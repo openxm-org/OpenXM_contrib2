@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.15 2003/01/06 01:16:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.16 2003/01/16 00:33:28 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -727,6 +727,8 @@ void qtogfs(Q a,GFS *c)
 {
 	int s;
 
+	if ( a && (SGN(a) < 1) )
+		error("qtogfs : invalid argument");
 	s = QTOS(a)%current_gfs_q;
 	itogfs(s,c);
 }
