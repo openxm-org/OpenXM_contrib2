@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.34 2004/03/09 09:40:46 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.35 2004/03/10 05:27:03 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1130,15 +1130,25 @@ int top_is_minus(FNODE f)
 			return top_is_minus((FNODE)FA0(f));
 		case I_FORMULA:
 			obj = (Obj)FA0(f);
-			if ( obj && OID(obj) == O_P ) {
-				opname = conv_rule(VR((P)obj)->name);
-			} else {
-				len = estimate_length(CO,obj);
-				opname = (char *)MALLOC_ATOMIC(len+1);
-				soutput_init(opname);
-				sprintexpr(CO,obj);
+			if ( !obj )
+				return 0;
+			else {
+				switch ( OID(obj) ) {
+					case O_N:
+						return mmono((P)obj);
+					case O_P:
+						/* must be a variable */
+						opname = conv_rule(VR((P)obj)->name);
+						return opname[0]=='-';
+					default:
+						/* ??? */
+						len = estimate_length(CO,obj);
+						opname = (char *)MALLOC_ATOMIC(len+1);
+						soutput_init(opname);
+						sprintexpr(CO,obj);
+						return opname[0]=='-';
+				}
 			}
-			return opname[0]=='-';
 		default:
 			return 0;
 	}
