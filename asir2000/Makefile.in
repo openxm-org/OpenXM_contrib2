@@ -78,6 +78,7 @@ PACKAGE = @PACKAGE@
 PARIINC = @PARIINC@
 PARILIB = @PARILIB@
 RANLIB = @RANLIB@
+USE_GC_INTERIX = @USE_GC_INTERIX@
 USE_GC_ZEROPAGE = @USE_GC_ZEROPAGE@
 VERSION = @VERSION@
 XPMLIB = @XPMLIB@
@@ -490,6 +491,11 @@ libasir-gc.a: parse/gc_risa.c
             -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
 	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \
 	    touch ${top_srcdir}/gc/.patch_gc_zeropage_done ; \
+	fi
+	-if [ "${USE_GC_INTERIX}" = yes \
+            -a ! -f ${top_srcdir}/gc/.patch_gc_interix_done ]; then \
+	    (cd ${top_srcdir}/gc; patch -p0 < ../gc_interix.diff) ; \
+	    touch ${top_srcdir}/gc/.patch_gc_interix_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/gc/.configure_done ]; then \
 	    if [ -n "${host_alias}" ]; then \

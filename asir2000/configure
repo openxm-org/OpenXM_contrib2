@@ -4926,7 +4926,9 @@ _ACEOF
     asm_obj="${i386_aout_obj}"
     ;;
 i[3-6]86-*-interix*)
-    asm_obj="${generic_obj}"
+    asm_obj="${i386_aout_obj}"
+    USE_GC_INTERIX="yes"
+
     cat >>confdefs.h <<\_ACEOF
 #define _ALL_SOURCE 1
 _ACEOF
@@ -5897,6 +5899,7 @@ s,@MPIINC@,$MPIINC,;t t
 s,@MPILIB@,$MPILIB,;t t
 s,@LAPACKLIB@,$LAPACKLIB,;t t
 s,@libasir_postfix@,$libasir_postfix,;t t
+s,@USE_GC_INTERIX@,$USE_GC_INTERIX,;t t
 s,@asm_obj@,$asm_obj,;t t
 CEOF
 

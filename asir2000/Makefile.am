@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.17 2003/03/20 07:34:07 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.18 2003/03/24 11:30:38 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -40,6 +40,11 @@ libasir-gc.a: parse/gc_risa.c
             -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
 	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \
 	    touch ${top_srcdir}/gc/.patch_gc_zeropage_done ; \
+	fi
+	-if [ "${USE_GC_INTERIX}" = yes \
+            -a ! -f ${top_srcdir}/gc/.patch_gc_interix_done ]; then \
+	    (cd ${top_srcdir}/gc; patch -p0 < ../gc_interix.diff) ; \
+	    touch ${top_srcdir}/gc/.patch_gc_interix_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/gc/.configure_done ]; then \
 	    if [ -n "${host_alias}" ]; then \
