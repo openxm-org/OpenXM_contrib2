@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.38 2003/08/20 08:56:29 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.39 2003/08/21 03:13:01 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -15,11 +15,14 @@
 
 #define REDTAB_LEN 32003
 
+/* GeoBucket for polynomial addition */
+
 typedef struct oPGeoBucket {
 	int m;
 	struct oND *body[32];
 } *PGeoBucket;
 
+/* distributed polynomial; linked list rep. */
 typedef struct oND {
 	struct oNM *body;
 	int nv;
@@ -27,6 +30,7 @@ typedef struct oND {
 	int sugar;
 } *ND;
 
+/* distributed polynomial; array rep. */
 typedef struct oNDV {
 	struct oNMV *body;
 	int nv;
@@ -34,6 +38,7 @@ typedef struct oNDV {
 	int sugar;
 } *NDV;
 
+/* monomial; linked list rep. */
 typedef struct oNM {
 	struct oNM *next;
 	union {
@@ -43,6 +48,7 @@ typedef struct oNM {
 	unsigned int dl[1];
 } *NM;
 
+/* monomial; array rep. */
 typedef struct oNMV {
 	union {
 		int m;
@@ -51,6 +57,7 @@ typedef struct oNMV {
 	unsigned int dl[1];
 } *NMV;
 
+/* history of reducer */
 typedef struct oRHist {
 	struct oRHist *next;
 	int index;
@@ -58,6 +65,7 @@ typedef struct oRHist {
 	unsigned int dl[1];
 } *RHist;
 
+/* S-pair list */
 typedef struct oND_pairs {
 	struct oND_pairs *next;
 	int i1,i2;
@@ -85,7 +93,6 @@ RHist *nd_psh;
 int nd_psn,nd_pslen;
 
 RHist *nd_red;
-int nd_red_len;
 
 int nd_found,nd_create,nd_notfirst;
 int nm_adv;
@@ -94,6 +101,7 @@ int nd_dcomp;
 
 extern int Top,Reverse,dp_nelim;
 
+/* fundamental macros */
 #define TD(d) (d[0])
 #define HDL(d) ((d)->body->dl)
 #define HTD(d) (TD(HDL(d)))
@@ -106,13 +114,13 @@ extern int Top,Reverse,dp_nelim;
 #define LEN(a) ((a)->len)
 #define LCM(a) ((a)->lcm)
 
+/* macros for term comparison */
 #define TD_DL_COMPARE(d1,d2)\
 (TD(d1)>TD(d2)?1:(TD(d1)<TD(d2)?-1:ndl_lex_compare(d1+1,d2+1)))
-
 #define DL_COMPARE(d1,d2)\
 (nd_dcomp?TD_DL_COMPARE(d1,d2):(*nd_compare_function)(d1,d2))
 
-#define NM_ADV(m) (m = (NM)(((char *)m)+nm_adv))
+/* allocators */
 #define NEWRHist(r) \
 ((r)=(RHist)MALLOC(sizeof(struct oRHist)+nd_wpd*sizeof(unsigned int)))
 #define NEWND_pairs(m) \
@@ -125,29 +133,37 @@ if(!_nm_free_list)_NM_alloc();\
 if(!_nd_free_list)_ND_alloc();\
 (d)=_nd_free_list; _nd_free_list = (ND)BDY(_nd_free_list);\
 NV(d)=(n); LEN(d)=(len); BDY(d)=(m)
+#define NEWNDV(d) ((d)=(NDV)MALLOC(sizeof(struct oNDV)))
+#define MKNDV(n,m,l,d) NEWNDV(d); NV(d)=(n); BDY(d)=(m); LEN(d) = l;
 
+/* allocate and link a new object */
 #define NEXTRHist(r,c) \
 if(!(r)){NEWRHist(r);(c)=(r);}else{NEWRHist(NEXT(c));(c)=NEXT(c);}
 #define NEXTNM(r,c) \
 if(!(r)){NEWNM(r);(c)=(r);}else{NEWNM(NEXT(c));(c)=NEXT(c);}
 #define NEXTNM2(r,c,s) \
 if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
+#define NEXTND_pairs(r,c) \
+if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
 
+/* deallocators */
 #define FREENM(m) NEXT(m)=_nm_free_list; _nm_free_list=(m)
 #define FREENDP(m) NEXT(m)=_ndp_free_list; _ndp_free_list=(m)
 #define FREEND(m) BDY(m)=(NM)_nd_free_list; _nd_free_list=(m)
 
-#define NEXTND_pairs(r,c) \
-if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
+/* macro for increasing pointer to NMV */
+#define NMV_ADV(m) (m = (NMV)(((char *)m)+nmv_adv))
 
-void nd_init_ord(struct order_spec *spec);
-int nd_check_candidate(NODE input,NODE cand);
+/* external functions */
+void GC_gcollect();
+NODE append_one(NODE,int);
+
+/* manipulation of coefficients */
 void nd_removecont(int mod,ND p);
 void nd_removecont2(ND p1,ND p2);
-void ndv_removecont(int mod,NDV p);
-void ndv_dehomogenize(NDV p);
-void ndv_mul_c_q(NDV p,Q mul);
-void nd_mul_c_q(ND p,Q mul);
+void removecont_array(Q *c,int n);
+
+/* GeoBucket functions */
 ND normalize_pbucket(int mod,PGeoBucket g);
 int head_pbucket(int mod,PGeoBucket g);
 int head_pbucket_q(PGeoBucket g);
@@ -155,35 +171,41 @@ void add_pbucket(int mod,PGeoBucket g,ND d);
 void free_pbucket(PGeoBucket b);
 void mulq_pbucket(PGeoBucket g,Q c);
 PGeoBucket create_pbucket();
-ND nd_remove_head(ND p);
 
-void GC_gcollect();
-NODE append_one(NODE,int);
-NODE nd_reducebase(NODE x);
-
-void removecont_array(Q *c,int n);
-ND_pairs crit_B( ND_pairs d, int s );
-void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp);
-void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp);
-void nd_setup(int mod,int trace,NODE f);
+/* manipulation of pairs and bases */
 int nd_newps(int mod,ND a,ND aq);
+ND_pairs nd_newpairs( NODE g, int t );
 ND_pairs nd_minp( ND_pairs d, ND_pairs *prest );
 NODE update_base(NODE nd,int ndp);
-static ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest );
-int crit_2( int dp1, int dp2 );
-ND_pairs crit_F( ND_pairs d1 );
-ND_pairs crit_M( ND_pairs d1 );
-ND_pairs nd_newpairs( NODE g, int t );
 ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t);
+ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest );
+ND_pairs crit_B( ND_pairs d, int s );
+ND_pairs crit_M( ND_pairs d1 );
+ND_pairs crit_F( ND_pairs d1 );
+int crit_2( int dp1, int dp2 );
+
+/* top level functions */
+void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp);
+void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp);
 NODE nd_gb(int m,int checkonly);
 NODE nd_gb_trace(int m);
-void nd_free_private_storage();
-void _NM_alloc();
-void _ND_alloc();
+
+/* ndl functions */
 int ndl_weight(unsigned int *d);
 void ndl_dehomogenize(unsigned int *p);
-ND nd_add(int mod,ND p1,ND p2);
-ND nd_add_q(ND p1,ND p2);
+void ndl_reconstruct(int obpe,unsigned int *d,unsigned int *r);
+INLINE int nd_length(ND p);
+INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2);
+INLINE int ndl_lex_compare(unsigned int *d1,unsigned int *d2);
+INLINE int ndl_equal(unsigned int *d1,unsigned int *d2);
+INLINE void ndl_copy(unsigned int *d1,unsigned int *d2);
+INLINE void ndl_add(unsigned int *d1,unsigned int *d2,unsigned int *d);
+INLINE void ndl_sub(unsigned int *d1,unsigned int *d2,unsigned int *d);
+INLINE int ndl_hash_value(unsigned int *d);
+INLINE int nd_find_reducer(ND g);
+INLINE int nd_find_reducer_direct(ND g,NDV *ps,int len);
+
+/* normal forms */
 int nd_sp(int mod,ND_pairs p,ND *nf);
 int nd_find_reducer(ND g);
 int nd_find_reducer_direct(ND g,NDV *ps,int len);
@@ -191,40 +213,62 @@ int nd_nf(int mod,ND g,int full,ND *nf);
 int nd_nf_pbucket(int mod,ND g,int full,ND *nf);
 int nd_nf_direct(int mod,ND g,NDV *ps,int len,int full,ND *rp);
 int nd_nf_direct_pbucket(int mod,ND g,NDV *ps,int len,int full,ND *rp);
-ND nd_reduce(ND p1,ND p2);
-ND nd_reduce_special(ND p1,ND p2);
+
+/* finalizers */
+NODE nd_reducebase(NODE x);
 NODE nd_reduceall(int m,NODE f);
 int nd_gbcheck(int m,NODE f);
 int nd_membercheck(int m,NODE f);
+
+/* allocators */
+void nd_free_private_storage();
+void _NM_alloc();
+void _ND_alloc();
 void nd_free(ND p);
-void ndv_free(NDV p);
+void nd_realloc(ND p,int obpe);
+void nd_free_redlist();
+
+/* printing */
 void ndl_print(unsigned int *dl);
 void nd_print(ND p);
 void nd_print_q(ND p);
-void ndv_print(NDV p);
-void ndv_print_q(NDV p);
 void ndp_print(ND_pairs d);
-int nd_length(ND p);
+
+
+/* setup, reconstruct */
+void nd_init_ord(struct order_spec *spec);
+ND_pairs nd_reconstruct(int mod,int trace,ND_pairs ndp);
+void nd_reconstruct_direct(int mod,NDV *ps,int len);
+void nd_setup(int mod,int trace,NODE f);
+void nd_setup_parameters();
+
+/* ND functions */
+int nd_check_candidate(NODE input,NODE cand);
 void nd_mul_c(int mod,ND p,int mul);
-void nd_free_redlist();
+void nd_mul_c_q(ND p,Q mul);
+ND nd_remove_head(ND p);
+int nd_length(ND p);
 void nd_append_red(unsigned int *d,int i);
 unsigned int *nd_compute_bound(ND p);
 unsigned int *dp_compute_bound(DP p);
-ND_pairs nd_reconstruct(int mod,int trace,ND_pairs ndp);
-void nd_reconstruct_direct(int mod,NDV *ps,int len);
-void nd_setup_parameters();
-void nd_realloc(ND p,int obpe);
 ND nd_copy(ND p);
-void ndl_dup(int obpe,unsigned int *d,unsigned int *r);
+ND nd_add(int mod,ND p1,ND p2);
+ND nd_add_q(ND p1,ND p2);
 
-#define NMV_ADV(m) (m = (NMV)(((char *)m)+nmv_adv))
-#define NEWNDV(d) ((d)=(NDV)MALLOC(sizeof(struct oNDV)))
-#define MKNDV(n,m,l,d) NEWNDV(d); NV(d)=(n); BDY(d)=(m); LEN(d) = l;
+/* NDV functions */
 void ndv_mul_c(int mod,NDV p,int mul);
+void ndv_mul_c_q(NDV p,Q mul);
+void ndv_realloc(NDV p,int obpe,int oadv);
+ND ndv_mul_nm(int mod,NDV p,NM m0);
+void ndv_dehomogenize(NDV p);
+void ndv_removecont(int mod,NDV p);
+void ndv_print(NDV p);
+void ndv_print_q(NDV p);
+void ndv_free(NDV p);
+
+/* converters */
 NDV ndtondv(int mod,ND p);
 ND ndvtond(int mod,NDV p);
-ND ndv_mul_nm(int mod,NDV p,NM m0);
-void ndv_realloc(NDV p,int obpe,int oadv);
 NDV dptondv(int,DP);
 DP ndvtodp(int,NDV);
 ND dptond(int,DP);
@@ -1750,7 +1794,7 @@ int crit_2( int dp1, int dp2 )
 	return ndl_disjoint(DL(nd_psh[dp1]),DL(nd_psh[dp2]));
 }
 
-static ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest )
+ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest )
 {
 	ND_pairs w,p,r,s;
 	unsigned int *d;
@@ -2439,7 +2483,7 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 		s->i1 = t->i1;
 		s->i2 = t->i2;
 		SG(s) = SG(t);
-		ndl_dup(obpe,LCM(t),LCM(s));
+		ndl_reconstruct(obpe,LCM(t),LCM(s));
 	}
 	
 	old_red = (RHist *)ALLOCA(REDTAB_LEN*sizeof(RHist));
@@ -2452,7 +2496,7 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 			NEWRHist(mr);
 			mr->index = r->index;
 			SG(mr) = SG(r);
-			ndl_dup(obpe,DL(r),DL(mr));
+			ndl_reconstruct(obpe,DL(r),DL(mr));
 			h = ndl_hash_value(DL(mr));
 			NEXT(mr) = nd_red[h];
 			nd_red[h] = mr;
@@ -2461,7 +2505,7 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 	old_red = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
 		NEWRHist(r); SG(r) = SG(nd_psh[i]);
-		ndl_dup(obpe,DL(nd_psh[i]),DL(r));
+		ndl_reconstruct(obpe,DL(nd_psh[i]),DL(r));
 		nd_psh[i] = r;
 	}
 	if ( s0 ) NEXT(s) = 0;
@@ -2505,7 +2549,7 @@ void nd_reconstruct_direct(int mod,NDV *ps,int len)
 			NEWRHist(mr);
 			mr->index = r->index;
 			SG(mr) = SG(r);
-			ndl_dup(obpe,DL(r),DL(mr));
+			ndl_reconstruct(obpe,DL(r),DL(mr));
 			h = ndl_hash_value(DL(mr));
 			NEXT(mr) = nd_red[h];
 			nd_red[h] = mr;
@@ -2517,7 +2561,7 @@ void nd_reconstruct_direct(int mod,NDV *ps,int len)
 	GC_gcollect();
 }
 
-void ndl_dup(int obpe,unsigned int *d,unsigned int *r)
+void ndl_reconstruct(int obpe,unsigned int *d,unsigned int *r)
 {
 	int n,i,ei,oepw,cepw,cbpe;
 
@@ -2550,7 +2594,7 @@ void nd_realloc(ND p,int obpe)
 		for ( mr0 = 0; m; m = NEXT(m) ) {
 			NEXTNM(mr0,mr);
 			CM(mr) = CM(m);
-			ndl_dup(obpe,DL(m),DL(mr));
+			ndl_reconstruct(obpe,DL(m),DL(mr));
 		}
 		NEXT(mr) = 0; 
 		BDY(p) = mr0;
@@ -2693,7 +2737,7 @@ void ndv_realloc(NDV p,int obpe,int oadv)
 		for ( i = 0; i < len; i++, NMV_OPREV(m), NMV_PREV(mr) ) {
 			CQ(t) = CQ(m);
 			for ( k = 0; k < nd_wpd; k++ ) DL(t)[k] = 0;
-			ndl_dup(obpe,DL(m),DL(t));
+			ndl_reconstruct(obpe,DL(m),DL(t));
 			CQ(mr) = CQ(t);
 			ndl_copy(DL(t),DL(mr));
 		}
