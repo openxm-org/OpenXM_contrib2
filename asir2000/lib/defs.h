@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.3 2000/08/22 05:04:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.4 2003/10/14 02:02:26 noro Exp $ 
 */
 /* some useful macros */
 
@@ -57,6 +57,8 @@
 #define VECT 5
 #define MAT 6
 #define STR 7
+#define STRUCT 8
+#define DPOLY 9
 
 #define N_Q 0
 #define N_R 1
@@ -76,6 +78,8 @@
 #define isvect(a) (type(a)==VECT)
 #define ismat(a) (type(a)==MAT)
 #define isstr(a) (type(a)==STR)
+#define isstruct(A) (type(A)==STRUCT)
+#define isdpoly(a) (type(a)==DPOLY)
 
 #define FIRST(L) (car(L))
 #define SECOND(L) (car(cdr(L)))
