@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.3 2000/01/18 05:55:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.4 2000/01/19 09:31:00 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -456,10 +456,22 @@ static void asir_executeFunction(int serial)
 	char *path;
 	USINT ui;
 	ERR err;
+	Obj arg;
 	static char buf[BUFSIZ];
 
-	func = ((STRING)asir_pop_one())->body;
-	argc = (int)(((USINT)asir_pop_one())->body);
+	arg = asir_pop_one();
+	if ( !arg || OID(arg) != O_STR ) {
+		sprintf(buf,"executeFunction : invalid function name");
+		goto error;
+	} else
+		func = ((STRING)arg)->body;
+
+	arg = asir_pop_one();
+	if ( !arg || OID(arg) != O_USINT ) {
+		sprintf(buf,"executeFunction : invalid argc");
+		goto error;
+	} else
+		argc = (int)(((USINT)arg)->body);
 
 	for ( n = 0; argc; argc-- ) {
 		NEXTNODE(n,n1);
@@ -491,12 +503,17 @@ static void asir_executeFunction(int serial)
 			searchf(usrf,func,&f);
 		if ( !f ) {
 			sprintf(buf,"executeFunction : the function %s not found",func);
-			create_error(&err,serial,buf);
-			result = (Obj)err;
+			goto error;
 		} else {
 			result = (Obj)bevalf(f,n);
 		}
 	}
+	asir_push_one(result);
+	return;
+
+error:
+	create_error(&err,serial,buf);
+	result = (Obj)err;
 	asir_push_one(result);
 }
 
