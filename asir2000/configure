@@ -1,10 +1,10 @@
 #!/bin/sh
-# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.4 2000/12/22 10:03:27 saito Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.5 2000/12/23 08:44:35 saito Exp $
 
 use_plot=1
 use_pari=1
 use_interval=1
-use_fep=0
+use_fep=1
 oxhome=/usr/local
 
 if [ -d ../../OpenXM ]; then

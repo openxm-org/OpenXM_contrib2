@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.5 2000/12/05 01:24:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.6 2000/12/22 10:03:30 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,8 +83,8 @@ extern VL file_vl;
 void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
 	loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat, loadbytearray };
 #if defined(INTERVAL)
-int loaditv();
-int loaditvd();
+void loaditv();
+void loaditvd();
 void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn };
 #else
 void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn };
@@ -197,7 +197,7 @@ BF *p;
 }
 
 #if defined(INTERVAL)
-loaditv(s,p)
+void loaditv(s,p)
 FILE *s;
 Itv *p;
 {
@@ -209,7 +209,7 @@ Itv *p;
 	*p = q;
 }
 
-loaditvd(s,p)
+void loaditvd(s,p)
 FILE *s;
 ItvD *p;
 {
