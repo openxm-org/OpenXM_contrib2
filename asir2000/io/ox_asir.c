@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.36 2001/12/27 07:51:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.37 2001/12/28 09:50:36 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -900,13 +900,26 @@ int asir_ox_peek_cmo_size()
 	Obj obj;
 	int len;
 
-	obj = asir_pop_one();
-	asir_push_one(obj);
+	obj = asir_peek_one();
 	if ( !valid_as_cmo(obj) ) {
 		fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
 		return 0;
 	}
 	len = count_as_cmo(obj);
+	return len;
+}
+
+int asir_ox_peek_cmo_string_length()
+{
+	Obj obj;
+	int len;
+
+	obj = asir_peek_one();
+	if ( !valid_as_cmo(obj) ) {
+		fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
+		return 0;
+	}
+	len = estimate_length(CO,obj);
 	return len;
 }
 
