@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.20 2003/05/23 00:11:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.21 2003/05/30 00:47:25 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -128,7 +128,13 @@ extern jmp_buf env;
 %%
 
 start 	: stat
-			{ parse_snode = $1; YYACCEPT; }
+			{ 
+				parse_snode = $1; 
+				if ( yychar >= 0 ) 
+					fprintf(stderr,
+						"Warning: a token was wasted after an 'if' statement without 'else'.\n");
+				YYACCEPT; 
+			}
 	  	;
 stat 	: tail
 			{ $$ = 0; }
