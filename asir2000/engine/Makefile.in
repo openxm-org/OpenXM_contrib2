@@ -105,7 +105,7 @@ libca_a_SOURCES = init.c mat.c vect.c str.c dist.c distm.c _distm.c ui.c \
   gf2n.c gfpn.c gfs.c gfspn.c \
   PU.c PUM.c R.c RU.c F.c  \
   D.c E.c Ebug.c EZ.c H.c M.c NEZ.c Mgfs.c Hgfs.c Fgfs.c \
-  C.c A.c alg.c p-itv.c f-itv.c d-itv.c pari-mp.c
+  C.c A.c alg.c p-itv.c f-itv.c d-itv.c pari-mp.c nd.c
 
 subdir = engine
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -127,7 +127,7 @@ am_libca_a_OBJECTS = init.$(OBJEXT) mat.$(OBJEXT) vect.$(OBJEXT) \
 	M.$(OBJEXT) NEZ.$(OBJEXT) Mgfs.$(OBJEXT) Hgfs.$(OBJEXT) \
 	Fgfs.$(OBJEXT) C.$(OBJEXT) A.$(OBJEXT) alg.$(OBJEXT) \
 	p-itv.$(OBJEXT) f-itv.$(OBJEXT) d-itv.$(OBJEXT) \
-	pari-mp.$(OBJEXT)
+	pari-mp.$(OBJEXT) nd.$(OBJEXT)
 libca_a_OBJECTS = $(am_libca_a_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@
@@ -150,7 +150,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 @AMDEP_TRUE@	$(DEPDIR)/gfs.Po $(DEPDIR)/gfspn.Po \
 @AMDEP_TRUE@	$(DEPDIR)/init.Po $(DEPDIR)/lmi.Po $(DEPDIR)/mat.Po \
 @AMDEP_TRUE@	$(DEPDIR)/mi.Po $(DEPDIR)/mt19937.Po \
-@AMDEP_TRUE@	$(DEPDIR)/num.Po $(DEPDIR)/p-itv.Po \
+@AMDEP_TRUE@	$(DEPDIR)/nd.Po $(DEPDIR)/num.Po $(DEPDIR)/p-itv.Po \
 @AMDEP_TRUE@	$(DEPDIR)/pari-mp.Po $(DEPDIR)/pari.Po \
 @AMDEP_TRUE@	$(DEPDIR)/real.Po $(DEPDIR)/str.Po $(DEPDIR)/ui.Po \
 @AMDEP_TRUE@	$(DEPDIR)/up.Po $(DEPDIR)/up2.Po \
@@ -233,6 +233,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/mat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/mi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/mt19937.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/nd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/num.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/p-itv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/pari-mp.Po@am__quote@
