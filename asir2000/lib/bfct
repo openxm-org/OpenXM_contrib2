@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.11 2000/12/15 01:52:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.12 2000/12/15 07:15:18 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -205,6 +205,93 @@ def compare_first(A,B)
 		return 0;
 }
 
+/* generic b-function w.r.t. weight vector W */
+
+def generic_bfct(F,V,DV,W)
+{
+	N = length(V);
+	N2 = N*2;
+
+	/* create a term order M in D<x,d> */
+	M = newmat(N2,N2);
+	for ( J = 0; J < N2; J++ )
+		M[0][J] = 1;
+	for ( I = 1; I < N2; I++ )
+		M[I][N2-I] = -1;
+	
+	VDV = append(V,DV);
+
+	/* create a non-term order MW in D<x,d> */
+	MW = newmat(N2+1,N2);
+	for ( J = 0; J < N; J++ )
+		MW[0][J] = -W[J];
+	for ( ; J < N2; J++ )
+		MW[0][J] = W[J-N];
+	for ( I = 1; I <= N2; I++ )
+		for ( J = 0; J < N2; J++ )
+			MW[I][J] = M[I-1][J];
+
+	/* create a homogenized term order MWH in D<x,d,h> */
+	MWH = newmat(N2+2,N2+1);
+	for ( J = 0; J <= N2; J++ )
+		MWH[0][J] = 1;
+	for ( I = 1; I <= N2+1; I++ )
+		for ( J = 0; J < N2; J++ )
+			MWH[I][J] = MW[I-1][J];
+
+	/* homogenize F */
+	VDVH = append(VDV,[h]);
+	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
+	
+	/* compute a groebner basis of FH w.r.t. MWH */
+	GH = dp_weyl_gr_main(FH,VDVH,0,0,MWH);
+
+	/* dehomigenize GH */
+	G = map(subst,GH,h,1);
+
+	/* G is a groebner basis w.r.t. a non term order MW */
+	/* take the initial part w.r.t. (-W,W) */
+	GIN = map(initial_part,G,VDV,MW,W);
+
+	/* GIN is a groebner basis w.r.t. a term order M */
+	/* As -W+W=0, gr_(-W,W)(D<x,d>) = D<x,d> */
+	
+	/* find b(W1*x1*d1+...+WN*xN*dN) in Id(GIN) */
+	for ( I = 0, T = 0; I < N; I++ )
+		T += W[I]*V[I]*DV[I];
+	B = weyl_minipoly(GIN,VDV,M,T);
+	return B;
+}
+
+def initial_part(F,V,MW,W)
+{
+	N2 = length(V);
+	N = N2/2;
+	dp_ord(MW);
+	DF = dp_ptod(F,V);
+	R = dp_hm(DF);
+	DF = dp_rest(DF);
+
+	E = dp_etov(R);
+	for ( I = 0, TW = 0; I < N; I++ )
+		TW += W[I]*(-E[I]+E[N+I]);
+	RW = TW;		
+
+	for ( ; DF; DF = dp_rest(DF) ) {
+		E = dp_etov(DF);
+		for ( I = 0, TW = 0; I < N; I++ )
+			TW += W[I]*(-E[I]+E[N+I]);
+		if ( TW == RW )
+			R += dp_hm(DF);
+		else if ( TW < RW )
+			break;
+		else 
+			error("initial_part : cannot happen");
+	}
+	return dp_dtop(R,V);
+	
+}
+
 /* b-function of F ? */
 
 def bfct(F)
@@ -258,65 +345,66 @@ def weyl_minipolym(G,V,O,M,V0)
 		H = cons([TT,T],H);
 		L = dp_lnf_mod([TT,T],G,M);
 		if ( !L[0] )
-			return dp_dtop(L[1],[V0]);
+			return dp_dtop(L[1],[t]); /* XXX */
 		else
 			G = insert(G,L);
 	}
 }
 
-def weyl_minipoly(G0,V0,O0,V)
+def weyl_minipoly(G0,V0,O0,P)
 {
 	HM = hmlist(G0,V0,O0);
+
+	N = length(V0);
+	Len = length(G0);
+	dp_ord(O0);
+	PS = newvect(Len);
+	for ( I = 0, T = G0, HL = []; T != []; T = cdr(T), I++ )
+		PS[I] = dp_ptod(car(T),V0);
+	for ( I = Len - 1, GI = []; I >= 0; I-- )
+		GI = cons(I,GI);
+	DP = dp_ptod(P,V0);
+
 	for ( I = 0; ; I++ ) {
 		Prime = lprime(I);
 		if ( !valid_modulus(HM,Prime) )
 			continue;
-		MP = weyl_minipolym(G0,V0,O0,Prime,V);
-		for ( D = deg(MP,V), TL = [], J = 0; J <= D; J++ )
-			TL = cons(V^J,TL);
-		dp_ord(O0);
-		NF = weyl_gennf(G0,TL,V0,O0)[0];
+		MP = weyl_minipolym(G0,V0,O0,Prime,P);
+		D = deg(MP,var(MP));
 
-		LHS = weyl_nf_tab(-car(TL),NF,V0);
-		B = weyl_hen_ttob(cdr(TL),NF,LHS,V0,Prime);
+		NFP = weyl_nf(GI,DP,1,PS);
+		NF = [[dp_ptod(1,V0),1]];
+		LCM = 1;
+
+		for ( J = 1; J <= D; J++ ) {
+			NFPrev = car(NF);
+			NFJ = weyl_nf(GI,
+				dp_weyl_mul(NFP[0],NFPrev[0]),NFP[1]*NFPrev[1],PS);
+			NFJ = remove_cont(NFJ);
+			NF = cons(NFJ,NF);
+			LCM = ilcm(LCM,NFJ[1]);
+		}
+		U = NF[0][0]*idiv(LCM,NF[0][1]);
+		Coef = [];
+		for ( J = D-1; J >= 0; J-- ) {
+			Coef = cons(strtov("u"+rtostr(J)),Coef);
+			U += car(Coef)*NF[D-J][0]*idiv(LCM,NF[D-J][1]);
+		}
+
+		for ( UU = U, Eq = []; UU; UU = dp_rest(UU) )
+			Eq = cons(dp_hc(UU),Eq);
+		M = etom([Eq,Coef]);
+		B = henleq(M,Prime);
+		if ( dp_gr_print() )
+			print("");
 		if ( B ) {
-			R = ptozp(B[1]*car(TL)+B[0]);
+			R = 0;
+			for ( I = 0; I < D; I++ )
+				R += B[0][I]*s^I;
+			R += B[1]*s^D;
 			return R;
 		}
 	}
-}
-
-def weyl_gennf(G,TL,V,O)
-{
-	N = length(V); Len = length(G); dp_ord(O); PS = newvect(Len);
-	for ( I = 0, T = G, HL = []; T != []; T = cdr(T), I++ ) {
-		PS[I] = dp_ptod(car(T),V); HL = cons(dp_ht(PS[I]),HL);
-	}
-	for ( I = 0, DTL = []; TL != []; TL = cdr(TL) )
-		DTL = cons(dp_ptod(car(TL),V),DTL);
-	for ( I = Len - 1, GI = []; I >= 0; I-- )
-		GI = cons(I,GI);
-	T = car(DTL); DTL = cdr(DTL);
-	H = [weyl_nf(GI,T,T,PS)];
-
-	T0 = time()[0];
-	while ( DTL != [] ) {
-		T = car(DTL); DTL = cdr(DTL);
-		if ( dp_gr_print() )
-			print(".",2);
-		if ( L = search_redble(T,H) ) {
-			DD = dp_subd(T,L[1]);
-			NF = weyl_nf(GI,dp_weyl_mul(L[0],dp_subd(T,L[1])),dp_hc(L[1])*T,PS);
-		} else
-			NF = weyl_nf(GI,T,T,PS);
-		NF = remove_cont(NF);
-		H = cons(NF,H);
-	}
-	print("");
-	TNF = time()[0]-T0;
-	if ( dp_gr_print() )
-		print("gennf(TAB="+rtostr(TTAB)+" NF="+rtostr(TNF)+")");
-	return [H,PS,GI];
 }
 
 def weyl_nf(B,G,M,PS)
@@ -361,78 +449,6 @@ def weyl_nf_mod(B,G,PS,Mod)
 		}
 	}
 	return D;
-}
-
-def weyl_hen_ttob(T,NF,LHS,V,MOD)
-{
-	T0 = time()[0]; M = etom(weyl_leq_nf(T,NF,LHS,V)); TE = time()[0] - T0;
-	T0 = time()[0]; U = henleq(M,MOD); TH = time()[0] - T0;
-	if ( dp_gr_print() ) {
-		print("(etom="+rtostr(TE)+" hen="+rtostr(TH)+")");
-	}
-	return U ? vtop(T,U,LHS) : 0;
-}
-
-def weyl_leq_nf(TL,NF,LHS,V)
-{
-	TLen = length(NF);
-	T = newvect(TLen); M = newvect(TLen);
-	for ( I = 0; I < TLen; I++ ) {
-		T[I] = dp_ht(NF[I][1]);
-		M[I] = dp_hc(NF[I][1]);
-	}
-	Len = length(TL); INDEX = newvect(Len); COEF = newvect(Len);
-	for ( L = TL, J = 0; L != []; L = cdr(L), J++ ) {
-		D = dp_ptod(car(L),V);
-		for ( I = 0; I < TLen; I++ )
-			if ( D == T[I] )
-				break;
-		INDEX[J] = I; COEF[J] = strtov("u"+rtostr(J));
-	}
-	if ( !LHS ) {
-		COEF[0] = 1; NM = 0; DN = 1;
-	} else {
-		NM = LHS[0]; DN = LHS[1];
-	}
-	for ( J = 0, S = -NM; J < Len; J++ ) {
-		DNJ = M[INDEX[J]];
-		GCD = igcd(DN,DNJ); CS = DNJ/GCD; CJ = DN/GCD;
-		S = CS*S + CJ*NF[INDEX[J]][0]*COEF[J];
-		DN *= CS;
-	}
-	for ( D = S, E = []; D; D = dp_rest(D) )
-		E = cons(dp_hc(D),E);
-	BOUND = LHS ? 0 : 1;
-	for ( I = Len - 1, W = []; I >= BOUND; I-- )	
-			W = cons(COEF[I],W);
-	return [E,W];	
-}
-
-def weyl_nf_tab(A,NF,V)
-{
-	TLen = length(NF);
-	T = newvect(TLen); M = newvect(TLen);
-	for ( I = 0; I < TLen; I++ ) {
-		T[I] = dp_ht(NF[I][1]);
-		M[I] = dp_hc(NF[I][1]);
-	}
-	A = dp_ptod(A,V);
-	for ( Z = A, Len = 0; Z; Z = dp_rest(Z), Len++ );
-	INDEX = newvect(Len); COEF = newvect(Len);
-	for ( Z = A, J = 0; Z; Z = dp_rest(Z), J++ ) {
-		D = dp_ht(Z);
-		for ( I = 0; I < TLen; I++ )
-			if ( D == T[I] )
-				break;
-		INDEX[J] = I; COEF[J] = dp_hc(Z);
-	}
-	for ( J = 0, S = 0, DN = 1; J < Len; J++ ) {
-		DNJ = M[INDEX[J]];
-		GCD = igcd(DN,DNJ); CS = DNJ/GCD; CJ = DN/GCD;
-		S = CS*S + CJ*NF[INDEX[J]][0]*COEF[J];
-		DN *= CS;
-	}
-	return [S,DN];	
 }
 
 def remove_zero(L)
