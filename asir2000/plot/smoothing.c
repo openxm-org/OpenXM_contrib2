@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.3 2000/10/24 01:53:53 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.4 2000/11/08 05:49:35 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -9,22 +9,9 @@
 #define PRINT_XOFFSET   100
 #define PRINT_YOFFSET   100
 
-struct polyLine {
-  int numberOfSegments;
-  int limit;
-  int *x;
-  int *y;
-};
 
 static FILE *Fp = NULL;
 
-static void *gcmalloc(int a);
-static struct polyLine *polyLine_new(void);
-static struct polyLine *polyLine_addNewSegment(struct polyLine *pl,
-											   int x,int y);
-static int polyLine_lastY(struct polyLine *pl);
-static void polyLine_outputPS(struct polyLine *pl);
-static void polyLine_output_bezier_PS(struct polyLine *pl);
 static void polyLine_outputProlog(int xmin, int ymin, int xmax, int ymax);
 static void polyLine_outputEpilog(void);
 static void polyLine_error(char *s);
@@ -36,108 +23,14 @@ static void polyLine_error(char *s);
 #define YES 1
 #define NO  0
 
-
 static int Xsize = 0;
 static int Ysize = 0;
-static int updatePolyLine(struct polyLine *pl[], int plSize,
-				   int prev[], int Curr[], int x);
 
 static void polyLine_outputPS_dashed_line(int x0,int y0,int x1,int y1);
 static int polyLine_pline(struct canvas *can);
 static int Strategy_generate_PS = 0;
 
-static void *gcmalloc(a)  {
-  void *m;
-  /* BUG:  interruption must be locked. */
-  m = (void *) GC_malloc(a);
-  if (m == NULL) polyLine_error("no memory");
-  return(m);
-}
 
-#define MINIMAL_POLYLINE_SIZE  10
-static struct polyLine *polyLine_new_with_size(int size) {
-  struct polyLine *pl;
-  pl = (struct polyLine *)gcmalloc(sizeof(struct polyLine));
-  pl-> limit = (size > 0? size: 1);
-  pl-> numberOfSegments = 0;
-  pl->x = (int *)gcmalloc(sizeof(int)*(pl->limit));
-  pl->y = (int *)gcmalloc(sizeof(int)*(pl->limit));
-  return(pl);
-}
-
-static struct polyLine *polyLine_new(void) {
-  return( polyLine_new_with_size(MINIMAL_POLYLINE_SIZE));
-}
-
-static struct polyLine *polyLine_addNewSegment(struct polyLine *pl,
-												int x,int y) {
-  int n,limit,i;
-  struct polyLine *new_pl;
-  limit = pl->limit;
-  n = pl->numberOfSegments;
-  if (n >= limit) {
-	new_pl = polyLine_new_with_size( 2*limit );
-	new_pl -> numberOfSegments = pl->numberOfSegments;
-	for (i=0; i<pl->numberOfSegments; i++) {
-	  new_pl->x[i] = pl->x[i];
-	  new_pl->y[i] = pl->y[i];
-	}
-	pl = new_pl;
-  }
-  pl->numberOfSegments++;
-  pl->x[n] = x;
-  pl->y[n] = y;
-  return(pl);
-}
-
-static int polyLine_lastY(struct polyLine *pl) {
-  int n;
-  n = pl->numberOfSegments;
-  if (n == 0) {
-	polyLine_error("polyLine_lastY:  empty polyLine.");
-  }
-  return(pl->y[n-1]);
-}
-
-
-static void polyLine_outputPS(struct polyLine *pl) {
-  int n,i;
-  n = pl->numberOfSegments;
-  if (n == 1) {
-	fprintf(Fp," %d %d ifplot_putpixel\n",translateX(pl->x[0]),translateY(pl->y[0]));
-  }else if (n > 1) {
-	fprintf(Fp," newpath ");
-	for (i=0; i<n; i++) {
-	  fprintf(Fp," %d %d ",translateX(pl->x[i]),translateY(pl->y[i]));
-	  if (i==0) fprintf(Fp," moveto ");
-	  else fprintf(Fp," lineto ");
-	}
-	fprintf(Fp," stroke\n");
-  }
-  fflush(Fp);
-}
-static void polyLine_output_bezier_PS(struct polyLine *pl) {
-  int n,i,m;
-  n = pl->numberOfSegments;
-  if (n == 1) {
-	fprintf(Fp," %d %d ifplot_putpixel\n",translateX(pl->x[0]),translateY(pl->y[0]));
-  }else if (n > 1) {
-	fprintf(Fp," newpath ");
-    i=0;
-	m = n-1-((n-1)/3)*3;
-    fprintf(Fp," %d %d ",translateX(pl->x[i]),translateY(pl->y[i]));
-	fprintf(Fp," moveto \n ");
-	for (i=1; i<= ((n-1)/3)*3; i++) {
-	  fprintf(Fp," %d %d ",translateX(pl->x[i]),translateY(pl->y[i]));
-	  if ( i%3 == 0) fprintf(Fp," curveto ");
-	}
-	for (i=n-m; i<n; i++) {
-	  fprintf(Fp," %d %d lineto ",translateX(pl->x[i]),translateY(pl->y[i]));
-	}
-	fprintf(Fp," stroke\n");
-  }
-  fflush(Fp);
-}
 static void polyLine_outputProlog(int xmin, int ymin,int xmax, int ymax) {
   fprintf(Fp,"%%!PS-Adobe-1.0\n");
   fprintf(Fp,"%%%%BoundingBox: %d %d %d %d \n",
@@ -163,127 +56,7 @@ static void polyLine_error(char *s) {
   fprintf(stderr,"Error in smoothing: %s\n",s);
   exit(-1);
 }
-static int updatePolyLine(struct polyLine *pl[], int plSize,
-						  int prev[], int curr[],int x) {
-  /*  1 <= y <= Ysize ,  curr[0], curr[Ysize+1]  = 0 ,  i=y .
-	  prev = {-1, -1, -1, 0, 1, -1, 2, -1}  -1: no polyLine. 0:pl[0], 1:pl[1],
-	  curr = {0,  1,  0,  1, 1, 1,  0, 0}    0: no dot, 1: dot.
-  */
-  /* Return Value:  plSize, pl, prev */
-  int i;
-  static int *prevHasNext = NULL;
-  static struct polyLine **tmpPl = NULL;
-  static struct polyLine **newPl = NULL;
-  int tmpPlSize = 0;
-  static int *tmpPrev = NULL;
-  int newPlSize = 0;
-  extern int Ysize;
-  if (prevHasNext == NULL) prevHasNext = (int *)gcmalloc(sizeof(int)*(Ysize+2));
-  if (tmpPl == NULL)
-	tmpPl = (struct polyLine **)gcmalloc(sizeof(struct polyLine *)*(Ysize+2));
-  if (newPl == NULL)
-	newPl = (struct polyLine **)gcmalloc(sizeof(struct polyLine *)*(Ysize+2));
-  if (tmpPrev == NULL) tmpPrev = (int *)gcmalloc(sizeof(int)*(Ysize+2));
-  for (i=0; i<Ysize+2; i++) {
-	prevHasNext[i] = NO; newPl[i] = NULL; tmpPl[i] = NULL;
-	tmpPrev[i] = -1;
-  }
-  prev[0] = prev[Ysize+1] = -1;
-  for (i=1; i <= Ysize; i++) {
-	if (curr[i] IS_DOT) {
-	  if (prev[i-1] IS_POLYLINE && !prevHasNext[i-1]) {
-		pl[prev[i-1]] = polyLine_addNewSegment(pl[prev[i-1]],x,i);
-		prevHasNext[i-1] = YES;
-	  }else if (prev[i] IS_POLYLINE && !prevHasNext[i]) {
-		pl[prev[i]] = polyLine_addNewSegment(pl[prev[i]],x,i);
-		prevHasNext[i] = YES;
-	  }else if (prev[i+1] IS_POLYLINE && !prevHasNext[i+1]) {
-		pl[prev[i+1]] = polyLine_addNewSegment(pl[prev[i+1]],x,i);
-		prevHasNext[i+1] = YES;
-	  }else{
-		newPl[newPlSize] = polyLine_new();
-		newPl[newPlSize] = polyLine_addNewSegment(newPl[newPlSize],x,i);
-		newPlSize++;
-	  }
-	}
-  }
-  for (i=1; i<=Ysize; i++) {
-	if (prevHasNext[i] == NO && prev[i] IS_POLYLINE) {
-	  /* polyLine_outputPS(pl[prev[i]]); */
-	  polyLine_output_bezier_PS(pl[prev[i]]);
-	}
-  }
 
-  /* generate new pl and new prev */
-  tmpPlSize = 0; tmpPrev[0] = tmpPrev[Ysize+1] = -1;
-  for (i = 1; i<=Ysize; i++) {
-	if (prevHasNext[i] == YES) {
-	  tmpPl[tmpPlSize] = pl[prev[i]];
-	  tmpPrev[polyLine_lastY(pl[prev[i]])] = tmpPlSize;
-	  tmpPlSize++;
-	}
-  }
-  for (i=0; i<newPlSize; i++) {
-	tmpPl[tmpPlSize] = newPl[i];
-	tmpPrev[polyLine_lastY(newPl[i])] = tmpPlSize;
-	tmpPlSize++;
-  }
-
-  /* copy and update for the next step.  */
-  for (i=0; i< Ysize+2; i++) {
-	prev[i] = tmpPrev[i];
-  }
-  for (i=0; i<tmpPlSize; i++) {
-	pl[i] = tmpPl[i];
-  }
-  return(tmpPlSize);
-}
-
-/*
-#define TEST_YSIZE 12
-#define TEST_XSIZE 5
-generatePS_from_image(FILE *fp) {
-  int image_test[TEST_XSIZE][TEST_YSIZE] =
-                          {{0,0,1,0,0,0,0,0,0,0,0,0},
-                           {0,1,0,1,0,0,0,0,0,1,0,0},
-                           {0,1,0,1,1,0,0,0,1,0,1,0},
-                           {0,0,1,0,0,0,0,0,0,1,0,1},
-                           {0,0,0,0,0,0,1,0,0,1,0,0}};
-  struct polyLine **pl;
-  int plSize = 0;
-  int *prev;
-  int *curr;
-  int i,x,y;
-
-  Xsize = TEST_XSIZE;
-  Ysize = TEST_YSIZE;
-  pl = (struct polyLine **)gcmalloc(sizeof(struct polyLine *)*(Ysize+2));
-  prev = (int *)gcmalloc(sizeof(int)*(Ysize+2));
-  curr = (int *)gcmalloc(sizeof(int)*(Ysize+2));
-  Fp = fp;
-  polyLine_outputProlog(0,0,Xsize,Ysize);
-  for (i=0; i<= Ysize+1; i++) {
-	prev[i] = -1;
-  }
-  for (x=0; x<Xsize; x++) {
-	curr[0] = curr[Ysize+1] = 0;
-	for (y=0; y<Ysize; y++) {
-	  if (image_test[x][y]) curr[y+1]=1;
-	  else curr[y+1] = 0;
-	}
-	plSize = updatePolyLine(pl,plSize,prev,curr,x);
-  }
-  for (y=0; y<Ysize+2; y++) {
-	curr[y] = 0;
-  }
-  plSize = updatePolyLine(pl,plSize,prev,curr,Xsize);
-  polyLine_outputEpilog();
-}
-main() {
-  generatePS_from_image(stdout);
-}
-
-*/
 static void polyLine_outputPS_dashed_line(int x0,int y0,int x1,int y1) {
   extern FILE *Fp;
   fprintf(Fp," gsave [3] 0 setdash newpath \n");
@@ -356,32 +129,9 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
 
   Xsize = xsize;
   Ysize = ysize;
-  pl = (struct polyLine **)gcmalloc(sizeof(struct polyLine *)*(Ysize+2));
-  prev = (int *)gcmalloc(sizeof(int)*(Ysize+2));
-  curr = (int *)gcmalloc(sizeof(int)*(Ysize+2));
   Fp = fp;
   polyLine_outputProlog(0,0,Xsize,Ysize);
   switch(Strategy_generate_PS) {
-  case 1:
-	for (c=0; c<colorSize; c++) {
-	  /* Set color if necessary */
-	  for (i=0; i<= Ysize+1; i++) {
-		prev[i] = -1;
-	  }
-	  for (x=0; x<Xsize; x++) {
-		curr[0] = curr[Ysize+1] = 0;
-		for (y=0; y<Ysize; y++) {
-		  if ((int) XGetPixel(image,x,y) == color[c]) curr[y+1]=1;
-		  else curr[y+1] = 0;
-		}
-		plSize = updatePolyLine(pl,plSize,prev,curr,x);
-	  }
-	  for (y=0; y<Ysize+2; y++) {
-		curr[y] = 0;
-	  }
-	  plSize = updatePolyLine(pl,plSize,prev,curr,Xsize);
-	}
-	break;
   default:
 	for (c=0; c<colorSize; c++) {
 	  /* Set color if necessary */
