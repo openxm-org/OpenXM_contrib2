@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/fff,v 1.5 2001/05/09 01:41:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/fff,v 1.6 2001/09/03 07:01:09 noro Exp $ 
 */
 /*
 	fff : Univariate factorizer over a finite field.
@@ -56,6 +56,9 @@
     99/06/11    noro    
     99/07/27    noro    
 */
+module fff $
+  /* Empty for now. It will be used in a future. */
+endmodule $
 
 #include "defs.h"
 

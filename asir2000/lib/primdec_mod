@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.10 2003/05/07 06:26:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.11 2003/08/05 05:56:19 noro Exp $ */
 
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
@@ -6,11 +6,12 @@ extern T_GRF,T_INT,T_PD,T_MP$
 extern BuchbergerMinipoly,PartialDecompByLex,ParallelMinipoly$
 extern B_Win,D_Win$
 extern COMMONCHECK_SF,CID_SF$
-extern LIBRARY_GR_LOADED$
-extern LIBRARY_FFF_LOADED$
 
-if(!LIBRARY_FFF_LOADED) load("fff"); else ; LIBRARY_FFF_LOADED = 1$
-if(!LIBRARY_GR_LOADED) load("gr"); else ; LIBRARY_GR_LOADED = 1$
+if (!module_definedp("fff")) load("fff") $$
+if (!module_definedp("gr"))  load("gr") $$
+module primdec_mod $
+  /* Empty for now. It will be used in a future. */
+endmodule $
 
 /*==============================================*/
 /*  prime decomposition of ideals over 		*/

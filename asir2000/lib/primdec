@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/primdec,v 1.3 2000/08/22 05:04:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/primdec,v 1.4 2001/01/15 05:18:20 noro Exp $ 
 */
 /*   Primary decomposition & Radical decomposition program      */
 /*   written by T.Shimoyama, Fujitsu Lab. Date: 1995.10.12      */
@@ -64,7 +64,11 @@ COMMONCHECK	if 1 : redundancy check by intersection (in gr_fctr_sub)
 SELECTFLAG	selection strategy of separators (0 -- 3)
 */
 
-if (vtype(minipoly) != 3) load("gr")$$
+if (!module_definedp("gr")) load("gr")$$
+module primdec $  
+  /* Empty for now. It will be used in a future. */
+endmodule$
+
 
 #define GR(R,F,V,O) T2=newvect(4,time());R=dp_gr_main(F,V,0,0,O);GRTIME+=newvect(4,time())-T2;
 #define HGRM(R,F,V,O) T2=newvect(4,time());R=dp_gr_main(F,V,1,1,O);GRTIME+=newvect(4,time())-T2;
