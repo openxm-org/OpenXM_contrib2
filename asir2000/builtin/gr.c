@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.45 2003/03/14 06:28:48 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.46 2003/04/21 02:49:40 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -663,12 +663,12 @@ NODE gb_f4_mod(NODE f,int m)
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				dt = mul_dllist(BDY(sd)->dl,ps[(int)BDY(r)]);
-/*				fprintf(stderr,"[%d]",length(dt)); */
+				fprintf(stderr,"[%d]",length(dt));
 				/* list of [t,f] */
 				bt1 = mknode(2,BDY(sd)->dl,BDY(r));
 				MKNODE(bt,bt1,blist); blist = bt;
 				symb_merge(s,dt,nv);
-/*				fprintf(stderr,"%d-",length(s)); */
+				fprintf(stderr,"%d-",length(s0)); 
 				nred++;
 			}
 		}
