@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.7 2000/02/09 00:37:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.8 2000/03/10 03:05:02 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -791,7 +791,7 @@ void asir_ox_init(int byteorder)
 	FILE *ifp;
 
 #if !defined(VISUAL) && !MPI
-	do_server_in_X11 = 1; /* XXX */
+	do_server_in_X11 = 0; /* XXX */
 #endif
 	asir_save_handler();
 #if PARI

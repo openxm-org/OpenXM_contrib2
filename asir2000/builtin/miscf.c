@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.3 2000/02/08 04:47:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.4 2000/03/01 02:29:17 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #if INET && !defined(VISUAL)
@@ -134,7 +134,7 @@ pointer *rp;
 		asir_terminate(2); 
 	else {
 		closecurrentinput();
-		if ( !asir_infile->fp )
+		if ( !asir_infile->fp && strcmp(asir_infile->name,"string") )
 			asir_terminate(2);
 	}
 	*rp = 0;

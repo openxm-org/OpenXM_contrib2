@@ -1,15 +1,18 @@
-/* $OpenXM: OpenXM/src/asir99/include/com.h,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #ifndef _COM_H_
 #define _COM_H_
 #if defined(VISUAL) || MPI
 #include "wsio.h"
 #endif
 
+#include <stdio.h>
+
 #if !defined(VISUAL)
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
+#include <setjmp.h>
 #endif
 
 #define N32 0x80

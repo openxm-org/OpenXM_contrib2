@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.2 2000/01/11 06:43:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.3 2000/02/08 04:47:10 noro Exp $ */
 #include "com.h"
 
 /* version */
@@ -111,8 +111,6 @@ extern char *ox_copy_bptr;
 
 extern struct IOFP iofp[];
 
-extern Obj *asir_OperandStack;
-extern int asir_OperandStackPtr;
 extern char *parse_strp;
 
 #define LBUFSIZ BUFSIZ*10
