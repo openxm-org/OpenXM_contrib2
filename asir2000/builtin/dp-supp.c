@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.11 2000/12/13 05:37:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.12 2001/02/21 07:10:17 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -658,6 +658,8 @@ DP *rp;
 
 /*
  * m-reduction
+ * do content reduction over Z or Q(x,...)
+ * do nothing over finite fields
  *
  */
 
@@ -697,6 +699,33 @@ DP *multp;
 	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
 	muldc(CO,p0,(P)c2,&h);
 	*head = h; *rest = r; *dnp = (P)c2;
+}
+
+/* m-reduction over a field */
+
+void dp_red_f(p1,p2,rest)
+DP p1,p2;
+DP *rest;
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,r,h;
+	Obj a,b;
+
+	n = p1->nv;
+	d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+
+	NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+
+	NEWMP(m); m->dl = d;
+	divr(CO,(Obj)BDY(p1)->c,(Obj)BDY(p2)->c,&a); chsgnr(a,&b);
+	C(m) = (P)b;
+	NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+
+	muld(CO,s,p2,&t); addd(CO,p1,t,rest);
 }
 
 void dp_red_mod(p0,p1,p2,mod,head,rest,dnp)
@@ -824,7 +853,9 @@ P *dnp;
 	*rp = d; *dnp = dn;
 }
 
-void dp_nf_ptozp(b,g,ps,full,multiple,rp)
+/* nf computation over Z */
+
+void dp_nf_z(b,g,ps,full,multiple,rp)
 NODE b;
 DP g;
 DP *ps;
@@ -839,7 +870,6 @@ DP *rp;
 	int *wb;
 	int hmag;
 	int sugar,psugar;
-	int fcoef;
 
 	if ( !g ) {
 		*rp = 0; return;
@@ -849,18 +879,7 @@ DP *rp;
 	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
 		wb[i] = QTOS((Q)BDY(l));
 
-	/* check whether polys have coeffs in finite fields */
-	fcoef = 0;
-	for ( i = 0; i < n; i++ )
-		if ( has_fcoef(ps[wb[i]]) ) {
-			fcoef = 1;
-			break;
-		}
-	if ( has_fcoef(g) )
-		fcoef = 1;
-
-	if ( !fcoef )
-		hmag = multiple*HMAG(g);
+	hmag = multiple*HMAG(g);
 	sugar = g->sugar;
 
 	for ( d = 0; g; ) {
@@ -881,12 +900,12 @@ DP *rp;
 		if ( u ) {
 			g = u;
 			if ( d ) {
-				if ( !fcoef && multiple && HMAG(d) > hmag ) {
+				if ( multiple && HMAG(d) > hmag ) {
 					dp_ptozp2(d,g,&t,&u); d = t; g = u;
 					hmag = multiple*HMAG(d);
 				}
 			} else {
-				if ( !fcoef && multiple && HMAG(g) > hmag ) {
+				if ( multiple && HMAG(g) > hmag ) {
 					dp_ptozp(g,&t); g = t;
 					hmag = multiple*HMAG(g);
 				}
@@ -909,6 +928,67 @@ DP *rp;
 		d->sugar = sugar;
 	*rp = d;
 }
+
+/* nf computation over a field */
+
+void dp_nf_f(b,g,ps,full,rp)
+NODE b;
+DP g;
+DP *ps;
+int full;
+DP *rp;
+{
+	DP u,p,d,s,t;
+	P dmy;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int sugar,psugar;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,p = ps[wb[i]]) ) {
+				dp_red_f(g,p,&u);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; return;
+				}
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d;
+}
+
+/* nf computation over GF(mod) (only for internal use) */
 
 void dp_nf_mod(b,g,ps,mod,full,rp)
 NODE b;
@@ -1080,6 +1160,40 @@ DP *rp;
 		d->sugar = sugar;
 	_dptodp(d,rp); _free_dp(d);
 }
+
+/* reduction by linear base over a field */
+
+void dp_lnf_f(p1,p2,g,r1p,r2p)
+DP p1,p2;
+NODE g;
+DP *r1p,*r2p;
+{
+	DP r1,r2,b1,b2,t,s;
+	Obj c,c1,c2;
+	NODE l,b;
+	int n;
+
+	if ( !p1 ) {
+		*r1p = p1; *r2p = p2; return;
+	}
+	n = p1->nv;
+	for ( l = g, r1 = p1, r2 = p2; l; l = NEXT(l) ) {
+			if ( !r1 ) {
+				*r1p = r1; *r2p = r2; return;
+			}
+			b = BDY((LIST)BDY(l)); b1 = (DP)BDY(b);
+			if ( dl_equal(n,BDY(r1)->dl,BDY(b1)->dl) ) {
+				b2 = (DP)BDY(NEXT(b));
+				divr(CO,(Obj)ONE,(Obj)BDY(b1)->c,&c1);
+				mulr(CO,c1,(Obj)BDY(r1)->c,&c2); chsgnr(c2,&c);
+				muldc(CO,b1,(P)c,&t); addd(CO,r1,t,&s); r1 = s;
+				muldc(CO,b2,(P)c,&t); addd(CO,r2,t,&s); r2 = s;
+			}
+	}
+	*r1p = r1; *r2p = r2;
+}
+
+/* reduction by linear base over GF(mod) */
 
 void dp_lnf_mod(p1,p2,g,mod,r1p,r2p)
 DP p1,p2;

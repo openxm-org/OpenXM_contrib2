@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.19 2001/06/07 04:54:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.20 2001/07/23 05:03:22 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -106,7 +106,7 @@ DP_pairs criterion_B(DP_pairs,int);
 DP_pairs newpairs(NODE,int);
 DP_pairs updpairs(DP_pairs,NODE,int);
 void _dp_nf(NODE,DP,DP *,int,DP *);
-void _dp_nf_ptozp(NODE,DP,DP *,int,int,DP *);
+void _dp_nf_z(NODE,DP,DP *,int,int,DP *);
 NODE gb_mod(NODE,int);
 NODE gbd(NODE,int,NODE,NODE);
 NODE gb(NODE,int,NODE);
@@ -135,8 +135,8 @@ void pltovl(LIST,VL *);
 void printdl(DL);
 int DPPlength(DP_pairs);
 void dp_gr_mod_main(LIST,LIST,Num,int,struct order_spec *,LIST *);
-void dp_gr_main(LIST,LIST,Num,int,struct order_spec *,LIST *);
-void dp_f4_main(LIST,LIST,struct order_spec *,LIST *);
+void dp_gr_main(LIST,LIST,Num,int,int,struct order_spec *,LIST *);
+void dp_f4_main(LIST,LIST,int,struct order_spec *,LIST *);
 void dp_f4_mod_main(LIST,LIST,int,struct order_spec *,LIST *);
 double get_rtime();
 void _dpmod_to_vect(DP,DL *,int *);
@@ -257,10 +257,10 @@ NODE f;
 	printf("\n");
 }
 
-void dp_gr_main(f,v,homo,modular,ord,rp)
+void dp_gr_main(f,v,homo,modular,field,ord,rp)
 LIST f,v;
 Num homo;
-int modular;
+int modular,field;
 struct order_spec *ord;
 LIST *rp;
 {
@@ -269,7 +269,7 @@ LIST *rp;
 	VL fv,vv,vc;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
 
-	mindex = 0; nochk = 0; dp_fcoeffs = 0;
+	mindex = 0; nochk = 0; dp_fcoeffs = field;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
 	NVars = length((NODE)vv); PCoeffs = vc ? 1 : 0; VC = vc;
 	CNVars = homo ? NVars+1 : NVars;
@@ -414,8 +414,9 @@ extern struct oEGT eg_red_mod;
 	MKLIST(*rp,r0);
 }
 
-void dp_f4_main(f,v,ord,rp)
+void dp_f4_main(f,v,field,ord,rp)
 LIST f,v;
+int field;
 struct order_spec *ord;
 LIST *rp;
 {
@@ -424,7 +425,7 @@ LIST *rp;
 	VL fv,vv,vc;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
 
-	dp_fcoeffs = 0;
+	dp_fcoeffs = field;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
 	NVars = length((NODE)vv); PCoeffs = vc ? 1 : 0; VC = vc;
 	CNVars = NVars;
@@ -1419,7 +1420,7 @@ NODE subst;
 			if ( PCoeffs || dp_fcoeffs )
 				_dp_nf(gall,h,ps,!Top,&nf);
 			else
-				_dp_nf_ptozp(gall,h,ps,!Top,DP_Multiple,&nf);
+				_dp_nf_z(gall,h,ps,!Top,DP_Multiple,&nf);
 			if ( DP_Print )
 				fprintf(asir_out,"(%.3g)",get_rtime()-t_0);
 			get_eg(&tnf1); add_eg(&eg_nf,&tnf0,&tnf1);
@@ -2108,7 +2109,7 @@ DP *rp;
 	*rp = d;
 }
 
-void _dp_nf_ptozp(b,g,ps,full,multiple,r)
+void _dp_nf_z(b,g,ps,full,multiple,r)
 NODE b;
 DP g;
 DP *ps;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.15 2001/03/29 09:49:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.16 2001/05/02 09:03:53 noro Exp $ 
 */
 #include "ca.h"
 
@@ -214,8 +214,10 @@ DP *pr;
 			}
 		}
 	}
+#if 0
 	if ( !dp_fcoeffs && has_fcoef(*pr) )
 		dp_fcoeffs = 1;
+#endif
 }
 
 void dtop(vl,dvl,p,pr)

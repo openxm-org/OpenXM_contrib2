@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.20 2001/09/03 01:04:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.21 2001/09/03 07:01:07 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -693,8 +693,8 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 /* predicates */
 #define NUM(p) (OID(p)==O_N)
 #define RAT(p) (OID(p)==O_R)
-#define INT(q) (!DN((Q)q))
 #define RATN(a) (NID(a)==N_Q)
+#define INT(q) (!(q)||(NUM(q)&&RATN((Num)q)&&!DN((Q)q)))
 #define REAL(a) (NID(a)==N_R)
 #define BIGFLOAT(a) (NID(a)==N_B)
 #define SFF(a) (NID(a)==N_M)
