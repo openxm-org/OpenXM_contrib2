@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.20 2001/09/17 03:33:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.21 2001/09/17 07:16:58 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1407,7 +1407,7 @@ int red_by_compress(m,p,r,ri,hc,len)
 int m;
 unsigned int *p;
 register unsigned int *r;
-register unsigned short *ri;
+register unsigned int *ri;
 unsigned int hc;
 register int len;
 {

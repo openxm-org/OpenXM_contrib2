@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.31 2001/09/17 02:47:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.32 2001/09/17 07:16:58 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -249,7 +249,7 @@ CDP *b;
 	r = (CDP)MALLOC(sizeof(struct oCDP));
  	r->len = len;
 	r->psindex = (int)BDY(NEXT(tf));
-	r->body = (unsigned short *)MALLOC_ATOMIC(sizeof(unsigned short)*len);
+	r->body = (unsigned int *)MALLOC_ATOMIC(sizeof(unsigned int)*len);
 
 	NEWDL(s,nv);
 	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
