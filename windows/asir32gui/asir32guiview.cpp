@@ -168,14 +168,21 @@ CAsir32guiDoc* CAsir32guiView::GetDocument() // ”ñƒfƒoƒbƒO ƒo[ƒWƒ‡ƒ“‚ÍƒCƒ“ƒ‰ƒCƒ
 
 void CAsir32guiView::PutChar(int c)
 {
-  int i;
+  int i,len;
   char buf[2];
 
+  if ( EndPos >= sizeof(Buffer)-1 ) {
+      Beep(); return;
+  }
   for ( i = EndPos-1; i >= CurrentPos; i-- )
-    Buffer[i+1] = Buffer[i];
+      Buffer[i+1] = Buffer[i];
   Buffer[CurrentPos] = (char)c;
-  buf[0] = (char)c; buf[1] = 0;
-  Insert(buf,FALSE);
+//  buf[0] = (char)c; buf[1] = 0;
+//  Insert(buf,FALSE);
+  len = GetWindowTextLength();
+  if ( len+1 >= TextBufferSize )
+      DeleteTop();
+  CEditView::OnChar(c, 1, 0);
   CurrentPos++;
   EndPos++;
 }
@@ -283,34 +290,37 @@ void CAsir32guiView::Beep(void) {
 }
 
 void CAsir32guiView::Paste(void) {
-	char buf[2*BUFSIZ];
-	const char *src;
-	char c;
-	int i,j,l;
-	HGLOBAL hClip;
+    char buf[2*BUFSIZ];
+    const char *src;
+    char c;
+    int i,j,l;
+    HGLOBAL hClip;
 
-	if ( asirgui_kind == ASIRGUI_MESSAGE ) {
-		Beep(); return;
-	}
+    if ( asirgui_kind == ASIRGUI_MESSAGE ) {
+        Beep(); return;
+    }
 
-	if ( OpenClipboard() == FALSE ) {
-    	Beep(); return;
+    if ( OpenClipboard() == FALSE ) {
+        Beep(); return;
     }
     hClip = GetClipboardData(CF_TEXT);
     src = (const char *)::GlobalLock(hClip);
-    if ( !src || (l = strlen(src)) >= 2*BUFSIZ ) {
+    if ( !src || (l = strlen(src)) >= sizeof(Buffer) ) {
     	::CloseClipboard();
     	Beep(); return;
     }
-	for ( i = j = 0; i < l; i++ )
-		if ( (c = src[i]) != '\n' && c != '\r' )
-			buf[j++] = c;
-	buf[j] = 0;
+    for ( i = j = 0; i < l; i++ )
+        if ( (c = src[i]) != '\n' && c != '\r' )
+             buf[j++] = c;
+    buf[j] = 0;
     ::GlobalUnlock(hClip);
     ::CloseClipboard();
+    if ( EndPos+j >= sizeof(Buffer)-1 ) {
+        Beep(); return;
+    }
     GetEditCtrl().ReplaceSel(buf);
-	strncpy(Buffer+EndPos,buf,j);
-	EndPos += j; CurrentPos = EndPos;
+    strncpy(Buffer+EndPos,buf,j);
+    EndPos += j; CurrentPos = EndPos;
 }
 
 #define CTRL(c) (c)&0x1f
