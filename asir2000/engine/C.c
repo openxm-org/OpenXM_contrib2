@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.5 2001/03/14 01:24:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.6 2001/03/14 06:04:53 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -229,6 +229,33 @@ P *gp;
 	}
 }
 
+void ptosfp(p,pr)
+P p;
+P *pr;
+{
+	DCP dc,dcr,dcr0;
+	GFS a;
+	P t;
+
+	if ( !p )
+		*pr = 0;
+	else if ( NUM(p) ) {
+		qtogfs((Q)p,&a); *pr = (P)a;
+	} else {
+		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+			ptosfp(COEF(dc),&t);
+			if ( t ) {
+				NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+			}
+		}
+		if ( !dcr0 ) 
+			*pr = 0;
+		else {
+			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+		}
+	}
+}
+
 void sfptop(f,gp)
 P f;
 P *gp;
@@ -248,6 +275,34 @@ P *gp;
 			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); sfptop(COEF(dc),&COEF(dcr));
 		}
 		NEXT(dcr) = 0; MKP(VR(f),dcr0,*gp);
+	}
+}
+
+void sf_galois_action(p,e,pr)
+P p;
+Q e;
+P *pr;
+{
+	DCP dc,dcr,dcr0;
+	GFS a;
+	P t;
+
+	if ( !p )
+		*pr = 0;
+	else if ( NUM(p) ) {
+		gfs_galois_action(p,e,&a); *pr = (P)a;
+	} else {
+		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+			sf_galois_action(COEF(dc),e,&t);
+			if ( t ) {
+				NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+			}
+		}
+		if ( !dcr0 ) 
+			*pr = 0;
+		else {
+			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+		}
 	}
 }
 

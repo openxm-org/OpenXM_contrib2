@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.3 2001/03/14 06:27:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.4 2001/03/29 09:49:58 noro Exp $
 */
 #include "ca.h"
 
@@ -153,6 +153,9 @@ UM dp;
 {
 	int i,r,rj,j,q;
 
+	if ( p == 2 && n == 1 )
+		return 1;
+
 	for ( i = 0, q = 1; i < n; i++ )
 		 q *= p;
 	for ( r = n==1?2:p; r < q; r++ ) {
@@ -192,6 +195,39 @@ int a,b;
 	for ( i = dr, r = 0; i >= 0; i-- )
 		r = r*p+COEF(wc)[i];
 	return r;
+}
+
+void gfs_galois_action(a,e,c)
+GFS a;
+Q e;
+GFS *c;
+{
+	Q p;
+	int i,k;
+	GFS t,s;
+
+	t = a;
+	k = QTOS(e);
+	STOQ(current_gfs_p,p);
+	for ( i = 0; i < k; i++ ) {
+		pwrgfs(t,p,&s); t = s;
+	}
+	*c = t;
+}
+
+void qtogfs(a,c)
+Q a;
+GFS *c;
+{
+	int s;
+
+	s = QTOS(a)%current_gfs_q;
+	if ( s < 0 )
+		s += current_gfs_q;
+	if ( !s )
+		*c = 0;
+	else
+		MKGFS(current_gfs_ntoi[s],*c);	
 }
 
 void mqtogfs(a,c)

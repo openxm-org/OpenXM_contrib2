@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.9 2001/05/02 09:03:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.10 2001/05/09 01:41:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,7 @@ void Pp_mag(),Pmaxblen();
 void Pmergelist(), Pch_mv(), Pre_mv(), Pdeglist();
 void Pptomp(),Pmptop();
 void Pptolmp(),Plmptop();
-void Psfptop();
+void Pptosfp(),Psfptop(),Psf_galois_action();
 void Pptogf2n(),Pgf2ntop(),Pgf2ntovect();
 void Pptogfpn(),Pgfpntop();
 void Pfind_root_gf2n();
@@ -150,6 +150,8 @@ struct ftab poly_tab[] = {
 	{"ptolmp",Pptolmp,1},
 	{"lmptop",Plmptop,1},
 
+	{"sf_galois_action",Psf_galois_action,2},
+	{"ptosfp",Pptosfp,1},
 	{"sfptop",Psfptop,1},
 
 	{"ptogf2n",Pptogf2n,1},
@@ -798,7 +800,10 @@ Obj *rp;
 					VR(current_gfs_ext),&p);
 				n0 = mknode(3,q,current_gfs_ext,p);
 			} else {
-				STOQ(current_gfs_iton[1],r);
+				if ( current_gfs_p == 2 )
+					r = ONE;
+				else
+					STOQ(current_gfs_iton[1],r);
 				n0 = mknode(3,q,current_gfs_ext,r);
 			}
 			MKLIST(list,n0);
@@ -1174,6 +1179,20 @@ NODE arg;
 P *rp;
 {
 	lmptop((P)ARG0(arg),rp);
+}
+
+void Psf_galois_action(arg,rp)
+NODE arg;
+P *rp;
+{
+	sf_galois_action(ARG0(arg),ARG1(arg),rp);
+}
+
+void Pptosfp(arg,rp)
+NODE arg;
+P *rp;
+{
+	ptosfp(ARG0(arg),rp);
 }
 
 void Psfptop(arg,rp)
