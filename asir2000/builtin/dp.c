@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.31 2003/04/25 04:25:08 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.32 2003/06/19 07:08:18 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -89,6 +89,7 @@ void Pdp_weyl_set_weight();
 void Pdp_set_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
 void Pdp_lnf_f();
+void Pnd_gr();
 
 LIST remove_zero_from_list(LIST);
 
@@ -129,6 +130,7 @@ struct ftab dp_tab[] = {
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
 	{"dp_gr_f_main",Pdp_gr_f_main,4},
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
+	{"nd_gr",Pnd_gr,4},
 
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
@@ -1476,6 +1478,30 @@ LIST *rp;
 		error("dp_gr_mod_main : invalid argument");
 	create_order_spec(ARG4(arg),&ord);
 	dp_gr_mod_main(f,v,homo,m,&ord,rp);
+}
+
+void Pnd_gr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	int m;
+	struct order_spec ord;
+
+	do_weyl = 0;
+	asir_assert(ARG0(arg),O_LIST,"nd_gr");
+	asir_assert(ARG1(arg),O_LIST,"nd_gr");
+	asir_assert(ARG3(arg),O_N,"nd_gr");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
+	m = QTOS((Q)ARG2(arg));
+	if ( !m )
+		error("nd_gr : invalid argument");
+	create_order_spec(ARG3(arg),&ord);
+	nd_gr(f,v,m,&ord,rp);
 }
 
 /* for Weyl algebra */

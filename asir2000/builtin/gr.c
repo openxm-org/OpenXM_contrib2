@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.51 2003/07/09 07:11:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.52 2003/07/16 05:31:21 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -105,8 +105,8 @@ static int NoRA = 0;
 static int ShowMag = 0;
 static int Stat = 0;
 static int Denominator = 1;
-static int Top = 0;
-static int Reverse = 0;
+int Top = 0;
+int Reverse = 0;
 static int Max_mag = 0;
 static int Max_coef = 0;
 static char *Demand = 0;
