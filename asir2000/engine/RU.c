@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/RU.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/RU.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 
@@ -107,6 +107,10 @@ Obj p,*r;
 			divsp(vl,u,s,(P *)r);
 		else {
 			divsp(vl,u,cdn,&pnm); divsp(vl,s,cdn,&pdn); 
+			if ( headsgn(pdn) < 0 ) {
+				chsgnp(pnm,&t); pnm = t;
+				chsgnp(pdn,&t); pdn = t;
+			}
 			MKRAT(pnm,pdn,1,a); *r = (Obj)a;
 		}
 	} else {
