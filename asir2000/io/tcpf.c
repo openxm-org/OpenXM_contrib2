@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.15 2000/10/06 06:05:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.16 2000/11/07 06:35:39 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -493,14 +493,15 @@ char *control_port_str,*server_port_str;
 {
 	char cmd[BUFSIZ];
 	char localhost[BUFSIZ];
-	char *dname,*conn_str,*rsh;
+	char *dname,*conn_str,*rsh,*dname0;
 	char dname_str[BUFSIZ];
 	char AsirExe[BUFSIZ];
 	STRING rootdir;
 	char prog[BUFSIZ];
 	char *av[BUFSIZ];
 
-	dname = use_x ? (char *)getenv("DISPLAY") : 0;
+	dname0 = (char *)getenv("DISPLAY");
+	dname = use_x ? dname0 : 0;
 	conn_str = conn_to_serv ? "1" : "0";
 	rsh = getenv("ASIR_RSH");
 	if ( !rsh )
@@ -542,7 +543,7 @@ char *control_port_str,*server_port_str;
 					control_port_str,server_port_str,server,dname,0);
 			else
 				execlp(launcher,launcher,".",conn_str,
-					control_port_str,server_port_str,server,"0",0);
+					control_port_str,server_port_str,server,dname0,"-nolog",0);
 		}
 	} else if ( conn_to_serv == 2 ) {
 		/* special support for java */
@@ -572,9 +573,9 @@ char *control_port_str,*server_port_str;
 				control_port_str,server_port_str,server,dname);
 		else
 			sprintf(cmd,
-"%s -n %s \"%s %s %s %s %s %s %s >&/dev/null&\">/dev/null",
+"%s -n %s \"%s %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
 				rsh,host,launcher,localhost,conn_str,
-				control_port_str,server_port_str,server,"0");
+				control_port_str,server_port_str,server,dname0,"-nolog");
 		system(cmd);
 	}
 #endif /* VISUAL */

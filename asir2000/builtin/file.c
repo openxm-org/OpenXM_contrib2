@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.5 2000/08/22 05:03:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.6 2000/08/25 08:06:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -374,6 +374,8 @@ Obj *rp;
 	ox_file_io = 0;
 }
 
+static struct oSTRING rootdir;
+
 #if defined(VISUAL)
 void get_rootdir(name,len)
 char *name;
@@ -382,7 +384,12 @@ int len;
 	LONG	ret;
 	HKEY	hOpenKey;
 	DWORD	Type;
+	char	*slash;
 		
+	if ( rootdir.body ) {
+		strcpy(name,rootdir.body);
+		return;
+	}
 	name[0] = 0;
 	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ECGEN_KEYNAME, 0,
 		KEY_QUERY_VALUE, &hOpenKey);
@@ -392,8 +399,27 @@ int len;
 	if( ret == ERROR_SUCCESS ) {
 		RegQueryValueEx(hOpenKey, "Directory", NULL, &Type, name, &len);
 		RegCloseKey(hOpenKey);
+	} else {
+		GetCurrentDirectory(len,name);
+		slash = strrchr(name,'\\');
+		if ( slash )
+			*slash = 0;
 	}
 }
+
+void set_rootdir(name)
+char *name;
+{
+	static char DirName[BUFSIZ];
+
+	strcpy(DirName,name);
+	rootdir.id = O_STR;
+	rootdir.body = DirName;
+	asir_libdir = DirName;
+	/* XXX */
+	env_init();
+}
+
 #else
 void get_rootdir(name,len)
 char *name;
@@ -401,12 +427,23 @@ int len;
 {
 	strcpy(name,asir_libdir);
 }
+
+void set_rootdir(name)
+char *name;
+{
+	static char DirName[BUFSIZ];
+
+	strcpy(DirName,name);
+	asir_libdir = DirName;
+	/* XXX */
+	env_init();
+}
+
 #endif
 
 void Pget_rootdir(rp)
 STRING *rp;
 {
-	static struct oSTRING rootdir;
 	static char DirName[BUFSIZ];
 	int DirNameLen;
 

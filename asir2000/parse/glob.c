@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.9 2000/08/22 05:04:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.10 2000/08/28 06:13:15 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -355,6 +355,8 @@ char **av;
 			do_message = 0; av++; ac--;
 		} else if ( !strcmp(*av,"-terse") ) {
 			no_prompt = 0; av++; ac--;
+		} else if ( !strcmp(*av,"-rootdir") && (ac >= 2) ) {
+			set_rootdir(*(av+1)); av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-maxheap") && (ac >= 2) ) {
 			void GC_set_max_heap_size(int);
 

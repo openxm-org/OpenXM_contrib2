@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.8 2000/11/07 06:35:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.9 2000/11/07 09:31:36 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -76,7 +76,7 @@ HANDLE hIntr,hReset,hKill;
 static void put_log(char *);
 static int which_command(char *,char *);
 static int search_command(char *);
-static int ox_spawn(char *,int,char *);
+static int ox_spawn(char *,int,char *,int);
 static void launch_error(char *);
 static int ox_io_init(int);
 static void push_one(Obj);
@@ -148,6 +148,7 @@ char *file;
 	argv[4] : server_port 
 	argv[5] : server
 	argv[6] : display or "0"
+	argv[7] : if exists, it should be "-nolog"
 */
 
 void launch_main(argc,argv)
@@ -160,7 +161,7 @@ char **argv;
 	char buf[BUFSIZ];
 	int cs,ss;
 	unsigned int cmd;
-	int use_unix,accept_client;
+	int use_unix,accept_client,nolog;
 	char *control_port_str,*server_port_str;
 	char *rhost,*server,*dname;
 
@@ -173,6 +174,7 @@ char **argv;
 	server_port_str = argv[4];
 	server = argv[5];
 	dname = argv[6];
+	nolog = argc > 7 ? 1 : 0;
 
 #if defined(VISUAL)
 		init_socket();
@@ -195,7 +197,7 @@ char **argv;
 	ox_io_init(cs);
 	if ( cs < 0 || ss < 0 )
 		launch_error("cannot connect to the client");
-	cpid = ox_spawn(server,ss,dname);
+	cpid = ox_spawn(server,ss,dname,nolog);
 
 	while ( 1 ) {
 		ox_recv(sindex,&id,&obj);
@@ -277,10 +279,11 @@ int cmd;
 }
 #endif
 
-static int ox_spawn(prog,bs,dname)
+static int ox_spawn(prog,bs,dname,nolog)
 char *prog;
 int bs;
 char *dname;
+int nolog;
 {
 #if defined(VISUAL)
 	char *av[BUFSIZ];
@@ -352,14 +355,17 @@ char *dname;
 		}
 		if ( !strcmp(dname,"1" ) ) /* XXX: for ssh */
 			execl(prog,prog,0);
-		else if ( !strcmp(dname,"0") ) {
+		else if ( nolog || !strcmp(dname,"0") ) {
 			FILE *null;
 
 			null = fopen("/dev/null","wb");
 			dup2(fileno(null),1);
 			dup2(fileno(null),2);
-			putenv("DISPLAY=");
-			execl(prog,prog,0);
+			if ( !nolog ) {
+				putenv("DISPLAY=");
+				execl(prog,prog,0);
+			} else
+				execl(prog,prog,"-display",dname,0);
 		} else
 			execl(prog,prog,"-display",dname,0);
 		/* On failure */
