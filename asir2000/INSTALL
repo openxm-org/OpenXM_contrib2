@@ -1,4 +1,4 @@
-              Installation of Asir2000 (standalone version; 2001.3.27)
+              Installation of Asir2000 (standalone version; 2003.3.11)
 
 Any question is welcome by e-mails to noro@math.kobe-u.ac.jp.
 
@@ -25,8 +25,8 @@ to '/usr/local'.  In the following the directory is denoted by TARGETDIR.
 
 2. Installation of pari
 
-% gzip -dc pari-2.2.tgz | tar xvf -
-% cd pari-2.2
+% gzip -dc pari.tgz | tar xvf -
+% cd pari
 % ./Configure --prefix=TARGETDIR
 % make all
 % su                         <-- if necessary
@@ -39,8 +39,7 @@ to '/usr/local'.  In the following the directory is denoted by TARGETDIR.
 
 % gzip -dc asir.tgz | tar xvf -
 % cd asir2000
-% configure -oxhome TARGETDIR -pari -plot
-% xmkmf -a
+% configure --prefix=TARGETDIR --with-pari --enable-plot
 % make
 % su                        <-- if necessary
 # make install
