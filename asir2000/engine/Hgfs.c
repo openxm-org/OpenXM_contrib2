@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.5 2001/06/25 04:11:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.6 2001/06/25 06:05:16 noro Exp $ */
 
 #include "ca.h"
 
@@ -600,7 +600,7 @@ ML *listp;
 
 	q = W_UMALLOC(dx);
 	rlist = MLALLOC(fn); rlist->n = fn; rlist->bound = bound;
-	for ( i = fn-1; i >= 1; i-- ) {
+	for ( i = 0; i < fn-1; i++ ) {
 		fprintf(stderr,"%d\n",i);
 		/* fl = gm[i]*hm mod y */
 		divsfum(fm,gm[i],hm);
@@ -609,7 +609,7 @@ ML *listp;
 		sfhenmain2(fl,gm[i],hm,bound,(BM *)&rlist->c[i]);
 		cpyum(hm,fm);
 	}
-	/* finally, fl must be the lift of gm[0] */
+	/* finally, fl must be the lift of gm[fn-1] */
 	rlist->c[i] = fl;
 
 	/* y -> y-a */
