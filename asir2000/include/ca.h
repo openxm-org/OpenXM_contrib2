@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.18 2001/07/03 01:41:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.19 2001/08/20 09:03:25 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -121,6 +121,7 @@ typedef void * pointer;
 #define N_GF2N 7
 #define N_GFPN 8
 #define N_GFS 9
+#define N_GFSPN 10
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
@@ -246,6 +247,12 @@ typedef struct oGFS {
 	int cont;
 } *GFS;
 
+typedef struct oGFSPN {
+	short id;
+	char nid;
+	char pad;
+	struct oUM *body;
+} *GFSPN;
 
 typedef struct oP {
 	short id;
@@ -451,6 +458,7 @@ struct oEGT {
 #define FF_GF2N 2
 #define FF_GFPN 3
 #define FF_GFS 4
+#define FF_GFSPN 5
 
 /* include interval.h */
 #include "interval.h"
@@ -566,6 +574,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWQ(q) ((q)=(Q)MALLOC(sizeof(struct oQ)),OID(q)=O_N,NID(q)=N_Q)
 #define NEWMQ(q) ((q)=(MQ)MALLOC_ATOMIC(sizeof(struct oMQ)),OID(q)=O_N,NID(q)=N_M)
 #define NEWGFS(q) ((q)=(GFS)MALLOC_ATOMIC(sizeof(struct oGFS)),OID(q)=O_N,NID(q)=N_GFS)
+#define NEWGFSPN(q) ((q)=(GFSPN)MALLOC(sizeof(struct oGFSPN)),OID(q)=O_N,NID(q)=N_GFSPN)
 #define NEWP(p) ((p)=(P)MALLOC(sizeof(struct oP)),OID(p)=O_P)
 #define NEWR(r) ((r)=(R)MALLOC(sizeof(struct oR)),OID(r)=O_R,(r)->reduced=0)
 #define NEWLIST(l) ((l)=(LIST)MALLOC(sizeof(struct oLIST)),OID(l)=O_LIST)
@@ -655,6 +664,8 @@ PL(NM(q))=1,BD(NM(q))[0]=ABS(n),DN(q)=0,(q)))
 ((a)?(NEWMQ(b),CONT(b)=(unsigned int)(a),(b)):((b)=0))
 #define MKGFS(a,b) \
 ((NEWGFS(b),CONT(b)=(a),(b)))
+#define MKGFSPN(a,b) \
+((NEWGFSPN(b),BDY(b)=(a),(b)))
 #define STOMQ(a,b) \
 ((a)?(NEWMQ(b),CONT(b)=(a),(b)):((b)=0))
 #define UTON(u,n) \
@@ -1215,6 +1226,14 @@ void divgfs(GFS,GFS,GFS *);
 void chsgngfs(GFS,GFS *);
 void pwrgfs(GFS,Q, GFS *);
 int cmpgfs(GFS,GFS);
+
+void addgfspn(GFSPN,GFSPN,GFSPN *);
+void subgfspn(GFSPN,GFSPN,GFSPN *);
+void mulgfspn(GFSPN,GFSPN,GFSPN *);
+void divgfspn(GFSPN,GFSPN,GFSPN *);
+void chsgngfspn(GFSPN,GFSPN *);
+void pwrgfspn(GFSPN,Q, GFSPN *);
+int cmpgfspn(GFSPN,GFSPN);
 
 void addalg(Num,Num,Num *);
 void addbf(Num,Num,Num *);

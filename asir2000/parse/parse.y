@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.7 2001/08/20 09:50:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.8 2001/08/21 01:39:39 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -258,31 +258,25 @@ pexpr	: STR
 			}
 		| LCASE '(' node ')' 
 			{
-				searchf(sysf,$1,(FUNC *)&val); 
-				if ( !val )
-					searchf(ubinf,$1,(FUNC *)&val);
-				if ( !val )
-					searchpf($1,(FUNC *)&val);
-				if ( !val )
-					searchf(usrf,$1,(FUNC *)&val);
-				if ( !val )
-					appenduf($1,(FUNC *)&val);
+				gen_searchf($1,(FUNC *)&val);
 				$$ = mkfnode(2,I_FUNC,val,mkfnode(1,I_LIST,$3));
 			}
 
 		| LCASE '(' node '|' optlist ')' 
 			{
-				searchf(sysf,$1,(FUNC *)&val); 
-				if ( !val )
-					searchf(ubinf,$1,(FUNC *)&val);
-				if ( !val )
-					searchpf($1,(FUNC *)&val);
-				if ( !val )
-					searchf(usrf,$1,(FUNC *)&val);
-				if ( !val )
-					appenduf($1,(FUNC *)&val);
+				gen_searchf($1,(FUNC *)&val);
 				$$ = mkfnode(3,I_FUNC_OPT,val,
 					mkfnode(1,I_LIST,$3),mkfnode(1,I_LIST,$5));
+			}
+		| MAP '(' LCASE ',' node ')' 
+			{
+				gen_searchf($3,(FUNC *)&val);
+				$$ = mkfnode(2,I_MAP,val,mkfnode(1,I_LIST,$5));
+			}
+		| RECMAP '(' LCASE ',' node ')' 
+			{
+				gen_searchf($3,(FUNC *)&val);
+				$$ = mkfnode(2,I_RECMAP,val,mkfnode(1,I_LIST,$5));
 			}
 		| LCASE '{' node '}' '(' node ')' 
 			{
@@ -293,31 +287,9 @@ pexpr	: STR
 			{
 				$$ = mkfnode(2,I_GETOPT,$3);
 			}
-		| MAP '(' LCASE ',' node ')' 
+		| GETOPT '(' ')'
 			{
-				searchf(sysf,$3,(FUNC *)&val); 
-				if ( !val )
-					searchf(ubinf,$3,(FUNC *)&val);
-				if ( !val )
-					searchpf($3,(FUNC *)&val);
-				if ( !val )
-					searchf(usrf,$3,(FUNC *)&val);
-				if ( !val )
-					appenduf($3,(FUNC *)&val);
-				$$ = mkfnode(2,I_MAP,val,mkfnode(1,I_LIST,$5));
-			}
-		| RECMAP '(' LCASE ',' node ')' 
-			{
-				searchf(sysf,$3,(FUNC *)&val); 
-				if ( !val )
-					searchf(ubinf,$3,(FUNC *)&val);
-				if ( !val )
-					searchpf($3,(FUNC *)&val);
-				if ( !val )
-					searchf(usrf,$3,(FUNC *)&val);
-				if ( !val )
-					appenduf($3,(FUNC *)&val);
-				$$ = mkfnode(2,I_RECMAP,val,mkfnode(1,I_LIST,$5));
+				$$ = mkfnode(2,I_GETOPT,0);
 			}
 		| TIMER '(' expr ',' expr ',' expr ')'
 			{

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.14 2001/07/03 01:41:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.15 2001/08/02 03:59:15 noro Exp $ */
 
 #include "ca.h"
 
@@ -1369,4 +1369,12 @@ P *qp;
 	if ( j >= 0 )
 		return 0;
 	sfbmtop(ql,x,y,qp);
+}
+
+/* XXX generate an irreducible poly of degree n */
+
+void generate_defpoly_sfum(n,dp)
+int n;
+UM *dp;
+{
 }

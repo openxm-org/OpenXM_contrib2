@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.12 2001/06/29 09:08:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.13 2001/07/13 08:25:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -751,6 +751,7 @@ Obj *rp;
 	N n;
 	UP up;
 	UP2 up2;
+	UM dp;
 	Q q,r;
 	P p;
 	NODE n0,n1;
@@ -786,6 +787,14 @@ Obj *rp;
 			setmod_lm(NM((Q)mod));
 			setmod_gfpn((P)defpoly);
 		}
+	} else if ( ac == 3 ) {
+		/* finite extension of a small finite field */
+		current_ff = FF_GFS;
+		setmod_sf(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg)));
+		d = QTOS((Q)ARG2(arg));
+		generate_defpoly_sfum(d,&dp);
+		setmod_gfspn(dp);
+		current_ff = FF_GFSPN;
 	}
 	switch ( current_ff ) {
 		case FF_GFP:
@@ -948,6 +957,7 @@ Obj *rp;
 	GF2N rg,sg;
 	GFPN rpn,spn;
 	GFS rs;
+	GFSPN rspn,sspn;
 	P t;
 	Obj obj;
 
@@ -972,6 +982,10 @@ Obj *rp;
 					ptomp(current_gfs_p,(P)p,&t); mqtogfs(t,&rs);
 					*rp = (Obj)rs;
 				} 
+				break;
+			case FF_GFSPN:
+				ntogfspn((Obj)p,&rspn); simpgfspn((GFSPN)rspn,&sspn);
+				*rp = (Obj)sspn;
 				break;
 			default:
 				*rp = (Obj)p;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.10 2001/08/21 01:39:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.11 2001/08/31 02:47:19 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -448,6 +448,8 @@ FNODE opt;
 	NODE tn,sn,opts,opt1;
     VS pvs;
 	char errbuf[BUFSIZ];
+	static int stack_size;
+	static void *stack_base;
 
 	if ( f->id == A_UNDEF ) {
 		sprintf(errbuf,"evalf : %s undefined",NAME(f));
@@ -479,6 +481,18 @@ FNODE opt;
 			cur_binf = 0;
 			break;
 		case A_USR:
+			/* stack check */
+#if !defined(VISUAL)
+			if ( !stack_size ) {
+				struct rlimit rl;
+				getrlimit(RLIMIT_STACK,&rl);
+				stack_size = rl.rlim_cur;
+			}
+			if ( !stack_base )
+				stack_base = (void *)GC_get_stack_base();
+			if ( (stack_base - (void *)&args) +0x100000 > stack_size )
+				error("stack overflow");
+#endif
 			args = (LIST)eval(a);
 			if ( opt ) {
 				opts = BDY((LIST)eval(opt));
@@ -777,6 +791,24 @@ NODE *dnp;
 	NEXT(n) = 0; *dnp = n0;
 }
 
+void gen_searchf(name,r)
+char *name;
+FUNC *r;
+{
+	FUNC val;
+
+	searchf(sysf,name,&val);
+	if ( !val )
+		searchf(ubinf,name,&val);
+	if ( !val )
+		searchpf(name,&val);
+	if ( !val )
+		searchf(usrf,name,&val);
+	if ( !val )
+		appenduf(name,&val);
+	*r = val;
+}
+
 void searchf(fn,name,r)
 NODE fn;
 char *name;
@@ -873,15 +905,21 @@ char *key;
 {
 	NODE opts,opt;
 	Obj value;
+	LIST r;
 	extern Obj VOIDobj;
 
 	opts = CPVS->opt;
-	for ( ; opts; opts = NEXT(opts) ) {
-		asir_assert(BDY(opts),O_LIST,"getopt_from_cvps");
-		opt = BDY((LIST)BDY(opts));
-		if ( !strcmp(key,BDY((STRING)BDY(opt))) )
-			return (Obj)BDY(NEXT(opt));
+	if ( !key ) {
+		MKLIST(r,opts);
+		return (Obj)r;
+	} else {
+		for ( ; opts; opts = NEXT(opts) ) {
+			asir_assert(BDY(opts),O_LIST,"getopt_from_cvps");
+			opt = BDY((LIST)BDY(opts));
+			if ( !strcmp(key,BDY((STRING)BDY(opt))) )
+				return (Obj)BDY(NEXT(opt));
+		}
+		return VOIDobj;
 	}
-	return VOIDobj;
 
 }

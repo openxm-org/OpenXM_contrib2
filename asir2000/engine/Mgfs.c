@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.8 2001/07/03 01:41:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.9 2001/07/23 05:05:41 noro Exp $ */
 
 #include "ca.h"
 
@@ -330,6 +330,30 @@ UM f;
 	inv = _invsf(*sp);
 	for ( ; i >= 0; i--, sp-- )
 		*sp = _MULSF(*sp,inv);
+}
+
+int compsfum(a,b)
+UM a,b;
+{
+	int i,da,db;
+
+	if ( !a )
+		return !b?0:1;
+	else if ( !b )
+		return 1;
+	else if ( (da = DEG(a)) > (db = DEG(b)) )
+		return 1;
+	else if ( da < db )
+		return -1;
+	else {
+		for ( i = da; i >= 0 && COEF(a)[i] == COEF(b)[i]; i-- );
+		if ( i < 0 )
+			return 0;
+		else if ( (unsigned int)COEF(a)[i] > (unsigned int)COEF(b)[i] )
+			return 1;
+		else
+			return -1;
+	}
 }
 
 void addsfarray(int,int *,int *);
