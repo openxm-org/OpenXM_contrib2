@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.3 2004/12/02 13:48:43 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.4 2004/12/03 07:16:34 noro Exp $
 */
 
 #include "ca.h"
@@ -10,6 +10,11 @@ extern struct order_spec *dp_current_spec;
 void simpdalg(DAlg da,DAlg *r);
 void invdalg(DAlg a,DAlg *c);
 void rmcontdalg(DAlg a, DAlg *c);
+
+NumberField get_numberfield()
+{
+	return current_numberfield;
+}
 
 void setfield_dalg(NODE alist)
 {
@@ -165,6 +170,7 @@ void simpdalg(DAlg da,DAlg *r)
 	DP nm;
 	DAlg d;
 	Q dn,dn1;
+	struct order_spec *current_spec;
 
 	if ( !(nf=current_numberfield) )
 		error("simpdalg : current_numberfield is not set");
@@ -172,7 +178,9 @@ void simpdalg(DAlg da,DAlg *r)
 		*r = 0;
 		return;
 	}
+	current_spec = dp_current_spec; initd(nf->spec);
 	dp_true_nf(nf->ind,da->nm,nf->ps,1,&nm,&dn);
+	initd(current_spec);
 	mulq(da->dn,dn,&dn1);
 	MKDAlg(nm,dn1,d);
 	rmcontdalg(d,r);
@@ -325,6 +333,8 @@ void invdalg(DAlg a,DAlg *c)
 	MP mp0,mp;
 	int *rinfo,*cinfo;
 	struct order_spec *current_spec;
+	struct oEGT eg0,eg1;
+	extern struct oEGT eg_le;
 
 	if ( !(nf=current_numberfield) )
 		error("invdalg : current_numberfield is not set");
@@ -371,7 +381,9 @@ void invdalg(DAlg a,DAlg *c)
 				mp = NEXT(mp);
 			}
 	}
+	get_eg(&eg0);
 	generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);
+	get_eg(&eg1); add_eg(&eg_le,&eg0,&eg1);
 	solmat = (Q **)BDY(sol);
 	for ( i = 0, mp0 = 0; i < dim; i++ )
 		if ( solmat[i][0] ) {

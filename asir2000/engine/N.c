@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.5 2001/10/09 01:36:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.6 2003/09/02 07:00:51 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -669,6 +669,15 @@ void pwrn(N n,int e,N *nr)
 extern int igcd_algorithm;
 
 void gcdEuclidn(), gcdn_HMEXT();
+
+void lcmn(N n1,N n2,N *nr)
+{
+	N g,t;
+
+	gcdn(n1,n2,&g);
+	divsn(n1,g,&t);
+	muln(t,n2,nr);
+}
 
 void gcdn(N n1,N n2,N *nr)
 {

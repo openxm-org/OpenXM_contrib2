@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.116 2004/12/01 12:36:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.117 2004/12/03 08:57:30 noro Exp $ */
 
 #include "nd.h"
 
@@ -44,7 +44,7 @@ static int nd_demand;
 
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
-ND nd_pseudo_monic(int m,ND p);
+int nd_monic(int m,ND *p);
 
 void nd_free_private_storage()
 {
@@ -1621,14 +1621,9 @@ again:
 			if ( checkonly ) return 0;
 			if ( DP_Print ) { printf("+"); fflush(stdout); }
 			nd_removecont(m,nf);
-			if ( nd_nalg ) {
-				nf1 = nd_pseudo_monic(m,nf); nd_free(nf);
-				stat = nd_nf(m,nf1,nd_ps,1,0,&nf);
-				if ( stat ) {
-					NEXT(l) = d; d = l;
-					d = nd_reconstruct(0,d);
-					goto again;
-				}
+			if ( !m && nd_nalg ) {
+				nd_monic(0,&nf);
+				nd_removecont(m,nf);
 			}
 			nfv = ndtondv(m,nf); nd_free(nf);
 			nh = ndv_newps(m,nfv,0);
@@ -1696,6 +1691,9 @@ void do_diagonalize_trace(int sugar,int m)
 	}
 }
 
+static struct oEGT eg_invdalg;
+struct oEGT eg_le;
+
 NODE nd_gb_trace(int m,int ishomo)
 {
 	int i,nh,sugar,stat;
@@ -1706,7 +1704,11 @@ NODE nd_gb_trace(int m,int ishomo)
 	NDV nfv,nfqv;
 	Q q,den,num;
 	union oNDC dn;
+	struct oEGT eg_monic,egm0,egm1;
 
+	init_eg(&eg_monic);
+	init_eg(&eg_invdalg);
+	init_eg(&eg_le);
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
 		d = update_pairs(d,g,i);
@@ -1754,8 +1756,17 @@ again:
 				if ( !rem(NM(HCQ(nfq)),m) ) return 0;
 
 				if ( DP_Print ) { printf("+"); fflush(stdout); }
-				nd_removecont(m,nf); nfv = ndtondv(m,nf); nd_free(nf);
-				nd_removecont(0,nfq); nfqv = ndtondv(0,nfq); nd_free(nfq);
+				if ( nd_nalg ) {
+					/* m|DN(HC(nf)^(-1)) => failure */
+					get_eg(&egm0);
+					if ( !nd_monic(m,&nfq) ) return 0;
+					get_eg(&egm1); add_eg(&eg_monic,&egm0,&egm1);
+					nd_removecont(0,nfq); nfqv = ndtondv(0,nfq); nd_free(nfq);
+					nfv = ndv_dup(0,nfqv); ndv_mod(m,nfv); nd_free(nf);
+				} else {
+					nd_removecont(0,nfq); nfqv = ndtondv(0,nfq); nd_free(nfq);
+					nd_removecont(m,nf); nfv = ndtondv(m,nf); nd_free(nf);
+				}
 				nh = ndv_newps(0,nfv,nfqv);
 				d = update_pairs(d,g,nh);
 				g = update_base(g,nh);
@@ -1773,6 +1784,11 @@ again:
 	else
 		for ( t = g; t; t = NEXT(t) )
 			BDY(t) = (pointer)nd_ps_trace[(int)BDY(t)];
+	if ( nd_nalg ) {
+		print_eg("monic",&eg_monic);
+		print_eg("invdalg",&eg_invdalg);
+		print_eg("le",&eg_le);
+	}
 	return g;
 }
 
@@ -5134,50 +5150,103 @@ DL nd_separate_d(UINT *d,UINT *trans)
 	return a;
 }
 
-ND nd_pseudo_monic(int mod,ND p)
+NumberField get_numberfield();
+
+int nd_monic(int mod,ND *p)
 {
 	UINT *trans,*t;
 	DL alg;
 	MP mp0,mp;
-	NM m,m0,m1;
+	NM m,m0,m1,ma0,ma,mb,mr0,mr;
+	ND r;
 	DL dl;
 	DP nm;
 	NDV ndv;
-	DAlg lc,inv;
+	DAlg inv,cd;
 	ND s,c;
-	int n,ntrans,i,e,td;
+	Q l,mul;
+	N ln;
+	int n,ntrans,i,e,td,is_lc,len;
+	NumberField nf;
+	struct oEGT eg0,eg1;
+
+	if ( !(nf = get_numberfield()) )
+		error("nd_monic : current_numberfield is not set");
 
 	n = nd_nvar; ntrans = n-nd_nalg;
-	NEWNM(m0);
-	NEWNM(m1);
-	alg = nd_separate_d(HDL(p),DL(m0));
-	mp0 = 0; NEXTMP(mp0,mp); mp->c = (P)HCQ(p); mp->dl = alg;
-	if ( !mp->dl->td )
-		return p;
-	for ( m = NEXT(BDY(p)); m; m = NEXT(m) ) {
-		alg = nd_separate_d(DL(m),DL(m1));
-		if ( !ndl_equal(DL(m0),DL(m1)) )
-			break;
-		NEXTMP(mp0,mp); mp->c = (P)CQ(m); mp->dl = alg;
-	}
-	NEXT(mp) = 0;
-	MKDP(nd_nalg,mp0,nm);
-	MKDAlg(nm,ONE,lc);
-	invdalg(lc,&inv);
-	ndv = ndtondv(0,p);
-	for ( s = 0, mp = BDY(inv->nm); mp; mp = NEXT(mp) ) {
-		CQ(m0) = (Q)mp->c;
-		dl = mp->dl;
-		for ( td = 0, i = ntrans; i < n; i++ ) {
-			e = dl->d[i-ntrans];
-			ndl_zero(DL(m0));
-			PUT_EXP(DL(m0),i,e);
-			td += MUL_WEIGHT(e,i);
+	/* Q coef -> DAlg coef */
+	NEWNM(ma0); ma = ma0;
+	m = BDY(*p); 
+	is_lc = 1;
+	while ( 1 ) {
+		NEWMP(mp0); mp = mp0;
+		mp->c = (P)CQ(m);
+		mp->dl = nd_separate_d(DL(m),DL(ma));
+		NEWNM(mb);
+		for ( m = NEXT(m); m; m = NEXT(m) ) {
+			alg = nd_separate_d(DL(m),DL(mb));
+			if ( !ndl_equal(DL(ma),DL(mb)) )
+				break;
+			NEXTMP(mp0,mp); mp->c = (P)CQ(m); mp->dl = alg;
 		}
-		TD(DL(m0)) = td;
-		if ( nd_blockmask) ndl_weight_mask(trans);
-		s = nd_add(0,s,ndv_mul_nm(0,m0,ndv));
+		NEXT(mp) = 0;
+		MKDP(nd_nalg,mp0,nm);
+		MKDAlg(nm,ONE,cd);
+		if ( is_lc == 1 ) {
+			/* if the lc is a rational number, we have nothing to do */
+			if ( !mp0->dl->td )
+				return 1;
+
+			get_eg(&eg0);
+			invdalg(cd,&inv);
+			get_eg(&eg1); add_eg(&eg_invdalg,&eg0,&eg1);
+			/* check the validity of inv */
+			if ( mod && !rem(NM(inv->dn),mod) )
+				return 0;
+			CA(ma) = nf->one;
+			is_lc = 0;
+			ln = ONEN;
+		} else {
+			muldalg(cd,inv,&CA(ma));	
+			lcmn(ln,NM(CA(ma)->dn),&ln);
+		}
+		if ( m ) {
+			NEXT(ma) = mb; ma = mb;
+		} else {
+			NEXT(ma) = 0;
+			break;
+		}
 	}
-	ndv_free(ndv);
-	return s;
+	/* l = lcm(denoms) */
+	NTOQ(ln,1,l);
+	for ( mr0 = 0, m = ma0; m; m = NEXT(m) ) {
+		divq(l,CA(m)->dn,&mul);
+		for ( mp = BDY(CA(m)->nm); mp; mp = NEXT(mp) ) {
+			NEXTNM(mr0,mr);
+			mulq((Q)mp->c,mul,&CQ(mr));
+			dl = mp->dl;
+			td = TD(DL(m));
+			ndl_copy(DL(m),DL(mr));
+			for ( i = ntrans; i < n; i++ ) {
+				e = dl->d[i-ntrans];
+				PUT_EXP(DL(mr),i,e);
+				td += MUL_WEIGHT(e,i);
+			}
+			TD(DL(mr)) = td;
+			if ( nd_blockmask) ndl_weight_mask(DL(mr));
+		}
+	}
+	NEXT(mr) = 0;
+	for ( len = 0, mr = mr0; mr; mr = NEXT(mr), len++ );
+	MKND(NV(*p),mr0,len,r);
+	/* XXX */
+	SG(r) = SG(*p);
+	nd_free(*p);
+	*p = r;
+	return 1;
+}
+
+void nd_set_nalg(int nalg)
+{
+	nd_nalg = nalg;
 }

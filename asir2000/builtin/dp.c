@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.53 2004/05/14 09:20:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.54 2004/05/31 00:38:44 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -97,6 +97,7 @@ void Pnd_weyl_gr(),Pnd_weyl_gr_trace();
 void Pnd_nf();
 void Pdp_initial_term();
 void Pdp_order();
+void Pnd_set_nalg();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -148,6 +149,7 @@ struct ftab dp_tab[] = {
 	{"nd_weyl_gr",Pnd_weyl_gr,4},
 	{"nd_weyl_gr_trace",Pnd_weyl_gr_trace,5},
 	{"nd_nf",Pnd_nf,5},
+	{"nd_set_nalg",Pnd_set_nalg,1},
 
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
@@ -1866,6 +1868,12 @@ LIST *rp;
 	m = QTOS((Q)ARG3(arg));
 	create_order_spec(0,ARG4(arg),&ord);
 	nd_gr_trace(f,v,m,homo,ord,rp);
+}
+
+void Pnd_set_nalg(NODE arg,Q *rp)
+{
+	nd_set_nalg(QTOS((Q)ARG0(arg)));
+	*rp = (Q)ARG0(arg);
 }
 
 void Pnd_nf(arg,rp)

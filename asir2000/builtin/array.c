@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.39 2004/12/01 12:55:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.40 2004/12/02 13:53:31 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1171,7 +1171,8 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 	int *cinfo,*rinfo;
 	int *rind,*cind;
 	int count;
-	struct oEGT eg_mul,eg_inv,tmp0,tmp1;
+	int ret;
+	struct oEGT eg_mul,eg_inv,eg_intrat,eg_check,tmp0,tmp1;
 	int period;
 
 	a0 = (Q **)mat->body;
@@ -1220,10 +1221,11 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 			*cindp = cind = (int *)MALLOC_ATOMIC((ri)*sizeof(int));
 
 			init_eg(&eg_mul); init_eg(&eg_inv);
+			init_eg(&eg_check); init_eg(&eg_intrat);
 			period = F4_INTRAT_PERIOD;
 			for ( q = ONE, count = 0; ; count++ ) {
 				if ( DP_Print )
-					fprintf(stderr,".");
+					fprintf(stderr,"o");
 				/* wc = -b mod md */
 				for ( i = 0; i < rank; i++ )
 					for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
@@ -1262,24 +1264,33 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				add_eg(&eg_mul,&tmp0,&tmp1);
 				/* q = q*md */
 				mulq(q,mdq,&u); q = u;
-				if ( !(count % period) )
-					if ( intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
+				if ( !(count % period) ) {
+					get_eg(&tmp0);
+					ret = intmtoratm_q(xmat,NM(q),*nmmat,dn);
+					get_eg(&tmp1); add_eg(&eg_intrat,&tmp0,&tmp1);
+					if ( ret ) {
 						for ( j = k = l = 0; j < col; j++ )
 							if ( cinfo[j] )
 								rind[k++] = j;	
 							else
 								cind[l++] = j;
-						if ( gensolve_check(mat,*nmmat,*dn,rind,cind) ) {
+						get_eg(&tmp0);
+						ret = gensolve_check(mat,*nmmat,*dn,rind,cind);
+						get_eg(&tmp1); add_eg(&eg_check,&tmp0,&tmp1);
+						if ( ret ) {
 							if ( DP_Print ) {
 								fprintf(stderr,"\n");
 								print_eg("INV",&eg_inv);
 								print_eg("MUL",&eg_mul);
+								print_eg("INTRAT",&eg_intrat);
+								print_eg("CHECK",&eg_check);
 								fflush(asir_out);
 							}
 							return rank;
 						}
 					} else
 						period *=2;
+				}
 			}
 	}
 }

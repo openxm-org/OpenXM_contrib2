@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.11 2004/10/06 12:09:19 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -48,6 +48,7 @@ typedef union oNDC {
 	int m;
 	Q z;
 	P p;
+	DAlg a;
 } *NDC;
 
 /* monomial; linked list rep. */
@@ -134,13 +135,15 @@ extern int *current_weyl_weight_vector;
 #define HCM(d) ((d)->body->c.m)
 #define HCQ(d) ((d)->body->c.z)
 #define HCP(d) ((d)->body->c.p)
-#define CM(a) ((a)->c.m)
-#define CQ(a) ((a)->c.z)
-#define CP(a) ((a)->c.p)
-#define DL(a) ((a)->dl)
-#define SG(a) ((a)->sugar)
-#define LEN(a) ((a)->len)
-#define LCM(a) ((a)->lcm)
+#define HCA(d) ((d)->body->c.a)
+#define CM(x) ((x)->c.m)
+#define CQ(x) ((x)->c.z)
+#define CP(x) ((x)->c.p)
+#define CA(x) ((x)->c.a)
+#define DL(x) ((x)->dl)
+#define SG(x) ((x)->sugar)
+#define LEN(x) ((x)->len)
+#define LCM(x) ((x)->lcm)
 #define GET_EXP(d,a) (((d)[nd_epos[a].i]>>nd_epos[a].s)&nd_mask0)
 #define GET_EXP_MASK(d,a,m) ((((d)[nd_epos[a].i]&(m)[nd_epos[a].i])>>nd_epos[a].s)&nd_mask0)
 #define PUT_EXP(r,a,e) ((r)[nd_epos[a].i] |= ((e)<<nd_epos[a].s))
