@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.2 2000/04/13 06:01:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.3 2000/04/20 02:20:15 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -591,7 +591,7 @@ NODE f;
 			if ( r ) {
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
-				muld(CO,sd,ps[(int)BDY(r)],&f2);
+				muld(CO,ps[(int)BDY(r)],sd,&f2);
 				MKNODE(bt,f2,blist); blist = bt;
 				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
@@ -707,7 +707,7 @@ int m;
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				_dp_mod(sd,m,0,&sdm);
-				_mulmd(CO,m,sdm,ps[(int)BDY(r)],&f2);
+				_mulmd(CO,m,ps[(int)BDY(r)],sdm,&f2);
 				MKNODE(bt,f2,blist); blist = bt;
 				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
@@ -1796,7 +1796,7 @@ DP *r;
 					ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
 				}
 				t_00 = get_rtime();
-				muld(CO,shift,t1,&t2);
+				muld(CO,t1,shift,&t2);
 				addd(CO,t,t2,&u);
 				tt = get_rtime(); t_m += tt-t_0;
 				ttt = get_rtime(); t_s += ttt-t_00;
@@ -1967,7 +1967,7 @@ DP *r;
 				ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
 
 				t_00 = get_rtime();
-				muld(CO,shift,t1,&t2);
+				muld(CO,t1,shift,&t2);
 				addd(CO,t,t2,&u);
 				tt = get_rtime(); t_m += tt-t_0;
 				ttt = get_rtime(); t_s += ttt-t_00;

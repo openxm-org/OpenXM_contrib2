@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.2 2000/04/05 08:32:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.3 2000/04/13 06:01:02 noro Exp $ */
 #include "ca.h"
 
 #define NV(p) ((p)->nv)
@@ -414,6 +414,8 @@ DP p1,p2,*pr;
 {
 	MP m;
 	DP s,t,u;
+	int i,l;
+	MP *w;
 
 	if ( !p1 || !p2 )
 		*pr = 0;
@@ -422,8 +424,12 @@ DP p1,p2,*pr;
 	else if ( OID(p2) <= O_P )
 		muldc(vl,p1,(P)p2,pr);
 	else {
-		for ( m = BDY(p2), s = 0; m; m = NEXT(m) ) {
-			muldm(vl,p1,m,&t); addd(vl,s,t,&u); s = u;
+		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
+		w = ALLOCA(l*sizeof(MP));
+		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		for ( s = 0, i = l-1; i >= 0; i-- ) {
+			muldm(vl,p1,w[i],&t); addd(vl,s,t,&u); s = u;
 		}
 		*pr = s;
 	}
@@ -464,6 +470,8 @@ DP p1,p2,*pr;
 {
 	MP m;
 	DP s,t,u;
+	int i,l;
+	MP *w;
 
 	if ( !p1 || !p2 )
 		*pr = 0;
@@ -472,8 +480,12 @@ DP p1,p2,*pr;
 	else if ( OID(p2) <= O_P )
 		muldc(vl,p1,(P)p2,pr);
 	else {
-		for ( m = BDY(p2), s = 0; m; m = NEXT(m) ) {
-			weyl_muldm(vl,p1,m,&t); addd(vl,s,t,&u); s = u;
+		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
+		w = ALLOCA(l*sizeof(MP));
+		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		for ( s = 0, i = l-1; i >= 0; i-- ) {
+			weyl_muldm(vl,p1,w[i],&t); addd(vl,s,t,&u); s = u;
 		}
 		*pr = s;
 	}
@@ -487,13 +499,18 @@ DP *pr;
 {
 	DP r,t,t1;
 	MP m;
-	int n;
+	int n,l,i;
+	MP *w;
 
 	if ( !p )
 		*pr = 0;
 	else {
-		for ( r = 0, m = BDY(p), n = NV(p); m; m = NEXT(m) ) {
-			weyl_mulmm(vl,m,m0,n,&t);
+		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
+		w = ALLOCA(l*sizeof(MP));
+		for ( m = BDY(p), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		for ( r = 0, i = l-1, n = NV(p); i >= 0; i-- ) {
+			weyl_mulmm(vl,w[i],m0,n,&t);
 			addd(vl,r,t,&t1); r = t1;
 		}
 		if ( r )
