@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.1 2002/09/26 04:33:16 noro Exp $ */
 
 #include "ca.h"
 
@@ -108,6 +108,11 @@ void ugcdsf(P *pa,int m,P *r)
 
 void gcdsf_main(VL vl,P *pa,int m,P *r)
 {
+	int nv,i,i0,imin,d,d0,d1,d2;
+	V v0,vmin;
+	VL tvl,nvl,rvl,nvl0,rvl0;
+	P *pc, *ps, *ph;
+
 	for ( nv = 0, tvl = vl; tvl; tvl = NEXT(tvl), nv++);
 	if ( nv == 1 ) {
 		ugcdsf(pa,m,r);
@@ -139,6 +144,7 @@ void gcdsf_main(VL vl,P *pa,int m,P *r)
 	NEXT(rvl) = 0;
 	/* nvl = ...,vmin */
 	NEXTVL(nvl0,nvl); nvl->v = vmin; NEXT(nvl) = 0;
+	MKV(vmin,x);
 
 	/* for content and primitive part */
 	pc = (P *)ALLOCA(m*sizeof(P));
@@ -181,7 +187,60 @@ void gcdsf_main(VL vl,P *pa,int m,P *r)
 			}
 			divgfs(hge,ce,&t); mulp(nvl,t,ge,&u); ge = u;
 			divsp(nvl,ph[imin],ge,&t); mulp(nvl,hge,t,&cof1e);
+			/* hm=0 : reset; he==hm : lucky */
 			if ( !hm || !cmpp(he,hm) ) {
+				substp(nvl,mod,vmin,s,&mode); divsp(nvl,mod,mode,&mod1); 
+				/* adj = mod/(mod|x=s)*(ge-g|x=s) */
+				substp(nvl,g,vmin,s,&t);
+				subp(nvl,ge,t,&u); mulp(nvl,mod1,u,&adj);
+				/* coadj = mod/(mod|vmin=s)*(cof1e-cof1e|vmin=s) */
+				substp(nvl,cof1,vmin,s,&t);
+				subp(nvl,cof1,t,&u); mulp(nvl,mod1,u,&coadj);
+				if ( !adj ) {
+					/* adj == gcd ? */
+					for ( i = 0; i < m; i++ )
+						if ( !divtp(nvl,lps[i],adj,&t) )
+							break;
+					if ( i == m ) {
+						cont_pp_mv_sf(nvl,rvl,adj,&t,&u);
+						mulp(nvl,cont,u,&t);
+						reorderp(nvl,vl,t,r);
+						return;
+					}
+				} else if ( !coadj ) {
+					/* ps[vmin]/coadj == gcd ? */
+					if ( divtp(nvl,lps[vmin],coadj,&q) ) {
+						for ( i = 0; i < m; i++ )
+							if ( !divtp(nvl,lps[i],q,&t) )
+								break;
+						if ( i == m ) {
+							cont_pp_mv_sf(nvl,rvl,q,&t,&u);
+							mulp(nvl,cont,u,&t);
+							reorderp(nvl,vl,t,r);
+							return;
+						}
+					}
+				}
+				addp(nvl,g,adj,&t); g = t;
+				addp(nvl,cof1,coadj,&t); cof1 = t;
+				subp(nvl,x,s,&t); mulp(nvl,mod,t,&u); mod = u;
+				hm = he;
+			} else {
+				d1 = homdeg(hm); d2 = homdeg(he);
+				if ( d1 < d2 ) /* we use current hm */
+					continue;
+				else if ( d1 > d2 ) {
+					/* use he */
+					g = ge;
+					cof1 = cof1e;
+					hm = he;
+					subp(nvl,x,s,&mod);
+				} else { 
+					/* d1==d2, but hm!=he => both are unlucky */
+					g = 0;
+					cof1 = 0;
+					MKGFS(0,mod);
+				}
 			}
 		}
 	}
