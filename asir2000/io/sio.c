@@ -44,14 +44,14 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.8 2000/10/06 06:05:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9 2000/11/07 06:35:39 noro Exp $ 
 */
 #if INET
 #include "ca.h"
 #include "setjmp.h"
 #include "ox.h"
 #if defined(VISUAL)
-#include <winsock.h>
+#include <winsock2.h>
 #else
 #include <sys/time.h>
 #include <sys/uio.h>
