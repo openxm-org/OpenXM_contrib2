@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.29 2003/06/09 16:18:09 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.30 2003/06/10 16:54:13 saito Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -953,6 +953,7 @@ int gauss_elim_mod(int **mat,int row,int col,int md)
 }
 
 struct oEGT eg_mod,eg_elim,eg_elim1,eg_elim2,eg_chrem,eg_gschk,eg_intrat,eg_symb;
+struct oEGT eg_conv;
 
 int generic_gauss_elim(MAT mat,MAT *nm,Q *dn,int **rindp,int **cindp)
 {

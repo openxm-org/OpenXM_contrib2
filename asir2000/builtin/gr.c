@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.48 2003/06/05 09:40:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.49 2003/06/21 02:09:15 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -619,14 +619,14 @@ NODE gb_f4_mod(NODE f,int m)
 	int *indred,*isred;
 	CDP ri;
 	int pscalen;
-	struct oEGT tmp0,tmp1,eg_split_symb,eg_split_elim1,eg_split_elim2;
-	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
+	struct oEGT tmp0,tmp1,eg_split_symb,eg_split_conv,eg_split_elim1,eg_split_elim2;
+	extern struct oEGT eg_symb,eg_conv,eg_elim1,eg_elim2;
 
 	/* initialize coeffcient array list of ps[] */
 	pscalen = pslen;
 	psca = (unsigned int **)MALLOC(pscalen*sizeof(unsigned int *));
 
-	init_eg(&eg_symb); init_eg(&eg_elim1); init_eg(&eg_elim2);
+	init_eg(&eg_symb); init_eg(&eg_conv); init_eg(&eg_elim1); init_eg(&eg_elim2);
 	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
 		i = (int)BDY(r);
 		d = updpairs(d,g,i);
@@ -673,9 +673,13 @@ NODE gb_f4_mod(NODE f,int m)
 			}
 		}
 /*		fprintf(stderr,"\n"); */
+		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
+		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
+
 		if ( DP_Print )
 			fprintf(asir_out,"number of reducers : %d\n",nred);
 
+		get_eg(&tmp0);
 		/* the first nred polys in blist are reducers */
 		/* row = the number of all the polys */
 		for ( r = blist, row = 0; r; r = NEXT(r), row++ );
@@ -714,8 +718,8 @@ NODE gb_f4_mod(NODE f,int m)
 		for ( j = 0, k = 0; j < col; j++ )
 			if ( !isred[j] )
 				st[k++] = at[j];
-		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
-		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
+		get_eg(&tmp1); add_eg(&eg_conv,&tmp0,&tmp1);
+		init_eg(&eg_split_conv); add_eg(&eg_split_conv,&tmp0,&tmp1);
 
 		get_eg(&tmp1);
 		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
@@ -772,6 +776,7 @@ NODE gb_f4_mod(NODE f,int m)
 		if ( DP_Print ) {
 			fprintf(asir_out,"done rank = %d\n",rank,row,col);
 			print_eg("Symb",&eg_split_symb);
+			print_eg("Conv",&eg_split_conv);
 			print_eg("Elim1",&eg_split_elim1);
 			print_eg("Elim2",&eg_split_elim2);
 			fprintf(asir_out,"\n");
@@ -814,6 +819,7 @@ NODE gb_f4_mod(NODE f,int m)
 	}
 	if ( DP_Print ) {
 		print_eg("Symb",&eg_symb);
+		print_eg("Conv",&eg_conv);
 		print_eg("Elim1",&eg_elim1);
 		print_eg("Elim2",&eg_elim2);
 		fflush(asir_out);
@@ -1602,7 +1608,7 @@ NODE gb(NODE f,int m,NODE subst)
 				_dp_nf(gall,h,ps,!Top,&nf);
 			else
 				_dp_nf_z(gall,h,ps,!Top,DP_Multiple,&nf);
-			if ( DP_Print )
+			if ( DP_Print && nf )
 				fprintf(asir_out,"(%.3g)",get_rtime()-t_0);
 			get_eg(&tnf1); add_eg(&eg_nf,&tnf0,&tnf1);
 		} else
