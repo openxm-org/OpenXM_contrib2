@@ -5522,7 +5522,7 @@ fi
 
 
 if test "${with_lapack:=no}" != no ; then
-    LAPACKLIB="-llapack -lblas -lI77 -lF77"
+    LAPACKLIB="-llapack -lblas -lg2c"
     cat >>confdefs.h <<\_ACEOF
 #define LAPACK 1
 _ACEOF

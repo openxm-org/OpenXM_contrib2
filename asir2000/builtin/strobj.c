@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.50 2004/07/13 10:57:26 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.51 2004/08/05 00:56:54 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,7 +77,7 @@ void Pquotetotex_tb();
 void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
-void Pquote_to_funargs(),Pfunargs_to_quote();
+void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 char *conv_rule(char *name);
@@ -108,6 +108,7 @@ struct ftab str_tab[] = {
 	{"flatten_quote",Pflatten_quote,2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
+	{"get_function_name",Pget_function_name,1},
 	{0,0,0},
 };
 
@@ -842,6 +843,22 @@ char *symbol_name(char *name)
 		if ( !strcmp(texsymbol[i].text,name) )
 			return texsymbol[i].symbol;
 	return 0;
+}
+
+void Pget_function_name(NODE arg,STRING *rp)
+{
+		QUOTEARG qa;
+		ARF f;
+		char *opname;
+
+		qa = (QUOTEARG)BDY(arg);
+		if ( !qa || OID(qa) != O_QUOTEARG || qa->type != A_arf )
+			*rp = 0;
+		else {
+			f = (ARF)BDY(qa);
+			opname = f->name;
+			MKSTR(*rp,opname);
+		}
 }
 
 FNODE strip_paren(FNODE);
