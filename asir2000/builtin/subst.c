@@ -45,15 +45,16 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.2 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Psubst(), Ppsubst(), Psubstf();
+void Psubst(), Ppsubst(), Psubstf(), Psubst_quote();
 
 struct ftab subst_tab[] = {
 	{"subst",Psubst,-99999999},
+	{"subst_quote",Psubst_quote,-99999999},
 	{"psubst",Ppsubst,-99999999},
 	{"substf",Psubstf,-99999999},
 	{0,0,0},
@@ -87,6 +88,40 @@ Obj *rp;
 		substr(CO,0,a,v,b,&t); a = t;
 	}
 	*rp = a;
+}
+
+FNODE subst_in_fnode();
+
+void Psubst_quote(arg,rp)
+NODE arg;
+QUOTE *rp;
+{
+	QUOTE a,h;
+	FNODE fn;
+	Obj g;
+	LIST l;
+	V v;
+
+	if ( !arg ) {
+		*rp = 0; return;
+	}
+	asir_assert(ARG0(arg),O_QUOTE,"subst_quote");
+	fn = BDY((QUOTE)ARG0(arg)); arg = NEXT(arg);
+	if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
+		arg = BDY(l);
+	while ( arg ) {
+		asir_assert(BDY(arg),O_P,"subst_quote");
+		v = VR((P)BDY(arg)); arg = NEXT(arg);
+		if ( !arg )
+			error("subst_quote : invalid argument");
+		g = (Obj)ARG0(arg); arg = NEXT(arg);
+		if ( !g || OID(g) != O_QUOTE )
+			objtoquote(g,&h);
+		else
+			h = (QUOTE)g;
+		fn = subst_in_fnode(fn,v,BDY(h));
+	}
+	MKQUOTE(*rp,fn);
 }
 
 void Ppsubst(arg,rp)

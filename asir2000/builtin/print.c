@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.10 2001/09/04 02:45:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.11 2001/09/04 03:12:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,6 +55,7 @@ void Pquotetolist();
 void Peval_variables_in_quote();
 void Pset_print_function();
 FNODE eval_pvar_in_fnode();
+FNODE subst_in_fnode();
 
 struct ftab print_tab[] = {
 	{"print",Pprint,-2},
@@ -365,6 +366,98 @@ FNODE f;
 
 		default:
 			error("eval_pvar_in_fnode : not implemented yet");
+	}
+}
+
+FNODE subst_in_fnode(f,v,g)
+FNODE f;
+V v;
+FNODE g;
+{
+	FNODE a1,a2,a3;
+	DCP dc;
+	pointer r;
+	V vf;
+	NODE n,t,t0;
+	QUOTE q;
+	Obj obj;
+
+	if ( !f )
+		return 0;
+
+	switch ( f->id ) {
+		/* unary operators */
+		case I_NOT: case I_PAREN:
+			a1 = subst_in_fnode((FNODE)FA0(f),v,g);
+			return mkfnode(1,f->id,a1);
+
+		/* binary operators */
+		case I_AND: case I_OR:
+			a1 = subst_in_fnode((FNODE)FA0(f),v,g);
+			a2 = subst_in_fnode((FNODE)FA1(f),v,g);
+			return mkfnode(3,f->id,a1,a2);
+
+		case I_BOP: case I_COP: case I_LOP: 
+			a1 = subst_in_fnode((FNODE)FA1(f),v,g);
+			a2 = subst_in_fnode((FNODE)FA2(f),v,g);
+			return mkfnode(4,f->id,FA0(f),a1,a2);
+
+		/* ternary operators */
+		case I_CE:
+			a1 = subst_in_fnode((FNODE)FA0(f),v,g);
+			a2 = subst_in_fnode((FNODE)FA1(f),v,g);
+			a3 = subst_in_fnode((FNODE)FA2(f),v,g);
+			return mkfnode(5,f->id,a1,a2,a3);
+
+		/* lists */
+		case I_LIST:
+			n = (NODE)FA0(f);
+			for ( t0 = 0; n; n = NEXT(n) ) {
+				NEXTNODE(t0,t);
+				BDY(t) = (pointer)subst_in_fnode(BDY(n),v,g);
+			}
+			if ( t0 )
+				NEXT(t) = 0;
+			return mkfnode(1,f->id,t0);
+
+		/* function */
+		case I_FUNC:
+			a1 = subst_in_fnode((FNODE)FA1(f),v,g);
+			return mkfnode(2,f->id,FA0(f),a1);
+			break;
+		case I_CAR: case I_CDR:
+			a1 = subst_in_fnode((FNODE)FA0(f),v,g);
+			return mkfnode(1,f->id,a1);
+		case I_EV:
+			/* exponent vector */
+			a1 = subst_in_fnode(mkfnode(1,I_LIST,FA0(f)),v,g);
+			return mkfnode(1,f->id,a1);
+
+		case I_STR:
+			return f;
+
+		case I_FORMULA:
+			obj = (Obj)FA0(f);
+			if ( !obj )
+				return f;
+
+			switch ( OID(obj) ) {
+				case O_N:
+					return f;
+				case O_P:
+					vf = VR((P)obj);
+					dc = DC((P)obj);
+					if ( vf != v )
+						return f;
+					else if ( UNIQ(DEG(dc)) && UNIQ((Q)COEF(dc)) )
+						return g;	
+					else break;
+				default:
+					break;
+			}
+
+		default:
+			error("subst_in_fnode : not implemented yet");
 	}
 }
 
