@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.68 2003/09/12 15:07:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.69 2003/09/15 09:49:44 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1760,11 +1760,13 @@ again:
 			d = nd_reconstruct(m,1,d);
 			goto again;
 		} else if ( nf ) {
-			/* overflow does not occur */
-			nd_sp(0,1,l,&h);
-			nd_nf(0,h,nd_ps_trace,!Top,0,&nfq);
+			if ( !nd_sp(0,1,l,&h) || !nd_nf(0,h,nd_ps_trace,!Top,0,&nfq) ) {
+				NEXT(l) = d; d = l;
+				d = nd_reconstruct(m,1,d);
+				goto again;
+			}
 			if ( nfq ) {
-				/* failure; m|HC(nfq) */
+				/* m|HC(nfq) => failure */
 				if ( !rem(NM(HCQ(nfq)),m) ) return 0;
 
 				printf("+"); fflush(stdout);
