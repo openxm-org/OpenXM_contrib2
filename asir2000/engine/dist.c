@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.13 2001/01/11 08:43:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.14 2001/02/21 07:10:18 noro Exp $ 
 */
 #include "ca.h"
 
@@ -108,7 +108,8 @@ P f;
 	else if ( NUM(f) )
 		return (NID((Num)f) == N_LM 
 			|| NID((Num)f) == N_GF2N
-			|| NID((Num)f) == N_GFPN) ? 1 : 0;
+			|| NID((Num)f) == N_GFPN
+			|| NID((Num)f) == N_GFS) ? 1 : 0;
 	else {
 		for ( dc = DC(f); dc; dc = NEXT(dc) )
 			if ( has_fcoef_p(COEF(dc)) )

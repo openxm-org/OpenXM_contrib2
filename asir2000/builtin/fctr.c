@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.2 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.3 2000/08/22 05:03:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -106,7 +106,7 @@ P *rp;
 	else if ( !p2 )
 		*rp = p1;
 	else if ( !qpcheck((Obj)p1) || !qpcheck((Obj)p2) )
-		error("gcd : invalid argument");
+		gcdprsp(CO,p1,p2,rp);
 	else if ( argc(arg) == 2 )
 		ezgcdp(CO,p1,p2,rp);
 	else {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.2 2001/03/14 06:04:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.3 2001/03/14 06:27:57 noro Exp $
 */
 #include "ca.h"
 
@@ -229,7 +229,7 @@ GFS *b;
 	else if ( OID(a) == O_N && NID(a) == N_M )
 		mqtogfs(a,b);
 	else if ( OID(a) == O_N && NID(a) == N_Q ) {
-		ptomp(current_gfs_q,(P)a,&t); mqtogfs(t,b);
+		ptomp(current_gfs_p,(P)a,&t); mqtogfs(t,b);
 	} else
 		error("ntogfs : invalid argument");
 }

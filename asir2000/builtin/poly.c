@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.6 2001/03/13 01:10:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.7 2001/03/14 06:04:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -886,8 +886,12 @@ Obj *rp;
 				ntogfpn((Obj)p,&rpn); simpgfpn((GFPN)rpn,&spn); *rp = (Obj)spn;
 				break;
 			case FF_GFS:
-				ptomp(current_gfs_q,(P)p,&t); mqtogfs(t,&rs);
-				*rp = (Obj)rs;
+				if ( NID((Num)p) == N_GFS )
+					*rp = p;
+				else {
+					ptomp(current_gfs_p,(P)p,&t); mqtogfs(t,&rs);
+					*rp = (Obj)rs;
+				} 
 				break;
 			default:
 				*rp = (Obj)p;

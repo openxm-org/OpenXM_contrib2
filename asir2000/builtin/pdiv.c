@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.4 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.5 2001/02/21 07:10:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -198,11 +198,14 @@ P *rp;
 			mptop(q,rp);
 		else
 			*rp = 0;
-	} else {
+	} else if ( qpcheck((Obj)p1) && qpcheck((Obj)p2) ) {
 		ptozp(p1,1,(Q *)&c1,&q1); ptozp(p2,1,(Q *)&c2,&q2);
 		if ( divtpz(CO,q1,q2,&q) ) {
 			divq((Q)c1,(Q)c2,(Q *)&c); mulp(CO,q,c,rp);
 		} else
+			*rp = 0;
+	} else {
+		if ( !divtp(CO,p1,p2,rp) )
 			*rp = 0;
 	}
 }
