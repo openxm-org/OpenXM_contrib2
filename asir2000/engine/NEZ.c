@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/NEZ.c,v 1.2 2000/08/21 08:31:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/NEZ.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
 */
 #include "ca.h"
 
@@ -352,6 +352,10 @@ P p0,*ps,*pr;
 	W_CALLOC(nv,struct oVN,vn1);
 	for ( i = 0, tvl = NEXT(nvl); tvl; tvl = NEXT(tvl), i++ )
 		vn1[i].v = vn0[i].v = tvl->v;
+	if ( !nonzero_const_term(p0) ) {
+		for ( i = 0; i < nv; i++ )
+			vn0[i].n = ((unsigned int)random())%256+1;
+	}
 
 	/* main loop */
 	for ( dg = deg(v,tps[0]) + 1; ; next(vn0) )
@@ -493,5 +497,23 @@ P p;
 		for ( dc = DC(p), n = 0; dc; dc = NEXT(dc) )
 			n += lengthp(COEF(dc));
 		return n;
+	}
+}
+
+int nonzero_const_term(P p)
+{
+	DCP dc;
+
+	if ( !p )
+		return 0;
+	else if ( NUM(p) )
+		return 1;
+	else {
+		dc = DC(p);
+		for ( ; NEXT(dc); dc = NEXT(dc) );
+		if ( DEG(dc) )
+			return 0;
+		else
+			return nonzero_const_term(COEF(dc));
 	}
 }
