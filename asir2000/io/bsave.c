@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.4 2000/11/08 08:02:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.5 2000/12/05 01:24:54 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -82,7 +82,13 @@ void savebytearray(FILE *,BYTEARRAY);
 
 void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
 	savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat, savebytearray };
+#if defined(INTERVAL)
+int saveitv();
+int saveitvd();
+void (*nsavef[])() = { saveq, savereal, 0, savebf, saveitv, saveitvd, 0, saveitv, savecplx ,savemi, savelm, savegf2n, savegfpn};
+#else
 void (*nsavef[])() = { saveq, savereal, 0, savebf, savecplx ,savemi, savelm, savegf2n, savegfpn};
+#endif
 
 static short zeroval = 0;
 
@@ -167,6 +173,24 @@ BF p;
 	error("savebf : PARI is not combined");
 #endif
 }
+
+#if defined(INTERVAL)
+saveitv(s,p)
+FILE *s;
+Itv p;
+{
+	saveobj(s,(Obj)INF(p));
+	saveobj(s,(Obj)SUP(p));
+}
+
+saveitvd(s,p)
+FILE *s;
+ItvD p;
+{
+	write_double(s,&INF(p));
+	write_double(s,&SUP(p));
+}
+#endif
 
 void savecplx(s,p)
 FILE *s;

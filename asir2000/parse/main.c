@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.7 2000/12/01 08:48:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.8 2000/12/05 01:24:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,6 +57,17 @@ extern jmp_buf environnement;
 #endif
 
 extern jmp_buf env;
+
+#if defined(INTERVAL)
+#ifndef ASIRRCNAME
+#define ASIRRCNAME      "int_asirrc"
+#endif
+#else
+#ifndef ASIRRCNAME
+#define ASIRRCNAME      "asirrc"
+#endif
+#endif
+
 
 double get_current_time();
 extern int mpi_nprocs,mpi_myid;
@@ -166,7 +177,7 @@ char *argv[];
 			get_rootdir(rootname,sizeof(rootname));
 			homedir = rootname;
 		}
-		sprintf(ifname,"%s/.asirrc",homedir);
+		sprintf(ifname,"%s/." ASIRRCNAME,homedir);
 	}
 
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {

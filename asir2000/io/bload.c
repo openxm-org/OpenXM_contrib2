@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.4 2000/11/08 08:02:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.5 2000/12/05 01:24:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -82,7 +82,13 @@ extern VL file_vl;
 
 void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
 	loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat, loadbytearray };
+#if defined(INTERVAL)
+int loaditv();
+int loaditvd();
+void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn };
+#else
 void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn };
+#endif
 
 void loadobj(s,p)
 FILE *s;
@@ -189,6 +195,34 @@ BF *p;
 	error("loadbf : PARI is not combined");
 #endif
 }
+
+#if defined(INTERVAL)
+loaditv(s,p)
+FILE *s;
+Itv *p;
+{
+	Itv q;
+	char dmy;
+
+	read_char(s,&dmy);
+	NEWItvP(q); loadobj(s,(Obj *)&INF(q)); loadobj(s,(Obj *)&SUP(q));
+	*p = q;
+}
+
+loaditvd(s,p)
+FILE *s;
+ItvD *p;
+{
+	ItvD q;
+	char dmy;
+
+	read_char(s,&dmy);
+	NEWItvD(q);
+	read_double(s,&INF(q));
+	read_double(s,&SUP(q));
+	*p = q;
+}
+#endif
 
 void loadcplx(s,p)
 FILE *s;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -63,7 +63,11 @@ Num *rp,*ip;
 {
 	if ( !a )
 		*rp = *ip = 0;
+#if defined(INTERVAL)
+	else if ( NID(a) <= N_PRE_C ) {
+#else
 	else if ( NID(a) <= N_B ) {
+#endif
 		*rp = a; *ip = 0;
 	} else {
 		*rp = ((C)a)->r; *ip = ((C)a)->i;
@@ -93,7 +97,11 @@ Num *c;
 		*c = b;
 	else if ( !b )
 		*c = a;
+#if defined(INTERVAL)
+	else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+#else
 	else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
+#endif
 		addnum(0,a,b,c);
 	else {
 		toreim(a,&ar,&ai); toreim(b,&br,&bi);
@@ -112,7 +120,11 @@ Num *c;
 		chsgnnum(b,c);
 	else if ( !b )
 		*c = a;
+#if defined(INTERVAL)
+	else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+#else
 	else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
+#endif
 		subnum(0,a,b,c);
 	else {
 		toreim(a,&ar,&ai); toreim(b,&br,&bi);
@@ -129,7 +141,11 @@ Num *c;
 
 	if ( !a || !b )
 		*c = 0;
+#if defined(INTERVAL)
+	else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+#else
 	else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
+#endif
 		mulnum(0,a,b,c);
 	else {
 		toreim(a,&ar,&ai); toreim(b,&br,&bi);
@@ -149,7 +165,11 @@ Num *c;
 		error("divcplx : division by 0");
 	else if ( !a )
 		*c = 0;
+#if defined(INTERVAL)
+	else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+#else
 	else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
+#endif
 		divnum(0,a,b,c);
 	else {
 		toreim(a,&ar,&ai); toreim(b,&br,&bi);
@@ -221,7 +241,11 @@ Num a,*c;
 
 	if ( !a )
 		*c = 0;
+#if defined(INTERVAL)
+	else if ( NID(a) <= N_PRE_C )
+#else
 	else if ( NID(a) <= N_B )
+#endif
 		chsgnnum(a,c);
 	else {
 		chsgnnum(((C)a)->r,&r); chsgnnum(((C)a)->i,&i);
@@ -236,12 +260,20 @@ Num a,b;
 	int s;
 
 	if ( !a ) {
+#if defined(INTERVAL)
+		if ( !b || (NID(b)<=N_PRE_C) )
+#else
 		if ( !b || (NID(b)<=N_B) )
+#endif
 			return compnum(0,a,b);
 		else
 			return -1;
 	} else if ( !b ) {
+#if defined(INTERVAL)
+		if ( !a || (NID(a)<=N_PRE_C) )
+#else
 		if ( !a || (NID(a)<=N_B) )
+#endif
 			return compnum(0,a,b);
 		else
 			return 1;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.5 2000/12/05 01:24:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.6 2000/12/11 02:00:41 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -86,6 +86,16 @@ int current_mod = 0;
 #if PARI
 int paristack = 1<<16;
 
+#if defined(INTERVAL)
+int zerorewrite = 0;
+void (*addnumt[])() = { addq, addreal, addalg, addbf, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn };
+void (*subnumt[])() = { subq, subreal, subalg, subbf, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn };
+void (*mulnumt[])() = { mulq, mulreal, mulalg, mulbf, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn };
+void (*divnumt[])() = { divq, divreal, divalg, divbf, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn };
+void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, pwrbf, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn };
+void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, chsgnbf, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn };
+int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, cmpbf, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn };
+#else
 void (*addnumt[])() = { addq, addreal, addalg, addbf, addcplx, addmi, addlm, addgf2n, addgfpn };
 void (*subnumt[])() = { subq, subreal, subalg, subbf, subcplx, submi, sublm, subgf2n, subgfpn };
 void (*mulnumt[])() = { mulq, mulreal, mulalg, mulbf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn };
@@ -93,6 +103,16 @@ void (*divnumt[])() = { divq, divreal, divalg, divbf, divcplx, divmi, divlm, div
 void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, pwrbf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn };
 void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, chsgnbf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn };
 int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, cmpbf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn };
+#endif
+#else
+#if defined(INTERVAL)
+void (*addnumt[])() = { addq, addreal, addalg, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn };
+void (*subnumt[])() = { subq, subreal, subalg, 0, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn };
+void (*mulnumt[])() = { mulq, mulreal, mulalg, 0, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn };
+void (*divnumt[])() = { divq, divreal, divalg, 0, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn };
+void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, 0, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn };
+void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, 0, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn };
+int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, 0, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn };
 #else
 void (*addnumt[])() = { addq, addreal, addalg, 0, addcplx, addmi, addlm, addgf2n, addgfpn };
 void (*subnumt[])() = { subq, subreal, subalg, 0, subcplx, submi, sublm, subgf2n, subgfpn };
@@ -101,6 +121,7 @@ void (*divnumt[])() = { divq, divreal, divalg, 0, divcplx, divmi, divlm, divgf2n
 void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, 0, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn };
 void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, 0, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn };
 int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, 0, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn };
+#endif
 #endif
 
 double get_current_time();

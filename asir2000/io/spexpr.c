@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.7 2000/12/15 05:30:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.8 2000/12/16 06:16:10 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -169,7 +169,11 @@ int mmono(p)
 P p;
 {
 	if ( NUM(p) )
+#if defined(INTERVAL)
+		if ( NID(p) != N_IP && compnum(CO,(Num)p,0) < 0 ) 
+#else
 		if ( compnum(CO,(Num)p,0) < 0 ) 
+#endif
 			return ( 1 );
 		else
 			return ( 0 );
@@ -300,6 +304,8 @@ N n;
 	}
 }
 
+extern int	printmode;
+
 void PRINTNUM(q)
 Num q;
 {
@@ -317,7 +323,21 @@ Num q;
 			}
 			break;
 		case N_R:
-			TAIL PRINTF(OUT,double_output?"%f":"%g",BDY((Real)q));
+			switch (printmode) {
+				case PRINTF_E:
+#if defined(INTERVAL)
+				case MID_PRINTF_E:
+#endif
+					TAIL PRINTF(OUT,"%.15e",BDY((Real)q));
+					break;
+				case PRINTF_G:
+#if defined(INTERVAL)
+				case MID_PRINTF_G:
+#endif
+				default:
+				TAIL PRINTF(OUT,"%g",BDY((Real)q));
+				break;
+			}
 			break;
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
@@ -325,6 +345,37 @@ Num q;
 #if PARI
 		case N_B:
 			PRINTBF((BF)q); break;
+#endif
+#if defined(INTERVAL)
+		case N_IP:
+		case N_IF:
+			PUTS("[");
+			PRINTNUM(INF((Itv)q));
+			PUTS(",");
+			PRINTNUM(SUP((Itv)q));
+			PUTS("]");
+			break;
+		case N_ID:
+			switch (printmode) {
+				case PRINTF_E:
+					TAIL PRINTF(OUT, "[%.16e,%.16e]",INF((ItvD)q),SUP((ItvD)q));
+#if defined(ITVDEBUG)
+					printbin(INF((ItvD)q));
+					printbin(SUP((ItvD)q));
+#endif
+					break;
+				case MID_PRINTF_G:
+					TAIL PRINTF(OUT, "<%g,%g>", (SUP((ItvD)q)+INF((ItvD)q))*0.5,(SUP((ItvD)q)-INF((ItvD)q))*0.5);
+					break;
+				case MID_PRINTF_E:
+					TAIL PRINTF(OUT, "<%.16e,%.16e>", (SUP((ItvD)q)+INF((ItvD)q))*0.5,(SUP((ItvD)q)-INF((ItvD)q))*0.5);
+					break;
+				case PRINTF_G:
+				default:
+					TAIL PRINTF(OUT, "[%g,%g]",INF((ItvD)q),SUP((ItvD)q));
+				break;
+			}
+			break;
 #endif
 		case N_C:
 			PRINTCPLX((C)q); break;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.5 2000/08/22 05:04:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.6 2000/12/05 01:24:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -227,7 +227,7 @@ SNODE f;
 #endif
 	char buf[BUFSIZ];
 	char prompt[BUFSIZ];
-	char *p,*pe;
+	char *p,*pe,*line;
 	NODE tn;
 	extern int kernelmode,do_fep;
 	NODE pvss;
@@ -252,10 +252,19 @@ SNODE f;
 		fputc('\0',stderr);
 	setjmp(debug_env);
 	while ( 1 ) {
-		if ( !do_server_in_X11 )
-			fputs(prompt,stderr);
+#if FEP
+		if ( !do_fep )
+#endif
+			if ( !do_server_in_X11 )
+				fputs(prompt,stderr);
 		bzero(buf,BUFSIZ);
 		while ( 1 ) {
+#if FEP
+			if ( do_fep ) {
+				line = (char *)readline_console(prompt);
+				strcpy(buf,line); free(line);
+			} else
+#endif
 			{
 				int len;
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.9 2000/12/05 08:29:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.10 2000/12/11 02:00:42 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -425,6 +425,9 @@ struct oEGT {
 #define FF_GFP 1
 #define FF_GF2N 2
 #define FF_GFPN 3
+
+/* include interval.h */
+#include "interval.h"
 
 #define INDEX 100
 

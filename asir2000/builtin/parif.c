@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.5 2000/11/15 00:07:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.6 2000/12/05 01:24:51 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,8 +63,17 @@ void ritopa_i(N,int,GEN *);
 void Peval(),Psetprec(),p_pi(),p_e(),p_mul(),p_gcd();
 void asir_cgiv(GEN);
 
+#if defined(INTERVAL) || 1
+void Psetprecword();
+#endif
+
 struct ftab pari_tab[] = {
-	{"eval",Peval,-2}, {"setprec",Psetprec,-1}, {0,0,0},
+	{"eval",Peval,-2},
+	{"setprec",Psetprec,-1},
+#if defined(INTERVAL) || 1
+	{"setprecword",Psetprecword,-1},
+#endif
+	{0,0,0},
 };
 
 #define MKPREC(a,i,b) (argc(a)==(i)?mkprec(QTOS((Q)(b))):prec)
@@ -83,11 +92,15 @@ void f(NODE,Obj *);\
 void f(ar,rp) NODE ar; Obj *rp;\
 { GEN _pt1_,_pt2_,_pt3_; CALLPARI2(pf,ARG0(ar),ARG1(ar),MKPREC(ar,3,ARG2(ar)),rp); }
 
+#if defined(INTERVAL)
+#define	PREC_CONV	pariK1
+#else
 #if defined(LONG_IS_32BIT)
 #define PREC_CONV		0.103810253
 #endif
 #if defined(LONG_IS_64BIT)
 #define PREC_CONV		0.051905126
+#endif
 #endif
 
 /* XXX : we should be more careful when we free PARI pointers. */
@@ -123,12 +136,41 @@ Obj *rp;
 	int p;
 	Q q;
 
+#if defined(INTERVAL) || 1
+	p = (int)((prec-2)/PREC_CONV); STOQ(p,q); *rp = (Obj)q;
+	if ( arg ) {
+		asir_assert(ARG0(arg),O_N,"setprec");
+		p = QTOS((Q)ARG0(arg));
+		if ( p > 0 )
+			prec = (long)(p*PREC_CONV+3);
+	}
+#else
 	p = (int)((prec-3)/PREC_CONV); STOQ(p,q); *rp = (Obj)q;
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"setprec");
 		prec = mkprec(QTOS((Q)ARG0(arg)));
 	}
+#endif
 }
+
+#if defined(INTERVAL) || 1
+void Psetprecword(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	int p;
+	Q q;
+
+	p = (int)((prec-2)); STOQ(p,q); *rp = (Obj)q;
+	if ( arg ) {
+		asir_assert(ARG0(arg),O_N,"setprecword");
+		p = QTOS((Q)ARG0(arg));
+		if ( p > 0 ) {
+			prec = p + 2;
+		}
+	}
+}
+#endif
 
 void p_pi(arg,rp)
 NODE arg;
