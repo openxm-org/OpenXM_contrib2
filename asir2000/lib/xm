@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.2 1999/12/11 13:50:13 takayama Exp $ */
 /**  xm  **/
 Xm_noX = 0$  
 /* 1 : using X-window system. 0 : not using X-window system. */
@@ -6,7 +6,7 @@ Xm_noX = 0$
          cf. var.sm1,  debugMode
 */
 
-print("xm Version 19991118. ox_help(0); ox_help(\"keyword\"); for help message ")$
+print("xm Version 20000116. ox_help(0); ox_help(\"keyword\"); for help message ")$
 
 
 /*&C-texi
@@ -130,6 +130,8 @@ def ox_check_errors2(P) {
   }
   return(P);
 }
+
+def first(A) {return(A[0]);}
 
 load("sm1")$
 load("gnuplot")$
