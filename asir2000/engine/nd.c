@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.27 2003/08/10 01:31:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.28 2003/08/11 06:58:01 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1350,10 +1350,10 @@ void add_pbucket(int mod,PGeoBucket g,ND d,int l)
 {
 	int k,m;
 
-	for ( k = 0, m = 1; l > m; k++, m <<= 2 );
-	/* 4^(k-1) < l <= 4^k */
+	for ( k = 0, m = 1; l > m; k++, m <<= 1 );
+	/* 2^(k-1) < l <= 2^k (=m) */
 	d = nd_add(mod,g->body[k],d);
-	for ( ; d && nd_length(d) > 1<<(2*k); k++ ) {
+	for ( ; d && nd_length(d) > m; k++, m <<= 1 ) {
 		g->body[k] = 0;
 		d = nd_add(mod,g->body[k+1],d);
 	}
