@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.25 2002/06/06 01:18:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.26 2003/01/04 09:06:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -120,7 +120,7 @@ struct ftab dp_tab[] = {
 	/* Buchberger algorithm */
 	{"dp_gr_main",Pdp_gr_main,5},
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
-	{"dp_gr_f_main",Pdp_gr_f_main,5},
+	{"dp_gr_f_main",Pdp_gr_f_main,4},
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
 
 	/* F4 algorithm */
@@ -1277,17 +1277,22 @@ LIST *rp;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_f_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_gr_f_main");
 	asir_assert(ARG2(arg),O_N,"dp_gr_f_main");
-	asir_assert(ARG3(arg),O_N,"dp_gr_f_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
 	homo = (Num)ARG2(arg);
+#if 0
+	asir_assert(ARG3(arg),O_N,"dp_gr_f_main");
 	m = QTOS((Q)ARG3(arg));
 	if ( m )
 		error("dp_gr_f_main : trace lifting is not implemented yet");
 	create_order_spec(ARG4(arg),&ord);
+#else
+	m = 0;
+	create_order_spec(ARG3(arg),&ord);
+#endif
 	field = 0;
 	for ( n = BDY(f); n; n = NEXT(n) ) {
 		t = get_field_type(BDY(n));

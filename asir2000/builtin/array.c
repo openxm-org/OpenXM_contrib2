@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.25 2001/12/20 08:18:26 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.26 2002/02/06 00:55:03 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -69,6 +69,7 @@ void Pgeneric_gauss_elim_mod();
 
 void Pmat_to_gfmmat(),Plu_gfmmat(),Psolve_by_lu_gfmmat();
 void Pgeninvm_swap(), Premainder(), Psremainder(), Pvtol();
+void Pgeninv_sf_swap();
 void sepvect();
 void Pmulmat_gf2n();
 void Pbconvmat_gf2n();
@@ -107,6 +108,7 @@ struct ftab array_tab[] = {
 	{"leqm1",Pleqm1,2},
 	{"geninvm",Pgeninvm,2},
 	{"geninvm_swap",Pgeninvm_swap,2},
+	{"geninv_sf_swap",Pgeninv_sf_swap,1},
 	{"remainder",Premainder,2},
 	{"sremainder",Psremainder,2},
 	{"mulmat_gf2n",Pmulmat_gf2n,1},
@@ -994,7 +996,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				} else
 					wi[j] = 0;
 
-		rank = find_lhs_and_lu_mod(w,row,col,md,&rinfo,&cinfo);
+		rank = find_lhs_and_lu_mod((unsigned int **)w,row,col,md,&rinfo,&cinfo);
 		a = (Q **)almat_pointer(rank,rank); /* lhs mat */
 		MKMAT(bmat,rank,col-rank); b = (Q **)bmat->body; /* lhs mat */
 		for ( j = li = ri = 0; j < col; j++ )
@@ -1939,7 +1941,9 @@ void mat_to_gfmmat(MAT m,unsigned int md,GFMMAT *rp)
 	TOGFMMAT(row,col,wmat,*rp);
 }
 
-void Pgeninvm_swap(NODE arg,LIST *rp)
+void Pgeninvm_swap(arg,rp)
+NODE arg;
+LIST *rp;
 {
 	MAT m;
 	pointer **mat;
@@ -1985,8 +1989,12 @@ void Pgeninvm_swap(NODE arg,LIST *rp)
 	}
 }
 
-int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,
-	unsigned int md,unsigned int ***invmatp,int **indexp)
+gauss_elim_geninv_mod_swap(mat,row,col,md,invmatp,indexp)
+unsigned int **mat;
+int row,col;
+unsigned int md;
+unsigned int ***invmatp;
+int **indexp;
 {
 	int i,j,k,inv,a,n,m;
 	unsigned int *t,*pivot,*s;
@@ -2030,6 +2038,103 @@ int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,
 		}
 	}
 	*invmatp = invmat = (unsigned int **)almat(col,col);
+	for ( i = 0; i < col; i++ )
+		for ( j = 0, s = invmat[i], t = mat[i]; j < col; j++ )
+			s[j] = t[col+index[j]];
+	return 0;
+}
+
+void Pgeninv_sf_swap(NODE arg,LIST *rp)
+{
+	MAT m;
+	GFS **mat,**tmat;
+	Q *tvect;
+	GFS q;
+	int **wmat,**invmat;
+	int *index;
+	unsigned int t;
+	int i,j,row,col,status;
+	MAT mat1;
+	VECT vect1;
+	NODE node1,node2;
+
+	asir_assert(ARG0(arg),O_MAT,"geninv_sf_swap");
+	m = (MAT)ARG0(arg);
+	row = m->row; col = m->col; mat = (GFS **)m->body;
+	wmat = (int **)almat(row,col+row);
+	for ( i = 0; i < row; i++ ) {
+		bzero((char *)wmat[i],(col+row)*sizeof(int));
+		for ( j = 0; j < col; j++ )
+			if ( q = (GFS)mat[i][j] )
+				wmat[i][j] = FTOIF(CONT(q));
+		wmat[i][col+i] = _onesf();
+	}
+	status = gauss_elim_geninv_sf_swap(wmat,row,col,&invmat,&index);
+	if ( status > 0 )
+		*rp = 0;
+	else {
+		MKMAT(mat1,col,col);
+		for ( i = 0, tmat = (GFS **)mat1->body; i < col; i++ )
+			for ( j = 0; j < col; j++ )
+				if ( t = invmat[i][j] ) {
+					MKGFS(IFTOF(t),tmat[i][j]);
+				}
+		MKVECT(vect1,row);
+		for ( i = 0, tvect = (Q *)vect1->body; i < row; i++ )
+			STOQ(index[i],tvect[i]);
+	 	MKNODE(node2,vect1,0); MKNODE(node1,mat1,node2); MKLIST(*rp,node1);
+	}
+}
+
+int gauss_elim_geninv_sf_swap(int **mat,int row,int col,
+	int ***invmatp,int **indexp)
+{
+	int i,j,k,inv,a,n,m,u;
+	int *t,*pivot,*s;
+	int *index;
+	int **invmat;
+
+	n = col; m = row+col;
+	*indexp = index = (int *)MALLOC_ATOMIC(row*sizeof(int));
+	for ( i = 0; i < row; i++ )
+		index[i] = i;
+	for ( j = 0; j < n; j++ ) {
+		for ( i = j; i < row && !mat[i][j]; i++ );
+		if ( i == row ) {
+			*indexp = 0; *invmatp = 0; return 1;
+		}
+		if ( i != j ) {
+			t = mat[i]; mat[i] = mat[j]; mat[j] = t;
+			k = index[i]; index[i] = index[j]; index[j] = k;	
+		}
+		pivot = mat[j];
+		inv = _invsf(pivot[j]);
+		for ( k = j; k < m; k++ )
+			if ( pivot[k] )
+				pivot[k] = _mulsf(pivot[k],inv);
+		for ( i = j+1; i < row; i++ ) {
+			t = mat[i];
+			if ( a = t[j] )
+				for ( k = j, a = _chsgnsf(a); k < m; k++ )
+					if ( pivot[k] ) {
+						u = _mulsf(pivot[k],a);
+						t[k] = _addsf(u,t[k]);
+					}
+		}
+	}
+	for ( j = n-1; j >= 0; j-- ) {
+		pivot = mat[j];
+		for ( i = j-1; i >= 0; i-- ) {
+			t = mat[i];
+			if ( a = t[j] )
+				for ( k = j, a = _chsgnsf(a); k < m; k++ )
+					if ( pivot[k] ) {
+						u = _mulsf(pivot[k],a);
+						t[k] = _addsf(u,t[k]);
+					}
+		}
+	}
+	*invmatp = invmat = (int **)almat(col,col);
 	for ( i = 0; i < col; i++ )
 		for ( j = 0, s = invmat[i], t = mat[i]; j < col; j++ )
 			s[j] = t[col+index[j]];

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.16 2002/10/31 03:59:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.17 2003/01/04 09:06:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -302,16 +302,18 @@ NODE arg;
 P *rp;
 {
 	DCP dc;
+	MP mp;
 	int m;
+	Obj obj;
 	P p,p1;
 	P *l;
 	V v;
 
-	asir_assert(ARG0(arg),O_P,"sfcont");
-	p = (P)ARG0(arg);
-	if ( NUM(p) )
-		*rp = p;
-	else {
+	obj = (Obj)ARG0(arg);
+	if ( !obj || NUM(obj) )
+		*rp = (P)obj;
+	else if ( OID(obj) == O_P ) {
+		p = (P)obj;
 		if ( argc(arg) == 2 ) {
 			v = VR((P)ARG1(arg));
 			change_mvar(CO,p,v,&p1);
@@ -324,6 +326,12 @@ P *rp;
 		l = (P *)ALLOCA(m*sizeof(P));
 		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ )
 			l[m] = COEF(dc);
+		gcdsf(CO,l,m,rp);
+	} else if ( OID(obj) == O_DP ) {
+		for ( m = 0, mp = BDY((DP)obj); mp; mp = NEXT(mp), m++ );
+		l = (P *)ALLOCA(m*sizeof(P));
+		for ( m = 0, mp = BDY((DP)obj); mp; mp = NEXT(mp), m++)
+			l[m] = mp->c;
 		gcdsf(CO,l,m,rp);
 	}
 }
@@ -377,17 +385,34 @@ int Divum();
 
 UM *resberle();
 
+void reduce_sfdc(DCP sfdc, DCP *dc);
+
 void Pmodfctr(arg,rp)
 NODE arg;
 LIST *rp;
 {
-	DCP dc;
-	int mod;
+	DCP dc,dcu;
+	int mod,i,t;
+	P p;
+	Obj u;
+	VL vl;
 
 	mod = QTOS((Q)ARG1(arg));
 	if ( mod < 0 )
 		error("modfctr : invalid modulus");
-	modfctrp(ARG0(arg),mod,NEWDDD,&dc);
+	p = (P)ARG0(arg);
+	clctv(CO,p,&vl);
+	if ( !NEXT(vl) )
+		modfctrp(ARG0(arg),mod,NEWDDD,&dc);
+	else {
+		/* XXX 16384 should be replaced by a macro */
+		for ( i = 0, t = 1; t*mod < 16384; t *= mod, i++ );
+		current_ff = FF_GFS;
+		setmod_sf(mod,i);
+		simp_ff((Obj)p,&u);
+		mfctrsf(CO,(P)u,&dcu);
+		reduce_sfdc(dcu,&dc);
+	}
 	if ( !dc ) {
 		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
 	}
@@ -603,4 +628,61 @@ VECT *rp;
 	for ( i = 0; i < n; i++ )
 		umtop(v,r[i],(P *)&BDY(result)[i]);
 	*rp = result;
+}
+
+void reduce_sfdc(DCP sfdc,DCP *dcr)
+{
+	P c,t,s,u,f;
+	DCP dc0,dc,tdc;
+	DCP *a;
+	int i,j,n;
+
+	if ( !current_gfs_ext ) {
+		/* we simply apply sfptop() */
+		for ( dc0 = 0; sfdc; sfdc = NEXT(sfdc) ) {
+			NEXTDC(dc0,dc);
+			DEG(dc) = DEG(sfdc);
+			sfptop(COEF(sfdc),&COEF(dc));
+		}
+		NEXT(dc) = 0;
+		*dcr = dc0;
+		return;
+	}
+
+	if ( NUM(COEF(sfdc)) ) {
+		sfptop(COEF(sfdc),&c);
+		sfdc = NEXT(sfdc);
+	} else
+		c = (P)ONE;
+
+	for ( n = 0, tdc = sfdc; tdc; tdc = NEXT(tdc), n++ );
+	a = (DCP *)ALLOCA(n*sizeof(DCP));
+	for ( i = 0, tdc = sfdc; i < n; tdc = NEXT(tdc), i++ )
+		a[i] = tdc;
+
+	dc0 = 0; NEXTDC(dc0,dc); DEG(dc) = ONE; COEF(dc) = c;
+	for ( i = 0; i < n; i++ ) {
+		if ( !a[i] )
+			continue;
+		t = COEF(a[i]);
+		f = t;
+		while ( 1 ) {
+			sf_galois_action(t,ONE,&s);
+			for ( j = i; j < n; j++ )
+				if ( a[j] && !compp(CO,s,COEF(a[j])) )
+					break;
+			if ( j == n )
+				error("reduce_sfdc : cannot happen");
+			if ( j == i ) {
+				NEXTDC(dc0,dc); DEG(dc) = DEG(a[i]);
+				sfptop(f,&COEF(dc));
+				break;
+			} else {
+				mulp(CO,f,s,&u); f = u;
+				t = s;
+				a[j] = 0;
+			}
+		}
+	}
+	*dcr = dc0;
 }
