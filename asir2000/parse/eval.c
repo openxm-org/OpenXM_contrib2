@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.8 2000/12/05 01:24:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.9 2001/08/20 09:50:34 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -100,10 +100,13 @@ FNODE f;
 	if ( !f )
 		return ( 0 );
 	switch ( f->id ) {
+		case I_PAREN:
+			val = eval((FNODE)(FA0(f)));
+			break;
 		case I_BOP:
 			a1 = eval((FNODE)FA1(f)); a2 = eval((FNODE)FA2(f));
 			(*((ARF)FA0(f))->fp)(CO,a1,a2,&val); 
-		break;
+			break;
 		case I_COP:
 			a1 = eval((FNODE)FA1(f)); a2 = eval((FNODE)FA2(f));
 			c = arf_comp(CO,a1,a2);

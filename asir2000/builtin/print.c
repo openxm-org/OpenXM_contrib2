@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.4 2001/08/06 01:48:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -214,6 +214,13 @@ Obj *rp;
 		case I_CDR:
 			fnodetotree((FNODE)FA0(f),&arg);
 			MKSTR(head,"cdr");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_PAREN:
+			fnodetotree((FNODE)FA0(f),&arg);
+			MKSTR(head,"()");
 			n = mknode(2,head,arg);
 			MKLIST(r,n);
 			*rp = (Obj)r;
