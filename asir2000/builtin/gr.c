@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.57 2004/02/03 23:31:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.58 2004/04/22 09:45:24 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1467,7 +1467,7 @@ void reduceall_mod(NODE in,int m,NODE *h)
 		}
 	}
 	for ( top = 0, j = n-1; j >= 0; j-- ) {
-		if ( w[i] >= 0 ) {
+		if ( w[j] >= 0 ) {
 			MKNODE(t,(pointer)w[j],top); top = t;
 		}
 	}
