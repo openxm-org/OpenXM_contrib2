@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.8 2001/08/06 01:48:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.9 2001/08/06 04:25:43 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,6 +89,7 @@ Obj obj;
 {
 	int r;
 	char errmsg[BUFSIZ];
+	LIST l;
 
 	if ( !obj ) {
 		r = CMO_NULL; write_int(s,&r);
@@ -141,7 +142,8 @@ Obj obj;
 			r = ((USINT)obj)->body; write_int(s,&r);
 			break;
 		case O_QUOTE:
-			write_cmo_tree(s,(FNODE)(((QUOTE)obj)->body));
+			fnodetotree(BDY((QUOTE)obj),&l);
+			write_cmo_tree(s,l);
 			break;
 		default:
 			sprintf(errmsg, "write_cmo : id=%d not implemented.",OID(obj));
@@ -418,97 +420,49 @@ ERR e;
 
 /* XXX */
 
-write_cmo_tree(s,f)
+/*
+ * BDY(l) = treenode
+ * treenode = [property,(name,)arglist]
+ * arglist = list of treenode
+ */
+
+write_cmo_tree(s,l)
 FILE *s;
-FNODE f;
+LIST l;
 {
-	int r,i,n;
-	char opname[BUFSIZ];
-	NODE args,t;
-	FUNC fspec;
-	struct oSTRING str,nullstr;
+	NODE n;
+	int r;
+	STRING prop,name,key;
 
-	/* zero */
-	if ( !f ) {
-		r = CMO_NULL; write_int(s,&r);
-		return;
-	}
-
-	/* null string */
-	nullstr.id = O_STR;
-	nullstr.body = 0;
-
-	/* name string */
-	str.id = O_STR;
-	str.body = opname;
-
-	switch ( f->id ) {
-		case I_BOP: case I_COP:
-		case I_AND: case I_OR:
-			/*
-			 * (CMO_TREE (CMO_STRING,op),(CMO_STRING,0)(CMO_LIST,2,arg1,arg2))
-			 */
-			switch ( f->id ) {
-				case I_BOP:
-					strcpy(opname,((ARF)FA0(f))->name); break;
-				case I_COP:
-					switch( (cid)FA0(f) ) {
-						case C_EQ: strcpy(opname,"=="); break;
-						case C_NE: strcpy(opname,"!="); break;
-						case C_GT: strcpy(opname,">"); break;
-						case C_LT: strcpy(opname,"<"); break;
-						case C_GE: strcpy(opname,">="); break;
-						case C_LE: strcpy(opname,"<="); break;
-					}
-					break;
-				case I_AND:
-					strcpy(opname,"&&"); break;
-				case I_OR:
-					strcpy(opname,"||"); break;
-			}
+	/* (CMO_TREE (CMO_LIST,n,key1,attr1,...,keyn,attn),(CMO_LIST,m,arg1,...,argm)) */
+	n = BDY(l);
+	prop = (STRING)BDY(n);	n = NEXT(n);
+	if ( !strcmp(BDY(prop),"internal") ) {
+		write_cmo(s,(Obj)BDY(n));
+	} else {
+		if ( strcmp(BDY(prop),"list") ) {
 			r = CMO_TREE; write_int(s,&r);
-			write_cmo_string(s,&str);	
-			write_cmo_string(s,&nullstr);
+			name = (STRING)BDY(n);
+			n = NEXT(n);
+			/* function name */
+			write_cmo(s,name);
+
+			/* attribute list */
 			r = CMO_LIST; write_int(s,&r);
-			n = 2; write_int(s,&n);
-			write_cmo_tree(s,(FNODE)FA1(f));
-			write_cmo_tree(s,(FNODE)FA2(f));
-			break;
-		case I_NOT:
-			r = CMO_TREE; write_int(s,&r);
-			strcpy(opname,"!");
-			write_cmo_string(s,&str);;
-			write_cmo_string(s,&nullstr);
-			r = CMO_LIST; write_int(s,&r);
-			n = 1; write_int(s,&n);
-			write_cmo_tree(s,(FNODE)FA1(f));
-			break;
-		case I_FUNC:
-			r = CMO_TREE; write_int(s,&r);
-			fspec = (FUNC)FA0(f);
-			strcpy(opname,fspec->name);
-			write_cmo_string(s,&str);	
-			write_cmo_string(s,&nullstr);
-			args = (NODE)FA0((FNODE)FA1(f));
-			r = CMO_LIST; write_int(s,&r);
-			for ( n = 0, t = args; t; t = NEXT(t), n++ );
-			write_int(s,&n);
-			for ( i = 0, t = args; i < n; t = NEXT(t), i++ )
-				write_cmo_tree(s,BDY(t));
-			break;
-		case I_LIST:
-			r = CMO_LIST; write_int(s,&r);
-			args = (NODE)FA0(f);
-			for ( n = 0, t = args; t; t = NEXT(t), n++ );
-			write_int(s,&n);
-			for ( i = 0, t = args; i < n; i++, t = NEXT(t) )
-				write_cmo_tree(s,BDY(t));
-			break;
-		case I_FORMULA:
-			write_cmo(s,FA0(f));
-			break;
-		default:
-			break; /* XXX */
+			r = 2; write_int(s,&r);
+			MKSTR(key,"asir");
+			write_cmo(s,key);
+			write_cmo(s,prop);
+		}
+
+		/* argument list */
+		r = CMO_LIST; write_int(s,&r);
+		/* len = number of arguments */
+		r = length(n); write_int(s,&r);
+		while ( n ) {
+			write_cmo_tree(s,BDY(n));
+			n = NEXT(n);
+		}
 	}
 }
 
@@ -534,6 +488,7 @@ Obj *rp;
 	BYTEARRAY array;
 	QUOTE quote;
 	FNODE fn;
+	LIST list;
 
 	read_int(s,&id);
 	switch ( id ) {
@@ -605,9 +560,14 @@ Obj *rp;
 			read_cmo(s,rp);
 			break;
 		case CMO_TREE:
-			read_cmo_tree(s,&fn);
+			read_cmo_tree_as_list(s,&list);
+#if 0
+			treetofnode(list,&fn);
 			MKQUOTE(quote,fn);
 			*rp = (Obj)quote;
+#else
+			*rp = list;
+#endif
 			break;
 		default:
 			MKUSINT(t,id);
@@ -847,6 +807,8 @@ static struct operator_tab optab[] = {
 
 static int optab_len = sizeof(optab)/sizeof(struct operator_tab);
 
+#if 0
+/* old code */
 read_cmo_tree(s,rp)
 FILE *s;
 FNODE *rp;
@@ -864,7 +826,7 @@ FNODE *rp;
 	FUNC func;
 
 	read_cmo(s,&name);
-	read_cmo(s,&cd); /* XXX: currently not used */
+	read_cmo(s,&attr);
 	for ( i = 0; i < optab_len; i++ )
 		if ( !strcmp(optab[i].name,BDY(name)) )
 			break;
@@ -932,6 +894,23 @@ pointer **argp;
 	}
 	return n;
 }
+#else
+read_cmo_tree_as_list(s,rp)
+FILE *s;
+LIST *rp;
+{
+	STRING name;
+	LIST attr,args;
+	NODE t0,t1;
+
+	read_cmo(s,&name);
+	read_cmo(s,&attr);
+	read_cmo(s,&args);
+	MKNODE(t1,name,BDY(args));
+	MKNODE(t0,attr,t1);
+	MKLIST(*rp,t0);
+}
+#endif
 
 localname_to_cmoname(a,b)
 char *a;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.6 2001/08/22 00:54:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.7 2001/08/22 04:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -205,7 +205,7 @@ Obj *rp;
 			break;
 
 		/* lists */
-		case I_EV: case I_LIST:
+		case I_LIST:
 			n = (NODE)FA0(f);
 			for ( t0 = 0; n; n = NEXT(n) ) {
 				NEXTNODE(t0,t);
@@ -213,19 +213,14 @@ Obj *rp;
 			}
 			if ( t0 )
 				NEXT(t) = 0;
-			switch ( f->id ) {
-				case I_LIST:
-					MKSTR(head,"list"); break;
-				case I_EV:
-					MKSTR(head,"exponent_vector"); break;
-			}
+			MKSTR(head,"list");
 			MKNODE(n,head,t0);
 			MKLIST(r,n);
 			*rp = (Obj)r;
 			break;
 
 		/* function */
-		case I_FUNC: case I_CAR: case I_CDR:
+		case I_FUNC: case I_CAR: case I_CDR: case I_EV:
 			MKSTR(head,"function");
 			switch ( f->id ) {
 				case I_FUNC:
@@ -239,6 +234,11 @@ Obj *rp;
 				case I_CDR:
 					MKSTR(op,"cdr");
 					fnodetotree((FNODE)FA0(f),&arg);
+					break;
+				case I_EV:
+					/* exponent vector; should be treated as function call */
+					MKSTR(op,"exponent_vector");
+					fnodetotree(mkfnode(1,I_LIST,FA0(f)),&arg);
 					break;
 			}
 			t0 = NEXT(BDY(arg)); /* XXX : skip the headers */
@@ -266,3 +266,34 @@ Obj *rp;
 			error("fnodetotree : not implemented yet");
 	}
 }
+
+char *get_attribute(key,attr)
+char *key;
+LIST attr;
+{}
+
+void treetofnode(obj,f)
+Obj obj;
+FNODE *f;
+{
+	NODE n;
+	LIST attr;
+	char *prop;
+
+	if ( obj || OID(obj) != O_LIST ) {
+		/* internal object */
+		*f = mkfnode(1,I_FORMULA,obj);
+	} else {
+		/* [attr(list),name(string),args(node)] */
+		n = BDY((LIST)obj);
+		attr = (LIST)BDY(n); n = NEXT(n);
+		prop = get_attribute("asir",attr);
+		if ( !strcmp(prop,"u_op") ) {
+		} else if ( !strcmp(prop,"b_op") ) {
+		} else if ( !strcmp(prop,"t_op") ) {
+		} else if ( !strcmp(prop,"function") ) {
+		}
+			/* default will be set to P_FUNC */
+	}
+}
+
