@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.12 2001/06/06 02:21:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.13 2001/06/27 09:14:08 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -416,7 +416,9 @@ static Obj pop_one() {
 
 static void terminate_server()
 {
+#if defined(SIGKILL)
 	kill(cpid,SIGKILL);
+#endif
 	exit(0);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.7 2001/06/27 04:07:57 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.8 2001/07/03 01:41:26 noro Exp $ */
 
 #include "ca.h"
 
@@ -8,7 +8,16 @@ extern int *current_gfs_plus1;
 void mulssfum(UM,int,UM);
 void kmulsfummain(UM,UM,UM);
 
-inline int _ADDSF(a,b)
+
+#if defined(__GNUC__)
+#define INLINE inline
+#elif defined(VISUAL)
+#define INLINE __inline
+#else
+#define INLINE
+#endif
+
+INLINE int _ADDSF(a,b)
 int a,b;
 {
 	if ( !a )
@@ -42,7 +51,7 @@ int a,b;
 	}
 }
 
-inline int _MULSF(a,b)
+INLINE int _MULSF(a,b)
 int a,b;
 {
 	if ( !a || !b )

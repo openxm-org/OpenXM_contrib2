@@ -353,14 +353,11 @@ SOURCE=.\builtin\help.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\engine\Hgfs.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\engine\init.c
-
-!IF  "$(CFG)" == "asir2000 - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "asir2000 - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -425,6 +422,10 @@ SOURCE=.\engine\mat.c
 # Begin Source File
 
 SOURCE=.\builtin\math.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\engine\Mgfs.c
 # End Source File
 # Begin Source File
 

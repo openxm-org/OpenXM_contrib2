@@ -356,6 +356,10 @@ SOURCE="..\..\asir2000\builtin\help.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\engine\Hgfs.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\engine\init.c"
 # End Source File
 # Begin Source File
@@ -432,6 +436,10 @@ SOURCE="..\..\asir2000\engine\mat.c"
 # Begin Source File
 
 SOURCE="..\..\asir2000\builtin\math.c"
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\asir2000\engine\Mgfs.c
 # End Source File
 # Begin Source File
 
