@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.32 2004/03/03 09:25:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.33 2004/03/17 02:10:31 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -1266,7 +1266,7 @@ void PRINTFNODE(FNODE f,int paren)
 	if ( paren ) PUTS("(");
 	switch ( f->id ) {
 		/* unary operators */
-		case I_NOT: PRINTFNODE((FNODE)FA0(f),1); break;
+		case I_NOT: PUTS("!"); PRINTFNODE((FNODE)FA0(f),1); break;
 		case I_PAREN: PRINTFNODE((FNODE)FA0(f),0); break;
 		case I_MINUS: PUTS("-"); PRINTFNODE((FNODE)FA0(f),1); break;
 		/* binary operators */
