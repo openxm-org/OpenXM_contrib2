@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.7 2000/12/05 01:24:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.8 2000/12/05 06:59:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -63,10 +63,10 @@ void Pdp_ptozp(), Pdp_ptozp2(), Pdp_red(), Pdp_red2(), Pdp_lcm(), Pdp_redble();
 void Pdp_sp(), Pdp_hm(), Pdp_ht(), Pdp_hc(), Pdp_rest(), Pdp_td(), Pdp_sugar();
 void Pdp_cri1(),Pdp_cri2(),Pdp_subd(),Pdp_mod(),Pdp_red_mod(),Pdp_tdiv();
 void Pdp_prim(),Pdp_red_coef(),Pdp_mag(),Pdp_set_kara(),Pdp_rat();
-void Pdp_nf(),Pdp_true_nf(),Pdp_nf_ptozp();
+void Pdp_nf(),Pdp_true_nf();
 void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
-void Pdp_minp(),Pdp_nf_demand(),Pdp_sp_mod();
+void Pdp_minp(),Pdp_sp_mod();
 void Pdp_homo(),Pdp_dehomo();
 void Pdp_gr_mod_main();
 void Pdp_gr_main(),Pdp_gr_hm_main(),Pdp_gr_d_main(),Pdp_gr_flags();
@@ -95,8 +95,6 @@ struct ftab dp_tab[] = {
 	/* normal form */
 	{"dp_nf",Pdp_nf,4},
 	{"dp_true_nf",Pdp_true_nf,4},
-	{"dp_nf_ptozp",Pdp_nf_ptozp,5},
-	{"dp_nf_demand",Pdp_nf_demand,5},
 	{"dp_nf_mod",Pdp_nf_mod,5},
 	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
 	{"dp_lnf_mod",Pdp_lnf_mod,3},
@@ -442,6 +440,8 @@ DP *rp;
 	dp_rat((DP)ARG0(arg),rp);
 }
 
+extern int DP_Multiple;
+
 void Pdp_nf(arg,rp)
 NODE arg;
 DP *rp;
@@ -460,7 +460,7 @@ DP *rp;
 	}
 	b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
 	full = (Q)ARG3(arg) ? 1 : 0;
-	dp_nf(b,g,ps,full,rp);
+	dp_nf_ptozp(b,g,ps,full,DP_Multiple,rp);
 }
 
 void Pdp_true_nf(arg,rp)
@@ -490,101 +490,6 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_nf_ptozp(arg,rp)
-NODE arg;
-DP *rp;
-{
-	NODE b;
-	DP g;
-	DP *ps;
-	int full,multiple;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_nf_ptozp");
-	asir_assert(ARG1(arg),O_DP,"dp_nf_ptozp");
-	asir_assert(ARG2(arg),O_VECT,"dp_nf_ptozp");
-	asir_assert(ARG3(arg),O_N,"dp_nf_ptozp");
-	asir_assert(ARG4(arg),O_N,"dp_nf_ptozp");
-	if ( !(g = (DP)ARG1(arg)) ) {
-		*rp = 0; return;
-	}
-	b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
-	full = (Q)ARG3(arg) ? 1 : 0;
-	multiple = QTOS((Q)ARG4(arg));
-	dp_nf_ptozp(b,g,ps,full,multiple,rp);
-}
-
-void Pdp_nf_demand(arg,rp)
-NODE arg;
-DP *rp;
-{
-	DP g,u,p,d,s,t,dmy1;
-	P dmy;
-	NODE b,l;
-	DP *hps;
-	MP m,mr;
-	int i,n;
-	int *wb;
-	int full;
-	char *fprefix;
-	int sugar,psugar;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_nf_demand");
-	asir_assert(ARG1(arg),O_DP,"dp_nf_demand");
-	asir_assert(ARG2(arg),O_N,"dp_nf_demand");
-	asir_assert(ARG3(arg),O_VECT,"dp_nf_demand");
-	asir_assert(ARG4(arg),O_STR,"dp_nf_demand");
-	if ( !(g = (DP)ARG1(arg)) ) {
-		*rp = 0; return;
-	}
-	b = BDY((LIST)ARG0(arg)); full = (Q)ARG2(arg) ? 1 : 0;
-	hps = (DP *)BDY((VECT)ARG3(arg)); fprefix = BDY((STRING)ARG4(arg));
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,hps[wb[i]]) ) {
-				FILE *fp;
-				char fname[BUFSIZ];
-
-				sprintf(fname,"%s%d",fprefix,wb[i]);
-				fprintf(stderr,"loading %s\n",fname);
-				fp = fopen(fname,"r"); skipvl(fp);						
-				loadobj(fp,(Obj *)&p); fclose(fp);
-				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				d = t;
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-				
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
-}
-
 void Pdp_nf_mod(arg,rp)
 NODE arg;
 DP *rp;
@@ -593,6 +498,7 @@ DP *rp;
 	DP g;
 	DP *ps;
 	int mod,full,ac;
+	NODE n,n0;
 
 	ac = argc(arg);
 	asir_assert(ARG0(arg),O_LIST,"dp_nf_mod");
@@ -605,7 +511,13 @@ DP *rp;
 	}
 	b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
 	full = QTOS((Q)ARG3(arg)); mod = QTOS((Q)ARG4(arg));
-	dp_nf_mod_qindex(b,g,ps,mod,full,rp);
+	for ( n0 = n = 0; b; b = NEXT(b) ) {
+		NEXTNODE(n0,n);
+		BDY(n) = (pointer)QTOS((Q)BDY(b));
+	}
+	if ( n0 )
+		NEXT(n) = 0;
+	dp_nf_mod(n,g,ps,mod,full,rp);
 }
 
 void Pdp_true_nf_mod(arg,rp)

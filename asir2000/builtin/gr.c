@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.12 2000/12/05 06:59:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.13 2000/12/05 08:29:43 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -74,8 +74,8 @@ typedef struct dp_pairs *DP_pairs;
 #define NEXTDPP(r,c) \
 if(!(r)){NEWDPP(r);(c)=(r);}else{NEWDPP(NEXT(c));(c)=NEXT(c);}
 
-struct oEGT eg_up,eg_sp,eg_spm,eg_nf,eg_nfm;
-struct oEGT eg_znfm,eg_pz,eg_np,eg_mp,eg_ra,eg_mc,eg_gc;
+struct oEGT eg_nf,eg_nfm;
+struct oEGT eg_znfm,eg_pz,eg_np,eg_ra,eg_mc,eg_gc;
 int TP,NBP,NMP,NFP,NDP,ZR,NZR;
 
 #define NEWDP_pairs ((DP_pairs)MALLOC(sizeof(struct dp_pairs)))
@@ -85,6 +85,7 @@ extern int do_weyl;
 
 extern DP_Print;
 
+void dp_imul_d(DP,Q,DP *);
 void print_stat(void);
 void init_stat(void);
 int dp_load_t(int,DP *);
@@ -104,9 +105,7 @@ DP_pairs criterion_M(DP_pairs);
 DP_pairs criterion_B(DP_pairs,int);
 DP_pairs newpairs(NODE,int);
 DP_pairs updpairs(DP_pairs,NODE,int);
-void _dp_nf_ptozp(NODE,DP,DP *,int,int,DP *);
-void _dp_nf_ptozp_mpi(NODE,DP,DP *,int,int,DP *);
-void _dp_nf(NODE,DP,DP *,int,DP *);
+void _dp_nf(NODE,DP,DP *,int,int,DP *);
 NODE gb_mod(NODE,int);
 NODE gbd(NODE,int,NODE,NODE);
 NODE gb(NODE,int,NODE);
@@ -153,26 +152,30 @@ static int *pss;
 static int psn,pslen;
 static int NVars,CNVars,PCoeffs;
 static VL VC;
+
+int DP_Print = 0;
+int DP_Multiple = 0;
+LIST Dist = 0;
+int NoGCD = 0;
+int GenTrace = 0;
+int OXCheck = -1;
+
+static DP_NFStat = 0;
 static int NoSugar = 0;
 static int NoCriB = 0;
 static int NoGC = 0;
 static int NoMC = 0;
 static int NoRA = 0;
-int DP_Print = 0;
 static int DP_PrintShort = 0;
 static int ShowMag = 0;
 static int Stat = 0;
-static int Multiple = 0;
 static int Denominator = 1;
 static int Top = 0;
 static int Reverse = 0;
 static int Max_mag = 0;
 static char *Demand = 0;
 static int PtozpRA = 0;
-LIST Dist = 0;
-int NoGCD = 0;
-int GenTrace = 0;
-int OXCheck = -1;
+
 int doing_f4;
 NODE TraceList;
 
@@ -1057,14 +1060,7 @@ NODE *h;
 			MKLIST(hist,node);
 			MKNODE(TraceList,hist,0);
 		}
-		if ( !PtozpRA || !Multiple )
-			_dp_nf(top,ps[w[i]],ps,1,&g);
-		else
-#if MPI
-			_dp_nf_ptozp_mpi(top,ps[w[i]],ps,1,Multiple,&g);
-#else
-			_dp_nf_ptozp(top,ps[w[i]],ps,1,Multiple,&g);
-#endif
+		_dp_nf(top,ps[w[i]],ps,1,PtozpRA?DP_Multiple:0,&g);
 		prim_part(g,0,&g1);
 		get_eg(&tmp1); add_eg(&eg_ra,&tmp0,&tmp1);
 		if ( DP_Print || DP_PrintShort ) {
@@ -1378,27 +1374,21 @@ NODE subst;
 		gall = append_one(gall,i);
 	}
 	while ( d ) {
-		get_eg(&tmp0);
-		l = minp(d,&d1); d = d1;
-		get_eg(&tmp1); add_eg(&eg_mp,&tmp0,&tmp1);
+		l = minp(d,&d);
 		if ( m ) {
-			get_eg(&tspm0);
 			_dp_sp_mod_dup(psm[l->dp1],psm[l->dp2],m,&h);
 			if ( h )
 				new_sugar = h->sugar;
-			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1);
 			get_eg(&tnfm0);
 			_dp_nf_mod_destructive(gall,h,psm,m,0,&nfm);
 			get_eg(&tnfm1); add_eg(&eg_nfm,&tnfm0,&tnfm1);
 		} else
 			nfm = (DP)1;
 		if ( nfm ) {
-			get_eg(&tsp0);
 			if ( Demand ) {
 				if ( dp_load_t(psn,&nf) ) {
 					skip_nf_flag = 1;
-					get_eg(&tsp1); add_eg(&eg_nf,&tsp0,&tsp1);
-					tnf0=tsp0; tnf1=tsp1;
+					tnf1=tsp1;
 					goto skip_nf;
 				} else {
 					skip_nf_flag = 0;
@@ -1413,17 +1403,9 @@ NODE subst;
 			}
 			if ( h )
 				new_sugar = h->sugar;
-			get_eg(&tsp1); add_eg(&eg_sp,&tsp0,&tsp1);
 			get_eg(&tnf0);
 			t_0 = get_rtime();
-			if ( !Multiple )
-				_dp_nf(gall,h,ps,!Top,&nf);
-			else
-#if MPI
-				_dp_nf_ptozp_mpi(gall,h,ps,!Top,Multiple,&nf);
-#else
-				_dp_nf_ptozp(gall,h,ps,!Top,Multiple,&nf);
-#endif
+			_dp_nf(gall,h,ps,!Top,DP_Multiple,&nf);
 			if ( DP_Print )
 				fprintf(asir_out,"(%.3g)",get_rtime()-t_0);
 			get_eg(&tnf1); add_eg(&eg_nf,&tnf0,&tnf1);
@@ -1484,99 +1466,6 @@ skip_nf:
 	return g;
 }
 
-NODE gbd(f,m,subst,dlist)
-NODE f;
-int m;
-NODE subst;
-NODE dlist;
-{
-	int i,nh,prev;
-	NODE r,g,gall;
-	struct dp_pairs ol;
-	DP_pairs l;
-	NODE pair;
-	DP h,nf,nfm,dp1,dp2;
-	struct oEGT tnf0,tnf1,tnfm0,tnfm1,tpz0,tpz1,tsp0,tsp1,tspm0,tspm1,tnp0,tnp1;
-
-	prev = 1;
-	l = &ol;
-	if ( m ) {
-		psm = (DP *)MALLOC(pslen*sizeof(DP));
-		for ( i = 0; i < psn; i++ )
-			if ( psh[i] && !validhc(psc[i],m,subst) )
-				return 0;
-			else
-				_dp_mod(ps[i],m,subst,&psm[i]);
-	}
-	for ( gall = g = 0, r = f; r; r = NEXT(r) ) {
-		i = (int)BDY(r);
-		g = updbase(g,i);
-		gall = append_one(gall,i);
-	}
-	while ( dlist ) {
-		pair = BDY((LIST)BDY(dlist)); dlist = NEXT(dlist);
-		l->dp1 = QTOS((Q)BDY(pair)); pair = NEXT(pair);
-		l->dp2 = QTOS((Q)BDY(pair));
-		if ( m ) {
-			get_eg(&tspm0);
-			_dp_sp_mod_dup(ps[l->dp1],ps[l->dp2],m,&h);
-			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1);
-			get_eg(&tnfm0);
-			_dp_nf_mod_destructive(gall,h,ps,m,!Top,&nf);
-			get_eg(&tnfm1); add_eg(&eg_nfm,&tnfm0,&tnfm1);
-		} else
-			nfm = (DP)1;
-		if ( nfm ) {
-			get_eg(&tsp0);
-			if ( Demand ) {
-				dp_load(l->dp1,&dp1); dp_load(l->dp2,&dp2);
-				dp_sp(dp1,dp2,&h);
-			} else
-				dp_sp(ps[l->dp1],ps[l->dp2],&h);
-			get_eg(&tsp1); add_eg(&eg_sp,&tsp0,&tsp1);
-			get_eg(&tnfm0);
-			get_eg(&tnf0);
-			if ( !Multiple )
-				_dp_nf(gall,h,ps,!Top,&nf);
-			else
-				_dp_nf_ptozp(gall,h,ps,!Top,Multiple,&nf);
-			get_eg(&tnf1); add_eg(&eg_nf,&tnf0,&tnf1);
-		} else
-			nf = 0;
-		if ( nf ) {
-			NZR++;
-			get_eg(&tpz0);
-			prim_part(nf,0,&h);
-			get_eg(&tpz1); add_eg(&eg_pz,&tpz0,&tpz1);
-			get_eg(&tnp0);
-			nh = newps(h,m,subst);
-			get_eg(&tnp1); add_eg(&eg_np,&tnp0,&tnp1);
-			if ( nh < 0 )
-				return 0;
-			g = updbase(g,nh);
-			gall = append_one(gall,nh);
-			if ( DP_Print ) {
-				if ( !prev )
-					fprintf(asir_out,"\n");
-				print_split_eg(&tnf0,&tnf1); fflush(asir_out);
-				fprintf(asir_out,"(%d,%d),nb=%d,nab=%d,rp=%d,sugar=%d",l->dp1,l->dp2,length(g),length(gall),length(dlist),pss[nh]);
-				printdl(psh[nh]); fprintf(asir_out,"\n"); fflush(asir_out);
-			}
-			prev = 1;
-		} else {
-			if ( m )
-				add_eg(&eg_znfm,&tnfm0,&tnfm1);
-			ZR++;
-			if ( DP_Print ) {
-				fprintf(asir_out,"."); fflush(asir_out); prev = 0;
-			}
-		}
-	}
-	if ( DP_Print )
-		fprintf(asir_out,"gb done\n");
-	return g;
-}
-
 NODE gb_mod(f,m)
 NODE f;
 int m;
@@ -1596,16 +1485,14 @@ int m;
 		gall = append_one(gall,i);
 	}
 	while ( d ) {
-		get_eg(&tmp0);
-		l = minp(d,&d1); d = d1;
-		get_eg(&tmp1); add_eg(&eg_mp,&tmp0,&tmp1); get_eg(&tspm0);
+		l = minp(d,&d);
 		if ( PCoeffs ) {
 			dp_sp_mod(ps[l->dp1],ps[l->dp2],m,&h);
-			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1); get_eg(&tnfm0);
+			get_eg(&tnfm0);
 			dp_nf_mod(gall,h,ps,m,!Top,&nf);
 		} else {
 			_dp_sp_mod_dup(ps[l->dp1],ps[l->dp2],m,&h);
-			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1); get_eg(&tnfm0);
+			get_eg(&tnfm0);
 			_dp_nf_mod_destructive(gall,h,ps,m,!Top,&nf);
 		}
 		get_eg(&tnfm1); add_eg(&eg_nfm,&tnfm0,&tnfm1);
@@ -1643,513 +1530,6 @@ int m;
 	return g;
 }
 
-void _dp_nf(b,g,ps,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int full;
-DP *rp;
-{
-	DP u,p,d,s,t,mult;
-	P coef;
-	NODE l;
-	MP m,mr;
-	int sugar,psugar;
-
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, l = b; l; l = NEXT(l) ) {
-			if ( dl_redble(BDY(g)->dl,psh[(int)BDY(l)]) ) {
-				dp_load((int)BDY(l),&p);
-				/* t+u = coef*(d+g) - mult*p (t = coef*d) */
-				dp_red(d,g,p,&t,&u,&coef,&mult);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( GenTrace ) {
-					LIST hist;
-					Q cq;
-					NODE node,node0;
-
-					STOQ((int)BDY(l),cq);
-					node0 = mknode(4,coef,cq,mult,ONE);
-					MKLIST(hist,node0);
-					MKNODE(node,hist,TraceList); TraceList = node;
-				}
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				d = t;
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
-}
-
-#define SAFENM(q) ((q)?NM(q):0)
-
-double pz_t_e, pz_t_d, pz_t_d1, pz_t_c, im_t_s, im_t_r;
-
-extern int GenTrace;
-extern NODE TraceList;
-
-void _dp_nf_ptozp(b,g,ps,full,multiple,r)
-NODE b;
-DP g;
-DP *ps;
-int full,multiple;
-DP *r;
-{
-	DP u,dp,rp,t,t1,t2,red,shift;
-	Q dc,rc,dcq,rcq,cont,hr,hred,cr,cred,mcred,c,gcd,cq;
-	N gn,tn,cn;
-	NODE l;
-	MP m,mr;
-	int hmag,denom;
-	int sugar,psugar;
-	NODE dist;
-	STRING imul;
-	int ndist;
-	int kara_bit;
-	extern int kara_mag;
-	double get_rtime();	
-	double t_0,t_00,tt,ttt,t_p,t_m,t_m1,t_m2,t_s,t_g,t_a;
-	LIST hist;
-	NODE node;
-	Q rcred,mrcred;
-
-	if ( !g ) {
-		*r = 0; return;
-	}
-	pz_t_e = pz_t_d = pz_t_d1 = pz_t_c = 0;
-	t_p = t_m = t_m1 = t_m2 = t_s = t_g = t_a = 0;
-
-	denom = Denominator?Denominator:1;
-	hmag = multiple*HMAG(g)/denom;
-	kara_bit = kara_mag*27; /* XXX */
-	if ( Dist ) {
-		dist = BDY(Dist);
-		ndist = length(dist);
-	}
-	sugar = g->sugar;
-
-	dc = 0; dp = 0; rc = ONE; rp = g;
-	MKSTR(imul,"dp_imul_index");
-
-	/* g = dc*dp+rc*rp */
-	for ( ; rp; ) {
-		for ( u = 0, l = b; l; l = NEXT(l) ) {
-			if ( dl_redble(BDY(rp)->dl,psh[(int)BDY(l)]) ) {
-				t_0 = get_rtime();
-				dp_load((int)BDY(l),&red);
-				hr = (Q)BDY(rp)->c; hred = (Q)BDY(red)->c;
-				gcdn(NM(hr),NM(hred),&gn);
-				divsn(NM(hred),gn,&tn); NTOQ(tn,SGN(hred),cr);
-				divsn(NM(hr),gn,&tn); NTOQ(tn,SGN(hr),cred);
-				tt = get_rtime()-t_0; t_p += tt;
-
-				t_0 = get_rtime();
-				dp_subd(rp,red,&shift);
-				if ( Dist && ndist && HMAG(red) > kara_bit ) {
-					NODE n0,n1,n2,n3;
-					int i,s,id;
-					Obj dmy;
-					Q ind;
-
-					if ( DP_Print )
-						fprintf(asir_out,"d");
-					i = (int)BDY(l); STOQ(i,ind);
-					chsgnp((P)cred,(P *)&mcred);
-
-					MKNODE(n3,ind,0); MKNODE(n2,mcred,n3);
-					MKNODE(n1,imul,n2); MKNODE(n0,BDY(dist),n1); 
-					Pox_rpc(n0,&dmy);
-					muldc(CO,rp,(P)cr,&t);
-					NEXT(n0)=0;
-					Pox_pop_local(n0,&t1);
-				} else {
-/*					
-					if ( DP_Print )
-						fprintf(asir_out,"l");
-*/
-					t_00 = get_rtime();
-					muldc(CO,rp,(P)cr,&t);
-					ttt = get_rtime()-t_00; t_m1 += ttt/dp_nt(rp);
-					t_00 = get_rtime();
-					chsgnp((P)cred,(P *)&mcred);
-					muldc(CO,red,(P)mcred,&t1);
-					ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
-				}
-				t_00 = get_rtime();
-				muld(CO,shift,t1,&t2);
-				addd(CO,t,t2,&u);
-				tt = get_rtime(); t_m += tt-t_0;
-				ttt = get_rtime(); t_s += ttt-t_00;
-
-				psugar = (BDY(rp)->dl->td - BDY(red)->dl->td) + red->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( GenTrace ) {
-					/* u = cr*rp + (-cred)*shift*red */ 
-					STOQ((int)BDY(l),cq);
-					node = mknode(4,cr,cq,0,0);
-					mulq(cred,rc,&rcred);
-					chsgnnum((Num)rcred,(Num *)&mrcred);
-					muldc(CO,shift,(P)mrcred,(DP *)&ARG2(node));
-					MKLIST(hist,node);
-				}
-				if ( !u ) {
-					if ( dp )
-						dp->sugar = sugar;
-					*r = dp;
-					if ( GenTrace ) {
-						ARG3(BDY(hist)) = ONE;
-						MKNODE(node,hist,TraceList); TraceList = node;
-					}
-					goto final;
-				}
-				break;
-			}
-		}
-		if ( u ) {
-			if ( HMAG(u) > hmag ) {
-				t_0 = get_rtime();
-				if ( Dist && HMAG(u) > kara_bit ) {
-					if ( DP_Print )
-						fprintf(asir_out,"D");
-					dp_ptozp_d(dist,ndist,u,&t);
-				} else {
-					if ( DP_Print )
-						fprintf(asir_out,"L");
-					dp_ptozp_d(0,0,u,&t);
-				}
-				tt = get_rtime()-t_0; t_g += tt;
-				t_0 = get_rtime();
-				divsn(NM((Q)BDY(u)->c),NM((Q)BDY(t)->c),&cn); NTOQ(cn,1,cont);
-				if ( !dp_fcoeffs && DP_Print ) {
-					fprintf(asir_out,"(%d)",p_mag((P)cont)*100/p_mag((P)BDY(u)->c));
-					fflush(asir_out);
-				}
-				mulq(cr,dc,&dcq);
-				mulq(cont,rc,&rcq);
-				gcdn(SAFENM(dcq),SAFENM(rcq),&gn);
-				divsn(SAFENM(dcq),gn,&tn); NTOQ(tn,SGN(dcq),dc);
-				divsn(SAFENM(rcq),gn,&tn); NTOQ(tn,SGN(rcq),rc);
-				tt = get_rtime()-t_0; t_a += tt;
-				rp = t;
-				hmag = multiple*HMAG(rp)/denom;
-				if ( GenTrace ) {
-					NTOQ(gn,1,gcd);
-					ARG3(BDY(hist)) = (pointer)gcd;
-					MKNODE(node,hist,TraceList); TraceList = node;
-				}
-			} else {
-				t_0 = get_rtime();
-				mulq(cr,dc,&dcq); dc = dcq;
-				tt = get_rtime()-t_0; t_a += tt;
-				rp = u;
-				if ( GenTrace ) {
-					ARG3(BDY(hist)) = (pointer)ONE;
-					MKNODE(node,hist,TraceList); TraceList = node;
-				}
-			}
-		} else if ( !full ) {
-			if ( rp ) {
-				MKDP(rp->nv,BDY(rp),t); t->sugar = sugar; rp = t;
-			}
-			*r = rp;
-			goto final;
-		} else {
-			t_0 = get_rtime();
-			mulq((Q)BDY(rp)->c,rc,&c);
-			gcdn(SAFENM(dc),SAFENM(c),&gn); NTOQ(gn,1,gcd);
-			divsn(SAFENM(dc),gn,&tn); NTOQ(tn,SGN(dc),dcq);
-			divsn(SAFENM(c),gn,&tn); NTOQ(tn,SGN(c),cq);
-			muldc(CO,dp,(P)dcq,&t1);
-			m = BDY(rp); NEWMP(mr); mr->dl = m->dl; mr->c = (P)cq;
-			NEXT(mr) = 0; MKDP(rp->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,t,t1,&dp);
-			dc = gcd;
-
-			dp_rest(rp,&t); rp = t;
-			tt = get_rtime()-t_0; t_a += tt;
-		}
-	}
-	if ( GenTrace ) {
-		mulq(ARG3(BDY((LIST)BDY(TraceList))),dc,&cq);
-		ARG3(BDY((LIST)BDY(TraceList))) = (pointer)cq;
-	}
-	if ( dp )
-		dp->sugar = sugar;
-	*r = dp;
-final:
-	if ( DP_Print )
-		fprintf(asir_out,"(%.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g)",
-			t_p,t_m,t_m1,t_m2,t_s,
-			t_g,t_a,
-			pz_t_e, pz_t_d, pz_t_d1, pz_t_c);
-}
-
-void dp_imul_d();
-void imulv();
-
-void _dp_nf_ptozp_mpi(b,g,ps,full,multiple,r)
-NODE b;
-DP g;
-DP *ps;
-int full,multiple;
-DP *r;
-{
-	Obj dmy;
-	DP u,dp,rp,t,t1,t2,red,shift;
-	Q dc,rc,dcq,rcq,cont,hr,hred,cr,cred,mcred,c,gcd,cq;
-	N gn,tn,cn;
-	NODE l,n0,n1,n2,n3;
-	MP m,mr;
-	int i,n;
-	int hmag,denom;
-	int sugar,psugar;
-	NODE dist;
-	STRING imul;
-	int ndist;
-	int kara_bit;
-	extern int kara_mag;
-	extern int mpi_mag;
-	Q ind;
-	int id;
-	double get_rtime();	
-	double t_0,t_00,tt,ttt,t_p,t_m,t_m1,t_m2,t_s,t_g,t_a;
-
-	if ( !g ) {
-		*r = 0; return;
-	}
-	pz_t_e = pz_t_d = pz_t_d1 = pz_t_c = 0;
-	t_p = t_m = t_m1 = t_m2 = t_s = t_g = t_a = 0;
-
-	denom = Denominator?Denominator:1;
-	hmag = multiple*HMAG(g)/denom;
-	kara_bit = kara_mag*27; /* XXX */
-	if ( Dist ) {
-		dist = BDY(Dist);
-		ndist = length(dist);
-	}
-	sugar = g->sugar;
-
-	dc = 0; dp = 0; rc = ONE; rp = g;
-	MKSTR(imul,"dp_imul_index");
-
-	for ( ; rp; ) {
-		for ( u = 0, l = b; l; l = NEXT(l) ) {
-			if ( dl_redble(BDY(rp)->dl,psh[(int)BDY(l)]) ) {
-				t_0 = get_rtime();
-				dp_load((int)BDY(l),&red);
-				hr = (Q)BDY(rp)->c; hred = (Q)BDY(red)->c;
-				gcdn(NM(hr),NM(hred),&gn);
-				divsn(NM(hred),gn,&tn); NTOQ(tn,SGN(hred),cr);
-				divsn(NM(hr),gn,&tn); NTOQ(tn,SGN(hr),cred);
-				tt = get_rtime()-t_0; t_p += tt;
-
-				t_0 = get_rtime();
-				dp_subd(rp,red,&shift);
-				t_00 = get_rtime();
-				if ( Dist && ndist 
-					&& HMAG(rp) > mpi_mag && p_mag((P)cr) > mpi_mag ) {
-					if ( DP_Print ) fprintf(asir_out,"~");
-					dp_imul_d(rp,cr,&t);
-				} else {
-					if ( DP_Print ) fprintf(asir_out,"_");
-					muldc(CO,rp,(P)cr,&t);
-				}
-				ttt = get_rtime()-t_00; t_m1 += ttt/dp_nt(rp);
-
-				t_00 = get_rtime();
-				chsgnp((P)cred,(P *)&mcred);
-				if ( Dist && ndist 
-					&& HMAG(red) > mpi_mag && p_mag((P)mcred) > mpi_mag ) {
-					if ( DP_Print ) fprintf(asir_out,"=");
-					dp_imul_d(red,mcred,&t1);
-				} else {
-					if ( DP_Print ) fprintf(asir_out,"_");
-					muldc(CO,red,(P)mcred,&t1);
-				}
-				ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
-
-				t_00 = get_rtime();
-				muld(CO,shift,t1,&t2);
-				addd(CO,t,t2,&u);
-				tt = get_rtime(); t_m += tt-t_0;
-				ttt = get_rtime(); t_s += ttt-t_00;
-
-				psugar = (BDY(rp)->dl->td - BDY(red)->dl->td) + red->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( dp )
-						dp->sugar = sugar;
-					*r = dp;
-					goto final;
-				}
-				break;
-			}
-		}
-		if ( u ) {
-			if ( HMAG(u) > hmag ) {
-				t_0 = get_rtime();
-				if ( Dist && HMAG(u) > mpi_mag ) {
-					if ( DP_Print )
-						fprintf(asir_out,"D");
-					dp_ptozp_d(dist,ndist,u,&t);
-				} else {
-					if ( DP_Print )
-						fprintf(asir_out,"L");
-					dp_ptozp_d(0,0,u,&t);
-				}
-				tt = get_rtime()-t_0; t_g += tt;
-				t_0 = get_rtime();
-				divsn(NM((Q)BDY(u)->c),NM((Q)BDY(t)->c),&cn); NTOQ(cn,1,cont);
-				if ( DP_Print ) {
-					fprintf(asir_out,"(%d)",p_mag((P)cont)*100/p_mag((P)BDY(u)->c));
-					fflush(asir_out);
-				}
-				mulq(cr,dc,&dcq);
-				mulq(cont,rc,&rcq);
-				gcdn(SAFENM(dcq),SAFENM(rcq),&gn);
-				divsn(SAFENM(dcq),gn,&tn); NTOQ(tn,SGN(dcq),dc);
-				divsn(SAFENM(rcq),gn,&tn); NTOQ(tn,SGN(rcq),rc);
-				tt = get_rtime()-t_0; t_a += tt;
-				rp = t;
-				hmag = multiple*HMAG(rp)/denom;
-			} else {
-				t_0 = get_rtime();
-				mulq(cr,dc,&dcq); dc = dcq;
-				tt = get_rtime()-t_0; t_a += tt;
-				rp = u;
-			}
-		} else if ( !full ) {
-			if ( rp ) {
-				MKDP(rp->nv,BDY(rp),t); t->sugar = sugar; rp = t;
-			}
-			*r = rp;
-			goto final;
-		} else {
-			t_0 = get_rtime();
-			mulq((Q)BDY(rp)->c,(Q)rc,(Q *)&c);
-			gcdn(SAFENM(dc),SAFENM(c),&gn); NTOQ(gn,1,gcd);
-			divsn(SAFENM(dc),gn,&tn); NTOQ(tn,SGN(dc),dcq);
-			divsn(SAFENM(c),gn,&tn); NTOQ(tn,SGN(c),cq);
-			muldc(CO,dp,(P)dcq,&t1);
-			m = BDY(rp); NEWMP(mr); mr->dl = m->dl; mr->c = (P)cq;
-			NEXT(mr) = 0; MKDP(rp->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,t,t1,&dp);
-			dc = gcd;
-
-			dp_rest(rp,&t); rp = t;
-			tt = get_rtime()-t_0; t_a += tt;
-		}
-	}
-	if ( dp )
-		dp->sugar = sugar;
-	*r = dp;
-final:
-	if ( DP_Print )
-		fprintf(asir_out,"(%.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g)",
-			t_p,t_m,t_m1,t_m2,t_s,
-			t_g,t_a,
-			pz_t_e, pz_t_d, pz_t_d1, pz_t_c);
-}
-
-void dp_imul_d(p,q,rp)
-DP p;
-Q q;
-DP *rp;
-{
-	int nsep,ndist,i,j,k,l,n;
-	double t0,t1,t2;
-	Q *s;
-	pointer *b;
-	VECT c,cs,ri;
-	VECT *r;
-	MP m;
-	NODE tn,dist,n0,n1,n2;
-	Obj dmy;
-	STRING imul;
-
-	extern LIST Dist;
-
-	if ( !p || !q ) {
-		*rp = 0; return;
-	}
-	dist = BDY(Dist);
-	for ( tn = dist, ndist = 0; tn; tn = NEXT(tn), ndist++ );
-	nsep = ndist + 1;
-	for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
-	if ( n <= nsep ) {
-		muldc(CO,p,(P)q,rp); return;
-	}
-	MKSTR(imul,"imulv");
-	t0 = get_rtime();
-	dp_dtov(p,&c);
-	sepvect(c,nsep,&cs);
-	r = (VECT *)CALLOC(nsep,sizeof(VECT *));
-	for ( i = 0, tn = dist, b = BDY(cs); i < ndist; i++, tn = NEXT(tn) ) {
-		n0 = mknode(4,BDY(tn),imul,b[i],q);
-		Pox_rpc(n0,&dmy);
-	}
-	t1 = get_rtime();
-	im_t_s += t1 - t0;
-	imulv(b[i],q,&r[i]);
-	t1 = get_rtime();
-	for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
-		MKNODE(n0,BDY(tn),0);
-		Pox_pop_local(n0,&r[i]);
-		if ( OID(r[i]) == O_ERR ) {
-			printexpr(CO,(Obj)r[i]);
-			error("dp_imul_d : aborted");
-		}
-	}
-	t2 = get_rtime();
-	im_t_r += t2 - t1;
-	s = (Q *)CALLOC(n,sizeof(Q));
-	for ( i = j = 0; i < nsep; i++ ) {
-		for ( k = 0, ri = r[i], l = ri->len; k < l; k++, j++ ) {
-			s[j] = (Q)BDY(ri)[k];
-		}
-	}
-	dp_vtod(s,p,rp);
-}
-
-void imulv(w,c,rp)
-VECT w;
-Q c;
-VECT *rp;
-{
-	int n,i;
-	VECT r;
-
-	n = w->len;
-	MKVECT(r,n); *rp = r;
-	for ( i = 0; i < n; i++ )
-		mulq((Q)BDY(w)[i],(Q)c,(Q *)&BDY(r)[i]);
-}
-
 DP_pairs updpairs( d, g, t)
 DP_pairs d;
 NODE /* of index */ g;
@@ -2160,7 +1540,6 @@ int t;
 	int dl,dl1;
 
 	if ( !g ) return d;
-	get_eg(&tup0);
 	if ( !NoCriB && d ) {
 		dl = DPPlength(d);
 		d = criterion_B( d, t );
@@ -2186,8 +1565,6 @@ int t;
 	else
 		dd = d1;
 	dl1 = DPPlength(dd); NDP += (dl-dl1);
-	get_eg(&tup1);
-	add_eg(&eg_up,&tup0,&tup1);
 	if ( !(nd = d) ) return dd;
 	while ( nd = NEXT(d1 = nd) ) ;
 	NEXT(d1) = dd;
@@ -2427,7 +1804,7 @@ NODE f;
 		l = d; d = NEXT(d);
 		get_eg(&tmp0);
 		dp_load(l->dp1,&dp1); dp_load(l->dp2,&dp2); dp_sp(dp1,dp2,&h);
-		_dp_nf(gall,h,ps,1,&nf);
+		_dp_nf(gall,h,ps,1,0,&nf);
 		get_eg(&tmp1); add_eg(&eg_gc,&tmp0,&tmp1);
 		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
@@ -2453,7 +1830,7 @@ NODE f,x;
 	}
 	for ( ; f; f = NEXT(f) ) {
 		get_eg(&tmp0);
-		_dp_nf(x,(DP)BDY(f),ps,1,&g);
+		_dp_nf(x,(DP)BDY(f),ps,1,0,&g);
 		get_eg(&tmp1); add_eg(&eg_mc,&tmp0,&tmp1);
 		if ( DP_Print ) {
 			print_split_eg(&tmp0,&tmp1); fflush(asir_out);
@@ -2502,16 +1879,18 @@ Obj name,value;
 		Top = v;
 	else if ( !strcmp(n,"ShowMag") )
 		ShowMag = v;
-	else if ( !strcmp(n,"DP_PrintShort") )
+	else if ( !strcmp(n,"PrintShort") )
 		DP_PrintShort = v;
-	else if ( !strcmp(n,"DP_Print") )
+	else if ( !strcmp(n,"Print") )
 		DP_Print = v;
+	else if ( !strcmp(n,"NFStat") )
+		DP_NFStat = v;
 	else if ( !strcmp(n,"Stat") )
 		Stat = v;
 	else if ( !strcmp(n,"Reverse") )
 		Reverse = v;
 	else if ( !strcmp(n,"Multiple") )
-		Multiple = v;
+		DP_Multiple = v;
 	else if ( !strcmp(n,"Denominator") )
 		Denominator = v;
 	else if ( !strcmp(n,"PtozpRA") )
@@ -2529,12 +1908,13 @@ LIST *list;
 	STRING name,path;
 	NODE n,n1;
 
-	STOQ(Multiple,v); MKNODE(n,v,0); MKSTR(name,"Multiple"); MKNODE(n1,name,n); n = n1;
+	STOQ(DP_Multiple,v); MKNODE(n,v,0); MKSTR(name,"DP_Multiple"); MKNODE(n1,name,n); n = n1;
 	STOQ(Denominator,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Denominator"); MKNODE(n1,name,n); n = n1;
 	MKNODE(n1,Dist,n); n = n1; MKSTR(name,"Dist"); MKNODE(n1,name,n); n = n1;
 	STOQ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
 	STOQ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
-	STOQ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"DP_Print"); MKNODE(n1,name,n); n = n1;
+	STOQ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
+	STOQ(DP_NFStat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NFStat"); MKNODE(n1,name,n); n = n1;
 	STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
 	STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
 	STOQ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
@@ -2606,19 +1986,294 @@ DP *p;
 }
 
 void init_stat() {
-	init_eg(&eg_up); init_eg(&eg_sp); init_eg(&eg_spm);
 	init_eg(&eg_nf); init_eg(&eg_nfm); init_eg(&eg_znfm);
-	init_eg(&eg_pz); init_eg(&eg_np); init_eg(&eg_mp);
+	init_eg(&eg_pz); init_eg(&eg_np);
 	init_eg(&eg_ra); init_eg(&eg_mc); init_eg(&eg_gc);
-	ZR = NZR = TP = NBP = NMP = NFP = NDP = 0;
+	ZR = NZR = TP = NBP = NFP = NDP = 0;
 }
 
 void print_stat() {
 	if ( !DP_Print && !Stat )
 		return;
-	print_eg("UP",&eg_up); print_eg("SP",&eg_sp); print_eg("SPM",&eg_spm);
 	print_eg("NF",&eg_nf); print_eg("NFM",&eg_nfm); print_eg("ZNFM",&eg_znfm);
-	print_eg("PZ",&eg_pz); print_eg("NP",&eg_np); print_eg("MP",&eg_mp);
+	print_eg("PZ",&eg_pz); print_eg("NP",&eg_np);
 	print_eg("RA",&eg_ra); print_eg("MC",&eg_mc); print_eg("GC",&eg_gc);
 	fprintf(asir_out,"T=%d,B=%d M=%d F=%d D=%d ZR=%d NZR=%d\n",TP,NBP,NMP,NFP,NDP,ZR,NZR);
 }
+
+/*
+ * dp_nf used in gb()
+ *
+ */
+
+#define SAFENM(q) ((q)?NM(q):0)
+
+double pz_t_e, pz_t_d, pz_t_d1, pz_t_c, im_t_s, im_t_r;
+
+extern int GenTrace;
+extern NODE TraceList;
+
+void _dp_nf(b,g,ps,full,multiple,r)
+NODE b;
+DP g;
+DP *ps;
+int full,multiple;
+DP *r;
+{
+	DP u,dp,rp,t,t1,t2,red,shift;
+	Q dc,rc,dcq,rcq,cont,hr,hred,cr,cred,mcred,c,gcd,cq;
+	N gn,tn,cn;
+	NODE l;
+	MP m,mr;
+	int hmag,denom;
+	int sugar,psugar;
+	NODE dist;
+	STRING imul;
+	int ndist;
+	int kara_bit;
+	extern int mpi_mag;
+	double get_rtime();	
+	double t_0,t_00,tt,ttt,t_p,t_m,t_m1,t_m2,t_s,t_g,t_a;
+	LIST hist;
+	NODE node;
+	Q rcred,mrcred;
+
+	if ( !g ) {
+		*r = 0; return;
+	}
+	pz_t_e = pz_t_d = pz_t_d1 = pz_t_c = 0;
+	t_p = t_m = t_m1 = t_m2 = t_s = t_g = t_a = 0;
+
+	denom = Denominator?Denominator:1;
+	hmag = multiple*HMAG(g)/denom;
+	if ( Dist ) {
+		dist = BDY(Dist);
+		ndist = length(dist);
+	}
+	sugar = g->sugar;
+
+	dc = 0; dp = 0; rc = ONE; rp = g;
+	MKSTR(imul,"dp_imul_index");
+
+	/* g = dc*dp+rc*rp */
+	for ( ; rp; ) {
+		for ( u = 0, l = b; l; l = NEXT(l) ) {
+			if ( dl_redble(BDY(rp)->dl,psh[(int)BDY(l)]) ) {
+				t_0 = get_rtime();
+				dp_load((int)BDY(l),&red);
+				hr = (Q)BDY(rp)->c; hred = (Q)BDY(red)->c;
+				/*
+				 * hr = HC(rp), hred = HC(red)
+				 * cred = hr/GCD(hr,hred), cr = hred/GCD(hr,hred)
+				 */
+				igcd_cofactor((Q)BDY(rp)->c,(Q)BDY(red)->c,&gcd,&cred,&cr);
+				tt = get_rtime()-t_0; t_p += tt;
+
+				t_0 = get_rtime();
+				dp_subd(rp,red,&shift);
+
+				t_00 = get_rtime();
+				if ( Dist && ndist
+					&& HMAG(red) > mpi_mag
+					&& p_mag((P)cr) > mpi_mag ) {
+					if ( DP_NFStat ) fprintf(asir_out,"~");
+					dp_imul_d(rp,cr,&t);
+				} else {
+					if ( DP_NFStat ) fprintf(asir_out,"_");
+					muldc(CO,rp,(P)cr,&t);
+				}
+				ttt = get_rtime()-t_00; t_m1 += ttt/dp_nt(rp);
+
+				t_00 = get_rtime();
+				chsgnp((P)cred,(P *)&mcred);
+				if ( Dist && ndist
+					&& HMAG(red) > mpi_mag
+					&& p_mag((P)mcred) > mpi_mag ) {
+					if ( DP_NFStat ) fprintf(asir_out,"=");
+					dp_imul_d(red,mcred,&t1);
+				} else {
+					if ( DP_NFStat ) fprintf(asir_out,"_");
+					muldc(CO,red,(P)mcred,&t1);
+				}
+				ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
+
+				t_00 = get_rtime();
+				muld(CO,shift,t1,&t2);
+				addd(CO,t,t2,&u);
+				tt = get_rtime(); t_m += tt-t_0;
+				ttt = get_rtime(); t_s += ttt-t_00;
+
+				psugar = (BDY(rp)->dl->td - BDY(red)->dl->td) + red->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( GenTrace ) {
+					/* u = cr*rp + (-cred)*shift*red */ 
+					STOQ((int)BDY(l),cq);
+					node = mknode(4,cr,cq,0,0);
+					mulq(cred,rc,&rcred);
+					chsgnnum((Num)rcred,(Num *)&mrcred);
+					muldc(CO,shift,(P)mrcred,(DP *)&ARG2(node));
+					MKLIST(hist,node);
+				}
+				if ( !u ) {
+					if ( dp )
+						dp->sugar = sugar;
+					*r = dp;
+					if ( GenTrace ) {
+						ARG3(BDY(hist)) = ONE;
+						MKNODE(node,hist,TraceList); TraceList = node;
+					}
+					goto final;
+				}
+				break;
+			}
+		}
+		if ( u ) {
+			if ( multiple && HMAG(u) > hmag ) {
+				t_0 = get_rtime();
+				if ( Dist && HMAG(u) > mpi_mag ) {
+					if ( DP_NFStat )
+						fprintf(asir_out,"D");
+					dp_ptozp_d(dist,ndist,u,&t);
+				} else {
+					if ( DP_NFStat )
+						fprintf(asir_out,"L");
+					dp_ptozp_d(0,0,u,&t);
+				}
+				tt = get_rtime()-t_0; t_g += tt;
+				t_0 = get_rtime();
+				divsn(NM((Q)BDY(u)->c),NM((Q)BDY(t)->c),&cn); NTOQ(cn,1,cont);
+				if ( !dp_fcoeffs && DP_NFStat ) {
+					fprintf(asir_out,"(%d)",p_mag((P)cont)*100/p_mag((P)BDY(u)->c));
+					fflush(asir_out);
+				}
+				mulq(cr,dc,&dcq);
+				mulq(cont,rc,&rcq);
+				igcd_cofactor(dcq,rcq,&gcd,&dc,&rc);
+				tt = get_rtime()-t_0; t_a += tt;
+				rp = t;
+				hmag = multiple*HMAG(rp)/denom;
+				if ( GenTrace ) {
+					ARG3(BDY(hist)) = (pointer)gcd;
+					MKNODE(node,hist,TraceList); TraceList = node;
+				}
+			} else {
+				t_0 = get_rtime();
+				mulq(cr,dc,&dcq); dc = dcq;
+				tt = get_rtime()-t_0; t_a += tt;
+				rp = u;
+				if ( GenTrace ) {
+					ARG3(BDY(hist)) = (pointer)ONE;
+					MKNODE(node,hist,TraceList); TraceList = node;
+				}
+			}
+		} else if ( !full ) {
+			if ( rp ) {
+				MKDP(rp->nv,BDY(rp),t); t->sugar = sugar; rp = t;
+			}
+			*r = rp;
+			goto final;
+		} else {
+			t_0 = get_rtime();
+			mulq((Q)BDY(rp)->c,rc,&c);
+			igcd_cofactor(dc,c,&gcd,&dcq,&cq);
+			muldc(CO,dp,(P)dcq,&t1);
+			m = BDY(rp); NEWMP(mr); mr->dl = m->dl; mr->c = (P)cq;
+			NEXT(mr) = 0; MKDP(rp->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,t,t1,&dp);
+			dc = gcd;
+
+			dp_rest(rp,&t); rp = t;
+			tt = get_rtime()-t_0; t_a += tt;
+		}
+	}
+	if ( GenTrace ) {
+		mulq(ARG3(BDY((LIST)BDY(TraceList))),dc,&cq);
+		ARG3(BDY((LIST)BDY(TraceList))) = (pointer)cq;
+	}
+	if ( dp )
+		dp->sugar = sugar;
+	*r = dp;
+final:
+	if ( DP_NFStat )
+		fprintf(asir_out,"(%.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g)",
+			t_p,t_m,t_m1,t_m2,t_s,
+			t_g,t_a,
+			pz_t_e, pz_t_d, pz_t_d1, pz_t_c);
+}
+
+void imulv();
+
+void dp_imul_d(p,q,rp)
+DP p;
+Q q;
+DP *rp;
+{
+	int nsep,ndist,i,j,k,l,n;
+	double t0,t1,t2;
+	Q *s;
+	pointer *b;
+	VECT c,cs,ri;
+	VECT *r;
+	MP m;
+	NODE tn,dist,n0,n1,n2;
+	Obj dmy;
+	STRING imul;
+
+	extern LIST Dist;
+
+	if ( !p || !q ) {
+		*rp = 0; return;
+	}
+	dist = BDY(Dist);
+	for ( tn = dist, ndist = 0; tn; tn = NEXT(tn), ndist++ );
+	nsep = ndist + 1;
+	for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+	if ( n <= nsep ) {
+		muldc(CO,p,(P)q,rp); return;
+	}
+	MKSTR(imul,"imulv");
+	t0 = get_rtime();
+	dp_dtov(p,&c);
+	sepvect(c,nsep,&cs);
+	r = (VECT *)CALLOC(nsep,sizeof(VECT *));
+	for ( i = 0, tn = dist, b = BDY(cs); i < ndist; i++, tn = NEXT(tn) ) {
+		n0 = mknode(4,BDY(tn),imul,b[i],q);
+		Pox_rpc(n0,&dmy);
+	}
+	t1 = get_rtime();
+	im_t_s += t1 - t0;
+	imulv(b[i],q,&r[i]);
+	t1 = get_rtime();
+	for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
+		MKNODE(n0,BDY(tn),0);
+		Pox_pop_local(n0,&r[i]);
+		if ( OID(r[i]) == O_ERR ) {
+			printexpr(CO,(Obj)r[i]);
+			error("dp_imul_d : aborted");
+		}
+	}
+	t2 = get_rtime();
+	im_t_r += t2 - t1;
+	s = (Q *)CALLOC(n,sizeof(Q));
+	for ( i = j = 0; i < nsep; i++ ) {
+		for ( k = 0, ri = r[i], l = ri->len; k < l; k++, j++ ) {
+			s[j] = (Q)BDY(ri)[k];
+		}
+	}
+	dp_vtod(s,p,rp);
+}
+
+void imulv(w,c,rp)
+VECT w;
+Q c;
+VECT *rp;
+{
+	int n,i;
+	VECT r;
+
+	n = w->len;
+	MKVECT(r,n); *rp = r;
+	for ( i = 0; i < n; i++ )
+		mulq((Q)BDY(w)[i],(Q)c,(Q *)&BDY(r)[i]);
+}
+

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.5 2000/08/22 05:03:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.6 2000/12/05 01:24:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -499,6 +499,35 @@ LIST *rp;
 		BDY(q)[i] = (pointer)qi; BDY(r)[i] = (pointer)ri;
 	}
 	MKNODE(n1,r,0); MKNODE(n0,q,n1); MKLIST(*rp,n0);
+}
+
+/*
+ * gcd = GCD(a,b), ca = a/g, cb = b/g
+ */
+
+void igcd_cofactor(a,b,gcd,ca,cb)
+Q a,b;
+Q *gcd,*ca,*cb;
+{
+	N gn,tn;
+	
+	if ( !a ) {
+		if ( !b )
+			error("igcd_cofactor : invalid input");
+		else {
+			*ca = 0;
+			*cb = ONE;
+			*gcd = b;
+		}
+	} else if ( !b ) {
+		*ca = ONE;
+		*cb = 0;
+		*gcd = a;
+	} else {
+		gcdn(NM(a),NM(b),&gn); NTOQ(gn,1,*gcd);
+		divsn(NM(a),gn,&tn); NTOQ(tn,SGN(a),*ca);
+		divsn(NM(b),gn,&tn); NTOQ(tn,SGN(b),*cb);
+	}
 }
 
 void igcdv(a,rp)
