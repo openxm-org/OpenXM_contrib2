@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.20 2004/03/04 12:28:14 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.21 2004/03/04 13:12:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -620,7 +620,6 @@ static struct TeXSymbol texsymbol[] = {
  {"c_i","\\sqrt{-1}"},
 
  /* Temporary  */
- {"dx","\\partial"},
  {0,0}
 };
 
