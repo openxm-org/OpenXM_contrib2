@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.23 2001/11/19 01:40:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.24 2002/01/28 00:54:41 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -88,6 +88,8 @@ void Pdp_weyl_set_weight();
 void Pdp_set_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
 void Pdp_lnf_f();
+
+LIST remove_zero_from_list(LIST);
 
 struct ftab dp_tab[] = {
 	/* content reduction */
@@ -1246,6 +1248,10 @@ LIST *rp;
 	asir_assert(ARG2(arg),O_N,"dp_gr_main");
 	asir_assert(ARG3(arg),O_N,"dp_gr_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	homo = (Num)ARG2(arg);
 	m = (Q)ARG3(arg);
 	if ( !m )
@@ -1271,6 +1277,10 @@ LIST *rp;
 	asir_assert(ARG1(arg),O_LIST,"dp_gr_f_main");
 	asir_assert(ARG2(arg),O_N,"dp_gr_f_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	homo = (Num)ARG2(arg);
 	create_order_spec(ARG3(arg),&ord);
 	dp_gr_main(f,v,homo,0,1,&ord,rp);
@@ -1287,6 +1297,10 @@ LIST *rp;
 	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	create_order_spec(ARG2(arg),&ord);
 	dp_f4_main(f,v,&ord,rp);
 }
@@ -1324,6 +1338,10 @@ LIST *rp;
 	asir_assert(ARG1(arg),O_LIST,"dp_f4_mod_main");
 	asir_assert(ARG2(arg),O_N,"dp_f4_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	if ( !m )
 		error("dp_f4_mod_main : invalid argument");
 	create_order_spec(ARG3(arg),&ord);
@@ -1345,6 +1363,10 @@ LIST *rp;
 	asir_assert(ARG2(arg),O_N,"dp_gr_mod_main");
 	asir_assert(ARG3(arg),O_N,"dp_gr_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
 	if ( !m )
 		error("dp_gr_mod_main : invalid argument");
@@ -1369,6 +1391,10 @@ LIST *rp;
 	asir_assert(ARG2(arg),O_N,"dp_weyl_gr_main");
 	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	homo = (Num)ARG2(arg);
 	m = (Q)ARG3(arg);
 	if ( !m )
@@ -1396,6 +1422,10 @@ LIST *rp;
 	asir_assert(ARG2(arg),O_N,"dp_weyl_gr_main");
 	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	homo = (Num)ARG2(arg);
 	create_order_spec(ARG3(arg),&ord);
 	do_weyl = 1;
@@ -1413,6 +1443,10 @@ LIST *rp;
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	create_order_spec(ARG2(arg),&ord);
 	do_weyl = 1;
 	dp_f4_main(f,v,&ord,rp);
@@ -1431,6 +1465,10 @@ LIST *rp;
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
 	asir_assert(ARG2(arg),O_N,"dp_f4_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	if ( !m )
 		error("dp_weyl_f4_mod_main : invalid argument");
 	create_order_spec(ARG3(arg),&ord);
@@ -1453,6 +1491,10 @@ LIST *rp;
 	asir_assert(ARG2(arg),O_N,"dp_weyl_gr_mod_main");
 	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
 	if ( !m )
 		error("dp_weyl_gr_mod_main : invalid argument");
@@ -1512,4 +1554,22 @@ VECT *rp;
 			current_weyl_weight_vector[i] = QTOS((Q)v->body[i]);
 		*rp = v;
 	}
+}
+
+LIST remove_zero_from_list(LIST l)
+{
+	NODE n,r0,r;
+	LIST rl;
+
+	asir_assert(l,O_LIST,"remove_zero_from_list");
+	n = BDY(l);
+	for ( r0 = 0; n; n = NEXT(n) )
+		if ( BDY(n) ) {
+			NEXTNODE(r0,r);
+			BDY(r) = BDY(n);
+		}
+	if ( r0 )
+		NEXT(r) = 0;
+	MKLIST(rl,r0);
+	return rl;
 }
