@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.23 2003/04/20 11:59:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.24 2003/04/28 02:15:30 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -128,46 +128,9 @@ def ann(F)
 
 def ann0(F)
 {
-	V = vars(F);
-	N = length(V);
-	D = newvect(N);
-
-	for ( I = 0; I < N; I++ )
-		D[I] = [deg(F,V[I]),V[I]];
-	qsort(D,compare_first);
-	for ( V = [], I = 0; I < N; I++ )
-		V = cons(D[I][1],V);
-
-	for ( I = N-1, DV = []; I >= 0; I-- )
-		DV = cons(strtov("d"+rtostr(V[I])),DV);
-
-	/* XXX : heuristics */
-	W = append([TMP_Y1,TMP_Y2,TMP_T],reverse(V));
-	DW = append([TMP_DY1,TMP_DY2,TMP_DT],reverse(DV));
-	WDW = append(W,DW);
-
-	B = [1-TMP_Y1*TMP_Y2,TMP_T-TMP_Y1*F];
-	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+TMP_Y1*diff(F,V[I])*TMP_DT,B);
-	}
-
-	/* homogenized (heuristics) */
-	dp_nelim(2);
-	G0 = dp_weyl_gr_main(B,WDW,1,0,6);
-	G1 = [];
-	for ( T = G0; T != []; T = cdr(T) ) {
-		E = car(T); VL = vars(E);
-		if ( !member(TMP_Y1,VL) && !member(TMP_Y2,VL) )
-			G1 = cons(E,G1);
-	}
-	G2 = map(psi,G1,TMP_T,TMP_DT);
-	G3 = map(subst,G2,TMP_T,-1-TMP_S);
-
-	/* G3 = J_f(s) */
-
-	V1 = cons(TMP_S,V); DV1 = cons(TMP_DS,DV); V1DV1 = append(V1,DV1);
-	G4 = dp_weyl_gr_main(cons(F,G3),V1DV1,0,1,0);
-	Bf = weyl_minipoly(G4,V1DV1,0,TMP_S);
+	F = subst(F,s,TMP_S);
+	Ann = ann(F);
+	Bf = bfunction(F);
 
 	FList = cdr(fctr(Bf));
 	for ( T = FList, Min = 0; T != []; T = cdr(T) ) {
@@ -176,7 +139,7 @@ def ann0(F)
 		if ( dn(Root) == 1 && Root < Min )
 			Min = Root;
 	}
-	return [Min,map(subst,G3,TMP_S,Min)];
+	return [Min,map(subst,Ann,s,Min,TMP_S,s,TMP_DS,ds)];
 }
 
 def psi(F,T,DT)
