@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.33 2001/09/17 08:37:30 noro Exp $
+ * $OpenXM$
 */
 #include "ca.h"
 #include "parse.h"
@@ -569,6 +569,7 @@ LIST *rp;
 	}
 	if ( fd0 ) NEXT(fd) = 0;
 	setup_arrays(fd0,m,&s);
+	init_stat();
 	x = gb_f4_mod(s,m);
 	if ( !homogen ) {
 		reduceall_mod(x,m,&xx); x = xx;
@@ -578,6 +579,7 @@ LIST *rp;
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
+	print_stat();
 }
 
 NODE gb_f4(f)
@@ -718,7 +720,7 @@ int m;
 	int **spmat;
 	CDP *redmat;
 	int *colstat,*w,*w1;
-	int rank,nred,nsp,nonzero,spcol;
+	int rank,nred,nsp,nsp0,nonzero,spcol;
 	int *indred,*isred;
 	CDP ri;
 	int pscalen;
@@ -753,6 +755,8 @@ int m;
 				s0 = symb_merge(s0,dp_dllist(sp),nv);
 			}
 		}
+		if ( DP_Print )
+			fprintf(asir_out,"initial spmat : %d x %d ",length(blist),length(s0));
 		/* s0 : all the terms appeared in symbolic reduction */
 		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
 			for ( r = gall;	r; r = NEXT(r) )
@@ -769,6 +773,8 @@ int m;
 				nred++;
 			}
 		}
+		if ( DP_Print )
+			fprintf(asir_out,"number of reducers : %d\n",nred);
 
 		/* the first nred polys in blist are reducers */
 		/* row = the number of all the polys */
@@ -835,6 +841,7 @@ int m;
 			}
 		}
 		/* update nsp */
+		nsp0 = nsp;
 		nsp = i;
 
 		/* XXX free redmat explicitly */
@@ -869,6 +876,9 @@ int m;
 			print_eg("Elim2",&eg_split_elim2);
 			fprintf(asir_out,"\n");
 		}
+
+		NZR += rank;
+		ZR += nsp0-rank;
 
 		if ( !rank )
 			continue;
@@ -2159,7 +2169,7 @@ void init_stat() {
 	init_eg(&eg_nf); init_eg(&eg_nfm); init_eg(&eg_znfm);
 	init_eg(&eg_pz); init_eg(&eg_np);
 	init_eg(&eg_ra); init_eg(&eg_mc); init_eg(&eg_gc);
-	ZR = NZR = TP = NBP = NFP = NDP = 0;
+	ZR = NZR = TP = NMP = NBP = NFP = NDP = 0;
 }
 
 void print_stat() {
