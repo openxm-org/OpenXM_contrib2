@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.12 2003/05/20 06:15:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.13 2003/05/20 06:26:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -160,12 +160,23 @@ unsigned int makepvar(char *str)
 		/* if ldef > 0, then local variables are being declared */
 		c = getpvar(CPVS,str,0);
 		c1 = getpvar(EPVS,str,1);
-		if ( c1 >= 0 ) goto CONFLICTION;
-		if ( CUR_MODULE ) {
-			c1 = getpvar(CUR_MODULE->pvs,str,1);
+		if ( c1 >= 0 ) {
+			if ( CUR_MODULE )
+				goto CONFLICTION;
+			else {
+				fprintf(stderr,"Warning: \"%s\", near line %d: conflicting declarations for `%s'\n",
+					asir_infile->name,asir_infile->ln,str);
+				fprintf(stderr,"         `%s' is bound to the global variable\n",str);
+				CPVS->va[c].attr = IS_GLOBAL;
+				c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
+			}
+		} else {
+			if ( CUR_MODULE ) {
+				c1 = getpvar(CUR_MODULE->pvs,str,1);
+			}
+			if ( c1 >= 0 ) goto CONFLICTION;
+			CPVS->va[c].attr = IS_LOCAL;
 		}
-		if ( c1 >= 0 ) goto CONFLICTION;
-		CPVS->va[c].attr = IS_LOCAL;
 	} else if ( CPVS != GPVS ) {
 		/* inside function */
 		if ( CUR_MODULE ) {
