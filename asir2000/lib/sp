@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.8 2000/08/22 05:04:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.9 2001/10/12 06:07:05 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
@@ -1327,8 +1327,12 @@ def resfctr(F,L,V,N)
 	N = ptozp(N);
 	V0 = var(N);
 	DN = diff(N,V0);
+	LC = coef(N,deg(N,V0),V0);
+	LCD = coef(DN,deg(DN,V0),V0);
 	for ( I = 0, J = 2, Len = deg(N,V0)+1; I < 5; J++ ) {
 		M = prime(J);
+		if ( !(LC%M) || !(LCD%M))
+			continue;
 		G = gcd(N,DN,M);
 		if ( !deg(G,V0) ) {            
 			I++;
