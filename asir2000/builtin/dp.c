@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.32 2003/06/19 07:08:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.33 2003/07/18 10:13:11 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1498,8 +1498,6 @@ LIST *rp;
 		*rp = f; return;
 	}
 	m = QTOS((Q)ARG2(arg));
-	if ( !m )
-		error("nd_gr : invalid argument");
 	create_order_spec(ARG3(arg),&ord);
 	nd_gr(f,v,m,&ord,rp);
 }
