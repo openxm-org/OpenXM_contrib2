@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.2 2000/08/21 08:31:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -683,9 +683,11 @@ int e;
 	FREEN(nw);
 }
 
+
+
 extern int igcd_algorithm;
 
-void gcdEuclidn();
+void gcdEuclidn(), gcdn_HMEXT();
 
 void gcdn(n1,n2,nr)
 N n1,n2,*nr;
@@ -695,18 +697,11 @@ N n1,n2,*nr;
 	if ( !igcd_algorithm )
 		gcdEuclidn(n1,n2,nr);
 	else {
-		if ( !n1 )
-			*nr = n2;
-		else if ( !n2 )
-			*nr = n1;
-		else {
-			n32ton27(n1,&m1);
-			n32ton27(n2,&m2);
-			gcdBinary_27n(m1,m2,&g);
-			n27ton32(g,nr);
-		}
+		gcdn_HMEXT(n1,n2,nr);
 	}
 }
+
+#include "Ngcd.c"
 
 void gcdEuclidn(n1,n2,nr)
 N n1,n2,*nr;
@@ -733,7 +728,8 @@ N n1,n2,*nr;
 				m1 = m2; m2 = r;
 			}
 		}
-		for ( i1 = BD(m1)[0], i2 = BD(m2)[0]; ir = i1 % i2; i1 = i2, i2 = ir );
+		for ( i1 = BD(m1)[0], i2 = BD(m2)[0]; ir = i1 % i2; i2 = ir )
+			i1 = i2;
 		if ( i2 == 1 )
 			COPY(ONEN,*nr);
 		else {
