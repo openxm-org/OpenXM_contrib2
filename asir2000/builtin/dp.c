@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.48 2004/03/12 05:18:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.49 2004/04/15 08:14:13 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -168,7 +168,7 @@ struct ftab dp_tab[] = {
 	{"dp_weyl_nf_f",Pdp_weyl_nf_f,4},
 
 	/* Buchberger algorithm */
-	{"dp_weyl_gr_main",Pdp_weyl_gr_main,5},
+	{"dp_weyl_gr_main",Pdp_weyl_gr_main,-5},
 	{"dp_weyl_gr_mod_main",Pdp_weyl_gr_mod_main,5},
 	{"dp_weyl_gr_f_main",Pdp_weyl_gr_f_main,4},
 
