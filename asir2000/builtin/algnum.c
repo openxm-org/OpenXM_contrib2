@@ -45,13 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.4 2000/12/05 01:24:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.5 2001/10/09 01:36:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pdefpoly(), Pnewalg(), Pmainalg(), Palgtorat(), Prattoalg(), Pgetalg();
 void Palg(), Palgv(), Pgetalgtree();
+void Pinvalg_le();
 
 void mkalg(P,Alg *);
 int cmpalgp(P,P);
@@ -62,6 +63,7 @@ void ptoalgp(P,P *);
 void clctalg(P,VL *);
 
 struct ftab alg_tab[] = {
+	{"invalg_le",Pinvalg_le,1},
 	{"defpoly",Pdefpoly,1},
 	{"newalg",Pnewalg,1},
 	{"mainalg",Pmainalg,1},
@@ -410,4 +412,148 @@ P p,*r;
 		}
 		NEXT(dcr) = 0; MKP((V)(VR(p)->priv),dcr0,*r);
 	}
+}
+
+void invalg_le(Alg a,LIST *r);
+
+void Pinvalg_le(NODE arg,LIST *r)
+{
+	invalg_le((Alg)ARG0(arg),r);
+}
+
+typedef struct oMono_nf {
+	DP mono;
+	DP nf;
+	Q dn;
+} *Mono_nf;
+
+void invalg_le(Alg a,LIST *r)
+{
+	Alg inv;
+	MAT mobj,sol;
+	int *rinfo,*cinfo;
+	P p,dn,dn1,ap;
+	VL vl,tvl;
+	Q c1,c2,c3,cont,c,two,iq,dn0,mul,dnsol;
+	int i,j,n,len,k;
+	MP mp,mp0;
+	DP dp,nm,nm1,m,d,u,u1;
+	NODE b,b1,hlist,mblist,t,s,rev0,rev,hist;
+	DP *ps;
+	struct order_spec *spec;
+	Mono_nf h,h1;
+	N nq,nr,nl,ng;
+	Q **mat,**solmat;
+	Q *w;
+	int *wi;
+
+	ap = (P)BDY(a);
+	asir_assert(ap,O_P,"invalg_le");
+
+	/* collecting algebraic numbers */
+	clctalg(ap,&vl);
+
+	/* setup */
+	ptozp(ap,1,&c,&p);
+	STOQ(2,two); create_order_spec(0,(Obj)two,&spec); initd(spec);
+	for ( n = 0, tvl = vl; tvl; tvl = NEXT(tvl), n++ );
+	ps = (DP *)ALLOCA(n*sizeof(DP));
+
+	/* conversion to DP */
+	for ( i = 0, tvl = vl; i < n; i++, tvl = NEXT(tvl) ) {
+		ptod(ALG,vl,tvl->v->attr,&ps[i]);
+	}
+	ptod(ALG,vl,p,&dp);
+	/* index list */
+	for ( b = 0, i = 0; i < n; i++ ) {
+		STOQ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
+	}
+	/* simplification */
+	dp_true_nf(b,dp,ps,1,&nm,&dn);
+
+	/* construction of NF table */
+
+	/* stdmono: <<0,...,0>> < ... < max */
+	for ( hlist = 0, i = 0; i < n; i++ ) {
+		MKNODE(b1,(pointer)ps[i],hlist); hlist = b1;
+	}
+	dp_mbase(hlist,&rev0);
+	for ( mblist = 0, rev = rev0; rev; rev = NEXT(rev) ) {
+		MKNODE(b1,BDY(rev),mblist); mblist = b1;
+	}
+	dn0 = ONE;
+	for ( hist = 0, t = mblist; t; t = NEXT(t) ) {
+		/* searching a predecessor */
+		for ( m = (DP)BDY(t), s = hist; s; s = NEXT(s) ) {
+			h = (Mono_nf)BDY(s);
+			if ( dp_redble(m,h->mono) )
+				break;
+		}
+		h1 = (Mono_nf)ALLOCA(sizeof(struct oMono_nf));
+		if ( s ) {
+			dp_subd(m,h->mono,&d);
+			muld(CO,d,h->nf,&u);
+			dp_true_nf(b,u,ps,1,&nm1,&dn1);
+			mulq(h->dn,(Q)dn1,&h1->dn);
+		} else {
+			muld(CO,m,nm,&u);
+			dp_true_nf(b,u,ps,1,&nm1,&dn1);
+			h1->dn = (Q)dn1;
+		}
+		h1->mono = m;
+		h1->nf = nm1;
+		MKNODE(b1,(pointer)h1,hist); hist = b1;
+
+		/* dn0 = LCM(dn0,h1->dn) */
+		gcdn(NM(dn0),NM(h1->dn),&ng); divn(NM(dn0),ng,&nq,&nr);
+		muln(nq,NM(h1->dn),&nl); NTOQ(nl,1,dn0);
+	}
+	/* create a matrix */
+	len = length(mblist);
+	MKMAT(mobj,len,len+1);
+	mat = (Q **)BDY(mobj);
+	mat[len-1][len] = dn0;
+	for ( j = 0, t = hist; j < len; j++, t = NEXT(t) ) {
+		h = (Mono_nf)BDY(t);
+		nm1 = h->nf;
+		divq((Q)dn0,h->dn,&mul);
+		for ( i = 0, rev = rev0, mp = BDY(nm1); mp && i < len; i++, rev = NEXT(rev) )
+			if ( dl_equal(n,BDY((DP)BDY(rev))->dl,mp->dl) ) {
+				mulq(mul,(Q)mp->c,&mat[i][j]);
+				mp = NEXT(mp);
+			}
+	}
+#if 0
+	w = (Q *)ALLOCA((len+1)*sizeof(Q));
+	wi = (int *)ALLOCA((len+1)*sizeof(int));
+	for ( i = 0; i < len; i++ ) {
+		for ( j = 0, k = 0; j <= len; j++ )
+			if ( mat[i][j] ) {
+				w[k] = mat[i][j];
+				wi[k] = j;
+				k++;
+			}
+		removecont_array(w,k);
+		for ( j = 0; j < k; j++ )
+			mat[i][wi[j]] = w[j];
+	}
+#endif
+	generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);
+	solmat = (Q **)BDY(sol);
+	for ( i = 0, t = rev0, mp0 = 0; i < len; i++, t = NEXT(t) )
+		if ( solmat[i][0] ) {
+			NEXTMP(mp0,mp);
+			mp->c = (P)solmat[i][0];
+			mp->dl = BDY((DP)BDY(t))->dl;
+		}
+	NEXT(mp) = 0; MKDP(n,mp0,u);
+	dp_ptozp(u,&u1);
+	divq((Q)BDY(u)->c,(Q)BDY(u1)->c,&cont);
+	dtop(ALG,vl,u1,&ap);
+	MKAlg(ap,inv);
+	mulq(dnsol,(Q)dn,&c1);
+	mulq(c1,c,&c2);
+	divq(c2,cont,&c3);
+	b = mknode(2,inv,c3);
+	MKLIST(*r,b);
 }
