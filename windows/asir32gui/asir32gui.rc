@@ -124,7 +124,7 @@ BEGIN
     END
     POPUP "мылъ(&H)"
     BEGIN
-        MENUITEM "asir command ┌л░Ю√╬",         ID_ASIRHELP
+        MENUITEM "√з▌÷",                        ID_ASIRHELP
         MENUITEM "йч╟╪ч╝щ▐Н∙Я(asir32gui) (&A)...", ID_APP_ABOUT
     END
 END
