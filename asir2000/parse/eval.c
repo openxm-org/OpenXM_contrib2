@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.7 2000/09/22 06:36:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.8 2000/12/05 01:24:56 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -65,6 +65,7 @@ int evalstatline;
 int recv_intr;
 
 pointer bevalf(), evalmapf(), evall();
+pointer eval_rec_mapf(), beval_rec_mapf();
 Obj getopt_from_cpvs();
 
 pointer eval(f)
@@ -161,6 +162,8 @@ FNODE f;
 			break;
 		case I_MAP:
 			val = evalmapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
+		case I_RECMAP:
+			val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
 		case I_IFUNC:
 			val = evalif((FNODE)FA0(f),(FNODE)FA1(f)); break;
 #if !defined(VISUAL)
@@ -553,6 +556,69 @@ FNODE a;
 			n = BDY((LIST)head);
 			for ( r0 = r = 0; n; n = NEXT(n) ) {
 				NEXTNODE(r0,r); MKNODE(t,BDY(n),rest); BDY(r) = bevalf(f,t);
+			}
+			if ( r0 )
+				NEXT(r) = 0;
+			MKLIST(rl,r0);
+			val = (pointer)rl;
+			break;
+		default:
+			val = bevalf(f,node);
+			break;
+	}
+	return val;
+}
+
+pointer eval_rec_mapf(f,a)
+FUNC f;
+FNODE a;
+{
+	LIST args;
+
+	args = (LIST)eval(a);
+	return beval_rec_mapf(f,BDY(args));
+}
+
+pointer beval_rec_mapf(f,node)
+FUNC f;
+NODE node;
+{
+	LIST args;
+	NODE rest,t,n,r,r0;
+	Obj head;
+	VECT v,rv;
+	MAT m,rm;
+	LIST rl;
+	int len,row,col,i,j;
+	pointer val;
+
+	head = (Obj)BDY(node); rest = NEXT(node);
+	if ( !head ) {
+		val = bevalf(f,node);
+		return val;
+	}
+	switch ( OID(head) ) {
+		case O_VECT:
+			v = (VECT)head; len = v->len; MKVECT(rv,len);
+			for ( i = 0; i < len; i++ ) {
+				MKNODE(t,BDY(v)[i],rest); BDY(rv)[i] = beval_rec_mapf(f,t);
+			}
+			val = (pointer)rv;
+			break;
+		case O_MAT:
+			m = (MAT)head; row = m->row; col = m->col; MKMAT(rm,row,col);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+					MKNODE(t,BDY(m)[i][j],rest);
+					BDY(rm)[i][j] = beval_rec_mapf(f,t);
+				}
+			val = (pointer)rm;
+			break;
+		case O_LIST:
+			n = BDY((LIST)head);
+			for ( r0 = r = 0; n; n = NEXT(n) ) {
+				NEXTNODE(r0,r); MKNODE(t,BDY(n),rest);
+				BDY(r) = beval_rec_mapf(f,t);
 			}
 			if ( r0 )
 				NEXT(r) = 0;

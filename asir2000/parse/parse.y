@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.5 2000/12/05 01:24:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.6 2001/04/20 02:34:24 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -90,7 +90,7 @@ extern jmp_buf env;
 }
 
 %token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF GLOBAL CMP OR AND CAR CDR QUOTED
-%token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP TIMER GF2NGEN GFPNGEN GETOPT
+%token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
 %token <p> '+' '-' '*' '/' '^' '%'
@@ -305,6 +305,19 @@ pexpr	: STR
 				if ( !val )
 					appenduf($3,(FUNC *)&val);
 				$$ = mkfnode(2,I_MAP,val,mkfnode(1,I_LIST,$5));
+			}
+		| RECMAP '(' LCASE ',' node ')' 
+			{
+				searchf(sysf,$3,(FUNC *)&val); 
+				if ( !val )
+					searchf(ubinf,$3,(FUNC *)&val);
+				if ( !val )
+					searchpf($3,(FUNC *)&val);
+				if ( !val )
+					searchf(usrf,$3,(FUNC *)&val);
+				if ( !val )
+					appenduf($3,(FUNC *)&val);
+				$$ = mkfnode(2,I_RECMAP,val,mkfnode(1,I_LIST,$5));
 			}
 		| TIMER '(' expr ',' expr ',' expr ')'
 			{
