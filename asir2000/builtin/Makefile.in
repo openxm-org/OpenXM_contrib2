@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/asir2000/builtin/Makefile.am,v 1.1 2003/02/23 03:05:36 ohara Exp $
 
 SHELL = @SHELL@
 
@@ -103,7 +103,7 @@ libfunc_a_SOURCES = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c \
                     rat.c reduct.c result.c itvnum.c mattran.c \
                     strobj.c subst.c time.c type.c var.c compobj.c \
                     gr.c dp-supp.c gf.c math.c numerical.c ec.c al.c \
-                    batch.c sha1.c user.c
+                    batch.c sha1.c user.c mattran.c
 
 subdir = builtin
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -121,7 +121,8 @@ am_libfunc_a_OBJECTS = ftab.$(OBJEXT) algnum.$(OBJEXT) array.$(OBJEXT) \
 	strobj.$(OBJEXT) subst.$(OBJEXT) time.$(OBJEXT) type.$(OBJEXT) \
 	var.$(OBJEXT) compobj.$(OBJEXT) gr.$(OBJEXT) dp-supp.$(OBJEXT) \
 	gf.$(OBJEXT) math.$(OBJEXT) numerical.$(OBJEXT) ec.$(OBJEXT) \
-	al.$(OBJEXT) batch.$(OBJEXT) sha1.$(OBJEXT) user.$(OBJEXT)
+	al.$(OBJEXT) batch.$(OBJEXT) sha1.$(OBJEXT) user.$(OBJEXT) \
+	mattran.$(OBJEXT)
 libfunc_a_OBJECTS = $(am_libfunc_a_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@

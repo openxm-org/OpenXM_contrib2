@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.30 2003/01/06 01:16:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.31 2003/02/14 22:29:18 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -211,7 +211,7 @@ void asir_terminate(int status)
 			LONGJMP(exec_env,status);
 	} else {
 		tty_reset();
-#if defined(MPI)
+#if MPI
 		if ( !mpi_myid )
 			close_allconnections();
 		mpi_finalize();
@@ -223,7 +223,7 @@ void asir_terminate(int status)
 #endif
 		if ( asir_out )
 			fflush(asir_out);
-#if defined(FEP)
+#if FEP
 		if ( do_fep ) {
 			stifle_history(MAXHIST);
 			write_history(asir_history);
@@ -258,7 +258,7 @@ FILE *in_fp;
 void process_args(int ac,char **av)
 {
 	do_asirrc = 1;
-#if !defined(MPI)
+#if !MPI
 	do_message = 1;
 #endif
 	while ( ac > 0 ) {
@@ -302,7 +302,7 @@ void process_args(int ac,char **av)
 		} else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
 			strcpy(displayname,*(av+1)); av += 2; ac -= 2;
 #endif
-#if defined(FEP)
+#if FEP
 		} else if ( !strcmp(*av,"-fep") ) {
 			do_fep = 1; av++; ac--;
 #endif
@@ -317,7 +317,7 @@ void process_args(int ac,char **av)
 			asir_terminate(1);
 		}
 	}
-#if defined(FEP)
+#if FEP
 	if ( do_fep ) {
 		char *home;
 		home = (char *)getenv("HOME");
@@ -669,7 +669,13 @@ void copyright() {
 	printf("Copyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\n");
 	printf("Copyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\n");
 	printf("GC 6.1(alpha5) copyright 2001, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n");
+#if PARI
+#if 0
 	printf("PARI 2.2.4, copyright (C) 2002 The PARI Group.\n");
+#endif
+	printf("PARI 2.0.17, copyright 1989-1999, C. Batut, K. Belabas, D. Bernardi,\n");
+	printf("   H. Cohen and M. Olivier.\n");
+#endif
 }
 
 

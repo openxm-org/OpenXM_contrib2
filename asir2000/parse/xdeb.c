@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.8 2001/10/09 01:36:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.9 2003/02/14 22:29:18 ohara Exp $ 
 */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
@@ -90,7 +90,7 @@ void show_debug_window(int on)
 {}
 #endif
 #else /* VISUAL */
-#if defined(DO_PLOT)
+#if DO_PLOT
 /*
  *	xdeb.c --- Asir Debug interface.
  *

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.21 2002/09/09 23:52:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.22 2003/02/14 22:29:18 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -531,7 +531,7 @@ int Egetc(FILE *fp)
 	int c;
 
 	if ( fp ) {
-#if defined(FEP)
+#if FEP
 		if ( do_fep && isatty(fileno(fp)) )
 			c = readline_getc();
 		else
@@ -570,7 +570,7 @@ void Eungetc(int c,FILE *fp)
 	if ( fp ) {
 		if ( asir_infile->encoded )
 			c = (int)encrypt_char((unsigned char)c);
-#if defined(FEP)
+#if FEP
 		if ( do_fep && isatty(fileno(fp)) )
 			readline_ungetc();
 		else
@@ -628,7 +628,7 @@ static void Gets(char *s)
 	*s = 0;
 }
 
-#if defined(FEP)
+#if FEP
 
 static char *readline_line;
 static int readline_nc,readline_index;

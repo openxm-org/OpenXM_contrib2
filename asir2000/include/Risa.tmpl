@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.33 2002/07/24 09:52:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.34 2003/02/14 22:29:13 ohara Exp $ 
 */
 #include "config.h"
 
@@ -117,17 +117,17 @@ PARILIB =
 #endif
 
 #ifdef USE_LAPACK
-LAPACK= -DLAPACK
+LAPACK= -DLAPACK=1
 LAPACKLIB = -llapack -lblas -lI77 -lF77
 #else
-LAPACK=
+LAPACK= -DLAPACK=0
 LAPACKLIB =
 #endif
 
 #ifdef USE_PLOT
-DO_PLOT= -DDO_PLOT
+DO_PLOT= -DDO_PLOT=1
 #else
-DO_PLOT=
+DO_PLOT= -DDO_PLOT=0
 #endif
 
 #ifdef USE_FFT_FLOAT
@@ -137,24 +137,24 @@ USE_FLOAT=
 #endif
 
 #ifdef USE_MPI
-MPI= -DMPI
+MPI= -DMPI=1
 MPILIB=-L/opt/FJSVmpi2/lib -lmpi -L/opt/FSUNaprun/lib -lmpl -lemi -lthread
 MPIINC=-I/opt/FJSVmpi2/include
 #else
-MPI=
+MPI=-DMPI=0
 MPILIB=
 MPIINC=
 #endif
 
 #ifdef USE_FEP
-FEP= -DFEP
+FEP= -DFEP=1
 #if defined(OpenXM_HOME)
 FEPLIB= $(ROOTDIR)/lib/libreadline.a
 #else
 FEPLIB = -lreadline -ltermcap
 #endif
 #else
-FEP=
+FEP=-DFEP=0
 FEPLIB =
 #endif
 

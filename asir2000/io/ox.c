@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.18 2002/12/09 00:42:14 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.19 2003/02/14 22:29:15 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -445,7 +445,7 @@ void clear_readbuffer()
 */
 }
 
-#if defined(MPI)
+#if MPI
 int ox_data_is_available(int s)
 {
 	return 1;
@@ -734,7 +734,7 @@ void ox_flush_stream(int s)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else
-#elif defined(MPI)
+#elif MPI
 	if ( (char)fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else
@@ -748,7 +748,7 @@ void ox_flush_stream_force(int s)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else
-#elif defined(MPI)
+#elif MPI
 	if ( (char)fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else

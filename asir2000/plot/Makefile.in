@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/asir2000/plot/Makefile.am,v 1.1 2003/02/23 03:05:40 ohara Exp $
 
 SHELL = @SHELL@
 
