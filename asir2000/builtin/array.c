@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.42 2004/12/13 23:04:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.43 2004/12/18 16:50:10 saito Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1178,6 +1178,10 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 	int ret;
 	struct oEGT eg_mul,eg_inv,eg_intrat,eg_check,tmp0,tmp1;
 	int period;
+	int *wx,*ptr;
+	int wxsize,nsize;
+	N wn;
+	Q wq;
 
 	a0 = (Q **)mat->body;
 	row = mat->row; col = mat->col;
@@ -1227,10 +1231,15 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 			init_eg(&eg_mul); init_eg(&eg_inv);
 			init_eg(&eg_check); init_eg(&eg_intrat);
 			period = F4_INTRAT_PERIOD;
-			for ( q = ONE, count = 0; ; count++ ) {
+			nsize = period;
+			wxsize = rank*ri*nsize;
+			wx = (int *)MALLOC_ATOMIC(wxsize*sizeof(int));
+			for ( i = 0; i < wxsize; i++ ) wx[i] = 0;
+			for ( q = ONE, count = 0; ; ) {
 				if ( DP_Print > 3 )
 					fprintf(stderr,"o");
 				/* wc = -b mod md */
+				get_eg(&tmp0);
 				for ( i = 0; i < rank; i++ )
 					for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
 						if ( u = (Q)bi[j] ) {
@@ -1240,17 +1249,19 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 							wi[j] = t;
 						} else
 							wi[j] = 0;
-				/* wc = A^(-1)wc; wc is normalized */
-				get_eg(&tmp0);
-				solve_by_lu_mod(w,rank,md,wc,ri);
+				/* wc = A^(-1)wc; wc is not normalized */
+				solve_by_lu_mod(w,rank,md,wc,ri,0);
+				/* wx += q*wc */
+				ptr = wx;
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0, wi = wc[i]; j < ri; j++ ) {
+						if ( wi[j] )
+							muln_1(BD(NM(q)),PL(NM(q)),wi[j],ptr);
+						ptr += nsize;
+					}
+				count++;
 				get_eg(&tmp1);
 				add_eg(&eg_inv,&tmp0,&tmp1);
-				/* x = x-q*wc */
-				for ( i = 0; i < rank; i++ )
-					for ( j = 0, xi = x[i], wi = wc[i]; j < ri; j++ ) {
-						STOQ(wi[j],u); mulq(q,u,&s);
-						subq(xi[j],s,&u); xi[j] = u;
-					}
 				get_eg(&tmp0);
 				for ( i = 0; i < rank; i++ )
 					for ( j = 0; j < ri; j++ ) {
@@ -1268,8 +1279,21 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				add_eg(&eg_mul,&tmp0,&tmp1);
 				/* q = q*md */
 				mulq(q,mdq,&u); q = u;
-				if ( !(count % period) ) {
+				if ( count == period ) {
 					get_eg(&tmp0);
+					ptr = wx;
+					for ( i = 0; i < rank; i++ )
+						for ( j = 0, xi = x[i]; j < ri;
+							j++, ptr += nsize ) {
+							for ( k = nsize-1; k >= 0 && !ptr[k]; k-- );
+							if ( k >= 0 ) {
+								wn = NALLOC(k+1);
+								PL(wn) = k+1;
+								for ( l = 0; l <= k; l++ ) BD(wn)[l] = (unsigned int)ptr[l];
+								NTOQ(wn,1,wq);
+								subq(xi[j],wq,&u); xi[j] = u;
+							}
+						}
 					ret = intmtoratm_q(xmat,NM(q),*nmmat,dn);
 					get_eg(&tmp1); add_eg(&eg_intrat,&tmp0,&tmp1);
 					if ( ret ) {
@@ -1292,8 +1316,14 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 							}
 							return rank;
 						}
-					} else
-						period *=2;
+					} else {
+						period = period*3/2;
+						count = 0;
+						nsize += period;
+						wxsize += rank*ri*nsize;
+						wx = (int *)REALLOC(wx,wxsize*sizeof(int));
+						for ( i = 0; i < wxsize; i++ ) wx[i] = 0;
+					}
 				}
 			}
 	}
@@ -1894,7 +1924,7 @@ int find_lhs_and_lu_mod(unsigned int **a,int row,int col,
 	b = a^(-1)b
  */
 
-void solve_by_lu_mod(int **a,int n,int md,int **b,int l)
+void solve_by_lu_mod(int **a,int n,int md,int **b,int l,int normalize)
 {
 	unsigned int *y,*c;
 	int i,j,k;
@@ -1927,8 +1957,12 @@ void solve_by_lu_mod(int **a,int n,int md,int **b,int l)
 			DMAR(t,a[i][i],0,md,c[i])
 		}
 		/* copy c to b[.][k] with normalization */
-		for ( i = 0; i < n; i++ )
-			b[i][k] = (int)(c[i]>m2 ? c[i]-md : c[i]);
+		if ( normalize )
+			for ( i = 0; i < n; i++ )
+				b[i][k] = (int)(c[i]>m2 ? c[i]-md : c[i]);
+		else
+			for ( i = 0; i < n; i++ )
+				b[i][k] = c[i];
 	}
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.32 2004/07/13 07:59:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.33 2004/10/27 08:21:47 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -755,7 +755,7 @@ int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat);
 int lu_gfmmat(GFMMAT mat,unsigned int md,int *perm);
 int find_lhs_and_lu_mod(unsigned int **a,int row,int col,
 	unsigned int md,int **rinfo,int **cinfo);
-void solve_by_lu_mod(int **a,int n,int md,int **b,int l);
+void solve_by_lu_mod(int **a,int n,int md,int **b,int l,int normalize);
 int gauss_elim_mod1(int **mat,int row,int col,int md);
 int gauss_elim_geninv_mod(unsigned int **mat,int row,int col,int md);
 void solve_by_lu_gfmmat(GFMMAT lu,unsigned int md,unsigned int *b,unsigned int *x);
