@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.67 2003/09/12 14:51:27 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.68 2003/09/12 15:07:11 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -42,24 +42,22 @@ typedef struct oNDV {
 	int sugar;
 } *NDV;
 
+typedef union oNDC {
+	int m;
+	Q z;
+	P p;
+} *NDC;
+
 /* monomial; linked list rep. */
 typedef struct oNM {
 	struct oNM *next;
-	union {
-		int m;
-		Q z;
-		P p;
-	} c;
+	union oNDC c;
 	UINT dl[1];
 } *NM;
 
 /* monomial; array rep. */
 typedef struct oNMV {
-	union {
-		int m;
-		Q z;
-		P p;
-	} c;
+	union oNDC c;
 	UINT dl[1];
 } *NMV;
 
@@ -116,6 +114,7 @@ typedef struct oIndArray
 
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 
+static int nd_f4_nsp=0x7fffffff;
 static double nd_scale=2;
 static UINT **nd_bound;
 static struct order_spec *nd_ord;
@@ -284,11 +283,9 @@ INLINE int ndl_hash_value(UINT *d);
 
 /* normal forms */
 INLINE int ndl_find_reducer(UINT *g);
-INLINE int ndl_find_reducer_direct(UINT *g,NDV *ps,int len);
 int nd_sp(int mod,int trace,ND_pairs p,ND *nf);
-int nd_nf(int mod,ND g,NDV *ps,int full,ND *nf);
+int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *nf);
 int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *nf);
-int nd_nf_direct(int mod,ND g,BaseSet base,int full,ND *rp);
 
 /* finalizers */
 NODE ndv_reducebase(NODE x);
@@ -311,7 +308,6 @@ void ndp_print(ND_pairs d);
 /* setup, reconstruct */
 void nd_init_ord(struct order_spec *spec);
 ND_pairs nd_reconstruct(int mod,int trace,ND_pairs ndp);
-void nd_reconstruct_direct(int mod,NDV *ps,int len);
 void ndv_setup(int mod,int trace,NODE f);
 void nd_setup_parameters(int nvar,int max);
 BlockMask nd_create_blockmask(struct order_spec *ord);
@@ -327,6 +323,7 @@ void nd_mul_c(int mod,ND p,int mul);
 void nd_mul_c_q(ND p,Q mul);
 void nd_mul_c_p(VL vl,ND p,P mul);
 ND nd_remove_head(ND p);
+ND nd_separate_head(ND p,ND *head);
 int nd_length(ND p);
 void nd_append_red(UINT *d,int i);
 UINT *ndv_compute_bound(NDV p);
@@ -1048,99 +1045,6 @@ int ndl_check_bound2(int index,UINT *d2)
 #endif
 }
 
-int ndl_check_bound2_direct(UINT *d1,UINT *d2)
-{
-	UINT u2;
-	int i,j,ind,k;
-
-	ind = 0;
-#if USE_UNROLL
-	switch ( nd_bpe ) {
-		case 3:
-			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-				u2 = d2[i];
-				if ( d1[ind++]+((u2>>27)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>24)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>21)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>18)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>15)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>12)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>9)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>6)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+((u2>>3)&0x7) >= 0x8 ) return 1;
-				if ( d1[ind++]+(u2&0x7) >= 0x8 ) return 1;
-			}
-			return 0;
-			break;
-		case 4:
-			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-				u2 = d2[i];
-				if ( d1[ind++]+((u2>>28)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+((u2>>24)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+((u2>>20)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+((u2>>16)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+((u2>>12)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+((u2>>8)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+((u2>>4)&0xf) >= 0x10 ) return 1;
-				if ( d1[ind++]+(u2&0xf) >= 0x10 ) return 1;
-			}
-			return 0;
-			break;
-		case 6:
-			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-				u2 = d2[i];
-				if ( d1[ind++]+((u2>>24)&0x3f) >= 0x40 ) return 1;
-				if ( d1[ind++]+((u2>>18)&0x3f) >= 0x40 ) return 1;
-				if ( d1[ind++]+((u2>>12)&0x3f) >= 0x40 ) return 1;
-				if ( d1[ind++]+((u2>>6)&0x3f) >= 0x40 ) return 1;
-				if ( d1[ind++]+(u2&0x3f) >= 0x40 ) return 1;
-			}
-			return 0;
-			break;
-		case 8:
-			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-				u2 = d2[i];
-				if ( d1[ind++]+((u2>>24)&0xff) >= 0x100 ) return 1;
-				if ( d1[ind++]+((u2>>16)&0xff) >= 0x100 ) return 1;
-				if ( d1[ind++]+((u2>>8)&0xff) >= 0x100 ) return 1;
-				if ( d1[ind++]+(u2&0xff) >= 0x100 ) return 1;
-			}
-			return 0;
-			break;
-		case 16:
-			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-				u2 = d2[i];
-				if ( d1[ind++]+((u2>>16)&0xffff) > 0x10000 ) return 1;
-				if ( d1[ind++]+(u2&0xffff) > 0x10000 ) return 1;
-			}
-			return 0;
-			break;
-		case 32:
-			for ( i = nd_exporigin; i < nd_wpd; i++ )
-				if ( d1[i]+d2[i]<d1[i] ) return 1;
-			return 0;
-			break;
-		default:
-			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-				u2 = d2[i];
-				k = (nd_epw-1)*nd_bpe;
-				for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
-					if ( d1[ind++]+((u2>>k)&nd_mask0) > nd_mask0 ) return 1;
-			}
-			return 0;
-			break;
-	}
-#else
-	for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-		u2 = d2[i];
-		k = (nd_epw-1)*nd_bpe;
-		for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
-			if ( d1[ind++]+((u2>>k)&nd_mask0) > nd_mask0 ) return 1;
-	}
-	return 0;
-#endif
-}
-
 INLINE int ndl_hash_value(UINT *d)
 {
 	int i;
@@ -1182,27 +1086,6 @@ INLINE int ndl_find_reducer(UINT *dg)
 				nd_append_red(dg,i);
 				return i;
 			}
-		}
-	return -1;
-}
-
-INLINE int ndl_find_reducer_direct(UINT *dg,NDV *ps,int len)
-{
-	NDV r;
-	RHist s;
-	int d,k,i;
-
-	if ( Reverse )
-		for ( i = len-1; i >= 0; i-- ) {
-			r = ps[i];
-			if ( ndl_reducible(dg,HDL(r)) )
-				return i;
-		}
-	else
-		for ( i = 0; i < len; i++ ) {
-			r = ps[i];
-			if ( ndl_reducible(dg,HDL(r)) )
-				return i;
 		}
 	return -1;
 }
@@ -1346,7 +1229,7 @@ ND nd_add_q(ND p1,ND p2)
 }
 
 /* ret=1 : success, ret=0 : overflow */
-int nd_nf(int mod,ND g,NDV *ps,int full,ND *rp)
+int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *rp)
 {
 	ND d;
 	NM m,mrd,tail;
@@ -1355,9 +1238,15 @@ int nd_nf(int mod,ND g,NDV *ps,int full,ND *rp)
 	int c,c1,c2,dummy;
 	RHist h;
 	NDV p,red;
-	Q cg,cred,gcd;
+	Q cg,cred,gcd,tq,qq;
 	double hmag;
 
+	if ( dn ) {
+		if ( mod )
+			dn->m = 1;
+		else
+			dn->z = ONE;
+	}
 	if ( !g ) {
 		*rp = 0;
 		return 1;
@@ -1384,11 +1273,18 @@ int nd_nf(int mod,ND g,NDV *ps,int full,ND *rp)
 				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
 				chsgnq(cg,&CQ(mul));
 				nd_mul_c_q(d,cred); nd_mul_c_q(g,cred);
+				if ( dn ) {
+					mulq(dn->z,cred,&tq); dn->z = tq;
+				}
 			}
 			g = nd_add(mod,g,ndv_mul_nm(mod,mul,p));
 			sugar = MAX(sugar,SG(p)+TD(DL(mul)));
 			if ( !mod && hmag && g && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
+				tq = HCQ(g);
 				nd_removecont2(d,g);
+				if ( dn ) {
+					divq(tq,HCQ(g),&qq); divq(dn->z,qq,&tq); dn->z = tq;
+				}
 				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
 			}
 		} else if ( !full ) {
@@ -1508,83 +1404,6 @@ int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *rp)
 	}
 }
 
-int nd_nf_direct(int mod,ND g,BaseSet base,int full,ND *rp)
-{
-	ND d;
-	NM m,mrd,tail;
-	NM mul;
-	NDV *ps;
-	int n,sugar,psugar,sugar0,stat,index,len;
-	int c,c1,c2;
-	UINT **bound;
-	RHist h;
-	NDV p,red;
-	Q cg,cred,gcd;
-	double hmag;
-
-	if ( !g ) {
-		*rp = 0;
-		return 1;
-	}
-#if 0
-	if ( !mod )
-		hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
-#else
-	/* XXX */
-	hmag = 0;
-#endif
-
-	ps = base->ps;
-	bound = base->bound;
-	len = base->len;
-	sugar0 = sugar = SG(g);
-	n = NV(g);
-	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
-	for ( d = 0; g; ) {
-		index = ndl_find_reducer_direct(HDL(g),ps,len);
-		if ( index >= 0 ) {
-			p = ps[index];
-			ndl_sub(HDL(g),HDL(p),DL(mul));
-			if ( ndl_check_bound2_direct(bound[index],DL(mul)) ) {
-				nd_free(g); nd_free(d);
-				return 0;
-			}
-			if ( mod ) {
-				c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
-				DMAR(c1,c2,0,mod,c); CM(mul) = c;
-			} else {
-				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
-				chsgnq(cg,&CQ(mul));
-				nd_mul_c_q(d,cred); nd_mul_c_q(g,cred);
-			}
-			g = nd_add(mod,g,ndv_mul_nm(mod,mul,p));
-			sugar = MAX(sugar,SG(p)+TD(DL(mul)));
-			if ( !mod && hmag && g && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
-				nd_removecont2(d,g);
-				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
-			}
-		} else if ( !full ) {
-			*rp = g;
-			return 1;
-		} else {
-			m = BDY(g); 
-			if ( NEXT(m) ) {
-				BDY(g) = NEXT(m); NEXT(m) = 0; LEN(g)--;
-			} else {
-				FREEND(g); g = 0;
-			}
-			if ( d ) {
-				NEXT(tail)=m; tail=m; LEN(d)++;
-			} else {
-				MKND(n,m,1,d); tail = BDY(d);
-			}
-		}
-	}
-	if ( d ) SG(d) = sugar;
-	*rp = d;
-	return 1;
-}
-
 /* input : list of NDV, cand : list of NDV */
 
 int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
@@ -1593,6 +1412,7 @@ int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
 	ND nf,d;
 	NDV r;
 	NODE t,s;
+	union oNDC dn;
 
 	ndv_setup(0,0,cand);
 	n = length(cand);
@@ -1605,7 +1425,7 @@ again:
 		else
 			r = (NDV)BDY(t);
 		d = ndvtond(0,r);
-		stat = nd_nf(0,d,nd_ps,0,&nf);
+		stat = nd_nf(0,d,nd_ps,0,0,&nf);
 		if ( !stat ) {
 			nd_reconstruct(0,0,0);
 			goto again;
@@ -1630,6 +1450,24 @@ ND nd_remove_head(ND p)
 		BDY(p) = NEXT(m); LEN(p)--;
 	}
 	FREENM(m);
+	return p;
+}
+
+ND nd_separate_head(ND p,ND *head)
+{
+	NM m,m0;
+	ND r;
+
+	m = BDY(p);
+	if ( !NEXT(m) ) {
+		*head = p; p = 0;
+	} else {
+		m0 = m;
+		BDY(p) = NEXT(m); LEN(p)--;
+		NEXT(m0) = 0;
+		MKND(NV(p),m0,1,r);
+		*head = r;
+	}
 	return p;
 }
 
@@ -1835,6 +1673,7 @@ NODE nd_gb(int m,int checkonly)
 	ND_pairs l;
 	ND h,nf;
 	NDV nfv;
+	union oNDC dn;
 
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
@@ -1856,9 +1695,9 @@ again:
 			goto again;
 		}
 #if USE_GEOBUCKET
-		stat = m?nd_nf_pbucket(m,h,nd_ps,!Top,&nf):nd_nf(m,h,nd_ps,!Top,&nf);
+		stat = m?nd_nf_pbucket(m,h,nd_ps,!Top,&nf):nd_nf(m,h,nd_ps,!Top,0,&nf);
 #else
-		stat = nd_nf(m,h,nd_ps,!Top,&nf);
+		stat = nd_nf(m,h,nd_ps,!Top,0,&nf);
 #endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
@@ -1890,6 +1729,7 @@ NODE nd_gb_trace(int m)
 	ND_pairs l;
 	ND h,nf,nfq;
 	NDV nfv,nfqv;
+	union oNDC dn;
 
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
@@ -1913,7 +1753,7 @@ again:
 #if USE_GEOBUCKET
 		stat = nd_nf_pbucket(m,h,nd_ps,!Top,&nf);
 #else
-		stat = nd_nf(m,h,nd_ps,!Top,&nf);
+		stat = nd_nf(m,h,nd_ps,!Top,0,&nf);
 #endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
@@ -1922,7 +1762,7 @@ again:
 		} else if ( nf ) {
 			/* overflow does not occur */
 			nd_sp(0,1,l,&h);
-			nd_nf(0,h,nd_ps_trace,!Top,&nfq);
+			nd_nf(0,h,nd_ps_trace,!Top,0,&nfq);
 			if ( nfq ) {
 				/* failure; m|HC(nfq) */
 				if ( !rem(NM(HCQ(nfq)),m) ) return 0;
@@ -1958,56 +1798,43 @@ int ndv_compare_rev(NDV *p1,NDV *p2)
 
 NODE ndv_reduceall(int m,NODE f)
 {
-	int i,j,n,stat;
-	NDV *w,*ps;
-	ND nf,g;
+	int i,n,stat;
+	ND nf,g,head;
 	NODE t,a0,a;
-	struct oBaseSet base;
-	UINT **bound;
+	union oNDC dn;
+	NDV *w;
+	Q q;
 
-	for ( n = 0, t = f; t; t = NEXT(t), n++ );
-	ps = (NDV *)ALLOCA(n*sizeof(NDV));
-	bound = (UINT **)ALLOCA(n*sizeof(UINT *));
-	for ( i = 0, t = f; i < n; i++, t = NEXT(t) ) ps[i] = (NDV)BDY(t);
-	qsort(ps,n,sizeof(NDV),(int (*)(const void *,const void *))ndv_compare);
-	for ( i = 0; i < n; i++ ) bound[i] = ndv_compute_bound(ps[i]);
-	base.ps = (NDV *)ALLOCA((n-1)*sizeof(NDV));
-	base.bound = (UINT **)ALLOCA((n-1)*sizeof(UINT *));
-	base.len = n-1;
-	i = 0;
-	while ( i < n ) {
-		for ( j = 0; j < i; j++ ) {
-			base.ps[j] = ps[j]; base.bound[j] = bound[j];
-		}
-		for ( j = i+1; j < n; j++ ) {
-			base.ps[j-1] = ps[j]; base.bound[j-1] = bound[j];
-		}
-		g = ndvtond(m,ps[i]);
-		stat = nd_nf_direct(m,g,&base,1,&nf);
+	n = length(f);
+#if 0
+	w = (NDV *)ALLOCA(n*sizeof(NDV));
+	for ( i = 0, t = f; i < n; i++, t = NEXT(t) ) w[i] = (NDV)BDY(t);
+	qsort(w,n,sizeof(NDV),
+		(int (*)(const void *,const void *))ndv_compare);
+	for ( t = f, i = 0; t; i++, t = NEXT(t) ) BDY(t) = (pointer)w[i];
+#endif
+	ndv_setup(m,0,f);
+	for ( i = 0; i < n; ) {
+		g = ndvtond(m,nd_ps[i]);
+		g = nd_separate_head(g,&head);
+		stat = nd_nf(m,g,nd_ps,1,&dn,&nf);
 		if ( !stat )
-			nd_reconstruct_direct(m,ps,n);
-		else if ( !nf ) {
+			nd_reconstruct(m,0,0);
+		else {
 			printf("."); fflush(stdout);
-			ndv_free(ps[i]);
-			for ( j = i+1; j < n; j++ ) {
-				ps[j-1] = ps[j]; bound[j-1] = bound[j];
-			}
-			n--;
-			base.len = n-1;
-		} else {
-			printf("."); fflush(stdout);
-			ndv_free(ps[i]);
+			if ( !m ) { mulq(HCQ(head),dn.z,&q); HCQ(head) = q; }
+			nf = nd_add(m,head,nf);
+			ndv_free(nd_ps[i]);
 			nd_removecont(m,nf);
-			ps[i] = ndtondv(m,nf);
-			bound[i] = ndv_compute_bound(ps[i]);
-			nd_free(nf);
+			nd_ps[i] = ndtondv(m,nf); nd_free(nf);
+			nd_bound[i] = ndv_compute_bound(nd_ps[i]);
 			i++;
 		}
 	}
 	printf("\n");
 	for ( a0 = 0, i = 0; i < n; i++ ) {
 		NEXTNODE(a0,a);
-		BDY(a) = (pointer)ps[i];
+		BDY(a) = (pointer)nd_ps[i];
 	}
 	NEXT(a) = 0;
 	return a0;
@@ -2253,17 +2080,18 @@ ND_pairs nd_minp( ND_pairs d, ND_pairs *prest )
 
 ND_pairs nd_minsugarp( ND_pairs d, ND_pairs *prest )
 {
-	int msugar;
+	int msugar,i;
 	ND_pairs t,dm0,dm,dr0,dr;
 
 	for ( msugar = SG(d), t = NEXT(d); t; t = NEXT(t) )
 		if ( SG(t) < msugar ) msugar = SG(t);
 	dm0 = 0; dr0 = 0;
-	for ( t = d; t; t = NEXT(t) )
-		if ( SG(t) == msugar ) {
+	for ( i = 0, t = d; t; t = NEXT(t) )
+		if ( i < nd_f4_nsp && SG(t) == msugar ) {
 			if ( dm0 ) NEXT(dm) = t;
 			else dm0 = t;
 			dm = t;
+			i++;
 		} else {
 			if ( dr0 ) NEXT(dr) = t;
 			else dr0 = t;
@@ -2308,11 +2136,17 @@ void ndv_setup(int mod,int trace,NODE f)
 	NODE s,s0,f0;
 	UINT *d;
 	RHist r;
+	NDV *w;
 	NDV a,am;
 
 	nd_found = 0; nd_notfirst = 0; nd_create = 0;
 
-	nd_psn = length(f); nd_pslen = 2*nd_psn;
+	for ( nd_psn = 0, s = f; s; s = NEXT(s) ) if ( BDY(s) ) nd_psn++;
+	w = (NDV *)ALLOCA(nd_psn*sizeof(NDV));
+	for ( i = 0, s = f; s; s = NEXT(s) ) if ( BDY(s) ) w[i++] = BDY(s);
+	qsort(w,nd_psn,sizeof(NDV),
+		(int (*)(const void *,const void *))ndv_compare);
+	nd_pslen = 2*nd_psn;
 	nd_ps = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_ps_trace = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_psh = (RHist *)MALLOC(nd_pslen*sizeof(RHist));
@@ -2322,16 +2156,15 @@ void ndv_setup(int mod,int trace,NODE f)
 		nd_red = (RHist *)MALLOC(REDTAB_LEN*sizeof(RHist));
 	bzero(nd_red,REDTAB_LEN*sizeof(RHist));
 	nd_free_private_storage();
-	for ( i = 0; i < nd_psn; i++, f = NEXT(f) ) {
+	for ( i = 0; i < nd_psn; i++ ) {
 		if ( trace ) {
-			a = nd_ps_trace[i] = ndv_dup(0,(NDV)BDY(f));
+			a = nd_ps_trace[i] = ndv_dup(0,w[i]);
 			ndv_removecont(0,a);
 			am = nd_ps[i] = ndv_dup(mod,a);
 			ndv_mod(mod,am);
 			ndv_removecont(mod,am);
 		} else {
-			a = nd_ps[i] = ndv_dup(mod,(NDV)BDY(f));
-			if ( mod ) ndv_mod(mod,a);
+			a = nd_ps[i] = ndv_dup(mod,w[i]);
 			ndv_removecont(mod,a);
 		}
 		NEWRHist(r); SG(r) = HTD(a); ndl_copy(HDL(a),DL(r));
@@ -2345,7 +2178,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	VL tv,fv,vv,vc;
 	NODE fd,fd0,r,r0,t,x,s,xx;
 	int e,max,nvar;
-	ND b;
+	NDV b;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	nvar = length(vv);
@@ -2358,6 +2191,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	nd_setup_parameters(nvar,max);
 	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 		b = (pointer)ptondv(CO,vv,(P)BDY(t));
+		if ( m ) ndv_mod(m,b);
 		if ( b ) { NEXTNODE(fd0,fd); BDY(fd) = (pointer)b; }
 	}
 	if ( fd0 ) NEXT(fd) = 0;
@@ -2951,41 +2785,6 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 	prev_ndp_free_list = 0;
 	GC_gcollect();
 	return s0;
-}
-
-void nd_reconstruct_direct(int mod,NDV *ps,int len)
-{
-	int i,obpe,oadv,h;
-	UINT **bound;
-	NM prev_nm_free_list;
-	RHist mr0,mr;
-	RHist r;
-	RHist *old_red;
-	ND_pairs s0,s,t,prev_ndp_free_list;
-	EPOS oepos;
-
-	obpe = nd_bpe;
-	oadv = nmv_adv;
-	oepos = nd_epos;
-	if ( obpe < 2 ) nd_bpe = 2;
-	else if ( obpe < 3 ) nd_bpe = 3;
-	else if ( obpe < 4 ) nd_bpe = 4;
-	else if ( obpe < 5 ) nd_bpe = 5;
-	else if ( obpe < 6 ) nd_bpe = 6;
-	else if ( obpe < 8 ) nd_bpe = 8;
-	else if ( obpe < 10 ) nd_bpe = 10;
-	else if ( obpe < 16 ) nd_bpe = 16;
-	else if ( obpe < 32 ) nd_bpe = 32;
-	else error("nd_reconstruct_direct : exponent too large");
-
-	nd_setup_parameters(0,0);
-	prev_nm_free_list = _nm_free_list;
-	prev_ndp_free_list = _ndp_free_list;
-	_nm_free_list = 0; _ndp_free_list = 0;
-	for ( i = len-1; i >= 0; i-- ) ndv_realloc(ps[i],obpe,oadv,oepos);
-	prev_nm_free_list = 0;
-	prev_ndp_free_list = 0;
-	GC_gcollect();
 }
 
 void ndl_reconstruct(UINT *d,UINT *r,int obpe,EPOS oepos)
@@ -3715,6 +3514,7 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	NDV ndv;
 	VL vv,tv;
 	int stat,nvar,max,e;
+	union oNDC dn;
 
 	pltovl(v,&vv);
 	nvar = length(vv);
@@ -3737,9 +3537,11 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	for ( in0 = 0, t = BDY(g); t; t = NEXT(t) ) {
 		NEXTNODE(in0,in);
 		BDY(in) = (pointer)ptondv(CO,vv,(P)BDY(t));
+		if ( m ) ndv_mod(m,(NDV)BDY(in));
 	}
 	NEXTNODE(in0,in);
 	BDY(in) = (pointer)ptondv(CO,vv,f);
+	if ( m ) ndv_mod(m,(NDV)BDY(in));
 	NEXT(in) = 0;
 
 	ndv_setup(m,0,in0);
@@ -3747,7 +3549,7 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	nd_scale=2;
 	while ( 1 ) {
 		nd = (pointer)ndvtond(m,nd_ps[nd_psn]);
-		stat = nd_nf(m,nd,nd_ps,1,&nf);
+		stat = nd_nf(m,nd,nd_ps,1,0,&nf);
 		if ( !stat ) {
 			nd_psn++;
 			nd_reconstruct(m,0,0);
@@ -3987,6 +3789,121 @@ int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
 	return col;
 }
 
+#if 0
+NODE nd_f4(int m)
+{
+	int i,nh,stat,index;
+	NODE r,g;
+	ND_pairs d,l,t;
+	ND spol,red;
+	NDV nf,redv;
+	NM s0,s;
+	NODE sp0,sp,rp0,rp;
+	int nsp,nred,col,rank,len,k,j,a;
+	UINT c;
+	UINT *s0vect,*svect,*p,*v;
+	int *colstat;
+	IndArray *imat;
+	int *rhead;
+	int spcol,sprow;
+	int sugar;
+	PGeoBucket bucket;
+	struct oEGT eg0,eg1,eg_f4;
+	static UINT **spmat;
+	static UINT *spb;
+	static int spblen;
+
+	if ( !m )
+		error("nd_f4 : not implemented");
+
+	g = 0; d = 0;
+	for ( i = 0; i < nd_psn; i++ ) {
+		d = update_pairs(d,g,i);
+		g = update_base(g,i);
+	}
+	if ( !spmat ) {
+		spmat = (UINT **)MALLOC(nd_f4_nsp*sizeof(UINT *));
+		spblen = 10000;
+		spb = (UINT *)MALLOC_ATOMIC(nd_f4_nsp*spblen*sizeof(UINT));
+	}
+	while ( d ) {
+		get_eg(&eg0);
+		l = nd_minsugarp(d,&d);
+		sugar = SG(l);
+		bucket = create_pbucket();
+		stat = nd_sp_f4(m,l,bucket,&sp0);
+		if ( !stat ) {
+			for ( t = l; NEXT(t); t = NEXT(t) );
+			NEXT(t) = d; d = l;
+			d = nd_reconstruct(m,0,d);
+			continue;
+		}
+		if ( !sp0 ) continue;
+		col = nd_symbolic_preproc(bucket,&s0vect,&rp0);
+		if ( !col ) {
+			for ( t = l; NEXT(t); t = NEXT(t) );
+			NEXT(t) = d; d = l;
+			d = nd_reconstruct(m,0,d);
+			continue;
+		}
+
+		nsp = length(sp0); nred = length(rp0); spcol = col-nred;
+		imat = (IndArray *)MALLOC(nred*sizeof(IndArray));
+		rhead = (int *)MALLOC_ATOMIC(col*sizeof(int));
+		for ( i = 0; i < col; i++ ) rhead[i] = 0;
+
+		/* construction of index arrays */
+		for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+			imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,(NM_ind_pair)BDY(rp));
+			rhead[imat[i]->head] = 1;
+		}
+
+		/* elimination (1st step) */
+		svect = (UINT *)MALLOC_ATOMIC(col*sizeof(UINT));
+		if ( spcol > spblen ) {
+			spblen = spcol;
+			spb = REALLOC(spb,spblen*nd_f4_nsp*sizeof(UINT));
+		}
+
+		for ( a = sprow = 0, sp = sp0, p = spb; a < nsp; a++, sp = NEXT(sp) ) {
+			nd_to_vect(m,s0vect,col,BDY(sp),svect);
+			ndv_reduce_vect(m,svect,col,imat,rp0);
+			for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+			if ( i < col ) {
+				spmat[sprow] = p;
+				v = spmat[sprow];
+				for ( j = k = 0; j < col; j++ )
+					if ( !rhead[j] ) v[k++] = svect[j];
+				sprow++;
+				p += k;
+			}
+		}
+		/* free index arrays */
+		for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
+
+		/* elimination (2nd step) */
+		colstat = (int *)ALLOCA(spcol*sizeof(int));
+		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+
+		get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
+		fprintf(asir_out,"sugar=%d,nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
+			sugar,nsp,nred,sprow,spcol,rank);
+		fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
+
+		/* adding new bases */
+		for ( i = 0; i < rank; i++ ) {
+			nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+			SG(nf) = sugar;
+			ndv_removecont(m,nf);
+			nh = ndv_newps(nf,0);
+			d = update_pairs(d,g,nh);
+			g = update_base(g,nh);
+		}
+	}
+	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
+	return g;
+}
+#else
 NODE nd_f4(int m)
 {
 	int i,nh,stat,index;
@@ -4089,3 +4006,4 @@ NODE nd_f4(int m)
 	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
 	return g;
 }
+#endif
