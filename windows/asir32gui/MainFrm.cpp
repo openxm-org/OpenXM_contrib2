@@ -57,7 +57,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	
+		
 	if ( asirgui_kind == ASIRGUI_MAIN ) {
 		if (!m_wndToolBar.Create(this) ||
 			!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))

@@ -68,6 +68,8 @@ public:
 	afx_msg void OnAsirhelp();
 	afx_msg void OnUpdateFileLog(CCmdUI* pCmdUI);
 	afx_msg void OnEditPaste();
+	afx_msg void OnFont();
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

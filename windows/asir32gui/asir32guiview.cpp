@@ -7,6 +7,7 @@
 #include "asir32guiDoc.h"
 #include "asir32guiView.h"
 #include "FatalDialog.h"
+#include <direct.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -14,8 +15,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-const WindowHeight       = 200;
-const WindowWidth        = 400;
 const TextBufferSize     = 32768;
 
 CAsir32guiView *theView;
@@ -64,6 +63,8 @@ BEGIN_MESSAGE_MAP(CAsir32guiView, CEditView)
 	ON_COMMAND(ID_ASIRHELP, OnAsirhelp)
 	ON_UPDATE_COMMAND_UI(ID_FILE_LOG, OnUpdateFileLog)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
+	ON_COMMAND(IDR_FONT, OnFont)
+	ON_WM_CREATE()
 	//}}AFX_MSG_MAP
 	// 標準印刷コマンド
 //	ON_COMMAND(ID_FILE_PRINT, CEditView::OnFilePrint)
@@ -436,7 +437,15 @@ void CAsir32guiView::OnFileOpen()
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
 	char cmd[BUFSIZ*2]; // XXX
 	char *p;
+	static char errmsg[BUFSIZ];
+	static char prevdir[BUFSIZ];
 
+	if ( !prevdir[0] ) {
+		get_rootdir(prevdir,sizeof(prevdir),errmsg);
+		strcat(prevdir,"\\lib");	
+	}
+
+	_chdir(prevdir);
 	CFileDialog	fileDialog(TRUE);
 	if ( fileDialog.DoModal() == IDOK ) {
 		CString pathName = fileDialog.GetPathName();
@@ -445,6 +454,11 @@ void CAsir32guiView::OnFileOpen()
 			if ( *p == '\\' )
 				*p = '/';
 		put_line(cmd);
+		p = strrchr(pathName,'\\');
+		if ( p ) {
+			*p = 0;
+			strcpy(prevdir,pathName);
+		}
 	}
 }
 
@@ -494,4 +508,43 @@ void CAsir32guiView::OnEditPaste()
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
     Paste();
+}
+
+void CAsir32guiView::OnFont() 
+{
+	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
+	int ret;
+	CFontDialog fd(NULL,CF_EFFECTS | CF_SCREENFONTS | CF_FIXEDPITCHONLY);
+	static CFont *f = 0;
+	LOGFONT lf;
+
+	ret = fd.DoModal();
+	if ( ret == IDOK ) {
+		fd.GetCurrentFont(&lf);
+		if ( f )
+			delete f;
+		f = new CFont;
+		f->CreateFontIndirect(&lf);
+		SetFont(f);
+	}
+}
+
+int CAsir32guiView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+{
+	if (CEditView::OnCreate(lpCreateStruct) == -1)
+		return -1;
+	
+	// TODO: この位置に固有の作成用コードを追加してください
+	
+	LOGFONT logFont; memset(&logFont, 0, sizeof(LOGFONT));
+	logFont.lfHeight = 20;
+	logFont.lfCharSet = DEFAULT_CHARSET;
+	strcpy(logFont.lfFaceName, "Terminal");
+	CFont *f = new CFont;
+	f->CreateFontIndirect(&logFont);
+	SetFont(f);
+	GetEditCtrl().LimitText(nMaxSize);
+	GetEditCtrl().SetTabStops(m_nTabStops);
+
+	return 0;
 }
