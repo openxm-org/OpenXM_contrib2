@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.38 2004/03/11 03:39:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.39 2004/03/11 04:52:17 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -121,6 +121,7 @@ int register_dp_vars(Obj arg);
 int register_dp_vars_prefix(Obj arg);
 int register_dp_vars_hweyl(Obj arg);
 int register_show_lt(Obj arg);
+char *objtostr(Obj obj);
 static struct TeXSymbol *user_texsymbol;
 static char **dp_vars;
 static int dp_vars_len;
@@ -176,6 +177,18 @@ char *conv_rule(char *name)
 		return conv_flag&CONV_SUBS?conv_subs(name):symbol_name(name);
 }
 
+int _is_delimiter(char c)
+{
+	if ( (c == ' ' || c == '_' || c == ',') ) return 1;
+	else return 0;
+}
+
+int _is_alpha(char c)
+{
+	if ( isdigit(c) || c == '{' || _is_delimiter(c) ) return 0;
+	else return 1;
+}
+
 char *conv_subs(char *name)
 {
 	int i,j,k,len,clen,slen,start,level;
@@ -186,8 +199,7 @@ char *conv_subs(char *name)
 	if ( !len ) return 0;
 	subs = (char **)ALLOCA(len*sizeof(char* ));
 	for ( i = 0, j = 0, start = i; ; j++ ) {
-		while ( (i < len) && 
-			(name[i] == ' ' || name[i] == '_' || name[i] == ',') ) i++;
+		while ( (i < len) && _is_delimiter(name[i]) ) i++;
 		start = i;
 		if ( i == len ) break;
 		if ( name[i] == '{' ) {
@@ -212,7 +224,7 @@ char *conv_subs(char *name)
 			if ( isdigit(name[i]) )
 				while ( i < len && isdigit(name[i]) ) i++;
 			else
-				while ( i < len && (isalpha(name[i]) || name[i] == '\\') ) i++;
+				while ( i < len && _is_alpha(name[i]) ) i++;
 			slen = i-start;	
 			buf = (char *)ALLOCA((slen+1)*sizeof(char));
 			strncpy(buf,name+start,slen); buf[slen] = 0;
@@ -784,6 +796,8 @@ void fnodetotex_tb(FNODE f,TB tb)
 	char *opname,*vname_conv,*prefix_conv;
 	Obj obj;
 	int i,len,allzero,elen,elen2;
+	C cplx;
+	char *r;
 	FNODE fi,f2;
 
 	write_tb(" ",tb);
@@ -970,11 +984,17 @@ void fnodetotex_tb(FNODE f,TB tb)
 
 		/* function */
 		case I_FUNC:
-			opname = conv_rule(((FUNC)FA0(f))->name);
-			write_tb(opname,tb);
-			write_tb("(",tb);
-			fargstotex_tb(opname,FA1(f),tb);
-			write_tb(")",tb);
+			if ( !strcmp(((FUNC)FA0(f))->name,"@pi") )
+				write_tb("\\pi",tb);
+			else if ( !strcmp(((FUNC)FA0(f))->name,"@e") )
+				write_tb("e",tb);
+			else {
+				opname = conv_rule(((FUNC)FA0(f))->name);
+				write_tb(opname,tb);
+				write_tb("(",tb);
+				fargstotex_tb(opname,FA1(f),tb);
+				write_tb(")",tb);
+			}
 			break;
 
 		/* XXX */
@@ -1061,15 +1081,32 @@ void fnodetotex_tb(FNODE f,TB tb)
 		/* internal object */
 		case I_FORMULA:
 			obj = (Obj)FA0(f);
-			if ( obj && OID(obj) == O_P ) {
-				opname = conv_rule(VR((P)obj)->name);
-			} else {
-				len = estimate_length(CO,obj);
-				opname = (char *)MALLOC_ATOMIC(len+1);
-				soutput_init(opname);
-				sprintexpr(CO,obj);
-			}
-			write_tb(opname,tb);
+			if ( !obj )
+				opname = "0";
+			else if ( OID(obj) == O_N && NID(obj) == N_C ) {
+				cplx = (C)obj;
+				write_tb("(",tb);
+				if ( cplx->r ) {
+					r = objtostr((Obj)cplx->r); write_tb(r,tb);
+				}
+				if ( cplx->i ) {
+					if ( cplx->r && compnum(0,cplx->i,0) > 0 ) {
+						write_tb("+",tb);
+						if ( !UNIQ(cplx->i) ) {
+							r = objtostr((Obj)cplx->i); write_tb(r,tb);
+						}
+					} else if ( MUNIQ(cplx->i) )
+						write_tb("-",tb);
+					else if ( !UNIQ(cplx->i) ) {
+						r = objtostr((Obj)cplx->i); write_tb(r,tb);
+					}
+					write_tb("\\sqrt{-1}",tb);
+				}
+				write_tb(")",tb);
+			} else if ( OID(obj) == O_P )
+				write_tb(conv_rule(VR((P)obj)->name),tb);
+			else
+				write_tb(objtostr(obj),tb);
 			break;
 
 		/* program variable */
@@ -1083,6 +1120,18 @@ void fnodetotex_tb(FNODE f,TB tb)
 		default:
 			error("fnodetotex_tb : not implemented yet");
 	}
+}
+
+char *objtostr(Obj obj)
+{
+	int len;
+	char *r;
+
+	len = estimate_length(CO,obj);
+	r = (char *)MALLOC_ATOMIC(len+1);
+	soutput_init(r);
+	sprintexpr(CO,obj);
+	return r;
 }
 
 void fnodenodetotex_tb(NODE n,TB tb)

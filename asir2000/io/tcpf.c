@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.52 2004/03/09 05:33:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.53 2004/03/09 07:18:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,10 +89,10 @@ if((ind)<0||(ind)>=mpi_nprocs){error("invalid server id");}
 if((ind)<0||(ind)>=mpi_nprocs){(ind)=-1;}
 #else
 #define valid_mctab_index(ind)\
-if((ind)<0||(ind)>=m_c_i||\
+if((ind)<I_am_server||(ind)>=m_c_i||\
 ((m_c_tab[ind].m<0)&&(m_c_tab[ind].c<0))){error("invalid server id");}
 #define check_valid_mctab_index(ind)\
-if((ind)<0||(ind)>=m_c_i||\
+if((ind)<I_am_server||(ind)>=m_c_i||\
 ((m_c_tab[ind].m<0)&&(m_c_tab[ind].c<0))){(ind)=-1;}
 #endif
 
