@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.27 2001/12/25 02:39:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.28 2001/12/25 05:28:39 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -471,6 +471,15 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 }
 
 #if defined(__CYGWIN__)
+static void bslash2slash(char *buf)
+{
+	char *p;
+
+	for ( p = buf; *p; p++ )
+		if ( *p == '\\' )
+			*p = '/';
+}
+
 static int get_start_path(char *buf)
 {
 	static char start_path[BUFSIZ];
@@ -486,6 +495,7 @@ static int get_start_path(char *buf)
 	strcpy(buf,"c:\\winnt\\system32\\start.exe");
 	cygwin_conv_to_full_posix_path(buf,name);
 	if ( !access(name,X_OK) ) {
+		bslash2slash(buf);
 		strcpy(start_path,buf);
 		return 1;
 	}
@@ -494,6 +504,7 @@ static int get_start_path(char *buf)
 	strcpy(buf,"c:\\windows\\command\\start.exe");
 	cygwin_conv_to_full_posix_path(buf,name);
 	if ( !access(name,X_OK) ) {
+		bslash2slash(buf);
 		strcpy(start_path,buf);
 		return 1;
 	}
@@ -516,6 +527,7 @@ static void get_launcher_path(char *buf)
 	get_rootdir(rootname,sizeof(rootname));
 	sprintf(name,"%s/ox_launch.exe",rootname);
 	cygwin_conv_to_full_win32_path(name,launcher_path);		
+	bslash2slash(launcher_path);
 	launcher_initialized = 1;
 	strcpy(buf,launcher_path);
 }
@@ -575,28 +587,33 @@ void spawn_server(char *host,char *launcher,char *server,
 //	_spawnv(_P_NOWAIT,"d:\\home\\noro\\engine2000\\debug\\engine.exe",av);
 //	printf("ox_launch 127.0.0.1 %s %s %s %s 0\n",conn_str,control_port_str,server_port_str,server);
 #else
-	get_start_path(win_start);
 	if ( use_unix || !host ) {
+#if defined(__CYGWIN__)
+		get_launcher_path(win_launcher);
+		if ( dname && get_start_path(win_start) ) {
+  			sprintf(cmd,"%s %s %s %s %s %s %s 1",
+				win_start,win_launcher,use_unix?".":"127.1",conn_str,
+				control_port_str,server_port_str,server);	
+			system(cmd);
+		} else {
+			if ( !fork() ) {
+				setpgid(0,getpid());
+				execlp(launcher,launcher,use_unix?".":"127.1",conn_str,
+					control_port_str,server_port_str,server,dname0,"-nolog",0);
+			}
+		}
+#else
 		if ( !fork() ) {
 			setpgid(0,getpid());
-#if defined(__CYGWIN__)
-			if ( dname && get_start_path(win_start) )
-			{
-				get_launcher_path(win_launcher);
-				execlp(win_start,"start",win_launcher,
-					use_unix?".":"127.1",conn_str,
-					control_port_str,server_port_str,server,"1",0);
-			}
-#else
 			if ( dname )
 				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
 					"-geometry","60x10","-e",launcher,use_unix?".":"127.1",conn_str,
 					control_port_str,server_port_str,server,dname,0);
-#endif
 			else 
 				execlp(launcher,launcher,use_unix?".":"127.1",conn_str,
 					control_port_str,server_port_str,server,dname0,"-nolog",0);
 		}
+#endif
 	} else if ( conn_to_serv == 2 ) {
 		/* special support for java */
 		if ( dname )

@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.30 2001/10/30 01:09:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.31 2001/12/25 02:39:03 noro Exp $ 
 */
 #include "config.h"
 
@@ -13,6 +13,10 @@
 /* #define USE_FEP */
 /* #undef OpenXM_HOME */
 /* #define USE_INTERVAL */
+
+#if defined(cygwinArchitecture)
+INSTALL=/bin/install
+#endif
 
 #if defined(LinuxArchitecture)
 #if LinuxCLibMajorVersion >= 6 || \
