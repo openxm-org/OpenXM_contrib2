@@ -4869,8 +4869,15 @@ sparc_v9_obj="sparc-2.o asm5-2.o edr-2.o"
 generic_obj=asmalpha.o
 
 case "${host}" in
-i[3-6]86-*-freebsd[3-9].*|i[3-6]86-*-linux*|x86-*-linux*)
+i[3-6]86-*-freebsd[3-9].*)
     asm_obj="${i386_elf_obj}"
+    ;;
+i[3-6]86-*-linux*|x86-*-linux*)
+    asm_obj="${i386_elf_obj}"
+    cat >>confdefs.h <<\_ACEOF
+#define BSD_SOURCE 1
+_ACEOF
+
     ;;
 *-*-cygwin*)
     asm_obj="${i386_aout_obj}"
