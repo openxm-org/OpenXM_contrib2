@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.12 2001/06/07 04:54:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.13 2001/06/07 05:14:48 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -90,6 +90,7 @@ void Px962_irredpoly_up2();
 void Pirredpoly_up2();
 void Pnbpoly_up2();
 void Pqsort();
+void Pexponent_vector();
 
 struct ftab array_tab[] = {
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
@@ -97,7 +98,10 @@ struct ftab array_tab[] = {
 	{"mat_to_gfmmat",Pmat_to_gfmmat,2},
 	{"generic_gauss_elim_mod",Pgeneric_gauss_elim_mod,2},
 	{"newvect",Pnewvect,-2},
+	{"vector",Pnewvect,-2},
+	{"exponent_vector",Pexponent_vector,-99999999},
 	{"newmat",Pnewmat,-3},
+	{"matrix",Pnewmat,-3},
 	{"newbytearray",Pnewbytearray,-2},
 	{"sepmat_destructive",Psepmat_destructive,2},
 	{"sepvect",Psepvect,2},
@@ -374,6 +378,13 @@ VECT *rp;
 			vb[i] = (pointer)BDY(tn);
 	}
 	*rp = vect;
+}
+
+void Pexponent_vector(arg,rp)
+NODE arg;
+DP *rp;
+{
+	nodetod(arg,rp);
 }
 
 void Pnewbytearray(arg,rp)
