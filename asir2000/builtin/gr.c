@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.39 2001/11/19 00:57:10 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.40 2001/11/19 01:40:04 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1779,7 +1779,7 @@ DP_pairs newpairs( NODE /* of index */ g, int t )
 		p->lcm = lcm_of_DL(CNVars, dl = psh[dp], tdl, (DL)0 );
 #if 0
 		if ( do_weyl )
-			p->sugar = dl_weight(p->lcm);
+			p->sugar = dl_weyl_weight(p->lcm);
 		else
 #endif
 			p->sugar = (ts > (s = pss[dp] - dl->td) ? ts : s) + p->lcm->td;
@@ -1946,7 +1946,8 @@ int dl_redble(DL dl1,DL dl2)
 	return 1;
 }
 
-int dl_weight(DL dl)
+#if 0
+int dl_weyl_weight(DL dl)
 {
 	int n,w,i;
 
@@ -1955,6 +1956,7 @@ int dl_weight(DL dl)
 		w += (-dl->d[i]+dl->d[n+i]);
 	return w;
 }
+#endif
 
 int gbcheck(NODE f)
 {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.31 2001/12/21 08:23:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.32 2001/12/25 02:39:03 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -824,6 +824,8 @@ if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
 #define _FREEMP(m) NEXT(m)=_mp_free_list; _mp_free_list=(m)
 #define _FREEDP(m) BDY(m)=(MP)_dp_free_list; _dp_free_list=(m)
 
+#define MUL_WEIGHT(a,i) (current_dl_weight_vector?(a)*current_dl_weight_vector[i]:(a))
+
 /* externals */
 #if 0
 double NatToReal();
@@ -879,6 +881,8 @@ extern int current_gfs_q1;
 extern int *current_gfs_plus1;
 extern int *current_gfs_ntoi;
 extern int *current_gfs_iton;
+
+extern int *current_dl_weight_vector;
 
 /* prototypes */
 int compui(VL,USINT,USINT);

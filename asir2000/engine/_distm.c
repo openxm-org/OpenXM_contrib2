@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.10 2001/09/17 01:18:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.11 2001/10/09 01:36:11 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -363,10 +363,13 @@ void _weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 	for ( i = 0; i < n2; i++ ) {
 		a = d0->d[i]; b = d1->d[n2+i];
 		k = d0->d[n2+i]; l = d1->d[i];
+
+		/* degree of xi^a*(Di^k*xi^l)*Di^b */
+		a += l;
+		b += k;
+		s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
+
 		if ( !k || !l ) {
-			a += l;
-			b += k;
-			s = a+b;
 			for ( j = 0, p = rtab; j < curlen; j++, p++ ) {
 				if ( p->c ) {
 					dt = p->d;
@@ -385,8 +388,6 @@ void _weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 			tab = (struct cdlm *)MALLOC(tablen*sizeof(struct cdlm));
 			ctab = (int *)MALLOC(tablen*sizeof(int));
 		}
-		/* degree of xi^a*(Di^k*xi^l)*Di^b */
-		s = a+k+l+b;
 		/* compute xi^a*(Di^k*xi^l)*Di^b */
 		min = MIN(k,l);
 		mkwcm(k,l,mod,ctab);
@@ -395,17 +396,17 @@ void _weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 		if ( n & 1 )
 			for ( j = 0; j <= min; j++ ) {
 				_NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->d[i] = a-j; d->d[n2+i] = b-j;
 				d->td = s;
-				d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+				d->d[n-1] = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i)); 
 				tab[j].d = d;
 				tab[j].c = ctab[j];
 			}
 		else
 			for ( j = 0; j <= min; j++ ) {
 				_NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-				d->td = d->d[i]+d->d[n2+i]; /* XXX */
+				d->d[i] = a-j; d->d[n2+i] = b-j;
+				d->td = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i);  /* XXX */
 				tab[j].d = d;
 				tab[j].c = ctab[j];
 			}
@@ -879,10 +880,13 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 	for ( i = 0; i < n2; i++ ) {
 		a = d0->d[i]; b = d1->d[n2+i];
 		k = d0->d[n2+i]; l = d1->d[i];
+
+		/* degree of xi^a*(Di^k*xi^l)*Di^b */
+		a += l;
+		b += k;
+		s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
+
 		if ( !k || !l ) {
-			a += l;
-			b += k;
-			s = a+b;
 			for ( j = 0, p = rtab; j < curlen; j++, p++ ) {
 				if ( p->c ) {
 					dt = p->d;
@@ -901,8 +905,6 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 			tab = (struct cdl *)MALLOC(tablen*sizeof(struct cdl));
 			ctab = (Q *)MALLOC(tablen*sizeof(P));
 		}
-		/* degree of xi^a*(Di^k*xi^l)*Di^b */
-		s = a+k+l+b;
 		/* compute xi^a*(Di^k*xi^l)*Di^b */
 		min = MIN(k,l);
 		mkwc(k,l,ctab);
@@ -911,17 +913,17 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 		if ( n & 1 )
 			for ( j = 0; j <= min; j++ ) {
 				_NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->d[i] = a-j; d->d[n2+i] = b-j;
 				d->td = s;
-				d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+				d->d[n-1] = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
 				tab[j].d = d;
 				tab[j].c = (P)ctab[j];
 			}
 		else
 			for ( j = 0; j <= min; j++ ) {
 				_NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-				d->td = d->d[i]+d->d[n2+i]; /* XXX */
+				d->d[i] = a-j; d->d[n2+i] = b-j;
+				d->td = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i); /* XXX */
 				tab[j].d = d;
 				tab[j].c = (P)ctab[j];
 			}

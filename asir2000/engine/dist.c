@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.18 2001/09/13 03:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.19 2001/10/09 01:36:11 noro Exp $ 
 */
 #include "ca.h"
 
@@ -186,7 +186,8 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 
 				for ( j = k-1, s = 0; j >= 0; j-- ) {
 					ptod(vl,dvl,COEF(w[j]),&t);
-					NEWDL(d,n); d->td = QTOS(DEG(w[j])); d->d[i] = d->td;
+					NEWDL(d,n); d->d[i] = QTOS(DEG(w[j]));
+					d->td = MUL_WEIGHT(d->d[i],i);
 					NEWMP(m); m->dl = d; C(m) = (P)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
 					comm_muld(vl,t,u,&r); addd(vl,r,s,&t); s = t;
 				}
@@ -253,7 +254,7 @@ void nodetod(NODE node,DP *dp)
 		else if ( !NUM(e) || !RATN(e) || !INT(e) )
 			error("nodetod : invalid input");
 		else {
-			d->d[i] = QTOS((Q)e); td += d->d[i];
+			d->d[i] = QTOS((Q)e); td += MUL_WEIGHT(d->d[i],i);
 		}
 	}
 	d->td = td;
@@ -681,10 +682,13 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 	for ( i = 0; i < n2; i++ ) {
 		a = d0->d[i]; b = d1->d[n2+i];
 		k = d0->d[n2+i]; l = d1->d[i];
+
+		/* degree of xi^a*(Di^k*xi^l)*Di^b */
+		a += l;
+		b += k;
+		s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
+
 		if ( !k || !l ) {
-			a += l;
-			b += k;
-			s = a+b;
 			for ( j = 0, p = rtab; j < curlen; j++, p++ ) {
 				if ( p->c ) {
 					dt = p->d;
@@ -703,8 +707,6 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 			tab = (struct cdl *)MALLOC(tablen*sizeof(struct cdl));
 			ctab = (Q *)MALLOC(tablen*sizeof(Q));
 		}
-		/* degree of xi^a*(Di^k*xi^l)*Di^b */
-		s = a+k+l+b;
 		/* compute xi^a*(Di^k*xi^l)*Di^b */
 		min = MIN(k,l);
 		mkwc(k,l,ctab);
@@ -712,17 +714,17 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 		if ( n & 1 )
 			for ( j = 0; j <= min; j++ ) {
 				NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->d[i] = a-j; d->d[n2+i] = b-j;
 				d->td = s;
-				d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+				d->d[n-1] = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
 				tab[j].d = d;
 				tab[j].c = (P)ctab[j];
 			}
 		else
 			for ( j = 0; j <= min; j++ ) {
 				NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-				d->td = d->d[i]+d->d[n2+i]; /* XXX */
+				d->d[i] = a-j; d->d[n2+i] = b-j;
+				d->td = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i); /* XXX */
 				tab[j].d = d;
 				tab[j].c = (P)ctab[j];
 			}
@@ -1064,7 +1066,7 @@ int cmpdl_weyl_elim(int n,DL d1,DL d2)
 	3. DRL for the first 2*m variables
 */
 
-extern int *current_weight_vector;
+extern int *current_weyl_weight_vector;
 
 int cmpdl_homo_ww_drl(int n,DL d1,DL d2)
 {
@@ -1078,8 +1080,8 @@ int cmpdl_homo_ww_drl(int n,DL d1,DL d2)
 
 	m = n>>1;
 	for ( i = 0, e1 = e2 = 0; i < m; i++ ) {
-		e1 += current_weight_vector[i]*(d1->d[m+i] - d1->d[i]);
-		e2 += current_weight_vector[i]*(d2->d[m+i] - d2->d[i]);
+		e1 += current_weyl_weight_vector[i]*(d1->d[m+i] - d1->d[i]);
+		e2 += current_weyl_weight_vector[i]*(d2->d[m+i] - d2->d[i]);
 	}
 	if ( e1 > e2 )
 		return 1;
@@ -1102,18 +1104,20 @@ int cmpdl_order_pair(int n,DL d1,DL d2)
 {
 	int e1,e2,i,j,l;
 	int *t1,*t2;
-	int len;
+	int len,head;
 	struct order_pair *pair;
 
 	len = dp_current_spec.ord.block.length;
 	pair = dp_current_spec.ord.block.order_pair;
 
+	head = 0;
 	for ( i = 0, t1 = d1->d, t2 = d2->d; i < len; i++ ) {
 		l = pair[i].length;
 		switch ( pair[i].order ) {
 			case 0:
 				for ( j = 0, e1 = e2 = 0; j < l; j++ ) {
-					e1 += t1[j]; e2 += t2[j];
+					e1 += MUL_WEIGHT(t1[j],head+j);
+					e2 += MUL_WEIGHT(t2[j],head+j);
 				}
 				if ( e1 > e2 )
 					return 1;
@@ -1127,7 +1131,8 @@ int cmpdl_order_pair(int n,DL d1,DL d2)
 				break;
 			case 1:
 				for ( j = 0, e1 = e2 = 0; j < l; j++ ) {
-					e1 += t1[j]; e2 += t2[j];
+					e1 += MUL_WEIGHT(t1[j],head+j);
+					e2 += MUL_WEIGHT(t2[j],head+j);
 				}
 				if ( e1 > e2 )
 					return 1;
@@ -1147,7 +1152,7 @@ int cmpdl_order_pair(int n,DL d1,DL d2)
 			default:
 				error("cmpdl_order_pair : invalid order"); break;
 		}
-		t1 += l; t2 += l;
+		t1 += l; t2 += l; head += l;
 	}
 	return 0;
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.22 2001/11/19 00:57:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.23 2001/11/19 01:40:04 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -85,6 +85,7 @@ void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main(),Pdp_weyl_gr_f_main();
 void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main(),Pdp_weyl_f4_f_main();
 void Pdp_weyl_mul(),Pdp_weyl_mul_mod();
 void Pdp_weyl_set_weight();
+void Pdp_set_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
 void Pdp_lnf_f();
 
@@ -151,6 +152,7 @@ struct ftab dp_tab[] = {
 	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
 
 	/* misc */
+	{"dp_set_weight",Pdp_set_weight,-1},
 	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
 	{0,0,0},
 };
@@ -320,7 +322,7 @@ DP *rp;
 	n = v->len;
 	NEWDL(dl,n); d = dl->d;
 	for ( i = 0, td = 0; i < n; i++ ) {
-		d[i] = QTOS((Q)(v->body[i])); td += d[i];
+		d[i] = QTOS((Q)(v->body[i])); td += MUL_WEIGHT(d[i],i);
 	}
 	dl->td = td;
 	NEWMP(m); m->dl = dl; m->c = (P)ONE; NEXT(m) = 0;
@@ -929,7 +931,7 @@ DP *rp;
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	NEWDL(d,n);
 	for ( i = 0, td = 0; i < n; i++ ) {
-		d->d[i] = MAX(d1->d[i],d2->d[i]); td += d->d[i];
+		d->d[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(d->d[i],i);
 	}
 	d->td = td;
 	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0;
@@ -1460,8 +1462,36 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-static VECT current_weight_vector_obj;
-int *current_weight_vector;
+static VECT current_dl_weight_vector_obj;
+int *current_dl_weight_vector;
+
+void Pdp_set_weight(arg,rp)
+NODE arg;
+VECT *rp;
+{
+	VECT v;
+	int i,n;
+
+	if ( !arg )
+		*rp = current_dl_weight_vector_obj;
+	else if ( !ARG0(arg) ) {
+		current_dl_weight_vector_obj = 0;
+		current_dl_weight_vector = 0;
+		*rp = 0;
+	} else {
+		asir_assert(ARG0(arg),O_VECT,"dp_set_weight");
+		v = (VECT)ARG0(arg);
+		current_dl_weight_vector_obj = v;
+		n = v->len;
+		current_dl_weight_vector = (int *)CALLOC(n,sizeof(int));
+		for ( i = 0; i < n; i++ )
+			current_dl_weight_vector[i] = QTOS((Q)v->body[i]);
+		*rp = v;
+	}
+}
+
+static VECT current_weyl_weight_vector_obj;
+int *current_weyl_weight_vector;
 
 void Pdp_weyl_set_weight(arg,rp)
 NODE arg;
@@ -1471,15 +1501,15 @@ VECT *rp;
 	int i,n;
 
 	if ( !arg )
-		*rp = current_weight_vector_obj;
+		*rp = current_weyl_weight_vector_obj;
 	else {
 		asir_assert(ARG0(arg),O_VECT,"dp_weyl_set_weight");
 		v = (VECT)ARG0(arg);
-		current_weight_vector_obj = v;
+		current_weyl_weight_vector_obj = v;
 		n = v->len;
-		current_weight_vector = (int *)CALLOC(n,sizeof(int));
+		current_weyl_weight_vector = (int *)CALLOC(n,sizeof(int));
 		for ( i = 0; i < n; i++ )
-			current_weight_vector[i] = QTOS((Q)v->body[i]);
+			current_weyl_weight_vector[i] = QTOS((Q)v->body[i]);
 		*rp = v;
 	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.14 2001/09/05 09:01:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.15 2001/10/09 01:36:24 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -690,7 +690,7 @@ DP_pairs criterion_F( DP_pairs d1 );
 NODE updbase(NODE g,int t);
 NODE /* of index */ remove_reducibles(NODE /* of index */ nd, int newdp );
 int dl_redble(DL dl1,DL dl2);
-int dl_weight(DL dl);
+int dl_weyl_weight(DL dl);
 int gbcheck(NODE f);
 int membercheck(NODE f,NODE x);
 void dp_set_flag(Obj name,Obj value);

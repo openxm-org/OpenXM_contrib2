@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.19 2001/09/19 09:10:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.20 2001/10/09 01:36:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -162,7 +162,8 @@ void dp_mbase(NODE hlist,NODE *mbase)
 	while ( 1 ) {
 		insert_to_node(d,mbase,nvar);
 		for ( i = nvar-1; i >= 0; ) {
-			d->d[i]++; d->td++;
+			d->d[i]++;
+			d->td += MUL_WEIGHT(1,i);
 			for ( j = 0; j < n; j++ ) {
 				if ( _dl_redble(dl[j],d,nvar) )
 					break;
@@ -171,7 +172,7 @@ void dp_mbase(NODE hlist,NODE *mbase)
 				for ( j = nvar-1; j >= i; j-- )
 					d->d[j] = 0;
 				for ( j = 0, td = 0; j < i; j++ )
-					td += d->d[j];
+					td += MUL_WEIGHT(d->d[j],j);
 				d->td = td;
 				i--;
 			} else
@@ -500,7 +501,7 @@ void dp_sp(DP p1,DP p2,DP *rp)
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
 	}
 
 	NEWDL(d,n); d->td = td - d1->td;
@@ -553,7 +554,7 @@ void _dp_sp_dup(DP p1,DP p2,DP *rp)
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
 	}
 
 	_NEWDL(d,n); d->td = td - d1->td;
@@ -604,7 +605,7 @@ void dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
 	}
 	NEWDL_NOINIT(d,n); d->td = td - d1->td;
 	for ( i = 0; i < n; i++ )
@@ -630,7 +631,7 @@ void _dp_sp_mod_dup(DP p1,DP p2,int mod,DP *rp)
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
 	}
 	_NEWDL(d,n); d->td = td - d1->td;
 	for ( i = 0; i < n; i++ )
@@ -656,7 +657,7 @@ void _dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
 	}
 	NEWDL(d,n); d->td = td - d1->td;
 	for ( i = 0; i < n; i++ )
@@ -1537,12 +1538,14 @@ void dp_rest(DP p,DP *rp)
 
 DL lcm_of_DL(int nv,DL dl1,DL dl2,DL dl)
 {
-	register int n, *d1, *d2, *d, td;
+	register int i, *d1, *d2, *d, td;
 
 	if ( !dl ) NEWDL(dl,nv);
 	d = dl->d,  d1 = dl1->d,  d2 = dl2->d;
-	for ( td = 0, n = nv; --n >= 0; d1++, d2++, d++ )
-		td += (*d = *d1 > *d2 ? *d1 : *d2 );
+	for ( td = 0, i = 0; i < nv; d1++, d2++, d++, i++ ) {
+		*d = *d1 > *d2 ? *d1 : *d2;
+		td += MUL_WEIGHT(*d,i);
+	}
 	dl->td = td;
 	return dl;
 }
