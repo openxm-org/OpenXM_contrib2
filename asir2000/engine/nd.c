@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.114 2004/10/25 04:19:50 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.115 2004/11/18 08:29:11 noro Exp $ */
 
 #include "nd.h"
 
@@ -3717,6 +3717,10 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	int stat,nvar,max,e;
 	union oNDC dn;
 
+	if ( !f ) {
+		*rp = 0;
+		return;
+	}
 	pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 
