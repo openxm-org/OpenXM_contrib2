@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.82 2003/10/15 03:21:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.83 2003/10/17 05:15:20 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -4131,7 +4131,7 @@ NODE nd_f4(int m)
 	ND spol,red;
 	NDV nf,redv;
 	NM s0,s;
-	NODE rp0,sp0,srp0,nflist;
+	NODE rp0,srp0,nflist;
 	int nsp,nred,col,rank,len,k,j,a;
 	UINT c;
 	UINT **spmat;
@@ -4164,7 +4164,6 @@ NODE nd_f4(int m)
 			d = nd_reconstruct(m,0,d);
 			continue;
 		}
-		if ( !sp0 ) continue;
 		col = nd_symbolic_preproc(bucket,&s0vect,&rp0);
 		if ( !col ) {
 			for ( t = l; NEXT(t); t = NEXT(t) );
