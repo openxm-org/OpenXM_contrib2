@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.19 2004/03/04 08:02:36 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -125,42 +125,67 @@ static struct {
 	{0,0,0},
 };
 
+#define PARTIAL "\\partial"
 char *conv_rule_d(char *name)
 {
-	char *p,*h,*t,*u;
-	int l;
+	int l,i,j,alpha,start;
+	char *b,*r;
+	l = strlen(name);
 
-	if ( *name == 'd' ) {
-		h = "\\partial";
-		if ( isdigit(name[1]) ) {
-			t = conv_rule_d(name+1);
-			/* 3 : _{} */
-			l = strlen(h)+strlen(t)+3;
-			u = (char *)MALLOC_ATOMIC(l+1);
-			sprintf(u,"%s_{%s}",h,t);	
-		} else {
-			/* XXX */
-			t = conv_rule_d(name+2);
-			/* 6 : _{ _{ }} */
-			l = strlen(h)+strlen(t)+6;
-			u = (char *)MALLOC_ATOMIC(l+1);
-			sprintf(u,"%s_{%c_{%s}}",h,name[1],t);
-		}
-		return u;
-	} else if ( p = strchr(name,'_') ) {
-		l = p-name;
-		h = (char *)ALLOCA(l+1);
-		strncpy(h,name,l);
-		h[l] = 0;
-		h = conv_rule_d(h);
-		t = conv_rule_d(p+1);
+	if ( name[0] == 'd' ) {
 		/* 3 : _{} */
-		l = strlen(h)+strlen(t)+3;
-		u = (char *)MALLOC_ATOMIC(l+1);
-		sprintf(u,"%s_{%s}",h,t);
-		return u;
-	} else
-		return name;
+		b = (char *)ALLOCA((2*l+1+strlen(PARTIAL)+3)*sizeof(char));
+		sprintf(b,"%s_{",PARTIAL);
+		i = 1;
+		j = strlen(b);
+	} else {
+		b = (char *)ALLOCA((2*l+1)*sizeof(char));
+		i = j = 0;
+	}
+	for ( ; i < l && name[i] == '_'; i++);
+	for ( ; i < l; ) {
+		if ( !isalpha(name[i]) )
+			break;
+		else
+			b[j++] = name[i++];
+	}
+	if ( i == l ) return name;
+	/* we found a digit or '_' */
+	b[j++] = '_'; b[j++] = '{';
+	if ( name[i] == '_' ) i++;
+	for ( start = 1; i < l; ) {
+		if ( name[i] == '_' ) {
+			i++;
+			start = 1;
+			b[j++] = ',';
+		} else if ( start ) {
+			alpha = isalpha(name[i])?1:0;
+			b[j++] = name[i++];
+			start = 0;
+		} else if ( alpha ) {
+			if ( isalpha(name[i]) )
+				b[j++] = name[i++];
+			else {
+				alpha = 0;
+				start = 1;
+				b[j++] = ',';
+			}
+		} else {
+			if ( isdigit(name[i]) )
+				b[j++] = name[i++];
+			else {
+				alpha = 1;
+				start = 1;
+				b[j++] = ',';
+			}
+		}
+	}
+	b[j++] = '}';
+	if ( name[0] == 'd' ) b[j++] = '}';
+	b[j++] = 0;
+	r = (char *)MALLOC_ATOMIC((j+1)*sizeof(char));	
+	strcpy(r,b);
+	return r;
 }
 
 int register_symbol_table(Obj arg)
