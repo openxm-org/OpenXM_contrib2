@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.2 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.3 2000/08/22 05:04:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -61,6 +61,7 @@ int argc;
 
 	t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
 	t->name = name; t->id = A_BIN; t->argc = argc; t->f.binf = func;
+	t->fullname = name;
 	MKNODE(n,t,*flistp); *flistp = n;
 }
 
@@ -75,6 +76,7 @@ int type;
 
 	t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
 	t->name = name; t->id = A_PARI; t->type = type; t->f.binf = (void (*)())func;
+	t->fullname = name;
 	MKNODE(n,t,*flistp); *flistp = n;
 }
 

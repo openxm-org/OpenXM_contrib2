@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.9 2003/05/14 09:18:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.10 2003/05/16 07:56:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,6 +56,7 @@ extern char *CUR_FUNC;
 void mkpvs(char *fname)
 {
 	VS pvs;
+	char *fullname;
 
 	pvs = (VS)MALLOC(sizeof(struct oVS));
 	pvs->va = (struct oPV *)MALLOC(DEFSIZE*sizeof(struct oPV));
@@ -64,7 +65,13 @@ void mkpvs(char *fname)
 	CPVS = pvs; 
 
 	/* XXX */
-	CUR_FUNC = fname;
+	if ( CUR_MODULE ) {
+		fullname = 
+			(char *)MALLOC_ATOMIC(strlen(CUR_MODULE->name)+strlen(fname)+1);
+		sprintf(fullname,"%s.%s",CUR_MODULE->name,fname);
+		CUR_FUNC = fullname;
+	} else
+		CUR_FUNC = fname;
 }
 
 void pushpvs(FUNC f)

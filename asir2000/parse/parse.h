@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.18 2003/05/14 06:20:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.19 2003/05/16 07:56:16 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -109,7 +109,7 @@ typedef struct oVS {
 typedef struct oMODULE {
 	char *name;
 	VS pvs;
-	NODE usrf_list,proto_list;
+	NODE usrf_list;
 } *MODULE;
 
 typedef struct oPV {
@@ -139,7 +139,7 @@ typedef struct oARF {
 } *ARF;
 
 typedef struct oFUNC {
-	char *name;
+	char *name,*fullname;
 	int argc;
 	int type;
 	aid id;
