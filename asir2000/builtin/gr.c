@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.20 2001/07/23 05:03:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.21 2001/09/04 08:48:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -136,7 +136,7 @@ void printdl(DL);
 int DPPlength(DP_pairs);
 void dp_gr_mod_main(LIST,LIST,Num,int,struct order_spec *,LIST *);
 void dp_gr_main(LIST,LIST,Num,int,int,struct order_spec *,LIST *);
-void dp_f4_main(LIST,LIST,int,struct order_spec *,LIST *);
+void dp_f4_main(LIST,LIST,struct order_spec *,LIST *);
 void dp_f4_mod_main(LIST,LIST,int,struct order_spec *,LIST *);
 double get_rtime();
 void _dpmod_to_vect(DP,DL *,int *);
@@ -414,9 +414,8 @@ extern struct oEGT eg_red_mod;
 	MKLIST(*rp,r0);
 }
 
-void dp_f4_main(f,v,field,ord,rp)
+void dp_f4_main(f,v,ord,rp)
 LIST f,v;
-int field;
 struct order_spec *ord;
 LIST *rp;
 {
@@ -425,7 +424,7 @@ LIST *rp;
 	VL fv,vv,vc;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
 
-	dp_fcoeffs = field;
+	dp_fcoeffs = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
 	NVars = length((NODE)vv); PCoeffs = vc ? 1 : 0; VC = vc;
 	CNVars = NVars;

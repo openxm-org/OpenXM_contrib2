@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.15 2001/01/11 08:43:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.16 2001/09/04 08:48:18 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -122,7 +122,6 @@ struct ftab dp_tab[] = {
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
 	{"dp_f4_mod_main",Pdp_f4_mod_main,4},
-	{"dp_f4_f_main",Pdp_f4_f_main,3},
 
 /* weyl algebra */
 	/* multiplication */
@@ -148,7 +147,6 @@ struct ftab dp_tab[] = {
 	/* F4 algorithm */
 	{"dp_weyl_f4_main",Pdp_weyl_f4_main,3},
 	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
-	{"dp_weyl_f4_f_main",Pdp_weyl_f4_f_main,3},
 
 	/* misc */
 	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
@@ -1286,22 +1284,7 @@ LIST *rp;
 	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	create_order_spec(ARG2(arg),&ord);
-	dp_f4_main(f,v,0,&ord,rp);
-}
-
-void Pdp_f4_f_main(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	LIST f,v;
-	struct order_spec ord;
-
-	do_weyl = 0;
-	asir_assert(ARG0(arg),O_LIST,"dp_f4_f_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_f4_f_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	create_order_spec(ARG2(arg),&ord);
-	dp_f4_main(f,v,1,&ord,rp);
+	dp_f4_main(f,v,&ord,rp);
 }
 
 void Pdp_f4_mod_main(arg,rp)
@@ -1313,9 +1296,9 @@ LIST *rp;
 	struct order_spec ord;
 
 	do_weyl = 0;
-	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
-	asir_assert(ARG2(arg),O_N,"dp_f4_main");
+	asir_assert(ARG0(arg),O_LIST,"dp_f4_mod_main");
+	asir_assert(ARG1(arg),O_LIST,"dp_f4_mod_main");
+	asir_assert(ARG2(arg),O_N,"dp_f4_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
 	create_order_spec(ARG3(arg),&ord);
 	dp_f4_mod_main(f,v,m,&ord,rp);
@@ -1406,23 +1389,7 @@ LIST *rp;
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	create_order_spec(ARG2(arg),&ord);
 	do_weyl = 1;
-	dp_f4_main(f,v,0,&ord,rp);
-	do_weyl = 0;
-}
-
-void Pdp_weyl_f4_f_main(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	LIST f,v;
-	struct order_spec ord;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	create_order_spec(ARG2(arg),&ord);
-	do_weyl = 1;
-	dp_f4_main(f,v,1,&ord,rp);
+	dp_f4_main(f,v,&ord,rp);
 	do_weyl = 0;
 }
 
