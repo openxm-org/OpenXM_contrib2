@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.5 2001/10/09 01:36:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.6 2004/06/25 09:53:11 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -193,7 +193,7 @@ unsigned int rem(N n,int m)
 	if ( !n ) 
 		return 0;
 	for ( i = PL(n)-1, x = BD(n)+i, r = 0; i >= 0; i--, x-- ) {
-#if defined(sparc) || !defined(__sparcv9)
+#if defined(sparc) && !defined(__sparcv9)
 		r = dsar(m,r,*x);
 #else
 		DSAB(m,r,*x,t,r)
