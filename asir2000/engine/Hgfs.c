@@ -1,7 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.28 2002/11/22 07:32:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.29 2002/11/22 08:44:57 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
+
+int debug_sfbfctr;
 
 void lnfsf(int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1);
 void extractcoefbm(BM f,int dx,UM r);
@@ -609,10 +611,12 @@ void sfhensel(int count,P f,V x,V y,int degbound,GFS *evp,P *sfp,ML *listp)
 
 	q = W_UMALLOC(dx);
 	rlist = MLALLOC(fn); rlist->n = fn; rlist->bound = bound;
-	fprintf(asir_out,"%d candidates\n",fn);
+	if ( debug_sfbfctr )
+		fprintf(asir_out,"%d candidates\n",fn);
 	init_eg(&eg_hensel);
 	for ( i = 0; i < fn-1; i++ ) {
-		fprintf(asir_out,"deg(fm) = %d, deg(gm[%d]) = %d\n",
+		if ( debug_sfbfctr )
+			fprintf(asir_out,"deg(fm) = %d, deg(gm[%d]) = %d\n",
 			DEG(fm),i,DEG(gm[i]));
 		init_eg(&eg_hensel_t);
 		get_eg(&tmp0);
@@ -624,11 +628,15 @@ void sfhensel(int count,P f,V x,V y,int degbound,GFS *evp,P *sfp,ML *listp)
 		cpyum(hm,fm);
 		get_eg(&tmp1); add_eg(&eg_hensel_t,&tmp0,&tmp1);
 		add_eg(&eg_hensel,&tmp0,&tmp1);
-		print_eg("Hensel",&eg_hensel_t);
+		if ( debug_sfbfctr) {
+			print_eg("Hensel",&eg_hensel_t);
+			fprintf(asir_out,"\n");
+		}
+	}
+	if ( debug_sfbfctr) {
+		print_eg("Hensel total",&eg_hensel);
 		fprintf(asir_out,"\n");
 	}
-	print_eg("Hensel total",&eg_hensel);
-	fprintf(asir_out,"\n");
 	/* finally, fl must be the lift of gm[fn-1] */
 	rlist->c[i] = fl;
 
@@ -761,9 +769,11 @@ void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp)
 	wa = W_UMALLOC(2*dx); wb = W_UMALLOC(2*dx);  /* XXX */
 	eucsfum(w1,w2,wa,wb);
 
-	fprintf(stderr,"dy=%d\n",dy);
+	if ( debug_sfbfctr)
+		fprintf(stderr,"dy=%d\n",dy);
 	for ( k = 1; k <= dy; k++ ) {
-		fprintf(stderr,".");
+		if ( debug_sfbfctr)
+			fprintf(stderr,".");
 
 		/* at this point, f = gk*hk mod y^k */
 
@@ -819,7 +829,8 @@ void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp)
 		cpyum(wg1,COEF(gk)[k]);
 		cpyum(wh1,COEF(hk)[k]);
 	}
-	fprintf(stderr,"\n");
+	if ( debug_sfbfctr)
+		fprintf(stderr,"\n");
 	*gp = gk;
 	DEG(f) = dy;
 	for ( i = 0; i <= dy; i++ )
@@ -865,9 +876,11 @@ void sfexgcd_by_hensel(BM g,BM h,int dy,BM *ap,BM *bp)
 	mulsfbm(a,g,c); mulsfbm(b,h,wz0); addtosfbm(wz0,c);
 	COEF(COEF(c)[0])[0] = 0;
 	
-	fprintf(stderr,"dy=%d\n",dy);
+	if ( debug_sfbfctr)
+		fprintf(stderr,"dy=%d\n",dy);
 	for ( k = 1; k <= dy; k++ ) {
-		fprintf(stderr,".");
+		if ( debug_sfbfctr)
+			fprintf(stderr,".");
 
 		/* at this point, a*g+b*h = 1 mod y^k, c = a*g+b*h-1 */
 
@@ -906,7 +919,8 @@ void sfexgcd_by_hensel(BM g,BM h,int dy,BM *ap,BM *bp)
 		cpyum(wa1,COEF(a)[k]);
 		cpyum(wb1,COEF(b)[k]);
 	}
-	fprintf(stderr,"\n");
+	if ( debug_sfbfctr)
+		fprintf(stderr,"\n");
 	DEG(a) = dy;
 	DEG(b) = dy;
 	*ap = a;
@@ -1204,10 +1218,11 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 		}
 	}
 
-	fprintf(stderr,"np = %d\n",np);
+	if ( debug_sfbfctr)
+		fprintf(stderr,"np = %d\n",np);
 	dtok = 0;
 	for ( g = f, k = 1, dcf = dcf0 = 0, win[0] = 1, --np, z = 0; ; z++ ) {
-		if ( !(z % 1000) ) fprintf(stderr,".");
+		if ( debug_sfbfctr && !(z % 1000) ) fprintf(stderr,".");
 		dt = sfdegtest(dy,bound,d1c,k,win);
 		if ( dt )
 			dtok++;
@@ -1272,7 +1287,8 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 				for ( i = 0, ++k; i < k; i++ ) 
 					win[i] = i + 1;
 	}
-	fprintf(stderr,"total %d, omitted by degtest %d\n",z,z-dtok);
+	if ( debug_sfbfctr )
+		fprintf(stderr,"total %d, omitted by degtest %d\n",z,z-dtok);
 	NEXTDC(dcf0,dcf); COEF(dcf) = g;
 	DEG(dcf) = ONE; NEXT(dcf) = 0; *dcp = dcf0;
 }
