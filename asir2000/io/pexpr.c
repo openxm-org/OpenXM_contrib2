@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.31 2004/02/27 09:13:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.32 2004/03/03 09:25:30 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -111,6 +111,9 @@ extern int asir_texmacs;
 #define PRINTSYMBOL printsymbol
 #define PRINTRANGE printrange
 #define PRINTTB printtb
+#define PRINTFNODE printfnode
+#define PRINTFNODENODE printfnodenode
+#define PRINTFARGS printfargs
 #endif
 
 #ifdef SPRINT
@@ -161,6 +164,9 @@ extern int print_quote;
 #define PRINTSYMBOL sprintsymbol
 #define PRINTRANGE sprintrange
 #define PRINTTB sprinttb
+#define PRINTFNODE sprintfnode
+#define PRINTFNODENODE sprintfnodenode
+#define PRINTFARGS sprintfargs
 #endif
 
 void PRINTEXPR();
@@ -195,6 +201,7 @@ void PRINTSF();
 void PRINTSYMBOL();
 void PRINTRANGE();
 void PRINTTB();
+void PRINTFNODE();
 
 #ifdef FPRINT
 void output_init() {
@@ -966,9 +973,11 @@ QUOTE quote;
 {
 	LIST list;
 
-	if ( print_quote ) {
+	if ( print_quote == 1 ) {
 		fnodetotree(BDY(quote),&list);
 		PRINTEXPR(vl,(Obj)list);
+	} else if ( print_quote == 2 ) {
+		PRINTFNODE(BDY(quote),0);
 	} else {
 		PUTS("<...quoted...>");
 	}
@@ -1218,4 +1227,133 @@ void PRINTTB(VL vl,TB p)
 	for ( i = 0; i < p->next; i++ ) {
 		PUTS(p->body[i]);
 	}
+}
+
+void PRINTFNODENODE(NODE n)
+{
+	for ( ; n; n = NEXT(n) ) {
+		PRINTFNODE((FNODE)BDY(n),0);
+		if ( NEXT(n) ) PUTS(",");
+	}
+}
+
+void PRINTFARGS(FNODE f)
+{
+	NODE n;
+
+	if ( f->id == I_LIST ) {
+		n = (NODE)FA0(f);
+		PRINTFNODENODE(n);
+	} else
+		PRINTFNODE(f,0);
+}
+
+void PRINTFNODE(FNODE f,int paren)
+{
+	NODE n,t,t0;
+	char vname[BUFSIZ],prefix[BUFSIZ];
+	char *opname,*vname_conv,*prefix_conv;
+	Obj obj;
+	int i,len,allzero,elen,elen2;
+	C cplx;
+	char *r;
+	FNODE fi,f2;
+
+	if ( !f ) {
+		PUTS("(0)");
+		return;
+	}
+	if ( paren ) PUTS("(");
+	switch ( f->id ) {
+		/* unary operators */
+		case I_NOT: PRINTFNODE((FNODE)FA0(f),1); break;
+		case I_PAREN: PRINTFNODE((FNODE)FA0(f),0); break;
+		case I_MINUS: PUTS("-"); PRINTFNODE((FNODE)FA0(f),1); break;
+		/* binary operators */
+		/* arg list */
+		/* I_AND, I_OR => FA0(f), FA1(f) */
+		/* otherwise   => FA1(f), FA2(f) */
+		case I_BOP:
+			PRINTFNODE((FNODE)FA1(f),1);
+			PUTS(((ARF)FA0(f))->name);
+			PRINTFNODE((FNODE)FA2(f),1);
+			break;
+		case I_COP:
+			switch( (cid)FA0(f) ) {
+				case C_EQ: opname = ("=="); break;
+				case C_NE: opname = ("!="); break;
+				case C_GT: opname = (">"); break;
+				case C_LT: opname = ("<"); break;
+				case C_GE: opname = (">="); break;
+				case C_LE: opname = ("<="); break;
+			}
+			PRINTFNODE((FNODE)FA1(f),1);
+			PUTS(opname);
+			PRINTFNODE((FNODE)FA2(f),1);
+			break;
+		case I_LOP:
+			switch( (lid)FA0(f) ) {
+				case L_EQ: opname = ("@=="); break;
+				case L_NE: opname = ("@!="); break;
+				case L_GT: opname = ("@>"); break;
+				case L_LT: opname = ("@<"); break;
+				case L_GE: opname = ("@>="); break;
+				case L_LE: opname = ("@<="); break;
+				case L_AND: opname = ("@&&"); break;
+				case L_OR: opname = ("@||"); break;
+				case L_NOT: opname = ("@!"); break;
+			}
+			if ( (lid)FA0(f)==L_NOT ) {
+				PUTS(opname); PRINTFNODE((FNODE)FA1(f),1);
+			} else {
+				PRINTFNODE((FNODE)FA1(f),1);
+				PUTS(opname);
+				PRINTFNODE((FNODE)FA2(f),1);
+			}
+			break;
+		case I_AND:
+			PRINTFNODE((FNODE)FA0(f),1);
+			PUTS("&&");
+			PRINTFNODE((FNODE)FA1(f),1);
+			break;
+		case I_OR:
+			PRINTFNODE((FNODE)FA0(f),1);
+			PUTS("!!");
+			PRINTFNODE((FNODE)FA1(f),1);
+			break;
+		/* ternary operators */
+		case I_CE:
+			PRINTFNODE((FNODE)FA0(f),1); PUTS("?"); PRINTFNODE((FNODE)FA1(f),1);
+			PUTS(":"); PRINTFNODE((FNODE)FA2(f),1);
+			break;
+		/* lists */
+		case I_LIST: PUTS("["); PRINTFNODENODE((NODE)FA0(f)); PUTS("]"); break;
+		/* function */
+		case I_FUNC:
+			if ( !strcmp(((FUNC)FA0(f))->name,"@pi") ) PUTS("@pi");
+			else if ( !strcmp(((FUNC)FA0(f))->name,"@e") ) PUTS("@e");
+			else {
+				PUTS(((FUNC)FA0(f))->name);
+				PUTS("("); PRINTFARGS(FA1(f)); PUTS(")");
+			}
+			break;
+		/* XXX */
+		case I_CAR: PUTS("car("); PRINTFNODE(FA0(f),0); PUTS(")"); break;
+		case I_CDR: PUTS("cdr("); PRINTFNODE(FA0(f),0); PUTS(")"); break;
+		/* exponent vector */
+		case I_EV: PUTS("<<"); PRINTFNODENODE((NODE)FA0(f)); PUTS(">>"); break;
+		/* string */
+		case I_STR: PUTS((char *)FA0(f)); break;
+		/* internal object */
+		case I_FORMULA: obj = (Obj)FA0(f); PRINTEXPR(CO,obj); break;
+		/* program variable */
+		case I_PVAR:
+			if ( FA1(f) )
+				error("printfnode : not implemented yet");
+			GETPVNAME(FA0(f),opname);
+			PUTS(opname);
+			break;
+		default: error("printfnode : not implemented yet");
+	}
+	if ( paren ) PUTS(")");
 }
