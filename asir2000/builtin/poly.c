@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.5 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.6 2001/03/13 01:10:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -666,7 +666,8 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
-extern int current_gfs_ext;
+extern P current_gfs_ext;
+extern int current_gfs_p;
 extern int current_gfs_q;
 extern int current_gfs_q1;
 extern int *current_gfs_plus1;
@@ -678,6 +679,7 @@ NODE arg;
 Obj *rp;
 {
 	int ac;
+	int d;
 	Obj mod,defpoly;
 	N n;
 	UP up;
@@ -694,14 +696,8 @@ Obj *rp;
 			error("setmod_ff : invalid argument");
 		switch ( OID(mod) ) {
 			case O_N:
-				if ( SGN((Q)mod) < 0 ) {
-					/* small finite field; primitive root representation */
-					current_ff = FF_GFS;
-					setmod_sf(BD(NM((Q)mod))[0],1);
-				} else {
-					current_ff = FF_GFP;
-					setmod_lm(NM((Q)mod));
-				}
+				current_ff = FF_GFP;
+				setmod_lm(NM((Q)mod));
 				break;
 			case O_P:
 				current_ff = FF_GF2N;
@@ -710,10 +706,12 @@ Obj *rp;
 				error("setmod_ff : invalid argument");
 		}
 	} else if ( ac == 2 ) {
-		mod = (Obj)ARG1(arg);
-		if ( SGN((Q)mod) < 0 ) {
-			error("setmod_ff : not implemented yet");
+		if ( OID(ARG0(arg)) == O_N ) {
+			/* small finite field; primitive root representation */
+			current_ff = FF_GFS;
+			setmod_sf(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg)));
 		} else {
+			mod = (Obj)ARG1(arg);
 			current_ff = FF_GFPN;
 			defpoly = (Obj)ARG0(arg);
 			if ( !mod || !defpoly )
@@ -734,9 +732,15 @@ Obj *rp;
 			MKLIST(list,n0);
 			*rp = (Obj)list; break;
 		case FF_GFS:
-			STOQ(current_gfs_q,q);
-			STOQ(current_gfs_iton[1],r);
-			n0 = mknode(3,ONE,q,r);
+			STOQ(current_gfs_p,q);
+			if ( current_gfs_ext ) {
+				enc_to_p(current_gfs_p,current_gfs_iton[1],
+					VR(current_gfs_ext),&p);
+				n0 = mknode(3,q,current_gfs_ext,p);
+			} else {
+				STOQ(current_gfs_iton[1],r);
+				n0 = mknode(3,q,current_gfs_ext,r);
+			}
 			MKLIST(list,n0);
 			*rp = (Obj)list; break;
 		default:
@@ -827,6 +831,7 @@ Obj *rp;
 	LM l;
 	GF2N g;
 	GFPN p;
+	GFS s;
 
 	switch ( current_ff ) {
 		case FF_GFP:
@@ -835,6 +840,8 @@ Obj *rp;
 			randomgf2n(&g); *rp = (Obj)g; break;
 		case FF_GFPN:
 			randomgfpn(&p); *rp = (Obj)p; break;
+		case FF_GFS:
+			randomgfs(&s); *rp = (Obj)s; break;
 		default:
 			error("random_ff : current_ff is not set");
 	}
@@ -879,12 +886,8 @@ Obj *rp;
 				ntogfpn((Obj)p,&rpn); simpgfpn((GFPN)rpn,&spn); *rp = (Obj)spn;
 				break;
 			case FF_GFS:
-				if ( current_gfs_ext > 1 ) {
-					error("simp_ff : not implemented yet");
-				} else {
-					ptomp(current_gfs_q,(P)p,&t); mqtogfs(t,&rs);
-					*rp = (Obj)rs;
-				}
+				ptomp(current_gfs_q,(P)p,&t); mqtogfs(t,&rs);
+				*rp = (Obj)rs;
 				break;
 			default:
 				*rp = (Obj)p;

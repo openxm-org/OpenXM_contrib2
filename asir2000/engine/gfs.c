@@ -45,13 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.1 2001/03/13 01:10:25 noro Exp $
 */
 #include "ca.h"
 
 /* q = p^n */
 
-int current_gfs_ext;
+P current_gfs_ext;
+int current_gfs_p;
 int current_gfs_q;
 int current_gfs_q1;
 int *current_gfs_plus1;
@@ -59,8 +60,22 @@ int *current_gfs_ntoi;
 int *current_gfs_iton;
 
 void chsgngfs();
+void generate_defpoly_um();
+
+void dec_um(p,a,u)
+int p,a;
+UM u;
+{
+	int i;
+
+	for ( i = 0; a; i++, a /= p )
+		COEF(u)[i] = a%p;
+	DEG(u) = i-1;
+}
 
 /*
+ * an element of GF(p^n) f(x)=a(n-1)*x^(n-1)+...+a(0)
+ * is encodeded to f(p).
  * current_gfs_iton[i] = r^i mod p (i=0,...,p-2)
  * current_gfs_iton[p-1] = 0
  */
@@ -68,45 +83,115 @@ void chsgngfs();
 void setmod_sf(p,n)
 int p,n;
 {
-	int r,i,p1;
+	int r,i,q1,q,t,t1;
+	UM dp;
 
+	for ( i = 0, q = 1; i < n; i++ )
+		q *= p;
+	dp = UMALLOC(n);
+	generate_defpoly_um(p,n,dp);
+	r = generate_primitive_root_enc(p,n,dp);
+	current_gfs_p = p;
+	current_gfs_q = q;
+	current_gfs_q1 = q1 = q-1;
 	if ( n > 1 )
-		error("setup_gfs : not implemented yet");
-	else {
-		r = generate_primitive_root_p(p);
-		current_gfs_q = p;
-		current_gfs_ext = 1;
-		current_gfs_q1 = p1 = p-1;
+		umtop(CO->v,dp,&current_gfs_ext);
+	else
+		current_gfs_ext = 0;
+	current_gfs_iton = (int *)MALLOC(q1*sizeof(int));
+	current_gfs_iton[0] = 1;
+	for ( i = 1; i < q1; i++ )
+		current_gfs_iton[i] = mulremum_enc(p,n,dp,current_gfs_iton[i-1],r);
 
-		current_gfs_iton = (int *)MALLOC(p1*sizeof(int));
-		current_gfs_iton[0] = 1;
-		for ( i = 1; i < p1; i++ )
-			current_gfs_iton[i] = (current_gfs_iton[i-1]*r)%p;
-
-		current_gfs_ntoi = (int *)MALLOC(p*sizeof(int));
-		current_gfs_ntoi[0] = -1;
-		for ( i = 0; i < p1; i++ )
-			current_gfs_ntoi[current_gfs_iton[i]] = i;
-			
-		current_gfs_plus1 = (int *)MALLOC(p*sizeof(int));
-		for ( i = 0; i < p1; i++ )
-			current_gfs_plus1[i] 
-				= current_gfs_ntoi[(current_gfs_iton[i]+1)%p];
+	current_gfs_ntoi = (int *)MALLOC(q*sizeof(int));
+	current_gfs_ntoi[0] = -1;
+	for ( i = 0; i < q1; i++ )
+		current_gfs_ntoi[current_gfs_iton[i]] = i;
+		
+	current_gfs_plus1 = (int *)MALLOC(q*sizeof(int));
+	for ( i = 0; i < q1; i++ ) {
+		t = current_gfs_iton[i];
+		/* add 1 to the constant part */
+		t1 = (t/p)*p+((t+1)%p);
+		current_gfs_plus1[i] = current_gfs_ntoi[t1];
 	}
 }
 
-int generate_primitive_root_p(p)
-int p;
+void generate_defpoly_um(p,n,dp)
+int p,n;
+UM dp;
 {
-	int r,rj,j;
+	int i,j,a,c,q;
+	UM wf,wdf,wgcd;
 
-	for ( r = 2; r < p; r++ ) {
+	wf = W_UMALLOC(n);
+	wdf = W_UMALLOC(n);
+	wgcd = W_UMALLOC(n);
+	COEF(dp)[n] = 1;
+	DEG(dp) = n;
+	for ( i = 0, q = 1; i < n; i++ )
+		q *= p;
+	for ( i = 0; i < q; i++ ) {
+		for ( j = 0, a = i; a; j++, a /= p )
+			COEF(dp)[j] = a%p;
+		for ( ; j < n; j++ )
+			COEF(dp)[j] = 0;
+		cpyum(dp,wf);
+		diffum(p,dp,wdf);
+		gcdum(p,wf,wdf,wgcd);
+		if ( DEG(wgcd) >= 1 )
+			continue;
+		mini(p,dp,wf);
+		if ( DEG(wf) <= 0 )
+			return;
+	}
+}
+
+int generate_primitive_root_enc(p,n,dp)
+int p,n;
+UM dp;
+{
+	int i,r,rj,j,q;
+
+	for ( i = 0, q = 1; i < n; i++ )
+		 q *= p;
+	for ( r = n==1?2:p; r < q; r++ ) {
 		rj = r;
-		for ( j = 1; j < p-1 && rj != 1; j++ )
-			rj = (rj*r) % p;
-		if ( j == p-1 )
+		for ( j = 1; j < q-1 && rj != 1; j++ )
+			rj = mulremum_enc(p,n,dp,rj,r);
+		if ( j == q-1 )
 			return r;
 	}
+}
+
+/* [a(p)]*[b(p)] in GF(p^n) -> [a(x)*b(x) mod dp(x)]_{x->p} */
+
+int mulremum_enc(p,n,dp,a,b)
+int p,n;
+UM dp;
+int a,b;
+{
+	int i,dr,r;
+	UM wa,wb,wc,wq;
+
+	if ( n == 1 )
+		return (a*b)%p;
+	if ( !a || !b )
+		return 0;
+
+	wa = W_UMALLOC(n);
+	dec_um(p,a,wa);
+
+	wb = W_UMALLOC(n);
+	dec_um(p,b,wb);
+
+	wc = W_UMALLOC(2*n);
+	wq = W_UMALLOC(2*n);
+	mulum(p,wa,wb,wc);
+	dr = divum(p,wc,dp,wq);
+	for ( i = dr, r = 0; i >= 0; i-- )
+		r = r*p+COEF(wc)[i];
+	return r;
 }
 
 void mqtogfs(a,c)
