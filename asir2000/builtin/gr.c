@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.44 2002/12/27 07:37:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.45 2003/03/14 06:28:48 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,6 +89,7 @@ static VL VC;
 
 int PCoeffs;
 int DP_Print = 0;
+int DP_PrintShort = 0;
 int DP_Multiple = 0;
 int DP_NFStat = 0;
 LIST Dist = 0;
@@ -101,7 +102,6 @@ static int NoCriB = 0;
 static int NoGC = 0;
 static int NoMC = 0;
 static int NoRA = 0;
-static int DP_PrintShort = 0;
 static int ShowMag = 0;
 static int Stat = 0;
 static int Denominator = 1;

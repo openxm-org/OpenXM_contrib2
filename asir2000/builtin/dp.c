@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.27 2003/01/06 01:16:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.28 2003/01/15 04:53:03 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1225,19 +1225,38 @@ LIST *rp;
 	dp_make_flaglist(rp);
 }
 
-extern int DP_Print;
+extern int DP_Print, DP_PrintShort;
 
 void Pdp_gr_print(arg,rp)
 NODE arg;
 Q *rp;
 {
 	Q q;
+	int s;
 
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"dp_gr_print");
-		q = (Q)ARG0(arg); DP_Print = QTOS(q);
-	} else
-		STOQ(DP_Print,q);
+		q = (Q)ARG0(arg);
+		s = QTOS(q);
+		switch ( s ) {
+			case 0:
+				DP_Print = 0; DP_PrintShort = 0;
+				break;
+			case 1:
+				DP_Print = 1;
+				break;
+			case 2: default:
+				DP_Print = 0; DP_PrintShort = 1;
+				break;
+		}
+	} else {
+		if ( DP_Print )	{
+			STOQ(1,q);
+		} else if ( DP_PrintShort ) {
+			STOQ(2,q);
+		} else
+			q = 0;
+	}
 	*rp = q;
 }
 
