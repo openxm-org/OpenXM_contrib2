@@ -292,6 +292,10 @@ SOURCE=.\fft\fft_primes.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\engine\Fgfs.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\builtin\file.c
 # End Source File
 # Begin Source File

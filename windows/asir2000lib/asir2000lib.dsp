@@ -295,6 +295,10 @@ SOURCE="..\..\asir2000\fft\fft_primes.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\engine\Fgfs.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\builtin\file.c"
 # End Source File
 # Begin Source File
