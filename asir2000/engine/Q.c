@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/engine/Q.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "inline.h"
@@ -302,6 +302,8 @@ Q *nr;
 	}
 }
 
+/* t = [nC0 nC1 ... nCn] */
+
 void mkbc(n,t)
 int n;
 Q *t;
@@ -315,6 +317,32 @@ Q *t;
 	}
 	for ( ; i <= n; i++ )
 		t[i] = t[n-i];
+}
+
+/*
+ *  Dx^k*x^l = W(k,l,0)*x^l*Dx^k+W(k,l,1)*x^(l-1)*x^(k-1)*+...
+ *
+ *  t = [W(k,l,0) W(k,l,1) ... W(k,l,min(k,l)]
+ *  where W(k,l,i) = i! * kCi * lCi
+ */
+
+void mkwc(k,l,t)
+int k,l;
+Q *t;
+{
+	int i,n,up,low;
+	N nm,d,c;
+
+	n = MIN(k,l);
+	for ( t[0] = ONE, i = 1; i <= n; i++ ) {
+		DM(k-i+1,l-i+1,up,low);
+		if ( up ) {
+			nm = NALLOC(2); PL(nm) = 2; BD(nm)[0] = low; BD(nm)[1] = up;
+		} else {
+			nm = NALLOC(1); PL(nm) = 1; BD(nm)[0] = low;
+		}
+		kmuln(NM(t[i-1]),nm,&d); divin(d,i,&c); NTOQ(c,1,t[i]);
+	}
 }
 
 void factorial(n,r)

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/engine/dist.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
 #include "ca.h"
 
 #define NV(p) ((p)->nv)
@@ -17,6 +17,14 @@
 
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
+
+void comm_muld(VL,DP,DP,DP *);
+void weyl_muld(VL,DP,DP,DP *);
+void weyl_muldm(VL,DP,MP,DP *);
+void weyl_mulmm(VL,MP,MP,int,DP *);
+void mkwc(int,int,Q *);
+
+int do_weyl;
 
 int dp_nelim,dp_fcoeffs;
 struct order_spec dp_current_spec;
@@ -130,7 +138,7 @@ DP *pr;
 					ptod(vl,dvl,COEF(dc),&t);
 					NEWDL(d,n); d->td = QTOS(DEG(dc)); d->d[i] = d->td;
 					NEWMP(m); m->dl = d; C(m) = (P)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
-					muld(vl,t,u,&r); addd(vl,r,s,&t); s = t;
+					comm_muld(vl,t,u,&r); addd(vl,r,s,&t); s = t;
 				}
 				*pr = s;
 			}
@@ -341,6 +349,16 @@ void muld(vl,p1,p2,pr)
 VL vl;
 DP p1,p2,*pr;
 {
+	if ( ! do_weyl )
+		comm_muld(vl,p1,p2,pr);
+	else
+		weyl_muld(vl,p1,p2,pr);
+}
+
+void comm_muld(vl,p1,p2,pr)
+VL vl;
+DP p1,p2,*pr;
+{
 	MP m;
 	DP s,t,u;
 
@@ -384,6 +402,99 @@ DP *pr;
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
 			(*pr)->sugar = p->sugar + m0->dl->td;
+	}
+}
+
+void weyl_muld(vl,p1,p2,pr)
+VL vl;
+DP p1,p2,*pr;
+{
+	MP m;
+	DP s,t,u;
+
+	if ( !p1 || !p2 )
+		*pr = 0;
+	else if ( OID(p1) <= O_P )
+		muldc(vl,p2,(P)p1,pr);
+	else if ( OID(p2) <= O_P )
+		muldc(vl,p1,(P)p2,pr);
+	else {
+		for ( m = BDY(p2), s = 0; m; m = NEXT(m) ) {
+			weyl_muldm(vl,p1,m,&t); addd(vl,s,t,&u); s = u;
+		}
+		*pr = s;
+	}
+}
+
+void weyl_muldm(vl,p,m0,pr)
+VL vl;
+DP p;
+MP m0;
+DP *pr;
+{
+	DP r,t,t1;
+	MP m;
+	int n;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		for ( r = 0, m = BDY(p), n = NV(p); m; m = NEXT(m) ) {
+			weyl_mulmm(vl,m,m0,n,&t);
+			addd(vl,r,t,&t1); r = t1;
+		}
+		if ( r )
+			r->sugar = p->sugar + m0->dl->td;
+		*pr = r;
+	}
+}
+
+/* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
+
+void weyl_mulmm(vl,m0,m1,n,pr)
+VL vl;
+MP m0,m1;
+int n;
+DP *pr;
+{
+	MP m,mr,mr0;
+	DP r,t,t1;
+	P c,c0,c1,cc;
+	DL d,d0,d1;
+	int i,j,a,b,k,l,n2,s,min;
+	Q *tab;
+
+	if ( !m0 || !m1 )
+		*pr = 0;
+	else {
+		c0 = C(m0); c1 = C(m1);
+		mulp(vl,c0,c1,&c);
+		d0 = m0->dl; d1 = m1->dl;
+		n2 = n>>1;
+		for ( i = 0, r = (DP)ONE; i < n2; i++ ) {
+			a = d0->d[i]; b = d1->d[n2+i];
+			k = d0->d[n2+i]; l = d1->d[i];
+			/* compute xi^a*(Di^k*xi^l)*Di^b */
+			min = MIN(k,l);
+			tab = (Q *)ALLOCA((min+1)*sizeof(Q));
+			mkwc(k,l,tab);
+			for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
+				NEXTMP(mr0,mr);
+				NEWDL(d,n);
+				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->td = d->d[i]+d->d[n2+i]; /* XXX */
+				s = MAX(s,d->td); /* XXX */
+				mr->c = (P)tab[j];
+				mr->dl = d;
+			}
+			if ( mr0 )
+				NEXT(mr) = 0;
+			MKDP(n,mr0,t);
+			if ( t )
+				t->sugar = s;
+			comm_muld(vl,r,t,&t1); r = t1;
+		}
+		muldc(vl,r,c,pr);
 	}
 }
 
