@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.1 2000/12/22 10:03:29 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.2 2000/12/23 11:36:49 saito Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -97,6 +97,7 @@ static char	*Interval_dummy;
 #undef  N_LM
 #undef  N_GF2N
 #undef  N_GFPN
+#undef  N_GFS
 #define N_IP	(N_B+1)
 #define N_ID	(N_B+2)
 #define N_IT	(N_B+3)
@@ -107,6 +108,7 @@ static char	*Interval_dummy;
 #define N_LM	(N_B+7)
 #define N_GF2N	(N_B+8)
 #define N_GFPN	(N_B+9)
+#define N_GFS	(N_B+10)
 
 /* data structures */
 struct oItv {
