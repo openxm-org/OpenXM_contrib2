@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.15 2002/07/11 03:34:34 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.16 2002/07/11 12:35:03 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1179,7 +1179,7 @@ struct canvas *can;
 static struct sm_btree *sm_newNode(unsigned long v);
 static int sm_insert(struct sm_btree *node,unsigned long v);
 static int sm_count(struct sm_btree *rootp);
-#define MALLOC(a) GC_malloc(a)
+
 struct sm_btree {
   unsigned long p;
   struct sm_btree * left;
