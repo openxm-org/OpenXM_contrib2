@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.17 2003/07/31 05:30:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.18 2003/07/31 05:42:22 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -65,7 +65,7 @@ typedef struct oND_pairs {
 } *ND_pairs;
 
 static unsigned int **nd_bound;
-int nd_mod,nd_nvar;
+int nd_nvar;
 int is_rlex;
 int nd_epw,nd_bpe,nd_wpd;
 unsigned int nd_mask[32];
@@ -139,7 +139,7 @@ void nd_free_private_storage();
 void _NM_alloc();
 void _ND_alloc();
 int ndl_td(unsigned int *d);
-ND nd_add(ND p1,ND p2);
+ND nd_add(int mod,ND p1,ND p2);
 ND nd_add_q(ND p1,ND p2);
 ND nd_mul_nm(int mod,ND p,NM m0);
 ND nd_mul_ind_nm(int mod,int index,NM m0);
@@ -156,8 +156,8 @@ void ndv_print(NDV p);
 void ndv_print_q(NDV p);
 void ndp_print(ND_pairs d);
 int nd_length(ND p);
-void nd_monic(ND p);
-void nd_mul_c(ND p,int mul);
+void nd_monic(int mod,ND p);
+void nd_mul_c(int mod,ND p,int mul);
 void nd_free_redlist();
 void nd_append_red(unsigned int *d,int td,int i);
 unsigned int *nd_compute_bound(ND p);
@@ -178,8 +178,8 @@ int nmv_adv;
 int nmv_len;
 NDV ndv_red;
 
-void ndv_mul_c(NDV p,int mul);
-ND ndv_add(ND p1,NDV p2);
+void ndv_mul_c(int mod,NDV p,int mul);
+ND ndv_add(int mod,ND p1,NDV p2);
 ND ndv_add_q(ND p1,NDV p2);
 NDV ndtondv(int mod,ND p);
 void ndv_mul_nm(int mod,NDV pv,NM m,NDV r);
@@ -659,7 +659,7 @@ INLINE int nd_find_reducer(ND g)
 	return -1;
 }
 
-ND nd_add(ND p1,ND p2)
+ND nd_add(int mod,ND p1,ND p2)
 {
 	int n,c;
 	int t;
@@ -680,9 +680,9 @@ ND nd_add(ND p1,ND p2)
 				c = ndl_compare(DL(m1),DL(m2));
 			switch ( c ) {
 				case 0:
-					t = ((CM(m1))+(CM(m2))) - nd_mod;
+					t = ((CM(m1))+(CM(m2))) - mod;
 					if ( t < 0 )
-						t += nd_mod;
+						t += mod;
 					s = m1; m1 = NEXT(m1);
 					if ( t ) {
 						NEXTNM2(mr0,mr,s); CM(mr) = (t);
@@ -814,10 +814,10 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 			}
 			if ( mod ) {
 				p = nd_ps[index];
-				c1 = invm(HCM(p),nd_mod); c2 = nd_mod-HCM(g);
-				DMAR(c1,c2,0,nd_mod,c); CM(mul) = c;
+				c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
+				DMAR(c1,c2,0,mod,c); CM(mul) = c;
 				ndv_mul_nm(mod,p,mul,ndv_red);
-				g = ndv_add(g,ndv_red);
+				g = ndv_add(mod,g,ndv_red);
 			} else {
 				p = nd_ps[index];
 				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
@@ -878,23 +878,23 @@ PGeoBucket create_pbucket()
 	return g;
 }
 
-void add_pbucket(PGeoBucket g,ND d)
+void add_pbucket(int mod,PGeoBucket g,ND d)
 {
 	int l,k,m;
 
 	l = nd_length(d);
 	for ( k = 0, m = 1; l > m; k++, m <<= 2 );
 	/* 4^(k-1) < l <= 4^k */
-	d = nd_add(g->body[k],d);
+	d = nd_add(mod,g->body[k],d);
 	for ( ; d && nd_length(d) > 1<<(2*k); k++ ) {
 		g->body[k] = 0;
-		d = nd_add(g->body[k+1],d);
+		d = nd_add(int mod,g->body[k+1],d);
 	}
 	g->body[k] = d;
 	g->m = MAX(g->m,k);
 }
 
-int head_pbucket(PGeoBucket g)
+int head_pbucket(int mod,PGeoBucket g)
 {
 	int j,i,c,k,nv,sum;
 	unsigned int *di,*dj;
@@ -930,9 +930,9 @@ int head_pbucket(PGeoBucket g)
 					dj = HDL(gj);
 					sum = HCM(gj);
 				} else if ( c == 0 ) {
-					sum = sum+HCM(gi)-nd_mod;
+					sum = sum+HCM(gi)-mod;
 					if ( sum < 0 )
-						sum += nd_mod;
+						sum += mod;
 					g->body[i] = nd_remove_head(gi);
 				}
 			}
@@ -954,7 +954,7 @@ ND normalize_pbucket(PGeoBucket g)
 
 	r = 0;
 	for ( i = 0; i <= g->m; i++ )
-		r = nd_add(r,g->body[i]);
+		r = nd_add(mod,r,g->body[i]);
 	return r;
 }
 
@@ -1356,7 +1356,7 @@ int nd_newps(int mod,ND a)
 			REALLOC((char *)nd_bound,nd_pslen*sizeof(unsigned int *));
 	}
 	if ( mod )
-		nd_monic(a);
+		nd_monic(mod,a);
 	else
 		nd_removecont(a);
 	nd_bound[nd_psn] = nd_compute_bound(a);
@@ -1413,7 +1413,7 @@ NODE nd_setup(int mod,NODE f)
 	for ( i = 0; i < nd_psn; i++, f = NEXT(f) ) {
 		nd_ps[i] = dptondv(mod,(DP)BDY(f));
 		if ( mod )
-			ndv_mul_c(nd_ps[i],invm(HCM(nd_ps[i]),nd_mod));
+			ndv_mul_c(mod,nd_ps[i],invm(HCM(nd_ps[i]),mod));
 		else
 			ndv_removecont(nd_ps[i]);
 		len = MAX(len,LEN(nd_ps[i]));
@@ -1455,7 +1455,6 @@ void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 			error("nd_gr : unsupported order");
 	}
 	initd(ord);
-	nd_mod = m;
 	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 		ptod(CO,vv,(P)BDY(t),&b);
 		if ( m )
@@ -1671,15 +1670,15 @@ void ndv_removecont(NDV p)
 	}
 }
 
-void nd_monic(ND p)
+void nd_monic(int mod,ND p)
 {
 	if ( !p )
 		return;
 	else
-		nd_mul_c(p,invm(HCM(p),nd_mod));
+		nd_mul_c(mod,p,invm(HCM(p),mod));
 }
 
-void nd_mul_c(ND p,int mul)
+void nd_mul_c(int mod,ND p,int mul)
 {
 	NM m;
 	int c,c1;
@@ -1688,7 +1687,7 @@ void nd_mul_c(ND p,int mul)
 		return;
 	for ( m = BDY(p); m; m = NEXT(m) ) {
 		c1 = CM(m);
-		DMAR(c1,mul,0,nd_mod,c);
+		DMAR(c1,mul,0,mod,c);
 		CM(m) = c;
 	}
 }
@@ -1959,13 +1958,13 @@ int nd_sp(int mod,ND_pairs p,ND *rp)
 	ndv_mul_nm(mod,p2,m,ndv_red);
 	FREENM(m);
 	if ( mod )
-		*rp = ndv_add(t1,ndv_red);
+		*rp = ndv_add(mod,t1,ndv_red);
 	else
 		*rp = ndv_add_q(t1,ndv_red);
 	return 1;
 }
 
-void ndv_mul_c(NDV p,int mul)
+void ndv_mul_c(int mod,NDV p,int mul)
 {
 	NMV m;
 	int c,c1,len,i;
@@ -1975,7 +1974,7 @@ void ndv_mul_c(NDV p,int mul)
 	len = LEN(p);
 	for ( m = BDY(p), i = 0; i < len; i++, NMV_ADV(m) ) {
 		c1 = CM(m);
-		DMAR(c1,mul,0,nd_mod,c);
+		DMAR(c1,mul,0,mod,c);
 		CM(m) = c;
 	}
 }
@@ -2011,7 +2010,7 @@ void ndv_mul_nm(int mod,NDV p,NM m0,NDV r)
 		if ( mod ) {
 			c = CM(m0);
 			for ( ; len > 0; len--, NMV_ADV(m), NMV_ADV(mr) ) {
-				c1 = CM(m); DMAR(c1,c,0,nd_mod,c2); CM(mr) = c2;
+				c1 = CM(m); DMAR(c1,c,0,mod,c2); CM(mr) = c2;
 				TD(mr) = TD(m)+td; ndl_add(DL(m),d,DL(mr));
 			}
 		} else {
@@ -2048,7 +2047,7 @@ ND ndv_mul_nm_create(int mod,NDV p,NM m0)
 			for ( i = 0; i < len; i++, NMV_ADV(m) ) {
 				NEXTNM(mr0,mr);
 				c1 = CM(m);
-				DMAR(c1,c,0,nd_mod,c2);
+				DMAR(c1,c,0,mod,c2);
 				CM(mr) = c2;
 				TD(mr) = TD(m)+td;
 				ndl_add(DL(m),d,DL(mr));
@@ -2069,7 +2068,7 @@ ND ndv_mul_nm_create(int mod,NDV p,NM m0)
 	}
 }
 
-ND ndv_add(ND p1,NDV p2)
+ND ndv_add(int mod,ND p1,NDV p2)
 {
 	register NM prev,cur,new;
 	int c,c1,c2,t,td,td2,mul,len,i;
@@ -2097,8 +2096,8 @@ ND ndv_add(ND p1,NDV p2)
 			else c = ndl_compare(DL(cur),DL(m2));
 			switch ( c ) {
 				case 0:
-					t = CM(m2)+CM(cur)-nd_mod;
-					if ( t < 0 ) t += nd_mod;
+					t = CM(m2)+CM(cur)-mod;
+					if ( t < 0 ) t += mod;
 					if ( t ) CM(cur) = t;
 					else if ( !prev ) {
 						head = NEXT(cur); FREENM(cur); cur = head;
