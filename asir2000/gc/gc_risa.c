@@ -1,4 +1,4 @@
-#include "gc_priv.h"
+#include "private/gc_priv.h"
 #include <time.h>
 
 int *StackBottom;

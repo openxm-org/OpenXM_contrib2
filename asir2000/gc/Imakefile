@@ -2,11 +2,11 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.6 2000/08/22 01:30:24 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.7 2001/03/19 04:02:03 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
-CFLAGS= $(DEFINES) $(CDEBUGFLAGS) -DSILENT -DLARGE_CONFIG -DALL_INTERIOR_POINTERS -DHEAP_START_ADDR=0x$(HEAP_START_ADDR)
+CFLAGS= $(DEFINES) $(CDEBUGFLAGS) -Iinclude -DATOMIC_UNCOLLECTABLE -DSILENT -DLARGE_CONFIG -DALL_INTERIOR_POINTERS -DHEAP_START_ADDR=0x$(HEAP_START_ADDR)
 
 OBJS= alloc.o reclaim.o allchblk.o misc.o mach_dep.o os_dep.o mark_rts.o headers.o mark.o obj_map.o blacklst.o finalize.o new_hblk.o dbg_mlc.o malloc.o mallocx.o stubborn.o solaris_threads.o typd_mlc.o ptr_chck.o dyn_load.o gc_risa.o
 
@@ -26,9 +26,6 @@ mach_dep.o: mips_mach_dep.s
 #if defined(_IBMR2)
 mach_dep.o: rs6000_mach_dep.s
 	as -o mach_dep.o rs6000_mach_dep.s
-#else
-mach_dep.o: mach_dep.c
-	$(CC) -c mach_dep.c
 #endif
 #endif
 #endif
