@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.9 2000/07/13 05:08:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.10 2000/08/22 01:30:21 noro Exp $
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
@@ -39,7 +39,6 @@ DEPLIBS =
 PLIB = parse/libparse.a
 GLIB = gc/libasir-gc.a
 ELIB = engine/libca.a
-E27LIB=engine-27/libca-27.a
 FLIB=fft/libdft.a
 ALIB = asm/libasm.a
 IOLIB = io/libio.a
@@ -56,11 +55,11 @@ PROGRAMS = asir
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)
 
-SUBDIRS = engine engine-27 fft asm gc parse builtin io plot lib include
+SUBDIRS = engine fft asm gc parse builtin io plot lib include
 
-LIBS0 = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+LIBS0 = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(ELIB) $(FLIB) $(ALIB)
 LIBS = $(LIBS0) $(GLIB)
-PILIBS = $(IOLIB) $(GLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+PILIBS = $(IOLIB) $(GLIB) $(ELIB) $(FLIB) $(ALIB)
 
 
 MakeSubdirs($(SUBDIRS))
