@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.27 2001/09/20 23:11:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.28 2001/10/05 01:38:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -653,6 +653,9 @@ void ox_asir_init(int argc,char **argv)
 	char *homedir;
 	char *ptr;
 
+#if !MPI
+	ox_io_init();
+#endif
 #if !defined(VISUAL) && !MPI
 	do_server_in_X11 = 1; /* XXX */
 #endif
@@ -706,9 +709,6 @@ void ox_asir_init(int argc,char **argv)
 		fclose(ifp);
 	}
 	input_init(0,"string");
-#if !MPI
-	ox_io_init();
-#endif
 	create_my_mathcap("ox_asir");
 }
 
