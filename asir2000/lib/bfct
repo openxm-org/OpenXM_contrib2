@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.14 2001/01/10 04:30:35 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.15 2001/01/11 08:43:23 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -212,6 +212,9 @@ def generic_bfct(F,V,DV,W)
 	N = length(V);
 	N2 = N*2;
 
+	/* If W is a list, convert it to a vector */
+	if ( type(W) == 4 )
+		W = newvect(length(W),W);
 	dp_weyl_set_weight(W);
 
 	/* create a term order M in D<x,d> (DRL) */
