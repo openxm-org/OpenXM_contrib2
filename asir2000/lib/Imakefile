@@ -1,10 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.12 2000/01/26 03:03:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.13 2000/03/01 02:29:18 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\
 	defs.h fctrdata fctrtest fff gr\
 	ifplot katsura mat nf num\
-	primdec ratint robot solve sp sturm xm dmul
+	primdec ratint robot solve sp sturm xm dmul bfct
 
 all::
 
@@ -13,7 +13,7 @@ depend::
 install-lib::
 	MakeDir($(ASIR_BINDIR))
 	MakeDir($(ASIR_LIBDIR))
-	-$(CP) -R $(SRCS) $(ASIR_LIBDIR)
+	-$(CP) $(SRCS) $(ASIR_LIBDIR)
 	$(RM) $(ASIR_LIBDIR)/help
 	(cd $(ASIR_LIBDIR); $(LN) help-eg help)
 

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/lib/ratint,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/ratint,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 /*
  * rational function integration (Trager's algorithm)
  * load("gr"); load("sp");
@@ -87,12 +87,6 @@ def solvemain(Mat,Index,N,M)
 			Mat[I][J] = sdiv(Mat[I][J]*D-W[J],U);
 	}
 	return [L,D];
-}
-
-def length(L)
-{
-	for ( I = 0; L != []; L = cdr(L), I++ );
-	return I;
 }
 
 def ltov(P,VL,W)
