@@ -1,8 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.18 2001/10/09 01:36:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.19 2001/10/30 07:25:58 noro Exp $ */
 
 #include "ca.h"
 
 void lnfsf(int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1);
+void extractcoefbm(BM f,int dx,UM r);
 
 int comp_dum(DUM a,DUM b)
 {
@@ -555,6 +556,8 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 	}
 
 	/* set bound */
+	/* g | f, lc_y(g) = lc_y(f) => deg_y(g) <= deg_y(f) */
+	/* so, bound = dy is sufficient, but we use slightly large value */
 	bound = dy+2;
 
 	/* f(x,y) -> f(x,y+ev) */
@@ -962,14 +965,15 @@ void sfbfctr(P f,V x,V y,DCP *dcp)
 void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 {
 	int np,dx,dy;
-	int i,j,k;
+	int i,j,k,bound;
 	int *win;
 	P g,lcg,factor,cofactor,lcyx;
 	P csum;
 	DCP dcf,dcf0,dc;
 	BM *c;
 	BM lcy;
-	UM lcg0;
+	UM lcg0,lcy0,w;
+	UM *d1c;
 	ML wlist;
 	struct oVL vl1,vl0;
 	VL vl;
@@ -985,7 +989,7 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 	win = W_ALLOC(np+1);
 	wlist = W_MLALLOC(np);
 	wlist->n = list->n;
-	wlist->bound = list->bound;
+	bound = wlist->bound = list->bound;
 	c = (BM *)COEF(wlist);
 	bcopy((char *)COEF(list),(char *)c,(int)(sizeof(BM)*np));
 
@@ -1009,11 +1013,30 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 	NEWP(lcyx); VR(lcyx) = x; DC(lcyx) = dc;
 	ptosfbm(dy,lcyx,lcy);
 
+	/* initialize lcy0 by LC(f) */
+	lcy0 = W_UMALLOC(bound);
+	ptosfum(COEF(DC(g)),lcy0);
+
+	/* ((d-1 coefs)*lcy0 */
+	d1c = (UM *)W_ALLOC(np*sizeof(UM));
+	w = W_UMALLOC(2*bound);
+	for ( i = 1; i < np; i++ ) {
+		extractcoefbm(c[i],degbm(c[i])-1,w);
+		d1c[i] = W_UMALLOC(2*bound);
+		mulsfum(w,lcy0,d1c[i]);
+		/* d1c[i] = d1c[i] mod y^(bound+1) */
+		if ( DEG(d1c[i]) > bound ) {
+			for ( j = DEG(d1c[i]); j > bound; j-- )
+				COEF(d1c[i])[j] = 0;
+			degum(d1c[i],bound);
+		}
+	}
+
 	fprintf(stderr,"np = %d\n",np);
 	dtok = 0;
 	for ( g = f, k = 1, dcf = dcf0 = 0, win[0] = 1, --np, z = 0; ; z++ ) {
 		if ( !(z % 1000) ) fprintf(stderr,".");
-		dt = sfdegtest(dy,wlist,k,win);
+		dt = sfdegtest(dy,bound,d1c,k,win);
 		if ( dt )
 			dtok++;
 		if ( dt && sfdtestmain(vl,lcg,lcg0,lcy,csum,wlist,
@@ -1054,6 +1077,22 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 			else 
 				for ( i = 1; i < k; i++ ) 
 					win[i] = win[0] + i;
+
+
+			/* update lcy0  */
+			ptosfum(COEF(DC(g)),lcy0);
+		
+			/* update d-1 coeffs */
+			for ( i = 1; i <= np; i++ ) {
+				extractcoefbm(c[i],degbm(c[i])-1,w);
+				mulsfum(w,lcy0,d1c[i]);
+				/* d1c[i] = d1c[1] mod y^(bound+1) */
+				if ( DEG(d1c[i]) > bound ) {
+					for ( j = DEG(d1c[i]); j > bound; j-- )
+						COEF(d1c[i])[j] = 0;
+					degum(d1c[i],bound);
+				}
+			}
 		} else if ( !ncombi(1,np,k,win) ) 
 			if ( k == np ) 
 				break;
@@ -1066,15 +1105,15 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 	DEG(dcf) = ONE; NEXT(dcf) = 0; *dcp = dcf0;
 }
 
-void extractcoefbm(BM f,int d,UM r)
+void extractcoefbm(BM f,int dx,UM r)
 {
 	int j;
 	UM fj;
 
 	for ( j = DEG(f); j >= 0; j-- ) {
 		fj = COEF(f)[j];
-		if ( fj && DEG(fj) >= d ) {
-			COEF(r)[j] = COEF(fj)[d];
+		if ( fj && DEG(fj) >= dx ) {
+			COEF(r)[j] = COEF(fj)[dx];
 		} else
 			COEF(r)[j] = 0;
 	}
@@ -1083,30 +1122,19 @@ void extractcoefbm(BM f,int d,UM r)
 
 /* deg_y(prod mod y^(bound+1)) <= dy ? */
 
-int sfdegtest(int dy,ML list,int k,int *in)
+int sfdegtest(int dy,int bound,UM *d1c,int k,int *in)
 {
-	int bound,dx,dx1,i,j;
-	UM w,w1,w2,wt;
+	int i,j;
+	UM w,w1,wt;
 	BM t;
 
-	bound = list->bound;
 	w = W_UMALLOC(bound);
 	w1 = W_UMALLOC(bound);
-	w2 = W_UMALLOC(bound);
 	clearum(w,bound);
 	for ( i = 0; i < k; i++ ) {
-		t = (BM)list->c[in[i]];
-		dx = degbm(t);
-		dx1 = dx-1;
-		/* t = t->c[0] + t->c[1]*y + ... + t->c[j]*y^j + ... */
-		/* extract coef. of x^dx1 and add it to w */
-		extractcoefbm(t,dx1,w1);
-		addsfum(w,w1,w2); wt = w; w = w2; w2 = wt;
+		addsfum(w,d1c[in[i]],w1); wt = w; w = w1; w1 = wt;
 	}
-	for ( j = bound; j >= dy; j-- )
-		if ( COEF(w)[j] )
-			break;
-	return j <= dy ? 1 : 0;
+	return DEG(w) <= dy ? 1 : 0;
 }
 
 /* lcy = LC(g), lcg = lcy*g, lcg0 = const part of lcg */
