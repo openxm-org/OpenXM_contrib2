@@ -1,0 +1,244 @@
+/* $OpenXM$ */
+/* $Id$ */
+
+/* Todo:
+     1. Some functions should be moved to longname
+*/
+
+/* #define CLIP  1 */
+/* #define DEBUG 1 */
+#define LIST  4
+
+/* General sugar functions */
+def floor(N) {
+  return(pari(floor,N));
+}
+
+def join(A,B) {
+  if (type(B) == 0) return(A);
+  return(append(A,B));
+}
+
+def eigenvalues(M) {
+  return(pari(eigen,M));
+}
+
+def roots(F) {
+  return(pari(roots,F));
+}
+
+/*  ---------------------------------------------- */
+def ox_get_errors(P) {
+  ox_push_cmd(P,276);
+  return(ox_pop_cmo(P));
+}
+
+def reset_plot() {   
+  extern Glib_process;
+  print("  Sending signal to ox_plot",0);
+  ox_reset(Glib_process);
+  print("  Done.");
+}
+Glib_canvas_x = 400$
+Glib_canvas_y = 400$
+Glib_xmin=0$  Glib_xmax=Glib_canvas_x$
+Glib_ymin=0$  Glib_ymax=Glib_canvas_y$
+#define START_SERVER \
+extern Glib_server_started, Glib_process$ \
+if (type(Glib_server_started) == 0) { \
+  Glib_process = ox_launch_nox(0,"ox_plot")$ \
+  register_handler(reset_plot); \
+  Glib_server_started = 1$ \
+}$
+
+Glib_canvas = -1$
+Glib_xmag = 1$ Glib_ymag=1$ Glib_xoffset=0$ Glib_yoffset=0$
+Glib_safe_mode = 2 $
+Glib_counter = 100$
+
+def open_Canvas(P,S) {
+  open_canvas(P,S);
+  R = ox_pop_cmo(P);
+/*
+  if (ox_get_errors(P) == []) {
+    R = ox_pop_cmo(P);
+  }else{
+    debug;
+  }
+*/
+  return(R);
+}
+
+def glib_open() {
+  extern Glib_canvas_x, Glib_canvas_y,
+         Glib_process, Glib_canvas;
+  START_SERVER  
+  Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
+  glib_check_strict();
+  return(Glib_canvas);
+}
+
+def glib_check() {
+  extern  Glib_process, Glib_canvas, Glib_safe_mode,
+          Glib_canvas_x, Glib_canvas_y, Glib_counter;
+  if (Glib_safe_mode == 0) {
+     return(0);
+  }
+  if (Glib_safe_mode == 2) {
+   if (Glib_counter > 0) {
+     Glib_counter--;
+     return(0);
+   }else{
+     Glib_counter=100;
+   }
+  }
+  glib_check_strict();
+}
+def glib_check_strict() {
+  extern  Glib_process, Glib_canvas, Glib_safe_mode,
+          Glib_canvas_x, Glib_canvas_y, Glib_counter;
+  if (Glib_canvas < 0) {
+    glib_open();
+  }
+  E = ox_get_errors(Glib_process);
+  if (E != []) {
+    ox_pops(Glib_process,200);
+    print(E);
+    print("Warning: ",0);
+    print("Drawing canvas seems to be closed.");
+    print("Opening a new canvas.");
+    Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
+    error("Drawing aborted");
+  }
+}
+
+def glib_clear() {
+  extern Glib_process, Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  clear_canvas(Glib_process,Glib_canvas);
+}
+
+def glib_window(Xmin,Ymin,Xmax,Ymax) {
+  extern Glib_xmin,  Glib_xmax, Glib_ymin, Glib_ymax,
+         Glib_canvas_x, Glib_canvas_y, Glib_process, Glib_canvas,
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
+  if (Xmax <= Xmin) error("glib window: Invalid size");
+  if (Ymax <= Ymin) error("glib window: Invalid size");
+  Glib_xmin = Xmin;  Glib_xmax = Xmax;
+  Glib_ymin = Ymin;  Glib_ymax = Ymax;
+  Glib_xoffset = -Xmin;
+  Glib_yoffset = -Ymin;
+  Glib_xmag    = Glib_canvas_x/(Xmax-Xmin);
+  Glib_ymag    = Glib_canvas_y/(Ymax-Ymin);
+  if (Glib_canvas < 0) glib_open();
+}
+
+def glib_putpixel(X,Y) {
+  extern Glib_process, Glib_canvas,
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
+  if (Glib_canvas < 0) glib_open();
+  glib_check();
+  draw_obj(Glib_process,Glib_canvas,
+           [floor(Glib_xmag*(X+Glib_xoffset)),
+            floor(Glib_ymag*(Y+Glib_yoffset))]);
+}
+
+def glib_line(X0,Y0,X1,Y1) {
+  extern Glib_xmag, Glib_ymag, Glib_xoffset, Glib_yoffset;
+  glib_clip_line(floor(Glib_xmag*(X0+Glib_xoffset)),
+                 floor(Glib_ymag*(Y0+Glib_yoffset)),
+                 floor(Glib_xmag*(X1+Glib_xoffset)),
+                 floor(Glib_ymag*(Y1+Glib_yoffset)));
+}
+
+def glib_clip_line(X0,Y0,X1,Y1) {
+  /* X0, Y0, X1, Y1 should be integers. 
+     Coordinates are already translated. */
+  extern Glib_process, Glib_canvas, Glib_canvas_x, Glib_canvas_y;
+  if (Glib_canvas < 0) glib_open();
+
+#ifdef CLIP
+#ifdef DEBUG
+  print(["clip_line",[X0,Y0,X1,Y1]]);
+#endif
+  /* clip by x = 0 */
+  S = glib_clip0_x(X0,Y0,X1,Y1,0);
+#ifdef DEBUG
+  print(["clip0_x",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+  S = glib_clip1_x(X0,Y0,X1,Y1,Glib_canvas_x-1);
+#ifdef DEBUG
+  print(["clip1_x",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+  S = glib_clip0_y(X0,Y0,X1,Y1,0);
+#ifdef DEBUG
+  print(["clip0_y",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+  S = glib_clip1_y(X0,Y0,X1,Y1,Glib_canvas_y-1);
+#ifdef DEBUG
+  print(["clip1_y",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+#ifdef DEBUG
+  print([X0,Y0,X1,Y1]);
+#endif
+#endif
+  glib_check();
+  draw_obj(Glib_process,Glib_canvas,
+           [floor(X0),floor(Y0),floor(X1),floor(Y1)]);
+  
+}
+
+def glib_clip0_x(X0,Y0,X1,Y1,Clip) {
+   if (X0 < Clip && X1 < Clip) return(0);
+   if (X0 < Clip && X1 > Clip) {
+     return([Clip, Y0+(Clip-X0)*(Y1-Y0)/(X1-X0),X1,Y1]);
+   }
+   if (X1 > Clip && X1 < Clip) {
+     return([X0,Y0,Clip, Y1+(Clip-X1)*(Y0-Y1)/(X0-X1)]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+def glib_clip0_y(X0,Y0,X1,Y1,Clip) {
+   if (Y0 < Clip && Y1 < Clip) return(0);
+   if (Y0 < Clip && Y1 > Clip) {
+     return([X0+(Clip-Y0)*(X1-X0)/(Y1-Y0),Clip,X1,Y1]);
+   }
+   if (Y1 > Clip && Y1 < Clip) {
+     return([X0,Y0,X1+(Clip-Y1)*(X0-X1)/(Y0-Y1),Clip]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+def glib_clip1_x(X0,Y0,X1,Y1,Clip) {
+   if (X0 > Clip && X1 > Clip) return(0);
+   if (X0 > Clip && X1 < Clip) {
+     return([Clip, Y0+(Clip-X0)*(Y1-Y0)/(X1-X0),X1,Y1]);
+   }
+   if (X1 < Clip && X1 > Clip) {
+     return([X0,Y0,Clip, Y1+(Clip-X1)*(Y0-Y1)/(X0-X1)]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+def glib_clip1_y(X0,Y0,X1,Y1,Clip) {
+   if (Y0 > Clip && Y1 > Clip) return(0);
+   if (Y0 > Clip && Y1 < Clip) {
+     return([X0+(Clip-Y0)*(X1-X0)/(Y1-Y0),Clip,X1,Y1]);
+   }
+   if (Y0 < Clip && Y1 > Clip) {
+     return([X0,Y0,X1+(Clip-Y1)*(X0-X1)/(Y0-Y1),Clip]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+end$
+
