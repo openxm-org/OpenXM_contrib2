@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.35 2003/08/20 07:04:31 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.36 2003/08/20 07:55:45 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -2471,10 +2471,11 @@ void nd_setup_parameters() {
 
 ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 {
-	int i,obpe,oadv;
+	int i,obpe,oadv,h;
 	NM prev_nm_free_list;
 	RHist mr0,mr;
 	RHist r;
+	RHist *old_red;
 	ND_pairs s0,s,t,prev_ndp_free_list;
 
 	obpe = nd_bpe;
@@ -2503,16 +2504,24 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 		SG(s) = SG(t);
 		ndl_dup(obpe,LCM(t),LCM(s));
 	}
+	
+	old_red = (RHist *)ALLOCA(REDTAB_LEN*sizeof(RHist));
 	for ( i = 0; i < REDTAB_LEN; i++ ) {
-		for ( mr0 = 0, r = nd_red[i]; r; r = NEXT(r) ) {
-			NEXTRHist(mr0,mr);
+		old_red[i] = nd_red[i];
+		nd_red[i] = 0;
+	}
+	for ( i = 0; i < REDTAB_LEN; i++ )
+		for ( r = old_red[i]; r; r = NEXT(r) ) {
+			NEWRHist(mr);
 			mr->index = r->index;
 			SG(mr) = SG(r);
 			ndl_dup(obpe,DL(r),DL(mr));
+			h = ndl_hash_value(DL(mr));
+			NEXT(mr) = nd_red[h];
+			nd_red[h] = mr;
 		}
-		if ( mr0 ) NEXT(mr) = 0;
-		nd_red[i] = mr0;
-	}
+	for ( i = 0; i < REDTAB_LEN; i++ ) old_red[i] = 0;
+	old_red = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
 		NEWRHist(r); SG(r) = SG(nd_psh[i]);
 		ndl_dup(obpe,DL(nd_psh[i]),DL(r));
@@ -2527,10 +2536,11 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 
 void nd_reconstruct_direct(int mod,NDV *ps,int len)
 {
-	int i,obpe,oadv;
+	int i,obpe,oadv,h;
 	NM prev_nm_free_list;
 	RHist mr0,mr;
 	RHist r;
+	RHist *old_red;
 	ND_pairs s0,s,t,prev_ndp_free_list;
 
 	obpe = nd_bpe;
@@ -2548,16 +2558,23 @@ void nd_reconstruct_direct(int mod,NDV *ps,int len)
 	_nm_free_list = 0; _ndp_free_list = 0;
 	if ( mod != 0 )
 		for ( i = len-1; i >= 0; i-- ) ndv_realloc(ps[i],obpe,oadv);
+	old_red = (RHist *)ALLOCA(REDTAB_LEN*sizeof(RHist));
 	for ( i = 0; i < REDTAB_LEN; i++ ) {
-		for ( mr0 = 0, r = nd_red[i]; r; r = NEXT(r) ) {
-			NEXTRHist(mr0,mr);
+		old_red[i] = nd_red[i];
+		nd_red[i] = 0;
+	}
+	for ( i = 0; i < REDTAB_LEN; i++ )
+		for ( r = old_red[i]; r; r = NEXT(r) ) {
+			NEWRHist(mr);
 			mr->index = r->index;
 			SG(mr) = SG(r);
 			ndl_dup(obpe,DL(r),DL(mr));
+			h = ndl_hash_value(DL(mr));
+			NEXT(mr) = nd_red[h];
+			nd_red[h] = mr;
 		}
-		if ( mr0 ) NEXT(mr) = 0;
-		nd_red[i] = mr0;
-	}
+	for ( i = 0; i < REDTAB_LEN; i++ ) old_red[i] = 0;
+	old_red = 0;
 	prev_nm_free_list = 0;
 	prev_ndp_free_list = 0;
 	GC_gcollect();
