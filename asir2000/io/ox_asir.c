@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.43 2003/03/07 06:39:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.44 2003/04/23 07:03:53 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,6 +60,7 @@ int asir_ox_init();
 
 /* environement is defined in libpari.a */
 extern jmp_buf environnement;
+extern int myrank_102,nserver_102;
 
 extern int do_message;
 extern int ox_flushing;
@@ -91,6 +92,10 @@ void asir_popString();
 void asir_popCMO(unsigned int);
 void asir_popSerializedLocalObject();
 void asir_pushCMOtag(unsigned int);
+void asir_set_rank_102(unsigned int);
+void asir_tcp_accept_102(unsigned int);
+void asir_tcp_connect_102(unsigned int);
+void asir_reset_102(unsigned int serial);
 LIST asir_GetErrorList();
 char *name_of_cmd(int);
 char *name_of_id(int);
@@ -258,6 +263,18 @@ static void asir_do_cmd(int cmd,unsigned int serial)
 		case SM_pushCMOtag:
 			asir_pushCMOtag(serial);
 			break;
+		case SM_set_rank_102:
+			asir_set_rank_102(serial);		
+			break;
+		case SM_tcp_accept_102:
+			asir_tcp_accept_102(serial);
+			break;
+		case SM_tcp_connect_102:
+			asir_tcp_connect_102(serial);
+			break;
+		case SM_reset_102:
+			asir_reset_102(serial);
+			break;
 		case SM_nop:
 		default:
 			break;
@@ -337,6 +354,17 @@ char *name_of_cmd(int cmd)
 			return "SM_nop";
 		case SM_pushCMOtag:
 			return "SM_pushCMOtag";
+		case SM_set_rank_102:
+			return "SM_set_rank_102";
+			break;
+		case SM_tcp_accept_102:
+			return "SM_tcp_accept_102";
+			break;
+		case SM_tcp_connect_102:
+			return "SM_tcp_connect_102";
+		case SM_reset_102:
+			return "SM_reset_102";
+			break;
 		default:
 			return "Unknown cmd";
 			break;
@@ -388,6 +416,87 @@ void asir_popCMO(unsigned int serial)
 		create_error(&err,serial,"cannot convert to CMO object");
 		ox_send_data(0,err);
 		asir_push_one(obj);
+	}
+}
+
+void asir_reset_102(unsigned int serial)
+{
+	int i,j,id;
+	Obj obj;
+
+	for ( i = 0; i < myrank_102; i++ )
+		do {
+			ox_recv_102(i,&id,&obj);
+		} while ( id != OX_SYNC_BALL );
+	for ( i = myrank_102; i < nserver_102; i++ )
+		ox_send_sync_102(i);
+}
+
+extern int myrank_102,nserver_102;
+
+void asir_set_rank_102(unsigned int serial)
+{
+	Obj obj;
+	Q rank,nserver;
+	int n,r,stat;
+	NODE arg;
+	ERR err;
+
+	rank = (Q)asir_pop_one();
+	nserver = (Q)asir_pop_one();
+	stat = 0;
+	if ( !nserver || !INT(nserver) || !INT(rank) ) {
+		stat = -1;
+	} else {
+		n = QTOS(nserver); r = QTOS(rank);
+		if ( n <= 0 || r < 0 || r >= n ) {
+			stat = -1;
+		}
+		myrank_102 = r;
+		nserver_102 = n;
+	}
+	if ( !stat ) return;
+	else {
+		create_error(&err,serial,"Invalid argument(s) in ox_set_rank_102");
+		asir_push_one(obj);
+	}
+}
+
+void asir_tcp_accept_102(unsigned int serial)
+{
+	Obj obj;
+	Q rank,port,ret;
+	NODE arg;
+	ERR err;
+
+	rank = (Q)asir_pop_one();
+	port = (Q)asir_pop_one();
+	arg = mknode(2,port,rank);
+	Pox_tcp_accept_102(arg,&ret);
+	if ( !ret ) return;
+	else {
+		create_error(&err,serial,"failed to bind or accept in ox_tcp_accept_102");
+		asir_push_one((Obj)err);
+	}
+}
+
+void asir_tcp_connect_102(unsigned int serial)
+{
+	Obj obj;
+	Q rank,port,ret;
+	STRING host;
+	NODE arg;
+	ERR err;
+
+	rank = (Q)asir_pop_one();
+	port = (Q)asir_pop_one();
+	host = (STRING)asir_pop_one();
+	arg = mknode(3,host,port,rank);
+	Pox_tcp_connect_102(arg,&ret);
+	if ( !ret ) return;
+	else {
+		create_error(&err,serial,"failed to connect in ox_tcp_connect_102");
+		asir_push_one((Obj)err);
 	}
 }
 

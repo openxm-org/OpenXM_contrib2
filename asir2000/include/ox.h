@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.16 2001/12/27 07:51:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.17 2003/01/28 08:38:58 noro Exp $ 
 */
 #include "com.h"
 
@@ -136,6 +136,11 @@
 #define SM_dupErrors 276
 #define SM_pushCMOtag 277
 
+#define SM_set_rank_102 278
+#define SM_tcp_accept_102 279
+#define SM_tcp_connect_102 280
+#define SM_reset_102 281
+
 #define SM_nop 300
 
 #define SM_control_kill 				1024
@@ -169,6 +174,7 @@ extern int ox_do_copy, ox_do_count, ox_count_length;
 extern char *ox_copy_bptr;
 
 extern struct IOFP iofp[];
+extern struct IOFP iofp_102[];
 
 extern char *parse_strp;
 
@@ -210,16 +216,23 @@ int cmo_tag(Obj obj,int *tag);
 void write_cmo(FILE *s,Obj obj);
 int valid_as_cmo(Obj obj);
 void ox_flush_stream_force(int s);
+void ox_flush_stream_force_102(int s);
 void ox_flush_stream(int s);
+void ox_flush_stream_102(int s);
 int ox_check_cmo_dp(int s, DP p);
 int ox_check_cmo_p(int s, P p);
 void ox_get_serverinfo(int s, LIST *rp);
 int ox_check_cmo(int s, Obj obj);
 void ox_write_cmo(int s, Obj obj);
+void ox_write_cmo_102(int s, Obj obj);
 void ox_write_int(int s, int n);
+void ox_write_int_102(int s, int n);
 void ox_read_local(int s, Obj *rp);
+void ox_read_local_102(int s, Obj *rp);
 void ox_read_cmo(int s, Obj *rp);
+void ox_read_cmo_102(int s, Obj *rp);
 void ox_read_int(int s, int *n);
+void ox_read_int_102(int s, int *n);
 void ox_get_result(int s,Obj *rp);
 unsigned int ox_recv(int s, int *id, Obj *p);
 void ox_send_local_ring(int s,VL vl);

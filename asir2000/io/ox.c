@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.19 2003/02/14 22:29:15 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.20 2003/03/07 03:12:28 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -144,6 +144,7 @@ static int ox_asir_available_sm[] = {
 	SM_executeFunction, SM_shutdown, SM_pops,
 	SM_mathcap, SM_setMathcap, SM_nop,
 	SM_beginBlock, SM_endBlock,
+	SM_set_rank_102, SM_tcp_accept_102, SM_tcp_connect_102, SM_reset_102,
 	0
 };
 
@@ -480,6 +481,26 @@ void wait_for_data(int s)
 #endif
 	}
 }
+
+void wait_for_data_102(int rank)
+{
+	fd_set r;
+	int sock;
+
+	if ( !FP_DATA_IS_AVAILABLE(iofp_102[rank].in) ) {
+#if defined(VISUAL)
+		sock = iofp_102[rank].in->fildes;
+		FD_ZERO(&r);
+		FD_SET((unsigned int)sock,&r);
+		select(0,&r,NULL,NULL,NULL);
+#else
+		sock = fileno(iofp_102[rank].in);
+		FD_ZERO(&r);
+		FD_SET(sock,&r);
+		select(FD_SETSIZE,&r,NULL,NULL,NULL);
+#endif
+	}
+}
 #endif
 
 void ox_send_data(int s,pointer p)
@@ -495,6 +516,18 @@ void ox_send_data(int s,pointer p)
 	ox_write_int(s,ox_serial++);
 	ox_write_cmo(s,p);
 	ox_flush_stream(s);
+	end_critical();
+}
+
+void ox_send_data_102(int rank,pointer p)
+{
+	ERR err;
+
+	begin_critical();
+	ox_write_int_102(rank,OX_DATA);
+	ox_write_int_102(rank,ox_serial++);
+	ox_write_cmo_102(rank,p);
+	ox_flush_stream_102(rank);
 	end_critical();
 }
 
@@ -519,6 +552,15 @@ void ox_send_sync(int s)
 	end_critical();
 }
 
+void ox_send_sync_102(int rank)
+{
+	begin_critical();
+	ox_write_int_102(rank,OX_SYNC_BALL);
+	ox_write_int_102(rank,ox_serial++);
+	ox_flush_stream_102(rank);
+	end_critical();
+}
+
 void ox_send_local_data(int s,Obj p)
 {
 	begin_critical();
@@ -530,6 +572,17 @@ void ox_send_local_data(int s,Obj p)
 	end_critical();
 }
 
+void ox_send_local_data_102(int rank,Obj p)
+{
+	begin_critical();
+	ox_write_int_102(rank,OX_LOCAL_OBJECT_ASIR);
+	ox_write_int_102(rank,ox_serial++);
+	ox_write_int_102(rank,ASIR_OBJ);
+	saveobj((FILE *)iofp_102[rank].out,p);
+	ox_flush_stream_102(rank);
+	end_critical();
+}
+
 void ox_send_local_ring(int s,VL vl)
 {
 	begin_critical();
@@ -538,6 +591,17 @@ void ox_send_local_ring(int s,VL vl)
 	ox_write_int(s,ASIR_VL);
 	savevl((FILE *)iofp[s].out,vl);
 	ox_flush_stream(s);
+	end_critical();
+}
+
+void ox_send_local_ring_102(int rank,VL vl)
+{
+	begin_critical();
+	ox_write_int_102(rank,OX_LOCAL_OBJECT_ASIR);
+	ox_write_int_102(rank,ox_serial++);
+	ox_write_int_102(rank,ASIR_VL);
+	savevl((FILE *)iofp_102[rank].out,vl);
+	ox_flush_stream_102(rank);
 	end_critical();
 }
 
@@ -561,6 +625,35 @@ unsigned int ox_recv(int s, int *id, Obj *p)
 			break;
 		case OX_LOCAL_OBJECT_ASIR:
 			ox_read_local(s,p);
+			break;
+		default:
+			*p = 0;
+			break;
+	}
+	end_critical();
+	return serial;
+}
+
+unsigned int ox_recv_102(int rank, int *id, Obj *p)
+{
+	unsigned int cmd,serial;
+	USINT ui;
+
+	wait_for_data_102(rank);
+	begin_critical();
+	ox_read_int_102(rank,id);
+	ox_read_int_102(rank,&serial);
+	switch ( *id ) {
+		case OX_COMMAND:
+			ox_read_int_102(rank,&cmd);
+			MKUSINT(ui,cmd);
+			*p = (Obj)ui;
+			break;
+		case OX_DATA:
+			ox_read_cmo_102(rank,p);
+			break;
+		case OX_LOCAL_OBJECT_ASIR:
+			ox_read_local_102(rank,p);
 			break;
 		default:
 			*p = 0;
@@ -600,11 +693,24 @@ void ox_read_int(int s, int *n)
 	read_int((FILE *)iofp[s].in,n);
 }
 
+void ox_read_int_102(int rank, int *n)
+{
+	ox_need_conv = iofp_102[rank].conv;
+	read_int((FILE *)iofp_102[rank].in,n);
+}
+
 void ox_read_cmo(int s, Obj *rp)
 {
 	ox_need_conv = iofp[s].conv;
 	read_cmo((FILE *)iofp[s].in,rp);
 }
+
+void ox_read_cmo_102(int rank, Obj *rp)
+{
+	ox_need_conv = iofp_102[rank].conv;
+	read_cmo((FILE *)iofp_102[rank].in,rp);
+}
+
 
 void ox_read_local(int s, Obj *rp)
 {
@@ -626,16 +732,48 @@ void ox_read_local(int s, Obj *rp)
 	}
 }
 
+void ox_read_local_102(int rank, Obj *rp)
+{
+	int id;
+
+	ox_need_conv = iofp_102[rank].conv;
+	read_int((FILE *)iofp_102[rank].in,&id);
+	switch ( id ) {
+		case ASIR_VL:
+			loadvl((FILE *)iofp_102[rank].in);
+			*rp = VOIDobj;
+			break;
+		case ASIR_OBJ:
+			loadobj((FILE *)iofp_102[rank].in,rp);
+			break;
+		default:
+			error("ox_read_local_102 : unsupported id");
+			break;
+	}
+}
+
 void ox_write_int(int s, int n)
 {
 	ox_need_conv = iofp[s].conv;
 	write_int((FILE *)iofp[s].out,&n);
 }
 
+void ox_write_int_102(int rank, int n)
+{
+	ox_need_conv = iofp_102[rank].conv;
+	write_int((FILE *)iofp_102[rank].out,&n);
+}
+
 void ox_write_cmo(int s, Obj obj)
 {
 	ox_need_conv = iofp[s].conv;
 	write_cmo((FILE *)iofp[s].out,obj);
+}
+
+void ox_write_cmo_102(int rank, Obj obj)
+{
+	ox_need_conv = iofp_102[rank].conv;
+	write_cmo((FILE *)iofp_102[rank].out,obj);
 }
 
 int ox_check_cmo(int s, Obj obj)
@@ -754,4 +892,22 @@ void ox_flush_stream_force(int s)
 	else
 #endif
 	fflush((FILE *)iofp[s].out);
+}
+
+void ox_flush_stream_102(int rank)
+{
+	if ( !ox_batch )
+		ox_flush_stream_force_102(rank);
+}
+
+void ox_flush_stream_force_102(int rank)
+{
+	if ( iofp_102[rank].out )
+#if defined(VISUAL)
+		cflush(iofp_102[rank].out);
+#elif MPI
+		cflush(iofp_102[rank].out);
+#else
+		fflush(iofp_102[rank].out);
+#endif
 }
