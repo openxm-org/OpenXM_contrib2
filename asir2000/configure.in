@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.19 2004/06/25 09:37:19 noro Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.20 2004/06/25 13:41:33 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -138,7 +138,7 @@ dnl [  --with-lapack           use the LAPACK library. [[no]]],
 dnl [with_lapack=${withval}],[with_lapack=no])
 
 if test "${with_lapack:=no}" != no ; then
-    LAPACKLIB="-llapack -lblas -lI77 -lF77"
+    LAPACKLIB="-llapack -lblas -lg2c
     AC_DEFINE([LAPACK])
 fi
 AC_SUBST([LAPACKLIB])

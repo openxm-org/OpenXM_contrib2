@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.123 2005/01/23 14:03:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.124 2005/02/09 07:58:43 noro Exp $ */
 
 #include "nd.h"
 
@@ -3536,7 +3536,7 @@ ND nd_dup(ND p)
 void ndv_mod(int mod,NDV p)
 {
 	NMV t,d;
-	int r;
+	int r,s,u;
 	int i,len,dlen;
 	Obj gfs;
 
@@ -3558,6 +3558,13 @@ void ndv_mod(int mod,NDV p)
 			if ( r ) {
 				if ( SGN(CQ(t)) < 0 )
 					r = mod-r;
+				if ( DN(CQ(t)) ) {
+					s = rem(DN(CQ(t)),mod);
+					if ( !s )
+						error("ndv_mod : division by 0");
+					s = invm(s,mod);
+					DMAR(r,s,0,mod,u); r = u;
+				}
 				CM(d) = r;
 				ndl_copy(DL(t),DL(d));
 				NMV_ADV(d);
@@ -5090,6 +5097,8 @@ void nd_det(int mod,MAT f,P *rp)
 	int n,i,j,max,e,nvar,sgn,k0,l0,len0,len,k,l,a;
 	pointer **m;
 	Q mone;
+	P **w;
+	P mp;
 	NDV **dm;
 	NDV *t,*mi,*mj;
 	NDV d,s,mij,mjj;
@@ -5105,8 +5114,23 @@ void nd_det(int mod,MAT f,P *rp)
 	if ( f->row != f->col )
 		error("nd_det : non-square matrix");
 	n = f->row;
-	for ( nvar = 0, tv = fv; tv; tv = NEXT(tv), nvar++ );
 	m = f->body;
+	for ( nvar = 0, tv = fv; tv; tv = NEXT(tv), nvar++ );
+
+	if ( !nvar ) {
+		if ( !mod )
+			detp(CO,(P **)m,n,rp);
+		else {
+			w = (P **)almat_pointer(n,n);
+			for ( i = 0; i < n; i++ )
+				for ( j = 0; j < n; j++ )
+					ptomp(mod,(P)m[i][j],&w[i][j]);
+			detmp(CO,mod,w,n,&mp);
+			mptop(mp,rp);
+		}
+		return;
+	}
+
 	for ( i = 0, max = 0; i < n; i++ )
 		for ( j = 0; j < n; j++ )
 			for ( tv = fv; tv; tv = NEXT(tv) ) {
@@ -5125,7 +5149,7 @@ void nd_det(int mod,MAT f,P *rp)
 	if ( mod ) ndv_mod(mod,d);
 	chsgnq(ONE,&mone);
 	for ( j = 0, sgn = 1; j < n; j++ ) {
-		if ( DP_Print ) fprintf(stderr,"j=%d\n",j);
+		if ( DP_Print ) fprintf(stderr,".",j);
 		for ( i = j; i < n && !dm[i][j]; i++ );
 		if ( i == n ) {
 			*rp = 0;
@@ -5182,6 +5206,7 @@ void nd_det(int mod,MAT f,P *rp)
 		}
 		d = mjj;
 	}
+	if ( DP_Print ) fprintf(stderr,"\n",k);
 	if ( sgn < 0 )
 		if ( mod )
 			ndv_mul_c(mod,d,mod-1);
