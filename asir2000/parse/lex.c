@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.2 2000/02/07 03:14:40 noro Exp $ */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
@@ -462,7 +462,9 @@ FILE *fp;
 		if ( asir_infile->encoded )
 			c = decrypt_char((unsigned char)c);
 		return c;
-	} else {
+	} else if ( read_exec_file )
+		return EOF;
+	else {
 		c = *parse_strp++;
 		if ( !c )
 			return EOF;
