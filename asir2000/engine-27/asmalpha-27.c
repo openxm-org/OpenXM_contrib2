@@ -1,7 +1,7 @@
-/* $OpenXM: OpenXM/src/asir99/engine-27/asmalpha-27.c,v 1.1.1.1 1999/11/10 08:12:27 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine-27/asmalpha-27.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
 #if defined(__alpha)
 typedef unsigned long UL;
-#elif defined(mips) || defined(hpux)
+#elif defined(mips) || defined(hpux) || defined(powerpc)
 typedef unsigned long long UL;
 #endif
 
@@ -34,7 +34,7 @@ unsigned int base,a1,a2,*u;
 
 	t = (UL)a1*(UL)a2;
 	*u = t/(UL)base;
-	return (unsigned int)(t%(UL)base);
+	return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dmab_27(base,a1,a2,a3,u)
@@ -44,7 +44,7 @@ unsigned int base,a1,a2,a3,*u;
 
 	t = (UL)a1*(UL)a2+(UL)a3;
 	*u = t/(UL)base;
-	return (unsigned int)(t%(UL)base);
+	return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dmar_27(a1,a2,a3,d)
@@ -63,7 +63,7 @@ unsigned int base,a1,a2,*u;
 
 	t = (((UL)a1)<<27)+(UL)a2;
 	*u = t/(UL)base;
-	return (unsigned int)(t%(UL)base);
+	return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dqr_27(a,b,qp)

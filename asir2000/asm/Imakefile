@@ -1,13 +1,13 @@
-/* $OpenXM: OpenXM/src/asir99/asm/Imakefile,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/asm/Imakefile,v 1.1.1.1 1999/12/03 07:39:06 noro Exp $ */
 #include "../include/Risa.tmpl"
 
-#if defined(AlphaArchitecture) || (defined(MipsArchitecture) && defined(SGIArchitecture))
+#if defined(AlphaArchitecture) || (defined(MipsArchitecture) && defined(SGIArchitecture)) || defined(PowerPCArchitecture)
 mdepsrc = asmalpha.c
 mdepobj = asmalpha.o
 #endif
 
 #ifdef LinuxArchitecture
-#ifndef AlphaArchitecture
+#if !defined(AlphaArchitecture) && !defined(PowerPCArchitecture)
 mdepsrc = asmi_l.s
 mdepobj = asmi_l.o
 #endif

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/engine/real.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include <math.h>
@@ -120,7 +120,7 @@ int *expo;
 #ifdef vax
 	t = m[0]; m[0] = m[1]; m[1] = t; itod(m);
 #endif
-#if defined(i386) || defined(MIPSEL) || defined(VISUAL) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
 	t = m[0]; m[0] = m[1]; m[1] = t;
 #endif
 	return *((double *)m);

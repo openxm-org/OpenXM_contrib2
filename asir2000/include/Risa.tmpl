@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.2 2000/01/20 06:17:11 noro Exp $ */
 #define USE_GCC
 #define USE_PARI
 #define USE_PLOT
@@ -10,8 +10,8 @@
 #if defined(LinuxArchitecture)
 #if LinuxCLibMajorVersion >= 6 || \
     (LinuxCLibMajorVersion == 5 && LinuxCLibMinorVersion == 99)
-STD_CPP_DEFINES = -traditional -Dlinux -D__i386__ -D_BSD_SOURCE $(PROJECT_DEFINES)
-STD_DEFINES = -Dlinux -D__i386__ -D_BSD_SOURCE $(PROJECT_DEFINES)
+STD_CPP_DEFINES = -traditional -Dlinux -D_BSD_SOURCE $(PROJECT_DEFINES)
+STD_DEFINES = -Dlinux -D_BSD_SOURCE $(PROJECT_DEFINES)
 #endif
 #endif
 
@@ -39,7 +39,6 @@ CC= cc
 #endif
 
 CDEBUGFLAGS= -O6
-CCOPTIONS=
 
 #if defined(SparcArchitecture)
 #if SystemV4

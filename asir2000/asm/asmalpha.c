@@ -1,7 +1,7 @@
-/* $OpenXM: OpenXM/src/asir99/asm/asmalpha.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/asm/asmalpha.c,v 1.1.1.1 1999/12/03 07:39:06 noro Exp $ */
 #if defined(__alpha)
 typedef unsigned long UL;
-#elif defined(mips) || defined(hpux)
+#elif defined(mips) || defined(hpux) || defined(powerpc)
 typedef unsigned long long UL;
 #endif
 
@@ -44,7 +44,7 @@ unsigned int base,a1,a2,*u;
 
 	t = (UL)a1*(UL)a2;
 	*u = t/(UL)base;
-	return (unsigned int)(t%(UL)base);
+	return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dmab(base,a1,a2,a3,u)
@@ -54,7 +54,7 @@ unsigned int base,a1,a2,a3,*u;
 
 	t = (UL)a1*(UL)a2+(UL)a3;
 	*u = t/(UL)base;
-	return (unsigned int)(t%(UL)base);
+	return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dmar(a1,a2,a3,d)
@@ -73,7 +73,7 @@ unsigned int base,a1,a2,*u;
 
 	t = (((UL)a1)<<32)+(UL)a2;
 	*u = t/(UL)base;
-	return (unsigned int)(t%(UL)base);
+	return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dqr(a,b,qp)
