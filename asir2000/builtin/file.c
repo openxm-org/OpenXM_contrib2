@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.11 2000/12/05 01:24:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.12 2000/12/06 00:54:09 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -71,7 +71,7 @@ void Pload(), Pwhich(), Ploadfiles(), Poutput();
 void Pbsave(), Pbload(), Pbload27();
 void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
-void Popen_file(), Pclose_file(), Pget_line(), Pget_byte();
+void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
 void Ppurge_stdin();
 
 extern int des_encryption;
@@ -79,9 +79,10 @@ extern char *asir_libdir;
 
 struct ftab file_tab[] = {
 	{"purge_stdin",Ppurge_stdin,0},
-	{"open_file",Popen_file,1},
+	{"open_file",Popen_file,-2},
 	{"close_file",Pclose_file,1},
 	{"get_byte",Pget_byte,1},
+	{"put_byte",Pput_byte,2},
 	{"get_line",Pget_line,-1},
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
@@ -127,9 +128,13 @@ Q *rp;
 	if ( i == BUFSIZ )
 		error("open_file : too many open files");
 	name = BDY((STRING)ARG0(arg));
-	fp = fopen(name,"r");
+	if ( argc(arg) == 2 ) {
+		asir_assert(ARG1(arg),O_STR,"open_file");
+		fp = fopen(name,BDY((STRING)ARG1(arg)));
+	} else
+		fp = fopen(name,"r");
 	if ( !fp ) {
-		sprintf(errbuf,"open_file : \"%s\" not found",name);
+		sprintf(errbuf,"open_file : cannot open \"%s\"",name);
 		error(errbuf);
 	}
 	file_ptrs[i] = fp;
@@ -223,6 +228,24 @@ Q *rp;
 		STOQ(c,*rp);
 	} else
 		error("get_byte : invalid argument");
+}
+
+void Pput_byte(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int i,c;
+	FILE *fp;
+
+	asir_assert(ARG0(arg),O_N,"put_byte");
+	asir_assert(ARG1(arg),O_N,"put_byte");
+	i = QTOS((Q)ARG0(arg));
+	c = QTOS((Q)ARG1(arg));
+	if ( fp = file_ptrs[i] ) {
+		putc(c,fp);
+		STOQ(c,*rp);
+	} else
+		error("put_byte : invalid argument");
 }
 
 void Pload(arg,rp)
