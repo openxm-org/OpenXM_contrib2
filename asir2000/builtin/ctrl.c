@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.31 2004/08/18 00:17:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.32 2004/09/15 06:06:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,6 +58,7 @@ struct ftab ctrl_tab[] = {
 	{0,0,0},
 };
 
+extern int error_in_timer;
 extern int prtime,nez,echoback,bigfloat;
 extern int GC_free_space_numerator,GC_free_space_divisor,debug_up;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
@@ -85,6 +86,7 @@ static struct {
 	char *key;
 	int *val;
 } ctrls[] = {
+	{"error_in_timer",&error_in_timer},
 	{"cputime",&prtime},
 	{"nez",&nez},
 	{"echo",&echoback},

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.49 2004/05/14 09:20:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.50 2004/06/30 06:26:39 fujiwara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -695,13 +695,14 @@ void set_lasterror(char *s)
 }
 
 SNODE error_snode;
+int error_in_timer;
 
 void error(char *s)
 {
 	SNODE *snp=0;
 
 #if !defined(VISUAL)
-	if ( timer_is_set )
+	if ( !error_in_timer && timer_is_set )
 		alrm_handler(SIGVTALRM);
 #endif
 	fprintf(stderr,"%s\n",s);
