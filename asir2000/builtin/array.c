@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.23 2001/10/01 01:58:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.24 2001/10/09 01:36:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -64,6 +64,7 @@ void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgen
 void Pinvmat();
 void Pnewbytearray();
 
+void Pgeneric_gauss_elim();
 void Pgeneric_gauss_elim_mod();
 
 void Pmat_to_gfmmat(),Plu_gfmmat(),Psolve_by_lu_gfmmat();
@@ -85,6 +86,7 @@ struct ftab array_tab[] = {
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
 	{"lu_gfmmat",Plu_gfmmat,2},
 	{"mat_to_gfmmat",Pmat_to_gfmmat,2},
+	{"generic_gauss_elim",Pgeneric_gauss_elim,1},
 	{"generic_gauss_elim_mod",Pgeneric_gauss_elim_mod,2},
 	{"newvect",Pnewvect,-2},
 	{"vector",Pnewvect,-2},
@@ -622,6 +624,45 @@ void Pinvmat(NODE arg,LIST *rp)
 		error("not implemented yet");
 #endif
 	}
+}
+
+/*
+	input : a row x col matrix A
+		A[I] <-> A[I][0]*x_0+A[I][1]*x_1+...
+
+	output : [B,R,C]
+		B : a rank(A) x col-rank(A) matrix
+		R : a vector of length rank(A)
+		C : a vector of length col-rank(A)
+		B[I] <-> x_{R[I]}+B[I][0]x_{C[0]}+B[I][1]x_{C[1]}+...
+*/
+
+void Pgeneric_gauss_elim(NODE arg,LIST *rp)
+{
+	NODE n0;
+	MAT m,nm;
+	int *ri,*ci;
+	VECT rind,cind;
+	Q dn,q;
+	int i,j,k,l,row,col,t,rank;
+
+	asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim");
+	m = (MAT)ARG0(arg);
+	row = m->row; col = m->col;
+	rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
+	t = col-rank;
+	MKVECT(rind,rank);
+	MKVECT(cind,t);
+	for ( i = 0; i < rank; i++ ) {
+		STOQ(ri[i],q);
+		BDY(rind)[i] = (pointer)q;
+	}
+	for ( i = 0; i < t; i++ ) {
+		STOQ(ci[i],q);
+		BDY(cind)[i] = (pointer)q;
+	}
+	n0 = mknode(4,nm,dn,rind,cind);
+	MKLIST(*rp,n0);
 }
 
 /*

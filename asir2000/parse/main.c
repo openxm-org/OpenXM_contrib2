@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.10 2001/08/20 09:03:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.11 2001/10/09 01:36:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -75,10 +75,6 @@ void recover();
 
 extern int mpi_nprocs,mpi_myid;
 
-#if MPI
-int *StackBottom;
-#endif
-
 #if defined(VISUAL_LIB)
 void Main(int argc,char *argv[])
 #else
@@ -88,6 +84,7 @@ void
 main(int argc,char *argv[])
 #endif
 {
+	int tmp;
 	FILE *ifp;
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
@@ -95,16 +92,16 @@ main(int argc,char *argv[])
 	extern int do_asirrc;
 	extern int do_file;
 	extern FILE *in_fp;
+	extern int *StackBottom;
 	char *getenv();
 	char *homedir;
 	char *ptr;
 #if !defined(VISUAL)
-	int tmp;
 	char *slash,*binname;
 #endif
 
-#if MPI
 	StackBottom = &tmp;
+#if MPI
 	mpi_init();
 	if ( mpi_myid ) {
 		int slave_argc;
