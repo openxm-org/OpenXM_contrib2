@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.11 2002/10/11 03:50:38 noro Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.12 2003/01/14 03:27:13 ohara Exp $
 
 use_plot=0
 use_pari=0
@@ -69,7 +69,7 @@ echo LIBPARI=$libpari >> include/config.h
 echo LIBASIR=$libname.a >> include/config.h
 
 case "`PATH=/usr/bin:/bin uname`" in
-SunOS|CYGWIN*)
+FreeBSD|SunOS|CYGWIN*)
     (cd gc; ./configure --disable-threads)
     ;;
 *)
