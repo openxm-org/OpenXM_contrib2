@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.5 2001/06/25 05:30:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.6 2001/06/25 10:01:28 noro Exp $ */
 
 #include "ca.h"
 
@@ -376,7 +376,7 @@ BM f1,f2,fr;
 		if ( DEG(mul) >= 0 )
 		for ( j = 0; i+j < bound; j++ ) {
 			if ( COEF(f1)[j] ) {
-				mulsfum(COEF(f1)[j],mul,t);
+				kmulsfum(COEF(f1)[j],mul,t);
 				addsfum(t,COEF(fr)[i+j],s);
 				cpyum(s,COEF(fr)[i+j]);
 			}

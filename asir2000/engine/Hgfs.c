@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.10 2001/06/26 08:52:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.11 2001/06/26 09:47:05 noro Exp $ */
 
 #include "ca.h"
 
@@ -18,6 +18,17 @@ void pp_sfp(VL,P,P *);
 void sfcsump(VL,P,P *);
 void mulsfbmarray(int,BM,ML,int,int *,V,V,P *);
 void const_term(P,UM);
+
+int comp_dum(a,b)
+DUM a,b;
+{
+	if ( DEG(a->f) > DEG(b->f) )
+		return -1;
+	else if ( DEG(a->f) < DEG(b->f) )
+		return 1;
+	else
+		return 0;
+}
 
 void fctrsf(p,dcp)
 P p;
@@ -66,6 +77,10 @@ DCP *dcp;
 			}
 		}
 	udc = udc1;
+	for ( i = 0; udc[i].f; i++ );
+	qsort(udc,i,sizeof(struct oDUM),
+		(int (*)(const void *,const void *))comp_dum);
+
 	NEWDC(dc0); COEF(dc0) = lc; DEG(dc0) = ONE; dc = dc0;
 	for ( n = 0; udc[n].f; n++ ) {
 		NEWDC(NEXT(dc)); dc = NEXT(dc);
@@ -564,6 +579,7 @@ ML *listp;
 	DCP dc;
 	UM w,w1,q,fm,hm;
 	UM *gm;
+	struct oEGT tmp0,tmp1,eg_hensel,eg_hensel_t;
 
 	clctv(CO,f,&vl);
 	if ( vl->v != x ) {
@@ -610,15 +626,26 @@ ML *listp;
 
 	q = W_UMALLOC(dx);
 	rlist = MLALLOC(fn); rlist->n = fn; rlist->bound = bound;
+	fprintf(asir_out,"%d candidates\n",fn);
+	init_eg(&eg_hensel);
 	for ( i = 0; i < fn-1; i++ ) {
-		fprintf(stderr,"%d\n",i);
+		fprintf(asir_out,"deg(fm) = %d, deg(gm[%d]) = %d\n",
+			DEG(fm),i,DEG(gm[i]));
+		init_eg(&eg_hensel_t);
+		get_eg(&tmp0);
 		/* fl = gm[i]*hm mod y */
 		divsfum(fm,gm[i],hm);
 		/* fl is replaced by the cofactor of gk mod y^bound */
 		/* rlist->c[i] = gk */
 		sfhenmain2(fl,gm[i],hm,bound,(BM *)&rlist->c[i]);
 		cpyum(hm,fm);
+		get_eg(&tmp1); add_eg(&eg_hensel_t,&tmp0,&tmp1);
+		add_eg(&eg_hensel,&tmp0,&tmp1);
+		print_eg("Hensel",&eg_hensel_t);
+		fprintf(asir_out,"\n");
 	}
+	print_eg("Hensel total",&eg_hensel);
+	fprintf(asir_out,"\n");
 	/* finally, fl must be the lift of gm[fn-1] */
 	rlist->c[i] = fl;
 
