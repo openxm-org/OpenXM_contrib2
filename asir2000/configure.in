@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.5 2003/03/07 05:40:16 noro Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.6 2003/03/07 08:49:12 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -56,6 +56,7 @@ fi
 AC_SUBST([PARIINC])
 AC_SUBST([PARILIB])
 
+AC_CHECK_TYPES([unsigned long long])
 AC_CHECK_SIZEOF(long)
 if test SIZEOF_LONG = 8; then
     AC_DEFINE([LONG_IS_64BIT])
