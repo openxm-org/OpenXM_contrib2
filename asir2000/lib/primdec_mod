@@ -5,9 +5,10 @@ extern BuchbergerMinipoly,PartialDecompByLex,ParallelMinipoly$
 extern B_Win,D_Win$
 extern COMMONCHECK_SF,CID_SF$
 extern FFF_LOADED_BY_PRIMDEC_MOD$
+extern GR_LOADED_BY_PRIMDEC_MOD$
 
-if(FFF_LOADED_BY_PRIMDEC_MOD) load("fff"); else ;
-FFF_LOADED_BY_PRIMDEC_MOD = 1$
+if(!FFF_LOADED_BY_PRIMDEC_MOD) load("fff"); else ; FFF_LOADED_BY_PRIMDEC_MOD = 1$
+if(!GR_LOADED_BY_PRIMDEC_MOD) load("gr"); else ; GR_LOADED_BY_PRIMDEC_MOD = 1$
 
 /*==============================================*/
 /*  prime decomposition of ideals over 		*/
@@ -925,8 +926,10 @@ def primedec_sf(P,VSet,Ord,Strategy)
 		REM[I]=[];
 		}
 
-	print("The dimension of the ideal is ",2);print(ORIGINALDIMENSION,2);
-	print(". ");
+	if ( dp_gr_print() ) {
+		print("The dimension of the ideal is ",2);print(ORIGINALDIMENSION,2);
+		print(". ");
+	}
 
 	if ( ORIGINALDIMENSION == 0 )
 		{
@@ -936,8 +939,9 @@ def primedec_sf(P,VSet,Ord,Strategy)
 
  	ANS=gr_fctr_sf([ORIGINAL],VSet,Ord);
 	NANS=length(ANS);
-	print("There are ",2);print(NANS,2);print(" partial components. ");
-
+	if ( dp_gr_print() ) {
+		print("There are ",2);print(NANS,2);print(" partial components. ");
+    }
 	for (I=0;I<NANS;I++)
 		{
 		TempI=ANS[I];
@@ -962,9 +966,11 @@ def primedec_sf(P,VSet,Ord,Strategy)
 			{
 			DIVLIST = prime_irred_sf_by_first(DIVLIST,VSet,0);
 			DIVLIST = monic_sf_first(DIVLIST,VSet);
-			print("We finish the computation. ");
-			T_TOTAL = time()[3]-T0[3];
-			print(["T_TOTAL",T_TOTAL,"T_GRF",T_GRF,"T_PD",T_PD,"T_MP",T_MP,"T_INT",T_INT,"B_Win",B_Win,"D_Win",D_Win]);
+			if ( dp_gr_print() ) {
+				print("We finish the computation. ");
+				T_TOTAL = time()[3]-T0[3];
+				print(["T_TOTAL",T_TOTAL,"T_GRF",T_GRF,"T_PD",T_PD,"T_MP",T_MP,"T_INT",T_INT,"B_Win",B_Win,"D_Win",D_Win]);
+			}
 			return 0;
 			}
 
@@ -974,7 +980,9 @@ def primedec_sf(P,VSet,Ord,Strategy)
 	DIVLIST = prime_irred_sf_by_first(DIVLIST,VSet,0);
 	DIVLIST = monic_sf_first(DIVLIST,VSet);
 	T_TOTAL = time()[3]-T0[3];
-	print(["T_TOTAL",T_TOTAL,"T_GRF",T_GRF,"T_PD",T_PD,"T_MP",T_MP,"T_INT",T_INT,"B_Win",B_Win,"D_Win",D_Win]);
+	if ( dp_gr_print() ) {
+		print(["T_TOTAL",T_TOTAL,"T_GRF",T_GRF,"T_PD",T_PD,"T_MP",T_MP,"T_INT",T_INT,"B_Win",B_Win,"D_Win",D_Win]);
+	}
 	return 0;
 	}
 
@@ -1112,9 +1120,10 @@ def primedecomposition(P,VSet,Ord,COUNTER,Strategy)
 	Dimension=Dimeset[0]; 
 	MSI=Dimeset[1];
 
-	print("The dimension of the ideal is ",2); print(Dimension,2);
-	print(".");
-
+	if ( dp_gr_print() ) {
+		print("The dimension of the ideal is ",2); print(Dimension,2);
+		print(".");
+	}
 	TargetVSet=setminus(VSet,MSI);
 	NewGP=dp_gr_f_main(GP,TargetVSet,Hom,Ord);
 
@@ -1125,16 +1134,19 @@ def primedecomposition(P,VSet,Ord,COUNTER,Strategy)
 
 	/* Then the ideal is 0-dimension in K[TargetVSet].	*/
 
-	print("We enter Zero-dimension Prime Decomposition. ",2);
+	if ( dp_gr_print() ) {
+		print("We enter Zero-dimension Prime Decomposition. ",2);
+	}
 
 	QP=zeroprimedecomposition(NewGP,TargetVSet,VSet);
 
 	ANS=[];
 	NQP=length(QP);
 
-	print("The number of the newly found component is ",2);
-	print(NQP,2);print(". ",2);
-
+	if ( dp_gr_print() ) {
+		print("The number of the newly found component is ",2);
+		print(NQP,2);print(". ",2);
+	}
 	for (I=0;I<NQP;I++)
 		{
 		ZPrimeideal=QP[I];
@@ -1172,7 +1184,9 @@ def primedecomposition(P,VSet,Ord,COUNTER,Strategy)
 	
 		if (CHECK==1)
 			{
-			print("We already obtain all divisor. ");
+			if ( dp_gr_print() ) {
+				print("We already obtain all divisor. ");
+			}
 			STOP = 1;
 			return 0;
 			}
@@ -1204,7 +1218,9 @@ def primedecomposition(P,VSet,Ord,COUNTER,Strategy)
 
 			if ( CHECKADD != 0 )
 				{
-				print("Avoid unnecessary computation. ",2);
+				if ( dp_gr_print() ) {
+					print("Avoid unnecessary computation. ",2);
+				}
 				continue;
 				}
 			}
@@ -1295,11 +1311,15 @@ def zeroprimedecomposition(P,TargetVSet,VSet)
 
 			ZDecomp=[PDiv];
 		
-			print("An intermediate ideal is of generic type. "); 
+			if ( dp_gr_print() ) {
+				print("An intermediate ideal is of generic type. "); 
+			}
 			}
 		else
 			{
-			print("An intermediate ideal is not of generic type. ",2); 
+			if ( dp_gr_print() ) {
+				print("An intermediate ideal is not of generic type. ",2); 
+			}
 
 			/* We compute the separable closure of <P> by using minimal polynomails.*/
 			/* separableclosure outputs 						*/
@@ -1315,19 +1335,24 @@ def zeroprimedecomposition(P,TargetVSet,VSet)
 	
 			if ( Sep[1] != 0 )
 				{
-				print("The ideal is inseparable. ",2); 
+				if ( dp_gr_print() ) {
+					print("The ideal is inseparable. ",2); 
+				}
 				CHECK2=checkgeneric2(Sep[2]);
 				}	
 			else
 				{
-				print("The ideal is already separable. ",2); 
+				if ( dp_gr_print() ) {
+					print("The ideal is already separable. ",2); 
+				}
 				}	
 
 			if ( Sep[1] !=0 && CHECK2 == 1 )
 				{
-				print("The separable closure is of generic type. ",2); 
-				print("So, the intermediate ideal is prime or primary. ",2); 
-
+				if ( dp_gr_print() ) {
+					print("The separable closure is of generic type. ",2); 
+					print("So, the intermediate ideal is prime or primary. ",2); 
+				}
 				PDiv=convertdivisor(Sep[0],TargetVSet,VSet,Sep[1]);				
 				if ( TargetVSet != VSet )
 					{
@@ -1418,8 +1443,9 @@ def zeroseparableprimedecomposition(P,TargetVSet,VSet)
 	/* Generic=[f, minimal polynomial of f in newt, newt], 	*/
 	/* where newt (X) is a newly introduced variable.	*/
 
-	print("We search for a linear sum of variables in generic position. ",2);
-
+	if ( dp_gr_print() ) {
+		print("We search for a linear sum of variables in generic position. ",2);
+	}
 	Generic=findgeneric(NewGP,TargetVSet,VSet);
 
 	X=Generic[2]; /* newly introduced variable		*/
@@ -1600,12 +1626,15 @@ def separableclosure(CP,TargetVSet,VSet)
 
 	if ( CHECK == 1 )
 		{
-		print("This is already a separable ideal.", 2);
+		if ( dp_gr_print() ) {
+			print("This is already a separable ideal.", 2);
+		}
 		return [CP[0],0];
 		}
 
-	print("This is not a separable ideal, so we make its separable closure.", 2);
-
+	if ( dp_gr_print() ) {
+		print("This is not a separable ideal, so we make its separable closure.", 2);
+	}
 	WSet=makecounterpart(TargetVSet);
 	Char=setmod_ff()[0];
 
@@ -1766,7 +1795,9 @@ def findgeneric(P,TargetVSet,VSet)
 		}
 	}
 #endif
-	print("Extend the ground field. ",2);
+	if ( dp_gr_print() ) {
+		print("Extend the ground field. ",2);
+	}
 	error();
 	}
 
