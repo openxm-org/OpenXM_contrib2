@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.6 2000/08/25 07:59:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.7 2000/08/25 08:06:19 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -102,6 +102,7 @@ char *s;
 	ox_copy_bptr = s;
 }
 
+#if !defined(VISUAL)
 /*
  * library mode functions
  * byte order is controlled by lib_ox_need_conv.
@@ -126,6 +127,7 @@ VL vl;
 {
 	ox_do_copy = 1; savevl(0,vl); ox_do_copy = 0;
 }
+#endif
 
 int gen_fread (ptr,size,nitems,stream)
 char *ptr;

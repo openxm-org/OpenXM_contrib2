@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.15 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.16 2000/08/22 05:04:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -735,6 +735,7 @@ static void ox_io_init() {
 	register_server(0,0,0);
 }
 
+#if !defined(VISUAL)
 /*
  * Library mode functions
  */
@@ -933,3 +934,4 @@ int asir_ox_init(int byteorder)
 	asir_reset_handler();
 	return 0;
 }
+#endif
