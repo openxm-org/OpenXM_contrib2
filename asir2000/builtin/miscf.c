@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.23 2004/03/11 09:53:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.24 2004/10/27 08:21:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -129,7 +129,9 @@ void Pset_secure_mode(NODE arg,Q *rp)
 
 void Pset_secure_flag(NODE arg,Q *rp)
 {
-	int ac,s;
+	int ac,s,status;
+	Obj f;
+	char *fname;
 
 	ac = argc(arg);
 	if ( !ac )
@@ -138,7 +140,20 @@ void Pset_secure_flag(NODE arg,Q *rp)
 		s = QTOS((Q)ARG1(arg));
 	else
 		s = 1;
-	setsecureflag(BDY((STRING)ARG0(arg)),s);
+	f = ARG0(arg);
+	if ( !f )
+		error("set_secure_flag : invalid argument");
+	switch ( OID(f) ) {
+		case O_STR:
+			fname = BDY((STRING)f); break;
+		case O_P:
+			fname = NAME(VR((P)f)); break;
+		default:
+			error("set_secure_flag : invalid argument"); break;
+	}
+	status = setsecureflag(fname,s);
+	if ( status < 0 )
+		error("set_secure_flag : function not found");
 	STOQ(s,*rp);
 }
 

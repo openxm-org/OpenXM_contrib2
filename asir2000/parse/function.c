@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.5 2004/06/28 01:50:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.6 2004/10/27 08:21:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -62,18 +62,21 @@ int getsecuremode()
 	return secure_mode;
 }
 
-void setsecureflag(char *name)
+int setsecureflag(char *name,int value)
 {
 	FUNC f;
 
 	searchf(noargsysf,name,&f);
 	if ( f ) {
-		f->secure = 1;
+		f->secure = value;
+		return 0;
 	}
 	gen_searchf_searchonly(name,&f);
 	if ( f ) {
-		f->secure = 1;
+		f->secure = value;
+		return 0;
 	}
+	return -1;
 }
 
 void appendbinf(flistp,name,func,argc)
