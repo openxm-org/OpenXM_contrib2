@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.3 2000/08/21 08:31:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.4 2000/08/22 05:04:28 noro Exp $ 
 */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
@@ -115,6 +115,7 @@ static String fallback[] = {
 
 static void Done();
 static void SetSelected();
+static void SetDismiss();
 
 static XtActionsRec actions_table[] = {
 	{"done",Done},
@@ -152,6 +153,20 @@ XtPointer cld,cad;
 	XtSetValues(cmdwin, arg, 1);
 }
 
+static void SetDismiss(w,cld,cad)
+Widget w;
+XtPointer cld,cad;
+{
+	Arg		arg[5];
+	char *cmd;
+
+	done = 1;
+	cmd = XawDialogGetValueString(cmdwin);
+	strcpy(debug_cmd,"quit");
+	XtSetArg(arg[0], XtNvalue, "");
+	XtSetValues(cmdwin, arg, 1);
+}
+
 init_cmdwin()
 {
 	Arg		arg[5];
@@ -179,15 +194,18 @@ init_cmdwin()
 			options,XtNumber(options),&argc,argv);
 		toplevel = XtAppCreateShell(0,"ox_asir_debug_window",applicationShellWidgetClass,
 			display,0,0);
-		XtSetArg(arg[0],XtNiconName,"ox_asir_debug_window");
+		n = 0;
+		XtSetArg(arg[n],XtNiconName,"ox_asir_debug_window"); n++;
+		XtSetArg(arg[n], XtNwidth, 200); n++;
 		mainwin = XtCreatePopupShell("shell",topLevelShellWidgetClass,
-			toplevel,arg,1);
+			toplevel,arg,n);
 	/*
 	 *	Command line
 	 */
 		cmdwin = XtCreateManagedWidget("cmdwin", dialogWidgetClass,
 			mainwin, NULL, 0);
-		XawDialogAddButton(cmdwin,"OK",SetSelected,"OK");
+		XawDialogAddButton(cmdwin,"Execute",SetSelected,"Execute");
+		XawDialogAddButton(cmdwin,"Dismiss",SetDismiss,"Dismiss");
 		n = 0;
 		XtSetArg(arg[n], XtNlabel, "Command : "); n++;
 		XtSetArg(arg[n], XtNvalue, ""); n++;
