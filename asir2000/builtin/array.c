@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.17 2001/09/10 05:55:13 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1438,6 +1438,54 @@ int **indredp;
 	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
 */
 
+#define DMA0(a1,a2,a3,u,l)\
+asm volatile("movl  %2,%%eax; mull  %3; addl    %4,%%eax; adcl  $0,%%edx; movl    %%edx,%0; movl %%eax,%1" :"=g"(u), "=g"(l) :"g"(a1),"g"(a2),"g"(a3) :"ax","dx");
+
+int red_by_compress(m,p,r,hc,len)
+int m;
+unsigned int *p;
+struct oCM *r;
+unsigned int hc;
+int len;
+{
+	int k;
+	register unsigned int up,lo;
+	unsigned int dmy;
+	unsigned int *pj;
+
+	p[r->index] = 0; r++;
+	for ( k = 1; k < len; k++, r++ ) {
+		pj = p+r->index;
+		DMA0(r->c,hc,*pj,up,lo);
+		if ( up ) {
+			DSAB(m,up,lo,dmy,*pj);
+		} else
+			*pj = lo;
+	}
+}
+
+/* p -= hc*r */
+
+int red_by_vect(m,p,r,hc,len)
+int m;
+unsigned int *p,*r;
+unsigned int hc;
+int len;
+{
+	register unsigned int up,lo;
+	unsigned int dmy;
+
+	*p++ = 0; r++; len--;
+	for ( ; len; len--, r++, p++ )
+		if ( *r ) {
+			DMA0(*r,hc,*p,up,lo);
+			if ( up ) {
+				DSAB(m,up,lo,dmy,*p);
+			} else
+				*p = lo;
+		}
+}
+
 void reduce_sp_by_red_mod_compress (sp,redmat,ind,nred,col,md)
 int *sp;
 CDP *redmat;
@@ -1445,44 +1493,49 @@ int *ind;
 int nred,col;
 int md;
 {
-	int i,j,k,hc,c,len;
-	int *tj;
+	int i,j,k,len;
+	unsigned int *tj;
 	CDP ri;
+	unsigned int hc,up,lo,up1,lo1,c;
+	unsigned int *usp;
+	struct oCM *rib;
 
+	usp = (unsigned int *)sp;
 	/* reduce the spolys by redmat */
 	for ( i = nred-1; i >= 0; i-- ) {
 		/* reduce sp by redmat[i] */
-		if ( hc = sp[ind[i]] ) {
+		usp[ind[i]] %= md;
+		if ( hc = usp[ind[i]] ) {
 			/* sp = sp-hc*redmat[i] */
 			hc = md-hc;
 			ri = redmat[i];
 			len = ri->len;
-			for ( k = 0; k < len; k++ ) {
-				j = ri->body[k].index;
-				c = ri->body[k].c;
-				tj = sp+j;
-#if 1
-				DMAR(c,hc,*tj,md,*tj);
-#else
-				*tj = ((hc*c)+(*tj))%md;
-#endif
-			}
+			red_by_compress(md,usp,ri->body,hc,len);
 		}
 	}
+	for ( i = 0; i < col; i++ )
+		if ( usp[i] >= md )
+			usp[i] %= md;
 }
 
 #define ONE_STEP2  if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
 
-int generic_gauss_elim_mod(mat,row,col,md,colstat)
-int **mat;
+int generic_gauss_elim_mod(mat0,row,col,md,colstat)
+int **mat0;
 int row,col,md;
 int *colstat;
 {
 	int i,j,k,l,inv,a,rank,zzz;
-	int *t,*pivot,*pk,*tk;
+	unsigned int *t,*pivot,*pk,*tk;
+	unsigned int **mat;
 
+	mat = (unsigned int **)mat0;
 	for ( rank = 0, j = 0; j < col; j++ ) {
-		for ( i = rank; i < row && !mat[i][j]; i++ );
+		for ( i = rank; i < row; i++ )
+			mat[i][j] %= md;
+		for ( i = rank; i < row; i++ )
+			if ( mat[i][j] )
+				break;
 		if ( i == row ) {
 			colstat[j] = 0;
 			continue;
@@ -1495,35 +1548,14 @@ int *colstat;
 		inv = invm(pivot[j],md);
 		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
 			if ( *pk ) {
+				if ( *pk >= md )
+					*pk %= md;
 				DMAR(*pk,inv,0,md,*pk)
 			}
 		for ( i = rank+1; i < row; i++ ) {
 			t = mat[i];
-			if ( a = t[j] ) {
-				a = md - a; pk = pivot+j; tk = t+j;
-				k = col-j;
-				for ( ; k >= 64; k -= 64 ) {
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-				}
-				for ( ; k > 0; k -- ) {
-					if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
-				}
-			}
+			if ( a = t[j] )
+				red_by_vect(md,t+j,pivot+j,md-a,col-j);
 		}
 		rank++;
 	}
@@ -1532,33 +1564,19 @@ int *colstat;
 			pivot = mat[l];
 			for ( i = 0; i < l; i++ ) {
 				t = mat[i];
-				if ( a = t[j] ) {
-					a = md-a; pk = pivot+j; tk = t+j;
-					k = col-j;
-					for ( ; k >= 64; k -= 64 ) {
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
-					}
-					for ( ; k > 0; k -- ) {
-						if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
-					}
-				}
+				t[j] %= md;
+				if ( a = t[j] )
+					red_by_vect(md,t+j,pivot+j,md-a,col-j);
 			}
 			l--;
+		}
+	for ( j = 0, l = 0; l < rank; j++ )
+		if ( colstat[j] ) {
+			t = mat[l];
+			for ( k = j; k < col; k++ )
+				if ( t[k] >= md )
+					t[k] %= md;
+			l++;
 		}
 	return rank;
 }

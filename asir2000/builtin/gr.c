@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.29 2001/09/13 03:19:56 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -93,6 +93,8 @@ extern int do_weyl;
 
 extern DP_Print;
 
+void _tf_to_vect_compress(NODE,DL *,CDP *);
+NODE mul_dllist(DL,DP);
 void dp_imul_d(DP,Q,DP *);
 void print_stat(void);
 void init_stat(void);
@@ -240,10 +242,45 @@ CDP *b;
 	for ( m = BDY(f), len = 0; m; m = NEXT(m), len++ );
 	r = (CDP)MALLOC(sizeof(struct oCDP));
  	r->len = len;
-	r->body = (CM)MALLOC(sizeof(struct oCM)*len);
+	r->body = (CM)MALLOC_ATOMIC(sizeof(struct oCM)*len);
 
 	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
 		for ( ; !eqdl(nv,m->dl,at[i]); i++ );
+		r->body[j].index = i;
+		r->body[j].c = ITOS(m->c);
+	}
+	*b = r;
+}
+
+/* [t,findex] -> tf -> compressed vector */
+
+void _tf_to_vect_compress(tf,at,b)
+NODE tf;
+DL *at;
+CDP *b;
+{
+	int i,j,k,nv,len;
+	DL t,s,d1;
+	DP f;
+	MP m;
+	CDP r;
+
+	t = (DL)BDY(tf);
+	f = ps[(int)BDY(NEXT(tf))];
+
+	nv = f->nv;
+	for ( m = BDY(f), len = 0; m; m = NEXT(m), len++ );
+	r = (CDP)MALLOC(sizeof(struct oCDP));
+ 	r->len = len;
+	r->body = (CM)MALLOC_ATOMIC(sizeof(struct oCM)*len);
+
+	NEWDL(s,nv);
+	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
+		d1 = m->dl;
+		s->td = t->td+d1->td;
+		for ( k = 0; k < nv; k++ )
+			s->d[k] = t->d[k]+d1->d[k];
+		for ( ; !eqdl(nv,s,at[i]); i++ );
 		r->body[j].index = i;
 		r->body[j].c = ITOS(m->c);
 	}
@@ -299,6 +336,32 @@ DP f;
 	mp0 = 0;
 	for ( m = BDY(f); m; m = NEXT(m) ) {
 		NEXTNODE(mp0,mp); BDY(mp) = (pointer)m->dl;
+	}
+	NEXT(mp) = 0;
+	return mp0;
+}
+
+NODE mul_dllist(d,f)
+DL d;
+DP f;
+{
+	MP m;
+	NODE mp,mp0;
+	DL t,d1;
+	int i,nv;
+
+	if ( !f )
+		return 0;
+	nv = NV(f);
+	mp0 = 0;
+	for ( m = BDY(f); m; m = NEXT(m) ) {
+		NEXTNODE(mp0,mp);
+		NEWDL(t,nv);
+		d1 = m->dl;
+		t->td = d->td+d1->td;
+		for ( i = 0; i < nv; i++ )
+			t->d[i] = d->d[i]+d1->d[i];
+		BDY(mp) = (pointer)t;
 	}
 	NEXT(mp) = 0;
 	return mp0;
@@ -698,7 +761,7 @@ int m;
 	DP_pairs d,dm,dr,t;
 	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
 	MP mp,mp0;
-	NODE blist,bt,nt;
+	NODE blist,bt,nt,bt1,dt,rhtlist;
 	DL *ht,*at,*st;
 	int **spmat;
 	CDP *redmat;
@@ -733,26 +796,7 @@ int m;
 			}
 		}
 		/* s0 : all the terms appeared in symbolic reduction */
-#if 0
-		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
-			for ( j = psn-1; j >= 0; j-- )
-				if ( _dl_redble(BDY(ps[j])->dl,BDY(s),nv) )
-					break;
-			if ( j >= 0 ) {
-				dltod(BDY(s),nv,&tdp);
-				dp_subd(tdp,ps[j],&sd);
-				for ( k = 0, i = 0; k < nv; k++ )
-					if ( BDY(sd)->dl->d[k] )
-						i++;
-				fprintf(stderr,"%c ",i<=1 ? 'o' : 'x');
-				_dp_mod(sd,m,0,&sdm);
-				mulmd_dup(m,sdm,ps[j],&f2);
-				MKNODE(bt,f2,blist); blist = bt;
-				s = symb_merge(s,dp_dllist(f2),nv);
-				nred++;
-			}
-		}
-#else
+		rhtlist = 0;
 		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
 			for ( r = gall;	r; r = NEXT(r) )
 				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
@@ -760,16 +804,15 @@ int m;
 			if ( r ) {
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
-				_dp_mod(sd,m,0,&sdm);
-				mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
-				MKNODE(bt,f2,blist); blist = bt;
-				s = symb_merge(s,dp_dllist(f2),nv);
+				dt = mul_dllist(BDY(sd)->dl,ps[(int)BDY(r)]);
+				/* list of [t,f] */
+				bt1 = mknode(2,BDY(sd)->dl,BDY(r));
+				MKNODE(bt,bt1,blist); blist = bt;
+				MKNODE(bt,BDY(dt),rhtlist); rhtlist = bt;
+				symb_merge(s,dt,nv);
 				nred++;
 			}
 		}
-#endif
-		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
-		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
 
 		/* the first nred polys in blist are reducers */
 		/* row = the number of all the polys */
@@ -777,8 +820,8 @@ int m;
 
 		/* head terms of reducers */
 		ht = (DL *)MALLOC(nred*sizeof(DL));
-		for ( r = blist, i = 0; i < nred; r = NEXT(r), i++ )
-			ht[i] = BDY((DP)BDY(r))->dl;
+		for ( r = rhtlist, i = 0; i < nred; r = NEXT(r), i++ )
+			ht[i] = BDY(r);
 
 		/* col = number of all terms */
 		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
@@ -793,16 +836,9 @@ int m;
 
 		/* reducer matrix */
 		/* indred : register the position of the head term */
-#if 0
-		reduce_reducers_mod_compress(blist,nred,at,col,m,&redmat,&indred);
-		isred = (int *)MALLOC(col*sizeof(int));
-		bzero(isred,col*sizeof(int));
-		for ( i = 0; i < nred; i++ )
-			isred[indred[i]] = 1;
-#else
 		redmat = (CDP *)MALLOC(nred*sizeof(CDP));
 		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ )
-			_dpmod_to_vect_compress(BDY(r),at,&redmat[i]);
+			_tf_to_vect_compress(BDY(r),at,&redmat[i]);
 		/* XXX */
 /*		reduce_reducers_mod(redmat,nred,col,m); */
 		/* register the position of the head term */
@@ -815,7 +851,6 @@ int m;
 			indred[i] = ri->body[0].index;
 			isred[indred[i]] = 1;
 		}
-#endif
 
 		spcol = col-nred;
 		/* head terms not in ht */
@@ -823,6 +858,8 @@ int m;
 		for ( j = 0, k = 0; j < col; j++ )
 			if ( !isred[j] )
 				st[k++] = at[j];
+		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
+		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
 
 		get_eg(&tmp1);
 		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
@@ -849,6 +886,12 @@ int m;
 		}
 		/* update nsp */
 		nsp = i;
+
+		/* XXX free redmat explicitly */
+		for ( k = 0; k < nred; k++ ) {
+			GC_free(BDY(redmat[k]));
+			GC_free(redmat[k]);
+		}
 
 		get_eg(&tmp0); add_eg(&eg_elim1,&tmp1,&tmp0);
 		init_eg(&eg_split_elim1); add_eg(&eg_split_elim1,&tmp1,&tmp0);
@@ -897,6 +940,11 @@ int m;
 				gall = append_one(gall,nh);
 				i++;
 			}
+
+		/* XXX free spmat[] explicitly */
+		for ( j = 0; j < nsp; j++ ) {
+			GC_free(spmat[j]);
+		}
 	}
 	if ( DP_Print ) {
 		print_eg("Symb",&eg_symb);

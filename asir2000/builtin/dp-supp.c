@@ -45,10 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.14 2001/09/11 03:13:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.15 2001/09/11 08:56:47 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
+#include "inline.h"
 #include "parse.h"
 #include "ox.h"
 
@@ -826,20 +827,32 @@ DP *rp;
 	DL d1,d2,d;
 	MP m;
 	DP t,s;
-	int c,c1;
-struct oEGT t0,t1;
+	int c,c1,c2;
+	struct oEGT t0,t1;
+	extern int do_weyl;
 
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	_NEWDL(d,n); d->td = d1->td - d2->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = d1->d[i]-d2->d[i];
-	c = invm(ITOS(BDY(p2)->c),mod); c1 = dmar(c,ITOS(BDY(p1)->c),0,mod);
+	c = invm(ITOS(BDY(p2)->c),mod); 
+	c2 = ITOS(BDY(p1)->c);
+	DMAR(c,c2,0,mod,c1);
 	_NEWMP(m); m->dl = d; m->c = STOI(mod-c1); NEXT(m) = 0;
+#if 0
 	_MKDP(n,m,s); s->sugar = d->td;
 	_mulmd_dup(mod,s,p2,&t); _free_dp(s);
+#else
+	if ( do_weyl ) {
+		_weyl_mulmdm_dup(mod,p2,m,&t); _FREEMP(m);
+	} else {
+		_mulmdm_dup(mod,p2,m,&t); _FREEMP(m);
+	}
+#endif
 /* get_eg(&t0); */
 	_addmd_destructive(mod,p1,t,rp);
 /* get_eg(&t1); add_eg(&eg_red_mod,&t0,&t1); */
+	_print_mp(NV(*rp),BDY(*rp));
 }
 
 /*
@@ -1708,4 +1721,24 @@ DP p;
 		}
 		return 1;
 	}
+}
+
+_print_mp(nv,m)
+int nv;
+MP m;
+{
+	int i;
+
+	if ( m )
+		return;
+	for ( ; m; m = NEXT(m) ) {
+		fprintf(stderr,"%d<",ITOS(C(m)));
+		for ( i = 0; i < nv; i++ ) {
+			fprintf(stderr,"%d",m->dl->d[i]);
+			if ( i != nv-1 )
+				fprintf(stderr," ");
+		}
+		fprintf(stderr,">",C(m));
+	}
+	fprintf(stderr,"\n");
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.8 2001/03/19 04:02:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.9 2001/09/11 03:13:43 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -263,7 +263,7 @@ DP *pr;
 {
 	MP m,mr,mr0;
 	DL d,dt,dm;
-	int c,n,r,i;
+	int c,n,r,i,c1,c2;
 	int *pt,*p1,*p2;
 
 	if ( !p )
@@ -272,7 +272,9 @@ DP *pr;
 		for ( mr0 = 0, m = BDY(p), c = ITOS(C(m0)), d = m0->dl, n = NV(p); 
 			m; m = NEXT(m) ) {
 			_NEXTMP(mr0,mr);
-			C(mr) = STOI(dmar(ITOS(C(m)),c,0,mod));
+			c1 = ITOS(C(m));
+			DMAR(c1,c,0,mod,c2);
+			C(mr) = (P)STOI(c2);
 			_NEWDL_NOINIT(dt,n); mr->dl = dt;
 			dm = m->dl;
 			dt->td = d->td + dm->td;
