@@ -345,6 +345,8 @@ def leastsq(ExpMat,Vars){
 		else
 			return([cdr(TMP1),[],[]])$
 	}
+	else
+		return []$
 
 }
 
