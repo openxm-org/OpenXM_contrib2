@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.6 2004/12/01 08:49:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.7 2004/12/02 13:48:43 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -62,6 +62,7 @@ void algtorat(Num,Obj *);
 void rattoalg(Obj,Alg *);
 void ptoalgp(P,P *);
 void clctalg(P,VL *);
+void get_algtree(Obj f,VL *r);
 
 struct ftab alg_tab[] = {
 	{"set_field",Pset_field,1},
@@ -266,6 +267,7 @@ LIST *rp;
 	Alg b;
 	NODE n0,n;
 
+#if 0
 	if ( !(a = (Num)ARG0(arg)) || NID(a) <= N_R )
 		vl = 0;
 	else {
@@ -281,6 +283,9 @@ LIST *rp;
 				vl = 0; break;
 		}
 	}
+#else
+	get_algtree((Obj)ARG0(arg),&vl);
+#endif
 	for ( n0 = 0; vl; vl = NEXT(vl) ) {
 		NEXTNODE(n0,n); MKV(vl->v,p); MKAlg(p,b); BDY(n) = (pointer)b;
 	}
@@ -576,4 +581,85 @@ void invalg_le(Alg a,LIST *r)
 	divq(c2,cont,&c3);
 	b = mknode(2,inv,c3);
 	MKLIST(*r,b);
+}
+
+void get_algtree(Obj f,VL *r)
+{
+	VL vl1,vl2,vl3;
+	Obj t;
+	DCP dc;
+	NODE b;
+	pointer *a;
+	pointer **m;
+	int len,row,col,i,j,l;
+
+	if ( !f ) *r = 0;
+	else
+		switch ( OID(f) ) {
+			case O_N:
+				if ( NID((Num)f) != N_A ) *r = 0;
+				else  {
+					t = BDY((Alg)f);
+					switch ( OID(t) ) {
+						case O_P:
+							clctalg((P)t,r); break;
+						case O_R:
+							clctalg(NM((R)t),&vl1);
+							clctalg(DN((R)t),&vl2);
+							mergev(ALG,vl1,vl2,r); break;
+						default:
+							*r = 0; break;
+					}
+				}
+				break;
+			case O_P:
+				vl1 = 0;
+				for ( dc = DC((P)f); dc; dc = NEXT(dc) ) {
+					get_algtree((Obj)COEF(dc),&vl2);
+					mergev(ALG,vl1,vl2,&vl3);
+					vl1 = vl3;
+				}
+				*r = vl1;
+				break;
+			case O_R:
+				get_algtree((Obj)NM((R)f),&vl1);
+				get_algtree((Obj)DN((R)f),&vl2);
+				mergev(ALG,vl1,vl2,r);
+				break;
+			case O_LIST:
+				vl1 = 0;
+				for ( b = BDY((LIST)f); b; b = NEXT(b) ) {
+					get_algtree((Obj)BDY(b),&vl2);
+					mergev(ALG,vl1,vl2,&vl3);
+					vl1 = vl3;
+				}
+				*r = vl1;
+				break;
+			case O_VECT:
+				vl1 = 0;
+				l = ((VECT)f)->len;
+				a = BDY((VECT)f);
+				for ( i = 0; i < l; i++ ) {
+					get_algtree((Obj)a[i],&vl2);
+					mergev(ALG,vl1,vl2,&vl3);
+					vl1 = vl3;
+				}
+				*r = vl1;
+				break;
+			case O_MAT:
+				vl1 = 0;
+				row = ((MAT)f)->row; col = ((MAT)f)->col;
+				m = BDY((MAT)f);
+				for ( i = 0; i < row; i++ )
+					for ( j = 0; j < col; j++ ) {
+						get_algtree((Obj)m[i][j],&vl2);
+						mergev(ALG,vl1,vl2,&vl3);
+						vl1 = vl3;
+					}
+				*r = vl1;
+				break;
+			default:
+				*r = 0;
+				break;
+		}
 }
