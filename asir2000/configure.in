@@ -1,8 +1,8 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.3 2003/03/06 11:29:10 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.4 2003/03/07 05:19:53 noro Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
-AM_INIT_AUTOMAKE(asir, 20030128)
+AM_INIT_AUTOMAKE(asir, 20030307)
 
 AC_CANONICAL_SYSTEM
 
@@ -34,10 +34,10 @@ AC_ARG_WITH([pari],
 
 if test ${with_pari:=no} != no ; then
     libasir_postfix=${libasir_postfix}_pari
-    if test ${with_pari} = old ; then
-        libpari=pari
-    else
+    if test ${with_pari} = new ; then
         libpari=pari-2.2
+    else
+        libpari=pari
     fi
     PARIINC='-I${prefix}/include/pari'
     if test "${enable_shared}" != yes ; then
@@ -46,16 +46,16 @@ if test ${with_pari:=no} != no ; then
         PARILIB='-L${prefix}/lib'" -l${libpari}"
     fi
     AC_DEFINE([PARI])
-    AC_CHECK_SIZEOF(long)
-    if test SIZEOF_LONG = 8; then
-        AC_DEFINE([LONG_IS_64BIT])
-    else
-        AC_DEFINE([LONG_IS_32BIT])
-    fi
 fi
 AC_SUBST([PARIINC])
 AC_SUBST([PARILIB])
 
+AC_CHECK_SIZEOF(long)
+if test SIZEOF_LONG = 8; then
+    AC_DEFINE([LONG_IS_64BIT])
+else
+    AC_DEFINE([LONG_IS_32BIT])
+fi
 if test "${no_x}" != yes ; then
     AC_ARG_ENABLE([plot],
     [  --enable-plot           enable plot feature. [[no]]],
