@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.2 2003/02/23 06:23:52 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.3 2003/03/04 06:40:10 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -30,7 +30,7 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 bin_PROGRAMS   = asir
 asir_SOURCES   = parse/main.c
 asir_LDADD     = ${ASIRLIB} ${GLIB}
-lib_LIBRARIES  = libasir.a libasir-gc.a
+noinst_LIBRARIES  = libasir.a libasir-gc.a
 CLEANFILES     = libasir.a libasir-gc.a asir${EXEEXT}
 
 libasir_gc_a_SOURCES =
@@ -61,12 +61,15 @@ libasir.a: ${ASIRLIB}
 #	ld -r $@ umain.o ${ASIRLIB} ${GLIB} ${LIBS} ${EXTRALIBS}
 
 install-exec-hook:
-	-if [ x${libasir_postfix} != x ] ; then \
-	    (cd ${prefix}/lib ; mv libasir.a libasir${libasir_postfix}.a) ; \
+	-mkdir -p ${prefix}/lib/asir
+	-if [ -x ${prefix}/bin/asir ]; then \
+		mv ${prefix}/bin/asir${EXEEXT} ${prefix}/lib/asir/ ; \
 	fi
+
+install-symlink-openxm:
 	-rm -f ${prefix}/bin/ox_asir${EXEEXT}
 	(cd ${prefix}/bin ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
-	mkdir -p ${prefix}/lib/asir
+	-mkdir -p ${prefix}/lib/asir
 	(cd ${prefix}/lib/asir ; \
 	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
@@ -76,3 +79,23 @@ install-exec-hook:
 install-libasir: libasir.a
 	mkdir -p ${prefix}/lib
 	${INSTALL_DATA} libasir.a ${prefix}/lib/libasir${libasir_postfix}.a
+
+install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
+	-mkdir -p ${prefix}/lib/asir
+	${INSTALL_PROGRAM} asir ${prefix}/lib/asir/
+	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
+	-mkdir -p ${prefix}/lib
+	${INSTALL_DATA} libasir.a    ${prefix}/lib/libasir${libasir_postfix}.a
+	${INSTALL_DATA} libasir-gc.a ${prefix}/lib/libasir-gc.a
+
+install-lib:
+	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
+	(cd ${prefix}/lib/asir ; \
+	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
+	-mkdir -p ${prefix}/bin
+	(cd ${prefix}/bin ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
+
+install-doc:
+	(cd ${top_srcdir}/lib; ${MAKE} install-doc)

@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.1 2003/02/23 03:05:39 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.in,v 1.2 2003/03/07 03:12:29 noro Exp $
 
 SHELL = @SHELL@
 
@@ -91,8 +91,7 @@ asm_obj = @asm_obj@
 install_sh = @install_sh@
 libasir_postfix = @libasir_postfix@
 
-rrdir = ${prefix}/lib/asir
-rr_DATA = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
+RR = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
           fff glib gr ifplot katsura mat nf num primdec primdec_lex \
           ratint robot solve sp sturm sym xm
 
@@ -100,8 +99,6 @@ subdir = lib
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
 DIST_SOURCES =
-DATA = $(rr_DATA)
-
 DIST_COMMON = Makefile.am Makefile.in
 all: all-am
 
@@ -114,23 +111,6 @@ Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  CONFIG_HEADERS= CONFIG_LINKS= \
 	  CONFIG_FILES=$(subdir)/$@ $(SHELL) ./config.status
 uninstall-info-am:
-install-rrDATA: $(rr_DATA)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(rrdir)
-	@list='$(rr_DATA)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(rrdir)/$$f"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(rrdir)/$$f; \
-	done
-
-uninstall-rrDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(rr_DATA)'; for p in $$list; do \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $(DESTDIR)$(rrdir)/$$f"; \
-	  rm -f $(DESTDIR)$(rrdir)/$$f; \
-	done
 tags: TAGS
 TAGS:
 
@@ -158,10 +138,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(DATA)
+all-am: Makefile
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(rrdir)
 
 install: install-am
 install-exec: install-exec-am
@@ -202,7 +181,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local install-rrDATA
+install-data-am:
 
 install-exec-am:
 
@@ -220,24 +199,29 @@ mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-generic
 
-uninstall-am: uninstall-info-am uninstall-rrDATA
+uninstall-am: uninstall-info-am
 
 .PHONY: all all-am check check-am clean clean-generic distclean \
 	distclean-generic distdir dvi dvi-am info info-am install \
-	install-am install-data install-data-am install-data-local \
-	install-exec install-exec-am install-info install-info-am \
-	install-man install-rrDATA install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	uninstall uninstall-am uninstall-info-am uninstall-rrDATA
+	install-am install-data install-data-am install-exec \
+	install-exec-am install-info install-info-am install-man \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic uninstall uninstall-am uninstall-info-am
 
 
-install-data-local:
+install-doc:
+	-mkdir -p ${prefix}/lib/asir
 	-for i in jp eg ; do \
 		uudecode help-$$i.uu ; \
-		gzip -dc help-$$i.tgz | ( cd ${rrdir}; tar xf - ) ; \
+		gzip -dc help-$$i.tgz | ( cd ${prefix}/lib/asir; tar xf - ) ; \
 		rm -f help-$$i.tgz ; \
 	done
+	(cd ${prefix}/lib/asir; ${LN_S} help-eg help)
+
+install-lib:
+	-mkdir -p ${prefix}/lib/asir
+	${INSTALL_DATA} ${RR} ${prefix}/lib/asir/
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

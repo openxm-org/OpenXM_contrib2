@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.3 2003/03/04 06:40:10 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/Makefile.in,v 1.4 2003/03/07 03:12:21 noro Exp $
 
 SHELL = @SHELL@
 
@@ -120,7 +120,7 @@ LIBS = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS
 bin_PROGRAMS = asir
 asir_SOURCES = parse/main.c
 asir_LDADD = ${ASIRLIB} ${GLIB}
-lib_LIBRARIES = libasir.a libasir-gc.a
+noinst_LIBRARIES = libasir.a libasir-gc.a
 CLEANFILES = libasir.a libasir-gc.a asir${EXEEXT}
 
 libasir_gc_a_SOURCES = 
@@ -128,7 +128,7 @@ subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(lib_LIBRARIES)
+LIBRARIES = $(noinst_LIBRARIES)
 
 libasir_gc_a_AR = $(AR) cru
 libasir_gc_a_LIBADD =
@@ -192,32 +192,9 @@ $(ACLOCAL_M4):  configure.in acinclude.m4
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 AR = ar
-install-libLIBRARIES: $(lib_LIBRARIES)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(libdir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(libdir)/$$p; \
-	  else :; fi; \
-	done
-	@$(POST_INSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(RANLIB) $(DESTDIR)$(libdir)/$$p"; \
-	    $(RANLIB) $(DESTDIR)$(libdir)/$$p; \
-	  else :; fi; \
-	done
 
-uninstall-libLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  echo " rm -f $(DESTDIR)$(libdir)/$$p"; \
-	  rm -f $(DESTDIR)$(libdir)/$$p; \
-	done
-
-clean-libLIBRARIES:
-	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
@@ -441,7 +418,7 @@ check: check-recursive
 all-am: Makefile $(LIBRARIES) $(PROGRAMS)
 installdirs: installdirs-recursive
 installdirs-am:
-	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 install: install-recursive
 install-exec: install-exec-recursive
@@ -469,7 +446,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-libLIBRARIES \
+clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
 	mostlyclean-am
 
 dist-all: distdir
@@ -490,7 +467,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binPROGRAMS install-libLIBRARIES
+install-exec-am: install-binPROGRAMS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
@@ -508,29 +485,26 @@ mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-libLIBRARIES
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) GTAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libLIBRARIES \
+	clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
 	clean-recursive dist dist-all distcheck distclean \
 	distclean-compile distclean-generic distclean-recursive \
 	distclean-tags distdir dvi dvi-am dvi-recursive info info-am \
 	info-recursive install install-am install-binPROGRAMS \
 	install-data install-data-am install-data-recursive \
 	install-exec install-exec-am install-exec-recursive \
-	install-info install-info-am install-info-recursive \
-	install-libLIBRARIES install-man install-recursive \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am installdirs-recursive maintainer-clean \
-	maintainer-clean-generic maintainer-clean-recursive mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-recursive \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-info-recursive uninstall-libLIBRARIES \
-	uninstall-recursive
+	install-info install-info-am install-info-recursive install-man \
+	install-recursive install-strip installcheck installcheck-am \
+	installdirs installdirs-am installdirs-recursive \
+	maintainer-clean maintainer-clean-generic \
+	maintainer-clean-recursive mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-recursive tags tags-recursive \
+	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am \
+	uninstall-info-recursive uninstall-recursive
 
 
 umain.o: parse/main.c
@@ -559,12 +533,15 @@ libasir.a: ${ASIRLIB}
 #	ld -r $@ umain.o ${ASIRLIB} ${GLIB} ${LIBS} ${EXTRALIBS}
 
 install-exec-hook:
-	-if [ x${libasir_postfix} != x ] ; then \
-	    (cd ${prefix}/lib ; mv libasir.a libasir${libasir_postfix}.a) ; \
+	-mkdir -p ${prefix}/lib/asir
+	-if [ -x ${prefix}/bin/asir ]; then \
+		mv ${prefix}/bin/asir${EXEEXT} ${prefix}/lib/asir/ ; \
 	fi
+
+install-symlink-openxm:
 	-rm -f ${prefix}/bin/ox_asir${EXEEXT}
 	(cd ${prefix}/bin ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
-	mkdir -p ${prefix}/lib/asir
+	-mkdir -p ${prefix}/lib/asir
 	(cd ${prefix}/lib/asir ; \
 	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
@@ -574,6 +551,26 @@ install-exec-hook:
 install-libasir: libasir.a
 	mkdir -p ${prefix}/lib
 	${INSTALL_DATA} libasir.a ${prefix}/lib/libasir${libasir_postfix}.a
+
+install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
+	-mkdir -p ${prefix}/lib/asir
+	${INSTALL_PROGRAM} asir ${prefix}/lib/asir/
+	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
+	-mkdir -p ${prefix}/lib
+	${INSTALL_DATA} libasir.a    ${prefix}/lib/libasir${libasir_postfix}.a
+	${INSTALL_DATA} libasir-gc.a ${prefix}/lib/libasir-gc.a
+
+install-lib:
+	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
+	(cd ${prefix}/lib/asir ; \
+	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
+	-mkdir -p ${prefix}/bin
+	(cd ${prefix}/bin ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
+
+install-doc:
+	(cd ${top_srcdir}/lib; ${MAKE} install-doc)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
