@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.1.1.1 2000/11/22 06:20:13 noro Exp $
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.2 2001/10/09 01:36:29 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -99,12 +99,14 @@ void create_canvas(struct canvas *can)
 	PostThreadMessage(MainThread,WM_APP,can->index,0);
 }
 
+void popdown_canvas(int index);
+
 void destroy_canvas(struct canvas *can)
 {
 	if ( can == current_can ) {
 		reset_busy(can); current_can = 0;
 	}
-	canvas[can->index] = 0;
+	popdown_canvas(can->index);
 }
 
 void clear_pixmap(struct canvas *can)
@@ -142,6 +144,16 @@ void alloc_pixmap(struct canvas *can)
 void copy_to_canvas(struct canvas *can)
 {
 	PostThreadMessage(MainThread,WM_APP,can->index,0);
+}
+
+void popup_canvas(int index)
+{
+	PostThreadMessage(MainThread,WM_APP+1,index,0);
+}
+
+void popdown_canvas(int index)
+{
+	PostThreadMessage(MainThread,WM_APP+2,index,0);
 }
 
 void copy_subimage(struct canvas *subcan,struct canvas *can,POINT pos)
