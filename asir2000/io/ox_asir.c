@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.5 2000/01/31 03:18:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.6 2000/02/08 04:47:11 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -719,7 +719,17 @@ int asir_ox_pop_cmo(void *cmo, int limit)
 
 void asir_ox_push_cmd(unsigned int cmd)
 {
-	asir_do_cmd(cmd,0);
+	int ret;
+	ERR err;
+	extern char LastError[];
+
+	if ( ret = setjmp(env) ) {
+		if ( ret == 1 ) {
+			create_error(&err,0,LastError); /* XXX */
+			asir_push_one((Obj)err);
+		}
+	} else
+		asir_do_cmd(cmd,0);
 }
 
 /*
