@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.3 2000/04/20 02:20:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.4 2000/05/29 08:54:44 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
@@ -309,7 +309,7 @@ VECT *rp;
 
 	asir_assert(ARG0(arg),O_N,"newvect");
 	len = QTOS((Q)ARG0(arg)); 
-	if ( len <= 0 )
+	if ( len < 0 )
 		error("newvect : invalid size");
 	MKVECT(vect,len);
 	if ( argc(arg) == 2 ) {
@@ -340,7 +340,7 @@ MAT *rp;
 	asir_assert(ARG0(arg),O_N,"newmat");
 	asir_assert(ARG1(arg),O_N,"newmat");
 	row = QTOS((Q)ARG0(arg)); col = QTOS((Q)ARG1(arg));
-	if ( row <= 0 || col <= 0 )
+	if ( row < 0 || col < 0 )
 		error("newmat : invalid size");
 	MKMAT(m,row,col);
 	if ( argc(arg) == 3 ) {

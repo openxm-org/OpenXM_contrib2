@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.2 2000/01/11 06:43:37 noro Exp $ */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
 
@@ -1086,7 +1086,8 @@ def henleq_gsl(L,B,MOD)
 	if ( !COUNT )
 		COUNT = 1;
 	MOD2 = idiv(MOD,2);
-	for ( I = 0, C = BB, X = 0, PK = 1, CCC = 0, ITOR_FAIL = -1; ;
+	X = newvect(size(AA)[0]);
+	for ( I = 0, C = BB, PK = 1, CCC = 0, ITOR_FAIL = -1; ;
 		I++, PK *= MOD ) {
 		if ( zerovector(C) )
 			if ( zerovector(RESTA*X+RESTB) ) {
