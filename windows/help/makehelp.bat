@@ -47,6 +47,7 @@ extract_man %lang% parts\builtin\bit.texi parts\builtin\function.texi parts\buil
 extract_man %lang% parts\builtin\list.texi parts\builtin\misc.texi parts\builtin\num.texi src
 extract_man %lang% parts\builtin\poly.texi parts\builtin\string.texi parts\builtin\structure.texi src
 extract_man %lang% parts\builtin\type.texi parts\builtin\upoly.texi src
+extract_man %lang% parts\builtin\module.texi parts\builtin\numeric.texi src
 
 cd src
 jperl ..\texi2html-%lang% -menu -split_node man.texi
