@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.12 2003/10/20 00:58:47 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.13 2004/02/09 23:37:12 noro Exp $ */
 
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
@@ -1978,7 +1978,8 @@ def contraction(P,V,W)
 	YSet=setminus(W,V);
 
 	Ord1 = [[Ord,length(V)],[0,length(YSet)]];
-	GP1 = dp_gr_f_main(P,W,Hom,Ord1);
+	W1 = append(V,YSet);
+	GP1 = dp_gr_f_main(P,W1,Hom,Ord1);
 
 	Factor = extcont_factor(GP1,V,Ord);
 	for ( F = 1, T = Factor; T != []; T = cdr(T) )
