@@ -41,7 +41,7 @@ directory を指定して下さい.  以下この directory を TARGETDIR 
 
 % gzip -dc asir2000.tgz | tar xvf -
 % cd asir2000
-% configure TARGETDIR
+% configure -oxhome TARGETDIR -pari -plot
 % xmkmf -a
 % make
 % su                        <-- 必要がある場合
