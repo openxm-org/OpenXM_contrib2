@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.1 2002/08/14 03:51:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.2 2004/09/29 08:50:23 noro Exp $ */
 
 /* a sample file for adding builtin functions */
 
@@ -19,12 +19,9 @@ struct ftab user_tab[] = {
   {0,0,0},
 };
 
-pointer qtoz(Q);
-Q ztoq(pointer);
-pointer addz(pointer,pointer), subz(pointer,pointer), mulz(pointer,pointer);
 void Pzadd(NODE arg,Q *rp)
 {
-	pointer z0,z1,z2;
+	Z z0,z1,z2;
 
 	z0 = qtoz((Q)ARG0(arg));
 	z1 = qtoz((Q)ARG1(arg));
@@ -35,7 +32,7 @@ void Pzadd(NODE arg,Q *rp)
 
 void Pzsub(NODE arg,Q *rp)
 {
-	pointer z0,z1,z2;
+	Z z0,z1,z2;
 
 	z0 = qtoz((Q)ARG0(arg));
 	z1 = qtoz((Q)ARG1(arg));
@@ -46,7 +43,7 @@ void Pzsub(NODE arg,Q *rp)
 
 void Pzmul(NODE arg,Q *rp)
 {
-	pointer z0,z1,z2;
+	Z z0,z1,z2;
 
 	z0 = qtoz((Q)ARG0(arg));
 	z1 = qtoz((Q)ARG1(arg));

@@ -1,52 +1,69 @@
-#if 1
 #include "ca.h"
+#include "base.h"
 #include "inline.h"
-#endif
 
-typedef struct oZ {
-	int p;
-	unsigned int b[1];
-} *Z;
-
-#define IMM_MAX 1073741823
-#define IMM_MIN -1073741823
-
-/* immediate int -> Z */
-#define IMMTOZ(c,n) (n)=((c)>=IMM_MIN&&(c)<=IMM_MAX?((Z)(((c)<<1)|1)):immtoz(c))
-/* immediate Z ? */
-#define IS_IMM(c) (((unsigned int)c)&1)
-/* Z can be conver to immediate ? */
-#define IS_IMMZ(n) (SL(n) == 1&&BD(n)[0]<=IMM_MAX)
-/* Z -> immediate Z */
-#define IMMZTOZ(n,z) (z)=(Z)(SL(n)<0?(((-BD(n)[0])<<1)|1):(((BD(n)[0])<<1)|1))
-/* Z -> immediate int */
-#define ZTOIMM(c) (((int)(c))>>1)
-#define ZALLOC(d) ((Z)MALLOC_ATOMIC(TRUESIZE(oZ,(d)-1,int)))
-#define SL(n) ((n)->p)
-
-Z immtoz(int c);
-Z qtoz(Q n);
-Q ztoq(Z n);
-Z chsgnz(Z n);
-Z dupz(Z n);
-Z addz(Z n1,Z n2);
-Z subz(Z n1,Z n2);
-Z mulz(Z n1,Z n2);
-Z divsz(Z n1,Z n2);
-Z divz(Z n1,Z n2,Z *rem);
-Z gcdz(Z n1,Z n2);
-Z gcdz_cofactor(Z n1,Z n2,Z *c1,Z *c2);
-Z estimate_array_gcdz(Z *a,int n);
-Z array_gcdz(Z *a,int n);
-void mkwcz(int k,int l,Z *t);
-int remzi(Z n,int m);
 inline void _addz(Z n1,Z n2,Z nr);
 inline void _subz(Z n1,Z n2,Z nr);
 inline void _mulz(Z n1,Z n2,Z nr);
 inline int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr);
 inline int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr);
 
-Z immtoz(int c)
+/* immediate int -> Z */
+#define UTOZ(c,n) (n)=(!((unsigned int)(c))?0:(((unsigned int)(c))<=IMM_MAX?((Z)((((unsigned int)(c))<<1)|1)):utoz((unsigned int)(c))))
+#define STOZ(c,n) (n)=(!((int)(c))?0:(((int)(c))>=IMM_MIN&&((int)(c))<=IMM_MAX?((Z)((((int)(c))<<1)|1)):stoz((int)(c))))
+/* immediate Z ? */
+#define IS_IMM(c) (((unsigned int)c)&1)
+/* Z can be conver to immediate ? */
+#define IS_SZ(n) (((SL(n) == 1)||(SL(n)==-1))&&BD(n)[0]<=IMM_MAX)
+/* Z -> immediate Z */
+#define SZTOZ(n,z) (z)=(Z)(SL(n)<0?(((-BD(n)[0])<<1)|1):(((BD(n)[0])<<1)|1))
+/* Z -> immediate int */
+#define ZTOS(c) (((int)(c))>>1)
+
+int uniz(Z a)
+{
+	if ( IS_IMM(a) && ZTOS(a) == 1 ) return 1;
+	else return 0;
+}
+
+int cmpz(Z a,Z b)
+{
+	int *ma,*mb;
+	int sa,sb,da,db,ca,cb,i;
+
+	if ( !a )
+		return -sgnz(b);
+	else if ( !b )
+		return sgnz(a);
+	else {
+		sa = sgnz(a); sb = sgnz(b);
+		if ( sa > sb ) return 1;
+		else if ( sa < sb ) return -1;
+		else if ( IS_IMM(a) ) 
+			if ( IS_IMM(b) ) {
+				ca = ZTOS(a); cb = ZTOS(b);
+				if ( ca > cb ) return sa;
+				else if ( ca < cb ) return -sa;
+				else return 0;
+			} else
+				return -sa;
+		else if ( IS_IMM(b) )
+			return sa;
+		else {
+			da = SL(a)*sa; db = SL(b)*sa;
+			if ( da > db ) return sa;
+			else if ( da < db ) return -sa;
+			else {
+				for ( i = da-1, ma = BD(a)+i, mb = BD(b)+i; i >= 0; i-- )
+					if ( *ma > *mb ) return sa;
+					else if ( *ma < *mb ) return -sa;
+				return 0;
+			}
+		}
+	}
+}
+
+Z stoz(int c)
 {
 	Z z;
 
@@ -59,10 +76,31 @@ Z immtoz(int c)
 	return z;
 }
 
+Z utoz(unsigned int c)
+{
+	Z z;
+
+	z = ZALLOC(1);
+	SL(z) = 1; BD(z)[0] = c;
+	return z;
+}
+
+Z simpz(Z n)
+{
+	Z n1;
+
+	if ( !n ) return 0;
+	else if ( IS_IMM(n) ) return n;
+	else if ( IS_SZ(n) ) {
+		SZTOZ(n,n1); return n1;
+	} else
+		return n;
+}
+
 int sgnz(Z n)
 {
 	if ( !n ) return 0;
-	else if ( IS_IMM(n) ) return ZTOIMM(n)>0?1:1;
+	else if ( IS_IMM(n) ) return ZTOS(n)>0?1:-1;
 	else if ( SL(n) < 0 ) return -1;
 	else return 1;
 }
@@ -73,7 +111,7 @@ z_mag(Z n)
 
 	if ( !n ) return 0;
 	else if ( IS_IMM(n) ) {
-		c = ZTOIMM(n);
+		c = ZTOS(n);
 		if ( c < 0 ) c = -c;
 		for ( i = 0; c; c >>= 1, i++ );
 		return i;
@@ -91,9 +129,9 @@ Z qtoz(Q n)
 		error("qtoz : invalid input");
 	else {
 		t = (Z)NM(n);
-		if ( IS_IMMZ(t) ) {
+		if ( IS_SZ(t) ) {
 			c = SGN(n) < 0 ? -BD(t)[0] : BD(t)[0];
-			IMMTOZ(c,r);
+			STOZ(c,r);
 		} else {
 			r = dupz((Z)t);
 			if ( SGN(n) < 0 ) SL(r) = -SL(r);
@@ -110,7 +148,7 @@ Q ztoq(Z n)
 
 	if ( !n ) return 0;
 	else if ( IS_IMM(n) ) {
-		c = ZTOIMM(n);
+		c = ZTOS(n);
 		STOQ(c,r);
 		return r;
 	} else {
@@ -127,17 +165,17 @@ Q ztoq(Z n)
 
 Z dupz(Z n)
 {
-	Z nr;
+	Z r;
 	int sd,i;
 
 	if ( !n ) return 0;
 	else if ( IS_IMM(n) ) return n;
 	else {
 		if ( (sd = SL(n)) < 0 ) sd = -sd;
-		nr = ZALLOC(sd);
-		SL(nr) = SL(n);
-		for ( i = 0; i < sd; i++ ) BD(nr)[i] = BD(n)[i];
-		return nr;
+		r = ZALLOC(sd);
+		SL(r) = SL(n);
+		for ( i = 0; i < sd; i++ ) BD(r)[i] = BD(n)[i];
+		return r;
 	}
 }
 
@@ -148,8 +186,8 @@ Z chsgnz(Z n)
 
 	if ( !n ) return 0;
 	else if ( IS_IMM(n) ) {
-		c = -ZTOIMM(n);
-		IMMTOZ(c,r);
+		c = -ZTOS(n);
+		STOZ(c,r);
 		return r;
 	} else {
 		r = dupz(n);
@@ -158,6 +196,17 @@ Z chsgnz(Z n)
 	}
 }
 
+Z absz(Z n)
+{
+	Z r;
+	int c;
+
+	if ( !n ) return 0;
+	else if ( sgnz(n) > 0 )
+		return n;
+	else 
+		return chsgnz(n);
+}
 
 Z addz(Z n1,Z n2)
 {
@@ -169,11 +218,10 @@ Z addz(Z n1,Z n2)
 	else if ( !n2 ) return dupz(n1);
 	else if ( IS_IMM(n1) ) {
 		if ( IS_IMM(n2) ) {
-			c = ZTOIMM(n1)+ZTOIMM(n2);
-			IMMTOZ(c,r);
-			return r;
+			c = ZTOS(n1)+ZTOS(n2);
+			STOZ(c,r);
 		} else {
-			c = ZTOIMM(n1);
+			c = ZTOS(n1);
 			if ( c < 0 ) {
 				t.p = -1; t.b[0] = -c;
 			} else {
@@ -182,10 +230,10 @@ Z addz(Z n1,Z n2)
 			if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
 			r = ZALLOC(d2+1);
 			_addz(&t,n2,r);
-			return r;
+			if ( !SL(r) ) r = 0;
 		}
 	} else if ( IS_IMM(n2) ) {
-		c = ZTOIMM(n2);
+		c = ZTOS(n2);
 		if ( c < 0 ) {
 			t.p = -1; t.b[0] = -c;
 		} else {
@@ -194,7 +242,7 @@ Z addz(Z n1,Z n2)
 		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
 		r = ZALLOC(d1+1);
 		_addz(n1,&t,r);
-		return r;
+		if ( !SL(r) ) r = 0;
 	} else {
 		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
 		if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
@@ -202,11 +250,11 @@ Z addz(Z n1,Z n2)
 		r = ZALLOC(d);
 		_addz(n1,n2,r);
 		if ( !SL(r) ) r = 0;
-		else if ( IS_IMMZ(r) ) {
-			IMMZTOZ(r,r1); r = r1;	
-		}
-		return r;
 	}
+	if ( r && !((int)r&1) && IS_SZ(r) ) {
+		SZTOZ(r,r1); r = r1;	
+	}
+	return r;
 }
 
 Z subz(Z n1,Z n2)
@@ -215,18 +263,15 @@ Z subz(Z n1,Z n2)
 	Z r,r1;
 	struct oZ t;
 
-	if ( !n1 ) {
-		r = dupz(n2);
-		SL(r) = -SL(r);
-		return r;
-	} else if ( !n2 ) return dupz(n1);
+	if ( !n1 )
+		return chsgnz(n2);
+	else if ( !n2 ) return n1;
 	else if ( IS_IMM(n1) ) {
 		if ( IS_IMM(n2) ) {
-			c = ZTOIMM(n1)-ZTOIMM(n2);
-			IMMTOZ(c,r);
-			return r;
+			c = ZTOS(n1)-ZTOS(n2);
+			STOZ(c,r);
 		} else {
-			c = ZTOIMM(n1);
+			c = ZTOS(n1);
 			if ( c < 0 ) {
 				t.p = -1; t.b[0] = -c;
 			} else {
@@ -235,10 +280,10 @@ Z subz(Z n1,Z n2)
 			if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
 			r = ZALLOC(d2+1);
 			_subz(&t,n2,r);
-			return r;
+			if ( !SL(r) ) r = 0;
 		}
 	} else if ( IS_IMM(n2) ) {
-		c = ZTOIMM(n2);
+		c = ZTOS(n2);
 		if ( c < 0 ) {
 			t.p = -1; t.b[0] = -c;
 		} else {
@@ -247,7 +292,7 @@ Z subz(Z n1,Z n2)
 		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
 		r = ZALLOC(d1+1);
 		_subz(n1,&t,r);
-		return r;
+		if ( !SL(r) ) r = 0;
 	} else {
 		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
 		if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
@@ -255,33 +300,50 @@ Z subz(Z n1,Z n2)
 		r = ZALLOC(d);
 		_subz(n1,n2,r);
 		if ( !SL(r) ) r = 0;
-		else if ( IS_IMMZ(r) ) {
-			IMMZTOZ(r,r1); r = r1;	
-		}
-		return r;
 	}
+	if ( r && !((int)r&1) && IS_SZ(r) ) {
+		SZTOZ(r,r1); r = r1;	
+	}
+	return r;
 }
 
 Z mulz(Z n1,Z n2)
 {
 	int d1,d2,sgn,i;
+	int c1,c2;
 	unsigned int u1,u2,u,l;
 	Z r;
 
 	if ( !n1 || !n2 ) return 0;
 
 	if ( IS_IMM(n1) ) {
-		sgn = 1;
-		u1 = ZTOIMM(n1); if ( u1 < 0 ) { sgn = -sgn; u1 = -u1; }
+		c1 = ZTOS(n1);
 		if ( IS_IMM(n2) ) {
-			u2 = ZTOIMM(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
-			DM(u1,u2,u,l);
-			if ( !u ) {
-				IMMTOZ(l,r);
-			} else {
-				r = ZALLOC(2); SL(r) = 2; BD(r)[1] = u; BD(r)[0] = l;
+			c2 = ZTOS(n2);
+			if ( c1 == 1 )
+				return n2;
+			else if ( c1 == -1 )
+				return chsgnz(n2);
+			else if ( c2 == 1 )
+				return n1;
+			else if ( c2 == -1 )
+				return chsgnz(n1);
+			else {
+				sgn = 1;
+				if ( c1 < 0 ) { c1 = -c1; sgn = -sgn; }
+				if ( c2 < 0 ) { c2 = -c2; sgn = -sgn; }
+				u1 = (unsigned int)c1; u2 = (unsigned int)c2;
+				DM(u1,u2,u,l);
+				if ( !u ) {
+					UTOZ(l,r);
+				} else {
+					r = ZALLOC(2); SL(r) = 2; BD(r)[1] = u; BD(r)[0] = l;
+				}
 			}
 		} else {
+			sgn = 1;
+			if ( c1 < 0 ) { c1 = -c1; sgn = -sgn; }
+			u1 = (unsigned int)c1;
 			if ( (d2 = SL(n2)) < 0 ) { sgn = -sgn; d2 = -d2; }
 			r = ZALLOC(d2+1);
 			for ( i = d2; i >= 0; i-- ) BD(r)[i] = 0;
@@ -289,8 +351,15 @@ Z mulz(Z n1,Z n2)
 			SL(r) = BD(r)[d2]?d2+1:d2;
 		}
 	} else if ( IS_IMM(n2) ) {
+		c2 = ZTOS(n2);
+		if ( c2 == 1 )
+			return n1;
+		else if ( c2 == -1 )
+			return chsgnz(n1);
+
 		sgn = 1;
-		u2 = ZTOIMM(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
+		if ( c2 < 0 ) { sgn = -sgn; c2 = -c2; }
+		u2 = (unsigned int)c2;
 		if ( (d1 = SL(n1)) < 0 ) { sgn = -sgn; d1 = -d1; }
 		r = ZALLOC(d1+1);
 		for ( i = d1; i >= 0; i-- ) BD(r)[i] = 0;
@@ -298,12 +367,12 @@ Z mulz(Z n1,Z n2)
 		SL(r) = BD(r)[d1]?d1+1:d1;
 	} else {
 		sgn = 1;
-		if ( (d1 = SL(n1)) < 0 ) { sgn = -sgn; d1 = -d1; }
-		if ( (d2 = SL(n2)) < 0 ) { sgn = -sgn; d2 = -d2; }
+		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
+		if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
 		r = ZALLOC(d1+d2);
 		_mulz(n1,n2,r);
 	}
-	if ( sgn < 0 ) SL(r) = -SL(r);
+	if ( sgn < 0 ) r = chsgnz(r);
 	return r;
 }
 
@@ -320,13 +389,13 @@ Z divsz(Z n1,Z n2)
 	if ( IS_IMM(n1) ) {
 		if ( !IS_IMM(n2) )
 			error("divsz : cannot happen");
-		c = ZTOIMM(n1)/ZTOIMM(n2);
-		IMMTOZ(c,q);
+		c = ZTOS(n1)/ZTOS(n2);
+		STOZ(c,q);
 		return q;
 	}
 	if ( IS_IMM(n2) ) {
 		sgn = 1;
-		u2 = ZTOIMM(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
+		u2 = ZTOS(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
 		diviz(n1,u2,&q);
 		if ( sgn < 0 ) SL(q) = -SL(q);
 		return q;
@@ -343,30 +412,116 @@ Z divsz(Z n1,Z n2)
 	if ( d1 < d2 ) error("divsz : cannot happen");
 	return q;
 }
+#endif
+
+/* XXX */
+Z divz(Z n1,Z n2,Z *r)
+{
+	int s1,s2;
+	Q t1,t2,qq,rq;
+	N qn,rn;
+
+	if ( !n1 ) {
+		*r = 0; return 0;
+	}
+	if ( !n2 )
+		error("divz : division by 0");
+	t1 = ztoq(n1); t2 = ztoq(n2);
+	s1 = sgnz(n1); s2 = sgnz(n2);
+	/* n1 = qn*SGN(n1)*SGN(n2)*n2+SGN(n1)*rn */
+	divn(NM(t1),NM(t2),&qn,&rn);
+	NTOQ(qn,s1*s2,qq);
+	NTOQ(rn,s1,rq);
+	*r = qtoz(rq);
+	return qtoz(qq);
+}
+
+Z divsz(Z n1,Z n2)
+{
+	int s1,s2;
+	Q t1,t2,qq;
+	N qn;
+
+	if ( !n1 )
+		return 0;
+	if ( !n2 )
+		error("divsz : division by 0");
+	t1 = ztoq(n1); t2 = ztoq(n2);
+	s1 = sgnz(n1); s2 = sgnz(n2);
+	/* n1 = qn*SGN(n1)*SGN(n2)*n2 */
+	divsn(NM(t1),NM(t2),&qn);
+	NTOQ(qn,s1*s2,qq);
+	return qtoz(qq);
+}
+
+int gcdimm(int c1,int c2)
+{
+	int r;
+
+	if ( !c1 ) return c2;
+	else if ( !c2 ) return c1;
+	while ( 1 ) {
+		r = c1%c2;
+		if ( !r ) return c2;
+		c1 = c2; c2 = r;
+	}
+}
 
 Z gcdz(Z n1,Z n2)
 {
-	int d1,d2;
-	N gcd;
+	int c1,c2,g;
+	Z gcd,r;
+	N gn;
 
 	if ( !n1 ) return n2;
 	else if ( !n2 ) return n1;
 
-	n1 = dupz(n1);
-	if ( SL(n1) < 0 ) SL(n1) = -SL(n1);
-	n2 = dupz(n2);
-	if ( SL(n2) < 0 ) SL(n2) = -SL(n2);
-	gcdn((N)n1,(N)n2,&gcd);	
-	return (Z)gcd;
+	if ( IS_IMM(n1) ) {
+		c1 = ZTOS(n1);
+		if ( c1 < 0 ) c1 = -c1;
+		if ( IS_IMM(n2) )
+			c2 = ZTOS(n2);
+		else
+			c2 = remzi(n2,c1>0?c1:-c1);
+		if ( c2 < 0 ) c2 = -c2;
+		g = gcdimm(c1,c2);
+		STOZ(g,gcd);
+		return gcd;
+	} else if ( IS_IMM(n2) ) {
+		c2 = ZTOS(n2);
+		if ( c2 < 0 ) c2 = -c2;
+		c1 = remzi(n1,c2>0?c2:-c2);
+		if ( c1 < 0 ) c1 = -c1;
+		g = gcdimm(c1,c2);
+		STOZ(g,gcd);
+		return gcd;
+	} else {
+		n1 = dupz(n1);
+		if ( SL(n1) < 0 ) SL(n1) = -SL(n1);
+		n2 = dupz(n2);
+		if ( SL(n2) < 0 ) SL(n2) = -SL(n2);
+		gcdn((N)n1,(N)n2,&gn);	
+		gcd = (Z)gn;
+		if ( IS_SZ(gcd) ) {
+			SZTOZ(gcd,r); gcd = r;
+		}
+		return gcd;
+	}
 }
 
 int remzi(Z n,int m)
 {
 	unsigned int *x;
 	unsigned int t,r;
-	int i;
+	int i,c;
 
 	if ( !n ) return 0;
+	if ( IS_IMM(n) ) {
+		c = ZTOS(n)%m;
+		if ( c < 0 ) c += m;
+		return c;
+	}
+
 	i = SL(n);
 	if ( i < 0 ) i = -i;
 	for ( i--, x = BD(n)+i, r = 0; i >= 0; i--, x-- ) {
@@ -376,6 +531,8 @@ int remzi(Z n,int m)
 		DSAB(m,r,*x,t,r);
 #endif
 	}
+	if ( r && SL(n) < 0 )
+		r = m-r;
 	return r;
 }
 
@@ -389,6 +546,7 @@ Z gcdz_cofactor(Z n1,Z n2,Z *c1,Z *c2)
 	return gcd;
 }
 
+#if 0
 Z estimate_array_gcdz(Z *b,int n)
 {
 	int m,i,j,sd;
@@ -683,7 +841,7 @@ void printz(Z n)
 	if ( !n )
 		fprintf(asir_out,"0");
 	else if ( IS_IMM(n) ) {
-		u = ZTOIMM(n);
+		u = ZTOS(n);
 		fprintf(asir_out,"%d",u);
 	} else {
 		if ( (sd = SL(n)) < 0 ) { SL(n) = -SL(n); fprintf(asir_out,"-"); }

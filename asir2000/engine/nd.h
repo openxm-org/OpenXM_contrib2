@@ -45,7 +45,7 @@ typedef struct oNDV {
 
 typedef union oNDC {
 	int m;
-	Q z;
+	Z z;
 	P p;
 } *NDC;
 
@@ -131,10 +131,10 @@ extern int *current_weyl_weight_vector;
 #define HDL(d) ((d)->body->dl)
 #define HTD(d) (TD(HDL(d)))
 #define HCM(d) ((d)->body->c.m)
-#define HCQ(d) ((d)->body->c.z)
+#define HCZ(d) ((d)->body->c.z)
 #define HCP(d) ((d)->body->c.p)
 #define CM(a) ((a)->c.m)
-#define CQ(a) ((a)->c.z)
+#define CZ(a) ((a)->c.z)
 #define CP(a) ((a)->c.p)
 #define DL(a) ((a)->dl)
 #define SG(a) ((a)->sugar)
@@ -214,16 +214,16 @@ NODE append_one(NODE,int);
 /* manipulation of coefficients */
 void nd_removecont(int mod,ND p);
 void nd_removecont2(ND p1,ND p2);
-void removecont_array(Q *c,int n);
+void removecont_array(Z *c,int n);
 
 /* GeoBucket functions */
 ND normalize_pbucket(int mod,PGeoBucket g);
 int head_pbucket(int mod,PGeoBucket g);
-int head_pbucket_q(PGeoBucket g);
+int head_pbucket_z(PGeoBucket g);
 void add_pbucket_symbolic(PGeoBucket g,ND d);
 void add_pbucket(int mod,PGeoBucket g,ND d);
 void free_pbucket(PGeoBucket b);
-void mulq_pbucket(PGeoBucket g,Q c);
+void mulz_pbucket(PGeoBucket g,Z c);
 NM remove_head_pbucket_symbolic(PGeoBucket g);
 PGeoBucket create_pbucket();
 
@@ -270,7 +270,7 @@ INLINE int ndl_hash_value(UINT *d);
 /* normal forms */
 INLINE int ndl_find_reducer(UINT *g);
 int nd_sp(int mod,int trace,ND_pairs p,ND *nf);
-int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *nf);
+int nd_nf(int mod,ND g,NDV *ps,int full,Q *dn,ND *nf);
 int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *nf);
 
 /* finalizers */
@@ -287,7 +287,7 @@ void nd_free_redlist();
 /* printing */
 void ndl_print(UINT *dl);
 void nd_print(ND p);
-void nd_print_q(ND p);
+void nd_print_z(ND p);
 void ndp_print(ND_pairs d);
 
 
@@ -306,7 +306,7 @@ ND nd_dup(ND p);
 /* ND functions */
 int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand);
 void nd_mul_c(int mod,ND p,int mul);
-void nd_mul_c_q(ND p,Q mul);
+void nd_mul_c_z(ND p,Z mul);
 void nd_mul_c_p(VL vl,ND p,P mul);
 ND nd_remove_head(ND p);
 ND nd_separate_head(ND p,ND *head);
@@ -317,7 +317,7 @@ UINT *nd_compute_bound(ND p);
 ND nd_copy(ND p);
 ND nd_merge(ND p1,ND p2);
 ND nd_add(int mod,ND p1,ND p2);
-ND nd_add_q(ND p1,ND p2);
+ND nd_add_z(ND p1,ND p2);
 ND nd_add_sf(ND p1,ND p2);
 ND nd_quo(int mod,PGeoBucket p,NDV d);
 INLINE int nd_length(ND p);
@@ -325,14 +325,14 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
 NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
 	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
-NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
+NODE nd_f4_red_z_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
 	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 
 /* NDV functions */
 ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);
 void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen);
 void ndv_mul_c(int mod,NDV p,int mul);
-void ndv_mul_c_q(NDV p,Q mul);
+void ndv_mul_c_z(NDV p,Z mul);
 ND ndv_mul_nm_symbolic(NM m0,NDV p);
 ND ndv_mul_nm(int mod,NM m0,NDV p);
 ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d);
@@ -342,7 +342,7 @@ void ndv_homogenize(NDV p,int obpe,int oadv,EPOS eops);
 void ndv_dehomogenize(NDV p,struct order_spec *spec);
 void ndv_removecont(int mod,NDV p);
 void ndv_print(NDV p);
-void ndv_print_q(NDV p);
+void ndv_print_z(NDV p);
 void ndv_free(NDV p);
 void ndv_save(NDV p,int index);
 NDV ndv_load(int index);
@@ -356,13 +356,13 @@ ND ndvtond(int mod,NDV p);
 int nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r);
 IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
-int nd_to_vect_q(UINT *s0,int n,ND d,Q *r);
-NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect);
+int nd_to_vect_z(UINT *s0,int n,ND d,Z *r);
+NDV vect_to_ndv_z(Z *vect,int spcol,int col,int *rhead,UINT *s0vect);
 
 /* elimination */
 int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat);
-int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat);
+int nd_gauss_elim_z(Z **mat0,int *sugar,int row,int col,int *colstat);
 
 int ndl_ww_lex_compare(UINT *a1,UINT *a2);
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.50 2004/07/13 07:59:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.51 2004/08/18 00:17:02 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,6 +163,11 @@ typedef struct oN {
 	int p;
 	unsigned int b[1];
 } *N;
+
+typedef struct oZ {
+	int p;
+	unsigned int b[1];
+} *Z;
 
 typedef struct oUP2 {
 	int w;
@@ -855,6 +860,12 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define MKReal(a,b) (!(a)?((b)=0):(NEWReal(b),BDY(b)=(a),(b)))
 #define MKAlg(b,r) \
 (!(b)?((r)=0):NUM(b)?((r)=(Alg)(b)):(NEWAlg(r),BDY(r)=(Obj)(b),(r)))
+
+#define IMM_MAX 1073741823
+#define IMM_MIN -1073741823
+
+#define SL(n) ((n)->p)
+#define ZALLOC(d) ((Z)MALLOC_ATOMIC(TRUESIZE(oZ,(d)-1,int)))
 
 #if defined(PARI)
 #define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):BIGFLOAT(a)?rtodbl(BDY((BF)a)):0)
@@ -2486,6 +2497,27 @@ void afctrmain(VL vl,P p0,P p,int init,DCP *dcp);
 int divtmp(VL vl,int mod,P p1,P p2,P *q);
 int divtdcmp(VL vl,int mod,P p1,P p2,P *q);
 void GC_gcollect();
+
+Z stoz(int c);
+Z utoz(unsigned int c);
+Z qtoz(Q n);
+Q ztoq(Z n);
+Z chsgnz(Z n);
+Z simpz(Z n);
+Z dupz(Z n);
+Z absz(Z n);
+Z addz(Z n1,Z n2);
+Z subz(Z n1,Z n2);
+Z mulz(Z n1,Z n2);
+Z divsz(Z n1,Z n2);
+Z divz(Z n1,Z n2,Z *rem);
+Z gcdz(Z n1,Z n2);
+Z gcdz_cofactor(Z n1,Z n2,Z *c1,Z *c2);
+Z estimate_array_gcdz(Z *a,int n);
+Z array_gcdz(Z *a,int n);
+void mkwcz(int k,int l,Z *t);
+int remzi(Z n,int m);
+
 
 #if 0 && !defined(VISUAL)
 void bzero(const void *,int);
