@@ -1599,7 +1599,7 @@ case 62:
 					if ( f )
 						yyval.f = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,0));
 					else {
-						gen_searchf(yyvsp[0].p,(FUNC *)&f);
+						gen_searchf_searchonly(yyvsp[0].p,(FUNC *)&f);
 						if ( f )
 							makesrvar(f,(P *)&val);
 						else
