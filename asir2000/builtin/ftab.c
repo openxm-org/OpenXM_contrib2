@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.4 2000/12/05 01:24:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.5 2000/12/22 09:58:32 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,7 +72,7 @@ str_tab, subst_tab, time_tab, type_tab, var_tab,
 	interval_tab,
 #endif
 print2d_tab, tcp_tab, plot_tab, pari_tab, comp_tab, gf_tab, math_tab,
-numerical_tab, ec_tab, al_tab;
+numerical_tab, ec_tab, al_tab, user_tab;
 
 struct ftab *ftabs[] = {
 	alg_tab, array_tab, cplx_tab, ctrl_tab, dp_tab, dp_supp_tab, fctr_tab, file_tab,
@@ -90,6 +90,7 @@ struct ftab *ftabs[] = {
 	numerical_tab,
 #endif
 	ec_tab, al_tab,
+	user_tab,
 	0,
 };
 
