@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.10 2001/09/06 00:24:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.11 2001/09/28 00:41:16 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -916,6 +916,17 @@ def p_true_nf(P,B,V,O) {
 	}
 	L = dp_true_nf(IL,DP,DB,1);
 	return [dp_dtop(L[0],V),L[1]];
+}
+
+def p_nf_mod(P,B,V,O,Mod) {
+	setmod(Mod);
+	dp_ord(O); DP = dp_mod(dp_ptod(P,V),Mod,[]);
+	N = length(B); DB = newvect(N);
+	for ( I = N-1, IL = []; I >= 0; I-- ) {
+		DB[I] = dp_mod(dp_ptod(B[I],V),Mod,[]);
+		IL = cons(I,IL);
+	}
+	return dp_dtop(dp_nf_mod(IL,DP,DB,1,Mod),V);
 }
 
 def p_terms(D,V,O)
