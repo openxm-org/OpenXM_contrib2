@@ -45,13 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.10 2000/12/05 01:24:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.11 2001/03/08 07:49:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #if !defined(VISUAL)
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
+#endif
+
+#if defined(VISUAL)
+#include <stdlib.h>
+#include <windows.h>
 #endif
 
 void Pquit(), Pdebug(), Pnmono(), Pnez(), Popt(), Pshell(), Pheap();
@@ -62,10 +67,12 @@ void Pnull_command();
 void Pgetenv();
 void Pget_addr(),Phex_dump();
 void Ppeek(),Ppoke();
+void Psleep();
 
 void delete_history(int,int);
 
 struct ftab misc_tab[] = {
+	{"sleep",Psleep,1},
 	{"null_command",Pnull_command,-99999},
 	{"getenv",Pgetenv,1},
 	{"end",Pquit,0},
@@ -96,6 +103,21 @@ struct ftab misc_tab[] = {
 #endif
 	{0,0,0},
 };
+
+void Psleep(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int ms;
+
+	ms = QTOS((Q)ARG0(arg));
+#if defined(VISUAL)
+	Sleep(ms);
+#else
+	usleep(ms*1000);
+#endif
+	*rp = ONE;
+}
 
 void Pgetenv(arg,rp)
 NODE arg;

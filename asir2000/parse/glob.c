@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.14 2001/03/08 07:49:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.15 2001/03/16 01:54:55 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -398,7 +398,9 @@ char *s;
 	/* restore states */
 	reset_engine();
 	reset_io();
+#if !defined(VISUAL)
 	reset_timer();
+#endif
 	longjmp(env,1);
 }
 
@@ -609,8 +611,10 @@ char *s;
 {
 	SNODE *snp;
 
+#if !defined(VISUAL)
 	if ( timer_is_set )
 		alrm_handler(SIGVTALRM);
+#endif
 	fprintf(stderr,"%s\n",s);
 	set_lasterror(s);
 	if ( CPVS != GPVS ) {
