@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.21 2002/01/30 01:09:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.22 2003/01/04 09:06:17 noro Exp $ 
 */
 #include "ca.h"
 
@@ -417,6 +417,76 @@ NODE symb_merge(NODE m1,NODE m2,int n)
 		}
 		if ( !cur )
 			NEXT(prev) = m;
+		return top;
+	}
+}
+
+void _adddl(int n,DL d1,DL d2,DL d3)
+{
+	int i;
+
+	d3->td = d1->td+d2->td;
+	for ( i = 0; i < n; i++ )
+		d3->d[i] = d1->d[i]+d2->d[i];
+}
+
+/* m1 <- m1 U dl*f, destructive */
+
+NODE mul_dllist(DL dl,DP f);
+
+NODE symb_mul_merge(NODE m1,DL dl,DP f,int n)
+{
+	NODE top,prev,cur,n1;
+	DP g;
+	DL t,s;
+	MP m;
+
+	if ( !m1 )
+		return mul_dllist(dl,f);
+	else if ( !f )
+		return m1;
+	else {
+		m = BDY(f);
+		NEWDL_NOINIT(t,n);
+		_adddl(n,m->dl,dl,t);
+		top = m1; prev = 0; cur = m1;
+		while ( m ) {
+			switch ( (*cmpdl)(n,(DL)BDY(cur),t) ) {
+				case 0:
+					prev = cur; cur = NEXT(cur);
+					if ( !cur ) {
+						MKDP(n,m,g);
+						NEXT(prev) = mul_dllist(dl,g);
+						return;
+					}
+					m = NEXT(m);
+					if ( m ) _adddl(n,m->dl,dl,t);
+					break;
+				case 1:
+					prev = cur; cur = NEXT(cur); 
+					if ( !cur ) {
+						MKDP(n,m,g);
+						NEXT(prev) = mul_dllist(dl,g);
+						return;
+					}
+					break;
+				case -1:
+					NEWDL_NOINIT(s,n);
+					s->td = t->td;
+					bcopy(t->d,s->d,n*sizeof(int));
+					NEWNODE(n1);
+					n1->body = (pointer)s;
+					NEXT(n1) = cur;
+					if ( !prev ) {
+						top = n1; cur = n1;
+					} else {
+						NEXT(prev) = n1; prev = n1;
+					}
+					m = NEXT(m);
+					if ( m ) _adddl(n,m->dl,dl,t);
+					break;
+			}
+		}
 		return top;
 	}
 }
