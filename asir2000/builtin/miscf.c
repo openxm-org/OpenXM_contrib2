@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.9 2000/11/14 08:38:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.10 2000/12/05 01:24:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -73,7 +73,7 @@ struct ftab misc_tab[] = {
 	{"debug",Pdebug,0},
 	{"shell",Pshell,-2},
 	{"heap",Pheap,-1},
-	{"version",Pversion,0},
+	{"version",Pversion,-99999},
 	{"nmono",Pnmono,1},
 	{"error",Perror,1},
 	{"error3",Perror3,3},
@@ -196,14 +196,30 @@ Q *rp;
 }
 
 unsigned int get_asir_version();
+char *get_asir_distribution();
 
-void Pversion(rp)
-Q *rp;
+void Pversion(arg,rp)
+NODE arg;
+Obj *rp;
 {
 	unsigned int version;
+	char *distribution;
+	Q q;
+	STRING str;
+	NODE n;
+	LIST l;
 
 	version = get_asir_version();
-	STOQ(version,*rp);
+	distribution = get_asir_distribution();
+	STOQ(version,q);
+	if ( !argc(arg) )
+		*rp = (Obj)q;
+	else {
+		MKSTR(str,distribution);	
+		n = mknode(2,q,str);
+		MKLIST(l,n);
+		*rp = (Obj)l;
+	}
 }
 
 extern int nez;

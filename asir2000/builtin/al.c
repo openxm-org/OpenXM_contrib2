@@ -1,10 +1,9 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/al.c,v 1.2 1999/11/18 05:42:01 noro Exp $ */
 /* ----------------------------------------------------------------------
    $Id$
    ----------------------------------------------------------------------
    File al.c: Real quantifier elimination code for RISA/ASIR
 
-   Copyright (c) 1996, 1997, 1998 by
+   Copyright (c) 1996-2001 by
    Andreas Dolzmann and Thomas Sturm, University of Passau, Germany
    dolzmann@uni-passau.de, sturm@uni-passau.de
    ----------------------------------------------------------------------
@@ -75,6 +74,7 @@ void mkeset();
 int selectside();
 int cmp2n();
 void add2eset();
+void seproots();
 void sp_add2eset();
 void subgpf();
 void subref();
@@ -122,6 +122,7 @@ extern Verbose;
 struct oRE {
 	P p;
 	P discr;
+        int rootno;
 	int itype;
 };
 
@@ -161,9 +162,10 @@ typedef struct oQVL *QVL;
 #define MKGP(x,g,p) (NEWGP(x),GUARD(x)=g,POINT(x)=p)
 
 #define NEWRE(x) ((x)=(RE)MALLOC(sizeof(struct oRE)))
-#define MKRE(x,pp,d,i) \
-(NEWRE(x),(x)->p=pp,(x)->discr=d,(x)->itype=i)
+#define MKRE(x,pp,d,rn,i) \
+(NEWRE(x),(x)->p=pp,(x)->discr=d,(x)->rootno=rn,(x)->itype=i)
 #define DISC(re) ((re)->discr)
+#define ROOTNO(re) ((re)->rootno)
 #define ITYPE(re) ((re)->itype)
 
 #define STD 0
@@ -1420,7 +1422,10 @@ NODE *peset;
 		BDY(esetc) = (pointer)hgp;
 	}
 	NEXTNODE(*peset,esetc);
-	mkqgp(rlhs,a,b,c,STD,&hgp);
+	mkqgp(rlhs,a,b,c,1,STD,&hgp);
+	BDY(esetc) = (pointer)hgp;
+	NEXTNODE(*peset,esetc);
+	mkqgp(rlhs,a,b,c,2,STD,&hgp);
 	BDY(esetc) = (pointer)hgp;
 }
 
@@ -1508,7 +1513,7 @@ GP *pgp;
 	RE hre;
 	F hf;
 	
-	MKRE(hre,mp,(P)ONE,itype);
+	MKRE(hre,mp,(P)ONE,1,itype);
 	MKAF(hf,AL_NEQ,b);
 	MKGP(*pgp,hf,hre);
 }
@@ -1529,12 +1534,13 @@ NODE trans[],transc[];
 	}
 	indices(op,0,&itype,&btype);
 	NEXTNODE(trans[btype],transc[btype]);
-	mkqgp(mp,a,b,c,itype,&hgp);
+	mkqgp(mp,a,b,c,-1,itype,&hgp);
 	BDY(transc[btype]) = (pointer)hgp;
 }
 
-void mkqgp(mp,a,b,c,itype,pgp)
+void mkqgp(mp,a,b,c,rootno,itype,pgp)
 P mp,a,b,c;
+int rootno;
 int itype;
 GP *pgp;
 {
@@ -1544,7 +1550,7 @@ GP *pgp;
 	NODE n=NULL,nc;
 	
 	mkdiscr(a,b,c,&discr);
-	MKRE(hre,mp,discr,itype);
+	MKRE(hre,mp,discr,rootno,itype);
 	NEXTNODE(n,nc);
 	MKAF(hf,AL_NEQ,a);
 	BDY(nc) = (pointer)hf;
@@ -1670,13 +1676,13 @@ V x;
 		add2eset(trans[cs],peset,&esetc);
 		sp_add2eset(trans[BTSO],deps,peset,&esetc);
 		NEXTNODE(*peset,esetc);
-		MKRE(hre,0,0,dinf);
+		MKRE(hre,0,0,0,dinf);
 		MKGP(hgp,F_TRUE,hre);
 		BDY(esetc) = (pointer)hgp;
 	} else {
 		NEXTNODE(*peset,esetc);
 		MKV(x,h);
-		MKRE(hre,h,(P)ONE,STD);
+		MKRE(hre,h,(P)ONE,1,STD);
 		MKGP(hgp,F_TRUE,hre);
 		BDY(esetc) = (pointer)hgp;
 	}
@@ -1733,14 +1739,46 @@ NODE n1a,n1b,n2a,n2b;
 void add2eset(trfield,peset,pesetc)
 NODE trfield,*peset,*pesetc;
 {
+        NODE ntrfield,ntrfieldc;
+
 	if (trfield == NULL)
 		return;
-	if (*peset == NULL)
-		*peset = *pesetc = trfield;
-	else
-		NEXT(*pesetc) = trfield;
-	while (NEXT(*pesetc))
-		*pesetc = NEXT(*pesetc);
+	seproots(trfield,&ntrfield,&ntrfieldc);
+	if (*peset == NULL) {
+		*peset = ntrfield;
+		*pesetc = ntrfieldc;
+	} else {
+		NEXT(*pesetc) = ntrfield;
+		*pesetc = ntrfieldc;
+	}
+}
+
+void seproots(trfield,pntrfield,pntrfieldc)
+NODE trfield,*pntrfield,*pntrfieldc;
+{
+      	NODE sc;
+	NODE ntrf=NULL,ntrfc;
+	RE hre,hre2;
+	GP hgp,hgp2;
+
+	for (sc=trfield; sc; sc=NEXT(sc)) {
+                hgp = (GP)BDY(sc);
+		hre = POINT(hgp);
+                if (ROOTNO(hre) == -1) {
+		        NEXTNODE(ntrf,ntrfc);
+			MKRE(hre2,PL(hre),DISC(hre),1,ITYPE(hre));
+                        MKGP(hgp2,GUARD(hgp),hre2);
+			BDY(ntrfc) = (pointer)hgp2;
+		        NEXTNODE(ntrf,ntrfc);
+			ROOTNO(hre) = 2;
+			BDY(ntrfc) = (pointer)hgp;
+		} else {
+		        NEXTNODE(ntrf,ntrfc);
+			BDY(ntrfc) = (pointer)hgp;
+		}
+	}
+	*pntrfield = ntrf;
+	*pntrfieldc = ntrfc;
 }
 
 void sp_add2eset(trfield,itype,peset,pesetc)
@@ -1844,18 +1882,13 @@ RE re;
 F *pf;
 {
 	P a,b,c,ld;
-	F hf;
-	NODE d=NULL,dc;
-	
+
 	getrecoeffs(prem,fdeg,re,&a,&b,&c,&ld);
-	NEXTNODE(d,dc);
-	substd_a21(op,a,b,c,ld,&hf);
-	BDY(dc) = (pointer)hf;
-	NEXTNODE(d,dc);
-	chsgnp(b,&b);
-	substd_a21(op,a,b,c,ld,&hf);
-	BDY(dc) = (pointer)hf;
-	MKJF(*pf,AL_OR,d);
+	if (ROOTNO(re) == 1)
+	  chsgnp(b,&b);
+	else if (ROOTNO(re) != 2)
+	  error("unspecified quadratic root in substd_a2");
+	substd_a21(op,a,b,c,ld,pf);
 }
 
 void substd_a21(op,a,b,c,d,pf)
@@ -2113,7 +2146,7 @@ RE r;
 	RE stdre;
 	
 	subpme_a_o1(FOP(af),FPL(af),v,ITYPE(r)==MEPS,&h);
-	MKRE(stdre,PL(r),DISC(r),STD);
+	MKRE(stdre,PL(r),DISC(r),ROOTNO(r),STD);
 	subref(h,v,stdre,pnf);
 }
 

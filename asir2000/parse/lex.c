@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.12 2000/12/22 10:03:32 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.13 2000/12/26 05:17:47 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -423,7 +423,7 @@ static int skipspace() {
 
 	for ( c = Getc(); ; )
 		switch ( c ) {
-			case ' ': case '\t':
+			case ' ': case '\t': case '\r':
 				c = Getc(); break;
 			case '\n':
 				c = afternl();	break;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.7 2000/12/22 10:03:28 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.8 2001/02/21 07:10:18 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -255,6 +255,11 @@ void reset_engine() {
 unsigned int get_asir_version() {
 	return ASIR_VERSION;
 }
+
+char *get_asir_distribution() {
+	return ASIR_DISTRIBUTION;
+}
+
 
 void create_error(ERR *err,unsigned int serial,char *msg)
 {

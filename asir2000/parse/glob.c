@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.12 2000/12/05 01:24:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.13 2000/12/22 10:03:31 saito Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -665,10 +665,16 @@ void reset_timer()
 #endif
 
 unsigned int get_asir_version();
+char *get_asir_distribution();
 
 void copyright() {
-	printf("This is Risa/Asir, Version %d.\n",get_asir_version());
-	printf("Copyright (C) FUJITSU LABORATORIES LIMITED.\n");
-	printf("1994-2000. All rights reserved.\n");
+	printf("This is Risa/Asir, Version %d (%s Distribution).\n",
+		get_asir_version(), get_asir_distribution());
+	printf("Copyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\n");
+	printf("Copyright 2000,2001, Risa/Asir committers, http://www.openxm.org/.\n");
+	printf("GC 5.3, copyright 1999, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n");
+	printf("PARI 2.0.17(beta), copyright (C) 1989-1999,\n");
+	printf("     C. Batut, K. Belabas, D. Bernardi, H. Cohen and M. Olivier.\n");
 }
+
 
