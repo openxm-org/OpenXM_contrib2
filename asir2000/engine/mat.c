@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.5 2002/03/01 06:27:23 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.6 2002/04/10 02:59:10 saito Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -523,6 +523,9 @@ VECT *c;
 	else if ( a->col != b->len ) {
 		*c = 0; error("mulmatvect : size mismatch");
 	} else {
+		for ( i = 0; i < b->len; i++ )
+			if ( BDY(b)[i] && OID((Obj)BDY(b)[i]) > O_R )
+				error("mulmatvect : invalid argument");
 		arow = a->row; m = a->col;
 		MKVECT(t,arow);
 		for ( i = 0; i < arow; i++ ) {
@@ -550,6 +553,9 @@ VECT *c;
 	else if ( a->len != b->row ) {
 		*c = 0; error("mulvectmat : size mismatch");
 	} else {
+		for ( i = 0; i < a->len; i++ )
+			if ( BDY(a)[i] && OID((Obj)BDY(a)[i]) > O_R )
+				error("mulvectmat : invalid argument");
 		bcol = b->col; m = a->len;
 		MKVECT(t,bcol);
 		for ( j = 0; j < bcol; j++ ) {
