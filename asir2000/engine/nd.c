@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.6 2003/07/25 04:19:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.7 2003/07/25 07:25:16 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -2202,7 +2202,7 @@ ND ndv_add(ND p1,NDV p2)
 		FREENM(new);
 		if ( head ) {
 			BDY(p1) = head;
-			p1->sugar = MAX(p1->sugar,p2->sugar+td);
+			p1->sugar = MAX(p1->sugar,p2->sugar);
 			return p1;
 		} else {
 			FREEND(p1);
