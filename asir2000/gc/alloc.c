@@ -93,6 +93,7 @@ extern signed_word GC_mem_found;  /* Number of reclaimed longwords	*/
 GC_bool GC_dont_expand = 0;
 
 word GC_free_space_divisor = 3;
+word GC_free_space_numerator = 1;
 
 extern GC_bool GC_collection_in_progress();
 		/* Collection is in progress, or was abandoned.	*/
@@ -159,9 +160,9 @@ static word min_words_allocd()
 				   /* use a bit more of large empty heap */
 			       + total_root_size);
     if (TRUE_INCREMENTAL) {
-        return scan_size / (2 * GC_free_space_divisor);
+        return scan_size * GC_free_space_numerator / (2 * GC_free_space_divisor);
     } else {
-        return scan_size / GC_free_space_divisor;
+        return scan_size * GC_free_space_numerator / GC_free_space_divisor;
     }
 }
 
@@ -463,6 +464,7 @@ GC_stop_func stop_func;
 #   if defined(CONDPRINT) && !defined(PRINTTIMES)
 	if (GC_print_stats) GET_TIME(start_time);
 #   endif
+    GC_timerstart();
     STOP_WORLD();
 #   ifdef CONDPRINT
       if (GC_print_stats) {
@@ -495,6 +497,7 @@ GC_stop_func stop_func;
 #		    endif
 		    GC_deficit = i; /* Give the mutator a chance. */
 	            START_WORLD();
+    			GC_timerstop();
 	            return(FALSE);
 	    }
 	    if (GC_mark_some((ptr_t)(&dummy))) break;
@@ -528,6 +531,7 @@ GC_stop_func stop_func;
         }
     
     START_WORLD();
+    GC_timerstop();
 #   ifdef PRINTTIMES
 	GET_TIME(current_time);
 	GC_printf1("World-stopped marking took %lu msecs\n",
@@ -608,6 +612,7 @@ void GC_finish_collection()
 	GET_TIME(start_time);
 	finalize_time = start_time;
 #   endif
+	GC_timerstart();
 
 #   ifdef GATHERSTATS
         GC_mem_found = 0;
@@ -724,6 +729,7 @@ void GC_finish_collection()
 	           MS_TIME_DIFF(finalize_time,start_time),
 	           MS_TIME_DIFF(done_time,finalize_time));
 #   endif
+	GC_timerstop();
 }
 
 /* Externally callable routine to invoke full, stop-world collection */

@@ -992,7 +992,8 @@ GC_bool ignore_old;
 	
 	GET_TIME(start_time);
 #   endif
-    
+    GC_timerstart();
+
     for (kind = 0; kind < GC_n_kinds; kind++) {
     	ok = &(GC_obj_kinds[kind]);
     	rlp = ok -> ok_reclaim_list;
@@ -1014,6 +1015,7 @@ GC_bool ignore_old;
             }
         }
     }
+    GC_timerstop();
 #   ifdef PRINTTIMES
 	GET_TIME(done_time);
 	GC_printf1("Disposing of reclaim lists took %lu msecs\n",
