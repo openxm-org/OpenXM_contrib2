@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.14 2001/09/04 05:14:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.15 2001/09/07 08:54:57 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1303,7 +1303,7 @@ int md;
 					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
 					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
 				}
-				for ( ; k >= 0; k-- ) {
+				for ( ; k > 0; k-- ) {
 					if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
 				}
 			}
@@ -1390,7 +1390,7 @@ int md;
 			hc = md-hc;
 			s = redmat[i]+j;
 			tj = sp+j;
-			for ( k = col-j; k >= 0; k-- ) {
+			for ( k = col-j; k > 0; k-- ) {
 				if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
 			}
 		}
@@ -1484,7 +1484,7 @@ int *colstat;
 					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
 					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
 				}
-				for ( ; k >= 0; k -- ) {
+				for ( ; k > 0; k -- ) {
 					if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
 				}
 			}
@@ -1517,7 +1517,7 @@ int *colstat;
 					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
 					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
 					}
-					for ( ; k >= 0; k -- ) {
+					for ( ; k > 0; k -- ) {
 						if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
 					}
 				}
