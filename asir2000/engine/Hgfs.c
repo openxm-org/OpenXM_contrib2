@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.17 2001/09/03 07:01:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.18 2001/10/09 01:36:10 noro Exp $ */
 
 #include "ca.h"
 
@@ -517,7 +517,7 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 	BM fl;
 	VL vl,nvl;
 	V y;
-	int dx,dy;
+	int dx,dy,bound;
 	GFS ev;
 	P f1,t,c,sf;
 	DCP dc;
@@ -554,9 +554,12 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 		ptosfum(dc->c,gm[i]);
 	}
 
+	/* set bound */
+	bound = dy+2;
+
 	/* f(x,y) -> f(x,y+ev) */
-	fl = BMALLOC(dx,dy);
-	ptosfbm(dy,f,fl);
+	fl = BMALLOC(dx,bound);
+	ptosfbm(bound,f,fl);
 	if ( ev ) shiftsfbm(fl,FTOIF(CONT(ev)));
 
 	/* sf = f(x+ev) */
@@ -568,7 +571,7 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 	hm = W_UMALLOC(dx);
 
 	q = W_UMALLOC(dx);
-	rlist = MLALLOC(fn); rlist->n = fn; rlist->bound = dy;
+	rlist = MLALLOC(fn); rlist->n = fn; rlist->bound = bound;
 	fprintf(asir_out,"%d candidates\n",fn);
 	init_eg(&eg_hensel);
 	for ( i = 0; i < fn-1; i++ ) {
@@ -578,9 +581,9 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 		get_eg(&tmp0);
 		/* fl = gm[i]*hm mod y */
 		divsfum(fm,gm[i],hm);
-		/* fl is replaced by the cofactor of gk mod y^dy */
+		/* fl is replaced by the cofactor of gk mod y^bound */
 		/* rlist->c[i] = gk */
-		sfhenmain2(fl,gm[i],hm,dy,(BM *)&rlist->c[i]);
+		sfhenmain2(fl,gm[i],hm,bound,(BM *)&rlist->c[i]);
 		cpyum(hm,fm);
 		get_eg(&tmp1); add_eg(&eg_hensel_t,&tmp0,&tmp1);
 		add_eg(&eg_hensel,&tmp0,&tmp1);
@@ -970,7 +973,7 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 	ML wlist;
 	struct oVL vl1,vl0;
 	VL vl;
-	int z;
+	int z,dt,dtok;
 
 	/* vl = [x,y] */
 	vl0.v = x; vl0.next = &vl1; vl1.v = y; vl1.next = 0; vl = &vl0;
@@ -982,7 +985,7 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 	win = W_ALLOC(np+1);
 	wlist = W_MLALLOC(np);
 	wlist->n = list->n;
-	wlist->bound = dy;
+	wlist->bound = list->bound;
 	c = (BM *)COEF(wlist);
 	bcopy((char *)COEF(list),(char *)c,(int)(sizeof(BM)*np));
 
@@ -1007,9 +1010,14 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 	ptosfbm(dy,lcyx,lcy);
 
 	fprintf(stderr,"np = %d\n",np);
+	dtok = 0;
 	for ( g = f, k = 1, dcf = dcf0 = 0, win[0] = 1, --np, z = 0; ; z++ ) {
 		if ( !(z % 1000) ) fprintf(stderr,".");
-		if ( sfdtestmain(vl,lcg,lcg0,lcy,csum,wlist,k,win,&factor,&cofactor) ) {
+		dt = sfdegtest(dy,wlist,k,win);
+		if ( dt )
+			dtok++;
+		if ( dt && sfdtestmain(vl,lcg,lcg0,lcy,csum,wlist,
+				k,win,&factor,&cofactor) ) {
 			NEXTDC(dcf0,dcf); DEG(dcf) = ONE; COEF(dcf) = factor;
 			g = cofactor;
 
@@ -1021,6 +1029,9 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 
 			/* update csum */
 			sfcsump(vl,lcg,&csum);
+
+			/* update dy */
+			dy = getdeg(y,g);
 
 			/* update lcy */
 			clearbm(0,lcy);
@@ -1050,12 +1061,56 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 				for ( i = 0, ++k; i < k; i++ ) 
 					win[i] = i + 1;
 	}
-	fprintf(stderr,"\n");
+	fprintf(stderr,"total %d, omitted by degtest %d\n",z,z-dtok);
 	NEXTDC(dcf0,dcf); COEF(dcf) = g;
 	DEG(dcf) = ONE; NEXT(dcf) = 0; *dcp = dcf0;
 }
 
+void extractcoefbm(BM f,int d,UM r)
+{
+	int j;
+	UM fj;
+
+	for ( j = DEG(f); j >= 0; j-- ) {
+		fj = COEF(f)[j];
+		if ( fj && DEG(fj) >= d ) {
+			COEF(r)[j] = COEF(fj)[d];
+		} else
+			COEF(r)[j] = 0;
+	}
+	degum(r,DEG(f));
+}
+
+/* deg_y(prod mod y^(bound+1)) <= dy ? */
+
+int sfdegtest(int dy,ML list,int k,int *in)
+{
+	int bound,dx,dx1,i,j;
+	UM w,w1,w2,wt;
+	BM t;
+
+	bound = list->bound;
+	w = W_UMALLOC(bound);
+	w1 = W_UMALLOC(bound);
+	w2 = W_UMALLOC(bound);
+	clearum(w,bound);
+	for ( i = 0; i < k; i++ ) {
+		t = (BM)list->c[in[i]];
+		dx = degbm(t);
+		dx1 = dx-1;
+		/* t = t->c[0] + t->c[1]*y + ... + t->c[j]*y^j + ... */
+		/* extract coef. of x^dx1 and add it to w */
+		extractcoefbm(t,dx1,w1);
+		addsfum(w,w1,w2); wt = w; w = w2; w2 = wt;
+	}
+	for ( j = bound; j >= dy; j-- )
+		if ( COEF(w)[j] )
+			break;
+	return j <= dy ? 1 : 0;
+}
+
 /* lcy = LC(g), lcg = lcy*g, lcg0 = const part of lcg */
+
 int sfdtestmain(VL vl,P lcg,UM lcg0,BM lcy,P csum,ML list,
 	int k,int *in,P *fp,P *cofp)
 {
