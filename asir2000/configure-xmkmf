@@ -1,0 +1,78 @@
+#!/bin/sh
+# $OpenXM$
+
+use_plot=0
+use_pari=0
+use_interval=0
+use_fep=0
+oxhome=/usr/local
+
+if [ -d ../../OpenXM ]; then
+oxhome=`( cd ../../OpenXM ; pwd )`
+fi
+
+while [ $# -gt 0 ]
+do
+	case $1 in
+	-oxhome)
+		shift; oxhome=$1 ;;
+	-plot)
+		use_plot=1 ;;
+	-oldpari)
+		use_pari=1 ;;
+	-pari)
+		use_pari=2 ;;
+	-interval)
+		use_interval=1 ;;
+	-fep)
+		use_fep=1 ;;
+	esac
+	shift
+done
+
+libname=libasir
+
+rm -f include/config.h
+echo "#define OpenXM_HOME ${oxhome}" >> include/config.h
+
+#cat > include/config.h <<EOF
+##define OpenXM_HOME ${oxhome}
+#EOF
+
+if [ $use_pari = 1 ]; then
+libname=$libname"_pari"
+libpari=pari
+echo "#define USE_PARI" >> include/config.h
+fi
+
+if [ $use_pari = 2 ]; then
+libname=$libname"_pari"
+libpari=pari-2.2
+echo "#define USE_PARI" >> include/config.h
+fi
+
+if [ $use_plot != 0 ]; then
+libname=$libname"_X"
+echo "#define USE_PLOT" >> include/config.h
+fi
+
+if [ $use_interval != 0 ]; then
+libname=$libname"_itv"
+echo "#define USE_INTERVAL" >> include/config.h
+fi
+
+if [ $use_fep != 0 ]; then
+echo "#define USE_FEP" >> include/config.h
+fi
+
+echo LIBPARI=$libpari >> include/config.h
+echo LIBASIR=$libname.a >> include/config.h
+
+case "`PATH=/usr/bin:/bin uname`" in
+FreeBSD|SunOS|CYGWIN*)
+    (cd gc; ./configure --disable-threads)
+    ;;
+*)
+    (cd gc; ./configure)
+    ;;
+esac
