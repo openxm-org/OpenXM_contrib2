@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.18 2001/09/17 01:18:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.19 2001/09/17 02:47:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1452,7 +1452,7 @@ register int len;
 	p[r->index] = 0; r++;
 	for ( len--; len; len--, r++ ) {
 		pj = p+r->index;
-		DMA0(r->c,hc,*pj,up,lo);
+		DMA(r->c,hc,*pj,up,lo);
 		if ( up ) {
 			DSAB(m,up,lo,dmy,*pj);
 		} else
@@ -1474,7 +1474,7 @@ int len;
 	*p++ = 0; r++; len--;
 	for ( ; len; len--, r++, p++ )
 		if ( *r ) {
-			DMA0(*r,hc,*p,up,lo);
+			DMA(*r,hc,*p,up,lo);
 			if ( up ) {
 				DSAB(m,up,lo,dmy,*p);
 			} else

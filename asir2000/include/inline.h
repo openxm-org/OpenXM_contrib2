@@ -45,14 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.6 2001/08/24 07:42:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.7 2001/09/17 02:47:08 noro Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));
 #define DMAR(a1,a2,a3,d,r) (r)=dmar(a1,a2,a3,d);
-/* XXX special macro for X86 */
-#define DMA0(a1,a2,a3,u,l) DMA(a1,a2,a3,u,l)
-
 #define DM27(a1,a2,u,l) (l)=dm_27(a1,a2,&(u));
 #define DMA27(a1,a2,a3,u,l) (l)=dma_27(a1,a2,a3,&(u));
 #define DSAB27(base,a1,a2,u,l) (l)=dmab(base,a1,BASE27,a2,&(u));
@@ -304,7 +301,7 @@ asm volatile("movl	%%eax,%0"	: "=g" (l)	:		: "ax"	);
 #endif
 
 #undef DM
-#undef DMA0
+#undef DMA
 #undef DMB
 #undef DMAB
 #undef DMAR
@@ -324,7 +321,7 @@ asm volatile(" movl	%2,%%edx; movl	%3,%%eax; divl	%4; movl	%%edx,%0; movl	%%eax,
 #define DM(a1,a2,u,l)\
 asm volatile(" movl	%2,%%eax; mull	%3; movl	%%edx,%0; movl	%%eax,%1" :"=g"(u),"=g"(l) :"g"(a1),"g"(a2) :"ax","dx");
 
-#define DMA0(a1,a2,a3,u,l)\
+#define DMA(a1,a2,a3,u,l)\
 asm volatile("movl  %2,%%eax; mull  %3; addl    %4,%%eax; adcl  $0,%%edx; movl    %%edx,%0; movl %%eax,%1" :"=g"(u), "=g"(l) :"g"(a1),"g"(a2),"g"(a3) :"ax","dx");
 
 #define DMB(base,a1,a2,u,l)\
