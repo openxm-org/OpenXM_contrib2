@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.80 2003/10/10 10:07:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.81 2003/10/11 02:14:19 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -270,7 +270,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp);
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp);
 NODE nd_f4(int m);
 NODE nd_gb(int m,int ishomo,int checkonly);
-NODE nd_gb_trace(int m);
+NODE nd_gb_trace(int m,int ishomo);
 
 /* ndl functions */
 int ndl_weight(UINT *d);
@@ -1782,16 +1782,26 @@ again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
 			if ( ishomo ) {
-				for ( i = nd_psn-1; SG(nd_ps[i]) == sugar; i-- ) {
-					s = ndvtond(m,nd_ps[i]);
+				for ( i = nd_psn-1; SG(nd_psh[i]) == sugar; i-- ) {
+					if ( nd_demand )
+						nfv = ndv_load(i);
+					else
+						nfv = nd_ps[i];
+					s = ndvtond(m,nfv);
 					s = nd_separate_head(s,&head);
 					nd_nf(m,s,nd_ps,1,&dn,&nf);
 					if ( !m ) { mulq(HCQ(head),dn.z,&q); HCQ(head) = q; }
 					nf = nd_add(m,head,nf);
-					ndv_free(nd_ps[i]);
+					ndv_free(nfv);
 					nd_removecont(m,nf);
-					nd_ps[i] = ndtondv(m,nf); nd_free(nf);
-					nd_bound[i] = ndv_compute_bound(nd_ps[i]);
+					nfv = ndtondv(m,nf);
+					nd_free(nf);
+					nd_bound[i] = ndv_compute_bound(nfv);
+					if ( nd_demand ) {
+						ndv_save(nfv,i);
+						ndv_free(nfv);
+					} else
+						nd_ps[i] = nfv;
 				}
 			}
 			sugar = SG(l);
@@ -1835,14 +1845,15 @@ again:
 	return g;
 }
 
-NODE nd_gb_trace(int m)
+NODE nd_gb_trace(int m,int ishomo)
 {
 	int i,nh,sugar,stat;
 	NODE r,g,t;
 	ND_pairs d;
 	ND_pairs l;
-	ND h,nf,nfq;
+	ND h,nf,nfq,s,head;
 	NDV nfv,nfqv;
+	Q q;
 	union oNDC dn;
 
 	g = 0; d = 0;
@@ -1855,6 +1866,39 @@ NODE nd_gb_trace(int m)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
+			if ( ishomo ) {
+				for ( i = nd_psn-1; SG(nd_psh[i]) == sugar; i-- ) {
+					/* for nd_ps */
+					s = ndvtond(m,nd_ps[i]);
+					s = nd_separate_head(s,&head);
+					nd_nf_pbucket(m,s,nd_ps,1,&nf);
+					nf = nd_add(m,head,nf);
+					ndv_free(nd_ps[i]);
+					nd_ps[i] = ndtondv(m,nf);
+					nd_free(nf);
+
+					/* for nd_ps_trace */
+					if ( nd_demand )
+						nfv = ndv_load(i);
+					else
+						nfv = nd_ps_trace[i];
+					s = ndvtond(0,nfv);
+					s = nd_separate_head(s,&head);
+					nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
+					mulq(HCQ(head),dn.z,&q); HCQ(head) = q;
+					nf = nd_add(0,head,nf);
+					ndv_free(nfv);
+					nd_removecont(0,nf);
+					nfv = ndtondv(0,nf);
+					nd_free(nf);
+					nd_bound[i] = ndv_compute_bound(nfv);
+					if ( nd_demand ) {
+						ndv_save(nfv,i);
+						ndv_free(nfv);
+					} else
+						nd_ps_trace[i] = nfv;
+				}
+			}
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
@@ -2356,6 +2400,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	if ( fd0 ) NEXT(fd) = 0;
 	ndv_setup(m,0,fd0);
 	x = f4?nd_f4(m):nd_gb(m,ishomo,0);
+	nd_demand = 0;
 	x = ndv_reducebase(x);
 	x = ndv_reduceall(m,x);
 	for ( r0 = 0, t = x; t; t = NEXT(t) ) {
@@ -2377,7 +2422,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	NMV a;
 	P p;
 	EPOS oepos;
-	int obpe,oadv,wmax,i,len,cbpe;
+	int obpe,oadv,wmax,i,len,cbpe,ishomo;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -2401,8 +2446,11 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	nd_init_ord(ord);
 	nd_setup_parameters(nvar,max);
 	obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos;
+	ishomo = 1;
 	for ( in0 = 0, fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 		c = ptondv(CO,vv,(P)BDY(t));
+		if ( ishomo )
+			ishomo = ishomo && ndv_ishomo(c);
 		if ( c ) { 
 			NEXTNODE(in0,in); BDY(in) = (pointer)c;
 			NEXTNODE(fd0,fd); BDY(fd) = (pointer)ndv_dup(0,c);
@@ -2410,7 +2458,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	}
 	if ( in0 ) NEXT(in) = 0;
 	if ( fd0 ) NEXT(fd) = 0;
-	if ( homo ) {
+	if ( !ishomo && homo ) {
 		for ( t = in0, wmax = 0; t; t = NEXT(t) ) {
 			c = (NDV)BDY(t); len = LEN(c);
 			for ( a = BDY(c), i = 0; i < len; i++, NMV_ADV(a) )
@@ -2426,14 +2474,14 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 		if ( Demand )
 			nd_demand = 1;
 		ndv_setup(m,1,fd0);
-		cand = nd_gb_trace(m);
+		cand = nd_gb_trace(m,ishomo || homo);
 		if ( !cand ) {
 			/* failure */
 			if ( trace > 1 ) { *rp = 0; return; }
 			else m = get_lprime(++mindex);
 			continue;
 		}
-		if ( homo ) {
+		if ( !ishomo && homo ) {
 			/* dehomogenization */
 			for ( t = cand; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
 			nd_init_ord(ord);
@@ -2455,7 +2503,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 			/* try the next modulus */
 			m = get_lprime(++mindex);
 			/* reset the parameters */
-			if ( homo ) {
+			if ( !ishomo && homo ) {
 				nd_init_ord(&ord1);
 				nd_setup_parameters(nvar+1,wmax);
 			} else {
