@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.24 2001/10/09 01:36:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.25 2001/12/20 08:18:26 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -81,6 +81,8 @@ void Pirredpoly_up2();
 void Pnbpoly_up2();
 void Pqsort();
 void Pexponent_vector();
+void Pmat_swap_row_destructive();
+void Pmat_swap_col_destructive();
 
 struct ftab array_tab[] = {
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
@@ -115,6 +117,8 @@ struct ftab array_tab[] = {
 	{"x962_irredpoly_up2",Px962_irredpoly_up2,2},
 	{"irredpoly_up2",Pirredpoly_up2,2},
 	{"nbpoly_up2",Pnbpoly_up2,2},
+	{"mat_swap_row_destructive",Pmat_swap_row_destructive,3},
+	{"mat_swap_col_destructive",Pmat_swap_col_destructive,3},
 	{0,0,0},
 };
 
@@ -2226,6 +2230,48 @@ void Pirredpoly_up2(NODE arg,GF2N *rp)
 		*rp = 0;
 }
 
+void Pmat_swap_row_destructive(NODE arg, MAT *m)
+{
+	int i1,i2;
+	pointer *t;
+	MAT mat;
+
+	asir_assert(ARG0(arg),O_MAT,"mat_swap_row_destructive");
+	asir_assert(ARG1(arg),O_N,"mat_swap_row_destructive");
+	asir_assert(ARG2(arg),O_N,"mat_swap_row_destructive");
+	mat = (MAT)ARG0(arg);
+	i1 = QTOS((Q)ARG1(arg));
+	i2 = QTOS((Q)ARG2(arg));
+	if ( i1 < 0 || i2 < 0 || i1 >= mat->row || i2 >= mat->row )
+		error("mat_swap_row_destructive : Out of range");
+	t = mat->body[i1];
+	mat->body[i1] = mat->body[i2];
+	mat->body[i2] = t;
+	*m = mat;
+}
+
+void Pmat_swap_col_destructive(NODE arg, MAT *m)
+{
+	int j1,j2,i,n;
+	pointer *mi;
+	pointer t;
+	MAT mat;
+
+	asir_assert(ARG0(arg),O_MAT,"mat_swap_col_destructive");
+	asir_assert(ARG1(arg),O_N,"mat_swap_col_destructive");
+	asir_assert(ARG2(arg),O_N,"mat_swap_col_destructive");
+	mat = (MAT)ARG0(arg);
+	j1 = QTOS((Q)ARG1(arg));
+	j2 = QTOS((Q)ARG2(arg));
+	if ( j1 < 0 || j2 < 0 || j1 >= mat->col || j2 >= mat->col )
+		error("mat_swap_col_destructive : Out of range");
+	n = mat->row;
+	for ( i = 0; i < n; i++ ) {
+		mi = mat->body[i];
+		t = mi[j1]; mi[j1] = mi[j2]; mi[j2] = t;
+	}
+	*m = mat;
+}
 /*
  * f = type 'type' normal polynomial of degree m if exists
  * IEEE P1363 A.7.2
