@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.122 2004/12/09 13:20:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.123 2005/01/23 14:03:48 noro Exp $ */
 
 #include "nd.h"
 
@@ -3415,7 +3415,7 @@ ND nd_quo(int mod,PGeoBucket bucket,NDV d)
 	ND p,t,r;
 	N tnm;
 
-	if ( !p ) return 0;
+	if ( bucket->m < 0 ) return 0;
 	else {
 		nv = NV(d);
 		mq0 = 0;
