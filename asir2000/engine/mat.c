@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.7 2002/05/27 03:00:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.8 2003/03/27 02:59:16 noro Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -72,7 +72,7 @@ MAT a,b,*c;
     for ( i = 0; i < row; i++ )
       for ( j = 0, ab = BDY(a)[i], bb = BDY(b)[i], tb = BDY(t)[i]; 
         j < col; j++ )
-        addr(vl,(Obj)ab[j],(Obj)bb[j],(Obj *)&tb[j]);
+        arf_add(vl,(Obj)ab[j],(Obj)bb[j],(Obj *)&tb[j]);
     *c = t;
   }
 }
@@ -97,7 +97,7 @@ MAT a,b,*c;
     for ( i = 0; i < row; i++ )
       for ( j = 0, ab = BDY(a)[i], bb = BDY(b)[i], tb = BDY(t)[i];
         j < col; j++ )
-        subr(vl,(Obj)ab[j],(Obj)bb[j],(Obj *)&tb[j]);
+        arf_sub(vl,(Obj)ab[j],(Obj)bb[j],(Obj *)&tb[j]);
     *c = t;
   }
 }
@@ -169,7 +169,7 @@ Obj a,b,*c;
 	else if ( OID(b) > O_R )
 		notdef(vl,a,b,c);
 	else {
-		divr(vl,(Obj)ONE,b,&t); mulrmat(vl,t,(MAT)a,(MAT *)c);
+		arf_div(vl,(Obj)ONE,b,&t); mulrmat(vl,t,(MAT)a,(MAT *)c);
 	}
 }	
 
@@ -188,7 +188,7 @@ MAT a,*b;
 		for ( i = 0; i < row; i++ )
 			for ( j = 0, ab = BDY(a)[i], tb = BDY(t)[i]; 
 				j < col; j++ )
-				chsgnr((Obj)ab[j],(Obj *)&tb[j]);
+				arf_chsgn((Obj)ab[j],(Obj *)&tb[j]);
 		*b = t;
 	} 
 }
@@ -261,7 +261,7 @@ MAT b,*c;
 		for ( i = 0; i < row; i++ )
 			for ( j = 0, bb = BDY(b)[i], tb = BDY(t)[i]; 
 				j < col; j++ )
-				mulr(vl,(Obj)a,(Obj)bb[j],(Obj *)&tb[j]);
+				arf_mul(vl,(Obj)a,(Obj)bb[j],(Obj *)&tb[j]);
 		*c = t;
 	}
 }
@@ -285,8 +285,8 @@ MAT a,b,*c;
 		for ( i = 0; i < arow; i++ )
 			for ( j = 0, ab = BDY(a)[i], tb = BDY(t)[i]; j < bcol; j++ ) {
 				for ( k = 0, s = 0; k < m; k++ ) {
-					mulr(vl,(Obj)ab[k],(Obj)BDY(b)[k][j],(Obj *)&u);
-					addr(vl,(Obj)s,(Obj)u,(Obj *)&v);
+					arf_mul(vl,(Obj)ab[k],(Obj)BDY(b)[k][j],(Obj *)&u);
+					arf_add(vl,(Obj)s,(Obj)u,(Obj *)&v);
 					s = v;
 				}
 				tb[j] = s;
@@ -339,8 +339,8 @@ MAT a,b,*c;
 			for ( i = 0; i < arow; i++ )
 				for ( j = 0, ab = BDY(a)[i], tb = BDY(t)[i]; j < bcol; j++ ) {
 					for ( k = 0, s = 0; k < m; k++ ) {
-						mulr(vl,(Obj)ab[k],(Obj)BDY(b)[k][j],(Obj *)&u);
-						addr(vl,(Obj)s,(Obj)u,(Obj *)&v);
+						arf_mul(vl,(Obj)ab[k],(Obj)BDY(b)[k][j],(Obj *)&u);
+						arf_add(vl,(Obj)s,(Obj)u,(Obj *)&v);
 						s = v;
 					}
 					tb[j] = s;
@@ -562,7 +562,7 @@ VECT *c;
 		MKVECT(t,arow);
 		for ( i = 0; i < arow; i++ ) {
 			for ( j = 0, s = 0, ab = BDY(a)[i]; j < m; j++ ) {
-				mulr(vl,(Obj)ab[j],(Obj)BDY(b)[j],(Obj *)&u); addr(vl,(Obj)s,(Obj)u,(Obj *)&v); s = v;
+				arf_mul(vl,(Obj)ab[j],(Obj)BDY(b)[j],(Obj *)&u); arf_add(vl,(Obj)s,(Obj)u,(Obj *)&v); s = v;
 			}
 			BDY(t)[i] = s;
 		}		
@@ -592,7 +592,7 @@ VECT *c;
 		MKVECT(t,bcol);
 		for ( j = 0; j < bcol; j++ ) {
 			for ( i = 0, s = 0; i < m; i++ ) {
-				mulr(vl,(Obj)BDY(a)[i],(Obj)BDY(b)[i][j],(Obj *)&u); addr(vl,(Obj)s,(Obj)u,(Obj *)&v); s = v;
+				arf_mul(vl,(Obj)BDY(a)[i],(Obj)BDY(b)[i][j],(Obj *)&u); arf_add(vl,(Obj)s,(Obj)u,(Obj *)&v); s = v;
 			}
 			BDY(t)[j] = s;
 		}
@@ -618,7 +618,7 @@ MAT a,b;
 		row = a->row; col = a->col;
 		for ( i = 0; i < row; i++ )
 			for ( j = 0; j < col; j++ )
-				if ( t = compr(vl,(Obj)BDY(a)[i][j],(Obj)BDY(b)[i][j]) )
+				if ( t = arf_comp(vl,(Obj)BDY(a)[i][j],(Obj)BDY(b)[i][j]) )
 					return t;
 		return 0;
 	}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/vect.c,v 1.2 2000/08/21 08:31:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/vect.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
 */
 #include "ca.h"
 
@@ -67,7 +67,7 @@ VECT a,b,*c;
 		len = a->len;
 		MKVECT(t,len);
 		for ( i = 0, ab = BDY(a), bb = BDY(b), tb = BDY(t); i < len; i++ )
-			addr(vl,(Obj)ab[i],(Obj)bb[i],(Obj *)&tb[i]);
+			arf_add(vl,(Obj)ab[i],(Obj)bb[i],(Obj *)&tb[i]);
 		*c = t;
 	}
 }
@@ -91,7 +91,7 @@ VECT a,b,*c;
 		MKVECT(t,len);
 		for ( i = 0, ab = BDY(a), bb = BDY(b), tb = BDY(t); 
 				i < len; i++ )
-				subr(vl,(Obj)ab[i],(Obj)bb[i],(Obj *)&tb[i]);
+				arf_sub(vl,(Obj)ab[i],(Obj)bb[i],(Obj *)&tb[i]);
 		*c = t;
 	}
 }
@@ -123,7 +123,7 @@ Obj a,b,*c;
 	else if ( OID(b) > O_R )
 		notdef(vl,a,b,c);
 	else {
-		divr(vl,(Obj)ONE,b,&t); mulrvect(vl,(Obj)t,(VECT)a,(VECT *)c);
+		arf_div(vl,(Obj)ONE,b,&t); mulrvect(vl,(Obj)t,(VECT)a,(VECT *)c);
 	}
 }
 
@@ -141,7 +141,7 @@ VECT a,*b;
 		MKVECT(t,len);
 		for ( i = 0, ab = BDY(a), tb = BDY(t); 
 			i < len; i++ )
-			chsgnr((Obj)ab[i],(Obj *)&tb[i]);
+			arf_chsgn((Obj)ab[i],(Obj *)&tb[i]);
 		*b = t;
 	} 
 }
@@ -161,7 +161,7 @@ VECT b,*c;
 		len = b->len;
 		MKVECT(t,len);
 		for ( i = 0, bb = BDY(b), tb = BDY(t); i < len; i++ )
-			mulr(vl,a,(Obj)bb[i],(Obj *)&tb[i]);
+			arf_mul(vl,a,(Obj)bb[i],(Obj *)&tb[i]);
 		*c = t;
 	}
 }
@@ -180,7 +180,7 @@ VECT a,b;
 		return a->len>b->len ? 1 : -1;
 	else {
 		for ( i = 0, len = a->len; i < len; i++ )
-			if ( t = compr(vl,(Obj)BDY(a)[i],(Obj)BDY(b)[i]) )
+			if ( t = arf_comp(vl,(Obj)BDY(a)[i],(Obj)BDY(b)[i]) )
 				return t;
 		return 0;
 	}
