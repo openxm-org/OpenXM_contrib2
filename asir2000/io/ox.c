@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.8 2000/09/12 06:05:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.9 2000/11/07 06:35:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -618,6 +618,7 @@ int ox_check_cmo(int s, Obj obj)
 		return 1;
 	switch ( OID(obj) ) {
 		case O_MATHCAP: case O_STR: case O_ERR: case O_USINT: case O_VOID:
+		case O_BYTEARRAY:
 			return 1;
 		case O_P:
 			if ( !check_by_mc(s,OX_DATA,CMO_RECURSIVE_POLYNOMIAL) )

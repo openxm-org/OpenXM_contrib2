@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.2 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.3 2000/08/22 05:04:28 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -124,7 +124,21 @@ pointer *vp;
 	int i,l;
 	NODE n,n0;
 	VECT v;
+	Q q;
 
+	if ( a && OID(a) == O_BYTEARRAY ) {
+		len = (Obj)BDY(ind);
+		if ( !rangecheck(len,((BYTEARRAY)a)->len) )
+			error("getarray : Out of range");
+		else if ( NEXT(ind) )
+			error("getarray : invalid index");
+		else {
+			i = (int)BDY((BYTEARRAY)a)[QTOS((Q)len)];
+			STOQ(i,q);
+			*vp = (pointer)q;
+		}
+		return;
+	}
 	for ( ; ind; ind = NEXT(ind) ) {
 		if ( !a )
 			error("getarray : array or list expected");
@@ -180,6 +194,16 @@ pointer b;
 	int i,l;
 	NODE n,n0;
 
+	if ( a && OID(a) == O_BYTEARRAY ) {
+		len = (Obj)BDY(ind);
+		if ( !rangecheck(len,((BYTEARRAY)a)->len) )
+			error("putarray : Out of range");
+		else if ( NEXT(ind) )
+			error("putarray : invalid index");
+		else
+			BDY((BYTEARRAY)a)[QTOS((Q)len)] = (unsigned char)QTOS((Q)b);
+		return;
+	}
 	for ( ; ind; ind = NEXT(ind) ) {
 		if ( !a )
 			error("putarray : array expected");

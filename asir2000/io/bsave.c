@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.2 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.3 2000/08/22 05:04:17 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -80,14 +80,10 @@ void saveq(FILE *,Q);
 void savenum(FILE *,Num);
 void savepfins(FILE *,V);
 void savegfmmat(FILE *,GFMMAT);
-
-#define O_GF2MAT 12
-#define O_MATHCAP 13
-#define O_F 14
-#define O_GFMMAT 15
+void savebytearray(FILE *,BYTEARRAY);
 
 void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
-	savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat };
+	savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat, savebytearray };
 void (*nsavef[])() = { saveq, savereal, 0, savebf, savecplx ,savemi, savelm, savegf2n, savegfpn};
 
 static short zeroval = 0;
@@ -373,4 +369,12 @@ GFMMAT p;
 	write_short(s,&OID(p)); write_int(s,&p->row); write_int(s,&p->col);
 	for ( i = 0, row = p->row, col = p->col; i < row; i++ )
 		write_intarray(s,p->body[i],col);
+}
+
+void savebytearray(s,p)
+FILE *s;
+BYTEARRAY p;
+{
+	write_short(s,&OID(p)); write_int(s,&p->len);
+	write_string(s,p->body,p->len);
 }

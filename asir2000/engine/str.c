@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/str.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/str.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 
@@ -66,4 +66,33 @@ VL vl;
 STRING a,b;
 {
 	return a ? (b?strcmp(BDY(a),BDY(b)):1) : (b?-1:0);
+}
+
+/* primitive functions for BYTEARRAY */
+
+int compbytearray(vl,a,b)
+VL vl;
+BYTEARRAY a,b;
+{
+	int i;
+
+	if ( !a )
+		if ( b )
+			return -1;
+		else
+			return 0;
+	else if ( !b )
+		return 1;
+	else if ( a->len > b->len )
+		return 1;
+	else if ( a->len < b->len )
+		return -1;
+	else {
+		for ( i = 0; i < a->len; i++ )
+			if ( a->body[i] > b->body[i] )
+				return 1;
+			else if ( a->body[i] < b->body[i] )
+				return -1;
+		return 0;
+	}
 }

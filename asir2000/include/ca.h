@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.4 2000/08/21 08:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.5 2000/08/22 05:04:15 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -111,6 +111,7 @@ typedef void * pointer;
 #define O_MATHCAP 13
 #define O_F 14
 #define O_GFMMAT 15
+#define O_BYTEARRAY 16
 #define O_VOID -1
 
 #define N_Q 0
@@ -317,6 +318,13 @@ typedef struct oMATHCAP {
 	short pad;
 	struct oLIST *body;
 } *MATHCAP;
+
+typedef struct oBYTEARRAY {
+	short id;
+	short pad;
+	int len;
+	unsigned char *body;
+} *BYTEARRAY;
 
 typedef struct oObj {
 	short id;
@@ -527,6 +535,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWUSINT(u) ((u)=(USINT)MALLOC_ATOMIC(sizeof(struct oUSINT)),OID(u)=O_USINT)
 #define NEWERR(e) ((e)=(ERR)MALLOC(sizeof(struct oERR)),OID(e)=O_ERR)
 #define NEWMATHCAP(e) ((e)=(MATHCAP)MALLOC(sizeof(struct oMATHCAP)),OID(e)=O_MATHCAP)
+#define NEWBYTEARRAY(e) ((e)=(BYTEARRAY)MALLOC(sizeof(struct oBYTEARRAY)),OID(e)=O_BYTEARRAY)
 
 #define NEWNODE(a) ((a)=(NODE)MALLOC(sizeof(struct oNODE)))
 #define NEWDC(dc) ((dc)=(DCP)MALLOC(sizeof(struct oDCP)))
@@ -574,6 +583,8 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKUSINT(u,b) (NEWUSINT(u),(u)->body=(unsigned)(b))
 #define MKERR(e,b) (NEWERR(e),(e)->body=(Obj)(b))
 #define MKMATHCAP(e,b) (NEWMATHCAP(e),(e)->body=(LIST)(b))
+#define MKBYTEARRAY(m,l) \
+(NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
 
 #define NEXTDC(r,c) \
 if(!(r)){NEWDC(r);(c)=(r);}else{NEWDC(NEXT(c));(c)=NEXT(c);}
@@ -678,6 +689,7 @@ extern void (*chsgnnumt[])();
 
 /* prototypes */
 int compui(VL,USINT,USINT);
+int compbytearray(VL,BYTEARRAY,BYTEARRAY);
 
 void powermodup(UP,UP *);
 void hybrid_powermodup(UP,UP *);

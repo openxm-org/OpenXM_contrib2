@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.2 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.3 2000/08/22 05:04:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,13 +76,14 @@ void loadreal(FILE *,Real *);
 void loadq(FILE *,Q *);
 void loadnum(FILE *,Num *);
 void loadgfmmat(FILE *,GFMMAT *);
+void loadbytearray(FILE *,BYTEARRAY *);
 
 V loadpfins(FILE *);
 
 extern VL file_vl;
 
 void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
-	loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat };
+	loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat, loadbytearray };
 void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn };
 
 void loadobj(s,p)
@@ -402,6 +403,21 @@ char **p;
 	} else
 		t = "";
 	*p = t;
+}
+
+void loadbytearray(s,p)
+FILE *s;
+BYTEARRAY *p;
+{
+	int len;
+	BYTEARRAY array;
+
+	read_int(s,&len);
+	MKBYTEARRAY(array,len);
+	if ( len ) {
+		read_string(s,array->body,len);
+	}
+	*p = array;
 }
 
 void loaddp(s,p)

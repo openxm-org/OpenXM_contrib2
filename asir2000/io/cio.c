@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.4 2000/08/22 05:04:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.5 2000/09/07 23:59:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,7 +64,7 @@ Obj obj;
 		return 1;
 	switch ( OID(obj) ) {
 		case O_MATHCAP: case O_P: case O_R: case O_DP: case O_STR:
-		case O_ERR: case O_USINT: case O_VOID:
+		case O_ERR: case O_USINT: case O_BYTEARRAY: case O_VOID:
 			return 1;
 		case O_N:
 			if ( NID((Num)obj) == N_Q || NID((Num)obj) == N_R )
@@ -131,6 +131,9 @@ Obj obj;
 			break;
 		case O_ERR:
 			write_cmo_error(s,obj);
+			break;
+		case O_BYTEARRAY:
+			write_cmo_bytearray(s,obj);
 			break;
 		case O_VOID:
 			r = ((USINT)obj)->body; write_int(s,&r);
@@ -385,6 +388,17 @@ STRING str;
 	savestr(s,BDY(str));	
 }
 
+write_cmo_bytearray(s,array)
+FILE *s;
+BYTEARRAY array;
+{
+	int r;
+
+	r = CMO_DATUM; write_int(s,&r);
+	write_int(s,&array->len);
+	write_string(s,array->body,array->len);
+}
+
 write_cmo_error(s,e)
 FILE *s;
 ERR e;
@@ -414,6 +428,7 @@ Obj *rp;
 	Obj obj;
 	ERR e;
 	MATHCAP mc;
+	BYTEARRAY array;
 
 	read_int(s,&id);
 	switch ( id ) {
@@ -425,6 +440,8 @@ Obj *rp;
 			read_cmo_uint(s,rp);
 			break;
 		case CMO_DATUM:
+			loadbytearray(s,&array); *rp = (Obj)array;
+			break;
 		case CMO_STRING:
 			loadstring(s,&str); *rp = (Obj)str;
 			break;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.2 2000/08/21 08:31:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -66,20 +66,23 @@ ARF addfs, subfs, mulfs, divfs, remfs, pwrfs;
 void divsdc();
 
 struct oAFUNC afunc[] = {
-/* ??? */	{0,0,0,0,0,0,0},
-/* O_N */	{addnum,subnum,mulnum,divnum,pwrnum,chsgnnum,compnum},
-/* O_P */	{addp,subp,mulp,divr,pwrp,chsgnp,compp},
-/* O_R */	{addr,subr,mulr,divr,pwrr,chsgnr,compr},
-/* O_LIST */	{notdef,notdef,notdef,notdef,notdef,notdef,complist},
-/* O_VECT */	{addvect,subvect,mulvect,divvect,notdef,chsgnvect,compvect},
-/* O_MAT */	{addmat,submat,mulmat,divmat,pwrmat,chsgnmat,compmat},
-/* O_STR */	{addstr,notdef,notdef,notdef,notdef,notdef,compstr},
-/* O_COMP */	{addcomp,subcomp,mulcomp,divcomp,pwrcomp,chsgncomp,compcomp},
-/* O_DP */   {addd,subd,muld,divsdc,notdef,chsgnd,compd},
-/* O_UI */	{notdef,notdef,notdef,notdef,notdef,notdef,compui},
-/* O_GF2MAT */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_ERR */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_GFMMAT */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* ???=0 */	{0,0,0,0,0,0,0},
+/* O_N=1 */	{addnum,subnum,mulnum,divnum,pwrnum,chsgnnum,compnum},
+/* O_P=2 */	{addp,subp,mulp,divr,pwrp,chsgnp,compp},
+/* O_R=3 */	{addr,subr,mulr,divr,pwrr,chsgnr,compr},
+/* O_LIST=4 */	{notdef,notdef,notdef,notdef,notdef,notdef,complist},
+/* O_VECT=5 */	{addvect,subvect,mulvect,divvect,notdef,chsgnvect,compvect},
+/* O_MAT=6 */	{addmat,submat,mulmat,divmat,pwrmat,chsgnmat,compmat},
+/* O_STR=7 */	{addstr,notdef,notdef,notdef,notdef,notdef,compstr},
+/* O_COMP=8 */	{addcomp,subcomp,mulcomp,divcomp,pwrcomp,chsgncomp,compcomp},
+/* O_DP=9 */   {addd,subd,muld,divsdc,notdef,chsgnd,compd},
+/* O_USINT=10 */	{notdef,notdef,notdef,notdef,notdef,notdef,compui},
+/* O_ERR=11 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* O_GF2MAT=12 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* O_MATHCAP=13 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* O_F=14 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* O_GFMMAT=15 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* O_BYTEARRAY=16 */	{notdef,notdef,notdef,notdef,notdef,notdef,compbytearray},
 };
 
 void arf_init() {

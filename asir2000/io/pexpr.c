@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.3 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.4 2000/08/22 05:04:18 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -87,6 +87,7 @@ int fortran_output;
 #define PRINTUI printui
 #define PRINTGF2MAT printgf2mat
 #define PRINTGFMMAT printgfmmat
+#define PRINTBYTEARRAY printbytearray
 #define PRINTERR printerr
 #define PRINTLF printlf
 #define PRINTLOP printlop
@@ -125,6 +126,7 @@ extern int fortran_output;
 #define PRINTUI sprintui
 #define PRINTGF2MAT sprintgf2mat
 #define PRINTGFMMAT sprintgfmmat
+#define PRINTBYTEARRAY sprintbytearray
 #define PRINTERR sprinterr
 #define PRINTLF sprintlf
 #define PRINTLOP sprintlop
@@ -149,6 +151,7 @@ void PRINTDP();
 void PRINTUI();
 void PRINTGF2MAT();
 void PRINTGFMMAT();
+void PRINTBYTEARRAY();
 void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
@@ -245,6 +248,8 @@ Obj p;
 			PRINTLF(vl,(F)p); break;
 		case O_GFMMAT:
 			PRINTGFMMAT(vl,(GFMMAT)p); break;
+		case O_BYTEARRAY:
+			PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
 		default:
 			break;
 	}
@@ -612,6 +617,24 @@ GFMMAT mat;
 		}
 		PUTS("]\n");
 	}
+}
+
+void PRINTBYTEARRAY(vl,array)
+VL vl;
+BYTEARRAY array;
+{
+	int len,i;
+	unsigned int t;
+	unsigned char *b;
+
+	len = array->len;
+	b = array->body;
+	PUTS("|");
+	for ( i = 0; i < len-1; i++ ) {
+		TAIL PRINTF(OUT,"%02x ",(unsigned int)b[i]);
+	}
+	TAIL PRINTF(OUT,"%02x",(unsigned int)b[i]);
+	PUTS("|");
 }
 
 void PRINTERR(vl,e)

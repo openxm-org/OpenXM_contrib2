@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.7 2000/08/22 05:03:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.8 2000/09/21 09:19:25 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -73,6 +73,7 @@ int gauss_elim_mod1(int **,int,int,int);
 int gauss_elim_geninv_mod(unsigned int **,int,int,int);
 int gauss_elim_geninv_mod_swap(unsigned int **,int,int,unsigned int,unsigned int ***,int **);
 void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm();
+void Pnewbytearray();
 
 void Pgeneric_gauss_elim_mod();
 
@@ -97,6 +98,7 @@ struct ftab array_tab[] = {
 	{"generic_gauss_elim_mod",Pgeneric_gauss_elim_mod,2},
 	{"newvect",Pnewvect,-2},
 	{"newmat",Pnewmat,-3},
+	{"newbytearray",Pnewbytearray,-2},
 	{"sepmat_destructive",Psepmat_destructive,2},
 	{"sepvect",Psepvect,2},
 	{"qsort",Pqsort,-2},
@@ -372,6 +374,35 @@ VECT *rp;
 			vb[i] = (pointer)BDY(tn);
 	}
 	*rp = vect;
+}
+
+void Pnewbytearray(arg,rp)
+NODE arg;
+BYTEARRAY *rp;
+{
+	int len,i,r;
+	BYTEARRAY array;
+	unsigned char *vb;
+	LIST list;
+	NODE tn;
+
+	asir_assert(ARG0(arg),O_N,"newbytearray");
+	len = QTOS((Q)ARG0(arg)); 
+	if ( len < 0 )
+		error("newbytearray : invalid size");
+	MKBYTEARRAY(array,len);
+	if ( argc(arg) == 2 ) {
+		list = (LIST)ARG1(arg);
+		asir_assert(list,O_LIST,"newbytearray");
+		for ( r = 0, tn = BDY(list); tn; r++, tn = NEXT(tn) );
+		if ( r > len ) {
+			*rp = array;
+			return;
+		}
+		for ( i = 0, tn = BDY(list), vb = BDY(array); tn; i++, tn = NEXT(tn) )
+			vb[i] = (unsigned char)QTOS((Q)BDY(tn));
+	}
+	*rp = array;
 }
 
 void Pnewmat(arg,rp)
