@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.6 2003/02/14 22:29:07 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.7 2004/06/22 09:17:21 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -284,9 +284,15 @@ Obj *rp;
 	pf = ins->pf; ad = ins->ad; a0 = ad[0].arg; a1 = ad[1].arg;	
 	if ( !a1 )
 		*rp = (Obj)ONE;
-	else if ( !a0 )
-		*rp = 0;
-	else if ( NUM(a1) && INT(a1) )
+	else if ( !a0 ) {
+		if ( RATN(a1) && SGN((Q)a1)>0 )
+			*rp = 0;
+		else if ( RATN(a1) && SGN((Q)a1) < 0 )
+			error("simplify_pow : division by 0");
+		else {
+			instov(ins,&v); MKV(v,t); *rp = (Obj)t;
+		}
+	} else if ( NUM(a1) && INT(a1) )
 		arf_pwr(CO,a0,a1,rp);
 	else {
 		instov(ins,&v); MKV(v,t); *rp = (Obj)t;

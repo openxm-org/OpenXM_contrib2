@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.14 2004/05/14 06:02:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.15 2004/06/15 16:14:50 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -243,12 +243,14 @@ Obj a,e,*r;
 {
 	R t;
 
-	if ( !a )
+	if ( !a ) {
 		if ( !e )
 			*r = (pointer)ONE;
-		else
+		else if ( RATN(e) && SGN((Q)e)>0 )
 			*r = 0;
-	else if ( OID(a) == O_QUOTE )
+		else
+			mkpow(vl,a,e,r);
+	} else if ( OID(a) == O_QUOTE )
 		(*(afunc[O_QUOTE].pwr))(vl,a,e,r);
 	else if ( !e ) {
 		if ( OID(a) == O_MAT )
