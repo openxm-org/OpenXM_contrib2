@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.15 2003/03/20 05:36:39 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.16 2003/03/20 07:06:31 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -9,7 +9,13 @@ endif
 
 SUBDIRS  = asm builtin engine fft include io lib parse ${PLOTDIR}
 
-DEFS     = @DEFS@ -DASIR_LIBDIR=\"${prefix}/lib/asir\"
+asirdir       = ${libdir}/asir
+asir_PROGRAMS = asir
+asir_SOURCES  = parse/main.c
+asir_LDADD    = libasir.a libasir-gc.a
+CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
+
+DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/gc/include \
            @PARIINC@ @MPIINC@ @X_CFLAGS@
@@ -25,11 +31,6 @@ PLIB  = parse/libparse.a
 ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
 LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS}
 # EXTRALIBS = @EXTRALIBS@
-
-bin_PROGRAMS   = asir
-asir_SOURCES   = parse/main.c
-asir_LDADD     = libasir.a libasir-gc.a
-CLEANFILES     = ${asir_LDADD}
 
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
@@ -66,28 +67,22 @@ libasir.a: ${ASIRLIB}
 #	-rm $@
 #	ld -r $@ umain.o ${ASIRLIB} ${GLIB} ${LIBS} ${EXTRALIBS}
 
-install-exec-hook:
-	-mkdir -p ${DESTDIR}${prefix}/lib/asir
-	-if [ -x ${DESTDIR}${prefix}/bin/asir ]; then \
-		mv ${DESTDIR}${prefix}/bin/asir${EXEEXT} ${DESTDIR}${prefix}/lib/asir/ ; \
-	fi
-
 install-libasir: libasir.a
-	mkdir -p ${DESTDIR}${prefix}/lib
-	${INSTALL_DATA} libasir.a ${DESTDIR}${prefix}/lib/libasir${libasir_postfix}.a
+	mkdir -p ${DESTDIR}${libdir}
+	${INSTALL_DATA} libasir.a ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
 
 install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
-	-mkdir -p ${DESTDIR}${prefix}/bin
-	${INSTALL_PROGRAM} asir ${DESTDIR}${prefix}/bin/
-	-mkdir -p ${DESTDIR}${prefix}/lib/asir
+	-mkdir -p ${DESTDIR}${bindir}
+	${INSTALL_PROGRAM} asir ${DESTDIR}${bindir}
+	-mkdir -p ${DESTDIR}${asirdir}
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
-	${INSTALL_DATA} libasir.a    ${DESTDIR}${prefix}/lib/libasir${libasir_postfix}.a
-	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${prefix}/lib/libasir-gc.a
-	-rm -f ${DESTDIR}${prefix}/bin/ox_asir${EXEEXT}
-	(cd ${DESTDIR}${prefix}/bin ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
-	-(cd ${DESTDIR}${prefix}/lib/asir; \
+	${INSTALL_DATA} libasir.a    ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
+	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir-gc.a
+	-rm -f ${DESTDIR}${bindir}/ox_asir${EXEEXT}
+	(cd ${DESTDIR}${bindir} ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
+	-(cd ${DESTDIR}${asirdir}; \
     rm -f asir${EXEEXT} ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
-	(cd ${DESTDIR}${prefix}/lib/asir ; \
+	(cd ${DESTDIR}${asirdir} ; \
 	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
@@ -97,15 +92,15 @@ install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
 
 install-lib:
 	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
-	-(cd ${DESTDIR}${prefix}/lib/asir; \
+	-(cd ${DESTDIR}${asirdir}; \
 	rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
-	(cd ${DESTDIR}${prefix}/lib/asir ; \
+	(cd ${DESTDIR}${asirdir} ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
-	-mkdir -p ${DESTDIR}${prefix}/bin
-	-rm -f ${DESTDIR}${prefix}/bin/asir${EXEEXT}
-	(cd ${DESTDIR}${prefix}/bin ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
+	-mkdir -p ${DESTDIR}${bindir}
+	-rm -f ${DESTDIR}${bindir}/asir${EXEEXT}
+	(cd ${DESTDIR}${bindir} ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
 
 install-doc:
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc)
