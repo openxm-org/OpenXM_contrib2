@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.20 2001/06/27 09:14:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.21 2001/08/20 09:03:27 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -176,7 +176,6 @@ void notdef(vl,a,b,c)
 VL vl;
 Obj a,b,*c;
 {
-	*c = 0;
 	error("undefined arithmetic operation.");
 }
 
