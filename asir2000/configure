@@ -4764,6 +4764,9 @@ _ACEOF
 
 fi
 if test "${no_x}" != yes ; then
+    if test -f "${x_libraries}/libXpm.a" ; then
+	    XPMLIB="-lXpm"
+    fi
     # Check whether --enable-plot or --disable-plot was given.
 if test "${enable_plot+set}" = set; then
   enableval="$enable_plot"
@@ -4772,6 +4775,7 @@ else
   enable_plot=no
 fi;
 fi
+
 
 if test ${enable_plot:=no} != no ; then
     libasir_postfix=${libasir_postfix}_X
@@ -5835,6 +5839,7 @@ s,@X_LIBS@,$X_LIBS,;t t
 s,@X_EXTRA_LIBS@,$X_EXTRA_LIBS,;t t
 s,@PARIINC@,$PARIINC,;t t
 s,@PARILIB@,$PARILIB,;t t
+s,@XPMLIB@,$XPMLIB,;t t
 s,@USE_PLOT_TRUE@,$USE_PLOT_TRUE,;t t
 s,@USE_PLOT_FALSE@,$USE_PLOT_FALSE,;t t
 s,@FEPLIB@,$FEPLIB,;t t

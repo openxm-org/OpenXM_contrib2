@@ -78,6 +78,7 @@ PARIINC = @PARIINC@
 PARILIB = @PARILIB@
 RANLIB = @RANLIB@
 VERSION = @VERSION@
+XPMLIB = @XPMLIB@
 X_CFLAGS = @X_CFLAGS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
@@ -92,7 +93,7 @@ libasir_postfix = @libasir_postfix@
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 @USE_PLOT_TRUE@PLOTDIR = plot
 @USE_PLOT_TRUE@PLLIB = plot/libplot.a
-@USE_PLOT_TRUE@X11LIB = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@ 
+@USE_PLOT_TRUE@X11LIB = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
 
 SUBDIRS = asm builtin engine fft include io lib parse ${PLOTDIR}
 
