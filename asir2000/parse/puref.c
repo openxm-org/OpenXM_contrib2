@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.5 2003/05/20 06:15:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.6 2004/03/11 09:52:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -284,6 +284,14 @@ void derivr(VL vl,Obj a,V v,Obj *b)
 	}
 }
 
+void gen_pwrr(VL vl,Obj a,Obj d,Obj *r)
+{
+	if ( INT(d) )
+		pwrr(vl,a,d,r);
+	else
+		mkpow(vl,a,d,r);
+}
+
 void substr(VL vl,int partial,Obj a,V v,Obj b,Obj *c)
 {
 	Obj nm,dn,t;
@@ -338,7 +346,8 @@ void substpr(VL vl,int partial,Obj p,V v0,Obj p0,Obj *pr)
 		for ( c = 0, dc = DC((P)p); dc; dc = NEXT(dc) ) {
 			substpr(vl,partial,(Obj)COEF(dc),v0,p0,&t);
 			if ( DEG(dc) ) {
-				pwrp(vl,x,DEG(dc),(P *)&s); mulr(vl,s,t,&m); 
+				gen_pwrr(vl,(Obj)x,(Obj)DEG(dc),&s);
+				mulr(vl,s,t,&m); 
 				addr(vl,m,c,&a); c = a;
 			} else {
 				addr(vl,t,c,&a); c = a;
@@ -352,7 +361,8 @@ void substpr(VL vl,int partial,Obj p,V v0,Obj p0,Obj *pr)
 		else
 			c = (Obj)COEF(dc);
 		for ( d = DEG(dc), dc = NEXT(dc); dc; d = DEG(dc), dc = NEXT(dc) ) {
-				subq(d,DEG(dc),(Q *)&t); pwrr(vl,p0,t,&s); mulr(vl,s,c,&m); 
+				subq(d,DEG(dc),(Q *)&t);
+				gen_pwrr(vl,p0,t,&s); mulr(vl,s,c,&m); 
 				if ( !partial )
 					substpr(vl,partial,(Obj)COEF(dc),v0,p0,&t); 
 				else
@@ -360,7 +370,8 @@ void substpr(VL vl,int partial,Obj p,V v0,Obj p0,Obj *pr)
 				addr(vl,m,t,&c); 
 		}
 		if ( d ) {
-			pwrr(vl,p0,(Obj)d,&t); mulr(vl,t,c,&m); 
+			gen_pwrr(vl,p0,(Obj)d,&t);
+			mulr(vl,t,c,&m); 
 			c = m;
 		}
 		*pr = c;
@@ -658,7 +669,8 @@ void substfp(VL vl,Obj p,PF u,PF f,Obj *pr)
 			for ( c = 0; dc; dc = NEXT(dc) ) {
 				substfp(vl,(Obj)COEF(dc),u,f,&t);
 				if ( DEG(dc) ) {
-					pwrp(vl,x,DEG(dc),(P *)&s); mulr(vl,s,t,&m); 
+					gen_pwrr(vl,(Obj)x,(Obj)DEG(dc),&s);
+					mulr(vl,s,t,&m); 
 					addr(vl,m,c,&a); c = a;
 				} else {
 					addr(vl,t,c,&a); c = a;
@@ -668,11 +680,12 @@ void substfp(VL vl,Obj p,PF u,PF f,Obj *pr)
 			substfv(vl,v,u,f,&p0);
 			substfp(vl,(Obj)COEF(dc),u,f,&c); 
 			for ( d = DEG(dc), dc = NEXT(dc); dc; d = DEG(dc), dc = NEXT(dc) ) {
-					subq(d,DEG(dc),(Q *)&t); pwrr(vl,p0,t,&s); mulr(vl,s,c,&m); 
+					subq(d,DEG(dc),(Q *)&t); 
+					gen_pwrr(vl,p0,t,&s); mulr(vl,s,c,&m); 
 					substfp(vl,(Obj)COEF(dc),u,f,&t); addr(vl,m,t,&c); 
 			}
 			if ( d ) {
-				pwrr(vl,p0,(Obj)d,&t); mulr(vl,t,c,&m); 
+				gen_pwrr(vl,p0,(Obj)d,&t); mulr(vl,t,c,&m); 
 				c = m;
 			}
 		}
