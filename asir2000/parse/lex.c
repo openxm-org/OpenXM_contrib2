@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.23 2003/03/07 03:12:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.24 2003/05/14 06:20:12 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -299,9 +299,26 @@ int yylex()
 		}
 		yylvalp->p = (pointer)r;
 		return ( FORMULA );
-	} else if ( isalpha(c) ) {
-		i = 0;
-		tbuf[i++] = c;
+	} else if ( isalpha(c) || c == ':' ) {
+		if ( c == ':' ) {
+			c1 = Getc();
+			if ( c1 != ':' ) {
+				Ungetc(c1);
+				return c;
+			}
+			c1 = Getc();
+			if ( !isalpha(c1) ) {
+				Ungetc(c1);
+				return COLONCOLON;
+			}
+			i = 0;
+			tbuf[i++] = ':';
+			tbuf[i++] = ':';
+			tbuf[i++] = c1;
+		} else {
+			i = 0;
+			tbuf[i++] = c;
+		}
 		while ( 1 ) {
 			c = Getc();
 			if ( isalpha(c)||isdigit(c)||(c=='_')||(c=='.') ) {

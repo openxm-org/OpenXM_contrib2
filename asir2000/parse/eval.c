@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.27 2003/05/20 06:15:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.28 2003/05/24 10:42:18 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -830,8 +830,12 @@ void searchuf(char *name,FUNC *r)
 void gen_searchf(char *name,FUNC *r)
 {
 	FUNC val = 0;
-
-	if ( CUR_MODULE )
+	int global = 0;
+	if ( *name == ':' ) {
+		global = 1;
+		name += 2;
+	}
+	if ( CUR_MODULE && !global )
 		searchf(CUR_MODULE->usrf_list,name,&val);
 	if ( !val )
 		searchf(sysf,name,&val);
@@ -941,6 +945,8 @@ void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *
 	char *longname;
 	int argc;
 
+	if ( *name == ':' )
+		name += 2;
 	if ( !module ) {
 		searchf(sysf,name,&f);
 		if ( f ) {
