@@ -137,6 +137,8 @@ def interval2value(A,Vars){
 			return [Vars,E[0][1]+1]$
 		else if(fop(B[0])==11)
 			return [Vars,E[0][1]-1]$
+		else if(fop(B[0])==8)
+			return [Vars,E[0][1]]$
 		else
 			return []$
 	}
