@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.24 2004/03/05 01:19:09 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.25 2004/03/05 01:34:24 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -119,6 +119,7 @@ static char *(*conv_rule)(char *);
 static char **dp_vars;
 static int dp_vars_len;
 static char *dp_vars_prefix;
+static FUNC convfunc;
 
 static struct {
 	char *name;
@@ -202,6 +203,19 @@ END:
 	return r;
 }
 
+char *call_convfunc(char *name)
+{
+	STRING str,r;
+	NODE arg;
+
+	MKSTR(str,name);
+	arg = mknode(1,str);
+	r = (STRING)bevalf(convfunc,arg);
+	if ( !r || OID(r) != O_STR )
+		error("call_convfunc : invalid result");
+	return BDY(r);
+}
+
 int register_symbol_table(Obj arg)
 {
 	NODE n,t;
@@ -248,6 +262,7 @@ int register_symbol_table(Obj arg)
 	return 1;
 }
 
+
 int register_conv_rule(Obj arg)
 {
 	if ( INT(arg) ) {
@@ -264,6 +279,12 @@ int register_conv_rule(Obj arg)
 				return 0;
 				break;
 		}
+	} else if ( OID(arg) == O_P && 
+		(int)(VR((P)arg))->attr == V_SR ) {
+		convfunc = (FUNC)(VR((P)arg)->priv);
+		/* f must be a function which takes single argument */
+		conv_rule = call_convfunc;
+		return 1;
 	} else return 0;
 }
 
