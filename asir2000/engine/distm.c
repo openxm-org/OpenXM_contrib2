@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.10 2002/01/28 00:54:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.11 2003/07/18 10:13:13 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -925,6 +925,8 @@ static ND *nps;
 int nd_mod,nd_nvar;
 int is_rlex;
 int nd_epw,nd_bpe,nd_wpd;
+unsigned int nd_mask[32];
+unsigned int nd_mask0;
 NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
@@ -974,7 +976,8 @@ ND nd_add(ND p1,ND p2);
 ND nd_mul_nm(ND p,NM m0);
 ND nd_sp(ND_pairs p);
 ND nd_reducer(ND p1,ND p2);
-ND nd_nf(NODE b,ND g,ND *ps,int full);
+ND nd_find_reducer(ND g);
+ND nd_nf(ND g,int full);
 void ndl_print(unsigned int *dl);
 void nd_print(ND p);
 void ndp_print(ND_pairs d);
@@ -993,7 +996,7 @@ void _NM_alloc()
 	NM p;
 	int i;
 
-	for ( i = 0; i < 1024; i++ ) {
+	for ( i = 0; i < 10240; i++ ) {
 		p = (NM)GC_malloc(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _nm_free_list; _nm_free_list = p;
 	}
@@ -1004,7 +1007,7 @@ void _ND_alloc()
 	ND p;
 	int i;
 
-	for ( i = 0; i < 1024; i++ ) {
+	for ( i = 0; i < 10240; i++ ) {
 		p = (ND)GC_malloc(sizeof(struct oND));
 		p->body = (NM)_nd_free_list; _nd_free_list = p;
 	}
@@ -1015,7 +1018,7 @@ void _NDP_alloc()
 	ND_pairs p;
 	int i;
 
-	for ( i = 0; i < 1024; i++ ) {
+	for ( i = 0; i < 10240; i++ ) {
 		p = (ND_pairs)GC_malloc(sizeof(struct oND_pairs)
 			+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _ndp_free_list; _ndp_free_list = p;
@@ -1038,7 +1041,7 @@ INLINE nd_length(ND p)
 INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 {
 	unsigned int u1,u2;
-	int i;
+	int i,j;
 
 	switch ( nd_bpe ) {
 		case 4:
@@ -1079,14 +1082,19 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		default:
-			error("ndl_reducible : not implemented yet");
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u1 = d1[i]; u2 = d2[i];
+				for ( j = 0; j < nd_epw; j++ )
+					if ( (u1&nd_mask[j]) < (u2&nd_mask[j]) ) return 0;
+			}
+			return 1;
 	}
 }
 
-INLINE void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
+void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 {
 	unsigned int t1,t2,u,u1,u2;
-	int i;
+	int i,j;
 
 	switch ( nd_bpe ) {
 		case 4:
@@ -1128,43 +1136,26 @@ INLINE void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 			}
 			break;
 		default:
-			error("ndl_lcm : not implemented yet");
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u1 = d1[i]; u2 = d2[i]; 
+				for ( j = 0, u = 0; j < nd_epw; j++ ) {
+					t1 = (u1&nd_mask[j]); t2 = (u2&nd_mask[j]); u |= t1>t2?t1:t2;
+				}
+				d[i] = u;
+			}
+			break;
 	}
 }
 
-INLINE int ndl_td(unsigned int *d)
+int ndl_td(unsigned int *d)
 {
 	unsigned int t,u;
-	int i;
+	int i,j;
 
-	switch ( nd_bpe ) {
-		case 4:
-			for ( t = 0, i = 0; i < nd_wpd; i++ ) {
-				u = d[i];
-				t += ((u&0xf0000000)>>28)+((u&0xf000000)>>24)
-					+((u&0xf00000)>>20)+((u&0xf0000)>>16)
-					+((u&0xf000)>>12)+((u&0xf00)>>8)+((u&0xf0)>>4)+(u&0xf);
-			}
-			break;
-		case 8:
-			for ( t = 0, i = 0; i < nd_wpd; i++ ) {
-				u = d[i];
-				t += ((u&0xff000000)>>24)+((u&0xff0000)>>16)
-					+((u&0xff00)>>8)+(u&0xff);
-			}
-			break;
-		case 16:
-			for ( t = 0, i = 0; i < nd_wpd; i++ ) {
-				u = d[i];
-				t += ((u&0xffff0000)>>16)+(u&0xffff);
-			}
-			break;
-		case 32:
-			for ( t = 0, i = 0; i < nd_wpd; i++ )
-				t += d[i];
-			break;
-		default:
-			error("ndl_td : not implemented yet");
+	for ( t = 0, i = 0; i < nd_wpd; i++ ) {
+		u = d[i];
+		for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
+			t += (u&nd_mask0); 
 	}
 	return t;
 }
@@ -1173,10 +1164,10 @@ INLINE int ndl_compare(unsigned int *d1,unsigned int *d2)
 {
 	int i;
 
-	for ( i = 0; i < nd_wpd; i++ )
-		if ( d1[i] > d2[i] )
+	for ( i = 0; i < nd_wpd; i++, d1++, d2++ )
+		if ( *d1 > *d2 )
 			return is_rlex ? -1 : 1;
-		else if ( d1[i] < d2[i] )
+		else if ( *d1 < *d2 )
 			return is_rlex ? 1 : -1;
 	return 0;
 }
@@ -1199,7 +1190,7 @@ INLINE void ndl_add(unsigned int *d1,unsigned int *d2,unsigned int *d)
 		d[i] = d1[i]+d2[i];
 }
 
-INLINE void ndl_sub(unsigned int *d1,unsigned int *d2,unsigned int *d)
+void ndl_sub(unsigned int *d1,unsigned int *d2,unsigned int *d)
 {
 	int i;
 
@@ -1207,10 +1198,10 @@ INLINE void ndl_sub(unsigned int *d1,unsigned int *d2,unsigned int *d)
 		d[i] = d1[i]-d2[i];
 }
 
-INLINE int ndl_disjoint(unsigned int *d1,unsigned int *d2)
+int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 {
 	unsigned int t1,t2,u,u1,u2;
-	int i;
+	int i,j;
 
 	switch ( nd_bpe ) {
 		case 4:
@@ -1251,94 +1242,15 @@ INLINE int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		default:
-			error("ndl_disjoint : not implemented yet");
-	}
-}
-
-ND nd_add(ND p1,ND p2)
-{
-	int n,c;
-	int t;
-	ND r;
-	NM m1,m2,mr0,mr,s;
-
-	if ( !p1 )
-		return p2;
-	else if ( !p2 )
-		return p1;
-	else {
-		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; ) {
-			if ( m1->td > m2->td )
-				c = 1;
-			else if ( m1->td < m2->td )
-				c = -1;
-			else
-				c = ndl_compare(m1->dl,m2->dl);
-			switch ( c ) {
-				case 0:
-					t = ((C(m1))+(C(m2))) - nd_mod;
-					if ( t < 0 )
-						t += nd_mod;
-					s = m1; m1 = NEXT(m1);
-					if ( t ) {
-						NEXTNM2(mr0,mr,s); C(mr) = (t);
-					} else {
-						FREENM(s);
-					}
-					s = m2; m2 = NEXT(m2); FREENM(s);
-					break;
-				case 1:
-					s = m1; m1 = NEXT(m1); NEXTNM2(mr0,mr,s);
-					break;
-				case -1:
-					s = m2; m2 = NEXT(m2); NEXTNM2(mr0,mr,s);
-					break;
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u1 = d1[i]; u2 = d2[i];
+				for ( j = 0; j < nd_epw; j++ ) {
+					if ( (u1&nd_mask0) && (u2&nd_mask0) ) return 0;
+					u1 >>= nd_bpe; u2 >>= nd_bpe;
+				}
 			}
-		}
-		if ( !mr0 )
-			if ( m1 )
-				mr0 = m1;
-			else if ( m2 )
-				mr0 = m2;
-			else
-				return 0;
-		else if ( m1 )
-			NEXT(mr) = m1;
-		else if ( m2 )
-			NEXT(mr) = m2;
-		else
-			NEXT(mr) = 0;
-		BDY(p1) = mr0;
-		p1->sugar = MAX(p1->sugar,p2->sugar);
-		FREEND(p2);
-		return p1;
-	}
-}
-
-INLINE ND nd_mul_nm(ND p,NM m0)
-{
-	NM m,mr,mr0;
-	unsigned int *d,*dt,*dm;
-	int c,n,td;
-	int *pt,*p1,*p2;
-	ND r;
-
-	if ( !p )
-		return 0;
-	else {
-		n = NV(p); m = BDY(p);
-		d = m0->dl; td = m0->td; c = C(m0);
-		mr0 = 0;
-		for ( ; m; m = NEXT(m) ) {
-			NEXTNM(mr0,mr);
-			C(mr) = (C(m)*c)%nd_mod;
-			mr->td = m->td+td;
-			ndl_add(m->dl,d,mr->dl);
-		}
-		NEXT(mr) = 0; 
-		MKND(NV(p),mr0,r);
-		r->sugar = p->sugar + td;
-		return r;
+			return 1;
+			break;
 	}
 }
 
@@ -1457,6 +1369,7 @@ ND nd_reducer(ND p1,ND p2)
 	NM m;
 	ND r;
 
+
 	NEWNM(m);
 	C(m) = ((nd_mod-HC(p1))*invm(HC(p2),nd_mod))%nd_mod;
 	m->td = HTD(p1)-HTD(p2);
@@ -1467,59 +1380,157 @@ ND nd_reducer(ND p1,ND p2)
 	return r;
 }
 
-#if 1
-ND nd_nf(NODE b,ND g,ND *ps,int full)
+ND nd_find_reducer(ND g)
 {
-	ND u,p,d,red;
-	NODE l;
-	NM m,mrd;
-	int sugar,psugar,n,h_reducible;
+	NM m;
+	ND r,p;
+	int i;
 
-	if ( !g ) {
-		return 0;
-	}
-	sugar = g->sugar;
-	n = g->nv;
-	for ( d = 0; g; ) {
-		for ( h_reducible = 0, l = b; l; l = NEXT(l) ) {
-			p = ps[(int)BDY(l)];
-			if ( HTD(g)>=HTD(p) && ndl_reducible(HDL(g),HDL(p)) ) {
-				h_reducible = 1;
-				psugar = HTD(g)-HTD(p) + p->sugar;
-#if 0
-				red = nd_reducer(g,p);
-				g = nd_add(g,red);
+	for ( i = 0; i < nd_psn; i++ ) {
+		p = nps[i];
+		if ( HTD(g) >= HTD(p) && ndl_reducible(HDL(g),HDL(p)) ) {
+#if 1
+			NEWNM(m);
+			C(m) = ((nd_mod-HC(g))*invm(HC(p),nd_mod))%nd_mod;
+			m->td = HTD(g)-HTD(p);
+			ndl_sub(HDL(g),HDL(p),m->dl);
+			NEXT(m) = 0;
+			r = nd_mul_nm(p,m);
+			FREENM(m);
+			r->sugar = m->td + p->sugar;
+			return r;
 #else
-				g = nd_reduce(g,p);
+			return p;
 #endif
-				sugar = MAX(sugar,psugar);
-				if ( !g ) {
-					if ( d )
-						d->sugar = sugar;
-					return d;
-				}
-				break;
+		}
+	}
+	return 0;
+}
+
+ND nd_add(ND p1,ND p2)
+{
+	int n,c;
+	int t;
+	ND r;
+	NM m1,m2,mr0,mr,s;
+
+	if ( !p1 )
+		return p2;
+	else if ( !p2 )
+		return p1;
+	else {
+		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; ) {
+			if ( m1->td > m2->td )
+				c = 1;
+			else if ( m1->td < m2->td )
+				c = -1;
+			else
+				c = ndl_compare(m1->dl,m2->dl);
+			switch ( c ) {
+				case 0:
+					t = ((C(m1))+(C(m2))) - nd_mod;
+					if ( t < 0 )
+						t += nd_mod;
+					s = m1; m1 = NEXT(m1);
+					if ( t ) {
+						NEXTNM2(mr0,mr,s); C(mr) = (t);
+					} else {
+						FREENM(s);
+					}
+					s = m2; m2 = NEXT(m2); FREENM(s);
+					break;
+				case 1:
+					s = m1; m1 = NEXT(m1); NEXTNM2(mr0,mr,s);
+					break;
+				case -1:
+					s = m2; m2 = NEXT(m2); NEXTNM2(mr0,mr,s);
+					break;
 			}
 		}
-		if ( !h_reducible ) {
-			/* head term is not reducible */
-			if ( !full ) {
-				if ( g )
-					g->sugar = sugar;
-				return g;
+		if ( !mr0 )
+			if ( m1 )
+				mr0 = m1;
+			else if ( m2 )
+				mr0 = m2;
+			else
+				return 0;
+		else if ( m1 )
+			NEXT(mr) = m1;
+		else if ( m2 )
+			NEXT(mr) = m2;
+		else
+			NEXT(mr) = 0;
+		BDY(p1) = mr0;
+		p1->sugar = MAX(p1->sugar,p2->sugar);
+		FREEND(p2);
+		return p1;
+	}
+}
+
+ND nd_mul_nm(ND p,NM m0)
+{
+	NM m,mr,mr0;
+	unsigned int *d,*dt,*dm;
+	int c,n,td;
+	int *pt,*p1,*p2;
+	ND r;
+
+	if ( !p )
+		return 0;
+	else {
+		n = NV(p); m = BDY(p);
+		d = m0->dl; td = m0->td; c = C(m0);
+		mr0 = 0;
+		for ( ; m; m = NEXT(m) ) {
+			NEXTNM(mr0,mr);
+			C(mr) = (C(m)*c)%nd_mod;
+			mr->td = m->td+td;
+			ndl_add(m->dl,d,mr->dl);
+		}
+		NEXT(mr) = 0; 
+		MKND(NV(p),mr0,r);
+		r->sugar = p->sugar + td;
+		return r;
+	}
+}
+
+#if 1
+ND nd_nf(ND g,int full)
+{
+	ND p,d,red;
+	NM m,mrd,tail;
+	int n,sugar,psugar;
+
+	if ( !g )
+		return 0;
+	sugar = g->sugar;
+	n = NV(g);
+	for ( d = 0; g; ) {
+		red = nd_find_reducer(g);
+		if ( red ) {
+#if 1
+			g = nd_add(g,red);
+			sugar = MAX(sugar,red->sugar);
+#else
+			psugar = (HTD(g)-HTD(red))+red->sugar;
+			g = nd_reduce(g,red);
+			sugar = MAX(sugar,psugar);
+#endif
+		} else if ( !full )
+			return g;
+		else {
+			m = BDY(g); 
+			if ( NEXT(m) ) {
+				BDY(g) = NEXT(m); NEXT(m) = 0;
 			} else {
-				m = BDY(g); 
-				if ( NEXT(m) ) {
-					BDY(g) = NEXT(m); NEXT(m) = 0;
-				} else {
-					FREEND(g); g = 0;
-				}
-				if ( d ) {
-					for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
-					NEXT(mrd) = m;
-				} else {
-					MKND(n,m,d);
-				}
+				FREEND(g); g = 0;
+			}
+			if ( d ) {
+				NEXT(tail)=m;
+				tail=m;
+			} else {
+				MKND(n,m,d);
+				tail = BDY(d);
 			}
 		}
 	}
@@ -1632,7 +1643,7 @@ ND normalize_pbucket(PGeoBucket g)
 	return r;
 }
 
-ND nd_nf(NODE b,ND g,ND *ps,int full)
+ND nd_nf(ND g,int full)
 {
 	ND u,p,d,red;
 	NODE l;
@@ -1656,41 +1667,31 @@ ND nd_nf(NODE b,ND g,ND *ps,int full)
 			return d;
 		}
 		g = bucket->body[h];
-		for ( h_reducible = 0, l = b; l; l = NEXT(l) ) {
-			p = ps[(int)BDY(l)];
-			if ( ndl_reducible(HDL(g),HDL(p)) ) {
-				h_reducible = 1;
-				psugar = HTD(g)-HTD(p) + p->sugar;
-				red = nd_reducer(g,p);
-				bucket->body[h] = nd_remove_head(g);
-				red = nd_remove_head(red);
-				add_pbucket(bucket,red);
-				sugar = MAX(sugar,psugar);
-				break;
-			}
-		}
-		if ( !h_reducible ) {
-			/* head term is not reducible */
-			if ( !full ) {
-				g = normalize_pbucket(bucket);
-				if ( g )
-					g->sugar = sugar;
-				return g;
+		red = nd_find_reducer(g);
+		if ( red ) {
+			bucket->body[h] = nd_remove_head(g);
+			red = nd_remove_head(red);
+			add_pbucket(bucket,red);
+			sugar = MAX(sugar,red->sugar);
+		} else if ( !full ) {
+			g = normalize_pbucket(bucket);
+			if ( g )
+				g->sugar = sugar;
+			return g;
+		} else {
+			m = BDY(g); 
+			if ( NEXT(m) ) {
+				BDY(g) = NEXT(m); NEXT(m) = 0;
 			} else {
-				m = BDY(g); 
-				if ( NEXT(m) ) {
-					BDY(g) = NEXT(m); NEXT(m) = 0;
-				} else {
-					FREEND(g); g = 0;
-				}
-				bucket->body[h] = g;
-				NEXT(m) = 0;
-				if ( d ) {
-					for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
-					NEXT(mrd) = m;
-				} else {
-					MKND(n,m,d);
-				}
+				FREEND(g); g = 0;
+			}
+			bucket->body[h] = g;
+			NEXT(m) = 0;
+			if ( d ) {
+				for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
+				NEXT(mrd) = m;
+			} else {
+				MKND(n,m,d);
 			}
 		}
 	}
@@ -1717,7 +1718,7 @@ NODE nd_gb(NODE f)
 #endif
 		l = nd_minp(d,&d);
 		h = nd_sp(l);
-		nf = nd_nf(gall,h,nps,!Top);
+		nf = nd_nf(h,!Top);
 		if ( nf ) {
 			printf("+"); fflush(stdout);
 #if 0
@@ -2022,6 +2023,10 @@ NODE nd_setup(NODE f)
 	nd_bpe = 4;
 	nd_epw = (sizeof(unsigned int)*8)/nd_bpe;
 	nd_wpd = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
+	nd_mask0 = (1<<nd_bpe)-1;
+	bzero(nd_mask,sizeof(nd_mask));
+	for ( i = 0; i < nd_epw; i++ )
+		nd_mask[nd_epw-i-1] = (nd_mask0<<(i*nd_bpe));
 	nd_free_private_storage();
 	for ( i = 0; i < nd_psn; i++, f = NEXT(f) ) {
 		nps[i] = dptond((DP)BDY(f));
@@ -2085,6 +2090,7 @@ void dltondl(int n,DL dl,unsigned int *r)
 	int i;
 
 	d = dl->d;
+	bzero(r,nd_wpd*sizeof(unsigned int));
 	if ( is_rlex )
 		for ( i = 0; i < n; i++ )
 			r[(n-1-i)/nd_epw] |= (d[i]<<((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe));
