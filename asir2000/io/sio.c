@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.17 2002/10/03 03:37:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.18 2002/10/03 07:12:30 noro Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -322,8 +322,6 @@ void free_iofp(int s)
 #endif
 	r->in = r->out = 0; r->s = 0;
 }
-
-#define LBUFSIZ BUFSIZ*10
 
 int get_iofp(int s1,char *af_sock,int is_server)
 {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.15 2001/12/25 02:39:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.16 2001/12/27 07:51:16 noro Exp $ 
 */
 #include "com.h"
 
@@ -172,7 +172,11 @@ extern struct IOFP iofp[];
 
 extern char *parse_strp;
 
+#if 0
 #define LBUFSIZ BUFSIZ*10
+#else
+#define LBUFSIZ BUFSIZ
+#endif
 
 /* prototypes */
 
