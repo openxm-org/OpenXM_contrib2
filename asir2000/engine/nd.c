@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.20 2003/08/01 05:03:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.21 2003/08/01 08:39:54 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -836,7 +836,7 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 			ndv_mul_nm(mod,p,mul,ndv_red);
 			g = ndv_add(mod,g,ndv_red);
 			sugar = MAX(sugar,SG(ndv_red));
-			if ( !mod && hmag && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
+			if ( !mod && hmag && g && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
 				nd_removecont2(d,g);
 				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
 			}
