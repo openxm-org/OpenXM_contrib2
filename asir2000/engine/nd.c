@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.83 2003/10/17 05:15:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.84 2003/10/18 01:39:42 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -1768,7 +1768,7 @@ NODE nd_gb(int m,int ishomo,int checkonly)
 	ND_pairs l;
 	ND h,nf,s,head;
 	NDV nfv;
-	Q q;
+	Q q,num,den;
 	union oNDC dn;
 
 	g = 0; d = 0;
@@ -1782,7 +1782,7 @@ again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
 			if ( ishomo ) {
-				for ( i = nd_psn-1; SG(nd_psh[i]) == sugar; i-- ) {
+				for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
 					if ( nd_demand )
 						nfv = ndv_load(i);
 					else
@@ -1790,7 +1790,14 @@ again:
 					s = ndvtond(m,nfv);
 					s = nd_separate_head(s,&head);
 					nd_nf(m,s,nd_ps,1,&dn,&nf);
-					if ( !m ) { mulq(HCQ(head),dn.z,&q); HCQ(head) = q; }
+					if ( !m ) { 
+						NTOQ(NM(dn.z),SGN(dn.z),num);
+						mulq(HCQ(head),num,&q); HCQ(head) = q;
+						if ( DN(dn.z) ) {
+							NTOQ(DN(dn.z),1,den);
+							nd_mul_c_q(nf,den);
+						}
+					}
 					nf = nd_add(m,head,nf);
 					ndv_free(nfv);
 					nd_removecont(m,nf);
@@ -1853,7 +1860,7 @@ NODE nd_gb_trace(int m,int ishomo)
 	ND_pairs l;
 	ND h,nf,nfq,s,head;
 	NDV nfv,nfqv;
-	Q q;
+	Q q,den,num;
 	union oNDC dn;
 
 	g = 0; d = 0;
@@ -1867,7 +1874,7 @@ again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
 			if ( ishomo ) {
-				for ( i = nd_psn-1; SG(nd_psh[i]) == sugar; i-- ) {
+				for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
 					/* for nd_ps */
 					s = ndvtond(m,nd_ps[i]);
 					s = nd_separate_head(s,&head);
@@ -1885,7 +1892,12 @@ again:
 					s = ndvtond(0,nfv);
 					s = nd_separate_head(s,&head);
 					nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
-					mulq(HCQ(head),dn.z,&q); HCQ(head) = q;
+					NTOQ(NM(dn.z),SGN(dn.z),num);
+					mulq(HCQ(head),num,&q); HCQ(head) = q;
+					if ( DN(dn.z) ) {
+						NTOQ(DN(dn.z),1,den);
+						nd_mul_c_q(nf,den);
+					}
 					nf = nd_add(0,head,nf);
 					ndv_free(nfv);
 					nd_removecont(0,nf);
@@ -1974,7 +1986,7 @@ NODE ndv_reduceall(int m,NODE f)
 	NODE t,a0,a;
 	union oNDC dn;
 	NDV *w;
-	Q q;
+	Q q,num,den;
 
 	n = length(f);
 #if 0
@@ -1993,7 +2005,14 @@ NODE ndv_reduceall(int m,NODE f)
 			nd_reconstruct(m,0,0);
 		else {
 			if ( DP_Print ) { printf("."); fflush(stdout); }
-			if ( !m ) { mulq(HCQ(head),dn.z,&q); HCQ(head) = q; }
+			if ( !m ) { 
+				NTOQ(NM(dn.z),SGN(dn.z),num);
+				mulq(HCQ(head),num,&q); HCQ(head) = q;
+				if ( DN(dn.z) ) {
+					NTOQ(DN(dn.z),1,den);
+					nd_mul_c_q(nf,den);
+				}
+			}
 			nf = nd_add(m,head,nf);
 			ndv_free(nd_ps[i]);
 			nd_removecont(m,nf);
