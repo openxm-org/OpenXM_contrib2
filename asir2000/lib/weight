@@ -520,27 +520,27 @@ def qcheck(PolyList,Vars,FLAG){
 				else{
 
 					TMP=vtol(TMP1[1])$
-
+					RET0=[]$
 					if((TMP0=fixedpoint(TMP,0))!=[]){
 					
 						for(I=0;I<length(TMP0);I++)
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-
-						TMP=value2(Vars,TMP)$
-
-						if(TMP!=[])
-							RET=append(RET,wsort(TMP,Vars,TMP,1/10))$
-					}	
-					else if((TMP0=fixedpoint(TMP,1))!=[]){
+						RET0=value2(Vars,TMP)$
+						if(RET0!=[])
+							RET0=wsort(RET0,Vars,RET0,1/10)$
+					}
+	
+					TMP=vtol(TMP1[1])$
+					if(RET0==[] && (TMP0=fixedpoint(TMP,1))!=[]){
 					
 						for(I=0;I<length(TMP0);I++)
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-
-						TMP=value2(Vars,TMP)$
+						RET0=value2(Vars,TMP)$
 	
-						if(TMP!=[])
-							RET=append(RET,wsort(TMP,Vars,TMP,1/10))$
+						if(RET0!=[])
+							RET0=wsort(RET0,Vars,RET0,1/10)$
 					}
+					RET=append(RET,RET0)$
 				}
 			}
 			else if(FLAG==1)
@@ -615,27 +615,28 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 			else{
 
 				TMP=vtol(TMP1[1])$
-
-				if((TMP0=fixedpoint(TMP1[1],0))!=[]){
+				RET0=[]$
+				if((TMP0=fixedpoint(TMP,0))!=[]){
 					
 					for(I=0;I<length(TMP0);I++)
 						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-
-					TMP=value2(Vars,TMP)$
-
-					if(TMP!=[])
-						RET=append(RET,wsort(TMP,Vars,TMP,ID+1/10))$
-				}	
-				else if((TMP0=fixedpoint(TMP1[1],1))!=[]){
-
+					RET0=value2(Vars,TMP)$
+					if(RET0!=[])
+						RET0=wsort(RET0,Vars,RET0,1/10)$
+				}
+	
+				TMP=vtol(TMP1[1])$
+				if(RET0==[] && (TMP0=fixedpoint(TMP,1))!=[]){
+					
 					for(I=0;I<length(TMP0);I++)
 						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-
-					TMP=value2(Vars,TMP)$
-
-					if(TMP!=[])
-						RET=append(RET,wsort(TMP,Vars,TMP,ID+1/10))$
+					RET0=value2(Vars,TMP)$
+	
+					if(RET0!=[])
+						RET0=wsort(RET0,Vars,RET0,1/10)$
 				}
+
+				RET=append(RET,RET0)$
 			}
 
 		}
@@ -714,8 +715,7 @@ def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 				if(TMP!=[])
 					RET=append(RET,wsort(TMP1[1],Vars,TMP,2))$
 			}
-			
-			if(FLAG==1)
+			else if(FLAG==1)
 				RET=append(RET,[[1,Vars,vtol(TMP1[1])]])$
 		}
 	}	
