@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.26 2001/09/20 10:44:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.27 2001/09/20 23:11:42 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -784,7 +784,7 @@ void asir_ox_push_cmo(void *cmo)
 
 /*
  * Pop an object from the stack and converts it
- * int a binary encoded CMO.
+ * into a binary encoded CMO.
  */
 
 int asir_ox_pop_cmo(void *cmo, int limit)
@@ -806,6 +806,30 @@ int asir_ox_pop_cmo(void *cmo, int limit)
 		return len;
 	} else
 		return -1;
+}
+
+int asir_ox_pop_string(void *string, int limit)
+{
+	Obj val;
+	int l;
+
+	val = asir_pop_one();
+	if ( !val ) {
+		if ( limit >= 2 ) {
+			sprintf(string,"0");
+			l = strlen(string);
+		} else
+			l = -1;
+	} else {
+		l = estimate_length(CO,val);
+		if ( l+1 <= limit ) {
+			soutput_init(string);
+			sprintexpr(CO,val);
+			l = strlen(string);
+		} else
+			l = -1;
+	}
+	return l;
 }
 
 /*
