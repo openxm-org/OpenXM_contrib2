@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.1 2001/12/10 05:02:46 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.2 2002/01/04 01:35:24 takayama Exp $ */
 /* $Id$ */
 
 /* Todo:
@@ -150,22 +150,29 @@ def glib_putpixel(X,Y) {
   if (Glib_canvas < 0) glib_open();
   glib_check();
   glib_check_arg(X,Y);
-  draw_obj(Glib_process,Glib_canvas,
+  C = getopt(color);
+  if ( type(C) != -1 )
+    draw_obj(Glib_process,Glib_canvas,
+           [floor(Glib_xmag*(X+Glib_xoffset)),
+            floor(Glib_ymag*(Y+Glib_yoffset))],C);
+  else
+    draw_obj(Glib_process,Glib_canvas,
            [floor(Glib_xmag*(X+Glib_xoffset)),
             floor(Glib_ymag*(Y+Glib_yoffset))]);
 }
 
 def glib_line(X0,Y0,X1,Y1) {
   extern Glib_xmag, Glib_ymag, Glib_xoffset, Glib_yoffset;
+  C = getopt(color);
   glib_check_arg(X0,Y0);
   glib_check_arg(X1,Y1);
   glib_clip_line(floor(Glib_xmag*(X0+Glib_xoffset)),
                  floor(Glib_ymag*(Y0+Glib_yoffset)),
                  floor(Glib_xmag*(X1+Glib_xoffset)),
-                 floor(Glib_ymag*(Y1+Glib_yoffset)));
+                 floor(Glib_ymag*(Y1+Glib_yoffset)),C);
 }
 
-def glib_clip_line(X0,Y0,X1,Y1) {
+def glib_clip_line(X0,Y0,X1,Y1,Color) {
   /* X0, Y0, X1, Y1 should be integers. 
      Coordinates are already translated. */
   extern Glib_process, Glib_canvas, Glib_canvas_x, Glib_canvas_y;
@@ -209,9 +216,12 @@ def glib_clip_line(X0,Y0,X1,Y1) {
 #endif
 #endif
   glib_check();
-  draw_obj(Glib_process,Glib_canvas,
+  if ( type(Color) != -1 )
+    draw_obj(Glib_process,Glib_canvas,
+           [floor(X0),floor(Y0),floor(X1),floor(Y1)],Color);
+  else
+    draw_obj(Glib_process,Glib_canvas,
            [floor(X0),floor(Y0),floor(X1),floor(Y1)]);
-  
 }
 
 def glib_clip0_x(X0,Y0,X1,Y1,Clip) {
