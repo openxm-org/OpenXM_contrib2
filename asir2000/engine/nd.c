@@ -1,3 +1,5 @@
+/* $OpenXM$ */
+
 #include "ca.h"
 #include "inline.h"
 
