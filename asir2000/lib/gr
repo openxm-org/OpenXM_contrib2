@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.18 2003/06/21 02:09:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.19 2003/10/20 00:58:47 takayama Exp $ 
 */
 
 module gr $
@@ -1585,6 +1585,64 @@ def check_trace(NF,NFIndex,HL)
 		return 0;
 	} else
 		error("check_trace");
+}
+
+/*
+ * Trace = [Input,[[j1,[[c,i,m,d],...]],[j2,[[...],...]],...]]
+ * if c != 0
+ *   g = 0
+ *   g = (c*g + m*gi)/d
+ *   ...
+ *   finally fj = g
+ */
+
+def show_trace(Trace,V)
+{
+	Input = Trace[0];
+	for ( I = 0, T = Input; T != []; T = cdr(T), I++ ) {
+		print("F"+rtostr(I)+"=",0);
+		print(dp_dtop(car(T),V));
+	}
+	Trace = cdr(Trace);
+	for ( T = Trace; T != []; T = cdr(T) ) {
+		HL = car(T);
+		J = car(HL); HL = HL[1];
+		L = length(HL);
+		print("F"+rtostr(J)+"=",0);	
+		for ( I = 0; I < L; I++ ) print("(",0);
+		for ( First = 1, S = HL; S != []; S = cdr(S) ) {
+			H = car(S);
+	
+			Coeff = H[0];
+			Index = H[1];
+			Monomial = H[2];
+			Denominator = H[3];
+			if ( First ) {
+				if ( Monomial != 1 ) {
+					print("(",0);
+					print(type(Monomial)==9?dp_dtop(Monomial,V):Monomial,0);
+					print(")*",0);
+				}
+				print("F"+rtostr(Index)+")",0);	
+			} else {
+				if ( Coeff != 1 ) {
+					print("*(",0); print(Coeff,0); print(")",0);
+				}
+				print("+",0);
+				if ( Monomial != 1 ) {
+					print("(",0);
+					print(type(Monomial)==9?dp_dtop(Monomial,V):Monomial,0);
+					print(")*",0);
+				}
+				print("F"+rtostr(Index)+")",0);	
+				if ( Denominator != 1 ) {
+					print("/",0); print(Denominator,0);
+				}
+			}
+			if ( First ) First = 0;
+		}
+		print("");
+	}
 }
 
 /*
