@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.4 2001/04/20 02:27:52 noro Exp $ 
 */
 #include "ca.h"
 
@@ -772,7 +772,7 @@ int dbound(v,f)
 V v;
 P f;
 {
-	int m;
+	int m,t;
 	DCP dc;
 
 	if ( !f ) 
@@ -780,8 +780,10 @@ P f;
 	else if ( v != VR(f) ) 
 		return homdeg(f);
 	else {
-		for ( dc = DC(f), m = 0; dc; dc = NEXT(dc) ) 
-			m = MAX(m,homdeg(COEF(dc)));
+		for ( dc = DC(f), m = 0; dc; dc = NEXT(dc) ) {
+			t = homdeg(COEF(dc));
+			m = MAX(m,t);
+		}
 		return ( m );
 	}
 }
@@ -789,7 +791,7 @@ P f;
 int homdeg(f)
 P f;
 {
-	int m;
+	int m,t;
 	DCP dc;
 
 	if ( !f ) 
@@ -797,8 +799,10 @@ P f;
 	else if ( NUM(f) ) 
 		return( 0 );
 	else {
-		for ( dc = DC(f), m = 0; dc; dc = NEXT(dc) ) 
-			m = MAX(m,QTOS(DEG(dc))+homdeg(COEF(dc)));
+		for ( dc = DC(f), m = 0; dc; dc = NEXT(dc) ) {
+			t = QTOS(DEG(dc))+homdeg(COEF(dc));
+			m = MAX(m,t);
+		}
 		return ( m );
 	}
 }
@@ -806,7 +810,7 @@ P f;
 int minhomdeg(f)
 P f;
 {
-	int m;
+	int m,t;
 	DCP dc;
 
 	if ( !f ) 
@@ -814,8 +818,10 @@ P f;
 	else if ( NUM(f) ) 
 		return( 0 );
 	else {
-		for ( dc = DC(f), m = homdeg(f); dc; dc = NEXT(dc) ) 
-			m = MIN(m,QTOS(DEG(dc))+minhomdeg(COEF(dc)));
+		for ( dc = DC(f), m = homdeg(f); dc; dc = NEXT(dc) ) {
+			t = QTOS(DEG(dc))+minhomdeg(COEF(dc));
+			m = MIN(m,t);
+		}
 		return ( m );
 	}
 }
