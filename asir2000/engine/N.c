@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.4 2000/12/21 02:51:45 murao Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.5 2001/10/09 01:36:10 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -927,13 +927,17 @@ void freen(N n)
 		free(n);
 }
 
+/* accepts Z */
 int n_bits(N n)
 {
-	unsigned int l,i,t;
+	unsigned int i,t;
+	int l;
 
 	if ( !n )
 		return 0;
-	l = PL(n); t = BD(n)[l-1];
+	l = PL(n);
+	if ( l < 0 ) l = -l;
+	t = BD(n)[l-1];
 	for ( i = 0; t; t>>=1, i++);
 	return i + (l-1)*BSH;
 }
