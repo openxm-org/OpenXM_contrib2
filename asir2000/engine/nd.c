@@ -1,7 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.62 2003/09/11 01:52:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.63 2003/09/11 09:03:53 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
+#include <time.h>
 
 #if defined(__GNUC__)
 #define INLINE inline
@@ -347,6 +348,7 @@ P ndvtop(int mod,VL vl,VL dvl,NDV p);
 NDV ndtondv(int mod,ND p);
 ND ndvtond(int mod,NDV p);
 int nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r);
+void nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r,int *ind);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
 
 void nd_free_private_storage()
@@ -3744,6 +3746,27 @@ int nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *r)
 	return i;
 }
 
+void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *r,int *ind)
+{
+	NM m;
+	NMV mr;
+	UINT *d,*t,*s;
+	NDV p;
+	int i,j,len;
+
+	m = pair->mul;
+	d = DL(m);
+	p = nd_ps[pair->index];
+	len = LEN(p);
+	t = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
+		ndl_add(d,DL(mr),t);	
+		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
+		r[j] = CM(mr);
+		ind[j] = i;
+	}
+}
+
 NODE nd_f4(int m)
 {
 	int i,nh,stat,index;
@@ -3760,10 +3783,11 @@ NODE nd_f4(int m)
 	UINT c,c1,c2,c3;
 	NM mul,head;
 	UINT **spmat;
-	UINT *s0vect,*rvect,*svect,*p;
+	UINT *s0vect,*rvect,*svect,*p,*ivect;
 	int *colstat;
-	int sugar;
+	int sugar,pos;
 	PGeoBucket bucket;
+	int t_0,t_1,t_2,t_3,t_4,t_5,t_c,t_e,t_20,t_21;
 
 	if ( !m )
 		error("nd_f4 : not implemented");
@@ -3776,9 +3800,9 @@ NODE nd_f4(int m)
 	while ( d ) {
 		l = nd_minsugarp(d,&d);
 		sugar = SG(l);
-		fprintf(asir_out,"%d",sugar);
 		sp0 = 0;
 		bucket = create_pbucket();
+		t_0 = clock();
 		for ( t = l, nsp = 0; t; t = NEXT(t) ) {
 			stat = nd_sp(m,0,t,&spol);
 			if ( !stat ) goto again;
@@ -3810,6 +3834,7 @@ NODE nd_f4(int m)
 				nred++;
 			}
 		}
+		t_1 = clock();
 		if ( s0 ) NEXT(s) = 0;
 		for ( i = 0, s = s0; s; s = NEXT(s), i++ );
 		col = i;
@@ -3821,23 +3846,41 @@ NODE nd_f4(int m)
 			spmat[i] = (UINT *)MALLOC(col*sizeof(UINT));
 			nd_to_vect(m,s0vect,col,BDY(sp),spmat[i]);
 		}
+		t_2 = clock();
+		t_c = 0;
+		t_e = 0;
 		rvect = (UINT *)ALLOCA(col*sizeof(UINT));
+		ivect = (int *)ALLOCA(col*sizeof(int));
 		for ( rp = rp0; rp; rp = NEXT(rp) ) {
-			k = nm_ind_pair_to_vect(m,s0vect,col,(NM_ind_pair)BDY(rp),rvect);
+			t_20 = clock();
+			nm_ind_pair_to_vect_compress(m,s0vect,col,(NM_ind_pair)BDY(rp),rvect,ivect);
+			t_21 = clock();
+			t_c += t_21-t_20;
+			k = ivect[0];
+			len = LEN(nd_ps[((NM_ind_pair)BDY(rp))->index]);
 			for ( i = 0; i < nsp; i++ ) {
 				svect = spmat[i];
 				if ( c = svect[k] )
-					for ( j = k; j < col; j++ ) {
-						if ( c1 = rvect[j] ) {
-							c1 = m-c1; c2 = svect[j]; DMAR(c1,c,c2,m,c3);
-							svect[j] = c3;
-						}
+					for ( j = 0; j < len; j++ ) {
+						pos = ivect[j];
+						c1 = m-rvect[j];
+						c2 = svect[pos]; DMAR(c1,c,c2,m,c3);
+						svect[pos] = c3;
 					}
 			}
+			t_e +=  clock()-t_21;
 		}
+		t_4 = clock();
 		colstat = (int *)ALLOCA(col*sizeof(int));
 		rank = generic_gauss_elim_mod(spmat,nsp,col,m,colstat);
-		printf("rank = %d\n",rank);
+		t_5 = clock();
+		fprintf(asir_out,"sugar=%d,rank=%d ",sugar,rank);
+		fprintf(asir_out,"symb=%f,conv1=%f,conv2=%f,elim1=%f,elim2=%f\n",
+		(t_1-t_0)/(double)CLOCKS_PER_SEC,
+		(t_2-t_1)/(double)CLOCKS_PER_SEC,
+		(t_c)/(double)CLOCKS_PER_SEC,
+		(t_e)/(double)CLOCKS_PER_SEC,
+		(t_5-t_4)/(double)CLOCKS_PER_SEC);
 		if ( rank )
 			for ( j = 0, i = 0; j < col; j++ ) {
 				if ( colstat[j] ) {

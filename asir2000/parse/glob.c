@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.35 2003/05/14 06:20:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.36 2003/05/16 07:56:16 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -631,7 +631,7 @@ SNODE error_snode;
 
 void error(char *s)
 {
-	SNODE *snp;
+	SNODE *snp=0;
 
 #if !defined(VISUAL)
 	if ( timer_is_set )
@@ -640,7 +640,7 @@ void error(char *s)
 	fprintf(stderr,"%s\n",s);
 	set_lasterror(s);
 	if ( CPVS != GPVS ) {
-		if ( CPVS->usrf && CPVS->usrf && CPVS->usrf->f.usrf )
+		if ( CPVS && CPVS->usrf && CPVS->usrf->f.usrf )
 			searchsn(&BDY(CPVS->usrf->f.usrf),evalstatline,&snp);
 		if ( snp )
 			error_snode = *snp;
