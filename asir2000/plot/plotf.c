@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.5 2000/08/22 05:04:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.6 2000/11/07 06:06:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,7 @@ struct ftab plot_tab[] = {
 	{"drawcircle",Pdrawcircle,5},
 	{"open_canvas",Popen_canvas,-3},
 	{"clear_canvas",Pclear_canvas,2},
-	{"draw_obj",Pdraw_obj,3},
+	{"draw_obj",Pdraw_obj,-4},
 /*
 	{"arrayplot",Parrayplot,2},
 */
@@ -493,7 +493,11 @@ Obj *rp;
 	sid = (Q)ARG0(arg);
 	index = (Q)ARG1(arg);
 	obj = (LIST)ARG2(arg);
-	arg = mknode(4,sid,fname,index,obj);
+	/* ARG3(arg) = color */
+	if ( argc(arg) == 4 )
+		arg = mknode(5,sid,fname,index,obj,ARG3(arg));
+	else
+		arg = mknode(4,sid,fname,index,obj);
 	Pox_cmo_rpc(arg,rp);
 }
 

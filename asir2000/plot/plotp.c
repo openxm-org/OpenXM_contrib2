@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.4 2000/08/22 05:04:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.5 2000/11/07 06:06:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -168,9 +168,11 @@ struct canvas *can;
 #if defined(VISUAL)	
 	len = can->pa[0].length;
 	pa = can->pa[0].pos;
-	for ( i = 0; i < len-1; i++ ) {
-		DRAWLINE(display,can->pix,drawGC,pa[i].x,pa[i].y,pa[i+1].x,pa[i+1].y);
-	}
+
+	Polyline(can->pix,pa,len);
+//	for ( i = 0; i < len-1; i++ ) {
+//		DRAWLINE(display,can->pix,drawGC,pa[i].x,pa[i].y,pa[i+1].x,pa[i+1].y);
+//	}
 #else
 	XDrawLines(display,can->pix,drawGC,
 		can->pa[0].pos,can->pa[0].length,CoordModeOrigin);
@@ -178,44 +180,56 @@ struct canvas *can;
 #endif
 }
 
-draw_point(display,can,x,y)
+draw_point(display,can,x,y,color)
 DISPLAY *display;
 struct canvas *can;
 int x,y;
+int color;
 {
 #if defined(VISUAL)
 	HDC dc;
 
-	y = can->height-y;
-	DRAWPOINT(display,can->pix,drawGC,x,y);
+	SetPixel(can->pix,x,y,(COLORREF)color);
 	dc = GetDC(can->hwnd);
-	DRAWPOINT(display,dc,drawGC,x,y);
+	SetPixel(dc,x,y,(COLORREF)color);
 	ReleaseDC(can->hwnd,dc);
 #else
-	y = can->height-y;
 	DRAWPOINT(display,can->pix,drawGC,x,y);
 	DRAWPOINT(display,can->window,drawGC,x,y);
 	XFlush(display);
 #endif
 }
 
-draw_line(display,can,x,y,u,v)
+draw_line(display,can,x,y,u,v,color)
 DISPLAY *display;
 struct canvas *can;
 int x,y,u,v;
+int color;
 {
 #if defined(VISUAL)
 	HDC dc;
+	HPEN pen,oldpen;
 
-	y = can->height-y;
-	v = can->height-v;
-	DRAWLINE(display,can->pix,drawGC,x,y,u,v);
-	dc = GetDC(can->hwnd);
-	DRAWLINE(display,dc,drawGC,x,y,u,v);
-	ReleaseDC(can->hwnd,dc);
+	if ( color ) {
+		pen = CreatePen(PS_SOLID,1,color);
+		oldpen = SelectObject(can->pix,pen);
+		DRAWLINE(display,can->pix,drawGC,x,y,u,v);
+		SelectObject(can->pix,oldpen);
+
+		dc = GetDC(can->hwnd);
+		oldpen = SelectObject(dc,pen);
+		DRAWLINE(display,dc,drawGC,x,y,u,v);
+		SelectObject(dc,oldpen);
+		ReleaseDC(can->hwnd,dc);
+
+		DeleteObject(pen);
+	} else {
+		DRAWLINE(display,can->pix,drawGC,x,y,u,v);
+		dc = GetDC(can->hwnd);
+		DRAWLINE(display,dc,drawGC,x,y,u,v);
+		ReleaseDC(can->hwnd,dc);
+	}
 #else
-	y = can->height-y;
-	v = can->height-v;
 	DRAWLINE(display,can->pix,drawGC,x,y,u,v);
 	DRAWLINE(display,can->window,drawGC,x,y,u,v);
 	XFlush(display);
@@ -242,19 +256,21 @@ DRAWABLE d;
 
 	xadj = yadj = 0;
 	if ( (can->xmin < 0) && (can->xmax > 0) ) {
-		x0 = (int)((can->width-1)*(-can->xmin/(can->xmax-can->xmin)));
+		x0 = (int)((can->width)*(-can->xmin/(can->xmax-can->xmin)));
 		DRAWLINE(display,d,dashGC,x0,0,x0,can->height);
 	} else if ( can->xmin >= 0 )
 		x0 = 0;
 	else
-		x0 = can->width-1-D;
+		x0 = can->width-D;
 	if ( (can->ymin < 0) && (can->ymax > 0) ) {
-		y0 = (int)((can->height-1)*(can->ymax/(can->ymax-can->ymin)));
+		y0 = (int)((can->height)*(can->ymax/(can->ymax-can->ymin)));
 		DRAWLINE(display,d,dashGC,0,y0,can->width,y0);
 	} else if ( can->ymin >= 0 )
-		y0 = can->height-1;
+		y0 = can->height;
 	else
 		y0 = D;
+
+	/* scale on x-axis */
 	w = can->xmax-can->xmin; 
 	w1 = w * DEFAULTWIDTH/can->width;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
@@ -262,20 +278,28 @@ DRAWABLE d;
 		x = (int)can->width*(n*e-can->xmin)/w;
 		DRAWLINE(display,d,drawGC,x,y0,x,y0-D);
 		sprintf(buf,"%g",n*e);
-		DRAWSTRING(display,d,scaleGC,x+2,y0,buf,strlen(buf));
+		DRAWSTRING(display,d,scaleGC,x+2,y0+2,buf,strlen(buf));
 	}
+
+	/* scale on y-axis */
 	w = can->ymax-can->ymin;
 	w1 = w * DEFAULTHEIGHT/can->height;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
-	if ( w == 0 )
-		printf("afo");
 	for ( n = ceil(can->ymin/e); n*e<= can->ymax; n++ ) {
 		y = (int)can->height*(1-(n*e-can->ymin)/w);
 		DRAWLINE(display,d,drawGC,x0,y,x0+D,y);
 		sprintf(buf,"%g",n*e);
-		if ( can->xmax <= 0 )
+		if ( can->xmax <= 0 ) {
+#if !defined(VISUAL)
 			xadj = TEXTWIDTH(sffs,buf,strlen(buf));
-		DRAWSTRING(display,d,scaleGC,x0-xadj,y,buf,strlen(buf));
+#else
+			SIZE size;
+
+			GetTextExtentPoint32(d,buf,strlen(buf),&size);
+			xadj = size.cx;
+#endif
+		}
+		DRAWSTRING(display,d,scaleGC,x0+2-xadj,y+2,buf,strlen(buf));
 	}
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.3 2000/08/22 05:04:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.4 2000/11/07 06:06:40 noro Exp $ 
 */
 #if defined(THINK_C)
 #include        <QuickDraw.h>
@@ -94,7 +94,7 @@
 #define C_APLOT C_PRIV+7
 #define C_DRAWCIRCLE C_PRIV+8
 
-#define MAXCANVAS 16
+#define MAXCANVAS 64
 #define MAXGC 16
 #if defined(THINK_C)
 #define DEFAULTWIDTH 200
@@ -145,8 +145,8 @@
 #define DRAWPOINT(d,p,g,x,y) SetPixel(p,x,y,0) 
 
 #define DRAWLINE(d,p,g,x,y,u,v) MoveToEx(p,x,y,&oldpos); LineTo(p,u,v)
-#define DRAWSTRING(d,p,g,x,y,s,l)
-#define TEXTWIDTH(f,s,l) 0
+#define DRAWSTRING(d,p,g,x,y,s,l) TextOut(p,x,y,s,l)
+/* #define TEXTWIDTH(f,s,l) */
 #else
 /* for UNIX */
 #define POINT XPoint
@@ -175,9 +175,16 @@ typedef struct RealVect {
 #define MKRVECT2(v,x,y)\
 ((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+sizeof(int)),\
  (v)->len=2,(v)->body[0]=(x),(v)->body[1]=(y))
-#define MKRVECT4(v,x,y,a,b)\
+#define MKRVECT3(v,x,y,z)\
+((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+2*sizeof(int)),\
+ (v)->len=3,(v)->body[0]=(x),(v)->body[1]=(y),(v)->body[2]=(z))
+#define MKRVECT4(v,x,y,z,u)\
 ((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+3*sizeof(int)),\
- (v)->len=2,(v)->body[0]=(x),(v)->body[1]=(y),(v)->body[2]=(a),(v)->body[3]=(b))
+ (v)->len=4,(v)->body[0]=(x),(v)->body[1]=(y),(v)->body[2]=(z),(v)->body[3]=(u))
+
+#define RV_POINT 1
+#define RV_LINE 2
+#define RV_ARC 3
 
 struct canvas {
 	int index;

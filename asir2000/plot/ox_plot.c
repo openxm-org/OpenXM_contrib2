@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.8 2000/10/06 06:05:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.9 2000/11/07 06:06:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,6 +69,7 @@ extern int do_message;
 extern int ox_flushing;
 extern jmp_buf ox_env;
 extern MATHCAP my_mathcap;
+extern char LastError[];
 
 void create_error(ERR *,unsigned int ,char *);
 
@@ -143,7 +144,6 @@ static void process_ox()
 	ERR err;
 	unsigned int serial;
 	int ret;
-	extern char LastError[];
 
 	serial = ox_recv(0,&id,&obj);
 	if ( do_message )
@@ -218,7 +218,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 			asir_executeString();
 			break;
 		case SM_executeFunction:
-			asir_executeFunction();
+			asir_executeFunction(serial);
 			break;
 		case SM_shutdown:
 			asir_terminate(2);
@@ -238,7 +238,8 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 	}
 }
 
-static void asir_executeFunction()
+static void asir_executeFunction(serial)
+int serial;
 { 
 	char *func;
 	int argc;
@@ -246,6 +247,7 @@ static void asir_executeFunction()
 	FUNC f;
 	Q ret;
 	VL vl;
+	ERR err;
 	NODE n,n1; 
 
 	func = ((STRING)asir_pop_one())->body;
@@ -272,7 +274,10 @@ static void asir_executeFunction()
 	} else if ( !strcmp(func,"drawcircle") ) {
 		drawcircle(n);
 	} else if ( !strcmp(func,"draw_obj") ) {
-		draw_obj(n);
+		if ( draw_obj(n) < 0 ) {
+			create_error(&err,serial,LastError);
+			asir_push_one((Obj)err);
+		}	
 	} else if ( !strcmp(func,"clear_canvas") ) {
 		clear_canvas(n);
 	}

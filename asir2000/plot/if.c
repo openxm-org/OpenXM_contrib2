@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.3 2000/08/22 05:04:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.4 2000/11/07 06:06:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -200,36 +200,43 @@ int drawcircle(NODE arg)
 int draw_obj(NODE arg)
 {
 	int index;
-	int x,y,u,v,r,l;
+	int x,y,u,v,len,r;
 	NODE obj,n;
 	RealVect *vect;
 	struct canvas *can;
+	int color;
 
 	index = QTOS((Q)ARG0(arg));
 	can = canvas[index];
-	if ( !can || !can->window )
+	if ( !can || !can->window ) {
+		set_lasterror("draw_obj : canvas does not exist");
 		return -1;
+	}
 
 	obj = BDY((LIST)ARG1(arg));
-	switch ( l = length(obj) ) {
+	if ( argc(arg) == 3 )
+		color = QTOS((Q)ARG2(arg));
+	else
+		color = 0; /* black */
+	switch ( len = length(obj) ) {
 		case 2: /* point */
 			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
-			draw_point(display,can,x,y);
-			MKRVECT2(vect,x,y);
-			MKNODE(n,vect,can->history);
-			can->history = n;
+			draw_point(display,can,x,y,color);
+			MKRVECT2(vect,x,y); MKNODE(n,vect,can->history); can->history = n;
 			break;
-//		case 3: /* circle */
-//			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
-//			r = (int)ToReal((Q)ARG2(obj));
-//			break;
+		case 3: /* circle */
+			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
+			r = (int)ToReal((Q)ARG2(obj));
+			MKRVECT3(vect,x,y,r); MKNODE(n,vect,can->history); can->history = n;
+			break;
 		case 4: /* line */
 			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
 			u = (int)ToReal((Q)ARG2(obj)); v = (int)ToReal((Q)ARG3(obj));
-			draw_line(display,can,x,y,u,v);
+			draw_line(display,can,x,y,u,v,color);
 			MKRVECT4(vect,x,y,u,v); MKNODE(n,vect,can->history); can->history = n;
 			break;
 		default:
+			set_lasterror("draw_obj : invalid request");
 			return -1;
 	}
 	return 0;

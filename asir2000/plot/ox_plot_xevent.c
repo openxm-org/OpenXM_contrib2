@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.8 2000/10/24 01:53:53 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.9 2000/11/07 06:06:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -149,7 +149,7 @@ XButtonEvent *ev;
 		case Button1:
 			e.x = ev->x; e.y = ev->y;
 			draw_frame0(can->window,spos,e);
-			if ( !busy ) {
+			if ( !busy && can->mode != MODE_INTERACTIVE ) {
 				if ( can->mode == MODE_PLOT )
 					plot_resize(can,spos,e);
 				else
