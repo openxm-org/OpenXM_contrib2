@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.24 2004/01/07 06:25:42 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.25 2004/02/13 05:48:36 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -172,6 +172,8 @@ main(int argc,char *argv[])
 	pf_init();
 	sysf_init();
 	parif_init();
+	order_init();
+	/* XXX set the default ordering */
 #if defined(VISUAL)
 	init_socket();
 #endif

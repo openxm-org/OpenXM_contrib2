@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.27 2004/02/03 23:31:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.28 2004/02/05 08:28:53 noro Exp $ 
 */
 #include "ca.h"
 
@@ -79,6 +79,14 @@ void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr);
 void comm_quod(VL vl,DP p1,DP p2,DP *pr);
 void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr);
 void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr);
+
+void order_init()
+{
+	struct order_spec *spec;
+
+	create_order_spec(0,0,&spec);
+	initd(spec);
+}
 
 int has_sfcoef(DP f)
 {

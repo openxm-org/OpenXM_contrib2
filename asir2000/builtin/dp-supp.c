@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.28 2004/02/05 08:28:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.29 2004/02/09 08:23:29 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1311,6 +1311,7 @@ void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
 
 /*
  * setting flags
+ * call create_order_spec with vl=0 to set old type order.
  *
  */
 
@@ -1443,14 +1444,19 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 	for ( i = 0; i < l; i++ ) top[i] = 0;
 
 	for ( t = wb, i = 0; t; t = NEXT(t), i++ ) {
+		if ( !BDY(t) || OID((Obj)BDY(t)) != O_LIST )
+			error("a list of lists must be specified for the key \"order\"");
 		a = BDY((LIST)BDY(t));
 		len = length(a);
 		a0 = (Obj)BDY(a);
 		if ( !a0 || OID(a0) == O_N ) {
 			/* a is a dense weight vector */
 			dw = (int *)MALLOC(sizeof(int)*len);
-			for ( j = 0, p = a; j < len; p = NEXT(p), j++ )
+			for ( j = 0, p = a; j < len; p = NEXT(p), j++ ) {
+				if ( !INT((Q)BDY(p)) )	
+					error("a dense weight vector must be specified as a list of integers");
 				dw[j] = QTOS((Q)BDY(p));
+			}
 			w_or_b[i].type = IS_DENSE_WEIGHT;
 			w_or_b[i].length = len;
 			w_or_b[i].body.dense_weight = dw;
@@ -1465,12 +1471,16 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 			sw = (struct sparse_weight *)
 				MALLOC(sizeof(struct sparse_weight)*len);
 			for ( j = 0, p = a; j < len; j++ ) {
+				if ( !BDY(p) || OID((P)BDY(p)) != O_P )
+					error("a sparse weight vector must be specified as [var1,weight1,...]");
 				v = VR((P)BDY(p)); p = NEXT(p);
 				for ( tvl = vl, k = 0; tvl && tvl->v != v;
 					k++, tvl = NEXT(tvl) );
 				if ( !tvl )
-					error("invalid variable name");
+					error("invalid variable name in a sparse weight vector");
 				sw[j].pos = k;
+				if ( !INT((Q)BDY(p)) )
+					error("a sparse weight vector must be specified as [var1,weight1,...]");
 				sw[j].value = QTOS((Q)BDY(p)); p = NEXT(p);
 			}
 			w_or_b[i].type = IS_SPARSE_WEIGHT;
@@ -1522,10 +1532,13 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 				for ( start = 0, tvl = vl; tvl->v != VR((P)BDY(a));
 				tvl = NEXT(tvl), start++ );
 				for ( p = NEXT(a), tvl = NEXT(tvl); p;
-					p = NEXT(p), tvl = NEXT(tvl) )
+					p = NEXT(p), tvl = NEXT(tvl) ) {
+					if ( !BDY(p) || OID((P)BDY(p)) != O_P )
+						error("a block must be specified as [ordsymbol,var1,var2,...]");
 					if ( tvl->v != VR((P)BDY(p)) ) break;
+				}
 				if ( p )
-					error("a block must be contiguous");
+					error("a block must be contiguous in the variable list");
 			}
 			w_or_b[i].type = IS_BLOCK;
 			w_or_b[i].length = len;
