@@ -1,4 +1,4 @@
-dnl $OpenXM$
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.1 2003/02/23 03:05:35 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -147,6 +147,10 @@ sparc-sun-solaris2.*)
     *)          asm_obj="${generic_obj}"  ;;
     esac
     AC_DEFINE([SYSV])
+    ;;
+powerpc-apple-darwin*)
+    asm_obj="${generic_obj}"
+    AC_DEFINE([__DARWIN__])
     ;;
 *)
     asm_obj="${generic_obj}"
