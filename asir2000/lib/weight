@@ -199,21 +199,8 @@ def fixedpoint(A,FLAG){
 	return fixpointmain(F,Vars)$
 }
 
-def nonzerovec(A){
-
-	for(I=0;I<size(A)[0];I++)
-		if(A[I]!=0)
-			return 1$
-
-	return 0$
-}
-
 def junban(A,B){
 	return (A<B ? 1:(A>B ? -1:0))$
-}
-
-def worder(A,B){
-	return (A[0]<B[0] ? 1:(A[0]>B[0] ? -1:0))$
 }
 
 def bsort(A){
@@ -263,47 +250,49 @@ def nonposdegchk(Res){
 
 def getgcd(A,B){
 
-	VarsNumA=length(A)$
-	VarsNumB=length(B)$
+	Anum=length(A)$
 
-	C=newvect(VarsNumB,B)$
+	TMP=[]$
+	for(I=0;I<length(B);I++){
 
-	for(I=0;I<VarsNumA;I++){
+		for(J=0;J<Anum;J++)
+			if(B[I]==A[J][0])
+				break;
 
-		for(J=0;J<VarsNumB;J++)
-			if(B[J]==A[I][0])
-				break$
-
-		if(J<VarsNumB)
-			C[J]=A[I][1]$
+		if(J==Anum)
+			TMP=cons([B[I],B[I]],TMP)$
 	}
+	A=append(A,TMP)$
 
-	D=0$
-	for(I=0;I<VarsNumB;I++)
-		D=gcd(D,C[I])$
+	Anum=length(A)$
+	A=map(ltov,A)$
+
+	for(D=0,I=0;I<Anum;I++)
+		D=gcd(D,A[I][1])$
 
 	if(D!=0){
-		C=C/D$
-		C=map(red,C)$
+		for(I=0;I<Anum;I++)
+			A[I][1]=red(A[I][1]/D)$
 	}
 
-	for(L=1,D=0,I=0;I<VarsNumB;I++){
-		if(type(TMP=dn(C[I]))==1)
+	for(L=1,D=0,I=0;I<Anum;I++){
+		if(type(TMP=dn(A[I][1]))==1)
 			L=ilcm(L,TMP)$
 
-		if(type(TMP=nm(C[I]))==1)
+		if(type(TMP=nm(A[I][1]))==1)
 			D=igcd(D,TMP)$
 	}
 
-	C=C*L$
-	if(D!=0)
-		C=C/D$
+	for(I=0;I<Anum;I++)
+		A[I][1]=A[I][1]*L$
 
-	RET=[]$
-	for(I=0;I<VarsNumB;I++)
-		RET=cons([B[I],C[I]],RET)$
+	if(D!=0){
 
-	return RET$
+		for(I=0;I<Anum;I++)
+			A[I][1]=A[I][1]/D$
+	}
+
+	return map(vtol,A)$
 }
 
 def makeret(Res,Vars,FLAG){
@@ -350,11 +339,6 @@ def makeret(Res,Vars,FLAG){
 		if(J<VarsNum)
 			RET[J]=ResVec[I]$
 	}
-			
-
-	for(J=0;J<length(Vars);J++)
-		RET=map(subst,RET,Vars[J],
-			strtov(rtostr(Vars[J])+"_deg"))$
 			
 	for(I=0;I<VarsNum;I++)
 		if(type(RET[I])!=1)
@@ -477,6 +461,8 @@ def value2(Vars,Ans){
 		Res[I][0]=Vars[I]$
 		Res[I][1]=Ans[I]$
 	}
+	Res=map(vtol,Res)$
+	Res=vtol(Res)$
 
 	Res=getgcd(Res,Vars)$
 
@@ -511,7 +497,7 @@ def qcheck(PolyList,Vars,FLAG){
 
 	VarsList=[]$
 	for(I=0;I<VarsNum;I++)
-		if(member(Vars[CHAGORD[I]],Rea))
+		if(member(TMP0=Vars[CHAGORD[I]],Rea))
 			VarsList=cons(Vars[CHAGORD[I]],VarsList)$
 
 	Res=solve(reverse(SolveList),reverse(VarsList))$
