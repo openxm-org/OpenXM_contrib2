@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.18 2002/01/28 02:42:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.19 2002/01/29 02:03:41 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -249,9 +249,9 @@ def generic_bfct(F,V,DV,W)
 	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
 	
 	/* compute a groebner basis of FH w.r.t. MWH */
-	dp_gr_flags(["Top",1,"NoRA",1]);
+	dp_gr_flags(["Top",1]);
 	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
-	dp_gr_flags(["Top",0,"NoRA",0]);
+	dp_gr_flags(["Top",0]);
 
 	/* dehomigenize GH */
 	G = map(subst,GH,h,1);
@@ -572,7 +572,11 @@ def bfct_via_gbfct_weight_2(F,V)
 	/* change of ordering from VDV to VDV2 */
 	VDV2 = append(V2,DV2);
 	dp_set_weight(WtV2);
-	GIN2 = dp_weyl_gr_main(GIN,VDV2,0,-1,0);
+	for ( Pind = 0; ; Pind++ ) {
+		Prime = lprime(Pind);
+		GIN2 = dp_weyl_gr_main(GIN,VDV2,0,-Prime,0);
+		if ( GIN2 ) break;
+	}
 
 	R = weyl_minipoly(GIN2,VDV2,0,T); /* M represents DRL order */
 	dp_set_weight(0);
@@ -632,20 +636,28 @@ def weyl_minipoly(G0,V0,O0,P)
 		PS[I] = dp_ptod(car(T),V0);
 	for ( I = Len - 1, GI = []; I >= 0; I-- )
 		GI = cons(I,GI);
+	PSM = newvect(Len);
 	DP = dp_ptod(P,V0);
 
-	for ( I = 0; ; I++ ) {
-		Prime = lprime(I);
+	for ( Pind = 0; ; Pind++ ) {
+		Prime = lprime(Pind);
 		if ( !valid_modulus(HM,Prime) )
 			continue;
-		MP = weyl_minipolym(G0,V0,O0,Prime,P);
-		D = deg(MP,var(MP));
+		setmod(Prime);
+		for ( I = 0, T = G0, HL = []; T != []; T = cdr(T), I++ )
+			PSM[I] = dp_mod(dp_ptod(car(T),V0),Prime,[]);
 
 		NFP = weyl_nf(GI,DP,1,PS);
+		NFPM = dp_mod(NFP[0],Prime,[])/ptomp(NFP[1],Prime);
+
 		NF = [[dp_ptod(1,V0),1]];
 		LCM = 1;
 
-		for ( J = 1; J <= D; J++ ) {
+		TM = dp_mod(<<0>>,Prime,[]);
+		TTM = dp_mod(dp_ptod(1,V0),Prime,[]);
+		GM = NFM = [[TTM,TM]];
+
+		for ( D = 1; ; D++ ) {
 			if ( dp_gr_print() )
 				print(".",2);
 			NFPrev = car(NF);
@@ -654,7 +666,18 @@ def weyl_minipoly(G0,V0,O0,P)
 			NFJ = remove_cont(NFJ);
 			NF = cons(NFJ,NF);
 			LCM = ilcm(LCM,NFJ[1]);
+
+			/* modular computation */
+			TM = dp_mod(<<D>>,Prime,[]);
+			TTM = dp_mod(NFJ[0],Prime,[])/ptomp(NFJ[1],Prime);
+			NFM = cons([TTM,TM],NFM);
+			LM = dp_lnf_mod([TTM,TM],GM,Prime);
+			if ( !LM[0] )
+				break;
+			else
+				GM = insert(GM,LM);
 		}
+
 		if ( dp_gr_print() )
 			print("");
 		U = NF[0][0]*idiv(LCM,NF[0][1]);
