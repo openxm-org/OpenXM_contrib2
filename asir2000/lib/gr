@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.6 2000/08/22 05:04:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.7 2000/09/07 23:59:55 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -935,14 +935,16 @@ def dp_terms(D,V)
 
 def gb_comp(A,B)
 {
-	for ( T = A; T != []; T = cdr(T) ) {
-		for ( S = B, M = car(T), N = -M; S != []; S = cdr(S) )
-			if ( car(S) == M || car(S) == N )
-				break;
-		if ( S == [] )
+	LA = length(A);
+	LB = length(B);
+	if ( LA != LB )
+		return 0;
+	A1 = qsort(newvect(LA,A));
+	B1 = qsort(newvect(LB,B));
+	for ( I = 0; I < LA; I++ )
+		if ( A1[I] != B1[I] && A1[I] != -B1[I] )
 			break;
-	}
-	return T == [] ? 1 : 0;
+	return I == LA ? 1 : 0;
 }
 
 def zero_dim(G,V,O) {
