@@ -319,7 +319,7 @@ ND nd_merge(ND p1,ND p2);
 ND nd_add(int mod,ND p1,ND p2);
 ND nd_add_q(ND p1,ND p2);
 ND nd_add_sf(ND p1,ND p2);
-ND nd_quo(int mod,ND p,NDV d);
+ND nd_quo(int mod,PGeoBucket p,NDV d);
 INLINE int nd_length(ND p);
 NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);

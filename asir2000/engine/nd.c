@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.102 2004/09/15 01:43:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.103 2004/09/15 06:06:42 noro Exp $ */
 
 #include "nd.h"
 
@@ -3202,21 +3202,24 @@ ND ndv_mul_nm(int mod,NM m0,NDV p)
 	}
 }
 
-ND nd_quo(int mod,ND p,NDV d)
+ND nd_quo(int mod,PGeoBucket bucket,NDV d)
 {
 	NM mq0,mq;
 	NMV tm;
 	Q q;
-	int i,nv,sg,c,c1,c2;
-	ND t,r;
-	
+	int i,nv,sg,c,c1,c2,hindex;
+	ND p,t,r;
+	N tnm;
+
 	if ( !p ) return 0;
 	else {
-		nv = NV(p);
-		sg = SG(p);
+		nv = NV(d);
 		mq0 = 0;
 		tm = (NMV)ALLOCA(nmv_adv);
-		while ( p ) {
+		while ( 1 ) {
+			hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
+			if ( hindex < 0 ) break;
+			p = bucket->body[hindex];
 			NEXTNM(mq0,mq);
 			ndl_sub(HDL(p),HDL(d),DL(mq));
 			ndl_copy(DL(mq),DL(tm));
@@ -3225,17 +3228,24 @@ ND nd_quo(int mod,ND p,NDV d)
 				DMAR(c1,c2,0,mod,c); CM(mq) = c;
 				CM(tm) = mod-c;
 			} else {
-				divq(HCQ(p),HCQ(d),&CQ(mq));
+				divsn(NM(HCQ(p)),NM(HCQ(d)),&tnm);
+				NTOQ(tnm,SGN(HCQ(p))*SGN(HCQ(d)),CQ(mq));
 				chsgnq(CQ(mq),&CQ(tm));
 			}
 			t = ndv_mul_nmv_trunc(mod,tm,d,HDL(d));
-			p = nd_add(mod,p,t);
+			bucket->body[hindex] = nd_remove_head(p);
+			t = nd_remove_head(t);
+			add_pbucket(mod,bucket,t);
 		}
-		NEXT(mq) = 0;
-		for ( i = 0, mq = mq0; mq; mq = NEXT(mq), i++ );
-		MKND(nv,mq0,i,r);
-		/* XXX */
-		SG(r) = sg-SG(d);
+		if ( !mq0 )
+			r = 0;
+		else {
+			NEXT(mq) = 0;
+			for ( i = 0, mq = mq0; mq; mq = NEXT(mq), i++ );
+			MKND(nv,mq0,i,r);
+			/* XXX */
+			SG(r) = HTD(r);
+		}
 		return r;
 	}
 }
@@ -4711,6 +4721,7 @@ void nd_det(int mod,MAT f,P *rp)
 	if ( mod ) ndv_mod(mod,d);
 	chsgnq(ONE,&mone);
 	for ( j = 0, sgn = 1; j < n; j++ ) {
+		if ( DP_Print ) fprintf(stderr,"j=%d\n",j);
 		for ( i = j; i < n && !dm[i][j]; i++ );
 		if ( i == n ) {
 			*rp = 0;
@@ -4733,19 +4744,22 @@ void nd_det(int mod,MAT f,P *rp)
 			sgn = -sgn;
 		}
 		for ( i = j+1, mj = dm[j], mjj = mj[j]; i < n; i++ ) {
+			if ( DP_Print ) fprintf(stderr,"	i=%d\n		",i);
 			mi = dm[i]; mij = mi[j];
 			if ( mod )
 				ndv_mul_c(mod,mij,mod-1);
 			else
 				ndv_mul_c_q(mij,mone);
 			for ( k = j+1; k < n; k++ ) {
+				if ( DP_Print ) fprintf(stderr,"k=%d ",k);
 				bucket = create_pbucket();
-				if ( mi[k] )
+				if ( mi[k] ) {
 					nmv = BDY(mjj); len = LEN(mjj);
 					for ( a = 0; a < len; a++, NMV_ADV(nmv) ) {
 						u = ndv_mul_nmv_trunc(mod,nmv,mi[k],DL(BDY(d)));
 						add_pbucket(mod,bucket,u);
 					}
+				}
 				if ( mj[k] && mij ) {
 					nmv = BDY(mij); len = LEN(mij);
 					for ( a = 0; a < len; a++, NMV_ADV(nmv) ) {
@@ -4753,10 +4767,10 @@ void nd_det(int mod,MAT f,P *rp)
 						add_pbucket(mod,bucket,u);
 					}
 				}
-				u = normalize_pbucket(mod,bucket);
-				u = nd_quo(mod,u,d);
+				u = nd_quo(mod,bucket,d);
 				mi[k] = ndtondv(mod,u);
 			}
+			if ( DP_Print ) fprintf(stderr,"\n",k);
 		}
 		d = mjj;
 	}
@@ -4792,7 +4806,7 @@ ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d)
 				if ( ndl_reducible(DL(tnm),d) ) {
 					NEXTNM(mr0,mr);
 					c1 = CM(m); DMAR(c1,c,0,mod,c2); CM(mr) = c2;
-					ndl_add(DL(m),d0,DL(mr));
+					ndl_copy(DL(tnm),DL(mr));
 				}
 			}
 		} else {
@@ -4802,7 +4816,7 @@ ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d)
 				if ( ndl_reducible(DL(tnm),d) ) {
 					NEXTNM(mr0,mr);
 					mulq(CQ(m),q,&CQ(mr));
-					ndl_add(DL(m),d0,DL(mr));
+					ndl_copy(DL(tnm),DL(mr));
 				}
 			}
 		}
