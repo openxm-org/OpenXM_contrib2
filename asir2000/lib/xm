@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.5 2000/02/01 12:22:01 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.6 2000/02/02 07:29:48 takayama Exp $ */
 /**  xm  **/
 Xm_noX = 0$  
 /* 1 : using X-window system. 0 : not using X-window system. */
@@ -180,5 +180,6 @@ load("sm1")$
 load("gnuplot")$
 load("tigers")$
 load("phc")$
+load("longname")$
 
 end$
