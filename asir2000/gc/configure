@@ -7756,9 +7756,9 @@ cat >>confdefs.h <<\EOF
 #define SILENT 1
 EOF
 
-cat >>confdefs.h <<\EOF
-#define NO_SIGNALS 1
-EOF
+#cat >>confdefs.h <<\EOF
+##define NO_SIGNALS 1
+#EOF
 
 cat >>confdefs.h <<\EOF
 #define NO_EXECUTE_PERMISSION 1
