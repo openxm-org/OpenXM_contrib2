@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.45 2003/08/25 08:57:31 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.46 2003/08/25 09:16:55 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -11,7 +11,7 @@
 #define INLINE
 #endif
 
-#define USE_GEOBUCKET 0
+#define USE_GEOBUCKET 1
 
 #define REDTAB_LEN 32003
 
