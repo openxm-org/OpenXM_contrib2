@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.27 2003/01/06 01:16:37 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.28 2003/05/29 16:44:59 saito Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -86,6 +86,7 @@ void Pmat_swap_row_destructive();
 void Pmat_swap_col_destructive();
 void Pvect();
 void Pmat();
+void Pmatc();
 
 struct ftab array_tab[] = {
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
@@ -100,6 +101,8 @@ struct ftab array_tab[] = {
 	{"newmat",Pnewmat,-3},
 	{"matrix",Pnewmat,-3},
 	{"mat",Pmat,-99999999},
+	{"matr",Pmat,-99999999},
+	{"matc",Pmatc,-99999999},
 	{"newbytearray",Pnewbytearray,-2},
 	{"sepmat_destructive",Psepmat_destructive,2},
 	{"sepvect",Psepvect,2},
@@ -371,6 +374,23 @@ void Pvect(NODE arg,VECT *rp) {
 	}
 
 	for (len = 0, tn = arg; tn; tn = NEXT(tn), len++);
+	if ( len == 1 ) {
+		if ( ARG0(arg) != 0 ) {
+			switch ( OID(ARG0(arg)) ) {
+				case O_VECT:
+					*rp = ARG0(arg);
+					return;
+				case O_LIST:
+					for ( len = 0, tn = ARG0(arg); tn; tn = NEXT(tn), len++ );
+					MKVECT(vect,len-1);
+					for ( i = 0, tn = BDY((LIST)ARG0(arg)), vb =BDY(vect);
+							tn; i++, tn = NEXT(tn) )
+						vb[i] = (pointer)BDY(tn);
+					*rp=vect;
+					return;
+			}
+		}
+	}
 	MKVECT(vect,len);
 	for ( i = 0, tn = arg, vb = BDY(vect); tn; i++, tn = NEXT(tn) )
 		vb[i] = (pointer)BDY(tn);
@@ -462,9 +482,12 @@ void Pnewmat(NODE arg,MAT *rp)
 void Pmat(NODE arg, MAT *rp)
 {
 	int row,col;
+	int i;
 	MAT m;
 	pointer **mb;
+	pointer *ent;
 	NODE tn, sn;
+	VECT v;
 
 	if ( !arg ) {
 		*rp =0;
@@ -472,11 +495,69 @@ void Pmat(NODE arg, MAT *rp)
 	}
 
 	for (row = 0, tn = arg; tn; tn = NEXT(tn), row++);
-	for (col = 0, tn = BDY((LIST)ARG0(arg)); tn ; tn = NEXT(tn), col++);
+	if ( OID(ARG0(arg)) == O_VECT ) {
+		v = ARG0(arg);
+		col = v->len;
+	} else if ( OID(ARG0(arg)) == O_LIST ) {
+		for (col = 0, tn = BDY((LIST)ARG0(arg)); tn ; tn = NEXT(tn), col++);
+	}
+
 	MKMAT(m,row,col);
-	for (row = 0, tn = arg, mb = BDY(m); tn; tn = NEXT(tn), row++)
-		for (col = 0, sn = BDY((LIST)BDY(tn)); sn; col++, sn = NEXT(sn) )
-			mb[row][col] = (pointer)BDY(sn);
+	for (row = 0, tn = arg, mb = BDY(m); tn; tn = NEXT(tn), row++) {
+		if ( BDY(tn) == 0 ) {
+			error("mat : invalid argument");
+		} else if ( OID(BDY(tn)) == O_VECT ) {
+			v = tn->body;
+			ent = BDY(v);
+			for (i = 0; i < v->len; i++ ) mb[row][i] = (Obj)ent[i];
+		} else if ( OID(BDY(tn)) == O_LIST ) {
+			for (col = 0, sn = BDY((LIST)BDY(tn)); sn; col++, sn = NEXT(sn) )
+				mb[row][col] = (pointer)BDY(sn);
+		} else {
+			error("mat : invalid argument");
+		}
+	}
+	*rp = m;
+}
+
+void Pmatc(NODE arg, MAT *rp)
+{
+	int row,col;
+	int i;
+	MAT m;
+	pointer **mb;
+	pointer *ent;
+	NODE tn, sn;
+	VECT v;
+
+	if ( !arg ) {
+		*rp =0;
+		return;
+	}
+
+	for (col = 0, tn = arg; tn; tn = NEXT(tn), col++);
+	if ( OID(ARG0(arg)) == O_VECT ) {
+		v = ARG0(arg);
+		row = v->len;
+	} else if ( OID(ARG0(arg)) == O_LIST ) {
+		for (row = 0, tn = BDY((LIST)ARG0(arg)); tn ; tn = NEXT(tn), row++);
+	}
+
+	MKMAT(m,row,col);
+	for (col = 0, tn = arg, mb = BDY(m); tn; tn = NEXT(tn), col++) {
+		if ( BDY(tn) == 0 ) {
+			error("matc : invalid argument");
+		} else if ( OID(BDY(tn)) == O_VECT ) {
+			v = tn->body;
+			ent = BDY(v);
+			for (i = 0; i < v->len; i++ ) mb[i][col] = (Obj)ent[i];
+		} else if ( OID(BDY(tn)) == O_LIST ) {
+			for (row = 0, sn = BDY((LIST)BDY(tn)); sn; row++, sn = NEXT(sn) )
+				mb[row][col] = (pointer)BDY(sn);
+		} else {
+			error("matc : invalid argument");
+		}
+	}
 	*rp = m;
 }
 

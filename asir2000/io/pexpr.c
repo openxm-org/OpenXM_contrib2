@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.22 2003/05/29 16:45:01 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.23 2003/06/07 16:40:25 saito Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -416,13 +416,6 @@ Num q;
 		case N_IP:
 		case N_IntervalBigFloat:
 			switch ( outputstyle ) {
-				case 0:
-					PUTS("[");
-					PRINTNUM(INF((Itv)q));
-					PUTS(",");
-					PRINTNUM(SUP((Itv)q));
-					PUTS("]");
-					break;
 				case 1:
 					PUTS("intval(");
 					PRINTNUM(INF((Itv)q));
@@ -430,6 +423,7 @@ Num q;
 					PRINTNUM(SUP((Itv)q));
 					PUTS(")");
 					break;
+				case 0:
 				default:
 					PUTS("[");
 					PRINTNUM(INF((Itv)q));
@@ -443,14 +437,11 @@ Num q;
 			switch (printmode) {
 				case PRINTF_E:
 					switch ( outputstyle ) {
-						case 0:
-							TAIL PRINTF(OUT, "[%.16e,%.16e]",
-								INF((IntervalDouble)q),SUP((IntervalDouble)q));
-							break;
 						case 1:
 							TAIL PRINTF(OUT, "intval(%.16e,%.16e)",
 								INF((IntervalDouble)q),SUP((IntervalDouble)q));
 							break;
+						case 0:
 						default:
 							TAIL PRINTF(OUT, "[%.16e,%.16e]",
 								INF((IntervalDouble)q),SUP((IntervalDouble)q));
@@ -463,16 +454,12 @@ Num q;
 					break;
 				case MID_PRINTF_G:
 					switch ( outputstyle ) {
-						case 0:
-							TAIL PRINTF(OUT, "<%g,%g>",
-								(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
-								(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
-							break;
 						case 1:
 							TAIL PRINTF(OUT, "intvalm(%g,%g)",
 								(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
 								(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
 							break;
+						case 0:
 						default:
 							TAIL PRINTF(OUT, "<%g,%g>",
 								(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
@@ -482,16 +469,12 @@ Num q;
 					break;
 				case MID_PRINTF_E:
 					switch ( outputstyle ) {
-						case 0:
-							TAIL PRINTF(OUT, "<%.16e,%.16e>",
-							(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
-							(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
-							break;
 						case 1:
 							TAIL PRINTF(OUT, "intvalm(%.16e,%.16e)",
 							(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
 							(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
 							break;
+						case 0:
 						default:
 							TAIL PRINTF(OUT, "<%.16e,%.16e>",
 							(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
@@ -502,14 +485,11 @@ Num q;
 				case PRINTF_G:
 				default:
 					switch ( outputstyle ) {
-						case 0:
-							TAIL PRINTF(OUT, "[%g,%g]",
-								INF((IntervalDouble)q),SUP((IntervalDouble)q));
-							break;
 						case 1:
 							TAIL PRINTF(OUT, "intval(%g,%g)",
 								INF((IntervalDouble)q),SUP((IntervalDouble)q));
 							break;
+						case 0:
 						default:
 							TAIL PRINTF(OUT, "[%g,%g]",
 								INF((IntervalDouble)q),SUP((IntervalDouble)q));
@@ -698,21 +678,15 @@ VECT vect;
 	pointer *ptr;
 
 	switch ( outputstyle ) {
-		case 0:
-			PUTS("[ ");
-			for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
-				PRINTEXPR(vl,ptr[i]); PUTS(" ");
-			}
-			PUTS("]");
-			break;
 		case 1:
 			PUTS("vect(");
 			for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
-				if ( i != 0 ) PUTS(", ");
+				if ( i != 0 ) PUTS(",");
 				PRINTEXPR(vl,ptr[i]);
 			}
 			PUTS(")");
 			break;
+		case 0:
 		default:
 			PUTS("[ ");
 			for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
@@ -731,30 +705,20 @@ MAT mat;
 	pointer *ptr;
 
 	switch ( outputstyle ) {
-		case 0:
-			for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
-				PUTS("[ ");
-				for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
-					PRINTEXPR(vl,ptr[j]); PUTS(" ");
-				}
-				PUTS("]");
-				if ( i < r - 1 )
-					PUTS("\n");
-			}
-			break;
 		case 1:
 			PUTS("mat(\n");
 			for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
 				if ( i != 0 ) PUTS(",\n");
 				PUTS("[ ");
 				for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
-					if ( j != 0 ) PUTS(", ");
+					if ( j != 0 ) PUTS(",");
 					PRINTEXPR(vl,ptr[j]);
 				}
-				PUTS("]");
+				PUTS(" ]");
 			}
 			PUTS(")");
 			break;
+		case 0:
 		default:
 			for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
 				PUTS("[ ");
