@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.12 2002/08/02 08:59:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.13 2002/08/02 09:29:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -138,54 +138,18 @@ int plot(NODE arg)
 	else
 		can->wname = "";
 	can->formula = formula; 
-	create_canvas(can);
 	if ( can->mode == MODE_PLOT ) {
 		plotcalc(can);
+		create_canvas(can);
 		plot_print(display,can);
 	} else if ( can->mode == MODE_POLARPLOT ) {
 		polarplotcalc(can);
+		create_canvas(can);
 		plot_print(display,can);
-	} else
-		ifplotmain(can);
-	copy_to_canvas(can);
-	return id;
-}
-
-int polarplot(NODE arg)
-{
-	int id;
-	NODE n;
-	struct canvas *can;
-	P formula;
-	LIST xrange,yrange,zrange,wsize;
-	STRING wname;
-
-	formula = (P)ARG0(arg);
-	xrange = (LIST)ARG1(arg);
-	wsize = (LIST)ARG4(arg);
-	wname = (STRING)ARG5(arg);
-
-	can = canvas[id = search_canvas()];
-	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
-	/* XXX  use zmin, zmax to hold parameter range */
-	can->zmin = ToReal((Num)BDY(n)); n = NEXT(n);
-	can->zmax = ToReal((Num)BDY(n));
-	can->mode = MODE_POLARPLOT;
-	if ( !wsize ) {
-		can->width = DEFAULTWIDTH; can->height = DEFAULTHEIGHT;
 	} else {
-		can->width = QTOS((Q)BDY(BDY(wsize)));
-		can->height = QTOS((Q)BDY(NEXT(BDY(wsize))));
+		create_canvas(can);
+		ifplotmain(can);
 	}
-	if ( wname )
-		can->wname = BDY(wname);
-	else
-		can->wname = "";
-	can->formula = formula; 
-	polarplotcalc(can);
-	/* xmax, xmin etc are determined after calc */
-	create_canvas(can);
-	plot_print(display,can);
 	copy_to_canvas(can);
 	return id;
 }
