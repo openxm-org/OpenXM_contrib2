@@ -47,7 +47,7 @@ extract_man %lang% parts\builtin\poly.texi parts\builtin\string.texi parts\built
 extract_man %lang% parts\builtin\type.texi parts\builtin\upoly.texi src
 
 cd src
-jperl ..\texi2html -menu -split_node man.texi
+jperl ..\texi2html-%lang% -menu -split_node man.texi
 cd ..
 mkdir html
 del /Q html\*.*
