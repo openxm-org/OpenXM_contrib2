@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.1 2000/12/22 09:58:32 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.2 2002/01/08 04:14:36 kondoh Exp $
  */
 
 #include "ca.h"
@@ -21,7 +21,7 @@ static void Pcup(NODE, Obj *);
 static void Pcap(NODE, Obj *);
 static void Pwidth(NODE, Obj *);
 static void Pdistance(NODE, Obj *);
-static void Pitvversion(Obj *);
+static void Pitvversion(Q *);
 #endif
 static void Pprintmode(NODE, Obj *);
 
@@ -58,7 +58,7 @@ struct ftab interval_tab[] = {
 static void
 Pitvversion(Obj *rp)
 {
-	STOQ(ASIR_VERSION,(Q)*rp);
+	STOQ(ASIR_VERSION, *rp);
 }
 
 extern int	bigfloat;

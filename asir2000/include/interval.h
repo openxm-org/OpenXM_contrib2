@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.7 2004/03/25 16:32:45 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.8 2004/12/10 07:36:34 noro Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -107,6 +107,7 @@ static char	*Interval_dummy;
 #undef  N_GFPN
 #undef  N_GFS
 #undef  N_GFSN
+#undef  N_DA
 #define	N_NEXT_B		(N_B+1)
 #define N_Quad			(N_NEXT_B)
 #define N_IP			(N_NEXT_B+1)
