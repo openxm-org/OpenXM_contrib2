@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.51 2004/03/05 06:14:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.52 2004/03/09 05:33:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1232,33 +1232,15 @@ void Pox_evalname(NODE arg,Obj *rp)
 	*rp = 0;
 }
 
-char *augment_backslash(char *s)
-{
-	char *p,*r;
-	int i;
-
-	for ( i = 0, p = s; *p; p++, i++ ) if ( *p == '\\' ) i++;
-	r = (char *)MALLOC_ATOMIC((i+1)*sizeof(char));
-	for ( i = 0, p = s; *p; p++, i++ ) {
-		if ( *p == '\\' ) r[i++] = '\\';
-		r[i] = *p;
-	}
-	return r;
-}
-
 void Pox_execute_string(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
-	char *cmd;
-	STRING str;
 
 	asir_assert(ARG1(arg),O_STR,"ox_execute_string");
 	valid_mctab_index(index);
 	s = m_c_tab[index].c;
-	cmd = augment_backslash(BDY((STRING)ARG1(arg)));
-	MKSTR(str,cmd);
-	ox_send_data(s,str);
+	ox_send_data(s,ARG1(arg));
 	ox_send_cmd(s,SM_executeStringByLocalParser);
 	*rp = 0;
 }

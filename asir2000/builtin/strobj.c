@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.30 2004/03/09 03:14:24 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.31 2004/03/09 06:12:47 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -179,50 +179,47 @@ char *conv_rule(char *name)
 char *conv_subscript(char *name)
 {
 	int i,j,k,len,clen,slen,start,level;
-	char *buf,*head,*r,*h;
+	char *buf,*head,*r,*h,*brace;
 	char **subs;
 
 	len = strlen(name);
-	i = 0;
-	if ( name[i] == '{' ) {
-		for ( level = 1, i++; i < len && level; i++ ) {
-			if ( name[i] == '{' ) level++;
-			else if ( name[i] == '}' ) level--;
-		}
-	}
-	for ( ; i < len && (isalpha(name[i]) || name[i]=='\\'); i++ );
-	if ( i == len ) return symbol_name(name);
-	buf = (char *)ALLOCA((i+1)*sizeof(char));
-	strncpy(buf,name,i); buf[i] = 0;
-	head = symbol_name(buf);
 	subs = (char **)ALLOCA(len*sizeof(char* ));
-	for ( j = 0, start = i; ; j++ ) {
+	for ( i = 0, j = 0, start = i; ; j++ ) {
 		while ( (i < len) && (name[i] == '_' || name[i] == ',') ) i++;
-		if ( i == len ) break;
 		start = i;
+		if ( i == len ) break;
 		if ( name[i] == '{' ) {
 			for ( level = 1, i++; i < len && level; i++ ) {
 				if ( name[i] == '{' ) level++;
 				else if ( name[i] == '}' ) level--;
 			}
-		} else if ( isdigit(name[i]) )
-			while ( i < len && isdigit(name[i]) ) i++;
-		else
-			while ( i < len && (isalpha(name[i]) || name[i] == '\\') ) i++;
-		slen = i-start;	
-		buf = (char *)ALLOCA((slen+1)*sizeof(char));
-		strncpy(buf,name+start,slen); buf[slen] = 0;
-		subs[j] = symbol_name(buf);
+			slen = i-start;	
+			brace = (char *)ALLOCA((slen+1)*sizeof(char));
+			strncpy(brace,name+start+1,slen-2);
+			brace[slen-2] = 0;
+			buf = conv_subscript(brace);
+			subs[j] = (char *)ALLOCA((strlen(buf)+3)*sizeof(char));
+			sprintf(subs[j],"{%s}",buf);
+		} else {
+			if ( isdigit(name[i]) )
+				while ( i < len && isdigit(name[i]) ) i++;
+			else
+				while ( i < len && (isalpha(name[i]) || name[i] == '\\') ) i++;
+			slen = i-start;	
+			buf = (char *)ALLOCA((slen+1)*sizeof(char));
+			strncpy(buf,name+start,slen); buf[slen] = 0;
+			subs[j] = symbol_name(buf);
+		}
 	}
-	for ( k = 0, clen = strlen(head); k < j; k++ ) clen += strlen(subs[k]);
-	/* {head}_{{subs(0)},...,{subs(j-1)}} => {}:j+2 _:1 ,:j-1 */
-	h = r = MALLOC_ATOMIC((clen+(j+2)*2+1+(j-1)+1)*sizeof(char));
-	if ( !j )
-		sprintf(h,"{%s}",head);
+	for ( k = 0, clen = 0; k < j; k++ ) clen += strlen(subs[k]);
+	/* {subs(0)}_{{subs(1)},...,{subs(j-1)}} => {}:j+1 _:1 ,:j-2 */
+	h = r = MALLOC_ATOMIC((clen+(j+1)*2+1+(j-2)+1)*sizeof(char));
+	if ( j == 1 )
+		sprintf(h,"{%s}",subs[0]);
 	else {
-		sprintf(h,"{%s}_{{%s}",head,subs[0]);
+		sprintf(h,"{%s}_{{%s}",subs[0],subs[1]);
 		h += strlen(h);
-		for ( k = 1; k < j; k++ ) {
+		for ( k = 2; k < j; k++ ) {
 			sprintf(h,",{%s}",subs[k]);
 			h += strlen(h);
 		}

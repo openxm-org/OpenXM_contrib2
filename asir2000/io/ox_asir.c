@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.53 2004/03/01 02:03:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.54 2004/03/04 06:29:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -663,6 +663,20 @@ void asir_evalName(unsigned int serial)
 	asir_push_one(val);
 }
 
+char *augment_backslash(char *s)
+{
+	char *p,*r;
+	int i;
+
+	for ( i = 0, p = s; *p; p++, i++ ) if ( *p == '\\' ) i++;
+	r = (char *)MALLOC_ATOMIC((i+1)*sizeof(char));
+	for ( i = 0, p = s; *p; p++, i++ ) {
+		if ( *p == '\\' ) r[i++] = '\\';
+		r[i] = *p;
+	}
+	return r;
+}
+
 int asir_executeString()
 {
 	SNODE snode;
@@ -679,7 +693,7 @@ int asir_executeString()
 # endif
 #endif
 	cmd = ((STRING)asir_pop_one())->body;
-	parse_strp = cmd;
+	parse_strp = augment_backslash(cmd);
 	if ( mainparse(&snode) ) {
 		return -1;
 	}
