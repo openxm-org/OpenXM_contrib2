@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.10 2003/03/07 03:12:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.11 2003/03/07 06:39:59 noro Exp $ 
 */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
@@ -159,6 +159,12 @@ static void SetDismiss(Widget w,XtPointer cld,XtPointer cad)
 	XtSetValues(cmdwin, arg, 1);
 }
 
+static Atom wm_delete_window;
+static void quit(Widget w, XEvent *ev, String *params,Cardinal *nparams)
+{
+	XBell(XtDisplay(w),0);
+}
+
 void init_cmdwin()
 {
 	Arg		arg[5];
@@ -193,6 +199,10 @@ void init_cmdwin()
 		toplevel = XtAppCreateShell(0,title,applicationShellWidgetClass,
 			display,0,0);
 		n = 0;
+		wm_delete_window = XInternAtom(XtDisplay(toplevel), "WM_DELETE_WINDOW",
+			False);
+		XtOverrideTranslations(toplevel, 
+					XtParseTranslationTable("<Message>WM_PROTOCOLS: quit()"));
 		XtSetArg(arg[n],XtNiconName,title); n++;
 		XtSetArg(arg[n], XtNwidth, 360); n++;
 		mainwin = XtCreatePopupShell("shell",topLevelShellWidgetClass,
@@ -209,6 +219,8 @@ void init_cmdwin()
 		XtSetArg(arg[n], XtNvalue, ""); n++;
 		XtSetValues(cmdwin, arg, n);
 		XtRealizeWidget(mainwin);
+		XSetWMProtocols(XtDisplay(mainwin),XtWindow(mainwin),
+			&wm_delete_window,1);
 	}
 	is_init = 1;
 }
