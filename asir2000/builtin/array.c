@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.8 2000/09/21 09:19:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.9 2000/11/08 08:02:49 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -383,6 +383,7 @@ BYTEARRAY *rp;
 	int len,i,r;
 	BYTEARRAY array;
 	unsigned char *vb;
+	char *str;
 	LIST list;
 	NODE tn;
 
@@ -392,15 +393,29 @@ BYTEARRAY *rp;
 		error("newbytearray : invalid size");
 	MKBYTEARRAY(array,len);
 	if ( argc(arg) == 2 ) {
-		list = (LIST)ARG1(arg);
-		asir_assert(list,O_LIST,"newbytearray");
-		for ( r = 0, tn = BDY(list); tn; r++, tn = NEXT(tn) );
-		if ( r > len ) {
-			*rp = array;
-			return;
+		if ( !ARG1(arg) )
+			error("newbytearray : invalid initialization");
+		switch ( OID((Obj)ARG1(arg)) ) {
+			case O_LIST:
+				list = (LIST)ARG1(arg);
+				asir_assert(list,O_LIST,"newbytearray");
+				for ( r = 0, tn = BDY(list); tn; r++, tn = NEXT(tn) );
+				if ( r <= len ) {
+					for ( i = 0, tn = BDY(list), vb = BDY(array); tn; 
+						i++, tn = NEXT(tn) )
+						vb[i] = (unsigned char)QTOS((Q)BDY(tn));
+				}
+				break;
+			case O_STR:
+				str = BDY((STRING)ARG1(arg));
+				r = strlen(str);
+				if ( r <= len )
+					bcopy(str,BDY(array),r);
+				break;
+			default:
+				if ( !ARG1(arg) )
+					error("newbytearray : invalid initialization");
 		}
-		for ( i = 0, tn = BDY(list), vb = BDY(array); tn; i++, tn = NEXT(tn) )
-			vb[i] = (unsigned char)QTOS((Q)BDY(tn));
 	}
 	*rp = array;
 }

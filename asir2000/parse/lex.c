@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.4 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.5 2000/08/22 05:04:27 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -397,6 +397,23 @@ yylex()
 		}
 	} else
 		return ( c );
+}
+
+void purge_stdin()
+{
+#if defined(VISUAL)
+#elif defined(__FreeBSD__)
+	fpurge(stdin);
+#elif defined(linux)
+	stdin->_IO_read_end = stdin->_IO_read_base;
+	stdin->_IO_read_ptr = stdin->_IO_read_base;
+#elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips)
+	stdin->_ptr = stdin->_base; stdin->_cnt = 0;
+#elif defined(VISUAL)
+	w_purge_stdin();
+#else
+--->FIXIT
+#endif
 }
 
 static int skipspace() {

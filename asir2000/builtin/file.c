@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.8 2000/11/08 08:44:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.9 2000/11/10 08:28:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,15 +72,17 @@ void Pbsave(), Pbload(), Pbload27();
 void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
 void Popen_file(), Pclose_file(), Pget_line(), Pget_byte();
+void Ppurge_stdin();
 
 extern int des_encryption;
 extern char *asir_libdir;
 
 struct ftab file_tab[] = {
+	{"purge_stdin",Ppurge_stdin,0},
 	{"open_file",Popen_file,1},
 	{"close_file",Pclose_file,1},
 	{"get_byte",Pget_byte,1},
-	{"get_line",Pget_line,1},
+	{"get_line",Pget_line,-1},
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
 	{"load",Pload,-1},
@@ -103,6 +105,13 @@ struct ftab file_tab[] = {
 };
 
 static FILE *file_ptrs[BUFSIZ];
+
+void Ppurge_stdin(rp)
+Q *rp;
+{
+	purge_stdin(stdin);
+	*rp = 0;
+}
 
 void Popen_file(arg,rp)
 NODE arg;
@@ -151,6 +160,20 @@ STRING *rp;
 	FILE *fp;
 	fpos_t head;
 	char *str;
+	char buf[BUFSIZ];
+
+	if ( !arg ) {
+#if defined(VISUAL_LIB)
+		get_string(buf,sizeof(buf));
+#else
+		fgets(buf,sizeof(buf),stdin);
+#endif
+		i = strlen(buf);
+		str = (char *)MALLOC_ATOMIC(i+1);	
+		strcpy(str,buf);
+		MKSTR(*rp,str);
+		return;
+	}
 
 	asir_assert(ARG0(arg),O_N,"get_line");
 	i = QTOS((Q)ARG0(arg));
