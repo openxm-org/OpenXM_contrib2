@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.36 2004/03/10 05:37:24 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.37 2004/03/10 06:12:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,7 +78,7 @@ void Pquotetotex_env();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 char *conv_rule(char *name);
-char *conv_subscript(char *name);
+char *conv_subs(char *name);
 char *call_convfunc(char *name);
 void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
@@ -116,6 +116,7 @@ void write_tb(char *s,TB tb)
 
 int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
+int register_conv_func(Obj arg);
 int register_dp_vars(Obj arg);
 int register_dp_vars_prefix(Obj arg);
 int register_dp_vars_hweyl(Obj arg);
@@ -130,9 +131,9 @@ static int is_lt;
 static int conv_flag;
 static int dp_vars_hweyl;
 
-#define CONV_SUBSCRIPT (1U<<0)
-#define CONV_DMODE (1U<<1)
-#define CONV_USERFUNC (1U<<31)
+#define CONV_TABLE (1U<<0)
+#define CONV_SUBS (1U<<1)
+#define CONV_DMODE (1U<<2)
 
 static struct {
 	char *name;
@@ -141,6 +142,7 @@ static struct {
 } qtot_env[] = {
 	{"symbol_table",0,register_symbol_table},
 	{"conv_rule",0,register_conv_rule},
+	{"conv_func",0,register_conv_func},
 	{"dp_vars",0,register_dp_vars},
 	{"dp_vars_prefix",0,register_dp_vars_prefix},
 	{"dp_vars_hweyl",0,register_dp_vars_hweyl},
@@ -154,30 +156,21 @@ char *conv_rule(char *name)
 {
 	char *body,*r;
 
+	if ( convfunc )
+		name = call_convfunc(name);
 	if ( conv_flag & CONV_DMODE ) {
 		if ( *name == 'd' ) {
-			if ( conv_flag & CONV_SUBSCRIPT )
-				body = conv_subscript(name+1);
-			else
-				body = name+1;
+			body = conv_flag&CONV_SUBS?conv_subs(name+1):symbol_name(name+1);
 			r = MALLOC_ATOMIC((strlen(PARTIAL)+strlen(body)+5)*sizeof(char));
-			sprintf(r,"{%s}_{%s}",PARTIAL,body);
+			sprintf(r,strlen(body)==1?"{%s}_%s":"{%s}_{%s}",PARTIAL,body);
 			return r;
-		} else {
-			if ( conv_flag & CONV_SUBSCRIPT )
-				body = conv_subscript(name);
-			else
-				body = name;
-		}
-	} else if ( conv_flag & CONV_SUBSCRIPT )
-		return conv_subscript(name);
-	else if ( conv_flag & CONV_USERFUNC && convfunc )
-		return call_convfunc(name);
-	else
-		return name;
+		} else
+			return conv_flag&CONV_SUBS?conv_subs(name):symbol_name(name);
+	} else 
+		return conv_flag&CONV_SUBS?conv_subs(name):symbol_name(name);
 }
 
-char *conv_subscript(char *name)
+char *conv_subs(char *name)
 {
 	int i,j,k,len,clen,slen,start,level;
 	char *buf,*head,*r,*h,*brace;
@@ -201,9 +194,12 @@ char *conv_subscript(char *name)
 				brace = (char *)ALLOCA((slen+1)*sizeof(char));
 				strncpy(brace,name+start+1,slen-2);
 				brace[slen-2] = 0;
-				buf = conv_subscript(brace);
+				buf = conv_subs(brace);
 				subs[j] = (char *)ALLOCA((strlen(buf)+3)*sizeof(char));
-				sprintf(subs[j],"{%s}",buf);
+				if ( strlen(buf) == 1 )
+					strcpy(subs[j],buf);
+				else	
+					sprintf(subs[j],"{%s}",buf);
 			} else
 				subs[j] = "{}";
 		} else {
@@ -223,10 +219,10 @@ char *conv_subscript(char *name)
 	if ( j == 1 )
 		sprintf(h,"{%s}",subs[0]);
 	else {
-		sprintf(h,"{%s}_{{%s}",subs[0],subs[1]);
+		sprintf(h,"{%s}_{%s",subs[0],subs[1]);
 		h += strlen(h);
 		for ( k = 2; k < j; k++ ) {
-			sprintf(h,",{%s}",subs[k]);
+			sprintf(h,",%s",subs[k]);
 			h += strlen(h);
 		}
 		strcpy(h,"}");
@@ -315,9 +311,12 @@ int register_conv_rule(Obj arg)
 		conv_flag = QTOS((Q)arg);
 		convfunc = 0;
 		return 1;
-	} else if ( OID(arg) == O_P && 
-		(int)(VR((P)arg))->attr == V_SR ) {
-		conv_flag = CONV_USERFUNC;
+	} else return 0;
+}
+
+int register_conv_func(Obj arg)
+{
+	if ( OID(arg) == O_P && (int)(VR((P)arg))->attr == V_SR ) {
 		convfunc = (FUNC)(VR((P)arg)->priv);
 		/* f must be a function which takes single argument */
 		return 1;
@@ -759,6 +758,9 @@ char *symbol_name(char *name)
 {
 	int i;
 
+	if ( !(conv_flag & CONV_TABLE) )
+		return name;
+
 	if ( user_texsymbol )
 		for ( i = 0; user_texsymbol[i].text; i++ )
 			if ( !strcmp(user_texsymbol[i].text,name) )
@@ -772,8 +774,8 @@ char *symbol_name(char *name)
 void fnodetotex_tb(FNODE f,TB tb)
 {
 	NODE n,t,t0;
-	char vname[BUFSIZ];
-	char *opname,*vname_conv;
+	char vname[BUFSIZ],prefix[BUFSIZ];
+	char *opname,*vname_conv,*prefix_conv;
 	Obj obj;
 	int i,len,allzero,elen,elen2;
 	FNODE fi,f2;
@@ -1001,23 +1003,26 @@ void fnodetotex_tb(FNODE f,TB tb)
 				fi = (FNODE)BDY(n);
 				if ( fi->id == I_FORMULA && !FA0(fi) ) continue;
 				allzero = 0;
-				if ( dp_vars_hweyl ) {
-					if ( i < elen2 )
-						if ( dp_vars_prefix )
-							sprintf(vname,"%s_{%d}",dp_vars_prefix,i);
-						else
-							sprintf(vname,"x_{%d}",i);
-					else if ( i < elen )
-						sprintf(vname,"{\\partial}_{%d}",i-elen2);
-					else
-						strcpy(vname,"h");
-				} else if ( dp_vars && i < dp_vars_len )
+				if ( dp_vars && i < dp_vars_len ) {
 					strcpy(vname,dp_vars[i]);
-				else if ( dp_vars_prefix )
-					sprintf(vname,"%s_{%d}",dp_vars_prefix,i);
-				else
-					sprintf(vname,"x_{%d}",i);
-				vname_conv = conv_rule(vname);
+					vname_conv = conv_rule(vname);
+				} else {
+					if ( dp_vars_hweyl ) {
+						if ( i < elen2 )
+							strcpy(prefix,dp_vars_prefix?dp_vars_prefix:"x");
+						else if ( i < elen )
+							strcpy(prefix,"\\partial");
+						else
+							strcpy(prefix,"h");
+					} else
+						strcpy(prefix,dp_vars_prefix?dp_vars_prefix:"x");
+					prefix_conv = conv_rule(prefix);
+					vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
+					if ( i < 10 )
+						sprintf(vname_conv,"%s_%d",prefix_conv,i);
+					else
+						sprintf(vname_conv,"%s_{%d}",prefix_conv,i);
+				}
 				if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
 					len = strlen(vname_conv);
 					opname = MALLOC_ATOMIC(len+2);
