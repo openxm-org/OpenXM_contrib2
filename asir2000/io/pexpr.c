@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.5 2000/11/08 08:02:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.6 2000/12/13 10:54:09 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -183,7 +183,7 @@ P p;
 void printbf(a)
 BF a;
 {
-	sor(a->body,'g',-1,0);
+	sor(a->body,double_output? 'f' : 'g',-1,0);
 }
 #endif
 #endif
