@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.6 2001/03/29 09:49:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.7 2002/02/08 08:28:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Psdiv(), Psrem(), Ptdiv(), Psqr(), Pinva_mod();
+void Psdiv(), Psrem(), Ptdiv(), Psqr(), Pinva_mod(), Pprem();
 void Psdiv_gf2n(), Psrem_gf2n(), Pgcd_gf2n();
 void Psdivm(), Psremm(), Psqrm();
 void Psrem_mod();
@@ -61,6 +61,7 @@ void Pudiv();
 struct ftab pdiv_tab[] = {
 	{"sdiv",Psdiv,-3},
 	{"srem",Psrem,-3},
+	{"prem",Pprem,-3},
 	{"sdiv_gf2n",Psdiv_gf2n,2},
 	{"srem_gf2n",Psrem_gf2n,2},
 	{"gcd_gf2n",Pgcd_gf2n,2},
@@ -117,6 +118,27 @@ Obj *rp;
 		restore_mvar(CO,r,v,(P *)rp);
 	} else
 		divsrp(CO,dnd,dvr,&q,(P *)rp);
+}
+
+void Pprem(arg,rp)
+NODE arg;
+P *rp;
+{
+	P q,r,dnd,dnd1,dvr,dvr1;
+	V v;
+	VL vl;
+
+	asir_assert(ARG0(arg),O_P,"prem");
+	asir_assert(ARG1(arg),O_P,"prem");
+	dnd = (P)ARG0(arg); dvr = (P)ARG1(arg);
+	if ( argc(arg) == 3 ) {
+		v = VR((P)ARG2(arg));
+		change_mvar(CO,dnd,v,&dnd1); change_mvar(CO,dvr,v,&dvr1);
+		reordvar(CO,v,&vl);
+		premp(vl,dnd1,dvr1,&r);
+		restore_mvar(CO,r,v,rp);
+	} else
+		premp(CO,dnd,dvr,rp);
 }
 
 void Psqr(arg,rp)
