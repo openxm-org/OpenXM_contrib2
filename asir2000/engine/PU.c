@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.9 2002/09/11 07:23:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.10 2004/06/25 03:07:51 noro Exp $ 
 */
 #include "ca.h"
 
@@ -116,7 +116,7 @@ void substp(VL vl,P p,V v0,P p0,P *pr)
 
 void detp(VL vl,P **rmat,int n,P *dp)
 {
-	int i,j,k,sgn;
+	int i,j,k,l,sgn,nmin,kmin,lmin,ntmp;
 	P mjj,mij,t,s,u,d;
 	P **mat;
 	P *mi,*mj;
@@ -130,11 +130,21 @@ void detp(VL vl,P **rmat,int n,P *dp)
 		if ( i == n ) {
 			*dp = 0; return;
 		}
-		for ( k = i; k < n; k++ )
-			if ( mat[k][j] && (nmonop(mat[k][j]) < nmonop(mat[i][j]) ) )
-				i = k;
-		if ( j != i ) {
-			mj = mat[j]; mat[j] = mat[i]; mat[i] = mj; sgn = -sgn;
+		nmin = nmonop(mat[i][j]);
+		kmin=lmin=j;
+		for ( k = j; k < n; k++ )
+			for ( l = j; l < n; l++ )
+				if ( mat[k][l] && ((ntmp=nmonop(mat[k][l])) < nmin) ) {
+					kmin = k; lmin = l; nmin = ntmp;
+				}
+		if ( kmin != j ) {
+			mj = mat[j]; mat[j] = mat[kmin]; mat[kmin] = mj; sgn = -sgn;
+		}
+		if ( lmin != j ) {
+			for ( k = j; k < n; k++ ) {
+				t = mat[k][j]; mat[k][j] = mat[k][lmin]; mat[k][lmin] = t;
+			}
+			sgn = -sgn;
 		}
 		for ( i = j + 1, mj = mat[j], mjj = mj[j]; i < n; i++ )
 			for ( k = j + 1, mi = mat[i], mij = mi[j]; k < n; k++ ) {

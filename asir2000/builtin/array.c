@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.34 2003/11/27 02:20:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.35 2004/06/30 20:01:36 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -87,6 +87,7 @@ void Pmat_swap_col_destructive();
 void Pvect();
 void Pmat();
 void Pmatc();
+void Pnd_det();
 
 struct ftab array_tab[] = {
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
@@ -111,6 +112,7 @@ struct ftab array_tab[] = {
 	{"ltov",Pltov,1},
 	{"size",Psize,1},
 	{"det",Pdet,-2},
+	{"nd_det",Pnd_det,1},
 	{"invmat",Pinvmat,-2},
 	{"leqm",Pleqm,2},
 	{"leqm1",Pleqm1,2},
@@ -2913,4 +2915,9 @@ void printimat(int **mat,int row,int col)
 		}
 		printf("\n");
 	}
+}
+
+void Pnd_det(NODE arg,P *rp)
+{
+	nd_det(ARG0(arg),rp);
 }

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.97 2004/03/25 01:31:03 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.98 2004/08/18 00:17:02 noro Exp $ */
 
 #include "nd.h"
 
@@ -2702,6 +2702,35 @@ UINT *ndv_compute_bound(NDV p)
 	return t;
 }
 
+UINT *nd_compute_bound(ND p)
+{
+	UINT *d1,*d2,*t;
+	UINT u;
+	int i,j,k,l,len,ind;
+	NM m;
+
+	if ( !p )
+		return 0;
+	d1 = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	d2 = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	len = LEN(p);
+	m = BDY(p); ndl_copy(DL(m),d1); m = NEXT(m);
+	for ( m = NEXT(m); m; m = NEXT(m) ) {
+		ndl_lcm(DL(m),d1,d2);
+		t = d1; d1 = d2; d2 = t;
+	}
+	l = nd_nvar+31;
+	t = (UINT *)MALLOC_ATOMIC(l*sizeof(UINT));
+	for ( i = nd_exporigin, ind = 0; i < nd_wpd; i++ ) {
+		u = d1[i];
+		k = (nd_epw-1)*nd_bpe;
+		for ( j = 0; j < nd_epw; j++, k -= nd_bpe, ind++ )
+			t[ind] = (u>>k)&nd_mask0;
+	}
+	for ( ; ind < l; ind++ ) t[ind] = 0;
+	return t;
+}
+
 int nd_get_exporigin(struct order_spec *ord)
 {
 	switch ( ord->id ) {
@@ -3163,6 +3192,35 @@ ND ndv_mul_nm(int mod,NM m0,NDV p)
 		NEXT(mr) = 0; 
 		MKND(NV(p),mr0,len,r);
 		SG(r) = SG(p) + TD(d);
+		return r;
+	}
+}
+
+ND nd_quo(ND p,ND d)
+{
+	NM mq0,mq;
+	Q q;
+	int i,nv,sg;
+	ND t,r;
+	
+	if ( !p ) return 0;
+	else {
+		nv = NV(p);
+		sg = SG(p);
+		mq0 = 0;
+		while ( p ) {
+			NEXTNM(mq0,mq);
+			ndl_sub(HDL(p),HDL(d),DL(mq));
+			divq(HCQ(p),HCQ(d),&q);
+			chsgnq(q,&CQ(mq));
+			t = nd_mul_nm_trunc(mq,d,HDL(d));
+			p = nd_add(0,p,t);
+		}
+		NEXT(mq) = 0;
+		for ( i = 0, mq = mq0; mq; mq = NEXT(mq), i++ );
+		MKND(nv,mq0,i,r);
+		/* XXX */
+		SG(r) = sg-SG(d);
 		return r;
 	}
 }
@@ -4586,4 +4644,124 @@ NDV ndv_load(int index)
 	MKNDV(nv,m0,len,d);
 	SG(d) = sugar;
 	return d;
+}
+
+void nd_det(MAT f,P *rp)
+{
+	VL fv,tv;
+	int n,i,j,max,e,nvar,sgn,k0,l0,len0,len,k,l;
+	pointer **m;
+	Q mone;
+	ND **dm;
+	ND *t,*mi,*mj;
+	ND d,s,mij,mjj,m1,m2,u;
+	NDV dv;
+	PGeoBucket bucket;
+	NM nm;
+	struct order_spec *ord;
+
+	create_order_spec(0,0,&ord);
+	nd_init_ord(ord);
+	get_vars((Obj)f,&fv);
+	if ( f->row != f->col )
+		error("nd_det : non-square matrix");
+	n = f->row;
+	for ( nvar = 0, tv = fv; tv; tv = NEXT(tv), nvar++ );
+	m = f->body;
+	for ( i = 0, max = 0; i < n; i++ )
+		for ( j = 0; j < n; j++ )
+			for ( tv = fv; tv; tv = NEXT(tv) ) {
+				e = getdeg(tv->v,(P)m[i][j]);
+				max = MAX(e,max);
+			}
+	nd_setup_parameters(nvar,1024);
+	dm = (ND **)almat_pointer(n,n);
+	for ( i = 0, max = 0; i < n; i++ )
+		for ( j = 0; j < n; j++ )
+			dm[i][j] = ptond(CO,fv,m[i][j]);
+	d = ptond(CO,fv,(P)ONE);
+	chsgnq(ONE,&mone);
+	for ( j = 0, sgn = 1; j < n; j++ ) {
+		for ( i = j; i < n && !dm[i][j]; i++ );
+		if ( i == n ) {
+			*rp = 0;
+			return;
+		}
+		k0 = i; l0 = j; len0 = nd_length(dm[k0][l0]);
+		for ( k = j; k < n; k++ )
+			for ( l = j; l < n; l++ )
+				if ( dm[k][l] && (len = nd_length(dm[k][l])) < len0 ) {
+					k0 = k; l0 = l; len0 = len;
+				}
+		if ( k0 != j ) {
+			t = dm[j]; dm[j] = dm[k0]; dm[k0] = t;
+			sgn = -sgn;
+		}
+		if ( l0 != j ) {
+			for ( k = j; k < n; k++ ) {
+				s = dm[k][j]; dm[k][j] = dm[k][l0]; dm[k][l0] = s;
+			}
+			sgn = -sgn;
+		}
+		for ( i = j+1, mj = dm[j], mjj = mj[j]; i < n; i++ ) {
+			mi = dm[i]; mij = mi[j];
+			nd_mul_c_q(mij,mone);
+			for ( k = j+1; k < n; k++ ) {
+				bucket = create_pbucket();
+				if ( mi[k] )
+					for ( nm = BDY(mjj); nm; nm = NEXT(nm) ) {
+						u = nd_mul_nm_trunc(nm,mi[k],DL(BDY(d)));
+						add_pbucket(0,bucket,u);
+					}
+				if ( mj[k] && mij ) {
+					for ( nm = BDY(mij); nm; nm = NEXT(nm) ) {
+						u = nd_mul_nm_trunc(nm,mj[k],DL(BDY(d)));
+						add_pbucket(0,bucket,u);
+					}
+				}
+				s = normalize_pbucket(0,bucket);
+				mi[k] = nd_quo(s,d);
+			}
+		}
+		d = mjj;
+	}
+	dv = ndtondv(0,d);
+	*rp = ndvtop(0,CO,fv,dv);
+}
+
+ND nd_mul_nm_trunc(NM m0,ND p,UINT *d)
+{
+	NM mr,mr0;
+	NM m,tnm;
+	UINT *d0,*dt,*dm;
+	int c,n,td,i,c1,c2,len;
+	Q q;
+	ND r;
+
+	if ( !p ) return 0;
+	else {
+		n = NV(p); m = BDY(p);
+		d0 = DL(m0);
+		len = LEN(p);
+		mr0 = 0;
+		td = TD(d);
+		q = CQ(m0);
+		NEWNM(tnm);
+		for ( ; m;m = NEXT(m) ) {
+			ndl_add(DL(m),d0,DL(tnm));
+			if ( ndl_reducible(DL(tnm),d) ) {
+				NEXTNM(mr0,mr);
+				mulq(CQ(m),q,&CQ(mr));
+				ndl_add(DL(m),d0,DL(mr));
+			}
+		}
+		if ( !mr0 )
+			return 0;
+		else {
+			NEXT(mr) = 0; 
+			MKND(NV(p),mr0,len,r);
+			SG(r) = SG(p) + TD(d0);
+			return r;
+		}
+	}
 }
