@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.32 2003/03/07 03:12:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.33 2003/03/07 06:39:59 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -61,6 +61,10 @@
 #if defined(VISUAL)
 #include <io.h>
 #include <direct.h>
+#else
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
 #endif
 
 #if defined(SYSV) && !defined(_IBMR2)
@@ -130,18 +134,10 @@ struct oF oF_TRUE,oF_FALSE;
 F F_TRUE = &oF_TRUE;  
 F F_FALSE = &oF_FALSE;
 
-#if defined(__SVR4) && defined(sun)
-char cppname[BUFSIZ] = "/usr/ccs/lib/cpp ";
-#else
-#if defined(__FreeBSD__) || defined(__NetBSD__) || (defined(__MACH__) && defined(__ppc__)) || defined(__CYGWIN__)
-char cppname[BUFSIZ] = "/usr/bin/cpp ";
-#else
 #if defined(VISUAL)
 char cppname[BUFSIZ] = "c:\\asir\\stdlib\\cpp ";
 #else
 char cppname[BUFSIZ] = "/lib/cpp ";
-#endif
-#endif
 #endif
 char asirname[BUFSIZ];
 char displayname[BUFSIZ];
@@ -251,6 +247,47 @@ void prompt() {
 void sprompt(char *ptr)
 {
 	sprintf(ptr,"[%d] ",APVS->n);
+}
+
+#if !defined(VISUAL)
+static int which(char *prog, char *path, char *buf, size_t size)
+{
+    char *tok;
+    char delim[] = ":";
+    char *path2  = malloc(strlen(path)+1);
+    char *name   = malloc(size);
+    int  proglen = strlen(prog)+3; /* "/" + prog + " \0" */
+
+    if (!name || !path2) {
+        return 0;
+    }
+    strcpy(path2, path);
+    tok = strtok(path2, delim);
+    while (tok != NULL) {
+        if (size >= strlen(tok)) {
+            sprintf(name, "%s/%s", tok, prog);
+            if (access(name, X_OK&R_OK) == 0) {
+                strcpy(buf, name);
+                strcat(buf, " ");
+                free(path2); free(name);
+                return 1;
+            }
+            tok = strtok(NULL, delim);
+        }
+    }
+    free(path2); free(name);
+    return 0;
+}
+#endif
+
+void cppname_init()
+{
+#if !defined(VISUAL)
+    if (access(cppname, X_OK&R_OK) != 0) {
+        which("cpp", "/lib:/usr/ccs/lib:/usr/bin", cppname, BUFSIZ) ||
+        which("cpp", getenv("PATH"), cppname, BUFSIZ);
+    }
+#endif
 }
 
 FILE *in_fp;
