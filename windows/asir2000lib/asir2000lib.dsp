@@ -125,10 +125,6 @@ SOURCE="..\..\asir2000\parse\asir_lib.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\engine-27\asmiw-27.c"
-# End Source File
-# Begin Source File
-
 SOURCE="..\..\asir2000\asm\asmiw.c"
 # End Source File
 # Begin Source File
@@ -206,10 +202,6 @@ SOURCE="..\..\asir2000\gc\dbg_mlc.c"
 # Begin Source File
 
 SOURCE="..\..\asir2000\asm\ddM.c"
-# End Source File
-# Begin Source File
-
-SOURCE="..\..\asir2000\engine-27\ddN-27.c"
 # End Source File
 # Begin Source File
 
@@ -456,10 +448,6 @@ SOURCE="..\..\asir2000\builtin\miscf.c"
 # Begin Source File
 
 SOURCE="..\..\asir2000\engine\mt19937.c"
-# End Source File
-# Begin Source File
-
-SOURCE="..\..\asir2000\engine-27\N-27.c"
 # End Source File
 # Begin Source File
 
