@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.6 2000/08/21 08:31:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.7 2000/08/22 05:03:56 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -712,8 +712,10 @@ int row,col,md;
 			t = mat[i];
 			if ( i != j && (a = t[j]) )
 				for ( k = j, a = md - a; k <= n; k++ ) {
+					unsigned int tk;
 /*					t[k] = dmar(pivot[k],a,t[k],md); */
-					DMAR(pivot[k],a,t[k],md,t[k])
+					DMAR(pivot[k],a,t[k],md,tk)
+					t[k] = tk;
 				}
 		}
 	}
@@ -1462,7 +1464,10 @@ int *perm;
 				DMAR(inv,m,0,md,t[k])
 				for ( j = k+1, m = md - t[k]; j < col; j++ )
 					if ( pivot[j] ) {
-						DMAR(m,pivot[j],t[j],md,t[j])
+						unsigned int tj;
+
+						DMAR(m,pivot[j],t[j],md,tj)
+						t[j] = tj;
 					}
 			}
 		}
@@ -1517,7 +1522,9 @@ int **rinfo,**cinfo;
 				DMAR(inv,m,0,md,t[k])
 				for ( j = k+1, m = md - t[k]; j < col; j++ )
 					if ( pivot[j] ) {
-						DMAR(m,pivot[j],t[j],md,t[j])
+						unsigned int tj;
+						DMAR(m,pivot[j],t[j],md,tj)
+						t[j] = tj;
 					}
 			}
 		}
@@ -2466,7 +2473,7 @@ int row,col;
 
 	for ( i = 0; i < row; i++ ) {
 		for ( j = 0; j < col; j++ ) {
-			printnum(mat[i][j]); printf(" ");
+			printnum((Num)mat[i][j]); printf(" ");
 		}
 		printf("\n");
 	}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.2 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.3 2000/08/22 05:04:27 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -102,7 +102,7 @@ extern jmp_buf env;
 %type <p> desc rawstr
 %type <f> expr pexpr opt
 %type <s> stat complex
-%type <n> stats node _node pvars fields members optlist
+%type <n> stats node _node pvars members optlist
 
 %right '=' BOPASS
 %right '?' ':'
@@ -136,12 +136,8 @@ stat 	: tail
 			{ $$ = 0; }
 		| GLOBAL { gdef=1; } pvars { gdef=0; } tail
 			{ $$ = 0; }
-		| STRUCT rawstr '{' fields '}' tail
+		| STRUCT rawstr '{' members '}' tail
 			{ structdef($2,$4); $$ = 0; }
-		| STRUCT rawstr '{' fields '}' pvars tail
-			{ structdef($2,$4); setstruct($2,$6); $$ = 0; }
-		| STRUCT rawstr pvars tail
-			{ setstruct($2,$3); $$ = 0; }
 		| expr tail
 			{ $$ = mksnode(1,S_SINGLE,$1); }
 		| complex
@@ -188,13 +184,6 @@ desc	:
 		;
 complex : '{' stats '}'
 			{ $$ = mksnode(1,S_CPLX,$2); }
-		;
-fields	:
-			{ $$ = 0; }
-		| fields members tail
-			{ MKNODE(a,0,$2); appendtonode($1,(pointer)a,&$$); }
-		| fields STRUCT rawstr members tail
-			{ MKNODE(a,$3,$4); appendtonode($1,(pointer)a,&$$); }
 		;
 members	: rawstr
 			{ MKNODE($$,$1,0); }
@@ -366,7 +355,7 @@ pexpr	: STR
 				}
 			}
 		| pexpr POINT rawstr
-			{ memberofstruct($1,$3,&$$); }
+			{ $$ = mkfnode(2,I_POINT,$1,$3); }
 		;
 expr 	: pexpr
 			{ $$ = $1; }

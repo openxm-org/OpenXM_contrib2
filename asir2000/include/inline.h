@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.3 2000/08/21 08:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.4 2000/08/22 05:04:15 noro Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));
@@ -293,12 +293,12 @@ asm volatile("udiv %1,%2,%0"    :"=r"(_t): "r"(a2),"r"(base) );\
 #if 0
 #undef DMA
 #define DMA(a1,a2,a3,u,l)\
-asm volatile("movl	%0,%%eax"	: 		: "m" (a1)	: "ax");\
-asm volatile("mull	%0"		: 		: "m" (a2)	: "ax","dx");\
-asm volatile("addl	%0,%%eax"	: 		: "m" (a3)	: "ax"	);\
+asm volatile("movl	%0,%%eax"	: 		: "g" (a1)	: "ax");\
+asm volatile("mull	%0"		: 		: "g" (a2)	: "ax","dx");\
+asm volatile("addl	%0,%%eax"	: 		: "g" (a3)	: "ax"	);\
 asm volatile("adcl	$0,%%edx"	: 		: 		: "dx"	);\
-asm volatile("movl	%%edx,%0"	: "=m" (u)	:		: "ax","dx");\
-asm volatile("movl	%%eax,%0"	: "=m" (l)	:		: "ax"	);
+asm volatile("movl	%%edx,%0"	: "=g" (u)	:		: "ax","dx");\
+asm volatile("movl	%%eax,%0"	: "=g" (l)	:		: "ax"	);
 #endif
 
 #undef DM
@@ -310,24 +310,24 @@ asm volatile("movl	%%eax,%0"	: "=m" (l)	:		: "ax"	);
 #undef DMA27
 
 #define DM27(a1,a2,u,l)\
-asm volatile(" movl 	%2,%%eax; mull	%3; shll	$5,%%edx; movl	%%eax,%%ecx; shrl	$27,%%ecx; orl		%%ecx,%%edx; andl	$134217727,%%eax; movl	%%edx,%0; movl	%%eax,%1" :"=m"(u),"=m"(l) :"m"(a1),"m"(a2) :"ax","bx","cx","dx");
+asm volatile(" movl 	%2,%%eax; mull	%3; shll	$5,%%edx; movl	%%eax,%%ecx; shrl	$27,%%ecx; orl		%%ecx,%%edx; andl	$134217727,%%eax; movl	%%edx,%0; movl	%%eax,%1" :"=g"(u),"=g"(l) :"g"(a1),"g"(a2) :"ax","bx","cx","dx");
 
 #define DMA27(a1,a2,a3,u,l)\
-asm volatile(" movl	%2,%%eax; mull	%3; addl	%4,%%eax; adcl	$0,%%edx; shll	$5,%%edx; movl	%%eax,%%ecx; shrl	$27,%%ecx; orl		%%ecx,%%edx; andl	$134217727,%%eax; movl	%%edx,%0; movl	%%eax,%1" :"=m"(u),"=m"(l) :"m"(a1),"m"(a2),"m"(a3) :"ax","bx","cx","dx");
+asm volatile(" movl	%2,%%eax; mull	%3; addl	%4,%%eax; adcl	$0,%%edx; shll	$5,%%edx; movl	%%eax,%%ecx; shrl	$27,%%ecx; orl		%%ecx,%%edx; andl	$134217727,%%eax; movl	%%edx,%0; movl	%%eax,%1" :"=g"(u),"=g"(l) :"g"(a1),"g"(a2),"g"(a3) :"ax","bx","cx","dx");
 
 #define DSAB(base,a1,a2,u,l)\
-asm volatile(" movl	%2,%%edx; movl	%3,%%eax; divl	%4; movl	%%edx,%0; movl	%%eax,%1" :"=m"(l),"=m"(u) :"m"(a1),"m"(a2),"m"(base) :"ax","dx");
+asm volatile(" movl	%2,%%edx; movl	%3,%%eax; divl	%4; movl	%%edx,%0; movl	%%eax,%1" :"=g"(l),"=g"(u) :"g"(a1),"g"(a2),"g"(base) :"ax","dx");
 
 #define DM(a1,a2,u,l)\
-asm volatile(" movl	%2,%%eax; mull	%3; movl	%%edx,%0; movl	%%eax,%1" :"=m"(u),"=m"(l) :"m"(a1),"m"(a2) :"ax","dx");
+asm volatile(" movl	%2,%%eax; mull	%3; movl	%%edx,%0; movl	%%eax,%1" :"=g"(u),"=g"(l) :"g"(a1),"g"(a2) :"ax","dx");
 
 #define DMB(base,a1,a2,u,l)\
-asm volatile(" movl	%2,%%eax;" mull	%3;" divl	%4;" movl	%%edx,%0;" movl	%%eax,%0" :"=m"(l),"=m"(u) :"m"(a1),"m"(a2),"m"(base) :"ax","dx");
+asm volatile(" movl	%2,%%eax;" mull	%3;" divl	%4;" movl	%%edx,%0;" movl	%%eax,%0" :"=g"(l),"=g"(u) :"g"(a1),"g"(a2),"g"(base) :"ax","dx");
 
 #define DMAB(base,a1,a2,a3,u,l)\
-asm volatile("movl	%2,%%eax; mull	%3; addl	%4,%%eax; adcl	$0,%%edx; divl	%5; movl	%%edx,%0; movl	%%eax,%1" :"=m"(l),"=m"(u) :"m"(a1),"m"(a2),"m"(a3),"m"(base) :"ax","dx");
+asm volatile("movl	%2,%%eax; mull	%3; addl	%4,%%eax; adcl	$0,%%edx; divl	%5; movl	%%edx,%0; movl	%%eax,%1" :"=g"(l),"=g"(u) :"g"(a1),"g"(a2),"g"(a3),"g"(base) :"ax","dx");
 
 #define DMAR(a1,a2,a3,d,r)\
-asm volatile("movl	%1,%%eax; mull	%2; addl	%3,%%eax; adcl	$0,%%edx; divl	%4; movl	%%edx,%0" :"=m"(r) :"m"(a1),"m"(a2),"m"(a3),"m"(d) :"ax","dx");
+asm volatile("movl	%1,%%eax; mull	%2; addl	%3,%%eax; adcl	$0,%%edx; divl	%4; movl	%%edx,%0" :"=g"(r) :"g"(a1),"g"(a2),"g"(a3),"g"(d) :"ax","dx");
 #endif
 

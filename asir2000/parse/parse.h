@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.3 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.4 2000/08/22 05:04:27 noro Exp $ 
 */
 # if defined(THINK_C) || defined(VISUAL)
 #include <time.h>
@@ -68,7 +68,7 @@ typedef enum {
 	I_ANS, I_PVAR, I_ASSPVAR, 
 	I_FORMULA, I_LIST, I_STR, I_NEWCOMP, I_CAR, I_CDR, I_CAST,
 	I_COM, I_PROC, I_INDEX, I_EV, I_TIMER, I_GF2NGEN, I_GFPNGEN, I_LOP,
-	I_OPT, I_GETOPT
+	I_OPT, I_GETOPT, I_POINT
 } fid;
 
 /* identifiers for statements */
@@ -544,7 +544,7 @@ void getmember(FNODE,Obj *);
 void getmemberp(FNODE,Obj **);
 void help(char *);
 void instov(PFINS ,V *);
-void memberofstruct(FNODE,char *,FNODE *);
+Obj memberofstruct(COMP,char *);
 void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(),PF *);
 void mkpfins(PF ,V *,V *);
 void mkuf(char *,char *,NODE,SNODE,int,int,char *);
@@ -565,7 +565,7 @@ void showbps(void);
 void showpos(void);
 void simplify_ins(PFINS ,Obj *);
 void sprintvars(char *,VS);
-void structdef(char *,NODE);
+int structdef(char *,NODE);
 void substfp(VL ,Obj ,PF ,PF ,Obj *);
 void substfr(VL ,Obj ,PF ,PF ,Obj *);
 void substfv(VL ,V ,PF ,PF ,Obj *);
@@ -637,7 +637,7 @@ void getmember();
 void getmemberp();
 void help();
 void instov();
-void memberofstruct();
+Obj memberofstruct();
 void mkpf();
 void mkpfins();
 void mkuf();
@@ -658,7 +658,7 @@ void showbps();
 void showpos();
 void simplify_ins();
 void sprintvars();
-void structdef();
+int structdef();
 void substfp();
 void substfr();
 void substfv();

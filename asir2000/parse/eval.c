@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.4 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.5 2000/08/22 05:04:26 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -185,14 +185,6 @@ FNODE f;
 			}
 			break;
 #endif
-#if 0
-		case I_PRESELF: case I_POSTSELF: 
-			val = evalpv(f->id,FA1(f),FA0(f)); break;
-		case I_PVAR: 
-			val = evalpv(f->id,FA0(f),0); break;
-		case I_ASSPVAR:
-			val = evalpv(f->id,FA0(f),FA1(f)); break;
-#endif
 #if 1
 		case I_PRESELF:
 			f1 = (FNODE)FA1(f);
@@ -205,7 +197,7 @@ FNODE f;
 					(*((ARF)FA0(f))->fp)(CO,u,ONE,&val); putarray(a,tn,val);
 				}
 			} else
-				val = evalpv(f->id,(FNODE)FA1(f),FA0(f));
+				error("++ : not implemented yet");
 			break;
 		case I_POSTSELF:
 			f1 = (FNODE)FA1(f);
@@ -219,10 +211,8 @@ FNODE f;
 					val = a;
 				}
 			} else
-				val = evalpv(f->id,(FNODE)FA1(f),FA0(f));
+				error("-- : not implemented yet");
 			break;
-		case I_CAST:
-			getmember((FNODE)f,(Obj *)&val); break;
 		case I_PVAR:
 			pv = (int)FA0(f); ind = (NODE)FA1(f); GETPV(pv,a); 
 			if ( !ind )
@@ -242,8 +232,14 @@ FNODE f;
 					evalnodebody(ind,&tn); 
 					putarray(a,tn,val = eval((FNODE)FA1(f))); 
 				}
-			} else
-				val = evalpv(ID(f),(FNODE)FA0(f),FA1(f));
+			} else if ( ID(f1) == I_POINT ) {
+				/* a->member = a1 */
+				/* f1 <-> FA0(f1)->FA1(f1) */
+				a = eval(FA0(f1));
+				a1 = eval(FA1(f));
+				assign_to_member(a,(char *)FA1(f1),a1);
+				val = a1;
+			}
 			break;
 #endif
 		case I_ANS:
@@ -304,6 +300,10 @@ FNODE f;
 			break;
 		case I_GETOPT:
 			val = (pointer)getopt_from_cpvs((char *)FA0(f));
+			break;
+		case I_POINT:
+			a = (pointer)eval(FA0(f));
+			val = (pointer)memberofstruct(a,(char *)FA1(f));
 			break;
 		default:
 			error("eval : unknown id");

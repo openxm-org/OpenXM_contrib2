@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.2 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.3 2000/08/22 05:04:28 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -231,33 +231,6 @@ pointer p;
 		reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
 	APVS->va[APVS->n++].priv = p; 
 }
-
-#if 1
-pointer evalpv(id,expr,f)
-int id;
-FNODE expr;
-pointer f;
-{
-	pointer a,val = 0;
-	pointer *addr;
-
-	if ( expr->id != I_PVAR && expr->id != I_CAST )
-		error("evalpv : invalid assignment");
-	switch ( id ) {
-		case I_PRESELF:
-			getmemberp((FNODE)expr,(Obj **)&addr);
-			(*((ARF)f)->fp)(CO,*addr,ONE,&val); *addr = val; break;
-		case I_POSTSELF:
-			getmemberp((FNODE)expr,(Obj **)&addr);
-			val = *addr; (*((ARF)f)->fp)(CO,*addr,ONE,&a); *addr = a; break;
-		case I_PVAR:
-			getmember((FNODE)expr,(Obj *)&val); break;
-		case I_ASSPVAR:
-			getmemberp((FNODE)expr,(Obj **)&addr); *addr = val = eval((FNODE)f); break;
-	}
-	return val;
-}
-#endif
 
 #if 0
 pointer evalpv(id,tree,f)

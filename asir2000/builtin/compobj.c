@@ -45,18 +45,33 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.2 2000/08/21 08:31:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.3 2000/08/22 05:03:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "comp.h"
 
 void Parfreg();
+void Pstruct_type();
 
 struct ftab comp_tab[] = {
 	{"arfreg",Parfreg,8},
+	{"struct_type",Pstruct_type,1},
 	{0,0,0},
 };
+
+void Pstruct_type(arg,rp)
+NODE arg;
+Q *rp;
+{
+	char *name;
+	int ind;
+
+	asir_assert(ARG0(arg),O_STR,"struct_type");
+	name = ((STRING)ARG0(arg))->body;
+	ind = structtoindex(name);
+	STOQ(ind,*rp);		
+}
 
 void Parfreg(arg,rp)
 NODE arg;
@@ -73,7 +88,7 @@ Q *rp;
 		if ( !strcmp(s[i].name,name) )
 			break;
 	if ( i == LSS->n )
-		error("argreg : no such structure");
+		error("arfreg : no such structure");
 		
 	t = (P)ARG1(arg); s[i].arf.add = !t ? 0 : (FUNC)VR(t)->priv;
 	t = (P)ARG2(arg); s[i].arf.sub = !t ? 0 : (FUNC)VR(t)->priv;
