@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.44 2003/08/22 08:32:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.45 2003/08/25 08:57:31 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -11,7 +11,7 @@
 #define INLINE
 #endif
 
-#define USE_GEOBUCKET 1
+#define USE_GEOBUCKET 0
 
 #define REDTAB_LEN 32003
 
@@ -1906,7 +1906,8 @@ int nd_newps(int mod,ND a,ND aq)
 	}
 	if ( a && aq ) {
 		/* trace lifting */
-		if ( !rem(NM(HCQ(aq)),mod) ) return -1;
+		if ( !rem(NM(HCQ(aq)),mod) )
+			return -1;
 	}
 	NEWRHist(r); nd_psh[nd_psn] = r;
 	if ( aq ) {
@@ -2878,15 +2879,17 @@ NDV dptondv(int mod,DP p)
 	DP q;
 	int l,i,n;
 
-	if ( !p ) return 0;
-	for ( t = BDY(p), l = 0; t; t = NEXT(t), l++ );
 	if ( mod ) {
 		_dp_mod(p,mod,0,&q); p = q;
+	}
+	if ( !p ) return 0;
+	for ( t = BDY(p), l = 0; t; t = NEXT(t), l++ );
+	if ( mod )
 		m0 = m = (NMV)MALLOC_ATOMIC(l*nmv_adv);
-	} else
+	else
 		m0 = m = (NMV)MALLOC(l*nmv_adv);
 	n = NV(p);
-	for ( t = BDY(p); t; i++, t = NEXT(t), NMV_ADV(m) ) {
+	for ( t = BDY(p); t; t = NEXT(t), NMV_ADV(m) ) {
 		if ( mod ) CM(m) = ITOS(C(t));
 		else CQ(m) = (Q)C(t);
 		dltondl(n,DL(t),DL(m));
