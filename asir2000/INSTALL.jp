@@ -37,6 +37,19 @@ directory を指定して下さい.  以下この directory を TARGETDIR 
 # exit
 %
 
+$B$b$7, make all でエラーが出て止まったら, 
+
+% cd Oxxx           <--- xxx は OS 名
+% make lib-sta
+% su
+# make install-lib-sta
+# make install-include
+# exit
+%
+
+を実行してください. GP はできませんが, asir2000 に必要なライブラリは生
+成されます.
+
 3. asir2000 の install
 
 % gzip -dc asir2000.tgz | tar xvf -

@@ -35,6 +35,20 @@ to '/usr/local'.  In the following the directory is denoted by TARGETDIR.
 # exit
 %
 
+While executing 'make install', the procedure may stop due to
+some error. Then try the following:
+
+% cd Oxxx           <--- 'xxx' is the name of the current OS.
+% make lib-sta
+% su
+# make install-lib-sta
+# make install-include
+# exit
+%
+
+Although GP is not built, the library necessary for building asir2000
+will be generated.
+
 3. Installation of asir2000
 
 % gzip -dc asir.tgz | tar xvf -
