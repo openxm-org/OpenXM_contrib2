@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.17 2001/09/03 07:01:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.18 2001/10/09 01:36:24 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -413,7 +413,7 @@ void purge_stdin()
 	w_purge_stdin();
 #elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips) || defined(VISUAL) || defined(_IBMR2)
 	stdin->_ptr = stdin->_base; stdin->_cnt = 0;
-#elif defined(__MACH__) && defined(__ppc__)
+#elif (defined(__MACH__) && defined(__ppc__)) || defined(__CYGWIN__)
 	stdin->_r = 0; stdin->_p = stdin->_bf._base;
 #else
 --->FIXIT

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.3 2000/08/21 08:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.4 2000/08/22 05:04:15 noro Exp $ 
 */
 #ifndef _COM_H_
 #define _COM_H_
@@ -57,9 +57,15 @@
 
 #if !defined(VISUAL)
 #include <netdb.h>
+#if defined(__CYGWIN__)
+#include <cygwin/types.h>
+#include <cygwin/socket.h>
+#include <cygwin/in.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
+#endif
 #include <setjmp.h>
 #endif
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.29 2001/10/09 01:36:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.30 2001/11/19 00:57:12 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -566,7 +566,7 @@ typedef unsigned int ModNum;
 #endif
 #define CALLOC(d,e) MALLOC((d)*(e))
 
-#if (defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL))
+#if !defined(__CYGWIN__) && ((defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL)))
 #define ALLOCA(d) alloca(d)
 #else
 #define ALLOCA(d) MALLOC(d)

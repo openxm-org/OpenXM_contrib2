@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.15 2001/09/20 04:08:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.16 2001/10/09 01:36:24 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -490,7 +490,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			break;
 		case A_USR:
 			/* stack check */
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__CYGWIN__)
 			if ( !stack_size ) {
 				struct rlimit rl;
 				getrlimit(RLIMIT_STACK,&rl);

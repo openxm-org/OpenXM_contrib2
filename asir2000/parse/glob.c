@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.23 2001/10/05 10:23:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.24 2001/10/09 01:36:24 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -54,7 +54,7 @@
 #if PARI
 #include "genpari.h"
 #endif
-#if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV)
+#if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__)
 #include <sgtty.h>
 #endif
 
@@ -133,7 +133,7 @@ F F_FALSE = &oF_FALSE;
 #if defined(__SVR4) && defined(sun)
 char cppname[BUFSIZ] = "/usr/ccs/lib/cpp ";
 #else
-#if defined(__FreeBSD__) || defined(__NetBSD__) || (defined(__MACH__) && defined(__ppc__))
+#if defined(__FreeBSD__) || defined(__NetBSD__) || (defined(__MACH__) && defined(__ppc__)) || defined(__CYGWIN__)
 char cppname[BUFSIZ] = "/usr/bin/cpp ";
 #else
 #if defined(VISUAL)

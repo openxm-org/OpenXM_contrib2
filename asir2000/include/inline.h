@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.7 2001/09/17 02:47:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.8 2001/09/17 03:33:58 noro Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));
@@ -287,7 +287,7 @@ asm volatile("udiv %1,%2,%0"    :"=r"(_t): "r"(a2),"r"(base) );\
 }
 #endif
 
-#if !defined(VISUAL) && defined(i386) && (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__))
+#if !defined(VISUAL) && defined(i386) && (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__CYGWIN__))
 
 #if 0
 #undef DMA
