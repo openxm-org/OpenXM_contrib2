@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.9 2001/10/03 01:47:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.10 2001/10/09 01:36:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,6 +60,7 @@ void patori_i(GEN,N *);
 void ritopa(Obj,GEN *);
 void ritopa_i(N,int,GEN *);
 
+void Ptodouble();
 void Peval(),Psetprec(),p_pi(),p_e(),p_mul(),p_gcd();
 void asir_cgiv(GEN);
 
@@ -70,6 +71,7 @@ void Psetprecword();
 struct ftab pari_tab[] = {
 	{"eval",Peval,-2},
 	{"setprec",Psetprec,-1},
+	{"todouble",Ptodouble,1},
 #if defined(INTERVAL) || 1
 	{"setprecword",Psetprecword,-1},
 #endif
@@ -120,6 +122,39 @@ int p;
 	if ( p <= 0 )
 		p = 1;
 	return (int)(p*PREC_CONV+3);
+}
+
+void Ptodouble(arg,rp)
+NODE arg;
+Num *rp;
+{
+	double r,i;
+	Real real,imag;
+	Num num;
+
+	asir_assert(ARG0(arg),O_N,"todouble");
+	num = (Num)ARG0(arg);
+	if ( !num ) {
+		*rp = 0;
+		return;
+	}
+	switch ( NID(num) ) {
+		case N_R: case N_Q: case N_B:
+			r = ToReal(num);
+			MKReal(r,real);
+			*rp = (Num)real;
+			break;
+		case N_C:
+			r = ToReal(((C)num)->r);
+			i = ToReal(((C)num)->i);
+			MKReal(r,real);
+			MKReal(i,imag);
+			reimtocplx((Num)real,(Num)imag,rp);
+			break;
+		default:
+			*rp = num;
+			break;
+	}
 }
 
 void Peval(arg,rp)
