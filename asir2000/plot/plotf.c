@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.7 2000/11/09 01:51:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.8 2000/11/22 04:03:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,7 +76,7 @@ void Popen_canvas(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Q w300,sid;
+	Q w300,s_id;
 	LIST geom;
 	int stream,id,i;
 	NODE n,n0;
@@ -99,7 +99,7 @@ Obj *rp;
 				error("open_canvas : invalid argument"); break;
 		}
 	/* open_canvas in ox_plot requires 
-	   [sid (Q),
+	   [s_id (Q),
 	   	geom=[xsize,ysize] (LIST),
 	   	wname=name (STRING)]
 	*/
@@ -108,13 +108,13 @@ Obj *rp;
 		stream = current_s;
 	else
 		current_s = stream;
-	STOQ(stream,sid);
+	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
 	MKSTR(fname,"open_canvas");
-	arg = mknode(4,sid,fname,geom,wname);
+	arg = mknode(4,s_id,fname,geom,wname);
 	Pox_cmo_rpc(arg,rp);
 }
 
@@ -122,7 +122,7 @@ void Pifplot(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Q m2,p2,w300,sid;
+	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,yrange,range[2],list,geom;
 	VL vl,vl0;
@@ -203,7 +203,7 @@ Obj *rp;
 			error("ifplot : cannot happen"); break;
 	}
 	/* ifplot in ox_plot requires 
-	   [sid (Q),
+	   [s_id (Q),
 	   	formula (Obj),
 	   	xrange=[x,xmin,xmax] (LIST),
 	   	yrange=[y,ymin,ymax] (LIST),
@@ -216,13 +216,13 @@ Obj *rp;
 		stream = current_s;
 	else
 		current_s = stream;
-	STOQ(stream,sid);
+	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
 	MKSTR(fname,"plot");
-	arg = mknode(8,sid,fname,poly,xrange,yrange,0,geom,wname);
+	arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
 	Pox_rpc(arg,rp);
 }
 
@@ -230,7 +230,7 @@ void Pconplot(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Q m2,p2,w300,sid;
+	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,yrange,zrange,range[3],list,geom;
 	VL vl,vl0;
@@ -327,7 +327,7 @@ Obj *rp;
 		current_s = stream;
 
 	/* conplot in ox_plot requires 
-	   [sid (Q),
+	   [s_id (Q),
 	   	formula (Obj),
 	   	xrange=[x,xmin,xmax] (LIST),
 	   	yrange=[y,ymin,ymax] (LIST),
@@ -340,13 +340,13 @@ Obj *rp;
 		stream = current_s;
 	else
 		current_s = stream;
-	STOQ(stream,sid);
+	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
 	MKSTR(fname,"plot");
-	arg = mknode(8,sid,fname,poly,xrange,yrange,zrange,geom,wname);
+	arg = mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
 	Pox_rpc(arg,rp);
 }
 
@@ -354,7 +354,7 @@ void Pplot(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Q m2,p2,w300,sid;
+	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,range[1],list,geom;
 	VL vl,vl0;
@@ -419,7 +419,7 @@ Obj *rp;
 			error("plot : cannot happen"); break;
 	}
 	/* conplot in ox_plot requires 
-	   [sid (Q),
+	   [s_id (Q),
 	   	formula (Obj),
 	   	xrange=[x,xmin,xmax] (LIST),
 	   	yrange=0,
@@ -431,13 +431,13 @@ Obj *rp;
 		stream = current_s;
 	else
 		current_s = stream;
-	STOQ(stream,sid);
+	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
 	MKSTR(fname,"plot");
-	arg = mknode(8,sid,fname,poly,xrange,0,0,geom,wname);
+	arg = mknode(8,s_id,fname,poly,xrange,0,0,geom,wname);
 	Pox_rpc(arg,rp);
 }
 
@@ -445,25 +445,25 @@ void Pplotover(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Q sid,index;
+	Q s_id,index;
 	P poly;
 	STRING fname;
 
 	poly = (P)ARG0(arg);
-	sid = (Q)ARG1(arg);
+	s_id = (Q)ARG1(arg);
 	index = (Q)ARG2(arg);
 	MKSTR(fname,"plotover");
-	arg = mknode(4,sid,fname,index,poly);
+	arg = mknode(4,s_id,fname,index,poly);
 	Pox_rpc(arg,rp);
 }
 
-/* arg = [x,y,r,sid,index] */
+/* arg = [x,y,r,s_id,index] */
 
 void Pdrawcircle(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Q sid,index;
+	Q s_id,index;
 	Obj x,y,r;
 	STRING fname;
 	NODE n;
@@ -472,34 +472,34 @@ Obj *rp;
 	x = (Obj)ARG0(arg);
 	y = (Obj)ARG1(arg);
 	r = (Obj)ARG2(arg);
-	sid = (Q)ARG3(arg);
+	s_id = (Q)ARG3(arg);
 	index = (Q)ARG4(arg);
 	MKSTR(fname,"drawcircle");
 	n = mknode(3,x,y,r); MKLIST(pos,n);
-	arg = mknode(4,sid,fname,index,pos);
+	arg = mknode(4,s_id,fname,index,pos);
 	Pox_rpc(arg,rp);
 }
 
-/* draw_obj(sid,cindex,point|line); point = [x,y], line = [xa,ya,xb,yb] */
+/* draw_obj(s_id,cindex,point|line); point = [x,y], line = [xa,ya,xb,yb] */
 void Pdraw_obj(arg,rp)
 NODE arg;
 Obj *rp;
 {
 	static STRING fname;
-	Q sid,index;
+	Q s_id,index;
 	LIST obj;
 
 	if ( !fname ) {
 		MKSTR(fname,"draw_obj");
 	}
-	sid = (Q)ARG0(arg);
+	s_id = (Q)ARG0(arg);
 	index = (Q)ARG1(arg);
 	obj = (LIST)ARG2(arg);
 	/* ARG3(arg) = color */
 	if ( argc(arg) == 4 )
-		arg = mknode(5,sid,fname,index,obj,ARG3(arg));
+		arg = mknode(5,s_id,fname,index,obj,ARG3(arg));
 	else
-		arg = mknode(4,sid,fname,index,obj);
+		arg = mknode(4,s_id,fname,index,obj);
 	Pox_cmo_rpc(arg,rp);
 }
 
@@ -508,15 +508,15 @@ NODE arg;
 Obj *rp;
 {
 	static STRING fname;
-	Q sid,index;
+	Q s_id,index;
 	LIST obj;
 
 	if ( !fname ) {
 		MKSTR(fname,"clear_canvas");
 	}
-	sid = (Q)ARG0(arg);
+	s_id = (Q)ARG0(arg);
 	index = (Q)ARG1(arg);
-	arg = mknode(3,sid,fname,index);
+	arg = mknode(3,s_id,fname,index);
 	Pox_cmo_rpc(arg,rp);
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.16 2001/03/19 00:44:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.17 2001/03/19 01:26:36 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -132,7 +132,7 @@ F F_FALSE = &oF_FALSE;
 #if defined(__SVR4) && defined(sun)
 char cppname[BUFSIZ] = "/usr/ccs/lib/cpp ";
 #else
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || (defined(__MACH__) && defined(__ppc__))
 char cppname[BUFSIZ] = "/usr/bin/cpp ";
 #else
 #if defined(VISUAL)

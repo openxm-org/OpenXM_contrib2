@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.22 2000/12/05 01:24:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.23 2000/12/16 07:12:01 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -202,7 +202,7 @@ NODE arg;
 LIST *rp;
 {
 	int i,c;
-	Q sid;
+	Q s_id;
 	NODE t,n0,n;
 	LIST list,l;
 
@@ -211,8 +211,8 @@ LIST *rp;
 			if ( (m_c_tab[i].m>=0) || (m_c_tab[i].c>=0) ) {
 				c = m_c_tab[i].c;
 				ox_get_serverinfo(c,&list);
-				STOQ(i,sid);
-				t = mknode(2,sid,list);
+				STOQ(i,s_id);
+				t = mknode(2,s_id,list);
 				MKLIST(l,t);
 				NEXTNODE(n0,n);
 				BDY(n) = (pointer)l;

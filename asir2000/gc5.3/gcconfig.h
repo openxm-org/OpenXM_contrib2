@@ -194,7 +194,7 @@
 #   define MACOS
 #   define mach_type_known
 # endif
-# if defined(macosx)
+# if defined(macosx) || (defined(__MACH__) && defined(__ppc__))
 #    define MACOSX
 #    define POWERPC
 #    define mach_type_known

@@ -2,11 +2,11 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.21 2001/03/19 04:02:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.22 2001/03/19 04:17:39 noro Exp $ 
 */
 #include "config.h"
 
-#define USE_GCC
+/* #define USE_GCC */
 /* #define USE_MPI */
 /* #define USE_FFT_FLOAT */
 /* #define USE_LAPACK */
@@ -25,7 +25,7 @@ EXTRA_LDOPTIONS=-static
 #endif
 #endif
 
-#if defined(AlphaArchitecture)
+#if defined(AlphaArchitecture) || defined(DarwinArchitecture)
 #undef USE_GCC
 #endif
 
@@ -88,6 +88,10 @@ CCOPTIONS =
 PARIFLAGS = -DLONG_IS_64BIT
 #else
 PARIFLAGS = -DLONG_IS_32BIT
+#endif
+
+#if defined(DarwinArchitecture)
+CCOPTIONS =
 #endif
 
 #ifdef USE_PARI

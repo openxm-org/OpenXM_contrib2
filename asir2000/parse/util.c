@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.5 2000/12/05 01:24:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.6 2000/12/11 09:28:03 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
-#if defined(VISUAL)
+#if defined(VISUAL) || (defined(__MACH__) && defined(__ppc__))
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -285,7 +285,7 @@ P p;
 	return ( r );
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || (defined(__MACH__) && defined(__ppc__))
 NODE mknode(int ac,...)
 {
 	va_list ap;

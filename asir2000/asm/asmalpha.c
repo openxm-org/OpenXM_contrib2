@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/asmalpha.c,v 1.3 2000/08/21 08:31:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/asmalpha.c,v 1.4 2000/08/22 05:03:54 noro Exp $ 
 */
 #if defined(__alpha)
 typedef unsigned long UL;
-#elif defined(mips) || defined(hpux) || defined(powerpc)
+#elif defined(mips) || defined(hpux) || defined(powerpc) || defined(__ppc__)
 typedef unsigned long long UL;
 #endif
 

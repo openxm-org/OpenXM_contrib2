@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.8 2000/08/22 05:04:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.9 2000/09/07 23:59:54 noro Exp $ 
 */
 #include "com.h"
 
@@ -147,7 +147,7 @@ typedef FILE *ox_stream;
 /* a macro to check whether data are available in the read buffer */
 #if defined(linux)
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->_IO_read_ptr < (fp)->_IO_read_end)
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || (defined(__MACH__) && defined(__ppc__))
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->_r)
 #elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips)
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->_cnt)
