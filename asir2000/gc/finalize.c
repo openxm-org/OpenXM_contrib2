@@ -764,7 +764,6 @@ int GC_invoke_finalizers()
     struct finalizable_object * curr_fo;
     int count = 0;
     word mem_freed_before;
-    GC_bool first_time = TRUE;
     DCL_LOCK_STATE;
     
     while (GC_finalize_now != 0) {
@@ -772,9 +771,8 @@ int GC_invoke_finalizers()
 	    DISABLE_SIGNALS();
 	    LOCK();
 #	endif
-	if (first_time) {
+	if (count == 0) {
 	    mem_freed_before = GC_mem_freed;
-	    first_time = FALSE;
 	}
     	curr_fo = GC_finalize_now;
 #	ifdef THREADS
@@ -797,7 +795,7 @@ int GC_invoke_finalizers()
     	    GC_free((GC_PTR)curr_fo);
 #	endif
     }
-    if (mem_freed_before != GC_mem_freed) {
+    if (count != 0 && mem_freed_before != GC_mem_freed) {
         LOCK();
 	GC_finalizer_mem_freed += (GC_mem_freed - mem_freed_before);
 	UNLOCK();
@@ -814,7 +812,9 @@ void GC_notify_or_invoke_finalizers GC_PROTO((void))
     if (GC_finalize_now == 0) return;
     if (!GC_finalize_on_demand) {
 	(void) GC_invoke_finalizers();
-	GC_ASSERT(GC_finalize_now == 0);
+#	ifndef THREADS
+	  GC_ASSERT(GC_finalize_now == 0);
+#	endif	/* Otherwise GC can run concurrently and add more */
 	return;
     }
     if (GC_finalizer_notifier != (void (*) GC_PROTO((void)))0
@@ -852,3 +852,17 @@ void GC_notify_or_invoke_finalizers GC_PROTO((void))
     return(result);
 }
 
+#if !defined(NO_DEBUGGING)
+
+void GC_print_finalization_stats()
+{
+    struct finalizable_object *fo = GC_finalize_now;
+    size_t ready = 0;
+
+    GC_printf2("%lu finalization table entries; %lu disappearing links\n",
+	       GC_fo_entries, GC_dl_entries);
+    for (; 0 != fo; fo = fo_next(fo)) ++ready;
+    GC_printf1("%lu objects are eligible for immediate finalization\n", ready);
+}
+
+#endif /* NO_DEBUGGING */

@@ -49,7 +49,7 @@
 #          if defined(GC_WIN32_THREADS) 
 #             if defined(GC_PTHREADS)
 		  pthread_mutex_t GC_allocate_ml = PTHREAD_MUTEX_INITIALIZER;
-#	      elif !defined(GC_NOT_DLL) && (defined(_DLL) || defined(GC_DLL))
+#	      elif defined(GC_DLL)
 		 __declspec(dllexport) CRITICAL_SECTION GC_allocate_ml;
 #	      else
 		 CRITICAL_SECTION GC_allocate_ml;
@@ -75,6 +75,14 @@
 
 #if defined(NOSYS) || defined(ECOS)
 #undef STACKBASE
+#endif
+
+/* Dont unnecessarily call GC_register_main_static_data() in case 	*/
+/* dyn_load.c isn't linked in.						*/
+#ifdef DYNAMIC_LOADING
+# define GC_REGISTER_MAIN_STATIC_DATA() GC_register_main_static_data()
+#else
+# define GC_REGISTER_MAIN_STATIC_DATA() TRUE
 #endif
 
 GC_FAR struct _GC_arrays GC_arrays /* = { 0 } */;
@@ -104,6 +112,10 @@ GC_bool GC_print_stats = 0;
 
 GC_bool GC_print_back_height = 0;
 
+#ifndef NO_DEBUGGING
+  GC_bool GC_dump_regularly = 0;  /* Generate regular debugging dumps. */
+#endif
+
 #ifdef FIND_LEAK
   int GC_find_leak = 1;
 #else
@@ -131,6 +143,13 @@ GC_PTR GC_default_oom_fn GC_PROTO((size_t bytes_requested))
 GC_PTR (*GC_oom_fn) GC_PROTO((size_t bytes_requested)) = GC_default_oom_fn;
 
 extern signed_word GC_mem_found;
+
+void * GC_project2(arg1, arg2)
+void *arg1;
+void *arg2;
+{
+  return arg2;
+}
 
 # ifdef MERGE_SIZES
     /* Set things up so that GC_size_map[i] >= words(i),		*/
@@ -468,6 +487,15 @@ void GC_init()
 	  GC_init_parallel();
 	}
 #   endif /* PARALLEL_MARK || THREAD_LOCAL_ALLOC */
+
+#   if defined(DYNAMIC_LOADING) && defined(DARWIN)
+    {
+        /* This must be called WITHOUT the allocation lock held
+        and before any threads are created */
+        extern void GC_init_dyld();
+        GC_init_dyld();
+    }
+#   endif
 }
 
 #if defined(MSWIN32) || defined(MSWINCE)
@@ -480,6 +508,22 @@ void GC_init()
 
 extern void GC_setpagesize();
 
+
+#ifdef MSWIN32
+extern GC_bool GC_no_win32_dlls;
+#else
+# define GC_no_win32_dlls FALSE
+#endif
+
+void GC_exit_check GC_PROTO((void))
+{
+   GC_gcollect();
+}
+
+#ifdef SEARCH_FOR_DATA_START
+  extern void GC_init_linux_data_start GC_PROTO((void));
+#endif
+
 #ifdef UNIX_LIKE
 
 extern void GC_set_and_save_fault_handler GC_PROTO((void (*handler)(int)));
@@ -490,12 +534,23 @@ int sig;
     GC_err_printf1("Caught signal %d: looping in handler\n", sig);
     for(;;);
 }
-#endif
 
-#ifdef MSWIN32
-extern GC_bool GC_no_win32_dlls;
-#else
-# define GC_no_win32_dlls FALSE
+static GC_bool installed_looping_handler = FALSE;
+
+void maybe_install_looping_handler()
+{
+    /* Install looping handler before the write fault handler, so we	*/
+    /* handle write faults correctly.					*/
+      if (!installed_looping_handler && 0 != GETENV("GC_LOOP_ON_ABORT")) {
+        GC_set_and_save_fault_handler(looping_handler);
+        installed_looping_handler = TRUE;
+      }
+}
+
+#else /* !UNIX_LIKE */
+
+# define maybe_install_looping_handler()
+
 #endif
 
 void GC_init_inner()
@@ -515,8 +570,16 @@ void GC_init_inner()
     if (0 != GETENV("GC_PRINT_STATS")) {
       GC_print_stats = 1;
     } 
+#   ifndef NO_DEBUGGING
+      if (0 != GETENV("GC_DUMP_REGULARLY")) {
+        GC_dump_regularly = 1;
+      }
+#   endif
     if (0 != GETENV("GC_FIND_LEAK")) {
       GC_find_leak = 1;
+#     ifdef __STDC__
+        atexit(GC_exit_check);
+#     endif
     }
     if (0 != GETENV("GC_ALL_INTERIOR_POINTERS")) {
       GC_all_interior_pointers = 1;
@@ -554,11 +617,7 @@ void GC_init_inner()
         }
       }
     }
-#   ifdef UNIX_LIKE
-      if (0 != GETENV("GC_LOOP_ON_ABORT")) {
-        GC_set_and_save_fault_handler(looping_handler);
-      }
-#   endif
+    maybe_install_looping_handler();
     /* Adjust normal object descriptor for extra allocation.	*/
     if (ALIGNMENT > GC_DS_TAGS && EXTRA_BYTES != 0) {
       GC_obj_kinds[NORMAL].ok_descriptor = ((word)(-ALIGNMENT) | GC_DS_LENGTH);
@@ -593,11 +652,21 @@ void GC_init_inner()
 #       if defined(LINUX) && defined(IA64)
 	  GC_register_stackbottom = GC_get_register_stack_base();
 #       endif
+      } else {
+#       if defined(LINUX) && defined(IA64)
+	  if (GC_register_stackbottom == 0) {
+	    WARN("GC_register_stackbottom should be set with GC_stackbottom", 0);
+	    /* The following is likely to fail, since we rely on 	*/
+	    /* alignment properties that may not hold with a user set	*/
+	    /* GC_stackbottom.						*/
+	    GC_register_stackbottom = GC_get_register_stack_base();
+	  }
+#	endif
       }
 #   endif
-    GC_ASSERT(sizeof (ptr_t) == sizeof(word));
-    GC_ASSERT(sizeof (signed_word) == sizeof(word));
-    GC_ASSERT(sizeof (struct hblk) == HBLKSIZE);
+    GC_STATIC_ASSERT(sizeof (ptr_t) == sizeof(word));
+    GC_STATIC_ASSERT(sizeof (signed_word) == sizeof(word));
+    GC_STATIC_ASSERT(sizeof (struct hblk) == HBLKSIZE);
 #   ifndef THREADS
 #     if defined(STACK_GROWS_UP) && defined(STACK_GROWS_DOWN)
   	ABORT(
@@ -621,7 +690,7 @@ void GC_init_inner()
     
     /* Add initial guess of root sets.  Do this first, since sbrk(0)	*/
     /* might be used.							*/
-      GC_register_data_segments();
+      if (GC_REGISTER_MAIN_STATIC_DATA()) GC_register_data_segments();
     GC_init_headers();
     GC_bl_init();
     GC_mark_init();
@@ -634,6 +703,18 @@ void GC_init_inner()
 		 sz_str);
 	  } 
 	  initial_heap_sz = divHBLKSZ(initial_heap_sz);
+	}
+    }
+    {
+	char * sz_str = GETENV("GC_MAXIMUM_HEAP_SIZE");
+	if (sz_str != NULL) {
+	  word max_heap_sz = (word)atol(sz_str);
+	  if (max_heap_sz < initial_heap_sz * HBLKSIZE) {
+	    WARN("Bad maximum heap size %s - ignoring it.\n",
+		 sz_str);
+	  } 
+	  if (0 == GC_max_retries) GC_max_retries = 2;
+	  GC_set_max_heap_size(max_heap_sz);
 	}
     }
     if (!GC_expand_hp_inner(initial_heap_sz)) {
@@ -671,6 +752,7 @@ void GC_init_inner()
     	GC_incremental = TRUE;
       }
 #   endif /* !SMALL_CONFIG */
+    COND_DUMP;
     /* Get black list set up and/or incrmental GC started */
       if (!GC_dont_precollect || GC_incremental) GC_gcollect_inner();
     GC_is_initialized = TRUE;
@@ -706,8 +788,9 @@ void GC_enable_incremental GC_PROTO(())
     if (GC_incremental) goto out;
     GC_setpagesize();
     if (GC_no_win32_dlls) goto out;
-#   ifndef GC_SOLARIS_THREADS
-        GC_dirty_init();
+#   ifndef GC_SOLARIS_THREADS 
+      maybe_install_looping_handler();  /* Before write fault handler! */
+      GC_dirty_init();
 #   endif
     if (!GC_is_initialized) {
         GC_init_inner();
@@ -926,6 +1009,17 @@ GC_warn_proc GC_current_warn_proc = GC_default_warn_proc;
     return(result);
 }
 
+# if defined(__STDC__) || defined(__cplusplus)
+    GC_word GC_set_free_space_divisor (GC_word value)
+# else
+    GC_word GC_set_free_space_divisor (value)
+    GC_word value;
+# endif
+{
+    GC_word old = GC_free_space_divisor;
+    GC_free_space_divisor = value;
+    return old;
+}
 
 #ifndef PCR
 void GC_abort(msg)
@@ -952,17 +1046,18 @@ GC_CONST char * msg;
 }
 #endif
 
-
-/* Needed by SRC_M3, gcj, and should perhaps be the official interface	*/
-/* to GC_dont_gc.							*/
 void GC_enable()
 {
+    LOCK();
     GC_dont_gc--;
+    UNLOCK();
 }
 
 void GC_disable()
 {
+    LOCK();
     GC_dont_gc++;
+    UNLOCK();
 }
 
 #if !defined(NO_DEBUGGING)
@@ -977,6 +1072,8 @@ void GC_dump()
     GC_print_hblkfreelist();
     GC_printf0("\n***Blocks in use:\n");
     GC_print_block_list();
+    GC_printf0("\n***Finalization statistics:\n");
+    GC_print_finalization_stats();
 }
 
 #endif /* NO_DEBUGGING */

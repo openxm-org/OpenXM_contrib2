@@ -72,6 +72,13 @@ int GC_full_freq = 19;	   /* Every 20th collection is a full	*/
 GC_bool GC_need_full_gc = FALSE;
 			   /* Need full GC do to heap growth.	*/
 
+#ifdef THREADS
+  GC_bool GC_world_stopped = FALSE;
+# define IF_THREADS(x) x
+#else
+# define IF_THREADS(x)
+#endif
+
 word GC_used_heap_size_after_full = 0;
 
 char * GC_copyright[] =
@@ -250,7 +257,6 @@ void GC_maybe_gc()
 
     if (GC_should_collect()) {
         if (!GC_incremental) {
-	    GC_notify_full_gc();
             GC_gcollect_inner();
             n_partial_gcs = 0;
             return;
@@ -302,6 +308,7 @@ void GC_maybe_gc()
 /*
  * Stop the world garbage collection.  Assumes lock held, signals disabled.
  * If stop_func is not GC_never_stop_func, then abort if stop_func returns TRUE.
+ * Return TRUE if we successfully completed the collection.
  */
 GC_bool GC_try_to_collect_inner(stop_func)
 GC_stop_func stop_func;
@@ -309,6 +316,7 @@ GC_stop_func stop_func;
 #   ifdef CONDPRINT
         CLOCK_TYPE start_time, current_time;
 #   endif
+    if (GC_dont_gc) return FALSE;
     if (GC_incremental && GC_collection_in_progress()) {
 #   ifdef CONDPRINT
       if (GC_print_stats) {
@@ -322,6 +330,7 @@ GC_stop_func stop_func;
     	    GC_collect_a_little_inner(1);
     	}
     }
+    if (stop_func == GC_never_stop_func) GC_notify_full_gc();
 #   ifdef CONDPRINT
       if (GC_print_stats) {
         if (GC_print_stats) GET_TIME(start_time);
@@ -397,6 +406,7 @@ int n;
 {
     register int i;
     
+    if (GC_dont_gc) return;
     if (GC_incremental && GC_collection_in_progress()) {
     	for (i = GC_deficit; i < GC_RATE*n; i++) {
     	    if (GC_mark_some((ptr_t)0)) {
@@ -464,8 +474,12 @@ GC_stop_func stop_func;
 #   if defined(CONDPRINT) && !defined(PRINTTIMES)
 	if (GC_print_stats) GET_TIME(start_time);
 #   endif
+#   if defined(REGISTER_LIBRARIES_EARLY)
+        GC_cond_register_dynamic_libraries();
+#   endif
     GC_timerstart();
     STOP_WORLD();
+    IF_THREADS(GC_world_stopped = TRUE);
 #   ifdef CONDPRINT
       if (GC_print_stats) {
 	GC_printf1("--> Marking for collection %lu ",
@@ -496,6 +510,7 @@ GC_stop_func stop_func;
 		      }
 #		    endif
 		    GC_deficit = i; /* Give the mutator a chance. */
+                    IF_THREADS(GC_world_stopped = FALSE);
 	            START_WORLD();
     			GC_timerstop();
 	            return(FALSE);
@@ -530,6 +545,7 @@ GC_stop_func stop_func;
             (*GC_check_heap)();
         }
     
+    IF_THREADS(GC_world_stopped = FALSE);
     START_WORLD();
     GC_timerstop();
 #   ifdef PRINTTIMES
@@ -622,6 +638,7 @@ void GC_finish_collection()
 	  GC_print_address_map();
 	}
 #   endif
+    COND_DUMP;
     if (GC_find_leak) {
       /* Mark all objects on the free list.  All objects should be */
       /* marked when we're done.				   */
@@ -764,8 +781,8 @@ void GC_finish_collection()
 
 void GC_gcollect GC_PROTO(())
 {
-    GC_notify_full_gc();
     (void)GC_try_to_collect(GC_never_stop_func);
+    if (GC_have_errors) GC_print_all_errors();
 }
 
 word GC_n_heap_sects = 0;	/* Number of sections currently in heap. */
@@ -970,7 +987,6 @@ GC_bool ignore_off_page;
 {
     if (!GC_incremental && !GC_dont_gc &&
 	(GC_dont_expand && GC_words_allocd > 0 || GC_should_collect())) {
-      GC_notify_full_gc();
       GC_gcollect_inner();
     } else {
       word blocks_to_get = GC_heapsize/(HBLKSIZE*GC_free_space_divisor)
@@ -995,7 +1011,6 @@ GC_bool ignore_off_page;
         && !GC_expand_hp_inner(needed_blocks)) {
       	if (GC_fail_count++ < GC_max_retries) {
       	    WARN("Out of Memory!  Trying to continue ...\n", 0);
-	    GC_notify_full_gc();
 	    GC_gcollect_inner();
 	} else {
 #	    if !defined(AMIGA) || !defined(GC_AMIGA_FASTALLOC)
@@ -1048,7 +1063,7 @@ int kind;
     while (*flh == 0) {
       ENTER_GC();
       /* Do our share of marking work */
-        if(TRUE_INCREMENTAL && !GC_dont_gc) GC_collect_a_little_inner(1);
+        if(TRUE_INCREMENTAL) GC_collect_a_little_inner(1);
       /* Sweep blocks for objects of this size */
         GC_continue_reclaim(sz, kind);
       EXIT_GC();
@@ -1070,6 +1085,8 @@ int kind;
 	EXIT_GC();
       }
     }
+    /* Successful allocation; reset failure count.	*/
+    GC_fail_count = 0;
     
     return(*flh);
 }

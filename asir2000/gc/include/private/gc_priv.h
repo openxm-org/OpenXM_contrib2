@@ -42,8 +42,8 @@
 #   include <sys/resource.h>
 #endif /* BSD_TIME */
 
-# ifndef GC_H
-#   include "gc.h"
+# ifndef _GC_H
+#   include "../gc.h"
 # endif
 
 # ifndef GC_MARK_H
@@ -352,7 +352,8 @@ void GC_print_callers GC_PROTO((struct callinfo info[NFRAMES]));
 #   include <string.h>
 #   define BCOPY_EXISTS
 # endif
-# if defined(MACOSX)
+# if defined(DARWIN)
+#   include <string.h>
 #   define BCOPY_EXISTS
 # endif
 
@@ -589,9 +590,10 @@ extern GC_warn_proc GC_current_warn_proc;
  */
  
 # ifdef LARGE_CONFIG
-#   define LOG_PHT_ENTRIES  19  /* Collisions likely at 512K blocks,	*/
-				/* which is >= 2GB.  Each table takes	*/
-				/* 64KB.				*/
+#   define LOG_PHT_ENTRIES  20  /* Collisions likely at 1M blocks,	*/
+				/* which is >= 4GB.  Each table takes	*/
+				/* 128KB, some of which may never be	*/
+				/* touched.				*/
 # else
 #   ifdef SMALL_CONFIG
 #     define LOG_PHT_ENTRIES  14 /* Collisions are likely if heap grows	*/
@@ -599,7 +601,7 @@ extern GC_warn_proc GC_current_warn_proc;
 				 /* Each hash table occupies 2K bytes.   */
 #   else /* default "medium" configuration */
 #     define LOG_PHT_ENTRIES  16 /* Collisions are likely if heap grows	*/
-				 /* to more than 16K hblks >= 256MB.	*/
+				 /* to more than 64K hblks >= 256MB.	*/
 				 /* Each hash table occupies 8K bytes.  */
 #   endif
 # endif
@@ -904,7 +906,7 @@ struct _GC_arrays {
   		       /* OFFSET_TOO_BIG if the value j would be too 	*/
   		       /* large to fit in the entry.  (Note that the	*/
   		       /* size of these entries matters, both for 	*/
-  		       /* space consumption and for cache utilization.	*/
+  		       /* space consumption and for cache utilization.)	*/
 #   define OFFSET_TOO_BIG 0xfe
 #   define OBJ_INVALID 0xff
 #   define MAP_ENTRY(map, bytes) (map)[bytes]
@@ -1179,6 +1181,10 @@ extern long GC_large_alloc_warn_interval;
 extern long GC_large_alloc_warn_suppressed;
 	/* Number of warnings suppressed so far.	*/
 
+#ifdef THREADS
+  extern GC_bool GC_world_stopped;
+#endif
+
 /* Operations */
 # ifndef abs
 #   define abs(x)  ((x) < 0? (-(x)) : (x))
@@ -1353,6 +1359,11 @@ extern void (*GC_start_call_back) GC_PROTO((void));
 # else
   void GC_push_regs GC_PROTO((void));
 # endif
+# if defined(SPARC) || defined(IA64)
+  /* Cause all stacked registers to be saved in memory.  Return a	*/
+  /* pointer to the top of the corresponding memory stack.		*/
+  word GC_save_regs_in_stack GC_PROTO((void));
+# endif
 			/* Push register contents onto mark stack.	*/
   			/* If NURSERY is defined, the default push	*/
   			/* action can be overridden with GC_push_proc	*/
@@ -1402,6 +1413,7 @@ void GC_set_fl_marks GC_PROTO((ptr_t p));
 				    /* Set all mark bits associated with */
 				    /* a free list.			 */
 void GC_add_roots_inner GC_PROTO((char * b, char * e, GC_bool tmp));
+void GC_remove_roots_inner GC_PROTO((char * b, char * e));
 GC_bool GC_is_static_root GC_PROTO((ptr_t p));
   		/* Is the address p in one of the registered static	*/
   		/* root sections?					*/
@@ -1412,6 +1424,11 @@ GC_bool GC_is_tmp_root GC_PROTO((ptr_t p));
 # endif
 void GC_register_dynamic_libraries GC_PROTO((void));
   		/* Add dynamic library data sections to the root set. */
+
+GC_bool GC_register_main_static_data GC_PROTO((void));
+		/* We need to register the main data segment.  Returns	*/
+		/* TRUE unless this is done implicitly as part of	*/
+		/* dynamic library registration.			*/
   
 /* Machine dependent startup routines */
 ptr_t GC_get_stack_base GC_PROTO((void));	/* Cold end of stack */
@@ -1612,6 +1629,8 @@ ptr_t GC_allocobj GC_PROTO((word sz, int kind));
   				/* Make the indicated 			*/
   				/* free list nonempty, and return its	*/
   				/* head.				*/
+
+void GC_free_inner(GC_PTR p);
   
 void GC_init_headers GC_PROTO((void));
 struct hblkhdr * GC_install_header GC_PROTO((struct hblk *h));
@@ -1641,6 +1660,12 @@ void GC_notify_or_invoke_finalizers GC_PROTO((void));
 			/* Call *GC_finalizer_notifier if there are	*/
 			/* finalizers to be run, and we haven't called	*/
 			/* this procedure yet this GC cycle.		*/
+
+GC_API GC_PTR GC_make_closure GC_PROTO((GC_finalization_proc fn, GC_PTR data));
+GC_API void GC_debug_invoke_finalizer GC_PROTO((GC_PTR obj, GC_PTR data));
+			/* Auxiliary fns to make finalization work	*/
+			/* correctly with displaced pointers introduced	*/
+			/* by the debugging allocators.			*/
   			
 void GC_add_to_heap GC_PROTO((struct hblk *p, word bytes));
   			/* Add a HBLKSIZE aligned chunk to the heap.	*/
@@ -1656,13 +1681,30 @@ extern void (*GC_check_heap) GC_PROTO((void));
 extern void (*GC_print_all_smashed) GC_PROTO((void));
 			/* Print GC_smashed if it's not empty.		*/
 			/* Clear GC_smashed list.			*/
+extern void GC_print_all_errors GC_PROTO((void));
+			/* Print smashed and leaked objects, if any.	*/
+			/* Clear the lists of such objects.		*/
 extern void (*GC_print_heap_obj) GC_PROTO((ptr_t p));
   			/* If possible print s followed by a more	*/
   			/* detailed description of the object 		*/
   			/* referred to by p.				*/
+#if defined(LINUX) && defined(__ELF__) && !defined(SMALL_CONFIG)
+  void GC_print_address_map GC_PROTO((void));
+  			/* Print an address map of the process.		*/
+#endif
 
+extern GC_bool GC_have_errors;  /* We saw a smashed or leaked object.	*/
+				/* Call error printing routine 		*/
+				/* occasionally.			*/
 extern GC_bool GC_print_stats;	/* Produce at least some logging output	*/
 				/* Set from environment variable.	*/
+
+#ifndef NO_DEBUGGING
+  extern GC_bool GC_dump_regularly;  /* Generate regular debugging dumps. */
+# define COND_DUMP if (GC_dump_regularly) GC_dump();
+#else
+# define COND_DUMP
+#endif
 
 /* Macros used for collector internal allocation.	*/
 /* These assume the collector lock is held.		*/
@@ -1735,6 +1777,7 @@ void GC_print_block_list GC_PROTO((void));
 void GC_print_hblkfreelist GC_PROTO((void));
 void GC_print_heap_sects GC_PROTO((void));
 void GC_print_static_roots GC_PROTO((void));
+void GC_print_finalization_stats GC_PROTO((void));
 void GC_dump GC_PROTO((void));
 
 #ifdef KEEP_BACK_PTRS
@@ -1815,6 +1858,10 @@ void GC_err_puts GC_PROTO((GC_CONST char *s));
 # else 
 #	define GC_ASSERT(expr)
 # endif
+
+/* Check a compile time assertion at compile time.  The error	*/
+/* message for failure is a bit baroque, but ...		*/
+# define GC_STATIC_ASSERT(expr) sizeof(char[(expr)? 1 : -1])
 
 # if defined(PARALLEL_MARK) || defined(THREAD_LOCAL_ALLOC)
     /* We need additional synchronization facilities from the thread	*/
