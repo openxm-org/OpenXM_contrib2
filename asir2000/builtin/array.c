@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.32 2003/09/17 08:14:26 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.33 2003/11/08 01:12:02 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -160,6 +160,7 @@ void Pqsort(NODE arg,VECT *rp)
 	NODE n;
 	P p;
 	V v;
+	FUNC func;
 
 	asir_assert(ARG0(arg),O_VECT,"qsort");
 	vect = (VECT)ARG0(arg);
@@ -170,9 +171,13 @@ void Pqsort(NODE arg,VECT *rp)
 		if ( !p || OID(p)!=2 )
 			error("qsort : invalid argument");
 		v = VR(p);
-		if ( (int)v->attr != V_SR )
-			error("qsort : no such function");
-		generic_comp_obj_func = (FUNC)v->priv;
+		gen_searchf(NAME(v),&func);
+		if ( !func ) {
+			if ( (int)v->attr != V_SR )
+				error("qsort : no such function");
+			func = (FUNC)v->priv;
+		}
+		generic_comp_obj_func = func;
 		MKNODE(n,0,0); MKNODE(generic_comp_obj_arg,0,n);	
 		qsort(BDY(vect),vect->len,sizeof(Obj),(int (*)(const void *,const void *))generic_comp_obj);
 	}
