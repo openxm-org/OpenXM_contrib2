@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.13 2001/04/20 02:34:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.14 2001/08/06 01:48:33 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -315,6 +315,7 @@ N n;
 	}
 }
 
+#if defined(FPRINT)
 #if defined(ITVDEBUG)
 void printbin(double z)
 {
@@ -336,11 +337,16 @@ void printbin(double z)
 	fprintf(stderr,"\n");
 }
 #endif
+#endif
 
+#if defined(FPRINT)
 #if 0
 int	printmode = PRINTF_E;
 #else
 int	printmode = PRINTF_G;
+#endif
+#else
+extern int printmode;
 #endif
 
 void PRINTNUM(q)
