@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.17 2003/04/02 06:48:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.18 2003/05/16 07:56:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,12 +70,14 @@ void Ppeek(),Ppoke();
 void Psleep();
 void Premove_module();
 void Pmodule_list();
+void Pmodule_definedp();
 
 void delete_history(int,int);
 
 struct ftab misc_tab[] = {
 	{"module_list",Pmodule_list,0},
 	{"remove_module",Premove_module,1},
+	{"module_definedp",Pmodule_definedp,1},
 	{"sleep",Psleep,1},
 	{"null_command",Pnull_command,-99999},
 	{"getenv",Pgetenv,1},
@@ -155,6 +157,25 @@ Q *rp;
 				NEXT(pm) = NEXT(m);
 			*rp = ONE;
 			return;
+		}
+	*rp = 0;
+}
+
+void Pmodule_definedp(arg,rp)
+NODE arg;
+Q *rp;
+{
+	NODE m;
+	char *name;
+
+	asir_assert(ARG0(arg),O_STR,"module_definedp");
+	name = BDY((STRING)ARG0(arg));
+    /* bug: the linear search is used here. The list of module shoud be sorted
+       and cashed, and binary search should be used. */
+	for (m = MODULE_LIST; m; m = NEXT(m) )
+		if ( !strcmp(name,((MODULE)BDY(m))->name) ) {
+			*rp = ONE;
+			return ;
 		}
 	*rp = 0;
 }
