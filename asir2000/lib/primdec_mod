@@ -4,6 +4,10 @@ extern T_GRF,T_INT,T_PD,T_MP$
 extern BuchbergerMinipoly,PartialDecompByLex,ParallelMinipoly$
 extern B_Win,D_Win$
 extern COMMONCHECK_SF,CID_SF$
+extern FFF_LOADED_BY_PRIMDEC_MOD$
+
+if(FFF_LOADED_BY_PRIMDEC_MOD) load("fff"); else ;
+FFF_LOADED_BY_PRIMDEC_MOD = 1$
 
 /*==============================================*/
 /*  prime decomposition of ideals over 		*/
