@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.2 2000/08/21 08:31:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.3 2000/08/22 05:04:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -335,6 +335,205 @@ search_active_canvas()
 	return -1;
 }
 
+	 
+#define PRINT_XOFFSET   100
+#define PRINT_YOFFSET   100
+static struct canvas *Can;
+/* void print_canvas(Widget w,struct canvas *can, XtPointer calldata); */
+static void output_to_file(Widget , XtPointer, XtPointer );
+static void output_to_ps_printer(Widget , XtPointer, XtPointer );
+static void cancel_output_to_file(Widget , XtPointer,XtPointer);
+static void generate_psfile(struct canvas *can, FILE *fp);
+static Widget PrintDialog;
+static Widget PrintDialog_lp;
+static Widget W;
+
+static void print_canvas(w,can,calldata)
+	 Widget w;
+	 struct canvas *can;
+	 XtPointer calldata;
+{
+  Widget fshell,fdialog;
+  extern struct canvas *Can;
+  extern Widget W;
+  static void output_to_printer();
+  static void print_canvas_to_file();
+
+  W = w;
+  Can = can;
+  create_popup(can->shell,"Print/Output PS file","",&fshell,&fdialog);
+  XawDialogAddButton(fdialog,"print",output_to_printer,w);
+  XawDialogAddButton(fdialog,"Output PS file",print_canvas_to_file,w);
+  XawDialogAddButton(fdialog,"cancel",cancel_output_to_file,w);
+  XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone); 
+}
+static void print_canvas_to_file(w,can,calldata)
+	 Widget w;
+	 struct canvas *can;
+	 XtPointer calldata;
+{
+  FILE *fp;
+  Arg arg[10];
+  int n;
+  char psfile[50];
+  Widget fshell,fdialog;
+  extern struct canvas *Can;
+  extern Widget PrintDialog;
+
+  w = W;
+  can = Can;
+  strcpy(psfile,"ox_plot.eps");
+  create_popup(can->shell,"Output as PS file",psfile,&fshell,&fdialog);
+  n = 0;
+  XtSetArg(arg[n], XtNlabel, "File : "); n++;
+  XtSetArg(arg[n], XtNvalue, psfile); n++;
+  XtSetValues(fdialog,arg,n); 
+  XawDialogAddButton(fdialog,"output to file",output_to_file,w);
+  XawDialogAddButton(fdialog,"cancel",cancel_output_to_file,w);
+  PrintDialog = fdialog;
+  XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
+}
+static void output_to_printer(w,can,calldata)
+	 Widget w;
+	 struct canvas *can;
+	 XtPointer calldata;
+{
+  FILE *fp;
+  Arg arg[10];
+  int n;
+  char psfile[50];
+  Widget fshell,fdialog;
+  extern struct canvas *Can;
+  extern Widget PrintDialog_lp;
+
+  w = W;
+  can = Can;
+  strcpy(psfile,"xerox");
+  create_popup(can->shell,"Output PS file to printer",psfile,&fshell,&fdialog);
+  n = 0;
+  XtSetArg(arg[n], XtNlabel, "PS Printer Name : "); n++;
+  XtSetArg(arg[n], XtNvalue, psfile); n++;
+  XtSetValues(fdialog,arg,n); 
+  XawDialogAddButton(fdialog,"output to PS printer",output_to_ps_printer,w);
+  XawDialogAddButton(fdialog,"cancel",cancel_output_to_file,w);
+  PrintDialog_lp = fdialog;
+  XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
+}
+
+static void cancel_output_to_file(w,fbutton,call) 
+	 Widget w;
+	 XtPointer fbutton, call;
+{
+  Widget shell = XtParent(XtParent(w));
+  XtPopdown(shell); XtDestroyWidget(shell);
+  XtSetSensitive(fbutton,True);
+}
+
+static void output_to_file(w,fbutton,call) 
+	 Widget w;
+	 XtPointer fbutton, call;
+{
+  char *fname;
+  FILE *fp;
+  extern struct canvas *Can;
+  extern Widget PrintDialog;
+  Widget shell = XtParent(XtParent(w));
+
+  fname = XawDialogGetValueString(PrintDialog);
+  fprintf(stderr,"fname=%s\n",fname); fflush(NULL);
+  fp = fopen(fname,"w");
+  if (fp == NULL) {
+	warning(Can,"Could not open the output file.");
+  }else{
+	generate_psfile(Can,fp);
+	fclose(fp);
+  }
+
+  XtPopdown(shell); XtDestroyWidget(shell);
+  XtSetSensitive(fbutton,True);
+}
+
+static void output_to_ps_printer(w,fbutton,call) 
+	 Widget w;
+	 XtPointer fbutton, call;
+{
+  char *printerName;
+  FILE *fp;
+  extern struct canvas *Can;
+  extern Widget PrintDialog_lp;
+  char fname[256];
+  char cmd[512];
+  static int id = 0;
+  Widget shell = XtParent(XtParent(w));
+
+  sprintf(fname,"/tmp/ox_plot_%d.eps",(int) getpid(),id++);
+
+  printerName = XawDialogGetValueString(PrintDialog_lp);
+  fprintf(stderr,"printerName=%s\n",printerName); fflush(NULL);
+  fp = fopen(fname,"w");
+  if (fp == NULL) {
+	warning(Can,"Could not open the output file.");
+  }else{
+	generate_psfile(Can,fp);
+	fclose(fp);
+  }
+
+  sprintf(cmd,"lpr -P%s %s",printerName,fname);
+  if (system(cmd)) {
+	warning(Can,"Unknown printer?");
+  }
+  sprintf(cmd,"rm -f %s",fname);
+  system(cmd);
+  XtPopdown(shell); XtDestroyWidget(shell);
+  XtSetSensitive(fbutton,True);
+}
+
+
+/* test sequence
+   ox_launch(0,"ox_plot");
+   ifplot(x^2-y^3);
+   drawcircle(0,0,100,0,0);
+   */
+static void generate_psfile(can,fp)
+	 struct canvas *can;
+	 FILE *fp;
+{
+  int x,y;
+  XImage *image;
+  int color;
+  fprintf(stderr,"generate_psfile\n"); 
+  if ( display ) {
+	fprintf(stderr,"generate_psfile: output to a file.\n"); 
+	fprintf(fp,"%%!\n");
+	fprintf(fp,"%%%%BoundingBox: %d %d %d %d \n",PRINT_XOFFSET,PRINT_YOFFSET,
+			PRINT_XOFFSET+can->width+1,PRINT_YOFFSET+can->height+1);
+	fprintf(fp,"%%This is generated by ifplot\n");
+    fprintf(fp,"/ifplot_putpixel { /oxcolor 2 1 roll def  \n");
+	fprintf(fp,"    /yyy 2 1 roll def /xxx 2 1 roll def \n");
+	fprintf(fp,"    gsave newpath xxx yyy .5 0 360 arc \n");
+    fprintf(fp,"    .3 oxcolor .04 mul add setgray  fill grestore \n");
+	fprintf(fp,"} def \n");
+	fprintf(fp,"%% newpath   ....  stroke \n");
+	image = XGetImage(display,can->pix,
+					  0,0,can->width,can->height,-1,ZPixmap);
+	for (x=0; x<can->width; x++) {
+	  for (y=0; y<can->height; y++) {
+		if ((color = (int) XGetPixel(image,x,y)) == 1) {
+		  /* white background */
+		}else {
+		  fprintf(fp,"%d %d %d ifplot_putpixel \n",PRINT_XOFFSET+x,
+				  PRINT_YOFFSET+can->height-y,color);
+		}
+	  }
+	}
+	/* pline(display,can,can->window); */
+	fprintf(fp,"showpage \n");
+  }else{
+	fprintf(stderr,"Cannot print on this system\n");
+  }
+  fflush(NULL);
+}
+
 void destroy_canvas(w,can,calldata)
 Widget w;
 struct canvas *can;
@@ -494,7 +693,7 @@ struct canvas *can;
 {
 	XEvent event;
 	Widget box,frame,commands,
-		coords,quit,wide,precise,canvas,formula;
+		coords,quit,print,wide,precise,canvas,formula;
 	Window window;
 	Pixmap pix;
 	int i,width,height;
@@ -522,6 +721,8 @@ struct canvas *can;
 
 	quit = XtCreateManagedWidget("quit",commandWidgetClass,commands,NULL,0);
 	XtAddCallback(quit,XtNcallback,destroy_canvas,can);
+	print = XtCreateManagedWidget("print",commandWidgetClass,commands,NULL,0);
+	XtAddCallback(print,XtNcallback,print_canvas,can);
 	can->wideb = wide = 
 		XtCreateManagedWidget("wide",toggleWidgetClass,commands,NULL,0);
 	XtAddCallback(wide,XtNcallback,wide_canvas,can);
