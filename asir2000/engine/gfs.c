@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.14 2002/12/18 06:15:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.15 2003/01/06 01:16:39 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -748,6 +748,21 @@ void gfstomq(GFS a,MQ *c)
 	} else {
 		UTOMQ(current_gfs_iton[CONT(a)],*c);
 	}
+}
+
+void gfstopgfs(GFS a,V v,P *c)
+{
+	MQ t;
+	Q q;
+
+	if ( !a )
+		*c = 0;
+	else if ( !current_gfs_ntoi ) {
+		UTOMQ(CONT(a),t);
+		STOQ(CONT(t),q);
+		*c = (P)q;
+	} else
+		enc_to_p(current_gfs_p,current_gfs_iton[CONT(a)],v,c);
 }
 
 void ntogfs(Obj a,GFS *b)

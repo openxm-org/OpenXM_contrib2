@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.16 2001/10/09 01:36:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.17 2002/09/27 04:42:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,7 +64,7 @@ void Pmergelist(), Pch_mv(), Pre_mv(), Pdeglist();
 void Pptomp(),Pmptop();
 void Pptolmp(),Plmptop();
 void Pptosfp(),Psfptop(),Psf_galois_action(),Psf_embed(),Psf_find_root();
-void Psf_minipoly(),Psf_log();
+void Psf_minipoly(),Psf_log(),Psfptopsfp();
 void Pptogf2n(),Pgf2ntop(),Pgf2ntovect();
 void Pptogfpn(),Pgfpntop();
 void Pfind_root_gf2n();
@@ -155,6 +155,7 @@ struct ftab poly_tab[] = {
 
 	{"ptosfp",Pptosfp,1},
 	{"sfptop",Psfptop,1},
+	{"sfptopsfp",Psfptopsfp,2},
 	{"ptogf2n",Pptogf2n,1},
 	{"gf2ntop",Pgf2ntop,-2},
 	{"gf2ntovect",Pgf2ntovect,1},
@@ -1100,6 +1101,11 @@ void Pptosfp(NODE arg,P *rp)
 void Psfptop(NODE arg,P *rp)
 {
 	sfptop((P)ARG0(arg),rp);
+}
+
+void Psfptopsfp(NODE arg,P *rp)
+{
+	sfptopsfp((P)ARG0(arg),VR((P)ARG1(arg)),rp);
 }
 
 void Pptogf2n(NODE arg,GF2N *rp)
