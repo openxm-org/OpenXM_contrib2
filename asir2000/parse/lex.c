@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.19 2001/12/21 08:23:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.20 2002/09/09 12:23:51 kondoh Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -144,7 +144,7 @@ int yylex()
 			while ( ( c = Getc() ) == '0' );
 			if ( c == '.' ) {
 				Ungetc(c); c = '0';
-			} else if ( c == 'x' ) {
+			} else if ( c == 'x' || c == 'X' ) {
 				for ( i = 0; i < 8; i++ ) 
 					nbuf[i] = '0';
 				READ_ALNUM_NBUF
@@ -153,7 +153,7 @@ int yylex()
 				NTOQ(n1,1,q); r = (Obj)q;
 				yylvalp->p = (pointer)r;
 				return ( FORMULA );
-			} else if ( c == 'b' ) {
+			} else if ( c == 'b' || c == 'B' ) {
 				for ( i = 0; i < 32; i++ ) 
 					nbuf[i] = '0';
 				READ_ALNUM_NBUF
@@ -256,7 +256,7 @@ int yylex()
 
 			REALLOC_NBUF nbuf[i++] = c;
 			READ_DIGIT_NBUF
-			if ( c == 'e' ) {
+			if ( c == 'e' || c == 'E' ) {
 				REALLOC_NBUF nbuf[i++] = c;
 				c = Getc();
 				if ( (c == '+') || (c == '-') ) {
@@ -265,7 +265,7 @@ int yylex()
 					Ungetc(c);
 				READ_DIGIT_NBUF
 			}
-		} else if ( c == 'e' ) {
+		} else if ( c == 'e' || c == 'E' ) {
 			floatingpoint = 1;
 			REALLOC_NBUF nbuf[i++] = c;
 			c = Getc();
