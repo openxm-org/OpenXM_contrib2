@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.3 2000/08/22 05:03:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.4 2000/09/21 09:19:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,12 +64,26 @@ void Pstruct_type(arg,rp)
 NODE arg;
 Q *rp;
 {
+	Obj obj;
 	char *name;
 	int ind;
 
-	asir_assert(ARG0(arg),O_STR,"struct_type");
-	name = ((STRING)ARG0(arg))->body;
-	ind = structtoindex(name);
+/*	asir_assert(ARG0(arg),O_STR,"struct_type"); */
+	obj = (Obj)ARG0(arg);
+	if ( !obj )
+		error("struct_type : invalid argument");
+	switch ( OID(obj) ) {
+		case O_STR:
+			name = ((STRING)obj)->body;
+			ind = structtoindex(name);
+			break;
+		case O_COMP:
+			ind = ((COMP)obj)->type;
+			break;
+		default:
+			error("struct_type : invalid argument");
+			break;
+	}
 	STOQ(ind,*rp);		
 }
 
