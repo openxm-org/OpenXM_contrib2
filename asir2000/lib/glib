@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.5 2002/07/14 03:57:24 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.6 2002/07/14 07:10:01 takayama Exp $ */
 /* $Id$ */
 
 
@@ -320,6 +320,7 @@ def glib_history(L) {
 /*&usage begin: glib_tops()
   If Glib_ps is set to 1, 
   it returns a postscript program to draw the picture on the canvas.
+  ref: print_output();
 end: */
 def glib_tops() {
   extern Glib_h;
