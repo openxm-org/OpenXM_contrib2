@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.9 2001/10/09 01:36:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.10 2002/07/10 05:29:36 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -306,21 +306,18 @@ void draw_character_string(DISPLAY *display,struct canvas *can,int x,int y,char 
 {
 #if defined(VISUAL)
 	HDC dc;
-	HPEN pen,oldpen;
+	COLORREF oldcolor;
 
 	if ( color ) {
-		pen = CreatePen(PS_SOLID,1,color);
-		oldpen = SelectObject(can->pix,pen);
+		oldcolor = SetTextColor(can->pix,color);
 		DRAWSTRING(display,can->pix,drawGC,x,y,str,strlen(str));
-		SelectObject(can->pix,oldpen);
+		SetTextColor(can->pix,oldcolor);
 
 		dc = GetDC(can->hwnd);
-		oldpen = SelectObject(dc,pen);
+		oldcolor = SetTextColor(dc,color);
 		DRAWSTRING(display,dc,drawGC,x,y,str,strlen(str));
-		SelectObject(dc,oldpen);
+		SetTextColor(dc,oldcolor);
 		ReleaseDC(can->hwnd,dc);
-
-		DeleteObject(pen);
 	} else {
 		DRAWSTRING(display,can->pix,drawGC,x,y,str,strlen(str));
 		dc = GetDC(can->hwnd);
