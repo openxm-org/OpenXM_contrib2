@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.32 2002/07/29 05:02:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.33 2002/08/02 02:28:28 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1279,5 +1279,11 @@ int validate_ox_plot_stream(int index)
 	MKSTR(name,"ox_plot");
 	arg = mknode(2,0,name);
 	Pox_launch_nox(arg,&r);
-	return QTOS((Q)r);
+	i = QTOS((Q)r);
+#if defined(VISUAL)
+	Sleep(100);
+	ox_send_cmd(m_c_tab[i].c,SM_nop);
+	ox_flush_stream_force(m_c_tab[i].c);
+#endif
+	return i;
 }
