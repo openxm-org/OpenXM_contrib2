@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.40 2003/08/21 04:44:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.41 2003/08/21 07:39:25 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -73,32 +73,39 @@ typedef struct oND_pairs {
 	unsigned int lcm[1];
 } *ND_pairs;
 
+/* index and shift count for each exponent */
+typedef struct oEPOS {
+	int i; /* index */
+	int s; /* shift */
+} *EPOS;
+
 int (*nd_compare_function)(unsigned int *a1,unsigned int *a2);
 
-double nd_scale=2;
+static double nd_scale=2;
 static unsigned int **nd_bound;
-struct order_spec *nd_ord;
-int nd_nvar;
-int nd_isrlex;
-int nd_epw,nd_bpe,nd_wpd,nd_exporigin;
-unsigned int nd_mask[32];
-unsigned int nd_mask0,nd_mask1;
+static struct order_spec *nd_ord;
+static EPOS nd_epos;
+static int nd_nvar;
+static int nd_isrlex;
+static int nd_epw,nd_bpe,nd_wpd,nd_exporigin;
+static unsigned int nd_mask[32];
+static unsigned int nd_mask0,nd_mask1;
 
-NM _nm_free_list;
-ND _nd_free_list;
-ND_pairs _ndp_free_list;
+static NM _nm_free_list;
+static ND _nd_free_list;
+static ND_pairs _ndp_free_list;
 
 static NDV *nd_ps;
 static NDV *nd_psq;
-RHist *nd_psh;
-int nd_psn,nd_pslen;
+static RHist *nd_psh;
+static int nd_psn,nd_pslen;
 
-RHist *nd_red;
+static RHist *nd_red;
 
-int nd_found,nd_create,nd_notfirst;
-int nm_adv;
-int nmv_adv;
-int nd_dcomp;
+static int nd_found,nd_create,nd_notfirst;
+static int nm_adv;
+static int nmv_adv;
+static int nd_dcomp;
 
 extern int Top,Reverse,dp_nelim;
 
@@ -114,6 +121,8 @@ extern int Top,Reverse,dp_nelim;
 #define SG(a) ((a)->sugar)
 #define LEN(a) ((a)->len)
 #define LCM(a) ((a)->lcm)
+#define GET_EXP(d,a) (((d)[nd_epos[a].i]>>nd_epos[a].s)&nd_mask0)
+#define PUT_EXP(r,a,e) ((r)[nd_epos[a].i] |= ((e)<<nd_epos[a].s))
 
 /* macros for term comparison */
 #define TD_DL_COMPARE(d1,d2)\
@@ -2071,11 +2080,9 @@ void dltondl(int n,DL dl,unsigned int *r)
 	d = dl->d;
 	for ( i = 0; i < nd_wpd; i++ ) r[i] = 0;
 	if ( nd_isrlex )
-		for ( i = 0; i < n; i++ )
-			r[(n-1-i)/nd_epw+nd_exporigin] |= (d[i]<<((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe));
+		for ( i = 0; i < n; i++ ) PUT_EXP(r,n-1-i,d[i]);
 	else
-		for ( i = 0; i < n; i++ )
-			r[i/nd_epw+nd_exporigin] |= d[i]<<((nd_epw-(i%nd_epw)-1)*nd_bpe);
+		for ( i = 0; i < n; i++ ) PUT_EXP(r,i,d[i]);
 	TD(r) = ndl_weight(r);
 }
 
@@ -2090,12 +2097,10 @@ DL ndltodl(int n,unsigned int *ndl)
 	d = dl->d;
 	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
-			d[i] = (ndl[(n-1-i)/nd_epw+nd_exporigin]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
-				&((1<<nd_bpe)-1);
+			d[i] = GET_EXP(ndl,n-1-i);
 	else
 		for ( i = 0; i < n; i++ )
-			d[i] = (ndl[i/nd_epw+nd_exporigin]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))
-				&((1<<nd_bpe)-1);
+			d[i] = GET_EXP(ndl,i);
 	return dl;
 }
 
@@ -2153,15 +2158,9 @@ void ndl_print(unsigned int *dl)
 	n = nd_nvar;
 	printf("<<");
 	if ( nd_isrlex )
-		for ( i = 0; i < n; i++ )
-			printf(i==n-1?"%d":"%d,",
-				(dl[(n-1-i)/nd_epw+nd_exporigin]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
-					&((1<<nd_bpe)-1));
+		for ( i = 0; i < n; i++ ) printf(i==n-1?"%d":"%d,",GET_EXP(dl,n-1-i));
 	else
-		for ( i = 0; i < n; i++ )
-			printf(i==n-1?"%d":"%d,",
-				(dl[i/nd_epw+nd_exporigin]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))
-					&((1<<nd_bpe)-1));
+		for ( i = 0; i < n; i++ ) printf(i==n-1?"%d":"%d,",GET_EXP(dl,i));
 	printf(">>");
 }
 
@@ -2432,9 +2431,7 @@ unsigned int *nd_compute_bound(ND p)
 	}
 	l = nd_nvar+31;
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
-	for ( i = 0; i < l; i++ ) t[i] = 0;
-	for ( i = 0; i < nd_nvar; i++ )
-		t[i] = (d1[i/nd_epw+nd_exporigin]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))&nd_mask0;
+	for ( i = 0; i < nd_nvar; i++ ) t[i] = GET_EXP(d1,i);
 	for ( ; i < l; i++ ) t[i] = 0;
 	return t;
 }
@@ -2470,6 +2467,12 @@ void nd_setup_parameters() {
 	}
 	nm_adv = sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int);
 	nmv_adv = sizeof(struct oNMV)+(nd_wpd-1)*sizeof(unsigned int);
+
+	nd_epos = (EPOS)MALLOC_ATOMIC(nd_nvar*sizeof(struct oEPOS));
+	for ( i = 0; i < nd_nvar; i++ ) {
+		nd_epos[i].i = nd_exporigin + i/nd_epw;
+		nd_epos[i].s = (nd_epw-(i%nd_epw)-1)*nd_bpe;
+	}
 }
 
 ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
