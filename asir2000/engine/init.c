@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.12 2001/09/03 07:01:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.13 2001/10/09 01:36:13 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -109,7 +109,7 @@ int paristack = 1<<16;
 #if defined(INTERVAL)
 int zerorewrite = 0;
 void (*addnumt[])() = { addq, addreal, addalg, ADDBF, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn };
-void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subfspn };
+void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn };
 void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn };
 void (*divnumt[])() = { divq, divreal, divalg, DIVBF, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn };
 void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn };
