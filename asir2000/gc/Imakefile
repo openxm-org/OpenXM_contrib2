@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.5 2000/07/13 05:09:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.6 2000/08/22 01:30:24 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
@@ -16,15 +16,8 @@ NormalLibraryTarget(asir-gc,$(OBJS))
 DependTarget()
 
 #if defined(AlphaArchitecture)
-#if defined(LinuxArchitecture)
-mach_dep.o: alpha_linux_mach_dep.s
-	as -o mach_dep.o alpha_linux_mach_dep.s
-#else
-mach_dep.o: alpha_mach_dep.s
-	as -o mach_dep.o alpha_mach_dep.s
-#endif
-mark_roots.o:
-	$(CC) -c $(CFLAGS) -Wo,-notail mark_roots.c
+mark_rts.o:
+	$(CC) -c $(CFLAGS) -Wo,-notail mark_rts.c
 #else
 #if defined(mips) || defined(MipsArchitecture)
 mach_dep.o: mips_mach_dep.s

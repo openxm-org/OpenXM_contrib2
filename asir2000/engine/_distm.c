@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.6 2000/12/05 08:29:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.7 2001/01/11 02:26:49 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -87,6 +87,10 @@ void _DL_alloc()
 
 /*	fprintf(stderr,"DL_alloc : %d \n",++DL_alloc_count); */
 	dl_len = (current_dl_length+1);
+#if defined(LONG_IS_64BIT)
+	if ( dl_len & 1 )
+		dl_len += 1;
+#endif
 	p = (int *)GC_malloc(128*dl_len*sizeof(int));
 	for ( i = 0; i < 128; i++, p += dl_len ) {
 		*(DL *)p = _dl_free_list;

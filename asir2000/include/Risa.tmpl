@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.19 2000/12/26 05:17:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.20 2001/03/19 01:26:35 noro Exp $ 
 */
 #include "config.h"
 
@@ -84,6 +84,7 @@ CC= cc -Wl,-D -Wl,$(HEAP_START_ADDR)
 #endif
 
 #if defined(AlphaArchitecture)
+CCOPTIONS =
 PARIFLAGS = -DLONG_IS_64BIT
 #else
 PARIFLAGS = -DLONG_IS_32BIT
