@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.9 2001/08/20 09:50:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.10 2001/08/21 01:39:39 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -445,7 +445,7 @@ FNODE opt;
 	LIST args;
 	pointer val;
 	int i,n,level;
-	NODE tn,sn,opts;
+	NODE tn,sn,opts,opt1;
     VS pvs;
 	char errbuf[BUFSIZ];
 
@@ -480,9 +480,19 @@ FNODE opt;
 			break;
 		case A_USR:
 			args = (LIST)eval(a);
-			if ( opt )
+			if ( opt ) {
 				opts = BDY((LIST)eval(opt));
-			else
+				/* opts = ["opt1",arg1],... */
+				opt1 = BDY((LIST)BDY(opts));
+				if ( !strcmp(BDY((STRING)BDY(opt1)),"option_list") ) {
+					/*
+					 * the special option specification:
+					 *  option_list=[["o1","a1"],...]
+					 */
+					asir_assert(BDY(NEXT(opt1)),O_LIST,"evalf");
+					opts = BDY((LIST)BDY(NEXT(opt1)));
+				}
+			} else
 				opts = 0;
     		pvs = f->f.usrf->pvs;
     		if ( PVSS ) {
@@ -867,6 +877,7 @@ char *key;
 
 	opts = CPVS->opt;
 	for ( ; opts; opts = NEXT(opts) ) {
+		asir_assert(BDY(opts),O_LIST,"getopt_from_cvps");
 		opt = BDY((LIST)BDY(opts));
 		if ( !strcmp(key,BDY((STRING)BDY(opt))) )
 			return (Obj)BDY(NEXT(opt));
