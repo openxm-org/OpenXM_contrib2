@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.4 2002/07/10 08:40:58 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.5 2002/07/14 03:57:24 takayama Exp $ */
 /* $Id$ */
 
 
@@ -147,7 +147,7 @@ def glib_check_arg(X,Y) {
   }
 }
 
-/*&usage begin: glib_putpixel(X,Y | color)
+/*&usage begin: glib_putpixel(X,Y|color)
   It puts a pixel at [{X},{Y}] with {color}
   example: glib_putpixel(1,2 | color=0xffff00);
 end: */
@@ -169,7 +169,7 @@ def glib_putpixel(X,Y) {
   }
 }
 
-/*&usage begin: glib_line(X0,Y0,X1,Y1 | color)
+/*&usage begin: glib_line(X0,Y0,X1,Y1|color)
   It draw the line [{X0},{Y0}]-- [{X1},{Y1}]with {color}
   example: glib_line(0,0,5,3/2 | color=0xff00ff);
 end: */
@@ -281,7 +281,7 @@ def glib_clip1_y(X0,Y0,X1,Y1,Clip) {
    return([X0,Y0,X1,Y1]);
 }
 
-/*&usage begin:glib_print(X,Y,Text|color)
+/*&usage begin: glib_print(X,Y,Text|color)
   It put a string {Text} at [{X},{Y}] on the glib canvas.
   example: glib_print(100,100,"Hello Worlds" | color=0xff0000);
 end: */
@@ -317,7 +317,7 @@ def glib_history(L) {
   return 0;
 }
 
-/*&usage begin:glib_tops()
+/*&usage begin: glib_tops()
   If Glib_ps is set to 1, 
   it returns a postscript program to draw the picture on the canvas.
 end: */
