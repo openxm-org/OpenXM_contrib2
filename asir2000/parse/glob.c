@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.2 1999/12/22 07:01:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.3 2000/01/11 06:43:38 noro Exp $ */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
@@ -87,19 +87,19 @@ F F_TRUE = &oF_TRUE;
 F F_FALSE = &oF_FALSE;
 
 #if defined(__SVR4) && defined(sun)
-char cppname[64] = "/usr/ccs/lib/cpp ";
+char cppname[BUFSIZ] = "/usr/ccs/lib/cpp ";
 #else
 #if defined(__FreeBSD__) || defined(__NetBSD__)
-char cppname[64] = "/usr/bin/cpp ";
+char cppname[BUFSIZ] = "/usr/bin/cpp ";
 #else
 #if defined(VISUAL)
-char cppname[64] = "c:\\asir\\stdlib\\cpp ";
+char cppname[BUFSIZ] = "c:\\asir\\stdlib\\cpp ";
 #else
-char cppname[64] = "/lib/cpp ";
+char cppname[BUFSIZ] = "/lib/cpp ";
 #endif
 #endif
 #endif
-char asirname[64];
+char asirname[BUFSIZ];
 char displayname[BUFSIZ];
 
 int Verbose;
