@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.18 2001/01/12 09:03:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.19 2001/06/07 04:54:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1930,6 +1930,7 @@ LIST *list;
 	STOQ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
 	STOQ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
 	STOQ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
+	STOQ(DP_PrintShort,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PrintShort"); MKNODE(n1,name,n); n = n1;
 	STOQ(DP_NFStat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NFStat"); MKNODE(n1,name,n); n = n1;
 	STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
 	STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
