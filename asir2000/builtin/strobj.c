@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.22 2004/03/04 13:19:11 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.23 2004/03/05 01:15:48 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -74,7 +74,7 @@ void Pclear_tb();
 void Pstring_to_tb();
 void Pquotetotex_tb();
 void Pquotetotex();
-void Pquotetotex_setenv();
+void Pquotetotex_env();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 void tb_to_string(TB tb,STRING *rp);
@@ -96,7 +96,7 @@ struct ftab str_tab[] = {
 	{"string_to_tb",Pstring_to_tb,1},
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
-	{"quotetotex_setenv",Pquotetotex_setenv,-99999999},
+	{"quotetotex_env",Pquotetotex_env,-99999999},
 	{0,0,0},
 };
 
@@ -294,7 +294,7 @@ int register_dp_vars(Obj arg)
 	}
 }
 
-void Pquotetotex_setenv(NODE arg,Obj *rp)
+void Pquotetotex_env(NODE arg,Obj *rp)
 {
 	int ac,i;
 	char *name;
@@ -313,7 +313,7 @@ void Pquotetotex_setenv(NODE arg,Obj *rp)
 		MKLIST(l,n0);
 		*rp = (Obj)l;
 	} else if ( ac == 1 || ac == 2 ) {
-		asir_assert(ARG0(arg),O_STR,"quotetotex_setenv");
+		asir_assert(ARG0(arg),O_STR,"quotetotex_env");
 		name = BDY((STRING)ARG0(arg));
 		for ( i = 0; qtot_env[i].name; i++ )
 			if ( !strcmp(qtot_env[i].name,name) ) {
@@ -321,7 +321,7 @@ void Pquotetotex_setenv(NODE arg,Obj *rp)
 					if ( (qtot_env[i].reg)((Obj)ARG1(arg)) )
 						qtot_env[i].value = (Obj)ARG1(arg);
 					else
-						error("quotetotex_setenv : invalid argument");
+						error("quotetotex_env : invalid argument");
 				}
 				*rp = qtot_env[i].value;
 				return;
