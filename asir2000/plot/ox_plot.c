@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.16 2002/07/10 05:29:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.17 2002/08/02 02:28:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -238,6 +238,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 			client_mathcap = (MATHCAP)asir_pop_one();
 			store_remote_mathcap(0,client_mathcap);
 			break;
+		case SM_nop:
 		default:
 			break;
 	}

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.14 2002/07/25 04:47:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.15 2002/08/02 02:28:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -141,7 +141,7 @@ static int ox_plot_available_sm[] = {
 	SM_popCMO, SM_popString, SM_setName,
 	SM_evalName, SM_executeStringByLocalParser,
 	SM_executeFunction, SM_shutdown, SM_pops,
-	SM_mathcap, SM_setMathcap,
+	SM_mathcap, SM_setMathcap, SM_nop,
 	0
 };
 
