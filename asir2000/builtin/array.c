@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.35 2004/06/30 20:01:36 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.36 2004/09/14 07:23:34 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -112,7 +112,7 @@ struct ftab array_tab[] = {
 	{"ltov",Pltov,1},
 	{"size",Psize,1},
 	{"det",Pdet,-2},
-	{"nd_det",Pnd_det,1},
+	{"nd_det",Pnd_det,-2},
 	{"invmat",Pinvmat,-2},
 	{"leqm",Pleqm,2},
 	{"leqm1",Pleqm1,2},
@@ -2919,5 +2919,8 @@ void printimat(int **mat,int row,int col)
 
 void Pnd_det(NODE arg,P *rp)
 {
-	nd_det(ARG0(arg),rp);
+	if ( argc(arg) == 1 )
+		nd_det(0,ARG0(arg),rp);
+	else
+		nd_det(QTOS((Q)ARG1(arg)),ARG0(arg),rp);
 }
