@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/glob.c,v 1.2 1999/11/17 08:57:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
@@ -714,7 +714,7 @@ void reset_timer()
 unsigned int get_asir_version();
 
 void copyright() {
-	printf("This is Asir, Version %d.\n",get_asir_version());
+	printf("This is Risa/Asir, Version %d.\n",get_asir_version());
 	printf("Copyright (C) FUJITSU LABORATORIES LIMITED.\n");
-	printf("3 March 1994. All rights reserved.\n");
+	printf("1994-1999. All rights reserved.\n");
 }

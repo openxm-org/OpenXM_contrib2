@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/ox_asir.c,v 1.5 1999/11/18 02:24:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -47,7 +47,7 @@ void ox_mpi_master_init() {
 	for ( i = 1; i < mpi_nprocs; i++ ) {
 		/* client mode */
 		idx = get_iofp(i,0,0);
-		ret = register_server(idx,idx);
+		ret = register_server(0,idx,idx);
 	}
 }
 
