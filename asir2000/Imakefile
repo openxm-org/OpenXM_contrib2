@@ -2,13 +2,17 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.13 2000/12/24 06:32:29 saito Exp $
+ * $OpenXM$
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
 
 #define IHaveSubdirs
 #define PassCDebugFlags
+
+#ifdef FreeBSDArchitecture
+EXTRALIB=-lcompat
+#endif
 
 #ifdef SunArchitecture
 EXTRASTDLIB= $(MPILIB) -ldl
@@ -50,8 +54,7 @@ PLLIB = plot/libplot.a
 PLLIB =
 #endif
 
-PROGRAM = asir
-PROGRAMS = $(PROGRAM)
+PROGRAMS = asir
 
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)
@@ -66,7 +69,11 @@ PILIBS = $(IOLIB) $(GLIB) $(ELIB) $(FLIB) $(ALIB)
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 
+#if 0
+AllTarget($(PROGRAMS) asir.o)
+#else
 AllTarget($(PROGRAMS) $(LIBRARIES))
+#endif
 
 #ifndef NormalRelocTarget
 #define	NormalRelocTarget(program,objects,deplibs,locallibs,syslibs)	@@\
@@ -78,7 +85,8 @@ clean::									@@\
 	$(RM) program
 #endif /* NormalRelocTarget */
 
-NormalProgramTarget($(PROGRAM),$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(LAPACKLIB) $(LIBCLIB) $(FEPLIB) $(EXTRASTDLIB) )
+NormalProgramTarget(asir,$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(LAPACKLIB) $(LIBCLIB) $(FEPLIB) $(EXTRASTDLIB) )
+NormalRelocTarget(asir.o,$(UOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(EXTRALIB) $(LIBCLIB) $(EXTRASTDLIB))
 
 $(LIBASIR): $(LIBS0)
 	-mkdir libtmp
@@ -90,21 +98,25 @@ $(LIBASIR): $(LIBS0)
 
 install:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
-	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_BINDIR)
+	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_LIBDIR)
 
 install-bin-lib:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
 	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_BINDIR)
 	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-lib)
-	(cd $(ASIR_LIBDIR); $(RM) $(PROGRAM); $(LN) $(ASIR_BINDIR)/$(PROGRAM) $(PROGRAM))
-	(cd $(ASIR_LIBDIR); $(RM) ox_asir; $(LN) $(ASIR_BINDIR)/$(PROGRAM) ox_asir)
-	(cd $(ASIR_LIBDIR); $(RM) ox_plot; $(LN) $(ASIR_BINDIR)/$(PROGRAM) ox_plot)
-	(cd $(ASIR_LIBDIR); $(RM) ox_launch; $(LN) $(ASIR_BINDIR)/$(PROGRAM) ox_launch)
+	$(RM) $(ASIR_LIBDIR)/asir
+	(cd $(ASIR_LIBDIR); $(LN) ./../../bin/asir asir)
+	$(RM) $(ASIR_LIBDIR)/ox_asir
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
+	$(RM) $(ASIR_LIBDIR)/ox_launch
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_launch)
+	$(RM) $(ASIR_LIBDIR)/ox_plot
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_plot)
 
 install-libasir:: $(LIBASIR)
-	MakeDir($(ASIR_LIBDIR))
-	$(INSTALL) $(INSTALLFLAGS) $(LIBASIR) $(ASIR_LIBDIR)
-	$(RANLIB) $(ASIR_LIBDIR)
+	MakeDir($(ROOTDIR)/lib)
+	$(INSTALL) $(INSTALLFLAGS) $(LIBASIR) $(ROOTDIR)/lib
+	$(RANLIB) $(ROOTDIR)/lib/$(LIBASIR)
 
 install-libgc:: $(GLIB)
 	MakeDir($(ROOTDIR)/lib)
@@ -112,10 +124,24 @@ install-libgc:: $(GLIB)
 	$(RANLIB) $(ROOTDIR)/lib/`basename $(GLIB)`
 
 install-lib::
-	MakeDir($(ASIR_LIBDIR))
+	MakeDir($(ROOTDIR)/lib)
 	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-lib)
+	$(RM) $(ASIR_LIBDIR)/ox_asir
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
+	$(RM) $(ASIR_LIBDIR)/ox_launch
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_launch)
+	$(RM) $(ASIR_LIBDIR)/ox_plot
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_plot)
+	$(RM) $(ASIR_BINDIR)/asir
+	$(LN) $(ASIR_LIBDIR)/asir $(ASIR_BINDIR)/asir
+
+install-doc::
+	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-doc)
 
 install-include::
+	(cd include; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
+	(cd parse; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
+	(cd gc; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
 
 clean::
 	$(RM) -r libtmp $(LIBRARIES)
