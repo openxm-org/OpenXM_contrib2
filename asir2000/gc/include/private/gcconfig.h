@@ -26,6 +26,9 @@
 
 # define GCCONFIG_H
 
+/* added by noro */
+#define LARGE_CONFIG
+
 # ifndef GC_PRIVATE_H
     /* Fake ptr_t declaration, just to avoid compilation errors.	*/
     /* This avoids many instances if "ifndef GC_PRIVATE_H" below.	*/
