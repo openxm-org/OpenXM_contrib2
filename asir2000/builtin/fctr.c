@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.9 2001/10/09 01:36:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.10 2001/11/19 00:57:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,8 +54,11 @@ void Pfctr(), Pgcd(), Pgcdz(), Plcm(), Psqfr(), Pufctrhint();
 void Pptozp(), Pcont();
 void Pafctr(), Pagcd();
 void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
-void Psfsqfr(),Psfbfctr(),Psfufctr();
+void Psfsqfr(),Psfbfctr(),Psfufctr(),Psfmintdeg();
 void Pirred_check(), Pnfctr_mod();
+
+void sfmintdeg(VL vl,P fx,int dy,int c,P *fr);
+void create_bmono(P c,V x,int i,V y,int j,P *mono);
 
 struct ftab fctr_tab[] = {
 	{"fctr",Pfctr,-2},
@@ -73,6 +76,7 @@ struct ftab fctr_tab[] = {
 	{"sfsqfr",Psfsqfr,1},
 	{"sfufctr",Psfufctr,1},
 	{"sfbfctr",Psfbfctr,-4},
+	{"sfmintdeg",Psfmintdeg,5},
 #if 0
 	{"ddd",Pddd,2},
 	{"newddd",Pnewddd,2},
@@ -369,6 +373,27 @@ LIST *rp;
 	dcptolist(dc,rp);
 }
 
+void Psfmintdeg(arg,rp)
+NODE arg;
+P *rp;
+{
+	V x,y;
+	P r;
+	struct oVL vl1,vl2;
+	VL vl;
+	int dy,c;
+
+	x = VR((P)ARG1(arg));
+	y = VR((P)ARG2(arg));
+	vl1.v = x; vl1.next = &vl2;
+	vl2.v = y; vl2.next = 0;
+	vl = &vl1;
+	dy = QTOS((Q)ARG3(arg));
+	c = QTOS((Q)ARG4(arg));
+	sfmintdeg(vl,(P)ARG0(arg),dy,c,&r);
+	reorderp(CO,vl,r,rp);
+}
+
 void Pmodsqfr(arg,rp)
 NODE arg;
 LIST *rp;
@@ -488,4 +513,228 @@ VECT *rp;
 	for ( i = 0; i < n; i++ )
 		umtop(v,r[i],(P *)&BDY(result)[i]);
 	*rp = result;
+}
+
+struct lb {
+	int pos,len;
+	int *r;
+	int *hist;
+};
+
+static NODE insert_lb(NODE g,struct lb *a)
+{
+	NODE prev,cur,n;
+
+	prev = 0; cur = g;
+	while ( cur ) {
+		if ( a->pos < ((struct lb *)BDY(cur))->pos ) {
+			MKNODE(n,a,cur);
+			if ( !prev )
+				return n;
+			else {
+				NEXT(prev) = n;
+				return g;
+			}
+		} else {
+			prev = cur;
+			cur = NEXT(cur);
+		}
+	}
+	MKNODE(n,a,0);
+	NEXT(prev) = n;
+	return g;
+}
+
+static void lnf(int *r,int *h,int n,int len,NODE g)
+{
+	struct lb *t;
+	int pos,i,j,len1,c;
+	int *r1,*h1;
+
+	for ( ; g; g = NEXT(g) ) {
+		t = (struct lb *)BDY(g);
+		pos = t->pos;
+		if ( c = r[pos] ) {
+			r1 = t->r;
+			h1 = t->hist;
+			len1 = t->len;
+			for ( i = pos; i < n; i++ )
+				r[i] = _subsf(r[i],_mulsf(r1[i],c));
+			for ( i = 0; i < len1; i++ )
+				h[i] = _subsf(h[i],_mulsf(h1[i],c));
+		}
+	}
+	for ( i = 0; i < n && !r[i]; i++ );
+	if ( i < n ) {
+		c = _invsf(r[i]);
+		for ( j = i; j < n; j++ )
+			r[j] = _mulsf(r[j],c);	
+		for ( j = i; j < len; j++ )
+			h[j] = _mulsf(h[j],c);	
+	}
+}
+
+void print_vect(int *r,int len)
+{
+	int i;
+
+	for ( i = 0; i < len; i++ )
+		if ( r[i] ) printf("(%d %d)",i,IFTOF(r[i]));
+	printf("\n");
+}
+
+void sfmintdeg(VL vl,P fx,int dy,int c,P *fr)
+{
+	V x,y;
+	int dx,dxdy,i,j,k,l,d,len,len0,u,dyk;
+	UP *rx;
+	DCP dc;
+	P t,f,mono,f1;
+	UP ut,h;
+	int ***nf;
+	int *r,*hist,*prev,*r1;
+	struct lb *lb;
+	GFS s;
+	NODE g;
+
+	x = vl->v;
+	y = NEXT(vl)->v;
+	dx = getdeg(x,fx);
+	dxdy = dx*dy;
+	/* rx = -(fx-x^dx) */
+	rx = (UP *)CALLOC(dx,sizeof(UP));
+	for ( dc = DC(fx); dc; dc = NEXT(dc)) {
+		chsgnp(COEF(dc),&t);
+		ptoup(t,&ut);
+		rx[QTOS(DEG(dc))] = ut;
+	}
+	/* nf[d] = normal form table of monomials with total degree d */
+	nf = (int ***)CALLOC(dx+dy+1,sizeof(int **)); /* xxx */
+	nf[0] = (int **)CALLOC(1,sizeof(int *));
+
+	/* nf[0][0] = 1 */
+	r = (int *)CALLOC(dxdy,sizeof(int));
+	r[0] = _onesf();
+	nf[0][0] = r;
+
+	hist = (int *)CALLOC(1,sizeof(int));
+	r[0] = _onesf();
+
+	lb = (struct lb *)CALLOC(1,sizeof(struct lb));
+	lb->pos = 0;
+	lb->r = r;
+	lb->hist = hist;
+	lb->len = 1;
+
+	/* g : table of normal form as linear form */
+	MKNODE(g,lb,0);
+
+	len = 1;
+	h = UPALLOC(dy);
+	for ( d = 1; ; d++ ) {
+		if ( d > c ){		
+			return;
+		}
+		nf[d] = (int **)CALLOC(d+1,sizeof(int *));
+		len0 = len;
+		len += d+1;
+
+		for ( i = d; i >= 0; i-- ) {
+			/* nf(x^(d-i)*y^i) = nf(y*nf(x^(d-i)*y^(i-1))) */
+			/* nf(x^d) = nf(nf(x^(d-1))*x) */
+			r = (int *)CALLOC(dxdy,sizeof(int));
+			if ( i == 0 ) {
+				prev = nf[d-1][0];
+				bcopy(prev,r+dy,(dxdy-dy)*sizeof(int));
+
+				/* create the head coeff */
+				for ( l = 0, k = dxdy-dy; l < dy; l++, k++ ) {
+					if ( prev[k] ) {
+						u = IFTOF(prev[k]);
+						MKGFS(u,s);
+					} else
+						s = 0;
+					COEF(h)[l] = (Num)s;
+				}
+				for ( l = dy-1; l >= 0 && !COEF(h)[l]; l--);
+				DEG(h) = l;
+
+				for ( k = 0, dyk = 0; k < dx; k++, dyk += dy ) {
+					tmulup(rx[k],h,dy,&ut);
+					if ( ut ) 
+						for ( l = 0; l < dy; l++ ) {
+							s = (GFS)COEF(ut)[l];
+							if ( s ) {
+								u = CONT(s);
+								r[dyk+l] = _addsf(r[dyk+l],FTOIF(u));
+							}
+						}
+				}
+			} else {
+				prev = nf[d-1][i-1];
+				for ( k = 0, dyk = 0; k < dx; k++, dyk += dy ) {
+					for ( l = 1; l < dy; l++ )
+						r[dyk+l] = prev[dyk+l-1];
+				}
+			}
+			nf[d][i] = r;
+			hist = (int *)CALLOC(len,sizeof(int));
+			hist[len0+i] = _onesf();
+			r1 = (int *)CALLOC(dxdy,sizeof(int));
+			bcopy(r,r1,dxdy*sizeof(int));
+			lnf(r1,hist,dxdy,len,g);
+			for ( k = 0; k < dxdy && !r1[k]; k++ );
+			if ( k == dxdy ) {
+				f = 0;
+				for ( k = j = 0; k <= d; k++ )
+					for ( i = 0; i <= k; i++, j++ )
+						if ( hist[j] ) {
+							u = IFTOF(hist[j]);
+							MKGFS(u,s);
+							/* mono = s*x^(k-i)*y^i */
+							create_bmono((P)s,x,k-i,y,i,&mono);
+							addp(vl,f,mono,&f1);
+							f = f1;
+						}
+				*fr = f;
+				return;
+			}	else {
+				lb = (struct lb *)CALLOC(1,sizeof(struct lb));
+				lb->pos = k;
+				lb->r = r1;
+				lb->hist = hist;
+				lb->len = len;
+				g = insert_lb(g,lb);
+			}
+		}
+	}
+}
+
+void create_bmono(P c,V x,int i,V y,int j,P *mono)
+{
+	P t,s;
+
+	if ( !i )
+		if ( !j )
+			t = c;
+		else {
+			/* c*y^j */
+			MKV(y,t);
+			COEF(DC(t)) = c;
+			STOQ(j,DEG(DC(t)));
+		}
+	else if ( !j ) {
+		/* c*x^i */
+		MKV(x,t);
+		COEF(DC(t)) = c;
+		STOQ(i,DEG(DC(t)));
+	} else {
+		MKV(y,s);
+		COEF(DC(s)) = c;
+		STOQ(j,DEG(DC(s)));
+		MKV(x,t);
+		COEF(DC(t)) = s;
+		STOQ(i,DEG(DC(t)));
+	}
+	*mono = t;
 }
