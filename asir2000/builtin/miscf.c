@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.20 2003/11/11 06:14:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.21 2004/02/25 06:43:52 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,6 +72,7 @@ void Psleep();
 void Premove_module();
 void Pmodule_list();
 void Pmodule_definedp();
+void Ptest();
 
 void delete_history(int,int);
 
@@ -104,6 +105,7 @@ struct ftab misc_tab[] = {
 	{"hex_dump",Phex_dump,2},
 	{"peek",Ppeek,1},
 	{"poke",Ppoke,2},
+	{"test",Ptest,2},
 #if !defined(VISUAL) && defined(DO_PLOT)
 	{"xpause",Pxpause,0},
 #endif
@@ -112,6 +114,16 @@ struct ftab misc_tab[] = {
 #endif
 	{0,0,0},
 };
+
+void Ptest(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int r;
+
+	r = equalr(CO,ARG0(arg),ARG1(arg));
+	STOQ(r,*rp);
+}
 
 void Psleep(arg,rp)
 NODE arg;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/R.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/R.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 
@@ -240,4 +240,20 @@ Obj a,b;
 			t = compp(vl,DN((R)a),DN((R)b));
 		return t;
 	}
+}
+
+int equalr(vl,a,b)
+VL vl;
+Obj a,b;
+{
+	if ( !a )
+		return b ? 0 : 1;
+	else if ( !b )
+		return 0;
+	else if ( !RAT(a) )
+		return !RAT(b) ? equalp(vl,(P)a,(P)b) : 0;
+	else if ( !RAT(b) )
+		return 0;
+	else
+		return equalp(vl,NM((R)a),NM((R)b)) && equalp(vl,DN((R)a),DN((R)b));
 }

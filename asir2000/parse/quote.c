@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.11 2004/03/10 02:41:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.12 2004/03/10 05:27:03 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -298,7 +298,7 @@ void vartoquote(V v,QUOTE *c)
 	P x;
 	PF pf;
 	PFAD ad;
-	QUOTE a,b;
+	QUOTE a,b,u;
 	int i;
 	FUNC f;
 	NODE t,t1;
@@ -312,8 +312,19 @@ void vartoquote(V v,QUOTE *c)
 		ad = ((PFINS)v->priv)->ad;
 		if ( !strcmp(NAME(pf),"pow") ) {
 			/* pow(a,b) = a^b */
-			objtoquote(ad[0].arg,&a); objtoquote(ad[1].arg,&b);
-			pwrquote(CO,a,b,c);
+			objtoquote(ad[0].arg,&a);
+			x = (P)ad[0].arg;
+			/* check whether x is a variable */
+			if ( x && OID(x)==O_P && !NEXT(DC(x))
+				&& UNIQ(DEG(DC(x))) && UNIQ(COEF(DC(x))) ) {
+				/* use a as is */
+				u = a;
+			} else {
+				/* a => (a) */
+				MKQUOTE(u,mkfnode(1,I_PAREN,BDY(a)));
+			}
+			objtoquote(ad[1].arg,&b);
+			pwrquote(CO,u,b,c);
 		} else {
 			for ( i = 0; i < pf->argc; i++ )
 				if ( ad[i].d )

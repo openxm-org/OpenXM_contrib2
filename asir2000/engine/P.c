@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.7 2003/06/24 09:49:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.8 2003/12/23 10:39:57 ohara Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -572,6 +572,38 @@ P p1,p2;
 		for ( ; v1 != VR(vl) && v2 != VR(vl); vl = NEXT(vl) );
 		return v1 == VR(vl) ? 1 : -1;
 	}
+}
+
+int equalp(vl,p1,p2)
+VL vl;
+P p1,p2;
+{
+	DCP dc1,dc2;
+	V v1,v2;
+
+	if ( !p1 ) {
+		if ( !p2 ) return 1;
+		else return 0;
+	}
+	/* p1 != 0 */
+	if ( !p2 ) return 0;
+
+	/* p1 != 0, p2 != 0 */
+	if ( NUM(p1) ) {
+		if ( !NUM(p2) ) return 0;
+		/* p1 and p2 are numbers */
+		if ( NID((Num)p1) != NID((Num)p2) ) return 0;
+		if ( !(*cmpnumt[NID(p1),NID(p1)])(p1,p2) ) return 1;
+		return 0;
+	}
+	if ( VR(p1) != VR(p2) ) return 0;
+	for ( dc1 = DC(p1), dc2 = DC(p2); 
+		dc1 && dc2; dc1 = NEXT(dc1), dc2 = NEXT(dc2) ) {
+		if ( cmpq(DEG(dc1),DEG(dc2)) ) return 0;
+		else if ( !equalp(vl,COEF(dc1),COEF(dc2)) ) return 0;
+	}
+	if ( dc1 || dc2 ) return 0;
+	else return 1;
 }
 
 void csump(vl,p,c)

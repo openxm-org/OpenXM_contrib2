@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.4 2001/10/09 01:36:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.5 2003/05/20 06:15:01 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -183,7 +183,7 @@ void appendpfins(V v,V *vp)
 	for ( node = fdef->ins; node; node = NEXT(node) ) {
 		for ( i = 0, tad = ((PFINS)((V)node->body)->priv)->ad; 
 			i < fdef->argc; i++ )
-			if ( (ad[i].d != tad[i].d) || compr(CO,ad[i].arg,tad[i].arg) )
+			if ( (ad[i].d != tad[i].d) || !equalr(CO,ad[i].arg,tad[i].arg) )
 				break;
 		if ( i == fdef->argc ) {
 			*vp = (V)node->body;
