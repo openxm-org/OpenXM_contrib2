@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.4 2003/10/14 02:02:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.5 2003/12/15 16:37:59 ohara Exp $ 
 */
 /* some useful macros */
 
@@ -80,6 +80,8 @@
 #define isstr(a) (type(a)==STR)
 #define isstruct(A) (type(A)==STRUCT)
 #define isdpoly(a) (type(a)==DPOLY)
+
+#define isnum_int(a) (type((a))==NUM && ntype((a))==O_Q && dn((a))==1)
 
 #define FIRST(L) (car(L))
 #define SECOND(L) (car(cdr(L)))
