@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/dmul102,v 1.1 2003/12/12 07:57:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/dmul102,v 1.2 2003/12/12 09:17:31 noro Exp $ */
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
@@ -12,9 +12,9 @@ Hosts = [
 ]$
 
 def spawn102(Hosts,N)
-"spawn102(hostlist,nserver|debug=1)
-hostlist : [\"iyokan-0\",\"iyokan-1\",...]
-nserver : number of servers to be used in hostlist
+"spawn102(hostlist,nserver|debug=1)\n\
+hostlist : [\"iyokan-0\",\"iyokan-1\",...]\n\
+nserver : number of servers to be used in hostlist\n\
 If debug is specified, the debug windows will appear."
 {
 	Debug = getopt(debug);
@@ -41,8 +41,8 @@ If debug is specified, the debug windows will appear."
 }
 
 def spawn102_local(N)
-"spawn102_local(nserver|debug=1)
-nserver : number of servers to be used in hostlist
+"spawn102_local(nserver|debug=1)\n\
+nserver : number of servers to be used in hostlist\n\
 If debug is specified, the debug windows will appear."
 {
 	Debug = getopt(debug);
@@ -69,8 +69,8 @@ If debug is specified, the debug windows will appear."
 }
 
 def urandompoly(N,D)
-"urandompoly(N,D)
- generate a univariate random polynomial of degree N,
+"urandompoly(N,D)\n\
+ generate a univariate random polynomial of degree N,\n\
  with D bit random coefficients."
 {
 	for(I=0,R=0;I<=N;I++)R+= lrandom(D)*x^I; return R;
@@ -83,8 +83,8 @@ def urandompoly(N,D)
 */
 
 def d_mul(F1,F2)
-"d_mul(F1,F2|proc=ProcList)
- computes the product of F1 and F2.
+"d_mul(F1,F2|proc=ProcList)\n\
+ computes the product of F1 and F2.\n\
  If ProcList is specified, the product is computed in parallel."
 {
 	Procs = getopt(proc);
