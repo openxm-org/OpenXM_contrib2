@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.11 2003/07/26 01:00:32 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1789,8 +1789,7 @@ unsigned int *dp_compute_bound(DP p)
 			d2[i] = d[i] > d1[i] ? d[i] : d1[i];
 		t = d1; d1 = d2; d2 = t;
 	}
-	l = ((nd_nvar+(sizeof(unsigned int)-1))
-		/sizeof(unsigned int))*sizeof(unsigned int);
+	l = nd_nvar+31;
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
 	bzero(t,l*sizeof(unsigned int));
 	bcopy(d1,t,nd_nvar*sizeof(unsigned int));
@@ -1812,8 +1811,7 @@ unsigned int *nd_compute_bound(ND p)
 		ndl_lcm(m->dl,d1,d2);
 		t = d1; d1 = d2; d2 = t;
 	}
-	l = ((nd_nvar+(sizeof(unsigned int)-1))
-		/sizeof(unsigned int))*sizeof(unsigned int);
+	l = nd_nvar+31;
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
 	bzero(t,l*sizeof(unsigned int));
 	for ( i = 0; i < nd_nvar; i++ )
