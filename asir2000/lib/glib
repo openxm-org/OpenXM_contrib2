@@ -1,6 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.7 2002/07/15 02:14:48 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.8 2002/08/03 23:59:14 takayama Exp $ */
 /* $Id$ */
 
+/* BUG: this library has not yet been adapted to the new automatic launcher
+        of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
+*/
 
 /* #define CLIP  1 */
 /* #define DEBUG 1 */
