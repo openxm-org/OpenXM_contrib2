@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.46 2004/02/03 23:31:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.47 2004/03/09 08:31:47 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1364,33 +1364,35 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
 			break;
 		}
 	}
-	for ( t = BDY(f); t; t = NEXT(t) )
-		if ( BDY(t) && OID((Obj)BDY(t))==O_DP )
-			break;
-	if ( t ) {
-		/* f is DP list */
-		/* create dummy var list */
-		d = (DP)BDY(t);
-		nv = NV(d);
-		for ( i = 0, vl0 = 0, x0 = 0; i < nv; i++ ) {
-			NEXTVL(vl0,vl);
-			NEXTNODE(x0,x);
-			sprintf(xiname,"x%d",i);
-			makevar(xiname,&xi);
-			x->body = (pointer)xi;
-			vl->v = VR((P)xi);
-		}
-		if ( vl0 ) {
-			NEXT(vl) = 0;
-			NEXT(x) = 0;
-		}
-		MKLIST(vars,x0);
-		*v = vars;
-		vl = vl0;
-	} else if ( !vars ) {
-		get_vars((Obj)f,&vl); vltopl(vl,v);
-	} else {
+	if ( vars ) {
 		*v = vars; pltovl(vars,&vl);
+	} else {
+		for ( t = BDY(f); t; t = NEXT(t) )
+			if ( BDY(t) && OID((Obj)BDY(t))==O_DP )
+				break;
+		if ( t ) {
+			/* f is DP list */
+			/* create dummy var list */
+			d = (DP)BDY(t);
+			nv = NV(d);
+			for ( i = 0, vl0 = 0, x0 = 0; i < nv; i++ ) {
+				NEXTVL(vl0,vl);
+				NEXTNODE(x0,x);
+				sprintf(xiname,"x%d",i);
+				makevar(xiname,&xi);
+				x->body = (pointer)xi;
+				vl->v = VR((P)xi);
+			}
+			if ( vl0 ) {
+				NEXT(vl) = 0;
+				NEXT(x) = 0;
+			}
+			MKLIST(vars,x0);
+			*v = vars;
+			vl = vl0;
+		} else {
+			get_vars((Obj)f,&vl); vltopl(vl,v);
+		}
 	}
 
 	for ( t = opt; t; t = NEXT(t) ) {
