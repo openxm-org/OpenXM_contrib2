@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.1 2000/10/15 06:56:53 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -40,6 +40,10 @@ static int Xsize = 0;
 static int Ysize = 0;
 static int updatePolyLine(struct polyLine *pl[], int plSize,
 				   int prev[], int Curr[], int x);
+
+static void polyLine_outputPS_dashed_line(int x0,int y0,int x1,int y1);
+static int polyLine_pline(struct canvas *can);
+
 
 static void *gcmalloc(a)  {
   void *m;
@@ -253,9 +257,69 @@ main() {
 }
 
 */
+static void polyLine_outputPS_dashed_line(int x0,int y0,int x1,int y1) {
+  extern FILE *Fp;
+  fprintf(Fp," gsave [3] 0 setdash newpath \n");
+  fprintf(Fp," %d %d moveto %d %d lineto stroke \n",x0,y0,x1,y1);
+  fprintf(Fp," stroke grestore \n");
+}
+
+#define D 5
+static int polyLine_pline(can)
+struct canvas *can;
+{
+	double w,w1,k,e,n;
+	int x0,y0,x,y,xadj,yadj;
+	char buf[BUFSIZ];
+	double adjust_scale();
+
+	if ( can->noaxis )
+		return;
+
+	xadj = yadj = 0;
+	if ( (can->xmin < 0) && (can->xmax > 0) ) {
+		x0 = (int)((can->width-1)*(-can->xmin/(can->xmax-can->xmin)));
+		polyLine_outputPS_dashed_line(translateX(x0),translateY(0),
+									  translateX(x0),translateY(can->height));
+	} else if ( can->xmin >= 0 )
+		x0 = 0;
+	else
+		x0 = can->width-1-D;
+	if ( (can->ymin < 0) && (can->ymax > 0) ) {
+		y0 = (int)((can->height-1)*(can->ymax/(can->ymax-can->ymin)));
+		polyLine_outputPS_dashed_line(translateX(0),translateY(y0),
+									  translateX(can->width),translateY(y0));
+	} else if ( can->ymin >= 0 )
+		y0 = can->height-1;
+	else
+		y0 = D;
+	/* BUG:  not written yet a code for PS.
+	w = can->xmax-can->xmin; 
+	w1 = w * DEFAULTWIDTH/can->width;
+	e = adjust_scale(EXP10(floor(log10(w1))),w1);
+	for ( n = ceil(can->xmin/e); n*e<= can->xmax; n++ ) {
+		x = (int)can->width*(n*e-can->xmin)/w;
+		DRAWLINE(display,d,drawGC,x,y0,x,y0-D);
+		sprintf(buf,"%g",n*e);
+		DRAWSTRING(display,d,scaleGC,x+2,y0,buf,strlen(buf));
+	}
+	w = can->ymax-can->ymin;
+	w1 = w * DEFAULTHEIGHT/can->height;
+	e = adjust_scale(EXP10(floor(log10(w1))),w1);
+	for ( n = ceil(can->ymin/e); n*e<= can->ymax; n++ ) {
+		y = (int)can->height*(1-(n*e-can->ymin)/w);
+		DRAWLINE(display,d,drawGC,x0,y,x0+D,y);
+		sprintf(buf,"%g",n*e);
+		if ( can->xmax <= 0 )
+			xadj = TEXTWIDTH(sffs,buf,strlen(buf));
+		DRAWSTRING(display,d,scaleGC,x0-xadj,y,buf,strlen(buf));
+	}
+	*/
+}
 
 generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
-					  int color[],int colorSize) {
+					  int color[],int colorSize,
+					  struct canvas *can) {
   struct polyLine **pl;
   int plSize = 0;
   int *prev;
@@ -287,7 +351,9 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
 	}
 	plSize = updatePolyLine(pl,plSize,prev,curr,Xsize);
   }
+  polyLine_pline(can);
   polyLine_outputEpilog();
 }
+
 
 

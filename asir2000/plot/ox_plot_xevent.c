@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.5 2000/10/14 07:45:34 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.6 2000/10/15 06:56:52 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -514,8 +514,7 @@ static void generate_psfile(can,fp)
 	image = XGetImage(display,can->pix,
 					  0,0,can->width,can->height,-1,ZPixmap);
 	color[0] = 0; /* balck line */
-	generatePS_from_image(fp,image,can->width,can->height,color,colorSize);
-	/* pline(display,can,can->window); */
+	generatePS_from_image(fp,image,can->width,can->height,color,colorSize,can);
   }else{
 	fprintf(stderr,"Cannot print on this system\n");
   }
