@@ -4129,6 +4129,8 @@ if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
     else
         CFLAGS="-O"
     fi
+elif test `basename ./"${CC}"` = "icc" ; then
+    CFLAGS="-g -O"
 fi
 
 # Check whether --enable-gc-zeropage or --disable-gc-zeropage was given.

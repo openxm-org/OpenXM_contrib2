@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.5 2002/01/08 04:14:38 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.6 2003/12/08 07:15:28 fujiwara Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -66,7 +66,7 @@ static char	*Interval_dummy;
 #endif
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && defined(__GNUC__)
 #include	<floatingpoint.h>
 #define	FPNEAREST	fpsetround(FP_RN);
 #define	FPPLUSINF	fpsetround(FP_RP);

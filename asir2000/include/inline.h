@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.8 2001/09/17 03:33:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.9 2001/12/21 08:23:12 noro Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));
@@ -54,7 +54,7 @@
 #define DMA27(a1,a2,a3,u,l) (l)=dma_27(a1,a2,a3,&(u));
 #define DSAB27(base,a1,a2,u,l) (l)=dmab(base,a1,BASE27,a2,&(u));
 
-#if defined(__GNUC__) || defined(__alpha) || defined(mips) || defined(_IBMR2)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__alpha) || defined(mips) || defined(_IBMR2)
 #define DM(a1,a2,u,l)\
 {UL _t;\
 _t=(UL)(a1)*(UL)(a2);\

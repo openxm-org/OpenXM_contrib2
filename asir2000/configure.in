@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.16 2004/01/25 11:54:09 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.17 2004/02/27 18:32:21 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -32,6 +32,8 @@ if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
     else
         CFLAGS="-O"
     fi
+elif test `basename ./"${CC}"` = "icc" ; then
+    CFLAGS="-g -O"
 fi
 
 AC_ARG_ENABLE([gc-zeropage],
