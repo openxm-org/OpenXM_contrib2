@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.10 2002/07/25 08:53:13 saito Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.11 2002/10/11 03:50:38 noro Exp $
 
 use_plot=0
 use_pari=0
@@ -68,8 +68,11 @@ fi
 echo LIBPARI=$libpari >> include/config.h
 echo LIBASIR=$libname.a >> include/config.h
 
-if [ -x /bin/uname ] && [ `/bin/uname` = SunOS ]; then
-(cd gc; ./configure --disable-threads)
-else
-(cd gc; ./configure)
-fi
+case "`PATH=/usr/bin:/bin uname`" in
+SunOS|CYGWIN*)
+    (cd gc; ./configure --disable-threads)
+    ;;
+*)
+    (cd gc; ./configure)
+    ;;
+esac
