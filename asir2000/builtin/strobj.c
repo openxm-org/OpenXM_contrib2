@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.25 2004/03/05 01:34:24 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.26 2004/03/05 01:47:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -114,12 +114,15 @@ int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
 int register_dp_vars(Obj arg);
 int register_dp_vars_prefix(Obj arg);
+int register_show_lt(Obj arg);
 static struct TeXSymbol *user_texsymbol;
 static char *(*conv_rule)(char *);
 static char **dp_vars;
 static int dp_vars_len;
 static char *dp_vars_prefix;
+static int show_lt;
 static FUNC convfunc;
+static int is_lt;
 
 static struct {
 	char *name;
@@ -130,6 +133,7 @@ static struct {
 	{"conv_rule",0,register_conv_rule},
 	{"dp_vars",0,register_dp_vars},
 	{"dp_vars_prefix",0,register_dp_vars_prefix},
+	{"show_lt",0,register_show_lt},
 	{0,0,0},
 };
 
@@ -262,6 +266,13 @@ int register_symbol_table(Obj arg)
 	return 1;
 }
 
+int register_show_lt(Obj arg)
+{
+	if ( INT(arg) ) {
+		show_lt = QTOS((Q)arg);
+		return 1;
+	} else return 0;
+}
 
 int register_conv_rule(Obj arg)
 {
@@ -397,6 +408,8 @@ void Pquotetotex(NODE arg,STRING *rp)
 	TB tb;
 
 	NEWTB(tb);
+	/* XXX for DP */
+	is_lt = 1;
 	fnodetotex_tb(BDY((QUOTE)ARG0(arg)),tb);
 	tb_to_string(tb,rp);
 }
@@ -407,6 +420,8 @@ void Pquotetotex_tb(NODE arg,Q *rp)
 	TB tb;
 
 	asir_assert(ARG1(arg),O_TB,"quotetotex_tb");
+	/* XXX for DP */
+	is_lt = 1;
 	fnodetotex_tb(BDY((QUOTE)ARG0(arg)),ARG1(arg));
 	*rp = 0;	
 }
@@ -948,6 +963,8 @@ void fnodetotex_tb(FNODE f,TB tb)
 		case I_EV:
 			n = (NODE)FA0(f);
 			allzero = 1;
+			if ( show_lt && is_lt )
+				write_tb("\\underline{",tb);
 			for ( t0 = 0, i = 0; n; n = NEXT(n), i++ ) {
 				fi = (FNODE)BDY(n);
 				if ( fi->id == I_FORMULA && !FA0(fi) ) continue;
@@ -977,6 +994,10 @@ void fnodetotex_tb(FNODE f,TB tb)
 			/* XXX */
 			if ( allzero )
 				write_tb(" 1 ",tb);
+			if ( show_lt && is_lt ) {
+				write_tb("}",tb);	
+				is_lt = 0;
+			}
 			break;
 
 		/* string */
@@ -1014,6 +1035,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 void fnodenodetotex_tb(NODE n,TB tb)
 {
 	for ( ; n; n = NEXT(n) ) {
+		is_lt = 1;
 		fnodetotex_tb((FNODE)BDY(n),tb);
 		if ( NEXT(n) ) write_tb(", ",tb);
 	}
