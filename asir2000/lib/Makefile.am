@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.1 2003/02/23 03:05:39 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.2 2003/03/07 15:55:06 ohara Exp $
 
 RR      = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
           fff glib gr ifplot katsura mat nf num primdec primdec_lex \
@@ -11,6 +11,7 @@ install-doc:
 		gzip -dc help-$$i.tgz | ( cd ${prefix}/lib/asir; tar xf - ) ; \
 		rm -f help-$$i.tgz ; \
 	done
+	-rm ${prefix}/lib/asir/help
 	(cd ${prefix}/lib/asir; ${LN_S} help-eg help)
 
 install-lib:

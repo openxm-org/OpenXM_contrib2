@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.in,v 1.2 2003/03/07 03:12:29 noro Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.in,v 1.3 2003/03/07 15:55:06 ohara Exp $
 
 SHELL = @SHELL@
 
@@ -217,6 +217,7 @@ install-doc:
 		gzip -dc help-$$i.tgz | ( cd ${prefix}/lib/asir; tar xf - ) ; \
 		rm -f help-$$i.tgz ; \
 	done
+	-rm ${prefix}/lib/asir/help
 	(cd ${prefix}/lib/asir; ${LN_S} help-eg help)
 
 install-lib:
