@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.9 2000/12/05 01:51:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.10 2000/12/06 01:27:16 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -69,6 +69,7 @@ int aftercomment();
 
 extern int main_parser;
 extern char *parse_strp;
+extern int recv_intr;
 
 static int skipspace();
 static int Getc();
@@ -523,6 +524,18 @@ FILE *fp;
 
 	if ( fp ) {
 		c = getc(fp);
+#if defined(VISUAL)
+		if ( recv_intr ) {
+#include <signal.h>
+			if ( recv_intr == 1 ) {
+				recv_intr = 0;
+				int_handler(SIGINT);
+			} else {
+				recv_intr = 0;
+				ox_usr1_handler(0);
+			}
+		}
+#endif
 		if ( c == EOF )
 			return c;
 		if ( asir_infile->encoded )
