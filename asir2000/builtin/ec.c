@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/ec.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/ec.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "inline.h"
@@ -78,7 +78,7 @@ struct ftab ec_tab[] = {
 	{"separate_vect",Pseparate_vect,1},
 	{"ecm_find_match",Pecm_find_match,2},
 	{"ecm_set_addcounter",Pecm_set_addcounter,-1},
-	{"sha1",Psha1,1},
+	{"sha1",Psha1,-2},
 #if 0
 	{"sha1_free",Psha1_free,1},
 #endif
@@ -99,7 +99,10 @@ Q *rp;
 	z = NM((Q)ARG0(arg));
 	n = PL(z);
 	l = n_bits(z);
-	bl = (l+7)/8;
+	if ( argc(arg) == 2 )
+		bl = QTOS((Q)ARG1(arg));
+	else
+		bl = (l+7)/8;
 	s = (unsigned char *)MALLOC(bl);
 	for ( i = 0, j = bl-1; i < n; i++ ) {
 		t = BD(z)[i];

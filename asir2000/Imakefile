@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.7 2000/03/10 03:05:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.8 2000/03/10 09:22:37 noro Exp $ */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
 
@@ -95,7 +95,7 @@ install:: $(PROGRAMS)
 install-bin-lib:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
 	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_BINDIR)
-	(cd lib; make install-lib)
+	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-lib)
 	$(RM) $(ASIR_LIBDIR)/asir
 	(cd $(ASIR_LIBDIR); $(LN) ./../../bin/asir asir)
 	$(RM) $(ASIR_LIBDIR)/ox_asir
@@ -116,7 +116,7 @@ install-libgc:: $(GLIB)
 	$(RANLIB) $(ROOTDIR)/lib/`basename $(GLIB)`
 
 install-lib::
-	(cd lib; make install-lib)
+	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-lib)
 	$(RM) $(ASIR_LIBDIR)/ox_asir
 	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
 	$(RM) $(ASIR_LIBDIR)/ox_launch
@@ -127,12 +127,12 @@ install-lib::
 	$(LN) $(ASIR_LIBDIR)/asir $(ASIR_BINDIR)/asir
 
 install-doc::
-	(cd lib; make install-doc)
+	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-doc)
 
 install-include::
-	(cd include; make install-include)
-	(cd parse; make install-include)
-	(cd gc; make install-include)
+	(cd include; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
+	(cd parse; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
+	(cd gc; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
 
 clean::
 	$(RM) -r libtmp $(LIBRARIES)

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.6 2000/01/26 02:05:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.7 2000/03/19 12:35:20 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -31,15 +31,17 @@ static int m_c_i,m_c_s;
 #if MPI
 extern int mpi_nprocs;
 #define valid_mctab_index(ind)\
-if((ind)<0||(ind)>=(mpi_nprocs-1)){error("invalid server id");}
+if((ind)<0||(ind)>=mpi_nprocs){error("invalid server id");}
 #else
 #define valid_mctab_index(ind)\
 if((ind)<0||(ind)>=m_c_i||\
-(!m_c_tab[ind].m&&!m_c_tab[ind].c)){error("invalid server id");}
+((m_c_tab[ind].m<0)&&(m_c_tab[ind].c<0))){error("invalid server id");}
 #endif
 
 int register_server();
 int get_mcindex(int);
+
+void Pox_send_raw_cmo(), Pox_recv_raw_cmo();
 
 void Pox_launch(),Pox_launch_nox(),Pox_launch_main();
 void Pox_launch_generic();
@@ -60,12 +62,15 @@ void Pox_flush();
 void Pgenerate_port(),Ptry_bind_listen(),Ptry_connect(),Ptry_accept();
 void Pregister_server();
 void Pox_get_serverinfo();
+void Pox_mpi_myid(), Pox_mpi_nprocs();
 
 void ox_launch_generic();
 
 pointer bevalf();
 
 struct ftab tcp_tab[] = {
+	{"ox_send_raw_cmo",Pox_send_raw_cmo,2},
+	{"ox_recv_raw_cmo",Pox_recv_raw_cmo,1},
 	{"ox_get_serverinfo",Pox_get_serverinfo,-1},
 	{"generate_port",Pgenerate_port,-1},
 	{"try_bind_listen",Ptry_bind_listen,1},
@@ -82,6 +87,10 @@ struct ftab tcp_tab[] = {
 	{"ox_cmo_rpc",Pox_cmo_rpc,-99999999},
 
 	{"ox_sync",Pox_sync,1},
+#if MPI
+	{"ox_mpi_myid",Pox_mpi_myid,0},
+	{"ox_mpi_nprocs",Pox_mpi_nprocs,0},
+#endif
 #if !MPI
 	{"ox_reset",Pox_reset,-2},
 	{"ox_intr",Pox_intr,1},
@@ -118,6 +127,22 @@ extern int ox_exchange_mathcap;
 
 char *getenv();
 
+#if MPI
+extern int mpi_myid, mpi_nprocs;
+
+void Pox_mpi_myid(rp)
+Q *rp;
+{
+	STOQ(mpi_myid,*rp);
+}
+
+void Pox_mpi_nprocs(rp)
+Q *rp;
+{
+	STOQ(mpi_nprocs,*rp);
+}
+#endif
+
 void Pox_get_serverinfo(arg,rp)
 NODE arg;
 LIST *rp;
@@ -129,7 +154,7 @@ LIST *rp;
 
 	if ( !arg ) {
 		for ( i = 0, n0 = 0; i < m_c_i; i++ )
-			if ( m_c_tab[i].m || m_c_tab[i].c ) {
+			if ( (m_c_tab[i].m>=0) || (m_c_tab[i].c>=0) ) {
 				c = m_c_tab[i].c;
 				ox_get_serverinfo(c,&list);
 				STOQ(i,sid);
@@ -143,7 +168,7 @@ LIST *rp;
 		MKLIST(*rp,n0);	
 	} else {
 		i = QTOS((Q)ARG0(arg));
-		if ( i >= 0 && i < m_c_i && (m_c_tab[i].m || m_c_tab[i].c) )
+		if ( i >= 0 && i < m_c_i && ((m_c_tab[i].m>=0) || (m_c_tab[i].c>=0)) )
 			ox_get_serverinfo(m_c_tab[i].c,rp);
 		else {
 			MKLIST(*rp,0);
@@ -528,12 +553,16 @@ int af_unix,m,c;
 		return -1;
 	if ( !m_c_tab ) {
 		s = BUFSIZ*sizeof(struct m_c);
-		m_c_tab = (struct m_c *)MALLOC_ATOMIC(s); bzero(m_c_tab,s);
+		m_c_tab = (struct m_c *)MALLOC_ATOMIC(s);
+		for ( i = 0; i < BUFSIZ; i++ ) {
+			m_c_tab[i].af_unix = 0;
+			m_c_tab[i].m = m_c_tab[i].c = -1;
+		}
 		m_c_s = BUFSIZ;
 	}
 #if !MPI
 	for ( i = 0; i < m_c_i; i++ )
-		if ( !m_c_tab[i].m && !m_c_tab[i].c )
+		if ( (m_c_tab[i].m<0) && (m_c_tab[i].c<0) )
 			break;
 	if ( i < m_c_i ) {
 		m_c_tab[i].m = m; m_c_tab[i].c = c;
@@ -545,6 +574,10 @@ int af_unix,m,c;
 		s = (m_c_s+BUFSIZ)*sizeof(struct m_c);
 		t = (struct m_c *)MALLOC_ATOMIC(s); bzero(m_c_tab,s);
 		bcopy(m_c_tab,t,m_c_s*sizeof(struct m_c));
+		for ( i = 0; i < BUFSIZ; i++ ) {
+			m_c_tab[m_c_s+i].af_unix = 0;
+			m_c_tab[m_c_s+i].m = m_c_tab[m_c_s+i].c = -1;
+		}
 		m_c_s += BUFSIZ; m_c_tab = t;
 	}
 	m_c_tab[m_c_i].m = m; m_c_tab[m_c_i].c = c;
@@ -615,6 +648,33 @@ Q *rp;
 	valid_mctab_index(index);
 	ox_flush_stream_force(m_c_tab[index].c);
 	*rp = ONE;
+}
+
+void Pox_send_raw_cmo(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	int s;
+	int index = QTOS((Q)ARG0(arg));
+
+	valid_mctab_index(index);
+	s = m_c_tab[index].c;
+	ox_write_cmo(s,(Obj)ARG1(arg));
+	/* flush always */
+	ox_flush_stream(s);
+	*rp = 0;
+}
+
+void Pox_recv_raw_cmo(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	int s;
+	int index = QTOS((Q)ARG0(arg));
+
+	valid_mctab_index(index);
+	s = m_c_tab[index].c;
+	ox_read_cmo(s,rp);
 }
 
 void Pox_push_local(arg,rp)
@@ -977,7 +1037,7 @@ Q *rp;
 	if ( m_c_tab[index].af_unix )
 		wait(&status);
 #endif
-	m_c_tab[index].m = 0; m_c_tab[index].c = 0;
+	m_c_tab[index].m = -1; m_c_tab[index].c = -1;
 	m_c_tab[index].af_unix = 0;
 	*rp = 0;
 }

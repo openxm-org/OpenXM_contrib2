@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.2 2000/02/08 04:47:12 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include <ctype.h>
@@ -188,7 +188,7 @@ SNODE f;
 	extern int kernelmode,do_fep;
 	NODE pvss;
 
-#if !defined(VISUAL)
+#if !MPI && !defined(VISUAL)
 	if ( !isatty(fileno(stdin)) && !do_server_in_X11 )
 		if ( do_file )
 			ExitAsir();
@@ -682,7 +682,7 @@ SNODE f;
 		CPVS->usrf->name,ln,CPVS->usrf->f.usrf->fname);
 	targetf = CPVS->usrf; curline = ln;
 	println(0,0,1);
-#if !defined(VISUAL)
+#if !MPI && !defined(VISUAL)
 	if ( do_server_in_X11 || isatty(0) )
 #endif
 		debug(f);

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.5 2000/05/29 08:54:46 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.6 2000/05/30 01:35:12 noro Exp $ */
 #include "ca.h"
 
 #define NV(p) ((p)->nv)
@@ -749,12 +749,18 @@ int cmpdl_revgradlex(n,d1,d2)
 int n;
 DL d1,d2;
 {
+	register int i;
+	register int *p1,*p2;
+
 	if ( d1->td > d2->td )
 		return 1;
 	else if ( d1->td < d2->td )
 		return -1;
-	else
-		return cmpdl_revlex(n,d1,d2);
+	else {
+		for ( i= n - 1, p1 = d1->d+n-1, p2 = d2->d+n-1;
+			i >= 0 && *p1 == *p2; i--, p1--, p2-- );
+		return i < 0 ? 0 : (*p1 < *p2 ? 1 : -1);
+	}
 }
 
 int cmpdl_blex(n,d1,d2)

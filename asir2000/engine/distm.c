@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.2 2000/05/29 08:54:46 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.3 2000/05/30 01:35:12 noro Exp $ */
 #include "ca.h"
 #include "inline.h"
 
@@ -382,7 +382,7 @@ DP *pr;
 			/* offset of h-degree */
 			NEWDL(d,n);
 			d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
-			NEWMP(mr); mr->c = (P)ONEM; mr->dl = d;
+			NEWMP(mr); mr->c = (P)ONEM; mr->dl = d; NEXT(mr) = 0;
 			MKDP(n,mr,r); r->sugar = d->td;
 		} else
 			r = (DP)ONEM;
@@ -762,7 +762,7 @@ DP *pr;
 			d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
 		else
 			d->td = 0;
-		NEWMP(mr); mr->c = STOI(c); mr->dl = d;
+		NEWMP(mr); mr->c = STOI(c); mr->dl = d; NEXT(mr) = 0;
 		MKDP(n,mr,r); r->sugar = d->td;
 
 		/* homogenized computation; dx-xd=h^2 */

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.2 2000/02/08 04:47:12 noro Exp $ */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
@@ -483,6 +483,10 @@ FNODE a;
 
 	args = (LIST)eval(a);
 	node = BDY(args); head = (Obj)BDY(node); rest = NEXT(node);
+	if ( !head ) {
+		val = bevalf(f,node);
+		return val;
+	}
 	switch ( OID(head) ) {
 		case O_VECT:
 			v = (VECT)head; len = v->len; MKVECT(rv,len);

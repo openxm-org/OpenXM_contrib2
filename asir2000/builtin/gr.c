@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.4 2000/04/25 04:07:58 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.5 2000/05/29 08:54:45 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -714,7 +714,7 @@ int m;
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				_dp_mod(sd,m,0,&sdm);
-				_mulmd(CO,m,ps[(int)BDY(r)],sdm,&f2);
+				_mulmd(CO,m,sdm,ps[(int)BDY(r)],&f2);
 				MKNODE(bt,f2,blist); blist = bt;
 				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
@@ -1355,6 +1355,7 @@ NODE subst;
 	struct oEGT tnf0,tnf1,tnfm0,tnfm1,tpz0,tpz1,tsp0,tsp1,tspm0,tspm1,tnp0,tnp1,tmp0,tmp1;
 	int skip_nf_flag;
 	double t_0;
+	int new_sugar;
 	static prev_sugar = -1;
 
 	Max_mag = 0;
@@ -1380,10 +1381,11 @@ NODE subst;
 		get_eg(&tmp1); add_eg(&eg_mp,&tmp0,&tmp1);
 		if ( m ) {
 			get_eg(&tspm0);
-			_dp_sp_mod(psm[l->dp1],psm[l->dp2],m,&h);
+			_dp_sp_mod_dup(psm[l->dp1],psm[l->dp2],m,&h);
+			new_sugar = h->sugar;
 			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1);
 			get_eg(&tnfm0);
-			_dp_nf_mod(gall,h,psm,m,0,&nfm);
+			_dp_nf_mod_destructive(gall,h,psm,m,0,&nfm);
 			get_eg(&tnfm1); add_eg(&eg_nfm,&tnfm0,&tnfm1);
 		} else
 			nfm = (DP)1;
@@ -1402,6 +1404,7 @@ NODE subst;
 				}
 			} else
 				dp_sp(ps[l->dp1],ps[l->dp2],&h);
+			new_sugar = h->sugar;
 			get_eg(&tsp1); add_eg(&eg_sp,&tsp0,&tsp1);
 			get_eg(&tnf0);
 			t_0 = get_rtime();
@@ -1460,9 +1463,9 @@ skip_nf:
 				add_eg(&eg_znfm,&tnfm0,&tnfm1);
 			ZR++;
 			if ( Print || PrintShort ) {
-				if ( h && (h->sugar != prev_sugar) ) {
-					fprintf(asir_out,"[%d]",h->sugar);	
-					prev_sugar = h->sugar;
+				if ( new_sugar != prev_sugar ) {
+					fprintf(asir_out,"[%d]",new_sugar);	
+					prev_sugar = new_sugar;
 				}
 				fprintf(asir_out,"."); fflush(asir_out); prev = 0;
 			}
@@ -1508,10 +1511,10 @@ NODE dlist;
 		l->dp2 = QTOS((Q)BDY(pair));
 		if ( m ) {
 			get_eg(&tspm0);
-			_dp_sp_mod(psm[l->dp1],psm[l->dp2],m,&h);
+			_dp_sp_mod_dup(ps[l->dp1],ps[l->dp2],m,&h);
 			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1);
 			get_eg(&tnfm0);
-			_dp_nf_mod(gall,h,psm,m,0,&nfm);
+			_dp_nf_mod_destructive(gall,h,ps,m,!Top,&nf);
 			get_eg(&tnfm1); add_eg(&eg_nfm,&tnfm0,&tnfm1);
 		} else
 			nfm = (DP)1;
@@ -1593,9 +1596,9 @@ int m;
 			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1); get_eg(&tnfm0);
 			dp_nf_mod(gall,h,ps,m,!Top,&nf);
 		} else {
-			_dp_sp_mod(ps[l->dp1],ps[l->dp2],m,&h);
+			_dp_sp_mod_dup(ps[l->dp1],ps[l->dp2],m,&h);
 			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1); get_eg(&tnfm0);
-			_dp_nf_mod(gall,h,ps,m,!Top,&nf);
+			_dp_nf_mod_destructive(gall,h,ps,m,!Top,&nf);
 		}
 		get_eg(&tnfm1); add_eg(&eg_nfm,&tnfm0,&tnfm1);
 		if ( nf ) {
@@ -1617,17 +1620,19 @@ int m;
 				print_split_eg(&tnfm0,&tnfm1); fflush(asir_out);
 				fprintf(asir_out,"(%d,%d),nb=%d,nab=%d,rp=%d,sugar=%d",l->dp1,l->dp2,length(g),length(gall),DPPlength(d),pss[nh]);
 				printdl(psh[nh]); fprintf(asir_out,"\n"); fflush(asir_out);
+			} else if ( PrintShort ) {
+				fprintf(asir_out,"+"); fflush(asir_out);
 			}
 			prev = 1;
 		} else {
 			add_eg(&eg_znfm,&tnfm0,&tnfm1);
 			ZR++;
-			if ( Print ) {
+			if ( Print || PrintShort ) {
 				fprintf(asir_out,"."); fflush(asir_out); prev = 0;
 			}
 		}
 	}
-	if ( Print )
+	if ( Print || PrintShort )
 		fprintf(asir_out,"gb_mod done\n");
 	return g;
 }

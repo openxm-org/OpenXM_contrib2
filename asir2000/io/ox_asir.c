@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.12 2000/03/16 08:23:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.13 2000/03/19 12:35:20 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -47,23 +47,32 @@ static char *name_of_id(int);
 static void asir_do_cmd(int,unsigned int);
 
 #if MPI
+/* XXX : currently MPI version supports only a homogeneous cluster. */
+
 extern int mpi_nprocs,mpi_myid;
 
 void ox_mpi_master_init() {
-	int i,idx,ret;
+	int i,idx;
 
-	for ( i = 1; i < mpi_nprocs; i++ ) {
-		/* client mode */
+	for ( i = 0; i < mpi_nprocs; i++ ) {
+		/* ordering information is not exchanged */
+		/* idx should be equal to i */
 		idx = get_iofp(i,0,0);
-		ret = register_server(0,idx,idx);
+		register_server(0,idx,idx);
 	}
 }
 
 void ox_mpi_slave_init() {
+	int i,idx;
+
 	endian_init();
-	/* server mode */
-	get_iofp(0,0,1);
 	fclose(stdin);
+	for ( i = 0; i < mpi_nprocs; i++ ) {
+		/* ordering information is not exchanged */
+		/* idx should be equal to i */
+		idx = get_iofp(i,0,0);
+		register_server(0,idx,idx);
+	}
 	asir_OperandStackSize = BUFSIZ;
 	asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));
 	asir_OperandStackPtr = -1;
@@ -675,6 +684,8 @@ static void ox_io_init() {
 	write_char(iofp[0].out,&c); ox_flush_stream_force(0);
 	read_char(iofp[0].in,&rc);
 	iofp[0].conv = c == rc ? 0 : 1;
+	/* XXX; for raw I/O */
+	register_server(0,0,0);
 }
 
 /*

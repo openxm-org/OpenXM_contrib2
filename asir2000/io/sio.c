@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.2 1999/12/24 06:57:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.3 2000/02/08 04:47:11 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "setjmp.h"
@@ -281,12 +281,27 @@ int is_server;
 {
 	int i;
 	unsigned char c,rc;
+	extern int mpi_myid;
 
+#if MPI
+	iofp[s1].s = s1;
+	if ( mpi_myid == s1 ) {
+		iofp[s1].in = 0;
+		iofp[s1].out = 0;
+	} else {
+		iofp[s1].in = WSIO_open(s1,"r");
+		iofp[s1].out = WSIO_open(s1,"w");
+	}
+	iofp[s1].conv = 0;
+	iofp[s1].socket = 0;
+
+	return s1;
+#else
 	for ( i = 0; i < MAXIOFP; i++ )
 		if ( !iofp[i].in )
 			break;
 	iofp[i].s = s1;
-#if defined(VISUAL) || MPI 
+#if defined(VISUAL)
 	iofp[i].in = WSIO_open(s1,"r");
 	iofp[i].out = WSIO_open(s1,"w");
 #else
@@ -295,10 +310,6 @@ int is_server;
 	setbuffer(iofp[i].in,(char *)malloc(LBUFSIZ),LBUFSIZ);
 	setbuffer(iofp[i].out,(char *)malloc(LBUFSIZ),LBUFSIZ);
 #endif
-#if MPI
-	iofp[i].conv = 0;
-	iofp[i].socket = 0;
-#else
 	if ( little_endian )
 		c = 1;
 	else
@@ -318,8 +329,8 @@ int is_server;
 		strcpy(iofp[i].socket,af_sock);
 	} else
 		iofp[i].socket = 0;
-#endif
 	return i;
+#endif
 }
 
 #if defined(VISUAL)
