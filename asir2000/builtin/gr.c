@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.16 2000/12/08 06:43:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.17 2000/12/11 02:00:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1416,7 +1416,7 @@ NODE subst;
 				new_sugar = h->sugar;
 			get_eg(&tnf0);
 			t_0 = get_rtime();
-			if ( PCoeffs )
+			if ( PCoeffs || dp_fcoeffs )
 				_dp_nf(gall,h,ps,!Top,&nf);
 			else
 				_dp_nf_ptozp(gall,h,ps,!Top,DP_Multiple,&nf);
