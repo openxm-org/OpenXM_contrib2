@@ -1864,6 +1864,18 @@ Since 6.2alpha5:
    generated with an empty body.  This seems to have been the cause of one
    or two subtle failures on unusual platforms.  Those failures should
    now occur at build time and be easily fixable.
+
+Since 6.2alpha6:
+ - Integrated a second round of Irix/AIX patches from Dan Bonachea.
+   Renamed mips_sgi_mach_dep.S back to mips_sgi_mach_dep.s, since it requires
+   the Irix assembler to do the C preprocessing; gcc -E doesn't work.
+ - Fixed Makefile.direct for DARWIN.  (Thanks to Manuel Serrano.)
+ - There was a race between GC_pthread_detach and thread exit that could
+   result in a thread structure being deallocated by GC_pthread_detach
+   eventhough it was still needed by the thread exit code.  (Thanks to
+   Dick Porter for the small test case that allowed this to be debugged.)
+ - Fixed version parsing for non-alpha versions in acinclude.m4 and
+   version checking in version.h.
     
 
 To do:
