@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.44 2004/03/19 01:18:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.45 2004/03/25 01:31:03 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -118,6 +118,9 @@ int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
 int register_conv_func(Obj arg);
 int register_dp_vars(Obj arg);
+int register_dp_vars_origin(Obj arg);
+int register_dp_dvars_origin(Obj arg);
+int register_dp_dvars_prefix(Obj arg);
 int register_dp_vars_prefix(Obj arg);
 int register_dp_vars_hweyl(Obj arg);
 int register_show_lt(Obj arg);
@@ -126,6 +129,9 @@ static struct TeXSymbol *user_texsymbol;
 static char **dp_vars;
 static int dp_vars_len;
 static char *dp_vars_prefix;
+static char *dp_dvars_prefix;
+static int dp_vars_origin;
+static int dp_dvars_origin;
 static int show_lt;
 static FUNC convfunc;
 static int is_lt;
@@ -146,6 +152,9 @@ static struct {
 	{"conv_func",0,register_conv_func},
 	{"dp_vars",0,register_dp_vars},
 	{"dp_vars_prefix",0,register_dp_vars_prefix},
+	{"dp_dvars_prefix",0,register_dp_dvars_prefix},
+	{"dp_vars_origin",0,register_dp_vars_origin},
+	{"dp_dvars_origin",0,register_dp_dvars_origin},
 	{"dp_vars_hweyl",0,register_dp_vars_hweyl},
 	{"show_lt",0,register_show_lt},
 	{0,0,0},
@@ -309,6 +318,22 @@ int register_symbol_table(Obj arg)
 	return 1;
 }
 
+int register_dp_vars_origin(Obj arg)
+{
+	if ( INT(arg) ) {
+		dp_vars_origin = QTOS((Q)arg);
+		return 1;
+	} else return 0;
+}
+
+int register_dp_dvars_origin(Obj arg)
+{
+	if ( INT(arg) ) {
+		dp_dvars_origin = QTOS((Q)arg);
+		return 1;
+	} else return 0;
+}
+
 int register_dp_vars_hweyl(Obj arg)
 {
 	if ( INT(arg) ) {
@@ -389,6 +414,20 @@ int register_dp_vars_prefix(Obj arg)
 		return 1;
 	} else if ( OID(arg) == O_P ) {
 		dp_vars_prefix = NAME(VR((P)arg));
+		return 1;
+	} else return 0;
+}
+
+int register_dp_dvars_prefix(Obj arg)
+{
+	if ( !arg ) {
+		dp_dvars_prefix = 0;
+		return 1;
+	} else if ( OID(arg) == O_STR ) {
+		dp_dvars_prefix = BDY((STRING)arg);
+		return 1;
+	} else if ( OID(arg) == O_P ) {
+		dp_dvars_prefix = NAME(VR((P)arg));
 		return 1;
 	} else return 0;
 }
@@ -804,7 +843,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 	char vname[BUFSIZ],prefix[BUFSIZ];
 	char *opname,*vname_conv,*prefix_conv;
 	Obj obj;
-	int i,len,allzero,elen,elen2;
+	int i,len,allzero,elen,elen2,si;
 	C cplx;
 	char *r;
 	FNODE fi,f2;
@@ -1047,14 +1086,17 @@ void fnodetotex_tb(FNODE f,TB tb)
 							strcpy(prefix,dp_vars_prefix?dp_vars_prefix:"x");
 							prefix_conv = conv_rule(prefix);
 							vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
-							sprintf(vname_conv,i<10?"%s_%d":"%s_{%d}",
-								prefix_conv,i);
+							si = i+dp_vars_origin;
+							sprintf(vname_conv,(si>=0&&si<10)?"%s_%d":"%s_{%d}",
+								prefix_conv,si);
 						} else if ( i < elen ) {
-							strcpy(prefix,"\\partial");
+							strcpy(prefix,
+								dp_dvars_prefix?dp_dvars_prefix:"\\partial");
 							prefix_conv = conv_rule(prefix);
 							vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
-							sprintf(vname_conv,i<10?"%s_%d":"%s_{%d}",
-								prefix_conv,i-elen2);
+							si = i+dp_dvars_origin-elen2;
+							sprintf(vname_conv,(si>=0&&si<10)?"%s_%d":"%s_{%d}",
+								prefix_conv,si);
 						} else {
 							strcpy(prefix,"h");
 							vname_conv = conv_rule(prefix);
@@ -1063,8 +1105,9 @@ void fnodetotex_tb(FNODE f,TB tb)
 						strcpy(prefix,dp_vars_prefix?dp_vars_prefix:"x");
 						prefix_conv = conv_rule(prefix);
 						vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
-						sprintf(vname_conv,i<10?"%s_%d":"%s_{%d}",
-							prefix_conv,i);
+						si = i+dp_vars_origin;
+						sprintf(vname_conv,(si>=0&&si<10)?"%s_%d":"%s_{%d}",
+							prefix_conv,si);
 					}
 				}
 				if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
