@@ -389,7 +389,7 @@ def qcheck(PolyList,Vars,FLAG){
 				return RET$
 			}
 			else{
-				RET=append(RET,[[Vars,ResVars[1]]])$
+				RET=append(RET,[[Vars,vtol(ResVars[1])]])$
 				return RET$
 			}
 		}
@@ -460,7 +460,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG){
 			return RET$
 		}
 		else{
-			RET=append(RET,[[Vars,TMP1[1]*1.0]])$
+			RET=append(RET,[[Vars,vtol(TMP1[1]*1.0)]])$
 			return RET$
 		}
 	}
@@ -575,7 +575,7 @@ def weightr(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 					map(drint,TMP1[1]*1.0),FLAG))$
 			}
 			else{
-				RET=append(RET,[[Vars,TMP1[1]*1.0]])$
+				RET=append(RET,[[Vars,vtol(TMP1[1]*1.0)]])$
 			}
 		}
 
