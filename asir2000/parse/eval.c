@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.13 2001/09/03 07:01:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.14 2001/09/05 09:01:28 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -252,6 +252,8 @@ FNODE f;
 				a = eval((FNODE)FA0(f1)); ind = (NODE)FA1(f1);
 				evalnodebody(ind,&tn);
 				putarray(a,tn,val = eval((FNODE)FA1(f)));
+			} else {
+				error("eval : invalid assignment");
 			}
 			break;
 		case I_ANS:
