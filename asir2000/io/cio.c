@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/cio.c,v 1.2 1999/11/18 02:24:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -20,7 +20,7 @@ Obj obj;
 		case O_ERR: case O_USINT: case O_VOID:
 			return 1;
 		case O_N:
-			if ( NID((Num)obj) == N_Q )
+			if ( NID((Num)obj) == N_Q || NID((Num)obj) == N_R )
 				return 1;
 			else
 				return 0;
@@ -47,7 +47,19 @@ Obj obj;
 	}
 	switch ( OID(obj) ) {
 		case O_N:
-			write_cmo_q(s,obj);
+			switch ( NID((Num)obj) ) {
+				case N_Q:
+					write_cmo_q(s,(Q)obj);
+					break;
+				case N_R:
+					write_cmo_real(s,(Real)obj);
+					break;
+				default:
+					sprintf(errmsg, "write_cmo : number id=%d not implemented.",
+						NID((Num)obj));
+					error(errmsg);
+					break;
+			}
 			break;
 		case O_P:
 			write_cmo_p(s,obj);
@@ -117,6 +129,17 @@ Q q;
 		r = CMO_ZZ; write_int(s,&r);
 		write_cmo_zz(s,SGN(q),NM(q));	
 	}
+}
+
+write_cmo_real(s,real)
+FILE *s;
+Real real;
+{
+	unsigned int r;
+	double dbl;
+
+	r = CMO_IEEE_DOUBLE_FLOAT; write_int(s,&r);
+	dbl = real->body; write_double(s,&dbl);
 }
 
 write_cmo_zz(s,sgn,n)
@@ -292,6 +315,8 @@ Obj *rp;
 	N nm,dn;
 	P p,pnm,pdn;
 	R r;
+	Real real;
+	double dbl;
 	STRING str;
 	USINT t;
 	DP dp;
@@ -338,6 +363,9 @@ Obj *rp;
 			read_cmo_zz(s,&sgn,&nm);
 			read_cmo_zz(s,&dummy,&dn);
 			NDTOQ(nm,dn,sgn,q); *rp = (Obj)q;
+			break;
+		case CMO_IEEE_DOUBLE_FLOAT:
+			read_double(s,&dbl); MKReal(dbl,real); *rp = (Obj)real;
 			break;
 		case CMO_DISTRIBUTED_POLYNOMIAL:
 			read_cmo_dp(s,&dp); *rp = (Obj)dp;

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.2 2000/01/26 02:05:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.3 2000/02/08 04:47:11 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -567,13 +567,18 @@ int ox_check_cmo(int s, Obj obj)
 		case O_DP:
 			return ox_check_cmo_dp(s,(DP)obj);	
 		case O_N:
-			if ( NID((Num)obj) == N_Q ) {
-				if ( INT((Q)obj) )
-					return check_by_mc(s,OX_DATA,CMO_ZZ);
-				else
-					return check_by_mc(s,OX_DATA,CMO_QQ);
-			} else
-				return 0;
+			switch ( NID((Num)obj) ) {
+				case N_Q:
+					if ( INT((Q)obj) )
+						return check_by_mc(s,OX_DATA,CMO_ZZ);
+					else
+						return check_by_mc(s,OX_DATA,CMO_QQ);
+				case N_R:
+					return 1;
+				default:
+					return 0;
+			}
+			break;
 		case O_LIST:
 			for ( m = BDY((LIST)obj); m; m = NEXT(m) )
 				if ( !ox_check_cmo(s,(BDY(m))) )

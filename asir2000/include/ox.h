@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.4 2000/03/10 06:42:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.5 2000/03/19 12:35:19 noro Exp $ */
 #include "com.h"
 
 /* version */
@@ -48,6 +48,14 @@
 #define CMO_DISTRIBUTED_POLYNOMIAL		31
 #define CMO_UNIVARIATE_POLYNOMIAL		33
 #define CMO_RATIONAL		34
+
+#define CMO_64BIT_MACHINE_DOUBLE   40
+#define CMO_ARRAY_OF_64BIT_MACHINE_DOUBLE  41
+#define CMO_128BIT_MACHINE_DOUBLE   42
+#define CMO_ARRAY_OF_128BIT_MACHINE_DOUBLE  43
+
+#define CMO_BIGFLOAT				50
+#define CMO_IEEE_DOUBLE_FLOAT		51
 
 #define CMO_INDETERMINATE		60
 #define CMO_TREE				61
