@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.10 2001/03/09 01:44:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.11 2001/03/13 01:10:27 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -402,7 +402,7 @@ Num q;
 			PRINTUP((UP)(((GFPN)q)->body));
 			break;
 		case N_GFS:
-			TAIL PRINTF(OUT,"%d",CONT((GFS)q)); break;
+			TAIL PRINTF(OUT,"@_%d",CONT((GFS)q)); break;
 	}
 }
 
