@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.31 2004/03/04 07:11:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.32 2004/03/26 08:25:37 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -188,6 +188,8 @@ int yylex()
 					c1 = Getc();
 					if ( c1 == 'n' ) {
 						c1 = '\n';
+					}else if ( c1 == 'r' ) {
+						c1 = '\r';
                     }else if ( c1 == 't' ) {
                         c1 = '\t';
                     }else if ( isdigit(c1) ){

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.49 2004/04/15 08:14:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.50 2004/04/15 08:27:42 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -426,12 +426,19 @@ NODE arg;
 Obj *rp;
 {
 	struct order_spec *spec;
-
+	LIST v;
+	struct oLIST f;
+	Num homo;
+	int modular;
+	
+	f.id = O_LIST; f.body = 0;
 	if ( !arg )
 		*rp = dp_current_spec->obj;
-	else if ( !create_order_spec(0,(Obj)ARG0(arg),&spec) )
-		error("dp_ord : invalid order specification");
 	else {
+		if ( ARG0(arg) && OID(ARG0(arg)) == O_OPTLIST )
+			parse_gr_option(&f,BDY((OPTLIST)ARG0(arg)),&v,&homo,&modular,&spec);
+		else if ( !create_order_spec(0,(Obj)ARG0(arg),&spec) )
+			error("dp_ord : invalid order specification");
 		initd(spec); *rp = spec->obj;
 	}
 }
@@ -1468,16 +1475,19 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
 			/* variable list; ignore */
 		} else if ( !strcmp(key,"order") ) {
 			/* order spec */
+			if ( !vl )
+				error("parse_gr_option : variables must be specified");
 			create_order_spec(vl,value,ord);
 			ord_is_set = 1;
 		} else if ( !strcmp(key,"block") ) {
 			create_order_spec(0,value,ord);
+			ord_is_set = 1;
 		} else if ( !strcmp(key,"matrix") ) {
 			create_order_spec(0,value,ord);
+			ord_is_set = 1;
 		} else if ( !strcmp(key,"sugarweight") ) {
 			/* weight */
 			Pdp_set_weight(NEXT(p),&dmy);
-			ord_is_set = 1;
 		} else if ( !strcmp(key,"homo") ) {
 			*homo = (Num)value;
 			homo_is_set = 1;
