@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.10 2000/12/06 01:27:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.11 2000/12/18 01:28:27 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -568,6 +568,25 @@ static int Getc() {
 	int c;
 
 	if ( main_parser ) {
+#if FEP
+		if ( do_fep && isatty(fileno(asir_infile->fp)) )
+			while ( 1 ) {
+				if ((c = readline_getc()) == EOF)
+					if ( NEXT(asir_infile) ) {
+						closecurrentinput();
+						c = Getc();
+						break;
+					} else if ( read_exec_file || do_file )
+						asir_terminate(1);
+					else {
+						if ( asir_infile->fp )
+							clearerr(asir_infile->fp);
+					}
+				else
+					break;
+			}
+		else
+#endif
 		while ( 1 ) {
 			if ((c = Egetc(asir_infile->fp)) == EOF)
 				if ( NEXT(asir_infile) ) {
@@ -596,6 +615,11 @@ static int Getc() {
 
 static void Ungetc(c) {
 	if ( main_parser ) {
+#if FEP
+                if ( do_fep && isatty(fileno(asir_infile->fp)) )
+                        readline_ungetc();
+                else
+#endif
 		Eungetc(c,asir_infile->fp);
 		if ( echoback )
 			fputc('',asir_out);
@@ -612,3 +636,58 @@ char *s;
 		*s++ = c;
 	*s = 0;
 }
+
+#if FEP
+
+static char *readline_line;
+static int readline_nc,readline_index;
+char *readline_console();
+
+int readline_getc()
+{
+        char buf[BUFSIZ];
+
+        if ( !readline_nc ) {
+                if ( readline_line )
+                        free(readline_line);
+                sprompt(buf);
+                readline_line = readline_console(buf);
+                readline_nc = strlen(readline_line);
+                readline_index = 0;
+        }
+        readline_nc--;
+        return readline_line[readline_index++];
+}
+
+void readline_ungetc()
+{
+        readline_nc++; readline_index--;
+}
+
+char *readline_console(prompt)
+char *prompt;
+{
+        char *line;
+        int exp_result;
+        char *expansion;
+
+        while ( 1 ) {
+                line = (char *)readline(prompt);
+                if ( line && *line ) {
+                        using_history();
+                        exp_result = history_expand(line,&expansion);
+                        if ( !exp_result ) {
+                                free(expansion);
+                                for ( ; isspace(*line); line++ );
+                                add_history(line);
+                                break;
+                        } else if ( exp_result > 0 ) {
+                                free(line);
+                                line = expansion;
+                                break;
+                        }
+                }
+        }
+        return line;
+}
+#endif

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.11 2000/11/08 06:21:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.12 2000/12/05 01:24:57 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -219,6 +219,12 @@ int status;
 			fputc(0xff,asir_out);
 		if ( asir_out )
 			fflush(asir_out);
+#if FEP
+		if ( do_fep ) {
+			stifle_history(MAXHIST);
+			write_history(asir_history);
+		}
+#endif
 		ExitAsir();
 	}
 }
@@ -297,6 +303,10 @@ char **av;
 		} else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
 			strcpy(displayname,*(av+1)); av += 2; ac -= 2;
 #endif
+#if FEP
+		} else if ( !strcmp(*av,"-fep") ) {
+			do_fep = 1; av++; ac--;
+#endif
 #if PARI
 		} else if ( !strcmp(*av,"-paristack") ) {
 			extern int paristack;
@@ -308,6 +318,17 @@ char **av;
 			asir_terminate(1);
 		}
 	}
+#if FEP
+	if ( do_fep ) {
+		char *home;
+		home = (char *)getenv("HOME");
+		if (!home)
+			home = ".";
+		sprintf (asir_history, "%s/.asir_history",home);
+		read_history(asir_history);
+		using_history();
+	}
+#endif
 }
 
 #include <signal.h>
