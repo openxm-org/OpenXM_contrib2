@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.7 2000/09/07 23:59:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.8 2001/04/09 02:42:29 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -1435,4 +1435,81 @@ def register_input(List)
 	Len = length(List);
 	NFArray = newvect(Len+100,List);
 }
+
+/*
+	tracetogen(): preliminary version
+
+	dp_gr_main() returns  [GB,GBIndex,Trace].
+	GB : groebner basis
+	GBIndex : IndexList (corresponding to Trace)
+	Trace : [InputList,Trace0,Trace1,...]
+	TraceI : [Index,TraceList]
+	TraceList : [[Coef,Index,Monomial,Denominator],...]
+	Poly <- 0
+	Poly <- (Coef*Poly+Monomial*PolyList[Index])/Denominator
+*/
+
+def tracetogen(GBIndex,Trace)
+{
+	InputList = Trace[0];
+	Trace = cdr(Trace);
+
+	/* number of initial basis */
+	Nini = length(InputList);
+
+	/* number of generated basis */
+	Ngen = length(Trace);
+	
+	N = Nini + Ngen;
+
+	/* stores traces */
+	Tr = vector(N);
+
+	/* stores coeffs */
+	Coef = vector(N);
+
+	for ( I = 0; I < Nini; I++ ) {
+		Tr[I] = [1,I,1,1];
+		C = vector(Nini);
+		C[I] = 1;
+		Coef[I] = C; 
+	}
+	for ( ; I < N; I++ )
+		Tr[I] = Trace[I-Nini][1];
+
+	for ( T = GBIndex; T != []; T = cdr(T) )
+		compute_coef_by_trace(car(T),Tr,Coef);
+	return Coef;
+}
+
+def compute_coef_by_trace(I,Tr,Coef)
+{
+	if ( Coef[I] )
+		return;
+
+	/* XXX */
+	Nini = size(Coef[0])[0];
+
+	/* initialize coef vector */
+	CI = vector(Nini);
+
+	for ( T = Tr[I]; T != []; T = cdr(T) ) {
+		/*	Trace = [Coef,Index,Monomial,Denominator] */
+		Trace = car(T);
+		C = Trace[0];
+		Ind = Trace[1];
+		Mon = Trace[2];
+		Den = Trace[3];
+		if ( !Coef[Ind] )
+			compute_coef_by_trace(Ind,Tr,Coef);
+
+		/* XXX */
+		CT = newvect(Nini);
+		for ( J = 0; J < Nini; J++ )
+			CT[J] = (C*CI[J]+Mon*Coef[Ind][J])/Den;
+		CI = CT;
+	}
+	Coef[I] = CI;
+}
+end$
 end$

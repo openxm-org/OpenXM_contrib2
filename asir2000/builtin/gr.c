@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.21 2001/09/04 08:48:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.22 2001/09/05 01:57:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -180,6 +180,7 @@ static int PtozpRA = 0;
 
 int doing_f4;
 NODE TraceList;
+NODE AllTraceList;
 
 int eqdl(nv,dl1,dl2)
 int nv;
@@ -266,8 +267,11 @@ LIST *rp;
 {
 	int i,mindex,m,nochk;
 	struct order_spec ord1;
+	Q q;
 	VL fv,vv,vc;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
+	NODE ind,ind0;
+	LIST trace,gbindex;
 
 	mindex = 0; nochk = 0; dp_fcoeffs = field;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
@@ -333,12 +337,27 @@ LIST *rp;
 			pss[i] = 0; psh[i] = 0; psc[i] = 0; ps[i] = 0;
 		}
 	}
-	for ( r0 = 0; x; x = NEXT(x) ) {
+	for ( r0 = 0, ind0 = 0; x; x = NEXT(x) ) {
 		NEXTNODE(r0,r); dp_load((int)BDY(x),&ps[(int)BDY(x)]);
 		dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+		NEXTNODE(ind0,ind);
+		STOQ((int)BDY(x),q); BDY(ind) = q;
 	}
 	if ( r0 ) NEXT(r) = 0;
+	if ( ind0 ) NEXT(ind) = 0;
 	MKLIST(*rp,r0);
+	MKLIST(gbindex,ind0);
+
+	if ( GenTrace && OXCheck < 0 ) {
+
+		x = AllTraceList;
+		for ( r = 0; x; x = NEXT(x) ) {
+			MKNODE(r0,BDY(x),r); r = r0;
+		}
+		MKLIST(trace,r);
+		r0 = mknode(3,*rp,gbindex,trace);
+		MKLIST(*rp,r0);
+	}
 	print_stat();
 	if ( ShowMag )
 		fprintf(asir_out,"\nMax_mag=%d\n",Max_mag);
@@ -920,18 +939,28 @@ int m;
 		pss[i] = ps[i]->sugar;
 		psc[i] = BDY(ps[i])->c;
 	}
-	if ( GenTrace && (OXCheck >= 0) ) {
+	if ( GenTrace ) {
 		Q q;
 		STRING fname;
 		LIST input;
-		NODE arg;
+		NODE arg,t,t1;
 		Obj dmy;
+	
+		t = 0;
+		for ( i = psn-1; i >= 0; i-- ) {
+			MKNODE(t1,ps[i],t);
+			t = t1;
+		}
+		MKLIST(input,t);
 
-		STOQ(OXCheck,q);
-		MKSTR(fname,"register_input");
-		MKLIST(input,f0);
-		arg = mknode(3,q,fname,input);
-		Pox_cmo_rpc(arg,&dmy);
+		if ( OXCheck >= 0 ) {
+			STOQ(OXCheck,q);
+			MKSTR(fname,"register_input");
+			arg = mknode(3,q,fname,input);
+			Pox_cmo_rpc(arg,&dmy);
+		} else if ( OXCheck < 0 ) {
+			MKNODE(AllTraceList,input,0);
+		}
 	}
 	for ( s0 = 0, i = 0; i < psn; i++ ) {
 		NEXTNODE(s0,s); BDY(s) = (pointer)i;
@@ -959,6 +988,8 @@ int m;
 		else
 			dp_ptozp(f,r);
 		if ( GenTrace && TraceList ) {
+			/* adust the denominator according to the final 
+			   content reduction */
 			divsp(CO,BDY(f)->c,BDY(*r)->c,&d);
 			mulp(CO,(P)ARG3(BDY((LIST)BDY(TraceList))),d,&t);
 			ARG3(BDY((LIST)BDY(TraceList))) = t;
@@ -1166,7 +1197,11 @@ NODE subst;
 		_dp_mod(a,m,subst,&psm[psn]);
 	if ( GenTrace ) {
 		NODE tn,tr,tr1;
-		LIST trace;
+		LIST trace,trace1;
+		NODE arg;
+		Q q1,q2;
+		STRING fname;
+		Obj dmy;
 	
 		/* reverse the TraceList */
 		tn = TraceList;
@@ -1175,16 +1210,17 @@ NODE subst;
 		}
 		MKLIST(trace,tr);
 		if ( OXCheck >= 0 ) {
-			NODE arg;
-			Q q1,q2;
-			STRING fname;
-			Obj dmy;
-
 			STOQ(OXCheck,q1);
 			MKSTR(fname,"check_trace");
 			STOQ(psn,q2);
 			arg = mknode(5,q1,fname,a,q2,trace);
 			Pox_cmo_rpc(arg,&dmy);
+		} else if ( OXCheck < 0 ) {
+			STOQ(psn,q1);
+			tn = mknode(2,q1,trace);
+			MKLIST(trace1,tn);
+			MKNODE(tr,trace1,AllTraceList);
+			AllTraceList = tr;
 		} else
 			dp_save(psn,(Obj)trace,"t");
 		TraceList = 0;
