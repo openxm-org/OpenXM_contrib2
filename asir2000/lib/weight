@@ -1,13 +1,20 @@
 load("solve")$
 load("gr")$
 
-def junban(A,B){
+def nonzerovec(A){
 
+	for(I=0;I<size(A)[0];I++)
+		if(A[I]!=0)
+			return 1$
+
+	return 0$
+}
+
+def junban(A,B){
 	return (A<B ? 1:(A>B ? -1:0))$
 }
 
 def worder(A,B){
-	
 	return (A[0]<B[0] ? 1:(A[0]>B[0] ? -1:0))$
 }
 
@@ -458,8 +465,13 @@ def weightr(ExpMat,Vars,PolyListNum,OneMat){
 		Res=solve(SolveList,SolVars)$
 		Res=cons([ExtVars[F],1],Res)$
 
-		Rea=cons(ExtVars[F],Rea)$
-		Res=getgcd(Res,Rea)$
+		TMP=[]$
+		for(I=0;I<length(Rea);I++)
+			if(member(Rea[I],Vars))
+				TMP=cons(Rea[I],TMP)$
+	
+		TMP=cons(ExtVars[F],TMP)$
+		Res=getgcd(Res,TMP)$
 	
 		if(nonposdegchk(Res)){
 
@@ -494,8 +506,6 @@ def weight(PolyList,Vars,FLAG){
 
 	RET=[]$
 
-/* first */
-
 	TMP=qcheck(PolyList,Vars)$
 
 	if(TMP!=[]){
@@ -507,34 +517,40 @@ def weight(PolyList,Vars,FLAG){
 
 	PolyListNum=length(PolyList)$
 
-	OneMat=newvect(PolyListNum+1,[0])$
-	ExpMat=[]$
-	for(I=0;I<PolyListNum;I++){
-		for(Poly=dp_ptod(PolyList[I],Vars);
-			Poly!=0;Poly=dp_rest(Poly)){
-			ExpMat=cons(dp_etov(dp_ht(Poly)),ExpMat)$
-		}
-		OneMat[I+1]=length(ExpMat)$
-	}
-
-	ExpMat=reverse(ExpMat)$
-	ExpMat=newvect(length(ExpMat),ExpMat)$
-
-/* second */
-
 	if(FLAG){
+
+		OneMat=newvect(PolyListNum+1,[0])$
+		ExpMat=[]$
+		for(I=0;I<PolyListNum;I++){
+			for(Poly=dp_ptod(PolyList[I],Vars);
+				Poly!=0;Poly=dp_rest(Poly)){
+				ExpMat=cons(dp_etov(dp_ht(Poly)),ExpMat)$
+			}
+			OneMat[I+1]=length(ExpMat)$
+		}
+
+		ExpMat=reverse(ExpMat)$
+		ExpMat=newvect(length(ExpMat),ExpMat)$
+
 		TMP=weightr(ExpMat,Vars,PolyListNum,OneMat)$
 		RET=append(RET,TMP[1])$
-	}
-
-/* third */
-
-	if(FLAG)
 		RET=append(RET,leastsq(TMP[0],ExpMat,Vars))$
-	else
-		RET=append(RET,leastsq(0,ExpMat,Vars))$
+	}
+	else{
+		ExpMat=[]$
+		for(I=0;I<PolyListNum;I++){
+			for(Poly=dp_ptod(PolyList[I],Vars);
+				Poly!=0;Poly=dp_rest(Poly)){
+				if(nonzerovec(TMP=dp_etov(dp_ht(Poly))))
+					ExpMat=cons(TMP,ExpMat)$
+			}
+		}
 
-/* forth */
+		ExpMat=reverse(ExpMat)$
+		ExpMat=newvect(length(ExpMat),ExpMat)$
+
+		RET=append(RET,leastsq(0,ExpMat,Vars))$
+	}
 
 	ExpMat=qsort(ExpMat,junban)$
 
