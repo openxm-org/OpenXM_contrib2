@@ -45,9 +45,31 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.20 2002/01/29 05:37:12 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.21 2002/01/30 02:12:58 noro Exp $
  */
 /* requires 'primdec' */
+
+extern LIBRARY_GR_LOADED$
+extern LIBRARY_PRIMDEC_LOADED$
+
+if(!LIBRARY_GR_LOADED) load("gr"); else ; LIBRARY_GR_LOADED = 1$
+if(!LIBRARY_PRIMDEC_LOADED) load("primdec"); else ; LIBRARY_PRIMDEC_LOADED = 1$
+
+/* toplevel */
+
+def bfunction(F)
+{
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = 0; I < N; I++ )
+		V = cons(D[I][1],V);
+	return bfct_via_gbfct_weight(F,V);
+}
 
 /* annihilating ideal of F^s */
 
