@@ -10,7 +10,7 @@ static char rcsid[]=
 #include <stdio.h>
 #include <pwd.h>
 #include <sys/types.h>
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(sun)
 #include <dirent.h>
 #else
 #include <sys/dir.h>

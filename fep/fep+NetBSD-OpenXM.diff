@@ -1,6 +1,6 @@
-diff -cr official+NetBSD/Makefile fep-cygwin/Makefile
-*** official+NetBSD/Makefile	Mon Sep  2 15:54:20 2002
---- fep-cygwin/Makefile	Mon Sep  2 18:37:26 2002
+diff -cr fep.orig/Makefile fep/Makefile
+*** fep.orig/Makefile	Wed Sep 18 18:48:24 2002
+--- fep/Makefile	Tue Sep  3 09:41:43 2002
 ***************
 *** 25,35 ****
   #DEBUG	= -O
@@ -15,9 +15,11 @@ diff -cr official+NetBSD/Makefile fep-cygwin/Makefile
   all: $(TARGET)
   
 --- 25,31 ----
-diff -cr official+NetBSD/fep_alias.c fep-cygwin/fep_alias.c
-*** official+NetBSD/fep_alias.c	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_alias.c	Mon Sep  2 19:01:17 2002
+Only in fep: fep
+Only in fep: fep+NetBSD-OpenXM.diff
+diff -cr fep.orig/fep_alias.c fep/fep_alias.c
+*** fep.orig/fep_alias.c	Wed Sep 18 18:48:25 2002
+--- fep/fep_alias.c	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -35,9 +37,10 @@ diff -cr official+NetBSD/fep_alias.c fep-cygwin/fep_alias.c
   
   #include <stdio.h>
   #include <ctype.h>
-diff -cr official+NetBSD/fep_com.c fep-cygwin/fep_com.c
-*** official+NetBSD/fep_com.c	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_com.c	Mon Sep  2 19:01:25 2002
+Only in fep: fep_alias.o
+diff -cr fep.orig/fep_com.c fep/fep_com.c
+*** fep.orig/fep_com.c	Wed Sep 18 18:48:26 2002
+--- fep/fep_com.c	Wed Sep 18 18:44:20 2002
 ***************
 *** 3,15 ****
   #ifndef lint
@@ -67,9 +70,22 @@ diff -cr official+NetBSD/fep_com.c fep-cygwin/fep_com.c
   #ifndef _POSIX_VDISABLE
   #define _POSIX_VDISABLE '\0'
   #endif
-diff -cr official+NetBSD/fep_defs.h fep-cygwin/fep_defs.h
-*** official+NetBSD/fep_defs.h	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_defs.h	Mon Sep  2 19:04:53 2002
+***************
+*** 22,27 ****
+--- 22,30 ----
+  #include <sys/file.h>
+  #include <sys/stat.h>
+  #include <sys/ioctl.h>
++ #if defined(sun)
++ #include <sys/fcntl.h>
++ #endif
+  #include "fep_defs.h"
+  #include "fep_glob.h"
+  #include "fep_funcs.h"
+Only in fep: fep_com.o
+diff -cr fep.orig/fep_defs.h fep/fep_defs.h
+*** fep.orig/fep_defs.h	Wed Sep 18 18:48:27 2002
+--- fep/fep_defs.h	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -176,9 +192,9 @@ diff -cr official+NetBSD/fep_defs.h fep-cygwin/fep_defs.h
   
   /*
    * Typedef's
-diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
-*** official+NetBSD/fep_edit.c	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_edit.c	Mon Sep  2 19:07:54 2002
+diff -cr fep.orig/fep_edit.c fep/fep_edit.c
+*** fep.orig/fep_edit.c	Wed Sep 18 18:48:28 2002
+--- fep/fep_edit.c	Wed Sep 18 18:43:52 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -215,13 +231,17 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   #endif
 ***************
 *** 21,27 ****
---- 21,32 ----
+--- 21,36 ----
   #endif
   #include <sys/time.h>
   #include <ctype.h>
 + #if defined(__CYGWIN__)
 + #include <sys/dirent.h>
 + #define direct dirent
++ #elif defined(sun)
++ #include <dirent.h>
++ #define direct dirent
++ #include <unistd.h>
 + #else
   #include <sys/dir.h>
 + #endif
@@ -230,7 +250,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   #include "fep_defs.h"
 ***************
 *** 207,213 ****
---- 212,225 ----
+--- 216,229 ----
       import (cft, initial_ttymode.c_cc[VSTART], ignore);
       import (cft, initial_ttymode.c_cc[VSTOP], ignore);
       */
@@ -247,7 +267,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       import (cft, initial_ttymode.c_cc[VEOF], send_eof);
 ***************
 *** 230,236 ****
---- 242,253 ----
+--- 246,257 ----
       import (cft, tchars_buf.t_startc, ignore);
       import (cft, tchars_buf.t_stopc, ignore);
       */
@@ -269,7 +289,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
       currentNull = strlen (CommandLine);
   
---- 478,484 ----
+--- 482,488 ----
       register int i, nbyte = 1, currentNull;
   #ifdef KANJI
       CHAR byte2;
@@ -286,7 +306,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   	putChar (c);
       reverse_strcpy (
   	&CommandLine[CurrentPosition] + nbyte,
---- 497,503 ----
+--- 501,507 ----
   	nbyte = 2;
       }
       else
@@ -303,7 +323,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       printS (&CommandLine [CurrentPosition]);
   
       if (CommandLine[CurrentPosition] != '\0') {
---- 509,515 ----
+--- 513,519 ----
       if (nbyte > 1) {
   	CommandLine[CurrentPosition - 1] = byte2;
       }
@@ -320,7 +340,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   	)
   	    (void) forward_n_character (1);
   }
---- 613,619 ----
+--- 617,623 ----
   #ifdef KANJI
   	    && !(CurrentPosition + 1 == position
   		    && iskanji (CommandLine[CurrentPosition]))
@@ -340,7 +360,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
   /*
    * Move cursor to end of line
---- 637,646 ----
+--- 641,650 ----
   #ifdef KANJI
   #define INC(i) if(iskanji(CommandLine[i])) i+=2; else i++;
   #define DEC(i) if(i>=2 && iskanji_in_string(CommandLine, i-2)) i-=2; else i--;
@@ -360,7 +380,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   	putchar (BS);
   	i--;
       }
---- 698,704 ----
+--- 702,708 ----
   	    i--;
   	}
   	else
@@ -377,7 +397,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       while (n--) {
   	i--, nchars++;
   	while (i > 0 && !iswordchar (CommandLine [i])) {
---- 753,759 ----
+--- 757,763 ----
   	    nchars++;
   	}
       }
@@ -394,7 +414,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       return (backward_n_character (nchars));
   }
   
---- 763,769 ----
+--- 767,773 ----
   	    i--, nchars++;
   	}
       }
@@ -411,7 +431,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       while (n--) {
   	i--, nchars++;
   	while (i > 0 && !isWordchar (CommandLine [i]))
---- 814,820 ----
+--- 818,824 ----
   	    nchars++;
   	}
       }
@@ -428,7 +448,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       return (backward_n_character (nchars));
   }
   
---- 822,828 ----
+--- 826,832 ----
   	while (i > 0 && isWordchar (CommandLine [i - 1]))
   	    i--, nchars++;
       }
@@ -445,7 +465,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       if (isctlchar(CommandLine[i])) {
   	(void) putchar (unctl (CommandLine [i]));
   	i++;
---- 860,866 ----
+--- 864,870 ----
   	(void) putchar (CommandLine[i++]);
       }
       else
@@ -462,7 +482,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   	putChar (CommandLine [i++]);
       }
   
---- 875,881 ----
+--- 879,885 ----
   	    (void) putchar (CommandLine[i++]);
   	}
   	else
@@ -481,7 +501,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
       deleteArea = howlong (&CommandLine[CurrentPosition - nbyte], nbyte);
       restArea = howlong (&CommandLine[CurrentPosition], 0);
---- 1056,1064 ----
+--- 1060,1068 ----
   	    i -= 2, nbyte += 2;
   	else
   	    i -= 1, nbyte += 1;
@@ -500,7 +520,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       while (n--) {
   	i--, nchars++;
   	while (i > 0 && !iswordchar (CommandLine [i]))
---- 1131,1137 ----
+--- 1135,1141 ----
   	    nchars++;
   	}
       }
@@ -517,7 +537,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
       return (delete_previous_n_character (nchars));
   }
---- 1139,1145 ----
+--- 1143,1149 ----
   	while (i > 0 && iswordchar (CommandLine [i - 1]))
   	    i--, nchars++;
       }
@@ -534,7 +554,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       while (n--) {
   	i--, nchars++;
   	while (i > 0 && !isWordchar (CommandLine [i]))
---- 1192,1198 ----
+--- 1196,1202 ----
   	    nchars++;
   	}
       }
@@ -551,7 +571,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
       return (delete_previous_n_character (nchars));
   }
---- 1200,1206 ----
+--- 1204,1210 ----
   	while (i > 0 && isWordchar (CommandLine [i - 1]))
   	    i--, nchars++;
       }
@@ -570,7 +590,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
       deleteArea = howlong (&CommandLine[CurrentPosition], nbyte);
       restArea = howlong (&CommandLine[CurrentPosition + nbyte], 0);
---- 1239,1247 ----
+--- 1243,1251 ----
   	    else
   		cp++, nbyte++;
       }
@@ -591,7 +611,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   	    if (fcp == 0) {
   		fputs ("\r\n", stdout);
   		perror ("alloca:");
---- 1798,1806 ----
+--- 1802,1810 ----
   
   # ifdef ALLOCA
     	    fcp = (char *) alloca (strlen (dp->d_name) + 1);
@@ -610,7 +630,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
       closedir(dirp);
       return (0);
---- 1861,1867 ----
+--- 1865,1871 ----
   # ifndef ALLOCA
       for (i = 0; fileList [i]; i++)
   	free (fileList [i]);
@@ -629,7 +649,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   	    if (fcp == 0) {
   		fputs ("\r\n", stdout);
   		perror ("alloca:");
---- 1989,1997 ----
+--- 1993,2001 ----
   	if (prefix (prefixstring, dp->d_name)) {
   # ifdef ALLOCA
     	    fcp = (char *) alloca (strlen (dp->d_name) + 1);
@@ -648,7 +668,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
       return;
   }
   
---- 2035,2041 ----
+--- 2039,2045 ----
   # ifndef ALLOCA
       for (i = 0; fileList [i]; i++)
   	free (fileList [i]);
@@ -665,7 +685,7 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
   bind_key (ft, func, s, dfunc)
       FUNC ft[];		/* Function table */
---- 2082,2088 ----
+--- 2086,2092 ----
   	fputs ("\n", stdout);
       }
   }
@@ -673,9 +693,10 @@ diff -cr official+NetBSD/fep_edit.c fep-cygwin/fep_edit.c
   
   bind_key (ft, func, s, dfunc)
       FUNC ft[];		/* Function table */
-diff -cr official+NetBSD/fep_funcs.c fep-cygwin/fep_funcs.c
-*** official+NetBSD/fep_funcs.c	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_funcs.c	Mon Sep  2 19:03:26 2002
+Only in fep: fep_edit.o
+diff -cr fep.orig/fep_funcs.c fep/fep_funcs.c
+*** fep.orig/fep_funcs.c	Wed Sep 18 18:48:28 2002
+--- fep/fep_funcs.c	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -693,9 +714,9 @@ diff -cr official+NetBSD/fep_funcs.c fep-cygwin/fep_funcs.c
   
   #include <stdio.h>
   #include "fep_defs.h"
-diff -cr official+NetBSD/fep_funcs.h fep-cygwin/fep_funcs.h
-*** official+NetBSD/fep_funcs.h	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_funcs.h	Mon Sep  2 19:05:03 2002
+diff -cr fep.orig/fep_funcs.h fep/fep_funcs.h
+*** fep.orig/fep_funcs.h	Wed Sep 18 18:48:29 2002
+--- fep/fep_funcs.h	Wed Sep 18 18:39:29 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -719,7 +740,7 @@ diff -cr official+NetBSD/fep_funcs.h fep-cygwin/fep_funcs.h
   int	delete_previous_word();
   int	delete_previous_Word();
   int	delete_to_kill_buffer();
-+ #if defined(__CYGWIN__)
++ #if defined(__CYGWIN__) || defined(sun)
 + void	terminate(int);
 + #else
   void	terminate __P((int));
@@ -728,9 +749,10 @@ diff -cr official+NetBSD/fep_funcs.h fep-cygwin/fep_funcs.h
   int	end_of_line();
   int	expand_file_name();
   int	forward_character();
-diff -cr official+NetBSD/fep_glob.h fep-cygwin/fep_glob.h
-*** official+NetBSD/fep_glob.h	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_glob.h	Mon Sep  2 19:05:16 2002
+Only in fep: fep_funcs.o
+diff -cr fep.orig/fep_glob.h fep/fep_glob.h
+*** fep.orig/fep_glob.h	Wed Sep 18 18:48:29 2002
+--- fep/fep_glob.h	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -748,9 +770,9 @@ diff -cr official+NetBSD/fep_glob.h fep-cygwin/fep_glob.h
   
   extern FUNC	*curFuncTab;	/* function table */
   extern FUNC	*altFuncTab;	/* altanative function table */
-diff -cr official+NetBSD/fep_hist.c fep-cygwin/fep_hist.c
-*** official+NetBSD/fep_hist.c	Mon Sep  2 15:54:20 2002
---- fep-cygwin/fep_hist.c	Mon Sep  2 19:03:17 2002
+diff -cr fep.orig/fep_hist.c fep/fep_hist.c
+*** fep.orig/fep_hist.c	Wed Sep 18 18:48:30 2002
+--- fep/fep_hist.c	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -782,11 +804,12 @@ diff -cr official+NetBSD/fep_hist.c fep-cygwin/fep_hist.c
   
   char	**HistoryTable;
   int	TopOfHist;
-diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
-*** official+NetBSD/fep_main.c	Mon Sep  2 15:54:21 2002
---- fep-cygwin/fep_main.c	Mon Sep  2 19:03:54 2002
+Only in fep: fep_hist.o
+diff -cr fep.orig/fep_main.c fep/fep_main.c
+*** fep.orig/fep_main.c	Wed Sep 18 18:48:31 2002
+--- fep/fep_main.c	Wed Sep 18 18:45:26 2002
 ***************
-*** 3,9 ****
+*** 3,18 ****
   #ifndef lint
   static char rcsid[]=
   "$Id$ (SRA)";
@@ -794,16 +817,8 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
   #include <stdio.h>
   #include <signal.h>
---- 3,9 ----
-  #ifndef lint
-  static char rcsid[]=
-  "$Id$ (SRA)";
-! #endif /* lint */
-  
-  #include <stdio.h>
-  #include <signal.h>
-***************
-*** 12,18 ****
+  #include <sys/types.h>
+  #include <sys/stat.h>
   #include <sys/ioctl.h>
   #ifdef TERMIOS
   #include <termios.h>
@@ -811,8 +826,21 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   #ifndef _POSIX_VDISABLE
   #define _POSIX_VDISABLE '\0'
   #endif
---- 12,18 ----
+--- 3,22 ----
+  #ifndef lint
+  static char rcsid[]=
+  "$Id$ (SRA)";
+! #endif /* lint */
+  
+  #include <stdio.h>
+  #include <signal.h>
+  #include <sys/types.h>
+  #include <sys/stat.h>
   #include <sys/ioctl.h>
++ #if defined(sun)
++ #include <sys/fcntl.h>
++ #include <sys/ttold.h>
++ #endif
   #ifdef TERMIOS
   #include <termios.h>
 ! #if defined(__linux__) || defined(__CYGWIN__)
@@ -828,7 +856,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
   char	*myself;			/* the command name */
   char	*prompt = "";			/* prompt string */
---- 39,45 ----
+--- 43,49 ----
   #ifdef STAT
     static char fep_statrc[] = FEP_STAT;
   #endif
@@ -836,6 +864,34 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
   char	*myself;			/* the command name */
   char	*prompt = "";			/* prompt string */
+***************
+*** 57,63 ****
+--- 61,71 ----
+  int	debug = OFF;			/* debug switch */
+  int	auto_tty_fix = ON;		/* fix tty mode automaticaly */
+  FILE	*script_fp = NULL;		/* script file pointer */
++ #if defined(sun)
++ void	catchsig (int);		/* function take care SIGCHILD */
++ #else
+  void	catchsig __P((int));		/* function take care SIGCHILD */
++ #endif
+  
+  #ifdef TERMIOS
+  #define ttystruct termios
+***************
+*** 72,78 ****
+--- 80,90 ----
+  int	columns;			/* terminal coulumn size */
+  char	*term_clear;			/* terminal clear code */
+  
++ #if defined(sun)
++ void	(*sighup)(int), (*sigchld)(int), (*sigtstp)(int);
++ #else
+  void	(*sighup) __P((int)), (*sigchld) __P((int)), (*sigtstp) __P((int));
++ #endif
+  					/* function buffer for signal */
+  
+  #ifdef TIOCSETN
 ***************
 *** 84,90 ****
   #ifdef KANJI
@@ -845,7 +901,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
   char	master_tty[16];			/* master tty name */
   char	slave_tty[16];			/* slave tty name */
---- 84,90 ----
+--- 96,102 ----
   #ifdef KANJI
   struct	jtchars jtchars_buf;		/* kanji tty characters */
   int	kmode_buf;			/* kanji mode */
@@ -854,8 +910,18 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   char	master_tty[16];			/* master tty name */
   char	slave_tty[16];			/* slave tty name */
 ***************
-*** 302,307 ****
---- 302,308 ----
+*** 296,307 ****
+--- 308,324 ----
+  fix_signal ()
+  {
+  #ifdef SIGWINCH
++ #if defined(sun)
++     void sigwinch (int);
++ #else
+      void sigwinch __P((int));
+  #endif
++ #endif
+  
       sighup = signal (SIGHUP, terminate);
       sigchld = signal (SIGCHLD, catchsig);
       sigtstp = signal (SIGTSTP, SIG_IGN);    
@@ -865,7 +931,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   #endif
 ***************
 *** 685,691 ****
---- 686,694 ----
+--- 702,710 ----
        */
       t = open ("/dev/tty", 2);
       if (t >= 0) {
@@ -877,7 +943,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
 ***************
 *** 818,823 ****
---- 821,833 ----
+--- 837,849 ----
       exit (0);
   }
   
@@ -892,26 +958,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   {
       char    c;
 ***************
-*** 828,833 ****
---- 838,853 ----
-  	master = 1;
-  	return;
-      }
-+ #ifdef __CYGWIN32__
-+     for (i = 0; i < 16; i++) {
-+ 	sprintf (master_tty, "/dev/ptmx");
-+ 	master = open (master_tty, O_RDWR);
-+ 	if (master >= 0) {
-+ 	    sprintf (slave_tty, "/dev/tty%x",i);
-+ 	    goto FOUND;
-+ 	}
-+     }
-+ #else
-      for (c = 'p'; c <= 's'; c++) {
-  	for (i = 0; i < 16; i++) {
-  	    sprintf (master_tty, "/dev/pty%c%x", c, i);
-***************
-*** 838,844 ****
+*** 850,856 ****
   	    }
   	}
       }
@@ -919,7 +966,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
       /*
        * Can't get master tty
        */
---- 858,864 ----
+--- 876,882 ----
   	    }
   	}
       }
@@ -928,7 +975,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
        * Can't get master tty
        */
 ***************
-*** 877,883 ****
+*** 889,895 ****
   # if defined(TIOCKGETC) && defined(TIOCKSETC)
       ioctl (0, TIOCKGETC, (char *) &jtchars_buf);
   # endif
@@ -936,7 +983,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
       FD_ZERO(&stdinmask);
       FD_ZERO(&mastermask);
---- 897,903 ----
+--- 915,921 ----
   # if defined(TIOCKGETC) && defined(TIOCKSETC)
       ioctl (0, TIOCKGETC, (char *) &jtchars_buf);
   # endif
@@ -945,7 +992,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
       FD_ZERO(&stdinmask);
       FD_ZERO(&mastermask);
 ***************
-*** 916,922 ****
+*** 928,934 ****
   # if defined(TIOCKGETC) && defined(TIOCKSETC)
       ioctl (slave, TIOCKSETC, (char *) &jtchars_buf);
   # endif
@@ -953,7 +1000,7 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
   #ifdef TIOCSWINSZ
       {
---- 936,942 ----
+--- 954,960 ----
   # if defined(TIOCKGETC) && defined(TIOCKSETC)
       ioctl (slave, TIOCKSETC, (char *) &jtchars_buf);
   # endif
@@ -962,11 +1009,16 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   #ifdef TIOCSWINSZ
       {
 ***************
-*** 944,950 ****
---- 964,972 ----
+*** 955,962 ****
+--- 981,994 ----
+  suspend()
   {
       long	pid;
++ #if defined(sun)
++     void	(*func) (int);
++ #else
       void	(*func) __P((int));
++ #endif
 + #ifndef __CYGWIN32__
       int		omask;
 + #endif
@@ -974,32 +1026,34 @@ diff -cr official+NetBSD/fep_main.c fep-cygwin/fep_main.c
   
       pid = getpid ();
 ***************
-*** 953,959 ****
---- 975,983 ----
+*** 965,971 ****
+--- 997,1005 ----
       signal (SIGTSTP, SIG_DFL);
       recover_tty();
   #define	mask(s)	(1 << ((s)-1))
-+ #ifndef __CYGWIN32__
++ #if !defined(__CYGWIN32__) && !defined(sun)
       omask = sigsetmask (sigblock (0) & ~mask (SIGTSTP));
 + #endif
       kill (0, SIGTSTP);
   
       if (kill (child_pid, SIGCONT) < 0 && errno == ESRCH) {
 ***************
-*** 964,970 ****
---- 988,996 ----
+*** 976,982 ****
+--- 1010,1018 ----
       kill (0, SIGCONT);
       signal (SIGCHLD, func);
       signal (SIGTSTP, SIG_IGN);
-+ #ifndef __CYGWIN32__
++ #if !defined(__CYGWIN32__) && !defined(sun)
       sigblock (mask (SIGTSTP));
 + #endif
       fix_tty ();
       if (look_var ("auto-repaint"))
   	fep_repaint(0);
-diff -cr official+NetBSD/fep_set.c fep-cygwin/fep_set.c
-*** official+NetBSD/fep_set.c	Mon Sep  2 15:54:01 2002
---- fep-cygwin/fep_set.c	Mon Sep  2 19:02:56 2002
+Only in fep.orig: fep_main.c.rej
+Only in fep: fep_main.o
+diff -cr fep.orig/fep_set.c fep/fep_set.c
+*** fep.orig/fep_set.c	Wed Sep 18 18:48:31 2002
+--- fep/fep_set.c	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -1156,9 +1210,10 @@ diff -cr official+NetBSD/fep_set.c fep-cygwin/fep_set.c
 ! #endif /* HASH */
       return (vp);
   }
-diff -cr official+NetBSD/fep_stat.h fep-cygwin/fep_stat.h
-*** official+NetBSD/fep_stat.h	Mon Sep  2 15:54:01 2002
---- fep-cygwin/fep_stat.h	Mon Sep  2 19:05:22 2002
+Only in fep: fep_set.o
+diff -cr fep.orig/fep_stat.h fep/fep_stat.h
+*** fep.orig/fep_stat.h	Wed Sep 18 18:48:31 2002
+--- fep/fep_stat.h	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,9 ****
   #ifndef lint
@@ -1176,9 +1231,9 @@ diff -cr official+NetBSD/fep_stat.h fep-cygwin/fep_stat.h
   
   extern long stat_obyte;
   extern long stat_ibyte;
-diff -cr official+NetBSD/fep_util.c fep-cygwin/fep_util.c
-*** official+NetBSD/fep_util.c	Mon Sep  2 15:54:01 2002
---- fep-cygwin/fep_util.c	Mon Sep  2 19:04:14 2002
+diff -cr fep.orig/fep_util.c fep/fep_util.c
+*** fep.orig/fep_util.c	Wed Sep 18 18:48:32 2002
+--- fep/fep_util.c	Wed Sep 18 18:44:49 2002
 ***************
 *** 3,16 ****
   #ifndef lint
@@ -1206,7 +1261,7 @@ diff -cr official+NetBSD/fep_util.c fep-cygwin/fep_util.c
   #include <stdio.h>
   #include <pwd.h>
   #include <sys/types.h>
-+ #if defined(__CYGWIN__)
++ #if defined(__CYGWIN__) || defined(sun)
 + #include <dirent.h>
 + #else
   #include <sys/dir.h>
@@ -1263,9 +1318,10 @@ diff -cr official+NetBSD/fep_util.c fep-cygwin/fep_util.c
   	return (iskanji (*cp));
   }
 ! #endif /* KANJI */
-diff -cr official+NetBSD/fep_vi.c fep-cygwin/fep_vi.c
-*** official+NetBSD/fep_vi.c	Mon Sep  2 15:54:21 2002
---- fep-cygwin/fep_vi.c	Mon Sep  2 19:02:30 2002
+Only in fep: fep_util.o
+diff -cr fep.orig/fep_vi.c fep/fep_vi.c
+*** fep.orig/fep_vi.c	Wed Sep 18 18:48:33 2002
+--- fep/fep_vi.c	Tue Sep  3 09:41:44 2002
 ***************
 *** 3,15 ****
   #ifndef lint
@@ -1329,9 +1385,10 @@ diff -cr official+NetBSD/fep_vi.c fep-cygwin/fep_vi.c
       import (cft, tchars_buf.t_quitc, insert_and_flush);
       import (cft, tchars_buf.t_eofc, send_eof);
       import (cft, tchars_buf.t_brkc, insert_and_flush);
-diff -cr official+NetBSD/feprc.sample fep-cygwin/feprc.sample
-*** official+NetBSD/feprc.sample	Mon Sep  2 15:54:02 2002
---- fep-cygwin/feprc.sample	Mon Sep  2 18:35:49 2002
+Only in fep: fep_vi.o
+diff -cr fep.orig/feprc.sample fep/feprc.sample
+*** fep.orig/feprc.sample	Wed Sep 18 18:48:33 2002
+--- fep/feprc.sample	Tue Sep  3 09:41:44 2002
 ***************
 *** 6,11 ****
 --- 6,13 ----
@@ -1361,3 +1418,4 @@ diff -cr official+NetBSD/feprc.sample fep-cygwin/feprc.sample
 +         fep-bind previous-history "\^[[A"
 +         fep-bind next-history "\^[[B"
 + 
+Only in fep: fepscript

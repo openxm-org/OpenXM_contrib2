@@ -10,6 +10,10 @@ static char rcsid[]=
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#if defined(sun)
+#include <sys/fcntl.h>
+#include <sys/ttold.h>
+#endif
 #ifdef TERMIOS
 #include <termios.h>
 #if defined(__linux__) || defined(__CYGWIN__)
@@ -57,7 +61,11 @@ int	histlen = -1;			/* history length */
 int	debug = OFF;			/* debug switch */
 int	auto_tty_fix = ON;		/* fix tty mode automaticaly */
 FILE	*script_fp = NULL;		/* script file pointer */
+#if defined(sun)
+void	catchsig (int);		/* function take care SIGCHILD */
+#else
 void	catchsig __P((int));		/* function take care SIGCHILD */
+#endif
 
 #ifdef TERMIOS
 #define ttystruct termios
@@ -72,7 +80,11 @@ int	lines;				/* terminal line size */
 int	columns;			/* terminal coulumn size */
 char	*term_clear;			/* terminal clear code */
 
+#if defined(sun)
+void	(*sighup)(int), (*sigchld)(int), (*sigtstp)(int);
+#else
 void	(*sighup) __P((int)), (*sigchld) __P((int)), (*sigtstp) __P((int));
+#endif
 					/* function buffer for signal */
 
 #ifdef TIOCSETN
@@ -296,7 +308,11 @@ DEFAULT:
 fix_signal ()
 {
 #ifdef SIGWINCH
+#if defined(sun)
+    void sigwinch (int);
+#else
     void sigwinch __P((int));
+#endif
 #endif
 
     sighup = signal (SIGHUP, terminate);
@@ -965,7 +981,11 @@ recover_tty()
 suspend()
 {
     long	pid;
+#if defined(sun)
+    void	(*func) (int);
+#else
     void	(*func) __P((int));
+#endif
 #ifndef __CYGWIN32__
     int		omask;
 #endif
@@ -977,7 +997,7 @@ suspend()
     signal (SIGTSTP, SIG_DFL);
     recover_tty();
 #define	mask(s)	(1 << ((s)-1))
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(sun)
     omask = sigsetmask (sigblock (0) & ~mask (SIGTSTP));
 #endif
     kill (0, SIGTSTP);
@@ -990,7 +1010,7 @@ suspend()
     kill (0, SIGCONT);
     signal (SIGCHLD, func);
     signal (SIGTSTP, SIG_IGN);
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(sun)
     sigblock (mask (SIGTSTP));
 #endif
     fix_tty ();

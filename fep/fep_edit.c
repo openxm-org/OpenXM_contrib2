@@ -24,6 +24,10 @@ static char rcsid[]=
 #if defined(__CYGWIN__)
 #include <sys/dirent.h>
 #define direct dirent
+#elif defined(sun)
+#include <dirent.h>
+#define direct dirent
+#include <unistd.h>
 #else
 #include <sys/dir.h>
 #endif

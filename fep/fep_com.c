@@ -22,6 +22,9 @@ static char rcsid[]=
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#if defined(sun)
+#include <sys/fcntl.h>
+#endif
 #include "fep_defs.h"
 #include "fep_glob.h"
 #include "fep_funcs.h"

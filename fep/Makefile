@@ -6,6 +6,7 @@
 # Options:
 #	KANJI:	SHIFT-JIS kanji code handling on ASCII KANJI UNIX
 #
+CC=gcc
 TARGET	= fep
 HEADER	= fep_defs.h fep_glob.h fep_funcs.h fep_stat.h
 SRC	= fep_main.c fep_edit.c fep_hist.c fep_com.c fep_funcs.c fep_set.c \
