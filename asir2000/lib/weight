@@ -706,10 +706,10 @@ def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 
 	if(jacobi(ExtMatColNum,NormMat1,WorkMat)){
 
-		Res=newvect(ExpMatColNum)$
-		for(I=0;I<ExpMatColNum;I++){
+		Res=newvect(ExtMatColNum)$
+		for(I=0;I<ExtMatColNum;I++){
 			Res[I]=newvect(2)$
-			Res[I][0]=Vars[I]$
+			Res[I][0]=ExtVars[I]$
 			Res[I][1]=WorkMat[ExtMatColNum-1][I]$
 		}
 
