@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.8 2001/06/25 10:01:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.9 2001/06/26 03:00:40 noro Exp $ */
 
 #include "ca.h"
 
@@ -942,6 +942,8 @@ BM fl;
 	int d,i,n;
 	UM t;
 
+	n = QTOS(DEG(DC(f)));
+	clearsfbm(bound,n,fl);
 	DEG(fl) = bound;
 	t = UMALLOC(bound);
 	for ( dc = DC(f); dc; dc = NEXT(dc) ) {
@@ -950,7 +952,6 @@ BM fl;
 		for ( i = 0; i <= DEG(t); i++ )
 			COEF(COEF(fl)[i])[d] = COEF(t)[i];
 	}
-	n = QTOS(DEG(DC(f)));
 	for ( i = 0; i < bound; i++ )
 		degum(COEF(fl)[i],n);
 }
