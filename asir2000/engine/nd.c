@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.115 2004/11/18 08:29:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.116 2004/12/01 12:36:17 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,6 +8,7 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 
+static int nd_nalg;
 #if 0
 static int ndv_alloc;
 #endif
@@ -43,6 +44,7 @@ static int nd_demand;
 
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
+ND nd_pseudo_monic(int m,ND p);
 
 void nd_free_private_storage()
 {
@@ -1580,7 +1582,7 @@ NODE nd_gb(int m,int ishomo,int checkonly)
 	NODE r,g,t;
 	ND_pairs d;
 	ND_pairs l;
-	ND h,nf,s,head;
+	ND h,nf,s,head,nf1;
 	NDV nfv;
 	Q q,num,den;
 	union oNDC dn;
@@ -1619,6 +1621,15 @@ again:
 			if ( checkonly ) return 0;
 			if ( DP_Print ) { printf("+"); fflush(stdout); }
 			nd_removecont(m,nf);
+			if ( nd_nalg ) {
+				nf1 = nd_pseudo_monic(m,nf); nd_free(nf);
+				stat = nd_nf(m,nf1,nd_ps,1,0,&nf);
+				if ( stat ) {
+					NEXT(l) = d; d = l;
+					d = nd_reconstruct(0,d);
+					goto again;
+				}
+			}
 			nfv = ndtondv(m,nf); nd_free(nf);
 			nh = ndv_newps(m,nfv,0);
 			d = update_pairs(d,g,nh);
@@ -5095,4 +5106,78 @@ UINT *nd_det_compute_bound(NDV **dm,int n,int j)
 	r = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
 	for ( k = 0; k < nd_wpd; k++ ) r[k] = d0[k];
 	return r;
+}
+
+DL nd_separate_d(UINT *d,UINT *trans)
+{
+	int n,ntrans,td,i,e;
+	DL a;
+
+	n = nd_nvar; ntrans = n-nd_nalg;
+	ndl_zero(trans);
+	td = 0;
+	for ( i = 0; i < ntrans; i++ ) {
+		e = GET_EXP(d,i);
+		PUT_EXP(trans,i,e);
+		td += MUL_WEIGHT(e,i);
+	}
+	TD(trans) = td;
+	if ( nd_blockmask) ndl_weight_mask(trans);
+	NEWDL(a,nd_nalg);
+	td = 0;
+	for ( ; i < n; i++ ) {
+		e = GET_EXP(d,i);
+		a->d[i-ntrans] = e;
+		td += e;
+	}
+	a->td = td;
+	return a;
+}
+
+ND nd_pseudo_monic(int mod,ND p)
+{
+	UINT *trans,*t;
+	DL alg;
+	MP mp0,mp;
+	NM m,m0,m1;
+	DL dl;
+	DP nm;
+	NDV ndv;
+	DAlg lc,inv;
+	ND s,c;
+	int n,ntrans,i,e,td;
+
+	n = nd_nvar; ntrans = n-nd_nalg;
+	NEWNM(m0);
+	NEWNM(m1);
+	alg = nd_separate_d(HDL(p),DL(m0));
+	mp0 = 0; NEXTMP(mp0,mp); mp->c = (P)HCQ(p); mp->dl = alg;
+	if ( !mp->dl->td )
+		return p;
+	for ( m = NEXT(BDY(p)); m; m = NEXT(m) ) {
+		alg = nd_separate_d(DL(m),DL(m1));
+		if ( !ndl_equal(DL(m0),DL(m1)) )
+			break;
+		NEXTMP(mp0,mp); mp->c = (P)CQ(m); mp->dl = alg;
+	}
+	NEXT(mp) = 0;
+	MKDP(nd_nalg,mp0,nm);
+	MKDAlg(nm,ONE,lc);
+	invdalg(lc,&inv);
+	ndv = ndtondv(0,p);
+	for ( s = 0, mp = BDY(inv->nm); mp; mp = NEXT(mp) ) {
+		CQ(m0) = (Q)mp->c;
+		dl = mp->dl;
+		for ( td = 0, i = ntrans; i < n; i++ ) {
+			e = dl->d[i-ntrans];
+			ndl_zero(DL(m0));
+			PUT_EXP(DL(m0),i,e);
+			td += MUL_WEIGHT(e,i);
+		}
+		TD(DL(m0)) = td;
+		if ( nd_blockmask) ndl_weight_mask(trans);
+		s = nd_add(0,s,ndv_mul_nm(0,m0,ndv));
+	}
+	ndv_free(ndv);
+	return s;
 }
