@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.26 2001/10/09 01:36:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.27 2001/12/25 02:39:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -52,6 +52,7 @@
 #include <signal.h>
 #include <string.h>
 #if !defined(VISUAL)
+#include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
 #endif
@@ -263,7 +264,7 @@ void Ptry_bind_listen(NODE arg,Q *rp)
 	char port_str[BUFSIZ];
 	int port,s,use_unix;
 
-	if ( !ARG0(arg) || NUM(ARG0(arg)) ) {
+	if ( IS_CYGWIN || !ARG0(arg) || NUM(ARG0(arg)) ) {
 		port = QTOS((Q)ARG0(arg));
 		sprintf(port_str,"%d",port);
 		use_unix = 0;
@@ -285,7 +286,7 @@ void Ptry_connect(NODE arg,Q *rp)
 	char *host;
 	int port,s,use_unix;
 
-	if ( !ARG1(arg) || NUM(ARG1(arg)) ) {
+	if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
 		port = QTOS((Q)ARG1(arg));
 		sprintf(port_str,"%d",port);
 		use_unix = 0;
@@ -306,7 +307,7 @@ void Ptry_accept(NODE arg,Q *rp)
 {
 	int use_unix,s;
 
-	if ( !ARG1(arg) || NUM(ARG1(arg)) )
+	if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) )
 		use_unix = 0;
 	else
 		use_unix = 1;
@@ -327,7 +328,7 @@ void Pregister_server(NODE arg,Q *rp)
 
 	cs = QTOS((Q)ARG0(arg));		
 	ss = QTOS((Q)ARG2(arg));		
-	if ( !ARG1(arg) || NUM(ARG1(arg)) ) {
+	if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
 		sprintf(cport_str,"%d",QTOS((Q)ARG1(arg)));
 		use_unix = 0;
 	} else {
@@ -397,11 +398,11 @@ void Pox_launch_generic(NODE arg,Q *rp)
 	host = (arg&&ARG0(arg))?BDY((STRING)ARG0(arg)):0;
 	launcher = BDY((STRING)ARG1(arg));
 	server = BDY((STRING)ARG2(arg));
-	use_unix = ARG3(arg) ? 1 : 0;
+	use_unix = !IS_CYGWIN && ARG3(arg) ? 1 : 0;
 	use_ssh = ARG4(arg) ? 1 : 0;
 	use_x = ARG5(arg) ? 1 : 0;
 	conn_to_serv = QTOS((Q)ARG6(arg));
-	if ( !host )
+	if ( !IS_CYGWIN && !host )
 		use_unix = 1;
 	ox_launch_generic(host,launcher,server,
 		use_unix,use_ssh,use_x,conn_to_serv,&ret);
@@ -469,6 +470,57 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 	STOQ(ind,*rp);
 }
 
+#if defined(__CYGWIN__)
+static int get_start_path(char *buf)
+{
+	static char start_path[BUFSIZ];
+	static int start_initialized = 0;
+	char name[BUFSIZ];
+
+	if ( start_initialized ) {
+		strcpy(buf,start_path);
+		return 1;
+	}
+
+	/* Windows2000 */
+	strcpy(buf,"c:\\winnt\\system32\\start.exe");
+	cygwin_conv_to_full_posix_path(buf,name);
+	if ( !access(name,X_OK) ) {
+		strcpy(start_path,buf);
+		return 1;
+	}
+
+	/* Windows98 */
+	strcpy(buf,"c:\\windows\\command\\start.exe");
+	cygwin_conv_to_full_posix_path(buf,name);
+	if ( !access(name,X_OK) ) {
+		strcpy(start_path,buf);
+		return 1;
+	}
+
+	return 0;
+}
+
+static void get_launcher_path(char *buf)
+{
+	static char rootname[BUFSIZ];
+	static char launcher_path[BUFSIZ];
+	static int launcher_initialized = 0;
+	char name[BUFSIZ];
+	
+	if ( launcher_initialized ) {
+		strcpy(buf,launcher_path);
+		return;
+	}
+
+	get_rootdir(rootname,sizeof(rootname));
+	sprintf(name,"%s/ox_launch.exe",rootname);
+	cygwin_conv_to_full_win32_path(name,launcher_path);		
+	launcher_initialized = 1;
+	strcpy(buf,launcher_path);
+}
+#endif
+
 void spawn_server(char *host,char *launcher,char *server,
 	int use_unix,int use_ssh,int use_x,int conn_to_serv,
 	char *control_port_str,char *server_port_str)
@@ -481,6 +533,9 @@ void spawn_server(char *host,char *launcher,char *server,
 	char *av[BUFSIZ];
 #if !defined(VISUAL)
 	char cmd[BUFSIZ];
+#endif
+#if defined(__CYGWIN__)
+	char win_start[BUFSIZ],win_launcher[BUFSIZ];
 #endif
 	void Pget_rootdir();
 
@@ -520,30 +575,27 @@ void spawn_server(char *host,char *launcher,char *server,
 //	_spawnv(_P_NOWAIT,"d:\\home\\noro\\engine2000\\debug\\engine.exe",av);
 //	printf("ox_launch 127.0.0.1 %s %s %s %s 0\n",conn_str,control_port_str,server_port_str,server);
 #else
-	if ( use_unix ) {
+	get_start_path(win_start);
+	if ( use_unix || !host ) {
 		if ( !fork() ) {
-#if 1
 			setpgid(0,getpid());
-			if ( dname )
 #if defined(__CYGWIN__)
+			if ( dname && get_start_path(win_start) )
 			{
-				execlp("start.exe","start",
-					"c:\\cygwin\\usr\\local\\lib\\asir\\ox_launch.exe",".",conn_str,
+				get_launcher_path(win_launcher);
+				execlp(win_start,"start",win_launcher,
+					use_unix?".":"127.1",conn_str,
 					control_port_str,server_port_str,server,"1",0);
 			}
 #else
+			if ( dname )
 				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
-					"-geometry","60x10","-e",launcher,".",conn_str,
+					"-geometry","60x10","-e",launcher,use_unix?".":"127.1",conn_str,
 					control_port_str,server_port_str,server,dname,0);
 #endif
 			else 
-				execlp(launcher,launcher,".",conn_str,
+				execlp(launcher,launcher,use_unix?".":"127.1",conn_str,
 					control_port_str,server_port_str,server,dname0,"-nolog",0);
-#else
-	printf("ox_launch.exe . %s %s %s %s %s %s",conn_str,control_port_str,
-server_port_str,server,dname0,"-nolog");
-	exit(0);
-#endif
 		}
 	} else if ( conn_to_serv == 2 ) {
 		/* special support for java */
@@ -617,12 +669,12 @@ void ox_launch_main(int with_x,NODE arg,Obj *p)
 	control = (char *)MALLOC(BUFSIZ);
 	if ( !arg || ( !ARG0(arg) && argc(arg) == 1 ) ) {
 		sprintf(control,"%s/ox_launch",asir_libdir);
-		use_unix = 1;
+		use_unix = IS_CYGWIN ? 0 : 1;
 		servername = (char *)MALLOC(BUFSIZ);
 		sprintf(servername,"%s/ox_asir",asir_libdir);
 	} else if ( !ARG0(arg) && argc(arg) == 2 ) {
 		sprintf(control,"%s/ox_launch",asir_libdir);
-		use_unix = 1;
+		use_unix = IS_CYGWIN ? 0 : 1;
 		str = BDY((STRING)ARG1(arg));
 		if ( str[0] == '/' )
 			servername = str;
@@ -633,7 +685,7 @@ void ox_launch_main(int with_x,NODE arg,Obj *p)
 	} else {
 		sprintf(control,"%s/ox_launch",BDY((STRING)ARG1(arg)));
 		if ( !ARG0(arg) )
-			use_unix = 1;
+			use_unix = IS_CYGWIN ? 0 : 1;
 		else
 			use_unix = 0;
 		str = BDY((STRING)ARG2(arg));
