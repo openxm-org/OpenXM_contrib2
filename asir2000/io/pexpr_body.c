@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.6 2004/12/17 03:09:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.7 2004/12/18 16:50:10 saito Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -323,7 +323,7 @@ IMAT xmat;
 	for(j = 0; j < row; j++) {
 		PUTS("( ");
 		for(i = 0; i < col; i++) {
-			cr = j * row + i;
+			cr = j * col + i;
 			if( ent.cr == cr ) {
 				PRINTEXPR(vl, (pointer)ent.body); PUTS(" ");
 				GetNextIent(&Im, &ent, &c);

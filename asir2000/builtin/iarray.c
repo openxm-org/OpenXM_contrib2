@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/iarray.c,v 1.1 2004/12/18 16:50:10 saito Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -91,7 +91,7 @@ Obj body;
 		m->root = (pointer)Im;
 		m->toor = (pointer)Im;
 		m->clen = 1;
-		MEnt(row * m->row + col, row, col, body, &Im->ient[0]);
+		MEnt(row * m->col + col, row, col, body, &Im->ient[0]);
 		Im->ient[1] = zent;
 	} else {
 		Im = (pointer)m->toor;
@@ -104,10 +104,10 @@ Obj body;
 			++(m->clen);
 			Imt->fore = (pointer)Im;
 			Imt->next = 0;
-			MEnt(row * m->row + col, row, col, body, &Im->ient[d]);
+			MEnt(row *  m->col + col, row, col, body, &Im->ient[d]);
 			Imt->ient[0] = zent;
 		} else {
-			MEnt(row * m->row + col, row, col, body, &Im->ient[d]);
+			MEnt(row * m->col + col, row, col, body, &Im->ient[d]);
 			Im->ient[d + 1] = zent;
 		}
 	}
@@ -125,7 +125,8 @@ Obj trg;
 
 	if ( m->row <= row || m->col <= col || row < 0 || col < 0 )
 		error("putim : Out of rage");
-	cr = row * m->row + col;
+	cr = row * m->col + col;
+printf("cr = %d\n",cr);
 	if ( ! m->clen ) {
 		if( trg == 0 ) return;
 		AppendIent(m, row, col, trg);
@@ -209,7 +210,7 @@ Obj *trg;
 	/* zero matrix case */
 		*trg = (Obj)0;
 	} else {
-		cr = row * m->row + col;
+		cr = row * m->col + col;
 		c = -1;
 		Im = (pointer)m->root;
 		GetNextIent( &Im, &ent, &c);
