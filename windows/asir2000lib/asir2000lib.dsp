@@ -687,6 +687,10 @@ SOURCE="..\..\asir2000\engine\up_lm.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\builtin\user.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\parse\util.c"
 # End Source File
 # Begin Source File

@@ -665,6 +665,10 @@ SOURCE=.\engine\up_lm.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\builtin\user.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\parse\util.c
 # End Source File
 # Begin Source File
