@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.8 2001/06/29 09:08:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.9 2001/10/09 01:36:12 noro Exp $
 */
 #include "ca.h"
 
@@ -639,17 +639,19 @@ int mulremum_enc(int p,int n,UM dp,int a,int b)
 	return r;
 }
 
+/* sigma : alpha -> alpha^q */
+
 void gfs_galois_action(GFS a,Q e,GFS *c)
 {
-	Q p;
+	Q q;
 	int i,k;
 	GFS t,s;
 
 	t = a;
 	k = QTOS(e);
-	STOQ(current_gfs_p,p);
+	STOQ(current_gfs_q,q);
 	for ( i = 0; i < k; i++ ) {
-		pwrgfs(t,p,&s); t = s;
+		pwrgfs(t,q,&s); t = s;
 	}
 	*c = t;
 }
