@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.31 2004/07/07 07:40:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.32 2004/07/13 07:59:54 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -148,6 +148,7 @@ typedef struct oFUNC {
 	char *name,*fullname;
 	int argc;
 	int type;
+	int secure;
 	aid id;
 	union {
 		void (*binf)();

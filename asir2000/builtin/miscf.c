@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.22 2004/03/11 09:52:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.23 2004/03/11 09:53:34 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -59,6 +59,8 @@
 #include <windows.h>
 #endif
 
+void Pset_secure_mode();
+void Pset_secure_flag();
 void Pquit(), Pdebug(), Pnmono(), Pnez(), Popt(), Pshell(), Pheap();
 void Ptoplevel();
 void Perror(), Perror3(), Pversion(), Pcopyright(), Pflist(), Pdelete_history(), Ppause(), Pxpause();
@@ -77,6 +79,8 @@ void Ptest();
 void delete_history(int,int);
 
 struct ftab misc_tab[] = {
+	{"set_secure_mode",Pset_secure_mode,-1},
+	{"set_secure_flag",Pset_secure_flag,-2},
 	{"module_list",Pmodule_list,0},
 	{"remove_module",Premove_module,1},
 	{"module_definedp",Pmodule_definedp,1},
@@ -113,6 +117,30 @@ struct ftab misc_tab[] = {
 #endif
 	{0,0,0},
 };
+
+void Pset_secure_mode(NODE arg,Q *rp)
+{
+	int s;
+	if ( argc(arg) )
+		setsecuremode(QTOS((Q)ARG0(arg)));
+	s = getsecuremode();
+	STOQ(s,*rp);
+}
+
+void Pset_secure_flag(NODE arg,Q *rp)
+{
+	int ac,s;
+
+	ac = argc(arg);
+	if ( !ac )
+		error("set_secure_flag : a function name must be specified");
+	if ( ac == 2 )
+		s = QTOS((Q)ARG1(arg));
+	else
+		s = 1;
+	setsecureflag(BDY((STRING)ARG0(arg)),s);
+	STOQ(s,*rp);
+}
 
 void Ptest(arg,rp)
 NODE arg;
