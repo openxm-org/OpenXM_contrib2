@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.6 2001/04/20 02:34:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.7 2001/04/20 02:46:55 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 
 void homfctr();
+void mfctr_wrt_v();
 
 void fctrp(vl,f,dcp)
 VL vl;
@@ -72,6 +73,30 @@ DCP *dcp;
 			ufctr(f,1,dcp);
 		else
 			mfctr(nvl,f,dcp);
+	}
+}
+
+void fctr_wrt_v_p(vl,f,v,dcp)
+VL vl;
+P f;
+V v;
+DCP *dcp;
+{
+	VL nvl;
+	DCP dc;
+
+	if ( !f || NUM(f) ) {
+		NEWDC(dc); COEF(dc) = f; DEG(dc) = ONE;
+		NEXT(dc) = 0; *dcp = dc;
+		return;
+	} else if ( !qpcheck((Obj)f) )
+		error("fctrp : invalid argument");	
+	else {
+		clctv(vl,f,&nvl);
+		if ( !NEXT(nvl) ) 
+			ufctr(f,1,dcp);
+		else
+			mfctr_wrt_v(nvl,f,v,dcp);
 	}
 }
 
@@ -117,6 +142,45 @@ DCP *dcp;
 		minlcdegp(vl,COEF(dct),&mvl,&pmin); 
 		min_common_vars_in_coefp(vl,COEF(dct),&mvl,&pmin); 
 #endif
+		pcp(mvl,pmin,&ppmin,&cmin);
+		if ( !NUM(cmin) ) {
+			mfctrmain(mvl,cmin,&dcs);
+			for ( dcr = dcs; dcr; dcr = NEXT(dcr) ) {
+				DEG(dcr) = DEG(dct);
+				reorderp(vl,mvl,COEF(dcr),&t); COEF(dcr) = t;
+			}
+			for ( ; NEXT(dc); dc = NEXT(dc) );
+			NEXT(dc) = dcs;
+		}
+		mfctrmain(mvl,ppmin,&dcs);
+		for ( dcr = dcs; dcr; dcr = NEXT(dcr) ) {
+			DEG(dcr) = DEG(dct);
+			reorderp(vl,mvl,COEF(dcr),&t); COEF(dcr) = t;
+		}
+		for ( ; NEXT(dc); dc = NEXT(dc) );
+		NEXT(dc) = dcs;
+	}
+	adjsgn(f,dc0); *dcp = dc0;
+}
+
+void mfctr_wrt_v(vl,f,v,dcp)
+VL vl;
+P f;
+V v;
+DCP *dcp;
+{
+	DCP dc,dc0,dct,dcs,dcr;
+	P p,pmin,ppmin,cmin,t;
+	VL nvl,mvl;
+	Q c;
+
+	ptozp(f,1,&c,&p);
+	NEWDC(dc0); dc = dc0; COEF(dc) = (P)c; DEG(dc) = ONE; NEXT(dc) = 0;
+	msqfr(vl,p,&dct);
+	for ( ; dct; dct = NEXT(dct) ) {
+		clctv(vl,f,&nvl);
+		reordvar(nvl,v,&mvl);
+		reorderp(mvl,vl,f,&pmin);
 		pcp(mvl,pmin,&ppmin,&cmin);
 		if ( !NUM(cmin) ) {
 			mfctrmain(mvl,cmin,&dcs);

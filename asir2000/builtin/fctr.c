@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.3 2000/08/22 05:03:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.4 2001/03/29 09:49:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,7 +57,7 @@ void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
 void Pirred_check(), Pnfctr_mod();
 
 struct ftab fctr_tab[] = {
-	{"fctr",Pfctr,1},
+	{"fctr",Pfctr,-2},
 	{"gcd",Pgcd,-3},
 	{"gcdz",Pgcdz,2},
 	{"lcm",Plcm,2},
@@ -86,7 +86,12 @@ LIST *rp;
 	DCP dc;
 
 	asir_assert(ARG0(arg),O_P,"fctr");
-	fctrp(CO,(P)ARG0(arg),&dc);
+	if ( argc(arg) == 1 )
+		fctrp(CO,(P)ARG0(arg),&dc);
+	else {
+		asir_assert(ARG1(arg),O_P,"fctr");
+		fctr_wrt_v_p(CO,(P)ARG0(arg),VR((P)ARG1(arg)),&dc);
+	}
 	dcptolist(dc,rp);
 }
 
