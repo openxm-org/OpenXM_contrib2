@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.9 2000/12/08 08:26:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.10 2000/12/11 02:00:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -722,7 +722,7 @@ P *dnp;
 		divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
 	}
 	NEWMP(m); m->dl = d; chsgnmp(mod,(P)c1,&m->c); NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p2,s,&t);
+	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,s,p2,&t);
 	if ( NUM(c2) ) {
 		addmd(CO,mod,p1,t,&r); h = p0;
 	} else {

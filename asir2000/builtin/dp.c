@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.11 2000/12/08 08:26:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.12 2000/12/11 02:00:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -77,10 +77,12 @@ void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod();
 void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 
-void Pdp_weyl_red(),Pdp_weyl_sp(),Pdp_weyl_nf();
+void Pdp_weyl_red();
+void Pdp_weyl_sp();
+void Pdp_weyl_nf(),Pdp_weyl_nf_mod();
 void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main();
 void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main();
-void Pdp_weyl_mul();
+void Pdp_weyl_mul(),Pdp_weyl_mul_mod();
 
 struct ftab dp_tab[] = {
 	/* content reduction */
@@ -118,6 +120,7 @@ struct ftab dp_tab[] = {
 /* weyl algebra */
 	/* multiplication */
 	{"dp_weyl_mul",Pdp_weyl_mul,2},
+	{"dp_weyl_mul_mod",Pdp_weyl_mul_mod,3},
 
 	/* s-poly */
 	{"dp_weyl_sp",Pdp_weyl_sp,2},
@@ -127,6 +130,7 @@ struct ftab dp_tab[] = {
 
 	/* normal form */
 	{"dp_weyl_nf",Pdp_weyl_nf,4},
+	{"dp_weyl_nf_mod",Pdp_weyl_nf_mod,5},
 
 	/* Buchberger algorithm */
 	{"dp_weyl_gr_main",Pdp_weyl_gr_main,5},
@@ -509,6 +513,38 @@ DP *rp;
 	do_weyl = 0;
 }
 
+void Pdp_nf_mod(arg,rp)
+NODE arg;
+DP *rp;
+{
+	NODE b;
+	DP g;
+	DP *ps;
+	int mod,full,ac;
+	NODE n,n0;
+
+	ac = argc(arg);
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_nf_mod");
+	asir_assert(ARG1(arg),O_DP,"dp_weyl_nf_mod");
+	asir_assert(ARG2(arg),O_VECT,"dp_weyl_nf_mod");
+	asir_assert(ARG3(arg),O_N,"dp_weyl_nf_mod");
+	asir_assert(ARG4(arg),O_N,"dp_weyl_nf_mod");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		*rp = 0; return;
+	}
+	b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
+	full = QTOS((Q)ARG3(arg)); mod = QTOS((Q)ARG4(arg));
+	for ( n0 = n = 0; b; b = NEXT(b) ) {
+		NEXTNODE(n0,n);
+		BDY(n) = (pointer)QTOS((Q)BDY(b));
+	}
+	if ( n0 )
+		NEXT(n) = 0;
+	do_weyl = 1;
+	dp_nf_mod(n0,g,ps,mod,full,rp);
+	do_weyl = 0;
+}
+
 void Pdp_true_nf(arg,rp)
 NODE arg;
 LIST *rp;
@@ -537,7 +573,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_nf_mod(arg,rp)
+void Pdp_weyl_nf_mod(arg,rp)
 NODE arg;
 DP *rp;
 {
@@ -547,7 +583,6 @@ DP *rp;
 	int mod,full,ac;
 	NODE n,n0;
 
-	do_weyl = 0;
 	ac = argc(arg);
 	asir_assert(ARG0(arg),O_LIST,"dp_nf_mod");
 	asir_assert(ARG1(arg),O_DP,"dp_nf_mod");
@@ -565,7 +600,9 @@ DP *rp;
 	}
 	if ( n0 )
 		NEXT(n) = 0;
-	dp_nf_mod(n,g,ps,mod,full,rp);
+	do_weyl = 1;
+	dp_nf_mod(n0,g,ps,mod,full,rp);
+	do_weyl = 0;
 }
 
 void Pdp_true_nf_mod(arg,rp)
@@ -685,6 +722,7 @@ LIST *rp;
 	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)r;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
+
 void Pdp_subd(arg,rp)
 NODE arg;
 DP *rp;
@@ -707,6 +745,22 @@ DP *rp;
 	asir_assert(p1,O_DP,"dp_weyl_mul"); asir_assert(p2,O_DP,"dp_mul");
 	do_weyl = 1;
 	muld(CO,p1,p2,rp);
+	do_weyl = 0;
+}
+
+void Pdp_weyl_mul_mod(arg,rp)
+NODE arg;
+DP *rp;
+{
+	DP p1,p2;
+	Q m;
+
+	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg); m = (Q)ARG2(arg);
+	asir_assert(p1,O_DP,"dp_weyl_mul_mod");
+	asir_assert(p2,O_DP,"dp_mul_mod");
+	asir_assert(m,O_N,"dp_mul_mod");
+	do_weyl = 1;
+	mulmd(CO,QTOS(m),p1,p2,rp);
 	do_weyl = 0;
 }
 
