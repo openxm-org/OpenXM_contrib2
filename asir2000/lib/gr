@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.14 2001/11/19 01:40:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.15 2002/06/12 08:19:04 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -128,22 +128,33 @@ def tolex(G0,V,O,W)
 {
 	TM = TE = TNF = 0;
 	N = length(V); HM = hmlist(G0,V,O); ZD = zero_dim(HM,V,O);
-	if ( !ZD )
-		error("tolex : ideal is not zero-dimensional!");
-	MB = dp_mbase(map(dp_ptod,HM,V));
+	if ( ZD )
+		MB = dp_mbase(map(dp_ptod,HM,V));
+	else
+		MB = 0;
 	for ( J = 0; ; J++ ) {
 		M = lprime(J);
 		if ( !valid_modulus(HM,M) )
 			continue;
-		T0 = time()[0]; GM = tolexm(G0,V,O,W,M); TM += time()[0] - T0;
-		dp_ord(2);
-		DL = map(dp_etov,map(dp_ht,map(dp_ptod,GM,W)));
-		D = newvect(N); TL = [];
-		do 
-			TL = cons(dp_dtop(dp_vtoe(D),W),TL);
-		while ( nextm(D,DL,N) );
-		L = npos_check(DL); NPOSV = L[0]; DIM = L[1];
-		T0 = time()[0]; NF = gennf(G0,TL,V,O,W[N-1],1)[0];
+		T0 = time()[0]; 
+		if ( ZD ) {
+			GM = tolexm(G0,V,O,W,M); 
+			dp_ord(2);
+			DL = map(dp_etov,map(dp_ht,map(dp_ptod,GM,W)));
+			D = newvect(N); TL = [];
+			do 
+				TL = cons(dp_dtop(dp_vtoe(D),W),TL);
+			while ( nextm(D,DL,N) );
+		} else {
+			GM = dp_gr_mod_main(G0,W,0,M,2);
+			dp_ord(2);
+			for ( T = GM, S = 0; T != []; T = cdr(T) )
+				for ( D = dp_ptod(car(T),V); D; D = dp_rest(D) )
+					S += dp_ht(D);
+			TL = dp_terms(S,V);
+		}
+		TM += time()[0] - T0;
+		T0 = time()[0]; NF = gennf(G0,TL,V,O,W[N-1],ZD)[0];
 		TNF += time()[0] - T0;
 		T0 = time()[0];
 		R = tolex_main(V,O,NF,GM,M,MB);
@@ -316,12 +327,20 @@ def dptov(P,W,MB)
 
 def tolex_main(V,O,NF,GM,M,MB)
 {
-	DIM = length(MB);
-	DV = newvect(DIM);
+	if ( MB ) {
+		PosDim = 0;
+		DIM = length(MB);
+		DV = newvect(DIM);
+	} else
+		PosDim = 1;
 	for ( T = GM, SL = [], LCM = 1; T != []; T = cdr(T) ) {
 		S = p_terms(car(T),V,2);
+		if ( PosDim ) {
+			MB = gather_nf_terms(S,NF,V,O);
+			DV = newvect(length(MB));
+		}
 		dp_ord(O); RHS = termstomat(NF,map(dp_ptod,cdr(S),V),MB,M);
-		dp_ord(0); NHT = nf_tab_gsl(dp_ptod(LCM*car(S),V),NF);
+		dp_ord(O); NHT = nf_tab_gsl(dp_ptod(LCM*car(S),V),NF);
 		dptov(NHT[0],DV,MB);
 		dp_ord(O); B = hen_ttob_gsl([DV,NHT[1]],RHS,cdr(S),M);
 		if ( !B )
@@ -336,6 +355,25 @@ def tolex_main(V,O,NF,GM,M,MB)
 			print(["DN",B[1]]);
 	}
 	return SL;
+}
+
+/*
+ * NF = [Pairs,DN]
+ *  Pairs = [[NF1,T1],[NF2,T2],...]
+ */
+
+def gather_nf_terms(S,NF,V,O)
+{
+	R = 0;
+	for ( T = S; T != []; T = cdr(T) ) {
+		DT = dp_ptod(car(T),V);
+		for ( U = NF[0]; U != []; U = cdr(U) )
+			if ( car(U)[1] == DT ) {
+				R += tpoly(dp_terms(car(U)[0],V));
+				break;
+			}
+	}
+	return map(dp_ptod,p_terms(R,V,O),V);
 }
 
 def reduce_dn(L)
@@ -464,6 +502,8 @@ def vtop(S,L,GSL)
 		return ptozp(A);
 	}
 }
+
+/* broken */
 
 def leq_nf(TL,NF,LHS,V)
 {
