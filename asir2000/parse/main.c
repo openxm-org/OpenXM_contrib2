@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.21 2003/04/02 09:43:33 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.22 2003/10/19 02:54:41 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -215,6 +215,7 @@ main(int argc,char *argv[])
 #endif
 		if ( SETJMP(main_env) )
 			prompt();
+		restore_handler();
 		read_eval_loop();
 	}
 }
