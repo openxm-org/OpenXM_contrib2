@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.2 2000/08/21 08:31:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -224,6 +224,25 @@ P *gp;
 	else {
 		for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
 			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); mptop(COEF(dc),&COEF(dcr));
+		}
+		NEXT(dcr) = 0; MKP(VR(f),dcr0,*gp);
+	}
+}
+
+void sfptop(f,gp)
+P f;
+P *gp;
+{
+	DCP dc,dcr,dcr0;
+	Q q;
+
+	if ( !f ) 
+		*gp = 0;
+	else if ( NUM(f) ) {
+		gfstomq((GFS)f,gp);
+	} else {
+		for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
+			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); sfptop(COEF(dc),&COEF(dcr));
 		}
 		NEXT(dcr) = 0; MKP(VR(f),dcr0,*gp);
 	}

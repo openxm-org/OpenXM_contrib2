@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.10 2000/12/11 02:00:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.11 2000/12/22 10:03:29 saito Exp $ 
 */
 #include <stdio.h>
 
@@ -119,6 +119,7 @@ typedef void * pointer;
 #define N_LM 6
 #define N_GF2N 7
 #define N_GFPN 8
+#define N_GFS 9
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
@@ -236,6 +237,14 @@ typedef struct oMQ {
 	char pad;
 	int cont;
 } *MQ;
+
+typedef struct oGFS {
+	short id;
+	char nid;
+	char pad;
+	int cont;
+} *GFS;
+
 
 typedef struct oP {
 	short id;
@@ -425,6 +434,7 @@ struct oEGT {
 #define FF_GFP 1
 #define FF_GF2N 2
 #define FF_GFPN 3
+#define FF_GFS 4
 
 /* include interval.h */
 #include "interval.h"
@@ -524,6 +534,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 /* cell allocators */
 #define NEWQ(q) ((q)=(Q)MALLOC(sizeof(struct oQ)),OID(q)=O_N,NID(q)=N_Q)
 #define NEWMQ(q) ((q)=(MQ)MALLOC_ATOMIC(sizeof(struct oMQ)),OID(q)=O_N,NID(q)=N_M)
+#define NEWGFS(q) ((q)=(GFS)MALLOC_ATOMIC(sizeof(struct oGFS)),OID(q)=O_N,NID(q)=N_GFS)
 #define NEWP(p) ((p)=(P)MALLOC(sizeof(struct oP)),OID(p)=O_P)
 #define NEWR(r) ((r)=(R)MALLOC(sizeof(struct oR)),OID(r)=O_R,(r)->reduced=0)
 #define NEWLIST(l) ((l)=(LIST)MALLOC(sizeof(struct oLIST)),OID(l)=O_LIST)
@@ -609,6 +620,8 @@ SGN(q)=((n)>0?1:-1),NM(q)=NALLOC(1),\
 PL(NM(q))=1,BD(NM(q))[0]=ABS(n),DN(q)=0,(q)))
 #define UTOMQ(a,b) \
 ((a)?(NEWMQ(b),CONT(b)=(unsigned int)(a),(b)):((b)=0))
+#define MKGFS(a,b) \
+((NEWGFS(b),CONT(b)=(a),(b)))
 #define STOMQ(a,b) \
 ((a)?(NEWMQ(b),CONT(b)=(a),(b)):((b)=0))
 #define UTON(u,n) \
@@ -1154,6 +1167,14 @@ void divgfpn(GFPN,GFPN,GFPN *);
 void chsgngfpn(GFPN,GFPN *);
 void pwrgfpn(GFPN,Q, GFPN *);
 int cmpgfpn(GFPN,GFPN);
+
+void addgfs(GFS,GFS,GFS *);
+void subgfs(GFS,GFS,GFS *);
+void mulgfs(GFS,GFS,GFS *);
+void divgfs(GFS,GFS,GFS *);
+void chsgngfs(GFS,GFS *);
+void pwrgfs(GFS,Q, GFS *);
+int cmpgfs(GFS,GFS);
 
 void addalg(Num,Num,Num *);
 void addbf(Num,Num,Num *);

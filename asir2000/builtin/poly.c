@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.4 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.5 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,6 +63,7 @@ void Pp_mag(),Pmaxblen();
 void Pmergelist(), Pch_mv(), Pre_mv(), Pdeglist();
 void Pptomp(),Pmptop();
 void Pptolmp(),Plmptop();
+void Psfptop();
 void Pptogf2n(),Pgf2ntop(),Pgf2ntovect();
 void Pptogfpn(),Pgfpntop();
 void Pfind_root_gf2n();
@@ -142,6 +143,8 @@ struct ftab poly_tab[] = {
 
 	{"ptolmp",Pptolmp,1},
 	{"lmptop",Plmptop,1},
+
+	{"sfptop",Psfptop,1},
 
 	{"ptogf2n",Pptogf2n,1},
 	{"gf2ntop",Pgf2ntop,-2},
@@ -663,6 +666,13 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
+extern int current_gfs_ext;
+extern int current_gfs_q;
+extern int current_gfs_q1;
+extern int *current_gfs_plus1;
+extern int *current_gfs_ntoi;
+extern int *current_gfs_iton;
+
 void Psetmod_ff(arg,rp)
 NODE arg;
 Obj *rp;
@@ -672,7 +682,7 @@ Obj *rp;
 	N n;
 	UP up;
 	UP2 up2;
-	Q q;
+	Q q,r;
 	P p;
 	NODE n0,n1;
 	LIST list;
@@ -684,8 +694,15 @@ Obj *rp;
 			error("setmod_ff : invalid argument");
 		switch ( OID(mod) ) {
 			case O_N:
-				current_ff = FF_GFP;
-				setmod_lm(NM((Q)mod)); break;
+				if ( SGN((Q)mod) < 0 ) {
+					/* small finite field; primitive root representation */
+					current_ff = FF_GFS;
+					setmod_sf(BD(NM((Q)mod))[0],1);
+				} else {
+					current_ff = FF_GFP;
+					setmod_lm(NM((Q)mod));
+				}
+				break;
 			case O_P:
 				current_ff = FF_GF2N;
 				setmod_gf2n((P)mod); break;
@@ -693,13 +710,17 @@ Obj *rp;
 				error("setmod_ff : invalid argument");
 		}
 	} else if ( ac == 2 ) {
-		current_ff = FF_GFPN;
-		defpoly = (Obj)ARG0(arg);
 		mod = (Obj)ARG1(arg);
-		if ( !mod || !defpoly )
-			error("setmod_ff : invalid argument");
-		setmod_lm(NM((Q)mod));
-		setmod_gfpn((P)defpoly);
+		if ( SGN((Q)mod) < 0 ) {
+			error("setmod_ff : not implemented yet");
+		} else {
+			current_ff = FF_GFPN;
+			defpoly = (Obj)ARG0(arg);
+			if ( !mod || !defpoly )
+				error("setmod_ff : invalid argument");
+			setmod_lm(NM((Q)mod));
+			setmod_gfpn((P)defpoly);
+		}
 	}
 	switch ( current_ff ) {
 		case FF_GFP:
@@ -710,6 +731,12 @@ Obj *rp;
 			getmod_lm(&n); NTOQ(n,1,q);
 			getmod_gfpn(&up); uptop(up,&p);
 			MKNODE(n1,q,0); MKNODE(n0,p,n1);
+			MKLIST(list,n0);
+			*rp = (Obj)list; break;
+		case FF_GFS:
+			STOQ(current_gfs_q,q);
+			STOQ(current_gfs_iton[1],r);
+			n0 = mknode(3,ONE,q,r);
 			MKLIST(list,n0);
 			*rp = (Obj)list; break;
 		default:
@@ -833,6 +860,7 @@ Obj *rp;
 	DCP dc,dcr0,dcr;
 	GF2N rg,sg;
 	GFPN rpn,spn;
+	GFS rs;
 	P t;
 	Obj obj;
 
@@ -849,6 +877,14 @@ Obj *rp;
 				break;
 			case FF_GFPN:
 				ntogfpn((Obj)p,&rpn); simpgfpn((GFPN)rpn,&spn); *rp = (Obj)spn;
+				break;
+			case FF_GFS:
+				if ( current_gfs_ext > 1 ) {
+					error("simp_ff : not implemented yet");
+				} else {
+					ptomp(current_gfs_q,(P)p,&t); mqtogfs(t,&rs);
+					*rp = (Obj)rs;
+				}
 				break;
 			default:
 				*rp = (Obj)p;
@@ -1061,6 +1097,13 @@ NODE arg;
 P *rp;
 {
 	lmptop((P)ARG0(arg),rp);
+}
+
+void Psfptop(arg,rp)
+NODE arg;
+P *rp;
+{
+	sfptop((P)ARG0(arg),rp);
 }
 
 void Pptogf2n(arg,rp)

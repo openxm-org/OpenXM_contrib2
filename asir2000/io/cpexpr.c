@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.7 2000/12/16 06:16:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.8 2001/03/09 01:44:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -241,6 +241,9 @@ Num q;
 			break;
 		case N_GFPN:
 			PRINTUP((UP)(((GFPN)q)->body));
+			break;
+		case N_GFS:
+			total_length += 11; /* XXX */
 			break;
 		default:
 			break;
