@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.31 2001/12/25 02:39:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.32 2001/12/25 08:59:48 noro Exp $ 
 */
 #include "config.h"
 
@@ -170,5 +170,5 @@ INTERVALDEF = -DINTERVAL
 INTERVALDEF =
 #endif
 
-INCLUDES= -I$(TOP)/include -I$(TOP)/parse -I$(TOP)/io -I$(PARIINC) -I$(MPIINC)
+INCLUDES= -I$(TOP)/include -I$(TOP)/parse -I$(TOP)/io -I$(TOP)/gc/include -I$(PARIINC) -I$(MPIINC)
 DEFINES= $(INTERVALDEF) -DINET=$(INET) -DPARI=$(PARI) -DLAPACK=$(LAPACK) -DDO_PLOT=$(DO_PLOT) -DUSE_FLOAT=$(USE_FLOAT) $(PARIFLAGS) -DHMEXT -DMPI=$(MPI) -DFEP=$(FEP) $(LINUX_EXTRA_DEFINES)
