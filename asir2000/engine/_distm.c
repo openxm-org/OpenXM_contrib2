@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.5 2000/12/05 06:59:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.6 2000/12/05 08:29:44 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -600,11 +600,14 @@ DP p;
 DP *r;
 {
 	MP m,mr0,mr;
+	DL t;
 
 	if ( !p )
 		*r = 0;
 	else {
-		current_dl_length = NV(p);
+		/* XXX : dummy call to set current_dl_length */
+		_NEWDL_NOINIT(t,NV(p));
+
 		for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
 			_NEXTMP(mr0,mr);
 			dlto_dl(m->dl,&mr->dl);
