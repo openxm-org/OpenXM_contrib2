@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.8 2001/03/29 09:49:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.9 2001/05/02 09:03:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -822,6 +822,12 @@ Q *rp;
 			getmod_gf2n(&up2); d = degup2(up2); STOQ(d,*rp); break;
 		case FF_GFPN:
 			getmod_gfpn(&up); STOQ(up->d,*rp); break;
+		case FF_GFS:
+			if ( !current_gfs_ext )
+				*rp = ONE;
+			else
+				*rp = DEG(DC(current_gfs_ext));
+			break;
 		default:
 			error("extdeg_ff : current_ff is not set");
 	}
@@ -838,6 +844,8 @@ Q *rp;
 			getmod_lm(&lm); NTOQ(lm,1,*rp); break;
 		case FF_GF2N:
 			STOQ(2,*rp); break;
+		case FF_GFS:
+			STOQ(current_gfs_p,*rp); break;
 		default:
 			error("characteristic_ff : current_ff is not set");
 	}
@@ -880,6 +888,8 @@ N *order;
 		case FF_GFPN:
 			getmod_lm(&m);
 			getmod_gfpn(&up); pwrn(m,up->d,order); break;
+		case FF_GFS:
+			STON(current_gfs_q,*order); break;
 		default:
 			error("field_order_ff : current_ff is not set");
 	}
@@ -1337,6 +1347,7 @@ P *rp;
 		case FF_GF2N:
 			powermodup_gf2n(p1,&p2); break;
 		case FF_GFPN:
+		case FF_GFS:
 			powermodup(p1,&p2); break;
 		default:
 			error("pwrmod_ff : current_ff is not set");
@@ -1358,6 +1369,7 @@ P *rp;
 		case FF_GF2N:
 			generic_powermodup_gf2n(g,f,(Q)ARG2(arg),&r); break;
 		case FF_GFPN:
+		case FF_GFS:
 			generic_powermodup(g,f,(Q)ARG2(arg),&r); break;
 		default:
 			error("generic_pwrmod_ff : current_ff is not set");
@@ -1385,6 +1397,7 @@ VECT *rp;
 		case FF_GF2N:
 			powertabup_gf2n(f,xp,tab); break;
 		case FF_GFPN:
+		case FF_GFS:
 			powertabup(f,xp,tab); break;
 		default:
 			error("pwrtab_ff : current_ff is not set");

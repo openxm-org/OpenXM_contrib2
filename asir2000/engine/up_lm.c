@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -54,6 +54,7 @@ extern GC_dont_gc;
 extern struct oEGT eg_chrem,eg_fore,eg_back;
 extern int debug_up;
 extern int up_lazy;
+extern int current_ff;
 
 void crup_lm(ModNum **,int,int *,int,N,N,UP *);
 
@@ -408,17 +409,42 @@ UP *xp;
 	UP x,y,t,invf,s;
 	int k;
 	LM lm;
+	GFS fs;
+	Num c;
 	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
+	if ( !current_ff )
+		error("powermodup : current_ff is not set");
 	field_order_ff(&n);
-	if ( !n )
-		error("powermodup : current_mod_lm is not set");
-	MKLM(ONEN,lm); 
-	x = UPALLOC(1); x->d = 1; x->c[1] = (Num)lm;
-	y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
+	switch ( current_ff ) {
+		case FF_GFP:
+		case FF_GFPN:
+			MKLM(ONEN,lm);
+			c = (Num)lm;
+			break;
+		case FF_GFS:
+			mqtogfs(ONEM,&fs);
+			c = (Num)fs;
+			break;
+		default:
+			error("powermodup : not implemented yet");
+	}
+	x = UPALLOC(1); x->d = 1; x->c[1] = c;
+	y = UPALLOC(0); y->d = 0; y->c[0] = c;
 
 	reverseup(f,f->d,&t);
-	invmodup(t,f->d,&s); uptolmup(s,&invf);
+	invmodup(t,f->d,&s); 
+	switch ( current_ff ) {
+		case FF_GFP:
+		case FF_GFPN:
+			uptolmup(s,&invf);
+			break;
+		case FF_GFS:
+			invf = s; /* XXX */
+			break;
+		default:
+			error("powermodup : not implemented yet");
+	}
 	for ( k = n_bits(n)-1; k >= 0; k-- ) {
 		ksquareup(y,&t);
 		rembymulup_special(t,f,invf,&s);
@@ -480,11 +506,25 @@ UP *xp;
 	UP x,y,t,invf,s;
 	int k;
 	LM lm;
+	GFS fs;
+	Num c;
 	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
 	e = NM(d);
-	MKLM(ONEN,lm); 
-	y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
+	switch ( current_ff ) {
+		case FF_GFP:
+		case FF_GFPN:
+			MKLM(ONEN,lm);
+			c = (Num)lm;
+			break;
+		case FF_GFS:
+			mqtogfs(ONEM,&fs);
+			c = (Num)fs;
+			break;
+		default:
+			error("generic_powermodup : not implemented yet");
+	}
+	y = UPALLOC(0); y->d = 0; y->c[0] = c;
 	remup(g,f,&x);
 	if ( !x ) {
 		*xp = !d ? y : 0;
@@ -543,11 +583,25 @@ UP *tab;
 	UP y,t,invf;
 	int i,d;
 	LM lm;
+	GFS fs;
+	Num c;
 	struct oEGT eg_rem,eg_mul,eg0,eg1,eg2;
 
 	d = f->d;
-	MKLM(ONEN,lm); 
-	y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
+	switch ( current_ff ) {
+		case FF_GFP:
+		case FF_GFPN:
+			MKLM(ONEN,lm);
+			c = (Num)lm;
+			break;
+		case FF_GFS:
+			mqtogfs(ONEM,&fs);
+			c = (Num)fs;
+			break;
+		default:
+			error("powertabup : not implemented yet");
+	}
+	y = UPALLOC(0); y->d = 0; y->c[0] = c;
 	tab[0] = y;
 	tab[1] = xp;
 
