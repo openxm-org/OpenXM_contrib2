@@ -20,7 +20,7 @@ INSTDIR	= ${PREFIX}/bin
 
 #STAT	= -DSTAT#		Delete # for statistic info
 #KANJI	= -DKANJI#		Delete # for KANJI handling
-CONFIG	= $(STAT) $(KANJI) -DTERMIOS
+CONFIG	= $(STAT) $(KANJI) -DTERMIOS -D_ALL_SOURCE
 
 #DEBUG	= -g
 #DEBUG	= -O

@@ -13,7 +13,7 @@ static char rcsid[]=
 #include "fep_glob.h"
 #include "fep_funcs.h"
 
-#if defined(__FreeBSD__) || defined(__CYGWIN__) || defined(__APPLE_CC__)
+#if defined(__FreeBSD__) || defined(__CYGWIN__) || defined(__APPLE_CC__) || defined(__INTERIX)
 #include <regex.h>
 regex_t Re_pat;
 #define re_comp(p) (regcomp(&Re_pat,(p), REG_EXTENDED|REG_NOSUB))

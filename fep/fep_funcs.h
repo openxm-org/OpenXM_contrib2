@@ -22,6 +22,9 @@ int	delete_previous_character();
 int	delete_previous_word();
 int	delete_previous_Word();
 int	delete_to_kill_buffer();
+#if defined(__INTERIX)
+#include <sys/cdefs.h>
+#endif
 #if defined(__CYGWIN__) || defined(sun)
 void	terminate(int);
 #else

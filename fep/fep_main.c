@@ -257,7 +257,11 @@ DEFAULT:
     commandv = &argv[1];
 
     if (! isatty (0)) {
+#if defined(__INTERIX)
+	execvp (*commandv, commandv);
+#else
 	execvp (*commandv, commandv, 0);
+#endif
 	perror (*commandv);
 	exit (1);
     }
@@ -673,6 +677,10 @@ swallow_output()
 #include <sys/m_wait.h>
 #endif
 
+#if defined(__INTERIX)
+#define wait3(s,opt,rp)   (waitpid((-1),(s),(opt)))
+#endif
+
 void
 catchsig(n)
     int n;
@@ -702,7 +710,7 @@ exec_to_command(argv)
      */
     t = open ("/dev/tty", 2);
     if (t >= 0) {
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__INTERIX)
 	ioctl (t, TIOCNOTTY, (char *) 0);
 #endif
 	(void) close (t);
@@ -721,7 +729,11 @@ exec_to_command(argv)
 #elif defined(TIOCSETN)
     ioctl (0, TIOCSETN, (char *) & slave_ttymode);
 #endif
+#if defined(__INTERIX)
+    execvp (*argv, argv);
+#else
     execvp (*argv, argv, 0);
+#endif
     perror (*argv);
     exit (1);
 }

@@ -195,7 +195,9 @@ FUNC cft[], aft[];
     import (cft, initial_ttymode.c_cc[VDSUSP], self_insert);
 #endif
     import (cft, initial_ttymode.c_cc[VREPRINT], reprint);
+#ifdef VDISCARD
     import (cft, initial_ttymode.c_cc[VDISCARD], self_insert);
+#endif
     import (cft, initial_ttymode.c_cc[VWERASE], delete_previous_word);
     import (cft, initial_ttymode.c_cc[VLNEXT], literal_next);
     import (cft, initial_ttymode.c_cc[VERASE], delete_previous_character);
