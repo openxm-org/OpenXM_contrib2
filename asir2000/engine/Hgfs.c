@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.24 2002/09/30 06:13:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.25 2002/10/23 07:54:58 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1011,6 +1011,33 @@ void sfbfctr(P f,V x,V y,int degbound,DCP *dcp)
 		}
 	}
 	*dcp = dc;
+}
+
+/* returns shifted f, shifted factors and the eval pt */
+
+void sfbfctr_shift(P f,V x,V y,int degbound,GFS *evp,P *sfp,DCP *dcp)
+{
+	ML list;
+	P sf;
+	GFS ev;
+	DCP dc,dct;
+	int dx,dy;
+
+	/* sf(x) = f(x+ev) = list->c[0]*list->c[1]*... */
+	sfhensel(5,f,x,degbound,&ev,&sf,&list);
+	if ( list->n == 0 )
+		error("sfbfctr_shift : short of evaluation points");
+	else if ( list->n == 1 ) {
+		/* f is irreducible */
+		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = f; NEXT(dc) = 0;
+		*evp = 0;
+		*sfp = f;
+		*dcp = dc;
+	} else {
+		sfdtest(sf,list,x,y,dcp);
+		*evp = ev;
+		*sfp = sf;
+	}
 }
 
 /* f = f(x,y) = list->c[0]*list->c[1]*... mod y^(list->bound+1) */

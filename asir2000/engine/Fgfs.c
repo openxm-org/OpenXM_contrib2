@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.4 2002/09/30 06:13:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.5 2002/10/23 07:54:58 noro Exp $ */
 
 #include "ca.h"
 
@@ -11,6 +11,9 @@ void pthrootsf(P f,Q m,P *r);
 void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp);
 void gcdsf(VL vl,P *pa,int k,P *r);
 void mfctrsfmain(VL vl, P f, DCP *dcp);
+int next_evaluation_point(int *mev,int n);
+void estimatelc_sf(VL vl,P c,DCP dc,int *mev,P *lcp);
+void mfctrsf_hensel(VL vl,int *mev,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up);
 
 void lex_lc(P f,P *c)
 {
@@ -493,14 +496,18 @@ void mfctrsf(VL vl, P f, DCP *dcp)
 
 void mfctrsfmain(VL vl, P f, DCP *dcp)
 {
-	VL tvl,nvl;
-	DCP dc,dc0,dc1,dc2,dct;
-	int imin,inext,i,n;
+	VL tvl,nvl,rvl;
+	DCP dc,dc0,dc1,dc2,dct,lcfdc;
+	int imin,inext,i,n,k,np;
 	int *da;
 	V vx,vy;
 	V *va;
 	P gcd,g,df,dfmin;
 	P pa[2];
+	P g0,pp0,spp0,c,c0,x,y,u,v,lcf,lcu,lcv,u0,v0,t,s;
+	GFS ev,evy;
+	P *fp0;
+	int *mev,*win;
 
 	clctv(vl,f,&tvl); vl = tvl;
 	if ( !vl )
@@ -563,7 +570,11 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	reorderp(nvl,vl,f,&g);
 	vx = nvl->v;
 	vy = NEXT(nvl)->v;
-	if ( !NEXT(NEXT(nvl)) ) {
+	MKV(vx,x);
+	MKV(vy,y);
+	/* remaining variables */
+	rvl = NEXT(NEXT(nvl));
+	if ( !rvl ) {
 		/* bivariate */
 		sfbfctr(g,vx,vy,getdeg(vx,g),&dc1);
 		for ( dc0 = 0; dc1; dc1 = NEXT(dc1) ) {
@@ -575,4 +586,78 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 		*dcp = dc0;
 		return;
 	}
+	/* n >= 3;  nvl = (vx,vy,X) */
+	/* find good evaluation pt for X */
+	mev = (int *)CALLOC(n-2,sizeof(int));
+	while ( 1 ) {
+		for ( g0 = g, tvl = rvl, i = 0; tvl; tvl = NEXT(tvl), i++ ) {
+			indextogfs(mev[i],&ev);
+			substp(nvl,g0,tvl->v,(P)ev,&t); g0 = t;
+		}
+		pa[0] = g0;
+		diffp(nvl,g0,vx,&pa[1]);
+		if ( pa[1] ) {
+			gcdsf(nvl,pa,2,&gcd);
+			/* XXX maybe we have to accept the case where gcd is a poly of y */
+			if ( NUM(gcd) )
+				break;
+		}
+		if ( next_evaluation_point(mev,n-2) )
+			error("mfctrsfhmain : short of evaluation points");
+	}
+	/* g0 = g(x,y,mev) */
+	/* separate content; g0 may have the content wrt x */
+	cont_pp_sfp(nvl,g0,&c0,&pp0);
+
+	/* factorize pp0; spp0 = pp0(x,y+evy) = prod dc */
+	sfbfctr_shift(pp0,vx,vy,getdeg(vx,pp0),&evy,&spp0,&dc);
+
+	if ( !NEXT(dc) ) {
+		/* f is irreducible */
+		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = f; NEXT(dc) = 0;
+		*dcp = dc;
+		return;
+	}
+	/* shift c0; c0 <- c0(y+evy) */
+	addp(nvl,y,(P)evy,&t);
+	substp(nvl,c0,vy,t,&s);
+	c0 = s;
+
+	/* now f(x,y+ev,mev) = c0 * prod dc */
+	/* factorize lc_x(f) */
+	lcf = COEF(DC(f));
+	mfctrsf(nvl,lcf,&lcfdc); lcfdc = NEXT(lcfdc);
+
+	/* np = number of bivariate factors */
+	for ( np = 0, dct = dc; dct; dct = NEXT(dct), np++ );
+	fp0 = (P *)ALLOCA((np+1)*sizeof(P));
+	for ( i = 0, dct = dc; i < np; dct = NEXT(dct), i++ )
+		fp0[i] = COEF(dct);
+	fp0[np] = 0;
+	win = W_ALLOC(np+1);
+	for ( k = 1, win[0] = 1, --np; ; ) {
+		itogfs(1,&u0);
+		/* u0 = product of selected factors */
+		for ( i = 0; i < k; i++ ) {
+			mulp(nvl,u0,fp0[win[i]],&t); u0 = t;
+		}
+		/* we have to consider the content */
+		/* g0(y+yev) = c0*u0*v0 */
+		mulp(nvl,LC(u0),c0,&c); estimatelc_sf(nvl,c,dc,mev,&lcu);
+		divsp(nvl,pp0,u0,&v0);
+		mulp(nvl,LC(v0),c0,&c); estimatelc_sf(nvl,c,dc,mev,&lcv);
+		mfctrsf_hensel(nvl,mev,f,pp0,u0,v0,lcu,lcv,&u);
+	}
+}
+
+int next_evaluation_point(int *mev,int n)
+{
+}
+
+void estimatelc_sf(VL vl,P c,DCP dc,int *mev,P *lcp)
+{
+}
+
+void mfctrsf_hensel(VL vl,int *mev,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
+{
 }
