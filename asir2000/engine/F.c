@@ -45,13 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.7 2001/04/20 02:46:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.8 2001/05/28 08:25:31 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 
 void homfctr();
 void mfctr_wrt_v();
+
+int use_new_hensel;
 
 void fctrp(vl,f,dcp)
 VL vl;
@@ -527,7 +529,10 @@ DCP *dcp;
 	else if ( iscycp(p) )
 		cycp(VR(p),UDEG(p),dcp);
 	else {
-		hensel(5,5,p,&list);
+		if ( use_new_hensel )
+			hensel2(5,5,p,&list);
+		else
+			hensel(5,5,p,&list);
 		if ( list->n == 1 ) {
 			NEWDC(dc); DEG(dc) = ONE; COEF(dc) = p; NEXT(dc) = 0;
 			*dcp = dc;

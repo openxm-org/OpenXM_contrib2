@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.4 2001/07/03 01:41:25 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -418,9 +418,13 @@ LUM *gp;
 		error("henmain2 : cannot happen(extgcd)");
 #endif
 
+#if 1
 	fprintf(stderr,"bound=%d\n",bound);
+#endif
 	for ( k = 1; k < bound; k++ ) {
+#if 1
 		fprintf(stderr,".");
+#endif
 		/* at this point, f = gk*hk mod y^k */
 
 #if 0
@@ -495,7 +499,9 @@ LUM *gp;
 		for ( i = 0; i <= DEG(wh1); i++ )
 			COEF(hk)[i][k] = COEF(wh1)[i];
 	}
+#if 1
 	fprintf(stderr,"\n");
+#endif
 	*gp = gk;
 	clearlum(n,bound,f);
 	DEG(f) = dh;
@@ -849,9 +855,13 @@ ML bqlist,cqlist,*listp;
 		for ( j = DEG(b[i]), pp = COEF(l[i]), px = COEF(b[i]); j >= 0; j-- ) 
 			pp[j][0] = px[j];
 	}
+#if 0
 	fprintf(stderr,"bound=%d\n",bound);
+#endif
 	for ( i = 1; i < bound; i++ ) {
+#if 0
 		fprintf(stderr,".");
+#endif
 		mullum(mod,i+1,l[0],l[1],wb0);
 		for ( j = 2; j < np; j++ ) {
 			mullum(mod,i+1,l[j],wb0,wb1);
@@ -880,7 +890,9 @@ ML bqlist,cqlist,*listp;
 		for ( j = n, px = COEF(wq0); j >= 0; j-- ) 
 			px[j] = 0;
 	}
+#if 0
 	fprintf(stderr,"\n");
+#endif
 }
 
 static double M;
