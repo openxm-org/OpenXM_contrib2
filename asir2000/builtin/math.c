@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.4 2000/12/07 07:06:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.5 2003/11/08 01:12:02 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -301,8 +301,9 @@ Q *rp;
 	if ( au ) {
 		NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
 		PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
-	} else {
+	} else if ( al ) {
 		UTOQ(al,q); SGN(q) = sgn;
-	}
+	} else
+		q = 0;
 	*rp = q;
 }
