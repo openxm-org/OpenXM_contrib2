@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.81 2003/10/11 02:14:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.82 2003/10/15 03:21:44 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -2899,7 +2899,9 @@ void nd_setup_parameters(int nvar,int max) {
 
 	nd_nvar = nvar;
 	if ( max ) {
-		if ( max < 2 ) nd_bpe = 1;
+		/* XXX */
+		if ( do_weyl ) nd_bpe = 32;
+		else if ( max < 2 ) nd_bpe = 1;
 		else if ( max < 4 ) nd_bpe = 2;
 		else if ( max < 8 ) nd_bpe = 3;
 		else if ( max < 16 ) nd_bpe = 4;
