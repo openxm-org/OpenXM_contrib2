@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.2 2000/08/21 08:31:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.3 2000/08/22 05:04:21 noro Exp $ 
 */
 /* some useful macros */
 
@@ -89,3 +89,4 @@
 #define TS(a) car(cdr(car(a)))
 
 #define MAX(a,b) ((a)>(b)?(a):(b))
+#define MIN(a,b) ((a)>(b)?(b):(a))
