@@ -202,6 +202,10 @@ SOURCE=.\engine\D.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\engine\dalg.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\gc\dbg_mlc.c
 # End Source File
 # Begin Source File
@@ -362,6 +366,10 @@ SOURCE=.\builtin\help.c
 # Begin Source File
 
 SOURCE=.\engine\Hgfs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\builtin\iarray.c
 # End Source File
 # Begin Source File
 
@@ -714,6 +722,10 @@ SOURCE=.\parse\xdeb.c
 # Begin Source File
 
 SOURCE=.\parse\ytab.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\engine\Z.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

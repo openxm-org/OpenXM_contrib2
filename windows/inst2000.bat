@@ -7,5 +7,9 @@ set lang=ja
 
 :MAIN
 set instdir="c:\program files\asir"
-copy %lang%\asir\bin\*.* %instdir%\bin
-copy %lang%\asir\lib\*.* %instdir%\lib
+mkdir %instdir%\bin
+mkdir %instdir%\lib
+mkdir %instdir%\lib-asir-contrib
+xcopy /S /Q /Y %lang%\asir\bin %instdir%\bin
+xcopy /S /Q /Y %lang%\asir\lib %instdir%\lib
+xcopy /S /Q /Y %lang%\asir\lib-asir-contrib %instdir%\lib-asir-contrib

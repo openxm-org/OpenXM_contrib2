@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.16 2005/03/24 22:54:22 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.17 2005/03/24 23:40:50 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -153,6 +153,7 @@ void env_init() {
 #if defined(VISUAL)
 			get_rootdir(rootname,sizeof(rootname));
 			asir_libdir = (char *)malloc(strlen(rootname)+strlen("/lib")+1);
+			sprintf(asir_libdir,"%s/lib",rootname);
 #else
 			asir_libdir = (char *)malloc(strlen(ASIR_LIBDIR)+1);
 			strcpy(asir_libdir,ASIR_LIBDIR);

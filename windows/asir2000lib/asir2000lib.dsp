@@ -197,6 +197,10 @@ SOURCE="..\..\asir2000\engine\D.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\engine\dalg.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\gc\dbg_mlc.c"
 # End Source File
 # Begin Source File
@@ -365,6 +369,10 @@ SOURCE="..\..\asir2000\builtin\help.c"
 # Begin Source File
 
 SOURCE=..\..\asir2000\engine\Hgfs.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\asir2000\builtin\iarray.c
 # End Source File
 # Begin Source File
 
@@ -732,6 +740,10 @@ SOURCE="..\..\asir2000\parse\xdeb.c"
 # Begin Source File
 
 SOURCE=..\..\asir2000\parse\ytab.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\asir2000\engine\Z.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

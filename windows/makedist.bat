@@ -1,8 +1,11 @@
+@echo off
 set lang=ja
 set instdir=%lang%\asir
 mkdir %instdir%
 mkdir %instdir%\bin
 mkdir %instdir%\lib
+mkdir %instdir%\lib-asir-contrib
+xcopy /S /Q /Y /EXCLUDE:exfiles ..\..\OpenXM\src\asir-contrib\packages\src %instdir%\lib-asir-contrib
 copy ..\asir2000\release\asir.exe %instdir%\bin
 copy ..\asir2000\lib\* %instdir%\lib"
 copy engine2000\release\engine.exe %instdir%\bin
@@ -20,6 +23,8 @@ set instdir=%lang%\asir
 mkdir %instdir%
 mkdir %instdir%\bin
 mkdir %instdir%\lib
+mkdir %instdir%\lib-asir-contrib
+xcopy /S /Q /Y /EXCLUDE:exfiles ..\..\OpenXM\src\asir-contrib\packages\src %instdir%\lib-asir-contrib
 copy ..\asir2000\release\asir.exe %instdir%\bin
 copy ..\asir2000\lib\* %instdir%\lib"
 copy engine2000\release\engine.exe %instdir%\bin
