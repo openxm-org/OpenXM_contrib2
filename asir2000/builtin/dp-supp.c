@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.6 2000/12/05 08:29:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.7 2000/12/08 02:39:04 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -257,9 +257,10 @@ DP *rp;
 	}
 }
 
-void dp_ptozp_d(dist,ndist,p,rp)
-NODE dist;
-int ndist;
+extern int mpi_mag;
+extern int PCoeffs;
+
+void dp_ptozp_d(p,rp)
 DP p,*rp;
 {
 	int i,j,k,l,n,nsep;
@@ -278,12 +279,26 @@ DP p,*rp;
 	N qn,gn;
 	double get_rtime();
 	int blen;
+	NODE dist;
+	int ndist;
 	double t0;
 	double t_e,t_d,t_d1,t_c;
+	extern int DP_NFStat;
+	extern LIST Dist;
 
 	if ( !p )
 		*rp = 0;
 	else {
+		if ( PCoeffs ) {
+			dp_ptozp(p,rp); return;
+		}	
+		if ( !dist || p_mag(BDY(p)->c) <= mpi_mag ) {
+			dist = 0; ndist = 0;
+			if ( DP_NFStat ) fprintf(asir_out,"L");
+		} else {
+			dist = BDY(Dist); ndist = length(dist);
+			if ( DP_NFStat ) fprintf(asir_out,"D");
+		}
 		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
 		nsep = ndist + 1;
 		if ( n <= nsep ) {
@@ -346,16 +361,14 @@ DP p,*rp;
 	}
 }
 
-void dp_ptozp2_d(dist,ndist,p0,p1,hp,rp)
-NODE dist;
-int ndist;
+void dp_ptozp2_d(p0,p1,hp,rp)
 DP p0,p1;
 DP *hp,*rp;
 {
 	DP t,s,h,r;
 	MP m,mr,mr0,m0;
 
-	addd(CO,p0,p1,&t); dp_ptozp_d(dist,ndist,t,&s);
+	addd(CO,p0,p1,&t); dp_ptozp_d(t,&s);
 	if ( !p0 ) {
 		h = 0; r = s;
 	} else if ( !p1 ) {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.8 2000/12/05 06:59:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.9 2000/12/08 02:39:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -380,10 +380,7 @@ NODE arg;
 DP *rp;
 {
 	asir_assert(ARG0(arg),O_DP,"dp_ptozp");
-	if ( Dist )
-		dp_ptozp_d(BDY(Dist),length(BDY(Dist)),(DP)ARG0(arg),rp);
-	else
-		dp_ptozp((DP)ARG0(arg),rp);
+	dp_ptozp((DP)ARG0(arg),rp);
 }
 	
 void Pdp_ptozp2(arg,rp)
@@ -396,10 +393,7 @@ LIST *rp;
 	p0 = (DP)ARG0(arg); p1 = (DP)ARG1(arg);
 	asir_assert(p0,O_DP,"dp_ptozp2");
 	asir_assert(p1,O_DP,"dp_ptozp2");
-	if ( Dist )
-		dp_ptozp2_d(BDY(Dist),length(BDY(Dist)),p0,p1,&h,&r);
-	else
-		dp_ptozp2(p0,p1,&h,&r);
+	dp_ptozp2(p0,p1,&h,&r);
 	NEWNODE(n0); BDY(n0) = (pointer)h;
 	NEWNODE(NEXT(n0)); BDY(NEXT(n0)) = (pointer)r;
 	NEXT(NEXT(n0)) = 0;

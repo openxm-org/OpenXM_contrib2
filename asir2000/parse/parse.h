@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.5 2000/09/21 09:19:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.6 2000/12/05 01:24:57 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -333,9 +333,8 @@ void call_usrf();
 
 /* prototypes */
 
-void dp_ptozp2_d(NODE,int,DP,DP,DP *,DP *);
-void dp_ptozp_d(NODE,int,DP,DP *);
-void dp_ptozp_d_old(NODE,int,DP,DP *);
+void dp_ptozp2_d(DP,DP,DP *,DP *);
+void dp_ptozp_d(DP,DP *);
 void dp_vtod(Q *,DP,DP *);
 void dp_idivv_hist(Q,DP *);
 void dp_igcdv_hist(DP,Q *);

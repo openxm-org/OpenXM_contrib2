@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.14 2000/12/08 02:39:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.15 2000/12/08 04:35:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -105,7 +105,8 @@ DP_pairs criterion_M(DP_pairs);
 DP_pairs criterion_B(DP_pairs,int);
 DP_pairs newpairs(NODE,int);
 DP_pairs updpairs(DP_pairs,NODE,int);
-void _dp_nf(NODE,DP,DP *,int,int,DP *);
+void _dp_nf(NODE,DP,DP *,int,DP *);
+void _dp_nf_ptozp(NODE,DP,DP *,int,int,DP *);
 NODE gb_mod(NODE,int);
 NODE gbd(NODE,int,NODE,NODE);
 NODE gb(NODE,int,NODE);
@@ -150,17 +151,18 @@ static P *psc;
 
 static int *pss;
 static int psn,pslen;
-static int NVars,CNVars,PCoeffs;
+static int NVars,CNVars;
 static VL VC;
 
+int PCoeffs;
 int DP_Print = 0;
 int DP_Multiple = 0;
+int DP_NFStat = 0;
 LIST Dist = 0;
 int NoGCD = 0;
 int GenTrace = 0;
 int OXCheck = -1;
 
-static DP_NFStat = 0;
 static int NoSugar = 0;
 static int NoCriB = 0;
 static int NoGC = 0;
@@ -1060,7 +1062,7 @@ NODE *h;
 			MKLIST(hist,node);
 			MKNODE(TraceList,hist,0);
 		}
-		_dp_nf(top,ps[w[i]],ps,1,PtozpRA?DP_Multiple:0,&g);
+		_dp_nf(top,ps[w[i]],ps,1,&g);
 		prim_part(g,0,&g1);
 		get_eg(&tmp1); add_eg(&eg_ra,&tmp0,&tmp1);
 		if ( DP_Print || DP_PrintShort ) {
@@ -1405,7 +1407,10 @@ NODE subst;
 				new_sugar = h->sugar;
 			get_eg(&tnf0);
 			t_0 = get_rtime();
-			_dp_nf(gall,h,ps,!Top,DP_Multiple,&nf);
+			if ( PCoeffs )
+				_dp_nf(gall,h,ps,!Top,&nf);
+			else
+				_dp_nf_ptozp(gall,h,ps,!Top,DP_Multiple,&nf);
 			if ( DP_Print )
 				fprintf(asir_out,"(%.3g)",get_rtime()-t_0);
 			get_eg(&tnf1); add_eg(&eg_nf,&tnf0,&tnf1);
@@ -1804,7 +1809,7 @@ NODE f;
 		l = d; d = NEXT(d);
 		get_eg(&tmp0);
 		dp_load(l->dp1,&dp1); dp_load(l->dp2,&dp2); dp_sp(dp1,dp2,&h);
-		_dp_nf(gall,h,ps,1,0,&nf);
+		_dp_nf(gall,h,ps,1,&nf);
 		get_eg(&tmp1); add_eg(&eg_gc,&tmp0,&tmp1);
 		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
@@ -1830,7 +1835,7 @@ NODE f,x;
 	}
 	for ( ; f; f = NEXT(f) ) {
 		get_eg(&tmp0);
-		_dp_nf(x,(DP)BDY(f),ps,1,0,&g);
+		_dp_nf(x,(DP)BDY(f),ps,1,&g);
 		get_eg(&tmp1); add_eg(&eg_mc,&tmp0,&tmp1);
 		if ( DP_Print ) {
 			print_split_eg(&tmp0,&tmp1); fflush(asir_out);
@@ -2028,7 +2033,70 @@ DP *r;
 	}
 }
 
-void _dp_nf(b,g,ps,full,multiple,r)
+void _dp_nf(b,g,ps,full,rp)
+NODE b;
+DP g;
+DP *ps;
+int full;
+DP *rp;
+{
+	DP u,p,d,s,t,mult;
+	P coef;
+	NODE l;
+	MP m,mr;
+	int sugar,psugar;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, l = b; l; l = NEXT(l) ) {
+			if ( dl_redble(BDY(g)->dl,psh[(int)BDY(l)]) ) {
+				dp_load((int)BDY(l),&p);
+				/* t+u = coef*(d+g) - mult*p (t = coef*d) */
+				dp_red(d,g,p,&t,&u,&coef,&mult);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( GenTrace ) {
+					LIST hist;
+					Q cq;
+					NODE node,node0;
+
+					STOQ((int)BDY(l),cq);
+					node0 = mknode(4,coef,cq,mult,ONE);
+					MKLIST(hist,node0);
+					MKNODE(node,hist,TraceList); TraceList = node;
+				}
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; return;
+				}
+				d = t;
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d;
+}
+
+void _dp_nf_ptozp(b,g,ps,full,multiple,r)
 NODE b;
 DP g;
 DP *ps;
@@ -2044,7 +2112,6 @@ DP *r;
 	int sugar,psugar;
 	NODE dist;
 	STRING imul;
-	int ndist;
 	int kara_bit;
 	double get_rtime();	
 	double t_0,t_00,tt,ttt,t_p,t_m,t_g,t_a;
@@ -2060,10 +2127,6 @@ DP *r;
 
 	denom = Denominator?Denominator:1;
 	hmag = multiple*HMAG(g)/denom;
-	if ( Dist ) {
-		dist = BDY(Dist);
-		ndist = length(dist);
-	}
 	sugar = g->sugar;
 
 	dc = 0; dp = 0; rc = ONE; rp = g;
@@ -2116,15 +2179,7 @@ DP *r;
 		if ( u ) {
 			if ( multiple && HMAG(u) > hmag ) {
 				t_0 = get_rtime();
-				if ( Dist && HMAG(u) > mpi_mag ) {
-					if ( DP_NFStat )
-						fprintf(asir_out,"D");
-					dp_ptozp_d(dist,ndist,u,&rp);
-				} else {
-					if ( DP_NFStat )
-						fprintf(asir_out,"L");
-					dp_ptozp_d(0,0,u,&rp);
-				}
+				dp_ptozp_d(u,&rp);
 				tt = get_rtime(); t_g += tt-t_0;
 
 				divsq((Q)BDY(u)->c,(Q)BDY(rp)->c,&cont);
@@ -2200,7 +2255,6 @@ DP *rp;
 	NODE tn,dist,n0,n1,n2;
 	Obj dmy;
 	STRING imul;
-
 	extern LIST Dist;
 
 	if ( !p || !q ) {

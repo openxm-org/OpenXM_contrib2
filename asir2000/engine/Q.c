@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.4 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.5 2000/08/22 05:04:04 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -217,6 +217,28 @@ Q n1,n2,*nq;
 		*nq = ONE;
 	else {
 		invq(n2,&m); mulq(n1,m,nq);
+	}
+}
+
+void divsq(n1,n2,nq)
+Q n1,n2,*nq;
+{
+	Q m;
+	int sgn;
+	N tn;
+
+	if ( !n2 ) {
+		error("division by 0");
+		*nq = 0;
+		return;
+	} else if ( !n1 ) 
+		*nq = 0;
+	else if ( n1 == n2 ) 
+		*nq = ONE;
+	else {
+		divsn(NM(n1),NM(n2),&tn);
+		sgn = SGN(n1)*SGN(n2);
+		NTOQ(tn,sgn,*nq);
 	}
 }
 
