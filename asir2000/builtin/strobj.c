@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.21 2004/03/04 13:12:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.22 2004/03/04 13:19:11 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -112,8 +112,11 @@ void write_tb(char *s,TB tb)
 
 int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
+int register_dp_vars(Obj arg);
 static struct TeXSymbol *user_texsymbol;
 static char *(*conv_rule)(char *);
+static char **dp_vars;
+int dp_vars_len;
 
 static struct {
 	char *name;
@@ -122,6 +125,7 @@ static struct {
 } qtot_env[] = {
 	{"symbol_table",0,register_symbol_table},
 	{"conv_rule",0,register_conv_rule},
+	{"dp_vars",0,register_dp_vars},
 	{0,0,0},
 };
 
@@ -218,10 +222,20 @@ int register_symbol_table(Obj arg)
 		if ( !t || !NEXT(t) ) return 0;
 		a0 = (STRING)BDY(t);
 		a1 = (STRING)BDY(NEXT(t));
-		if ( !a0 || OID(a0) != O_STR ) return 0;
-		if ( !a1 || OID(a1) != O_STR ) return 0;
-		uts[i].text = BDY(a0);	
-		uts[i].symbol = BDY(a1);	
+		if ( !a0 ) return 0;
+		if ( OID(a0) == O_STR )
+			uts[i].text = BDY(a0);	
+		else if ( OID(a0) == O_P )
+			uts[i].text = NAME(VR((P)a0));	
+		else
+			return 0;
+		if ( !a1 ) return 0;
+		if ( OID(a1) == O_STR )
+			uts[i].symbol = BDY(a1);	
+		else if ( OID(a1) == O_P )
+			uts[i].symbol = NAME(VR((P)a1));	
+		else
+			return 0;
 	}
 	uts[i].text = 0;
 	uts[i].symbol = 0;
@@ -246,6 +260,38 @@ int register_conv_rule(Obj arg)
 				break;
 		}
 	} else return 0;
+}
+
+int register_dp_vars(Obj arg)
+{
+	int l,i;
+	char **r;
+	NODE n;
+	STRING a;
+
+	if ( !arg ) {
+		dp_vars = 0;
+		dp_vars_len = 0;
+	} else if ( OID(arg) != O_LIST )
+		return 0;
+	else {
+		n = BDY((LIST)arg);
+		l = length(n);
+		r = (char **)MALLOC_ATOMIC(l*sizeof(char *));
+		for ( i = 0; i < l; i++, n = NEXT(n) ) {
+			a = (STRING)BDY(n);
+			if ( !a ) return 0;
+			if ( OID(a) == O_STR )
+				r[i] = BDY(a);	
+			else if ( OID(a) == O_P )
+				r[i] = NAME(VR((P)a));	
+			else
+				return 0;
+		}
+		dp_vars = r;
+		dp_vars_len = l;
+		return 1;
+	}
 }
 
 void Pquotetotex_setenv(NODE arg,Obj *rp)
@@ -644,7 +690,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 {
 	NODE n,t,t0;
 	char vname[BUFSIZ];
-	char *opname;
+	char *opname,*vname_conv;
 	Obj obj;
 	int i,len,allzero;
 	FNODE fi,f2;
@@ -656,175 +702,166 @@ void fnodetotex_tb(FNODE f,TB tb)
 	}
 	switch ( f->id ) {
 		/* unary operators */
-		case I_NOT: case I_PAREN: case I_MINUS:
-			switch ( f->id ) {
-				case I_NOT:
-					write_tb("\\neg (",tb);
-					fnodetotex_tb((FNODE)FA0(f),tb);
-					write_tb(")",tb);
+		case I_NOT:
+			write_tb("\\neg (",tb);
+			fnodetotex_tb((FNODE)FA0(f),tb);
+			write_tb(")",tb);
+			break;
+		case I_PAREN:
+			write_tb("(",tb);
+			fnodetotex_tb((FNODE)FA0(f),tb);
+			write_tb(")",tb);
+			break;
+		case I_MINUS:
+			write_tb("-",tb);
+			fnodetotex_tb((FNODE)FA0(f),tb);
+			break;
+
+		/* binary operators */
+		/* arg list */
+		/* I_AND, I_OR => FA0(f), FA1(f) */
+		/* otherwise   => FA1(f), FA2(f) */
+		case I_BOP:
+			opname = ((ARF)FA0(f))->name;
+			if ( !strcmp(opname,"+") ) {
+				fnodetotex_tb((FNODE)FA1(f),tb);
+				write_tb(opname,tb);
+				fnodetotex_tb((FNODE)FA2(f),tb);
+			} else if ( !strcmp(opname,"-") ) {
+				if ( FA1(f) ) fnodetotex_tb((FNODE)FA1(f),tb);
+				write_tb(opname,tb);
+				fnodetotex_tb((FNODE)FA2(f),tb);
+			} else if ( !strcmp(opname,"*") ) {
+				fnodetotex_tb((FNODE)FA1(f),tb);
+				write_tb(" ",tb);
+				/* XXX special care for DP */
+				f2 = (FNODE)FA2(f);
+				if ( f2->id == I_EV ) {
+					n = (NODE)FA0(f2);
+					for ( i = 0; n; n = NEXT(n), i++ ) {
+						fi = (FNODE)BDY(n);
+						if ( fi->id != I_FORMULA || FA0(fi) )
+							break;
+					}
+					if ( n )
+						fnodetotex_tb((FNODE)FA2(f),tb);
+				} else
+					fnodetotex_tb((FNODE)FA2(f),tb);
+			} else if ( !strcmp(opname,"/") ) {
+				write_tb("\\frac{",tb);
+				fnodetotex_tb((FNODE)FA1(f),tb);
+				write_tb("} {",tb);
+				fnodetotex_tb((FNODE)FA2(f),tb);
+				write_tb("}",tb);
+			} else if ( !strcmp(opname,"^") ) {
+				fnodetotex_tb((FNODE)FA1(f),tb);
+				write_tb("^{",tb);
+				fnodetotex_tb((FNODE)FA2(f),tb);
+				write_tb("} ",tb);
+			} else if ( !strcmp(opname,"%") ) {
+				fnodetotex_tb((FNODE)FA1(f),tb);
+				write_tb(" {\\rm mod}\\, ",tb);
+				fnodetotex_tb((FNODE)FA2(f),tb);
+			} else
+				error("invalid binary operator");
+			break;
+
+		case I_COP:
+			switch( (cid)FA0(f) ) {
+				case C_EQ:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" = ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
-				case I_PAREN:
-					write_tb("(",tb);
-					fnodetotex_tb((FNODE)FA0(f),tb);
-					write_tb(")",tb);
+				case C_NE:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\neq ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
-				case I_MINUS:
-					write_tb("-",tb);
-					fnodetotex_tb((FNODE)FA0(f),tb);
+				case C_GT:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\gt ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case C_LT:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\lt ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case C_GE:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\geq ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case C_LE:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\leq ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
 			}
 			break;
 
-		/* binary operators */
-		case I_BOP: case I_COP: case I_LOP: case I_AND: case I_OR:
-			/* arg list */
-			/* I_AND, I_OR => FA0(f), FA1(f) */
-			/* otherwise   => FA1(f), FA2(f) */
-
-			/* op */
-			switch ( f->id ) {
-				case I_BOP:
-					opname = ((ARF)FA0(f))->name;
-					if ( !strcmp(opname,"+") ) {
-						fnodetotex_tb((FNODE)FA1(f),tb);
-						write_tb(opname,tb);
-						fnodetotex_tb((FNODE)FA2(f),tb);
-					} else if ( !strcmp(opname,"-") ) {
-						if ( FA1(f) ) fnodetotex_tb((FNODE)FA1(f),tb);
-						write_tb(opname,tb);
-						fnodetotex_tb((FNODE)FA2(f),tb);
-					} else if ( !strcmp(opname,"*") ) {
-						fnodetotex_tb((FNODE)FA1(f),tb);
-						write_tb(" ",tb);
-						/* XXX special care for DP */
-						f2 = (FNODE)FA2(f);
-						if ( f2->id == I_EV ) {
-							n = (NODE)FA0(f2);
-							for ( i = 0; n; n = NEXT(n), i++ ) {
-								fi = (FNODE)BDY(n);
-								if ( fi->id != I_FORMULA || FA0(fi) )
-									break;
-							}
-							if ( n )
-								fnodetotex_tb((FNODE)FA2(f),tb);
-						} else
-							fnodetotex_tb((FNODE)FA2(f),tb);
-					} else if ( !strcmp(opname,"/") ) {
-						write_tb("\\frac{",tb);
-						fnodetotex_tb((FNODE)FA1(f),tb);
-						write_tb("} {",tb);
-						fnodetotex_tb((FNODE)FA2(f),tb);
-						write_tb("}",tb);
-					} else if ( !strcmp(opname,"^") ) {
-						fnodetotex_tb((FNODE)FA1(f),tb);
-						write_tb("^{",tb);
-						fnodetotex_tb((FNODE)FA2(f),tb);
-						write_tb("} ",tb);
-					} else if ( !strcmp(opname,"%") ) {
-						fnodetotex_tb((FNODE)FA1(f),tb);
-						write_tb(" {\\rm mod}\\, ",tb);
-						fnodetotex_tb((FNODE)FA2(f),tb);
-					} else
-						error("invalid binary operator");
-
-				case I_COP:
-					switch( (cid)FA0(f) ) {
-						case C_EQ:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" = ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case C_NE:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\neq ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case C_GT:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\gt ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case C_LT:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\lt ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case C_GE:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\geq ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case C_LE:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\leq ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-					}
+		case I_LOP:
+			switch( (lid)FA0(f) ) {
+				case L_EQ:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" = ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
-
-				case I_LOP:
-					switch( (lid)FA0(f) ) {
-						case L_EQ:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" = ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_NE:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\neq ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_GT:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\gt ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_LT:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\lt ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_GE:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\geq ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_LE:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" \\leq ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_AND:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" {\\rm \\ and\\ } ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_OR:
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(" {\\rm \\ or\\ } ",tb);
-							fnodetotex_tb((FNODE)FA2(f),tb);
-							break;
-						case L_NOT:
-							/* XXX : L_NOT is a unary operator */
-							write_tb("\\neg (",tb);
-							fnodetotex_tb((FNODE)FA1(f),tb);
-							write_tb(")",tb);
-							return;
-					}
+				case L_NE:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\neq ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
-
-				case I_AND:
-					fnodetotex_tb((FNODE)FA0(f),tb);
+				case L_GT:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\gt ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case L_LT:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\lt ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case L_GE:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\geq ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case L_LE:
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" \\leq ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case L_AND:
+					fnodetotex_tb((FNODE)FA1(f),tb);
 					write_tb(" {\\rm \\ and\\ } ",tb);
-					fnodetotex_tb((FNODE)FA1(f),tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
-
-				case I_OR:
-					fnodetotex_tb((FNODE)FA0(f),tb);
+				case L_OR:
+					fnodetotex_tb((FNODE)FA1(f),tb);
 					write_tb(" {\\rm \\ or\\ } ",tb);
-					fnodetotex_tb((FNODE)FA1(f),tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
+				case L_NOT:
+					/* XXX : L_NOT is a unary operator */
+					write_tb("\\neg (",tb);
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(")",tb);
+					return;
 			}
+			break;
+
+		case I_AND:
+			fnodetotex_tb((FNODE)FA0(f),tb);
+			write_tb(" {\\rm \\ and\\ } ",tb);
+			fnodetotex_tb((FNODE)FA1(f),tb);
+			break;
+
+		case I_OR:
+			fnodetotex_tb((FNODE)FA0(f),tb);
+			write_tb(" {\\rm \\ or\\ } ",tb);
+			fnodetotex_tb((FNODE)FA1(f),tb);
 			break;
 
 		/* ternary operators */
@@ -841,63 +878,70 @@ void fnodetotex_tb(FNODE f,TB tb)
 			break;
 
 		/* function */
-		case I_FUNC: case I_CAR: case I_CDR: case I_EV:
-			switch ( f->id ) {
-				case I_FUNC:
-					opname = symbol_name(((FUNC)FA0(f))->name);
-					write_tb(opname,tb);
-					write_tb("(",tb);
-					fargstotex_tb(opname,FA1(f),tb);
-					write_tb(")",tb);
-					break;
-				case I_CAR:
-					opname = symbol_name("car");
-					write_tb(opname,tb);
-					write_tb("(",tb);
-					fargstotex_tb(opname,FA0(f),tb);
-					write_tb(")",tb);
-					break;
-				case I_CDR:
-					opname = symbol_name("cdr");
-					write_tb(opname,tb);
-					write_tb("(",tb);
-					fargstotex_tb(opname,FA0(f),tb);
-					write_tb(")",tb);
-					break;
-				case I_EV:
-					n = (NODE)FA0(f);
-					allzero = 1;
-					for ( t0 = 0, i = 0; n; n = NEXT(n), i++ ) {
-						fi = (FNODE)BDY(n);
-						if ( fi->id == I_FORMULA && !FA0(fi) ) continue;
-						allzero = 0;
-						if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
-							sprintf(vname,"x_{%d}",i);
-							len = strlen(vname);
-							opname = MALLOC_ATOMIC(len+1);
-							strcpy(opname,vname);
-							write_tb(opname,tb);
-						} else {
-							sprintf(vname,"x_{%d}^{",i);
-							len = strlen(vname);
-							opname = MALLOC_ATOMIC(len+1);
-							strcpy(opname,vname);
-							write_tb(opname,tb);
-							fnodetotex_tb((FNODE)BDY(n),tb);
-							write_tb("} ",tb);
-						}
-					}
-					/* XXX */
-					if ( allzero )
-						write_tb(" 1 ",tb);
-					break;
-			}
+		case I_FUNC:
+			opname = symbol_name(((FUNC)FA0(f))->name);
+			write_tb(opname,tb);
+			write_tb("(",tb);
+			fargstotex_tb(opname,FA1(f),tb);
+			write_tb(")",tb);
 			break;
 
+		/* XXX */
+		case I_CAR:
+			opname = symbol_name("car");
+			write_tb(opname,tb);
+			write_tb("(",tb);
+			fargstotex_tb(opname,FA0(f),tb);
+			write_tb(")",tb);
+			break;
+
+		case I_CDR:
+			opname = symbol_name("cdr");
+			write_tb(opname,tb);
+			write_tb("(",tb);
+			fargstotex_tb(opname,FA0(f),tb);
+			write_tb(")",tb);
+			break;
+
+		/* exponent vector */
+		case I_EV:
+			n = (NODE)FA0(f);
+			allzero = 1;
+			for ( t0 = 0, i = 0; n; n = NEXT(n), i++ ) {
+				fi = (FNODE)BDY(n);
+				if ( fi->id == I_FORMULA && !FA0(fi) ) continue;
+				allzero = 0;
+				if ( dp_vars && i < dp_vars_len )
+					strcpy(vname,dp_vars[i]);
+				else
+					sprintf(vname,"x_{%d}",i);
+				vname_conv = symbol_name(vname);
+				if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
+					len = strlen(vname_conv);
+					opname = MALLOC_ATOMIC(len+2);
+					sprintf(opname,"%s ",vname_conv);
+					write_tb(opname,tb);
+				} else {
+					len = strlen(vname_conv);
+					/* 2: ^{ */
+					opname = MALLOC_ATOMIC(len+1+2);
+					sprintf(opname,"%s^{",vname_conv);
+					write_tb(opname,tb);
+					fnodetotex_tb((FNODE)BDY(n),tb);
+					write_tb("} ",tb);
+				}
+			}
+			/* XXX */
+			if ( allzero )
+				write_tb(" 1 ",tb);
+			break;
+
+		/* string */
 		case I_STR:
 			write_tb((char *)FA0(f),tb);
 			break;
 
+		/* internal object */
 		case I_FORMULA:
 			obj = (Obj)FA0(f);
 			if ( obj && OID(obj) == O_P ) {
@@ -911,6 +955,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 			write_tb(opname,tb);
 			break;
 
+		/* program variable */
 		case I_PVAR:
 			if ( FA1(f) )
 				error("fnodetotex_tb : not implemented yet");
