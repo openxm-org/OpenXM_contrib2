@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/strobj.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ctype.h"
@@ -42,7 +42,7 @@ STRING *rp;
 	char *b;
 	int len;
 
-	len = countobj(ARG0(arg));
+	len = estimate_length(CO,ARG0(arg));
 	b = (char *)MALLOC(len+1);
 	soutput_init(b);
 	sprintexpr(CO,ARG0(arg));
