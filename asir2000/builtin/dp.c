@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.21 2001/10/09 01:36:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.22 2001/11/19 00:57:10 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -119,7 +119,7 @@ struct ftab dp_tab[] = {
 	{"dp_gr_main",Pdp_gr_main,5},
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
 	{"dp_gr_f_main",Pdp_gr_f_main,4},
-	{"dp_gr_checklist",Pdp_gr_checklist,1},
+	{"dp_gr_checklist",Pdp_gr_checklist,2},
 
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
@@ -1298,10 +1298,13 @@ LIST *rp;
 	VECT g;
 	LIST dp;
 	NODE r;
+	int n;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_checklist");
-	gbcheck_list(BDY((LIST)ARG0(arg)),&g,&dp);
+	asir_assert(ARG1(arg),O_N,"dp_gr_checklist");
+	n = QTOS((Q)ARG1(arg));
+	gbcheck_list(BDY((LIST)ARG0(arg)),n,&g,&dp);
 	r = mknode(2,g,dp);
 	MKLIST(*rp,r);
 }

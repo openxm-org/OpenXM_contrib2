@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.38 2001/11/16 10:35:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.39 2001/11/19 00:57:10 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1994,7 +1994,7 @@ int gbcheck(NODE f)
 	return 1;
 }
 
-void gbcheck_list(NODE f,VECT *gp,LIST *pp)
+void gbcheck_list(NODE f,int n,VECT *gp,LIST *pp)
 {
 	int i;
 	NODE r,g,gall,u,u0,t;
@@ -2003,6 +2003,8 @@ void gbcheck_list(NODE f,VECT *gp,LIST *pp)
 	DP_pairs d,l;
 	Q q1,q2;
 
+	/* we need the following settings */
+	NVars = CNVars = n;
 	setup_arrays(f,0,&r);
 	for ( gall = g = 0, d = 0; r; r = NEXT(r) ) {
 		i = (int)BDY(r);
