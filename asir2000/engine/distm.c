@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.14 2003/07/22 07:12:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.15 2003/07/22 10:00:51 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -1981,11 +1981,13 @@ again:
 		}
 		stat = nd_sp(l,&h);
 		if ( !stat ) {
+			NEXT(l) = d; d = l;
 			d = nd_reconstruct(d);
 			goto again;
 		}
 		stat = nd_nf(h,!Top,&nf);
 		if ( !stat ) {
+			NEXT(l) = d; d = l;
 			d = nd_reconstruct(d);
 			goto again;
 		} else if ( nf ) {
