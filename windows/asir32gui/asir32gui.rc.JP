@@ -125,7 +125,8 @@ BEGIN
     END
     POPUP "ﾍﾙﾌﾟ(&H)"
     BEGIN
-        MENUITEM "目次",                        ID_ASIRHELP
+        MENUITEM "ユーザーズマニュアル",                        ID_ASIRHELP
+        MENUITEM "Asir-contrib ユーザーズマニュアル",           ID_CONTRIBHELP
         MENUITEM "ﾊﾞｰｼﾞｮﾝ情報(asir32gui) (&A)...", ID_APP_ABOUT
     END
 END
