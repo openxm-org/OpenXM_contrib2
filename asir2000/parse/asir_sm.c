@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.5 2003/02/14 22:29:17 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.6 2004/02/13 05:48:36 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,6 +83,7 @@ Asir_Start()
 	asir_save_handler();
 	if ( ox_asir_initialized )
 		return;
+	GC_init();
 	ox_asir_initialized = 1;
 	ox_do_copy = 1;
 #if defined(THINK_C)
@@ -97,7 +98,6 @@ Asir_Start()
 #if defined(TOWNS) && !defined(GO32) && !defined(__WIN32__)
 	disable_ctrl_c();
 #endif
-	GC_init();
 /*	process_args(argc,argv); */
 #if 0
 	copyright();

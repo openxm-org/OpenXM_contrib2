@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.6 2003/02/14 22:29:17 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.7 2004/02/13 05:48:36 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,6 +79,7 @@ void Init_Asir(int argc,char **argv)
 
 	if ( asirlib_initialized )
 		return;
+	GC_init();
 	asirlib_initialized = 1;
 	do_file = 1;
 #if defined(PARI)
@@ -96,7 +97,6 @@ void Init_Asir(int argc,char **argv)
 #if !defined(VISUAL) && !defined(THINK_C)
 /*	check_key(); */
 #endif
-	GC_init();
 	process_args(--argc,++argv);
 	copyright();
 	output_init();

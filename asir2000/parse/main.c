@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.25 2004/02/13 05:48:36 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.26 2004/03/05 02:26:53 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -106,6 +106,7 @@ main(int argc,char *argv[])
 #endif
 
 	StackBottom = &tmp;
+	GC_init();
 #if defined(MPI)
 	mpi_init();
 	if ( mpi_myid ) {
@@ -153,7 +154,6 @@ main(int argc,char *argv[])
 	rtime_init();
 	env_init();
 	endian_init();
-	GC_init();
 	cppname_init();
 	process_args(--argc,++argv);
 #if defined(PARI)

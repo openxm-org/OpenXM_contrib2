@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.55 2004/03/09 07:18:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.56 2004/03/11 07:40:42 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -853,6 +853,7 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	int tmp;
 #endif
 
+	GC_init();
 #if !defined(VISUAL) && !defined(MPI)
 	do_server_in_X11 = 1; /* XXX */
 #endif
@@ -865,7 +866,6 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	rtime_init();
 	env_init();
 	endian_init();
-	GC_init();
 	cppname_init();
 	process_args(--argc,++argv);
 #if defined(__CYGWIN__)
@@ -1142,6 +1142,7 @@ int asir_ox_init(int byteorder)
 	static ox_asir_initialized = 0;
 	FILE *ifp;
 
+	GC_init();
 #if !defined(VISUAL) && !defined(MPI)
 	do_server_in_X11 = 0; /* XXX */
 #endif
@@ -1154,7 +1155,6 @@ int asir_ox_init(int byteorder)
 	rtime_init();
 	env_init();
 	endian_init();
-	GC_init();
 /*	process_args(argc,argv); */
 	output_init();
 	arf_init();
