@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.46 2003/08/25 09:16:55 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.47 2003/08/25 09:19:43 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -271,6 +271,7 @@ void nd_reconstruct_direct(int mod,NDV *ps,int len);
 void nd_setup(int mod,int trace,NODE f);
 void nd_setup_parameters();
 BlockMask nd_create_blockmask(struct order_spec *ord);
+int nd_get_exporigin(struct order_spec *ord);
 
 /* ND functions */
 int nd_check_candidate(NODE input,NODE cand);
@@ -1511,6 +1512,7 @@ again:
 		} else if ( nf ) {
 			if ( checkonly ) return 0;
 			printf("+"); fflush(stdout);
+			ndl_print(HDL(nf));
 			nh = m?nd_newps(m,nf,0):nd_newps(m,0,nf);
 			d = update_pairs(d,g,nh);
 			g = update_base(g,nh);
@@ -2347,7 +2349,7 @@ void ndv_dehomogenize(NDV p,struct order_spec *ord)
 
 	len = p->len;
 	newnvar = nd_nvar-1;
-	newexporigin = ord->ord.block.length+1;
+	newexporigin = nd_get_exporigin(ord);
 	newwpd = newnvar/nd_epw+(newnvar%nd_epw?1:0)+newexporigin;
 	for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ )
 		ndl_dehomogenize(DL(m));
@@ -2503,25 +2505,27 @@ unsigned int *ndv_compute_bound(NDV p)
 	return t;
 }
 
+int nd_get_exporigin(struct order_spec *ord)
+{
+	switch ( nd_ord->id ) {
+		case 0:
+			return 1;
+		case 1:
+			/* block order */
+			/* d[0]:weight d[1]:w0,...,d[nd_exporigin-1]:w(n-1) */
+			return ord->ord.block.length+1;
+		case 2:
+			error("nd_setup_parameters : matrix order is not supported yet.");
+	}
+}
+
 void nd_setup_parameters() {
 	int i,n,elen;
 
 	nd_epw = (sizeof(unsigned int)*8)/nd_bpe;
 	elen = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
 
-	switch ( nd_ord->id ) {
-		case 0:
-			nd_exporigin = 1;
-			break;
-		case 1:
-			/* block order */
-			/* d[0]:weight d[1]:w0,...,d[nd_exporigin-1]:w(n-1) */
-			nd_exporigin = nd_ord->ord.block.length+1;
-			break;
-		case 2:
-			error("nd_setup_parameters : matrix order is not supported yet.");
-			break;
-	}
+	nd_exporigin = nd_get_exporigin(nd_ord);
 	nd_wpd = nd_exporigin+elen;
 	nd_epos = (EPOS)MALLOC_ATOMIC(nd_nvar*sizeof(struct oEPOS));
 	for ( i = 0; i < nd_nvar; i++ ) {
