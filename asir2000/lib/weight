@@ -707,7 +707,6 @@ def weight(PolyList,Vars,FLAG){
 	}
 	else{
 		TMP0=map(ltov,TMP0)$
-		TMP0=ltov(TMP0)$
 
 		for(I=0;I<length(TMP0);I++)
 			if(TMP0[I][0]==3)
@@ -716,7 +715,6 @@ def weight(PolyList,Vars,FLAG){
 				TMP0[I][0]=6$
 
 		TMP0=map(vtol,TMP0)$
-		TMP0=vtol(TMP0)$
 
 		RET=append(RET,TMP0)$
 	}
