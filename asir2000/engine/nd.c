@@ -1,8 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.85 2003/10/28 03:23:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.86 2003/10/28 08:47:01 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
+#include "base.h"
 #include "inline.h"
 #include <time.h>
 
@@ -117,7 +118,11 @@ typedef struct oIndArray
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 
 static int ndv_alloc;
+#if 1
 static int nd_f4_nsp=0x7fffffff;
+#else
+static int nd_f4_nsp=50;
+#endif
 static double nd_scale=2;
 static UINT **nd_bound;
 static struct order_spec *nd_ord;
