@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.7 2001/10/09 01:36:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.8 2002/08/08 10:57:01 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -476,8 +476,8 @@ void partial_factorial(int s,int e,N *r)
 	for ( i = 0, m = 1; m < e; m <<=1, i++ );
 	 /* XXX estimate of word length of the result */
 	len = (i*(e-s+1)+1+31)/32;
-	p = ALLOCA(len*sizeof(int));
-	p1 = ALLOCA(len*sizeof(int));
+	p = ALLOCA((len+1)*sizeof(int));
+	p1 = ALLOCA((len+1)*sizeof(int));
 	p[0] = s;
 	len = 1;
 	for ( i = s+1; (int)i <= e; ) {
