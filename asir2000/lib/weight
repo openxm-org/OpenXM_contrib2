@@ -1,6 +1,47 @@
 load("solve")$
 load("gr")$
 
+def junban(A,B){
+
+	return (A<B ? 1:(A>B ? -1:0))$
+}
+
+def worder(A,B){
+	
+	return (A[0]<B[0] ? 1:(A[0]>B[0] ? -1:0))$
+}
+
+def wsort(A,B,C){
+
+	D=newvect(length(B))$
+	for(I=0;I<length(B);I++)
+		D[I]=[A[I],B[I],C[I]]$
+
+	D=qsort(D,worder)$
+	E=[]$
+	for(I=0;I<length(B);I++)
+		E=cons(D[I][1],E)$
+	E=reverse(E)$
+	F=[]$
+	for(I=0;I<length(B);I++)
+		F=cons(D[I][2],F)$
+	F=reverse(F)$
+	
+	return [E,F]$
+}
+
+def derase(A){
+
+	B=newvect(length(A),A)$
+	B=qsort(B,junban)$
+	C=[]$
+	for(I=0;I<size(B)[0];I++)
+		if(car(C)!=B[I])
+			C=cons(B[I],C)$
+
+	return reverse(C)$
+}
+
 def nonposdegchk(Res){
 
 	for(I=0;I<length(Res);I++)
@@ -10,14 +51,49 @@ def nonposdegchk(Res){
 	return 1$
 }
 
+def getgcd(A,B){
 
-def notzerovec(Vec){
+	VarsNumA=length(A)$
+	VarsNumB=length(B)$
 
-	for(I=0;I<size(Vec)[0];I++)
-		if(Vec[I]!=0)
-			return 1$
+	C=newvect(VarsNumB,B)$
 
-	return 0$
+	for(I=0;I<VarsNumA;I++){
+
+		for(J=0;J<VarsNumB;J++)
+			if(C[J]==A[I][0])
+				break$
+
+		if(J<VarsNumB)
+			C[J]=A[I][1]$
+	}
+
+	D=0$
+	for(I=0;I<VarsNumB;I++)
+		D=gcd(D,C[I])$
+
+	if(D!=0){
+		C=C/D$
+		C=map(red,C)$
+	}
+
+	for(L=1,D=0,I=0;I<VarsNumB;I++){
+		if(type(TMP=dn(C[I]))==1)
+			L=ilcm(L,TMP)$
+
+		if(type(TMP=nm(C[I]))==1)
+			D=igcd(D,TMP)$
+	}
+
+	C=C*L$
+	if(D!=0)
+		C=C/D$
+
+	RET=[]$
+	for(I=0;I<VarsNumB;I++)
+		RET=cons([B[I],C[I]],RET)$
+
+	return RET$
 }
 
 def resvars(Res,Vars){
@@ -35,65 +111,52 @@ def resvars(Res,Vars){
 	return(ResVars)$
 }
 
-def makeret1(Res,Vars){
+def makeret(Res,Vars){
 
+	ResNum=length(Res)$
 	VarsNum=length(Vars)$
 
-	ResVec=newvect(VarsNum,Vars)$
+	ResVec=newvect(ResNum)$
+	for(M=0,I=0;I<ResNum;I++){
+		if(member(Res[I][0],Vars)){
+			ResVec[I]=Res[I][1]$
 
-	for(F=0,I=0,M=0;I<length(Res);I++){
+			if(type(ResVec[I])==1){
+				if(M==0)
+					M=ResVec[I]$
+				else
+					if(ResVec[I]<M)
+						M=ResVec[I]$
+			}
+		}
+	}		
+	
+	if(M!=0)
+		ResVec=ResVec/M;
 
+	RET=newvect(VarsNum,Vars)$
+
+	for(I=0;I<ResNum;I++){
 		for(J=0;J<VarsNum;J++)
-			if(Res[I][0]==Vars[J])
+			if(Vars[J]==Res[I][0])
 				break$
 
-		if(J<VarsNum){
-			ResVec[J]=Res[I][1]$
-
-			if(F==0 && type(ResVec[J])==1){
-				if(M==0)
-					M=ResVec[J]$
-				else
-					if(ResVec[J]<M)
-						M=ResVec[J]$
-			}
-			else
-				F=1$
-		}
-
+		if(J<VarsNum)
+			RET[J]=ResVec[I]$
 	}
-
-	if(F==0)
-		for(I=0;I<VarsNum;I++)
-			ResVec[I]=ResVec[I]/M*1.0$
-
+			
 	for(I=0;I<VarsNum;I++)
-		for(J=0;J<length(Vars);J++)
-			ResVec[I]=subst(ResVec[I],Vars[J],
-				strtov(rtostr(Vars[J])+"_deg"))$
+		if(type(RET[I])!=1)
+			return [1,RET]$
 
-	ResVec=cons(F,vtol(ResVec))$
-	return ResVec$
-}
-
-def junban(A,B){
-
-	for(I=0;I<size(A)[0];I++){
-		if(A[I]<B[I])
-			return 1$
-		
-		if(A[I]>B[I])
-			return -1$
-	}
-
-	return 0$
+	return [0,RET]$
 }
 
 def roundret(V){
 
-	VN=length(V)$
-	RET0=newvect(VN,V)$
+	VN=size(V)[0]$
 
+	RET0=V$
 	for(I=1;I<1000;I++){
 		RET1=I*RET0$
 		for(J=0;J<VN;J++){
@@ -115,10 +178,7 @@ def roundret(V){
 
 def chkou(L,ExpMat,CHAGORD){
 
-	P=1$
-	F=ExpMat[L]$
-
-	for(I=0;I<L;I++){
+	for(P=1,I=0;I<L;I++){
 		Q=ExpMat[L][CHAGORD[I]]$
 		for(J=0;J<size(ExpMat[0])[0];J++){
 			ExpMat[L][CHAGORD[J]]=red((ExpMat[I][CHAGORD[I]]
@@ -143,7 +203,7 @@ def chkou(L,ExpMat,CHAGORD){
 	}
 }
 
-def qcheck0(PolyList,Vars){
+def qcheckmain(PolyList,Vars){
 
 	RET=[]$
 	PolyListNum=length(PolyList)$
@@ -162,19 +222,12 @@ def qcheck0(PolyList,Vars){
 		for(;Poly!=0;Poly=dp_rest(Poly)){
 			ExpMat[L]=dp_etov(dp_ht(Poly))-BASE0$
 			L=chkou(L,ExpMat,CHAGORD)$
-			if(L==VarsNum-1){
-				RET=cons(ExpMat,RET)$
-				RET=cons(CHAGORD,RET)$
-				RET=cons(L,RET)$
-				return RET$
-			}
+			if(L==VarsNum-1)
+				return [L,CHAGORD,ExpMat]$
 		}	
 	}
 	
-	RET=cons(ExpMat,RET)$
-	RET=cons(CHAGORD,RET)$
-	RET=cons(L,RET)$
-	return RET$
+	return [L,CHAGORD,ExpMat]$
 }
 
 def inner(A,B){
@@ -204,63 +257,9 @@ def checktd(PolyList,Vars,ResVars){
 	return 1$
 }
 
-def getgcd(A,B){
-
-	VarsNumA=length(A)$
-	VarsNumB=length(B)$
-
-	C=newvect(VarsNumB,B)$
-
-	for(I=0;I<VarsNumA;I++){
-
-		for(J=0;J<VarsNumB;J++)
-			if(C[J]==A[I][0])
-				break$
-
-		C[J]=A[I][1]$
-	}
-
-	D=0$
-	for(I=0;I<VarsNumB;I++)
-		D=gcd(D,C[I])$
-
-	if(D!=0){
-
-		for(I=0;I<VarsNumB;I++)
-			C[I]=red(C[I]/D)$
-
-	}
-
-	for(L=1,D=0,I=0;I<VarsNumB;I++){
-		if(type(TMP=dn(C[I]))==1)
-			L=ilcm(L,TMP)$
-
-		if(type(TMP=nm(C[I]))==1)
-			D=igcd(D,TMP)$
-	}
-
-	for(I=0;I<VarsNumB;I++)
-		C[I]=C[I]*L$
-
-	if(D!=0)
-		for(I=0;I<VarsNumB;I++)
-			C[I]=C[I]/D$
-
-
-	RET=newvect(VarsNumB)$
-	for(I=0;I<VarsNumB;I++){
-		RET[I]=newvect(2)$
-		RET[I][0]=B[I]$
-		RET[I][1]=C[I]$
-	}
-
-	return vtol(map(vtol,RET))$
-}
-
 def qcheck(PolyList,Vars){
 
-	RET=[]$
-	Res=qcheck0(PolyList,Vars)$
+	Res=qcheckmain(PolyList,Vars)$
 	VarsNum=length(Vars)$
 
 	IndNum=Res[0]$
@@ -276,16 +275,18 @@ def qcheck(PolyList,Vars){
 		SolveList=cons(TMP,SolveList)$
 	}
 
+	Rea=vars(SolveList)$
+
 	VarsList=[]$
 	for(I=0;I<VarsNum;I++)
-		VarsList=cons(Vars[CHAGORD[I]],VarsList)$
+		if(member(Vars[CHAGORD[I]],Rea))
+			VarsList=cons(Vars[CHAGORD[I]],VarsList)$
 
-	Rea=vars(SolveList)$
 	Res=solve(reverse(SolveList),reverse(VarsList))$
+	Res=getgcd(Res,Rea)$
 
 	if(nonposdegchk(Res)){
 
-		Res=getgcd(Res,Rea)$
 	   	ResVars=resvars(Res,Vars)$
 
 		if(checktd(PolyList,Vars,ResVars)==1){
@@ -293,64 +294,195 @@ def qcheck(PolyList,Vars){
 			for(J=0;J<length(Vars);J++)
 				ResVars=map(subst,ResVars,Vars[J],
 					strtov(rtostr(Vars[J])+"_deg"))$
-
-			RET=cons([vtol(ResVars),ResVars,[]],RET)$
-			return cons(1,RET)$
+			
+			return [wsort(ResVars,Vars,ResVars)]$
 		}
 		else
-			return cons(0,RET)$
-	}
-	else
-		return cons(0,RET)$
-
-}
-
-def leastsq(ExpMat,Vars){
-
-	ExpMatRowNum=size(ExpMat)[0]$
-	ExpMatColNum=size(ExpMat[0])[0]$
-
-	NormMat=newmat(ExpMatColNum,ExpMatColNum+1)$
-
-	for(I=0;I<ExpMatColNum;I++)
-		for(J=0;J<ExpMatColNum;J++)
-			for(K=0;K<ExpMatRowNum;K++)
-				NormMat[I][J]+=ExpMat[K][I]*ExpMat[K][J]$
-
-	for(I=0;I<ExpMatColNum;I++)
-		for(J=0;J<ExpMatRowNum;J++)
-			NormMat[I][ExpMatColNum]+=ExpMat[J][I]$
-
-	SolveList=[]$
-	for(I=0;I<ExpMatColNum;I++){
-		TMP=0$
-		for(J=0;J<ExpMatColNum;J++)
-			TMP+=NormMat[I][J]*Vars[J]$
-
-		TMP-=NormMat[I][ExpMatColNum]$
-		SolveList=cons(TMP,SolveList)$
-	}
-
-	Rea=vars(SolveList)$
-	Res=solve(SolveList,Vars)$
-
-	if(nonposdegchk(Res)){
-		Res=getgcd(Res,Rea)$
-		TMP1=makeret1(Res,Vars);
-		if(car(TMP1)==0){	
-			TMP2=roundret(cdr(TMP1));
-			TMP3=map(drint,cdr(TMP1))$
-			return([cdr(TMP1),newvect(length(TMP3),TMP3),TMP2])$
-		}
-		else
-			return([cdr(TMP1),[],[]])$
+			return []$
 	}
 	else
 		return []$
 
 }
 
-def weight(PolyList,Vars){
+def leastsq(NormMat,ExpMat,Vars){
+
+	RET=[]$
+
+	ExpMatRowNum=size(ExpMat)[0]$
+	ExpMatColNum=size(ExpMat[0])[0]$
+
+	if(NormMat==0){
+		NormMat=newmat(ExpMatColNum,ExpMatColNum)$
+
+		for(I=0;I<ExpMatColNum;I++)
+			for(J=I;J<ExpMatColNum;J++)
+				for(K=0;K<ExpMatRowNum;K++)
+					NormMat[I][J]+=
+						ExpMat[K][I]*ExpMat[K][J]$
+	}
+
+	BVec=newvect(ExpMatColNum)$
+
+	for(I=0;I<ExpMatColNum;I++)
+		for(J=0;J<ExpMatRowNum;J++)
+			BVec[I]+=ExpMat[J][I]$
+
+	SolveList=[]$
+	for(I=0;I<ExpMatColNum;I++){
+		TMP=0$
+		for(J=0;J<I;J++)
+			TMP+=NormMat[J][I]*Vars[J]$
+
+		for(J=I;J<ExpMatColNum;J++)
+			TMP+=NormMat[I][J]*Vars[J]$
+
+		TMP-=BVec[I]$
+		SolveList=cons(TMP,SolveList)$
+	}
+
+	Rea=vars(SolveList)$
+
+	VarsList=[]$
+	for(I=0;I<length(Vars);I++)
+		if(member(Vars[I],Rea))
+			VarsList=cons(Vars[I],VarsList)$
+
+	Res=solve(SolveList,VarsList)$
+	Res=getgcd(Res,Rea)$
+
+	if(nonposdegchk(Res)){
+		TMP1=makeret(Res,Vars)$
+		if(TMP1[0]==0){	
+			TMP=roundret(TMP1[1]*1.0)$
+			if(TMP!=[])
+				RET=cons(wsort(TMP1[1],Vars,TMP),RET)$
+
+			RET=cons(wsort(TMP1[1],Vars,
+				map(drint,TMP1[1]*1.0)),RET)$
+
+			return RET$
+		}
+		else{
+			RET=cons(wsort(TMP1[1],Vars,TMP1[1]*1.0),RET)$
+			return RET$
+		}
+	}
+	else
+		return RET$
+
+}
+
+def weightr(ExpMat,Vars,PolyListNum,OneMat){
+
+	RET=[]$
+
+	ExpMatRowNum=size(ExpMat)[0]$
+	ExpMatColNum=size(ExpMat[0])[0]$
+	ExtMatColNum=ExpMatColNum+PolyListNum$
+
+	ExtVars=reverse(Vars)$
+	for(I=0;I<PolyListNum;I++)
+		ExtVars=cons(uc(),ExtVars)$
+
+	ExtVars=reverse(ExtVars)$
+
+	NormMat=newmat(ExpMatColNum,ExtMatColNum)$
+
+	for(I=0;I<ExpMatColNum;I++)
+		for(J=I;J<ExpMatColNum;J++)
+			for(K=0;K<ExpMatRowNum;K++)
+				NormMat[I][J]+=
+					ExpMat[K][I]*
+					ExpMat[K][J]$
+
+	for(I=0;I<ExpMatColNum;I++)
+		for(J=0;J<PolyListNum;J++)
+			for(K=OneMat[J];K<OneMat[J+1];K++)
+				NormMat[I][J+ExpMatColNum]-=
+					ExpMat[K][I]$
+
+	WVect=newvect(PolyListNum)$
+	for(I=0;I<PolyListNum;I++)
+		WVect[I]=OneMat[I+1]-OneMat[I]$
+
+	for(F=0;F<ExtMatColNum;F++){
+		SolveList=[]$
+		for(I=0;I<ExpMatColNum;I++){
+			if (F==I) 
+				continue$
+
+			TMP=0$
+		
+			for(J=0;J<I;J++)
+				if(J!=F)
+					TMP+=NormMat[J][I]*ExtVars[J]$
+
+			for(J=I;J<ExtMatColNum;J++)
+				if(J!=F)	
+					TMP+=NormMat[I][J]*ExtVars[J]$
+			
+			if(F<I)
+				TMP+=NormMat[F][I]$
+			else
+				TMP+=NormMat[I][F]$
+	
+			SolveList=cons(TMP,SolveList)$
+		}		
+		
+		for(I=0;I<PolyListNum;I++){
+			if(F==(I+ExpMatColNum))
+				continue$
+			
+			TMP=0$
+			for(J=0;J<ExpMatColNum;J++)
+				if(J!=F)
+					TMP+=NormMat[J][I+ExpMatColNum]
+						*ExtVars[J]$
+
+			TMP+=WVect[I]*ExtVars[I+ExpMatColNum]$
+
+			if(F<ExpMatColNum)
+				TMP+=NormMat[F][I+ExpMatColNum]$
+
+			SolveList=cons(TMP,SolveList)$
+		}	
+
+		Rea=vars(SolveList)$
+
+		SolVars=[]$
+		for(I=0;I<ExtMatColNum;I++)
+			if(I!=F && member(ExtVars[I],Rea))
+				SolVars=cons(ExtVars[I],SolVars)$
+
+		Res=solve(SolveList,SolVars)$
+		Res=cons([ExtVars[F],1],Res)$
+
+		Rea=cons(ExtVars[F],Rea)$
+		Res=getgcd(Res,Rea)$
+	
+		if(nonposdegchk(Res)){
+
+			TMP1=makeret(Res,Vars)$
+			if(TMP1[0]==0){	
+				TMP=roundret(TMP1[1]*1.0)$
+				if(TMP!=[])
+					RET=cons(wsort(TMP1[1],Vars,TMP),RET)$
+
+				RET=cons(wsort(TMP1[1],Vars,
+					map(drint,TMP1[1]*1.0)),RET)$
+			}
+			else{
+				RET=cons(wsort(TMP1[1],Vars,TMP1[1]*1.0),RET)$
+			}
+		}
+
+	}
+
+	return [NormMat,RET]$
+}
+
+def weight(PolyList,Vars,FLAG){
 
 	Vars0=vars(PolyList)$
 	Vars1=[]$
@@ -362,39 +494,50 @@ def weight(PolyList,Vars){
 
 	RET=[]$
 
+/* first */
+
 	TMP=qcheck(PolyList,Vars)$
 
-	if(car(TMP)==1){
-		RET=cdr(TMP)$
-		RET=cons(Vars,RET)$
-		RET=cons(1,RET)$
-		return RET$	
+	if(TMP!=[]){
+		RET=append(RET,TMP)$
+		return cons(1,RET)$
 	}
 
 	dp_ord(2)$
 
 	PolyListNum=length(PolyList)$
-	VPolyList=newvect(PolyListNum,PolyList)$
 
+	OneMat=newvect(PolyListNum+1,[0])$
 	ExpMat=[]$
-	for(I=0;I<PolyListNum;I++)
-		for(Poly=dp_ptod(VPolyList[I],Vars);
+	for(I=0;I<PolyListNum;I++){
+		for(Poly=dp_ptod(PolyList[I],Vars);
 			Poly!=0;Poly=dp_rest(Poly)){
-			Exp=dp_etov(dp_ht(Poly))$
-			if(notzerovec(Exp))
-				ExpMat=cons(Exp,ExpMat)$
-			}
+			ExpMat=cons(dp_etov(dp_ht(Poly)),ExpMat)$
+		}
+		OneMat[I+1]=length(ExpMat)$
+	}
 
 	ExpMat=reverse(ExpMat)$
 	ExpMat=newvect(length(ExpMat),ExpMat)$
 
-/* first */
-
-	RET=cons(leastsq(ExpMat,Vars),RET)$
-
 /* second */
 
+	if(FLAG){
+		TMP=weightr(ExpMat,Vars,PolyListNum,OneMat)$
+		RET=append(RET,TMP[1])$
+	}
+
+/* third */
+
+	if(FLAG)
+		RET=append(RET,leastsq(TMP[0],ExpMat,Vars))$
+	else
+		RET=append(RET,leastsq(0,ExpMat,Vars))$
+
+/* forth */
+
 	ExpMat=qsort(ExpMat,junban)$
+
 	ExpMat2=[]$
 	for(I=0;I<size(ExpMat)[0];I++)
 		if(car(ExpMat2)!=ExpMat[I])
@@ -402,12 +545,11 @@ def weight(PolyList,Vars){
 
 	if(size(ExpMat)[0]!=length(ExpMat2)){
 		ExpMat=newvect(length(ExpMat2),ExpMat2)$
-		RET=cons(leastsq(ExpMat,Vars),RET)$
+		RET=append(RET,leastsq(0,ExpMat,Vars))$
 	}
 
-	RET=cons(Vars,reverse(RET))$
-	RET=cons(0,RET)$
-	return RET$
+	RET=derase(RET)$
+	return cons(0,RET)$
 }
 
 end$
