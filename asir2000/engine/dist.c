@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.19 2001/10/09 01:36:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.20 2002/01/28 00:54:43 noro Exp $ 
 */
 #include "ca.h"
 
@@ -61,6 +61,10 @@
 #define ORD_ELIM 9
 #define ORD_WEYL_ELIM 10
 #define ORD_HOMO_WW_DRL 11
+#define ORD_DRL_ZIGZAG 12
+#define ORD_HOMO_WW_DRL_ZIGZAG 13
+
+int cmpdl_drl_zigzag(), cmpdl_homo_ww_drl_zigzag();
 
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
@@ -136,6 +140,10 @@ void initd(struct order_spec *spec)
 					cmpdl = cmpdl_weyl_elim; break;
 				case ORD_HOMO_WW_DRL:
 					cmpdl = cmpdl_homo_ww_drl; break;
+				case ORD_DRL_ZIGZAG:
+					cmpdl = cmpdl_drl_zigzag; break;
+				case ORD_HOMO_WW_DRL_ZIGZAG:
+					cmpdl = cmpdl_homo_ww_drl_zigzag; break;
 				case ORD_LEX: default:
 					cmpdl = cmpdl_lex; break;
 			}
@@ -1079,9 +1087,9 @@ int cmpdl_homo_ww_drl(int n,DL d1,DL d2)
 		return -1;
 
 	m = n>>1;
-	for ( i = 0, e1 = e2 = 0; i < m; i++ ) {
-		e1 += current_weyl_weight_vector[i]*(d1->d[m+i] - d1->d[i]);
-		e2 += current_weyl_weight_vector[i]*(d2->d[m+i] - d2->d[i]);
+	for ( i = 0, e1 = e2 = 0, p1 = d1->d, p2 = d2->d; i < m; i++ ) {
+		e1 += current_weyl_weight_vector[i]*(p1[m+i] - p1[i]);
+		e2 += current_weyl_weight_vector[i]*(p2[m+i] - p2[i]);
 	}
 	if ( e1 > e2 )
 		return 1;
@@ -1098,6 +1106,59 @@ int cmpdl_homo_ww_drl(int n,DL d1,DL d2)
 	for ( i= n - 1, p1 = d1->d+n-1, p2 = d2->d+n-1;
 		i >= 0 && *p1 == *p2; i--, p1--, p2-- );
 	return i < 0 ? 0 : (*p1 < *p2 ? 1 : -1);
+}
+
+int cmpdl_drl_zigzag(int n,DL d1,DL d2)
+{
+	int i,t,m;
+	int *p1,*p2;
+
+	if ( d1->td > d2->td )
+		return 1;
+	else if ( d1->td < d2->td )
+		return -1;
+	else {
+		m = n>>1;
+		for ( i= m - 1, p1 = d1->d, p2 = d2->d; i >= 0; i-- ) {
+			if ( t = p1[m+i] - p2[m+i] ) return t > 0 ? -1 : 1;
+			if ( t = p1[i] - p2[i] ) return t > 0 ? -1 : 1;
+		}
+		return 0;
+	}
+}
+
+int cmpdl_homo_ww_drl_zigzag(int n,DL d1,DL d2)
+{
+	int e1,e2,m,i,t;
+	int *p1,*p2;
+
+	if ( d1->td > d2->td )
+		return 1;
+	else if ( d1->td < d2->td )
+		return -1;
+
+	m = n>>1;
+	for ( i = 0, e1 = e2 = 0, p1 = d1->d, p2 = d2->d; i < m; i++ ) {
+		e1 += current_weyl_weight_vector[i]*(p1[m+i] - p1[i]);
+		e2 += current_weyl_weight_vector[i]*(p2[m+i] - p2[i]);
+	}
+	if ( e1 > e2 )
+		return 1;
+	else if ( e1 < e2 )
+		return -1;
+
+	e1 = d1->td - d1->d[n-1];
+	e2 = d2->td - d2->d[n-1];
+	if ( e1 > e2 )
+		return 1;
+	else if ( e1 < e2 )
+		return -1;
+
+	for ( i= m - 1, p1 = d1->d, p2 = d2->d; i >= 0; i-- ) {
+		if ( t = p1[m+i] - p2[m+i] ) return t > 0 ? -1 : 1;
+		if ( t = p1[i] - p2[i] ) return t > 0 ? -1 : 1;
+	}
+	return 0;
 }
 
 int cmpdl_order_pair(int n,DL d1,DL d2)
