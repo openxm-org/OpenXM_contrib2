@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.15 2003/03/07 03:12:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.16 2003/03/07 06:39:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
-#if !defined(VISUAL)
+#if !defined(VISUAL) && defined(DO_PLOT)
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #endif
