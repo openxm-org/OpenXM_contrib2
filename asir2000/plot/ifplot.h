@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.10 2002/07/29 03:08:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.11 2002/08/02 08:59:47 noro Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -151,6 +151,9 @@ typedef struct RealVect {
 #define MKRVECT4(v,x,y,z,u)\
 ((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+3*sizeof(int)),\
  (v)->len=4,(v)->body[0]=(x),(v)->body[1]=(y),(v)->body[2]=(z),(v)->body[3]=(u))
+#define MKRVECT5(v,x,y,z,u,w)\
+((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+4*sizeof(int)),\
+ (v)->len=4,(v)->body[0]=(x),(v)->body[1]=(y),(v)->body[2]=(z),(v)->body[3]=(u),(v)->body[4]=(w))
 
 #define RV_POINT 1
 #define RV_LINE 2

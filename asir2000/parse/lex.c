@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.30 2004/03/01 02:03:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.31 2004/03/04 07:11:01 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -478,6 +478,8 @@ void purge_stdin()
 #endif
 }
 
+extern int asir_texmacs;
+
 static int skipspace() {
 	int c,c1;
 
@@ -486,7 +488,7 @@ static int skipspace() {
 			case ' ': case '\t': case '\r':
 				c = Getc(); break;
 			case '\n':
-				c = afternl();	break;
+				c = afternl(); break;
 			case '/':
 				if ( (c1 = Getc()) == '*' )
 					c = aftercomment();

@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.1 2004/03/17 03:22:47 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -983,10 +983,17 @@ QUOTE quote;
 void PRINTTB(VL vl,TB p)
 {
 	int i;
+#if defined(SPRINT)
+	char *ptr,*e;
 
+	for ( i = 0, ptr = buf+strlen(OUT); i < p->next; i++ )
+		for ( e = p->body[i]; *e; *ptr++ = *e++ );
+	*ptr = 0;
+#else
 	for ( i = 0; i < p->next; i++ ) {
 		PUTS(p->body[i]);
 	}
+#endif
 }
 
 void PRINTUP2(p)

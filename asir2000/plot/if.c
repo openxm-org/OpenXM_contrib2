@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.14 2002/08/02 09:44:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.15 2002/08/15 05:36:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -307,18 +307,21 @@ int draw_obj(NODE arg)
 		case 2: /* point */
 			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
 			draw_point(display,can,x,y,color);
-			MKRVECT2(vect,x,y); MKNODE(n,vect,can->history); can->history = n;
+			MKRVECT3(vect,x,y,color); MKNODE(n,vect,can->history);
+			can->history = n;
 			break;
 		case 3: /* circle */
 			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
 			r = (int)ToReal((Q)ARG2(obj));
-			MKRVECT3(vect,x,y,r); MKNODE(n,vect,can->history); can->history = n;
+			MKRVECT4(vect,x,y,r,color); MKNODE(n,vect,can->history);
+			can->history = n;
 			break;
 		case 4: /* line */
 			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
 			u = (int)ToReal((Q)ARG2(obj)); v = (int)ToReal((Q)ARG3(obj));
 			draw_line(display,can,x,y,u,v,color);
-			MKRVECT4(vect,x,y,u,v); MKNODE(n,vect,can->history); can->history = n;
+			MKRVECT5(vect,x,y,u,v,color); MKNODE(n,vect,can->history);
+			can->history = n;
 			break;
 		default:
 			set_lasterror("draw_obj : invalid request");
