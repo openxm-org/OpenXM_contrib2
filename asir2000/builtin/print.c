@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.8 2001/08/31 09:17:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.9 2001/09/03 08:52:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -278,6 +278,8 @@ Obj *rp;
 			break;
 
 		case I_PVAR:
+			if ( FA1(f) )
+				error("fnodetotree : not implemented yet");
 			MKSTR(head,"variable");
 			GETPVNAME(FA0(f),opname);
 			MKSTR(op,opname);
@@ -297,6 +299,7 @@ FNODE f;
 	FNODE a1,a2,a3;
 	pointer r;
 	NODE n,t,t0;
+	QUOTE q;
 
 	if ( !f )
 		return 0;
@@ -355,7 +358,8 @@ FNODE f;
 		case I_PVAR: case I_INDEX:
 		case I_POSTSELF: case I_PRESELF:
 			r = eval(f);
-			return mkfnode(1,I_FORMULA,r);
+			objtoquote(r,&q);
+			return BDY(q);
 
 		default:
 			error("eval_pvar_in_fnode : not implemented yet");
