@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.43 2002/07/18 02:23:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.44 2002/12/27 07:37:57 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2195,7 +2195,11 @@ void dp_load(int index,DP *p)
 		sprintf(path,"%s%c%d",Demand,DELIM,index);
 		if ( !(fp = fopen(path,"rb") ) )
 			error("dp_load : cannot open a file");
-		skipvl(fp); loadobj(fp,(Obj *)p); fclose(fp);
+		if ( PCoeffs )
+			loadvl(fp);
+		else
+			skipvl(fp);
+		loadobj(fp,(Obj *)p); fclose(fp);
 	}
 }
 
@@ -2208,7 +2212,11 @@ int dp_load_t(int index,DP *p)
 	if ( !(fp = fopen(path,"rb") ) )
 		return 0;
 	else {
-		skipvl(fp); loadobj(fp,(Obj *)p); fclose(fp); return 1;
+		if ( PCoeffs )
+			loadvl(fp);
+		else
+			skipvl(fp);
+		loadobj(fp,(Obj *)p); fclose(fp); return 1;
 	}
 }
 
