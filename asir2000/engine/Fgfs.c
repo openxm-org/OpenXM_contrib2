@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.13 2002/11/26 08:21:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.14 2002/12/18 06:15:40 noro Exp $ */
 
 #include "ca.h"
 
@@ -474,7 +474,10 @@ void cont_pp_mv_sf(VL vl,VL rvl,P p,P *c,P *pp)
 	MP t;
 	int i,m;
 	P *ps;
+	struct order_spec spec;
 
+	create_order_spec(0,&spec);
+	initd(&spec);
 	ptod(vl,rvl,p,&dp);
 	for ( t = BDY(dp), m = 0; t; t = NEXT(t), m++ );
 	ps = (P *)ALLOCA(m*sizeof(P));

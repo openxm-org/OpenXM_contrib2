@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.11 2001/10/09 01:36:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.12 2002/11/01 06:47:41 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -225,7 +225,11 @@ void ptosfp(P p,P *pr)
 	if ( !p )
 		*pr = 0;
 	else if ( NUM(p) ) {
-		qtogfs((Q)p,&a); *pr = (P)a;
+		if ( NID((Num)p) == N_GFS )
+			*pr = (P)p;
+		else {
+			qtogfs((Q)p,&a); *pr = (P)a;
+		}
 	} else {
 		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
 			ptosfp(COEF(dc),&t);

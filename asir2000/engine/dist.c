@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.20 2002/01/28 00:54:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.21 2002/01/30 01:09:07 noro Exp $ 
 */
 #include "ca.h"
 
@@ -75,32 +75,29 @@ int dp_nelim,dp_fcoeffs;
 struct order_spec dp_current_spec;
 int *dp_dl_work;
 
-int has_fcoef(DP f)
+int has_sfcoef(DP f)
 {
 	MP t;
 
 	if ( !f )
 		return 0;
 	for ( t = BDY(f); t; t = NEXT(t) )
-		if ( has_fcoef_p(t->c) )
+		if ( has_sfcoef_p(t->c) )
 			break;
 	return t ? 1 : 0;
 }
 
-int has_fcoef_p(P f)
+int has_sfcoef_p(P f)
 {
 	DCP dc;
 
 	if ( !f )
 		return 0;
 	else if ( NUM(f) )
-		return (NID((Num)f) == N_LM 
-			|| NID((Num)f) == N_GF2N
-			|| NID((Num)f) == N_GFPN
-			|| NID((Num)f) == N_GFS) ? 1 : 0;
+		return (NID((Num)f) == N_GFS) ? 1 : 0;
 	else {
 		for ( dc = DC(f); dc; dc = NEXT(dc) )
-			if ( has_fcoef_p(COEF(dc)) )
+			if ( has_sfcoef_p(COEF(dc)) )
 				return 1;
 		return 0;
 	}
@@ -204,8 +201,8 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 		}
 	}
 #if 0
-	if ( !dp_fcoeffs && has_fcoef(*pr) )
-		dp_fcoeffs = 1;
+	if ( !dp_fcoeffs && has_sfcoef(*pr) )
+		dp_fcoeffs = N_GFS;
 #endif
 }
 

@@ -45,13 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.24 2002/01/28 00:54:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.25 2002/06/06 01:18:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
 
-extern int dp_fcoeffs;
 extern int dp_nelim;
 extern int dp_order_pair_length;
 extern struct order_pair *dp_order_pair;
@@ -121,7 +120,7 @@ struct ftab dp_tab[] = {
 	/* Buchberger algorithm */
 	{"dp_gr_main",Pdp_gr_main,5},
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
-	{"dp_gr_f_main",Pdp_gr_f_main,4},
+	{"dp_gr_f_main",Pdp_gr_f_main,5},
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
 
 	/* F4 algorithm */
@@ -1270,20 +1269,38 @@ LIST *rp;
 {
 	LIST f,v;
 	Num homo;
+	int m,field,t;
 	struct order_spec ord;
+	NODE n;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_f_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_gr_f_main");
 	asir_assert(ARG2(arg),O_N,"dp_gr_f_main");
+	asir_assert(ARG3(arg),O_N,"dp_gr_f_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
 	homo = (Num)ARG2(arg);
-	create_order_spec(ARG3(arg),&ord);
-	dp_gr_main(f,v,homo,0,1,&ord,rp);
+	m = QTOS((Q)ARG3(arg));
+	if ( m )
+		error("dp_gr_f_main : trace lifting is not implemented yet");
+	create_order_spec(ARG4(arg),&ord);
+	field = 0;
+	for ( n = BDY(f); n; n = NEXT(n) ) {
+		t = get_field_type(BDY(n));
+		if ( !t )
+			continue;
+		if ( t < 0 )
+			error("dp_gr_f_main : incosistent coefficients");
+		if ( !field )
+			field = t;
+		else if ( t != field )
+			error("dp_gr_f_main : incosistent coefficients");
+	}
+	dp_gr_main(f,v,homo,m?1:0,field,&ord,rp);
 }
 
 void Pdp_f4_main(arg,rp)
@@ -1572,4 +1589,30 @@ LIST remove_zero_from_list(LIST l)
 		NEXT(r) = 0;
 	MKLIST(rl,r0);
 	return rl;
+}
+
+int get_field_type(P p)
+{
+	int type,t;
+	DCP dc;
+
+	if ( !p )
+		return 0;
+	else if ( NUM(p) )
+		return NID((Num)p);
+	else {
+		type = 0;
+		for ( dc = DC(p); dc; dc = NEXT(dc) ) {
+			t = get_field_type(COEF(dc));
+			if ( !t )
+				continue;
+			if ( t < 0 )
+				return t;
+			if ( !type )
+				type = t;
+			else if ( t != type )
+				return -1;
+		}
+		return type;
+	}
 }

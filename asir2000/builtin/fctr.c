@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.15 2002/10/23 07:54:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.16 2002/10/31 03:59:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pfctr(), Pgcd(), Pgcdz(), Plcm(), Psqfr(), Pufctrhint();
-void Pptozp(), Pcont();
+void Pptozp(), Pcont(), Psfcont();
 void Pafctr(), Pagcd();
 void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
 void Psfsqfr(),Psffctr(),Psfbfctr(),Psfufctr(),Psfmintdeg(),Psfgcd();
@@ -70,6 +70,7 @@ struct ftab fctr_tab[] = {
 	{"ufctrhint",Pufctrhint,2},
 	{"ptozp",Pptozp,1},
 	{"cont",Pcont,-2},
+	{"sfcont",Psfcont,-2},
 	{"afctr",Pafctr,2},
 	{"agcd",Pagcd,3},
 	{"modsqfr",Pmodsqfr,2},
@@ -293,6 +294,37 @@ P *rp;
 		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ )
 			l[m] = COEF(dc);
 		nezgcdnpz(CO,l,m,rp);
+	}
+}
+
+void Psfcont(arg,rp)
+NODE arg;
+P *rp;
+{
+	DCP dc;
+	int m;
+	P p,p1;
+	P *l;
+	V v;
+
+	asir_assert(ARG0(arg),O_P,"sfcont");
+	p = (P)ARG0(arg);
+	if ( NUM(p) )
+		*rp = p;
+	else {
+		if ( argc(arg) == 2 ) {
+			v = VR((P)ARG1(arg));
+			change_mvar(CO,p,v,&p1);
+			if ( VR(p1) != v ) {
+				*rp = p1; return;
+			} else
+				p = p1;
+		}
+		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ );
+		l = (P *)ALLOCA(m*sizeof(P));
+		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ )
+			l[m] = COEF(dc);
+		gcdsf(CO,l,m,rp);
 	}
 }
 

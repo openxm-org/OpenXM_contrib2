@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.21 2002/01/28 00:54:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.22 2002/12/27 07:37:57 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -399,33 +399,31 @@ void dp_prim(DP p,DP *rp)
 
 	if ( !p )
 		*rp = 0;
-	else if ( dp_fcoeffs ) {
-		for ( m = BDY(p); m; m = NEXT(m) ) {
+	else if ( dp_fcoeffs == N_GFS ) {
+		for ( m = BDY(p); m; m = NEXT(m) )
 			if ( OID(m->c) == O_N ) {
 				/* GCD of coeffs = 1 */
 				*rp = p;
 				return;
-			} else if ( have_sf_coef(m->c) ) {
-				/* compute GCD over the finite fieid */
-				for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
-				w = (P *)ALLOCA(n*sizeof(P));
-				for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
-					w[i] = m->c;
-				gcdsf(CO,w,n,&g);
-				if ( NUM(g) )
-					*rp = p;
-				else {
-					for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-						NEXTMP(mr0,mr); divsp(CO,m->c,g,&mr->c); mr->dl = m->dl;
-					}
-					NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-				}
-				return;
+			} else break;
+		/* compute GCD over the finite fieid */
+		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+		w = (P *)ALLOCA(n*sizeof(P));
+		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+			w[i] = m->c;
+		gcdsf(CO,w,n,&g);
+		if ( NUM(g) )
+			*rp = p;
+		else {
+			for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+				NEXTMP(mr0,mr); divsp(CO,m->c,g,&mr->c); mr->dl = m->dl;
 			}
+			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
 		}
-		/* all coeffs are poly over Q */
+		return;
+	} else if ( dp_fcoeffs )
 		*rp = p;
-	} else if ( NoGCD )
+	else if ( NoGCD )
 		dp_ptozp(p,rp);
 	else {
 		dp_ptozp(p,&p1); p = p1;
@@ -728,13 +726,18 @@ void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
 	Q c,c1,c2;
 	N gn,tn;
 	P g,a;
+	P p[2];
 
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	NEWDL(d,n); d->td = d1->td - d2->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = d1->d[i]-d2->d[i];
 	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
-	if ( dp_fcoeffs ) {
+	if ( dp_fcoeffs == N_GFS ) {
+		p[0] = (P)c1; p[1] = (P)c2;
+		gcdsf(CO,p,2,&g);
+		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+	} else if ( dp_fcoeffs ) {
 		/* do nothing */
 	} else if ( INT(c1) && INT(c2) ) {
 		gcdn(NM(c1),NM(c2),&gn);
