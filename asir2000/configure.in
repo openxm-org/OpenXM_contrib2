@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.1 2003/02/23 03:05:35 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.2 2003/02/24 17:58:41 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -143,7 +143,7 @@ case "${host}" in
 sparc-sun-solaris2.*)
     case "`uname -m`" in
     [sun4[dm]]) asm_obj="${sparc_v8_obj}" ;;
-    sun4u)      asm_obj="${sparc_v9_obj}" ;;
+    sun4u*)     asm_obj="${sparc_v9_obj}" ;;
     *)          asm_obj="${generic_obj}"  ;;
     esac
     AC_DEFINE([SYSV])
