@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.2 2002/01/08 04:14:37 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.3 2003/02/14 22:29:09 ohara Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -339,15 +339,23 @@ int cmpitvp(Itv a, Itv b)
 	int	s,t;
 
 	if ( !a ) {
-		if ( !b || (NID(b)<=N_B) )
+		if ( !b || (NID(b)<=N_B) ) {
 			return compnum(0,(Num)a,(Num)b);
-		else
-			return -1;
+		} else {
+			itvtois(b,&bi,&bs);
+			if ( compnum(0,(Num)a,bs) > 0 ) return 1;
+			else if ( compnum(0,bi,(Num)a) > 0 ) return -1;
+			else  return 0;
+		}
 	} else if ( !b ) {
-		if ( !a || (NID(a)<=N_B) )
+		if ( !a || (NID(a)<=N_B) ) {
 			return compnum(0,(Num)a,(Num)b);
-		else
-			return initvp((Num)b,a);
+		} else {
+			itvtois(a,&ai,&as);
+			if ( compnum(0,ai,(Num)b) > 0 ) return 1;
+			else if ( compnum(0,(Num)b,as) > 0 ) return -1;
+			else  return 0;
+		}
 	} else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
