@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.10 2004/06/25 03:07:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.11 2004/09/14 07:23:34 noro Exp $ 
 */
 #include "ca.h"
 
@@ -131,7 +131,7 @@ void detp(VL vl,P **rmat,int n,P *dp)
 			*dp = 0; return;
 		}
 		nmin = nmonop(mat[i][j]);
-		kmin=lmin=j;
+		kmin=i; lmin=j;
 		for ( k = j; k < n; k++ )
 			for ( l = j; l < n; l++ )
 				if ( mat[k][l] && ((ntmp=nmonop(mat[k][l])) < nmin) ) {

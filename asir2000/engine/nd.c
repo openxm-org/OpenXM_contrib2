@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.98 2004/08/18 00:17:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.99 2004/09/14 07:23:34 noro Exp $ */
 
 #include "nd.h"
 
@@ -4725,6 +4725,8 @@ void nd_det(MAT f,P *rp)
 		}
 		d = mjj;
 	}
+	if ( sgn < 0 )
+		nd_mul_c_q(d,mone);
 	dv = ndtondv(0,d);
 	*rp = ndvtop(0,CO,fv,dv);
 }
