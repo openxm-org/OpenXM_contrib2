@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.118 2004/12/04 09:39:27 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.119 2004/12/06 09:29:34 noro Exp $ */
 
 #include "nd.h"
 
@@ -2214,6 +2214,65 @@ void ndv_setup(int mod,int trace,NODE f)
 struct order_spec *append_block(struct order_spec *spec,
     int nv,int nalg,int ord);
 
+void preprocess_algcoef(VL vv,VL av,struct order_spec *ord,LIST f,
+	struct order_spec **ord1p,LIST *f1p,NODE *alistp)
+{
+	NODE alist,t,s,r0,r;
+	VL tv;
+	P poly;
+	DP d;
+	Alg alpha,dp;
+	DAlg inv,da,hc;
+	MP m;
+	int i,nvar,nalg;
+	NumberField nf;
+	LIST f1,f2;
+	struct order_spec *current_spec;
+
+	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++);
+	for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++);
+
+	for ( alist = 0, tv = av; tv; tv = NEXT(tv) ) {
+		NEXTNODE(alist,t); MKV(tv->v,poly); 
+		MKAlg(poly,alpha); BDY(t) = (pointer)alpha;
+		tv->v = tv->v->priv;
+	}
+	NEXT(t) = 0;
+
+	/* simplification, makeing polynomials monic */
+	setfield_dalg(alist);
+	obj_algtodalg(f,&f1);
+	for ( t = BDY(f); t; t = NEXT(t) ) {
+		initd(ord); ptod(vv,vv,(P)BDY(t),&d);			
+		hc = (DAlg)BDY(d)->c;
+		if ( NID(hc) == N_DA ) {
+			invdalg(hc,&inv);
+			for ( m = BDY(d); m; m = NEXT(m) ) {
+				muldalg(inv,(DAlg)m->c,&da); m->c = (P)da;
+			}
+		}
+		initd(ord); dtop(vv,vv,d,&poly); BDY(f) = (pointer)poly;
+	}
+	obj_dalgtoalg(f1,&f);
+
+	/* append alg vars to the var list */
+	for ( tv = vv; NEXT(tv); tv = NEXT(tv) );
+	NEXT(tv) = av;
+
+	/* append a block to ord */
+	*ord1p = append_block(ord,nvar,nalg,2);
+
+	/* create generator list */
+	nf = get_numberfield();
+	for ( i = nalg-1, t = BDY(f); i >= 0; i-- ) {
+		MKAlg(nf->defpoly[i],dp);
+		MKNODE(s,dp,t); t = s;
+	}
+	MKLIST(f1,t);
+	*alistp = alist;
+	algobjtorat(f1,f1p);
+}
+
 void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 {
 	VL tv,fv,vv,vc,av;
@@ -2226,6 +2285,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	LIST f1,f2;
 	Obj obj;
 	NumberField nf;
+	struct order_spec *ord1;
 
 	if ( !m && Demand ) nd_demand = 1;
 	else nd_demand = 0;
@@ -2250,25 +2310,11 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 		nd_nalg = nalg;
 		/* #i -> t#i */
 		if ( nalg ) {
-			for ( alist = 0, tv = av; tv; tv = NEXT(tv) ) {
-				NEXTNODE(alist,t); MKV(tv->v,p); 
-				MKAlg(p,alpha); BDY(t) = (pointer)alpha;
-				tv->v = tv->v->priv;
-			}
-			NEXT(t) = 0;
-			for ( tv = vv; NEXT(tv); tv = NEXT(tv) );
-			NEXT(tv) = av;
-			ord = append_block(ord,nvar,nalg,2);
-			nvar += nalg;
-			setfield_dalg(alist);
-			nf = get_numberfield();
-			for ( i = nalg-1, t = BDY(f); i >= 0; i-- ) {
-				MKAlg(nf->defpoly[i],dp);
-				MKNODE(s,dp,t); t = s;
-			}
-			MKLIST(f1,t);
-			algobjtorat(f1,&f2); f = f2;
+			preprocess_algcoef(vv,av,ord,f,&ord1,&f1,&alist);
+			ord = ord1;
+			f = f1;
 		}
+		nvar += nalg;
 	}
 	nd_init_ord(ord);
 	for ( t = BDY(f), max = 0; t; t = NEXT(t) )
@@ -2311,7 +2357,6 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
 {
-	struct order_spec *ord1;
 	VL tv,fv,vv,vc,av;
 	NODE fd,fd0,in0,in,r,r0,t,s,cand,alist;
 	int m,nocheck,nvar,mindex,e,max;
@@ -2325,6 +2370,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	LIST f1,f2;
 	Obj obj;
 	NumberField nf;
+	struct order_spec *ord1;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -2342,25 +2388,11 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	nd_nalg = nalg;
 	/* #i -> t#i */
 	if ( nalg ) {
-		for ( alist = 0, tv = av; tv; tv = NEXT(tv) ) {
-			NEXTNODE(alist,t); MKV(tv->v,poly); 
-			MKAlg(poly,alpha); BDY(t) = (pointer)alpha;
-			tv->v = tv->v->priv;
-		}
-		NEXT(t) = 0;
-		for ( tv = vv; NEXT(tv); tv = NEXT(tv) );
-		NEXT(tv) = av;
-		ord = append_block(ord,nvar,nalg,2);
-		nvar += nalg;
-		setfield_dalg(alist);
-		nf = get_numberfield();
-		for ( i = nalg-1, t = BDY(f); i >= 0; i-- ) {
-			MKAlg(nf->defpoly[i],dp);
-			MKNODE(s,dp,t); t = s;
-		}
-		MKLIST(f1,t);
-		algobjtorat(f1,&f2); f = f2;
+		preprocess_algcoef(vv,av,ord,f,&ord1,&f1,&alist);
+		ord = ord1;
+		f = f1;
 	}
+	nvar += nalg;
 
 	nocheck = 0;
 	mindex = 0;

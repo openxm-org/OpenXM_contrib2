@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.4 2004/12/03 07:16:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.5 2004/12/04 09:39:27 noro Exp $
 */
 
 #include "ca.h"
@@ -10,6 +10,8 @@ extern struct order_spec *dp_current_spec;
 void simpdalg(DAlg da,DAlg *r);
 void invdalg(DAlg a,DAlg *c);
 void rmcontdalg(DAlg a, DAlg *c);
+void algtodalg(Alg a,DAlg *r);
+void dalgtoalg(DAlg da,Alg *r);
 
 NumberField get_numberfield()
 {
@@ -87,6 +89,182 @@ void qtodalg(Q q,DAlg *r)
 		}
 	} else
 		error("qtodalg : invalid argument");
+}
+
+void obj_algtodalg(Obj obj,Obj *r)
+{
+	DAlg d;
+	DCP dc,dcr0,dcr;
+	P c,p;
+	Obj t;
+	Obj nm,dn;
+	NODE b,s,s0;
+	R rat;
+	VECT v;
+	MAT mat;
+	LIST list;
+	pointer *a;
+	pointer **m;
+	int len,row,col,i,j,l;
+
+	if ( !obj ) {
+		*r = 0;
+		return;
+	}
+	switch ( OID(obj) ) {
+		case O_N:
+			algtodalg((Alg)obj,&d); *r = (Obj)d;
+			break;
+		case O_P:
+			for ( dcr0 = 0, dc = DC((P)obj); dc; dc = NEXT(dc) ) {
+				obj_algtodalg((Obj)COEF(dc),&t);
+				if ( t ) {
+					NEXTDC(dcr0,dcr);
+					COEF(dcr) = (P)t;
+					DEG(dcr) = DEG(dc);
+				}
+			}
+			if ( dcr0 ) {
+				MKP(VR((P)obj),dcr0,p);
+				*r = (Obj)p;
+			} else
+				*r = 0;
+			break;
+		case O_R:
+			obj_algtodalg((Obj)NM((R)obj),&nm);
+			obj_algtodalg((Obj)DN((R)obj),&dn);
+			if ( !dn )
+				error("obj_algtodalg : division by 0");
+			if ( !nm )
+				*r = 0;
+			else {
+				MKRAT((P)nm,(P)dn,0,rat); *r = (Obj)rat;
+			}
+			break;
+		case O_LIST:
+			s0 = 0;
+			for ( b = BDY((LIST)obj); b; b = NEXT(b) ) {
+				NEXTNODE(s0,s);
+				obj_algtodalg((Obj)BDY(b),&t);
+				BDY(s) = (pointer)t;
+			}
+			NEXT(s) = 0;
+			MKLIST(list,s0);
+			*r = (Obj)list;
+			break;
+		case O_VECT:
+			l = ((VECT)obj)->len;
+			a = BDY((VECT)obj);
+			MKVECT(v,l);
+			for ( i = 0; i < l; i++ ) {
+				obj_algtodalg((Obj)a[i],&t);
+				BDY(v)[i] = (pointer)t;
+			}
+			*r = (Obj)v;
+			break;
+		case O_MAT:
+			row = ((MAT)obj)->row; col = ((MAT)obj)->col;
+			m = BDY((MAT)obj);
+			MKMAT(mat,row,col);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+					obj_algtodalg((Obj)m[i][j],&t);
+					BDY(mat)[i][j] = (pointer)t;
+				}
+			*r = (Obj)mat;
+			break;
+		default:
+			*r = obj;
+			break;
+	}
+}
+
+void obj_dalgtoalg(Obj obj,Obj *r)
+{
+	Alg d;
+	DCP dc,dcr0,dcr;
+	P c,p;
+	Obj t;
+	Obj nm,dn;
+	NODE b,s,s0;
+	R rat;
+	VECT v;
+	MAT mat;
+	LIST list;
+	pointer *a;
+	pointer **m;
+	int len,row,col,i,j,l;
+
+	if ( !obj ) {
+		*r = 0;
+		return;
+	}
+	switch ( OID(obj) ) {
+		case O_N:
+			dalgtoalg((DAlg)obj,&d); *r = (Obj)d;
+			break;
+		case O_P:
+			for ( dcr0 = 0, dc = DC((P)obj); dc; dc = NEXT(dc) ) {
+				obj_dalgtoalg((Obj)COEF(dc),&t);
+				if ( t ) {
+					NEXTDC(dcr0,dcr);
+					COEF(dcr) = (P)t;
+					DEG(dcr) = DEG(dc);
+				}
+			}
+			if ( dcr0 ) {
+				MKP(VR((P)obj),dcr0,p);
+				*r = (Obj)p;
+			} else
+				*r = 0;
+			break;
+		case O_R:
+			obj_dalgtoalg((Obj)NM((R)obj),&nm);
+			obj_dalgtoalg((Obj)DN((R)obj),&dn);
+			if ( !dn )
+				error("obj_dalgtoalg : division by 0");
+			if ( !nm )
+				*r = 0;
+			else {
+				MKRAT((P)nm,(P)dn,0,rat); *r = (Obj)rat;
+			}
+			break;
+		case O_LIST:
+			s0 = 0;
+			for ( b = BDY((LIST)obj); b; b = NEXT(b) ) {
+				NEXTNODE(s0,s);
+				obj_dalgtoalg((Obj)BDY(b),&t);
+				BDY(s) = (pointer)t;
+			}
+			NEXT(s) = 0;
+			MKLIST(list,s0);
+			*r = (Obj)list;
+			break;
+		case O_VECT:
+			l = ((VECT)obj)->len;
+			a = BDY((VECT)obj);
+			MKVECT(v,l);
+			for ( i = 0; i < l; i++ ) {
+				obj_dalgtoalg((Obj)a[i],&t);
+				BDY(v)[i] = (pointer)t;
+			}
+			*r = (Obj)v;
+			break;
+		case O_MAT:
+			row = ((MAT)obj)->row; col = ((MAT)obj)->col;
+			m = BDY((MAT)obj);
+			MKMAT(mat,row,col);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+					obj_dalgtoalg((Obj)m[i][j],&t);
+					BDY(mat)[i][j] = (pointer)t;
+				}
+			*r = (Obj)mat;
+			break;
+		default:
+			*r = obj;
+			break;
+	}
 }
 
 void algtodalg(Alg a,DAlg *r)
