@@ -1,10 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.2 2000/03/10 07:12:06 noro Exp $ */
 /* 
 	sp : functions related to algebraic number fields
 
 	Revision History:
 
-	99/08/24    noro    modified for 1999 release version
+	2000/03/10    noro    fixed several bugs
+	1999/08/24    noro    modified for 1999 release version
 */
 
 #include "defs.h"

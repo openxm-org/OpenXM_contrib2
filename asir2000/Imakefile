@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.6 2000/03/01 02:29:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.7 2000/03/10 03:05:00 noro Exp $ */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
 
@@ -97,7 +97,7 @@ install-bin-lib:: $(PROGRAMS)
 	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_BINDIR)
 	(cd lib; make install-lib)
 	$(RM) $(ASIR_LIBDIR)/asir
-	(cd $(ASIR_LIBDIR); $(LN) $(ASIR_BINDIR)/asir asir)
+	(cd $(ASIR_LIBDIR); $(LN) ./../../bin/asir asir)
 	$(RM) $(ASIR_LIBDIR)/ox_asir
 	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
 	$(RM) $(ASIR_LIBDIR)/ox_launch
