@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.8 2001/04/09 02:42:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.9 2001/09/05 08:09:10 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -1449,8 +1449,10 @@ def register_input(List)
 	Poly <- (Coef*Poly+Monomial*PolyList[Index])/Denominator
 */
 
-def tracetogen(GBIndex,Trace)
+def tracetogen(G)
 {
+	GB = G[0]; GBIndex = G[1]; Trace = G[2];
+
 	InputList = Trace[0];
 	Trace = cdr(Trace);
 
@@ -1468,10 +1470,14 @@ def tracetogen(GBIndex,Trace)
 	/* stores coeffs */
 	Coef = vector(N);
 
+	/* XXX create dp_ptod(1,V) */
+	HT = dp_ht(InputList[0]);
+	One = dp_subd(HT,HT);
+
 	for ( I = 0; I < Nini; I++ ) {
-		Tr[I] = [1,I,1,1];
+		Tr[I] = [1,I,One,1];
 		C = vector(Nini);
-		C[I] = 1;
+		C[I] = One;
 		Coef[I] = C; 
 	}
 	for ( ; I < N; I++ )
@@ -1511,5 +1517,4 @@ def compute_coef_by_trace(I,Tr,Coef)
 	}
 	Coef[I] = CI;
 }
-end$
 end$
