@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.8 2004/06/22 13:40:44 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.9 2004/06/29 15:06:28 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pcar(), Pcdr(), Pcons(), Pappend(), Preverse(), Plength();
-void Plist(), Passoc();
+void Plist(), Passoc(), Pcadr(), Pcddr();
 void Pnconc(), Preplcd(), Preplca();
 
 struct ftab list_tab[] = {
@@ -66,6 +66,8 @@ struct ftab list_tab[] = {
 	{"replca",Preplca,2},
 	{"list", Plist, -99999999},
 	{"assoc",Passoc,2},
+	{"cddr",Pcddr,1},
+	{"cadr",Pcadr,1},
 	{0,0,0},
 };
 
@@ -89,6 +91,43 @@ LIST *rp;
 		*rp = (LIST)ARG0(arg);
 	else 
 		MKLIST(*rp,NEXT(BDY((LIST)ARG0(arg))));
+}
+
+void Pcddr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+    NODE n;
+    asir_assert(ARG0(arg),O_LIST,"cddr");
+    if ( !BDY((LIST)ARG0(arg)) ) {
+        *rp = (LIST)ARG0(arg);
+    }else {
+        n = NEXT(BDY((LIST)ARG0(arg)));
+        if ( n ) {
+            n = NEXT(n);
+        }
+        MKLIST(*rp,n);
+    }
+}
+
+void Pcadr(arg,rp)
+NODE arg;
+pointer *rp;
+{
+    NODE n;
+    LIST t;
+    asir_assert(ARG0(arg),O_LIST,"cadr");
+    if ( !BDY((LIST)ARG0(arg)) ) {
+        *rp = ARG0(arg);
+    }else {
+        n = NEXT(BDY((LIST)ARG0(arg)));
+        if ( n ) {
+            *rp = (pointer)BDY(n);
+        }else {
+            MKLIST(t,n);
+            *rp = t;
+        }
+    }
 }
 
 void Pcons(arg,rp)
