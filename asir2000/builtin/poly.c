@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/poly.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -11,13 +11,14 @@ void Pord(), Pcoef0(), Pcoef(), Pdeg(), Pmindeg(), Psetmod();
 void Pcoef_gf2n();
 void getcoef(), getdeglist(), mergedeglist(), change_mvar(), restore_mvar();
 
-void Pp_mag();
+void Pp_mag(),Pmaxblen();
 void Pmergelist(), Pch_mv(), Pre_mv(), Pdeglist();
 void Pptomp(),Pmptop();
 void Pptolmp(),Plmptop();
 void Pptogf2n(),Pgf2ntop(),Pgf2ntovect();
 void Pptogfpn(),Pgfpntop();
 void Pfind_root_gf2n();
+void Pumul_specialmod(),Pusquare_specialmod(),Putmul_specialmod();
 
 void Pureverse(),Putrunc(),Pudecomp(),Purembymul(),Purembymul_precomp();
 void Puinvmod(),Purevinvmod();
@@ -48,6 +49,7 @@ void Pbininv_gf2n();
 void Prinvtest_gf2n();
 void Pis_irred_gf2();
 void Pis_irred_ddd_gf2();
+void Pget_next_fft_prime();
 
 void simp_ff(Obj,Obj *);
 void ranp(int,UP *);
@@ -62,6 +64,7 @@ int current_ff;
 struct ftab poly_tab[] = {
 	{"ranp",Pranp,2},
 	{"p_mag",Pp_mag,1},
+	{"maxblen",Pmaxblen,1},
 	{"ord",Pord,-1},
 	{"coef0",Pcoef0,-3},
 	{"coef",Pcoef,-3},
@@ -107,6 +110,10 @@ struct ftab poly_tab[] = {
 	{"ureverse_inv_as_power_series",Purevinvmod,2},
 	{"uinv_as_power_series",Puinvmod,2},
 
+	{"umul_specialmod",Pumul_specialmod,3},
+	{"usquare_specialmod",Pusquare_specialmod,2},
+	{"utmul_specialmod",Putmul_specialmod,4},
+
 	{"utmul",Putmul,3},
 	{"umul_ff",Pumul_ff,2},
 	{"usquare_ff",Pusquare_ff,1},
@@ -150,10 +157,43 @@ struct ftab poly_tab[] = {
 	{"bininv_gf2n",Pbininv_gf2n,2},
 	{"invtest_gf2n",Pinvtest_gf2n,1},
 	{"rinvtest_gf2n",Prinvtest_gf2n,0},
+	{"get_next_fft_prime",Pget_next_fft_prime,2},
 	{0,0,0},
 };
 
 extern V up_var;
+/*
+	get_next_fft_prime(StartIndex,Bits)
+	tries to find smallest Index >= StartIndex s.t.
+		2^(Bits-1)|FFTprime[Index]-1
+	return [Index,Mod] or 0 (not exist)
+*/
+
+void Pget_next_fft_prime(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	unsigned int mod,d;
+	int start,bits,i;
+	NODE n;
+	Q q,ind;
+
+	start = QTOS((Q)ARG0(arg));
+	bits = QTOS((Q)ARG1(arg));
+	for ( i = start; ; i++ ) {
+		get_fft_prime(i,&mod,&d);
+		if ( !mod ) {
+			*rp = 0; return;
+		}
+		if ( bits <= d ) {
+			UTOQ(mod,q);
+			UTOQ(i,ind);
+			n = mknode(2,ind,q);
+			MKLIST(*rp,n);
+			return;
+		}
+	}
+}
 
 void Pranp(arg,rp)
 NODE arg;
@@ -191,6 +231,15 @@ UP *nr;
 		c->d = i;
 	else
 		*nr = 0;
+}
+
+void Pmaxblen(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int l;
+	l = maxblenp(ARG0(arg));
+	STOQ(l,*rp);
 }
 
 void Pp_mag(arg,rp)
@@ -1465,4 +1514,87 @@ P *rp;
 	ptoup((P)ARG1(arg),&f);
 	tracemodup_gf2n(g,f,(Q)ARG2(arg),&r);
 	uptop(r,rp);
+}
+
+void Pumul_specialmod(arg,rp)
+NODE arg;
+P *rp;
+{
+	P a1,a2;
+	UP p1,p2,r;
+	int i,nmod;
+	int *modind;
+	NODE t,n;
+
+	a1 = (P)ARG0(arg); a2 = (P)ARG1(arg);
+	if ( !a1 || !a2 || NUM(a1) || NUM(a2) )
+		mulp(CO,a1,a2,rp);
+	else {
+		if ( !uzpcheck(a1) || !uzpcheck(a2) || VR(a1) != VR(a2) )
+			error("umul_specialmod : invalid argument");
+		ptoup(a1,&p1);
+		ptoup(a2,&p2);
+		n = BDY((LIST)ARG2(arg));
+		nmod = length(n);
+		modind = (int *)MALLOC_ATOMIC(nmod*sizeof(int));
+		for ( i = 0, t = n; i < nmod; i++, t = NEXT(t) )
+			modind[i] = QTOS((Q)BDY(t));
+		fft_mulup_specialmod_main(p1,p2,0,modind,nmod,&r);
+		uptop(r,rp);
+	}
+}
+
+void Pusquare_specialmod(arg,rp)
+NODE arg;
+P *rp;
+{
+	P a1;
+	UP p1,r;
+	int i,nmod;
+	int *modind;
+	NODE t,n;
+
+	a1 = (P)ARG0(arg);
+	if ( !a1 || NUM(a1) )
+		mulp(CO,a1,a1,rp);
+	else {
+		if ( !uzpcheck(a1) )
+			error("usquare_specialmod : invalid argument");
+		ptoup(a1,&p1);
+		n = BDY((LIST)ARG1(arg));
+		nmod = length(n);
+		modind = (int *)MALLOC_ATOMIC(nmod*sizeof(int));
+		for ( i = 0, t = n; i < nmod; i++, t = NEXT(t) )
+			modind[i] = QTOS((Q)BDY(t));
+		fft_mulup_specialmod_main(p1,p1,0,modind,nmod,&r);
+		uptop(r,rp);
+	}
+}
+
+void Putmul_specialmod(arg,rp)
+NODE arg;
+P *rp;
+{
+	P a1,a2;
+	UP p1,p2,r;
+	int i,nmod;
+	int *modind;
+	NODE t,n;
+
+	a1 = (P)ARG0(arg); a2 = (P)ARG1(arg);
+	if ( !a1 || !a2 || NUM(a1) || NUM(a2) )
+		mulp(CO,a1,a2,rp);
+	else {
+		if ( !uzpcheck(a1) || !uzpcheck(a2) || VR(a1) != VR(a2) )
+			error("utmul_specialmod : invalid argument");
+		ptoup(a1,&p1);
+		ptoup(a2,&p2);
+		n = BDY((LIST)ARG3(arg));
+		nmod = length(n);
+		modind = (int *)MALLOC_ATOMIC(nmod*sizeof(int));
+		for ( i = 0, t = n; i < nmod; i++, t = NEXT(t) )
+			modind[i] = QTOS((Q)BDY(t));
+		fft_mulup_specialmod_main(p1,p2,QTOS((Q)ARG2(arg))+1,modind,nmod,&r);
+		uptop(r,rp);
+	}
 }

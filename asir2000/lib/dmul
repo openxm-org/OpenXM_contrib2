@@ -1,0 +1,187 @@
+/* $OpenXM$ */
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#define MIN(a,b) ((a)>(b)?(b):(a))
+
+/* CAUTION: functions in this file are experimental. */
+
+/*
+	return: F1*F2
+	if option 'proc' is supplied as a list of server id's, 
+	F1*F2 is calculated by distributed computation.
+*/
+
+def d_mul(F1,F2)
+{
+	Procs = getopt(proc);
+	if ( type(Procs) == -1 )
+		Procs = [];
+	NP = length(Procs)+1;
+	V =var(F1);
+	D1 = deg(F1,V);
+	D2 = deg(F2,V);
+	Dmin = MIN(D1,D2);
+	Dfft = p_mag(D1+D2+1)+1;
+	Bound = maxblen(F1)+maxblen(F2)+p_mag(Dmin)+1;
+
+	Marray = newvect(NP);
+	MIarray = newvect(NP);
+	for ( I = 0; I < NP; I++ ) {
+		Marray[I] = 1;
+		MIarray[I] = [];
+	}
+
+	for ( M = 1, I = 0, J = 0; p_mag(M) <= Bound; J = (J+1)%NP ) {
+		T = get_next_fft_prime(I,Dfft);
+		if ( !T )
+			error("fft_mul_d : fft_prime exhausted.");
+		Marray[J] *= T[1];
+		MIarray[J] = cons(T[0],MIarray[J]);
+		M *= T[1];
+		I = T[0]+1;
+	}
+	/* Now, 
+		Marray[J] = FFTprime[Marray[J][0]]*...*FFTprime[Marray[J][...]]
+		M = Marray[0]*...*Marray[NP-1]
+	*/
+	C = newvect(NP);
+	T0 = time();
+	for ( J = 0; J < NP-1; J++ )
+		ox_cmo_rpc(Procs[J],"call_umul",F1,F2,MIarray[J],Marray[J],M);
+	T1 = time();
+	R = call_umul(F1,F2,MIarray[NP-1],Marray[NP-1],M);
+	T2 = time();
+	for ( J = 0; J < NP-1; J++ )
+		R += ox_pop_cmo(Procs[J]);
+	T3 = time();
+	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]);
+	return R%M;
+}
+
+/*
+	return: F1^2
+	if option 'proc' is supplied as a list of server id's, 
+	F1^2 is calculated by distributed computation.
+*/
+
+def d_square(F1)
+{
+	Procs = getopt(proc);
+	if ( type(Procs) == -1 )
+		Procs = [];
+	NP = length(Procs)+1;
+	V =var(F1);
+	D1 = deg(F1,V);
+	Dfft = p_mag(2*D1+1)+1;
+	Bound = 2*maxblen(F1)+p_mag(D1)+1;
+
+	Marray = newvect(NP);
+	MIarray = newvect(NP);
+	for ( I = 0; I < NP; I++ ) {
+		Marray[I] = 1;
+		MIarray[I] = [];
+	}
+
+	for ( M = 1, I = 0, J = 0; p_mag(M) <= Bound; J = (J+1)%NP ) {
+		T = get_next_fft_prime(I,Dfft);
+		if ( !T )
+			error("fft_mul_d : fft_prime exhausted.");
+		Marray[J] *= T[1];
+		MIarray[J] = cons(T[0],MIarray[J]);
+		M *= T[1];
+		I = T[0]+1;
+	}
+	/* Now, 
+		Marray[J] = FFTprime[Marray[J][0]]*...*FFTprime[Marray[J][...]]
+		M = Marray[0]*...*Marray[NP-1]
+	*/
+	C = newvect(NP);
+	T0 = time();
+	for ( J = 0; J < NP-1; J++ )
+		ox_cmo_rpc(Procs[J],"call_usquare",F1,MIarray[J],Marray[J],M);
+	T1 = time();
+	R = call_usquare(F1,MIarray[NP-1],Marray[NP-1],M);
+	T2 = time();
+	for ( J = 0; J < NP-1; J++ )
+		R += ox_pop_cmo(Procs[J]);
+	T3 = time();
+	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]);
+	return R%M;
+}
+
+/*
+	return: F1^2 mod V^(D+1)
+	if option 'proc' is supplied as a list of server id's, 
+	F1*F2 mod V^(D+1) is calculated by distributed computation.
+*/
+
+def d_tmul(F1,F2,D)
+{
+	Procs = getopt(proc);
+	if ( type(Procs) == -1 )
+		Procs = [];
+	NP = length(Procs)+1;
+	V =var(F1);
+	D1 = deg(F1,V);
+	D2 = deg(F2,V);
+	Dmin = MIN(D1,D2);
+	Dfft = p_mag(D1+D2+1)+1;
+	Bound = maxblen(F1)+maxblen(F2)+p_mag(Dmin)+1;
+
+	Marray = newvect(NP);
+	MIarray = newvect(NP);
+	for ( I = 0; I < NP; I++ ) {
+		Marray[I] = 1;
+		MIarray[I] = [];
+	}
+
+	for ( M = 1, I = 0, J = 0; p_mag(M) <= Bound; J = (J+1)%NP ) {
+		T = get_next_fft_prime(I,Dfft);
+		if ( !T )
+			error("fft_mul_d : fft_prime exhausted.");
+		Marray[J] *= T[1];
+		MIarray[J] = cons(T[0],MIarray[J]);
+		M *= T[1];
+		I = T[0]+1;
+	}
+	/* Now, 
+		Marray[J] = FFTprime[Marray[J][0]]*...*FFTprime[Marray[J][...]]
+		M = Marray[0]*...*Marray[NP-1]
+	*/
+	C = newvect(NP);
+	T0 = time();
+	for ( J = 0; J < NP-1; J++ )
+		ox_cmo_rpc(Procs[J],"call_utmul",F1,F2,D,MIarray[J],Marray[J],M);
+	T1 = time();
+	R = call_utmul(F1,F2,D,MIarray[NP-1],Marray[NP-1],M);
+	T2 = time();
+	for ( J = 0; J < NP-1; J++ )
+		R += ox_pop_cmo(Procs[J]);
+	T3 = time();
+	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]);
+	return R%M;
+}
+
+def call_umul(F1,F2,Ind,M1,M)
+{
+	C = umul_specialmod(F1,F2,Ind);
+	Mhat = idiv(M,M1);
+	MhatInv = inv(Mhat,M1);
+	return (MhatInv*Mhat)*C;
+}
+
+def call_usquare(F1,Ind,M1,M)
+{
+	C = usquare_specialmod(F1,Ind);
+	Mhat = idiv(M,M1);
+	MhatInv = inv(Mhat,M1);
+	return (MhatInv*Mhat)*C;
+}
+
+def call_utmul(F1,F2,D,Ind,M1,M)
+{
+	C = utmul_specialmod(F1,F2,D,Ind);
+	Mhat = idiv(M,M1);
+	MhatInv = inv(Mhat,M1);
+	return (MhatInv*Mhat)*C;
+}
+end$

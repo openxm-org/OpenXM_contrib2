@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/engine/up.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/up.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
 #include "ca.h"
 #include <math.h>
 
@@ -1582,3 +1582,63 @@ UP *r;
 }
 #endif
 
+/* 
+ * dbd == 0 => n1 * n2
+ * dbd > 0  => n1 * n2 mod x^dbd
+ * n1 == n2 => squaring
+ * return: n1*n2 mod Primes[modind[0]]*.prime...*Primes[modind[nmod-1]].prime
+ */
+
+void fft_mulup_specialmod_main(n1,n2,dbd,modind,nmod,nr)
+UP n1,n2;
+int dbd;
+int *modind;
+int nmod;
+UP *nr;
+{
+	ModNum *f1,*f2,*w,*fr;
+	ModNum **frarray,**fa;
+	N m,m1,m2;
+	unsigned int *modarray;
+	int d1,d2,dmin,i,mod,root,d,cond,bound;
+	UP r;
+
+	if ( !n1 || !n2 ) {
+		*nr = 0; return;
+	}
+	d1 = n1->d; d2 = n2->d; dmin = MIN(d1,d2);
+	if ( !d1 || !d2 ) {
+		mulup(n1,n2,nr); return;
+	}
+	m = ONEN;
+	bound = maxblenup(n1)+maxblenup(n2)+int_bits(dmin)+1;
+	f1 = (ModNum *)MALLOC_ATOMIC((d1+d2+1)*sizeof(ModNum));
+	if ( n1 == n2 )
+		f2 = 0;
+	else
+		f2 = (ModNum *)MALLOC_ATOMIC((d1+d2+1)*sizeof(ModNum));
+	w = (ModNum *)MALLOC_ATOMIC(6*(1<<int_bits(d1+d2+1))*sizeof(ModNum));
+	frarray = (ModNum **)MALLOC(nmod*sizeof(ModNum *));
+	modarray = (unsigned int *)MALLOC_ATOMIC(nmod*sizeof(unsigned int *));
+
+	for ( i = 0; i < nmod; i++ ) {
+		FFT_primes(modind[i],&modarray[i],&root,&d);
+			if ( (1<<d) < d1+d2+1 )
+				error("fft_mulup_specialmod_main : invalid modulus");
+		frarray[i] = fr 
+			= (ModNum *)MALLOC_ATOMIC((d1+d2+1)*sizeof(ModNum));
+		uptofmarray(modarray[i],n1,f1); 
+		if ( !f2 )
+			cond = FFT_pol_square(d1,f1,fr,modind[i],w);
+		else {
+			uptofmarray(modarray[i],n2,f2); 
+			cond = FFT_pol_product(d1,f1,d2,f2,fr,modind[i],w);
+		}
+		if ( cond )
+			error("fft_mulup_specialmod_main : error in FFT_pol_product");
+		STON(modarray[i],m1); muln(m,m1,&m2); m = m2;
+	}
+	if ( !dbd )
+		dbd = d1+d2+1;
+	crup(frarray,MIN(d1+d2,dbd-1),modarray,nmod,m,nr);
+}

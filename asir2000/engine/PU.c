@@ -991,3 +991,22 @@ P p;
 		return s;
 	}
 }
+
+int maxblenp(p)
+P p;
+{
+	int s,t;
+	DCP dc;
+
+	if ( !p )
+		return 0;
+	else if ( OID(p) == O_N )
+		return n_bits(NM((Q)p))+(INT((Q)p)?0:n_bits(DN((Q)p)));
+	else {
+		for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
+			t = p_mag(COEF(dc));
+			s = MAX(t,s);
+		}
+		return s;
+	}
+}
