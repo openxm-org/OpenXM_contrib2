@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.6 2003/12/29 10:53:12 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.7 2004/02/09 08:23:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,17 +54,95 @@
 void Parfreg();
 void Pstruct_type();
 void Prange();
+void Pget_element_at();
+void Pput_element_at();
+void Pget_element_names();
+void Pget_struct_name();
 
 struct ftab comp_tab[] = {
 	{"arfreg",Parfreg,8},
 	{"struct_type",Pstruct_type,1},
+	{"get_element_at",Pget_element_at,2},
+	{"put_element_at",Pput_element_at,3},
+	{"get_element_names",Pget_element_names,1},
+	{"get_struct_name",Pget_struct_name,1},
 	{"range",Prange,2},
 	{0,0,0},
 };
 
-void Pstruct_type(arg,rp)
-NODE arg;
-Q *rp;
+void Pget_element_at(NODE arg,Obj *rp)
+{
+	COMP obj;
+	char *name;
+	int i;
+	SDEF sdef;
+
+	asir_assert(ARG0(arg),O_COMP,"get_element_at");
+	asir_assert(ARG1(arg),O_STR,"get_element_at");
+	name = BDY((STRING)ARG1(arg));
+	obj = (COMP)ARG0(arg);
+	sdef = LSS->sa+obj->type;
+	for ( i = 0; i < sdef->n; i++ )
+		if ( !strcmp(name,sdef->member[i]) ) break;
+	if ( i < sdef->n ) {
+		*rp = obj->member[i];
+	} else
+		error("get_element_at : no such member");
+}
+
+void Pput_element_at(NODE arg,Obj *rp)
+{
+	COMP obj;
+	char *name;
+	int i;
+	SDEF sdef;
+
+	asir_assert(ARG0(arg),O_COMP,"put_element_at");
+	asir_assert(ARG1(arg),O_STR,"put_element_at");
+	name = BDY((STRING)ARG1(arg));
+	obj = (COMP)ARG0(arg);
+	sdef = LSS->sa+obj->type;
+	for ( i = 0; i < sdef->n; i++ )
+		if ( !strcmp(name,sdef->member[i]) ) break;
+	if ( i < sdef->n ) {
+		obj->member[i] = (Obj)ARG2(arg);
+		*rp = obj->member[i];
+	} else
+		error("put_element_at : no such member");
+}
+
+void Pget_element_names(NODE arg,LIST *rp)
+{
+	COMP obj;
+	int i;
+	SDEF sdef;
+	NODE t,t1;
+	STRING name;
+
+	asir_assert(ARG0(arg),O_COMP,"get_element_names");
+	obj = (COMP)ARG0(arg);
+	sdef = LSS->sa+obj->type;
+	t = 0;
+	for ( i = sdef->n-1; i >= 0; i-- ) {
+		MKSTR(name,sdef->member[i]);
+		MKNODE(t1,(pointer)name,t);
+		t = t1;
+	}
+	MKLIST(*rp,t);
+}
+
+void Pget_struct_name(NODE arg,STRING *rp)
+{
+	COMP obj;
+	SDEF sdef;
+
+	asir_assert(ARG0(arg),O_COMP,"get_struct_name");
+	obj = (COMP)ARG0(arg);
+	sdef = LSS->sa+obj->type;
+	MKSTR(*rp,sdef->name);
+}
+
+void Pstruct_type(NODE arg,Q *rp)
 {
 	Obj obj;
 	char *name;
@@ -89,9 +167,7 @@ Q *rp;
 	STOQ(ind,*rp);		
 }
 
-void Parfreg(arg,rp)
-NODE arg;
-Q *rp;
+void Parfreg(NODE arg,Q *rp)
 {
 	char *name;
 	P t;
