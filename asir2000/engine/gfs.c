@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.1 2001/03/13 01:10:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.2 2001/03/14 06:04:53 noro Exp $
 */
 #include "ca.h"
 
@@ -398,4 +398,21 @@ GFS a,b;
 			else
 				return 0;
 		}
+}
+
+void randomgfs(r)
+GFS *r;
+{
+	unsigned int t;
+
+	if ( !current_gfs_q1 )
+		error("addgfs : current_gfs_q is not set");
+	t = mt_genrand()%current_gfs_q;
+	if ( !t )
+		*r = 0;
+	else {
+		if ( t == current_gfs_q1 )
+			t = 0;
+		MKGFS(t,*r);
+	}
 }
