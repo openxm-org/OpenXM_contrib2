@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.22 2003/08/01 08:47:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.23 2003/08/05 05:01:18 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1382,7 +1382,7 @@ NODE nd_reduceall(int m,NODE f)
 		} else {
 			printf("."); fflush(stdout);
 			ndv_free(ps[i]);
-			nd_removecont(0,nf);
+			nd_removecont(m,nf);
 			ps[i] = ndtondv(m,nf);
 			nd_free(nf);
 		}
