@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.20 2002/07/25 04:47:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.21 2002/07/26 00:33:01 noro Exp $
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
@@ -165,7 +165,10 @@ install-doc::
 install-include::
 	(cd include; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
 	(cd parse; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
-	(cd gc5.3; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-include)
+	MakeDir($(GC_INCDIR))
+	-$(CP) gc/include//**/*.h $(GC_INCDIR)
+	MakeDir($(GC_INCDIR)/private)
+	-$(CP) gc/include/private//**/*.h $(GC_INCDIR)/private
 
 clean::
 	$(RM) -r libtmp $(LIBRARIES)
