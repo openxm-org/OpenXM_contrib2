@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.45 2004/03/25 01:31:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.46 2004/03/25 01:56:00 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -75,6 +75,7 @@ void Pstring_to_tb();
 void Pquotetotex_tb();
 void Pquotetotex();
 void Pquotetotex_env();
+void Pflatten_quote();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 char *conv_rule(char *name);
@@ -101,6 +102,7 @@ struct ftab str_tab[] = {
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
 	{"quotetotex_env",Pquotetotex_env,-99999999},
+	{"flatten_quote",Pflatten_quote,2},
 	{0,0,0},
 };
 
@@ -1277,4 +1279,16 @@ int top_is_minus(FNODE f)
 		default:
 			return 0;
 	}
+}
+
+FNODE flatten_fnode(FNODE,char *);
+
+void Pflatten_quote(NODE arg,QUOTE *rp)
+{
+	FNODE f;
+	QUOTE q;
+
+	f = flatten_fnode(BDY((QUOTE)ARG0(arg)),BDY((STRING)ARG1(arg)));
+	MKQUOTE(q,f);
+	*rp = q;
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.33 2004/05/14 09:20:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.34 2004/06/21 09:05:16 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -306,8 +306,6 @@ pointer eval(FNODE f)
 				MKLIST(t,NEXT(BDY((LIST)a))); val = (pointer)t;
 			}
 			break;
-		case I_PROC:
-			val = (pointer)FA0(f); break;
 		case I_INDEX:
 			a = eval((FNODE)FA0(f)); ind = (NODE)FA1(f);
 			evalnodebody(ind,&tn); getarray(a,tn,&val); 
