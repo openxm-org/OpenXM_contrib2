@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.109 2004/09/21 04:50:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.110 2004/09/21 05:23:14 noro Exp $ */
 
 #include "nd.h"
 
@@ -2581,14 +2581,8 @@ void removecont_array(Q *c,int n)
 	Q d0,d1,a,u,u1,gcd;
 	int i,j;
 	N qn,rn,gn;
-	Q *t,*q,*r;
+	Q *q,*r;
 
-	t = (Q *)ALLOCA(n*sizeof(Q));
-	for ( i = j = 0; i < n; i++ )
-		if ( c[i] )
-			t[j++] = c[i];
-	n = j;
-	c = t;
 	q = (Q *)ALLOCA(n*sizeof(Q));
 	r = (Q *)ALLOCA(n*sizeof(Q));
 	v.id = O_VECT; v.len = n; v.body = (pointer *)c;
