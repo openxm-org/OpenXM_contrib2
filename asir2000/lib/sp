@@ -1,10 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.3 2000/03/10 09:22:39 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 /* 
 	sp : functions related to algebraic number fields
 
 	Revision History:
 
-	2000/03/10    noro    fixed several bugs
+	2000/04/20    noro    fixed bugs around gathering algebraic numbers
 	1999/08/24    noro    modified for 1999 release version
 */
 
@@ -38,68 +38,6 @@ def sp(P)
 			L = aflist(append(H,append([X-A,R],cdr(T))),AL);
 		}
 	}
-}
-
-/*
-	Input:
-		F=F(x,a1,...,an)
-		DL = [[an,dn(an,...,a1)],...,[a2,d2(a2,a1)],[a1,d1(a1)]]
-		'ai' denotes a root of di(t).
-	Output:
-		irreducible factorization of F over Q(a1,...,an)
-		[[F1(x,a1,...,an),e1],...,[Fk(x,a1,...,an),ek]]
-		'ej' denotes the multiplicity of Fj.
-*/
-
-def af_noalg(F,DL)
-{
-	DL = reverse(DL);
-	N = length(DL);
-	Tab = newvect(N);
-	/* Tab = [[a1,r1],...]; ri is a root of di(t,r(i-1),...,r1). */
-	AL = [];
-	for ( I = 0; I < N; I++ ) {
-		T = DL[I];
-		for ( J = 0, DP = T[1]; J < I; J++ )
-			DP = subst(DP,Tab[J][0],Tab[J][1]);
-		B = newalg(DP);
-		Tab[I] = [T[0],B];
-		F = subst(F,T[0],B);
-		AL = cons(B,AL);
-	}
-	FL = af(F,AL);
-	for ( T = FL, R = []; T != []; T = cdr(T) )
-		R = cons([conv_noalg(T[0][0],Tab),T[0][1]],R);
-	return reverse(R);
-}
-
-/*
-	Input:
-		F=F(x) univariate polynomial over the rationals
-	Output:
-		[FL,DL]
-		DL = [[an,dn(an,...,a1)],...,[a2,d2(a2,a1)],[a1,d1(a1)]]
-		'ai' denotes a root of di(t).
-		FL = [F1,F2,...]
-		irreducible factors of F over Q(a1,...,an)
-*/
-
-def sp_noalg(F)
-{
-	L = sp(F);
-	FL = map(algptorat,L[0]);
-	for ( T = L[1], DL = []; T != []; T = cdr(T) )
-		DL = cons([algtorat(T[0][0]),T[0][1]],DL);
-	return [FL,reverse(DL)];
-}
-
-def conv_noalg(F,Tab)
-{
-	N = size(Tab)[0];
-	F = algptorat(F);
-	for ( I = N-1; I >= 0; I-- )
-		F = subst(F,algtorat(Tab[I][1]),Tab[I][0]);
-	return F;
 }
 
 def aflist(L,AL)

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.2 2000/04/13 06:01:01 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -618,7 +618,11 @@ NODE f;
 			fprintf(asir_out,"mat : %d x %d",row,col);
 			fflush(asir_out);
 		}
+#if 0
+		rank = generic_gauss_elim_hensel(mat,&nm,&dn,&rind,&cind);
+#else
 		rank = generic_gauss_elim(mat,&nm,&dn,&rind,&cind);
+#endif
 		if ( Print )
 			fprintf(asir_out,"done rank = %d\n",rank,row,col);
 		for ( i = 0; i < rank; i++ ) {

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.2 2000/03/14 05:25:43 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
@@ -10,6 +10,8 @@
 
 extern int Print; /* XXX */
 
+void inner_product_mat_int_mod(Q **,int **,int,int,int,Q *);
+void solve_by_lu_mod(int **,int,int,int **,int);
 void solve_by_lu_gfmmat(GFMMAT,unsigned int,unsigned int *,unsigned int *);
 int lu_gfmmat(GFMMAT,unsigned int,int *);
 void mat_to_gfmmat(MAT,unsigned int,GFMMAT *);
@@ -809,21 +811,148 @@ RESET:
 					else
 						cind[l++] = j;
 				get_eg(&tmp0);
-				if ( gensolve_check(mat,*nm,*dn,rind,cind) )
-				get_eg(&tmp1);
-				add_eg(&eg_gschk,&tmp0,&tmp1);
-				add_eg(&eg_gschk_split,&tmp0,&tmp1);
-				if ( Print ) {
-					print_eg("Mod",&eg_mod_split);
-					print_eg("Elim",&eg_elim_split);
-					print_eg("ChRem",&eg_chrem_split);
-					print_eg("IntRat",&eg_intrat_split);
-					print_eg("Check",&eg_gschk_split);
-					fflush(asir_out);
+				if ( gensolve_check(mat,*nm,*dn,rind,cind) ) {
+					get_eg(&tmp1);
+					add_eg(&eg_gschk,&tmp0,&tmp1);
+					add_eg(&eg_gschk_split,&tmp0,&tmp1);
+					if ( Print ) {
+						print_eg("Mod",&eg_mod_split);
+						print_eg("Elim",&eg_elim_split);
+						print_eg("ChRem",&eg_chrem_split);
+						print_eg("IntRat",&eg_intrat_split);
+						print_eg("Check",&eg_gschk_split);
+						fflush(asir_out);
+					}
+					return rank;
 				}
-				return rank;
 			}
 		}
+	}
+}
+
+int generic_gauss_elim_hensel(mat,nmmat,dn,rindp,cindp)
+MAT mat;
+MAT *nmmat;
+Q *dn;
+int **rindp,**cindp;
+{
+	MAT bmat,xmat;
+	Q **a0,**a,**b,**x,**nm;
+	Q *ai,*bi,*xi;
+	int row,col;
+	int **w;
+	int *wi;
+	int **wc;
+	Q mdq,q,s,u;
+	N tn;
+	int ind,md,i,j,k,l,li,ri,rank;
+	unsigned int t;
+	int *cinfo,*rinfo;
+	int *rind,*cind;
+	int count;
+	struct oEGT eg_mul,eg_inv,tmp0,tmp1;
+
+	a0 = (Q **)mat->body;
+	row = mat->row; col = mat->col;
+	w = (int **)almat(row,col);
+	for ( ind = 0; ; ind++ ) {
+		md = lprime[ind];
+		STOQ(md,mdq);
+		for ( i = 0; i < row; i++ )
+			for ( j = 0, ai = a0[i], wi = w[i]; j < col; j++ )
+				if ( q = (Q)ai[j] ) {
+					t = rem(NM(q),md);
+					if ( t && SGN(q) < 0 )
+						t = (md - t) % md;
+					wi[j] = t;
+				} else
+					wi[j] = 0;
+
+		rank = find_lhs_and_lu_mod(w,row,col,md,&rinfo,&cinfo);
+		a = (Q **)almat_pointer(rank,rank); /* lhs mat */
+		MKMAT(bmat,rank,col-rank); b = (Q **)bmat->body; /* lhs mat */
+		for ( j = li = ri = 0; j < col; j++ )
+			if ( cinfo[j] ) {
+				/* the column is in lhs */
+				for ( i = 0; i < rank; i++ ) {
+					w[i][li] = w[i][j];
+					a[i][li] = a0[rinfo[i]][j];
+				}
+				li++;
+			} else {
+				/* the column is in rhs */
+				for ( i = 0; i < rank; i++ )
+					b[i][ri] = a0[rinfo[i]][j];
+				ri++;
+			}
+
+			/* solve Ax+B=0; A: rank x rank, B: rank x ri */
+			MKMAT(xmat,rank,ri); x = (Q **)(xmat)->body;
+			MKMAT(*nmmat,rank,ri); nm = (Q **)(*nmmat)->body;
+			/* use the right part of w as work area */
+			/* ri = col - rank */
+			wc = (int **)almat(rank,ri);
+			for ( i = 0; i < rank; i++ )
+				wc[i] = w[i]+rank;
+			*rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+			*cindp = cind = (int *)MALLOC_ATOMIC((ri)*sizeof(int));
+
+			init_eg(&eg_mul); init_eg(&eg_inv);
+			for ( q = ONE, count = 0; ; count++ ) {
+				fprintf(stderr,".");
+				/* wc = -b mod md */
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
+						if ( u = (Q)bi[j] ) {
+							t = rem(NM(u),md);
+							if ( t && SGN(u) > 0 )
+								t = (md - t) % md;
+							wi[j] = t;
+						} else
+							wi[j] = 0;
+				/* wc = A^(-1)wc; wc is normalized */
+				get_eg(&tmp0);
+				solve_by_lu_mod(w,rank,md,wc,ri);
+				get_eg(&tmp1);
+				add_eg(&eg_inv,&tmp0,&tmp1);
+				/* x = x-q*wc */
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0, xi = x[i], wi = wc[i]; j < ri; j++ ) {
+						STOQ(wi[j],u); mulq(q,u,&s);
+						subq(xi[j],s,&u); xi[j] = u;
+					}
+				get_eg(&tmp0);
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0; j < ri; j++ ) {
+						inner_product_mat_int_mod(a,wc,rank,i,j,&u);
+						addq(b[i][j],u,&s);
+						if ( s ) {
+							t = divin(NM(s),md,&tn);
+							if ( t )
+								error("generic_gauss_elim_hensel:incosistent");	
+							NTOQ(tn,SGN(s),b[i][j]);
+						} else
+							b[i][j] = 0;
+					}
+				get_eg(&tmp1);
+				add_eg(&eg_mul,&tmp0,&tmp1);
+				/* q = q*md */
+				mulq(q,mdq,&u); q = u;
+				if ( !(count % 2) && intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
+					for ( j = k = l = 0; j < col; j++ )
+						if ( cinfo[j] )
+							rind[k++] = j;	
+						else
+							cind[l++] = j;
+					if ( gensolve_check(mat,*nmmat,*dn,rind,cind) ) {
+						fprintf(stderr,"\n");
+						print_eg("INV",&eg_inv);
+						print_eg("MUL",&eg_mul);
+						fflush(asir_out);
+						return rank;
+					}
+				}
+			}
 	}
 }
 
@@ -921,6 +1050,8 @@ Q *dn;
 	N u,unm,udn;
 	int sgn,ret;
 
+	if ( UNIN(md) )
+		return 0;
 	row = mat->row; col = mat->col;
 	bshiftn(md,1,&t);
 	isqrt(t,&s);
@@ -939,6 +1070,65 @@ Q *dn;
 				if ( !ret )
 					return 0;
 				else {
+					NTOQ(unm,sgn,nm1);
+					NTOQ(udn,1,dn1);
+					if ( !UNIQ(dn1) ) {
+						for ( k = 0; k < i; k++ )
+							for ( l = 0, nmk = rmat[k]; l < col; l++ ) {
+								mulq(nmk[l],dn1,&q); nmk[l] = q;
+							}
+						for ( l = 0, nmk = rmat[i]; l < j; l++ ) {
+							mulq(nmk[l],dn1,&q); nmk[l] = q;
+						}
+					}
+					rmat[i][j] = nm1;
+					mulq(dn0,dn1,&q); dn0 = q;
+				}
+			}
+	*dn = dn0;
+	return 1;
+}
+
+/* mat->body = Q ** */
+
+int intmtoratm_q(mat,md,nm,dn)
+MAT mat;
+N md;
+MAT nm;
+Q *dn;
+{
+	N t,s,b;
+	Q bound,dn0,dn1,nm1,q,tq;
+	int i,j,k,l,row,col;
+	Q **rmat;
+	Q **tmat;
+	Q *tmi;
+	Q *nmk;
+	N u,unm,udn;
+	int sgn,ret;
+
+	if ( UNIN(md) )
+		return 0;
+	row = mat->row; col = mat->col;
+	bshiftn(md,1,&t);
+	isqrt(t,&s);
+	bshiftn(s,64,&b);
+	if ( !b )
+		b = ONEN;
+	dn0 = ONE;
+	tmat = (Q **)mat->body;
+	rmat = (Q **)nm->body;
+	for ( i = 0; i < row; i++ )
+		for ( j = 0, tmi = tmat[i]; j < col; j++ )
+			if ( tmi[j] ) {
+				muln(NM(tmi[j]),NM(dn0),&s);
+				remn(s,md,&u);
+				ret = inttorat(u,md,b,&sgn,&unm,&udn);
+				if ( !ret )
+					return 0;
+				else {
+					if ( SGN(tmi[j])<0 )
+						sgn = -sgn;
 					NTOQ(unm,sgn,nm1);
 					NTOQ(udn,1,dn1);
 					if ( !UNIQ(dn1) ) {
@@ -1049,6 +1239,114 @@ int *perm;
 		}
 	}
 	return 1;
+}
+
+/*
+ Input
+	a: a row x col matrix
+	md : a modulus
+
+ Output:
+	return : d = the rank of mat
+	a[0..(d-1)][0..(d-1)] : LU decomposition (a[i][i] = 1/U[i][i])
+	rinfo: array of length row
+	cinfo: array of length col
+    i-th row in new a <-> rinfo[i]-th row in old a
+	cinfo[j]=1 <=> j-th column is contained in the LU decomp.
+*/
+
+int find_lhs_and_lu_mod(a,row,col,md,rinfo,cinfo)
+unsigned int **a;
+unsigned int md;
+int **rinfo,**cinfo;
+{
+	int i,j,k,l,d;
+	int *rp,*cp;
+	unsigned int *t,*pivot;
+	unsigned int inv,m;
+
+	*rinfo = rp = (int *)MALLOC_ATOMIC(row*sizeof(int));
+	*cinfo = cp = (int *)MALLOC_ATOMIC(col*sizeof(int));
+	for ( i = 0; i < row; i++ )
+		rp[i] = i;
+	for ( k = 0, d = 0; k < col; k++ ) {
+		for ( i = d; i < row && !a[i][k]; i++ );
+		if ( i == row ) {
+			cp[k] = 0;
+			continue;
+		} else
+			cp[k] = 1;
+		if ( i != d ) {
+			j = rp[i]; rp[i] = rp[d]; rp[d] = j;
+			t = a[i]; a[i] = a[d]; a[d] = t;
+		}
+		pivot = a[d];
+		pivot[k] = inv = invm(pivot[k],md);
+		for ( i = d+1; i < row; i++ ) {
+			t = a[i];
+			if ( m = t[k] ) {
+				DMAR(inv,m,0,md,t[k])
+				for ( j = k+1, m = md - t[k]; j < col; j++ )
+					if ( pivot[j] ) {
+						DMAR(m,pivot[j],t[j],md,t[j])
+					}
+			}
+		}
+		d++;
+	}
+	return d;
+}
+
+/*
+  Input
+	a : n x n matrix; a result of LU-decomposition
+	md : modulus
+	b : n x l matrix 
+ Output
+	b = a^(-1)b
+ */
+
+void solve_by_lu_mod(a,n,md,b,l)
+int **a;
+int n;
+int md;
+int **b;
+int l;
+{
+	unsigned int *y,*c;
+	int i,j,k;
+	unsigned int t,m,m2;
+
+	y = (int *)MALLOC_ATOMIC(n*sizeof(int));
+	c = (int *)MALLOC_ATOMIC(n*sizeof(int));
+	m2 = md>>1;
+	for ( k = 0; k < l; k++ ) {
+		/* copy b[.][k] to c */
+		for ( i = 0; i < n; i++ )
+			c[i] = (unsigned int)b[i][k];
+		/* solve Ly=c */
+		for ( i = 0; i < n; i++ ) {
+			for ( t = c[i], j = 0; j < i; j++ )
+				if ( a[i][j] ) {
+					m = md - a[i][j];
+					DMAR(m,y[j],t,md,t)
+				}
+			y[i] = t;
+		}
+		/* solve Uc=y */
+		for ( i = n-1; i >= 0; i-- ) {
+			for ( t = y[i], j =i+1; j < n; j++ )
+				if ( a[i][j] ) {
+					m = md - a[i][j];
+					DMAR(m,c[j],t,md,t)
+				}
+			/* a[i][i] = 1/U[i][i] */
+			DMAR(t,a[i][i],0,md,c[i])
+		}
+		/* copy c to b[.][k] with normalization */
+		for ( i = 0; i < n; i++ )
+			b[i][k] = (int)(c[i]>m2 ? c[i]-md : c[i]);
+	}
 }
 
 void Pleqm1(arg,rp)
@@ -1508,6 +1806,68 @@ Q *r;
 		NTOQ(sum,sgn,*r);
 }
 
+/* (k,l) element of a*b where a: .x n matrix, b: n x . integer matrix */
+
+void inner_product_mat_int_mod(a,b,n,k,l,r)
+Q **a;
+int **b;
+int n,k,l;
+Q *r;
+{
+	int la,lb,i;
+	int sgn,sgn1;
+	N wm,wma,sum,t;
+	Q aki;
+	int bil,bilsgn;
+	struct oN tn;
+
+	for ( la = 0, i = 0; i < n; i++ ) {
+		if ( aki = a[k][i] )
+			if ( DN(aki) )
+				error("inner_product_int : invalid argument");
+			else
+				la = MAX(PL(NM(aki)),la);
+	}
+	lb = 1;
+	sgn = 0;
+	sum= NALLOC(la+lb+2);
+	bzero((char *)sum,(la+lb+3)*sizeof(unsigned int));
+	wm = NALLOC(la+lb+2);
+	wma = NALLOC(la+lb+2);
+	for ( i = 0; i < n; i++ ) {
+		if ( !(aki = a[k][i]) || !(bil = b[i][l]) )
+			continue;
+		tn.p = 1;
+		if ( bil > 0 ) {
+			tn.b[0] = bil; bilsgn = 1;
+		} else {
+			tn.b[0] = -bil; bilsgn = -1;
+		}
+		_muln(NM(aki),&tn,wm);
+		sgn1 = SGN(aki)*bilsgn;
+		if ( !sgn ) {
+			sgn = sgn1;
+			t = wm; wm = sum; sum = t;
+		} else if ( sgn == sgn1 ) {
+			_addn(sum,wm,wma);
+			if ( !PL(wma) )
+				sgn = 0;
+			t = wma; wma = sum; sum = t;
+		} else {
+			/* sgn*sum+sgn1*wm = sgn*(sum-wm) */
+			sgn *= _subn(sum,wm,wma);
+			t = wma; wma = sum; sum = t;
+		}
+	}
+	GC_free(wm);
+	GC_free(wma);
+	if ( !sgn ) {
+		GC_free(sum);
+		*r = 0;
+	} else
+		NTOQ(sum,sgn,*r);
+}
+
 void Pmul_mat_vect_int(arg,rp)
 NODE arg;
 VECT *rp;
@@ -1867,4 +2227,32 @@ PENTA:
 	}
 	/* exhausted */
 	return 1;
+}
+
+printqmat(mat,row,col)
+Q **mat;
+int row,col;
+{
+	int i,j;
+
+	for ( i = 0; i < row; i++ ) {
+		for ( j = 0; j < col; j++ ) {
+			printnum(mat[i][j]); printf(" ");
+		}
+		printf("\n");
+	}
+}
+
+printimat(mat,row,col)
+int **mat;
+int row,col;
+{
+	int i,j;
+
+	for ( i = 0; i < row; i++ ) {
+		for ( j = 0; j < col; j++ ) {
+			printf("%d ",mat[i][j]);
+		}
+		printf("\n");
+	}
 }

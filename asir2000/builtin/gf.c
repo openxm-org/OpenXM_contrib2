@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/gf.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -180,19 +180,42 @@ P *mfl;
 ML *listp;
 {
 	register int i,j;
-	int q,n,bound;
+	int q,n,bound,inv,lc;
 	int *p;
 	int **pp;
 	ML blist,clist,bqlist,cqlist,rlist;
 	UM *b;
 	LUM fl,tl;
 	LUM *l;
+	UM w;
 
+	w = W_UMALLOC(UDEG(f));
 	blist = MLALLOC(nf); blist->n = nf; blist->mod = mod;
-	for ( i = 0; i < nf; i++ ) {
+
+	/* c[0] must have lc(f) */
+	blist->c[0] = (pointer)UMALLOC(UDEG(mfl[0]));
+	ptoum(mod,mfl[0],w);
+	inv = invm(w->c[UDEG(mfl[0])],mod);
+	lc = rem(NM((Q)LC(f)),mod);
+	if ( SGN((Q)LC(f)) < 0 )
+		lc = (mod-lc)%mod;
+	lc = dmar(inv,lc,0,mod);
+	if ( lc == 1 )
+		copyum(w,blist->c[0]);
+	else
+		mulsum(mod,w,lc,blist->c[0]);
+
+	/* c[i] (i=1,...,nf-1) must be monic */
+	for ( i = 1; i < nf; i++ ) {
 		blist->c[i] = (pointer)UMALLOC(UDEG(mfl[i]));
-		ptoum(mod,mfl[i],blist->c[i]);
+		ptoum(mod,mfl[i],w);
+		inv = invm(w->c[UDEG(mfl[i])],mod);
+		if ( inv == 1 )
+			copyum(w,blist->c[i]);
+		else
+			mulsum(mod,w,inv,blist->c[i]);
 	}
+
 	gcdgen(f,blist,&clist); henprep(f,blist,clist,&bqlist,&cqlist);
 	n = bqlist->n; q = bqlist->mod;
 	bqlist->bound = cqlist->bound = bound = mignotte(q,f);
