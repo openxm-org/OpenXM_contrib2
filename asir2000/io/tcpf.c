@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.44 2003/12/09 03:07:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.45 2003/12/10 02:16:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -132,6 +132,7 @@ void Pox_tcp_accept_102(),Pox_tcp_connect_102();
 void Pox_send_102(),Pox_recv_102();
 void Pox_set_rank_102();
 void Pox_reset_102();
+void Pox_bcast_102();
 
 void ox_launch_generic();
 
@@ -151,6 +152,7 @@ struct ftab tcp_tab[] = {
 
 	{"ox_send_102",Pox_send_102,2},
 	{"ox_recv_102",Pox_recv_102,1},
+	{"ox_bcast_102",Pox_bcast_102,-2},
 
 	{"try_bind_listen",Ptry_bind_listen,1},
 	{"try_connect",Ptry_connect,2},
@@ -995,6 +997,20 @@ void Pox_recv_102(NODE arg,Obj *rp)
 	int rank = QTOS((Q)ARG0(arg));
 
 	ox_recv_102(rank,&id,rp);
+}
+
+void Pox_bcast_102(NODE arg,Obj *rp)
+{
+	int rank = QTOS((Q)ARG0(arg));
+	Obj data;
+
+	if ( rank == myrank_102 ) {
+		if ( argc(arg) == 1 ) 
+			error("ox_bcast_102 : data should be given at the root");
+		data = (Obj)ARG1(arg);
+	}
+	ox_bcast_102(rank,&data);
+	*rp = data;
 }
 
 void Pox_push_local(NODE arg,Obj *rp)

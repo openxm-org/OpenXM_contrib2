@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.20 2003/03/07 03:12:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.21 2003/12/09 03:07:45 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,6 +56,7 @@
 
 extern Obj VOIDobj;
 
+extern int nserver_102, myrank_102;
 extern int ox_need_conv;
 int ox_usr1_sent, ox_int_received, critical_when_signal;
 unsigned int ox_serial;
@@ -529,6 +530,32 @@ void ox_send_data_102(int rank,pointer p)
 	ox_write_cmo_102(rank,p);
 	ox_flush_stream_102(rank);
 	end_critical();
+}
+
+void ox_bcast_102(int root,Obj *rp)
+{
+	Obj data;
+	int n,myr,r,mask,src,dst,id;
+
+	data = *rp;
+	n = nserver_102;
+	myr = myrank_102;
+	r = myr-root;
+	if ( r < 0 ) r += n;
+	for ( mask = 1; mask < n; mask <<= 1 )
+		if ( r&mask ) {
+			src = myr-mask;
+			if ( src < 0 ) src += n;
+			ox_recv_102(src,&id,&data);
+			break;
+		}
+	for ( mask >>= 1; mask > 0; mask >>= 1 )
+		if ( (r+mask) < n ) {
+			dst = myr+mask;
+			if ( dst >= n ) dst -= n;
+			ox_send_data_102(dst,data);
+		}
+	*rp = data;
 }
 
 void ox_send_cmd(int s,int id)

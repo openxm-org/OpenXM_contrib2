@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.17 2003/01/28 08:38:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.18 2003/12/09 03:07:45 noro Exp $ 
 */
 #include "com.h"
 
@@ -235,12 +235,18 @@ void ox_read_int(int s, int *n);
 void ox_read_int_102(int s, int *n);
 void ox_get_result(int s,Obj *rp);
 unsigned int ox_recv(int s, int *id, Obj *p);
+unsigned int ox_recv_102(int s, int *id, Obj *p);
 void ox_send_local_ring(int s,VL vl);
+void ox_send_local_ring_102(int s,VL vl);
 void ox_send_local_data(int s,Obj p);
+void ox_send_local_data_102(int s,Obj p);
 void ox_send_sync(int s);
+void ox_send_sync_102(int s);
 void ox_send_cmd(int s,int id);
 void ox_send_data(int s,pointer p);
+void ox_send_data_102(int s,pointer p);
 void wait_for_data(int s);
+void wait_for_data_102(int s);
 int ox_data_is_available(int s);
 void clear_readbuffer();
 void end_critical();
