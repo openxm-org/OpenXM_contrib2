@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.5 2001/08/21 01:39:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.6 2001/08/22 00:54:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,31 +89,65 @@ Obj *rp;
 	fnodetotree((FNODE)BDY((QUOTE)(ARG0(arg))),rp);
 }
 
+/* fnode -> [tag,name,arg0,arg1,...] */
+
 void fnodetotree(f,rp)
 FNODE f;
 Obj *rp;
 {
-	Obj a1,a2;
+	Obj a1,a2,a3;
 	NODE n,t,t0;
-	STRING head;
+	STRING head,op,str;
 	LIST r,arg;
 	char *opname;
 
 	if ( !f ) {
-		*rp = 0;
+		MKSTR(head,"internal");
+		n = mknode(2,head,0);
+		MKLIST(r,n);
+		*rp = (Obj)r;
 		return;
 	}
 	switch ( f->id ) {
-		case I_BOP: case I_COP: I_LOP:
-			/* arg list */
-			fnodetotree((FNODE)FA1(f),&a1);
-			fnodetotree((FNODE)FA2(f),&a2);
-			n = mknode(2,a1,a2); MKLIST(arg,n);
+		/* unary operators */
+		case I_NOT: case I_PAREN:
+			MKSTR(head,"u_op");
+			switch ( f->id ) {
+				case I_NOT:
+					MKSTR(op,"!");
+					break;
+				case I_PAREN:
+					MKSTR(op,"()");
+					break;
+			}
+			fnodetotree((FNODE)FA0(f),&a1);
+			n = mknode(3,head,op,a1);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
 
+		/* binary operators */
+		case I_BOP: case I_COP: case I_LOP: case I_AND: case I_OR:
 			/* head */
+			MKSTR(head,"b_op");
+
+			/* arg list */
+			switch ( f->id ) {
+				case I_AND: case I_OR:
+					fnodetotree((FNODE)FA0(f),&a1);
+					fnodetotree((FNODE)FA1(f),&a2);
+					break;
+				default:
+					fnodetotree((FNODE)FA1(f),&a1);
+					fnodetotree((FNODE)FA2(f),&a2);
+					break;
+			}
+
+			/* op */
 			switch ( f->id ) {
 				case I_BOP:
-					MKSTR(head,((ARF)FA0(f))->name); break;
+					MKSTR(op,((ARF)FA0(f))->name); break;
+
 				case I_COP:
 					switch( (cid)FA0(f) ) {
 						case C_EQ: opname = "=="; break;
@@ -123,7 +157,8 @@ Obj *rp;
 						case C_GE: opname = ">="; break;
 						case C_LE: opname = "<="; break;
 					}
-					MKSTR(head,opname); break;
+					MKSTR(op,opname); break;
+
 				case I_LOP:
 					switch( (lid)FA0(f) ) {
 						case L_EQ: opname = "@=="; break;
@@ -134,49 +169,42 @@ Obj *rp;
 						case L_LE: opname = "@<="; break;
 						case L_AND: opname = "@&&"; break;
 						case L_OR: opname = "@||"; break;
-						case L_NOT: opname = "@!"; break;
+
+						case L_NOT: opname = "@!";
+							/* XXX : L_NOT is a unary operator */
+							MKSTR(head,"u_op");
+							MKSTR(op,opname);
+							n = mknode(3,head,op,a1);
+							MKLIST(r,n);
+							*rp = (Obj)r;
+							return;
 					}
-					MKSTR(head,opname); break;
+					MKSTR(op,opname); break;
+
+				case I_AND:
+					MKSTR(op,"&&"); break;
+
+				case I_OR:
+					MKSTR(op,"||"); break;
 			}
-			n = mknode(2,head,arg);
+			n = mknode(4,head,op,a1,a2);
 			MKLIST(r,n);
 			*rp = (Obj)r;
 			break;
-		case I_AND:
-			fnodetotree((FNODE)FA0(f),&a1);
-			fnodetotree((FNODE)FA1(f),&a2);
-			n = mknode(2,a1,a2); MKLIST(arg,n);
-			MKSTR(head,"&&");
-			n = mknode(2,head,arg);
-			MKLIST(r,n);
-			*rp = (Obj)r;
-			break;
-		case I_OR:
-			fnodetotree((FNODE)FA0(f),&a1);
-			fnodetotree((FNODE)FA1(f),&a2);
-			n = mknode(2,a1,a2); MKLIST(arg,n);
-			MKSTR(head,"||");
-			n = mknode(2,head,arg);
-			MKLIST(r,n);
-			*rp = (Obj)r;
-			break;
-		case I_NOT:
-			fnodetotree((FNODE)FA0(f),&a1);
-			n = mknode(1,a1); MKLIST(arg,n);
-			MKSTR(head,"!");
-			n = mknode(2,head,arg);
-			MKLIST(r,n);
-			*rp = (Obj)r;
-			break;
+
+		/* ternary operators */
 		case I_CE:
+			MKSTR(head,"t_op");
+			MKSTR(op,"?:");
 			fnodetotree((FNODE)FA0(f),&a1);
 			fnodetotree((FNODE)FA1(f),&a2);
-			n = mknode(2,a1,a2); MKLIST(arg,n);
-			MKSTR(head,"?:");
-			n = mknode(2,head,arg);
+			fnodetotree((FNODE)FA2(f),&a3);
+			n = mknode(5,head,op,a1,a2,a3);
 			MKLIST(r,n);
 			*rp = (Obj)r;
 			break;
+
+		/* lists */
 		case I_EV: case I_LIST:
 			n = (NODE)FA0(f);
 			for ( t0 = 0; n; n = NEXT(n) ) {
@@ -185,51 +213,54 @@ Obj *rp;
 			}
 			if ( t0 )
 				NEXT(t) = 0;
-			MKLIST(arg,t0);
 			switch ( f->id ) {
 				case I_LIST:
-					MKSTR(head,"()"); break;
+					MKSTR(head,"list"); break;
 				case I_EV:
 					MKSTR(head,"exponent_vector"); break;
 			}
-			n = mknode(2,head,arg);
+			MKNODE(n,head,t0);
 			MKLIST(r,n);
 			*rp = (Obj)r;
 			break;
-		case I_FUNC:
-			fnodetotree((FNODE)FA1(f),&arg);
-			MKSTR(head,((FUNC)FA0(f))->name);
-			n = mknode(2,head,arg);
+
+		/* function */
+		case I_FUNC: case I_CAR: case I_CDR:
+			MKSTR(head,"function");
+			switch ( f->id ) {
+				case I_FUNC:
+					MKSTR(op,((FUNC)FA0(f))->name);
+					fnodetotree((FNODE)FA1(f),&arg);
+					break;
+				case I_CAR:
+					MKSTR(op,"car");
+					fnodetotree((FNODE)FA0(f),&arg);
+					break;
+				case I_CDR:
+					MKSTR(op,"cdr");
+					fnodetotree((FNODE)FA0(f),&arg);
+					break;
+			}
+			t0 = NEXT(BDY(arg)); /* XXX : skip the headers */
+			MKNODE(t,op,t0);
+			MKNODE(n,head,t);
 			MKLIST(r,n);
 			*rp = (Obj)r;
 			break;
-		case I_CAR:
-			fnodetotree((FNODE)FA0(f),&arg);
-			MKSTR(head,"car");
-			n = mknode(2,head,arg);
-			MKLIST(r,n);
-			*rp = (Obj)r;
-			break;
-		case I_CDR:
-			fnodetotree((FNODE)FA0(f),&arg);
-			MKSTR(head,"cdr");
-			n = mknode(2,head,arg);
-			MKLIST(r,n);
-			*rp = (Obj)r;
-			break;
-		case I_PAREN:
-			fnodetotree((FNODE)FA0(f),&arg);
-			MKSTR(head,"()");
-			n = mknode(2,head,arg);
-			MKLIST(r,n);
-			*rp = (Obj)r;
-			break;
+
 		case I_STR:
-			MKSTR(head,FA0(f));
-			*rp = (Obj)head;
+			MKSTR(head,"internal");
+			MKSTR(str,FA0(f));
+			n = mknode(2,head,str);
+			MKLIST(r,n);
+			*rp = (Obj)r;
 			break;
+
 		case I_FORMULA:
-			*rp = (Obj)FA0(f);
+			MKSTR(head,"internal");
+			n = mknode(2,head,FA0(f));
+			MKLIST(r,n);
+			*rp = (Obj)r;
 			break;
 		default:
 			error("fnodetotree : not implemented yet");
