@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.9 2002/07/10 05:29:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.10 2002/07/29 03:08:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -320,8 +320,14 @@ int draw_string(NODE arg)
 
 	index = QTOS((Q)ARG0(arg));
 	can = canvas[index];
-	if ( !can || !can->window ) {
-		set_lasterror("draw_string : canvas does not exist");
+	if ( !can && closed_canvas[index] ) {
+		canvas[index] = closed_canvas[index];
+		closed_canvas[index] = 0;
+		can = canvas[index];
+		popup_canvas(index);
+		current_can = can;
+	} else if ( !can || (can && !can->window) ) {
+		set_lasterror("draw_obj : canvas does not exist");
 		return -1;
 	}
 
