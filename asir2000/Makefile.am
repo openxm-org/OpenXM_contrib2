@@ -1,10 +1,10 @@
-# $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.5 2003/03/07 17:00:45 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.6 2003/03/07 17:18:40 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
     PLOTDIR = plot
     PLLIB   = plot/libplot.a
-    X11LIB  = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ -lXpm -lXext -lX11 @X_EXTRA_LIBS@ 
+    X11LIB  = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@ 
 endif
 
 SUBDIRS  = asm builtin engine fft include io lib parse ${PLOTDIR}
@@ -86,6 +86,7 @@ install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
+	(cd ${top_srcdir}/include; ${MAKE} install)
 
 install-lib:
 	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
