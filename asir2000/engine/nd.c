@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.64 2003/09/12 01:12:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.65 2003/09/12 08:01:51 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -3787,7 +3787,8 @@ int nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *r)
 	return i;
 }
 
-void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair,int *ind)
+void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,
+	NM_ind_pair pair,int *ind)
 {
 	NM m;
 	NMV mr;
@@ -3808,10 +3809,10 @@ void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair,int *i
 }
 
 
-void ndv_reduce_vect(int m,UINT *svect,int **imat,NODE rp0)
+void ndv_reduce_vect(int m,UINT *svect,int col,int **imat,NODE rp0)
 {
 	int i,j,k,len,pos;
-	UINT c,c1,c2,c3;
+	UINT c,c1,c2,c3,up,lo,dmy;
 	UINT *ivect;
 	NDV redv;
 	NMV mr0,mr;
@@ -3820,6 +3821,7 @@ void ndv_reduce_vect(int m,UINT *svect,int **imat,NODE rp0)
 	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
 		ivect = imat[i];
 		k = ivect[0];
+		svect[k] %= m;
 		if ( c = svect[k] ) {
 			c = m-c;
 			redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
@@ -3828,11 +3830,17 @@ void ndv_reduce_vect(int m,UINT *svect,int **imat,NODE rp0)
 			for ( j = 0, mr = mr0; j < len; j++, NMV_ADV(mr) ) {
 				pos = ivect[j];
 				c1 = CM(mr);
-				c2 = svect[pos]; DMAR(c1,c,c2,m,c3);
-				svect[pos] = c3;
+				c2 = svect[pos];
+				DMA(c1,c,c2,up,lo);
+				if ( up ) {
+					DSAB(m,up,lo,dmy,c3); svect[pos] = c3;
+				} else
+					svect[pos] = lo;
 			}
 		}
 	}
+	for ( i = 0; i < col; i++ )
+		if ( svect[i] >= (UINT)m ) svect[i] %= m;
 }
 
 NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
@@ -3937,6 +3945,7 @@ NODE nd_f4(int m)
 	int spcol,sprow;
 	int sugar;
 	PGeoBucket bucket;
+	struct oEGT eg0,eg1,eg_f4;
 
 	if ( !m )
 		error("nd_f4 : not implemented");
@@ -3947,6 +3956,7 @@ NODE nd_f4(int m)
 		g = update_base(g,i);
 	}
 	while ( d ) {
+		get_eg(&eg0);
 		l = nd_minsugarp(d,&d);
 		sugar = SG(l);
 		bucket = create_pbucket();
@@ -3977,7 +3987,7 @@ NODE nd_f4(int m)
 		svect = (UINT *)MALLOC_ATOMIC(col*sizeof(UINT));
 		for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
 			nd_to_vect(m,s0vect,col,BDY(sp),svect);
-			ndv_reduce_vect(m,svect,imat,rp0);
+			ndv_reduce_vect(m,svect,col,imat,rp0);
 			for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
 			if ( i < col ) {
 				spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
@@ -3993,11 +4003,13 @@ NODE nd_f4(int m)
 		colstat = (int *)ALLOCA(spcol*sizeof(int));
 		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
 
-		fprintf(asir_out,"sugar=%d,rank=%d\n",sugar,rank); fflush(asir_out);
+		get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
+		fprintf(asir_out,"sugar=%d,nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
+			sugar,nsp,nred,sprow,spcol,rank);
+		fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
 
 		/* adding new bases */
-		for ( i = sprow-1; i >= rank; i-- ) GC_free(spmat[i]);
-		for ( ; i >= 0; i-- ) {
+		for ( i = 0; i < rank; i++ ) {
 			nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
 			SG(nf) = sugar;
 			ndv_removecont(m,nf);
@@ -4006,6 +4018,7 @@ NODE nd_f4(int m)
 			g = update_base(g,nh);
 			GC_free(spmat[i]);
 		}
+		for ( ; i < sprow; i++ ) GC_free(spmat[i]);
 	}
 	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
 	return g;
