@@ -96,7 +96,7 @@ void CChildView::OnPrint(CDC &dc)
 {
 	DOCINFO docinfo;
 	NODE n;
-	int width,height,ratio,x,y;
+	int width,height,ratio,x,y,step;
 
 	memset(&docinfo,0,sizeof(DOCINFO));
 	docinfo.cbSize = sizeof(DOCINFO);
@@ -123,7 +123,8 @@ void CChildView::OnPrint(CDC &dc)
 	dc.StartPage();
 
 	if ( can->mode == MODE_INTERACTIVE ) {
-		// We want to associate precisely one printer pixel to
+
+		// We want to associate a rectangle of a fixed size to
 		// one bitmap pixel
 		// if can->width/can->height > width/height
 		// then match the widths, else match the height
@@ -139,6 +140,7 @@ void CChildView::OnPrint(CDC &dc)
 		dc.SetViewportOrg(width/18,height/18);
 		dc.SetViewportExt(width,height);
 
+		step = (ratio+4)/5;
 		for ( n = can->history; n; n = NEXT(n) ) {
 			RealVect *rv = (RealVect *)n->body;
 			if ( rv->len == 2 ) {
@@ -146,7 +148,8 @@ void CChildView::OnPrint(CDC &dc)
 				x = rv->body[0]*ratio;
 				y = rv->body[1]*ratio;
 //				dc.FillRect(CRect(x,y,x+1,y+1),&brush);
-				dc.FillRect(CRect(x-1,y-1,x+1,y+1),&brush);
+//				dc.FillRect(CRect(x-1,y-1,x+1,y+1),&brush);
+				dc.FillRect(CRect(x,y,x+step,y+step),&brush);
 			} else if ( rv->len == 4 ) {
 				dc.MoveTo(rv->body[0]*ratio,rv->body[1]*ratio);
 				dc.LineTo(rv->body[2]*ratio,rv->body[3]*ratio);

@@ -19,6 +19,7 @@ extern "C" {
 	extern HANDLE hStreamNotify;
 	extern HANDLE hStreamNotify_Ack;
 	extern DWORD MainThread;
+	extern int canvas_created;
 	void Init_IO();
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -183,10 +184,12 @@ BOOL COx_plotApp::PreTranslateMessage(MSG* pMsg)
 			pFrame->UpdateWindow();
 			pFrame->BringWindowToTop();
 			can->hwnd = pFrame->m_wndView.m_hWnd;
+			canvas_created = 1;
 		} else
 			pFrame = (CMainFrame *)can->window;
 		pFrame->RedrawWindow();
-	}
+	} else if ( pMsg->message == WM_APP+1 )
+		;  // dummy message
 	return CWinApp::PreTranslateMessage(pMsg);
 }
 

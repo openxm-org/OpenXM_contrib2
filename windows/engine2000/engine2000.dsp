@@ -131,6 +131,15 @@ SOURCE=.\ox_plot.cpp
 # Begin Source File
 
 SOURCE=.\ox_plot_win.c
+
+!IF  "$(CFG)" == "engine2000 - Win32 Release"
+
+# ADD CPP /O2
+
+!ELSEIF  "$(CFG)" == "engine2000 - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
