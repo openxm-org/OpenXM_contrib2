@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.9 2000/11/07 06:06:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.10 2000/11/09 01:51:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -704,12 +704,14 @@ create_gc() {
 	scaleGC = XCreateGC(display,rootwin,0,NULL);
 	xorGC = XCreateGC(display,rootwin,0,NULL);
 	colorGC = XCreateGC(display,rootwin,0,NULL);
+	cdrawGC = XCreateGC(display,rootwin,0,NULL);
 	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,drawGC);
 	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,dashGC);
 	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,clearGC);
 	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,scaleGC);
 	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,xorGC);
 	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,colorGC);
+	XCopyGC(display,DefaultGC(display,scrn),(1L<<(GCLastBit+1))-1,cdrawGC);
 	XSetForeground(display,drawGC,forePixel);
 	XSetForeground(display,scaleGC,forePixel);
 	XSetForeground(display,clearGC,backPixel);
@@ -724,6 +726,18 @@ create_gc() {
 	color.red = 0xffff; color.green = color.blue = 0;
 	XAllocColor(display,DefaultColormap(display,scrn),&color);
 	XSetForeground(display,colorGC,color.pixel);
+}
+
+set_drawcolor(c)
+unsigned int c;
+{
+	XColor color = {0,0x0,0x0,0x0,DoRed|DoGreen|DoBlue,0};
+
+	color.red = (c&0xff0000)>>8;
+	color.green = (c&0xff00);
+	color.blue = (c&0xff)<<8;
+	XAllocColor(display,DefaultColormap(display,scrn),&color);
+	XSetForeground(display,cdrawGC,color.pixel);
 }
 
 create_cursors() {

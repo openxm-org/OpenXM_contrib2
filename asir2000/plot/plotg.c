@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.3 2000/08/22 05:04:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.4 2000/11/07 06:06:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -62,7 +62,7 @@ POINT start_point, end_point;
 SIZE cansize;
 #else
 Window rootwin;
-GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC;
+GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC,cdrawGC;
 XFontStruct *sffs;
 #endif
 

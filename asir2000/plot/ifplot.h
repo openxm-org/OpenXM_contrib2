@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.4 2000/11/07 06:06:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.5 2000/11/09 01:51:12 noro Exp $ 
 */
 #if defined(THINK_C)
 #include        <QuickDraw.h>
@@ -246,6 +246,6 @@ extern POINT start_point,end_point;
 extern SIZE cansize;
 #else
 extern Window rootwin;
-extern GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC;
+extern GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC,cdrawGC;
 extern XFontStruct *sffs;
 #endif

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.5 2000/11/07 06:06:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.6 2000/11/09 01:51:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -194,8 +194,14 @@ int color;
 	SetPixel(dc,x,y,(COLORREF)color);
 	ReleaseDC(can->hwnd,dc);
 #else
-	DRAWPOINT(display,can->pix,drawGC,x,y);
-	DRAWPOINT(display,can->window,drawGC,x,y);
+	if ( color ) {
+		set_drawcolor(color);
+		DRAWPOINT(display,can->pix,cdrawGC,x,y);
+		DRAWPOINT(display,can->window,cdrawGC,x,y);
+	} else {
+		DRAWPOINT(display,can->pix,drawGC,x,y);
+		DRAWPOINT(display,can->window,drawGC,x,y);
+	}
 	XFlush(display);
 #endif
 }
@@ -230,8 +236,14 @@ int color;
 		ReleaseDC(can->hwnd,dc);
 	}
 #else
-	DRAWLINE(display,can->pix,drawGC,x,y,u,v);
-	DRAWLINE(display,can->window,drawGC,x,y,u,v);
+	if ( color ) {
+		set_drawcolor(color);
+		DRAWLINE(display,can->pix,cdrawGC,x,y,u,v);
+		DRAWLINE(display,can->window,cdrawGC,x,y,u,v);
+	} else {
+		DRAWLINE(display,can->pix,drawGC,x,y,u,v);
+		DRAWLINE(display,can->window,drawGC,x,y,u,v);
+	}
 	XFlush(display);
 #endif
 }
