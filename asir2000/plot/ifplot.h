@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.8 2001/10/09 01:36:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.9 2002/07/11 03:34:34 takayama Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -189,6 +189,7 @@ struct canvas {
 };
 
 extern struct canvas *canvas[];
+extern struct canvas *closed_canvas[];
 extern struct canvas *current_can;
 
 extern VL CO;

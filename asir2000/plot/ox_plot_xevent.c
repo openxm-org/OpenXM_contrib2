@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.17 2002/07/12 00:14:40 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.18 2002/07/20 02:28:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,6 +72,7 @@ XFontStruct *sffs;
 #endif
 
 struct canvas *canvas[MAXCANVAS];
+struct canvas *closed_canvas[MAXCANVAS];
 struct canvas *current_can;
 #endif /* __DARWIN__ */
 
@@ -359,7 +360,10 @@ search_active_canvas()
 	return -1;
 }
 
-	 
+void popup_canvas(index)
+{
+	XtPopup(canvas[index]->shell,XtGrabNone);
+}
 
 void destroy_canvas(w,can,calldata)
 Widget w;
@@ -367,11 +371,14 @@ struct canvas *can;
 XtPointer calldata;
 {
 	XtPopdown(can->shell); 
-	XtDestroyWidget(can->shell);
+/*	XtDestroyWidget(can->shell); */
 	XFlush(display);
 	if ( can == current_can ) {
 		reset_busy(can); current_can = 0;
 	}
+	if ( closed_canvas[can->index] )
+		XtDestroyWidget(closed_canvas[can->index]->shell);
+	closed_canvas[can->index] = can;
 	canvas[can->index] = 0;
 }
 

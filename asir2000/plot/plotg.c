@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.5 2000/11/09 02:30:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.6 2002/01/30 08:31:34 noro Exp $ 
 */
 
 /* XXX : declared in ox_plot_xevent.c on darwin */
@@ -70,5 +70,6 @@ XFontStruct *sffs;
 #endif
 
 struct canvas *canvas[MAXCANVAS];
+struct canvas *closed_canvas[MAXCANVAS];
 struct canvas *current_can;
 #endif
