@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.8 2000/03/10 03:05:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.9 2000/03/10 06:42:23 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -704,6 +704,10 @@ int asir_ox_pop_cmo(void *cmo, int limit)
 	int len;
 
 	obj = asir_pop_one();
+	if ( !valid_as_cmo(obj) ) {
+		fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
+		return -1;
+	}
 	len = count_as_cmo(obj);
 	if ( len <= limit ) {
 		ox_copy_init(cmo);
@@ -765,6 +769,10 @@ int asir_ox_peek_cmo_size()
 	int len;
 
 	obj = asir_pop_one();
+	if ( !valid_as_cmo(obj) ) {
+		fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
+		return 0;
+	}
 	len = count_as_cmo(obj);
 	asir_push_one(obj);
 	return len;
