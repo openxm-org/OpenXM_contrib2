@@ -475,6 +475,10 @@ SOURCE="..\..\asir2000\engine\N.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\engine\nd.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\gc\new_hblk.c"
 # End Source File
 # Begin Source File

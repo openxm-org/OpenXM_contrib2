@@ -461,6 +461,10 @@ SOURCE=.\engine\N.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\engine\nd.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\gc\new_hblk.c
 # End Source File
 # Begin Source File
