@@ -45,21 +45,24 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.4 2003/01/16 04:44:19 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.5 2003/01/16 16:20:12 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Pcar(), Pcdr(), Pcons(), Pappend(), Pconcat(), Preverse(), Plength();
+void Pcar(), Pcdr(), Pcons(), Pappend(), Preverse(), Plength();
+void Pnconc(), Preplcd(), Preplca();
 
 struct ftab list_tab[] = {
 	{"car",Pcar,1},
 	{"cdr",Pcdr,1},
 	{"cons",Pcons,2},
 	{"append",Pappend,2},
-	{"concat",Pconcat,2},
 	{"reverse",Preverse,1},
 	{"length",Plength,1},
+	{"nconc",Pnconc,2},
+	{"replcd",Preplcd,2},
+	{"replca",Preplca,2},
 	{0,0,0},
 };
 
@@ -114,26 +117,6 @@ LIST *rp;
 	}
 }
 
-void Pconcat(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	NODE a1,a2,n;
-
-	asir_assert(ARG0(arg),O_LIST,"concat");
-	asir_assert(ARG1(arg),O_LIST,"concat");
-	a1 = (LIST)ARG0(arg);
-	if ( !a1 )
-		*rp = (LIST)ARG1(arg);
-	else {
-		for ( n = a1; n; n = NEXT(n) ) {
-			a2 = n;
-		}
-		NEXT(a2) = BDY((LIST)ARG1(arg));
-		*rp = (LIST)a1;
-	}
-}
-
 void Preverse(arg,rp)
 NODE arg;
 LIST *rp;
@@ -162,4 +145,56 @@ Q *rp;
 	n = BDY((LIST)ARG0(arg));
 	for ( i = 0; n; i++, n = NEXT(n) );
 	STOQ(i,*rp);
+}
+
+void Pnconc(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE a1,a2,n;
+
+	asir_assert(ARG0(arg),O_LIST,"nconc");
+	asir_assert(ARG1(arg),O_LIST,"nconc");
+	a1 = BDY((LIST)ARG0(arg));
+	if ( !a1 )
+		*rp = (LIST)ARG1(arg);
+	else {
+		for ( n = a1; n; n = NEXT(n) ) {
+			a2 = n;
+		}
+		NEXT(a2) = BDY((LIST)ARG1(arg));
+		*rp = (LIST)ARG0(arg);
+	}
+}
+
+void Preplcd(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE a0,a1;
+	
+	asir_assert(ARG0(arg),O_LIST,"replcd");
+	asir_assert(ARG1(arg),O_LIST,"replcd");
+	a0 = BDY((LIST)ARG0(arg));
+	if ( !a0 )
+		*rp = (LIST)ARG0(arg);
+	else {
+		NEXT(a0) = BDY((LIST)ARG1(arg));
+		*rp = (LIST)ARG0(arg);
+	}
+}
+
+void Preplca(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE n;
+	
+	asir_assert(ARG0(arg),O_LIST,"replca");
+	if ( !(n = BDY((LIST)ARG0(arg)) ) )
+		*rp = (LIST)ARG0(arg);
+	else {
+		BDY(BDY((LIST)ARG0(arg))) = (LIST)ARG1(arg);
+		*rp = (LIST)ARG0(arg);
+	}
 }
