@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.50 2003/07/01 08:12:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.51 2003/07/09 07:11:07 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1974,7 +1974,7 @@ DP_pairs criterion_F( DP_pairs d1 )
 	for ( head = last = 0, p = d1; NEXT(p); ) {
 		s = (r = w = collect_pairs_of_hdlcm( p, &rest ))->sugar;
 		while ( w = NEXT(w) )
-			if ( criterion_2( w->dp1, w->dp2 ) ) {
+			if ( !do_weyl && criterion_2( w->dp1, w->dp2 ) ) {
 				r = w;
 				break;
 			} else if ( w->sugar < s ) s = (r = w)->sugar;
