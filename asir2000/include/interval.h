@@ -1,5 +1,5 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.1 2000/12/22 10:03:29 saito Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -32,6 +32,15 @@ static char	*Interval_dummy;
 
 #ifdef	linux
 #include	<fpu_control.h>
+#if 1
+#define	LINUX_FPU_RC_MASK				0xf3ff
+#define	LINUX_FPU_SETCW(c)			{_FPU_GETCW(__fpu_control);\
+				_FPU_SETCW(__fpu_control & LINUX_FPU_RC_MASK | c);}
+#define	FPNEAREST	LINUX_FPU_SETCW(_FPU_RC_NEAREST);
+#define	FPPLUSINF	LINUX_FPU_SETCW(_FPU_RC_UP);
+#define	FPMINUSINF	LINUX_FPU_SETCW(_FPU_RC_DOWN);
+#define	FPTOZERO		LINUX_FPU_SETCW(_FPU_RC_ZERO);
+#else
 #define	_FPU_DEFAULT_p_FPU_RC_UP	0x1b72
 #define	_FPU_DEFAULT_p_FPU_RC_DOWN	0x1772
 #define	_FPU_DEFAULT_p_FPU_RC_ZERO	0x1f72
@@ -39,6 +48,7 @@ static char	*Interval_dummy;
 #define	FPPLUSINF	__setfpucw(_FPU_DEFAULT_p_FPU_RC_UP);
 #define	FPMINUSINF	__setfpucw(_FPU_DEFAULT_p_FPU_RC_DOWN);
 #define	FPTOZERO	__setfpucw(_FPU_DEFAULT_p_FPU_RC_ZERO);
+#endif
 #endif
 
 #if defined(__osf__)
