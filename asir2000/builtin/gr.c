@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.27 2001/09/11 08:56:47 noro Exp $ 
+ * $OpenXM$
 */
 #include "ca.h"
 #include "parse.h"
@@ -150,9 +150,7 @@ double get_rtime();
 void _dpmod_to_vect(DP,DL *,int *);
 void dp_to_vect(DP,DL *,Q *);
 NODE dp_dllist(DP f);
-DLBUCKET dp_dllist_bucket(DP f);
 NODE symb_merge(NODE,NODE,int),_symb_merge(NODE,NODE,int);
-DLBUCKET symb_merge_bucket(DLBUCKET,DLBUCKET,int);
 extern int dp_nelim;
 extern int dp_fcoeffs;
 static DP *ps,*psm;
@@ -304,56 +302,6 @@ DP f;
 	}
 	NEXT(mp) = 0;
 	return mp0;
-}
-
-void print_dlbucket(d,nv)
-DLBUCKET d;
-int nv;
-{
-	int i;
-	NODE n;
-
-	for ( ; d; d = NEXT(d) ) {
-		fprintf(stderr,"td = %d\n",d->td);
-		for ( n = BDY(d); n; n = NEXT(n) ) {
-			fprintf(stderr,"<");
-			for ( i = 0; i < nv; i++ ) {
-				fprintf(stderr,"%d",((DL)BDY(n))->d[i]);
-				if ( i != nv-1 )
-					fprintf(stderr," ");
-			}
-			fprintf(stderr,">");
-		}
-		fprintf(stderr,"\n");
-	}
-}
-
-DLBUCKET dp_dllist_bucket(f)
-DP f;
-{
-	MP m;
-	NODE n,n0;
-	DLBUCKET d,d0;
-	int td;
-
-	if ( !f )
-		return 0;
-	d0 = 0;
-	m = BDY(f);
-	do {
-		NEXTDLBUCKET(d0,d);
-		n0 = 0;
-		d->td = td = m->dl->td;
-		do {
-			NEXTNODE(n0,n);
-			BDY(n) = (pointer)m->dl;
-			m = NEXT(m);
-		} while ( m && m->dl->td == td );
-		NEXT(n) = 0;
-		BDY(d) = n0;
-	} while ( m );
-	NEXT(d) = 0;
-	return d0;
 }
 
 void pdl(f)
@@ -746,8 +694,7 @@ int m;
 {
 	int i,j,k,nh,row,col,nv;
 	NODE r,g,gall;
-	NODE sb;
-	DLBUCKET s,s0,s1;
+	NODE s,s0;
 	DP_pairs d,dm,dr,t;
 	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
 	MP mp,mp0;
@@ -782,57 +729,42 @@ int m;
 			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
-				s0 = symb_merge_bucket(s0,dp_dllist_bucket(sp),nv);
-/*				print_dlbucket(s0,nv); */
+				s0 = symb_merge(s0,dp_dllist(sp),nv);
 			}
 		}
 		/* s0 : all the terms appeared in symbolic reduction */
 #if 0
 		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
-			sb = BDY(s);
-			for ( ; sb; sb = NEXT(sb) ) {
-				for ( j = psn-1; j >= 0; j-- )
-					if ( _dl_redble(BDY(ps[j])->dl,BDY(sb),nv) )
-						break;
-				if ( j >= 0 ) {
-					dltod(BDY(sb),nv,&tdp);
-					dp_subd(tdp,ps[j],&sd);
-					for ( k = 0, i = 0; k < nv; k++ )
-						if ( BDY(sd)->dl->d[k] )
-							i++;
-					fprintf(stderr,"%c ",i<=1 ? 'o' : 'x');
-					_dp_mod(sd,m,0,&sdm);
-					mulmd_dup(m,sdm,ps[j],&f2);
-					MKNODE(bt,f2,blist); blist = bt;
-					/* merge the highest degree part into sb */
-					s1 = dp_dllist_bucket(f2);
-					symb_merge(sb,BDY(s1),nv);
-					/* merge the rest into s */
-					symb_merge_bucket(s,NEXT(s1),nv);
-					nred++;
-				}
+			for ( j = psn-1; j >= 0; j-- )
+				if ( _dl_redble(BDY(ps[j])->dl,BDY(s),nv) )
+					break;
+			if ( j >= 0 ) {
+				dltod(BDY(s),nv,&tdp);
+				dp_subd(tdp,ps[j],&sd);
+				for ( k = 0, i = 0; k < nv; k++ )
+					if ( BDY(sd)->dl->d[k] )
+						i++;
+				fprintf(stderr,"%c ",i<=1 ? 'o' : 'x');
+				_dp_mod(sd,m,0,&sdm);
+				mulmd_dup(m,sdm,ps[j],&f2);
+				MKNODE(bt,f2,blist); blist = bt;
+				s = symb_merge(s,dp_dllist(f2),nv);
+				nred++;
 			}
 		}
 #else
 		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
-			sb = BDY(s);
-			for ( ; sb; sb = NEXT(sb) ) {
-				for ( r = gall;	r; r = NEXT(r) )
-					if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(sb),nv) )
-						break;
-				if ( r ) {
-					dltod(BDY(sb),nv,&tdp);
-					dp_subd(tdp,ps[(int)BDY(r)],&sd);
-					_dp_mod(sd,m,0,&sdm);
-					mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
-					MKNODE(bt,f2,blist); blist = bt;
-					/* merge the highest degree part into sb */
-					s1 = dp_dllist_bucket(f2);
-					symb_merge(sb,BDY(s1),nv);
-					/* merge the rest into s */
-					symb_merge_bucket(s,NEXT(s1),nv);
-					nred++;
-				}
+			for ( r = gall;	r; r = NEXT(r) )
+				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
+					break;
+			if ( r ) {
+				dltod(BDY(s),nv,&tdp);
+				dp_subd(tdp,ps[(int)BDY(r)],&sd);
+				_dp_mod(sd,m,0,&sdm);
+				mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
+				MKNODE(bt,f2,blist); blist = bt;
+				s = symb_merge(s,dp_dllist(f2),nv);
+				nred++;
 			}
 		}
 #endif
@@ -849,15 +781,12 @@ int m;
 			ht[i] = BDY((DP)BDY(r))->dl;
 
 		/* col = number of all terms */
-		for ( s = s0, col = 0; s; s = NEXT(s) )
-			for ( sb = BDY(s); sb; sb = NEXT(sb) )
-				col++;
+		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
 
 		/* head terms of all terms */
 		at = (DL *)MALLOC(col*sizeof(DL));
-		for ( s = s0, i = 0; i < col; s = NEXT(s) )
-			for ( sb = BDY(s); sb; sb = NEXT(sb), i++ )
-				at[i] = (DL)BDY(sb);
+		for ( s = s0, i = 0; i < col; s = NEXT(s), i++ )
+			at[i] = (DL)BDY(s);
 
 		/* store coefficients separately in spmat and redmat */
 		nsp = row-nred;
