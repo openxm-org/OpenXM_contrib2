@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.2 2000/08/21 08:31:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.3 2000/08/22 05:04:31 noro Exp $ 
 */
 #if defined(THINK_C)
 #include        <QuickDraw.h>
@@ -55,6 +55,9 @@
 #include        <ToolUtils.h>
 #include        <Fonts.h>
 /* #include        <Strings.h> */
+#elif defined(VISUAL)
+/* for Visual C++ */
+#include <windows.h>
 #else
 #include <sys/types.h>
 #include <X11/Xlib.h>
@@ -104,6 +107,7 @@
 #define MODE_IFPLOT 0
 #define MODE_CONPLOT 1
 #define MODE_PLOT 2
+#define MODE_INTERACTIVE 3
 
 #define DIR_X 0
 #define DIR_Y 1
@@ -127,7 +131,24 @@
 #else
 #define DRAWABLE BitMap
 #endif
+
+#elif defined(VISUAL)
+/* for Visual C++ */
+#define XC(a) ((a).x)
+#define YC(a) ((a).y)
+#define DISPLAY int
+#define WINDOW int
+#define CURSOR int
+#define DRAWABLE HDC
+
+/* XXX : use GC argument as the color */
+#define DRAWPOINT(d,p,g,x,y) SetPixel(p,x,y,0) 
+
+#define DRAWLINE(d,p,g,x,y,u,v) MoveToEx(p,x,y,&oldpos); LineTo(p,u,v)
+#define DRAWSTRING(d,p,g,x,y,s,l)
+#define TEXTWIDTH(f,s,l) 0
 #else
+/* for UNIX */
 #define POINT XPoint
 #define XC(a) ((a).x)
 #define YC(a) ((a).y)
@@ -146,6 +167,18 @@ struct pa {
 	POINT *pos;
 };
 
+typedef struct RealVect {
+	int len;
+	int body[1];
+} RealVect;
+
+#define MKRVECT2(v,x,y)\
+((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+sizeof(int)),\
+ (v)->len=2,(v)->body[0]=(x),(v)->body[1]=(y))
+#define MKRVECT4(v,x,y,a,b)\
+((v)=(RealVect *)MALLOC_ATOMIC(sizeof(RealVect)+3*sizeof(int)),\
+ (v)->len=2,(v)->body[0]=(x),(v)->body[1]=(y),(v)->body[2]=(a),(v)->body[3]=(b))
+
 struct canvas {
 	int index;
 #if defined(THINK_C)
@@ -158,6 +191,14 @@ struct canvas {
 	BitMap pix,wbits;
 	RgnHandle rgnsav;
 #endif
+#elif defined(VISUAL)
+/* for Visual C++ */
+	void *window; /* pointer to CMainFrame */
+	HWND hwnd; /* handle to the canvas window */
+	HDC pix; /* shadow DC on memory */
+	char *prefix;
+	int percentage;
+	struct canvas *real_can;
 #else
 	Widget shell,xcoord,ycoord,xdone,ydone,level,wideb,preciseb,noaxisb;
 	Window window;
@@ -178,6 +219,8 @@ struct canvas {
 	Q qxmin,qxmax;
 	Q qymin,qymax;
 	struct pa *pa;
+	/* to register the history in the interactive mode */
+	NODE history;
 };
 
 extern struct canvas *canvas[];
@@ -191,7 +234,10 @@ extern int stream;
 extern DISPLAY *display;
 extern CURSOR normalcur,runningcur,errorcur;
 
-#if !defined(THINK_C)
+#if defined(VISUAL)
+extern POINT start_point,end_point;
+extern SIZE cansize;
+#else
 extern Window rootwin;
 extern GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC;
 extern XFontStruct *sffs;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.4 2000/08/21 08:31:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.5 2000/08/22 05:04:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,7 @@
 #include "ifplot.h"
 
 void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
+void Popen_canvas(), Pclear_canvas(), Pdraw_obj();
 
 struct ftab plot_tab[] = {
 	{"ifplot",Pifplot,-7},
@@ -60,6 +61,9 @@ struct ftab plot_tab[] = {
 	{"plot",Pplot,-6},
 	{"plotover",Pplotover,3},
 	{"drawcircle",Pdrawcircle,5},
+	{"open_canvas",Popen_canvas,-3},
+	{"clear_canvas",Pclear_canvas,2},
+	{"draw_obj",Pdraw_obj,3},
 /*
 	{"arrayplot",Parrayplot,2},
 */
@@ -67,6 +71,52 @@ struct ftab plot_tab[] = {
 };
 
 int current_s;
+
+void Popen_canvas(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	Q w300,sid;
+	LIST geom;
+	int stream,id,i;
+	NODE n,n0;
+	STRING fname,wname;
+
+	geom = 0; wname = 0; stream = -1;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+			case O_LIST:
+				geom = (LIST)BDY(arg);
+				break;
+			case O_N:
+				stream = QTOS((Q)BDY(arg)); break;
+			case O_STR:
+				wname = (STRING)BDY(arg); break;
+			default:
+				error("open_canvas : invalid argument"); break;
+		}
+	/* open_canvas in ox_plot requires 
+	   [sid (Q),
+	   	geom=[xsize,ysize] (LIST),
+	   	wname=name (STRING)]
+	*/
+
+	if ( stream < 0 )
+		stream = current_s;
+	else
+		current_s = stream;
+	STOQ(stream,sid);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"open_canvas");
+	arg = mknode(4,sid,fname,geom,wname);
+	Pox_cmo_rpc(arg,rp);
+}
 
 void Pifplot(arg,rp)
 NODE arg;
@@ -426,6 +476,42 @@ Obj *rp;
 	n = mknode(3,x,y,r); MKLIST(pos,n);
 	arg = mknode(4,sid,fname,index,pos);
 	Pox_rpc(arg,rp);
+}
+
+/* draw_obj(sid,cindex,point|line); point = [x,y], line = [xa,ya,xb,yb] */
+void Pdraw_obj(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	static STRING fname;
+	Q sid,index;
+	LIST obj;
+
+	if ( !fname ) {
+		MKSTR(fname,"draw_obj");
+	}
+	sid = (Q)ARG0(arg);
+	index = (Q)ARG1(arg);
+	obj = (LIST)ARG2(arg);
+	arg = mknode(4,sid,fname,index,obj);
+	Pox_cmo_rpc(arg,rp);
+}
+
+void Pclear_canvas(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	static STRING fname;
+	Q sid,index;
+	LIST obj;
+
+	if ( !fname ) {
+		MKSTR(fname,"clear_canvas");
+	}
+	sid = (Q)ARG0(arg);
+	index = (Q)ARG1(arg);
+	arg = mknode(3,sid,fname,index);
+	Pox_cmo_rpc(arg,rp);
 }
 
 #if 0

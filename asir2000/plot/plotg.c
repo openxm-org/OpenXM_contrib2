@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.2 2000/08/21 08:31:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.3 2000/08/22 05:04:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,9 +57,15 @@ int stream;
 DISPLAY *display;
 CURSOR normalcur,runningcur,errorcur;
 
+#if defined(VISUAL)
+POINT start_point, end_point;
+SIZE cansize;
+#else
 Window rootwin;
 GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC;
 XFontStruct *sffs;
+#endif
 
 struct canvas *canvas[MAXCANVAS];
 struct canvas *current_can;
+

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.2 2000/08/21 08:31:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.3 2000/08/22 05:04:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,32 @@
 #include "ifplot.h"
 
 extern jmp_buf ox_env;
+
+int open_canvas(NODE arg)
+{
+	int id;
+	struct canvas *can;
+	LIST wsize;
+	STRING wname;
+
+	wsize = (LIST)ARG0(arg);
+	wname = (STRING)ARG1(arg);
+
+	can = canvas[id = search_canvas()];
+	can->mode = MODE_INTERACTIVE;
+	if ( !wsize ) {
+		can->width = DEFAULTWIDTH; can->height = DEFAULTHEIGHT;
+	} else {
+		can->width = QTOS((Q)BDY(BDY(wsize)));
+		can->height = QTOS((Q)BDY(NEXT(BDY(wsize))));
+	}
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	return id;
+}
 
 int plot(NODE arg)
 {
@@ -142,6 +168,7 @@ int plotover(NODE arg)
 
 int drawcircle(NODE arg)
 {
+#if !defined(VISUAL)
 	int id;
 	int index;
 	pointer ptr;
@@ -167,6 +194,60 @@ int drawcircle(NODE arg)
 		copy_to_canvas(can);
 		return index;
 	}
+#endif
+}
+
+int draw_obj(NODE arg)
+{
+	int index;
+	int x,y,u,v,r,l;
+	NODE obj,n;
+	RealVect *vect;
+	struct canvas *can;
+
+	index = QTOS((Q)ARG0(arg));
+	can = canvas[index];
+	if ( !can || !can->window )
+		return -1;
+
+	obj = BDY((LIST)ARG1(arg));
+	switch ( l = length(obj) ) {
+		case 2: /* point */
+			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
+			draw_point(display,can,x,y);
+			MKRVECT2(vect,x,y);
+			MKNODE(n,vect,can->history);
+			can->history = n;
+			break;
+//		case 3: /* circle */
+//			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
+//			r = (int)ToReal((Q)ARG2(obj));
+//			break;
+		case 4: /* line */
+			x = (int)ToReal((Q)ARG0(obj)); y = (int)ToReal((Q)ARG1(obj));
+			u = (int)ToReal((Q)ARG2(obj)); v = (int)ToReal((Q)ARG3(obj));
+			draw_line(display,can,x,y,u,v);
+			MKRVECT4(vect,x,y,u,v); MKNODE(n,vect,can->history); can->history = n;
+			break;
+		default:
+			return -1;
+	}
+	return 0;
+}
+
+int clear_canvas(NODE arg)
+{
+	int index;
+	struct canvas *can;
+
+	index = QTOS((Q)ARG0(arg));
+	can = canvas[index];
+	if ( !can || !can->window )
+		return -1;
+	clear_pixmap(can);
+	copy_to_canvas(can);
+	/* clear the history */
+	can->history = 0;
 }
 
 #define RealtoDbl(r) ((r)?BDY(r):0.0)
@@ -297,6 +378,9 @@ POINT spos,epos;
 		if ( can->precise && !can->wide ) {
 			current_can = can;
 			alloc_pixmap(ncan);
+#if defined(VISUAL)
+			ncan->real_can = can;
+#endif
 			qifplotmain(ncan);
 			copy_subimage(ncan,can,spos);
 			copy_to_canvas(can);

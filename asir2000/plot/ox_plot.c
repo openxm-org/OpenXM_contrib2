@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.7 2000/09/12 06:05:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.8 2000/10/06 06:05:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,14 +92,21 @@ static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
 static void asir_executeFunction();
 
-void ox_plot_main(int argc,char **argv) {
+#if defined(VISUAL)
+void ox_plot_main()
+#else
+void ox_plot_main(int argc,char **argv)
+#endif
+{
 	int ds;
 	fd_set r;
 	int n;
 
+#if !defined(VISUAL)
 	ox_asir_init(argc,argv);
 	init_plot_display(argc,argv);
 	ds = ConnectionNumber(display);
+#endif
 	if ( do_message )
 		fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
 
@@ -110,6 +117,9 @@ void ox_plot_main(int argc,char **argv) {
 		ox_send_sync(0);
 	}
 	while ( 1 ) {
+#if defined(VISUAL)
+		process_ox();
+#else
 		if ( ox_data_is_available(0) )
 			process_ox();
 		else {
@@ -122,6 +132,7 @@ void ox_plot_main(int argc,char **argv) {
 				process_xevent();
 		}
 	}
+#endif
 }
 
 static void process_ox()
@@ -247,16 +258,22 @@ static void asir_executeFunction()
 	if ( n )
 		NEXT(n1) = 0;
 	id = -1;
-	if ( !strcmp(func,"plot") )
+	if ( !strcmp(func,"plot") ) {
 		id = plot(n);
-	else if ( !strcmp(func,"arrayplot") )
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
-	else if ( !strcmp(func,"plotover") )
-		id = plotover(n);
-	else if ( !strcmp(func,"drawcircle") )
-		id = drawcircle(n);
-	STOQ(id,ret);
-#if 0
-	asir_push_one((Obj)ret);
-#endif
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"open_canvas") ) {
+		id = open_canvas(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"plotover") ) {
+		plotover(n);
+	} else if ( !strcmp(func,"drawcircle") ) {
+		drawcircle(n);
+	} else if ( !strcmp(func,"draw_obj") ) {
+		draw_obj(n);
+	} else if ( !strcmp(func,"clear_canvas") ) {
+		clear_canvas(n);
+	}
 }

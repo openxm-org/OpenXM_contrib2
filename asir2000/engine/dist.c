@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.8 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.9 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 
@@ -63,13 +63,20 @@
 #define ORD_BLEXREV 8
 #define ORD_ELIM 9
 
+struct cdl {
+	P c;
+	DL d;
+};
+
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
 
 void comm_muld(VL,DP,DP,DP *);
 void weyl_muld(VL,DP,DP,DP *);
-void weyl_muldm(VL,DP,MP,DP *);
-void weyl_mulmm(VL,MP,MP,int,DP *);
+void weyl_muldm(VL,MP,DP,DP *);
+void weyl_mulmm(VL,MP,MP,int,struct cdl *,int);
+void comm_muld_tab(VL,int,struct cdl *,int,struct cdl *,int,struct cdl *);
+
 void mkwc(int,int,Q *);
 
 int do_weyl;
@@ -540,33 +547,38 @@ DP p1,p2,*pr;
 	else if ( OID(p2) <= O_P )
 		muldc(vl,p1,(P)p2,pr);
 	else {
-		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
+		for ( m = BDY(p1), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
 			if ( w ) GC_free(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
-		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
+		for ( m = BDY(p1), i = 0; i < l; m = NEXT(m), i++ )
 			w[i] = m;
 		for ( s = 0, i = l-1; i >= 0; i-- ) {
-			weyl_muldm(vl,p1,w[i],&t); addd(vl,s,t,&u); s = u;
+			weyl_muldm(vl,w[i],p2,&t); addd(vl,s,t,&u); s = u;
 		}
 		bzero(w,l*sizeof(MP));
 		*pr = s;
 	}
 }
 
-void weyl_muldm(vl,p,m0,pr)
+/* monomial * polynomial */
+
+void weyl_muldm(vl,m0,p,pr)
 VL vl;
-DP p;
 MP m0;
+DP p;
 DP *pr;
 {
 	DP r,t,t1;
 	MP m;
-	int n,l,i;
-	static MP *w;
+	DL d0;
+	int n,n2,l,i,j,tlen;
+	static MP *w,*psum;
+	static struct cdl *tab;
 	static int wlen;
+	static int rtlen;
 
 	if ( !p )
 		*pr = 0;
@@ -579,88 +591,176 @@ DP *pr;
 		}
 		for ( m = BDY(p), i = 0; i < l; m = NEXT(m), i++ )
 			w[i] = m;
-		for ( r = 0, i = l-1, n = NV(p); i >= 0; i-- ) {
-			weyl_mulmm(vl,w[i],m0,n,&t);
-			addd(vl,r,t,&t1); r = t1;
+
+		n = NV(p); n2 = n>>1;
+		d0 = m0->dl;
+		for ( i = 0, tlen = 1; i < n2; i++ )
+			tlen *= d0->d[n2+i]+1;
+		if ( tlen > rtlen ) {
+			if ( tab ) GC_free(tab);
+			if ( psum ) GC_free(psum);
+			rtlen = tlen;
+			tab = (struct cdl *)MALLOC(rtlen*sizeof(struct cdl));
+			psum = (MP *)MALLOC(rtlen*sizeof(MP));
 		}
-		bzero(w,l*sizeof(MP));
+		bzero(psum,tlen*sizeof(MP));
+		for ( i = l-1; i >= 0; i-- ) {
+			bzero(tab,tlen*sizeof(struct cdl));
+			weyl_mulmm(vl,m0,w[i],n,tab,tlen);
+			for ( j = 0; j < tlen; j++ ) {
+				if ( tab[j].c ) {
+					NEWMP(m); m->dl = tab[j].d; C(m) = tab[j].c; NEXT(m) = psum[j];
+					psum[j] = m;
+				}
+			}
+		}
+		for ( j = tlen-1, r = 0; j >= 0; j-- ) 
+			if ( psum[j] ) {
+				MKDP(n,psum[j],t); addd(vl,r,t,&t1); r = t1;
+			}
 		if ( r )
 			r->sugar = p->sugar + m0->dl->td;
 		*pr = r;
 	}
 }
 
-/* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
+/* m0 = x0^d0*x1^d1*... * dx0^e0*dx1^e1*... */
+/* rtab : array of length (e0+1)*(e1+1)*... */
 
-void weyl_mulmm(vl,m0,m1,n,pr)
+void weyl_mulmm(vl,m0,m1,n,rtab,rtablen)
 VL vl;
 MP m0,m1;
 int n;
-DP *pr;
+struct cdl *rtab;
+int rtablen;
 {
 	MP m,mr,mr0;
 	DP r,t,t1;
 	P c,c0,c1,cc;
-	DL d,d0,d1;
-	int i,j,a,b,k,l,n2,s,min;
-	static Q *tab;
+	DL d,d0,d1,dt;
+	int i,j,a,b,k,l,n2,s,min,curlen;
+	struct cdl *p;
+	static Q *ctab;
+	static struct cdl *tab;
 	static int tablen;
+	static struct cdl *tmptab;
+	static int tmptablen;
 
-	if ( !m0 || !m1 )
-		*pr = 0;
-	else {
-		c0 = C(m0); c1 = C(m1);
-		mulp(vl,c0,c1,&c);
-		d0 = m0->dl; d1 = m1->dl;
-		n2 = n>>1;
-		if ( n & 1 ) { 
-			/* homogenized computation; dx-xd=h^2 */
-			/* offset of h-degree */
-			NEWDL(d,n); 
-			d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
-			NEWMP(mr); mr->c = (P)ONE; mr->dl = d;
-			MKDP(n,mr,r); r->sugar = d->td;
-		} else
-			r = (DP)ONE;
-		for ( i = 0; i < n2; i++ ) {
-			a = d0->d[i]; b = d1->d[n2+i];
-			k = d0->d[n2+i]; l = d1->d[i];
-			/* degree of xi^a*(Di^k*xi^l)*Di^b */
-			s = a+k+l+b;
-			/* compute xi^a*(Di^k*xi^l)*Di^b */
-			min = MIN(k,l);
+	
+	if ( !m0 || !m1 ) {
+		rtab[0].c = 0;
+		rtab[0].d = 0;
+		return;
+	}
+	c0 = C(m0); c1 = C(m1);
+	mulp(vl,c0,c1,&c);
+	d0 = m0->dl; d1 = m1->dl;
+	n2 = n>>1;
+	curlen = 1;
+	NEWDL(d,n);
+	if ( n & 1 )
+		/* offset of h-degree */
+	 	d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
+	else
+		d->td = 0;
+	rtab[0].c = c;
+	rtab[0].d = d;
 
-			if ( min+1 > tablen ) {
-				if ( tab ) GC_free(tab);
-				tab = (Q *)MALLOC((min+1)*sizeof(Q));
-				tablen = min+1;
+	if ( rtablen > tmptablen ) {
+		if ( tmptab ) GC_free(tmptab);
+		tmptab = (struct cdl *)MALLOC(rtablen*sizeof(struct cdl));
+		tmptablen = rtablen;
+	}
+	for ( i = 0; i < n2; i++ ) {
+		a = d0->d[i]; b = d1->d[n2+i];
+		k = d0->d[n2+i]; l = d1->d[i];
+		if ( !k || !l ) {
+			a += l;
+			b += k;
+			s = a+b;
+			for ( j = 0, p = rtab; j < curlen; j++, p++ ) {
+				if ( p->c ) {
+					dt = p->d;
+					dt->d[i] = a;
+					dt->d[n2+i] = b;
+					dt->td += s;
+				}
 			}
-			mkwc(k,l,tab);
-			if ( n & 1 )
-				for ( mr0 = 0, j = 0; j <= min; j++ ) {
-					NEXTMP(mr0,mr); NEWDL(d,n);
-					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-					d->td = s;
-					d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
-					mr->c = (P)tab[j]; mr->dl = d;
-				}
-			else
-				for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
-					NEXTMP(mr0,mr); NEWDL(d,n);
-					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-					d->td = d->d[i]+d->d[n2+i]; /* XXX */
-					s = MAX(s,d->td); /* XXX */
-					mr->c = (P)tab[j]; mr->dl = d;
-				}
-			bzero(tab,(min+1)*sizeof(Q));
-			if ( mr0 )
-				NEXT(mr) = 0;
-			MKDP(n,mr0,t);
-			if ( t )
-				t->sugar = s;
-			comm_muld(vl,r,t,&t1); r = t1;
+			curlen *= k+1;
+			continue;
 		}
-		muldc(vl,r,c,pr);
+		if ( k+1 > tablen ) {
+			if ( tab ) GC_free(tab);
+			if ( ctab ) GC_free(ctab);
+			tablen = k+1;
+			tab = (struct cdl *)MALLOC(tablen*sizeof(struct cdl));
+			ctab = (Q *)MALLOC(tablen*sizeof(Q));
+		}
+		/* degree of xi^a*(Di^k*xi^l)*Di^b */
+		s = a+k+l+b;
+		/* compute xi^a*(Di^k*xi^l)*Di^b */
+		min = MIN(k,l);
+		mkwc(k,l,ctab);
+		bzero(tab,(k+1)*sizeof(struct cdl));
+		if ( n & 1 )
+			for ( j = 0; j <= min; j++ ) {
+				NEWDL(d,n);
+				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->td = s;
+				d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+				tab[j].d = d;
+				tab[j].c = (P)ctab[j];
+			}
+		else
+			for ( j = 0; j <= min; j++ ) {
+				NEWDL(d,n);
+				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->td = d->d[i]+d->d[n2+i]; /* XXX */
+				tab[j].d = d;
+				tab[j].c = (P)ctab[j];
+			}
+		bzero(ctab,(min+1)*sizeof(Q));
+		comm_muld_tab(vl,n,rtab,curlen,tab,k+1,tmptab);
+		curlen *= k+1;
+		bcopy(tmptab,rtab,curlen*sizeof(struct cdl));
+	}
+}
+
+/* direct product of two cdl tables
+  rt[] = [
+    t[0]*t1[0],...,t[n-1]*t1[0],
+    t[0]*t1[1],...,t[n-1]*t1[1],
+    ...
+    t[0]*t1[n1-1],...,t[n-1]*t1[n1-1]
+  ]
+*/
+
+void comm_muld_tab(vl,nv,t,n,t1,n1,rt)
+VL vl;
+int nv;
+struct cdl *t;
+int n;
+struct cdl *t1;
+int n1;
+struct cdl *rt;
+{
+	int i,j;
+	struct cdl *p;
+	P c;
+	DL d;
+
+	bzero(rt,n*n1*sizeof(struct cdl));
+	for ( j = 0, p = rt; j < n1; j++ ) {
+		c = t1[j].c;
+		d = t1[j].d;
+		if ( !c )
+			break;
+		for ( i = 0; i < n; i++, p++ ) {
+			if ( t[i].c ) {
+				mulp(vl,t[i].c,c,&p->c);
+				adddl(nv,t[i].d,d,&p->d);
+			}
+		}
 	}
 }
 

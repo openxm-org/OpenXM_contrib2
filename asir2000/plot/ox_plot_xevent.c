@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.7 2000/10/15 10:58:11 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.8 2000/10/24 01:53:53 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1120,4 +1120,11 @@ static void method_is_not_available() {
   strcat(m,Printing_methods[PrintingMethod]);
   strcat(m,MSG2);
   warning(Can,m);
+}
+
+clear_pixmap(can)
+struct canvas *can;
+{
+	XFillRectangle(display,can->pix,clearGC,0,0,can->width,can->height);
+	XFlush(display);
 }
