@@ -21,7 +21,7 @@ include   header files of PARI
 
 These subdirectories are created automatically if they does not exist.
 If you can be a root, it is recommended to set the install directory
-to '/usr/local/lib'.  In the following the directory is denoted by TARGETDIR.
+to '/usr/local'.  In the following the directory is denoted by TARGETDIR.
 
 2. Installation of pari
 

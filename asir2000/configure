@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.6 2000/12/24 06:32:30 saito Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.7 2000/12/26 05:17:46 noro Exp $
 
 use_plot=0
 use_pari=0
@@ -18,8 +18,10 @@ do
 		shift; oxhome=$1 ;;
 	-plot)
 		use_plot=1 ;;
-	-pari)
+	-oldpari)
 		use_pari=1 ;;
+	-pari)
+		use_pari=2 ;;
 	-interval)
 		use_interval=1 ;;
 	-fep)
@@ -37,8 +39,15 @@ echo "#define OpenXM_HOME ${oxhome}" >> include/config.h
 ##define OpenXM_HOME ${oxhome}
 #EOF
 
-if [ $use_pari != 0 ]; then
+if [ $use_pari = 1 ]; then
 libname=$libname"_pari"
+libpari=pari
+echo "#define USE_PARI" >> include/config.h
+fi
+
+if [ $use_pari = 2 ]; then
+libname=$libname"_pari"
+libpari=pari-2.2
 echo "#define USE_PARI" >> include/config.h
 fi
 
@@ -56,5 +65,6 @@ if [ $use_fep != 0 ]; then
 echo "#define USE_FEP" >> include/config.h
 fi
 
+echo LIBPARI=$libpari >> include/config.h
 echo LIBASIR=$libname.a >> include/config.h
 
