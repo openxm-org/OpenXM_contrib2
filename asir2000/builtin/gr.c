@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.36 2001/10/01 01:58:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.37 2001/10/09 01:36:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1992,6 +1992,40 @@ int gbcheck(NODE f)
 	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"\n");
 	return 1;
+}
+
+void gbcheck_list(NODE f,LIST *gp,LIST *pp)
+{
+	int i;
+	NODE r,g,gall,u,u0,t;
+	LIST pair;
+	DP_pairs d,l;
+	Q q1,q2;
+
+	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
+		i = (int)BDY(r);
+		d = updpairs(d,g,i);
+		g = updbase(g,i);
+		gall = append_one(gall,i);
+	}
+	for ( u0 = 0, t = gall; t; t = NEXT(t) ) {
+		NEXTNODE(u0,u);
+		BDY(u) = ps[(int)BDY(t)];
+	}
+	if ( u0 )
+		NEXT(u) = 0;
+	MKLIST(*gp,u);
+	for ( u0 = 0, l = d; l; l = NEXT(l) ) {
+		NEXTNODE(u0,u);
+		STOQ(l->dp1,q1);
+		STOQ(l->dp2,q2);
+		t = mknode(2,q1,q2);
+		MKLIST(pair,t);
+		BDY(u) = (pointer)pair;
+	}
+	if ( u0 )
+		NEXT(u) = 0;
+	MKLIST(*pp,u);
 }
 
 int membercheck(NODE f,NODE x)
