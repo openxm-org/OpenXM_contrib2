@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.33 2004/04/15 08:44:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.34 2004/04/22 07:52:38 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1568,6 +1568,35 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 	if ( 1 ) print_composite_order_spec(spec);
 }
 
+/* module order spec */
+
+void create_modorder_spec(int id,LIST shift,struct modorder_spec **s)
+{
+	struct modorder_spec *spec;
+	NODE n,t;
+	LIST list;
+	int *ds;
+	int i,l;
+	Q q;
+
+	*s = spec = (struct modorder_spec *)MALLOC(sizeof(struct modorder_spec));
+	spec->id = id;
+	if ( shift ) {
+		n = BDY(shift);
+		spec->len = l = length(n);
+		spec->degree_shift = ds = (int *)MALLOC_ATOMIC(l*sizeof(int));
+		for ( t = n, i = 0; t; t = NEXT(t), i++ )
+			ds[i] = QTOS((Q)BDY(t));
+	} else {
+		spec->len = 0;
+		spec->degree_shift = 0;
+	}
+	STOQ(id,q);
+	n = mknode(2,q,shift);
+	MKLIST(list,n);
+	spec->obj = (Obj)list;
+}
+
 /*
  * converters
  *
@@ -1867,6 +1896,19 @@ void dp_hm(DP p,DP *rp)
 	}
 }
 
+void dp_ht(DP p,DP *rp)
+{
+	MP m,mr;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		m = BDY(p);
+		NEWMP(mr); mr->dl = m->dl; mr->c = (P)ONE; NEXT(mr) = 0;
+		MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td; 	/* XXX */
+	}
+}
+
 void dp_rest(DP p,DP *rp)
 {
 	MP m;
@@ -2149,5 +2191,31 @@ LIST dp_order(LIST f,struct order_spec *ord)
 			}
 		default:
 			error("dp_initial_term : unsupported order");
+	}
+}
+
+int dpv_ht(DPV p,DP *h)
+{
+	int len,max,maxi,i,t;
+	DP *e;
+	MP m,mr;
+
+	len = p->len;
+	e = p->body;
+	max = -1;
+	maxi = -1;
+	for ( i = 0; i < len; i++ )
+		if ( e[i] && (t = BDY(e[i])->dl->td) > max ) {
+			max = t;
+			maxi = i;
+		}
+	if ( max < 0 ) {
+		*h = 0;
+		return -1;
+	} else {
+		m = BDY(e[maxi]);
+		NEWMP(mr); mr->dl = m->dl; mr->c = (P)ONE; NEXT(mr) = 0;
+		MKDP(e[maxi]->nv,mr,*h); (*h)->sugar = mr->dl->td;  /* XXX */
+		return maxi;
 	}
 }

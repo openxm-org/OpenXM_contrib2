@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.50 2004/04/15 08:27:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.51 2004/04/30 08:25:38 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -55,6 +55,7 @@ extern int dp_nelim;
 extern int dp_order_pair_length;
 extern struct order_pair *dp_order_pair;
 extern struct order_spec *dp_current_spec;
+extern struct modorder_spec *dp_current_modspec;
 
 int do_weyl;
 
@@ -79,6 +80,7 @@ void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod(), Pdp_nf_tab_f();
 void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 void Pdp_gr_checklist();
+void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -186,6 +188,7 @@ struct ftab dp_supp_tab[] = {
 	/* setting flags */
 	{"dp_sort",Pdp_sort,1},
 	{"dp_ord",Pdp_ord,-1},
+	{"dpv_ord",Pdpv_ord,-2},
 	{"dp_set_kara",Pdp_set_kara,-1},
 	{"dp_nelim",Pdp_nelim,-1},
 	{"dp_gr_flags",Pdp_gr_flags,-1},
@@ -202,6 +205,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_mdtod",Pdp_mdtod,1},
 	{"dp_mod",Pdp_mod,3},
 	{"dp_rat",Pdp_rat,1},
+	{"dp_ltod",Pdp_ltod,2},
 
 	/* criteria */
 	{"dp_cri1",Pdp_cri1,2},
@@ -214,6 +218,9 @@ struct ftab dp_supp_tab[] = {
 	{"dp_hm",Pdp_hm,1},
 	{"dp_ht",Pdp_ht,1},
 	{"dp_hc",Pdp_hc,1},
+	{"dpv_hm",Pdpv_hm,1},
+	{"dpv_ht",Pdpv_ht,1},
+	{"dpv_hc",Pdpv_hc,1},
 	{"dp_rest",Pdp_rest,1},
 	{"dp_initial_term",Pdp_initial_term,1},
 	{"dp_order",Pdp_order,1},
@@ -463,6 +470,40 @@ DP *rp;
 	if ( vl )
 		NEXT(tvl) = 0;
 	ptod(CO,vl,(P)ARG0(arg),rp);
+}
+
+void Pdp_ltod(arg,rp)
+NODE arg;
+DPV *rp;
+{
+	NODE n;
+	VL vl,tvl;
+	int sugar,i,len;
+	DP *e;
+	NODE nd,t;
+
+	asir_assert(ARG0(arg),O_LIST,"dp_ptod");
+	nd = BDY((LIST)ARG0(arg));
+	asir_assert(ARG1(arg),O_LIST,"dp_ptod");
+	for ( vl = 0, n = BDY((LIST)ARG1(arg)); n; n = NEXT(n) ) {
+		if ( !vl ) {
+			NEWVL(vl); tvl = vl;
+		} else {
+			NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+		}
+		VR(tvl) = VR((P)BDY(n));
+	}
+	if ( vl )
+		NEXT(tvl) = 0;
+	len = length(nd);
+	e = (DP *)MALLOC(len*sizeof(DP));
+	sugar = 0;
+	for ( i = 0, t = nd; i < len; i++, t = NEXT(t) ) {
+		ptod(CO,vl,(P)BDY(t),&e[i]);
+		if ( e[i] )
+			sugar = MAX(sugar,e[i]->sugar);
+	}
+	MKDPV(len,e,*rp);
 }
 
 void Pdp_dtop(arg,rp)
@@ -1033,13 +1074,7 @@ DP *rp;
 	MP m,mr;
 
 	p = (DP)ARG0(arg); asir_assert(p,O_DP,"dp_ht");
-	if ( !p )
-		*rp = 0;
-	else {
-		m = BDY(p);
-		NEWMP(mr); mr->dl = m->dl; mr->c = (P)ONE; NEXT(mr) = 0;
-		MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td;	/* XXX */
-	}
+	dp_ht(p,rp);
 }
 
 void Pdp_hc(arg,rp)
@@ -2062,5 +2097,126 @@ int get_field_type(P p)
 				return -1;
 		}
 		return type;
+	}
+}
+
+void Pdpv_ord(NODE arg,Obj *rp)
+{
+	int ac,id;
+	LIST shift;
+
+	ac = argc(arg);
+	if ( ac ) {
+		id = QTOS((Q)ARG0(arg));
+		if ( ac > 1 && ARG1(arg) && OID((Obj)ARG1(arg))==O_LIST )
+			shift = (LIST)ARG1(arg);
+		else
+			shift = 0;
+		create_modorder_spec(id,shift,&dp_current_modspec);
+	}
+	*rp = dp_current_modspec->obj;
+}
+
+void Pdpv_ht(NODE arg,LIST *rp)
+{
+	NODE n;
+	DP ht;
+	int pos;
+	DPV p;
+	Q q;
+
+	asir_assert(ARG0(arg),O_DPV,"dpv_ht");
+	p = (DPV)ARG0(arg);
+	pos = dpv_hp(p);
+	if ( pos < 0 )
+		ht = 0;
+	else
+		dp_ht(BDY(p)[pos],&ht);
+	STOQ(pos,q);
+	n = mknode(2,q,ht);
+	MKLIST(*rp,n);
+}
+
+void Pdpv_hm(NODE arg,LIST *rp)
+{
+	NODE n;
+	DP ht;
+	int pos;
+	DPV p;
+	Q q;
+
+	asir_assert(ARG0(arg),O_DPV,"dpv_hm");
+	p = (DPV)ARG0(arg);
+	pos = dpv_hp(p);
+	if ( pos < 0 )
+		ht = 0;
+	else
+		dp_hm(BDY(p)[pos],&ht);
+	STOQ(pos,q);
+	n = mknode(2,q,ht);
+	MKLIST(*rp,n);
+}
+
+void Pdpv_hc(NODE arg,LIST *rp)
+{
+	NODE n;
+	P hc;
+	int pos;
+	DPV p;
+	Q q;
+
+	asir_assert(ARG0(arg),O_DPV,"dpv_hc");
+	p = (DPV)ARG0(arg);
+	pos = dpv_hp(p);
+	if ( pos < 0 )
+		hc = 0;
+	else
+		hc = BDY(BDY(p)[pos])->c;
+	STOQ(pos,q);
+	n = mknode(2,q,hc);
+	MKLIST(*rp,n);
+}
+
+int dpv_hp(DPV p)
+{
+	int len,i,maxp,maxw,w,slen;
+	int *shift;
+	DP *e;
+
+	len = p->len;
+	e = p->body;
+	slen = dp_current_modspec->len;
+	shift = dp_current_modspec->degree_shift;
+	switch ( dp_current_modspec->id ) {
+		case ORD_REVGRADLEX:
+			for ( maxp = -1, i = 0; i < len; i++ )
+				if ( !e[i] ) continue;
+				else if ( maxp < 0 ) { 
+					maxw = BDY(e[i])->dl->td+(i<slen?shift[i]:0); maxp = i; 
+				} else {
+					w = BDY(e[i])->dl->td+(i<slen?shift[i]:0);
+					if ( w >= maxw ) {
+						maxw = w; maxp = i;
+					}
+				}
+			return maxp;
+		case ORD_GRADLEX:
+			for ( maxp = -1, i = 0; i < len; i++ )
+				if ( !e[i] ) continue;
+				else if ( maxp < 0 ) { 
+					maxw = BDY(e[i])->dl->td+(i<slen?shift[i]:0); maxp = i; 
+				} else {
+					w = BDY(e[i])->dl->td+(i<slen?shift[i]:0);
+					if ( w > maxw ) {
+						maxw = w; maxp = i;
+					}
+				}
+			return maxp;
+			break;
+		case ORD_LEX:
+			for ( i = 0; i < len; i++ )
+				if ( e[i] ) return i;
+			return -1;
+			break;
 	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.29 2004/03/05 02:26:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.30 2004/04/14 07:27:41 ohara Exp $ 
 */
 #include "ca.h"
 
@@ -73,6 +73,7 @@ int do_weyl;
 
 int dp_nelim,dp_fcoeffs;
 struct order_spec *dp_current_spec;
+struct modorder_spec *dp_current_modspec;
 int *dp_dl_work;
 
 void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr);
@@ -86,6 +87,7 @@ void order_init()
 
 	create_order_spec(0,0,&spec);
 	initd(spec);
+	create_modorder_spec(0,0,&dp_current_modspec);
 }
 
 int has_sfcoef(DP f)
@@ -307,12 +309,12 @@ void addd(VL vl,DP p1,DP p2,DP *pr)
 	else {
 		if ( OID(p1) <= O_R ) {
 			n = NV(p2);	NEWDL(d,n);
-			NEWMP(m1); m1->dl = d; C(m1) = p1; NEXT(m1) = 0;
+			NEWMP(m1); m1->dl = d; C(m1) = (P)p1; NEXT(m1) = 0;
 			MKDP(n,m1,p1); (p1)->sugar = 0;
 		}
 		if ( OID(p2) <= O_R ) {
 			n = NV(p1);	NEWDL(d,n);
-			NEWMP(m2); m2->dl = d; C(m2) = p2; NEXT(m2) = 0;
+			NEWMP(m2); m2->dl = d; C(m2) = (P)p2; NEXT(m2) = 0;
 			MKDP(n,m2,p2); (p2)->sugar = 0;
 		}
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; )
@@ -1681,5 +1683,95 @@ DL remove_head_bucket(GeoBucket g,int nv)
 		d = g->body[j]->body;
 		g->body[j] = NEXT(g->body[j]);
 		return d;
+	}
+}
+
+/*  DPV functions */
+
+void adddv(VL vl,DPV p1,DPV p2,DPV *pr)
+{
+	int i,len;
+	DP *e;
+
+	if ( !p1 || !p2 )
+		error("adddv : invalid argument");
+	else if ( p1->len != p2->len )
+		error("adddv : size mismatch");
+	else {
+		len = p1->len;
+		e = (DP *)MALLOC(p1->len*sizeof(DP));
+		for ( i = 0; i < len; i++ )
+			addd(vl,p1->body[i],p2->body[i],&e[i]);
+		MKDPV(len,e,*pr);
+		(*pr)->sugar = MAX(p1->sugar,p2->sugar);
+	}
+}
+
+void subdv(VL vl,DPV p1,DPV p2,DPV *pr)
+{
+	int i,len;
+	DP *e;
+
+	if ( !p1 || !p2 )
+		error("subdv : invalid argument");
+	else if ( p1->len != p2->len )
+		error("subdv : size mismatch");
+	else {
+		len = p1->len;
+		e = (DP *)MALLOC(p1->len*sizeof(DP));
+		for ( i = 0; i < len; i++ )
+			subd(vl,p1->body[i],p2->body[i],&e[i]);
+		MKDPV(len,e,*pr);
+		(*pr)->sugar = MAX(p1->sugar,p2->sugar);
+	}
+}
+
+void chsgndv(DPV p1,DPV *pr)
+{
+	int i,len;
+	DP *e;
+
+	if ( !p1 )
+		error("subdv : invalid argument");
+	else {
+		len = p1->len;
+		e = (DP *)MALLOC(p1->len*sizeof(DP));
+		for ( i = 0; i < len; i++ )
+			chsgnd(p1->body[i],&e[i]);
+		MKDPV(len,e,*pr);
+		(*pr)->sugar = p1->sugar;
+	}
+}
+
+void muldv(VL vl,DP p1,DPV p2,DPV *pr)
+{
+	int i,len;
+	DP *e;
+
+	len = p2->len;
+	e = (DP *)MALLOC(p2->len*sizeof(DP));
+	if ( !p1 ) {
+		MKDPV(len,e,*pr);
+		(*pr)->sugar = 0;
+	} else {
+		for ( i = 0; i < len; i++ )
+			muld(vl,p1,p2->body[i],&e[i]);
+		MKDPV(len,e,*pr);
+		(*pr)->sugar = p1->sugar + p2->sugar;	
+	}
+}
+
+int compdv(VL vl,DPV p1,DPV p2)
+{
+	int i,t,len;
+
+	if ( p1->len != p2->len )
+		error("compdv : size mismatch");
+	else {
+		len = p1->len;
+		for ( i = 0; i < len; i++ )
+			if ( t = compd(vl,p1->body[i],p2->body[i]) )
+				return t;
+		return 0;
 	}
 }

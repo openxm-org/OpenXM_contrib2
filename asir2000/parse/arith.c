@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.12 2004/03/03 09:25:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.13 2004/04/14 07:27:42 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -88,6 +88,7 @@ struct oAFUNC afunc[] = {
 /* O_SYMBOL=19 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_RANGE=20 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_TB=21 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
+/* O_DPV=22 */	{adddv,subdv,muldv,notdef,notdef,chsgndv,compdv},
 };
 
 void arf_init() {
@@ -189,7 +190,7 @@ Obj a,b,*r;
 			case O_DP:
 				if ( bid <= O_P )
 					(*afunc[O_DP].mul)(vl,a,b,r);
-				else if ( bid == O_MAT || bid == O_VECT )
+				else if ( bid == O_MAT || bid == O_VECT || bid == O_DPV )
 					(*afunc[bid].mul)(vl,a,b,r);
 				else
 					notdef(vl,a,b,r);

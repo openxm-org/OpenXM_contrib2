@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.20 2004/03/17 02:23:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.21 2004/03/17 03:22:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -88,6 +88,7 @@ static int total_length;
 #define PRINTSYMBOL length_SYMBOL
 #define PRINTRANGE length_RANGE
 #define PRINTTB length_TB
+#define PRINTDPV length_DPV
 #define PRINTERR length_err
 #define PRINTLF length_lf
 #define PRINTLOP length_lop

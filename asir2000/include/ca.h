@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.47 2004/03/09 08:02:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.48 2004/03/10 02:41:08 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,6 +122,7 @@ typedef void * pointer;
 #define O_SYMBOL 19
 #define O_RANGE 20
 #define O_TB 21
+#define O_DPV 22
 #define O_VOID -1
 
 #define N_Q 0
@@ -326,6 +327,13 @@ typedef struct oDP {
 	int sugar;
 	struct oMP *body;
 } *DP;
+
+typedef struct oDPV {
+	short id;
+	int len;
+	int sugar;
+	struct oDP **body;
+} *DPV;
 
 typedef struct oUSINT {
 	short id;
@@ -555,6 +563,14 @@ struct order_spec {
 	} ord;
 };
 
+struct modorder_spec {
+	/* id : ORD_REVGRADLEX, ORD_GRADLEX, ORD_LEX */
+	int id;
+	Obj obj;
+	int len;
+	int *degree_shift;
+};
+
 /* structure for cputime */
 
 struct oEGT {
@@ -710,6 +726,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWSTR(l) ((l)=(STRING)MALLOC(sizeof(struct oSTRING)),OID(l)=O_STR)
 #define NEWCOMP(c,n) ((c)=(COMP)MALLOC(sizeof(struct oCOMP)+((n)-1)*sizeof(Obj)),OID(c)=O_COMP)
 #define NEWDP(d) ((d)=(DP)MALLOC(sizeof(struct oDP)),OID(d)=O_DP)
+#define NEWDPV(d) ((d)=(DPV)MALLOC(sizeof(struct oDPV)),OID(d)=O_DPV)
 #define NEWUSINT(u) ((u)=(USINT)MALLOC_ATOMIC(sizeof(struct oUSINT)),OID(u)=O_USINT)
 #define NEWERR(e) ((e)=(ERR)MALLOC(sizeof(struct oERR)),OID(e)=O_ERR)
 #define NEWMATHCAP(e) ((e)=(MATHCAP)MALLOC(sizeof(struct oMATHCAP)),OID(e)=O_MATHCAP)
@@ -764,6 +781,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define TOGFMMAT(r,c,b,m) (NEWGFMMAT(m),(m)->row=(r),(m)->col=(c),(m)->body=(b))
 #define MKSTR(a,b) (NEWSTR(a),(a)->body=(char *)(b))
 #define MKDP(n,m,d) (NEWDP(d),(d)->nv=(n),BDY(d)=(m))
+#define MKDPV(len,m,d) (NEWDPV(d),(d)->len=(len),BDY(d)=(m))
 #define MKLM(b,l) (!(b)?(l)=0:(NEWLM(l),(l)->body=(b),(l)))
 #define MKGF2N(b,l) (!(b)?(l)=0:(NEWGF2N(l),(l)->body=(b),(l)))
 #define MKGFPN(b,l) (!(b)?(l)=0:(NEWGFPN(l),(l)->body=(b),(l)))
@@ -1067,6 +1085,12 @@ void nodetod(NODE,DP *);
 void dtop(VL,VL,DP,P *);
 void ptod(VL,VL,P,DP *);
 void initd(struct order_spec *);
+
+void adddv(VL,DPV,DPV,DPV *);
+void subdv(VL,DPV,DPV,DPV *);
+void muldv(VL,DP,DPV,DPV *);
+void chsgndv(DPV,DPV *);
+int compdv(VL,DPV,DPV);
 
 void _printdp(DP);
 void _dp_sp_mod(DP,DP,int,DP *);

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.1 2004/03/17 03:22:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.2 2004/03/26 08:25:36 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -34,6 +34,7 @@ void PRINTSF();
 void PRINTSYMBOL();
 void PRINTRANGE();
 void PRINTTB();
+void PRINTDPV();
 void PRINTFNODE();
 void PRINTBF();
 
@@ -88,6 +89,8 @@ Obj p;
 				PRINTRANGE(vl,(RANGE)p); break;
 			case O_TB:
 				PRINTTB(vl,(TB)p); break;
+			case O_DPV:
+				PRINTDPV(vl,(DPV)p); break;
 			default:
 				break;
 		}
@@ -237,6 +240,21 @@ VECT vect;
 			PUTS("]");
 			break;
 	}
+}
+
+void PRINTDPV(vl,d)
+VL vl;
+DPV d;
+{
+	int i;
+	DP *ptr;
+
+	PUTS("modvect(");
+	for ( i = 0, ptr = BDY(d); i < d->len; i++ ) {
+		if ( i != 0 ) PUTS(",");
+		PRINTEXPR(vl,(Obj)ptr[i]);
+	}
+	PUTS(")");
 }
 
 void PRINTMAT(vl,mat)
