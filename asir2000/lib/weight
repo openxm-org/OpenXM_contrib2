@@ -4,7 +4,6 @@ load("gr")$
 #define EPS 1E-6
 #define TINY 1E-20
 #define MAX_ITER 100
-#define ROUND_THRESHOLD 0.4
 
 def rotate(A,I,J,K,L,C,S){
 
@@ -351,24 +350,28 @@ def roundret(V){
 
 	VN=size(V)[0]$
 
+	K=1$
 	RET0=V$
-	for(I=1;I<1000;I++){
-		RET1=I*RET0$
-		for(J=0;J<VN;J++){
-			X=drint(RET1[J])$
-			if(dabs(X-RET1[J])<ROUND_THRESHOLD)
-				RET1[J]=X$
-			else
-				break$
-		}
-		if(J==VN)
-			break$
+	RET1=map(drint,RET0)$
+	S=0$
+	for(J=0;J<VN;J++)
+		S+=(RET0[J]-RET1[J])^2$
+
+	for(I=2;I<10;I++){
+		RET0=I*V$
+		RET1=map(drint,RET0)$
+
+		T=0$
+		for(J=0;J<VN;J++)
+			T+=(RET0[J]-RET1[J])^2$
+
+		if(T<S){
+			K=I$
+			S=T$
+		}	
 	}
 	
-	if(I==1000)
-		return []$
-	else
-		return RET1$
+	return map(drint,K*V)$
 }
 
 def chkou(L,ExpMat,CHAGORD){
@@ -523,7 +526,7 @@ def qcheck(PolyList,Vars,FLAG){
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
 						RET0=value2(Vars,TMP)$
 						if(RET0!=[])
-							RET0=wsort(RET0,Vars,RET0,1/10)$
+							RET0=wsort(RET0,Vars,RET0,-1)$
 					}
 	
 					TMP=vtol(TMP1[1])$
@@ -534,7 +537,7 @@ def qcheck(PolyList,Vars,FLAG){
 						RET0=value2(Vars,TMP)$
 	
 						if(RET0!=[])
-							RET0=wsort(RET0,Vars,RET0,1/10)$
+							RET0=wsort(RET0,Vars,RET0,-1)$
 					}
 					RET=append(RET,RET0)$
 				}
@@ -547,60 +550,54 @@ def qcheck(PolyList,Vars,FLAG){
 	return RET$
 }
 
-def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
+def unitweight2(NormMat0,ExpMat,Vars,FLAG,ID){
 
 	RET=[]$
 
 	ExpMatRowNum=size(ExpMat)[0]$
 	ExpMatColNum=size(ExpMat[0])[0]$
+	ExtMatColNum=ExpMatColNum+1$
+
+	ExtVars=append(Vars,[uc()])$
 
 	if(NormMat==0){
-		NormMat=newmat(ExpMatColNum,ExpMatColNum)$
+
+		NormMat0=newvect(ExtMatColNum)$
+		for(I=0;I<ExtMatColNum;I++)
+			NormMat0[I]=newvect(ExtMatColNum)$
 
 		for(I=0;I<ExpMatColNum;I++)
 			for(J=I;J<ExpMatColNum;J++)
 				for(K=0;K<ExpMatRowNum;K++)
-					NormMat[I][J]+=
-						ExpMat[K][I]*ExpMat[K][J]$
+					NormMat0[I][J]+=
+						ExpMat[K][I]*
+						ExpMat[K][J]$
 	}
-
-	BVec=newvect(ExpMatColNum)$
 
 	for(I=0;I<ExpMatColNum;I++)
-		for(J=0;J<ExpMatRowNum;J++)
-			BVec[I]+=ExpMat[J][I]$
+		for(K=0;K<ExpMatRowNum;K++)
+			NormMat0[I][ExpMatColNum]-=ExpMat[K][I]$
 
-	SolveList=[]$
-	for(I=0;I<ExpMatColNum;I++){
-		TMP=0$
-		for(J=0;J<I;J++)
-			TMP+=NormMat[J][I]*Vars[J]$
+	NormMat0[ExpMatColNum][ExpMatColNum]=ExpMatRowNum$
 
-		for(J=I;J<ExpMatColNum;J++)
-			TMP+=NormMat[I][J]*Vars[J]$
+	WorkMat=newvect(ExtMatColNum)$
+	for(I=0;I<ExtMatColNum;I++)
+		WorkMat[I]=newvect(ExtMatColNum)$
 
-		TMP-=BVec[I]$
-		SolveList=cons(TMP,SolveList)$
-	}
+	if(jacobi(ExtMatColNum,NormMat0,WorkMat)){
 
-	Rea=vars(SolveList)$
+		Res=newvect(ExtMatColNum)$
+		for(I=0;I<ExtMatColNum;I++){
+			Res[I]=newvect(2)$
+			Res[I][0]=ExtVars[I]$
+			Res[I][1]=WorkMat[ExtMatColNum-1][I]$
+		}
 
-	VarsList=[]$
-	for(I=0;I<length(Vars);I++)
-		if(member(Vars[I],Rea))
-			VarsList=cons(Vars[I],VarsList)$
+		if(nonposdegchk(Res)){
 
-	Res=solve(SolveList,VarsList)$
-	Res=getgcd(Res,Rea)$
+			TMP1=makeret(Res,Vars,1)$
 
-	if(nonposdegchk(Res)){
-
-		TMP1=makeret(Res,Vars,1)$
-
-		if(FLAG==0){
-
-			if(TMP1[0]==0){	
-
+			if(FLAG==0){		
 				TMP=roundret(TMP1[1])$
 
 				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),ID))$
@@ -608,42 +605,15 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 				if(TMP!=[])
 					RET=append(RET,wsort(TMP1[1],Vars,TMP,ID+1))$
 			}
-			else{
-
-				TMP=vtol(TMP1[1])$
-				RET0=[]$
-				if((TMP0=fixedpoint(TMP,0))!=[]){
-					
-					for(I=0;I<length(TMP0);I++)
-						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-					RET0=value2(Vars,TMP)$
-					if(RET0!=[])
-						RET0=wsort(RET0,Vars,RET0,ID+1/10)$
-				}
-	
-				TMP=vtol(TMP1[1])$
-				if(RET0==[] && (TMP0=fixedpoint(TMP,1))!=[]){
-					
-					for(I=0;I<length(TMP0);I++)
-						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-					RET0=value2(Vars,TMP)$
-	
-					if(RET0!=[])
-						RET0=wsort(RET0,Vars,RET0,ID+1/10)$
-				}
-
-				RET=append(RET,RET0)$
-			}
-
+			else if(FLAG==1)
+				RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
 		}
-		else if(FLAG==1)
-			RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
-	}
-
+	}	
+	
 	return RET$
 }
 
-def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
+def unitweight1(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 
 	RET=[]$
 
@@ -657,9 +627,9 @@ def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 
 	ExtVars=reverse(ExtVars)$
 
-	NormMat0=newvect(ExpMatColNum)$
+	NormMat0=newvect(ExpMatColNum+1)$
 	for(I=0;I<ExpMatColNum;I++)
-		NormMat0[I]=newvect(ExpMatColNum)$
+		NormMat0[I]=newvect(ExpMatColNum+1)$
 
 	for(I=0;I<ExpMatColNum;I++)
 		for(J=I;J<ExpMatColNum;J++)
@@ -672,11 +642,9 @@ def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 	for(I=0;I<ExtMatColNum;I++)
 		NormMat1[I]=newvect(ExtMatColNum)$
 
-
 	WorkMat=newvect(ExtMatColNum)$
 	for(I=0;I<ExtMatColNum;I++)
 		WorkMat[I]=newvect(ExtMatColNum)$
-
 
 	for(I=0;I<ExpMatColNum;I++)
 		for(J=I;J<ExpMatColNum;J++)
@@ -755,13 +723,13 @@ def weight(PolyList,Vars,FLAG){
 	ExpMat=reverse(ExpMat)$
 	ExpMat=newvect(length(ExpMat),ExpMat)$
 
-	TMP=unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG)$
+	TMP=unitweight1(ExpMat,Vars,PolyListNum,OneMat,FLAG)$
 
 	RET=append(RET,TMP[1])$
 
-	TMP0=leastsq(TMP[0],ExpMat,Vars,FLAG,3)$
+	TMP=unitweight2(TMP[0],ExpMat,Vars,FLAG,3)$
 
-	RET=append(RET,TMP0)$
+	RET=append(RET,TMP)$
 
 	ExpMat=qsort(ExpMat,junban)$
 
@@ -772,7 +740,7 @@ def weight(PolyList,Vars,FLAG){
 
 	if(size(ExpMat)[0]!=length(ExpMat2)){
 		ExpMat=newvect(length(ExpMat2),ExpMat2)$
-		RET=append(RET,leastsq(0,ExpMat,Vars,FLAG,5))$
+		RET=append(RET,unitweight2(0,ExpMat,Vars,FLAG,5))$
 	}
 	else{
 		TMP0=map(ltov,TMP0)$
