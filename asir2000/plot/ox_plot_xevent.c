@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.16 2002/07/11 12:35:03 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.17 2002/07/12 00:14:40 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -94,6 +94,7 @@ static struct PlotResources {
 	Pixel ForePixel,BackPixel,DashPixel;
 	char *ForeName,*BackName,*DashName;
 	Boolean Reverse;
+	Boolean UpsideDown;
 } PlotResources;
 
 #define forePixel PlotResources.ForePixel
@@ -103,6 +104,7 @@ static struct PlotResources {
 #define backName PlotResources.BackName
 #define dashName PlotResources.DashName
 #define reverse PlotResources.Reverse
+#define upsidedown PlotResources.UpsideDown
 
 Cursor create_cursor();
 
@@ -639,6 +641,7 @@ struct canvas *can;
 }
 
 static XrmOptionDescRec options[] = {
+{"-upsidedown","*upsidedown",XrmoptionNoArg,"on"},
 {"-reverse","*reverse",XrmoptionNoArg,"on"},
 {"-fg","*foreground",XrmoptionSepArg,NULL},
 {"-bg","*background",XrmoptionSepArg,NULL},
@@ -647,6 +650,8 @@ static XrmOptionDescRec options[] = {
 #define offset(name) XtOffset(struct PlotResources *,name)
 
 static XtResource resources[] = {
+{"upsidedown","UpsideDown",XtRBoolean,sizeof(Boolean),
+	offset(UpsideDown),XtRBoolean,&upsidedown},
 {"reverse","Reverse",XtRBoolean,sizeof(Boolean),
 	offset(Reverse),XtRBoolean,&reverse},
 {"foreground","Foreground",XtRString,sizeof(char *),
@@ -1144,7 +1149,7 @@ static void generate_psfile(can,fp)
 	  colorSize =
 		getColorSizeOfImageForPS(can->width,can->height,image,&tableOfxcolorForPS);
 	  color[0] = 0; /* black line */
-	  generatePS_from_image(fp,image,can->width,can->height,color,colorSize,can,tableOfxcolorForPS);
+	  generatePS_from_image(fp,image,can->width,can->height,color,colorSize,can,tableOfxcolorForPS,upsidedown);
 	}else{
 	  fprintf(stderr,"Cannot print on this system\n");
 	}
