@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.18 2003/11/01 23:58:43 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.19 2003/11/12 07:48:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -235,20 +235,30 @@ void Pget_byte(NODE arg,Q *rp)
 		error("get_byte : invalid argument");
 }
 
-void Pput_byte(NODE arg,Q *rp)
+void Pput_byte(NODE arg,Obj *rp)
 {
-	int i,c;
+	int i,j,c;
 	FILE *fp;
+	Obj obj;
+	TB tb;
 
 	asir_assert(ARG0(arg),O_N,"put_byte");
-	asir_assert(ARG1(arg),O_N,"put_byte");
 	i = QTOS((Q)ARG0(arg));
-	c = QTOS((Q)ARG1(arg));
-	if ( fp = file_ptrs[i] ) {
-		putc(c,fp);
-		STOQ(c,*rp);
-	} else
+	if ( !(fp = file_ptrs[i]) )
 		error("put_byte : invalid argument");
+
+	obj = (Obj)ARG1(arg);
+	if ( !obj || OID(obj) == O_N ) {
+		c = QTOS((Q)obj);
+		putc(c,fp);
+	} else if ( OID(obj) == O_STR )
+		fputs(BDY((STRING)obj),fp);
+	else if ( OID(obj) == O_TB ) {
+		tb = (TB)obj;
+		for ( j = 0; j < tb->next; j++ )
+			fputs(tb->body[j],fp);
+	}
+	*rp = obj;
 }
 
 void Pload(NODE arg,Q *rp)
