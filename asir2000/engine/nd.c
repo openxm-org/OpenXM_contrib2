@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.113 2004/10/06 12:09:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.114 2004/10/25 04:19:50 noro Exp $ */
 
 #include "nd.h"
 
@@ -2622,6 +2622,7 @@ void nd_mul_c(int mod,ND p,int mul)
 	int c,c1;
 
 	if ( !p ) return;
+	if ( mul == 1 ) return;
 	if ( mod == -1 )
 		for ( m = BDY(p); m; m = NEXT(m) )
 			CM(m) = _mulsf(CM(m),mul);
@@ -2637,6 +2638,7 @@ void nd_mul_c_q(ND p,Q mul)
 	Q c;
 
 	if ( !p ) return;
+	if ( UNIQ(mul) ) return;
 	for ( m = BDY(p); m; m = NEXT(m) ) {
 		mulq(CQ(m),mul,&c); CQ(m) = c;
 	}
