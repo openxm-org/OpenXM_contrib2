@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.3 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.4 2000/08/22 05:04:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -140,6 +140,49 @@ Obj obj;
 			error(errmsg);
 			break;
 	}
+}
+
+int cmo_tag(obj,tag)
+Obj obj;
+int *tag;
+{
+	if ( !valid_as_cmo(obj) )
+		return 0;
+	if ( !obj ) {
+		*tag = CMO_NULL;
+		return 1;
+	}
+	switch ( OID(obj) ) {
+		case O_N:
+			switch ( NID((Num)obj) ) {
+				case N_Q:
+					*tag = DN((Q)obj) ? CMO_QQ : CMO_ZZ; break;
+				case N_R:
+					*tag = CMO_IEEE_DOUBLE_FLOAT; break;
+				default:
+					return 0;
+			}
+			break;
+		case O_P:
+			*tag = CMO_RECURSIVE_POLYNOMIAL; break;
+		case O_R:
+			*tag = CMO_RATIONAL; break;
+		case O_DP:
+			*tag = CMO_DISTRIBUTED_POLYNOMIAL; break;
+		case O_LIST:
+			*tag = CMO_LIST; break;
+		case O_STR:
+			*tag = CMO_STRING; break;
+		case O_USINT:
+			*tag = CMO_INT32; break;
+		case O_MATHCAP:
+			*tag = CMO_MATHCAP; break;
+		case O_ERR:
+			*tag = CMO_ERROR2; break;
+		default:
+			return 0;
+	}
+	return 1;
 }
 
 write_cmo_mathcap(s,mc)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.5 2000/08/21 08:31:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.6 2000/08/22 05:04:22 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -254,7 +254,8 @@ def tolex_gsl_main(G0,V,O,W,NFL,NPOSV,GM,M,MB)
 			R += B[0][K]*TERMS[K];
 		LCM *= B[1];
 		SL = cons(cons(V1,[R,LCM]),SL);
-		print(["DN",B[1]]);
+		if ( dp_gr_print() )
+			print(["DN",B[1]]);
 	}
 	return SL;
 }
@@ -265,7 +266,8 @@ def hen_ttob_gsl(LHS,RHS,TERMS,M)
 	L1 = idiv(LCM,LDN); R1 = idiv(LCM,RDN);
 	T0 = time()[0];
 	S = henleq_gsl(RHS[0],LHS[0]*L1,M);
-	print(["henleq_gsl",time()[0]-T0]);
+	if ( dp_gr_print() )
+		print(["henleq_gsl",time()[0]-T0]);
 	N = length(TERMS);
 	return [S[0],S[1]*R1];
 }
@@ -330,7 +332,8 @@ def tolex_main(V,O,NF,GM,M,MB)
 			U += B[0][I-1]*S[I];
 		R = ptozp(U);
 		SL = cons(R,SL);
-		print(["DN",B[1]]);
+		if ( dp_gr_print() )
+			print(["DN",B[1]]);
 	}
 	return SL;
 }
@@ -399,7 +402,8 @@ def gennf(G,TL,V,O,V0,FLAG)
 			if ( dp_gr_print() )
 				print(".",2);
 		}
-		print("");
+		if ( dp_gr_print() )
+			print("");
 		TTAB = time()[0]-T0;
 	}
 
@@ -554,7 +558,8 @@ def tolexm_main(PS,HL,V,W,M,FLAG)
 			print(".",2);
 		UTAB[I] = [MB[I],dp_nf_mod(GI,U*dp_mod(MB[I],M,[]),PS,1,M)];
 	}
-	print("");
+	if ( dp_gr_print() )
+		print("");
 	T = dp_mod(dp_ptod(dp_dtop(dp_vtoe(D),W),V),M,[]);
 	H = G = [[T,T]];
 	DL = []; G2 = [];

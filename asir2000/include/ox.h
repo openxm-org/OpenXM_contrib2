@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.7 2000/08/21 08:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.8 2000/08/22 05:04:15 noro Exp $ 
 */
 #include "com.h"
 
@@ -134,6 +134,7 @@
 #define SM_executeStringByLocalParserInBatchMode 274
 #define SM_getsp 275
 #define SM_dupErrors 276
+#define SM_pushCMOtag 277
 
 #define SM_nop 300
 

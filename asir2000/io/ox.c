@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.5 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.6 2000/08/22 05:04:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -114,7 +114,7 @@ static int available_cmo[] = {
 
 static int available_sm[] = {
 	SM_dupErrors, SM_getsp, SM_popSerializedLocalObject,
-	SM_popCMO, SM_popString, SM_setName,
+	SM_popCMO, SM_popString, SM_pushCMOtag, SM_setName,
 	SM_evalName, SM_executeStringByLocalParser,
 	SM_executeStringByLocalParserInBatchMode,
 	SM_executeFunction, SM_shutdown, SM_pops,

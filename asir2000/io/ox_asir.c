@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.16 2000/08/22 05:04:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.17 2000/08/29 04:03:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,6 +78,7 @@ static void create_error(ERR *,unsigned int ,char *);
 static void ox_io_init();
 static void ox_asir_init(int,char **);
 static Obj asir_pop_one();
+static Obj asir_peek_one();
 static void asir_push_one(Obj);
 static void asir_end_flush();
 static void asir_executeFunction(int);
@@ -88,6 +89,7 @@ static void asir_pops();
 static void asir_popString();
 static void asir_popCMO(unsigned int);
 static void asir_popSerializedLocalObject();
+static void asir_pushCMOtag(unsigned int);
 static LIST asir_GetErrorList();
 static char *name_of_cmd(int);
 static char *name_of_id(int);
@@ -271,6 +273,9 @@ static void asir_do_cmd(int cmd,unsigned int serial)
 			client_mathcap = (MATHCAP)asir_pop_one();
 			store_remote_mathcap(0,client_mathcap);
 			break;
+		case SM_pushCMOtag:
+			asir_pushCMOtag(serial);
+			break;
 		case SM_nop:
 		default:
 			break;
@@ -348,6 +353,8 @@ static char *name_of_cmd(int cmd)
 			break;
 		case SM_nop:
 			return "SM_nop";
+		case SM_pushCMOtag:
+			return "SM_pushCMOtag";
 		default:
 			return "Unknown cmd";
 			break;
@@ -399,6 +406,23 @@ static void asir_popCMO(unsigned int serial)
 		create_error(&err,serial,"cannot convert to CMO object");
 		ox_send_data(0,err);
 		asir_push_one(obj);
+	}
+}
+
+static void asir_pushCMOtag(unsigned int serial)
+{
+	Obj obj;
+	ERR err;
+	USINT ui;
+	int tag;
+
+	obj = asir_peek_one();
+	if ( cmo_tag(obj,&tag) ) {
+		MKUSINT(ui,tag);
+		asir_push_one((Obj)ui);
+	} else {
+		create_error(&err,serial,"cannot convert to CMO object");
+		asir_push_one((Obj)err);
 	}
 }
 
@@ -616,6 +640,18 @@ static Obj asir_pop_one() {
 		if ( do_message )
 			fprintf(stderr,"pop at %d\n",asir_OperandStackPtr);
 		return asir_OperandStack[asir_OperandStackPtr--];
+	}
+}
+
+static Obj asir_peek_one() {
+	if ( asir_OperandStackPtr < 0 ) {
+		if ( do_message )
+			fprintf(stderr,"OperandStack underflow");
+		return 0;
+	} else {
+		if ( do_message )
+			fprintf(stderr,"peek at %d\n",asir_OperandStackPtr);
+		return asir_OperandStack[asir_OperandStackPtr];
 	}
 }
 
