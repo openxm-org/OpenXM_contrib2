@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.32 2004/04/15 08:14:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.33 2004/04/15 08:44:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1994,18 +1994,19 @@ LIST extract_initial_term(LIST f,int *weight,int n);
 
 DP extract_initial_term_from_dp(DP p,int *weight,int n)
 {
-	int w,t,i;
+	int w,t,i,top;
 	MP m,r0,r;
 	DP dp;
 
 	if ( !p ) return 0;
-	w = -1;
+	top = 1;
 	for ( m = BDY(p); m; m = NEXT(m) ) {
 		for ( i = 0, t = 0; i < n; i++ )	
 			t += weight[i]*m->dl->d[i];
-		if ( t > w ) {
+		if ( top || t > w ) {
 			r0 = 0;
 			w = t;
+			top = 0;
 		}
 		if ( t == w ) {
 			NEXTMP(r0,r);
@@ -2077,16 +2078,18 @@ LIST highest_order(LIST f,int *weight,int n);
 
 int highest_order_dp(DP p,int *weight,int n)
 {
-	int w,t,i;
+	int w,t,i,top;
 	MP m;
 
 	if ( !p ) return -1;
-	w = -1;
+	top = 1;
 	for ( m = BDY(p); m; m = NEXT(m) ) {
 		for ( i = 0, t = 0; i < n; i++ )	
 			t += weight[i]*m->dl->d[i];
-		if ( t > w )
+		if ( top || t > w ) {
 			w = t;
+			top = 0;
+		}
 	}
 	return w;
 }
