@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.4 2000/08/22 05:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.5 2000/09/23 05:45:49 noro Exp $ 
 */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
@@ -174,6 +174,7 @@ init_cmdwin()
 	char *argv[1];
 	int n;
 	char *d;
+	char hostname[BUFSIZ],title[BUFSIZ];
 	extern char displayname[];
 	extern int do_server_in_X11;
 
@@ -184,19 +185,21 @@ init_cmdwin()
 		else
 			do_server_in_X11 = 0;
 	}
+	gethostname(hostname, BUFSIZ);
+	sprintf(title,"Asir debugger:%s",hostname);
 	if ( displayname[0] ) {
 		argv[0] = 0;
 		XtToolkitInitialize();
 		app_con = XtCreateApplicationContext();
 		XtAppAddActions(app_con,actions_table, XtNumber(actions_table));
 		XtAppSetFallbackResources(app_con,fallback);
-		display = XtOpenDisplay(app_con,displayname,"ox_asir_debug_window","ox_asir_debug_window",
+		display = XtOpenDisplay(app_con,displayname,title,title,
 			options,XtNumber(options),&argc,argv);
-		toplevel = XtAppCreateShell(0,"ox_asir_debug_window",applicationShellWidgetClass,
+		toplevel = XtAppCreateShell(0,title,applicationShellWidgetClass,
 			display,0,0);
 		n = 0;
-		XtSetArg(arg[n],XtNiconName,"ox_asir_debug_window"); n++;
-		XtSetArg(arg[n], XtNwidth, 200); n++;
+		XtSetArg(arg[n],XtNiconName,title); n++;
+		XtSetArg(arg[n], XtNwidth, 360); n++;
 		mainwin = XtCreatePopupShell("shell",topLevelShellWidgetClass,
 			toplevel,arg,n);
 	/*

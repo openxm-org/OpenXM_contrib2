@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.11 2000/08/22 05:04:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.12 2000/09/23 00:57:44 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -486,17 +486,27 @@ char *control_port_str,*server_port_str;
 	char cmd[BUFSIZ];
 	char localhost[BUFSIZ];
 	char *dname,*conn_str,*rsh;
+	char dname_str[BUFSIZ];
 
 	dname = use_x ? (char *)getenv("DISPLAY") : 0;
 	conn_str = conn_to_serv ? "1" : "0";
-	rsh = use_ssh ? "ssh" : RSH;
+	rsh = getenv("ASIR_RSH");
+	if ( !rsh )
+		rsh = use_ssh ? "ssh" : RSH;
+	if ( !use_unix && dname && strstr(rsh,"ssh") ) {
+		/*
+		 * if "ssh" is used to invoke a remote server,
+		 * we should not specify "-display".
+		 */
+		use_ssh = 1;
+	}
 	gethostname(localhost,BUFSIZ);
 #if !defined(VISUAL)
 	if ( use_unix ) {
 		if ( !fork() ) {
 			setpgid(0,getpid());
 			if ( dname )
-				execlp("xterm","xterm","-name",OX_XTERM,"-display",dname,
+				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
 					"-geometry","60x10","-e",launcher,".",conn_str,
 					control_port_str,server_port_str,server,dname,0);
 			else
@@ -507,7 +517,7 @@ char *control_port_str,*server_port_str;
 		/* special support for java */
 		if ( dname )
 			sprintf(cmd,
-				"%s -n %s \"(cd %s; xterm -name %s -display %s -geometry 60x10 -e java %s -host %s -control %s -data %s)>&/dev/null&\">/dev/null",
+				"%s -n %s \"(cd %s; xterm -name %s %s -geometry 60x10 -e java %s -host %s -control %s -data %s)>&/dev/null&\">/dev/null",
 				rsh,host,launcher,OX_XTERM,dname,server,localhost,control_port_str,server_port_str);
 		else
 			sprintf(cmd,
@@ -521,13 +531,19 @@ char *control_port_str,*server_port_str;
 #endif /* VISUAL */
 	{
 		if ( dname )
+			if ( use_ssh )
 			sprintf(cmd,
-				"%s -n %s \"xterm -name %s -display %s -geometry 60x10 -e %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
-				rsh,host,OX_XTERM,dname,launcher,localhost,conn_str,
+"%s -f -n %s \"xterm -name %s -title ox_launch:%s -geometry 60x10 -e %s %s %s %s %s %s %s>&/dev/null\">/dev/null",
+				rsh,host,OX_XTERM,host,launcher,localhost,conn_str,
+				control_port_str,server_port_str,server,"1");
+			else
+			sprintf(cmd,
+"%s -n %s \"xterm -name %s -title ox_launch:%s -display %s -geometry 60x10 -e %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
+				rsh,host,OX_XTERM,host,dname,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,dname);
 		else
 			sprintf(cmd,
-				"%s -n %s \"%s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
+"%s -n %s \"%s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
 				rsh,host,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,"0");
 		system(cmd);
