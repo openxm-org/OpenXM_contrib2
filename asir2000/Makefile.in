@@ -120,24 +120,11 @@ LIBS = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS
 bin_PROGRAMS = asir
 asir_SOURCES = parse/main.c
 asir_LDADD = libasir.a libasir-gc.a
-noinst_LIBRARIES = libasir.a libasir-gc.a
 CLEANFILES = libasir.a libasir-gc.a asir${EXEEXT}
-
-libasir_gc_a_SOURCES = 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(noinst_LIBRARIES)
-
-libasir_gc_a_AR = $(AR) cru
-libasir_gc_a_LIBADD =
-am_libasir_gc_a_OBJECTS =
-libasir_gc_a_OBJECTS = $(am_libasir_gc_a_OBJECTS)
-libasir_a_AR = $(AR) cru
-libasir_a_LIBADD =
-libasir_a_SOURCES = libasir.a.c
-libasir_a_OBJECTS = libasir.a.$(OBJEXT)
 bin_PROGRAMS = asir$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
@@ -154,7 +141,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 CFLAGS = @CFLAGS@
-DIST_SOURCES = $(libasir_gc_a_SOURCES) libasir.a.c $(asir_SOURCES)
+DIST_SOURCES = $(asir_SOURCES)
 
 RECURSIVE_TARGETS = info-recursive dvi-recursive install-info-recursive \
 	uninstall-info-recursive all-recursive install-data-recursive \
@@ -164,7 +151,7 @@ DIST_COMMON = INSTALL Makefile.am Makefile.in acinclude.m4 aclocal.m4 \
 	config.guess config.sub configure configure.in depcomp \
 	install-sh missing mkinstalldirs
 DIST_SUBDIRS = asm builtin engine fft include io lib parse plot
-SOURCES = $(libasir_gc_a_SOURCES) libasir.a.c $(asir_SOURCES)
+SOURCES = $(asir_SOURCES)
 
 all: all-recursive
 
@@ -185,11 +172,6 @@ $(srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.in $(ACLOCAL_M4)
 
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ configure.in acinclude.m4
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
-
-AR = ar
-
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
@@ -410,7 +392,7 @@ distcheck: dist
 	  sed 'h;s/./=/g;p;x;p;x'
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LIBRARIES) $(PROGRAMS)
+all-am: Makefile $(PROGRAMS)
 installdirs: installdirs-recursive
 installdirs-am:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
@@ -441,8 +423,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
-	mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 dist-all: distdir
 	$(AMTAR) chof - $(distdir) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
@@ -485,27 +466,27 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) GTAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
-	clean-recursive dist dist-all distcheck distclean \
-	distclean-compile distclean-generic distclean-recursive \
-	distclean-tags distdir dvi dvi-am dvi-recursive info info-am \
-	info-recursive install install-am install-binPROGRAMS \
-	install-data install-data-am install-data-recursive \
-	install-exec install-exec-am install-exec-recursive \
-	install-info install-info-am install-info-recursive install-man \
-	install-recursive install-strip installcheck installcheck-am \
-	installdirs installdirs-am installdirs-recursive \
-	maintainer-clean maintainer-clean-generic \
-	maintainer-clean-recursive mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-recursive tags tags-recursive \
-	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am \
+	clean-binPROGRAMS clean-generic clean-recursive dist dist-all \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-recursive distclean-tags distdir dvi dvi-am \
+	dvi-recursive info info-am info-recursive install install-am \
+	install-binPROGRAMS install-data install-data-am \
+	install-data-recursive install-exec install-exec-am \
+	install-exec-recursive install-info install-info-am \
+	install-info-recursive install-man install-recursive \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am installdirs-recursive maintainer-clean \
+	maintainer-clean-generic maintainer-clean-recursive mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-recursive \
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am \
 	uninstall-info-recursive uninstall-recursive
 
 
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a:
+libasir-gc.a: parse/gc_risa.c
 	-if [ "${USE_GC_ZEROPAGE}" = yes \
             -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
 	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \

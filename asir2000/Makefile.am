@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.12 2003/03/19 07:12:02 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.13 2003/03/20 02:02:39 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -29,15 +29,12 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 bin_PROGRAMS   = asir
 asir_SOURCES   = parse/main.c
 asir_LDADD     = libasir.a libasir-gc.a
-noinst_LIBRARIES  = libasir.a libasir-gc.a
 CLEANFILES     = libasir.a libasir-gc.a asir${EXEEXT}
-
-libasir_gc_a_SOURCES =
 
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a:
+libasir-gc.a: parse/gc_risa.c
 	-if [ "${USE_GC_ZEROPAGE}" = yes \
             -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
 	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \
