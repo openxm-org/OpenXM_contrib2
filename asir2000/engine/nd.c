@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.71 2003/09/17 07:16:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.72 2003/09/17 08:14:26 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -2240,7 +2240,6 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	int e,max,nvar;
 	NDV b;
 
-	nd_free_private_storage();
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	nvar = length(vv);
 	nd_init_ord(ord);
@@ -2285,7 +2284,6 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	nocheck = 0;
 	mindex = 0;
 
-	nd_free_private_storage();
 	/* setup modulus */
 	if ( trace < 0 ) {
 		trace = -trace;
@@ -2362,7 +2360,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	}
 	/* dp->p */
 	nd_bpe = cbpe;
-	nd_setup_parameters(0,0);
+	nd_setup_parameters(nd_nvar,0);
 	for ( r = cand; r; r = NEXT(r) ) BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
 	MKLIST(*rp,cand);
 }
@@ -2744,23 +2742,23 @@ int nd_get_exporigin(struct order_spec *ord)
 void nd_setup_parameters(int nvar,int max) {
 	int i,j,n,elen,ord_o,ord_l,l,s;
 	struct order_pair *op;
+	int bpe;
 
-	/* if max == 0, don't touch nd_bpe */
-	if ( max > 0 ) {
-		if ( max < 2 ) nd_bpe = 1;
-		if ( max < 4 ) nd_bpe = 2;
-		else if ( max < 8 ) nd_bpe = 3;
-		else if ( max < 16 ) nd_bpe = 4;
-		else if ( max < 32 ) nd_bpe = 5;
-		else if ( max < 64 ) nd_bpe = 6;
-		else if ( max < 256 ) nd_bpe = 8;
-		else if ( max < 1024 ) nd_bpe = 10;
-		else if ( max < 65536 ) nd_bpe = 16;
-		else nd_bpe = 32;
-	}
-	/* nvar == 0, don't touch nd_nvar */
-	if ( nvar > 0 ) nd_nvar = nvar;
-
+	if ( !max ) bpe = nd_bpe;
+	else if ( max < 2 ) bpe = 1;
+	else if ( max < 4 ) bpe = 2;
+	else if ( max < 8 ) bpe = 3;
+	else if ( max < 16 ) bpe = 4;
+	else if ( max < 32 ) bpe = 5;
+	else if ( max < 64 ) bpe = 6;
+	else if ( max < 256 ) bpe = 8;
+	else if ( max < 1024 ) bpe = 10;
+	else if ( max < 65536 ) bpe = 16;
+	else bpe = 32;
+	if ( bpe != nd_bpe || nvar != nd_nvar )
+		nd_free_private_storage();
+	nd_bpe = bpe;
+	nd_nvar = nvar;
 	nd_epw = (sizeof(UINT)*8)/nd_bpe;
 	elen = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
 
@@ -2809,7 +2807,7 @@ ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 	else if ( obpe < 32 ) nd_bpe = 32;
 	else error("nd_reconstruct : exponent too large");
 
-	nd_setup_parameters(0,0);
+	nd_setup_parameters(nd_nvar,0);
 	prev_nm_free_list = _nm_free_list;
 	prev_ndp_free_list = _ndp_free_list;
 	_nm_free_list = 0;
