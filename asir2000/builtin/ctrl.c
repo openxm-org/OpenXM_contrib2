@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.14 2001/07/04 07:19:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.15 2001/08/06 01:48:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,6 +63,7 @@ extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
 extern int do_message;
 extern int ox_batch,ox_check,ox_exchange_mathcap;
 extern int f4_nocheck;
+extern int StrassenSize;
 extern int fortran_output;
 extern int real_digit;
 #if defined(INTERVAL)
@@ -93,6 +94,7 @@ static struct {
 	{"ox_check",&ox_check},
 	{"ox_exchange_mathcap",&ox_exchange_mathcap},
 	{"f4_nocheck",&f4_nocheck},
+	{"StrassenSize",&StrassenSize},
 	{"double_output",&double_output},
 	{"real_digit",&real_digit},
 	{"fortran_output",&fortran_output},

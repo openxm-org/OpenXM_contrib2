@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.13 2001/10/09 01:36:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.14 2002/01/04 17:01:39 saito Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -83,6 +83,7 @@ USINT VOIDobj = &oVOID;
 int bigfloat;
 int nez = 1;
 int current_mod = 0;
+int Strassensize = 4;
 
 static int *lprime;
 int lprime_size;
