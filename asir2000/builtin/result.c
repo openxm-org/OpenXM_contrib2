@@ -45,18 +45,70 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/result.c,v 1.2 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/result.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Presult(), Psrcr();
+void Presult(), Psrcr(), Pnd_res();
 
 struct ftab result_tab[] = {
 	{"res",Presult,-4},
+	{"nd_res",Pnd_res,-4},
 	{"srcr",Psrcr,3},
 	{0,0,0},
 };
+
+void Pnd_res(arg,rp)
+NODE arg;
+P *rp;
+{
+	int mod,d1,d2,i,j;
+	Q q1,q2;
+	P *a1,*a2;
+	P p1,p2,r1,r2,r;
+	V v;
+	MAT m;
+	DCP dc;
+	VL vl;
+
+	asir_assert(ARG0(arg),O_P,"nd_res");
+	asir_assert(ARG1(arg),O_P,"nd_res");
+	asir_assert(ARG2(arg),O_P,"nd_res");
+	v = VR((P)ARG0(arg)); p1 = ARG1(arg); p2 = ARG2(arg);
+	d1 = getdeg(v,p1);
+	d2 = getdeg(v,p2);
+	if ( d1 == 0 ) {
+		if ( d2 == 0 )
+			*rp = (P)ONE;
+		else {
+			STOQ(d2,q2);
+			pwrp(CO,p1,q2,rp);
+		}
+		return;
+	} else if ( d2 == 0 ) {
+		STOQ(d1,q1);
+		pwrp(CO,p2,q1,rp);
+		return;
+	} 
+	MKMAT(m,d1+d2,d1+d2);
+	reordvar(CO,v,&vl);
+	reorderp(vl,CO,p1,&r1);
+	reorderp(vl,CO,p2,&r2);
+	a1 = ALLOCA((d1+1)*sizeof(P));
+	a2 = ALLOCA((d2+1)*sizeof(P));
+	for ( i = 0; i <= d1; i++ ) a1[i] = 0;
+	for ( i = 0; i <= d2; i++ ) a2[i] = 0;
+	for ( dc = DC(r1); dc; dc = NEXT(dc) ) a1[d1-QTOS(DEG(dc))] = COEF(dc);
+	for ( dc = DC(r2); dc; dc = NEXT(dc) ) a2[d2-QTOS(DEG(dc))] = COEF(dc);
+	for ( i = 0; i < d2; i++ )
+		for ( j = 0; j <= d1; j++ )
+			m->body[i][i+j] = a1[j];
+	for ( i = 0; i < d1; i++ )
+		for ( j = 0; j <= d2; j++ )
+			m->body[i+d2][i+j] = a2[j];
+	nd_det(argc(arg)==3?0:QTOS((Q)ARG3(arg)),m,rp);
+}
 
 void Presult(arg,rp)
 NODE arg;
