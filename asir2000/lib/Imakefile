@@ -1,4 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.13 2000/03/01 02:29:18 noro Exp $ */
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.  
+ *
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.14 2000/06/07 03:00:21 noro Exp $
+ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\

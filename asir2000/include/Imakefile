@@ -1,4 +1,9 @@
-/* $OpenXM$ */
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.  
+ *
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Imakefile,v 1.1 2000/03/10 03:05:01 noro Exp $
+ */
 #include "../include/Risa.tmpl"
 
 SRCS= al.h b.h base.h bf.h ca-27.h ca.h com.h inline.h ox.h prime.h version.h wsio.h

@@ -1,4 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Imakefile,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.  
+ *
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Imakefile,v 1.2 2000/07/13 05:09:00 noro Exp $
+ */
 #include "../include/Risa.tmpl"
 
 TSRC = init.c mat.c vect.c str.c dist.c distm.c _distm.c ui.c

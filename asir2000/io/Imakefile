@@ -1,4 +1,9 @@
-/* $OpenXM: OpenXM/src/asir99/io/Imakefile,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.  
+ *
+ * $OpenXM: OpenXM_contrib2/asir2000/io/Imakefile,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $
+ */
 #include "../include/Risa.tmpl"
 
 SRCS= pexpr.c spexpr.c biovar.c bsave.c bload.c io.c sio.c cpexpr.c cio.c ox.c des.c ox_asir.c ox_launch.c tcpf.c ws_fileio.c

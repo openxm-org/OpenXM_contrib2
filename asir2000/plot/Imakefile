@@ -1,4 +1,9 @@
-/* $OpenXM: OpenXM/src/asir99/plot/Imakefile,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.  
+ *
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/Imakefile,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $
+ */
 #include "../include/Risa.tmpl"
 
 #ifdef USE_PLOT
