@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.14 2002/08/02 05:39:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.15 2002/08/02 08:59:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,7 +77,7 @@ struct ftab plot_tab[] = {
 	{0,0,0},
 };
 
-void Popen_canvas(NODE arg,Obj *rp)
+void Popen_canvas(NODE arg,Q *rp)
 {
 	Q w300,s_id;
 	LIST geom;
@@ -116,6 +116,7 @@ void Popen_canvas(NODE arg,Obj *rp)
 	MKSTR(fname,"open_canvas");
 	arg = mknode(4,s_id,fname,geom,wname);
 	Pox_cmo_rpc(arg,rp);
+	*rp = s_id;
 }
 
 void Pifplot(NODE arg,Q *rp)
