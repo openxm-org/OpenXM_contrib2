@@ -623,6 +623,10 @@ SOURCE="..\..\asir2000\builtin\result.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\builtin\round.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\engine\RU.c"
 # End Source File
 # Begin Source File

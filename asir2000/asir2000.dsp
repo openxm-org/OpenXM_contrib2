@@ -493,6 +493,10 @@ SOURCE=.\io\ox.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\io\ox_asir.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\engine\P.c
 # End Source File
 # Begin Source File
@@ -602,6 +606,10 @@ SOURCE=.\builtin\reduct.c
 # Begin Source File
 
 SOURCE=.\builtin\result.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\builtin\round.c
 # End Source File
 # Begin Source File
 

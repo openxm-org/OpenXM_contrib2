@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /machine:I386
-# ADD LINK32 advapi32.lib "c:\program files\html help workshop\htmlhelp.lib" /nologo /subsystem:windows /machine:I386 /out:".\Release\asirgui.exe"
+# ADD LINK32 advapi32.lib "c:\program files\html help workshop\lib\htmlhelp.lib" /nologo /subsystem:windows /machine:I386 /out:".\Release\asirgui.exe"
 # SUBTRACT LINK32 /debug
 
 !ELSEIF  "$(CFG)" == "asir32gui - Win32 Debug"
@@ -82,7 +82,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /debug /machine:I386
-# ADD LINK32 "c:\program files\html help workshop\htmlhelp.lib" advapi32.lib /nologo /subsystem:windows /incremental:no /debug /debugtype:both /machine:I386 /out:".\Debug\asirgui.exe"
+# ADD LINK32 "c:\program files\html help workshop\lib\htmlhelp.lib" advapi32.lib /nologo /subsystem:windows /incremental:no /debug /debugtype:both /machine:I386 /out:".\Debug\asirgui.exe"
 # SUBTRACT LINK32 /map
 
 !ENDIF 
