@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.5 2004/12/04 09:39:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.6 2004/12/07 15:15:52 noro Exp $
 */
 
 #include "ca.h"
@@ -505,7 +505,7 @@ void invdalg(DAlg a,DAlg *c)
 	N ln,gn,qn;
 	DAlg *simp;
 	DAlg t,a0,r;
-	Q dn,dnsol,mul;
+	Q dn,dnsol,mul,nmc,dn1;
 	MAT mobj,sol;
 	Q **mat,**solmat;
 	MP mp0,mp;
@@ -526,7 +526,8 @@ void invdalg(DAlg a,DAlg *c)
 	mb = nf->mb;
 	n = nf->n;
 	ln = ONEN;
-	MKDAlg(a->nm,ONE,a0);
+	dp_ptozp(a->nm,&u); divq((Q)BDY(a->nm)->c,(Q)BDY(u)->c,&nmc);
+	MKDAlg(u,ONE,a0);
 	simp = (DAlg *)ALLOCA(dim*sizeof(DAlg));
 	current_spec = dp_current_spec; initd(nf->spec);
 	for ( i = dim-1; i >= 0; i-- ) {
@@ -570,7 +571,8 @@ void invdalg(DAlg a,DAlg *c)
 			mp->dl = BDY(mb[i])->dl;
 		}
 	NEXT(mp) = 0; MKDP(n,mp0,u);
-	MKDAlg(u,dnsol,r);
+	mulq(dnsol,nmc,&dn1);
+	MKDAlg(u,dn1,r);
 	rmcontdalg(r,c);
 }
 
