@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.9 2003/08/21 08:05:02 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.10 2003/08/23 01:42:53 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -415,7 +415,7 @@ P *p;
 	P t;
 	char *str;
 
-	for ( vl = CO, str = NAME(f); ; )
+	for ( vl = CO, str = f->fullname; ; )
 		if ( NAME(VR(vl)) && !strcmp(NAME(VR(vl)),str) ) {
 			VR(vl)->attr = (pointer)V_SR; VR(vl)->priv = (pointer)f;
 			MKV(VR(vl),t); *p = t;
