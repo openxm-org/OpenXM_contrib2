@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.24 2003/05/16 07:56:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.25 2003/05/16 09:34:49 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -1051,7 +1051,12 @@ MODULE mkmodule(char *name)
 
 void print_crossref(FUNC f)
 {
-	if ( show_crossref && CUR_FUNC )
-		fprintf(asir_out,"%s() at line %d in %s()\n",
-			f->fullname, asir_infile->ln, CUR_FUNC);
+  FUNC r;
+  if ( show_crossref && CUR_FUNC ) {
+	searchuf(f->fullname,&r);
+	if (r != NULL) {
+	  fprintf(asir_out,"%s() at line %d in %s()\n",
+			  f->fullname, asir_infile->ln, CUR_FUNC);
+	}
+  }
 }
