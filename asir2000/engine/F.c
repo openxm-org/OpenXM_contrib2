@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.5 2001/04/19 04:52:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.6 2001/04/20 02:34:21 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -854,10 +854,8 @@ DCP *dcp;
 				*dcp = dc;
 				return;
 			} else {
-				d = d1;
-				found = 1;
-				sp0 = p0; sdc0 = dc0;
-				bcopy((char *)vn1,(char *)svn1,(int)(sizeof(struct oVN)*nv));
+				d = d1+1; /* XXX : try searching better evaluation */
+				found = 0;
 				break;
 			}
 		}
