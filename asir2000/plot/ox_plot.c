@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.5 2000/08/21 08:31:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.6 2000/08/22 05:04:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,7 +70,8 @@ static int plot_OperandStackSize;
 static Obj *plot_OperandStack;
 static int plot_OperandStackPtr = -1;
 
-static void create_error(ERR *,unsigned int ,char *);
+void create_error(ERR *,unsigned int ,char *);
+
 static void process_ox();
 static void ox_io_init();
 static void ox_asir_init(int,char **);
@@ -89,19 +90,6 @@ static char *name_of_cmd(unsigned int);
 static char *name_of_id(int);
 static void asir_do_cmd(unsigned int,unsigned int);
 static LIST asir_GetErrorList();
-
-static void create_error(ERR *err,unsigned int serial,char *msg)
-{
-	USINT ui;
-	NODE n,n1;
-	LIST list;
-	STRING errmsg;
-
-	MKUSINT(ui,serial);
-	MKSTR(errmsg,msg);
-	MKNODE(n1,errmsg,0); MKNODE(n,ui,n1); MKLIST(list,n);
-	MKERR(*err,list);
-}
 
 void ox_plot_main(int argc,char **argv) {
 	int ds;

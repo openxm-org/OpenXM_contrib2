@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.17 2000/08/29 04:03:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.18 2000/09/07 23:59:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,11 +70,12 @@ extern int little_endian,ox_sock_id;
 int ox_sock_id;
 int lib_ox_need_conv;
 
+void create_error(ERR *,unsigned int ,char *);
+
 static int asir_OperandStackSize;
 static Obj *asir_OperandStack;
 static int asir_OperandStackPtr = -1;
 
-static void create_error(ERR *,unsigned int ,char *);
 static void ox_io_init();
 static void ox_asir_init(int,char **);
 static Obj asir_pop_one();
@@ -127,24 +128,6 @@ void ox_mpi_slave_init() {
 	asir_OperandStackPtr = -1;
 }
 #endif
-
-static void create_error(ERR *err,unsigned int serial,char *msg)
-{
-	int len;
-	USINT ui;
-	NODE n,n1;
-	LIST list;
-	char *msg1;
-	STRING errmsg;
-
-	MKUSINT(ui,serial);
-	len = strlen(msg);
-	msg1 = (char *)MALLOC(len+1);
-	strcpy(msg1,msg);
-	MKSTR(errmsg,msg1);
-	MKNODE(n1,errmsg,0); MKNODE(n,ui,n1); MKLIST(list,n);
-	MKERR(*err,list);
-}
 
 void ox_main(int argc,char **argv) {
 	int id;
