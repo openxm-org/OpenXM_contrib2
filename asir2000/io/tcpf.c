@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.33 2002/08/02 02:28:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.34 2002/08/02 09:43:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -205,7 +205,7 @@ void Pox_get_serverinfo(NODE arg,LIST *rp)
 	LIST list,l;
 
 	if ( !arg ) {
-		for ( i = 0, n0 = 0; i < m_c_i; i++ )
+		for ( i = I_am_server?1:0, n0 = 0; i < m_c_i; i++ )
 			if ( (m_c_tab[i].m>=0) || (m_c_tab[i].c>=0) ) {
 				c = m_c_tab[i].c;
 				ox_get_serverinfo(c,&list);
