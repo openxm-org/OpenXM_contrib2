@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.3 2002/09/27 08:40:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.4 2002/09/30 06:13:07 noro Exp $ */
 
 #include "ca.h"
 
@@ -10,6 +10,7 @@ void sqfrsfmain(VL vl,P f,DCP *dcp);
 void pthrootsf(P f,Q m,P *r);
 void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp);
 void gcdsf(VL vl,P *pa,int k,P *r);
+void mfctrsfmain(VL vl, P f, DCP *dcp);
 
 void lex_lc(P f,P *c)
 {
@@ -468,4 +469,110 @@ void cont_pp_mv_sf(VL vl,VL rvl,P p,P *c,P *pp)
 		ps[i] = C(t);
 	ugcdsf(ps,m,c);
 	divsp(vl,p,*c,pp);
+}
+
+void mfctrsf(VL vl, P f, DCP *dcp)
+{
+	DCP dc0,dc,dct,dcs,dcr;
+	Obj obj;
+
+	simp_ff((Obj)f,&obj); f = (P)obj;
+	sqfrsf(vl,f,&dct);
+	dc = dc0 = dct; dct = NEXT(dct); NEXT(dc) = 0;
+	for ( ; dct; dct = NEXT(dct) ) {
+		mfctrsfmain(vl,COEF(dct),&dcs);
+		for ( dcr = dcs; dcr; dcr = NEXT(dcr) )
+			DEG(dcr) = DEG(dct);
+		for ( ; NEXT(dc); dc = NEXT(dc) );
+		NEXT(dc) = dcs;
+	}
+	*dcp = dc0;
+}
+
+/* f : sqfr, non const */
+
+void mfctrsfmain(VL vl, P f, DCP *dcp)
+{
+	VL tvl,nvl;
+	DCP dc,dc0,dc1,dc2,dct;
+	int imin,inext,i,n;
+	int *da;
+	V vx,vy;
+	V *va;
+	P gcd,g,df,dfmin;
+	P pa[2];
+
+	clctv(vl,f,&tvl); vl = tvl;
+	if ( !vl )
+		error("mfctrsfmain : cannot happen");
+	if ( !NEXT(vl) ) {
+		/* univariate */
+		ufctrsf(f,&dc);
+		/* remove lc */
+		*dcp = NEXT(dc);
+		return;
+	}
+	for ( n = 0, tvl = vl; tvl; tvl = NEXT(tvl), n++ );
+	va = (V *)ALLOCA(n*sizeof(int));
+	da = (int *)ALLOCA(n*sizeof(int));
+	/* find v s.t. diff(f,v) is nonzero and deg(f,v) is minimal */
+	imin = -1;
+	for ( i = 0, tvl = vl; i < n; tvl = NEXT(tvl), i++ ) {
+		va[i] = tvl->v;	
+		da[i] = getdeg(va[i],f);
+		diffp(vl,f,va[i],&df);
+		if ( !df )
+			continue;
+		if ( imin < 0 || da[i] < da[imin] ) {
+			dfmin = df;
+			imin = i;
+		}
+	}
+	/* find v1 neq v s.t. deg(f,v) is minimal */
+	inext = -1;
+	for ( i = 0; i < n; i++ ) {
+		if ( i == imin )
+			continue;
+		if ( inext < 0 || da[i] < da[inext] )
+			inext = i;
+	}
+	pa[0] = f;
+	pa[1] = dfmin;
+	gcdsf_main(vl,pa,2,&gcd);
+	if ( !NUM(gcd) ) {
+		/* f = gcd * f/gcd */	
+		mfctrsfmain(vl,gcd,&dc1);
+		divsp(vl,f,gcd,&g);
+		mfctrsfmain(vl,g,&dc2);
+		for ( dct = dc1; NEXT(dct); dct = NEXT(dct) );
+		NEXT(dct) = dc2;
+		*dcp = dc1;
+		return;
+	}
+	/* create vl s.t. vl[0] = va[imin], vl[1] = va[inext] */
+	nvl = 0;
+	NEXTVL(nvl,tvl); tvl->v = va[imin];
+	NEXTVL(nvl,tvl); tvl->v = va[inext];
+	for ( i = 0; i < n; i++ ) {
+		if ( i == imin || i == inext )
+			continue;
+		NEXTVL(nvl,tvl); tvl->v = va[i];
+	}
+	NEXT(tvl) = 0;
+
+	reorderp(nvl,vl,f,&g);
+	vx = nvl->v;
+	vy = NEXT(nvl)->v;
+	if ( !NEXT(NEXT(nvl)) ) {
+		/* bivariate */
+		sfbfctr(g,vx,vy,getdeg(vx,g),&dc1);
+		for ( dc0 = 0; dc1; dc1 = NEXT(dc1) ) {
+			NEXTDC(dc0,dc);
+			DEG(dc) = ONE;
+			reorderp(vl,nvl,COEF(dc1),&COEF(dc));
+		}
+		NEXT(dc) = 0;
+		*dcp = dc0;
+		return;
+	}
 }

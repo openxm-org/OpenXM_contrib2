@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.23 2002/09/27 08:40:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.24 2002/09/30 06:13:07 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -16,7 +16,7 @@ int comp_dum(DUM a,DUM b)
 		return 0;
 }
 
-void fctrsf(P p,DCP *dcp)
+void ufctrsf(P p,DCP *dcp)
 {
 	int n,i,j,k;
 	DCP dc,dc0;
@@ -669,7 +669,7 @@ int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp)
 			ptosfum(f0,wf); cpyum(wf,wf1); 
 			diffsfum(wf1,wf2); gcdsfum(wf1,wf2,gcd);
 			if ( DEG(gcd) == 0 ) {
-				fctrsf(f0,&dc);
+				ufctrsf(f0,&dc);
 				for ( dct = NEXT(dc), i = 0; dct; dct = NEXT(dct), i++ );
 				if ( i < fn ) {
 					dc0 = dc; fn = i; fm = m;

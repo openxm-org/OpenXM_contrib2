@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.13 2002/09/27 08:40:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.14 2002/09/30 06:15:51 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,7 +54,7 @@ void Pfctr(), Pgcd(), Pgcdz(), Plcm(), Psqfr(), Pufctrhint();
 void Pptozp(), Pcont();
 void Pafctr(), Pagcd();
 void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
-void Psfsqfr(),Psfbfctr(),Psfufctr(),Psfmintdeg(),Psfgcd();
+void Psfsqfr(),Psffctr(),Psfbfctr(),Psfufctr(),Psfmintdeg(),Psfgcd();
 void Pirred_check(), Pnfctr_mod();
 
 void sfmintdeg(VL vl,P fx,int dy,int c,P *fr);
@@ -73,6 +73,7 @@ struct ftab fctr_tab[] = {
 	{"modsqfr",Pmodsqfr,2},
 	{"modfctr",Pmodfctr,2},
 	{"sfsqfr",Psfsqfr,1},
+	{"sffctr",Psffctr,1},
 	{"sfufctr",Psfufctr,1},
 	{"sfbfctr",Psfbfctr,-4},
 	{"sfmintdeg",Psfmintdeg,5},
@@ -336,6 +337,16 @@ LIST *rp;
 	gcdsf(CO,ps,2,rp);
 }
 
+void Psffctr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	mfctrsf(CO,ARG0(arg),&dc);
+	dcptolist(dc,rp);
+}
+
 void Psfsqfr(arg,rp)
 NODE arg;
 LIST *rp;
@@ -352,7 +363,7 @@ LIST *rp;
 {
 	DCP dc;
 
-	fctrsf(ARG0(arg),&dc);
+	ufctrsf(ARG0(arg),&dc);
 	dcptolist(dc,rp);
 }
 
