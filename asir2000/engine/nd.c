@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.57 2003/09/05 05:02:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.58 2003/09/05 07:00:37 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -3249,3 +3249,41 @@ EPOS nd_create_epos(struct order_spec *ord)
 	}
 	return epos;
 }
+
+/* external interface */
+
+void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
+{
+	NODE t;
+	ND nd,nf;
+	VL vv;
+	DP d,r,dm;
+	int stat;
+
+	pltovl(v,&vv);
+	nd_nvar = length(vv);
+	nd_init_ord(ord);
+	initd(ord);
+	for ( t = BDY(g); NEXT(t); t = NEXT(t) ) {
+		ptod(CO,vv,(P)BDY(t),&d); BDY(t) = (pointer)d;
+	}
+	ptod(CO,vv,(P)BDY(t),&d); BDY(t) = (pointer)d;
+	NEWNODE(NEXT(t)); ptod(CO,vv,f,&d); BDY(NEXT(t)) = d; NEXT(NEXT(t)) = 0;
+	nd_setup(m,0,BDY(g));
+	nd_psn--;
+	nd_scale=2;
+	while ( 1 ) {
+		nd = (pointer)ndvtond(m,nd_ps[nd_psn]);
+		stat = nd_nf(m,nd,nd_ps,1,&nf);
+		if ( !stat ) {
+			nd_psn++;
+			nd_reconstruct(m,0,0);
+			nd_psn--;
+		} else
+			break;
+	}
+	r = (DP)ndtodp(m,nf);
+	if ( m ) _dtop_mod(CO,vv,r,rp);
+	else dtop(CO,vv,r,rp);
+}
+
