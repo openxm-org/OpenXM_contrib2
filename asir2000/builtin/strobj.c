@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.26 2004/03/05 01:47:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.27 2004/03/05 05:15:47 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,6 +77,9 @@ void Pquotetotex();
 void Pquotetotex_env();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
+char *conv_rule(char *name);
+char *conv_subscript(char *name);
+char *call_convfunc(char *name);
 void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
@@ -116,13 +119,17 @@ int register_dp_vars(Obj arg);
 int register_dp_vars_prefix(Obj arg);
 int register_show_lt(Obj arg);
 static struct TeXSymbol *user_texsymbol;
-static char *(*conv_rule)(char *);
 static char **dp_vars;
 static int dp_vars_len;
 static char *dp_vars_prefix;
 static int show_lt;
 static FUNC convfunc;
 static int is_lt;
+static int conv_flag;
+
+#define CONV_SUBSCRIPT (1U<<0)
+#define CONV_DMODE (1U<<1)
+#define CONV_USERFUNC (1U<<31)
 
 static struct {
 	char *name;
@@ -138,72 +145,74 @@ static struct {
 };
 
 #define PARTIAL "\\partial"
-char *conv_rule_d(char *name)
-{
-	int l,i,j,alpha,start;
-	char *b,*r;
-	l = strlen(name);
 
-	if ( name[0] == 'd' ) {
-		/* 3 : _{} */
-		b = (char *)ALLOCA((2*l+1+strlen(PARTIAL)+3)*sizeof(char));
-		sprintf(b,"%s_{",PARTIAL);
-		i = 1;
-		j = strlen(b);
-	} else {
-		b = (char *)ALLOCA((2*l+1)*sizeof(char));
-		i = j = 0;
-	}
-	for ( ; i < l && name[i] == '_'; i++);
-	for ( ; i < l; ) {
-		if ( !isalpha(name[i]) )
-			break;
-		else
-			b[j++] = name[i++];
-	}
-	if ( i == l )
-		if ( name[0] == 'd' )
-			goto END;
-		else
-			return name;
-	/* we found a digit or '_' */
-	b[j++] = '_'; b[j++] = '{';
-	if ( name[i] == '_' ) i++;
-	for ( start = 1; i < l; ) {
-		if ( name[i] == '{' || name[i] == '}' || name[i] == ' ' )
-			b[j++] = name[i++];
-		else if ( name[i] == '_' ) {
-			i++;
-			start = 1;
-			b[j++] = ',';
-		} else if ( start ) {
-			alpha = isalpha(name[i])?1:0;
-			b[j++] = name[i++];
-			start = 0;
-		} else if ( alpha ) {
-			if ( isalpha(name[i]) )
-				b[j++] = name[i++];
-			else {
-				alpha = 0;
-				start = 1;
-				b[j++] = ',';
-			}
+char *conv_rule(char *name)
+{
+	char *body,*r;
+
+	if ( conv_flag & CONV_DMODE ) {
+		if ( *name == 'd' ) {
+			if ( conv_flag & CONV_SUBSCRIPT )
+				body = conv_subscript(name+1);
+			else
+				body = name+1;
+			r = MALLOC_ATOMIC((strlen(PARTIAL)+strlen(body)+5)*sizeof(char));
+			sprintf(r,"{%s}_{%s}",PARTIAL,body);
+			return r;
 		} else {
-			if ( isdigit(name[i]) )
-				b[j++] = name[i++];
-			else {
-				alpha = 1;
-				start = 1;
-				b[j++] = ',';
-			}
+			if ( conv_flag & CONV_SUBSCRIPT )
+				body = conv_subscript(name);
+			else
+				body = name;
 		}
+	} else if ( conv_flag & CONV_SUBSCRIPT )
+		return conv_subscript(name);
+	else if ( conv_flag & CONV_USERFUNC && convfunc )
+		return call_convfunc(name);
+	else
+		return name;
+}
+
+char *conv_subscript(char *name)
+{
+	int i,j,k,len,clen,slen,start;
+	char *buf,*head,*r,*h;
+	char **subs;
+
+	len = strlen(name);
+	for ( i = 0; i < len && (isalpha(name[i]) || name[i]=='\\'); i++ );
+	if ( i == len ) return name;
+	buf = (char *)ALLOCA((i+1)*sizeof(char));
+	strncpy(buf,name,i); buf[i] = 0;
+	head = symbol_name(buf);
+	subs = (char **)ALLOCA(len*sizeof(char* ));
+	for ( j = 0, start = i; ; j++ ) {
+		while ( (i < len) && (name[i] == '_' || name[i] == ',') ) i++;
+		if ( i == len ) break;
+		start = i;
+		if ( isdigit(name[i]) )
+			while ( i < len && isdigit(name[i]) ) i++;
+		else
+			while ( i < len && (isalpha(name[i]) || name[i] == '\\') ) i++;
+		slen = i-start;	
+		buf = (char *)ALLOCA((slen+1)*sizeof(char));
+		strncpy(buf,name+start,slen); buf[slen] = 0;
+		subs[j] = symbol_name(buf);
 	}
-	b[j++] = '}';
-END:
-	if ( name[0] == 'd' ) b[j++] = '}';
-	b[j++] = 0;
-	r = (char *)MALLOC_ATOMIC((j+1)*sizeof(char));	
-	strcpy(r,b);
+	for ( k = 0, clen = strlen(head); k < j; k++ ) clen += strlen(subs[k]);
+	/* {head}_{{subs(0)},...,{subs(j-1)}} => {}:j+2 _:1 ,:j-1 */
+	h = r = MALLOC_ATOMIC((clen+(j+2)*2+1+(j-1)+1)*sizeof(char));
+	if ( !j )
+		sprintf(h,"{%s}",head);
+	else {
+		sprintf(h,"{%s}_{{%s}",head,subs[0]);
+		h += strlen(h);
+		for ( k = 1; k < j; k++ ) {
+			sprintf(h,",{%s}",subs[k]);
+			h += strlen(h);
+		}
+		strcpy(h,"}");
+	}
 	return r;
 }
 
@@ -277,24 +286,14 @@ int register_show_lt(Obj arg)
 int register_conv_rule(Obj arg)
 {
 	if ( INT(arg) ) {
-		switch ( QTOS((Q)arg) ) {
-			case 0:
-				conv_rule = 0;
-				return 1;
-				break;
-			case 1:
-				conv_rule = conv_rule_d;
-				return 1;
-				break;
-			default:
-				return 0;
-				break;
-		}
+		conv_flag = QTOS((Q)arg);
+		convfunc = 0;
+		return 1;
 	} else if ( OID(arg) == O_P && 
 		(int)(VR((P)arg))->attr == V_SR ) {
+		conv_flag = CONV_USERFUNC;
 		convfunc = (FUNC)(VR((P)arg)->priv);
 		/* f must be a function which takes single argument */
-		conv_rule = call_convfunc;
 		return 1;
 	} else return 0;
 }
@@ -736,10 +735,7 @@ char *symbol_name(char *name)
 	for ( i = 0; texsymbol[i].text; i++ )
 		if ( !strcmp(texsymbol[i].text,name) )
 			return texsymbol[i].symbol;
-	if ( conv_rule )
-		return (*conv_rule)(name);
-	else
-		return name;
+	return name;
 }
 
 void fnodetotex_tb(FNODE f,TB tb)
@@ -935,7 +931,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 
 		/* function */
 		case I_FUNC:
-			opname = symbol_name(((FUNC)FA0(f))->name);
+			opname = conv_rule(((FUNC)FA0(f))->name);
 			write_tb(opname,tb);
 			write_tb("(",tb);
 			fargstotex_tb(opname,FA1(f),tb);
@@ -944,7 +940,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 
 		/* XXX */
 		case I_CAR:
-			opname = symbol_name("car");
+			opname = conv_rule("car");
 			write_tb(opname,tb);
 			write_tb("(",tb);
 			fargstotex_tb(opname,FA0(f),tb);
@@ -952,7 +948,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 			break;
 
 		case I_CDR:
-			opname = symbol_name("cdr");
+			opname = conv_rule("cdr");
 			write_tb(opname,tb);
 			write_tb("(",tb);
 			fargstotex_tb(opname,FA0(f),tb);
@@ -975,7 +971,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 					sprintf(vname,"%s_{%d}",dp_vars_prefix,i);
 				else
 					sprintf(vname,"x_{%d}",i);
-				vname_conv = symbol_name(vname);
+				vname_conv = conv_rule(vname);
 				if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
 					len = strlen(vname_conv);
 					opname = MALLOC_ATOMIC(len+2);
@@ -1009,7 +1005,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 		case I_FORMULA:
 			obj = (Obj)FA0(f);
 			if ( obj && OID(obj) == O_P ) {
-				opname = symbol_name(VR((P)obj)->name);
+				opname = conv_rule(VR((P)obj)->name);
 			} else {
 				len = estimate_length(CO,obj);
 				opname = (char *)MALLOC_ATOMIC(len+1);
