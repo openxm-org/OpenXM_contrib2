@@ -45,13 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.7 2000/08/21 08:31:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.8 2000/08/22 05:04:23 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
 
 	Revision History:
 
+	2001/10/12    noro    if USE_PARI_FACTOR is nonzero, pari factor is called
 	2000/03/10    noro    fixed several bugs around gathering algebraic numbers
 	1999/08/24    noro    modified for 1999 release version
 */
@@ -60,6 +61,7 @@
 
 extern ASCENT,GCDTIME,UFTIME,RESTIME,SQTIME,PRINT$
 extern Ord$
+extern USE_PARI_FACTOR$
 
 def sp(P)
 {
@@ -592,6 +594,21 @@ def simpcoef(P) {
 }
 
 def ufctrhint_heuristic(P,HINT,PP,SHIFT) {
+	if ( USE_PARI_FACTOR )
+		return pari_ufctr(P);
+	else
+		return asir_ufctrhint_heuristic(P,HINT,PP,SHIFT);
+}
+
+def pari_ufctr(P) {
+	F = pari(factor,P);
+	S = size(F);
+	for ( I = S[0]-1, R = []; I >= 0; I-- )
+		R = cons(vtol(F[I]),R);
+	return cons([1,1],R);
+}
+
+def asir_ufctrhint_heuristic(P,HINT,PP,SHIFT) {
 	V = var(P); D = deg(P,V);
 	if ( D == HINT )
 		return [[P,1]];
