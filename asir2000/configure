@@ -841,6 +841,7 @@ Optional Features:
   --enable-maintainer-mode enable make rules and dependencies not useful
                           (and sometimes confusing) to the casual installer
   --enable-shared         enable linking shared libraries.  [no]
+  --enable-gc-zeropage    enable to avoid the kernel zeropage bug.  [no]
   --enable-plot           enable plot feature. [no]
   --enable-interval       enable interval feature. [no]
   --enable-fft-float      enable FFT-FLOAT feature. [no]
@@ -1545,7 +1546,6 @@ INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
-
 
 echo "$as_me:$LINENO: checking whether to enable maintainer-specific portions of Makefiles" >&5
 echo $ECHO_N "checking whether to enable maintainer-specific portions of Makefiles... $ECHO_C" >&6
@@ -4131,6 +4131,19 @@ if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
     fi
 fi
 
+# Check whether --enable-gc-zeropage or --disable-gc-zeropage was given.
+if test "${enable_gc_zeropage+set}" = set; then
+  enableval="$enable_gc_zeropage"
+  enable_gc_zeropage=yes
+else
+  enable_gc_zeropage=no
+fi;
+
+if test "${enable_gc_zeropage:=no}" != no ; then
+    USE_GC_ZEROPAGE="yes"
+fi
+
+
 libasir_postfix=""
 
 # Check whether --with-pari or --without-pari was given.
@@ -5866,6 +5879,7 @@ s,@X_CFLAGS@,$X_CFLAGS,;t t
 s,@X_PRE_LIBS@,$X_PRE_LIBS,;t t
 s,@X_LIBS@,$X_LIBS,;t t
 s,@X_EXTRA_LIBS@,$X_EXTRA_LIBS,;t t
+s,@USE_GC_ZEROPAGE@,$USE_GC_ZEROPAGE,;t t
 s,@PARIINC@,$PARIINC,;t t
 s,@PARILIB@,$PARILIB,;t t
 s,@XPMLIB@,$XPMLIB,;t t

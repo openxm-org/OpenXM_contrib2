@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.9 2003/03/12 08:22:50 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.10 2003/03/16 18:37:55 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -39,6 +39,11 @@ umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
 libasir-gc.a: parse/gc_risa.o
+	-if [ "${USE_GC_ZEROPAGE}" = yes \
+            -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
+	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \
+	    touch ${top_srcdir}/gc/.patch_gc_zeropage_done ; \
+	fi
 	-if [ ! -f ${top_srcdir}/gc/.configure_done ]; then \
 	    (cd ${top_srcdir}/gc; ./configure --disable-threads) ; \
 	    touch ${top_srcdir}/gc/.configure_done ; \
