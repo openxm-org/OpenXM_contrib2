@@ -79,6 +79,7 @@ PARIINC = @PARIINC@
 PARILIB = @PARILIB@
 RANLIB = @RANLIB@
 USE_GC_INTERIX = @USE_GC_INTERIX@
+USE_GC_SPARC64 = @USE_GC_SPARC64@
 USE_GC_ZEROPAGE = @USE_GC_ZEROPAGE@
 VERSION = @VERSION@
 XPMLIB = @XPMLIB@
@@ -496,6 +497,11 @@ libasir-gc.a: parse/gc_risa.c
             -a ! -f ${top_srcdir}/gc/.patch_gc_interix_done ]; then \
 	    (cd ${top_srcdir}/gc; patch -p0 < ../gc_interix.diff) ; \
 	    touch ${top_srcdir}/gc/.patch_gc_interix_done ; \
+	fi
+	-if [ "${USE_GC_SPARC64}" = yes \
+            -a ! -f ${top_srcdir}/gc/.patch_gc_sparc64_done ]; then \
+	    (cd ${top_srcdir}/gc; patch -p0 < ../gc_sparc64.diff) ; \
+	    touch ${top_srcdir}/gc/.patch_gc_sparc64_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/gc/.configure_done ]; then \
 	    if [ -n "${host_alias}" ]; then \

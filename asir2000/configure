@@ -4939,7 +4939,12 @@ _ACEOF
 sparc-sun-solaris2.*)
     case "`uname -m`" in
     sun4[dm]) asm_obj="${sparc_v8_obj}" ;;
-    sun4u*)     asm_obj="${sparc_v9_obj}" ;;
+    sun4u*)     asm_obj="${sparc_v9_obj}"
+                if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
+                    CFLAGS="${CFLAGS} -m64"
+                fi
+
+                ;;
     *)          asm_obj="${generic_obj}"  ;;
     esac
     cat >>confdefs.h <<\_ACEOF
@@ -5902,6 +5907,7 @@ s,@MPILIB@,$MPILIB,;t t
 s,@LAPACKLIB@,$LAPACKLIB,;t t
 s,@libasir_postfix@,$libasir_postfix,;t t
 s,@USE_GC_INTERIX@,$USE_GC_INTERIX,;t t
+s,@USE_GC_SPARC64@,$USE_GC_SPARC64,;t t
 s,@asm_obj@,$asm_obj,;t t
 CEOF
 

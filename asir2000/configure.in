@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.18 2004/03/25 16:32:45 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.19 2004/06/25 09:37:19 noro Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -178,7 +178,12 @@ case "${host}" in
 sparc-sun-solaris2.*)
     case "`uname -m`" in
     [sun4[dm]]) asm_obj="${sparc_v8_obj}" ;;
-    sun4u*)     asm_obj="${sparc_v9_obj}" ;;
+    sun4u*)     asm_obj="${sparc_v9_obj}"
+                if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
+                    CFLAGS="${CFLAGS} -m64"
+                fi
+                AC_SUBST([USE_GC_SPARC64])
+                ;;
     *)          asm_obj="${generic_obj}"  ;;
     esac
     AC_DEFINE([SYSV])
