@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.11 2002/11/22 08:44:57 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.12 2002/11/26 07:09:45 noro Exp $ */
 
 #include "ca.h"
 
@@ -51,12 +51,13 @@ void sqfrsf(VL vl, P f, DCP *dcp)
 	DCP dc,dct;
 	Obj obj;
 	P t,s,c;
-	VL tvl,nvl;
+	VL tvl,onevl;
 
 	simp_ff((Obj)f,&obj); f = (P)obj;
 	lex_lc(f,&c); divsp(vl,f,c,&t); f = t;
 	monomialfctr(vl,f,&t,&dc); f = t;
 	clctv(vl,f,&tvl); vl = tvl;
+	NEWVL(onevl); NEXT(onevl)=0;
 	if ( !vl )
 		;
 	else if ( !NEXT(vl) ) {
@@ -65,8 +66,8 @@ void sqfrsf(VL vl, P f, DCP *dcp)
 	} else {
 		t = f;
 		for ( tvl = vl; tvl; tvl = NEXT(tvl) ) {
-			reordvar(vl,tvl->v,&nvl);
-			cont_pp_mv_sf(vl,NEXT(nvl),t,&c,&s); t = s;
+			onevl->v = tvl->v;
+			cont_pp_mv_sf(vl,onevl,t,&c,&s); t = s;
 			sqfrsf(vl,c,&dct);
 			dc = append_dc(dc,NEXT(dct));
 		}
@@ -822,13 +823,17 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,int *mev,P *up)
 	P *cu,*cv;
 	GFSN inv;
 
-	/* adjust coeffs */
+	/* check the validity of lc's and adjust coeffs */
+	/* f                -> lcu*lcv*x^(m+l)+... */
+	mulp(vl,lcu,lcv,&t); 
+	if ( !divtp(vl,t,LC(f),&m) ) {
+		*up = 0; return;
+	}
+	mulp(vl,m,f,&t); f = t;
 	/* u0 = am x^m+ ... -> lcu*x^m + a(m-1)*(lcu(mev)/am)*x^(m-1)+... */
 	/* v0 = bm x^l+ ... -> lcv*x^l + b(l-1)*(lcv(mev)/bl)*x^(l-1)+... */
-	/* f                -> lcu*lcv*x^(m+l)+... */
 	adjust_coef_sf(vl,rvl,lcu,u0,mev,&u);
 	adjust_coef_sf(vl,rvl,lcv,v0,mev,&v);
-	mulp(vl,lcu,lcv,&t); divsp(vl,t,LC(f),&m); mulp(vl,m,f,&t); f = t;
 
 	/* f <- f(X+mev), u <- u(X+mev), v <- v(X+mev) */
 	fin = f;
