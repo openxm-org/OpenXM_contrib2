@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.9 2000/01/19 06:02:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.10 2000/01/19 07:25:30 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\
@@ -16,7 +16,8 @@ install-lib::
 	-$(CP) -R $(SRCS) $(ASIR_LIBDIR)
 	$(RM) $(ASIR_LIBDIR)/help
 	$(LN) -f $(ASIR_LIBDIR)/help-eg $(ASIR_LIBDIR)/help
-#if 0
+
+install-doc::
 	$(RM) -r $(ASIR_LIBDIR)/help-jp
 	$(RM) -r $(ASIR_LIBDIR)/help-eg
 	$(RM) -r $(ASIR_LIBDIR)/html-jp
@@ -25,4 +26,3 @@ install-lib::
 	uudecode help-eg.uu ; gzip -dc help-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) help-eg.tgz
 	uudecode html-jp.uu ; gzip -dc html-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) html-jp.tgz
 	uudecode html-eg.uu ; gzip -dc html-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) html-eg.tgz
-#endif
