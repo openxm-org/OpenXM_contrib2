@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.9 2000/03/10 06:42:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.10 2000/03/16 01:07:00 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -9,7 +9,7 @@
 #endif
 
 void ox_usr1_handler();
-
+void asir_ox_init();
 
 extern jmp_buf environnement;
 
@@ -18,7 +18,10 @@ extern int ox_flushing;
 extern jmp_buf ox_env;
 extern MATHCAP my_mathcap;
 
+extern int little_endian,ox_sock_id;
+
 int ox_sock_id;
+int lib_ox_need_conv;
 
 static int asir_OperandStackSize;
 static Obj *asir_OperandStack;
@@ -646,7 +649,6 @@ static void ox_asir_init(int argc,char **argv)
 
 static void ox_io_init() {
 	unsigned char c,rc;
-	extern int little_endian,ox_sock_id;
 
 	endian_init();
 #if defined(VISUAL)
@@ -702,11 +704,13 @@ int asir_ox_pop_cmo(void *cmo, int limit)
 {
 	Obj obj;
 	int len;
+	ERR err;
 
 	obj = asir_pop_one();
 	if ( !valid_as_cmo(obj) ) {
-		fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
-		return -1;
+		asir_push_one(obj);
+		create_error(&err,0,"The object at the stack top is invalid as a CMO.");
+		obj = (Obj)err;
 	}
 	len = count_as_cmo(obj);
 	if ( len <= limit ) {
@@ -769,22 +773,20 @@ int asir_ox_peek_cmo_size()
 	int len;
 
 	obj = asir_pop_one();
+	asir_push_one(obj);
 	if ( !valid_as_cmo(obj) ) {
 		fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
 		return 0;
 	}
 	len = count_as_cmo(obj);
-	asir_push_one(obj);
 	return len;
 }
 
 /*
  * Initialization.
- * byteorder = 1 : little endian
- *             0 : big endian
+ * byteorder=0 => native
+ *          =1 => network byte order
  */
-
-void asir_ox_io_init();
 
 void asir_ox_init(int byteorder)
 {
@@ -850,26 +852,14 @@ void asir_ox_init(int byteorder)
 		fclose(ifp);
 	}
 	input_init(0,"string");
-	asir_ox_io_init(byteorder);
-	create_my_mathcap("ox_asir");
-}
 
-void asir_ox_io_init(byteorder)
-int byteorder;
-{
-	unsigned char c;
-	extern int little_endian;
-	extern int lib_ox_initialized;
-
-	endian_init();
 	asir_OperandStackSize = BUFSIZ;
 	asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));
 	asir_OperandStackPtr = -1;
-	if ( little_endian )
-		c = 1;
+	if ( little_endian && byteorder )
+		lib_ox_need_conv = 1;
 	else
-		c = 0;
-	iofp[0].conv = c == byteorder ? 0 : 1;
-	lib_ox_initialized = 1;
+		lib_ox_need_conv = 0;
 	do_message = 0;
+	create_my_mathcap("ox_asir");
 }

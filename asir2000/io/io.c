@@ -1,11 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.2 2000/01/18 05:55:07 noro Exp $ */
 #include <stdio.h>
 #include "ca.h"
 #if defined(VISUAL) || MPI
 #include "wsio.h"
 #endif
 
-extern int little_endian;
+extern int little_endian,lib_ox_need_conv;
 extern int ox_do_copy, ox_do_count, ox_count_length, ox_file_io, ox_need_conv;
 extern char *ox_copy_bptr;
 
@@ -55,27 +55,22 @@ char *s;
 	ox_copy_bptr = s;
 }
 
-void ox_obj_to_buf(p)
-Obj p;
-{
-	ox_do_copy = 1; saveobj(0,p); ox_do_copy = 0;
-}
-
-void ox_buf_to_obj(p)
-Obj *p;
-{
-	ox_do_copy = 1; loadobj(0,p); ox_do_copy = 0;
-}
+/*
+ * library mode functions
+ * byte order is controlled by lib_ox_need_conv.
+ */
 
 void ox_obj_to_buf_as_cmo(p)
 Obj p;
 {
+	ox_need_conv = lib_ox_need_conv;
 	ox_do_copy = 1; write_cmo(0,p); ox_do_copy = 0;
 }
 
 void ox_buf_to_obj_as_cmo(p)
 Obj *p;
 {
+	ox_need_conv = lib_ox_need_conv;
 	ox_do_copy = 1; read_cmo(0,p); ox_do_copy = 0;
 }
 
@@ -83,27 +78,6 @@ void ox_vl_to_buf(vl)
 VL vl;
 {
 	ox_do_copy = 1; savevl(0,vl); ox_do_copy = 0;
-}
-
-void risa_to_cmo(obj,cmo)
-Obj obj;
-void **cmo;
-{
-	int len;
-	void *buf;
-
-	len = count_as_cmo(obj);
-	*cmo = buf = (void *)MALLOC_ATOMIC(len);
-	ox_copy_init(buf);
-	ox_obj_to_buf_as_cmo(obj);
-}
-
-void cmo_to_risa(cmo,obj)
-void *cmo;
-Obj *obj;
-{
-	ox_copy_init(cmo);
-	ox_buf_to_obj_as_cmo(obj);
 }
 
 int gen_fread (ptr,size,nitems,stream)
