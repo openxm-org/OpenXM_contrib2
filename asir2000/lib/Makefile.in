@@ -93,7 +93,7 @@ install_sh = @install_sh@
 libasir_postfix = @libasir_postfix@
 
 asirdir = ${libdir}/asir
-RR = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
+RR = alpi bfct bgk const cyclic defs.h dfff dmul dmul102 fctrdata fctrtest \
           fff glib gr ifplot katsura mat nf num primdec primdec_lex \
           ratint robot solve sp sturm sym xm primdec_mod weight
 

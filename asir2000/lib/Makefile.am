@@ -1,7 +1,7 @@
-## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.8 2003/06/26 08:24:55 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.9 2003/10/21 00:52:50 noro Exp $
 
 asirdir = ${libdir}/asir
-RR      = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
+RR      = alpi bfct bgk const cyclic defs.h dfff dmul dmul102 fctrdata fctrtest \
           fff glib gr ifplot katsura mat nf num primdec primdec_lex \
           ratint robot solve sp sturm sym xm primdec_mod weight
 
