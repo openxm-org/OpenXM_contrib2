@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.4 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.5 2000/08/22 05:03:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -88,8 +88,10 @@ struct ftab file_tab[] = {
 	{"bsave",Pbsave,2},
 	{"bload",Pbload,1},
 	{"get_rootdir",Pget_rootdir,0},
+#if defined(VISUAL) && defined(DES_ENC)
 	{"bsave_enc",Pbsave_enc,2},
 	{"bload_enc",Pbload_enc,1},
+#endif
 	{"bload27",Pbload27,1},
 	{"bsave_compat",Pbsave_compat,2},
 	{"bload_compat",Pbload_compat,1},
@@ -416,6 +418,7 @@ STRING *rp;
 	*rp = &rootdir;
 }
 
+#if defined(VISUAL) && defined(DES_ENC)
 void Pbsave_enc(arg,rp)
 NODE arg;
 Obj *rp;
@@ -435,6 +438,7 @@ Obj *rp;
 	Pbload(arg,rp);
 	des_encryption = 0;
 }
+#endif
 
 void Pbload27(arg,rp)
 NODE arg;

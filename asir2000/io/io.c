@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.5 2000/08/22 05:04:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.6 2000/08/25 07:59:24 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -215,6 +215,7 @@ unsigned int *p;
 		gen_fwrite(p,sizeof(unsigned int),1,f);
 }
 
+#if defined(VISUAL) && defined(DES_ENC)
 int des_encryption;
 static unsigned char asir_deskey[8] = {0xc7,0xe0,0xfc,0xb5,0xc3,0xad,0x8e,0x3a};
 static unsigned char deskey_string[96];
@@ -228,6 +229,7 @@ void init_deskey()
 		deskey_initialized = 1;
 	}
 }
+#endif
 
 void write_intarray(f,p,l)
 FILE *f;
