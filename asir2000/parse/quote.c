@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.7 2004/03/03 09:25:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.8 2004/03/04 01:41:32 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -277,21 +277,17 @@ void mptoquote(MP m,int n,QUOTE *r,int *sgn)
 		s = u;
 	}
 	dl = m->dl;
-	if ( !dl->td )
-		*r = s;	
-	else {
-		for ( i = n-1, t = 0; i >= 0; i-- ) {
-			STOQ(dl->d[i],q);
-			f = mkfnode(1,I_FORMULA,q);
-			MKNODE(t1,f,t);
-			t = t1;
-		}
-		MKQUOTE(u,mkfnode(1,I_EV,t));
-		if ( UNIQ(c) )
-			*r = u;
-		else
-			mulquote(CO,s,u,r);
+	for ( i = n-1, t = 0; i >= 0; i-- ) {
+		STOQ(dl->d[i],q);
+		f = mkfnode(1,I_FORMULA,q);
+		MKNODE(t1,f,t);
+		t = t1;
 	}
+	MKQUOTE(u,mkfnode(1,I_EV,t));
+	if ( UNIQ(c) )
+		*r = u;
+	else
+		mulquote(CO,s,u,r);
 }
 
 void vartoquote(V v,QUOTE *c)

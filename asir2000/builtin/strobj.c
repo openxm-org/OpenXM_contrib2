@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.14 2004/03/03 09:25:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.15 2004/03/04 01:41:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,11 +69,13 @@ void Pclear_tb();
 void Pstring_to_tb();
 void Pquotetotex_tb();
 void Pquotetotex();
+void Ptrim_tb();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
+void dp_trim_tb(TB tb);
 
 struct ftab str_tab[] = {
 	{"rtostr",Prtostr,1},
@@ -88,6 +90,7 @@ struct ftab str_tab[] = {
 	{"clear_tb",Pclear_tb,1},
 	{"tb_to_string",Ptb_to_string,1},
 	{"string_to_tb",Pstring_to_tb,1},
+	{"trim_tb",Ptrim_tb,2},
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
 	{0,0,0},
@@ -103,12 +106,71 @@ void write_tb(char *s,TB tb)
 	tb->next++;
 }
 
+void dp_trim_tb(TB tb)
+{
+	int i,j,l,onei,onej;
+	char *p;
+
+	if ( !tb->next ) return;
+	/* number    1 =>  number */
+	onei = -1; onej = -1;
+	for ( i = tb->next-1; i >= 0; i-- ) {
+		p = tb->body[i];
+		l = strlen(p);
+		if ( onei < 0 ) {
+			for ( j = l-1; j >= 0 && isspace(p[j]); j-- );
+			if ( j < 0 ) continue;
+			if ( p[j] != '1' ) return;
+			/* we found 1 */
+			onei = i; onej = j; j--;
+		} else
+			j = l-1;
+		/* we search the previous non-space character */
+		for ( ; j >= 0 && isspace(p[j]); j-- );
+		if ( j < 0 ) continue;
+		if ( p[j] == '+' || p[j] == '-' ) return;
+		else break;
+	}
+	if ( i < 0 ) return;
+	/* the previous character is a number */
+	l = strlen(tb->body[onei]);
+	p = (char *)MALLOC_ATOMIC(l+1);
+	strcpy(p,tb->body[onei]);
+	p[onej] = ' ';
+	tb->body[onei] = p;
+}
+
+void Ptrim_tb(NODE arg,Q *rp)
+{
+	asir_assert(ARG0(arg),O_TB,"trim_tb");
+	if ( !INT(ARG1(arg)) ) error("trim_tb : invalid argument");
+	switch ( QTOS((Q)ARG1(arg)) ) {
+		case O_DP:
+			dp_trim_tb((TB)ARG0(arg));
+			break;
+		default:
+			break;
+	}
+	*rp = 0;
+}
+
 void Pwrite_to_tb(NODE arg,Q *rp)
 {
 	int i;
+	Obj obj;
+	TB tb;
 
 	asir_assert(ARG1(arg),O_TB,"write_to_tb");
-	write_tb(BDY((STRING)ARG0(arg)),ARG1(arg));
+	obj = ARG0(arg);
+	if ( !obj )
+		write_tb("",ARG1(arg));
+	else if ( OID(obj) == O_STR )
+		write_tb(BDY((STRING)obj),ARG1(arg));
+	else if ( OID(obj) == O_TB ) {
+		tb = (TB)obj;
+		for ( i = 0; i < tb->next; i++ )
+			write_tb(tb->body[i],ARG1(arg));
+	}
 	*rp = 0;	
 }
 
@@ -182,12 +244,20 @@ void Pstr_len(arg,rp)
 NODE arg;
 Q *rp;
 {
-	STRING str;
-	int r;
+	Obj obj;
+	TB tb;
+	int r,i;
 
-	str = (STRING)ARG0(arg);
-	asir_assert(str,O_STR,"str_chr");
-	r = strlen(BDY(str));
+	obj = (Obj)ARG0(arg);
+	if ( !obj || (OID(obj) != O_STR && OID(obj) != O_TB) ) 
+		error("str_len : invalid argument");
+	if ( OID(obj) == O_STR)
+		r = strlen(BDY((STRING)obj));
+	else if ( OID(obj) == O_TB ) {
+		tb = (TB)obj;
+		for ( r = i = 0; i < tb->next; i++ )
+			r += strlen(tb->body[i]);
+	}
 	STOQ(r,*rp);
 }
 
