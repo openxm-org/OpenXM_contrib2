@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.11 2002/08/02 02:57:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.12 2002/08/02 08:59:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -182,8 +182,9 @@ int polarplot(NODE arg)
 	else
 		can->wname = "";
 	can->formula = formula; 
-	create_canvas(can);
 	polarplotcalc(can);
+	/* xmax, xmin etc are determined after calc */
+	create_canvas(can);
 	plot_print(display,can);
 	copy_to_canvas(can);
 	return id;
