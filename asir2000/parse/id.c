@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/id.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/id.c,v 1.2 2000/01/20 02:29:12 noro Exp $ */
 #include <stdio.h>
 
 static table1(),namemain(),host(),cgen(),instruction();
@@ -147,17 +147,13 @@ static instruction()
 
 	host(&id);
 	fprintf(stderr,
-"\nYou need a key for each machine on which you want to run Asir.
-In order to get the key, send an e-mail consisting of the following
-single line to risa@sec.flab.fujitsu.co.jp.
-
-ASIR %08x
-
-After a while, an e-mail will be returned containing only one line like
-
-YYYYYYYY YYYYYYYY YYYYYYYY
-
-Create '%s/asir_key'
+"\nYou need a key for each machine on which you want to run Asir.\n\
+In order to get the key, send an e-mail consisting of the following\n\
+single line to risa@sec.flab.fujitsu.co.jp.\n\n\
+ASIR %08x\n\n\
+After a while, an e-mail will be returned containing only one line like\n\n\
+YYYYYYYY YYYYYYYY YYYYYYYY\n\n\
+Create '%s/asir_key'\n\
 if necessary and append the returned string to the file.\n",
 id,asir_libdir,asir_libdir);
 	ExitAsir();
