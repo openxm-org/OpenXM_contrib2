@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.14 2000/06/07 03:00:21 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.15 2000/08/22 01:30:26 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
@@ -25,9 +25,5 @@ install-lib::
 install-doc::
 	$(RM) -r $(ASIR_LIBDIR)/help-jp
 	$(RM) -r $(ASIR_LIBDIR)/help-eg
-	$(RM) -r $(ASIR_LIBDIR)/html-jp
-	$(RM) -r $(ASIR_LIBDIR)/html-eg
 	uudecode help-jp.uu ; gzip -dc help-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) help-jp.tgz
 	uudecode help-eg.uu ; gzip -dc help-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) help-eg.tgz
-	uudecode html-jp.uu ; gzip -dc html-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) html-jp.tgz
-	uudecode html-eg.uu ; gzip -dc html-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) html-eg.tgz
