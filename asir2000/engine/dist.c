@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.22 2003/01/04 09:06:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.23 2003/05/28 07:32:32 noro Exp $ 
 */
 #include "ca.h"
 
@@ -74,6 +74,11 @@ int do_weyl;
 int dp_nelim,dp_fcoeffs;
 struct order_spec dp_current_spec;
 int *dp_dl_work;
+
+void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr);
+void comm_quod(VL vl,DP p1,DP p2,DP *pr);
+void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr);
+void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr);
 
 int has_sfcoef(DP f)
 {
@@ -601,6 +606,85 @@ void comm_muld(VL vl,DP p1,DP p2,DP *pr)
 	}
 }
 
+/* discard terms which is not a multiple of dl */
+
+void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr)
+{
+	MP m;
+	DP s,t,u;
+	int i,l,l1;
+	static MP *w;
+	static int wlen;
+
+	if ( !p1 || !p2 )
+		*pr = 0;
+	else if ( OID(p1) <= O_P )
+		muldc_trunc(vl,p2,(P)p1,dl,pr);
+	else if ( OID(p2) <= O_P )
+		muldc_trunc(vl,p1,(P)p2,dl,pr);
+	else {
+		for ( m = BDY(p1), l1 = 0; m; m = NEXT(m), l1++ );
+		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
+		if ( l1 < l ) {
+			t = p1; p1 = p2; p2 = t;
+			l = l1;
+		}
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
+		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		for ( s = 0, i = l-1; i >= 0; i-- ) {
+			muldm_trunc(vl,p1,w[i],dl,&t); addd(vl,s,t,&u); s = u;
+		}
+		bzero(w,l*sizeof(MP));
+		*pr = s;
+	}
+}
+
+void comm_quod(VL vl,DP p1,DP p2,DP *pr)
+{
+	MP m,m0;
+	DP s,t;
+	int i,n,sugar;
+	DL d1,d2,d;
+	Q a,b;
+
+	if ( !p2 )
+		error("comm_quod : invalid input");
+	if ( !p1 )
+		*pr = 0;
+	else {
+		n = NV(p1);
+		d2 = BDY(p2)->dl;
+		m0 = 0;
+		sugar = p1->sugar;
+		while ( p1 ) {
+			d1 = BDY(p1)->dl;
+			NEWDL(d,n);
+			d->td = d1->td - d2->td;
+			for ( i = 0; i < n; i++ )
+				d->d[i] = d1->d[i]-d2->d[i];
+			NEXTMP(m0,m);
+			m->dl = d;
+			divq((Q)BDY(p1)->c,(Q)BDY(p2)->c,&a); chsgnq(a,&b);
+			C(m) = (P)b;
+			muldm_trunc(vl,p2,m,d2,&t);
+			addd(vl,p1,t,&s); p1 = s;
+			C(m) = (P)a;
+		}
+		if ( m0 ) {
+			NEXT(m) = 0; MKDP(n,m0,*pr);
+		} else
+			*pr = 0;
+		/* XXX */
+		if ( *pr )
+			(*pr)->sugar = sugar - d2->td;
+	}
+}
+
 void muldm(VL vl,DP p,MP m0,DP *pr)
 {
 	MP m,mr,mr0;
@@ -621,6 +705,43 @@ void muldm(VL vl,DP p,MP m0,DP *pr)
 			adddl(n,m->dl,d,&mr->dl);
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = p->sugar + m0->dl->td;
+	}
+}
+
+void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr)
+{
+	MP m,mr,mr0;
+	P c;
+	DL d,tdl;
+	int n,i;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		n = NV(p);
+		NEWDL(tdl,n);
+		for ( mr0 = 0, m = BDY(p), c = C(m0), d = m0->dl; 
+			m; m = NEXT(m) ) {
+			_adddl(n,m->dl,d,tdl);
+			for ( i = 0; i < n; i++ )
+				if ( tdl->d[i] < dl->d[i] )
+					break;
+			if ( i < n )
+				continue;
+			NEXTMP(mr0,mr);
+			mr->dl = tdl;
+			NEWDL(tdl,n);
+			if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) )
+				mulq((Q)C(m),(Q)c,(Q *)&C(mr));
+			else
+				mulp(vl,C(m),c,&C(mr));
+		}
+		if ( mr0 ) {
+			NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
+		} else
+			*pr = 0;
 		if ( *pr )
 			(*pr)->sugar = p->sugar + m0->dl->td;
 	}
@@ -864,6 +985,35 @@ void muldc(VL vl,DP p,P c,DP *pr)
 		if ( *pr )
 			(*pr)->sugar = p->sugar;
 	}
+}
+
+void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr)
+{
+	MP m,mr,mr0;
+	DL mdl;
+	int i,n;
+
+	if ( !p || !c ) {
+		*pr = 0; return;
+	}
+	n = NV(p);
+	for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+		mdl = m->dl;
+		for ( i = 0; i < n; i++ )
+			if ( mdl->d[i] < dl->d[i] )
+				break;
+		if ( i < n )
+			break;
+		NEXTMP(mr0,mr);
+		if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) )
+			mulq((Q)C(m),(Q)c,(Q *)&C(mr));
+		else
+			mulp(vl,C(m),c,&C(mr));
+		mr->dl = m->dl;
+	}
+	NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
+	if ( *pr )
+		(*pr)->sugar = p->sugar;
 }
 
 void divsdc(VL vl,DP p,P c,DP *pr)

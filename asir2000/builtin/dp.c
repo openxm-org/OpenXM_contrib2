@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.30 2003/04/25 01:31:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.31 2003/04/25 04:25:08 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -58,6 +58,7 @@ extern struct order_spec dp_current_spec;
 
 int do_weyl;
 
+void Pdp_mul_trunc(),Pdp_quo();
 void Pdp_ord(), Pdp_ptod(), Pdp_dtop();
 void Pdp_ptozp(), Pdp_ptozp2(), Pdp_red(), Pdp_red2(), Pdp_lcm(), Pdp_redble();
 void Pdp_sp(), Pdp_hm(), Pdp_ht(), Pdp_hc(), Pdp_rest(), Pdp_td(), Pdp_sugar();
@@ -100,6 +101,10 @@ struct ftab dp_tab[] = {
 	{"dp_cont",Pdp_cont,1},
 
 /* polynomial ring */
+	/* special operations */
+	{"dp_mul_trunc",Pdp_mul_trunc,3},
+	{"dp_quo",Pdp_quo,2},
+
 	/* s-poly */
 	{"dp_sp",Pdp_sp,2},
 	{"dp_sp_mod",Pdp_sp_mod,3},
@@ -824,6 +829,31 @@ DP *rp;
 	dp_subd(p1,p2,rp);
 }
 
+void Pdp_mul_trunc(arg,rp)
+NODE arg;
+DP *rp;
+{
+	DP p1,p2,p;
+
+	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg); p = (DP)ARG2(arg);
+	asir_assert(p1,O_DP,"dp_mul_trunc");
+	asir_assert(p2,O_DP,"dp_mul_trunc");
+	asir_assert(p,O_DP,"dp_mul_trunc");
+	comm_muld_trunc(CO,p1,p2,BDY(p)->dl,rp);
+}
+
+void Pdp_quo(arg,rp)
+NODE arg;
+DP *rp;
+{
+	DP p1,p2;
+
+	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
+	asir_assert(p1,O_DP,"dp_quo");
+	asir_assert(p2,O_DP,"dp_quo");
+	comm_quod(CO,p1,p2,rp);
+}
+
 void Pdp_weyl_mul(arg,rp)
 NODE arg;
 DP *rp;
@@ -831,7 +861,7 @@ DP *rp;
 	DP p1,p2;
 
 	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
-	asir_assert(p1,O_DP,"dp_weyl_mul"); asir_assert(p2,O_DP,"dp_mul");
+	asir_assert(p1,O_DP,"dp_weyl_mul"); asir_assert(p2,O_DP,"dp_weyl_mul");
 	do_weyl = 1;
 	muld(CO,p1,p2,rp);
 	do_weyl = 0;

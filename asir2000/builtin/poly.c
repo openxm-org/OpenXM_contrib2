@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.17 2002/09/27 04:42:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.18 2003/01/16 00:33:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,7 @@
 
 void Pranp();
 
+void Pmul_trunc();
 void Pumul(),Pumul_ff(),Pusquare(),Pusquare_ff(),Putmul(),Putmul_ff();
 void Pkmul(),Pksquare(),Pktmul();
 void Pord(), Pcoef0(), Pcoef(), Pdeg(), Pmindeg(), Psetmod();
@@ -111,6 +112,7 @@ void field_order_ff(N *);
 int current_ff;
 
 struct ftab poly_tab[] = {
+	{"mul_trunc",Pmul_trunc,3},
 	{"homogeneous_deg",Phomogeneous_deg,-2},
 	{"homogeneous_part",Phomogeneous_part,-3},
 	{"reorder",Preorder,3},
@@ -222,6 +224,33 @@ struct ftab poly_tab[] = {
 	{"get_next_fft_prime",Pget_next_fft_prime,2},
 	{0,0,0},
 };
+
+void Pmul_trunc(NODE arg,P *rp)
+{
+	P p1,p2,p,h;
+	VL vl0,vl1,vl2,tvl,vl;
+	VN vn;
+	int i,n;
+
+	p1 = (P)ARG0(arg);
+	p2 = (P)ARG1(arg);
+	get_vars((Obj)p1,&vl1); get_vars((Obj)p2,&vl2); mergev(CO,vl1,vl2,&tvl);
+	p = (P)ARG2(arg);
+	get_vars((Obj)p,&vl0); mergev(CO,tvl,vl0,&vl);
+	for ( tvl = vl, n = 0; tvl; tvl = NEXT(tvl), n++ );
+	vn = (VN) ALLOCA((n+1)*sizeof(struct oVN));
+	for ( i = 0, tvl = vl; i < n; tvl = NEXT(tvl), i++ ) {
+		vn[i].v = tvl->v;
+		vn[i].n = 0;
+	}
+	vn[i].v = 0;
+	vn[i].n = 0;
+	for ( h = p, i = 0; OID(h) == O_P; h = COEF(DC(h)) ) {
+		for ( ; vn[i].v != VR(h); i++ );
+		vn[i].n = QTOS(DEG(DC(h)));
+	}
+	mulp_trunc(vl,p1,p2,vn,rp);
+}
 
 void Phomogeneous_part(NODE arg,P *rp)
 {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.4 2000/12/05 01:24:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.5 2001/06/15 07:56:03 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -567,6 +567,134 @@ Q *d;
 				m = m1;
 		}
 		*d = m;
+	}
+}
+
+void mulpc_trunc(VL vl,P p,P c,VN vn,P *pr);
+void mulpq_trunc(P p,Q q,VN vn,P *pr);
+void mulp_trunc(VL vl,P p1,P p2,VN vn,P *pr);
+
+void mulp_trunc(VL vl,P p1,P p2,VN vn,P *pr)
+{
+	register DCP dc,dct,dcr,dcr0;
+	V v1,v2;
+	P t,s,u;
+	int n1,n2,i,d,d1;
+
+	if ( !p1 || !p2 ) *pr = 0;
+	else if ( NUM(p1) ) 
+		mulpq_trunc(p2,(Q)p1,vn,pr);
+	else if ( NUM(p2) )
+		mulpq_trunc(p1,(Q)p2,vn,pr);
+	else if ( ( v1 = VR(p1) ) ==  ( v2 = VR(p2) ) ) {
+		for ( ; vn->v && vn->v != v1; vn++ )
+			if ( vn->n ) {
+				/* p1,p2 do not contain vn->v */
+				*pr = 0;
+				return;
+			}
+		if ( !vn->v )
+			error("mulp_trunc : invalid vn");
+		d = vn->n;
+		for ( dc = DC(p2), s = 0; dc; dc = NEXT(dc) ) {
+			for ( dcr0 = 0, dct = DC(p1); dct; dct = NEXT(dct) ) {
+				d1 = QTOS(DEG(dct))+QTOS(DEG(dc));
+				if ( d1 >= d ) {
+					mulp_trunc(vl,COEF(dct),COEF(dc),vn+1,&t);
+					if ( t ) {
+						NEXTDC(dcr0,dcr);
+						STOQ(d1,DEG(dcr));
+						COEF(dcr) = t;
+					}
+				}
+			}
+			if ( dcr0 ) {
+				NEXT(dcr) = 0; MKP(v1,dcr0,t);
+				addp(vl,s,t,&u); s = u; t = u = 0;
+			}
+		}
+		*pr = s;
+	} else {
+		while ( v1 != VR(vl) && v2 != VR(vl) ) 
+			vl = NEXT(vl);
+		if ( v1 == VR(vl) ) 
+			mulpc_trunc(vl,p1,p2,vn,pr);
+		else 
+			mulpc_trunc(vl,p2,p1,vn,pr);
+	}
+}
+
+void mulpq_trunc(P p,Q q,VN vn,P *pr)
+{
+	DCP dc,dcr,dcr0;
+	P t;
+	int i,d;
+	V v;
+
+	if (!p || !q)
+		*pr = 0;
+	else if ( NUM(p) ) {
+		for ( ; vn->v; vn++ )
+			if ( vn->n ) {
+				*pr = 0;
+				return;
+			}
+		MULNUM(p,q,pr);
+	} else {
+		v = VR(p);
+		for ( ; vn->v && vn->v != v; vn++ ) {
+			if ( vn->n ) {
+				/* p does not contain vn->v */
+				*pr = 0;
+				return;
+			}
+		}
+		if ( !vn->v )
+			error("mulpq_trunc : invalid vn");
+		d = vn->n;
+		for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
+			mulpq_trunc(COEF(dc),q,vn+1,&t);
+			if ( t ) {
+				NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
+			}
+		}
+		if ( dcr0 ) {
+			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+		} else
+			*pr = 0;
+	}
+}
+
+void mulpc_trunc(VL vl,P p,P c,VN vn,P *pr)
+{
+	DCP dc,dcr,dcr0;
+	P t;
+	V v;
+	int i,d;
+
+	if ( NUM(c) ) 
+		mulpq_trunc(p,(Q)c,vn,pr);
+	else {
+		v = VR(p);
+		for ( ; vn->v && vn->v != v; vn++ )
+			if ( vn->n ) {
+				/* p,c do not contain vn->v */
+				*pr = 0;
+				return;
+			}
+		if ( !vn->v )
+			error("mulpc_trunc : invalid vn");
+		d = vn->n;
+		for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
+			mulp_trunc(vl,COEF(dc),c,vn+1,&t);
+			if ( t ) {
+				NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
+			}
+		}
+		if ( dcr0 ) {
+			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+		} else
+			*pr = 0;
 	}
 }
 #endif
