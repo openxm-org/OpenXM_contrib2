@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.34 2003/08/20 06:06:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.35 2003/08/20 07:04:31 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -372,7 +372,7 @@ void ndl_dehomogenize(unsigned int *d)
 			h = (d[1]>>((nd_epw-1)*nd_bpe))&nd_mask0;
 			for ( i = 1; i <= nd_wpd; i++ )
 				d[i] = ((d[i]<<nd_bpe)&mask)
-					|(i+1<nd_wpd?((d[i+1]>>((nd_epw-1)*nd_bpe))&nd_mask0):0);
+					|(i+1<=nd_wpd?((d[i+1]>>((nd_epw-1)*nd_bpe))&nd_mask0):0);
 			TD(d) -= h;
 		}
 	} else 
@@ -505,12 +505,11 @@ INLINE void ndl_copy(unsigned int *d1,unsigned int *d2)
 	}
 }
 
-/* XXX : TD is not added */
-
 INLINE void ndl_add(unsigned int *d1,unsigned int *d2,unsigned int *d)
 {
 	int i;
 
+	TD(d) = TD(d1)+TD(d2);
 	switch ( nd_wpd ) {
 		case 1:
 			d[1] = d1[1]+d2[1];
@@ -2706,7 +2705,6 @@ ND ndv_mul_nm(int mod,NDV p,NM m0)
 				c1 = CM(m);
 				DMAR(c1,c,0,mod,c2);
 				CM(mr) = c2;
-				TD(DL(mr)) = TD(DL(m))+td;
 				ndl_add(DL(m),d,DL(mr));
 			}
 		} else {
@@ -2714,7 +2712,6 @@ ND ndv_mul_nm(int mod,NDV p,NM m0)
 			for ( i = 0; i < len; i++, NMV_ADV(m) ) {
 				NEXTNM(mr0,mr);
 				mulq(CQ(m),q,&CQ(mr));
-				TD(DL(mr)) = TD(DL(m))+td;
 				ndl_add(DL(m),d,DL(mr));
 			}
 		}
