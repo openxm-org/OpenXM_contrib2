@@ -1,4 +1,4 @@
-/* OpenXM */
+/* $OpenXM$ */
 
 #include "ca.h"
 #include "base.h"
