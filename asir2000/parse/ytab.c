@@ -222,12 +222,12 @@ static const short yyrline[] =
      177,   183,   185,   187,   190,   192,   195,   197,   200,   203,
      205,   208,   210,   213,   215,   218,   220,   223,   225,   228,
      230,   233,   235,   238,   240,   243,   246,   248,   250,   252,
-     254,   256,   258,   285,   292,   299,   305,   311,   316,   320,
-     324,   328,   335,   342,   346,   348,   350,   352,   365,   375,
-     378,   380,   382,   384,   386,   388,   390,   392,   394,   396,
-     398,   400,   402,   404,   406,   408,   410,   412,   414,   416,
-     418,   420,   422,   424,   426,   428,   430,   432,   434,   436,
-     438
+     254,   256,   258,   279,   286,   293,   299,   305,   310,   314,
+     318,   322,   329,   336,   340,   342,   344,   346,   359,   369,
+     372,   374,   376,   378,   380,   382,   384,   386,   388,   390,
+     392,   394,   396,   398,   400,   402,   404,   406,   408,   410,
+     412,   414,   416,   418,   420,   422,   424,   426,   428,   430,
+     432
 };
 #endif
 
@@ -1599,13 +1599,7 @@ case 62:
 					if ( f )
 						yyval.f = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,0));
 					else {
-						searchf(sysf,yyvsp[0].p,&f); 
-						if ( !f )
-							searchf(ubinf,yyvsp[0].p,&f);
-						if ( !f )
-							searchpf(yyvsp[0].p,&f);
-						if ( !f )
-							searchf(usrf,yyvsp[0].p,&f);
+						gen_searchf(yyvsp[0].p,(FUNC *)&f);
 						if ( f )
 							makesrvar(f,(P *)&val);
 						else
@@ -1616,7 +1610,7 @@ case 62:
 			}
     break;
 case 63:
-#line 286 "parse.y"
+#line 280 "parse.y"
 {
 				gen_searchf(yyvsp[-3].p,(FUNC *)&val);
 				print_crossref(val);
@@ -1624,7 +1618,7 @@ case 63:
 			}
     break;
 case 64:
-#line 293 "parse.y"
+#line 287 "parse.y"
 {
 				gen_searchf(yyvsp[-5].p,(FUNC *)&val);
 				print_crossref(val);
@@ -1633,7 +1627,7 @@ case 64:
 			}
     break;
 case 65:
-#line 300 "parse.y"
+#line 294 "parse.y"
 {
 				gen_searchf(yyvsp[-3].p,(FUNC *)&val);
 				print_crossref(val);
@@ -1641,7 +1635,7 @@ case 65:
 			}
     break;
 case 66:
-#line 306 "parse.y"
+#line 300 "parse.y"
 {
 				gen_searchf(yyvsp[-3].p,(FUNC *)&val);
 				print_crossref(val);
@@ -1649,32 +1643,32 @@ case 66:
 			}
     break;
 case 67:
-#line 312 "parse.y"
+#line 306 "parse.y"
 {
 				searchpf(yyvsp[-6].p,(FUNC *)&val);
 				yyval.f = mkfnode(2,I_PFDERIV,val,mkfnode(1,I_LIST,yyvsp[-1].n),mkfnode(1,I_LIST,yyvsp[-4].n));
 			}
     break;
 case 68:
-#line 317 "parse.y"
+#line 311 "parse.y"
 {
 				yyval.f = mkfnode(2,I_GETOPT,yyvsp[-1].p);
 			}
     break;
 case 69:
-#line 321 "parse.y"
+#line 315 "parse.y"
 {
 				yyval.f = mkfnode(2,I_GETOPT,0);
 			}
     break;
 case 70:
-#line 325 "parse.y"
+#line 319 "parse.y"
 {
 				yyval.f = mkfnode(3,I_TIMER,yyvsp[-5].f,yyvsp[-3].f,yyvsp[-1].f);
 			}
     break;
 case 71:
-#line 329 "parse.y"
+#line 323 "parse.y"
 {
 				searchf(parif,yyvsp[-1].p,(FUNC *)&val);
 				if ( !val )
@@ -1683,7 +1677,7 @@ case 71:
 			}
     break;
 case 72:
-#line 336 "parse.y"
+#line 330 "parse.y"
 {
 				searchf(parif,yyvsp[-3].p,(FUNC *)&val);
 				if ( !val )
@@ -1692,25 +1686,25 @@ case 72:
 			}
     break;
 case 73:
-#line 343 "parse.y"
+#line 337 "parse.y"
 {
 				yyval.f = mkfnode(2,I_IFUNC,yyvsp[-4].f,mkfnode(1,I_LIST,yyvsp[-1].n));
 			}
     break;
 case 74:
-#line 347 "parse.y"
+#line 341 "parse.y"
 { yyval.f = mkfnode(1,I_CAR,yyvsp[-1].f); }
     break;
 case 75:
-#line 349 "parse.y"
+#line 343 "parse.y"
 { yyval.f = mkfnode(1,I_CDR,yyvsp[-1].f); }
     break;
 case 76:
-#line 351 "parse.y"
+#line 345 "parse.y"
 { yyval.f = mkfnode(1,I_PAREN,yyvsp[-1].f); }
     break;
 case 77:
-#line 353 "parse.y"
+#line 347 "parse.y"
 { 
 				if ( main_parser || allow_create_var )
 					yyval.f = mkfnode(2,I_PVAR,makepvar(yyvsp[0].p),0);
@@ -1725,7 +1719,7 @@ case 77:
 			}
     break;
 case 78:
-#line 366 "parse.y"
+#line 360 "parse.y"
 {
 				if ( yyvsp[-3].f->id == I_PVAR || yyvsp[-3].f->id == I_INDEX ) {
 					appendtonode((NODE)yyvsp[-3].f->arg[1],(pointer)yyvsp[-1].f,&a);
@@ -1737,131 +1731,131 @@ case 78:
 			}
     break;
 case 79:
-#line 376 "parse.y"
+#line 370 "parse.y"
 { yyval.f = mkfnode(2,I_POINT,yyvsp[-2].f,yyvsp[0].p); }
     break;
 case 80:
-#line 379 "parse.y"
+#line 373 "parse.y"
 { yyval.f = yyvsp[0].f; }
     break;
 case 81:
-#line 381 "parse.y"
+#line 375 "parse.y"
 { yyval.f = mkfnode(3,I_CAST,structtoindex(yyvsp[-2].p),yyvsp[0].f,0); }
     break;
 case 82:
-#line 383 "parse.y"
+#line 377 "parse.y"
 { yyval.f = mkfnode(2,I_ASSPVAR,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 83:
-#line 385 "parse.y"
+#line 379 "parse.y"
 { yyval.f = mkfnode(2,I_ASSPVAR,yyvsp[-2].f,mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f)); }
     break;
 case 84:
-#line 387 "parse.y"
+#line 381 "parse.y"
 { yyval.f = mkfnode(2,I_POSTSELF,yyvsp[0].p,yyvsp[-1].f); }
     break;
 case 85:
-#line 389 "parse.y"
+#line 383 "parse.y"
 { yyval.f = mkfnode(2,I_PRESELF,yyvsp[-1].p,yyvsp[0].f); }
     break;
 case 86:
-#line 391 "parse.y"
+#line 385 "parse.y"
 { yyval.f = mkfnode(1,I_LIST,yyvsp[-1].n); }
     break;
 case 87:
-#line 393 "parse.y"
+#line 387 "parse.y"
 { yyval.f = yyvsp[0].f; }
     break;
 case 88:
-#line 395 "parse.y"
+#line 389 "parse.y"
 { yyval.f = mkfnode(1,I_MINUS,yyvsp[0].f); }
     break;
 case 89:
-#line 397 "parse.y"
+#line 391 "parse.y"
 { yyval.f = mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 90:
-#line 399 "parse.y"
+#line 393 "parse.y"
 { yyval.f = mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 91:
-#line 401 "parse.y"
+#line 395 "parse.y"
 { yyval.f = mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 92:
-#line 403 "parse.y"
+#line 397 "parse.y"
 { yyval.f = mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 93:
-#line 405 "parse.y"
+#line 399 "parse.y"
 { yyval.f = mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 94:
-#line 407 "parse.y"
+#line 401 "parse.y"
 { yyval.f = mkfnode(3,I_BOP,yyvsp[-1].p,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 95:
-#line 409 "parse.y"
+#line 403 "parse.y"
 { yyval.f = mkfnode(3,I_COP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 96:
-#line 411 "parse.y"
+#line 405 "parse.y"
 { yyval.f = mkfnode(1,I_NOT,yyvsp[0].f); }
     break;
 case 97:
-#line 413 "parse.y"
+#line 407 "parse.y"
 { yyval.f = mkfnode(2,I_OR,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 98:
-#line 415 "parse.y"
+#line 409 "parse.y"
 { yyval.f = mkfnode(2,I_AND,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 99:
-#line 417 "parse.y"
+#line 411 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[0].f,0); }
     break;
 case 100:
-#line 419 "parse.y"
+#line 413 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 101:
-#line 421 "parse.y"
+#line 415 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 102:
-#line 423 "parse.y"
+#line 417 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 103:
-#line 425 "parse.y"
+#line 419 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 104:
-#line 427 "parse.y"
+#line 421 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 105:
-#line 429 "parse.y"
+#line 423 "parse.y"
 { yyval.f = mkfnode(3,I_LOP,yyvsp[-1].i,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 106:
-#line 431 "parse.y"
+#line 425 "parse.y"
 { yyval.f = mkfnode(3,I_CE,yyvsp[-4].f,yyvsp[-2].f,yyvsp[0].f); }
     break;
 case 107:
-#line 433 "parse.y"
+#line 427 "parse.y"
 { yyval.f = mkfnode(1,I_EV,yyvsp[-1].n); }
     break;
 case 108:
-#line 435 "parse.y"
+#line 429 "parse.y"
 { yyval.f = mkfnode(1,I_NEWCOMP,(int)structtoindex(yyvsp[-1].p)); }
     break;
 case 109:
-#line 437 "parse.y"
+#line 431 "parse.y"
 { MKQUOTE(quote,yyvsp[-1].f); yyval.f = mkfnode(1,I_FORMULA,(pointer)quote); }
     break;
 case 110:
-#line 439 "parse.y"
+#line 433 "parse.y"
 { MKQUOTE(quote,yyvsp[0].f); yyval.f = mkfnode(1,I_FORMULA,(pointer)quote); }
     break;
 }
@@ -2097,5 +2091,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 441 "parse.y"
+#line 435 "parse.y"
 
