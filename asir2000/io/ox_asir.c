@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.2 1999/12/22 07:01:39 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.3 2000/01/18 05:55:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -549,6 +549,8 @@ static void ox_asir_init(int argc,char **argv)
 	char *getenv();
 	static ox_asir_initialized = 0;
 	FILE *ifp;
+	char *homedir;
+	char *ptr;
 
 #if !defined(VISUAL) && !MPI
 	do_server_in_X11 = 1; /* XXX */
@@ -587,11 +589,23 @@ static void ox_asir_init(int argc,char **argv)
 #if defined(UINIT)
 	reg_sysf();
 #endif
+/* if ASIR_CONFIG is set, execute it; else execute .asirrc */
+	if ( ptr = getenv("ASIR_CONFIG") )
+		strcpy(ifname,ptr);
+	else {
 #if defined(THINK_C)
-	sprintf(ifname,"asirrc");
+		sprintf(ifname,"asirrc");
 #else
-	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
+		homedir = getenv("HOME");
+		if ( !homedir ) {
+			char rootname[BUFSIZ];
+
+			get_rootdir(rootname,sizeof(rootname));
+			homedir = rootname;
+		}
+		sprintf(ifname,"%s/.asirrc",homedir);
 #endif
+	}
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
 		if ( !setjmp(env) ) {
