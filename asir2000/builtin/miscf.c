@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.16 2003/03/07 06:39:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.17 2003/04/02 06:48:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,10 +68,14 @@ void Pgetenv();
 void Pget_addr(),Phex_dump();
 void Ppeek(),Ppoke();
 void Psleep();
+void Premove_module();
+void Pmodule_list();
 
 void delete_history(int,int);
 
 struct ftab misc_tab[] = {
+	{"module_list",Pmodule_list,0},
+	{"remove_module",Premove_module,1},
 	{"sleep",Psleep,1},
 	{"null_command",Pnull_command,-99999},
 	{"getenv",Pgetenv,1},
@@ -85,7 +89,7 @@ struct ftab misc_tab[] = {
 	{"error",Perror,1},
 	{"error3",Perror3,3},
 	{"nez",Pnez,1},
-	{"flist",Pflist,0},
+	{"flist",Pflist,-1},
 	{"delete_history",Pdelete_history,-2},
 	{"pause",Ppause,0},
 	{"gc",Pgc,0},
@@ -117,6 +121,42 @@ Q *rp;
 	usleep(ms*1000);
 #endif
 	*rp = ONE;
+}
+
+void Pmodule_list(rp)
+LIST *rp;
+{
+	char *name;
+	NODE r,r1,m;
+	STRING s;
+
+	r = 0;
+	for ( m = MODULE_LIST; m; m = NEXT(m) ) {
+		MKSTR(s,((MODULE)BDY(m))->name);
+		MKNODE(r1,s,r); r = r1;
+	}
+	MKLIST(*rp,r);
+}
+
+void Premove_module(arg,rp)
+NODE arg;
+Q *rp;
+{
+	NODE pm,m;
+	char *name;
+
+	asir_assert(ARG0(arg),O_STR,"remove_module");
+	name = BDY((STRING)ARG0(arg));
+	for ( pm = 0, m = MODULE_LIST; m; pm = m, m = NEXT(m) )
+		if ( !strcmp(name,((MODULE)BDY(m))->name) ) {
+			if ( !pm )
+				MODULE_LIST = NEXT(MODULE_LIST);
+			else
+				NEXT(pm) = NEXT(m);
+			*rp = ONE;
+			return;
+		}
+	*rp = 0;
 }
 
 void Pgetenv(arg,rp)
@@ -287,29 +327,48 @@ Q *rp;
 	*rp = 0;
 }
 
-void Pflist(rp)
+void Pflist(arg,rp)
+NODE arg;
 LIST *rp;
 {
 	char *n;
 	STRING name;
-	NODE t,r,r0;
+	char *mname;
+	NODE t,r,r0,m;
 	LIST l;
 
-	for ( t = usrf, r0 = 0; t; t = NEXT(t) )
-		if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
-			n = NAME((FUNC)BDY(t)); MKSTR(name,n);
-			MKNODE(r,name,r0); r0 = r;
+	if ( argc(arg) ) {
+		/* module name is specified */
+		asir_assert(ARG0(arg),O_STR,"flist");
+		mname = BDY((STRING)ARG0(arg));
+		r0 = 0;
+		for ( m = MODULE_LIST; m; m = NEXT(m) ) {
+			if ( !strcmp(mname,((MODULE)BDY(m))->name) ) {
+				t = ((MODULE)BDY(m))->usrf_list;
+				for ( r0 = 0; t; t = NEXT(t) )
+					if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
+						n = NAME((FUNC)BDY(t)); MKSTR(name,n);
+						MKNODE(r,name,r0); r0 = r;
+				}
+			}
 		}
-	for ( t = ubinf; t; t = NEXT(t) )
-		if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
-			n = NAME((FUNC)BDY(t)); MKSTR(name,n);
-			MKNODE(r,name,r0); r0 = r;
-		}
-	for ( t = sysf; t; t = NEXT(t) )
-		if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
-			n = NAME((FUNC)BDY(t)); MKSTR(name,n);
-			MKNODE(r,name,r0); r0 = r;
-		}
+	} else {
+		for ( t = usrf, r0 = 0; t; t = NEXT(t) )
+			if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
+				n = NAME((FUNC)BDY(t)); MKSTR(name,n);
+				MKNODE(r,name,r0); r0 = r;
+			}
+		for ( t = ubinf; t; t = NEXT(t) )
+			if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
+				n = NAME((FUNC)BDY(t)); MKSTR(name,n);
+				MKNODE(r,name,r0); r0 = r;
+			}
+		for ( t = sysf; t; t = NEXT(t) )
+			if ( ((FUNC)BDY(t))->id != A_UNDEF ) {
+				n = NAME((FUNC)BDY(t)); MKSTR(name,n);
+				MKNODE(r,name,r0); r0 = r;
+			}
+	}
 	MKLIST(l,r0); *rp = l;
 }
 

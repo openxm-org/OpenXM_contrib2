@@ -45,14 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.8 2003/05/14 07:08:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.9 2003/05/14 09:18:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 NODE PVSS;
+extern char *CUR_FUNC;
 
-void mkpvs()
+void mkpvs(char *fname)
 {
 	VS pvs;
 
@@ -61,6 +62,9 @@ void mkpvs()
 	pvs->n = 0;
 	pvs->asize=DEFSIZE;
 	CPVS = pvs; 
+
+	/* XXX */
+	CUR_FUNC = fname;
 }
 
 void pushpvs(FUNC f)
@@ -106,6 +110,7 @@ int gdef,mgdef;
 #define IS_GLOBAL 1
 #define IS_MGLOBAL 2
 
+
 unsigned int makepvar(char *str)
 {
 	int c,c1;
@@ -116,6 +121,14 @@ unsigned int makepvar(char *str)
 		/* add to the external variable list */
 		c = getpvar(CPVS,str,0);
 		getpvar(EPVS,str,0);
+		if ( CUR_MODULE ) {
+			c1 = getpvar(CUR_MODULE->pvs,str,1);
+			if ( c1 >= 0 ) {
+				fprintf(stderr,"\"%s\", near line %d: conflicting declarations for `%s'",
+					asir_infile->name,asir_infile->ln,str);
+				error("");
+			}
+		}
 		if ( CPVS != GPVS ) {
 			/* inside function : we add the name to the global list */
 			getpvar(GPVS,str,0);
@@ -124,6 +137,12 @@ unsigned int makepvar(char *str)
 	} else if ( mgdef ) {
 		c = getpvar(CPVS,str,0);
 		getpvar(CUR_MODULE->pvs,str,0);
+		c1 = getpvar(EPVS,str,1);
+		if ( c1 >= 0 ) {
+			fprintf(stderr,"\"%s\", near line %d: conflicting declarations for `%s'",
+				asir_infile->name,asir_infile->ln,str);
+			error("");
+		}
 		if ( CPVS != GPVS ) {
 			/* inside function */
 			CPVS->va[c].attr = IS_MGLOBAL;
@@ -159,7 +178,9 @@ unsigned int makepvar(char *str)
 			c = PVGLOBAL((unsigned int)c);
 		} else {
 			/* not declared as static or extern */
-			error("Undeclared variable in a module.");
+			fprintf(stderr,"\"%s\", near line %d: undeclared variable `%s'",
+				asir_infile->name,asir_infile->ln,str);
+			error("");
 		}
 	} else {
 		/* outside function, outside module */

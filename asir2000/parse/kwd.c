@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.7 2003/05/14 06:20:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.8 2003/05/14 09:18:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -71,6 +71,7 @@ struct oTKWD kwd[] = {
 	{"global",GLOBAL},
 	{"extern",GLOBAL},
 	{"static",MGLOBAL},
+	{"globalf",GLOBALF},
 	{"struct",STRUCT},
 	{"newstruct",NEWSTRUCT},
 	{"car",CAR},

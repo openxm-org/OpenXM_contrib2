@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.34 2003/04/02 09:43:33 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.35 2003/05/14 06:20:12 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -132,6 +132,7 @@ VS CPVS,MPVS;
 
 NODE MODULE_LIST;
 MODULE CUR_MODULE;
+char *CUR_FUNC;
 
 struct oF oF_TRUE,oF_FALSE;
 F F_TRUE = &oF_TRUE;  

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.18 2003/03/07 03:12:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.19 2003/03/07 06:39:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,6 +72,7 @@ extern int zerorewrite;
 extern int double_output;
 extern int use_new_hensel;
 extern int print_quote;
+extern int show_crossref;
 
 static struct {
 	char *key;
@@ -100,6 +101,7 @@ static struct {
 	{"fortran_output",&fortran_output},
 	{"new_hensel",&use_new_hensel},
 	{"print_quote",&print_quote},
+	{"show_crossref",&show_crossref},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
 #endif

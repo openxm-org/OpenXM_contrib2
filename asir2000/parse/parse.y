@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.15 2003/05/14 06:20:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.16 2003/05/14 09:18:38 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -89,7 +89,7 @@ extern jmp_buf env;
 	pointer p;
 }
 
-%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND GLOBAL MGLOBAL CMP OR AND CAR CDR QUOTED
+%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND GLOBAL MGLOBAL GLOBALF CMP OR AND CAR CDR QUOTED
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
@@ -98,7 +98,7 @@ extern jmp_buf env;
 %type <p> desc rawstr
 %type <f> expr pexpr opt
 %type <s> stat complex
-%type <n> stats node _node pvars members optlist
+%type <n> stats node _node pvars vars members optlist
 
 %right '=' BOPASS
 %right '?' ':'
@@ -132,6 +132,8 @@ stat 	: tail
 			{ $$ = 0; }
 		| GLOBAL { gdef=1; } pvars { gdef=0; } tail
 			{ $$ = 0; }
+		| GLOBALF vars tail
+			{ register_proto($2); $$ = 0; }
 		| MGLOBAL { mgdef=1; } pvars { mgdef=0; } tail
 			{ $$ = 0; }
 		| STRUCT rawstr '{' members '}' tail
@@ -162,7 +164,7 @@ stat 	: tail
 			{ $$ = mksnode(3,S_PFDEF,$1,$3,$7); NOPR; }
 		| PFDEF LCASE '(' node ')'
 			{ $$ = mksnode(3,S_PFDEF,$2,$4,0); NOPR; }
-		| FDEF LCASE { mkpvs(); } '(' node ')' desc '{' stats '}'
+		| FDEF LCASE { mkpvs($2); } '(' node ')' desc '{' stats '}'
 			{
 				mkuf($2,asir_infile->name,$5,
 					mksnode(1,S_CPLX,$9),$1,asir_infile->ln,$7,CUR_MODULE); 
@@ -191,6 +193,11 @@ complex : '{' stats '}'
 members	: rawstr
 			{ MKNODE($$,$1,0); }
 		| members ',' rawstr
+			{ appendtonode($1,$3,&$$); }
+		;
+vars	: LCASE
+			{ MKNODE($$,$1,0); }
+		| vars ',' LCASE
 			{ appendtonode($1,$3,&$$); }
 		;
 pvars	: UCASE
@@ -268,23 +275,27 @@ pexpr	: STR
 		| LCASE '(' node ')' 
 			{
 				gen_searchf($1,(FUNC *)&val);
+				print_crossref(val);
 				$$ = mkfnode(2,I_FUNC,val,mkfnode(1,I_LIST,$3));
 			}
 
 		| LCASE '(' node '|' optlist ')' 
 			{
 				gen_searchf($1,(FUNC *)&val);
+				print_crossref(val);
 				$$ = mkfnode(3,I_FUNC_OPT,val,
 					mkfnode(1,I_LIST,$3),mkfnode(1,I_LIST,$5));
 			}
 		| MAP '(' LCASE ',' node ')' 
 			{
 				gen_searchf($3,(FUNC *)&val);
+				print_crossref(val);
 				$$ = mkfnode(2,I_MAP,val,mkfnode(1,I_LIST,$5));
 			}
 		| RECMAP '(' LCASE ',' node ')' 
 			{
 				gen_searchf($3,(FUNC *)&val);
+				print_crossref(val);
 				$$ = mkfnode(2,I_RECMAP,val,mkfnode(1,I_LIST,$5));
 			}
 		| LCASE '{' node '}' '(' node ')' 

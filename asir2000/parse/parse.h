@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.17 2003/04/02 09:43:33 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.18 2003/05/14 06:20:12 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -109,7 +109,7 @@ typedef struct oVS {
 typedef struct oMODULE {
 	char *name;
 	VS pvs;
-	NODE usrf_list;
+	NODE usrf_list,proto_list;
 } *MODULE;
 
 typedef struct oPV {
@@ -293,6 +293,7 @@ switch ( id ) {\
 extern VS GPVS,CPVS,EPVS,APVS,MPVS;
 extern MODULE CUR_MODULE;
 extern NODE MODULE_LIST;
+extern char *CUR_FUNC;
 extern ARF addfs, subfs, mulfs, divfs, remfs, pwrfs;
 extern INFILE asir_infile;
 extern NODE usrf,sysf,noargsysf,ubinf,parif,ONENODE;
@@ -462,7 +463,8 @@ int get_heapsize(void);
 int searchpvar(char *);
 void mkparif(char *,FUNC *);
 void makevar(char *,P *);
-void mkpvs(void);
+void mkpvs(char *);
+MODULE mkmodule(char *);
 void stoarg(char *,int *,char **);
 void yyerror(char *);
 void closecurrentinput(void);
@@ -767,7 +769,6 @@ void igcd_cofactor(Q a,Q b,Q *gcd,Q *ca,Q *cb);
 int comp_n(N *a,N *b);
 int TypeT_NB_check(unsigned int m, unsigned int t);
 int small_jacobi(int a,int m);
-void mkpvs();
 void pushpvs(FUNC f);
 void poppvs();
 unsigned int makepvar(char *str);

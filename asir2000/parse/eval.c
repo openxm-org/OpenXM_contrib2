@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.22 2003/05/14 07:08:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.23 2003/05/14 09:18:38 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -63,6 +63,7 @@ extern JMP_BUF timer_env;
 int f_break,f_return,f_continue;
 int evalstatline;
 int recv_intr;
+int show_crossref;
 
 pointer eval(FNODE f)
 {
@@ -803,6 +804,11 @@ MODULE searchmodule(char *name)
 	}
 	return 0;
 }
+/*
+ * xxx.yyy() is searched in the flist 
+ * of the module xxx.
+ * yyy() is searched in the global flist.
+ */
 
 void searchuf(char *name,FUNC *r)
 {
@@ -821,22 +827,58 @@ void searchuf(char *name,FUNC *r)
 		searchf(usrf,name,r);
 }
 
+/*
+ * xxx.yyy() is searched in the flist 
+ * of the module xxx.
+ * yyy() is searched in the current flist
+ * and proto list.
+ */
+
+void searchuf_proto(char *name,FUNC *r)
+{
+	MODULE mod;
+	char *name0,*dot;
+
+	if ( dot = strchr(name,'.') ) {
+		name0 = (char *)ALLOCA(strlen(name)+1);
+		strcpy(name0,name);
+		dot = strchr(name0,'.');
+		*dot = 0;
+		mod = searchmodule(name0);
+		if ( mod )
+			searchf(mod->usrf_list,dot+1,r);
+	} else if ( CUR_MODULE )
+		searchf(CUR_MODULE->proto_list,name,r);
+}
+
 void gen_searchf(char *name,FUNC *r)
 {
 	FUNC val = 0;
 
-	if ( CUR_MODULE )
+	if ( CUR_MODULE ) {
 		searchf(CUR_MODULE->usrf_list,name,&val);
-	if ( !val )
-		searchf(sysf,name,&val);
-	if ( !val )
-		searchf(ubinf,name,&val);
-	if ( !val )
-		searchpf(name,&val);
-	if ( !val )
-		searchuf(name,&val);
-	if ( !val )
-		appenduf(name,&val);
+		if ( !val )
+			searchf(sysf,name,&val);
+		if ( !val )
+			searchf(ubinf,name,&val);
+		if ( !val )
+			searchpf(name,&val);
+		if ( !val )
+			searchuf_proto(name,&val);
+		if ( !val )
+			appenduf(name,&val);
+	} else {
+		if ( !val )
+			searchf(sysf,name,&val);
+		if ( !val )
+			searchf(ubinf,name,&val);
+		if ( !val )
+			searchpf(name,&val);
+		if ( !val )
+			searchuf(name,&val);
+		if ( !val )
+			appenduf(name,&val);
+	}
 	*r = val;
 }
 
@@ -883,6 +925,18 @@ void appenduf(char *name,FUNC *r)
 			MKNODE(tn,f,usrf); usrf = tn;
 		}
 	}
+	*r = f;
+}
+
+void appenduf_global(char *name,FUNC *r)
+{
+	NODE tn;
+	FUNC f;
+
+	f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
+	f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
+	f->name = name; 
+	MKNODE(tn,f,usrf); usrf = tn;
 	*r = f;
 }
 
@@ -942,6 +996,7 @@ void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *
 	t->desc = desc;
 	f->id = A_USR; f->argc = argc; f->f.usrf = t;
 	CPVS = GPVS;
+	CUR_FUNC = 0;
 	clearbp(f);
 }
 
@@ -973,8 +1028,6 @@ Obj getopt_from_cpvs(char *key)
 
 }
 
-extern NODE MODULE_LIST;
-
 MODULE mkmodule(char *name)
 {
 	MODULE mod;
@@ -1004,6 +1057,45 @@ MODULE mkmodule(char *name)
 	}
 }
 
-int afo(SNODE a1) {
-	printf("afo\n");
+/* register function names to the proto list of a module */
+
+void register_proto(NODE n)
+{
+	NODE tn,flist;
+	char *name;
+	FUNC val;
+
+	if ( !CUR_MODULE )
+		error("globalf : must be declared in a module.");
+	for ( tn = n; tn; tn = NEXT(tn) ) {
+		name = (char *)BDY(tn);
+		searchf(sysf,name,&val);
+		if ( val ) {
+			fprintf(stderr,"globalf : `%s' is a builtin function.",name);
+			error("");
+		}
+		searchf(ubinf,name,&val);
+		if ( val ) {
+			fprintf(stderr,
+				"globalf : `%s' is a user-defined builtin function.",name);
+			error("");
+		}
+		searchpf(name,&val);
+		if ( val ) {
+			fprintf(stderr,"globalf : `%s' is a pure function.",name);
+			error("");
+		}
+		searchf(usrf,name,&val);
+		if ( !val )
+			appenduf_global(name,&val);
+		MKNODE(flist,val,CUR_MODULE->proto_list);
+		CUR_MODULE->proto_list = flist;
+	}
+}
+
+void print_crossref(FUNC f)
+{
+	if ( show_crossref && CUR_FUNC )
+		fprintf(asir_out,"%s() at line %d in %s()\n",
+			f->name, asir_infile->ln, CUR_FUNC);
 }
