@@ -45,203 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.3 2000/08/22 05:03:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.4 2000/12/05 01:24:49 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
 #include "ox.h"
 
+#define HMAG(p) (p_mag(BDY(p)->c))
+
 extern int (*cmpdl)();
-double pz_t_e,pz_t_d,pz_t_d1,pz_t_c;
-
-void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod();
-void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
-void Pdp_cont(), Pdp_igcdv_hist(), Pdp_idivv_hist();
-
-struct ftab dp_supp_tab[] = {
-  {"dp_mbase",Pdp_mbase,1},
-  {"dp_lnf_mod",Pdp_lnf_mod,3},
-  {"dp_nf_tab_mod",Pdp_nf_tab_mod,3},
-  {"dp_etov",Pdp_etov,1},
-  {"dp_vtoe",Pdp_vtoe,1},
-  {"dp_dtov",Pdp_dtov,1},
-  {"dp_idiv",Pdp_idiv,2},
-  {"dp_cont",Pdp_cont,1},
-  {"dp_sep",Pdp_sep,2},
-  {"dp_mdtod",Pdp_mdtod,1},
-  {"dp_igcdv_hist",Pdp_igcdv_hist,1},
-  {"dp_idivv_hist",Pdp_idivv_hist,1},
-  {0,0,0}
-};
-
-void Pdp_mdtod(arg,rp)
-NODE arg;
-DP *rp;
-{
-	MP m,mr,mr0;
-	DP p;
-	P t;
-
-	p = (DP)ARG0(arg);
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			mptop(m->c,&t); NEXTMP(mr0,mr); mr->c = t; mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
-}
-
-void Pdp_sep(arg,rp)
-NODE arg;
-VECT *rp;
-{
-	DP p,r;
-	MP m,t;
-	MP *w0,*w;
-	int i,n,d,nv,sugar;
-	VECT v;
-	pointer *pv;
-
-	p = (DP)ARG0(arg); m = BDY(p);
-	d = QTOS((Q)ARG1(arg));
-	for ( t = m, n = 0; t; t = NEXT(t), n++ );
-	if ( d > n )
-		d = n;
-	MKVECT(v,d); *rp = v;
-	pv = BDY(v); nv = p->nv; sugar = p->sugar;
-	w0 = (MP *)MALLOC(d*sizeof(MP)); bzero(w0,d*sizeof(MP));
-	w = (MP *)MALLOC(d*sizeof(MP)); bzero(w,d*sizeof(MP));
-	for ( t = BDY(p), i = 0; t; t = NEXT(t), i++, i %= d  ) {
-		NEXTMP(w0[i],w[i]); w[i]->c = t->c; w[i]->dl = t->dl;
-	}
-	for ( i = 0; i < d; i++ ) {
-		NEXT(w[i]) = 0; MKDP(nv,w0[i],r); r->sugar = sugar;
-		pv[i] = (pointer)r;
-	}
-}
-
-void Pdp_idiv(arg,rp)
-NODE arg;
-DP *rp;
-{
-	dp_idiv((DP)ARG0(arg),(Q)ARG1(arg),rp);
-}
-
-void Pdp_cont(arg,rp)
-NODE arg;
-Q *rp;
-{
-	dp_cont((DP)ARG0(arg),rp);
-}
-
-void Pdp_dtov(arg,rp)
-NODE arg;
-VECT *rp;
-{
-	dp_dtov((DP)ARG0(arg),rp);
-}
-
-void Pdp_mbase(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	NODE mb;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_mbase");
-	dp_mbase(BDY((LIST)ARG0(arg)),&mb);
-	MKLIST(*rp,mb);
-}
-
-void Pdp_etov(arg,rp)
-NODE arg;
-VECT *rp;
-{
-	DP dp;
-	int n,i;
-	int *d;
-	VECT v;
-	Q t;
-
-	dp = (DP)ARG0(arg);
-	asir_assert(dp,O_DP,"dp_etov");
-	n = dp->nv; d = BDY(dp)->dl->d;
-	MKVECT(v,n);
-	for ( i = 0; i < n; i++ ) {
-		STOQ(d[i],t); v->body[i] = (pointer)t;
-	}
-	*rp = v;
-}
-
-void Pdp_vtoe(arg,rp)
-NODE arg;
-DP *rp;
-{
-	DP dp;
-	DL dl;
-	MP m;
-	int n,i,td;
-	int *d;
-	VECT v;
-
-	v = (VECT)ARG0(arg);
-	asir_assert(v,O_VECT,"dp_vtoe");
-	n = v->len;
-	NEWDL(dl,n); d = dl->d;
-	for ( i = 0, td = 0; i < n; i++ ) {
-		d[i] = QTOS((Q)(v->body[i])); td += d[i];
-	}
-	dl->td = td;
-	NEWMP(m); m->dl = dl; m->c = (P)ONE; NEXT(m) = 0;
-	MKDP(n,m,dp); dp->sugar = td;
-	*rp = dp;
-}
-
-void Pdp_lnf_mod(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	DP r1,r2;
-	NODE b,g,n;
-	int mod;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_lnf_mod");
-	asir_assert(ARG1(arg),O_LIST,"dp_lnf_mod");
-	asir_assert(ARG2(arg),O_N,"dp_lnf_mod");
-	b = BDY((LIST)ARG0(arg)); g = BDY((LIST)ARG1(arg));
-	mod = QTOS((Q)ARG2(arg));
-	dp_lnf_mod((DP)BDY(b),(DP)BDY(NEXT(b)),g,mod,&r1,&r2);
-	NEWNODE(n); BDY(n) = (pointer)r1;
-	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)r2;
-	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
-}
-
-void Pdp_nf_tab_mod(arg,rp)
-NODE arg;
-DP *rp;
-{
-	asir_assert(ARG0(arg),O_DP,"dp_nf_tab_mod");
-	asir_assert(ARG1(arg),O_VECT,"dp_nf_tab_mod");
-	asir_assert(ARG2(arg),O_N,"dp_nf_tab_mod");
-	dp_nf_tab_mod((DP)ARG0(arg),(LIST *)BDY((VECT)ARG1(arg)),
-		QTOS((Q)ARG2(arg)),rp);
-}
-
-void Pdp_igcdv_hist(arg,rp)
-NODE arg;
-Q *rp;
-{
-	dp_igcdv_hist((DP)ARG0(arg),rp);
-}
-
-void Pdp_idivv_hist(arg,rp)
-NODE arg;
-DP *rp;
-{
-	dp_idivv_hist((Q)ARG0(arg),rp);
-}
+extern double pz_t_e,pz_t_d,pz_t_d1,pz_t_c;
+extern int dp_nelim,dp_fcoeffs;
 
 void dp_idiv(p,c,rp)
 DP p;
@@ -498,84 +313,6 @@ DP *hp,*rp;
 	*hp = h; *rp = r;
 }
 
-struct igcdv_hist {
-	int len;
-	DP dp;
-	Q d,d1;
-	Q *q,*q1;
-};
-
-static struct igcdv_hist current_igcdv_hist;
-
-void dp_igcdv_hist(p,rp)
-DP p;
-Q *rp;
-{
-	VECT c;
-	Q *a,*q,*r,*q1,*r1;
-	int i,n,nz;
-	Q d,d1;
-	N qn,rn,gn;
-	struct oVECT v;
-
-	dp_dtov(p,&c); a = (Q *)c->body;
-	n = c->len;
-	q = (Q *)MALLOC(n*sizeof(Q)); r = (Q *)MALLOC(n*sizeof(Q));
-	igcdv_estimate(c,&d);
-	for ( i = 0, nz = 0; i < n; i++ ) {
-		divn(NM(a[i]),NM(d),&qn,&rn);
-		NTOQ(qn,SGN(a[i]),q[i]); NTOQ(rn,SGN(a[i]),r[i]);
-		if ( r[i] )
-			nz = 1;
-	}
-	current_igcdv_hist.len = n;
-	current_igcdv_hist.dp = p;
-	current_igcdv_hist.d = d;
-	current_igcdv_hist.q = q;
-	if ( nz ) {
-		v.id = O_VECT; v.len = n; v.body = (pointer *)r;
-		igcdv(&v,&d1);
-		q1 = (Q *)MALLOC(n*sizeof(Q)); r1 = (Q *)MALLOC(n*sizeof(Q));
-		for ( i = 0; i < n; i++ ) {
-			if ( r[i] )
-				divn(NM(r[i]),NM(d1),&qn,&rn);
-			else {
-				qn = rn = 0;
-			}
-			NTOQ(qn,SGN(r[i]),q1[i]); NTOQ(rn,SGN(r[i]),r1[i]);
-		}
-		gcdn(NM(d),NM(d1),&gn); NTOQ(gn,1,*rp);
-	} else {
-		d1 = 0; q1 = 0; *rp = d;
-	}
-	current_igcdv_hist.d1 = d1;
-	current_igcdv_hist.q1 = q1;
-}
-
-void dp_idivv_hist(g,rp)
-Q g;
-DP *rp;
-{
-	int i,n;
-	Q *q,*q1,*s;
-	Q t,u,m;
-	N qn;
-
-	n = current_igcdv_hist.len;
-	q = current_igcdv_hist.q; q1 = current_igcdv_hist.q1;
-	divsn(NM(current_igcdv_hist.d),NM(g),&qn); NTOQ(qn,1,m);
-	s = (Q *)MALLOC(n*sizeof(Q));
-	for ( i = 0; i < n; i++ )
-		mulq(m,q[i],&s[i]);
-	if ( q1 ) {
-		divsn(NM(current_igcdv_hist.d1),NM(g),&qn); NTOQ(qn,1,m);
-		for ( i = 0; i < n; i++ ) {
-			mulq(m,q1[i],&t); addq(t,s[i],&u); s[i] = u;
-		}
-	}
-	dp_vtod(s,current_igcdv_hist.dp,rp);
-}
-
 void dp_vtod(c,p,rp)
 Q *c;
 DP p;
@@ -592,67 +329,6 @@ DP *rp;
 		}
 		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp);
 		(*rp)->sugar = p->sugar;
-	}
-}
-
-void dp_ptozp_d_old(dist,ndist,p,rp)
-NODE dist;
-int ndist;
-DP p,*rp;
-{
-	DP d,s,u,su;
-	MP m,mr,mr0;
-	MP *w0,*w;
-	Q *g;
-	int i,n,nv,nsep;
-	P t;
-	NODE tn,n0,n1,n2;
-	struct oVECT v;
-	int id,sindex;
-	Obj dmy;
-	Q gcd;
-	STRING cont,div;
-
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
-		nsep = ndist + 1;
-		if ( n <= nsep ) {
-			dp_ptozp(p,rp); return;
-		}
-		nv = p->nv;
-		w0 = (MP *)MALLOC(nsep*sizeof(MP)); bzero(w0,nsep*sizeof(MP));
-		w = (MP *)MALLOC(nsep*sizeof(MP)); bzero(w,nsep*sizeof(MP));
-		g = (Q *)MALLOC(nsep*sizeof(Q)); bzero(g,nsep*sizeof(Q));
-		for ( m = BDY(p), i = 0; m; m = NEXT(m), i++, i %= nsep  ) {
-			NEXTMP(w0[i],w[i]); w[i]->c = m->c; w[i]->dl = m->dl;
-		}
-		MKSTR(cont,"reg_dp_cont"); MKSTR(div,"reg_dp_idiv");
-
-		for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
-			NEXT(w[i]) = 0; MKDP(nv,w0[i],d); d->sugar = p->sugar;
-			MKNODE(n2,d,0); MKNODE(n1,cont,n2); MKNODE(n0,BDY(tn),n1);
-			Pox_rpc(n0,&dmy);
-		}
-		NEXT(w[i]) = 0; MKDP(nv,w0[i],d); d->sugar = p->sugar;
-		dp_cont(d,&g[i]);
-
-		for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) )
-			Pox_pop_local(tn,&g[i]);
-		v.id = O_VECT; v.len = nsep; v.body = (pointer *)g; igcdv(&v,&gcd);
-
-		for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
-			MKNODE(n2,gcd,0); MKNODE(n1,div,n2); MKNODE(n0,BDY(tn),n1);
-			Pox_rpc(n0,&dmy);
-		}
-		dp_idiv(d,gcd,&s);
-
-		for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
-			Pox_pop_local(tn,&u);
-			addd(CO,s,u,&su); s = su;
-		}
-		*rp = s;
 	}
 }
 
@@ -771,4 +447,1094 @@ DP *hp,*rp;
 	if ( r )
 		r->sugar = p1->sugar;
 	*hp = h; *rp = r;
+}
+
+int create_order_spec(obj,spec)
+Obj obj;
+struct order_spec *spec;
+{
+	int i,j,n,s,row,col;
+	struct order_pair *l;
+	NODE node,t,tn;
+	MAT m;
+	pointer **b;
+	int **w;
+
+	if ( !obj || NUM(obj) ) {
+		spec->id = 0; spec->obj = obj;
+		spec->ord.simple = QTOS((Q)obj);
+		return 1;
+	} else if ( OID(obj) == O_LIST ) {
+		node = BDY((LIST)obj); 
+		for ( n = 0, t = node; t; t = NEXT(t), n++ );
+		l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
+		for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
+			tn = BDY((LIST)BDY(t)); l[i].order = QTOS((Q)BDY(tn));
+			tn = NEXT(tn); l[i].length = QTOS((Q)BDY(tn));
+			s += l[i].length;
+		}
+		spec->id = 1; spec->obj = obj;
+		spec->ord.block.order_pair = l;
+		spec->ord.block.length = n; spec->nv = s;
+		return 1;
+	} else if ( OID(obj) == O_MAT ) {
+		m = (MAT)obj; row = m->row; col = m->col; b = BDY(m);
+		w = almat(row,col);
+		for ( i = 0; i < row; i++ )
+			for ( j = 0; j < col; j++ )
+				w[i][j] = QTOS((Q)b[i][j]);
+		spec->id = 2; spec->obj = obj;
+		spec->nv = col; spec->ord.matrix.row = row;
+		spec->ord.matrix.matrix = w;
+		return 1;
+	} else
+		return 0;
+}
+
+void homogenize_order(old,n,new)
+struct order_spec *old,*new;
+int n;
+{
+	struct order_pair *l;
+	int length,nv,row,i,j;
+	int **newm,**oldm;
+
+	switch ( old->id ) {
+		case 0:
+			switch ( old->ord.simple ) {
+				case 0:
+					new->id = 0; new->ord.simple = 0; break;
+				case 1:
+					l = (struct order_pair *)
+						MALLOC_ATOMIC(2*sizeof(struct order_pair));
+					l[0].length = n; l[0].order = 1;
+					l[1].length = 1; l[1].order = 2;
+					new->id = 1;
+					new->ord.block.order_pair = l;
+					new->ord.block.length = 2; new->nv = n+1;
+					break;
+				case 2:
+					new->id = 0; new->ord.simple = 1; break;
+				case 3: case 4: case 5:
+					new->id = 0; new->ord.simple = old->ord.simple+3;
+					dp_nelim = n-1; break;
+				case 6: case 7: case 8: case 9:
+					new->id = 0; new->ord.simple = old->ord.simple; break;
+				default:
+					error("homogenize_order : invalid input");
+			}
+			break;
+		case 1:
+			length = old->ord.block.length;
+			l = (struct order_pair *)
+				MALLOC_ATOMIC((length+1)*sizeof(struct order_pair));
+			bcopy((char *)old->ord.block.order_pair,(char *)l,length*sizeof(struct order_pair));
+			l[length].order = 2; l[length].length = 1;
+			new->id = 1; new->nv = n+1;
+			new->ord.block.order_pair = l;
+			new->ord.block.length = length+1;
+			break;
+		case 2:
+			nv = old->nv; row = old->ord.matrix.row;
+			oldm = old->ord.matrix.matrix; newm = almat(row+1,nv+1);
+			for ( i = 0; i <= nv; i++ )
+				newm[0][i] = 1;
+			for ( i = 0; i < row; i++ ) {
+				for ( j = 0; j < nv; j++ )
+					newm[i+1][j] = oldm[i][j];
+				newm[i+1][j] = 0;
+			}
+			new->id = 2; new->nv = nv+1;
+			new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
+			break;
+		default:
+			error("homogenize_order : invalid input");
+	}
+}
+
+extern int NoGCD;
+
+void dp_prim(p,rp)
+DP p,*rp;
+{
+	P t,g;
+	DP p1;
+	MP m,mr,mr0;
+	int i,n;
+	P *w;
+	Q *c;
+	Q dvr;
+
+	if ( !p )
+		*rp = 0;
+	else if ( dp_fcoeffs )
+		*rp = p;
+	else if ( NoGCD )
+		dp_ptozp(p,rp);
+	else {
+		dp_ptozp(p,&p1); p = p1;
+		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+		if ( n == 1 ) {
+			m = BDY(p);
+			NEWMP(mr); mr->dl = m->dl; mr->c = (P)ONE; NEXT(mr) = 0;
+			MKDP(p->nv,mr,*rp); (*rp)->sugar = p->sugar;
+			return;
+		}
+		w = (P *)ALLOCA(n*sizeof(P));
+		c = (Q *)ALLOCA(n*sizeof(Q));
+		for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+			if ( NUM(m->c) ) {
+				c[i] = (Q)m->c; w[i] = (P)ONE;
+			} else
+				ptozp(m->c,1,&c[i],&w[i]);
+		qltozl(c,n,&dvr); heu_nezgcdnpz(CO,w,n,&t); mulp(CO,t,(P)dvr,&g);
+		if ( NUM(g) )
+			*rp = p;
+		else {
+			for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+				NEXTMP(mr0,mr); divsp(CO,m->c,g,&mr->c); mr->dl = m->dl;
+			}
+			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+		}
+	}
+}
+
+void heu_nezgcdnpz(vl,pl,m,pr)
+VL vl;
+P *pl,*pr;
+int m;
+{
+	int i,r;
+	P gcd,t,s1,s2,u;
+	Q rq;
+	
+	while ( 1 ) {
+		for ( i = 0, s1 = 0; i < m; i++ ) {
+			r = random(); UTOQ(r,rq);
+			mulp(vl,pl[i],(P)rq,&t); addp(vl,s1,t,&u); s1 = u;
+		}
+		for ( i = 0, s2 = 0; i < m; i++ ) {
+			r = random(); UTOQ(r,rq);
+			mulp(vl,pl[i],(P)rq,&t); addp(vl,s2,t,&u); s2 = u;
+		}
+		ezgcdp(vl,s1,s2,&gcd);
+		for ( i = 0; i < m; i++ ) {
+			if ( !divtpz(vl,pl[i],gcd,&t) )
+				break;
+		}
+		if ( i == m )
+			break;
+	}
+	*pr = gcd;
+}
+
+void dp_prim_mod(p,mod,rp)
+int mod;
+DP p,*rp;
+{
+	P t,g;
+	MP m,mr,mr0;
+
+	if ( !p )
+		*rp = 0;
+	else if ( NoGCD )
+		*rp = p;
+	else {
+		for ( m = BDY(p), g = m->c, m = NEXT(m); m; m = NEXT(m) ) {
+			gcdprsmp(CO,mod,g,m->c,&t); g = t;
+		}
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); divsmp(CO,mod,m->c,g,&mr->c); mr->dl = m->dl;
+		}
+		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+	}
+}
+
+
+void dp_mod(p,mod,subst,rp)
+DP p;
+int mod;
+NODE subst;
+DP *rp;
+{
+	MP m,mr,mr0;
+	P t,s,s1;
+	V v;
+	NODE tn;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			for ( tn = subst, s = m->c; tn; tn = NEXT(tn) ) {
+				v = VR((P)BDY(tn)); tn = NEXT(tn);
+				substp(CO,s,v,(P)BDY(tn),&s1); s = s1;
+			}
+			ptomp(mod,s,&t);
+			if ( t ) {
+				NEXTMP(mr0,mr); mr->c = t; mr->dl = m->dl;
+			}
+		}
+		if ( mr0 ) {
+			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+		} else
+			*rp = 0;
+	}
+}
+
+void dp_rat(p,rp)
+DP p;
+DP *rp;
+{
+	MP m,mr,mr0;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); mptop(m->c,&mr->c); mr->dl = m->dl;
+		}
+		if ( mr0 ) {
+			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+		} else
+			*rp = 0;
+	}
+}
+
+
+void dp_nf(b,g,ps,full,rp)
+NODE b;
+DP g;
+DP *ps;
+int full;
+DP *rp;
+{
+	DP u,p,d,s,t,dmy1;
+	P dmy;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int sugar,psugar;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,p = ps[wb[i]]) ) {
+				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; return;
+				}
+				d = t;
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d;
+}
+
+void dp_true_nf(b,g,ps,full,rp,dnp)
+NODE b;
+DP g;
+DP *ps;
+int full;
+DP *rp;
+P *dnp;
+{
+	DP u,p,d,s,t,dmy;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int sugar,psugar;
+	P dn,tdn,tdn1;
+
+	dn = (P)ONE;
+	if ( !g ) {
+		*rp = 0; *dnp = dn; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,p = ps[wb[i]]) ) {
+				dp_red(d,g,p,&t,&u,&tdn,&dmy);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; *dnp = dn; return;
+				} else {
+					d = t;
+					mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+				}
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; *dnp = dn; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d; *dnp = dn;
+}
+
+
+void dp_nf_ptozp(b,g,ps,full,multiple,rp)
+NODE b;
+DP g;
+DP *ps;
+int full,multiple;
+DP *rp;
+{
+	DP u,p,d,s,t,dmy1;
+	P dmy;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int hmag;
+	int sugar,psugar;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	hmag = multiple*HMAG(g);
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,p = ps[wb[i]]) ) {
+				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; return;
+				}
+				d = t;
+				break;
+			}
+		}
+		if ( u ) {
+			g = u;
+			if ( d ) {
+				if ( HMAG(d) > hmag ) {
+					dp_ptozp2(d,g,&t,&u); d = t; g = u;
+					hmag = multiple*HMAG(d);
+				}
+			} else {
+				if ( HMAG(g) > hmag ) {
+					dp_ptozp(g,&t); g = t;
+					hmag = multiple*HMAG(g);
+				}
+			}
+		}
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+				
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d;
+}
+
+
+void dp_nf_mod_qindex(b,g,ps,mod,full,rp)
+NODE b;
+DP g;
+DP *ps;
+int mod,full;
+DP *rp;
+{
+	DP u,p,d,s,t;
+	P dmy;
+	NODE l;
+	MP m,mr;
+	int sugar,psugar;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, l = b; l; l = NEXT(l) ) {
+			if ( dp_redble(g,p = ps[QTOS((Q)BDY(l))]) ) {
+				dp_red_mod(d,g,p,mod,&t,&u,&dmy);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; return;
+				}
+				d = t;
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addmd(CO,mod,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d;
+}
+
+void dp_nf_mod(b,g,ps,mod,full,rp)
+NODE b;
+DP g;
+DP *ps;
+int mod,full;
+DP *rp;
+{
+	DP u,p,d,s,t;
+	P dmy;
+	NODE l;
+	MP m,mr;
+	int sugar,psugar;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, l = b; l; l = NEXT(l) ) {
+			if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
+				dp_red_mod(d,g,p,mod,&t,&u,&dmy);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; return;
+				}
+				d = t;
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addmd(CO,mod,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d;
+}
+
+void dp_true_nf_mod(b,g,ps,mod,full,rp,dnp)
+NODE b;
+DP g;
+DP *ps;
+int mod,full;
+DP *rp;
+P *dnp;
+{
+	DP u,p,d,s,t;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int sugar,psugar;
+	P dn,tdn,tdn1;
+
+	dn = (P)ONEM;
+	if ( !g ) {
+		*rp = 0; *dnp = dn; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+		wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,p = ps[wb[i]]) ) {
+				dp_red_mod(d,g,p,mod,&t,&u,&tdn);	
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; *dnp = dn; return;
+				} else {
+					d = t;
+					mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+				}
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else if ( !full ) {
+			if ( g ) {
+				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+			}
+			*rp = g; *dnp = dn; return;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addmd(CO,mod,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d; *dnp = dn;
+}
+
+
+void qltozl(w,n,dvr)
+Q *w,*dvr;
+int n;
+{
+	N nm,dn;
+	N g,l1,l2,l3;
+	Q c,d;
+	int i;
+	struct oVECT v;
+
+	for ( i = 0; i < n; i++ )
+		if ( w[i] && !INT(w[i]) )
+			break;
+	if ( i == n ) {
+		v.id = O_VECT; v.len = n; v.body = (pointer *)w;
+		igcdv(&v,dvr); return;
+	}
+	c = w[0]; nm = NM(c); dn = INT(c) ? ONEN : DN(c);
+	for ( i = 1; i < n; i++ ) {
+		c = w[i]; l1 = INT(c) ? ONEN : DN(c);
+		gcdn(nm,NM(c),&g); nm = g;
+		gcdn(dn,l1,&l2); muln(dn,l1,&l3); divsn(l3,l2,&dn);
+	}
+	if ( UNIN(dn) )
+		NTOQ(nm,1,d);
+	else 
+		NDTOQ(nm,dn,1,d);
+	*dvr = d;
+}
+
+int comp_nm(a,b)
+Q *a,*b;
+{
+	return cmpn((*a)?NM(*a):0,(*b)?NM(*b):0);
+}
+
+void sortbynm(w,n)
+Q *w;
+int n;
+{
+	qsort(w,n,sizeof(Q),(int (*)(const void *,const void *))comp_nm);
+}
+
+int dp_redble(p1,p2)
+DP p1,p2;
+{
+	int i,n;
+	DL d1,d2;
+
+	d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	if ( d1->td < d2->td )
+		return 0;
+	else {
+		for ( i = 0, n = p1->nv; i < n; i++ )
+			if ( d1->d[i] < d2->d[i] )
+				return 0;
+		return 1;
+	}
+}
+
+void dp_red_mod(p0,p1,p2,mod,head,rest,dnp)
+DP p0,p1,p2;
+int mod;
+DP *head,*rest;
+P *dnp;
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,r,h;
+	P c1,c2,g,u;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+	c1 = (P)BDY(p1)->c; c2 = (P)BDY(p2)->c;
+	gcdprsmp(CO,mod,c1,c2,&g);
+	divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
+	if ( NUM(c2) ) {
+		divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
+	}
+	NEWMP(m); m->dl = d; chsgnmp(mod,(P)c1,&m->c); NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p2,s,&t);
+	if ( NUM(c2) ) {
+		addmd(CO,mod,p1,t,&r); h = p0;
+	} else {
+		mulmdc(CO,mod,p1,c2,&s); addmd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
+	}
+	*head = h; *rest = r; *dnp = c2;
+}
+
+void dp_subd(p1,p2,rp)
+DP p1,p2;
+DP *rp;
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP s;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td;
+	*rp = s;
+}
+
+void dltod(d,n,rp)
+DL d;
+int n;
+DP *rp;
+{
+	MP m;
+	DP s;
+
+	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td;
+	*rp = s;
+}
+
+void dp_red(p0,p1,p2,head,rest,dnp,multp)
+DP p0,p1,p2;
+DP *head,*rest;
+P *dnp;
+DP *multp;
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,r,h;
+	Q c,c1,c2;
+	N gn,tn;
+	P g,a;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+	if ( dp_fcoeffs ) {
+		/* do nothing */
+	} else if ( INT(c1) && INT(c2) ) {
+		gcdn(NM(c1),NM(c2),&gn);
+		if ( !UNIN(gn) ) {
+			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+		}
+	} else {
+		ezgcdpz(CO,(P)c1,(P)c2,&g);
+		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+	}
+	NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+	*multp = s;
+	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
+	muldc(CO,p0,(P)c2,&h);
+	*head = h; *rest = r; *dnp = (P)c2;
+}
+
+extern int GenTrace;
+extern NODE TraceList;
+
+void dp_sp(p1,p2,rp)
+DP p1,p2;
+DP *rp;
+{
+	int i,n,td;
+	int *w;
+	DL d1,d2,d;
+	MP m;
+	DP t,s1,s2,u;
+	Q c,c1,c2;
+	N gn,tn;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	w = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, td = 0; i < n; i++ ) {
+		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+	}
+
+	NEWDL(d,n); d->td = td - d1->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d1->d[i];
+	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+	if ( INT(c1) && INT(c2) ) {
+		gcdn(NM(c1),NM(c2),&gn);
+		if ( !UNIN(gn) ) {
+			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+		}
+	}
+
+	NEWMP(m); m->dl = d; m->c = (P)c2; NEXT(m) = 0;
+	MKDP(n,m,s1); s1->sugar = d->td; muld(CO,s1,p1,&t);
+
+	NEWDL(d,n); d->td = td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d2->d[i];
+	NEWMP(m); m->dl = d; m->c = (P)c1; NEXT(m) = 0;
+	MKDP(n,m,s2); s2->sugar = d->td; muld(CO,s2,p2,&u);
+
+	subd(CO,t,u,rp);
+	if ( GenTrace ) {
+		LIST hist;
+		NODE node;
+
+		node = mknode(4,ONE,0,s1,ONE);
+		MKLIST(hist,node);
+		MKNODE(TraceList,hist,0);
+
+		node = mknode(4,ONE,0,0,ONE);
+		chsgnd(s2,(DP *)&ARG2(node));
+		MKLIST(hist,node);
+		MKNODE(node,hist,TraceList); TraceList = node;
+	}
+}
+
+void dp_sp_mod(p1,p2,mod,rp)
+DP p1,p2;
+int mod;
+DP *rp;
+{
+	int i,n,td;
+	int *w;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,u;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	w = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, td = 0; i < n; i++ ) {
+		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+	}
+	NEWDL(d,n); d->td = td - d1->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d1->d[i];
+	NEWMP(m); m->dl = d; m->c = (P)BDY(p2)->c; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p1,s,&t);
+	NEWDL(d,n); d->td = td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d2->d[i];
+	NEWMP(m); m->dl = d; m->c = (P)BDY(p1)->c; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p2,s,&u);
+	submd(CO,mod,t,u,rp);
+}
+
+void dp_hm(p,rp)
+DP p;
+DP *rp;
+{
+	MP m,mr;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		m = BDY(p);
+		NEWMP(mr); mr->dl = m->dl; mr->c = m->c; NEXT(mr) = 0;
+		MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td; 	/* XXX */
+	}
+}
+
+void dp_rest(p,rp)
+DP p,*rp;
+{
+	MP m;
+
+	m = BDY(p);
+	if ( !NEXT(m) )
+		*rp = 0;
+	else {
+		MKDP(p->nv,NEXT(m),*rp);
+		if ( *rp )
+			(*rp)->sugar = p->sugar;
+	}
+}
+
+DL lcm_of_DL(nv,dl1,dl2,dl)
+int nv;
+DL dl1,dl2;
+register DL dl;
+{
+	register int n, *d1, *d2, *d, td;
+
+	if ( !dl ) NEWDL(dl,nv);
+	d = dl->d,  d1 = dl1->d,  d2 = dl2->d;
+	for ( td = 0, n = nv; --n >= 0; d1++, d2++, d++ )
+		td += (*d = *d1 > *d2 ? *d1 : *d2 );
+	dl->td = td;
+	return dl;
+}
+
+int dl_equal(nv,dl1,dl2)
+int nv;
+DL dl1, dl2;
+{
+    register int *d1, *d2, n;
+
+    if ( dl1->td != dl2->td ) return 0;
+    for ( d1 = dl1->d, d2 = dl2->d, n = nv; --n >= 0; d1++, d2++ )
+        if ( *d1 != *d2 ) return 0;
+    return 1;
+}
+
+void dp_homo(p,rp)
+DP p;
+DP *rp;
+{
+	MP m,mr,mr0;
+	int i,n,nv,td;
+	DL dl,dlh;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		n = p->nv; nv = n + 1;
+		m = BDY(p); td = sugard(m);
+		for ( mr0 = 0; m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); mr->c = m->c;
+			dl = m->dl;
+			mr->dl = dlh = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
+			dlh->td = td;
+			for ( i = 0; i < n; i++ )
+				dlh->d[i] = dl->d[i];
+			dlh->d[n] = td - dl->td;
+		}
+		NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
+	}
+}
+
+void dp_dehomo(p,rp)
+DP p;
+DP *rp;
+{
+	MP m,mr,mr0;
+	int i,n,nv;
+	DL dl,dlh;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		n = p->nv; nv = n - 1;
+		m = BDY(p);
+		for ( mr0 = 0; m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); mr->c = m->c;
+			dlh = m->dl;
+			mr->dl = dl = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
+			dl->td = dlh->td - dlh->d[nv];
+			for ( i = 0; i < nv; i++ )
+				dl->d[i] = dlh->d[i];
+		}
+		NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
+	}
+}
+
+int dp_nt(p)
+DP p;
+{
+	int i;
+	MP m;
+
+	if ( !p )
+		return 0;
+	else {
+		for ( i = 0, m = BDY(p); m; m = NEXT(m), i++ );
+		return i;
+	}
+}
+
+void _dp_red_mod_destructive(p1,p2,mod,rp)
+DP p1,p2;
+int mod;
+DP *rp;
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP t,s;
+	int c,c1;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	_NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+	c = invm(ITOS(BDY(p2)->c),mod); c1 = dmar(c,ITOS(BDY(p1)->c),0,mod);
+	_NEWMP(m); m->dl = d; m->c = STOI(mod-c1); NEXT(m) = 0;
+	_MKDP(n,m,s); s->sugar = d->td;
+	_mulmd_dup(mod,s,p2,&t); _free_dp(s);
+	_addmd_destructive(mod,p1,t,rp);
+}
+
+void _dp_sp_mod_dup(p1,p2,mod,rp)
+DP p1,p2;
+int mod;
+DP *rp;
+{
+	int i,n,td;
+	int *w;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,u;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	w = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, td = 0; i < n; i++ ) {
+		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+	}
+	_NEWDL(d,n); d->td = td - d1->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d1->d[i];
+	_NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
+	_MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p1,&t); _free_dp(s);
+	_NEWDL(d,n); d->td = td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d2->d[i];
+	_NEWMP(m); m->dl = d; m->c = STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
+	_MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p2,&u); _free_dp(s);
+	_addmd_destructive(mod,t,u,rp);
+}
+
+
+void _dp_nf_mod_destructive(b,g,ps,mod,full,rp)
+NODE b;
+DP g;
+DP *ps;
+int mod,full;
+DP *rp;
+{
+	DP u,p,d,s,t;
+	NODE l;
+	MP m,mr,mrd;
+	int sugar,psugar,n,h_reducible,i;
+
+	if ( !g ) {
+		*rp = 0; return;
+	}
+	sugar = g->sugar;
+	n = g->nv;
+	for ( d = 0; g; ) {
+		for ( h_reducible = 0, l = b; l; l = NEXT(l) ) {
+			if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
+				h_reducible = 1;
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				_dp_red_mod_destructive(g,p,mod,&u); g = u;
+				sugar = MAX(sugar,psugar);
+				if ( !g ) {
+					if ( d )
+						d->sugar = sugar;
+					_dptodp(d,rp); _free_dp(d); return;
+				}
+				break;
+			}
+		}
+		if ( !h_reducible ) {
+			/* head term is not reducible */
+			if ( !full ) {
+				if ( g )
+					g->sugar = sugar;
+				_dptodp(g,rp); _free_dp(g); return;
+			} else {
+				m = BDY(g); 
+				if ( NEXT(m) ) {
+					BDY(g) = NEXT(m); NEXT(m) = 0;
+				} else {
+					_FREEDP(g); g = 0;
+				}
+				if ( d ) {
+					for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
+					NEXT(mrd) = m;
+				} else {
+					_MKDP(n,m,d);
+				}
+			}
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	_dptodp(d,rp); _free_dp(d);
 }

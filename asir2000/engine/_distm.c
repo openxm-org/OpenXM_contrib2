@@ -45,31 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.4 2000/11/07 06:06:39 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
 
-#define NV(p) ((p)->nv)
-#define C(p) ((p)->c)
-#if 0
-#define ITOS(p) (((unsigned int)(p))>>1)
-#define STOI(i) ((P)((((unsigned int)(i))<<1)|1))
-#else
-#define ITOS(p) (((unsigned int)(p))&0x7fffffff)
-#define STOI(i) ((P)((unsigned int)(i)|0x80000000))
-#endif
-
-struct cdlm {
-	int c;
-	DL d;
-};
-
 extern int (*cmpdl)();
 extern int do_weyl;
 
+void dpto_dp();
 void _dptodp();
-void adddl_dup();
+void _adddl_dup();
 void adddl_destructive();
 void _mulmdm_dup();
 void _free_dp();
@@ -84,22 +70,6 @@ MP _mp_free_list;
 DP _dp_free_list;
 DL _dl_free_list;
 int current_dl_length;
-
-#define _NEWDL_NOINIT(d,n) if ((n)!= current_dl_length){_dl_free_list=0; current_dl_length=(n);} if(!_dl_free_list)_DL_alloc(); (d)=_dl_free_list; _dl_free_list = *((DL *)_dl_free_list)
-#define _NEWDL(d,n) if ((n)!= current_dl_length){_dl_free_list=0; current_dl_length=(n);} if(!_dl_free_list)_DL_alloc(); (d)=_dl_free_list; _dl_free_list = *((DL *)_dl_free_list); bzero((d),(((n)+1)*sizeof(int)))
-#define _NEWMP(m) if(!_mp_free_list)_MP_alloc(); (m)=_mp_free_list; _mp_free_list = NEXT(_mp_free_list)
-#define _MKDP(n,m,d) if(!_dp_free_list)_DP_alloc(); (d)=_dp_free_list; _dp_free_list = (DP)BDY(_dp_free_list); (d)->nv=(n); BDY(d)=(m)
-
-#define _NEXTMP(r,c) \
-if(!(r)){_NEWMP(r);(c)=(r);}else{_NEWMP(NEXT(c));(c)=NEXT(c);}
-
-#define _NEXTMP2(r,c,s) \
-if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
-
-#define FREEDL(m) *((DL *)m)=_dl_free_list; _dl_free_list=(m)
-#define FREEMP(m) NEXT(m)=_mp_free_list; _mp_free_list=(m)
-#define FREEDP(m) BDY(m)=(MP)_dp_free_list; _dp_free_list=(m)
-
 
 void _DL_alloc()
 {
@@ -167,9 +137,9 @@ DP p1,p2,*pr;
 					if ( t ) {
 						_NEXTMP2(mr0,mr,s); C(mr) = STOI(t);
 					} else {
-						FREEDL(s->dl); FREEMP(s);
+						_FREEDL(s->dl); _FREEMP(s);
 					}
-					s = m2; m2 = NEXT(m2); FREEDL(s->dl); FREEMP(s);
+					s = m2; m2 = NEXT(m2); _FREEDL(s->dl); _FREEMP(s);
 					break;
 				case 1:
 					s = m1; m1 = NEXT(m1); _NEXTMP2(mr0,mr,s);
@@ -196,7 +166,7 @@ DP p1,p2,*pr;
 		_MKDP(NV(p1),mr0,*pr);
 		if ( *pr )
 			(*pr)->sugar = MAX(p1->sugar,p2->sugar);
-		FREEDP(p1); FREEDP(p2);
+		_FREEDP(p1); _FREEDP(p2);
 	}
 }
 
@@ -464,15 +434,15 @@ int rtablen;
 #if 0
 		_comm_mulmd_tab(mod,n,rtab,curlen,tab,k+1,tmptab);
 		for ( j = 0; j < curlen; j++ )
-			if ( rtab[j].d ) { FREEDL(rtab[j].d); }
+			if ( rtab[j].d ) { _FREEDL(rtab[j].d); }
 		for ( j = 0; j <= min; j++ )
-			if ( tab[j].d ) { FREEDL(tab[j].d); }
+			if ( tab[j].d ) { _FREEDL(tab[j].d); }
 		curlen *= k+1;
 		bcopy(tmptab,rtab,curlen*sizeof(struct cdlm));
 #else
 		_comm_mulmd_tab_destructive(mod,n,rtab,curlen,tab,k+1);
 		for ( j = 0; j <= min; j++ )
-			if ( tab[j].d ) { FREEDL(tab[j].d); }
+			if ( tab[j].d ) { _FREEDL(tab[j].d); }
 		curlen *= k+1;
 #endif
 	}
@@ -510,7 +480,7 @@ struct cdlm *rt;
 		for ( i = 0; i < n; i++, p++ ) {
 			if ( t[i].c ) {
 				p->c = dmar(t[i].c,c,0,mod);
-				adddl_dup(nv,t[i].d,d,&p->d);
+				_adddl_dup(nv,t[i].d,d,&p->d);
 			}
 		}
 	}
@@ -537,7 +507,7 @@ int n1;
 		for ( i = 0; i < n; i++, p++ ) {
 			if ( t[i].c ) {
 				p->c = dmar(t[i].c,c,0,mod);
-				adddl_dup(nv,t[i].d,d,&p->d);
+				_adddl_dup(nv,t[i].d,d,&p->d);
 			}
 		}
 	}
@@ -551,55 +521,18 @@ int n1;
 		}
 }
 
-void _dp_red_mod_destructive(p1,p2,mod,rp)
-DP p1,p2;
-int mod;
-DP *rp;
+void dlto_dl(d,dr)
+DL d;
+DL *dr;
 {
 	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s;
-	int c,c1;
+	DL t;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	_NEWDL(d,n); d->td = d1->td - d2->td;
+	n = current_dl_length;
+	_NEWDL(t,n); *dr = t;
+	t->td = d->td;
 	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c = invm(ITOS(BDY(p2)->c),mod); c1 = dmar(c,ITOS(BDY(p1)->c),0,mod);
-	_NEWMP(m); m->dl = d; m->c = STOI(mod-c1); NEXT(m) = 0;
-	_MKDP(n,m,s); s->sugar = d->td;
-	_mulmd_dup(mod,s,p2,&t); _free_dp(s);
-	_addmd_destructive(mod,p1,t,rp);
-}
-
-void _dp_sp_mod_dup(p1,p2,mod,rp)
-DP p1,p2;
-int mod;
-DP *rp;
-{
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,u;
-
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
-	}
-	_NEWDL(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	_NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
-	_MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p1,&t); _free_dp(s);
-	_NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	_NEWMP(m); m->dl = d; m->c = STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
-	_MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p2,&u); _free_dp(s);
-	_addmd_destructive(mod,t,u,rp);
+		t->d[i] = d->d[i];	
 }
 
 void _dltodl(d,dr)
@@ -616,7 +549,7 @@ DL *dr;
 		t->d[i] = d->d[i];	
 }
 
-void adddl_dup(n,d1,d2,dr)
+void _adddl_dup(n,d1,d2,dr)
 int n;
 DL d1,d2;
 DL *dr;
@@ -631,27 +564,13 @@ DL *dr;
 		dt->d[i] = d1->d[i]+d2->d[i];
 }
 
-/* d1 += d2 */
-
-void adddl_destructive(n,d1,d2)
-int n;
-DL d1,d2;
-{
-	DL dt;
-	int i;
-
-	d1->td += d2->td;
-	for ( i = 0; i < n; i++ )
-		d1->d[i] += d2->d[i];
-}
-
 void _free_dlarray(a,n)
 DL *a;
 int n;
 {
 	int i;
 
-	for ( i = 0; i < n; i++ ) { FREEDL(a[i]); }
+	for ( i = 0; i < n; i++ ) { _FREEDL(a[i]); }
 }
 
 void _free_dp(f)
@@ -663,9 +582,30 @@ DP f;
 		return;
 	m = f->body;
 	while ( m ) {
-		s = m; m = NEXT(m); FREEDL(s->dl); FREEMP(s);
+		s = m; m = NEXT(m); _FREEDL(s->dl); _FREEMP(s);
 	}
-	FREEDP(f);
+	_FREEDP(f);
+}
+
+void dpto_dp(p,r)
+DP p;
+DP *r;
+{
+	MP m,mr0,mr;
+
+	if ( !p )
+		*r = 0;
+	else {
+		current_dl_length = NV(p);
+		for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
+			_NEXTMP(mr0,mr);
+			dlto_dl(m->dl,&mr->dl);
+			mr->c = m->c;
+		}
+		NEXT(mr) = 0;
+		_MKDP(p->nv,mr0,*r);
+		(*r)->sugar = p->sugar;
+	}
 }
 
 void _dptodp(p,r)
@@ -688,61 +628,55 @@ DP *r;
 	}
 }
 
-void _dp_nf_mod_destructive(b,g,ps,mod,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int mod,full;
-DP *rp;
-{
-	DP u,p,d,s,t;
-	NODE l;
-	MP m,mr,mrd;
-	int sugar,psugar,n,h_reducible,i;
+/* 
+ * destructive merge of two list
+ *
+ * p1, p2 : list of DL
+ * return : a merged list
+ */
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	sugar = g->sugar;
-	n = g->nv;
-	for ( d = 0; g; ) {
-		for ( h_reducible = 0, l = b; l; l = NEXT(l) ) {
-			if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
-				h_reducible = 1;
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				_dp_red_mod_destructive(g,p,mod,&u); g = u;
-				sugar = MAX(sugar,psugar);
-				if ( !g ) {
-					if ( d )
-						d->sugar = sugar;
-					_dptodp(d,rp); _free_dp(d); return;
-				}
+NODE _symb_merge(m1,m2,n)
+NODE m1,m2;
+int n;
+{
+	NODE top,prev,cur,m,t;
+
+	if ( !m1 )
+		return m2;
+	else if ( !m2 )
+		return m1;
+	else {
+		switch ( (*cmpdl)(n,(DL)BDY(m1),(DL)BDY(m2)) ) {
+			case 0:
+				top = m1; _FREEDL((DL)BDY(m2)); m = NEXT(m2);
 				break;
+			case 1:
+				top = m1; m = m2;
+				break;
+			case -1:
+				top = m2; m = m1;
+				break;
+		}
+		prev = top; cur = NEXT(top);
+		/* BDY(prev) > BDY(m) always holds */
+		while ( cur && m ) {
+			switch ( (*cmpdl)(n,(DL)BDY(cur),(DL)BDY(m)) ) {
+				case 0:
+					_FREEDL(BDY(m)); m = NEXT(m);
+					prev = cur; cur = NEXT(cur);
+					break;
+				case 1:
+					t = NEXT(cur); NEXT(cur) = m; m = t;
+					prev = cur; cur = NEXT(cur);
+					break;
+				case -1:
+					NEXT(prev) = m; m = cur;
+					prev = NEXT(prev); cur = NEXT(prev);
+					break;
 			}
 		}
-		if ( !h_reducible ) {
-			/* head term is not reducible */
-			if ( !full ) {
-				if ( g )
-					g->sugar = sugar;
-				_dptodp(g,rp); _free_dp(g); return;
-			} else {
-				m = BDY(g); 
-				if ( NEXT(m) ) {
-					BDY(g) = NEXT(m); NEXT(m) = 0;
-				} else {
-					FREEDP(g); g = 0;
-				}
-				if ( d ) {
-					for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
-					NEXT(mrd) = m;
-				} else {
-					_MKDP(n,m,d);
-				}
-			}
-		}
+		if ( !cur )
+			NEXT(prev) = m;
+		return top;
 	}
-	if ( d )
-		d->sugar = sugar;
-	_dptodp(d,rp); _free_dp(d);
 }

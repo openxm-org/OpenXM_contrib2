@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.9 2000/11/08 08:02:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.10 2000/11/13 01:48:12 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -57,7 +57,7 @@
 #define DMAR(a1,a2,a3,d,r) (r)=dmar(a1,a2,a3,d);
 #endif
 
-extern int Print; /* XXX */
+extern int DP_Print; /* XXX */
 
 void inner_product_mat_int_mod(Q **,int **,int,int,int,Q *);
 void solve_by_lu_mod(int **,int,int,int **,int);
@@ -805,7 +805,7 @@ int **rindp,**cindp;
 	colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
 	wcolstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
 	for ( ind = 0; ; ind++ ) {
-		if ( Print ) {
+		if ( DP_Print ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
 		md = lprime[ind];
@@ -842,13 +842,13 @@ RESET:
 					}
 		} else {
 			if ( rank < rank0 ) {
-				if ( Print ) {
+				if ( DP_Print ) {
 					fprintf(asir_out,"lower rank matrix; continuing...\n");
 					fflush(asir_out);
 				}
 				continue;
 			} else if ( rank > rank0 ) {
-				if ( Print ) {
+				if ( DP_Print ) {
 					fprintf(asir_out,"higher rank matrix; resetting...\n");
 					fflush(asir_out);
 				}
@@ -856,7 +856,7 @@ RESET:
 			} else {
 				for ( j = 0; (j<col) && (colstat[j]==wcolstat[j]); j++ );
 				if ( j < col ) {
-					if ( Print ) {
+					if ( DP_Print ) {
 						fprintf(asir_out,"inconsitent colstat; resetting...\n");
 						fflush(asir_out);
 					}
@@ -912,7 +912,7 @@ RESET:
 					get_eg(&tmp1);
 					add_eg(&eg_gschk,&tmp0,&tmp1);
 					add_eg(&eg_gschk_split,&tmp0,&tmp1);
-					if ( Print ) {
+					if ( DP_Print ) {
 						print_eg("Mod",&eg_mod_split);
 						print_eg("Elim",&eg_elim_split);
 						print_eg("ChRem",&eg_chrem_split);

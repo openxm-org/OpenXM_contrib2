@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.10 2000/09/08 02:56:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.11 2000/12/05 01:24:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,9 +83,6 @@ int TP,NBP,NMP,NFP,NDP,ZR,NZR;
 extern int (*cmpdl)();
 extern int do_weyl;
 
-void Pdp_gr_flags(), Pdp_gr_print();
-void Pdp_gr_main(),Pdp_gr_mod_main(),Pdp_f4_main(),Pdp_f4_mod_main();
-
 void print_stat(void);
 void init_stat(void);
 int dp_load_t(int,DP *);
@@ -108,8 +105,6 @@ DP_pairs updpairs(DP_pairs,NODE,int);
 void _dp_nf_ptozp(NODE,DP,DP *,int,int,DP *);
 void _dp_nf_ptozp_mpi(NODE,DP,DP *,int,int,DP *);
 void _dp_nf(NODE,DP,DP *,int,DP *);
-void _dp_nf_mod(NODE,DP,DP *,int,int,DP *);
-void interreduce_mod(NODE,int,int);
 NODE gb_mod(NODE,int);
 NODE gbd(NODE,int,NODE,NODE);
 NODE gb(NODE,int,NODE);
@@ -144,8 +139,8 @@ void dp_f4_mod_main(LIST,LIST,int,struct order_spec *,LIST *);
 double get_rtime();
 void _dpmod_to_vect(DP,DL *,int *);
 void dp_to_vect(DP,DL *,Q *);
-NODE dp_dllist(DP f),symb_merge(NODE,NODE,int);
-
+NODE dp_dllist(DP f);
+NODE symb_merge(NODE,NODE,int),_symb_merge(NODE,NODE,int);
 extern int dp_nelim;
 extern int dp_fcoeffs;
 static DP *ps,*psm;
@@ -161,15 +156,14 @@ static int NoCriB = 0;
 static int NoGC = 0;
 static int NoMC = 0;
 static int NoRA = 0;
-int Print = 0;
-static int PrintShort = 0;
+int DP_Print = 0;
+static int DP_PrintShort = 0;
 static int ShowMag = 0;
 static int Stat = 0;
 static int Multiple = 0;
 static int Denominator = 1;
 static int Top = 0;
 static int Reverse = 0;
-static int InterReduce = 0;
 static int Max_mag = 0;
 static char *Demand = 0;
 static int PtozpRA = 0;
@@ -179,119 +173,6 @@ int GenTrace = 0;
 int OXCheck = -1;
 int doing_f4;
 NODE TraceList;
-
-void Pdp_gr_flags(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	Obj name,value;
-	NODE n;
-
-	if ( arg ) {
-		asir_assert(ARG0(arg),O_LIST,"dp_gr_flags");
-		n = BDY((LIST)ARG0(arg));
-		while ( n ) {
-			name = (Obj)BDY(n); n = NEXT(n);
-			if ( !n )
-				break;
-			else {
-				value = (Obj)BDY(n); n = NEXT(n);
-			}
-			dp_set_flag(name,value);
-		}
-	}
-	dp_make_flaglist(rp);
-}
-
-void Pdp_gr_print(arg,rp)
-NODE arg;
-Q *rp;
-{
-	Q q;
-
-	if ( arg ) {
-		asir_assert(ARG0(arg),O_N,"dp_gr_print");
-		q = (Q)ARG0(arg); Print = QTOS(q);
-	} else
-		STOQ(Print,q);
-	*rp = q;
-}
-
-void Pdp_gr_main(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	LIST f,v;
-	Num homo;
-	Q m;
-	int modular;
-	struct order_spec ord;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_gr_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_gr_main");
-	asir_assert(ARG2(arg),O_N,"dp_gr_main");
-	asir_assert(ARG3(arg),O_N,"dp_gr_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	homo = (Num)ARG2(arg);
-	m = (Q)ARG3(arg);
-	if ( !m )
-		modular = 0;
-	else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 && BD(NM(m))[0] >= 0x80000000) )
-		error("dp_gr_main : too large modulus");
-	else
-		modular = QTOS(m);
-	create_order_spec(ARG4(arg),&ord);
-	dp_gr_main(f,v,homo,modular,&ord,rp);
-}
-
-void Pdp_f4_main(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	LIST f,v;
-	struct order_spec ord;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	create_order_spec(ARG2(arg),&ord);
-	dp_f4_main(f,v,&ord,rp);
-}
-
-void Pdp_f4_mod_main(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	LIST f,v;
-	int m;
-	struct order_spec ord;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
-	asir_assert(ARG2(arg),O_N,"dp_f4_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
-	create_order_spec(ARG3(arg),&ord);
-	dp_f4_mod_main(f,v,m,&ord,rp);
-}
-
-void Pdp_gr_mod_main(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	LIST f,v;
-	Num homo;
-	int m;
-	struct order_spec ord;
-
-	asir_assert(ARG0(arg),O_LIST,"dp_gr_mod_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_gr_mod_main");
-	asir_assert(ARG2(arg),O_N,"dp_gr_mod_main");
-	asir_assert(ARG3(arg),O_N,"dp_gr_mod_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
-	create_order_spec(ARG4(arg),&ord);
-	dp_gr_mod_main(f,v,homo,m,&ord,rp);
-}
 
 int eqdl(nv,dl1,dl2)
 int nv;
@@ -418,7 +299,7 @@ LIST *rp;
 		if ( homo ) {
 			initd(&ord1); CNVars = NVars+1;
 		}
-		if ( Print && modular ) {
+		if ( DP_Print && modular ) {
 			fprintf(asir_out,"mod= %d, eval = ",m); printsubst(subst);
 		}
 		x = gb(s,m,subst);
@@ -627,7 +508,7 @@ NODE f;
 	while ( d ) {
 		get_eg(&tmp0);
 		minsugar(d,&dm,&dr); d = dr;
-		if ( Print )
+		if ( DP_Print )
 			fprintf(asir_out,"sugar=%d\n",dm->sugar);
 		blist = 0; s0 = 0;
 		/* asph : sum of all head terms of spoly */
@@ -668,7 +549,7 @@ NODE f;
 			dp_to_vect(BDY(r),at,(Q *)mat->body[i]);
 		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
 		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
-		if ( Print ) {
+		if ( DP_Print ) {
 			print_eg("Symb",&eg_split_symb);
 			fprintf(asir_out,"mat : %d x %d",row,col);
 			fflush(asir_out);
@@ -678,7 +559,7 @@ NODE f;
 #else
 		rank = generic_gauss_elim(mat,&nm,&dn,&rind,&cind);
 #endif
-		if ( Print )
+		if ( DP_Print )
 			fprintf(asir_out,"done rank = %d\n",rank,row,col);
 		for ( i = 0; i < rank; i++ ) {
 			for ( k = 0; k < nred; k++ )
@@ -703,7 +584,7 @@ NODE f;
 			}
 		}
 	}
-	if ( Print ) {
+	if ( DP_Print ) {
 		print_eg("Symb",&eg_symb);
 		print_eg("Mod",&eg_mod); print_eg("GaussElim",&eg_elim);
 		print_eg("ChRem",&eg_chrem); print_eg("IntToRat",&eg_intrat);
@@ -745,12 +626,12 @@ int m;
 	while ( d ) {
 		get_eg(&tmp0);
 		minsugar(d,&dm,&dr); d = dr;
-		if ( Print )
+		if ( DP_Print )
 			fprintf(asir_out,"sugar=%d\n",dm->sugar);
 		blist = 0; s0 = 0;
 		/* asph : sum of all head terms of spoly */
 		for ( t = dm; t; t = NEXT(t) ) {
-			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
+			_dp_sp_mod_dup(ps[t->dp1],ps[t->dp2],m,&sp);
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
 				s0 = symb_merge(s0,dp_dllist(sp),nv);
@@ -765,7 +646,7 @@ int m;
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				_dp_mod(sd,m,0,&sdm);
-				_mulmd(CO,m,sdm,ps[(int)BDY(r)],&f2);
+				_mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
 				MKNODE(bt,f2,blist); blist = bt;
 				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
@@ -840,7 +721,7 @@ int m;
 			for ( j = 0; j < spcol; j++ )
 				if ( spmat[i][j] )
 					nonzero++;
-		if ( Print )
+		if ( DP_Print )
 			fprintf(asir_out,"spmat : %d x %d (nonzero=%f%%)...",
 				nsp,spcol,((double)nonzero*100)/(nsp*spcol));
 		rank = generic_gauss_elim_mod(spmat,nsp,spcol,m,colstat);
@@ -848,7 +729,7 @@ int m;
 		get_eg(&tmp1); add_eg(&eg_elim2,&tmp0,&tmp1);
 		init_eg(&eg_split_elim2); add_eg(&eg_split_elim2,&tmp0,&tmp1);
 
-		if ( Print ) {
+		if ( DP_Print ) {
 			fprintf(asir_out,"done rank = %d\n",rank,row,col);
 			print_eg("Symb",&eg_split_symb);
 			print_eg("Elim1",&eg_split_elim1);
@@ -858,10 +739,13 @@ int m;
 		for ( j = 0, i = 0; j < spcol; j++ )
 			if ( colstat[j] ) {
 				mp0 = 0;
-				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = STOI(1);
+				NEXTMP(mp0,mp);
+				_dltodl(st[j],&mp->dl);
+				mp->c = STOI(1);
 				for ( k = j+1; k < spcol; k++ )
 					if ( !colstat[k] && spmat[i][k] ) {
-						NEXTMP(mp0,mp); mp->dl = st[k];
+						NEXTMP(mp0,mp);
+						_dltodl(st[k],&mp->dl);
 						mp->c = STOI(spmat[i][k]);
 				}
 				NEXT(mp) = 0;
@@ -872,8 +756,10 @@ int m;
 				gall = append_one(gall,nh);
 				i++;
 			}
+		for ( i = 0, r = blist; i < row; i++, r = NEXT(r) )
+			_free_dp(BDY(r));
 	}
-	if ( Print ) {
+	if ( DP_Print ) {
 		print_eg("Symb",&eg_symb);
 		print_eg("Elim1",&eg_elim1);
 		print_eg("Elim2",&eg_elim2);
@@ -1148,7 +1034,7 @@ NODE *h;
 	if ( NoRA ) {
 		*h = in; return;
 	}
-	if ( Print || PrintShort ) {
+	if ( DP_Print || DP_PrintShort ) {
 		fprintf(asir_out,"reduceall\n"); fflush(asir_out);
 	}
 	r = NODE_sortbi(in,0);
@@ -1184,7 +1070,7 @@ NODE *h;
 #endif
 		prim_part(g,0,&g1);
 		get_eg(&tmp1); add_eg(&eg_ra,&tmp0,&tmp1);
-		if ( Print || PrintShort ) {
+		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
 		w[i] = newps(g1,0,(NODE)0);
@@ -1193,7 +1079,7 @@ NODE *h;
 		MKNODE(t,(pointer)w[j],top); top = t;
 	}
 	*h = top;
-	if ( Print || PrintShort )
+	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"\n");
 }
 
@@ -1205,13 +1091,13 @@ NODE *h;
 	NODE r,t,top;
 	int n,i,j;
 	int *w;
-	DP g;
+	DP g,p;
 	struct oEGT tmp0,tmp1;
 
 	if ( NoRA ) {
 		*h = in; return;
 	}
-	if ( Print || PrintShort ) {
+	if ( DP_Print || DP_PrintShort ) {
 		fprintf(asir_out,"reduceall\n"); fflush(asir_out);
 	}
 	r = NODE_sortbi(in,0);
@@ -1227,10 +1113,12 @@ NODE *h;
 		get_eg(&tmp0);
 		if ( PCoeffs )
 			dp_nf_mod(top,ps[w[i]],ps,m,1,&g);
-		else
-			_dp_nf_mod(top,ps[w[i]],ps,m,1,&g);
+		else {
+			dpto_dp(ps[w[i]],&p);
+			_dp_nf_mod_destructive(top,p,ps,m,1,&g);
+		}
 		get_eg(&tmp1); add_eg(&eg_ra,&tmp0,&tmp1);
-		if ( Print || PrintShort ) {
+		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
 		w[i] = newps_mod(g,m);
@@ -1239,7 +1127,7 @@ NODE *h;
 		MKNODE(t,(pointer)w[j],top); top = t;
 	}
 	*h = top;
-	if ( Print || PrintShort )
+	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"\n");
 }
 
@@ -1539,7 +1427,7 @@ NODE subst;
 #else
 				_dp_nf_ptozp(gall,h,ps,!Top,Multiple,&nf);
 #endif
-			if ( Print )
+			if ( DP_Print )
 				fprintf(asir_out,"(%.3g)",get_rtime()-t_0);
 			get_eg(&tnf1); add_eg(&eg_nf,&tnf0,&tnf1);
 		} else
@@ -1566,7 +1454,7 @@ skip_nf:
 					mag += p_mag((P)mp->c);
 				Max_mag = MAX(Max_mag,mag);
 			}
-			if ( Print ) {
+			if ( DP_Print ) {
 				if ( !prev )
 					fprintf(asir_out,"\n");
 				print_split_e(&tnf0,&tnf1); print_split_e(&tpz0,&tpz1);
@@ -1577,7 +1465,7 @@ skip_nf:
 				if ( ShowMag )
 					fprintf(asir_out,",mag=%d",mag);
 				fprintf(asir_out,"\n"); fflush(asir_out);
-			} else if ( PrintShort ) {
+			} else if ( DP_PrintShort ) {
 				fprintf(asir_out,"+"); fflush(asir_out);
 			}
 			prev = 1;
@@ -1585,7 +1473,7 @@ skip_nf:
 			if ( m )
 				add_eg(&eg_znfm,&tnfm0,&tnfm1);
 			ZR++;
-			if ( Print || PrintShort ) {
+			if ( DP_Print || DP_PrintShort ) {
 				if ( new_sugar != prev_sugar ) {
 					fprintf(asir_out,"[%d]",new_sugar);	
 					prev_sugar = new_sugar;
@@ -1594,7 +1482,7 @@ skip_nf:
 			}
 		}
 	}
-	if ( Print || PrintShort )
+	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"gb done\n");
 	return g;
 }
@@ -1670,7 +1558,7 @@ NODE dlist;
 				return 0;
 			g = updbase(g,nh);
 			gall = append_one(gall,nh);
-			if ( Print ) {
+			if ( DP_Print ) {
 				if ( !prev )
 					fprintf(asir_out,"\n");
 				print_split_eg(&tnf0,&tnf1); fflush(asir_out);
@@ -1682,12 +1570,12 @@ NODE dlist;
 			if ( m )
 				add_eg(&eg_znfm,&tnfm0,&tnfm1);
 			ZR++;
-			if ( Print ) {
+			if ( DP_Print ) {
 				fprintf(asir_out,"."); fflush(asir_out); prev = 0;
 			}
 		}
 	}
-	if ( Print )
+	if ( DP_Print )
 		fprintf(asir_out,"gb done\n");
 	return g;
 }
@@ -1734,104 +1622,28 @@ int m;
 				return 0;
 			d = updpairs(d,g,nh);
 			g = updbase(g,nh);
-			if ( InterReduce )
-				interreduce_mod(g,nh,m);
 			gall = append_one(gall,nh);
-			if ( Print ) {
+			if ( DP_Print ) {
 				if ( !prev )
 					fprintf(asir_out,"\n");
 				print_split_eg(&tnfm0,&tnfm1); fflush(asir_out);
 				fprintf(asir_out,"(%d,%d),nb=%d,nab=%d,rp=%d,sugar=%d",l->dp1,l->dp2,length(g),length(gall),DPPlength(d),pss[nh]);
 				printdl(psh[nh]); fprintf(asir_out,"\n"); fflush(asir_out);
-			} else if ( PrintShort ) {
+			} else if ( DP_PrintShort ) {
 				fprintf(asir_out,"+"); fflush(asir_out);
 			}
 			prev = 1;
 		} else {
 			add_eg(&eg_znfm,&tnfm0,&tnfm1);
 			ZR++;
-			if ( Print || PrintShort ) {
+			if ( DP_Print || DP_PrintShort ) {
 				fprintf(asir_out,"."); fflush(asir_out); prev = 0;
 			}
 		}
 	}
-	if ( Print || PrintShort )
+	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"gb_mod done\n");
 	return g;
-}
-
-void interreduce_mod(g,n,m)
-NODE g;
-int n,m;
-{
-	DP nf;
-	NODE gn,t;
-	int i;
-
-	MKNODE(gn,(pointer)n,0);
-	if ( PCoeffs )
-		for ( t = g; t; t = NEXT(t) ) {
-			i = (int)BDY(t);
-			if ( i != n ) {
-				dp_nf_mod(gn,ps[i],ps,m,1,&nf); ps[i] = nf;
-			}
-		}
-	else
-		for ( t = g; t; t = NEXT(t) ) {
-			i = (int)BDY(t);
-			if ( i != n ) {
-				_dp_nf_mod(gn,ps[i],ps,m,1,&nf); ps[i] = nf;
-			}
-		}
-}
-
-void _dp_nf_mod(b,g,ps,mod,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int mod,full;
-DP *rp;
-{
-	DP u,p,d,s,t;
-	NODE l;
-	MP m,mr;
-	int sugar,psugar;
-
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, l = b; l; l = NEXT(l) ) {
-			if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
-				_dp_red_mod(g,p,mod,&u);		
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			_addmd(CO,mod,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
 }
 
 void _dp_nf(b,g,ps,full,rp)
@@ -1967,7 +1779,7 @@ DP *r;
 					Obj dmy;
 					Q ind;
 
-					if ( Print )
+					if ( DP_Print )
 						fprintf(asir_out,"d");
 					i = (int)BDY(l); STOQ(i,ind);
 					chsgnp((P)cred,(P *)&mcred);
@@ -1980,7 +1792,7 @@ DP *r;
 					Pox_pop_local(n0,&t1);
 				} else {
 /*					
-					if ( Print )
+					if ( DP_Print )
 						fprintf(asir_out,"l");
 */
 					t_00 = get_rtime();
@@ -2025,18 +1837,18 @@ DP *r;
 			if ( HMAG(u) > hmag ) {
 				t_0 = get_rtime();
 				if ( Dist && HMAG(u) > kara_bit ) {
-					if ( Print )
+					if ( DP_Print )
 						fprintf(asir_out,"D");
 					dp_ptozp_d(dist,ndist,u,&t);
 				} else {
-					if ( Print )
+					if ( DP_Print )
 						fprintf(asir_out,"L");
 					dp_ptozp_d(0,0,u,&t);
-				} dp_ptozp(u,&t); /* XXX */
+				}
 				tt = get_rtime()-t_0; t_g += tt;
 				t_0 = get_rtime();
 				divsn(NM((Q)BDY(u)->c),NM((Q)BDY(t)->c),&cn); NTOQ(cn,1,cont);
-				if ( !dp_fcoeffs && Print ) {
+				if ( !dp_fcoeffs && DP_Print ) {
 					fprintf(asir_out,"(%d)",p_mag((P)cont)*100/p_mag((P)BDY(u)->c));
 					fflush(asir_out);
 				}
@@ -2093,7 +1905,7 @@ DP *r;
 		dp->sugar = sugar;
 	*r = dp;
 final:
-	if ( Print )
+	if ( DP_Print )
 		fprintf(asir_out,"(%.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g)",
 			t_p,t_m,t_m1,t_m2,t_s,
 			t_g,t_a,
@@ -2164,10 +1976,10 @@ DP *r;
 				t_00 = get_rtime();
 				if ( Dist && ndist 
 					&& HMAG(rp) > mpi_mag && p_mag((P)cr) > mpi_mag ) {
-					if ( Print ) fprintf(asir_out,"~");
+					if ( DP_Print ) fprintf(asir_out,"~");
 					dp_imul_d(rp,cr,&t);
 				} else {
-					if ( Print ) fprintf(asir_out,"_");
+					if ( DP_Print ) fprintf(asir_out,"_");
 					muldc(CO,rp,(P)cr,&t);
 				}
 				ttt = get_rtime()-t_00; t_m1 += ttt/dp_nt(rp);
@@ -2176,10 +1988,10 @@ DP *r;
 				chsgnp((P)cred,(P *)&mcred);
 				if ( Dist && ndist 
 					&& HMAG(red) > mpi_mag && p_mag((P)mcred) > mpi_mag ) {
-					if ( Print ) fprintf(asir_out,"=");
+					if ( DP_Print ) fprintf(asir_out,"=");
 					dp_imul_d(red,mcred,&t1);
 				} else {
-					if ( Print ) fprintf(asir_out,"_");
+					if ( DP_Print ) fprintf(asir_out,"_");
 					muldc(CO,red,(P)mcred,&t1);
 				}
 				ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
@@ -2205,18 +2017,18 @@ DP *r;
 			if ( HMAG(u) > hmag ) {
 				t_0 = get_rtime();
 				if ( Dist && HMAG(u) > mpi_mag ) {
-					if ( Print )
+					if ( DP_Print )
 						fprintf(asir_out,"D");
 					dp_ptozp_d(dist,ndist,u,&t);
 				} else {
-					if ( Print )
+					if ( DP_Print )
 						fprintf(asir_out,"L");
 					dp_ptozp_d(0,0,u,&t);
 				}
 				tt = get_rtime()-t_0; t_g += tt;
 				t_0 = get_rtime();
 				divsn(NM((Q)BDY(u)->c),NM((Q)BDY(t)->c),&cn); NTOQ(cn,1,cont);
-				if ( Print ) {
+				if ( DP_Print ) {
 					fprintf(asir_out,"(%d)",p_mag((P)cont)*100/p_mag((P)BDY(u)->c));
 					fflush(asir_out);
 				}
@@ -2260,7 +2072,7 @@ DP *r;
 		dp->sugar = sugar;
 	*r = dp;
 final:
-	if ( Print )
+	if ( DP_Print )
 		fprintf(asir_out,"(%.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g %.3g)",
 			t_p,t_m,t_m1,t_m2,t_s,
 			t_g,t_a,
@@ -2611,7 +2423,7 @@ NODE f;
 		g = updbase(g,i);
 		gall = append_one(gall,i);
 	}
-	if ( Print || PrintShort ) {
+	if ( DP_Print || DP_PrintShort ) {
 		fprintf(asir_out,"gbcheck total %d pairs\n",DPPlength(d)); fflush(asir_out);
 	}
 	while ( d ) {
@@ -2620,13 +2432,13 @@ NODE f;
 		dp_load(l->dp1,&dp1); dp_load(l->dp2,&dp2); dp_sp(dp1,dp2,&h);
 		_dp_nf(gall,h,ps,1,&nf);
 		get_eg(&tmp1); add_eg(&eg_gc,&tmp0,&tmp1);
-		if ( Print || PrintShort ) {
+		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
 		if ( nf )
 			return 0;
 	}
-	if ( Print || PrintShort )
+	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"\n");
 	return 1;
 }
@@ -2639,22 +2451,22 @@ NODE f,x;
 
 	if ( NoMC )
 		return 1;
-	if ( Print || PrintShort ) {
+	if ( DP_Print || DP_PrintShort ) {
 		fprintf(asir_out,"membercheck\n"); fflush(asir_out);
 	}
 	for ( ; f; f = NEXT(f) ) {
 		get_eg(&tmp0);
 		_dp_nf(x,(DP)BDY(f),ps,1,&g);
 		get_eg(&tmp1); add_eg(&eg_mc,&tmp0,&tmp1);
-		if ( Print ) {
+		if ( DP_Print ) {
 			print_split_eg(&tmp0,&tmp1); fflush(asir_out);
-		} else if ( PrintShort ) {
+		} else if ( DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
 		if ( g )
 			return 0;
 	}
-	if ( Print || PrintShort )
+	if ( DP_Print || DP_PrintShort )
 		fprintf(asir_out,"\n");
 	return 1;
 }
@@ -2693,16 +2505,14 @@ Obj name,value;
 		Top = v;
 	else if ( !strcmp(n,"ShowMag") )
 		ShowMag = v;
-	else if ( !strcmp(n,"PrintShort") )
-		PrintShort = v;
-	else if ( !strcmp(n,"Print") )
-		Print = v;
+	else if ( !strcmp(n,"DP_PrintShort") )
+		DP_PrintShort = v;
+	else if ( !strcmp(n,"DP_Print") )
+		DP_Print = v;
 	else if ( !strcmp(n,"Stat") )
 		Stat = v;
 	else if ( !strcmp(n,"Reverse") )
 		Reverse = v;
-	else if ( !strcmp(n,"InterReduce") )
-		InterReduce = v;
 	else if ( !strcmp(n,"Multiple") )
 		Multiple = v;
 	else if ( !strcmp(n,"Denominator") )
@@ -2725,10 +2535,9 @@ LIST *list;
 	STOQ(Multiple,v); MKNODE(n,v,0); MKSTR(name,"Multiple"); MKNODE(n1,name,n); n = n1;
 	STOQ(Denominator,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Denominator"); MKNODE(n1,name,n); n = n1;
 	MKNODE(n1,Dist,n); n = n1; MKSTR(name,"Dist"); MKNODE(n1,name,n); n = n1;
-	STOQ(InterReduce,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"InterReduce"); MKNODE(n1,name,n); n = n1;
 	STOQ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
 	STOQ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
-	STOQ(Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
+	STOQ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"DP_Print"); MKNODE(n1,name,n); n = n1;
 	STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
 	STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
 	STOQ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
@@ -2808,7 +2617,7 @@ void init_stat() {
 }
 
 void print_stat() {
-	if ( !Print && !Stat )
+	if ( !DP_Print && !Stat )
 		return;
 	print_eg("UP",&eg_up); print_eg("SP",&eg_sp); print_eg("SPM",&eg_spm);
 	print_eg("NF",&eg_nf); print_eg("NFM",&eg_nfm); print_eg("ZNFM",&eg_znfm);

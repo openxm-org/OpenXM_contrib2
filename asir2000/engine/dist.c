@@ -45,12 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.9 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.10 2000/11/07 06:06:39 noro Exp $ 
 */
 #include "ca.h"
-
-#define NV(p) ((p)->nv)
-#define C(p) ((p)->c)
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
@@ -62,11 +59,6 @@
 #define ORD_BGRADREV 7
 #define ORD_BLEXREV 8
 #define ORD_ELIM 9
-
-struct cdl {
-	P c;
-	DL d;
-};
 
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
@@ -833,6 +825,20 @@ DL *dr;
 		for ( i = 0; i < n; i++ )
 			dt->d[i] = d1->d[i]+d2->d[i];
 	}
+}
+
+/* d1 += d2 */
+
+void adddl_destructive(n,d1,d2)
+int n;
+DL d1,d2;
+{
+	DL dt;
+	int i;
+
+	d1->td += d2->td;
+	for ( i = 0; i < n; i++ )
+		d1->d[i] += d2->d[i];
 }
 
 int compd(vl,p1,p2)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.6 2000/11/08 08:02:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.7 2000/12/05 01:24:53 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -641,6 +641,42 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define UNIN(n) ((n)&&(PL(n)==1)&&(BD(n)[0]==1))
 #define EVENN(n) ((!(n))||(!(BD(n)[0]%2)))
 
+/* special macros for private memory management */
+
+#define NV(p) ((p)->nv)
+#define C(p) ((p)->c)
+#define ITOS(p) (((unsigned int)(p))&0x7fffffff)
+#define STOI(i) ((P)((unsigned int)(i)|0x80000000))
+
+struct cdl {
+	P c;
+	DL d;
+};
+
+struct cdlm {
+	int c;
+	DL d;
+};
+
+extern MP _mp_free_list;
+extern DP _dp_free_list;       
+extern DL _dl_free_list;       
+extern int current_dl_length;      
+
+#define _NEWDL_NOINIT(d,n) if ((n)!= current_dl_length){_dl_free_list=0; current_dl_length=(n);} if(!_dl_free_list)_DL_alloc(); (d)=_dl_free_list; _dl_free_list = *((DL *)_dl_free_list)
+#define _NEWDL(d,n) if ((n)!= current_dl_length){_dl_free_list=0; current_dl_length=(n);} if(!_dl_free_list)_DL_alloc(); (d)=_dl_free_list; _dl_free_list = *((DL *)_dl_free_list); bzero((d),(((n)+1)*sizeof(int)))
+#define _NEWMP(m) if(!_mp_free_list)_MP_alloc(); (m)=_mp_free_list; _mp_free_list = NEXT(_mp_free_list)
+#define _MKDP(n,m,d) if(!_dp_free_list)_DP_alloc(); (d)=_dp_free_list; _dp_free_list = (DP)BDY(_dp_free_list); (d)->nv=(n); BDY(d)=(m)
+
+#define _NEXTMP(r,c) \
+if(!(r)){_NEWMP(r);(c)=(r);}else{_NEWMP(NEXT(c));(c)=NEXT(c);}
+
+#define _NEXTMP2(r,c,s) \
+if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
+
+#define _FREEDL(m) *((DL *)m)=_dl_free_list; _dl_free_list=(m)
+#define _FREEMP(m) NEXT(m)=_mp_free_list; _mp_free_list=(m)
+#define _FREEDP(m) BDY(m)=(MP)_dp_free_list; _dp_free_list=(m)
 
 /* externals */
 #if 0
