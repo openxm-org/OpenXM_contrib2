@@ -45,14 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.22 2003/04/20 08:54:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.23 2003/04/20 11:59:57 noro Exp $
  */
 /* requires 'primdec' */
 
 #define TMP_S ssssssss
-#define TMP_T tttttttt
+#define TMP_DS dssssssss
+#define TMP_T dtttttttt
+#define TMP_DT tttttttt
 #define TMP_Y1 yyyyyyyy1
+#define TMP_DY1 dyyyyyyyy1
 #define TMP_Y2 yyyyyyyy2
+#define TMP_DY2 dyyyyyyyy2
 
 extern LIBRARY_GR_LOADED$
 extern LIBRARY_PRIMDEC_LOADED$
@@ -64,9 +68,6 @@ if(!LIBRARY_PRIMDEC_LOADED) load("primdec"); else ; LIBRARY_PRIMDEC_LOADED = 1$
 
 def bfunction(F)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -83,9 +84,8 @@ def bfunction(F)
 
 def ann(F)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-
+	if ( member(s,vars(F)) )
+		error("ann : the variable 's' is reserved.");
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -99,12 +99,12 @@ def ann(F)
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
-	W = append([y1,y2,t],V);
-	DW = append([dy1,dy2,dt],DV);
+	W = append([TMP_Y1,TMP_Y2,TMP_T],V);
+	DW = append([TMP_DY1,TMP_DY2,TMP_DT],DV);
 
-	B = [1-y1*y2,t-y1*F];
+	B = [1-TMP_Y1*TMP_Y2,TMP_T-TMP_Y1*F];
 	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
+		B = cons(DV[I]+TMP_Y1*diff(F,V[I])*TMP_DT,B);
 	}
 
 	/* homogenized (heuristics) */
@@ -113,11 +113,11 @@ def ann(F)
 	G1 = [];
 	for ( T = G0; T != []; T = cdr(T) ) {
 		E = car(T); VL = vars(E);
-		if ( !member(y1,VL) && !member(y2,VL) )
+		if ( !member(TMP_Y1,VL) && !member(TMP_Y2,VL) )
 			G1 = cons(E,G1);
 	}
-	G2 = map(psi,G1,t,dt);
-	G3 = map(subst,G2,t,-1-s);
+	G2 = map(psi,G1,TMP_T,TMP_DT);
+	G3 = map(subst,G2,TMP_T,-1-s);
 	return G3;
 }
 
@@ -128,9 +128,6 @@ def ann(F)
 
 def ann0(F)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -145,13 +142,13 @@ def ann0(F)
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
 	/* XXX : heuristics */
-	W = append([y1,y2,t],reverse(V));
-	DW = append([dy1,dy2,dt],reverse(DV));
+	W = append([TMP_Y1,TMP_Y2,TMP_T],reverse(V));
+	DW = append([TMP_DY1,TMP_DY2,TMP_DT],reverse(DV));
 	WDW = append(W,DW);
 
-	B = [1-y1*y2,t-y1*F];
+	B = [1-TMP_Y1*TMP_Y2,TMP_T-TMP_Y1*F];
 	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
+		B = cons(DV[I]+TMP_Y1*diff(F,V[I])*TMP_DT,B);
 	}
 
 	/* homogenized (heuristics) */
@@ -160,17 +157,17 @@ def ann0(F)
 	G1 = [];
 	for ( T = G0; T != []; T = cdr(T) ) {
 		E = car(T); VL = vars(E);
-		if ( !member(y1,VL) && !member(y2,VL) )
+		if ( !member(TMP_Y1,VL) && !member(TMP_Y2,VL) )
 			G1 = cons(E,G1);
 	}
-	G2 = map(psi,G1,t,dt);
-	G3 = map(subst,G2,t,-1-s);
+	G2 = map(psi,G1,TMP_T,TMP_DT);
+	G3 = map(subst,G2,TMP_T,-1-TMP_S);
 
 	/* G3 = J_f(s) */
 
-	V1 = cons(s,V); DV1 = cons(ds,DV); V1DV1 = append(V1,DV1);
+	V1 = cons(TMP_S,V); DV1 = cons(TMP_DS,DV); V1DV1 = append(V1,DV1);
 	G4 = dp_weyl_gr_main(cons(F,G3),V1DV1,0,1,0);
-	Bf = weyl_minipoly(G4,V1DV1,0,s);
+	Bf = weyl_minipoly(G4,V1DV1,0,TMP_S);
 
 	FList = cdr(fctr(Bf));
 	for ( T = FList, Min = 0; T != []; T = cdr(T) ) {
@@ -179,28 +176,7 @@ def ann0(F)
 		if ( dn(Root) == 1 && Root < Min )
 			Min = Root;
 	}
-	return [Min,map(subst,G3,s,Min)];
-}
-
-def indicial1(F,V)
-{
-	W = append([y1,t],V);
-	N = length(V);
-	B = [t-y1*F];
-	for ( I = N-1, DV = []; I >= 0; I-- )
-		DV = cons(strtov("d"+rtostr(V[I])),DV);
-	DW = append([dy1,dt],DV);
-	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
-	}
-	dp_nelim(1);
-
-	/* homogenized (heuristics) */
-	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
-	G1 = map(subst,G0,y1,1);
-	G2 = map(psi,G1,t,dt);
-	G3 = map(subst,G2,t,-s-1);
-	return G3;
+	return [Min,map(subst,G3,TMP_S,Min)];
 }
 
 def psi(F,T,DT)
@@ -425,13 +401,33 @@ def bfct(F)
 	return Minipoly;
 }
 
+/* called from bfct() only */
+
+def indicial1(F,V)
+{
+	W = append([y1,t],V);
+	N = length(V);
+	B = [t-y1*F];
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+	DW = append([dy1,dt],DV);
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
+	}
+	dp_nelim(1);
+
+	/* homogenized (heuristics) */
+	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
+	G1 = map(subst,G0,y1,1);
+	G2 = map(psi,G1,t,dt);
+	G3 = map(subst,G2,t,-s-1);
+	return G3;
+}
+
 /* b-function computation via generic_bfct() (experimental) */
 
 def bfct_via_gbfct(F)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -445,11 +441,11 @@ def bfct_via_gbfct(F)
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
-	B = [t-F];
+	B = [TMP_T-F];
 	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+diff(F,V[I])*dt,B);
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
 	}
-	V1 = cons(t,V); DV1 = cons(dt,DV);
+	V1 = cons(TMP_T,V); DV1 = cons(TMP_DT,DV);
 	W = newvect(N+1);
 	W[0] = 1;
 	R = generic_bfct(B,V1,DV1,W);
@@ -461,10 +457,6 @@ def bfct_via_gbfct(F)
 
 def bfct_via_gbfct_weight(F,V)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-	V = replace_vars_v(V);
-
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
@@ -486,11 +478,11 @@ def bfct_via_gbfct_weight(F,V)
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
-	B = [t-F];
+	B = [TMP_T-F];
 	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+diff(F,V[I])*dt,B);
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
 	}
-	V1 = cons(t,V); DV1 = cons(dt,DV);
+	V1 = cons(TMP_T,V); DV1 = cons(TMP_DT,DV);
 	W = newvect(N+1);
 	W[0] = 1;
 	R = generic_bfct_1(B,V1,DV1,W);
@@ -502,10 +494,6 @@ def bfct_via_gbfct_weight(F,V)
 
 def bfct_via_gbfct_weight_1(F,V)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-	V = replace_vars_v(V);
-
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
@@ -527,11 +515,11 @@ def bfct_via_gbfct_weight_1(F,V)
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
-	B = [t-F];
+	B = [TMP_T-F];
 	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+diff(F,V[I])*dt,B);
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
 	}
-	V1 = append(V,[t]); DV1 = append(DV,[dt]);
+	V1 = append(V,[TMP_T]); DV1 = append(DV,[TMP_DT]);
 	W = newvect(N+1);
 	W[N] = 1;
 	R = generic_bfct_1(B,V1,DV1,W);
@@ -541,10 +529,6 @@ def bfct_via_gbfct_weight_1(F,V)
 
 def bfct_via_gbfct_weight_2(F,V)
 {
-	/* XXX */
-	F = replace_vars_f(F);
-	V = replace_vars_v(V);
-
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
@@ -581,12 +565,12 @@ def bfct_via_gbfct_weight_2(F,V)
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
-	B = [t-F];
+	B = [TMP_T-F];
 	for ( I = 0; I < N; I++ ) {
-		B = cons(DV[I]+diff(F,V[I])*dt,B);
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
 	}
-	V1 = cons(t,V); DV1 = cons(dt,DV);
-	V2 = append(V,[t]); DV2 = append(DV,[dt]);
+	V1 = cons(TMP_T,V); DV1 = cons(TMP_DT,DV);
+	V2 = append(V,[TMP_T]); DV2 = append(DV,[TMP_DT]);
 	W = newvect(N+1,[1]);
 	dp_weyl_set_weight(W);
 
@@ -637,6 +621,8 @@ def bfct_via_gbfct_weight_2(F,V)
 	return subst(R,s,-s-1);
 }
 
+/* minimal polynomial of s; modular computation */
+
 def weyl_minipolym(G,V,O,M,V0)
 {
 	N = length(V);
@@ -677,6 +663,8 @@ def weyl_minipolym(G,V,O,M,V0)
 			G = insert(G,L);
 	}
 }
+
+/* minimal polynomial of s over Q */
 
 def weyl_minipoly(G0,V0,O0,P)
 {
@@ -822,13 +810,6 @@ def flatmf(L) {
 			S = append(S,[F]);
 	return S;
 }
-
-def member(A,L) {
-    for ( ; L != []; L = cdr(L) )
-		if ( A == car(L) )
-			return 1;
-	return 0;
-}   
 
 def intersection(A,B)
 {
