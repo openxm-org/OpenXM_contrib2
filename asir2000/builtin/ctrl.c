@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.24 2003/10/20 09:17:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.25 2003/10/20 09:20:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -147,7 +147,8 @@ Q *rp;
 	} else if ( !strcmp(key,"prompt") ) {
 		/* special treatment is necessary for "prompt" */
 		if ( argc(arg) == 1 ) {
-			*rp = (Q)user_defined_prompt;
+		  if ((!do_quiet) && (user_defined_prompt == (Obj)0)) *rp=ONE;
+          else *rp = (Q)user_defined_prompt;
 		} else {
 			c = (Q)ARG1(arg);
 			if ( !c ) {
