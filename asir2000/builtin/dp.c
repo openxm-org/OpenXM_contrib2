@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.52 2004/05/14 06:02:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.53 2004/05/14 09:20:56 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -471,7 +471,7 @@ DP *rp;
 		if ( current_option ) {
 			f.id = O_LIST; f.body = mknode(1,p);
 			parse_gr_option(&f,current_option,&v,&homo,&modular,&ord);
-			dp_current_spec = ord;
+			initd(ord);
 		} else
 			error("dp_ptod : invalid argument");
 	} else {
@@ -510,7 +510,7 @@ DPV *rp;
 	if ( ac == 1 ) {
 		if ( current_option ) {
 			parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
-			dp_current_spec = ord;
+			initd(ord);
 		} else
 			error("dp_ltod : invalid argument");
 	} else {
@@ -1176,9 +1176,10 @@ Obj *rp;
 		n = mknode(1,f); MKLIST(l,n); f = l;
 		is_list = 0;
 	}
-	if ( current_option )
+	if ( current_option ) {
 		parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
-	else
+		initd(ord);
+	} else
 		ord = dp_current_spec;
 	initiallist = dp_initial_term(f,ord);		
 	if ( !is_list )
@@ -1204,9 +1205,10 @@ Obj *rp;
 		n = mknode(1,f); MKLIST(l,n); f = l;
 		is_list = 0;
 	}
-	if ( current_option )
+	if ( current_option ) {
 		parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
-	else
+		initd(ord);
+	} else
 		ord = dp_current_spec;
 	ordlist = dp_order(f,ord);		
 	if ( !is_list )
