@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.55 2004/12/04 09:39:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.56 2004/12/06 09:29:34 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2030,7 +2030,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-static VECT current_dl_weight_vector_obj;
+VECT current_dl_weight_vector_obj;
 int *current_dl_weight_vector;
 
 void Pdp_set_weight(arg,rp)

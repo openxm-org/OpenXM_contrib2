@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.119 2004/12/06 09:29:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.120 2004/12/07 15:15:52 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,6 +8,7 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 
+static int nd_ntrans;
 static int nd_nalg;
 #if 0
 static int ndv_alloc;
@@ -2214,20 +2215,25 @@ void ndv_setup(int mod,int trace,NODE f)
 struct order_spec *append_block(struct order_spec *spec,
     int nv,int nalg,int ord);
 
+extern VECT current_dl_weight_vector_obj;
+static VECT prev_weight_vector_obj;
+
 void preprocess_algcoef(VL vv,VL av,struct order_spec *ord,LIST f,
 	struct order_spec **ord1p,LIST *f1p,NODE *alistp)
 {
-	NODE alist,t,s,r0,r;
+	NODE alist,t,s,r0,r,arg;
 	VL tv;
 	P poly;
 	DP d;
 	Alg alpha,dp;
 	DAlg inv,da,hc;
 	MP m;
-	int i,nvar,nalg;
+	int i,nvar,nalg,n;
 	NumberField nf;
 	LIST f1,f2;
 	struct order_spec *current_spec;
+	VECT obj,obj0;
+	Obj tmp;
 
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++);
 	for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++);
@@ -2271,6 +2277,44 @@ void preprocess_algcoef(VL vv,VL av,struct order_spec *ord,LIST f,
 	MKLIST(f1,t);
 	*alistp = alist;
 	algobjtorat(f1,f1p);
+
+	/* creating a new weight vector */
+	prev_weight_vector_obj = obj0 = current_dl_weight_vector_obj;
+	n = nvar+nalg+1;
+	MKVECT(obj,n);
+	if ( obj0 && obj0->len == nvar )
+		for ( i = 0; i < nvar; i++ ) BDY(obj)[i] = BDY(obj0)[i];
+	else
+		for ( i = 0; i < nvar; i++ ) BDY(obj)[i] = (pointer)ONE;
+	for ( i = 0; i < nalg; i++ ) BDY(obj)[i+nvar] = 0;
+	BDY(obj)[n-1] = (pointer)ONE;
+	arg = mknode(1,obj);
+	Pdp_set_weight(arg,&tmp);
+}
+
+NODE postprocess_algcoef(VL av,NODE alist,NODE r)
+{
+	NODE s,t,u0,u;
+	P p;
+	VL tv;
+	Obj obj,tmp;
+	NODE arg;
+
+	u0 = 0;
+	for ( t = r; t; t = NEXT(t) ) {
+		p = (P)BDY(t);
+		for ( tv = av, s = alist; tv; tv = NEXT(tv), s = NEXT(s) ) {
+			substr(CO,0,(Obj)p,tv->v,(Obj)BDY(s),&obj); p = (P)obj;
+		}
+		if ( OID(p) == O_P || (OID(p) == O_N && NID((Num)p) != N_A) ) {
+			NEXTNODE(u0,u);
+			BDY(u) = (pointer)p;
+		}
+	}	
+	arg = mknode(1,prev_weight_vector_obj);
+	Pdp_set_weight(arg,&tmp);
+
+	return u0;
 }
 
 void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
@@ -2307,6 +2351,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	if ( !m ) {
 		get_algtree((Obj)f,&av);
 		for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++ );
+		nd_ntrans = nvar;
 		nd_nalg = nalg;
 		/* #i -> t#i */
 		if ( nalg ) {
@@ -2340,15 +2385,10 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	for ( r0 = 0, t = x; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r); 
 		BDY(r) = ndvtop(m,CO,vv,BDY(t));
-		if ( nalg ) {
-			p = BDY(r);
-			for ( tv = av, s = alist; tv; tv = NEXT(tv), s = NEXT(s) ) {
-				substr(CO,0,(Obj)p,tv->v,(Obj)BDY(s),&obj); p = (P)obj;
-			}
-			BDY(r) = p;
-		}
 	}
 	if ( r0 ) NEXT(r) = 0;
+	if ( nalg )
+		r0 = postprocess_algcoef(av,alist,r0);
 	MKLIST(*rp,r0);
 #if 0
 	fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
@@ -2385,6 +2425,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 
 	get_algtree((Obj)f,&av);
 	for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++ );
+	nd_ntrans = nvar;
 	nd_nalg = nalg;
 	/* #i -> t#i */
 	if ( nalg ) {
@@ -2483,16 +2524,10 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	/* dp->p */
 	nd_bpe = cbpe;
 	nd_setup_parameters(nd_nvar,0);
-	for ( r = cand; r; r = NEXT(r) ) {
+	for ( r = cand; r; r = NEXT(r) )
 		BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
-		if ( nalg ) {
-			poly = BDY(r);
-			for ( tv = av, s = alist; tv; tv = NEXT(tv), s = NEXT(s) ) {
-				substr(CO,0,(Obj)poly,tv->v,(Obj)BDY(s),&obj); poly = (P)obj;
-			}
-			BDY(r) = poly;
-		}
-	}
+	if ( nalg )
+		cand = postprocess_algcoef(av,alist,cand);
 	MKLIST(*rp,cand);
 }
 
@@ -5241,13 +5276,19 @@ UINT *nd_det_compute_bound(NDV **dm,int n,int j)
 
 DL nd_separate_d(UINT *d,UINT *trans)
 {
-	int n,ntrans,td,i,e;
+	int n,td,i,e,j;
 	DL a;
 
-	n = nd_nvar; ntrans = n-nd_nalg;
 	ndl_zero(trans);
 	td = 0;
-	for ( i = 0; i < ntrans; i++ ) {
+	for ( i = 0; i < nd_ntrans; i++ ) {
+		e = GET_EXP(d,i);
+		PUT_EXP(trans,i,e);
+		td += MUL_WEIGHT(e,i);
+	}
+	if ( nd_ntrans+nd_nalg < nd_nvar ) {
+		/* homogenized */
+		i = nd_nvar-1;
 		e = GET_EXP(d,i);
 		PUT_EXP(trans,i,e);
 		td += MUL_WEIGHT(e,i);
@@ -5256,9 +5297,10 @@ DL nd_separate_d(UINT *d,UINT *trans)
 	if ( nd_blockmask) ndl_weight_mask(trans);
 	NEWDL(a,nd_nalg);
 	td = 0;
-	for ( ; i < n; i++ ) {
-		e = GET_EXP(d,i);
-		a->d[i-ntrans] = e;
+	for ( i = 0; i < nd_nalg; i++ ) {
+		j = nd_ntrans+i;
+		e = GET_EXP(d,j);
+		a->d[i] = e;
 		td += e;
 	}
 	a->td = td;
@@ -5286,7 +5328,6 @@ int nd_monic(int mod,ND *p)
 	if ( !(nf = get_numberfield()) )
 		error("nd_monic : current_numberfield is not set");
 
-	n = nd_nvar; ntrans = n-nd_nalg;
 	/* Q coef -> DAlg coef */
 	NEWNM(ma0); ma = ma0;
 	m = BDY(*p); 
@@ -5340,10 +5381,10 @@ int nd_monic(int mod,ND *p)
 			dl = mp->dl;
 			td = TD(DL(m));
 			ndl_copy(DL(m),DL(mr));
-			for ( i = ntrans; i < n; i++ ) {
-				e = dl->d[i-ntrans];
-				PUT_EXP(DL(mr),i,e);
-				td += MUL_WEIGHT(e,i);
+			for ( i = 0; i < nd_nalg; i++ ) {
+				e = dl->d[i];
+				PUT_EXP(DL(mr),i+nd_ntrans,e);
+				td += MUL_WEIGHT(e,i+nd_ntrans);
 			}
 			TD(DL(mr)) = td;
 			if ( nd_blockmask) ndl_weight_mask(DL(mr));
