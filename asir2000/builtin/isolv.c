@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $OpenXM$
  */
 
 #include "ca.h"
