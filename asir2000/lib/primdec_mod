@@ -134,7 +134,7 @@ def frobeniuskernel_main(P,VSet,WSet)
 	XSet=append(VSet,WSet);
 	NewOrder=[[0,length(VSet)],[0,length(WSet)]];
 
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 
 	for (I=0;I<NV;I++)
 		{
@@ -168,7 +168,7 @@ def frobeniuskernel_main2(P,VSet,WSet)
 	XSet=append(VSet,WSet);
 	NewOrder=[[0,NV],[0,NV]];
 
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 
 	for (I=0;I<NV;I++)
 		{
@@ -216,7 +216,7 @@ def frobeniuskernel_main4(P,VSet,WSet)
 	XSet=append(VSet,WSet);
 	NewOrder=[[0,NV],[0,NV]];
 
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 
 	for (I=0;I<NV;I++)
 		{
@@ -279,7 +279,7 @@ def frobeniuskernel_main3(P,VSet,WSet)
 
 	NewP=coefficientfrobeniuskernel(P);
 
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 
 	for (I=0;I<NV;I++)
 		{
@@ -342,8 +342,8 @@ def coefficientfrobeniuskernel_main(Poly)
 	Vars=vars(Poly);
 	QP=dp_ptod(Poly,Vars);
 	ANS=0;
-	FOrd=deg(setmod_ff()[1],var(setmod_ff()[1]));
-	Char=setmod_ff()[0];
+	FOrd=extdeg_ff();
+	Char=characteristic_ff();
 	Pow=Char^(FOrd-1);
 
 	while(QP !=0 )
@@ -1636,7 +1636,7 @@ def separableclosure(CP,TargetVSet,VSet)
 		print("This is not a separable ideal, so we make its separable closure.", 2);
 	}
 	WSet=makecounterpart(TargetVSet);
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 
 	NewP=CP[0];
 	EXPVECTOR=newvect(NVSet);
@@ -1692,7 +1692,7 @@ def convertdivisor(P,TargetVSet,VSet,ExVector)
 
 	NVSet=length(TargetVSet);
 	WSet=makecounterpart(TargetVSet);
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 	Ord=0;
 
 	NewP=P;
@@ -2034,7 +2034,7 @@ def checkseparablepoly(P,V)
 
 def pdivide(F,V)
 	{
-	Char=setmod_ff()[0];
+	Char=characteristic_ff();
 	TestP=P;
 
 	Deg=ideg(TestP,V);
@@ -2082,14 +2082,15 @@ def convertsmallfield(PP,VSet,Ord)
 	{
 	dp_ord(Ord);
 	NVSet=length(VSet);
-	Char=setmod_ff()[0];
-	ExtDeg=deg(setmod_ff()[1],var(setmod_ff()[1]));
+	Char=characteristic_ff();
+	ExtDeg=extdeg_ff();
 
 	NewV=pgpgpgpgpgpgpg;	
 	MPP=map(monic_hc,PP,VSet);
 	MPP=map(sfptopsfp,MPP,NewV);
 
-	MinPoly=subst(setmod_ff()[1],var(setmod_ff()[1]),NewV);
+	DefPoly=setmod_ff()[1];
+	MinPoly=subst(DefPoly,var(DefPoly),NewV);
 	XSet=cons(NewV,VSet);
 
 	Ord1=[[0,1],[Ord,NVSet]];
@@ -2109,7 +2110,7 @@ def checkgaloisorbit(PP,VSet,Ord,Flag)
 	{
 	NPP=length(PP);
 	TmpPP=PP;
-	ExtDeg=deg(setmod_ff()[1],var(setmod_ff()[1]));
+	ExtDeg=extdeg_ff();
 	
 	ANS=[];
 	BNS=[];
