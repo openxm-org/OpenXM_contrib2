@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.11 2001/08/21 01:39:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.12 2001/09/03 07:01:10 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -287,6 +287,9 @@ switch ( id ) {\
 #define GETPV(i,p) \
 ((int)(i)>=0	? (int)((p)=CPVS->va[(unsigned int)(i)].priv)\
 		: (int)((p)=GPVS->va[(unsigned int)(i)&(~MSB)].priv))
+#define GETPVNAME(i,p) \
+((int)(i)>=0	? (int)((p)=CPVS->va[(unsigned int)(i)].name)\
+		: (int)((p)=GPVS->va[(unsigned int)(i)&(~MSB)].name))
 #define ASSPV(i,p) \
 ((int)(i)>=0	? (int)(CPVS->va[(unsigned int)(i)].priv=(pointer)(p))\
 		: (int)(GPVS->va[(unsigned int)(i)&(~MSB)].priv=(pointer)(p)))

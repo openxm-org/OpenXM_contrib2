@@ -45,17 +45,20 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.7 2001/08/22 04:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.8 2001/08/31 09:17:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pprint();
 void Pquotetolist();
+void Peval_variables_in_quote();
+FNODE eval_pvar_in_fnode();
 
 struct ftab print_tab[] = {
 	{"print",Pprint,-2},
 	{"quotetolist",Pquotetolist,1},
+	{"eval_variables_in_quote",Peval_variables_in_quote,1},
 	{0,0,0},
 };
 
@@ -87,6 +90,17 @@ Obj *rp;
 {
 	asir_assert(ARG0(arg),O_QUOTE,"quotetolist");	
 	fnodetotree((FNODE)BDY((QUOTE)(ARG0(arg))),rp);
+}
+
+void Peval_variables_in_quote(arg,rp)
+NODE arg;
+QUOTE *rp;
+{
+	FNODE fn;
+
+	asir_assert(ARG0(arg),O_QUOTE,"eval_variables_in_quote");	
+	fn = eval_pvar_in_fnode((FNODE)BDY((QUOTE)(ARG0(arg))));
+	MKQUOTE(*rp,fn);
 }
 
 /* fnode -> [tag,name,arg0,arg1,...] */
@@ -262,8 +276,89 @@ Obj *rp;
 			MKLIST(r,n);
 			*rp = (Obj)r;
 			break;
+
+		case I_PVAR:
+			MKSTR(head,"variable");
+			GETPVNAME(FA0(f),opname);
+			MKSTR(op,opname);
+			n = mknode(2,head,op);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+
 		default:
 			error("fnodetotree : not implemented yet");
+	}
+}
+
+FNODE eval_pvar_in_fnode(f)
+FNODE f;
+{
+	FNODE a1,a2,a3;
+	pointer r;
+	NODE n,t,t0;
+
+	if ( !f )
+		return 0;
+
+	switch ( f->id ) {
+		/* unary operators */
+		case I_NOT: case I_PAREN:
+			a1 = eval_pvar_in_fnode((FNODE)FA0(f));
+			return mkfnode(1,f->id,a1);
+
+		/* binary operators */
+		case I_AND: case I_OR:
+			a1 = eval_pvar_in_fnode((FNODE)FA0(f));
+			a2 = eval_pvar_in_fnode((FNODE)FA1(f));
+			return mkfnode(3,f->id,a1,a2);
+
+		case I_BOP: case I_COP: case I_LOP: 
+			a1 = eval_pvar_in_fnode((FNODE)FA1(f));
+			a2 = eval_pvar_in_fnode((FNODE)FA2(f));
+			return mkfnode(4,f->id,FA0(f),a1,a2);
+
+		/* ternary operators */
+		case I_CE:
+			a1 = eval_pvar_in_fnode((FNODE)FA0(f));
+			a2 = eval_pvar_in_fnode((FNODE)FA1(f));
+			a3 = eval_pvar_in_fnode((FNODE)FA2(f));
+			return mkfnode(5,f->id,a1,a2,a3);
+
+		/* lists */
+		case I_LIST:
+			n = (NODE)FA0(f);
+			for ( t0 = 0; n; n = NEXT(n) ) {
+				NEXTNODE(t0,t);
+				BDY(t) = (pointer)eval_pvar_in_fnode(BDY(n));
+			}
+			if ( t0 )
+				NEXT(t) = 0;
+			return mkfnode(1,f->id,t0);
+
+		/* function */
+		case I_FUNC:
+			a1 = eval_pvar_in_fnode((FNODE)FA1(f));
+			return mkfnode(2,f->id,FA0(f),a1);
+			break;
+		case I_CAR: case I_CDR:
+			a1 = eval_pvar_in_fnode((FNODE)FA0(f));
+			return mkfnode(1,f->id,a1);
+		case I_EV:
+			/* exponent vector */
+			a1 = eval_pvar_in_fnode(mkfnode(1,I_LIST,FA0(f)));
+			return mkfnode(1,f->id,a1);
+
+		case I_STR: case I_FORMULA:
+			return f;
+
+		case I_PVAR: case I_INDEX:
+		case I_POSTSELF: case I_PRESELF:
+			r = eval(f);
+			return mkfnode(1,I_FORMULA,r);
+
+		default:
+			error("eval_pvar_in_fnode : not implemented yet");
 	}
 }
 
