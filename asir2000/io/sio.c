@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9 2000/11/07 06:35:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9.2.1 2000/11/08 08:18:14 maekawa Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -186,7 +186,6 @@ char *port_str;
   try to accept a connection request
 
   Input
-    af_unix: s is UNIX domain socket if af_unix is nonzero
     s: socket
 
   Output
@@ -196,8 +195,8 @@ char *port_str;
   the original socket is always closed.
 */
 
-int try_accept(af_unix,s)
-int af_unix,s;
+int try_accept(s)
+int s;
 {
 	union {
 		struct sockaddr sa;

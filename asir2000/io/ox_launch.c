@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.8 2000/11/07 06:35:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.9 2000/11/07 09:31:36 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -186,8 +186,8 @@ char **argv;
 	if ( accept_client ) {
 		cs = try_bind_listen(use_unix,control_port_str);
 		ss = try_bind_listen(use_unix,server_port_str);
-		cs = try_accept(use_unix,cs);
-		ss = try_accept(use_unix,ss);
+		cs = try_accept(cs);
+		ss = try_accept(ss);
 	} else {
 		cs = try_connect(use_unix,rhost,control_port_str);
 		ss = try_connect(use_unix,rhost,server_port_str);

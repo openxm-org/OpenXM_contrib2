@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.15 2000/10/06 06:05:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.16 2000/11/07 06:35:39 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -309,7 +309,7 @@ Q *rp;
 }
 
 /*
- try_accept(sock,port)
+ try_accept(sock)
 */
 
 void Ptry_accept(arg,rp)
@@ -322,7 +322,7 @@ Q *rp;
 		use_unix = 0;
 	else
 		use_unix = 1;
-	s = try_accept(use_unix,QTOS((Q)ARG0(arg)));
+	s = try_accept(QTOS((Q)ARG0(arg)));
 	STOQ(s,*rp);
 }
 
@@ -448,8 +448,8 @@ Q *rp;
 			cs = try_connect(use_unix,host,control_port_str);
 			ss = try_connect(use_unix,host,server_port_str);
 		} else {
-			cs = try_accept(use_unix,cs);
-			ss = try_accept(use_unix,ss);
+			cs = try_accept(cs);
+			ss = try_accept(ss);
 		}
 	} while ( cs < 0 || ss < 0 );
 
