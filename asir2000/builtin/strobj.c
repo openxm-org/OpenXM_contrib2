@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.42 2004/03/12 02:15:23 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.43 2004/03/15 06:44:50 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1043,20 +1043,29 @@ void fnodetotex_tb(FNODE f,TB tb)
 					vname_conv = conv_rule(vname);
 				} else {
 					if ( dp_vars_hweyl ) {
-						if ( i < elen2 )
+						if ( i < elen2 ) {
 							strcpy(prefix,dp_vars_prefix?dp_vars_prefix:"x");
-						else if ( i < elen )
+							prefix_conv = conv_rule(prefix);
+							vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
+							sprintf(vname_conv,i<10?"%s_%d":"%s_{%d}",
+								prefix_conv,i);
+						} else if ( i < elen ) {
 							strcpy(prefix,"\\partial");
-						else
+							prefix_conv = conv_rule(prefix);
+							vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
+							sprintf(vname_conv,i<10?"%s_%d":"%s_{%d}",
+								prefix_conv,i-elen2);
+						} else {
 							strcpy(prefix,"h");
-					} else
+							vname_conv = conv_rule(prefix);
+						}
+					} else {
 						strcpy(prefix,dp_vars_prefix?dp_vars_prefix:"x");
-					prefix_conv = conv_rule(prefix);
-					vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
-					if ( i < 10 )
-						sprintf(vname_conv,"%s_%d",prefix_conv,i);
-					else
-						sprintf(vname_conv,"%s_{%d}",prefix_conv,i);
+						prefix_conv = conv_rule(prefix);
+						vname_conv = (char *)ALLOCA(strlen(prefix_conv)+50);
+						sprintf(vname_conv,i<10?"%s_%d":"%s_{%d}",
+							prefix_conv,i);
+					}
 				}
 				if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
 					len = strlen(vname_conv);
