@@ -45,17 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.34 2002/11/22 07:32:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.35 2003/02/14 22:29:13 ohara Exp $ 
 */
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined(hpux)
 #include <netinet/in.h>
 # define setbuffer(FP,buf,siz) setvbuf(FP,buf,_IOFBF,siz)
 #endif
 
-#if defined(VISUAL)
-#include <stdlib.h>
+#if !defined(VISUAL)
+#include <unistd.h>
 #endif
 
 #if !defined(VISUAL)
@@ -81,11 +82,15 @@ typedef caddr_t pointer;
 
 typedef void * pointer;
 
-#if defined(VISUAL)
+#if defined(sun)
+#include <strings.h>
+#else
 #include <string.h>
+#if defined(VISUAL)
 #define index(s,c) strchr(s,c)
 #define bzero(s,len) memset(s,0,len)
 #define bcopy(x,y,len) memcpy(y,x,len)
+#endif
 #endif
 
 #define COPY(a,b) ((b)=(a))
