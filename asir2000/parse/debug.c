@@ -1,8 +1,10 @@
-/* $OpenXM: OpenXM/src/asir99/parse/debug.c,v 1.2 1999/11/18 05:42:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include <ctype.h>
+#if PARI
 #include "genpari.h"
+#endif
 
 void show_stack(VS);
 void change_stack(int,NODE *);

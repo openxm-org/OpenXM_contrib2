@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/parif.c,v 1.2 1999/11/18 05:42:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -314,7 +314,10 @@ struct ftab pari_tab[] = {
 
 void parif_init() {}
 
-pointer evalparif() {
+pointer evalparif(f,arg)
+FUNC f;
+NODE arg;
+{
 	error("evalparif : PARI is not combined.");
 }
 #endif /*PARI */

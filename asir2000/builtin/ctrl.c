@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.4 2000/02/07 03:19:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.5 2000/02/07 03:21:42 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -24,7 +24,9 @@ static struct {
 	{"cputime",&prtime},
 	{"nez",&nez},
 	{"echo",&echoback},
+#if DO_PLOT
 	{"bigfloat",&bigfloat},
+#endif
 	{"verbose",&Verbose},
 	{"hideargs",&hideargs},
 	{"hex",&hex_output},

@@ -1,8 +1,11 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/file.c,v 1.2 1999/11/23 07:14:14 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
+#include "unistd.h"
+#if PARI
 #include "genpari.h"
+#endif
 
 #if defined(VISUAL)
 #include <windows.h>

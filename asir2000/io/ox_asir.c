@@ -1,10 +1,15 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.4 2000/01/19 09:31:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.5 2000/01/31 03:18:05 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
+#include "signal.h"
 #include "ox.h"
 #include "version.h"
+#if PARI
+#include "genpari.h"
+#endif
 
 void ox_usr1_handler();
+
 
 extern jmp_buf environnement;
 

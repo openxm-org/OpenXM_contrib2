@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/eval.c,v 1.2 1999/11/18 05:42:03 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
@@ -8,7 +8,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #endif
+#if PARI
 #include "genpari.h"
+#endif
 
 extern jmp_buf timer_env;
 

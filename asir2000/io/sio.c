@@ -1,6 +1,7 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.2 1999/12/24 06:57:22 noro Exp $ */
 #if INET
 #include "ca.h"
+#include "setjmp.h"
 #include "ox.h"
 #if defined(VISUAL)
 #include <winsock.h>

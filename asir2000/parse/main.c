@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.2 2000/01/19 02:08:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #if defined(THINK_C)
@@ -20,10 +20,6 @@ extern int mpi_nprocs,mpi_myid;
 #if defined(VISUAL_LIB)
 void Main(argc,argv)
 #else
-void ExitAsir() {
-	exit(0);
-}
-
 #if defined(VISUAL)
 void
 #endif
@@ -69,10 +65,12 @@ char *argv[];
 		/* never return */
 		ox_main(argc,argv);
 		exit(0);
+#if DO_PLOT
 	} else if ( !strcmp(binname,"ox_plot") ) {
 		/* never return */
 		ox_plot_main(argc,argv);
 		exit(0);
+#endif
 	} else if ( !strcmp(binname,"ox_launch") ) {
 		/* never return */
 		launch_main(argc,argv);

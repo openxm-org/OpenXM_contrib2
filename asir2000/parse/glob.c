@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.3 2000/01/11 06:43:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.4 2000/01/19 01:49:36 noro Exp $ */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
@@ -151,6 +151,12 @@ static int buserr_sav;
 static char asir_history[BUFSIZ];
 
 extern int mpi_myid;
+
+#if !defined(VISUAL_LIB)
+void ExitAsir() {
+	exit(0);
+}
+#endif
 
 /*
  * status = 1 abnormal termination (error() etc.)
@@ -725,3 +731,4 @@ void copyright() {
 	printf("Copyright (C) FUJITSU LABORATORIES LIMITED.\n");
 	printf("1994-1999. All rights reserved.\n");
 }
+

@@ -1,10 +1,10 @@
-/* $OpenXM: OpenXM/src/asir99/io/ox_launch.c,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+#include <setjmp.h>
+#include <signal.h>
+#include <fcntl.h>
 #include "ca.h"
 #include "com.h"
 #include "ox.h"
-#include <signal.h>
-#include <setjmp.h>
-#include <fcntl.h>
 #if defined(VISUAL)
 #include <windows.h>
 #include <io.h>

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/xdeb.c,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
 #include <stdio.h>
@@ -42,6 +42,7 @@ void show_debug_window(int on)
 {}
 #endif
 #else /* VISUAL */
+#if DO_PLOT
 /*
  *	xdeb.c --- Asir Debug interface.
  *
@@ -177,4 +178,15 @@ char *buf;
 	}
 	strcpy(buf,debug_cmd);
 }
+#else /* DO_PLOT */
+init_cmdwin() {}
+
+show_debug_window(on)
+int on;
+{}
+
+get_line(buf)
+char *buf;
+{}
+#endif /* DO_PLOT */
 #endif /* VISUAL */

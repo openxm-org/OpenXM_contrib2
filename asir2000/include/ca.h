@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/include/ca.h,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include <stdio.h>
 
 #if defined(hpux)
@@ -29,11 +29,6 @@
 #if 0
 #include <sys/types.h>
 typedef caddr_t pointer;
-#endif
-
-#ifndef PARI
-/* for THINK C ... */
-#define PARI 1
 #endif
 
 typedef void * pointer;

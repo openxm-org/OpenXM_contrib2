@@ -1,6 +1,7 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.2 2000/01/26 02:05:34 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
+#include "signal.h"
 #include "wsio.h"
 #include "ox.h"
 

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.3 2000/01/26 02:18:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.4 2000/02/07 07:19:58 noro Exp $ */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
 
@@ -23,8 +23,13 @@ LIBCLIB=/usr/lib/libc.a -lm
 LIBCLIB=-lm
 #endif
 
+#if defined(USE_PLOT)
 LOCAL_LIBRARIES = -L/usr/openwin/lib XawClientLibs $(XWCHARLIB)
 DEPLIBS = XawClientDepLibs
+#else
+LOCAL_LIBRARIES = 
+DEPLIBS = 
+#endif
 
 PLIB = parse/libparse.a
 GLIB = gc/libasir-gc.a
@@ -42,7 +47,6 @@ PLLIB =
 #endif
 
 PROGRAMS = asir
-LIBRARIES = libasir.a $(GLIB)
 
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)
@@ -76,21 +80,27 @@ clean::									@@\
 NormalProgramTarget(asir,$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(KANLIB) $(GMPLIB) $(LAPACKLIB) $(LIBCLIB) $(EXTRASTDLIB) )
 NormalRelocTarget(asir.o,$(UOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(EXTRALIB) $(LIBCLIB) $(EXTRASTDLIB))
 
-libasir.a: $(LIBS0)
+$(LIBASIR): $(LIBS0)
 	-mkdir libtmp
 	( cd libtmp; $(RM) * )
-	for i in $(LIBS); do ( cd libtmp; ar x ../$$i; chmod 644 * ) done
+	for i in $(LIBS0); do ( cd libtmp; ar x ../$$i; chmod 644 * ) done
 	$(RM) $@
 	( cd libtmp; $(AR) ../$@ *.o )
 	$(RANLIB) $@
-	$(_NULLCMD_)
 
-install:: $(PROGRAMS) $(LIBRARIES)
+install:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
 	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_LIBDIR)
+
+install-libasir:: $(LIBASIR)
 	MakeDir($(ROOTDIR)/lib)
-	$(INSTALL) $(INSTALLFLAGS) $(LIBRARIES) $(ROOTDIR)/lib
-	for i in $(LIBRARIES); do $(RANLIB) $(ROOTDIR)/lib/`basename $$i` ;  done
+	$(INSTALL) $(INSTALLFLAGS) $(LIBASIR) $(ROOTDIR)/lib
+	$(RANLIB) $(ROOTDIR)/lib/$(LIBASIR)
+
+install-libgc:: $(GLIB)
+	MakeDir($(ROOTDIR)/lib)
+	$(INSTALL) $(INSTALLFLAGS) $(GLIB) $(ROOTDIR)/lib
+	$(RANLIB) $(ROOTDIR)/lib/`basename $(GLIB)`
 
 install-lib::
 	(cd lib; make install-lib)

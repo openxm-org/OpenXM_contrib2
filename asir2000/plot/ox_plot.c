@@ -1,9 +1,12 @@
-/* $OpenXM: OpenXM/src/asir99/plot/ox_plot.c,v 1.3 1999/11/19 05:51:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.1.1.1 1999/12/03 07:39:13 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "ifplot.h"
 #include "version.h"
+#if PARI
+#include "genpari.h"
+#endif
 
 void ox_usr1_handler();
 

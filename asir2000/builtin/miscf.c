@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.2 2000/01/18 05:55:05 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #if INET && !defined(VISUAL)
@@ -36,7 +36,7 @@ struct ftab misc_tab[] = {
 	{"gc",Pgc,0},
 	{"batch",Pbatch,2},
 	{"send_progress",Psend_progress,-2},
-#if INET && !defined(VISUAL)
+#if INET && !defined(VISUAL) && DO_PLOT
 	{"xpause",Pxpause,0},
 #endif
 #if 0
@@ -245,7 +245,9 @@ Q *rp;
 	code = QTOS((Q)ARG0(arg));
 	reason = BDY((STRING)ARG1(arg));
 	action = BDY((STRING)ARG2(arg));
+#if defined(VISUAL)
 	set_error(code,reason,action);
+#endif
 	error("");
 	*rp = 0;
 }
@@ -333,7 +335,7 @@ Q *rp;
 	STOQ(ret,*rp);	
 }
 
-#if INET && !defined(VISUAL)
+#if INET && !defined(VISUAL) && DO_PLOT
 void Pxpause(rp)
 Q *rp;
 {

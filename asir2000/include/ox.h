@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.2 2000/01/11 06:43:35 noro Exp $ */
 #include "com.h"
 
 /* version */
@@ -102,11 +102,7 @@ typedef FILE *ox_stream;
 --->FIXIT
 #endif
 
-#if PARI
-#include "genpari.h"
-
 extern jmp_buf environnement;
-#endif
 
 extern jmp_buf env;
 extern int *StackBottom;
