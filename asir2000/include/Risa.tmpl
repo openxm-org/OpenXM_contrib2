@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.26 2001/08/02 03:59:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.27 2001/08/06 01:48:32 noro Exp $ 
 */
 #include "config.h"
 
@@ -102,9 +102,9 @@ CC = cc -qchars=signed
 PARI=1
 PARIINC = $(ROOTDIR)/include/pari
 #if defined(OpenXM_HOME)
-PARILIB = $(ROOTDIR)/lib/libpari.a
+PARILIB = $(ROOTDIR)/lib/libpari-2.2.a
 #else
-PARILIB = -L/usr/local/lib -lpari
+PARILIB = -L/usr/local/lib -lpari-2.2
 #endif
 #else
 PARI=0

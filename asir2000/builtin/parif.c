@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.7 2000/12/22 09:58:32 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.8 2001/07/05 09:26:43 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -228,8 +228,9 @@ NODE arg;
 	GEN a,v;
 	long ltop,lbot;
 	pointer r;
-	int ac,opt;
+	int ac,opt,intarg,ret;
 	char buf[BUFSIZ];
+	Q q;
 	GEN (*dmy)();
 
 	if ( !f->f.binf ) {
@@ -237,6 +238,18 @@ NODE arg;
 		error(buf);
 	}
 	switch ( f->type ) {
+		case 0: /* in/out : integer */
+			ac = argc(arg);
+			if ( ac > 2 ) {
+				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
+				error("");
+			}
+			intarg = !ac ? 0 : QTOS((Q)ARG0(arg));
+			dmy = (GEN (*)())f->f.binf;
+			ret = (*dmy)(intarg);
+			STOQ(ret,q);
+			return (pointer)q;
+
 		case 1:
 			ac = argc(arg);
 			if ( !ac || ( ac > 2 ) ) {
@@ -287,6 +300,7 @@ struct pariftab {
  */
 
 struct pariftab pariftab[] = {
+{"allocatemem",allocatemoremem,0},
 {"abs",(GEN (*)())gabs,1},
 {"adj",adj,1},
 {"arg",garg,1},
@@ -410,6 +424,7 @@ struct pariftab pariftab[] = {
 {"wf",wf,1},
 {"wf2",wf2,1},
 {"zeta",gzeta,1},
+{"factor",factor,1},
 {"factorint",factorint,2},
 {0,0,0},
 };
