@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.12 2001/08/22 09:19:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.13 2001/12/25 02:39:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,6 +54,26 @@
 #include "cursor.h"
 #include <X11/Xaw/MenuButton.h>
 #include <X11/Xaw/Paned.h>
+
+/* XXX : these lines are in plotg.c, but ld says they are not defined */
+#if __DARWIN__
+int stream;
+
+DISPLAY *display;
+CURSOR normalcur,runningcur,errorcur;
+
+#if defined(VISUAL)
+POINT start_point, end_point;
+SIZE cansize;
+#else
+Window rootwin;
+GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC,cdrawGC;
+XFontStruct *sffs;
+#endif
+
+struct canvas *canvas[MAXCANVAS];
+struct canvas *current_can;
+#endif /* __DARWIN__ */
 
 #ifdef ABS
 #undef ABS
