@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.9 2003/07/25 09:04:47 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1022,7 +1022,7 @@ int nd_nf(ND g,int full,ND *rp)
 	ND p,d;
 	NM m,mrd,tail;
 	NM mul;
-	int n,sugar,psugar,stat,index;
+	int n,sugar,psugar,sugar0,stat,index;
 	int c,c1,c2;
 #if USE_NDV
 	NDV red;
@@ -1034,7 +1034,7 @@ int nd_nf(ND g,int full,ND *rp)
 		*rp = 0;
 		return 1;
 	}
-	sugar = g->sugar;
+	sugar0 = sugar = g->sugar;
 	n = NV(g);
 	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	for ( d = 0; g; ) {
@@ -1043,6 +1043,11 @@ int nd_nf(ND g,int full,ND *rp)
 			p = nd_ps[index];
 			ndl_sub(HDL(g),HDL(p),mul->dl);
 			mul->td = HTD(g)-HTD(p);
+#if 0
+			if ( d && (p->sugar+mul->td) > sugar ) {
+				goto afo;				
+			}
+#endif
 			if ( ndl_check_bound2(index,mul->dl) ) {
 				nd_free(g); nd_free(d);
 				return 0;
@@ -1062,6 +1067,7 @@ int nd_nf(ND g,int full,ND *rp)
 			*rp = g;
 			return 1;
 		} else {
+afo:
 			m = BDY(g); 
 			if ( NEXT(m) ) {
 				BDY(g) = NEXT(m); NEXT(m) = 0;
@@ -1544,11 +1550,13 @@ ND_pairs nd_minp( ND_pairs d, ND_pairs *prest )
 				c = ndl_compare(p->lcm,lcm);
 				if ( c < 0 )
 					goto find;
+#if 0
 				else if ( c == 0 ) {
 					tlen = nd_psl[p->i1]+nd_psl[p->i2];
 					if ( tlen < len )
 						goto find;
 				}
+#endif
 			}
 		}
 		continue;
