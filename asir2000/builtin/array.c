@@ -45,12 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.36 2004/09/14 07:23:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.37 2004/09/15 01:43:32 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
 #include "inline.h"
+
+#define F4_INTRAT_PERIOD 8 
 
 #if 0
 #undef DMAR
@@ -1118,7 +1120,7 @@ RESET:
 			add_eg(&eg_chrem_split,&tmp0,&tmp1);
 
 			get_eg(&tmp0);
-			if ( ind % 16 )
+			if ( ind % F4_INTRAT_PERIOD )
 				ret = 0;
 			else
 				ret = intmtoratm(crmat,m1,*nm,dn);
@@ -1257,7 +1259,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				add_eg(&eg_mul,&tmp0,&tmp1);
 				/* q = q*md */
 				mulq(q,mdq,&u); q = u;
-				if ( !(count % 16) && intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
+				if ( !(count % F4_INTRAT_PERIOD) && intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
 					for ( j = k = l = 0; j < col; j++ )
 						if ( cinfo[j] )
 							rind[k++] = j;	

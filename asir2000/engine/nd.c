@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.108 2004/09/21 02:43:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.109 2004/09/21 04:50:15 noro Exp $ */
 
 #include "nd.h"
 
@@ -2579,10 +2579,16 @@ void removecont_array(Q *c,int n)
 {
 	struct oVECT v;
 	Q d0,d1,a,u,u1,gcd;
-	int i;
+	int i,j;
 	N qn,rn,gn;
-	Q *q,*r;
+	Q *t,*q,*r;
 
+	t = (Q *)ALLOCA(n*sizeof(Q));
+	for ( i = j = 0; i < n; i++ )
+		if ( c[i] )
+			t[j++] = c[i];
+	n = j;
+	c = t;
 	q = (Q *)ALLOCA(n*sizeof(Q));
 	r = (Q *)ALLOCA(n*sizeof(Q));
 	v.id = O_VECT; v.len = n; v.body = (pointer *)c;
@@ -3857,8 +3863,10 @@ int ndv_reduce_vect_q(Q *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 			len = LEN(redv); mr = BDY(redv);
 			igcd_cofactor(svect[k],CQ(mr),&gcd,&cs,&cr);
 			chsgnq(cs,&mcs);
-			for ( j = 0; j < col; j++ ) {
-				mulq(svect[j],cr,&c1); svect[j] = c1;
+			if ( !UNIQ(cr) ) {
+				for ( j = 0; j < col; j++ ) {
+					mulq(svect[j],cr,&c1); svect[j] = c1;
+				}
 			}
 			svect[k] = 0; prev = k;
 			switch ( ivect->width ) {
