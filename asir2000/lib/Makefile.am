@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.2 2003/03/07 15:55:06 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.3 2003/03/07 17:00:46 ohara Exp $
 
 RR      = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
           fff glib gr ifplot katsura mat nf num primdec primdec_lex \

@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.7 2003/03/08 10:41:18 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.8 2003/03/08 10:55:06 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT

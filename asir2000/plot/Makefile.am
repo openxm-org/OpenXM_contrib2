@@ -1,4 +1,4 @@
-# $OpenXM$
+## $OpenXM: OpenXM_contrib2/asir2000/plot/Makefile.am,v 1.1 2003/02/23 03:05:40 ohara Exp $
 
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${prefix}/lib/asir\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
