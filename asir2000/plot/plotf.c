@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.11 2001/10/09 01:36:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.12 2002/07/10 05:29:36 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -74,8 +74,6 @@ struct ftab plot_tab[] = {
 */
 	{0,0,0},
 };
-
-int current_s;
 
 void Popen_canvas(NODE arg,Obj *rp)
 {
@@ -107,10 +105,7 @@ void Popen_canvas(NODE arg,Obj *rp)
 	   	wname=name (STRING)]
 	*/
 
-	if ( stream < 0 )
-		stream = current_s;
-	else
-		current_s = stream;
+	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
@@ -121,7 +116,7 @@ void Popen_canvas(NODE arg,Obj *rp)
 	Pox_cmo_rpc(arg,rp);
 }
 
-void Pifplot(NODE arg,Obj *rp)
+void Pifplot(NODE arg,Q *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -133,6 +128,7 @@ void Pifplot(NODE arg,Obj *rp)
 	P var;
 	NODE n,n0;
 	STRING fname,wname;
+	Obj t;
 
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
@@ -213,10 +209,7 @@ void Pifplot(NODE arg,Obj *rp)
 	   	wname=name (STRING)]
 	*/
 
-	if ( stream < 0 )
-		stream = current_s;
-	else
-		current_s = stream;
+	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
@@ -224,10 +217,11 @@ void Pifplot(NODE arg,Obj *rp)
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
-	Pox_rpc(arg,rp);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
 }
 
-void Pmemory_ifplot(NODE arg,Obj *rp)
+void Pmemory_ifplot(NODE arg,Q *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -239,6 +233,7 @@ void Pmemory_ifplot(NODE arg,Obj *rp)
 	P var;
 	NODE n,n0;
 	STRING fname;
+	Obj t;
 
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
@@ -316,10 +311,7 @@ void Pmemory_ifplot(NODE arg,Obj *rp)
 	   	geom=[xsize,ysize] (LIST)]
 	*/
 
-	if ( stream < 0 )
-		stream = current_s;
-	else
-		current_s = stream;
+	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
@@ -327,10 +319,11 @@ void Pmemory_ifplot(NODE arg,Obj *rp)
 	}
 	MKSTR(fname,"memory_plot");
 	arg = mknode(7,s_id,fname,poly,xrange,yrange,0,geom);
-	Pox_rpc(arg,rp);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
 }
 
-void Pconplot(NODE arg,Obj *rp)
+void Pconplot(NODE arg,Q *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -342,6 +335,7 @@ void Pconplot(NODE arg,Obj *rp)
 	P var;
 	NODE n,n0;
 	STRING fname,wname;
+	Obj t;
 
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
@@ -423,11 +417,6 @@ void Pconplot(NODE arg,Obj *rp)
 		default:
 			error("ifplot : cannot happen"); break;
 	}
-	if ( stream < 0 )
-		stream = current_s;
-	else
-		current_s = stream;
-
 	/* conplot in ox_plot requires 
 	   [s_id (Q),
 	   	formula (Obj),
@@ -438,10 +427,7 @@ void Pconplot(NODE arg,Obj *rp)
 	   	wname=name (STRING)]
 	*/
 
-	if ( stream < 0 )
-		stream = current_s;
-	else
-		current_s = stream;
+	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
@@ -449,10 +435,11 @@ void Pconplot(NODE arg,Obj *rp)
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
-	Pox_rpc(arg,rp);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
 }
 
-void Pplot(NODE arg,Obj *rp)
+void Pplot(NODE arg,Q *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -464,6 +451,7 @@ void Pplot(NODE arg,Obj *rp)
 	P var;
 	NODE n,n0;
 	STRING fname,wname;
+	Obj t;
 
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
@@ -527,10 +515,7 @@ void Pplot(NODE arg,Obj *rp)
 	   	geom=[xsize,ysize] (LIST),
 	   	wname=name (STRING)]
 	*/
-	if ( stream < 0 )
-		stream = current_s;
-	else
-		current_s = stream;
+	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	if ( !geom ) {
 		STOQ(300,w300);
@@ -538,32 +523,36 @@ void Pplot(NODE arg,Obj *rp)
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,s_id,fname,poly,xrange,0,0,geom,wname);
-	Pox_rpc(arg,rp);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
 }
 
-void Pplotover(NODE arg,Obj *rp)
+void Pplotover(NODE arg,Q *rp)
 {
 	Q s_id,index;
 	P poly;
 	STRING fname;
+	Obj t;
 
 	poly = (P)ARG0(arg);
 	s_id = (Q)ARG1(arg);
 	index = (Q)ARG2(arg);
 	MKSTR(fname,"plotover");
 	arg = mknode(4,s_id,fname,index,poly);
-	Pox_rpc(arg,rp);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
 }
 
 /* arg = [x,y,r,s_id,index] */
 
-void Pdrawcircle(NODE arg,Obj *rp)
+void Pdrawcircle(NODE arg,Q *rp)
 {
 	Q s_id,index;
 	Obj x,y,r;
 	STRING fname;
 	NODE n;
 	LIST pos;
+	Obj t;
 
 	x = (Obj)ARG0(arg);
 	y = (Obj)ARG1(arg);
@@ -573,15 +562,17 @@ void Pdrawcircle(NODE arg,Obj *rp)
 	MKSTR(fname,"drawcircle");
 	n = mknode(3,x,y,r); MKLIST(pos,n);
 	arg = mknode(4,s_id,fname,index,pos);
-	Pox_rpc(arg,rp);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
 }
 
 /* draw_obj(s_id,cindex,point|line); point = [x,y], line = [xa,ya,xb,yb] */
-void Pdraw_obj(NODE arg,Obj *rp)
+void Pdraw_obj(NODE arg,Q *rp)
 {
 	static STRING fname;
 	Q s_id,index;
 	LIST obj;
+	Obj t;
 
 	if ( !fname ) {
 		MKSTR(fname,"draw_obj");
@@ -594,16 +585,18 @@ void Pdraw_obj(NODE arg,Obj *rp)
 		arg = mknode(5,s_id,fname,index,obj,ARG3(arg));
 	else
 		arg = mknode(4,s_id,fname,index,obj);
-	Pox_cmo_rpc(arg,rp);
+	Pox_cmo_rpc(arg,&t);
+	*rp = s_id;
 }
 
 /* draw_string(s_id,cindex,pos,string,[,color]); pos=[x,y] */
-void Pdraw_string(NODE arg,Obj *rp)
+void Pdraw_string(NODE arg,Q *rp)
 {
 	static STRING fname;
 	STRING str;
 	Q s_id,index;
 	LIST pos;
+	Obj t;
 
 	if ( !fname ) {
 		MKSTR(fname,"draw_string");
@@ -617,13 +610,15 @@ void Pdraw_string(NODE arg,Obj *rp)
 		arg = mknode(6,s_id,fname,index,pos,str,ARG4(arg));
 	else
 		arg = mknode(5,s_id,fname,index,pos,str);
-	Pox_cmo_rpc(arg,rp);
+	Pox_cmo_rpc(arg,&t);
+	*rp = s_id;
 }
 
-void Pclear_canvas(NODE arg,Obj *rp)
+void Pclear_canvas(NODE arg,Q *rp)
 {
 	static STRING fname;
 	Q s_id,index;
+	Obj t;
 
 	if ( !fname ) {
 		MKSTR(fname,"clear_canvas");
@@ -631,7 +626,8 @@ void Pclear_canvas(NODE arg,Obj *rp)
 	s_id = (Q)ARG0(arg);
 	index = (Q)ARG1(arg);
 	arg = mknode(3,s_id,fname,index);
-	Pox_cmo_rpc(arg,rp);
+	Pox_cmo_rpc(arg,&t);
+	*rp = s_id;
 }
 
 #if 0

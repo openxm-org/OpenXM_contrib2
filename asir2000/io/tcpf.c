@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.31 2002/04/01 08:20:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.32 2002/07/29 05:02:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1246,4 +1246,38 @@ void shutdown_all() {
 		m_c_tab[index].m = 0; m_c_tab[index].c = 0;
 		m_c_tab[index].af_unix = 0;
 	}
+}
+
+char *ox_get_servername(int);
+
+int is_ox_plot(int index)
+{
+	char *name;
+
+	check_valid_mctab_index(index);
+	if ( index < 0 )
+		return 0;
+	/* m : client, c : server ??? */
+	name = ox_get_servername(m_c_tab[index].c);
+	return strcmp(name,"ox_plot") ? 0 : 1;
+}
+
+int validate_ox_plot_stream(int index)
+{
+	int i;
+	NODE arg;
+	STRING name;
+	Obj r;
+
+	if ( is_ox_plot(index) )
+		return index;
+	for ( i = 0; i < m_c_i; i++ )
+		if ( is_ox_plot(i) )
+			return i;
+
+	/* create an ox_plot server */
+	MKSTR(name,"ox_plot");
+	arg = mknode(2,0,name);
+	Pox_launch_nox(arg,&r);
+	return QTOS((Q)r);
 }

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.38 2002/02/25 06:39:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.39 2002/02/25 06:47:39 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,7 +78,7 @@ Obj *asir_OperandStack;
 int asir_OperandStackPtr = -1;
 
 void ox_io_init();
-void ox_asir_init(int,char **);
+void ox_asir_init(int,char **,char *);
 Obj asir_pop_one();
 Obj asir_peek_one();
 void asir_push_one(Obj);
@@ -140,7 +140,7 @@ void ox_main(int argc,char **argv) {
 	int ret;
 	extern char LastError[];
 
-	ox_asir_init(argc,argv);
+	ox_asir_init(argc,argv,"ox_asir");
 	if ( do_message )
 		fprintf(stderr,"I'm an ox_asir, Version %d.\n",ASIR_VERSION);
 	if ( SETJMP(ox_env) ) {
@@ -636,7 +636,7 @@ Obj asir_peek_one() {
 	}
 }
 
-void ox_asir_init(int argc,char **argv)
+void ox_asir_init(int argc,char **argv,char *servername)
 {
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
@@ -712,7 +712,7 @@ void ox_asir_init(int argc,char **argv)
 	input_init(0,"string");
 /* XXX Windows compatibility */
 	ox_io_init();
-	create_my_mathcap("ox_asir");
+	create_my_mathcap(servername);
 }
 
 void ox_io_init() {

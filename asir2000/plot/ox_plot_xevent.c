@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.19 2002/07/29 03:08:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.20 2002/07/30 03:54:36 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -82,7 +82,6 @@ struct canvas *current_can;
 #endif
 
 static char *dname;
-static int remotes;
 static int depth,scrn;
 
 extern JMP_BUF ox_env;
@@ -539,8 +538,7 @@ struct canvas *can;
 
 	width = can->width; height = can->height;
 
-	sprintf(buf,"%s : %d/%d", can->wname?can->wname:"Plot",
-		remotes,can->index);
+	sprintf(buf,"%s : %d", can->wname?can->wname:"Plot",can->index);
 	XtSetArg(arg[0],XtNiconName,buf);
 	can->shell =
 		XtCreatePopupShell("shell",topLevelShellWidgetClass,toplevel,arg,1);

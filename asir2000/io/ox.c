@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.14 2002/07/25 04:47:41 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -125,7 +125,7 @@ static int available_cmo[] = {
 	0
 };
 
-static int available_sm[] = {
+static int ox_asir_available_sm[] = {
 	SM_dupErrors, SM_getsp, SM_popSerializedLocalObject,
 	SM_popCMO, SM_popString, SM_pushCMOtag, SM_setName,
 	SM_evalName, SM_executeStringByLocalParser,
@@ -133,6 +133,15 @@ static int available_sm[] = {
 	SM_executeFunction, SM_shutdown, SM_pops,
 	SM_mathcap, SM_setMathcap, SM_nop,
 	SM_beginBlock, SM_endBlock,
+	0
+};
+
+static int ox_plot_available_sm[] = {
+	SM_dupErrors, SM_getsp, SM_popSerializedLocalObject,
+	SM_popCMO, SM_popString, SM_setName,
+	SM_evalName, SM_executeStringByLocalParser,
+	SM_executeFunction, SM_shutdown, SM_pops,
+	SM_mathcap, SM_setMathcap,
 	0
 };
 
@@ -164,11 +173,20 @@ void create_my_mathcap(char *system)
 	MKUSINT(t,OX_VERSION);
 	n0 = mknode(2,t,str); MKLIST(sname,n0);
 
-	/* cmo tag */
-	for ( n0 = 0, i = 0; k = available_sm[i]; i++ ) {
-		NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
+	/* sm tag */
+	n0 = 0;
+	if ( !strcmp(system,"ox_asir") ) {
+		for ( i = 0; k = ox_asir_available_sm[i]; i++ ) {
+			NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
+		}
+		NEXT(n) = 0;
+	} else if ( !strcmp(system,"ox_plot") ) {
+		for ( i = 0; k = ox_plot_available_sm[i]; i++ ) {
+			NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
+		}
+		NEXT(n) = 0;
 	}
-	NEXT(n) = 0; MKLIST(smlist,n0);
+	MKLIST(smlist,n0);
 
 	/* creation of [OX_DATA,CMO list] */
 	/* ox tag */
@@ -654,6 +672,12 @@ void ox_get_serverinfo(int s, LIST *rp)
 		MKLIST(*rp,0);
 	}
 }
+
+char *ox_get_servername(int s)
+{
+	return (remote_mc && remote_mc[s].servername)?remote_mc[s].servername:0;
+}
+
 
 int ox_check_cmo_p(int s, P p)
 {
