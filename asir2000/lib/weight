@@ -780,7 +780,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 			RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
 	}
 
-	return RET$
+	return [NormMat0,RET]$
 }
 
 def weight(PolyList,Vars,FLAG){
@@ -828,7 +828,7 @@ def weight(PolyList,Vars,FLAG){
 		RET=append(RET,TMP[1])$
 	else{
 		TMP=leastsq(0,ExpMat,Vars,FLAG,7)$
-		RET=append(RET,TMP)$
+		RET=append(RET,TMP[1])$
 	}
 
 	ExpMat=qsort(ExpMat,junban)$
@@ -845,7 +845,7 @@ def weight(PolyList,Vars,FLAG){
 			RET=append(RET,TMP[1])$
 		else{
 			TMP=leastsq(0,ExpMat,Vars,FLAG,9)$
-			RET=append(RET,TMP)$
+			RET=append(RET,TMP[1])$
 		}
 	}
 	else{
