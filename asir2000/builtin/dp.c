@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.13 2000/12/13 05:37:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.14 2000/12/14 08:43:47 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -83,6 +83,7 @@ void Pdp_weyl_nf(),Pdp_weyl_nf_mod();
 void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main();
 void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main();
 void Pdp_weyl_mul(),Pdp_weyl_mul_mod();
+void Pdp_weyl_set_weight();
 
 struct ftab dp_tab[] = {
 	/* content reduction */
@@ -140,6 +141,8 @@ struct ftab dp_tab[] = {
 	{"dp_weyl_f4_main",Pdp_weyl_f4_main,3},
 	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
 
+	/* misc */
+	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
 	{0,0,0},
 };
 
@@ -1319,3 +1322,26 @@ LIST *rp;
 	do_weyl = 0;
 }
 
+static VECT current_weight_vector_obj;
+int *current_weight_vector;
+
+void Pdp_weyl_set_weight(arg,rp)
+NODE arg;
+VECT *rp;
+{
+	VECT v;
+	int i,n;
+
+	if ( !arg )
+		*rp = current_weight_vector_obj;
+	else {
+		asir_assert(ARG0(arg),O_VECT,"dp_weyl_set_weight");
+		v = (VECT)ARG0(arg);
+		current_weight_vector_obj = v;
+		n = v->len;
+		current_weight_vector = (int *)CALLOC(n,sizeof(int));
+		for ( i = 0; i < n; i++ )
+			current_weight_vector[i] = QTOS((Q)v->body[i]);
+		*rp = v;
+	}
+}

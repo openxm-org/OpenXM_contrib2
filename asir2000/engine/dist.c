@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.11 2000/12/05 06:59:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.12 2000/12/11 02:00:41 noro Exp $ 
 */
 #include "ca.h"
 
@@ -60,6 +60,7 @@
 #define ORD_BLEXREV 8
 #define ORD_ELIM 9
 #define ORD_WEYL_ELIM 10
+#define ORD_HOMO_WW_DRL 11
 
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
@@ -73,6 +74,7 @@ void comm_muld_tab(VL,int,struct cdl *,int,struct cdl *,int,struct cdl *);
 void mkwc(int,int,Q *);
 
 int cmpdl_weyl_elim();
+int cmpdl_homo_ww_drl();
 
 int do_weyl;
 
@@ -146,6 +148,8 @@ struct order_spec *spec;
 					cmpdl = cmpdl_elim; break;
 				case ORD_WEYL_ELIM:
 					cmpdl = cmpdl_weyl_elim; break;
+				case ORD_HOMO_WW_DRL:
+					cmpdl = cmpdl_homo_ww_drl; break;
 				case ORD_LEX: default:
 					cmpdl = cmpdl_lex; break;
 			}
@@ -1092,6 +1096,49 @@ DL d1,d2;
 	else if ( d1->td < d2->td )
 		return -1;
 	else return -cmpdl_revlex(n,d1,d2);
+}
+
+/*
+	a special ordering
+	1. total order
+	2. (-w,w) for the first 2*m variables
+	3. DRL for the first 2*m variables
+*/
+
+extern int *current_weight_vector;
+
+int cmpdl_homo_ww_drl(n,d1,d2)
+int n;
+DL d1,d2;
+{
+	int e1,e2,m,i;
+	int *p1,*p2;
+
+	if ( d1->td > d2->td )
+		return 1;
+	else if ( d1->td < d2->td )
+		return -1;
+
+	m = n>>1;
+	for ( i = 0, e1 = e2 = 0; i < m; i++ ) {
+		e1 += current_weight_vector[i]*(d1->d[m+i] - d1->d[i]);
+		e2 += current_weight_vector[i]*(d2->d[m+i] - d2->d[i]);
+	}
+	if ( e1 > e2 )
+		return 1;
+	else if ( e1 < e2 )
+		return -1;
+
+	e1 = d1->td - d1->d[n-1];
+	e2 = d2->td - d2->d[n-1];
+	if ( e1 > e2 )
+		return 1;
+	else if ( e1 < e2 )
+		return -1;
+
+	for ( i= n - 1, p1 = d1->d+n-1, p2 = d2->d+n-1;
+		i >= 0 && *p1 == *p2; i--, p1--, p2-- );
+	return i < 0 ? 0 : (*p1 < *p2 ? 1 : -1);
 }
 
 int cmpdl_order_pair(n,d1,d2)

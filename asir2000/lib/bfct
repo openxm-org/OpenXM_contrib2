@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.13 2000/12/27 07:17:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.14 2001/01/10 04:30:35 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -212,6 +212,8 @@ def generic_bfct(F,V,DV,W)
 	N = length(V);
 	N2 = N*2;
 
+	dp_weyl_set_weight(W);
+
 	/* create a term order M in D<x,d> (DRL) */
 	M = newmat(N2,N2);
 	for ( J = 0; J < N2; J++ )
@@ -244,7 +246,9 @@ def generic_bfct(F,V,DV,W)
 	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
 	
 	/* compute a groebner basis of FH w.r.t. MWH */
-	GH = dp_weyl_gr_main(FH,VDVH,0,1,MWH);
+	dp_gr_flags(["Top",1,"NoRA",1]);
+	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
+	dp_gr_flags(["Top",0,"NoRA",0]);
 
 	/* dehomigenize GH */
 	G = map(subst,GH,h,1);
