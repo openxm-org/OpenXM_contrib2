@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.44 2003/04/23 07:03:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.45 2003/12/09 03:07:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -465,17 +465,27 @@ void asir_set_rank_102(unsigned int serial)
 void asir_tcp_accept_102(unsigned int serial)
 {
 	Obj obj;
-	Q rank,port,ret;
-	NODE arg;
+	Q r,p;
 	ERR err;
+	char port_str[BUFSIZ];
+	int port,s,use_unix,rank;
 
-	rank = (Q)asir_pop_one();
-	port = (Q)asir_pop_one();
-	arg = mknode(2,port,rank);
-	Pox_tcp_accept_102(arg,&ret);
-	if ( !ret ) return;
-	else {
-		create_error(&err,serial,"failed to bind or accept in ox_tcp_accept_102");
+	r = (Q)asir_pop_one();
+	p = (Q)asir_pop_one();
+	if ( IS_CYGWIN || !p || NUM(p) ) {
+		port = QTOS(p);
+		sprintf(port_str,"%d",port);
+		use_unix = 0;
+	} else {
+		strcpy(port_str,BDY((STRING)p));
+		use_unix = 1;
+	}
+	s = try_bind_listen(use_unix,port_str);
+	s = try_accept(use_unix,s);
+	rank = QTOS((Q)r);
+	if ( register_102(s,rank,1) < 0 ) {
+		create_error(&err,serial,
+			"failed to bind or accept in ox_tcp_accept_102");
 		asir_push_one((Obj)err);
 	}
 }
@@ -483,19 +493,30 @@ void asir_tcp_accept_102(unsigned int serial)
 void asir_tcp_connect_102(unsigned int serial)
 {
 	Obj obj;
-	Q rank,port,ret;
-	STRING host;
-	NODE arg;
+	Q r,p;
+	STRING h;
 	ERR err;
+	char *host;
+	char port_str[BUFSIZ];
+	int port,s,use_unix,rank;
 
-	rank = (Q)asir_pop_one();
-	port = (Q)asir_pop_one();
-	host = (STRING)asir_pop_one();
-	arg = mknode(3,host,port,rank);
-	Pox_tcp_connect_102(arg,&ret);
-	if ( !ret ) return;
-	else {
-		create_error(&err,serial,"failed to connect in ox_tcp_connect_102");
+	r = (Q)asir_pop_one();
+	p = (Q)asir_pop_one();
+	h = (STRING)asir_pop_one();
+	if ( IS_CYGWIN || !p || NUM(p) ) {
+		port = QTOS(p);
+		sprintf(port_str,"%d",port);
+		use_unix = 0;
+	} else {
+		strcpy(port_str,BDY((STRING)p));
+		use_unix = 1;
+	}
+	host = BDY((STRING)h);
+	s = try_connect(use_unix,host,port_str);
+	rank = QTOS((Q)r);
+	if ( register_102(s,rank,1) < 0 ) {
+		create_error(&err,serial,
+			"failed to bind or accept in ox_tcp_connect_102");
 		asir_push_one((Obj)err);
 	}
 }

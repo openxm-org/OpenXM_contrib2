@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.43 2003/12/03 09:32:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.44 2003/12/09 03:07:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -143,13 +143,14 @@ struct ftab tcp_tab[] = {
 	{"ox_get_serverinfo",Pox_get_serverinfo,-1},
 	{"generate_port",Pgenerate_port,-1},
 
+	/* from master to client */
 	{"ox_set_rank_102",Pox_set_rank_102,3},
+	{"ox_tcp_accept_102",Pox_tcp_accept_102,3},
+	{"ox_tcp_connect_102",Pox_tcp_connect_102,4},
+	{"ox_reset_102",Pox_reset_102,1},
 
 	{"ox_send_102",Pox_send_102,2},
 	{"ox_recv_102",Pox_recv_102,1},
-	{"ox_tcp_accept_102",Pox_tcp_accept_102,2},
-	{"ox_tcp_connect_102",Pox_tcp_connect_102,3},
-	{"ox_reset_102",Pox_reset_102,1},
 
 	{"try_bind_listen",Ptry_bind_listen,1},
 	{"try_connect",Ptry_connect,2},
@@ -313,55 +314,41 @@ void Pox_set_rank_102(NODE arg,Q *rp)
 	*rp = 0;
 }
 
-/* ox_tcp_accept_102(port,rank) */
+/* ox_tcp_accept_102(server,port,rank) */
 
 void Pox_tcp_accept_102(NODE arg,Q *rp)
 {
-	char port_str[BUFSIZ];
-	int port,s,use_unix,rank;
+	int s;
+	int	index = QTOS((Q)ARG0(arg));
 
-	if ( IS_CYGWIN || !ARG0(arg) || NUM(ARG0(arg)) ) {
-		port = QTOS((Q)ARG0(arg));
-		sprintf(port_str,"%d",port);
-		use_unix = 0;
-	} else {
-		strcpy(port_str,BDY((STRING)ARG0(arg)));
-		use_unix = 1;
-	}
-	s = try_bind_listen(use_unix,port_str);
-	s = try_accept(use_unix,s);
-	rank = QTOS((Q)ARG1(arg));
-	if ( register_102(s,rank,1) < 0 )
-		STOQ(-1,*rp);
-	else
-		*rp = 0;
+	valid_mctab_index(index);
+	s = m_c_tab[index].c;
+
+	ox_send_data(s,ARG1(arg));
+	ox_send_data(s,ARG2(arg));
+	ox_send_cmd(s,SM_tcp_accept_102);
+	ox_flush_stream_force(s);
+	*rp = 0;
 }
 
 /*
- ox_tcp_connect_102(host,port,rank)
+ ox_tcp_connect_102(server,host,port,rank)
 */
 
 void Pox_tcp_connect_102(NODE arg,Q *rp)
 {
-	char port_str[BUFSIZ];
-	char *host;
-	int port,s,use_unix,rank;
+	int s;
+	int	index = QTOS((Q)ARG0(arg));
 
-	if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
-		port = QTOS((Q)ARG1(arg));
-		sprintf(port_str,"%d",port);
-		use_unix = 0;
-	} else {
-		strcpy(port_str,BDY((STRING)ARG1(arg)));
-		use_unix = 1;
-	}
-	host = BDY((STRING)ARG0(arg));
-	s = try_connect(use_unix,host,port_str);
-	rank = QTOS((Q)ARG2(arg));
-	if ( register_102(s,rank,0) < 0 )
-		STOQ(-1,*rp);
-	else
-		*rp = 0;
+	valid_mctab_index(index);
+	s = m_c_tab[index].c;
+
+	ox_send_data(s,ARG1(arg));
+	ox_send_data(s,ARG2(arg));
+	ox_send_data(s,ARG3(arg));
+	ox_send_cmd(s,SM_tcp_connect_102);
+	ox_flush_stream_force(s);
+	*rp = 0;	
 }
 
 /*
