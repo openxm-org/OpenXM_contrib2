@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.13 2001/11/19 00:57:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.14 2001/11/19 01:40:05 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -352,6 +352,9 @@ def minipoly(G0,V,O,P,V0)
 	if ( !zero_dim(hmlist(G0,V,O),V,O) )
 		error("tolex : ideal is not zero-dimensional!");
 
+	Pin = P;
+	P = ptozp(P);
+	CP = sdiv(P,Pin);
 	G1 = cons(V0-P,G0);
 	O1 = [[0,1],[O,length(V)]];
 	V1 = cons(V0,V);
@@ -372,7 +375,7 @@ def minipoly(G0,V,O,P,V0)
 			TL = cons(V0^J,TL);
 		NF = gennf(G1,TL,V1,O1,V0,1)[0];
 		R = tolex_main(V1,O1,NF,[MP],M,MB);
-		return R[0];
+		return ptozp(subst(R[0],V0,CP*V0));
 	}
 }
 
