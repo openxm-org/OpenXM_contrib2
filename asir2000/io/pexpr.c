@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.23 2003/06/07 16:40:25 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.24 2003/06/09 16:18:10 saito Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -67,6 +67,7 @@ int hex_output;
 int fortran_output;
 int double_output;
 int real_digit;
+int real_binary;
 int print_quote;
 
 #define TAIL
@@ -395,7 +396,76 @@ Num q;
 				case MID_PRINTF_G:
 #endif
 				default:
-					if ( real_digit ) {
+					if ( real_binary ) {
+						unsigned int *m;
+						unsigned int u,l,mask;
+						int i,expo;
+
+						m = (unsigned int *)&BDY((Real)q);
+#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
+						u = m[1]; l = m[0];
+#else
+						u = m[0]; l = m[1];
+#endif
+						if (u&0x80000000) {
+							TAIL PRINTF(OUT,"-");
+						}
+						u &= 0x7fffffff;
+						expo = ((int)(u>>20));
+						u &= 0xfffff;
+						if ( expo == 2047 ) {
+							if ( u || l ) {
+								TAIL PRINTF(OUT,"NaN");
+							} else {
+								TAIL PRINTF(OUT,"Inf");
+							}
+						} else if ( expo == 0 ) {
+							if ( u || l ) {
+								TAIL PRINTF(OUT,"0b0.");
+								for ( i = 0, mask = 0x80000; i < 20; 
+									i++, mask >>= 1) {
+									TAIL
+									if ( u&mask )
+										PRINTF(OUT,"1");
+									else
+										PRINTF(OUT,"0");
+								}
+								for ( i = 0, mask = 0x80000000; i < 32;
+									i++, mask >>= 1) {
+									TAIL
+									if ( l&mask )
+										PRINTF(OUT,"1");
+									else
+										PRINTF(OUT,"0");
+								}
+								TAIL PRINTF(OUT,"*2^%d",-1022);
+							} else {
+								TAIL PRINTF(OUT,"0");
+							}
+						} else {
+							expo -= 1023;
+							TAIL PRINTF(OUT,"0b1.");
+							for ( i = 0, mask = 0x80000; i < 20; 
+								i++, mask >>= 1) {
+								TAIL
+								if ( u&mask )
+									PRINTF(OUT,"1");
+								else
+									PRINTF(OUT,"0");
+							}
+							for ( i = 0, mask = 0x80000000; i < 32;
+								i++, mask >>= 1) {
+								TAIL
+								if ( l&mask )
+									PRINTF(OUT,"1");
+								else
+									PRINTF(OUT,"0");
+							}
+							if ( expo ) {
+								TAIL PRINTF(OUT,"*2^%d",expo);
+							}
+						}
+					} else if ( real_digit ) {
 						sprintf(real_format,
 							double_output?"%%.%df":"%%.%dg",real_digit);
 						TAIL PRINTF(OUT,real_format,BDY((Real)q));

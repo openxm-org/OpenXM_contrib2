@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.25 2003/10/20 09:20:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.26 2003/10/21 04:28:48 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -67,6 +67,7 @@ extern int StrassenSize;
 extern int outputstyle;
 extern int fortran_output;
 extern int real_digit;
+extern int real_binary;
 #if defined(INTERVAL)
 extern int zerorewrite;
 #endif
@@ -102,6 +103,7 @@ static struct {
 	{"outputstyle",&outputstyle},
 	{"double_output",&double_output},
 	{"real_digit",&real_digit},
+	{"real_binary",&real_binary},
 	{"fortran_output",&fortran_output},
 	{"new_hensel",&use_new_hensel},
 	{"print_quote",&print_quote},
