@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.25 2002/10/23 07:54:58 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.26 2002/10/25 02:43:40 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -819,6 +819,93 @@ void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp)
 	DEG(f) = dy;
 	for ( i = 0; i <= dy; i++ )
 		cpyum(COEF(hk)[i],COEF(f)[i]);
+}
+
+/* a0*g+b0*h = 1 mod y -> a*g+b*h = 1 mod y^(dy+1) */
+
+void sfexgcd_by_hensel(BM g,BM h,int dy,BM *ap,BM *bp)
+{
+	int i,k;
+	int dx;
+	UM wt,wa,wb,q,w1,w2,ws;
+	UM wc,wd,we,wz,wa1,wb1;
+	BM wz0,wz1;
+	int dg,dh;
+	BM a,b,c;
+
+	dg = degbm(g);
+	dh = degbm(h);
+	dx = dg+dh;
+
+	a = BMALLOC(dh,dy);
+	b = BMALLOC(dg,dy);
+	/* c holds a*g+b*h-1 */
+	c = BMALLOC(dg+dh,dy);
+
+	W_BMALLOC(dx,dy,wz0); W_BMALLOC(dx,dy,wz1);
+
+	wt = W_UMALLOC(dx); ws = W_UMALLOC(dx); q = W_UMALLOC(2*dx);
+	wa1 = W_UMALLOC(2*dx); wb1 = W_UMALLOC(2*dx);
+	wc = W_UMALLOC(2*dx); wd = W_UMALLOC(2*dx);
+	we = W_UMALLOC(2*dx); wz = W_UMALLOC(2*dx);
+
+	/* compute wa,wb s.t. wa*g0+wb*h0 = 1 mod y */
+	w1 = W_UMALLOC(dg); cpyum(COEF(g)[0],w1);
+	w2 = W_UMALLOC(dh); cpyum(COEF(h)[0],w2);
+	wa = W_UMALLOC(2*dx); wb = W_UMALLOC(2*dx);  /* XXX */
+	eucsfum(w1,w2,wa,wb);
+	cpyum(wa,COEF(a)[0]); cpyum(wb,COEF(b)[0]);
+	
+	/* initialize c to a*g+b*h-1 */
+	mulsfbm(a,g,c); mulsfbm(b,h,wz0); addtosfbm(wz0,c);
+	COEF(COEF(c)[0])[0] = 0;
+	
+	fprintf(stderr,"dy=%d\n",dy);
+	for ( k = 1; k <= dy; k++ ) {
+		fprintf(stderr,".");
+
+		/* at this point, a*g+b*h = 1 mod y^k, c = a*g+b*h-1 */
+
+		/* wt = -((a*g+b*h-1)/y^k) */
+		cpyum(COEF(c)[k],wt);
+		for ( i = DEG(wt); i >= 0; i-- )
+			COEF(wt)[i] = _chsgnsf(COEF(wt)[i]);
+		
+		/* compute wa1,wb1 s.t. wa1*g0+wb1*h0 = wt */
+		mulsfum(wa,wt,wa1); DEG(wa1) = divsfum(wa1,COEF(h)[0],q);
+		mulsfum(wa1,COEF(g)[0],wc); subsfum(wt,wc,wd); 
+		DEG(wd) = divsfum(wd,COEF(h)[0],wb1);
+
+		/* c += ((wa1*g+wb1*h)*y^k mod y^(dy+1) */
+		/* wz0 = wa1*y^k */
+		clearbm(dx,wz0);
+		cpyum(wa1,COEF(wz0)[k]);
+
+		/* wz1 = wz0*g mod y^(dy+1) */
+		clearbm(dx,wz1);
+		mulsfbm(g,wz0,wz1);
+		/* c += wz1 */
+		addtosfbm(wz1,c);
+
+		/* wz0 = wb1*y^k */
+		clearbm(dx,wz0);
+		cpyum(wb1,COEF(wz0)[k]);
+
+		/* wz1 = wz0*h mod y^(dy+1) */
+		clearbm(dx,wz1);
+		mulsfbm(h,wz0,wz1);
+		/* c += wz1 */
+		addtosfbm(wz1,c);
+
+		/* a += wa1*y^k, b += wb1*y^k */
+		cpyum(wa1,COEF(a)[k]);
+		cpyum(wb1,COEF(b)[k]);
+	}
+	fprintf(stderr,"\n");
+	DEG(a) = dy;
+	DEG(b) = dy;
+	*ap = a;
+	*bp = b;
 }
 
 /* fl->c[i] = coef_y(f,i) */

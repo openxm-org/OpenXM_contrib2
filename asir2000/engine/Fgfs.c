@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.6 2002/10/25 02:43:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.7 2002/10/30 08:07:11 noro Exp $ */
 
 #include "ca.h"
 
@@ -17,9 +17,13 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up);
 void substvp_sf(VL vl,VL rvl,P f,int *mev,P *r);
 void shift_sf(VL vl, VL rvl, P f, int *mev, int sgn, P *r);
 void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,P *r);
-void extended_gcd_modyk(P u0,P v0,P *cu,P *cv);
+void extended_gcd_modyk(P u0,P v0,V x,V y,int dy,P *cu,P *cv);
 void poly_to_gfsn_poly(VL vl,P f,V v,P *r);
 void gfsn_poly_to_poly(VL vl,P f,V v,P *r);
+void poly_to_gfsn_poly_main(P f,V v,P *r);
+void gfsn_poly_to_poly_main(P f,V v,P *r);
+void gfsn_univariate_to_sfbm(P f,int dy,BM *r);
+void sfbm_to_gfsn_univariate(BM f,V x,V y,P *r);
 
 void lex_lc(P f,P *c)
 {
@@ -850,7 +854,7 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	substvp_sf(vl,rvl,v,0,&v0);
 
 	/* compute a(x,y), b(x,y) s.t. a*u0+b*v0 = 1 mod y^dy */
-	extended_gcd_modyk(u0,v0,&cu[0],&cv[0]);
+	extended_gcd_modyk(u0,v0,vx,vy,dy,&cu[0],&cv[0]);
 
 	/* du0 = LC(u0)^(-1)*u0 mod y^dy */
 	/* dv0 = LC(v0)^(-1)*v0 mod y^dy */
@@ -946,14 +950,133 @@ void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,P *r)
 	MKP(VR(u0),dc0,*r);
 }
 
-void extended_gcd_modyk(P u0,P v0,P *cu,P *cv)
+void extended_gcd_modyk(P u0,P v0,V x,V y,int dy,P *cu,P *cv)
 {
+	BM g,h,a,b;
+
+	gfsn_univariate_to_sfbm(u0,dy,&g);	
+	gfsn_univariate_to_sfbm(v0,dy,&h);	
+	sfexgcd_by_hensel(g,h,dy,&a,&b);
+	sfbm_to_gfsn_univariate(a,x,y,cu);
+	sfbm_to_gfsn_univariate(b,x,y,cv);
+}
+
+/* (F[y])[x] -> F[x][y] */
+
+void gfsn_univariate_to_sfbm(P f,int dy,BM *r)
+{
+	int dx,d,i;
+	BM b;
+	UM cy;
+	DCP dc;
+
+	dx = getdeg(VR(f),f);	
+	b = BMALLOC(dx,dy);
+	DEG(b) = dy;
+	for ( dc = DC(f); dc; dc = NEXT(dc) ) {
+		/* d : degree in x, cy : poly in y */
+		d = QTOS(DEG(dc));
+		cy = BDY((GFSN)COEF(dc));
+		for ( i = DEG(cy); i >= 0; i-- )
+			COEF(COEF(b)[i])[d] = COEF(cy)[i];
+	}
+	*r = b;
+}
+
+void sfbm_to_gfsn_univariate(BM f,V x,V y,P *r)
+{
+	P g;
+	VL vl;
+
+	sfbmtop(f,x,y,&g);
+	NEWVL(vl); vl->v = x;
+	NEWVL(NEXT(vl)); NEXT(vl)->v = y;
+	NEXT(NEXT(vl)) = 0;
+	poly_to_gfsn_poly(vl,g,y,r);
 }
 
 void poly_to_gfsn_poly(VL vl,P f,V v,P *r)
 {
+	VL tvl,nvl0,nvl;
+	P g;
+
+	/* (x,y,...,v,...) -> (x,y,...,v) */
+	for ( nvl0 = 0, tvl = vl; tvl; tvl = NEXT(tvl) ) {
+		if ( tvl->v != v ) {
+			NEXTVL(nvl0,nvl);
+			nvl->v = tvl->v;
+		}
+	}
+	NEXTVL(nvl0,nvl);
+	nvl->v = v;
+	NEXT(nvl) = 0;
+	reorderp(nvl0,vl,f,&g);
+	poly_to_gfsn_poly_main(g,v,r);
+}
+
+void poly_to_gfsn_poly_main(P f,V v,P *r)
+{
+	int d;
+	UM u;
+	GFSN g;
+	DCP dc,dct,dc0;
+
+	if ( !f || NUM(f) )
+		*r = f;
+	else if ( VR(f) == v ) {
+		d = getdeg(v,f);
+		u = UMALLOC(d);
+		ptosfum(f,u);		
+		MKGFSN(u,g);
+		*r = (P)g;
+	} else {
+		for ( dc0 = 0, dct = DC(f); dct; dct = NEXT(dct) ) {
+			NEXTDC(dc0,dc);
+			DEG(dc) = DEG(dct);
+			poly_to_gfsn_poly_main(COEF(dct),v,&COEF(dc));
+		}
+		NEXT(dc) = 0;
+		MKP(VR(f),dc0,*r);
+	}
 }
 
 void gfsn_poly_to_poly(VL vl,P f,V v,P *r)
 {
+	VL tvl,nvl0,nvl;
+	P g;
+
+	gfsn_poly_to_poly_main(f,v,&g);
+	/* (x,y,...,v,...) -> (x,y,...,v) */
+	for ( nvl0 = 0, tvl = vl; tvl; tvl = NEXT(tvl) ) {
+		if ( tvl->v != v ) {
+			NEXTVL(nvl0,nvl);
+			nvl->v = tvl->v;
+		}
+	}
+	NEXTVL(nvl0,nvl);
+	nvl->v = v;
+	NEXT(nvl) = 0;
+	reorderp(vl,nvl0,g,r);
+}
+
+void gfsn_poly_to_poly_main(P f,V v,P *r)
+{
+	DCP dc,dc0,dct;
+
+	if ( !f )
+		*r = f;
+	else if ( NUM(f) ) {
+		if ( NID((Num)f) == N_GFSN )
+			sfumtop(v,BDY((GFSN)f),r);
+		else
+			*r = f;
+	} else {
+		for ( dc0 = 0, dct = DC(f); dct; dct = NEXT(dct) ) {
+			NEXTDC(dc0,dc);
+			DEG(dc) = DEG(dct);
+			gfsn_poly_to_poly_main(COEF(dct),v,&COEF(dc));
+		}
+		NEXT(dc) = 0;
+		MKP(VR(f),dc0,*r);
+	}
 }
