@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.30 2001/12/26 09:28:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.31 2002/04/01 08:20:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -491,21 +491,43 @@ static int get_start_path(char *buf)
 		return 1;
 	}
 
-	/* Windows2000 */
-	strcpy(buf,"c:\\winnt\\system32\\start.exe");
-	cygwin_conv_to_full_posix_path(buf,name);
-	if ( !access(name,X_OK) ) {
-		bslash2slash(buf);
-		strcpy(start_path,buf);
-		return 1;
-	}
-
 	/* Windows98 */
 	strcpy(buf,"c:\\windows\\command\\start.exe");
 	cygwin_conv_to_full_posix_path(buf,name);
 	if ( !access(name,X_OK) ) {
 		bslash2slash(buf);
 		strcpy(start_path,buf);
+		start_initialized  = 1;
+		return 1;
+	}
+
+	/* Windows2000 */
+	strcpy(buf,"c:\\winnt\\system32\\start.exe");
+	cygwin_conv_to_full_posix_path(buf,name);
+	if ( !access(name,X_OK) ) {
+		bslash2slash(buf);
+		strcpy(start_path,buf);
+		start_initialized  = 1;
+		return 1;
+	}
+
+	strcpy(buf,"c:\\winnt\\system32\\cmd.exe");
+	cygwin_conv_to_full_posix_path(buf,name);
+	if ( !access(name,X_OK) ) {
+		bslash2slash(buf);
+		sprintf(start_path,"%s /c start",buf);
+		strcpy(buf,start_path);
+		start_initialized  = 1;
+		return 1;
+	}
+
+	strcpy(buf,"c:\\windows\\system32\\cmd.exe");
+	cygwin_conv_to_full_posix_path(buf,name);
+	if ( !access(name,X_OK) ) {
+		bslash2slash(buf);
+		sprintf(start_path,"%s /c start",buf);
+		strcpy(buf,start_path);
+		start_initialized  = 1;
 		return 1;
 	}
 
