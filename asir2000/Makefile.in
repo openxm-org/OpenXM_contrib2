@@ -518,7 +518,11 @@ libasir-gc.a: parse/gc_risa.o
 	    touch ${top_srcdir}/gc/.patch_gc_zeropage_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/gc/.configure_done ]; then \
-	    (cd ${top_srcdir}/gc; ./configure --disable-threads) ; \
+	    if [ -n "${host_alias}" ]; then \
+	        (cd ${top_srcdir}/gc; ./configure --host=${host_alias} --disable-threads) ; \
+	    else \
+	        (cd ${top_srcdir}/gc; ./configure --disable-threads) ; \
+	    fi ; \
 	    touch ${top_srcdir}/gc/.configure_done ; \
 	fi
 	(cd ${top_srcdir}/gc; ${MAKE})
