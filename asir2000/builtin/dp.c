@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.36 2003/08/05 05:01:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.37 2003/08/22 07:12:48 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -90,6 +90,7 @@ void Pdp_set_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
 void Pdp_lnf_f();
 void Pnd_gr(),Pnd_gr_trace();
+void Pnd_weyl_gr(),Pnd_weyl_gr_trace();
 
 LIST remove_zero_from_list(LIST);
 
@@ -132,6 +133,8 @@ struct ftab dp_tab[] = {
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
 	{"nd_gr",Pnd_gr,4},
 	{"nd_gr_trace",Pnd_gr_trace,5},
+	{"nd_weyl_gr",Pnd_weyl_gr,4},
+	{"nd_weyl_gr_trace",Pnd_weyl_gr_trace,5},
 
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
@@ -1527,6 +1530,51 @@ LIST *rp;
 	nd_gr_trace(f,v,m,homo,&ord,rp);
 }
 
+void Pnd_weyl_gr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	int m,homo;
+	struct order_spec ord;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr");
+	asir_assert(ARG1(arg),O_LIST,"nd_weyl_gr");
+	asir_assert(ARG2(arg),O_N,"nd_weyl_gr");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
+	m = QTOS((Q)ARG2(arg));
+	create_order_spec(ARG3(arg),&ord);
+	nd_gr(f,v,m,&ord,rp);
+}
+
+void Pnd_weyl_gr_trace(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	int m,homo;
+	struct order_spec ord;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr_trace");
+	asir_assert(ARG1(arg),O_LIST,"nd_weyl_gr_trace");
+	asir_assert(ARG2(arg),O_N,"nd_weyl_gr_trace");
+	asir_assert(ARG3(arg),O_N,"nd_weyl_gr_trace");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
+	homo = QTOS((Q)ARG2(arg));
+	m = QTOS((Q)ARG3(arg));
+	create_order_spec(ARG4(arg),&ord);
+	nd_gr_trace(f,v,m,homo,&ord,rp);
+}
 /* for Weyl algebra */
 
 void Pdp_weyl_gr_main(arg,rp)

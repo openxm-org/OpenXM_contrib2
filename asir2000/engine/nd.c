@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.54 2003/08/31 07:42:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.55 2003/09/03 07:33:35 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -185,6 +185,7 @@ if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
 
 /* macro for increasing pointer to NMV */
 #define NMV_ADV(m) (m = (NMV)(((char *)m)+nmv_adv))
+#define NMV_PREV(m) (m = (NMV)(((char *)m)-nmv_adv))
 
 /* external functions */
 void GC_gcollect();
@@ -291,7 +292,6 @@ INLINE int nd_length(ND p);
 /* NDV functions */
 ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);
 void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen);
-void weyl_mul_nm_nmv_q(int n,NM m0,NMV m1,NM *tab,int tlen);
 void ndv_mul_c(int mod,NDV p,int mul);
 void ndv_mul_c_q(NDV p,Q mul);
 void ndv_realloc(NDV p,int obpe,int oadv,EPOS oepos);
@@ -1764,8 +1764,6 @@ ND_pairs crit_B( ND_pairs d, int s )
 	return head;
 }
 
-/* XXX : check is necessary */
-
 ND_pairs crit_M( ND_pairs d1 )
 {
 	ND_pairs e,d2,d3,dd,p;
@@ -2164,10 +2162,7 @@ void dltondl(int n,DL dl,unsigned int *r)
 		for ( j = 0; j < l; j++ )
 			r[j+1] = ndl_weight_mask(r,j);
 	} else {
-		if ( nd_isrlex )
-			for ( i = 0; i < n; i++ ) PUT_EXP(r,n-1-i,d[i]);
-		else
-			for ( i = 0; i < n; i++ ) PUT_EXP(r,i,d[i]);
+		for ( i = 0; i < n; i++ ) PUT_EXP(r,i,d[i]);
 		TD(r) = ndl_weight(r);
 	}
 }
@@ -2197,12 +2192,7 @@ DL ndltodl(int n,unsigned int *ndl)
 			s += ord_l;
 		}
 	} else {
-		if ( nd_isrlex )
-			for ( i = 0; i < n; i++ )
-				d[i] = GET_EXP(ndl,n-1-i);
-		else
-			for ( i = 0; i < n; i++ )
-				d[i] = GET_EXP(ndl,i);
+		for ( i = 0; i < n; i++ ) d[i] = GET_EXP(ndl,i);
 	}
 	return dl;
 }
@@ -2275,10 +2265,7 @@ void ndl_print(unsigned int *dl)
 					printf(s==n-1?"%d":"%d,",GET_EXP(dl,s));
 		}
 	} else {
-		if ( nd_isrlex )
-			for ( i = 0; i < n; i++ ) printf(i==n-1?"%d":"%d,",GET_EXP(dl,n-1-i));
-		else
-			for ( i = 0; i < n; i++ ) printf(i==n-1?"%d":"%d,",GET_EXP(dl,i));
+		for ( i = 0; i < n; i++ ) printf(i==n-1?"%d":"%d,",GET_EXP(dl,i));
 	}
 	printf(">>");
 }
@@ -2581,9 +2568,16 @@ void nd_setup_parameters() {
 	nd_exporigin = nd_get_exporigin(nd_ord);
 	nd_wpd = nd_exporigin+elen;
 	nd_epos = (EPOS)MALLOC_ATOMIC(nd_nvar*sizeof(struct oEPOS));
-	for ( i = 0; i < nd_nvar; i++ ) {
-		nd_epos[i].i = nd_exporigin + i/nd_epw;
-		nd_epos[i].s = (nd_epw-(i%nd_epw)-1)*nd_bpe;
+	if ( nd_isrlex ) {
+		for ( i = 0; i < nd_nvar; i++ ) {
+			nd_epos[i].i = nd_exporigin + (nd_nvar-1-i)/nd_epw;
+			nd_epos[i].s = (nd_epw-((nd_nvar-1-i)%nd_epw)-1)*nd_bpe;
+		}
+	} else {
+		for ( i = 0; i < nd_nvar; i++ ) {
+			nd_epos[i].i = nd_exporigin + i/nd_epw;
+			nd_epos[i].s = (nd_epw-(i%nd_epw)-1)*nd_bpe;
+		}
 	}
 	if ( nd_bpe < 32 ) {
 		nd_mask0 = (1<<nd_bpe)-1;
@@ -2732,16 +2726,10 @@ void ndl_reconstruct(int obpe,EPOS oepos,unsigned int *d,unsigned int *r)
 			s += ord_l;
 		}
 	} else {
-		if ( nd_isrlex )
-			for ( i = 0; i < n; i++ ) {
-				ei = GET_EXP_OLD(d,n-1-i);
-				PUT_EXP(r,n-1-i,ei);
-			}
-		else
-			for ( i = 0; i < n; i++ ) {
-				ei = GET_EXP_OLD(d,i);
-				PUT_EXP(r,i,ei);
-			}
+		for ( i = 0; i < n; i++ ) {
+			ei = GET_EXP_OLD(d,i);
+			PUT_EXP(r,i,ei);
+		}
 	}
 }
 
@@ -2783,7 +2771,8 @@ int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
 	NEWNM(m);
 	CQ(m) = HCQ(p2);
 	ndl_sub(lcm,HDL(p1),DL(m));
-	if ( ndl_check_bound2(p->i1,DL(m)) ) return 0;
+	if ( ndl_check_bound2(p->i1,DL(m)) )
+		return 0;
 	t1 = ndv_mul_nm(mod,m,p1);
 	if ( mod ) CM(m) = mod-HCM(p1); 
 	else chsgnq(HCQ(p1),&CQ(m));
@@ -2839,12 +2828,10 @@ ND weyl_ndv_mul_nm(int mod,NM m0,NDV p) {
 	tab = (NM *)ALLOCA(tlen*sizeof(NM));
 	psum = (NM *)ALLOCA(tlen*sizeof(NM));
 	for ( i = 0; i < tlen; i++ ) psum[i] = 0;
-	for ( i = l-1, m1 = BDY(p)+nmv_adv*(l-1); i >= 0; i--, m1 -= nmv_adv ) {
+	m1 = (NMV)(((char *)BDY(p))+nmv_adv*(l-1));
+	for ( i = l-1; i >= 0; i--, NMV_PREV(m1) ) {
 		/* m0(NM) * m1(NMV) => tab(NM) */
-		if ( mod )
-			weyl_mul_nm_nmv(mod,n,m0,m1,tab,tlen);
-		else
-			weyl_mul_nm_nmv_q(n,m0,m1,tab,tlen);
+		weyl_mul_nm_nmv(n,mod,m0,m1,tab,tlen);
 		for ( j = 0; j < tlen; j++ ) {
 			if ( tab[j] ) {
 				NEXT(tab[j]) = psum[j];	psum[j] = tab[j];
@@ -2857,14 +2844,19 @@ ND weyl_ndv_mul_nm(int mod,NM m0,NDV p) {
 			MKND(n,psum[i],j,s);
 			r = nd_add(mod,r,s);
 		}
-	if ( s ) SG(s) = SG(p)+TD(d0);
-	return s;
+	if ( r ) SG(r) = SG(p)+TD(d0);
+	return r;
 }
+
+/* product of monomials */
+/* XXX block order is not handled correctly */
 
 void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
 {
-	int i,n2,j,s,curlen,homo,h,a,b,k,l,min;
-	unsigned int *d0,*d1,*d,*ctab;
+	int i,n2,j,s,curlen,homo,h,a,b,k,l,u,min;
+	unsigned int *d0,*d1,*d,*dt,*ctab;
+	Q *ctab_q;
+	Q q,q1;
 	unsigned int c0,c1,c;
 	NM *p;
 	NM m,t;
@@ -2873,7 +2865,10 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
 	if ( !m0 || !m1 ) return;
 	d0 = DL(m0); d1 = DL(m1); n2 = n>>1;
 	NEWNM(m); d = DL(m);
-	c0 = CM(m0); c1 = CM(m1); DMAR(c1,c,0,mod,c); CM(m) = c;
+	if ( mod ) {
+		c0 = CM(m0); c1 = CM(m1); DMAR(c0,c1,0,mod,c); CM(m) = c;
+	} else
+		mulq(CQ(m0),CQ(m1),&CQ(m));
 	for ( i = 0; i < nd_wpd; i++ ) d[i] = 0;
 	homo = n&1 ? 1 : 0;
 	if ( homo ) {
@@ -2885,139 +2880,76 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
 	}
 	tab[0] = m;
 	curlen = 1;
-	s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
 	NEWNM(m); d = DL(m);
 	for ( i = 0; i < n2; i++ ) {
 		a = GET_EXP(d0,i); b = GET_EXP(d1,n2+i);
 		k = GET_EXP(d0,n2+i); l = GET_EXP(d1,i);
 		/* xi^a*(Di^k*xi^l)*Di^b */
 		a += l; b += k;
+		s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
 		if ( !k || !l ) {
 			for ( j = 0; j < curlen; j++ )
-				if ( m = tab[j] ) {
-					d = DL(m);
-					PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b); TD(d) += s;
+				if ( t = tab[j] ) {
+					dt = DL(t);
+					PUT_EXP(dt,i,a); PUT_EXP(dt,n2+i,b); TD(dt) += s;
 					/* XXX other weights */
 				}
 			curlen *= k+1;
 			continue;
 		}
 		min = MIN(k,l);
-		ctab = (unsigned int *)ALLOCA((min+1)*sizeof(unsigned int));
-		mkwcm(k,l,mod,ctab);
-		for ( j = 0; j < nd_wpd; i++ ) d[j] = 0;
+		if ( mod ) {
+			ctab = (unsigned int *)ALLOCA((min+1)*sizeof(unsigned int));
+			mkwcm(k,l,mod,ctab);
+		} else {
+			ctab_q = (Q *)ALLOCA((min+1)*sizeof(Q));
+			mkwc(k,l,ctab_q);
+		}
 		p = tab+curlen;
 		for ( j = 1; j <= min; j++ ) {
+			for ( u = 0; u < nd_wpd; u++ ) d[u] = 0;
 			PUT_EXP(d,i,a-j); PUT_EXP(d,n2+i,b-j);
-			h = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
+			h = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i);
 			if ( homo ) {
 				TD(d) = s;
-				PUT_EXP(d,n-1,h);
+				PUT_EXP(d,n-1,s-h);
 			} else TD(d) = h;
 			/* XXX other weights */
-			c = ctab[j];
-			for ( k = 0; k < curlen; k++, p++ ) {
-				NEWNM(t);
-				ndl_add(DL(tab[k]),d,DL(t));
-				c0 = CM(tab[k]); DMAR(c0,c,0,mod,c1); CM(t) = c1;
-				*p = t;
-			}
-		}
-		/* destructive for j = 0 */	
-		PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b);
-		h = s-(MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i));
-		if ( homo ) {
-			TD(d) = s;
-			PUT_EXP(d,n-1,h);
-		} else TD(d) = h;
-		/* XXX other weights */
-		c = ctab[0];
-		p = tab;
-		for ( k = 0; k < curlen; k++, p++ ) {
-			ndl_addto(DL(tab[k]),d);
-			c0 = CM(tab[k]); DMAR(c0,c,0,mod,c1); CM(tab[k]) = c1;
-		}
-		curlen *= k+1;
-	}
-	FREENM(m);
-}
-
-void weyl_mul_nm_nmv_q(int n,NM m0,NMV m1,NM *tab,int tlen)
-{
-	int i,n2,j,s,curlen,homo,h,a,b,k,l,min;
-	unsigned int *d0,*d1,*d;
-	Q *ctab;
-	Q c0,c1,c;
-	NM *p;
-	NM m,t;
-
-	for ( i = 0; i < tlen; i++ ) tab[i] = 0;
-	if ( !m0 || !m1 ) return;
-	d0 = DL(m0); d1 = DL(m1); n2 = n>>1;
-	NEWNM(m); d = DL(m);
-	mulq(CQ(m0),CQ(m1),&CQ(m));
-	for ( i = 0; i < nd_wpd; i++ ) d[i] = 0;
-	homo = n&1 ? 1 : 0;
-	if ( homo ) {
-		/* offset of h-degree */
-		h = GET_EXP(d0,n-1)+GET_EXP(d1,n-1);
-		PUT_EXP(DL(m),n-1,h);
-		TD(DL(m)) = h;
-		/* XXX other weights */
-	}
-	tab[0] = m;
-	curlen = 1;
-	s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
-	NEWNM(m); d = DL(m);
-	for ( i = 0; i < n2; i++ ) {
-		a = GET_EXP(d0,i); b = GET_EXP(d1,n2+i);
-		k = GET_EXP(d0,n2+i); l = GET_EXP(d1,i);
-		/* xi^a*(Di^k*xi^l)*Di^b */
-		a += l; b += k;
-		if ( !k || !l ) {
-			for ( j = 0; j < curlen; j++ )
-				if ( m = tab[j] ) {
-					d = DL(m);
-					PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b); TD(d) += s;
-					/* XXX other weights */
+			if ( mod ) c = ctab[j];
+			else q = ctab_q[j];
+			for ( u = 0; u < curlen; u++, p++ ) {
+				if ( tab[u] ) {
+					NEWNM(t);
+					ndl_add(DL(tab[u]),d,DL(t));
+					if ( mod ) {
+						c0 = CM(tab[u]); DMAR(c0,c,0,mod,c1); CM(t) = c1;
+					} else
+						mulq(CQ(tab[u]),q,&CQ(t));
+					*p = t;
 				}
-			curlen *= k+1;
-			continue;
-		}
-		min = MIN(k,l);
-		ctab = (Q *)ALLOCA((min+1)*sizeof(Q));
-		mkwc(k,l,ctab);
-		for ( j = 0; j < nd_wpd; i++ ) d[j] = 0;
-		p = tab+curlen;
-		for ( j = 1; j <= min; j++ ) {
-			PUT_EXP(d,i,a-j); PUT_EXP(d,n2+i,b-j);
-			h = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
-			if ( homo ) {
-				TD(d) = s;
-				PUT_EXP(d,n-1,h);
-			} else TD(d) = h;
-			/* XXX other weights */
-			c = ctab[j];
-			for ( k = 0; k < curlen; k++, p++ ) {
-				NEWNM(t);
-				ndl_add(DL(tab[k]),d,DL(t));
-				mulq(CQ(tab[k]),c,&CQ(t));
-				*p = t;
 			}
 		}
 		/* destructive for j = 0 */	
+		for ( u = 0; u < nd_wpd; u++ ) d[u] = 0;
 		PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b);
-		h = s-(MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i));
+		h = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
 		if ( homo ) {
 			TD(d) = s;
-			PUT_EXP(d,n-1,h);
+			PUT_EXP(d,n-1,s-h);
 		} else TD(d) = h;
 		/* XXX other weights */
-		c = ctab[0];
+		if ( mod ) c = ctab[0];
+		else q = ctab_q[0];
 		p = tab;
-		for ( k = 0; k < curlen; k++, p++ ) {
-			ndl_addto(DL(tab[k]),d);
-			mulq(CQ(tab[k]),c,&CQ(tab[k]));
+		for ( u = 0; u < curlen; u++, p++ ) {
+			if ( tab[u] ) {
+				ndl_addto(DL(tab[u]),d);
+				if ( mod ) {
+					c0 = CM(tab[u]); DMAR(c0,c,0,mod,c1); CM(tab[u]) = c1;
+				} else {
+					mulq(CQ(tab[u]),q,&q1); CQ(tab[u]) = q1;
+				}
+			}
 		}
 		curlen *= k+1;
 	}
@@ -3072,7 +3004,6 @@ void ndv_realloc(NDV p,int obpe,int oadv,EPOS oepos)
 	int len,i,k;
 
 #define NMV_OPREV(m) (m = (NMV)(((char *)m)-oadv))
-#define NMV_PREV(m) (m = (NMV)(((char *)m)-nmv_adv))
 
 	if ( p ) {
 		m = BDY(p); len = LEN(p);
