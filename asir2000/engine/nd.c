@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.49 2003/08/26 01:54:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.50 2003/08/27 01:48:25 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -2509,7 +2509,7 @@ unsigned int *ndv_compute_bound(NDV p)
 
 int nd_get_exporigin(struct order_spec *ord)
 {
-	switch ( nd_ord->id ) {
+	switch ( ord->id ) {
 		case 0:
 			return 1;
 		case 1:
