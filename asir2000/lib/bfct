@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.7 2000/12/14 01:38:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.8 2000/12/14 09:13:37 noro Exp $ 
 */
 /* requires 'primdec' */
 
@@ -250,7 +250,7 @@ def weyl_gennf(G,TL,V,O)
 		NF = remove_cont(NF);
 		H = cons(NF,H);
 	}
-	print("");
+	if ( dp_gr_print() ) print("");
 	TNF = time()[0]-T0;
 	if ( dp_gr_print() )
 		print("gennf(TAB="+rtostr(TTAB)+" NF="+rtostr(TNF)+")");
