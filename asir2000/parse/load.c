@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.5 2000/11/10 08:28:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.6 2001/08/20 09:03:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -316,9 +316,12 @@ char *name;
 {
 	FILE *fp;
 	IN save_asir_infile;
+	int save_prresult;
+	extern prresult;
 
 	savepvs();
 	save_asir_infile = asir_infile;
+	save_prresult = prresult;
 	fp = fopen(name,"rb");
 	input_init(fp,name);
 	if ( !setjmp(exec_env) ) {
@@ -330,6 +333,7 @@ char *name;
 	fclose(fp);
 	restorepvs();
 	asir_infile = save_asir_infile;
+	prresult = save_prresult;
 }
 
 static NODE objfile = 0;
