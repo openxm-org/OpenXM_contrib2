@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.5 2000/01/13 08:12:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.6 2000/01/19 02:08:07 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\
@@ -7,6 +7,8 @@ SRCS= alpi bgk const cyclic\
 	primdec ratint robot solve sp sturm xm dmul
 
 all::
+
+depend:
 
 install-lib::
 	MakeDir($(ASIR_BINDIR))
