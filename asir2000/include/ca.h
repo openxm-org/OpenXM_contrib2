@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.39 2003/11/08 01:12:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.40 2003/12/23 06:30:14 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1446,6 +1446,7 @@ void dtestroot(int,int,P,LUM,struct oDUM *,DCP *);
 void dtestroot1(int,int,P,LUM,P *);
 void dtestsq(int,int,P,LUM,P *);
 void dtestsql(P,ML,struct oDUM *,DCP *);
+void ediffp(VL,P,V,P *);
 void estimatelc(VL,Q,DCP,VN,P *);
 void eucum(register int,UM,UM,UM,UM);
 void exthp(VL,P,int,P *);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.6 2003/06/19 07:08:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.7 2003/06/24 09:49:36 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -447,6 +447,50 @@ P *r;
 		} else {
 			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
 				diffp(vl,COEF(dc),v,&t);
+				if ( t ) {
+					NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+				}
+			}
+			if ( !dcr0 )
+				*r = 0;
+			else {
+				NEXT(dcr) = 0; MKP(VR(p),dcr0,*r);
+			}
+		}
+	}
+}
+
+/* Euler derivation */
+void ediffp(vl,p,v,r)
+VL vl;
+P p;
+V v;
+P *r;
+{
+	P t;
+	DCP dc,dcr,dcr0;
+
+	if ( !p || NUM(p) ) 
+		*r = 0;
+	else {
+		if ( v == VR(p) ) {
+			for ( dc = DC(p), dcr0 = 0; 
+				  dc && DEG(dc); dc = NEXT(dc) ) {
+				MULPQ(COEF(dc),(P)DEG(dc),&t);
+				if ( t ) {
+					NEXTDC(dcr0,dcr);
+					DEG(dcr) = DEG(dc);
+					COEF(dcr) = t;
+				}
+			}
+			if ( !dcr0 )
+				*r = 0;
+			else {
+				NEXT(dcr) = 0; MKP(v,dcr0,*r);
+			}
+		} else {
+			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+				ediffp(vl,COEF(dc),v,&t);
 				if ( t ) {
 					NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
 				}
