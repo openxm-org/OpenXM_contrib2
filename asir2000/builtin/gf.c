@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.11 2001/08/02 03:59:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.12 2001/09/03 07:01:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -210,7 +210,7 @@ NODE *rp;
 	BM fl;
 	BM *r;
 	VL vl,nvl;
-	int i,fn,dx,dy;
+	int i,fn,dx,dy,d;
 	NODE t,top;
 	UM fm,hm,q;
 	UM *gm;
@@ -230,9 +230,10 @@ NODE *rp;
 	x = VR((P)BDY(mfl));
 	y = vl->v == x ? vl->next->v : vl->v;
 
-	for ( i = 0, t = mfl; i < fn; i++, t = NEXT(t) ) {
+	for ( i = 0, t = mfl, d = 0; i < fn; i++, t = NEXT(t) ) {
 		gm[i] = (pointer)UMALLOC(getdeg(x,(P)BDY(t)));
 		ptosfum((P)BDY(t),gm[i]);
+		d += DEG(gm[i]);
 	}
 
 	/* reorder f if necessary */
@@ -241,6 +242,9 @@ NODE *rp;
 		vl = nvl; f = g;
 	}
 	dx = getdeg(x,f);
+	if ( dx != d )
+		error("sfuhensel : product of factors has incompatible degree");
+
 	dy = getdeg(y,f);
 	dy = MAX(dy,bound);
 	fl = BMALLOC(dx,dy);
