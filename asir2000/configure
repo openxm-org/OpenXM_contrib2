@@ -4918,7 +4918,7 @@ i[3-6]86-*-freebsd[3-9].*)
 i[3-6]86-*-linux*|x86-*-linux*)
     asm_obj="${i386_elf_obj}"
     cat >>confdefs.h <<\_ACEOF
-#define BSD_SOURCE 1
+#define _BSD_SOURCE 1
 _ACEOF
 
     ;;
