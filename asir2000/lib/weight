@@ -4,6 +4,7 @@ load("gr")$
 #define EPS 1E-6
 #define TINY 1E-20
 #define MAX_ITER 100
+#define ROUND_THRESHOLD 0.4
 
 def rotate(A,I,J,K,L,C,S){
 
@@ -352,7 +353,7 @@ def roundret(V){
 		RET1=I*RET0$
 		for(J=0;J<VN;J++){
 			X=drint(RET1[J])$
-			if(dabs(X-RET1[J])<0.2)
+			if(dabs(X-RET1[J])<ROUND_THRESHOLD)
 				RET1[J]=X$
 			else
 				break$
