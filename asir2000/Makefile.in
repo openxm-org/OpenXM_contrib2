@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/asir2000/Makefile.in,v 1.1 2003/02/23 03:25:19 ohara Exp $
 
 SHELL = @SHELL@
 
@@ -121,7 +121,7 @@ bin_PROGRAMS = asir
 asir_SOURCES = parse/main.c
 asir_LDADD = ${ASIRLIB} ${GLIB}
 lib_LIBRARIES = libasir.a libasir-gc.a
-CLEANFILES = libasir.a libasir-gc.a asir
+CLEANFILES = libasir.a libasir-gc.a asir${EXEEXT}
 
 libasir_gc_a_SOURCES = 
 subdir = .
@@ -562,8 +562,14 @@ install-exec-hook:
 	-if [ x${libasir_postfix} != x ] ; then \
 	    (cd ${prefix}/lib ; mv libasir.a libasir${libasir_postfix}.a) ; \
 	fi
-	-rm -f ${prefix}/bin/ox_asir
-	(cd ${prefix}/bin ; ${LN_S} asir ox_asir)
+	-rm -f ${prefix}/bin/ox_asir${EXEEXT}
+	(cd ${prefix}/bin ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
+	mkdir -p ${prefix}/lib/asir
+	(cd ${prefix}/lib/asir ; \
+	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
