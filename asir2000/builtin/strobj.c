@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.2 2000/02/03 05:45:44 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ctype.h"
@@ -9,13 +9,65 @@ extern jmp_buf environnement;
 extern char *parse_strp;
 
 void Prtostr(), Pstrtov(), Peval_str();
+void Pstrtoascii(), Pasciitostr();
 
 struct ftab str_tab[] = {
 	{"rtostr",Prtostr,1},
 	{"strtov",Pstrtov,1},
 	{"eval_str",Peval_str,1},
+	{"strtoascii",Pstrtoascii,1},
+	{"asciitostr",Pasciitostr,1},
 	{0,0,0},
 };
+
+void Pstrtoascii(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	STRING str;
+	unsigned char *p;
+	int len,i;
+	NODE n,n1;
+	Q q;
+
+	str = (STRING)ARG0(arg);
+	asir_assert(str,O_STR,"strtoascii");
+	p = BDY(str);
+	len = strlen(p);
+	for ( i = len-1, n = 0; i >= 0; i-- ) {
+		UTOQ((unsigned int)p[i],q);
+		MKNODE(n1,q,n);
+		n = n1;
+	}
+	MKLIST(*rp,n);
+}
+
+void Pasciitostr(arg,rp)
+NODE arg;
+STRING *rp;
+{
+	LIST list;
+	unsigned char *p;
+	int len,i,j;
+	NODE n;
+	Q q;
+
+	list = (LIST)ARG0(arg);
+	asir_assert(list,O_LIST,"asciitostr");
+	n = BDY(list);
+	len = length(n);
+	p = MALLOC_ATOMIC(len+1);
+	for ( i = 0; i < len; i++, n = NEXT(n) ) {
+		q = (Q)BDY(n);
+		asir_assert(q,O_N,"asciitostr");
+		j = QTOS(q);
+		if ( j >= 256 || j < 0 )
+			error("asciitostr : argument out of range");
+		p[i] = j;
+	}
+	p[i] = 0;
+	MKSTR(*rp,(char *)p);
+}
 
 void Peval_str(arg,rp)
 NODE arg;

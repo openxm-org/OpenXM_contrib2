@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.2 2000/01/11 06:43:35 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -84,6 +84,7 @@ NODE arg;
 USINT *rp;
 {
 	Q q;
+	unsigned int t;
 
 	asir_assert(ARG0(arg),O_N,"ntoint32");
 	q = (Q)ARG0(arg);
@@ -91,20 +92,23 @@ USINT *rp;
 		MKUSINT(*rp,0);
 		return;
 	}
-	if ( NID(q)!=N_Q || SGN(q)<0 || !INT(q) || PL(NM(q))>1 )
+	if ( NID(q)!=N_Q || !INT(q) || PL(NM(q))>1 )
 		error("ntoint32 : invalid argument");
-	MKUSINT(*rp,BD(NM(q))[0]);
+	t = BD(NM(q))[0];
+	if ( SGN(q) < 0 )
+		t = -t;
+	MKUSINT(*rp,t);
 }
 
 void Pint32ton(arg,rp)
 NODE arg;
 Q *rp;
 {
-	unsigned int t;
+	int t;
 
 	asir_assert(ARG0(arg),O_USINT,"int32ton");
-	t = BDY((USINT)ARG0(arg));
-	UTOQ(t,*rp);
+	t = (int)BDY((USINT)ARG0(arg));
+	STOQ(t,*rp);
 }
 
 void Pdp_set_mpi(arg,rp)
