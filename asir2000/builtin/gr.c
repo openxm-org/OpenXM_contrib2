@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.49 2003/06/21 02:09:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.50 2003/07/01 08:12:38 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -123,17 +123,70 @@ void Pox_pop_local(NODE,Obj *);
 INLINE int eqdl(int nv,DL dl1,DL dl2)
 {
 	int i;
-	int *b1,*b2;
+	int *p1,*p2;
 
 	if ( dl1->td != dl2->td )
 		return 0;
-	for ( i = 0, b1 = dl1->d, b2 = dl2->d; i < nv; i++ )
-		if ( b1[i] != b2[i] )
-			break;
-	if ( i == nv )
-		return 1;
-	else
-		return 0;
+	i = nv-1;
+	p1 = dl1->d;
+	p2 = dl2->d;
+	while ( i >= 7 ) {
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		if ( *p1++ != *p2++ ) return 0;
+		i -= 8;
+	}
+	switch ( i ) {
+		case 6:
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		case 5:
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		case 4:
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		case 3:
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		case 2:
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		case 1:
+			if ( *p1++ != *p2++ ) return 0;
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		case 0:
+			if ( *p1++ != *p2++ ) return 0;
+			return 1;
+		default:
+			return 1;
+	}
 }
 
 /* b[] should be cleared */
@@ -601,6 +654,8 @@ NODE gb_f4(NODE f)
 /* initial bases are monic */
 
 unsigned int **psca;
+GeoBucket create_bucket();
+DL remove_head_bucket(GeoBucket,int);
 
 NODE gb_f4_mod(NODE f,int m)
 {
@@ -619,6 +674,8 @@ NODE gb_f4_mod(NODE f,int m)
 	int *indred,*isred;
 	CDP ri;
 	int pscalen;
+	GeoBucket bucket;
+	DL head;
 	struct oEGT tmp0,tmp1,eg_split_symb,eg_split_conv,eg_split_elim1,eg_split_elim2;
 	extern struct oEGT eg_symb,eg_conv,eg_elim1,eg_elim2;
 
@@ -641,37 +698,49 @@ NODE gb_f4_mod(NODE f,int m)
 		minsugar(d,&dm,&dr); d = dr;
 		if ( DP_Print )
 			fprintf(asir_out,"sugar=%d\n",dm->sugar);
-		blist = 0; s0 = 0;
+		blist = 0;
+		bucket = create_bucket();
 		/* asph : sum of all head terms of spoly */
 		for ( t = dm; t; t = NEXT(t) ) {
 			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
 /*			fprintf(stderr,"splen=%d-",dp_nt(sp)); */
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
-				s0 = symb_merge(s0,dp_dllist(sp),nv);
+				add_bucket(bucket,dp_dllist(sp),nv);
 /*				fprintf(stderr,"%d-",length(s0)); */
 			}
 		}
+#if 0
 		if ( DP_Print )
 			fprintf(asir_out,"initial spmat : %d x %d ",length(blist),length(s0));
+#endif
 		/* s0 : all the terms appeared in symbolic reduction */
-		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
+		nred = 0;
+		s0 = 0;
+		while ( 1 ) {
+			head = remove_head_bucket(bucket,nv);
+			if ( !head ) break;
+			else {
+				NEXTNODE(s0,s);
+				BDY(s) = (pointer)head;
+			}
 			for ( r = gall;	r; r = NEXT(r) )
-				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
+				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,head,nv) )
 					break;
 			if ( r ) {
-				dltod(BDY(s),nv,&tdp);
+				dltod(head,nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				dt = mul_dllist(BDY(sd)->dl,ps[(int)BDY(r)]);
+				add_bucket(bucket,NEXT(dt),nv);
 /*				fprintf(stderr,"[%d]",length(dt)); */
 				/* list of [t,f] */
 				bt1 = mknode(2,BDY(sd)->dl,BDY(r));
 				MKNODE(bt,bt1,blist); blist = bt;
-				symb_merge(s,dt,nv);
 /*				fprintf(stderr,"%d-",length(s0));  */
 				nred++;
 			}
 		}
+		if ( s0 ) NEXT(s) = 0;
 /*		fprintf(stderr,"\n"); */
 		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
 		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);

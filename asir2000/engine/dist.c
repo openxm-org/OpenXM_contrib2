@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.23 2003/05/28 07:32:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.24 2003/06/19 07:08:19 noro Exp $ 
 */
 #include "ca.h"
 
@@ -385,6 +385,8 @@ void symb_addd(DP p1,DP p2,DP *pr)
 NODE symb_merge(NODE m1,NODE m2,int n)
 {
 	NODE top,prev,cur,m,t;
+	int c,i;
+	DL d1,d2;
 
 	if ( !m1 )
 		return m2;
@@ -405,7 +407,26 @@ NODE symb_merge(NODE m1,NODE m2,int n)
 		prev = top; cur = NEXT(top);
 		/* BDY(prev) > BDY(m) always holds */
 		while ( cur && m ) {
+			d1 = (DL)BDY(cur);
+			d2 = (DL)BDY(m);
+			if ( d1->td > d2->td )
+				c = 1;
+			else if ( d1->td < d2->td )
+				c = -1;
+			else {
+				for ( i = n-1; i >= 0 && d1->d[i] == d2->d[i]; i-- );
+				if ( i < 0 )
+					c = 0;
+				else if ( d1->d[i] < d2->d[i] )
+					c = 1;
+				else
+					c = -1;
+			}
+#if 0
 			switch ( (*cmpdl)(n,(DL)BDY(cur),(DL)BDY(m)) ) {
+#else
+			switch ( c ) {
+#endif
 				case 0:
 					m = NEXT(m);
 					prev = cur; cur = NEXT(cur);
@@ -1114,7 +1135,7 @@ int cmpdl_gradlex(int n,DL d1,DL d2)
 
 int cmpdl_revgradlex(int n,DL d1,DL d2)
 {
-	register int i;
+	register int i,c;
 	register int *p1,*p2;
 
 	if ( d1->td > d2->td )
@@ -1122,9 +1143,69 @@ int cmpdl_revgradlex(int n,DL d1,DL d2)
 	else if ( d1->td < d2->td )
 		return -1;
 	else {
-		for ( i= n - 1, p1 = d1->d+n-1, p2 = d2->d+n-1;
-			i >= 0 && *p1 == *p2; i--, p1--, p2-- );
-		return i < 0 ? 0 : (*p1 < *p2 ? 1 : -1);
+		i = n-1;
+		p1 = d1->d+n-1;
+		p2 = d2->d+n-1;
+		while ( i >= 7 ) {
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			c = (*p1--) - (*p2--); if ( c ) goto LAST;
+			i -= 8;
+		}
+		switch ( i ) {
+			case 6:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			case 5:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			case 4:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			case 3:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			case 2:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			case 1:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			case 0:
+				c = (*p1--) - (*p2--); if ( c ) goto LAST;
+				return 0;
+			default:
+				return 0;
+		}
+LAST:
+		if ( c > 0 ) return -1;
+		else return 1;
 	}
 }
 
@@ -1455,4 +1536,57 @@ int cmpdl_matrix(int n,DL d1,DL d2)
 			return -1;
 	}
 	return 0;
+}
+
+GeoBucket create_bucket()
+{
+	GeoBucket g;
+
+	g = CALLOC(1,sizeof(struct oGeoBucket));
+	g->m = 32;
+	return g;
+}
+
+void add_bucket(GeoBucket g,NODE d,int nv)
+{
+	int l,k,m;
+
+	l = length(d);
+	for ( k = 0, m = 1; l > m; k++, m <<= 1 );
+	/* 2^(k-1) < l <= 2^k */
+	d = symb_merge(g->body[k],d,nv);
+	for ( ; length(d) > (1<<(k)); k++ ) {
+		g->body[k] = 0;
+		d = symb_merge(g->body[k+1],d,nv);
+	}
+	g->body[k] = d;
+	g->m = MAX(g->m,k);
+}
+
+DL remove_head_bucket(GeoBucket g,int nv)
+{
+	int j,i,c,m;
+	DL d;
+
+	j = -1;
+	m = g->m;
+	for ( i = 0; i <= m; i++ ) {
+		if ( !g->body[i] )
+			continue;
+		if ( j < 0 ) j = i;
+		else {
+			c = (*cmpdl)(nv,g->body[i]->body,g->body[j]->body);
+			if ( c > 0 )
+				j = i;
+			else if ( c == 0 )
+				g->body[i] = NEXT(g->body[i]);	
+		}
+	}
+	if ( j < 0 )
+		return 0;
+	else {
+		d = g->body[j]->body;
+		g->body[j] = NEXT(g->body[j]);
+		return d;
+	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.35 2003/02/14 22:29:13 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.36 2003/04/08 22:10:40 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -418,6 +418,11 @@ typedef struct oDLBUCKET {
 	struct oNODE *body;
 	struct oDLBUCKET *next;
 } *DLBUCKET;
+
+typedef struct oGeoBucket {
+	int m;
+	struct oNODE *body[32];
+} *GeoBucket;
 
 typedef struct oVL {
 	V v;
