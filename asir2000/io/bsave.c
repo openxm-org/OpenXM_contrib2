@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.11 2002/01/08 04:14:38 kondoh Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.12 2003/02/14 22:29:15 ohara Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -116,7 +116,7 @@ void savebf(FILE *s,BF p)
 	GEN z;
 	int sign;
 	unsigned long expo;
-	unsigned int len;
+	unsigned int len,t;
 
 	z = (GEN)BDY(p);
 	sign = signe(z);

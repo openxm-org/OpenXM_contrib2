@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.11 2002/01/08 04:14:38 kondoh Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.12 2003/02/14 22:29:15 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -126,6 +126,7 @@ void loadbf(FILE *s,BF *p)
 	char dmy;
 	int sign;
 	unsigned int len;
+	unsigned long expo;
 	BF q;
 
 	read_char(s,&dmy);
