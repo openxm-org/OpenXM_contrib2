@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.16 2003/01/06 09:23:27 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.17 2003/01/13 06:40:41 noro Exp $ */
 
 #include "ca.h"
 
@@ -979,6 +979,12 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,int *mev,P *up)
 		addp(vl,v,wv,&t); v = t;
 		addp(vl,vh[j],wv,&t); vh[j] = t;
 	}
+	gfsn_poly_to_poly(vl,u,vy,&t);
+	shift_sf(vl,rvl,t,mev,-1,&s);
+	if ( divtp(vl,fin,s,&q) )
+		cont_pp_mv_sf(vl,onevl,s,&cont,up);
+	else
+		*up = 0;
 }
 
 void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,int *mev,P *r)
