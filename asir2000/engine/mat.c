@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.4 2002/01/04 17:08:23 saito Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -244,7 +244,7 @@ MAT a,b,*c;
 	pointer s,u,v;
 	pointer *ab,*tb;
 
-	/* 行列のcol,rowの数があわない場合 */
+	/* Mismach col and row */
 	if ( a->col != b->row ) {
 		*c = 0; error("mulmat : size mismatch"); 
 	} else {
@@ -292,7 +292,7 @@ MAT a,b,*c;
 	int a1row,a2row, a3row,a4row, a1col, a2col, a3col, a4col;
 	int b1row,b2row, b3row,b4row, b1col, b2col, b3col, b4col;
 	int pflag1, pflag2;
-	/* 行列のcol,rowの数があわない場合 */
+	/* mismach col and row */
 	if ( a->col != b->row ) {
 		*c = 0; error("mulmat : size mismatch");
 	}
@@ -302,8 +302,8 @@ MAT a,b,*c;
 		arowh = arow/2; bcolh = bcol/2;
 		MKMAT(t,arow,bcol);
 		/* StrassenSize == 0 or matrix size less then StrassenSize,
-		then calc cannonical algorizm. */
-		if((StrassenSize == 0)||(a->row<=StrassenSize || a->col <= StrassenSize)) {
+		then calc cannonical algorithm. */
+		if((StrassenSize == 0)||(a->row<=StrassenSize || a->col <= StrassenSize) || (b->row<=StrassenSize || b->col <= StrassenSize)) {
 			for ( i = 0; i < arow; i++ )
 				for ( j = 0, ab = BDY(a)[i], tb = BDY(t)[i]; j < bcol; j++ ) {
 					for ( k = 0, s = 0; k < m; k++ ) {
@@ -316,7 +316,7 @@ MAT a,b,*c;
 		*c = t;
 		return;
 		}
-		/* 行列が奇数次の場合は偶数次になるように0でpadding */
+		/* padding odd col and row to even number for zero */
 		i = arow/2;
 		j = arow - i;
 		if (i != j) {
@@ -347,7 +347,7 @@ MAT a,b,*c;
 			}
 		} 
 
-		/* 行列A,Bを分割 */
+		/* split matrix A and B */
 		a1row = aa->row/2; a1col = aa->col/2;
 		MKMAT(a11,a1row,a1col);
     MKMAT(a21,a1row,a1col);
@@ -360,28 +360,28 @@ MAT a,b,*c;
     MKMAT(b12,b1row,b1col);
     MKMAT(b22,b1row,b1col);
 
-		/* a11の行列を作る */
+		/* make a11 matrix */
 		for (i = 0; i < a1row; i++) {
 			for (j = 0; j < a1col; j++) {
 				a11->body[i][j] = aa->body[i][j];
 			}
 		}
 
-		/* a21の行列を作る */
+		/* make a21 matrix */
 		for (i = a1row; i < aa->row; i++) {
 			for (j = 0; j < a1col; j++) {
 				a21->body[i-a1row][j] = aa->body[i][j];
 			}
 		}
 
-		/* a12の行列を作る */
+		/* create a12 matrix */
 		for (i = 0; i < a1row; i++) {
 			for (j = a1col; j < aa->col; j++) {
 				a12->body[i][j-a1col] = aa->body[i][j];
 			}
 		}
 
-		/* a22の行列を作る */
+		/* create a22 matrix */
     for (i = a1row; i < aa->row; i++) {
       for (j = a1col; j < aa->col; j++) {
         a22->body[i-a1row][j-a1col] = aa->body[i][j];
@@ -389,34 +389,34 @@ MAT a,b,*c;
    }
 
 
-		/* b11の行列を作る */
+		/* create b11 submatrix */
 		for (i = 0; i < b1row; i++) {
 			for (j = 0; j < b1col; j++) {
 				b11->body[i][j] = bb->body[i][j];
 			}
 		}
 
-		/* b21の行列を作る */
+		/* create b21 submatrix */
 		for (i = b1row; i < bb->row; i++) {
 			for (j = 0; j < b1col; j++) {
 				b21->body[i-b1row][j] = bb->body[i][j];
 			}
 		}
 
-		/* b12の行列を作る */
+		/* create b12 submatrix */
 		for (i = 0; i < b1row; i++) {
 			for (j = b1col; j < bb->col; j++) {
 				b12->body[i][j-b1col] = bb->body[i][j];
 			}
 		}
 
-		/* b22の行列を作る */
+		/* create b22 submatrix */
 		for (i = b1row; i < bb->row; i++) {
 			for (j = b1col; j < bb->col; j++) {
 				b22->body[i-b1row][j-b1col] = bb->body[i][j];
 			}
 		}
-		/* Strassen-Winogradの方法で展開 */
+		/* expand matrix by Strassen-Winograd algorithm */
 		/* s1=A21+A22 */
 		addmat(vl,a21,a22,&s1);
 
@@ -433,77 +433,28 @@ MAT a,b,*c;
 		submat(vl, a11, a21, &ans1);
 		submat(vl, b22, b12, &ans2);
 		mulmatmat(vl, ans1, ans2, &u1);
-/* tomo
-		strassen(vl, ans1, ans2, &u1);
-*/
 
 		/* v=s1*t1 */
 		mulmatmat(vl, s1, t1, &v1);
-/* tomo
-		strassen(vl, s1, t1, &v1);
-*/
 
 		/* w=A11*B11+s2*t2 */
 		mulmatmat(vl, a11, b11, &ans1);
 		mulmatmat(vl, s2, t2, &ans2);
-/* tomo
-		strassen(vl, a11, b11, &ans1);
-		strassen(vl, s2, t2, &ans2);
-*/
 		addmat(vl, ans1, ans2, &w1);
 
 		/* C11 = A11*B11+A12*B21 */
 		mulmatmat(vl, a12, b21, &ans2);
-/* tomo
-		strassen(vl,  a12, b21, &ans2);
-*/
 		addmat(vl, ans1, ans2, &c11);
 
 		/* C12 = w1+v1+(A12-s2)*B22 */
 		submat(vl, a12, s2, &ans1);
 		mulmatmat(vl, ans1, b22, &ans2);
-/* tomo
-		strassen(vl,  ans1, b22, &ans2);
-*/
 		addmat(vl, w1, v1, &ans1);
 		addmat(vl, ans1, ans2, &c12);
 
 		/* C21 = w1+u1+A22*(B21-t2) */
 		submat(vl, b21, t2, &ans1);
 		mulmatmat(vl, a22, ans1, &ans2);
-/* tomo
-		strassen(vl,  a22, ans1, &ans2);
-*/
-		addmat(vl, w1, u1, &ans1);
-		addmat(vl, ans1, ans2, &c21);
-
-		/* C22 = w1 + u1 + v1 */
-		addmat(vl, ans1, v1, &c22);
-
-	}
-
-	/* 解の領域tに計算結果を戻す */
-	for(i =0; i<c11->row; i++) {
-		for ( j=0; j < c11->col; j++) {
-			t->body[i][j] = c11->body[i][j];
-		}
-	}
-	if (pflag1 == 0) {
-			k = c21->row;
-	} else {
-			k = c21->row - 1;
-	}
-	for(i =0; i<k; i++) {
-		for ( j=0; j < c21->col; j++) {
-			t->body[i+c11->row][j] = c21->body[i][j];
-		}
-	}
-	if (pflag2 == 0) {
-		h = c12->col;
-	} else {
-		h = c12->col -1;
-	}
-	for(i =0; i<c12->row; i++) {
 		for ( j=0; j < k; j++) {
 			t->body[i][j+c11->col] = c12->body[i][j];
 		}
