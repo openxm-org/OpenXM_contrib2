@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.10 2002/11/22 07:32:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.11 2002/11/22 08:44:57 noro Exp $ */
 
 #include "ca.h"
 
@@ -12,11 +12,11 @@ void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp);
 void gcdsf(VL vl,P *pa,int k,P *r);
 void mfctrsfmain(VL vl, P f, DCP *dcp);
 void next_evaluation_point(int *mev,int n);
-void estimatelc_sf(VL vl,VL rvl,P c,DCP dc,P *lcp);
-void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up);
+void estimatelc_sf(VL vl,VL rvl,P c,DCP dc,int *mev,P *lcp);
+void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,int *mev,P *up);
 void substvp_sf(VL vl,VL rvl,P f,int *mev,P *r);
 void shift_sf(VL vl, VL rvl, P f, int *mev, int sgn, P *r);
-void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,P *r);
+void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,int *mev,P *r);
 void extended_gcd_modyk(P u0,P v0,V x,V y,int dy,P *cu,P *cv);
 void poly_to_gfsn_poly(VL vl,P f,V v,P *r);
 void gfsn_poly_to_poly(VL vl,P f,V v,P *r);
@@ -515,7 +515,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	P gcd,g,df,dfmin;
 	P pa[2];
 	P f0,pp0,spp0,c,c0,x,y,u,v,lcf,lcu,lcv,u0,v0,t,s;
-	P ype,yme;
+	P ype,yme,fin;
 	GFS ev,evy;
 	P *fp0;
 	int *mev,*win;
@@ -578,6 +578,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	}
 	NEXT(tvl) = 0;
 
+	fin = f;
 	reorderp(nvl,vl,f,&g); f = g;
 	vx = nvl->v;
 	vy = NEXT(nvl)->v;
@@ -626,7 +627,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 
 	if ( !NEXT(dc) ) {
 		/* f is irreducible */
-		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = f; NEXT(dc) = 0;
+		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = fin; NEXT(dc) = 0;
 		*dcp = dc;
 		return;
 	}
@@ -645,15 +646,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	lcf = COEF(DC(f));
 	mfctrsf(nvl,lcf,&dct); 
 	/* skip the first element (= a number) */
-	dct = NEXT(dct);
-
-	/* shift lcfdc; c <- c(X+mev) */
-	for ( lcfdc = 0; dct; dct = NEXT(dct) ) {
-		NEXTDC(lcfdc,dcs);
-		DEG(dcs) = DEG(dct);
-		shift_sf(nvl,rvl,COEF(dct),mev,1,&COEF(dcs));
-	}
-	NEXT(dcs) = 0;
+	lcfdc = NEXT(dct);
 
 	/* np = number of bivariate factors */
 	for ( np = 0, dct = dc; dct; dct = NEXT(dct), np++ );
@@ -664,9 +657,6 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	l = tl = (P *)ALLOCA((np+1)*sizeof(P));
 	win = W_ALLOC(np+1);
 
-	/* f <- f(X+mev) */
-	shift_sf(nvl,rvl,f,mev,1,&s); f = s;
-
 	for ( k = 1, win[0] = 1, --np; ; ) {
 		itogfs(1,&u0);
 		/* u0 = product of selected factors */
@@ -675,15 +665,15 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 		}
 		/* we have to consider the content */
 		/* f0 = c0*u0*v0 */
-		mulp(nvl,LC(u0),c0,&c); estimatelc_sf(nvl,rvl,c,lcfdc,&lcu);
+		mulp(nvl,LC(u0),c0,&c); estimatelc_sf(nvl,rvl,c,lcfdc,mev,&lcu);
 		divsp(nvl,pp0,u0,&v0);
-		mulp(nvl,LC(v0),c0,&c); estimatelc_sf(nvl,rvl,c,lcfdc,&lcv);
-		mfctrsf_hensel(nvl,rvl,f,pp0,u0,v0,lcu,lcv,&u);
+		mulp(nvl,LC(v0),c0,&c); estimatelc_sf(nvl,rvl,c,lcfdc,mev,&lcv);
+		mfctrsf_hensel(nvl,rvl,f,pp0,u0,v0,lcu,lcv,mev,&u);
 		if ( u ) {
 			/* save the factor */
 			reorderp(vl,nvl,u,&t);
-			/* x -> x-mev, y -> y-evy */
-			shift_sf(vl,rvl,t,mev,-1,&s); substp(vl,s,vy,yme,tl++);
+			/* y -> y-evy */
+			substp(vl,t,vy,yme,tl++);
 
 			/* update f,pp0 */
 			divsp(nvl,f,u,&t); f = t;
@@ -714,8 +704,8 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 		}
 	}
 	reorderp(vl,nvl,f,&t);
-	/* x -> x-mev, y -> y-evy */
-	shift_sf(vl,rvl,t,mev,-1,&s); substp(vl,s,vy,yme,tl++);
+	/* y -> y-evy */
+	substp(vl,t,vy,yme,tl++);
 	*tl = 0;
 	for ( dc0 = 0, i = 0; l[i]; i++ ) {
 		NEXTDC(dc0,dc); DEG(dc) = ONE; COEF(dc) = l[i];
@@ -742,12 +732,12 @@ void next_evaluation_point(int *e,int n)
 
 /* 
  * dc : f1^E1*...*fk^Ek
- * find e1,...,ek s.t. fi(0)^ei | c 
+ * find e1,...,ek s.t. fi(mev)^ei | c 
  * and return f1^e1*...*fk^ek
  * vl = (vx,vy,rvl)
  */
 
-void estimatelc_sf(VL vl,VL rvl,P c,DCP dc,P *lcp)
+void estimatelc_sf(VL vl,VL rvl,P c,DCP dc,int *mev,P *lcp)
 {
 	DCP dct;
 	P r,c1,c2,t,s,f;
@@ -758,7 +748,7 @@ void estimatelc_sf(VL vl,VL rvl,P c,DCP dc,P *lcp)
 		if ( NUM(COEF(dct)) )
 			continue;
 		/* constant part */
-		substvp_sf(vl,rvl,COEF(dct),0,&f);
+		substvp_sf(vl,rvl,COEF(dct),mev,&f);
 		d = QTOS(DEG(dct));
 		for ( i = 0, c1 = c; i < d; i++ )
 			if ( !divtp(vl,c1,f,&c2) )
@@ -819,7 +809,7 @@ void shift_sf(VL vl, VL rvl, P f, int *mev, int sgn, P *r)
  * pp(f(0)) = u0*v0
  */
 
-void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
+void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,int *mev,P *up)
 {
 	VL tvl,onevl;
 	P t,s,w,u,v,ff,si,wu,wv,fj,cont;
@@ -828,17 +818,23 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	int dy,n,i,dbd,nv,j;
 	int *md;
 	P *uh,*vh;
-	P x,du0,dv0,m,q,r;
+	P x,du0,dv0,m,q,r,fin;
 	P *cu,*cv;
 	GFSN inv;
 
 	/* adjust coeffs */
-	/* u0 = am x^m+ ... -> lcu*x^m + a(m-1)*(lcu(0)/am)*x^(m-1)+... */
-	/* v0 = bm x^l+ ... -> lcv*x^l + b(l-1)*(lcv(0)/bl)*x^(l-1)+... */
+	/* u0 = am x^m+ ... -> lcu*x^m + a(m-1)*(lcu(mev)/am)*x^(m-1)+... */
+	/* v0 = bm x^l+ ... -> lcv*x^l + b(l-1)*(lcv(mev)/bl)*x^(l-1)+... */
 	/* f                -> lcu*lcv*x^(m+l)+... */
-	adjust_coef_sf(vl,rvl,lcu,u0,&u);
-	adjust_coef_sf(vl,rvl,lcv,v0,&v);
+	adjust_coef_sf(vl,rvl,lcu,u0,mev,&u);
+	adjust_coef_sf(vl,rvl,lcv,v0,mev,&v);
 	mulp(vl,lcu,lcv,&t); divsp(vl,t,LC(f),&m); mulp(vl,m,f,&t); f = t;
+
+	/* f <- f(X+mev), u <- u(X+mev), v <- v(X+mev) */
+	fin = f;
+	shift_sf(vl,rvl,f,mev,1,&s); f = s;
+	shift_sf(vl,rvl,u,mev,1,&s); u = s;
+	shift_sf(vl,rvl,v,mev,1,&s); v = s;
 
 	vx = vl->v; vy = NEXT(vl)->v;
 	n = getdeg(vx,f);
@@ -930,14 +926,16 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 		}
 		if ( !wu ) {
 			gfsn_poly_to_poly(vl,u,vy,&t);
-			if ( divtp(vl,f,t,&q) ) {
-				cont_pp_mv_sf(vl,onevl,t,&cont,up);
+			shift_sf(vl,rvl,t,mev,-1,&s);
+			if ( divtp(vl,fin,s,&q) ) {
+				cont_pp_mv_sf(vl,onevl,s,&cont,up);
 				return;
 			}
 		}
 		if ( !wv ) {
 			gfsn_poly_to_poly(vl,v,vy,&t);
-			if ( divtp(vl,f,t,&q) ) {
+			shift_sf(vl,rvl,t,mev,-1,&s);
+			if ( divtp(vl,fin,s,&q) ) {
 				cont_pp_mv_sf(vl,onevl,q,&cont,up);
 				return;
 			}
@@ -949,12 +947,12 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	}
 }
 
-void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,P *r)
+void adjust_coef_sf(VL vl,VL rvl,P lcu,P u0,int *mev,P *r)
 {
 	P lcu0,cu;
 	DCP dc0,dcu,dc;
 
-	substvp_sf(vl,rvl,lcu,0,&lcu0);
+	substvp_sf(vl,rvl,lcu,mev,&lcu0);
 	divsp(vl,lcu0,LC(u0),&cu);
 	for ( dc0 = 0, dcu = DC(u0); dcu; dcu = NEXT(dcu) ) {
 		if ( !dc0 ) {
