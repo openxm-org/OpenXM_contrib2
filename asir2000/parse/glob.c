@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.21 2001/08/20 09:03:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.22 2001/09/05 01:20:19 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -347,15 +347,15 @@ void sig_init() {
 #endif
 	signal(SIGSEGV,segv_handler);
 
-#if defined SIGFPE
+#if defined(SIGFPE)
 	signal(SIGFPE,fpe_handler);
 #endif
 
-#if defined SIGPIPE
+#if defined(SIGPIPE)
 	signal(SIGPIPE,pipe_handler);
 #endif
 
-#if defined SIGILL
+#if defined(SIGILL)
 	signal(SIGILL,ill_handler);
 #endif
 
@@ -686,7 +686,7 @@ void copyright() {
 	printf("Copyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\n");
 	printf("Copyright 2000,2001, Risa/Asir committers, http://www.openxm.org/.\n");
 	printf("GC 5.3, copyright 1999, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n");
-	printf("PARI 2.0.17(beta), copyright (C) 1989-1999,\n");
+	printf("PARI 2.2.1(alpha), copyright (C) 2000,\n");
 	printf("     C. Batut, K. Belabas, D. Bernardi, H. Cohen and M. Olivier.\n");
 }
 

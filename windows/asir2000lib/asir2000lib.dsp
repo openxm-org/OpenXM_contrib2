@@ -336,6 +336,10 @@ SOURCE=..\..\asir2000\engine\gfs.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\asir2000\engine\gfspn.c
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\asir2000\parse\glob.c"
 # End Source File
 # Begin Source File
@@ -572,6 +576,10 @@ SOURCE="..\..\asir2000\engine\Q.c"
 # Begin Source File
 
 SOURCE="..\..\asir2000\engine\QM.c"
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\asir2000\parse\quote.c
 # End Source File
 # Begin Source File
 

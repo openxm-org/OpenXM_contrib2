@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.7 2000/09/12 06:05:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.1.1.1 2000/11/22 06:20:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -205,7 +205,7 @@ static void process_ox(int id, Obj obj, unsigned int serial)
 				break;
 			if ( do_message )
 				fprintf(stderr," %s\n",name_of_cmd(cmd));
-			if ( ret = setjmp(env) ) {
+			if ( ret = setjmp(main_env) ) {
 				if ( ret == 1 ) {
 					create_error(&err,serial,LastError);
 					asir_push_one((Obj)err);

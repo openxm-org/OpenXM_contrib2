@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.3 2000/08/22 05:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.4 2000/11/13 01:48:13 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,16 +141,16 @@ int unget_char(int c)
   return c;
 }
 
-int put_char(int c,FILE *file)
+int win_put_char(int c,FILE *file)
 {
   static char s[2];
   
   s[0] = (char)c;
-  put_string(s,file);
+  win_put_string(s,file);
   return c;
 }
 
-int put_string(char *s,FILE *file)
+int win_put_string(char *s,FILE *file)
 {
   char c;
 
@@ -192,7 +192,7 @@ int w_ungetc(int c, FILE *file)
 int w_fputc(int c, FILE *file)
 {
   if ( file == stdout || file == stderr )
-    return put_char(c,file);
+    return win_put_char(c,file);
   else
     return fputc(c,file);
 }
@@ -202,7 +202,7 @@ int w_fputs(char *s, FILE *file)
   int status;
 
   if ( file == stdout || file == stderr )
-    return put_string(s,file);
+    return win_put_string(s,file);
   else
     return fputs(s,file);
 }
@@ -215,7 +215,7 @@ int w_printf(char *format, ...)
 
   va_start(ap,format);
   status = vsprintf(buf,format,ap);
-  put_string(buf,stdout);
+  win_put_string(buf,stdout);
   return status;
 }
 
@@ -228,7 +228,7 @@ int w_fprintf(FILE *file, char *format, ...)
   va_start(ap,format);
   if ( file == stdout || file == stderr ) {
     status = vsprintf(buf,format,ap);
-    put_string(buf,file);
+    win_put_string(buf,file);
   } else {
     status = vfprintf(file,format,ap);
   }

@@ -333,6 +333,10 @@ SOURCE=.\engine\gfs.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\engine\gfspn.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\parse\glob.c
 # End Source File
 # Begin Source File
@@ -554,6 +558,10 @@ SOURCE=.\engine\Q.c
 # Begin Source File
 
 SOURCE=.\engine\QM.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\parse\quote.c
 # End Source File
 # Begin Source File
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.18 2001/09/19 09:28:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.19 2001/10/01 01:58:02 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1300,6 +1300,8 @@ LIST *rp;
 	asir_assert(ARG1(arg),O_LIST,"dp_f4_mod_main");
 	asir_assert(ARG2(arg),O_N,"dp_f4_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+	if ( !m )
+		error("dp_f4_mod_main : invalid argument");
 	create_order_spec(ARG3(arg),&ord);
 	dp_f4_mod_main(f,v,m,&ord,rp);
 }
@@ -1320,6 +1322,8 @@ LIST *rp;
 	asir_assert(ARG3(arg),O_N,"dp_gr_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
+	if ( !m )
+		error("dp_gr_mod_main : invalid argument");
 	create_order_spec(ARG4(arg),&ord);
 	dp_gr_mod_main(f,v,homo,m,&ord,rp);
 }
@@ -1405,6 +1409,8 @@ LIST *rp;
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
 	asir_assert(ARG2(arg),O_N,"dp_f4_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+	if ( !m )
+		error("dp_weyl_f4_mod_main : invalid argument");
 	create_order_spec(ARG3(arg),&ord);
 	do_weyl = 1;
 	dp_f4_mod_main(f,v,m,&ord,rp);
@@ -1426,6 +1432,8 @@ LIST *rp;
 	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
+	if ( !m )
+		error("dp_weyl_gr_mod_main : invalid argument");
 	create_order_spec(ARG4(arg),&ord);
 	do_weyl = 1;
 	dp_gr_mod_main(f,v,homo,m,&ord,rp);

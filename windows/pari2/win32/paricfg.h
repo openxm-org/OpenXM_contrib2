@@ -3,6 +3,7 @@
 #define __CONFIG_H__
 
 #define GPDATADIR "/pari/data"
+#define GPMISCDIR "/pari/data"
 
 #define PARIVERSION "GP/PARI CALCULATOR Version 2.0.13 (alpha)"
 #ifdef __cplusplus

@@ -11,7 +11,6 @@ int get_char(void);
 char *get_string(char *s,int n);
 int unget_char(int c);
 int put_char(int c,FILE *file);
-int put_string(char *s,FILE *file);
 
 int w_fgetc(FILE *file);
 char *w_fgets(char *s,int n, FILE *file);
