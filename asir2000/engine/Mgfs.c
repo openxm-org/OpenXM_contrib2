@@ -1,8 +1,59 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.3 2001/06/25 01:35:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.4 2001/06/25 04:11:42 noro Exp $ */
 
 #include "ca.h"
 
+extern int up_kara_mag, current_gfs_q1;
+extern int *current_gfs_plus1;
+
 void mulssfum(UM,int,UM);
+void kmulsfummain(UM,UM,UM);
+
+inline int _ADDSF(a,b)
+int a,b;
+{
+	if ( !a )
+		return b;
+	else if ( !b )
+		return a;
+
+	a = IFTOF(a); b = IFTOF(b);
+	if ( a > b ) {
+		/* tab[a]+tab[b] = tab[b](tab[a-b]+1) */
+		a = current_gfs_plus1[a-b];
+		if ( a < 0 )
+			return 0;
+		else {
+			a += b;
+			if ( a >= current_gfs_q1 )
+				a -= current_gfs_q1;
+			return FTOIF(a);
+		}
+	} else {
+		/* tab[a]+tab[b] = tab[a](tab[b-a]+1) */
+		b = current_gfs_plus1[b-a];
+		if ( b < 0 )
+			return 0;
+		else {
+			b += a;
+			if ( b >= current_gfs_q1 )
+				b -= current_gfs_q1;
+			return FTOIF(b);
+		}
+	}
+}
+
+inline int _MULSF(a,b)
+int a,b;
+{
+	if ( !a || !b )
+		return 0;
+	else {
+		a = IFTOF(a) + IFTOF(b);
+		if ( a >= current_gfs_q1 )
+			a -= current_gfs_q1;
+		return FTOIF(a);
+	}
+}
 
 void addsfum(p1,p2,pr)
 UM p1,p2,pr;
@@ -23,7 +74,7 @@ UM p1,p2,pr;
 		c1 = COEF(p2); c2 = COEF(p1); dmax = DEG(p2); dmin = DEG(p1);
 	}
 	for ( i = 0, cr = COEF(pr); i <= dmin; i++ ) 
-		cr[i] = _addsf(c1[i],c2[i]);
+		cr[i] = _ADDSF(c1[i],c2[i]);
 	for ( ; i <= dmax; i++ ) 
 		cr[i] = c1[i];
 	if ( dmax == dmin ) 
@@ -110,7 +161,8 @@ UM p1,p2,pr;
 	for ( i = 0; i <= d2; i++, cr++ ) 
 		if ( mul = *c2++ ) 
 			for ( j = 0, pc1 = c1, pcr = cr; j <= d1; j++, pc1++, pcr++ )
-				*pcr = _addsf(_mulsf(*pc1,mul),*pcr);
+				if ( *pc1 )
+					*pcr = _ADDSF(_MULSF(*pc1,mul),*pcr);
 	DEG(pr) = d1 + d2;
 }
 
@@ -123,9 +175,92 @@ UM p,pr;
 
 	for ( i = DEG(pr) = DEG(p), sp = COEF(p)+i, dp = COEF(pr)+i; 
 		  i >= 0; i--, dp--, sp-- )
-		*dp = _mulsf(*sp,n);
+		*dp = _MULSF(*sp,n);
 }
 	
+void kmulsfum(n1,n2,nr)
+UM n1,n2,nr;
+{
+	UM n,t,s,m,carry;
+	int d,d1,d2,len,i,l;
+	unsigned int *r,*r0;
+
+	if ( !n1 || !n2 ) {
+		nr->d = -1; return;
+	}
+	d1 = DEG(n1)+1; d2 = DEG(n2)+1;
+	if ( (d1 < up_kara_mag) || (d2 < up_kara_mag) ) {
+		mulsfum(n1,n2,nr); return;
+	}
+	if ( d1 < d2 ) {
+		n = n1; n1 = n2; n2 = n;
+		d = d1; d1 = d2; d2 = d;
+	}
+	if ( d2 > (d1+1)/2 ) {
+		kmulsfummain(n1,n2,nr); return;
+	}
+	d = (d1/d2)+((d1%d2)!=0);
+	len = (d+1)*d2;
+	r0 = (unsigned int *)ALLOCA(len*sizeof(int));
+	bzero((char *)r0,len*sizeof(int));
+	m = W_UMALLOC(d2+1);
+	carry = W_UMALLOC(d2+1);
+	t = W_UMALLOC(d1+d2+1);
+	s = W_UMALLOC(d1+d2+1);
+	for ( DEG(carry) = -1, i = 0, r = r0; i < d; i++, r += d2 ) {
+		extractum(n1,i*d2,d2,m);
+		if ( m ) {
+			kmulsfum(m,n2,t);
+			addsfum(t,carry,s);
+			c_copyum(s,d2,r);
+			extractum(s,d2,d2,carry);
+		} else {
+			c_copyum(carry,d2,r);
+			carry = 0;
+		}
+	}
+	c_copyum(carry,d2,r);
+	for ( l = len - 1; !r0[l]; l-- );
+	l++;
+	DEG(nr) = l-1;
+	bcopy((char *)r0,(char *)COEF(nr),l*sizeof(int));
+}
+
+void kmulsfummain(n1,n2,nr)
+UM n1,n2,nr;
+{
+	int d1,d2,h,len;
+	UM n1lo,n1hi,n2lo,n2hi,hi,lo,mid1,mid2,mid,s1,s2,t1,t2;
+
+	d1 = DEG(n1)+1; d2 = DEG(n2)+1; h = (d1+1)/2;
+	n1lo = W_UMALLOC(d1+1); n1hi = W_UMALLOC(d1+1);
+	n2lo = W_UMALLOC(d2+1); n2hi = W_UMALLOC(d2+1);
+	lo = W_UMALLOC(d1+d2+1); hi = W_UMALLOC(d1+d2+1);
+	mid1 = W_UMALLOC(d1+d2+1); mid2 = W_UMALLOC(d1+d2+1);
+	mid = W_UMALLOC(d1+d2+1);
+	s1 = W_UMALLOC(d1+d2+1); s2 = W_UMALLOC(d1+d2+1);
+	extractum(n1,0,h,n1lo); extractum(n1,h,d1-h,n1hi);
+	extractum(n2,0,h,n2lo); extractum(n2,h,d2-h,n2hi);
+	kmulsfum(n1hi,n2hi,hi); kmulsfum(n1lo,n2lo,lo);
+	len = DEG(hi)+1+2*h; t1 = W_UMALLOC(len-1); DEG(t1) = len-1;
+	bzero((char *)COEF(t1),len*sizeof(int));
+	if ( lo )
+		bcopy((char *)COEF(lo),(char *)COEF(t1),(DEG(lo)+1)*sizeof(int));
+	if ( hi )
+		bcopy((char *)COEF(hi),(char *)(COEF(t1)+2*h),(DEG(hi)+1)*sizeof(int));
+
+	addsfum(hi,lo,mid1);
+	subsfum(n1hi,n1lo,s1); subsfum(n2lo,n2hi,s2);
+	kmulsfum(s1,s2,mid2); addsfum(mid1,mid2,mid);
+	if ( mid ) {
+		len = DEG(mid)+1+h; t2 = W_UMALLOC(len-1); DEG(t2) = len-1;
+		bzero((char *)COEF(t2),len*sizeof(int));
+		bcopy((char *)COEF(mid),(char *)(COEF(t2)+h),(DEG(mid)+1)*sizeof(int));
+		addsfum(t1,t2,nr);
+	} else
+		copyum(t1,nr);
+}
+
 int divsfum(p1,p2,pq)
 UM p1,p2,pq;
 {
@@ -142,20 +277,20 @@ UM p1,p2,pq;
 	if ( ( hd = c2[d2] ) != _onesf() ) {
 		inv = _invsf(hd);
 		for ( pc1 = c2 + d2; pc1 >= c2; pc1-- )
-			*pc1 = _mulsf(*pc1,inv);
+			*pc1 = _MULSF(*pc1,inv);
 	} else 
 		inv = _onesf();
 	for ( i = dd, ct = c1+d1; i >= 0; i-- ) 
 		if ( tmp = *ct-- ) {
 			tmp = _chsgnsf(tmp);
 			for ( j = d2-1, pct = ct, pc1 = c2+j; j >= 0; j--, pct--, pc1-- )
-				*pct = _addsf(_mulsf(*pc1,tmp),*pct);
+				*pct = _ADDSF(_MULSF(*pc1,tmp),*pct);
 		}
 	if ( inv != _onesf() ) {
 		for ( pc1 = c1+d2, pct = c1+d1; pc1 <= pct; pc1++ )
-			*pc1 = _mulsf(*pc1,inv);
+			*pc1 = _MULSF(*pc1,inv);
 		for ( pc1 = c2, pct = c2+d2; pc1 <= pct; pc1++ )
-			*pc1 = _mulsf(*pc1,hd);
+			*pc1 = _MULSF(*pc1,hd);
 	}
 	for ( i = d2-1, pc1 = c1+i; i >= 0 && !(*pc1); pc1--, i-- );
 	for ( DEG(pq) = j = dd, pc1 = c1+d1, pct = COEF(pq)+j; j >= 0; j-- )
@@ -171,7 +306,7 @@ UM f,fd;
 
 	for ( i = DEG(f), dp = COEF(fd)+i-1, sp = COEF(f)+i; 
 		i >= 1; i--, dp--, sp-- ) {
-		*dp = _mulsf(*sp,_itosf(i));
+		*dp = _MULSF(*sp,_itosf(i));
 	}
 	degum(fd,DEG(f) - 1);
 }
@@ -185,7 +320,7 @@ UM f;
 	i = DEG(f); sp = COEF(f)+i;
 	inv = _invsf(*sp);
 	for ( ; i >= 0; i--, sp-- )
-		*sp = _mulsf(*sp,inv);
+		*sp = _MULSF(*sp,inv);
 }
 
 void addsfarray(int,int *,int *);
@@ -284,7 +419,7 @@ int *a1,*a2;
 
 	for ( i = 0; i < n; i++, a1++, a2++ )
 		if ( *a1 )
-			*a2 = _addsf(*a1,*a2);
+			*a2 = _ADDSF(*a1,*a2);
 }
 
 void mulsfarray_trunc(n,a1,a2,r)
@@ -301,7 +436,7 @@ int *a1,*a2,*r;
 		if ( mul = *c2++ )
 		for ( j = 0, pc1 = c1, pcr = cr; j+i < n; j++, pc1++, pcr++ )
 			if ( *pc1 )
-				*pcr = _addsf(_mulsf(*pc1,mul),*pcr);
+				*pcr = _ADDSF(_MULSF(*pc1,mul),*pcr);
 	}
 }
 
@@ -488,5 +623,5 @@ LUM g,f;
 	cf = COEF(f);
 	for ( i = 0; i <= dg; i++ )
 		for ( j = 0; j <= bound; j++ )
-			cf[i][j] = _addsf(cf[i][j],cg[i][j]);
+			cf[i][j] = _ADDSF(cf[i][j],cg[i][j]);
 }

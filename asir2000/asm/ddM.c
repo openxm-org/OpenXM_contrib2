@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.2 2000/08/21 08:31:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.3 2000/08/22 05:03:55 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -293,7 +293,7 @@ UM n1,n2,nr;
 	carry = W_UMALLOC(d2+1);
 	t = W_UMALLOC(d1+d2+1);
 	s = W_UMALLOC(d1+d2+1);
-	for ( carry = 0, i = 0, r = r0; i < d; i++, r += d2 ) {
+	for ( DEG(carry) = -1, i = 0, r = r0; i < d; i++, r += d2 ) {
 		extractum(n1,i*d2,d2,m);
 		if ( m ) {
 			kmulum(mod,m,n2,t);
