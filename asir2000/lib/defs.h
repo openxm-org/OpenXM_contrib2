@@ -45,10 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.6 2004/06/22 16:11:08 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/defs.h,v 1.7 2004/06/27 13:49:40 ohara Exp $ 
 */
 /* some useful macros */
 
+#define VOID -1
 #define ZERO 0
 #define NUM 1
 #define POLY 2
@@ -71,6 +72,7 @@
 #define V_PF 2
 #define V_SR 3
 
+#define isvoid(a) (type(a)==VOID)
 #define isnum(a) (type(a)==NUM)
 #define ispoly(a) (type(a)==POLY)
 #define israt(a) (type(a)==RAT)
