@@ -14,8 +14,12 @@ static char rcsid[]=
 #include "fep_funcs.h"
 
 #if defined(__FreeBSD__) || defined(__CYGWIN__)
-#define re_comp regcomp
-#define re_exec regexec
+#include <regex.h>
+regex_t Re_pat;
+#define re_comp(p) (regcomp(&Re_pat,(p), REG_EXTENDED|REG_NOSUB))
+#define re_exec(p) (!regexec(&Re_pat, (p), 0 , NULL, 0))
+#else
+    char *re_comp();
 #endif
 
 char	**HistoryTable;
@@ -277,7 +281,6 @@ search_reverse_history (string)
     char *string;
 {
     register int i;
-    char *re_comp();
 
     if (string != NULL) {
 	set_var ("search-string", string);
@@ -302,7 +305,6 @@ search_forward_history (string)
     char *string;
 {
     register int i;
-    char *re_comp();
 
     if (string != NULL) {
 	if (re_comp(string) != (char *)0)
