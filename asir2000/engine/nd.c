@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.30 2003/08/12 09:07:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.31 2003/08/13 03:13:22 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -67,10 +67,13 @@ typedef struct oND_pairs {
 	unsigned int lcm[1];
 } *ND_pairs;
 
+int (*nm_compare_generic)(NM a,NM b);
+int (*nmv_compare_generic)(NMV a,NMV b);
+
 double nd_scale=2;
 static unsigned int **nd_bound;
 int nd_nvar;
-int is_rlex;
+int nd_isrlex;
 int nd_epw,nd_bpe,nd_wpd;
 unsigned int nd_mask[32];
 unsigned int nd_mask0,nd_mask1;
@@ -91,6 +94,7 @@ int nd_red_len;
 int nd_found,nd_create,nd_notfirst;
 int nm_adv;
 int nmv_adv;
+int nd_degcompat;
 
 extern int Top,Reverse;
 
@@ -105,6 +109,10 @@ extern int Top,Reverse;
 #define SG(a) ((a)->sugar)
 #define LEN(a) ((a)->len)
 
+#define NM_COMPARE(m1,m2)\
+nd_degcompat?(TD(m1)>TD(m2)?1\
+                           :(TD(m1)<TD(m2)?-1:ndl_compare(DL(m1),DL(m2))))\
+            :(*nm_compare_generic)(m1,m2)
 #define NM_ADV(m) (m = (NM)(((char *)m)+nm_adv))
 #define NEWRHist(r) \
 ((r)=(RHist)MALLOC(sizeof(struct oRHist)+(nd_wpd-1)*sizeof(unsigned int)))
@@ -125,6 +133,7 @@ if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
 #define NEXTND_pairs(r,c) \
 if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
 
+void nd_init_ord(struct order_spec *spec);
 int nd_check_candidate(NODE input,NODE cand);
 void nd_removecont(int mod,ND p);
 void nd_removecont2(ND p1,ND p2);
@@ -346,7 +355,7 @@ int ndl_dehomogenize(unsigned int *d)
 	unsigned int h;
 	int i,bits;
 
-	if ( is_rlex ) {
+	if ( nd_isrlex ) {
 		if ( nd_bpe == 32 ) {
 			h = d[0];
 			for ( i = 1; i < nd_wpd; i++ )
@@ -454,9 +463,9 @@ INLINE int ndl_compare(unsigned int *d1,unsigned int *d2)
 
 	for ( i = 0; i < nd_wpd; i++, d1++, d2++ )
 		if ( *d1 > *d2 )
-			return is_rlex ? -1 : 1;
+			return nd_isrlex ? -1 : 1;
 		else if ( *d1 < *d2 )
-			return is_rlex ? 1 : -1;
+			return nd_isrlex ? 1 : -1;
 	return 0;
 }
 
@@ -824,12 +833,7 @@ ND nd_add(int mod,ND p1,ND p2)
 	else {
 		can = 0;
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; ) {
-			if ( TD(m1) > TD(m2) )
-				c = 1;
-			else if ( TD(m1) < TD(m2) )
-				c = -1;
-			else
-				c = ndl_compare(DL(m1),DL(m2));
+			c = NM_COMPARE(m1,m2);
 			switch ( c ) {
 				case 0:
 					t = ((CM(m1))+(CM(m2))) - mod;
@@ -888,12 +892,7 @@ ND nd_add_q(ND p1,ND p2)
 	else {
 		can = 0;
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; ) {
-			if ( TD(m1) > TD(m2) )
-				c = 1;
-			else if ( TD(m1) < TD(m2) )
-				c = -1;
-			else
-				c = ndl_compare(DL(m1),DL(m2));
+			c = NM_COMPARE(m1,m2);
 			switch ( c ) {
 				case 0:
 					addq(CQ(m1),CQ(m2),&t);
@@ -1417,12 +1416,7 @@ int head_pbucket(int mod,PGeoBucket g)
 			} else {
 				di = HDL(gi);
 				nv = NV(gi);
-				if ( HTD(gi) > HTD(gj) )
-					c = 1;
-				else if ( HTD(gi) < HTD(gj) )
-					c = -1;
-				else
-					c = ndl_compare(di,dj);
+				c = NM_COMPARE(BDY(gi),BDY(gj));
 				if ( c > 0 ) {
 					if ( sum )
 						HCM(gj) = sum;
@@ -1471,12 +1465,7 @@ int head_pbucket_q(PGeoBucket g)
 			} else {
 				di = HDL(gi);
 				nv = NV(gi);
-				if ( HTD(gi) > HTD(gj) )
-					c = 1;
-				else if ( HTD(gi) < HTD(gj) )
-					c = -1;
-				else
-					c = ndl_compare(di,dj);
+				c = NM_COMPARE(BDY(gi),BDY(gj));
 				if ( c > 0 ) {
 					if ( sum )
 						HCQ(gj) = sum;
@@ -1632,10 +1621,13 @@ int ndv_compare(NDV *p1,NDV *p2)
 {
 	int td1,td2;
 
-	td1 = HTD(*p1); td2 = HTD(*p2);
-	if ( td1 > td2 ) return 1;
-	else if ( td1 < td2 ) return -1;
-	else return ndl_compare(HDL(*p1),HDL(*p2));
+	if ( nd_degcompat ) {
+		td1 = HTD(*p1); td2 = HTD(*p2);
+		if ( td1 > td2 ) return 1;
+		else if ( td1 < td2 ) return -1;
+		else return ndl_compare(HDL(*p1),HDL(*p2));
+	} else
+		return (*nmv_compare_generic)(BDY(*p1),BDY(*p2));
 }
 
 int ndv_compare_rev(NDV *p1,NDV *p2)
@@ -2139,18 +2131,8 @@ void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	nd_nvar = length(vv);
-	if ( ord->id )
-		error("nd_gr : unsupported order");
-	switch ( ord->ord.simple ) {
-		case 0:
-			is_rlex = 1;
-			break;
-		case 1:
-			is_rlex = 0;
-			break;
-		default:
-			error("nd_gr : unsupported order");
-	}
+	nd_init_ord(ord);
+	/* XXX for DP */
 	initd(ord);
 	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 		ptod(CO,vv,(P)BDY(t),&b);
@@ -2186,16 +2168,9 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	nd_nvar = length(vv);
-	if ( ord->id )
-		error("nd_gr : unsupported order");
 	initd(ord);
 	if ( homo ) {
 		homogenize_order(ord,nd_nvar,&ord1);
-		switch ( ord1.ord.simple ) {
-			case 0: is_rlex = 1; break;
-			case 1: is_rlex = 0; break;
-			default: error("nd_gr : unsupported order");
-		}
 		for ( fd0 = 0, in0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 			ptod(CO,vv,(P)BDY(t),&c);
 			if ( c ) {
@@ -2205,12 +2180,13 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		if ( in0 ) NEXT(in) = 0;
+		nd_init_ord(&ord1);
 		initd(&ord1);
 		nd_nvar++;
 	} else {
 		switch ( ord->ord.simple ) {
-			case 0: is_rlex = 1; break;
-			case 1: is_rlex = 0; break;
+			case 0: nd_isrlex = 1; nd_degcompat = 1; break;
+			case 1: nd_isrlex = 0; nd_degcompat = 1; break;
 			default: error("nd_gr : unsupported order");
 		}
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
@@ -2261,7 +2237,7 @@ void dltondl(int n,DL dl,unsigned int *r)
 
 	d = dl->d;
 	bzero(r,nd_wpd*sizeof(unsigned int));
-	if ( is_rlex )
+	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
 			r[(n-1-i)/nd_epw] |= (d[i]<<((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe));
 	else
@@ -2278,7 +2254,7 @@ DL ndltodl(int n,int td,unsigned int *ndl)
 	NEWDL(dl,n);
 	TD(dl) = td;
 	d = dl->d;
-	if ( is_rlex )
+	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
 			d[i] = (ndl[(n-1-i)/nd_epw]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
 				&((1<<nd_bpe)-1);
@@ -2347,7 +2323,7 @@ void ndl_print(unsigned int *dl)
 
 	n = nd_nvar;
 	printf("<<");
-	if ( is_rlex )
+	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
 			printf(i==n-1?"%d":"%d,",
 				(dl[(n-1-i)/nd_epw]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
@@ -2791,7 +2767,7 @@ void ndl_dup(int obpe,unsigned int *d,unsigned int *r)
 	cbpe = nd_bpe;
 	for ( i = 0; i < nd_wpd; i++ )
 		r[i] = 0;
-	if ( is_rlex )
+	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ ) {
 			ei = (d[(n-1-i)/oepw]>>((oepw-((n-1-i)%oepw)-1)*obpe))
 				&((1<<obpe)-1);
@@ -3155,3 +3131,23 @@ NODE nd_reducebase(NODE x)
 	NEXT(t) = 0; x = t0;
 	return x;
 }
+
+void nd_init_ord(struct order_spec *ord)
+{
+	if ( ord->id )
+		error("nd_gr : unsupported order");
+	nd_degcompat = 0;
+	switch ( ord->ord.simple ) {
+		case 0:
+			nd_degcompat = 1;
+			nd_isrlex = 1;
+			break;
+		case 1:
+			nd_degcompat = 1;
+			nd_isrlex = 0;
+			break;
+		default:
+			error("nd_gr : unsupported order");
+	}
+}
+
