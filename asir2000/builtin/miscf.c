@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.19 2003/10/20 00:21:09 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.20 2003/11/11 06:14:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -61,7 +61,7 @@
 
 void Pquit(), Pdebug(), Pnmono(), Pnez(), Popt(), Pshell(), Pheap();
 void Ptoplevel();
-void Perror(), Perror3(), Pversion(), Pflist(), Pdelete_history(), Ppause(), Pxpause();
+void Perror(), Perror3(), Pversion(), Pcopyright(), Pflist(), Pdelete_history(), Ppause(), Pxpause();
 void Pr2g(), Pread_cmo(), Pwrite_cmo();
 void Pgc(),Pbatch(),Psend_progress();
 void Pnull_command();
@@ -88,6 +88,7 @@ struct ftab misc_tab[] = {
 	{"shell",Pshell,-2},
 	{"heap",Pheap,-1},
 	{"version",Pversion,-99999},
+	{"copyright",Pcopyright,0},
 	{"nmono",Pnmono,1},
 	{"toplevel",Ptoplevel,-1},
 	{"error",Perror,1},
@@ -305,6 +306,14 @@ Obj *rp;
 		MKLIST(l,n);
 		*rp = (Obj)l;
 	}
+}
+
+char *scopyright();
+
+void Pcopyright(rp)
+STRING *rp;
+{
+	MKSTR(*rp,scopyright());
 }
 
 extern int nez;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.45 2004/02/05 08:28:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.46 2004/02/09 08:23:30 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -744,24 +744,46 @@ void reset_timer()
 unsigned int get_asir_version();
 char *get_asir_distribution();
 
-void copyright() {
-#if defined(INTERVAL)
-	printf("This is Risa/Asir + Interval Arithmetic, Version %d (%s Distribution).\n",
-		get_asir_version(), get_asir_distribution());
-#else
-	printf("This is Risa/Asir, Version %d (%s Distribution).\n",
-		get_asir_version(), get_asir_distribution());
-#endif
-	printf("Copyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\n");
-	printf("Copyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\n");
-	printf("GC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n");
+char *get_pariversion() 
+{
 #if PARI
 #if 0
-	printf("PARI 2.2.4, copyright (C) 2002 The PARI Group.\n");
+	return "PARI 2.2.4, copyright (C) 2002 The PARI Group.\nPARI 2.0.17, copyright 1989-1999, C. Batut, K. Belabas, D. Bernardi,\n   H. Cohen and M. Olivier.\n";
 #endif
-	printf("PARI 2.0.17, copyright 1989-1999, C. Batut, K. Belabas, D. Bernardi,\n");
-	printf("   H. Cohen and M. Olivier.\n");
+	return "PARI 2.0.17, copyright 1989-1999, C. Batut, K. Belabas, D. Bernardi,\n   H. Cohen and M. Olivier.\n";
+#endif
+	return "";
+}
+
+char *get_intervalversion()
+{
+#if defined(INTERVAL)
+	return " + Interval Arithmetic";
+#else
+	return "";
 #endif
 }
 
+void copyright()
+{
+	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	printf(format, get_intervalversion(), get_asir_version(), get_asir_distribution(), get_pariversion());
+}
 
+char *scopyright()
+{
+	static char *notice;
+	char *s1, *s2, *s3;
+	int d, len;
+	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	if (!notice) {
+		s1 = get_intervalversion();
+		s2 = get_asir_distribution();
+		s3 = get_pariversion();
+		d  = get_asir_version();
+		len = (strlen(format)-8)+strlen(s1)+strlen(s2)+strlen(s3)+sizeof(int)*3;
+		notice = MALLOC(len+1);
+		sprintf(notice, format, s1, d, s2, s3);
+	}
+	return notice;
+}
