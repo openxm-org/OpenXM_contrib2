@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.30 2003/06/10 16:54:13 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.31 2003/07/01 08:12:37 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1576,6 +1576,14 @@ void red_by_vect(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)
 		}
 }
 
+void red_by_vect_sf(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)
+{
+	*p++ = 0; r++; len--;
+	for ( ; len; len--, r++, p++ )
+		if ( *r )
+			*p = _addsf(_mulsf(*r,hc),*p);
+}
+
 extern unsigned int **psca;
 
 void reduce_sp_by_red_mod_compress (int *sp,CDP *redmat,int *ind,
@@ -1660,6 +1668,50 @@ int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat)
 				if ( t[k] >= (unsigned int)md )
 					t[k] %= md;
 			l++;
+		}
+	return rank;
+}
+
+int generic_gauss_elim_sf(int **mat0,int row,int col,int md,int *colstat)
+{
+	int i,j,k,l,inv,a,rank;
+	unsigned int *t,*pivot,*pk;
+	unsigned int **mat;
+
+	mat = (unsigned int **)mat0;
+	for ( rank = 0, j = 0; j < col; j++ ) {
+		for ( i = rank; i < row; i++ )
+			if ( mat[i][j] )
+				break;
+		if ( i == row ) {
+			colstat[j] = 0;
+			continue;
+		} else
+			colstat[j] = 1;
+		if ( i != rank ) {
+			t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+		}
+		pivot = mat[rank];
+		inv = _invsf(pivot[j]);
+		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+			if ( *pk )
+				*pk = _mulsf(*pk,inv);
+		for ( i = rank+1; i < row; i++ ) {
+			t = mat[i];
+			if ( a = t[j] )
+				red_by_vect_sf(md,t+j,pivot+j,_chsgnsf(a),col-j);
+		}
+		rank++;
+	}
+	for ( j = col-1, l = rank-1; j >= 0; j-- )
+		if ( colstat[j] ) {
+			pivot = mat[l];
+			for ( i = 0; i < l; i++ ) {
+				t = mat[i];
+				if ( a = t[j] )
+					red_by_vect_sf(md,t+j,pivot+j,_chsgnsf(a),col-j);
+			}
+			l--;
 		}
 	return rank;
 }

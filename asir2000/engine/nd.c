@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.70 2003/09/15 10:51:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.71 2003/09/17 07:16:53 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -3806,6 +3806,52 @@ void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
 		if ( svect[i] >= (UINT)m ) svect[i] %= m;
 }
 
+void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
+{
+	int i,j,k,len,pos,prev;
+	UINT c,c1,c2,c3,up,lo,dmy;
+	IndArray ivect;
+	unsigned char *ivc;
+	unsigned short *ivs;
+	unsigned int *ivi;
+	NDV redv;
+	NMV mr;
+	NODE rp;
+
+	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+		ivect = imat[i];
+		k = ivect->head; svect[k] %= m;
+		if ( c = svect[k] ) {
+			c = _chsgnsf(c); redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
+			len = LEN(redv); mr = BDY(redv);
+			svect[k] = 0; prev = k;
+			switch ( ivect->width ) {
+				case 1:
+					ivc = ivect->index.c;
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivc[j]; prev = pos;
+						svect[pos] = _addsf(_mulsf(CM(mr),c),svect[pos]);
+					}
+					break;
+				case 2:
+					ivs = ivect->index.s; 
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivs[j]; prev = pos;
+						svect[pos] = _addsf(_mulsf(CM(mr),c),svect[pos]);
+					}
+					break;
+				case 4:
+					ivi = ivect->index.i;
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivi[j]; prev = pos;
+						svect[pos] = _addsf(_mulsf(CM(mr),c),svect[pos]);
+					}
+					break;
+			}
+		}
+	}
+}
+
 NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 {
 	int j,k,len;
@@ -3881,7 +3927,8 @@ int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
 		}
 		col++;
 	}
-	NEXT(rp) = 0; NEXT(s) = 0;
+	if ( rp0 ) NEXT(rp) = 0;
+	NEXT(s) = 0;
 	s0v = (UINT *)MALLOC_ATOMIC(col*nd_wpd*sizeof(UINT));
 	for ( i = 0, p = s0v, s = s0; i < col;
 		i++, p += nd_wpd, s = NEXT(s) ) ndl_copy(DL(s),p);
@@ -4073,7 +4120,8 @@ NODE nd_f4(int m)
 		svect = (UINT *)MALLOC_ATOMIC(col*sizeof(UINT));
 		for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
 			nd_to_vect(m,s0vect,col,BDY(sp),svect);
-			ndv_reduce_vect(m,svect,col,imat,rp0);
+			if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rp0);
+			else ndv_reduce_vect(m,svect,col,imat,rp0);
 			for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
 			if ( i < col ) {
 				spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
@@ -4087,7 +4135,10 @@ NODE nd_f4(int m)
 
 		/* elimination (2nd step) */
 		colstat = (int *)ALLOCA(spcol*sizeof(int));
-		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+		if ( m == -1 )
+			rank = generic_gauss_elim_sf(spmat,sprow,spcol,m,colstat);
+		else
+			rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
 
 		get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
 		if ( DP_Print ) {
