@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.45 2003/12/10 02:16:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.46 2003/12/10 05:39:58 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -133,6 +133,7 @@ void Pox_send_102(),Pox_recv_102();
 void Pox_set_rank_102();
 void Pox_reset_102();
 void Pox_bcast_102();
+void Pox_reduce_102();
 
 void ox_launch_generic();
 
@@ -153,6 +154,7 @@ struct ftab tcp_tab[] = {
 	{"ox_send_102",Pox_send_102,2},
 	{"ox_recv_102",Pox_recv_102,1},
 	{"ox_bcast_102",Pox_bcast_102,-2},
+	{"ox_reduce_102",Pox_reduce_102,3},
 
 	{"try_bind_listen",Ptry_bind_listen,1},
 	{"try_connect",Ptry_connect,2},
@@ -1011,6 +1013,26 @@ void Pox_bcast_102(NODE arg,Obj *rp)
 	}
 	ox_bcast_102(rank,&data);
 	*rp = data;
+}
+
+void Pox_reduce_102(NODE arg,Obj *rp)
+{
+	int rank = QTOS((Q)ARG0(arg));
+	STRING op;
+	char *opname;
+	void (*func)();
+
+	op = (STRING)ARG1(arg);
+	asir_assert(op,O_STR,"ox_reduce_102");
+	opname = BDY(op);
+	if ( !strcmp(opname,"+") )
+		func = arf_add;
+	else if ( !strcmp(opname,"*") )
+		func = arf_mul;
+	else {
+		error("ox_reduce_102 : operation not supported");
+	}
+	ox_reduce_102(rank,func,(Obj)ARG2(arg),rp);
 }
 
 void Pox_push_local(NODE arg,Obj *rp)

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.21 2003/12/09 03:07:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.22 2003/12/10 05:39:58 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -535,27 +535,55 @@ void ox_send_data_102(int rank,pointer p)
 void ox_bcast_102(int root,Obj *rp)
 {
 	Obj data;
-	int n,myr,r,mask,src,dst,id;
+	int r,mask,id,src,dst;
 
 	data = *rp;
-	n = nserver_102;
-	myr = myrank_102;
-	r = myr-root;
-	if ( r < 0 ) r += n;
-	for ( mask = 1; mask < n; mask <<= 1 )
+	r = myrank_102-root;
+	if ( r < 0 ) r += nserver_102;
+	for ( mask = 1; mask < nserver_102; mask <<= 1 )
 		if ( r&mask ) {
-			src = myr-mask;
-			if ( src < 0 ) src += n;
+			src = myrank_102-mask;
+			if ( src < 0 ) src += nserver_102;
 			ox_recv_102(src,&id,&data);
 			break;
 		}
 	for ( mask >>= 1; mask > 0; mask >>= 1 )
-		if ( (r+mask) < n ) {
-			dst = myr+mask;
-			if ( dst >= n ) dst -= n;
+		if ( (r+mask) < nserver_102 ) {
+			dst = myrank_102+mask;
+			if ( dst >= nserver_102 ) dst -= nserver_102;
 			ox_send_data_102(dst,data);
 		}
 	*rp = data;
+}
+
+/* func : an arithmetic funcion func(vl,a,b,*c) */
+
+void ox_reduce_102(int root,void (*func)(),Obj data,Obj *rp)
+{
+	Obj data0,t;
+	int r,mask,id,src,dst;
+
+	r = myrank_102-root;
+	if ( r < 0 ) r += nserver_102;
+	for ( mask = 1; mask < nserver_102; mask <<= 1 )
+		if ( r&mask ) {
+			dst = (r-mask)+root;
+			if ( dst >= nserver_102 ) dst -= nserver_102;
+			ox_send_data_102(dst,data);
+			break;
+		} else {
+			src = r+mask;
+			if ( src < nserver_102 ) {
+				src += root;
+				if ( src >= nserver_102 ) src -= nserver_102;
+				ox_recv_102(src,&id,&data0);
+				(*func)(CO,data,data0,&t); data = t;
+			}
+		}
+	if ( !r )
+		*rp = data;
+	else
+		*rp = 0;
 }
 
 void ox_send_cmd(int s,int id)
