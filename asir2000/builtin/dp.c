@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.12 2000/12/11 02:00:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.13 2000/12/13 05:37:30 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -523,12 +523,13 @@ DP *rp;
 	int mod,full,ac;
 	NODE n,n0;
 
+	do_weyl = 0;
 	ac = argc(arg);
-	asir_assert(ARG0(arg),O_LIST,"dp_weyl_nf_mod");
-	asir_assert(ARG1(arg),O_DP,"dp_weyl_nf_mod");
-	asir_assert(ARG2(arg),O_VECT,"dp_weyl_nf_mod");
-	asir_assert(ARG3(arg),O_N,"dp_weyl_nf_mod");
-	asir_assert(ARG4(arg),O_N,"dp_weyl_nf_mod");
+	asir_assert(ARG0(arg),O_LIST,"dp_nf_mod");
+	asir_assert(ARG1(arg),O_DP,"dp_nf_mod");
+	asir_assert(ARG2(arg),O_VECT,"dp_nf_mod");
+	asir_assert(ARG3(arg),O_N,"dp_nf_mod");
+	asir_assert(ARG4(arg),O_N,"dp_nf_mod");
 	if ( !(g = (DP)ARG1(arg)) ) {
 		*rp = 0; return;
 	}
@@ -540,9 +541,7 @@ DP *rp;
 	}
 	if ( n0 )
 		NEXT(n) = 0;
-	do_weyl = 1;
 	dp_nf_mod(n0,g,ps,mod,full,rp);
-	do_weyl = 0;
 }
 
 void Pdp_true_nf(arg,rp)
@@ -584,11 +583,11 @@ DP *rp;
 	NODE n,n0;
 
 	ac = argc(arg);
-	asir_assert(ARG0(arg),O_LIST,"dp_nf_mod");
-	asir_assert(ARG1(arg),O_DP,"dp_nf_mod");
-	asir_assert(ARG2(arg),O_VECT,"dp_nf_mod");
-	asir_assert(ARG3(arg),O_N,"dp_nf_mod");
-	asir_assert(ARG4(arg),O_N,"dp_nf_mod");
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_nf_mod");
+	asir_assert(ARG1(arg),O_DP,"dp_weyl_nf_mod");
+	asir_assert(ARG2(arg),O_VECT,"dp_weyl_nf_mod");
+	asir_assert(ARG3(arg),O_N,"dp_weyl_nf_mod");
+	asir_assert(ARG4(arg),O_N,"dp_weyl_nf_mod");
 	if ( !(g = (DP)ARG1(arg)) ) {
 		*rp = 0; return;
 	}
