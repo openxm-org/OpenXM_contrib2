@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.15 2001/09/03 07:01:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.16 2001/10/09 01:36:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -751,6 +751,8 @@ void Psetmod_ff(NODE arg,Obj *rp)
 			else {
 				if ( current_gfs_p == 2 )
 					r = ONE;
+				else if ( !current_gfs_ntoi )
+					r = 0;
 				else
 					STOQ(current_gfs_iton[1],r);
 				p = (P)r;
