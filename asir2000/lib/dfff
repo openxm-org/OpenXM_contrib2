@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/dfff,v 1.1 2000/12/13 11:01:29 noro Exp $ */
 
 #define MAXLEVEL 50
 
@@ -19,6 +19,25 @@ Proc1 = -1$
 #include "defs.h"
 
 extern TPMOD,TQMOD$
+
+def df_demo()
+{
+	purge_stdin();
+	print("Degree of input polynomial to be factored => ",0);
+	Str = get_line();
+	N = eval_str(Str);
+	P = lprime(0);
+	setmod_ff(P);
+	for ( I = 0, F = 1; I < N; I++ )
+		F *= randpoly_ff(2,x);
+	print("");
+	print("Factorization of ",0);
+	print(F,0);
+	print(" over GF(",0); print(P,0); print(")");
+	print("");
+	R = fctr_ff(F);
+	print(R);
+}
 
 /*
   Input : a univariate polynomial F
