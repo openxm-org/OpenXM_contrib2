@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.53 2003/07/18 10:13:12 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.54 2003/10/08 09:09:04 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -304,6 +304,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
 	NODE ind,ind0;
 	LIST trace,gbindex;
+	int input_is_dp = 0;
 
 	mindex = 0; nochk = 0; dp_fcoeffs = field;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
@@ -316,14 +317,22 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 		homogenize_order(ord,NVars,&ord1);
 		for ( fd0 = fi0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 			NEXTNODE(fd0,fd); NEXTNODE(fi0,fi);
-			ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fi)); dp_homo((DP)BDY(fi),(DP *)&BDY(fd));
+			if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+				dp_sort((DP)BDY(t),(DP *)&BDY(fi)); input_is_dp = 1;
+			} else 
+				ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fi));
+			dp_homo((DP)BDY(fi),(DP *)&BDY(fd));
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		if ( fi0 ) NEXT(fi) = 0;
 		initd(&ord1);
 	} else {
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-			NEXTNODE(fd0,fd); ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fd));
+			NEXTNODE(fd0,fd);
+			if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+				dp_sort((DP)BDY(t),(DP *)&BDY(fd)); input_is_dp = 1;
+			} else
+				ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fd));
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		fi0 = fd0;
@@ -371,7 +380,10 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 	}
 	for ( r0 = 0, ind0 = 0; x; x = NEXT(x) ) {
 		NEXTNODE(r0,r); dp_load((int)BDY(x),&ps[(int)BDY(x)]);
-		dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+		if ( input_is_dp )
+			BDY(r) = (pointer)ps[(int)BDY(x)];
+		else
+			dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
 		NEXTNODE(ind0,ind);
 		STOQ((int)BDY(x),q); BDY(ind) = q;
 	}
@@ -401,7 +413,8 @@ void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp
 	VL fv,vv,vc;
 	NODE fd,fd0,r,r0,t,x,s,xx;
 	DP a,b,c;
-extern struct oEGT eg_red_mod;
+	extern struct oEGT eg_red_mod;
+	int input_is_dp = 0;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
 	NVars = length((NODE)vv); PCoeffs = vc ? 1 : 0; VC = vc;
@@ -411,7 +424,11 @@ extern struct oEGT eg_red_mod;
 	initd(ord);
 	if ( homo ) {
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-			ptod(CO,vv,(P)BDY(t),&a); dp_homo(a,&b);
+			if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+				dp_sort((DP)BDY(t),&a); input_is_dp = 1;
+			} else 
+				ptod(CO,vv,(P)BDY(t),&a);
+			dp_homo(a,&b);
 			if ( PCoeffs )
 				dp_mod(b,m,0,&c);
 			else
@@ -423,7 +440,10 @@ extern struct oEGT eg_red_mod;
 		homogenize_order(ord,NVars,&ord1); initd(&ord1);
 	} else {
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-			ptod(CO,vv,(P)BDY(t),&b);
+			if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+				dp_sort((DP)BDY(t),&b); input_is_dp = 1;
+			} else 
+				ptod(CO,vv,(P)BDY(t),&b);
 			if ( PCoeffs )
 				dp_mod(b,m,0,&c);
 			else
@@ -465,6 +485,7 @@ void dp_f4_main(LIST f,LIST v,struct order_spec *ord,LIST *rp)
 	int homogen;
 	VL fv,vv,vc;
 	NODE fd,fd0,r,r0,t,x,s,xx;
+	int input_is_dp = 0;
 
 	dp_fcoeffs = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
@@ -474,7 +495,11 @@ void dp_f4_main(LIST f,LIST v,struct order_spec *ord,LIST *rp)
 		error("dp_f4_main : invalid order specification");
 	initd(ord);
 	for ( fd0 = 0, t = BDY(f), homogen = 1; t; t = NEXT(t) ) {
-		NEXTNODE(fd0,fd); ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fd));
+		NEXTNODE(fd0,fd); 
+		if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+			dp_sort((DP)BDY(t),(DP *)&BDY(fd)); input_is_dp = 1;
+		} else 
+			ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fd));
 		if ( homogen )
 			homogen = dp_homogeneous(BDY(fd));
 	}
@@ -486,7 +511,10 @@ void dp_f4_main(LIST f,LIST v,struct order_spec *ord,LIST *rp)
 	}
 	for ( r0 = 0; x; x = NEXT(x) ) {
 		NEXTNODE(r0,r); dp_load((int)BDY(x),&ps[(int)BDY(x)]);
-		dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+		if ( input_is_dp )
+			BDY(r) = (pointer)ps[(int)BDY(x)];
+		else
+			dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
@@ -498,6 +526,7 @@ void dp_f4_mod_main(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 	VL fv,vv,vc;
 	DP b,c,c1;
 	NODE fd,fd0,r,r0,t,x,s,xx;
+	int input_is_dp = 0;
 
 	dp_fcoeffs = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
@@ -507,7 +536,10 @@ void dp_f4_mod_main(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 		error("dp_f4_mod_main : invalid order specification");
 	initd(ord);
 	for ( fd0 = 0, t = BDY(f), homogen = 1; t; t = NEXT(t) ) {
-		ptod(CO,vv,(P)BDY(t),&b);
+		if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+			dp_sort((DP)BDY(t),&b); input_is_dp = 1;
+		} else 
+			ptod(CO,vv,(P)BDY(t),&b);
 		if ( homogen )
 			homogen = dp_homogeneous(b);
 		_dp_mod(b,m,0,&c);
