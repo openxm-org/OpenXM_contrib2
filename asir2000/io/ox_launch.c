@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.16 2001/12/25 02:39:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.17 2004/03/02 02:43:55 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -168,6 +168,7 @@ char **argv;
 	int use_unix,accept_client,nolog;
 	char *control_port_str,*server_port_str;
 	char *rhost,*server,*dname;
+	char *e,*s;
 
 	GC_init(); nglob_init();
 	gethostname(hostname,BUFSIZ);
@@ -192,6 +193,15 @@ char **argv;
 #if defined(SIGTERM)
 	signal(SIGTERM,terminate_server);
 #endif
+
+	/* XXX a dirty hack */
+	if ( !getenv("LD_LIBRARY_PATH") ) {
+		if ( e = getenv("OpenXM_HOME") ) {
+			s = (char *)alloca(strlen(e)+100);
+			sprintf(s,"LD_LIBRARY_PATH=%s/lib",e);
+			putenv(s);
+		}
+	}
 
 	if ( accept_client ) {
 		cs = try_bind_listen(use_unix,control_port_str);
