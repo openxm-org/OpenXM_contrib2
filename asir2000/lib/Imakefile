@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.4 2000/01/11 06:43:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.5 2000/01/13 08:12:41 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\
@@ -8,10 +8,12 @@ SRCS= alpi bgk const cyclic\
 
 all::
 
-install2::
+install-lib::
 	MakeDir($(ASIR_BINDIR))
 	MakeDir($(ASIR_LIBDIR))
 	-$(CP) -R $(SRCS) $(ASIR_LIBDIR)
+	$(LN) $(ASIR_LIBDIR)/help-eg $(ASIR_LIBDIR)/help
+#if 0
 	$(RM) -r $(ASIR_LIBDIR)/help-jp
 	$(RM) -r $(ASIR_LIBDIR)/help-eg
 	$(RM) -r $(ASIR_LIBDIR)/html-jp
@@ -20,4 +22,4 @@ install2::
 	uudecode help-eg.uu ; gzip -dc help-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) help-eg.tgz
 	uudecode html-jp.uu ; gzip -dc html-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) html-jp.tgz
 	uudecode html-eg.uu ; gzip -dc html-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - ); $(RM) html-eg.tgz
-	$(LN) $(ASIR_LIBDIR)/help-eg $(ASIR_LIBDIR)/help
+#endif

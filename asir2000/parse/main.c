@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/main.c,v 1.2 1999/11/18 05:42:03 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #if defined(THINK_C)
@@ -43,6 +43,7 @@ char *argv[];
 	char *getenv();
 	char *homedir;
 	char *slash,*binname;
+	char *ptr;
 
 	StackBottom = &tmp + 1; /* XXX */
 #if MPI
@@ -113,18 +114,25 @@ char *argv[];
 #if defined(UINIT)
 	reg_sysf();
 #endif
-#if defined(THINK_C)
-	sprintf(ifname,"asirrc");
-#else
-	homedir = getenv("HOME");
-	if ( !homedir ) {
-		char rootname[BUFSIZ];
 
-		get_rootdir(rootname,sizeof(rootname));
-		homedir = rootname;
-	}
-	sprintf(ifname,"%s/.asirrc",homedir);
+/* if ASIR_CONFIG is set, execute it; else execute .asirrc */
+	if ( ptr = getenv("ASIR_CONFIG") )
+		strcpy(ifname,ptr);
+	else {
+#if defined(THINK_C)
+		sprintf(ifname,"asirrc");
+#else
+		homedir = getenv("HOME");
+		if ( !homedir ) {
+			char rootname[BUFSIZ];
+
+			get_rootdir(rootname,sizeof(rootname));
+			homedir = rootname;
+		}
+		sprintf(ifname,"%s/.asirrc",homedir);
 #endif
+	}
+
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
 		if ( !setjmp(env) ) {
@@ -134,6 +142,7 @@ char *argv[];
 		}
 		fclose(ifp);
 	}
+
 	if ( do_file )
 		input_init(in_fp,"stdin");
 	else
