@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.6 2000/08/25 08:06:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.7 2000/11/08 06:21:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,7 +70,7 @@ void Pload(), Pwhich(), Ploadfiles(), Poutput();
 void Pbsave(), Pbload(), Pbload27();
 void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
-void Popen_file(), Pclose_file(), Pget_line();
+void Popen_file(), Pclose_file(), Pget_line(), Pget_byte();
 
 extern int des_encryption;
 extern char *asir_libdir;
@@ -78,6 +78,7 @@ extern char *asir_libdir;
 struct ftab file_tab[] = {
 	{"open_file",Popen_file,1},
 	{"close_file",Pclose_file,1},
+	{"get_byte",Pget_byte,1},
 	{"get_line",Pget_line,1},
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
@@ -131,7 +132,7 @@ Q *rp;
 {
 	int i;
 
-	asir_assert(ARG0(arg),O_N,"open_file");
+	asir_assert(ARG0(arg),O_N,"close_file");
 	i = QTOS((Q)ARG0(arg));
 	if ( file_ptrs[i] ) {
 		fclose(file_ptrs[i]);
@@ -150,7 +151,7 @@ STRING *rp;
 	fpos_t head;
 	char *str;
 
-	asir_assert(ARG0(arg),O_N,"open_file");
+	asir_assert(ARG0(arg),O_N,"get_line");
 	i = QTOS((Q)ARG0(arg));
 	if ( fp = file_ptrs[i] ) {
 		if ( feof(fp) ) {
@@ -178,6 +179,26 @@ STRING *rp;
 		MKSTR(*rp,str);
 	} else
 		error("get_line : invalid argument");
+}
+
+void Pget_byte(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int i,c;
+	FILE *fp;
+
+	asir_assert(ARG0(arg),O_N,"get_byte");
+	i = QTOS((Q)ARG0(arg));
+	if ( fp = file_ptrs[i] ) {
+		if ( feof(fp) ) {
+			STOQ(-1,*rp);
+			return;
+		}
+		c = getc(fp);
+		STOQ(c,*rp);
+	} else
+		error("get_byte : invalid argument");
 }
 
 void Pload(arg,rp)
