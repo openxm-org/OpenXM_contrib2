@@ -568,10 +568,13 @@ void CAsir32guiView::OnUpdateContribhelp(CCmdUI* pCmdUI)
 	// TODO: この位置に command update UI ハンドラ用のコードを追加してください
 	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
 
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\bin\\cmanhelp.chm",root);
-	if ( _access(helpfile,04) != -1 )
-		pCmdUI->Enable( TRUE );
-	else
-		pCmdUI->Enable( FALSE );
+	if ( getenv("OpenXM_WIN_ROOT") ) {
+		get_rootdir(root,sizeof(root),errmsg);
+		sprintf(helpfile,"%s\\bin\\cmanhelp.chm",root);
+		if ( _access(helpfile,04) != -1 ) {
+			pCmdUI->Enable( TRUE );
+			return;
+		}
+	}
+	pCmdUI->Enable( FALSE );
 }
