@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.7 2000/12/01 04:34:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.8 2000/12/05 01:24:57 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -555,7 +555,11 @@ static int Getc() {
 			if ((c = Egetc(asir_infile->fp)) == EOF)
 				if ( NEXT(asir_infile) ) {
 					closecurrentinput();
-					c = Getc();
+					/* if the input is the top level, generate error */
+					if ( !NEXT(asir_infile) )
+						error("end-of-file detected during parsing");
+					else
+						c = Getc();
 					break;
 				} else if ( read_exec_file || do_file )
 					asir_terminate(2);
