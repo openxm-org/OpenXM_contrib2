@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.19 2003/07/31 07:30:27 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.20 2003/08/01 05:03:15 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -64,6 +64,7 @@ typedef struct oND_pairs {
 	unsigned int lcm[1];
 } *ND_pairs;
 
+double nd_scale=2;
 static unsigned int **nd_bound;
 int nd_nvar;
 int is_rlex;
@@ -124,6 +125,7 @@ if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
 if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
 
 void nd_removecont(int mod,ND p);
+void nd_removecont2(ND p1,ND p2);
 void ndv_removecont(int mod,NDV p);
 void ndv_mul_c_q(NDV p,Q mul);
 void nd_mul_c_q(ND p,Q mul);
@@ -131,6 +133,7 @@ void nd_mul_c_q(ND p,Q mul);
 void GC_gcollect();
 NODE append_one(NODE,int);
 
+void removecont_array(Q *c,int n);
 ND_pairs crit_B( ND_pairs d, int s );
 void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp);
 void nd_gr_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp);
@@ -793,11 +796,15 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 	RHist h;
 	NDV p,red;
 	Q cg,cred,gcd;
+	double hmag;
 
 	if ( !g ) {
 		*rp = 0;
 		return 1;
 	}
+	if ( !mod )
+		hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+
 	sugar0 = sugar = SG(g);
 	n = NV(g);
 	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
@@ -829,6 +836,10 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 			ndv_mul_nm(mod,p,mul,ndv_red);
 			g = ndv_add(mod,g,ndv_red);
 			sugar = MAX(sugar,SG(ndv_red));
+			if ( !mod && hmag && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
+				nd_removecont2(d,g);
+				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+			}
 		} else if ( !full ) {
 			*rp = g;
 			return 1;
@@ -1841,20 +1852,50 @@ void nd_removecont(int mod,ND p)
 	Q *w;
 	Q dvr,t;
 	NM m;
+	struct oVECT v;
+	N q,r;
 
 	if ( mod )
 		nd_mul_c(mod,p,invm(HCM(p),mod));
 	else {
 		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
 		w = (Q *)ALLOCA(n*sizeof(Q));
+		v.len = n;
+		v.body = (pointer *)w;
 		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
 			w[i] = CQ(m);
-		sortbynm(w,n);
-		qltozl(w,n,&dvr);
-		for ( m = BDY(p); m; m = NEXT(m) ) {
-			divq(CQ(m),dvr,&t); CQ(m) = t;
-		}
+		removecont_array(w,n);
+		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
 	}
+}
+
+void nd_removecont2(ND p1,ND p2)
+{
+	int i,n1,n2,n;
+	Q *w;
+	Q dvr,t;
+	NM m;
+	struct oVECT v;
+	N q,r;
+
+	if ( !p1 ) {
+		nd_removecont(0,p2); return;
+	} else if ( !p2 ) {
+		nd_removecont(0,p1); return;
+	}
+	n1 = nd_length(p1);
+	n2 = nd_length(p2);
+	n = n1+n2;
+	w = (Q *)ALLOCA(n*sizeof(Q));
+	v.len = n;
+	v.body = (pointer *)w;
+	for ( m = BDY(p1), i = 0; i < n1; m = NEXT(m), i++ )
+		w[i] = CQ(m);
+	for ( m = BDY(p2); i < n; m = NEXT(m), i++ )
+		w[i] = CQ(m);
+	removecont_array(w,n);
+	for ( m = BDY(p1), i = 0; i < n1; m = NEXT(m), i++ ) CQ(m) = w[i];	
+	for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
 }
 
 void ndv_removecont(int mod,NDV p)
@@ -1877,6 +1918,44 @@ void ndv_removecont(int mod,NDV p)
 			divq(CQ(m),dvr,&t); CQ(m) = t;
 		}
 	}
+}
+
+void removecont_array(Q *c,int n)
+{
+	struct oVECT v;
+	Q d0,d1,a,u,u1,gcd;
+	int i;
+	N qn,rn,gn;
+	Q *q,*r;
+
+	q = (Q *)ALLOCA(n*sizeof(Q));
+	r = (Q *)ALLOCA(n*sizeof(Q));
+	v.id = O_VECT; v.len = n; v.body = (pointer *)c;
+	igcdv_estimate(&v,&d0);
+	for ( i = 0; i < n; i++ ) {
+		divn(NM(c[i]),NM(d0),&qn,&rn);
+		NTOQ(qn,SGN(c[i])*SGN(d0),q[i]);
+		NTOQ(rn,SGN(c[i]),r[i]);
+	}
+	for ( i = 0; i < n; i++ )
+		if ( r[i] )
+			break;
+	if ( i < n ) {
+		v.id = O_VECT; v.len = n; v.body = (pointer *)r;
+		igcdv(&v,&d1);
+		gcdn(NM(d0),NM(d1),&gn); NTOQ(gn,1,gcd);
+		divsn(NM(d0),gn,&qn); NTOQ(qn,1,a);
+		for ( i = 0; i < n; i++ ) {
+			mulq(a,q[i],&u);
+			if ( r[i] ) {
+				divsn(NM(r[i]),gn,&qn); NTOQ(qn,SGN(r[i]),u1);
+				addq(u,u1,&q[i]);
+			} else
+				q[i] = u;
+		}
+	}
+	for ( i = 0; i < n; i++ )
+		c[i] = q[i];
 }
 
 void nd_mul_c(int mod,ND p,int mul)
