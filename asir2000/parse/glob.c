@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.8 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.9 2000/08/22 05:04:26 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -781,6 +781,6 @@ unsigned int get_asir_version();
 void copyright() {
 	printf("This is Risa/Asir, Version %d.\n",get_asir_version());
 	printf("Copyright (C) FUJITSU LABORATORIES LIMITED.\n");
-	printf("1994-1999. All rights reserved.\n");
+	printf("1994-2000. All rights reserved.\n");
 }
 
