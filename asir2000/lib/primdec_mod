@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.7 2003/04/21 02:00:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.8 2003/04/21 02:02:16 noro Exp $ */
 
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
@@ -2092,6 +2092,10 @@ def convertsmallfield(PP,VSet,Ord)
 	MPP=map(sfptopsfp,MPP,NewV);
 
 	DefPoly=setmod_ff()[1];
+	/* GF(p) case */
+	if ( !DefPoly )
+		return MPP;
+
 	MinPoly=subst(DefPoly,var(DefPoly),NewV);
 	XSet=cons(NewV,VSet);
 
