@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.7 2001/03/19 04:02:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/gc5.3/Imakefile,v 1.1.1.1 2001/04/20 10:05:31 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
@@ -23,7 +23,7 @@ mark_rts.o:
 mach_dep.o: mips_mach_dep.s
 	as -n32 -mips3 -o mach_dep.o mips_mach_dep.s
 #else
-#if defined(_IBMR2)
+#if defined(_IBMR2) || defined(AIXArchitecture)
 mach_dep.o: rs6000_mach_dep.s
 	as -o mach_dep.o rs6000_mach_dep.s
 #else

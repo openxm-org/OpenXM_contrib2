@@ -2,11 +2,11 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/Imakefile,v 1.3 2000/08/22 01:30:22 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/Imakefile,v 1.4 2001/06/04 02:49:45 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
-#if defined(AlphaArchitecture) || (defined(MipsArchitecture) && defined(SGIArchitecture)) || defined(PowerPCArchitecture) || defined(DarwinArchitecture)
+#if defined(AlphaArchitecture) || (defined(MipsArchitecture) && defined(SGIArchitecture)) || defined(PowerPCArchitecture) || defined(DarwinArchitecture) || defined(AIXArchitecture)
 mdepsrc = asmalpha.c
 mdepobj = asmalpha.o
 #endif

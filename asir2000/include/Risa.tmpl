@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.22 2001/03/19 04:17:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.23 2001/06/04 02:49:46 noro Exp $ 
 */
 #include "config.h"
 
@@ -92,6 +92,10 @@ PARIFLAGS = -DLONG_IS_32BIT
 
 #if defined(DarwinArchitecture)
 CCOPTIONS =
+#endif
+
+#if defined(AIXArchitecture)
+CC = cc -qchars=signed
 #endif
 
 #ifdef USE_PARI

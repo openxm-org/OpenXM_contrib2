@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.4 2000/12/05 01:24:52 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -335,7 +335,7 @@ P p,*pr;
 	if ( !p ) 
 		*pr = NULL;
 	else if ( NUM(p) ) {
-#if defined(_PA_RISC1_1) || defined(__alpha) || defined(mips)
+#if defined(_PA_RISC1_1) || defined(__alpha) || defined(mips) || defined(_IBMR2)
 #ifdef FBASE
 		chsgnnum((Num)p,(Num *)pr);
 #else

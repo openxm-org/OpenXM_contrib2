@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.17 2001/03/19 01:26:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.18 2001/06/04 02:49:48 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -62,7 +62,7 @@
 #include <direct.h>
 #endif
 
-#if defined(SYSV)
+#if defined(SYSV) && !defined(_IBMR2)
 #include <sys/ttold.h>
 #endif
 
@@ -426,11 +426,9 @@ int sig;
 		return;
 	}
 #if defined(VISUAL)
-	suspend_timer(); signal(SIGINT,SIG_IGN);
+	suspend_timer();
 #endif
-#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
 	signal(SIGINT,SIG_IGN);
-#endif
 #if !defined(VISUAL) 
     if ( do_server_in_X11 ) {
 		debug(PVSS?((VS)BDY(PVSS))->usrf->f.usrf->body:0);
@@ -526,9 +524,9 @@ int sig;
 
 void restore_handler() {
 #if defined(VISUAL)
-	resume_timer(); signal(SIGINT,int_handler);
+	resume_timer();
 #endif
-#if defined(_PA_RISC1_1) || defined(linux) || defined(__svr4__)
+#if defined(SIGINT)
 	signal(SIGINT,int_handler);
 #endif
 }
@@ -536,19 +534,19 @@ void restore_handler() {
 void segv_handler(sig)
 int sig;
 {
-#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
+#if defined(SIGSEGV)
 	signal(SIGSEGV,segv_handler);
-#endif
 	error("internal error (SEGV)");
+#endif
 }
 
 void ill_handler(sig)
 int sig;
 {
-#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
+#if defined(SIGILL)
 	signal(SIGILL,ill_handler);
-#endif
 	error("illegal instruction (ILL)");
+#endif
 }
 
 void alrm_handler(sig)
@@ -570,10 +568,10 @@ int sig;
 void fpe_handler(sig)
 int sig;
 {
-#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
+#if defined(SIGFPE)
 	signal(SIGFPE,fpe_handler);
-#endif
 	error("internal error (FPE)");
+#endif
 }
 
 void pipe_handler(sig)
