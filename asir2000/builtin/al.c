@@ -60,6 +60,7 @@ void qeblock_verbose0();
 int getmodulus();
 int qevar();
 int gausselim();
+int delv();
 int translate();
 int translate_a();
 void translate_a1();
@@ -1354,7 +1355,7 @@ NODE *peset;
 				if (!w)
 					continue;
 				*px = v;
-				delvip(v,pvl);
+				delv(v,*pvl,pvl);
 				if (a) {
 					gauss_mkeset2(rlhs,a,b,c,peset);
 					return 2;
@@ -1429,21 +1430,26 @@ NODE *peset;
 	BDY(esetc) = (pointer)hgp;
 }
 
-int delvip(v,pvl)
+int delv(v,vl,pnvl)
 V v;
-VL *pvl;
+VL vl,*pnvl;
 {
-	VL prev;
+        VL nvl=NULL,nvlc;
 
-	if (v == VR(*pvl)) {
-		*pvl = NEXT(*pvl);
+	if (v == VR(vl)) {
+	        *pnvl = NEXT(vl);
 		return 1;
 	}
-	for (prev=*pvl; NEXT(prev); prev=NEXT(prev))
-		if (VR(NEXT(prev)) == v) {
-			NEXT(prev) = NEXT(NEXT(prev));
-			return 1;
-		}
+	for (; vl && (VR(vl) != v); vl=NEXT(vl)) {
+                NEXTVL(nvl,nvlc);
+		VR(nvlc) = VR(vl);
+	}
+	if (vl) {
+                NEXT(nvlc) = NEXT(vl);
+		*pnvl = nvl;
+		return 1;
+	}
+	*pnvl = nvl;
 	return 0;
 }
 
