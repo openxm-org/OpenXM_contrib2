@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/int.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -16,6 +16,7 @@ void Pset_upkara(), Pset_uptkara(), Pset_up2kara(), Pset_upfft();
 void Pmt_save(), Pmt_load();
 void Psmall_jacobi();
 void Pdp_set_mpi();
+void Pntoint32(),Pint32ton();
 
 #ifdef HMEXT
 void Pigcdbin(), Pigcdbmod(), PigcdEuc(), Pigcdacc(), Pigcdcntl();
@@ -68,6 +69,8 @@ struct ftab int_tab[] = {
 #endif /* HMEXT */
 	{"mt_save",Pmt_save,1},
 	{"mt_load",Pmt_load,1},
+	{"ntoint32",Pntoint32,1},
+	{"int32ton",Pint32ton,1},
 	{0,0,0},
 };
 
@@ -75,6 +78,34 @@ static int is_prime_small(unsigned int);
 static unsigned int gcd_small(unsigned int,unsigned int);
 int TypeT_NB_check(unsigned int, unsigned int);
 int mpi_mag;
+
+void Pntoint32(arg,rp)
+NODE arg;
+USINT *rp;
+{
+	Q q;
+
+	asir_assert(ARG0(arg),O_N,"ntoint32");
+	q = (Q)ARG0(arg);
+	if ( !q ) {
+		MKUSINT(*rp,0);
+		return;
+	}
+	if ( NID(q)!=N_Q || SGN(q)<0 || !INT(q) || PL(NM(q))>1 )
+		error("ntoint32 : invalid argument");
+	MKUSINT(*rp,BD(NM(q))[0]);
+}
+
+void Pint32ton(arg,rp)
+NODE arg;
+Q *rp;
+{
+	unsigned int t;
+
+	asir_assert(ARG0(arg),O_USINT,"int32ton");
+	t = BDY((USINT)ARG0(arg));
+	UTOQ(t,*rp);
+}
 
 void Pdp_set_mpi(arg,rp)
 NODE arg;

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.2 1999/12/22 07:01:40 noro Exp $ */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
@@ -434,6 +434,13 @@ int sig;
 #endif
 #if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
 	signal(SIGINT,SIG_IGN);
+#endif
+#if !defined(VISUAL) 
+    if ( do_server_in_X11 ) {
+		debug(PVSS?((VS)BDY(PVSS))->usrf->f.usrf->body:0);
+ 		restore_handler();
+		return;
+	}
 #endif
 #if defined(linux)
 #if 1

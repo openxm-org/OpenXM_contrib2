@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/dmul,v 1.1 1999/12/27 04:16:32 noro Exp $ */
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
@@ -15,14 +15,25 @@ def d_mul(F1,F2)
 	Procs = getopt(proc);
 	if ( type(Procs) == -1 )
 		Procs = [];
+	Mod = getopt(mod);
+	if ( type(Mod) == -1 )
+		Mod = 0;
 	NP = length(Procs)+1;
 	V =var(F1);
+	if ( !V ) {
+		T = F1*F2;
+		if ( Mod )
+			return T % Mod;
+		else
+			return T;
+	}
 	D1 = deg(F1,V);
 	D2 = deg(F2,V);
 	Dmin = MIN(D1,D2);
 	Dfft = p_mag(D1+D2+1)+1;
 	Bound = maxblen(F1)+maxblen(F2)+p_mag(Dmin)+1;
-
+	if ( Bound < 32 )
+		Bound = 32;
 	Marray = newvect(NP);
 	MIarray = newvect(NP);
 	for ( I = 0; I < NP; I++ ) {
@@ -53,8 +64,11 @@ def d_mul(F1,F2)
 	for ( J = 0; J < NP-1; J++ )
 		R += ox_pop_cmo(Procs[J]);
 	T3 = time();
-	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]);
-	return R%M;
+/*	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]); */
+	if ( Mod )
+		return (R%M)%Mod;
+	else
+		return uadj_coef(R%M,M,ishift(M,1));
 }
 
 /*
@@ -68,12 +82,23 @@ def d_square(F1)
 	Procs = getopt(proc);
 	if ( type(Procs) == -1 )
 		Procs = [];
+	Mod = getopt(mod);
+	if ( type(Mod) == -1 )
+		Mod = 0;
 	NP = length(Procs)+1;
 	V =var(F1);
+	if ( !V ) {
+		T = F1^2;
+		if ( Mod )
+			return T % Mod;
+		else
+			return T;
+	}
 	D1 = deg(F1,V);
 	Dfft = p_mag(2*D1+1)+1;
 	Bound = 2*maxblen(F1)+p_mag(D1)+1;
-
+	if ( Bound < 32 )
+		Bound = 32;
 	Marray = newvect(NP);
 	MIarray = newvect(NP);
 	for ( I = 0; I < NP; I++ ) {
@@ -104,8 +129,11 @@ def d_square(F1)
 	for ( J = 0; J < NP-1; J++ )
 		R += ox_pop_cmo(Procs[J]);
 	T3 = time();
-	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]);
-	return R%M;
+/*	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]); */
+	if ( Mod )
+		return (R%M)%Mod;
+	else
+		return uadj_coef(R%M,M,ishift(M,1));
 }
 
 /*
@@ -119,14 +147,25 @@ def d_tmul(F1,F2,D)
 	Procs = getopt(proc);
 	if ( type(Procs) == -1 )
 		Procs = [];
+	Mod = getopt(mod);
+	if ( type(Mod) == -1 )
+		Mod = 0;
 	NP = length(Procs)+1;
 	V =var(F1);
+	if ( !V ) {
+		T = utrunc(F1*F2,D);
+		if ( Mod )
+			return T % Mod;
+		else
+			return T;
+	}
 	D1 = deg(F1,V);
 	D2 = deg(F2,V);
 	Dmin = MIN(D1,D2);
 	Dfft = p_mag(D1+D2+1)+1;
 	Bound = maxblen(F1)+maxblen(F2)+p_mag(Dmin)+1;
-
+	if ( Bound < 32 )
+		Bound = 32;
 	Marray = newvect(NP);
 	MIarray = newvect(NP);
 	for ( I = 0; I < NP; I++ ) {
@@ -157,8 +196,45 @@ def d_tmul(F1,F2,D)
 	for ( J = 0; J < NP-1; J++ )
 		R += ox_pop_cmo(Procs[J]);
 	T3 = time();
-	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]);
-	return R%M;
+/*	print(["send",T1[3]-T0[3],"self",T2[3]-T1[3],"recv",T3[3]-T2[3]]); */
+	if ( Mod )
+		return (R%M)%Mod;
+	else
+		return uadj_coef(R%M,M,ishift(M,1));
+}
+
+def d_rembymul(F1,F2,INVF2)
+{
+	Procs = getopt(proc);
+	if ( type(Procs) == -1 )
+		Procs = [];
+	Mod = getopt(mod);
+	if ( type(Mod) == -1 )
+		Mod = 0;
+	NP = length(Procs)+1;
+	if ( !F2 )
+		error("d_rembymul : division by 0");
+	V =var(F1);
+	if ( !V ) {
+		T = srem(F1,F2);
+		if ( Mod )
+			return T % Mod;
+		else
+			return T;
+	}
+	D1 = deg(F1,V);
+	D2 = deg(F2,V);
+	if ( !F1 || !D2 )
+		return 0;
+	if ( D1 < D2 )
+		return F1;
+	D = D1-D2;
+	R1 = utrunc(ureverse(F1),D);
+	Q = ureverse(utrunc(d_tmul(R1,INVF2,D|proc=Procs,mod=Mod),D));
+	if ( Mod )
+		return (utrunc(F1,D2-1)-d_tmul(Q,F2,D2-1|proc=Procs,mod=Mod))%Mod;
+	else
+		return utrunc(F1,D2-1)-d_tmul(Q,F2,D2-1|proc=Procs);
 }
 
 def call_umul(F1,F2,Ind,M1,M)
@@ -166,7 +242,7 @@ def call_umul(F1,F2,Ind,M1,M)
 	C = umul_specialmod(F1,F2,Ind);
 	Mhat = idiv(M,M1);
 	MhatInv = inv(Mhat,M1);
-	return (MhatInv*Mhat)*C;
+	return Mhat*((MhatInv*C)%M1);
 }
 
 def call_usquare(F1,Ind,M1,M)
@@ -174,7 +250,7 @@ def call_usquare(F1,Ind,M1,M)
 	C = usquare_specialmod(F1,Ind);
 	Mhat = idiv(M,M1);
 	MhatInv = inv(Mhat,M1);
-	return (MhatInv*Mhat)*C;
+	return Mhat*((MhatInv*C)%M1);
 }
 
 def call_utmul(F1,F2,D,Ind,M1,M)
@@ -182,6 +258,6 @@ def call_utmul(F1,F2,D,Ind,M1,M)
 	C = utmul_specialmod(F1,F2,D,Ind);
 	Mhat = idiv(M,M1);
 	MhatInv = inv(Mhat,M1);
-	return (MhatInv*Mhat)*C;
+	return Mhat*((MhatInv*C)%M1);
 }
 end$

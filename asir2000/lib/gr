@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/lib/gr,v 1.1.1.1 1999/11/10 08:12:31 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
 
@@ -1258,15 +1258,27 @@ def vs_dim(G,V,O)
 		error("vs_dim : ideal is not zero-dimensional!");
 }
 
-def dgr(G,V,O,P)
+def dgr(G,V,O)
 {
+	P = getopt(proc);
+	if ( type(P) == -1 )
+		return gr(G,V,O);
 	P0 = P[0]; P1 = P[1]; P = [P0,P1];
-	flush(P0); flush(P1);
-	rpc(P0,"dp_gr_main",G,V,0,1,O);
-	rpc(P1,"dp_gr_main",G,V,1,1,O);
-	F = select(P);
-	R = rpcrecv(F[0]); flush(P0); flush(P1);
-	return R;
+	map(ox_reset,P);
+	ox_cmo_rpc(P0,"dp_gr_main",G,V,0,1,O);
+	ox_cmo_rpc(P1,"dp_gr_main",G,V,1,1,O);
+	map(ox_push_cmd,P,262); /* 262 = OX_popCMO */
+	F = ox_select(P);
+	R = ox_get(F[0]);
+	if ( F[0] == P0 ) {
+		Win = "nonhomo";
+		Lose = P1;
+	} else {
+		Win = "nhomo";
+		Lose = P0;
+	}
+	ox_reset(Lose);
+	return [Win,R];
 }
 
 /* functions for rpc */

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.3 1999/12/21 04:20:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.4 1999/12/24 06:57:22 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -45,7 +45,7 @@ void Pox_launch(),Pox_launch_nox(),Pox_launch_main();
 void Pox_launch_generic();
 void Pox_shutdown();
 
-void Pox_rpc(),Pox_cmo_rpc(),Pox_reset(),Pox_sync(),Pox_select();
+void Pox_rpc(),Pox_cmo_rpc(),Pox_reset(),Pox_intr(),Pox_sync(),Pox_select();
 
 void Pox_push_local(),Pox_push_cmo(),Pox_push_vl(),Pox_push_cmd();
 
@@ -84,6 +84,7 @@ struct ftab tcp_tab[] = {
 	{"ox_sync",Pox_sync,1},
 #if !MPI
 	{"ox_reset",Pox_reset,-2},
+	{"ox_intr",Pox_intr,1},
 	{"ox_select",Pox_select,-2},
 #endif
 
@@ -920,6 +921,26 @@ Q *rp;
 				break;
 		}
 		ox_send_sync(c);
+	} else
+		*rp = 0;
+}
+
+void Pox_intr(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int m;
+	Obj obj;
+	int index = QTOS((Q)ARG0(arg));
+
+	valid_mctab_index(index);
+	m = m_c_tab[index].m;
+	if ( m >= 0 ) {
+		if ( argc(arg) == 1 ) {
+			ox_send_cmd(m,SM_control_intr);
+			ox_flush_stream_force(m);
+		}
+		*rp = ONE;
 	} else
 		*rp = 0;
 }

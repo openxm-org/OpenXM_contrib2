@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/include/ox.h,v 1.2 1999/11/18 02:24:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "com.h"
 
 /* version */
@@ -82,12 +82,8 @@
 #define SM_nop 300
 
 #define SM_control_kill 				1024
-#define SM_control_kill2 				1025
-#define SM_control_intr 				1026
-#define SM_control_intr2 				1027
-#define SM_control_spawn				1028
+#define SM_control_intr 				1025
 #define SM_control_reset_connection		1030
-#define SM_control_reset_connection2	1031
 
 typedef FILE *ox_stream;
 

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.2 1999/12/27 04:16:30 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -50,7 +50,7 @@ void Prinvtest_gf2n();
 void Pis_irred_gf2();
 void Pis_irred_ddd_gf2();
 void Pget_next_fft_prime();
-
+void Puadj_coef();
 void simp_ff(Obj,Obj *);
 void ranp(int,UP *);
 void field_order_ff(N *);
@@ -62,6 +62,7 @@ extern int lm_lazy;
 int current_ff;
 
 struct ftab poly_tab[] = {
+	{"uadj_coef",Puadj_coef,3},
 	{"ranp",Pranp,2},
 	{"p_mag",Pp_mag,1},
 	{"maxblen",Pmaxblen,1},
@@ -125,7 +126,7 @@ struct ftab poly_tab[] = {
 
 	{"utrunc",Putrunc,2},
 	{"udecomp",Pudecomp,2},
-	{"ureverse",Pureverse,1},
+	{"ureverse",Pureverse,-2},
 	{"urembymul",Purembymul,2},
 	{"urembymul_precomp",Purembymul_precomp,3},
 
@@ -162,6 +163,30 @@ struct ftab poly_tab[] = {
 };
 
 extern V up_var;
+
+/*
+	uadj_coef(F,M,M2)
+	if ( F is a non-negative integer )
+		return F > M2 ? F-M : M2;
+	else
+		F = CN*V^N+...+C0
+		return uadj_coef(CN,M,M2)*V^N+...+uadj_coef(C0,M,M2);
+*/
+
+void Puadj_coef(arg,rp)
+NODE arg;
+P *rp;
+{
+	UP f,r;
+	N m,m2;
+
+	ptoup((P)ARG0(arg),&f);
+	m = NM((Q)ARG1(arg));
+	m2 = NM((Q)ARG2(arg));
+	adj_coefup(f,m,m2,&r);
+	uptop(r,rp);
+}
+
 /*
 	get_next_fft_prime(StartIndex,Bits)
 	tries to find smallest Index >= StartIndex s.t.
@@ -1040,7 +1065,10 @@ P *rp;
 	UP p,r;
 
 	ptoup((P)ARG0(arg),&p);
-	reverseup(p,p->d,&r);
+	if ( argc(arg) == 1 )
+		reverseup(p,p->d,&r);
+	else 
+		reverseup(p,QTOS((Q)ARG1(arg)),&r);
 	uptop(r,rp);
 }
 
