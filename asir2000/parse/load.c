@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.13 2004/03/05 08:45:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.14 2004/03/18 01:59:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,7 +79,7 @@
 #define MALLOC(x) GC_malloc((x)+4)
 #endif
 
-char *ASIRLOADPATH[32];
+char **ASIRLOADPATH;
 
 #if defined(VISUAL)
 #define ENVDELIM ';'
@@ -174,7 +174,16 @@ void env_init() {
 			strcpy(asir_pager,MORE);
 		}
 	}
-	if ( e = getenv("ASIRLOADPATH" ) )
+	if ( e = getenv("ASIRLOADPATH" ) ) {
+		for ( i = 0; ; i++, e = p+1 ) {
+			p = (char *)index(e,ENVDELIM);
+			if ( !p )
+				break;
+		}
+		i += 2;
+        ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
+		for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
+		e = getenv("ASIRLOADPATH");
 		for ( i = 0; ; i++, e = p+1 ) {
 			p = (char *)index(e,ENVDELIM);
 			l = p ? p-e : strlen(e); q = (char *)MALLOC(l+1);
@@ -184,6 +193,7 @@ void env_init() {
 			if ( !p )
 				break;
 		}
+    }
 	for ( i = 0; ASIRLOADPATH[i]; i++ );
 	ASIRLOADPATH[i] = asir_libdir;
 }
