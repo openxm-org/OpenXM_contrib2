@@ -1,6 +1,7 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.11 2001/10/09 01:36:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.12 2002/01/13 07:11:46 noro Exp $ */
 
 #include "ca.h"
+#include "inline.h"
 
 extern int up_kara_mag, current_gfs_q1;
 extern int *current_gfs_plus1;
@@ -21,6 +22,18 @@ INLINE int _ADDSF(int a,int b)
 		return a;
 
 	a = IFTOF(a); b = IFTOF(b);
+
+	if ( !current_gfs_ntoi ) {
+		a = a+b-current_gfs_q;
+		if ( a == 0 )
+			return 0;
+		else {
+			if ( a < 0 )
+				a += current_gfs_q;
+			return FTOIF(a);
+		}
+	}
+
 	if ( a > b ) {
 		/* tab[a]+tab[b] = tab[b](tab[a-b]+1) */
 		a = current_gfs_plus1[a-b];
@@ -48,9 +61,15 @@ INLINE int _ADDSF(int a,int b)
 
 INLINE int _MULSF(int a,int b)
 {
+	int c;
+
 	if ( !a || !b )
 		return 0;
-	else {
+	else if ( !current_gfs_ntoi ) {
+		a = IFTOF(a); b = IFTOF(b);
+		DMAR(a,b,0,current_gfs_q,c);
+		return FTOIF(c);
+	} else {
 		a = IFTOF(a) + IFTOF(b);
 		if ( a >= current_gfs_q1 )
 			a -= current_gfs_q1;

@@ -1,6 +1,7 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.20 2001/10/30 10:24:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.21 2001/11/19 00:57:11 noro Exp $ */
 
 #include "ca.h"
+#include "inline.h"
 
 void lnfsf(int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1);
 void extractcoefbm(BM f,int dx,UM r);
@@ -1387,6 +1388,7 @@ int divtp_by_sfbm(VL vl,P f,P g,P *qp)
 /* XXX generate an irreducible poly of degree n */
 
 extern int current_gfs_q1;
+extern int *current_gfs_ntoi;
 
 void generate_defpoly_sfum(int n,UM *dp)
 {
@@ -1414,8 +1416,12 @@ void generate_defpoly_sfum(int n,UM *dp)
 		for ( j = 0; j < i; j++ )
 			w[j] = 0;
 		w[i]++;
-		for ( i = 0; i < n; i++ )
-			c[i] = w[i]?FTOIF(w[i]-1):0;
+		if ( !current_gfs_ntoi )
+			for ( i = 0; i < n; i++ )
+				c[i] = w[i]?FTOIF(w[i]):0;
+		else
+			for ( i = 0; i < n; i++ )
+				c[i] = w[i]?FTOIF(w[i]-1):0;
 		if ( !c[0] )
 			continue;
 		diffsfum(r,dr); cpyum(r,t); gcdsfum(t,dr,g);
