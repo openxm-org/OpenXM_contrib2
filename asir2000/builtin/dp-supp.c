@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.20 2001/10/09 01:36:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.21 2002/01/28 00:54:41 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -371,6 +371,22 @@ void dp_ptozp2_d(DP p0,DP p1,DP *hp,DP *rp)
 	*hp = h; *rp = r;
 }
 
+int have_sf_coef(P p)
+{
+	DCP dc;
+
+	if ( !p )
+		return 0;
+	else if ( NUM(p) )
+		return NID((Num)p) == N_GFS ? 1 : 0;
+	else {
+		for ( dc = DC(p); dc; dc = NEXT(dc) )
+			if ( have_sf_coef(COEF(dc)) )
+				return 1;
+		return 0;
+	}
+}
+
 void dp_prim(DP p,DP *rp)
 {
 	P t,g;
@@ -383,9 +399,33 @@ void dp_prim(DP p,DP *rp)
 
 	if ( !p )
 		*rp = 0;
-	else if ( dp_fcoeffs )
+	else if ( dp_fcoeffs ) {
+		for ( m = BDY(p); m; m = NEXT(m) ) {
+			if ( OID(m->c) == O_N ) {
+				/* GCD of coeffs = 1 */
+				*rp = p;
+				return;
+			} else if ( have_sf_coef(m->c) ) {
+				/* compute GCD over the finite fieid */
+				for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+				w = (P *)ALLOCA(n*sizeof(P));
+				for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+					w[i] = m->c;
+				gcdsf(CO,w,n,&g);
+				if ( NUM(g) )
+					*rp = p;
+				else {
+					for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+						NEXTMP(mr0,mr); divsp(CO,m->c,g,&mr->c); mr->dl = m->dl;
+					}
+					NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+				}
+				return;
+			}
+		}
+		/* all coeffs are poly over Q */
 		*rp = p;
-	else if ( NoGCD )
+	} else if ( NoGCD )
 		dp_ptozp(p,rp);
 	else {
 		dp_ptozp(p,&p1); p = p1;

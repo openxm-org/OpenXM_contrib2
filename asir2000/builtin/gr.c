@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.42 2002/07/17 09:45:49 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.43 2002/07/18 02:23:53 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1161,9 +1161,7 @@ void prim_part(DP f,int m,DP *r)
 		else
 			*r = f;
 	} else {
-		if ( dp_fcoeffs )
-			*r = f;
-		else if ( PCoeffs )
+		if ( dp_fcoeffs || PCoeffs )
 			dp_prim(f,r);
 		else
 			dp_ptozp(f,r);
