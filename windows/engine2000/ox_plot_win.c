@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.4 2002/07/30 03:48:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.5 2002/10/02 09:33:32 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,15 +92,16 @@ int search_active_canvas()
 
 volatile DWORD MainThread;
 volatile int canvas_created;
+extern HANDLE hMainThreadReady,hCanvasCreated;
 
 void create_canvas(struct canvas *can)
 {
 	alloc_pixmap(can);
 	can->real_can = can;
-	while ( !MainThread );
-	canvas_created = 0;
+	WaitForSingleObject(hMainThreadReady,(DWORD)-1);
+	ResetEvent(hCanvasCreated);
 	PostThreadMessage(MainThread,WM_APP,can->index,0);
-	while ( !canvas_created );
+	WaitForSingleObject(hCanvasCreated,(DWORD)-1);
 }
 
 void destroy_canvas(struct canvas *can)

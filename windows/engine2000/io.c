@@ -54,6 +54,7 @@ static HANDLE hNotify0,hNotify_Ack0,hIntr0;
 static HANDLE hDebugNotify,hDebugNotify_Ack,hDebugIntr,hDebugIntr_Ack,hDebugKill;
 
 HANDLE hResizeNotify,hResizeNotify_Ack; /* should be visible from another file */
+HANDLE hMainThreadReady,hCanvasCreated; /* notification for ox_plot */
 
 /* XXX */
 extern HANDLE hStreamNotify,hStreamNotify_Ack; /* declared in io/ox.c */
@@ -431,6 +432,10 @@ void OxPlotMain(int argc, char **argv)
 	hResizeNotify = CreateEvent(NULL,TRUE,FALSE,eventname);
 	sprintf(eventname,"resize_notify_ack_%d",mypid);
 	hResizeNotify_Ack = CreateEvent(NULL,TRUE,FALSE,eventname);
+	sprintf(eventname,"mainthreadready_%d",mypid);
+	hMainThreadReady = CreateEvent(NULL,TRUE,FALSE,eventname);
+	sprintf(eventname,"canvascreated_%d",mypid);
+	hCanvasCreated = CreateEvent(NULL,TRUE,FALSE,eventname);
 
 	hWatchStreamThread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)ox_watch_stream,NULL,0,&tid); 
 //	ret = SetThreadPriority(hWatchStreamThread,THREAD_PRIORITY_BELOW_NORMAL);

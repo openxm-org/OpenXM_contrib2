@@ -16,10 +16,11 @@ extern "C" {
 #include "ca.h"
 #include "ifplot.h"
 
+	extern HANDLE hCanvasCreated;
+	extern HANDLE hMainThreadReady;
 	extern HANDLE hStreamNotify;
 	extern HANDLE hStreamNotify_Ack;
 	extern DWORD MainThread;
-	extern int canvas_created;
 	void Init_IO();
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -86,6 +87,7 @@ BOOL COx_plotApp::InitInstance()
 		WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, NULL, 
 		NULL);
 	MainThread = m_nThreadID;
+	SetEvent(hMainThreadReady);
 
 	// メイン ウィンドウが初期化されたので、表示と更新を行います。
 //	pFrame->ShowWindow(SW_SHOW);
@@ -184,12 +186,11 @@ BOOL COx_plotApp::PreTranslateMessage(MSG* pMsg)
 			pFrame->UpdateWindow();
 			pFrame->BringWindowToTop();
 			can->hwnd = pFrame->m_wndView.m_hWnd;
-			canvas_created = 1;
 		} else
 			pFrame = (CMainFrame *)can->window;
 		pFrame->RedrawWindow();
-	} else if ( pMsg->message == WM_APP+1 )
-		;  // dummy message
+		SetEvent(hCanvasCreated);
+	} 
 	return CWinApp::PreTranslateMessage(pMsg);
 }
 
