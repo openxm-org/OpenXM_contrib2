@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.5 2003/07/24 03:45:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.6 2003/07/25 04:19:54 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -811,7 +811,7 @@ INLINE int ndl_hash_value(int td,unsigned int *d)
 	return r;
 }
 
-INLINE int nd_find_reducer(ND g)
+int nd_find_reducer(ND g)
 {
 	NM m;
 	ND p;
@@ -1030,7 +1030,7 @@ int nd_nf(ND g,int full,ND *rp)
 {
 	ND p,d;
 	NM m,mrd,tail;
-	struct oNM mul;
+	NM mul;
 	int n,sugar,psugar,stat,index;
 	int c,c1,c2;
 #if USE_NDV
@@ -1045,24 +1045,25 @@ int nd_nf(ND g,int full,ND *rp)
 	}
 	sugar = g->sugar;
 	n = NV(g);
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	for ( d = 0; g; ) {
 		index = nd_find_reducer(g);
 		if ( index >= 0 ) {
 			p = nd_ps[index];
-			ndl_sub(HDL(g),HDL(p),mul.dl);
-			mul.td = HTD(g)-HTD(p);
-			if ( ndl_check_bound2(index,mul.dl) ) {
+			ndl_sub(HDL(g),HDL(p),mul->dl);
+			mul->td = HTD(g)-HTD(p);
+			if ( ndl_check_bound2(index,mul->dl) ) {
 				nd_free(g); nd_free(d);
 				return 0;
 			}
 			c1 = invm(HC(p),nd_mod); c2 = nd_mod-HC(g);
-			DMAR(c1,c2,0,nd_mod,c); mul.c = c;
+			DMAR(c1,c2,0,nd_mod,c); C(mul) = c;
 #if USE_NDV
-			ndv_mul_nm(nd_psv[index],&mul,ndv_red);
+			ndv_mul_nm(nd_psv[index],mul,ndv_red);
 			g = ndv_add(g,ndv_red);
 			sugar = MAX(sugar,ndv_red->sugar);
 #else
-			red = nd_mul_ind_nm(index,&mul);
+			red = nd_mul_ind_nm(index,mul);
 			g = nd_add(g,red);
 			sugar = MAX(sugar,red->sugar);
 #endif
@@ -1892,7 +1893,7 @@ void nd_append_red(unsigned int *d,int td,int i)
 	h = ndl_hash_value(td,d);
 	m->c = i;
 	m->td = td;
-	bcopy(d,m->dl,nd_wpd*sizeof(unsigned int));
+	ndl_copy(d,m->dl);
 	NEXT(m) = nd_red[h];
 	nd_red[h] = m;
 }
@@ -1901,7 +1902,7 @@ unsigned int *dp_compute_bound(DP p)
 {
 	unsigned int *d,*d1,*d2,*t;
 	MP m;
-	int i;
+	int i,l;
 
 	if ( !p )
 		return 0;
@@ -1915,7 +1916,9 @@ unsigned int *dp_compute_bound(DP p)
 			d2[i] = d[i] > d1[i] ? d[i] : d1[i];
 		t = d1; d1 = d2; d2 = t;
 	}
-	t = (unsigned int *)MALLOC_ATOMIC(nd_nvar*sizeof(unsigned int));
+	l = ((nd_nvar+(sizeof(unsigned int)-1))/sizeof(unsigned int))*sizeof(unsigned int);
+	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
+	bzero(t,l*sizeof(unsigned int));
 	bcopy(d1,t,nd_nvar*sizeof(unsigned int));
 	return t;
 }
@@ -2222,7 +2225,7 @@ NDV ndtondv(ND p)
 	m0 = m = (NMV)MALLOC_ATOMIC(len*nmv_adv);
 	for ( t = BDY(p), i = 0; t; t = NEXT(t), i++, NMV_ADV(m) ) {
 		m->td = t->td;
-		bcopy(t->dl,m->dl,nd_wpd*sizeof(unsigned int));
+		ndl_copy(t->dl,m->dl);
 		m->c = t->c;
 	}
 	MKNDV(NV(p),m0,len,d);
