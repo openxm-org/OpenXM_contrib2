@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.7 2000/03/10 03:05:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.8 2000/03/14 06:30:34 noro Exp $ */
 #include "config.h"
 
 #define USE_GCC
@@ -12,6 +12,9 @@
     (LinuxCLibMajorVersion == 5 && LinuxCLibMinorVersion == 99)
 STD_CPP_DEFINES = -traditional -Dlinux -D_BSD_SOURCE $(PROJECT_DEFINES)
 STD_DEFINES = -Dlinux -D_BSD_SOURCE $(PROJECT_DEFINES)
+#if 0
+EXTRA_LDOPTIONS=-static
+#endif
 #endif
 #endif
 
