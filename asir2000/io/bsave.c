@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.6 2000/12/22 10:03:30 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.7 2000/12/24 06:32:31 saito Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -69,6 +69,7 @@ void saver(FILE *,R);
 void savep(FILE *,P);
 void savegf2n(FILE *,GF2N);
 void savegfpn(FILE *,GFPN);
+void savegfs(FILE *,GFS);
 void savelm(FILE *,LM);
 void savemi(FILE *,MQ);
 void savecplx(FILE *,C);
@@ -85,9 +86,9 @@ void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
 #if defined(INTERVAL)
 void saveitv();
 void saveitvd();
-void (*nsavef[])() = { saveq, savereal, 0, savebf, saveitv, saveitvd, 0, saveitv, savecplx ,savemi, savelm, savegf2n, savegfpn};
+void (*nsavef[])() = { saveq, savereal, 0, savebf, saveitv, saveitvd, 0, saveitv, savecplx ,savemi, savelm, savegf2n, savegfpn, savegfs};
 #else
-void (*nsavef[])() = { saveq, savereal, 0, savebf, savecplx ,savemi, savelm, savegf2n, savegfpn};
+void (*nsavef[])() = { saveq, savereal, 0, savebf, savecplx ,savemi, savelm, savegf2n, savegfpn, savegfs};
 #endif
 
 static short zeroval = 0;
@@ -235,6 +236,11 @@ GFPN p;
 	for ( i = 0; i <= d; i++ )
 		saveobj(s,(Obj)p->body->c[i]);
 }
+
+void savegfs(s,p)
+FILE *s;
+GFS p;
+{ write_int(s,&CONT(p)); }
 
 void savep(s,p)
 FILE *s;
