@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/lib/sp,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 /* 
 	sp : functions related to algebraic number fields
 
@@ -84,7 +84,7 @@ def flatmf(L) {
 def af(P,AL)
 {
 	RESTIME=UFTIME=GCDTIME=SQTIME=0;
-	S = reverse(asq(P,AL));
+	S = reverse(asq(P));
 	for ( L = []; S != []; S = cdr(S) ) {
 		FM = car(S); F = FM[0]; M = FM[1];
 		G = af_sp(F,AL,1);
@@ -124,7 +124,7 @@ def af_spmain(P,AL,INIT,HINT,PP,SHIFT)
 	N = simpcoef(sp_norm(A0,V,subst(P,V,V-INIT*A0),AL));
 	RESTIME+=time()[0]-TTT;
 	TTT = time()[0];
-	DCSQ = sortfs(asq(N,AL));
+	DCSQ = sortfs(asq(N));
 	SQTIME+=time()[0]-TTT;
 	for ( G = P, A = V+INIT*A0, DCR = []; DCSQ != []; DCSQ = cdr(DCSQ) ) {
 		C = TT(DCSQ); D = TS(DCSQ);
@@ -142,7 +142,7 @@ def af_spmain(P,AL,INIT,HINT,PP,SHIFT)
 			else {
 				S = subst(car(DCT),V,A);
 				if ( pra(G,S,AL) )
-					U = cr_gcda(S,G,AL);
+					U = cr_gcda(S,G);
 				else
 					U = S;
 			}
@@ -270,26 +270,40 @@ def getalgp(P) {
 	else {
 		for ( V = var(P), I = deg(P,V), T = []; I >= 0; I-- )
 			if ( C = coef(P,I) )
-				T = union(T,getalgp(C));
+				T = union_sort(T,getalgp(C));
 		return T;
 	}
 }
 		
-def union(A,B)
-{
-	for ( T = B; T != []; T = cdr(T) )
-		A = union1(A,car(T));
-	return A;
+def getalgtreep(P) {
+	if ( type(P) <= 1 )
+		return getalgtree(P);
+	else {
+		for ( V = var(P), I = deg(P,V), T = []; I >= 0; I-- )
+			if ( C = coef(P,I) )
+				T = union_sort(T,getalgtreep(C));
+		return T;
+	}
 }
 
-def union1(A,E)
+/* C = union of A and B; A and B is sorted. C should also be sorted. */
+
+def union_sort(A,B)
 {
 	if ( A == [] )
-		return [E];
-	else if ( car(A) == E )
+		return B;
+	else if ( B == [] )
 		return A;
-	else
-		return cons(car(A),union1(cdr(A),E));
+	else {
+		A0 = car(A);
+		B0 = car(B);
+		if ( A0 == B0 )
+			return cons(A0,union_sort(cdr(A),cdr(B)));
+		else if ( A0 > B0 )
+			return cons(A0,union_sort(cdr(A),B));
+		else
+			return cons(B0,union_sort(A,cdr(B)));
+	}
 }
 
 def invalgp(A)
@@ -359,7 +373,7 @@ def sortfs(L)
 
 def pdiva(P1,P2)
 {
-	A = union(getalgp(P1),getalgp(P2));
+	A = union_sort(getalgp(P1),getalgp(P2));
 	P1 = algptorat(P1); P2 = algptorat(P2);
 	return simpalg(rattoalgp(sdiv(P1*LCOEF(P2)^(DEG(P1)-DEG(P2)+1),P2),A));
 }
@@ -371,7 +385,7 @@ def pqra(P1,P2)
 	else if ( (type(P1) != POLY) || (deg(P1,var(P1)) < deg(P2,var(P1))) )
 		return [0,P1];
 	else {
-		A = union(getalgp(P1),getalgp(P2));
+		A = union_sort(getalgp(P1),getalgp(P2));
 		P1 = algptorat(P1); P2 = algptorat(P2);
 		L = sqr(P1*LCOEF(P2)^(DEG(P1)-DEG(P2)+1),P2);
 		return [simpalg(rattoalgp(L[0],A)),simpalg(rattoalgp(L[1],A))];
@@ -410,7 +424,7 @@ def sort_alg(VL)
 	return L;
 }
 
-def asq(P,AL)
+def asq(P)
 {
 	P = simpalg(P);
 	if ( type(P) == NUM )
@@ -423,7 +437,7 @@ def asq(P,AL)
 			if ( type(F) == NUM ) 
 				break;
 			F1 = diff(F,V);
-			GCD = cr_gcda(F,F1,AL);
+			GCD = cr_gcda(F,F1);
 			FLAT = pdiva(F,GCD);
 			if ( type(GCD) == NUM ) {
 				A[I] = F; B[I] = 1; 
@@ -479,7 +493,7 @@ def ufctrhint_heuristic(P,HINT,PP,SHIFT) {
 		G = igcd(G,DT=deg(T,V));
 	if ( G == 1 ) {
 		if ( K*deg(PPP,V) != deg(P,V) )
-			PPP = cr_gcda(PPP,P,AL);
+			PPP = cr_gcda(PPP,P);
 		return ufctrhint2(P,HINT,PPP,AL);
 	} else {
 		for ( S = 0, T = P; T; T -= coef(T,DT)*V^DT ) {
@@ -489,7 +503,7 @@ def ufctrhint_heuristic(P,HINT,PP,SHIFT) {
 		L = fctr(S);
 		for ( DC = [car(L)], L = cdr(L); L != []; L = cdr(L) ) {
 			H = subst(car(car(L)),V,V^G);
-			HH = cr_gcda(PPP,H,AL);
+			HH = cr_gcda(PPP,H);
 			T = ufctrhint2(H,HINT,HH,AL);
 			DC = append(DC,T);
 		}
@@ -645,27 +659,13 @@ def norm_ch_lag(V,VM,P,P0) {
 	return S;
 }
 
-def cr_gcda(P1,P2,EXT)
+def cr_gcda(P1,P2)
 {
 	if ( !(V = var(P1)) || !var(P2) )
 		return 1;
-	AL = union(getalgp(P1),getalgp(P2));
-	if ( AL == [] )
+	EXT = union_sort(getalgtreep(P1),getalgtreep(P2));
+	if ( EXT == [] )
 		return gcd(P1,P2);
-	T = newvect(length(EXT));
-	for ( TAL = AL; TAL != []; TAL = cdr(TAL) ) {
-		A = getalg(car(TAL));
-		for ( TA = A; TA != []; TA = cdr(TA) ) {
-			B = car(TA);
-			for ( TEXT = EXT, I = 0; TEXT != []; TEXT = cdr(TEXT), I++ )
-				if ( car(TEXT) == B )
-					T[I] = B;
-		}
-	}
-	for ( I = length(EXT)-1, S = []; I >= 0; I-- )
-		if ( T[I] )
-			S = cons(T[I],S);
-	EXT = S;
 	NEXT = length(EXT);
 	if ( deg(P1,V) < deg(P2,V) ) {
 		T = P1; P1 = P2; P2 = T;
@@ -745,18 +745,6 @@ def member(E,L)
 		if ( E == car(L) )
 			return 1;
 	return 0;
-}
-
-def getallalg(A)
-{
-	T = cdr(vars(defpoly(A)));
-	if ( T == [] )
-		return [A];
-	else {
-		for ( S = [A]; T != []; T = cdr(T) )
-			S = union(S,getallalg(rattoalg(car(T))));
-		return S;
-	}
 }
 
 def discr(P) {
