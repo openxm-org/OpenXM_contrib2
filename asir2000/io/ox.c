@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/ox.c,v 1.7 1999/11/19 04:15:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "wsio.h"
@@ -19,6 +19,7 @@ unsigned int ox_serial;
 int ox_flushing;
 int ox_batch;
 int ox_check=1;
+int ox_exchange_mathcap=1;
 jmp_buf ox_env;
 
 MATHCAP my_mathcap;

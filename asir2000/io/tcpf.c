@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.4 1999/12/24 06:57:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.5 2000/01/11 06:43:36 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -114,6 +114,7 @@ struct ftab tcp_tab[] = {
 
 extern struct IOFP iofp[];
 extern MATHCAP my_mathcap;
+extern int ox_exchange_mathcap;
 
 char *getenv();
 
@@ -283,18 +284,19 @@ Q *rp;
 	/* register server to the server list */
 	ind = register_server(use_unix,cn,sn);
 
-	/* request remote mathcap */
-	ox_send_cmd(sn,SM_mathcap);
-	ox_send_cmd(sn,SM_popCMO);
-	ox_flush_stream_force(sn);
-	ox_recv(sn,&id,&server_mathcap);
-	store_remote_mathcap(sn,server_mathcap);
-
-	/* send my mathcap */
-	create_my_mathcap("asir");
-	ox_send_data(sn,my_mathcap);
-	ox_send_cmd(sn,SM_setMathcap);
-
+	if ( ox_exchange_mathcap ) {
+		/* request remote mathcap */
+		ox_send_cmd(sn,SM_mathcap);
+		ox_send_cmd(sn,SM_popCMO);
+		ox_flush_stream_force(sn);
+		ox_recv(sn,&id,&server_mathcap);
+		store_remote_mathcap(sn,server_mathcap);
+	
+		/* send my mathcap */
+		create_my_mathcap("asir");
+		ox_send_data(sn,my_mathcap);
+		ox_send_cmd(sn,SM_setMathcap);
+	}
 	/* return the server id */
 	STOQ(ind,*rp);
 }
@@ -371,18 +373,19 @@ Q *rp;
 	/* register server to the server list */
 	ind = register_server(use_unix,cn,sn);
 
-	/* request remote mathcap */
-	ox_send_cmd(sn,SM_mathcap);
-	ox_send_cmd(sn,SM_popCMO);
-	ox_flush_stream_force(sn);
-	ox_recv(sn,&id,&server_mathcap);
-	store_remote_mathcap(sn,server_mathcap);
-
-	/* send my mathcap */
-	create_my_mathcap("asir");
-	ox_send_data(sn,my_mathcap);
-	ox_send_cmd(sn,SM_setMathcap);
-
+	if ( ox_exchange_mathcap ) {
+		/* request remote mathcap */
+		ox_send_cmd(sn,SM_mathcap);
+		ox_send_cmd(sn,SM_popCMO);
+		ox_flush_stream_force(sn);
+		ox_recv(sn,&id,&server_mathcap);
+		store_remote_mathcap(sn,server_mathcap);
+	
+		/* send my mathcap */
+		create_my_mathcap("asir");
+		ox_send_data(sn,my_mathcap);
+		ox_send_cmd(sn,SM_setMathcap);
+	}
 	/* return the server id */
 	STOQ(ind,*rp);
 }

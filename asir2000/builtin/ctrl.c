@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/ctrl.c,v 1.3 1999/11/23 07:14:14 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -13,7 +13,7 @@ extern int prtime,nez,echoback,bigfloat;
 extern int GC_free_space_numerator,GC_free_space_divisor,debug_up,no_prompt;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
 extern int do_message;
-extern int ox_batch,ox_check;
+extern int ox_batch,ox_check,ox_exchange_mathcap;
 extern int f4_nocheck;
 
 static struct {
@@ -33,6 +33,7 @@ static struct {
 	{"no_prompt",&no_prompt},
 	{"ox_batch",&ox_batch},
 	{"ox_check",&ox_check},
+	{"ox_exchange_mathcap",&ox_exchange_mathcap},
 	{"f4_nocheck",&f4_nocheck},
 	{0,0},
 };
