@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.47 2003/08/25 09:19:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.48 2003/08/26 01:42:12 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1512,7 +1512,6 @@ again:
 		} else if ( nf ) {
 			if ( checkonly ) return 0;
 			printf("+"); fflush(stdout);
-			ndl_print(HDL(nf));
 			nh = m?nd_newps(m,nf,0):nd_newps(m,0,nf);
 			d = update_pairs(d,g,nh);
 			g = update_base(g,nh);
