@@ -105,11 +105,11 @@ SOURCE="..\..\asir2000\builtin\algnum.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\allchblk.c"
+SOURCE="..\..\asir2000\gc5.3\allchblk.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\alloc.c"
+SOURCE="..\..\asir2000\gc5.3\alloc.c"
 # End Source File
 # Begin Source File
 
@@ -141,7 +141,7 @@ SOURCE="..\..\asir2000\io\biovar.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\blacklst.c"
+SOURCE="..\..\asir2000\gc5.3\blacklst.c"
 # End Source File
 # Begin Source File
 
@@ -157,7 +157,7 @@ SOURCE="..\..\asir2000\engine\C.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\checksums.c"
+SOURCE="..\..\asir2000\gc5.3\checksums.c"
 # End Source File
 # Begin Source File
 
@@ -197,7 +197,7 @@ SOURCE="..\..\asir2000\engine\D.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\dbg_mlc.c"
+SOURCE="..\..\asir2000\gc5.3\dbg_mlc.c"
 # End Source File
 # Begin Source File
 
@@ -237,7 +237,7 @@ SOURCE="..\..\asir2000\builtin\dp.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\dyn_load.c"
+SOURCE="..\..\asir2000\gc5.3\dyn_load.c"
 # End Source File
 # Begin Source File
 
@@ -299,7 +299,7 @@ SOURCE="..\..\asir2000\builtin\file.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\finalize.c"
+SOURCE="..\..\asir2000\gc5.3\finalize.c"
 # End Source File
 # Begin Source File
 
@@ -311,7 +311,7 @@ SOURCE="..\..\asir2000\parse\function.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\gc_risa.c"
+SOURCE="..\..\asir2000\gc5.3\gc_risa.c"
 # ADD CPP /D "WINNT"
 # End Source File
 # Begin Source File
@@ -348,7 +348,7 @@ SOURCE="..\..\asir2000\engine\H.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\headers.c"
+SOURCE="..\..\asir2000\gc5.3\headers.c"
 # End Source File
 # Begin Source File
 
@@ -403,7 +403,7 @@ SOURCE="..\..\asir2000\engine\M.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\mach_dep.c"
+SOURCE="..\..\asir2000\gc5.3\mach_dep.c"
 # End Source File
 # Begin Source File
 
@@ -411,19 +411,19 @@ SOURCE="..\..\asir2000\parse\main.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\malloc.c"
+SOURCE="..\..\asir2000\gc5.3\malloc.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\mallocx.c"
+SOURCE="..\..\asir2000\gc5.3\mallocx.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\mark.c"
+SOURCE="..\..\asir2000\gc5.3\mark.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\mark_rts.c"
+SOURCE="..\..\asir2000\gc5.3\mark_rts.c"
 # End Source File
 # Begin Source File
 
@@ -439,7 +439,7 @@ SOURCE="..\..\asir2000\engine\mi.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\misc.c"
+SOURCE="..\..\asir2000\gc5.3\misc.c"
 # End Source File
 # Begin Source File
 
@@ -455,7 +455,7 @@ SOURCE="..\..\asir2000\engine\N.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\new_hblk.c"
+SOURCE="..\..\asir2000\gc5.3\new_hblk.c"
 # End Source File
 # Begin Source File
 
@@ -471,11 +471,11 @@ SOURCE="..\..\asir2000\builtin\numerical.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\obj_map.c"
+SOURCE="..\..\asir2000\gc5.3\obj_map.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\os_dep.c"
+SOURCE="..\..\asir2000\gc5.3\os_dep.c"
 # End Source File
 # Begin Source File
 
@@ -539,7 +539,7 @@ SOURCE="..\..\asir2000\builtin\print.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\ptr_chck.c"
+SOURCE="..\..\asir2000\gc5.3\ptr_chck.c"
 # End Source File
 # Begin Source File
 
@@ -579,11 +579,11 @@ SOURCE="..\..\asir2000\engine\real.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\real_malloc.c"
+SOURCE="..\..\asir2000\gc5.3\real_malloc.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\reclaim.c"
+SOURCE="..\..\asir2000\gc5.3\reclaim.c"
 # End Source File
 # Begin Source File
 
@@ -627,7 +627,7 @@ SOURCE="..\..\asir2000\parse\struct.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\stubborn.c"
+SOURCE="..\..\asir2000\gc5.3\stubborn.c"
 # End Source File
 # Begin Source File
 
@@ -643,7 +643,7 @@ SOURCE="..\..\asir2000\builtin\time.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\typd_mlc.c"
+SOURCE="..\..\asir2000\gc5.3\typd_mlc.c"
 # End Source File
 # Begin Source File
 
@@ -683,7 +683,7 @@ SOURCE="..\..\asir2000\engine\vect.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\asir2000\gc\win32_threads.c"
+SOURCE="..\..\asir2000\gc5.3\win32_threads.c"
 # End Source File
 # Begin Source File
 

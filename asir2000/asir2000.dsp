@@ -110,11 +110,11 @@ SOURCE=.\builtin\algnum.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\allchblk.c
+SOURCE=.\gc5.3\allchblk.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\alloc.c
+SOURCE=.\gc5.3\alloc.c
 # End Source File
 # Begin Source File
 
@@ -146,7 +146,7 @@ SOURCE=.\io\biovar.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\blacklst.c
+SOURCE=.\gc5.3\blacklst.c
 # End Source File
 # Begin Source File
 
@@ -162,7 +162,7 @@ SOURCE=.\engine\C.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\checksums.c
+SOURCE=.\gc5.3\checksums.c
 # End Source File
 # Begin Source File
 
@@ -202,7 +202,7 @@ SOURCE=.\engine\D.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\dbg_mlc.c
+SOURCE=.\gc5.3\dbg_mlc.c
 # End Source File
 # Begin Source File
 
@@ -242,7 +242,7 @@ SOURCE=.\builtin\dp.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\dyn_load.c
+SOURCE=.\gc5.3\dyn_load.c
 # End Source File
 # Begin Source File
 
@@ -296,7 +296,7 @@ SOURCE=.\builtin\file.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\finalize.c
+SOURCE=.\gc5.3\finalize.c
 # End Source File
 # Begin Source File
 
@@ -308,7 +308,7 @@ SOURCE=.\parse\function.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\gc_risa.c
+SOURCE=.\gc5.3\gc_risa.c
 # ADD CPP /D "WINNT"
 # End Source File
 # Begin Source File
@@ -345,7 +345,7 @@ SOURCE=.\engine\H.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\headers.c
+SOURCE=.\gc5.3\headers.c
 # End Source File
 # Begin Source File
 
@@ -396,7 +396,7 @@ SOURCE=.\engine\M.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\mach_dep.c
+SOURCE=.\gc5.3\mach_dep.c
 # End Source File
 # Begin Source File
 
@@ -404,19 +404,19 @@ SOURCE=.\parse\main.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\malloc.c
+SOURCE=.\gc5.3\malloc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\mallocx.c
+SOURCE=.\gc5.3\mallocx.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\mark.c
+SOURCE=.\gc5.3\mark.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\mark_rts.c
+SOURCE=.\gc5.3\mark_rts.c
 # End Source File
 # Begin Source File
 
@@ -432,7 +432,7 @@ SOURCE=.\engine\mi.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\misc.c
+SOURCE=.\gc5.3\misc.c
 # End Source File
 # Begin Source File
 
@@ -448,7 +448,7 @@ SOURCE=.\engine\N.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\new_hblk.c
+SOURCE=.\gc5.3\new_hblk.c
 # End Source File
 # Begin Source File
 
@@ -464,11 +464,11 @@ SOURCE=.\builtin\numerical.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\obj_map.c
+SOURCE=.\gc5.3\obj_map.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\os_dep.c
+SOURCE=.\gc5.3\os_dep.c
 # End Source File
 # Begin Source File
 
@@ -528,7 +528,7 @@ SOURCE=.\builtin\print.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\ptr_chck.c
+SOURCE=.\gc5.3\ptr_chck.c
 # End Source File
 # Begin Source File
 
@@ -568,11 +568,11 @@ SOURCE=.\engine\real.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\real_malloc.c
+SOURCE=.\gc5.3\real_malloc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\reclaim.c
+SOURCE=.\gc5.3\reclaim.c
 # End Source File
 # Begin Source File
 
@@ -612,7 +612,7 @@ SOURCE=.\parse\struct.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\stubborn.c
+SOURCE=.\gc5.3\stubborn.c
 # End Source File
 # Begin Source File
 
@@ -628,7 +628,7 @@ SOURCE=.\builtin\time.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\typd_mlc.c
+SOURCE=.\gc5.3\typd_mlc.c
 # End Source File
 # Begin Source File
 
@@ -668,7 +668,7 @@ SOURCE=.\engine\vect.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\gc\win32_threads.c
+SOURCE=.\gc5.3\win32_threads.c
 # End Source File
 # Begin Source File
 
