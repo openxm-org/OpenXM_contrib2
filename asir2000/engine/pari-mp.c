@@ -1,7 +1,9 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari-mp.c,v 1.1 2000/12/22 10:03:28 saito Exp $
 */
 /* for f-itv.c */
+
+#if PARI
 
 #include "genpari.h"
 #include "itv-pari.h"
@@ -490,3 +492,4 @@ PariDivrrDown(GEN x, GEN y)
   z[1]=ex1;*z=z0;return z;
 }
 
+#endif /* PARI */
