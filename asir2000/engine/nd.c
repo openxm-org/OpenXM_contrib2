@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.74 2003/09/19 02:33:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.75 2003/09/19 10:09:42 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -100,7 +100,7 @@ typedef struct oBaseSet {
 typedef struct oNM_ind_pair
 {
 	NM mul;
-	int index;
+	int index,sugar;
 } *NM_ind_pair;
 
 typedef struct oIndArray
@@ -213,7 +213,7 @@ if(!(r)){NEWNM(r);(c)=(r);}else{NEWNM(NEXT(c));(c)=NEXT(c);}
 if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
 #define NEXTND_pairs(r,c) \
 if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
-#define MKNM_ind_pair(p,m,i) (NEWNM_ind_pair(p),(p)->mul=(m),(p)->index=(i))
+#define MKNM_ind_pair(p,m,i,s) (NEWNM_ind_pair(p),(p)->mul=(m),(p)->index=(i),(p)->sugar = (s))
 
 /* deallocators */
 #define FREENM(m) NEXT(m)=_nm_free_list; _nm_free_list=(m)
@@ -367,6 +367,10 @@ ND ndvtond(int mod,NDV p);
 int nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r);
 IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
+
+/* elimination */
+int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat);
+int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 
 void nd_free_private_storage()
 {
@@ -3777,7 +3781,7 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 }
 
 
-void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+int ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
 	int i,j,k,len,pos,prev;
 	UINT c,c1,c2,c3,up,lo,dmy;
@@ -3788,11 +3792,14 @@ void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,i
 	NDV redv;
 	NMV mr;
 	NODE rp;
+	int maxrs;
 
+	maxrs = 0;
 	for ( i = 0; i < nred; i++ ) {
 		ivect = imat[i];
 		k = ivect->head; svect[k] %= m;
 		if ( c = svect[k] ) {
+			maxrs = MAX(maxrs,rp0[i]->sugar);
 			c = m-c; redv = nd_ps[rp0[i]->index];
 			len = LEN(redv); mr = BDY(redv);
 			svect[k] = 0; prev = k;
@@ -3832,9 +3839,10 @@ void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,i
 	}
 	for ( i = 0; i < col; i++ )
 		if ( svect[i] >= (UINT)m ) svect[i] %= m;
+	return maxrs;
 }
 
-void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+int ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
 	int i,j,k,len,pos,prev;
 	UINT c,c1,c2,c3,up,lo,dmy;
@@ -3845,11 +3853,14 @@ void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp
 	NDV redv;
 	NMV mr;
 	NODE rp;
+	int maxrs;
 
+	maxrs = 0;
 	for ( i = 0; i < nred; i++ ) {
 		ivect = imat[i];
 		k = ivect->head; svect[k] %= m;
 		if ( c = svect[k] ) {
+			maxrs = MAX(maxrs,rp0[i]->sugar);
 			c = _chsgnsf(c); redv = nd_ps[rp0[i]->index];
 			len = LEN(redv); mr = BDY(redv);
 			svect[k] = 0; prev = k;
@@ -3878,6 +3889,7 @@ void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp
 			}
 		}
 	}
+	return maxrs;
 }
 
 NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
@@ -3927,7 +3939,7 @@ int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
 {
 	NODE rp0,rp;
 	NM mul,head,s0,s;
-	int index,col,i;
+	int index,col,i,sugar;
 	RHist h;
 	UINT *s0v,*p;
 	NM_ind_pair pair;
@@ -3946,7 +3958,8 @@ int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
 			NEWNM(mul);
 			ndl_sub(DL(head),DL(h),DL(mul));
 			if ( ndl_check_bound2(index,DL(mul)) ) return 0;
-			MKNM_ind_pair(pair,mul,index);
+			sugar = TD(DL(mul))+SG(nd_ps[index]);
+			MKNM_ind_pair(pair,mul,index,sugar);
 			red = ndv_mul_nm_symbolic(mul,nd_ps[index]);
 			add_pbucket_symbolic(bucket,nd_remove_head(red));
 			NEXTNODE(rp0,rp); BDY(rp) = (pointer)pair;
@@ -4023,7 +4036,6 @@ NODE nd_f4(int m)
 		/* adding new bases */
 		for ( r = nflist; r; r = NEXT(r) ) {
 			nf = (NDV)BDY(r);
-			SG(nf) = sugar;
 			ndv_removecont(m,nf);
 			nh = ndv_newps(nf,0);
 			d = update_pairs(d,g,nh);
@@ -4049,6 +4061,8 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 	int *colstat;
 	struct oEGT eg0,eg1,eg_f4;
 	NM_ind_pair *rvect;
+	int maxrs;
+	int *spsugar;
 
 	get_eg(&eg0);
 	for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
@@ -4068,20 +4082,24 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 	/* elimination (1st step) */
 	spmat = (int **)ALLOCA(nsp*sizeof(UINT *));
 	svect = (UINT *)ALLOCA(col*sizeof(UINT));
+	spsugar = (int *)ALLOCA(nsp*sizeof(UINT));
 	for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
 		nd_sp(m,0,sp,&spol);
 		if ( !spol ) continue;
 		nd_to_vect(m,s0vect,col,spol,svect);
-		nd_free(spol);
-		if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rvect,nred);
-		else ndv_reduce_vect(m,svect,col,imat,rvect,nred);
+		if ( m == -1 ) 
+			maxrs = ndv_reduce_vect_sf(m,svect,col,imat,rvect,nred);
+		else
+			maxrs = ndv_reduce_vect(m,svect,col,imat,rvect,nred);
 		for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
 		if ( i < col ) {
 			spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
 			for ( j = k = 0; j < col; j++ )
 				if ( !rhead[j] ) v[k++] = svect[j];
+			spsugar[sprow] = MAX(maxrs,SG(spol));
 			sprow++;
 		}
+		nd_free(spol);
 	}
 	/* free index arrays */
 	for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
@@ -4089,13 +4107,14 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 	/* elimination (2nd step) */
 	colstat = (int *)ALLOCA(spcol*sizeof(int));
 	if ( m == -1 )
-		rank = generic_gauss_elim_sf(spmat,sprow,spcol,m,colstat);
+		rank = nd_gauss_elim_sf(spmat,spsugar,sprow,spcol,m,colstat);
 	else
-		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+		rank = nd_gauss_elim_mod(spmat,spsugar,sprow,spcol,m,colstat);
 	r0 = 0;
 	for ( i = 0; i < rank; i++ ) {
 		NEXTNODE(r0,r); BDY(r) = 
 			(pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+		SG((NDV)BDY(r)) = spsugar[i];
 		GC_free(spmat[i]);
 	}
 	for ( ; i < sprow; i++ ) GC_free(spmat[i]);
@@ -4269,6 +4288,8 @@ void nd_exec_f4_red_dist()
 	struct order_spec ord;
 	Obj ordspec;
 	ND spol;
+	int maxrs;
+	int *spsugar;
 
 	nd_read = iofp[0].in;
 	nd_write = iofp[0].out;
@@ -4327,31 +4348,151 @@ void nd_exec_f4_red_dist()
 	/* elimination (1st step) */
 	spmat = (int **)MALLOC(nsp*sizeof(UINT *));
 	svect = (UINT *)MALLOC(col*sizeof(UINT));
+	spsugar = (int *)ALLOCA(nsp*sizeof(UINT));
 	for ( a = sprow = 0; a < nsp; a++ ) {
 		nd_sp(m,0,sp0[a],&spol);
 		if ( !spol ) continue;
 		nd_to_vect(m,s0vect,col,spol,svect);
-		nd_free(spol);
-		if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rp0,nred);
-		else ndv_reduce_vect(m,svect,col,imat,rp0,nred);
+		if ( m == -1 ) 
+			maxrs = ndv_reduce_vect_sf(m,svect,col,imat,rp0,nred);
+		else 
+			maxrs = ndv_reduce_vect(m,svect,col,imat,rp0,nred);
 		for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
 		if ( i < col ) {
 			spmat[sprow] = v = (UINT *)MALLOC(spcol*sizeof(UINT));
 			for ( j = k = 0; j < col; j++ )
 				if ( !rhead[j] ) v[k++] = svect[j];
+			spsugar[sprow] = MAX(maxrs,SG(spol));
 			sprow++;
 		}
+		nd_free(spol);
 	}
 	/* elimination (2nd step) */
 	colstat = (int *)ALLOCA(spcol*sizeof(int));
 	if ( m == -1 )
-		rank = generic_gauss_elim_sf(spmat,sprow,spcol,m,colstat);
+		rank = nd_gauss_elim_sf(spmat,spsugar,sprow,spcol,m,colstat);
 	else
-		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+		rank = nd_gauss_elim_mod(spmat,spsugar,sprow,spcol,m,colstat);
 	nd_send_int(rank);
 	for ( i = 0; i < rank; i++ ) {
 		nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
 		nd_send_ndv(nf);
 	}
 	fflush(nd_write);
+}
+
+int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat)
+{
+	int i,j,k,l,inv,a,rank,s;
+	unsigned int *t,*pivot,*pk;
+	unsigned int **mat;
+
+	mat = (unsigned int **)mat0;
+	for ( rank = 0, j = 0; j < col; j++ ) {
+		for ( i = rank; i < row; i++ )
+			mat[i][j] %= md;
+		for ( i = rank; i < row; i++ )
+			if ( mat[i][j] )
+				break;
+		if ( i == row ) {
+			colstat[j] = 0;
+			continue;
+		} else
+			colstat[j] = 1;
+		if ( i != rank ) {
+			t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+			s = sugar[i]; sugar[i] = sugar[rank]; sugar[rank] = s;
+		}
+		pivot = mat[rank];
+		s = sugar[rank];
+		inv = invm(pivot[j],md);
+		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+			if ( *pk ) {
+				if ( *pk >= (unsigned int)md )
+					*pk %= md;
+				DMAR(*pk,inv,0,md,*pk)
+			}
+		for ( i = rank+1; i < row; i++ ) {
+			t = mat[i];
+			if ( a = t[j] ) {
+				sugar[i] = MAX(sugar[i],s);
+				red_by_vect(md,t+j,pivot+j,md-a,col-j);
+			}
+		}
+		rank++;
+	}
+	for ( j = col-1, l = rank-1; j >= 0; j-- )
+		if ( colstat[j] ) {
+			pivot = mat[l];
+			s = sugar[l];
+			for ( i = 0; i < l; i++ ) {
+				t = mat[i];
+				t[j] %= md;
+				if ( a = t[j] ) {
+					sugar[i] = MAX(sugar[i],s);
+					red_by_vect(md,t+j,pivot+j,md-a,col-j);
+				}
+			}
+			l--;
+		}
+	for ( j = 0, l = 0; l < rank; j++ )
+		if ( colstat[j] ) {
+			t = mat[l];
+			for ( k = j; k < col; k++ )
+				if ( t[k] >= (unsigned int)md )
+					t[k] %= md;
+			l++;
+		}
+	return rank;
+}
+
+int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat)
+{
+	int i,j,k,l,inv,a,rank,s;
+	unsigned int *t,*pivot,*pk;
+	unsigned int **mat;
+
+	mat = (unsigned int **)mat0;
+	for ( rank = 0, j = 0; j < col; j++ ) {
+		for ( i = rank; i < row; i++ )
+			if ( mat[i][j] )
+				break;
+		if ( i == row ) {
+			colstat[j] = 0;
+			continue;
+		} else
+			colstat[j] = 1;
+		if ( i != rank ) {
+			t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+			s = sugar[i]; sugar[i] = sugar[rank]; sugar[rank] = s;
+		}
+		pivot = mat[rank];
+		s = sugar[rank];
+		inv = _invsf(pivot[j]);
+		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+			if ( *pk )
+				*pk = _mulsf(*pk,inv);
+		for ( i = rank+1; i < row; i++ ) {
+			t = mat[i];
+			if ( a = t[j] ) {
+				sugar[i] = MAX(sugar[i],s);
+				red_by_vect_sf(md,t+j,pivot+j,_chsgnsf(a),col-j);
+			}
+		}
+		rank++;
+	}
+	for ( j = col-1, l = rank-1; j >= 0; j-- )
+		if ( colstat[j] ) {
+			pivot = mat[l];
+			s = sugar[l];
+			for ( i = 0; i < l; i++ ) {
+				t = mat[i];
+				if ( a = t[j] ) {
+					sugar[i] = MAX(sugar[i],s);
+					red_by_vect_sf(md,t+j,pivot+j,_chsgnsf(a),col-j);
+				}
+			}
+			l--;
+		}
+	return rank;
 }
