@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.35 2004/07/07 07:40:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.36 2004/10/27 08:21:47 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -696,6 +696,10 @@ pointer bevalf(FUNC f,NODE a)
 
 	if ( f->id == A_UNDEF ) {
 		sprintf(errbuf,"bevalf : %s undefined",NAME(f));
+		error(errbuf);
+	}
+	if ( getsecuremode() && !PVSS && !f->secure ) {
+		sprintf(errbuf,"bevalf : %s not permitted",NAME(f));
 		error(errbuf);
 	}
 	if ( f->id != A_PARI ) {
