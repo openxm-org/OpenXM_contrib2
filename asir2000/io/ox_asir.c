@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.47 2003/12/11 05:48:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.48 2003/12/12 04:59:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -556,11 +556,12 @@ void asir_tcp_connect_102(unsigned int serial)
 		port = QTOS(p);
 		sprintf(port_str,"%d",port);
 		use_unix = 0;
+		host = BDY((STRING)h);
 	} else {
 		strcpy(port_str,BDY((STRING)p));
 		use_unix = 1;
+		host = 0;
 	}
-	host = BDY((STRING)h);
 	s = try_connect(use_unix,host,port_str);
 	rank = QTOS((Q)r);
 	if ( register_102(s,rank,1) < 0 ) {
