@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.18 2004/07/13 09:10:39 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.19 2004/08/05 00:56:54 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -323,16 +323,6 @@ void vartoquote(V v,QUOTE *c)
 				MKQUOTE(u,mkfnode(1,I_PAREN,BDY(a))); a = u;
 			}
 			objtoquote(ad[1].arg,&b);
-			x = (P)ad[1].arg;
-			/* check whether x is a non-negative integer or a variable */
-			if ( !x || (INT(x) && SGN((Q)x) > 0)
-				|| (OID(x)==O_P && !NEXT(DC(x))
-					&& UNIQ(DEG(DC(x))) && UNIQ(COEF(DC(x)))) ) {
-				/* use b as is */
-			} else {
-				/* b => (b) */
-				MKQUOTE(u,mkfnode(1,I_PAREN,BDY(b))); b = u;
-			}
 			pwrquote(CO,a,b,c);
 		} else {
 			for ( i = 0; i < pf->argc; i++ )
