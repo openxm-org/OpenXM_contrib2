@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.31 2004/03/09 09:40:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.32 2004/04/15 08:14:13 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2058,6 +2058,7 @@ LIST dp_initial_term(LIST f,struct order_spec *ord)
 				case IS_SPARSE_WEIGHT:
 					n = ord->nv;
 					weight = (int *)ALLOCA(n*sizeof(int));
+					for ( i = 0; i < n; i++ ) weight[i] = 0;
 					l = worb->length;
 					for ( i = 0; i < l; i++ )
 						weight[worb->body.sparse_weight[i].pos]
@@ -2134,6 +2135,7 @@ LIST dp_order(LIST f,struct order_spec *ord)
 				case IS_SPARSE_WEIGHT:
 					n = ord->nv;
 					weight = (int *)ALLOCA(n*sizeof(int));
+					for ( i = 0; i < n; i++ ) weight[i] = 0;
 					l = worb->length;
 					for ( i = 0; i < l; i++ )
 						weight[worb->body.sparse_weight[i].pos]
