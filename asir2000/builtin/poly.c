@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.11 2001/05/28 08:22:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.12 2001/06/29 09:08:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,7 +64,7 @@ void Pmergelist(), Pch_mv(), Pre_mv(), Pdeglist();
 void Pptomp(),Pmptop();
 void Pptolmp(),Plmptop();
 void Pptosfp(),Psfptop(),Psf_galois_action(),Psf_embed(),Psf_find_root();
-void Psf_minipoly();
+void Psf_minipoly(),Psf_log();
 void Pptogf2n(),Pgf2ntop(),Pgf2ntovect();
 void Pptogfpn(),Pgfpntop();
 void Pfind_root_gf2n();
@@ -155,6 +155,8 @@ struct ftab poly_tab[] = {
 	{"sf_find_root",Psf_find_root,1},
 	{"sf_minipoly",Psf_minipoly,2},
 	{"sf_embed",Psf_embed,3},
+	{"sf_log",Psf_log,1},
+
 	{"ptosfp",Pptosfp,1},
 	{"sfptop",Psfptop,1},
 	{"ptogf2n",Pptogf2n,1},
@@ -1208,6 +1210,18 @@ P *rp;
 	k = CONT((GFS)ARG1(arg));
 	pm = QTOS((Q)ARG2(arg));
 	sf_embed((P)ARG0(arg),k,pm,rp);
+}
+
+void Psf_log(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int k;
+
+	if ( !ARG0(arg) )
+		error("sf_log : invalid armument");
+	k = CONT((GFS)ARG0(arg));
+	STOQ(k,*rp);
 }
 
 void Psf_find_root(arg,rp)
