@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.16 2002/10/01 09:58:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.17 2003/02/14 22:29:07 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -131,11 +131,19 @@ void Popen_file(NODE arg,Q *rp)
 	if ( i == BUFSIZ )
 		error("open_file : too many open files");
 	name = BDY((STRING)ARG0(arg));
-	if ( argc(arg) == 2 ) {
+	if (strcmp(name,"unix://stdin") == 0) {
+	  fp = stdin;
+	}else if (strcmp(name,"unix://stdout") == 0) {
+	  fp = stdout;
+    }else if (strcmp(name,"unix://stderr") == 0) {
+	  fp = stderr;
+    }else{
+	  if ( argc(arg) == 2 ) {
 		asir_assert(ARG1(arg),O_STR,"open_file");
 		fp = fopen(name,BDY((STRING)ARG1(arg)));
-	} else
+	  } else
 		fp = fopen(name,"r");
+    }
 	if ( !fp ) {
 		sprintf(errbuf,"open_file : cannot open \"%s\"",name);
 		error(errbuf);
