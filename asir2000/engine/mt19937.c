@@ -1,4 +1,5 @@
-/* $OpenXM: OpenXM/src/asir99/engine/mt19937.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/mt19937.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ 
+*/
 #include <stdio.h>
 
 /* A C-program for MT19937: Real number version                */
