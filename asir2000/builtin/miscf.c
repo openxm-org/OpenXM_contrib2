@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/miscf.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #if INET && !defined(VISUAL)
@@ -12,6 +12,8 @@ void Pr2g(), Pread_cmo(), Pwrite_cmo();
 void Pgc(),Pbatch(),Psend_progress();
 void Pnull_command();
 void Pgetenv();
+void Plib_ox_push_cmo(),Plib_ox_pop_cmo(),Plib_ox_push_cmd();
+void Plib_ox_execute_string();
 
 void delete_history(int,int);
 
@@ -40,8 +42,62 @@ struct ftab misc_tab[] = {
 #if 0
 	{"opt",Popt,1},
 #endif
+/* test functions for library mode ox operations */
+	{"lib_ox_push_cmo",Plib_ox_push_cmo,1},
+	{"lib_ox_pop_cmo",Plib_ox_pop_cmo,0},
+	{"lib_ox_push_cmd",Plib_ox_push_cmd,1},
+	{"lib_ox_execute_string",Plib_ox_execute_string,1},
 	{0,0,0},
 };
+
+extern int little_endian;
+
+int lib_ox_initialized;
+
+void Plib_ox_push_cmo(arg,rp)
+NODE arg;
+Q *rp;
+{
+	void *cmo;
+
+	if ( !lib_ox_initialized ) asir_ox_io_init(little_endian);
+	risa_to_cmo(ARG0(arg),&cmo);
+	asir_ox_push_cmo(cmo);
+	*rp = ONE;
+}
+
+void Plib_ox_pop_cmo(rp)
+Obj *rp;
+{
+	void *buf;
+	int ret,len;
+
+	if ( !lib_ox_initialized ) asir_ox_io_init(little_endian);
+	len = asir_ox_peek_cmo_size();
+	buf = (void *)MALLOC_ATOMIC(len);
+	ret = asir_ox_pop_cmo(buf,len);
+	if ( ret < 0 )
+		error("lib_ox_pop_cmo : buffer too small (cannot happen!)");
+	cmo_to_risa(buf,rp);
+}
+
+void Plib_ox_push_cmd(arg,rp)
+NODE arg;
+Q *rp;
+{
+	if ( !lib_ox_initialized ) asir_ox_io_init(little_endian);
+	asir_ox_push_cmd((unsigned int)QTOS((Q)ARG0(arg)));
+	*rp = ONE;
+}
+
+void Plib_ox_execute_string(arg,rp)
+NODE arg;
+Q *rp;
+{
+	if ( !lib_ox_initialized ) asir_ox_io_init(little_endian);
+	asir_ox_execute_string(BDY((STRING)ARG0(arg)));
+	*rp = ONE;
+}
 
 void Pgetenv(arg,rp)
 NODE arg;

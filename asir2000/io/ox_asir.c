@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.2 1999/12/22 07:01:39 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -637,4 +637,176 @@ static void ox_io_init() {
 	write_char(iofp[0].out,&c); ox_flush_stream_force(0);
 	read_char(iofp[0].in,&rc);
 	iofp[0].conv = c == rc ? 0 : 1;
+}
+
+/*
+ * Library mode functions
+ */
+
+/*
+ * Converts a binary encoded CMO into a risa object
+ * and pushes it onto the stack.
+ */
+
+void asir_ox_push_cmo(void *cmo)
+{
+	Obj obj;
+
+	ox_copy_init(cmo);
+	ox_buf_to_obj_as_cmo(&obj);
+	asir_push_one(obj);
+}
+
+/*
+ * Pop an object from the stack and converts it
+ * int a binary encoded CMO.
+ */
+
+int asir_ox_pop_cmo(void *cmo, int limit)
+{
+	Obj obj;
+	int len;
+
+	obj = asir_pop_one();
+	len = count_as_cmo(obj);
+	if ( len <= limit ) {
+		ox_copy_init(cmo);
+		ox_obj_to_buf_as_cmo(obj);
+		return len;
+	} else
+		return -1;
+}
+
+/*
+ * Executes an SM command.
+ */
+
+void asir_ox_push_cmd(unsigned int cmd)
+{
+	asir_do_cmd(cmd,0);
+}
+
+/*
+ * Executes a string written in Asir. 
+ */
+
+void asir_ox_execute_string(char *s)
+{
+	STRING str;
+
+	MKSTR(str,s);
+	asir_push_one((Obj)str);
+	asir_executeString();
+}
+
+/*
+ * Returns the size as a CMO of the object 
+ * at the top of the stack.
+ */
+
+int asir_ox_peek_cmo_size()
+{
+	Obj obj;
+	int len;
+
+	obj = asir_pop_one();
+	len = count_as_cmo(obj);
+	asir_push_one(obj);
+	return len;
+}
+
+/*
+ * Initialization.
+ * byteorder = 1 : little endian
+ *             0 : big endian
+ */
+
+void asir_ox_io_init();
+
+void asir_ox_init(int byteorder)
+{
+	int tmp;
+	char ifname[BUFSIZ];
+	extern int GC_dont_gc;
+	extern int read_exec_file;
+	extern int do_asirrc;
+	extern int do_server_in_X11;
+	char *getenv();
+	static ox_asir_initialized = 0;
+	FILE *ifp;
+
+#if !defined(VISUAL) && !MPI
+	do_server_in_X11 = 1; /* XXX */
+#endif
+	asir_save_handler();
+#if PARI
+	risa_pari_init();
+#endif
+	srandom((int)get_current_time());
+
+#if defined(THINK_C)
+	param_init();
+#endif
+	StackBottom = &tmp + 1; /* XXX */
+	rtime_init();
+	env_init();
+	endian_init();
+#if !defined(VISUAL) && !defined(THINK_C)
+/*	check_key(); */
+#endif
+	GC_init();
+/*	process_args(argc,argv); */
+	output_init();
+	arf_init();
+	nglob_init();
+	glob_init();
+	sig_init();
+	tty_init();
+	debug_init();
+	pf_init();
+	sysf_init();
+	parif_init();
+#if defined(VISUAL)
+	init_socket();
+#endif
+#if defined(UINIT)
+	reg_sysf();
+#endif
+#if defined(THINK_C)
+	sprintf(ifname,"asirrc");
+#else
+	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
+#endif
+	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
+		input_init(ifp,ifname);
+		if ( !setjmp(env) ) {
+			read_exec_file = 1;
+			read_eval_loop();
+			read_exec_file = 0;
+		}
+		fclose(ifp);
+	}
+	input_init(0,"string");
+	asir_ox_io_init(byteorder);
+	create_my_mathcap("ox_asir");
+}
+
+void asir_ox_io_init(byteorder)
+int byteorder;
+{
+	unsigned char c;
+	extern int little_endian;
+	extern int lib_ox_initialized;
+
+	endian_init();
+	asir_OperandStackSize = BUFSIZ;
+	asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));
+	asir_OperandStackPtr = -1;
+	if ( little_endian )
+		c = 1;
+	else
+		c = 0;
+	iofp[0].conv = c == byteorder ? 0 : 1;
+	lib_ox_initialized = 1;
+	do_message = 0;
 }

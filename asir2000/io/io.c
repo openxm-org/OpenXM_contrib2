@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/io.c,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include <stdio.h>
 #include "ca.h"
 #if defined(VISUAL) || MPI
@@ -33,6 +33,14 @@ Obj p;
 	return ox_count_length;
 }
 
+int count_as_cmo(p)
+Obj p;
+{
+	ox_count_length = 0;
+	ox_do_count = 1; write_cmo(0,p); ox_do_count = 0;
+	return ox_count_length;
+}
+
 int countvl(vl)
 VL vl;
 {
@@ -59,10 +67,43 @@ Obj *p;
 	ox_do_copy = 1; loadobj(0,p); ox_do_copy = 0;
 }
 
+void ox_obj_to_buf_as_cmo(p)
+Obj p;
+{
+	ox_do_copy = 1; write_cmo(0,p); ox_do_copy = 0;
+}
+
+void ox_buf_to_obj_as_cmo(p)
+Obj *p;
+{
+	ox_do_copy = 1; read_cmo(0,p); ox_do_copy = 0;
+}
+
 void ox_vl_to_buf(vl)
 VL vl;
 {
 	ox_do_copy = 1; savevl(0,vl); ox_do_copy = 0;
+}
+
+void risa_to_cmo(obj,cmo)
+Obj obj;
+void **cmo;
+{
+	int len;
+	void *buf;
+
+	len = count_as_cmo(obj);
+	*cmo = buf = (void *)MALLOC_ATOMIC(len);
+	ox_copy_init(buf);
+	ox_obj_to_buf_as_cmo(obj);
+}
+
+void cmo_to_risa(cmo,obj)
+void *cmo;
+Obj *obj;
+{
+	ox_copy_init(cmo);
+	ox_buf_to_obj_as_cmo(obj);
 }
 
 int gen_fread (ptr,size,nitems,stream)

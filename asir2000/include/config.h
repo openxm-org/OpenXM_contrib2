@@ -1,1 +1,1 @@
-#define OpenXM_HOME /usr/local
+#define OpenXM_HOME /export/home/noro/ca/Kobe/OpenXM
