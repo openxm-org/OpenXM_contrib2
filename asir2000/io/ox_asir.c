@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.37 2001/12/28 09:50:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.38 2002/02/25 06:39:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -920,7 +920,7 @@ int asir_ox_peek_cmo_string_length()
 		return 0;
 	}
 	len = estimate_length(CO,obj);
-	return len;
+	return len+1;
 }
 
 /*
