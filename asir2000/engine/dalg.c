@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.2 2004/12/02 08:39:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.3 2004/12/02 13:48:43 noro Exp $
 */
 
 #include "ca.h"
@@ -56,6 +56,32 @@ void setfield_dalg(NODE alist)
 	nf->mb = mb = (DP *)MALLOC(dim*sizeof(DP));
 	for ( i = 0, t = mblist; t; t = NEXT(t), i++ )
 		mb[i] = (DP)BDY(t);	
+}
+
+void qtodalg(Q q,DAlg *r)
+{
+	NumberField nf;
+	Q t;
+	DP nm;
+
+	if ( !(nf=current_numberfield) )
+		error("qtodalg : current_numberfield is not set");
+	if ( !q )
+		*r = 0;
+	else if ( NID(q) == N_DA )
+		*r = (DAlg)q;
+	else if ( NID(q) == N_Q ) {
+		if ( INT(q) ) {
+			muldc(CO,nf->one->nm,(P)q,&nm);
+			MKDAlg(nm,ONE,*r);
+		} else {
+			NTOQ(NM(q),SGN(q),t);
+			muldc(CO,nf->one->nm,(P)t,&nm);
+			NTOQ(DN(q),1,t);
+			MKDAlg(nm,t,*r);
+		}
+	} else
+		error("qtodalg : invalid argument");
 }
 
 void algtodalg(Alg a,DAlg *r)
@@ -157,6 +183,7 @@ void adddalg(DAlg a,DAlg b,DAlg *c)
 	NumberField nf;
 	Q dna,dnb,a1,b1,dn,g;
 	N an,bn,gn;
+	DAlg t;
 	DP ta,tb,nm;
 	struct order_spec *current_spec;
 
@@ -167,6 +194,7 @@ void adddalg(DAlg a,DAlg b,DAlg *c)
 	else if ( !b )
 		*c = a;
 	else {
+		qtodalg((Q)a,&t); a = t; qtodalg((Q)b,&t); b = t;
 		dna = a->dn;
 		dnb = b->dn;
 		gcdn(NM(dna),NM(dnb),&gn);
@@ -192,6 +220,7 @@ void subdalg(DAlg a,DAlg b,DAlg *c)
 	Q dna,dnb,a1,b1,dn,g;
 	N an,bn,gn;
 	DP ta,tb,nm;
+	DAlg t;
 	struct order_spec *current_spec;
 
 	if ( !(nf=current_numberfield) )
@@ -201,6 +230,7 @@ void subdalg(DAlg a,DAlg b,DAlg *c)
 	else if ( !b )
 		*c = a;
 	else {
+		qtodalg((Q)a,&t); a = t; qtodalg((Q)b,&t); b = t;
 		dna = a->dn;
 		dnb = b->dn;
 		gcdn(NM(dna),NM(dnb),&gn);
@@ -233,6 +263,7 @@ void muldalg(DAlg a,DAlg b,DAlg *c)
 	if ( !a || !b )
 		*c = 0;
 	else {
+		qtodalg((Q)a,&t); a = t; qtodalg((Q)b,&t); b = t;
 		current_spec = dp_current_spec; initd(nf->spec);
 		muld(CO,a->nm,b->nm,&nm);
 		initd(current_spec);
@@ -245,7 +276,7 @@ void muldalg(DAlg a,DAlg b,DAlg *c)
 
 void divdalg(DAlg a,DAlg b,DAlg *c)
 {
-	DAlg inv;
+	DAlg inv,t;
 
 	if ( !current_numberfield )
 		error("divdalg : current_numberfield is not set");
@@ -254,6 +285,7 @@ void divdalg(DAlg a,DAlg b,DAlg *c)
 	if ( !a )
 		c = 0;
 	else {
+		qtodalg((Q)a,&t); a = t; qtodalg((Q)b,&t); b = t;
 		invdalg(b,&inv);
 		muldalg(a,inv,c);
 	}
@@ -298,6 +330,10 @@ void invdalg(DAlg a,DAlg *c)
 		error("invdalg : current_numberfield is not set");
 	if ( !a )
 		error("invdalg : division by 0");
+	else if ( NID(a) == N_Q ) {
+		invq((Q)a,&dn); *c = (DAlg)dn;
+		return;
+	}
 	dim = nf->dim;
 	mb = nf->mb;
 	n = nf->n;
@@ -351,9 +387,12 @@ void invdalg(DAlg a,DAlg *c)
 void chsgndalg(DAlg a,DAlg *c)
 {
 	DP nm;
+	Q t;
 
 	if ( !a ) *c = 0;
-	else {
+	else if ( NID(a) == N_Q ) {
+		chsgnq((Q)a,&t); *c = (DAlg)t;
+	} else {
 		chsgnd(a->nm,&nm);
 		MKDAlg(nm,a->dn,*c);
 	}
@@ -363,12 +402,17 @@ void pwrdalg(DAlg a,Q e,DAlg *c)
 {
 	NumberField nf;
 	DAlg t,z,y;
+	Q q;
 	N en,qn;
 	int r;
 
 	if ( !(nf=current_numberfield) )
 		error("pwrdalg : current_numberfield is not set");
-	if ( !e )
+	if ( !a )
+		*c = !e ? (DAlg)ONE : 0;
+	else if ( NID(a) == N_Q ) {
+		pwrq((Q)a,e,&q); *c = (DAlg)q;
+	} else if ( !e )
 		*c = nf->one;
 	else if ( UNIQ(e) )
 		*c = a;
