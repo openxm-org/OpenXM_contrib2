@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/round.c,v 1.2 2003/12/02 03:26:14 noro Exp $ */
 
 #define INTERVAL
 #include "ca.h"
@@ -33,6 +33,8 @@ void Padd_pinf(NODE arg,Real *rp)
 		*rp = b;
 	else if ( !b )
 		*rp = a;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("add_pinf : invalid argument");
 	else {
 		FPPLUSINF
 		c = BDY(a)+BDY(b);
@@ -53,6 +55,8 @@ void Padd_minf(NODE arg,Real *rp)
 		*rp = b;
 	else if ( !b )
 		*rp = a;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("add_pinf : invalid argument");
 	else {
 		FPMINUSINF
 		c = BDY(a)+BDY(b);
@@ -79,6 +83,8 @@ void Psub_pinf(NODE arg,Real *rp)
 		}
 	} else if ( !b )
 		*rp = a;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("sub_pinf : invalid argument");
 	else {
 		FPPLUSINF
 		c = BDY(a)-BDY(b);
@@ -105,6 +111,8 @@ void Psub_minf(NODE arg,Real *rp)
 		}
 	} else if ( !b )
 		*rp = a;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("sub_minf : invalid argument");
 	else {
 		FPMINUSINF
 		c = BDY(a)-BDY(b);
@@ -123,6 +131,8 @@ void Pmul_pinf(NODE arg,Real *rp)
 	b = (Real)ARG1(arg);
 	if ( !a || !b )
 		*rp = 0;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("mul_pinf : invalid argument");
 	else {
 		FPPLUSINF
 		c = BDY(a)*BDY(b);
@@ -141,6 +151,8 @@ void Pmul_minf(NODE arg,Real *rp)
 	b = (Real)ARG1(arg);
 	if ( !a || !b )
 		*rp = 0;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("mul_minf : invalid argument");
 	else {
 		FPMINUSINF
 		c = BDY(a)*BDY(b);
@@ -161,6 +173,8 @@ void Pdiv_pinf(NODE arg,Real *rp)
 		error("div_pinf : division by 0");
 	else if ( !a )
 		*rp = 0;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("div_pinf : invalid argument");
 	else {
 		FPPLUSINF
 		c = BDY(a)/BDY(b);
@@ -178,9 +192,11 @@ void Pdiv_minf(NODE arg,Real *rp)
 	a = (Real)ARG0(arg);
 	b = (Real)ARG1(arg);
 	if ( !b )
-		error("div_pinf : division by 0");
+		error("div_minf : division by 0");
 	else if ( !a )
 		*rp = 0;
+	else if ( NID(a) != N_R || NID(b) != N_R )
+		error("div_minf : invalid argument");
 	else {
 		FPMINUSINF
 		c = BDY(a)/BDY(b);
