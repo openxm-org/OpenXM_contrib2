@@ -1,0 +1,3239 @@
+extern Hom,GBTime$
+extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
+extern T_GRF,T_INT,T_PD,T_MP$
+extern BuchbergerMinipoly,PartialDecompByLex,ParallelMinipoly$
+extern B_Win,D_Win$
+extern COMMONCHECK_SF,CID_SF$
+
+/*==============================================*/
+/*  prime decomposition of ideals over 		*/
+/*  finite fields				*/
+/*        part 1 				*/
+/*	radical computation 			*/
+/*  28/12/2002	for Basic Small Finite Field	*/
+/*   4/1/2003	for Arbitary Small Finite Field	*/
+/*==============================================*/
+
+/*==============================================*/
+/*  radical computation of ideals over 		*/
+/*  finite fields by Matsumoto's algorithm	*/
+/*						*/
+/* The radical of I is computed as the 		*/
+/* kernel of a power of Frobenius map.		*/
+/* 						*/
+/*  radical 					*/
+/*	Input: a list P of polynomials		*/
+/*	Output: a list P1 of polynomials 	*/
+/*	     such that <P1>=rad(<P>)		*/
+/*						*/
+/*  frobeniuskernel_main{2}			*/
+/*	Input: a list of polynomials P,		*/
+/* 	       a list of variables VSet,	*/
+/*	   and a list of other variables WSet	*/
+/*	Output: a list of polynomials Q		*/
+/*	   such that Q is the kernel of 	*/
+/*         single Frobenius map: x--> x^q	*/
+/*	   where q is the characteristic.	*/
+/*	version 2 uses successive kernel	*/
+/*	computation suggested by Matsumoto	*/
+/*						*/
+/*  coefficientfrobeniuskernel			*/
+/*	Input: a list of polynomials P,		*/
+/*	Output: a list of polynomials Q		*/
+/*	   such that Q is the kernel of 	*/
+/*         single coefficient Frobenius 	*/
+/*	   map: a in GF(q) --> a^q		*/
+/*	   where q is the characteristic.	*/
+/*						*/
+/*  elimination					*/
+/*	Input: a list P of polynomials		*/
+/*	       a list V of variables		*/
+/*	Output: a list P1 of polynomials 	*/
+/*  		such that P1={f\in P | 		*/
+/*		  vars(f)\cap V =\emptyset}	*/
+/*						*/
+/*  checkequality				*/
+/*	Input: a list P of polynomials		*/
+/*	       a list Q of polynomials		*/
+/*	Output: 1 if <P>=<Q>			*/
+/*		0 otherwise			*/
+/*						*/
+/*						*/
+/*  						*/
+/*==============================================*/
+
+def radicalideal(P,Choice,VSet)
+	{
+
+	GBTime=0;
+	Ord=0;
+
+	/* VSet=vars(P);*/
+	WSet=makecounterpart(VSet);
+
+T000=time()[0];
+	P1=dp_gr_f_main(P,VSet,Hom,Ord);
+T001=time()[0];
+GBTime +=T001-T000;
+
+	if ( Choice == 3 )
+		{
+		P2=frobeniuskernel_main3(P1,VSet,WSet);
+		}
+	else if ( Choice == 2 )
+		{
+		P2=frobeniuskernel_main2(P1,VSet,WSet);	
+		}
+	else if ( Choice == 4 )
+		{
+		P2=frobeniuskernel_main4(P1,VSet,WSet);	
+		}
+	else  
+		{
+		P2=frobeniuskernel_main(P1,VSet,WSet);	
+		}
+
+	M=checkequality(P1,P2,VSet);
+
+	while ( M !=1 )
+		{
+		P1=P2;
+		P2=frobeniuskernel_main2(P2,VSet,WSet);
+		M=checkequality(P1,P2,VSet);
+		}
+
+	return P1;
+	}
+
+
+def frobeniuskernel_main(P,VSet,WSet)
+	{
+	NV=length(VSet);
+
+	NewP=coefficientfrobeniuskernel(P);
+
+	NW=length(NewP);
+
+	TempP=NewP;
+
+	for (K=NW-1;K>=0;K--)
+		{
+		Poly=TempP[K];
+		for (J=0;J<NV;J++)
+			{
+			Poly=subst(Poly,VSet[J],WSet[J]);
+			}
+		NewP=cons(Poly,NewP);
+		}
+
+	XSet=append(VSet,WSet);
+	NewOrder=[[0,length(VSet)],[0,length(WSet)]];
+
+	Char=setmod_ff()[0];
+
+	for (I=0;I<NV;I++)
+		{
+		AddPoly=VSet[I]^Char-WSet[I];
+		NewP=cons(AddPoly,NewP);
+		}
+
+	G=dp_gr_f_main(NewP,XSet,Hom,NewOrder);
+	PW=elimination(G,WSet);
+
+	NW=length(PW);
+	ANS=[];
+	for (I=NW-1;I>=0;I--)
+		{
+		Poly=PW[I];
+		for (J=0;J<NV;J++)
+			{
+			Poly=subst(Poly,WSet[J],VSet[J]);
+			}
+		ANS=cons(Poly,ANS);
+		}
+	return ANS;
+	}
+
+def frobeniuskernel_main2(P,VSet,WSet)
+	{
+	NV=length(VSet);
+
+	NewP=coefficientfrobeniuskernel(P);
+
+	XSet=append(VSet,WSet);
+	NewOrder=[[0,NV],[0,NV]];
+
+	Char=setmod_ff()[0];
+
+	for (I=0;I<NV;I++)
+		{
+		for (J=0;J<NV;J++)
+			{
+			if ( I == J )
+				{
+				AddPoly=VSet[J]^Char-WSet[J];
+				}
+			else
+				{
+				AddPoly=VSet[J]-WSet[J];
+				}			
+			NewP=cons(AddPoly,NewP);
+			}
+
+T000=time()[0];
+		GP=dp_gr_f_main(NewP,XSet,Hom,NewOrder);
+T001=time()[0];
+GBTime += T001-T000;
+
+		PW=elimination(GP,WSet);
+		NW=length(PW);
+		NewP=[];
+		for (K=NW-1;K>=0;K--)
+			{
+			Poly=PW[K];
+			for (J=0;J<NV;J++)
+				{
+				Poly=subst(Poly,WSet[J],VSet[J]);
+				}
+			NewP=cons(Poly,NewP);
+			}
+		}
+	return NewP;
+	}
+
+
+def frobeniuskernel_main4(P,VSet,WSet)
+	{
+	NV=length(VSet);
+
+	NewP=coefficientfrobeniuskernel(P);
+
+	XSet=append(VSet,WSet);
+	NewOrder=[[0,NV],[0,NV]];
+
+	Char=setmod_ff()[0];
+
+	for (I=0;I<NV;I++)
+		{
+		NW=length(NewP);
+		TempP=NewP;
+
+		for (J=0;J<NV;J++)
+			{
+			if ( I == J )
+				{
+				AddPoly=VSet[J]^Char-WSet[J];
+				}
+			else
+				{
+				AddPoly=VSet[J]-WSet[J];
+				}			
+			NewP=cons(AddPoly,NewP);
+			}
+
+		/* for (K=NW-1;K>=0;K--)
+			{
+			Poly=TempP[K];
+			for (J=0;J<NV;J++)
+				{
+				if ( J == I )
+					{
+					Poly=subst(Poly,VSet[J],WSet[J]);
+					}
+				else
+					{
+					Poly=subst(Poly,VSet[J],WSet[J]^Char);
+					}
+				}
+			NewP=cons(Poly,NewP);
+			}*/
+T000=time()[0];
+		GP=dp_gr_f_main(NewP,XSet,Hom,NewOrder);
+T001=time()[0];
+GBTime += T001-T000;
+
+		PW=elimination(GP,WSet);
+		NW=length(PW);
+		NewP=[];
+		for (K=NW-1;K>=0;K--)
+			{
+			Poly=PW[K];
+			for (J=0;J<NV;J++)
+				{
+				Poly=subst(Poly,WSet[J],VSet[J]);
+				}
+			NewP=cons(Poly,NewP);
+			}
+		}
+	return NewP;
+	}
+
+def frobeniuskernel_main3(P,VSet,WSet)
+	{
+	NV=length(VSet);
+
+	NewP=coefficientfrobeniuskernel(P);
+
+	Char=setmod_ff()[0];
+
+	for (I=0;I<NV;I++)
+		{
+		XWSet=[];
+		for (J=0;J<NV;J++)
+			{
+			if ( I == J )
+				{
+				AddPoly=VSet[I]^Char-WSet[I];
+				NewP=cons(AddPoly,NewP);
+				XWSet=append(XWSet,[WSet[I]]);
+				}
+			else
+				{
+				XWSet =append(XWSet,[VSet[J]]);
+				}			
+			}
+
+		XSet=cons(VSet[I],XWSet);
+
+		NewOrder=[[0,1],[0,NV]];
+T000=time()[0];
+		GP=dp_gr_f_main(NewP,XSet,Hom,NewOrder);
+T001=time()[0];
+GBTime += T001-T000;
+
+		PW=elimination(GP,XWSet);
+		NW=length(PW);
+		NewP=[];
+		for (K=NW-1;K>=0;K--)
+			{
+			Poly=PW[K];
+			Poly=subst(Poly,WSet[I],VSet[I]);
+			NewP=cons(Poly,NewP);
+			}
+		}
+	return NewP;
+	}
+
+def coefficientfrobeniuskernel(P)
+	{
+	if ( setmod_ff()[1] == 0 )
+		{
+		return P;
+		}
+
+	NP=length(P);
+	ANS=[];
+	for (I=0;I<NP;I++)
+		{
+		TEST=P[I];
+		Q=coefficientfrobeniuskernel_main(TEST);
+		ANS=append(ANS,[Q]);
+		}
+	return ANS;
+	}
+
+def coefficientfrobeniuskernel_main(Poly)
+	{
+	Vars=vars(Poly);
+	QP=dp_ptod(Poly,Vars);
+	ANS=0;
+	FOrd=deg(setmod_ff()[1],x);
+	Char=setmod_ff()[0];
+	Pow=Char^(FOrd-1);
+
+	while(QP !=0 )
+		{
+		Coef=dp_hc(QP);
+		HT=dp_ht(QP);
+
+		ANS=ANS+Coef^Pow*dp_dtop(HT,Vars);
+
+		QP=dp_rest(QP);
+		}
+	return ANS;
+	}
+
+
+def elimination(G,V)
+	{
+	ANS=[];
+	NG=length(G);
+
+	for (I=NG-1;I>=0;I--)
+		{
+		VSet=vars(G[I]);
+		DIFF=setminus(VSet,V);
+
+		if ( DIFF ==[] ) 
+			{
+			ANS=cons(G[I],ANS);
+			}
+		}
+	return ANS;
+	}
+
+def setminus(A,B)
+	{
+	NA=length(A);
+	NB=length(B);
+
+	ANS=[];
+
+	for (I=0;I<NA;I++)
+		{
+		Flag =0;
+		for (J=0;J<NB;J++)
+			{
+			if (A[I] == B[J])
+				{
+				Flag=1;
+				break;
+				}
+			}
+
+		if ( Flag == 0 )
+			{
+			ANS=append(ANS,[A[I]]);
+			}
+		}
+	return ANS;
+	}
+
+def makecounterpart(V)
+	{
+	NV=length(V);
+
+	A="tmp";
+
+	ANS=[];
+	for (I=NV-1;I>=0;I--)
+		{
+		T=strtov(A+rtostr(I));
+		ANS=cons(T,ANS);
+		}
+	return ANS;
+	}
+
+def checkequality(P,Q,VSet)
+	{
+	QQ=dp_gr_f_main(Q,VSet,Hom,Ord);
+	PP=dp_gr_f_main(P,VSet,Hom,Ord);
+
+	NP=length(PP);
+	NQ=length(QQ);
+
+	VarsP=vars(P);
+	VarsQ=vars(Q);
+	if ( NP != NQ || VarsP !=VarsQ )
+		{
+		return 0;
+		}
+
+	for (I=0;I<NP;I++)
+		{
+		HCP=dp_hc(dp_ptod(PP[I],VSet));
+		HCQ=dp_hc(dp_ptod(QQ[I],VSet));
+
+		if ( HCP*QQ[I]-HCQ*PP[I] != 0 )
+			{
+			return 0;
+			}
+		}
+
+	return 1;
+	}
+
+/*==============================================*/
+/*  prime decomposition of ideals over          */
+/*  finite fields                               */
+/*        part 2                                */
+/*      ideal dimension		                */
+/*        3/1/2003                    		*/
+/*==============================================*/
+
+/*==============================================*/
+/*  ideal dimension computation 	        */
+/*                                              */
+/* The dimension of I is computed as the       	*/
+/* maximal size of MSI sets.          		*/
+/*                                              */
+/*  idealdimension                              */
+/*      Input: a list P of polynomials          */
+/*	       a list V of variables		*/
+/*      Output: the dimension of I 		*/
+/*           and the MSI with max size		*/
+/*                                              */
+/*  findmsi		                        */
+/*      Input: a list of head monomials         */
+/*         and a list of variables 		*/
+/*      Output: a list of all MSI sets		*/
+/*             and SI sets			*/
+/*                                              */
+/*  findmsi_main				*/
+/*      Input: a list P of polynomials          */
+/*             a list V of variables            */
+/*      Output: a list P1 of polynomials        */
+/*              such that P1={f\in P |          */
+/*                vars(f)\cap V =\emptyset}     */
+/*                                              */
+/*  headtermset					*/
+/*      Input: a list P of polynomials          */
+/*             a list V of variables		*/
+/*      Output: a list of head monomials 	*/
+/*                                              */
+/*                                              */
+/*                                              */
+/*==============================================*/
+
+def idealdimension(P,V,Ord)
+	{
+	GP=dp_gr_f_main(P,V,Hom,Ord);
+	HeadTermset=headtermset(GP,V,Ord);
+	MSIset=findmsi(HeadTermset,V);
+	if ( MSIset == [] )
+		{
+		return [0,[]];
+		}
+	Index=findmaxindex(MSIset);
+	MSI=MSIset[Index];
+	Dimension=length(MSI);
+	return [Dimension, MSI];
+	}
+
+def findmaxindex(S)
+	{
+	NS=length(S);
+	Index=0;
+	Defaultsize=length(S[0]);
+	for (I=1;I<NS;I++)
+		{
+		Targetsize=length(S[I]);
+
+		if ( Targetsize > Defaultsize )
+			{
+			Index=I;
+			}
+		Defaultsize= Targetsize;
+		}
+	return Index;
+	}
+
+def headtermset(P,V,Ord)
+	{
+	ANS=[];
+	NP=length(P);
+	for ( I=NP-1;I>=0;I--)
+		{
+		Head=headterm(P[I],V,Ord);
+		ANS=cons(Head,ANS);
+		}
+	return ANS;
+	}
+
+def headterm(P,V,Ord)
+	{
+	dp_ord(Ord);
+	Q=dp_ptod(P,V);
+	Headdp=dp_hm(Q);
+	Head=dp_dtop(Headdp,V);
+	return Head;
+	}
+
+def findmsi_main(TermsetIndex,MSIsetIndex,Int,N)
+	{
+	ANS=[];
+	BNS=[];
+	TempMSIsetIndex=MSIsetIndex;
+
+	if (Int == 0)
+		{
+		for ( I=0;I<N;I++)
+			{
+			TEST1=[I];
+			Check=intersection(TermsetIndex,TEST1);
+			if ( Check == 0 )
+				{
+				ANS=cons(TEST1,ANS);
+				}
+			}
+		}
+
+	while( Int !=0 && TempMSIsetIndex != [] )
+		{
+		TEST=TempMSIsetIndex[0];
+		Flag=0;
+		for ( I=TEST[0]+1;I<N;I++)
+			{
+			TEST1=cons(I,TEST);
+			Check=intersection(TermsetIndex,TEST1);
+			if ( Check == 0 )
+				{
+				Flag=1;
+				ANS=cons(TEST1,ANS);
+				}
+			}
+		if ( Flag == 0 )
+			{
+			BNS=cons(TEST,BNS);
+			}
+		TempMSIsetIndex=cdr(TempMSIsetIndex);
+		}
+	return [ANS,BNS];
+	}
+		
+def findmsi(Termset,Vset)
+	{
+	ANS=[];
+	MSIsetIndex=[];
+	N=length(Vset);
+	TermsetIndex=makeindex(Termset,Vset);
+
+	for (I=0;I<N;I++)
+		{
+		Temp=findmsi_main(TermsetIndex,ANS,I,N);
+		ANS=Temp[0];
+		BNS=Temp[1];
+		MSIsetIndex=append(BNS,MSIsetIndex);
+		}
+
+	MSIsetIndex=append(ANS,MSIsetIndex);
+	MSIset=makevarset(MSIsetIndex,Vset);
+	return MSIset;
+	}
+
+def makeindex(Termset,Vset)
+	{
+	ANS=[];
+
+	N=length(Vset);
+
+	TempTermset=Termset;
+	while( TempTermset !=[] )
+		{
+		TEST=TempTermset[0];
+		Index=[];
+		for (I=0;I<N;I++)
+			{
+			Q=srem(TEST,Vset[I]);
+			if ( Q == 0 )
+				{
+				Index=cons(I,Index);
+				}
+			}
+		ANS=cons(Index,ANS);
+		TempTermset=cdr(TempTermset);
+		}
+	return ANS;
+	}
+
+def makevarset(IndexSet,Vset)
+	{
+	ANS=[];
+	NI=length(IndexSet);
+		
+	for (I=0;I<NI;I++)
+		{
+		TEST=IndexSet[I];
+
+		TestV=makevar(TEST,Vset);
+		ANS=append(ANS,[TestV]);
+		}
+	return ANS;
+	}
+
+def makevar(Index,Vset)
+	{
+	ANS=[];
+	TempIndex=Index;
+
+	while( TempIndex !=[] )
+		{
+		ANS=cons(Vset[TempIndex[0]],ANS);
+		TempIndex=cdr(TempIndex);
+		}
+
+	return ANS;
+	}
+
+def intersection(IndexSet,TestIndex)
+	{
+	TempIndexSet=IndexSet;
+
+	while(TempIndexSet !=[] )
+		{
+		Sample=TempIndexSet[0];
+
+		Inclusion=testinclusion(Sample,TestIndex);
+
+		if ( Inclusion == 1 )
+			{
+			return 1;
+			}
+
+		TempIndexSet=cdr(TempIndexSet);
+		}
+	return 0;
+	}
+
+def testinclusion(Sample,Test)
+	{
+	NS=length(Sample);
+	NT=length(Test);
+	
+	for (I=0;I<NS;I++)
+		{
+		Flag=0;
+		for (J=0;J<NT;J++)
+			{
+			if (Sample[I]==Test[J])
+				{
+				Flag=1;
+				break;
+				}
+			}
+		if ( Flag == 0 )
+			{
+			return 0;
+			}
+		}
+	return 1;	
+	}
+
+
+/*======================================================*/
+/*  prime decomposition of ideals over          	*/
+/*  small finite fields                         	*/
+/*        part 3                                	*/
+/*      prime decomposition                     	*/
+/*	  9/1/2003  1st Implementation			*/
+/*	  11/1/2003  Divid 3 cases in zeroprime		*/
+/*		decomposition		  (3a)		*/
+/*	  12/1/2003 Redundant elimination (3e)		*/
+/*	  13/1/2003 gr_fctr_sf version    (3f)		*/
+/*	  14/1/2003 Flag on Early Termination		*/
+/*	  15/1/2002 drl version				*/
+/*	  17/1/2002 depth oriented search 		*/
+/*	  17/1/2002 dimension oriented search 		*/
+/*							*/
+/*  global variables					*/
+/*  Hom: used in dp_gr_f_main 				*/
+/*  DIVLIST: the set of prime ideals			*/
+/*  ORIGINAL: the GB of the original input ideal	*/
+/*  ORIGINALDIMENSION: the dimension 			*/
+/*  STOP: the flag on terminatation			*/
+/*  Trials: a bound on the number of trials             */
+/*  REM: the vector list of remaining ideals 		*/
+/*							*/
+/*======================================================*/
+
+/*======================================================*/
+/*  	prime decomposition				*/
+/*                                              	*/
+/*                                              	*/
+/*  primedec(P,V,Ord,F) 		                */
+/*      Input: a list P of polynomials          	*/
+/*             a list V of variables            	*/
+/*	       a term order Ord				*/
+/*	       a flag F on Early Termination		*/
+/*      Output: 0					*/
+/*     DVILIST: the set of prime divisors of <P>	*/
+/*  [subprocedure]	                        	*/
+/*	 o --gr_fctr_sf    (mplex2)			*/
+/*	 o --primedecomposition 			*/
+/*  Remark: if F = 1, we empoly Early Termination	*/
+/*							*/
+/*							*/
+/*  primedecomposition(P,V,Ord,C,F)                 	*/
+/*      Input: a list P of polynomials          	*/
+/*             a list V of variables            	*/
+/*	       a term order Ord				*/
+/*	       a level C of recursive call		*/
+/*	       a flag F on Early Termination		*/
+/*      Output: 0					*/
+/*     DVILIST: the set of prime divisors of <P>^ec	*/
+/*  [subprocedure]	                        	*/
+/*	 o --idealdimension (part2)			*/
+/*	 o --setminus	   (part1)			*/
+/*	 o --zeroprimedecomposition 			*/
+/*	 o --extcont					*/
+/*	 o --checkadd2					*/
+/*	 o --ideal_intersection_sfrat 			*/
+/*	 o --radical_equality				*/
+/*							*/
+/*  zeroprimedecomposition(P,V,W)               	*/
+/*      Input: a list P of polynomials          	*/
+/*             	lists V,W of variables           	*/
+/*	       	such that <P> is 0-dimensional		*/
+/*	       	in K[V] and W is the original set	*/
+/*	       	of variables				*/
+/*      Output: the set of prime/primary 		*/
+/*		divisors of <P>				*/
+/*		(P is a GB w.r.t. DRL)			*/
+/*  [subprocedure]	                        	*/
+/*	 o --partical_decomp (mplex2)			*/
+/*	 o --checkgeneric				*/
+/*	 o --separableclosure				*/
+/*	 o --zerogenericprimedecomposition		*/
+/*	 o --zeroseparableprimedecomposition		*/
+/*	 o --convertdivisor				*/
+/*	 o --contraction				*/
+/*	 o --radicalideal (part1)			*/
+/*                                              	*/
+/*  extcont(P,V,Ord)         				*/
+/*      Input: a list P of polynomials			*/
+/*             	a set V of variables    		*/
+/*      Output: a polynomial f				*/
+/*             	such that \sqrt<P>^c=\sqrt(P:f)		*/
+/*	    Then \sqrt<P>=\sqrt(P:f)\cap \sqrt(P+<f>)	*/
+/*                                              	*/
+/*  separableclosure([P,MP],V,W)			*/
+/*      Input: a pair [P,MP] of a list P of 		*/
+/*	       	polynomials and a list MP of 		*/
+/*	       	minimal polynomials of variables	*/
+/*             	list V,W of variables          		*/
+/*	       	such that <P> is 0-dimensional 		*/
+/*	       	in K[V] and W is the original set	*/
+/*	       	of variables				*/
+/*      Output: [Q,E], a list Q of polynomials		*/
+/*		 an exponent vector E			*/
+/*             	 such that <Q> is the separable 	*/
+/*	       	 closure of <P>				*/
+/*  [subprocedure]	                        	*/
+/*	 o --makecounterpart(part1)			*/
+/*	 o --elimination(part1)				*/
+/*	 o --checkseparable				*/
+/*                                              	*/
+/*  zeroseparableprimedecomposition(P,V,W)		*/
+/*      Input: a list P of polynomials          	*/
+/*             lists V,W of variables           	*/
+/*	       	such that <P> is 0-dimensional		*/
+/*	       	and all minimal polynomial 		*/
+/*	       	are irreducible (i.e. <P> is an		*/
+/*	       	intermediate ideal in the paper		*/
+/*             	or the output of partial_decomp)	*/
+/*	       	in K[V] and W is the original set	*/
+/*	       	of variables				*/
+/*      Output: the set of prime/primary 		*/
+/*		 divisors of <P>			*/
+/*  [subprocedure]	                        	*/
+/*	 o --findgeneric				*/
+/*	 o --elimination(part1)				*/
+/*                                              	*/
+/*  zerogenericprimedecomposition([P,MP],M,V,W) 	*/
+/*      Input: a pair [P,MP] of a list P of 		*/
+/*	       	polynomials and a list MP of 		*/
+/*	       	minimal polynomials of variables	*/
+/*	       	such that <P> is 0-dimensional		*/
+/*	       	and M is a minimal poly of a 		*/
+/*	       	variable in generic position 		*/
+/*	       	in K[V] and W is the original 		*/
+/*	       	set of variables			*/
+/*      Output: the set of prime/primary 		*/
+/*		divisors of <P>				*/
+/*  [subprocedure]	                        	*/
+/*                                              	*/
+/*  convertdivisor(P,V,W,E)                     	*/
+/*      Input: a list P of polynomials          	*/
+/*             	list V,W of variables          		*/
+/*	       	such that <P> is a primary/prime	*/
+/*	       	0-dimensional ideal in K[V] and 	*/
+/*	       	W is the original set			*/
+/*	       	of variables				*/
+/*	       	the exponent vector E			*/
+/*      Output: the corresponding prime ideal		*/
+/*             in K[W]		                	*/
+/*  [subprocedure]	                        	*/
+/*	 o --elimination(part1)				*/
+/*                                              	*/
+/*  contraction(P,V,W)	                        	*/
+/*      Input: a list P of polynomials          	*/
+/*             	list V,W of variables          		*/
+/*	       	such that <P> is a primary/prime	*/
+/*	       	0-dimensional ideal in K[V] and 	*/
+/*	       	W is the original set			*/
+/*	       	of variables				*/
+/*      Output: the contraction <P>^c in K[W]		*/
+/*                                              	*/
+/*  findgeneric(P,V)	                        	*/
+/*      Input: a list P of polynomials          	*/
+/*             	a list V of variables          		*/
+/*	       	such that <P> is a separable 		*/
+/*	       	0-dimensional ideal in K[V]  		*/
+/*      Output: [F,Min,X], a polynomial F in 		*/
+/*    	       	generic position, its minimal 		*/ 
+/*             	polynomial Min in a new variable 	*/
+/*             	X                                	*/
+/*  [subprocedure]	                        	*/
+/*	 o --lineardimension				*/
+/*	 o --makemagic					*/
+/*	 o --minipoly_sf (mplex2)			*/
+/*							*/
+/*======================================================*/
+
+def primedec_mod(P,VSet,Ord,Mod,Strategy)
+{
+	for ( Q = Mod, E = 1; Q < 2^14; Q *= Mod, E++ );
+	Q /= Mod;
+	E--;
+	if ( !(E%2) ) {
+		Q /= Mod;
+		E--;
+	}
+	setmod_ff(Mod,E);
+	Pq = map(simp_ff,P);
+	primedec_sf(Pq,VSet,Ord,Strategy);
+	R = convsf(DIVLIST,VSet,0,1);
+	return R;
+}
+
+
+def primedec_sf(P,VSet,Ord,Strategy)
+	{
+	/* DIVLIST = the set of all computed candidates for iredundant divisors */
+	/* INTIDEAL = the intersection of all computed candidates	 	*/
+	/* ORIGINAL = a Groebner basis of the input ideal <P> w.r.t. Ord	*/
+	/* ORIGINALDIMENSION = the dimension of the input ideal <P>		*/
+	/* STOP = the flag on termination					*/
+	/* REM = the list of remaining 	ideals					*/
+
+	T0 = time();
+	T_GRF=0;
+	T_INT=0;
+	T_PD=0;
+	T_MP=0;
+	DIVLIST=[];
+	INTIDEAL=[];
+	STOP=0;
+	B_Win=0;
+	D_Win=0;
+
+	ORIGINAL=dp_gr_f_main(P,VSet,Hom,Ord);
+
+	Dimeset=idealdimension(ORIGINAL,VSet,Ord);
+	ORIGINALDIMENSION=Dimeset[0]; 
+
+	/* REM0=newvect(ORIGINALDIMENSION+1);*/
+	REM=newvect(ORIGINALDIMENSION+1);
+
+	for (I=0;I<ORIGINALDIMENSION+1;I++)
+		{
+		/* REM0[I]=[];*/
+		REM[I]=[];
+		}
+
+	print("The dimension of the ideal is ",2);print(ORIGINALDIMENSION,2);
+	print(". ");
+
+	if ( ORIGINALDIMENSION == 0 )
+		{
+		Strategy = 0;
+		STOP = 0;
+		}
+
+ 	ANS=gr_fctr_sf([ORIGINAL],VSet,Ord);
+	NANS=length(ANS);
+	print("There are ",2);print(NANS,2);print(" partial components. ");
+
+	for (I=0;I<NANS;I++)
+		{
+		TempI=ANS[I];
+		DimI=idealdimension(TempI,VSet,Ord)[0];	
+
+		REM[ORIGINALDIMENSION-DimI]=cons(TempI,REM[ORIGINALDIMENSION-DimI]);
+		}
+
+	REM[0]=ANS;
+
+	INDEX=0;
+
+	while  ( INDEX != -1 )
+		{
+		/* print("We deal with the ",2);print(I,2);print("-th partial component. ");*/
+
+		TESTIDEAL=car(REM[INDEX]);
+		REM[INDEX]=cdr(REM[INDEX]);
+		primedecomposition(TESTIDEAL,VSet,Ord,INDEX,Strategy);
+
+		if (STOP == 1 )
+			{
+			DIVLIST = prime_irred_sf_by_first(DIVLIST,VSet,0);
+			DIVLIST = monic_sf_first(DIVLIST,VSet);
+			print("We finish the computation. ");
+			T_TOTAL = time()[3]-T0[3];
+			print(["T_TOTAL",T_TOTAL,"T_GRF",T_GRF,"T_PD",T_PD,"T_MP",T_MP,"T_INT",T_INT,"B_Win",B_Win,"D_Win",D_Win]);
+			return 0;
+			}
+
+		INDEX=findindex(REM);
+		}
+
+	DIVLIST = prime_irred_sf_by_first(DIVLIST,VSet,0);
+	DIVLIST = monic_sf_first(DIVLIST,VSet);
+	T_TOTAL = time()[3]-T0[3];
+	print(["T_TOTAL",T_TOTAL,"T_GRF",T_GRF,"T_PD",T_PD,"T_MP",T_MP,"T_INT",T_INT,"B_Win",B_Win,"D_Win",D_Win]);
+	return 0;
+	}
+
+
+
+
+
+def findindex(VECTORLIST)
+	{
+	NL=size(VECTORLIST)[0];
+
+	for (I=0;I<NL;I++)
+		{
+		if ( VECTORLIST[I] == [] )
+			{
+			continue;
+			}
+		return I;
+		}
+	return -1;
+	}
+
+#if 0 
+def checkadd2(ADD,TESTADDLIST,VSet)
+	{
+	/* This function will be used for eliminating redundant divisors	*/
+
+	NTESTADDLIST=length(TESTADDLIST);
+	for (I=0;I<NTESTADDLIST;I++)
+		{
+		TESTLIST=TESTADDLIST[I][0];
+
+ 		if ( setminus(TESTLIST,ADD) == [] )
+			{
+			return 1;
+			}
+		if ( inclusion_test(TESTLIST,ADD,VSet,Ord) == 1 )
+			{
+			return 1;
+			}
+		}
+	return 0;
+	}
+#endif 
+
+def checkadd2a(ADD,DIM,TESTADDLIST,VSet)
+	{
+	/* This function will be used for eliminating redundant divisors	*/
+
+	NTESTADDLIST=length(TESTADDLIST);
+	for (I=0;I<NTESTADDLIST;I++)
+		{
+		TESTLIST=TESTADDLIST[I][0];
+		TESTDIM=TESTADDLIST[I][1];
+
+		if (DIM > TESTDIM )
+			{
+			continue;
+			}
+
+ 		if ( setminus(TESTLIST,ADD) == [] )
+			{
+			return 1;
+			}
+		if ( inclusion_test(TESTLIST,ADD,VSet,Ord) == 1 )
+			{
+			return 1;
+			}
+		}
+	return 0;
+	}
+
+def checkadd3(ADD,TESTADDLIST,VSet)
+	{
+	/* This function will be used for eliminating redundant divisors	*/
+
+	NTESTADDLIST=length(TESTADDLIST);
+	for (I=0;I<NTESTADDLIST;I++)
+		{
+		TESTLIST=TESTADDLIST[I];
+
+ 		if ( setminus(TESTLIST,ADD) == [] ) 
+			{
+			return 1;
+			}
+
+
+		/* if ( inclusion_test(TESTLIST,ADD,VSet,0) == 1 )
+			{
+			return 1;
+			}*/
+		}
+	return 0;
+	}
+
+def radical_equality(A,B,VSet,Ord)
+	{
+	/* This function will be used for checking the termination.	*/
+
+	NA=length(A);
+
+	Ord1=[[0,1],[0,length(VSet)]];    
+	Vt=newt;
+
+	for (I=0;I<NA;I++)
+		{
+		NewB=cons(1-newt*A[I],B);
+	        GB = dp_gr_f_main(NewB,cons(Vt,VSet),0,Ord1);
+		K=elimination(GB,VSet);
+
+		if ( vars(K) !=[] )
+			{
+			return 0;
+			}
+
+		}
+
+	return 1;
+	}
+
+def primedecomposition(P,VSet,Ord,COUNTER,Strategy)
+	{
+	/* DIVLIST = the set of all computed candidates for iredundant divisors */
+	/* INTIDEAL = the intersection of all computed candidates	 	*/
+	/* ORIGINAL = a Groebner basis of the input ideal <P> w.r.t. Ord	*/
+	/* ORIGINALDIMENSION = the dimension of the input ideal <P>		*/
+
+	RP=P;
+	GP=dp_gr_f_main(RP,VSet,Hom,Ord);
+
+	/* First we compute the MSI and the dimension of the 	*/
+	/* ideal <P> in K[Vset], where K is the ground field.	*/
+
+	Dimeset=idealdimension(GP,VSet,Ord);
+	Dimension=Dimeset[0]; 
+	MSI=Dimeset[1];
+
+	print("The dimension of the ideal is ",2); print(Dimension,2);
+	print(".");
+
+	TargetVSet=setminus(VSet,MSI);
+	NewGP=dp_gr_f_main(GP,TargetVSet,Hom,Ord);
+
+	if ( vars(NewGP) == [] )
+		{
+		return [];
+		}
+
+	/* Then the ideal is 0-dimension in K[TargetVSet].	*/
+
+	print("We enter Zero-dimension Prime Decomposition. ",2);
+
+	QP=zeroprimedecomposition(NewGP,TargetVSet,VSet);
+
+	ANS=[];
+	NQP=length(QP);
+
+	print("The number of the newly found component is ",2);
+	print(NQP,2);print(". ",2);
+
+	for (I=0;I<NQP;I++)
+		{
+		ZPrimeideal=QP[I];
+		Primedivisor=ZPrimeideal;
+		CHECKADD=checkadd2a(Primedivisor,Dimension,DIVLIST,VSet);
+		if (CHECKADD == 0 )
+			{
+			DIVLIST=append(DIVLIST,[[Primedivisor,Dimension]]);
+
+			if (Strategy != 1 )
+				{
+				/* NO-OPERATION */
+				}
+			else if ( COUNTER == 0 && Dimension == 0 && ORIGINALDIMENSION == 0 )
+				{
+				/* NO-OPERATION */
+				}
+			else if ( INTIDEAL == [] )
+				{
+				INTIDEAL=Primedivisor;
+				}
+			else 
+				{
+				INTIDEAL=ideal_intersection_sfrat(Primedivisor,INTIDEAL,VSet);
+				}
+			}
+		}
+
+	/* We compute prime decomposition for remaining ideal 	*/
+	/* I+<ExtPoly> by recursive call.			*/
+
+	if ( Strategy == 1 )
+		{
+		CHECK=radical_equality(INTIDEAL,ORIGINAL,VSet,Ord);
+	
+		if (CHECK==1)
+			{
+			print("We already obtain all divisor. ");
+			STOP = 1;
+			return 0;
+			}
+		}
+
+
+	if ( Dimension == 0 )
+		{
+		return 0;
+		}
+
+	Ord1 = [[0,length(TargetVSet)],[0,length(MSI)]];
+	GP1 = dp_gr_f_main(GP,append(TargetVSet,MSI),Hom,Ord1);
+	ExtpolyFactor=extcont_factor(GP1,TargetVSet,0);
+
+	COUNTER=COUNTER+1;
+
+	for ( Tmp = ExtpolyFactor; Tmp != []; Tmp = cdr(Tmp) ) 
+		{
+		AddPoly=car(Tmp);
+
+		NewGP=cons(AddPoly,GP);
+
+		GP1 = dp_gr_f_main(cons(AddPoly,GP),VSet,Hom,Ord);
+
+		if ( Strategy == 1 )
+			{
+			CHECKADD=radical_equality(INTIDEAL,NewGP,VSet,Ord);
+
+			if ( CHECKADD != 0 )
+				{
+				print("Avoid unnecessary computation. ",2);
+				continue;
+				}
+			}
+
+
+		DimI=idealdimension(GP1,VSet,Ord)[0];
+
+		if ( REM[ORIGINALDIMENSION-DimI] !=[] )
+			{
+			REM[ORIGINALDIMENSION-DimI]=cons(GP1,REM[ORIGINALDIMENSION-DimI]);
+			}
+		else
+			{
+			REM[ORIGINALDIMENSION-DimI]=[GP1];
+			}
+
+		/* primedecomposition(GP1,VSet,Ord,COUNTER,Strategy);
+		if ( STOP == 1)
+			{
+			return 0;
+			}*/
+		}
+	return 0;
+	}
+
+/* returns 1 if Poly is a subset of Id(GB) */
+/* we assume GB is a gb wrt (V,Ord)        */
+
+def inclusion_test(Poly,GB,V,Ord)
+{
+	Len = length(GB);
+	PS = newvect(Len);
+	dp_ord(Ord);
+	for ( J = 0, T = GB; T != []; T = cdr(T), J++ )
+		PS[J] = dp_ptod(car(T),V);
+	for ( J = Len-1, Ind = []; J >= 0; J-- )
+		Ind = cons(J,Ind);
+
+	for ( T = Poly; T != []; T = cdr(T) )
+		if ( nf_sfrat(Ind,dp_ptod(car(T),V),1,PS)[0] )
+			return 0;
+	return 1;
+}
+
+
+def zeroprimedecomposition(P,TargetVSet,VSet)
+	{
+	/* We compute prime decomposition for an ideal <P>	*/
+	/* such that <P> is 0-dimensional in K[TargetVSet].	*/
+
+	PD=partial_decomp(P,TargetVSet);
+
+	/* each ideal in PD is an intermediate ideal,		*/
+	/* i.e., all minimal polynomials are irreducible.	*/
+	/* Thus, each ideal is very likely a prime ideal.	*/
+	/* PD=[[P,MP],...], where P is a GB w.r.t. DRL and 	*/
+	/* MP is the set of all minimal polynomials.		*/
+
+	NPD=length(PD);
+	ANS=[];
+
+	for (I=0;I<NPD;I++)
+		{
+		COMP=PD[I];
+
+		/* check if the ideal has a variable in generic position*/
+	
+		CHECK=checkgeneric(COMP,TargetVSet,VSet);
+
+		/* If there is a variable in generic position, then we apply a special 	*/
+		/* procedure (zerogenericprimedecomposition). Otherwise we apply a 	*/
+		/* general procedure (zeroseparableprimedecomposition).			*/	
+		/*									*/
+		/* CHECK=[1,M], where M is the minimal polynomail of a variable x	*/
+		/* such that x is in generic position, if there is such a variable x.	*/
+		/* Otherwise, CHECK=0.							*/
+
+		if (CHECK != 0 )
+			{
+			if ( TargetVSet != VSet )
+				{
+				PDiv=contraction(COMP[0],TargetVSet,VSet)[0];
+				}
+			else
+				{
+				PDiv=COMP[0];
+				}
+
+			ZDecomp=[PDiv];
+		
+			print("An intermediate ideal is of generic type. "); 
+			}
+		else
+			{
+			print("An intermediate ideal is not of generic type. ",2); 
+
+			/* We compute the separable closure of <P> by using minimal polynomails.*/
+			/* separableclosure outputs 						*/
+			/* [a GB Q of separable closure, the exponent vector].			*/
+			/* If <P> is already separable, then the exponent vector is 0.		*/
+
+			Sep=separableclosure(COMP,TargetVSet,VSet);
+
+			/* Then, we compute prime divisors of the separable closure by using	*/
+			/* generic position.							*/
+			/* If Sep[1]=0, COMP[0] is already separable ideal, and hence,		*/
+			/* we do not apply radicalideal to its divisors.			*/
+	
+			if ( Sep[1] != 0 )
+				{
+				print("The ideal is inseparable. ",2); 
+				CHECK2=checkgeneric2(Sep[2]);
+				}	
+			else
+				{
+				print("The ideal is already separable. ",2); 
+				}	
+
+			if ( Sep[1] !=0 && CHECK2 == 1 )
+				{
+				print("The separable closure is of generic type. ",2); 
+				print("So, the intermediate ideal is prime or primary. ",2); 
+
+				PDiv=convertdivisor(Sep[0],TargetVSet,VSet,Sep[1]);				
+				if ( TargetVSet != VSet )
+					{
+					PDiv=contraction(PDiv,TargetVSet,VSet)[0]; 
+					}
+				Divisor=radicalideal(PDiv,2,VSet);
+				ZDecomp=[Divisor];
+				}
+			else
+				{
+#if 0
+				ZSDecomp=zeroseparableprimedecomposition(Sep[0],TargetVSet,VSet);
+#else
+				ZSDecomp=zerosepdec(Sep[0],TargetVSet,VSet,Ord);
+#endif
+				/* We convert a prime separable ideal in K[TargetVSet] to its 		*/
+				/* corresponding prime ideal in K[VSet].				*/
+
+				NComp=length(ZSDecomp);
+				ZDecomp=[];
+
+				for (J=0;J<NComp;J++)
+					{
+					SDiv=ZSDecomp[J];
+
+				/* First we convert a prime separable ideal in K[TargetVSet] to its	*/
+				/* corresponding prime/primary ideal in K[TargetVSet] by computing the	*/
+				/* image of Frobenius map.						*/
+
+					PDiv=convertdivisor(SDiv,TargetVSet,VSet,Sep[1]);
+
+				/* Then we compute the true prime divisor by contraction and radical	*/
+				/* computation.								*/
+				
+					if ( TargetVSet != VSet )
+						{
+						PDiv=contraction(PDiv,TargetVSet,VSet)[0]; 
+						}
+
+					if (Sep[1] != 0 )
+						{
+						Divisor=radicalideal(PDiv,2,VSet);
+						}
+					else
+						{
+						Divisor=PDiv;
+						}
+
+	
+					ZDecomp=append(ZDecomp,[Divisor]);
+					}
+				}
+			}
+						
+		ANS=append(ANS, ZDecomp);
+		}
+	return map(monic_hc,ANS,VSet);
+	}
+
+def monic_hc(Poly,V)
+{
+	if ( type(Poly) == 4 )
+		map(monic_hc,Poly,V);
+	else {
+		T = dp_ptod(Poly,V);
+		return dp_dtop(T/dp_hc(T),V);
+	}
+}
+
+def zeroseparableprimedecomposition(P,TargetVSet,VSet)
+	{
+	/* We compute prime decomposition for a separable	*/
+	/* 0-dimensional ideal <P> in K[TargetVSet] by using	*/
+	/* generic position.					*/
+
+	ANS=[];
+	Ord=0;
+
+	NVSet=length(TargetVSet);
+
+	/* The P is already a GB w.r.t. DRL. So, the following	*/
+	/* must be replaced with  NewP=P. 			*/
+
+	/* NewGP=dp_gr_f_main(P,TargetVSet,Hom,Ord); */
+	NewGP = P;
+
+	/* We search a polynomial f in generic position.	*/
+	/* Generic=[f, minimal polynomial of f in newt, newt], 	*/
+	/* where newt (X) is a newly introduced variable.	*/
+
+	print("We search for a linear sum of variables in generic position. ",2);
+
+	Generic=findgeneric(NewGP,TargetVSet,VSet);
+
+	X=Generic[2]; /* newly introduced variable		*/
+	Factors=sffctr(Generic[1]);
+	NFactors=length(Factors);
+	/* irreducible case */
+	if ( NFactors == 2 && Factors[1][1] == 1 )
+		return [NewGP];
+#if 0
+	for (J=1;J<NFactors;J++)
+		{
+		AddPoly=Factors[J][0];
+		AddPoly2=X-Generic[0]; 
+
+		TestGP=append(NewGP,[AddPoly, AddPoly2]);
+		VS=cons(X,TargetVSet);
+		Q=dp_gr_f_main(TestGP,VS,Hom,[[0,1],[Ord,NVSet]]); 
+		QR=elimination(Q,VSet);
+		ANS=append(ANS,[QR]);
+		}
+#else
+	/* noro */
+	dp_ord([[0,1],[Ord,NVSet]]); 
+	XVSet = cons(X,TargetVSet);
+	PS = newvect(length(NewGP)+1,map(dp_ptod,cons(X-Generic[0],NewGP),XVSet));
+	for ( I = length(NewGP), Ind = [];I >= 0; I-- )
+		Ind = cons(I,Ind);
+	Ind = reverse(Ind);
+	YSet = setminus(VSet,TargetVSet);
+	NYSet = length(YSet);
+	ElimVSet = append(TargetVSet,YSet);
+	ElimOrd = [[Ord,NVSet],[0,NYSet]];
+	for ( J = 1; J < NFactors; J++ ) {
+		dp_ord([[0,1],[Ord,NVSet]]); 
+		Factor = dp_dtop(nf_sfrat(Ind,dp_ptod(Factors[J][0],XVSet),1,PS)[0],XVSet);
+#if 0
+		Q = dp_gr_f_main(cons(Factor,NewGP),ElimVSet,Hom,ElimOrd);
+#else
+		Q0 = dp_gr_f_main(cons(Factor,NewGP),ElimVSet,Hom,0);
+		Q = dp_gr_f_main(Q0,ElimVSet,Hom,ElimOrd);
+#endif
+		Q = dp_gr_f_main(Q,TargetVSet,Hom,Ord);
+		ANS = cons(Q,ANS);
+	}
+#endif
+	return ANS;
+	}
+
+/* partial decomposition by sums of variables 
+   -> zeroseparableprimedecomposition */
+
+#if 0
+def zerosepdec(P,W,V,Ord)
+{
+	/* P is GB wrt (W,Ord) */	
+	dp_ord(Ord);
+	DIM = length(dp_mbase(map(dp_ptod,P,W)));
+	/* preprocessing */
+	N = length(W);
+	C = newvect(N);
+	C[0] = 1;
+	Vt = ttttt;
+	do {			
+		for ( I = 0, LF = 0; I < N; I++ )
+			if ( C[I] ) LF += W[I];
+		LF = simp_ff(LF);
+		MP = minipoly_sf(P,W,Ord,LF,Vt);
+		Factors = map(first,cdr(sffctr(MP)));
+		if ( deg(MP,Vt) == DIM ) {
+			if ( length(Factors) == 1 )
+				return [P];
+			else
+				return zerosepdec_main(P,W,V,Ord,map(subst,Factors,Vt,LF));		
+		} else if ( length(Factors) > 1 ) {
+			R =  zerosepdec_main(P,W,V,Ord,map(subst,Factors,Vt,LF));		
+			S = [];
+			for ( TR = R; TR != []; TR = cdr(TR) )
+				S = append(zerosepdec(car(TR),W,V,Ord),S);	
+			return S;
+		}
+	} while ( !nextchoice(C) );
+	/* we could not find any useful combination */
+	R = zeroseparableprimedecomposition(P,W,V);
+	return R;
+}
+#else
+
+/* we only search for useful poly among v[i]+v[j] */
+def zerosepdec(P,W,V,Ord)
+{
+	/* P is GB wrt (W,Ord) */	
+	dp_ord(Ord);
+	DIM = length(dp_mbase(map(dp_ptod,P,W)));
+	/* preprocessing */
+	N = length(W);
+	C = newvect(N);
+	C[0] = 1;
+	Vt = ttttt;
+	for ( I1 = 0; I1 < N; I1++ )
+		for ( I2 = I1+1; I2 < N; I2++ ) {
+			LF = simp_ff(W[I1]+W[I2]);
+			MP = minipoly_sf(P,W,Ord,LF,Vt);
+			Factors = map(first,cdr(sffctr(MP)));
+			if ( deg(MP,Vt) == DIM ) {
+				if ( length(Factors) == 1 )
+					return [P];
+				else
+					return zerosepdec_main(P,W,V,Ord,map(subst,Factors,Vt,LF));		
+			} else if ( length(Factors) > 1 ) {
+				R =  zerosepdec_main(P,W,V,Ord,map(subst,Factors,Vt,LF));		
+				S = [];
+				for ( TR = R; TR != []; TR = cdr(TR) )
+					S = append(zerosepdec(car(TR),W,V,Ord),S);	
+				return S;
+			}
+		}
+	/* we could not find any useful combination */
+	R = zeroseparableprimedecomposition(P,W,V);
+	return R;
+}
+#endif
+
+def zerosepdec_main(P,W,V,Ord,Factors)
+{
+	dp_ord(Ord); 
+	N = length(P);
+	NFactors = length(Factors);
+	PS = newvect(length(P),map(dp_ptod,P,W));
+	for ( I = length(P)-1, Ind = [];I >= 0; I-- )
+		Ind = cons(I,Ind);
+	Y= setminus(V,W);
+	NW = length(W);
+	NY = length(Y);
+	ElimV = append(W,Y);
+	ElimOrd = [[Ord,NW],[0,NY]];
+	ANS = [];
+	for ( J = 0; J < NFactors; J++ ) {
+		Factor = dp_dtop(nf_sfrat(Ind,dp_ptod(Factors[J],W),1,PS)[0],W);
+		Q = dp_gr_f_main(cons(Factor,P),ElimV,Hom,ElimOrd);
+		Q = dp_gr_f_main(Q,W,Hom,Ord);
+		ANS = cons(Q,ANS);
+	}
+	return ANS;
+}
+
+def nextchoice(C)
+{
+	N = size(C)[0];
+	for ( I = N-1, Carry = 1; I >= 0; I-- ) {
+		if ( C[I] ) {
+			C[I] = !Carry;
+			Carry = !C[I];
+		} else {
+			C[I] = Carry;
+			Carry = 0;
+		}
+	}
+	return Carry;
+}
+
+def separableclosure(CP,TargetVSet,VSet)
+	{
+	/* We compute a separable ideal <Q> from <P> by 	*/
+	/* computing inverse Frobenius map.			*/
+
+	Ord=0;
+
+	NVSet=length(TargetVSet);
+	IndexVector=newvect(NVSet);
+
+	/* First we check if <P> is already separable.		*/
+	/* CHECK == 1 if <P> is already separable,		*/
+	/* Otherwise, CHECK is the list of pairs of		*/
+	/* the separable closure sc(m) of the minimal polynomial*/
+	/* m and the exponent e, i.e. m=sc(m)(t^(q^e)).		*/
+
+	CHECK=checkseparable(CP,TargetVSet,VSet);
+
+	if ( CHECK == 1 )
+		{
+		print("This is already a separable ideal.", 2);
+		return [CP[0],0];
+		}
+
+	print("This is not a separable ideal, so we make its separable closure.", 2);
+
+	WSet=makecounterpart(TargetVSet);
+	Char=setmod_ff()[0];
+
+	NewP=CP[0];
+	EXPVECTOR=newvect(NVSet);
+	CHECKEXPVECTOR=newvect(NVSet);
+
+	for (I=0;I<NVSet;I++)
+		{
+		EXPVECTOR[I]=CHECK[NVSet-I-1][0];
+		CHECKEXPVECTOR[I]=deg(CHECK[NVSet-I-1][1],TargetVSet[I]);
+
+		POW=Char^CHECK[NVSet-I-1][0];
+
+		AddPoly=TargetVSet[I]^POW-WSet[I];
+		/*SepClosure=subst(CHECK[I][0],TargetVSet[I],WSet[I]);*/
+
+		NewP=cons(AddPoly,NewP);
+		}
+
+	NewOrder=[[Ord,NVSet],[Ord,NVSet]];
+	XSet=append(TargetVSet,WSet);
+	YSet=append(VSet,WSet);
+
+	NewG=dp_gr_f_main(NewP,XSet,Hom,NewOrder);
+
+	NWSet=setminus(YSet,TargetVSet);
+	
+	Q=elimination(NewG,NWSet);
+
+	NQ=length(Q);
+
+	ANS=[];
+	for (I=NQ-1;I>=0;I--)
+		{
+		Poly=Q[I];
+		for (J=0;J<NVSet;J++)
+			{
+			Poly=subst(Poly,WSet[J],TargetVSet[J]);
+			}
+		ANS=cons(Poly,ANS);
+		}
+	return [ANS,EXPVECTOR,CHECKEXPVECTOR];
+	}
+
+def convertdivisor(P,TargetVSet,VSet,ExVector)
+	{
+	/* We compute a corresponding ideal <Q> from <P> by 	*/
+	/* computing Frobenius map.				*/
+
+	if (ExVector == 0 )
+		{
+		return P;
+		}
+
+	NVSet=length(TargetVSet);
+	WSet=makecounterpart(TargetVSet);
+	Char=setmod_ff()[0];
+	Ord=0;
+
+	NewP=P;
+
+	for (I=0;I<NVSet;I++)
+		{
+		POW=Char^ExVector[I];
+
+		AddPoly=TargetVSet[I]-WSet[I]^POW;
+		/*SepClosure=subst(CHECK[I][0],TargetVSet[I],WSet[I]);*/
+
+		NewP=cons(AddPoly,NewP);
+		}
+
+	NewOrder=[[Ord,NVSet],[Ord,NVSet]];
+
+	XSet=append(TargetVSet,WSet);
+	YSet=append(VSet,WSet);
+
+	NewG=dp_gr_f_main(NewP,XSet,Hom,NewOrder);
+	
+	NWSet=setminus(YSet,TargetVSet);
+
+	Q=elimination(NewG,NWSet);
+
+	NQ=length(Q);
+
+	ANS=[];
+	for (I=NQ-1;I>=0;I--)
+		{
+		Poly=Q[I];
+		for (J=0;J<NVSet;J++)
+			{
+			Poly=subst(Poly,WSet[J],TargetVSet[J]);
+			}
+		ANS=cons(Poly,ANS);
+		}
+	return ANS;
+	}
+
+
+def findgeneric(P,TargetVSet,VSet)
+	{
+	/* The number of trials is set as Trails. */
+	NTargetVSet=length(TargetVSet);
+	MNumber=0;
+	/* Trials=100;*/
+
+	if ( Trials == 0 )
+		Trials = 2;
+
+	Lineardimension=lineardimension(P,TargetVSet);
+	NewVar=newt;
+	Count=0;  
+	Ord=0;
+
+#if 0
+	while(Count < Trials )
+		{
+		Candidate=0;
+		MNumber=MNumber+1;
+
+		MAGIC=makemagic(TargetVSet,MNumber);
+
+		for (I=0;I<NTargetVSet;I++)
+			{
+			Candidate=Candidate+MAGIC[I]*TargetVSet[I];
+			}
+		MinPoly=minipoly_sf(P,TargetVSet,Ord,Candidate,NewVar);
+		Deg=deg(MinPoly,NewVar);
+		if ( Deg == Lineardimension )
+			{
+			return [Candidate,MinPoly,NewVar];
+			}
+		Count=Count+1;
+		}
+#else
+	YSet = setminus(VSet,TargetVSet);
+	NYSet = length(YSet);
+	Eval = newvect(NYSet);
+	Q1 = field_order_ff()-1;
+	HM = hmlist(P,TargetVSet,Ord);
+	for ( Count = 0; Count < Trials; Count++ ) {
+		Candidate = ptosfp(2)*TargetVSet[0];
+		Candidate = 0;
+		for ( I = 0; I < NTargetVSet; I++ )
+			Candidate += random_ff()*TargetVSet[I];
+		do {
+			for ( I = 0; I < NYSet; I++ )
+				Eval[I] = random()%Q1;
+		} while ( !valid_modulus_sfrat(HM,YSet,Eval) );
+		P0 = map(eval_sfrat,P,YSet,Eval);
+		MinPoly0 = minipoly_sf(P0,TargetVSet,Ord,Candidate,NewVar);
+		Deg = deg(MinPoly0,NewVar);
+		if ( Deg == Lineardimension ) {
+			MinPoly=minipoly_sf(P,TargetVSet,Ord,Candidate,NewVar);
+			if ( deg(MinPoly,NewVar) != Deg )
+				error("findgeneric : cannot happen");
+			return [Candidate,MinPoly,NewVar];
+		}
+	}
+#endif
+	print("Extend the ground field. ",2);
+	error();
+	}
+
+def makemagic(VSet,MNumber)
+	{
+	NVSet=length(VSet);
+	MAGIC=[1];
+	for (I=1;I<NVSet;I++)
+		{
+		U=ptosfp(MNumber^I);
+		MAGIC=append(MAGIC,[U]);
+		}
+	return MAGIC;
+	}
+
+#if 0
+def zerogenericprimedecomposition(CP,MinP,TargetVSet,VSet)
+	{
+	P=CP[0];
+
+	FACTORS=sffctr(MinP);
+	NFACTORS=length(FACTORS);
+
+	if ( NFACTORS == 2 )
+		{
+		return [P];
+		}
+	
+	ANS=[];
+
+	for (I=1;I<NFACTORS;I++)
+		{
+		AddPoly=NFACTORS[I][0];
+		NewP=cos(AddPoly,P);
+		NewG=dp_gr_f_main(NewP,TargetVSet,Hom,Ord);
+		ANS=cons(NewG,ANS);
+		}
+	return ANS;
+	}
+#endif 
+
+
+def lineardimension(P,VSet)
+	{
+	Ord=0;
+
+	PP=dp_gr_f_main(P,VSet,Hom,Ord);
+	dp_ord(Ord);
+	Dimension=length(dp_mbase(map(dp_ptod,PP,VSet)));
+	return Dimension;
+	}
+
+def checkgeneric(CP,TargetVSet,VSet)
+	{
+	Dimension=lineardimension(CP[0],TargetVSet);
+	NVSet=length(TargetVSet);
+	Flag=0;
+
+	for (I=0;I<NVSet;I++)
+		{
+		MinP=CP[1][I];
+
+		if ( deg(MinP,TargetVSet[NVSet-I-1]) == Dimension )
+			{
+			return [1,MinP];
+			}
+		}
+	return 0;
+	}
+
+def checkseparable(CP,TargetVSet,VSet)
+	{
+	NVSet=length(TargetVSet);
+	EXPVector=newvect(NVSet);
+	Flag=1;
+
+	for (I=0;I<NVSet;I++)
+		{
+		MinP=CP[1][I];
+		CHECK=checkseparablepoly(MinP,TargetVSet[NVSet-I-1]);
+		if ( CHECK[0] != 0 )
+			{
+			Flag = 0; 
+			}
+		EXPVector[I]=CHECK;
+		}
+	if ( Flag == 0 )
+		{
+		return EXPVector;
+		}
+	return 1;
+	}
+
+def checkseparablepoly(F,V)
+	{
+	P = characteristic_ff();
+	E = 0;
+	Vt = newt;
+	while ( 1 ) {
+		if ( diff(F,V) != 0 )
+			return [E,F];
+		T = srem(F,V^P-Vt,V);
+		F = subst(T,Vt,V);
+		E++;
+		}
+	}
+
+def extcont(P,V,Ord)
+	{
+	/* We assume P is a Groebner Basis w.r.t. Ord. 		*/
+	/* We compute a polynomial f such that 			*/
+	/* \sqrt{<P>}=\sqrt{<P>+<f>}\cap \sqrt{(<P>)^{ec}}	*/			
+	/* by B.W. Proposition 8.96.				*/
+	/* Remark: The square free part of f is also OK.	*/
+
+	dp_ord(Ord); 
+	HC = map(dp_hc,map(dp_ptod,P,V));
+	LCM = car(HC);
+	for ( T = cdr(HC); T != []; T = cdr(T) )
+		LCM = lcm_sfrat(LCM,car(T));
+	return LCM;
+	}
+
+def first(A)
+{
+	return A[0];
+}
+
+def set_union(A,B)
+{
+	for ( T = A; T != []; T = cdr(T) )
+		B = insert_element(car(T),B);
+	return B;
+}
+
+def insert_element(E,A)
+{
+	for ( T = A; T != []; T = cdr(T) )
+		if ( E == car(T) )
+			break;
+	if ( T == [] )
+		return cons(E,A);
+	else
+		return A;
+}
+
+def extcont_factor(P,V,Ord)
+	{
+	/* We assume P is a Groebner Basis w.r.t. Ord. 		*/
+	/* We compute a polynomial f such that 			*/
+	/* \sqrt{<P>}=\sqrt{<P>+<f>}\cap \sqrt{(<P>)^{ec}}	*/			
+	/* by B.W. Proposition 8.96.				*/
+	/* Remark: The square free part of f is also OK.	*/
+
+	dp_ord(Ord); 
+	HC = map(dp_hc,map(dp_ptod,P,V));
+	F = [];
+	for ( T = HC; T != []; T = cdr(T) ) {
+		F1 = map(first,cdr(sffctr(car(T))));
+		F = set_union(F1,F);
+	}
+	return F;
+	}
+
+def contraction(P,V,W)
+	{
+	/* We assume P is a Groebner Basis w.r.t. Ord.		*/
+	/* We compute the contraction <P>^{c} by 		*/
+	/*  <P>^c=(<G>:f^\infty)				*/			
+	/* by B.W. Proposition 8.91.				*/
+	/* This procedure is called by zeroprimedecomposition.	*/
+	/* So, P is supposed to be a GB w.r.t. DRL.		*/
+
+	Ord=0;
+	YSet=setminus(W,V);
+
+	Ord1 = [[Ord,length(V)],[0,length(YSet)]];
+	GP1 = dp_gr_f_main(P,W,Hom,Ord1);
+
+	Factor = extcont_factor(GP1,V,Ord);
+	for ( F = 1, T = Factor; T != []; T = cdr(T) )
+		F *= car(T);
+	Vt = newt;	
+
+	G = dp_gr_f_main(cons(1-Vt*F,P),cons(Vt,W),0,[[0,1],[Ord,length(W)]]);
+	R = [];
+	for ( T = G; T != []; T = cdr(T) )
+		if ( !member(Vt,vars(car(T))) )
+			R = cons(car(T),R);
+	return [R,F];
+	}
+
+def checkgeneric2(LIST)
+	{
+	NList=size(LIST)[0];
+
+	FLAG=0;
+
+	for (I=0;I<NList;I++)
+		{
+		if ( LIST[I] > 1 )
+			{
+			FLAG=FLAG+1;
+			}
+		}
+
+	if (FLAG < 2 )
+		{
+		return 1;
+		}
+	return 0;
+	}
+
+#if 0 
+def checkseparablepoly(P,V)
+	{
+	TestP=P;
+	CHECK=diff(TestP,V); 
+	Count=0;
+
+	while ( CHECK !=0 )
+		{
+		if  ( deg(TestP,V) != 0 )
+			{
+			break;
+			}
+		TestP=pdivide(TestP);
+		CHECK=diff(TestP,V);
+		Count=Count+1;
+		}
+
+	return [TestP,Count];
+	}
+
+def pdivide(F,V)
+	{
+	Char=setmod_ff()[0];
+	TestP=P;
+
+	Deg=ideg(TestP,V);
+	DegP=idiv(Deg,Char); 
+
+	if ( irem(Deg,Char) != 0 )
+		{
+		error;
+		}
+	ANS=0; 
+
+	for (I=O;I<DegP;I++)
+		{
+		TempDeg=I*Char;
+		ANS=ANS+coeff(TestP,V,TempDeg)*X^I;
+		}
+	return ANS;
+	}
+#endif 
+
+
+def convsf(PP,VSet,Ord,Flag)
+	{
+	/* Flag = 0 or 1 				*/
+	/* If Flag = 1, we compute the intersection 	*/
+	/* of the Galois orbit.				*/
+
+	CHECK=checkgaloisorbit(PP,VSet,Ord,Flag);
+
+	NewPP=CHECK[0];
+	
+	ANS=[];
+
+	NPP=length(NewPP);
+
+	for (I=0;I<NPP;I++)
+		{
+		NewComp=convertsmallfield(CHECK[Flag][I],VSet,Ord);		
+		ANS=cons(NewComp,ANS);
+		}
+	return ANS;
+	}
+
+def convertsmallfield(PP,VSet,Ord)
+	{
+	dp_ord(Ord);
+	NVSet=length(VSet);
+	Char=setmod_ff()[0];
+	ExtDeg=deg(setmod_ff()[1],x);
+
+	NewV=pg;	
+	MPP=map(monic_hc,PP,VSet);
+	MPP=map(sfptopsfp,MPP,NewV);
+
+	MinPoly=subst(setmod_ff()[1],x,NewV);
+	XSet=cons(NewV,VSet);
+
+	Ord1=[[0,1],[Ord,NVSet]];
+
+	/* setmod_ff(Char,1);*/
+
+	NewP=dp_gr_mod_main(cons(MinPoly,MPP),XSet,0,Char,Ord1);
+
+	ANS=elimination(NewP,VSet);
+	
+	/* setmod_ff(Char,ExtDeg);*/
+
+	return ANS;
+	}
+
+def checkgaloisorbit(PP,VSet,Ord,Flag)
+	{
+	NPP=length(PP);
+	TmpPP=PP;
+	ExtDeg=deg(setmod_ff()[1],x);
+	
+	ANS=[];
+	BNS=[];
+
+	while (TmpPP != [] )
+		{
+		TestP=car(TmpPP);
+		Dim=TestP[1];
+		TmpPP=cdr(TmpPP);
+		NewP=TestP[0];
+
+		ANS=cons(TestP[0],ANS);
+		
+		for (J=1;J<ExtDeg;J++)
+			{
+			G1=map(sf_galois_action,TestP[0],J);		
+
+			if ( setminus(G1,TestP[0]) == [] )
+				{
+				break;
+				}
+			if (Flag == 1 )
+				{
+				NewP=ideal_intersection_sfrat(NewP,G1,VSet);
+				}
+			TmpPP=deletecomponent(TmpPP,[G1,Dim]);
+			}
+		BNS=cons(NewP,BNS);
+
+		}
+	return [ANS,BNS];
+	}
+
+def deletecomponent(PP,G)
+	{
+	TmpPP=PP;
+
+	while( TmpPP !=[] )
+		{
+		Test=car(TmpPP)[0];
+
+		if ( setminus(Test,G[0]) == [] )
+			{
+			ANS=setminus(PP,[G]);
+			return ANS;
+			}
+
+		TmpPP=cdr(TmpPP);
+		}
+	error();
+	}
+
+
+def pfctr(F)
+{
+	if ( type(F) == 1 )
+		return [[F,1]];
+	P = characteristic_ff();
+	E = extdeg_ff();
+	F = sfptop(F);
+	check_coef(F,P);
+	D = modfctr(F,P);
+	setmod_ff(P,E);
+	return map(mapsf_first,D);
+}
+
+def check_coef(F,P)
+{
+	V = vars(F);
+	D = dp_ptod(F,V);
+	for ( T = D; T; T = dp_rest(T) )
+		if ( dp_hc(T) >= P )
+			error("invalid coef");
+}
+
+def mapsf_first(D)
+{
+	return [ptosfp(D[0]),D[1]];
+}
+
+def partial_decomp(B,V)
+{
+	T0 = time();
+	if ( ParallelMinipoly ) {
+		map(ox_cmo_rpc,ParallelMinipoly,"setmod_ff",characteristic_ff(),extdeg_ff());
+		map(ox_pop_cmo,ParallelMinipoly);
+	}
+	B = map(ptosfp,B);
+	B = dp_gr_f_main(B,V,0,0);
+	R = partial_decomp0(B,V,length(V)-1);
+	if ( PartialDecompByLex ) {
+		R0 = [];
+		for ( TR = R; TR != []; TR = cdr(TR) ) {
+			T = car(TR);
+			S = dp_gr_f_main(T[0],V,0,0);
+			R0 = cons([S,T[1]],R0);
+		}
+		R = reverse(R0);
+	}
+	T_PD += time()[3]-T0[3];
+	return R;
+}
+
+def setintersection(A,B)
+{ 
+	for ( L = []; A != []; A = cdr(A) )
+		if ( member(car(A),B) )
+			L = cons(car(A),L);
+	return L;   
+}
+
+/* returns [[Plist,Mlist],...] */
+
+def partial_decomp0(B,V,I)
+{
+	N = length(V);
+	if ( I < 0 )
+		return [[B,[]]];
+	Ord = PartialDecompByLex ? [[0,I],[2,N-I]] : 0;
+#if 0
+	if ( setminus(vars(B),V) == [] )
+		B = fglm_sf_0dim(B,V,Ord0,Ord);
+	else
+#endif
+		B = dp_gr_f_main(B,V,0,Ord);
+	if ( type(B[0]) == 1 )
+		return [];
+	if ( !zero_dim(B,V,Ord) )
+		error("non zero-dimensional ideal");
+	/* XXX */
+	Vt = ttttt;
+	VI = V[I];
+	if ( PartialDecompByLex ) {
+		for ( J = 0, W = V; J < I; J++ )
+			W = cdr(W);
+		VW = setminus(V,W);
+		for ( Bw = [], T = B; T != []; T = cdr(T) )
+			if ( setintersection(vars(car(T)),VW) == [] )
+				Bw = cons(car(T),Bw);
+		MI = minipoly_sf(Bw,W,2,VI,Vt);
+	} else
+		MI = minipoly_sf(B,V,0,VI,Vt);
+	MIF = sffctr(MI);
+	/* if MI is irreducible, then process the next variable */
+	if ( length(MIF) == 2 && MIF[1][1] == 1 ) {
+		L = partial_decomp0(B,V,I-1);
+		R = [];
+		for ( S = L; S != []; S = cdr(S) ) {
+			L = car(S);
+			R = cons([L[0],cons(subst(MI,Vt,VI),L[1])],R);
+		}
+		return R;
+	}
+
+	/* for nf computation */
+	Ord1 = PartialDecompByLex ? 2 : [[0,1],[0,N]];
+	Len = length(B);
+	PS = newvect(Len+1);
+	dp_ord(Ord1);
+	XV = cons(Vt,V);
+	for ( J = 0, T = cons(Vt-VI,B); T != []; T = cdr(T), J++ )
+		PS[J] = dp_ptod(car(T),XV);
+	for ( J = 0, GI = []; J <= Len; J++ )
+		GI = cons(J,GI);
+	if ( PartialDecompByLex )
+		GI = reverse(GI);
+	
+	R = [];
+	for ( T = MIF; T != []; T = cdr(T) ) {
+		Mt = car(car(T));
+		if ( type(Mt) == 1 )
+			continue;
+		dp_ord(Ord1);
+		NfMt = dp_dtop(nf_sfrat(GI,dp_ptod(Mt,XV),1,PS)[0],XV);
+		if ( NfMt )
+			B1 = dp_gr_f_main(cons(NfMt,B),V,0,Ord);
+		else
+			B1 = B;
+		Rt = partial_decomp0(B1,V,I-1);
+		for ( S = Rt; S != []; S = cdr(S) ) {
+			L = car(S);
+			R = cons([L[0],cons(subst(Mt,Vt,VI),L[1])],R);
+		}
+	}
+	return R;
+}
+
+
+/* G is a gb wrt (V,O) */
+
+def minipoly_sf(G,V,O,F,V0)
+{
+	T0 = time();
+	Vc = cons(V0,setminus(vars(G),V));
+	if ( ParallelMinipoly ) {
+		Proc0 = ParallelMinipoly[0];
+		Proc1 = ParallelMinipoly[1];
+		if ( length(Vc) == 1 ) {
+			ox_rpc(Proc0,"minipoly_sf_by_buchberger",G,V,O,F,V0,1);
+			ox_rpc(Proc1,"minipoly_sf_0dim",G,V,O,F,V0,1);
+			map(ox_get,ParallelMinipoly);
+			/* 258=SM_popSerializedLocalObject */
+			map(ox_push_cmd,ParallelMinipoly,258);
+			F = ox_select(ParallelMinipoly);
+			MP = ox_get(F[0]);
+			if ( F[0] == Proc0 ) {
+				if ( length(F) == 1 )
+					B_Win++;
+				else
+					ox_get(Proc1);
+			} else {
+				if ( length(F) == 1 )
+					D_Win++;
+				else
+					ox_get(Proc0);
+			}
+			ox_reset(Proc0);
+			ox_reset(Proc1);
+		} else if ( length(Vc) == 2 ) {
+			ox_rpc(Proc0,"minipoly_sf_by_buchberger",G,V,O,F,V0,1);
+			ox_rpc(Proc1,"minipoly_sfrat",G,V,O,F,V0,1);
+			map(ox_get,ParallelMinipoly);
+			/* 258=SM_popSerializedLocalObject */
+			map(ox_push_cmd,ParallelMinipoly,258);
+			F = ox_select(ParallelMinipoly);
+			MP = ox_get(F[0]);
+			if ( F[0] == Proc0 ) {
+				if ( length(F) == 1 )
+					B_Win++;
+				else
+					ox_get(Proc1);
+			} else {
+				if ( length(F) == 1 )
+					D_Win++;
+				else
+					ox_get(Proc0);
+			}
+			ox_reset(Proc0);
+			ox_reset(Proc1);
+		} else
+			MP = minipoly_sf_by_buchberger(G,V,O,F,V0,0);
+	} else if ( BuchbergerMinipoly )
+		MP = minipoly_sf_by_buchberger(G,V,O,F,V0,0);
+	else {
+		if ( length(Vc) == 1 )
+			MP = minipoly_sf_0dim(G,V,O,F,V0,0);
+		else if ( length(Vc) == 2 )
+			MP = minipoly_sfrat(G,V,O,F,V0,0);
+		else
+			MP = minipoly_sf_by_buchberger(G,V,O,F,V0,0);
+	}
+	T_MP += time()[3]-T0[3];
+	return MP;
+}
+
+def minipoly_sf_by_buchberger(G,V,O,F,V0,Server)
+{
+	if ( Server )
+		ox_sync(0);
+	Vc = cons(V0,setminus(vars(G),V));
+	Gf = cons(ptosfp(V0-F),G);
+	Vf = append(V,Vc);
+	Gelim = dp_gr_f_main(Gf,Vf,1,[[0,length(V)],[0,length(Vc)]]);
+	for ( Gc = [], T = Gelim; T != []; T = cdr(T) ) {
+		Vt = setminus(vars(car(T)),Vc);
+		if ( Vt == [] )
+			Gc = cons(car(T),Gc);
+	}
+	Gt = dp_gr_f_main(Gc,Vc,1,[[0,1],[0,length(Vc)-1]]);	
+	Pmin = car(Gt); Dmin = deg(Pmin,V0); 
+	for ( T = cdr(Gt); T != []; T = cdr(T) ) {
+		Dt = deg(car(T),V0);
+		if ( Dt < Dmin ) {
+			Pmin = car(T); Dmin = Dt; 
+		}
+	}
+	Cont = sfcont(Pmin,V0);
+	return sdiv(Pmin,Cont);
+}
+
+def minipoly_sf_0dim(G,V,O,F,V0,Server)
+{
+	if ( Server )
+		ox_sync(0);
+	N = length(V);
+	Len = length(G);
+	dp_ord(O);
+	PS = newvect(Len);
+	for ( I = 0, T = G; T != []; T = cdr(T), I++ )
+		PS[I] = dp_ptod(car(T),V);
+	for ( I = Len-1, HL = []; I >= 0; I-- )
+		HL = cons(dp_ht(PS[I]),HL);
+	for ( I = Len - 1, GI = []; I >= 0; I-- )
+		GI = cons(I,GI);
+	MB = dp_mbase(HL); DIM = length(MB); UT = newvect(DIM);
+	U = dp_ptod(ptosfp(F),V);
+	U = dp_nf_f(GI,U,PS,1);
+	for ( I = 0; I < DIM; I++ )
+		UT[I] = [MB[I],dp_nf_f(GI,U*MB[I],PS,1)];
+
+	T = dp_ptod(ptosfp(1),[V0]);
+	TT = dp_ptod(ptosfp(1),V);
+	G = H = [[TT,T]];
+
+	for ( I = 1; ; I++ ) {
+		if ( dp_gr_print() )
+			print(".",2);
+		T = dp_ptod(ptosfp(V0^I),[V0]);
+		TT = dp_nf_tab_f(H[0][0],UT);
+		H = cons([TT,T],H);
+		L = dp_lnf_f([TT,T],G);
+		if ( !L[0] ) {
+			if ( dp_gr_print() )
+				print("");
+			return dp_dtop(L[1],[V0]); /* XXX */
+		} else
+			G = insert(G,L);
+	}
+}
+
+#if 1
+def minipoly_sf_rat(G,V,F,V0)
+{
+	Vc = setminus(vars(G),V);
+	Gf = cons(V0-F,G);
+	Vf = append(V,[V0]);
+	G3 = dp_gr_f_main(map(ptosfp,Gf),Vf,0,3);
+	for ( T = G3; T != []; T = cdr(T) ) {
+		Vt = setminus(vars(car(T)),Vc);
+		if ( Vt == [V0] )
+			return car(T);
+	}
+}
+
+def minipoly_mod(G,V,Mod,F,V0)
+{
+	Vc = setminus(vars(G),V);
+	Gf = cons(V0-F,G);
+	Vf = append(V,[V0]);
+	G3 = dp_gr_mod_main(Gf,Vf,1,Mod,3);
+	for ( T = G3; T != []; T = cdr(T) ) {
+		Vt = setminus(vars(car(T)),Vc);
+		if ( Vt == [V0] )
+			return car(T);
+	}
+}
+#endif
+
+/* find N/D s.t. F = N/D mod V^(2M), deg(N),deg(D)<M */
+
+def pade(F,M)
+{
+	V = var(F);
+	A = newvect(M);
+	D = 0;
+	for ( I = 0; I < M; I++ ) {
+		A[I] = strtov("b"+rtostr(I));
+		D += A[I]*V^I;
+	}
+	T = F*D;
+	M2 = M*2;
+	R = [];
+	for ( I = M; I < M2; I++ )
+		R = cons(coef(T,I,V),R);
+}
+
+def minipoly_sfrat(G0,V,O,P,V0,Server)
+{
+	if ( Server )
+		ox_sync(0);
+	if ( !zero_dim(hmlist(G0,V,O),V,O) )
+		error("minipoly_sfrat : ideal is not zero-dimensional!");
+
+	G1 = cons(V0-P,G0);
+	if ( type(O) <= 1 )
+		O1 = [[0,1],[O,length(V)]];
+	else
+		O1 = cons([0,1],O);
+	V1 = cons(V0,V);
+	W = append(V,[V0]);	
+	Vc = setminus(vars(G0),V);
+
+	N = length(V1);
+	dp_ord(O1);
+	HM = hmlist(G1,V1,O1);
+	MB = dp_mbase(map(dp_ptod,HM,V1));
+	dp_ord(O);
+
+	Nc = length(Vc);
+	Eval = newvect(Nc);
+
+	/* heristic lower bound of deg(MP) */
+	Q1 = field_order_ff()-1;
+	do {
+		for ( I = 0; I < Nc; I++ )
+			Eval[I] = random()%Q1;
+	} while ( !valid_modulus_sfrat(HM,Vc,Eval) );
+	G0E = map(eval_sfrat,G0,Vc,Eval);
+	P0 = eval_sfrat(P,Vc,Eval);
+	MP = minipoly_sf(G0E,V,O,P0,V0);
+	DMP = deg(MP,V0);
+
+	for ( I = 0; I < Nc; I++ )
+		Eval[I] = 0;
+	while ( 1 ) {
+		if ( valid_modulus_sfrat(HM,Vc,Eval) ) {
+			G0E = map(eval_sfrat,G0,Vc,Eval);
+			P0 = eval_sfrat(P,Vc,Eval);
+			MP = minipoly_sf(G0E,V,O,P0,V0);
+			D = deg(MP,V0);
+			if ( D >= DMP ) {
+				DMP = D;
+				for ( TL = [], MPT = 0, J = 0; J <= D; J++ ) {
+					TL = cons(V0^J,TL);
+					MPT += car(TL);
+				}
+				NF = gennf_sfrat(G1,TL,V1,O1,V0,1)[0];
+				R = tolex_sfrat_main(V1,O1,NF,[MPT],Vc,Eval,MB);
+				if ( R )
+					return sdiv(R[0],sfcont(R[0],V0));
+			}
+		}
+		next_eval_sfrat(Eval);
+	}
+}
+
+def next_eval_sfrat(Eval)
+{
+	N = size(Eval)[0];
+	for ( I = N-1; I >= 0; I-- )
+		if ( Eval[I] ) break;
+	if ( I < 0 ) Eval[N-1] = 1;
+	else if ( I == 0 ) {
+		T = Eval[0]; Eval[0] = 0; Eval[N-1] = T+1;
+	} else {
+		Eval[I-1]++; T = Eval[I];
+		for ( J = I; J < N-1; J++ )
+			Eval[J] = 0;
+		Eval[N-1] = T-1;
+	}
+}
+
+def eval_sfrat(F,V,Eval)
+{
+	for ( I = 0; V != []; V = cdr(V), I++ )
+		F = subst(F,car(V),ptosfp(Eval[I]));
+	return F;
+}
+
+def valid_modulus_sfrat(HL,Vc,Eval) {
+	for ( T = HL; T != []; T = cdr(T) ) {
+		C = car(T);
+		for ( S = Vc, I = 0; S != []; S = cdr(S), I++ )
+			C = subst(C,car(S),ptosfp(Eval[I]));
+		if ( !C )
+			break;
+	}
+	return T == [] ? 1 : 0;
+}
+
+def gennf_sfrat(G,TL,V,O,V0,FLAG)
+{
+	N = length(V); Len = length(G); dp_ord(O); PS = newvect(Len);
+	for ( I = 0, T = G, HL = []; T != []; T = cdr(T), I++ ) {
+		PS[I] = dp_ptod(car(T),V); HL = cons(dp_ht(PS[I]),HL);
+	}
+	for ( I = 0, DTL = []; TL != []; TL = cdr(TL) )
+		DTL = cons(dp_ptod(car(TL),V),DTL);
+	for ( I = Len - 1, GI = []; I >= 0; I-- )
+		GI = cons(I,GI);
+	T = car(DTL); DTL = cdr(DTL);
+	H = [nf_sfrat(GI,T,T,PS)];
+
+	USE_TAB = (FLAG != 0);
+	if ( USE_TAB ) {
+		T0 = time()[0];
+		MB = dp_mbase(HL); DIM = length(MB);
+		U = dp_ptod(V0,V);
+		UTAB = newvect(DIM);
+		for ( I = 0; I < DIM; I++ ) {
+			UTAB[I] = [MB[I],remove_cont_sfrat(nf_sfrat(GI,U*MB[I],1,PS))];
+			if ( dp_gr_print() )
+				print(".",2);
+		}
+		if ( dp_gr_print() )
+			print("");
+		TTAB = time()[0]-T0;
+	}
+
+	T0 = time()[0];
+	for ( LCM = 1; DTL != []; ) {
+		if ( dp_gr_print() )
+			print(".",2);
+		T = car(DTL); DTL = cdr(DTL);
+		if ( L = search_redble(T,H) ) {
+			DD = dp_subd(T,L[1]);
+			if ( USE_TAB && (DD == U) ) {
+				NF = nf_tab_sfrat(L[0],UTAB);
+				NF = [NF[0],dp_hc(L[1])*NF[1]*T];
+			} else
+				NF = nf_sfrat(GI,L[0]*dp_subd(T,L[1]),dp_hc(L[1])*T,PS);
+		} else
+			NF = nf_sfrat(GI,T,T,PS);
+		NF = remove_cont_sfrat(NF);
+		H = cons(NF,H);
+		LCM = lcm_sfrat(LCM,dp_hc(NF[1]));
+	}
+	TNF = time()[0]-T0;
+	if ( dp_gr_print() )
+		print("gennf(TAB="+rtostr(TTAB)+" NF="+rtostr(TNF)+")");
+	return [[map(adj_dn_sfrat,H,LCM),LCM],PS,GI];
+}
+
+def lcm_sfrat(A,B)
+{
+	G = sfgcd(A,B);
+	return sdiv(A,G)*B;
+}
+
+#define REDCONT(f) ((f)/sfcont(f))
+
+def remove_cont_sfrat(L)
+{
+	if ( type(L[1]) <= 2 ) {
+		T = remove_cont_sfrat([L[0],L[1]*<<0>>]);
+		return [T[0],dp_hc(T[1])];
+	} else if ( !L[0] )
+		return [0,REDCONT(L[1])];
+	else if ( !L[1] )
+		return [REDCONT(L[0]),0];
+	else {
+		A0 = REDCONT(L[0]); A1 = REDCONT(L[1]);
+		C0 = sdiv(dp_hc(L[0]),dp_hc(A0)); C1 = sdiv(dp_hc(L[1]),dp_hc(A1));
+		GCD = sfgcd(C0,C1); M0 = sdiv(C0,GCD); M1 = sdiv(C1,GCD);
+		return [M0*A0,M1*A1];
+	}
+}
+
+def nf_sfrat(B,G,M,PS)
+{
+	for ( D = 0; G; ) {
+		for ( U = 0, L = B; L != []; L = cdr(L) ) {
+			if ( dp_redble(G,R=PS[car(L)]) > 0 ) {
+				GCD = sfgcd(dp_hc(G),dp_hc(R));
+				CG = sdiv(dp_hc(R),GCD); CR = sdiv(dp_hc(G),GCD);
+				U = CG*G-dp_subd(G,R)*CR*R;
+				if ( !U )
+					return [D,M];
+				D *= CG; M *= CG;
+				break;
+			}
+		}
+		if ( U )
+			G = U;
+		else {
+			D += dp_hm(G); G = dp_rest(G);
+		}
+	}
+	return [D,M];
+}
+
+def nf_tab_sfrat(F,TAB)
+{
+	for ( NM = 0, DN = 1, I = 0; F; F = dp_rest(F) ) {
+		T = dp_ht(F);
+		for ( ; TAB[I][0] != T; I++);
+		NF = TAB[I][1]; N = NF[0]; D = NF[1];
+		G = sfgcd(DN,D); DN1 = sdiv(DN,G); D1 = sdiv(D,G);
+		NM = D1*NM + DN1*dp_hc(F)*N; DN *= D1;
+	}
+	return [NM,DN];
+}
+
+def adj_dn_sfrat(P,D)
+{
+	return [(sdiv(D,dp_hc(P[1])))*P[0],dp_ht(P[1])];
+}
+
+def tolex_sfrat_main(V,O,NF,GM,Vc,Eval,MB)
+{
+	if ( MB ) {
+		PosDim = 0;
+		DIM = length(MB);
+		DV = newvect(DIM);
+	} else
+		PosDim = 1;
+	for ( T = GM, SL = [], LCM = 1; T != []; T = cdr(T) ) {
+		S = p_terms(car(T),V,2);
+		if ( PosDim ) {
+			MB = gather_nf_terms(S,NF,V,O);
+			DV = newvect(length(MB));
+		}
+		dp_ord(O); RHS = termstomat_sfrat(NF,map(dp_ptod,cdr(S),V),MB,Vc,Eval);
+		dp_ord(O); NHT = nf_tab_gsl_sfrat(dp_ptod(LCM*car(S),V),NF);
+		dptov(NHT[0],DV,MB);
+		dp_ord(O); B = hen_ttob_gsl_sfrat([DV,NHT[1]],RHS,cdr(S),Vc,Eval);
+		if ( !B )
+			return 0;
+		Len = length(S);
+		LCM *= B[1];
+		for ( U = LCM*car(S), I = 1; I < Len; I++  )
+			U += B[0][I-1]*S[I];
+		SL = cons(U,SL);
+		if ( dp_gr_print() )
+			print(["DN",B[1]]);
+	}
+	return SL;
+}
+
+def termstomat_sfrat(NF,TERMS,MB,Vc,Eval)
+{
+	DN = NF[1];
+	NF = NF[0];
+	N = length(MB);
+	M = length(TERMS);
+	MAT = newmat(N,M);
+	W = newvect(N);
+	Len = length(NF);
+	for ( I = 0; I < M; I++ ) {
+		T = TERMS[I];
+		for ( K = 0; K < Len; K++ )
+			if ( T == NF[K][1] )
+				break;
+		dptov(NF[K][0],W,MB);
+		for ( J = 0; J < N; J++ )
+			MAT[J][I] = W[J];
+	}
+	return [henleq_prep_sfrat(MAT,Vc,Eval),DN];
+}
+
+def henleq_prep_sfrat(A,Vc,Eval)
+{
+	SIZE = size(A); ROW = SIZE[0]; COL = SIZE[1];
+	L = geninv_sf_swap(map(eval_sfrat,A,Vc,Eval)); INV = L[0]; INDEX = L[1];
+	AA = newmat(COL,COL);
+	for ( I = 0; I < COL; I++ )
+		for ( J = 0, T = AA[I], S = A[INDEX[I]]; J < COL; J++ )
+			T[J] = S[J];
+	if ( COL != ROW ) {
+		RESTA = newmat(ROW-COL,COL);
+		for ( ; I < ROW; I++ )
+			for ( J = 0, T = RESTA[I-COL], S = A[INDEX[I]]; J < COL; J++ )
+				T[J] = S[J];
+	} else
+		RESTA = 0;
+	return [[A,AA,RESTA],L];
+}
+
+def hen_ttob_gsl_sfrat(LHS,RHS,TERMS,Vc,Eval)
+{
+	LDN = LHS[1]; RDN = RHS[1]; LCM = lcm_sfrat(LDN,RDN);
+	L1 = sdiv(LCM,LDN); R1 = sdiv(LCM,RDN);
+	T0 = time()[0];
+	S = henleq_gsl_sfrat(RHS[0],LHS[0]*L1,Vc,Eval);
+	if ( dp_gr_print() )
+		print(["henleq_gsl_sfrat",time()[0]-T0]);
+	if ( !S )
+		return 0;
+	N = length(TERMS);
+	return [S[0],S[1]*R1];
+}
+
+def nf_tab_gsl_sfrat(A,NF)
+{
+	DN = NF[1];
+	NF = NF[0];
+	TLen = length(NF);
+	for ( R = 0; A; A = dp_rest(A) ) {
+		HM = dp_hm(A); C = dp_hc(HM); T = dp_ht(HM);
+		for ( I = 0; I < TLen; I++ )
+			if ( NF[I][1] == T )
+				break;
+		R += C*NF[I][0];
+	}
+	return remove_cont_sfrat([R,DN]);
+}
+
+def henleq_gsl_sfrat(L,B,Vc,Eval)
+{
+	Nc = length(Vc);
+	if ( Nc > 1 )
+		return henleq_gsl_sfrat_higher(L,B,Vc,Eval);
+
+	V0 = Vc[0]; E0 = ptosfp(Eval[0]);
+
+	AL = L[0]; INVL = L[1];
+	A = AL[0]; AA = AL[1]; RESTA = AL[2];
+	INV = INVL[0]; INDEX = INVL[1];
+
+	SIZE = size(A); ROW = SIZE[0]; COL = SIZE[1];
+	BB = newvect(COL);
+	for ( I = 0; I < COL; I++ )
+		BB[I] = B[INDEX[I]];
+	if ( COL != ROW ) {
+		RESTB = newvect(ROW-COL);
+		for ( ; I < ROW; I++ )
+			RESTB[I-COL] = B[INDEX[I]];	
+	} else
+		RESTB = 0;
+
+	COUNT = 2;
+	if ( !COUNT )
+		COUNT = 2;
+	X = newvect(size(AA)[0]);
+	for ( I = 0, C = BB, CCC = 0, ITOR_FAIL = -1; ; I++ ) {
+		if ( zerovector(C) ) {
+			X = map(subst,X,V0,V0-E0);
+			if ( zerovector(RESTA*X+RESTB) ) {
+				if ( dp_gr_print() ) print("end",0);
+				return [X,ptosfp(1)];
+			} else
+				return 0;
+		} else if ( COUNT == CCC ) {
+			CCC = 0;
+			ND = polyvtoratv(X,V0,I);
+			if ( ND ) {
+				F = map(subst,ND[0],V0,V0-E0);
+				LCM = subst(ND[1],V0,V0-E0);
+				T = AA*F+LCM*BB;
+				if ( zerovector(T) ) {
+					T = RESTA*F+LCM*RESTB;
+					if ( zerovector(T) ) {
+						if ( dp_gr_print() ) print("end",0);
+						return [F,LCM];
+					} else
+						return 0;
+				}
+			} else {
+			}
+		} else {
+			if ( dp_gr_print() ) print(".",2);
+			CCC++;
+		}
+		XT = -INV*map(subst,C,V0,E0);
+		X += XT*V0^I;
+		C += AA*XT;
+		C = map(sdiv,C,V0-E0);
+	}
+}
+
+def henleq_gsl_sfrat_higher(L,B,Vc,Eval)
+{
+	Nc = length(Vc);
+	E = map(ptosfp,Eval);
+
+	AL = L[0]; INVL = L[1];
+	A = AL[0]; AA0 = AL[1]; RESTA = AL[2];
+	INV = INVL[0]; INDEX = INVL[1];
+
+	SIZE = size(A); ROW = SIZE[0]; COL = SIZE[1];
+
+	AA = map(mshift,AA0,Vc,E,1);
+	BB = newvect(COL);
+	for ( I = 0; I < COL; I++ )
+		BB[I] = mshift(B[INDEX[I]],Vc,E,1);
+
+	if ( COL != ROW ) {
+		RESTB = newvect(ROW-COL);
+		for ( ; I < ROW; I++ )
+			RESTB[I-COL] = B[INDEX[I]];	
+	} else
+		RESTB = 0;
+
+	COUNT = 2;
+	if ( !COUNT )
+		COUNT = 2;
+	X = newvect(size(AA)[0]);
+	for ( I = 0, R = BB, CCC = 0, ITOR_FAIL = -1; ; I++ ) {
+		if ( zerovector(R) ) {
+			X = map(mshift,X,Vc,E,-1);
+			if ( zerovector(RESTA*X+RESTB) ) {
+				if ( dp_gr_print() ) print("end",0);
+				return [X,ptosfp(1)];
+			} else
+				return 0;
+		} else if ( COUNT == CCC ) {
+			CCC = 0;
+			ND = polyvtoratv_higher(X,Vc,I);
+			if ( ND ) {
+				F = map(mshift,ND[0],Vc,E,-1);
+				LCM = mshift(ND[1],Vc,E,-1);
+				T = AA*F+LCM*BB;
+				if ( zerovector(T) ) {
+					T = RESTA*F+LCM*RESTB;
+					if ( zerovector(T) ) {
+						if ( dp_gr_print() ) print("end",0);
+						return [F,LCM];
+					} else
+						return 0;
+				}
+			} else {
+			}
+		} else {
+			if ( dp_gr_print() ) print(".",2);
+			CCC++;
+		}
+		RK = map(mtrunc,R,I+1);
+		XT = -INV*RK;
+		X += XT;
+		R += AA*XT;
+	}
+}
+
+/* V -> V+Sgn*E */
+
+def mshift(F,V,E,Sgn)
+{
+	N = length(V);
+	for ( I = 0; I < N; I++ )
+		F = subst(F,V[I],V[I]+Sgn*E[I]);
+	return F;
+}
+
+/* truncate terms whose degree are higher than or equal to D */
+
+def mtrunc(F,D)
+{
+	if ( type(F) <= 1 )
+		return F;
+	else {
+		R = 0;
+		V = var(F);
+		while ( F ) {
+			K = deg(F,V);
+			C = coef(F,K,V);
+			if ( K < D )
+				R += mtrunc(C,D-K)*V^K;
+			F -= C*V^K;
+		}
+		return R;
+	}
+}
+
+/* for 1-dim case */
+
+def polyvtoratv(Vect,V,K)
+{
+	N = size(Vect)[0];
+	R = newvect(N);
+	K2 = idiv(K,2);
+	Mat = newmat(K2,K2);
+	for ( I = 0; I < N; I++ ) {
+		T = polytorat(Vect[I],V,Mat,K2);
+		if ( T )
+			R[I] = T;
+		else
+			return 0;
+	}
+	LCM = R[0][1];
+	for ( I = 1; I < N; I++ )
+		LCM = lcm_sfrat(LCM,R[I][1]);
+	for ( I = 0; I < N; I++ )
+		R[I] = R[I][0]*sdiv(LCM,R[I][1]);
+	return [R,LCM];
+}
+
+/* for higher dim case */
+
+def polyvtoratv_higher(Vect,Vc,K)
+{
+	N = size(Vect)[0];
+	R = newvect(N);
+	K2 = idiv(K,2);
+	for ( I = 0; I < N; I++ ) {
+		T = polytorat_higher(Vect[I],Vc,K2);
+		if ( T )
+			R[I] = T;
+		else
+			return 0;
+	}
+	LCM = R[0][1];
+	for ( I = 1; I < N; I++ )
+		LCM = lcm_sfrat(LCM,R[I][1]);
+	for ( I = 0; I < N; I++ )
+		R[I] = R[I][0]*sdiv(LCM,R[I][1]);
+	return [R,LCM];
+}
+
+/* find F = N/D mod V^(2K), deg(N), deg(D) < K */
+def polytorat_gcd(F,V,K)
+{
+	if ( deg(F,V) < K )
+		return [F,ptosfp(1)];
+	F1 = Mod^(K*2); F2 = F;
+	B1 = 0; B2 = 1;
+	while ( 1 ) {
+		Q = sdiv(F1,F2); 
+		F3 = F1-F2*Q;
+		B3 = B1-B2*Q;
+		if ( deg(F3,V) < K ) {
+			if ( deg(B3,V) < K )
+				return [F3,B3];
+			else
+				return 0;
+		}
+		F1 = F2; F2 = F3;
+		B1 = B2; B2 = B3;
+	}
+}
+
+/* 
+ * for 1-dim case
+ *
+ * solve
+ *
+ * [fk      ... f1][  a0  ]   
+ * [f(k+1)  ... f2][  a1  ] = 0
+ * [        ...   ][ ...  ]
+ * [f(2k-1) ... fk][a(k-1)]
+ */
+
+def polytorat(F,V,Mat,K)
+{
+	if ( deg(F,V) < K )
+		return [F,ptosfp(1)];
+	for ( I = 0; I < K; I++ )
+		for ( J = 0; J < K; J++ )
+			Mat[I][J] = coef(F,I+K-J);
+	S = nullspace_ff(Mat);
+	MT = S[0]; IND = S[1];
+	for ( I = 0; I < K; I++ )
+		if ( IND[I] )
+			break;
+	if ( I == K )
+		return 0;
+	D = null_to_poly_ff(MT,IND,V)[0];
+	N = trunc(F*D,K-1);
+	return [N,D];
+}
+
+/* find N,D s.t. tdeg(N), tdeg(D) < K, F = N/D mod <V0,...,VM>^(2K) */
+
+def polytorat_higher(F,V,K)
+{
+	if ( K < 2 ) return 0;
+	if ( homogeneous_deg(F) < K )
+		return [F,ptosfp(1)];
+	D = create_icpoly(V,K);
+	C = extract_coef(D*F,V,K,2*K);
+	Vc = vars(C);
+	G = dp_gr_f_main(C,Vc,0,2);	
+	PS = newvect(length(G),map(dp_ptod,G,Vc));
+	for ( I = length(G)-1, Ind = [];I >= 0; I-- )
+		Ind = cons(I,Ind);
+	D = dp_dtop(nf_sfrat(Ind,dp_ptod(D,Vc),1,PS)[0],Vc);
+	if ( !D )
+		return 0;
+	Vp = setminus(vars(D),V);
+	D = subst(D,car(Vp),1);
+	for ( T = cdr(Vp); T != []; T = cdr(T) )
+		D = subst(D,car(T),0);
+	N = mtrunc(F*D,K);
+	return [N,D];
+}
+
+def create_icpoly(V,K)
+{
+	if ( V == [] )
+		return uc();
+	R = 0;
+	for ( I = 0; I < K; I++ )
+		R += create_icpoly(cdr(V),K-I)*V[0]^I;
+	return R;
+}
+
+/* extract terms whose degrees are in [From,To) */
+
+def extract_coef(F,V,From,To)
+{
+	if ( V == [] ) {
+		if ( From == 0 )
+			return [F];
+		else 
+			return [];
+	}
+	R = [];
+	V0 = V[0];
+	for ( I = 0; I < To; I++ ) {
+		C = coef(F,I,V0);
+		if ( C ) {
+			C = extract_coef(C,cdr(V),From>=I?From-I:0,To-I);
+			R = append(C,R);
+		}
+	}
+	return R;
+}
+
+def saturation_sfrat(F,G,V,Ord)
+{
+	Vt = ttttt;
+	G0 = dp_gr_f_main(cons(Vt*F-1,G),cons(Vt,V),0,[[0,1],[Ord,length(V)]]);
+	return elimination(G0,V);
+}
+
+def ideal_list_intersection_sfrat(L,V)
+{
+	R = car(L);
+	for ( TL = cdr(L); TL != []; TL = cdr(TL) )
+		R = ideal_intersection_sfrat(R,car(TL),V);
+	return R;
+}
+
+def ideal_intersection_sfrat(A,B,V)
+{
+	T0 = time();
+	Vt = ttttt;
+	C = [];
+	for ( T = A; T != []; T = cdr(T) )
+		C = cons(car(T)*Vt,C);
+	for ( T = B; T != []; T = cdr(T) )
+		C = cons(car(T)*(1-Vt),C);
+	Ord = [[0,1],[0,length(V)]];	
+#if 0
+	G0 = dp_gr_f_main(C,cons(Vt,V),0,0);
+	G = dp_gr_f_main(G0,cons(Vt,V),0,Ord);
+#else
+	G = dp_gr_f_main(C,cons(Vt,V),0,Ord);
+#endif
+	T_INT += time()[3]-T0[3];
+	return elimination(G,V);
+}
+
+/* Shimoyama's gr_fctr */
+
+def idealsqfr_sf(G)
+{
+	for(LL=[],I=length(G)-1;I>=0;I--) {
+		for(A=1,L=sfsqfr(G[I]),J=1;J<length(L);J++)
+			A*=L[J][0];
+		LL=cons(A,LL);
+	}
+	return LL;
+}
+
+def ideal_uniq(L) /* sub procedure of welldec and normposdec */
+{
+	for (R = [],I = 0,N=length(L); I < N; I++) {
+		if ( R == [] )
+			R = append(R,[L[I]]);
+		else {
+			for (J = 0; J < length(R); J++)
+				if ( gb_comp(L[I],R[J]) )
+					break;
+			if ( J == length(R) )
+				R = append(R,[L[I]]);
+		}
+	}
+	return R;
+}
+
+def ideal_uniq_by_first(L) /* sub procedure of welldec and normposdec */
+{
+	for (R = [],I = 0,N=length(L); I < N; I++) {
+		if ( R == [] )
+			R = append(R,[L[I]]);
+		else {
+			for (J = 0; J < length(R); J++)
+				if ( gb_comp(L[I][0],R[J][0]) )
+					break;
+			if ( J == length(R) )
+				R = append(R,[L[I]]);
+		}
+	}
+	return R;
+}
+
+def prime_irred_sf(TP,VL,Ord)
+{
+	TP = ideal_uniq(TP);
+	N = length(TP);
+	for (P = [], I = 0; I < N; I++) {
+		for (J = 0; J < N; J++)
+			if ( I != J && inclusion_test(TP[J],TP[I],VL,Ord) )
+				break;
+		if (J == N)
+			P = append(P,[TP[I]]);
+	}
+	return P;
+}
+
+def prime_irred_sf_by_first(TP,VL,Ord)
+{
+	TP = ideal_uniq_by_first(TP);
+	N = length(TP);
+	for (P = [], I = 0; I < N; I++) {
+		for (J = 0; J < N; J++)
+			if ( I != J && inclusion_test(car(TP[J]),car(TP[I]),VL,Ord) )
+				break;
+		if (J == N)
+			P = append(P,[TP[I]]);
+	}
+	return P;
+}
+
+def monic_sf_first(L,V)
+{
+	for ( R = [], T = L; T != []; T = cdr(T) )
+		R = cons([monic_sf(car(T)[0],V),car(T)[1]],R);
+	return reverse(R);
+}
+
+def monic_sf(P,V)
+{
+	if ( type(P) == 4 )
+		return map(monic_sf,P,V);
+	else {
+		D = dp_ptod(P,V);
+		return dp_dtop(D/dp_hc(D),V);
+	}
+}
+
+def gr_fctr_sf(FL,VL,Ord)
+{
+	T0 = time();
+	COMMONCHECK_SF = 1;
+	for (TP = [],I = 0; I<length(FL); I++ ) {
+		F = FL[I];
+		SF = idealsqfr_sf(F);
+		if ( !gb_comp(F,SF) ) 
+			F = dp_gr_f_main(SF,VL,0,Ord);
+		CID_SF=[1];
+		SP = gr_fctr_sub_sf(F,VL,Ord);
+		TP = append(TP,SP);
+	}
+	TP = prime_irred_sf(TP,VL,Ord);
+	T_GRF += time()[3]-T0[3];
+	return TP;
+}
+
+def gr_fctr_sub_sf(G,VL,Ord)
+{
+	if ( length(G) == 1 && type(G[0]) == 1 )
+		return [G];
+	RL = [];
+	for (I = 0; I < length(G); I++) {
+		FL = sffctr(G[I]); L = length(FL); N = FL[1][1];
+		if (L > 2 || N > 1) {
+			TLL = [];
+			for (J = 1; J < L; J++) {
+				W = cons(FL[J][0],G);
+				NG = dp_gr_f_main(W,VL,0,Ord);
+				TNG = idealsqfr_sf(NG);
+				if ( !gb_comp(NG,TNG) )
+					NG = dp_gr_f_main(TNG,VL,0,Ord);
+				if ( !inclusion_test(CID_SF,NG,VL,Ord) ) {
+					DG = gr_fctr_sub_sf(NG,VL,Ord);
+					RL = append(RL,DG);
+					if ( J <= L-2 
+						&& !inclusion_test(CID_SF,NG,VL,Ord)
+						&& COMMONCHECK_SF ) {
+						CID_SF=ideal_intersection_sfrat(CID_SF,NG,VL);
+					}
+				}
+			}
+			break;
+		}
+	}
+	if (I == length(G))
+		RL = append([G],RL);
+	return RL;
+}
+end$
