@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.11 2003/02/07 09:25:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.12 2004/01/07 08:23:11 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
@@ -803,10 +803,12 @@ def norm_ch_lag(V,VM,P,P0) {
 
 def cr_gcda(P1,P2)
 {
-	if ( !var(P1) )
+	if ( !P1 )
 		return P2;
-	else if ( !var(P2) )
+	if ( !P2 )
 		return P1;
+	if ( !var(P1) || !var(P2) )
+		return 1;
 	V = var(P1);
 	EXT = union_sort(getalgtreep(P1),getalgtreep(P2));
 	if ( EXT == [] )
