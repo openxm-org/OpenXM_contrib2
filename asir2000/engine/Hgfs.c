@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.13 2001/06/29 09:08:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.14 2001/07/03 01:41:25 noro Exp $ */
 
 #include "ca.h"
 
@@ -614,7 +614,7 @@ ML *listp;
 	/* f(x,y) -> f(x,y+ev) */
 	fl = BMALLOC(dx,dy);
 	ptosfbm(dy,f,fl);
-	shiftsfbm(fl,FTOIF(CONT(ev)));
+	if ( ev ) shiftsfbm(fl,FTOIF(CONT(ev)));
 
 	/* sf = f(x+ev) */
 	sfbmtop(fl,x,y,&sf);
@@ -1028,13 +1028,15 @@ DCP *dcp;
 		return;
 	}
 	sfdtest(sf,list,x,y,&dc);
-	dx = getdeg(x,sf);
-	dy = getdeg(y,sf);
-	W_BMALLOC(dx,dy,fl);
-	for ( dct = dc; dct; dct = NEXT(dct) ) {
-		ptosfbm(dy,COEF(dct),fl);
-		shiftsfbm(fl,_chsgnsf(FTOIF(CONT(ev))));
-		sfbmtop(fl,x,y,&COEF(dct));
+	if ( ev ) {
+		dx = getdeg(x,sf);
+		dy = getdeg(y,sf);
+		W_BMALLOC(dx,dy,fl);
+		for ( dct = dc; dct; dct = NEXT(dct) ) {
+			ptosfbm(dy,COEF(dct),fl);
+			shiftsfbm(fl,_chsgnsf(FTOIF(CONT(ev))));
+			sfbmtop(fl,x,y,&COEF(dct));
+		}
 	}
 	*dcp = dc;
 }
