@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.16 2004/03/04 03:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.17 2004/03/04 05:16:42 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,6 +58,11 @@ extern jmp_buf environnement;
 #endif
 #include <string.h>
 
+struct TeXSymbol {
+	char *text;
+	char *symbol;
+};
+
 extern char *parse_strp;
 
 void Prtostr(), Pstrtov(), Peval_str();
@@ -69,6 +74,7 @@ void Pclear_tb();
 void Pstring_to_tb();
 void Pquotetotex_tb();
 void Pquotetotex();
+void Pquotetotex_setenv();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 void tb_to_string(TB tb,STRING *rp);
@@ -90,6 +96,7 @@ struct ftab str_tab[] = {
 	{"string_to_tb",Pstring_to_tb,1},
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
+	{"quotetotex_setenv",Pquotetotex_setenv,-99999999},
 	{0,0,0},
 };
 
@@ -101,6 +108,97 @@ void write_tb(char *s,TB tb)
 	}
 	tb->body[tb->next] = s;
 	tb->next++;
+}
+
+int register_symbol_table(Obj arg);
+int register_conv_rule(Obj arg);
+static struct TeXSymbol *user_texsymbol;
+
+static struct {
+	char *name;
+	Obj value;
+	int (*reg)();
+} qtot_env[] = {
+	{"symbol_table",0,register_symbol_table},
+	{"conv_rule",0,register_conv_rule},
+	{0,0,0},
+};
+
+int register_symbol_table(Obj arg)
+{
+	NODE n,t;
+	Obj b;
+	STRING a0,a1;
+	struct TeXSymbol *uts;
+	int i,len;
+
+	/* check */
+	if ( !arg ) {
+		user_texsymbol = 0;
+		return 1;
+	}
+	if ( OID(arg) != O_LIST ) return 0;
+
+	n = BDY((LIST)arg);
+	len = length(n);
+	uts = (struct TeXSymbol *)MALLOC((len+1)*sizeof(struct TeXSymbol));
+	for ( i = 0; n; n = NEXT(n), i++ ) {
+		b = (Obj)BDY(n);
+		if ( !b || OID(b) != O_LIST ) return 0;
+		t = BDY((LIST)b);
+		if ( !t || !NEXT(t) ) return 0;
+		a0 = (STRING)BDY(t);
+		a1 = (STRING)BDY(NEXT(t));
+		if ( !a0 || OID(a0) != O_STR ) return 0;
+		if ( !a1 || OID(a1) != O_STR ) return 0;
+		uts[i].text = BDY(a0);	
+		uts[i].symbol = BDY(a1);	
+	}
+	uts[i].text = 0;
+	uts[i].symbol = 0;
+	user_texsymbol = uts;	
+	return 1;
+}
+
+int register_conv_rule(Obj arg)
+{
+}
+
+void Pquotetotex_setenv(NODE arg,Obj *rp)
+{
+	int ac,i;
+	char *name;
+	NODE n,n0;
+	STRING s;
+	LIST l;
+
+	ac = argc(arg);
+	if ( !ac ) {
+		n0 = 0;
+		for ( i = 0; qtot_env[i].name; i++ ) {
+			NEXTNODE(n0,n); MKSTR(s,qtot_env[i].name); BDY(n) = (pointer)s;
+			NEXTNODE(n0,n); BDY(n) = (Q)qtot_env[i].value;
+		}
+		NEXT(n) = 0;
+		MKLIST(l,n0);
+		*rp = (Obj)l;
+	} else if ( ac == 1 || ac == 2 ) {
+		asir_assert(ARG0(arg),O_STR,"quotetotex_setenv");
+		name = BDY((STRING)ARG0(arg));
+		for ( i = 0; qtot_env[i].name; i++ )
+			if ( !strcmp(qtot_env[i].name,name) ) {
+				if ( ac == 2 ) {
+					if ( (qtot_env[i].reg)((Obj)ARG1(arg)) )
+						qtot_env[i].value = (Obj)ARG1(arg);
+					else
+						error("quotetotex_setenv : invalid argument");
+				}
+				*rp = qtot_env[i].value;
+				return;
+			}
+		*rp = 0;
+	} else
+		*rp = 0;
 }
 
 void Pwrite_to_tb(NODE arg,Q *rp)
@@ -378,11 +476,6 @@ P *rp;
 #endif
 }
 
-struct TeXSymbol {
-	char *text;
-	char *symbol;
-};
-
 static struct TeXSymbol texsymbol[] = {
  {"sin","\\sin"},
  {"cos","\\cos"},
@@ -451,6 +544,10 @@ char *symbol_name(char *name)
 {
 	int i;
 
+	if ( user_texsymbol )
+		for ( i = 0; user_texsymbol[i].text; i++ )
+			if ( !strcmp(user_texsymbol[i].text,name) )
+				return user_texsymbol[i].symbol;
 	for ( i = 0; texsymbol[i].text; i++ )
 		if ( !strcmp(texsymbol[i].text,name) )
 			return texsymbol[i].symbol;
