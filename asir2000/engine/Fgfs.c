@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.19 2003/03/12 02:06:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.20 2004/02/03 23:31:57 noro Exp $ */
 
 #include "ca.h"
 
@@ -501,7 +501,7 @@ void cont_pp_mv_sf(VL vl,VL rvl,P p,P *c,P *pp)
 	extern struct order_spec *dp_current_spec;
 
 	currentspec = dp_current_spec;
-	create_order_spec(0,0,spec);
+	create_order_spec(0,0,&spec);
 	initd(spec);
 	ptod(vl,rvl,p,&dp);
 	for ( t = BDY(dp), m = 0; t; t = NEXT(t), m++ );
