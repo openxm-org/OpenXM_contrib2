@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.11 2002/07/12 08:05:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.12 2002/09/04 04:57:46 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -386,7 +386,7 @@ struct pariftab pariftab[] = {
 {"indsort",indexsort,1},
 {"initalg",initalg,1},
 {"isfund",gisfundamental,1},
-{"isprime",gisprime,1},
+{"isprime",gisprime,2},
 {"ispsp",gispsp,1},
 {"isqrt",racine,1},
 {"issqfree",gissquarefree,1},
