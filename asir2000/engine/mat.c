@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.9 2003/05/20 07:19:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.10 2003/05/22 07:01:40 noro Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -102,6 +102,101 @@ MAT a,b,*c;
   }
 }
 
+void addmat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
+VL vl;
+MAT a,b,*c;
+int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
+{
+	int row,col,i,j;
+  MAT t;
+  pointer *ab,*bb,*tb;
+  row = ar1 - ar0 + 1; col = ac1 - ac0 + 1;
+
+  if ( !a )  
+    *c = b;     
+  else if ( !b )
+    *c = a;     
+  else if ( (row != br1 - br0 + 1) || (col != bc1 - bc0 + 1) ) {
+    *c = 0; error("addmat : size mismatch add"); 
+  } else {
+    MKMAT(t,row,col);
+    for ( i = 0; i < row; i++ ) {
+			if (i+ar0 > a->row-1) {
+				ab = NULL;
+			} else {
+      	ab = BDY(a)[i+ar0];
+			}
+			if (i+br0 > b->row-1) {
+				bb = NULL;
+			} else {
+				bb = BDY(b)[i+br0];
+			}
+			tb = BDY(t)[i]; 
+			for ( j =0; j < col; j++ ) {
+				if ((ab == NULL || j+ac0 > a->col-1) && (bb == NULL || j+bc0 > b->col-1)) {
+					arf_add(vl,NULL,NULL,(Obj *)&tb[j]);
+				} else if ((ab != NULL && j+ac0 <= a->col-1) && (bb == NULL || j+bc0 > b->col-1)){
+					arf_add(vl,(Obj)ab[j+ac0],NULL,(Obj *)&tb[j]);
+				} else if ((ab == NULL || j+ac0 > a->col-1) && (bb != NULL && j+bc0 <= b->col-1)) {
+					arf_add(vl,NULL, (Obj)bb[j+bc0],(Obj *)&tb[j]);
+				} else {
+        	arf_add(vl,(Obj)ab[j+ac0],(Obj)bb[j+bc0],(Obj *)&tb[j]);
+				}
+
+			}
+		}
+    *c = t;
+  }
+}
+
+void submat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
+VL vl;
+MAT a,b,*c;
+int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
+{
+	int row,col,i,j;
+  MAT t;
+  pointer *ab,*bb,*tb;
+
+  row = ar1 - ar0 + 1; col = ac1 - ac0 + 1;
+
+  if ( !a )
+    chsgnmat(b,c);
+  else if ( !b )
+    *c = a;
+  else if ( (row != br1 - br0 + 1) || (col != bc1 - bc0 + 1) ) {
+    *c = 0; error("submat : size mismatch sub");
+  } else {
+    MKMAT(t,row,col);
+    for ( i = 0; i < row; i++ ) {
+			if (i+ar0 > a->row-1) {
+				ab = NULL;
+			} else {
+      	ab = BDY(a)[i+ar0];
+			}
+			if (i+br0 > b->row-1) {
+				bb = NULL;
+			} else {
+				bb = BDY(b)[i+br0];
+			}
+			tb = BDY(t)[i]; 
+			for ( j =0; j < col; j++ ) {
+				if ((ab == NULL || j+ac0 > a->col-1) && (bb == NULL || j+bc0 > b->col-1)) {
+					arf_sub(vl,NULL,NULL,(Obj *)&tb[j]);
+				} else if ((ab != NULL && j+ac0 <= a->col-1) && (bb == NULL || j+bc0 > b->col-1)){
+					arf_sub(vl,(Obj)ab[j+ac0],NULL,(Obj *)&tb[j]);
+				} else if ((ab == NULL || j+ac0 > a->col-1) && (bb != NULL && j+bc0 <= b->col-1)) {
+					arf_sub(vl,NULL, (Obj)bb[j+bc0],(Obj *)&tb[j]);
+				} else {
+        	arf_sub(vl,(Obj)ab[j+ac0],(Obj)bb[j+bc0],(Obj *)&tb[j]);
+				}
+
+			}
+		}
+    *c = t;
+  }
+}
+
 void mulmat(vl,a,b,c)
 VL vl;
 Obj a,b,*c;
@@ -146,7 +241,7 @@ Obj a,b,*c;
 					case O_VECT:
 						mulmatvect(vl,(MAT)a,(VECT)b,(VECT *)c); break;
 					case O_MAT:
-						mulmatmat(vl,(MAT)a,(MAT)b,(MAT *)c); break;
+						mulmatmat_miser(vl,(MAT)a,(MAT)b,(MAT *)c, 0,0, ((MAT)a)->row-1, ((MAT)a)->col-1, 0,0,((MAT)b)->row-1, ((MAT)b)->col-1); break;
 					default:
 						notdef(vl,a,b,c); break;
 				}
@@ -299,7 +394,7 @@ void Strassen(arg, c)
 NODE arg;
 Obj *c;
 {
-  MAT a,b;
+  AT a,b;
 	VL vl;
 
 	/* tomo */
@@ -331,7 +426,6 @@ MAT a,b,*c;
 	else {
 		pflag1 = 0; pflag2 = 0;
 		arow = a->row; m = a->col; bcol = b->col;
-		arowh = arow/2; bcolh = bcol/2;
 		MKMAT(t,arow,bcol);
 		/* StrassenSize == 0 or matrix size less then StrassenSize,
 		then calc cannonical algorithm. */
@@ -361,6 +455,7 @@ MAT a,b,*c;
 			m++;
 			pflag2 = 1;
 		}
+/*
 		MKMAT(aa, arow, m);
 		for (i = 0; i < a->row; i++) {
 			for (j = 0; j < a->col; j++) {
@@ -378,45 +473,46 @@ MAT a,b,*c;
 				bb->body[i][j] = b->body[i][j];
 			}
 		} 
+*/
 
 		/* split matrix A and B */
-		a1row = aa->row/2; a1col = aa->col/2;
+		a1row = arow/2; a1col = m/2;
 		MKMAT(a11,a1row,a1col);
-    MKMAT(a21,a1row,a1col);
-    MKMAT(a12,a1row,a1col);
-    MKMAT(a22,a1row,a1col);
+		MKMAT(a21,a1row,a1col);
+		MKMAT(a12,a1row,a1col);
+		MKMAT(a22,a1row,a1col);
 
-		b1row = bb->row/2; b1col = bb->col/2;
+		b1row = m/2; b1col = bcol/2;
 		MKMAT(b11,b1row,b1col);
-    MKMAT(b21,b1row,b1col);
-    MKMAT(b12,b1row,b1col);
-    MKMAT(b22,b1row,b1col);
+		MKMAT(b21,b1row,b1col);
+		MKMAT(b12,b1row,b1col);
+		MKMAT(b22,b1row,b1col);
 
 		/* make a11 matrix */
 		for (i = 0; i < a1row; i++) {
 			for (j = 0; j < a1col; j++) {
-				a11->body[i][j] = aa->body[i][j];
+				a11->body[i][j] = a->body[i][j];
 			}
 		}
 
 		/* make a21 matrix */
-		for (i = a1row; i < aa->row; i++) {
+		for (i = a1row; i < a->row; i++) {
 			for (j = 0; j < a1col; j++) {
-				a21->body[i-a1row][j] = aa->body[i][j];
+				a21->body[i-a1row][j] = a->body[i][j];
 			}
 		}
 
 		/* create a12 matrix */
 		for (i = 0; i < a1row; i++) {
-			for (j = a1col; j < aa->col; j++) {
-				a12->body[i][j-a1col] = aa->body[i][j];
+			for (j = a1col; j < a->col; j++) {
+				a12->body[i][j-a1col] = a->body[i][j];
 			}
 		}
 
 		/* create a22 matrix */
-    for (i = a1row; i < aa->row; i++) {
-      for (j = a1col; j < aa->col; j++) {
-        a22->body[i-a1row][j-a1col] = aa->body[i][j];
+    for (i = a1row; i < a->row; i++) {
+      for (j = a1col; j < a->col; j++) {
+        a22->body[i-a1row][j-a1col] = a->body[i][j];
       }
    }
 
@@ -424,28 +520,28 @@ MAT a,b,*c;
 		/* create b11 submatrix */
 		for (i = 0; i < b1row; i++) {
 			for (j = 0; j < b1col; j++) {
-				b11->body[i][j] = bb->body[i][j];
+				b11->body[i][j] = b->body[i][j];
 			}
 		}
 
 		/* create b21 submatrix */
-		for (i = b1row; i < bb->row; i++) {
+		for (i = b1row; i < b->row; i++) {
 			for (j = 0; j < b1col; j++) {
-				b21->body[i-b1row][j] = bb->body[i][j];
+				b21->body[i-b1row][j] = b->body[i][j];
 			}
 		}
 
 		/* create b12 submatrix */
 		for (i = 0; i < b1row; i++) {
-			for (j = b1col; j < bb->col; j++) {
-				b12->body[i][j-b1col] = bb->body[i][j];
+			for (j = b1col; j < b->col; j++) {
+				b12->body[i][j-b1col] = b->body[i][j];
 			}
 		}
 
 		/* create b22 submatrix */
-		for (i = b1row; i < bb->row; i++) {
-			for (j = b1col; j < bb->col; j++) {
-				b22->body[i-b1row][j-b1col] = bb->body[i][j];
+		for (i = b1row; i < b->row; i++) {
+			for (j = b1col; j < b->col; j++) {
+				b22->body[i-b1row][j-b1col] = b->body[i][j];
 			}
 		}
 		/* expand matrix by Strassen-Winograd algorithm */
@@ -537,7 +633,178 @@ MAT a,b,*c;
 	*c = t;
 }
 
+void mulmatmat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
+VL vl;
+MAT a,b,*c;
+int ar0, ac0, ar1, ac1, br0, bc0, br1, bc1;
+{
+	int arow,bcol,i,j,k,m, h;
+	MAT t, a11, a12, a21, a22;
+	MAT p, b11, b12, b21, b22;
+	MAT ans1, ans2, c11, c12, c21, c22;
+	MAT s1, s2, t1, t2, u1, v1, w1;
+	pointer s,u,v;
+	pointer *ab,*tb, *bb;
+	int a1row, a1col;
+	int b1row, b1col;
+	int pflag1, pflag2;
 
+	arow = ar1-ar0 + 1; m = ac1-ac0 + 1; bcol = bc1 - bc0 + 1;
+	/* mismach col and row */
+	if ( m != br1-br0 + 1 ) {
+		*c = 0; error("mulmat : size mismatch");
+	}
+	else {
+		pflag1 = 0; pflag2 = 0;
+		MKMAT(t,arow,bcol);
+		/* StrassenSize == 0 or matrix size less then StrassenSize,
+		then calc cannonical algorithm. */
+		if((StrassenSize == 0)||(arow<=StrassenSize || m <= StrassenSize) || (m<=StrassenSize || bcol <= StrassenSize)) {
+			for ( i = 0; i < arow; i++ ) {
+				if (i+ar0 > a->row-1) {
+					ab = NULL;
+				} else {
+      		ab = BDY(a)[i+ar0];
+				}
+				tb = BDY(t)[i]; 
+				for ( j = 0; j < bcol; j++ ) {
+					for ( k = 0, s = 0; k < m; k++ ) {
+						if (k+br0 > b->row-1) {
+							bb = NULL;
+						} else {
+							bb = BDY(b)[k+br0];
+						}
+						if ((ab == NULL || k+ac0 > a->col-1) && (bb == NULL || j+bc0 > b->col-1)) {
+							arf_mul(vl,NULL,NULL,(Obj *)&u);
+						} else if ((ab != NULL && k+ac0 <= a->col-1) && (bb == NULL || j+bc0 > b->col-1)){
+							arf_mul(vl,(Obj)ab[k+ac0],NULL,(Obj *)&u);
+						} else if ((ab == NULL || k+ac0 > a->col-1) && (bb != NULL && j+bc0 <= b->col-1)) {
+							arf_mul(vl,NULL,(Obj)bb[j+bc0],(Obj *)&u);
+						} else {
+							arf_mul(vl,(Obj)ab[k+ac0],(Obj)bb[j+bc0],(Obj *)&u);
+						}
+						arf_add(vl,(Obj)s,(Obj)u,(Obj *)&v);
+						s = v;
+					}
+					tb[j] = s;
+				}
+			}
+		*c = t;
+		return;
+
+		}
+		/* padding odd col and row to even number for zero */
+		i = arow/2;
+		j = arow - i;
+		if (i != j) {
+			arow++;
+			pflag1 = 1;
+		}
+		i = m/2;
+		j = m - i;
+		if (i != j) {
+			m++;
+			pflag2 = 1;
+		}
+
+		i = bcol/2;
+		j = bcol - i;
+		if (i != j) {
+			bcol++;
+		}
+
+		/* split matrix A and B */
+		a1row = arow/2; a1col = m/2;
+		b1row = m/2; b1col = bcol/2;
+
+		/* expand matrix by Strassen-Winograd algorithm */
+		/* s1=A21+A22 */
+		addmat_miser(vl,a,a,&s1, ar0 + a1row, ac0, ar0 + arow -1, ac0 + a1col-1, ar0 + a1row, ac0 + a1col, ar0 + arow -1, ac0 + m-1);
+
+		/* s2=s1-A11 */
+		submat_miser(vl,s1,a,&s2, 0,0, s1->row-1, s1->col-1, ar0, ac0, ar0 + a1row-1, ac0 + a1col-1);
+
+		/* t1=B12-B11 */
+		submat_miser(vl, b, b, &t1, br0, bc0 + b1col, br0 + b1row-1, bc0 + bcol - 1, br0,bc0,br0 + b1row-1, bc0 + b1col-1);
+
+		/* t2=B22-t1 */
+		submat_miser(vl, b, t1, &t2, br0 + b1row, bc0 + b1col, br0 + m-1, bc0 + bcol-1, 0,0,t1->row-1, t1->col-1);
+
+		/* u=(A11-A21)*(B22-B12) */
+		submat_miser(vl, a, a, &ans1, ar0, ac0, ar0 + a1row-1,ac0 + a1col-1, ar0 + a1row, ac0, ar0 + arow-1, ac0 + a1col-1);
+		submat_miser(vl, b, b, &ans2, br0 + b1row, bc0 + b1col, br0 + m-1, bc0 + bcol-1, br0, bc0 + b1col, br0 + b1row-1, bc0 + bcol-1);
+		mulmatmat_miser(vl, ans1, ans2, &u1, 0, 0, ans1->row -1, ans1->col-1, 0, 0, ans2->row -1, ans2->col-1);
+
+		/* v=s1*t1 */
+		mulmatmat_miser(vl, s1, t1, &v1, 0, 0, s1->row -1, s1->col-1, 0, 0, t1->row -1, t1->col-1);
+
+		/* w=A11*B11+s2*t2 */
+		mulmatmat_miser(vl, a, b, &ans1, ar0, ac0, ar0 + a1row-1,ac0 + a1col-1, br0, bc0, br0 + b1row-1,bc0 + b1col-1);
+		mulmatmat_miser(vl, s2, t2, &ans2, 0, 0, s2->row -1, s2->col-1, 0, 0, t2->row -1, t2->col-1);
+		addmat_miser(vl, ans1, ans2, &w1, 0, 0, ans1->row -1, ans1->col-1, 0, 0, ans2->row -1, ans2->col-1);
+
+		/* C11 = A11*B11+A12*B21 */
+		mulmatmat_miser(vl, a, b, &ans2, ar0, ac0 + a1col, ar0 + a1row-1, ac0 + m-1, br0 + b1row, bc0 + 0, br0 + m-1, bc0 + b1col-1);
+		addmat_miser(vl, ans1, ans2, &c11, 0, 0, ans1->row -1, ans1->col -1, 0, 0, ans2->row -1, ans2->col-1);
+
+		/* C12 = w1+v1+(A12-s2)*B22 */
+		submat_miser(vl, a, s2, &ans1, ar0, ac0 + a1col, ar0 + a1row-1, ac0 + m-1, 0, 0, s2->row -1, s2->col -1);
+		mulmatmat_miser(vl, ans1, b, &ans2, 0, 0, ans1->row -1, ans1->col -1, br0 + b1row, bc0 + b1col, br0 + m-1, bc0 + bcol-1);
+		addmat_miser(vl, w1, v1, &ans1, 0, 0, w1->row -1, w1->col -1, 0,0, v1->row-1, v1->col -1);
+		addmat_miser(vl, ans1, ans2, &c12, 0, 0, ans1->row -1, ans1->col -1, 0, 0, ans2->row -1, ans2->col-1);
+
+		/* C21 = w1+u1+A22*(B21-t2) */
+		submat_miser(vl, b, t2, &ans1, br0 + b1row, bc0 + 0, br0 + m-1, bc0 + b1col-1, 0,0, t2->row-1, t2->col-1);
+		mulmatmat_miser(vl, a, ans1, &ans2, ar0 + a1row, ac0 + a1col, ar0 + arow-1, ac0 + m-1, 0, 0, ans1->row -1, ans1->col -1);
+		addmat_miser(vl, w1, u1, &ans1, 0,0,w1->row -1, w1->col-1, 0,0,u1->row -1, u1->col-1);
+		addmat_miser(vl, ans1, ans2, &c21, 0, 0, ans1->row -1, ans1->col -1, 0, 0, ans2->row -1, ans2->col-1);
+
+		/* C22 = w1 + u1 + v1 */
+		addmat_miser(vl, ans1, v1, &c22, 0, 0, ans1->row -1, ans1->col -1, 0, 0, v1->row-1, v1->col-1);
+	}
+
+	for(i =0; i<c11->row; i++) {
+		for ( j=0; j < c11->col; j++) {
+			t->body[i][j] = c11->body[i][j];
+		}
+	}
+	if (pflag1 == 0) {
+			k = c21->row;
+	} else {
+			k = c21->row - 1;
+	}
+	for(i =0; i<k; i++) {
+		for ( j=0; j < c21->col; j++) {
+			t->body[i+c11->row][j] = c21->body[i][j];
+		}
+	}
+	if (pflag2 == 0) {
+		h = c12->col;
+	} else {
+		h = c12->col -1;
+	}
+	for(i =0; i<c12->row; i++) {
+		for ( j=0; j < k; j++) {
+			t->body[i][j+c11->col] = c12->body[i][j];
+		}
+	}
+	if (pflag1 == 0) {
+		k = c22->row;
+	} else {
+		k = c22->row -1;
+	}
+	if (pflag2 == 0) {
+		h = c22->col;
+	} else {
+		h = c22->col - 1;
+	}
+	for(i =0; i<k; i++) {
+		for ( j=0; j < h; j++) {
+			t->body[i+c11->row][j+c11->col] = c22->body[i][j];
+		}
+	}
+	*c = t;
+}
 
 void mulmatvect(vl,a,b,c)
 VL vl;
