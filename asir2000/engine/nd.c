@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.3 2003/07/23 07:50:32 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.4 2003/07/23 14:24:14 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -128,6 +128,7 @@ void nd_mul_c(ND p,int mul);
 void nd_free_redlist();
 void nd_append_red(unsigned int *d,int td,int i);
 unsigned int *nd_compute_bound(ND p);
+unsigned int *dp_compute_bound(DP p);
 ND_pairs nd_reconstruct(ND_pairs);
 void nd_setup_parameters();
 ND nd_dup(ND p,int obpe);
@@ -152,6 +153,7 @@ void nd_free_private_storage()
 {
 	_nd_free_list = 0;
 	_nm_free_list = 0;
+	_ndp_free_list = 0;
 	nd_red = 0;
 	GC_gcollect();
 }
@@ -652,37 +654,93 @@ ND nd_reduce_special(ND p1,ND p2)
 	}
 }
 
-INLINE int ndl_check_bound(unsigned int *d)
+int ndl_check_bound2(int index,unsigned int *d2)
 {
-	int i;
+	unsigned int u2;
+	unsigned int *d1;
+	int i,j,ind,k;
 
-	for ( i = 0; i < nd_wpd; i++ )
-		if ( d[i] & nd_mask1 )
-			return 1;
-	return 0;
+	d1 = nd_bound[index];
+	ind = 0;
+	switch ( nd_bpe ) {
+		case 4:
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u2 = d2[i];
+				if ( d1[ind++]+((u2>>28)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+((u2>>24)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+((u2>>20)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+((u2>>16)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+((u2>>12)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+((u2>>8)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+((u2>>4)&0xf) >= 0x10 ) return 1;
+				if ( d1[ind++]+(u2&0xf) >= 0x10 ) return 1;
+			}
+			return 0;
+			break;
+		case 6:
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u2 = d2[i];
+				if ( d1[ind++]+((u2>>24)&0x3f) >= 0x40 ) return 1;
+				if ( d1[ind++]+((u2>>18)&0x3f) >= 0x40 ) return 1;
+				if ( d1[ind++]+((u2>>12)&0x3f) >= 0x40 ) return 1;
+				if ( d1[ind++]+((u2>>6)&0x3f) >= 0x40 ) return 1;
+				if ( d1[ind++]+(u2&0x3f) >= 0x40 ) return 1;
+			}
+			return 0;
+			break;
+		case 8:
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u2 = d2[i];
+				if ( d1[ind++]+((u2>>24)&0xff) >= 0x100 ) return 1;
+				if ( d1[ind++]+((u2>>16)&0xff) >= 0x100 ) return 1;
+				if ( d1[ind++]+((u2>>8)&0xff) >= 0x100 ) return 1;
+				if ( d1[ind++]+(u2&0xff) >= 0x100 ) return 1;
+			}
+			return 0;
+			break;
+		case 16:
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u2 = d2[i];
+				if ( d1[ind++]+((u2>>16)&0xffff) > 0x10000 ) return 1;
+				if ( d1[ind++]+(u2&0xffff) > 0x10000 ) return 1;
+			}
+			return 0;
+			break;
+		case 32:
+			for ( i = 0; i < nd_wpd; i++ )
+				if ( d1[i]+d2[i]<d1[i] ) return 1;
+			return 0;
+			break;
+		default:
+			for ( i = 0; i < nd_wpd; i++ ) {
+				u2 = d2[i];
+				k = (nd_epw-1)*nd_bpe;
+				for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
+					if ( d1[ind++]+((u2>>k)&nd_mask0) > nd_mask0 ) return 1;
+			}
+			return 0;
+			break;
+	}
 }
 
 int nd_sp(ND_pairs p,ND *rp)
 {
 	NM m;
 	ND p1,p2,t1,t2;
-	unsigned int *lcm,*check;
+	unsigned int *lcm;
 	int td;
 
-	check = (unsigned int *)ALLOCA(nd_wpd*sizeof(unsigned int));
 	p1 = nd_ps[p->i1];
 	p2 = nd_ps[p->i2];
 	lcm = p->lcm;
 	td = p->td;
 	NEWNM(m);
 	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl); NEXT(m) = 0;
-	ndl_add(nd_bound[p->i1],m->dl,check);
-	if ( ndl_check_bound(check) )
+	if ( ndl_check_bound2(p->i1,m->dl) )
 		return 0;
 	t1 = nd_mul_nm(p1,m);
 	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
-	ndl_add(nd_bound[p->i2],m->dl,check);
-	if ( ndl_check_bound(check) ) {
+	if ( ndl_check_bound2(p->i2,m->dl) ) {
 		nd_free(t1);
 		return 0;
 	}
@@ -709,7 +767,6 @@ int nd_find_reducer(ND g, ND *rp)
 	ND r,p;
 	int i,c1,c2,c;
 	int d,k,append,index;
-	unsigned int *check;
 	NM t;
 
 	d = ndl_hash_value(HTD(g),HDL(g));
@@ -739,9 +796,7 @@ found:
 	p = nd_ps[index];
 	ndl_sub(HDL(g),HDL(p),m->dl);
 
-	check = (unsigned int *)ALLOCA(nd_wpd*sizeof(unsigned int));	
-	ndl_add(nd_bound[index],m->dl,check);
-	if ( ndl_check_bound(check) ) {
+	if ( ndl_check_bound2(index,m->dl) ) {
 		FREENM(m);
 		return -1;
 	}
@@ -1454,8 +1509,8 @@ int nd_newps(ND a)
 	nd_monic(a);
 	nd_ps[nd_psn] = a;
 	nd_bound[nd_psn] = nd_compute_bound(a);
-	len = nd_psv[nd_psn]->len;
 #if USE_NDV
+	len = nd_psv[nd_psn]->len;
 	nd_psv[nd_psn] = ndtondv(a);
 	if ( len > nmv_len ) {
 		nmv_len = 2*len;
@@ -1471,8 +1526,9 @@ DP ndtodp(ND);
 
 NODE nd_setup(NODE f)
 {
-	int i,td,len;
+	int i,j,td,len,max;
 	NODE s,s0,f0;
+	unsigned int *d;
 
 	nd_found = 0;
 	nd_notfirst = 0;
@@ -1486,18 +1542,35 @@ NODE nd_setup(NODE f)
 	nd_psv = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 #endif
 	nd_bound = (unsigned int **)MALLOC(nd_pslen*sizeof(unsigned int *));
-	nd_bpe = 8;
+	for ( max = 0, i = 0, s = f; i < nd_psn; i++, s = NEXT(s) ) {
+		nd_bound[i] = d = dp_compute_bound((DP)BDY(s));
+		for ( j = 0; j < nd_nvar; j++ )
+			max = MAX(d[j],max);
+	}
+
+	if ( max < 2 )
+		nd_bpe = 2;
+	else if ( max < 4 )
+		nd_bpe = 4;
+	else if ( max < 64 )
+		nd_bpe = 6;
+	else if ( max < 256 )
+		nd_bpe = 8;
+	else if ( max < 65536 )
+		nd_bpe = 16;
+	else
+		nd_bpe = 32;
+	
 	nd_setup_parameters();
 	nd_free_private_storage();
 	len = 0;
 	for ( i = 0; i < nd_psn; i++, f = NEXT(f) ) {
 		nd_ps[i] = dptond((DP)BDY(f));
-		nd_bound[i] = nd_compute_bound(nd_ps[i]);
+		nd_monic(nd_ps[i]);
 #if USE_NDV
 		nd_psv[i] = ndtondv(nd_ps[i]);
 		len = MAX(len,nd_psv[i]->len);
 #endif
-		nd_monic(nd_ps[i]);
 	}
 	nd_red = (NM *)MALLOC(REDTAB_LEN*sizeof(NM));
 #if USE_NDV
@@ -1736,9 +1809,33 @@ void nd_append_red(unsigned int *d,int td,int i)
 	nd_red[h] = m;
 }
 
+unsigned int *dp_compute_bound(DP p)
+{
+	unsigned int *d,*d1,*d2,*t;
+	MP m;
+	int i;
+
+	if ( !p )
+		return 0;
+	d1 = (unsigned int *)ALLOCA(nd_nvar*sizeof(unsigned int));
+	d2 = (unsigned int *)ALLOCA(nd_nvar*sizeof(unsigned int));
+	m = BDY(p);
+	bcopy(m->dl->d,d1,nd_nvar*sizeof(unsigned int));
+	for ( m = NEXT(BDY(p)); m; m = NEXT(m) ) {
+		d = m->dl->d;
+		for ( i = 0; i < nd_nvar; i++ )
+			d2[i] = d[i] > d1[i] ? d[i] : d1[i];
+		t = d1; d1 = d2; d2 = t;
+	}
+	t = (unsigned int *)MALLOC_ATOMIC(nd_nvar*sizeof(unsigned int));
+	bcopy(d1,t,nd_nvar*sizeof(unsigned int));
+	return t;
+}
+
 unsigned int *nd_compute_bound(ND p)
 {
 	unsigned int *d1,*d2,*t;
+	int i;
 	NM m;
 
 	if ( !p )
@@ -1750,8 +1847,10 @@ unsigned int *nd_compute_bound(ND p)
 		ndl_lcm(m->dl,d1,d2);
 		t = d1; d1 = d2; d2 = t;
 	}
-	t = (unsigned int *)MALLOC_ATOMIC(nd_wpd*sizeof(unsigned int));
-	bcopy(d1,t,nd_wpd*sizeof(unsigned int));
+	t = (unsigned int *)MALLOC_ATOMIC(nd_nvar*sizeof(unsigned int));
+	bzero(t,nd_nvar*sizeof(unsigned int));
+	for ( i = 0; i < nd_nvar; i++ )
+		t[i] = (d1[i/nd_epw]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))&nd_mask0;
 	return t;
 }
 
@@ -1783,12 +1882,19 @@ ND_pairs nd_reconstruct(ND_pairs d)
 	ND_pairs s0,s,t,prev_ndp_free_list;
 	
 	obpe = nd_bpe;
-	switch ( nd_bpe ) {
-		case 4: nd_bpe = 6; break;
-		case 6: nd_bpe = 8; break;
-		case 8: nd_bpe = 16; break;
-		case 16: nd_bpe = 32; break;
-	}
+	if ( obpe < 4 )
+		nd_bpe = 4;
+	else if ( obpe < 6 )
+		nd_bpe = 6;
+	else if ( obpe < 8 )
+		nd_bpe = 8;
+	else if ( obpe < 16 )
+		nd_bpe = 16;
+	else if ( obpe < 32 )
+		nd_bpe = 32;
+	else
+		error("nd_reconstruct : exponent too large");
+
 	nd_setup_parameters();
 	prev_nm_free_list = _nm_free_list;
 	prev_ndp_free_list = _ndp_free_list;
@@ -1799,7 +1905,6 @@ ND_pairs nd_reconstruct(ND_pairs d)
 #if USE_NDV
 		nd_psv[i] = ndtondv(nd_ps[i]);
 #endif
-		nd_bound[i] = nd_compute_bound(nd_ps[i]);
 	}
 	s0 = 0;
 	for ( t = d; t; t = NEXT(t) ) {
@@ -1898,7 +2003,6 @@ int ndv_find_reducer(ND g, NDV red)
 	ND r,p;
 	int i,c1,c2,c;
 	int d,k,append,index;
-	unsigned int *check;
 	NM t;
 	NDV pv;
 
@@ -1930,9 +2034,7 @@ found:
 	pv = nd_psv[index];
 	ndl_sub(HDL(g),HDL(p),m->dl);
 
-	check = (unsigned int *)ALLOCA(nd_wpd*sizeof(unsigned int));	
-	ndl_add(nd_bound[index],m->dl,check);
-	if ( ndl_check_bound(check) ) {
+	if ( ndl_check_bound2(index,m->dl) ) {
 		FREENM(m);
 		return -1;
 	}
