@@ -102,10 +102,10 @@ noinst_LIBRARIES = libfunc.a
 libfunc_a_SOURCES = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c \
                     fctr.c file.c help.c int.c list.c miscf.c \
                     parif.c poly.c pdiv.c print.c pf.c \
-                    rat.c reduct.c result.c isolv.c itvnum.c mattran.c \
+                    rat.c reduct.c result.c itvnum.c mattran.c isolv.c \
                     strobj.c subst.c time.c type.c var.c compobj.c \
                     gr.c dp-supp.c gf.c math.c numerical.c ec.c al.c \
-                    batch.c sha1.c user.c
+                    batch.c sha1.c user.c mattran.c
 
 subdir = builtin
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -119,11 +119,12 @@ am_libfunc_a_OBJECTS = ftab.$(OBJEXT) algnum.$(OBJEXT) array.$(OBJEXT) \
 	file.$(OBJEXT) help.$(OBJEXT) int.$(OBJEXT) list.$(OBJEXT) \
 	miscf.$(OBJEXT) parif.$(OBJEXT) poly.$(OBJEXT) pdiv.$(OBJEXT) \
 	print.$(OBJEXT) pf.$(OBJEXT) rat.$(OBJEXT) reduct.$(OBJEXT) \
-	result.$(OBJEXT) itvnum.$(OBJEXT) isolv.$(OBJEXT) mattran.$(OBJEXT) \
-	strobj.$(OBJEXT) subst.$(OBJEXT) time.$(OBJEXT) type.$(OBJEXT) \
-	var.$(OBJEXT) compobj.$(OBJEXT) gr.$(OBJEXT) dp-supp.$(OBJEXT) \
-	gf.$(OBJEXT) math.$(OBJEXT) numerical.$(OBJEXT) ec.$(OBJEXT) \
-	al.$(OBJEXT) batch.$(OBJEXT) sha1.$(OBJEXT) user.$(OBJEXT) \
+	result.$(OBJEXT) itvnum.$(OBJEXT) mattran.$(OBJEXT) \
+	isolv.$(OBJEXT) strobj.$(OBJEXT) subst.$(OBJEXT) time.$(OBJEXT) \
+	type.$(OBJEXT) var.$(OBJEXT) compobj.$(OBJEXT) gr.$(OBJEXT) \
+	dp-supp.$(OBJEXT) gf.$(OBJEXT) math.$(OBJEXT) \
+	numerical.$(OBJEXT) ec.$(OBJEXT) al.$(OBJEXT) batch.$(OBJEXT) \
+	sha1.$(OBJEXT) user.$(OBJEXT) mattran.$(OBJEXT)
 libfunc_a_OBJECTS = $(am_libfunc_a_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@
