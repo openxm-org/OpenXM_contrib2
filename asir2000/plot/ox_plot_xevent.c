@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.18 2002/07/20 02:28:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.19 2002/07/29 03:08:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -362,7 +362,9 @@ search_active_canvas()
 
 void popup_canvas(index)
 {
+	clear_pixmap(canvas[index]);
 	XtPopup(canvas[index]->shell,XtGrabNone);
+	copy_to_canvas(canvas[index]);
 }
 
 void destroy_canvas(w,can,calldata)
