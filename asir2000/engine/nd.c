@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.101 2004/09/14 10:00:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.102 2004/09/15 01:43:33 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,7 +8,9 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 
+#if 0
 static int ndv_alloc;
+#endif
 #if 1
 static int nd_f4_nsp=0x7fffffff;
 #else
@@ -1285,7 +1287,7 @@ again:
 		d = ndvtond(0,r);
 		stat = nd_nf(0,d,nd_ps,0,0,&nf);
 		if ( !stat ) {
-			nd_reconstruct(0,0,0);
+			nd_reconstruct(0,0);
 			goto again;
 		} else if ( nf ) return 0;
 		if ( DP_Print ) { printf("."); fflush(stdout); }
@@ -1595,7 +1597,7 @@ again:
 		stat = nd_sp(m,0,l,&h);
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
-			d = nd_reconstruct(m,0,d);
+			d = nd_reconstruct(0,d);
 			goto again;
 		}
 #if USE_GEOBUCKET
@@ -1605,7 +1607,7 @@ again:
 #endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
-			d = nd_reconstruct(m,0,d);
+			d = nd_reconstruct(0,d);
 			goto again;
 		} else if ( nf ) {
 			if ( checkonly ) return 0;
@@ -1705,7 +1707,7 @@ again:
 		stat = nd_sp(m,0,l,&h);
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
-			d = nd_reconstruct(m,1,d);
+			d = nd_reconstruct(1,d);
 			goto again;
 		}
 #if USE_GEOBUCKET
@@ -1715,7 +1717,7 @@ again:
 #endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
-			d = nd_reconstruct(m,1,d);
+			d = nd_reconstruct(1,d);
 			goto again;
 		} else if ( nf ) {
 			if ( nd_demand ) {
@@ -1726,7 +1728,7 @@ again:
 			if ( !nfq ) {
 				if ( !nd_sp(0,1,l,&h) || !nd_nf(0,h,nd_ps_trace,!Top,0,&nfq) ) {
 					NEXT(l) = d; d = l;
-					d = nd_reconstruct(m,1,d);
+					d = nd_reconstruct(1,d);
 					goto again;
 				}
 			}
@@ -1790,7 +1792,7 @@ NODE ndv_reduceall(int m,NODE f)
 		g = nd_separate_head(g,&head);
 		stat = nd_nf(m,g,nd_ps,1,&dn,&nf);
 		if ( !stat )
-			nd_reconstruct(m,0,0);
+			nd_reconstruct(0,0);
 		else {
 			if ( DP_Print ) { printf("."); fflush(stdout); }
 			if ( !m ) { 
@@ -2186,7 +2188,9 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	if ( !m && Demand ) nd_demand = 1;
 	else nd_demand = 0;
 
+#if 0
 	ndv_alloc = 0;
+#endif
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 	switch ( ord->id ) {
@@ -2224,7 +2228,9 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
+#if 0
 	fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
+#endif
 }
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
@@ -2789,7 +2795,7 @@ void nd_setup_parameters(int nvar,int max) {
 	nd_work_vector = (int *)REALLOC(nd_work_vector,nd_nvar*sizeof(int));
 }
 
-ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
+ND_pairs nd_reconstruct(int trace,ND_pairs d)
 {
 	int i,obpe,oadv,h;
 	static NM prev_nm_free_list;
@@ -3456,7 +3462,9 @@ NDV ndtondv(int mod,ND p)
 		m0 = m = (NMV)GC_malloc_atomic_ignore_off_page(len*nmv_adv);
 	else
 		m0 = m = MALLOC(len*nmv_adv);
+#if 0
 	ndv_alloc += nmv_adv*len;
+#endif
 	for ( t = BDY(p), i = 0; t; t = NEXT(t), i++, NMV_ADV(m) ) {
 		ndl_copy(DL(t),DL(m));
 		CQ(m) = CQ(t);
@@ -3727,7 +3735,7 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 		stat = nd_nf(m,nd,nd_ps,1,0,&nf);
 		if ( !stat ) {
 			nd_psn++;
-			nd_reconstruct(m,0,0);
+			nd_reconstruct(0,0);
 			nd_psn--;
 		} else
 			break;
@@ -3964,7 +3972,9 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 	if ( !len ) return 0;
 	else {
 		mr0 = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+#if 0
 		ndv_alloc += nmv_adv*len;
+#endif
 		mr = mr0; 
 		p = s0vect;
 		for ( j = k = 0; j < col; j++, p += nd_wpd )
@@ -4059,7 +4069,9 @@ NODE nd_f4(int m)
 
 	if ( !m )
 		error("nd_f4 : not implemented");
+#if 0
 	ndv_alloc = 0;
+#endif
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
 		d = update_pairs(d,g,i);
@@ -4074,7 +4086,7 @@ NODE nd_f4(int m)
 		if ( !stat ) {
 			for ( t = l; NEXT(t); t = NEXT(t) );
 			NEXT(t) = d; d = l;
-			d = nd_reconstruct(m,0,d);
+			d = nd_reconstruct(0,d);
 			continue;
 		}
 		if ( bucket->m < 0 ) continue;
@@ -4082,7 +4094,7 @@ NODE nd_f4(int m)
 		if ( !col ) {
 			for ( t = l; NEXT(t); t = NEXT(t) );
 			NEXT(t) = d; d = l;
-			d = nd_reconstruct(m,0,d);
+			d = nd_reconstruct(0,d);
 			continue;
 		}
 		get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
@@ -4103,7 +4115,9 @@ NODE nd_f4(int m)
 		}
 	}
 	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
+#if 0
 	fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
+#endif
 	return g;
 }
 
@@ -4257,7 +4271,9 @@ NDV nd_recv_ndv()
 	if ( !len ) return 0;
 	else {
 		m0 = m = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+#if 0
 		ndv_alloc += len*nmv_adv;
+#endif
 		for ( i = 0; i < len; i++, NMV_ADV(m) ) {
 			CM(m) = nd_recv_int();	
 			nd_recv_intarray(DL(m),nd_wpd);

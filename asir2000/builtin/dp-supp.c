@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.35 2004/05/14 06:02:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.36 2004/05/14 09:20:56 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -61,6 +61,10 @@ extern int dp_nelim,dp_fcoeffs;
 extern int NoGCD;
 extern int GenTrace;
 extern NODE TraceList;
+
+int show_orderspec;
+
+void print_composite_order_spec(struct order_spec *spec);
 
 /* 
  * content reduction
@@ -1317,7 +1321,7 @@ void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
 
 int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 {
-	int i,j,n,s,row,col;
+	int i,j,n,s,row,col,ret;
 	struct order_spec *spec;
 	struct order_pair *l;
 	NODE node,t,tn;
@@ -1325,8 +1329,12 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 	pointer **b;
 	int **w;
 
-	if ( vl && obj && OID(obj) == O_LIST )
-		return create_composite_order_spec(vl,(LIST)obj,specp);
+	if ( vl && obj && OID(obj) == O_LIST ) {
+		ret = create_composite_order_spec(vl,(LIST)obj,specp);
+		if ( show_orderspec )
+			print_composite_order_spec(*specp);
+		return ret;
+	}
 
 	*specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
 	if ( !obj || NUM(obj) ) {
@@ -1406,6 +1414,13 @@ void print_composite_order_spec(struct order_spec *spec)
 	}
 }
 
+int comp_sw(struct sparse_weight *a, struct sparse_weight *b)
+{
+	if ( a->pos > b->pos ) return 1;
+	else if ( a->pos < b->pos ) return -1;
+	else return 0;
+}
+
 /* order = [w_or_b, w_or_b, ... ] */
 /* w_or_b = w or b                */
 /* w = [1,2,...] or [x,1,y,2,...] */
@@ -1483,6 +1498,8 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 					error("a sparse weight vector must be specified as [var1,weight1,...]");
 				sw[j].value = QTOS((Q)BDY(p)); p = NEXT(p);
 			}
+			qsort(sw,len,sizeof(struct sparse_weight),
+				(int (*)(const void *,const void *))comp_sw);
 			w_or_b[i].type = IS_SPARSE_WEIGHT;
 			w_or_b[i].length = len;
 			w_or_b[i].body.sparse_weight = sw;

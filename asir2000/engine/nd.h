@@ -293,7 +293,7 @@ void ndp_print(ND_pairs d);
 
 /* setup, reconstruct */
 void nd_init_ord(struct order_spec *spec);
-ND_pairs nd_reconstruct(int mod,int trace,ND_pairs ndp);
+ND_pairs nd_reconstruct(int trace,ND_pairs ndp);
 void ndv_setup(int mod,int trace,NODE f);
 void nd_setup_parameters(int nvar,int max);
 BlockMask nd_create_blockmask(struct order_spec *ord);
