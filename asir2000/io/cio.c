@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.7 2001/08/03 08:50:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.8 2001/08/06 01:48:33 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -494,6 +494,14 @@ FNODE f;
 			for ( n = 0, t = args; t; t = NEXT(t), n++ );
 			write_int(s,&n);
 			for ( i = 0, t = args; i < n; t = NEXT(t), i++ )
+				write_cmo_tree(s,BDY(t));
+			break;
+		case I_LIST:
+			r = CMO_LIST; write_int(s,&r);
+			args = (NODE)FA0(f);
+			for ( n = 0, t = args; t; t = NEXT(t), n++ );
+			write_int(s,&n);
+			for ( i = 0, t = args; i < n; i++, t = NEXT(t) )
 				write_cmo_tree(s,BDY(t));
 			break;
 		case I_FORMULA:
