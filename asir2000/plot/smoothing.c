@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.2 2000/10/15 10:58:11 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.3 2000/10/24 01:53:53 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -44,7 +44,7 @@ static int updatePolyLine(struct polyLine *pl[], int plSize,
 
 static void polyLine_outputPS_dashed_line(int x0,int y0,int x1,int y1);
 static int polyLine_pline(struct canvas *can);
-
+static int Strategy_generate_PS = 0;
 
 static void *gcmalloc(a)  {
   void *m;
@@ -352,6 +352,7 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
   int *prev;
   int *curr;
   int i,x,y,c;
+  extern int Strategy_generate_PS;
 
   Xsize = xsize;
   Ysize = ysize;
@@ -360,23 +361,40 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
   curr = (int *)gcmalloc(sizeof(int)*(Ysize+2));
   Fp = fp;
   polyLine_outputProlog(0,0,Xsize,Ysize);
-  for (c=0; c<colorSize; c++) {
-	/* Set color if necessary */
-	for (i=0; i<= Ysize+1; i++) {
-	  prev[i] = -1;
-	}
-	for (x=0; x<Xsize; x++) {
-	  curr[0] = curr[Ysize+1] = 0;
-	  for (y=0; y<Ysize; y++) {
-		if ((int) XGetPixel(image,x,y) == color[c]) curr[y+1]=1;
-		else curr[y+1] = 0;
+  switch(Strategy_generate_PS) {
+  case 1:
+	for (c=0; c<colorSize; c++) {
+	  /* Set color if necessary */
+	  for (i=0; i<= Ysize+1; i++) {
+		prev[i] = -1;
 	  }
-	  plSize = updatePolyLine(pl,plSize,prev,curr,x);
+	  for (x=0; x<Xsize; x++) {
+		curr[0] = curr[Ysize+1] = 0;
+		for (y=0; y<Ysize; y++) {
+		  if ((int) XGetPixel(image,x,y) == color[c]) curr[y+1]=1;
+		  else curr[y+1] = 0;
+		}
+		plSize = updatePolyLine(pl,plSize,prev,curr,x);
+	  }
+	  for (y=0; y<Ysize+2; y++) {
+		curr[y] = 0;
+	  }
+	  plSize = updatePolyLine(pl,plSize,prev,curr,Xsize);
 	}
-	for (y=0; y<Ysize+2; y++) {
-	  curr[y] = 0;
+	break;
+  default:
+	for (c=0; c<colorSize; c++) {
+	  /* Set color if necessary */
+	  for (x=0; x<Xsize; x++) {
+		for (y=0; y<Ysize; y++) {
+		  if ((int) XGetPixel(image,x,y) == color[c]){
+			fprintf(Fp," %d %d ", translateX(x),translateY(y) );
+			fprintf(Fp," ifplot_putpixel\n");
+		  }
+		}
+	  }
 	}
-	plSize = updatePolyLine(pl,plSize,prev,curr,Xsize);
+	break;
   }
   polyLine_pline(can);
   polyLine_outputEpilog();
