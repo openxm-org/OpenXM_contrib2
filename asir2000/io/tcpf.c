@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/tcpf.c,v 1.8 1999/11/19 10:41:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -403,6 +403,7 @@ char *control_port_str,*server_port_str;
 	gethostname(localhost,BUFSIZ);
 	if ( use_unix ) {
 		if ( !fork() ) {
+			setpgid(0,getpid());
 			if ( dname )
 				execlp("xterm","xterm","-name",OX_XTERM,"-display",dname,
 					"-geometry","60x10","-e",launcher,".",conn_str,
