@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.6 2001/06/20 09:30:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.7 2001/06/25 10:01:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -339,20 +339,23 @@ NODE arg;
 LIST *rp;
 {
 	V x,y;
-	GFS ev;
-	DCP dc;
+	DCP dc,dct;
 	LIST l;
-	NODE n0,n1;
+	P t;
+	struct oVL vl1,vl2;
+	VL vl;
 
 	x = VR((P)ARG1(arg));
 	y = VR((P)ARG2(arg));
-	sfbfctr((P)ARG0(arg),x,y,&ev,&dc);
-	if ( !dc ) {
-		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
+	vl1.v = x; vl1.next = &vl2;
+	vl2.v = y; vl2.next = 0;
+	vl = &vl1;
+
+	sfbfctr((P)ARG0(arg),x,y,&dc);
+	for ( dct = dc; dct; dct = NEXT(dct) ) {
+		reorderp(CO,vl,COEF(dct),&t); COEF(dct) = t;
 	}
-	dcptolist(dc,&l);
-	MKNODE(n1,l,0); MKNODE(n0,ev,n1);
-	MKLIST(*rp,n1);
+	dcptolist(dc,rp);
 }
 
 void Pmodsqfr(arg,rp)
