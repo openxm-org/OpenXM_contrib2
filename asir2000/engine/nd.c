@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.78 2003/10/10 01:51:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.79 2003/10/10 07:18:12 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -4142,7 +4142,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 	int **spmat;
 	UINT *svect,*v;
 	int *colstat;
-	struct oEGT eg0,eg1,eg_f4;
+	struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
 	NM_ind_pair *rvect;
 	int maxrs;
 	int *spsugar;
@@ -4184,6 +4184,11 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 		}
 		nd_free(spol);
 	}
+	get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
+	if ( DP_Print ) {
+		fprintf(asir_out,"elim1=%fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+		fflush(asir_out);
+	}
 	/* free index arrays */
 	for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
 
@@ -4201,8 +4206,10 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 		GC_free(spmat[i]);
 	}
 	for ( ; i < sprow; i++ ) GC_free(spmat[i]);
-	get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
+	get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
+	init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
 	if ( DP_Print ) {
+		fprintf(asir_out,"elim2=%fsec\n",eg_f4_2.exectime+eg_f4_2.gctime);
 		fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
 			nsp,nred,sprow,spcol,rank);
 		fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
