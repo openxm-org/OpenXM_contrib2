@@ -1049,7 +1049,7 @@ usageAndExit()
 /*
  * Propagate window size changes to the slave tty.
  */
-sigwinch()
+void sigwinch(int dummy)
 {
 #ifdef TIOCGWINSZ			/* 4.3BSD */
     struct winsize win;
