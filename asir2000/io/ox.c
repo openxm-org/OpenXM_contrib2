@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.22 2003/12/10 05:39:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.23 2003/12/10 07:37:40 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -146,6 +146,7 @@ static int ox_asir_available_sm[] = {
 	SM_mathcap, SM_setMathcap, SM_nop,
 	SM_beginBlock, SM_endBlock,
 	SM_set_rank_102, SM_tcp_accept_102, SM_tcp_connect_102, SM_reset_102,
+	SM_bcast_102, SM_reduce_102,
 	0
 };
 
@@ -532,13 +533,15 @@ void ox_send_data_102(int rank,pointer p)
 	end_critical();
 }
 
-void ox_bcast_102(int root,Obj *rp)
+void ox_bcast_102(int root)
 {
 	Obj data;
 	int r,mask,id,src,dst;
 
-	data = *rp;
 	r = myrank_102-root;
+	if ( r == 0 )
+		data = (Obj)asir_pop_one();
+		
 	if ( r < 0 ) r += nserver_102;
 	for ( mask = 1; mask < nserver_102; mask <<= 1 )
 		if ( r&mask ) {
@@ -553,18 +556,19 @@ void ox_bcast_102(int root,Obj *rp)
 			if ( dst >= nserver_102 ) dst -= nserver_102;
 			ox_send_data_102(dst,data);
 		}
-	*rp = data;
+	asir_push_one(data);
 }
 
 /* func : an arithmetic funcion func(vl,a,b,*c) */
 
-void ox_reduce_102(int root,void (*func)(),Obj data,Obj *rp)
+void ox_reduce_102(int root,void (*func)())
 {
-	Obj data0,t;
+	Obj data,data0,t;
 	int r,mask,id,src,dst;
 
 	r = myrank_102-root;
 	if ( r < 0 ) r += nserver_102;
+	data = (Obj)asir_pop_one();
 	for ( mask = 1; mask < nserver_102; mask <<= 1 )
 		if ( r&mask ) {
 			dst = (r-mask)+root;
@@ -580,10 +584,7 @@ void ox_reduce_102(int root,void (*func)(),Obj data,Obj *rp)
 				(*func)(CO,data,data0,&t); data = t;
 			}
 		}
-	if ( !r )
-		*rp = data;
-	else
-		*rp = 0;
+	asir_push_one(r?0:data);
 }
 
 void ox_send_cmd(int s,int id)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.18 2003/12/09 03:07:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.19 2003/12/10 05:39:57 noro Exp $ 
 */
 #include "com.h"
 
@@ -140,6 +140,8 @@
 #define SM_tcp_accept_102 279
 #define SM_tcp_connect_102 280
 #define SM_reset_102 281
+#define SM_bcast_102 282
+#define SM_reduce_102 283
 
 #define SM_nop 300
 

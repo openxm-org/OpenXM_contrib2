@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.46 2003/12/10 05:39:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.47 2003/12/10 07:37:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -154,7 +154,7 @@ struct ftab tcp_tab[] = {
 	{"ox_send_102",Pox_send_102,2},
 	{"ox_recv_102",Pox_recv_102,1},
 	{"ox_bcast_102",Pox_bcast_102,-2},
-	{"ox_reduce_102",Pox_reduce_102,3},
+	{"ox_reduce_102",Pox_reduce_102,-3},
 
 	{"try_bind_listen",Ptry_bind_listen,1},
 	{"try_connect",Ptry_connect,2},
@@ -1006,18 +1006,15 @@ void Pox_bcast_102(NODE arg,Obj *rp)
 	int rank = QTOS((Q)ARG0(arg));
 	Obj data;
 
-	if ( rank == myrank_102 ) {
-		if ( argc(arg) == 1 ) 
-			error("ox_bcast_102 : data should be given at the root");
-		data = (Obj)ARG1(arg);
-	}
-	ox_bcast_102(rank,&data);
-	*rp = data;
+	if ( argc(arg) > 1 )
+		asir_push_one((Obj)ARG1(arg));
+	ox_bcast_102(rank);
+	*rp = (Obj)asir_pop_one();
 }
 
 void Pox_reduce_102(NODE arg,Obj *rp)
 {
-	int rank = QTOS((Q)ARG0(arg));
+	int root = QTOS((Q)ARG0(arg));
 	STRING op;
 	char *opname;
 	void (*func)();
@@ -1032,7 +1029,10 @@ void Pox_reduce_102(NODE arg,Obj *rp)
 	else {
 		error("ox_reduce_102 : operation not supported");
 	}
-	ox_reduce_102(rank,func,(Obj)ARG2(arg),rp);
+	if ( argc(arg) > 2 )
+		asir_push_one((Obj)ARG2(arg));
+	ox_reduce_102(root,func);
+	*rp = (Obj)asir_pop_one();
 }
 
 void Pox_push_local(NODE arg,Obj *rp)

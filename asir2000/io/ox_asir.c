@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.45 2003/12/09 03:07:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.46 2003/12/10 02:16:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,6 +96,8 @@ void asir_set_rank_102(unsigned int);
 void asir_tcp_accept_102(unsigned int);
 void asir_tcp_connect_102(unsigned int);
 void asir_reset_102(unsigned int serial);
+void asir_bcast_102(unsigned int serial);
+void asir_reduce_102(unsigned int serial);
 LIST asir_GetErrorList();
 char *name_of_cmd(int);
 char *name_of_id(int);
@@ -275,6 +277,12 @@ static void asir_do_cmd(int cmd,unsigned int serial)
 		case SM_reset_102:
 			asir_reset_102(serial);
 			break;
+		case SM_bcast_102:
+			asir_bcast_102(serial);
+			break;
+		case SM_reduce_102:
+			asir_reduce_102(serial);
+			break;
 		case SM_nop:
 		default:
 			break;
@@ -365,6 +373,12 @@ char *name_of_cmd(int cmd)
 		case SM_reset_102:
 			return "SM_reset_102";
 			break;
+		case SM_bcast_102:
+			return "SM_bcast_102";
+			break;
+		case SM_reduce_102:
+			return "SM_reduce_102";
+			break;
 		default:
 			return "Unknown cmd";
 			break;
@@ -419,6 +433,43 @@ void asir_popCMO(unsigned int serial)
 	}
 }
 
+void asir_reduce_102(unsigned int serial)
+{
+	Q r;
+	int root;
+	Obj data,obj;
+	ERR err;
+	STRING op;
+	char *opname;
+	void (*func)();
+
+	func = 0;
+	op = (STRING)asir_pop_one();
+	opname = BDY(op);
+	r = (Q)asir_pop_one();
+	root = QTOS(r);
+	if ( !strcmp(opname,"+") )
+		func = arf_add;
+	else if ( !strcmp(opname,"*") )
+		func = arf_mul;
+	if ( !func ) {
+		create_error(&err,serial,"Invalid opration in ox_reduce_102");
+		asir_push_one(obj);
+	} else
+		ox_reduce_102(root,func);
+}
+
+void asir_bcast_102(unsigned int serial)
+{
+	Q r;
+	int root;
+	Obj data;
+
+	r = (Q)asir_pop_one();
+	root = QTOS(r);
+	ox_bcast_102(root);
+}
+
 void asir_reset_102(unsigned int serial)
 {
 	int i,j,id;
@@ -431,8 +482,6 @@ void asir_reset_102(unsigned int serial)
 	for ( i = myrank_102; i < nserver_102; i++ )
 		ox_send_sync_102(i);
 }
-
-extern int myrank_102,nserver_102;
 
 void asir_set_rank_102(unsigned int serial)
 {
