@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.13 2004/02/26 10:07:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.14 2004/03/03 09:25:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -359,9 +359,82 @@ P *rp;
 #endif
 }
 
+struct TeXSymbol {
+	char *text;
+	char *symbol;
+};
+
+static struct TeXSymbol texsymbol[] = {
+ {"sin","\\sin"},
+ {"cos","\\cos"},
+ {"tan","\\tan"},
+ {"sinh","\\sinh"},
+ {"cosh","\\cosh"},
+ {"tanh","\\tanh"},
+ {"exp","\\exp"},
+ {"log","\\log"},
+
+/* Greek Letters (lower case) */
+ {"alpha","\\alpha"},
+ {"beta","\\beta"},
+ {"gamma","\\gamma"},
+ {"delta","\\delta"},
+ {"epsilon","\\epsilon"},
+ {"varepsilon","\\varepsilon"},
+ {"zeta","\\zeta"},
+ {"eta","\\eta"},
+ {"theta","\\theta"},
+ {"vartheta","\\vartheta"},
+ {"iota","\\iota"},
+ {"kappa","\\kappa"},
+ {"lambda","\\lambda"},
+ {"mu","\\mu"},
+ {"nu","\\nu"},
+ {"xi","\\xi"},
+ {"pi","\\pi"},
+ {"varpi","\\varpi"},
+ {"rho","\\rho"},
+ {"sigma","\\sigma"},
+ {"varsigma","\\varsigma"},
+ {"tau","\\tau"},
+ {"upsilon","\\upsilon"},
+ {"phi","\\phi"},
+ {"varphi","\\varphi"},
+ {"chi","\\chi"},
+ {"omega","\\omega"},
+
+/* Greek Letters, (upper case) */
+ {"ggamma","\\Gamma"},
+ {"ddelta","\\Delta"},
+ {"ttheta","\\Theta"},
+ {"llambda","\\Lambda"},
+ {"xxi","\\Xi"},
+ {"ppi","\\Pi"},
+ {"ssigma","\\Sigma"},
+ {"uupsilon","\\Upsilon"},
+ {"pphi","\\Phi"},
+ {"ppsi","\\Psi"},
+ {"oomega","\\Omega"},
+
+ /* Our own mathematical functions */
+ {"algebra_tensor","\\otimes"},
+ {"base_where","{\\rm \\ where \\ }"},
+ /* Mathematical constants */
+ {"c_pi","\\pi"},
+ {"c_i","\\sqrt{-1}"},
+
+ /* Temporary  */
+ {"dx","\\partial"},
+ {0,0}
+};
+
 char *symbol_name(char *name)
 {
-	/* XXX */
+	int i;
+
+	for ( i = 0; texsymbol[i].text; i++ )
+		if ( !strcmp(texsymbol[i].text,name) )
+			return texsymbol[i].symbol;
 	return name;
 }
 
@@ -371,7 +444,8 @@ void fnodetotex_tb(FNODE f,TB tb)
 	char vname[BUFSIZ];
 	char *opname;
 	Obj obj;
-	int i,len;
+	int i,len,allzero;
+	FNODE fi;
 
 	write_tb(" ",tb);
 	if ( !f ) {
@@ -578,12 +652,30 @@ void fnodetotex_tb(FNODE f,TB tb)
 					break;
 				case I_EV:
 					n = (NODE)FA0(f);
+					allzero = 1;
 					for ( t0 = 0, i = 0; n; n = NEXT(n), i++ ) {
-						sprintf(vname,"x_{%d}^{",i);
-						write_tb(vname,tb);
-						fnodetotex_tb((FNODE)BDY(n),tb);
-						write_tb("} ",tb);
+						fi = (FNODE)BDY(n);
+						if ( fi->id == I_FORMULA && !FA0(fi) ) continue;
+						allzero = 0;
+						if ( fi->id == I_FORMULA && UNIQ(FA0(fi)) ) {
+							sprintf(vname,"x_{%d}",i);
+							len = strlen(vname);
+							opname = MALLOC_ATOMIC(len+1);
+							strcpy(opname,vname);
+							write_tb(opname,tb);
+						} else {
+							sprintf(vname,"x_{%d}^{",i);
+							len = strlen(vname);
+							opname = MALLOC_ATOMIC(len+1);
+							strcpy(opname,vname);
+							write_tb(opname,tb);
+							fnodetotex_tb((FNODE)BDY(n),tb);
+							write_tb("} ",tb);
+						}
 					}
+					/* XXX */
+					if ( allzero )
+						write_tb(" 1 ",tb);
 					break;
 			}
 			break;

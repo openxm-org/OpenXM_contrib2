@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.6 2001/10/09 01:36:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.7 2004/03/03 09:25:30 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -183,23 +183,27 @@ void polytoquote(P a,QUOTE *c)
 void dptoquote(DP a,QUOTE *c)
 {
 	MP t;
-	MP *m;
-	int i,n,nv;
+	MP m;
+	int i,n,nv,sgn;
 	QUOTE s,r,u;
 
 	if ( !a ) {
 		MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
 		return;
 	}
-	for ( t = BDY(a), n = 0; t; t = NEXT(t), n++ );
-	m = (MP *)ALLOCA(n*sizeof(MP));
-	for ( t = BDY(a), i = 0; t; t = NEXT(t), i++ )
-		m[i] = t;
 	nv = NV(a);
-	mptoquote(m[n-1],nv,&r);
-	for ( i = n-2; i >= 0; i-- ) {
-		mptoquote(m[i],nv,&s);
-		addquote(CO,s,r,&u);
+	m = BDY(a);
+	mptoquote(m,nv,&r,&sgn);
+	if ( sgn == -1 ) {
+		MKQUOTE(u,mkfnode(1,I_MINUS,BDY(r)));
+		r = u;
+	}
+	for ( m = NEXT(m); m; m = NEXT(m) ) {
+		mptoquote(m,nv,&s,&sgn);
+		if ( sgn < 0 )
+			subquote(CO,r,s,&u);
+		else
+			addquote(CO,r,s,&u);
 		r = u;
 	}
 	*c = r;
@@ -250,25 +254,44 @@ void dctoquote(DCP dc,QUOTE v,QUOTE *q,int *sgn)
 	*q = r;
 }
 
-void mptoquote(MP m,int n,QUOTE *c)
+void mptoquote(MP m,int n,QUOTE *r,int *sgn)
 {
 	QUOTE s,u;
+	P c;
 	NODE t,t1;
 	FNODE f;
 	Q q;
 	DL dl;
 	int i;
 
-	objtoquote((Obj)C(m),&s);
-	dl = m->dl;
-	for ( i = n-1, t = 0; i >= 0; i-- ) {
-		STOQ(dl->d[i],q);
-		f = mkfnode(1,I_FORMULA,q);
-		MKNODE(t1,f,t);
-		t = t1;
+	if ( mmono(C(m)) ) {
+		chsgnp(C(m),&c);
+		*sgn = -1;
+	} else {
+		c = C(m);
+		*sgn = 1;
 	}
-	MKQUOTE(u,mkfnode(1,I_EV,t));
-	mulquote(CO,s,u,c);
+	objtoquote((Obj)c,&s);
+	if ( !NUM(c) && NEXT(DC(c)) ) {
+		MKQUOTE(u,mkfnode(1,I_PAREN,BDY(s)));
+		s = u;
+	}
+	dl = m->dl;
+	if ( !dl->td )
+		*r = s;	
+	else {
+		for ( i = n-1, t = 0; i >= 0; i-- ) {
+			STOQ(dl->d[i],q);
+			f = mkfnode(1,I_FORMULA,q);
+			MKNODE(t1,f,t);
+			t = t1;
+		}
+		MKQUOTE(u,mkfnode(1,I_EV,t));
+		if ( UNIQ(c) )
+			*r = u;
+		else
+			mulquote(CO,s,u,r);
+	}
 }
 
 void vartoquote(V v,QUOTE *c)

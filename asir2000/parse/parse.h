@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.27 2004/02/09 08:23:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.28 2004/03/03 09:25:30 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -793,7 +793,7 @@ void objtoquote(Obj a,QUOTE *c);
 void polytoquote(P a,QUOTE *c);
 void dptoquote(DP a,QUOTE *c);
 void dctoquote(DCP dc,QUOTE v,QUOTE *c,int *sgn);
-void mptoquote(MP m,int n,QUOTE *c);
+void mptoquote(MP m,int n,QUOTE *c,int *sgn);
 void vartoquote(V v,QUOTE *c);
 void fnodetotree(FNODE f,LIST *rp);
 FNODE eval_pvar_in_fnode(FNODE f);
