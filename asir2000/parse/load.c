@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.11 2004/03/02 08:28:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.12 2004/03/05 08:34:43 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -113,7 +113,7 @@ char *search_executable(char *name)
 	nlen = strlen(name);
 	for ( s = (char *)getenv("PATH"); s; ) {
 		c = (char *)index(s,':');
-		len = c ? c-s : strlen(dir);
+		len = c ? c-s : strlen(s);
 		if ( len >= BUFSIZ ) continue;
 		strncpy(dir,s,len); dir[len] = 0;
 		if ( c ) s = c+1;
