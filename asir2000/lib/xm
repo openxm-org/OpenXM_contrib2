@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.15 2001/05/27 07:18:03 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.16 2002/07/30 12:47:00 takayama Exp $ 
 */
 /**  xm  **/
 Xm_noX = 0$  
@@ -55,10 +55,6 @@ Xm_noX = 0$
 */
 Xm_use_timer_to_start_server = 1$
 
-print("Asir-Contrib xm version 20010310. Copyright 2000-2001, OpenXM Committers.")$
-/* print("http://www.openxm.org")$ */
-print("help(\"keyword\"); ox_help(0); ox_help(\"keyword\"); ox_grep(\"keyword\");")$
-print("     for help messages. ")$
 XM_debug=1$
 
 /*&C-texi
