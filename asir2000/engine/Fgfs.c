@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.17 2003/01/13 06:40:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.18 2003/01/17 00:17:10 noro Exp $ */
 
 #include "ca.h"
 
@@ -561,7 +561,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 		return;
 	}
 	for ( n = 0, tvl = vl; tvl; tvl = NEXT(tvl), n++ );
-	va = (V *)ALLOCA(n*sizeof(int));
+	va = (V *)ALLOCA(n*sizeof(V));
 	da = (int *)ALLOCA(n*sizeof(int));
 	/* find v s.t. diff(f,v) is nonzero and deg(f,v) is minimal */
 	imin = -1;
