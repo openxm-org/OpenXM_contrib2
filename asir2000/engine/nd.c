@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.73 2003/09/17 08:37:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.74 2003/09/19 02:33:12 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -4070,6 +4070,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 	svect = (UINT *)ALLOCA(col*sizeof(UINT));
 	for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
 		nd_sp(m,0,sp,&spol);
+		if ( !spol ) continue;
 		nd_to_vect(m,s0vect,col,spol,svect);
 		nd_free(spol);
 		if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rvect,nred);
@@ -4328,6 +4329,7 @@ void nd_exec_f4_red_dist()
 	svect = (UINT *)MALLOC(col*sizeof(UINT));
 	for ( a = sprow = 0; a < nsp; a++ ) {
 		nd_sp(m,0,sp0[a],&spol);
+		if ( !spol ) continue;
 		nd_to_vect(m,s0vect,col,spol,svect);
 		nd_free(spol);
 		if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rp0,nred);
