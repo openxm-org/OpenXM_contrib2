@@ -46,7 +46,8 @@ directory を指定して下さい.  以下この directory を TARGETDIR 
 % make
 % su                        <-- $BI,MW$,$"$k>l9g
 # make install
-# make install2
+# make install-lib
+# make install-doc
 # exit
 %	
 

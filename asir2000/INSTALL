@@ -45,7 +45,8 @@ directory is denoted by TARGETDIR.
 % make
 % su                        <-- if necessary
 # make install
-# make install2
+# make install-lib
+# make install-doc
 # exit
 %	
 
