@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.14 2004/07/07 07:40:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.15 2004/07/08 02:58:19 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -433,7 +433,7 @@ FNODE flatten_fnode(FNODE f,char *opname)
 		f2 = (pointer)flatten_fnode(FA2(f),opname);
 		f2 = strip_paren(f2);
 		if ( f1->id == I_BOP && !strcmp(((ARF)FA0(f1))->name,opname) ) {
-			/* [+ [+ A B] C] => [+ A [+ B C]] */
+			/* [op [op A B] C] => [op A [op B C]] */
 			return mkfnode(3,I_BOP,(ARF)FA0(f),FA1(f1),
 				mkfnode(3,I_BOP,(ARF)FA0(f),FA2(f1),f2));
 		} else
