@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.14 2001/08/06 01:48:33 noro Exp $ 
+ * $OpenXM$
 */
 #include "ca.h"
 #include "al.h"
@@ -99,6 +99,8 @@ int print_quote;
 #define PRINTEOP printeop
 #define PRINTQOP printqop
 #define PRINTUP printup
+#define PRINTUM printum
+#define PRINTSF printsf
 #endif
 
 #ifdef SPRINT
@@ -142,6 +144,8 @@ extern int print_quote;
 #define PRINTEOP sprinteop
 #define PRINTQOP sprintqop
 #define PRINTUP sprintup
+#define PRINTUM sprintum
+#define PRINTSF sprintsf
 #endif
 
 void PRINTEXPR();
@@ -445,6 +449,9 @@ Num q;
 			break;
 		case N_GFS:
 			TAIL PRINTF(OUT,"@_%d",CONT((GFS)q));
+			break;
+		case N_GFSN:
+			PRINTUM(BDY((GFSN)q));
 			break;
 	}
 }
@@ -952,5 +959,49 @@ UP n;
 			}
 		}
 		PUTS(")");
+	}
+}
+
+PRINTUM(n)
+UM n;
+{
+	int i,d;
+
+	if ( !n )
+		PUTS("0");
+	else if ( !n->d )
+		PRINTSF(n->c[0]);
+	else {
+		d = n->d;
+		PUTS("(");
+		if ( !d ) {
+			PRINTSF(n->c[d]);
+		} else if ( d == 1 ) {
+			PRINTSF(n->c[d]);
+			PUTS("*@s");
+		} else {
+			PRINTSF(n->c[d]);
+			PUTS("*@s"); PRINTHAT; TAIL PRINTF(OUT,"%d",d);
+		}
+		for ( i = d-1; i >= 0; i-- ) {
+			if ( n->c[i] ) {
+				PUTS("+("); PRINTSF(n->c[i]); PUTS(")");
+				if ( i >= 2 ) {
+					PUTS("*@s"); PRINTHAT; TAIL PRINTF(OUT,"%d",i);
+				} else if ( i == 1 )
+					PUTS("*@s");
+			}
+		}
+		PUTS(")");
+	}
+}
+
+PRINTSF(i)
+unsigned int i;
+{
+	if ( !i ) {
+		PUTS("0");
+	} else {
+		TAIL PRINTF(OUT,"@_%d",IFTOF(i));
 	}
 }

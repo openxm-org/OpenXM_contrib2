@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.7 2000/12/24 06:32:31 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.8 2001/03/16 01:56:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -67,6 +67,7 @@ void loadp(FILE *,P *);
 void loadgf2n(FILE *,GF2N *);
 void loadgfpn(FILE *,GFPN *);
 void loadgfs(FILE *,GFS *);
+void loadgfsn(FILE *,GFSN *);
 void loadlm(FILE *,LM *);
 void loadmi(FILE *,MQ *);
 void loadcplx(FILE *,C *);
@@ -86,9 +87,9 @@ void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
 #if defined(INTERVAL)
 void loaditv();
 void loaditvd();
-void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs };
+void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn };
 #else
-void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs };
+void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn };
 #endif
 
 void loadobj(s,p)
@@ -303,6 +304,20 @@ GFS *p;
 	read_char(s,&dmy);
 	NEWGFS(q); read_int(s,(int *)&CONT(q));
 	*p = q;
+}
+
+void loadgfsn(s,p)
+FILE *s;
+GFSN *p;
+{
+	char dmy;
+	int d;
+	UM body;
+
+	read_char(s,&dmy); read_int(s,&d);
+	body = UMALLOC(d); DEG(body) = d;
+	read_intarray(s,COEF(body),d+1);
+	MKGFSN(body,*p);
 }
 
 void loadp(s,p)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.11 2001/08/31 02:47:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.12 2001/09/03 01:04:28 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -82,8 +82,10 @@ FNODE f;
 	FNODE f1;
 	UP2 up2;
 	UP up;
+	UM um;
 	GF2N gf2n;
 	GFPN gfpn;
+	GFSN gfsn;
 
 #if defined(VISUAL)
 	if ( recv_intr ) {
@@ -259,11 +261,19 @@ FNODE f;
 			break;
 		case I_GFPNGEN:
 			up = UPALLOC(1);
-			up->d=1;
-			up->c[0] = 0;
-			up->c[1] = (Num)ONELM;
+			DEG(up)=1;
+			COEF(up)[0] = 0;
+			COEF(up)[1] = (Num)ONELM;
 			MKGFPN(up,gfpn);
 			val = (pointer)gfpn;
+			break;
+		case I_GFSNGEN:
+			um = UMALLOC(1);
+			DEG(um) = 1;
+			COEF(um)[0] = 0;
+			COEF(um)[1] = _onesf();
+			MKGFSN(um,gfsn);
+			val = (pointer)gfsn;
 			break;
 		case I_STR:
 			MKSTR(str,FA0(f)); val = (pointer)str; break;

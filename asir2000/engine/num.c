@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/num.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/num.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 
@@ -95,4 +95,32 @@ VL vl;
 Num a,b;
 {
 	return (*cmpnumt[MAX(a?NID(a):0,b?NID(b):0)])(a,b);
+}
+
+extern int current_ff;
+
+void one_ff(c)
+Num *c;
+{
+	LM lm;
+	GFS fs;
+	GFSN fspn;
+
+	switch ( current_ff ) {
+		case FF_GFP:
+		case FF_GFPN:
+			MKLM(ONEN,lm);
+			*c = (Num)lm;
+			break;
+		case FF_GFS:
+			mqtogfs(ONEM,&fs);
+			*c = (Num)fs;
+			break;
+		case FF_GFSN:
+			ntogfsn(ONE,&fspn);
+			*c = (Num)fspn;
+			break;
+		default:
+			error("one_ff : not implemented yet");
+	}
 }

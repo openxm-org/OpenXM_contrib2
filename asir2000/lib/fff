@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/fff,v 1.4 2001/03/08 07:49:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/fff,v 1.5 2001/05/09 01:41:42 noro Exp $ 
 */
 /*
 	fff : Univariate factorizer over a finite field.
@@ -469,7 +469,7 @@ def lnf_insert(P,L,V)
 def c_z_ff(F,E)
 {
 	Type = field_type_ff();
-	if ( Type == 1 || Type == 3 || Type == 4 )
+	if ( Type == 1 || Type == 3 || Type == 4 || Type == 5 )
 		return c_z_lm(F,E);
 	else
 		return c_z_gf2n(F,E);
@@ -500,7 +500,7 @@ def find_root_ff(P)
 def c_z_one_ff(F,E)
 {
 	Type = field_type_ff();
-	if ( Type == 1 || Type == 3 )
+	if ( Type == 1 || Type == 3 || Type == 4 || Type == 5 )
 		return c_z_one_lm(F,E);
 	else
 		return c_z_one_gf2n(F,E);

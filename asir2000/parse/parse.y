@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.8 2001/08/21 01:39:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.9 2001/09/03 01:04:28 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -90,7 +90,7 @@ extern jmp_buf env;
 }
 
 %token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF GLOBAL CMP OR AND CAR CDR QUOTED
-%token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GETOPT
+%token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
 %token <p> '+' '-' '*' '/' '^' '%'
@@ -229,6 +229,8 @@ pexpr	: STR
 			{ $$ = mkfnode(0,I_GF2NGEN); }
 		| GFPNGEN
 			{ $$ = mkfnode(0,I_GFPNGEN); }
+		| GFSNGEN
+			{ $$ = mkfnode(0,I_GFSNGEN); }
 	 	| LCASE
 			{
 				FUNC f;

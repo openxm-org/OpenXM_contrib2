@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.10 2001/03/15 05:52:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.11 2001/04/20 02:34:23 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -85,6 +85,8 @@ extern int hex_output,fortran_output,double_output,real_digit;
 #define PRINTEOP length_eop
 #define PRINTQOP length_qop
 #define PRINTUP length_up
+#define PRINTUM length_um
+#define PRINTSF length_sf
 
 void PRINTEXPR();
 void PRINTNUM();
@@ -248,6 +250,9 @@ Num q;
 			break;
 		case N_GFS:
 			total_length += 13; /* XXX */
+			break;
+		case N_GFSN:
+			PRINTUM(BDY((GFSN)q));
 			break;
 		default:
 			break;
@@ -746,4 +751,47 @@ UP n;
 		}
 		PUTS(")");
 	}
+}
+
+PRINTUM(n)
+UM n;
+{
+	int i,d;
+
+	if ( !n )
+		PUTS("0");
+	else if ( !n->d )
+		PRINTSF(n->c[0]);
+	else {
+		d = n->d;
+		PUTS("(");
+		if ( !d ) {
+			PRINTSF(n->c[d]);
+		} else if ( d == 1 ) {
+			PRINTSF(n->c[d]);
+			PUTS("*@s");
+		} else {
+			PRINTSF(n->c[d]);
+			PUTS("*@s"); PRINTHAT; total_length += 13;
+		}
+		for ( i = d-1; i >= 0; i-- ) {
+			if ( n->c[i] ) {
+				PUTS("+("); PRINTSF(n->c[i]); PUTS(")");
+				if ( i >= 2 ) {
+					PUTS("*@s"); PRINTHAT; total_length += 13;
+				} else if ( i == 1 )
+					PUTS("*@s");
+			}
+		}
+		PUTS(")");
+	}
+}
+
+PRINTSF(i)
+unsigned int i;
+{
+	if ( !i ) {
+		PUTS("0");
+	} else
+		total_length += 15;
 }

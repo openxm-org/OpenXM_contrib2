@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.13 2001/07/13 08:25:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.14 2001/09/03 01:04:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -132,7 +132,7 @@ struct ftab poly_tab[] = {
 
 	{"sparsemod_gf2n",Psparsemod_gf2n,-1},
 
-	{"setmod_ff",Psetmod_ff,-2},
+	{"setmod_ff",Psetmod_ff,-3},
 	{"simp_ff",Psimp_ff,1},
 	{"extdeg_ff",Pextdeg_ff,0},
 	{"characteristic_ff",Pcharacteristic_ff,0},
@@ -753,7 +753,7 @@ Obj *rp;
 	UP2 up2;
 	UM dp;
 	Q q,r;
-	P p;
+	P p,p1,y;
 	NODE n0,n1;
 	LIST list;
 
@@ -793,8 +793,8 @@ Obj *rp;
 		setmod_sf(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg)));
 		d = QTOS((Q)ARG2(arg));
 		generate_defpoly_sfum(d,&dp);
-		setmod_gfspn(dp);
-		current_ff = FF_GFSPN;
+		setmod_gfsn(dp);
+		current_ff = FF_GFSN;
 	}
 	switch ( current_ff ) {
 		case FF_GFP:
@@ -808,17 +808,28 @@ Obj *rp;
 			MKLIST(list,n0);
 			*rp = (Obj)list; break;
 		case FF_GFS:
+		case FF_GFSN:
 			STOQ(current_gfs_p,q);
-			if ( current_gfs_ext ) {
+			if ( current_gfs_ext )
 				enc_to_p(current_gfs_p,current_gfs_iton[1],
 					VR(current_gfs_ext),&p);
-				n0 = mknode(3,q,current_gfs_ext,p);
-			} else {
+			else {
 				if ( current_gfs_p == 2 )
 					r = ONE;
 				else
 					STOQ(current_gfs_iton[1],r);
-				n0 = mknode(3,q,current_gfs_ext,r);
+				p = (P)r;
+			}
+			switch ( current_ff ) {
+				case FF_GFS:
+					n0 = mknode(3,q,current_gfs_ext,p);
+					break;
+				case FF_GFSN:
+					getmod_gfsn(&dp);
+					makevar("y",&y);
+					sfumtop(VR(y),dp,&p1);
+					n0 = mknode(4,q,current_gfs_ext,p,p1);
+					break;
 			}
 			MKLIST(list,n0);
 			*rp = (Obj)list; break;
@@ -833,6 +844,7 @@ Q *rp;
 	int d;
 	UP2 up2;
 	UP up;
+	UM dp;
 
 	switch ( current_ff ) {
 		case FF_GFP:
@@ -846,6 +858,10 @@ Q *rp;
 				*rp = ONE;
 			else
 				*rp = DEG(DC(current_gfs_ext));
+			break;
+		case FF_GFSN:
+			getmod_gfsn(&dp);
+			STOQ(DEG(dp),*rp);
 			break;
 		default:
 			error("extdeg_ff : current_ff is not set");
@@ -864,6 +880,7 @@ Q *rp;
 		case FF_GF2N:
 			STOQ(2,*rp); break;
 		case FF_GFS:
+		case FF_GFSN:
 			STOQ(current_gfs_p,*rp); break;
 		default:
 			error("characteristic_ff : current_ff is not set");
@@ -890,6 +907,7 @@ N *order;
 {
 	UP2 up2;
 	UP up;
+	UM dp;
 	N m;
 	int d,w;
 
@@ -906,9 +924,14 @@ N *order;
 			break;
 		case FF_GFPN:
 			getmod_lm(&m);
-			getmod_gfpn(&up); pwrn(m,up->d,order); break;
+			getmod_gfpn(&up); pwrn(m,up->d,order);
+			break;
 		case FF_GFS:
 			STON(current_gfs_q,*order); break;
+		case FF_GFSN:
+			STON(current_gfs_q,m);
+			getmod_gfsn(&dp); pwrn(m,DEG(dp),order);
+			break;
 		default:
 			error("field_order_ff : current_ff is not set");
 	}
@@ -921,6 +944,7 @@ Obj *rp;
 	GF2N g;
 	GFPN p;
 	GFS s;
+	GFSN spn;
 
 	switch ( current_ff ) {
 		case FF_GFP:
@@ -931,6 +955,8 @@ Obj *rp;
 			randomgfpn(&p); *rp = (Obj)p; break;
 		case FF_GFS:
 			randomgfs(&s); *rp = (Obj)s; break;
+		case FF_GFSN:
+			randomgfsn(&spn); *rp = (Obj)spn; break;
 		default:
 			error("random_ff : current_ff is not set");
 	}
@@ -957,7 +983,7 @@ Obj *rp;
 	GF2N rg,sg;
 	GFPN rpn,spn;
 	GFS rs;
-	GFSPN rspn,sspn;
+	GFSN rspn,sspn;
 	P t;
 	Obj obj;
 
@@ -983,8 +1009,8 @@ Obj *rp;
 					*rp = (Obj)rs;
 				} 
 				break;
-			case FF_GFSPN:
-				ntogfspn((Obj)p,&rspn); simpgfspn((GFSPN)rspn,&sspn);
+			case FF_GFSN:
+				ntogfsn((Obj)p,&rspn); simpgfsn((GFSN)rspn,&sspn);
 				*rp = (Obj)sspn;
 				break;
 			default:
@@ -1456,6 +1482,7 @@ P *rp;
 			powermodup_gf2n(p1,&p2); break;
 		case FF_GFPN:
 		case FF_GFS:
+		case FF_GFSN:
 			powermodup(p1,&p2); break;
 		default:
 			error("pwrmod_ff : current_ff is not set");
@@ -1478,6 +1505,7 @@ P *rp;
 			generic_powermodup_gf2n(g,f,(Q)ARG2(arg),&r); break;
 		case FF_GFPN:
 		case FF_GFS:
+		case FF_GFSN:
 			generic_powermodup(g,f,(Q)ARG2(arg),&r); break;
 		default:
 			error("generic_pwrmod_ff : current_ff is not set");
@@ -1506,6 +1534,7 @@ VECT *rp;
 			powertabup_gf2n(f,xp,tab); break;
 		case FF_GFPN:
 		case FF_GFS:
+		case FF_GFSN:
 			powertabup(f,xp,tab); break;
 		default:
 			error("pwrtab_ff : current_ff is not set");

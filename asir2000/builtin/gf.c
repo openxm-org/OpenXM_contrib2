@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.10 2001/07/03 01:41:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.11 2001/08/02 03:59:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -67,6 +67,7 @@ void nullspace_lm(LM **,int,int *);
 void nullspace_gf2n(GF2N **,int,int *);
 void nullspace_gfpn(GFPN **,int,int *);
 void nullspace_gfs(GFS **,int,int *);
+void nullspace_gfsn(GFSN **,int,int *);
 void null_to_sol(int **,int *,int,int,UM *);
 
 void showgfmat(UM **,int);
@@ -905,6 +906,8 @@ LIST *rp;
 			nullspace_gfpn((GFPN **)w,n,ind); break;
 		case FF_GFS:
 			nullspace_gfs((GFS **)w,n,ind); break;
+		case FF_GFSN:
+			nullspace_gfsn((GFSN **)w,n,ind); break;
 		default:
 			error("nullspace_ff : current_ff is not set");
 	}
@@ -1081,6 +1084,47 @@ int *ind;
 			chsgngfs(u[j],&h);
 			for ( s = j; s < n; s++ ) {
 				mulgfs(h,t[s],&w); addgfs(w,u[s],&w1); u[s] = w1;
+			}
+		}
+	}
+}
+
+void nullspace_gfsn(mat,n,ind)
+GFSN **mat;
+int n;
+int *ind;
+{
+	int i,j,l,s;
+	GFSN w,w1,h,inv;
+	GFSN *t,*u;
+	GFSN one;
+
+	bzero(ind,n*sizeof(int));
+	ind[0] = 0;
+
+	for ( i = j = 0; j < n; i++, j++ ) {
+		for ( ; j < n; j++ ) {
+			for ( l = i; l < n; l++ )
+				if ( mat[l][j] )
+					break;
+			if ( l < n ) {
+				t = mat[i]; mat[i] = mat[l]; mat[l] = t; break;
+			} else
+				ind[j] = 1;
+		}
+		if ( j == n )
+			break;
+		invgfsn(mat[i][j],&inv);
+		for ( s = j, t = mat[i]; s < n; s++ ) {
+			mulgfsn(t[s],inv,&w); t[s] = w;
+		}
+		for ( l = 0; l < n; l++ ) {
+			if ( l == i )
+				continue;
+			u = mat[l]; 
+			chsgngfsn(u[j],&h);
+			for ( s = j; s < n; s++ ) {
+				mulgfsn(h,t[s],&w); addgfsn(w,u[s],&w1); u[s] = w1;
 			}
 		}
 	}

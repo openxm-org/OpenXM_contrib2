@@ -1,73 +1,74 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/gfsn.c,v 1.3 2001/09/03 01:06:40 noro Exp $ */
 
 #include "ca.h"
 #include "base.h"
 
-UM current_mod_gfspn;
+UM current_mod_gfsn;
 
-void setmod_gfspn(p)
+void setmod_gfsn(p)
 UM p;
 {
-	current_mod_gfspn = p;
+	current_mod_gfsn = p;
 }
 
-void getmod_gfspn(up)
+void getmod_gfsn(up)
 UM *up;
 {
-	*up = current_mod_gfspn;
+	*up = current_mod_gfsn;
 }
 
-void simpgfspn(n,r)
-GFSPN n;
-GFSPN *r;
+void simpgfsn(n,r)
+GFSN n;
+GFSN *r;
 {
 	UM t,q;
 
 	if ( !n )
 		*r = 0;
-	else if ( NID(n) != N_GFSPN )
+	else if ( NID(n) != N_GFSN )
 		*r = n;
 	else {
 		t = UMALLOC(DEG(BDY(n)));
 		q = W_UMALLOC(DEG(BDY(n)));
 		cpyum(BDY(n),t);
-		divsfum(t,current_mod_gfspn,q);
-		MKGFSPN(t,*r);
+		DEG(t) = divsfum(t,current_mod_gfsn,q);
+		MKGFSN(t,*r);
 	}
 }
 
-#define NZGFSPN(a) ((a)&&(OID(a)==O_N)&&(NID(a)==N_GFSPN))
+#define NZGFSN(a) ((a)&&(OID(a)==O_N)&&(NID(a)==N_GFSN))
 
-void ntogfspn(a,b)
+void ntogfsn(a,b)
 Obj a;
-GFSPN *b;
+GFSN *b;
 {
 	UM t;
 	GFS c;
 
-	if ( !a || (OID(a)==O_N && NID(a) == N_GFSPN) )
-		*b = (GFSPN)a;
+	if ( !a || (OID(a)==O_N && NID(a) == N_GFSN) )
+		*b = (GFSN)a;
 	else if ( OID(a) == O_N && (NID(a) == N_GFS || NID(a) == N_Q) ) {
 		ntogfs((Num)a,&c);
 		if ( !b )
 			*b = 0;
 		else {
 			t = UMALLOC(0); ptosfum((P)c,t);
-			MKGFSPN(t,*b);
+			MKGFSN(t,*b);
 		}
 	} else
-		error("ntogfspn : invalid argument");
+		error("ntogfsn : invalid argument");
 }
 
-void addgfspn(a,b,c)
-GFSPN a,b;
-GFSPN *c;
+void addgfsn(a,b,c)
+GFSN a,b;
+GFSN *c;
 {
 	UM t,q;
-	GFSPN z;
+	GFSN z;
 	int d;
+	MQ qq;
 
-	ntogfspn((Obj)a,&z); a = z; ntogfspn((Obj)b,&z); b = z;
+	ntogfsn((Obj)a,&z); a = z; ntogfsn((Obj)b,&z); b = z;
 	if ( !a )
 		*c = b;
 	else if ( !b )
@@ -77,22 +78,23 @@ GFSPN *c;
 		t = UMALLOC(d);
 		q = W_UMALLOC(d);
 		addsfum(BDY(a),BDY(b),t);
-		divsfum(t,current_mod_gfspn,q);
-		MKGFSPN(t,*c);
+		DEG(t) = divsfum(t,current_mod_gfsn,q);
+		MKGFSN(t,z);
+		*c = (GFSN)z;
 	}
 }
 
-void subgfspn(a,b,c)
-GFSPN a,b;
-GFSPN *c;
+void subgfsn(a,b,c)
+GFSN a,b;
+GFSN *c;
 {
 	UM t,q;
-	GFSPN z;
+	GFSN z;
 	int d;
 
-	ntogfspn((Obj)a,&z); a = z; ntogfspn((Obj)b,&z); b = z;
+	ntogfsn((Obj)a,&z); a = z; ntogfsn((Obj)b,&z); b = z;
 	if ( !a )
-		chsgngfspn(b,c);
+		chsgngfsn(b,c);
 	else if ( !b )
 		*c = a;
 	else {
@@ -100,22 +102,22 @@ GFSPN *c;
 		t = UMALLOC(d);
 		q = W_UMALLOC(d);
 		subsfum(BDY(a),BDY(b),t);
-		divsfum(t,current_mod_gfspn,q);
-		MKGFSPN(t,*c);
+		DEG(t) = divsfum(t,current_mod_gfsn,q);
+		MKGFSN(t,*c);
 	}
 }
 
 extern int up_lazy;
 
-void mulgfspn(a,b,c)
-GFSPN a,b;
-GFSPN *c;
+void mulgfsn(a,b,c)
+GFSN a,b;
+GFSN *c;
 {
 	UM t,q;
-	GFSPN z;
+	GFSN z;
 	int d;
 
-	ntogfspn((Obj)a,&z); a = z; ntogfspn((Obj)b,&z); b = z;
+	ntogfsn((Obj)a,&z); a = z; ntogfsn((Obj)b,&z); b = z;
 	if ( !a || !b )
 		*c = 0;
 	else {
@@ -123,74 +125,74 @@ GFSPN *c;
 		t = UMALLOC(d);
 		q = W_UMALLOC(d);
 		mulsfum(BDY(a),BDY(b),t);
-		divsfum(t,current_mod_gfspn,q);
-		MKGFSPN(t,*c);
+		DEG(t) = divsfum(t,current_mod_gfsn,q);
+		MKGFSN(t,*c);
 	}
 }
 
-void divgfspn(a,b,c)
-GFSPN a,b;
-GFSPN *c;
+void divgfsn(a,b,c)
+GFSN a,b;
+GFSN *c;
 {
-	GFSPN z;
+	GFSN z;
 	int d;
 	UM wb,wc,wd,we,t,q;
 
-	ntogfspn((Obj)a,&z); a = z; ntogfspn((Obj)b,&z); b = z;
+	ntogfsn((Obj)a,&z); a = z; ntogfsn((Obj)b,&z); b = z;
 	if ( !b )
-		error("divgfspn: division by 0");
+		error("divgfsn: division by 0");
 	else if ( !a )
 		*c = 0;
 	else {
 		wb = W_UMALLOC(DEG(BDY(b))); cpyum(BDY(b),wb); 
-		d = DEG(current_mod_gfspn);
-		wc = W_UMALLOC(d); cpyum(current_mod_gfspn,wc);
+		d = DEG(current_mod_gfsn);
+		wc = W_UMALLOC(d); cpyum(current_mod_gfsn,wc);
 		wd = W_UMALLOC(2*d); we = W_UMALLOC(2*d);
 		/* wd*wb+we*wc=1 */
 		eucsfum(wb,wc,wd,we);
 		d = DEG(BDY(a))+DEG(wd);
 		t = UMALLOC(d);
 		q = W_UMALLOC(d);
-		mulsfum(a,wd,t);
-		divsfum(t,current_mod_gfspn,q);
-		MKGFSPN(t,*c);
+		mulsfum(BDY(a),wd,t);
+		DEG(t) = divsfum(t,current_mod_gfsn,q);
+		MKGFSN(t,*c);
 	}
 }
 
-void invgfspn(b,c)
-GFSPN b;
-GFSPN *c;
+void invgfsn(b,c)
+GFSN b;
+GFSN *c;
 {
-	GFSPN z;
+	GFSN z;
 	int d;
 	UM wb,wc,wd,we,t;
 
-	ntogfspn((Obj)b,&z); b = z;
+	ntogfsn((Obj)b,&z); b = z;
 	if ( !b )
-		error("divgfspn: division by 0");
+		error("divgfsn: division by 0");
 	else {
 		wb = W_UMALLOC(DEG(BDY(b))); cpyum(BDY(b),wb); 
-		d = DEG(current_mod_gfspn);
-		wc = W_UMALLOC(d); cpyum(current_mod_gfspn,wc);
+		d = DEG(current_mod_gfsn);
+		wc = W_UMALLOC(d); cpyum(current_mod_gfsn,wc);
 		wd = W_UMALLOC(2*d); we = W_UMALLOC(2*d);
 		/* wd*wb+we*wc=1 */
 		eucsfum(wb,wc,wd,we);
 		d = DEG(wd);
 		t = UMALLOC(d);
 		cpyum(wd,t);
-		MKGFSPN(t,*c);
+		MKGFSN(t,*c);
 	}
 }
 
-void chsgngfspn(a,c)
-GFSPN a,*c;
+void chsgngfsn(a,c)
+GFSN a,*c;
 {
-	GFSPN z;
+	GFSN z;
 	int d;
 	struct oUM zero;
 	UM t;
 
-	ntogfspn((Obj)a,&z); a = z;
+	ntogfsn((Obj)a,&z); a = z;
 	if ( !a )
 		*c = 0;
 	else {
@@ -198,28 +200,28 @@ GFSPN a,*c;
 		t = UMALLOC(d);
 		DEG(&zero) = -1;
 		subsfum(&zero,BDY(a),t);
-		MKGFSPN(t,*c);
+		MKGFSN(t,*c);
 	}
 }
 
-void pwrgfspn(a,b,c)
-GFSPN a;
+void pwrgfsn(a,b,c)
+GFSN a;
 Q b;
-GFSPN *c;
+GFSN *c;
 {
-	GFSPN z;
+	GFSN z;
 	UM t,x,y,q;
 	int d,k;
 	N e;
 
-	ntogfspn((Obj)a,&z); a = z;
+	ntogfsn((Obj)a,&z); a = z;
 	if ( !b ) {
 		t = UMALLOC(0); DEG(t) = 0; COEF(t)[0] = _onesf();
-		MKGFSPN(t,*c);
+		MKGFSN(t,*c);
 	} else if ( !a )
 		*c = 0;
 	else {
-		d = DEG(current_mod_gfspn);
+		d = DEG(current_mod_gfsn);
 
 		/* y = 1 */
 		y = UMALLOC(d); DEG(y) = 0; COEF(y)[0] = _onesf();
@@ -228,32 +230,32 @@ GFSPN *c;
 
 		/* x = simplify(a) */
 		x = W_UMALLOC(DEG(BDY(a))); cpyum(BDY(a),x);
-		divsfum(x,current_mod_gfspn,q);
+		DEG(x) = divsfum(x,current_mod_gfsn,q);
 		if ( DEG(x) < 0 ) {
 			*c = 0;
 		} else {
 			e = NM(b);
 			for ( k = n_bits(e)-1; k >= 0; k-- ) {
 				mulsfum(y,y,t);
-				divsfum(t,current_mod_gfspn,q);
+				DEG(t) = divsfum(t,current_mod_gfsn,q);
 				cpyum(t,y);
 				if ( e->b[k/32] & (1<<(k%32)) ) {
 					mulsfum(y,x,t);
-					divsfum(t,current_mod_gfspn,q);
+					DEG(t) = divsfum(t,current_mod_gfsn,q);
 					cpyum(t,y);
 				}
 			}
-			MKGFSPN(y,*c);
+			MKGFSN(y,*c);
 		}
 	}
 }
 
-int cmpgfspn(a,b)
-GFSPN a,b;
+int cmpgfsn(a,b)
+GFSN a,b;
 {
-	GFSPN z;
+	GFSN z;
 
-	ntogfspn((Obj)a,&z); a = z; ntogfspn((Obj)b,&z); b = z;
+	ntogfsn((Obj)a,&z); a = z; ntogfsn((Obj)b,&z); b = z;
 	if ( !a )
 		if ( !b )
 			return 0;
@@ -265,21 +267,21 @@ GFSPN a,b;
 		return compsfum(BDY(a),BDY(b));
 }
 
-void randomgfspn(r)
-GFSPN *r;
+void randomgfsn(r)
+GFSN *r;
 {
 	int i,d;
 	UM t;
 
-	if ( !current_mod_gfspn )
-		error("randomgfspn : current_mod_gfspn is not set");
-	d = DEG(current_mod_gfspn);
+	if ( !current_mod_gfsn )
+		error("randomgfsn : current_mod_gfsn is not set");
+	d = DEG(current_mod_gfsn);
 	t = UMALLOC(d-1);
 	randsfum(d,t);
 	degum(t,d-1);
 	if ( DEG(t) < 0 )
 		*r = 0;
 	else {
-		MKGFSPN(t,*r);
+		MKGFSN(t,*r);
 	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.4 2001/05/09 01:41:42 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -408,27 +408,13 @@ UP *xp;
 	N n;
 	UP x,y,t,invf,s;
 	int k;
-	LM lm;
-	GFS fs;
 	Num c;
 	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
 	if ( !current_ff )
 		error("powermodup : current_ff is not set");
 	field_order_ff(&n);
-	switch ( current_ff ) {
-		case FF_GFP:
-		case FF_GFPN:
-			MKLM(ONEN,lm);
-			c = (Num)lm;
-			break;
-		case FF_GFS:
-			mqtogfs(ONEM,&fs);
-			c = (Num)fs;
-			break;
-		default:
-			error("powermodup : not implemented yet");
-	}
+	one_ff(&c);
 	x = UPALLOC(1); x->d = 1; x->c[1] = c;
 	y = UPALLOC(0); y->d = 0; y->c[0] = c;
 
@@ -440,6 +426,7 @@ UP *xp;
 			uptolmup(s,&invf);
 			break;
 		case FF_GFS:
+		case FF_GFSN:
 			invf = s; /* XXX */
 			break;
 		default:
@@ -505,25 +492,11 @@ UP *xp;
 	N e;
 	UP x,y,t,invf,s;
 	int k;
-	LM lm;
-	GFS fs;
 	Num c;
 	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
 	e = NM(d);
-	switch ( current_ff ) {
-		case FF_GFP:
-		case FF_GFPN:
-			MKLM(ONEN,lm);
-			c = (Num)lm;
-			break;
-		case FF_GFS:
-			mqtogfs(ONEM,&fs);
-			c = (Num)fs;
-			break;
-		default:
-			error("generic_powermodup : not implemented yet");
-	}
+	one_ff(&c);
 	y = UPALLOC(0); y->d = 0; y->c[0] = c;
 	remup(g,f,&x);
 	if ( !x ) {
@@ -582,25 +555,11 @@ UP *tab;
 {
 	UP y,t,invf;
 	int i,d;
-	LM lm;
-	GFS fs;
 	Num c;
 	struct oEGT eg_rem,eg_mul,eg0,eg1,eg2;
 
 	d = f->d;
-	switch ( current_ff ) {
-		case FF_GFP:
-		case FF_GFPN:
-			MKLM(ONEN,lm);
-			c = (Num)lm;
-			break;
-		case FF_GFS:
-			mqtogfs(ONEM,&fs);
-			c = (Num)fs;
-			break;
-		default:
-			error("powertabup : not implemented yet");
-	}
+	one_ff(&c);
 	y = UPALLOC(0); y->d = 0; y->c[0] = c;
 	tab[0] = y;
 	tab[1] = xp;

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.15 2001/08/02 03:59:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.16 2001/09/03 01:04:26 noro Exp $ */
 
 #include "ca.h"
 
@@ -1373,8 +1373,47 @@ P *qp;
 
 /* XXX generate an irreducible poly of degree n */
 
+extern int current_gfs_q1;
+
 void generate_defpoly_sfum(n,dp)
 int n;
 UM *dp;
 {
+	UM r,dr,t,g;
+	UM *f;
+	int *c,*w;
+	int max,i,j;
+
+	*dp = r = UMALLOC(n);
+	DEG(r) = n;
+	c = COEF(r);
+	c[n] = _onesf();
+	max = current_gfs_q1;
+	w = (int *)ALLOCA(n*sizeof(int));
+	bzero(w,n*sizeof(int));
+
+	dr = W_UMALLOC(n); t = W_UMALLOC(n); g = W_UMALLOC(n);
+	f = (UM *)ALLOCA((n+1)*sizeof(UM));
+	while ( 1 ) {
+		for ( i = 0; i < n && w[i] == max; i++ );
+		if ( i == n ) {
+			/* XXX cannot happen */
+			error("generate_defpoly_sfum : cannot happen");
+		}
+		for ( j = 0; j < i; j++ )
+			w[j] = 0;
+		w[i]++;
+		for ( i = 0; i < n; i++ )
+			c[i] = w[i]?FTOIF(w[i]-1):0;
+		if ( !c[0] )
+			continue;
+		diffsfum(r,dr); cpyum(r,t); gcdsfum(t,dr,g);
+		if ( DEG(g) > 0 )
+			continue;
+
+		czsfum(r,f);
+		for ( i = 0; f[i]; i++ );
+		if ( i == 1 )
+			return;
+	}
 }

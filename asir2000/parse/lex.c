@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.15 2001/06/04 02:49:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.16 2001/06/15 07:56:06 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -369,6 +369,8 @@ yylex()
 			Ungetc(c); REALLOC_TBUF tbuf[i] = 0;
 			if ( !strcmp(tbuf,"@p") )
 				return GFPNGEN;
+			else if ( !strcmp(tbuf,"@s") )
+				return GFSNGEN;
 			else if ( !strcmp(tbuf,"@i") ) {
 				extern pointer IU;
 
