@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.113 2004/10/06 12:09:19 noro Exp $ */
 
 #include "nd.h"
 
@@ -40,6 +40,9 @@ static int nd_worb_len;
 static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
+
+UINT *nd_det_compute_bound(NDV **dm,int n,int j);
+void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
 
 void nd_free_private_storage()
 {
@@ -724,13 +727,11 @@ int ndl_disjoint(UINT *d1,UINT *d2)
 #endif
 }
 
-int ndl_check_bound2(int index,UINT *d2)
+int ndl_check_bound(UINT *d1,UINT *d2)
 {
 	UINT u2;
-	UINT *d1;
 	int i,j,ind,k;
 
-	d1 = nd_bound[index];
 	ind = 0;
 #if USE_UNROLL
 	switch ( nd_bpe ) {
@@ -817,6 +818,11 @@ int ndl_check_bound2(int index,UINT *d2)
 	}
 	return 0;
 #endif
+}
+
+int ndl_check_bound2(int index,UINT *d2)
+{
+	return ndl_check_bound(nd_bound[index],d2);
 }
 
 INLINE int ndl_hash_value(UINT *d)
@@ -4887,6 +4893,7 @@ void nd_det(int mod,MAT f,P *rp)
 	NDV d,s,mij,mjj;
 	ND u;
 	NMV nmv;
+	UINT *bound;
 	PGeoBucket bucket;
 	struct order_spec *ord;
 
@@ -4904,7 +4911,7 @@ void nd_det(int mod,MAT f,P *rp)
 				e = getdeg(tv->v,(P)m[i][j]);
 				max = MAX(e,max);
 			}
-	nd_setup_parameters(nvar,1024);
+	nd_setup_parameters(nvar,max);
 	dm = (NDV **)almat_pointer(n,n);
 	for ( i = 0, max = 0; i < n; i++ )
 		for ( j = 0; j < n; j++ ) {
@@ -4938,15 +4945,19 @@ void nd_det(int mod,MAT f,P *rp)
 			}
 			sgn = -sgn;
 		}
+		bound = nd_det_compute_bound(dm,n,j);
+		if ( ndl_check_bound(bound,bound) )
+			nd_det_reconstruct(dm,n,j,d);
+
 		for ( i = j+1, mj = dm[j], mjj = mj[j]; i < n; i++ ) {
-			if ( DP_Print ) fprintf(stderr,"	i=%d\n		",i);
+/*			if ( DP_Print ) fprintf(stderr,"	i=%d\n		",i); */
 			mi = dm[i]; mij = mi[j];
 			if ( mod )
 				ndv_mul_c(mod,mij,mod-1);
 			else
 				ndv_mul_c_q(mij,mone);
 			for ( k = j+1; k < n; k++ ) {
-				if ( DP_Print ) fprintf(stderr,"k=%d ",k);
+/*				if ( DP_Print ) fprintf(stderr,"k=%d ",k); */
 				bucket = create_pbucket();
 				if ( mi[k] ) {
 					nmv = BDY(mjj); len = LEN(mjj);
@@ -4965,7 +4976,7 @@ void nd_det(int mod,MAT f,P *rp)
 				u = nd_quo(mod,bucket,d);
 				mi[k] = ndtondv(mod,u);
 			}
-			if ( DP_Print ) fprintf(stderr,"\n",k);
+/*			if ( DP_Print ) fprintf(stderr,"\n",k); */
 		}
 		d = mjj;
 	}
@@ -5025,4 +5036,57 @@ ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d)
 			return r;
 		}
 	}
+}
+
+void nd_det_reconstruct(NDV **dm,int n,int j,NDV d)
+{
+	int i,obpe,oadv,h,k,l;
+	static NM prev_nm_free_list;
+	EPOS oepos;
+
+	obpe = nd_bpe;
+	oadv = nmv_adv;
+	oepos = nd_epos;
+	if ( obpe < 2 ) nd_bpe = 2;
+	else if ( obpe < 3 ) nd_bpe = 3;
+	else if ( obpe < 4 ) nd_bpe = 4;
+	else if ( obpe < 5 ) nd_bpe = 5;
+	else if ( obpe < 6 ) nd_bpe = 6;
+	else if ( obpe < 8 ) nd_bpe = 8;
+	else if ( obpe < 10 ) nd_bpe = 10;
+	else if ( obpe < 16 ) nd_bpe = 16;
+	else if ( obpe < 32 ) nd_bpe = 32;
+	else error("nd_det_reconstruct : exponent too large");
+
+	nd_setup_parameters(nd_nvar,0);
+	prev_nm_free_list = _nm_free_list;
+	_nm_free_list = 0;
+	for ( k = j; k < n; k++ )
+		for (l = j; l < n; l++ )
+			ndv_realloc(dm[k][l],obpe,oadv,oepos);
+	ndv_realloc(d,obpe,oadv,oepos);
+	prev_nm_free_list = 0;
+#if 0
+	GC_gcollect();
+#endif
+}
+
+UINT *nd_det_compute_bound(NDV **dm,int n,int j)
+{
+	UINT *d0,*d1,*d,*t,*r;
+	int k,l;
+
+	d0 = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	d1 = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	for ( k = 0; k < nd_wpd; k++ ) d0[k] = 0;
+	for ( k = j; k < n; k++ )
+		for ( l = j; l < n; l++ )
+			if ( dm[k][l] ) {
+				d = ndv_compute_bound(dm[k][l]);
+				ndl_lcm(d,d0,d1);
+				t = d1; d1 = d0; d0 = t;
+			}
+	r = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	for ( k = 0; k < nd_wpd; k++ ) r[k] = d0[k];
+	return r;
 }
