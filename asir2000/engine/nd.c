@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.63 2003/09/11 09:03:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.64 2003/09/12 01:12:40 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -15,6 +15,7 @@
 typedef unsigned int UINT;
 
 #define USE_GEOBUCKET 1
+#define USE_UNROLL 1
 
 #define REDTAB_LEN 32003
 
@@ -348,7 +349,7 @@ P ndvtop(int mod,VL vl,VL dvl,NDV p);
 NDV ndtondv(int mod,ND p);
 ND ndvtond(int mod,NDV p);
 int nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r);
-void nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r,int *ind);
+void nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair,int *ind);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
 
 void nd_free_private_storage()
@@ -413,8 +414,8 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
 	int i,j;
 
 	if ( TD(d1) < TD(d2) ) return 0;
+#if USE_UNROLL
 	switch ( nd_bpe ) {
-#if 0
 		case 3:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
@@ -479,7 +480,6 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
 				if ( d1[i] < d2[i] ) return 0;
 			return 1;
 			break;
-#endif
 		default:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
@@ -488,6 +488,14 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
 			}
 			return 1;
 	}
+#else
+	for ( i = nd_exporigin; i < nd_wpd; i++ ) {
+		u1 = d1[i]; u2 = d2[i];
+		for ( j = 0; j < nd_epw; j++ )
+			if ( (u1&nd_mask[j]) < (u2&nd_mask[j]) ) return 0;
+	}
+	return 1;
+#endif
 }
 
 /*
@@ -555,8 +563,8 @@ void ndl_lcm(UINT *d1,unsigned *d2,UINT *d)
 	UINT t1,t2,u,u1,u2;
 	int i,j,l;
 
+#if USE_UNROLL
 	switch ( nd_bpe ) {
-#if 0
 		case 3:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
@@ -622,7 +630,6 @@ void ndl_lcm(UINT *d1,unsigned *d2,UINT *d)
 				d[i] = u1>u2?u1:u2;
 			}
 			break;
-#endif
 		default:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i]; 
@@ -633,6 +640,15 @@ void ndl_lcm(UINT *d1,unsigned *d2,UINT *d)
 			}
 			break;
 	}
+#else
+	for ( i = nd_exporigin; i < nd_wpd; i++ ) {
+		u1 = d1[i]; u2 = d2[i]; 
+		for ( j = 0, u = 0; j < nd_epw; j++ ) {
+			t1 = (u1&nd_mask[j]); t2 = (u2&nd_mask[j]); u |= t1>t2?t1:t2;
+		}
+		d[i] = u;
+	}
+#endif
 	TD(d) = ndl_weight(d);
 	if ( nd_blockmask ) ndl_weight_mask(d);
 }
@@ -838,8 +854,8 @@ int ndl_disjoint(UINT *d1,UINT *d2)
 	UINT t1,t2,u,u1,u2;
 	int i,j;
 
+#if USE_UNROLL
 	switch ( nd_bpe ) {
-#if 0
 		case 3:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
@@ -904,7 +920,6 @@ int ndl_disjoint(UINT *d1,UINT *d2)
 				if ( d1[i] && d2[i] ) return 0;
 			return 1;
 			break;
-#endif
 		default:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
@@ -916,6 +931,16 @@ int ndl_disjoint(UINT *d1,UINT *d2)
 			return 1;
 			break;
 	}
+#else
+	for ( i = nd_exporigin; i < nd_wpd; i++ ) {
+		u1 = d1[i]; u2 = d2[i];
+		for ( j = 0; j < nd_epw; j++ ) {
+			if ( (u1&nd_mask0) && (u2&nd_mask0) ) return 0;
+			u1 >>= nd_bpe; u2 >>= nd_bpe;
+		}
+	}
+	return 1;
+#endif
 }
 
 int ndl_check_bound2(int index,UINT *d2)
@@ -926,8 +951,8 @@ int ndl_check_bound2(int index,UINT *d2)
 
 	d1 = nd_bound[index];
 	ind = 0;
+#if USE_UNROLL
 	switch ( nd_bpe ) {
-#if 0
 		case 3:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
@@ -992,7 +1017,6 @@ int ndl_check_bound2(int index,UINT *d2)
 				if ( d1[i]+d2[i]<d1[i] ) return 1;
 			return 0;
 			break;
-#endif
 		default:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
@@ -1003,6 +1027,15 @@ int ndl_check_bound2(int index,UINT *d2)
 			return 0;
 			break;
 	}
+#else
+	for ( i = nd_exporigin; i < nd_wpd; i++ ) {
+		u2 = d2[i];
+		k = (nd_epw-1)*nd_bpe;
+		for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
+			if ( d1[ind++]+((u2>>k)&nd_mask0) > nd_mask0 ) return 1;
+	}
+	return 0;
+#endif
 }
 
 int ndl_check_bound2_direct(UINT *d1,UINT *d2)
@@ -1011,8 +1044,8 @@ int ndl_check_bound2_direct(UINT *d1,UINT *d2)
 	int i,j,ind,k;
 
 	ind = 0;
+#if USE_UNROLL
 	switch ( nd_bpe ) {
-#if 0
 		case 3:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
@@ -1077,7 +1110,6 @@ int ndl_check_bound2_direct(UINT *d1,UINT *d2)
 				if ( d1[i]+d2[i]<d1[i] ) return 1;
 			return 0;
 			break;
-#endif
 		default:
 			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
@@ -1088,6 +1120,15 @@ int ndl_check_bound2_direct(UINT *d1,UINT *d2)
 			return 0;
 			break;
 	}
+#else
+	for ( i = nd_exporigin; i < nd_wpd; i++ ) {
+		u2 = d2[i];
+		k = (nd_epw-1)*nd_bpe;
+		for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
+			if ( d1[ind++]+((u2>>k)&nd_mask0) > nd_mask0 ) return 1;
+	}
+	return 0;
+#endif
 }
 
 INLINE int ndl_hash_value(UINT *d)
@@ -3746,7 +3787,7 @@ int nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *r)
 	return i;
 }
 
-void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *r,int *ind)
+void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair,int *ind)
 {
 	NM m;
 	NMV mr;
@@ -3762,9 +3803,119 @@ void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *
 	for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
 		ndl_add(d,DL(mr),t);	
 		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
-		r[j] = CM(mr);
 		ind[j] = i;
 	}
+}
+
+
+void ndv_reduce_vect(int m,UINT *svect,int **imat,NODE rp0)
+{
+	int i,j,k,len,pos;
+	UINT c,c1,c2,c3;
+	UINT *ivect;
+	NDV redv;
+	NMV mr0,mr;
+	NODE rp;
+
+	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+		ivect = imat[i];
+		k = ivect[0];
+		if ( c = svect[k] ) {
+			c = m-c;
+			redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
+			len = LEN(redv);
+			mr0 = BDY(redv);
+			for ( j = 0, mr = mr0; j < len; j++, NMV_ADV(mr) ) {
+				pos = ivect[j];
+				c1 = CM(mr);
+				c2 = svect[pos]; DMAR(c1,c,c2,m,c3);
+				svect[pos] = c3;
+			}
+		}
+	}
+}
+
+NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
+{
+	int j,k,len;
+	UINT *p;
+	UINT c;
+	NDV r;
+	NMV mr0,mr;
+
+	for ( j = 0, len = 0; j < spcol; j++ ) if ( vect[j] ) len++;
+	if ( !len ) return 0;
+	else {
+		mr0 = (NMV)MALLOC_ATOMIC(nmv_adv*len);
+		mr = mr0; 
+		p = s0vect;
+		for ( j = k = 0; j < col; j++, p += nd_wpd )
+			if ( !rhead[j] ) {
+				if ( c = vect[k++] ) {
+					ndl_copy(p,DL(mr)); CM(mr) = c; NMV_ADV(mr);
+				}
+			}
+		MKNDV(nd_nvar,mr0,len,r);
+		return r;
+	}
+}
+
+NODE nd_sp_f4(int m,ND_pairs l,PGeoBucket bucket)
+{
+	ND_pairs t;
+	NODE sp0,sp;
+	int stat;
+	ND spol;
+
+	sp0 = 0;
+	for ( t = l; t; t = NEXT(t) ) {
+		stat = nd_sp(m,0,t,&spol);
+		if ( !stat ) return 0;
+		if ( spol ) {
+			NEXTNODE(sp0,sp); BDY(sp) = (pointer)nd_dup(spol);
+			add_pbucket_symbolic(bucket,spol);
+		}
+	}
+	return sp0;
+}
+
+int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
+{
+	NODE rp0,rp;
+	NM mul,head,s0,s;
+	int index,col,i;
+	RHist h;
+	UINT *s0v,*p;
+	NM_ind_pair pair;
+	ND red;
+
+	s0 = 0; rp0 = 0; col = 0;
+	while ( 1 ) {
+		head = remove_head_pbucket_symbolic(bucket);
+		if ( !head ) break;
+		if ( !s0 ) s0 = head;
+		else NEXT(s) = head;
+		s = head;
+		index = ndl_find_reducer(DL(head));
+		if ( index >= 0 ) {
+			h = nd_psh[index];
+			NEWNM(mul);
+			ndl_sub(DL(head),DL(h),DL(mul));
+			if ( ndl_check_bound2(index,DL(mul)) ) return 0;
+			MKNM_ind_pair(pair,mul,index);
+			red = ndv_mul_nm_symbolic(mul,nd_ps[index]);
+			add_pbucket_symbolic(bucket,nd_remove_head(red));
+			NEXTNODE(rp0,rp); BDY(rp) = (pointer)pair;
+		}
+		col++;
+	}
+	NEXT(rp) = 0; NEXT(s) = 0;
+	s0v = (UINT *)MALLOC_ATOMIC(col*nd_wpd*sizeof(UINT));
+	for ( i = 0, p = s0v, s = s0; i < col;
+		i++, p += nd_wpd, s = NEXT(s) ) ndl_copy(DL(s),p);
+	*s0vect = s0v;		
+	*r = rp0;
+	return col;
 }
 
 NODE nd_f4(int m)
@@ -3773,21 +3924,19 @@ NODE nd_f4(int m)
 	NODE r,g;
 	ND_pairs d,l,t;
 	ND spol,red;
-	NDV nf;
-	NM_ind_pair pair,pair1,pair2;
+	NDV nf,redv;
 	NM s0,s;
 	NODE sp0,sp,rp0,rp;
-	RHist h;
-	int nsp,nred,col,rank,len,k,j;
-	NMV mr0,mr;
-	UINT c,c1,c2,c3;
-	NM mul,head;
+	int nsp,nred,col,rank,len,k,j,a;
+	UINT c;
 	UINT **spmat;
-	UINT *s0vect,*rvect,*svect,*p,*ivect;
+	UINT *s0vect,*svect,*p,*v;
 	int *colstat;
-	int sugar,pos;
+	int **imat;
+	int *rhead;
+	int spcol,sprow;
+	int sugar;
 	PGeoBucket bucket;
-	int t_0,t_1,t_2,t_3,t_4,t_5,t_c,t_e,t_20,t_21;
 
 	if ( !m )
 		error("nd_f4 : not implemented");
@@ -3800,117 +3949,63 @@ NODE nd_f4(int m)
 	while ( d ) {
 		l = nd_minsugarp(d,&d);
 		sugar = SG(l);
-		sp0 = 0;
 		bucket = create_pbucket();
-		t_0 = clock();
-		for ( t = l, nsp = 0; t; t = NEXT(t) ) {
-			stat = nd_sp(m,0,t,&spol);
-			if ( !stat ) goto again;
-			if ( spol ) {
-				NEXTNODE(sp0,sp); BDY(sp) = (pointer)nd_dup(spol);
-				add_pbucket_symbolic(bucket,spol);
-				nsp++;
-			}
+		if ( !(sp0 = nd_sp_f4(m,l,bucket)) 
+			|| !(col = nd_symbolic_preproc(bucket,&s0vect,&rp0)) ) {
+			for ( t = l; NEXT(t); t = NEXT(t) );
+			NEXT(t) = d; d = l;
+			d = nd_reconstruct(m,0,d);
+			continue;
 		}
-		if ( sp0 ) NEXT(sp) = 0;
-		s0 = 0;
-		rp0 = 0;
-		while ( 1 ) {
-			head = remove_head_pbucket_symbolic(bucket);
-			if ( !head ) break;
-			if ( !s0 ) s0 = head;
-			else NEXT(s) = head;
-			s = head;
-			index = ndl_find_reducer(DL(head));
-			if ( index >= 0 ) {
-				h = nd_psh[index];
-				NEWNM(mul);
-				ndl_sub(DL(head),DL(h),DL(mul));
-				if ( ndl_check_bound2(index,DL(mul)) ) goto again;
-				MKNM_ind_pair(pair,mul,index);
-				red = ndv_mul_nm_symbolic(mul,nd_ps[index]);
-				add_pbucket_symbolic(bucket,nd_remove_head(red));
-				NEXTNODE(rp0,rp); BDY(rp) = (pointer)pair;
-				nred++;
-			}
-		}
-		t_1 = clock();
-		if ( s0 ) NEXT(s) = 0;
-		for ( i = 0, s = s0; s; s = NEXT(s), i++ );
-		col = i;
-		s0vect = (UINT *)MALLOC(col*nd_wpd*sizeof(UINT));
-		for ( i = 0, p = s0vect, s = s0; i < col;
-			i++, p += nd_wpd, s = NEXT(s) ) ndl_copy(DL(s),p);
-		spmat = (UINT **)MALLOC(nsp*sizeof(UINT *));
-		for ( i = 0, sp = sp0; i < nsp; i++, sp = NEXT(sp) ) {
-			spmat[i] = (UINT *)MALLOC(col*sizeof(UINT));
-			nd_to_vect(m,s0vect,col,BDY(sp),spmat[i]);
-		}
-		t_2 = clock();
-		t_c = 0;
-		t_e = 0;
-		rvect = (UINT *)ALLOCA(col*sizeof(UINT));
-		ivect = (int *)ALLOCA(col*sizeof(int));
-		for ( rp = rp0; rp; rp = NEXT(rp) ) {
-			t_20 = clock();
-			nm_ind_pair_to_vect_compress(m,s0vect,col,(NM_ind_pair)BDY(rp),rvect,ivect);
-			t_21 = clock();
-			t_c += t_21-t_20;
-			k = ivect[0];
-			len = LEN(nd_ps[((NM_ind_pair)BDY(rp))->index]);
-			for ( i = 0; i < nsp; i++ ) {
-				svect = spmat[i];
-				if ( c = svect[k] )
-					for ( j = 0; j < len; j++ ) {
-						pos = ivect[j];
-						c1 = m-rvect[j];
-						c2 = svect[pos]; DMAR(c1,c,c2,m,c3);
-						svect[pos] = c3;
-					}
-			}
-			t_e +=  clock()-t_21;
-		}
-		t_4 = clock();
-		colstat = (int *)ALLOCA(col*sizeof(int));
-		rank = generic_gauss_elim_mod(spmat,nsp,col,m,colstat);
-		t_5 = clock();
-		fprintf(asir_out,"sugar=%d,rank=%d ",sugar,rank);
-		fprintf(asir_out,"symb=%f,conv1=%f,conv2=%f,elim1=%f,elim2=%f\n",
-		(t_1-t_0)/(double)CLOCKS_PER_SEC,
-		(t_2-t_1)/(double)CLOCKS_PER_SEC,
-		(t_c)/(double)CLOCKS_PER_SEC,
-		(t_e)/(double)CLOCKS_PER_SEC,
-		(t_5-t_4)/(double)CLOCKS_PER_SEC);
-		if ( rank )
-			for ( j = 0, i = 0; j < col; j++ ) {
-				if ( colstat[j] ) {
-					for ( k = j, len = 0; k < col; k++ )
-						if ( spmat[i][k] ) len++;
-					mr0 = (NMV)MALLOC_ATOMIC(nmv_adv*len);
-					mr = mr0; 
-					p = s0vect+nd_wpd*j;
-					for ( k = j; k < col; k++, p += nd_wpd )
-						if ( spmat[i][k] ) {
-							ndl_copy(p,DL(mr));
-							CM(mr) = spmat[i][k];
-							NMV_ADV(mr);
-						}
-					MKNDV(nd_nvar,mr0,len,nf);
-					SG(nf) = sugar;
-					ndv_removecont(m,nf);
-					nh = ndv_newps(nf,0);
-					d = update_pairs(d,g,nh);
-					g = update_base(g,nh);
-					i++;
-				}
-			}
-		continue;
 
-again:
-		for ( t = l; NEXT(t); t = NEXT(t) );
-		NEXT(t) = d; d = l;
-		d = nd_reconstruct(m,0,d);
-		NEWNM(mul);
+		nsp = length(sp0); nred = length(rp0); spcol = col-nred;
+		imat = (int **)MALLOC(nred*sizeof(int *));
+		rhead = (int *)MALLOC_ATOMIC(col*sizeof(int));
+		for ( i = 0; i < col; i++ ) rhead[i] = 0;
+
+		/* construction of index arrays */
+		for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+			redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
+			imat[i] = (int *)MALLOC_ATOMIC(LEN(redv)*sizeof(int));
+			nm_ind_pair_to_vect_compress(m,s0vect,col,
+				(NM_ind_pair)BDY(rp),imat[i]);
+			rhead[imat[i][0]] = 1;
+		}
+
+		/* elimination (1st step) */
+		spmat = (UINT **)MALLOC(nsp*sizeof(UINT *));
+		svect = (UINT *)MALLOC_ATOMIC(col*sizeof(UINT));
+		for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
+			nd_to_vect(m,s0vect,col,BDY(sp),svect);
+			ndv_reduce_vect(m,svect,imat,rp0);
+			for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+			if ( i < col ) {
+				spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
+				for ( j = k = 0; j < col; j++ )
+					if ( !rhead[j] ) v[k++] = svect[j];
+				sprow++;
+			}
+		}
+		/* free index arrays */
+		for ( i = 0; i < nred; i++ ) GC_free(imat[i]);
+
+		/* elimination (2nd step) */
+		colstat = (int *)ALLOCA(spcol*sizeof(int));
+		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+
+		fprintf(asir_out,"sugar=%d,rank=%d\n",sugar,rank); fflush(asir_out);
+
+		/* adding new bases */
+		for ( i = sprow-1; i >= rank; i-- ) GC_free(spmat[i]);
+		for ( ; i >= 0; i-- ) {
+			nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+			SG(nf) = sugar;
+			ndv_removecont(m,nf);
+			nh = ndv_newps(nf,0);
+			d = update_pairs(d,g,nh);
+			g = update_base(g,nh);
+			GC_free(spmat[i]);
+		}
 	}
 	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
 	return g;
