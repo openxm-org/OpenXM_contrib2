@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.40 2003/12/23 06:30:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.41 2003/12/23 10:39:57 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -491,6 +491,26 @@ struct order_pair {
 	int order, length;
 };
 
+struct sparse_weight {
+	int pos, value;
+};
+
+#define IS_DENSE_WEIGHT 0
+#define IS_SPARSE_WEIGHT 1
+#define IS_BLOCK 2
+
+struct weight_or_block {
+	int type;
+	int length;
+	union {
+		int *dense_weight;
+		struct sparse_weight *sparse_weight;
+		struct {
+			int order, start;
+		} block;
+	} body;
+};
+
 struct order_spec {
 	int id;
 	Obj obj;
@@ -505,6 +525,10 @@ struct order_spec {
 			int row;
 			int **matrix;
 		} matrix;
+		struct {
+			int length;
+			struct weight_or_block *w_or_b;
+		} composite;
 	} ord;
 };
 

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.87 2003/11/05 08:02:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.88 2003/12/24 02:20:19 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -151,7 +151,7 @@ static int nmv_adv;
 static int nd_dcomp;
 static int nd_demand;
 
-extern struct order_spec dp_current_spec;
+extern struct order_spec *dp_current_spec;
 extern char *Demand;
 extern VL CO;
 extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar;
@@ -2446,7 +2446,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
 {
-	struct order_spec ord1;
+	struct order_spec *ord1;
 	VL tv,fv,vv,vc;
 	NODE fd,fd0,in0,in,r,r0,t,s,cand;
 	int m,nocheck,nvar,mindex,e,max;
@@ -2505,7 +2505,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 				wmax = MAX(TD(DL(a)),wmax);
 		}
 		homogenize_order(ord,nvar,&ord1);
-		nd_init_ord(&ord1);
+		nd_init_ord(ord1);
 		nd_setup_parameters(nvar+1,wmax);
 		for ( t = fd0; t; t = NEXT(t) )
 			ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos);
@@ -2544,7 +2544,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 			m = get_lprime(++mindex);
 			/* reset the parameters */
 			if ( !ishomo && homo ) {
-				nd_init_ord(&ord1);
+				nd_init_ord(ord1);
 				nd_setup_parameters(nvar+1,wmax);
 			} else {
 				nd_init_ord(ord);
@@ -4433,7 +4433,7 @@ NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 	nd_send_int(nd_wpd);
 	nd_send_int(nmv_adv);
 
-	saveobj(nd_write,dp_current_spec.obj); fflush(nd_write);
+	saveobj(nd_write,dp_current_spec->obj); fflush(nd_write);
 
 	nd_send_int(nd_psn);
 	for ( i = 0; i < nd_psn; i++ ) nd_send_ndv(nd_ps[i]);
@@ -4479,7 +4479,7 @@ void nd_exec_f4_red_dist()
 	ND_pairs *sp0;
 	int *colstat;
 	int a,sprow,rank;
-	struct order_spec ord;
+	struct order_spec *ord;
 	Obj ordspec;
 	ND spol;
 	int maxrs;
@@ -4494,8 +4494,8 @@ void nd_exec_f4_red_dist()
 	nmv_adv = nd_recv_int();
 
 	loadobj(nd_read,&ordspec);
-	create_order_spec(ordspec,&ord);
-	nd_init_ord(&ord);
+	create_order_spec(0,ordspec,&ord);
+	nd_init_ord(ord);
 	nd_setup_parameters(nd_nvar,0);
 
 	nd_psn = nd_recv_int();

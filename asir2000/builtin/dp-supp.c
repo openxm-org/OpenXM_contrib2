@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.25 2003/01/18 02:38:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.26 2003/11/27 07:53:53 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1314,15 +1314,20 @@ void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
  *
  */
 
-int create_order_spec(Obj obj,struct order_spec *spec)
+int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 {
 	int i,j,n,s,row,col;
+	struct order_spec *spec;
 	struct order_pair *l;
 	NODE node,t,tn;
 	MAT m;
 	pointer **b;
 	int **w;
 
+	if ( vl && obj && OID(obj) == O_LIST )
+		return create_composite_order_spec(vl,(LIST)obj,specp);
+
+	*specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
 	if ( !obj || NUM(obj) ) {
 		spec->id = 0; spec->obj = obj;
 		spec->ord.simple = QTOS((Q)obj);
@@ -1352,6 +1357,69 @@ int create_order_spec(Obj obj,struct order_spec *spec)
 		return 1;
 	} else
 		return 0;
+}
+
+/* order = [w_or_b, w_or_b, ... ] */
+/* w_or_b = w or b                */
+/* w = [1,2,...] or [x,1,y,2,...] */
+/* b = [@lex,x,y,...,z] etc       */
+
+int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
+{
+	NODE wb,t,p;
+	struct order_spec *spec;
+	VL tvl;
+	int n,i,j,k,l,len;
+	int *dw;
+	struct sparse_weight *sw;
+	struct weight_or_block *w_or_b;
+	Obj a0;
+	NODE a;
+	V v;
+
+	/* l = number of vars in vl */
+	for ( l = 0, tvl = vl; tvl; tvl = NEXT(tvl), l++ );
+	/* n = number of primitives in order */
+	wb = BDY(order);
+	n = length(wb);
+	*specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+	spec->id = 3;
+	spec->obj = (Obj)order;
+	spec->nv = l;
+	spec->ord.composite.length = n;
+	spec->ord.composite.w_or_b = (struct weight_or_block *)
+		MALLOC(sizeof(struct weight_or_block)*n);
+	for ( t = wb, i = 0; t; t = NEXT(t) ) {
+		a = BDY((LIST)BDY(wb));
+		len = length(a);
+		a0 = (Obj)BDY(a);
+		if ( !a0 || OID(a0) == O_N ) {
+			/* a is dense weight */
+			dw = (int *)MALLOC(sizeof(int)*len);
+			for ( j = 0, p = a; j < len; p = NEXT(p), j++ )
+				dw[j] = QTOS((Q)BDY(p));
+			w_or_b[i].type = IS_DENSE_WEIGHT;
+			w_or_b[i].length = len;
+			w_or_b[i].body.dense_weight = dw;
+		} else if ( OID(a0) == O_P ) {
+			sw = (struct sparse_weight *)
+				MALLOC(sizeof(struct sparse_weight)*len);
+			for ( j = 0, p = a; j < len; j++ ) {
+				v = VR((P)BDY(a)); a = NEXT(a);
+				for ( tvl = vl, k = 0; tvl && tvl->v != v;
+					k++, tvl = NEXT(tvl) );
+				if ( !tvl )
+					error("invalid variable name");
+				sw[j].pos = k;
+				sw[j].value = QTOS((Q)BDY(a));
+			}
+			w_or_b[i].type = IS_SPARSE_WEIGHT;
+			w_or_b[i].length = len;
+			w_or_b[i].body.sparse_weight = sw;
+		} else {
+			error("not implemented yet");
+		}		
+	}
 }
 
 /*
@@ -1451,12 +1519,14 @@ void dp_rat(DP p,DP *rp)
 }
 
 
-void homogenize_order(struct order_spec *old,int n,struct order_spec *new)
+void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 {
 	struct order_pair *l;
 	int length,nv,row,i,j;
 	int **newm,**oldm;
+	struct order_spec *new;
 
+	*newp = new = (struct order_spec *)MALLOC(sizeof(struct order_spec));
 	switch ( old->id ) {
 		case 0:
 			switch ( old->ord.simple ) {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.55 2003/12/25 08:46:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.56 2003/12/26 02:38:10 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -298,7 +298,7 @@ void pdl(NODE f)
 void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *ord,LIST *rp)
 {
 	int i,mindex,m,nochk;
-	struct order_spec ord1;
+	struct order_spec *ord1;
 	Q q;
 	VL fv,vv,vc;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
@@ -325,7 +325,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		if ( fi0 ) NEXT(fi) = 0;
-		initd(&ord1);
+		initd(ord1);
 	} else {
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 			NEXTNODE(fd0,fd);
@@ -349,7 +349,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 	init_stat();
 	while ( 1 ) {
 		if ( homo ) {
-			initd(&ord1); CNVars = NVars+1;
+			initd(ord1); CNVars = NVars+1;
 		}
 		if ( DP_Print && modular ) {
 			fprintf(asir_out,"mod= %d, eval = ",m); printsubst(subst);
@@ -409,7 +409,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 
 void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp)
 {
-	struct order_spec ord1;
+	struct order_spec *ord1;
 	VL fv,vv,vc;
 	NODE fd,fd0,r,r0,t,x,s,xx;
 	DP a,b,c;
@@ -437,7 +437,7 @@ void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp
 				NEXTNODE(fd0,fd); BDY(fd) = (pointer)c;
 			}
 		}
-		homogenize_order(ord,NVars,&ord1); initd(&ord1);
+		homogenize_order(ord,NVars,&ord1); initd(ord1);
 	} else {
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 			if ( BDY(t) && OID(BDY(t)) == O_DP ) {
@@ -457,7 +457,7 @@ void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp
 	setup_arrays(fd0,m,&s);
 	init_stat();
 	if ( homo ) {
-		initd(&ord1); CNVars = NVars+1;
+		initd(ord1); CNVars = NVars+1;
 	}
 /* init_eg(&eg_red_mod); */
 	x = gb_mod(s,m);
@@ -1137,6 +1137,20 @@ void pltovl(LIST l,VL *vl)
 	}
 	if ( r0 ) NEXT(r) = 0;
 	*vl = r0;
+}
+
+void vltopl(VL vl,LIST *l)
+{
+	VL n;
+	NODE r,r0;
+	P p;
+
+	n = vl;
+	for ( r0 = 0; n; n = NEXT(n) ) {
+		NEXTNODE(r0,r); MKV(n->v,p); BDY(r) = (pointer)p;
+	}
+	if ( r0 ) NEXT(r) = 0;
+	MKLIST(*l,r0);
 }
 
 void makesubst(VL v,NODE *s)

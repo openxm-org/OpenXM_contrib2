@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.22 2003/08/23 01:42:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.23 2003/10/19 02:54:41 ohara Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -370,8 +370,8 @@ void dp_mod(DP,int,NODE,DP *);
 void dp_prim_mod(DP,int,DP *);
 void dp_prim(DP,DP *);
 void heu_nezgcdnpz(VL,P *,int,P *);
-void homogenize_order(struct order_spec *,int,struct order_spec *);
-int create_order_spec(Obj,struct order_spec *);
+void homogenize_order(struct order_spec *,int,struct order_spec **);
+int create_order_spec(VL,Obj,struct order_spec **);
 
 int dl_equal(int,DL,DL);
 void qltozl(Q *,int,Q *);
@@ -601,12 +601,10 @@ int dp_redble(DP p1,DP p2);
 void sortbynm(Q *w,int n);
 int comp_nm(Q *a,Q *b);
 void qltozl(Q *w,int n,Q *dvr);
-void homogenize_order(struct order_spec *old,int n,struct order_spec *new);
 void dp_rat(DP p,DP *rp);
 void dp_mod(DP p,int mod,NODE subst,DP *rp);
 void dp_dehomo(DP p,DP *rp);
 void dp_homo(DP p,DP *rp);
-int create_order_spec(Obj obj,struct order_spec *spec);
 void dp_nf_tab_mod(DP p,LIST *tab,int mod,DP *rp);
 void dp_lnf_mod(DP p1,DP p2,NODE g,int mod,DP *r1p,DP *r2p);
 void dp_lnf_f(DP p1,DP p2,NODE g,DP *r1p,DP *r2p);

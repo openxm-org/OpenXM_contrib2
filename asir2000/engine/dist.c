@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.25 2003/07/09 07:11:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.26 2003/08/22 08:14:45 noro Exp $ 
 */
 #include "ca.h"
 
@@ -72,7 +72,7 @@ int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
 int do_weyl;
 
 int dp_nelim,dp_fcoeffs;
-struct order_spec dp_current_spec;
+struct order_spec *dp_current_spec;
 int *dp_dl_work;
 
 void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr);
@@ -151,7 +151,7 @@ void initd(struct order_spec *spec)
 			}
 			break;
 	}
-	dp_current_spec = *spec;
+	dp_current_spec = spec;
 }
 
 void ptod(VL vl,VL dvl,P p,DP *pr)
@@ -1467,8 +1467,8 @@ int cmpdl_order_pair(int n,DL d1,DL d2)
 	int len,head;
 	struct order_pair *pair;
 
-	len = dp_current_spec.ord.block.length;
-	pair = dp_current_spec.ord.block.order_pair;
+	len = dp_current_spec->ord.block.length;
+	pair = dp_current_spec->ord.block.order_pair;
 
 	head = 0;
 	for ( i = 0, t1 = d1->d, t2 = d2->d; i < len; i++ ) {
@@ -1525,8 +1525,8 @@ int cmpdl_matrix(int n,DL d1,DL d2)
 
 	for ( i = 0, t1 = d1->d, t2 = d2->d, w = dp_dl_work; i < n; i++ )
 		w[i] = t1[i]-t2[i];
-	len = dp_current_spec.ord.matrix.row;
-	matrix = dp_current_spec.ord.matrix.matrix;
+	len = dp_current_spec->ord.matrix.row;
+	matrix = dp_current_spec->ord.matrix.matrix;
 	for ( j = 0; j < len; j++ ) {
 		v = matrix[j];
 		for ( i = 0, s = 0; i < n; i++ )

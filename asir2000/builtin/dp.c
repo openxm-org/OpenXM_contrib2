@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.44 2003/11/27 07:53:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.45 2003/12/25 08:46:19 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -54,7 +54,7 @@
 extern int dp_nelim;
 extern int dp_order_pair_length;
 extern struct order_pair *dp_order_pair;
-extern struct order_spec dp_current_spec;
+extern struct order_spec *dp_current_spec;
 
 int do_weyl;
 
@@ -129,7 +129,7 @@ struct ftab dp_tab[] = {
 	{"dp_lnf_f",Pdp_lnf_f,2},
 
 	/* Buchberger algorithm */
-	{"dp_gr_main",Pdp_gr_main,5},
+	{"dp_gr_main",Pdp_gr_main,-5},
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
 	{"dp_gr_f_main",Pdp_gr_f_main,4},
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
@@ -416,14 +416,14 @@ void Pdp_ord(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	struct order_spec spec;
+	struct order_spec *spec;
 
 	if ( !arg )
-		*rp = dp_current_spec.obj;
-	else if ( !create_order_spec((Obj)ARG0(arg),&spec) )
+		*rp = dp_current_spec->obj;
+	else if ( !create_order_spec(0,(Obj)ARG0(arg),&spec) )
 		error("dp_ord : invalid order specification");
 	else {
-		initd(&spec); *rp = spec.obj;
+		initd(spec); *rp = spec->obj;
 	}
 }
 
@@ -1334,36 +1334,115 @@ Q *rp;
 	*rp = q;
 }
 
+void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
+	int *modular,struct order_spec **ord)
+{
+	NODE t,p;
+	Q m;
+	char *key;
+	Obj value,dmy;
+	int ord_is_set = 0;
+	int modular_is_set = 0;
+	int homo_is_set = 0;
+	VL vl;
+	LIST vars;
+
+	/* extract vars */
+	vars = 0;
+	for ( t = opt; t; t = NEXT(t) ) {
+		p = BDY((LIST)BDY(t));
+		key = BDY((STRING)BDY(p));
+		value = (Obj)BDY(NEXT(p));
+		if ( !strcmp(key,"v") ) {
+			/* variable list */
+			vars = (LIST)value;
+			break;
+		}
+	}
+	if ( !vars ) {
+		get_vars((Obj)f,&vl); vltopl(vl,v);
+	} else {
+		*v = vars; pltovl(vars,&vl);
+	}
+
+	for ( t = opt; t; t = NEXT(t) ) {
+		p = BDY((LIST)BDY(t));
+		key = BDY((STRING)BDY(p));
+		value = (Obj)BDY(NEXT(p));
+		if ( !strcmp(key,"v") ) {
+			/* variable list; ignore */
+		} else if ( !strcmp(key,"order") ) {
+			/* order spec */
+			create_order_spec(vl,value,ord);
+			ord_is_set = 1;
+		} else if ( !strcmp(key,"block") ) {
+			create_order_spec(0,value,ord);
+		} else if ( !strcmp(key,"matrix") ) {
+			create_order_spec(0,value,ord);
+		} else if ( !strcmp(key,"sugarweight") ) {
+			/* weight */
+			Pdp_set_weight(NEXT(p),&dmy);
+			ord_is_set = 1;
+		} else if ( !strcmp(key,"homo") ) {
+			*homo = (Num)value;
+			homo_is_set = 1;
+		} else if ( !strcmp(key,"trace") ) {
+			m = (Q)value;
+			if ( !m )
+				*modular = 0;
+			else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 
+				&& BD(NM(m))[0] >= 0x80000000) )
+				error("parse_gr_option : too large modulus");
+			else
+				*modular = QTOS(m);
+			modular_is_set = 1;
+		} else
+			error("parse_gr_option : not implemented");
+	}
+	if ( !ord_is_set ) create_order_spec(0,0,ord);
+	if ( !modular_is_set ) *modular = 0;
+	if ( !homo_is_set ) *homo = 0;
+}
+
 void Pdp_gr_main(arg,rp)
 NODE arg;
 LIST *rp;
 {
 	LIST f,v;
+	VL vl;
 	Num homo;
 	Q m;
-	int modular;
-	struct order_spec ord;
+	int modular,ac;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_gr_main");
-	asir_assert(ARG2(arg),O_N,"dp_gr_main");
-	asir_assert(ARG3(arg),O_N,"dp_gr_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = (LIST)ARG0(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	homo = (Num)ARG2(arg);
-	m = (Q)ARG3(arg);
-	if ( !m )
-		modular = 0;
-	else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 && BD(NM(m))[0] >= 0x80000000) )
-		error("dp_gr_main : too large modulus");
+	if ( argc(arg) == 5 ) {
+		asir_assert(ARG1(arg),O_LIST,"dp_gr_main");
+		asir_assert(ARG2(arg),O_N,"dp_gr_main");
+		asir_assert(ARG3(arg),O_N,"dp_gr_main");
+		f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+		homo = (Num)ARG2(arg);
+		m = (Q)ARG3(arg);
+		if ( !m )
+			modular = 0;
+		else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 && BD(NM(m))[0] >= 0x80000000) )
+			error("dp_gr_main : too large modulus");
+		else
+			modular = QTOS(m);
+		create_order_spec(0,ARG4(arg),&ord);
+	} else if ( (ac=argc(arg)) == 2 && OID(ARG1(arg)) == O_OPTLIST )
+		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	else if ( ac == 1 )
+		parse_gr_option(f,0,&v,&homo,&modular,&ord);
 	else
-		modular = QTOS(m);
-	create_order_spec(ARG4(arg),&ord);
-	dp_gr_main(f,v,homo,modular,0,&ord,rp);
+		error("dp_gr_main : invalid argument");
+	dp_gr_main(f,v,homo,modular,0,ord,rp);
 }
 
 void Pdp_gr_f_main(arg,rp)
@@ -1373,7 +1452,7 @@ LIST *rp;
 	LIST f,v;
 	Num homo;
 	int m,field,t;
-	struct order_spec ord;
+	struct order_spec *ord;
 	NODE n;
 
 	do_weyl = 0;
@@ -1391,10 +1470,10 @@ LIST *rp;
 	m = QTOS((Q)ARG3(arg));
 	if ( m )
 		error("dp_gr_f_main : trace lifting is not implemented yet");
-	create_order_spec(ARG4(arg),&ord);
+	create_order_spec(0,ARG4(arg),&ord);
 #else
 	m = 0;
-	create_order_spec(ARG3(arg),&ord);
+	create_order_spec(0,ARG3(arg),&ord);
 #endif
 	field = 0;
 	for ( n = BDY(f); n; n = NEXT(n) ) {
@@ -1408,7 +1487,7 @@ LIST *rp;
 		else if ( t != field )
 			error("dp_gr_f_main : incosistent coefficients");
 	}
-	dp_gr_main(f,v,homo,m?1:0,field,&ord,rp);
+	dp_gr_main(f,v,homo,m?1:0,field,ord,rp);
 }
 
 void Pdp_f4_main(arg,rp)
@@ -1416,7 +1495,7 @@ NODE arg;
 LIST *rp;
 {
 	LIST f,v;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
@@ -1426,8 +1505,8 @@ LIST *rp;
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	create_order_spec(ARG2(arg),&ord);
-	dp_f4_main(f,v,&ord,rp);
+	create_order_spec(0,ARG2(arg),&ord);
+	dp_f4_main(f,v,ord,rp);
 }
 
 /* dp_gr_checklist(list of dp) */
@@ -1456,7 +1535,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_f4_mod_main");
@@ -1469,8 +1548,8 @@ LIST *rp;
 	}
 	if ( !m )
 		error("dp_f4_mod_main : invalid argument");
-	create_order_spec(ARG3(arg),&ord);
-	dp_f4_mod_main(f,v,m,&ord,rp);
+	create_order_spec(0,ARG3(arg),&ord);
+	dp_f4_mod_main(f,v,m,ord,rp);
 }
 
 void Pdp_gr_mod_main(arg,rp)
@@ -1480,7 +1559,7 @@ LIST *rp;
 	LIST f,v;
 	Num homo;
 	int m;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_mod_main");
@@ -1495,8 +1574,8 @@ LIST *rp;
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
 	if ( !m )
 		error("dp_gr_mod_main : invalid argument");
-	create_order_spec(ARG4(arg),&ord);
-	dp_gr_mod_main(f,v,homo,m,&ord,rp);
+	create_order_spec(0,ARG4(arg),&ord);
+	dp_gr_mod_main(f,v,homo,m,ord,rp);
 }
 
 void Pnd_f4(arg,rp)
@@ -1505,7 +1584,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m,homo;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"nd_gr");
@@ -1517,8 +1596,8 @@ LIST *rp;
 		*rp = f; return;
 	}
 	m = QTOS((Q)ARG2(arg));
-	create_order_spec(ARG3(arg),&ord);
-	nd_gr(f,v,m,1,&ord,rp);
+	create_order_spec(0,ARG3(arg),&ord);
+	nd_gr(f,v,m,1,ord,rp);
 }
 
 void Pnd_gr(arg,rp)
@@ -1527,7 +1606,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m,homo;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"nd_gr");
@@ -1539,8 +1618,8 @@ LIST *rp;
 		*rp = f; return;
 	}
 	m = QTOS((Q)ARG2(arg));
-	create_order_spec(ARG3(arg),&ord);
-	nd_gr(f,v,m,0,&ord,rp);
+	create_order_spec(0,ARG3(arg),&ord);
+	nd_gr(f,v,m,0,ord,rp);
 }
 
 void Pnd_gr_trace(arg,rp)
@@ -1549,7 +1628,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m,homo;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"nd_gr_trace");
@@ -1563,8 +1642,8 @@ LIST *rp;
 	}
 	homo = QTOS((Q)ARG2(arg));
 	m = QTOS((Q)ARG3(arg));
-	create_order_spec(ARG4(arg),&ord);
-	nd_gr_trace(f,v,m,homo,&ord,rp);
+	create_order_spec(0,ARG4(arg),&ord);
+	nd_gr_trace(f,v,m,homo,ord,rp);
 }
 
 void Pnd_weyl_gr(arg,rp)
@@ -1573,7 +1652,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m,homo;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 1;
 	asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr");
@@ -1585,8 +1664,8 @@ LIST *rp;
 		*rp = f; return;
 	}
 	m = QTOS((Q)ARG2(arg));
-	create_order_spec(ARG3(arg),&ord);
-	nd_gr(f,v,m,0,&ord,rp);
+	create_order_spec(0,ARG3(arg),&ord);
+	nd_gr(f,v,m,0,ord,rp);
 }
 
 void Pnd_weyl_gr_trace(arg,rp)
@@ -1595,7 +1674,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m,homo;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 1;
 	asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr_trace");
@@ -1609,8 +1688,8 @@ LIST *rp;
 	}
 	homo = QTOS((Q)ARG2(arg));
 	m = QTOS((Q)ARG3(arg));
-	create_order_spec(ARG4(arg),&ord);
-	nd_gr_trace(f,v,m,homo,&ord,rp);
+	create_order_spec(0,ARG4(arg),&ord);
+	nd_gr_trace(f,v,m,homo,ord,rp);
 }
 
 void Pnd_nf(arg,rp)
@@ -1619,7 +1698,7 @@ P *rp;
 {
 	P f;
 	LIST g,v;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	do_weyl = 0;
 	asir_assert(ARG0(arg),O_P,"nd_nf");
@@ -1632,8 +1711,8 @@ P *rp;
 		*rp = f; return;
 	}
 	v = (LIST)ARG2(arg);
-	create_order_spec(ARG3(arg),&ord);
-	nd_nf_p(f,g,v,QTOS((Q)ARG4(arg)),&ord,rp);
+	create_order_spec(0,ARG3(arg),&ord);
+	nd_nf_p(f,g,v,QTOS((Q)ARG4(arg)),ord,rp);
 }
 
 /* for Weyl algebra */
@@ -1646,7 +1725,7 @@ LIST *rp;
 	Num homo;
 	Q m;
 	int modular;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_main");
@@ -1665,9 +1744,9 @@ LIST *rp;
 		error("dp_gr_main : too large modulus");
 	else
 		modular = QTOS(m);
-	create_order_spec(ARG4(arg),&ord);
+	create_order_spec(0,ARG4(arg),&ord);
 	do_weyl = 1;
-	dp_gr_main(f,v,homo,modular,0,&ord,rp);
+	dp_gr_main(f,v,homo,modular,0,ord,rp);
 	do_weyl = 0;
 }
 
@@ -1677,7 +1756,7 @@ LIST *rp;
 {
 	LIST f,v;
 	Num homo;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_main");
@@ -1689,9 +1768,9 @@ LIST *rp;
 		*rp = f; return;
 	}
 	homo = (Num)ARG2(arg);
-	create_order_spec(ARG3(arg),&ord);
+	create_order_spec(0,ARG3(arg),&ord);
 	do_weyl = 1;
-	dp_gr_main(f,v,homo,0,1,&ord,rp);
+	dp_gr_main(f,v,homo,0,1,ord,rp);
 	do_weyl = 0;
 }
 
@@ -1700,7 +1779,7 @@ NODE arg;
 LIST *rp;
 {
 	LIST f,v;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
@@ -1709,9 +1788,9 @@ LIST *rp;
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	create_order_spec(ARG2(arg),&ord);
+	create_order_spec(0,ARG2(arg),&ord);
 	do_weyl = 1;
-	dp_f4_main(f,v,&ord,rp);
+	dp_f4_main(f,v,ord,rp);
 	do_weyl = 0;
 }
 
@@ -1721,7 +1800,7 @@ LIST *rp;
 {
 	LIST f,v;
 	int m;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
@@ -1733,9 +1812,9 @@ LIST *rp;
 	}
 	if ( !m )
 		error("dp_weyl_f4_mod_main : invalid argument");
-	create_order_spec(ARG3(arg),&ord);
+	create_order_spec(0,ARG3(arg),&ord);
 	do_weyl = 1;
-	dp_f4_mod_main(f,v,m,&ord,rp);
+	dp_f4_mod_main(f,v,m,ord,rp);
 	do_weyl = 0;
 }
 
@@ -1746,7 +1825,7 @@ LIST *rp;
 	LIST f,v;
 	Num homo;
 	int m;
-	struct order_spec ord;
+	struct order_spec *ord;
 
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_mod_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_mod_main");
@@ -1760,9 +1839,9 @@ LIST *rp;
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
 	if ( !m )
 		error("dp_weyl_gr_mod_main : invalid argument");
-	create_order_spec(ARG4(arg),&ord);
+	create_order_spec(0,ARG4(arg),&ord);
 	do_weyl = 1;
-	dp_gr_mod_main(f,v,homo,m,&ord,rp);
+	dp_gr_mod_main(f,v,homo,m,ord,rp);
 	do_weyl = 0;
 }
 
