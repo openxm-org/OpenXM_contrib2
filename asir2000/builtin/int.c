@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.6 2000/12/05 01:24:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.7 2000/12/08 02:39:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -66,14 +66,11 @@ void Psmall_jacobi();
 void Pdp_set_mpi();
 void Pntoint32(),Pint32ton();
 
-#ifdef HMEXT
 void Pigcdbin(), Pigcdbmod(), PigcdEuc(), Pigcdacc(), Pigcdcntl();
 
 void Pihex();
 void Pimaxrsh(), Pilen();
 void Ptype_t_NB();
-
-#endif /* HMEXT */
 
 struct ftab int_tab[] = {
 	{"dp_set_mpi",Pdp_set_mpi,-1},
@@ -105,16 +102,13 @@ struct ftab int_tab[] = {
 	{"ixor",Pixor,2},
 	{"ishift",Pishift,2},
 	{"small_jacobi",Psmall_jacobi,2},
-#ifdef HMEXT
+
 	{"igcdbin",Pigcdbin,2},		/* HM@CCUT extension */
 	{"igcdbmod",Pigcdbmod,2},	/* HM@CCUT extension */
 	{"igcdeuc",PigcdEuc,2},		/* HM@CCUT extension */
 	{"igcdacc",Pigcdacc,2},		/* HM@CCUT extension */
 	{"igcdcntl",Pigcdcntl,-1},	/* HM@CCUT extension */
-	{"ihex",Pihex,1},	/* HM@CCUT extension */
-	{"imaxrsh",Pimaxrsh,1},	/* HM@CCUT extension */
-	{"ilen",Pilen,1},	/* HM@CCUT extension */
-#endif /* HMEXT */
+
 	{"mt_save",Pmt_save,1},
 	{"mt_load",Pmt_load,1},
 	{"ntoint32",Pntoint32,1},
@@ -994,7 +988,6 @@ Q *rp;
 	STOQ(up2_kara_mag,*rp);
 }
 
-#ifdef HMEXT
 void Pigcdbin(arg,rp)
 NODE arg;
 Obj *rp;
@@ -1145,60 +1138,3 @@ Obj *rp;
 	*rp = (Obj)a;
 	return;
 }
-
-
-void Pimaxrsh(arg,rp)
-NODE arg;
-LIST *rp;
-{
-	N n1, n2;
-	Q q;
-	NODE node1, node2;
-	int bits;
-	N maxrshn();
-	
-	q = (Q)ARG0(arg);
-	asir_assert(q,O_N,"imaxrsh");
-	if ( !q ) n1 = n2 = 0;
-	else {
-		n1 = maxrshn( NM(q), &bits );
-		STON( bits, n2 );
-	}
-	NTOQ( n2, 1, q );
-	MKNODE( node2, q, 0 );
-	NTOQ( n1, 1, q );
-	MKNODE( node1, q, node2 );
-	MKLIST( *rp, node1 );
-}
-void Pilen(arg,rp)
-NODE arg;
-Obj *rp;
-{
-	Q q;
-	int l;
-	
-	q = (Q)ARG0(arg);
-	asir_assert(q,O_N,"ilenh");
-	if ( !q ) l = 0;
-	else l = PL(NM(q));
-	STOQ(l,q);
-	*rp = (Obj)q;
-}
-
-void Pihex(arg,rp)
-NODE arg;
-Obj *rp;
-{
-	Q n1;
-	
-	n1 = (Q)ARG0(arg);
-	asir_assert(n1,O_N,"ihex");
-	if ( n1 ) {
-		int i, l = PL(NM(n1)), *p = BD(NM(n1));
-
-		for ( i = 0; i < l; i++ ) printf( " 0x%08x", p[i] );
-		printf( "\n" );
-	} else printf( " 0x%08x\n", 0 );
-	*rp = (Obj)n1;
-}
-#endif /* HMEXT */
