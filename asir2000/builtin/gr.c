@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.24 2001/09/07 08:54:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.25 2001/09/10 05:55:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -232,7 +232,7 @@ CDP *b;
 	for ( m = BDY(f), len = 0; m; m = NEXT(m), len++ );
 	r = (CDP)MALLOC(sizeof(struct oCDP));
  	r->len = len;
-	r->body = (CMP)MALLOC(sizeof(struct oCMP)*len);
+	r->body = (CM)MALLOC(sizeof(struct oCM)*len);
 
 	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
 		for ( ; !eqdl(nv,m->dl,at[i]); i++ );
@@ -255,7 +255,7 @@ CDP *rp;
 		if ( a[i] ) nz++;
 	*rp = r = (CDP)MALLOC(sizeof(struct oCDP));
 	r->len = nz;
-	r->body = (CMP)MALLOC(sizeof(struct oCMP)*nz);
+	r->body = (CM)MALLOC(sizeof(struct oCM)*nz);
 	for ( i = 0, j = 0; i < n; i++ ) {
 		if ( a[i] ) {
 			r->body[j].index = i;
