@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.10 2001/11/06 09:40:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.11 2002/09/27 04:24:04 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -688,31 +688,55 @@ void gfs_embed(GFS z,int k,int pm,GFS *c)
 	}
 }
 
+/* 0 <= index <= q-1 */
+
+void indextogfs(int index, GFS *c)
+{
+	if ( index == 0 )
+		*c = 0;
+	else if ( index >= current_gfs_q )
+		error("indextogfs : exhausted");
+	else if ( !current_gfs_ntoi ) {
+		MKGFS(index,*c);
+	} else {
+		MKGFS(index-1,*c);
+	}
+}
+
+void itogfs(int n, GFS *c)
+{
+	n = _itosf(n);
+	if ( !n )
+		*c = 0;
+	else {
+		n = IFTOF(n);
+		MKGFS(n,*c);
+	}
+}
+
+void iftogfs(int n, GFS *c)
+{
+	if ( !n )
+		*c = 0;
+	else {
+		MKGFS(IFTOF(n),*c);
+	}
+}
+
 void qtogfs(Q a,GFS *c)
 {
 	int s;
 
 	s = QTOS(a)%current_gfs_q;
-	if ( s < 0 )
-		s += current_gfs_q;
-	if ( !s )
-		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		MKGFS(s,*c);
-	} else {
-		MKGFS(current_gfs_ntoi[s],*c);	
-	}
+	itogfs(s,c);
 }
 
 void mqtogfs(MQ a,GFS *c)
 {
 	if ( !a )
 		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		MKGFS(CONT(a),*c);	
-	} else {
-		MKGFS(current_gfs_ntoi[CONT(a)],*c);	
-	}
+	else
+		itogfs(CONT(a),c);
 }
 
 void gfstomq(GFS a,MQ *c)
@@ -879,21 +903,21 @@ void pwrgfs(GFS a,Q b,GFS *c)
 
 	ntogfs((Obj)a,&z); a = z;
 	if ( !b )
-		MKGFS(0,*c);
+		itogfs(1,c);
 	else if ( !a )
 		*c = 0;
-	else if ( !current_gfs_ntoi ) {
+	else if ( !current_gfs_ntoi) {
 		ai = pwrm(current_gfs_q,CONT(a),QTOS(b));
 		MKGFS(ai,*c);
 	} else {
 		STON(CONT(a),an); muln(an,NM(b),&tn);
 		STON(current_gfs_q1,an); remn(tn,an,&rn);
 		if ( !rn )
-			MKGFS(0,*c);
+			itogfs(1,c);
 		else if ( SGN(b) > 0 )
 			MKGFS(BD(rn)[0],*c);
 		else {
-			MKGFS(0,t);
+			itogfs(1,&t);
 			MKGFS(BD(rn)[0],s);
 			divgfs(t,s,c);
 		}
@@ -927,13 +951,7 @@ void randomgfs(GFS *r)
 	if ( !current_gfs_q1 )
 		error("addgfs : current_gfs_q is not set");
 	t = mt_genrand()%current_gfs_q;
-	if ( !t )
-		*r = 0;
-	else {
-		if ( current_gfs_ntoi && t == (unsigned int)current_gfs_q1 )
-			t = 0;
-		MKGFS(t,*r);
-	}
+	indextogfs(t,r);
 }
 
 /* arithmetic operations for 'immediate values of GFS */
@@ -1082,8 +1100,7 @@ int _pwrsf(int a,int b)
 		a = pwrm(current_gfs_q,IFTOF(a),b);
 		return FTOIF(a);
 	} else {
-		a = IFTOF(a);
-		MKGFS(a,at);
+		iftogfs(a,&at);
 		STOQ(b,bt);
 		pwrgfs(at,bt,&ct);
 		c = CONT(ct);
@@ -1112,7 +1129,7 @@ int _itosf(int n)
 
 int _isonesf(int a)
 {
-	return a == (!current_gfs_ntoi ? FTOIF(1) : FTOIF(0));
+	return a == _onesf();
 }
 
 int _randomsf()

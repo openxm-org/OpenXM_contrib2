@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.21 2001/11/19 00:57:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.22 2002/09/27 04:24:04 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -650,7 +650,7 @@ int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp)
 	V x,y;
 	P lc,lc0,f0;
 	Obj obj;
-	int j,q1,index,i;
+	int j,q,index,i;
 
 	clctv(vl,f,&nvl); vl = nvl;
 	x = vl->v; y = vl->next->v;
@@ -658,11 +658,11 @@ int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp)
 	n = QTOS(DEG(DC(f)));
 	wf = W_UMALLOC(n); wf1 = W_UMALLOC(n); wf2 = W_UMALLOC(n);
 	wfs = W_UMALLOC(n); gcd = W_UMALLOC(n);
-	q1 = field_order_sf()-1;
+	q = field_order_sf();
 	lc = DC(f)->c;
 	for ( j = 0, fn = n + 1, index = 0; 
-		index < q1 && j < count && fn > 1; index++ ) {
-		MKGFS(index,m);
+		index < q && j < count && fn > 1; index++ ) {
+		indextogfs(index,&m);
 		substp(vl,lc,y,(P)m,&lc0);
 		if ( lc0 ) {
 			substp(vl,f,y,(P)m,&f0);
@@ -678,7 +678,7 @@ int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp)
 			}
 		}
 	}
-	if ( index == q1 )
+	if ( index == q )
 		return 0;
 	else if ( fn == 1 )
 		return 1;
@@ -865,7 +865,7 @@ void sfbmtop(BM f,V x,V y,P *fp)
 			if ( DEG(c[j]) >= i && (a = COEF(c[j])[i]) ) {
 				NEWDC(dct);
 				STOQ(j,DEG(dct));
-				MKGFS(IFTOF(a),b);
+				iftogfs(a,&b);
 				COEF(dct) = (P)b;
 				NEXT(dct) = dc;
 				dc = dct;
@@ -1322,7 +1322,7 @@ void cont_pp_sfp(VL vl,P f,P *cp,P *fp)
 	y = vl->next->v;
 	d = getdeg(y,f);
 	if ( d == 0 ) {
-		MKGFS(0,g);
+		itogfs(1,&g);
 		*cp = (P)g;
 		*fp = f;  /* XXX */
 	} else {

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.12 2002/01/13 07:11:46 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.13 2002/09/27 04:24:04 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -690,11 +690,7 @@ void sfmintdeg(VL vl,P fx,int dy,int c,P *fr)
 
 				/* create the head coeff */
 				for ( l = 0, k = dxdy-dy; l < dy; l++, k++ ) {
-					if ( prev[k] ) {
-						u = IFTOF(prev[k]);
-						MKGFS(u,s);
-					} else
-						s = 0;
+					iftogfs(prev[k],&s);
 					COEF(h)[l] = (Num)s;
 				}
 				for ( l = dy-1; l >= 0 && !COEF(h)[l]; l--);
@@ -730,8 +726,7 @@ void sfmintdeg(VL vl,P fx,int dy,int c,P *fr)
 				for ( k = j = 0; k <= d; k++ )
 					for ( i = 0; i <= k; i++, j++ )
 						if ( hist[j] ) {
-							u = IFTOF(hist[j]);
-							MKGFS(u,s);
+							iftogfs(hist[j],&s);
 							/* mono = s*x^(k-i)*y^i */
 							create_bmono((P)s,x,k-i,y,i,&mono);
 							addp(vl,f,mono,&f1);
