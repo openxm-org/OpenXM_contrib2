@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.4 2001/09/04 03:12:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.5 2002/12/09 00:42:15 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -55,6 +55,7 @@ extern int main_parser, allow_create_var;
 extern char *parse_strp;
 extern SNODE parse_snode;
 extern FUNC parse_targetf;
+extern int outputstyle;
 
 int mainparse(snodep)
 SNODE *snodep;
@@ -163,6 +164,9 @@ void read_eval_loop() {
 					bevalf(user_print_function,mknode(1,LastVal));
 				else
 					printexpr(CO,LastVal);
+				if ( outputstyle == 1 ) {
+					putc(';',asir_out);
+				}
 				putc('\n',asir_out);
 				fflush(asir_out);
 			}

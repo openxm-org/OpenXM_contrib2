@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.21 2003/02/14 22:29:15 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.22 2003/05/29 16:45:01 saito Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -57,7 +57,7 @@
 #endif
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
-extern int prefixmode;
+extern int outputstyle;
 
 #ifdef FPRINT
 FILE *asir_out;
@@ -415,27 +415,46 @@ Num q;
 #if defined(INTERVAL)
 		case N_IP:
 		case N_IntervalBigFloat:
-			if ( prefixmode == 0 ) {
-				PUTS("[");
-				PRINTNUM(INF((Itv)q));
-				PUTS(",");
-				PRINTNUM(SUP((Itv)q));
-				PUTS("]");
-			} else {
-				PUTS("intval(");
-				PRINTNUM(INF((Itv)q));
-				PUTS(",");
-				PRINTNUM(SUP((Itv)q));
-				PUTS(")");
+			switch ( outputstyle ) {
+				case 0:
+					PUTS("[");
+					PRINTNUM(INF((Itv)q));
+					PUTS(",");
+					PRINTNUM(SUP((Itv)q));
+					PUTS("]");
+					break;
+				case 1:
+					PUTS("intval(");
+					PRINTNUM(INF((Itv)q));
+					PUTS(",");
+					PRINTNUM(SUP((Itv)q));
+					PUTS(")");
+					break;
+				default:
+					PUTS("[");
+					PRINTNUM(INF((Itv)q));
+					PUTS(",");
+					PRINTNUM(SUP((Itv)q));
+					PUTS("]");
+					break;
 			}
 			break;
 		case N_IntervalDouble:
 			switch (printmode) {
 				case PRINTF_E:
-					if (prefixmode == 0 ) {
-						TAIL PRINTF(OUT, "[%.16e,%.16e]",INF((IntervalDouble)q),SUP((IntervalDouble)q));
-					} else {
-						TAIL PRINTF(OUT, "intval(%.16e,%.16e)",INF((IntervalDouble)q),SUP((IntervalDouble)q));
+					switch ( outputstyle ) {
+						case 0:
+							TAIL PRINTF(OUT, "[%.16e,%.16e]",
+								INF((IntervalDouble)q),SUP((IntervalDouble)q));
+							break;
+						case 1:
+							TAIL PRINTF(OUT, "intval(%.16e,%.16e)",
+								INF((IntervalDouble)q),SUP((IntervalDouble)q));
+							break;
+						default:
+							TAIL PRINTF(OUT, "[%.16e,%.16e]",
+								INF((IntervalDouble)q),SUP((IntervalDouble)q));
+							break;
 					}
 #if defined(ITVDEBUG)
 					printbin(INF((IntervalDouble)q));
@@ -443,25 +462,58 @@ Num q;
 #endif
 					break;
 				case MID_PRINTF_G:
-					if (prefixmode == 0) {
-						TAIL PRINTF(OUT, "<%g,%g>", (SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
-					} else {
-						TAIL PRINTF(OUT, "intvalm(%g,%g)", (SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+					switch ( outputstyle ) {
+						case 0:
+							TAIL PRINTF(OUT, "<%g,%g>",
+								(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
+								(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+							break;
+						case 1:
+							TAIL PRINTF(OUT, "intvalm(%g,%g)",
+								(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
+								(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+							break;
+						default:
+							TAIL PRINTF(OUT, "<%g,%g>",
+								(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
+								(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+							break;
 					}
 					break;
 				case MID_PRINTF_E:
-					if (prefixmode == 0) {
-						TAIL PRINTF(OUT, "<%.16e,%.16e>", (SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
-					} else {
-						TAIL PRINTF(OUT, "intvalm(%.16e,%.16e)", (SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+					switch ( outputstyle ) {
+						case 0:
+							TAIL PRINTF(OUT, "<%.16e,%.16e>",
+							(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
+							(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+							break;
+						case 1:
+							TAIL PRINTF(OUT, "intvalm(%.16e,%.16e)",
+							(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
+							(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+							break;
+						default:
+							TAIL PRINTF(OUT, "<%.16e,%.16e>",
+							(SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,
+							(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
+							break;
 					}
 					break;
 				case PRINTF_G:
 				default:
-					if (prefixmode == 0) {
-						TAIL PRINTF(OUT, "[%g,%g]",INF((IntervalDouble)q),SUP((IntervalDouble)q));
-					} else {
-						TAIL PRINTF(OUT, "intval(%g,%g)",INF((IntervalDouble)q),SUP((IntervalDouble)q));
+					switch ( outputstyle ) {
+						case 0:
+							TAIL PRINTF(OUT, "[%g,%g]",
+								INF((IntervalDouble)q),SUP((IntervalDouble)q));
+							break;
+						case 1:
+							TAIL PRINTF(OUT, "intval(%g,%g)",
+								INF((IntervalDouble)q),SUP((IntervalDouble)q));
+							break;
+						default:
+							TAIL PRINTF(OUT, "[%g,%g]",
+								INF((IntervalDouble)q),SUP((IntervalDouble)q));
+							break;
 					}
 				break;
 			}
@@ -645,19 +697,29 @@ VECT vect;
 	int i;
 	pointer *ptr;
 
-	if ( prefixmode == 0 ) {
-		PUTS("[ ");
-		for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
-			PRINTEXPR(vl,ptr[i]); PUTS(" ");
-		}
-		PUTS("]");
-	} else {
-		PUTS("vect(");
-		for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
-			if ( i != 0 ) PUTS(", ");
-			PRINTEXPR(vl,ptr[i]);
-		}
-		PUTS(")");
+	switch ( outputstyle ) {
+		case 0:
+			PUTS("[ ");
+			for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
+				PRINTEXPR(vl,ptr[i]); PUTS(" ");
+			}
+			PUTS("]");
+			break;
+		case 1:
+			PUTS("vect(");
+			for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
+				if ( i != 0 ) PUTS(", ");
+				PRINTEXPR(vl,ptr[i]);
+			}
+			PUTS(")");
+			break;
+		default:
+			PUTS("[ ");
+			for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
+				PRINTEXPR(vl,ptr[i]); PUTS(" ");
+			}
+			PUTS("]");
+			break;
 	}
 }
 
@@ -668,27 +730,42 @@ MAT mat;
 	int i,j,r,c;
 	pointer *ptr;
 
-	if ( prefixmode == 0 ) {
-		for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
-			PUTS("[ ");
-			for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
-				PRINTEXPR(vl,ptr[j]); PUTS(" ");
+	switch ( outputstyle ) {
+		case 0:
+			for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
+				PUTS("[ ");
+				for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
+					PRINTEXPR(vl,ptr[j]); PUTS(" ");
+				}
+				PUTS("]");
+				if ( i < r - 1 )
+					PUTS("\n");
 			}
-			PUTS("]");
-			if ( i < r - 1 )
-				PUTS("\n");
-		}
-	} else {
-		PUTS("mat(\n");
-		for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
-			if ( i != 0 ) PUTS(",\n");
-			PUTS("[ ");
-			for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
-				PRINTEXPR(vl,ptr[j]); PUTS(" ");
+			break;
+		case 1:
+			PUTS("mat(\n");
+			for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
+				if ( i != 0 ) PUTS(",\n");
+				PUTS("[ ");
+				for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
+					if ( j != 0 ) PUTS(", ");
+					PRINTEXPR(vl,ptr[j]);
+				}
+				PUTS("]");
 			}
-			PUTS("]");
-		}
-		PUTS(")");
+			PUTS(")");
+			break;
+		default:
+			for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
+				PUTS("[ ");
+				for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
+					PRINTEXPR(vl,ptr[j]); PUTS(" ");
+				}
+				PUTS("]");
+				if ( i < r - 1 )
+					PUTS("\n");
+			}
+			break;
 	}
 }
 
