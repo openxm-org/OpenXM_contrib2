@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.10 2003/02/14 22:29:07 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.11 2004/02/13 05:48:35 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -229,7 +229,7 @@ STRING *rp;
 	int len;
 
 	len = estimate_length(CO,ARG0(arg));
-	b = (char *)MALLOC(len+1);
+	b = (char *)MALLOC_ATOMIC(len+1);
 	soutput_init(b);
 	sprintexpr(CO,ARG0(arg));
 	MKSTR(*rp,b);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/str.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/str.c,v 1.4 2000/11/08 08:02:49 noro Exp $ 
 */
 #include "ca.h"
 
@@ -56,7 +56,7 @@ STRING *c;
 {
 	char *buf;
 
-	buf = (char *)MALLOC(strlen(BDY(a))+strlen(BDY(b))+1);
+	buf = (char *)MALLOC_ATOMIC(strlen(BDY(a))+strlen(BDY(b))+1);
 	sprintf(buf,"%s%s",BDY(a),BDY(b));
 	MKSTR(*c,buf); 
 }
