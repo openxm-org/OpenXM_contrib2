@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.42 2003/03/07 03:12:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.43 2003/03/07 06:39:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -666,6 +666,7 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	env_init();
 	endian_init();
 	GC_init();
+	cppname_init();
 	process_args(--argc,++argv);
 #if defined(__CYGWIN__)
 	if ( !displayname[0] )
