@@ -454,7 +454,7 @@ def checktd(PolyList,Vars,ResVars){
 	return 1$
 }
 
-def value2(Vars,Ans,Ba){
+def value2(Vars,Ans,Ba,FLAG){
 
 	N=length(Vars)$
 	Res=newvect(N)$
@@ -469,8 +469,8 @@ def value2(Vars,Ans,Ba){
 	Res=getgcd(Res,Vars)$
 
 	if(nonposdegchk(Res)){
-		TMP1=makeret(Res,Vars,1)$
-		return [vtol(TMP1[1]),vtol(map(drint,TMP1[1]*1.0))]$
+		TMP1=makeret(Res,Vars,FLAG)$
+		return vtol(TMP1[1])$
 	}
 	else
 		return []$
@@ -523,10 +523,10 @@ def qcheck(PolyList,Vars,FLAG){
 					
 						for(I=0;I<length(TMP0);I++)
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-						RET0=value2(Vars,TMP,1)$
+						RET0=value2(Vars,TMP,1,0)$
 
 						if(RET0!=[])
-							RET0=wsort(RET0[0],Vars,RET0[1],-1)$
+							RET0=wsort(RET0,Vars,RET0,-1)$
 					}
 	
 					TMP=vtol(TMP1[1])$
@@ -534,10 +534,10 @@ def qcheck(PolyList,Vars,FLAG){
 					
 						for(I=0;I<length(TMP0);I++)
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-						RET0=value2(Vars,TMP,-1)$
+						RET0=value2(Vars,TMP,-1,0)$
 	
 						if(RET0!=[])
-							RET0=wsort(RET0[0],Vars,RET0[1],-1)$
+							RET0=wsort(RET0,Vars,RET0,-1)$
 					}
 					RET=append(RET,RET0)$
 				}
@@ -600,7 +600,7 @@ def unitweight2(NormMat0,ExpMat,Vars,FLAG,ID){
 			if(FLAG==0){		
 				TMP=roundret(TMP1[1])$
 
-				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),ID))$
+				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]),ID))$
 
 				if(TMP!=[])
 					RET=append(RET,wsort(TMP1[1],Vars,TMP,ID+1))$
@@ -674,7 +674,7 @@ def unitweight1(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 			if(FLAG==0){		
 				TMP=roundret(TMP1[1])$
 
-				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),1))$
+				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]),1))$
 
 				if(TMP!=[])
 					RET=append(RET,wsort(TMP1[1],Vars,TMP,2))$
@@ -743,7 +743,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 
 				TMP=roundret(TMP1[1])$
 
-				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),ID))$
+				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]),ID))$
 
 				if(TMP!=[])
 					RET=append(RET,wsort(TMP1[1],Vars,TMP,ID+1))$
@@ -756,10 +756,10 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 					
 					for(I=0;I<length(TMP0);I++)
 						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-					RET0=value2(Vars,TMP,1)$
+					RET0=value2(Vars,TMP,1,1)$
 
 					if(RET0!=[])
-						RET0=wsort(RET0[0],Vars,RET0[1],-ID)$
+						RET0=wsort(RET0,Vars,map(drint,RET0),-ID)$
 				}
 	
 				TMP=vtol(TMP1[1])$
@@ -767,10 +767,10 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 					
 					for(I=0;I<length(TMP0);I++)
 						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-					RET0=value2(Vars,TMP,-1)$
+					RET0=value2(Vars,TMP,-1,1)$
 	
 					if(RET0!=[])
-						RET0=wsort(RET0[0],Vars,RET0[1],-ID)$
+						RET0=wsort(RET0,Vars,map(drint,RET0),-ID)$
 				}
 
 				RET=append(RET,RET0)$
