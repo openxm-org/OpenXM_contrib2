@@ -13,8 +13,6 @@
 
 @SET_MAKE@
 
-# $OpenXM: OpenXM_contrib2/asir2000/asm/Makefile.am,v 1.1 2003/02/23 03:05:36 ohara Exp $
-
 SHELL = @SHELL@
 
 srcdir = @srcdir@
