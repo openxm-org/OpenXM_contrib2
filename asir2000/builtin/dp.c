@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.28 2003/01/15 04:53:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.29 2003/04/21 02:49:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -61,6 +61,7 @@ int do_weyl;
 void Pdp_ord(), Pdp_ptod(), Pdp_dtop();
 void Pdp_ptozp(), Pdp_ptozp2(), Pdp_red(), Pdp_red2(), Pdp_lcm(), Pdp_redble();
 void Pdp_sp(), Pdp_hm(), Pdp_ht(), Pdp_hc(), Pdp_rest(), Pdp_td(), Pdp_sugar();
+void Pdp_set_sugar();
 void Pdp_cri1(),Pdp_cri2(),Pdp_subd(),Pdp_mod(),Pdp_red_mod(),Pdp_tdiv();
 void Pdp_prim(),Pdp_red_coef(),Pdp_mag(),Pdp_set_kara(),Pdp_rat();
 void Pdp_nf(),Pdp_true_nf();
@@ -196,6 +197,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_td",Pdp_td,1},
 	{"dp_mag",Pdp_mag,1},
 	{"dp_sugar",Pdp_sugar,1},
+	{"dp_set_sugar",Pdp_set_sugar,2},
 
 	/* misc */
 	{"dp_mbase",Pdp_mbase,1},
@@ -1022,6 +1024,27 @@ Q *rp;
 		*rp = 0;
 	else
 		STOQ(p->sugar,*rp);
+}
+
+void Pdp_set_sugar(arg,rp)
+NODE arg;
+Q *rp;
+{
+	DP p;
+	Q q;
+	int i;
+
+	p = (DP)ARG0(arg);
+	q = (Q)ARG1(arg);
+	if ( p && q) {
+		asir_assert(p,O_DP,"dp_set_sugar");
+		asir_assert(q,O_N, "dp_set_sugar");
+		i = QTOS(q);
+		if (p->sugar < i) {
+			p->sugar = i;
+		}
+	}
+	*rp = 0;
 }
 
 void Pdp_cri1(arg,rp)
