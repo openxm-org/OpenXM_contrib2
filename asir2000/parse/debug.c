@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.4 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.5 2000/08/22 05:04:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -153,16 +153,12 @@ void debug_init() {
 	for ( n = 0; dckwd[n].id != D_UNKNOWN; n++ );
 	for ( i = 0; i < n; i++ )
 		MKNODE(dckwd[i].names,debcom[i],0);
-#if defined(THINK_C)
-	strcpy(buf,"dbxinit");
-#else
 	home = (char *)getenv("HOME");
 	if ( home )
 		strcpy(buf,home);
 	else
 		buf[0] = 0;
 	strcat(buf,"/.dbxinit");
-#endif
 	if ( (fp = fopen(".dbxinit","r")) || (fp = fopen(buf,"r")) ) {
 		while ( fgets(buf,BUFSIZ,fp) ) {
 			stoarg(buf,&ac,av);
@@ -243,7 +239,7 @@ SNODE f;
 		else
 			return;
 #endif
-#if defined(VISUAL) || defined(THINK_C)
+#if defined(VISUAL)
 	suspend_timer();
 #endif
 	pvss = PVSS; debug_mode = 1;
@@ -358,10 +354,7 @@ LAST:
 	if ( kernelmode )
 		fputc('\0',stderr);
 	debug_mode = 0;
-#if defined(THINK_C)
-	show_debug_window(0);
-	resume_timer();
-#elif !defined(VISUAL)
+#if !defined(VISUAL)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(0);
@@ -746,9 +739,6 @@ int l;
 	int i;
 	int ln;
 	FUNC r;
-#if defined(THINK_C)
-	void setDir(short);
-#endif
 
 	if ( !ac )
 		ln = curline;
@@ -766,13 +756,7 @@ int l;
 	}
 	if ( !targetf )
 		return;
-#if defined(THINK_C)
-	setDir(targetf->f.usrf->vol);
-#endif
 	fp = fopen(targetf->f.usrf->fname,"r");
-#if defined(THINK_C)
-	resetDir();
-#endif
 	if ( !fp ) {
 		fprintf(stderr,"\"%s\" not found\n",targetf->name);
 		return;

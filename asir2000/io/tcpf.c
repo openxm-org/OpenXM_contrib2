@@ -44,9 +44,8 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.20 2000/11/15 08:47:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.21 2000/11/15 09:18:01 noro Exp $ 
 */
-#if INET
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
@@ -1167,7 +1166,6 @@ Q *rp;
 	ox_send_cmd(m_c_tab[index].c,ui);
 	*rp = 0;
 }
-#endif
 
 void shutdown_all() {
 	int s;

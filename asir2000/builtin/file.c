@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.9 2000/11/10 08:28:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.10 2000/11/13 01:48:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -233,11 +233,6 @@ Q *rp;
 	char *name,*name0;
 	char errbuf[BUFSIZ];
 
-#if defined THINK_C
-	if ( !arg ) {
-		ret = finder_loadfile();
-	} else
-#endif
 	if ( ARG0(arg) ) {
 		switch (OID(ARG0(arg))) {
 			case O_STR:
@@ -341,11 +336,7 @@ Q *rp;
 	for ( t = vl; t; t = NEXT(t) )
 		if ( t->v->attr == (pointer)V_UC )
 			error("bsave : not implemented");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
-#else
-	fp = fopen(BDY((STRING)ARG1(arg)),"w");
-#endif
 	if ( !fp )
 		error("bsave : invalid filename");
 	ox_file_io = 1; /* network byte order is used */
@@ -363,11 +354,7 @@ Obj *rp;
 	FILE *fp;
 
 	asir_assert(ARG0(arg),O_STR,"bload");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-#else
-	fp = fopen(BDY((STRING)ARG0(arg)),"r");
-#endif
 	if ( !fp )
 		error("bload : invalid filename");
 	ox_file_io = 1; /* network byte order is used */
@@ -385,11 +372,7 @@ Q *rp;
 	VL vl,t;
 
 	asir_assert(ARG1(arg),O_STR,"bsave_cmo");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
-#else
-	fp = fopen(BDY((STRING)ARG1(arg)),"w");
-#endif
 	if ( !fp )
 		error("bsave_cmo : invalid filename");
 	ox_file_io = 1; /* network byte order is used */
@@ -406,11 +389,7 @@ Obj *rp;
 	FILE *fp;
 
 	asir_assert(ARG0(arg),O_STR,"bload_cmo");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-#else
-	fp = fopen(BDY((STRING)ARG0(arg)),"r");
-#endif
 	if ( !fp )
 		error("bload_cmo : invalid filename");
 	ox_file_io = 1; /* network byte order is used */
@@ -530,11 +509,7 @@ Obj *rp;
 	Obj r;
 
 	asir_assert(ARG0(arg),O_STR,"bload27");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-#else
-	fp = fopen(BDY((STRING)ARG0(arg)),"r");
-#endif
 	if ( !fp )
 		error("bload : invalid filename");
 	loadvl(fp);
@@ -555,11 +530,7 @@ Q *rp;
 	for ( t = vl; t; t = NEXT(t) )
 		if ( t->v->attr == (pointer)V_UC )
 			error("bsave : not implemented");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
-#else
-	fp = fopen(BDY((STRING)ARG1(arg)),"w");
-#endif
 	if ( !fp )
 		error("bsave : invalid filename");
 	/* indicator of an asir32 file */
@@ -580,11 +551,7 @@ Obj *rp;
 	int c;
 
 	asir_assert(ARG0(arg),O_STR,"bload_compat");
-#if defined(THINK_C) || defined(VISUAL)
 	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-#else
-	fp = fopen(BDY((STRING)ARG0(arg)),"r");
-#endif
 	if ( !fp )
 		error("bload : invalid filename");
 	fread(hdr,sizeof(unsigned int),2,fp);

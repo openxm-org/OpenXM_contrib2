@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.4 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.5 2000/11/15 00:07:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,17 +55,10 @@
 
 extern long prec;
 
-#if defined(THINK_C)
 void patori(GEN,Obj *);
 void patori_i(GEN,N *);
 void ritopa(Obj,GEN *);
 void ritopa_i(N,int,GEN *);
-#else
-void patori();
-void patori_i();
-void ritopa();
-void ritopa_i();
-#endif
 
 void Peval(),Psetprec(),p_pi(),p_e(),p_mul(),p_gcd();
 void asir_cgiv(GEN);

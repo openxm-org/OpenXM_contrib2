@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/cursor.h,v 1.2 2000/08/21 08:31:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/cursor.h,v 1.3 2000/08/22 05:04:30 noro Exp $ 
 */
-#if defined(__GNUC__) || defined(THINK_C)
+#if defined(__GNUC__)
 #define CONST const
 #else
 #define CONST

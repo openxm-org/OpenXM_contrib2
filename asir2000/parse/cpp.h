@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.h,v 1.2 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.h,v 1.3 2000/08/22 05:04:26 noro Exp $ 
 */
 #ifndef _ACCUM_
 #define _ACCUM_
@@ -149,18 +149,8 @@ int issymchar(char c);
 #ifndef _MALLOC_
 #define _MALLOC_
 
-#if 0
-#define malloc check0_malloc
-#define realloc check0_realloc
-#endif
-
-#if defined(THINK_C)
-char *malloc(int);
-char *realloc(void *,int);
-#else
 char *malloc(size_t);
 char *realloc(void *, size_t);
-#endif
 char *copyofstr(char *str);
 char *copyofblk(char *blk, int len);
 #define NEW(type) ((type *) malloc((int)sizeof(type)))

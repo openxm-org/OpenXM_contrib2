@@ -2,12 +2,11 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.11 2000/08/21 08:31:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.12 2000/08/22 01:30:25 noro Exp $ 
 */
 #include "config.h"
 
 #define USE_GCC
-#define USE_INET
 /* #define USE_MPI */
 /* #define USE_FFT_FLOAT */
 /* #define USE_LAPACK */
@@ -97,12 +96,6 @@ PARIINC = .
 PARILIB =
 #endif
 
-#ifdef USE_INET
-INET=1
-#else
-INET=0
-#endif
-
 #ifdef USE_LAPACK
 LAPACK=1
 LAPACKLIB = -llapack -lblas -lI77 -lF77
@@ -138,4 +131,4 @@ MPIINC=.
 #endif
 
 INCLUDES= -I$(TOP)/include -I$(TOP)/parse -I$(TOP)/io -I$(PARIINC) -I$(MPIINC)
-DEFINES= -DINET=$(INET) -DPARI=$(PARI) -DLAPACK=$(LAPACK) -DDO_PLOT=$(DO_PLOT) -DUSE_FLOAT=$(USE_FLOAT) $(PARIFLAGS) -DHMEXT -DMPI=$(MPI) $(LINUX_EXTRA_DEFINES)
+DEFINES= -DPARI=$(PARI) -DLAPACK=$(LAPACK) -DDO_PLOT=$(DO_PLOT) -DUSE_FLOAT=$(USE_FLOAT) $(PARIFLAGS) -DHMEXT -DMPI=$(MPI) $(LINUX_EXTRA_DEFINES)

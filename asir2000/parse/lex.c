@@ -45,17 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.6 2000/11/13 01:48:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.7 2000/12/01 04:34:01 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
 #include "base.h"
 #include "parse.h"
-#if !defined(THINK_C)
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
 #include "y.tab.h"
 
 extern IN asir_infile;

@@ -45,27 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.2 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.3 2000/08/22 05:03:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
-
-#if defined(THINK_C)
-#define DO_PLOT 1
-#endif
-
-#if 0
-struct ftab sysftab[] = {
-	{"modfctr",Pmodfctr,2}, 
-	{"modsqfr",Pmodsqfr,2},
-	{"ddd",Pddd,2},
-/*	{"sacinit",Psacinit,-1},
-	{"sacp",Psacp,1},
-	{"sacprod",Psacprod,1},
-	{"sacfctr",Psacfctr,1}, */
-	{0,0,0}
-};
-#endif
 
 void Ptstart(), Ptstop(), Pquit(), Pdebug();
 
@@ -78,7 +61,6 @@ struct ftab nasysftab[] = {
 	{0,0,0},
 };
 
-#if !defined(THINK_C)
 typedef struct ftab FTAB[];
 
 extern FTAB
@@ -88,29 +70,14 @@ print_tab, puref_tab, rat_tab, reduct_tab, result_tab,
 str_tab, subst_tab, time_tab, type_tab, var_tab,
 print2d_tab, tcp_tab, plot_tab, pari_tab, comp_tab, gf_tab, math_tab,
 numerical_tab, ec_tab, al_tab;
-#else
-extern struct ftab
-alg_tab[], array_tab[], cplx_tab[], ctrl_tab[], dp_tab[], dp_supp_tab[], fctr_tab[], file_tab[],
-help_tab[], int_tab[], list_tab[], misc_tab[], pdiv_tab[], poly_tab[],
-print_tab[], puref_tab[], rat_tab[], reduct_tab[], result_tab[],
-str_tab[], subst_tab[], time_tab[], type_tab[], var_tab[],
-plot_tab[], pari_tab[], comp_tab[], gf_tab[], math_tab[],
-numerical_tab[], ec_tab[], al_tab[];
-#endif
 
 struct ftab *ftabs[] = {
 	alg_tab, array_tab, cplx_tab, ctrl_tab, dp_tab, dp_supp_tab, fctr_tab, file_tab,
 	help_tab, int_tab, list_tab, misc_tab, pdiv_tab, poly_tab,
 	print_tab, puref_tab, rat_tab, reduct_tab, result_tab,
-	str_tab, subst_tab, time_tab, type_tab, var_tab, pari_tab, comp_tab, gf_tab,	math_tab,
+	str_tab, subst_tab, time_tab, type_tab, var_tab, pari_tab, comp_tab, gf_tab,	math_tab, tcp_tab,
 #if DO_PLOT
 	plot_tab,
-#endif
-#if INET
-	tcp_tab,
-#endif
-#if 0
-	print2d_tab,
 #endif
 #if LAPACK
 	numerical_tab,

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.5 2000/08/22 05:04:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.6 2000/11/08 08:02:50 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -56,10 +56,6 @@
 
 #if defined(VISUAL)
 #include <stdlib.h>
-#endif
-
-#if defined(__MWERKS__)
-#define THINK_C
 #endif
 
 #if defined(linux) || (defined(sun) && !defined(SYSV)) || defined(news5000) || (defined(mips) && defined(ultrix))
@@ -671,7 +667,7 @@ extern N ONEN;
 extern UP2 ONEUP2;
 
 extern FILE *asir_out;
-#if defined(__GNUC__) || defined(THINK_C)
+#if defined(__GNUC__)
 extern const int sprime[];
 extern const int lprime[];
 #else

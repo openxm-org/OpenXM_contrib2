@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 #if PARI
@@ -53,17 +53,10 @@
 #include <math.h>
 #include "genpari.h"
 
-#if defined(THINK_C)
 void patori(GEN,Obj *);
 void patori_i(GEN,N *);
 void ritopa(Obj,GEN *);
 void ritopa_i(N,int,GEN *);
-#else
-void patori();
-void patori_i();
-void ritopa();
-void ritopa_i();
-#endif
 
 extern long prec;
 extern int paristack;

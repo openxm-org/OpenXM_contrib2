@@ -45,22 +45,16 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/cplxnum.c,v 1.2 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/cplxnum.c,v 1.3 2000/08/22 05:03:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pconj(),Preal(),Pimag();
 
-#if defined(THINK_C)
 void cplx_conj(Obj,Obj *);
 void cplx_real(Obj,Obj *);
 void cplx_imag(Obj,Obj *);
-#else
-void cplx_conj();
-void cplx_real();
-void cplx_imag();
-#endif
 
 struct ftab cplx_tab[] = {
 	{"conj",Pconj,1},

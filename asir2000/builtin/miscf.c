@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.8 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.9 2000/11/14 08:38:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
-#if INET && !defined(VISUAL)
+#if !defined(VISUAL)
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #endif
@@ -88,7 +88,7 @@ struct ftab misc_tab[] = {
 	{"hex_dump",Phex_dump,2},
 	{"peek",Ppeek,1},
 	{"poke",Ppoke,2},
-#if INET && !defined(VISUAL) && DO_PLOT
+#if !defined(VISUAL) && DO_PLOT
 	{"xpause",Pxpause,0},
 #endif
 #if 0
@@ -333,7 +333,7 @@ Q *rp;
 	STOQ(ret,*rp);	
 }
 
-#if INET && !defined(VISUAL) && DO_PLOT
+#if !defined(VISUAL) && DO_PLOT
 void Pxpause(rp)
 Q *rp;
 {

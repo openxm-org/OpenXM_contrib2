@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.4 2000/08/22 05:04:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.5 2000/09/21 09:19:27 noro Exp $ 
 */
-# if defined(THINK_C) || defined(VISUAL)
+# if defined(VISUAL)
 #include <time.h>
 #else
 #include <sys/time.h>
@@ -319,7 +319,7 @@ extern int Verbose;
 #define fflush w_fflush
 #endif
 
-#if defined(THINK_C) || defined(VISUAL)
+#if defined(VISUAL)
 NODE mknode(int,...);
 FNODE mkfnode(int,fid,...);
 SNODE mksnode(int,sid,...);
@@ -333,7 +333,6 @@ void call_usrf();
 
 /* prototypes */
 
-#if 1 || defined(THINK_C) || defined(VISUAL)
 void dp_ptozp2_d(NODE,int,DP,DP,DP *,DP *);
 void dp_ptozp_d(NODE,int,DP,DP *);
 void dp_ptozp_d_old(NODE,int,DP,DP *);
@@ -582,97 +581,3 @@ void divcomp(VL,COMP,COMP,COMP *);
 void chsgncomp(COMP,COMP *);
 void pwrcomp(VL,COMP,Obj,COMP *);
 int compcomp(VL,COMP,COMP);
-#else
-int arf_comp();
-int complist();
-int complist();
-int getcompsize();
-int getpvar();
-int getpvar();
-int gettype();
-int indextotype();
-int loadfile();
-int loadfiles();
-int makepvar();
-int membertoindex();
-int qcoefp();
-int qcoefr();
-int rangecheck();
-int structtoindex();
-pointer eval();
-pointer evalf();
-pointer evalif();
-pointer evalnode();
-pointer evalpf();
-pointer evalparif();
-pointer evalpv();
-pointer evalstat();
-void _mkpfins();
-void appendpfins();
-void appenduf();
-void arf_add();
-void arf_chsgn();
-void arf_div();
-void arf_init();
-void arf_mul();
-void arf_pwr();
-void arf_remain();
-void arf_sub();
-void bp();
-void clearbp();
-void debug();
-void debug_init();
-void delbp();
-void derivr();
-void derivvar();
-void duppfins();
-void error();
-void evalins();
-void evalnodebody();
-void evalp();
-void evalr();
-void evalv();
-void getarrayp();
-void getmember();
-void getmemberp();
-void help();
-void instov();
-Obj memberofstruct();
-void mkpf();
-void mkpfins();
-void mkuf();
-void newstruct();
-void optobj();
-void println();
-void printvars();
-void resetpvs();
-void searchc();
-void searchf();
-void searchpf();
-void searchsn();
-void setbp();
-void setf();
-void setstruct();
-void showbp();
-void showbps();
-void showpos();
-void simplify_ins();
-void sprintvars();
-int structdef();
-void substfp();
-void substfr();
-void substfv();
-void substpr();
-void substr();
-void appendtonode();
-void getarray();
-void putarray();
-
-void addcomp();
-void subcomp();
-void mulcomp();
-void divcomp();
-void chsgncomp();
-void pwrcomp();
-int compcomp();
-#endif

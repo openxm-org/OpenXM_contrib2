@@ -45,12 +45,8 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.c,v 1.2 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.c,v 1.3 2000/08/22 05:04:26 noro Exp $ 
 */
-#if defined(__MWERKS__)
-#define THINK_C
-#endif
-
 #include <stdio.h>
 #include <ctype.h>
 #include <setjmp.h>
@@ -66,13 +62,6 @@ jmp_buf cpp_env;
 #include "stats.h"
 #include "symtbl.h"
 #include "unctrl.h"
-#endif
-
-#if defined(THINK_C)
-#include <string.h>
-
-int define(char *,int,unsigned char *,int);
-void Bcopy(char *,char *,int);
 #endif
 
 
@@ -2518,13 +2507,6 @@ void do_include(int expr_sharp)
     fprintf(stderr,"illegal %cinclude filename delimiter\n",sharp?'#':'@');
   }
 }
-
-#if defined(THINK_C)
-#if defined(DELIM)
-#undef DELIM
-#endif
-#define DELIM ':'
-#endif
 
 #if  defined(SYSV)
 #else

@@ -45,17 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.5 2000/11/09 01:51:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.6 2000/11/09 02:30:44 noro Exp $ 
 */
-#if defined(THINK_C)
-#include        <QuickDraw.h>
-#include        <Windows.h>
-#include        <Events.h>
-#include        <OSUtils.h>
-#include        <ToolUtils.h>
-#include        <Fonts.h>
-/* #include        <Strings.h> */
-#elif defined(VISUAL)
+#if defined(VISUAL)
 /* for Visual C++ */
 #include <windows.h>
 #else
@@ -96,13 +88,8 @@
 
 #define MAXCANVAS 64
 #define MAXGC 16
-#if defined(THINK_C)
-#define DEFAULTWIDTH 200
-#define DEFAULTHEIGHT 200
-#else
 #define DEFAULTWIDTH 400
 #define DEFAULTHEIGHT 400
-#endif
 
 #define MODE_IFPLOT 0
 #define MODE_CONPLOT 1
@@ -113,26 +100,7 @@
 #define DIR_Y 1
 #define DIR_Z 2
 
-#if defined(THINK_C)
-#define COPYBITS
-
-#define POINT Point
-#define XC(a) ((a).h)
-#define YC(a) ((a).v)
-#define DRAWPOINT(d,p,g,x,y) MoveTo(x,y); Line(0,0)
-#define DRAWLINE(d,p,g,x,y,u,v) MoveTo(x,y); LineTo(u,v)
-#define DRAWSTRING(d,p,g,x,y,s,l) MoveTo(x,y); DrawText(s,0,l)
-#define TEXTWIDTH(f,s,l) TextWidth(s,0,l)
-#define DISPLAY int
-#define WINDOW WindowPtr
-#define CURSOR CursHandle
-#ifndef COPYBITS
-#define DRAWABLE PicHandle
-#else
-#define DRAWABLE BitMap
-#endif
-
-#elif defined(VISUAL)
+#if defined(VISUAL)
 /* for Visual C++ */
 #define XC(a) ((a).x)
 #define YC(a) ((a).y)
@@ -188,17 +156,7 @@ typedef struct RealVect {
 
 struct canvas {
 	int index;
-#if defined(THINK_C)
-	Rect rect;
-	WindowRecord record;
-	WindowPtr window;
-#ifndef COPYBITS
-	PicHandle pix;
-#else
-	BitMap pix,wbits;
-	RgnHandle rgnsav;
-#endif
-#elif defined(VISUAL)
+#if defined(VISUAL)
 /* for Visual C++ */
 	void *window; /* pointer to CMainFrame */
 	HWND hwnd; /* handle to the canvas window */
@@ -233,10 +191,8 @@ struct canvas {
 extern struct canvas *canvas[];
 extern struct canvas *current_can;
 
-#ifdef INET
 extern VL CO;
 extern int stream;
-#endif
 
 extern DISPLAY *display;
 extern CURSOR normalcur,runningcur,errorcur;

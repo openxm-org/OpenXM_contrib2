@@ -45,17 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/evall.c,v 1.2 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/evall.c,v 1.3 2000/08/22 05:04:26 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
 #include "al.h"
-#if !defined(THINK_C)
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
 
 pointer evall();
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.10 2000/08/28 06:13:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.11 2000/11/08 06:21:18 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -53,12 +53,8 @@
 #if PARI
 #include "genpari.h"
 #endif
-#if !defined(THINK_C) && !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV)
+#if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV)
 #include <sgtty.h>
-#else
-#if defined(THINK_C) && !defined(__MWERKS__)
-#include <console.h>
-#endif
 #endif
 
 #if defined(VISUAL)
@@ -70,13 +66,10 @@
 #include <sys/ttold.h>
 #endif
 
-#if defined(THINK_C) || defined(VISUAL)
 #if defined(VISUAL)
 #define HISTORY asir_history
-#else
-#define HISTORY "history"
 #endif
-#endif
+
 #define MAXHIST 100
 
 extern int GC_free_space_divisor;
@@ -166,9 +159,6 @@ void glob_init() {
 	OID(F_TRUE)=O_F; FOP(F_TRUE)=AL_TRUE; F_TRUE->arg.dummy = 0;
 	OID(F_FALSE)=O_F; FOP(F_FALSE)=AL_FALSE; F_FALSE->arg.dummy = 0;
 	sprintf(asirname,"%s/asir_symtab",asir_libdir);
-#if defined(THINK_C)
-	initVol();
-#endif
 }
 
 void input_init(fp,name)
@@ -218,7 +208,6 @@ int status;
 		read_exec_file = 0; longjmp(env,status);
 	} else {
 		tty_reset();
-#if INET && !defined(THINK_C)
 #if MPI
 		if ( !mpi_myid )
 			close_allconnections();
@@ -226,19 +215,10 @@ int status;
 #else
 		close_allconnections();
 #endif
-#endif
 		if ( kernelmode )
 			fputc(0xff,asir_out);
 		if ( asir_out )
 			fflush(asir_out);
-#if defined(THINK_C) && !defined(__MWERKS__)
-		*((int *)0x8) = buserr_sav;
-		while ( NEXT(asir_infile) )
-		closecurrentinput();
-		console_options.pause_atexit = 0;
-		resetDir();
-		write_hist(HISTORY);
-#endif
 		ExitAsir();
 	}
 }
@@ -246,45 +226,6 @@ int status;
 void param_init() {
 	unsigned int et = 0xff;
 	extern int paristack;
-#if defined(THINK_C)	
-	char name[BUFSIZ];
-	int c;
-	int val;
-	FILE *fp;
-	int stacksize;
-
-#include <Memory.h>
-	GC_free_space_divisor = 4; stacksize = 0x40000;
-	if ( fp = fopen("params","r") ) {
-		while ( 1 ) {
-			c = fgetc(fp);
-			if ( c == EOF )
-				break;
-			else
-				ungetc(c,fp);
-			fscanf(fp,"%s %d",name,&val);
-			if ( !strcmp(name,"stacksize") )
-				stacksize = val;
-			else if ( !strcmp(name,"adj") )
-				GC_free_space_divisor = val;
-#if PARI
-			else if ( !strcmp(name,"paristack") )
-				paristack = val;
-#endif
-		}
-		fclose(fp);
-	}
-#if defined(__MWERKS__)
-	{
-		Ptr al;
-		al = LMGetApplLimit();
-		LMSetApplLimit(al-stacksize);
-	}
-#else
-	ApplLimit = (Ptr)((char *)ApplLimit-stacksize);
-	console_options.title = "\pAsir";
-#endif
-#endif
 	if ( *((char *)&et) )
 		little_endian = 1;
 	else
@@ -303,21 +244,12 @@ char *ptr;
 	sprintf(ptr,"[%d]%c",APVS->n,kernelmode?0xfe:' ');
 }
 
-#if 0 && !defined(THINK_C) && !defined(VISUAL) && !defined(_PA_RISC1_1)
-static struct tchars tc;
-static char oldeof;
-struct winsize wsize;
-int ttywidth;
-char *upperbuf,*lowerbuf;
-#endif
-
 FILE *in_fp;
 
 void process_args(ac,av)
 int ac;
 char **av;
 {
-#if !defined(THINK_C)
 	do_asirrc = 1;
 #if !MPI
 	do_message = 1;
@@ -376,11 +308,6 @@ char **av;
 			asir_terminate(1);
 		}
 	}
-#endif
-#if (defined(THINK_C) && !defined(__MWERKS__))
-	init_hist(MAXHIST);
-	read_hist(HISTORY);
-#endif
 }
 
 #include <signal.h>
@@ -405,22 +332,9 @@ void sig_init() {
 	signal(SIGILL,ill_handler);
 #endif
 
-#if defined(THINK_C)
-	buserr_sav = *((int *)0x8);
-	*((int *)0x8) = (int)bus_handler;
-#else /* THINK_C */
-
 #if !defined(VISUAL)
 	signal(SIGBUS,bus_handler);
 #endif
-
-#if 0
-#if !defined(VISUAL) && !defined(_PA_RISC1_1)
-	signal(SIGWINCH,winch_handler);
-#endif
-#endif
-
-#endif /* THINK_C */
 }
 
 static void (*old_int)(int);
@@ -485,7 +399,7 @@ int sig;
 		ox_int_received = 1;
 		return;
 	}
-#if defined(THINK_C) || defined(VISUAL)
+#if defined(VISUAL)
 	suspend_timer(); signal(SIGINT,SIG_IGN);
 #endif
 #if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
@@ -585,7 +499,7 @@ int sig;
 }
 
 void restore_handler() {
-#if defined(THINK_C) || defined(VISUAL)
+#if defined(VISUAL)
 	resume_timer(); signal(SIGINT,int_handler);
 #endif
 #if defined(_PA_RISC1_1) || defined(linux) || defined(__svr4__)
@@ -596,7 +510,7 @@ void restore_handler() {
 void segv_handler(sig)
 int sig;
 {
-#if defined(THINK_C) || defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
+#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
 	signal(SIGSEGV,segv_handler);
 #endif
 	error("internal error (SEGV)");
@@ -605,7 +519,7 @@ int sig;
 void ill_handler(sig)
 int sig;
 {
-#if defined(THINK_C) || defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
+#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
 	signal(SIGILL,ill_handler);
 #endif
 	error("illegal instruction (ILL)");
@@ -630,30 +544,10 @@ int sig;
 void fpe_handler(sig)
 int sig;
 {
-#if defined(THINK_C) || defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
+#if defined(_PA_RISC1_1) || defined(linux) || defined(VISUAL) || defined(__svr4__)
 	signal(SIGFPE,fpe_handler);
 #endif
 	error("internal error (FPE)");
-}
-
-void winch_handler(sig)
-int sig;
-{
-#if 0
-#if !defined(THINK_C) && !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(__svr4__)
-	if ( isatty(1) ) {
-		struct winsize t;
-
-		if ( ioctl(1,TIOCGWINSZ,&t) == -1 )
-			perror("TIOCGWINSZ");
-		if ( t.ws_col != wsize.ws_col || t.ws_row != wsize.ws_row ) {
-			resize_buffer();
-			if ( killpg(getpgrp(0),SIGWINCH) == -1 )
-				perror("killpg");
-		}
-	}
-#endif
-#endif
 }
 
 void pipe_handler(sig)
@@ -667,41 +561,12 @@ int sig;
 
 void resize_buffer()
 {
-#if 0 && !defined(THINK_C) && !defined(VISUAL) && !defined(_PA_RISC1_1)
-	if ( isatty(1) ) {
-		if ( ioctl(1,TIOCGWINSZ,&wsize) == -1 )
-			perror("TIOCGWINSZ");
-		if ( wsize.ws_col > 2 ) {
-			ttywidth = wsize.ws_col - 2;
-			upperbuf = (char *)MALLOC(wsize.ws_col);
-			lowerbuf = (char *)MALLOC(wsize.ws_col);
-		}
-	}
-#endif
 }
 
 void tty_init() {
-#if 0 && !defined(THINK_C) && !defined(VISUAL) && !defined(_PA_RISC1_1)
-	if ( isatty(0) ) {
-		if ( ioctl(0,TIOCGETC,&tc) == -1 )
-			perror("TIOCGETC"); 
-		oldeof = tc.t_eofc; tc.t_eofc = 0xff; 
-		if ( ioctl(0,TIOCSETC,&tc) == -1 )
-			perror("TIOCSETC");
-		setpgrp(0, getpid());
-	}
-	resize_buffer();
-#endif
 }
 
 void tty_reset() {
-#if 0 && !defined(THINK_C) && !defined(VISUAL) && !defined(_PA_RISC1_1)
-	if ( oldeof ) {
-		tc.t_eofc = oldeof; 
-		if ( ioctl(0,TIOCSETC,&tc) == -1 )
-			perror("TIOCSETC");
-	}
-#endif
 }
 
 extern int evalstatline;

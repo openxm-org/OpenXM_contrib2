@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.9 2000/08/22 05:03:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.10 2000/09/08 02:56:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1961,7 +1961,6 @@ DP *r;
 
 				t_0 = get_rtime();
 				dp_subd(rp,red,&shift);
-#if INET
 				if ( Dist && ndist && HMAG(red) > kara_bit ) {
 					NODE n0,n1,n2,n3;
 					int i,s,id;
@@ -1979,9 +1978,7 @@ DP *r;
 					muldc(CO,rp,(P)cr,&t);
 					NEXT(n0)=0;
 					Pox_pop_local(n0,&t1);
-				} else
-#endif
-				{
+				} else {
 /*					
 					if ( Print )
 						fprintf(asir_out,"l");
@@ -2027,7 +2024,6 @@ DP *r;
 		if ( u ) {
 			if ( HMAG(u) > hmag ) {
 				t_0 = get_rtime();
-#if INET
 				if ( Dist && HMAG(u) > kara_bit ) {
 					if ( Print )
 						fprintf(asir_out,"D");
@@ -2036,10 +2032,7 @@ DP *r;
 					if ( Print )
 						fprintf(asir_out,"L");
 					dp_ptozp_d(0,0,u,&t);
-				}
-#else
-				dp_ptozp(u,&t); /* XXX */
-#endif
+				} dp_ptozp(u,&t); /* XXX */
 				tt = get_rtime()-t_0; t_g += tt;
 				t_0 = get_rtime();
 				divsn(NM((Q)BDY(u)->c),NM((Q)BDY(t)->c),&cn); NTOQ(cn,1,cont);
@@ -2757,11 +2750,6 @@ LIST *list;
 
 #define DELIM '/'
 
-#if defined(THINK_C)
-#undef DELIM
-#define DELIM ':'
-#endif
-
 void dp_save(index,p,prefix)
 int index;
 Obj p;
@@ -2774,11 +2762,7 @@ char *prefix;
 		sprintf(path,"%s%c%s%d",Demand,DELIM,prefix,index);
 	else
 		sprintf(path,"%s%c%d",Demand,DELIM,index);
-#if defined(VISUAL) || defined(THINK_C)
 	if ( !(fp = fopen(path,"wb") ) )
-#else
-	if ( !(fp = fopen(path,"w") ) )
-#endif
 		error("dp_save : cannot open a file");
 	savevl(fp,VC); saveobj(fp,p); fclose(fp);
 }
@@ -2794,11 +2778,7 @@ DP *p;
 		*p = ps[index];
 	else {
 		sprintf(path,"%s%c%d",Demand,DELIM,index);
-#if defined(VISUAL) || defined(THINK_C)
 		if ( !(fp = fopen(path,"rb") ) )
-#else
-		if ( !(fp = fopen(path,"r") ) )
-#endif
 			error("dp_load : cannot open a file");
 		skipvl(fp); loadobj(fp,(Obj *)p); fclose(fp);
 	}
@@ -2812,11 +2792,7 @@ DP *p;
 	char path[BUFSIZ];
 
 	sprintf(path,"%s%c%d",Demand,DELIM,index);
-#if defined(VISUAL) || defined(THINK_C)
 	if ( !(fp = fopen(path,"rb") ) )
-#else
-	if ( !(fp = fopen(path,"r") ) )
-#endif
 		return 0;
 	else {
 		skipvl(fp); loadobj(fp,(Obj *)p); fclose(fp); return 1;
@@ -2840,161 +2816,3 @@ void print_stat() {
 	print_eg("RA",&eg_ra); print_eg("MC",&eg_mc); print_eg("GC",&eg_gc);
 	fprintf(asir_out,"T=%d,B=%d M=%d F=%d D=%d ZR=%d NZR=%d\n",TP,NBP,NMP,NFP,NDP,ZR,NZR);
 }
-
-/*
- * Old codes 
- */
-
-#if 0
-void _dp_nf_ptozp(b,g,ps,full,multiple,rp)
-NODE b;
-DP g;
-DP *ps;
-int full,multiple;
-DP *rp;
-{
-	P dmy;
-	DP u,p,d,s,t,dmy1;
-	NODE l;
-	MP m,mr;
-	int i,n;
-	int hmag,denom;
-	int sugar,psugar;
-	NODE dist;
-	int ndist;
-	int kara_bit;
-	extern int kara_mag;
-
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	denom = Denominator?Denominator:1;
-	hmag = multiple*HMAG(g)/denom;
-	kara_bit = kara_mag*27; /* XXX */
-	if ( Dist ) {
-		dist = BDY(Dist);
-		ndist = length(dist);
-	}
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, l = b; l; l = NEXT(l) ) {
-			if ( dl_redble(BDY(g)->dl,psh[(int)BDY(l)]) ) {
-				dp_load((int)BDY(l),&p);
-				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				d = t;
-				break;
-			}
-		}
-		if ( u ) {
-			g = u;
-			if ( d ) {
-				if ( HMAG(d) > hmag ) {
-					if ( Dist && HMAG(g) > kara_bit )
-						dp_ptozp2_d(dist,ndist,d,g,&t,&u);
-					else
-						dp_ptozp2(d,g,&t,&u);
-					d = t; g = u;
-					hmag = multiple*HMAG(d)/denom;
-				}
-			} else {
-				if ( HMAG(g) > hmag ) {
-#if INET
-					if ( Dist && HMAG(g) > kara_bit ) {
-						dp_ptozp_d(dist,ndist,g,&t);
-					} else
-#endif
-						dp_ptozp(g,&t);
-					g = t;
-					hmag = multiple*HMAG(g)/denom;
-				}
-			}
-		}
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
-}
-
-int criterion_2(dp1,dp2)
-{
-	DP g1,g2,g,s1,s2;
-
-	monomial_gcd(ps[dp1],&g1); monomial_gcd(ps[dp2],&g2);
-	dp_gcd(g1,g2,&g);
-	dp_subd(ps[dp1],g,&s1); dp_subd(ps[dp2],g,&s2);
-	return _criterion_2(s1,s2);
-}
-
-int _criterion_2( dp1, dp2 )
-DP dp1, dp2;
-{
-	register int i, *d1, *d2;
-
-	d1 = BDY(dp1)->dl->d; d2 = BDY(dp2)->dl->d;
-	for ( i = CNVars; --i >= 0; d1++, d2++ )
-		if ( (*d1 <= *d2 ? *d1 : *d2) > 0  ) return 0;
-	return 1;
-}
-
-void dp_gcd(p1,p2,rp)
-DP p1,p2;
-DP *rp;
-{
-	int i,n,td;
-	DL d1,d2,d;
-	MP m;
-	DP s;
-
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	NEWDL(d,n);
-	for ( i = 0, td = 0; i < n; i++ ) {
-		d->d[i] = MIN(d1->d[i],d2->d[i]);
-		td += d->d[i];
-	}
-	d->td = td;
-	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
-	*rp = s;
-}
-
-void monomial_gcd(p,rp)
-DP p;
-DP *rp;
-{
-	int n,i,td;
-	DL d,d1;
-	MP m;
-	DP s;
-
-	n = p->nv; m = BDY(p); d = m->dl;
-	NEWDL(d1,n);
-	for ( i = 0; i < n; i++ )
-		d1->d[i] = d->d[i];
-	for ( m = NEXT(m); m; m = NEXT(m) ) {
-		d = m->dl;
-		for ( i = 0; i < n; i++ )
-			d1->d[i] = MIN(d1->d[i],d->d[i]);
-	}
-	for ( i = 0, td = 0; i < n; i++ )
-		td += d1->d[i];
-	NEWMP(m); m->dl = d1; m->c = (P)ONE; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
-	*rp = s;
-}
-#endif

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.4 2000/09/12 06:05:29 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -84,11 +84,7 @@ int nez = 1;
 int current_mod = 0;
 
 #if PARI
-#if defined(THINK_C)
 int paristack = 1<<16;
-#else
-int paristack = 1<<20;
-#endif
 
 void (*addnumt[])() = { addq, addreal, addalg, addbf, addcplx, addmi, addlm, addgf2n, addgfpn };
 void (*subnumt[])() = { subq, subreal, subalg, subbf, subcplx, submi, sublm, subgf2n, subgfpn };

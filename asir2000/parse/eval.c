@@ -45,17 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.6 2000/09/21 09:19:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.7 2000/09/22 06:36:43 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
 #include "base.h"
 #include "parse.h"
-#if !defined(THINK_C)
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
 #if PARI
 #include "genpari.h"
 #endif

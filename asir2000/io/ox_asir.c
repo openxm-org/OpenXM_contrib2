@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.21 2000/11/07 06:35:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.22 2000/11/14 08:38:39 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -662,15 +662,9 @@ void ox_asir_init(int argc,char **argv)
 #endif
 	srandom((int)get_current_time());
 
-#if defined(THINK_C)
-	param_init();
-#endif
 	rtime_init();
 	env_init();
 	endian_init();
-#if !defined(VISUAL) && !defined(THINK_C)
-/*	check_key(); */
-#endif
 	GC_init();
 	process_args(--argc,++argv);
 	output_init();
@@ -693,9 +687,6 @@ void ox_asir_init(int argc,char **argv)
 	if ( ptr = getenv("ASIR_CONFIG") )
 		strcpy(ifname,ptr);
 	else {
-#if defined(THINK_C)
-		sprintf(ifname,"asirrc");
-#else
 		homedir = getenv("HOME");
 		if ( !homedir ) {
 			char rootname[BUFSIZ];
@@ -704,7 +695,6 @@ void ox_asir_init(int argc,char **argv)
 			homedir = rootname;
 		}
 		sprintf(ifname,"%s/.asirrc",homedir);
-#endif
 	}
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
@@ -899,15 +889,9 @@ int asir_ox_init(int byteorder)
 #endif
 	srandom((int)get_current_time());
 
-#if defined(THINK_C)
-	param_init();
-#endif
 	rtime_init();
 	env_init();
 	endian_init();
-#if !defined(VISUAL) && !defined(THINK_C)
-/*	check_key(); */
-#endif
 	GC_init();
 /*	process_args(argc,argv); */
 	output_init();
@@ -926,11 +910,7 @@ int asir_ox_init(int byteorder)
 #if defined(UINIT)
 	reg_sysf();
 #endif
-#if defined(THINK_C)
-	sprintf(ifname,"asirrc");
-#else
 	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
-#endif
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
 		if ( !setjmp(env) ) {

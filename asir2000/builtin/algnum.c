@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.2 2000/08/21 08:31:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.3 2000/08/22 05:03:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,22 +53,13 @@
 void Pdefpoly(), Pnewalg(), Pmainalg(), Palgtorat(), Prattoalg(), Pgetalg();
 void Palg(), Palgv(), Pgetalgtree();
 
-#if defined(THINK_C)
 void mkalg(P,Alg *);
 int cmpalgp(P,P);
 void algptop(P,P *);
 void algtorat(Num,Obj *);
 void rattoalg(Obj,Alg *);
 void ptoalgp(P,P *);
-#else
-void mkalg();
-int cmpalgp();
-void algptop();
-void algtorat();
-void rattoalg();
-void ptoalgp();
-void clctalg();
-#endif
+void clctalg(P,VL *);
 
 struct ftab alg_tab[] = {
 	{"defpoly",Pdefpoly,1},

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.4 2000/08/21 08:31:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.5 2000/08/22 05:03:58 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -868,7 +868,7 @@ Q *rp;
 	UTOQ(r,*rp);
 }
 
-#if defined(VISUAL) || defined(THINK_C)
+#if defined(VISUAL)
 void srandom(unsigned int);
 
 static unsigned int R_Next;

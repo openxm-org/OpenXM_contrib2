@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.3 2000/08/22 05:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.4 2000/11/08 08:02:52 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
-#if defined(THINK_C) || defined(VISUAL)
+#if defined(VISUAL)
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -285,7 +285,7 @@ P p;
 	return ( r );
 }
 
-#if defined(THINK_C) || defined(VISUAL)
+#if defined(VISUAL)
 NODE mknode(int ac,...)
 {
 	va_list ap;
@@ -494,43 +494,3 @@ int esize;
 		*arrayp = new;
 	}
 }
-
-#if defined(THINK_C)
-void bzero(p,len)
-register char *p;
-register int len;
-{
-	for ( ; len; len-- )
-		*p++ = 0;
-}
-
-void bcopy(s,d,len)
-register char *s;
-register char *d;
-int len;
-{
-	for ( ; len; len-- )
-		*d++ = *s++;
-}
-
-char *index(char *s,char c)
-{
-	for ( ; *s && *s != c; s++ );
-	if ( *s )
-		return s;
-	else
-		return 0;
-}
-	
-void printap(p)
-P p;
-{
-	DCP dc;
-	
-	for ( dc = DC(p); dc; dc = NEXT(dc) ) {
-		printf("(c=0x%lx c->nm=0x%lx c->nm->p=%ld) ",
-			(int *)dc->c,(int *)((Q)dc->c)->nm,(int)((Q)dc->c)->nm->p);
-	}
-	printf("\n");
-}
-#endif

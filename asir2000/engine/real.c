@@ -45,72 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.4 2000/08/22 05:04:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.5 2000/11/15 02:16:30 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include <math.h>
 
-#if defined(THINK_C)
-double RatnToReal(a)
-Q a;
-{
-	double nm,dn,t;
-	int enm,edn;
-	char buf[BUFSIZ];
-
-	nm = NatToReal(NM(a),&enm);
-	if ( INT(a) )
-		if ( enm >= 1 )
-			error("RatnToReal : Overflow");
-		else
-			return SGN(a)>0 ? nm : -nm;
-	else {
-		dn = NatToReal(DN(a),&edn);
-		sprintf(buf,"1.0E%d",enm-edn);
-		sscanf(buf,"%lf",&t);
-		if ( SGN(a) < 0 )
-			t = -t;
-		return nm/dn*t;
-	}
-}
-
-double NatToReal(a,expo)
-N a;
-int *expo;
-{
-	int *p;
-	int l,all,i,j,s,tb,top,tail;
-	unsigned int t,m[2];	
-	
-	p = BD(a); l = PL(a) - 1;
-	for ( top = 0, t = p[l]; t; t >>= 1, top++ );
-	all = top + BSH*l; tail = (53-top)%BSH; i = l-(53-top)/BSH-1; 
-	m[1] = i < 0 ? 0 : p[i]>>(BSH-tail);
-	for ( j = 1, i++, tb = tail; i <= l; i++ ) {
-		s = 32-tb; t = i < 0 ? 0 : p[i];
-		if ( BSH > s ) {
-			m[j] |= ((t&((1<<s)-1))<<tb);
-			if ( !j ) 
-				break;
-			else {
-				j--; m[j] = t>>s; tb = BSH-s;
-			}
-		} else {
-			m[j] |= (t<<tb); tb += BSH;
-		}
-	}
-	s = (all-1)+1023;
-	m[0] = (m[0]&((1<<20)-1))|(MIN(2046,s)<<20); *expo = MAX(s-2046,0);
-#ifdef vax
-	t = m[0]; m[0] = m[1]; m[1] = t; itod(m);
-#endif
-#if defined(MIPSEL)
-	t = m[0]; m[0] = m[1]; m[1] = t;
-#endif
-	return (double)(*((short double *)m));
-}
-#else
 double RatnToReal(a)
 Q a;
 {
@@ -173,7 +113,6 @@ int *expo;
 #endif
 	return *((double *)m);
 }
-#endif
 
 void addreal(a,b,c)
 Num a,b;

@@ -44,9 +44,8 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9 2000/11/07 06:35:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.10 2000/11/15 01:20:27 noro Exp $ 
 */
-#if INET
 #include "ca.h"
 #include "setjmp.h"
 #include "ox.h"
@@ -427,6 +426,4 @@ int fd;
 			return i;
 	return -1;
 }
-
-#endif /* INET */
 
