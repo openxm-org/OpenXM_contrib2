@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.36 2003/08/20 07:55:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.37 2003/08/20 08:38:20 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1514,7 +1514,7 @@ again:
 				printf("+"); fflush(stdout);
 				nh = nd_newps_trace(m,nf,nfq);
 				/* failure; m|HC(nfq) */
-				if ( nf < 0 ) return 0;
+				if ( nh < 0 ) return 0;
 				d = update_pairs(d,g,nh);
 				g = update_base(g,nh);
 			} else {
