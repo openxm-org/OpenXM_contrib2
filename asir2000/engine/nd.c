@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.103 2004/09/15 06:06:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.104 2004/09/17 01:27:48 noro Exp $ */
 
 #include "nd.h"
 
@@ -4824,6 +4824,7 @@ ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d)
 			return 0;
 		else {
 			NEXT(mr) = 0; 
+			for ( len = 0, mr = mr0; mr; mr = NEXT(mr), len++ );
 			MKND(NV(p),mr0,len,r);
 			SG(r) = SG(p) + TD(d0);
 			return r;
