@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.1 2001/12/10 05:02:46 takayama Exp $ */
 /* $Id$ */
 
 /* Todo:
@@ -124,6 +124,7 @@ def glib_window(Xmin,Ymin,Xmax,Ymax) {
          Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
   if (Xmax <= Xmin) error("glib window: Invalid size");
   if (Ymax <= Ymin) error("glib window: Invalid size");
+  glib_check_arg(Xmin,Ymin); glib_check_arg(Xmax,Ymax);
   Glib_xmin = Xmin;  Glib_xmax = Xmax;
   Glib_ymin = Ymin;  Glib_ymax = Ymax;
   Glib_xoffset = -Xmin;
@@ -133,11 +134,22 @@ def glib_window(Xmin,Ymin,Xmax,Ymax) {
   if (Glib_canvas < 0) glib_open();
 }
 
+def glib_check_arg(X,Y) {
+  if (type(X) <= 1 && type(Y) <= 1) return 1;
+  else {
+    print("Error in glib: arguments ",0);
+    print([X,Y],0);
+    print(" are not numbers.");
+    error("Invalid argument for glib_window, glib_putpixel, glib_line.");
+  }
+}
+
 def glib_putpixel(X,Y) {
   extern Glib_process, Glib_canvas,
          Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
   if (Glib_canvas < 0) glib_open();
   glib_check();
+  glib_check_arg(X,Y);
   draw_obj(Glib_process,Glib_canvas,
            [floor(Glib_xmag*(X+Glib_xoffset)),
             floor(Glib_ymag*(Y+Glib_yoffset))]);
@@ -145,6 +157,8 @@ def glib_putpixel(X,Y) {
 
 def glib_line(X0,Y0,X1,Y1) {
   extern Glib_xmag, Glib_ymag, Glib_xoffset, Glib_yoffset;
+  glib_check_arg(X0,Y0);
+  glib_check_arg(X1,Y1);
   glib_clip_line(floor(Glib_xmag*(X0+Glib_xoffset)),
                  floor(Glib_ymag*(Y0+Glib_yoffset)),
                  floor(Glib_xmag*(X1+Glib_xoffset)),
