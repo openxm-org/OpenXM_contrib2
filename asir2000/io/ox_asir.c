@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.24 2001/04/23 05:02:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.25 2001/08/20 09:03:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -715,6 +715,9 @@ void ox_asir_init(int argc,char **argv)
 void ox_io_init() {
 	unsigned char c,rc;
 	extern int I_am_server;
+
+	/* XXX : ssh forwards stdin to a remote host */
+	fclose(stdin);
 
 	I_am_server = 1;
 	endian_init();
