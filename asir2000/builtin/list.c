@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.5 2003/01/16 16:20:12 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.6 2003/01/20 17:44:51 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -134,6 +134,7 @@ LIST *rp;
 	}
 }
 
+#if 0
 void Plength(arg,rp)
 NODE arg;
 Q *rp;
@@ -145,6 +146,28 @@ Q *rp;
 	n = BDY((LIST)ARG0(arg));
 	for ( i = 0; n; i++, n = NEXT(n) );
 	STOQ(i,*rp);
+}
+#endif
+
+void Plength(arg,rp)
+NODE arg;
+Q *rp;
+{
+    NODE n;
+    int i;
+
+    switch (OID(ARG0(arg))) {
+    case O_VECT:
+        i = ((VECT)ARG0(arg))->len;
+        break;
+    case O_LIST:
+        n = BDY((LIST)ARG0(arg));
+        for ( i = 0; n; i++, n = NEXT(n) );
+        break;
+    default:
+        error("length : invalid argument"); break;
+    }
+    STOQ(i,*rp);
 }
 
 void Pnconc(arg,rp)
