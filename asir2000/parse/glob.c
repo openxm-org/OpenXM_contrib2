@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.46 2004/02/09 08:23:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.47 2004/02/25 06:43:52 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -195,6 +195,7 @@ int do_message;
 int do_fep;
 int read_exec_file;
 int asir_setenv;
+int asir_texmacs;
 static int buserr_sav;
 static char asir_history[BUFSIZ];
 
@@ -258,13 +259,18 @@ void param_init() {
 Obj user_defined_prompt;
 
 void prompt() {
-	if ( !do_quiet && !do_fep && asir_infile->fp == stdin )
+	if ( !do_quiet && !do_fep && asir_infile->fp == stdin ) {
+		if ( asir_texmacs ) printf("\2\verbatim:\2channel:prompt\5\2latex:\\red");
 		fprintf(asir_out,"[%d] ",APVS->n);
-	else if ( do_quiet && user_defined_prompt 
+		if ( asir_texmacs ) printf("\5\5");
+		fflush(asir_out);
+	} else if ( do_quiet && user_defined_prompt 
 		&& OID(user_defined_prompt)==O_STR) {
+		if ( asir_texmacs ) printf("\2\verbatim:\2channel:prompt\5\2latex:\\red");
 		fprintf(asir_out,BDY((STRING)user_defined_prompt),APVS->n);
+		if ( asir_texmacs ) printf("\5\5");
+		fflush(asir_out);
 	}
-	fflush(asir_out);
 }
 
 void sprompt(char *ptr)
@@ -349,6 +355,9 @@ void process_args(int ac,char **av)
 			do_file = 1;
 			do_filename = *(av+1);
 			av += 2; ac -= 2;
+		} else if ( !strcmp(*av,"-texmacs") ) {
+			asir_texmacs = 1; av++; ac--;
+			*stderr = *stdout;
 		} else if ( !strcmp(*av,"-E") ) {
 			asir_setenv = 1; av++; ac--;
 		} else if ( !strcmp(*av,"-quiet") ) {
@@ -442,8 +451,10 @@ void asir_reset_handler() {
 void resetenv(char *s)
 {
 	extern FILE *outfile;
+	FILE *stream = asir_texmacs ? stdout : stderr;
 
-	fprintf(stderr,"%s\n",s);
+	if ( asir_texmacs ) { printf("\2verbatim:"); fflush(stdout); }
+	fprintf(stream,"%s\n",s);
 	while ( NEXT(asir_infile) )
 		closecurrentinput();
 	resetpvs();
@@ -464,6 +475,7 @@ void resetenv(char *s)
 #if !defined(VISUAL)
 	reset_timer();
 #endif
+	if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 	LONGJMP(main_env,1);
 }
 
@@ -478,6 +490,10 @@ extern int ox_int_received, critical_when_signal;
 void int_handler(int sig)
 {
 	extern NODE PVSS;
+	FILE *stream;
+
+	if ( asir_texmacs ) stream = stdout;
+	else stream = stderr;
 
 	if ( do_file ) {
 		ExitAsir();
@@ -505,22 +521,36 @@ void int_handler(int sig)
 #endif
 		getchar();
 #endif
+	if ( asir_texmacs ) {
+		printf("\2\verbatim:\2channel:prompt\5\2verbatim:interrupt>\5\5"); fflush(stdout);
+	}
 	while ( 1 ) {
 		char buf[BUFSIZ];
 		char c;
 
-		fprintf(stderr,"interrupt ?(q/t/c/d/u/w/?) "); fflush(stderr);
+		if ( asir_texmacs ) { printf("\2verbatim:"); fflush(stdout); }
+		fprintf(stream,"interrupt ?(q/t/c/d/u/w/?) "); fflush(stream);
+		if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 		buf[0] = '\n';
 		while ( buf[0] == '\n' )
 			fgets(buf,BUFSIZ,stdin);
 		switch ( c = buf[0] ) {
 			case 'q':
 				while ( 1 ) {
-					fprintf(stderr,"Abort this session? (y or n) "); fflush(stderr);
+					if ( asir_texmacs ) {
+						printf("\2verbatim:"); fflush(stdout);
+					}
+					fprintf(stream,"Abort this session? (y or n) "); fflush(stream);
+					if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 					fgets(buf,BUFSIZ,stdin);
 					if ( !strncmp(buf,"y",1) ) {
 						read_exec_file = 0;
-						fprintf(stderr,"Bye\n"); asir_terminate(1);
+						if ( asir_texmacs ) { 
+							printf("\2verbatim:"); fflush(stdout); 
+						}
+						fprintf(stream,"Bye\n");
+						if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
+						asir_terminate(1);
 					} else if ( !strncmp(buf,"n",1) ) {
 						restore_handler();
 						return;
@@ -530,7 +560,11 @@ void int_handler(int sig)
 			case 't':
 			case 'u':
 				while ( 1 ) {
-					fprintf(stderr,"Abort this computation? (y or n) "); fflush(stderr);
+					if ( asir_texmacs ) {
+						printf("\2verbatim:"); fflush(stdout);
+					}
+					fprintf(stream,"Abort this computation? (y or n) "); fflush(stream);
+					if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 					fgets(buf,BUFSIZ,stdin);
 					if ( !strncmp(buf,"y",1) )
 						break;
@@ -544,10 +578,14 @@ void int_handler(int sig)
 				restore_handler();
 				if ( c == 'u' ) {
 					if ( registered_handler ) {
-						fprintf(stderr,
+						if ( asir_texmacs ) {
+							printf("\2verbatim:"); fflush(stdout);
+						}
+						fprintf(stream,
 							"Calling the registered exception handler...");
 						bevalf(registered_handler,0);
-						fprintf(stderr, "done.\n");
+						fprintf(stream, "done.\n");
+						if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 					}
 				}
 				if ( read_exec_file ) {
@@ -567,9 +605,14 @@ void int_handler(int sig)
 				restore_handler();
 				return; break;
 			case 'w':
-				showpos(); break;
+				showpos();
+				break;
 			case '?': 
-				fprintf(stderr, "q:quit t:toplevel c:continue d:debug u:call registered handler w:where\n");
+				if ( asir_texmacs ) {
+					printf("\2verbatim:"); fflush(stdout);
+				}
+				fprintf(stream, "q:quit t:toplevel c:continue d:debug u:call registered handler w:where\n");
+				if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 				break;
 			default:
 				break;
@@ -767,7 +810,9 @@ char *get_intervalversion()
 void copyright()
 {
 	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	if ( asir_texmacs ) printf("\2verbatim:");
 	printf(format, get_intervalversion(), get_asir_version(), get_asir_distribution(), get_pariversion());
+	if ( asir_texmacs ) putchar('\5');
 }
 
 char *scopyright()

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.29 2004/02/09 08:23:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.30 2004/02/13 05:48:36 saito Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -73,6 +73,7 @@ int double_output;
 int real_digit;
 int real_binary;
 int print_quote;
+extern int asir_texmacs;
 
 #define TAIL
 #define PUTS(s) fputs(s,OUT)
@@ -261,57 +262,62 @@ BF a;
 #endif
 #endif
 
+#define DATA_BEGIN 2
+#define DATA_END 5
+
+extern FUNC user_print_function;
+
 void PRINTEXPR(vl,p)
 VL vl;
 Obj p;
 {
+	if ( asir_texmacs && !user_print_function ) printf("\2verbatim:");
 	if ( !p ) {
 		PRINTR(vl,(R)p);
-		return;
-	}
-
-	switch ( OID(p) ) {
-		case O_N:
-			PRINTNUM((Num)p); break;
-		case O_P:
-			PRINTP(vl,(P)p); break;
-		case O_R:
-			PRINTR(vl,(R)p); break;
-		case O_LIST:
-			PRINTLIST(vl,(LIST)p); break;
-		case O_VECT:
-			PRINTVECT(vl,(VECT)p); break;
-		case O_MAT:
-			PRINTMAT(vl,(MAT)p); break;
-		case O_STR:
-			PRINTSTR((STRING)p); break;
-		case O_COMP:
-			PRINTCOMP(vl,(COMP)p); break;
-		case O_DP:
-			PRINTDP(vl,(DP)p); break;
-		case O_USINT:
-			PRINTUI(vl,(USINT)p); break;
-		case O_GF2MAT:
-			PRINTGF2MAT(vl,(GF2MAT)p); break;
-		case O_ERR:
+	} else
+		switch ( OID(p) ) {
+			case O_N:
+				PRINTNUM((Num)p); break;
+			case O_P:
+				PRINTP(vl,(P)p); break;
+			case O_R:
+				PRINTR(vl,(R)p); break;
+			case O_LIST:
+				PRINTLIST(vl,(LIST)p); break;
+			case O_VECT:
+				PRINTVECT(vl,(VECT)p); break;
+			case O_MAT:
+				PRINTMAT(vl,(MAT)p); break;
+			case O_STR:
+				PRINTSTR((STRING)p); break;
+			case O_COMP:
+				PRINTCOMP(vl,(COMP)p); break;
+			case O_DP:
+				PRINTDP(vl,(DP)p); break;
+			case O_USINT:
+				PRINTUI(vl,(USINT)p); break;
+			case O_GF2MAT:
+				PRINTGF2MAT(vl,(GF2MAT)p); break;
+			case O_ERR:
 			PRINTERR(vl,(ERR)p); break;
-		case O_MATHCAP:
-			PRINTLIST(vl,((MATHCAP)p)->body); break;
-		case O_F:
-			PRINTLF(vl,(F)p); break;
-		case O_GFMMAT:
-			PRINTGFMMAT(vl,(GFMMAT)p); break;
-		case O_BYTEARRAY:
-			PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
-		case O_QUOTE:
-			PRINTQUOTE(vl,(QUOTE)p); break;
-		case O_SYMBOL:
-			PRINTSYMBOL((SYMBOL)p); break;
-		case O_RANGE:
-			PRINTRANGE(vl,(RANGE)p); break;
-		default:
-			break;
-	}
+			case O_MATHCAP:
+				PRINTLIST(vl,((MATHCAP)p)->body); break;
+			case O_F:
+				PRINTLF(vl,(F)p); break;
+			case O_GFMMAT:
+				PRINTGFMMAT(vl,(GFMMAT)p); break;
+			case O_BYTEARRAY:
+				PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
+			case O_QUOTE:
+				PRINTQUOTE(vl,(QUOTE)p); break;
+			case O_SYMBOL:
+				PRINTSYMBOL((SYMBOL)p); break;
+			case O_RANGE:
+				PRINTRANGE(vl,(RANGE)p); break;
+			default:
+				break;
+		}
+	if ( asir_texmacs && !user_print_function ) { putchar('\5'); fflush(stdout); }
 }
 
 void PRINTN(n)
