@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.13 2001/09/05 09:01:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.14 2001/10/09 01:36:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -65,19 +65,32 @@ struct ftab print_tab[] = {
 
 void Pprint(NODE arg,pointer *rp)
 {
-	printexpr(CO,ARG0(arg)); 
-	if ( argc(arg) == 2 )
-		switch ( QTOS((Q)ARG1(arg)) ) {
-			case 0:
-				break;
-			case 2:
-				fflush(asir_out); break;
-				break;
-			case 1: default:
-				putc('\n',asir_out); break;
+	Obj obj;
+	OPTLIST opt;
+
+	if ( arg ) {
+		obj = (Obj)ARG0(arg);
+		if ( NEXT(arg) ) {
+			opt = (OPTLIST)ARG1(arg);
+			if ( INT(opt) ) {
+				printexpr(CO,obj);
+				switch ( QTOS((Q)opt) ) {
+					case 0:
+						break;
+					case 2:
+						fflush(asir_out); break;
+						break;
+					case 1: default:
+						putc('\n',asir_out); break;
+				}
+			} else if ( OID(opt) == O_OPTLIST ) {
+			} else
+				error("print : invalid argument");
+		} else {
+			printexpr(CO,obj);
+			putc('\n',asir_out);
 		}
-	else
-		putc('\n',asir_out);
+	}
 	*rp = 0;
 }
 

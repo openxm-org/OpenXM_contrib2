@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.28 2003/05/24 10:42:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.29 2003/05/30 00:47:24 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -453,10 +453,11 @@ extern NODE PVSS;
 pointer evalf(FUNC f,FNODE a,FNODE opt)
 {
 	LIST args;
+	OPTLIST optlist;
 	pointer val;
 	int i,n,level;
-	NODE tn,sn,opts,opt1;
-    VS pvs,prev_mpvs;
+	NODE tn,sn,opts,opt1,dmy;
+    	VS pvs,prev_mpvs;
 	char errbuf[BUFSIZ];
 	static unsigned int stack_size;
 	static void *stack_base;
@@ -474,11 +475,30 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 	}
 	switch ( f->id ) {
 		case A_BIN:
+			if ( opt ) {
+				opts = BDY((LIST)eval(opt));
+				/* opts = ["opt1",arg1],... */
+				opt1 = BDY((LIST)BDY(opts));
+				if ( !strcmp(BDY((STRING)BDY(opt1)),"option_list") ) {
+					/*
+					 * the special option specification:
+					 *  option_list=[["o1","a1"],...]
+					 */
+					asir_assert(BDY(NEXT(opt1)),O_LIST,"evalf");
+					opts = BDY((LIST)BDY(NEXT(opt1)));
+				}
+			} else
+				opts = 0;
 			if ( !n ) {
 				cur_binf = f;
 				(*f->f.binf)(&val);
 			} else {
 				args = (LIST)eval(a);
+				if ( opts ) {
+					NEWOPTLIST(optlist);
+					BDY(optlist) = opts;
+					appendtonode(BDY(args),(pointer)optlist,&dmy);
+				}
 				cur_binf = f;
 				(*f->f.binf)(args?BDY(args):0,&val);
 			}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.37 2003/07/09 07:11:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.38 2003/10/20 07:18:42 saito Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,6 +118,7 @@ typedef void * pointer;
 #define O_GFMMAT 15
 #define O_BYTEARRAY 16
 #define O_QUOTE 17
+#define O_OPTLIST 18
 #define O_VOID -1
 
 #define N_Q 0
@@ -353,6 +354,12 @@ typedef struct oQUOTE {
 	short pad;
 	pointer body;
 } *QUOTE;
+
+typedef struct oOPTLIST {
+	short id;
+	short pad;
+	struct oNODE *body;
+} *OPTLIST;
 
 typedef struct oObj {
 	short id;
@@ -661,6 +668,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWMATHCAP(e) ((e)=(MATHCAP)MALLOC(sizeof(struct oMATHCAP)),OID(e)=O_MATHCAP)
 #define NEWBYTEARRAY(e) ((e)=(BYTEARRAY)MALLOC(sizeof(struct oBYTEARRAY)),OID(e)=O_BYTEARRAY)
 #define NEWQUOTE(e) ((e)=(QUOTE)MALLOC(sizeof(struct oQUOTE)),OID(e)=O_QUOTE)
+#define NEWOPTLIST(l) ((l)=(OPTLIST)MALLOC(sizeof(struct oOPTLIST)),OID(l)=O_OPTLIST)
 
 #define NEWNODE(a) ((a)=(NODE)MALLOC(sizeof(struct oNODE)))
 #define NEWDC(dc) ((dc)=(DCP)MALLOC(sizeof(struct oDCP)))

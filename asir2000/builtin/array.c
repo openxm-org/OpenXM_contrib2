@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.31 2003/07/01 08:12:37 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.32 2003/09/17 08:14:26 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -68,7 +68,7 @@ void Pgeneric_gauss_elim();
 void Pgeneric_gauss_elim_mod();
 
 void Pmat_to_gfmmat(),Plu_gfmmat(),Psolve_by_lu_gfmmat();
-void Pgeninvm_swap(), Premainder(), Psremainder(), Pvtol();
+void Pgeninvm_swap(), Premainder(), Psremainder(), Pvtol(), Pltov();
 void Pgeninv_sf_swap();
 void sepvect();
 void Pmulmat_gf2n();
@@ -108,6 +108,7 @@ struct ftab array_tab[] = {
 	{"sepvect",Psepvect,2},
 	{"qsort",Pqsort,-2},
 	{"vtol",Pvtol,1},
+	{"ltov",Pltov,1},
 	{"size",Psize,1},
 	{"det",Pdet,-2},
 	{"invmat",Pinvmat,-2},
@@ -594,6 +595,21 @@ void Pvtol(NODE arg,LIST *rp)
 		MKNODE(n1,a[i],n); n = n1;
 	}
 	MKLIST(*rp,n);
+}
+
+void Pltov(NODE arg,VECT *rp)
+{
+	NODE n;
+	VECT v;
+	int len,i;
+
+	asir_assert(ARG0(arg),O_LIST,"ltov");
+	n = (NODE)BDY((LIST)ARG0(arg));
+	len = length(n);
+	MKVECT(v,len);
+	for ( i = 0; i < len; i++, n = NEXT(n) )
+		BDY(v)[i] = BDY(n);
+	*rp = v;
 }
 
 void Premainder(NODE arg,Obj *rp)

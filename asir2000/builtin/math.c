@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.4 2000/12/07 07:06:41 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -65,8 +65,11 @@ struct ftab math_tab[] = {
 	{"dasin",Pdasin,1},
 	{"dacos",Pdacos,1},
 	{"datan",Pdatan,1},
+	{"floor",Pdfloor,1},
 	{"dfloor",Pdfloor,1},
+	{"ceil",Pdceil,1},
 	{"dceil",Pdceil,1},
+	{"rint",Pdrint,1},
 	{"drint",Pdrint,1},
 	{0,0,0},
 };
