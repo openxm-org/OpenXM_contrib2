@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.5 2001/12/21 08:23:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.6 2001/12/25 05:28:38 noro Exp $ 
 */
 #ifndef _COM_H_
 #define _COM_H_
@@ -69,6 +69,8 @@
 #define IS_CYGWIN 0
 #endif
 #include <setjmp.h>
+#else
+#define IS_CYGWIN 0
 #endif
 
 #define N32 0x80
