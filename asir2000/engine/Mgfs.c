@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.10 2001/09/03 01:04:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.11 2001/10/09 01:36:10 noro Exp $ */
 
 #include "ca.h"
 
@@ -537,4 +537,226 @@ void clearbm(int n,BM f)
 	dy = DEG(f);
 	for ( c = COEF(f), i = 0; i <= dy; i++ )
 		clearum(c[i],n);
+}
+
+static void create_bmono(P c,V x,int i,V y,int j,P *mono);
+
+struct lb {
+	int pos,len;
+	int *r;
+	int *hist;
+};
+
+static NODE insert_lb(NODE g,struct lb *a)
+{
+	NODE prev,cur,n;
+
+	prev = 0; cur = g;
+	while ( cur ) {
+		if ( a->pos < ((struct lb *)BDY(cur))->pos ) {
+			MKNODE(n,a,cur);
+			if ( !prev )
+				return n;
+			else {
+				NEXT(prev) = n;
+				return g;
+			}
+		} else {
+			prev = cur;
+			cur = NEXT(cur);
+		}
+	}
+	MKNODE(n,a,0);
+	NEXT(prev) = n;
+	return g;
+}
+
+static void lnf(int *r,int *h,int n,int len,NODE g)
+{
+	struct lb *t;
+	int pos,i,j,len1,c;
+	int *r1,*h1;
+
+	for ( ; g; g = NEXT(g) ) {
+		t = (struct lb *)BDY(g);
+		pos = t->pos;
+		if ( c = r[pos] ) {
+			c = _chsgnsf(c);
+			r1 = t->r;
+			h1 = t->hist;
+			len1 = t->len;
+			for ( i = pos; i < n; i++ )
+				if ( r1[i] )
+					r[i] = _ADDSF(r[i],_MULSF(r1[i],c));
+			for ( i = 0; i < len1; i++ )
+				if ( h1[i] )
+					h[i] = _ADDSF(h[i],_MULSF(h1[i],c));
+		}
+	}
+	for ( i = 0; i < n && !r[i]; i++ );
+	if ( i < n ) {
+		c = _invsf(r[i]);
+		for ( j = i; j < n; j++ )
+			if ( r[j] )
+				r[j] = _MULSF(r[j],c);	
+		for ( j = 0; j < len; j++ )
+			if ( h[j] ) 
+				h[j] = _MULSF(h[j],c);	
+	}
+}
+
+void sfmintdeg(VL vl,P fx,int dy,int c,P *fr)
+{
+	V x,y;
+	int dx,dxdy,i,j,k,l,d,len,len0,u,dyk;
+	UP *rx;
+	DCP dc;
+	P t,f,mono,f1;
+	UP ut,h;
+	int ***nf;
+	int *r,*hist,*prev,*r1;
+	struct lb *lb;
+	GFS s;
+	NODE g;
+
+	x = vl->v;
+	y = NEXT(vl)->v;
+	dx = getdeg(x,fx);
+	dxdy = dx*dy;
+	/* rx = -(fx-x^dx) */
+	rx = (UP *)CALLOC(dx,sizeof(UP));
+	for ( dc = DC(fx); dc; dc = NEXT(dc)) {
+		chsgnp(COEF(dc),&t);
+		ptoup(t,&ut);
+		rx[QTOS(DEG(dc))] = ut;
+	}
+	/* nf[d] = normal form table of monomials with total degree d */
+	nf = (int ***)CALLOC(dx+dy+1,sizeof(int **)); /* xxx */
+	nf[0] = (int **)CALLOC(1,sizeof(int *));
+
+	/* nf[0][0] = 1 */
+	r = (int *)CALLOC(dxdy,sizeof(int));
+	r[0] = _onesf();
+	nf[0][0] = r;
+
+	hist = (int *)CALLOC(1,sizeof(int));
+	hist[0] = _onesf();
+
+	lb = (struct lb *)CALLOC(1,sizeof(struct lb));
+	lb->pos = 0;
+	lb->r = r;
+	lb->hist = hist;
+	lb->len = 1;
+
+	/* g : table of normal form as linear form */
+	MKNODE(g,lb,0);
+
+	len = 1;
+	h = UPALLOC(dy);
+	for ( d = 1; ; d++ ) {
+		if ( d > c ){		
+			return;
+		}
+		nf[d] = (int **)CALLOC(d+1,sizeof(int *));
+		len0 = len;
+		len += d+1;
+
+		for ( i = d; i >= 0; i-- ) {
+			/* nf(x^(d-i)*y^i) = nf(y*nf(x^(d-i)*y^(i-1))) */
+			/* nf(x^d) = nf(nf(x^(d-1))*x) */
+			r = (int *)CALLOC(dxdy,sizeof(int));
+			if ( i == 0 ) {
+				prev = nf[d-1][0];
+				bcopy(prev,r+dy,(dxdy-dy)*sizeof(int));
+
+				/* create the head coeff */
+				for ( l = 0, k = dxdy-dy; l < dy; l++, k++ ) {
+					if ( prev[k] ) {
+						u = IFTOF(prev[k]);
+						MKGFS(u,s);
+					} else
+						s = 0;
+					COEF(h)[l] = (Num)s;
+				}
+				for ( l = dy-1; l >= 0 && !COEF(h)[l]; l--);
+				DEG(h) = l;
+
+				for ( k = 0, dyk = 0; k < dx; k++, dyk += dy ) {
+					tmulup(rx[k],h,dy,&ut);
+					if ( ut ) 
+						for ( l = 0; l < dy; l++ ) {
+							s = (GFS)COEF(ut)[l];
+							if ( s ) {
+								u = CONT(s);
+								r[dyk+l] = _ADDSF(r[dyk+l],FTOIF(u));
+							}
+						}
+				}
+			} else {
+				prev = nf[d-1][i-1];
+				for ( k = 0, dyk = 0; k < dx; k++, dyk += dy ) {
+					for ( l = 1; l < dy; l++ )
+						r[dyk+l] = prev[dyk+l-1];
+				}
+			}
+			nf[d][i] = r;
+			hist = (int *)CALLOC(len,sizeof(int));
+			hist[len0+i] = _onesf();
+			r1 = (int *)CALLOC(dxdy,sizeof(int));
+			bcopy(r,r1,dxdy*sizeof(int));
+			lnf(r1,hist,dxdy,len,g);
+			for ( k = 0; k < dxdy && !r1[k]; k++ );
+			if ( k == dxdy ) {
+				f = 0;
+				for ( k = j = 0; k <= d; k++ )
+					for ( i = 0; i <= k; i++, j++ )
+						if ( hist[j] ) {
+							u = IFTOF(hist[j]);
+							MKGFS(u,s);
+							/* mono = s*x^(k-i)*y^i */
+							create_bmono((P)s,x,k-i,y,i,&mono);
+							addp(vl,f,mono,&f1);
+							f = f1;
+						}
+				*fr = f;
+				return;
+			}	else {
+				lb = (struct lb *)CALLOC(1,sizeof(struct lb));
+				lb->pos = k;
+				lb->r = r1;
+				lb->hist = hist;
+				lb->len = len;
+				g = insert_lb(g,lb);
+			}
+		}
+	}
+}
+
+static void create_bmono(P c,V x,int i,V y,int j,P *mono)
+{
+	P t,s;
+
+	if ( !i )
+		if ( !j )
+			t = c;
+		else {
+			/* c*y^j */
+			MKV(y,t);
+			COEF(DC(t)) = c;
+			STOQ(j,DEG(DC(t)));
+		}
+	else if ( !j ) {
+		/* c*x^i */
+		MKV(x,t);
+		COEF(DC(t)) = c;
+		STOQ(i,DEG(DC(t)));
+	} else {
+		MKV(y,s);
+		COEF(DC(s)) = c;
+		STOQ(j,DEG(DC(s)));
+		MKV(x,t);
+		COEF(DC(t)) = s;
+		STOQ(i,DEG(DC(t)));
+	}
+	*mono = t;
 }
