@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.19 2001/10/30 07:25:58 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.20 2001/10/30 10:24:35 noro Exp $ */
 
 #include "ca.h"
 
@@ -27,7 +27,9 @@ void fctrsf(P p,DCP *dcp)
 
 	simp_ff((Obj)p,&obj); p = (P)obj;
 	if ( !p ) {
-		*dcp = 0; return;
+		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; 
+		NEXT(dc) = 0; *dcp = dc;
+		return;
 	}
 	mp = W_UMALLOC(UDEG(p));
 	ptosfum(p,mp);
@@ -510,7 +512,7 @@ void ptosfbm(int,P,BM);
 
 /* f = f(x,y) */
 
-void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
+void sfhensel(int count,P f,V x,int degbound,GFS *evp,P *sfp,ML *listp)
 {
 	int i;
 	int fn;
@@ -521,7 +523,7 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 	int dx,dy,bound;
 	GFS ev;
 	P f1,t,c,sf;
-	DCP dc;
+	DCP dc,dct,dc0;
 	UM q,fm,hm;
 	UM *gm;
 	struct oEGT tmp0,tmp1,eg_hensel,eg_hensel_t;
@@ -544,9 +546,35 @@ void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 		*listp = rlist = MLALLOC(1); rlist->n = fn; rlist->c[0] = 0;
 		return;
 	}
-	/* pass the the leading coeff. to the first element */
-	c = dc->c; dc = NEXT(dc);
-	mulp(vl,dc->c,c,&t); dc->c = t;
+	if ( degbound >= 0 ) {
+		/*
+		 * reconstruct dc so that
+		 * dc[1],... : factors satisfy degree bound
+		 * dc[0]     : product of others
+		 */
+		c = dc->c; dc = NEXT(dc);
+		dc0 = 0;
+		fn = 0;
+		while ( dc ) {
+			if ( getdeg(x,COEF(dc)) <= degbound ) {
+				dct = NEXT(dc); NEXT(dc) = dc0; dc0 = dc; dc = dct;
+				fn++;
+			} else {
+				mulp(vl,COEF(dc),c,&t); c = t;
+				dc = NEXT(dc);
+			}
+		}
+		if ( OID(c) == O_P ) {
+			NEWDC(dc); COEF(dc) = c; DEG(dc) = ONE; NEXT(dc) = dc0;
+			fn++;
+		} else {
+			mulp(vl,dc0->c,c,&t); dc0->c = t; dc = dc0;
+		}
+	} else {
+		/* pass the the leading coeff. to the first element */
+		c = dc->c; dc = NEXT(dc);
+		mulp(vl,dc->c,c,&t); dc->c = t;
+	}
 
 	/* convert mod y-a factors into UM */
 	gm = (UM *)ALLOCA(fn*sizeof(UM));
@@ -869,8 +897,10 @@ void sfsqfr(P f,DCP *dcp)
 		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = f; NEXT(dc) = 0; *dcp = dc;
 	} else if ( !NEXT(vl) )
 		sfusqfr(f,dcp);
+#if 0
 	else if ( !NEXT(NEXT(vl)) )
 		sfbsqfr(f,vl->v,NEXT(vl)->v,dcp);
+#endif
 	else
 		error("sfsqfr : not implemented yet");
 }
@@ -903,16 +933,21 @@ void sfusqfr(P f,DCP *dcp)
 	*dcp = dct;
 }
 
+void sfbsqfrmain(P f,V x,V y,DCP *dcp)
+{
+	/* XXX*/
+}
+
+/* f is bivariate */
+
 void sfbsqfr(P f,V x,V y,DCP *dcp)
 {
 	P t,rf,cx,cy;
 	VL vl,rvl;
-	DCP dcx,dcy;
+	DCP dcx,dcy,dct,dc;
 	struct oVL vl0,vl1;
 
-	/* vl = [x,y] */
-	vl0.v = x; vl0.next = &vl1; vl1.v = y; vl1.next = 0; vl = &vl0;
-	/* cy(y) = cont(f,x), f /= cx */
+	/* cy(y) = cont(f,x), f /= cy */
 	cont_pp_sfp(vl,f,&cy,&t); f = t;
 	/* rvl = [y,x] */
 	reordvar(vl,y,&rvl); reorderp(rvl,vl,f,&rf);
@@ -921,13 +956,32 @@ void sfbsqfr(P f,V x,V y,DCP *dcp)
 	reorderp(vl,rvl,rf,&f);
 
 	/* f -> cx*cy*f */
-	sfusqfr(cx,&dcx);
-	sfusqfr(cy,&dcy);
+	sfsqfr(cx,&dcx); dcx = NEXT(dcx);
+	sfsqfr(cy,&dcy); dcy = NEXT(dcy);
+	if ( dcx ) {
+		for ( dct = dcx; NEXT(dct); dct = NEXT(dct) );
+		NEXT(dct) = dcy;
+	} else
+		dcx = dcy;
+	if ( OID(f) == O_N )
+		*dcp = dcx;
+	else {
+		/* f must be bivariate */
+		sfbsqfrmain(f,x,y,&dc);
+		if ( dcx ) {
+			for ( dct = dcx; NEXT(dct); dct = NEXT(dct) );
+			NEXT(dct) = dc;
+		} else
+			dcx = dc;
+		*dcp = dcx;
+	}
 }
 
 void sfdtest(P,ML,V,V,DCP *);
 
-void sfbfctr(P f,V x,V y,DCP *dcp)
+/* if degbound >= 0 find factor s.t. deg_x(factor) <= degbound */
+
+void sfbfctr(P f,V x,V y,int degbound,DCP *dcp)
 {
 	ML list;
 	P sf;
@@ -937,7 +991,7 @@ void sfbfctr(P f,V x,V y,DCP *dcp)
 	int dx,dy;
 
 	/* sf(x) = f(x+ev) = list->c[0]*list->c[1]*... */
-	sfhensel(5,f,x,&ev,&sf,&list);
+	sfhensel(5,f,x,degbound,&ev,&sf,&list);
 	if ( list->n == 0 )
 		error("sfbfctr : short of evaluation points");
 	else if ( list->n == 1 ) {

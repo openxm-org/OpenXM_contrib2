@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.37 2001/10/09 01:36:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.38 2001/11/16 10:35:07 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1994,27 +1994,25 @@ int gbcheck(NODE f)
 	return 1;
 }
 
-void gbcheck_list(NODE f,LIST *gp,LIST *pp)
+void gbcheck_list(NODE f,VECT *gp,LIST *pp)
 {
 	int i;
 	NODE r,g,gall,u,u0,t;
+	VECT vect;
 	LIST pair;
 	DP_pairs d,l;
 	Q q1,q2;
 
-	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
+	setup_arrays(f,0,&r);
+	for ( gall = g = 0, d = 0; r; r = NEXT(r) ) {
 		i = (int)BDY(r);
 		d = updpairs(d,g,i);
 		g = updbase(g,i);
 		gall = append_one(gall,i);
 	}
-	for ( u0 = 0, t = gall; t; t = NEXT(t) ) {
-		NEXTNODE(u0,u);
-		BDY(u) = ps[(int)BDY(t)];
-	}
-	if ( u0 )
-		NEXT(u) = 0;
-	MKLIST(*gp,u);
+	NEWVECT(vect); vect->len = psn; vect->body = (pointer)ps;
+	*gp = vect;
+
 	for ( u0 = 0, l = d; l; l = NEXT(l) ) {
 		NEXTNODE(u0,u);
 		STOQ(l->dp1,q1);
@@ -2025,7 +2023,7 @@ void gbcheck_list(NODE f,LIST *gp,LIST *pp)
 	}
 	if ( u0 )
 		NEXT(u) = 0;
-	MKLIST(*pp,u);
+	MKLIST(*pp,u0);
 }
 
 int membercheck(NODE f,NODE x)

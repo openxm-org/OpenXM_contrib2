@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.11 2001/09/28 00:41:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.12 2001/11/01 10:00:19 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -1553,5 +1553,74 @@ def compute_coef_by_trace(I,Tr,Coef)
 		CI = CT;
 	}
 	Coef[I] = CI;
+}
+
+extern Gbcheck_DP,Gbcheck_IL$
+
+def register_data_for_gbcheck(DPL)
+{
+	for ( IL = [], I = length(DPL)-1; I >= 0; I-- )
+		IL = cons(I,IL);
+	Gbcheck_DP = newvect(length(DPL),DPL);
+	Gbcheck_IL = IL;
+}
+
+def sp_nf_for_gbcheck(Pair)
+{
+	SP = dp_sp(Gbcheck_DP[Pair[0]],Gbcheck_DP[Pair[1]]);
+	return dp_nf(Gbcheck_IL,SP,Gbcheck_DP,1);
+}
+
+def gbcheck(B,V,O)
+{
+	dp_ord(O);
+	D = map(dp_ptod,B,V);	
+	L = dp_gr_checklist(D);
+	DP = L[0]; Plist = L[1];
+	for ( IL = [], I = size(DP)[0]-1; I >= 0; I-- )
+		IL = cons(I,IL);
+	Procs = getopt(proc);
+	if ( type(Procs) == 4 ) {
+		map(ox_reset,Procs);
+		/* register DP in servers */
+		map(ox_cmo_rpc,Procs,"register_data_for_gbcheck",vtol(DP));
+		/* discard return value in stack */
+		map(ox_pop_cmo,Procs);
+		Free = Procs;
+		Busy = [];
+		T = Plist;
+		while ( T != [] || Busy != []  ){
+			if ( Free == [] || T == [] ) {
+				/* someone is working; wait for data */
+				Ready = ox_select(Busy);
+				Busy = setminus(Busy,Ready);
+				Free = append(Ready,Free);
+				for ( ; Ready != []; Ready = cdr(Ready) ) {
+					if ( ox_get(car(Ready)) ) {
+						map(ox_reset,Procs);
+						return 0;
+					}
+				}
+			} else {
+				P = car(Free);
+				Free = cdr(Free);
+				Busy = cons(P,Busy);
+				Pair = car(T);
+				T = cdr(T);
+				ox_cmo_rpc(P,"sp_nf_for_gbcheck",Pair);
+				ox_push_cmd(P,262); /* 262 = OX_popCMO */
+			}
+		}
+		map(ox_reset,Procs);
+		return 1;
+	} else {
+		for ( T = Plist; T != []; T = cdr(T) ) {
+			Pair = T[0];
+			SP = dp_sp(DP[Pair[0]],DP[Pair[1]]);
+			if ( dp_nf(IL,SP,DP,1) )
+				return 0;
+		}
+		return 1;
+	}
 }
 end$

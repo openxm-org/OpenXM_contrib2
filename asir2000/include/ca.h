@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.28 2001/09/17 10:32:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.29 2001/10/09 01:36:19 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -1852,7 +1852,7 @@ int berlekampsf(UM p,int df,UM *tab,UM *r);
 void minipolysf(UM f,UM p,UM mp);
 int find_rootsf(UM p,int *root);
 void canzassf(UM f,int d,UM *r);
-void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp);
+void sfhensel(int count,P f,V x,int degbound,GFS *evp,P *sfp,ML *listp);
 int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp);
 void sfgcdgen(P f,ML blist,ML *clistp);
 void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp);
@@ -1861,7 +1861,7 @@ void sfbmtop(BM f,V x,V y,P *fp);
 void sfsqfr(P f,DCP *dcp);
 void sfusqfr(P f,DCP *dcp);
 void sfbsqfr(P f,V x,V y,DCP *dcp);
-void sfbfctr(P f,V x,V y,DCP *dcp);
+void sfbfctr(P f,V x,V y,int degbound,DCP *dcp);
 void sfdtest(P f,ML list,V x,V y,DCP *dcp);
 int sfdtestmain(VL vl,P lcg,UM lcg0,BM lcy,P csum,ML list,
 	int k,int *in,P *fp,P *cofp);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.20 2001/10/05 10:23:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.21 2001/10/09 01:36:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -76,6 +76,7 @@ void Pdp_gr_print();
 void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod();
 void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
+void Pdp_gr_checklist();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -118,6 +119,7 @@ struct ftab dp_tab[] = {
 	{"dp_gr_main",Pdp_gr_main,5},
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
 	{"dp_gr_f_main",Pdp_gr_f_main,4},
+	{"dp_gr_checklist",Pdp_gr_checklist,1},
 
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
@@ -1285,6 +1287,23 @@ LIST *rp;
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	create_order_spec(ARG2(arg),&ord);
 	dp_f4_main(f,v,&ord,rp);
+}
+
+/* dp_gr_checklist(list of dp) */
+
+void Pdp_gr_checklist(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	VECT g;
+	LIST dp;
+	NODE r;
+
+	do_weyl = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_gr_checklist");
+	gbcheck_list(BDY((LIST)ARG0(arg)),&g,&dp);
+	r = mknode(2,g,dp);
+	MKLIST(*rp,r);
 }
 
 void Pdp_f4_mod_main(arg,rp)
