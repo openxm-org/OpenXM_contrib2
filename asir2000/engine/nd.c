@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.26 2003/08/07 09:47:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.27 2003/08/10 01:31:24 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -10,6 +10,8 @@
 #else
 #define INLINE
 #endif
+
+#define USE_GEOBUCKET 1
 
 #define REDTAB_LEN 32003
 
@@ -921,7 +923,7 @@ ND nd_add_q(ND p1,ND p2)
 	}
 }
 
-#if 1
+#if !USE_GEOBUCKET
 /* ret=1 : success, ret=0 : overflow */
 int nd_nf(int mod,ND g,int full,ND *rp)
 {
@@ -1001,118 +1003,6 @@ afo:
 	*rp = d;
 	return 1;
 }
-#else
-int nd_nf(int mod,ND g,int full,ND *rp)
-{
-	int hindex,index;
-	NDV p;
-	ND u,d,red;
-	NODE l;
-	NM mul,m,mrd;
-	int sugar,psugar,n,h_reducible;
-	PGeoBucket bucket;
-	int c,c1,c2;
-	Q cg,cred,gcd,zzz;
-	RHist h;
-
-	if ( !g ) {
-		*rp = 0;
-		return 1;
-	}
-	sugar = SG(g);
-	n = NV(g);
-	bucket = create_pbucket();
-	add_pbucket(mod,bucket,g,nd_length(g));
-	d = 0;
-	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
-	while ( 1 ) {
-		hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
-		if ( hindex < 0 ) {
-			if ( d )
-				SG(d) = sugar;
-			*rp = d;
-			return 1;
-		}
-		g = bucket->body[hindex];
-		index = nd_find_reducer(g);
-		if ( index >= 0 ) {
-			h = nd_psh[index];
-			ndl_sub(HDL(g),DL(h),DL(mul));
-			TD(mul) = HTD(g)-TD(h);
-			if ( ndl_check_bound2(index,DL(mul)) ) {
-				nd_free(d);
-				free_pbucket(bucket);
-				*rp = 0;
-				return 0;
-			}
- 			if ( mod ) {
-				p = nd_ps[index];
-				c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
-				DMAR(c1,c2,0,mod,c); CM(mul) = c;
-			} else {
-				p = nd_psq[index];
-				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
-				chsgnq(cg,&CQ(mul));
-				nd_mul_c_q(d,cred);
-				mulq_pbucket(bucket,cred);
-				g = bucket->body[hindex];
-			}
-			red = ndv_mul_nm(mod,p,mul);
-			bucket->body[hindex] = nd_remove_head(g);
-			red = nd_remove_head(red);
-			add_pbucket(mod,bucket,red,LEN(p)-1);
-			sugar = MAX(sugar,SG(p)+TD(mul));
-		} else if ( !full ) {
-			g = normalize_pbucket(mod,bucket);
-			if ( g )
-				SG(g) = sugar;
-			*rp = g;
-			return 1;
-		} else {
-			m = BDY(g); 
-			if ( NEXT(m) ) {
-				BDY(g) = NEXT(m); NEXT(m) = 0;
-			} else {
-				FREEND(g); g = 0;
-			}
-			bucket->body[hindex] = g;
-			NEXT(m) = 0;
-			if ( d ) {
-				for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
-				NEXT(mrd) = m;
-			} else {
-				MKND(n,m,d);
-			}
-		}
-	}
-}
-#endif
-
-/* input : list of DP, cand : list of DP */
-
-int nd_check_candidate(NODE input,NODE cand)
-{
-	int n,i,stat;
-	ND nf,d;
-	NODE t;
-
-	nd_setup(0,cand);
-
-	/* membercheck : list is a subset of Id(cand) ? */
-	for ( t = input; t; t = NEXT(t) ) {
-		d = dptond(0,(DP)BDY(t));
-		stat = nd_nf_direct(0,d,nd_psq,n,0,&nf);
-		if ( !stat )
-			nd_reconstruct_direct(0,nd_psq,n);
-		else if ( nf )
-			return 0;
-	}
-	/* gbcheck : cand is a GB of Id(cand) ? */
-	if ( !nd_gb(0,1) )
-		return 0;
-	/* XXX */
-	return 1;
-}
 
 int nd_nf_direct(int mod,ND g,NDV *ps,int len,int full,ND *rp)
 {
@@ -1187,6 +1077,238 @@ int nd_nf_direct(int mod,ND g,NDV *ps,int len,int full,ND *rp)
 	if ( d )
 		SG(d) = sugar;
 	*rp = d;
+	return 1;
+}
+#else
+int nd_nf(int mod,ND g,int full,ND *rp)
+{
+	int hindex,index;
+	NDV p;
+	ND u,d,red;
+	NODE l;
+	NM mul,m,mrd;
+	int sugar,psugar,n,h_reducible;
+	PGeoBucket bucket;
+	int c,c1,c2;
+	Q cg,cred,gcd,zzz;
+	RHist h;
+	double hmag,gmag;
+
+	if ( !g ) {
+		*rp = 0;
+		return 1;
+	}
+	sugar = SG(g);
+	n = NV(g);
+	if ( !mod )
+		hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+	bucket = create_pbucket();
+	add_pbucket(mod,bucket,g,nd_length(g));
+	d = 0;
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
+	while ( 1 ) {
+		hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
+		if ( hindex < 0 ) {
+			if ( d )
+				SG(d) = sugar;
+			*rp = d;
+			return 1;
+		}
+		g = bucket->body[hindex];
+		index = nd_find_reducer(g);
+		if ( index >= 0 ) {
+			h = nd_psh[index];
+			ndl_sub(HDL(g),DL(h),DL(mul));
+			TD(mul) = HTD(g)-TD(h);
+			if ( ndl_check_bound2(index,DL(mul)) ) {
+				nd_free(d);
+				free_pbucket(bucket);
+				*rp = 0;
+				return 0;
+			}
+ 			if ( mod ) {
+				p = nd_ps[index];
+				c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
+				DMAR(c1,c2,0,mod,c); CM(mul) = c;
+			} else {
+				p = nd_psq[index];
+				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
+				chsgnq(cg,&CQ(mul));
+				nd_mul_c_q(d,cred);
+				mulq_pbucket(bucket,cred);
+				g = bucket->body[hindex];
+				gmag = (double)p_mag((P)HCQ(g));
+			}
+			red = ndv_mul_nm(mod,p,mul);
+			bucket->body[hindex] = nd_remove_head(g);
+			red = nd_remove_head(red);
+			add_pbucket(mod,bucket,red,LEN(p)-1);
+			sugar = MAX(sugar,SG(p)+TD(mul));
+			if ( !mod && hmag && (gmag > hmag) ) {
+				g = normalize_pbucket(mod,bucket);
+				if ( !g ) {
+					if ( d )
+						SG(d) = sugar;
+					*rp = d;
+					return 1;
+				}
+				nd_removecont2(d,g);
+				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+				add_pbucket(mod,bucket,g,nd_length(g)-1);			
+			}
+		} else if ( !full ) {
+			g = normalize_pbucket(mod,bucket);
+			if ( g )
+				SG(g) = sugar;
+			*rp = g;
+			return 1;
+		} else {
+			m = BDY(g); 
+			if ( NEXT(m) ) {
+				BDY(g) = NEXT(m); NEXT(m) = 0;
+			} else {
+				FREEND(g); g = 0;
+			}
+			bucket->body[hindex] = g;
+			NEXT(m) = 0;
+			if ( d ) {
+				for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
+				NEXT(mrd) = m;
+			} else {
+				MKND(n,m,d);
+			}
+		}
+	}
+}
+
+int nd_nf_direct(int mod,ND g,NDV *ps,int len,int full,ND *rp)
+{
+	int hindex,index;
+	NDV p;
+	ND u,d,red;
+	NODE l;
+	NM mul,m,mrd;
+	int sugar,psugar,n,h_reducible;
+	PGeoBucket bucket;
+	int c,c1,c2;
+	Q cg,cred,gcd,zzz;
+	RHist h;
+	double hmag,gmag;
+
+	if ( !g ) {
+		*rp = 0;
+		return 1;
+	}
+	sugar = SG(g);
+	n = NV(g);
+#if 0
+	if ( !mod )
+		hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+#else
+	/* XXX */
+	hmag = 0;
+#endif
+	bucket = create_pbucket();
+	add_pbucket(mod,bucket,g,nd_length(g));
+	d = 0;
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
+	while ( 1 ) {
+		hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
+		if ( hindex < 0 ) {
+			if ( d )
+				SG(d) = sugar;
+			*rp = d;
+			return 1;
+		}
+		g = bucket->body[hindex];
+		index = nd_find_reducer_direct(g,ps,len);
+		if ( index >= 0 ) {
+			p = ps[index];
+			ndl_sub(HDL(g),HDL(p),DL(mul));
+			TD(mul) = HTD(g)-HTD(p);
+			if ( ndl_check_bound2_direct(HDL(p),DL(mul)) ) {
+				nd_free(d);
+				free_pbucket(bucket);
+				*rp = 0;
+				return 0;
+			}
+ 			if ( mod ) {
+				c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
+				DMAR(c1,c2,0,mod,c); CM(mul) = c;
+			} else {
+				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
+				chsgnq(cg,&CQ(mul));
+				nd_mul_c_q(d,cred);
+				mulq_pbucket(bucket,cred);
+				g = bucket->body[hindex];
+				gmag = (double)p_mag((P)HCQ(g));
+			}
+			red = ndv_mul_nm(mod,p,mul);
+			bucket->body[hindex] = nd_remove_head(g);
+			red = nd_remove_head(red);
+			add_pbucket(mod,bucket,red,LEN(p)-1);
+			sugar = MAX(sugar,SG(p)+TD(mul));
+			if ( !mod && hmag && (gmag > hmag) ) {
+				g = normalize_pbucket(mod,bucket);
+				if ( !g ) {
+					if ( d )
+						SG(d) = sugar;
+					*rp = d;
+					return 1;
+				}
+				nd_removecont2(d,g);
+				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+				add_pbucket(mod,bucket,g,nd_length(g)-1);			
+			}
+		} else if ( !full ) {
+			g = normalize_pbucket(mod,bucket);
+			if ( g )
+				SG(g) = sugar;
+			*rp = g;
+			return 1;
+		} else {
+			m = BDY(g); 
+			if ( NEXT(m) ) {
+				BDY(g) = NEXT(m); NEXT(m) = 0;
+			} else {
+				FREEND(g); g = 0;
+			}
+			bucket->body[hindex] = g;
+			NEXT(m) = 0;
+			if ( d ) {
+				for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
+				NEXT(mrd) = m;
+			} else {
+				MKND(n,m,d);
+			}
+		}
+	}
+}
+#endif
+
+/* input : list of DP, cand : list of DP */
+
+int nd_check_candidate(NODE input,NODE cand)
+{
+	int n,i,stat;
+	ND nf,d;
+	NODE t;
+
+	nd_setup(0,cand);
+
+	/* membercheck : list is a subset of Id(cand) ? */
+	for ( t = input; t; t = NEXT(t) ) {
+		d = dptond(0,(DP)BDY(t));
+		stat = nd_nf_direct(0,d,nd_psq,n,0,&nf);
+		if ( !stat )
+			nd_reconstruct_direct(0,nd_psq,n);
+		else if ( nf )
+			return 0;
+	}
+	/* gbcheck : cand is a GB of Id(cand) ? */
+	if ( !nd_gb(0,1) )
+		return 0;
+	/* XXX */
 	return 1;
 }
 
@@ -1360,8 +1482,11 @@ ND normalize_pbucket(int mod,PGeoBucket g)
 	ND r,t;
 
 	r = 0;
-	for ( i = 0; i <= g->m; i++ )
+	for ( i = 0; i <= g->m; i++ ) {
 		r = nd_add(mod,r,g->body[i]);
+		g->body[i] = 0;
+	}
+	g->m = -1;
 	return r;
 }
 
