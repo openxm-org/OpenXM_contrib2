@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.43 2004/02/04 07:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.44 2004/02/05 08:28:53 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,6 +120,7 @@ typedef void * pointer;
 #define O_QUOTE 17
 #define O_OPTLIST 18
 #define O_SYMBOL 19
+#define O_RANGE 20
 #define O_VOID -1
 
 #define N_Q 0
@@ -362,12 +363,19 @@ typedef struct oOPTLIST {
 	struct oNODE *body;
 } *OPTLIST;
 
-typedef struct oSymbol {
+typedef struct oSYMBOL {
 	short id;
 	short pad;
 	char *name;
 	int value;
-} *Symbol;
+} *SYMBOL;
+
+typedef struct oRANGE {
+	short id;
+	short pad;
+	struct oObj *start,*end;
+} *RANGE;
+
 
 typedef struct oObj {
 	short id;
@@ -702,6 +710,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWQUOTE(e) ((e)=(QUOTE)MALLOC(sizeof(struct oQUOTE)),OID(e)=O_QUOTE)
 #define NEWOPTLIST(l) ((l)=(OPTLIST)MALLOC(sizeof(struct oOPTLIST)),OID(l)=O_OPTLIST)
 #define NEWSYMBOL(l) ((l)=(SYMBOL)MALLOC(sizeof(struct oSYMBOL)),OID(l)=O_SYMBOL)
+#define NEWRANGE(l) ((l)=(RANGE)MALLOC(sizeof(struct oRANGE)),OID(l)=O_RANGE)
 
 #define NEWNODE(a) ((a)=(NODE)MALLOC(sizeof(struct oNODE)))
 #define NEWDC(dc) ((dc)=(DCP)MALLOC(sizeof(struct oDCP)))

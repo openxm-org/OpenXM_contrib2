@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.25 2004/02/04 07:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.26 2004/02/05 08:28:54 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -300,7 +300,7 @@ extern NODE usrf,sysf,noargsysf,ubinf,parif,ONENODE;
 extern int nextbp,nextbplevel;
 extern int Verbose;
 extern int do_quiet;
-extern Symbol Symbol_grlex, Symbol_glex, Symbol_lex;
+extern SYMBOL Symbol_grlex, Symbol_glex, Symbol_lex;
 
 #if defined(VISUAL_LIB)
 #include <w_stdio.h>

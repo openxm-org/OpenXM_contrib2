@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.44 2004/02/04 07:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.45 2004/02/05 08:28:53 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -134,10 +134,10 @@ NODE MODULE_LIST;
 MODULE CUR_MODULE;
 char *CUR_FUNC;
 
-struct oSymbol oGrlex, oGlex, oLex;
-Symbol Symbol_grlex = &oGrlex;
-Symbol Symbol_glex = &oGlex;
-Symbol Symbol_lex = &oLex;;
+struct oSYMBOL oGrlex, oGlex, oLex;
+SYMBOL Symbol_grlex = &oGrlex;
+SYMBOL Symbol_glex = &oGlex;
+SYMBOL Symbol_lex = &oLex;;
 
 struct oF oF_TRUE,oF_FALSE;
 F F_TRUE = &oF_TRUE;  

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.27 2003/12/25 02:40:24 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.28 2004/02/04 07:42:07 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -108,6 +108,7 @@ int print_quote;
 #define PRINTUM printum
 #define PRINTSF printsf
 #define PRINTSYMBOL printsymbol
+#define PRINTRANGE printrange
 #endif
 
 #ifdef SPRINT
@@ -156,6 +157,7 @@ extern int print_quote;
 #define PRINTUM sprintum
 #define PRINTSF sprintsf
 #define PRINTSYMBOL sprintsymbol
+#define PRINTRANGE sprintrange
 #endif
 
 void PRINTEXPR();
@@ -188,6 +190,7 @@ void PRINTLOP();
 void PRINTQOP();
 void PRINTSF();
 void PRINTSYMBOL();
+void PRINTRANGE();
 
 #ifdef FPRINT
 void output_init() {
@@ -299,7 +302,9 @@ Obj p;
 		case O_QUOTE:
 			PRINTQUOTE(vl,(QUOTE)p); break;
 		case O_SYMBOL:
-			PRINTSYMBOL((Symbol)p); break;
+			PRINTSYMBOL((SYMBOL)p); break;
+		case O_RANGE:
+			PRINTRANGE(vl,(RANGE)p); break;
 		default:
 			break;
 	}
@@ -1177,7 +1182,16 @@ unsigned int i;
 	}
 }
 
-void PRINTSYMBOL(Symbol p)
+void PRINTSYMBOL(SYMBOL sym)
 {
-	PUTS(p->name);
+	PUTS(sym->name);
+}
+
+void PRINTRANGE(VL vl,RANGE p)
+{
+	PUTS("range(");
+	PRINTEXPR(vl,p->start);
+	PUTS(",");
+	PRINTEXPR(vl,p->end);
+	PUTS(")");
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.27 2004/02/03 23:31:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.28 2004/02/05 08:28:53 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1415,15 +1415,15 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 	NODE wb,t,p;
 	struct order_spec *spec;
 	VL tvl;
-	int n,i,j,k,l,len;
+	int n,i,j,k,l,start,end,len,w;
 	int *dw;
 	struct sparse_weight *sw;
 	struct weight_or_block *w_or_b;
 	Obj a0;
 	NODE a;
-	V v;
-	Symbol sym;
-	int start;
+	V v,sv,ev;
+	SYMBOL sym;
+	int *top;
 
 	/* l = number of vars in vl */
 	for ( l = 0, tvl = vl; tvl; tvl = NEXT(tvl), l++ );
@@ -1436,7 +1436,12 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 	spec->nv = l;
 	spec->ord.composite.length = n;
 	w_or_b = spec->ord.composite.w_or_b = (struct weight_or_block *)
-		MALLOC(sizeof(struct weight_or_block)*n);
+		MALLOC(sizeof(struct weight_or_block)*(n+1));
+
+	/* top : register the top variable in each w_or_b specification */
+	top = (int *)ALLOCA(l*sizeof(int));
+	for ( i = 0; i < l; i++ ) top[i] = 0;
+
 	for ( t = wb, i = 0; t; t = NEXT(t), i++ ) {
 		a = BDY((LIST)BDY(t));
 		len = length(a);
@@ -1449,6 +1454,11 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 			w_or_b[i].type = IS_DENSE_WEIGHT;
 			w_or_b[i].length = len;
 			w_or_b[i].body.dense_weight = dw;
+
+			/* find the top */
+			for ( k = 0; k < len && !dw[k]; k++ );
+			if ( k < len ) top[k] = 1;
+
 		} else if ( OID(a0) == O_P ) {
 			/* a is a sparse weight vector */
 			len >>= 1;
@@ -1466,16 +1476,57 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 			w_or_b[i].type = IS_SPARSE_WEIGHT;
 			w_or_b[i].length = len;
 			w_or_b[i].body.sparse_weight = sw;
+
+			/* find the top */
+			for ( k = 0; k < len && !sw[k].value; k++ );
+			if ( k < len ) top[sw[k].pos] = 1;
+		} else if ( OID(a0) == O_RANGE ) {
+			/* [range(v1,v2),w] */
+			sv = VR((P)(((RANGE)a0)->start));
+			ev = VR((P)(((RANGE)a0)->end));
+			for ( tvl = vl, start = 0; tvl && tvl->v != sv; start++, tvl = NEXT(tvl) );
+			if ( !tvl )
+				error("invalid range");
+			for ( end = start; tvl && tvl->v != ev; end++, tvl = NEXT(tvl) );
+			if ( !tvl )
+				error("invalid range");
+			len = end-start+1;
+			sw = (struct sparse_weight *)
+				MALLOC(sizeof(struct sparse_weight)*len);
+			w = QTOS((Q)BDY(NEXT(a)));
+			for ( tvl = vl, k = 0; k < start; k++, tvl = NEXT(tvl) );
+			for ( j = 0 ; k <= end; k++, tvl = NEXT(tvl), j++ ) {
+				sw[j].pos = k;
+				sw[j].value = w;
+			}
+			w_or_b[i].type = IS_SPARSE_WEIGHT;
+			w_or_b[i].length = len;
+			w_or_b[i].body.sparse_weight = sw;
+
+			/* register the top */
+			if ( w ) top[start] = 1;
 		} else if ( OID(a0) == O_SYMBOL ) {
 			/* a is a block */
-			sym = (Symbol)a0; a = NEXT(a); len--;
-			for ( start = 0, tvl = vl; tvl->v != VR((P)BDY(a));
+			sym = (SYMBOL)a0; a = NEXT(a); len--;
+			if ( OID((Obj)BDY(a)) == O_RANGE ) {
+				sv = VR((P)(((RANGE)BDY(a))->start));
+				ev = VR((P)(((RANGE)BDY(a))->end));
+				for ( tvl = vl, start = 0; tvl && tvl->v != sv; start++, tvl = NEXT(tvl) );
+				if ( !tvl )
+					error("invalid range");
+				for ( end = start; tvl && tvl->v != ev; end++, tvl = NEXT(tvl) );
+				if ( !tvl )
+					error("invalid range");
+				len = end-start+1;
+			} else {
+				for ( start = 0, tvl = vl; tvl->v != VR((P)BDY(a));
 				tvl = NEXT(tvl), start++ );
-			for ( p = NEXT(a), tvl = NEXT(tvl); p;
-				p = NEXT(p), tvl = NEXT(tvl) )
-				if ( tvl->v != VR((P)BDY(p)) ) break;
-			if ( p )
-				error("a block must be contiguous");
+				for ( p = NEXT(a), tvl = NEXT(tvl); p;
+					p = NEXT(p), tvl = NEXT(tvl) )
+					if ( tvl->v != VR((P)BDY(p)) ) break;
+				if ( p )
+					error("a block must be contiguous");
+			}
 			w_or_b[i].type = IS_BLOCK;
 			w_or_b[i].length = len;
 			w_or_b[i].body.block.start = start;
@@ -1486,8 +1537,20 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 			else if ( !strcmp(sym->name,"@lex") )
 				w_or_b[i].body.block.order = 2;
 			else
-				error("invalid ordernam");
+				error("invalid ordername");
+			/* register the tops */
+			for ( j = 0, k = start; j < len; j++, k++ )
+				top[k] = 1;
 		}
+	}
+	for ( k = 0; k < l && top[k]; k++ );
+	if ( k < l ) {
+		/* incomplete order specification; add @grlex */
+		w_or_b[n].type = IS_BLOCK;
+		w_or_b[n].length = l;
+		w_or_b[n].body.block.start = 0;
+		w_or_b[n].body.block.order = 0;
+		spec->ord.composite.length = n+1;
 	}
 	if ( 1 ) print_composite_order_spec(spec);
 }

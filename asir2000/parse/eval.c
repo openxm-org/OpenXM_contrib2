@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.29 2003/05/30 00:47:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.30 2003/11/08 01:12:03 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -84,6 +84,7 @@ pointer eval(FNODE f)
 	GF2N gf2n;
 	GFPN gfpn;
 	GFSN gfsn;
+	RANGE range;
 
 #if defined(VISUAL)
 	if ( recv_intr ) {

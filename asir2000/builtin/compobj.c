@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.5 2002/01/22 01:00:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.6 2003/12/29 10:53:12 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,10 +53,12 @@
 
 void Parfreg();
 void Pstruct_type();
+void Prange();
 
 struct ftab comp_tab[] = {
 	{"arfreg",Parfreg,8},
 	{"struct_type",Pstruct_type,1},
+	{"range",Prange,2},
 	{0,0,0},
 };
 
@@ -113,4 +115,14 @@ Q *rp;
 	t = (P)ARG6(arg); s[i].arf.chsgn = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
 	t = (P)ARG7(arg); s[i].arf.comp = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
 	*rp = ONE;
+}
+
+void Prange(NODE arg,RANGE *rp)
+{
+	RANGE range;
+
+	NEWRANGE(range);
+	range->start = (Obj)ARG0(arg);
+	range->end = (Obj)ARG1(arg);
+	*rp = range;
 }
