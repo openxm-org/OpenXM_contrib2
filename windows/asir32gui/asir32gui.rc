@@ -65,10 +65,9 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_DEBUGFRAME          ICON    DISCARDABLE     "res\\idr_main.ico"
-IDR_MAINFRAME           ICON    DISCARDABLE     "res\\std.ico"
-IDR_ASIR32TYPE          ICON    DISCARDABLE     "res\\asir32guiDoc.ico"
 IDR_HOPO                ICON    DISCARDABLE     "res\\std.ico"
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\std.ico"
+IDR_DEBUGFRAME          ICON    DISCARDABLE     "res\\std.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -76,7 +75,7 @@ IDR_HOPO                ICON    DISCARDABLE     "res\\std.ico"
 //
 
 IDR_MAINFRAME           BITMAP  MOVEABLE PURE   "res\\Toolbar.bmp"
-IDR_DEBUGFRAME          BITMAP  MOVEABLE PURE   "res\\mainfram.bmp"
+//IDR_DEBUGFRAME          BITMAP  MOVEABLE PURE   "res\\mainfram.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -194,7 +193,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " ﬁ∞ºﬁÆ›èÓïÒ(asir32gui)"
 FONT 9, "ÇlÇr ÇoÉSÉVÉbÉN"
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    ICON            128,IDC_STATIC,11,17,20,20
     LTEXT           "asir32gui Version 1.0",IDC_STATIC,40,10,119,8,
                     SS_NOPREFIX
     LTEXT           "Copyright (C) 1998",IDC_STATIC,40,25,119,8
