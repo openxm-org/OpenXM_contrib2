@@ -45,15 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.2 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pprint();
+void Pquotetolist();
 
 struct ftab print_tab[] = {
 	{"print",Pprint,-2},
+	{"quotetolist",Pquotetolist,1},
 	{0,0,0},
 };
 
@@ -75,4 +77,151 @@ pointer *rp;
 	else
 		putc('\n',asir_out);
 	*rp = 0;
+}
+
+void fnodetotree();
+
+void Pquotetolist(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	asir_assert(ARG0(arg),O_QUOTE,"quotetolist");	
+	fnodetotree((FNODE)BDY((QUOTE)(ARG0(arg))),rp);
+}
+
+void fnodetotree(f,rp)
+FNODE f;
+Obj *rp;
+{
+	Obj a1,a2;
+	NODE n,t,t0;
+	STRING head;
+	LIST r,arg;
+	char *opname;
+
+	if ( !f ) {
+		*rp = 0;
+		return;
+	}
+	switch ( f->id ) {
+		case I_BOP: case I_COP: I_LOP:
+			/* arg list */
+			fnodetotree((FNODE)FA1(f),&a1);
+			fnodetotree((FNODE)FA2(f),&a2);
+			n = mknode(2,a1,a2); MKLIST(arg,n);
+
+			/* head */
+			switch ( f->id ) {
+				case I_BOP:
+					MKSTR(head,((ARF)FA0(f))->name); break;
+				case I_COP:
+					switch( (cid)FA0(f) ) {
+						case C_EQ: opname = "=="; break;
+						case C_NE: opname = "!="; break;
+						case C_GT: opname = ">"; break;
+						case C_LT: opname = "<"; break;
+						case C_GE: opname = ">="; break;
+						case C_LE: opname = "<="; break;
+					}
+					MKSTR(head,opname); break;
+				case I_LOP:
+					switch( (lid)FA0(f) ) {
+						case L_EQ: opname = "@=="; break;
+						case L_NE: opname = "@!="; break;
+						case L_GT: opname = "@>"; break;
+						case L_LT: opname = "@<"; break;
+						case L_GE: opname = "@>="; break;
+						case L_LE: opname = "@<="; break;
+						case L_AND: opname = "@&&"; break;
+						case L_OR: opname = "@||"; break;
+						case L_NOT: opname = "@!"; break;
+					}
+					MKSTR(head,opname); break;
+			}
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_AND:
+			fnodetotree((FNODE)FA0(f),&a1);
+			fnodetotree((FNODE)FA1(f),&a2);
+			n = mknode(2,a1,a2); MKLIST(arg,n);
+			MKSTR(head,"&&");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_OR:
+			fnodetotree((FNODE)FA0(f),&a1);
+			fnodetotree((FNODE)FA1(f),&a2);
+			n = mknode(2,a1,a2); MKLIST(arg,n);
+			MKSTR(head,"||");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_NOT:
+			fnodetotree((FNODE)FA0(f),&a1);
+			n = mknode(1,a1); MKLIST(arg,n);
+			MKSTR(head,"!");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_CE:
+			fnodetotree((FNODE)FA0(f),&a1);
+			fnodetotree((FNODE)FA1(f),&a2);
+			n = mknode(2,a1,a2); MKLIST(arg,n);
+			MKSTR(head,"?:");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_EV: case I_LIST:
+			n = (NODE)FA0(f);
+			for ( t0 = 0; n; n = NEXT(n) ) {
+				NEXTNODE(t0,t);
+				fnodetotree(BDY(n),&BDY(t));
+			}
+			if ( t0 )
+				NEXT(t) = 0;
+			MKLIST(arg,t0);
+			switch ( f->id ) {
+				case I_LIST:
+					*rp = (Obj)arg; break;
+				case I_EV:
+					MKSTR(head,"exponent_vector");
+					n = mknode(2,head,arg);
+					MKLIST(r,n);
+					*rp = (Obj)r;
+					break;
+			}
+			break;
+		case I_FUNC:
+			fnodetotree((FNODE)FA1(f),&arg);
+			MKSTR(head,((FUNC)FA0(f))->name);
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_CAR:
+			fnodetotree((FNODE)FA0(f),&arg);
+			MKSTR(head,"car");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_CDR:
+			fnodetotree((FNODE)FA0(f),&arg);
+			MKSTR(head,"cdr");
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
+			break;
+		case I_FORMULA:
+			*rp = (Obj)FA0(f);
+			break;
+		default:
+			error("fnodetotree : not implemented yet");
+	}
 }

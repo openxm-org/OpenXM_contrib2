@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.12 2001/03/15 05:52:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.13 2001/04/20 02:34:23 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -64,6 +64,9 @@ FILE *asir_out;
 char DFORMAT[BUFSIZ];
 int hex_output;
 int fortran_output;
+int double_output;
+int real_digit;
+int print_quote;
 
 #define TAIL
 #define PUTS(s) fputs(s,OUT)
@@ -106,6 +109,7 @@ extern int hex_output;
 extern int fortran_output;
 extern int double_output;
 extern int real_digit;
+extern int print_quote;
 
 #define TAIL while ( *OUT ) OUT++;
 #define PUTS(s) strcat(OUT,s)
@@ -174,7 +178,8 @@ P p;
 {
 	if ( NUM(p) )
 #if defined(INTERVAL)
-		if ( NID(p) != N_IP && compnum(CO,(Num)p,0) < 0 ) 
+		if ( NID(p) != N_IP && NID(p) != N_ID && NID(p) != N_IT && NID(p) != N_IF
+			&& compnum(CO,(Num)p,0) < 0 ) 
 #else
 		if ( compnum(CO,(Num)p,0) < 0 ) 
 #endif
@@ -336,21 +341,21 @@ Num q;
 #if defined(INTERVAL)
 				case MID_PRINTF_E:
 #endif
-					TAIL PRINTF(OUT,"%.15e",BDY((Real)q));
+					TAIL PRINTF(OUT,"%.16e",BDY((Real)q));
 					break;
 				case PRINTF_G:
 #if defined(INTERVAL)
 				case MID_PRINTF_G:
 #endif
 				default:
-				if ( real_digit ) {
-					sprintf(real_format,
-						double_output?"%%.%df":"%%.%dg",real_digit);
-					TAIL PRINTF(OUT,real_format,BDY((Real)q));
-				} else {
-					TAIL PRINTF(OUT,double_output?"%f":"%g",BDY((Real)q));
-				}
-				break;
+					if ( real_digit ) {
+						sprintf(real_format,
+							double_output?"%%.%df":"%%.%dg",real_digit);
+						TAIL PRINTF(OUT,real_format,BDY((Real)q));
+					} else {
+						TAIL PRINTF(OUT,double_output?"%f":"%g",BDY((Real)q));
+					}
+					break;
 			}
 			break;
 		case N_A:
@@ -407,7 +412,8 @@ Num q;
 			PRINTUP((UP)(((GFPN)q)->body));
 			break;
 		case N_GFS:
-			TAIL PRINTF(OUT,"@_%d",CONT((GFS)q)); break;
+			TAIL PRINTF(OUT,"@_%d",CONT((GFS)q));
+			break;
 	}
 }
 
@@ -418,7 +424,13 @@ C a;
 	if ( a->r )
 		PRINTNUM(a->r);
 	if ( a->i ) {
+#if defined(INTERVAL)
+		if ( a->r && ((compnum(0,a->i,0) > 0)
+			|| NID(a->i) == N_IP || NID(a->i) == N_ID
+			|| NID(a->i) == N_IT || NID(a->i) == N_IF) )
+#else
 		if ( a->r && (compnum(0,a->i,0) > 0) )
+#endif
 			PUTS("+");
 		PRINTNUM(a->i); PUTS("*@i");
 	}

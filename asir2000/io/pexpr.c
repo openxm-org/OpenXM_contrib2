@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.12 2001/03/15 05:52:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.13 2001/04/20 02:34:23 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -66,6 +66,7 @@ int hex_output;
 int fortran_output;
 int double_output;
 int real_digit;
+int print_quote;
 
 #define TAIL
 #define PUTS(s) fputs(s,OUT)
@@ -106,6 +107,9 @@ static char *buf;
 extern char DFORMAT[BUFSIZ];
 extern int hex_output;
 extern int fortran_output;
+extern int double_output;
+extern int real_digit;
+extern int print_quote;
 
 #define TAIL while ( *OUT ) OUT++;
 #define PUTS(s) strcat(OUT,s)
@@ -434,7 +438,7 @@ Num q;
 			PRINTUP((UP)(((GFPN)q)->body));
 			break;
 		case N_GFS:
-			TAIL PRINTF(OUT,"@_%d",CONT((GFS)q)); break;
+			TAIL PRINTF(OUT,"@_%d",CONT((GFS)q));
 			break;
 	}
 }
@@ -756,7 +760,14 @@ void PRINTQUOTE(vl,quote)
 VL vl;
 QUOTE quote;
 {
-	PUTS("<...quoted...>");
+	LIST list;
+
+	if ( print_quote ) {
+		fnodetotree(BDY(quote),&list);
+		PRINTEXPR(vl,(Obj)list);
+	} else {
+		PUTS("<...quoted...>");
+	}
 }
 
 void PRINTERR(vl,e)
