@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.14 2002/09/30 06:15:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.15 2002/10/23 07:54:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,10 +56,12 @@ void Pafctr(), Pagcd();
 void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
 void Psfsqfr(),Psffctr(),Psfbfctr(),Psfufctr(),Psfmintdeg(),Psfgcd();
 void Pirred_check(), Pnfctr_mod();
+void Pbivariate_hensel_special();
 
 void sfmintdeg(VL vl,P fx,int dy,int c,P *fr);
 
 struct ftab fctr_tab[] = {
+	{"bivariate_hensel_special",Pbivariate_hensel_special,6},
 	{"fctr",Pfctr,-2},
 	{"gcd",Pgcd,-3},
 	{"gcdz",Pgcdz,2},
@@ -87,6 +89,40 @@ struct ftab fctr_tab[] = {
 	{"nfctr_mod",Pnfctr_mod,2},
 	{0,0,0},
 };
+
+/* bivariate_hensel_special(f(x,y):monic in x,g0(x),h0(y),x,y,d) */
+
+void Pbivariate_hensel_special(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+	struct oVN vn[2];
+	P f,g0,h0,ak,bk,gk,hk;
+	V vx,vy;
+	VL nvl;
+	Q qk,cbd,bb;
+	int d;
+	NODE n;
+
+	f = (P)ARG0(arg);
+	g0 = (P)ARG1(arg);
+	h0 = (P)ARG2(arg);
+	vx = VR((P)ARG3(arg));
+	vy = VR((P)ARG4(arg));
+	d = QTOS((Q)ARG5(arg));
+	NEWVL(nvl); nvl->v = vx;
+	NEWVL(NEXT(nvl)); NEXT(nvl)->v = vy;
+	NEXT(NEXT(nvl)) = 0;
+	vn[0].v = vy; vn[0].n = 0;	
+	vn[1].v = 0; vn[1].n = 0;
+	cbound(nvl,f,&cbd);
+	addq(cbd,cbd,&bb);
+	henzq1(g0,h0,bb,&bk,&ak,&qk);
+	henmv(nvl,vn,f,g0,h0,ak,bk,(P)ONE,(P)ONE,(P)ONE,(P)ONE,qk,d,&gk,&hk);
+	n = mknode(2,gk,hk);
+	MKLIST(*rp,n);
+}
 
 void Pfctr(arg,rp)
 NODE arg;
