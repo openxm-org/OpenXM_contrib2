@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.2 2000/08/21 08:31:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,6 +57,7 @@ struct ftab list_tab[] = {
 	{"cdr",Pcdr,1},
 	{"cons",Pcons,2},
 	{"append",Pappend,2},
+	{"concat",Pconcat,2},
 	{"reverse",Preverse,1},
 	{"length",Plength,1},
 	{0,0,0},
@@ -110,6 +111,26 @@ LIST *rp;
 		}
 		NEXT(t) = BDY((LIST)ARG1(arg));
 		MKLIST(*rp,t0);
+	}
+}
+
+void Pconcat(arg,rp)
+NODE arg;
+LISR *rp;
+{
+	NODE a1,a2,n;
+
+	asir_assert(ARG0(arg),O_LIST,"concat");
+	asir_assert(ARG1(arg),O_LIST,"concat");
+	a1 = (LIST)ARG0(arg);
+	if ( !a1 )
+		*rp = (LIST)ARG1(arg);
+	else {
+		for ( n = a1; n; n = NEXT(n) ) {
+			a2 = n;
+		}
+		NEXT(a2) = BDY((LIST)ARG1(arg));
+		*rp = (LIST)a1;
 	}
 }
 
