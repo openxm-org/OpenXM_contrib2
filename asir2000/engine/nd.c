@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.11 2003/07/26 01:00:32 noro Exp $ */
+/* $OpenXM$ */
 
 #include "ca.h"
 #include "inline.h"
@@ -35,16 +35,23 @@ typedef struct oNDV {
 
 typedef struct oNM {
 	struct oNM *next;
-	int td;
 	int c;
+	int td;
 	unsigned int dl[1];
 } *NM;
 
 typedef struct oNMV {
-	int td;
 	int c;
+	int td;
 	unsigned int dl[1];
 } *NMV;
+
+typedef struct oRHist {
+	struct oRHist *next;
+	int index;
+	int td;
+	unsigned int dl[1];
+} *RHist;
 
 typedef struct oND_pairs {
 	struct oND_pairs *next;
@@ -62,14 +69,16 @@ unsigned int nd_mask0,nd_mask1;
 NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
-NM *nd_red;
+RHist *nd_red;
 int nd_red_len;
 
 extern int Top,Reverse;
 int nd_psn,nd_pslen;
 int nd_found,nd_create,nd_notfirst;
 int *nd_psl;
-NM *nd_psh;
+RHist *nd_psh;
+int nm_adv;
+#define NM_ADV(m) (m = (NM)(((char *)m)+nm_adv))
 
 void GC_gcollect();
 NODE append_one(NODE,int);
@@ -78,10 +87,13 @@ NODE append_one(NODE,int);
 #define HDL(d) ((d)->body->dl)
 #define HC(d) ((d)->body->c)
 
+#define NEWRHist(r) ((r)=(RHist)MALLOC(sizeof(struct oRHist)))
 #define NEWND_pairs(m) if(!_ndp_free_list)_NDP_alloc(); (m)=_ndp_free_list; _ndp_free_list = NEXT(_ndp_free_list)   
 #define NEWNM(m) if(!_nm_free_list)_NM_alloc(); (m)=_nm_free_list; _nm_free_list = NEXT(_nm_free_list)   
 #define MKND(n,m,d) if(!_nd_free_list)_ND_alloc(); (d)=_nd_free_list; _nd_free_list = (ND)BDY(_nd_free_list); (d)->nv=(n); BDY(d)=(m)
 
+#define NEXTRHist(r,c) \
+if(!(r)){NEWRHist(r);(c)=(r);}else{NEWRHist(NEXT(c));(c)=NEXT(c);}
 #define NEXTNM(r,c) \
 if(!(r)){NEWNM(r);(c)=(r);}else{NEWNM(NEXT(c));(c)=NEXT(c);}
 #define NEXTNM2(r,c,s) \
@@ -166,7 +178,7 @@ void nd_free_private_storage()
 	_nd_free_list = 0;
 	_nm_free_list = 0;
 	_ndp_free_list = 0;
-	bzero(nd_red,sizeof(REDTAB_LEN*sizeof(NM)));
+	bzero(nd_red,sizeof(REDTAB_LEN*sizeof(RHist)));
 	GC_gcollect();
 }
 
@@ -796,26 +808,36 @@ INLINE int ndl_hash_value(int td,unsigned int *d)
 
 INLINE int nd_find_reducer(ND g)
 {
-	NM m;
+	RHist r;
 	int d,k,i;
 
 	d = ndl_hash_value(HTD(g),HDL(g));
-	for ( m = nd_red[d], k = 0; m; m = NEXT(m), k++ ) {
-		if ( HTD(g) == m->td && ndl_equal(HDL(g),m->dl) ) {
+	for ( r = nd_red[d], k = 0; r; r = NEXT(r), k++ ) {
+		if ( HTD(g) == r->td && ndl_equal(HDL(g),r->dl) ) {
 			if ( k > 0 ) nd_notfirst++;
 			nd_found++;
-			return m->c;
+			return r->index;
 		}
 	}
 
-	for ( i = 0; i < nd_psn; i++ ) {
-		m = nd_psh[i];
-		if ( HTD(g) >= m->td && ndl_reducible(HDL(g),m->dl) ) {
-			nd_create++;
-			nd_append_red(HDL(g),HTD(g),i);
-			return i;
+	if ( Reverse )
+		for ( i = nd_psn-1; i >= 0; i-- ) {
+			r = nd_psh[i];
+			if ( HTD(g) >= r->td && ndl_reducible(HDL(g),r->dl) ) {
+				nd_create++;
+				nd_append_red(HDL(g),HTD(g),i);
+				return i;
+			}
 		}
-	}
+	else
+		for ( i = 0; i < nd_psn; i++ ) {
+			r = nd_psh[i];
+			if ( HTD(g) >= r->td && ndl_reducible(HDL(g),r->dl) ) {
+				nd_create++;
+				nd_append_red(HDL(g),HTD(g),i);
+				return i;
+			}
+		}
 	return -1;
 }
 
@@ -1444,7 +1466,7 @@ find:
 int nd_newps(ND a)
 {
 	int len;
-	NM m;
+	RHist r;
 
 	if ( nd_psn == nd_pslen ) {
 		nd_pslen *= 2;
@@ -1454,15 +1476,16 @@ int nd_newps(ND a)
 #else
 		nd_ps = (ND *)REALLOC((char *)nd_ps,nd_pslen*sizeof(ND));
 #endif
-		nd_psh = (NM *)REALLOC((char *)nd_psh,nd_pslen*sizeof(NM));
+		nd_psh = (RHist *)REALLOC((char *)nd_psh,nd_pslen*sizeof(RHist));
 		nd_bound = (unsigned int **)
 			REALLOC((char *)nd_bound,nd_pslen*sizeof(unsigned int *));
 	}
 	nd_monic(a);
 	nd_bound[nd_psn] = nd_compute_bound(a);
-	NEWNM(m); m->td = HTD(a); ndl_copy(HDL(a),m->dl); nd_psh[nd_psn] = m;
+	NEWRHist(r); r->td = HTD(a); ndl_copy(HDL(a),r->dl); nd_psh[nd_psn] = r;
 #if USE_NDV
 	nd_ps[nd_psn]= ndtondv(a);
+	nd_free(a);
 	nd_psl[nd_psn] = len = nd_ps[nd_psn]->len;
 	if ( len > nmv_len ) {
 		nmv_len = 2*len;
@@ -1480,7 +1503,7 @@ NODE nd_setup(NODE f)
 	int i,j,td,len,max;
 	NODE s,s0,f0;
 	unsigned int *d;
-	NM m;
+	RHist r;
 
 	nd_found = 0; nd_notfirst = 0; nd_create = 0;
 
@@ -1491,7 +1514,7 @@ NODE nd_setup(NODE f)
 #else
 	nd_ps = (ND *)MALLOC(nd_pslen*sizeof(ND));
 #endif
-	nd_psh = (NM *)MALLOC(nd_pslen*sizeof(NM));
+	nd_psh = (RHist *)MALLOC(nd_pslen*sizeof(RHist));
 	nd_bound = (unsigned int **)MALLOC(nd_pslen*sizeof(unsigned int *));
 	for ( max = 0, i = 0, s = f; i < nd_psn; i++, s = NEXT(s) ) {
 		nd_bound[i] = d = dp_compute_bound((DP)BDY(s));
@@ -1499,8 +1522,8 @@ NODE nd_setup(NODE f)
 			max = MAX(d[j],max);
 	}
 	if ( !nd_red )
-		nd_red = (NM *)MALLOC(REDTAB_LEN*sizeof(NM));
-	bzero(nd_red,REDTAB_LEN*sizeof(NM));
+		nd_red = (RHist *)MALLOC(REDTAB_LEN*sizeof(RHist));
+	bzero(nd_red,REDTAB_LEN*sizeof(RHist));
 
 	if ( max < 2 )
 		nd_bpe = 2;
@@ -1514,7 +1537,7 @@ NODE nd_setup(NODE f)
 		nd_bpe = 16;
 	else
 		nd_bpe = 32;
-	
+
 	nd_setup_parameters();
 	nd_free_private_storage();
 	len = 0;
@@ -1528,8 +1551,8 @@ NODE nd_setup(NODE f)
 		nd_mul_c(nd_ps[i],1);
 		nd_psl[i] = nd_length(nd_ps[i]);
 #endif
-		NEWNM(m); m->td = HTD(nd_ps[i]); ndl_copy(HDL(nd_ps[i]),m->dl);
-		nd_psh[i] = m;
+		NEWRHist(r); r->td = HTD(nd_ps[i]); ndl_copy(HDL(nd_ps[i]),r->dl);
+		nd_psh[i] = r;
 	}
 #if USE_NDV
 	nmv_len = 16*len;
@@ -1759,12 +1782,12 @@ void nd_free(ND p)
 
 void nd_append_red(unsigned int *d,int td,int i)
 {
-	NM m,m0;
+	RHist m,m0;
 	int h;
 
-	NEWNM(m);
+	NEWRHist(m);
 	h = ndl_hash_value(td,d);
-	m->c = i;
+	m->index = i;
 	m->td = td;
 	ndl_copy(d,m->dl);
 	NEXT(m) = nd_red[h];
@@ -1789,7 +1812,7 @@ unsigned int *dp_compute_bound(DP p)
 			d2[i] = d[i] > d1[i] ? d[i] : d1[i];
 		t = d1; d1 = d2; d2 = t;
 	}
-	l = nd_nvar+31;
+	l = (nd_nvar+31);
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
 	bzero(t,l*sizeof(unsigned int));
 	bcopy(d1,t,nd_nvar*sizeof(unsigned int));
@@ -1835,6 +1858,7 @@ void nd_setup_parameters() {
 		nd_mask[nd_epw-i-1] = (nd_mask0<<(i*nd_bpe));
 		nd_mask1 |= (1<<(nd_bpe-1))<<(i*nd_bpe);
 	}
+	nm_adv = sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int);
 #if USE_NDV
 	nmv_adv = sizeof(struct oNMV)+(nd_wpd-1)*sizeof(unsigned int);
 #endif
@@ -1843,7 +1867,9 @@ void nd_setup_parameters() {
 ND_pairs nd_reconstruct(ND_pairs d)
 {
 	int i,obpe,oadv;
-	NM prev_nm_free_list,mr0,mr,m;
+	NM prev_nm_free_list;
+	RHist mr0,mr;
+	RHist r;
 	ND_pairs s0,s,t,prev_ndp_free_list;
 	
 	obpe = nd_bpe;
@@ -1868,7 +1894,7 @@ ND_pairs nd_reconstruct(ND_pairs d)
 	prev_ndp_free_list = _ndp_free_list;
 	_nm_free_list = 0;
 	_ndp_free_list = 0;
-	for ( i = 0; i < nd_psn; i++ ) {
+	for ( i = nd_psn-1; i >= 0; i-- ) {
 #if USE_NDV
 		ndv_realloc(nd_ps[i],obpe,oadv);
 #else
@@ -1885,18 +1911,18 @@ ND_pairs nd_reconstruct(ND_pairs d)
 		ndl_dup(obpe,t->lcm,s->lcm);
 	}
 	for ( i = 0; i < REDTAB_LEN; i++ ) {
-		for ( mr0 = 0, m = nd_red[i]; m; m = NEXT(m) ) {
-			NEXTNM(mr0,mr);
-			mr->c = m->c;
-			mr->td = m->td;
-			ndl_dup(obpe,m->dl,mr->dl);
+		for ( mr0 = 0, r = nd_red[i]; r; r = NEXT(r) ) {
+			NEXTRHist(mr0,r);
+			mr->index = r->index;
+			mr->td = r->td;
+			ndl_dup(obpe,r->dl,mr->dl);
 		}
 		if ( mr0 ) NEXT(mr) = 0;
 		nd_red[i] = mr0;
 	}
 	for ( i = 0; i < nd_psn; i++ ) {
-		NEWNM(m); m->td = nd_psh[i]->td; ndl_dup(obpe,nd_psh[i]->dl,m->dl);
-		nd_psh[i] = m;
+		NEWRHist(r); r->td = nd_psh[i]->td; ndl_dup(obpe,nd_psh[i]->dl,r->dl);
+		nd_psh[i] = r;
 	}
 	if ( s0 ) NEXT(s) = 0;
 	prev_nm_free_list = 0;
@@ -2082,8 +2108,15 @@ ND ndv_add(ND p1,NDV p2)
 		NEWNM(new); len = p2->len;
 		for ( m2 = BDY(p2), i = 0; cur && i < len; ) {
 			td2 = new->td = m2->td;
-			if ( cur->td > td2 ) c = 1;
-			else if ( cur->td < td2 ) c = -1;
+			if ( cur->td > td2 ) {
+				prev = cur; cur = NEXT(cur);
+				continue;
+			} else if ( cur->td < td2 ) c = -1;
+			else if ( nd_wpd == 1 ) {
+				if ( cur->dl[0] > m2->dl[0] ) c = is_rlex ? -1 : 1;
+				else if ( cur->dl[0] < m2->dl[0] ) c = is_rlex ? 1 : -1;
+				else c = 0;
+			}
 			else c = ndl_compare(cur->dl,m2->dl);
 			switch ( c ) {
 				case 0:
@@ -2136,19 +2169,26 @@ ND ndv_add(ND p1,NDV p2)
 
 void ndv_realloc(NDV p,int obpe,int oadv)
 {
-	NMV m,mr,mr0;
-	int len,i;
+	NMV m,mr,mr0,t;
+	int len,i,k;
 
-#define NMV_OADV(m) (m = (NMV)(((char *)m)+oadv))
+#define NMV_OPREV(m) (m = (NMV)(((char *)m)-oadv))
+#define NMV_PREV(m) (m = (NMV)(((char *)m)-nmv_adv))
 
 	if ( p ) {
 		m = BDY(p); len = p->len;
-		mr0 = mr = (NMV)MALLOC_ATOMIC(len*nmv_adv);
-		bzero(mr0,len*nmv_adv);
-		for ( i = 0; i < len; i++, NMV_OADV(m), NMV_ADV(mr) ) {
-			C(mr) = C(m);
-			mr->td = m->td;
-			ndl_dup(obpe,m->dl,mr->dl);
+		mr0 = (NMV)REALLOC(BDY(p),len*nmv_adv);
+		m = (NMV)((char *)mr0+(len-1)*oadv);
+		mr = (NMV)((char *)mr0+(len-1)*nmv_adv);
+		t = (NMV)ALLOCA(nmv_adv);
+		for ( i = 0; i < len; i++, NMV_OPREV(m), NMV_PREV(mr) ) {
+			C(t) = C(m);
+			t->td = m->td;
+			for ( k = 0; k < nd_wpd; k++ ) t->dl[k] = 0;
+			ndl_dup(obpe,m->dl,t->dl);
+			C(mr) = C(t);
+			mr->td = t->td;
+			ndl_copy(t->dl,mr->dl);
 		}
 		BDY(p) = mr0;
 	}
