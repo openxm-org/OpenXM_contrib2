@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.76 2003/09/28 09:18:57 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.77 2003/10/08 09:09:04 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -2318,6 +2318,9 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	NDV b;
 	int ishomo;
 
+	if ( !m && Demand ) nd_demand = 1;
+	else nd_demand = 0;
+
 	ndv_alloc = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -2367,8 +2370,9 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	nocheck = 0;
 	mindex = 0;
 
-	if ( Demand )
-		nd_demand = 1;
+	if ( Demand ) nd_demand = 1;
+	else nd_demand = 0;
+
 	/* setup modulus */
 	if ( trace < 0 ) {
 		trace = -trace;
@@ -2424,9 +2428,9 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 		nd_demand = 0;
 		cand = ndv_reducebase(cand);
 		cand = ndv_reduceall(0,cand);
+		cbpe = nd_bpe;
 		if ( nocheck )
 			break;
-		cbpe = nd_bpe;
 		if ( ndv_check_candidate(in0,obpe,oadv,oepos,cand) )
 			/* success */
 			break;
