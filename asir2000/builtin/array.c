@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.15 2001/09/07 08:54:57 noro Exp $ 
+ * $OpenXM$
 */
 #include "ca.h"
 #include "base.h"
@@ -67,6 +67,7 @@ void mat_to_gfmmat(MAT,unsigned int,GFMMAT *);
 
 int generic_gauss_elim_mod(int **,int,int,int,int *);
 int generic_gauss_elim(MAT ,MAT *,Q *,int **,int **);
+void reduce_sp_by_red_mod_compress (int *,CDP *,int *,int,int,int);
 
 int gauss_elim_mod(int **,int,int,int);
 int gauss_elim_mod1(int **,int,int,int);
@@ -1394,6 +1395,41 @@ int md;
 				if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
 			}
 		}
+	}
+}
+
+/*
+	rlist : reducers list 
+	ht(BDY(rlist)) < ht(BDY(NEXT(rlist)) < ...  w.r.t. the term order
+*/
+
+void reduce_reducers_mod_compress(rlist,nred,at,col,md,redmatp,indredp)
+NODE rlist;
+int nred;
+DL *at;
+int col,md;
+CDP **redmatp;
+int **indredp;
+{
+	CDP *redmat;
+	CDP t;
+	int *indred,*w;
+	int i,k;
+	NODE r;
+
+	*redmatp = redmat = (CDP *)CALLOC(nred,sizeof(CDP));
+	*indredp = indred = (int *)CALLOC(nred,sizeof(int));
+	w = (int *)CALLOC(col,sizeof(int));
+
+	_dpmod_to_vect_compress(BDY(rlist),at,&redmat[0]);
+	indred[0] = redmat[0]->body[0].index;
+
+	for ( i = 1, r = NEXT(rlist); i < nred; i++, r = NEXT(r) ) {
+		bzero(w,col*sizeof(int));
+		_dpmod_to_vect(BDY(r),at,w);
+		reduce_sp_by_red_mod_compress(w,redmat,indred,i,col,md);
+		compress_vect(w,col,&redmat[i]);
+		indred[i] = redmat[i]->body[0].index;
 	}
 }
 

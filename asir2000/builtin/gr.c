@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.23 2001/09/05 08:09:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.24 2001/09/07 08:54:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -240,6 +240,29 @@ CDP *b;
 		r->body[j].c = ITOS(m->c);
 	}
 	*b = r;
+}
+
+/* dense vector -> CDP  */
+void compress_vect(a,n,rp)
+int *a;
+int n;
+CDP *rp;
+{
+	int i,j,nz;
+	CDP r;
+
+	for ( i = 0, nz = 0; i < n; i++ )
+		if ( a[i] ) nz++;
+	*rp = r = (CDP)MALLOC(sizeof(struct oCDP));
+	r->len = nz;
+	r->body = (CMP)MALLOC(sizeof(struct oCMP)*nz);
+	for ( i = 0, j = 0; i < n; i++ ) {
+		if ( a[i] ) {
+			r->body[j].index = i;
+			r->body[j].c = ITOS(a[i]);
+			j++;
+		}
+	}
 }
 
 void dp_to_vect(f,at,b)
@@ -663,7 +686,7 @@ int m;
 	DL *ht,*at,*st;
 	int **spmat;
 	CDP *redmat;
-	int *colstat,*w;
+	int *colstat,*w,*w1;
 	int rank,nred,nsp,nonzero,spcol;
 	int *indred,*isred;
 	CDP ri;
@@ -755,6 +778,14 @@ int m;
 		nsp = row-nred;
 
 		/* reducer matrix */
+		/* indred : register the position of the head term */
+#if 0
+		reduce_reducers_mod_compress(blist,nred,at,col,m,&redmat,&indred);
+		isred = (int *)MALLOC(col*sizeof(int));
+		bzero(isred,col*sizeof(int));
+		for ( i = 0; i < nred; i++ )
+			isred[indred[i]] = 1;
+#else
 		redmat = (CDP *)MALLOC(nred*sizeof(CDP));
 		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ )
 			_dpmod_to_vect_compress(BDY(r),at,&redmat[i]);
@@ -770,6 +801,7 @@ int m;
 			indred[i] = ri->body[0].index;
 			isred[indred[i]] = 1;
 		}
+#endif
 
 		spcol = col-nred;
 		/* head terms not in ht */
@@ -780,21 +812,35 @@ int m;
 
 		get_eg(&tmp1);
 		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
-		spmat = almat(nsp,spcol);
+		spmat = (int **)MALLOC(nsp*sizeof(int *));
 		w = (int *)MALLOC(col*sizeof(int));
-		for ( ; i < row; r = NEXT(r), i++ ) {
+
+		/* skip reducers in blist */
+		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ );
+		for ( i = 0; r; r = NEXT(r) ) {
 			bzero(w,col*sizeof(int));
 			_dpmod_to_vect(BDY(r),at,w);
 			reduce_sp_by_red_mod_compress(w,redmat,indred,nred,col,m);
-			for ( j = 0, k = 0; j < col; j++ )
-				if ( !isred[j] )
-					spmat[i-nred][k++] = w[j];
+			for ( j = 0; j < col; j++ )
+				if ( w[j] )
+					break;
+			if ( j < col ) {
+				w1 = (int *)MALLOC_ATOMIC(spcol*sizeof(int));
+				for ( j = 0, k = 0; j < col; j++ )
+					if ( !isred[j] )
+						w1[k++] = w[j];
+				spmat[i] = w1;
+				i++;
+			}
 		}
+		/* update nsp */
+		nsp = i;
 
 		get_eg(&tmp0); add_eg(&eg_elim1,&tmp1,&tmp0);
 		init_eg(&eg_split_elim1); add_eg(&eg_split_elim1,&tmp1,&tmp0);
 
 		colstat = (int *)MALLOC_ATOMIC(spcol*sizeof(int));
+		bzero(colstat,spcol*sizeof(int));
 		for ( i = 0, nonzero=0; i < nsp; i++ )
 			for ( j = 0; j < spcol; j++ )
 				if ( spmat[i][j] )
@@ -816,6 +862,10 @@ int m;
 			print_eg("Elim2",&eg_split_elim2);
 			fprintf(asir_out,"\n");
 		}
+
+		if ( !rank )
+			continue;
+
 		for ( j = 0, i = 0; j < spcol; j++ )
 			if ( colstat[j] ) {
 				mp0 = 0;
