@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.2 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.3 2000/08/22 05:04:27 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -100,6 +100,8 @@ FNODE *exprp;
 	}
 }
 
+extern FUNC user_print_function;
+
 void read_eval_loop() {
 	struct oEGT egt0,egt1;
 	extern int prtime,prresult,ox_do_copy;
@@ -120,7 +122,11 @@ void read_eval_loop() {
 		r1 = get_rtime();
 		if ( !ox_do_copy ) {
 			if ( prresult ) {
-				printexpr(CO,LastVal); putc('\n',asir_out);
+				if ( user_print_function )
+					bevalf(user_print_function,mknode(1,LastVal));
+				else
+					printexpr(CO,LastVal);
+				putc('\n',asir_out);
 				fflush(asir_out);
 			}
 			if ( prtime ) {

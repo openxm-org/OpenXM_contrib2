@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.9 2001/09/03 08:52:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.10 2001/09/04 02:45:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,12 +53,14 @@
 void Pprint();
 void Pquotetolist();
 void Peval_variables_in_quote();
+void Pset_print_function();
 FNODE eval_pvar_in_fnode();
 
 struct ftab print_tab[] = {
 	{"print",Pprint,-2},
 	{"quotetolist",Pquotetolist,1},
 	{"eval_variables_in_quote",Peval_variables_in_quote,1},
+	{"set_print_function",Pset_print_function,-1},
 	{0,0,0},
 };
 
@@ -396,3 +398,16 @@ FNODE *f;
 	}
 }
 
+FUNC user_print_function;
+
+void Pset_print_function(arg,rp)
+NODE arg;
+pointer *rp;
+{
+	if ( !arg )
+		user_print_function = 0;		
+	else {
+		gen_searchf(BDY((STRING)ARG0(arg)),&user_print_function);
+	}
+	*rp = 0;
+}
