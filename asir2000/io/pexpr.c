@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.4 2000/08/22 05:04:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.5 2000/11/08 08:02:51 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -64,6 +64,7 @@ FILE *asir_out;
 char DFORMAT[BUFSIZ];
 int hex_output;
 int fortran_output;
+int double_output;
 
 #define TAIL
 #define PUTS(s) fputs(s,OUT)
@@ -303,7 +304,7 @@ Num q;
 			}
 			break;
 		case N_R:
-			TAIL PRINTF(OUT,"%g",BDY((Real)q));
+			TAIL PRINTF(OUT,double_output?"%f":"%g",BDY((Real)q));
 			break;
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
