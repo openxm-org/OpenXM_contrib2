@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.21 2003/05/14 06:20:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.22 2003/05/14 07:08:48 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -1002,4 +1002,8 @@ MODULE mkmodule(char *name)
 		MODULE_LIST = m;
 		return mod;
 	}
+}
+
+int afo(SNODE a1) {
+	printf("afo\n");
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.14 2002/12/22 02:08:29 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.15 2003/05/14 06:20:12 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -89,7 +89,7 @@ extern jmp_buf env;
 	pointer p;
 }
 
-%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF GLOBAL MGLOBAL CMP OR AND CAR CDR QUOTED
+%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND GLOBAL MGLOBAL CMP OR AND CAR CDR QUOTED
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
@@ -168,11 +168,10 @@ stat 	: tail
 					mksnode(1,S_CPLX,$9),$1,asir_infile->ln,$7,CUR_MODULE); 
 				$$ = 0; NOPR; 
 			}
-		| MODDEF LCASE { CUR_MODULE = mkmodule($2); } '{' stats '}'
-			{
-				CUR_MODULE = 0;
-				$$ = 0; NOPR;
-			}
+		| MODDEF LCASE tail
+			{ CUR_MODULE = mkmodule($2); MPVS = CUR_MODULE->pvs; $$ = 0; NOPR; }
+		| MODEND tail
+			{ CUR_MODULE = 0; MPVS = 0; $$ = 0; NOPR; }
 	  	| error tail
 			{ yyerrok; $$ = 0; }
 		;

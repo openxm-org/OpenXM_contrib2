@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.7 2003/05/14 06:20:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.8 2003/05/14 07:08:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -112,9 +112,9 @@ unsigned int makepvar(char *str)
 
 	/* EPVS : global list of the current file */
 	/* add to the local variable list */
-	c = getpvar(CPVS,str,0);
 	if ( gdef ) {
 		/* add to the external variable list */
+		c = getpvar(CPVS,str,0);
 		getpvar(EPVS,str,0);
 		if ( CPVS != GPVS ) {
 			/* inside function : we add the name to the global list */
@@ -122,6 +122,7 @@ unsigned int makepvar(char *str)
 			CPVS->va[c].attr = IS_GLOBAL;
 		}
 	} else if ( mgdef ) {
+		c = getpvar(CPVS,str,0);
 		getpvar(CUR_MODULE->pvs,str,0);
 		if ( CPVS != GPVS ) {
 			/* inside function */
@@ -129,6 +130,7 @@ unsigned int makepvar(char *str)
 		}
 	} else if ( CPVS != GPVS ) {
 		/* inside function */
+		c = getpvar(CPVS,str,0);
 		switch ( CPVS->va[c].attr ) {
 			case IS_GLOBAL:
 				c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
@@ -148,6 +150,20 @@ unsigned int makepvar(char *str)
 				}
 				break;
 		}
+	} else if ( CUR_MODULE ) {
+		/* outside function, inside module */
+		if ( (c = getpvar(CUR_MODULE->pvs,str,1)) >= 0 )
+			c = PVMGLOBAL((unsigned int)c);
+		else if ( getpvar(EPVS,str,1) >= 0 ) {
+			c = getpvar(GPVS,str,1);
+			c = PVGLOBAL((unsigned int)c);
+		} else {
+			/* not declared as static or extern */
+			error("Undeclared variable in a module.");
+		}
+	} else {
+		/* outside function, outside module */
+		c = getpvar(GPVS,str,0);
 	}
 	return c;
 }
