@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/array.c,v 1.2 1999/11/23 07:14:14 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
@@ -706,8 +706,9 @@ int **rindp,**cindp;
 	colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
 	wcolstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
 	for ( ind = 0; ; ind++ ) {
-		if ( Print )
-			fprintf(asir_out,".");
+		if ( Print ) {
+			fprintf(asir_out,"."); fflush(asir_out);
+		}
 		md = lprime[ind];
 		get_eg(&tmp0);
 		for ( i = 0; i < row; i++ )
@@ -742,18 +743,24 @@ RESET:
 					}
 		} else {
 			if ( rank < rank0 ) {
-				if ( Print )
+				if ( Print ) {
 					fprintf(asir_out,"lower rank matrix; continuing...\n");
+					fflush(asir_out);
+				}
 				continue;
 			} else if ( rank > rank0 ) {
-				if ( Print )
+				if ( Print ) {
 					fprintf(asir_out,"higher rank matrix; resetting...\n");
+					fflush(asir_out);
+				}
 				goto RESET;
 			} else {
 				for ( j = 0; (j<col) && (colstat[j]==wcolstat[j]); j++ );
 				if ( j < col ) {
-					if ( Print )
+					if ( Print ) {
 						fprintf(asir_out,"inconsitent colstat; resetting...\n");
+						fflush(asir_out);
+					}
 					goto RESET;
 				}
 			}
