@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.7 2000/12/05 01:24:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.8 2001/10/09 01:36:27 noro Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -205,6 +205,12 @@ extern Window rootwin;
 extern GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC,cdrawGC;
 extern XFontStruct *sffs;
 #endif
+
+struct xcolorForPS {
+  unsigned long pixel;
+  double r,g,b;
+  int print;
+};
 
 /* prototypes */
 void calc(double **tab,struct canvas *can,int nox);

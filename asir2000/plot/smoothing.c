@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.4 2000/11/08 05:49:35 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.5 2001/04/07 10:53:15 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -50,6 +50,7 @@ static void polyLine_outputProlog(int xmin, int ymin,int xmax, int ymax) {
   fflush(Fp);
 }
 static void polyLine_outputEpilog(void) {
+  fprintf(Fp,"0 0 0 setrgbcolor \n");
   fprintf(Fp,"showpage \n"); fflush(Fp);
 }
 static void polyLine_error(char *s) {
@@ -119,7 +120,7 @@ struct canvas *can;
 
 generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
 					  int color[],int colorSize,
-					  struct canvas *can) {
+					  struct canvas *can,struct xcolorForPS *tableOfxcolorForPS) {
   struct polyLine **pl;
   int plSize = 0;
   int *prev;
@@ -133,8 +134,11 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
   polyLine_outputProlog(0,0,Xsize,Ysize);
   switch(Strategy_generate_PS) {
   default:
+	fprintf(Fp,"%% debug info : colorSize=%d\n",colorSize);
 	for (c=0; c<colorSize; c++) {
-	  /* Set color if necessary */
+	  /* Set color by looking at tableOfxcolorForPS.
+         It has not yet been implemented.
+      */
 	  for (x=0; x<Xsize; x++) {
 		for (y=0; y<Ysize; y++) {
 		  if ((int) XGetPixel(image,x,y) == color[c]){
@@ -149,6 +153,7 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
   polyLine_pline(can);
   polyLine_outputEpilog();
 }
+
 
 
 

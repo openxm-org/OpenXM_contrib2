@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.13 2001/12/25 02:39:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.14 2002/01/30 08:31:34 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1121,6 +1121,9 @@ static void output_to_ps_printer(w,fbutton,call)
    ifplot(x^2-y^3);
    drawcircle(0,0,100,0,0);
    */
+static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
+                                    struct xcolorForPS **tableOfxcolorForPS);
+
 static void generate_psfile(can,fp)
 	 struct canvas *can;
 	 FILE *fp;
@@ -1130,6 +1133,7 @@ static void generate_psfile(can,fp)
   int color[1];
   int colorSize = 1;
   char *m;
+  struct xcolorForPS *tableOfxcolorForPS;
   extern int PrintingMethod;
   fprintf(stderr,"generate_psfile\n");
   if (PrintingMethod == PRINTING_METHOD_BITMAP) {
@@ -1137,8 +1141,10 @@ static void generate_psfile(can,fp)
 	  fprintf(stderr,"generate_psfile: output to a file.\n"); 
 	  image = XGetImage(display,can->pix,
 						0,0,can->width,can->height,-1,ZPixmap);
-	  color[0] = 0; /* balck line */
-	  generatePS_from_image(fp,image,can->width,can->height,color,colorSize,can);
+	  colorSize =
+		getColorSizeOfImageForPS(can->width,can->height,image,&tableOfxcolorForPS);
+	  color[0] = 0; /* black line */
+	  generatePS_from_image(fp,image,can->width,can->height,color,colorSize,can,tableOfxcolorForPS);
 	}else{
 	  fprintf(stderr,"Cannot print on this system\n");
 	}
@@ -1165,3 +1171,80 @@ struct canvas *can;
 	XFillRectangle(display,can->pix,clearGC,0,0,can->width,can->height);
 	XFlush(display);
 }
+
+/* 
+   The following functions are used to generate color postscript file. 
+*/
+/* In order to count colorSize, binary tree (sm_btree) is used. */
+static struct sm_btree *sm_newNode(unsigned long v);
+static int sm_insert(struct sm_btree *node,unsigned long v);
+static int sm_count(struct sm_btree *rootp);
+#define MALLOC(a) GC_malloc(a)
+struct sm_btree {
+  unsigned long p;
+  struct sm_btree * left;
+  struct sm_btree * right;
+};
+static struct sm_btree *sm_newNode(unsigned long v) {
+  struct sm_btree * n;
+  n = (struct sm_btree *)MALLOC(sizeof(struct sm_btree));
+  if (n == NULL) { fprintf(stderr,"No more memory.\n"); exit(10); }
+  n->p = v;
+  n->left = NULL;
+  n->right = NULL;
+  return n;
+}
+static int sm_insert(struct sm_btree *node,unsigned long v)
+{
+  if (node->p == v) return;
+  if (node->p > v) {
+    if (node->left == NULL) {
+      node->left = sm_newNode(v);
+      return;
+    }
+    sm_insert(node->left,v);
+  }
+  if (node->p < v) {
+    if (node->right == NULL) {
+      node->right = sm_newNode(v);
+      return;
+    }
+    sm_insert(node->right,v);
+  }
+}
+static int sm_count(struct sm_btree *rootp) 
+{
+  if (rootp == NULL) return 0;
+  return (1+sm_count(rootp->left)+sm_count(rootp->right));
+}
+
+static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
+                                    struct xcolorForPS **tableOfxcolorForPS) 
+{
+  int x,y;
+  int size;
+  struct sm_btree root;
+  struct xcolorForPS *table;
+  root.p = 0;
+  root.left = NULL; root.right=NULL;
+  /* get color size */
+  for (x=0; x<xsize; x++) {
+    for (y=0; y<ysize; y++) {
+      sm_insert(&root,XGetPixel(image,x,y));
+    }
+  }
+  size=sm_count(&root);
+
+  table = (struct xcolorForPS *)MALLOC((size+1)*sizeof(struct xcolorForPS));
+  if (table == NULL) {
+	fprintf(stderr,"No more memory in getColorSizeOfImageForPS.\n");
+	return 0;
+  }
+  /* Set rgb values standing for the pixel values.
+	 Not implemented.
+  */
+
+  *tableOfxcolorForPS = table;
+  return size;
+}
+
