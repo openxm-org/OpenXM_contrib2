@@ -13,7 +13,7 @@
 
 @SET_MAKE@
 
-# $OpenXM: OpenXM_contrib2/asir2000/Makefile.in,v 1.1 2003/02/23 03:25:19 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/Makefile.in,v 1.2 2003/02/23 06:23:52 ohara Exp $
 
 SHELL = @SHELL@
 
@@ -570,6 +570,10 @@ install-exec-hook:
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
+
+install-libasir: libasir.a
+	mkdir -p ${prefix}/lib
+	${INSTALL_DATA} libasir.a ${prefix}/lib/libasir${libasir_postfix}.a
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
