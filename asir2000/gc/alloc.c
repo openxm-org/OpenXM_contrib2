@@ -932,6 +932,9 @@ word n;
     GC_prev_heap_addr = GC_last_heap_addr;
     GC_last_heap_addr = (ptr_t)space;
     GC_add_to_heap(space, bytes);
+#if defined(VISUAL_LIB)
+	SendHeapSize();
+#endif
     return(TRUE);
 }
 
@@ -1027,6 +1030,21 @@ int kind;
     
     if (sz == 0) return(0);
 
+#if defined(VISUAL)
+	{
+#include <signal.h>
+		extern int recv_intr;
+		if ( recv_intr ) {
+			if ( recv_intr == 1 ) {
+				recv_intr = 0;
+				int_handler();
+			} else {
+				recv_intr = 0;
+				ox_usr1_handler(0);
+			}
+		}
+	}
+#endif
     while (*flh == 0) {
       ENTER_GC();
       /* Do our share of marking work */
