@@ -69,6 +69,7 @@ BEGIN_MESSAGE_MAP(CAsir32guiView, CEditView)
 	ON_WM_CREATE()
 	ON_COMMAND(ID_CONTRIBHELP, OnContribhelp)
 	ON_UPDATE_COMMAND_UI(ID_CONTRIBHELP, OnUpdateContribhelp)
+	ON_WM_SIZE()
 	//}}AFX_MSG_MAP
 	// 標準印刷コマンド
 //	ON_COMMAND(ID_FILE_PRINT, CEditView::OnFilePrint)
@@ -89,7 +90,7 @@ CAsir32guiView::CAsir32guiView()
 	read_input_history();
 	DebugMode = 0;
 	DebugInMain = 0;
-	MaxLineLength = 80;
+//	MaxLineLength = 80;
 	LogStart = 0;
 	Logging = 0;
 	Logfp = NULL;
@@ -524,13 +525,27 @@ void CAsir32guiView::OnEditPaste()
     Paste();
 }
 
+void CAsir32guiView::UpdateMetrics()
+{
+   TEXTMETRIC tm;
+   RECT r;
+
+   GetEditCtrl().GetRect(&r);
+   CDC *pDC = GetDC();
+   pDC->SelectObject(GetFont());
+   pDC->GetTextMetrics(&tm);
+   MaxLineLength = (r.right-r.left)/tm.tmAveCharWidth-1;
+}
+
 void CAsir32guiView::OnFont() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
 	int ret;
-	CFontDialog fd(NULL,CF_EFFECTS | CF_SCREENFONTS | CF_FIXEDPITCHONLY);
-	static CFont *f = 0;
 	LOGFONT lf;
+
+	GetFont()->GetLogFont(&lf);
+	CFontDialog fd(&lf,CF_EFFECTS | CF_SCREENFONTS | CF_FIXEDPITCHONLY);
+	static CFont *f = 0;
 
 	ret = fd.DoModal();
 	if ( ret == IDOK ) {
@@ -540,6 +555,7 @@ void CAsir32guiView::OnFont()
 		f = new CFont;
 		f->CreateFontIndirect(&lf);
 		SetFont(f);
+		UpdateMetrics();
 	}
 }
 
@@ -549,7 +565,7 @@ int CAsir32guiView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;
 	
 	// TODO: この位置に固有の作成用コードを追加してください
-	
+
 	LOGFONT logFont; memset(&logFont, 0, sizeof(LOGFONT));
 	logFont.lfHeight = 20;
 	logFont.lfCharSet = DEFAULT_CHARSET;
@@ -557,8 +573,9 @@ int CAsir32guiView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CFont *f = new CFont;
 	f->CreateFontIndirect(&logFont);
 	SetFont(f);
+	UpdateMetrics();
 	GetEditCtrl().LimitText(nMaxSize);
-	GetEditCtrl().SetTabStops(m_nTabStops);
+	GetEditCtrl().SetTabStops(m_nTabStops);	
 
 	return 0;
 }
@@ -587,4 +604,12 @@ void CAsir32guiView::OnUpdateContribhelp(CCmdUI* pCmdUI)
 		}
 	}
 	pCmdUI->Enable( FALSE );
+}
+
+void CAsir32guiView::OnSize(UINT nType, int cx, int cy) 
+{
+	CEditView::OnSize(nType, cx, cy);
+	
+	// TODO: この位置にメッセージ ハンドラ用のコードを追加してください
+	UpdateMetrics();
 }

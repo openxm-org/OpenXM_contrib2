@@ -52,7 +52,7 @@ public:
 	void UpdateCursor(int);
 	void Beep(void);
 	void ReplaceString(char *);
-	void UpdateLineLength(int);
+	void UpdateMetrics();
 
 protected:
 
@@ -72,6 +72,7 @@ public:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnContribhelp();
 	afx_msg void OnUpdateContribhelp(CCmdUI* pCmdUI);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

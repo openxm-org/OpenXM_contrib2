@@ -15,14 +15,14 @@ Class3=CAsir32guiView
 Class4=CMainFrame
 
 ResourceCount=6
-Resource1=IDD_DEBUG
-Resource2=IDD_FORMVIEW
+Resource1=IDD_ABOUTBOX
+Resource2=IDD_DEBUG
 Class5=CAboutDlg
 Class6=CFatalDialog
 Class7=CAsirEdit
-Resource3=IDD_ABOUTBOX
-Resource4=IDR_DEBUGFRAME
-Resource5=IDR_MAINFRAME
+Resource3=IDR_DEBUGFRAME
+Resource4=IDR_MAINFRAME
+Resource5=IDD_FORMVIEW
 Resource6=IDD_FATAL
 
 [CLS:CAsir32guiApp]
