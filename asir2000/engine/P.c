@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.5 2001/06/15 07:56:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.6 2003/06/19 07:08:19 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -695,6 +695,49 @@ void mulpc_trunc(VL vl,P p,P c,VN vn,P *pr)
 			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
 		} else
 			*pr = 0;
+	}
+}
+
+void quop_trunc(VL vl,P p1,P p2,VN vn,P *pr)
+{
+	DCP dc,dcq0,dcq;
+	P t,s,m,lc2,qt;
+	V v1,v2;
+	Q d2;
+	VN vn1;
+
+	if ( !p1 )
+		*pr = 0;
+	else if ( NUM(p2) )
+		divsp(vl,p1,p2,pr);
+	else if ( (v1 = VR(p1)) != (v2 = VR(p2)) ) {
+		for ( dcq0 = 0, dc = DC(p1); dc; dc = NEXT(dc) ) {
+			NEXTDC(dcq0,dcq);
+			DEG(dcq) = DEG(dc);
+			quop_trunc(vl,COEF(dc),p2,vn,&COEF(dcq));
+		}
+		NEXT(dcq) = 0;
+		MKP(v1,dcq0,*pr);
+	} else {
+		d2 = DEG(DC(p2));
+		lc2 = COEF(DC(p2));
+		t = p1;
+		dcq0 = 0;
+		/* vn1 = degree list of LC(p2) */
+		for ( vn1 = vn; vn1->v != v1; vn1++ );
+		vn1++;
+		while ( t ) {
+			dc = DC(t);
+			NEXTDC(dcq0,dcq);
+			subq(DEG(dc),d2,&DEG(dcq));
+			quop_trunc(vl,COEF(dc),lc2,vn1,&COEF(dcq));
+			NEXT(dcq) = 0;
+			MKP(v1,dcq,qt);
+			mulp_trunc(vl,p2,qt,vn,&m);
+			subp(vl,t,m,&s); t = s;
+		}
+		NEXT(dcq) = 0;
+		MKP(v1,dcq0,*pr);
 	}
 }
 #endif
