@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.13 2001/09/04 08:48:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.14 2001/09/11 03:13:42 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1690,3 +1690,22 @@ DP p;
 	}
 }
 
+int dp_homogeneous(p)
+DP p;
+{
+	MP m;
+	int d;
+
+	if ( !p )
+		return 1;
+	else {
+		m = BDY(p);
+		d = m->dl->td;
+		m = NEXT(m);
+		for ( ; m; m = NEXT(m) ) {
+			if ( m->dl->td != d )
+				return 0;
+		}
+		return 1;
+	}
+}

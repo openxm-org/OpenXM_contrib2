@@ -45,12 +45,20 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.25 2001/09/10 05:55:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.26 2001/09/11 01:30:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
 #include "ox.h"
+
+#if defined(__GNUC__)
+#define INLINE inline
+#elif defined(VISUAL)
+#define INLINE __inline
+#else
+#define INLINE
+#endif
 
 #define ITOS(p) (((unsigned int)(p))&0x7fffffff)
 #define STOI(i) ((P)((unsigned int)(i)|0x80000000))
@@ -182,7 +190,7 @@ int doing_f4;
 NODE TraceList;
 NODE AllTraceList;
 
-int eqdl(nv,dl1,dl2)
+INLINE int eqdl(nv,dl1,dl2)
 int nv;
 DL dl1,dl2;
 {
@@ -486,7 +494,7 @@ LIST f,v;
 struct order_spec *ord;
 LIST *rp;
 {
-	int i,mindex,m,nochk;
+	int i,mindex,m,nochk,homogen;
 	struct order_spec ord1;
 	VL fv,vv,vc;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
@@ -498,13 +506,17 @@ LIST *rp;
 	if ( ord->id && NVars != ord->nv )
 		error("dp_f4_main : invalid order specification");
 	initd(ord);
-	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
+	for ( fd0 = 0, t = BDY(f), homogen = 1; t; t = NEXT(t) ) {
 		NEXTNODE(fd0,fd); ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fd));
+		if ( homogen )
+			homogen = dp_homogeneous(BDY(fd));
 	}
 	if ( fd0 ) NEXT(fd) = 0;
 	setup_arrays(fd0,0,&s);
 	x = gb_f4(s);
-	reduceall(x,&xx); x = xx;
+	if ( !homogen ) {
+		reduceall(x,&xx); x = xx;
+	}
 	for ( r0 = 0; x; x = NEXT(x) ) {
 		NEXTNODE(r0,r); dp_load((int)BDY(x),&ps[(int)BDY(x)]);
 		dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
@@ -519,7 +531,7 @@ int m;
 struct order_spec *ord;
 LIST *rp;
 {
-	int i;
+	int i,homogen;
 	struct order_spec ord1;
 	VL fv,vv,vc;
 	DP b,c,c1;
@@ -532,8 +544,10 @@ LIST *rp;
 	if ( ord->id && NVars != ord->nv )
 		error("dp_f4_mod_main : invalid order specification");
 	initd(ord);
-	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
+	for ( fd0 = 0, t = BDY(f), homogen = 1; t; t = NEXT(t) ) {
 		ptod(CO,vv,(P)BDY(t),&b);
+		if ( homogen )
+			homogen = dp_homogeneous(b);
 		_dp_mod(b,m,0,&c);
 		_dp_monic(c,m,&c1);
 		if ( c ) {
@@ -543,7 +557,9 @@ LIST *rp;
 	if ( fd0 ) NEXT(fd) = 0;
 	setup_arrays(fd0,m,&s);
 	x = gb_f4_mod(s,m);
-	reduceall_mod(x,m,&xx); x = xx;
+	if ( !homogen ) {
+		reduceall_mod(x,m,&xx); x = xx;
+	}
 	for ( r0 = 0; x; x = NEXT(x) ) {
 		NEXTNODE(r0,r); _dtop_mod(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
 	}
@@ -752,8 +768,6 @@ int m;
 			}
 		}
 #endif
-		fprintf(stderr,"\n");
-		
 		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
 		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
 
