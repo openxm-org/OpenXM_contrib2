@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.42 2003/08/21 08:20:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.43 2003/08/22 07:12:49 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -422,33 +422,36 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 	}
 }
 
-/* XXX : block order not supported */
-
 void ndl_dehomogenize(unsigned int *d)
 {
 	unsigned int mask;
 	unsigned int h;
 	int i,bits;
 
-	if ( nd_isrlex ) {
-		if ( nd_bpe == 32 ) {
-			h = d[nd_exporigin];
-			for ( i = nd_exporigin+1; i < nd_wpd; i++ )
-				d[i-1] = d[i];
-			d[i-1] = 0;
-			TD(d) -= h;
-		} else {
-			bits = nd_epw*nd_bpe;
-			mask = bits==32?0xffffffff:((1<<(nd_epw*nd_bpe))-1);
-			h = (d[nd_exporigin]>>((nd_epw-1)*nd_bpe))&nd_mask0;
-			for ( i = nd_exporigin; i < nd_wpd; i++ )
-				d[i] = ((d[i]<<nd_bpe)&mask)
-					|(i+1<nd_wpd?((d[i+1]>>((nd_epw-1)*nd_bpe))&nd_mask0):0);
-			TD(d) -= h;
-		}
-	} else 
-		TD(d) -= ((d[(nd_nvar-1)/nd_epw+nd_exporigin]>>
-			((nd_epw-((nd_nvar-1)%nd_epw)-1)*nd_bpe))&((1<<nd_bpe)-1));
+	if ( nd_blockmask ) {
+		h = GET_EXP(d,nd_nvar-1);
+		TD(d) -= h;
+		d[nd_exporigin-1] -= h;
+	} else {
+		if ( nd_isrlex ) {
+			if ( nd_bpe == 32 ) {
+				h = d[nd_exporigin];
+				for ( i = nd_exporigin+1; i < nd_wpd; i++ )
+					d[i-1] = d[i];
+				d[i-1] = 0;
+				TD(d) -= h;
+			} else {
+				bits = nd_epw*nd_bpe;
+				mask = bits==32?0xffffffff:((1<<(nd_epw*nd_bpe))-1);
+				h = (d[nd_exporigin]>>((nd_epw-1)*nd_bpe))&nd_mask0;
+				for ( i = nd_exporigin; i < nd_wpd; i++ )
+					d[i] = ((d[i]<<nd_bpe)&mask)
+						|(i+1<nd_wpd?((d[i+1]>>((nd_epw-1)*nd_bpe))&nd_mask0):0);
+				TD(d) -= h;
+			}
+		} else 
+			TD(d) -= GET_EXP(d,nd_nvar-1);
+	}
 }
 
 void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
@@ -570,7 +573,7 @@ int ndl_block_compare(unsigned int *d1,unsigned int *d2)
 {
 	int i,l,j,ord_o,ord_l;
 	struct order_pair *op;
-	unsigned int t1,t2;
+	unsigned int t1,t2,m;
 	unsigned int *mask;
 
 	l = nd_blockmask->n;
@@ -579,11 +582,12 @@ int ndl_block_compare(unsigned int *d1,unsigned int *d2)
 		mask = nd_blockmask->mask[j];
 		ord_o = op[j].order;
 		if ( ord_o < 2 )
-			if ( d1[j+1] > d2[j+1] ) return 1;
-			else if ( d1[j+1] < d2[j+1] ) return -1;
+			if ( (t1=d1[j+1]) > (t2=d2[j+1]) ) return 1;
+			else if ( t1 < t2 ) return -1;
 		for ( i = nd_exporigin; i < nd_wpd; i++ ) {
-			t1 = d1[i]&mask[i];
-			t2 = d2[i]&mask[i];
+			m = mask[i];
+			t1 = d1[i]&m;
+			t2 = d2[i]&m;
 			if ( t1 > t2 )
 				return !ord_o ? -1 : 1;
 			else if ( t1 < t2 )
