@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.52 2004/12/15 22:51:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.53 2004/12/17 03:09:08 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -225,6 +225,12 @@ void asir_terminate(int status)
 		else
 			LONGJMP(exec_env,status);
 	} else {
+		if ( user_quit_handler ) {
+			fprintf(stderr,"Calling the registered quit callbacks...");
+			for ( n = user_quit_handler; n; n = NEXT(n) )
+				bevalf((FUNC)BDY(n),0);
+			fprintf(stderr, "done.\n");
+		}
 		tty_reset();
 #if defined(MPI)
 		if ( !mpi_myid )
@@ -244,12 +250,6 @@ void asir_terminate(int status)
 			write_history(asir_history);
 		}
 #endif
-		if ( user_quit_handler ) {
-			fprintf(stderr,"Calling the registered quit callbacks...");
-			for ( n = user_quit_handler; n; n = NEXT(n) )
-				bevalf((FUNC)BDY(n),0);
-			fprintf(stderr, "done.\n");
-		}
 		ExitAsir();
 	}
 }
