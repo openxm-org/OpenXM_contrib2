@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.13 2002/08/02 09:29:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.14 2002/08/02 09:44:37 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -114,7 +114,7 @@ int plot(NODE arg)
 		can->mode = xrange ? MODE_PLOT : MODE_POLARPLOT;
 
 	if ( zrange ) {
-		n = BDY(zrange); v = VR((P)BDY(n)); n = NEXT(n);
+		n = NEXT(BDY(zrange));
 		can->zmin = ToReal(BDY(n)); 
 		n = NEXT(n); can->zmax = ToReal(BDY(n));
 		n = NEXT(n);
@@ -122,7 +122,7 @@ int plot(NODE arg)
 			can->nzstep = n ? QTOS((Q)BDY(n)) : MAXGC;
 		else {
 			/* XXX */
-			can->vx = v;
+			can->vx = VR((P)BDY(BDY(zrange)));
 			can->nzstep = n ? QTOS((Q)BDY(n)) : DEFAULTPOLARSTEP;
 		}
 	}
