@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.48 2003/12/12 04:59:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.49 2003/12/12 09:01:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -479,7 +479,7 @@ void asir_reset_102(unsigned int serial)
 		do {
 			ox_recv_102(i,&id,&obj);
 		} while ( id != OX_SYNC_BALL );
-	for ( i = myrank_102; i < nserver_102; i++ )
+	for ( i = myrank_102+1; i < nserver_102; i++ )
 		ox_send_sync_102(i);
 }
 

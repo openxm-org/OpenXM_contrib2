@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.48 2003/12/11 05:48:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.49 2003/12/12 04:59:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -301,6 +301,7 @@ void Pox_reset_102(NODE arg,Q *rp)
 	s = m_c_tab[index].c;
 	ox_send_cmd(s,SM_reset_102);
 	ox_flush_stream_force(s);
+	*rp = 0;
 }
 
 void Pox_get_rank_102(LIST *rp)
