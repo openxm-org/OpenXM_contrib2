@@ -559,7 +559,9 @@ def weightr(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 			if(member(Rea[I],Vars))
 				TMP=cons(Rea[I],TMP)$
 	
-		TMP=cons(ExtVars[F],TMP)$
+		if(member(ExtVars[F],Vars))
+			TMP=cons(ExtVars[F],TMP)$
+
 		Res=getgcd(Res,TMP)$
 	
 		if(nonposdegchk(Res)){
