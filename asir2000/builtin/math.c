@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.6 2003/12/11 00:19:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.7 2003/12/24 08:00:38 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -74,24 +74,77 @@ struct ftab math_tab[] = {
 	{0,0,0},
 };
 
+void get_ri(Num z,double *r,double *i)
+{
+	if ( !z ) {
+		*r = 0; *i = 0; return;
+	}
+	if ( OID(z) != O_N )
+		error("get_ri : invalid argument");
+	switch ( NID(z) ) {
+		case N_Q: case N_R: case N_B:
+			*r = ToReal(z); *i = 0;
+			break;
+		case N_C:
+			*r = ToReal(((C)z)->r);
+			*i = ToReal(((C)z)->i);
+			break;
+		default:
+			error("get_ri : invalid argument");
+			break;
+	}
+}
+
 void Pabs(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+	double s,r,i;
 
-	s = fabs(ToReal(ARG0(arg)));
+	if ( !ARG0(arg) ) {
+		*rp = 0; return;
+	}
+	get_ri((Num)ARG0(arg),&r,&i);
+	if ( i == 0 )
+		s = fabs(r);
+	else if ( r == 0 )
+		s = fabs(i);
+	else
+		s = sqrt(r*r+i*i);
 	MKReal(s,*rp);
 }
 
 void Pdsqrt(arg,rp)
 NODE arg;
-Real *rp;
+Num *rp;
 {
-	double s;
+	double s,r,i,a;
+	C z;
+	Real real;
 
-	s = sqrt(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+	if ( !ARG0(arg) ) {
+		*rp = 0; return;
+	}
+	get_ri((Num)ARG0(arg),&r,&i);
+	if ( i == 0 )
+		if ( r > 0 ) {
+			s = sqrt(r);
+			MKReal(s,real);
+			*rp = (Num)real;
+		} else {
+			NEWC(z);
+			z->r = 0;
+			s = sqrt(-r); MKReal(s,real); z->i = (Num)real;
+			*rp = (Num)z;
+		}
+	else {
+		a = sqrt(r*r+i*i);
+		NEWC(z);
+		s = sqrt((r+a)/2); MKReal(s,real); z->r = (Num)real;
+		s = i>0?sqrt((-r+a)/2):-sqrt((-r+a)/2);
+		MKReal(s,real); z->i = (Num)real;
+		*rp = (Num)z;
+	}
 }
 
 void Pdsin(arg,rp)
