@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.9 2000/11/07 09:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.10 2000/11/08 06:21:17 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -361,11 +361,12 @@ int nolog;
 			null = fopen("/dev/null","wb");
 			dup2(fileno(null),1);
 			dup2(fileno(null),2);
-			if ( !nolog ) {
+			if ( strcmp(dname,"0") )
+				execl(prog,prog,"-display",dname,0);
+			else {
 				putenv("DISPLAY=");
 				execl(prog,prog,0);
-			} else
-				execl(prog,prog,"-display",dname,0);
+			}
 		} else
 			execl(prog,prog,"-display",dname,0);
 		/* On failure */

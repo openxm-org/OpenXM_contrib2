@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.21 2000/11/15 09:18:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.22 2000/12/05 01:24:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -500,6 +500,8 @@ char *control_port_str,*server_port_str;
 	char *av[BUFSIZ];
 
 	dname0 = (char *)getenv("DISPLAY");
+	if ( !dname0 )
+		dname0 = "0";
 	dname = use_x ? dname0 : 0;
 	conn_str = conn_to_serv ? "1" : "0";
 	rsh = getenv("ASIR_RSH");
