@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.2 2003/10/20 07:32:19 saito Exp $
  */
 
 #include "ca.h"
@@ -14,6 +14,7 @@ static void NSolve(NODE, Obj *);
 void Solve1(P, Q, pointer *);
 void Sturm(P, VECT *);
 void boundbody(P, Q *);
+void binary(int , MAT);
 void separate(Q, Q, VECT, Q, Q, int, int, MAT, int *);
 void ueval(P, Q, Q *);
 
@@ -75,14 +76,14 @@ NSolve(arg, rp)
 NODE arg;
 Obj  *rp;
 {
-	pointer p, Eps;
-	LIST    root, listp;
-	V       v;
-	Q       eps;
-	NODE    n, n0, m0, m, ln0;
-	Num     r;
-	Itv     iv;
-	BF      breal;
+	pointer	p, Eps;
+	pointer	root, listp;
+	V			v;
+	Q			eps;
+	NODE		n, n0, m0, m, ln0;
+	Num		r;
+	Itv		iv;
+	BF			breal;
 
 	p = (pointer)ARG0(arg);
 	if ( !p ) {
@@ -116,11 +117,11 @@ Obj  *rp;
 				ToBf(r, &breal);
 				NEXTNODE( n0, n );
 				MKNODE(ln0, breal, NEXT(m));
-				MKLIST(listp, ln0);
+				MKLIST((LIST)listp, ln0);
 				BDY(n) = (pointer)listp;
 			}
 			NEXT(n) = 0;
-			MKLIST(listp,n0);
+			MKLIST((LIST)listp,n0);
 			*rp = (pointer)listp;
 			break;
 		case O_LIST:
@@ -159,7 +160,7 @@ pointer *rt;
 	chvu = stumq(sseq, up);
 	chvl = stumq(sseq, low);
 	tnumb = abs(chvu - chvl);
-	MKMAT(root, tnumb, 3);
+	MKMAT(root, tnumb, 4);
 	pad = -1;
 
 	fctrp(CO,inp,&fctp);
@@ -172,11 +173,13 @@ pointer *rt;
 				BDY(root)[pad][0] = 0;
 				BDY(root)[pad][1] = 0;
 				BDY(root)[pad][2] = DEG(fctp);
+				BDY(root)[pad][3] = p;
 			} else {
 				divq((Q)COEF(NEXT(onedeg)),(Q)COEF(onedeg),&a);
 				BDY(root)[pad][0] = a;
 				BDY(root)[pad][1] = BDY(root)[pad][0];
 				BDY(root)[pad][2] = DEG(fctp);
+				BDY(root)[pad][3] = p;
 			}
 			continue;
 		}
@@ -201,6 +204,30 @@ pointer *rt;
 				a = BDY(root)[i][2];
 				BDY(root)[i][2] = BDY(root)[j][2];
 				BDY(root)[j][2] = a;
+				a = BDY(root)[i][3];
+				BDY(root)[i][3] = BDY(root)[j][3];
+				BDY(root)[j][3] = a;
+			}
+		}
+	}
+	for (i = 0; i < pad; i++) {
+		while(cmpq(BDY(root)[i][1], BDY(root)[i+1][0]) > 0 ) {
+			binary(i, root);
+			binary(i+1, root);
+			if ( cmpq(BDY(root)[i][0], BDY(root)[i+1][1]) > 0 ) {
+				a = BDY(root)[i][0];
+				BDY(root)[i][0] = BDY(root)[i+1][0];
+				BDY(root)[i+1][0] = a;
+				a = BDY(root)[i][1];
+				BDY(root)[i][1] = BDY(root)[i+1][1];
+				BDY(root)[i+1][1] = a;
+				a = BDY(root)[i][2];
+				BDY(root)[i][2] = BDY(root)[i+1][2];
+				BDY(root)[i+1][2] = a;
+				a = BDY(root)[i][3];
+				BDY(root)[i][3] = BDY(root)[i+1][3];
+				BDY(root)[i+1][3] = a;
+				break;
 			}
 		}
 	}
@@ -224,7 +251,7 @@ MAT	root;
 int	*padp;
 {
 	int de, midn;
-	Q   mid, a, b, c, d, e;
+	Q   mid, e;
 	P   p;
 
 	de = abs(lown - upn);
@@ -233,17 +260,11 @@ int	*padp;
 		(*padp)++;
 		BDY(root)[*padp][0] = up;
 		BDY(root)[*padp][1] = low;
+		BDY(root)[*padp][3] = (P *)sseq->body[0];
 		subq( BDY(root)[*padp][1], BDY(root)[*padp][0], &e );
 		SGN(e) = 1;
-		p = (P *)sseq->body[0];
 		while (cmpq(e, eps) > 0) {
-			addq(BDY(root)[*padp][0], BDY(root)[*padp][1], &c);
-			divq(c, TWO, &d);
-			ueval(p, BDY(root)[*padp][1], &a);
-			ueval(p, d, &b);
-			if (SGN(a) == SGN(b))
-				BDY(root)[*padp][1] = d;
-			else BDY(root)[*padp][0] = d;
+			binary(*padp, root);
 			subq( BDY(root)[*padp][1], BDY(root)[*padp][0], &e);
 			SGN(e) = 1;
 		}
@@ -255,6 +276,25 @@ int	*padp;
 	midn = stumq(sseq, mid);
 	separate(mult, eps, sseq, low, mid, lown, midn, root, padp);
 	separate(mult, eps, sseq, mid, up, midn, upn, root, padp);
+}
+
+void
+binary(indx, root)
+int indx;
+MAT root;
+{
+	Q	a, b, c, d, e;
+	P	p;
+	p = (P*)BDY(root)[indx][3];
+	addq(BDY(root)[indx][0], BDY(root)[indx][1], &c);
+	divq(c, TWO, &d);
+	ueval(p, BDY(root)[indx][1], &a);
+	ueval(p, d, &b);
+	if (SGN(a) == SGN(b)){
+		BDY(root)[indx][1] = d;
+	} else {
+		BDY(root)[indx][0] = d;
+	}
 }
 
 void
