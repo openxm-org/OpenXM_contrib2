@@ -4803,7 +4803,7 @@ _ACEOF
 
 fi
 if test "${no_x}" != yes ; then
-    if test -f "${x_libraries}/libXpm.a" ; then
+    if test -f "${x_libraries}/libXpm.a" -o -f "${x_libraries}/libXpm.dll.a" ; then
 	    XPMLIB="-lXpm"
     fi
     # Check whether --enable-plot or --disable-plot was given.

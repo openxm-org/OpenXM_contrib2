@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.12 2003/03/19 00:52:27 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.13 2003/03/19 08:27:47 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -74,7 +74,7 @@ else
     AC_DEFINE([LONG_IS_32BIT])
 fi
 if test "${no_x}" != yes ; then
-    if test -f "${x_libraries}/libXpm.a" ; then
+    if test -f "${x_libraries}/libXpm.a" -o -f "${x_libraries}/libXpm.dll.a" ; then
 	    XPMLIB="-lXpm"
     fi
     AC_ARG_ENABLE([plot],
