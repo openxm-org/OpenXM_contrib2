@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.11 2001/10/09 01:36:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.12 2002/01/28 00:54:42 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -80,8 +80,8 @@ void _DL_alloc()
 	if ( dl_len & 1 )
 		dl_len += 1;
 #endif
-	p = (int *)GC_malloc(128*dl_len*sizeof(int));
 	for ( i = 0; i < 128; i++, p += dl_len ) {
+		p = (int *)GC_malloc(dl_len*sizeof(int));
 		*(DL *)p = _dl_free_list;
 		_dl_free_list = (DL)p;
 	}
@@ -94,9 +94,9 @@ void _MP_alloc()
 	static int MP_alloc_count;
 
 /*	fprintf(stderr,"MP_alloc : %d \n",++MP_alloc_count); */
-	p = (MP)GC_malloc(1024*sizeof(struct oMP));
 	for ( i = 0; i < 1024; i++ ) {
-		p[i].next = _mp_free_list; _mp_free_list = &p[i];
+		p = (MP)GC_malloc(sizeof(struct oMP));
+		p->next = _mp_free_list; _mp_free_list = p;
 	}
 }
 		
@@ -107,9 +107,9 @@ void _DP_alloc()
 	static int DP_alloc_count;
 
 /*	fprintf(stderr,"DP_alloc : %d \n",++DP_alloc_count); */
-	p = (DP)GC_malloc(1024*sizeof(struct oDP));
 	for ( i = 0; i < 1024; i++ ) {
-		p[i].body = (MP)_dp_free_list; _dp_free_list = &p[i];
+		p = (DP)GC_malloc(sizeof(struct oDP));
+		p->body = (MP)_dp_free_list; _dp_free_list = p;
 	}
 }
 
