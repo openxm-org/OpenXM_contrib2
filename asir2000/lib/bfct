@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.5 2000/12/11 02:00:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.6 2000/12/13 05:37:31 noro Exp $ 
 */
 /* requires 'primdec' */
 
@@ -77,7 +77,7 @@ def ann(F)
 	return G4;
 }
 
-def indicial1(F)
+def indicial1(F,V)
 {
 	V = vars(F);
 	W = append([y1,t],V);
@@ -90,7 +90,8 @@ def indicial1(F)
 		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
 	}
 	dp_nelim(1);
-	G0 = dp_weyl_gr_main(B,append(W,DW),0,0,6);
+	/* we use homogenization (heuristically determined) */
+	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
 	G1 = map(subst,G0,y1,1);
 	Mat = newmat(2,2,[[-1,1],[0,1]]);
 	G2 = map(psi,G1,t,dt);
@@ -140,10 +141,10 @@ def compare_first(A,B)
 
 def bfct(F)
 {
-	G4 = indicial1(F);
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
+
 	for ( I = 0; I < N; I++ )
 		D[I] = [deg(F,V[I]),V[I]];
 	qsort(D,compare_first);
@@ -152,8 +153,10 @@ def bfct(F)
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 	V1 = cons(s,V); DV1 = cons(ds,DV);
-	G0 = dp_weyl_gr_main(G4,append(V1,DV1),0,1,0);
-	Minipoly = weyl_minipoly(G0,append(V1,DV1),0,s);
+
+	G0 = indicial1(F,reverse(V));
+	G1 = dp_weyl_gr_main(G0,append(V1,DV1),0,1,0);
+	Minipoly = weyl_minipoly(G1,append(V1,DV1),0,s);
 	return Minipoly;
 }
 
@@ -291,8 +294,6 @@ def weyl_nf_mod(B,G,PS,Mod)
 
 def weyl_hen_ttob(T,NF,LHS,V,MOD)
 {
-	if ( length(T) == 1 )
-		return car(T);
 	T0 = time()[0]; M = etom(weyl_leq_nf(T,NF,LHS,V)); TE = time()[0] - T0;
 	T0 = time()[0]; U = henleq(M,MOD); TH = time()[0] - T0;
 	if ( dp_gr_print() ) {
