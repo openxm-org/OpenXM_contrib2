@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.43 2004/01/25 11:54:10 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.44 2004/02/04 07:42:07 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -171,8 +171,8 @@ void glob_init() {
 	Symbol_grlex->value = 0;
 	OID(Symbol_glex) = O_SYMBOL; Symbol_glex->name = "@glex"; 
 	Symbol_glex->value = 1;
-	OID(Symbol_lex) = O_SYMBOL; Symbol_glex->name = "@lex"; 
-	Symbol_lex->value = 1;
+	OID(Symbol_lex) = O_SYMBOL; Symbol_lex->name = "@lex"; 
+	Symbol_lex->value = 2;
 	sprintf(asirname,"%s/asir_symtab",asir_libdir);
 }
 

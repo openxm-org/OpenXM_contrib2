@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.42 2004/02/03 23:31:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.43 2004/02/04 07:42:07 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1022,6 +1022,7 @@ void square_rem_tab_up_gf2n(UP,UP *,UP *);
 void powertabup_gf2n(UP,UP,UP *);
 void find_root_gf2n(UP,GF2N *);
 
+int cmpdl_composite(int,DL,DL);
 int cmpdl_matrix(int,DL,DL);
 int cmpdl_order_pair(int,DL,DL);
 int cmpdl_elim(int,DL,DL);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.26 2003/08/22 08:14:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.27 2004/02/03 23:31:57 noro Exp $ 
 */
 #include "ca.h"
 
@@ -111,6 +111,10 @@ int has_sfcoef_p(P f)
 void initd(struct order_spec *spec)
 {
 	switch ( spec->id ) {
+		case 3:
+			cmpdl = cmpdl_composite;
+			dp_dl_work = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));	
+			break;
 		case 2:
 			cmpdl = cmpdl_matrix;
 			dp_dl_work = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));	
@@ -1513,6 +1517,75 @@ int cmpdl_order_pair(int n,DL d1,DL d2)
 				error("cmpdl_order_pair : invalid order"); break;
 		}
 		t1 += l; t2 += l; head += l;
+	}
+	return 0;
+}
+
+int cmpdl_composite(int nv,DL d1,DL d2)
+{
+	int n,i,j,k,start,s,len;
+	int *dw;
+	struct sparse_weight *sw;
+	struct weight_or_block *worb;
+	int *w,*t1,*t2;
+
+	n = dp_current_spec->ord.composite.length;
+	worb = dp_current_spec->ord.composite.w_or_b;
+	w = dp_dl_work;
+	for ( i = 0, t1 = d1->d, t2 = d2->d; i < nv; i++ )
+		w[i] = t1[i]-t2[i];
+	for ( i = 0; i < n; i++, worb++ ) {
+		len = worb->length;
+		switch ( worb->type ) {
+			case IS_DENSE_WEIGHT:
+				dw = worb->body.dense_weight;
+				for ( j = 0, s = 0; j < len; j++ )
+					s += dw[j]*w[j];
+				if ( s > 0 ) return 1;
+				else if ( s < 0 ) return -1;
+				break;
+			case IS_SPARSE_WEIGHT:
+				sw = worb->body.sparse_weight;
+				for ( j = 0, s = 0; j < len; j++ )
+					s += sw[j].value*w[sw[j].pos];
+				if ( s > 0 ) return 1;
+				else if ( s < 0 ) return -1;
+				break;
+			case IS_BLOCK:
+				start = worb->body.block.start;
+				switch ( worb->body.block.order ) {
+					case 0:
+						for ( j = 0, k = start, s = 0; j < len; j++, k++ ) {
+							s += MUL_WEIGHT(w[k],k);
+						}
+						if ( s > 0 ) return 1;
+						else if ( s < 0 ) return -1;
+						else {
+							for ( j = k-1; j >= start && w[j] == 0; j-- );
+							if ( j >= start )
+								return w[j] < 0 ? 1 : -1;
+						}
+						break;
+					case 1:
+						for ( j = 0, k = start, s = 0; j < len; j++, k++ ) {
+							s += MUL_WEIGHT(w[k],k);
+						}
+						if ( s > 0 ) return 1;
+						else if ( s < 0 ) return -1;
+						else {
+							for ( j = 0, k = start;  j < len && w[j] == 0; j++, k++ );
+							if ( j < len )
+								return w[j] > 0 ? 1 : -1;
+						}
+						break;
+					case 2:
+						for ( j = 0, k = start;  j < len && w[j] == 0; j++, k++ );
+						if ( j < len )
+							return w[j] > 0 ? 1 : -1;
+						break;
+				}
+				break;
+		}
 	}
 	return 0;
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.26 2003/11/27 07:53:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.27 2004/02/03 23:31:57 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1359,6 +1359,52 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		return 0;
 }
 
+void print_composite_order_spec(struct order_spec *spec)
+{
+	int nv,n,len,i,j,k,start;
+	struct weight_or_block *worb;
+
+	nv = spec->nv;
+	n = spec->ord.composite.length;
+	worb = spec->ord.composite.w_or_b;
+	for ( i = 0; i < n; i++, worb++ ) {
+		len = worb->length;
+		printf("[ ");
+		switch ( worb->type ) {
+			case IS_DENSE_WEIGHT:
+				for ( j = 0; j < len; j++ )
+					printf("%d ",worb->body.dense_weight[j]);
+				for ( ; j < nv; j++ )
+					printf("0 ");
+				break;
+			case IS_SPARSE_WEIGHT:
+				for ( j = 0, k = 0; j < nv; j++ )
+					if ( j == worb->body.sparse_weight[k].pos )
+						printf("%d ",worb->body.sparse_weight[k++].value);
+					else
+						printf("0 ");
+				break;
+			case IS_BLOCK:
+				start = worb->body.block.start;
+				for ( j = 0; j < start; j++ ) printf("0 ");
+				switch ( worb->body.block.order ) {
+					case 0:
+						for ( k = 0; k < len; k++, j++ ) printf("R ");
+						break;
+					case 1:
+						for ( k = 0; k < len; k++, j++ ) printf("G ");
+						break;
+					case 2:
+						for ( k = 0; k < len; k++, j++ ) printf("L ");
+						break;
+				}
+				for ( ; j < nv; j++ ) printf("0 ");
+				break;
+		}
+		printf("]\n");
+	}
+}
+
 /* order = [w_or_b, w_or_b, ... ] */
 /* w_or_b = w or b                */
 /* w = [1,2,...] or [x,1,y,2,...] */
@@ -1376,6 +1422,8 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 	Obj a0;
 	NODE a;
 	V v;
+	Symbol sym;
+	int start;
 
 	/* l = number of vars in vl */
 	for ( l = 0, tvl = vl; tvl; tvl = NEXT(tvl), l++ );
@@ -1387,14 +1435,14 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 	spec->obj = (Obj)order;
 	spec->nv = l;
 	spec->ord.composite.length = n;
-	spec->ord.composite.w_or_b = (struct weight_or_block *)
+	w_or_b = spec->ord.composite.w_or_b = (struct weight_or_block *)
 		MALLOC(sizeof(struct weight_or_block)*n);
-	for ( t = wb, i = 0; t; t = NEXT(t) ) {
-		a = BDY((LIST)BDY(wb));
+	for ( t = wb, i = 0; t; t = NEXT(t), i++ ) {
+		a = BDY((LIST)BDY(t));
 		len = length(a);
 		a0 = (Obj)BDY(a);
 		if ( !a0 || OID(a0) == O_N ) {
-			/* a is dense weight */
+			/* a is a dense weight vector */
 			dw = (int *)MALLOC(sizeof(int)*len);
 			for ( j = 0, p = a; j < len; p = NEXT(p), j++ )
 				dw[j] = QTOS((Q)BDY(p));
@@ -1402,24 +1450,46 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 			w_or_b[i].length = len;
 			w_or_b[i].body.dense_weight = dw;
 		} else if ( OID(a0) == O_P ) {
+			/* a is a sparse weight vector */
+			len >>= 1;
 			sw = (struct sparse_weight *)
 				MALLOC(sizeof(struct sparse_weight)*len);
 			for ( j = 0, p = a; j < len; j++ ) {
-				v = VR((P)BDY(a)); a = NEXT(a);
+				v = VR((P)BDY(p)); p = NEXT(p);
 				for ( tvl = vl, k = 0; tvl && tvl->v != v;
 					k++, tvl = NEXT(tvl) );
 				if ( !tvl )
 					error("invalid variable name");
 				sw[j].pos = k;
-				sw[j].value = QTOS((Q)BDY(a));
+				sw[j].value = QTOS((Q)BDY(p)); p = NEXT(p);
 			}
 			w_or_b[i].type = IS_SPARSE_WEIGHT;
 			w_or_b[i].length = len;
 			w_or_b[i].body.sparse_weight = sw;
-		} else {
-			error("not implemented yet");
-		}		
+		} else if ( OID(a0) == O_SYMBOL ) {
+			/* a is a block */
+			sym = (Symbol)a0; a = NEXT(a); len--;
+			for ( start = 0, tvl = vl; tvl->v != VR((P)BDY(a));
+				tvl = NEXT(tvl), start++ );
+			for ( p = NEXT(a), tvl = NEXT(tvl); p;
+				p = NEXT(p), tvl = NEXT(tvl) )
+				if ( tvl->v != VR((P)BDY(p)) ) break;
+			if ( p )
+				error("a block must be contiguous");
+			w_or_b[i].type = IS_BLOCK;
+			w_or_b[i].length = len;
+			w_or_b[i].body.block.start = start;
+			if ( !strcmp(sym->name,"@grlex") )
+				w_or_b[i].body.block.order = 0;
+			else if ( !strcmp(sym->name,"@glex") )
+				w_or_b[i].body.block.order = 1;
+			else if ( !strcmp(sym->name,"@lex") )
+				w_or_b[i].body.block.order = 2;
+			else
+				error("invalid ordernam");
+		}
 	}
+	if ( 1 ) print_composite_order_spec(spec);
 }
 
 /*
