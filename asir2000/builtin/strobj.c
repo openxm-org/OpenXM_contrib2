@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.39 2004/03/11 04:52:17 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.40 2004/03/11 07:40:41 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -156,25 +156,26 @@ static struct {
 char *conv_rule(char *name)
 {
 	char *body,*r;
+	int len;
 
 	if ( convfunc )
 		name = call_convfunc(name);
-	if ( conv_flag & CONV_DMODE ) {
-		if ( *name == 'd' ) {
-			body = conv_flag&CONV_SUBS?conv_subs(name+1):symbol_name(name+1);
-			if ( !body ) {
-				r = MALLOC_ATOMIC((strlen(PARTIAL)+1)*sizeof(char));
-				strcpy(r,PARTIAL);
-			} else {
-				r = MALLOC_ATOMIC((strlen(PARTIAL)+strlen(body)+5)
-					*sizeof(char));
-				sprintf(r,strlen(body)==1?"{%s}_%s":"{%s}_{%s}",PARTIAL,body);
-			}
-			return r;
-		} else
-			return conv_flag&CONV_SUBS?conv_subs(name):symbol_name(name);
-	} else 
-		return conv_flag&CONV_SUBS?conv_subs(name):symbol_name(name);
+	if ( conv_flag & CONV_TABLE ) {
+		r = symbol_name(name);
+		if ( r ) return r;
+	}
+	if ( (conv_flag & CONV_DMODE) && *name == 'd' ) {
+		body = conv_rule(name+1);
+		r = MALLOC_ATOMIC((strlen(PARTIAL)+strlen(body)+5)*sizeof(char));
+		if ( !body || !(len=strlen(body)) )
+			strcpy(r,PARTIAL);
+		else if ( len == 1 )
+			sprintf(r,"%s_%s",PARTIAL,body);
+		else
+			sprintf(r,"%s_{%s}",PARTIAL,body);
+		return r;
+	} else
+		return conv_subs(name);
 }
 
 int _is_delimiter(char c)
@@ -192,11 +193,11 @@ int _is_alpha(char c)
 char *conv_subs(char *name)
 {
 	int i,j,k,len,clen,slen,start,level;
-	char *buf,*head,*r,*h,*brace;
+	char *buf,*head,*r,*h,*brace,*buf_conv;
 	char **subs;
 
-	len = strlen(name);
-	if ( !len ) return 0;
+	if ( !name || !(len=strlen(name)) ) return "";
+	if ( !(conv_flag&CONV_SUBS) ) return name;
 	subs = (char **)ALLOCA(len*sizeof(char* ));
 	for ( i = 0, j = 0, start = i; ; j++ ) {
 		while ( (i < len) && _is_delimiter(name[i]) ) i++;
@@ -228,7 +229,8 @@ char *conv_subs(char *name)
 			slen = i-start;	
 			buf = (char *)ALLOCA((slen+1)*sizeof(char));
 			strncpy(buf,name+start,slen); buf[slen] = 0;
-			subs[j] = symbol_name(buf);
+			buf_conv = symbol_name(buf);
+			subs[j] = buf_conv?buf_conv:buf;
 		}
 	}
 	for ( k = 0, clen = 0; k < j; k++ ) clen += strlen(subs[k]);
@@ -776,6 +778,8 @@ char *symbol_name(char *name)
 {
 	int i;
 
+	if ( !name || strlen(name) == 0 )
+		return "";
 	if ( !(conv_flag & CONV_TABLE) )
 		return name;
 
@@ -786,7 +790,7 @@ char *symbol_name(char *name)
 	for ( i = 0; texsymbol[i].text; i++ )
 		if ( !strcmp(texsymbol[i].text,name) )
 			return texsymbol[i].symbol;
-	return name;
+	return 0;
 }
 
 void fnodetotex_tb(FNODE f,TB tb)
