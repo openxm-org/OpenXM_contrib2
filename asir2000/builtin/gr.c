@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.56 2003/12/26 02:38:10 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.57 2004/02/03 23:31:57 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1383,9 +1383,10 @@ void reduceall(NODE in,NODE *h)
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, t = r; i < n; i++, t = NEXT(t) )
 		w[i] = (int)BDY(t);
+	/* w[i] < 0 : reduced to 0 */
 	for ( i = 0; i < n; i++ ) {
 		for ( top = 0, j = n-1; j >= 0; j-- )
-			if ( j != i ) {
+			if ( w[j] >= 0 && j != i ) {
 				MKNODE(t,(pointer)w[j],top); top = t;
 			}
 		get_eg(&tmp0);
@@ -1407,10 +1408,16 @@ void reduceall(NODE in,NODE *h)
 		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
-		w[i] = newps(g1,0,(NODE)0);
+		if ( g1 ) {
+			w[i] = newps(g1,0,(NODE)0);
+		} else {
+			w[i] = -1;
+		}
 	}
 	for ( top = 0, j = n-1; j >= 0; j-- ) {
-		MKNODE(t,(pointer)w[j],top); top = t;
+		if ( w[j] >= 0 ) {
+			MKNODE(t,(pointer)w[j],top); top = t;
+		}
 	}
 	*h = top;
 	if ( DP_Print || DP_PrintShort )
@@ -1436,9 +1443,10 @@ void reduceall_mod(NODE in,int m,NODE *h)
 	w = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, t = r; i < n; i++, t = NEXT(t) )
 		w[i] = (int)BDY(t);
+	/* w[i] < 0 : reduced to 0 */
 	for ( i = 0; i < n; i++ ) {
 		for ( top = 0, j = n-1; j >= 0; j-- )
-			if ( j != i ) {
+			if ( w[j] >= 0 && j != i ) {
 				MKNODE(t,(pointer)w[j],top); top = t;
 			}
 		get_eg(&tmp0);
@@ -1452,10 +1460,16 @@ void reduceall_mod(NODE in,int m,NODE *h)
 		if ( DP_Print || DP_PrintShort ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
-		w[i] = newps_mod(g,m);
+		if ( g ) {
+			w[i] = newps_mod(g,m);
+		} else {
+			w[i] = -1;
+		}
 	}
 	for ( top = 0, j = n-1; j >= 0; j-- ) {
-		MKNODE(t,(pointer)w[j],top); top = t;
+		if ( w[i] >= 0 ) {
+			MKNODE(t,(pointer)w[j],top); top = t;
+		}
 	}
 	*h = top;
 	if ( DP_Print || DP_PrintShort )
