@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.17 2001/09/17 02:58:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.18 2001/09/17 10:32:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -844,7 +844,8 @@ DP *rp;
 	_mulmd_dup(mod,s,p2,&t); _free_dp(s);
 #else
 	if ( do_weyl ) {
-		_weyl_mulmdm_dup(mod,p2,m,&t); _FREEMP(m);
+		_MKDP(n,m,s); s->sugar = d->td;
+		_mulmd_dup(mod,s,p2,&t); _free_dp(s);
 	} else {
 		_mulmdm_dup(mod,p2,m,&t); _FREEMP(m);
 	}
