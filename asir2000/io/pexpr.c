@@ -44,13 +44,17 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.25 2003/12/02 06:56:48 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.26 2003/12/24 08:00:38 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
 #include "comp.h"
 #include "base.h"
+
+#if defined(PARI)
+#include "genpari.h"
+#endif
 
 #ifndef FPRINT
 #define FPRINT
@@ -210,8 +214,6 @@ P p;
 void printbf(a)
 BF a;
 {
-	void sor();
-
 	sor(a->body,double_output ? 'f' : 'g',-1,0);
 }
 #endif
@@ -225,8 +227,6 @@ char *s;
 }
 
 #if defined(PARI)
-#include "genpari.h"
-
 void myoutbrute(g)
 GEN g;
 {
@@ -237,7 +237,6 @@ void sprintbf(a)
 BF a;
 {
 	char *str;
-	char *GENtostr();
 	char *GENtostr0();
 
 	if ( double_output ) {

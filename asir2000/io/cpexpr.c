@@ -44,12 +44,15 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.14 2002/09/02 05:16:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.15 2003/02/14 22:29:15 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "al.h"
 #include "base.h"
+#if PARI
+#include "genpari.h"
+#endif
 
 extern int hex_output,fortran_output,double_output,real_digit;
 
@@ -131,7 +134,6 @@ int estimate_length(VL vl,pointer p)
 void PRINTBF(BF a)
 {
 	char *str;
-	char *GENtostr();
 	char *GENtostr0();
 	void myoutbrute();
 
