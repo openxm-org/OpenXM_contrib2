@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.7 2000/12/22 10:03:31 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.8 2001/08/20 09:03:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -167,9 +167,11 @@ void debug_init() {
 		}
 		fclose(fp);
 	}
+#if 0
 #if !defined(VISUAL)
 	if ( do_server_in_X11 )
 		init_cmdwin();
+#endif
 #endif
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.5 2000/09/23 05:45:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.6 2000/09/25 04:33:38 noro Exp $ 
 */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
@@ -177,7 +177,10 @@ init_cmdwin()
 	char hostname[BUFSIZ],title[BUFSIZ];
 	extern char displayname[];
 	extern int do_server_in_X11;
+	static int is_init = 0;
 
+	if ( is_init )
+		return;
 	if ( !displayname[0] ) {
 		d = (char *)getenv("DISPLAY");
 		if ( d )
@@ -215,6 +218,7 @@ init_cmdwin()
 		XtSetValues(cmdwin, arg, n);
 		XtRealizeWidget(mainwin);
 	}
+	is_init = 1;
 }
 
 show_debug_window(on)
@@ -222,6 +226,7 @@ int on;
 {
 	XEvent ev;
 
+	init_cmdwin();
 	if ( mainwin ) {
 		if ( on )
 			XtPopup(mainwin,XtGrabNone);
