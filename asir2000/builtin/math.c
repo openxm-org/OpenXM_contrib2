@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.5 2003/11/08 01:12:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.6 2003/12/11 00:19:24 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -201,7 +201,7 @@ Q *rp;
 		a = -a;
 	} else
 		sgn = 1;
-#if defined(i386) || defined(__alpha) || defined(VISUAL)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__x86_64)
 	au = ((unsigned int *)&a)[1];
 	al = ((unsigned int *)&a)[0];
 #else
@@ -244,7 +244,7 @@ Q *rp;
 		a = -a;
 	} else
 		sgn = 1;
-#if defined(i386) || defined(__alpha) || defined(VISUAL)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__x86_64)
 	au = ((unsigned int *)&a)[1];
 	al = ((unsigned int *)&a)[0];
 #else
@@ -291,7 +291,7 @@ Q *rp;
 		a = -a;
 	} else
 		sgn = 1;
-#if defined(i386) || defined(__alpha) || defined(VISUAL)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__x86_64)
 	au = ((unsigned int *)&a)[1];
 	al = ((unsigned int *)&a)[0];
 #else

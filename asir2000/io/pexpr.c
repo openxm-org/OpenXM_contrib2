@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.24 2003/06/09 16:18:10 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.25 2003/12/02 06:56:48 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -402,7 +402,7 @@ Num q;
 						int i,expo;
 
 						m = (unsigned int *)&BDY((Real)q);
-#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__x86_64)
 						u = m[1]; l = m[0];
 #else
 						u = m[0]; l = m[1];

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gfpn.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gfpn.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -273,7 +273,7 @@ UP *r;
 	for ( j = 0; j <= d; j++ ) {
 #if 1
 		a = (UL)floor(k[j]);
-#if defined(i386) || defined(__alpha) || defined(VISUAL)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__x86_64)
 		au = ((unsigned int *)&a)[1];
 		al = ((unsigned int *)&a)[0];
 #else
