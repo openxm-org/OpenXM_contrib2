@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.91 2004/03/13 07:32:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.92 2004/03/13 07:43:24 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -1937,7 +1937,7 @@ NODE nd_gb_trace(int m,int ishomo)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
-			if ( ishomo ) do_diagonalize(sugar,m);
+			if ( ishomo ) do_diagonalize_trace(sugar,m);
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
