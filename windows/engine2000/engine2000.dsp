@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MTd /W3 /GX /O2 /I "..\asir2000\include" /I "..\asir2000\parse" /I "..\asir2000\plot" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /c
+# ADD CPP /nologo /MTd /W3 /GX /O2 /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\..\asir2000\plot" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /machine:I386
-# ADD LINK32 ..\asir2000lib\release\asir2000lib.lib ..\pari2\pari-2.0.17.beta\win32\libpariw.lib ws2_32.lib /nologo /stack:0x10000000 /subsystem:windows /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Release/engine.exe"
+# ADD LINK32 ..\asir2000lib\release\\asir2000lib.lib ..\pari2\win32\libpariw.lib ws2_32.lib /nologo /stack:0x10000000 /subsystem:windows /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Release/engine.exe"
 
 !ELSEIF  "$(CFG)" == "engine2000 - Win32 Debug"
 
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "..\asir2000\include" /I "..\asir2000\parse" /I "..\asir2000\plot" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\..\asir2000\plot" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /GZ /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 ..\asir2000lib\debug\asir2000lib.lib ..\pari2\pari-2.0.17.beta\win32\libpariw.lib ws2_32.lib /nologo /stack:0x10000000 /subsystem:windows /debug /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Debug/engine.exe" /pdbtype:sept
+# ADD LINK32 ..\asir2000lib\debug\asir2000lib.lib ..\pari2\win32\libpariw.lib ws2_32.lib /nologo /stack:0x10000000 /subsystem:windows /debug /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Debug/engine.exe" /pdbtype:sept
 
 !ENDIF 
 
@@ -94,7 +94,7 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\asir2000\plot\calc.c
+SOURCE=..\..\asir2000\plot\calc.c
 # End Source File
 # Begin Source File
 
@@ -106,7 +106,7 @@ SOURCE=.\engine2000.rc
 # End Source File
 # Begin Source File
 
-SOURCE=..\asir2000\plot\if.c
+SOURCE=..\..\asir2000\plot\if.c
 # End Source File
 # Begin Source File
 
@@ -118,11 +118,11 @@ SOURCE=.\MainFrm.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\asir2000\io\ox_asir.c
+SOURCE=..\..\asir2000\io\ox_asir.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\asir2000\io\ox_launch.c
+SOURCE=..\..\asir2000\io\ox_launch.c
 # End Source File
 # Begin Source File
 
@@ -138,11 +138,11 @@ SOURCE=.\plot.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\asir2000\plot\plotg.c
+SOURCE=..\..\asir2000\plot\plotg.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\asir2000\plot\plotp.c
+SOURCE=..\..\asir2000\plot\plotp.c
 # End Source File
 # Begin Source File
 

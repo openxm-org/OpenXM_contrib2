@@ -29,7 +29,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include <process.h>
-#include "../asir2000/include/ca.h"
+#include "ca.h"
 
 /* error message structure */
 
