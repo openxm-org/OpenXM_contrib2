@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.11 2003/08/05 05:56:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.12 2003/10/20 00:58:47 takayama Exp $ */
 
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
@@ -7,8 +7,8 @@ extern BuchbergerMinipoly,PartialDecompByLex,ParallelMinipoly$
 extern B_Win,D_Win$
 extern COMMONCHECK_SF,CID_SF$
 
-if (!module_definedp("fff")) load("fff") $$
-if (!module_definedp("gr"))  load("gr") $$
+if (!module_definedp("fff")) load("fff"); else $
+if (!module_definedp("gr")) load("gr"); else $
 module primdec_mod $
   /* Empty for now. It will be used in a future. */
 endmodule $
