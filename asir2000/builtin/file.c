@@ -45,13 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.14 2001/08/20 09:03:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.15 2001/10/09 01:36:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "base.h"
+#if !defined(VISUAL)
 #include "unistd.h"
+#endif
 #if PARI
 #include "genpari.h"
 #endif
