@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.2 2000/08/21 08:31:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
 */
 #include "ca.h"
 
@@ -599,7 +599,7 @@ int getdeg(v,p)
 V v;
 P p;
 {
-	int m;
+	int m,t;
 	DCP dc;
 	
 	if ( !p || NUM(p) ) 
@@ -607,8 +607,10 @@ P p;
 	else if ( v == VR(p) ) 
 		return ( deg(v,p) );
 	else {
-		for ( dc = DC(p), m = 0; dc; dc = NEXT(dc) ) 
-			m = MAX(m,getdeg(v,COEF(dc)));
+		for ( dc = DC(p), m = 0; dc; dc = NEXT(dc) ) {
+			t = getdeg(v,COEF(dc));
+			m = MAX(m,t);
+		}
 		return ( m );
 	}
 }
