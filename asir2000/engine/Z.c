@@ -718,7 +718,7 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
 	:"eax","ebx","ecx","edx","esi","edi");
 #else
-	for ( i = 0, c = 0, mr = BD(nr); i < d2; i++, m1++, m2++, mr++ ) {
+	for ( i = 0, c = 0; i < d2; i++, m1++, m2++, mr++ ) {
 		tmp = *m1 + *m2;
 		if ( tmp < *m1 ) {
 			tmp += c;
@@ -808,7 +808,7 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
 	:"eax","ebx","ecx","edx","esi","edi");
 #else
-	for ( i = 0, br = 0, mr = BD(nr); i < d2; i++, mr++ ) {
+	for ( i = 0, br = 0; i < d2; i++, mr++ ) {
 		t = *m1++;
 		tmp = *m2++ + br;
 		if ( br > 0 && !tmp ) {
