@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.23 2004/03/05 01:15:48 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.24 2004/03/05 01:19:09 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -113,10 +113,12 @@ void write_tb(char *s,TB tb)
 int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
 int register_dp_vars(Obj arg);
+int register_dp_vars_prefix(Obj arg);
 static struct TeXSymbol *user_texsymbol;
 static char *(*conv_rule)(char *);
 static char **dp_vars;
-int dp_vars_len;
+static int dp_vars_len;
+static char *dp_vars_prefix;
 
 static struct {
 	char *name;
@@ -126,6 +128,7 @@ static struct {
 	{"symbol_table",0,register_symbol_table},
 	{"conv_rule",0,register_conv_rule},
 	{"dp_vars",0,register_dp_vars},
+	{"dp_vars_prefix",0,register_dp_vars_prefix},
 	{0,0,0},
 };
 
@@ -162,7 +165,9 @@ char *conv_rule_d(char *name)
 	b[j++] = '_'; b[j++] = '{';
 	if ( name[i] == '_' ) i++;
 	for ( start = 1; i < l; ) {
-		if ( name[i] == '_' ) {
+		if ( name[i] == '{' || name[i] == '}' || name[i] == ' ' )
+			b[j++] = name[i++];
+		else if ( name[i] == '_' ) {
 			i++;
 			start = 1;
 			b[j++] = ',';
@@ -272,6 +277,7 @@ int register_dp_vars(Obj arg)
 	if ( !arg ) {
 		dp_vars = 0;
 		dp_vars_len = 0;
+		return 1;
 	} else if ( OID(arg) != O_LIST )
 		return 0;
 	else {
@@ -292,6 +298,20 @@ int register_dp_vars(Obj arg)
 		dp_vars_len = l;
 		return 1;
 	}
+}
+
+int register_dp_vars_prefix(Obj arg)
+{
+	if ( !arg ) {
+		dp_vars_prefix = 0;
+		return 1;
+	} else if ( OID(arg) == O_STR ) {
+		dp_vars_prefix = BDY((STRING)arg);
+		return 1;
+	} else if ( OID(arg) == O_P ) {
+		dp_vars_prefix = NAME(VR((P)arg));
+		return 1;
+	} else return 0;
 }
 
 void Pquotetotex_env(NODE arg,Obj *rp)
@@ -913,6 +933,8 @@ void fnodetotex_tb(FNODE f,TB tb)
 				allzero = 0;
 				if ( dp_vars && i < dp_vars_len )
 					strcpy(vname,dp_vars[i]);
+				else if ( dp_vars_prefix )
+					sprintf(vname,"%s_{%d}",dp_vars_prefix,i);
 				else
 					sprintf(vname,"x_{%d}",i);
 				vname_conv = symbol_name(vname);
