@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9.2.2 2000/11/08 08:31:55 maekawa Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9.2.3 2000/11/10 14:57:24 maekawa Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -86,7 +86,7 @@ void getremotename(s,name)
 int s;
 char *name;
 {
-	struct sockaddr_strorage ss;
+	struct sockaddr_storage ss;
 	struct sockaddr *sa;
 	socklen_t len;
 	char host[NI_MAXHOST];
@@ -203,7 +203,7 @@ int s;
 	len = sizeof(ss);
 	if (getsockname(s, (struct sockaddr *)&ss, &len) < 0) {
 		close(s);
-		return (-1)
+		return (-1);
 	}
 
 	for (i = 0 ; i < 10 ; i++) {
