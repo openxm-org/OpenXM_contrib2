@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.1.1.1 1999/12/03 07:39:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.2 2000/03/28 06:32:23 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -125,7 +125,7 @@ Obj *rp;
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,sid,fname,poly,xrange,yrange,0,geom,wname);
-	Pox_cmo_rpc(arg,rp);
+	Pox_rpc(arg,rp);
 }
 
 void Pconplot(arg,rp)
@@ -249,7 +249,7 @@ Obj *rp;
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,sid,fname,poly,xrange,yrange,zrange,geom,wname);
-	Pox_cmo_rpc(arg,rp);
+	Pox_rpc(arg,rp);
 }
 
 void Pplot(arg,rp)
@@ -338,7 +338,7 @@ Obj *rp;
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,sid,fname,poly,xrange,0,0,geom,wname);
-	Pox_cmo_rpc(arg,rp);
+	Pox_rpc(arg,rp);
 }
 
 void Pplotover(arg,rp)
@@ -354,7 +354,7 @@ Obj *rp;
 	index = (Q)ARG2(arg);
 	MKSTR(fname,"plotover");
 	arg = mknode(4,sid,fname,index,poly);
-	Pox_cmo_rpc(arg,rp);
+	Pox_rpc(arg,rp);
 }
 
 /* arg = [x,y,r,sid,index] */
@@ -377,7 +377,7 @@ Obj *rp;
 	MKSTR(fname,"drawcircle");
 	n = mknode(3,x,y,r); MKLIST(pos,n);
 	arg = mknode(4,sid,fname,index,pos);
-	Pox_cmo_rpc(arg,rp);
+	Pox_rpc(arg,rp);
 }
 
 #if 0
