@@ -45,8 +45,8 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.8 2000/12/14 09:13:37 noro Exp $ 
-*/
+ * $OpenXM$
+ */
 /* requires 'primdec' */
 
 /* annihilating ideal of F^s */
@@ -73,8 +73,10 @@ def ann(F)
 	for ( I = 0; I < N; I++ ) {
 		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
 	}
+
+	/* homogenized (heuristics) */
 	dp_nelim(2);
-	G0 = dp_weyl_gr_main(B,append(W,DW),0,0,6);
+	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
 	G1 = [];
 	for ( T = G0; T != []; T = cdr(T) ) {
 		E = car(T); VL = vars(E);
@@ -85,6 +87,65 @@ def ann(F)
 	G3 = map(b_subst,G2,t);
 	G4 = map(subst,G3,t,-1-s);
 	return G4;
+}
+
+/*
+ * compute J_f|s=r, where r = the minimal integral root of global b_f(s)
+ * ann0(F) returns [MinRoot,Ideal]
+ */
+
+def ann0(F)
+{
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = 0; I < N; I++ )
+		V = cons(D[I][1],V);
+
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	/* XXX : heuristics */
+	W = append([y1,y2,t],reverse(V));
+	DW = append([dy1,dy2,dt],reverse(DV));
+	WDW = append(W,DW);
+
+	B = [1-y1*y2,t-y1*F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
+	}
+
+	/* homogenized (heuristics) */
+	dp_nelim(2);
+	G0 = dp_weyl_gr_main(B,WDW,1,0,6);
+	G1 = [];
+	for ( T = G0; T != []; T = cdr(T) ) {
+		E = car(T); VL = vars(E);
+		if ( !member(y1,VL) && !member(y2,VL) )
+			G1 = cons(E,G1);
+	}
+	G2 = map(subst,G1,dt,1);
+	G3 = map(b_subst,G2,t);
+	G4 = map(subst,G3,t,-1-s);
+
+	/* G4 = J_f(s) */
+
+	V1 = cons(s,V); DV1 = cons(ds,DV); V1DV1 = append(V1,DV1);
+	G5 = dp_weyl_gr_main(cons(F,G4),V1DV1,0,1,0);
+	Bf = weyl_minipoly(G5,V1DV1,0,s);
+
+	FList = cdr(fctr(Bf));
+	for ( T = FList, Min = 0; T != []; T = cdr(T) ) {
+		LF = car(car(T));
+		Root = -coef(LF,0)/coef(LF,1);
+		if ( dn(Root) == 1 && Root < Min )
+			Min = Root;
+	}
+	return [Min,map(subst,G4,s,Min)];
 }
 
 def indicial1(F,V)
@@ -99,7 +160,8 @@ def indicial1(F,V)
 		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
 	}
 	dp_nelim(1);
-	/* we use homogenization (heuristically determined) */
+
+	/* homogenized (heuristics) */
 	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
 	G1 = map(subst,G0,y1,1);
 	Mat = newmat(2,2,[[-1,1],[0,1]]);
@@ -250,7 +312,7 @@ def weyl_gennf(G,TL,V,O)
 		NF = remove_cont(NF);
 		H = cons(NF,H);
 	}
-	if ( dp_gr_print() ) print("");
+	print("");
 	TNF = time()[0]-T0;
 	if ( dp_gr_print() )
 		print("gennf(TAB="+rtostr(TTAB)+" NF="+rtostr(TNF)+")");
