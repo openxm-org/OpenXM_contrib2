@@ -70,11 +70,7 @@ def makeret1(Res,Vars){
 	return ResVec$
 }
 
-def junban1(A,B){
-	return (nmono(A)<nmono(B) ? -1:(nmono(A)>nmono(B) ? 1:0))$
-}
-
-def junban2(A,B){
+def junban(A,B){
 
 	for(I=0;I<size(A)[0];I++){
 		if(A[I]<B[I])
@@ -325,8 +321,7 @@ def weight(PolyList,Vars){
 	dp_ord(2)$
 
 	PolyListNum=length(PolyList)$
-	VPolyList=qsort(newvect(PolyListNum,PolyList),junban1)$
-	VPolyList=vtol(VPolyList)$
+	VPolyList=newvect(PolyListNum,PolyList)$
 
 	ExpMat=[]$
 	for(I=0;I<PolyListNum;I++)
@@ -335,91 +330,10 @@ def weight(PolyList,Vars){
 
 	ExpMat=reverse(ExpMat)$
 	ExpMat=newvect(length(ExpMat),ExpMat)$
-
-
-/* first */
-
 	ExpMatRowNum=size(ExpMat)[0]$
 	ExpMatColNum=size(ExpMat[0])[0]$
-	ExtMatColNum=ExpMatColNum+PolyListNum$
 
-	OneMat=newvect(PolyListNum+1,[0])$
-	for(I=0,SUM=0;I<PolyListNum;I++){
-		SUM+=nmono(VPolyList[I])$
-		OneMat[I+1]=SUM$
-	}
-
-	RevOneMat=newvect(ExpMatRowNum)$
-	for(I=0;I<PolyListNum;I++)
-		for(J=OneMat[I];J<OneMat[I+1];J++)
-			RevOneMat[J]=I$
-
-	NormMat=newmat(ExpMatColNum,ExtMatColNum)$
-
-	for(I=0;I<ExpMatColNum;I++)
-		for(J=0;J<ExpMatColNum;J++)
-			for(K=0;K<ExpMatRowNum;K++)
-				NormMat[I][J]+=ExpMat[K][I]*ExpMat[K][J]$
-
-	for(I=0;I<ExpMatColNum;I++)
-		for(J=0;J<PolyListNum-1;J++)
-			for(K=OneMat[J];K<OneMat[J+1];K++)
-				NormMat[I][J+ExpMatColNum]-=ExpMat[K][I]$
-
-	for(I=0;I<ExpMatColNum;I++)
-		for(J=OneMat[PolyListNum-1];J<OneMat[PolyListNum];J++)
-			NormMat[I][ExtMatColNum-1]+=ExpMat[J][I]$
-
-	NormMat2=newmat(PolyListNum-1,ExpMatColNum+1)$
-
-	for(I=0;I<PolyListNum-1;I++)
-		for(J=0;J<ExpMatColNum;J++)
-			for(K=OneMat[I];K<OneMat[I+1];K++)
-				NormMat2[I][J]-=ExpMat[K][J]$
-
-	for(I=0;I<PolyListNum-1;I++)
-		NormMat2[I][ExpMatColNum]=OneMat[I+1]-OneMat[I]$
-
-	ExtVars=Vars$
-	for(I=0;I<PolyListNum-1;I++)
-		ExtVars=append(ExtVars,[uc()])$
-
-	SolveList=[]$
-	for(I=0;I<ExpMatColNum;I++){
-		TMP=0$
-		for(J=0;J<ExtMatColNum-1;J++)
-			TMP+=NormMat[I][J]*ExtVars[J]$
-
-		TMP-=NormMat[I][ExtMatColNum-1]$
-		SolveList=cons(TMP,SolveList)$
-	}
-
-	for(I=0;I<PolyListNum-1;I++){
-		TMP=0$
-		for(J=0;J<ExpMatColNum;J++)
-			TMP+=NormMat2[I][J]*ExtVars[J]$
-
-		TMP+=NormMat2[I][ExpMatColNum]*ExtVars[I+ExpMatColNum]$
-
-		SolveList=cons(TMP,SolveList)$
-	}
-
-	Rea=vars(SolveList)$
-	Res=solve(SolveList,reverse(ExtVars))$
-
-	if(nonposdegchk(Res)){
-		Res=getgcd(Res,Rea)$
-		TMP1=makeret1(Res,Vars);
-		if(car(TMP1)==0){	
-			TMP2=roundret(cdr(TMP1));
-			TMP3=map(drint,cdr(TMP1))$
-			RET=cons([cdr(TMP1),newvect(length(TMP3),TMP3),TMP2],RET)$
-		}
-		else
-			RET=cons([cdr(TMP1),[],[]],RET)$
-	}
-
-/* second */
+/* first */
 
 	NormMat=newmat(ExpMatColNum,ExpMatColNum+1)$
 
@@ -457,9 +371,9 @@ def weight(PolyList,Vars){
 			RET=cons([cdr(TMP1),[],[]],RET)$
 	}
 
-/* third */
+/* second */
 
-	ExpMat=qsort(ExpMat,junban2)$
+	ExpMat=qsort(ExpMat,junban)$
 	ExpMat2=[]$
 	for(I=0;I<size(ExpMat)[0];I++)
 		if(car(ExpMat2)!=ExpMat[I])
@@ -507,51 +421,6 @@ def weight(PolyList,Vars){
 
 	RET=cons(Vars,reverse(RET))$
 	RET=cons(0,RET)$
-	return RET$
-}
-
-def average(PolyList,Vars){
-
-	RET=[]$
-	dp_ord(2)$
-
-	PolyListNum=length(PolyList)$
-
-	ExpMat=[]$
-	for(I=0;I<PolyListNum;I++)
-		for(Poly=dp_ptod(PolyList[I],Vars);Poly!=0;Poly=dp_rest(Poly))
-			ExpMat=cons(dp_etov(dp_ht(Poly)),ExpMat)$
-
-	ExpMat=reverse(ExpMat)$
-	ExpMat=newvect(length(ExpMat),ExpMat)$
-
-	ExpMat=qsort(ExpMat,junban2)$
-	ExpMat2=[]$
-	for(I=0;I<size(ExpMat)[0];I++)
-		if(car(ExpMat2)!=ExpMat[I])
-			ExpMat2=cons(ExpMat[I],ExpMat2)$
-
-	ExpMat=newvect(length(ExpMat2),ExpMat2)$
-	ExpMatRowNum=size(ExpMat)[0]$
-	ExpMatColNum=size(ExpMat[0])[0]$
-
-	Res=newvect(ExpMatColNum);
-	for(I=0;I<ExpMatColNum;I++)
-		Res[I]=newvect(2,[Vars[I]])$
-
-	for(I=0;I<ExpMatRowNum;I++)
-		for(J=0;J<ExpMatColNum;J++)
-			Res[J][1]+=ExpMat[I][J]$
-
-	for(I=0;I<ExpMatColNum;I++)
-		if(Res[I][1]==0)
-			Res[I][1]=1$
-		else
-			Res[I][1]=1/Res[I][1]$
-
-	RET=cons(makeret(vtol(Res),Vars,1),RET)$
-	RET=cons(Vars,RET)$
-
 	return RET$
 }
 
