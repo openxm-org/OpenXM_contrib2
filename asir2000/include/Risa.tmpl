@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/include/Risa.tmpl,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #define USE_GCC
 #define USE_PARI
 #define USE_PLOT
@@ -6,6 +6,14 @@
 /* #define USE_MPI */
 /* #define USE_FFT_FLOAT */
 /* #define USE_LAPACK */
+
+#if defined(LinuxArchitecture)
+#if LinuxCLibMajorVersion >= 6 || \
+    (LinuxCLibMajorVersion == 5 && LinuxCLibMinorVersion == 99)
+STD_CPP_DEFINES = -traditional -Dlinux -D__i386__ -D_BSD_SOURCE $(PROJECT_DEFINES)
+STD_DEFINES = -Dlinux -D__i386__ -D_BSD_SOURCE $(PROJECT_DEFINES)
+#endif
+#endif
 
 #if defined(AlphaArchitecture)
 #undef USE_GCC
@@ -116,4 +124,4 @@ MPIINC=.
 #endif
 
 INCLUDES= -I$(TOP)/include -I$(TOP)/parse -I$(TOP)/io -I$(PARIINC) -I$(MPIINC)
-DEFINES= -DINET=$(INET) -DPARI=$(PARI) -DLAPACK=$(LAPACK) -DDO_PLOT=$(DO_PLOT) -DUSE_FLOAT=$(USE_FLOAT) $(PARIFLAGS) -DHMEXT -DMPI=$(MPI)
+DEFINES= -DINET=$(INET) -DPARI=$(PARI) -DLAPACK=$(LAPACK) -DDO_PLOT=$(DO_PLOT) -DUSE_FLOAT=$(USE_FLOAT) $(PARIFLAGS) -DHMEXT -DMPI=$(MPI) $(LINUX_EXTRA_DEFINES)
