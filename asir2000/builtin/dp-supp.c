@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.12 2001/02/21 07:10:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.13 2001/09/04 08:48:18 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -554,6 +554,61 @@ DP *rp;
 	MKDP(n,m,s2); s2->sugar = d->td; muld(CO,s2,p2,&u);
 
 	subd(CO,t,u,rp);
+	if ( GenTrace ) {
+		LIST hist;
+		NODE node;
+
+		node = mknode(4,ONE,0,s1,ONE);
+		MKLIST(hist,node);
+		MKNODE(TraceList,hist,0);
+
+		node = mknode(4,ONE,0,0,ONE);
+		chsgnd(s2,(DP *)&ARG2(node));
+		MKLIST(hist,node);
+		MKNODE(node,hist,TraceList); TraceList = node;
+	}
+}
+
+void _dp_sp_dup(p1,p2,rp)
+DP p1,p2;
+DP *rp;
+{
+	int i,n,td;
+	int *w;
+	DL d1,d2,d;
+	MP m;
+	DP t,s1,s2,u;
+	Q c,c1,c2;
+	N gn,tn;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	w = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, td = 0; i < n; i++ ) {
+		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+	}
+
+	_NEWDL(d,n); d->td = td - d1->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d1->d[i];
+	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+	if ( INT(c1) && INT(c2) ) {
+		gcdn(NM(c1),NM(c2),&gn);
+		if ( !UNIN(gn) ) {
+			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+		}
+	}
+
+	_NEWMP(m); m->dl = d; m->c = (P)c2; NEXT(m) = 0;
+	_MKDP(n,m,s1); s1->sugar = d->td; _muld_dup(CO,s1,p1,&t); _free_dp(s1);
+
+	_NEWDL(d,n); d->td = td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d2->d[i];
+	_NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0;
+	_MKDP(n,m,s2); s2->sugar = d->td; _muld_dup(CO,s2,p2,&u); _free_dp(s2);
+
+	_addd_destructive(CO,t,u,rp);
 	if ( GenTrace ) {
 		LIST hist;
 		NODE node;
