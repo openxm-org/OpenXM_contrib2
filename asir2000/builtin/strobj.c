@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.29 2004/03/09 02:51:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.30 2004/03/09 03:14:24 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -117,6 +117,7 @@ int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
 int register_dp_vars(Obj arg);
 int register_dp_vars_prefix(Obj arg);
+int register_dp_vars_hweyl(Obj arg);
 int register_show_lt(Obj arg);
 static struct TeXSymbol *user_texsymbol;
 static char **dp_vars;
@@ -126,6 +127,7 @@ static int show_lt;
 static FUNC convfunc;
 static int is_lt;
 static int conv_flag;
+static int dp_vars_hweyl;
 
 #define CONV_SUBSCRIPT (1U<<0)
 #define CONV_DMODE (1U<<1)
@@ -140,6 +142,7 @@ static struct {
 	{"conv_rule",0,register_conv_rule},
 	{"dp_vars",0,register_dp_vars},
 	{"dp_vars_prefix",0,register_dp_vars_prefix},
+	{"dp_vars_hweyl",0,register_dp_vars_hweyl},
 	{"show_lt",0,register_show_lt},
 	{0,0,0},
 };
@@ -180,7 +183,14 @@ char *conv_subscript(char *name)
 	char **subs;
 
 	len = strlen(name);
-	for ( i = 0; i < len && (isalpha(name[i]) || name[i]=='\\'); i++ );
+	i = 0;
+	if ( name[i] == '{' ) {
+		for ( level = 1, i++; i < len && level; i++ ) {
+			if ( name[i] == '{' ) level++;
+			else if ( name[i] == '}' ) level--;
+		}
+	}
+	for ( ; i < len && (isalpha(name[i]) || name[i]=='\\'); i++ );
 	if ( i == len ) return symbol_name(name);
 	buf = (char *)ALLOCA((i+1)*sizeof(char));
 	strncpy(buf,name,i); buf[i] = 0;
@@ -278,6 +288,14 @@ int register_symbol_table(Obj arg)
 	uts[i].symbol = 0;
 	user_texsymbol = uts;	
 	return 1;
+}
+
+int register_dp_vars_hweyl(Obj arg)
+{
+	if ( INT(arg) ) {
+		dp_vars_hweyl = QTOS((Q)arg);
+		return 1;
+	} else return 0;
 }
 
 int register_show_lt(Obj arg)
@@ -749,7 +767,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 	char vname[BUFSIZ];
 	char *opname,*vname_conv;
 	Obj obj;
-	int i,len,allzero;
+	int i,len,allzero,elen,elen2;
 	FNODE fi,f2;
 
 	write_tb(" ",tb);
@@ -963,6 +981,11 @@ void fnodetotex_tb(FNODE f,TB tb)
 		/* exponent vector */
 		case I_EV:
 			n = (NODE)FA0(f);
+			if ( dp_vars_hweyl ) {
+				elen = length(n);
+				elen2 = elen>>1;
+				elen = elen2<<1;
+			}
 			allzero = 1;
 			if ( show_lt && is_lt )
 				write_tb("\\underline{",tb);
@@ -970,7 +993,17 @@ void fnodetotex_tb(FNODE f,TB tb)
 				fi = (FNODE)BDY(n);
 				if ( fi->id == I_FORMULA && !FA0(fi) ) continue;
 				allzero = 0;
-				if ( dp_vars && i < dp_vars_len )
+				if ( dp_vars_hweyl ) {
+					if ( i < elen2 )
+						if ( dp_vars_prefix )
+							sprintf(vname,"%s_{%d}",dp_vars_prefix,i);
+						else
+							sprintf(vname,"x_{%d}",i);
+					else if ( i < elen )
+						sprintf(vname,"{\\partial}_{%d}",i-elen2);
+					else
+						strcpy(vname,"h");
+				} else if ( dp_vars && i < dp_vars_len )
 					strcpy(vname,dp_vars[i]);
 				else if ( dp_vars_prefix )
 					sprintf(vname,"%s_{%d}",dp_vars_prefix,i);
