@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.18 2001/06/04 02:49:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.19 2001/06/15 07:56:06 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -215,6 +215,9 @@ int status;
 			close_allconnections();
 		mpi_finalize();
 #else
+#if defined(SIGPIPE)
+		signal(SIGPIPE,SIG_IGN);
+#endif
 		close_allconnections();
 #endif
 		if ( kernelmode )
@@ -579,6 +582,7 @@ int sig;
 {
 #if defined(SIGPIPE)
 	signal(SIGPIPE,pipe_handler);
+	end_critical();
 	error("internal error (BROKEN PIPE)");
 #endif
 }

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.11 2000/12/16 07:12:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.12 2001/06/06 02:21:40 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -82,6 +82,7 @@ static int ox_io_init(int);
 static void push_one(Obj);
 static Obj pop_one();
 static void do_cmd(int);
+static void terminate_server();
 
 static Obj *asir_OperandStack;
 static int asir_OperandStackPtr;
@@ -183,6 +184,9 @@ char **argv;
 	signal(SIGINT,SIG_IGN);
 #if defined(SIGUSR1)
 	signal(SIGUSR1,SIG_IGN);
+#endif
+#if defined(SIGTERM)
+	signal(SIGTERM,terminate_server);
 #endif
 
 	if ( accept_client ) {
@@ -408,5 +412,11 @@ static Obj pop_one() {
 	if ( asir_OperandStackPtr >= 0 ) {
 		return asir_OperandStack[asir_OperandStackPtr--];
 	}
+}
+
+static void terminate_server()
+{
+	kill(cpid,SIGKILL);
+	exit(0);
 }
 
