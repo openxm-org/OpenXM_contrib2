@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.31 2001/10/06 00:55:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.32 2001/10/09 01:36:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -712,24 +712,23 @@ void ox_io_init() {
 	unsigned char c,rc;
 	extern int I_am_server;
 
-	/* XXX : ssh forwards stdin to a remote host */
-#if !defined(VISUAL)
-	int i;
-#if defined(linux) || defined(__NeXT__) || defined(ultrix)
+	/* XXX : ssh forwards stdin to a remote host on PC Unix */
+#if defined(linux)
 #include <sys/param.h>
+	int i;
 
 	close(0);
 	for ( i = 5; i < NOFILE; i++ )
 		close(i);
-#else
+#elif defined(__FreeBSD__)
 #include <sys/resource.h>
+	int i;
 	struct rlimit rl;
 
 	getrlimit(RLIMIT_NOFILE,&rl);
 	close(0);
 	for ( i = 5; i < rl.rlim_cur; i++ )
 		close(i);
-#endif
 #endif
 
 	I_am_server = 1;
