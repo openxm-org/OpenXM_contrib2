@@ -1,0 +1,3 @@
+#define ASIRGUI_MAIN 0
+#define ASIRGUI_DEBUG 1
+#define ASIRGUI_MESSAGE 2
