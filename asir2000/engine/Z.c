@@ -8,9 +8,23 @@ typedef struct oZ {
 	unsigned int b[1];
 } *Z;
 
+#define IMM_MAX 1073741823
+#define IMM_MIN -1073741823
+
+/* immediate int -> Z */
+#define IMMTOZ(c,n) ((c)>=IMM_MIN&&(c)<=IMM_MAX?(n)=(Z)(((c)<<1)|1):(n)=immtoz(c))
+/* immediate Z ? */
+#define IS_IMM(c) (((unsigned int)c)&1)
+/* Z can be conver to immediate ? */
+#define IS_IMMZ(n) (SL(n) == 1&&BD(n)[0]<=IMM_MAX)
+/* Z -> immediate Z */
+#define IMMZTOZ(n,z) (SL(n)<0?(z)=(Z)(((-BD(n)[0])<<1)|1):(Z)(((BD(n)[0])<<1)|1))
+/* Z -> immediate int */
+#define ZTOIMM(c) (((int)(c))>>1)
 #define ZALLOC(d) ((Z)MALLOC_ATOMIC(TRUESIZE(oZ,(d)-1,int)))
 #define SL(n) ((n)->p)
 
+Z immtoz(int c);
 Z qtoz(Q n);
 Q ztoq(Z n);
 Z chsgnz(Z n);
@@ -32,27 +46,55 @@ inline void _mulz(Z n1,Z n2,Z nr);
 inline int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr);
 inline int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr);
 
-sgnz(Z n)
+Z immtoz(int c)
+{
+	Z z;
+
+	z = ZALLOC(1);
+	if ( c < 0 ) {
+		SL(z) = -1; BD(z)[0] = -c;
+	} else {
+		SL(z) = 1; BD(z)[0] = c;
+	}
+	return z;
+}
+
+int sgnz(Z n)
 {
 	if ( !n ) return 0;
+	else if ( IS_IMM(n) ) return ZTOIMM(n)>0?1:1;
 	else if ( SL(n) < 0 ) return -1;
 	else return 1;
 }
 
 z_mag(Z n)
 {
-	return n_bits((N)n);
+	int n;
+
+	if ( !n ) return 0;
+	else if ( IS_IMM(n) ) {
+		c = ZTOIMM(n);
+		if ( c < 0 ) c = -c;
+		for ( i = 0; c; c >>= 1, i++ );
+		return i;
+	}
+	else return n_bits((N)n);
 }
 
 Z qtoz(Q n)
 {
-	Z r;
+	Z r,t;
 
 	if ( !n ) return 0;
 	else if ( !INT(n) )
 		error("qtoz : invalid input");
 	else {
-		r = dupz((Z)NM(n));
+		t = (Z)NM(n);
+		if ( IS_IMMZ(t) ) {
+			IMMZTOZ(t,r);
+		} else {
+			r = dupz((Z)t);
+		}
 		if ( SGN(n) < 0 ) SL(r) = -SL(r);
 		return r;
 	}
@@ -62,10 +104,14 @@ Q ztoq(Z n)
 {
 	Q r;
 	Z nm;
-	int sgn;
+	int sgn,c;
 
 	if ( !n ) return 0;
-	else {
+	else if ( IS_IMM(n) ) {
+		c = ZTOIMM(n);
+		STOQ(c,r);
+		return r;
+	} else {
 		nm = dupz(n);
 		if ( SL(nm) < 0 ) {
 			sgn = -1;
@@ -83,189 +129,222 @@ Z dupz(Z n)
 	int sd,i;
 
 	if ( !n ) return 0;
-	if ( (sd = SL(n)) < 0 ) sd = -sd;
-	nr = ZALLOC(sd);
-	SL(nr) = SL(n);
-	for ( i = 0; i < sd; i++ ) BD(nr)[i] = BD(n)[i];
-	return nr;
+	else if ( IS_IMM(n) ) return n;
+	else {
+		if ( (sd = SL(n)) < 0 ) sd = -sd;
+		nr = ZALLOC(sd);
+		SL(nr) = SL(n);
+		for ( i = 0; i < sd; i++ ) BD(nr)[i] = BD(n)[i];
+		return nr;
+	}
 }
 
 Z chsgnz(Z n)
 {
 	Z r;
+	int c;
 
 	if ( !n ) return 0;
-	else {
+	else if ( IS_IMM(n) ) {
+		c = -ZTOIMM(n);
+		IMMTOZ(c,r);
+		return r;
+	} else {
 		r = dupz(n);
 		SL(r) = -SL(r);
 		return r;
 	}
 }
 
+
 Z addz(Z n1,Z n2)
 {
-	unsigned int u1,u2,t;
-	int sd1,sd2,d,d1,d2;
-	Z nr;
+	int d1,d2,d,c;
+	Z r,r1;
+	struct oZ t;
 
 	if ( !n1 ) return dupz(n2);
 	else if ( !n2 ) return dupz(n1);
-	else {
-		d1 = ((sd1 = SL(n1))< 0)?-sd1:sd1;
-		d2 = ((sd2 = SL(n2))< 0)?-sd2:sd2;
-		if ( d1 == 1 && d2 == 1 ) {
-			u1 = BD(n1)[0]; u2 = BD(n2)[0];
-			if ( sd1 > 0 ) {
-				if ( sd2 > 0 ) {
-					t = u1+u2;
-					if ( t < u1 ) {
-						nr=ZALLOC(2); SL(nr) = 2; BD(nr)[1] = 1;
-					} else {
-						nr=ZALLOC(1); SL(nr) = 1;
-					}
-					BD(nr)[0] = t;
-				} else {
-					if ( u1 == u2 ) nr = 0;
-					else if ( u1 > u2 ) {
-						nr=ZALLOC(1); SL(nr) = 1; BD(nr)[0] = u1-u2;
-					} else {
-						nr=ZALLOC(1); SL(nr) = -1; BD(nr)[0] = u2-u1;
-					}
-				}
-			} else {
-				if ( sd2 > 0 ) {
-					if ( u2 == u1 ) nr = 0;
-					else if ( u2 > u1 ) {
-						nr=ZALLOC(1); SL(nr) = 1; BD(nr)[0] = u2-u1;
-					} else {
-						nr=ZALLOC(1); SL(nr) = -1; BD(nr)[0] = u1-u2;
-					}
-				} else {
-					t = u1+u2;
-					if ( t < u1 ) {
-						nr=ZALLOC(2); SL(nr) = -2; BD(nr)[1] = 1;
-					} else {
-						nr=ZALLOC(1); SL(nr) = -1;
-					}
-					BD(nr)[0] = t;
-				}
-			}
+	else if ( IS_IMM(n1) ) {
+		if ( IS_IMM(n2) ) {
+			c = ZTOIMM(n1)+ZTOIMM(n2);
+			IMMTOZ(c,r);
+			return r;
 		} else {
-			d = MAX(d1,d2)+1;
-			nr = ZALLOC(d);
-			_addz(n1,n2,nr);
-			if ( !SL(nr) ) nr = 0;
+			c = ZTOIMM(n1);
+			if ( c < 0 ) {
+				t.p = -1; t.b[0] = -c;
+			} else {
+				t.p = 1; t.b[0] = c;
+			}
+			if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
+			r = ZALLOC(d2+1);
+			_addz(&t,n2,r);
+			return r;
 		}
-		return nr;
+	} else if ( IS_IMM(n2) ) {
+		c = ZTOIMM(n2);
+		if ( c < 0 ) {
+			t.p = -1; t.b[0] = -c;
+		} else {
+			t.p = 1; t.b[0] = c;
+		}
+		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
+		r = ZALLOC(d1+1);
+		_addz(n1,&t,r);
+		return r;
+	} else {
+		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
+		if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
+		d = MAX(d1,d2)+1;
+		r = ZALLOC(d);
+		_addz(n1,n2,r);
+		if ( !SL(r) ) r = 0;
+		else if ( IS_IMMZ(r) ) {
+			IMMZTOZ(r,r1); r = r1;	
+		}
+		return r;
 	}
 }
 
 Z subz(Z n1,Z n2)
 {
-	int sd1,sd2,d;
-	Z nr;
+	int d1,d2,d,c;
+	Z r,r1;
+	struct oZ t;
 
-	if ( !n1 )
-		if ( !n2 ) return 0;
-		else {
-			nr = dupz(n2);
-			SL(nr) = -SL(nr);
+	if ( !n1 ) {
+		r = dupz(n2);
+		SL(r) = -SL(r);
+		return r;
+	} else if ( !n2 ) return dupz(n1);
+	else if ( IS_IMM(n1) ) {
+		if ( IS_IMM(n2) ) {
+			c = ZTOIMM(n1)-ZTOIMM(n2);
+			IMMTOZ(c,r);
+			return r;
+		} else {
+			c = ZTOIMM(n1);
+			if ( c < 0 ) {
+				t.p = -1; t.b[0] = -c;
+			} else {
+				t.p = 1; t.b[0] = c;
+			}
+			if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
+			r = ZALLOC(d2+1);
+			_subz(&t,n2,r);
+			return r;
 		}
-	else if ( !n2 ) return dupz(n1);
-	else {
-		if ( (sd1 = SL(n1)) < 0 ) sd1 = -sd1;
-		if ( (sd2 = SL(n2)) < 0 ) sd2 = -sd2;
-		d = MAX(sd1,sd2)+1;
-		nr = ZALLOC(d);
-		_subz(n1,n2,nr);
-		if ( !SL(nr) ) nr = 0;
-		return nr;
+	} else if ( IS_IMM(n2) ) {
+		c = ZTOIMM(n2);
+		if ( c < 0 ) {
+			t.p = -1; t.b[0] = -c;
+		} else {
+			t.p = 1; t.b[0] = c;
+		}
+		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
+		r = ZALLOC(d1+1);
+		_subz(n1,&t,r);
+		return r;
+	} else {
+		if ( (d1 = SL(n1)) < 0 ) d1 = -d1;
+		if ( (d2 = SL(n2)) < 0 ) d2 = -d2;
+		d = MAX(d1,d2)+1;
+		r = ZALLOC(d);
+		_subz(n1,n2,r);
+		if ( !SL(r) ) r = 0;
+		else if ( IS_IMMZ(r) ) {
+			IMMZTOZ(r,r1); r = r1;	
+		}
+		return r;
 	}
 }
 
 Z mulz(Z n1,Z n2)
 {
-	int sd1,sd2,d1,d2;
+	int d1,d2,sgn,i;
 	unsigned int u1,u2,u,l;
-	Z nr;
+	Z r;
 
 	if ( !n1 || !n2 ) return 0;
-	else {
-		d1 = ((sd1 = SL(n1))< 0)?-sd1:sd1;
-		d2 = ((sd2 = SL(n2))< 0)?-sd2:sd2;
-		if ( d1 == 1 && d2 == 1 ) {
-			u1 = BD(n1)[0]; u2 = BD(n2)[0];
+
+	if ( IS_IMM(n1) ) {
+		sgn = 1;
+		u1 = ZTOIMM(n1); if ( u1 < 0 ) { sgn = -sgn; u1 = -u1; }
+		if ( IS_IMM(n2) ) {
+			u2 = ZTOIMM(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
 			DM(u1,u2,u,l);
-			if ( u ) {
-				nr = ZALLOC(2); SL(nr) = sd1*sd2*2; BD(nr)[1] = u;
+			if ( !u ) {
+				IMMTOZ(l,r);
 			} else {
-				nr = ZALLOC(1); SL(nr) = sd1*sd2;
+				r = ZALLOC(2); SL(r) = 2; BD(r)[1] = u; BD(r)[0] = l;
 			}
-			BD(nr)[0] = l;
 		} else {
-			nr = ZALLOC(d1+d2);
-			_mulz(n1,n2,nr);
+			if ( (d2 = SL(n2)) < 0 ) { sgn = -sgn; d2 = -d2; }
+			r = ZALLOC(d2+1);
+			for ( i = d2; i >= 0; i-- ) BD(r)[i] = 0;
+			muln_1(BD(n2),d2,u1,BD(r));
+			SL(r) = BD(r)[d2]?d2+1:d2;
 		}
-		return nr;
-	}
-}
-
-/* XXX */
-Z divz(Z n1,Z n2,Z *rem)
-{
-	int sgn,sd1,sd2;
-	N q,r;
-
-	if ( !n2 ) error("divz : division by 0");
-	else if ( !n1 ) {
-		*rem = 0; return 0;
+	} else if ( IS_IMM(n2) ) {
+		sgn = 1;
+		u2 = ZTOIMM(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
+		if ( (d1 = SL(n1)) < 0 ) { sgn = -sgn; d1 = -d1; }
+		r = ZALLOC(d1+1);
+		for ( i = d1; i >= 0; i-- ) BD(r)[i] = 0;
+		muln_1(BD(n1),d1,u2,BD(r));
+		SL(r) = BD(r)[d1]?d1+1:d1;
 	} else {
-		sd2 = SL(n2);
-		if ( sd2 == 1 && BD(n2)[0] == 1 ) {
-			*rem = 0; return n1;
-		} else if ( sd2 == -1 && BD(n2)[0] == 1 ) {
-			*rem = 0; return chsgnz(n1);
-		}
-
-		sd1 = SL(n1);
-		n1 = dupz(n1);
-		if ( sd1 < 0 ) SL(n1) = -sd1;
-		if ( sd2 < 0 ) SL(n2) = -sd2;
-		divn((N)n1,(N)n2,&q,&r);
-		if ( q && ((sd1>0&&sd2<0)||(sd1<0&&sd2>0)) ) SL((Z)q) = -SL((Z)q);
-		if ( r && sd1 < 0 ) SL((Z)r) = -SL((Z)r);
-		SL(n2) = sd2;
-		*rem = (Z)r;
-		return (Z)q;
+		sgn = 1;
+		if ( (d1 = SL(n1)) < 0 ) { sgn = -sgn; d1 = -d1; }
+		if ( (d2 = SL(n2)) < 0 ) { sgn = -sgn; d2 = -d2; }
+		r = ZALLOC(d1+d2);
+		_mulz(n1,n2,r);
 	}
+	if ( sgn < 0 ) SL(r) = -SL(r);
+	return r;
 }
+
+/* kokokara */
 
 Z divsz(Z n1,Z n2)
 {
-	int sgn,sd1,sd2;
-	N q;
+	int sgn,d1,d2;
+	Z q;
 
 	if ( !n2 ) error("divsz : division by 0");
-	else if ( !n1 ) return 0;
-	else {
-		sd2 = SL(n2);
-		if ( sd2 == 1 && BD(n2)[0] == 1 ) return n1;
-		else if ( sd2 == -1 && BD(n2)[0] == 1 ) return chsgnz(n1);
-			
-		sd1 = SL(n1);
-		n1 = dupz(n1);
-		if ( sd1 < 0 ) SL(n1) = -sd1;
-		if ( sd2 < 0 ) SL(n2) = -sd2;
-		divsn((N)n1,(N)n2,&q);
-		if ( q && ((sd1>0&&sd2<0)||(sd1<0&&sd2>0)) ) SL((Z)q) = -SL((Z)q);
-		SL(n2) = sd2;
-		return (Z)q;
+	if ( !n1 ) return 0;
+
+	if ( IS_IMM(n1) ) {
+		if ( !IS_IMM(n2) )
+			error("divsz : cannot happen");
+		c = ZTOIMM(n1)/ZTOIMM(n2);
+		IMMTOZ(c,q);
+		return q;
 	}
+	if ( IS_IMM(n2) ) {
+		sgn = 1;
+		u2 = ZTOIMM(n2); if ( u2 < 0 ) { sgn = -sgn; u2 = -u2; }
+		diviz(n1,u2,&q);
+		if ( sgn < 0 ) SL(q) = -SL(q);
+		return q;
+	}
+
+	sgn = 1;
+	if ( (d2 = SL(n2)) < 0 ) { sgn = -sgn; d2 = -d2; }
+	if ( d2 == 1 ) {
+		diviz(n1,BD(u2)[0],&q);
+		if ( sgn < 0 ) SL(q) = -SL(q);
+		return q;
+	}
+	if ( (d1 = SL(n1)) < 0 ) { sgn = -sgn; d1 = -d1; }
+	if ( d1 < d2 ) error("divsz : cannot happen");
+	return q;
 }
 
 Z gcdz(Z n1,Z n2)
 {
-	int sd1,sd2;
+	int d1,d2;
 	N gcd;
 
 	if ( !n1 ) return n2;
@@ -363,43 +442,43 @@ void _copyz(Z n1,Z n2)
 
 void _addz(Z n1,Z n2,Z nr)
 {
-	int sd1,sd2;
+	int d1,d2;
 
 	if ( !n1 || !SL(n1) ) _copyz(n2,nr);
 	else if ( !n2 || !SL(n2) ) _copyz(n1,nr);
-	else if ( (sd1=SL(n1)) > 0 )
-		if ( (sd2=SL(n2)) > 0 )
-			SL(nr) = _addz_main(BD(n1),sd1,BD(n2),sd2,BD(nr));
+	else if ( (d1=SL(n1)) > 0 )
+		if ( (d2=SL(n2)) > 0 )
+			SL(nr) = _addz_main(BD(n1),d1,BD(n2),d2,BD(nr));
 		else 
-			SL(nr) = _subz_main(BD(n1),sd1,BD(n2),-sd2,BD(nr));
-	else if ( (sd2=SL(n2)) > 0 )
-		SL(nr) = _subz_main(BD(n2),sd2,BD(n1),-sd1,BD(nr));
+			SL(nr) = _subz_main(BD(n1),d1,BD(n2),-d2,BD(nr));
+	else if ( (d2=SL(n2)) > 0 )
+		SL(nr) = _subz_main(BD(n2),d2,BD(n1),-d1,BD(nr));
 	else
-		SL(nr) = -_addz_main(BD(n1),-sd1,BD(n2),-sd2,BD(nr));
+		SL(nr) = -_addz_main(BD(n1),-d1,BD(n2),-d2,BD(nr));
 }
 
 void _subz(Z n1,Z n2,Z nr)
 {
-	int sd1,sd2;
+	int d1,d2;
 
 	if ( !n1 || !SL(n1) ) _copyz(n2,nr);
 	else if ( !n2 || !SL(n2) ) {
 		_copyz(n1,nr);
 		SL(nr) = -SL(nr);
-	} else if ( (sd1=SL(n1)) > 0 )
-		if ( (sd2=SL(n2)) > 0 )
-			SL(nr) = _subz_main(BD(n1),sd1,BD(n2),sd2,BD(nr));
+	} else if ( (d1=SL(n1)) > 0 )
+		if ( (d2=SL(n2)) > 0 )
+			SL(nr) = _subz_main(BD(n1),d1,BD(n2),d2,BD(nr));
 		else 
-			SL(nr) = _addz_main(BD(n1),sd1,BD(n2),-sd2,BD(nr));
-	else if ( (sd2=SL(n2)) > 0 )
-		SL(nr) = -_addz_main(BD(n1),-sd1,BD(n2),sd2,BD(nr));
+			SL(nr) = _addz_main(BD(n1),d1,BD(n2),-d2,BD(nr));
+	else if ( (d2=SL(n2)) > 0 )
+		SL(nr) = -_addz_main(BD(n1),-d1,BD(n2),d2,BD(nr));
 	else
-		SL(nr) = -_subz_main(BD(n1),-sd1,BD(n2),-sd2,BD(nr));
+		SL(nr) = -_subz_main(BD(n1),-d1,BD(n2),-d2,BD(nr));
 }
 
 void _mulz(Z n1,Z n2,Z nr)
 {
-	int sd1,sd2;
+	int d1,d2;
 	int i,d,sgn;
 	unsigned int mul;
 	unsigned int *m1,*m2;
@@ -407,14 +486,14 @@ void _mulz(Z n1,Z n2,Z nr)
 	if ( !n1 || !SL(n1) || !n2 || !SL(n2) )
 		SL(nr) = 0;
 	else {
-		sd1 = SL(n1); sd2 = SL(n2);
+		d1 = SL(n1); d2 = SL(n2);
 		sgn = 1;
-		if ( sd1 < 0 ) { sgn = -sgn; sd1 = -sd1; }
-		if ( sd2 < 0 ) { sgn = -sgn; sd2 = -sd2; }
-		d = sd1+sd2;
+		if ( d1 < 0 ) { sgn = -sgn; d1 = -d1; }
+		if ( d2 < 0 ) { sgn = -sgn; d2 = -d2; }
+		d = d1+d2;
 		for ( i = d-1, m1 = BD(nr); i >= 0; i-- ) *m1++ = 0;
-		for ( i = 0, m1 = BD(n1), m2 = BD(n2); i < sd2; i++, m2++ )
-			if ( mul = *m2 ) muln_1(m1,sd1,mul,BD(nr)+i);
+		for ( i = 0, m1 = BD(n1), m2 = BD(n2); i < d2; i++, m2++ )
+			if ( mul = *m2 ) muln_1(m1,d1,mul,BD(nr)+i);
 		SL(nr) = sgn*(BD(nr)[d-1]?d:d-1);
 	}
 }
