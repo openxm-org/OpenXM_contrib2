@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.94 2004/03/15 07:30:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.95 2004/03/15 08:44:52 noro Exp $ */
 
 #include "nd.h"
 
@@ -29,8 +29,10 @@ static NDV *nd_ps;
 static NDV *nd_ps_trace;
 static RHist *nd_psh;
 static int nd_psn,nd_pslen;
-
 static RHist *nd_red;
+static int *nd_work_vector;
+static int **nd_matrix;
+static int nd_matrix_len;
 
 static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
@@ -418,6 +420,23 @@ int ndl_block_compare(UINT *d1,UINT *d2)
 			else if ( t1 < t2 )
 				return !ord_o ? 1 : -1;
 		}
+	}
+	return 0;
+}
+
+int ndl_matrix_compare(UINT *d1,UINT *d2)
+{
+	int i,j,s;
+	int *v;
+
+	for ( j = 0; j < nd_nvar; j++ )
+		nd_work_vector[j] = GET_EXP(d1,j)-GET_EXP(d2,j);
+	for ( i = 0; i < nd_matrix_len; i++ ) {
+		v = nd_matrix[i];
+		for ( j = 0, s = 0; j < nd_nvar; j++ )
+			s += v[j]*nd_work_vector[j];
+		if ( s > 0 ) return 1;
+		else if ( s < 0 ) return -1;
 	}
 	return 0;
 }
@@ -2624,14 +2643,14 @@ UINT *ndv_compute_bound(NDV p)
 int nd_get_exporigin(struct order_spec *ord)
 {
 	switch ( ord->id ) {
-		case 0:
+		case 0: case 2:
 			return 1;
 		case 1:
 			/* block order */
 			/* d[0]:weight d[1]:w0,...,d[nd_exporigin-1]:w(n-1) */
 			return ord->ord.block.length+1;
-		case 2:
-			error("nd_get_exporigin : matrix order is not supported yet.");
+		case 3:
+			error("nd_get_exporigin : composite order is not supported yet.");
 	}
 }
 
@@ -2676,6 +2695,7 @@ void nd_setup_parameters(int nvar,int max) {
 	nmv_adv = ROUND_FOR_ALIGN(sizeof(struct oNMV)+(nd_wpd-1)*sizeof(UINT));
 	nd_epos = nd_create_epos(nd_ord);
 	nd_blockmask = nd_create_blockmask(nd_ord);
+	nd_work_vector = (int *)REALLOC(nd_work_vector,nd_nvar*sizeof(int));
 }
 
 ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
@@ -3427,13 +3447,23 @@ void nd_init_ord(struct order_spec *ord)
 			}
 			break;
 		case 1:
+			/* block order */
 			/* XXX */
 			nd_dcomp = -1;
 			nd_isrlex = 0;
 			ndl_compare_function = ndl_block_compare;
 			break;
 		case 2:
-			error("nd_init_ord : matrix order is not supported yet.");
+			/* matrix order */
+			/* XXX */
+			nd_dcomp = -1;
+			nd_isrlex = 0;
+			nd_matrix_len = ord->ord.matrix.row;
+			nd_matrix = ord->ord.matrix.matrix;
+			ndl_compare_function = ndl_matrix_compare;
+			break;
+		case 3:
+			error("nd_init_ord : composite order is not supported yet.");
 			break;
 	}
 	nd_ord = ord;
@@ -3445,7 +3475,8 @@ BlockMask nd_create_blockmask(struct order_spec *ord)
 	UINT *t;
 	BlockMask bm;
 
-	if ( !ord->id )
+	/* we only create mask table for block order */
+	if ( ord->id != 1 )
 		return 0;
 	n = ord->ord.block.length;
 	bm = (BlockMask)MALLOC(sizeof(struct oBlockMask));
@@ -3503,7 +3534,14 @@ EPOS nd_create_epos(struct order_spec *ord)
 			}
 			break;
 		case 2:
-			error("nd_create_epos : matrix order is not supported yet.");
+			/* matrix order */
+		case 3:
+			/* composite order */
+			for ( i = 0; i < nd_nvar; i++ ) {
+				epos[i].i = nd_exporigin + i/nd_epw;
+				epos[i].s = (nd_epw-(i%nd_epw)-1)*nd_bpe;
+			}
+			break;
 	}
 	return epos;
 }

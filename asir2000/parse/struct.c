@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.5 2001/10/09 01:36:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.6 2003/05/14 06:20:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -90,6 +90,7 @@ int structdef(char *name,NODE member)
 
 void newstruct(int type,COMP *rp)
 {
+	if ( type < 0 || type >= LSS->n ) error("");
 	NEWCOMP(*rp,LSS->sa[type].n); (*rp)->type = type;
 }
 
