@@ -1,0 +1,90 @@
+/* $OpenXM: OpenXM/src/asir99/Imakefile,v 1.2 1999/11/17 08:57:05 noro Exp $ */
+#define RISA_TOP_DIR
+#include "include/Risa.tmpl"
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+#ifdef FreeBSDArchitecture
+EXTRALIB=-lcompat
+#endif
+
+#ifdef SunArchitecture
+EXTRASTDLIB= $(MPILIB) -ldl
+#endif
+
+#if defined(AlphaArchitecture) && OSMajorVersion < 4
+EXTRASTDLIB=/usr/lib/libots.a
+#endif
+
+#if defined(LinuxArchitecture) && DefaultLinuxCLibMajorVersion < 6
+LIBCLIB=/usr/lib/libc.a -lm
+#else
+LIBCLIB=-lm
+#endif
+
+LOCAL_LIBRARIES = -L/usr/openwin/lib XawClientLibs $(XWCHARLIB)
+DEPLIBS = XawClientDepLibs
+
+PLIB = parse/libparse.a
+GLIB = gc/libgc.a
+ELIB = engine/libca.a
+E27LIB=engine-27/libca-27.a
+FLIB=fft/libdft.a
+ALIB = asm/libasm.a
+IOLIB = io/libio.a
+BLIB = builtin/libfunc.a
+
+#ifdef USE_PLOT
+PLLIB = plot/libplot.a
+#else
+PLLIB =
+#endif
+
+PROGRAMS = asir
+
+TOBJ = parse/main.o $(FOBJ)
+UOBJ = parse/umain.o $(FOBJ)
+
+SUBDIRS = engine engine-27 fft asm gc parse builtin io plot lib
+
+LIBS = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(GLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+PILIBS = $(IOLIB) $(GLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+
+#if 0
+AllTarget($(PROGRAMS) asir.o)
+#else
+AllTarget($(PROGRAMS))
+#endif
+
+#ifndef NormalRelocTarget
+#define	NormalRelocTarget(program,objects,deplibs,locallibs,syslibs)	@@\
+program: objects deplibs						@@\
+	RemoveTargetProgram($@)						@@\
+	ld -r objects locallibs $(LDLIBS) syslibs $(EXTRA_LOAD_FLAGS) -o $@ @@\
+									@@\
+clean::									@@\
+	$(RM) program
+#endif /* NormalRelocTarget */
+
+NormalProgramTarget(asir,$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(KANLIB) $(GMPLIB) $(LAPACKLIB) $(LIBCLIB) $(EXTRASTDLIB) )
+NormalRelocTarget(asir.o,$(UOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(EXTRALIB) $(LIBCLIB) $(EXTRASTDLIB))
+
+install:: $(PROGRAMS)
+	MakeDir($(ASIR_BINDIR))
+	MakeDir($(ASIR_LIBDIR))
+	$(INSTALL) -c $(PROGRAMS) $(ASIR_LIBDIR)
+
+install2::
+	(cd lib; make install2)
+	$(RM) $(ASIR_LIBDIR)/ox_asir
+	$(LN) $(ASIR_LIBDIR)/asir $(ASIR_LIBDIR)/ox_asir
+	$(RM) $(ASIR_LIBDIR)/ox_launch
+	$(LN) $(ASIR_LIBDIR)/asir $(ASIR_LIBDIR)/ox_launch
+	$(RM) $(ASIR_LIBDIR)/ox_plot
+	$(LN) $(ASIR_LIBDIR)/asir $(ASIR_LIBDIR)/ox_plot
+	$(RM) $(ASIR_BINDIR)/asir
+	$(LN) $(ASIR_LIBDIR)/asir $(ASIR_BINDIR)/asir

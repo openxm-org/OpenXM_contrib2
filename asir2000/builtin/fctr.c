@@ -1,0 +1,386 @@
+/* $OpenXM: OpenXM/src/asir99/builtin/fctr.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+#include "ca.h"
+#include "parse.h"
+
+void Pfctr(), Pgcd(), Pgcdz(), Plcm(), Psqfr(), Pufctrhint();
+void Pptozp(), Pcont();
+void Pafctr(), Pagcd();
+void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
+void Pirred_check(), Pnfctr_mod();
+
+struct ftab fctr_tab[] = {
+	{"fctr",Pfctr,1},
+	{"gcd",Pgcd,-3},
+	{"gcdz",Pgcdz,2},
+	{"lcm",Plcm,2},
+	{"sqfr",Psqfr,1},
+	{"ufctrhint",Pufctrhint,2},
+	{"ptozp",Pptozp,1},
+	{"cont",Pcont,-2},
+	{"afctr",Pafctr,2},
+	{"agcd",Pagcd,3},
+	{"modsqfr",Pmodsqfr,2},
+	{"modfctr",Pmodfctr,2},
+#if 0
+	{"ddd",Pddd,2},
+	{"newddd",Pnewddd,2},
+#endif
+	{"ddd_tab",Pddd_tab,2},
+	{"irred_check",Pirred_check,2},
+	{"nfctr_mod",Pnfctr_mod,2},
+	{0,0,0},
+};
+
+void Pfctr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	asir_assert(ARG0(arg),O_P,"fctr");
+	fctrp(CO,(P)ARG0(arg),&dc);
+	dcptolist(dc,rp);
+}
+
+void Pgcd(arg,rp)
+NODE arg;
+P *rp;
+{
+	P p1,p2,g1,g2,g;
+	Num m;
+	int mod;
+
+	p1 = (P)ARG0(arg); p2 = (P)ARG1(arg);
+	asir_assert(p1,O_P,"gcd");
+	asir_assert(p2,O_P,"gcd");
+	if ( !p1 )
+		*rp = p2;
+	else if ( !p2 )
+		*rp = p1;
+	else if ( !qpcheck((Obj)p1) || !qpcheck((Obj)p2) )
+		error("gcd : invalid argument");
+	else if ( argc(arg) == 2 )
+		ezgcdp(CO,p1,p2,rp);
+	else {
+		m = (Num)ARG2(arg);
+		asir_assert(m,O_P,"gcd");
+		mod = QTOS((Q)m);
+		ptomp(mod,p1,&g1); ptomp(mod,p2,&g2);
+		gcdprsmp(CO,mod,g1,g2,&g);
+		mptop(g,rp);
+	}
+}
+
+void Pgcdz(arg,rp)
+NODE arg;
+P *rp;
+{
+	P p1,p2,t;
+	Q c1,c2;
+	N n;
+
+	p1 = (P)ARG0(arg); p2 = (P)ARG1(arg);
+	asir_assert(p1,O_P,"gcdz");
+	asir_assert(p2,O_P,"gcdz");
+	if ( !p1 )
+		*rp = p2;
+	else if ( !p2 )
+		*rp = p1;
+	else if ( !qpcheck((Obj)p1) || !qpcheck((Obj)p2) )
+		error("gcdz : invalid argument");
+	else if ( NUM(p1) || NUM(p2) ) {
+		if ( NUM(p1) )
+			c1 = (Q)p1;
+		else
+			ptozp(p1,1,&c1,&t);
+		if ( NUM(p2) )
+			c2 = (Q)p2;
+		else
+			ptozp(p2,1,&c2,&t);
+		gcdn(NM(c1),NM(c2),&n); NTOQ(n,1,c1); *rp = (P)c1;
+	} else {
+#if 0
+		w[0] = p1; w[1] = p2; nezgcdnpz(CO,w,2,rp);
+#endif
+		ezgcdpz(CO,p1,p2,rp);
+	}
+}
+
+void Plcm(arg,rp)
+NODE arg;
+P *rp;
+{
+	P t1,t2,p1,p2,g,q;
+	Q c;
+
+	p1 = (P)ARG0(arg); p2 = (P)ARG1(arg);
+	asir_assert(p1,O_P,"lcm");
+	asir_assert(p2,O_P,"lcm");
+	if ( !p1 || !p2 )
+		*rp = 0;
+	else if ( !qpcheck((Obj)p1) || !qpcheck((Obj)p2) )
+		error("lcm : invalid argument");
+	else {
+		ptozp(p1,1,&c,&t1); ptozp(p2,1,&c,&t2);
+		ezgcdp(CO,t1,t2,&g); divsp(CO,t1,g,&q); mulp(CO,q,t2,rp);
+	}
+}
+
+void Psqfr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	asir_assert(ARG0(arg),O_P,"sqfr");
+	sqfrp(CO,(P)ARG0(arg),&dc);
+	dcptolist(dc,rp);
+}
+
+void Pufctrhint(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	asir_assert(ARG0(arg),O_P,"ufctrhint");
+	asir_assert(ARG1(arg),O_N,"ufctrhint");
+	ufctr((P)ARG0(arg),QTOS((Q)ARG1(arg)),&dc);
+	dcptolist(dc,rp);
+}
+
+#if 0
+Pmgcd(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	NODE node,tn;
+	int i,m;
+	P *l;
+
+	node = BDY((LIST)ARG0(arg));
+	for ( i = 0, tn = node; tn; tn = NEXT(tn), i++ );
+	m = i; l = (P *)ALLOCA(m*sizeof(P));
+	for ( i = 0, tn = node; i < m; tn = NEXT(tn), i++ )
+		l[i] = (P)BDY(tn);
+	nezgcdnpz(CO,l,m,rp);
+}
+#endif
+
+void Pcont(arg,rp)
+NODE arg;
+P *rp;
+{
+	DCP dc;
+	int m;
+	P p,p1;
+	P *l;
+	V v;
+
+	asir_assert(ARG0(arg),O_P,"cont");
+	p = (P)ARG0(arg);
+	if ( NUM(p) )
+		*rp = p;
+	else {
+		if ( argc(arg) == 2 ) {
+			v = VR((P)ARG1(arg));
+			change_mvar(CO,p,v,&p1);
+			if ( VR(p1) != v ) {
+				*rp = p1; return;
+			} else
+				p = p1;
+		}
+		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ );
+		l = (P *)ALLOCA(m*sizeof(P));
+		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ )
+			l[m] = COEF(dc);
+		nezgcdnpz(CO,l,m,rp);
+	}
+}
+
+void Pptozp(arg,rp)
+NODE arg;
+P *rp;
+{
+	Q t;
+
+	asir_assert(ARG0(arg),O_P,"ptozp");
+	ptozp((P)ARG0(arg),1,&t,rp);
+}
+
+void Pafctr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+	
+	asir_assert(ARG0(arg),O_P,"afctr");
+	asir_assert(ARG1(arg),O_P,"afctr");
+	afctr(CO,(P)ARG0(arg),(P)ARG1(arg),&dc);
+	dcptolist(dc,rp);
+}
+
+void Pagcd(arg,rp)
+NODE arg;
+P *rp;
+{
+	asir_assert(ARG0(arg),O_P,"agcd");
+	asir_assert(ARG1(arg),O_P,"agcd");
+	asir_assert(ARG2(arg),O_P,"agcd");
+	gcda(CO,(P)ARG0(arg),(P)ARG1(arg),(P)ARG2(arg),rp);
+}
+
+#if 1
+#define Mulum mulum
+#define Divum divum
+#define Mulsum mulsum
+#define Gcdum gcdum
+#endif
+
+void Mulum(), Mulsum(), Gcdum();
+int Divum();
+
+#define FCTR 0 /* berlekamp */
+#define SQFR 1
+#define DDD 2  /* Cantor-Zassenhauss */
+#define NEWDDD 3  /* berlekamp + root-finding by Cantor-Zassenhauss */
+
+UM *resberle();
+
+void Pmodfctr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+	int mod;
+
+	mod = QTOS((Q)ARG1(arg));
+	if ( mod < 0 )
+		error("modfctr : invalid modulus");
+	modfctrp(ARG0(arg),mod,NEWDDD,&dc);
+	if ( !dc ) {
+		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
+	}
+	dcptolist(dc,rp);
+}
+
+void Pmodsqfr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	if ( !dc ) {
+		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
+	}
+	modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),SQFR,&dc);
+	dcptolist(dc,rp);
+}
+
+void Pddd(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	if ( !dc ) {
+		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
+	}
+	modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),DDD,&dc);
+	dcptolist(dc,rp);
+}
+
+void Pnewddd(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+
+	if ( !dc ) {
+		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
+	}
+	modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),NEWDDD,&dc);
+	dcptolist(dc,rp);
+}
+
+void Pirred_check(arg,rp)
+NODE arg;
+Q *rp;
+{
+	P p;
+	UM mp;
+	int r,mod;
+
+	p = (P)ARG0(arg);
+	if ( !p ) {
+		*rp = 0; return;
+	}
+	mp = W_UMALLOC(UDEG(p));
+	mod = QTOS((Q)ARG1(arg));
+	ptoum(mod,p,mp);
+	r = irred_check(mp,mod);
+	if ( r )
+		*rp = ONE;
+	else
+		*rp = 0;
+}
+
+void Pnfctr_mod(arg,rp)
+NODE arg;
+Q *rp;
+{
+	P p;
+	UM mp;
+	int r,mod;
+
+	p = (P)ARG0(arg);
+	if ( !p ) {
+		*rp = 0; return;
+	}
+	mp = W_UMALLOC(UDEG(p));
+	mod = QTOS((Q)ARG1(arg));
+	ptoum(mod,p,mp);
+	r = nfctr_mod(mp,mod);
+	STOQ(r,*rp);
+}
+
+void Pddd_tab(arg,rp)
+NODE arg;
+VECT *rp;
+{
+	P p;
+	UM mp,t,q,r1,w,w1;
+	UM *r,*s;
+	int dr,mod,n,i;
+	VECT result;
+	V v;
+
+	p = (P)ARG0(arg); mod = QTOS((Q)ARG1(arg));
+	v = VR(p);
+	n = UDEG(p); mp = W_UMALLOC(n);
+	ptoum(mod,p,mp);
+	r = (UM *)W_ALLOC(n); s = (UM *)W_ALLOC(n);
+	r[0] = UMALLOC(0); DEG(r[0]) = 0; COEF(r[0])[0] = 1;
+	t = W_UMALLOC(mod); bzero(COEF(t),sizeof(int)*(mod+1));
+	DEG(t) = mod; COEF(t)[mod] = 1;
+	q = W_UMALLOC(mod);
+	dr = divum(mod,t,mp,q);
+	DEG(t) = dr; r[1] = r1 = UMALLOC(dr); cpyum(t,r1);
+	s[0] = W_UMALLOC(dr); cpyum(t,s[0]);
+	w = W_UMALLOC(n); bzero(COEF(w),sizeof(int)*(n+1));
+	w1 = W_UMALLOC(2*n); bzero(COEF(w1),sizeof(int)*(2*n+1));
+	for ( i = 1; i < n; i++ ) {
+		DEG(w) = i; COEF(w)[i-1] = 0; COEF(w)[i] = 1;
+		mulum(mod,r1,w,w1);
+		dr = divum(mod,w1,mp,q); DEG(w1) = dr;
+		s[i] = W_UMALLOC(dr); cpyum(w1,s[i]);
+	}
+	for ( i = 2; i < n; i++ ) {
+		mult_mod_tab(r[i-1],mod,s,w,n);
+		r[i] = UMALLOC(DEG(w)); cpyum(w,r[i]);
+	}
+	MKVECT(result,n);
+	for ( i = 0; i < n; i++ )
+		umtop(v,r[i],(P *)&BDY(result)[i]);
+	*rp = result;
+}

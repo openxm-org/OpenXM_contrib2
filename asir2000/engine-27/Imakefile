@@ -1,0 +1,120 @@
+/* $OpenXM: OpenXM/src/asir99/engine-27/Imakefile,v 1.1.1.1 1999/11/10 08:12:27 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+#if defined(AlphaArchitecture) || (defined(MipsArchitecture) && defined(SGIArchitecture))
+
+mdepsrc = asmalpha-27.c
+mdepobj = asmalpha-27.o
+#endif
+
+#ifdef LinuxArchitecture
+#ifndef AlphaArchitecture
+mdepsrc = asmi_l-27.s
+mdepobj = asmi_l-27.o
+#endif
+#endif
+
+#ifdef i386BsdArchitecture
+mdepsrc = asmi-27.s
+mdepobj = asmi-27.o
+#endif
+
+#ifdef SunArchitecture
+#ifdef i386Architecture
+mdepsrc = asmi_l-27.s
+mdepobj = asmi_l-27.o
+#else
+mdepsrc = asm3-27.s
+mdepobj = asm3-27.o
+#endif
+#endif
+
+#ifdef SparcArchitecture
+#if SystemV4
+#if SUN4M
+mdepsrc = sparc-2-27.s-cc asm5-2-27.s edr-2-27.s
+mdepobj = sparc-2-27.o asm5-2-27.o edr-2-27.o
+#else
+mdepsrc = sparc-2-27.s-cc asm4-2-27.s edr-2-27.s
+mdepobj = sparc-2-27.o asm4-2-27.o edr-2-27.o
+#endif
+#else
+#if SUN4M
+mdepsrc = sparc-27.c asm45-27.s edr-27.s
+mdepobj = sparc-2-27.o asm45-27.o edr-27.o
+#else
+mdepsrc = sparc-27.c asm4-27.s edr-27.s
+mdepobj = sparc-27.o asm4-27.o edr-27.o
+#endif
+#endif
+#endif
+
+#ifdef UltrixArchitecture
+#ifdef VaxArchitecture
+mdepsrc = asmv-27.s
+mdepobj = asmv-27.o
+#endif
+#ifdef MipsArchitecture
+mdepsrc = asmm-27.s
+mdepobj = asmm-27.o
+#endif
+#endif
+
+#ifdef HPArchitecture
+/*
+mdepsrc = asmh-27.s
+mdepobj = asmh-27.o
+*/
+mdepsrc = asmalpha-27.c
+mdepobj = asmalpha-27.o
+#endif
+
+#ifdef NeXTArchitecture
+mdepsrc = asm3-27.s
+mdepobj = asm3-27.o
+#endif
+
+#ifdef ApolloArchitecture
+mdepsrc = asma-27.s
+mdepobj = asma-27.o
+#endif
+
+#ifdef Mc88000Architecture
+mdepsrc = asml-27.s
+mdepobj = asml-27.o
+#endif
+
+#ifdef SonyArchitecture
+#ifdef Mc68020Architecture
+mdepsrc = asmn-27.s
+mdepobj = asmn-27.o
+#endif
+#ifdef MipsArchitecture
+mdepsrc = asmm-27.s
+mdepobj = asmm-27.o
+#endif
+#endif
+
+SRCS = N-27.c ddN-27.c $(mdepsrc)
+OBJS = N-27.o ddN-27.o $(mdepobj)
+
+NormalLibraryTarget(ca-27,$(OBJS))
+DependTarget()
+
+asmm-27.o asma-27.o:
+	$(RM) $@
+	$(AS) -o $@ $(INCLUDES) $*.s
+
+asmh-27.o:
+	$(RM) $@
+	$(CC) -c -o $@ $(INCLUDES) $*.s
+
+asm4-27.o asm4-2-27.o asm45-27.o asm45-2-27.o asm5-27.o asm5-2-27.o edr-27.o edr-2-27.o:
+	$(RM) $@
+	$(AS) -o $@ -P $(INCLUDES) $*.s
+
+sparc-27.o: sparc-27.s-cc
+	as -o sparc-27.o sparc-27.s-cc
+
+sparc-2-27.o: sparc-2-27.s-cc
+	as -o sparc-2-27.o sparc-2-27.s-cc

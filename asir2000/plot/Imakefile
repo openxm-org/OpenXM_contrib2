@@ -1,0 +1,21 @@
+/* $OpenXM: OpenXM/src/asir99/plot/Imakefile,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+#ifdef USE_PLOT
+SRCS = calc.c if.c plotp.c plotg.c ox_plot.c plotf.c ox_plot_xevent.c 
+OBJS = calc.o if.o plotp.o plotg.o ox_plot.o plotf.o ox_plot_xevent.o 
+
+AllTarget(libplot.a)
+NormalLibraryTarget(plot,$(OBJS))
+
+$(OBJS) plotf.o dummy.o unixplot.o: $(TOP)/include/Risa.tmpl
+#else
+AllTarget()
+#endif
+
+DependTarget()
+
+#if defined(MipsArchitecture)
+unixplot.o:
+	cc -O2 -c $(ALLDEFINES) $*.c
+#endif

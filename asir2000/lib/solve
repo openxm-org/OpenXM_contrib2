@@ -1,0 +1,108 @@
+/* $OpenXM: OpenXM/src/asir99/lib/solve,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+def kenzan(El,Sl)
+{
+	for ( Tl = El; Tl != []; Tl = cdr(Tl) ) {
+		if ( substv(car(Tl),Sl) ) {
+			print("kenzan : error");
+			return 0;
+		}
+	}
+	print("kenzan : ok");
+	return 1;
+}
+
+def substv(P,Sl)
+{
+	for ( A = P; Sl != []; Sl = cdr(Sl) ) 
+		A = subst(A,car(car(Sl)),car(cdr(car(Sl))));
+	return A;
+}
+			
+def co(X,V,D)
+{
+	for ( I = 0; I < D; I++ )
+		X = diff(X,V);
+	return sdiv(subst(X,V,0),fac(D));
+}
+
+def solve(El,Vl)
+/*
+ * El : list of linear forms
+ * Vl : list of variable
+ */
+{
+	N = length(El); M = length(Vl);
+	Mat = newmat(N,M+1); 
+	W = newvect(M+1); Index = newvect(N); Vs = newvect(M);
+	for ( I = 0, Tl = Vl; I < M; Tl = cdr(Tl), I++ )
+		Vs[I] = car(Tl);
+	for ( I = 0, Tl = El; I < N; Tl = cdr(Tl), I++ ) {
+		ltov(car(Tl),Vl,W);
+		for ( J = 0; J <= M; J++ )
+			Mat[I][J] = W[J];
+	}
+	Tl = solvemain(Mat,Index,N,M); L = car(Tl); D = car(cdr(Tl));
+	if ( L < 0 )
+		return [];
+	for ( I = L - 1, S = []; I >= 0; I-- ) {
+		for ( J = Index[I]+1, A = 0; J < M; J++ ) {
+			A += Mat[I][J]*Vs[J];
+		}
+		S = cons([Vs[Index[I]],-red((A+Mat[I][M])/D)],S);
+	}
+	if ( kenzan(El,S) )
+		return S;
+	else
+		return [];
+	return S;
+}
+
+def solvemain(Mat,Index,N,M) 
+/* 
+ *	Mat : matrix of size Nx(M+1)
+ *	Index : vector of length N
+ */
+{
+	for ( J = 0, L = 0, D = 1; J < M; J++ ) {
+		for ( I = L; I < N && !Mat[I][J]; I++ );
+		if ( I == N )
+			continue;
+		Index[L] = J;
+		for ( K = 0; K <= M; K++ ) {
+			T = Mat[I][K]; Mat[I][K] = Mat[L][K]; Mat[L][K] = T;
+		}
+		for ( I = L + 1, V = Mat[L][J]; I < N; I++ )
+			for ( K = J, U = Mat[I][J]; K <= M; K++ )
+				Mat[I][K] = sdiv(Mat[I][K]*V-Mat[L][K]*U,D);
+		D = V; L++;
+	}
+	for ( I = L; I < N; I++ )
+		for ( J = 0; J <= M; J++ )
+			if ( Mat[I][J] )
+				return -1;
+	for ( I = L - 2, W = newvect(M+1); I >= 0; I-- ) {
+		for ( J = 0; J <= M; J++ )
+			W[J] = 0;
+		for ( G = I + 1; G < L; G++ )
+			for ( H = Index[G], U = Mat[I][H]; H <= M; H++ )
+				W[H] += Mat[G][H]*U;
+		for ( J = Index[I], U = Mat[I][J]; J <= M; J++ )
+			Mat[I][J] = sdiv(Mat[I][J]*D-W[J],U);
+	}
+	return [L,D];
+}
+
+def length(L)
+{
+	for ( I = 0; L != []; L = cdr(L), I++ );
+	return I;
+}
+
+def ltov(P,VL,W)
+{
+	for ( I = 0, L = VL; L != []; L = cdr(L), I++ ) {
+		W[I] = co(P,car(L),1); P -= W[I]*car(L);
+	}
+	W[I] = P;
+}
+end$

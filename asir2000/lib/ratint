@@ -1,0 +1,257 @@
+/* $OpenXM: OpenXM/src/asir99/lib/ratint,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/*
+ * rational function integration (Trager's algorithm)
+ * load("gr"); load("sp");
+ * toplevel : ratint(F,V)
+ * returns a complicated list s.t. 
+ * [<rational part>, [[root*log(poly),defpoly],...].
+ */
+
+#define FIRST(a) car(a)
+#define SECOND(a) car(cdr(a))
+#define THIRD(a) car(cdr(cdr(a)))
+
+
+def substv(P,Sl)
+{
+	for ( A = P; Sl != []; Sl = cdr(Sl) )
+		A = subst(A,FIRST(car(Sl)),SECOND(car(Sl)));
+	return A;
+}
+			
+def co(X,V,D)
+{
+	for ( I = 0; I < D; I++ )
+		X = diff(X,V);
+	return sdiv(subst(X,V,0),fac(D));
+}
+
+def solve(El,Vl)
+/*
+ * El : list of linear forms
+ * Vl : list of variable
+ */
+{
+	N = length(El); M = length(Vl);
+	Mat = newmat(N,M+1); 
+	W = newvect(M+1); Index = newvect(N); Vs = newvect(M);
+	for ( I = 0, Tl = Vl; I < M; Tl = cdr(Tl), I++ )
+		Vs[I] = car(Tl);
+	for ( I = 0, Tl = El; I < N; Tl = cdr(Tl), I++ ) {
+		ltov(car(Tl),Vl,W);
+		for ( J = 0; J <= M; J++ )
+			Mat[I][J] = W[J];
+	}
+	Tl = solvemain(Mat,Index,N,M); L = car(Tl); D = car(cdr(Tl));
+	if ( L < 0 )
+		return [];
+	for ( I = L - 1, S = []; I >= 0; I-- ) {
+		for ( J = Index[I]+1, A = 0; J < M; J++ ) {
+			A += Mat[I][J]*Vs[J];
+		}
+		S = cons([Vs[Index[I]],-red((A+Mat[I][M])/D)],S);
+	}
+	return S;
+}
+
+def solvemain(Mat,Index,N,M) 
+/* 
+ *	Mat : matrix of size Nx(M+1)
+ *	Index : vector of length N
+ */
+{
+	for ( J = 0, L = 0, D = 1; J < M; J++ ) {
+		for ( I = L; I < N && !Mat[I][J]; I++ );
+		if ( I == N )
+			continue;
+		Index[L] = J;
+		for ( K = 0; K <= M; K++ ) {
+			T = Mat[I][K]; Mat[I][K] = Mat[L][K]; Mat[L][K] = T;
+		}
+		for ( I = L + 1, V = Mat[L][J]; I < N; I++ )
+			for ( K = J, U = Mat[I][J]; K <= M; K++ )
+				Mat[I][K] = sdiv(Mat[I][K]*V-Mat[L][K]*U,D);
+		D = V; L++;
+	}
+	for ( I = L; I < N; I++ )
+		for ( J = 0; J <= M; J++ )
+			if ( Mat[I][J] )
+				return -1;
+	for ( I = L - 2, W = newvect(M+1); I >= 0; I-- ) {
+		for ( J = 0; J <= M; J++ )
+			W[J] = 0;
+		for ( G = I + 1; G < L; G++ )
+			for ( H = Index[G], U = Mat[I][H]; H <= M; H++ )
+				W[H] += Mat[G][H]*U;
+		for ( J = Index[I], U = Mat[I][J]; J <= M; J++ )
+			Mat[I][J] = sdiv(Mat[I][J]*D-W[J],U);
+	}
+	return [L,D];
+}
+
+def length(L)
+{
+	for ( I = 0; L != []; L = cdr(L), I++ );
+	return I;
+}
+
+def ltov(P,VL,W)
+{
+	for ( I = 0, L = VL; L != []; L = cdr(L), I++ ) {
+		W[I] = co(P,car(L),1); P -= W[I]*car(L);
+	}
+	W[I] = P;
+}
+
+def makeucp(N,V) {
+	for ( UCV = [], I = 0; I <= N; I++ )
+		UCV = cons(uc(),UCV);
+	for ( L = UCV, I = P = 0; I <= N; I++, L = cdr(L) )
+		P += car(L)*V^I;
+	return [P,UCV];
+}
+
+def ratint(F,V) {
+	L = ratintsep(F,V);
+	Rat = FIRST(L);
+	if ( !SECOND(L) )
+		return L;
+	else {
+		Pf = ratintpf(SECOND(L),V);
+		for ( T = Pf, S = []; T != []; T = cdr(T) )
+			S = cons(ratintlog(car(T),V),S);
+		return [Rat,S];
+	}
+}
+
+def ratintlog(F,V) {
+	Nm = nm(F); Dn = dn(F);
+	C = uc();
+	R = res(V,ptozp(Nm-C*diff(Dn,V)),ptozp(Dn));
+	Rc = FIRST(SECOND(fctr(R)));
+	if ( deg(Rc,C) == 1 ) {
+		VC = -co(Rc,C,0)/co(Rc,C,1);
+		A = gcd(Nm-VC*diff(Dn,V),Dn);
+		return [VC*log(A),0];
+	} else {
+		Root = newalg(Rc);
+		A = gcda(subst(ptozp(Nm-C*diff(Dn,V)),C,Root),subst(ptozp(Dn),C,Root));
+		return [Root*log(A),defpoly(Root)];
+	}
+}
+
+def ratintsep(F,V) {
+	B = dn(F); A = srem(nm(F),B); P = sdiv(nm(F)-R,B);
+	IP = polyint(P,V);
+	G = gcd(B,diff(B,x));
+	if ( type(G) == 1 )
+		return [IP,red(A/B)];
+	H = sdiv(B,G);
+	N = deg(B,V); M = deg(H,V);
+	CL = makeucp(N-M-1,V); DL = makeucp(M-1,V);
+	C = car(CL); CV = car(cdr(CL));
+	D = car(DL); DV = car(cdr(DL));
+	UCV = append(CV,DV);
+	S = solveuc(A-(diff(C,V)*H-C*sdiv(H*diff(G,V),G)+D*G),V,UCV);
+	C = substv(C,S); D = substv(D,S);
+	return [IP+C/G,red(D/H)];
+}
+
+def polyint(P,V) {
+	if ( !P )
+		return 0;
+	if ( type(P) == 1 )
+		return P*V;
+	for ( I = deg(P,V), T = 0; I >= 0; I-- )
+		T += coef(P,I)/(I+1)*V^(I+1);
+	return T;
+}
+
+def ratintpf(P,V) {
+	NmP = nm(P); DnP = dn(P);
+	DnPf = fctr(DnP); 
+	L = length(DnPf) - 1;
+	if ( L == 1 ) 
+		return [P];
+
+	Lc = FIRST(car(DnPf)); DnPf = cdr(DnPf);
+	NmP = sdiv(NmP,Lc); DnP = sdiv(DnP,Lc); 
+	Nm = newvect(L); Dn = newvect(L);
+	for ( I = 0, F = DnPf; I < L; I++, F = cdr(F) )
+		Dn[I] = FIRST(car(F));
+
+	for ( I = 0, U = -NmP, Vl = []; I < L; I++ ) {
+		CL = makeucp(deg(Dn[I],V)-1,V);
+		Nm[I] = FIRST(CL); Vl = append(Vl,SECOND(CL));
+		U += sdiv(DnP,Dn[I])*Nm[I];
+	}
+
+	S = solveuc(U,V,Vl);
+	for ( I = 0, F = []; I < L; I++ )
+		if ( T = substv(Nm[I],S) )
+			F = cons(T/Dn[I],F);
+	return F;
+}
+
+def solveuc(P,V,L) {
+	for ( N = deg(P,V), E = [], I = N; I >= 0; I-- )
+		if ( C = coef(P,I) )
+			E = cons(C,E);
+	EVG = eqsimp(E,L);
+	if ( FIRST(EVG) == [] )
+		return THIRD(EVG);
+	else {
+		S = solve(FIRST(EVG),SECOND(EVG));
+		for ( T = S, G = THIRD(EVG); G != []; G = cdr(G) ) {
+			VV = car(G); 
+			T = cons([FIRST(VV),substv(SECOND(VV),S)],T);
+		}
+		return T;
+	}
+	
+}
+
+#if 0
+def append(A,B) {
+	return A == [] ? B : cons(car(A),append(cdr(A),B));
+}
+#endif
+
+def eqsimp(E,Vs) {
+	for ( Got = []; ; ) {
+		if ( (VV = searchmonic(E,Vs)) == [] )
+			return [E,Vs,Got];
+		V = FIRST(VV); Val = SECOND(VV); 
+		Vs = subtract(Vs,V);
+		for ( T = []; E != []; E = cdr(E) )
+			if ( S = subst(car(E),V,Val) )
+				T = cons(S,T);
+		E = T;
+		for ( T = [VV]; Got != []; Got = cdr(Got) ) {
+			VV1 = car(Got);
+			T = cons([FIRST(VV1),subst(SECOND(VV1),V,Val)],T);
+		}
+		Got = T;
+	}
+}
+
+def searchmonic(E,Vs) {
+	for ( ; E != []; E = cdr(E) )
+		for ( P = car(E), T = Vs; T != []; T = cdr(T) ) {
+			V = car(T); C = diff(P,V);	
+			if ( C == 1 )
+				return [V,-(P-V)];
+			else if ( C == -1 )
+				return [V,P+V];
+		}
+	return [];
+}
+
+def subtract(S,E) {
+	for ( T = []; S != []; S = cdr(S) )
+		if ( car(S) == E )
+			return append(T,cdr(S));
+		else
+			T = cons(car(S),T);
+}
+end$

@@ -1,0 +1,26 @@
+/* OpenXM */
+addpadic(mod,n,n1,n2)
+register int mod;
+int n;
+register int *n1,*n2;
+{
+	register int i,carry,tmp;
+
+	for ( i = 0, carry = 0; i < n; i++,n1++,n2++ ) {
+		asm("	ld	[%i2],%o0	");
+		asm("	ld	[%i3],%l7	");
+		asm("	add	%o0,%l7,%l7	");
+		asm("	add	%l7,%i4,%l7	");
+		asm("	mov	%i0,%o1	");
+		asm("	call	.udr,2	");
+		asm("	mov	%l7,%o0	");
+
+		asm("	mov	%o1,%i4	");
+		asm("	st	%o0,[%i3]	");
+		/*
+		tmp = *n1 + *n2 + carry;
+		carry = tmp / mod;
+		*n2 = tmp - ( carry * mod );
+		*/
+	}
+}

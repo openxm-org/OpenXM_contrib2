@@ -1,0 +1,30 @@
+/* $OpenXM: OpenXM/src/asir99/parse/Imakefile,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+SRCS = glob.c parser.c kwd.c parse.y lex.c debug.c\
+	eval.c arith.c function.c load.c util.c\
+	pvar.c struct.c puref.c comp.c main.c id.c xdeb.c  evall.c
+
+OBJS = glob.o parser.o kwd.o y.tab.o lex.o debug.o\
+	eval.o arith.o function.o load.o util.o\
+	pvar.o struct.o puref.o comp.o id.o xdeb.o evall.o
+
+AllTarget(y.tab.c libparse.a main.o umain.o)
+NormalLibraryTarget(parse,$(OBJS))
+DependTarget()
+SpecialObjectRule(load.o,NullParameter,-DASIR_LIBDIR=\"$(ASIR_LIBDIR)\")
+
+y.tab.h y.tab.c: parse.y
+	yacc -d parse.y
+
+umain.o: main.c
+	$(CC) -c $(CFLAGS) -DUINIT main.c -o umain.o
+
+#if 0
+y.tab.o:
+	cc -c -O2 -DYYMAXDEPTH=500 $(INCLUDES) $(DEFINES) $*.c
+#endif
+
+glob.o lex.o debug.o main.o umain.o: $(TOP)/include/Risa.tmpl
+y.tab.c y.tab.h: $(TOP)/include/Risa.tmpl
+lex.o kwd.o: y.tab.h

@@ -1,0 +1,106 @@
+              Asir2000 の install のしかた  (standalone 版; 1999.12.1)
+
+                               (株)富士通研究所 CS研)SC研 野呂 正行
+
+不明な点は, noryo@flab.fujitsu.co.jp にお問い合わせ下さい. 
+
+0. コンパイラについて
+
+Sparc の場合, gcc が用いられますが, /usr/ccs/bin が, /usr/local/bin
+より先にサーチされるように, path を設定して下さい. 
+
+Intel PC の場合, gcc が用いられます. 
+
+Alpha の場合, 純正 C コンパイラ /usr/ccs/bin/cc を使用します. 
+
+1. install directory を決める. 
+
+install directory には, 以下のものが置かれます. 
+
+bin       pari, asir の実行ファイル
+lib       pari, asir のライブラリファイル
+include   pari の include ファイル
+
+これらの subdirectory はなければ自動的につくられます. root 権限がある
+場合には, /usr/local などに install することをおすすめします (pari の 
+default はそこ).  もし個人的に使用する場合には, 自分が書き込める 
+directory を指定して下さい.  以下この directory を TARGETDIR と書きま
+す.
+
+2. pari-2.0.17.beta の install
+
+% gzip -dc pari-2.0.17.beta.tgz | tar xvf -
+% cd pari-2.0.17.beta
+% ./Configure --prefix=TARGETDIR
+% make all
+% su                         <-- 必要がある場合
+# make install
+# make install-lib-sta
+# exit
+%
+
+3. asir2000 の install
+
+% gzip -dc asir2000.tgz | tar xvf -
+% cd asir2000
+% configure TARGETDIR
+% xmkmf -a
+% make
+% su                        <-- 必要がある場合
+# make install
+# make install2
+# exit
+%	
+
+5. 環境変数について
+
+上記の手順で install した場合, 環境変数の設定なしで全て正常に動作する
+はずです. もし, ASIR_LIBDIR が設定されている場合にはその設定をやめて下
+さい. また, load() 関数のサーチパスを指定するASIRLOADPATH は, リスト中
+の directory を左からサーチしたあと, 最後に TARGETDIR/lib/asir をサー
+チします. ASIRLOADPATH に, 旧版のlibrary directory が紛れ込まないよう
+に注意して下さい.
+
+6. asir_key の取得
+
+% TARGETDIR/bin/asir
+asir_key not found.
+ID for this machine is XXXXXXXX.
+See the file ASIR_INSTALL to get the correct key.
+
+こう表示されたら, email で key を取得する必要があります. ただし, 既に
+そのマシンで key を取得すみなら, 
+
+% cp SOMEWHERE/asir_key TARGETDIR/lib/asir
+
+で OK です. 新規に取得する場合には, 
+
+risa@sec.flab.fujitsu.co.jp
+
+宛に,
+
+ASIR XXXXXXXX
+
+という 1 行のみからなる e-mail を送って下さい. XXXXXXXX は表示された 
+ID です. 折り返し
+
+YYYYYYYY YYYYYYYY YYYYYYYY
+
+という形の 1 行のみからなる e-mail が届くので, この 1 行を含む `asir_key' な
+るファイルを作り, TARGETDIR に置いて下さい. 
+
+7. manual の make
+
+これは, ptex, texi2html, makeinfo (ver. 1.68 以上) が必要です. あらか
+じめ make したものが, man99.ps.gz および lib/html-jpです. 後者は 2. の 
+make install2 で, lib directory に install されます. 
+
+% cd asir2000/doc
+% make
+% make html
+
+html-jp は, HTML 形式の asir マニュアルで, man99.ps がほぼそのままの形
+で見られます. Table of Contents ファイルは html-jp/man99_toc.htmlです.
+
+
+

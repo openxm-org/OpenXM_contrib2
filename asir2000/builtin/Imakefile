@@ -1,0 +1,21 @@
+/* $OpenXM: OpenXM/src/asir99/builtin/Imakefile,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+SRCS = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c\
+	fctr.c file.c help.c int.c list.c miscf.c\
+	parif.c poly.c pdiv.c print.c pf.c\
+	rat.c reduct.c result.c\
+	strobj.c subst.c time.c type.c var.c compobj.c\
+	gr.c dp-supp.c gf.c math.c numerical.c ec.c al.c batch.c sha1.c
+
+OBJS = ftab.o algnum.o array.o cplxnum.o ctrl.o dp.o\
+	fctr.o file.o help.o int.o list.o miscf.o\
+	parif.o poly.o pdiv.o print.o pf.o\
+	rat.o reduct.o result.o\
+	strobj.o subst.o time.o type.o var.o compobj.o\
+	gr.o dp-supp.o gf.o math.o numerical.o ec.o al.o batch.o sha1.o
+
+NormalLibraryTarget(func,$(OBJS))
+DependTarget()
+
+file.o ftab.o parif.o pf.o print.o sprint.o: $(TOP)/include/Risa.tmpl

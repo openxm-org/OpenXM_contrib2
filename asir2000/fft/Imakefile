@@ -1,0 +1,9 @@
+/* $OpenXM: OpenXM/src/asir99/fft/Imakefile,v 1.1.1.1 1999/11/10 08:12:27 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+SRCS = dft.c polmul.c fft_primes.c
+OBJS = dft.o polmul.o fft_primes.o
+NormalLibraryTarget(dft,$(OBJS))
+DependTarget()
+
+dft.o polmul.o: $(TOP)/include/Risa.tmpl

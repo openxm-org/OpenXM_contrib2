@@ -1,0 +1,21 @@
+../builtin/array.c:	r = (Q)bevalf(generic_comp_obj_func,generic_comp_obj_arg);
+../builtin/pf.c:		*rp = (Obj)bevalf((FUNC)v->priv,BDY((LIST)ARG1(arg)));
+../io/ox_asir.c:			result = (Obj)bevalf(f,n);
+../io/tcpf.c:pointer bevalf();
+../parse/eval.c:pointer bevalf(), evalmapf(), evall();
+../parse/eval.c:			val = evalf((FUNC)FA0(f),(FNODE)FA1(f),0); break;
+../parse/eval.c:			val = evalf_opt((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
+../parse/eval.c:pointer evalf(f,a,opt)
+../parse/eval.c:		sprintf(errbuf,"evalf : %s undefined",NAME(f));
+../parse/eval.c:			sprintf(errbuf,"evalf : argument mismatch in %s()",NAME(f));
+../parse/eval.c:			sprintf(errbuf,"evalf : %s undefined",NAME(f));
+../parse/eval.c:				MKNODE(t,BDY(v)[i],rest); BDY(rv)[i] = bevalf(f,t);
+../parse/eval.c:					MKNODE(t,BDY(m)[i][j],rest); BDY(rm)[i][j] = bevalf(f,t);
+../parse/eval.c:				NEXTNODE(r0,r); MKNODE(t,BDY(n),rest); BDY(r) = bevalf(f,t);
+../parse/eval.c:			val = bevalf(f,node);
+../parse/eval.c:pointer bevalf(f,a)
+../parse/eval.c:		sprintf(errbuf,"bevalf : %s undefined",NAME(f));
+../parse/eval.c:			sprintf(errbuf,"bevalf : argument mismatch in %s()",NAME(f));
+../parse/eval.c:			sprintf(errbuf,"bevalf : %s undefined",NAME(f));
+../parse/eval.c:		return evalf((FUNC)VR((P)g)->priv,a);
+../parse/glob.c:						bevalf(registered_handler,0);

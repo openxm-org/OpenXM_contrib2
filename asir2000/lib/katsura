@@ -1,0 +1,42 @@
+/* $OpenXM: OpenXM/src/asir99/lib/katsura,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+def mku(L,N)
+{
+	if (L < 0)
+		L = -L;
+	if (L <= N)
+		return strtov("u"+rtostr(L));
+	return 0;
+}
+
+/* generate katsura systems */
+
+def katsura(N)
+{
+	R = [];
+	for(L = 0; L < N; L++) {
+		for(A = -mku(L,N),I = -N; I <= N; I++)
+			A += mku(L-I,N)*mku(I,N);
+		R = cons(A,R);
+	}
+	for(A = 0, L = -N; L <= N; L++) 
+		A += mku(L,N);
+	R = cons(A-1,R);
+	return R;
+}
+
+/* generate homogenized katsura systems */
+
+def hkatsura(N)
+{
+	R = [];
+	for(L = 0; L < N; L++) {
+		for(A = -mku(L,N)*t,I = -N; I <= N; I++)
+			A += mku(L-I,N)*mku(I,N);
+		R = cons(A,R);
+	}
+	for(A = 0, L = -N; L <= N; L++) 
+		A += mku(L,N);
+	R = cons(A-t,R);
+	return R;
+}
+end$

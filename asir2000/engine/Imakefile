@@ -1,0 +1,35 @@
+/* $OpenXM: OpenXM/src/asir99/engine/Imakefile,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+TSRC = init.c mat.c vect.c str.c dist.c distm.c ui.c
+NSRC = N.c Q.c QM.c real.c bf.c cplx.c num.c pari.c mi.c lmi.c mt19937.c
+PSRC = P.c PM.c PD.c PDM.c up.c up_lm.c up_gf2n.c up2.c gf2n.c gfpn.c
+PUSRC = PU.c PUM.c
+RSRC = R.c RU.c
+FSRC = F.c 
+HSRC = D.c E.c Ebug.c EZ.c H.c M.c NEZ.c
+OSRC = C.c A.c alg.c
+
+SRCS = $(TSRC) $(NSRC) $(PSRC) $(PUSRC) $(RSRC) $(FSRC) $(HSRC) $(OSRC)
+
+TOBJ = init.o mat.o vect.o str.o dist.o distm.o ui.o
+NOBJ = N.o Q.o QM.o real.o bf.o cplx.o num.o pari.o mi.o lmi.o mt19937.o
+POBJ = P.o PM.o PD.o PDM.o up.o up_lm.o up_gf2n.o up2.o gf2n.o gfpn.o
+PUOBJ = PU.o PUM.o
+ROBJ = R.o RU.o
+FOBJ = F.o 
+HOBJ = D.o E.o Ebug.o EZ.o H.o M.o NEZ.o
+OOBJ = C.o A.o alg.o
+
+OBJS = $(TOBJ) $(NOBJ) $(POBJ) $(PUOBJ) $(ROBJ) $(FOBJ) $(HOBJ) $(OOBJ)
+
+NormalLibraryTarget(ca,$(OBJS))
+DependTarget()
+
+SpecialObjectRule(P.o, NullParameter, -DFBASE)
+SpecialObjectRule(PD.o, NullParameter, -DFBASE)
+SpecialObjectRule(PM.o, NullParameter, -DMODULAR)
+SpecialObjectRule(PDM.o, NullParameter, -DMODULAR)
+
+bf.o cplx.o init.o pari.o up.o: $(TOP)/include/Risa.tmpl
+init.o: $(TOP)/include/version.h

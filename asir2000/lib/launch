@@ -1,0 +1,94 @@
+/* $OpenXM: OpenXM/src/asir99/lib/launch,v 1.2 1999/11/15 08:59:10 noro Exp $ */
+/* 
+	usage of 
+
+	generate_port()
+	try_bind_listen()
+	try_connect()
+	try_accept()
+	register_server()
+*/
+
+def local_launch(Server,Use_X,Conn_To_Server,Use_Unix)
+{
+	Host = Use_Unix ? "." : "127.1";
+	Display = getenv("DISPLAY");
+	if ( !Display )
+		Display = "0";
+	do {
+		Control_Sock = -1;
+		Server_Sock = -1;
+		do {
+			Control_Port = generate_port(Use_Unix);
+			Server_Port = generate_port(Use_Unix);
+			if ( !Conn_To_Server ) {
+				if ( Control_Sock < 0 )
+					Control_Sock = try_bind_listen(Control_Port);
+				if ( Server_Sock < 0 )
+					Server_Sock = try_bind_listen(Server_Port);
+			} else
+				break;
+		} while ( Control_Sock < 0 || Server_Sock < 0 );
+		ServerCmd = get_rootdir()+"/ox_launch"
+			+" "+Host
+			+" "+rtostr(Conn_To_Server) +" "+rtostr(Control_Port)
+			+" "+rtostr(Server_Port) +" "+Server +" "+Display;
+		if ( Use_X && getenv("DISPLAY") )
+			Cmd = "xterm -name ox_xterm -display "+Display
+				+" -geometry 60x10 -e "
+				+ ServerCmd+"\&";
+		else
+			Cmd =ServerCmd+"\&";
+		shell(Cmd);
+		if ( Conn_To_Server ) {
+			Control_Sock = try_connect(Host,Control_Port);
+			Server_Sock = try_connect(Host,Server_Port);
+		} else {
+			Control_Sock = try_accept(Control_Sock,Control_Port);
+			Server_Sock = try_accept(Server_Sock,Control_Port);
+		}
+	} while ( Control_Sock < 0 || Server_Sock < 0 );
+	return register_server(Control_Sock,Control_Port,Server_Sock,Server_Port);
+}
+
+def remote_launch(Host,Server,Use_X,Conn_To_Server)
+{
+	Display = getenv("DISPLAY");
+	if ( !Display )
+		Display = "0";
+	do {
+		Control_Sock = -1;
+		Server_Sock = -1;
+		do {
+			Control_Port = generate_port();
+			Server_Port = generate_port();
+			if ( !Conn_To_Server ) {
+				if ( Control_Sock < 0 )
+					Control_Sock = try_bind_listen(Control_Port);
+				if ( Server_Sock < 0 )
+					Server_Sock = try_bind_listen(Server_Port);
+			} else
+				break;
+		} while ( Control_Sock < 0 || Server_Sock < 0 );
+		ServerCmd = get_rootdir()+"/ox_launch"
+			+" "+Host
+			+" "+rtostr(Conn_To_Server) +" "+rtostr(Control_Port)
+			+" "+rtostr(Server_Port) +" "+Server +" "+Display;
+		if ( Use_X && getenv("DISPLAY") )
+			Cmd = "xterm -name ox_xterm -display "+Display
+				+" -geometry 60x10 -e "
+				+ ServerCmd+">&/dev/null&";
+		else
+			Cmd =ServerCmd+">&/dev/null&";
+		shell("rsh -n "+Host+" \""+Cmd+"\""+">/dev/null");
+		if ( Conn_To_Server ) {
+			Control_Sock = try_connect(Host,Control_Port);
+			Server_Sock = try_connect(Host,Server_Port);
+		} else {
+			Control_Sock = try_accept(Control_Sock,Control_Port);
+			Server_Sock = try_accept(Server_Sock,Control_Port);
+		}
+	} while ( Control_Sock < 0 || Server_Sock < 0 );
+	return register_server(Control_Sock,Control_Port,Server_Sock,Server_Port);
+}
+end$

@@ -1,0 +1,11 @@
+#!/bin/sh
+# $OpenXM: OpenXM/src/asir99/configure,v 1.1.1.1 1999/11/10 08:12:24 noro Exp $
+if [ $# = 1 ]; then
+	oxhome=$1
+else
+	oxhome=`( cd ../../OpenXM ; pwd )`
+fi
+rm -f include/config.h
+cat > include/config.h <<EOF
+#define OpenXM_HOME ${oxhome}
+EOF

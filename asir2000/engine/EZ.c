@@ -1,0 +1,716 @@
+/* $OpenXM: OpenXM/src/asir99/engine/EZ.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+#include "ca.h"
+
+void ezgcdp(vl,p1,p2,pr)
+VL vl;
+P p1,p2;
+P *pr;
+{
+	P f1,f2;
+	Q c;
+
+	if ( !p1 )
+		if ( !p2 )
+			*pr = 0;
+		else
+			*pr = p2;
+	else if ( !p2 )
+		*pr = p1;
+	else {
+		if ( !qpcheck((Obj)p1) || !qpcheck((Obj)p2) )
+			error("ezgcdp : invalid argument");
+		ptozp(p1,1,&c,&f1);
+		ptozp(p2,1,&c,&f2);
+		ezgcdpz(vl,f1,f2,pr);
+	}
+}
+
+/*
+ * p1, p2 : integer coefficient 
+ * returns gcd(pp(p1),pp(p2)) * gcd(cont(p1),cont(p2))
+ */
+
+void ezgcdpz(vl,p1,p2,pr)
+VL vl;
+P p1,p2,*pr;
+{
+	P f1,f2,t,s,g,gcd;
+	P fc1,fc2,cont;
+	VL tvl,svl;
+	V v1,v2;
+	DCP dc,dc1,dc2;
+	N cn;
+	Q cq;
+	Q c1,c2,c;
+	P g1,g2;
+	P mgcd;
+	extern int nez;
+	P pm[2];
+
+	if ( nez ) {
+		pm[0] = p1; pm[1] = p2; nezgcdnpz(vl,pm,2,pr); return;
+	}
+	monomialfctr(vl,p1,&f1,&dc1); p1 = f1;
+	monomialfctr(vl,p2,&f2,&dc2); p2 = f2;
+	for ( mgcd = (P)ONE; dc1; dc1 = NEXT(dc1) )
+		for ( v1 = VR(dc1->c), dc = dc2; dc; dc = NEXT(dc) )
+			if ( v1 == VR(dc->c) ) {
+				pwrp(vl,dc->c,cmpq(dc1->d,dc->d)>=0?dc->d:dc1->d,&t);
+				mulp(vl,mgcd,t,&s); mgcd = s; break;
+			}
+
+	if ( NUM(p1) ) {
+		if ( NUM(p2) ) {
+			gcdn(NM((Q)p1),NM((Q)p2),&cn); NTOQ(cn,1,c);
+		} else {
+			ptozp(p2,1,&c2,&t);
+			gcdn(NM((Q)p1),NM(c2),&cn); NTOQ(cn,1,c);
+		}
+		mulp(vl,(P)c,mgcd,pr);
+		return;
+	} else if ( NUM(p2) ) {
+		ptozp(p1,1,&c1,&t);
+		gcdn(NM(c1),NM((Q)p2),&cn); NTOQ(cn,1,c);
+		mulp(vl,(P)c,mgcd,pr);
+		return;
+	}
+
+	ptozp(p1,1,&c1,&g1); ptozp(p2,1,&c2,&g2);
+	gcdn(NM(c1),NM(c2),&cn); NTOQ(cn,1,cq);
+
+	if ( ( v1 = VR(f1) ) != ( v2 = VR(f2) ) ) {
+		while ( v1 != VR(vl) && v2 != VR(vl) )
+			vl = NEXT(vl);
+		if ( v1 == VR(vl) ) {
+			pcp(vl,f1,&g,&fc1);
+			ezgcdpz(vl,fc1,f2,&t);
+		} else {
+			pcp(vl,f2,&g,&fc2);
+			ezgcdpz(vl,fc2,f1,&t);
+		}
+		mulp(vl,t,(P)cq,&s); mulp(vl,s,mgcd,pr);
+		return;
+	}
+
+	pcp(vl,f1,&g1,&fc1); pcp(vl,f2,&g2,&fc2);
+	ezgcdpz(vl,fc1,fc2,&cont);
+	clctv(vl,g1,&tvl); clctv(vl,g2,&svl);
+	if ( !NEXT(tvl) && !NEXT(svl) ) {
+		uezgcdpz(vl,g1,g2,&t);
+		mulp(vl,t,cont,&s); mulp(vl,s,(P)cq,&t); mulp(vl,t,mgcd,pr);
+		return;
+	}
+
+	if ( homdeg(g1) > homdeg(g2) ) {
+		t = g1; g1 = g2; g2 = t;
+	}
+	sqfrp(vl,g1,&dc);
+	for ( g = g2, gcd = (P)ONE; dc && !NUM(g); dc = NEXT(dc) ) {
+		if ( NUM(COEF(dc)) )
+			continue;
+		ezgcdpp(vl,dc,g,&t); 
+		if ( NUM(t) ) 
+			continue;
+		mulp(vl,gcd,t,&s); gcd = s;
+		divsp(vl,g,t,&s); g = s;
+	}
+	mulp(vl,gcd,cont,&t); mulp(vl,t,(P)cq,&s); mulp(vl,s,mgcd,pr);
+}
+
+void uezgcdpz(vl,p1,p2,pr)
+VL vl;
+P p1,p2,*pr;
+{
+	P g1,g2,gcd,t,s,g;
+	DCP dc;
+	N cn;
+	Q c1,c2,cq;
+	P f1,f2;
+
+	if ( NUM(p1) ) {
+		if ( NUM(p2) ) {
+			gcdn(NM((Q)p1),NM((Q)p2),&cn); NTOQ(cn,1,cq),*pr = (P)cq;
+			return;
+		} else {
+			ptozp(p2,1,&c2,&t);
+			gcdn(NM((Q)p1),NM(c2),&cn); NTOQ(cn,1,cq),*pr = (P)cq;
+			return;
+		}
+	} else if ( NUM(p2) ) {
+		ptozp(p1,1,&c1,&t);
+		gcdn(NM(c1),NM((Q)p2),&cn); NTOQ(cn,1,cq),*pr = (P)cq;
+		return;
+	}
+
+	ptozp(p1,1,&c1,&f1); ptozp(p2,1,&c2,&f2);
+	gcdn(NM(c1),NM(c2),&cn); NTOQ(cn,1,cq);
+	if ( UDEG(f1) > UDEG(f2) ) {
+		g1 = f2; g2 = f1;
+	} else {
+		g1 = f1; g2 = f2;
+	}
+	usqp(g1,&dc);
+	for ( g = g2, gcd = (P)ONE; dc && !NUM(g); dc = NEXT(dc) ) {
+		if ( NUM(COEF(dc)) )
+			continue;
+		uezgcdpp(dc,g,&t); 
+		if ( NUM(t) ) 
+			continue;
+		mulp(CO,gcd,t,&s); gcd = s;
+		divsp(CO,g,t,&s); g = s;
+	}
+	mulp(vl,gcd,(P)cq,pr);
+}
+
+/*
+	dc : dc pair c^d
+	r = gcd(c^d,f)
+*/
+
+void ezgcdpp(vl,dc,f,r)
+VL vl;
+DCP dc;
+P f;
+P *r;
+{
+	int k;
+	P g,h,t,s,gcd;
+
+	if ( NUM(f) ) {
+		*r = (P)ONE;
+		return;
+	}
+	k = QTOS(DEG(dc)) - 1;
+/*	ezgcd1p(vl,COEF(dc),f,&gcd); */
+	ezgcdnp(vl,COEF(dc),&f,1,&gcd);
+	g = gcd; divsp(vl,f,gcd,&h);
+	for ( ; k > 0; k-- ) {
+/*		ezgcd1p(vl,g,h,&t); */
+		ezgcdnp(vl,g,&h,1,&t);
+		if ( NUM(t) )
+			break;
+		mulp(vl,gcd,t,&s); gcd = s;
+		divsp(vl,h,t,&s); h = s;
+	}
+	*r = gcd;
+}
+
+void ezgcd1p(vl,p0,p1,gcdp)
+VL vl;
+P p0,p1;
+P *gcdp;
+{
+	VL nvl,tvl,vl0,vl1,vl2;
+	P f0,f1,t;
+
+	clctv(vl,p0,&vl0); clctv(vl,p1,&vl1); mergev(vl,vl0,vl1,&vl2);
+	minchdegp(vl,p0,&tvl,&t); reordvar(vl2,tvl->v,&nvl);
+	reorderp(nvl,vl,p0,&f0); reorderp(nvl,vl,p1,&f1);
+	ezgcdnp(nvl,f0,&f1,1,&t);
+	reorderp(vl,nvl,t,gcdp);
+}
+
+void uezgcdpp(dc,f,r)
+DCP dc;
+P f;
+P *r;
+{
+	int k;
+	P g,h,t,s,gcd;
+
+	if ( NUM(f) ) {
+		*r = (P)ONE;
+		return;
+	}
+
+	k = QTOS(DEG(dc)) - 1;
+	uezgcd1p(COEF(dc),f,&gcd);
+	g = gcd; divsp(CO,f,gcd,&h);
+	for ( ; k > 0; k-- ) {
+		uezgcd1p(g,h,&t);
+		if ( NUM(t) )
+			break;
+		mulp(CO,gcd,t,&s); gcd = s;
+		divsp(CO,h,t,&s); h = s;
+	}
+	*r = gcd;
+}
+
+/*
+ * pr = gcd(p0,ps[0],...,ps[m-1])
+ *
+ * p0 is already square-free and primitive.
+ * ps[i] is at least primitive.
+ *
+ */
+
+void ezgcdnp(vl,p0,ps,m,pr)
+VL vl;
+int m;
+P p0,*ps,*pr;
+{
+	/* variables */
+	P p00,g,h,g0,h0,a0,b0;
+	P lp0,lgp0,lp00,lg,lg0,cbd,tq,t;
+	P *tps;
+	VL nvl1,nvl2,nvl,tvl;
+	V v;
+	int i,j,k,d0,dg,dg0,dmin;
+	VN vn0,vn1,vnt;
+	int nv,flag;
+
+	/* set-up */
+	if ( NUM(p0) ) {
+		*pr = (P) ONE;
+		return;
+	}
+	for ( v = VR(p0), i = 0; i < m; i++ )
+		if ( NUM(ps[i]) || (v != VR(ps[i])) ) {
+			*pr = (P)ONE;
+			return;
+		}
+	tps = (P *) ALLOCA(m*sizeof(P));
+	for ( i = 0; i < m; i++ )
+		tps[i] = ps[i];
+	sortplist(tps,m);	
+	/* deg(tps[0]) <= deg(tps[1]) <= ... */
+	
+	if ( !cmpq(DEG(DC(p0)),ONE) ) {
+		if ( divcheck(vl,tps,m,(P)ONE,p0) )
+			*pr = p0;
+		else
+			*pr = (P)ONE;
+		return;
+	}
+
+	lp0 = LC(p0); lg = lp0; dmin = d0 = deg(v,p0);
+	clctv(vl,p0,&nvl);
+	for ( i = 0; i < m; i++ ) {
+		clctv(vl,tps[i],&nvl1); mergev(vl,nvl,nvl1,&nvl2);
+		nvl = nvl2;
+		ezgcdpz(nvl,lg,LC(tps[i]),&t); lg = t;
+	}
+
+	mulp(nvl,p0,lg,&lgp0);
+	k = dbound(v,lgp0) + 1;
+	cbound(nvl,lgp0,(Q *)&cbd);
+	for ( nv = 0, tvl = nvl; tvl; tvl = NEXT(tvl), nv++ );
+	W_CALLOC(nv,struct oVN,vn0); W_CALLOC(nv,struct oVN,vnt);
+	W_CALLOC(nv,struct oVN,vn1);
+	for ( i = 0, tvl = NEXT(nvl); tvl; tvl = NEXT(tvl), i++ )
+		vn1[i].v = vn0[i].v = tvl->v;
+
+	/* main loop */
+	for ( dg = deg(v,tps[0]) + 1; ; next(vn0) )
+		do {
+			for ( i = 0, j = 0; vn0[i].v; i++ ) 
+				if ( vn0[i].n ) vnt[j++].v = (V)i;
+			vnt[j].n = 0;
+
+			/* find b s.t. LC(p0)(b), LC(tps[i])(b) != 0 */
+			mulsgn(vn0,vnt,j,vn1);
+			substvp(nvl,p0,vn1,&p00);
+			flag = (!zerovpchk(nvl,lp0,vn1) && sqfrchk(p00));
+			for ( i = 0; flag && (i < m); i++ )
+				flag &= (!zerovpchk(nvl,LC(tps[i]),vn1));
+			if ( !flag ) 
+				continue;
+
+			/* substitute y -> b */
+			substvp(nvl,lg,vn1,&lg0);
+			lp00 = LC(p00);
+			/* extended-gcd in 1-variable */
+			uexgcdnp(nvl,p00,tps,m,vn1,(Q)cbd,&g0,&h0,&a0,&b0,(Q *)&tq);
+			if ( NUM(g0) ) {
+				*pr = (P)ONE;
+				return;
+			} else if ( dg > ( dg0 = deg(v,g0) ) ) {
+				dg = dg0;
+				if ( dg == d0 ) {
+					if ( divcheck(nvl,tps,m,lp0,p0) ) {
+						*pr = p0;
+				 		return;
+					}
+				} else if ( dg == deg(v,tps[0]) ) {
+					if ( divtpz(nvl,p0,tps[0],&t) &&
+						divcheck(nvl,tps+1,m-1,LC(tps[0]),tps[0]) ) {
+						*pr = tps[0];
+				 		return;
+					} else
+						break;
+				} else {
+					henmv(nvl,vn1,lgp0,g0,h0,a0,b0,
+						lg,lp0,lg0,lp00,(Q)tq,k,&g,&h);
+					if ( divtpz(nvl,lgp0,g,&t) &&
+						divcheck(nvl,tps,m,lg,g) ) {
+						pcp(nvl,g,pr,&t);
+						return;
+					}	
+				}
+			}
+		} while ( !nextbin(vnt,j) );
+}
+
+/*
+	f : sqfr
+*/
+
+void uezgcd1p(f,g,r)
+P f,g;
+P *r;
+{
+	UM wf,wf1,wf2,wg,wg1,wgcd,wcof;
+	int d1,d2,dg,m,index,n;
+	ML list;
+	DCP dc;
+	P t;
+	Q c;
+
+	if ( NUM(f) || NUM(g) ) {
+		*r = (P)ONE;
+		return;
+	}
+	ptozp(f,1,&c,&t); f = t; ptozp(g,1,&c,&t); g = t;
+	d1 = UDEG(f); d2 = UDEG(g);
+	n = MAX(d1,d2)+1;
+	wf = W_UMALLOC(n); wf1 = W_UMALLOC(n);
+	wf2 = W_UMALLOC(n); wg = W_UMALLOC(n);
+	wg1 = W_UMALLOC(n); wgcd = W_UMALLOC(n);
+	wcof = W_UMALLOC(n);
+
+	for ( index = INDEX, dg = MIN(d1,d2)+1; ; ) {
+		m = sprime[index++];
+		if ( !rem(NM((Q)UCOEF(f)),m) || !rem(NM((Q)UCOEF(g)),m)) 
+			continue;
+		ptoum(m,f,wf); cpyum(wf,wf1);
+		diffum(m,wf1,wf2); gcdum(m,wf1,wf2,wgcd);
+		if ( DEG(wgcd) > 0 ) 
+			continue;
+		ptoum(m,g,wg); cpyum(wg,wg1); cpyum(wf,wf1);
+		gcdum(m,wf1,wg1,wgcd);
+		if ( dg <= DEG(wgcd) )
+			continue;
+		else
+			dg = DEG(wgcd);
+		if ( dg == 0 ) {
+			*r = (P)ONE;
+			return;
+		} else if ( dg == d1 ) {
+			if ( divtpz(CO,g,f,&t) ) {
+				*r = f;
+				return;
+			}
+		} else if ( dg == d2 ) {
+			if ( divtpz(CO,f,g,&t) ) {
+				*r = g;
+				return; 
+			} 
+		} else {
+			divum(m,wf,wgcd,wcof);
+			ezgcdhensel(f,m,wcof,wgcd,&list);
+			dtest(f,list,1,&dc);
+			if ( NEXT(dc) ) {
+				if ( divtpz(CO,g,COEF(dc),&t) ) {
+					*r = COEF(dc);
+					return;
+				}
+			}
+		}
+	}
+}
+	
+void uexgcdnp(vl,p1,ps,n,vn,cbd,g,h,a,b,q)
+VL vl;
+P p1;
+P *ps;
+int n;
+VN vn;
+Q cbd;
+P *g,*h,*a,*b;
+Q *q;
+{
+	UM wg,wh,wg1,wh1,wgcd,wt;
+	P t,s,gcd,cof,gk,hk,ak,bk;
+	Q c,tq,bb,tq1,qk;
+	int mod,k,i,index,d;
+
+	ptozp(p1,1,&c,&gcd);
+	for ( i = 0; i < n; i++ ) {
+		substvp(vl,ps[i],vn,&t);
+		uezgcd1p(gcd,t,&s);
+		if ( NUM(s) ) {
+			*g = (P)ONE; *h = p1; *a = 0; *b = (P)ONE;
+			return;
+		} else
+			gcd = s;
+	}
+
+	if ( !dcomp(p1,gcd) ) {
+		*g = p1; *h = (P)ONE; *a = 0; *b = (P)ONE;
+		return;
+	}
+		
+	divsp(CO,p1,gcd,&cof);
+	d = UDEG(p1)+1;
+	wg = W_UMALLOC(d); wh = W_UMALLOC(d);
+	wg1 = W_UMALLOC(d); wh1 = W_UMALLOC(d);
+	wgcd = W_UMALLOC(d); wt = W_UMALLOC(d);
+	for ( index = INDEX; ; ) {
+		mod = sprime[index++];
+		if ( !rem(NM((Q)LC(p1)),mod) )
+			continue;
+		ptoum(mod,gcd,wg); ptoum(mod,cof,wh);
+		cpyum(wg,wg1); cpyum(wh,wh1);
+		gcdum(mod,wg,wh,wt); cpyum(wt,wgcd);
+		if ( DEG(wgcd) > 0 )
+			continue;
+		STOQ(mod,tq); addq(cbd,cbd,&bb);
+		for ( k = 1; cmpq(tq,bb) < 0; k++ ) {
+			mulq(tq,tq,&tq1); tq = tq1;
+		}
+		henzq(p1,gcd,wg1,cof,wh1,mod,k,&gk,&hk,&bk,&ak,&qk);
+		break;
+	}
+	*g = gk; *h = hk; *a = ak; *b = bk; *q = tq;
+}
+
+void ezgcdhensel(f,mod,cof,gcd,listp)
+P f;
+int mod;
+UM gcd,cof;
+ML *listp;
+{
+	register int i,j;
+	int q,n,bound;
+	int *p;
+	int **pp;
+	ML blist,clist,bqlist,cqlist,rlist;
+	UM *b;
+	LUM fl,tl;
+	LUM *l;
+	LUM LUMALLOC();
+	
+	blist = W_MLALLOC(2);
+	blist->n = 2; blist->mod = mod;
+	blist->c[0] = (pointer)cof; blist->c[1] = (pointer)gcd;
+	gcdgen(f,blist,&clist);
+	henprep(f,blist,clist,&bqlist,&cqlist);
+	n = bqlist->n; q = bqlist->mod;
+	bqlist->bound = cqlist->bound = bound = mignotte(q,f);
+
+	if ( bound == 1 ) {
+		*listp = rlist = MLALLOC(n);
+		rlist->n = n;
+		rlist->mod = q;
+		rlist->bound = bound;
+
+		for ( i = 0, b = (UM *)bqlist->c, l = (LUM *)rlist->c; 
+			i < n; i++ ) {
+			tl = LUMALLOC(DEG(b[i]),1);
+			l[i] = tl;
+			p = COEF(b[i]);
+
+			for ( j = 0, pp = COEF(tl); 
+				  j <= DEG(tl); j++ )
+					pp[j][0] = p[j];
+		}
+	} else {
+		W_LUMALLOC((int)UDEG(f),bound,fl);
+		ptolum(q,bound,f,fl);
+		henmain(fl,bqlist,cqlist,listp);
+	}
+}
+
+void ezgcdnpz(vl,ps,m,pr)
+VL vl;
+P *ps,*pr;
+int m;
+{
+	P t,s,gcd;
+	P cont;
+	VL tvl,svl,nvl;
+	int i;
+	DCP dc;
+	N cn;
+	Q cq;
+	P *pl,*ppl,*pcl;
+	Q *cl;
+	V v;
+
+	pl = (P *)ALLOCA((m+1)*sizeof(P));
+	cl = (Q *)ALLOCA((m+1)*sizeof(Q));
+	for ( i = 0; i < m; i++ ) 
+		ptozp(ps[i],1,&cl[i],&pl[i]); 
+	for ( i = 1, cq = cl[0]; i < m; i++ ) {
+		gcdn(NM(cl[i]),NM(cq),&cn); NTOQ(cn,1,cq);
+	}
+	for ( i = 0; i < m; i++ ) 
+		if ( NUM(pl[i]) ) {
+			*pr = (P)cq;
+			return;
+		}
+
+	for ( i = 0, nvl = 0; i < m; i++ ) {
+		clctv(vl,ps[i],&tvl); mergev(vl,nvl,tvl,&svl); nvl = svl;
+	}
+
+	ppl = (P *)ALLOCA((m+1)*sizeof(P));
+	pcl = (P *)ALLOCA((m+1)*sizeof(P));
+	for ( i = 0, v = nvl->v; i < m; i++ )
+		if ( v == VR(pl[i]) )
+			pcp(nvl,pl[i],&ppl[i],&pcl[i]);
+		else {
+			ppl[i] = (P)ONE; pcl[i] = pl[i];
+		}
+	ezgcdnpz(nvl,pcl,m,&cont);						
+
+	for ( i = 0; i < m; i++ ) 
+		if ( NUM(ppl[i]) ) {
+			mulp(nvl,cont,(P)cq,pr);
+			return;
+		}
+	sortplist(ppl,m);
+	sqfrp(nvl,ppl[0],&dc);
+	for ( dc = NEXT(dc), gcd = (P)ONE; dc; dc = NEXT(dc) ) {
+		if ( NUM(COEF(dc)) )
+			continue;
+		ezgcdnpp(vl,dc,ppl+1,m-1,&t); 
+		if ( NUM(t) ) 
+			continue;
+		mulp(vl,gcd,t,&s); gcd = s;
+	}
+	mulp(vl,gcd,cont,&t); mulp(vl,t,(P)cq,pr);
+}
+
+void ezgcdnpp(vl,dc,pl,m,r)
+VL vl;
+DCP dc;
+P *pl;
+int m;
+P *r;
+{
+	int i,k;
+	P g,t,s,gcd;
+	P *pm;
+
+	ezgcdnp(vl,COEF(dc),pl,m,&gcd);
+	if ( NUM(gcd) ) {
+		*r = (P)ONE;
+		return;
+	}
+	pm = (P *) ALLOCA((m+1)*sizeof(P));
+	for ( i = 0; i < m; i++ ) {
+		divsp(vl,pl[i],gcd,&pm[i]);
+		if ( NUM(pm[i]) ) {
+			*r = gcd;
+			return;
+		}
+	}
+	for ( g = gcd, k = QTOS(DEG(dc)) - 1; k > 0; k-- ) {
+		ezgcdnp(vl,g,pm,m,&t);
+		if ( NUM(t) )
+			break;
+		mulp(vl,gcd,t,&s); gcd = s;
+		for ( i = 0; i < m; i++ ) {
+			divsp(vl,pm[i],t,&s);
+			if ( NUM(s) ) {
+				*r = gcd;
+				return;
+			}
+			pm[i] = s;
+		}
+	}
+	*r = gcd;
+}
+
+void pcp(vl,p,pp,c)
+VL vl;
+P p;
+P *pp,*c;
+{
+	P f,g,n;
+	DCP dc;
+	P *pl;
+	int i,m;
+	extern int nez;
+
+	if ( NUM(p) ) {
+		*c = p;
+		*pp = (P)ONE;
+	} else {
+		for ( m = 0, dc = DC(p); dc; dc = NEXT(dc), m++ );
+		if ( m == 1 ) {
+			*c = COEF(DC(p));
+			divsp(vl,p,*c,pp);
+			return;
+		}
+		ptozp(p,1,(Q *)&n,&f);
+		pl = (P *)ALLOCA((m+1)*sizeof(P));
+		for ( i = 0, dc = DC(f); i < m; dc = NEXT(dc), i++ )
+			pl[i] = COEF(dc);
+		if ( nez )
+			nezgcdnpz(vl,pl,m,&g);	
+		else
+			ezgcdnpz(vl,pl,m,&g);	
+		mulp(vl,g,n,c); divsp(vl,f,g,pp);
+	}
+}
+
+#if 0
+pcp(vl,p,pp,c)
+VL vl;
+P p;
+P *pp,*c;
+{
+	P f,g,n,t;
+	DCP dc;
+
+	if ( NUM(p) ) {
+		*c = p;
+		*pp = (P)ONE;
+	} else {
+		ptozp(p,1,&n,&f);
+		for ( g = LC(f), dc = NEXT(DC(f)); dc; dc = NEXT(dc) ) {
+			ezgcdpz(vl,g,COEF(dc),&t); g = t;
+		}
+		mulp(vl,g,n,c); 
+		divsp(vl,f,g,pp);
+	}
+}
+#endif
+
+int divcheck(vl,ps,m,l,p)
+VL vl;
+int m;
+P *ps,l,p;
+{
+	int i;
+	P r,t;
+
+	for ( i = 0; i < m; i++ ) {
+		mulp(vl,ps[i],l,&t);
+		if ( !divtpz(vl,t,p,&r) )
+			return ( 0 );
+	}
+	return ( 1 );
+}
+
+void sortplist(plist,n)
+P *plist;
+int n;
+{
+	int i,j;
+	P t;
+
+	for ( i = 0; i < n; i++ )
+		for ( j = i + 1; j < n; j++ )
+			if ( cmpq(DEG(DC(plist[i])),DEG(DC(plist[j]))) > 0 ) {
+				t = plist[i]; plist[i] = plist[j]; plist[j] = t;
+			}
+}
+
+int dcomp(p1,p2)
+P p1,p2;
+{
+	return ( cmpq(DEG(DC(p1)),DEG(DC(p2))) );
+}

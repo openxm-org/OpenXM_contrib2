@@ -1,0 +1,14 @@
+/* $OpenXM: OpenXM/src/asir99/io/Imakefile,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+SRCS= pexpr.c spexpr.c biovar.c bsave.c bload.c io.c sio.c cpexpr.c cio.c ox.c des.c ox_asir.c ox_launch.c tcpf.c ws_fileio.c
+OBJS= pexpr.o spexpr.o biovar.o bsave.o bload.o io.o sio.o cpexpr.o cio.o ox.o des.o ox_asir.o ox_launch.o tcpf.o ws_fileio.o
+
+AllTarget(libio.a)
+NormalLibraryTarget(io,$(OBJS))
+DependTarget()
+
+#if defined(MipsArchitecture)
+ping.o server.o:
+	cc -c -O2 $(ALLDEFINES) $*.c
+#endif

@@ -1,0 +1,41 @@
+/* $OpenXM: OpenXM/src/asir99/lib/robot,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+def rot_x(T) {
+	return newmat(3,3,[[1,0,0],[0,cos(T),-sin(T)],[0,sin(T),cos(T)]]);
+}
+
+def rot_mx(T) {
+	return newmat(3,3,[[1,0,0],[0,cos(T),sin(T)],[0,-sin(T),cos(T)]]);
+}
+
+def rot_z(T) {
+	return newmat(3,3,[[cos(T),-sin(T),0],[sin(T),cos(T),0],[0,0,1]]);
+}
+
+E=rot_z(t1-r)*rot_mx(t2+t3)*rot_z(t4)*rot_mx(t5)*rot_z(t6-p)-rot_mx(t)$
+F=newmat(3,3)$
+for ( I = 0; I < 3; I++ )
+	for ( J = 0; J < 3; J++ )
+		F[I][J] = subst(E[I][J],
+			sin(t),st,cos(t),ct,
+			sin(r),sr,cos(r),cr,
+			sin(p),sp,cos(p),cp,
+			sin(-r+t1),srt1,cos(-r+t1),crt1,
+			sin(t2+t3),st23,cos(t2+t3),ct23,
+			sin(t4),st4,cos(t4),ct4,
+			sin(t5),st5,cos(t5),ct5,
+			sin(-p+t6),spt6,cos(-p+t6),cpt6
+		);
+
+def mtol(F) {
+	for ( L = [st^2+ct^2-1,
+		srt1^2+crt1^2-1,st23^2+ct23^2-1,
+		st4^2+ct4^2-1,st5^2+ct5^2-1,spt6^2+cpt6^2-1]
+		, I = 0; I < 3; I++ )
+		for ( J = 0; J < 3; J++ )
+			L = cons(F[I][J],L);
+	return L;
+}
+L = mtol(F)$
+V = [cpt6,spt6,ct5,st5,ct4,st4,ct23,st23,crt1,srt1,ct,st]$
+Ord = 2;
+end;

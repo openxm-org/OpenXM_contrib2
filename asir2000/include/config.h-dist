@@ -1,0 +1,2 @@
+/* $OpenXM: OpenXM/src/asir99/include/config.h-dist,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+#define OpenXM_HOME /usr/local

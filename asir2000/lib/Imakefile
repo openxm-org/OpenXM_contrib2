@@ -1,0 +1,20 @@
+/* $OpenXM: OpenXM/src/asir99/lib/Imakefile,v 1.2 1999/11/17 08:57:10 noro Exp $ */
+#include "../include/Risa.tmpl"
+
+SRCS= alpi bgk const contrib cyclic\
+	defs.h fctrdata fctrtest fff gr\
+	ifplot katsura mat nf num\
+	primdec ratint robot solve sp sturm xm
+
+all::
+
+install2::
+	MakeDir($(ASIR_BINDIR))
+	MakeDir($(ASIR_LIBDIR))
+	-$(CP) -R $(SRCS) $(ASIR_LIBDIR)
+	$(RM) -r $(ASIR_LIBDIR)/help
+	$(RM) -r $(ASIR_LIBDIR)/help-jp
+	$(RM) -r $(ASIR_LIBDIR)/html-jp
+	gzip -dc help-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - )
+	gzip -dc html-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - )
+	$(LN) $(ASIR_LIBDIR)/help-jp $(ASIR_LIBDIR)/help
