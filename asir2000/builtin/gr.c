@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.35 2001/09/18 00:56:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -120,6 +120,7 @@ NODE gbd(NODE,int,NODE,NODE);
 NODE gb(NODE,int,NODE);
 NODE gb_f4(NODE);
 NODE gb_f4_mod(NODE,int);
+NODE gb_f4_mod_old(NODE,int);
 DP_pairs minp(DP_pairs, DP_pairs *);
 void minsugar(DP_pairs,DP_pairs *,DP_pairs *);
 NODE append_one(NODE,int);
@@ -570,7 +571,10 @@ LIST *rp;
 	if ( fd0 ) NEXT(fd) = 0;
 	setup_arrays(fd0,m,&s);
 	init_stat();
-	x = gb_f4_mod(s,m);
+	if ( do_weyl )
+		x = gb_f4_mod_old(s,m);
+	else
+		x = gb_f4_mod(s,m);
 	if ( !homogen ) {
 		reduceall_mod(x,m,&xx); x = xx;
 	}
@@ -750,9 +754,11 @@ int m;
 		/* asph : sum of all head terms of spoly */
 		for ( t = dm; t; t = NEXT(t) ) {
 			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
+/*			fprintf(stderr,"splen=%d-",dp_nt(sp)); */
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
 				s0 = symb_merge(s0,dp_dllist(sp),nv);
+/*				fprintf(stderr,"%d-",length(s0)); */
 			}
 		}
 		if ( DP_Print )
@@ -766,13 +772,16 @@ int m;
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				dt = mul_dllist(BDY(sd)->dl,ps[(int)BDY(r)]);
+/*				fprintf(stderr,"[%d]",length(dt)); */
 				/* list of [t,f] */
 				bt1 = mknode(2,BDY(sd)->dl,BDY(r));
 				MKNODE(bt,bt1,blist); blist = bt;
 				symb_merge(s,dt,nv);
+/*				fprintf(stderr,"%d-",length(s)); */
 				nred++;
 			}
 		}
+/*		fprintf(stderr,"\n"); */
 		if ( DP_Print )
 			fprintf(asir_out,"number of reducers : %d\n",nred);
 
@@ -911,6 +920,176 @@ int m;
 		for ( j = 0; j < nsp; j++ ) {
 			GC_free(spmat[j]);
 		}
+	}
+	if ( DP_Print ) {
+		print_eg("Symb",&eg_symb);
+		print_eg("Elim1",&eg_elim1);
+		print_eg("Elim2",&eg_elim2);
+		fflush(asir_out);
+	}
+	return g;
+}
+
+NODE gb_f4_mod_old(f,m)
+NODE f;
+int m;
+{
+	int i,j,k,nh,row,col,nv;
+	NODE r,g,gall;
+	NODE s,s0;
+	DP_pairs d,dm,dr,t;
+	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
+	MP mp,mp0;
+	NODE blist,bt,nt;
+	DL *ht,*at,*st;
+	int **spmat,**redmat;
+	int *colstat,*w;
+	int rank,nred,nsp,nonzero,spcol;
+	int *indred,*isred,*ri;
+	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim1,eg_split_elim2;
+	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
+
+	init_eg(&eg_symb); init_eg(&eg_elim1); init_eg(&eg_elim2);
+	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
+		i = (int)BDY(r);
+		d = updpairs(d,g,i);
+		g = updbase(g,i);
+		gall = append_one(gall,i);
+	}
+	if ( gall )
+		nv = ((DP)ps[(int)BDY(gall)])->nv;
+	while ( d ) {
+		get_eg(&tmp0);
+		minsugar(d,&dm,&dr); d = dr;
+		if ( DP_Print )
+			fprintf(asir_out,"sugar=%d\n",dm->sugar);
+		blist = 0; s0 = 0;
+		/* asph : sum of all head terms of spoly */
+		for ( t = dm; t; t = NEXT(t) ) {
+			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
+			if ( sp ) {
+				MKNODE(bt,sp,blist); blist = bt;
+				s0 = symb_merge(s0,dp_dllist(sp),nv);
+			}
+		}
+		/* s0 : all the terms appeared in symbolic redunction */
+		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
+			for ( r = gall;	r; r = NEXT(r) )
+				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
+					break;
+			if ( r ) {
+				dltod(BDY(s),nv,&tdp);
+				dp_subd(tdp,ps[(int)BDY(r)],&sd);
+				_dp_mod(sd,m,0,&sdm);
+				mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
+				MKNODE(bt,f2,blist); blist = bt;
+				s = symb_merge(s,dp_dllist(f2),nv);
+				nred++;
+			}
+		}
+		
+		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
+		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
+
+		/* the first nred polys in blist are reducers */
+		/* row = the number of all the polys */
+		for ( r = blist, row = 0; r; r = NEXT(r), row++ );
+
+		/* head terms of reducers */
+		ht = (DL *)MALLOC(nred*sizeof(DL));
+		for ( r = blist, i = 0; i < nred; r = NEXT(r), i++ )
+			ht[i] = BDY((DP)BDY(r))->dl;
+
+		/* col = number of all terms */
+		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
+
+		/* head terms of all terms */
+		at = (DL *)MALLOC(col*sizeof(DL));
+		for ( s = s0, i = 0; i < col; s = NEXT(s), i++ )
+			at[i] = (DL)BDY(s);
+
+		/* store coefficients separately in spmat and redmat */
+		nsp = row-nred;
+
+		/* reducer matrix */
+		redmat = (int **)almat(nred,col);
+		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ )
+			_dpmod_to_vect(BDY(r),at,redmat[i]);
+		/* XXX */
+/*		reduce_reducers_mod(redmat,nred,col,m); */
+		/* register the position of the head term */
+		indred = (int *)MALLOC(nred*sizeof(int));
+		bzero(indred,nred*sizeof(int));
+		isred = (int *)MALLOC(col*sizeof(int));
+		bzero(isred,col*sizeof(int));
+		for ( i = 0; i < nred; i++ ) {
+			ri = redmat[i];
+			for ( j = 0; j < col && !ri[j]; j++ );
+			indred[i] = j;
+			isred[j] = 1;
+		}
+
+		spcol = col-nred;
+		/* head terms not in ht */
+		st = (DL *)MALLOC(spcol*sizeof(DL));
+		for ( j = 0, k = 0; j < col; j++ )
+			if ( !isred[j] )
+				st[k++] = at[j];
+
+		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
+		spmat = almat(nsp,spcol);
+		w = (int *)MALLOC(col*sizeof(int));
+		for ( ; i < row; r = NEXT(r), i++ ) {
+			bzero(w,col*sizeof(int));
+			_dpmod_to_vect(BDY(r),at,w);
+			reduce_sp_by_red_mod(w,redmat,indred,nred,col,m);
+			for ( j = 0, k = 0; j < col; j++ )
+				if ( !isred[j] )
+					spmat[i-nred][k++] = w[j];
+		}
+
+		get_eg(&tmp0); add_eg(&eg_elim1,&tmp1,&tmp0);
+		init_eg(&eg_split_elim1); add_eg(&eg_split_elim1,&tmp1,&tmp0);
+
+		colstat = (int *)MALLOC_ATOMIC(spcol*sizeof(int));
+		for ( i = 0, nonzero=0; i < nsp; i++ )
+			for ( j = 0; j < spcol; j++ )
+				if ( spmat[i][j] )
+					nonzero++;
+		if ( DP_Print && nsp )
+			fprintf(asir_out,"spmat : %d x %d (nonzero=%f%%)...",
+				nsp,spcol,((double)nonzero*100)/(nsp*spcol));
+		if ( nsp )
+			rank = generic_gauss_elim_mod(spmat,nsp,spcol,m,colstat);
+		else
+			rank = 0;
+		get_eg(&tmp1); add_eg(&eg_elim2,&tmp0,&tmp1);
+		init_eg(&eg_split_elim2); add_eg(&eg_split_elim2,&tmp0,&tmp1);
+
+		if ( DP_Print ) {
+			fprintf(asir_out,"done rank = %d\n",rank,row,col);
+			print_eg("Symb",&eg_split_symb);
+			print_eg("Elim1",&eg_split_elim1);
+			print_eg("Elim2",&eg_split_elim2);
+			fprintf(asir_out,"\n");
+		}
+		for ( j = 0, i = 0; j < spcol; j++ )
+			if ( colstat[j] ) {
+				mp0 = 0;
+				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = STOI(1);
+				for ( k = j+1; k < spcol; k++ )
+					if ( !colstat[k] && spmat[i][k] ) {
+						NEXTMP(mp0,mp); mp->dl = st[k];
+						mp->c = STOI(spmat[i][k]);
+				}
+				NEXT(mp) = 0;
+				MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
+				nh = newps_mod(nf,m);
+				d = updpairs(d,g,nh);
+				g = updbase(g,nh);
+				gall = append_one(gall,nh);
+				i++;
+			}
 	}
 	if ( DP_Print ) {
 		print_eg("Symb",&eg_symb);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.21 2001/09/17 07:16:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.22 2001/09/17 08:37:30 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -74,6 +74,7 @@ int gauss_elim_mod1(int **,int,int,int);
 int gauss_elim_geninv_mod(unsigned int **,int,int,int);
 int gauss_elim_geninv_mod_swap(unsigned int **,int,int,unsigned int,unsigned int ***,int **);
 void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm();
+void Pinvmat();
 void Pnewbytearray();
 
 void Pgeneric_gauss_elim_mod();
@@ -110,6 +111,7 @@ struct ftab array_tab[] = {
 	{"vtol",Pvtol,1},
 	{"size",Psize,1},
 	{"det",Pdet,-2},
+	{"invmat",Pinvmat,-2},
 	{"leqm",Pleqm,2},
 	{"leqm1",Pleqm1,2},
 	{"geninvm",Pgeninvm,2},
@@ -638,6 +640,41 @@ P *rp;
 				ptomp(mod,mat[i][j],&w[i][j]);
 		detmp(CO,mod,w,n,&d);
 		mptop(d,rp);
+	}
+}
+
+void Pinvmat(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	MAT m,r;
+	int n,i,j,mod;
+	P dn;
+	P **mat,**imat,**w;
+	NODE nd;
+
+	m = (MAT)ARG0(arg);
+	asir_assert(m,O_MAT,"invmat");
+	if ( m->row != m->col )
+		error("invmat : non-square matrix");
+	else if ( argc(arg) == 1 ) {
+		n = m->row;
+		invmatp(CO,(P **)BDY(m),n,&imat,&dn);
+		NEWMAT(r); r->row = n; r->col = n; r->body = (pointer **)imat;
+		nd = mknode(2,r,dn);
+		MKLIST(*rp,nd);
+	} else {
+		n = m->row; mod = QTOS((Q)ARG1(arg)); mat = (P **)BDY(m);
+		w = (P **)almat_pointer(n,n);
+		for ( i = 0; i < n; i++ )
+			for ( j = 0; j < n; j++ )
+				ptomp(mod,mat[i][j],&w[i][j]);
+#if 0
+		detmp(CO,mod,w,n,&d);
+		mptop(d,rp);
+#else
+		error("not implemented yet");
+#endif
 	}
 }
 

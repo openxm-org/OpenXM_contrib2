@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.5 2001/03/29 09:49:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.6 2001/06/07 04:54:40 noro Exp $ 
 */
 #include "ca.h"
 
@@ -158,6 +158,64 @@ P *dp;
 		chsgnp(d,dp);
 	else
 		*dp = d;
+}
+
+void invmatp(vl,rmat,n,imatp,dnp)
+VL vl;
+P **rmat;
+int n;
+P ***imatp;
+P *dnp;
+{
+	int i,j,k,l,n2;
+	P mjj,mij,t,s,u,d;
+	P **mat,**imat;
+	P *mi,*mj,*w;
+	
+	n2 = n<<1;
+	mat = (P **)almat_pointer(n,n2);
+	for ( i = 0; i < n; i++ ) {
+		for ( j = 0; j < n; j++ )
+			mat[i][j] = rmat[i][j];
+		mat[i][i+n] = (P)ONE;
+	}
+	for ( j = 0, d = (P)ONE; j < n; j++ ) {
+		for ( i = j; (i < n) && !mat[i][j]; i++ );
+		if ( i == n ) {
+			error("invmatp : input is singular");
+		}
+		for ( k = i; k < n; k++ )
+			if ( mat[k][j] && (nmonop(mat[k][j]) < nmonop(mat[i][j]) ) )
+				i = k;
+		if ( j != i ) {
+			mj = mat[j]; mat[j] = mat[i]; mat[i] = mj;
+		}
+		for ( i = j + 1, mj = mat[j], mjj = mj[j]; i < n; i++ )
+			for ( k = j + 1, mi = mat[i], mij = mi[j]; k < n2; k++ ) {
+				mulp(vl,mi[k],mjj,&t); mulp(vl,mj[k],mij,&s);
+				subp(vl,t,s,&u); divsp(vl,u,d,&mi[k]);
+			}
+		d = mjj;
+	}
+	/* backward substitution */
+	w = (P *)ALLOCA(n2*sizeof(P));
+	for ( i = n-2; i >= 0; i-- ) {
+		bzero(w,n2*sizeof(P));
+		for ( k = i+1; k < n; k++ )
+			for ( l = k, u = mat[i][l]; l < n2; l++ ) {
+				mulp(vl,mat[k][l],u,&t); addp(vl,w[l],t,&s); w[l] = s;
+			}
+		for ( j = i, u = mat[i][j]; j < n2; j++ ) {
+			mulp(vl,mat[i][j],d,&t); subp(vl,t,w[j],&s);
+			divsp(vl,s,u,&mat[i][j]);
+		}
+	}
+	imat = (P **)almat_pointer(n,n);
+	for ( i = 0; i < n; i++ )
+		for ( j = 0; j < n; j++ )
+			imat[i][j] = mat[i][j+n];
+	*imatp = imat;
+	*dnp = d;
 }
 
 void reordvar(vl,v,nvlp)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.17 2001/09/05 01:57:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.18 2001/09/19 09:28:16 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -146,7 +146,7 @@ struct ftab dp_tab[] = {
 
 	/* F4 algorithm */
 	{"dp_weyl_f4_main",Pdp_weyl_f4_main,3},
-/*	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4}, */
+	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
 
 	/* misc */
 	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
