@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.19 2004/03/04 08:02:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.20 2004/03/04 12:28:14 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -149,7 +149,11 @@ char *conv_rule_d(char *name)
 		else
 			b[j++] = name[i++];
 	}
-	if ( i == l ) return name;
+	if ( i == l )
+		if ( name[0] == 'd' )
+			goto END;
+		else
+			return name;
 	/* we found a digit or '_' */
 	b[j++] = '_'; b[j++] = '{';
 	if ( name[i] == '_' ) i++;
@@ -181,6 +185,7 @@ char *conv_rule_d(char *name)
 		}
 	}
 	b[j++] = '}';
+END:
 	if ( name[0] == 'd' ) b[j++] = '}';
 	b[j++] = 0;
 	r = (char *)MALLOC_ATOMIC((j+1)*sizeof(char));	
