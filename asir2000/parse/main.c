@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.8 2000/12/05 01:24:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.9 2000/12/22 10:03:32 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,7 +56,7 @@
 extern jmp_buf environnement;
 #endif
 
-extern jmp_buf env;
+extern jmp_buf main_env;
 
 #if defined(INTERVAL)
 #ifndef ASIRRCNAME
@@ -182,7 +182,7 @@ char *argv[];
 
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(env) ) {
+		if ( !setjmp(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
 			read_exec_file = 0;
@@ -203,7 +203,7 @@ char *argv[];
 			resetenv("");
 		}
 #endif
-		if ( setjmp(env) )
+		if ( setjmp(main_env) )
 			prompt();
 		read_eval_loop();
 	}

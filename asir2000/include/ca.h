@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.17 2001/06/25 04:11:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.18 2001/07/03 01:41:26 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -1240,6 +1240,7 @@ void addlm(LM,LM,LM *);
 void addstr(VL,STRING,STRING,STRING *);
 void addum(int,UM,UM,UM);
 void addvect(VL,VECT,VECT,VECT *);
+void addquote(VL,QUOTE,QUOTE,QUOTE *);
 void adjc(VL,P,P,P,Q,P *,P *);
 void afctr(VL,P,P,DCP *);
 void afctrmain(VL,P,P,int,DCP *);
@@ -1263,6 +1264,7 @@ void chsgnreal(Num,Num *);
 void chsgnmi(MQ,MQ *);
 void chsgnlm(LM,LM *);
 void chsgnvect(VECT,VECT *);
+void chsgnquote(QUOTE,QUOTE *);
 void clctv(VL,P,VL *);
 void clctvr(VL,Obj,VL *);
 void cm2p(Q,Q,P,P *);
@@ -1304,6 +1306,7 @@ void divsrdcp(VL,P,P,P *,P *);
 void divsrmp(VL,int,P,P,P *,P *);
 void divsrp(VL,P,P,P *,P *);
 void divvect(VL,Obj,Obj,Obj *);
+void divquote(VL,QUOTE,QUOTE,QUOTE *);
 void dtest(P,ML,int,DCP *);
 void dtestroot(int,int,P,LUM,struct oDUM *,DCP *);
 void dtestroot1(int,int,P,LUM,P *);
@@ -1399,6 +1402,7 @@ void mulsgn(VN,VN,int,VN);
 void mulsum(register int,UM,register int,UM);
 void mulum(register int,UM,UM,UM);
 void mulvect(VL,Obj,Obj,Obj *);
+void mulquote(VL,QUOTE,QUOTE,QUOTE *);
 void mulvectmat(VL,VECT,MAT,VECT *);
 void next(VN);
 void nezgcdnp_sqfr_primitive(VL,P,P *,int,P *);
@@ -1444,6 +1448,7 @@ void pwrnum(VL,Num,Num,Num *);
 void pwrp(VL,P,Q,P *);
 void pwrq(Q,Q,Q *);
 void pwrr(VL,Obj,Obj,Obj *);
+void pwrquote(VL,QUOTE,QUOTE,QUOTE *);
 void pwrreal(Num,Num,Real *);
 void pwrmi(MQ,Q,MQ *);
 void pwrlm(LM,Q,LM *);
@@ -1502,6 +1507,7 @@ void substp(VL,P,V,P,P *);
 void substvp(VL,P,VN,P *);
 void subum(int,UM,UM,UM);
 void subvect(VL,VECT,VECT,VECT *);
+void subquote(VL,QUOTE,QUOTE,QUOTE *);
 void toreim(Num,Num *,Num *);
 void ucsump(P,Q *);
 void udivpwm(Q,P,P,P *,P *);

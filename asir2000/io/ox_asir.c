@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.23 2000/12/05 01:24:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.24 2001/04/23 05:02:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -174,7 +174,7 @@ void ox_main(int argc,char **argv) {
 					break;
 				if ( do_message )
 					fprintf(stderr," %s\n",name_of_cmd(cmd));
-				if ( ret = setjmp(env) ) {
+				if ( ret = setjmp(main_env) ) {
 					if ( ret == 1 ) {
 						create_error(&err,serial,LastError);
 						asir_push_one((Obj)err);
@@ -698,7 +698,7 @@ void ox_asir_init(int argc,char **argv)
 	}
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(env) ) {
+		if ( !setjmp(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
 			read_exec_file = 0;
@@ -801,7 +801,7 @@ void asir_ox_push_cmd(int cmd)
 	ERR err;
 	extern char LastError[];
 
-	if ( ret = setjmp(env) ) {
+	if ( ret = setjmp(main_env) ) {
 		asir_reset_handler();
 		if ( ret == 1 ) {
 			create_error(&err,0,LastError); /* XXX */
@@ -828,7 +828,7 @@ void asir_ox_execute_string(char *s)
 
 	MKSTR(str,s);
 	asir_push_one((Obj)str);
-	if ( ret = setjmp(env) ) {
+	if ( ret = setjmp(main_env) ) {
 		asir_reset_handler();
 		if ( ret == 1 ) {
 			create_error(&err,0,LastError); /* XXX */
@@ -913,7 +913,7 @@ int asir_ox_init(int byteorder)
 	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(env) ) {
+		if ( !setjmp(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
 			read_exec_file = 0;

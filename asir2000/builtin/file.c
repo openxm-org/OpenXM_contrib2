@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.12 2000/12/06 00:54:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.13 2001/03/21 23:49:34 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -73,6 +73,7 @@ void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
 void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
 void Ppurge_stdin();
+void Pload_exec();
 
 extern int des_encryption;
 extern char *asir_libdir;
@@ -87,6 +88,7 @@ struct ftab file_tab[] = {
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
 	{"load",Pload,-1},
+	{"load_exec",Pload_exec,1},
 	{"which",Pwhich,1},
 	{"loadfiles",Ploadfiles,1},
 	{"output",Poutput,-1},
@@ -276,6 +278,22 @@ Q *rp;
 				break;
 		}
 	}
+	STOQ(ret,*rp);
+}
+
+void Pload_exec(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int ret = 0;
+	char *name0,*name;
+
+	name0 = BDY((STRING)ARG0(arg));
+	searchasirpath(name0,&name);
+	if ( !name )
+		ret = -1;
+	else
+		ret = load_and_execfile(name);
 	STOQ(ret,*rp);
 }
 

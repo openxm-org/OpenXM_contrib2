@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.10 2001/06/04 02:49:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.11 2001/06/15 07:56:05 noro Exp $ 
 */
 #include "com.h"
 
@@ -161,7 +161,7 @@ typedef FILE *ox_stream;
 
 extern jmp_buf environnement;
 
-extern jmp_buf env;
+extern jmp_buf main_env;
 extern int *StackBottom;
 extern int ox_do_copy, ox_do_count, ox_count_length;
 extern char *ox_copy_bptr;

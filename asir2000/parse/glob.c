@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.19 2001/06/15 07:56:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.20 2001/06/27 09:14:08 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -77,7 +77,7 @@ extern int GC_free_space_numerator;
 extern FILE *asir_out;
 
 IN asir_infile;
-jmp_buf env,debug_env,timer_env;
+jmp_buf main_env,debug_env,timer_env,exec_env;
 int little_endian,debug_mode;
 char *asir_libdir;
 char *asir_pager;
@@ -180,7 +180,6 @@ Obj a,b,*c;
 	error("undefined arithmetic operation.");
 }
 
-int kernelmode;
 int do_asirrc;
 int do_file;
 int do_message;
@@ -206,8 +205,15 @@ void ExitAsir() {
 void asir_terminate(status)
 int status;
 {
+	int t;
+
 	if ( read_exec_file ) {
-		read_exec_file = 0; longjmp(env,status);
+		t = read_exec_file;
+		read_exec_file = 0;
+		if ( t == 1 )
+			longjmp(main_env,status);
+		else
+			longjmp(exec_env,status);
 	} else {
 		tty_reset();
 #if MPI
@@ -220,8 +226,6 @@ int status;
 #endif
 		close_allconnections();
 #endif
-		if ( kernelmode )
-			fputc(0xff,asir_out);
 		if ( asir_out )
 			fflush(asir_out);
 #if FEP
@@ -245,14 +249,14 @@ void param_init() {
 	
 void prompt() {
 	if ( !no_prompt && !do_fep && asir_infile->fp == stdin )
-		fprintf(asir_out,"[%d]%c",APVS->n,kernelmode?0xfe:' ');
+		fprintf(asir_out,"[%d] ",APVS->n);
 	fflush(asir_out);
 }
 
 void sprompt(ptr)
 char *ptr;
 {
-	sprintf(ptr,"[%d]%c",APVS->n,kernelmode?0xfe:' ');
+	sprintf(ptr,"[%d] ",APVS->n);
 }
 
 FILE *in_fp;
@@ -290,8 +294,6 @@ char **av;
 			}
 			do_file = 1;
 			av += 2; ac -= 2;
-		} else if ( !strcmp(*av,"-kernel") ) {
-			kernelmode = 1; av++; ac--;
 		} else if ( !strcmp(*av,"-norc") ) {
 			do_asirrc = 0; av++; ac--;
 		} else if ( !strcmp(*av,"-nomessage") ) {
@@ -404,7 +406,7 @@ char *s;
 #if !defined(VISUAL)
 	reset_timer();
 #endif
-	longjmp(env,1);
+	longjmp(main_env,1);
 }
 
 void fatal(n)
@@ -452,8 +454,6 @@ int sig;
 		char c;
 
 		fprintf(stderr,"interrupt ?(q/t/c/d/u/w/?) "); fflush(stderr);
-		if ( kernelmode )
-			fputc('\0',stderr);
 		buf[0] = '\n';
 		while ( buf[0] == '\n' )
 			fgets(buf,BUFSIZ,stdin);
@@ -485,8 +485,6 @@ int sig;
 				}
 				if ( debug_mode )
 					debug_mode = 0;
-				if ( kernelmode )
-					fputc('\0',stderr);
 				restore_handler();
 				if ( c == 'u' ) {
 					if ( registered_handler ) {
@@ -510,8 +508,6 @@ int sig;
  				restore_handler();
  				return;
 			case 'c': 
-				if ( kernelmode )
-					fputc('\0',stderr);
 				restore_handler();
 				return; break;
 			case 'w':

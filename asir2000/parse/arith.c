@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.4 2000/11/08 08:02:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.5 2000/12/11 09:28:03 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,6 +83,7 @@ struct oAFUNC afunc[] = {
 /* O_F=14 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_GFMMAT=15 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_BYTEARRAY=16 */	{notdef,notdef,notdef,notdef,notdef,notdef,compbytearray},
+/* O_QUOTE=17 */	{addquote,subquote,mulquote,divquote,pwrquote,chsgnquote,(int(*)())notdef},
 };
 
 void arf_init() {
@@ -191,6 +192,8 @@ Obj a,e,*r;
 
 	if ( !a )
 		*r = 0;
+	else if ( OID(a) == O_QUOTE )
+		(*(afunc[O_QUOTE].pwr))(vl,a,e,r);
 	else if ( !e )
 		*r = (pointer)ONE;
 	else if ( (OID(e) <= O_N) && INT(e) ) {
