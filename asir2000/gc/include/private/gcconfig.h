@@ -864,6 +864,7 @@
 #   endif
 #   ifdef LINUX
 #	define OS_TYPE "LINUX"
+#   define USE_MMAP
 #       define LINUX_STACKBOTTOM
 #	if 0
 #	  define HEURISTIC1
