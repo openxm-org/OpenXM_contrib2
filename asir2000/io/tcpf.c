@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.7 2000/03/19 12:35:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.8 2000/07/13 05:09:03 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -548,17 +548,18 @@ int af_unix,m,c;
 {
 	int s,i,ci;
 	struct m_c *t;
+#define INIT_TAB_SIZ 64
 
 	if ( c < 0 )
 		return -1;
 	if ( !m_c_tab ) {
-		s = BUFSIZ*sizeof(struct m_c);
+		s = INIT_TAB_SIZ*sizeof(struct m_c);
 		m_c_tab = (struct m_c *)MALLOC_ATOMIC(s);
-		for ( i = 0; i < BUFSIZ; i++ ) {
+		for ( i = 0; i < INIT_TAB_SIZ; i++ ) {
 			m_c_tab[i].af_unix = 0;
 			m_c_tab[i].m = m_c_tab[i].c = -1;
 		}
-		m_c_s = BUFSIZ;
+		m_c_s = INIT_TAB_SIZ;
 	}
 #if !MPI
 	for ( i = 0; i < m_c_i; i++ )
@@ -571,14 +572,14 @@ int af_unix,m,c;
 	}
 #endif
 	if ( m_c_i == m_c_s ) {
-		s = (m_c_s+BUFSIZ)*sizeof(struct m_c);
+		s = (m_c_s+INIT_TAB_SIZ)*sizeof(struct m_c);
 		t = (struct m_c *)MALLOC_ATOMIC(s); bzero(m_c_tab,s);
 		bcopy(m_c_tab,t,m_c_s*sizeof(struct m_c));
-		for ( i = 0; i < BUFSIZ; i++ ) {
+		for ( i = 0; i < INIT_TAB_SIZ; i++ ) {
 			m_c_tab[m_c_s+i].af_unix = 0;
 			m_c_tab[m_c_s+i].m = m_c_tab[m_c_s+i].c = -1;
 		}
-		m_c_s += BUFSIZ; m_c_tab = t;
+		m_c_s += INIT_TAB_SIZ; m_c_tab = t;
 	}
 	m_c_tab[m_c_i].m = m; m_c_tab[m_c_i].c = c;
 	m_c_tab[m_c_i].af_unix = af_unix;

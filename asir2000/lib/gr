@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.2 2000/01/11 06:43:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.3 2000/06/05 02:26:48 noro Exp $ */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
 
@@ -1307,5 +1307,77 @@ def r_ttob_gsl(L,M)
 def get_matrix()
 {
 	REMOTE_MATRIX;
+}
+
+extern NFArray$
+
+/*
+ * HL = [[c,i,m,d],...]
+ * if c != 0
+ *   g = 0
+ *   g = (c*g + m*gi)/d
+ *   ...
+ *   finally compare g with NF
+ *   if g == NF then NFArray[NFIndex] = g
+ *
+ * if c = 0 then HL consists of single history [0,i,0,0],
+ * which means that dehomogenization of NFArray[i] should be 
+ * eqall to NF.
+ */
+
+def check_trace(NF,NFIndex,HL)
+{
+	if ( !car(HL)[0] ) {
+		/* dehomogenization */
+		DH = dp_dehomo(NFArray[car(HL)[1]]);
+		if ( NF == DH ) {
+			realloc_NFArray(NFIndex);
+			NFArray[NFIndex] = NF;
+			return 0;
+		} else
+			error("check_trace(dehomo)");
+	}
+
+	for ( G = 0, T = HL; T != []; T = cdr(T) ) {
+		H = car(T);
+
+		Coeff = H[0];
+		Index = H[1];
+		Monomial = H[2];
+		Denominator = H[3];
+
+		Reducer = NFArray[Index];
+		G = (Coeff*G+Monomial*Reducer)/Denominator;
+	}
+	if ( NF == G ) {
+		realloc_NFArray(NFIndex);
+		NFArray[NFIndex] = NF;
+		return 0;
+	} else
+		error("check_trace");
+}
+
+/*
+ * realloc NFArray so that it can hold * an element as NFArray[Ind].
+ */
+
+def realloc_NFArray(Ind)
+{
+	if ( Ind == size(NFArray)[0] ) {
+		New = newvect(Ind + 100);
+		for ( I = 0; I < Ind; I++ )
+			New[I] = NFArray[I];
+		NFArray = New;
+	}
+}
+
+/*
+ * create NFArray and initialize it by List.
+ */
+
+def register_input(List)
+{
+	Len = length(List);
+	NFArray = newvect(Len+100,List);
 }
 end$

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.2 2000/04/13 06:01:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.3 2000/05/29 08:54:45 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
@@ -511,7 +511,7 @@ DP *ps;
 int full;
 DP *rp;
 {
-	DP u,p,d,s,t;
+	DP u,p,d,s,t,dmy1;
 	P dmy;
 	NODE l;
 	MP m,mr;
@@ -530,7 +530,7 @@ DP *rp;
 	for ( d = 0; g; ) {
 		for ( u = 0, i = 0; i < n; i++ ) {
 			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red(d,g,p,&t,&u,&dmy);
+				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {
@@ -569,7 +569,7 @@ int full;
 DP *rp;
 P *dnp;
 {
-	DP u,p,d,s,t;
+	DP u,p,d,s,t,dmy;
 	NODE l;
 	MP m,mr;
 	int i,n;
@@ -589,7 +589,7 @@ P *dnp;
 	for ( d = 0; g; ) {
 		for ( u = 0, i = 0; i < n; i++ ) {
 			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red(d,g,p,&t,&u,&tdn);
+				dp_red(d,g,p,&t,&u,&tdn,&dmy);
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {
@@ -654,7 +654,7 @@ DP *ps;
 int full,multiple;
 DP *rp;
 {
-	DP u,p,d,s,t;
+	DP u,p,d,s,t,dmy1;
 	P dmy;
 	NODE l;
 	MP m,mr;
@@ -675,7 +675,7 @@ DP *rp;
 	for ( d = 0; g; ) {
 		for ( u = 0, i = 0; i < n; i++ ) {
 			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red(d,g,p,&t,&u,&dmy);				
+				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {
@@ -723,7 +723,7 @@ void Pdp_nf_demand(arg,rp)
 NODE arg;
 DP *rp;
 {
-	DP g,u,p,d,s,t;
+	DP g,u,p,d,s,t,dmy1;
 	P dmy;
 	NODE b,l;
 	DP *hps;
@@ -759,7 +759,7 @@ DP *rp;
 				fprintf(stderr,"loading %s\n",fname);
 				fp = fopen(fname,"r"); skipvl(fp);						
 				loadobj(fp,(Obj *)&p); fclose(fp);
-				dp_red(d,g,p,&t,&u,&dmy);				
+				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {
@@ -1233,22 +1233,23 @@ NODE arg;
 LIST *rp;
 {
 	NODE n;
-	DP head,rest;
+	DP head,rest,dmy1;
 	P dmy;
 
 	asir_assert(ARG0(arg),O_DP,"dp_red");
 	asir_assert(ARG1(arg),O_DP,"dp_red");
 	asir_assert(ARG2(arg),O_DP,"dp_red");
-	dp_red((DP)ARG0(arg),(DP)ARG1(arg),(DP)ARG2(arg),&head,&rest,&dmy);
+	dp_red((DP)ARG0(arg),(DP)ARG1(arg),(DP)ARG2(arg),&head,&rest,&dmy,&dmy1);
 	NEWNODE(n); BDY(n) = (pointer)head;
 	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)rest;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void dp_red(p0,p1,p2,head,rest,dnp)
+void dp_red(p0,p1,p2,head,rest,dnp,multp)
 DP p0,p1,p2;
 DP *head,*rest;
 P *dnp;
+DP *multp;
 {
 	int i,n;
 	DL d1,d2,d;
@@ -1276,6 +1277,7 @@ P *dnp;
 		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
 	}
 	NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+	*multp = s;
 	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
 	muldc(CO,p0,(P)c2,&h);
 	*head = h; *rest = r; *dnp = (P)c2;
@@ -1292,6 +1294,9 @@ DP *rp;
 	dp_sp(p1,p2,rp);
 }
 
+extern int GenTrace;
+extern NODE TraceList;
+
 void dp_sp(p1,p2,rp)
 DP p1,p2;
 DP *rp;
@@ -1300,7 +1305,7 @@ DP *rp;
 	int *w;
 	DL d1,d2,d;
 	MP m;
-	DP t,s,u;
+	DP t,s1,s2,u;
 	Q c,c1,c2;
 	N gn,tn;
 
@@ -1323,15 +1328,28 @@ DP *rp;
 	}
 
 	NEWMP(m); m->dl = d; m->c = (P)c2; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; muld(CO,s,p1,&t);
+	MKDP(n,m,s1); s1->sugar = d->td; muld(CO,s1,p1,&t);
 
 	NEWDL(d,n); d->td = td - d2->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = w[i] - d2->d[i];
 	NEWMP(m); m->dl = d; m->c = (P)c1; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; muld(CO,s,p2,&u);
+	MKDP(n,m,s2); s2->sugar = d->td; muld(CO,s2,p2,&u);
 
 	subd(CO,t,u,rp);
+	if ( GenTrace ) {
+		LIST hist;
+		NODE node;
+
+		node = mknode(4,ONE,0,s1,ONE);
+		MKLIST(hist,node);
+		MKNODE(TraceList,hist,0);
+
+		node = mknode(4,ONE,0,0,ONE);
+		chsgnd(s2,(DP *)&ARG2(node));
+		MKLIST(hist,node);
+		MKNODE(node,hist,TraceList); TraceList = node;
+	}
 }
 
 void Pdp_sp_mod(arg,rp)

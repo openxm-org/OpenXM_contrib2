@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.5 2000/05/29 08:54:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.6 2000/07/13 05:09:00 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -42,7 +42,7 @@ void print_stat(void);
 void init_stat(void);
 int dp_load_t(int,DP *);
 void dp_load(int,DP *);
-void dp_save(int,DP);
+void dp_save(int,Obj,char *);
 void dp_make_flaglist(LIST *);
 void dp_set_flag(Obj,Obj);
 int membercheck(NODE,NODE);
@@ -127,7 +127,10 @@ static char *Demand = 0;
 static int PtozpRA = 0;
 LIST Dist = 0;
 int NoGCD = 0;
+int GenTrace = 0;
+int OXCheck = -1;
 int doing_f4;
+NODE TraceList;
 
 void Pdp_gr_flags(arg,rp)
 NODE arg;
@@ -956,9 +959,9 @@ NODE f,*r;
 int m;
 {
 	int i;
-	NODE s,s0;
+	NODE s,s0,f0;
 
-	f = NODE_sortb(f,1);
+	f0 = f = NODE_sortb(f,1);
 	psn = length(f); pslen = 2*psn;
 	ps = (DP *)MALLOC(pslen*sizeof(DP));
 	psh = (DL *)MALLOC(pslen*sizeof(DL));
@@ -967,10 +970,23 @@ int m;
 	for ( i = 0; i < psn; i++, f = NEXT(f) ) {
 		prim_part((DP)BDY(f),m,&ps[i]);
 		if ( Demand )
-			dp_save(i,ps[i]);
+			dp_save(i,(Obj)ps[i],0);
 		psh[i] = BDY(ps[i])->dl;
 		pss[i] = ps[i]->sugar;
 		psc[i] = BDY(ps[i])->c;
+	}
+	if ( GenTrace && (OXCheck >= 0) ) {
+		Q q;
+		STRING fname;
+		LIST input;
+		NODE arg;
+		Obj dmy;
+
+		STOQ(OXCheck,q);
+		MKSTR(fname,"register_input");
+		MKLIST(input,f0);
+		arg = mknode(3,q,fname,input);
+		Pox_cmo_rpc(arg,&dmy);
 	}
 	for ( s0 = 0, i = 0; i < psn; i++ ) {
 		NEXTNODE(s0,s); BDY(s) = (pointer)i;
@@ -983,6 +999,8 @@ void prim_part(f,m,r)
 DP f,*r;
 int m;
 {
+	P d,t;
+
 	if ( m > 0 ) {
 		if ( PCoeffs )
 			dp_prim_mod(f,m,r);
@@ -995,6 +1013,11 @@ int m;
 			dp_prim(f,r);
 		else
 			dp_ptozp(f,r);
+		if ( GenTrace && TraceList ) {
+			divsp(CO,BDY(f)->c,BDY(*r)->c,&d);
+			mulp(CO,(P)ARG3(BDY((LIST)BDY(TraceList))),d,&t);
+			ARG3(BDY((LIST)BDY(TraceList))) = t;
+		}
 	}
 }
 
@@ -1092,8 +1115,17 @@ NODE *h;
 			}
 		get_eg(&tmp0);
 		dp_load(w[i],&ps[w[i]]);
-		_dp_nf(top,ps[w[i]],ps,1,&g);
 
+		if ( GenTrace ) {
+			Q q;
+			NODE node;
+			LIST hist;
+
+			STOQ(w[i],q);
+			node = mknode(4,ONE,q,ONE,ONE);
+			MKLIST(hist,node);
+			MKNODE(TraceList,hist,0);
+		}
 		if ( !PtozpRA || !Multiple )
 			_dp_nf(top,ps[w[i]],ps,1,&g);
 		else
@@ -1184,7 +1216,7 @@ NODE subst;
 			ps[psn] = a;
 		else
 			ps[psn] = 0;
-		dp_save(psn,a);
+		dp_save(psn,(Obj)a,0);
 	} else
 		ps[psn] = a;
 	psh[psn] = BDY(a)->dl;
@@ -1192,6 +1224,31 @@ NODE subst;
 	psc[psn] = BDY(a)->c;
 	if ( m )
 		_dp_mod(a,m,subst,&psm[psn]);
+	if ( GenTrace ) {
+		NODE tn,tr,tr1;
+		LIST trace;
+	
+		/* reverse the TraceList */
+		tn = TraceList;
+		for ( tr = 0; tn; tn = NEXT(tn) ) {
+			MKNODE(tr1,BDY(tn),tr); tr = tr1;
+		}
+		MKLIST(trace,tr);
+		if ( OXCheck >= 0 ) {
+			NODE arg;
+			Q q1,q2;
+			STRING fname;
+			Obj dmy;
+
+			STOQ(OXCheck,q1);
+			MKSTR(fname,"check_trace");
+			STOQ(psn,q2);
+			arg = mknode(5,q1,fname,a,q2,trace);
+			Pox_cmo_rpc(arg,&dmy);
+		} else
+			dp_save(psn,(Obj)trace,"t");
+		TraceList = 0;
+	}
 	return psn++;
 }
 
@@ -1267,7 +1324,18 @@ NODE f,*g;
 	}
 	for ( top = 0, i = n-1; i >= 0; i-- )
 		if ( r[i] >= 0 ) {
-			dp_load(r[i],&ps[r[i]]); dp_dehomo(ps[r[i]],&u); j = newps(u,0,0);
+			dp_load(r[i],&ps[r[i]]); dp_dehomo(ps[r[i]],&u);
+			if ( GenTrace ) {
+				Q q;
+				LIST hist;
+				NODE node;
+
+				STOQ(r[i],q);
+				node = mknode(4,0,q,0,0);
+				MKLIST(hist,node);
+				MKNODE(TraceList,hist,0);
+			}
+			j = newps(u,0,0);
 			MKNODE(t,j,top); top = t;
 		}
 	*g = top;
@@ -1355,6 +1423,7 @@ NODE subst;
 	struct oEGT tnf0,tnf1,tnfm0,tnfm1,tpz0,tpz1,tsp0,tsp1,tspm0,tspm1,tnp0,tnp1,tmp0,tmp1;
 	int skip_nf_flag;
 	double t_0;
+	Q q;
 	int new_sugar;
 	static prev_sugar = -1;
 
@@ -1404,6 +1473,10 @@ NODE subst;
 				}
 			} else
 				dp_sp(ps[l->dp1],ps[l->dp2],&h);
+			if ( GenTrace ) {
+				STOQ(l->dp1,q); ARG1(BDY((LIST)BDY(NEXT(TraceList)))) = q;
+				STOQ(l->dp2,q); ARG1(BDY((LIST)BDY(TraceList))) = q;
+			}
 			new_sugar = h->sugar;
 			get_eg(&tsp1); add_eg(&eg_sp,&tsp0,&tsp1);
 			get_eg(&tnf0);
@@ -1718,8 +1791,8 @@ DP *ps;
 int full;
 DP *rp;
 {
-	DP u,p,d,s,t;
-	P dmy;
+	DP u,p,d,s,t,mult;
+	P coef;
 	NODE l;
 	MP m,mr;
 	int sugar,psugar;
@@ -1732,9 +1805,20 @@ DP *rp;
 		for ( u = 0, l = b; l; l = NEXT(l) ) {
 			if ( dl_redble(BDY(g)->dl,psh[(int)BDY(l)]) ) {
 				dp_load((int)BDY(l),&p);
-				dp_red(d,g,p,&t,&u,&dmy);
+				/* t+u = coef*(d+g) - mult*p (t = coef*d) */
+				dp_red(d,g,p,&t,&u,&coef,&mult);
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
+				if ( GenTrace ) {
+					LIST hist;
+					Q cq;
+					NODE node,node0;
+
+					STOQ((int)BDY(l),cq);
+					node0 = mknode(4,coef,cq,mult,ONE);
+					MKLIST(hist,node0);
+					MKNODE(node,hist,TraceList); TraceList = node;
+				}
 				if ( !u ) {
 					if ( d )
 						d->sugar = sugar;
@@ -1767,6 +1851,9 @@ DP *rp;
 
 double pz_t_e, pz_t_d, pz_t_d1, pz_t_c, im_t_s, im_t_r;
 
+extern int GenTrace;
+extern NODE TraceList;
+
 void _dp_nf_ptozp(b,g,ps,full,multiple,r)
 NODE b;
 DP g;
@@ -1788,6 +1875,9 @@ DP *r;
 	extern int kara_mag;
 	double get_rtime();	
 	double t_0,t_00,tt,ttt,t_p,t_m,t_m1,t_m2,t_s,t_g,t_a;
+	LIST hist;
+	NODE node;
+	Q rcred,mrcred;
 
 	if ( !g ) {
 		*r = 0; return;
@@ -1807,6 +1897,7 @@ DP *r;
 	dc = 0; dp = 0; rc = ONE; rp = g;
 	MKSTR(imul,"dp_imul_index");
 
+	/* g = dc*dp+rc*rp */
 	for ( ; rp; ) {
 		for ( u = 0, l = b; l; l = NEXT(l) ) {
 			if ( dl_redble(BDY(rp)->dl,psh[(int)BDY(l)]) ) {
@@ -1861,10 +1952,23 @@ DP *r;
 
 				psugar = (BDY(rp)->dl->td - BDY(red)->dl->td) + red->sugar;
 				sugar = MAX(sugar,psugar);
+				if ( GenTrace ) {
+					/* u = cr*rp + (-cred)*shift*red */ 
+					STOQ((int)BDY(l),cq);
+					node = mknode(4,cr,cq,0,0);
+					mulq(cred,rc,&rcred);
+					chsgnnum((Num)rcred,(Num *)&mrcred);
+					muldc(CO,shift,(P)mrcred,(DP *)&ARG2(node));
+					MKLIST(hist,node);
+				}
 				if ( !u ) {
 					if ( dp )
 						dp->sugar = sugar;
 					*r = dp;
+					if ( GenTrace ) {
+						ARG3(BDY(hist)) = ONE;
+						MKNODE(node,hist,TraceList); TraceList = node;
+					}
 					goto final;
 				}
 				break;
@@ -1901,11 +2005,20 @@ DP *r;
 				tt = get_rtime()-t_0; t_a += tt;
 				rp = t;
 				hmag = multiple*HMAG(rp)/denom;
+				if ( GenTrace ) {
+					NTOQ(gn,1,gcd);
+					ARG3(BDY(hist)) = (pointer)gcd;
+					MKNODE(node,hist,TraceList); TraceList = node;
+				}
 			} else {
 				t_0 = get_rtime();
 				mulq(cr,dc,&dcq); dc = dcq;
 				tt = get_rtime()-t_0; t_a += tt;
 				rp = u;
+				if ( GenTrace ) {
+					ARG3(BDY(hist)) = (pointer)ONE;
+					MKNODE(node,hist,TraceList); TraceList = node;
+				}
 			}
 		} else if ( !full ) {
 			if ( rp ) {
@@ -1928,6 +2041,10 @@ DP *r;
 			dp_rest(rp,&t); rp = t;
 			tt = get_rtime()-t_0; t_a += tt;
 		}
+	}
+	if ( GenTrace ) {
+		mulq(ARG3(BDY((LIST)BDY(TraceList))),dc,&cq);
+		ARG3(BDY((LIST)BDY(TraceList))) = (pointer)cq;
 	}
 	if ( dp )
 		dp->sugar = sugar;
@@ -2549,6 +2666,10 @@ Obj name,value;
 		Denominator = v;
 	else if ( !strcmp(n,"PtozpRA") )
 		PtozpRA = v;
+	else if ( !strcmp(n,"GenTrace") )
+		GenTrace = v;
+	else if ( !strcmp(n,"OXCheck") )
+		OXCheck = v;
 }
 
 void dp_make_flaglist(list)
@@ -2565,6 +2686,8 @@ LIST *list;
 	STOQ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
 	STOQ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
 	STOQ(Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
+	STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
+	STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
 	STOQ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
 	STOQ(ShowMag,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"ShowMag"); MKNODE(n1,name,n); n = n1;
 	STOQ(Top,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Top"); MKNODE(n1,name,n); n = n1;
@@ -2589,21 +2712,25 @@ LIST *list;
 #define DELIM ':'
 #endif
 
-void dp_save(index,p)
+void dp_save(index,p,prefix)
 int index;
-DP p;
+Obj p;
+char *prefix;
 {
 	FILE *fp;
 	char path[BUFSIZ];
 
-	sprintf(path,"%s%c%d",Demand,DELIM,index);
+	if ( prefix )
+		sprintf(path,"%s%c%s%d",Demand,DELIM,prefix,index);
+	else
+		sprintf(path,"%s%c%d",Demand,DELIM,index);
 #if defined(VISUAL) || defined(THINK_C)
 	if ( !(fp = fopen(path,"wb") ) )
 #else
 	if ( !(fp = fopen(path,"w") ) )
 #endif
 		error("dp_save : cannot open a file");
-	savevl(fp,VC); saveobj(fp,(Obj)p); fclose(fp);
+	savevl(fp,VC); saveobj(fp,p); fclose(fp);
 }
 
 void dp_load(index,p)
@@ -2676,7 +2803,8 @@ DP *ps;
 int full,multiple;
 DP *rp;
 {
-	DP u,p,d,s,t,dmy;
+	P dmy;
+	DP u,p,d,s,t,dmy1;
 	NODE l;
 	MP m,mr;
 	int i,n;
@@ -2702,7 +2830,7 @@ DP *rp;
 		for ( u = 0, l = b; l; l = NEXT(l) ) {
 			if ( dl_redble(BDY(g)->dl,psh[(int)BDY(l)]) ) {
 				dp_load((int)BDY(l),&p);
-				dp_red(d,g,p,&t,&u,&dmy);
+				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {

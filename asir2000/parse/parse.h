@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/parse.h,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 # if defined(THINK_C) || defined(VISUAL)
 #include <time.h>
 #else
@@ -311,7 +311,7 @@ void dp_rest(DP,DP *);
 void dp_hm(DP,DP *);
 void dp_sp_mod(DP,DP,int,DP *);
 void dp_sp(DP,DP,DP *);
-void dp_red(DP,DP,DP,DP *,DP *,P *);
+void dp_red(DP,DP,DP,DP *,DP *,P *,DP *);
 void dp_subd(DP,DP,DP *);
 void dp_red_mod(DP,DP,DP,int,DP *,DP *,P *);
 int dp_redble(DP,DP);
