@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.33 2004/11/24 06:01:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.34 2004/12/15 22:51:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -91,7 +91,7 @@ static struct {
 	{"cputime",&prtime},
 	{"nez",&nez},
 	{"echo",&echoback},
-#if defined(DO_PLOT)
+#if defined(PARI)
 	{"bigfloat",&bigfloat},
 #endif
 	{"verbose",&Verbose},
