@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.16 2001/05/02 09:03:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.17 2001/09/04 08:48:20 noro Exp $ 
 */
 #include "ca.h"
 
@@ -439,6 +439,47 @@ int n;
 					NEXT(prev) = m; m = cur;
 					prev = NEXT(prev); cur = NEXT(prev);
 					break;
+			}
+		}
+		if ( !cur )
+			NEXT(prev) = m;
+		return top;
+	}
+}
+
+DLBUCKET symb_merge_bucket(m1,m2,n)
+DLBUCKET m1,m2;
+int n;
+{
+	DLBUCKET top,prev,cur,m,t;
+
+	if ( !m1 )
+		return m2;
+	else if ( !m2 )
+		return m1;
+	else {
+		if ( m1->td == m2->td ) {
+			top = m1;
+			BDY(top) = symb_merge(BDY(top),BDY(m2),n);
+			m = NEXT(m2);
+		} else if ( m1->td > m2->td ) {
+			top = m1; m = m2;
+		} else {
+			top = m2; m = m1;
+		}
+		prev = top; cur = NEXT(top);
+		/* prev->td > m->td always holds */
+		while ( cur && m ) {
+			if ( cur->td == m->td ) {
+				BDY(cur) = symb_merge(BDY(cur),BDY(m),n);
+				m = NEXT(m);
+				prev = cur; cur = NEXT(cur);
+			} else if ( cur->td > m->td ) {
+				t = NEXT(cur); NEXT(cur) = m; m = t;
+				prev = cur; cur = NEXT(cur);
+			} else {
+				NEXT(prev) = m; m = cur;
+				prev = NEXT(prev); cur = NEXT(prev);
 			}
 		}
 		if ( !cur )

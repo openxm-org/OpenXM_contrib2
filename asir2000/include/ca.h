@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.23 2001/09/07 08:54:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.24 2001/09/11 01:30:32 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -381,6 +381,14 @@ typedef struct oCM {
 	int c;
 } *CM;
 
+/* bucket list for DL */
+
+typedef struct oDLBUCKET {
+	int td;
+	struct oNODE *body;
+	struct oDLBUCKET *next;
+} *DLBUCKET;
+
 typedef struct oVL {
 	V v;
 	struct oVL *next;
@@ -607,6 +615,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWV(v) ((v)=(V)MALLOC(sizeof(struct oV)))
 #define NEWVL(vl) ((vl)=(VL)MALLOC(sizeof(struct oVL)))
 #define NEWMP(m) ((m)=(MP)MALLOC(sizeof(struct oMP)))
+#define NEWDLBUCKET(a) ((a)=(DLBUCKET)MALLOC(sizeof(struct oDLBUCKET)))
 
 #define NEWMAT(l) ((l)=(MAT)MALLOC(sizeof(struct oMAT)),OID(l)=O_MAT)
 #define NEWGF2MAT(l) ((l)=(GF2MAT)MALLOC(sizeof(struct oGF2MAT)),OID(l)=O_GF2MAT)
@@ -662,6 +671,8 @@ if(!(r)){NEWNODE(r);(c)=(r);}else{NEWNODE(NEXT(c));(c)=NEXT(c);}
 if(!(r)){NEWMP(r);(c)=(r);}else{NEWMP(NEXT(c));(c)=NEXT(c);}
 #define NEXTMP2(r,c,s) \
 if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
+#define NEXTDLBUCKET(r,c) \
+if(!(r)){NEWDLBUCKET(r);(c)=(r);}else{NEWDLBUCKET(NEXT(c));(c)=NEXT(c);}
 
 /* convertors */
 #define NTOQ(n,s,q) \
