@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.4 2001/06/25 05:30:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.5 2001/10/09 01:36:02 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -193,7 +193,7 @@ unsigned int rem(N n,int m)
 	if ( !n ) 
 		return 0;
 	for ( i = PL(n)-1, x = BD(n)+i, r = 0; i >= 0; i--, x-- ) {
-#if defined(sparc)
+#if defined(sparc) || !defined(__sparcv9)
 		r = dsar(m,r,*x);
 #else
 		DSAB(m,r,*x,t,r)
@@ -202,7 +202,7 @@ unsigned int rem(N n,int m)
 	return r;
 }
 
-#ifndef sparc
+#if !defined(sparc) || defined(__sparcv9)
 void addpadic(int mod,int n,unsigned int *n1,unsigned int *n2)
 {
 	unsigned int carry,tmp;
