@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.35 2004/03/10 05:27:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.36 2004/03/10 05:37:24 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -184,6 +184,7 @@ char *conv_subscript(char *name)
 	char **subs;
 
 	len = strlen(name);
+	if ( !len ) return 0;
 	subs = (char **)ALLOCA(len*sizeof(char* ));
 	for ( i = 0, j = 0, start = i; ; j++ ) {
 		while ( (i < len) && 
@@ -196,12 +197,15 @@ char *conv_subscript(char *name)
 				else if ( name[i] == '}' ) level--;
 			}
 			slen = i-start;	
-			brace = (char *)ALLOCA((slen+1)*sizeof(char));
-			strncpy(brace,name+start+1,slen-2);
-			brace[slen-2] = 0;
-			buf = conv_subscript(brace);
-			subs[j] = (char *)ALLOCA((strlen(buf)+3)*sizeof(char));
-			sprintf(subs[j],"{%s}",buf);
+			if ( slen >= 3 ) {
+				brace = (char *)ALLOCA((slen+1)*sizeof(char));
+				strncpy(brace,name+start+1,slen-2);
+				brace[slen-2] = 0;
+				buf = conv_subscript(brace);
+				subs[j] = (char *)ALLOCA((strlen(buf)+3)*sizeof(char));
+				sprintf(subs[j],"{%s}",buf);
+			} else
+				subs[j] = "{}";
 		} else {
 			if ( isdigit(name[i]) )
 				while ( i < len && isdigit(name[i]) ) i++;
