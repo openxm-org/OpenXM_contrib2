@@ -163,7 +163,7 @@ def getgcd(A,B){
 	for(I=0;I<VarsNumA;I++){
 
 		for(J=0;J<VarsNumB;J++)
-			if(C[J]==A[I][0])
+			if(B[J]==A[I][0])
 				break$
 
 		if(J<VarsNumB)
@@ -203,17 +203,24 @@ def makeret(Res,Vars,FLAG){
 	ResNum=length(Res)$
 	VarsNum=length(Vars)$
 
-	ResVec=newvect(ResNum)$
-	for(M=0,I=0;I<ResNum;I++){
-		if(member(Res[I][0],Vars)){
-			ResVec[I]=Res[I][1]$
+	ResVec=newvect(VarsNum,Vars)$
 
-			if(FLAG && type(ResVec[I])==1){
+	M=0$
+	for(I=0;I<ResNum;I++){
+
+		for(J=0;J<VarsNum;J++)
+			if(Vars[J]==Res[I][0])
+				break;
+
+		if(J<VarsNum){
+			ResVec[J]=TMP=Res[I][1]$
+
+			if(FLAG && type(TMP)==1){
 				if(M==0)
-					M=ResVec[I]$
+					M=TMP$
 				else
-					if(ResVec[I]<M)
-						M=ResVec[I]$
+					if(TMP<M)
+						M=TMP$
 			}
 		}
 	}		
@@ -448,7 +455,9 @@ def leastsq(NormMat,ExpMat,Vars,FLAG){
 	Res=getgcd(Res,Rea)$
 
 	if(nonposdegchk(Res)){
+
 		TMP1=makeret(Res,Vars,1)$
+
 		if(TMP1[0]==0){	
 			TMP=roundret(TMP1[1])$
 			if(TMP!=[])
@@ -567,6 +576,7 @@ def weightr(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 		if(nonposdegchk(Res)){
 
 			TMP1=makeret(Res,Vars,1)$
+
 			if(TMP1[0]==0){	
 				TMP=roundret(TMP1[1])$
 				if(TMP!=[])
