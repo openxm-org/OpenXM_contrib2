@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.8 2001/03/16 01:56:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.9 2001/09/03 07:01:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,32 +53,6 @@
 #include "genpari.h"
 int get_lg(GEN);
 #endif
-
-void loaderror(FILE *,ERR *);
-void loadui(FILE *,USINT *);
-void loaddp(FILE *,DP *);
-void loadstr(FILE *,char **);
-void loadstring(FILE *,STRING *);
-void loadmat(FILE *,MAT *);
-void loadvect(FILE *,VECT *);
-void loadlist(FILE *,LIST *);
-void loadr(FILE *,R *);
-void loadp(FILE *,P *);
-void loadgf2n(FILE *,GF2N *);
-void loadgfpn(FILE *,GFPN *);
-void loadgfs(FILE *,GFS *);
-void loadgfsn(FILE *,GFSN *);
-void loadlm(FILE *,LM *);
-void loadmi(FILE *,MQ *);
-void loadcplx(FILE *,C *);
-void loadbf(FILE *,BF *);
-void loadreal(FILE *,Real *);
-void loadq(FILE *,Q *);
-void loadnum(FILE *,Num *);
-void loadgfmmat(FILE *,GFMMAT *);
-void loadbytearray(FILE *,BYTEARRAY *);
-
-V loadpfins(FILE *);
 
 extern VL file_vl;
 
@@ -92,9 +66,7 @@ void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv
 void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn };
 #endif
 
-void loadobj(s,p)
-FILE *s;
-Obj *p;
+void loadobj(FILE *s,Obj *p)
 {
 	short id;
 
@@ -107,9 +79,7 @@ Obj *p;
 		(*loadf[id])(s,p);
 }
 
-void loadnum(s,p)
-FILE *s;
-Num *p;
+void loadnum(FILE *s,Num *p)
 { 
 	char nid;
 
@@ -120,9 +90,7 @@ Num *p;
 		(*nloadf[nid])(s,p); 
 }
 
-void loadq(s,p)
-FILE *s;
-Q *p;
+void loadq(FILE *s,Q *p)
 {
 	int size[2];
 	char sgn;
@@ -140,9 +108,7 @@ Q *p;
 	NDTOQ(nm,dn,sgn,*p);
 }
 
-void loadreal(s,p)
-FILE *s;
-Real *p;
+void loadreal(FILE *s,Real *p)
 {
 	Real q;
 	char dmy;
@@ -152,14 +118,11 @@ Real *p;
 	*p = q;
 }
 
-void loadbf(s,p)
-FILE *s;
-BF *p;
+void loadbf(FILE *s,BF *p)
 {
 #if PARI
 	GEN z;
 	unsigned int uexpo,lexpo;
-	UL expo;
 	char dmy;
 	int sign;
 	unsigned int len;
@@ -199,9 +162,7 @@ BF *p;
 }
 
 #if defined(INTERVAL)
-void loaditv(s,p)
-FILE *s;
-Itv *p;
+void loaditv(FILE *s,Itv *p)
 {
 	Itv q;
 	char dmy;
@@ -211,9 +172,7 @@ Itv *p;
 	*p = q;
 }
 
-void loaditvd(s,p)
-FILE *s;
-ItvD *p;
+void loaditvd(FILE *s,ItvD *p)
 {
 	ItvD q;
 	char dmy;
@@ -226,9 +185,7 @@ ItvD *p;
 }
 #endif
 
-void loadcplx(s,p)
-FILE *s;
-C *p;
+void loadcplx(FILE *s,C *p)
 {
 	C q;
 	char dmy;
@@ -238,9 +195,7 @@ C *p;
 	*p = q;
 }
 
-void loadmi(s,p)
-FILE *s;
-MQ *p;
+void loadmi(FILE *s,MQ *p)
 {
 	MQ q;
 	char dmy;
@@ -250,9 +205,7 @@ MQ *p;
 	*p = q;
 }
 
-void loadlm(s,p)
-FILE *s;
-LM *p;
+void loadlm(FILE *s,LM *p)
 {
 	int size;
 	char dmy;
@@ -264,9 +217,7 @@ LM *p;
 	MKLM(body,*p);
 }
 
-void loadgf2n(s,p)
-FILE *s;
-GF2N *p;
+void loadgf2n(FILE *s,GF2N *p)
 {
 	char dmy;
 	int len;
@@ -278,9 +229,7 @@ GF2N *p;
 	MKGF2N(body,*p);
 }
 
-void loadgfpn(s,p)
-FILE *s;
-GFPN *p;
+void loadgfpn(FILE *s,GFPN *p)
 {
 	char dmy;
 	int d,i;
@@ -294,9 +243,7 @@ GFPN *p;
 	MKGFPN(body,*p);
 }
 
-void loadgfs(s,p)
-FILE *s;
-GFS *p;
+void loadgfs(FILE *s,GFS *p)
 {
 	GFS q;
 	char dmy;
@@ -306,9 +253,7 @@ GFS *p;
 	*p = q;
 }
 
-void loadgfsn(s,p)
-FILE *s;
-GFSN *p;
+void loadgfsn(FILE *s,GFSN *p)
 {
 	char dmy;
 	int d;
@@ -320,9 +265,7 @@ GFSN *p;
 	MKGFSN(body,*p);
 }
 
-void loadp(s,p)
-FILE *s;
-P *p;
+void loadp(FILE *s,P *p)
 {
 	V v;
 	int n,vindex;
@@ -349,8 +292,7 @@ P *p;
 
 /* |name(str)|argc(int)|darray(intarray)|args| */
 
-V loadpfins(s)
-FILE *s;
+V loadpfins(FILE *s)
 {
 	char *name;
 	FUNC fp;
@@ -388,9 +330,7 @@ FILE *s;
 	return v;
 }
 
-void loadr(s,p)
-FILE *s;
-R *p;
+void loadr(FILE *s,R *p)
 {
 	R r;
 
@@ -398,9 +338,7 @@ R *p;
 	loadobj(s,(Obj *)&NM(r)); loadobj(s,(Obj *)&DN(r)); *p = r;
 }
 
-void loadlist(s,p)
-FILE *s;
-LIST *p;
+void loadlist(FILE *s,LIST *p)
 {
 	int n;
 	NODE tn,tn0;
@@ -414,9 +352,7 @@ LIST *p;
 	MKLIST(*p,tn0);
 }
 
-void loadvect(s,p)
-FILE *s;
-VECT *p;
+void loadvect(FILE *s,VECT *p)
 {
 	int i,len;
 	VECT vect;
@@ -427,9 +363,7 @@ VECT *p;
 	*p = vect;
 }
 
-void loadmat(s,p)
-FILE *s;
-MAT *p;
+void loadmat(FILE *s,MAT *p)
 {
 	int row,col,i,j;
 	MAT mat;
@@ -441,18 +375,14 @@ MAT *p;
 	*p = mat;
 }
 
-void loadstring(s,p)
-FILE *s;
-STRING *p;
+void loadstring(FILE *s,STRING *p)
 {
 	char *t;
 
 	loadstr(s,&t); MKSTR(*p,t);
 }
 
-void loadstr(s,p)
-FILE *s;
-char **p;
+void loadstr(FILE *s,char **p)
 {
 	int len;
 	char *t;
@@ -465,9 +395,7 @@ char **p;
 	*p = t;
 }
 
-void loadbytearray(s,p)
-FILE *s;
-BYTEARRAY *p;
+void loadbytearray(FILE *s,BYTEARRAY *p)
 {
 	int len;
 	BYTEARRAY array;
@@ -480,9 +408,7 @@ BYTEARRAY *p;
 	*p = array;
 }
 
-void loaddp(s,p)
-FILE *s;
-DP *p;
+void loaddp(FILE *s,DP *p)
 {
 	int nv,n,i,sugar;
 	DP dp;
@@ -499,18 +425,14 @@ DP *p;
 	NEXT(m) = 0; MKDP(nv,m0,dp); dp->sugar = sugar; *p = dp;
 }
 
-void loadui(s,u)
-FILE *s;
-USINT *u;
+void loadui(FILE *s,USINT *u)
 {
 	unsigned int b;
 
 	read_int(s,&b); MKUSINT(*u,b);
 }
 
-void loaderror(s,e)
-FILE *s;
-ERR *e;
+void loaderror(FILE *s,ERR *e)
 {
 	Obj b;
 
@@ -518,11 +440,9 @@ ERR *e;
 }
 
 
-void loadgfmmat(s,p) 
-FILE *s;
-GFMMAT *p;
+void loadgfmmat(FILE *s,GFMMAT *p) 
 {
-	int i,j,row,col;
+	int i,row,col;
 	unsigned int **a;
 	GFMMAT mat;
 

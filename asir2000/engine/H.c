@@ -45,46 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.4 2001/07/03 01:41:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.5 2001/07/04 07:19:20 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
 #include "base.h"
 #include <math.h>
-
-void modfctrp(P,int,int,DCP *);
-void gensqfrum(int,UM,struct oDUM *);
-void srchum(int,UM,UM,UM);
-UM *resberle(int,UM,UM *);
-int substum(int,UM,int);
-void ddd(int,UM,UM *);
-void canzas(int,UM,int,UM *,UM *);
-int divum(int,UM,UM,UM);
-void randum(int,int,UM);
-void pwrmodum(int,UM,int,UM,UM);
-void spwrum(int,UM,UM *,UM,N,UM);
-void spwrum0(int,UM,UM,N,UM);
-void mulum(int,UM,UM,UM);
-void mulsum(int,UM,int,UM);
-void gcdum(int,UM,UM,UM);
-void mult_mod_tab(UM,int,UM *,UM,int);
-void make_qmat(UM,int,UM *,int ***);
-void null_mod(int **,int,int,int *);
-void null_to_sol(int **,int *,int,int,UM *);
-void newddd(int,UM,UM *);
-int irred_check(UM,int);
-int berlekamp(UM,int,int,UM *,UM *);
-int nfctr_mod(UM,int);
-void minipoly_mod(int,UM,UM,UM);
-int find_root(int,UM,int *);
-void showum(UM);
-void showumat(int **,int);
-
-void henmain2(LUM,UM,UM,UM,UM,int,int,LUM *);
-void addtolum(int,int,LUM,LUM);
-void clearlum(int,int,LUM);
-void henprep2(int,int,int,UM,UM,UM,UM,UM,UM,UM);
-void henprep(P,ML,ML,ML *,ML *);
 
 #if 1
 #define Mulum mulum
@@ -100,18 +66,7 @@ void henprep(P,ML,ML,ML *,ML *);
 			
 LUM LUMALLOC();
 
-struct p_pair {
-	UM p0;
-	UM p1;
-	struct p_pair *next;
-};
-
-void lnf_mod(int,int,UM,UM,struct p_pair *,UM,UM);
-
-void berle(index,count,f,listp)
-int index,count;
-P f;
-ML *listp;
+void berle(int index,int count,P f,ML *listp)
 {
 	UM wf,wf1,wf2,wfs,gcd;
 	ML flist;
@@ -153,9 +108,7 @@ ML *listp;
 		ptr[i] = ( ptr[i] * hd ) % m;
 }
 
-int berlecnt(mod,f)
-register int mod;
-UM f;
+int berlecnt(int mod,UM f)
 {
 	register int i,j,**c;
 	int d,dr,n;
@@ -183,10 +136,7 @@ UM f;
 
 /* XXX berlecntmain should not be used for large mod */
 
-int berlecntmain(mod,n,m,c)
-register int mod;
-int n,m;
-register int **c;
+int berlecntmain(int mod,int n,int m,int **c)
 {
 	register int *p1,*p2,i,j,k,l,a;
 	int *tmp,inv;
@@ -212,10 +162,7 @@ register int **c;
 	return ( cfs );
 }
 
-UM *berlemain(mod,f,fp)
-register int mod;
-UM f;
-UM *fp;
+UM *berlemain(int mod,UM f,UM *fp)
 {
 	UM wg,ws,wf,f0,gcd,q;
 	int n;
@@ -244,10 +191,7 @@ UM *fp;
 	return ( fp );
 }
 
-void hensel(index,count,f,listp)
-int index,count;
-P f;
-ML *listp;
+void hensel(int index,int count,P f,ML *listp)
 {
 	register int i,j;
 	int q,n,bound;
@@ -284,20 +228,15 @@ ML *listp;
 	}
 }
 
-void hensel2(index,count,f,listp)
-int index,count;
-P f;
-ML *listp;
+void hensel2(int index,int count,P f,ML *listp)
 {
 	register int i,j;
 	int mod,q,n,bound,dx;
-	int *p;
 	ML blist,clist,bqlist,cqlist,rlist;
 	UM fm,qfm,gm,qgm,hm,qhm,qam,qbm,w;
 	UM *b;
 	LUM fl,tl;
-	LUM *l;
-	int dr,k;
+	int k;
 
 	dx = UDEG(f);
 	if ( dx == 1 ) {
@@ -370,14 +309,10 @@ ML *listp;
 	f = g0*h0 mod m -> f = gk*hk mod m^(bound), f is replaced by hk
 */
 
-void henmain2(f,g0,h0,a0,b0,m,bound,gp)
-LUM f;
-UM g0,h0,a0,b0;
-int m,bound;
-LUM *gp;
+void henmain2(LUM f,UM g0,UM h0,UM a0,UM b0,int m,int bound,LUM *gp)
 {
 	int n,dg,dh,i,k,j,dg1,dh1;
-	UM wu,wr,ws,wt,q,wh1,wg1,wc,wd,we,wz,w1,w2;
+	UM wu,wr,ws,wt,q,wh1,wg1,wc,wd,we,wz;
 	LUM wb0,wb1,wb2,fk,gk,hk;
 
 	n = DEG(f); dg = DEG(g0); dh = DEG(h0);
@@ -510,9 +445,7 @@ LUM *gp;
 			COEF(f)[i][j] = COEF(hk)[i][j];
 }
 
-void clearlum(n,bound,f)
-int n,bound;
-LUM f;
+void clearlum(int n,int bound,LUM f)
 {
 	int i;
 
@@ -522,10 +455,7 @@ LUM f;
 
 /* g += f */
 
-void addtolum(m,bound,f,g)
-int m,bound;
-LUM f;
-LUM g;
+void addtolum(int m,int bound,LUM f,LUM g)
 {
 	int n,i;
 
@@ -534,10 +464,7 @@ LUM g;
 		addpadic(m,bound,COEF(f)[i],COEF(g)[i]);
 }
 
-void hsq(index,count,f,nindex,dcp)
-int index,count,*nindex;
-P f;
-DCP *dcp;
+void hsq(int index,int count,P f,int *nindex,DCP *dcp)
 {
 	register int i,j,k;
 	register int **pp,**fpp;
@@ -663,9 +590,7 @@ DCP *dcp;
 	*dcp = 0;
 }
 
-void gcdgen(f,blist,clistp)
-P f;
-ML blist,*clistp;
+void gcdgen(P f,ML blist,ML *clistp)
 {
 	register int i;
 	int n,d,mod,np;
@@ -695,13 +620,10 @@ ML blist,*clistp;
 /* find a,b s.t. qa*qg+qb*qh=1 mod q, qg=g mod mod, qh=h mod mod */
 /* q = mod^k */
 
-void henprep2(mod,q,k,f,g,h,qg,qh,qa,qb)
-int mod,q,k;
-UM f,g,h,qg,qh,qa,qb;
+void henprep2(int mod,int q,int k,UM f,UM g,UM h,UM qg,UM qh,UM qa,UM qb)
 {
 	int n;
 	UM wg,wh,wa,wb;
-	UM wt,ws,wu;
 	ML bl,cl,bql,cql;
 	P ff;
 
@@ -745,9 +667,7 @@ UM f,g,h,qg,qh,qa,qb;
 	henprep(f,blist,clist,&bqlist,&cqlist);
  */
 
-void henprep(f,blist,clist,bqlistp,cqlistp)
-P f;
-ML blist,clist,*bqlistp,*cqlistp;
+void henprep(P f,ML blist,ML clist,ML *bqlistp,ML *cqlistp)
 {
 	register int i,j,k,*px,*py,*pz;
 	int n,pmax,dr,tmp,p,p1,mod,np,b,q;
@@ -828,9 +748,7 @@ ML blist,clist,*bqlistp,*cqlistp;
 	henmain(fl,bqlist,cqlist,listp)
 */
 
-void henmain(f,bqlist,cqlist,listp)
-LUM f;
-ML bqlist,cqlist,*listp;
+void henmain(LUM f,ML bqlist,ML cqlist,ML *listp)
 {
 	register int i,j,k;
 	int *px,*py;
@@ -898,9 +816,7 @@ ML bqlist,cqlist,*listp;
 static double M;
 static int E;
 
-int mignotte(q,f)
-int q;
-P f;
+int mignotte(int q,P f)
 {
 	int p;
 	unsigned int *b;
@@ -916,9 +832,7 @@ P f;
 	return (int)ceil( (0.31*(E+UDEG(f)+1)+log10((double)M)) / log10((double)q) );
 }
 
-int mig(q,d,f)
-int q,d;
-P f;
+int mig(int q,int d,P f)
 {
 	int p;
 	unsigned int *b;
@@ -935,9 +849,7 @@ P f;
 	return (int)ceil( (0.31*(E+d+1)+log10((double)M)) / log10((double)q) );
 }
 
-void sqad(man,exp)
-unsigned int man;
-int exp;
+void sqad(unsigned int man,int exp)
 {
 	int e,sqe;
 	unsigned int t;
@@ -973,10 +885,7 @@ int exp;
 	}
 }
 
-void ptolum(q,bound,f,fl)
-int q,bound;
-P f;
-LUM fl;
+void ptolum(int q,int bound,P f,LUM fl)
 {
 	DCP dc;
 	int i,j;
@@ -1009,10 +918,7 @@ LUM fl;
 	}
 }
 
-void modfctrp(p,mod,flag,dcp)
-P p;
-int mod,flag;
-DCP *dcp;
+void modfctrp(P p,int mod,int flag,DCP *dcp)
 {
 	int cm,n,i,j,k;
 	DCP dc,dc0;
@@ -1104,10 +1010,7 @@ DCP *dcp;
 	NEXT(dc) = 0; *dcp = dc0;
 }
 
-void gensqfrum(mod,p,dc)
-int mod;
-UM p;
-struct oDUM *dc;
+void gensqfrum(int mod,UM p,struct oDUM *dc)
 {
 	int n,i,j,d;
 	UM t,s,g,f,f1,b;
@@ -1160,9 +1063,7 @@ struct oDUM *dc;
 }
 
 #if 0
-void srchum(mod,p1,p2,gr)
-int mod;
-UM p1,p2,gr;
+void srchum(int mod,UM p1,UM p2,UM gr)
 {
 	UM m,m1,m2,q,r,t,g1,g2;
 	int lc,d,d1,d2,i,j,k,l,l1,l2,l3,tmp,adj;
@@ -1232,10 +1133,7 @@ UM p1,p2,gr;
 	}
 }
 
-UM *resberle(mod,f,fp)
-register int mod;
-UM f;
-UM *fp;
+UM *resberle(int mod,UM f,UM *fp)
 {
 	UM w,wg,ws,wf,f0,gcd,q,res;
 	int n;
@@ -1268,10 +1166,7 @@ UM *fp;
 	return ( fp );
 }
 
-int substum(mod,p,a)
-int mod;
-UM p;
-int a;
+int substum(int mod,UM p,int a)
 {
 	int i,j,s;
 	int *c;
@@ -1291,9 +1186,7 @@ int a;
 }
 #endif
 
-void ddd(mod,f,r)
-int mod;
-UM f,*r;
+void ddd(int mod,UM f,UM *r)
 {
 	register int i,j;
 	int d,n;
@@ -1339,9 +1232,7 @@ UM f,*r;
 }
 
 #if 0
-void canzas(mod,f,d,base,r)
-int mod;
-UM f,*base,*r;
+void canzas(int mod,UM f,int d,UM *base,UM *r)
 {
 	UM t,s,u,w,g,o,q;
 	N n1,n2,n3,n4,n5;
@@ -1379,9 +1270,7 @@ UM f,*base,*r;
 	}
 }
 #else
-void canzas(mod,f,d,base,r)
-int mod;
-UM f,*base,*r;
+void canzas(int mod,UM f,int d,UM *base,UM *r)
 {
 	UM t,s,u,w,g,o,q;
 	N n1,n2,n3,n4,n5;
@@ -1420,9 +1309,7 @@ UM f,*base,*r;
 }
 #endif
 
-void randum(mod,d,p)
-int mod,d;
-UM p;
+void randum(int mod,int d,UM p)
 {
 	unsigned int n;
 	int i;
@@ -1432,9 +1319,7 @@ UM p;
 		COEF(p)[i] = ((unsigned int)random()) % mod;
 }
 
-void pwrmodum(mod,p,e,f,pr)
-int mod,e;
-UM p,f,pr;
+void pwrmodum(int mod,UM p,int e,UM f,UM pr)
 {
 	UM wt,ws,q;
 
@@ -1460,11 +1345,7 @@ UM p,f,pr;
 	}
 }
 
-void spwrum(mod,m,base,f,e,r)
-int mod;
-UM f,m,r;
-UM *base;
-N e;
+void spwrum(int mod,UM m,UM *base,UM f,N e,UM r)
 {
 	int a,n,i;
 	N e1,an;
@@ -1492,10 +1373,7 @@ N e;
 	}
 }
 
-void spwrum0(mod,m,f,e,r)
-int mod;
-UM f,m,r;
-N e;
+void spwrum0(int mod,UM m,UM f,N e,UM r)
 {
 	UM t,s,q;
 	N e1;
@@ -1518,9 +1396,7 @@ N e;
 }
 
 #if 0
-void Mulum(mod,p1,p2,pr)
-register int mod;
-UM p1,p2,pr;
+void Mulum(int mod,UM p1,UM p2,UM pr)
 {
 	register int *pc1,*pcr;
 	register int mul,i,j,d1,d2;
@@ -1539,9 +1415,7 @@ UM p1,p2,pr;
 	DEG(pr) = d1 + d2;
 }
 
-void Mulsum(mod,p,n,pr)
-register int mod,n;
-UM p,pr;
+void Mulsum(int mod,UM p,int n,UM pr)
 {
 	register int *sp,*dp;
 	register int i;
@@ -1551,9 +1425,7 @@ UM p,pr;
 		*dp = (*sp * n) % mod;
 }
 	
-int Divum(mod,p1,p2,pq)
-register int mod;
-UM p1,p2,pq;
+int Divum(int mod,UM p1,UM p2,UM pq)
 {
 	register int *pc1,*pct;
 	register int tmp,i,j,inv;
@@ -1589,9 +1461,7 @@ UM p1,p2,pq;
 	return( i );
 }
 
-void Gcdum(mod,p1,p2,pr)
-register int mod;
-UM p1,p2,pr;
+void Gcdum(int mod,UM p1,UM p2,UM pr)
 {
 	register int *sp,*dp;
 	register int i,inv;
@@ -1618,10 +1488,7 @@ UM p1,p2,pr;
 }
 #endif
 
-void mult_mod_tab(p,mod,tab,r,d)
-UM p,r;
-UM *tab;
-int mod,d;
+void mult_mod_tab(UM p,int mod,UM *tab,UM r,int d)
 {
 	UM w,w1,c;
 	int n,i;
@@ -1639,11 +1506,7 @@ int mod,d;
 		}
 }
 
-void make_qmat(p,mod,tab,mp)
-UM p;
-int mod;
-UM *tab;
-int ***mp;
+void make_qmat(UM p,int mod,UM *tab,int ***mp)
 {
 	int n,i,j;
 	int *c;
@@ -1662,10 +1525,7 @@ int ***mp;
 		mat[i][i] = (mat[i][i]+mod-1) % mod;
 }
 
-void null_mod(mat,mod,n,ind)
-int **mat;
-int *ind;
-int mod,n;
+void null_mod(int **mat,int mod,int n,int *ind)
 {
 	int i,j,l,s,h,inv;
 	int *t,*u;
@@ -1696,11 +1556,7 @@ int mod,n;
 	}
 }
 
-void null_to_sol(mat,ind,mod,n,r)
-int **mat;
-int *ind;
-int mod,n;
-UM *r;
+void null_to_sol(int **mat,int *ind,int mod,int n,UM *r)
 {
 	int i,j,k,l;
 	int *c;
@@ -1729,9 +1585,7 @@ null_mod(mat,mod,n,ind)
 null_to_sol(mat,ind,mod,n,r)
 */
 
-void newddd(mod,f,r)
-int mod;
-UM f,*r;
+void newddd(int mod,UM f,UM *r)
 {
 	register int i,j;
 	int d,n;
@@ -1774,9 +1628,7 @@ UM f,*r;
 	r[j] = 0;
 }
 
-int nfctr_mod(f,mod)
-int mod;
-UM f;
+int nfctr_mod(UM f,int mod)
 {
 	register int i,j;
 	int d,n;
@@ -1817,9 +1669,7 @@ UM f;
 	return j;
 }
 
-int irred_check(f,mod)
-UM f;
-int mod;
+int irred_check(UM f,int mod)
 {
 	register int i,j;
 	int d,n;
@@ -1862,10 +1712,7 @@ int mod;
 	return 1;
 }
 
-int berlekamp(p,mod,df,tab,r)
-UM p;
-int mod,df;
-UM *tab,*r;
+int berlekamp(UM p,int mod,int df,UM *tab,UM *r)
 {
 	int n,i,j,k,nf,d,nr;
 	int **mat;
@@ -1911,11 +1758,12 @@ UM *tab,*r;
 			}
 		}
 	}
+	/* NOTREACHED */
+	error("berlekamp : cannot happen");
+	return -1;
 }
 
-void minipoly_mod(mod,f,p,mp)
-int mod;
-UM f,p,mp;
+void minipoly_mod(int mod,UM f,UM p,UM mp)
 {
 	struct p_pair *list,*l,*l1,*lprev;	
 	int n,d;
@@ -1950,11 +1798,7 @@ UM f,p,mp;
 	}
 }
 
-void lnf_mod(mod,n,p0,p1,list,np0,np1)
-int mod,n;
-UM p0,p1;
-struct p_pair *list;
-UM np0,np1;
+void lnf_mod(int mod,int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1)
 {
 	int inv,h,d1;
 	UM t0,t1,s0,s1;
@@ -1974,10 +1818,7 @@ UM np0,np1;
 	}
 }
 
-int find_root(mod,p,root)
-int mod;
-UM p;
-int *root;
+int find_root(int mod,UM p,int *root)
 {
 	UM *r;
 	int i,j;
@@ -1990,8 +1831,7 @@ int *root;
 	return j;
 }
 
-void showum(p)
-UM p;
+void showum(UM p)
 {
 	int i;
 	int *c;
@@ -2002,9 +1842,7 @@ UM p;
 	printf("\n");
 }
 
-void showumat(mat,n)
-int **mat;
-int n;
+void showumat(int **mat,int n)
 {
 	int i,j;
 

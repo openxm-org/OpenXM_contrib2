@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.11 2001/04/20 02:34:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.12 2001/09/03 07:01:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -109,13 +109,18 @@ void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
 void PRINTLF();
+void PRINTUP();
+void PRINTUM();
 void PRINTUP2();
+void PRINTFOP();
+void PRINTEOP();
+void PRINTLOP();
+void PRINTQOP();
+void PRINTSF();
 
 static int total_length;
 
-int estimate_length(vl,p)
-VL vl;
-pointer p;
+int estimate_length(VL vl,pointer p)
 {
 	total_length = 0;
 	PRINTEXPR(vl,p);
@@ -123,8 +128,7 @@ pointer p;
 }
 
 #if PARI
-void PRINTBF(a)
-BF a;
+void PRINTBF(BF a)
 {
 	char *str;
 	char *GENtostr();
@@ -141,9 +145,7 @@ BF a;
 }
 #endif
 
-void PRINTEXPR(vl,p)
-VL vl;
-pointer p;
+void PRINTEXPR(VL vl,pointer p)
 {
 	if ( !p ) {
 		total_length++;
@@ -190,8 +192,7 @@ pointer p;
 	}
 }
 
-void PRINTN(n)
-N n;
+void PRINTN(N n)
 {
 	double ceil();
 
@@ -203,8 +204,7 @@ N n;
 		total_length += (int)(ceil(0.31*((double)(BSH*PL(n))))+1);
 }
 
-void PRINTNUM(q)
-Num q;
+void PRINTNUM(Num q)
 {
 	if ( !q ) {
 		PUTS("0");
@@ -259,8 +259,7 @@ Num q;
 	}
 }
 
-void PRINTCPLX(a)
-C a;
+void PRINTCPLX(C a)
 {
 	PUTS("(");
 	if ( a->r )
@@ -273,13 +272,10 @@ C a;
 	PUTS(")");
 }
 
-void PRINTP(vl,p)
-VL vl;
-P p;
+void PRINTP(VL vl,P p)
 {
 	V v;
 	DCP dc;
-	int t;
 
 	if ( !p )
 		PUTS("0");
@@ -331,9 +327,7 @@ P p;
 
 extern int hideargs;
 
-void PRINTV(vl,v)
-VL vl;
-V v;
+void PRINTV(VL vl,V v)
 {
 	PF pf;
 	PFAD ad;
@@ -389,9 +383,7 @@ V v;
 	}
 }
 
-void PRINTR(vl,a)
-VL vl;
-R a;
+void PRINTR(VL vl,R a)
 {
 	if ( !a ) 
 		PUTS("0");
@@ -405,9 +397,7 @@ R a;
 		}
 }
 
-void PRINTVECT(vl,vect)
-VL vl;
-VECT vect;
+void PRINTVECT(VL vl,VECT vect)
 {
 	int i;
 	pointer *ptr;
@@ -419,9 +409,7 @@ VECT vect;
 	PUTS("]");
 }
 
-void PRINTMAT(vl,mat)
-VL vl;
-MAT mat;
+void PRINTMAT(VL vl,MAT mat)
 {
 	int i,j,r,c;
 	pointer *ptr;
@@ -437,9 +425,7 @@ MAT mat;
 	}
 }
 
-void PRINTLIST(vl,list)
-VL vl;
-LIST list;
+void PRINTLIST(VL vl,LIST list)
 {
 	NODE tnode;
 
@@ -452,8 +438,7 @@ LIST list;
 	PUTS("]");
 }
 
-void PRINTSTR(str)
-STRING str;
+void PRINTSTR(STRING str)
 {
 	char *p;
 
@@ -465,9 +450,7 @@ STRING str;
 		}
 }
 
-void PRINTCOMP(vl,c)
-VL vl;
-COMP c;
+void PRINTCOMP(VL vl,COMP c)
 {
 	int n,i;
 
@@ -481,9 +464,7 @@ COMP c;
 	PUTS("}");
 }
 
-void PRINTDP(vl,d)
-VL vl;
-DP d;
+void PRINTDP(VL vl,DP d)
 {
 	int n,i;
 	MP m;
@@ -501,16 +482,12 @@ DP d;
 	}
 }
 
-void PRINTUI(vl,u)
-VL vl;
-USINT u;
+void PRINTUI(VL vl,USINT u)
 {
 	total_length += 10;
 }
 
-void PRINTGF2MAT(vl,mat)
-VL vl;
-GF2MAT mat;
+void PRINTGF2MAT(VL vl,GF2MAT mat)
 {
 	int row,col,w,i,j,k,m;
 	unsigned int t;
@@ -533,12 +510,9 @@ GF2MAT mat;
 	}
 }
 
-void PRINTGFMMAT(vl,mat)
-VL vl;
-GFMMAT mat;
+void PRINTGFMMAT(VL vl,GFMMAT mat)
 {
 	int row,col,i,j;
-	unsigned int t;
 	unsigned int **b;
 
 	row = mat->row;
@@ -553,31 +527,24 @@ GFMMAT mat;
 	}
 }
 
-void PRINTBYTEARRAY(vl,array)
-VL vl;
-BYTEARRAY array;
+void PRINTBYTEARRAY(VL vl,BYTEARRAY array)
 {
 	/* |xx xx ... xx| */
 	total_length += 1+3*array->len;
 }
 
-void PRINTQUOTE(vl,quote)
-VL vl;
-QUOTE quote;
+void PRINTQUOTE(VL vl,QUOTE quote)
 {
 	/* <...quoted...> */
 	total_length += 20;
 }
 
-void PRINTERR(vl,e)
-VL vl;
-ERR e;
+void PRINTERR(VL vl,ERR e)
 {
 	PUTS("error("); PRINTEXPR(vl,e->body); PUTS(")");
 }
 
-void PRINTUP2(p)
-UP2 p;
+void PRINTUP2(UP2 p)
 {
 	int d,i;
 
@@ -609,9 +576,7 @@ UP2 p;
 	}
 }
 
-void PRINTLF(vl,f)
-VL vl;
-F f;
+void PRINTLF(VL vl,F f)
 {
 	switch ( FOP(f) ) {
 		case AL_TRUE:
@@ -637,9 +602,7 @@ F f;
 	}
 }
 
-PRINTFOP(vl,f)
-VL vl;
-F f;
+void PRINTFOP(VL vl,F f)
 {
 	char *op;
 	NODE n;
@@ -652,9 +615,7 @@ F f;
 	}
 }
 
-PRINTEOP(vl,f)
-VL vl;
-F f;
+void PRINTEOP(VL vl,F f)
 {
 	oFOP op;
 	char *sop;
@@ -679,9 +640,7 @@ F f;
 	PUTS(")");
 }
 
-PRINTLOP(vl,f)
-VL vl;
-F f;
+void PRINTLOP(VL vl,F f)
 {
 	char *op;
 
@@ -705,9 +664,7 @@ F f;
 	PRINTEXPR(vl,(Obj)FPL(f)); PUTS(op); PUTS("0");
 }
 
-PRINTQOP(vl,f)
-VL vl;
-F f;
+void PRINTQOP(VL vl,F f)
 {
 	char *op;
 
@@ -717,8 +674,7 @@ F f;
 	PRINTEXPR(vl,(Obj)FQMAT(f)); PUTS(")");
 }
 
-PRINTUP(n)
-UP n;
+void PRINTUP(UP n)
 {
 	int i,d;
 
@@ -753,8 +709,7 @@ UP n;
 	}
 }
 
-PRINTUM(n)
-UM n;
+void PRINTUM(UM n)
 {
 	int i,d;
 
@@ -787,8 +742,7 @@ UM n;
 	}
 }
 
-PRINTSF(i)
-unsigned int i;
+void PRINTSF(unsigned int i)
 {
 	if ( !i ) {
 		PUTS("0");

@@ -45,9 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/A.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/A.c,v 1.4 2001/06/07 04:54:39 noro Exp $ 
 */
 #include "ca.h"
+
+int get_lprime();
 
 void pdiva(vl,p0,p1,p2,pr)
 VL vl;

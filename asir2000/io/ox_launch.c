@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.13 2001/06/27 09:14:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.14 2001/07/23 05:05:41 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -78,7 +78,7 @@ static int which_command(char *,char *);
 static int search_command(char *);
 static int ox_spawn(char *,int,char *,int);
 static void launch_error(char *);
-static int ox_io_init(int);
+static void ox_io_init(int);
 static void push_one(Obj);
 static Obj pop_one();
 static void do_cmd(int);
@@ -156,10 +156,13 @@ void launch_main(argc,argv)
 int argc;
 char **argv;
 {
-	int id;
-	Obj p,obj;
+#if !defined(VISUAL)
+	Obj p;
 	char *name;
 	char buf[BUFSIZ];
+#endif
+	int id;
+	Obj obj;
 	int cs,ss;
 	unsigned int cmd;
 	int use_unix,accept_client,nolog;
@@ -226,10 +229,6 @@ static void do_cmd(cmd)
 int cmd;
 {
 	USINT t;
-	int id,cindex;
-	int bport,sport;
-	int bs,bs0;
-	STRING prog,dname;
 
 	switch ( cmd ) {
 		case SM_shutdown:
@@ -293,7 +292,7 @@ int nolog;
 	char *av[BUFSIZ];
 	char sock_id[BUFSIZ],ox_intr[BUFSIZ],ox_reset[BUFSIZ],ox_kill[BUFSIZ];
 	char AsirExe[BUFSIZ];
-	HANDLE hProc;
+	int hProc;
 	STRING rootdir;
 	int mypid;
 	int newbs;
@@ -391,7 +390,7 @@ char *s;
 	exit(0);
 }
 
-static int ox_io_init(sock)
+static void ox_io_init(sock)
 int sock;
 {
 	endian_init();
@@ -414,7 +413,7 @@ static Obj pop_one() {
 	}
 }
 
-static void terminate_server()
+static void terminate_server(int sig)
 {
 #if defined(SIGKILL)
 	kill(cpid,SIGKILL);

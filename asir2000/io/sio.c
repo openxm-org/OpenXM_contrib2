@@ -44,13 +44,14 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.10 2000/11/15 01:20:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.11 2000/12/05 01:24:55 noro Exp $ 
 */
 #include "ca.h"
 #include "setjmp.h"
 #include "ox.h"
 #if defined(VISUAL)
 #include <winsock2.h>
+#include <io.h>
 #else
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -75,15 +76,12 @@ struct IOFP iofp[MAXIOFP];
 
 void init_socket(void);
 
-int getremotesocket(s)
-int s;
+int getremotesocket(int s)
 {
 	return iofp[s].s;
 }
 
-void getremotename(s,name)
-int s;
-char *name;
+void getremotename(int s,char *name)
 {
 	struct sockaddr_in peer;
 	struct hostent *hp;
@@ -98,9 +96,7 @@ char *name;
 		strcpy(name,(char *)inet_ntoa(peer.sin_addr));
 }
 
-int generate_port(use_unix,port_str)
-int use_unix;
-char *port_str;
+void generate_port(int use_unix,char *port_str)
 {
 	double get_current_time();
 	unsigned long mt_genrand();
@@ -121,9 +117,7 @@ char *port_str;
 	}
 }
 
-int try_bind_listen(use_unix,port_str)
-int use_unix;
-char *port_str;
+int try_bind_listen(int use_unix,char *port_str)
 {
 	struct sockaddr_in sin;
 	struct sockaddr *saddr;
@@ -156,7 +150,7 @@ char *port_str;
 			return -1;
 		}
 		sin.sin_family = AF_INET; sin.sin_addr.s_addr = INADDR_ANY;
-		sin.sin_port = htons(atoi(port_str));
+		sin.sin_port = htons((unsigned short)atoi(port_str));
 		len = sizeof(sin);
 		saddr = (struct sockaddr *)&sin;
 	}
@@ -192,8 +186,7 @@ char *port_str;
   the original socket is always closed.
 */
 
-int try_accept(af_unix,s)
-int af_unix,s;
+int try_accept(int af_unix,int s)
 {
 	int len,c,i;
 	struct sockaddr_in sin;
@@ -218,9 +211,7 @@ int af_unix,s;
 	return c;
 }
 
-int try_connect(use_unix,host,port_str)
-int use_unix;
-char *host,*port_str;
+int try_connect(int use_unix,char *host,char *port_str)
 {
 	struct sockaddr_in sin;
 	struct sockaddr *saddr;
@@ -255,7 +246,7 @@ char *host,*port_str;
 				return -1;
 			}
 			bzero(&sin,sizeof(sin));
-			sin.sin_port = htons(atoi(port_str));
+			sin.sin_port = htons((unsigned short)atoi(port_str));
 			sin.sin_addr.s_addr = inet_addr(host);
 			if ( sin.sin_addr.s_addr != -1 ) {
 				sin.sin_family = AF_INET;
@@ -286,7 +277,7 @@ char *host,*port_str;
 }
 
 #if 0
-close_allconnections()
+void close_allconnections()
 {
 	int s;
 
@@ -297,8 +288,7 @@ close_allconnections()
 		close_connection(s);
 }
 
-close_connection(s)
-int s;
+void close_connection(int s)
 {
 	struct IOFP *r;
 
@@ -310,14 +300,13 @@ int s;
 	}
 }
 #else
-close_allconnections()
+void close_allconnections()
 {
 	shutdown_all();
 }
 #endif
 
-free_iofp(s)
-int s;
+void free_iofp(int s)
 {
 	struct IOFP *r;
 
@@ -331,10 +320,7 @@ int s;
 
 #define LBUFSIZ BUFSIZ*10
 
-int get_iofp(s1,af_sock,is_server)
-int s1;
-char *af_sock;
-int is_server;
+int get_iofp(int s1,char *af_sock,int is_server)
 {
 	int i;
 	unsigned char c,rc;
@@ -373,15 +359,15 @@ int is_server;
 		c = 0xff;
 	if ( is_server ) {
 		/* server : write -> read */
-		write_char(iofp[i].out,&c); ox_flush_stream_force(i);
-		read_char(iofp[i].in,&rc);
+		write_char((FILE *)iofp[i].out,&c); ox_flush_stream_force(i);
+		read_char((FILE *)iofp[i].in,&rc);
 	} else {
 		/* client : read -> write */
-		read_char(iofp[i].in,&rc);
+		read_char((FILE *)iofp[i].in,&rc);
 		/* special care for a failure of spawing a server */
 		if ( rc !=0 && rc != 1 && rc != 0xff )
 			return -1;	
-		write_char(iofp[i].out,&c); ox_flush_stream_force(i);
+		write_char((FILE *)iofp[i].out,&c); ox_flush_stream_force(i);
 	}
 	iofp[i].conv = c == rc ? 0 : 1;
 	if ( af_sock && af_sock[0] ) {
@@ -410,14 +396,12 @@ void init_socket()
 }
 #endif
 
-get_fd(index)
-int index;
+int get_fd(int index)
 {
 	return iofp[index].s;
 }
 
-get_index(fd)
-int fd;
+int get_index(int fd)
 {
 	int i;
 

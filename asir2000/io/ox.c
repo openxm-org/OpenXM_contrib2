@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.10 2000/11/08 08:02:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.11 2001/08/03 08:50:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,11 +53,6 @@
 #include "ox.h"
 
 #define ISIZ sizeof(int)
-
-void ox_flush_stream(),ox_write_int(),ox_write_cmo();
-void ox_read_int(),ox_read_cmo();
-void mclist_to_mc();
-void ox_read_local();
 
 extern Obj VOIDobj;
 
@@ -94,6 +89,8 @@ static struct mathcap my_mc;
 static struct mathcap *remote_mc;
 static int remote_mc_len;
 
+void mclist_to_mc(LIST mclist,struct mathcap *mc);
+
 #if defined(VISUAL)
 /* XXX : mainly used in engine2000/io.c, but declared here */
 HANDLE hStreamNotify,hStreamNotify_Ack;
@@ -107,8 +104,7 @@ void cleanup_events()
 }
 #endif
 
-void ox_resetenv(s)
-char *s;
+void ox_resetenv(char *s)
 {
 #if defined(VISUAL)
 	cleanup_events();
@@ -158,7 +154,7 @@ void create_my_mathcap(char *system)
 	NODE n,n0;
 	int i,k;
 	STRING str;
-	LIST sname,smlist,oxlist,cmolist,asirlist,oxtag,oxasir,r;
+	LIST sname,smlist,oxlist,cmolist,asirlist,oxasir,r;
 	USINT tag,t,t1;
 
 	if ( my_mathcap )
@@ -251,8 +247,8 @@ void store_remote_mathcap(int s,MATHCAP mc)
 
 void mclist_to_mc(LIST mclist,struct mathcap *mc)
 {
-	int id,l,i,j;
-	NODE n,t,oxcmo,ox,cap;
+	int l,i,j;
+	NODE n,t,oxcmo,cap;
 	int *ptr;
 
 	/*
@@ -298,9 +294,7 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc)
 	}
 }
 
-int check_sm_by_mc(s,smtag)
-int s;
-unsigned int smtag;
+int check_sm_by_mc(int s,unsigned int smtag)
 {
 	struct mathcap *rmc;
 	int nsmcap,i;
@@ -323,9 +317,7 @@ unsigned int smtag;
 		return 1;
 }
 
-int check_by_mc(s,oxtag,cmotag)
-int s;
-unsigned int oxtag,cmotag;
+int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
 {
 	struct mathcap *rmc;
 	int noxcap,ncap,i,j;
@@ -363,18 +355,21 @@ void begin_critical() {
 void end_critical() {
 	critical_when_signal = 0;
 	if ( ox_usr1_sent ) {
-		ox_usr1_sent = 0; ox_usr1_handler();
+		ox_usr1_sent = 0;
+#if !defined(VISUAL)
+	ox_usr1_handler(SIGUSR1);
+#else
+	ox_usr1_handler(0);
+#endif
 	}
 	if ( ox_int_received ) {
 		ox_int_received = 0; int_handler(SIGINT);
 	}
 }
 
-void ox_usr1_handler(sig)
-int sig;
+void ox_usr1_handler(int sig)
 {
 	extern jmp_buf env;
-	unsigned int cmd;
 
 #if !defined(VISUAL)
 	signal(SIGUSR1,ox_usr1_handler);
@@ -390,11 +385,6 @@ int sig;
 
 void clear_readbuffer()
 {
-	char c;
-	fd_set r,w,e;
-	struct timeval interval;
-	int n,sock;
-
 #if defined(linux)
 	iofp[0].in->_IO_read_ptr = iofp[0].in->_IO_read_end;
 #elif defined(__FreeBSD__)
@@ -441,7 +431,7 @@ void wait_for_data(int s)
 #if defined(VISUAL)
 		sock = iofp[s].in->fildes;
 		FD_ZERO(&r);
-		FD_SET(sock,&r);
+		FD_SET((unsigned int)sock,&r);
 		select(0,&r,NULL,NULL,NULL);
 #else
 		sock = fileno(iofp[s].in);
@@ -496,7 +486,7 @@ void ox_send_local_data(int s,Obj p)
 	ox_write_int(s,OX_LOCAL_OBJECT_ASIR);
 	ox_write_int(s,ox_serial++);
 	ox_write_int(s,ASIR_OBJ);
-	saveobj(iofp[s].out,p);
+	saveobj((FILE *)iofp[s].out,p);
 	ox_flush_stream(s);
 	end_critical();
 }
@@ -507,12 +497,12 @@ void ox_send_local_ring(int s,VL vl)
 	ox_write_int(s,OX_LOCAL_OBJECT_ASIR);
 	ox_write_int(s,ox_serial++);
 	ox_write_int(s,ASIR_VL);
-	savevl(iofp[s].out,vl);
+	savevl((FILE *)iofp[s].out,vl);
 	ox_flush_stream(s);
 	end_critical();
 }
 
-unsigned int ox_recv(int s, int *id, pointer *p)
+unsigned int ox_recv(int s, int *id, Obj *p)
 {
 	unsigned int cmd,serial;
 	USINT ui;
@@ -525,7 +515,7 @@ unsigned int ox_recv(int s, int *id, pointer *p)
 		case OX_COMMAND:
 			ox_read_int(s,&cmd);
 			MKUSINT(ui,cmd);
-			*p = (pointer)ui;
+			*p = (Obj)ui;
 			break;
 		case OX_DATA:
 			ox_read_cmo(s,p);
@@ -541,9 +531,7 @@ unsigned int ox_recv(int s, int *id, pointer *p)
 	return serial;
 }
 
-void ox_get_result(s,rp)
-int s;
-Obj *rp;
+void ox_get_result(int s,Obj *rp)
 {
 	int id;
 	Obj obj,r;
@@ -552,7 +540,7 @@ Obj *rp;
 	level = 0;
 	r = 0;
 	do {
-		ox_recv(s,&id,(pointer *)&obj);
+		ox_recv(s,&id,&obj);
 		if ( id == OX_COMMAND ) {
 			switch ( ((USINT)obj)->body ) {
 				case SM_beginBlock:
@@ -570,13 +558,13 @@ Obj *rp;
 void ox_read_int(int s, int *n)
 {
 	ox_need_conv = iofp[s].conv;
-	read_int(iofp[s].in,n);
+	read_int((FILE *)iofp[s].in,n);
 }
 
 void ox_read_cmo(int s, Obj *rp)
 {
 	ox_need_conv = iofp[s].conv;
-	read_cmo(iofp[s].in,rp);
+	read_cmo((FILE *)iofp[s].in,rp);
 }
 
 void ox_read_local(int s, Obj *rp)
@@ -584,14 +572,14 @@ void ox_read_local(int s, Obj *rp)
 	int id;
 
 	ox_need_conv = iofp[s].conv;
-	read_int(iofp[s].in,&id);
+	read_int((FILE *)iofp[s].in,&id);
 	switch ( id ) {
 		case ASIR_VL:
-			loadvl(iofp[s].in);
+			loadvl((FILE *)iofp[s].in);
 			*rp = VOIDobj;
 			break;
 		case ASIR_OBJ:
-			loadobj(iofp[s].in,rp);
+			loadobj((FILE *)iofp[s].in,rp);
 			break;
 		default:
 			error("ox_read_local : unsupported id");
@@ -602,13 +590,13 @@ void ox_read_local(int s, Obj *rp)
 void ox_write_int(int s, int n)
 {
 	ox_need_conv = iofp[s].conv;
-	write_int(iofp[s].out,&n);
+	write_int((FILE *)iofp[s].out,&n);
 }
 
 void ox_write_cmo(int s, Obj obj)
 {
 	ox_need_conv = iofp[s].conv;
-	write_cmo(iofp[s].out,obj);
+	write_cmo((FILE *)iofp[s].out,obj);
 }
 
 int ox_check_cmo(int s, Obj obj)
@@ -693,8 +681,7 @@ int ox_check_cmo_dp(int s, DP p)
 	return 1;
 }
 
-void ox_flush_stream(s)
-int s;
+void ox_flush_stream(int s)
 {
 	if ( ox_batch )
 		return;
@@ -707,11 +694,10 @@ int s;
 		cflush(iofp[s].out);
 	else
 #endif
-	fflush(iofp[s].out);
+	fflush((FILE *)iofp[s].out);
 }
 
-void ox_flush_stream_force(s)
-int s;
+void ox_flush_stream_force(int s)
 {
 #if defined(VISUAL)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
@@ -722,5 +708,5 @@ int s;
 		cflush(iofp[s].out);
 	else
 #endif
-	fflush(iofp[s].out);
+	fflush((FILE *)iofp[s].out);
 }

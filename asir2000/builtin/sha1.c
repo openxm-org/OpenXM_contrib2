@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/sha1.c,v 1.2 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/sha1.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
 */
 /* Implementation of NIST's Secure Hash Algorithm (FIPS 180)
 * Lightly bummed for execution efficiency.
@@ -335,12 +335,12 @@ static void nist_guts(int file_flag, /* Input from memory, or from stream? */
       if (nread < 64)   /* Partial block? */
         {
           nbits = nread << 3;         /* Length: bits */
-          if ((lo_length += nbits) < nbits)
+          if ((int)(lo_length += nbits) < nbits)
             hi_length++;        /* 64-bit integer */
 
           if (nread < 64 && ! padded)  /* Append a single bit */
             {
-              d.B[nread++] = 0x80; /* Using up next byte */
+              d.B[nread++] = (char)0x80; /* Using up next byte */
               padded = TRUE;     /* Single bit once */
             }
           for (i = nread; i < 64; i++) /* Pad with nulls */

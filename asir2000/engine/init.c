@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.11 2001/06/07 04:54:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.12 2001/09/03 07:01:06 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -191,34 +191,28 @@ extern double gctime;
 double suspend_start;
 double suspended_time=0;
 
-void get_eg(p)
-struct oEGT *p;
+void get_eg(struct oEGT *p)
 {
 	p->exectime = get_clock() - gctime - suspended_time; p->gctime = gctime;
 }
 
-void init_eg(eg)
-struct oEGT *eg;
+void init_eg(struct oEGT *eg)
 {
 	bzero((char *)eg,sizeof(struct oEGT));
 }
 
-void add_eg(base,start,end)
-struct oEGT *base,*start,*end;
+void add_eg(struct oEGT *base,struct oEGT *start,struct oEGT *end)
 {
 	base->exectime += end->exectime - start->exectime;
 	base->gctime += end->gctime - start->gctime;
 }
 
-void print_eg(item,eg)
-char *item;
-struct oEGT *eg;
+void print_eg(char *item,struct oEGT *eg)
 {
 	printf("%s=(%.4g,%.4g)",item,eg->exectime,eg->gctime);
 }
 
-void print_split_eg(start,end)
-struct oEGT *start,*end;
+void print_split_eg(struct oEGT *start,struct oEGT *end)
 {
 	struct oEGT base;
 
@@ -226,8 +220,7 @@ struct oEGT *start,*end;
 	printf("(%.4g,%.4g)",base.exectime,base.gctime);
 }
 
-void print_split_e(start,end)
-struct oEGT *start,*end;
+void print_split_e(struct oEGT *start,struct oEGT *end)
 {
 	struct oEGT base;
 
@@ -303,8 +296,7 @@ int get_lprime(index)
 	return lprime[index];
 }
 
-void create_new_lprimes(index)
-int index;
+void create_new_lprimes(int index)
 {
 	int count,p,i,j,d;
 

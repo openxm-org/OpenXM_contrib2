@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.11 2001/08/20 09:03:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.12 2001/08/22 09:19:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -242,8 +242,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 	}
 }
 
-static void asir_executeFunction(serial)
-int serial;
+static void asir_executeFunction(int serial)
 { 
 	char *func;
 	int argc;

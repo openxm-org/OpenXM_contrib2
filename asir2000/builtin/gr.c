@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.35 2001/09/18 00:56:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.36 2001/10/01 01:58:02 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,98 +60,22 @@
 #define INLINE
 #endif
 
-#define NEXTVL(r,c) \
-if(!(r)){NEWVL(r);(c)=(r);}else{NEWVL(NEXT(c));(c)=NEXT(c);}
-
 #define HMAG(p) (p_mag(BDY(p)->c))
 
-struct dp_pairs {
-	int dp1, dp2;
-	DL lcm;
-	int sugar;
-	struct dp_pairs *next;
-};
+#define NEWDP_pairs ((DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 
-typedef struct dp_pairs *DP_pairs;
-
-#define NEWDPP(a) ((a)=(DP_pairs)MALLOC(sizeof(struct dp_pairs)))
-
-#define NEXTDPP(r,c) \
-if(!(r)){NEWDPP(r);(c)=(r);}else{NEWDPP(NEXT(c));(c)=NEXT(c);}
+static DP_pairs collect_pairs_of_hdlcm( DP_pairs d1, DP_pairs *prest );
+double get_rtime();	
 
 struct oEGT eg_nf,eg_nfm;
 struct oEGT eg_znfm,eg_pz,eg_np,eg_ra,eg_mc,eg_gc;
 int TP,NBP,NMP,NFP,NDP,ZR,NZR;
-
-#define NEWDP_pairs ((DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 
 extern int (*cmpdl)();
 extern int do_weyl;
 
 extern DP_Print;
 
-void dptoca(DP,unsigned int **);
-void _tf_to_vect_compress(NODE,DL *,CDP *);
-NODE mul_dllist(DL,DP);
-void dp_imul_d(DP,Q,DP *);
-void print_stat(void);
-void init_stat(void);
-int dp_load_t(int,DP *);
-void dp_load(int,DP *);
-void dp_save(int,Obj,char *);
-void dp_make_flaglist(LIST *);
-void dp_set_flag(Obj,Obj);
-int membercheck(NODE,NODE);
-int gbcheck(NODE);
-int dl_redble(DL,DL);
-NODE remove_reducibles(NODE,int);
-NODE updbase(NODE,int);
-DP_pairs criterion_F(DP_pairs);
-int criterion_2(int,int);
-static DP_pairs collect_pairs_of_hdlcm(DP_pairs,DP_pairs *);
-DP_pairs criterion_M(DP_pairs);
-DP_pairs criterion_B(DP_pairs,int);
-DP_pairs newpairs(NODE,int);
-DP_pairs updpairs(DP_pairs,NODE,int);
-void _dp_nf(NODE,DP,DP *,int,DP *);
-void _dp_nf_z(NODE,DP,DP *,int,int,DP *);
-NODE gb_mod(NODE,int);
-NODE gbd(NODE,int,NODE,NODE);
-NODE gb(NODE,int,NODE);
-NODE gb_f4(NODE);
-NODE gb_f4_mod(NODE,int);
-NODE gb_f4_mod_old(NODE,int);
-DP_pairs minp(DP_pairs, DP_pairs *);
-void minsugar(DP_pairs,DP_pairs *,DP_pairs *);
-NODE append_one(NODE,int);
-void reducebase_dehomo(NODE,NODE *);
-int newps_mod(DP,int);
-int newps_nosave(DP,int,NODE);
-int newps(DP,int,NODE);
-void reduceall_mod(NODE,int,NODE *);
-void reduceall(NODE,NODE *);
-NODE NODE_sortbi(NODE,int);
-NODE NODE_sortbi_insert(int, NODE,int);
-NODE NODE_sortb(NODE,int);
-NODE NODE_sortb_insert(DP,NODE,int);
-void prim_part(DP,int,DP *);
-void setup_arrays(NODE,int,NODE *);
-int validhc(P,int,NODE);
-void vlminus(VL,VL,VL *);
-void printsubst(NODE);
-void makesubst(VL,NODE *);
-void pltovl(LIST,VL *);
-void printdl(DL);
-int DPPlength(DP_pairs);
-void dp_gr_mod_main(LIST,LIST,Num,int,struct order_spec *,LIST *);
-void dp_gr_main(LIST,LIST,Num,int,int,struct order_spec *,LIST *);
-void dp_f4_main(LIST,LIST,struct order_spec *,LIST *);
-void dp_f4_mod_main(LIST,LIST,int,struct order_spec *,LIST *);
-double get_rtime();
-void _dpmod_to_vect(DP,DL *,int *);
-void dp_to_vect(DP,DL *,Q *);
-NODE dp_dllist(DP f);
-NODE symb_merge(NODE,NODE,int),_symb_merge(NODE,NODE,int);
 extern int dp_nelim;
 extern int dp_fcoeffs;
 static DP *ps,*psm;
@@ -191,9 +115,11 @@ int doing_f4;
 NODE TraceList;
 NODE AllTraceList;
 
-INLINE int eqdl(nv,dl1,dl2)
-int nv;
-DL dl1,dl2;
+void Pox_cmo_rpc(NODE,Obj *);
+void Pox_rpc(NODE,Obj *);
+void Pox_pop_local(NODE,Obj *);
+
+INLINE int eqdl(int nv,DL dl1,DL dl2)
 {
 	int i;
 	int *b1,*b2;
@@ -211,10 +137,7 @@ DL dl1,dl2;
 
 /* b[] should be cleared */
 
-void _dpmod_to_vect(f,at,b)
-DP f;
-DL *at;
-int *b;
+void _dpmod_to_vect(DP f,DL *at,int *b)
 {
 	int i,nv;
 	MP m;
@@ -228,10 +151,7 @@ int *b;
 
 /* [t,findex] -> tf -> compressed vector */
 
-void _tf_to_vect_compress(tf,at,b)
-NODE tf;
-DL *at;
-CDP *b;
+void _tf_to_vect_compress(NODE tf,DL *at,CDP *b)
 {
 	int i,j,k,nv,len;
 	DL t,s,d1;
@@ -261,10 +181,7 @@ CDP *b;
 	*b = r;
 }
 
-void dp_to_vect(f,at,b)
-DP f;
-DL *at;
-Q *b;
+void dp_to_vect(DP f,DL *at,Q *b)
 {
 	int i,nv;
 	MP m;
@@ -276,8 +193,7 @@ Q *b;
 	}
 }
 
-NODE dp_dllist(f)
-DP f;
+NODE dp_dllist(DP f)
 {
 	MP m;
 	NODE mp,mp0;
@@ -292,9 +208,7 @@ DP f;
 	return mp0;
 }
 
-NODE mul_dllist(d,f)
-DL d;
-DP f;
+NODE mul_dllist(DL d,DP f)
 {
 	MP m;
 	NODE mp,mp0;
@@ -318,8 +232,7 @@ DP f;
 	return mp0;
 }
 
-void pdl(f)
-NODE f;
+void pdl(NODE f)
 {
 	while ( f ) {
 		printdl(BDY(f)); f = NEXT(f);
@@ -328,12 +241,7 @@ NODE f;
 	printf("\n");
 }
 
-void dp_gr_main(f,v,homo,modular,field,ord,rp)
-LIST f,v;
-Num homo;
-int modular,field;
-struct order_spec *ord;
-LIST *rp;
+void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *ord,LIST *rp)
 {
 	int i,mindex,m,nochk;
 	struct order_spec ord1;
@@ -433,12 +341,7 @@ LIST *rp;
 		fprintf(asir_out,"\nMax_mag=%d\n",Max_mag);
 }
 
-void dp_gr_mod_main(f,v,homo,m,ord,rp)
-LIST f,v;
-Num homo;
-int m;
-struct order_spec *ord;
-LIST *rp;
+void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp)
 {
 	struct order_spec ord1;
 	VL fv,vv,vc;
@@ -503,15 +406,11 @@ extern struct oEGT eg_red_mod;
 	MKLIST(*rp,r0);
 }
 
-void dp_f4_main(f,v,ord,rp)
-LIST f,v;
-struct order_spec *ord;
-LIST *rp;
+void dp_f4_main(LIST f,LIST v,struct order_spec *ord,LIST *rp)
 {
-	int i,mindex,m,nochk,homogen;
-	struct order_spec ord1;
+	int homogen;
 	VL fv,vv,vc;
-	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
+	NODE fd,fd0,r,r0,t,x,s,xx;
 
 	dp_fcoeffs = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
@@ -539,17 +438,12 @@ LIST *rp;
 	MKLIST(*rp,r0);
 }
 
-void dp_f4_mod_main(f,v,m,ord,rp)
-LIST f,v;
-int m;
-struct order_spec *ord;
-LIST *rp;
+void dp_f4_mod_main(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 {
-	int i,homogen;
-	struct order_spec ord1;
+	int homogen;
 	VL fv,vv,vc;
 	DP b,c,c1;
-	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
+	NODE fd,fd0,r,r0,t,x,s,xx;
 
 	dp_fcoeffs = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
@@ -586,23 +480,21 @@ LIST *rp;
 	print_stat();
 }
 
-NODE gb_f4(f)
-NODE f;
+NODE gb_f4(NODE f)
 {
-	int i,j,k,nh,row,col,nv;
+	int i,k,nh,row,col,nv;
 	NODE r,g,gall;
 	NODE s,s0;
 	DP_pairs d,dm,dr,t;
-	DP h,nf,nf1,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
+	DP nf,nf1,f2,sp,sd,tdp;
 	MP mp,mp0;
-	NODE blist,bt,nt;
+	NODE blist,bt;
 	DL *ht,*at;
 	MAT mat,nm;
-	int *colstat;
 	int *rind,*cind;
 	int rank,nred;
 	Q dn;
-	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim;
+	struct oEGT tmp0,tmp1,eg_split_symb;
 	extern struct oEGT eg_mod,eg_elim,eg_chrem,eg_gschk,eg_intrat,eg_symb;
 
 	init_eg(&eg_mod); init_eg(&eg_elim); init_eg(&eg_chrem);
@@ -709,18 +601,16 @@ NODE f;
 
 unsigned int **psca;
 
-NODE gb_f4_mod(f,m)
-NODE f;
-int m;
+NODE gb_f4_mod(NODE f,int m)
 {
 	int i,j,k,nh,row,col,nv;
 	NODE r,g,gall;
 	NODE s,s0;
 	DP_pairs d,dm,dr,t;
-	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
+	DP nf,sp,sd,tdp;
 	MP mp,mp0;
-	NODE blist,bt,nt,bt1,dt,rhtlist;
-	DL *ht,*at,*st;
+	NODE blist,bt,bt1,dt;
+	DL *at,*st;
 	int **spmat;
 	CDP *redmat;
 	int *colstat,*w,*w1;
@@ -728,7 +618,7 @@ int m;
 	int *indred,*isred;
 	CDP ri;
 	int pscalen;
-	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim1,eg_split_elim2;
+	struct oEGT tmp0,tmp1,eg_split_symb,eg_split_elim1,eg_split_elim2;
 	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
 
 	/* initialize coeffcient array list of ps[] */
@@ -930,23 +820,21 @@ int m;
 	return g;
 }
 
-NODE gb_f4_mod_old(f,m)
-NODE f;
-int m;
+NODE gb_f4_mod_old(NODE f,int m)
 {
 	int i,j,k,nh,row,col,nv;
 	NODE r,g,gall;
 	NODE s,s0;
 	DP_pairs d,dm,dr,t;
-	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
+	DP nf,f2,sp,sd,sdm,tdp;
 	MP mp,mp0;
-	NODE blist,bt,nt;
+	NODE blist,bt;
 	DL *ht,*at,*st;
 	int **spmat,**redmat;
 	int *colstat,*w;
 	int rank,nred,nsp,nonzero,spcol;
 	int *indred,*isred,*ri;
-	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim1,eg_split_elim2;
+	struct oEGT tmp0,tmp1,eg_split_symb,eg_split_elim1,eg_split_elim2;
 	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
 
 	init_eg(&eg_symb); init_eg(&eg_elim1); init_eg(&eg_elim2);
@@ -1100,8 +988,7 @@ int m;
 	return g;
 }
 
-int DPPlength(n)
-DP_pairs n;
+int DPPlength(DP_pairs n)
 {
 	int i;
 
@@ -1109,8 +996,7 @@ DP_pairs n;
 	return i;
 }
 
-void printdl(dl)
-DL dl;
+void printdl(DL dl)
 {
 	int i;
 
@@ -1120,9 +1006,7 @@ DL dl;
 	fprintf(asir_out,"%d>>",dl->d[i]);
 }
 
-void pltovl(l,vl)
-LIST l;
-VL *vl;
+void pltovl(LIST l,VL *vl)
 {
 	NODE n;
 	VL r,r0;
@@ -1135,9 +1019,7 @@ VL *vl;
 	*vl = r0;
 }
 
-void makesubst(v,s)
-VL v;
-NODE *s;
+void makesubst(VL v,NODE *s)
 {
 	NODE r,r0;
 	Q q;
@@ -1156,8 +1038,7 @@ NODE *s;
 	*s = r0;
 }
 
-void printsubst(s)
-NODE s;
+void printsubst(NODE s)
 {
 	fputc('[',asir_out);
 	while ( s ) {
@@ -1171,8 +1052,7 @@ NODE s;
 	fprintf(asir_out,"]\n"); return;
 }
 
-void vlminus(v,w,d)
-VL v,w,*d;
+void vlminus(VL v,VL w,VL *d)
 {
 	int i,j,n,m;
 	V *va,*wa;
@@ -1202,10 +1082,7 @@ VL v,w,*d;
 	*d = r0;
 }
 
-int validhc(a,m,s)
-P a;
-int m;
-NODE s;
+int validhc(P a,int m,NODE s)
 {
 	P c,c1;
 	V v;
@@ -1220,9 +1097,7 @@ NODE s;
 	return c1 ? 1 : 0;
 }
 
-void setup_arrays(f,m,r)
-NODE f,*r;
-int m;
+void setup_arrays(NODE f,int m,NODE *r)
 {
 	int i;
 	NODE s,s0,f0;
@@ -1250,7 +1125,7 @@ int m;
 		STRING fname;
 		LIST input;
 		NODE arg,t,t1;
-		Obj dmy;
+		Obj obj;
 	
 		t = 0;
 		for ( i = psn-1; i >= 0; i-- ) {
@@ -1263,7 +1138,7 @@ int m;
 			STOQ(OXCheck,q);
 			MKSTR(fname,"register_input");
 			arg = mknode(3,q,fname,input);
-			Pox_cmo_rpc(arg,&dmy);
+			Pox_cmo_rpc(arg,&obj);
 		} else if ( OXCheck < 0 ) {
 			MKNODE(AllTraceList,input,0);
 		}
@@ -1275,9 +1150,7 @@ int m;
 	*r = s0;
 }
 
-void prim_part(f,m,r)
-DP f,*r;
-int m;
+void prim_part(DP f,int m,DP *r)
 {
 	P d,t;
 
@@ -1303,10 +1176,7 @@ int m;
 	}
 }
 
-NODE /* of DP */ NODE_sortb_insert( newdp, nd, dec )
-DP newdp;
-NODE /* of DP */ nd;
-int dec;
+NODE /* of DP */ NODE_sortb_insert( DP newdp, NODE /* of DP */ nd, int dec )
 {
 	register NODE last, p;
 	register DL newdl = BDY(newdp)->dl;
@@ -1325,9 +1195,7 @@ int dec;
 	return nd;
 }
 
-NODE NODE_sortb( node, dec )
-NODE node;
-int dec;
+NODE NODE_sortb( NODE node, int dec )
 {
 	register NODE nd, ans;
 
@@ -1336,10 +1204,7 @@ int dec;
 	return ans;
 }
 
-NODE /* of index */ NODE_sortbi_insert( newdpi, nd, dec )
-int newdpi;
-NODE /* of index */ nd;
-int dec;
+NODE /* of index */ NODE_sortbi_insert( int newdpi, NODE /* of index */ nd, int dec )
 {
 	register NODE last, p;
 	register DL newdl = psh[newdpi];
@@ -1358,9 +1223,7 @@ int dec;
 	return nd;
 }
 
-NODE NODE_sortbi( node, dec )
-NODE node;
-int dec;
+NODE NODE_sortbi( NODE node, int dec )
 {
 	register NODE nd, ans;
 
@@ -1369,9 +1232,7 @@ int dec;
 	return ans;
 }
 
-void reduceall(in,h)
-NODE in;
-NODE *h;
+void reduceall(NODE in,NODE *h)
 {
 	NODE r,t,top;
 	int n,i,j;
@@ -1424,10 +1285,7 @@ NODE *h;
 		fprintf(asir_out,"\n");
 }
 
-void reduceall_mod(in,m,h)
-NODE in;
-int m;
-NODE *h;
+void reduceall_mod(NODE in,int m,NODE *h)
 {
 	NODE r,t,top;
 	int n,i,j;
@@ -1472,10 +1330,7 @@ NODE *h;
 		fprintf(asir_out,"\n");
 }
 
-int newps(a,m,subst)
-DP a;
-int m;
-NODE subst;
+int newps(DP a,int m,NODE subst)
 {
 	if ( m && !validhc(!a?0:BDY(a)->c,m,subst) )
 		return -1;
@@ -1507,7 +1362,7 @@ NODE subst;
 		NODE arg;
 		Q q1,q2;
 		STRING fname;
-		Obj dmy;
+		Obj obj;
 	
 		/* reverse the TraceList */
 		tn = TraceList;
@@ -1520,7 +1375,7 @@ NODE subst;
 			MKSTR(fname,"check_trace");
 			STOQ(psn,q2);
 			arg = mknode(5,q1,fname,a,q2,trace);
-			Pox_cmo_rpc(arg,&dmy);
+			Pox_cmo_rpc(arg,&obj);
 		} else if ( OXCheck < 0 ) {
 			STOQ(psn,q1);
 			tn = mknode(2,q1,trace);
@@ -1534,10 +1389,7 @@ NODE subst;
 	return psn++;
 }
 
-int newps_nosave(a,m,subst)
-DP a;
-int m;
-NODE subst;
+int newps_nosave(DP a,int m,NODE subst)
 {
 	if ( m && !validhc(!a?0:BDY(a)->c,m,subst) )
 		return -1;
@@ -1559,9 +1411,7 @@ NODE subst;
 	return psn++;
 }
 
-int newps_mod(a,m)
-DP a;
-int m;
+int newps_mod(DP a,int m)
 {
 	if ( psn == pslen ) {
 		pslen *= 2;
@@ -1576,8 +1426,7 @@ int m;
 	return psn++;
 }
 
-void reducebase_dehomo(f,g)
-NODE f,*g;
+void reducebase_dehomo(NODE f,NODE *g)
 {
 	int n,i,j,k;
 	int *r;
@@ -1623,9 +1472,7 @@ NODE f,*g;
 	*g = top;
 }
 
-NODE append_one(f,n)
-NODE f;
-int n;
+NODE append_one(NODE f,int n)
 {
 	NODE t;
 
@@ -1638,8 +1485,7 @@ int n;
 	}
 }
 
-DP_pairs minp( d, prest )
-DP_pairs d, *prest;
+DP_pairs minp( DP_pairs d, DP_pairs *prest )
 {
 	register DP_pairs m, ml, p, l;
 	register DL lcm;
@@ -1664,9 +1510,7 @@ DP_pairs d, *prest;
 	return m;
 }
 
-void minsugar(d,dm,dr)
-DP_pairs d;
-DP_pairs *dm,*dr;
+void minsugar(DP_pairs d,DP_pairs *dm,DP_pairs *dr)
 {
 	int msugar;
 	DP_pairs t,dm0,dr0,dmt,drt;
@@ -1691,18 +1535,15 @@ DP_pairs *dm,*dr;
 	*dm = dm0; *dr = dr0;
 }
 
-NODE gb(f,m,subst)
-NODE f;
-int m;
-NODE subst;
+NODE gb(NODE f,int m,NODE subst)
 {
 	int i,nh,prev,mag;
 	NODE r,g,gall;
-	DP_pairs d,d1;
+	DP_pairs d;
 	DP_pairs l;
 	DP h,nf,nfm,dp1,dp2;
 	MP mp;
-	struct oEGT tnf0,tnf1,tnfm0,tnfm1,tpz0,tpz1,tsp0,tsp1,tspm0,tspm1,tnp0,tnp1,tmp0,tmp1;
+	struct oEGT tnf0,tnf1,tnfm0,tnfm1,tpz0,tpz1,tnp0,tnp1;
 	int skip_nf_flag;
 	double t_0;
 	Q q;
@@ -1741,7 +1582,6 @@ NODE subst;
 			if ( Demand ) {
 				if ( dp_load_t(psn,&nf) ) {
 					skip_nf_flag = 1;
-					tnf1=tsp1;
 					goto skip_nf;
 				} else {
 					skip_nf_flag = 0;
@@ -1822,16 +1662,14 @@ skip_nf:
 	return g;
 }
 
-NODE gb_mod(f,m)
-NODE f;
-int m;
+NODE gb_mod(NODE f,int m)
 {
 	int i,nh,prev;
 	NODE r,g,gall;
-	DP_pairs d,d1;
+	DP_pairs d;
 	DP_pairs l;
 	DP h,nf;
-	struct oEGT tnfm0,tnfm1,tspm0,tspm1,tmp0,tmp1,tpz0,tpz1;
+	struct oEGT tnfm0,tnfm1,tpz0,tpz1;
 
 	prev = 1;
 	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
@@ -1886,13 +1724,9 @@ int m;
 	return g;
 }
 
-DP_pairs updpairs( d, g, t)
-DP_pairs d;
-NODE /* of index */ g;
-int t;
+DP_pairs updpairs( DP_pairs d, NODE /* of index */ g, int t)
 {
 	register DP_pairs d1, dd, nd;
-	struct oEGT tup0,tup1;
 	int dl,dl1;
 
 	if ( !g ) return d;
@@ -1927,9 +1761,7 @@ int t;
 	return d;
 }
 
-DP_pairs newpairs( g, t )
-NODE /* of index */ g;
-register int t;
+DP_pairs newpairs( NODE /* of index */ g, int t )
 {
 	register NODE r;
 	register DL tdl = psh[t];
@@ -1955,9 +1787,7 @@ register int t;
 	return last;
 }
 
-DP_pairs criterion_B( d, s )
-register DP_pairs d;
-int s;
+DP_pairs criterion_B( DP_pairs d, int s )
 {
 	register DP_pairs dd, p;
 	register DL tij, t = psh[s], dltmp;
@@ -1980,8 +1810,7 @@ int s;
 	return dd;
 }
 
-DP_pairs criterion_M( d1 )
-DP_pairs d1;
+DP_pairs criterion_M( DP_pairs d1 )
 {
 	register DP_pairs dd, e, d3, d2, p;
 	register DL itdl, jtdl;
@@ -2023,8 +1852,7 @@ DP_pairs d1;
 	return dd;
 }
 
-static DP_pairs collect_pairs_of_hdlcm( d1, prest )
-DP_pairs d1, *prest;
+static DP_pairs collect_pairs_of_hdlcm( DP_pairs d1, DP_pairs *prest )
 {
 	register DP_pairs w, p, r, s;
 	register DL ti;
@@ -2048,8 +1876,7 @@ DP_pairs d1, *prest;
 	return w;
 }
 
-int criterion_2( dp1, dp2 )
-int dp1, dp2;
+int criterion_2( int dp1, int dp2 )
 {
 	register int i, *d1, *d2;
 
@@ -2059,8 +1886,7 @@ int dp1, dp2;
 	return 1;
 }
 
-DP_pairs criterion_F( d1 )
-DP_pairs d1;
+DP_pairs criterion_F( DP_pairs d1 )
 {
 	DP_pairs rest, head;
 	register DP_pairs last, p, r, w;
@@ -2083,18 +1909,14 @@ DP_pairs d1;
 	return head;
 }
 
-NODE updbase(g,t)
-NODE g;
-int t;
+NODE updbase(NODE g,int t)
 {
 	g = remove_reducibles(g,t);
 	g = append_one(g,t);
 	return g;
 }
 
-NODE /* of index */ remove_reducibles( nd, newdp )
-NODE /* of index */ nd;
-int newdp;
+NODE /* of index */ remove_reducibles(NODE /* of index */ nd, int newdp )
 {
 	register DL dl, dln;
 	register NODE last, p, head;
@@ -2115,8 +1937,7 @@ int newdp;
 	return head;
 }
 
-int dl_redble( dl1, dl2 )
-DL dl1, dl2;
+int dl_redble(DL dl1,DL dl2)
 {
 	register int n, *d1, *d2;
 
@@ -2125,8 +1946,7 @@ DL dl1, dl2;
 	return 1;
 }
 
-int dl_weight(dl)
-DL dl;
+int dl_weight(DL dl)
 {
 	int n,w,i;
 
@@ -2136,8 +1956,7 @@ DL dl;
 	return w;
 }
 
-int gbcheck(f)
-NODE f;
+int gbcheck(NODE f)
 {
 	int i;
 	NODE r,g,gall;
@@ -2175,8 +1994,7 @@ NODE f;
 	return 1;
 }
 
-int membercheck(f,x)
-NODE f,x;
+int membercheck(NODE f,NODE x)
 {
 	DP g;
 	struct oEGT tmp0,tmp1;
@@ -2203,8 +2021,7 @@ NODE f,x;
 	return 1;
 }
 
-void dp_set_flag(name,value)
-Obj name,value;
+void dp_set_flag(Obj name,Obj value)
 {
 	char *n;
 	int v;
@@ -2259,8 +2076,7 @@ Obj name,value;
 		OXCheck = v;
 }
 
-void dp_make_flaglist(list)
-LIST *list;
+void dp_make_flaglist(LIST *list)
 {
 	Q v;
 	STRING name,path;
@@ -2295,10 +2111,7 @@ LIST *list;
 
 #define DELIM '/'
 
-void dp_save(index,p,prefix)
-int index;
-Obj p;
-char *prefix;
+void dp_save(int index,Obj p,char *prefix)
 {
 	FILE *fp;
 	char path[BUFSIZ];
@@ -2312,9 +2125,7 @@ char *prefix;
 	savevl(fp,VC); saveobj(fp,p); fclose(fp);
 }
 
-void dp_load(index,p)
-int index;
-DP *p;
+void dp_load(int index,DP *p)
 {
 	FILE *fp;
 	char path[BUFSIZ];
@@ -2329,9 +2140,7 @@ DP *p;
 	}
 }
 
-int dp_load_t(index,p)
-int index;
-DP *p;
+int dp_load_t(int index,DP *p)
 {
 	FILE *fp;
 	char path[BUFSIZ];
@@ -2371,10 +2180,7 @@ extern int GenTrace;
 extern NODE TraceList;
 extern int mpi_mag;
 
-void dp_mulc_d(p,c,r)
-DP p;
-P c;
-DP *r;
+void dp_mulc_d(DP p,P c,DP *r)
 {
 	if ( Dist && BDY(Dist)
 		&& HMAG(p) > mpi_mag
@@ -2387,12 +2193,7 @@ DP *r;
 	}
 }
 
-void _dp_nf(b,g,ps,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int full;
-DP *rp;
+void _dp_nf(NODE b,DP g,DP *ps,int full,DP *rp)
 {
 	DP u,p,d,s,t,mult;
 	P coef;
@@ -2450,25 +2251,15 @@ DP *rp;
 	*rp = d;
 }
 
-void _dp_nf_z(b,g,ps,full,multiple,r)
-NODE b;
-DP g;
-DP *ps;
-int full,multiple;
-DP *r;
+void _dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *r)
 {
-	DP u,dp,rp,t,t1,t2,red,shift;
+	DP u,dp,rp,t,t1,red,shift;
 	Q dc,rc,dcq,rcq,cont,hr,hred,cr,cred,mcred,c,gcd,cq;
-	N gn,tn,cn;
 	NODE l;
-	MP m,mr;
 	int hmag,denom;
 	int sugar,psugar;
-	NODE dist;
 	STRING imul;
-	int kara_bit;
-	double get_rtime();	
-	double t_0,t_00,tt,ttt,t_p,t_m,t_g,t_a;
+	double t_0,tt,t_p,t_m,t_g,t_a;
 	LIST hist;
 	NODE node;
 	Q rcred,mrcred;
@@ -2497,9 +2288,9 @@ DP *r;
 				tt = get_rtime(); t_p += tt-t_0;
 
 				dp_subd(rp,red,&shift);
-				dp_mulc_d(rp,cr,&t);
+				dp_mulc_d(rp,(P)cr,&t);
 				chsgnp((P)cred,(P *)&mcred);
-				dp_mulc_d(red,mcred,&t1);
+				dp_mulc_d(red,(P)mcred,&t1);
 				muld(CO,shift,t1,&t1);
 				addd(CO,t,t1,&u);
 				t_m += get_rtime()-tt;
@@ -2594,10 +2385,7 @@ final:
 
 void imulv();
 
-void dp_imul_d(p,q,rp)
-DP p;
-Q q;
-DP *rp;
+void dp_imul_d(DP p,Q q,DP *rp)
 {
 	int nsep,ndist,i,j,k,l,n;
 	double t0,t1,t2;
@@ -2606,8 +2394,8 @@ DP *rp;
 	VECT c,cs,ri;
 	VECT *r;
 	MP m;
-	NODE tn,dist,n0,n1,n2;
-	Obj dmy;
+	NODE tn,dist,n0;
+	Obj obj;
 	STRING imul;
 	extern LIST Dist;
 
@@ -2628,7 +2416,7 @@ DP *rp;
 	r = (VECT *)CALLOC(nsep,sizeof(VECT *));
 	for ( i = 0, tn = dist, b = BDY(cs); i < ndist; i++, tn = NEXT(tn) ) {
 		n0 = mknode(4,BDY(tn),imul,b[i],q);
-		Pox_rpc(n0,&dmy);
+		Pox_rpc(n0,&obj);
 	}
 	t1 = get_rtime();
 	im_t_s += t1 - t0;
@@ -2636,7 +2424,7 @@ DP *rp;
 	t1 = get_rtime();
 	for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
 		MKNODE(n0,BDY(tn),0);
-		Pox_pop_local(n0,&r[i]);
+		Pox_pop_local(n0,&obj); r[i] = (VECT)obj;
 		if ( OID(r[i]) == O_ERR ) {
 			printexpr(CO,(Obj)r[i]);
 			error("dp_imul_d : aborted");
@@ -2653,10 +2441,7 @@ DP *rp;
 	dp_vtod(s,p,rp);
 }
 
-void imulv(w,c,rp)
-VECT w;
-Q c;
-VECT *rp;
+void imulv(VECT w,Q c,VECT *rp)
 {
 	int n,i;
 	VECT r;
@@ -2667,9 +2452,7 @@ VECT *rp;
 		mulq((Q)BDY(w)[i],(Q)c,(Q *)&BDY(r)[i]);
 }
 
-void dptoca(p,rp)
-DP p;
-unsigned int **rp;
+void dptoca(DP p,unsigned int **rp)
 {
 	int i;
 	MP m;

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.30 2001/10/05 10:23:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.31 2001/10/06 00:55:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -134,10 +134,7 @@ void ox_main(int argc,char **argv) {
 	int id;
 	int cmd;
 	Obj obj;
-	USINT ui;
 	ERR err;
-	LIST list;
-	NODE n,n1;
 	unsigned int serial;
 	int ret;
 	extern char LastError[];
@@ -522,11 +519,9 @@ static void asir_executeFunction(int serial)
 	int argc;
 	FUNC f;
 	Obj result;
-	VL vl;
 	NODE n,n1; 
 	STRING fname;
 	char *path;
-	USINT ui;
 	ERR err;
 	Obj arg;
 	static char buf[BUFSIZ];
@@ -641,7 +636,6 @@ Obj asir_peek_one() {
 
 void ox_asir_init(int argc,char **argv)
 {
-	int tmp;
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
 	extern int read_exec_file;
@@ -652,6 +646,9 @@ void ox_asir_init(int argc,char **argv)
 	FILE *ifp;
 	char *homedir;
 	char *ptr;
+#if !defined(VISUAL)
+	int tmp;
+#endif
 
 #if !defined(VISUAL) && !MPI
 	do_server_in_X11 = 1; /* XXX */
@@ -714,23 +711,24 @@ void ox_asir_init(int argc,char **argv)
 void ox_io_init() {
 	unsigned char c,rc;
 	extern int I_am_server;
-	int i;
 
 	/* XXX : ssh forwards stdin to a remote host */
 #if !defined(VISUAL)
+	int i;
 #if defined(linux) || defined(__NeXT__) || defined(ultrix)
 #include <sys/param.h>
-			close(0);
-			for ( i = 5; i < NOFILE; i++ )
-				close(i);
+
+	close(0);
+	for ( i = 5; i < NOFILE; i++ )
+		close(i);
 #else
 #include <sys/resource.h>
-			struct rlimit rl;
+	struct rlimit rl;
 
-			getrlimit(RLIMIT_NOFILE,&rl);
-			close(0);
-			for ( i = 5; i < rl.rlim_cur; i++ )
-				close(i);
+	getrlimit(RLIMIT_NOFILE,&rl);
+	close(0);
+	for ( i = 5; i < rl.rlim_cur; i++ )
+		close(i);
 #endif
 #endif
 

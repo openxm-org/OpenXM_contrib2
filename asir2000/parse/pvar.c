@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.4 2000/09/21 09:19:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.5 2000/12/05 01:24:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,7 @@
 NODE PVSS;
 
 void mkpvs()
- {
+{
 	VS pvs;
 
 	pvs = (VS)MALLOC(sizeof(struct oVS));
@@ -63,8 +63,7 @@ void mkpvs()
 	CPVS = pvs; 
 }
 
-void pushpvs(f)
-FUNC f;
+void pushpvs(FUNC f)
 {
 	VS pvs;
 	NODE node;
@@ -103,8 +102,7 @@ void poppvs() {
 
 int gdef;
 
-int makepvar(str)
-char *str;
+int makepvar(char *str)
 {
 	int c;
 
@@ -125,8 +123,7 @@ char *str;
 
 extern FUNC parse_targetf;
 
-int searchpvar(str)
-char *str;
+int searchpvar(char *str)
 {
 	VS pvs;
 	int i;
@@ -141,10 +138,7 @@ char *str;
 		return i;
 }
 
-int getpvar(pvs,str,searchonly)
-VS pvs;
-char *str;
-int searchonly;
+int getpvar(VS pvs,char *str,int searchonly)
 {
 	struct oPV *va;
 	PV v;
@@ -215,8 +209,7 @@ void restorepvs()
 	nextbplevel = saved_nextbplevel;
 }
 
-void storeans(p)
-pointer p;
+void storeans(pointer p)
 {
 	if ( APVS->asize == APVS->n )
 		reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
@@ -224,10 +217,7 @@ pointer p;
 }
 
 #if 0
-pointer evalpv(id,tree,f)
-int id;
-NODE2 tree;
-pointer f;
+pointer evalpv(int id,NODE2 tree,pointer f)
 {
 	pointer a,val = 0;
 	pointer *addr;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.5 2000/11/09 01:51:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.6 2001/08/22 09:19:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -139,7 +139,6 @@ int plot(NODE arg)
 
 int memory_plot(NODE arg,LIST *bytes)
 {
-	int id;
 	NODE n;
 	struct canvas tmp_can;
 	struct canvas *can;
@@ -213,9 +212,9 @@ int plotover(NODE arg)
 	can = canvas[index];
 	if ( !can->window )
 		return -1;
-	get_vars_recursive(formula,&vl);
+	get_vars_recursive((Obj)formula,&vl);
 	for ( vl0 = vl; vl0; vl0 = NEXT(vl0) )
-		if ( vl0->v->attr == V_IND )
+		if ( vl0->v->attr == (pointer)V_IND )
 			if ( vl->v != can->vx && vl->v != can->vy )
 				return -1;
 	current_can = can;
@@ -329,7 +328,6 @@ int arrayplot(NODE arg)
 	LIST xrange,wsize;
 	char *wname;
 	NODE n;
-	Q ret;
 	double ymax,ymin,dy,xstep;
 	Real *tab;
 	struct canvas *can;
@@ -381,16 +379,14 @@ int arrayplot(NODE arg)
 		else if ( t < -MAXSHORT )
 			pa[ix].y = -MAXSHORT;
 		else
-			pa[ix].y = t;
+			pa[ix].y = (long)t;
 	}
 	plot_print(display,can);
 	copy_to_canvas(can);
 	return id;
 }
 
-ifplot_resize(can,spos,epos)
-struct canvas *can;
-POINT spos,epos;
+void ifplot_resize(struct canvas *can,POINT spos,POINT epos)
 {
 	struct canvas *ncan;
 	struct canvas fakecan;
@@ -399,7 +395,6 @@ POINT spos,epos;
 	Q s,t;
 	int new;
 	int w,h,m;
-	Q ret;
 
 	if ( XC(spos) < XC(epos) && YC(spos) < YC(epos) ) {
 		if ( can->precise && !can->wide ) {
@@ -465,15 +460,12 @@ POINT spos,epos;
 	}
 }
 
-plot_resize(can,spos,epos)
-struct canvas *can;
-POINT spos,epos;
+void plot_resize(struct canvas *can,POINT spos,POINT epos)
 {
 	struct canvas *ncan;
 	Q dx,dx2,xmin,xmax,xmid;
-	double dy,dy2,ymin,ymax,ymid;
+	double dy,ymin,ymax,ymid;
 	Q sx,ex,cw,ten,two;
-	double sy,ey;
 	Q s,t;
 	int new;
 	int w,h,m;
@@ -525,11 +517,10 @@ POINT spos,epos;
 	}
 }
 
-ifplotmain(can)
-struct canvas *can;
+void ifplotmain(struct canvas *can)
 {
 	int width,height;
-	double **tabe,*tabeb;
+	double **tabe;
 	int i;
 
 	width = can->width; height = can->height;
@@ -543,8 +534,7 @@ struct canvas *can;
 	define_cursor(can->window,normalcur);
 }
 
-qifplotmain(can)
-struct canvas *can;
+void qifplotmain(struct canvas *can)
 {
 	int width,height;
 	char **tabe,*tabeb;

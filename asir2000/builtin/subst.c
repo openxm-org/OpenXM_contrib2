@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.4 2001/09/05 04:43:58 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,7 +96,7 @@ void Psubst_quote(arg,rp)
 NODE arg;
 QUOTE *rp;
 {
-	QUOTE a,h;
+	QUOTE h;
 	FNODE fn;
 	Obj g;
 	LIST l;

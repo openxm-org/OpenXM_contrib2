@@ -1,25 +1,21 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/gfsn.c,v 1.3 2001/09/03 01:06:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/gfspn.c,v 1.4 2001/09/03 07:01:06 noro Exp $ */
 
 #include "ca.h"
 #include "base.h"
 
 UM current_mod_gfsn;
 
-void setmod_gfsn(p)
-UM p;
+void setmod_gfsn(UM p)
 {
 	current_mod_gfsn = p;
 }
 
-void getmod_gfsn(up)
-UM *up;
+void getmod_gfsn(UM *up)
 {
 	*up = current_mod_gfsn;
 }
 
-void simpgfsn(n,r)
-GFSN n;
-GFSN *r;
+void simpgfsn(GFSN n,GFSN *r)
 {
 	UM t,q;
 
@@ -38,9 +34,7 @@ GFSN *r;
 
 #define NZGFSN(a) ((a)&&(OID(a)==O_N)&&(NID(a)==N_GFSN))
 
-void ntogfsn(a,b)
-Obj a;
-GFSN *b;
+void ntogfsn(Obj a,GFSN *b)
 {
 	UM t;
 	GFS c;
@@ -48,7 +42,7 @@ GFSN *b;
 	if ( !a || (OID(a)==O_N && NID(a) == N_GFSN) )
 		*b = (GFSN)a;
 	else if ( OID(a) == O_N && (NID(a) == N_GFS || NID(a) == N_Q) ) {
-		ntogfs((Num)a,&c);
+		ntogfs((Obj)a,&c);
 		if ( !b )
 			*b = 0;
 		else {
@@ -59,14 +53,11 @@ GFSN *b;
 		error("ntogfsn : invalid argument");
 }
 
-void addgfsn(a,b,c)
-GFSN a,b;
-GFSN *c;
+void addgfsn(GFSN a,GFSN b,GFSN *c)
 {
 	UM t,q;
 	GFSN z;
 	int d;
-	MQ qq;
 
 	ntogfsn((Obj)a,&z); a = z; ntogfsn((Obj)b,&z); b = z;
 	if ( !a )
@@ -84,9 +75,7 @@ GFSN *c;
 	}
 }
 
-void subgfsn(a,b,c)
-GFSN a,b;
-GFSN *c;
+void subgfsn(GFSN a,GFSN b,GFSN *c)
 {
 	UM t,q;
 	GFSN z;
@@ -109,9 +98,7 @@ GFSN *c;
 
 extern int up_lazy;
 
-void mulgfsn(a,b,c)
-GFSN a,b;
-GFSN *c;
+void mulgfsn(GFSN a,GFSN b,GFSN *c)
 {
 	UM t,q;
 	GFSN z;
@@ -130,9 +117,7 @@ GFSN *c;
 	}
 }
 
-void divgfsn(a,b,c)
-GFSN a,b;
-GFSN *c;
+void divgfsn(GFSN a,GFSN b,GFSN *c)
 {
 	GFSN z;
 	int d;
@@ -159,9 +144,7 @@ GFSN *c;
 	}
 }
 
-void invgfsn(b,c)
-GFSN b;
-GFSN *c;
+void invgfsn(GFSN b,GFSN *c)
 {
 	GFSN z;
 	int d;
@@ -184,8 +167,7 @@ GFSN *c;
 	}
 }
 
-void chsgngfsn(a,c)
-GFSN a,*c;
+void chsgngfsn(GFSN a,GFSN *c)
 {
 	GFSN z;
 	int d;
@@ -204,10 +186,7 @@ GFSN a,*c;
 	}
 }
 
-void pwrgfsn(a,b,c)
-GFSN a;
-Q b;
-GFSN *c;
+void pwrgfsn(GFSN a,Q b,GFSN *c)
 {
 	GFSN z;
 	UM t,x,y,q;
@@ -250,8 +229,7 @@ GFSN *c;
 	}
 }
 
-int cmpgfsn(a,b)
-GFSN a,b;
+int cmpgfsn(GFSN a,GFSN b)
 {
 	GFSN z;
 
@@ -267,10 +245,9 @@ GFSN a,b;
 		return compsfum(BDY(a),BDY(b));
 }
 
-void randomgfsn(r)
-GFSN *r;
+void randomgfsn(GFSN *r)
 {
-	int i,d;
+	int d;
 	UM t;
 
 	if ( !current_mod_gfsn )

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.1.1.1 2000/11/22 06:20:13 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -71,8 +71,6 @@ HBRUSH ClearBrush,DrawBrush;
 
 #define LABELWIDTH 150
 
-void alloc_pixmap(),reset_busy(),set_busy(),create_brushes(), draw_frame0(), pline();
-
 int search_canvas()
 {
 	int i;
@@ -94,16 +92,14 @@ int search_active_canvas()
 	return -1;
 }
 
-void create_canvas(can)
-struct canvas *can;
+void create_canvas(struct canvas *can)
 {
 	alloc_pixmap(can);
 	can->real_can = can;
 	PostThreadMessage(MainThread,WM_APP,can->index,0);
 }
 
-void destroy_canvas(can)
-struct canvas *can;
+void destroy_canvas(struct canvas *can)
 {
 	if ( can == current_can ) {
 		reset_busy(can); current_can = 0;
@@ -111,8 +107,7 @@ struct canvas *can;
 	canvas[can->index] = 0;
 }
 
-void clear_pixmap(can)
-struct canvas *can;
+void clear_pixmap(struct canvas *can)
 {
 	RECT rect;
 
@@ -122,8 +117,7 @@ struct canvas *can;
 	FillRect(can->pix,&rect,ClearBrush);
 }
 
-void alloc_pixmap(can)
-struct canvas *can;
+void alloc_pixmap(struct canvas *can)
 {
 	HDC pix;
 	HBITMAP bm;
@@ -145,22 +139,17 @@ struct canvas *can;
 	current_can = can;
 }
 
-void copy_to_canvas(can)
-struct canvas *can;
+void copy_to_canvas(struct canvas *can)
 {
 	PostThreadMessage(MainThread,WM_APP,can->index,0);
 }
 
-void copy_subimage(subcan,can,pos)
-struct canvas *subcan,*can;
-POINT pos;
+void copy_subimage(struct canvas *subcan,struct canvas *can,POINT pos)
 {
 	BitBlt(can->pix,pos.x,pos.y,subcan->width,subcan->height,subcan->pix,0,0,SRCCOPY);
 }
 
-void draw_wideframe(can,d)
-struct canvas *can;
-DRAWABLE d;
+void draw_wideframe(struct canvas *can,DRAWABLE d)
 {
 	struct canvas fakecan;
 	double xmid,ymid,dx,dy;
@@ -192,9 +181,7 @@ void create_brushes()
 		DrawBrush = CreateSolidBrush(0);
 }
 
-void draw_frame0(d,spos,epos)
-DRAWABLE d;
-POINT spos,epos;
+void draw_frame0(DRAWABLE d,POINT spos,POINT epos)
 {
 	RECT rect;
 	int ulx,uly,w,h;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up.c,v 1.3 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up.c,v 1.4 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -76,9 +76,7 @@ extern int lm_lazy;
 extern int current_ff;
 extern int GC_dont_gc;
 
-void monicup(a,b)
-UP a;
-UP *b;
+void monicup(UP a,UP *b)
 {
 	UP w;
 
@@ -91,9 +89,7 @@ UP *b;
 	}
 }
 
-void simpup(a,b)
-UP a;
-UP *b;
+void simpup(UP a,UP *b)
 {
 	int i,d;
 	UP c;
@@ -116,9 +112,7 @@ UP *b;
 	}
 }
 
-void simpnum(a,b)
-Num a;
-Num *b;
+void simpnum(Num a,Num *b)
 {
 	LM lm;
 	GF2N gf;
@@ -139,9 +133,7 @@ Num *b;
 		}
 }
 
-void uremp(p1,p2,rp)
-P p1,p2;
-P *rp;
+void uremp(P p1,P p2,P *rp)
 {
 	UP n1,n2,r;
 
@@ -154,9 +146,7 @@ P *rp;
 	}
 }
 
-void ugcdp(p1,p2,rp)
-P p1,p2;
-P *rp;
+void ugcdp(P p1,P p2,P *rp)
 {
 	UP n1,n2,r;
 
@@ -165,10 +155,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void reversep(p1,d,rp)
-P p1;
-Q d;
-P *rp;
+void reversep(P p1,Q d,P *rp)
 {
 	UP n1,r;
 
@@ -181,10 +168,7 @@ P *rp;
 	}
 }
 
-void invmodp(p1,d,rp)
-P p1;
-Q d;
-P *rp;
+void invmodp(P p1,Q d,P *rp)
 {
 	UP n1,r;
 
@@ -197,9 +181,7 @@ P *rp;
 	}
 }
 
-void addup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void addup(UP n1,UP n2,UP *nr)
 {
 	UP r,t;
 	int i,d1,d2;
@@ -228,9 +210,7 @@ UP *nr;
 	}
 }
 
-void subup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void subup(UP n1,UP n2,UP *nr)
 {
 	UP r;
 	int i,d1,d2,d;
@@ -263,9 +243,7 @@ UP *nr;
 	}
 }
 
-void chsgnup(n1,nr)
-UP n1;
-UP *nr;
+void chsgnup(UP n1,UP *nr)
 {
 	UP r;
 	int d1,i;
@@ -282,10 +260,7 @@ UP *nr;
 	}
 }
 
-void hybrid_mulup(ff,n1,n2,nr)
-int ff;
-UP n1,n2;
-UP *nr;
+void hybrid_mulup(int ff,UP n1,UP n2,UP *nr)
 {
 	if ( !n1 || !n2 )
 		*nr = 0;
@@ -302,10 +277,7 @@ UP *nr;
 		}
 }
 
-void hybrid_squareup(ff,n1,nr)
-int ff;
-UP n1;
-UP *nr;
+void hybrid_squareup(int ff,UP n1,UP *nr)
 {
 	if ( !n1 )
 		*nr = 0;
@@ -322,11 +294,7 @@ UP *nr;
 		}
 }
 
-void hybrid_tmulup(ff,n1,n2,d,nr)
-int ff;
-UP n1,n2;
-int d;
-UP *nr;
+void hybrid_tmulup(int ff,UP n1,UP n2,int d,UP *nr)
 {
 	if ( !n1 || !n2 )
 		*nr = 0;
@@ -343,9 +311,7 @@ UP *nr;
 		}
 }
 
-void mulup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void mulup(UP n1,UP n2,UP *nr)
 {
 	UP r;
 	Num *pc1,*pc,*c1,*c2,*c;
@@ -374,10 +340,7 @@ UP *nr;
 
 /* nr = c*n1 */
 
-void mulcup(c,n1,nr)
-Num c;
-UP n1;
-UP *nr;
+void mulcup(Num c,UP n1,UP *nr)
 {
 	int d;
 	UP r;
@@ -402,10 +365,7 @@ UP *nr;
 	}
 }
 
-void tmulup(n1,n2,d,nr)
-UP n1,n2;
-int d;
-UP *nr;
+void tmulup(UP n1,UP n2,int d,UP *nr)
 {
 	UP r;
 	Num *pc1,*pc,*c1,*c2,*c;
@@ -439,9 +399,7 @@ UP *nr;
 	}
 }
 
-void squareup(n1,nr)
-UP n1;
-UP *nr;
+void squareup(UP n1,UP *nr)
 {
 	UP r;
 	Num *c1,*c;
@@ -476,9 +434,7 @@ UP *nr;
 	}
 }
 
-void remup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void remup(UP n1,UP n2,UP *nr)
 {
 	UP w,r;
 
@@ -499,8 +455,7 @@ UP *nr;
 	}
 }
 
-void remup_destructive(n1,n2)
-UP n1,n2;
+void remup_destructive(UP n1,UP n2)
 {
 	Num *c1,*c2;
 	int d1,d2,i,j;
@@ -528,9 +483,7 @@ UP n1,n2;
 	n1->d = i;
 }
 
-void qrup(n1,n2,nq,nr)
-UP n1,n2;
-UP *nq,*nr;
+void qrup(UP n1,UP n2,UP *nq,UP *nr)
 {
 	UP w,r,q;
 	struct oUP t;
@@ -565,8 +518,7 @@ UP *nq,*nr;
 	}
 }
 
-void qrup_destructive(n1,n2)
-UP n1,n2;
+void qrup_destructive(UP n1,UP n2)
 {
 	Num *c1,*c2;
 	int d1,d2,i,j;
@@ -596,9 +548,7 @@ UP n1,n2;
 	n1->d = i;
 }
 
-void gcdup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void gcdup(UP n1,UP n2,UP *nr)
 {
 	UP w1,w2,t,r;
 	int d1,d2;
@@ -636,9 +586,7 @@ UP *nr;
 
 /* compute r s.t. a*r = 1 mod m */
 
-void extended_gcdup(a,m,r)
-UP a,m;
-UP *r;
+void extended_gcdup(UP a,UP m,UP *r)
 {
 	UP one,g1,g2,a1,a2,a3,b1,b2,b3,inv,quo,rem,t;
 	Num i;
@@ -659,10 +607,7 @@ UP *r;
 	mulup(b2,inv,r);
 }
 
-void reverseup(n1,d,nr)
-UP n1;
-int d;
-UP *nr;
+void reverseup(UP n1,int d,UP *nr)
 {
 	Num *c1,*c;
 	int i,d1;
@@ -686,10 +631,7 @@ UP *nr;
 	}
 }
 
-void invmodup(n1,d,nr)
-UP n1;
-int d;
-UP *nr;
+void invmodup(UP n1,int d,UP *nr)
 {
 	UP r;
 	Num s,t,u,hinv;
@@ -727,10 +669,7 @@ UP *nr;
 	}
 }
 
-void pwrup(n,e,nr)
-UP n;
-Q e;
-UP *nr;
+void pwrup(UP n,Q e,UP *nr)
 {
 	UP y,z,t;
 	N en,qn;
@@ -758,8 +697,7 @@ UP *nr;
 	}
 }
 
-int compup(n1,n2)
-UP n1,n2;
+int compup(UP n1,UP n2)
 {
 	int i,r;
 
@@ -781,10 +719,7 @@ UP n1,n2;
 	}
 }
 
-void kmulp(vl,n1,n2,nr)
-VL vl;
-P n1,n2;
-P *nr;
+void kmulp(VL vl,P n1,P n2,P *nr)
 {
 	UP b1,b2,br;
 
@@ -799,10 +734,7 @@ P *nr;
 	}
 }
 
-void ksquarep(vl,n1,nr)
-VL vl;
-P n1;
-P *nr;
+void ksquarep(VL vl,P n1,P *nr)
 {
 	UP b1,br;
 
@@ -817,12 +749,9 @@ P *nr;
 	}
 }
 
-void kmulup(n1,n2,nr)
-UP n1,n2,*nr;
+void kmulup(UP n1,UP n2,UP *nr)
 {
-	UP n,t,s,m,carry;
-	int d,d1,d2,len,i,l;
-	pointer *r,*r0;
+	int d1,d2;
 
 	if ( !n1 || !n2 ) {
 		*nr = 0; return;
@@ -834,8 +763,7 @@ UP n1,n2,*nr;
 		kmulupmain(n1,n2,nr);
 }
 
-void ksquareup(n1,nr)
-UP n1,*nr;
+void ksquareup(UP n1,UP *nr)
 {
 	int d1;
 	extern Q TWO;
@@ -850,26 +778,21 @@ UP n1,*nr;
 		ksquareupmain(n1,nr);
 }
 
-void copyup(n1,n2)
-UP n1,n2;
+void copyup(UP n1,UP n2)
 {
 	n2->d = n1->d;
 	bcopy((char *)n1->c,(char *)n2->c,(n1->d+1)*sizeof(Q));
 }
 
-void c_copyup(n,len,p)
-UP n;
-int len;
-pointer *p;
+void c_copyup(UP n,int len,pointer *p)
 {
 	if ( n )
 		bcopy((char *)COEF(n),(char *)p,MIN((DEG(n)+1),len)*sizeof(pointer));
 }
 
-void kmulupmain(n1,n2,nr)
-UP n1,n2,*nr;
+void kmulupmain(UP n1,UP n2,UP *nr)
 {
-	int d1,d2,h,len;
+	int d1,d2,h;
 	UP n1lo,n1hi,n2lo,n2hi,hi,lo,mid1,mid2,mid,s1,s2,t1,t2;
 
 	d1 = DEG(n1)+1; d2 = DEG(n2)+1; h = (MAX(d1,d2)+1)/2;
@@ -886,10 +809,9 @@ UP n1,n2,*nr;
 	addup(t1,t2,nr);
 }
 
-void ksquareupmain(n1,nr)
-UP n1,*nr;
+void ksquareupmain(UP n1,UP *nr)
 {
-	int d1,h,len;
+	int d1,h;
 	UP n1lo,n1hi,hi,lo,mid1,mid2,mid,s1,t1,t2;
 
 	d1 = DEG(n1)+1; h = (d1+1)/2;
@@ -904,9 +826,7 @@ UP n1,*nr;
 	addup(t1,t2,nr);
 }
 
-void rembymulup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void rembymulup(UP n1,UP n2,UP *nr)
 {
 	int d1,d2,d;
 	UP r1,r2,inv2,t,s,q;
@@ -935,13 +855,10 @@ UP *nr;
 	inv2 = inverse of reversep(n2) mod x^d
 */
 
-void hybrid_rembymulup_special(ff,n1,n2,inv2,nr)
-int ff;
-UP n1,n2,inv2;
-UP *nr;
+void hybrid_rembymulup_special(int ff,UP n1,UP n2,UP inv2,UP *nr)
 {
 	int d1,d2,d;
-	UP r1,t,s,q,u;
+	UP r1,t,s,q;
 
 	if ( !n2 )
 		error("hybrid_rembymulup : division by 0");
@@ -962,12 +879,10 @@ UP *nr;
 	}
 }
 
-void rembymulup_special(n1,n2,inv2,nr)
-UP n1,n2,inv2;
-UP *nr;
+void rembymulup_special(UP n1,UP n2,UP inv2,UP *nr)
 {
 	int d1,d2,d;
-	UP r1,t,s,q,u;
+	UP r1,t,s,q;
 
 	if ( !n2 )
 		error("rembymulup : division by 0");
@@ -990,13 +905,10 @@ UP *nr;
 
 /* *nr = n1*n2 mod x^d */
 
-void tkmulup(n1,n2,d,nr)
-UP n1,n2;
-int d;
-UP *nr;
+void tkmulup(UP n1,UP n2,int d,UP *nr)
 {
 	int m;
-	UP n1l,n1h,n2l,n2h,l,h,t,s,u,afo;
+	UP n1l,n1h,n2l,n2h,l,h,t,s,u;
 
 	if ( d < 0 )
 		error("tkmulup : invalid argument");
@@ -1026,10 +938,7 @@ UP *nr;
 
 /* n->n*x^d */
 
-void shiftup(n,d,nr)
-UP n;
-int d;
-UP *nr;
+void shiftup(UP n,int d,UP *nr)
 {
 	int dr;
 	UP r;
@@ -1044,9 +953,7 @@ UP *nr;
 	}
 }
 
-void fft_rembymulup_special(n1,n2,inv2,nr)
-UP n1,n2,inv2;
-UP *nr;
+void fft_rembymulup_special(UP n1,UP n2,UP inv2,UP *nr)
 {
 	int d1,d2,d;
 	UP r1,t,s,q,u;
@@ -1069,9 +976,7 @@ UP *nr;
 	}
 }
 
-void set_degreeup(n,d)
-UP n;
-int d;
+void set_degreeup(UP n,int d)
 {
 	int i;
 
@@ -1081,10 +986,7 @@ int d;
 
 /* n -> n0 + x^d n1 */
 
-void decompup(n,d,n0,n1)
-UP n;
-int d;
-UP *n0,*n1;
+void decompup(UP n,int d,UP *n0,UP *n1)
 {
 	int dn;
 	UP r0,r1;
@@ -1112,10 +1014,7 @@ UP *n0,*n1;
 
 /* n -> n mod x^d */
 
-void truncup(n1,d,nr)
-UP n1;
-int d;
-UP *nr;
+void truncup(UP n1,int d,UP *nr)
 {
 	int i;
 	UP r;
@@ -1137,8 +1036,7 @@ UP *nr;
 	}
 }
 
-int int_bits(t)
-int t;
+int int_bits(int t)
 {
 	int k;
 
@@ -1148,8 +1046,7 @@ int t;
 
 /* n is assumed to be LM or integer coefficient */
 
-int maxblenup(n)
-UP n;
+int maxblenup(UP n)
 {
 	int m,r,i,d;
 	Num *c;
@@ -1174,10 +1071,7 @@ UP n;
 	return r;
 }
 
-void uptofmarray(mod,n,f)
-int mod;
-UP n;
-ModNum *f;
+void uptofmarray(int mod,UP n,ModNum *f)
 {
 	int d,i;
 	unsigned int r;
@@ -1208,10 +1102,7 @@ ModNum *f;
 	}
 }
 
-void fmarraytoup(f,d,nr)
-ModNum *f;
-int d;
-UP *nr;
+void fmarraytoup(ModNum *f,int d,UP *nr)
 {
 	int i;
 	Q *c;
@@ -1234,10 +1125,7 @@ UP *nr;
 
 /* f[i]: an array of length n */
 
-void uiarraytoup(f,n,d,nr)
-unsigned int **f;
-int n,d;
-UP *nr;
+void uiarraytoup(unsigned int **f,int n,int d,UP *nr)
 {
 	int i,j;
 	unsigned int *fi;
@@ -1269,10 +1157,7 @@ UP *nr;
 	}
 }
 
-void adj_coefup(n,m,m2,nr)
-UP n;
-N m,m2;
-UP *nr;
+void adj_coefup(UP n,N m,N m2,UP *nr)
 {
 	int d;
 	Q *c,*cr;
@@ -1304,10 +1189,7 @@ UP *nr;
 
 /* n is assumed to have positive integer coefficients. */
 
-void remcup(n,mod,nr)
-UP n;
-N mod;
-UP *nr;
+void remcup(UP n,N mod,UP *nr)
 {
 	int i,d;
 	Q *c,*cr;
@@ -1338,9 +1220,7 @@ UP *nr;
 
 void fft_mulup_main(UP,UP,int,UP *);
 
-void fft_mulup(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void fft_mulup(UP n1,UP n2,UP *nr)
 {
 	int d1,d2,d,b1,b2,h;
 	UP n1lo,n1hi,n2lo,n2hi,lo,hi,t1,t2,mid1,mid2,mid,s1,s2;
@@ -1374,10 +1254,7 @@ UP *nr;
 	}
 }
 
-void trunc_fft_mulup(n1,n2,dbd,nr)
-UP n1,n2;
-int dbd;
-UP *nr;
+void trunc_fft_mulup(UP n1,UP n2,int dbd,UP *nr)
 {
 	int d1,d2,b1,b2,m;
 	UP n1l,n1h,n2l,n2h,l,h,t,s,u;
@@ -1414,11 +1291,9 @@ UP *nr;
 	}
 }
 
-void fft_squareup(n1,nr)
-UP n1;
-UP *nr;
+void fft_squareup(UP n1,UP *nr)
 {
-	int d1,d,h,len,b1;
+	int d1,d,h,b1;
 	UP n1lo,n1hi,hi,lo,mid1,mid2,mid,s1,t1,t2;
 
 	if ( !n1 )
@@ -1455,9 +1330,7 @@ UP *nr;
  * n1 == n2 => squaring
  */
 
-void fft_mulup_main(n1,n2,dbd,nr)
-UP n1,n2;
-UP *nr;
+void fft_mulup_main(UP n1,UP n2,int dbd,UP *nr)
 {
 	ModNum *f1,*f2,*w,*fr;
 	ModNum **frarray,**fa;
@@ -1526,13 +1399,7 @@ UP *nr;
 #if 0
 /* inefficient version */
 
-void crup(f,d,mod,index,m,r)
-ModNum **f;
-int d;
-int *mod;
-int index;
-N m;
-UP *r;
+void crup(ModNum **f,int d,int *mod,int index,N m,UP *r)
 {
 	N *cof,*c;
 	int *inv;
@@ -1571,13 +1438,7 @@ UP *r;
 #else
 /* improved version */
 
-void crup(f,d,mod,index,m,r)
-ModNum **f;
-int d;
-int *mod;
-int index;
-N m;
-UP *r;
+void crup(ModNum **f,int d,int *mod,int index,N m,UP *r)
 {
 	N cof,c,t,w,w1;
 	struct oN fc;
@@ -1637,19 +1498,13 @@ UP *r;
  * return: n1*n2 mod Primes[modind[0]]*.prime...*Primes[modind[nmod-1]].prime
  */
 
-void fft_mulup_specialmod_main(n1,n2,dbd,modind,nmod,nr)
-UP n1,n2;
-int dbd;
-int *modind;
-int nmod;
-UP *nr;
+void fft_mulup_specialmod_main(UP n1,UP n2,int dbd,int *modind,int nmod,UP *nr)
 {
 	ModNum *f1,*f2,*w,*fr;
-	ModNum **frarray,**fa;
+	ModNum **frarray;
 	N m,m1,m2;
 	unsigned int *modarray;
-	int d1,d2,dmin,i,mod,root,d,cond,bound;
-	UP r;
+	int d1,d2,dmin,i,root,d,cond,bound;
 
 	if ( !n1 || !n2 ) {
 		*nr = 0; return;

@@ -45,21 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.3 2000/08/22 05:04:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.4 2001/08/22 09:19:21 noro Exp $ 
 */
 #include "ca.h"
+#include "parse.h"
 #include "ifplot.h"
 #include <math.h>
 #if PARI
 #include "genpari.h"
 #endif
 
-double usubstrp(P,double);
-
-void calc(tab,can,nox)
-double **tab;
-struct canvas *can;
-int nox;
+void calc(double **tab,struct canvas *can,int nox)
 {
 	double x,y,xmin,ymin,xstep,ystep;
 	int ix,iy;
@@ -84,19 +80,19 @@ int nox;
 		for( iy = 0, y = ymin; iy < h ; iy++, y += ystep )
 			tab[ix][iy] = usubstrp(g,y);
 #endif
-		BDY(rx) = x; substr(CO,0,fr,vx,x?(P)rx:0,&t); devalr(CO,t,&g);
+		BDY(rx) = x; substr(CO,0,fr,vx,x?(Obj)rx:0,&t);
+		devalr(CO,t,&g);
 		if ( !nox ) marker(can,DIR_X,ix);
 		for( iy = 0, y = ymin; iy < h ; iy++, y += ystep ) {
 			BDY(ry) = y;
-			substr(CO,0,g,vy,y?(P)ry:0,&t); devalr(CO,t,&s);
+			substr(CO,0,g,vy,y?(Obj)ry:0,&t);
+			devalr(CO,t,&s);
 			tab[ix][iy] = ToReal(s);
 		}
 	}
 }
 
-double usubstrp(p,r)
-P p;
-double r;
+double usubstrp(P p,double r)
 {
 	double t;
 	DCP dc;
@@ -119,16 +115,12 @@ double r;
 	return t;
 }
 
-void qcalc(tab,can)
-char **tab;
-struct canvas *can;
+void qcalc(char **tab,struct canvas *can)
 {
-	Q dx,dy,w,h,xstep,ystep,c,q1,q2;
+	Q dx,dy,w,h,xstep,ystep,c,q1;
 	P g,g1,f1,f2,x,y,t,s;
-	DCP dc;
 	int ix,iy;
 	int *a,*pa;
-	char *px;
 	VECT ss;
 
 	
@@ -148,7 +140,7 @@ struct canvas *can;
 			for ( iy = 0; iy < can->height; iy++ )
 				tab[ix][iy] = 1;
 		else if ( !NUM(g1) ) {
-			strum(CO,g1,&ss); seproot(ss,0,can->height,a);
+			sturmseq(CO,g1,&ss); seproot(ss,0,can->height,a);
 			for ( iy = 0, pa = a; iy < can->height; iy++, pa++ )
 				if ( *pa < 0 || (*(pa+1) >= 0 && (*pa > *(pa+1))) )
 					tab[ix][iy] = 1;
@@ -162,7 +154,7 @@ struct canvas *can;
 			for ( ix = 0; ix < can->width; ix++ )
 				tab[ix][iy] = 1;
 		else if ( !NUM(g1) ) {
-			strum(CO,g1,&ss); seproot(ss,0,can->width,a);
+			sturmseq(CO,g1,&ss); seproot(ss,0,can->width,a);
 			for ( ix = 0, pa = a; ix < can->width; ix++, pa++ )
 				if ( *pa < 0 || (*(pa+1) >= 0 && (*pa > *(pa+1))) )
 					tab[ix][iy] = 1;
@@ -170,10 +162,7 @@ struct canvas *can;
 	}
 }
 
-strum(vl,p,rp)
-VL vl;
-P p;
-VECT *rp;
+void sturmseq(VL vl,P p,VECT *rp)
 {
 	P g1,g2,q,r,s;
 	P *t;
@@ -214,10 +203,7 @@ VECT *rp;
 	*rp = ret;	
 }
 
-seproot(s,min,max,ar)
-VECT s;
-int min,max;
-int *ar;
+void seproot(VECT s,int min,int max,int *ar)
 {
 	P f;
 	P *ss;
@@ -257,9 +243,7 @@ int *ar;
 	seproot(s,k,j,ar);
 }
 
-numch(s,n,a0)
-VECT s;
-Q n,a0;
+int numch(VECT s,Q n,Q a0)
 {
 	int len,i,c;
 	Q a;
@@ -277,10 +261,7 @@ Q n,a0;
 	return c;
 }
 
-usubstqp(p,r,v)
-P p;
-Q r;
-Q *v;
+void usubstqp(P p,Q r,Q *v)
 {
 	Q d,d1,a,b,t;
 	DCP dc;
@@ -303,8 +284,7 @@ Q *v;
 	}
 }
 
-void plotcalc(can)
-struct canvas *can;
+void plotcalc(struct canvas *can)
 {
 	double x,xmin,xstep,ymax,ymin,dy;
 	int ix;
@@ -325,7 +305,8 @@ struct canvas *can;
 	for( ix = 0, x = xmin; ix < w ; ix++, x += xstep ) {
 		/* full substitution */
 		BDY(rx) = x;
-		substr(CO,0,fr,can->vx,x?(P)rx:0,&s); devalr(CO,(Obj)s,&t);
+		substr(CO,0,fr,can->vx,x?(Obj)rx:0,&s);
+		devalr(CO,(Obj)s,&t);
 		if ( t && (OID(t)!=O_N || NID((Num)t)!=N_R) )
 			error("plotcalc : invalid evaluation");
 		tab[ix] = ToReal((Num)t);	
@@ -361,6 +342,6 @@ struct canvas *can;
 		else if ( t < -MAXSHORT )
 			YC(pa[ix]) = -MAXSHORT;
 		else
-			YC(pa[ix]) = t;
+			YC(pa[ix]) = (long)t;
 	}
 }

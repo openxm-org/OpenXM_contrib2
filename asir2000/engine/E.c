@@ -45,17 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.6 2001/05/02 09:03:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.7 2001/06/07 04:54:40 noro Exp $ 
 */
 #include "ca.h"
 
-void henmv(vl,vn,f,g0,h0,a0,b0,lg,lh,lg0,lh0,q,k,gp,hp)
-VL vl;
-VN vn;
-P f,g0,h0,a0,b0,lg,lh,lg0,lh0;
-Q q;
-int k;
-P *gp,*hp;
+void henmv(VL vl,VN vn,P f,P g0,P h0,P a0,P b0,P lg,P lh,P lg0,P lh0,Q q,int k,P *gp,P *hp)
 {
 	P g1,h1,a1,b1;
 	N qn;
@@ -66,13 +60,7 @@ P *gp,*hp;
 	henmvmain(vl,vn,f,g1,h1,b1,a1,lg,lh,q,q2,k,gp,hp);
 }
 
-void henmvmain(vl,vn,f,fi0,fi1,gi0,gi1,l0,l1,mod,mod2,k,fr0,fr1)
-VL vl;
-VN vn;
-P f,fi0,fi1,gi0,gi1,l0,l1;
-Q mod,mod2;
-int k;
-P *fr0,*fr1;
+void henmvmain(VL vl,VN vn,P f,P fi0,P fi1,P gi0,P gi1,P l0,P l1,Q mod,Q mod2,int k,P *fr0,P *fr1)
 {
 	V v;
 	int n,i,j;
@@ -164,13 +152,7 @@ END:
 	output : gr1 * fr0 + gr0 * fr1 = 1 mod qr; ( qr = p^(2^(k-1)) )
 */
 
-void henzq(f,i0,fi0,i1,fi1,p,k,fr0p,fr1p,gr0p,gr1p,qrp)
-P f;
-UM fi0,fi1;
-int p,k;
-P i0,i1;
-P *fr0p,*fr1p,*gr0p,*gr1p;
-Q *qrp;
+void henzq(P f,P i0,UM fi0,P i1,UM fi1,int p,int k,P *fr0p,P *fr1p,P *gr0p,P *gr1p,Q *qrp)
 {
 	N qn;
 	Q q,qq,q2;
@@ -263,11 +245,7 @@ Q *qrp;
 	*fr0p = f0; *fr1p = f1; *gr0p = g0; *gr1p = g1; *qrp = q;
 }
 
-void henzq1(g,h,bound,gcp,hcp,qp)
-P g,h;
-Q bound;
-P *gcp,*hcp;
-Q *qp;
+void henzq1(P g,P h,Q bound,P *gcp,P *hcp,Q *qp)
 {
 	V v;
 	Q f,q,q1;
@@ -355,10 +333,7 @@ Q *qp;
 	}
 }
 
-void addm2p(vl,mod,mod2,n1,n2,nr)
-VL vl;
-Q mod,mod2;
-P n1,n2,*nr;
+void addm2p(VL vl,Q mod,Q mod2,P n1,P n2,P *nr)
 {
 	P t;
 
@@ -369,10 +344,7 @@ P n1,n2,*nr;
 		cm2p(mod,mod2,t,nr); 
 }
 
-void subm2p(vl,mod,mod2,n1,n2,nr)
-VL vl;
-Q mod,mod2;
-P n1,n2,*nr;
+void subm2p(VL vl,Q mod,Q mod2,P n1,P n2,P *nr)
 {
 	P t;
 
@@ -383,10 +355,7 @@ P n1,n2,*nr;
 		cm2p(mod,mod2,t,nr); 
 }
 
-void mulm2p(vl,mod,mod2,n1,n2,nr)
-VL vl;
-Q mod,mod2;
-P n1,n2,*nr;
+void mulm2p(VL vl,Q mod,Q mod2,P n1,P n2,P *nr)
 {
 	P t;
 
@@ -397,9 +366,7 @@ P n1,n2,*nr;
 		cm2p(mod,mod2,t,nr); 
 }
 
-void cmp(mod,p,pr)
-Q mod;
-P p,*pr;
+void cmp(Q mod,P p,P *pr)
 {
 	P t;
 	DCP dc,dcr,dcr0;
@@ -426,9 +393,7 @@ P p,*pr;
 	}
 }
 
-void cm2p(mod,m,p,pr)
-Q mod,m;
-P p,*pr;
+void cm2p(Q mod,Q m,P p,P *pr)
 {
 	P t;
 	DCP dc,dcr,dcr0;
@@ -455,9 +420,7 @@ P p,*pr;
 	}
 }
 
-void addm2q(mod,mod2,n1,n2,nr)
-Q mod,mod2;
-Q n1,n2,*nr;
+void addm2q(Q mod,Q mod2,Q n1,Q n2,Q *nr)
 {
 	Q t;
 
@@ -468,9 +431,7 @@ Q n1,n2,*nr;
 		rem2q(t,mod,mod2,nr); 
 }
 
-void subm2q(mod,mod2,n1,n2,nr)
-Q mod,mod2;
-Q n1,n2,*nr;
+void subm2q(Q mod,Q mod2,Q n1,Q n2,Q *nr)
 {
 	Q t;
 
@@ -481,9 +442,7 @@ Q n1,n2,*nr;
 		rem2q(t,mod,mod2,nr); 
 }
 
-void mulm2q(mod,mod2,n1,n2,nr)
-Q mod,mod2;
-Q n1,n2,*nr;
+void mulm2q(Q mod,Q mod2,Q n1,Q n2,Q *nr)
 {
 	Q t;
 
@@ -494,8 +453,7 @@ Q n1,n2,*nr;
 		rem2q(t,mod,mod2,nr); 
 }
 
-void rem2q(n,m,m2,nr)
-Q n,m,m2,*nr;
+void rem2q(Q n,Q m,Q m2,Q *nr)
 {
 	N q,r,s;
 	int sgn;
@@ -516,12 +474,7 @@ Q n,m,m2,*nr;
 	extract d-homogeneous part with respect to vl - {v}
 */
 
-void exthpc_generic(vl,p,d,v,pr)
-VL vl;
-P p;
-int d;
-V v;
-P *pr;
+void exthpc_generic(VL vl,P p,int d,V v,P *pr)
 {
 	P w,x,t,t1,a,xd;
 	V v0;
@@ -547,11 +500,7 @@ P *pr;
 	}
 }
 
-void exthp(vl,p,d,pr)
-VL vl;
-P p;
-int d;
-P *pr;
+void exthp(VL vl,P p,int d,P *pr)
 {
 	P t,t1,a,w,x,xd;
 	DCP dc;
@@ -573,12 +522,7 @@ P *pr;
 	}
 }
 
-void exthpc(vl,v,p,d,pr)
-VL vl;
-V v;
-P p;
-int d;
-P *pr;
+void exthpc(VL vl,V v,P p,int d,P *pr)
 {
 	P t,t1,a,w,x,xd;
 	DCP dc;
@@ -597,10 +541,7 @@ P *pr;
 	}
 }
 
-void cbound(vl,p,b)
-VL vl;
-P p;
-Q *b;
+void cbound(VL vl,P p,Q *b)
 {
 	Q n,e,t,m;
 	int k;
@@ -615,9 +556,7 @@ Q *b;
 	mulq(m,n,b); 
 }
 
-int geldb(vl,p)
-VL vl;
-P p;
+int geldb(VL vl,P p)
 {
 	int m;
 
@@ -626,9 +565,7 @@ P p;
 	return ( m );
 }
 
-int getdeg(v,p)
-V v;
-P p;
+int getdeg(V v,P p)
 {
 	int m,t;
 	DCP dc;
@@ -646,9 +583,7 @@ P p;
 	}
 }
 
-void cmax(p,b)
-P p;
-Q *b;
+void cmax(P p,Q *b)
 {
 	DCP dc;
 	Q m,m1;
@@ -667,9 +602,7 @@ Q *b;
 	}
 }
 
-int nextbin(vn,n)
-VN vn;
-int n;
+int nextbin(VN vn,int n)
 {
 	int tmp,i,carry;
 
@@ -684,9 +617,7 @@ int n;
 	return ( carry );
 }
 
-void mulsgn(vn,vnt,n,vn1)
-VN vn,vnt,vn1;
-int n;
+void mulsgn(VN vn,VN vnt,int n,VN vn1)
 {
 	int i;
 
@@ -697,8 +628,7 @@ int n;
 			vn1[(int)vnt[i].v].n *= -1;
 }
 
-void next(vn)
-VN vn;
+void next(VN vn)
 {
 	int i,m,n,tmp,carry;
 
@@ -725,10 +655,7 @@ VN vn;
 	}
 }
 		
-void clctv(vl,p,nvlp)
-VL vl;
-P p;
-VL *nvlp;
+void clctv(VL vl,P p,VL *nvlp)
 {
 	int i,n;
 	VL tvl;
@@ -750,10 +677,7 @@ VL *nvlp;
 	vntovl(tvn,n,nvlp);
 }
 
-void markv(vn,n,p)
-VN vn;
-int n;
-P p;
+void markv(VN vn,int n,P p)
 {
 	V v;
 	DCP dc;
@@ -771,10 +695,7 @@ P p;
 		markv(vn,n,COEF(dc));
 }
 			
-void vntovl(vn,n,vlp)
-VN vn;
-int n;
-VL *vlp;
+void vntovl(VN vn,int n,VL *vlp)
 {
 	int i;
 	VL tvl,tvl0;
@@ -799,9 +720,7 @@ VL *vlp;
 	*vlp = tvl0;
 }
 
-int dbound(v,f)
-V v;
-P f;
+int dbound(V v,P f)
 {
 	int m,t;
 	DCP dc;
@@ -819,8 +738,7 @@ P f;
 	}
 }
 
-int homdeg(f)
-P f;
+int homdeg(P f)
 {
 	int m,t;
 	DCP dc;
@@ -838,8 +756,7 @@ P f;
 	}
 }
 
-int minhomdeg(f)
-P f;
+int minhomdeg(P f)
 {
 	int m,t;
 	DCP dc;
@@ -857,11 +774,7 @@ P f;
 	}
 }
 
-void adjc(vl,f,a,lc0,q,fr,ar)
-VL vl;
-P f,a,lc0;
-Q q;
-P *fr,*ar;
+void adjc(VL vl,P f,P a,P lc0,Q q,P *fr,P *ar)
 {
 	P m,m1;
 	Q t;
@@ -875,13 +788,7 @@ P *fr,*ar;
 }
 
 #if 1
-void affinemain(vl,p,v0,n,pl,pr)
-VL vl;
-V v0;
-int n;
-P *pl;
-P p;
-P *pr;
+void affinemain(VL vl,P p,V v0,int n,P *pl,P *pr)
 {
 	P x,t,m,c,s,a;
 	DCP dc;
@@ -920,11 +827,7 @@ P *pr;
 #endif
 
 #if 0
-affine(vl,p,vn,r)
-VL vl;
-P p;
-VN vn;
-P *r;
+affine(VL vl,P p,VN vn,P *r)
 {
 	int n,d,d1,i;
 	Q *q;
@@ -942,12 +845,7 @@ P *r;
 	}
 }
 
-afmain(vl,bc,p,vn,r)
-VL vl;
-Q **bc;
-P p;
-VN vn;
-P *r;
+afmain(VL vl,Q **bc,P p,VN vn,P *r)
 {
 	P t,s,u;
 	P *c,*rc;
@@ -988,11 +886,7 @@ P *r;
 }
 #endif
 
-void restore(vl,f,vn,fr)
-VL vl;
-P f;
-VN vn;
-P *fr;
+void restore(VL vl,P f,VN vn,P *fr)
 {
 	int i;
 	P vv,g,g1,t;
@@ -1012,8 +906,7 @@ P *fr;
 	*fr = g;
 }
 
-void mergev(vl,vl1,vl2,nvlp)
-VL vl,vl1,vl2,*nvlp;
+void mergev(VL vl,VL vl1,VL vl2,VL *nvlp)
 {
 	int i,n;
 	VL tvl;
@@ -1049,11 +942,7 @@ VL vl,vl1,vl2,*nvlp;
 }
 
 #if 0
-void substvp(vl,f,vn,g)
-VL vl;
-P f;
-VN vn;
-P *g;
+void substvp(VL vl,P f,VN vn,P *g)
 {
 	V v;
 	int i;
@@ -1068,11 +957,7 @@ P *g;
 	*g = h;
 }
 
-void affine(vl,f,vn,fr)
-VL vl;
-P f;
-VN vn;
-P *fr;
+void affine(VL vl,P f,VN vn,P *fr)
 {
 	int i,j,n;
 	P vv,g,g1,t,u;

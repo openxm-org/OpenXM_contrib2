@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.17 2001/09/04 08:48:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.18 2001/09/13 03:04:28 noro Exp $ 
 */
 #include "ca.h"
 
@@ -65,28 +65,13 @@
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
 
-void comm_muld(VL,DP,DP,DP *);
-void weyl_muld(VL,DP,DP,DP *);
-void weyl_muldm(VL,MP,DP,DP *);
-void weyl_mulmm(VL,MP,MP,int,struct cdl *,int);
-void comm_muld_tab(VL,int,struct cdl *,int,struct cdl *,int,struct cdl *);
-
-void mkwc(int,int,Q *);
-
-int cmpdl_weyl_elim();
-int cmpdl_homo_ww_drl();
-
 int do_weyl;
 
 int dp_nelim,dp_fcoeffs;
 struct order_spec dp_current_spec;
 int *dp_dl_work;
 
-int has_fcoef(DP);
-int has_fcoef_p(P);
-
-int has_fcoef(f)
-DP f;
+int has_fcoef(DP f)
 {
 	MP t;
 
@@ -98,8 +83,7 @@ DP f;
 	return t ? 1 : 0;
 }
 
-int has_fcoef_p(f)
-P f;
+int has_fcoef_p(P f)
 {
 	DCP dc;
 
@@ -118,8 +102,7 @@ P f;
 	}
 }
 
-void initd(spec)
-struct order_spec *spec;
+void initd(struct order_spec *spec)
 {
 	switch ( spec->id ) {
 		case 2:
@@ -161,10 +144,7 @@ struct order_spec *spec;
 	dp_current_spec = *spec;
 }
 
-void ptod(vl,dvl,p,pr)
-VL vl,dvl;
-P p;
-DP *pr;
+void ptod(VL vl,VL dvl,P p,DP *pr)
 {
 	int isconst = 0;
 	int n,i,j,k;
@@ -220,10 +200,7 @@ DP *pr;
 #endif
 }
 
-void dtop(vl,dvl,p,pr)
-VL vl,dvl;
-DP p;
-P *pr;
+void dtop(VL vl,VL dvl,DP p,P *pr)
 {
 	int n,i,j,k;
 	DL d;
@@ -258,9 +235,7 @@ P *pr;
 	}
 }
 
-void nodetod(node,dp)
-NODE node;
-DP *dp;
+void nodetod(NODE node,DP *dp)
 {
 	NODE t;
 	int len,i,td;
@@ -286,8 +261,7 @@ DP *dp;
 	MKDP(len,m,u); u->sugar = td; *dp = u;
 }
 
-int sugard(m)
-MP m;
+int sugard(MP m)
 {
 	int s;
 
@@ -296,9 +270,7 @@ MP m;
 	return s;
 }
 
-void addd(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void addd(VL vl,DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr,mr0;
@@ -347,12 +319,10 @@ DP p1,p2,*pr;
 
 /* for F4 symbolic reduction */
 
-void symb_addd(p1,p2,pr)
-DP p1,p2,*pr;
+void symb_addd(DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr,mr0;
-	P t;
 
 	if ( !p1 )
 		*pr = p2;
@@ -401,9 +371,7 @@ DP p1,p2,*pr;
  * return : a merged list
  */
 
-NODE symb_merge(m1,m2,n)
-NODE m1,m2;
-int n;
+NODE symb_merge(NODE m1,NODE m2,int n)
 {
 	NODE top,prev,cur,m,t;
 
@@ -447,9 +415,7 @@ int n;
 	}
 }
 
-DLBUCKET symb_merge_bucket(m1,m2,n)
-DLBUCKET m1,m2;
-int n;
+DLBUCKET symb_merge_bucket(DLBUCKET m1,DLBUCKET m2,int n)
 {
 	DLBUCKET top,prev,cur,m,t;
 
@@ -488,9 +454,7 @@ int n;
 	}
 }
 
-void subd(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void subd(VL vl,DP p1,DP p2,DP *pr)
 {
 	DP t;
 
@@ -501,8 +465,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void chsgnd(p,pr)
-DP p,*pr;
+void chsgnd(DP p,DP *pr)
 {
 	MP m,mr,mr0;
 
@@ -518,9 +481,7 @@ DP p,*pr;
 	}
 }
 
-void muld(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void muld(VL vl,DP p1,DP p2,DP *pr)
 {
 	if ( ! do_weyl )
 		comm_muld(vl,p1,p2,pr);
@@ -528,9 +489,7 @@ DP p1,p2,*pr;
 		weyl_muld(vl,p1,p2,pr);
 }
 
-void comm_muld(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void comm_muld(VL vl,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
@@ -566,11 +525,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void muldm(vl,p,m0,pr)
-VL vl;
-DP p;
-MP m0;
-DP *pr;
+void muldm(VL vl,DP p,MP m0,DP *pr)
 {
 	MP m,mr,mr0;
 	P c;
@@ -595,9 +550,7 @@ DP *pr;
 	}
 }
 
-void weyl_muld(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void weyl_muld(VL vl,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
@@ -630,11 +583,7 @@ DP p1,p2,*pr;
 
 /* monomial * polynomial */
 
-void weyl_muldm(vl,m0,p,pr)
-VL vl;
-MP m0;
-DP p;
-DP *pr;
+void weyl_muldm(VL vl,MP m0,DP p,DP *pr)
 {
 	DP r,t,t1;
 	MP m;
@@ -692,16 +641,9 @@ DP *pr;
 /* m0 = x0^d0*x1^d1*... * dx0^e0*dx1^e1*... */
 /* rtab : array of length (e0+1)*(e1+1)*... */
 
-void weyl_mulmm(vl,m0,m1,n,rtab,rtablen)
-VL vl;
-MP m0,m1;
-int n;
-struct cdl *rtab;
-int rtablen;
+void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 {
-	MP m,mr,mr0;
-	DP r,t,t1;
-	P c,c0,c1,cc;
+	P c,c0,c1;
 	DL d,d0,d1,dt;
 	int i,j,a,b,k,l,n2,s,min,curlen;
 	struct cdl *p;
@@ -800,14 +742,7 @@ int rtablen;
   ]
 */
 
-void comm_muld_tab(vl,nv,t,n,t1,n1,rt)
-VL vl;
-int nv;
-struct cdl *t;
-int n;
-struct cdl *t1;
-int n1;
-struct cdl *rt;
+void comm_muld_tab(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1,struct cdl *rt)
 {
 	int i,j;
 	struct cdl *p;
@@ -829,11 +764,7 @@ struct cdl *rt;
 	}
 }
 
-void muldc(vl,p,c,pr)
-VL vl;
-DP p;
-P c;
-DP *pr;
+void muldc(VL vl,DP p,P c,DP *pr)
 {
 	MP m,mr,mr0;
 
@@ -858,11 +789,7 @@ DP *pr;
 	}
 }
 
-void divsdc(vl,p,c,pr)
-VL vl;
-DP p;
-P c;
-DP *pr;
+void divsdc(VL vl,DP p,P c,DP *pr)
 {
 	MP m,mr,mr0;
 
@@ -880,10 +807,7 @@ DP *pr;
 	}
 }
 
-void adddl(n,d1,d2,dr)
-int n;
-DL d1,d2;
-DL *dr;
+void adddl(int n,DL d1,DL d2,DL *dr)
 {
 	DL dt;
 	int i;
@@ -902,11 +826,8 @@ DL *dr;
 
 /* d1 += d2 */
 
-void adddl_destructive(n,d1,d2)
-int n;
-DL d1,d2;
+void adddl_destructive(int n,DL d1,DL d2)
 {
-	DL dt;
 	int i;
 
 	d1->td += d2->td;
@@ -914,9 +835,7 @@ DL d1,d2;
 		d1->d[i] += d2->d[i];
 }
 
-int compd(vl,p1,p2)
-VL vl;
-DP p1,p2;
+int compd(VL vl,DP p1,DP p2)
 {
 	int n,t;
 	MP m1,m2;
@@ -940,9 +859,7 @@ DP p1,p2;
 	}
 }
 
-int cmpdl_lex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_lex(int n,DL d1,DL d2)
 {
 	int i;
 
@@ -950,9 +867,7 @@ DL d1,d2;
 	return i == n ? 0 : (d1->d[i] > d2->d[i] ? 1 : -1);
 }
 
-int cmpdl_revlex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_revlex(int n,DL d1,DL d2)
 {
 	int i;
 
@@ -960,9 +875,7 @@ DL d1,d2;
 	return i < 0 ? 0 : (d1->d[i] < d2->d[i] ? 1 : -1);
 }
 
-int cmpdl_gradlex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_gradlex(int n,DL d1,DL d2)
 {
 	if ( d1->td > d2->td )
 		return 1;
@@ -972,9 +885,7 @@ DL d1,d2;
 		return cmpdl_lex(n,d1,d2);
 }
 
-int cmpdl_revgradlex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_revgradlex(int n,DL d1,DL d2)
 {
 	register int i;
 	register int *p1,*p2;
@@ -990,9 +901,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_blex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_blex(int n,DL d1,DL d2)
 {
 	int c;
 
@@ -1004,9 +913,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_bgradlex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_bgradlex(int n,DL d1,DL d2)
 {
 	int e1,e2,c;
 
@@ -1024,9 +931,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_brevgradlex(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_brevgradlex(int n,DL d1,DL d2)
 {
 	int e1,e2,c;
 
@@ -1044,9 +949,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_brevrev(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_brevrev(int n,DL d1,DL d2)
 {
 	int e1,e2,f1,f2,c,i;
 
@@ -1073,9 +976,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_bgradrev(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_bgradrev(int n,DL d1,DL d2)
 {
 	int e1,e2,f1,f2,c,i;
 
@@ -1102,9 +1003,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_blexrev(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_blexrev(int n,DL d1,DL d2)
 {
 	int e1,e2,f1,f2,c,i;
 
@@ -1125,9 +1024,7 @@ DL d1,d2;
 	}
 }
 
-int cmpdl_elim(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_elim(int n,DL d1,DL d2)
 {
 	int e1,e2,i;
 
@@ -1142,9 +1039,7 @@ DL d1,d2;
 		return cmpdl_revgradlex(n,d1,d2);
 }
 
-int cmpdl_weyl_elim(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_weyl_elim(int n,DL d1,DL d2)
 {
 	int e1,e2,i;
 
@@ -1171,9 +1066,7 @@ DL d1,d2;
 
 extern int *current_weight_vector;
 
-int cmpdl_homo_ww_drl(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_homo_ww_drl(int n,DL d1,DL d2)
 {
 	int e1,e2,m,i;
 	int *p1,*p2;
@@ -1205,9 +1098,7 @@ DL d1,d2;
 	return i < 0 ? 0 : (*p1 < *p2 ? 1 : -1);
 }
 
-int cmpdl_order_pair(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_order_pair(int n,DL d1,DL d2)
 {
 	int e1,e2,i,j,l;
 	int *t1,*t2;
@@ -1261,9 +1152,7 @@ DL d1,d2;
 	return 0;
 }
 
-int cmpdl_matrix(n,d1,d2)
-int n;
-DL d1,d2;
+int cmpdl_matrix(int n,DL d1,DL d2)
 {
 	int *v,*w,*t1,*t2;
 	int s,i,j,len;

@@ -170,6 +170,13 @@ void PRINTCPLX();
 void PRINTLM();
 void PRINTLF();
 void PRINTUP2();
+void PRINTUP();
+void PRINTUM();
+void PRINTFOP();
+void PRINTEOP();
+void PRINTLOP();
+void PRINTQOP();
+void PRINTSF();
 
 #ifdef FPRINT
 void output_init() {
@@ -200,6 +207,8 @@ P p;
 void printbf(a)
 BF a;
 {
+	void sor();
+
 	sor(a->body,double_output ? 'f' : 'g',-1,0);
 }
 #endif
@@ -736,7 +745,6 @@ VL vl;
 GFMMAT mat;
 {
 	int row,col,i,j;
-	unsigned int t;
 	unsigned int **b;
 
 	row = mat->row;
@@ -756,7 +764,6 @@ VL vl;
 BYTEARRAY array;
 {
 	int len,i;
-	unsigned int t;
 	unsigned char *b;
 
 	len = array->len;
@@ -849,7 +856,7 @@ F f;
 	}
 }
 
-PRINTFOP(vl,f)
+void PRINTFOP(vl,f)
 VL vl;
 F f;
 {
@@ -864,7 +871,7 @@ F f;
 	}
 }
 
-PRINTEOP(vl,f)
+void PRINTEOP(vl,f)
 VL vl;
 F f;
 {
@@ -891,7 +898,7 @@ F f;
 	PUTS(")");
 }
 
-PRINTLOP(vl,f)
+void PRINTLOP(vl,f)
 VL vl;
 F f;
 {
@@ -917,7 +924,7 @@ F f;
 	PRINTEXPR(vl,(Obj)FPL(f)); PUTS(op); PUTS("0");
 }
 
-PRINTQOP(vl,f)
+void PRINTQOP(vl,f)
 VL vl;
 F f;
 {
@@ -928,7 +935,7 @@ F f;
 	PRINTEXPR(vl,(Obj)FQMAT(f)); PUTS(")");
 }
 
-PRINTUP(n)
+void PRINTUP(n)
 UP n;
 {
 	int i,d;
@@ -962,7 +969,7 @@ UP n;
 	}
 }
 
-PRINTUM(n)
+void PRINTUM(n)
 UM n;
 {
 	int i,d;
@@ -996,7 +1003,7 @@ UM n;
 	}
 }
 
-PRINTSF(i)
+void PRINTSF(i)
 unsigned int i;
 {
 	if ( !i ) {

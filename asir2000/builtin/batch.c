@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/batch.c,v 1.2 2000/08/21 08:31:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/batch.c,v 1.3 2000/08/22 05:03:56 noro Exp $ 
 */
 #if !defined(VISUAL)
 
@@ -75,14 +75,14 @@ static void read_until_eof();
 static HANDLE hRead,hWrite,hNotify,hNotify_Ack,hIntr,hIntr_Ack,hKill,hProc;
 
 int exec_file(char *bindir,char *fname) {
-	int i;
 	char *av[BUFSIZ];
 	char AsirExe[BUFSIZ];
-	DWORD tid,mypid,pid,len;
+	DWORD mypid;
 	HANDLE hR0,hW0,hR1,hW1;
-    SECURITY_ATTRIBUTES SecurityAttributes;
+	SECURITY_ATTRIBUTES SecurityAttributes;
 	char remread[10],remwrite[10];
 	char notify[100],notify_ack[100],intr[100],intr_ack[100],kill[100];
+	void _setargv();
 
 	mypid = GetCurrentProcessId();
 	sprintf(notify,"asir_notify_%d",mypid);
@@ -136,7 +136,6 @@ static int insert_buf_len = 0;
 
 static void read_until_eof()
 {
-	char *p;
 	DWORD len;
 	unsigned int cmdsize,cmd,size;
 

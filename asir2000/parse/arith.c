@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.5 2000/12/11 09:28:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.6 2001/08/20 09:03:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -238,7 +238,7 @@ int complist(vl,a,b)
 VL vl;
 LIST a,b;
 {
-	int i,t;
+	int t;
 	NODE an,bn;
 
 	if ( !a )

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gf2n.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gf2n.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -54,8 +54,7 @@ extern int lm_lazy;
 
 GEN_UP2 current_mod_gf2n;
 
-void setmod_gf2n(p)
-P p;
+void setmod_gf2n(P p)
 {
 	if ( !current_mod_gf2n ) {
 		current_mod_gf2n = (GEN_UP2)MALLOC(sizeof(struct oGEN_UP2));
@@ -65,8 +64,7 @@ P p;
 	ptoup2_sparse(p,&current_mod_gf2n->sparse);
 }
 
-void getmod_gf2n(p)
-UP2 *p;
+void getmod_gf2n(UP2 *p)
 {
 	if ( current_mod_gf2n )
 		*p = current_mod_gf2n->dense;
@@ -74,9 +72,7 @@ UP2 *p;
 		*p = 0;
 }
 
-void simpgf2n(n,r)
-GF2N n;
-GF2N *r;
+void simpgf2n(GF2N n,GF2N *r)
 {
 	UP2 rem;
 
@@ -90,9 +86,7 @@ GF2N *r;
 	}
 }
 
-void ptogf2n(q,l)
-Obj q;
-GF2N *l;
+void ptogf2n(Obj q,GF2N *l)
 {
 	UP2 q1;
 
@@ -105,9 +99,7 @@ GF2N *l;
 		error("ptogf2n : invalid argument");
 }
 
-void gf2ntop(q,l)
-GF2N q;
-P *l;
+void gf2ntop(GF2N q,P *l)
 {
 	if ( !q )
 		*l = 0;
@@ -115,9 +107,7 @@ P *l;
 		up2top(q->body,l);
 }
 
-void gf2ntovect(q,l)
-GF2N q;
-VECT *l;
+void gf2ntovect(GF2N q,VECT *l)
 {
 	if ( !q )
 		*l = 0;
@@ -127,9 +117,7 @@ VECT *l;
 
 #define NZGF2N(a) ((a)&&(OID(a)==O_N)&&(NID(a)==N_GF2N))
 
-void addgf2n(a,b,c)
-GF2N a,b;
-GF2N *c;
+void addgf2n(GF2N a,GF2N b,GF2N *c)
 {
 	UP2 t,t1;
 	GF2N z;
@@ -146,16 +134,12 @@ GF2N *c;
 	}
 }
 
-void subgf2n(a,b,c)
-GF2N a,b;
-GF2N *c;
+void subgf2n(GF2N a,GF2N b,GF2N *c)
 {
 	addgf2n(a,b,c);
 }
 
-void mulgf2n(a,b,c)
-GF2N a,b;
-GF2N *c;
+void mulgf2n(GF2N a,GF2N b,GF2N *c)
 {
 	UP2 t;
 	GF2N z;
@@ -178,9 +162,7 @@ GF2N *c;
 	}
 }
 
-void squaregf2n(a,c)
-GF2N a;
-GF2N *c;
+void squaregf2n(GF2N a,GF2N *c)
 {
 	UP2 t;
 	GF2N z;
@@ -203,9 +185,7 @@ GF2N *c;
 	}
 }
 
-void divgf2n(a,b,c)
-GF2N a,b;
-GF2N *c;
+void divgf2n(GF2N a,GF2N b,GF2N *c)
 {
 	UP2 t,i,s;
 	GF2N z;
@@ -223,9 +203,7 @@ GF2N *c;
 	}
 }
 
-void invgf2n(b,c)
-GF2N b;
-GF2N *c;
+void invgf2n(GF2N b,GF2N *c)
 {
 	UP2 i;
 	GF2N z;
@@ -239,16 +217,12 @@ GF2N *c;
 	}
 }
 
-void chsgngf2n(a,c)
-GF2N a,*c;
+void chsgngf2n(GF2N a,GF2N *c)
 {
 	*c = a;
 }
 
-void pwrgf2n(a,b,c)
-GF2N a;
-Q b;
-GF2N *c;
+void pwrgf2n(GF2N a,Q b,GF2N *c)
 {
 	UP2 t;
 	GF2N r;
@@ -267,8 +241,7 @@ GF2N *c;
 	}
 }
 
-int cmpgf2n(a,b)
-GF2N a,b;
+int cmpgf2n(GF2N a,GF2N b)
 {
 	GF2N z;
 
@@ -284,8 +257,7 @@ GF2N a,b;
 		return compup2(a->body,b->body);
 }
 
-void randomgf2n(r)
-GF2N *r;
+void randomgf2n(GF2N *r)
 {
 	int i,w,d;
 	unsigned int *tb;

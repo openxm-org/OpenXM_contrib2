@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.8 2000/12/21 02:45:16 murao Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.9 2001/06/07 04:54:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,8 +57,6 @@ void Pup2_init_eg(), Pup2_show_eg();
 void Piqr(), Pprime(), Plprime(), Pinttorat();
 void Piand(), Pior(), Pixor(), Pishift();
 void Pisqrt();
-void iand(), ior(), ixor();
-void isqrt();
 void Plrandom();
 void Pset_upkara(), Pset_uptkara(), Pset_up2kara(), Pset_upfft();
 void Pmt_save(), Pmt_load();
@@ -121,9 +119,7 @@ static unsigned int gcd_small(unsigned int,unsigned int);
 int TypeT_NB_check(unsigned int, unsigned int);
 int mpi_mag;
 
-void Pntoint32(arg,rp)
-NODE arg;
-USINT *rp;
+void Pntoint32(NODE arg,USINT *rp)
 {
 	Q q;
 	unsigned int t;
@@ -138,13 +134,11 @@ USINT *rp;
 		error("ntoint32 : invalid argument");
 	t = BD(NM(q))[0];
 	if ( SGN(q) < 0 )
-		t = -t;
+		t = -(int)t;
 	MKUSINT(*rp,t);
 }
 
-void Pint32ton(arg,rp)
-NODE arg;
-Q *rp;
+void Pint32ton(NODE arg,Q *rp)
 {
 	int t;
 
@@ -153,9 +147,7 @@ Q *rp;
 	STOQ(t,*rp);
 }
 
-void Pdp_set_mpi(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_set_mpi(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"dp_set_mpi");
@@ -164,9 +156,7 @@ Q *rp;
 	STOQ(mpi_mag,*rp);
 }
 
-void Psmall_jacobi(arg,rp)
-NODE arg;
-Q *rp;
+void Psmall_jacobi(NODE arg,Q *rp)
 {
 	Q a,m;
 	int a0,m0,s;
@@ -187,8 +177,7 @@ Q *rp;
 	}
 }
 
-int small_jacobi(a,m)
-int a,m;
+int small_jacobi(int a,int m)
 {
 	int m4,m8,a4,j1,i,s;
 
@@ -214,9 +203,7 @@ int a,m;
 	}  
 }
 
-void Ptype_t_NB(arg,rp)
-NODE arg;
-Q *rp;
+void Ptype_t_NB(NODE arg,Q *rp)
 {
 	if ( TypeT_NB_check(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg))))
 		*rp = ONE;
@@ -287,9 +274,7 @@ static unsigned int gcd_small(unsigned int a,unsigned int b)
 		}
 }
 
-void Pmt_save(arg,rp)
-NODE arg;
-Q *rp;
+void Pmt_save(NODE arg,Q *rp)
 {
 	int ret;
 
@@ -297,9 +282,7 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
-void Pmt_load(arg,rp)
-NODE arg;
-Q *rp;
+void Pmt_load(NODE arg,Q *rp)
 {
 	int ret;
 
@@ -307,9 +290,7 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
-void Pisqrt(arg,rp)
-NODE arg;
-Q *rp;
+void Pisqrt(NODE arg,Q *rp)
 {
 	Q a;
 	N r;
@@ -326,9 +307,7 @@ Q *rp;
 	}
 }
 
-void Pidiv(arg,rp)
-NODE arg;
-Obj *rp;
+void Pidiv(NODE arg,Obj *rp)
 {
 	N q,r;
 	Q a;
@@ -347,9 +326,7 @@ Obj *rp;
 	}
 }
 
-void Pirem(arg,rp)
-NODE arg;
-Obj *rp;
+void Pirem(NODE arg,Obj *rp)
 {
 	N q,r;
 	Q a;
@@ -368,9 +345,7 @@ Obj *rp;
 	}
 }
 
-void Piqr(arg,rp)
-NODE arg;
-LIST *rp;
+void Piqr(NODE arg,LIST *rp)
 {
 	N q,r;
 	Q a,b;
@@ -394,9 +369,7 @@ LIST *rp;
 	MKNODE(node2,b,0); MKNODE(node1,a,node2); MKLIST(*rp,node1);
 }
 
-void Pinttorat(arg,rp)
-NODE arg;
-LIST *rp;
+void Pinttorat(NODE arg,LIST *rp)
 {
 	Q cq,qq,t,u1,v1,r1,nm;
 	N m,b,q,r,c,u2,v2,r2;
@@ -435,9 +408,7 @@ LIST *rp;
 	}
 }
 
-void Pigcd(arg,rp)
-NODE arg;
-Q *rp;
+void Pigcd(NODE arg,Q *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -459,16 +430,12 @@ Q *rp;
 	}
 }
 
-int comp_n(a,b)
-N *a,*b;
+int comp_n(N *a,N *b)
 {
 	return cmpn(*a,*b);
 }
 
-void iqrv(a,dvr,rp)
-VECT a;
-Q dvr;
-LIST *rp;
+void iqrv(VECT a,Q dvr,LIST *rp)
 {
 	int i,n;
 	VECT q,r;
@@ -499,9 +466,7 @@ LIST *rp;
  * gcd = GCD(a,b), ca = a/g, cb = b/g
  */
 
-void igcd_cofactor(a,b,gcd,ca,cb)
-Q a,b;
-Q *gcd,*ca,*cb;
+void igcd_cofactor(Q a,Q b,Q *gcd,Q *ca,Q *cb)
 {
 	N gn,tn;
 	
@@ -524,9 +489,7 @@ Q *gcd,*ca,*cb;
 	}
 }
 
-void igcdv(a,rp)
-VECT a;
-Q *rp;
+void igcdv(VECT a,Q *rp)
 {
 	int i,j,n,nz;
 	N g,gt,q,r;
@@ -560,9 +523,7 @@ Q *rp;
 	NTOQ(g,1,*rp);
 }
 
-void igcdv_estimate(a,rp)
-VECT a;
-Q *rp;
+void igcdv_estimate(VECT a,Q *rp)
 {
 	int n,i,m;
 	N s,t,u,g;
@@ -583,9 +544,7 @@ Q *rp;
 	gcdn(s,t,&g); NTOQ(g,1,*rp);
 }
 
-void Pilcm(arg,rp)
-NODE arg;
-Obj *rp;
+void Pilcm(NODE arg,Obj *rp)
 {
 	N g,q,r,l;
 	Q n1,n2,a;
@@ -601,9 +560,7 @@ Obj *rp;
 	}
 }
 
-void Piand(arg,rp)
-NODE arg;
-Q *rp;
+void Piand(NODE arg,Q *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -619,9 +576,7 @@ Q *rp;
 	}
 }
 
-void Pior(arg,rp)
-NODE arg;
-Q *rp;
+void Pior(NODE arg,Q *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -639,9 +594,7 @@ Q *rp;
 	}
 }
 
-void Pixor(arg,rp)
-NODE arg;
-Q *rp;
+void Pixor(NODE arg,Q *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -659,9 +612,7 @@ Q *rp;
 	}
 }
 
-void Pishift(arg,rp)
-NODE arg;
-Q *rp;
+void Pishift(NODE arg,Q *rp)
 {
 	N g;
 	Q n1,s,a;
@@ -679,8 +630,7 @@ Q *rp;
 	}
 }
 
-void isqrt(a,r)
-N a,*r;
+void isqrt(N a,N *r)
 {
 	int k;
 	N x,t,x2,xh,quo,rem;
@@ -708,8 +658,7 @@ N a,*r;
 	}
 }
 
-void iand(n1,n2,r)
-N n1,n2,*r;
+void iand(N n1,N n2,N *r)
 {
 	int d1,d2,d,i;
 	N nr;
@@ -728,8 +677,7 @@ N n1,n2,*r;
 	}
 }
 
-void ior(n1,n2,r)
-N n1,n2,*r;
+void ior(N n1,N n2,N *r)
 {
 	int d1,d2,i;
 	N nr;
@@ -752,8 +700,7 @@ N n1,n2,*r;
 	}
 }
 
-void ixor(n1,n2,r)
-N n1,n2,*r;
+void ixor(N n1,N n2,N *r)
 {
 	int d1,d2,i;
 	N nr;
@@ -776,23 +723,19 @@ N n1,n2,*r;
 	}
 }
 
-void Pup2_init_eg(rp)
-Obj *rp;
+void Pup2_init_eg(Obj *rp)
 {
 	up2_init_eg();
 	*rp = 0;
 }
 
-void Pup2_show_eg(rp)
-Obj *rp;
+void Pup2_show_eg(Obj *rp)
 {
 	up2_show_eg();
 	*rp = 0;
 }
 
-void Pgf2nton(arg,rp)
-NODE arg;
-Q *rp;
+void Pgf2nton(NODE arg,Q *rp)
 {
 	if ( !ARG0(arg) )
 		*rp = 0;
@@ -800,9 +743,7 @@ Q *rp;
 		up2ton(((GF2N)ARG0(arg))->body,rp);
 }
 
-void Pntogf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pntogf2n(NODE arg,GF2N *rp)
 {
 	UP2 t;
 
@@ -810,9 +751,7 @@ GF2N *rp;
 	MKGF2N(t,*rp);
 }
 
-void Pup2_inv(arg,rp)
-NODE arg;
-P *rp;
+void Pup2_inv(NODE arg,P *rp)
 {
 	UP2 a,b,t;
 
@@ -822,9 +761,7 @@ P *rp;
 	up2top(t,rp);
 }
 
-void Pinv(arg,rp)
-NODE arg;
-Num *rp;
+void Pinv(NODE arg,Num *rp)
 {
 	Num n;
 	Q mod;
@@ -851,17 +788,13 @@ Num *rp;
 		}
 }
 
-void Pfac(arg,rp)
-NODE arg;
-Q *rp;
+void Pfac(NODE arg,Q *rp)
 { 
 	asir_assert(ARG0(arg),O_N,"fac");
 	factorial(QTOS((Q)ARG0(arg)),rp); 
 }
 
-void Plrandom(arg,rp)
-NODE arg;
-Q *rp;
+void Plrandom(NODE arg,Q *rp)
 {
 	N r;
 
@@ -870,9 +803,7 @@ Q *rp;
 	NTOQ(r,1,*rp);
 }
 
-void Prandom(arg,rp)
-NODE arg;
-Q *rp;
+void Prandom(NODE arg,Q *rp)
 {
 	unsigned int r;
 
@@ -902,8 +833,7 @@ unsigned int random() {
         return R_Next = (R_Next * 1103515245 + 12345);
 }
 
-void srandom(s)
-unsigned int s;
+void srandom(unsigned int s)
 {
 		if ( s )
 			R_Next = s;
@@ -912,9 +842,7 @@ unsigned int s;
 }
 #endif
 
-void Pprime(arg,rp)
-NODE arg;
-Q *rp;
+void Pprime(NODE arg,Q *rp)
 {
 	int i;
 
@@ -926,9 +854,7 @@ Q *rp;
 		STOQ(sprime[i],*rp);
 }
 
-void Plprime(arg,rp)
-NODE arg;
-Q *rp;
+void Plprime(NODE arg,Q *rp)
 {
 	int i,p;
 
@@ -943,9 +869,7 @@ Q *rp;
 
 extern int up_kara_mag, up_tkara_mag, up_fft_mag;
 
-void Pset_upfft(arg,rp)
-NODE arg;
-Q *rp;
+void Pset_upfft(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"set_upfft");
@@ -954,9 +878,7 @@ Q *rp;
 	STOQ(up_fft_mag,*rp);
 }
 
-void Pset_upkara(arg,rp)
-NODE arg;
-Q *rp;
+void Pset_upkara(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"set_upkara");
@@ -965,9 +887,7 @@ Q *rp;
 	STOQ(up_kara_mag,*rp);
 }
 
-void Pset_uptkara(arg,rp)
-NODE arg;
-Q *rp;
+void Pset_uptkara(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"set_uptkara");
@@ -978,9 +898,7 @@ Q *rp;
 
 extern int up2_kara_mag;
 
-void Pset_up2kara(arg,rp)
-NODE arg;
-Q *rp;
+void Pset_up2kara(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"set_up2kara");
@@ -989,9 +907,7 @@ Q *rp;
 	STOQ(up2_kara_mag,*rp);
 }
 
-void Pigcdbin(arg,rp)
-NODE arg;
-Obj *rp;
+void Pigcdbin(NODE arg,Obj *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -1009,9 +925,7 @@ Obj *rp;
 	}
 }
 
-void Pigcdbmod(arg,rp)
-NODE arg;
-Obj *rp;
+void Pigcdbmod(NODE arg,Obj *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -1029,9 +943,7 @@ Obj *rp;
 	}
 }
 
-void Pigcdacc(arg,rp)
-NODE arg;
-Obj *rp;
+void Pigcdacc(NODE arg,Obj *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -1049,9 +961,7 @@ Obj *rp;
 	}
 }
 
-void PigcdEuc(arg,rp)
-NODE arg;
-Obj *rp;
+void PigcdEuc(NODE arg,Obj *rp)
 {
 	N g;
 	Q n1,n2,a;
@@ -1088,9 +998,7 @@ extern int igcdacc_thre;
      *  > igcdacc_thre, "bmod" reduction is done.
      */
 
-void Pigcdcntl(arg,rp)
-NODE arg;
-Obj *rp;
+void Pigcdcntl(NODE arg,Obj *rp)
 {
 	Obj p;
 	Q a;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.16 2001/06/15 07:56:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.17 2001/09/03 07:01:10 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -60,21 +60,17 @@
 #include "y.tab.h"
 #endif
 
-extern IN asir_infile;
-extern struct oTKWD kwd[];
+static int Getc();
+static void Ungetc(int c);
+static void Gets(char *s);
+static int skipspace();
 
-int afternl();
-int myatoi();
-int aftercomment();
+extern INFILE asir_infile;
+extern struct oTKWD kwd[];
 
 extern int main_parser;
 extern char *parse_strp;
 extern int recv_intr;
-
-static int skipspace();
-static int Getc();
-static void Ungetc();
-static void Gets();
 
 #define NBUFSIZ (BUFSIZ*10)
 #define TBUFSIZ (BUFSIZ)
@@ -117,7 +113,7 @@ while ( 1 ) {\
 		break;\
 }
 
-yylex()
+int yylex()
 {
 #define yylvalp (&yylval)
 	register int c,c1;
@@ -412,6 +408,8 @@ void purge_stdin()
 	stdin->_IO_read_end = stdin->_IO_read_base;
 	stdin->_IO_read_ptr = stdin->_IO_read_base;
 #elif defined(VISUAL_LIB)
+	void w_purge_stdin();
+
 	w_purge_stdin();
 #elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips) || defined(VISUAL) || defined(_IBMR2)
 	stdin->_ptr = stdin->_base; stdin->_cnt = 0;
@@ -483,8 +481,7 @@ int aftercomment() {
 	}
 }
 			
-int myatoi(s)
-char *s;
+int myatoi(char *s)
 {
 	int i,r;
 	for ( i = 0, r = 0; i < DLENGTH; i++ ) r = r * 10 + ( s[i] - '0' );
@@ -493,8 +490,7 @@ char *s;
 
 extern int ox_do_copy;
 
-void yyerror(s)
-char *s;
+void yyerror(char *s)
 {
 	if ( main_parser )
 		if ( ox_do_copy ) {
@@ -513,16 +509,10 @@ int echoback;
 
 extern int read_exec_file, do_fep, do_file;
 
-int readline_getc();
-void readline_ungetc();
-int Egetc();
-void Eungetc();
-
 unsigned char encrypt_char(unsigned char);
 unsigned char decrypt_char(unsigned char);
 
-int Egetc(fp)
-FILE *fp;
+int Egetc(FILE *fp)
 {
 	int c;
 
@@ -561,9 +551,7 @@ FILE *fp;
 	}
 }
 
-void Eungetc(c,fp)
-int c;
-FILE *fp;
+void Eungetc(int c,FILE *fp)
 {
 	if ( fp ) {
 		if ( asir_infile->encoded )
@@ -608,7 +596,7 @@ static int Getc() {
 	return ( c );
 }
 
-static void Ungetc(c) {
+static void Ungetc(int c) {
 	if ( main_parser ) {
 		Eungetc(c,asir_infile->fp);
 		if ( echoback )
@@ -617,8 +605,7 @@ static void Ungetc(c) {
 		*--parse_strp = c;
 }
 
-static void Gets(s)
-char *s;
+static void Gets(char *s)
 {
 	int c;
 
@@ -654,8 +641,7 @@ void readline_ungetc()
         readline_nc++; readline_index--;
 }
 
-char *readline_console(prompt)
-char *prompt;
+char *readline_console(char *prompt)
 {
         char *line;
         int exp_result;

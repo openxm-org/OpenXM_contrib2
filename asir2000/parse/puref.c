@@ -45,16 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.2 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.3 2000/08/22 05:04:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 NODE pflist;
 
-void searchpf(name,fp)
-char *name;
-FUNC *fp;
+void searchpf(char *name,FUNC *fp)
 {
 	NODE node;
 	PF pf;
@@ -71,9 +69,7 @@ FUNC *fp;
 	*fp = 0;
 }
 
-void searchc(name,fp)
-char *name;
-FUNC *fp;
+void searchc(char *name,FUNC *fp)
 {
 	NODE node;
 	PF pf;
@@ -91,14 +87,8 @@ FUNC *fp;
 	*fp = 0;
 }
 
-void mkpf(name,body,argc,args,parif,libmf,simp,pfp)
-char *name;
-Obj body;
-int argc;
-V *args;
-int (*parif)(),(*simp)();
-double (*libmf)();
-PF *pfp;
+void mkpf(char *name,Obj body,int argc,V *args,
+	int (*parif)(),double (*libmf)(), int (*simp)(),PF *pfp)
 {
 	PF pf;
 	NODE node;
@@ -123,10 +113,7 @@ PF *pfp;
    each arg.
  */
 
-void mkpfins(pf,args,vp)
-PF pf;
-V *args;
-V *vp;
+void mkpfins(PF pf,V *args,V *vp)
 {
 	V v;
 	PFINS ins;
@@ -147,10 +134,7 @@ V *vp;
 
 /* the same as above. Argements are given as an array of Obj */
 
-void _mkpfins(pf,args,vp)
-PF pf;
-Obj *args;
-V *vp;
+void _mkpfins(PF pf,Obj *args,V *vp)
 {
 	V v;
 	PFINS ins;
@@ -170,11 +154,7 @@ V *vp;
 
 /* the same as above. darray is also given */
 
-void _mkpfins_with_darray(pf,args,darray,vp)
-PF pf;
-Obj *args;
-int *darray;
-V *vp;
+void _mkpfins_with_darray(PF pf,Obj *args,int *darray,V *vp)
 {
 	V v;
 	PFINS ins;
@@ -192,9 +172,7 @@ V *vp;
 	appendpfins(v,vp);
 }
 
-void appendpfins(v,vp)
-V v;
-V *vp;
+void appendpfins(V v,V *vp)
 {
 	PF fdef;
 	PFAD ad,tad;
@@ -216,9 +194,7 @@ V *vp;
 	fdef->ins = node; appendvar(CO,v); *vp = v;
 }
 
-void duppfins(v,vp)
-V v;
-V *vp;
+void duppfins(V v,V *vp)
 {
 	V tv;
 	PFINS tins;
@@ -231,10 +207,7 @@ V *vp;
 	*vp = tv;
 }
 
-void derivvar(vl,pf,v,a)
-VL vl;
-V pf,v;
-Obj *a;
+void derivvar(VL vl,V pf,V v,Obj *a)
 {
 	Obj t,s,u,w,u1;
 	P p;
@@ -264,10 +237,7 @@ Obj *a;
 	}
 }
 
-void derivr(vl,a,v,b)
-VL vl;
-V v;
-Obj a,*b;
+void derivr(VL vl,Obj a,V v,Obj *b)
 {
 	VL tvl,svl;
 	Obj r,s,t,u,nm,dn,dnm,ddn,m;
@@ -314,13 +284,7 @@ Obj a,*b;
 	}
 }
 
-void substr(vl,partial,a,v,b,c)
-VL vl;
-int partial;
-Obj a;
-V v;
-Obj b;
-Obj *c;
+void substr(VL vl,int partial,Obj a,V v,Obj b,Obj *c)
 {
 	Obj nm,dn,t;
 
@@ -343,13 +307,7 @@ Obj *c;
 	}
 }
 
-void substpr(vl,partial,p,v0,p0,pr)
-VL vl;
-int partial;
-V v0;
-Obj p;
-Obj p0;
-Obj *pr;
+void substpr(VL vl,int partial,Obj p,V v0,Obj p0,Obj *pr)
 {
 	P x;
 	Obj t,m,c,s,a;
@@ -409,11 +367,7 @@ Obj *pr;
 	}
 }
 
-void evalr(vl,a,prec,c)
-VL vl;
-Obj a;
-int prec;
-Obj *c;
+void evalr(VL vl,Obj a,int prec,Obj *c)
 {
 	Obj nm,dn;
 
@@ -435,11 +389,7 @@ Obj *c;
 	}
 }
 
-void evalp(vl,p,prec,pr)
-VL vl;
-P p;
-int prec;
-P *pr;
+void evalp(VL vl,P p,int prec,P *pr)
 {
 	P t;
 	DCP dc,dcr0,dcr;
@@ -467,11 +417,7 @@ P *pr;
 	}
 }
 
-void evalv(vl,v,prec,rp)
-VL vl;
-V v;
-int prec;
-Obj *rp;
+void evalv(VL vl,V v,int prec,Obj *rp)
 {
 	PFINS ins,tins;
 	PFAD ad,tad;
@@ -492,10 +438,7 @@ Obj *rp;
 	}
 }
 
-void evalins(ins,prec,rp)
-PFINS ins;
-int prec;
-Obj *rp;
+void evalins(PFINS ins,int prec,Obj *rp)
 {
 	PF pf;
 	PFAD ad;
@@ -524,15 +467,7 @@ Obj *rp;
 	}
 }
 
-void devalins(PFINS,Obj *);
-void devalv(VL,V,Obj *);
-void devalp(VL,P,P *);
-void devalr(VL,Obj,Obj *);
-
-void devalr(vl,a,c)
-VL vl;
-Obj a;
-Obj *c;
+void devalr(VL vl,Obj a,Obj *c)
 {
 	Obj nm,dn;
 	double d;
@@ -560,10 +495,7 @@ Obj *c;
 	}
 }
 
-void devalp(vl,p,pr)
-VL vl;
-P p;
-P *pr;
+void devalp(VL vl,P p,P *pr)
 {
 	P t;
 	DCP dc,dcr0,dcr;
@@ -606,16 +538,12 @@ P *pr;
 	}
 }
 
-void devalv(vl,v,rp)
-VL vl;
-V v;
-Obj *rp;
+void devalv(VL vl,V v,Obj *rp)
 {
 	PFINS ins,tins;
 	PFAD ad,tad;
 	PF pf;
 	P t;
-	Obj s;
 	int i;
 
 	if ( (vid)v->attr != V_PF ) {
@@ -631,16 +559,13 @@ Obj *rp;
 	}
 }
 
-void devalins(ins,rp)
-PFINS ins;
-Obj *rp;
+void devalins(PFINS ins,Obj *rp)
 {
 	PF pf;
 	PFAD ad;
 	int i;
 	Real r;
 	double d;
-	Q q;
 	V v;
 	P x;
 
@@ -671,9 +596,7 @@ Obj *rp;
 	}
 }
 
-void simplify_ins(ins,rp)
-PFINS ins;
-Obj *rp;
+void simplify_ins(PFINS ins,Obj *rp)
 {
 	V v;
 	P t;
@@ -685,9 +608,7 @@ Obj *rp;
 	}
 }
 
-void instov(ins,vp)
-PFINS ins;
-V *vp;
+void instov(PFINS ins,V *vp)
 {
 	V v;
 
@@ -696,11 +617,7 @@ V *vp;
 	appendpfins(v,vp);
 }
 
-void substfr(vl,a,u,f,c)
-VL vl;
-Obj a;
-PF u,f;
-Obj *c;
+void substfr(VL vl,Obj a,PF u,PF f,Obj *c)
 {
 	Obj nm,dn;
 
@@ -722,11 +639,7 @@ Obj *c;
 	}
 }
 
-void substfp(vl,p,u,f,pr)
-VL vl;
-Obj p;
-PF u,f;
-Obj *pr;
+void substfp(VL vl,Obj p,PF u,PF f,Obj *pr)
 {
 	V v;
 	DCP dc;
@@ -767,11 +680,7 @@ Obj *pr;
 	}
 }
 
-void substfv(vl,v,u,f,c)
-VL vl;
-V v;
-PF u,f;
-Obj *c;
+void substfv(VL vl,V v,PF u,PF f,Obj *c)
 {
 	P t;
 	Obj r,s,w;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.6 2000/12/11 09:28:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.7 2001/06/04 02:49:48 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -121,7 +121,7 @@ NODE ind;
 pointer *vp;
 {
 	Obj len,row,col;
-	int i,l;
+	int i;
 	NODE n,n0;
 	VECT v;
 	Q q;
@@ -191,7 +191,7 @@ NODE ind;
 pointer b;
 {
 	Obj len,row,col;
-	int i,l;
+	int i;
 	NODE n,n0;
 
 	if ( a && OID(a) == O_BYTEARRAY ) {

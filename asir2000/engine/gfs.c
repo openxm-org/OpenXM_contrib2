@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.7 2001/06/21 07:47:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.8 2001/06/29 09:08:53 noro Exp $
 */
 #include "ca.h"
 
@@ -58,9 +58,6 @@ int current_gfs_q1;
 int *current_gfs_plus1;
 int *current_gfs_ntoi;
 int *current_gfs_iton;
-
-void chsgngfs();
-void generate_defpoly_um();
 
 struct prim_root_info {
 	int p;
@@ -473,9 +470,7 @@ struct prim_root_info prim_root_info_tab[] = {
 {16349,1,0,2}, {16361,1,0,3}, {16363,1,0,2}, {16369,1,0,7}, {16381,1,0,2},
 };
 
-void dec_um(p,a,u)
-int p,a;
-UM u;
+void dec_um(int p,int a,UM u)
 {
 	int i;
 
@@ -491,8 +486,7 @@ UM u;
  * current_gfs_iton[p-1] = 0
  */
 
-void setmod_sf(p,n)
-int p,n;
+void setmod_sf(int p,int n)
 {
 	int r,i,q1,q,t,t1;
 	UM dp;
@@ -504,6 +498,8 @@ int p,n;
 	if ( !r ) {
 		generate_defpoly_um(p,n,dp);
 		r = generate_primitive_root_enc(p,n,dp);
+		if ( !r )
+			error("setmod_sf : primitive root not found");
 	}
 	current_gfs_p = p;
 	current_gfs_q = q;
@@ -531,9 +527,7 @@ int p,n;
 	}
 }
 
-int search_defpoly_and_primitive_root(p,n,dp)
-int p,n;
-UM dp;
+int search_defpoly_and_primitive_root(int p,int n,UM dp)
 {
 	int l,min,max,mid,p1,i,ind,t;
 
@@ -570,11 +564,9 @@ UM dp;
 	return prim_root_info_tab[i].prim_root;
 }
 
-void generate_defpoly_um(p,n,dp)
-int p,n;
-UM dp;
+void generate_defpoly_um(int p,int n,UM dp)
 {
-	int i,j,a,c,q;
+	int i,j,a,q;
 	UM wf,wdf,wgcd;
 
 	wf = W_UMALLOC(n);
@@ -600,9 +592,7 @@ UM dp;
 	}
 }
 
-int generate_primitive_root_enc(p,n,dp)
-int p,n;
-UM dp;
+int generate_primitive_root_enc(int p,int n,UM dp)
 {
 	int i,r,rj,j,q;
 
@@ -618,14 +608,13 @@ UM dp;
 		if ( j == q-1 )
 			return r;
 	}
+	/* not found */
+	return 0;
 }
 
 /* [a(p)]*[b(p)] in GF(p^n) -> [a(x)*b(x) mod dp(x)]_{x->p} */
 
-int mulremum_enc(p,n,dp,a,b)
-int p,n;
-UM dp;
-int a,b;
+int mulremum_enc(int p,int n,UM dp,int a,int b)
 {
 	int i,dr,r;
 	UM wa,wb,wc,wq;
@@ -650,10 +639,7 @@ int a,b;
 	return r;
 }
 
-void gfs_galois_action(a,e,c)
-GFS a;
-Q e;
-GFS *c;
+void gfs_galois_action(GFS a,Q e,GFS *c)
 {
 	Q p;
 	int i,k;
@@ -670,10 +656,7 @@ GFS *c;
 
 /* GF(pn)={0,1,a,a^2,...} -> GF(pm)={0,1,b,b^2,...}; a->b^k */
 
-void gfs_embed(z,k,pm,c)
-GFS z;
-int k,pm;
-GFS *c;
+void gfs_embed(GFS z,int k,int pm,GFS *c)
 {
 	int t;
 
@@ -684,9 +667,8 @@ GFS *c;
 		MKGFS(t,*c);
 	}
 }
-void qtogfs(a,c)
-Q a;
-GFS *c;
+
+void qtogfs(Q a,GFS *c)
 {
 	int s;
 
@@ -699,9 +681,7 @@ GFS *c;
 		MKGFS(current_gfs_ntoi[s],*c);	
 }
 
-void mqtogfs(a,c)
-MQ a;
-GFS *c;
+void mqtogfs(MQ a,GFS *c)
 {
 	if ( !a )
 		*c = 0;
@@ -710,9 +690,7 @@ GFS *c;
 	}
 }
 
-void gfstomq(a,c)
-GFS a;
-MQ *c;
+void gfstomq(GFS a,MQ *c)
 {
 	if ( !a )
 		*c = 0;
@@ -721,9 +699,7 @@ MQ *c;
 	}
 }
 
-void ntogfs(a,b)
-Obj a;
-GFS *b;
+void ntogfs(Obj a,GFS *b)
 {
 	P t;
 
@@ -732,22 +708,20 @@ GFS *b;
 	if ( !a || (OID(a)==O_N && NID(a) == N_GFS) )
 		*b = (GFS)a;
 	else if ( OID(a) == O_N && NID(a) == N_M )
-		mqtogfs(a,b);
+		mqtogfs((MQ)a,b);
 	else if ( OID(a) == O_N && NID(a) == N_Q ) {
-		ptomp(current_gfs_p,(P)a,&t); mqtogfs(t,b);
+		ptomp(current_gfs_p,(P)a,&t); mqtogfs((MQ)t,b);
 	} else
 		error("ntogfs : invalid argument");
 }
 
-void addgfs(a,b,c)
-GFS a,b;
-GFS *c;
+void addgfs(GFS a,GFS b,GFS *c)
 {
 	int ai,bi,ci;
 	GFS z;
 
-	ntogfs(a,&z); a = z;
-	ntogfs(b,&z); b = z;
+	ntogfs((Obj)a,&z); a = z;
+	ntogfs((Obj)b,&z); b = z;
 	if ( !a )
 		*c = b;
 	else if ( !b )
@@ -780,14 +754,12 @@ GFS *c;
 	}
 }
 
-void subgfs(a,b,c)
-GFS a,b;
-GFS *c;
+void subgfs(GFS a,GFS b,GFS *c)
 {
 	GFS t,z;
 
-	ntogfs(a,&z); a = z;
-	ntogfs(b,&z); b = z;
+	ntogfs((Obj)a,&z); a = z;
+	ntogfs((Obj)b,&z); b = z;
 	if ( !b )
 		*c = a;
 	else {
@@ -796,15 +768,13 @@ GFS *c;
 	}
 }
 
-void mulgfs(a,b,c)
-GFS a,b;
-GFS *c;
+void mulgfs(GFS a,GFS b,GFS *c)
 {
 	int ai;
 	GFS z;
 
-	ntogfs(a,&z); a = z;
-	ntogfs(b,&z); b = z;
+	ntogfs((Obj)a,&z); a = z;
+	ntogfs((Obj)b,&z); b = z;
 	if ( !a || !b )
 		*c = 0;
 	else {
@@ -815,15 +785,13 @@ GFS *c;
 	}
 }
 
-void divgfs(a,b,c)
-GFS a,b;
-GFS *c;
+void divgfs(GFS a,GFS b,GFS *c)
 {
 	int ai;
 	GFS z;
 
-	ntogfs(a,&z); a = z;
-	ntogfs(b,&z); b = z;
+	ntogfs((Obj)a,&z); a = z;
+	ntogfs((Obj)b,&z); b = z;
 	if ( !b )
 		error("divgfs : division by 0");
 	else if ( !a )
@@ -836,13 +804,12 @@ GFS *c;
 	}
 }
 
-void chsgngfs(a,c)
-GFS a,*c;
+void chsgngfs(GFS a,GFS *c)
 {
 	int ai;
 	GFS z;
 
-	ntogfs(a,&z); a = z;
+	ntogfs((Obj)a,&z); a = z;
 	if ( !a )
 		*c = 0;
 	else if ( current_gfs_q1&1 )
@@ -856,15 +823,12 @@ GFS a,*c;
 	}
 }
 
-void pwrgfs(a,b,c)
-GFS a;
-Q b;
-GFS *c;
+void pwrgfs(GFS a,Q b,GFS *c)
 {
 	N an,tn,rn;
 	GFS t,s,z;
 
-	ntogfs(a,&z); a = z;
+	ntogfs((Obj)a,&z); a = z;
 	if ( !b )
 		MKGFS(0,*c);
 	else if ( !a )
@@ -884,12 +848,11 @@ GFS *c;
 	}
 }
 
-int cmpgfs(a,b)
-GFS a,b;
+int cmpgfs(GFS a,GFS b)
 {
 	GFS z;
 
-	ntogfs(a,&z); a = z;
+	ntogfs((Obj)a,&z); a = z;
 	if ( !a )
 		return !b ? 0 : -1;
 	else
@@ -905,8 +868,7 @@ GFS a,b;
 		}
 }
 
-void randomgfs(r)
-GFS *r;
+void randomgfs(GFS *r)
 {
 	unsigned int t;
 
@@ -916,7 +878,7 @@ GFS *r;
 	if ( !t )
 		*r = 0;
 	else {
-		if ( t == current_gfs_q1 )
+		if ( t == (unsigned int)current_gfs_q1 )
 			t = 0;
 		MKGFS(t,*r);
 	}
@@ -924,8 +886,7 @@ GFS *r;
 
 /* arithmetic operations for 'immediate values of GFS */
 
-int _addsf(a,b)
-int a,b;
+int _addsf(int a,int b)
 {
 	if ( !a )
 		return b;
@@ -958,8 +919,7 @@ int a,b;
 	}
 }
 
-int _chsgnsf(a)
-int a;
+int _chsgnsf(int a)
 {
 	if ( !a )
 		return 0;
@@ -975,8 +935,7 @@ int a;
 	}
 }
 
-int _subsf(a,b)
-int a,b;
+int _subsf(int a,int b)
 {
 	if ( !a )
 		return _chsgnsf(b);
@@ -986,8 +945,7 @@ int a,b;
 		return _addsf(a,_chsgnsf(b));
 }
 
-int _mulsf(a,b)
-int a,b;
+int _mulsf(int a,int b)
 {
 	if ( !a || !b )
 		return 0;
@@ -999,23 +957,25 @@ int a,b;
 	}
 }
 
-int _invsf(a)
-int a;
+int _invsf(int a)
 {
-	if ( !a )
+	if ( !a ) {
 		error("_invsf : division by 0");
-	else {
+		/* NOTREACHED */
+		return -1;
+	} else {
 		a = current_gfs_q1 - IFTOF(a);
 		return FTOIF(a);
 	}
 }
 
-int _divsf(a,b)
-int a,b;
+int _divsf(int a,int b)
 {
-	if ( !b )
+	if ( !b ) {
 		error("_divsf : division by 0");
-	else if ( !a )
+		/* NOTREACHED */
+		return -1;
+	} else if ( !a )
 		return 0;
 	else {
 		a = IFTOF(a) - IFTOF(b);
@@ -1025,8 +985,7 @@ int a,b;
 	}
 }
 
-int _pwrsf(a,b)
-int a,b;
+int _pwrsf(int a,int b)
 {
 	GFS at,ct;
 	Q bt;
@@ -1051,8 +1010,7 @@ int _onesf()
 	return FTOIF(0);
 }
 
-int _itosf(n)
-int n;
+int _itosf(int n)
 {
 	int i;
 
@@ -1066,8 +1024,7 @@ int n;
 	return i;
 }
 
-int _isonesf(a)
-int a;
+int _isonesf(int a)
 {
 	return a == FTOIF(0);
 }

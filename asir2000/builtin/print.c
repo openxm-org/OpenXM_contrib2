@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.12 2001/09/05 04:43:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.13 2001/09/05 09:01:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,8 +54,6 @@ void Pprint();
 void Pquotetolist();
 void Peval_variables_in_quote();
 void Pset_print_function();
-FNODE eval_pvar_in_fnode();
-FNODE subst_in_fnode();
 
 struct ftab print_tab[] = {
 	{"print",Pprint,-2},
@@ -65,9 +63,7 @@ struct ftab print_tab[] = {
 	{0,0,0},
 };
 
-void Pprint(arg,rp)
-NODE arg;
-pointer *rp;
+void Pprint(NODE arg,pointer *rp)
 {
 	printexpr(CO,ARG0(arg)); 
 	if ( argc(arg) == 2 )
@@ -85,19 +81,13 @@ pointer *rp;
 	*rp = 0;
 }
 
-void fnodetotree();
-
-void Pquotetolist(arg,rp)
-NODE arg;
-Obj *rp;
+void Pquotetolist(NODE arg,LIST *rp)
 {
 	asir_assert(ARG0(arg),O_QUOTE,"quotetolist");	
 	fnodetotree((FNODE)BDY((QUOTE)(ARG0(arg))),rp);
 }
 
-void Peval_variables_in_quote(arg,rp)
-NODE arg;
-QUOTE *rp;
+void Peval_variables_in_quote(NODE arg,QUOTE *rp)
 {
 	FNODE fn;
 
@@ -108,21 +98,17 @@ QUOTE *rp;
 
 /* fnode -> [tag,name,arg0,arg1,...] */
 
-void fnodetotree(f,rp)
-FNODE f;
-Obj *rp;
+void fnodetotree(FNODE f,LIST *rp)
 {
-	Obj a1,a2,a3;
+	LIST a1,a2,a3;
 	NODE n,t,t0;
 	STRING head,op,str;
-	LIST r,arg;
 	char *opname;
 
 	if ( !f ) {
 		MKSTR(head,"internal");
 		n = mknode(2,head,0);
-		MKLIST(r,n);
-		*rp = (Obj)r;
+		MKLIST(*rp,n);
 		return;
 	}
 	switch ( f->id ) {
@@ -142,8 +128,7 @@ Obj *rp;
 			}
 			fnodetotree((FNODE)FA0(f),&a1);
 			n = mknode(3,head,op,a1);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		/* binary operators */
@@ -195,8 +180,7 @@ Obj *rp;
 							MKSTR(head,"u_op");
 							MKSTR(op,opname);
 							n = mknode(3,head,op,a1);
-							MKLIST(r,n);
-							*rp = (Obj)r;
+							MKLIST(*rp,n);
 							return;
 					}
 					MKSTR(op,opname); break;
@@ -208,8 +192,7 @@ Obj *rp;
 					MKSTR(op,"||"); break;
 			}
 			n = mknode(4,head,op,a1,a2);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		/* ternary operators */
@@ -220,8 +203,7 @@ Obj *rp;
 			fnodetotree((FNODE)FA1(f),&a2);
 			fnodetotree((FNODE)FA2(f),&a3);
 			n = mknode(5,head,op,a1,a2,a3);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		/* lists */
@@ -229,14 +211,14 @@ Obj *rp;
 			n = (NODE)FA0(f);
 			for ( t0 = 0; n; n = NEXT(n) ) {
 				NEXTNODE(t0,t);
-				fnodetotree(BDY(n),&BDY(t));
+				fnodetotree((FNODE)BDY(n),&a1);
+				BDY(t) = (pointer)a1;
 			}
 			if ( t0 )
 				NEXT(t) = 0;
 			MKSTR(head,"list");
 			MKNODE(n,head,t0);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		/* function */
@@ -245,42 +227,39 @@ Obj *rp;
 			switch ( f->id ) {
 				case I_FUNC:
 					MKSTR(op,((FUNC)FA0(f))->name);
-					fnodetotree((FNODE)FA1(f),&arg);
+					fnodetotree((FNODE)FA1(f),&a1);
 					break;
 				case I_CAR:
 					MKSTR(op,"car");
-					fnodetotree((FNODE)FA0(f),&arg);
+					fnodetotree((FNODE)FA0(f),&a1);
 					break;
 				case I_CDR:
 					MKSTR(op,"cdr");
-					fnodetotree((FNODE)FA0(f),&arg);
+					fnodetotree((FNODE)FA0(f),&a1);
 					break;
 				case I_EV:
 					/* exponent vector; should be treated as function call */
 					MKSTR(op,"exponent_vector");
-					fnodetotree(mkfnode(1,I_LIST,FA0(f)),&arg);
+					fnodetotree(mkfnode(1,I_LIST,FA0(f)),&a1);
 					break;
 			}
-			t0 = NEXT(BDY(arg)); /* XXX : skip the headers */
+			t0 = NEXT(BDY(a1)); /* XXX : skip the headers */
 			MKNODE(t,op,t0);
 			MKNODE(n,head,t);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		case I_STR:
 			MKSTR(head,"internal");
 			MKSTR(str,FA0(f));
 			n = mknode(2,head,str);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		case I_FORMULA:
 			MKSTR(head,"internal");
 			n = mknode(2,head,FA0(f));
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		case I_PVAR:
@@ -290,8 +269,7 @@ Obj *rp;
 			GETPVNAME(FA0(f),opname);
 			MKSTR(op,opname);
 			n = mknode(2,head,op);
-			MKLIST(r,n);
-			*rp = (Obj)r;
+			MKLIST(*rp,n);
 			break;
 
 		default:
@@ -299,8 +277,7 @@ Obj *rp;
 	}
 }
 
-FNODE eval_pvar_in_fnode(f)
-FNODE f;
+FNODE eval_pvar_in_fnode(FNODE f)
 {
 	FNODE a1,a2,a3;
 	pointer r;
@@ -369,20 +346,17 @@ FNODE f;
 
 		default:
 			error("eval_pvar_in_fnode : not implemented yet");
+			/* NOTREACHED */
+			return 0;
 	}
 }
 
-FNODE subst_in_fnode(f,v,g)
-FNODE f;
-V v;
-FNODE g;
+FNODE subst_in_fnode(FNODE f,V v,FNODE g)
 {
 	FNODE a1,a2,a3;
 	DCP dc;
-	pointer r;
 	V vf;
 	NODE n,t,t0;
-	QUOTE q;
 	Obj obj;
 
 	if ( !f )
@@ -461,17 +435,18 @@ FNODE g;
 
 		default:
 			error("subst_in_fnode : not implemented yet");
+			/* NOTREACHED */
+			return 0;
 	}
 }
 
-char *get_attribute(key,attr)
-char *key;
-LIST attr;
+/* not completed yet */
+
+#if 0
+char *get_attribute(char *key,LIST attr)
 {}
 
-void treetofnode(obj,f)
-Obj obj;
-FNODE *f;
+void treetofnode(Obj obj,FNODE *f)
 {
 	NODE n;
 	LIST attr;
@@ -493,12 +468,11 @@ FNODE *f;
 			/* default will be set to P_FUNC */
 	}
 }
+#endif
 
 FUNC user_print_function;
 
-void Pset_print_function(arg,rp)
-NODE arg;
-pointer *rp;
+void Pset_print_function(NODE arg,pointer *rp)
 {
 	if ( !arg )
 		user_print_function = 0;		

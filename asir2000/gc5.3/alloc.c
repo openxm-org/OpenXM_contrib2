@@ -25,6 +25,7 @@
 # endif
 
 void GC_timerstart(),GC_timerstop();
+void SendHeapSize(), int_handler(), ox_usr1_handler();
 
 /*
  * Separate free lists are maintained for different sized objects

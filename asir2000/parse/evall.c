@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/evall.c,v 1.3 2000/08/22 05:04:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/evall.c,v 1.4 2000/12/05 01:24:56 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -55,11 +55,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-pointer evall();
-
-pointer evall(id,a1,a2)
-lid id;
-Obj a1,a2;
+pointer evall(lid id,Obj a1,Obj a2)
 {
 	F f;
 	Obj d;
@@ -117,8 +113,7 @@ Obj a1,a2;
 	return (pointer)f;
 }
 
-node_concat_dup(n1,n2,nr)
-NODE n1,n2,*nr;
+void node_concat_dup(NODE n1,NODE n2,NODE *nr)
 {
 	NODE r0,r,n;
 

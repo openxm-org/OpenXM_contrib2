@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.18 2001/09/17 10:32:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.19 2001/09/19 09:10:34 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -67,8 +67,7 @@ extern NODE TraceList;
  *
  */
 
-void dp_ptozp(p,rp)
-DP p,*rp;
+void dp_ptozp(DP p,DP *rp)
 {
 	MP m,mr,mr0;
 	int i,n;
@@ -95,9 +94,7 @@ DP p,*rp;
 	}
 }
 
-void dp_ptozp2(p0,p1,hp,rp)
-DP p0,p1;
-DP *hp,*rp;
+void dp_ptozp2(DP p0,DP p1,DP *hp,DP *rp)
 {
 	DP t,s,h,r;
 	MP m,mr,mr0,m0;
@@ -121,10 +118,7 @@ DP *hp,*rp;
 	*hp = h; *rp = r;
 }
 
-void dp_idiv(p,c,rp)
-DP p;
-Q c;
-DP *rp;
+void dp_idiv(DP p,Q c,DP *rp)
 {
 	Q t;
 	N nm,q;
@@ -154,9 +148,7 @@ DP *rp;
 	}
 }
 
-void dp_mbase(hlist,mbase)
-NODE hlist;
-NODE *mbase;
+void dp_mbase(NODE hlist,NODE *mbase)
 {
 	DL *dl;
 	DL d;
@@ -190,9 +182,7 @@ NODE *mbase;
 	}
 }
 
-int _dl_redble(d1,d2,nvar)
-DL d1,d2;
-int nvar;
+int _dl_redble(DL d1,DL d2,int nvar)
 {
 	int i;
 
@@ -207,10 +197,7 @@ int nvar;
 		return 1;
 }
 
-void insert_to_node(d,n,nvar)
-DL d;
-NODE *n;
-int nvar;
+void insert_to_node(DL d,NODE *n,int nvar)
 {
 	DL d1;
 	MP m;
@@ -239,10 +226,7 @@ int nvar;
 	}
 }
 
-void dp_vtod(c,p,rp)
-Q *c;
-DP p;
-DP *rp;
+void dp_vtod(Q *c,DP p,DP *rp)
 {
 	MP mr0,m,mr;
 	int i;
@@ -261,8 +245,7 @@ DP *rp;
 extern int mpi_mag;
 extern int PCoeffs;
 
-void dp_ptozp_d(p,rp)
-DP p,*rp;
+void dp_ptozp_d(DP p,DP *rp)
 {
 	int i,j,k,l,n,nsep;
 	MP m;
@@ -271,7 +254,6 @@ DP p,*rp;
 	VECT c,cs;
 	VECT qi,ri;
 	LIST *qr;
-	int s,id;
 	Obj dmy;
 	Q d0,d1,gcd,a,u,u1;
 	Q *q,*r;
@@ -286,6 +268,8 @@ DP p,*rp;
 	double t_e,t_d,t_d1,t_c;
 	extern int DP_NFStat;
 	extern LIST Dist;
+	void Pox_rpc();
+	void Pox_pop_local();
 
 	if ( !p )
 		*rp = 0;
@@ -362,9 +346,7 @@ DP p,*rp;
 	}
 }
 
-void dp_ptozp2_d(p0,p1,hp,rp)
-DP p0,p1;
-DP *hp,*rp;
+void dp_ptozp2_d(DP p0,DP p1,DP *hp,DP *rp)
 {
 	DP t,s,h,r;
 	MP m,mr,mr0,m0;
@@ -388,8 +370,7 @@ DP *hp,*rp;
 	*hp = h; *rp = r;
 }
 
-void dp_prim(p,rp)
-DP p,*rp;
+void dp_prim(DP p,DP *rp)
 {
 	P t,g;
 	DP p1;
@@ -433,10 +414,7 @@ DP p,*rp;
 	}
 }
 
-void heu_nezgcdnpz(vl,pl,m,pr)
-VL vl;
-P *pl,*pr;
-int m;
+void heu_nezgcdnpz(VL vl,P *pl,int m,P *pr)
 {
 	int i,r;
 	P gcd,t,s1,s2,u;
@@ -462,9 +440,7 @@ int m;
 	*pr = gcd;
 }
 
-void dp_prim_mod(p,mod,rp)
-int mod;
-DP p,*rp;
+void dp_prim_mod(DP p,int mod,DP *rp)
 {
 	P t,g;
 	MP m,mr,mr0;
@@ -484,18 +460,14 @@ DP p,*rp;
 	}
 }
 
-void dp_cont(p,rp)
-DP p;
-Q *rp;
+void dp_cont(DP p,Q *rp)
 {
 	VECT v;
 
 	dp_dtov(p,&v); igcdv(v,rp);
 }
 
-void dp_dtov(dp,rp)
-DP dp;
-VECT *rp;
+void dp_dtov(DP dp,VECT *rp)
 {
 	MP m,t;
 	int i,n;
@@ -515,9 +487,7 @@ VECT *rp;
  *
  */
 
-void dp_sp(p1,p2,rp)
-DP p1,p2;
-DP *rp;
+void dp_sp(DP p1,DP p2,DP *rp)
 {
 	int i,n,td;
 	int *w;
@@ -570,9 +540,7 @@ DP *rp;
 	}
 }
 
-void _dp_sp_dup(p1,p2,rp)
-DP p1,p2;
-DP *rp;
+void _dp_sp_dup(DP p1,DP p2,DP *rp)
 {
 	int i,n,td;
 	int *w;
@@ -625,10 +593,7 @@ DP *rp;
 	}
 }
 
-void dp_sp_mod(p1,p2,mod,rp)
-DP p1,p2;
-int mod;
-DP *rp;
+void dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 {
 	int i,n,td;
 	int *w;
@@ -654,10 +619,7 @@ DP *rp;
 	submd(CO,mod,t,u,rp);
 }
 
-void _dp_sp_mod_dup(p1,p2,mod,rp)
-DP p1,p2;
-int mod;
-DP *rp;
+void _dp_sp_mod_dup(DP p1,DP p2,int mod,DP *rp)
 {
 	int i,n,td;
 	int *w;
@@ -683,10 +645,7 @@ DP *rp;
 	_addmd_destructive(mod,t,u,rp);
 }
 
-void _dp_sp_mod(p1,p2,mod,rp)
-DP p1,p2;
-int mod;
-DP *rp;
+void _dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 {
 	int i,n,td;
 	int *w;
@@ -719,11 +678,7 @@ DP *rp;
  *
  */
 
-void dp_red(p0,p1,p2,head,rest,dnp,multp)
-DP p0,p1,p2;
-DP *head,*rest;
-P *dnp;
-DP *multp;
+void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
 {
 	int i,n;
 	DL d1,d2,d;
@@ -759,14 +714,12 @@ DP *multp;
 
 /* m-reduction over a field */
 
-void dp_red_f(p1,p2,rest)
-DP p1,p2;
-DP *rest;
+void dp_red_f(DP p1,DP p2,DP *rest)
 {
 	int i,n;
 	DL d1,d2,d;
 	MP m;
-	DP t,s,r,h;
+	DP t,s;
 	Obj a,b;
 
 	n = p1->nv;
@@ -784,11 +737,7 @@ DP *rest;
 	muld(CO,s,p2,&t); addd(CO,p1,t,rest);
 }
 
-void dp_red_mod(p0,p1,p2,mod,head,rest,dnp)
-DP p0,p1,p2;
-int mod;
-DP *head,*rest;
-P *dnp;
+void dp_red_mod(DP p0,DP p1,DP p2,int mod,DP *head,DP *rest,P *dnp)
 {
 	int i,n;
 	DL d1,d2,d;
@@ -818,17 +767,13 @@ P *dnp;
 
 struct oEGT eg_red_mod;
 
-void _dp_red_mod_destructive(p1,p2,mod,rp)
-DP p1,p2;
-int mod;
-DP *rp;
+void _dp_red_mod_destructive(DP p1,DP p2,int mod,DP *rp)
 {
 	int i,n;
 	DL d1,d2,d;
 	MP m;
 	DP t,s;
 	int c,c1,c2;
-	struct oEGT t0,t1;
 	extern int do_weyl;
 
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
@@ -860,13 +805,7 @@ DP *rp;
  *
  */
 
-void dp_true_nf(b,g,ps,full,rp,dnp)
-NODE b;
-DP g;
-DP *ps;
-int full;
-DP *rp;
-P *dnp;
+void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
 {
 	DP u,p,d,s,t,dmy;
 	NODE l;
@@ -923,12 +862,7 @@ P *dnp;
 
 /* nf computation over Z */
 
-void dp_nf_z(b,g,ps,full,multiple,rp)
-NODE b;
-DP g;
-DP *ps;
-int full,multiple;
-DP *rp;
+void dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *rp)
 {
 	DP u,p,d,s,t,dmy1;
 	P dmy;
@@ -999,15 +933,9 @@ DP *rp;
 
 /* nf computation over a field */
 
-void dp_nf_f(b,g,ps,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int full;
-DP *rp;
+void dp_nf_f(NODE b,DP g,DP *ps,int full,DP *rp)
 {
 	DP u,p,d,s,t;
-	P dmy;
 	NODE l;
 	MP m,mr;
 	int i,n;
@@ -1058,12 +986,7 @@ DP *rp;
 
 /* nf computation over GF(mod) (only for internal use) */
 
-void dp_nf_mod(b,g,ps,mod,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int mod,full;
-DP *rp;
+void dp_nf_mod(NODE b,DP g,DP *ps,int mod,int full,DP *rp)
 {
 	DP u,p,d,s,t;
 	P dmy;
@@ -1109,13 +1032,7 @@ DP *rp;
 	*rp = d;
 }
 
-void dp_true_nf_mod(b,g,ps,mod,full,rp,dnp)
-NODE b;
-DP g;
-DP *ps;
-int mod,full;
-DP *rp;
-P *dnp;
+void dp_true_nf_mod(NODE b,DP g,DP *ps,int mod,int full,DP *rp,P *dnp)
 {
 	DP u,p,d,s,t;
 	NODE l;
@@ -1170,17 +1087,12 @@ P *dnp;
 	*rp = d; *dnp = dn;
 }
 
-void _dp_nf_mod_destructive(b,g,ps,mod,full,rp)
-NODE b;
-DP g;
-DP *ps;
-int mod,full;
-DP *rp;
+void _dp_nf_mod_destructive(NODE b,DP g,DP *ps,int mod,int full,DP *rp)
 {
-	DP u,p,d,s,t;
+	DP u,p,d;
 	NODE l;
-	MP m,mr,mrd;
-	int sugar,psugar,n,h_reducible,i;
+	MP m,mrd;
+	int sugar,psugar,n,h_reducible;
 
 	if ( !g ) {
 		*rp = 0; return;
@@ -1231,10 +1143,7 @@ DP *rp;
 
 /* reduction by linear base over a field */
 
-void dp_lnf_f(p1,p2,g,r1p,r2p)
-DP p1,p2;
-NODE g;
-DP *r1p,*r2p;
+void dp_lnf_f(DP p1,DP p2,NODE g,DP *r1p,DP *r2p)
 {
 	DP r1,r2,b1,b2,t,s;
 	Obj c,c1,c2;
@@ -1263,11 +1172,7 @@ DP *r1p,*r2p;
 
 /* reduction by linear base over GF(mod) */
 
-void dp_lnf_mod(p1,p2,g,mod,r1p,r2p)
-DP p1,p2;
-NODE g;
-int mod;
-DP *r1p,*r2p;
+void dp_lnf_mod(DP p1,DP p2,NODE g,int mod,DP *r1p,DP *r2p)
 {
 	DP r1,r2,b1,b2,t,s;
 	P c;
@@ -1295,11 +1200,7 @@ DP *r1p,*r2p;
 	*r1p = r1; *r2p = r2;
 }
 
-void dp_nf_tab_mod(p,tab,mod,rp)
-DP p;
-LIST *tab;
-int mod;
-DP *rp;
+void dp_nf_tab_mod(DP p,LIST *tab,int mod,DP *rp)
 {
 	DP s,t,u;
 	MP m;
@@ -1325,9 +1226,7 @@ DP *rp;
  *
  */
 
-int create_order_spec(obj,spec)
-Obj obj;
-struct order_spec *spec;
+int create_order_spec(Obj obj,struct order_spec *spec)
 {
 	int i,j,n,s,row,col;
 	struct order_pair *l;
@@ -1372,9 +1271,7 @@ struct order_spec *spec;
  *
  */
 
-void dp_homo(p,rp)
-DP p;
-DP *rp;
+void dp_homo(DP p,DP *rp)
 {
 	MP m,mr,mr0;
 	int i,n,nv,td;
@@ -1398,9 +1295,7 @@ DP *rp;
 	}
 }
 
-void dp_dehomo(p,rp)
-DP p;
-DP *rp;
+void dp_dehomo(DP p,DP *rp)
 {
 	MP m,mr,mr0;
 	int i,n,nv;
@@ -1423,11 +1318,7 @@ DP *rp;
 	}
 }
 
-void dp_mod(p,mod,subst,rp)
-DP p;
-int mod;
-NODE subst;
-DP *rp;
+void dp_mod(DP p,int mod,NODE subst,DP *rp)
 {
 	MP m,mr,mr0;
 	P t,s,s1;
@@ -1454,9 +1345,7 @@ DP *rp;
 	}
 }
 
-void dp_rat(p,rp)
-DP p;
-DP *rp;
+void dp_rat(DP p,DP *rp)
 {
 	MP m,mr,mr0;
 
@@ -1474,9 +1363,7 @@ DP *rp;
 }
 
 
-void homogenize_order(old,n,new)
-struct order_spec *old,*new;
-int n;
+void homogenize_order(struct order_spec *old,int n,struct order_spec *new)
 {
 	struct order_pair *l;
 	int length,nv,row,i,j;
@@ -1535,9 +1422,7 @@ int n;
 	}
 }
 
-void qltozl(w,n,dvr)
-Q *w,*dvr;
-int n;
+void qltozl(Q *w,int n,Q *dvr)
 {
 	N nm,dn;
 	N g,l1,l2,l3;
@@ -1565,15 +1450,12 @@ int n;
 	*dvr = d;
 }
 
-int comp_nm(a,b)
-Q *a,*b;
+int comp_nm(Q *a,Q *b)
 {
 	return cmpn((*a)?NM(*a):0,(*b)?NM(*b):0);
 }
 
-void sortbynm(w,n)
-Q *w;
-int n;
+void sortbynm(Q *w,int n)
 {
 	qsort(w,n,sizeof(Q),(int (*)(const void *,const void *))comp_nm);
 }
@@ -1584,8 +1466,7 @@ int n;
  *
  */
 
-int dp_redble(p1,p2)
-DP p1,p2;
+int dp_redble(DP p1,DP p2)
 {
 	int i,n;
 	DL d1,d2;
@@ -1601,9 +1482,7 @@ DP p1,p2;
 	}
 }
 
-void dp_subd(p1,p2,rp)
-DP p1,p2;
-DP *rp;
+void dp_subd(DP p1,DP p2,DP *rp)
 {
 	int i,n;
 	DL d1,d2,d;
@@ -1619,10 +1498,7 @@ DP *rp;
 	*rp = s;
 }
 
-void dltod(d,n,rp)
-DL d;
-int n;
-DP *rp;
+void dltod(DL d,int n,DP *rp)
 {
 	MP m;
 	DP s;
@@ -1632,9 +1508,7 @@ DP *rp;
 	*rp = s;
 }
 
-void dp_hm(p,rp)
-DP p;
-DP *rp;
+void dp_hm(DP p,DP *rp)
 {
 	MP m,mr;
 
@@ -1647,8 +1521,7 @@ DP *rp;
 	}
 }
 
-void dp_rest(p,rp)
-DP p,*rp;
+void dp_rest(DP p,DP *rp)
 {
 	MP m;
 
@@ -1662,10 +1535,7 @@ DP p,*rp;
 	}
 }
 
-DL lcm_of_DL(nv,dl1,dl2,dl)
-int nv;
-DL dl1,dl2;
-register DL dl;
+DL lcm_of_DL(int nv,DL dl1,DL dl2,DL dl)
 {
 	register int n, *d1, *d2, *d, td;
 
@@ -1677,9 +1547,7 @@ register DL dl;
 	return dl;
 }
 
-int dl_equal(nv,dl1,dl2)
-int nv;
-DL dl1, dl2;
+int dl_equal(int nv,DL dl1,DL dl2)
 {
     register int *d1, *d2, n;
 
@@ -1689,8 +1557,7 @@ DL dl1, dl2;
     return 1;
 }
 
-int dp_nt(p)
-DP p;
+int dp_nt(DP p)
 {
 	int i;
 	MP m;
@@ -1703,8 +1570,7 @@ DP p;
 	}
 }
 
-int dp_homogeneous(p)
-DP p;
+int dp_homogeneous(DP p)
 {
 	MP m;
 	int d;
@@ -1723,9 +1589,7 @@ DP p;
 	}
 }
 
-_print_mp(nv,m)
-int nv;
-MP m;
+void _print_mp(int nv,MP m)
 {
 	int i;
 

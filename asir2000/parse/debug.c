@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.8 2001/08/20 09:03:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.9 2001/10/05 03:21:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,24 +53,6 @@
 #if PARI
 #include "genpari.h"
 #endif
-
-void show_stack(VS);
-void change_stack(int,NODE *);
-void showpos(void);
-void printvars(char *,VS);
-void println(int,char **,int);
-void bp(SNODE);
-void searchsn(SNODE *,int,SNODE **);
-void showbp(int);
-void showbps(void);
-void delbp(int,char **);
-int searchbp(void);
-void clearbp(FUNC);
-void settp(char *);
-void setbp(char *);
-void setf(int,char **);
-void show_alias(char *);
-void add_alias(char *,char *);
 
 extern do_server_in_X11,do_file;
 
@@ -175,8 +157,7 @@ void debug_init() {
 #endif
 }
 
-void add_alias(com,alias)
-char *com,*alias;
+void add_alias(char *com,char *alias)
 {
 	int i;
 	NODE tn;
@@ -191,8 +172,7 @@ char *com,*alias;
 		}
 }
 
-void show_alias(alias)
-char *alias;
+void show_alias(char *alias)
 {
 	int i;
 	NODE tn;
@@ -217,8 +197,7 @@ char *alias;
 				}
 }
 
-void debug(f)
-SNODE f;
+void debug(SNODE f)
 {
 	int ac,i,n;
 	did id;
@@ -229,7 +208,10 @@ SNODE f;
 #endif
 	char buf[BUFSIZ];
 	char prompt[BUFSIZ];
-	char *p,*pe,*line;
+	char *p,*pe;
+#if !defined(VISUAL)
+	char *line;
+#endif
 	NODE tn;
 	extern int do_fep;
 	NODE pvss;
@@ -367,9 +349,7 @@ LAST:
 		show_debug_window(0);
 }
 
-void setf(ac,av)
-int ac;
-char **av;
+void setf(int ac,char **av)
 {
 	FUNC r;
 
@@ -394,8 +374,7 @@ static struct {
 
 static int bpindex = 0;
 
-void setbp(p)
-char *p;
+void setbp(char *p)
 {
 	int ac;
 	char *av[BUFSIZ];
@@ -477,8 +456,7 @@ char *p;
 	}
 }
 
-void settp(p)
-char *p;
+void settp(char *p)
 {
 	int ac;
 	char *_av[BUFSIZ];
@@ -563,8 +541,7 @@ char *p;
 	}
 }
 
-void clearbp(f)
-FUNC f;
+void clearbp(FUNC f)
 {
 	int i;
 
@@ -589,9 +566,7 @@ int searchbp()
 		return bpindex++;
 }
 
-void delbp(ac,av)
-int ac;
-char **av;
+void delbp(int ac,char **av)
 {
 	int n;
 
@@ -612,8 +587,7 @@ void showbps() {
 		showbp(i);
 }
 
-void showbp(n)
-int n;
+void showbp(int n)
 {
 	if ( bpt[n].snp )
 		if ( bpt[n].texpr )
@@ -648,10 +622,7 @@ int n;
 			}
 }
 
-void searchsn(fp,n,fpp)
-SNODE *fp;
-int n;
-SNODE **fpp;
+void searchsn(SNODE *fp,int n,SNODE **fpp)
 {
 	NODE tn;
 	SNODE sn;
@@ -708,8 +679,7 @@ SNODE **fpp;
 	}
 }
 
-void bp(f)
-SNODE f;
+void bp(SNODE f)
 {
 	int ln;
 
@@ -736,10 +706,7 @@ SNODE f;
 		debug(f);
 }
 
-void println(ac,av,l)
-int ac;
-char **av;
-int l;
+void println(int ac,char **av,int l)
 {
 	FILE *fp;
 	char buf[BUFSIZ+1];
@@ -780,9 +747,7 @@ int l;
 	fclose(fp);
 }
 
-void printvars(s,vs)
-char *s;
-VS vs;
+void printvars(char *s,VS vs)
 {
 	FNODE expr;
 	char *p;
@@ -850,8 +815,7 @@ void showpos()
 	}
 }
 
-void showpos_to_string(buf)
-char *buf;
+void showpos_to_string(char *buf)
 {
 	NODE n;
 	VS vs;
@@ -873,9 +837,7 @@ char *buf;
 	}
 }
 
-void change_stack(level,pvss)
-int level;
-NODE *pvss;
+void change_stack(int level,NODE *pvss)
 {
 	extern NODE PVSS;
 	NODE n;
@@ -895,8 +857,7 @@ NODE *pvss;
 	targetf = vs->usrf; curline = vs->at;
 }
 
-void show_stack(vs)
-VS vs;
+void show_stack(VS vs)
 {
 	fprintf(stderr,"#%d %s(), line %d in \"%s\"\n",
 		((VS)BDY(PVSS))->level-vs->level,vs->usrf->name,vs->at,vs->usrf->f.usrf->fname);

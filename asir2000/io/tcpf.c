@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.24 2001/06/04 02:49:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.25 2001/06/06 02:21:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -97,7 +97,7 @@ int get_mcindex(int);
 
 void Pox_send_raw_cmo(), Pox_recv_raw_cmo();
 
-void Pox_launch(),Pox_launch_nox(),Pox_launch_main();
+void Pox_launch(),Pox_launch_nox();
 void Pox_launch_generic();
 void Pox_shutdown();
 
@@ -184,22 +184,18 @@ char *getenv();
 #if MPI
 extern int mpi_myid, mpi_nprocs;
 
-void Pox_mpi_myid(rp)
-Q *rp;
+void Pox_mpi_myid(Q *rp)
 {
 	STOQ(mpi_myid,*rp);
 }
 
-void Pox_mpi_nprocs(rp)
-Q *rp;
+void Pox_mpi_nprocs(Q *rp)
 {
 	STOQ(mpi_nprocs,*rp);
 }
 #endif
 
-void Pox_get_serverinfo(arg,rp)
-NODE arg;
-LIST *rp;
+void Pox_get_serverinfo(NODE arg,LIST *rp)
 {
 	int i,c;
 	Q s_id;
@@ -235,9 +231,7 @@ LIST *rp;
   else use UNIX socket and return a string which represents a path name
 */
 
-void Pgenerate_port(arg,rp)
-NODE arg;
-Obj *rp;
+void Pgenerate_port(NODE arg,Obj *rp)
 {
 	char port_str[BUFSIZ];
 	int port;
@@ -252,7 +246,7 @@ Obj *rp;
 		*rp = (Obj)q;
 	} else {
 		generate_port(1,port_str);
-		s = (char *)MALLOC(strlen(port_str)+1);
+		s = (char *)MALLOC(strlen((char *)port_str)+1);
 		strcpy(s,port_str);
 		MKSTR(str,s);
 		*rp = (Obj)str;
@@ -263,9 +257,7 @@ Obj *rp;
  try_bind_listen(port)
 */
 
-void Ptry_bind_listen(arg,rp)
-NODE arg;
-Q *rp;
+void Ptry_bind_listen(NODE arg,Q *rp)
 {
 	char port_str[BUFSIZ];
 	int port,s,use_unix;
@@ -286,9 +278,7 @@ Q *rp;
  try_connect(host,port)
 */
 
-void Ptry_connect(arg,rp)
-NODE arg;
-Q *rp;
+void Ptry_connect(NODE arg,Q *rp)
 {
 	char port_str[BUFSIZ];
 	char *host;
@@ -311,9 +301,7 @@ Q *rp;
  try_accept(sock,port)
 */
 
-void Ptry_accept(arg,rp)
-NODE arg;
-Q *rp;
+void Ptry_accept(NODE arg,Q *rp)
 {
 	int use_unix,s;
 
@@ -329,12 +317,11 @@ Q *rp;
  register_server(cs,cport,ss,sport)
 */
 
-void Pregister_server(arg,rp)
-NODE arg;
-Q *rp;
+void Pregister_server(NODE arg,Q *rp)
 {
 	int cs,ss,cn,sn,ind,use_unix,id;
 	char cport_str[BUFSIZ],sport_str[BUFSIZ];
+	Obj obj;
 	MATHCAP server_mathcap;
 
 	cs = QTOS((Q)ARG0(arg));		
@@ -375,7 +362,7 @@ Q *rp;
 		ox_send_cmd(sn,SM_mathcap);
 		ox_send_cmd(sn,SM_popCMO);
 		ox_flush_stream_force(sn);
-		ox_recv(sn,&id,&server_mathcap);
+		ox_recv(sn,&id,&obj); server_mathcap = (MATHCAP)obj;
 		store_remote_mathcap(sn,server_mathcap);
 	
 		/* send my mathcap */
@@ -400,12 +387,11 @@ Q *rp;
 	conn_to_serv: connect to server if 1
 */
 
-void Pox_launch_generic(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_launch_generic(NODE arg,Q *rp)
 {
 	int use_unix,use_ssh,use_x,conn_to_serv;
 	char *host,*launcher,*server;
+	Q ret;
 
 	host = (arg&&ARG0(arg))?BDY((STRING)ARG0(arg)):0;
 	launcher = BDY((STRING)ARG1(arg));
@@ -417,18 +403,17 @@ Q *rp;
 	if ( !host )
 		use_unix = 1;
 	ox_launch_generic(host,launcher,server,
-		use_unix,use_ssh,use_x,conn_to_serv,rp);
+		use_unix,use_ssh,use_x,conn_to_serv,&ret);
+	*rp = ret;
 }
 
-void ox_launch_generic(host,launcher,server,
-		use_unix,use_ssh,use_x,conn_to_serv,rp)
-char *host,*launcher,*server;
-int use_unix,use_ssh,use_x,conn_to_serv;
-Q *rp;
+void ox_launch_generic(char *host,char *launcher,char *server,
+		int use_unix,int use_ssh,int use_x,int conn_to_serv,Q *rp)
 {
 	int cs,ss,cn,sn,ind,id;
 	char control_port_str[BUFSIZ];
 	char server_port_str[BUFSIZ];
+	Obj obj;
 	MATHCAP server_mathcap;
 
 	control_port_str[0] = 0;
@@ -471,7 +456,7 @@ Q *rp;
 		ox_send_cmd(sn,SM_mathcap);
 		ox_send_cmd(sn,SM_popCMO);
 		ox_flush_stream_force(sn);
-		ox_recv(sn,&id,&server_mathcap);
+		ox_recv(sn,&id,&obj); server_mathcap = (MATHCAP)obj;
 		store_remote_mathcap(sn,server_mathcap);
 	
 		/* send my mathcap */
@@ -483,21 +468,20 @@ Q *rp;
 	STOQ(ind,*rp);
 }
 
-int spawn_server(host,launcher,server,
-	use_unix,use_ssh,use_x,conn_to_serv,
-	control_port_str,server_port_str)
-char *host,*launcher,*server;
-int use_unix,use_ssh,use_x,conn_to_serv;
-char *control_port_str,*server_port_str;
+void spawn_server(char *host,char *launcher,char *server,
+	int use_unix,int use_ssh,int use_x,int conn_to_serv,
+	char *control_port_str,char *server_port_str)
 {
-	char cmd[BUFSIZ];
 	char localhost[BUFSIZ];
 	char *dname,*conn_str,*rsh,*dname0;
-	char dname_str[BUFSIZ];
 	char AsirExe[BUFSIZ];
 	STRING rootdir;
 	char prog[BUFSIZ];
 	char *av[BUFSIZ];
+#if !defined(VISUAL)
+	char cmd[BUFSIZ];
+#endif
+	void Pget_rootdir();
 
 	dname0 = (char *)getenv("DISPLAY");
 	if ( !dname0 )
@@ -588,18 +572,14 @@ char *control_port_str,*server_port_str;
 #endif /* VISUAL */
 }
 
-void Pox_launch(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_launch(NODE arg,Obj *rp)
 {
-	Pox_launch_main(1,arg,rp);
+	ox_launch_main(1,arg,rp);
 }
 
-void Pox_launch_nox(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_launch_nox(NODE arg,Obj *rp)
 {
-	Pox_launch_main(0,arg,rp);
+	ox_launch_main(0,arg,rp);
 }
 
 /* 
@@ -608,15 +588,13 @@ Obj *rp;
 	ox_launch(remote,lib,ox_xxx) : invoke remote ox_xxx with lib/ox_launch
 */
 
-void Pox_launch_main(with_x,arg,rp)
-int with_x;
-NODE arg;
-Obj *rp;
+void ox_launch_main(int with_x,NODE arg,Obj *p)
 {
 	char *str;
-	char *hostname,*servername,*dname;
+	char *hostname,*servername;
 	char *control;
 	int use_unix;
+	Q ret;
 	extern char *asir_libdir;
 
 	if ( arg && ARG0(arg) && argc(arg) != 3 )
@@ -655,13 +633,13 @@ Obj *rp;
 		hostname = BDY((STRING)ARG0(arg));
 	else
 		hostname = 0;
-	ox_launch_generic(hostname,control,servername,use_unix,0,with_x,0,rp);
+	ox_launch_generic(hostname,control,servername,use_unix,0,with_x,0,&ret);
+	*p = (Obj)ret;
 }
 
-int register_server(af_unix,m,c)
-int af_unix,m,c;
+int register_server(int af_unix,int m,int c)
 {
-	int s,i,ci;
+	int s,i;
 	struct m_c *t;
 #define INIT_TAB_SIZ 64
 
@@ -703,8 +681,7 @@ int af_unix,m,c;
 
 /* iofp index => m_c_tab index */
 
-int get_mcindex(i)
-int i;
+int get_mcindex(int i)
 {
 	int j;
 
@@ -716,9 +693,7 @@ int i;
 
 /* arg = [ind0,ind1,...]; indk = index to m_c_tab */
 
-void Pox_select(arg,rp)
-NODE arg;
-LIST *rp;
+void Pox_select(NODE arg,LIST *rp)
 {
 	int fd,n,i,index,mcind;
 	fd_set r,w,e;
@@ -741,7 +716,7 @@ LIST *rp;
 	for ( t = list; t; t = NEXT(t) ) {
 		index = QTOS((Q)BDY(t));
 		valid_mctab_index(index);
-		fd = get_fd(m_c_tab[index].c); FD_SET(fd,&r);
+		fd = get_fd(m_c_tab[index].c); FD_SET((unsigned int)fd,&r);
 	}
 	n = select(FD_SETSIZE,&r,&w,&e,tvp);
 	for ( i = 0, t = 0; n && i < FD_SETSIZE; i++ )
@@ -755,9 +730,7 @@ LIST *rp;
 	MKLIST(*rp,t);
 }
 
-void Pox_flush(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_flush(NODE arg,Q *rp)
 {
 	int index = QTOS((Q)ARG0(arg));
 
@@ -766,9 +739,7 @@ Q *rp;
 	*rp = ONE;
 }
 
-void Pox_send_raw_cmo(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_send_raw_cmo(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -781,9 +752,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_recv_raw_cmo(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_recv_raw_cmo(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -793,9 +762,7 @@ Obj *rp;
 	ox_read_cmo(s,rp);
 }
 
-void Pox_push_local(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_push_local(NODE arg,Obj *rp)
 {
 	int s;
 	struct oLIST dummy;
@@ -814,9 +781,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_push_cmo(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_push_cmo(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -828,11 +793,8 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_push_vl(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_push_vl(NODE arg,Obj *rp)
 {
-	int s;
 	int index = QTOS((Q)ARG0(arg));
 
 	valid_mctab_index(index);
@@ -840,9 +802,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_pop_local(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_pop_local(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -854,9 +814,7 @@ Obj *rp;
 	ox_get_result(s,rp);
 }
 
-void Pox_pop_cmo(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_pop_cmo(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -868,9 +826,7 @@ Obj *rp;
 	ox_get_result(s,rp);
 }
 
-void Pox_pop0_local(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_pop0_local(NODE arg,Obj *rp)
 {
 	int index = QTOS((Q)ARG0(arg));
 
@@ -879,9 +835,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_pop0_cmo(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_pop0_cmo(NODE arg,Obj *rp)
 {
 	int index = QTOS((Q)ARG0(arg));
 
@@ -890,9 +844,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_pop0_string(arg,rp)
-NODE arg;
-STRING *rp;
+void Pox_pop0_string(NODE arg,STRING *rp)
 {
 	int index = QTOS((Q)ARG0(arg));
 
@@ -901,11 +853,9 @@ STRING *rp;
 	*rp = 0;
 }
 
-void Pox_pop_string(arg,rp)
-NODE arg;
-STRING *rp;
+void Pox_pop_string(NODE arg,Obj *rp)
 {
-	int s,id;
+	int s;
 	int index = QTOS((Q)ARG0(arg));
 
 	valid_mctab_index(index);
@@ -915,9 +865,7 @@ STRING *rp;
 	ox_get_result(s,rp);
 }
 
-void Pox_get(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_get(NODE arg,Obj *rp)
 {
 	int index;
 	int s;
@@ -935,9 +883,7 @@ Obj *rp;
 	}
 }
 
-void Pox_pops(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_pops(NODE arg,Obj *rp)
 {
 	int s;
 	USINT n;
@@ -954,9 +900,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_execute_function(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_execute_function(NODE arg,Obj *rp)
 {
 	int s;
 	USINT ui;
@@ -971,9 +915,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_setname(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_setname(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -985,9 +927,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_evalname(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_evalname(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -999,9 +939,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_execute_string(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_execute_string(NODE arg,Obj *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
@@ -1015,9 +953,7 @@ Obj *rp;
 
 /* arg=[sid,fname,arg0,arg1,...,arg{n-1}] */
 
-void Pox_rpc(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_rpc(NODE arg,Obj *rp)
 {
 	int s,i,n;
 	STRING f;
@@ -1043,9 +979,7 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_cmo_rpc(arg,rp)
-NODE arg;
-Obj *rp;
+void Pox_cmo_rpc(NODE arg,Obj *rp)
 {
 	int s,i,n;
 	STRING f;
@@ -1070,12 +1004,10 @@ Obj *rp;
 	*rp = 0;
 }
 
-void Pox_reset(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_reset(NODE arg,Q *rp)
 {
 	USINT t;
-	int s,id,c,m;
+	int id,c,m;
 	Obj obj;
 	int index = QTOS((Q)ARG0(arg));
 
@@ -1086,7 +1018,7 @@ Q *rp;
 		if ( argc(arg) == 1 ) {
 			ox_send_cmd(m,SM_control_reset_connection);
 			ox_flush_stream_force(m);
-			ox_recv(m,&id,&t);
+			ox_recv(m,&id,&obj); t = (USINT)obj;
 		}
 		*rp = ONE;
 #if defined(VISUAL)
@@ -1104,12 +1036,9 @@ Q *rp;
 		*rp = 0;
 }
 
-void Pox_intr(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_intr(NODE arg,Q *rp)
 {
 	int m;
-	Obj obj;
 	int index = QTOS((Q)ARG0(arg));
 
 	valid_mctab_index(index);
@@ -1124,9 +1053,7 @@ Q *rp;
 		*rp = 0;
 }
 
-void Pox_sync(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_sync(NODE arg,Q *rp)
 {
 	int c;
 	int index = QTOS((Q)ARG0(arg));
@@ -1137,13 +1064,13 @@ Q *rp;
 	*rp = 0;
 }
 
-void Pox_shutdown(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_shutdown(NODE arg,Q *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
+#if !defined(VISUAL)
 	int status;
+#endif
 
 	valid_mctab_index(index);
 	s = m_c_tab[index].m;
@@ -1162,9 +1089,7 @@ Q *rp;
 	*rp = 0;
 }
 
-void Pox_push_cmd(arg,rp)
-NODE arg;
-Q *rp;
+void Pox_push_cmd(NODE arg,Q *rp)
 {
 	int ui;
 	int index = QTOS((Q)ARG0(arg));
@@ -1178,7 +1103,9 @@ Q *rp;
 void shutdown_all() {
 	int s;
 	int i,index;
+#if !defined(VISUAL)
 	int status;
+#endif
 
 	for ( i = I_am_server?1:0; i < m_c_i; i++ ) {
 		index = i;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.11 2001/03/08 07:49:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.12 2001/03/19 00:44:01 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -233,7 +233,7 @@ Obj *rp;
 
 	version = get_asir_version();
 	distribution = get_asir_distribution();
-	STOQ(version,q);
+	UTOQ(version,q);
 	if ( !argc(arg) )
 		*rp = (Obj)q;
 	else {
@@ -271,7 +271,6 @@ void Perror3(arg,rp)
 NODE arg;
 Q *rp;
 {
-	char s[BUFSIZ];
 	int code;
 	char *reason,*action;
 

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.8 2001/03/16 01:56:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.9 2001/09/03 07:01:08 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -56,31 +56,6 @@
 #include "genpari.h"
 int get_lg(GEN);
 #endif
-
-void saveerror(FILE *,ERR);
-void saveui(FILE *,USINT);
-void savedp(FILE *,DP);
-void savestr(FILE *,char *);
-void savestring(FILE *,STRING);
-void savemat(FILE *,MAT);
-void savevect(FILE *,VECT);
-void savelist(FILE *,LIST);
-void saver(FILE *,R);
-void savep(FILE *,P);
-void savegf2n(FILE *,GF2N);
-void savegfpn(FILE *,GFPN);
-void savegfs(FILE *,GFS);
-void savelm(FILE *,LM);
-void savemi(FILE *,MQ);
-void savecplx(FILE *,C);
-void savebf(FILE *,BF);
-void savereal(FILE *,Real);
-void saveq(FILE *,Q);
-void savenum(FILE *,Num);
-void savepfins(FILE *,V);
-void savegfmmat(FILE *,GFMMAT);
-void savebytearray(FILE *,BYTEARRAY);
-void savegfsn(FILE *,GFSN);
 
 void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
 	savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat, savebytearray };
@@ -94,9 +69,7 @@ void (*nsavef[])() = { saveq, savereal, 0, savebf, savecplx ,savemi, savelm, sav
 
 static short zeroval = 0;
 
-void saveobj(s,p)
-FILE *s;
-Obj p;
+void saveobj(FILE *s,Obj p)
 {
 	if ( !p )
 		write_short(s,&zeroval);
@@ -106,9 +79,7 @@ Obj p;
 		(*savef[OID(p)])(s,p);
 }
 
-void savenum(s,p)
-FILE *s;
-Num p;
+void savenum(FILE *s,Num p)
 { 
 	if ( !nsavef[NID(p)] )
 		error("savenum : not implemented");
@@ -119,9 +90,7 @@ Num p;
 	}
 }
 
-void saveq(s,p)
-FILE *s;
-Q p;
+void saveq(FILE *s,Q p)
 {
 	int size[2];
 	int len = 2;
@@ -133,9 +102,7 @@ Q p;
 		write_intarray(s,BD(DN(p)),size[1]);
 }
 
-void savereal(s,p)
-FILE *s;
-Real p;
+void savereal(FILE *s,Real p)
 { write_double(s,&BDY(p)); }
 
 /*
@@ -143,15 +110,13 @@ Real p;
  * -> | id(2) | nid(1) | sgn(1) | expo>>32 | expo&0xffffffff | len | ... |
  */
 
-void savebf(s,p)
-FILE *s;
-BF p;
+void savebf(FILE *s,BF p)
 {
 #if PARI
 	GEN z;
 	int sign;
 	unsigned long expo;
-	unsigned int len,t;
+	unsigned int len;
 
 	z = (GEN)BDY(p);
 	sign = signe(z);
@@ -177,36 +142,26 @@ BF p;
 }
 
 #if defined(INTERVAL)
-void saveitv(s,p)
-FILE *s;
-Itv p;
+void saveitv(FILE *s,Itv p)
 {
 	saveobj(s,(Obj)INF(p));
 	saveobj(s,(Obj)SUP(p));
 }
 
-void saveitvd(s,p)
-FILE *s;
-ItvD p;
+void saveitvd(FILE *s,ItvD p)
 {
 	write_double(s,&INF(p));
 	write_double(s,&SUP(p));
 }
 #endif
 
-void savecplx(s,p)
-FILE *s;
-C p;
+void savecplx(FILE *s,C p)
 { saveobj(s,(Obj)p->r); saveobj(s,(Obj)p->i); }
 
-void savemi(s,p)
-FILE *s;
-MQ p;
+void savemi(FILE *s,MQ p)
 { write_int(s,&CONT(p)); }
 
-void savelm(s,p)
-FILE *s;
-LM p;
+void savelm(FILE *s,LM p)
 {
 	int size;
 
@@ -215,9 +170,7 @@ LM p;
 	write_intarray(s,BD(BDY(p)),size);
 }
 
-void savegf2n(s,p)
-FILE *s;
-GF2N p;
+void savegf2n(FILE *s,GF2N p)
 {
 	int len;
 
@@ -226,9 +179,7 @@ GF2N p;
 	write_intarray(s,p->body->b,len);
 }
 
-void savegfpn(s,p)
-FILE *s;
-GFPN p;
+void savegfpn(FILE *s,GFPN p)
 {
 	int d,i;
 
@@ -238,14 +189,10 @@ GFPN p;
 		saveobj(s,(Obj)p->body->c[i]);
 }
 
-void savegfs(s,p)
-FILE *s;
-GFS p;
+void savegfs(FILE *s,GFS p)
 { write_int(s,&CONT(p)); }
 
-void savegfsn(s,p)
-FILE *s;
-GFSN p;
+void savegfsn(FILE *s,GFSN p)
 {
 	int d;
 
@@ -254,9 +201,7 @@ GFSN p;
 	write_intarray(s,COEF(BDY(p)),d+1);
 }
 
-void savep(s,p)
-FILE *s;
-P p;
+void savep(FILE *s,P p)
 {
 	DCP dc;
 	int n;
@@ -281,9 +226,7 @@ P p;
 /* save a pure function (v->attr = V_PF) */
 /* |name(str)|argc(int)|darray(intarray)|args| */
 
-void savepfins(s,v)
-FILE *s;
-V v;
+void savepfins(FILE *s,V v)
 {
 	PFINS ins;
 	PF pf;
@@ -303,9 +246,7 @@ V v;
 		saveobj(s,ins->ad[i].arg);
 }
 
-void saver(s,p)
-FILE *s;
-R p;
+void saver(FILE *s,R p)
 {
 	if ( !RAT(p) )
 		savep(s,(P)p);
@@ -315,9 +256,7 @@ R p;
 	}
 }
 
-void savelist(s,p)
-FILE *s;
-LIST p;
+void savelist(FILE *s,LIST p)
 {
 	int n;
 	NODE tn;
@@ -328,9 +267,7 @@ LIST p;
 		saveobj(s,(Obj)BDY(tn));
 }
 
-void savevect(s,p)
-FILE *s;
-VECT p;
+void savevect(FILE *s,VECT p)
 {
 	int i,len = 2;
 
@@ -339,9 +276,7 @@ VECT p;
 		saveobj(s,(Obj)BDY(p)[i]);
 }
 
-void savemat(s,p)
-FILE *s;
-MAT p;
+void savemat(FILE *s,MAT p)
 {
 	int i,j,row,col;
 	int len = 3;
@@ -352,16 +287,12 @@ MAT p;
 			saveobj(s,(Obj)BDY(p)[i][j]);
 }
 
-void savestring(s,p)
-FILE *s;
-STRING p;
+void savestring(FILE *s,STRING p)
 {
 	write_short(s,&OID(p)); savestr(s,BDY(p));
 }
 
-void savestr(s,p)
-FILE *s;
-char *p;
+void savestr(FILE *s,char *p)
 {
 	int size;
 
@@ -370,9 +301,7 @@ char *p;
 		write_string(s,p,size);
 }
 
-void savedp(s,p)
-FILE *s;
-DP p;
+void savedp(FILE *s,DP p)
 {
 	int nv,n,i,sugar;
 	MP m,t;
@@ -386,34 +315,26 @@ DP p;
 	}
 }
 
-void saveui(s,u)
-FILE *s;
-USINT u;
+void saveui(FILE *s,USINT u)
 {
 	write_short(s,&OID(u)); write_int(s,&BDY(u));
 }
 
-void saveerror(s,e)
-FILE *s;
-ERR e;
+void saveerror(FILE *s,ERR e)
 {
 	write_short(s,&OID(e)); saveobj(s,(Obj)BDY(e));
 }
 
-void savegfmmat(s,p)
-FILE *s;
-GFMMAT p;
+void savegfmmat(FILE *s,GFMMAT p)
 {
-	int i,j,row,col;
+	int i,row,col;
 
 	write_short(s,&OID(p)); write_int(s,&p->row); write_int(s,&p->col);
 	for ( i = 0, row = p->row, col = p->col; i < row; i++ )
 		write_intarray(s,p->body[i],col);
 }
 
-void savebytearray(s,p)
-FILE *s;
-BYTEARRAY p;
+void savebytearray(FILE *s,BYTEARRAY p)
 {
 	write_short(s,&OID(p)); write_int(s,&p->len);
 	write_string(s,p->body,p->len);

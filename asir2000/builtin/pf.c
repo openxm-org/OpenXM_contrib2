@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.4 2001/04/20 02:34:21 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -363,7 +363,7 @@ LIST *rp;
 		t->name = pf->name; t->id = A_PURE; t->argc = pf->argc;
 		t->f.puref = pf;
 		makesrvar(t,&f);
-		n0 = 0; NEXTNODE(n0,n); BDY(n) = (pointer)f;
+		n = n0 = 0; NEXTNODE(n0,n); BDY(n) = (pointer)f;
 		for ( i = 0; i < pf->argc; i++ ) {
 			NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
 		}

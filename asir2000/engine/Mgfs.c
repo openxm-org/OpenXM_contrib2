@@ -1,13 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.9 2001/07/23 05:05:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.10 2001/09/03 01:04:26 noro Exp $ */
 
 #include "ca.h"
 
 extern int up_kara_mag, current_gfs_q1;
 extern int *current_gfs_plus1;
-
-void mulssfum(UM,int,UM);
-void kmulsfummain(UM,UM,UM);
-
 
 #if defined(__GNUC__)
 #define INLINE inline
@@ -17,8 +13,7 @@ void kmulsfummain(UM,UM,UM);
 #define INLINE
 #endif
 
-INLINE int _ADDSF(a,b)
-int a,b;
+INLINE int _ADDSF(int a,int b)
 {
 	if ( !a )
 		return b;
@@ -51,8 +46,7 @@ int a,b;
 	}
 }
 
-INLINE int _MULSF(a,b)
-int a,b;
+INLINE int _MULSF(int a,int b)
 {
 	if ( !a || !b )
 		return 0;
@@ -64,8 +58,7 @@ int a,b;
 	}
 }
 
-void addsfum(p1,p2,pr)
-UM p1,p2,pr;
+void addsfum(UM p1,UM p2,UM pr)
 {
 	int *c1,*c2,*cr,i,dmax,dmin;
 		
@@ -92,8 +85,7 @@ UM p1,p2,pr;
 		DEG(pr) = dmax;
 }
 
-void subsfum(p1,p2,pr)
-UM p1,p2,pr;
+void subsfum(UM p1,UM p2,UM pr)
 {
 	int *c1,*c2,*cr,i;
 	int dmax,dmin;
@@ -128,8 +120,7 @@ UM p1,p2,pr;
 		DEG(pr) = dmax;
 }
 		
-void gcdsfum(p1,p2,pr)
-UM p1,p2,pr;
+void gcdsfum(UM p1,UM p2,UM pr)
 {
 	int inv;
 	UM t1,t2,q,tum;
@@ -153,8 +144,8 @@ UM p1,p2,pr;
 		mulssfum(t2,inv,pr);
 	}
 }
-void mulsfum(p1,p2,pr)
-UM p1,p2,pr;
+
+void mulsfum(UM p1,UM p2,UM pr)
 {
 	int *pc1,*pcr;
 	int *c1,*c2,*cr;
@@ -175,9 +166,7 @@ UM p1,p2,pr;
 	DEG(pr) = d1 + d2;
 }
 
-void mulssfum(p,n,pr)
-int n;
-UM p,pr;
+void mulssfum(UM p,int n,UM pr)
 {
 	int *sp,*dp;
 	int i;
@@ -187,8 +176,7 @@ UM p,pr;
 		*dp = _MULSF(*sp,n);
 }
 	
-void kmulsfum(n1,n2,nr)
-UM n1,n2,nr;
+void kmulsfum(UM n1,UM n2,UM nr)
 {
 	UM n,t,s,m,carry;
 	int d,d1,d2,len,i,l;
@@ -235,8 +223,7 @@ UM n1,n2,nr;
 	bcopy((char *)r0,(char *)COEF(nr),l*sizeof(int));
 }
 
-void kmulsfummain(n1,n2,nr)
-UM n1,n2,nr;
+void kmulsfummain(UM n1,UM n2,UM nr)
 {
 	int d1,d2,h,len;
 	UM n1lo,n1hi,n2lo,n2hi,hi,lo,mid1,mid2,mid,s1,s2,t1,t2;
@@ -270,8 +257,7 @@ UM n1,n2,nr;
 		copyum(t1,nr);
 }
 
-int divsfum(p1,p2,pq)
-UM p1,p2,pq;
+int divsfum(UM p1,UM p2,UM pq)
 {
 	int *pc1,*pct;
 	int *c1,*c2,*ct;
@@ -307,8 +293,7 @@ UM p1,p2,pq;
 	return i;
 }
 
-void diffsfum(f,fd)
-UM f,fd;
+void diffsfum(UM f,UM fd)
 {
 	int *dp,*sp;
 	int i;
@@ -320,8 +305,7 @@ UM f,fd;
 	degum(fd,DEG(f) - 1);
 }
 
-void monicsfum(f)
-UM f;
+void monicsfum(UM f)
 {
 	int *sp;
 	int i,inv;
@@ -332,8 +316,7 @@ UM f;
 		*sp = _MULSF(*sp,inv);
 }
 
-int compsfum(a,b)
-UM a,b;
+int compsfum(UM a,UM b)
 {
 	int i,da,db;
 
@@ -361,11 +344,10 @@ void mulsfarray_trunc(int,int *,int *,int *);
 
 /* f1 = f1->c[0]+f1->c[1]*y+...,  f2 = f2->c[0]+f2->c[1]*y+... mod y^n */
 
-void mulsfbm(f1,f2,fr)
-BM f1,f2,fr;
+void mulsfbm(BM f1,BM f2,BM fr)
 {
 	UM mul,t,s;
-	int i,j,h,d1,d2,dy;
+	int i,j,d1,d2,dy;
 
 	dy = MIN(DEG(f1),DEG(f2));
 
@@ -388,8 +370,7 @@ BM f1,f2,fr;
 	DEG(fr) = dy;
 }
 
-int degbm(f)
-BM f;
+int degbm(BM f)
 {
 	int d,i,dy;
 
@@ -402,8 +383,7 @@ BM f;
 
 /* g += f */
 
-void addtosfbm(f,g)
-BM f,g;
+void addtosfbm(BM f,BM g)
 {
 	int i,d1,d2,dy;
 	UM t;
@@ -421,8 +401,7 @@ BM f,g;
 	}
 }
 
-void eucsfum(f1,f2,a,b)
-UM f1,f2,a,b;
+void eucsfum(UM f1,UM f2,UM a,UM b)
 {
 	UM g1,g2,a1,a2,a3,wm,q,tum;
 	int d,dr;
@@ -456,10 +435,7 @@ UM f1,f2,a,b;
 
 void shiftsfum(UM,int,UM);
 
-void shiftsflum(n,f,ev)
-int n;
-LUM f;
-int ev;
+void shiftsflum(int n,LUM f,int ev)
 {
 	int d,i,j;
 	UM w,w1;
@@ -483,10 +459,7 @@ int ev;
 
 /* f(x) -> g(x) = f(x+a) */
 
-void shiftsfum(f,a,g)
-UM f;
-int a;
-UM g;
+void shiftsfum(UM f,int a,UM g)
 {
 	int n,i;
 	UM pwr,xa,w,t;
@@ -523,9 +496,7 @@ UM g;
 
 /* f(y) -> f(y+a) */
 
-void shiftsfbm(f,a)
-BM f;
-int a;
+void shiftsfbm(BM f,int a)
 {
 	int i,j,d,dy;
 	UM pwr,ya,w,t,s;
@@ -558,9 +529,7 @@ int a;
 	}
 }
 
-void clearbm(n,f)
-int n;
-BM f;
+void clearbm(int n,BM f)
 {
 	int i,dy;
 	UM *c;

@@ -1,6 +1,8 @@
 #include "gc_priv.h"
 #include <time.h>
 
+void error(char *);
+
 int *StackBottom;
 
 void *Risa_GC_malloc(size_t d)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.6 2001/08/20 09:03:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.7 2001/08/20 09:14:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -74,13 +74,12 @@
 #include <io.h>
 #endif
 
+#ifdef MALLOC
 #undef MALLOC
 #define MALLOC(x) GC_malloc((x)+4)
+#endif
 
 char *ASIRLOADPATH[32];
-
-void encrypt_file(char *,char *);
-void decrypt_file(char *,char *);
 
 #if defined(VISUAL)
 #define ENVDELIM ';'
@@ -95,6 +94,8 @@ void decrypt_file(char *,char *);
 #endif
 
 char *getenv();
+void Pget_rootdir();
+
 extern char *asir_libdir;
 extern char *asir_pager;
 extern int read_exec_file;
@@ -141,9 +142,7 @@ void env_init() {
 	ASIRLOADPATH[i] = asir_libdir;
 }
 
-void searchasirpath(name,pathp)
-char *name;
-char **pathp;
+void searchasirpath(char *name,char **pathp)
 {
 	char **p;
 	char *q;
@@ -195,19 +194,16 @@ char **pathp;
 
 #define DELIM '/'
 
-void Eungetc(int,FILE *);
-
-void loadasirfile(name0)
-char *name0;
+void loadasirfile(char *name0)
 {
 	FILE *in;
-	IN t;
+	INFILE t;
 	extern char cppname[];
 #if defined(VISUAL)
 	char ibuf1[BUFSIZ],ibuf2[BUFSIZ];
 	int ac;
 	char *av[BUFSIZ];
-	char *p,*c;
+	char *p;
 	FILE *fp;
 	char dname[BUFSIZ],tname0[BUFSIZ];
 	char *name,*tname;
@@ -217,6 +213,7 @@ char *name0;
 	char CppExe[BUFSIZ];
 	char nbuf[BUFSIZ],tnbuf[BUFSIZ];
 	STRING rootdir;
+	void call_exe(char *,char **);
 
 	/* create the unique prefix */
 	if ( !prefix[0] )
@@ -280,7 +277,7 @@ char *name0;
 		perror("fopen");
 		error("load : failed");
 	}
-	t = (IN)MALLOC(sizeof(struct oIN));
+	t = (INFILE)MALLOC(sizeof(struct oINFILE));
 	t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
 	t->tname = (char *)MALLOC(strlen(tname)+1); strcpy(t->tname,tname); free(tname);
 	t->encoded = encoded;
@@ -292,7 +289,7 @@ char *name0;
 		perror("popen");
 		error("load : failed");
 	}
-	t = (IN)MALLOC(sizeof(struct oIN));
+	t = (INFILE)MALLOC(sizeof(struct oINFILE));
 	t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
 #endif
 	t->fp = in; t->ln = 1; t->next = asir_infile; asir_infile = t;
@@ -302,8 +299,7 @@ char *name0;
 		reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
 }
 
-void execasirfile(name)
-char *name;
+void execasirfile(char *name)
 {
 	loadasirfile(name);
 	read_exec_file = 1;
@@ -311,11 +307,10 @@ char *name;
 	read_exec_file = 0;
 }
 
-void load_and_execfile(name)
-char *name;
+void load_and_execfile(char *name)
 {
 	FILE *fp;
-	IN save_asir_infile;
+	INFILE save_asir_infile;
 	int save_prresult;
 	extern prresult;
 
@@ -338,8 +333,7 @@ char *name;
 
 static NODE objfile = 0;
 
-int loadfile(s)
-char *s;
+int loadfile(char *s)
 {
 	FILE *in;
 
@@ -351,7 +345,7 @@ char *s;
 		return 0;
 }
 
-int loadfiles(node) NODE node; { return 0; }
+int loadfiles(NODE node) { return 0; }
 
 static unsigned char encrypt_tab[128][2] = {
 {137,40},{1,194},{133,79},{48,20},{254,76},{98,17},{110,233},{19,231},
@@ -401,8 +395,7 @@ unsigned char decrypt_char(unsigned char c)
 	return decrypt_tab[c];
 }
 
-void encrypt_file(in,out)
-char *in,*out;
+void encrypt_file(char *in,char *out)
 {
 	FILE *infp,*outfp;
 	int c;
@@ -413,13 +406,12 @@ char *in,*out;
 		c = getc(infp);
 		if ( c == EOF )
 			break;
-		putc(encrypt_char(c),outfp);
+		putc(encrypt_char((unsigned char)c),outfp);
 	}
 	fclose(infp); fclose(outfp);
 }
 
-void decrypt_file(in,out)
-char *in,*out;
+void decrypt_file(char *in,char *out)
 {
 	FILE *infp,*outfp;
 	int c;
@@ -432,7 +424,7 @@ char *in,*out;
 		c = getc(infp);
 		if ( c == EOF )
 			break;
-		putc(decrypt_char(c),outfp);
+		putc(decrypt_char((unsigned char)c),outfp);
 	}
 	fclose(infp); fclose(outfp);
 }

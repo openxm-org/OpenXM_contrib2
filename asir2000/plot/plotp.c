@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.7 2000/11/09 02:30:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.8 2001/08/22 09:19:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,10 +63,7 @@
 static POINT oldpos;
 #endif
 
-if_print(display,tab,can)
-DISPLAY *display;
-double **tab;
-struct canvas *can;
+void if_print(DISPLAY *display,double **tab,struct canvas *can)
 {
 	int ix,iy,width,height;
 	double *px,*px1,*px2;
@@ -90,10 +87,7 @@ struct canvas *can;
 
 #define MEMORY_DRAWPOINT(a,len,x,y) (((a)[(len)*(y)+((x)>>3)]) |= (1<<((x)&7)))
 
-memory_if_print(tab,can,bytes)
-double **tab;
-struct canvas *can;
-BYTEARRAY *bytes;
+void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
 {
 	int ix,iy,width,height;
 	double *px,*px1,*px2;
@@ -118,10 +112,7 @@ BYTEARRAY *bytes;
 			}
 }
 
-con_print(display,tab,can)
-DISPLAY *display;
-double **tab;
-struct canvas *can;
+void con_print(DISPLAY *display,double **tab,struct canvas *can)
 {
 	int ix,iy,iz,width,height,pas,pai,len;
 	double zstep,z;
@@ -168,10 +159,7 @@ struct canvas *can;
 	flush();
 }
 
-memory_con_print(tab,can,bytes)
-double **tab;
-struct canvas *can;
-BYTEARRAY *bytes;
+void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
 {
 	int ix,iy,iz,width,height,pas,pai,len;
 	double zstep,z;
@@ -217,10 +205,7 @@ BYTEARRAY *bytes;
 		}
 }
 
-qif_print(display,tab,can)
-DISPLAY *display;
-char **tab;
-struct canvas *can;
+void qif_print(DISPLAY *display,char **tab,struct canvas *can)
 {
 	int ix,iy,width,height;
 	char *px;
@@ -237,11 +222,9 @@ struct canvas *can;
 	flush();
 }
 
-plot_print(display,can)
-DISPLAY *display;
-struct canvas *can;
+void plot_print(DISPLAY *display,struct canvas *can)
 {
-	int len,i;
+	int len;
 	POINT *pa;
 
 #if defined(VISUAL)	
@@ -259,11 +242,7 @@ struct canvas *can;
 #endif
 }
 
-draw_point(display,can,x,y,color)
-DISPLAY *display;
-struct canvas *can;
-int x,y;
-int color;
+void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color)
 {
 #if defined(VISUAL)
 	HDC dc;
@@ -285,11 +264,7 @@ int color;
 #endif
 }
 
-draw_line(display,can,x,y,u,v,color)
-DISPLAY *display;
-struct canvas *can;
-int x,y,u,v;
-int color;
+void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color)
 {
 #if defined(VISUAL)
 	HDC dc;
@@ -329,12 +304,9 @@ int color;
 
 #define D 5
 
-pline(display,can,d)
-DISPLAY *display;
-struct canvas *can;
-DRAWABLE d;
+void pline(DISPLAY *display,struct canvas *can,DRAWABLE d)
 {
-	double w,w1,k,e,n;
+	double w,w1,e,n;
 	int x0,y0,x,y,xadj,yadj;
 	char buf[BUFSIZ];
 	double adjust_scale();
@@ -366,7 +338,7 @@ DRAWABLE d;
 	w1 = w * DEFAULTWIDTH/can->width;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
 	for ( n = ceil(can->xmin/e); n*e<= can->xmax; n++ ) {
-		x = (int)can->width*(n*e-can->xmin)/w;
+		x = (int)(can->width*(n*e-can->xmin)/w);
 		DRAWLINE(display,d,drawGC,x,y0,x,y0-D);
 		sprintf(buf,"%g",n*e);
 		DRAWSTRING(display,d,scaleGC,x+2,y0+2,buf,strlen(buf));
@@ -377,7 +349,7 @@ DRAWABLE d;
 	w1 = w * DEFAULTHEIGHT/can->height;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
 	for ( n = ceil(can->ymin/e); n*e<= can->ymax; n++ ) {
-		y = (int)can->height*(1-(n*e-can->ymin)/w);
+		y = (int)(can->height*(1-(n*e-can->ymin)/w));
 		DRAWLINE(display,d,drawGC,x0,y,x0+D,y);
 		sprintf(buf,"%g",n*e);
 		if ( can->xmax <= 0 ) {
@@ -394,8 +366,7 @@ DRAWABLE d;
 	}
 }
 
-double adjust_scale(e,w)
-double e,w;
+double adjust_scale(double e,double w)
 {
 	switch ( (int)floor(w/e) ) {
 		case 1:
@@ -410,9 +381,7 @@ double e,w;
 	}
 }
 
-initmarker(can,message)
-struct canvas *can;
-char *message;
+void initmarker(struct canvas *can,char *message)
 {
 #if defined(VISUAL)
 	can->real_can->percentage = 0;
@@ -424,17 +393,15 @@ char *message;
 #endif
 }
 
-marker(can,dir,p)
-struct canvas *can;
-int dir,p;
+void marker(struct canvas *can,int dir,int p)
 {
 #if defined(VISUAL)
 	if ( dir == DIR_X )
-		can->real_can->percentage = ceil((float)p/(float)can->real_can->width*100);
+		can->real_can->percentage = (int)ceil((float)p/(float)can->real_can->width*100);
 	else if ( dir == DIR_Y )
-		can->real_can->percentage = ceil((float)p/(float)can->real_can->height*100);
+		can->real_can->percentage = (int)ceil((float)p/(float)can->real_can->height*100);
 	else
-		can->real_can->percentage = ceil((float)p/(float)can->real_can->nzstep*100);
+		can->real_can->percentage = (int)ceil((float)p/(float)can->real_can->nzstep*100);
 #else
 	if ( dir == DIR_X ) {
 		XawScrollbarSetThumb(can->xdone,(float)p/(float)can->width,0.05);
@@ -449,9 +416,7 @@ int dir,p;
 #endif
 }
 
-define_cursor(w,cur)
-WINDOW w;
-CURSOR cur;
+void define_cursor(WINDOW w,CURSOR cur)
 {
 #if !defined(VISUAL)
 	XDefineCursor(display,w,cur); flush();
@@ -465,14 +430,14 @@ static int flush_count;
 #define MAX_COUNT 32
 #endif
 
-count_and_flush() {
+void count_and_flush() {
 #if !defined(VISUAL)
 	if ( ++flush_count == MAX_COUNT )
 		flush();
 #endif
 }
 
-flush() {
+void flush() {
 #if !defined(VISUAL)
 	flush_count = 0;
 	XFlush(display);

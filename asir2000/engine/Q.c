@@ -45,14 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.5 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.6 2000/12/08 06:43:10 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "inline.h"
 
-void addq(n1,n2,nr)
-Q n1,n2,*nr;
+void addq(Q n1,Q n2,Q *nr)
 {
 	N nm,dn,nm1,nm2,nm3,dn0,dn1,dn2,g,g1,g0,m;
 	int sgn;
@@ -135,8 +134,7 @@ Q n1,n2,*nr;
 	}
 }
 
-void subq(n1,n2,nr)
-Q n1,n2,*nr;
+void subq(Q n1,Q n2,Q *nr)
 {
 	Q m;
 
@@ -155,8 +153,7 @@ Q n1,n2,*nr;
 	}
 }
 
-void mulq(n1,n2,nr)
-Q n1,n2,*nr;
+void mulq(Q n1,Q n2,Q *nr)
 {
 	N nm,nm1,nm2,dn,dn1,dn2,g;
 	int sgn;
@@ -202,8 +199,7 @@ Q n1,n2,*nr;
 	}
 }
 
-void divq(n1,n2,nq)
-Q n1,n2,*nq;
+void divq(Q n1,Q n2,Q *nq)
 {
 	Q m;
 
@@ -220,10 +216,8 @@ Q n1,n2,*nq;
 	}
 }
 
-void divsq(n1,n2,nq)
-Q n1,n2,*nq;
+void divsq(Q n1,Q n2,Q *nq)
 {
-	Q m;
 	int sgn;
 	N tn;
 
@@ -242,8 +236,7 @@ Q n1,n2,*nq;
 	}
 }
 
-void invq(n,nr)
-Q n,*nr;
+void invq(Q n,Q *nr)
 {
 	N nm,dn;
 
@@ -264,8 +257,7 @@ Q n,*nr;
 	}
 }
 
-void chsgnq(n,nr)
-Q n,*nr;
+void chsgnq(Q n,Q *nr)
 {
 	Q t;
 
@@ -276,8 +268,7 @@ Q n,*nr;
 	}
 }
 
-void pwrq(n1,n,nr)
-Q n1,n,*nr;
+void pwrq(Q n1,Q n,Q *nr)
 {
 	N nm,dn;
 	int sgn;
@@ -317,8 +308,7 @@ Q n1,n,*nr;
 	}
 }
 
-int cmpq(q1,q2)
-Q q1,q2;
+int cmpq(Q q1,Q q2)
 {
 	int sgn;
 	N t,s;
@@ -352,9 +342,7 @@ Q q1,q2;
 	}
 }
 
-void remq(n,m,nr)
-Q n,m;
-Q *nr;
+void remq(Q n,Q m,Q *nr)
 {
 	N q,r,s;
 
@@ -374,9 +362,7 @@ Q *nr;
 
 /* t = [nC0 nC1 ... nCn] */
 
-void mkbc(n,t)
-int n;
-Q *t;
+void mkbc(int n,Q *t)
 {
 	int i;
 	N c,d;
@@ -396,9 +382,7 @@ Q *t;
  *  where W(k,l,i) = i! * kCi * lCi
  */
 
-void mkwc(k,l,t)
-int k,l;
-Q *t;
+void mkwc(int k,int l,Q *t)
 {
 	int i,n,up,low;
 	N nm,d,c;
@@ -418,9 +402,7 @@ Q *t;
 /* mod m table */
 /* XXX : should be optimized */
 
-void mkwcm(k,l,m,t)
-int k,l,m;
-int *t;
+void mkwcm(int k,int l,int m,int *t)
 {
 	int i,n;
 	Q *s;
@@ -433,9 +415,7 @@ int *t;
 	}
 }
 
-void factorial(n,r)
-int n;
-Q *r;
+void factorial(int n,Q *r)
 {
 	Q t,iq,s;
 	unsigned int i,m,m0;
@@ -459,8 +439,7 @@ Q *r;
 	}
 }
 
-void invl(a,mod,ar)
-Q a,mod,*ar;
+void invl(Q a,Q mod,Q *ar)
 {
 	Q f1,f2,a1,a2,q,m,s;
 	N qn,rn;
@@ -500,8 +479,7 @@ Q a,mod,*ar;
 
 int kara_mag=100;
 
-void kmuln(n1,n2,nr)
-N n1,n2,*nr;
+void kmuln(N n1,N n2,N *nr)
 {
 	N n,t,s,m,carry;
 	int d,d1,d2,len,i,l;
@@ -544,10 +522,7 @@ N n1,n2,*nr;
 	bcopy((char *)r0,(char *)BD(t),l*sizeof(int));
 }
 
-void extractn(n,index,len,nr)
-N n;
-int index,len;
-N *nr;
+void extractn(N n,int index,int len,N *nr)
 {
 	unsigned int *m;
 	int l;
@@ -569,25 +544,19 @@ N *nr;
 	}
 }
 
-void copyn(n,len,p)
-N n;
-int len;
-int *p;
+void copyn(N n,int len,int *p)
 {
 	if ( n )
 		bcopy((char *)BD(n),(char *)p,MIN(PL(n),len)*sizeof(int));
 }
 
-void dupn(n,p)
-N n;
-N p;
+void dupn(N n,N p)
 {
 	if ( n )
 		bcopy((char *)n,(char *)p,(1+PL(n))*sizeof(int));
 }
 
-void kmulnmain(n1,n2,nr)
-N n1,n2,*nr;
+void kmulnmain(N n1,N n2,N *nr)
 {
 	int d1,d2,h,sgn,sgn1,sgn2,len;
 	N n1lo,n1hi,n2lo,n2hi,hi,lo,mid1,mid2,mid,s1,s2,t1,t2;

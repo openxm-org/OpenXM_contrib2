@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.4 2000/12/05 01:24:52 noro Exp $ 
 */
 #include "ca.h"
 #if PARI
@@ -62,9 +62,6 @@ extern long prec;
 extern int paristack;
 
 void risa_pari_init() {
-	char buf[BUFSIZ];
-	int i;
-
 	pari_init(paristack,2);
 	prec = 4;
 }

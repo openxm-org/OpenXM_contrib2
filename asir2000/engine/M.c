@@ -45,14 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.7 2001/06/25 04:11:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.8 2001/07/03 01:41:26 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 
-void addum(mod,p1,p2,pr)
-int mod;
-UM p1,p2,pr;
+void addum(int mod,UM p1,UM p2,UM pr)
 {
 	register int *c1,*c2,*cr,i,dmax,dmin;
 		
@@ -79,9 +77,7 @@ UM p1,p2,pr;
 		DEG(pr) = dmax;
 }
 
-void subum(mod,p1,p2,pr)
-int mod;
-UM p1,p2,pr;
+void subum(int mod,UM p1,UM p2,UM pr)
 {
 	register int *c1,*c2,*cr,i;
 	int dmax,dmin;
@@ -116,9 +112,7 @@ UM p1,p2,pr;
 		DEG(pr) = dmax;
 }
 		
-void pwrum(mod,p,e,pr)
-int mod,e;
-UM p,pr;
+void pwrum(int mod,UM p,int e,UM pr)
 {
 	UM wt,ws;
 
@@ -141,9 +135,7 @@ UM p,pr;
 	}
 }
 
-void gcdum(mod,p1,p2,pr)
-register int mod;
-UM p1,p2,pr;
+void gcdum(int mod,UM p1,UM p2,UM pr)
 {
 	register int inv;
 	UM t1,t2,q,tum;
@@ -168,13 +160,10 @@ UM p1,p2,pr;
 	}
 }
 
-void eucum(mod,f1,f2,a,b)
-register int mod;
-UM f1,f2,a,b;
+void eucum(int mod,UM f1,UM f2,UM a,UM b)
 {
 	UM g1,g2,a1,a2,a3,wm,q,tum;
 	int d,dr;
-	UM t1,t2,t3;
 
 	d = DEG(f1) + DEG(f2) + 10;
 	g1 = W_UMALLOC(d); g2 = W_UMALLOC(d); a1 = W_UMALLOC(d);
@@ -210,9 +199,7 @@ UM f1,f2,a,b;
 #endif
 }
 
-void eucum2(mod,f1,f2,a,b)
-register int mod;
-UM f1,f2,a,b;
+void eucum2(int mod,UM f1,UM f2,UM a,UM b)
 {
 	UM gk,gk1,gk2,ak,ak1,ak2,bk,bk1,bk2,q,t,wm1,wm2,wz;
 	int d,inv;
@@ -279,11 +266,7 @@ UM f1,f2,a,b;
 	}
 }
 
-void sqfrum(index,count,f,nindex,dcr,pl)
-int index,count,*nindex;
-P f;
-struct oDUM **dcr;
-ML *pl;
+void sqfrum(int index,int count,P f,int *nindex,struct oDUM **dcr,ML *pl)
 {
 	int i,j,m,n,d,dt,mod;
 	UM wf,wdf,ws,wt,wgcd,mf,mgcd;
@@ -335,10 +318,7 @@ ML *pl;
 	l[i] = 0;
 }
 
-void sqfrummain(mod,p,gcd,dcp)
-int mod;
-UM p,gcd;
-struct oDUM **dcp;
+void sqfrummain(int mod,UM p,UM gcd,struct oDUM **dcp)
 {
 	int i,j,n;
 	UM wp,wdp,wc,wd,ws,wt,wq;
@@ -417,8 +397,7 @@ struct oDUM **dcp;
 	dc[j].f = 0;
 }
 
-void cpyum(p1,p2)
-UM p1,p2;
+void cpyum(UM p1,UM p2)
 {
 	register int *c1,*c2,i;
 
@@ -427,17 +406,13 @@ UM p1,p2;
 		c2[i] = c1[i];
 }
 
-void clearum(p,n)
-UM p;
-int n;
+void clearum(UM p,int n)
 {
 	DEG(p) = -1;
 	bzero(COEF(p),(n+1)*sizeof(int));
 }
 
-void degum(f,n)
-UM f;
-int n;
+void degum(UM f,int n)
 {
 	register int i,*c;
 
@@ -445,9 +420,7 @@ int n;
 	DEG(f) = i;
 }
 
-int deg(v,p)
-V v;
-P p;
+int deg(V v,P p)
 {
 	if ( !p )
 		return ( -1 );
@@ -462,8 +435,7 @@ P p;
 		return ( UDEG(p) );
 }
 
-LUM LUMALLOC(n,bound)
-int n,bound;
+LUM LUMALLOC(int n,int bound)
 {
 	LUM p;
 	int **c;
@@ -480,8 +452,7 @@ int n,bound;
 
 /* dx = deg in x, dy = deg in y, c[i] <-> the coef of y^i (poly in x) */
 
-BM BMALLOC(dx,dy)
-int dx,dy;
+BM BMALLOC(int dx,int dy)
 {
 	BM p;
 	UM *c;
@@ -496,9 +467,7 @@ int dx,dy;
 	return p;
 }
 
-void mullum(mod,n,f1,f2,fr)
-int mod,n;
-LUM f1,f2,fr;
+void mullum(int mod,int n,LUM f1,LUM f2,LUM fr)
 {
 	int max;
 	register int i,j,**p1,**p2,*px;
@@ -524,9 +493,7 @@ LUM f1,f2,fr;
 	}
 }
 
-void cpylum(bound,p,r)
-int bound;
-LUM p,r;
+void cpylum(int bound,LUM p,LUM r)
 {
 	register int i,j;
 	register int **pp,**ppr;
@@ -538,8 +505,7 @@ LUM p,r;
 			ppr[i][j] = pp[i][j];
 }
 
-int isequalum(f1,f2)
-UM f1,f2;
+int isequalum(UM f1,UM f2)
 {
 	int i;
 
@@ -563,9 +529,7 @@ UM f1,f2;
 	}
 }
 
-void pwrlum(mod,bound,p,n,r)
-int mod,bound,n;
-LUM p,r;
+void pwrlum(int mod,int bound,LUM p,int n,LUM r)
 {
 	LUM t,s;
 
@@ -589,8 +553,7 @@ LUM p,r;
 	}
 }
 
-int **almat(n,m)
-int n,m;
+int **almat(int n,int m)
 {
 	int **mat,i;
 
@@ -600,9 +563,7 @@ int n,m;
 	return mat;
 }
 
-void mini(mod,f,fr)
-register int mod;
-UM f,fr;
+void mini(int mod,UM f,UM fr)
 {
 	register int i,j,**c,*ptr;
 	int d,dr,dm,n;
@@ -636,10 +597,7 @@ UM f,fr;
 	DEG(fr) = dm + 1;
 }
 
-int minimain(mod,n,m,c)
-register int mod;
-int n,m;
-register int **c;
+int minimain(int mod,int n,int m,int **c)
 {
 	register int *ptr,*ci,*p;
 	register int i,l,a,j,b,inv;

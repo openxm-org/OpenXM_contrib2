@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.1.1.1 2000/11/22 06:20:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.2 2001/10/05 10:23:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,8 +56,6 @@
 #if PARI
 #include "genpari.h"
 #endif
-
-void ox_usr1_handler();
 
 extern int asir_OperandStackSize;
 extern Obj *asir_OperandStack;
@@ -92,6 +90,7 @@ LIST asir_GetErrorList();
 static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
 static void asir_executeFunction();
+static void process_resize(struct canvas *can,POINT startp,POINT endp);
 
 #if defined(VISUAL)
 
@@ -105,9 +104,11 @@ void ox_plot_main()
 void ox_plot_main(int argc,char **argv)
 #endif
 {
+#if !defined(VISUAL)
 	int ds;
 	fd_set r;
 	int n;
+#endif
 	int id;
 	Obj obj;
 	unsigned int serial;
@@ -232,9 +233,7 @@ static void process_ox(int id, Obj obj, unsigned int serial)
 		fprintf(stderr,"\n");
 }
 
-static process_resize(can,startp,endp)
-struct canvas *can;
-POINT startp,endp;
+static void process_resize(struct canvas *can,POINT startp,POINT endp)
 {
 	if ( can->mode == MODE_INTERACTIVE )
 		return;
@@ -301,15 +300,12 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 	}
 }
 
-static void asir_executeFunction(serial)
-int serial;
+static void asir_executeFunction(int serial)
 { 
 	char *func;
 	int argc;
 	int id;
-	FUNC f;
 	Q ret;
-	VL vl;
 	ERR err;
 	NODE n,n1; 
 
@@ -346,7 +342,7 @@ int serial;
 	}
 }
 
-print_rect(int x, int y, int z, int w)
+void print_rect(int x, int y, int z, int w)
 {
 	extern DWORD MainThread;
 

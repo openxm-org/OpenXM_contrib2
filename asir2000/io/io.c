@@ -44,10 +44,11 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.7 2000/08/25 08:06:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.8 2000/08/29 04:03:05 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
+#include "parse.h"
 #if defined(VISUAL) || MPI
 #include "wsio.h"
 #endif
@@ -55,6 +56,9 @@
 extern int little_endian,lib_ox_need_conv;
 extern int ox_do_copy, ox_do_count, ox_count_length, ox_file_io, ox_need_conv;
 extern char *ox_copy_bptr;
+
+/* XXX */
+void write_cmo(pointer,Obj);
 
 void reset_io()
 {
@@ -72,32 +76,28 @@ void endian_init()
 	ox_need_conv = 1;
 }
 
-int countobj(p)
-Obj p;
+int countobj(Obj p)
 {
 	ox_count_length = 0;
 	ox_do_count = 1; saveobj(0,p); ox_do_count = 0;
 	return ox_count_length;
 }
 
-int count_as_cmo(p)
-Obj p;
+int count_as_cmo(Obj p)
 {
 	ox_count_length = 0;
 	ox_do_count = 1; write_cmo(0,p); ox_do_count = 0;
 	return ox_count_length;
 }
 
-int countvl(vl)
-VL vl;
+int countvl(VL vl)
 {
 	ox_count_length = 0;
 	ox_do_count = 1; savevl(0,vl); ox_do_count = 0;
 	return ox_count_length;
 }
 
-void ox_copy_init(s)
-char *s;
+void ox_copy_init(char *s)
 {
 	ox_copy_bptr = s;
 }
@@ -108,31 +108,25 @@ char *s;
  * byte order is controlled by lib_ox_need_conv.
  */
 
-void ox_obj_to_buf_as_cmo(p)
-Obj p;
+void ox_obj_to_buf_as_cmo(Obj p)
 {
 	ox_need_conv = lib_ox_need_conv;
 	ox_do_copy = 1; write_cmo(0,p); ox_do_copy = 0;
 }
 
-void ox_buf_to_obj_as_cmo(p)
-Obj *p;
+void ox_buf_to_obj_as_cmo(Obj *p)
 {
 	ox_need_conv = lib_ox_need_conv;
 	ox_do_copy = 1; read_cmo(0,p); ox_do_copy = 0;
 }
 
-void ox_vl_to_buf(vl)
-VL vl;
+void ox_vl_to_buf(VL vl)
 {
 	ox_do_copy = 1; savevl(0,vl); ox_do_copy = 0;
 }
 #endif
 
-int gen_fread (ptr,size,nitems,stream)
-char *ptr;
-int size,nitems;
-FILE *stream;
+int gen_fread (char *ptr,int size,int nitems,FILE *stream)
 {
 	int n;
 
@@ -140,6 +134,8 @@ FILE *stream;
 		n = size*nitems;
 		memcpy(ptr,ox_copy_bptr,n);
 		ox_copy_bptr += n;
+		/* dummy return */
+		return 0;
 	} else {
 #if defined(VISUAL)
 		if ( _fileno(stream) < 0 )
@@ -151,26 +147,29 @@ FILE *stream;
 		else
 #endif
 		n = fread(ptr,size,nitems,stream);
-		if ( !n )
+		if ( !n ) {
 			ExitAsir();
-		else
+			/* NOTREACHED */
+			return 0;
+		} else
 			return n;
 	}
 }
 
-int gen_fwrite (ptr,size,nitems,stream)
-char *ptr;
-int size,nitems;
-FILE *stream;
+int gen_fwrite (char *ptr,int size,int nitems,FILE *stream)
 {
 	int n;
 
-	if ( ox_do_count )
+	if ( ox_do_count ) {
 		ox_count_length += size*nitems;
-	else if ( ox_do_copy ) {
+		/* dummy return  */
+		return 0;
+	} else if ( ox_do_copy ) {
 		n = size*nitems;
 		memcpy(ox_copy_bptr,ptr,n);
 		ox_copy_bptr += n;
+		/* dummy return  */
+		return 0;
 	} else
 #if defined(VISUAL)
 	if ( _fileno(stream) < 0 )
@@ -184,37 +183,31 @@ FILE *stream;
 		return fwrite(ptr,size,nitems,stream);
 }
 
-void write_char(f,p)
-FILE *f;
-unsigned char *p;
+void write_char(FILE *f,unsigned char *p)
 {
 	gen_fwrite(p,sizeof(unsigned char),1,f);
 }
 
-void write_short(f,p)
-FILE *f;
-unsigned short *p;
+void write_short(FILE *f,unsigned short *p)
 {
 	unsigned short t;
 
 	if ( little_endian && (ox_file_io || ox_need_conv) ) {
 		t = htons(*p);
-		gen_fwrite(&t,sizeof(unsigned short),1,f);
+		gen_fwrite((char *)&t,sizeof(unsigned short),1,f);
 	} else
-		gen_fwrite(p,sizeof(unsigned short),1,f);
+		gen_fwrite((char *)p,sizeof(unsigned short),1,f);
 }
 
-void write_int(f,p)
-FILE *f;
-unsigned int *p;
+void write_int(FILE *f,unsigned int *p)
 {
 	unsigned int t;
 
 	if ( little_endian && (ox_file_io || ox_need_conv) ) {
 		t = htonl(*p);
-		gen_fwrite(&t,sizeof(unsigned int),1,f);
+		gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
 	} else
-		gen_fwrite(p,sizeof(unsigned int),1,f);
+		gen_fwrite((char *)p,sizeof(unsigned int),1,f);
 }
 
 #if defined(VISUAL) && defined(DES_ENC)
@@ -233,10 +226,7 @@ void init_deskey()
 }
 #endif
 
-void write_intarray(f,p,l)
-FILE *f;
-unsigned int *p;
-int l;
+void write_intarray(FILE *f,unsigned int *p,int l)
 {
 	int i;
 	unsigned int t;
@@ -252,7 +242,7 @@ int l;
 			des_enc(plain,deskey_string,encrypted);
 			encrypted[0] = htonl(encrypted[0]);
 			encrypted[1] = htonl(encrypted[1]);
-			gen_fwrite(encrypted,sizeof(unsigned int),2,f);
+			gen_fwrite((char *)encrypted,sizeof(unsigned int),2,f);
 		}
 		if ( (l2<<1) < l ) {
 			plain[0] = *p;
@@ -260,24 +250,21 @@ int l;
 			des_enc(plain,deskey_string,encrypted);
 			encrypted[0] = htonl(encrypted[0]);
 			encrypted[1] = htonl(encrypted[1]);
-			gen_fwrite(encrypted,sizeof(unsigned int),2,f);
+			gen_fwrite((char *)encrypted,sizeof(unsigned int),2,f);
 		}
 	} else
 #endif
 	if ( little_endian && (ox_file_io || ox_need_conv) )
 		for ( i = 0; i < l; i++, p++) {
 			t = htonl(*p);
-			gen_fwrite(&t,sizeof(unsigned int),1,f);
+			gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
 		}
 	else
-		gen_fwrite(p,sizeof(unsigned int),l,f);
+		gen_fwrite((char *)p,sizeof(unsigned int),l,f);
 }
 
 #if defined(LONG_IS_64BIT)
-void write_longarray(f,p,l)
-FILE *f;
-unsigned long *p;
-int l;
+void write_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;
 	unsigned long w;
@@ -295,60 +282,46 @@ int l;
 }
 #endif
 
-void write_double(f,p)
-FILE *f;
-double *p;
+void write_double(FILE *f,double *p)
 {
 	unsigned int t;
 
 	if ( little_endian && (ox_file_io || ox_need_conv) ) {
 		t = htonl(((unsigned int *)p)[1]);
-		gen_fwrite(&t,sizeof(unsigned int),1,f);
+		gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
 		t = htonl(((unsigned int *)p)[0]);
-		gen_fwrite(&t,sizeof(unsigned int),1,f);
+		gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
 	} else
-		gen_fwrite(p,sizeof(double),1,f);
+		gen_fwrite((char *)p,sizeof(double),1,f);
 }
 
-void write_string(f,p,l)
-FILE *f;
-unsigned char *p;
+void write_string(FILE *f,unsigned char *p,int l)
 {
 	gen_fwrite(p,sizeof(unsigned char),l,f);
 }
 
-void read_char(f,p)
-FILE *f;
-unsigned char *p;
+void read_char(FILE *f,unsigned char *p)
 {
 	gen_fread((char *)p,sizeof(unsigned char),1,f);
 }
 
-void read_short(f,p)
-FILE *f;
-unsigned short *p;
+void read_short(FILE *f,unsigned short *p)
 {
-	gen_fread(p,sizeof(unsigned short),1,f);
+	gen_fread((char *)p,sizeof(unsigned short),1,f);
 	if ( little_endian && (ox_file_io || ox_need_conv) )
 		*p = ntohs(*p);
 }
 
-void read_int(f,p)
-FILE *f;
-unsigned int *p;
+void read_int(FILE *f,unsigned int *p)
 {
-	gen_fread(p,sizeof(unsigned int),1,f);
+	gen_fread((char *)p,sizeof(unsigned int),1,f);
 	if ( little_endian && (ox_file_io || ox_need_conv) )
 		*p = ntohl(*p);
 }
 
-void read_intarray(f,p,l)
-FILE *f;
-unsigned int *p;
-int l;
+void read_intarray(FILE *f,unsigned int *p,int l)
 {
 	int i;
-	unsigned int t;
 #if defined(VISUAL) && defined(DES_ENC)
 	int l2;
 	unsigned int plain[2],encrypted[2];
@@ -373,7 +346,7 @@ int l;
 	} else
 #endif
 	{
-		gen_fread(p,sizeof(unsigned int),l,f);
+		gen_fread((char *)p,sizeof(unsigned int),l,f);
 		if ( little_endian && (ox_file_io || ox_need_conv) )
 			for ( i = 0; i < l; i++, p++ )
 				*p = ntohl(*p);
@@ -381,10 +354,7 @@ int l;
 }
 
 #if defined(LONG_IS_64BIT)
-void read_longarray(f,p,l)
-FILE *f;
-unsigned long *p;
-int l;
+void read_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;
 	unsigned int hi,lo;
@@ -405,16 +375,12 @@ int l;
 }
 #endif
 
-void read_string(f,p,l)
-FILE *f;
-unsigned char *p;
+void read_string(FILE *f,unsigned char *p,int l)
 {
 	gen_fread((char *)p,sizeof(unsigned char),l,f);
 }
 
-void read_double(f,p)
-FILE *f;
-double *p;
+void read_double(FILE *f,double *p)
 {
 	unsigned int t;
 

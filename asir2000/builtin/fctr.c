@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.7 2001/06/25 10:01:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.8 2001/06/26 03:00:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -325,7 +325,6 @@ NODE arg;
 LIST *rp;
 {
 	DCP dc;
-	int mod;
 
 	fctrsf(ARG0(arg),&dc);
 	if ( !dc ) {
@@ -340,7 +339,6 @@ LIST *rp;
 {
 	V x,y;
 	DCP dc,dct;
-	LIST l;
 	P t;
 	struct oVL vl1,vl2;
 	VL vl;
@@ -364,10 +362,10 @@ LIST *rp;
 {
 	DCP dc;
 
-	if ( !dc ) {
+	if ( !ARG0(arg) ) {
 		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
-	}
-	modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),SQFR,&dc);
+	} else
+		modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),SQFR,&dc);
 	dcptolist(dc,rp);
 }
 
@@ -377,10 +375,10 @@ LIST *rp;
 {
 	DCP dc;
 
-	if ( !dc ) {
+	if ( !ARG0(arg) ) {
 		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
-	}
-	modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),DDD,&dc);
+	} else
+		modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),DDD,&dc);
 	dcptolist(dc,rp);
 }
 
@@ -388,12 +386,12 @@ void Pnewddd(arg,rp)
 NODE arg;
 LIST *rp;
 {
-	DCP dc;
+	DCP dc=0;
 
-	if ( !dc ) {
+	if ( !ARG0(arg) ) {
 		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
-	}
-	modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),NEWDDD,&dc);
+	} else 
+		modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),NEWDDD,&dc);
 	dcptolist(dc,rp);
 }
 

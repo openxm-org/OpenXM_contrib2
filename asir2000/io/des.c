@@ -1,8 +1,9 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/des.c,v 1.5 2000/12/05 09:06:03 noro Exp $ */
  /* Copyright (C) 1996 S.Amada */
 
 #include    <stdio.h>
 #include    <stdlib.h>
+#include    <string.h>
 
 #define	ROUND	16  /* íiêî */
 
@@ -16,6 +17,7 @@ void	des_enc(ULONG *, UCHAR *, ULONG *);
 ULONG	round_func(ULONG , UCHAR *);
 ULONG	s_box_func(UCHAR *);
 void	des_dec(ULONG *, UCHAR *, ULONG *);
+void	key_schedule(UCHAR *,UCHAR *);
 
 /*  åÆÇÃèkñÒå^ì]íu PC-1	*/
 static USHORT	pc_1[56] = {
@@ -172,7 +174,7 @@ UCHAR	*r_key;	    /* ägëÂåÆ(48 * 16 bit)	*/
 ULONG	*cipher;    /* à√çÜï∂(64 bit)		*/
 {
     ULONG   l_text,r_text,
-	    l_work,r_work,tmp_text,c_text[2];
+	    l_work,r_work,tmp_text;
     int	    loop;
 
 
@@ -363,115 +365,115 @@ UCHAR	*i_data;
     for(loop = 0;loop < 6;loop++,i_data++) work[loop] = *i_data;
 
 /* S1 */
-    s_work[0] = (work[0] >> 2) & 0x3fL;
-    val = (s_work[0] >> 1) & 0x0fL;
+    s_work[0] = (work[0] >> 2) & 0x3f;
+    val = (s_work[0] >> 1) & 0x0f;
     if(s_work[0] & 0x20L)
     {
-	if(s_work[0] & 0x01L) s_work[0] = s_1[val+48];
-	else s_work[0] = s_1[val+32];
+	if(s_work[0] & 0x01L) s_work[0] = (UCHAR)s_1[val+48];
+	else s_work[0] = (UCHAR)s_1[val+32];
     }
     else
     {
-	if(s_work[0] & 0x01L) s_work[0] = s_1[val+16];
-	else s_work[0] = s_1[val];
+	if(s_work[0] & 0x01L) s_work[0] = (UCHAR)s_1[val+16];
+	else s_work[0] = (UCHAR)s_1[val];
     }
 
 /* S2 */
-    s_work[1] = ((work[0] << 4) | (work[1] >> 4)) & 0x3fL;
-    val = (s_work[1] >> 1) & 0x0fL;
+    s_work[1] = ((work[0] << 4) | (work[1] >> 4)) & 0x3f;
+    val = (s_work[1] >> 1) & 0x0f;
     if(s_work[1] & 0x20L)
     {
-	if(s_work[1] & 0x01L) s_work[1] = s_2[val+48];
-	else s_work[1] = s_2[val+32];
+	if(s_work[1] & 0x01L) s_work[1] = (UCHAR)s_2[val+48];
+	else s_work[1] = (UCHAR)s_2[val+32];
     }
     else
     {
-	if(s_work[1] & 0x01L) s_work[1] = s_2[val+16];
-	else s_work[1] = s_2[val];
+	if(s_work[1] & 0x01L) s_work[1] = (UCHAR)s_2[val+16];
+	else s_work[1] = (UCHAR)s_2[val];
     }
 
 /* S3 */
-    s_work[2] = ((work[1] << 2) | (work[2] >> 6)) & 0x3fL;
-    val = (s_work[2] >> 1) & 0x0fL;
+    s_work[2] = ((work[1] << 2) | (work[2] >> 6)) & 0x3f;
+    val = (s_work[2] >> 1) & 0x0f;
     if(s_work[2] & 0x20L)
     {
-	if(s_work[2] & 0x01L) s_work[2] = s_3[val+48];
-	else s_work[2] = s_3[val+32];
+	if(s_work[2] & 0x01L) s_work[2] = (UCHAR)s_3[val+48];
+	else s_work[2] = (UCHAR)s_3[val+32];
     }
     else
     {
-	if(s_work[2] & 0x01L) s_work[2] = s_3[val+16];
-	else s_work[2] = s_3[val];
+	if(s_work[2] & 0x01L) s_work[2] = (UCHAR)s_3[val+16];
+	else s_work[2] = (UCHAR)s_3[val];
     }
 
 /* S4 */
-    s_work[3] = work[2] & 0x3fL;
-    val = (s_work[3] >> 1) & 0x0fL;
+    s_work[3] = work[2] & 0x3f;
+    val = (s_work[3] >> 1) & 0x0f;
     if(s_work[3] & 0x20L)
     {
-	if(s_work[3] & 0x01L) s_work[3] = s_4[val+48];
-	else s_work[3] = s_4[val+32];
+	if(s_work[3] & 0x01L) s_work[3] = (UCHAR)s_4[val+48];
+	else s_work[3] = (UCHAR)s_4[val+32];
     }
     else
     {
-	if(s_work[3] & 0x01L) s_work[3] = s_4[val+16];
-	else s_work[3] = s_4[val];
+	if(s_work[3] & 0x01L) s_work[3] = (UCHAR)s_4[val+16];
+	else s_work[3] = (UCHAR)s_4[val];
     }
 
 /* S5 */
-    s_work[4] = (work[3] >> 2) & 0x3fL;
-    val = (s_work[4] >> 1) & 0x0fL;
+    s_work[4] = (work[3] >> 2) & 0x3f;
+    val = (s_work[4] >> 1) & 0x0f;
     if(s_work[4] & 0x20L)
     {
-	if(s_work[4] & 0x01L) s_work[4] = s_5[val+48];
-	else s_work[4] = s_5[val+32];
+	if(s_work[4] & 0x01L) s_work[4] = (UCHAR)s_5[val+48];
+	else s_work[4] = (UCHAR)s_5[val+32];
     }
     else
     {
-	if(s_work[4] & 0x01L) s_work[4] = s_5[val+16];
-	else s_work[4] = s_5[val];
+	if(s_work[4] & 0x01L) s_work[4] = (UCHAR)s_5[val+16];
+	else s_work[4] = (UCHAR)s_5[val];
     }
 
 /* S6 */
-    s_work[5] = ((work[3] << 4) | (work[4] >> 4)) & 0x3fL;
-    val = (s_work[5] >> 1) & 0x0fL;
+    s_work[5] = ((work[3] << 4) | (work[4] >> 4)) & 0x3f;
+    val = (s_work[5] >> 1) & 0x0f;
     if(s_work[5] & 0x20L)
     {
-	if(s_work[5] & 0x01L) s_work[5] = s_6[val+48];
-	else s_work[5] = s_6[val+32];
+	if(s_work[5] & 0x01L) s_work[5] = (UCHAR)s_6[val+48];
+	else s_work[5] = (UCHAR)s_6[val+32];
     }
     else
     {
-	if(s_work[5] & 0x01L) s_work[5] = s_6[val+16];
-	else s_work[5] = s_6[val];
+	if(s_work[5] & 0x01L) s_work[5] = (UCHAR)s_6[val+16];
+	else s_work[5] = (UCHAR)s_6[val];
     }
 
 /* S7 */
-    s_work[6] = ((work[4] << 2) | (work[5] >> 6)) & 0x3fL;
-    val = (s_work[6] >> 1) & 0x0fL;
+    s_work[6] = ((work[4] << 2) | (work[5] >> 6)) & 0x3f;
+    val = (s_work[6] >> 1) & 0x0f;
     if(s_work[6] & 0x20L)
     {
-	if(s_work[6] & 0x01L) s_work[6] = s_7[val+48];
-	else s_work[6] = s_7[val+32];
+	if(s_work[6] & 0x01L) s_work[6] = (UCHAR)s_7[val+48];
+	else s_work[6] = (UCHAR)s_7[val+32];
     }
     else
     {
-	if(s_work[6] & 0x01L) s_work[6] = s_7[val+16];
-	else s_work[6] = s_7[val];
+	if(s_work[6] & 0x01L) s_work[6] = (UCHAR)s_7[val+16];
+	else s_work[6] = (UCHAR)s_7[val];
     }
 
 /* S8 */
-    s_work[7] = work[5] & 0x3fL;
-    val = (s_work[7] >> 1) & 0x0fL;
+    s_work[7] = work[5] & 0x3f;
+    val = (s_work[7] >> 1) & 0x0f;
     if(s_work[7] & 0x20L)
     {
-	if(s_work[7] & 0x01L) s_work[7] = s_8[val+48];
-	else s_work[7] = s_8[val+32];
+	if(s_work[7] & 0x01L) s_work[7] = (UCHAR)s_8[val+48];
+	else s_work[7] = (UCHAR)s_8[val+32];
     }
     else
     {
-	if(s_work[7] & 0x01L) s_work[7] = s_8[val+16];
-	else s_work[7] = s_8[val];
+	if(s_work[7] & 0x01L) s_work[7] = (UCHAR)s_8[val+16];
+	else s_work[7] = (UCHAR)s_8[val];
     }
 
     fval = (s_work[0] << 28) | (s_work[1] << 24)
@@ -623,7 +625,7 @@ UCHAR	*key,*ex_key;
     ULONG   k_work1,k_work2,
 	    c_key,d_key,
 	    c_tmp,d_tmp;
-    int	    loop,loop2,len,strcnt;
+    int	    loop,loop2;
 
 
     k_work1 = 0x00000000L;

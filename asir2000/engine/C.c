@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.9 2001/06/25 01:35:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.10 2001/06/29 09:08:53 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -54,9 +54,7 @@
 V up_var;
 
 /* binary has at least 32 leading 0 chars. */
-void binaryton(binary,np)
-char *binary;
-N *np;
+void binaryton(char *binary,N *np)
 {
 	int i,w,len;
 	N n;
@@ -80,9 +78,7 @@ N *np;
 }
 
 /* hex has at least 8 leading 0 chars. */
-void hexton(hex,np)
-char *hex;
-N *np;
+void hexton(char *hex,N *np)
 {
 	int i,w,len;
 	N n;
@@ -105,9 +101,7 @@ N *np;
 	}
 }
 
-void ntobn(base,n,nrp)
-int base;
-N n,*nrp;
+void ntobn(int base,N n,N *nrp)
 {
 	int i,d,plc;
 	unsigned int *c,*x,*w;
@@ -143,9 +137,7 @@ N n,*nrp;
 		BD(nr)[i] = c[i];
 }
 
-void bnton(base,n,nrp)
-int base;
-N n,*nrp;
+void bnton(int base,N n,N *nrp)
 {
 	unsigned int carry;
 	unsigned int *x,*w;
@@ -173,10 +165,7 @@ N n,*nrp;
 		BD(nr)[i] = x[i];
 }
 
-void ptomp(m,p,pr)
-int m;
-P p;
-P *pr;
+void ptomp(int m,P p,P *pr)
 {
 	DCP dc,dcr,dcr0;
 	Q q;
@@ -210,9 +199,7 @@ P *pr;
 	}
 }
 		
-void mptop(f,gp)
-P f;
-P *gp;
+void mptop(P f,P *gp)
 {
 	DCP dc,dcr,dcr0;
 	Q q;
@@ -229,9 +216,7 @@ P *gp;
 	}
 }
 
-void ptosfp(p,pr)
-P p;
-P *pr;
+void ptosfp(P p,P *pr)
 {
 	DCP dc,dcr,dcr0;
 	GFS a;
@@ -256,9 +241,7 @@ P *pr;
 	}
 }
 
-void sfptop(f,gp)
-P f;
-P *gp;
+void sfptop(P f,P *gp)
 {
 	DCP dc,dcr,dcr0;
 	Q q;
@@ -278,10 +261,7 @@ P *gp;
 	}
 }
 
-void sf_galois_action(p,e,pr)
-P p;
-Q e;
-P *pr;
+void sf_galois_action(P p,Q e,P *pr)
 {
 	DCP dc,dcr,dcr0;
 	GFS a;
@@ -290,7 +270,7 @@ P *pr;
 	if ( !p )
 		*pr = 0;
 	else if ( NUM(p) ) {
-		gfs_galois_action(p,e,&a); *pr = (P)a;
+		gfs_galois_action((GFS)p,e,&a); *pr = (P)a;
 	} else {
 		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
 			sf_galois_action(COEF(dc),e,&t);
@@ -308,10 +288,7 @@ P *pr;
 
 /* GF(pn)={0,1,a,a^2,...} -> GF(pm)={0,1,b,b^2,..} ; a -> b^k */
 
-void sf_embed(p,k,pm,pr)
-P p;
-int k,pm;
-P *pr;
+void sf_embed(P p,int k,int pm,P *pr)
 {
 	DCP dc,dcr,dcr0;
 	GFS a;
@@ -320,7 +297,7 @@ P *pr;
 	if ( !p )
 		*pr = 0;
 	else if ( NUM(p) ) {
-		gfs_embed(p,k,pm,&a); *pr = (P)a;
+		gfs_embed((GFS)p,k,pm,&a); *pr = (P)a;
 	} else {
 		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
 			sf_embed(COEF(dc),k,pm,&t);
@@ -336,9 +313,7 @@ P *pr;
 	}
 }
 
-void ptolmp(p,pr)
-P p;
-P *pr;
+void ptolmp(P p,P *pr)
 {
 	DCP dc,dcr,dcr0;
 	LM a;
@@ -363,9 +338,7 @@ P *pr;
 	}
 }
 		
-void lmptop(f,gp)
-P f;
-P *gp;
+void lmptop(P f,P *gp)
 {
 	DCP dc,dcr,dcr0;
 	Q q;
@@ -382,10 +355,7 @@ P *gp;
 	}
 }
 
-void ptoum(m,f,wf)
-int m;
-P f;
-UM wf;
+void ptoum(int m,P f,UM wf)
 {
 	unsigned int r;
 	int i;
@@ -403,10 +373,7 @@ UM wf;
 	degum(wf,UDEG(f));
 }
 
-void umtop(v,w,f)
-V v;
-UM w;
-P *f;
+void umtop(V v,UM w,P *f)
 {
 	int *c;
 	DCP dc,dc0;
@@ -429,9 +396,7 @@ P *f;
 	}
 }
 
-void ptosfum(f,wf)
-P f;
-UM wf;
+void ptosfum(P f,UM wf)
 {
 	GFS c;
 	int i;
@@ -454,10 +419,7 @@ UM wf;
 	degum(wf,UDEG(f));
 }
 
-void sfumtop(v,w,f)
-V v;
-UM w;
-P *f;
+void sfumtop(V v,UM w,P *f)
 {
 	int *c;
 	DCP dc,dc0;
@@ -486,9 +448,7 @@ P *f;
 	}
 }
 
-void ptoup(n,nr)
-P n;
-UP *nr;
+void ptoup(P n,UP *nr)
 {
 	DCP dc;
 	UP r;
@@ -509,9 +469,7 @@ UP *nr;
 	}
 }
 
-void uptop(n,nr)
-UP n;
-P *nr;
+void uptop(UP n,P *nr)
 {
 	int i;
 	DCP dc0,dc;
@@ -531,10 +489,7 @@ P *nr;
 	}
 }
 
-void ulmptoum(m,f,wf)
-int m;
-UP f;
-UM wf;
+void ulmptoum(int m,UP f,UM wf)
 {
 	int i,d;
 	LM *c;
@@ -549,10 +504,7 @@ UM wf;
 	}
 }
 
-void objtobobj(base,p,rp)
-int base;
-Obj p;
-Obj *rp;
+void objtobobj(int base,Obj p,Obj *rp)
 {
 	if ( !p )
 		*rp = 0;
@@ -575,10 +527,7 @@ Obj *rp;
 		}
 }
 
-void bobjtoobj(base,p,rp)
-int base;
-Obj p;
-Obj *rp;
+void bobjtoobj(int base,Obj p,Obj *rp)
 {
 	if ( !p )
 		*rp = 0;
@@ -601,10 +550,7 @@ Obj *rp;
 		}
 }
 
-void numtobnum(base,p,rp)
-int base;
-Num p;
-Num *rp;
+void numtobnum(int base,Num p,Num *rp)
 {
 	N nm,dn,body;
 	Q q;
@@ -634,10 +580,7 @@ Num *rp;
 		}
 }
 
-void bnumtonum(base,p,rp)
-int base;
-Num p;
-Num *rp;
+void bnumtonum(int base,Num p,Num *rp)
 {
 	N nm,dn,body;
 	Q q;
@@ -667,10 +610,7 @@ Num *rp;
 		}
 }
 
-void ptobp(base,p,rp)
-int base;
-P p;
-P *rp;
+void ptobp(int base,P p,P *rp)
 {
 	DCP dcr0,dcr,dc;
 
@@ -686,10 +626,7 @@ P *rp;
 	}
 }
 
-void bptop(base,p,rp)
-int base;
-P p;
-P *rp;
+void bptop(int base,P p,P *rp)
 {
 	DCP dcr0,dcr,dc;
 
@@ -705,10 +642,7 @@ P *rp;
 	}
 }
 
-void listtoblist(base,p,rp)
-int base;
-LIST p;
-LIST *rp;
+void listtoblist(int base,LIST p,LIST *rp)
 {
 	NODE nr0,nr,n;
 
@@ -724,10 +658,7 @@ LIST *rp;
 	}
 }
 
-void blisttolist(base,p,rp)
-int base;
-LIST p;
-LIST *rp;
+void blisttolist(int base,LIST p,LIST *rp)
 {
 	NODE nr0,nr,n;
 
@@ -743,10 +674,7 @@ LIST *rp;
 	}
 }
 
-void vecttobvect(base,p,rp)
-int base;
-VECT p;
-VECT *rp;
+void vecttobvect(int base,VECT p,VECT *rp)
 {
 	int i,l;
 	VECT r;
@@ -761,10 +689,7 @@ VECT *rp;
 	}
 }
 
-void bvecttovect(base,p,rp)
-int base;
-VECT p;
-VECT *rp;
+void bvecttovect(int base,VECT p,VECT *rp)
 {
 	int i,l;
 	VECT r;
@@ -779,10 +704,7 @@ VECT *rp;
 	}
 }
 
-void mattobmat(base,p,rp)
-int base;
-MAT p;
-MAT *rp;
+void mattobmat(int base,MAT p,MAT *rp)
 {
 	int row,col,i,j;
 	MAT r;
@@ -798,10 +720,7 @@ MAT *rp;
 	}
 }
 
-void bmattomat(base,p,rp)
-int base;
-MAT p;
-MAT *rp;
+void bmattomat(int base,MAT p,MAT *rp)
 {
 	int row,col,i,j;
 	MAT r;
@@ -817,9 +736,7 @@ MAT *rp;
 	}
 }
 
-void n32ton27(g,rp)
-N g;
-N *rp;
+void n32ton27(N g,N *rp)
 {
 	int i,j,k,l,r,bits,words;
 	unsigned int t;
@@ -843,9 +760,7 @@ N *rp;
 	b[words-1] &= ((1<<r)-1);
 }
 
-void n27ton32(a,rp)
-N a;
-N *rp;
+void n27ton32(N a,N *rp)
 {
 	int i,j,k,l,r,bits,words;
 	unsigned int t;
@@ -868,9 +783,7 @@ N *rp;
 	}
 }
 
-void mptoum(p,pr)
-P p;
-UM pr;
+void mptoum(P p,UM pr)
 {
 	DCP dc;
 
@@ -886,10 +799,7 @@ UM pr;
 	}
 }
 
-void umtomp(v,p,pr)
-V v;
-UM p;
-P *pr;
+void umtomp(V v,UM p,P *pr)
 {
 	DCP dc,dc0;
 	int i;
@@ -911,10 +821,7 @@ P *pr;
 
 /* f(p) -> f(x) */
 
-void enc_to_p(p,a,v,pr)
-int p,a;
-V v;
-P *pr;
+void enc_to_p(int p,int a,V v,P *pr)
 {
 	DCP dc,dct;
 	int i,c;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ec.c,v 1.3 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ec.c,v 1.4 2000/08/22 05:03:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -270,7 +270,6 @@ void Pecm_compute_all_key_homo_ff(arg,rp)
 NODE arg;
 VECT *rp;
 {
-	Obj mod;
 	unsigned int *ka;
 	int len,i;
 	VECT *pa;
@@ -418,7 +417,7 @@ VECT *rp;
 {
 	GF2N ax,bc,a0,a1,a2,b0,b1,b2;
 	GF2N a2b0,a0b2,a2b1,a1b2,a02,a04,a22,a24,a0a2,a0a22,a1a2;
-	GF2N t,s,u,r0,r1,r00,r01,r02,r002,r003,r022,r02q;
+	GF2N t,s,u,r0,r1,r00,r01,r02,r002,r003,r02q;
 	VECT r;
 	GF2N *vb,*rb;
 
@@ -487,7 +486,7 @@ extern LM THREE_LM,FOUR_LM,EIGHT_LM;
 unsigned int ecm_count_order_gfp(p,a,b)
 unsigned int p,a,b;
 {
-	unsigned int x,y,rhs,ord,t;
+	unsigned int x,rhs,ord,t;
 
 	for ( x = 0, ord = 1; x < p; x++ ) {
 		DMAR(x,x,a,p,t) /* t = x^2+a mod p */
@@ -505,6 +504,8 @@ UP2 d;
 GF2N a,b;
 {
 	error("ecm_count_order_gf2n : not implemented yet");
+	/* NOTREACHED */
+	return 0;
 }
 
 /* ec = [AX,BC]  */
@@ -647,7 +648,7 @@ void ecm_chsgn_ff(p,pr)
 VECT p;
 VECT *pr;
 {
-	Obj m,x,y,z;
+	Obj x,y,z;
 	LM tl;
 	GF2N tg;
 	Obj *vb;
@@ -732,8 +733,6 @@ unsigned int *ka;
 	LM *b,*x,*z;
 	int i;
 	LM t,s,m;
-	N lm;
-	Q mod;
 
 	b = (LM *)ALLOCA((len+1)*sizeof(LM));
 	x = (LM *)ALLOCA(len*sizeof(LM));
@@ -871,7 +870,6 @@ void sort_ktarray(karray,tarray,rp)
 VECT karray,tarray;
 LIST *rp;
 {
-	LIST *lb;
 	NODE r,r1;
 	int i,i0,k,len,same,tsame;
 	struct oKeyIndexPair *kip;

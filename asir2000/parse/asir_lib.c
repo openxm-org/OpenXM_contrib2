@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.4 2000/11/14 08:38:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,7 +68,6 @@ int Call_Asir(char *,pointer *);
 
 void Init_Asir(int argc,char **argv)
 {
-	int tmp;
 	FILE *ifp;
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
@@ -135,6 +134,8 @@ int Call_Asir(char *cmd,pointer *result)
 	SNODE snode;
 	pointer val;
 #if PARI
+	void recover(int);
+
 	recover(0);
 	if ( setjmp(environnement) ) {
 		avma = top; recover(1);

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.9 2001/08/06 04:25:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.10 2001/08/31 09:17:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -52,11 +52,7 @@
 
 #define ISIZ sizeof(int)
 
-int write_cmo_zz(FILE *,int,N);
-int read_cmo_zz(FILE *,int *,N *);
-
-int valid_as_cmo(obj)
-Obj obj;
+int valid_as_cmo(Obj obj)
 {
 	NODE m;
 
@@ -83,9 +79,7 @@ Obj obj;
 	}
 }
 
-write_cmo(s,obj)
-FILE *s;
-Obj obj;
+void write_cmo(FILE *s,Obj obj)
 {
 	int r;
 	char errmsg[BUFSIZ];
@@ -112,31 +106,31 @@ Obj obj;
 			}
 			break;
 		case O_P:
-			write_cmo_p(s,obj);
+			write_cmo_p(s,(P)obj);
 			break;
 		case O_R:
-			write_cmo_r(s,obj);
+			write_cmo_r(s,(R)obj);
 			break;
 		case O_DP:
-			write_cmo_dp(s,obj);
+			write_cmo_dp(s,(DP)obj);
 			break;
 		case O_LIST:
-			write_cmo_list(s,obj);
+			write_cmo_list(s,(LIST)obj);
 			break;
 		case O_STR:
-			write_cmo_string(s,obj);
+			write_cmo_string(s,(STRING)obj);
 			break;
 		case O_USINT:
-			write_cmo_uint(s,obj);
+			write_cmo_uint(s,(USINT)obj);
 			break;
 		case O_MATHCAP:
-			write_cmo_mathcap(s,obj);
+			write_cmo_mathcap(s,(MATHCAP)obj);
 			break;
 		case O_ERR:
-			write_cmo_error(s,obj);
+			write_cmo_error(s,(ERR)obj);
 			break;
 		case O_BYTEARRAY:
-			write_cmo_bytearray(s,obj);
+			write_cmo_bytearray(s,(BYTEARRAY)obj);
 			break;
 		case O_VOID:
 			r = ((USINT)obj)->body; write_int(s,&r);
@@ -152,9 +146,7 @@ Obj obj;
 	}
 }
 
-int cmo_tag(obj,tag)
-Obj obj;
-int *tag;
+int cmo_tag(Obj obj,int *tag)
 {
 	if ( !valid_as_cmo(obj) )
 		return 0;
@@ -197,19 +189,15 @@ int *tag;
 	return 1;
 }
 
-write_cmo_mathcap(s,mc)
-FILE *s;
-MATHCAP mc;
+void write_cmo_mathcap(FILE *s,MATHCAP mc)
 {
 	unsigned int r;
 
 	r = CMO_MATHCAP; write_int(s,&r);
-	write_cmo(s,BDY(mc));
+	write_cmo(s,(Obj)BDY(mc));
 }
 
-write_cmo_uint(s,ui)
-FILE *s;
-USINT ui;
+void write_cmo_uint(FILE *s,USINT ui)
 {
 	unsigned int r;
 
@@ -217,9 +205,7 @@ USINT ui;
 	r = ui->body; write_int(s,&r);
 }
 
-write_cmo_q(s,q)
-FILE *s;
-Q q;
+void write_cmo_q(FILE *s,Q q)
 {
 	int r;
 
@@ -233,9 +219,7 @@ Q q;
 	}
 }
 
-write_cmo_real(s,real)
-FILE *s;
-Real real;
+void write_cmo_real(FILE *s,Real real)
 {
 	unsigned int r;
 	double dbl;
@@ -244,15 +228,9 @@ Real real;
 	dbl = real->body; write_double(s,&dbl);
 }
 
-write_cmo_zz(s,sgn,n)
-FILE *s;
-int sgn;
-N n;
+void write_cmo_zz(FILE *s,int sgn,N n)
 {
-	int i,l,bytes;
-	unsigned int t;
-	unsigned int *b;
-	unsigned char c;
+	int l,bytes;
 
 #if 1
 	l = PL(n);
@@ -273,15 +251,12 @@ N n;
 #endif
 }
 
-write_cmo_p(s,p)
-FILE *s;
-P p;
+void write_cmo_p(FILE *s,P p)
 {
 	int r,i;
 	VL t,vl;
 	char *namestr;
 	STRING name;
-	NODE n0,n;
 
 	r = CMO_RECURSIVE_POLYNOMIAL; write_int(s,&r);
 	get_vars((Obj)p,&vl);
@@ -296,17 +271,14 @@ P p;
 /*		localname_to_cmoname(NAME(t->v),&namestr); */
 		namestr = NAME(t->v);
 		MKSTR(name,namestr);
-		write_cmo(s,name);
+		write_cmo(s,(Obj)name);
 	}
 
 	/* body */
 	write_cmo_upoly(s,vl,p);
 }
 
-write_cmo_upoly(s,vl,p)
-FILE *s;
-VL vl;
-P p;
+void write_cmo_upoly(FILE *s,VL vl,P p)
 {
 	int r,i;
 	V v;
@@ -314,7 +286,7 @@ P p;
 	VL vlt;
 
 	if ( NUM(p) )
-		write_cmo(s,p);
+		write_cmo(s,(Obj)p);
 	else {
 		r = CMO_UNIVARIATE_POLYNOMIAL; write_int(s,&r);
 		v = VR(p);
@@ -330,20 +302,16 @@ P p;
 	}
 }
 
-write_cmo_r(s,f)
-FILE *s;
-R f;
+void write_cmo_r(FILE *s,R f)
 {
 	int r;
 
 	r = CMO_RATIONAL; write_int(s,&r);
-	write_cmo(s,NM(f));
-	write_cmo(s,DN(f));
+	write_cmo(s,(Obj)NM(f));
+	write_cmo(s,(Obj)DN(f));
 }
 
-write_cmo_dp(s,dp)
-FILE *s;
-DP dp;
+void write_cmo_dp(FILE *s,DP dp)
 {
 	int i,n,nv,r;
 	MP m;
@@ -357,10 +325,7 @@ DP dp;
 		write_cmo_monomial(s,m,nv);
 }
 
-write_cmo_monomial(s,m,n)
-FILE *s;
-MP m;
-int n;
+void write_cmo_monomial(FILE *s,MP m,int n)
 {
 	int i,r;
 	int *p;
@@ -370,12 +335,10 @@ int n;
 	for ( i = 0, p = m->dl->d; i < n; i++ ) {
 		write_int(s,p++);
 	}
-	write_cmo_q(s,m->c);
+	write_cmo_q(s,(Q)m->c);
 }
 
-write_cmo_list(s,list)
-FILE *s;
-LIST list;
+void write_cmo_list(FILE *s,LIST list)
 {
 	NODE m;
 	int i,n,r;
@@ -387,9 +350,7 @@ LIST list;
 		write_cmo(s,BDY(m));
 }
 
-write_cmo_string(s,str)
-FILE *s;
-STRING str;
+void write_cmo_string(FILE *s,STRING str)
 {
 	int r;
 
@@ -397,9 +358,7 @@ STRING str;
 	savestr(s,BDY(str));	
 }
 
-write_cmo_bytearray(s,array)
-FILE *s;
-BYTEARRAY array;
+void write_cmo_bytearray(FILE *s,BYTEARRAY array)
 {
 	int r;
 
@@ -408,9 +367,7 @@ BYTEARRAY array;
 	write_string(s,array->body,array->len);
 }
 
-write_cmo_error(s,e)
-FILE *s;
-ERR e;
+void write_cmo_error(FILE *s,ERR e)
 {
 	int r;
 
@@ -426,9 +383,7 @@ ERR e;
  * arglist = list of treenode
  */
 
-write_cmo_tree(s,l)
-FILE *s;
-LIST l;
+void write_cmo_tree(FILE *s,LIST l)
 {
 	NODE n;
 	int r;
@@ -445,14 +400,14 @@ LIST l;
 			name = (STRING)BDY(n);
 			n = NEXT(n);
 			/* function name */
-			write_cmo(s,name);
+			write_cmo(s,(Obj)name);
 
 			/* attribute list */
 			r = CMO_LIST; write_int(s,&r);
 			r = 2; write_int(s,&r);
 			MKSTR(key,"asir");
-			write_cmo(s,key);
-			write_cmo(s,prop);
+			write_cmo(s,(Obj)key);
+			write_cmo(s,(Obj)prop);
 		}
 
 		/* argument list */
@@ -466,28 +421,22 @@ LIST l;
 	}
 }
 
-read_cmo(s,rp)
-FILE *s;
-Obj *rp;
+void read_cmo(FILE *s,Obj *rp)
 {
 	int id;
-	int n,sgn,dummy;
-	Q q,qnm,qdn;
+	int sgn,dummy;
+	Q q;
 	N nm,dn;
 	P p,pnm,pdn;
-	R r;
 	Real real;
 	double dbl;
 	STRING str;
 	USINT t;
 	DP dp;
-	char *b;
 	Obj obj;
 	ERR e;
 	MATHCAP mc;
 	BYTEARRAY array;
-	QUOTE quote;
-	FNODE fn;
 	LIST list;
 
 	read_int(s,&id);
@@ -497,7 +446,7 @@ Obj *rp;
 			*rp = 0;
 			break;
 		case CMO_INT32:
-			read_cmo_uint(s,rp);
+			read_cmo_uint(s,&t); *rp = (Obj)t;
 			break;
 		case CMO_DATUM:
 			loadbytearray(s,&array); *rp = (Obj)array;
@@ -520,7 +469,7 @@ Obj *rp;
 			read_cmo_list(s,rp);
 			break;
 		case CMO_MONOMIAL32:
-			read_cmo_monomial(s,rp);
+			read_cmo_monomial(s,&dp); *rp = (Obj)dp;
 			break;
 		case CMO_ZZ:
 			read_cmo_zz(s,&sgn,&nm);
@@ -544,10 +493,11 @@ Obj *rp;
 			read_cmo_upoly(s,&p); *rp = (Obj)p;
 			break;
 		case CMO_INDETERMINATE:
-			read_cmo(s,&str); *rp = (Obj)str;
+			read_cmo(s,rp);
 			break;
 		case CMO_RATIONAL:
-			read_cmo(s,&pnm); read_cmo(s,&pdn);
+			read_cmo(s,&obj); pnm = (P)obj;
+			read_cmo(s,&obj); pdn = (P)obj;
 			divr(CO,(Obj)pnm,(Obj)pdn,rp);
 			break;
 		case CMO_ZERO:
@@ -566,7 +516,7 @@ Obj *rp;
 			MKQUOTE(quote,fn);
 			*rp = (Obj)quote;
 #else
-			*rp = list;
+			*rp = (Obj)list;
 #endif
 			break;
 		default:
@@ -577,9 +527,7 @@ Obj *rp;
 	}
 }
 
-read_cmo_uint(s,rp)
-FILE *s;
-USINT *rp;
+void read_cmo_uint(FILE *s,USINT *rp)
 {
 	unsigned int body;
 
@@ -587,16 +535,10 @@ USINT *rp;
 	MKUSINT(*rp,body);
 }
 
-read_cmo_zz(s,sgn,rp)
-FILE *s;
-int *sgn;
-N *rp;
+void read_cmo_zz(FILE *s,int *sgn,N *rp)
 {
-	int l,i,words;
+	int l;
 	N n;
-	unsigned int *b;
-	unsigned int h;
-	unsigned char c;
 
 	read_int(s,&l);
 	if ( l == 0 ) {
@@ -636,14 +578,11 @@ N *rp;
 #endif
 }
 
-read_cmo_list(s,rp)
-FILE *s;
-Obj *rp;
+void read_cmo_list(FILE *s,Obj *rp)
 {
 	int len;
 	Obj *w;
 	int i;
-	Obj r,r1;
 	NODE n0,n1;
 	LIST list;
 
@@ -658,13 +597,10 @@ Obj *rp;
 	*rp = (Obj)list;
 }
 
-read_cmo_dp(s,rp)
-FILE *s;
-DP *rp;
+void read_cmo_dp(FILE *s,DP *rp)
 {
 	int len;
 	int i;
-	NODE n0,n1;
 	MP mp0,mp;
 	int nv,d;
 	DP dp;
@@ -674,7 +610,7 @@ DP *rp;
 	/* skip the ring definition */
 	read_cmo(s,&obj);
 	for ( mp0 = 0, i = 0, d = 0; i < len; i++ ) {
-		read_cmo(s,&dp);
+		read_cmo(s,&obj); dp = (DP)obj;
 		if ( !mp0 ) {
 			nv = dp->nv;
 			mp0 = dp->body;
@@ -689,10 +625,9 @@ DP *rp;
 	dp->sugar = d; *rp = dp;
 }
 
-read_cmo_monomial(s,rp)
-FILE *s;
-DP *rp;
+void read_cmo_monomial(FILE *s,DP *rp)
 {
+	Obj obj;
 	MP m;
 	DP dp;
 	int i,sugar,n;
@@ -704,16 +639,15 @@ DP *rp;
 	for ( sugar = 0, i = 0; i < n; i++ )
 		sugar += dl->d[i];
 	dl->td = sugar;
-	read_cmo(s,&m->c);
+	read_cmo(s,&obj); m->c = (P)obj;
 	NEXT(m) = 0; MKDP(n,m,dp); dp->sugar = sugar; *rp = dp;
 }
 
 static V *remote_vtab;
 
-read_cmo_p(s,rp)
-FILE *s;
-P *rp;
+void read_cmo_p(FILE *s,P *rp)
 {
+	Obj obj;
 	LIST vlist;
 	int nv,i;
 	V *vtab;
@@ -723,7 +657,7 @@ P *rp;
 	VL tvl,rvl;
 	char *name;
 
-	read_cmo(s,&vlist);
+	read_cmo(s,&obj); vlist = (LIST)obj;
 	nv = length(BDY(vlist));
 	vtab = (V *)ALLOCA(nv*sizeof(V));
 	for ( i = 0, t = BDY(vlist); i < nv; t = NEXT(t), i++ ) {
@@ -732,7 +666,7 @@ P *rp;
 		makevar(name,&v); vtab[i] = VR(v);
 	}
 	remote_vtab = vtab;
-	read_cmo(s,&p);
+	read_cmo(s,&obj); p = (P)obj;
 	for ( i = 0; i < nv-1; i++ ) {
 		v1 = vtab[i]; v2 = vtab[i+1];
 		for ( tvl = CO; tvl->v != v1 && tvl->v != v2; tvl = NEXT(tvl) );
@@ -748,11 +682,10 @@ P *rp;
 		*rp = p;
 }
 
-read_cmo_upoly(s,rp)
-FILE *s;
-P *rp;
+void read_cmo_upoly(FILE *s,P *rp)
 {
 	int n,ind,i,d;
+	Obj obj;
 	P c;
 	Q q;
 	DCP dc0,dc;
@@ -761,7 +694,7 @@ P *rp;
 	read_int(s,&ind);
 	for ( i = 0, dc0 = 0; i < n; i++ ) {
 		read_int(s,&d);
-		read_cmo(s,&c);
+		read_cmo(s,&obj); c = (P)obj;
 		if ( c ) {
 			if ( OID(c) == O_USINT ) {
 				UTOQ(((USINT)c)->body,q); c = (P)q;
@@ -809,7 +742,7 @@ static int optab_len = sizeof(optab)/sizeof(struct operator_tab);
 
 #if 0
 /* old code */
-read_cmo_tree(s,rp)
+void read_cmo_tree(s,rp)
 FILE *s;
 FNODE *rp;
 {
@@ -895,26 +828,23 @@ pointer **argp;
 	return n;
 }
 #else
-read_cmo_tree_as_list(s,rp)
-FILE *s;
-LIST *rp;
+void read_cmo_tree_as_list(FILE *s,LIST *rp)
 {
+	Obj obj;
 	STRING name;
 	LIST attr,args;
 	NODE t0,t1;
 
-	read_cmo(s,&name);
-	read_cmo(s,&attr);
-	read_cmo(s,&args);
+	read_cmo(s,&obj); name = (STRING)obj;
+	read_cmo(s,&obj); attr = (LIST)obj;
+	read_cmo(s,&obj); args = (LIST)obj;
 	MKNODE(t1,name,BDY(args));
 	MKNODE(t0,attr,t1);
 	MKLIST(*rp,t0);
 }
 #endif
 
-localname_to_cmoname(a,b)
-char *a;
-char **b;
+void localname_to_cmoname(char *a,char **b)
 {
 	int l;
 	char *t;
@@ -929,9 +859,7 @@ char **b;
 	}
 }
 
-cmoname_to_localname(a,b)
-char *a;
-char **b;
+void cmoname_to_localname(char *a,char **b)
 {
 	int l;
 	char *t;

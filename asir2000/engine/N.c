@@ -45,19 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.4 2000/12/21 02:51:45 murao Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 
-void addn();
-int subn();
-void _bshiftn();
-void dupn();
-
 #if defined(VISUAL) || defined(i386)
-void addn(n1,n2,nr)
-N n1,n2,*nr;
+void addn(N n1,N n2,N *nr)
 {
 	unsigned int *m1,*m2,*mr;
 	unsigned int c;
@@ -138,8 +132,7 @@ N n1,n2,*nr;
 	}
 }
 
-int subn(n1,n2,nr)
-N n1,n2,*nr;
+int subn(N n1,N n2,N *nr)
 {
 	N r;
 	unsigned int *m1,*m2,*mr,br;
@@ -245,8 +238,7 @@ N n1,n2,*nr;
 	}
 }
 
-void _addn(n1,n2,nr)
-N n1,n2,nr;
+void _addn(N n1,N n2,N nr)
 {
 	unsigned int *m1,*m2,*mr;
 	unsigned int c;
@@ -326,8 +318,7 @@ N n1,n2,nr;
 	}
 }
 
-int _subn(n1,n2,nr)
-N n1,n2,nr;
+int _subn(N n1,N n2,N nr)
 {
 	unsigned int *m1,*m2,*mr,br;
 	unsigned int tmp,t;
@@ -433,8 +424,7 @@ N n1,n2,nr;
 }
 #else
 
-void addn(n1,n2,nr)
-N n1,n2,*nr;
+void addn(N n1,N n2,N *nr)
 {
 	unsigned int *m1,*m2,*mr,i,c;
 	N r;
@@ -475,8 +465,7 @@ N n1,n2,*nr;
 	}
 }
 
-int subn(n1,n2,nr)
-N n1,n2,*nr;
+int subn(N n1,N n2,N *nr)
 {
 	N r;
 	unsigned int *m1,*m2,*mr,i,br;
@@ -534,8 +523,7 @@ N n1,n2,*nr;
 	}
 }
 
-void _addn(n1,n2,nr)
-N n1,n2,nr;
+void _addn(N n1,N n2,N nr)
 {
 	unsigned int *m1,*m2,*mr,i,c;
 	int d1,d2;
@@ -574,8 +562,7 @@ N n1,n2,nr;
 	}
 }
 
-int _subn(n1,n2,nr)
-N n1,n2,nr;
+int _subn(N n1,N n2,N nr)
 {
 	N r;
 	unsigned int *m1,*m2,*mr,i,br;
@@ -635,11 +622,7 @@ N n1,n2,nr;
 
 /* a2 += a1; n2 >= n1 */
 
-void addarray_to(a1,n1,a2,n2)
-unsigned int *a1;
-int n1;
-unsigned int *a2;
-int n2;
+void addarray_to(unsigned int *a1,int n1,unsigned int *a2,int n2)
 {
 	int i;
 	unsigned int c,tmp;
@@ -664,9 +647,7 @@ int n2;
 		*a2 = c;
 }
 
-void pwrn(n,e,nr)
-N n,*nr;
-int e;
+void pwrn(N n,int e,N *nr)
 {
 	N nw,nw1;
 
@@ -689,11 +670,8 @@ extern int igcd_algorithm;
 
 void gcdEuclidn(), gcdn_HMEXT();
 
-void gcdn(n1,n2,nr)
-N n1,n2,*nr;
+void gcdn(N n1,N n2,N *nr)
 {
-	N m1,m2,g;
-
 	if ( !igcd_algorithm )
 		gcdEuclidn(n1,n2,nr);
 	else {
@@ -703,8 +681,7 @@ N n1,n2,*nr;
 
 #include "Ngcd.c"
 
-void gcdEuclidn(n1,n2,nr)
-N n1,n2,*nr;
+void gcdEuclidn(N n1,N n2,N *nr)
 {
 	N m1,m2,q,r;
 	unsigned int i1,i2,ir;
@@ -738,8 +715,7 @@ N n1,n2,*nr;
 	}
 }
 
-int cmpn(n1,n2)
-N n1,n2;
+int cmpn(N n1,N n2)
 {
 	int i;
 	unsigned int *m1,*m2;
@@ -766,10 +742,7 @@ N n1,n2;
 	}
 }
 
-void bshiftn(n,b,r)
-N n;
-int b;
-N *r;
+void bshiftn(N n,int b,N *r)
 {
 	int w,l,nl,i,j;
 	N z;
@@ -837,10 +810,7 @@ N *r;
 }
 
 #if 0
-void _bshiftn(n,b,z)
-N n;
-int b;
-N z;
+void _bshiftn(N n,int b,N z)
 {
 	int w,l,nl,i,j;
 	unsigned int msw;
@@ -907,10 +877,7 @@ N z;
 }
 #endif
 
-void shiftn(n,w,r)
-N n;
-int w;
-N *r;
+void shiftn(N n,int w,N *r)
 {
 	int l,nl;
 	N z;
@@ -934,9 +901,7 @@ N *r;
 	}
 }
 
-void randomn(bits,r)
-int bits;
-N *r;
+void randomn(int bits,N *r)
 {
 	int l,i;
 	unsigned int *tb;
@@ -956,15 +921,13 @@ N *r;
 		PL(t) = i+1;
 }
 
-void freen(n)
-N n;
+void freen(N n)
 {
 	if ( n && (n != ONEN) )
 		free(n);
 }
 
-int n_bits(n)
-N n;
+int n_bits(N n)
 {
 	unsigned int l,i,t;
 

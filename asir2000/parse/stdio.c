@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.4 2000/11/13 01:48:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.5 2001/10/05 10:23:07 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,6 +141,8 @@ int unget_char(int c)
   return c;
 }
 
+int win_put_string(char *s,FILE *file);
+
 int win_put_char(int c,FILE *file)
 {
   static char s[2];
@@ -199,8 +201,6 @@ int w_fputc(int c, FILE *file)
 
 int w_fputs(char *s, FILE *file)
 {
-  int status;
-
   if ( file == stdout || file == stderr )
     return win_put_string(s,file);
   else

@@ -45,28 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.3 2000/08/22 05:03:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.4 2001/06/25 05:30:48 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "inline.h"
-
-void ksquareummain(int,UM,UM);
-void kmulummain(int,UM,UM,UM);
-void c_copyum(UM,int,int *);
-void copyum(UM,UM);
-void extractum(UM,int,int,UM);
-void ksquareum(int,UM,UM);
-void kmulum(int,UM,UM,UM);
 
 /*
  * mod is declared as 'int', because several xxxum functions contains signed 
  * integer addition/subtraction. So mod should be less than 2^31.
  */
     
-void mulum(mod,p1,p2,pr)
-int mod;
-UM p1,p2,pr;
+void mulum(int mod,UM p1,UM p2,UM pr)
 {
 	int *pc1,*pcr;
 	int *c1,*c2,*cr;
@@ -87,9 +77,7 @@ UM p1,p2,pr;
 	DEG(pr) = d1 + d2;
 }
 
-void mulsum(mod,p,n,pr)
-int mod,n;
-UM p,pr;
+void mulsum(int mod,UM p,int n,UM pr)
 {
 	int *sp,*dp;
 	int i;
@@ -100,9 +88,7 @@ UM p,pr;
 	}
 }
 	
-int divum(mod,p1,p2,pq)
-int mod;
-UM p1,p2,pq;
+int divum(int mod,UM p1,UM p2,UM pq)
 {
 	int *pc1,*pct;
 	int *c1,*c2,*ct;
@@ -142,13 +128,13 @@ UM p1,p2,pq;
 	return i;
 }
 
-void diffum(mod,f,fd)
-int mod;
-UM f,fd;
+void diffum(int mod,UM f,UM fd)
 {
 	int *dp,*sp;
 	int i;
+#if !defined(VISUAL)
 	UL ltmp;
+#endif
 
 	for ( i = DEG(f), dp = COEF(fd)+i-1, sp = COEF(f)+i; 
 		i >= 1; i--, dp--, sp-- ) {
@@ -157,9 +143,7 @@ UM f,fd;
 	degum(fd,DEG(f) - 1);
 }
 
-unsigned int pwrm(mod,a,n)
-int mod,a;
-int n;
+unsigned int pwrm(int mod,int a,int n)
 {
 	unsigned int s,t;
 
@@ -178,9 +162,7 @@ int n;
 	}
 }
 
-unsigned int invm(s,mod)
-unsigned int s;
-int mod;
+unsigned int invm(unsigned int s,int mod)
 {
 	unsigned int r,a2,q;
 	unsigned int f1,f2,a1;
@@ -202,9 +184,7 @@ int mod;
 	return a2;
 }
 
-unsigned int rem(n,m)
-N n;
-unsigned int m;
+unsigned int rem(N n,int m)
 {
 	unsigned int *x;
 	unsigned int t,r;
@@ -223,10 +203,7 @@ unsigned int m;
 }
 
 #ifndef sparc
-void addpadic(mod,n,n1,n2)
-int mod;
-int n;
-unsigned int *n1,*n2;
+void addpadic(int mod,int n,unsigned int *n1,unsigned int *n2)
 {
 	unsigned int carry,tmp;
 	int i;
@@ -242,11 +219,7 @@ unsigned int *n1,*n2;
 }
 #endif 
 
-void mulpadic(mod,n,n1,n2,nr)
-int mod;
-int n;
-unsigned int *n1;
-unsigned int *n2,*nr;
+void mulpadic(int mod,int n,unsigned int *n1,unsigned int *n2,unsigned int *nr)
 {
 	unsigned int *pn1,*pnr;
 	unsigned int carry,mul;
@@ -264,8 +237,7 @@ unsigned int *n2,*nr;
 
 extern up_kara_mag;
 
-void kmulum(mod,n1,n2,nr)
-UM n1,n2,nr;
+void kmulum(int mod,UM n1,UM n2,UM nr)
 {
 	UM n,t,s,m,carry;
 	int d,d1,d2,len,i,l;
@@ -312,9 +284,7 @@ UM n1,n2,nr;
 	bcopy((char *)r0,(char *)COEF(nr),l*sizeof(int));
 }
 
-void ksquareum(mod,n1,nr)
-int mod;
-UM n1,nr;
+void ksquareum(int mod,UM n1,UM nr)
 {
 	int d1;
 
@@ -328,10 +298,7 @@ UM n1,nr;
 	ksquareummain(mod,n1,nr);
 }
 
-void extractum(n,index,len,nr)
-UM n;
-int index,len;
-UM nr;
+void extractum(UM n,int index,int len,UM nr)
 {
 	int *m;
 	int l;
@@ -352,25 +319,19 @@ UM nr;
 	}
 }
 
-void copyum(n1,n2)
-UM n1,n2;
+void copyum(UM n1,UM n2)
 {
 	n2->d = n1->d;
 	bcopy((char *)n1->c,(char *)n2->c,(n1->d+1)*sizeof(int));
 }
 
-void c_copyum(n,len,p)
-UM n;
-int len;
-int *p;
+void c_copyum(UM n,int len,int *p)
 {
 	if ( n )
 		bcopy((char *)COEF(n),(char *)p,MIN((DEG(n)+1),len)*sizeof(int));
 }
 
-void kmulummain(mod,n1,n2,nr)
-int mod;
-UM n1,n2,nr;
+void kmulummain(int mod,UM n1,UM n2,UM nr)
 {
 	int d1,d2,h,len;
 	UM n1lo,n1hi,n2lo,n2hi,hi,lo,mid1,mid2,mid,s1,s2,t1,t2;
@@ -404,9 +365,7 @@ UM n1,n2,nr;
 		copyum(t1,nr);
 }
 
-void ksquareummain(mod,n1,nr)
-int mod;
-UM n1,nr;
+void ksquareummain(int mod,UM n1,UM nr)
 {
 	int d1,h,len;
 	UM n1lo,n1hi,hi,lo,mid1,mid2,mid,s1,t1,t2;

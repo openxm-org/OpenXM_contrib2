@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PDM.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PDM.c,v 1.4 2001/02/21 07:10:18 noro Exp $ 
 */
 #ifndef MODULAR
 #define MODULAR
@@ -468,11 +468,9 @@ P f1,f2,*fqp,*frp;
 
 #ifdef MODULAR
 
-int divtmp(vl,mod,p1,p2,q)
-VL vl;
-P p1,p2,*q;
+int divtmp(VL vl,int mod,P p1,P p2,P *q)
 {
-	register int i,j,k;
+	register int i,j;
 	register DCP dc1,dc2,dc;
 	P m,m1,s,dvr,t;
 	P *pq,*pr,*pd;
@@ -554,13 +552,11 @@ P p1,p2,*q;
 	}
 }
 
-int divtdcmp(vl,mod,p1,p2,q)
-VL vl;
-P p1,p2,*q;
+int divtdcmp(VL vl,int mod,P p1,P p2,P *q)
 {
 
 	P m;
-	register DCP dc,dcr,dcr0,dct;
+	register DCP dc,dcr,dcr0;
 
 	for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
 		if ( !divtmp(vl,mod,COEF(dc),p2,&m) ) {

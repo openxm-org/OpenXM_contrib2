@@ -342,7 +342,6 @@ void Init_IO()
 void AsirMain(int argc, char **argv)
 {
 	DWORD tid;
-	int ret;
 
 	hRead = (void *)atoi(__argv[1]);
 	hWrite = (void *)atoi(__argv[2]);
@@ -378,7 +377,6 @@ void OxAsirMain(int argc, char **argv)
 {
 	int create_message;
 	int tid;
-	int ret;
 
 	ox_sock_id = atoi(__argv[1]);
 	create_message = atoi(__argv[2]);
@@ -410,7 +408,6 @@ void OxPlotMain(int argc, char **argv)
 	DWORD tid;
 	DWORD mypid;
 	char eventname[BUFSIZ];
-	int ret;
 
 	ox_sock_id = atoi(argv[1]);
 	do_message = atoi(argv[2]);
@@ -446,7 +443,7 @@ void OxPlotMain(int argc, char **argv)
 
 	/* process_args() increments argv */
 	plot_argc = argc-5;
-	plot_argv = argc+5;
+	plot_argv = argv+5;
 	hComputingThread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)ox_plot_main,NULL,0,&tid);
 //	ret = SetThreadPriority(hComputingThread,THREAD_PRIORITY_ABOVE_NORMAL);
 //	if ( !ret )
@@ -558,8 +555,8 @@ void set_error(int id,char *reason,char *action)
 }
 
 /* dummy functions */
-reset_current_computation(){}
-set_selection(){}
-reset_selection(){}
-set_busy(){}
-reset_busy(){}
+void reset_current_computation(){}
+void set_selection(){}
+void reset_selection(){}
+void set_busy(){}
+void reset_busy(){}

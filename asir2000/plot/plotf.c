@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.9 2001/06/04 02:49:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.10 2001/08/22 09:19:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,6 +55,8 @@
 void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
 void Pmemory_ifplot();
 void Popen_canvas(), Pclear_canvas(), Pdraw_obj();
+void Pox_rpc();
+void Pox_cmo_rpc();
 
 struct ftab plot_tab[] = {
 	{"ifplot",Pifplot,-7},
@@ -74,13 +76,11 @@ struct ftab plot_tab[] = {
 
 int current_s;
 
-void Popen_canvas(arg,rp)
-NODE arg;
-Obj *rp;
+void Popen_canvas(NODE arg,Obj *rp)
 {
 	Q w300,s_id;
 	LIST geom;
-	int stream,id,i;
+	int stream;
 	NODE n,n0;
 	STRING fname,wname;
 
@@ -120,16 +120,14 @@ Obj *rp;
 	Pox_cmo_rpc(arg,rp);
 }
 
-void Pifplot(arg,rp)
-NODE arg;
-Obj *rp;
+void Pifplot(NODE arg,Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,yrange,range[2],list,geom;
 	VL vl,vl0;
 	V v[2],av[2];
-	int stream,ri,id,i;
+	int stream,ri,i;
 	P poly;
 	P var;
 	NODE n,n0;
@@ -145,9 +143,9 @@ Obj *rp;
 		switch ( OID(BDY(arg)) ) {
 			case O_P:
 				poly = (P)BDY(arg); 
-				get_vars_recursive(poly,&vl);
+				get_vars_recursive((Obj)poly,&vl);
 				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-					if ( vl0->v->attr == V_IND )
+					if ( vl0->v->attr == (pointer)V_IND )
 						if ( i >= 2 )
 							error("ifplot : invalid argument");
 						else
@@ -228,20 +226,18 @@ Obj *rp;
 	Pox_rpc(arg,rp);
 }
 
-void Pmemory_ifplot(arg,rp)
-NODE arg;
-Obj *rp;
+void Pmemory_ifplot(NODE arg,Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,yrange,range[2],list,geom;
 	VL vl,vl0;
 	V v[2],av[2];
-	int stream,ri,id,i;
+	int stream,ri,i;
 	P poly;
 	P var;
 	NODE n,n0;
-	STRING fname,wname;
+	STRING fname;
 
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
@@ -253,9 +249,9 @@ Obj *rp;
 		switch ( OID(BDY(arg)) ) {
 			case O_P:
 				poly = (P)BDY(arg); 
-				get_vars_recursive(poly,&vl);
+				get_vars_recursive((Obj)poly,&vl);
 				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-					if ( vl0->v->attr == V_IND )
+					if ( vl0->v->attr == (pointer)V_IND )
 						if ( i >= 2 )
 							error("ifplot : invalid argument");
 						else
@@ -333,16 +329,14 @@ Obj *rp;
 	Pox_rpc(arg,rp);
 }
 
-void Pconplot(arg,rp)
-NODE arg;
-Obj *rp;
+void Pconplot(NODE arg,Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,yrange,zrange,range[3],list,geom;
 	VL vl,vl0;
 	V v[2],av[2];
-	int stream,ri,id,i;
+	int stream,ri,i;
 	P poly;
 	P var;
 	NODE n,n0;
@@ -358,9 +352,9 @@ Obj *rp;
 		switch ( OID(BDY(arg)) ) {
 			case O_P:
 				poly = (P)BDY(arg);
-				get_vars_recursive(poly,&vl);
+				get_vars_recursive((Obj)poly,&vl);
 				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-					if ( vl0->v->attr == V_IND )
+					if ( vl0->v->attr == (pointer)V_IND )
 						if ( i >= 2 )
 							error("ifplot : invalid argument");
 						else
@@ -457,16 +451,14 @@ Obj *rp;
 	Pox_rpc(arg,rp);
 }
 
-void Pplot(arg,rp)
-NODE arg;
-Obj *rp;
+void Pplot(NODE arg,Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
 	LIST xrange,range[1],list,geom;
 	VL vl,vl0;
 	V v[1],av[1];
-	int stream,ri,id,i;
+	int stream,ri,i;
 	P poly;
 	P var;
 	NODE n,n0;
@@ -482,9 +474,9 @@ Obj *rp;
 		switch ( OID(BDY(arg)) ) {
 			case O_P: case O_R:
 				poly = (P)BDY(arg);
-				get_vars_recursive(poly,&vl);
+				get_vars_recursive((Obj)poly,&vl);
 				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-					if ( vl0->v->attr == V_IND )
+					if ( vl0->v->attr == (pointer)V_IND )
 						if ( i >= 1 )
 							error("ifplot : invalid argument");
 						else
@@ -548,9 +540,7 @@ Obj *rp;
 	Pox_rpc(arg,rp);
 }
 
-void Pplotover(arg,rp)
-NODE arg;
-Obj *rp;
+void Pplotover(NODE arg,Obj *rp)
 {
 	Q s_id,index;
 	P poly;
@@ -566,9 +556,7 @@ Obj *rp;
 
 /* arg = [x,y,r,s_id,index] */
 
-void Pdrawcircle(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdrawcircle(NODE arg,Obj *rp)
 {
 	Q s_id,index;
 	Obj x,y,r;
@@ -588,9 +576,7 @@ Obj *rp;
 }
 
 /* draw_obj(s_id,cindex,point|line); point = [x,y], line = [xa,ya,xb,yb] */
-void Pdraw_obj(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdraw_obj(NODE arg,Obj *rp)
 {
 	static STRING fname;
 	Q s_id,index;
@@ -610,13 +596,10 @@ Obj *rp;
 	Pox_cmo_rpc(arg,rp);
 }
 
-void Pclear_canvas(arg,rp)
-NODE arg;
-Obj *rp;
+void Pclear_canvas(NODE arg,Obj *rp)
 {
 	static STRING fname;
 	Q s_id,index;
-	LIST obj;
 
 	if ( !fname ) {
 		MKSTR(fname,"clear_canvas");
@@ -628,9 +611,7 @@ Obj *rp;
 }
 
 #if 0
-void Parrayplot(arg,rp)
-NODE arg;
-Obj *rp;
+void Parrayplot(NODE arg,Obj *rp)
 {
 	int s;
 	int id;

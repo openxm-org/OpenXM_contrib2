@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/fft_primes.c,v 1.2 2000/08/21 08:31:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/fft_primes.c,v 1.3 2000/08/22 05:04:12 noro Exp $ 
 */
 #include "dft.h"
 
@@ -13754,8 +13754,9 @@ static int blen_prod_fftprime[MAX_D+1] =
           0 if not.
 */
 
-int fft_available(d1,n1,d2,n2)
-int d1,n1,d2,n2;
+int int_bits(int);
+
+int fft_available(int d1,int n1,int d2,int n2)
 {
 	int dmin,bound,dlen;
 

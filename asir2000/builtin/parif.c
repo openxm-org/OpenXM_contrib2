@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.8 2001/07/05 09:26:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.9 2001/10/03 01:47:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -117,8 +117,9 @@ GEN ptr;
 mkprec(p)
 int p;
 {
-	if ( p > 0 )
-		return (int)(p*PREC_CONV+3);
+	if ( p <= 0 )
+		p = 1;
+	return (int)(p*PREC_CONV+3);
 }
 
 void Peval(arg,rp)
@@ -236,6 +237,8 @@ NODE arg;
 	if ( !f->f.binf ) {
 		sprintf(buf,"pari : %s undefined.",f->name);
 		error(buf);
+		/* NOTREACHED */
+		return 0;
 	}
 	switch ( f->type ) {
 		case 0: /* in/out : integer */
@@ -243,10 +246,12 @@ NODE arg;
 			if ( ac > 2 ) {
 				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
 				error("");
+				/* NOTREACHED */
+				return 0;
 			}
 			intarg = !ac ? 0 : QTOS((Q)ARG0(arg));
 			dmy = (GEN (*)())f->f.binf;
-			ret = (*dmy)(intarg);
+			ret = (int)(*dmy)(intarg);
 			STOQ(ret,q);
 			return (pointer)q;
 
@@ -255,6 +260,8 @@ NODE arg;
 			if ( !ac || ( ac > 2 ) ) {
 				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
 				error("");
+				/* NOTREACHED */
+				return 0;
 			}
 			ltop = avma;
 			ritopa((Obj)ARG0(arg),&a);
@@ -269,6 +276,8 @@ NODE arg;
 			if ( !ac || ( ac > 2 ) ) {
 				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
 				error("");
+				/* NOTREACHED */
+				return 0;
 			}
 			if ( ac == 1 )
 				opt = 0;
@@ -284,6 +293,8 @@ NODE arg;
 
 		default:
 			error("evalparif : not implemented yet.");
+			/* NOTREACHED */
+			return 0;
 	}
 }
 
@@ -300,7 +311,7 @@ struct pariftab {
  */
 
 struct pariftab pariftab[] = {
-{"allocatemem",allocatemoremem,0},
+{"allocatemem",(GEN(*)())allocatemoremem,0},
 {"abs",(GEN (*)())gabs,1},
 {"adj",adj,1},
 {"arg",garg,1},

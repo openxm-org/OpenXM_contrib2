@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.6 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.7 2000/08/22 05:04:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -105,7 +105,7 @@ Q *rp;
 	p = BDY(str);
 	spos = QTOS(start);
 	chr = BDY(terminator)[0];
-	if ( spos > strlen(p) )
+	if ( spos > (int)strlen(p) )
 		r = -1;
 	else {
 		ind = strchr(p+spos,chr);
@@ -204,6 +204,8 @@ Obj *rp;
 	FNODE fnode;
 	char *cmd;
 #if PARI
+	void recover(int);
+
 	recover(0);
 	if ( setjmp(environnement) ) {
 		avma = top; recover(1);
@@ -233,7 +235,7 @@ void Pstrtov(arg,rp)
 NODE arg;
 P *rp;
 {
-	char *p,*t;
+	char *p;
 
 	p = BDY((STRING)ARG0(arg));
 #if 0

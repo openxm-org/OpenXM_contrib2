@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Ngcd.c,v 1.2 2000/12/21 02:56:31 murao Exp $
 */
 /*
 #include "ca.h"
@@ -13,6 +13,9 @@
 
 
 #if BSH == BIT_WIDTH_OF_INT
+#if defined(BMASK)
+#undef BMASK
+#endif
 #define BMask ((unsigned)(-1))
 #define BMASK BMask
 #endif

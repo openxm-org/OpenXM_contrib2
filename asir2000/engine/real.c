@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.5 2000/11/15 02:16:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.6 2000/12/05 01:24:52 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -54,24 +54,27 @@
 double RatnToReal(a)
 Q a;
 {
-	double nm,dn,t,man;
+	double nm,dn,man;
 	int enm,edn,e;
-	unsigned int *p,s;
 
 	nm = NatToReal(NM(a),&enm);
 	if ( INT(a) )
-		if ( enm >= 1 )
+		if ( enm >= 1 ) {
 			error("RatnToReal : Overflow");
-		else
+			/* NOTREACHED */
+			return 0;
+		} else
 			return SGN(a)>0 ? nm : -nm;
 	else {
 		dn = NatToReal(DN(a),&edn);
 		man = nm/dn;
 		if ( SGN(a) < 0 )
 			man = -man;
-		if ( ((e = enm - edn) >= 1024) || (e <= -1023) )
+		if ( ((e = enm - edn) >= 1024) || (e <= -1023) ) {
 			error("RatnToReal : Overflow"); /* XXX */
-		else if ( !e )
+			/* NOTREACHED */
+			return 0;
+		} else if ( !e )
 			return man;
 		else
 			return man*pow(2,e);

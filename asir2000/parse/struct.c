@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.3 2000/08/22 05:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.4 2000/09/21 09:19:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,14 +54,12 @@
 struct oSS oLSS;
 SS LSS = &oLSS;
 
-int structdef(name,member)
-char *name;
-NODE member;
+int structdef(char *name,NODE member)
 {
-	int i,j,k,type;
+	int i,j;
 	SDEF sdef,s;
-	NODE n,ms;
-	char *mname,*sname;
+	NODE n;
+	char *mname;
 
 	/* search the predefined structure */
 	for ( s = LSS->sa, i = 0; i < LSS->n; i++ )
@@ -90,15 +88,12 @@ NODE member;
 	return i;
 }
 
-void newstruct(type,rp)
-int type;
-COMP *rp;
+void newstruct(int type,COMP *rp)
 {
 	NEWCOMP(*rp,LSS->sa[type].n); (*rp)->type = type;
 }
 
-int structtoindex(name)
-char *name;
+int structtoindex(char *name)
 {
 	SDEF s;
 	int i;
@@ -112,9 +107,7 @@ char *name;
 		return i;
 }
 
-int membertoindex(type,name)
-int type;
-char *name;
+int membertoindex(int type,char *name)
 {
 	SDEF s;
 	char **member;
@@ -130,16 +123,13 @@ char *name;
 		return i;
 }
 
-int getcompsize(type)
-int type;
+int getcompsize(int type)
 {
 	return LSS->sa[type].n;
 }
 
 #if 0
-void getmember(expr,memp)
-FNODE expr;
-Obj *memp;
+void getmember(FNODE expr,Obj *memp)
 {
 	int i;
 	FNODE root;
@@ -159,9 +149,7 @@ Obj *memp;
 	*memp = (Obj)t;
 }
 
-void getmemberp(expr,addrp)
-FNODE expr;
-Obj **addrp;
+void getmemberp(FNODE expr,Obj **addrp)
 {
 	int i;
 	FNODE root;
@@ -184,10 +172,7 @@ Obj **addrp;
 	*addrp = (Obj *)addr;
 }
 
-void getarrayp(a,ind,addrp)
-Obj a;
-NODE ind;
-Obj **addrp;
+void getarrayp(Obj a,NODE ind,Obj **addrp)
 {
 	Obj len,row,col;
 	Obj *addr;
@@ -216,11 +201,8 @@ Obj **addrp;
 }
 #endif
 
-Obj memberofstruct(a,name)
-COMP a;
-char *name;
+Obj memberofstruct(COMP a,char *name)
 {
-	NODE2 n,*np;
 	int type,ind;
 	char buf[BUFSIZ];
 
@@ -235,12 +217,8 @@ char *name;
 	return (Obj)a->member[ind];
 }
 
-void assign_to_member(a,name,obj)
-COMP a;
-char *name;
-Obj obj;
+void assign_to_member(COMP a,char *name,Obj obj)
 {
-	NODE2 n,*np;
 	int type,ind;
 	char buf[BUFSIZ];
 

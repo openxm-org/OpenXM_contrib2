@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.6 2000/11/09 02:30:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.7 2000/12/05 01:24:59 noro Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -105,7 +105,7 @@
 #define XC(a) ((a).x)
 #define YC(a) ((a).y)
 #define DISPLAY int
-#define WINDOW int
+#define WINDOW void *
 #define CURSOR int
 #define DRAWABLE HDC
 
@@ -204,4 +204,61 @@ extern SIZE cansize;
 extern Window rootwin;
 extern GC drawGC,dashGC,hlGC,scaleGC,clearGC,xorGC,colorGC,cdrawGC;
 extern XFontStruct *sffs;
+#endif
+
+/* prototypes */
+void calc(double **tab,struct canvas *can,int nox);
+double usubstrp(P p,double r);
+void qcalc(char **tab,struct canvas *can);
+void sturmseq(VL vl,P p,VECT *rp);
+void seproot(VECT s,int min,int max,int *ar);
+int numch(VECT s,Q n,Q a0);
+void usubstqp(P p,Q r,Q *v);
+void plotcalc(struct canvas *can);
+int open_canvas(NODE arg);
+int plot(NODE arg);
+int memory_plot(NODE arg,LIST *bytes);
+int plotover(NODE arg);
+int drawcircle(NODE arg);
+int draw_obj(NODE arg);
+int clear_canvas(NODE arg);
+int arrayplot(NODE arg);
+void ifplot_resize(struct canvas *can,POINT spos,POINT epos);
+void plot_resize(struct canvas *can,POINT spos,POINT epos);
+void ifplotmain(struct canvas *can);
+void qifplotmain(struct canvas *can);
+void if_print(DISPLAY *display,double **tab,struct canvas *can);
+void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes);
+void con_print(DISPLAY *display,double **tab,struct canvas *can);
+void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes);
+void qif_print(DISPLAY *display,char **tab,struct canvas *can);
+void plot_print(DISPLAY *display,struct canvas *can);
+void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color);
+void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color);
+void pline(DISPLAY *display,struct canvas *can,DRAWABLE d);
+double adjust_scale(double e,double w);
+void initmarker(struct canvas *can,char *message);
+void marker(struct canvas *can,int dir,int p);
+void define_cursor(WINDOW w,CURSOR cur);
+void count_and_flush();
+void flush();
+
+#if defined(VISUAL)
+int search_canvas();
+int search_active_canvas();
+void create_canvas(struct canvas *can);
+void destroy_canvas(struct canvas *can);
+void clear_pixmap(struct canvas *can);
+void alloc_pixmap(struct canvas *can);
+void copy_to_canvas(struct canvas *can);
+void copy_subimage(struct canvas *subcan,struct canvas *can,POINT pos);
+void draw_wideframe(struct canvas *can,DRAWABLE d);
+void create_brushes();
+void draw_frame0(DRAWABLE d,POINT spos,POINT epos);
+
+void reset_current_computation();
+void set_selection();
+void reset_selection();
+void set_busy();
+void reset_busy();
 #endif

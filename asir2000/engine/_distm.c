@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.9 2001/09/11 03:13:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.10 2001/09/17 01:18:35 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -53,23 +53,12 @@
 extern int (*cmpdl)();
 extern int do_weyl;
 
-void dpto_dp();
-void _dptodp();
-void _adddl_dup();
-void adddl_destructive();
-void _mulmdm_dup();
-void _free_dp();
-void _comm_mulmd_dup();
-void _weyl_mulmd_dup();
-void _weyl_mulmmm_dup();
-void _weyl_mulmdm_dup();
-void _comm_mulmd_tab();
-void _comm_mulmd_tab_destructive();
-
 MP _mp_free_list;
 DP _dp_free_list;
 DL _dl_free_list;
 int current_dl_length;
+
+void GC_gcollect();
 
 void _free_private_storage()
 {
@@ -126,9 +115,7 @@ void _DP_alloc()
 
 /* merge p1 and p2 into pr */
 
-void _addmd_destructive(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void _addmd_destructive(int mod,DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr,mr0,s;
@@ -182,9 +169,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void _mulmd_dup(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void _mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 {
 	if ( !do_weyl )
 		_comm_mulmd_dup(mod,p1,p2,pr);
@@ -192,9 +177,7 @@ DP p1,p2,*pr;
 		_weyl_mulmd_dup(mod,p1,p2,pr);
 }
 
-void _comm_mulmd_dup(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void _comm_mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
@@ -226,13 +209,11 @@ DP p1,p2,*pr;
 	}
 }
 
-void _weyl_mulmd_dup(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void _weyl_mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
-	int i,l,l1;
+	int i,l;
 	static MP *w;
 	static int wlen;
 
@@ -255,15 +236,11 @@ DP p1,p2,*pr;
 	}
 }
 
-void _mulmdm_dup(mod,p,m0,pr)
-int mod;
-DP p;
-MP m0;
-DP *pr;
+void _mulmdm_dup(int mod,DP p,MP m0,DP *pr)
 {
 	MP m,mr,mr0;
 	DL d,dt,dm;
-	int c,n,r,i,c1,c2;
+	int c,n,i,c1,c2;
 	int *pt,*p1,*p2;
 
 	if ( !p )
@@ -287,13 +264,7 @@ DP *pr;
 	}
 }
 
-void _weyl_mulmmm_dup_bug();
-
-void _weyl_mulmdm_dup(mod,m0,p,pr)
-int mod;
-MP m0;
-DP p;
-DP *pr;
+void _weyl_mulmdm_dup(int mod,MP m0,DP p,DP *pr)
 {
 	DP r,t,t1;
 	MP m;
@@ -351,18 +322,11 @@ DP *pr;
 
 /* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
 
-void _weyl_mulmmm_dup(mod,m0,m1,n,rtab,rtablen)
-int mod;
-MP m0,m1;
-int n;
-struct cdlm *rtab;
-int rtablen;
+void _weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 {
-	MP m,mr,mr0;
-	DP r,t,t1;
-	int c,c0,c1,cc;
+	int c,c0,c1;
 	DL d,d0,d1,dt;
-	int i,j,a,b,k,l,n2,s,min,h,curlen;
+	int i,j,a,b,k,l,n2,s,min,curlen;
 	struct cdlm *p;
 	static int *ctab;
 	static struct cdlm *tab;
@@ -471,14 +435,7 @@ int rtablen;
   ]
 */
 
-void _comm_mulmd_tab(mod,nv,t,n,t1,n1,rt)
-int mod;
-int nv;
-struct cdlm *t;
-int n;
-struct cdlm *t1;
-int n1;
-struct cdlm *rt;
+void _comm_mulmd_tab(int mod,int nv,struct cdlm *t,int n,struct cdlm *t1,int n1,struct cdlm *rt)
 {
 	int i,j;
 	struct cdlm *p;
@@ -500,13 +457,7 @@ struct cdlm *rt;
 	}
 }
 
-void _comm_mulmd_tab_destructive(mod,nv,t,n,t1,n1)
-int mod;
-int nv;
-struct cdlm *t;
-int n;
-struct cdlm *t1;
-int n1;
+void _comm_mulmd_tab_destructive(int mod,int nv,struct cdlm *t,int n,struct cdlm *t1,int n1)
 {
 	int i,j;
 	struct cdlm *p;
@@ -535,9 +486,7 @@ int n1;
 		}
 }
 
-void dlto_dl(d,dr)
-DL d;
-DL *dr;
+void dlto_dl(DL d,DL *dr)
 {
 	int i,n;
 	DL t;
@@ -549,9 +498,7 @@ DL *dr;
 		t->d[i] = d->d[i];	
 }
 
-void _dltodl(d,dr)
-DL d;
-DL *dr;
+void _dltodl(DL d,DL *dr)
 {
 	int i,n;
 	DL t;
@@ -563,10 +510,7 @@ DL *dr;
 		t->d[i] = d->d[i];	
 }
 
-void _adddl_dup(n,d1,d2,dr)
-int n;
-DL d1,d2;
-DL *dr;
+void _adddl_dup(int n,DL d1,DL d2,DL *dr)
 {
 	DL dt;
 	int i;
@@ -578,17 +522,14 @@ DL *dr;
 		dt->d[i] = d1->d[i]+d2->d[i];
 }
 
-void _free_dlarray(a,n)
-DL *a;
-int n;
+void _free_dlarray(DL *a,int n)
 {
 	int i;
 
 	for ( i = 0; i < n; i++ ) { _FREEDL(a[i]); }
 }
 
-void _free_dp(f)
-DP f;
+void _free_dp(DP f)
 {
 	MP m,s;
 
@@ -601,9 +542,7 @@ DP f;
 	_FREEDP(f);
 }
 
-void dpto_dp(p,r)
-DP p;
-DP *r;
+void dpto_dp(DP p,DP *r)
 {
 	MP m,mr0,mr;
 	DL t;
@@ -625,9 +564,7 @@ DP *r;
 	}
 }
 
-void _dptodp(p,r)
-DP p;
-DP *r;
+void _dptodp(DP p,DP *r)
 {
 	MP m,mr0,mr;
 
@@ -652,9 +589,7 @@ DP *r;
  * return : a merged list
  */
 
-NODE _symb_merge(m1,m2,n)
-NODE m1,m2;
-int n;
+NODE _symb_merge(NODE m1,NODE m2,int n)
 {
 	NODE top,prev,cur,m,t;
 
@@ -698,26 +633,9 @@ int n;
 	}
 }
 
-/* XXX : bellow should be placed in another file */
-
-void dpto_dp();
-void _dptodp();
-void _adddl_dup();
-void adddl_destructive();
-void _muldm_dup();
-void _free_dp();
-void _comm_muld_dup();
-void _weyl_muld_dup();
-void _weyl_mulmm_dup();
-void _weyl_muldm_dup();
-void _comm_muld_tab();
-void _comm_muld_tab_destructive();
-
 /* merge p1 and p2 into pr */
 
-void _addd_destructive(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void _addd_destructive(VL vl,DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr,mr0,s;
@@ -769,9 +687,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void _muld_dup(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void _muld_dup(VL vl,DP p1,DP p2,DP *pr)
 {
 	if ( !do_weyl )
 		_comm_muld_dup(vl,p1,p2,pr);
@@ -779,9 +695,7 @@ DP p1,p2,*pr;
 		_weyl_muld_dup(vl,p1,p2,pr);
 }
 
-void _comm_muld_dup(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void _comm_muld_dup(VL vl,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
@@ -813,13 +727,11 @@ DP p1,p2,*pr;
 	}
 }
 
-void _weyl_muld_dup(vl,p1,p2,pr)
-VL vl;
-DP p1,p2,*pr;
+void _weyl_muld_dup(VL vl,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
-	int i,l,l1;
+	int i,l;
 	static MP *w;
 	static int wlen;
 
@@ -842,16 +754,12 @@ DP p1,p2,*pr;
 	}
 }
 
-void _muldm_dup(vl,p,m0,pr)
-VL vl;
-DP p;
-MP m0;
-DP *pr;
+void _muldm_dup(VL vl,DP p,MP m0,DP *pr)
 {
 	MP m,mr,mr0;
 	DL d,dt,dm;
 	P c;
-	int n,r,i;
+	int n,i;
 	int *pt,*p1,*p2;
 
 	if ( !p )
@@ -873,11 +781,7 @@ DP *pr;
 	}
 }
 
-void _weyl_muldm_dup(vl,m0,p,pr)
-VL vl;
-MP m0;
-DP p;
-DP *pr;
+void _weyl_muldm_dup(VL vl,MP m0,DP p,DP *pr)
 {
 	DP r,t,t1;
 	MP m;
@@ -935,21 +839,13 @@ DP *pr;
 
 /* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
 
-void _weyl_mulmm_dup(vl,m0,m1,n,rtab,rtablen)
-VL vl;
-MP m0,m1;
-int n;
-struct cdl *rtab;
-int rtablen;
+void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 {
-	MP m,mr,mr0;
-	DP r,t,t1;
 	P c;
-	int c0,c1,cc;
 	DL d,d0,d1,dt;
-	int i,j,a,b,k,l,n2,s,min,h,curlen;
+	int i,j,a,b,k,l,n2,s,min,curlen;
 	struct cdl *p;
-	static P *ctab;
+	static Q *ctab;
 	static struct cdl *tab;
 	static int tablen;
 	static struct cdl *tmptab;
@@ -1003,7 +899,7 @@ int rtablen;
 			if ( ctab ) GC_free(ctab);
 			tablen = k+1;
 			tab = (struct cdl *)MALLOC(tablen*sizeof(struct cdl));
-			ctab = (P *)MALLOC(tablen*sizeof(P));
+			ctab = (Q *)MALLOC(tablen*sizeof(P));
 		}
 		/* degree of xi^a*(Di^k*xi^l)*Di^b */
 		s = a+k+l+b;
@@ -1019,7 +915,7 @@ int rtablen;
 				d->td = s;
 				d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
 				tab[j].d = d;
-				tab[j].c = ctab[j];
+				tab[j].c = (P)ctab[j];
 			}
 		else
 			for ( j = 0; j <= min; j++ ) {
@@ -1027,7 +923,7 @@ int rtablen;
 				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
 				d->td = d->d[i]+d->d[n2+i]; /* XXX */
 				tab[j].d = d;
-				tab[j].c = ctab[j];
+				tab[j].c = (P)ctab[j];
 			}
 #if 0
 		_comm_muld_tab(vl,n,rtab,curlen,tab,k+1,tmptab);
@@ -1055,14 +951,7 @@ int rtablen;
   ]
 */
 
-void _comm_muld_tab(vl,nv,t,n,t1,n1,rt)
-VL vl;
-int nv;
-struct cdl *t;
-int n;
-struct cdl *t1;
-int n1;
-struct cdl *rt;
+void _comm_muld_tab(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1,struct cdl *rt)
 {
 	int i,j;
 	struct cdl *p;
@@ -1084,13 +973,7 @@ struct cdl *rt;
 	}
 }
 
-void _comm_muld_tab_destructive(vl,nv,t,n,t1,n1)
-VL vl;
-int nv;
-struct cdl *t;
-int n;
-struct cdl *t1;
-int n1;
+void _comm_muld_tab_destructive(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1)
 {
 	int i,j;
 	struct cdl *p;

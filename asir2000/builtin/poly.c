@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.14 2001/09/03 01:04:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.15 2001/09/03 07:01:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -107,10 +107,6 @@ void Phomogeneous_deg();
 void simp_ff(Obj,Obj *);
 void ranp(int,UP *);
 void field_order_ff(N *);
-
-extern int current_mod;
-extern GEN_UP2 current_mod_gf2n;
-extern int lm_lazy;
 
 int current_ff;
 
@@ -226,11 +222,7 @@ struct ftab poly_tab[] = {
 	{0,0,0},
 };
 
-extern V up_var;
-
-void Phomogeneous_part(arg,rp)
-NODE arg;
-P *rp;
+void Phomogeneous_part(NODE arg,P *rp)
 {
 	if ( argc(arg) == 2 )
 		exthp(CO,(P)ARG0(arg),QTOS((Q)ARG1(arg)),rp);
@@ -239,9 +231,7 @@ P *rp;
 			VR((P)ARG1(arg)),rp);
 }
 
-void Phomogeneous_deg(arg,rp)
-NODE arg;
-Q *rp;
+void Phomogeneous_deg(NODE arg,Q *rp)
 {
 	int d;
 
@@ -256,9 +246,7 @@ Q *rp;
 	p1 = reorder(p,ovl,nvl) => p1 is 'sorted accoding to nvl.
 */
 
-void Preorder(arg,rp)
-NODE arg;
-P *rp;
+void Preorder(NODE arg,P *rp)
 {
 	VL ovl,nvl,tvl;
 	NODE n;
@@ -291,9 +279,7 @@ P *rp;
 		return uadj_coef(CN,M,M2)*V^N+...+uadj_coef(C0,M,M2);
 */
 
-void Puadj_coef(arg,rp)
-NODE arg;
-P *rp;
+void Puadj_coef(NODE arg,P *rp)
 {
 	UP f,r;
 	N m,m2;
@@ -312,9 +298,7 @@ P *rp;
 	return [Index,Mod] or 0 (not exist)
 */
 
-void Pget_next_fft_prime(arg,rp)
-NODE arg;
-LIST *rp;
+void Pget_next_fft_prime(NODE arg,LIST *rp)
 {
 	unsigned int mod,d;
 	int start,bits,i;
@@ -328,7 +312,7 @@ LIST *rp;
 		if ( !mod ) {
 			*rp = 0; return;
 		}
-		if ( bits <= d ) {
+		if ( bits <= (int)d ) {
 			UTOQ(mod,q);
 			UTOQ(i,ind);
 			n = mknode(2,ind,q);
@@ -338,9 +322,7 @@ LIST *rp;
 	}
 }
 
-void Pranp(arg,rp)
-NODE arg;
-P *rp;
+void Pranp(NODE arg,P *rp)
 {
 	int n;
 	UP c;
@@ -354,9 +336,7 @@ P *rp;
 		*rp = 0;
 }
 
-void ranp(n,nr)
-int n;
-UP *nr;
+void ranp(int n,UP *nr)
 {
 	int i;
 	unsigned int r;
@@ -376,27 +356,21 @@ UP *nr;
 		*nr = 0;
 }
 
-void Pmaxblen(arg,rp)
-NODE arg;
-Q *rp;
+void Pmaxblen(NODE arg,Q *rp)
 {
 	int l;
 	l = maxblenp(ARG0(arg));
 	STOQ(l,*rp);
 }
 
-void Pp_mag(arg,rp)
-NODE arg;
-Q *rp;
+void Pp_mag(NODE arg,Q *rp)
 {
 	int l;
 	l = p_mag(ARG0(arg));
 	STOQ(l,*rp);
 }
 
-void Pord(arg,listp)
-NODE arg;
-LIST *listp;
+void Pord(NODE arg,LIST *listp)
 {
 	NODE n,tn;
 	LIST l;
@@ -446,9 +420,7 @@ LIST *listp;
 	NEXT(tn) = 0; MKLIST(l,n); *listp = l;
 }
 
-void Pcoef0(arg,rp)
-NODE arg;
-Obj *rp;
+void Pcoef0(NODE arg,Obj *rp)
 {
 	Obj t,n;
 	P s;
@@ -489,9 +461,7 @@ Obj *rp;
 	}
 }
 
-void Pcoef(arg,rp)
-NODE arg;
-Obj *rp;
+void Pcoef(NODE arg,Obj *rp)
 {
 	Obj t,n;
 	P s;
@@ -531,9 +501,7 @@ Obj *rp;
 	}
 }
 
-void Pcoef_gf2n(arg,rp)
-NODE arg;
-Obj *rp;
+void Pcoef_gf2n(NODE arg,Obj *rp)
 {
 	Obj t,n;
 	int id,d;
@@ -554,9 +522,7 @@ Obj *rp;
 		*rp = 0;
 }
 
-void Pdeg(arg,rp)
-NODE arg;
-Q *rp;
+void Pdeg(NODE arg,Q *rp)
 {
 	Obj t,v;
 	int d;
@@ -582,9 +548,7 @@ Q *rp;
 		degp(VR((P)ARG1(arg)),(P)ARG0(arg),rp);
 }
 
-void Pmindeg(arg,rp)
-NODE arg;
-Q *rp;
+void Pmindeg(NODE arg,Q *rp)
 {
 	Obj t;
 
@@ -594,9 +558,7 @@ Q *rp;
 		getmindeg(VR((P)ARG1(arg)),(P)ARG0(arg),rp);
 }
 
-void Psetmod(arg,rp)
-NODE arg;
-Q *rp;
+void Psetmod(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"setmod");
@@ -605,9 +567,7 @@ Q *rp;
 	STOQ(current_mod,*rp);
 }
 
-void Psparsemod_gf2n(arg,rp)
-NODE arg;
-Q *rp;
+void Psparsemod_gf2n(NODE arg,Q *rp)
 {
 	int id;
 
@@ -620,9 +580,7 @@ Q *rp;
 	STOQ(id,*rp);
 }
 
-void Pmultest_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pmultest_gf2n(NODE arg,GF2N *rp)
 {
 	GF2N a,b,c;
 	int i;
@@ -633,9 +591,7 @@ GF2N *rp;
 	*rp = c;
 }
 
-void Psquaretest_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Psquaretest_gf2n(NODE arg,GF2N *rp)
 {
 	GF2N a,c;
 	int i;
@@ -646,9 +602,7 @@ GF2N *rp;
 	*rp = c;
 }
 
-void Pinvtest_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pinvtest_gf2n(NODE arg,GF2N *rp)
 {
 	GF2N a,c;
 	int i;
@@ -659,9 +613,7 @@ GF2N *rp;
 	*rp = c;
 }
 
-void Pbininv_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pbininv_gf2n(NODE arg,GF2N *rp)
 {
 	UP2 a,inv;
 	int n;
@@ -672,8 +624,7 @@ GF2N *rp;
 	MKGF2N(inv,*rp);
 }
 
-void Prinvtest_gf2n(rp)
-Real *rp;
+void Prinvtest_gf2n(Real *rp)
 {
 	GF2N *a;
 	GF2N c;
@@ -693,9 +644,7 @@ Real *rp;
 	MKReal(r,*rp);
 }
 
-void Pfind_root_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pfind_root_gf2n(NODE arg,GF2N *rp)
 {
 
 #if 0
@@ -711,9 +660,7 @@ GF2N *rp;
 #endif
 }
 
-void Pis_irred_gf2(arg,rp)
-NODE arg;
-Q *rp;
+void Pis_irred_gf2(NODE arg,Q *rp)
 {
 	UP2 t;
 
@@ -721,9 +668,7 @@ Q *rp;
 	*rp = irredcheckup2(t) ? ONE : 0;
 }
 
-void Pis_irred_ddd_gf2(arg,rp)
-NODE arg;
-Q *rp;
+void Pis_irred_ddd_gf2(NODE arg,Q *rp)
 {
 	UP2 t;
 	int ret;
@@ -733,17 +678,7 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
-extern P current_gfs_ext;
-extern int current_gfs_p;
-extern int current_gfs_q;
-extern int current_gfs_q1;
-extern int *current_gfs_plus1;
-extern int *current_gfs_ntoi;
-extern int *current_gfs_iton;
-
-void Psetmod_ff(arg,rp)
-NODE arg;
-Obj *rp;
+void Psetmod_ff(NODE arg,Obj *rp)
 {
 	int ac;
 	int d;
@@ -838,8 +773,7 @@ Obj *rp;
 	}
 }
 
-void Pextdeg_ff(rp)
-Q *rp;
+void Pextdeg_ff(Q *rp)
 {
 	int d;
 	UP2 up2;
@@ -868,8 +802,7 @@ Q *rp;
 	}
 }
 
-void Pcharacteristic_ff(rp)
-Q *rp;
+void Pcharacteristic_ff(Q *rp)
 {
 	N lm;
 
@@ -887,14 +820,12 @@ Q *rp;
 	}
 }
 
-void Pfield_type_ff(rp)
-Q *rp;
+void Pfield_type_ff(Q *rp)
 {
 	STOQ(current_ff,*rp);
 }
 
-void Pfield_order_ff(rp)
-Q *rp;
+void Pfield_order_ff(Q *rp)
 {
 	N n;
 
@@ -902,43 +833,7 @@ Q *rp;
 	NTOQ(n,1,*rp);
 }
 
-void field_order_ff(order)
-N *order;
-{
-	UP2 up2;
-	UP up;
-	UM dp;
-	N m;
-	int d,w;
-
-	switch ( current_ff ) {
-		case FF_GFP:
-			getmod_lm(order); break;
-		case FF_GF2N:
-			getmod_gf2n(&up2); d = degup2(up2);
-			w = (d>>5)+1;
-			*order = m = NALLOC(w);
-			PL(m)=w;
-			bzero((char *)BD(m),w*sizeof(unsigned int));
-			BD(m)[d>>5] |= 1<<(d&31);
-			break;
-		case FF_GFPN:
-			getmod_lm(&m);
-			getmod_gfpn(&up); pwrn(m,up->d,order);
-			break;
-		case FF_GFS:
-			STON(current_gfs_q,*order); break;
-		case FF_GFSN:
-			STON(current_gfs_q,m);
-			getmod_gfsn(&dp); pwrn(m,DEG(dp),order);
-			break;
-		default:
-			error("field_order_ff : current_ff is not set");
-	}
-}
-
-void Prandom_ff(rp)
-Obj *rp;
+void Prandom_ff(Obj *rp)
 {
 	LM l;
 	GF2N g;
@@ -962,83 +857,12 @@ Obj *rp;
 	}
 }
 
-void Psimp_ff(arg,rp)
-NODE arg;
-Obj *rp;
+void Psimp_ff(NODE arg,Obj *rp)
 {
-	LM r;
-	GF2N rg;
-	extern lm_lazy;
-
 	simp_ff((Obj)ARG0(arg),rp);
 }
 
-void simp_ff(p,rp)
-Obj p;
-Obj *rp;
-{
-	Num n;
-	LM r,s;
-	DCP dc,dcr0,dcr;
-	GF2N rg,sg;
-	GFPN rpn,spn;
-	GFS rs;
-	GFSN rspn,sspn;
-	P t;
-	Obj obj;
-
-	lm_lazy = 0;
-	if ( !p )
-		*rp = 0;
-	else if ( OID(p) == O_N ) {
-		switch ( current_ff ) {
-			case FF_GFP:
-				ptolmp((P)p,&t); simplm((LM)t,&s); *rp = (Obj)s;
-				break;
-			case FF_GF2N:
-				ptogf2n((Obj)p,&rg); simpgf2n((GF2N)rg,&sg); *rp = (Obj)sg;
-				break;
-			case FF_GFPN:
-				ntogfpn((Obj)p,&rpn); simpgfpn((GFPN)rpn,&spn); *rp = (Obj)spn;
-				break;
-			case FF_GFS:
-				if ( NID((Num)p) == N_GFS )
-					*rp = p;
-				else {
-					ptomp(current_gfs_p,(P)p,&t); mqtogfs(t,&rs);
-					*rp = (Obj)rs;
-				} 
-				break;
-			case FF_GFSN:
-				ntogfsn((Obj)p,&rspn); simpgfsn((GFSN)rspn,&sspn);
-				*rp = (Obj)sspn;
-				break;
-			default:
-				*rp = (Obj)p;
-				break;
-		}
-	} else if ( OID(p) == O_P ) {
-		for ( dc = DC((P)p), dcr0 = 0; dc; dc = NEXT(dc) ) {
-			simp_ff((Obj)COEF(dc),&obj);
-			if ( obj ) {
-				NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = (P)obj;
-			}
-		}
-		if ( !dcr0 ) 
-			*rp = 0;
-		else {
-			NEXT(dcr) = 0; MKP(VR((P)p),dcr0,t); *rp = (Obj)t;
-		}
-	} else
-		error("simp_ff : not implemented yet");
-}
-
-void getcoef(vl,p,v,d,r)
-VL vl;
-P p;
-V v;
-Q d;
-P *r;
+void getcoef(VL vl,P p,V v,Q d,P *r)
 {
 	P s,t,u,a,b,x;
 	DCP dc;
@@ -1064,9 +888,7 @@ P *r;
 	}
 }
 
-void Pdeglist(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdeglist(NODE arg,LIST *rp)
 {
 	NODE d;
 
@@ -1074,25 +896,17 @@ LIST *rp;
 	MKLIST(*rp,d);
 }
 
-void Pch_mv(arg,rp)
-NODE arg;
-P *rp;
+void Pch_mv(NODE arg,P *rp)
 {
 	change_mvar(CO,(P)ARG0(arg),VR((P)ARG1(arg)),rp);
 }
 
-void Pre_mv(arg,rp)
-NODE arg;
-P *rp;
+void Pre_mv(NODE arg,P *rp)
 {
 	restore_mvar(CO,(P)ARG0(arg),VR((P)ARG1(arg)),rp);
 }
 
-void change_mvar(vl,p,v,r)
-VL vl;
-P p;
-V v;
-P *r;
+void change_mvar(VL vl,P p,V v,P *r)
 {
 	Q d;
 	DCP dc,dc0;
@@ -1110,11 +924,7 @@ P *r;
 	}
 }
 
-void restore_mvar(vl,p,v,r)
-VL vl;
-P p;
-V v;
-P *r;
+void restore_mvar(VL vl,P p,V v,P *r)
 {
 	P s,u,a,b,x;
 	DCP dc;
@@ -1131,10 +941,7 @@ P *r;
 	}
 }
 
-void getdeglist(p,v,d)
-P p;
-V v;
-NODE *d;
+void getdeglist(P p,V v,NODE *d)
 {
 	NODE n,n0,d0,d1,d2;
 	DCP dc;
@@ -1153,9 +960,8 @@ NODE *d;
 		*d = d0;
 	}
 }
-void Pmergelist(arg,rp)
-NODE arg;
-LIST *rp;
+
+void Pmergelist(NODE arg,LIST *rp)
 {
     NODE n;
 
@@ -1165,8 +971,7 @@ LIST *rp;
 	MKLIST(*rp,n);
 }
 
-void mergedeglist(d0,d1,dr)
-NODE d0,d1,*dr;
+void mergedeglist(NODE d0,NODE d1,NODE *dr)
 {
 	NODE t0,t,dt;
 	Q d;
@@ -1198,37 +1003,27 @@ NODE d0,d1,*dr;
 	}
 }
 
-void Pptomp(arg,rp)
-NODE arg;
-P *rp;
+void Pptomp(NODE arg,P *rp)
 {
 	ptomp(QTOS((Q)ARG1(arg)),(P)ARG0(arg),rp);
 }
 
-void Pmptop(arg,rp)
-NODE arg;
-P *rp;
+void Pmptop(NODE arg,P *rp)
 {
 	mptop((P)ARG0(arg),rp);
 }
 
-void Pptolmp(arg,rp)
-NODE arg;
-P *rp;
+void Pptolmp(NODE arg,P *rp)
 {
 	ptolmp((P)ARG0(arg),rp);
 }
 
-void Plmptop(arg,rp)
-NODE arg;
-P *rp;
+void Plmptop(NODE arg,P *rp)
 {
 	lmptop((P)ARG0(arg),rp);
 }
 
-void Psf_galois_action(arg,rp)
-NODE arg;
-P *rp;
+void Psf_galois_action(NODE arg,P *rp)
 {
 	sf_galois_action(ARG0(arg),ARG1(arg),rp);
 }
@@ -1240,9 +1035,7 @@ P *rp;
   PM : order of GF(pm)
 */
 
-void Psf_embed(arg,rp)
-NODE arg;
-P *rp;
+void Psf_embed(NODE arg,P *rp)
 {
 	int k,pm;
 
@@ -1252,9 +1045,7 @@ P *rp;
 	sf_embed((P)ARG0(arg),k,pm,rp);
 }
 
-void Psf_log(arg,rp)
-NODE arg;
-Q *rp;
+void Psf_log(NODE arg,Q *rp)
 {
 	int k;
 
@@ -1264,9 +1055,7 @@ Q *rp;
 	STOQ(k,*rp);
 }
 
-void Psf_find_root(arg,rp)
-NODE arg;
-GFS *rp;
+void Psf_find_root(NODE arg,GFS *rp)
 {
 	P p;
 	Obj t;
@@ -1284,9 +1073,7 @@ GFS *rp;
 	MKGFS(IFTOF(root[0]),*rp);
 }
 
-void Psf_minipoly(arg,rp)
-NODE arg;
-P *rp;
+void Psf_minipoly(NODE arg,P *rp)
 {
 	Obj t;
 	P p1,p2;
@@ -1303,66 +1090,46 @@ P *rp;
 	sfptop(p1,rp);
 }
 
-void Pptosfp(arg,rp)
-NODE arg;
-P *rp;
+void Pptosfp(NODE arg,P *rp)
 {
 	ptosfp(ARG0(arg),rp);
 }
 
-void Psfptop(arg,rp)
-NODE arg;
-P *rp;
+void Psfptop(NODE arg,P *rp)
 {
 	sfptop((P)ARG0(arg),rp);
 }
 
-void Pptogf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pptogf2n(NODE arg,GF2N *rp)
 {
 	ptogf2n((Obj)ARG0(arg),rp);
 }
 
-void Pgf2ntop(arg,rp)
-NODE arg;
-P *rp;
+void Pgf2ntop(NODE arg,P *rp)
 {
-	extern V up2_var;
-
 	if ( argc(arg) == 2 )
 		up2_var = VR((P)ARG1(arg));
 	gf2ntop((GF2N)ARG0(arg),rp);
 }
 
-void Pgf2ntovect(arg,rp)
-NODE arg;
-VECT *rp;
+void Pgf2ntovect(NODE arg,VECT *rp)
 {
 	gf2ntovect((GF2N)ARG0(arg),rp);
 }
 
-void Pptogfpn(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pptogfpn(NODE arg,GFPN *rp)
 {
 	ptogfpn((Obj)ARG0(arg),rp);
 }
 
-void Pgfpntop(arg,rp)
-NODE arg;
-P *rp;
+void Pgfpntop(NODE arg,P *rp)
 {
-	extern V up_var;
-
 	if ( argc(arg) == 2 )
 		up_var = VR((P)ARG1(arg));
 	gfpntop((GFPN)ARG0(arg),rp);
 }
 
-void Pureverse(arg,rp)
-NODE arg;
-P *rp;
+void Pureverse(NODE arg,P *rp)
 {
 	UP p,r;
 
@@ -1374,9 +1141,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Putrunc(arg,rp)
-NODE arg;
-P *rp;
+void Putrunc(NODE arg,P *rp)
 {
 	UP p,r;
 
@@ -1385,9 +1150,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Pudecomp(arg,rp)
-NODE arg;
-LIST *rp;
+void Pudecomp(NODE arg,LIST *rp)
 {
 	P u,l;
 	UP p,up,low;
@@ -1401,9 +1164,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Purembymul(arg,rp)
-NODE arg;
-P *rp;
+void Purembymul(NODE arg,P *rp)
 {
 	UP p1,p2,r;
 
@@ -1423,9 +1184,7 @@ P *rp;
  * p2*inv = 1 mod x^d2
  */
 
-void Purembymul_precomp(arg,rp)
-NODE arg;
-P *rp;
+void Purembymul_precomp(NODE arg,P *rp)
 {
 	UP p1,p2,inv,r;
 
@@ -1445,9 +1204,7 @@ P *rp;
 	}
 }
 
-void Puinvmod(arg,rp)
-NODE arg;
-P *rp;
+void Puinvmod(NODE arg,P *rp)
 {
 	UP p,r;
 
@@ -1456,9 +1213,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Purevinvmod(arg,rp)
-NODE arg;
-P *rp;
+void Purevinvmod(NODE arg,P *rp)
 {
 	UP p,pr,r;
 
@@ -1468,9 +1223,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Ppwrmod_ff(arg,rp)
-NODE arg;
-P *rp;
+void Ppwrmod_ff(NODE arg,P *rp)
 {
 	UP p1,p2;
 
@@ -1490,9 +1243,7 @@ P *rp;
 	uptop(p2,rp);
 }
 
-void Pgeneric_pwrmod_ff(arg,rp)
-NODE arg;
-P *rp;
+void Pgeneric_pwrmod_ff(NODE arg,P *rp)
 {
 	UP g,f,r;
 
@@ -1513,9 +1264,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Ppwrtab_ff(arg,rp)
-NODE arg;
-VECT *rp;
+void Ppwrtab_ff(NODE arg,VECT *rp)
 {
 	UP f,xp;
 	UP *tab;
@@ -1544,9 +1293,7 @@ VECT *rp;
 		uptop(tab[i],(P *)&BDY(r)[i]);
 }
 
-void Pkpwrmod_lm(arg,rp)
-NODE arg;
-P *rp;
+void Pkpwrmod_lm(NODE arg,P *rp)
 {
 	UP p1,p2;
 
@@ -1555,9 +1302,7 @@ P *rp;
 	uptop(p2,rp);
 }
 
-void Pkgeneric_pwrmod_lm(arg,rp)
-NODE arg;
-P *rp;
+void Pkgeneric_pwrmod_lm(NODE arg,P *rp)
 {
 	UP g,f,r;
 
@@ -1567,9 +1312,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Pkpwrtab_lm(arg,rp)
-NODE arg;
-VECT *rp;
+void Pkpwrtab_lm(NODE arg,VECT *rp)
 {
 	UP f,xp;
 	UP *tab;
@@ -1587,17 +1330,13 @@ VECT *rp;
 		uptop(tab[i],(P *)&BDY(r)[i]);
 }
 
-void Plazy_lm(arg,rp)
-NODE arg;
-Q *rp;
+void Plazy_lm(NODE arg,Q *rp)
 {
 	lm_lazy = QTOS((Q)ARG0(arg));
 	*rp = 0;
 }
 
-void Pkmul(arg,rp)
-NODE arg;
-P *rp;
+void Pkmul(NODE arg,P *rp)
 {
 	P n1,n2;
 	
@@ -1607,9 +1346,7 @@ P *rp;
 	kmulp(CO,n1,n2,rp);
 }
 
-void Pksquare(arg,rp)
-NODE arg;
-P *rp;
+void Pksquare(NODE arg,P *rp)
 {
 	P n1;
 	
@@ -1618,9 +1355,7 @@ P *rp;
 	ksquarep(CO,n1,rp);
 }
 
-void Pktmul(arg,rp)
-NODE arg;
-P *rp;
+void Pktmul(NODE arg,P *rp)
 {
 	UP p1,p2,r;
 
@@ -1630,9 +1365,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Pumul(arg,rp)
-NODE arg;
-P *rp;
+void Pumul(NODE arg,P *rp)
 {
 	P a1,a2;
 	UP p1,p2,r;
@@ -1641,7 +1374,7 @@ P *rp;
 	if ( !a1 || !a2 || NUM(a1) || NUM(a2) )
 		mulp(CO,a1,a2,rp);
 	else {
-		if ( !uzpcheck(a1) || !uzpcheck(a2) || VR(a1) != VR(a2) )
+		if ( !uzpcheck((Obj)a1) || !uzpcheck((Obj)a2) || VR(a1) != VR(a2) )
 			error("umul : invalid argument");
 		ptoup(a1,&p1);
 		ptoup(a2,&p2);
@@ -1650,20 +1383,16 @@ P *rp;
 	}
 }
 
-void Pusquare(arg,rp)
-NODE arg;
-P *rp;
+void Pusquare(NODE arg,P *rp)
 {
-	UP p1,p2,r;
+	UP p1,r;
 
 	ptoup((P)ARG0(arg),&p1);
 	hybrid_squareup(0,p1,&r);
 	uptop(r,rp);
 }
 
-void Putmul(arg,rp)
-NODE arg;
-P *rp;
+void Putmul(NODE arg,P *rp)
 {
 	UP p1,p2,r;
 
@@ -1673,9 +1402,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Pumul_ff(arg,rp)
-NODE arg;
-Obj *rp;
+void Pumul_ff(NODE arg,Obj *rp)
 {
 	P a1,a2;
 	UP p1,p2,r;
@@ -1689,11 +1416,9 @@ Obj *rp;
 	simp_ff((Obj)p,rp);
 }
 
-void Pusquare_ff(arg,rp)
-NODE arg;
-Obj *rp;
+void Pusquare_ff(NODE arg,Obj *rp)
 {
-	UP p1,p2,r;
+	UP p1,r;
 	P p;
 
 	ptoup((P)ARG0(arg),&p1);
@@ -1702,9 +1427,7 @@ Obj *rp;
 	simp_ff((Obj)p,rp);
 }
 
-void Putmul_ff(arg,rp)
-NODE arg;
-Obj *rp;
+void Putmul_ff(NODE arg,Obj *rp)
 {
 	UP p1,p2,r;
 	P p;
@@ -1716,9 +1439,7 @@ Obj *rp;
 	simp_ff((Obj)p,rp);
 }
 
-void Phfmul_lm(arg,rp)
-NODE arg;
-P *rp;
+void Phfmul_lm(NODE arg,P *rp)
 {
 	UP p1,p2,r;
 	UP hi,lo,mid,t,s,p10,p11,p20,p21;
@@ -1759,9 +1480,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Pfmultest(arg,rp)
-NODE arg;
-LIST *rp;
+void Pfmultest(NODE arg,LIST *rp)
 {
 	P p1,p2,r;
 	int d1,d2;
@@ -1806,9 +1525,7 @@ LIST *rp;
 	}
 }
 
-void Pkmulum(arg,rp)
-NODE arg;
-P *rp;
+void Pkmulum(NODE arg,P *rp)
 {
 	P p1,p2;
 	int d1,d2,mod;
@@ -1823,9 +1540,7 @@ P *rp;
 	umtop(VR(p1),wr,rp);
 }
 
-void Pksquareum(arg,rp)
-NODE arg;
-P *rp;
+void Pksquareum(NODE arg,P *rp)
 {
 	P p1;
 	int d1,mod;
@@ -1840,9 +1555,7 @@ P *rp;
 	umtop(VR(p1),wr,rp);
 }
 
-void Ptracemod_gf2n(arg,rp)
-NODE arg;
-P *rp;
+void Ptracemod_gf2n(NODE arg,P *rp)
 {
 	UP g,f,r;
 
@@ -1852,9 +1565,7 @@ P *rp;
 	uptop(r,rp);
 }
 
-void Pumul_specialmod(arg,rp)
-NODE arg;
-P *rp;
+void Pumul_specialmod(NODE arg,P *rp)
 {
 	P a1,a2;
 	UP p1,p2,r;
@@ -1866,7 +1577,7 @@ P *rp;
 	if ( !a1 || !a2 || NUM(a1) || NUM(a2) )
 		mulp(CO,a1,a2,rp);
 	else {
-		if ( !uzpcheck(a1) || !uzpcheck(a2) || VR(a1) != VR(a2) )
+		if ( !uzpcheck((Obj)a1) || !uzpcheck((Obj)a2) || VR(a1) != VR(a2) )
 			error("umul_specialmod : invalid argument");
 		ptoup(a1,&p1);
 		ptoup(a2,&p2);
@@ -1880,9 +1591,7 @@ P *rp;
 	}
 }
 
-void Pusquare_specialmod(arg,rp)
-NODE arg;
-P *rp;
+void Pusquare_specialmod(NODE arg,P *rp)
 {
 	P a1;
 	UP p1,r;
@@ -1894,7 +1603,7 @@ P *rp;
 	if ( !a1 || NUM(a1) )
 		mulp(CO,a1,a1,rp);
 	else {
-		if ( !uzpcheck(a1) )
+		if ( !uzpcheck((Obj)a1) )
 			error("usquare_specialmod : invalid argument");
 		ptoup(a1,&p1);
 		n = BDY((LIST)ARG1(arg));
@@ -1907,9 +1616,7 @@ P *rp;
 	}
 }
 
-void Putmul_specialmod(arg,rp)
-NODE arg;
-P *rp;
+void Putmul_specialmod(NODE arg,P *rp)
 {
 	P a1,a2;
 	UP p1,p2,r;
@@ -1921,7 +1628,7 @@ P *rp;
 	if ( !a1 || !a2 || NUM(a1) || NUM(a2) )
 		mulp(CO,a1,a2,rp);
 	else {
-		if ( !uzpcheck(a1) || !uzpcheck(a2) || VR(a1) != VR(a2) )
+		if ( !uzpcheck((Obj)a1) || !uzpcheck((Obj)a2) || VR(a1) != VR(a2) )
 			error("utmul_specialmod : invalid argument");
 		ptoup(a1,&p1);
 		ptoup(a2,&p2);

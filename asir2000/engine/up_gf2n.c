@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -54,10 +54,7 @@ extern int debug_up;
 extern int up_lazy;
 extern GEN_UP2 current_mod_gf2n;
 
-void squarep_gf2n(vl,n1,nr)
-VL vl;
-P n1;
-P *nr;
+void squarep_gf2n(VL vl,P n1,P *nr)
 {
 	UP b1,br;
 
@@ -72,9 +69,7 @@ P *nr;
 	}
 }
 
-void squareup_gf2n(n1,nr)
-UP n1;
-UP *nr;
+void squareup_gf2n(UP n1,UP *nr)
 {
 	UP r;
 	GF2N *c1,*c;
@@ -98,14 +93,11 @@ UP *nr;
 
 /* x^(2^n) mod f */
 
-void powermodup_gf2n(f,xp)
-UP f;
-UP *xp;
+void powermodup_gf2n(UP f,UP *xp)
 {
 	UP x,t,invf;
 	int k,n;
 	GF2N lm;
-	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2;
 
 	n = degup2(current_mod_gf2n->dense);
 	MKGF2N(ONEUP2,lm);
@@ -123,10 +115,7 @@ UP *xp;
 
 /* g^d mod f */
 
-void generic_powermodup_gf2n(g,f,d,xp)
-UP g,f;
-Q d;
-UP *xp;
+void generic_powermodup_gf2n(UP g,UP f,Q d,UP *xp)
 {
 	N e;
 	UP x,y,t,invf,s;
@@ -161,10 +150,7 @@ UP *xp;
 
 /* g+g^2+...+g^(2^(nd-1)) mod f; where e = deg(mod) */
 
-void tracemodup_gf2n(g,f,d,xp)
-UP g,f;
-Q d;
-UP *xp;
+void tracemodup_gf2n(UP g,UP f,Q d,UP *xp)
 {
 	UP x,t,s,u,invf;
 	int en,i;
@@ -185,10 +171,7 @@ UP *xp;
 	*xp = s;
 }
 
-void tracemodup_gf2n_slow(g,f,d,xp)
-UP g,f;
-Q d;
-UP *xp;
+void tracemodup_gf2n_slow(UP g,UP f,Q d,UP *xp)
 {
 	UP x,t,s,u;
 	int en,i;
@@ -207,18 +190,12 @@ UP *xp;
 	*xp = s;
 }
 
-static struct oEGT eg_trace_tab,eg_trace_mul;
-
-void tracemodup_gf2n_tab(g,f,d,xp)
-UP g,f;
-Q d;
-UP *xp;
+void tracemodup_gf2n_tab(UP g,UP f,Q d,UP *xp)
 {
 	UP x0,x2,t,s,u;
 	int en,i;
 	UP *tab;
 	GF2N one;
-	struct oEGT eg1,eg2;
 
 	en = QTOS(d)*degup2(current_mod_gf2n->dense);
 	remup(g,f,&t); g = t;
@@ -246,10 +223,7 @@ UP *xp;
 	*xp = s;
 }
 
-void square_rem_tab_up_gf2n(f,tab,rp)
-UP f;
-UP *tab;
-UP *rp;
+void square_rem_tab_up_gf2n(UP f,UP *tab,UP *rp)
 {
 	UP s,t,u,n;
 	Num *c;
@@ -270,10 +244,7 @@ UP *rp;
 	}
 }
 
-void powertabup_gf2n(f,xp,tab)
-UP f;
-UP xp;
-UP *tab;
+void powertabup_gf2n(UP f,UP xp,UP *tab)
 {
 	UP y,t,invf;
 	int i,d;
@@ -300,14 +271,11 @@ UP *tab;
 	}
 }
 
-void find_root_gf2n(f,r)
-UP f;
-GF2N *r;
+void find_root_gf2n(UP f,GF2N *r)
 {
 	UP g,ut,c,t,h,rem;
 	int n;
 	GF2N rn;
-	struct oEGT eg0,eg1,eg_trace;
 
 	n = degup2(current_mod_gf2n->dense);
 	g = f;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.2 2000/08/21 08:31:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.3 2000/08/22 05:03:55 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -55,12 +55,7 @@
 #include "base.h"
 #include "inline.h"
 
-void bxprintn(N),bprintn(N);
-void divnmain_special(int,int,unsigned int *,unsigned int *,unsigned int *);
-void dupn(N,N);
-
-void divn(n1,n2,nq,nr)
-N n1,n2,*nq,*nr;
+void divn(N n1,N n2,N *nq,N *nr)
 {
 	int tmp,b;
 	int i,j,d1,d2,dd;
@@ -122,8 +117,7 @@ N n1,n2,*nq,*nr;
 	}
 }
 
-void divsn(n1,n2,nq)
-N n1,n2,*nq;
+void divsn(N n1,N n2,N *nq)
 {
 	int d1,d2,dd,i,b;
 	unsigned int *m1,*m2;
@@ -162,8 +156,7 @@ N n1,n2,*nq;
 	}
 }
 
-void remn(n1,n2,nr)
-N n1,n2,*nr;
+void remn(N n1,N n2,N *nr)
 {
 	int d1,d2,tmp;
 	unsigned int uq,ur;
@@ -195,11 +188,7 @@ N n1,n2,*nr;
 
 /* d = 2^(32*words)-lower */
 
-void remn_special(a,d,bits,lower,b)
-N a,d;
-int bits;
-unsigned int lower;
-N *b;
+void remn_special(N a,N d,int bits,unsigned int lower,N *b)
 {
 	int words;
 	N r;
@@ -237,10 +226,7 @@ N *b;
 	} else
 		*b = r;
 }
-void mulin(n,d,p)
-N n;
-unsigned int d;
-unsigned int *p;
+void mulin(N n,unsigned int d,unsigned int *p)
 {
 	unsigned int carry;
 	unsigned int *m,*me;
@@ -252,10 +238,7 @@ unsigned int *p;
 	*p = carry;
 }
 
-unsigned int divin(n,dvr,q)
-N n;
-unsigned int dvr;
-N *q;
+unsigned int divin(N n,unsigned int dvr,N *q)
 {
 	int d;
 	unsigned int up;
@@ -277,8 +260,7 @@ N *q;
 	return ( up );
 }
 
-void bprintn(n)
-N n;
+void bprintn(N n)
 {
 	int l,i;
 	unsigned int *b;
@@ -292,8 +274,7 @@ N n;
 	}
 }
 
-void bxprintn(n)
-N n;
+void bxprintn(N n)
 {
 	int l,i;
 	unsigned int *b;
@@ -308,8 +289,7 @@ N n;
 }
 
 #if defined(VISUAL) || defined(i386)
-void muln(n1,n2,nr)
-N n1,n2,*nr;
+void muln(N n1,N n2,N *nr)
 {
 	unsigned int tmp,carry,mul;
 	unsigned int *p1,*m1,*m2;
@@ -341,8 +321,7 @@ N n1,n2,*nr;
 	}
 }
 
-void _muln(n1,n2,nr)
-N n1,n2,nr;
+void _muln(N n1,N n2,N nr)
 {
 	unsigned int mul;
 	unsigned int *m1,*m2;
@@ -365,11 +344,7 @@ N n1,n2,nr;
 	}
 }
 
-void muln_1(p,s,d,r)
-unsigned int *p;
-int s;
-unsigned int d;
-unsigned int *r;
+void muln_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 {
 	/* esi : p, edi : r, carry : ebx, s : ecx */
 #if defined(VISUAL)
@@ -422,9 +397,7 @@ unsigned int *r;
 #endif
 }
 
-void divnmain(d1,d2,m1,m2,q)
-int d1,d2;
-unsigned int *m1,*m2,*q;
+void divnmain(int d1,int d2,unsigned int *m1,unsigned int *m2,unsigned int *q)
 {
 	int i,j;
 	UL r,ltmp;
@@ -476,9 +449,7 @@ unsigned int *m1,*m2,*q;
 	}
 }
 
-void divnmain_special(d1,d2,m1,m2,q)
-int d1,d2;
-unsigned int *m1,*m2,*q;
+void divnmain_special(int d1,int d2,unsigned int *m1,unsigned int *m2,unsigned int *q)
 {
 	int i,j;
 	UL ltmp;
@@ -507,11 +478,7 @@ unsigned int *m1,*m2,*q;
 	}
 }
 
-unsigned int divn_1(p,s,d,r)
-unsigned int *p;
-int s;
-unsigned int d;
-unsigned int *r;
+unsigned int divn_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 {
 /*
 	unsigned int borrow,l;
@@ -582,8 +549,7 @@ unsigned int *r;
 
 #else
 
-void muln(n1,n2,nr)
-N n1,n2,*nr;
+void muln(N n1,N n2,N *nr)
 {
 	unsigned int tmp,carry,mul;
 	unsigned int *p1,*pp,*m1,*m2;
@@ -619,8 +585,7 @@ N n1,n2,*nr;
 	}
 }
 
-void _muln(n1,n2,nr)
-N n1,n2,nr;
+void _muln(N n1,N n2,N nr)
 {
 	unsigned int tmp,carry,mul;
 	unsigned int *p1,*pp,*m1,*m2;
@@ -649,11 +614,7 @@ N n1,n2,nr;
 
 /* r[0...s] = p[0...s-1]*d */
 
-void muln_1(p,s,d,r)
-unsigned int *p;
-int s;
-unsigned int d;
-unsigned int *r;
+void muln_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 {
 	unsigned int carry;
 
@@ -663,9 +624,7 @@ unsigned int *r;
 	*r = carry;
 }
 
-void divnmain(d1,d2,m1,m2,q)
-int d1,d2;
-unsigned int *m1,*m2,*q;
+void divnmain(int d1,int d2,unsigned int *m1,unsigned int *m2,unsigned int *q)
 {
 	int i,j;
 	UL r,ltmp;
@@ -711,11 +670,7 @@ unsigned int *m1,*m2,*q;
 	}
 }
 
-unsigned int divn_1(p,s,d,r)
-unsigned int *p;
-int s;
-unsigned int d;
-unsigned int *r;
+unsigned int divn_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 {
 	unsigned int borrow,l;
 

@@ -45,14 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.2 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pvar(), Pvars(), Puc(), Pvars_recursive();
-void get_vars(Obj,VL *);
-void get_vars_recursive(Obj,VL *);
 
 struct ftab var_tab[] = {
 	{"var",Pvar,1},
@@ -62,9 +60,7 @@ struct ftab var_tab[] = {
 	{0,0,0},
 };
 
-void Pvar(arg,rp)
-NODE arg;
-Obj *rp;
+void Pvar(NODE arg,Obj *rp)
 {
 	Obj t;
 	P p;
@@ -90,9 +86,7 @@ Obj *rp;
 		*rp = 0;
 }
 
-void Pvars(arg,rp)
-NODE arg;
-LIST *rp;
+void Pvars(NODE arg,LIST *rp)
 {
 	VL vl;
 	NODE n,n0;
@@ -107,9 +101,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Pvars_recursive(arg,rp)
-NODE arg;
-LIST *rp;
+void Pvars_recursive(NODE arg,LIST *rp)
 {
 	VL vl;
 	NODE n,n0;
@@ -124,9 +116,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void get_vars_recursive(obj,vlp)
-Obj obj;
-VL *vlp;
+void get_vars_recursive(Obj obj,VL *vlp)
 {
 	VL vl,vl0,vl1,vl2,t;
 	PFINS ins;
@@ -148,9 +138,7 @@ VL *vlp;
 	mergev(CO,vl,vl0,vlp);
 }
 
-void get_vars(t,vlp)
-Obj t;
-VL *vlp;
+void get_vars(Obj t,VL *vlp)
 {
 	pointer *vb;
 	pointer **mb;
@@ -200,8 +188,7 @@ VL *vlp;
 	*vlp = vl;
 }
 
-void Puc(p)
-Obj *p;
+void Puc(Obj *p)
 {
 	VL vl;
 	V v;

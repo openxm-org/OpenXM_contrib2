@@ -45,14 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.6 2001/06/07 04:54:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.7 2001/10/01 01:58:03 noro Exp $ 
 */
 #include "ca.h"
 
-void reorderp(nvl,ovl,p,pr)
-VL nvl,ovl;
-P p;
-P *pr;
+void reorderp(VL nvl,VL ovl,P p,P *pr)
 {
 	DCP dc;
 	P x,m,s,t,c;
@@ -76,11 +73,7 @@ P *pr;
 	}
 }
 			
-void substp(vl,p,v0,p0,pr)
-VL vl;
-V v0;
-P p,p0;
-P *pr;
+void substp(VL vl,P p,V v0,P p0,P *pr)
 {
 	P x,t,m,c,s,a;
 	DCP dc;
@@ -121,11 +114,7 @@ P *pr;
 	}
 }
 
-void detp(vl,rmat,n,dp)
-VL vl;
-P **rmat;
-int n;
-P *dp;
+void detp(VL vl,P **rmat,int n,P *dp)
 {
 	int i,j,k,sgn;
 	P mjj,mij,t,s,u,d;
@@ -160,12 +149,7 @@ P *dp;
 		*dp = d;
 }
 
-void invmatp(vl,rmat,n,imatp,dnp)
-VL vl;
-P **rmat;
-int n;
-P ***imatp;
-P *dnp;
+void invmatp(VL vl,P **rmat,int n,P ***imatp,P *dnp)
 {
 	int i,j,k,l,n2;
 	P mjj,mij,t,s,u,d;
@@ -218,10 +202,7 @@ P *dnp;
 	*dnp = d;
 }
 
-void reordvar(vl,v,nvlp)
-VL vl;
-V v;
-VL *nvlp;
+void reordvar(VL vl,V v,VL *nvlp)
 {
 	VL nvl,nvl0;
 
@@ -238,9 +219,7 @@ VL *nvlp;
 	*nvlp = nvl0;
 }
 
-void gcdprsp(vl,p1,p2,pr)
-VL vl;
-P p1,p2,*pr;
+void gcdprsp(VL vl,P p1,P p2,P *pr)
 {
 	P g1,g2,gc1,gc2,gp1,gp2,g,gc,gp,gcr;
 	V v1,v2;
@@ -278,9 +257,7 @@ P p1,p2,*pr;
 	}
 }
 
-void gcdcp(vl,p,pr)
-VL vl;
-P p,*pr;
+void gcdcp(VL vl,P p,P *pr)
 {
 	P g,g1;
 	DCP dc;
@@ -298,10 +275,7 @@ P p,*pr;
 	}
 }
 
-void sprs(vl,v,p1,p2,pr)
-VL vl;
-V v;
-P p1,p2,*pr;
+void sprs(VL vl,V v,P p1,P p2,P *pr)
 {
 	P q1,q2,m,m1,m2,x,h,r,g1,g2;
 	int d;
@@ -339,10 +313,7 @@ P p1,p2,*pr;
 	*pr = g2;
 }
 
-void resultp(vl,v,p1,p2,pr)
-VL vl;
-V v;
-P p1,p2,*pr;
+void resultp(VL vl,V v,P p1,P p2,P *pr)
 {
 	P q1,q2,m,m1,m2,lc,q,r,t,g1,g2,adj;
 	int d,d1,d2,j,k;
@@ -434,10 +405,7 @@ P p1,p2,*pr;
 	}
 }
 
-void srch2(vl,v,p1,p2,pr)
-VL vl;
-V v;
-P p1,p2,*pr;
+void srch2(VL vl,V v,P p1,P p2,P *pr)
 {
 	P q1,q2,m,m1,m2,lc,q,r,t,s,g1,g2,adj;
 	int d,d1,d2,j,k;
@@ -526,10 +494,7 @@ P p1,p2,*pr;
 	}
 }
 
-void srcr(vl,v,p1,p2,pr)
-VL vl;
-V v;
-P p1,p2,*pr;
+void srcr(VL vl,V v,P p1,P p2,P *pr)
 {
 	P q1,q2,c,c1;
 	P tg,tg1,tg2,resg;
@@ -573,10 +538,7 @@ P p1,p2,*pr;
 	*pr = c;
 }
 
-void res_ch_det(vl,v,p1,p2,pr)
-VL vl;
-V v;
-P p1,p2,*pr;
+void res_ch_det(VL vl,V v,P p1,P p2,P *pr)
 {
 	P q1,q2,c,c1;
 	P tg,tg1,tg2,resg;
@@ -620,12 +582,7 @@ P p1,p2,*pr;
 	*pr = c;
 }
 
-void res_detmp(vl,mod,v,p1,p2,dp)
-VL vl;
-int mod;
-V v;
-P p1,p2;
-P *dp;
+void res_detmp(VL vl,int mod,V v,P p1,P p2,P *dp)
 {
 	int n1,n2,n,sgn;
 	int i,j,k;
@@ -671,10 +628,7 @@ P *dp;
 }
 
 #if 0
-showmat(vl,mat,n)
-VL vl;
-P **mat;
-int n;
+showmat(VL vl,P **mat,int n)
 {
 	int i,j;
 	P t;
@@ -688,9 +642,7 @@ int n;
 	fflush(out);
 }
 
-showmp(vl,p)
-VL vl;
-P p;
+showmp(VL vl,P p)
 {
 	P t;
 
@@ -698,9 +650,7 @@ P p;
 }
 #endif
 
-void premp(vl,p1,p2,pr)
-VL vl;
-P p1,p2,*pr;
+void premp(VL vl,P p1,P p2,P *pr)
 {
 	P m,m1,m2;
 	P *pw;
@@ -753,9 +703,7 @@ P p1,p2,*pr;
 	}
 }
 
-void ptozp0(p,pr)
-P p;
-P *pr;
+void ptozp0(P p,P *pr)
 {
 	Q c;
 
@@ -765,9 +713,7 @@ P *pr;
 		*pr = p;
 }
 
-void mindegp(vl,p,mvlp,pr)
-VL vl,*mvlp;
-P p,*pr;
+void mindegp(VL vl,P p,VL *mvlp,P *pr)
 {
 	P t;
 	VL nvl,tvl,avl;
@@ -789,9 +735,7 @@ P p,*pr;
 	}
 }
 
-void maxdegp(vl,p,mvlp,pr)
-VL vl,*mvlp;
-P p,*pr;
+void maxdegp(VL vl,P p,VL *mvlp,P *pr)
 {
 	P t;
 	VL nvl,tvl,avl;
@@ -813,9 +757,7 @@ P p,*pr;
 	}
 }
 
-void min_common_vars_in_coefp(vl,p,mvlp,pr)
-VL vl,*mvlp;
-P p,*pr;
+void min_common_vars_in_coefp(VL vl,P p,VL *mvlp,P *pr)
 {
 	P u,p0;
 	VL tvl,cvl,svl,uvl,avl,vl0;
@@ -847,9 +789,7 @@ P p,*pr;
 	*pr = p0; *mvlp = vl0;
 }
 
-void minlcdegp(vl,p,mvlp,pr)
-VL vl,*mvlp;
-P p,*pr;
+void minlcdegp(VL vl,P p,VL *mvlp,P *pr)
 {
 	P u,p0;
 	VL tvl,uvl,avl,vl0;
@@ -867,9 +807,7 @@ P p,*pr;
 	*pr = p0; *mvlp = vl0;
 }
 
-void sort_by_deg(n,p,pr)
-int n;
-P *p,*pr;
+void sort_by_deg(int n,P *p,P *pr)
 {
 	int j,k,d,k0;
 	V v;
@@ -887,9 +825,7 @@ P *p,*pr;
 	}
 }
 
-void sort_by_deg_rev(n,p,pr)
-int n;
-P *p,*pr;
+void sort_by_deg_rev(int n,P *p,P *pr)
 {
 	int j,k,d,k0;
 	V v;
@@ -908,10 +844,7 @@ P *p,*pr;
 }
 
 
-void getmindeg(v,p,dp)
-V v;
-P p;
-Q *dp;
+void getmindeg(V v,P p,Q *dp)
 {
 	Q dt,d;
 	DCP dc;
@@ -933,9 +866,7 @@ Q *dp;
 	}
 }
 
-void minchdegp(vl,p,mvlp,pr)
-VL vl,*mvlp;
-P p,*pr;
+void minchdegp(VL vl,P p,VL *mvlp,P *pr)
 {
 	P t;
 	VL tvl,nvl,avl;
@@ -964,9 +895,7 @@ P p,*pr;
 	}
 }
 
-int getchomdeg(v,p)
-V v;
-P p;
+int getchomdeg(V v,P p)
 {
 	int m,m1;
 	DCP dc;
@@ -984,10 +913,7 @@ P p;
 	}
 }
 
-int getlchomdeg(v,p,d)
-V v;
-P p;
-int *d;
+int getlchomdeg(V v,P p,int *d)
 {
 	int m0,m1,d0,d1;
 	DCP dc;
@@ -1012,8 +938,7 @@ int *d;
 	}
 }
 
-int nmonop(p)
-P p;
+int nmonop(P p)
 {
 	int s;
 	DCP dc;
@@ -1033,8 +958,7 @@ P p;
 		}
 }
 
-int qpcheck(p)
-Obj p;
+int qpcheck(Obj p)
 {
 	DCP dc;
 
@@ -1056,8 +980,7 @@ Obj p;
 
 /* check if p is univariate and all coeffs are INT or LM */
 
-int uzpcheck(p)
-Obj p;
+int uzpcheck(Obj p)
 {
 	DCP dc;
 	P c;
@@ -1071,7 +994,7 @@ Obj p;
 			case O_P:
 				for ( dc = DC((P)p); dc; dc = NEXT(dc) ) {
 					c = COEF(dc);
-					if ( !NUM(c) || !uzpcheck(c) )
+					if ( !NUM(c) || !uzpcheck((Obj)c) )
 						return 0;
 				}
 				return 1;
@@ -1080,8 +1003,7 @@ Obj p;
 		}
 }
 
-int p_mag(p)
-P p;
+int p_mag(P p)
 {
 	int s;
 	DCP dc;
@@ -1097,8 +1019,7 @@ P p;
 	}
 }
 
-int maxblenp(p)
-P p;
+int maxblenp(P p)
 {
 	int s,t;
 	DCP dc;

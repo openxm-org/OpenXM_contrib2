@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/al.c,v 1.4 2001/03/09 01:14:13 noro Exp $ */
 /* ----------------------------------------------------------------------
    $Id$
    ----------------------------------------------------------------------
@@ -14,6 +14,7 @@
 #include <parse.h>
 #include <al.h>
 
+void Preverse();
 void Phugo();
 void Pex();
 void Pall();
@@ -23,6 +24,7 @@ void Pfargs();
 void Pfopargs();
 void Pcompf();
 void Patnum();
+int gauss_abc();
 int compf();
 void Patl();
 void Pqevar();
@@ -38,6 +40,8 @@ void simpl_th2atl();
 int simpl_gand_udnargls();
 int simpl_gand_thupd();
 int simpl_gand_thprsism();
+int simpl_gand_smtbdlhs();
+int simpl_gand_smtbelhs();
 void lbc();
 void replaceq();
 void deleteq();
@@ -71,7 +75,7 @@ void mkqgp();
 void getqcoeffs();
 void mkdiscr();
 int al_reorder();
-int indices();
+void indices();
 void mkeset();
 int selectside();
 int cmp2n();
@@ -118,6 +122,8 @@ void rep();
 void gpp();
 void esetp();
 void nodep();
+void gauss_mkeset1();
+void gauss_mkeset2();
 
 extern Verbose;
 
@@ -448,7 +454,7 @@ F f,*pnf;
 NODE th;
 int n;
 {
-	F h,hh;
+	F h;
 	oFOP op=FOP(f);
 
 	if (AL_ATOMIC(op)) {
@@ -570,7 +576,6 @@ NODE th,*patl,*patlc;
 int n;
 {
   NODE atl=NULL,atlc=NULL;
-  LBF h;
   F at,negat;
 
   switch (gand) {
@@ -1254,7 +1259,8 @@ int *pleft,*pmodulus;
 	int i=0;
 	
 	if (!Verbose)
-		return;
+	/* added by noro */
+		return 0;
 	if (*pleft == 0) {
 		for (; cvl; cvl=NEXT(cvl))
 			i++;
@@ -1397,7 +1403,7 @@ Q deg;
 	return (NZNUMBER(*pa) || NZNUMBER(*pb) || NZNUMBER(*pc));
 }
 
-gauss_mkeset1(rlhs,b,peset)
+void gauss_mkeset1(rlhs,b,peset)
 P rlhs,b;
 NODE *peset;
 {
@@ -1407,15 +1413,12 @@ NODE *peset;
 	MKNODE(*peset,hgp,NULL);
 }
 
-gauss_mkeset2(rlhs,a,b,c,peset)
+void gauss_mkeset2(rlhs,a,b,c,peset)
 P rlhs,a,b,c;
 NODE *peset;
 {
-	RE hre;
-	F hf;
 	GP hgp;
-	P discr;
-	NODE esetc;
+	NODE esetc=NULL;
 
 	*peset = NULL;
 	if (!NUM(a)) {
@@ -1460,10 +1463,7 @@ V x;
 NODE trans[];
 {
 	NODE sc,transc[8];
-	RE hre;
-	GP hgp;
 	int bt,w=0;
-	P h;
 
 	for (bt=BTMIN; bt<=BTMAX; bt++)
 		trans[bt] = NULL;
@@ -1494,6 +1494,8 @@ NODE trans[],transc[];
 		return 1;
 	};
 	error("degree violation in translate_a");
+	/* XXX : NOTREACHED */
+	return -1;
 }
 
 void translate_a1(op,mp,trans,transc)
@@ -1554,7 +1556,7 @@ GP *pgp;
 	P discr;
 	RE hre;
 	F hf;
-	NODE n=NULL,nc;
+	NODE n=NULL,nc=NULL;
 	
 	mkdiscr(a,b,c,&discr);
 	MKRE(hre,mp,discr,rootno,itype);
@@ -1613,7 +1615,7 @@ V v;
 		return 0;
 }
 
-int indices(op,s,pit,pbt)
+void indices(op,s,pit,pbt)
 oFOP op;
 int s,*pit,*pbt;
 {
@@ -1669,7 +1671,7 @@ void mkeset(trans,x,peset)
 NODE trans[],*peset;
 V x;
 {
-	NODE esetc;
+	NODE esetc=NULL;
 	P h;
 	RE hre;
 	GP hgp;
@@ -1807,7 +1809,7 @@ F f,*pnf;
 V v;
 GP gp;
 {
-	NODE argl=NULL,arglc;
+	NODE argl=NULL,arglc=NULL;
 
 	NEXTNODE(argl,arglc);
 	BDY(arglc) = (pointer)GUARD(gp);
@@ -1857,7 +1859,7 @@ V v;
 RE re;
 {
 	VL no;
-	P rlhs,prem,bdn,nlhs;
+	P rlhs,prem,nlhs;
 	Q dd,dndeg;
 	
 	reordvar(CO,v,&no);
@@ -1935,7 +1937,7 @@ P a,b,c,d;
 F *pf;
 {
 	F hf;
-	NODE cj=NULL,cjc;
+	NODE cj=NULL,cjc=NULL;
 	P hp1,hp2;
 
 	NEXTNODE(cj,cjc);
@@ -1957,7 +1959,7 @@ P a,b,c,d;
 F *pf;
 {
 	F hf;
-	NODE cj=NULL,cjc,dj=NULL,djc;
+	NODE cj=NULL,cjc=NULL,dj=NULL,djc=NULL;
 	P hp1,hp2;
 
 	NEXTNODE(dj,djc);
@@ -1993,7 +1995,7 @@ P a,b,c,d;
 F *pf;
 {
 	F hf,hf0;
-	NODE cj=NULL,cjc,d1=NULL,d1c,d2=NULL,d2c;
+	NODE cj=NULL,cjc=NULL,d1=NULL,d1c=NULL,d2=NULL,d2c=NULL;
 	P hp1,hp2;
 
 	NEXTNODE(d1,d1c);
@@ -2034,7 +2036,7 @@ P prem,*pa,*pb,*pc,*pld;
 Q fdeg;
 RE re;
 {
-	P a,b,c,alpha,beta,h1,h2,h3;
+	P a,b,c,alpha,beta,h1,h2;
 	Q two;
 
 	alpha = COEF(DC(prem));
@@ -2082,7 +2084,7 @@ F *pnf;
 {
 	P an;
 	F h;
-	NODE c=NULL,cc,d=NULL,dc;
+	NODE c=NULL,cc=NULL,d=NULL,dc=NULL;
 
 	if (lhsdcp == 0) {
 		MKAF(*pnf,op,0);
@@ -2166,7 +2168,7 @@ F *pnf;
 {
 	Q deg;
 	F h;
-	NODE c=NULL,cc,d=NULL,dc;
+	NODE c=NULL,cc=NULL,d=NULL,dc=NULL;
 	P df;
 	
 	degp(v,lhs,&deg);
@@ -2377,7 +2379,7 @@ F f,*pf;
 int neg,disj;
 {
 	F h;
-	NODE sc,nargl=NULL,narglc;
+	NODE sc,nargl=NULL,narglc=NULL;
 	oFOP op=FOP(f);
 
 	if (AL_ATOMIC(op) || AL_TVAL(op)) {

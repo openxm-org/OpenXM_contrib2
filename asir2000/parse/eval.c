@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.14 2001/09/05 09:01:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.15 2001/09/20 04:08:21 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -64,12 +64,7 @@ int f_break,f_return,f_continue;
 int evalstatline;
 int recv_intr;
 
-pointer bevalf(), evalmapf(), evall();
-pointer eval_rec_mapf(), beval_rec_mapf();
-Obj getopt_from_cpvs();
-
-pointer eval(f)
-FNODE f;
+pointer eval(FNODE f)
 {
 	LIST t;
 	STRING str;
@@ -334,8 +329,7 @@ FNODE f;
 	return ( val );
 }
 
-pointer evalstat(f)
-SNODE f;
+pointer evalstat(SNODE f)
 {
 	pointer val = 0,t,s,s1;
 	P u;
@@ -440,8 +434,7 @@ SNODE f;
 	return ( val );
 }
 
-pointer evalnode(node)
-NODE node;
+pointer evalnode(NODE node)
 {
 	NODE tn;
 	pointer val;
@@ -455,10 +448,7 @@ NODE node;
 extern FUNC cur_binf;
 extern NODE PVSS;
 
-pointer evalf(f,a,opt)
-FUNC f;
-FNODE a;
-FNODE opt;
+pointer evalf(FUNC f,FNODE a,FNODE opt)
 {
 	LIST args;
 	pointer val;
@@ -562,9 +552,7 @@ FNODE opt;
 	return val;
 }
 
-pointer evalmapf(f,a)
-FUNC f;
-FNODE a;
+pointer evalmapf(FUNC f,FNODE a)
 {
 	LIST args;
 	NODE node,rest,t,n,r,r0;
@@ -614,9 +602,7 @@ FNODE a;
 	return val;
 }
 
-pointer eval_rec_mapf(f,a)
-FUNC f;
-FNODE a;
+pointer eval_rec_mapf(FUNC f,FNODE a)
 {
 	LIST args;
 
@@ -624,11 +610,8 @@ FNODE a;
 	return beval_rec_mapf(f,BDY(args));
 }
 
-pointer beval_rec_mapf(f,node)
-FUNC f;
-NODE node;
+pointer beval_rec_mapf(FUNC f,NODE node)
 {
-	LIST args;
 	NODE rest,t,n,r,r0;
 	Obj head;
 	VECT v,rv;
@@ -677,16 +660,12 @@ NODE node;
 	return val;
 }
 
-pointer bevalf(f,a)
-FUNC f;
-NODE a;
+pointer bevalf(FUNC f,NODE a)
 {
 	pointer val;
 	int i,n;
 	NODE tn,sn;
     VS pvs;
-	struct oLIST list;
-	struct oFNODE fnode;
 	char errbuf[BUFSIZ];
 
 	if ( f->id == A_UNDEF ) {
@@ -748,8 +727,7 @@ NODE a;
 	return val;
 }
 
-pointer evalif(f,a)
-FNODE f,a;
+pointer evalif(FNODE f,FNODE a)
 {
 	Obj g;
 
@@ -758,19 +736,18 @@ FNODE f,a;
 		return evalf((FUNC)VR((P)g)->priv,a,0);
 	else {
 		error("invalid function pointer");
+		/* NOTREACHED */
+		return (pointer)-1;
 	}
 }
 
-pointer evalpf(pf,args)
-PF pf;
-NODE args;
+pointer evalpf(PF pf,NODE args)
 {
 	Obj s,s1;
 	int i;
 	NODE node;
 	PFINS ins;
 	PFAD ad;
-	char errbuf[BUFSIZ];
 	
 	if ( !pf->body ) {
 		ins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
@@ -789,9 +766,7 @@ NODE args;
 	return (pointer)s;
 }
 
-void evalnodebody(sn,dnp)
-NODE sn;
-NODE *dnp;
+void evalnodebody(NODE sn,NODE *dnp)
 {
 	NODE n,n0,tn;
 	int line;
@@ -809,9 +784,7 @@ NODE *dnp;
 	NEXT(n) = 0; *dnp = n0;
 }
 
-void gen_searchf(name,r)
-char *name;
-FUNC *r;
+void gen_searchf(char *name,FUNC *r)
 {
 	FUNC val;
 
@@ -827,10 +800,7 @@ FUNC *r;
 	*r = val;
 }
 
-void searchf(fn,name,r)
-NODE fn;
-char *name;
-FUNC *r;
+void searchf(NODE fn,char *name,FUNC *r)
 {
 	NODE tn;
 
@@ -843,9 +813,7 @@ FUNC *r;
 	*r = 0;
 }
 
-void appenduf(name,r)
-char *name;
-FUNC *r;
+void appenduf(char *name,FUNC *r)
 {
 	NODE tn;
 	FUNC f;
@@ -856,9 +824,7 @@ FUNC *r;
 	*r = f;
 }
 
-void mkparif(name,r)
-char *name;
-FUNC *r;
+void mkparif(char *name,FUNC *r)
 {
 	FUNC f;
 
@@ -866,12 +832,7 @@ FUNC *r;
 	f->name = name; f->id = A_PARI; f->argc = 0; f->f.binf = 0;
 }
 
-void mkuf(name,fname,args,body,startl,endl,desc)
-char *name,*fname;
-NODE args;
-SNODE body;
-int startl,endl;
-char *desc;
+void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc)
 {
 	FUNC f;
 	USRF t;
@@ -918,11 +879,9 @@ char *desc;
 	CVS->opt = BDY([[key,value],[key,value],...])
 */
 
-Obj getopt_from_cpvs(key)
-char *key;
+Obj getopt_from_cpvs(char *key)
 {
 	NODE opts,opt;
-	Obj value;
 	LIST r;
 	extern Obj VOIDobj;
 

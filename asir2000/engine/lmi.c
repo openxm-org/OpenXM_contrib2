@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/lmi.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/lmi.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -67,8 +67,7 @@ int lm_lazy;
 
 static GEN_LM current_mod_lm;
 
-void random_lm(r)
-LM *r;
+void random_lm(LM *r)
 {
 	N n,t;
 
@@ -79,9 +78,7 @@ LM *r;
 	MKLM(t,*r);
 }
 
-void ntosparsen(p,bits)
-N p;
-N *bits;
+void ntosparsen(N p,N *bits)
 {
 	int l,i,j,nz;
 	N r;
@@ -101,8 +98,7 @@ N *bits;
 	}
 }
 
-void setmod_lm(p)
-N p;
+void setmod_lm(N p)
 {
 	int i;
 
@@ -124,8 +120,7 @@ N p;
 	}
 }
 
-void getmod_lm(p)
-N *p;
+void getmod_lm(N *p)
 {
 	if ( !current_mod_lm )
 		*p = 0;
@@ -133,9 +128,7 @@ N *p;
 		*p = current_mod_lm->dense;
 }
 
-void simplm(n,r)
-LM n;
-LM *r;
+void simplm(LM n,LM *r)
 {
 	N rem;
 
@@ -149,9 +142,7 @@ LM *r;
 	}
 }
 
-void qtolm(q,l)
-Q q;
-LM *l;
+void qtolm(Q q,LM *l)
 {
 	N rn;
 	LM a,b,c;
@@ -176,11 +167,8 @@ LM *l;
 
 #define NZLM(a) ((a)&&(NID(a)==N_LM))
 
-void addlm(a,b,c)
-LM a,b;
-LM *c;
+void addlm(LM a,LM b,LM *c)
 {
-	int s;
 	N t,t1;
 	LM z;
 
@@ -196,12 +184,10 @@ LM *c;
 	}
 }
 
-void sublm(a,b,c)
-LM a,b;
-LM *c;
+void sublm(LM a,LM b,LM *c)
 {
 	int s;
-	N t,t1,mod;
+	N t;
 	LM z;
 
 	qtolm((Q)a,&z); a = z; qtolm((Q)b,&z); b = z;
@@ -223,11 +209,9 @@ LM *c;
 	}
 }
 
-void mullm(a,b,c)
-LM a,b;
-LM *c;
+void mullm(LM a,LM b,LM *c)
 {
-	N t,q,r;
+	N t,r;
 	LM z;
 
 	qtolm((Q)a,&z); a = z; qtolm((Q)b,&z); b = z;
@@ -240,9 +224,7 @@ LM *c;
 	}
 }
 
-void divlm(a,b,c)
-LM a,b;
-LM *c;
+void divlm(LM a,LM b,LM *c)
 {
 	LM r;
 	Q t,m,i;
@@ -261,8 +243,7 @@ LM *c;
 	}
 }
 
-void chsgnlm(a,c)
-LM a,*c;
+void chsgnlm(LM a,LM *c)
 {
 	LM t;
 	N s,u;
@@ -277,10 +258,7 @@ LM a,*c;
 	}
 }
 
-void pwrlm(a,b,c)
-LM a;
-Q b;
-LM *c;
+void pwrlm(LM a,Q b,LM *c)
 {
 	LM t;
 	N s;
@@ -296,9 +274,7 @@ LM *c;
 	}
 }
 
-void pwrlm0(a,n,c)
-N a,n;
-N *c;
+void pwrlm0(N a,N n,N *c)
 {
 	N n1,t,t1,t2,r1;
 	int r;
@@ -318,8 +294,7 @@ N *c;
 	}
 }
 
-int cmplm(a,b)
-LM a,b;
+int cmplm(LM a,LM b)
 {
 	LM z;
 
@@ -337,9 +312,7 @@ LM a,b;
 
 void remn_special(N,N,int,unsigned int ,N *);
 
-void gen_simpn(a,b)
-N a;
-N *b;
+void gen_simpn(N a,N *b)
 {
 	if ( !current_mod_lm )
 		error("gen_simpn: current_mod_lm is not set");
@@ -351,9 +324,7 @@ N *b;
 		remn(a,current_mod_lm->dense,b);	
 }
 
-void gen_simpn_force(a,b)
-N a;
-N *b;
+void gen_simpn_force(N a,N *b)
 {
 	if ( !current_mod_lm )
 		error("gen_simpn_force: current_mod_lm is not set");

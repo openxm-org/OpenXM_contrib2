@@ -175,7 +175,7 @@ void CChildView::PrintAxis(CDC &dc)
 {
 #define D 5
 
-	double w,w1,k,e,n;
+	double w,w1,e,n;
 	int x0,y0,x,y,xadj,yadj;
 	char buf[BUFSIZ];
 
@@ -204,7 +204,7 @@ void CChildView::PrintAxis(CDC &dc)
 	w1 = w * DEFAULTWIDTH/can->width;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
 	for ( n = ceil(can->xmin/e); n*e<= can->xmax; n++ ) {
-		x = (int)can->width*(n*e-can->xmin)/w;
+		x = (int)(can->width*(n*e-can->xmin)/w);
 		dc.MoveTo(x,y0); dc.LineTo(x,y0-D);
 		sprintf(buf,"%g",n*e);
 		dc.TextOut(x+2,y0+2,buf,strlen(buf));
@@ -213,7 +213,7 @@ void CChildView::PrintAxis(CDC &dc)
 	w1 = w * DEFAULTHEIGHT/can->height;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
 	for ( n = ceil(can->ymin/e); n*e<= can->ymax; n++ ) {
-		y = (int)can->height*(1-(n*e-can->ymin)/w);
+		y = (int)(can->height*(1-(n*e-can->ymin)/w));
 		dc.MoveTo(x0,y); dc.LineTo(x0+D,y);
 		sprintf(buf,"%g",n*e);
 		if ( can->xmax <= 0 ) {

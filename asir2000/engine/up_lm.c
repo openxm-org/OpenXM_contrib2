@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.4 2001/05/09 01:41:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.5 2001/09/03 07:01:06 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -56,11 +56,7 @@ extern int debug_up;
 extern int up_lazy;
 extern int current_ff;
 
-void crup_lm(ModNum **,int,int *,int,N,N,UP *);
-
-void fft_mulup_lm(n1,n2,nr)
-UP n1,n2;
-UP *nr;
+void fft_mulup_lm(UP n1,UP n2,UP *nr)
 {
 	ModNum *f1,*f2,*w,*fr;
 	ModNum *frarray[1024];
@@ -109,9 +105,7 @@ UP *nr;
 	error("fft_mulup : FFT_primes exhausted");
 }
 
-void fft_squareup_lm(n1,nr)
-UP n1;
-UP *nr;
+void fft_squareup_lm(UP n1,UP *nr)
 {
 	ModNum *f1,*w,*fr;
 	ModNum *frarray[1024];
@@ -158,10 +152,7 @@ UP *nr;
 	error("fft_squareup : FFT_primes exhausted");
 }
 
-void trunc_fft_mulup_lm(n1,n2,dbd,nr)
-UP n1,n2;
-int dbd;
-UP *nr;
+void trunc_fft_mulup_lm(UP n1,UP n2,int dbd,UP *nr)
 {
 	ModNum *f1,*f2,*fr,*w;
 	ModNum *frarray[1024];
@@ -211,14 +202,7 @@ UP *nr;
 	error("trunc_fft_mulup : FFT_primes exhausted");
 }
 
-void crup_lm(f,d,mod,index,m,lm_mod,r)
-ModNum **f;
-int d;
-int *mod;
-int index;
-N m;
-N lm_mod;
-UP *r;
+void crup_lm(ModNum **f,int d,int *mod,int index,N m,N lm_mod,UP *r)
 {
 	double *k;
 	double c2;
@@ -232,7 +216,6 @@ UP *r;
 	unsigned int **sum;
 	unsigned int *sum_b;
 	Q q;
-	struct oEGT eg0,eg1;
 
 	if ( !lm_mod )
 		error("crup_lm : current_mod_lm is not set");
@@ -304,9 +287,7 @@ UP *r;
 	addup(s,s1,r);
 }
 
-void fft_rembymulup_special_lm(n1,n2,inv2,nr)
-UP n1,n2,inv2;
-UP *nr;
+void fft_rembymulup_special_lm(UP n1,UP n2,UP inv2,UP *nr)
 {
 	int d1,d2,d;
 	UP r1,t,s,q,u;
@@ -329,9 +310,7 @@ UP *nr;
 	}
 }
 
-void uptolmup(n,nr)
-UP n;
-UP *nr;
+void uptolmup(UP n,UP *nr)
 {
 	int i,d;
 	Q *c;
@@ -353,14 +332,13 @@ UP *nr;
 	}
 }
 
-save_up(obj,name)
-UP obj;
-char *name;
+void save_up(UP obj,char *name)
 {
 	P p;
 	Obj ret;
 	NODE n0,n1;
 	STRING s;
+	void Pbsave();
 
 	uptop(obj,&p);
 	MKSTR(s,name);
@@ -368,16 +346,12 @@ char *name;
 	Pbsave(n0,&ret);
 }
 
-void hybrid_powermodup(f,xp)
-UP f;
-UP *xp;
+void hybrid_powermodup(UP f,UP *xp)
 {
 	N n;
 	UP x,y,t,invf,s;
 	int k;
 	LM lm;
-	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
-	char name[BUFSIZ];
 
 	getmod_lm(&n);
 	if ( !n )
@@ -401,15 +375,12 @@ UP *xp;
 	*xp = y;
 }
 
-void powermodup(f,xp)
-UP f;
-UP *xp;
+void powermodup(UP f,UP *xp)
 {
 	N n;
 	UP x,y,t,invf,s;
 	int k;
 	Num c;
-	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
 	if ( !current_ff )
 		error("powermodup : current_ff is not set");
@@ -447,16 +418,12 @@ UP *xp;
 
 /* g^d mod f */
 
-void hybrid_generic_powermodup(g,f,d,xp)
-UP g,f;
-Q d;
-UP *xp;
+void hybrid_generic_powermodup(UP g,UP f,Q d,UP *xp)
 {
 	N e;
 	UP x,y,t,invf,s;
 	int k;
 	LM lm;
-	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
 	e = NM(d);
 	MKLM(ONEN,lm); 
@@ -484,16 +451,12 @@ UP *xp;
 	*xp = y;
 }
 
-void generic_powermodup(g,f,d,xp)
-UP g,f;
-Q d;
-UP *xp;
+void generic_powermodup(UP g,UP f,Q d,UP *xp)
 {
 	N e;
 	UP x,y,t,invf,s;
 	int k;
 	Num c;
-	struct oEGT eg_sq,eg_rem,eg_mul,eg_inv,eg0,eg1,eg2,eg3;
 
 	e = NM(d);
 	one_ff(&c);
@@ -521,15 +484,11 @@ UP *xp;
 	*xp = y;
 }
 
-void hybrid_powertabup(f,xp,tab)
-UP f;
-UP xp;
-UP *tab;
+void hybrid_powertabup(UP f,UP xp,UP *tab)
 {
 	UP y,t,invf;
 	int i,d;
 	LM lm;
-	struct oEGT eg_rem,eg_mul,eg0,eg1,eg2;
 
 	d = f->d;
 	MKLM(ONEN,lm); 
@@ -548,15 +507,11 @@ UP *tab;
 	}
 }
 
-void powertabup(f,xp,tab)
-UP f;
-UP xp;
-UP *tab;
+void powertabup(UP f,UP xp,UP *tab)
 {
 	UP y,t,invf;
 	int i,d;
 	Num c;
-	struct oEGT eg_rem,eg_mul,eg0,eg1,eg2;
 
 	d = f->d;
 	one_ff(&c);

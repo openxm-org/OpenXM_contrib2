@@ -45,15 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/Ebug.c,v 1.2 2000/08/21 08:31:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Ebug.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
 */
 #include "ca.h"
 
-void substvp(vl,f,vn,g)
-VL vl;
-P f;
-VN vn;
-P *g;
+void substvp(VL vl,P f,VN vn,P *g)
 {
 	V v;
 	int i;
@@ -68,11 +64,7 @@ P *g;
 	*g = h;
 }
 		
-void affine(vl,f,vn,fr)
-VL vl;
-P f;
-VN vn;
-P *fr;
+void affine(VL vl,P f,VN vn,P *fr)
 {
 	int i,j,n;
 	P vv,g,g1,t,u;

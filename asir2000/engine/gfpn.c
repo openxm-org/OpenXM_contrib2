@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfpn.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfpn.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -54,23 +54,19 @@ void chsgngfpn(GFPN,GFPN *);
 
 UP current_mod_gfpn;
 
-void setmod_gfpn(p)
-P p;
+void setmod_gfpn(P p)
 {
 	UP t;
 
 	ptoup(p,&t); uptolmup(t,&current_mod_gfpn);
 }
 
-void getmod_gfpn(up)
-UP *up;
+void getmod_gfpn(UP *up)
 {
 	*up = current_mod_gfpn;
 }
 
-void ptogfpn(q,l)
-Obj q;
-GFPN *l;
+void ptogfpn(Obj q,GFPN *l)
 {
 	UP q1,q2;
 
@@ -83,9 +79,7 @@ GFPN *l;
 		error("ptogfpn : invalid argument");
 }
 
-void gfpntop(q,l)
-GFPN q;
-P *l;
+void gfpntop(GFPN q,P *l)
 {
 	if ( !q )
 		*l = 0;
@@ -95,9 +89,7 @@ P *l;
 		*l = (P)q;
 }
 
-void simpgfpn(n,r)
-GFPN n;
-GFPN *r;
+void simpgfpn(GFPN n,GFPN *r)
 {
 	UP rem,t;
 
@@ -114,9 +106,7 @@ GFPN *r;
 
 #define NZGFPN(a) ((a)&&(OID(a)==O_N)&&(NID(a)==N_GFPN))
 
-void ntogfpn(a,b)
-Obj a;
-GFPN *b;
+void ntogfpn(Obj a,GFPN *b)
 {
 	UP t;
 	LM lm;
@@ -135,9 +125,7 @@ GFPN *b;
 		error("ntogfpn : invalid argument");
 }
 
-void addgfpn(a,b,c)
-GFPN a,b;
-GFPN *c;
+void addgfpn(GFPN a,GFPN b,GFPN *c)
 {
 	UP t,t1,t2;
 	GFPN z;
@@ -155,9 +143,7 @@ GFPN *c;
 	}
 }
 
-void subgfpn(a,b,c)
-GFPN a,b;
-GFPN *c;
+void subgfpn(GFPN a,GFPN b,GFPN *c)
 {
 	UP t,t1,t2;
 	GFPN z;
@@ -177,9 +163,7 @@ GFPN *c;
 
 extern int up_lazy;
 
-void mulgfpn(a,b,c)
-GFPN a,b;
-GFPN *c;
+void mulgfpn(GFPN a,GFPN b,GFPN *c)
 {
 	UP t,t1,t2;
 	GFPN z;
@@ -197,9 +181,7 @@ GFPN *c;
 	}
 }
 
-void squaregfpn(a,c)
-GFPN a;
-GFPN *c;
+void squaregfpn(GFPN a,GFPN *c)
 {
 	UP t,t1,t2;
 	GFPN z;
@@ -215,9 +197,7 @@ GFPN *c;
 	}
 }
 
-void divgfpn(a,b,c)
-GFPN a,b;
-GFPN *c;
+void divgfpn(GFPN a,GFPN b,GFPN *c)
 {
 	UP t,t1,i,s;
 	GFPN z;
@@ -236,9 +216,7 @@ GFPN *c;
 	}
 }
 
-void invgfpn(b,c)
-GFPN b;
-GFPN *c;
+void invgfpn(GFPN b,GFPN *c)
 {
 	UP i,t;
 	GFPN z;
@@ -253,8 +231,7 @@ GFPN *c;
 	}
 }
 
-void chsgngfpn(a,c)
-GFPN a,*c;
+void chsgngfpn(GFPN a,GFPN *c)
 {
 	GFPN z;
 	UP t,t1;
@@ -269,10 +246,7 @@ GFPN a,*c;
 	}
 }
 
-void pwrgfpn(a,b,c)
-GFPN a;
-Q b;
-GFPN *c;
+void pwrgfpn(GFPN a,Q b,GFPN *c)
 {
 	UP t,s;
 	GFPN r;
@@ -294,8 +268,7 @@ GFPN *c;
 	}
 }
 
-int cmpgfpn(a,b)
-GFPN a,b;
+int cmpgfpn(GFPN a,GFPN b)
 {
 	GFPN z;
 
@@ -311,8 +284,7 @@ GFPN a,b;
 		return compup(a->body,b->body);
 }
 
-void randomgfpn(r)
-GFPN *r;
+void randomgfpn(GFPN *r)
 {
 	int i,d;
 	LM *tb;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.22 2001/09/17 08:37:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.23 2001/10/01 01:58:01 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -59,20 +59,7 @@
 
 extern int DP_Print; /* XXX */
 
-void inner_product_mat_int_mod(Q **,int **,int,int,int,Q *);
-void solve_by_lu_mod(int **,int,int,int **,int);
-void solve_by_lu_gfmmat(GFMMAT,unsigned int,unsigned int *,unsigned int *);
-int lu_gfmmat(GFMMAT,unsigned int,int *);
-void mat_to_gfmmat(MAT,unsigned int,GFMMAT *);
 
-int generic_gauss_elim_mod(int **,int,int,int,int *);
-int generic_gauss_elim(MAT ,MAT *,Q *,int **,int **);
-void reduce_sp_by_red_mod_compress (int *,CDP *,int *,int,int,int);
-
-int gauss_elim_mod(int **,int,int,int);
-int gauss_elim_mod1(int **,int,int,int);
-int gauss_elim_geninv_mod(unsigned int **,int,int,int);
-int gauss_elim_geninv_mod_swap(unsigned int **,int,int,unsigned int,unsigned int ***,int **);
 void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm();
 void Pinvmat();
 void Pnewbytearray();
@@ -129,8 +116,7 @@ struct ftab array_tab[] = {
 	{0,0,0},
 };
 
-int comp_obj(a,b)
-Obj *a,*b;
+int comp_obj(Obj *a,Obj *b)
 {
 	return arf_comp(CO,*a,*b);
 }
@@ -138,8 +124,7 @@ Obj *a,*b;
 static FUNC generic_comp_obj_func;
 static NODE generic_comp_obj_arg;
 
-int generic_comp_obj(a,b)
-Obj *a,*b;
+int generic_comp_obj(Obj *a,Obj *b)
 {
 	Q r;
 	
@@ -153,13 +138,9 @@ Obj *a,*b;
 }
 
 
-void Pqsort(arg,rp)
-NODE arg;
-VECT *rp;
+void Pqsort(NODE arg,VECT *rp)
 {
 	VECT vect;
-	char buf[BUFSIZ];
-	char *fname;
 	NODE n;
 	P p;
 	V v;
@@ -182,9 +163,7 @@ VECT *rp;
 	*rp = vect;
 }
 
-void PNBmul_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void PNBmul_gf2n(NODE arg,GF2N *rp)
 {
 	GF2N a,b;
 	GF2MAT mat;
@@ -221,9 +200,7 @@ GF2N *rp;
 	}
 }
 
-void Pmul_vect_mat_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pmul_vect_mat_gf2n(NODE arg,GF2N *rp)
 {
 	GF2N a;
 	GF2MAT mat;
@@ -254,9 +231,7 @@ GF2N *rp;
 	}
 }
 
-void Pbconvmat_gf2n(arg,rp)
-NODE arg;
-LIST *rp;
+void Pbconvmat_gf2n(NODE arg,LIST *rp)
 {
 	P p0,p1;
 	int to;
@@ -276,9 +251,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Pmulmat_gf2n(arg,rp)
-NODE arg;
-GF2MAT *rp;
+void Pmulmat_gf2n(NODE arg,GF2MAT *rp)
 {
 	GF2MAT m;
 
@@ -287,9 +260,7 @@ GF2MAT *rp;
 	*rp = m;
 }
 
-void Psepmat_destructive(arg,rp)
-NODE arg;
-LIST *rp;
+void Psepmat_destructive(NODE arg,LIST *rp)
 {
 	MAT mat,mat1;
 	int i,j,row,col;
@@ -320,17 +291,12 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Psepvect(arg,rp)
-NODE arg;
-VECT *rp;
+void Psepvect(NODE arg,VECT *rp)
 {
 	sepvect((VECT)ARG0(arg),QTOS((Q)ARG1(arg)),rp);
 }
 
-void sepvect(v,d,rp)
-VECT v;
-int d;
-VECT *rp;
+void sepvect(VECT v,int d,VECT *rp)
 {
 	int i,j,k,n,q,q1,r;
 	pointer *pv,*pw,*pu;
@@ -354,9 +320,7 @@ VECT *rp;
 	}
 }
 
-void Pnewvect(arg,rp)
-NODE arg;
-VECT *rp;
+void Pnewvect(NODE arg,VECT *rp)
 {
 	int len,i,r;
 	VECT vect;
@@ -383,16 +347,12 @@ VECT *rp;
 	*rp = vect;
 }
 
-void Pexponent_vector(arg,rp)
-NODE arg;
-DP *rp;
+void Pexponent_vector(NODE arg,DP *rp)
 {
 	nodetod(arg,rp);
 }
 
-void Pnewbytearray(arg,rp)
-NODE arg;
-BYTEARRAY *rp;
+void Pnewbytearray(NODE arg,BYTEARRAY *rp)
 {
 	int len,i,r;
 	BYTEARRAY array;
@@ -434,9 +394,7 @@ BYTEARRAY *rp;
 	*rp = array;
 }
 
-void Pnewmat(arg,rp)
-NODE arg;
-MAT *rp;
+void Pnewmat(NODE arg,MAT *rp)
 {
 	int row,col;
 	int i,j,r,c;
@@ -471,9 +429,7 @@ MAT *rp;
 	*rp = m;
 }
 
-void Pvtol(arg,rp)
-NODE arg;
-LIST *rp;
+void Pvtol(NODE arg,LIST *rp)
 {
 	NODE n,n1;
 	VECT v;
@@ -488,9 +444,7 @@ LIST *rp;
 	MKLIST(*rp,n);
 }
 
-void Premainder(arg,rp)
-NODE arg;
-Obj *rp;
+void Premainder(NODE arg,Obj *rp)
 {
 	Obj a;
 	VECT v,w;
@@ -538,9 +492,7 @@ Obj *rp;
 	}
 }
 
-void Psremainder(arg,rp)
-NODE arg;
-Obj *rp;
+void Psremainder(NODE arg,Obj *rp)
 {
 	Obj a;
 	VECT v,w;
@@ -589,9 +541,7 @@ Obj *rp;
 	}
 }
 
-void Psize(arg,rp)
-NODE arg;
-LIST *rp;
+void Psize(NODE arg,LIST *rp)
 {
 
 	int n,m;
@@ -617,9 +567,7 @@ LIST *rp;
 	MKLIST(*rp,t);
 }
 
-void Pdet(arg,rp)
-NODE arg;
-P *rp;
+void Pdet(NODE arg,P *rp)
 {
 	MAT m;
 	int n,i,j,mod;
@@ -643,9 +591,7 @@ P *rp;
 	}
 }
 
-void Pinvmat(arg,rp)
-NODE arg;
-LIST *rp;
+void Pinvmat(NODE arg,LIST *rp)
 {
 	MAT m,r;
 	int n,i,j,mod;
@@ -689,9 +635,7 @@ LIST *rp;
 		B[I] <-> x_{R[I]}+B[I][0]x_{C[0]}+B[I][1]x_{C[1]}+...
 */
 
-void Pgeneric_gauss_elim_mod(arg,rp)
-NODE arg;
-LIST *rp;
+void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 {
 	NODE n0;
 	MAT m,mat;
@@ -701,7 +645,7 @@ LIST *rp;
 	Q *rib,*cib;
 	int *colstat;
 	Q q;
-	int md,i,j,k,l,row,col,t,n,rank;
+	int md,i,j,k,l,row,col,t,rank;
 
 	asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim_mod");
 	asir_assert(ARG1(arg),O_N,"generic_gauss_elim_mod");
@@ -741,9 +685,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Pleqm(arg,rp)
-NODE arg;
-VECT *rp;
+void Pleqm(NODE arg,VECT *rp)
 {
 	MAT m;
 	VECT vect;
@@ -782,9 +724,7 @@ VECT *rp;
 	}
 }
 
-int gauss_elim_mod(mat,row,col,md)
-int **mat;
-int row,col,md;
+int gauss_elim_mod(int **mat,int row,int col,int md)
 {
 	int i,j,k,inv,a,n;
 	int *t,*pivot;
@@ -823,11 +763,7 @@ int row,col,md;
 
 struct oEGT eg_mod,eg_elim,eg_elim1,eg_elim2,eg_chrem,eg_gschk,eg_intrat,eg_symb;
 
-int generic_gauss_elim(mat,nm,dn,rindp,cindp)
-MAT mat;
-MAT *nm;
-Q *dn;
-int **rindp,**cindp;
+int generic_gauss_elim(MAT mat,MAT *nm,Q *dn,int **rindp,int **cindp)
 {
 	int **wmat;
 	Q **bmat;
@@ -979,11 +915,7 @@ RESET:
 	}
 }
 
-int generic_gauss_elim_hensel(mat,nmmat,dn,rindp,cindp)
-MAT mat;
-MAT *nmmat;
-Q *dn;
-int **rindp,**cindp;
+int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 {
 	MAT bmat,xmat;
 	Q **a0,**a,**b,**x,**nm;
@@ -1107,13 +1039,10 @@ int **rindp,**cindp;
 
 int f4_nocheck;
 
-int gensolve_check(mat,nm,dn,rind,cind)
-MAT mat,nm;
-Q dn;
-int *rind,*cind;
+int gensolve_check(MAT mat,MAT nm,Q dn,int *rind,int *cind)
 {
 	int row,col,rank,clen,i,j,k,l;
-	Q s,t,u;
+	Q s,t;
 	Q *w;
 	Q *mati,*nmk;
 
@@ -1158,13 +1087,10 @@ int *rind,*cind;
 
 /* assuming 0 < c < m */
 
-int inttorat(c,m,b,sgnp,nmp,dnp)
-N c,m,b;
-int *sgnp;
-N *nmp,*dnp;
+int inttorat(N c,N m,N b,int *sgnp,N *nmp,N *dnp)
 {
-	Q qq,t,u1,v1,r1,nm;
-	N q,r,u2,v2,r2;
+	Q qq,t,u1,v1,r1;
+	N q,u2,v2,r2;
 
 	u1 = 0; v1 = ONE; u2 = m; v2 = c;
 	while ( cmpn(v2,b) >= 0 ) {
@@ -1183,14 +1109,10 @@ N *nmp,*dnp;
 
 /* mat->body = N ** */
 
-int intmtoratm(mat,md,nm,dn)
-MAT mat;
-N md;
-MAT nm;
-Q *dn;
+int intmtoratm(MAT mat,N md,MAT nm,Q *dn)
 {
 	N t,s,b;
-	Q bound,dn0,dn1,nm1,q,tq;
+	Q dn0,dn1,nm1,q;
 	int i,j,k,l,row,col;
 	Q **rmat;
 	N **tmat;
@@ -1240,14 +1162,10 @@ Q *dn;
 
 /* mat->body = Q ** */
 
-int intmtoratm_q(mat,md,nm,dn)
-MAT mat;
-N md;
-MAT nm;
-Q *dn;
+int intmtoratm_q(MAT mat,N md,MAT nm,Q *dn)
 {
 	N t,s,b;
-	Q bound,dn0,dn1,nm1,q,tq;
+	Q dn0,dn1,nm1,q;
 	int i,j,k,l,row,col;
 	Q **rmat;
 	Q **tmat;
@@ -1299,10 +1217,7 @@ Q *dn;
 
 #define ONE_STEP1  if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
 
-void reduce_reducers_mod(mat,row,col,md)
-int **mat;
-int row,col;
-int md;
+void reduce_reducers_mod(int **mat,int row,int col,int md)
 {
 	int i,j,k,l,hc,zzz;
 	int *t,*s,*tj,*ind;
@@ -1357,10 +1272,7 @@ int md;
 	2. reduce spolys by the reduced reducers
 */
 
-void pre_reduce_mod(mat,row,col,nred,md)
-int **mat;
-int row,col,nred;
-int md;
+void pre_reduce_mod(int **mat,int row,int col,int nred,int md)
 {
 	int i,j,k,l,hc,inv;
 	int *t,*s,*tk,*ind;
@@ -1410,14 +1322,10 @@ int md;
 	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
 */
 
-void reduce_sp_by_red_mod(sp,redmat,ind,nred,col,md)
-int *sp,**redmat;
-int *ind;
-int nred,col;
-int md;
+void reduce_sp_by_red_mod(int *sp,int **redmat,int *ind,int nred,int col,int md)
 {
 	int i,j,k,hc,zzz;
-	int *t,*s,*tj;
+	int *s,*tj;
 
 	/* reduce the spolys by redmat */
 	for ( i = nred-1; i >= 0; i-- ) {
@@ -1440,13 +1348,8 @@ int md;
 	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
 */
 
-int red_by_compress(m,p,r,ri,hc,len)
-int m;
-unsigned int *p;
-register unsigned int *r;
-register unsigned int *ri;
-unsigned int hc;
-register int len;
+void red_by_compress(int m,unsigned int *p,unsigned int *r,
+	unsigned int *ri,unsigned int hc,int len)
 {
 	unsigned int up,lo;
 	unsigned int dmy;
@@ -1465,11 +1368,7 @@ register int len;
 
 /* p -= hc*r */
 
-int red_by_vect(m,p,r,hc,len)
-int m;
-unsigned int *p,*r;
-unsigned int hc;
-int len;
+void red_by_vect(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)
 {
 	register unsigned int up,lo;
 	unsigned int dmy;
@@ -1487,17 +1386,12 @@ int len;
 
 extern unsigned int **psca;
 
-void reduce_sp_by_red_mod_compress (sp,redmat,ind,nred,col,md)
-int *sp;
-CDP *redmat;
-int *ind;
-int nred,col;
-int md;
+void reduce_sp_by_red_mod_compress (int *sp,CDP *redmat,int *ind,
+	int nred,int col,int md)
 {
-	int i,j,k,len;
-	unsigned int *tj;
+	int i,len;
 	CDP ri;
-	unsigned int hc,up,lo,up1,lo1,c;
+	unsigned int hc;
 	unsigned int *usp;
 
 	usp = (unsigned int *)sp;
@@ -1514,19 +1408,16 @@ int md;
 		}
 	}
 	for ( i = 0; i < col; i++ )
-		if ( usp[i] >= md )
+		if ( usp[i] >= (unsigned int)md )
 			usp[i] %= md;
 }
 
 #define ONE_STEP2  if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
 
-int generic_gauss_elim_mod(mat0,row,col,md,colstat)
-int **mat0;
-int row,col,md;
-int *colstat;
+int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat)
 {
-	int i,j,k,l,inv,a,rank,zzz;
-	unsigned int *t,*pivot,*pk,*tk;
+	int i,j,k,l,inv,a,rank;
+	unsigned int *t,*pivot,*pk;
 	unsigned int **mat;
 
 	mat = (unsigned int **)mat0;
@@ -1548,7 +1439,7 @@ int *colstat;
 		inv = invm(pivot[j],md);
 		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
 			if ( *pk ) {
-				if ( *pk >= md )
+				if ( *pk >= (unsigned int)md )
 					*pk %= md;
 				DMAR(*pk,inv,0,md,*pk)
 			}
@@ -1574,7 +1465,7 @@ int *colstat;
 		if ( colstat[j] ) {
 			t = mat[l];
 			for ( k = j; k < col; k++ )
-				if ( t[k] >= md )
+				if ( t[k] >= (unsigned int)md )
 					t[k] %= md;
 			l++;
 		}
@@ -1583,13 +1474,10 @@ int *colstat;
 
 /* LU decomposition; a[i][i] = 1/U[i][i] */
 
-int lu_gfmmat(mat,md,perm)
-GFMMAT mat;
-unsigned int md;
-int *perm;
+int lu_gfmmat(GFMMAT mat,unsigned int md,int *perm)
 {
 	int row,col;
-	int i,j,k,l;
+	int i,j,k;
 	unsigned int *t,*pivot;
 	unsigned int **a;
 	unsigned int inv,m;
@@ -1641,12 +1529,10 @@ int *perm;
 	cinfo[j]=1 <=> j-th column is contained in the LU decomp.
 */
 
-int find_lhs_and_lu_mod(a,row,col,md,rinfo,cinfo)
-unsigned int **a;
-unsigned int md;
-int **rinfo,**cinfo;
+int find_lhs_and_lu_mod(unsigned int **a,int row,int col,
+	unsigned int md,int **rinfo,int **cinfo)
 {
-	int i,j,k,l,d;
+	int i,j,k,d;
 	int *rp,*cp;
 	unsigned int *t,*pivot;
 	unsigned int inv,m;
@@ -1694,12 +1580,7 @@ int **rinfo,**cinfo;
 	b = a^(-1)b
  */
 
-void solve_by_lu_mod(a,n,md,b,l)
-int **a;
-int n;
-int md;
-int **b;
-int l;
+void solve_by_lu_mod(int **a,int n,int md,int **b,int l)
 {
 	unsigned int *y,*c;
 	int i,j,k;
@@ -1737,9 +1618,7 @@ int l;
 	}
 }
 
-void Pleqm1(arg,rp)
-NODE arg;
-VECT *rp;
+void Pleqm1(NODE arg,VECT *rp)
 {
 	MAT m;
 	VECT vect;
@@ -1778,9 +1657,7 @@ VECT *rp;
 	}
 }
 
-gauss_elim_mod1(mat,row,col,md)
-int **mat;
-int row,col,md;
+int gauss_elim_mod1(int **mat,int row,int col,int md)
 {
 	int i,j,k,inv,a,n;
 	int *t,*pivot;
@@ -1817,9 +1694,7 @@ int row,col,md;
 		return -1;
 }
 
-void Pgeninvm(arg,rp)
-NODE arg;
-LIST *rp;
+void Pgeninvm(NODE arg,LIST *rp)
 {
 	MAT m;
 	pointer **mat;
@@ -1853,17 +1728,15 @@ LIST *rp;
 		MKMAT(mat1,col,row); MKMAT(mat2,row-col,row);
 		for ( i = 0, tmat = (Q **)mat1->body; i < col; i++ )
 			for ( j = 0; j < row; j++ )
-				STOQ(wmat[i][j+col],tmat[i][j]);
+				UTOQ(wmat[i][j+col],tmat[i][j]);
 		for ( tmat = (Q **)mat2->body; i < row; i++ )
 			for ( j = 0; j < row; j++ )
-				STOQ(wmat[i][j+col],tmat[i-col][j]);
+				UTOQ(wmat[i][j+col],tmat[i-col][j]);
 	 	MKNODE(node2,mat2,0); MKNODE(node1,mat1,node2); MKLIST(*rp,node1);
 	}
 }
 
-int gauss_elim_geninv_mod(mat,row,col,md)
-unsigned int **mat;
-int row,col,md;
+int gauss_elim_geninv_mod(unsigned int **mat,int row,int col,int md)
 {
 	int i,j,k,inv,a,n,m;
 	unsigned int *t,*pivot;
@@ -1899,9 +1772,7 @@ int row,col,md;
 	return 0;
 }
 
-void Psolve_by_lu_gfmmat(arg,rp)
-NODE arg;
-VECT *rp;
+void Psolve_by_lu_gfmmat(NODE arg,VECT *rp)
 {
 	GFMMAT lu;
 	Q *perm,*rhs,*v;
@@ -1922,15 +1793,12 @@ VECT *rp;
 	solve_by_lu_gfmmat(lu,md,b,sol);
 	MKVECT(r,n);
 	for ( i = 0, v = (Q *)r->body; i < n; i++ )
-			STOQ(sol[i],v[i]);
+			UTOQ(sol[i],v[i]);
 	*rp = r;
 }
 
-void solve_by_lu_gfmmat(lu,md,b,x)
-GFMMAT lu;
-unsigned int md;
-unsigned int *b;
-unsigned int *x;
+void solve_by_lu_gfmmat(GFMMAT lu,unsigned int md,
+	unsigned int *b,unsigned int *x)
 {
 	int n;
 	unsigned int **a;
@@ -1962,9 +1830,7 @@ unsigned int *x;
 	}
 }
 
-void Plu_gfmmat(arg,rp)
-NODE arg;
-LIST *rp;
+void Plu_gfmmat(NODE arg,LIST *rp)
 {
 	MAT m;
 	GFMMAT mm;
@@ -1994,9 +1860,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Pmat_to_gfmmat(arg,rp)
-NODE arg;
-GFMMAT *rp;
+void Pmat_to_gfmmat(NODE arg,GFMMAT *rp)
 {
 	MAT m;
 	unsigned int md;
@@ -2007,10 +1871,7 @@ GFMMAT *rp;
 	mat_to_gfmmat(m,md,rp);	
 }
 
-void mat_to_gfmmat(m,md,rp)
-MAT m;
-unsigned int md;
-GFMMAT *rp;
+void mat_to_gfmmat(MAT m,unsigned int md,GFMMAT *rp)
 {
 	unsigned int **wmat;
 	unsigned int t;
@@ -2033,9 +1894,7 @@ GFMMAT *rp;
 	TOGFMMAT(row,col,wmat,*rp);
 }
 
-void Pgeninvm_swap(arg,rp)
-NODE arg;
-LIST *rp;
+void Pgeninvm_swap(NODE arg,LIST *rp)
 {
 	MAT m;
 	pointer **mat;
@@ -2081,12 +1940,8 @@ LIST *rp;
 	}
 }
 
-gauss_elim_geninv_mod_swap(mat,row,col,md,invmatp,indexp)
-unsigned int **mat;
-int row,col;
-unsigned int md;
-unsigned int ***invmatp;
-int **indexp;
+int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,
+	unsigned int md,unsigned int ***invmatp,int **indexp)
 {
 	int i,j,k,inv,a,n,m;
 	unsigned int *t,*pivot,*s;
@@ -2140,10 +1995,7 @@ void _addn(N,N,N);
 int _subn(N,N,N);
 void _muln(N,N,N);
 
-void inner_product_int(a,b,n,r)
-Q *a,*b;
-int n;
-Q *r;
+void inner_product_int(Q *a,Q *b,int n,Q *r)
 {
 	int la,lb,i;
 	int sgn,sgn1;
@@ -2196,11 +2048,7 @@ Q *r;
 
 /* (k,l) element of a*b where a: .x n matrix, b: n x . integer matrix */
 
-void inner_product_mat_int_mod(a,b,n,k,l,r)
-Q **a;
-int **b;
-int n,k,l;
-Q *r;
+void inner_product_mat_int_mod(Q **a,int **b,int n,int k,int l,Q *r)
 {
 	int la,lb,i;
 	int sgn,sgn1;
@@ -2256,9 +2104,7 @@ Q *r;
 		NTOQ(sum,sgn,*r);
 }
 
-void Pmul_mat_vect_int(arg,rp)
-NODE arg;
-VECT *rp;
+void Pmul_mat_vect_int(NODE arg,VECT *rp)
 {
 	MAT mat;
 	VECT vect,r;
@@ -2269,14 +2115,13 @@ VECT *rp;
 	row = mat->row;
 	col = mat->col;
 	MKVECT(r,row);
-	for ( i = 0; i < row; i++ )
-		inner_product_int(mat->body[i],vect->body,col,&r->body[i]);
+	for ( i = 0; i < row; i++ ) {
+		inner_product_int((Q *)mat->body[i],(Q *)vect->body,col,(Q *)&r->body[i]);
+	}
 	*rp = r;
 }
 
-void Pnbpoly_up2(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pnbpoly_up2(NODE arg,GF2N *rp)
 {
 	int m,type,ret;
 	UP2 r;
@@ -2290,11 +2135,9 @@ GF2N *rp;
 		*rp = 0;
 }
 
-void Px962_irredpoly_up2(arg,rp)
-NODE arg;
-GF2N *rp;
+void Px962_irredpoly_up2(NODE arg,GF2N *rp)
 {
-	int m,type,ret,w;
+	int m,ret,w;
 	GF2N prev;
 	UP2 r;
 
@@ -2310,18 +2153,16 @@ GF2N *rp;
 			bzero((char *)r->b,w*sizeof(unsigned int));
 		}
 	}
-	ret = _generate_irreducible_polynomial(r,m,type);
+	ret = _generate_irreducible_polynomial(r,m);
 	if ( ret == 0 )
 		MKGF2N(r,*rp);
 	else
 		*rp = 0;
 }
 
-void Pirredpoly_up2(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pirredpoly_up2(NODE arg,GF2N *rp)
 {
-	int m,type,ret,w;
+	int m,ret,w;
 	GF2N prev;
 	UP2 r;
 
@@ -2337,7 +2178,7 @@ GF2N *rp;
 			bzero((char *)r->b,w*sizeof(unsigned int));
 		}
 	}
-	ret = _generate_good_irreducible_polynomial(r,m,type);
+	ret = _generate_good_irreducible_polynomial(r,m);
 	if ( ret == 0 )
 		MKGF2N(r,*rp);
 	else
@@ -2617,9 +2458,7 @@ PENTA:
 	return 1;
 }
 
-printqmat(mat,row,col)
-Q **mat;
-int row,col;
+void printqmat(Q **mat,int row,int col)
 {
 	int i,j;
 
@@ -2631,9 +2470,7 @@ int row,col;
 	}
 }
 
-printimat(mat,row,col)
-int **mat;
-int row,col;
+void printimat(int **mat,int row,int col)
 {
 	int i,j;
 

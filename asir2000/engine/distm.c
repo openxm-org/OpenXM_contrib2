@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.7 2000/12/05 06:59:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.8 2000/12/05 08:29:44 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -53,23 +53,7 @@
 extern int (*cmpdl)();
 extern int do_weyl;
 
-void comm_mulmd();
-void weyl_mulmd();
-void weyl_mulmdm();
-void weyl_mulmmm();
-
-void mulmdm_dup();
-void comm_mulmd_dup();
-void weyl_mulmd_dup();
-void weyl_mulmdm_dup();
-void weyl_mulmmm_dup();
-void comm_mulmd_tab_destructive();
-void adddl_dup();
-void ptomd(vl,mod,dvl,p,pr)
-VL vl,dvl;
-int mod;
-P p;
-DP *pr;
+void ptomd(VL vl,int mod,VL dvl,P p,DP *pr)
 {
 	P t;
 
@@ -77,11 +61,7 @@ DP *pr;
 	mptomd(vl,mod,dvl,t,pr);
 }
 
-void mptomd(vl,mod,dvl,p,pr)
-VL vl,dvl;
-int mod;
-P p;
-DP *pr;
+void mptomd(VL vl,int mod,VL dvl,P p,DP *pr)
 {
 	int n,i;
 	VL tvl;
@@ -121,11 +101,7 @@ DP *pr;
 	}
 }
 
-void mdtop(vl,mod,dvl,p,pr)
-VL vl,dvl;
-int mod;
-DP p;
-P *pr;
+void mdtop(VL vl,int mod,VL dvl,DP p,P *pr)
 {
 	int n,i;
 	DL d;
@@ -149,10 +125,7 @@ P *pr;
 	}
 }
 
-void addmd(vl,mod,p1,p2,pr)
-VL vl;
-int mod;
-DP p1,p2,*pr;
+void addmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr,mr0;
@@ -210,10 +183,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void submd(vl,mod,p1,p2,pr)
-VL vl;
-int mod;
-DP p1,p2,*pr;
+void submd(VL vl,int mod,DP p1,DP p2,DP *pr)
 {
 	DP t;
 
@@ -224,9 +194,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void chsgnmd(mod,p,pr)
-int mod;
-DP p,*pr;
+void chsgnmd(int mod,DP p,DP *pr)
 {
 	MP m,mr,mr0;
 
@@ -242,10 +210,7 @@ DP p,*pr;
 	}
 }
 
-void mulmd(vl,mod,p1,p2,pr)
-VL vl;
-int mod;
-DP p1,p2,*pr;
+void mulmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 {
 	if ( !do_weyl )
 		comm_mulmd(vl,mod,p1,p2,pr);
@@ -253,10 +218,7 @@ DP p1,p2,*pr;
 		weyl_mulmd(vl,mod,p1,p2,pr);
 }
 
-void comm_mulmd(vl,mod,p1,p2,pr)
-VL vl;
-int mod;
-DP p1,p2,*pr;
+void comm_mulmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
@@ -292,14 +254,11 @@ DP p1,p2,*pr;
 	}
 }
 
-void weyl_mulmd(vl,mod,p1,p2,pr)
-VL vl;
-int mod;
-DP p1,p2,*pr;
+void weyl_mulmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
-	int i,l,l1;
+	int i,l;
 	static MP *w;
 	static int wlen;
 
@@ -326,12 +285,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void mulmdm(vl,mod,p,m0,pr)
-VL vl;
-int mod;
-DP p;
-MP m0;
-DP *pr;
+void mulmdm(VL vl,int mod,DP p,MP m0,DP *pr)
 {
 	MP m,mr,mr0;
 	P c;
@@ -358,12 +312,7 @@ DP *pr;
 	}
 }
 
-void weyl_mulmdm(vl,mod,p,m0,pr)
-VL vl;
-int mod;
-DP p;
-MP m0;
-DP *pr;
+void weyl_mulmdm(VL vl,int mod,DP p,MP m0,DP *pr)
 {
 	DP r,t,t1;
 	MP m;
@@ -395,17 +344,12 @@ DP *pr;
 
 /* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
 
-void weyl_mulmmm(vl,mod,m0,m1,n,pr)
-VL vl;
-int mod;
-MP m0,m1;
-int n;
-DP *pr;
+void weyl_mulmmm(VL vl,int mod,MP m0,MP m1,int n,DP *pr)
 {
-	MP m,mr,mr0;
+	MP mr,mr0;
 	MQ mq;
 	DP r,t,t1;
-	P c,c0,c1,cc;
+	P c,c0,c1;
 	DL d,d0,d1;
 	int i,j,a,b,k,l,n2,s,min;
 	static int *tab;
@@ -469,12 +413,7 @@ DP *pr;
 	}
 }
 
-void mulmdc(vl,mod,p,c,pr)
-VL vl;
-int mod;
-DP p;
-P c;
-DP *pr;
+void mulmdc(VL vl,int mod,DP p,P c,DP *pr)
 {
 	MP m,mr,mr0;
 	int t;
@@ -498,12 +437,7 @@ DP *pr;
 	}
 }
 
-void divsmdc(vl,mod,p,c,pr)
-VL vl;
-int mod;
-DP p;
-P c;
-DP *pr;
+void divsmdc(VL vl,int mod,DP p,P c,DP *pr)
 {
 	MP m,mr,mr0;
 
@@ -521,10 +455,7 @@ DP *pr;
 	}
 }
 
-void _dtop_mod(vl,dvl,p,pr)
-VL vl,dvl;
-DP p;
-P *pr;
+void _dtop_mod(VL vl,VL dvl,DP p,P *pr)
 {
 	int n,i;
 	DL d;
@@ -549,11 +480,7 @@ P *pr;
 	}
 }
 
-void _dp_mod(p,mod,subst,rp)
-DP p;
-int mod;
-NODE subst;
-DP *rp;
+void _dp_mod(DP p,int mod,NODE subst,DP *rp)
 {
 	MP m,mr,mr0;
 	P t,s;
@@ -579,14 +506,10 @@ DP *rp;
 	}
 }
 
-void _dp_monic(p,mod,rp)
-DP p;
-int mod;
-DP *rp;
+void _dp_monic(DP p,int mod,DP *rp)
 {
 	MP m,mr,mr0;
 	int c,c1;
-	NODE tn;
 
 	if ( !p )
 		*rp = 0;
@@ -600,8 +523,7 @@ DP *rp;
 	}
 }
 
-void _printdp(d)
-DP d;
+void _printdp(DP d)
 {
 	int n,i;
 	MP m;
@@ -623,9 +545,7 @@ DP d;
 
 /* merge p1 and p2 into pr */
 
-void addmd_destructive(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void addmd_destructive(int mod,DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr,mr0,s;
@@ -676,9 +596,7 @@ DP p1,p2,*pr;
 	}
 }
 
-void mulmd_dup(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 {
 	if ( !do_weyl )
 		comm_mulmd_dup(mod,p1,p2,pr);
@@ -686,9 +604,7 @@ DP p1,p2,*pr;
 		weyl_mulmd_dup(mod,p1,p2,pr);
 }
 
-void comm_mulmd_dup(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void comm_mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
@@ -720,13 +636,11 @@ DP p1,p2,*pr;
 	}
 }
 
-void weyl_mulmd_dup(mod,p1,p2,pr)
-int mod;
-DP p1,p2,*pr;
+void weyl_mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 {
 	MP m;
 	DP s,t,u;
-	int i,l,l1;
+	int i,l;
 	static MP *w;
 	static int wlen;
 
@@ -749,15 +663,11 @@ DP p1,p2,*pr;
 	}
 }
 
-void mulmdm_dup(mod,p,m0,pr)
-int mod;
-DP p;
-MP m0;
-DP *pr;
+void mulmdm_dup(int mod,DP p,MP m0,DP *pr)
 {
 	MP m,mr,mr0;
 	DL d,dt,dm;
-	int c,n,r,i;
+	int c,n,i;
 	int *pt,*p1,*p2;
 
 	if ( !p )
@@ -779,11 +689,7 @@ DP *pr;
 	}
 }
 
-void weyl_mulmdm_dup(mod,m0,p,pr)
-int mod;
-MP m0;
-DP p;
-DP *pr;
+void weyl_mulmdm_dup(int mod,MP m0,DP p,DP *pr)
 {
 	DP r,t,t1;
 	MP m;
@@ -841,18 +747,11 @@ DP *pr;
 
 /* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
 
-void weyl_mulmmm_dup(mod,m0,m1,n,rtab,rtablen)
-int mod;
-MP m0,m1;
-int n;
-struct cdlm *rtab;
-int rtablen;
+void weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 {
-	MP m,mr,mr0;
-	DP r,t,t1;
-	int c,c0,c1,cc;
+	int c,c0,c1;
 	DL d,d0,d1,dt;
-	int i,j,a,b,k,l,n2,s,min,h,curlen;
+	int i,j,a,b,k,l,n2,s,min,curlen;
 	struct cdlm *p;
 	static int *ctab;
 	static struct cdlm *tab;
@@ -940,13 +839,7 @@ int rtablen;
 	}
 }
 
-void comm_mulmd_tab_destructive(mod,nv,t,n,t1,n1)
-int mod;
-int nv;
-struct cdlm *t;
-int n;
-struct cdlm *t1;
-int n1;
+void comm_mulmd_tab_destructive(int mod,int nv,struct cdlm *t,int n,struct cdlm *t1,int n1)
 {
 	int i,j;
 	struct cdlm *p;
@@ -975,10 +868,7 @@ int n1;
 		}
 }
 
-void adddl_dup(n,d1,d2,dr)
-int n;
-DL d1,d2;
-DL *dr;
+void adddl_dup(int n,DL d1,DL d2,DL *dr)
 {
 	DL dt;
 	int i;

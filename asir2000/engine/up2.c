@@ -45,12 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up2.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up2.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
-
-void find_root_up2();
 
 #define INLINE
 
@@ -166,9 +164,7 @@ else {\
 		a[q+1] ^= (w>>(32-s));\
 }
 
-void ptoup2(n,nr)
-P n;
-UP2 *nr;
+void ptoup2(P n,UP2 *nr)
 {
 	DCP dc;
 	UP2 r,s;
@@ -197,9 +193,7 @@ UP2 *nr;
 	}
 }
 
-void ptoup2_sparse(n,nr)
-P n;
-UP2 *nr;
+void ptoup2_sparse(P n,UP2 *nr)
 {
 	DCP dc;
 	UP2 s;
@@ -226,9 +220,7 @@ UP2 *nr;
 	}
 }
 
-void up2top(n,nr)
-UP2 n;
-P *nr;
+void up2top(UP2 n,P *nr)
 {
 	int i,d;
 	DCP dc0,dc;
@@ -248,9 +240,7 @@ P *nr;
 	}
 }
 
-void up2tovect(n,nr)
-UP2 n;
-VECT *nr;
+void up2tovect(UP2 n,VECT *nr)
 {
 	int i,d;
 	VECT v;
@@ -266,9 +256,7 @@ VECT *nr;
 	}
 }
 
-void up2ton(p,n)
-UP2 p;
-Q *n;
+void up2ton(UP2 p,Q *n)
 {
 	N nm;
 	int w;
@@ -284,9 +272,7 @@ Q *n;
 	}
 }
 
-void ntoup2(n,p)
-Q n;
-UP2 *p;
+void ntoup2(Q n,UP2 *p)
 {
 	N nm;
 	UP2 t;
@@ -301,10 +287,7 @@ UP2 *p;
 	}
 }
 
-void gen_simpup2(p,m,r)
-UP2 p;
-GEN_UP2 m;
-UP2 *r;
+void gen_simpup2(UP2 p,GEN_UP2 m,UP2 *r)
 {
 	if ( lm_lazy || !m )
 		*r = p;
@@ -316,9 +299,7 @@ UP2 *r;
 		*r = 0;
 }
 
-void gen_simpup2_destructive(p,m)
-UP2 p;
-GEN_UP2 m;
+void gen_simpup2_destructive(UP2 p,GEN_UP2 m)
 {
 	UP2 t;
 
@@ -331,10 +312,7 @@ GEN_UP2 m;
 		remup2_sparse_destructive(p,m->sparse);
 }
 
-void gen_invup2(p,m,r)
-UP2 p;
-GEN_UP2 m;
-UP2 *r;
+void gen_invup2(UP2 p,GEN_UP2 m,UP2 *r)
 {
 	if ( !m )
 		error("gen_invup2 : invalid modulus");
@@ -342,11 +320,7 @@ UP2 *r;
 		invup2(p,m->dense,r);
 }
 
-void gen_pwrmodup2(a,b,m,c)
-UP2 a;
-Q b;
-GEN_UP2 m;
-UP2 *c;
+void gen_pwrmodup2(UP2 a,Q b,GEN_UP2 m,UP2 *c)
 {
 	if ( !m )
 		pwrmodup2(a,b,0,c);
@@ -356,9 +330,7 @@ UP2 *c;
 		pwrmodup2_sparse(a,b,m->sparse,c);
 }
 
-void simpup2(p,m,r)
-UP2 p,m;
-UP2 *r;
+void simpup2(UP2 p,UP2 m,UP2 *r)
 {
 	if ( !lm_lazy && m )
 		remup2(p,m,r);
@@ -366,8 +338,7 @@ UP2 *r;
 		*r = p;
 }
 
-int degup2(a)
-UP2 a;
+int degup2(UP2 a)
 {
 	unsigned int l,i,t;
 
@@ -380,8 +351,7 @@ UP2 a;
 	}
 }
 
-int degup2_sparse(a)
-UP2 a;
+int degup2_sparse(UP2 a)
 {
 	if ( !a || !a->w )
 		return -1;
@@ -389,8 +359,7 @@ UP2 a;
 		return a->b[0];
 }
 
-int degup2_1(a)
-unsigned int a;
+int degup2_1(unsigned int a)
 {
 	int i;
 
@@ -398,9 +367,7 @@ unsigned int a;
 	return i-1;
 }
 
-void addup2(a,b,c)
-UP2 a,b;
-UP2 *c;
+void addup2(UP2 a,UP2 b,UP2 *c)
 {
 	int i;
 	UP2 t;
@@ -431,9 +398,7 @@ UP2 *c;
 	}
 }
 
-void subup2(a,b,c)
-UP2 a,b;
-UP2 *c;
+void subup2(UP2 a,UP2 b,UP2 *c)
 {
 	addup2(a,b,c);
 }
@@ -448,10 +413,7 @@ x                   m
 ---------------------
 */
 
-INLINE void mulup2_n1(s,w,m,r)
-unsigned int *s,*r;
-int w;
-unsigned int m;
+INLINE void mulup2_n1(unsigned int *s,int w,unsigned int m,unsigned int *r)
 {
 	int i;
 	unsigned int _u,_l,t;
@@ -463,10 +425,7 @@ unsigned int m;
 		}
 }
 
-INLINE void mulup2_nh(s,w,m,r)
-unsigned int *s,*r;
-int w;
-unsigned int m; /* 0 <= b <= 0xffff */
+INLINE void mulup2_nh(unsigned int *s,int w,unsigned int m,unsigned int *r)
 {
 	int i;
 	unsigned int u,l;
@@ -477,9 +436,7 @@ unsigned int m; /* 0 <= b <= 0xffff */
 	}
 }
 
-void _mulup2_1(a,b,c)
-UP2 a,c;
-unsigned int b;
+void _mulup2_1(UP2 a,unsigned int b,UP2 c)
 {
 	int w;
 
@@ -495,9 +452,7 @@ unsigned int b;
 	}
 }
 
-void _mulup2_h(a,b,c)
-UP2 a,c;
-unsigned int b; /* 0 <= b <= 0xffff */
+void _mulup2_h(UP2 a,unsigned int b,UP2 c)
 {
 	int w;
 
@@ -510,9 +465,7 @@ unsigned int b; /* 0 <= b <= 0xffff */
 	}
 }
 
-void mulup2(a,b,c)
-UP2 a,b;
-UP2 *c;
+void mulup2(UP2 a,UP2 b,UP2 *c)
 {
 	UP2 t;
 	int wa,wb,w;
@@ -543,9 +496,7 @@ UP2 *c;
 	}
 }
 
-void _kmulup2_(a,b,w,c)
-unsigned int *a,*b,*c;
-int w;
+void _kmulup2_(unsigned int *a,unsigned int *b,int w,unsigned int *c)
 {
 	switch ( w ) {
 		case 1: GF2M_MUL_1(c[1],c[0],*a,*b); break;
@@ -558,9 +509,7 @@ int w;
 	}
 }
 
-void _mulup2_nn(a,b,w,c)
-unsigned int *a,*b,*c;
-int w;
+void _mulup2_nn(unsigned int *a,unsigned int *b,int w,unsigned int *c)
 {
 	int wlow,whigh;
 	struct _oUP2 ablow,abhigh,alow,ahigh,blow,bhigh,aa,bb,mid,cmid;
@@ -595,8 +544,7 @@ int w;
 	_addtoup2_(&mid,&cmid);
 }
 
-void _mulup2(a,b,c)
-UP2 a,b,c;
+void _mulup2(UP2 a,UP2 b,UP2 c)
 {
 	int wa,wb,w;
 	int i;
@@ -616,8 +564,7 @@ UP2 a,b,c;
 	_adjup2(c);
 }
 
-void _mulup2_(a,b,c)
-_UP2 a,b,c;
+void _mulup2_(_UP2 a,_UP2 b,_UP2 c)
 {
 	int wa,wb,w;
 	int i;
@@ -637,9 +584,7 @@ _UP2 a,b,c;
 	_adjup2_(c);
 }
 
-void squareup2(n,nr)
-UP2 n;
-UP2 *nr;
+void squareup2(UP2 n,UP2 *nr)
 {
 	int w,w2,i;
 	unsigned int s;
@@ -662,9 +607,7 @@ UP2 *nr;
 	}
 }
 
-void _squareup2(n,nr)
-UP2 n;
-UP2 nr;
+void _squareup2(UP2 n,UP2 nr)
 {
 	int w,w2,i;
 	unsigned int s;
@@ -687,8 +630,7 @@ UP2 nr;
 	}
 }
 
-void _adjup2(n)
-UP2 n;
+void _adjup2(UP2 n)
 {
 	int i;
 	unsigned int *nb;
@@ -699,8 +641,7 @@ UP2 n;
 	n->w = i;
 }
 
-void _adjup2_(n)
-_UP2 n;
+void _adjup2_(_UP2 n)
 {
 	int i;
 	unsigned int *nb;
@@ -711,8 +652,7 @@ _UP2 n;
 	n->w = i;
 }
 
-void _addup2(a,b,c)
-UP2 a,b,c;
+void _addup2(UP2 a,UP2 b,UP2 c)
 {
 	int i,wa,wb,w;
 	UP2 t;
@@ -739,8 +679,7 @@ UP2 a,b,c;
 
 /* a += b */
 
-void _addup2_destructive(a,b)
-UP2 a,b;
+void _addup2_destructive(UP2 a,UP2 b)
 {
 	int i,wa,wb;
 	unsigned int *ab,*bb;
@@ -766,8 +705,7 @@ UP2 a,b;
 	}
 }
 
-void _addup2_(a,b,c)
-_UP2 a,b,c;
+void _addup2_(_UP2 a,_UP2 b,_UP2 c)
 {
 	int i,wa,wb,w;
 	_UP2 t;
@@ -786,8 +724,7 @@ _UP2 a,b,c;
 	c->w = wa;
 }
 
-void _addtoup2_(a,b)
-_UP2 a,b;
+void _addtoup2_(_UP2 a,_UP2 b)
 {
 	int i,wa;
 	unsigned int *ab,*bb;
@@ -800,8 +737,7 @@ _UP2 a,b;
 
 /* 8bit x 8bit; also works if deg(a*b) < 32 */
 
-unsigned int mulup2_bb(a,b)
-unsigned int a,b;
+unsigned int mulup2_bb(unsigned int a,unsigned int b)
 {
 	unsigned int t;
 
@@ -837,8 +773,7 @@ void init_up2_tab()
   deg(b)=BSH-1, deg(a)<=BSH-1 => deg(q)<=BSH-1, deg(r)<=BSH-2
 */
 
-INLINE unsigned int quoup2_11(a,b)
-unsigned int a,b;
+INLINE unsigned int quoup2_11(unsigned int a,unsigned int b)
 {
 	unsigned int q,i;
 
@@ -851,10 +786,7 @@ unsigned int a,b;
 	return q;
 }
 
-void divup2_1(a1,a2,e1,e2,qp,rp)
-unsigned int a1,a2;
-int e1,e2;
-unsigned int *qp,*rp;
+void divup2_1(unsigned int a1,unsigned int a2,int e1,int e2,unsigned int *qp,unsigned int *rp)
 {
 	int i;
 	unsigned t,q;
@@ -869,9 +801,7 @@ unsigned int *qp,*rp;
 	*qp = q; *rp = a1;
 }
 
-void qrup2(a,b,q,r)
-UP2 a,b;
-UP2 *q,*r;
+void qrup2(UP2 a,UP2 b,UP2 *q,UP2 *r)
 {
 	unsigned int msa,msb,t,q0;
 	int s,i,wq,wb;
@@ -921,9 +851,7 @@ UP2 *q,*r;
 
 /* q->w >= a->w-b->w+2, r->w >= b->w */
 
-void _qrup2(a,b,q,r)
-UP2 a,b;
-UP2 q,r;
+void _qrup2(UP2 a,UP2 b,UP2 q,UP2 r)
 {
 	unsigned int msa,msb,t,q0;
 	int s,i,wq,wb;
@@ -963,9 +891,7 @@ UP2 q,r;
 		r->w = i+1;
 }
 
-void remup2(a,b,c)
-UP2 a,b;
-UP2 *c;
+void remup2(UP2 a,UP2 b,UP2 *c)
 {
 	unsigned int msa,msb,t,q;
 	int s,i,wq,wb;
@@ -1006,8 +932,7 @@ UP2 *c;
 	}
 }
 
-void _remup2(a,b,c)
-UP2 a,b,c;
+void _remup2(UP2 a,UP2 b,UP2 c)
 {
 	unsigned int msa,msb,t,q;
 	int s,i,wq,wb;
@@ -1049,9 +974,7 @@ UP2 a,b,c;
 
 /* b = b->w|b->b[0]|b->b[1]|...  -> b = x^b->[0]+x^b->[1]+... (b->w terms) */
 
-void remup2_sparse(a,b,c)
-UP2 a,b;
-UP2 *c;
+void remup2_sparse(UP2 a,UP2 b,UP2 *c)
 {
 	int i,j,k,wa,wb,d,ds,db,dr,r;
 	unsigned int ha,hb;
@@ -1123,8 +1046,7 @@ UP2 *c;
 	}
 }
 
-void remup2_sparse_destructive(a,b)
-UP2 a,b;
+void remup2_sparse_destructive(UP2 a,UP2 b)
 {
 	int i,j,k,wb,d,ds,db,dr,r;
 	unsigned int ha,hb;
@@ -1171,9 +1093,7 @@ UP2 a,b;
 
 /* b = x^d+x^(d-1)+...+1 */
 
-void remup2_type1_destructive(a,d)
-UP2 a;
-int d;
+void remup2_type1_destructive(UP2 a,int d)
 {
 	int i,k,ds,db,dr;
 	unsigned int ha,hb,r;
@@ -1204,8 +1124,7 @@ int d;
 
 /* b = x^b->b[0]+x^b->b[1]+1 */
 
-void remup2_3_destructive(a,b)
-UP2 a,b;
+void remup2_3_destructive(UP2 a,UP2 b)
 {
 	int i,k,d,ds,db,db1,dr;
 	unsigned int ha,hb,r;
@@ -1240,8 +1159,7 @@ UP2 a,b;
 
 /* b = x^b->b[0]+x^b->b[1]+x^b->b[2]+x^b->b[3]+1 */
 
-void remup2_5_destructive(a,b)
-UP2 a,b;
+void remup2_5_destructive(UP2 a,UP2 b)
 {
 	int i,d,ds,db,db1,db2,db3,dr;
 	int k,k1,k2,k3;
@@ -1283,8 +1201,7 @@ UP2 a,b;
 	_adjup2(a);
 }
 
-void _invup2_1(f1,f2,a1,b1)
-unsigned int f1,f2,*a1,*b1;
+void _invup2_1(unsigned int f1,unsigned int f2,unsigned int *a1,unsigned int *b1)
 {
 	unsigned int p1,p2,p3,q1,q2,q3,g1,g2,q,r;
 	int d1,d2;
@@ -1304,8 +1221,7 @@ unsigned int f1,f2,*a1,*b1;
 	*a1 = p1; *b1 = q1;
 }
 
-void _gcdup2_1(f1,f2,gcd)
-unsigned int f1,f2,*gcd;
+void _gcdup2_1(unsigned int f1,unsigned int f2,unsigned int *gcd)
 {
 	unsigned int g1,g2,q,r;
 	int d1,d2;
@@ -1341,9 +1257,7 @@ void up2_show_eg() {
 	printf("\n");
 }
 
-void invup2(a,m,inv)
-UP2 a,m;
-UP2 *inv;
+void invup2(UP2 a,UP2 m,UP2 *inv)
 {
 	int w,e1,e2,d1,d2;
 	UP2 g1,g2,g3,a1,a2,a3,q,r,w1,w2,t;
@@ -1417,9 +1331,7 @@ UP2 *inv;
 	}
 }
 
-void gcdup2(a,m,gcd)
-UP2 a,m;
-UP2 *gcd;
+void gcdup2(UP2 a,UP2 m,UP2 *gcd)
 {
 	int w,e1,e2,d1,d2;
 	UP2 g1,g2,g3,q,r,w1,w2,t;
@@ -1489,17 +1401,12 @@ UP2 *gcd;
 	}
 }
 
-void chsgnup2(a,c)
-UP2 a,*c;
+void chsgnup2(UP2 a,UP2 *c)
 {
 	*c = a;
 }
 
-void pwrmodup2(a,b,m,c)
-UP2 a;
-Q b;
-UP2 m;
-UP2 *c;
+void pwrmodup2(UP2 a,Q b,UP2 m,UP2 *c)
 {
 	N n;
 	UP2 y,t,t1;
@@ -1535,11 +1442,7 @@ UP2 *c;
 	}
 }
 
-void pwrmodup2_sparse(a,b,m,c)
-UP2 a;
-Q b;
-UP2 m;
-UP2 *c;
+void pwrmodup2_sparse(UP2 a,Q b,UP2 m,UP2 *c)
 {
 	N n;
 	UP2 y,t,t1;
@@ -1575,8 +1478,7 @@ UP2 *c;
 	}
 }
 
-int compup2(n1,n2)
-UP2 n1,n2;
+int compup2(UP2 n1,UP2 n2)
 {
 	int i;
 	unsigned int *m1,*m2;
@@ -1603,17 +1505,13 @@ UP2 n1,n2;
 	}
 }
 
-void _copyup2(n,r)
-UP2 n,r;
+void _copyup2(UP2 n,UP2 r)
 {
 	r->w = n->w;
 	bcopy(n->b,r->b,n->w*sizeof(unsigned int));
 }
 
-void _bshiftup2(n,b,r)
-UP2 n;
-int b;
-UP2 r;
+void _bshiftup2(UP2 n,int b,UP2 r)
 {
 	int w,l,nl,i,j;
 	unsigned int msw;
@@ -1679,9 +1577,7 @@ UP2 r;
 	}
 }
 
-void _bshiftup2_destructive(n,b)
-UP2 n;
-int b;
+void _bshiftup2_destructive(UP2 n,int b)
 {
 	int w,l,nl,i,j;
 	unsigned int msw;
@@ -1746,9 +1642,7 @@ int b;
 	}
 }
 
-void diffup2(f,r)
-UP2 f;
-UP2 *r;
+void diffup2(UP2 f,UP2 *r)
 {
 	int d,i,w;
 	UP2 t;
@@ -1769,8 +1663,7 @@ UP2 *r;
 	}
 }
 
-int sqfrcheckup2(f)
-UP2 f;
+int sqfrcheckup2(UP2 f)
 {
 	UP2 df,g;
 
@@ -1782,8 +1675,7 @@ UP2 f;
 		return 1;
 }
 
-int irredcheckup2(f)
-UP2 f;
+int irredcheckup2(UP2 f)
 {
 	int n,w,i,j,k,hcol;
 	unsigned int hbit;
@@ -1823,8 +1715,7 @@ UP2 f;
 	return 1;
 }
 
-int irredcheck_dddup2(f)
-UP2 f;
+int irredcheck_dddup2(UP2 f)
 {
 	UP2 x,u,t,s,gcd;
 	int n,i;
@@ -1844,10 +1735,7 @@ UP2 f;
 	return 1;
 }
 
-void _copy_up2bits(p,mat,pos)
-UP2 p;
-unsigned int **mat;
-int pos;
+void _copy_up2bits(UP2 p,unsigned int **mat,int pos)
 {
 	int d,col,j,jcol,jsh;
 	unsigned int bit;
@@ -1863,9 +1751,7 @@ int pos;
 	mat[pos][col] ^= bit;
 }
 
-int compute_multiplication_matrix(p0,mp)
-P p0;
-GF2MAT *mp;
+int compute_multiplication_matrix(P p0,GF2MAT *mp)
 {
 	UP2 p;
 	int n,w,i,j,k,l;
@@ -1909,21 +1795,15 @@ GF2MAT *mp;
 #define GF2N_PBTOPB 0
 #define GF2N_NBTOPB 1
 
-void compute_change_of_basis_matrix_with_root(P,P,int,GF2N,GF2MAT *,GF2MAT *);
-
 /*
  * if 'to' = GF2N_NBTOPB then p0 must be a normal poly.
  * rep0 x m01 -> rep1, rep1 x m10 -> rep0
  */
 
-void compute_change_of_basis_matrix(p0,p1,to,m01,m10)
-P p0,p1;
-int to;
-GF2MAT *m01,*m10;
+void compute_change_of_basis_matrix(P p0,P p1,int to,GF2MAT *m01,GF2MAT *m10)
 {
 	UP2 up0;
 	int n,w;
-	unsigned int **p01,**p10;
 	GF2N root;
 
 	setmod_gf2n(p1);
@@ -1934,15 +1814,10 @@ GF2MAT *m01,*m10;
 	compute_change_of_basis_matrix_with_root(p0,p1,to,root,m01,m10);
 }
 
-void compute_change_of_basis_matrix_with_root(p0,p1,to,root,m01,m10)
-P p0,p1;
-int to;
-GF2N root;
-GF2MAT *m01,*m10;
+void compute_change_of_basis_matrix_with_root(P p0,P p1,int to,GF2N root,GF2MAT *m01,GF2MAT *m10)
 {
 	UP2 up0,t,u,s;
 	int n,w,i;
-	unsigned int **a,**b,**g,**h;
 	unsigned int **p01,**p10;
 	P tmp;
 
@@ -1985,9 +1860,7 @@ GF2MAT *m01,*m10;
  *
  */
 
-int compute_representation_conversion_matrix(p0,np,pn)
-P p0;
-GF2MAT *np,*pn;
+int compute_representation_conversion_matrix(P p0,GF2MAT *np,GF2MAT *pn)
 {
 	UP2 x,s;
 	int n,w,i;
@@ -2016,9 +1889,7 @@ GF2MAT *np,*pn;
 	return 1;
 }
 
-void mul_nb(mat,a,b,c)
-GF2MAT mat;
-unsigned int *a,*b,*c;
+void mul_nb(GF2MAT mat,unsigned int *a,unsigned int *b,unsigned int *c)
 {
 	int n,w,i;
 	unsigned int *wa,*wb,*t;
@@ -2047,9 +1918,7 @@ unsigned int *a,*b,*c;
   a=(c0,c1,...,c{n-1})->(c1,c2,...,c{n-1},c0)
 */
 
-void leftshift(a,n)
-unsigned int *a;
-int n;
+void leftshift(unsigned int *a,int n)
 {
 	int r,w,i;
 	unsigned int msb;
@@ -2064,9 +1933,7 @@ int n;
 		a[w-1] &= (1<<r)-1;
 }
 
-void mat_to_gf2mat(a,b)
-MAT a;
-unsigned int ***b;
+void mat_to_gf2mat(MAT a,unsigned int ***b)
 {
 	int n,w,i,j;
 	unsigned int **m;
@@ -2080,9 +1947,7 @@ unsigned int ***b;
 				m[i][j/BSH] |= 1<<(j%BSH);
 }
 
-void gf2mat_to_mat(a,n,b)
-unsigned int **a;
-MAT *b;
+void gf2mat_to_mat(unsigned int **a,int n,MAT *b)
 {
 	int w,i,j;
 	MAT m;
@@ -2095,9 +1960,7 @@ MAT *b;
 				m->body[i][j] = (pointer)ONE;
 }
 
-void mulgf2mat(n,a,b,c)
-int n;
-unsigned int **a,**b,**c;
+void mulgf2mat(int n,unsigned int **a,unsigned int **b,unsigned int **c)
 {
 	int i,j,k,w;
 
@@ -2113,11 +1976,7 @@ unsigned int **a,**b,**c;
 
 /* c = a*b; where a, c are row vectors */
 
-void mulgf2vectmat(n,a,b,c)
-int n;
-unsigned int *a;
-unsigned int **b;
-unsigned int *c;
+void mulgf2vectmat(int n,unsigned int *a,unsigned int **b,unsigned int *c)
 {
 	int j,k,w;
 
@@ -2129,9 +1988,7 @@ unsigned int *c;
 				c[k] ^= b[j][k];
 }
 
-int mulgf2vectvect(n,a,b)
-int n;
-unsigned int *a,*b;
+int mulgf2vectvect(int n,unsigned int *a,unsigned int *b)
 {
 	unsigned int t,r;
 	int i,w;
@@ -2143,9 +2000,7 @@ unsigned int *a,*b;
 	return r;
 }
 
-int invgf2mat(n,a,b)
-int n;
-unsigned int **a,**b;
+int invgf2mat(int n,unsigned int **a,unsigned int **b)
 {
 	int i,j,k,hcol,hbit,w;
 	unsigned int *u;
@@ -2184,15 +2039,12 @@ unsigned int **a,**b;
 	return 1;
 }
 
-INLINE void _mulup2_11(a1,a2,ar)
-unsigned int a1,a2;
-unsigned int *ar;
+INLINE void _mulup2_11(unsigned int a1,unsigned int a2,unsigned int *ar)
 {
 	GF2M_MUL_1(ar[1],ar[0],a1,a2);
 }
 
-void _mulup2_22(a1,a2,ar)
-unsigned int *a1,*a2,*ar;
+void _mulup2_22(unsigned int *a1,unsigned int *a2,unsigned int *ar)
 {
 	unsigned int m[2];
 
@@ -2205,8 +2057,7 @@ unsigned int *a1,*a2,*ar;
 }
 
 #if 0
-void _mulup2_33(a1,a2,ar)
-unsigned int *a1,*a2,*ar;
+void _mulup2_33(unsigned int *a1,unsigned int *a2,unsigned int *ar)
 {
 	unsigned int m[4];
 	unsigned int c1[2],c2[2];
@@ -2226,8 +2077,7 @@ unsigned int *a1,*a2,*ar;
 #else
 /* (ar[5]...ar[0]) = (a1[2]a1[1]a1[0])*(a2[2]a2[1]a2[0])  */
 
-void _mulup2_33(a1,a2,ar)
-unsigned int *a1,*a2,*ar;
+void _mulup2_33(unsigned int *a1,unsigned int *a2,unsigned int *ar)
 {
 	unsigned int m[4];
 	unsigned int c[2];
@@ -2276,8 +2126,7 @@ unsigned int *a1,*a2,*ar;
 }
 #endif
 
-void _mulup2_44(a1,a2,ar)
-unsigned int *a1,*a2,*ar;
+void _mulup2_44(unsigned int *a1,unsigned int *a2,unsigned int *ar)
 {
 	unsigned int m[4];
 	unsigned int c1[2],c2[2];
@@ -2295,8 +2144,7 @@ unsigned int *a1,*a2,*ar;
 	ar[2] ^= m[0]; ar[3] ^= m[1]; ar[4] ^= m[2]; ar[5] ^= m[3];
 }
 
-void _mulup2_55(a1,a2,ar)
-unsigned int *a1,*a2,*ar;
+void _mulup2_55(unsigned int *a1,unsigned int *a2,unsigned int *ar)
 {
 	unsigned int m[6];
 	unsigned int c1[3],c2[3];
@@ -2315,8 +2163,7 @@ unsigned int *a1,*a2,*ar;
 	ar[6] ^= m[3]; ar[7] ^= m[4]; ar[8] ^= m[5];
 }
 
-void _mulup2_66(a1,a2,ar)
-unsigned int *a1,*a2,*ar;
+void _mulup2_66(unsigned int *a1,unsigned int *a2,unsigned int *ar)
 {
 	unsigned int m[6];
 	unsigned int c1[3],c2[3];
@@ -2336,9 +2183,7 @@ unsigned int *a1,*a2,*ar;
 }
 
 #if 0
-void printup2_(f,l)
-unsigned int *f;
-int l;
+void printup2_(unsigned int *f,int l)
 {
 	int i;
 
@@ -2350,10 +2195,7 @@ int l;
 }
 #endif
 
-void type1_bin_invup2(a,n,inv)
-UP2 a;
-int n;
-UP2 *inv;
+void type1_bin_invup2(UP2 a,int n,UP2 *inv)
 {
 	int lf,lg,i,j,k,lg2,df,dg,l,w;
 	unsigned int r;
@@ -2406,8 +2248,7 @@ UP2 *inv;
 	}
 }
 
-UP2 *compute_tab_gf2n(f)
-UP2 f;
+UP2 *compute_tab_gf2n(UP2 f)
 {
 	GEN_UP2 mod;
 	int m,n,w,i;
@@ -2426,10 +2267,7 @@ UP2 f;
 	return tab;
 }
 
-UP compute_trace_gf2n(tab,c,n)
-UP2 *tab;
-GF2N c;
-int n;
+UP compute_trace_gf2n(UP2 *tab,GF2N c,int n)
 {
 	GEN_UP2 mod;
 	int w,m,i,j;
@@ -2471,9 +2309,7 @@ int n;
 	return r;			
 }
 
-void up2toup(f,r)
-UP2 f;
-UP *r;
+void up2toup(UP2 f,UP *r)
 {
 	int d,i;
 	UP2 c;
@@ -2497,15 +2333,12 @@ UP *r;
 	}
 }
 
-void find_root_up2(f,r)
-UP2 f;
-GF2N *r;
+void find_root_up2(UP2 f,GF2N *r)
 {
 	int n;
 	UP2 *tab;
 	UP uf,trace,gcd,quo,rem;
 	GF2N c;
-	int i;
 
 	/* computeation of tab : tab[i] = t^(2^i) mod f (i=0,...,n-1) */
 	n = degup2(f);

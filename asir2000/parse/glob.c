@@ -45,11 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.22 2001/09/05 01:20:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.23 2001/10/05 10:23:07 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
+#include "ox.h"
 #if PARI
 #include "genpari.h"
 #endif
@@ -76,7 +77,7 @@ extern int GC_free_space_divisor;
 extern int GC_free_space_numerator;
 extern FILE *asir_out;
 
-IN asir_infile;
+INFILE asir_infile;
 jmp_buf main_env,debug_env,timer_env,exec_env;
 int little_endian,debug_mode;
 char *asir_libdir;
@@ -163,18 +164,14 @@ void glob_init() {
 	sprintf(asirname,"%s/asir_symtab",asir_libdir);
 }
 
-void input_init(fp,name)
-FILE *fp;
-char *name;
+void input_init(FILE *fp,char *name)
 {
-	asir_infile = (IN)CALLOC(sizeof(struct oIN),1);
+	asir_infile = (INFILE)CALLOC(sizeof(struct oINFILE),1);
 	asir_infile->name = name; asir_infile->fp = fp;
 	asir_infile->ln = 1; NEXT(asir_infile) = 0;
 }
 
-void notdef(vl,a,b,c)
-VL vl;
-Obj a,b,*c;
+void notdef(VL vl,Obj a,Obj b,Obj *c)
 {
 	error("undefined arithmetic operation.");
 }
@@ -201,8 +198,7 @@ void ExitAsir() {
  * status = 2 normal termination (end(), quit() etc.)
  */
 
-void asir_terminate(status)
-int status;
+void asir_terminate(int status)
 {
 	int t;
 
@@ -252,17 +248,14 @@ void prompt() {
 	fflush(asir_out);
 }
 
-void sprompt(ptr)
-char *ptr;
+void sprompt(char *ptr)
 {
 	sprintf(ptr,"[%d] ",APVS->n);
 }
 
 FILE *in_fp;
 
-void process_args(ac,av)
-int ac;
-char **av;
+void process_args(int ac,char **av)
 {
 	do_asirrc = 1;
 #if !MPI
@@ -343,6 +336,8 @@ void sig_init() {
 #if !defined(VISUAL)
 	signal(SIGINT,int_handler);
 #else
+	void register_ctrlc_handler();
+
 	register_ctrlc_handler();
 #endif
 	signal(SIGSEGV,segv_handler);
@@ -379,8 +374,7 @@ void asir_reset_handler() {
 	signal(SIGINT,old_int);
 }
 
-void resetenv(s)
-char *s;
+void resetenv(char *s)
 {
 	extern FILE *outfile;
 
@@ -408,8 +402,7 @@ char *s;
 	longjmp(main_env,1);
 }
 
-void fatal(n)
-int n;
+void fatal(int n)
 {
 	resetenv("return to toplevel");
 }
@@ -417,8 +410,7 @@ int n;
 FUNC registered_handler;
 extern int ox_int_received, critical_when_signal;
 
-void int_handler(sig)
-int sig;
+void int_handler(int sig)
 {
 	extern NODE PVSS;
 
@@ -529,8 +521,7 @@ void restore_handler() {
 #endif
 }
 
-void segv_handler(sig)
-int sig;
+void segv_handler(int sig)
 {
 #if defined(SIGSEGV)
 	signal(SIGSEGV,segv_handler);
@@ -538,8 +529,7 @@ int sig;
 #endif
 }
 
-void ill_handler(sig)
-int sig;
+void ill_handler(int sig)
 {
 #if defined(SIGILL)
 	signal(SIGILL,ill_handler);
@@ -547,15 +537,13 @@ int sig;
 #endif
 }
 
-void alrm_handler(sig)
-int sig;
+void alrm_handler(int sig)
 {
 	fprintf(stderr,"interval timer expired (VTALRM)\n");
 	longjmp(timer_env,1);
 }
 
-void bus_handler(sig)
-int sig;
+void bus_handler(int sig)
 {
 #if defined(SIGBUS)
 	signal(SIGBUS,bus_handler);
@@ -563,8 +551,7 @@ int sig;
 #endif
 }
 
-void fpe_handler(sig)
-int sig;
+void fpe_handler(int sig)
 {
 #if defined(SIGFPE)
 	signal(SIGFPE,fpe_handler);
@@ -572,8 +559,7 @@ int sig;
 #endif
 }
 
-void pipe_handler(sig)
-int sig;
+void pipe_handler(int sig)
 {
 #if defined(SIGPIPE)
 	signal(SIGPIPE,pipe_handler);
@@ -594,8 +580,7 @@ void tty_reset() {
 
 extern int evalstatline;
 
-void set_lasterror(s)
-char *s;
+void set_lasterror(char *s)
 {
 	strncpy(LastError,s,BUFSIZ);
 	LastError[BUFSIZ-1] = 0;
@@ -603,8 +588,7 @@ char *s;
 
 SNODE error_snode;
 
-void error(s)
-char *s;
+void error(char *s)
 {
 	SNODE *snp;
 
@@ -644,8 +628,7 @@ char *s;
 #if !defined(VISUAL)
 #include <sys/time.h>
 
-void set_timer(interval)
-int interval;
+void set_timer(int interval)
 {
 	struct itimerval it;
 

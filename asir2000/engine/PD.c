@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PD.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PD.c,v 1.4 2001/03/29 09:49:57 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -169,11 +169,7 @@ P p1,p2,*q;
 }
 
 #ifdef FBASE
-void plisttop(f,v,n,gp)
-P *f;
-V v;
-int n;
-P *gp;
+void plisttop(P *f,V v,int n,P *gp)
 {
 	int i;
 	DCP dc,dc0;
@@ -200,11 +196,9 @@ P *gp;
 
 /* for multivariate polynomials over fields */
 
-int divtp(vl,p1,p2,q)
-VL vl;
-P p1,p2,*q;
+int divtp(VL vl,P p1,P p2,P *q)
 {
-	register int i,j,k;
+	register int i,j;
 	register DCP dc1,dc2,dc;
 	P m,m1,s,dvr,t;
 	P *pq,*pr,*pd;
@@ -286,13 +280,11 @@ P p1,p2,*q;
 	}
 }
 
-int divtdcp(vl,p1,p2,q)
-VL vl;
-P p1,p2,*q;
+int divtdcp(VL vl,P p1,P p2,P *q)
 {
 
 	P m;
-	register DCP dc,dcr,dcr0,dct;
+	register DCP dc,dcr,dcr0;
 
 	for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
 		if ( !divtp(vl,COEF(dc),p2,&m) ) {
@@ -305,9 +297,7 @@ P p1,p2,*q;
 	return 1;
 }
 
-int divtpz(vl,p1,p2,q)
-VL vl;
-P p1,p2,*q;
+int divtpz(VL vl,P p1,P p2,P *q)
 {
 	register int i,j;
 	register DCP dc1,dc2,dc;
@@ -407,9 +397,7 @@ P p1,p2,*q;
 	}
 }
 
-int divtdcpz(vl,p1,p2,q)
-VL vl;
-P p1,p2,*q;
+int divtdcpz(VL vl,P p1,P p2,P *q)
 {
 
 	P m;
@@ -426,8 +414,7 @@ P p1,p2,*q;
 	return ( 1 );
 }
 
-void udivpz(f1,f2,fqp,frp)
-P f1,f2,*fqp,*frp;
+void udivpz(P f1,P f2,P *fqp,P *frp)
 {
 	register int n1,n2,i,j;
 	Q *pq,*pr,*pd,d,m,s,q;
@@ -492,10 +479,7 @@ P f1,f2,*fqp,*frp;
 	plisttop((P *)pq,VR(f1),n1-n2,fqp); plisttop((P *)pr,VR(f1),n2-1,frp);
 }
 
-void udivpwm(mod,p1,p2,q,r)
-Q mod;
-P p1,p2;
-P *q,*r;
+void udivpwm(Q mod,P p1,P p2,P *q,P *r)
 {
 	P s,t,u,tq,tr;
 
@@ -504,9 +488,7 @@ P *q,*r;
 	cmp(mod,tr,r); mulpq(tq,t,&s); cmp(mod,s,q); 
 }
 
-void udivpzwm(mod,f1,f2,fqp,frp)
-Q mod;
-P f1,f2,*fqp,*frp;
+void udivpzwm(Q mod,P f1,P f2,P *fqp,P *frp)
 {
 	register int n1,n2,i,j;
 	Q *pq,*pr,*pd,d,m,s,q;

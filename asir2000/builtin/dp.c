@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.19 2001/10/01 01:58:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.20 2001/10/05 10:23:06 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1365,8 +1365,6 @@ LIST *rp;
 {
 	LIST f,v;
 	Num homo;
-	Q m;
-	int modular;
 	struct order_spec ord;
 
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_main");

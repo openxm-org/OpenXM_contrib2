@@ -1,29 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.16 2001/09/03 01:04:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.17 2001/09/03 07:01:06 noro Exp $ */
 
 #include "ca.h"
 
-struct p_pair {
-	UM p0;
-	UM p1;
-	struct p_pair *next;
-};
+void lnfsf(int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1);
 
-void canzassf(UM,int,UM *);
-void lnfsf(int,UM,UM,struct p_pair *,UM,UM);
-void minipolysf(UM,UM,UM);
-void czsfum(UM,UM *);
-void gensqfrsfum(UM,DUM);
-void sfbmtop(BM,V,V,P *);
-void cont_pp_sfp(VL,P,P *,P *);
-void sfcsump(VL,P,P *);
-void mulsfbmarray(int,BM,ML,int,int *,V,V,P *);
-void const_term(P,UM);
-
-void sfbsqfr(P,V,V,DCP *);
-void sfusqfr(P,DCP *);
-
-int comp_dum(a,b)
-DUM a,b;
+int comp_dum(DUM a,DUM b)
 {
 	if ( DEG(a->f) > DEG(b->f) )
 		return -1;
@@ -33,19 +14,17 @@ DUM a,b;
 		return 0;
 }
 
-void fctrsf(p,dcp)
-P p;
-DCP *dcp;
+void fctrsf(P p,DCP *dcp)
 {
 	int n,i,j,k;
 	DCP dc,dc0;
 	P lc;
-	P zp;
 	UM mp;
 	UM *tl;
+	Obj obj;
 	struct oDUM *udc,*udc1;
 
-	simp_ff(p,&zp); p = zp;
+	simp_ff((Obj)p,&obj); p = (P)obj;
 	if ( !p ) {
 		*dcp = 0; return;
 	}
@@ -92,9 +71,7 @@ DCP *dcp;
 	NEXT(dc) = 0; *dcp = dc0;
 }
 
-void gensqfrsfum(p,dc)
-UM p;
-struct oDUM *dc;
+void gensqfrsfum(UM p,struct oDUM *dc)
 {
 	int n,i,j,d,mod;
 	UM t,s,g,f,f1,b;
@@ -147,9 +124,7 @@ struct oDUM *dc;
 	}
 }
 
-void randsfum(d,p)
-int d;
-UM p;
+void randsfum(int d,UM p)
 {
 	int i;
 
@@ -159,9 +134,7 @@ UM p;
 	p->d = i;
 }
 
-void pwrmodsfum(p,e,f,pr)
-int e;
-UM p,f,pr;
+void pwrmodsfum(UM p,int e,UM f,UM pr)
 {
 	UM wt,ws,q;
 
@@ -189,9 +162,7 @@ UM p,f,pr;
 	}
 }
 
-void spwrsfum(m,f,e,r)
-UM f,m,r;
-N e;
+void spwrsfum(UM m,UM f,N e,UM r)
 {
 	UM t,s,q;
 	N e1;
@@ -213,9 +184,7 @@ N e;
 	}
 }
 
-void tracemodsfum(m,f,e,r)
-UM f,m,r;
-int e;
+void tracemodsfum(UM m,UM f,int e,UM r)
 {
 	UM t,s,q,u;
 	int i;
@@ -235,10 +204,7 @@ int e;
 	cpyum(s,r);
 }
 
-void make_qmatsf(p,tab,mp)
-UM p;
-UM *tab;
-int ***mp;
+void make_qmatsf(UM p,UM *tab,int ***mp)
 {
 	int n,i,j;
 	int *c;
@@ -259,10 +225,7 @@ int ***mp;
 		mat[i][i] = _subsf(mat[i][i],one);
 }
 
-void nullsf(mat,n,ind)
-int **mat;
-int *ind;
-int n;
+void nullsf(int **mat,int n,int *ind)
 {
 	int i,j,l,s,h,inv;
 	int *t,*u;
@@ -294,11 +257,7 @@ int n;
 	}
 }
 
-void null_to_solsf(mat,ind,n,r)
-int **mat;
-int *ind;
-int n;
-UM *r;
+void null_to_solsf(int **mat,int *ind,int n,UM *r)
 {
 	int i,j,k,l;
 	int *c;
@@ -327,8 +286,7 @@ nullsf(mat,n,ind)
 null_to_solsf(ind,n,r)
 */
 
-void czsfum(f,r)
-UM f,*r;
+void czsfum(UM f,UM *r)
 {
 	int i,j;
 	int d,n,ord;
@@ -382,10 +340,7 @@ UM f,*r;
 	r[j] = 0;
 }
 
-int berlekampsf(p,df,tab,r)
-UM p;
-int df;
-UM *tab,*r;
+int berlekampsf(UM p,int df,UM *tab,UM *r)
 {
 	int n,i,j,k,nf,d,nr;
 	int **mat;
@@ -431,10 +386,12 @@ UM *tab,*r;
 			}
 		}
 	}
+	/* NOT REACHED */
+	error("berlekampsf : cannot happen");
+	return 0;
 }
 
-void minipolysf(f,p,mp)
-UM f,p,mp;
+void minipolysf(UM f,UM p,UM mp)
 {
 	struct p_pair *list,*l,*l1,*lprev;	
 	int n,d;
@@ -469,13 +426,9 @@ UM f,p,mp;
 	}
 }
 
-void lnfsf(n,p0,p1,list,np0,np1)
-int n;
-UM p0,p1;
-struct p_pair *list;
-UM np0,np1;
+void lnfsf(int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1)
 {
-	int inv,h,d1;
+	int h,d1;
 	UM t0,t1,s0,s1;
 	struct p_pair *l;
 
@@ -492,12 +445,10 @@ UM np0,np1;
 	}
 }
 
-int find_rootsf(p,root)
-UM p;
-int *root;
+int find_rootsf(UM p,int *root)
 {
 	UM *r;
-	int i,j,n;
+	int i,n;
 
 	n = DEG(p);
 	r = ALLOCA((DEG(p))*sizeof(UM));
@@ -507,14 +458,12 @@ int *root;
 	return n;
 }
 
-void canzassf(f,d,r)
-UM f,*r;
-int d;
+void canzassf(UM f,int d,UM *r)
 {
 	UM t,s,u,w,g,o;
 	N n1,n2,n3,n4,n5;
 	UM *b;
-	int n,m,i,q,ed;
+	int n,q,ed;
 
 	if ( DEG(f) == d ) {
 		r[0] = UMALLOC(d); cpyum(f,r[0]);
@@ -560,25 +509,19 @@ void ptosfbm(int,P,BM);
 
 /* f = f(x,y) */
 
-void sfhensel(count,f,x,evp,sfp,listp)
-int count;
-P f;
-V x;
-GFS *evp;
-P *sfp;
-ML *listp;
+void sfhensel(int count,P f,V x,GFS *evp,P *sfp,ML *listp)
 {
-	int i,j;
-	int fn,n;
+	int i;
+	int fn;
 	ML rlist;
 	BM fl;
 	VL vl,nvl;
 	V y;
-	int dx,dy,mev;
+	int dx,dy;
 	GFS ev;
-	P f1,t,yev,c,sf;
+	P f1,t,c,sf;
 	DCP dc;
-	UM w,w1,q,fm,hm;
+	UM q,fm,hm;
 	UM *gm;
 	struct oEGT tmp0,tmp1,eg_hensel,eg_hensel_t;
 
@@ -662,26 +605,21 @@ ML *listp;
 
 /* main variable of f = x */
 
-int sfberle(vl,f,count,ev,dcp)
-VL vl;
-P f;
-int count;
-GFS *ev;
-DCP *dcp;
+int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp)
 {
 	UM wf,wf1,wf2,wfs,gcd;
-	ML flist;
-	int fn,fn1,n;
+	int fn,n;
 	GFS m,fm;
 	DCP dc,dct,dc0;
 	VL nvl;
 	V x,y;
-	P g,lc,lc0,f0;
+	P lc,lc0,f0;
+	Obj obj;
 	int j,q1,index,i;
 
 	clctv(vl,f,&nvl); vl = nvl;
 	x = vl->v; y = vl->next->v;
-	simp_ff(f,&g); g = f;
+	simp_ff((Obj)f,&obj); f = (P)obj;
 	n = QTOS(DEG(DC(f)));
 	wf = W_UMALLOC(n); wf1 = W_UMALLOC(n); wf2 = W_UMALLOC(n);
 	wfs = W_UMALLOC(n); gcd = W_UMALLOC(n);
@@ -716,9 +654,7 @@ DCP *dcp;
 	}
 }
 
-void sfgcdgen(f,blist,clistp)
-P f;
-ML blist,*clistp;
+void sfgcdgen(P f,ML blist,ML *clistp)
 {
 	int i;
 	int n,d,np;
@@ -747,17 +683,11 @@ ML blist,*clistp;
 
 /* f = g0*h0 mod y -> f = gk*hk mod y^(dy+1), f is replaced by hk */
 
-void sfhenmain2(f,g0,h0,dy,gp)
-BM f;
-UM g0,h0;
-int dy;
-BM *gp;
+void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp)
 {
-	int i,j,k,l;
-	int *px,*py;
-	int **pp,**pp1;
-	int dx,np,dr,tmp;
-	UM wt,wa,wb,wm,q,w1,w2,wh1,wg1,ws;
+	int i,k;
+	int dx;
+	UM wt,wa,wb,q,w1,w2,wh1,wg1,ws;
 	UM wc,wd,we,wz;
 	BM wb0,wb1;
 	int dg,dh;
@@ -858,10 +788,7 @@ BM *gp;
 
 /* fl->c[i] = coef_y(f,i) */
 
-void ptosfbm(dy,f,fl)
-int dy;
-P f;
-BM fl;
+void ptosfbm(int dy,P f,BM fl)
 {
 	DCP dc;
 	int d,i,dx;
@@ -885,10 +812,7 @@ BM fl;
 
 /* x : main variable */
 
-void sfbmtop(f,x,y,fp)
-BM f;
-V x,y;
-P *fp;
+void sfbmtop(BM f,V x,V y,P *fp)
 {
 	UM *c;
 	int i,j,d,a,dy;
@@ -926,16 +850,13 @@ P *fp;
 		*fp = 0;
 }
 
-void sfsqfr(f,dcp)
-P f;
-DCP *dcp;
+void sfsqfr(P f,DCP *dcp)
 {
-	P g;
-	V x;
+	Obj obj;
 	DCP dc;
 	VL vl;
 
-	simp_ff(f,&g); f = g;
+	simp_ff((Obj)f,&obj); f = (P)obj;
 	clctv(CO,f,&vl);
 	if ( !vl ) {
 		/* f is a const */
@@ -943,14 +864,12 @@ DCP *dcp;
 	} else if ( !NEXT(vl) )
 		sfusqfr(f,dcp);
 	else if ( !NEXT(NEXT(vl)) )
-		sfbsqfr(f,x,NEXT(vl)->v,dcp);
+		sfbsqfr(f,vl->v,NEXT(vl)->v,dcp);
 	else
 		error("sfsqfr : not implemented yet");
 }
 
-void sfusqfr(f,dcp)
-P f;
-DCP *dcp;
+void sfusqfr(P f,DCP *dcp)
 {
 	DCP dc,dct;
 	struct oDUM *udc;
@@ -978,10 +897,7 @@ DCP *dcp;
 	*dcp = dct;
 }
 
-void sfbsqfr(f,x,y,dcp)
-P f;
-V x,y;
-DCP *dcp;
+void sfbsqfr(P f,V x,V y,DCP *dcp)
 {
 	P t,rf,cx,cy;
 	VL vl,rvl;
@@ -1005,10 +921,7 @@ DCP *dcp;
 
 void sfdtest(P,ML,V,V,DCP *);
 
-void sfbfctr(f,x,y,dcp)
-P f;
-V x,y;
-DCP *dcp;
+void sfbfctr(P f,V x,V y,DCP *dcp)
 {
 	ML list;
 	P sf;
@@ -1043,17 +956,13 @@ DCP *dcp;
 
 /* f = f(x,y) = list->c[0]*list->c[1]*... mod y^(list->bound+1) */
 
-void sfdtest(f,list,x,y,dcp)
-P f;
-ML list;
-V x,y;
-DCP *dcp;
+void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 {
 	int np,dx,dy;
 	int i,j,k;
 	int *win;
 	P g,lcg,factor,cofactor,lcyx;
-	P t,csum;
+	P csum;
 	DCP dcf,dcf0,dc;
 	BM *c;
 	BM lcy;
@@ -1147,16 +1056,8 @@ DCP *dcp;
 }
 
 /* lcy = LC(g), lcg = lcy*g, lcg0 = const part of lcg */
-int sfdtestmain(vl,lcg,lcg0,lcy,csum,list,k,in,fp,cofp)
-VL vl;
-P lcg;
-UM lcg0;
-BM lcy;
-P csum;
-ML list;
-int k;
-int *in;
-P *fp,*cofp;
+int sfdtestmain(VL vl,P lcg,UM lcg0,BM lcy,P csum,ML list,
+	int k,int *in,P *fp,P *cofp)
 {
 	P fmul,csumg,q,cont;
 	V x,y;
@@ -1181,9 +1082,7 @@ P *fp,*cofp;
 		return 0;
 }
 
-void const_term(f,c)
-P f;
-UM c;
+void const_term(P f,UM c)
 {
 	DCP dc;
 
@@ -1194,9 +1093,7 @@ UM c;
 		DEG(c) = -1;
 }
 
-void const_term_sfbm(f,c)
-BM f;
-UM c;
+void const_term_sfbm(BM f,UM c)
 {
 	int i,dy;
 
@@ -1211,14 +1108,8 @@ UM c;
 
 /* lcy*(product of const part) | lcg0 ? */
 
-int sfctest(lcg0,lcy,list,k,in)
-UM lcg0;
-BM lcy;
-ML list;
-int k;
-int *in;
+int sfctest(UM lcg0,BM lcy,ML list,int k,int *in)
 {
-	DCP dc;
 	int dy,i,dr;
 	UM t,s,u,w;
 	BM *l;
@@ -1249,17 +1140,10 @@ int *in;
 
 /* main var of f is x */
 
-void mulsfbmarray(dx,lcy,list,k,in,x,y,g)
-int dx;
-BM lcy;
-ML list;
-int k;
-int *in;
-V x,y;
-P *g;
+void mulsfbmarray(int dx,BM lcy,ML list,int k,int *in,V x,V y,P *g)
 {
 	int dy,i;
-	BM wb0,wb1,t,lcbm;
+	BM wb0,wb1,t;
 	BM *l;
 
 	dy = list->bound;
@@ -1275,10 +1159,7 @@ P *g;
 	sfbmtop(wb0,x,y,g);
 }
 
-void sfcsump(vl,f,s)
-VL vl;
-P f;
-P *s;
+void sfcsump(VL vl,P f,P *s)
 {
 	P t,u;
 	DCP dc;
@@ -1291,10 +1172,7 @@ P *s;
 
 /* *fp = primitive part of f w.r.t. x */
 
-void cont_pp_sfp(vl,f,cp,fp)
-VL vl;
-P f;
-P *cp,*fp;
+void cont_pp_sfp(VL vl,P f,P *cp,P *fp)
 {
 	V x,y;
 	int d;
@@ -1325,10 +1203,7 @@ P *cp,*fp;
 	}
 }
 
-int divtp_by_sfbm(vl,f,g,qp)
-VL vl;
-P f,g;
-P *qp;
+int divtp_by_sfbm(VL vl,P f,P g,P *qp)
 {
 	V x,y;
 	int fx,fy,gx,gy;
@@ -1369,15 +1244,14 @@ P *qp;
 	if ( j >= 0 )
 		return 0;
 	sfbmtop(ql,x,y,qp);
+	return 1;
 }
 
 /* XXX generate an irreducible poly of degree n */
 
 extern int current_gfs_q1;
 
-void generate_defpoly_sfum(n,dp)
-int n;
-UM *dp;
+void generate_defpoly_sfum(int n,UM *dp)
 {
 	UM r,dr,t,g;
 	UM *f;

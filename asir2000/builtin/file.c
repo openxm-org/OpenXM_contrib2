@@ -45,10 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.13 2001/03/21 23:49:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.14 2001/08/20 09:03:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
+#include "ox.h"
 #include "base.h"
 #include "unistd.h"
 #if PARI
@@ -58,6 +59,7 @@
 #if defined(VISUAL)
 #include <windows.h>
 #include <process.h>
+#include <io.h>
 /* #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\WinECgen\\1.00.000" */
 #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\FSEcParamGen\\V1.0L10"
 #define ASIR_KEYNAME "SoftWare\\Fujitsu\\Asir\\1999.03.31"
@@ -109,16 +111,13 @@ struct ftab file_tab[] = {
 
 static FILE *file_ptrs[BUFSIZ];
 
-void Ppurge_stdin(rp)
-Q *rp;
+void Ppurge_stdin(Q *rp)
 {
 	purge_stdin(stdin);
 	*rp = 0;
 }
 
-void Popen_file(arg,rp)
-NODE arg;
-Q *rp;
+void Popen_file(NODE arg,Q *rp)
 {
 	char *name;
 	FILE *fp;
@@ -143,9 +142,7 @@ Q *rp;
 	STOQ(i,*rp);
 }
 
-void Pclose_file(arg,rp)
-NODE arg;
-Q *rp;
+void Pclose_file(NODE arg,Q *rp)
 {
 	int i;
 
@@ -159,9 +156,7 @@ Q *rp;
 	*rp = ONE;
 }
 
-void Pget_line(arg,rp)
-NODE arg;
-STRING *rp;
+void Pget_line(NODE arg,STRING *rp)
 {
 	int i,j,c;
 	FILE *fp;
@@ -212,9 +207,7 @@ STRING *rp;
 		error("get_line : invalid argument");
 }
 
-void Pget_byte(arg,rp)
-NODE arg;
-Q *rp;
+void Pget_byte(NODE arg,Q *rp)
 {
 	int i,c;
 	FILE *fp;
@@ -232,9 +225,7 @@ Q *rp;
 		error("get_byte : invalid argument");
 }
 
-void Pput_byte(arg,rp)
-NODE arg;
-Q *rp;
+void Pput_byte(NODE arg,Q *rp)
 {
 	int i,c;
 	FILE *fp;
@@ -250,9 +241,7 @@ Q *rp;
 		error("put_byte : invalid argument");
 }
 
-void Pload(arg,rp)
-NODE arg;
-Q *rp;
+void Pload(NODE arg,Q *rp)
 {
 	int ret = 0;
 	char *name,*name0;
@@ -281,25 +270,23 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
-void Pload_exec(arg,rp)
-NODE arg;
-Q *rp;
+void Pload_exec(NODE arg,Q *rp)
 {
-	int ret = 0;
+	int ret;
 	char *name0,*name;
 
 	name0 = BDY((STRING)ARG0(arg));
 	searchasirpath(name0,&name);
 	if ( !name )
 		ret = -1;
-	else
-		ret = load_and_execfile(name);
+	else {
+		load_and_execfile(name);
+		ret = 0;
+	}
 	STOQ(ret,*rp);
 }
 
-void Pwhich(arg,rp)
-NODE arg;
-STRING *rp;
+void Pwhich(NODE arg,STRING *rp)
 {
 	char *name;
 	STRING str;
@@ -318,9 +305,7 @@ STRING *rp;
 		*rp = 0;
 }
 
-void Ploadfiles(arg,rp)
-NODE arg;
-Q *rp;
+void Ploadfiles(NODE arg,Q *rp)
 {
 	int ret;
 
@@ -334,9 +319,7 @@ Q *rp;
 	STOQ(ret,*rp);
 }
 
-void Poutput(arg,rp)
-NODE arg;
-Q *rp;
+void Poutput(NODE arg,Q *rp)
 {
 #if PARI
 	extern FILE *outfile;
@@ -365,9 +348,7 @@ Q *rp;
 
 extern int ox_file_io;
 
-void Pbsave(arg,rp)
-NODE arg;
-Q *rp;
+void Pbsave(NODE arg,Q *rp)
 {
 	FILE *fp;
 	VL vl,t;
@@ -388,9 +369,7 @@ Q *rp;
 	*rp = ONE;
 }
 
-void Pbload(arg,rp)
-NODE arg;
-Obj *rp;
+void Pbload(NODE arg,Obj *rp)
 {
 	FILE *fp;
 
@@ -405,12 +384,9 @@ Obj *rp;
 	ox_file_io = 0;
 }
 
-void Pbsave_cmo(arg,rp)
-NODE arg;
-Q *rp;
+void Pbsave_cmo(NODE arg,Q *rp)
 {
 	FILE *fp;
-	VL vl,t;
 
 	asir_assert(ARG1(arg),O_STR,"bsave_cmo");
 	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
@@ -423,9 +399,7 @@ Q *rp;
 	*rp = ONE;
 }
 
-void Pbload_cmo(arg,rp)
-NODE arg;
-Obj *rp;
+void Pbload_cmo(NODE arg,Obj *rp)
 {
 	FILE *fp;
 
@@ -442,9 +416,7 @@ Obj *rp;
 static struct oSTRING rootdir;
 
 #if defined(VISUAL)
-void get_rootdir(name,len)
-char *name;
-int len;
+void get_rootdir(char *name,int len)
 {
 	LONG	ret;
 	HKEY	hOpenKey;
@@ -480,8 +452,7 @@ int len;
 	}
 }
 
-void set_rootdir(name)
-char *name;
+void set_rootdir(char *name)
 {
 	static char DirName[BUFSIZ];
 
@@ -494,15 +465,12 @@ char *name;
 }
 
 #else
-void get_rootdir(name,len)
-char *name;
-int len;
+void get_rootdir(char *name,int len)
 {
 	strcpy(name,asir_libdir);
 }
 
-void set_rootdir(name)
-char *name;
+void set_rootdir(char *name)
 {
 	static char DirName[BUFSIZ];
 
@@ -514,11 +482,9 @@ char *name;
 
 #endif
 
-void Pget_rootdir(rp)
-STRING *rp;
+void Pget_rootdir(STRING *rp)
 {
 	static char DirName[BUFSIZ];
-	int DirNameLen;
 
 	if ( !rootdir.body ) {
 		get_rootdir(DirName,sizeof(DirName));
@@ -529,9 +495,7 @@ STRING *rp;
 }
 
 #if defined(VISUAL) && defined(DES_ENC)
-void Pbsave_enc(arg,rp)
-NODE arg;
-Obj *rp;
+void Pbsave_enc(NODE arg,Obj *rp)
 {
 	init_deskey();
 	des_encryption = 1;
@@ -539,9 +503,7 @@ Obj *rp;
 	des_encryption = 0;
 }
 
-void Pbload_enc(arg,rp)
-NODE arg;
-Obj *rp;
+void Pbload_enc(NODE arg,Obj *rp)
 {
 	init_deskey();
 	des_encryption = 1;
@@ -550,9 +512,7 @@ Obj *rp;
 }
 #endif
 
-void Pbload27(arg,rp)
-NODE arg;
-Obj *rp;
+void Pbload27(NODE arg,Obj *rp)
 {
 	FILE *fp;
 	Obj r;
@@ -567,9 +527,7 @@ Obj *rp;
 	bobjtoobj(BASE27,r,rp);
 }
 
-void Pbsave_compat(arg,rp)
-NODE arg;
-Q *rp;
+void Pbsave_compat(NODE arg,Q *rp)
 {
 	FILE *fp;
 	VL vl,t;
@@ -590,9 +548,7 @@ Q *rp;
 	*rp = ONE;
 }
 
-void Pbload_compat(arg,rp)
-NODE arg;
-Obj *rp;
+void Pbload_compat(NODE arg,Obj *rp)
 {
 	FILE *fp;
 	unsigned int hdr[2];
@@ -626,21 +582,14 @@ Obj *rp;
 	fclose(fp);
 }
 
-void Premove_file(arg,rp)
-NODE arg;
-Q *rp;
+void Premove_file(NODE arg,Q *rp)
 {
 	unlink((char *)BDY((STRING)ARG0(arg)));
 	*rp = ONE;
 }
 
-void Paccess(arg,rp)
-NODE arg;
-Q *rp;
+void Paccess(NODE arg,Q *rp)
 {
-	char *name;
-	STRING str;
-
 #if defined(VISUAL)
 	if ( access(BDY((STRING)ARG0(arg)),04) >= 0 )
 #else
@@ -657,9 +606,7 @@ int process_id()
 	return GetCurrentProcessId();
 }
 
-void call_exe(name,av)
-char *name;
-char **av;
+void call_exe(char *name,char **av)
 {
 	_spawnv(_P_WAIT,name,av);
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.12 2001/09/03 07:01:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.13 2001/09/03 07:56:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -884,7 +884,6 @@ NODE arg;
 LIST *rp;
 {
 	int i,j,n;
-	Q mod;
 	MAT mat,r;
 	VECT u;
 	Q q;
@@ -1101,7 +1100,6 @@ int *ind;
 	int i,j,l,s;
 	GFSN w,w1,h,inv;
 	GFSN *t,*u;
-	GFSN one;
 
 	bzero(ind,n*sizeof(int));
 	ind[0] = 0;

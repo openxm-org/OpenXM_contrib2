@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.3 2000/08/22 05:03:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.4 2000/12/05 01:24:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -250,7 +250,7 @@ LIST *rp;
 		t = BDY((Alg)a);
 		switch ( OID(t) ) {
 			case O_P:
-				clctalg(t,&vl); break;
+				clctalg((P)t,&vl); break;
 			case O_R:
 				clctalg(NM((R)t),&vl1);
 				clctalg(DN((R)t),&vl2);

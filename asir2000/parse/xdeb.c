@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.6 2000/09/25 04:33:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.7 2001/10/05 03:21:27 noro Exp $ 
 */
 #if defined(VISUAL)
 #if defined(VISUAL_LIB)
@@ -130,18 +130,12 @@ static Display *display;
 
 void get_cmd();
 
-static void Done(w,e,p,n)
-Widget w;
-XEvent *e;
-String *p;
-Cardinal *n;
+static void Done(Widget w,XEvent *e,String *p,Cardinal *n)
 {
 	SetSelected(w,0,0);
 }
 
-static void SetSelected(w,cld,cad)
-Widget w;
-XtPointer cld,cad;
+static void SetSelected(Widget w,XtPointer cld,XtPointer cad)
 {
 	Arg		arg[5];
 	char *cmd;
@@ -153,9 +147,7 @@ XtPointer cld,cad;
 	XtSetValues(cmdwin, arg, 1);
 }
 
-static void SetDismiss(w,cld,cad)
-Widget w;
-XtPointer cld,cad;
+static void SetDismiss(Widget w,XtPointer cld,XtPointer cad)
 {
 	Arg		arg[5];
 	char *cmd;
@@ -167,7 +159,7 @@ XtPointer cld,cad;
 	XtSetValues(cmdwin, arg, 1);
 }
 
-init_cmdwin()
+void init_cmdwin()
 {
 	Arg		arg[5];
 	int argc=0;
@@ -221,8 +213,7 @@ init_cmdwin()
 	is_init = 1;
 }
 
-show_debug_window(on)
-int on;
+void show_debug_window(int on)
 {
 	XEvent ev;
 
@@ -240,8 +231,7 @@ int on;
 	}
 }
 
-get_line(buf)
-char *buf;
+void get_line(char *buf)
 {
 	XEvent ev;
 
@@ -253,13 +243,12 @@ char *buf;
 	strcpy(buf,debug_cmd);
 }
 #else /* DO_PLOT */
-init_cmdwin() {}
+void init_cmdwin() {}
 
-show_debug_window(on)
-int on;
+void show_debug_window(int on)
 {}
 
-get_line(buf)
+void get_line(buf)
 char *buf;
 {}
 #endif /* DO_PLOT */

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/gf2m_mul_w.c,v 1.2 2000/08/21 08:31:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/gf2m_mul_w.c,v 1.3 2000/08/22 05:03:55 noro Exp $ 
 */
 unsigned int NNgf2m_mul_11(unsigned int *h, unsigned int a, unsigned int b)
 {
@@ -54,7 +54,6 @@ unsigned int NNgf2m_mul_11(unsigned int *h, unsigned int a, unsigned int b)
 	push ebx
 	mov ecx,a
 	mov edx,b
-GF2ML0:
 	xor ebx,ebx
 	xor eax,eax
 	add edx,edx
@@ -261,7 +260,6 @@ unsigned int NNgf2m_mul_1h(unsigned int *h, unsigned int a, unsigned int b)
 	mov ecx,a
 	mov edx,b
 	shl edx,0x10
-GF2MLL0:
 	xor ebx,ebx
 	xor eax,eax
 	add edx,edx

@@ -45,20 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.8 2001/05/28 08:25:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.9 2001/07/04 07:19:19 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 
-void homfctr();
-void mfctr_wrt_v();
-
 int use_new_hensel;
 
-void fctrp(vl,f,dcp)
-VL vl;
-P f;
-DCP *dcp;
+void fctrp(VL vl,P f,DCP *dcp)
 {
 	VL nvl;
 	DCP dc;
@@ -78,11 +72,7 @@ DCP *dcp;
 	}
 }
 
-void fctr_wrt_v_p(vl,f,v,dcp)
-VL vl;
-P f;
-V v;
-DCP *dcp;
+void fctr_wrt_v_p(VL vl,P f,V v,DCP *dcp)
 {
 	VL nvl;
 	DCP dc;
@@ -102,10 +92,7 @@ DCP *dcp;
 	}
 }
 
-void homfctr(vl,g,dcp)
-VL vl;
-P g;
-DCP *dcp;
+void homfctr(VL vl,P g,DCP *dcp)
 {
 	P s,t,u,f,h,x;
 	Q e;
@@ -125,10 +112,7 @@ DCP *dcp;
 	*dcp = dc;
 }
 
-void mfctr(vl,f,dcp)
-VL vl;
-P f;
-DCP *dcp;
+void mfctr(VL vl,P f,DCP *dcp)
 {
 	DCP dc,dc0,dct,dcs,dcr;
 	P p,pmin,ppmin,cmin,t;
@@ -165,11 +149,7 @@ DCP *dcp;
 	adjsgn(f,dc0); *dcp = dc0;
 }
 
-void mfctr_wrt_v(vl,f,v,dcp)
-VL vl;
-P f;
-V v;
-DCP *dcp;
+void mfctr_wrt_v(VL vl,P f,V v,DCP *dcp)
 {
 	DCP dc,dc0,dct,dcs,dcr;
 	P p,pmin,ppmin,cmin,t;
@@ -205,9 +185,7 @@ DCP *dcp;
 }
 
 #if 0
-void adjsgn(p,dc)
-P p;
-DCP dc;
+void adjsgn(P p,DCP dc)
 {
 	int sgn;
 	DCP dct;
@@ -221,11 +199,8 @@ DCP dc;
 	}
 }
 #else
-void adjsgn(p,dc)
-P p;
-DCP dc;
+void adjsgn(P p,DCP dc)
 {     
-	int sgn;
 	DCP dct;
 	P c;
 
@@ -239,8 +214,7 @@ DCP dc;
 }
 #endif
 
-int headsgn(p)
-P p;
+int headsgn(P p)
 {
 	if ( !p )
 		return 0;
@@ -251,11 +225,7 @@ P p;
 	}
 }
 
-void fctrwithmvp(vl,f,v,dcp)
-VL vl;
-P f;
-V v;
-DCP *dcp;
+void fctrwithmvp(VL vl,P f,V v,DCP *dcp)
 {
 	VL nvl;
 	DCP dc;
@@ -273,11 +243,7 @@ DCP *dcp;
 		mfctrwithmv(nvl,f,v,dcp);
 }
 
-void mfctrwithmv(vl,f,v,dcp)
-VL vl;
-P f;
-V v;
-DCP *dcp;
+void mfctrwithmv(VL vl,P f,V v,DCP *dcp)
 {
 	DCP dc,dc0,dct,dcs,dcr;
 	P p,pmin,ppmin,cmin,t;
@@ -314,10 +280,7 @@ DCP *dcp;
 	*dcp = dc0;
 }
 
-void ufctr(f,hint,dcp)
-P f;
-int hint;
-DCP *dcp;
+void ufctr(P f,int hint,DCP *dcp)
 {
 	P p,c;
 	DCP dc,dct,dcs,dcr;
@@ -334,10 +297,7 @@ DCP *dcp;
 	}
 }
 
-void mfctrmain(vl,p,dcp)
-VL vl;
-P p;
-DCP *dcp;
+void mfctrmain(VL vl,P p,DCP *dcp)
 {
 	int i,j,k,*win,np,x;
 	VL nvl,tvl;
@@ -513,10 +473,7 @@ MAIN :
 	NEXT(dc) = 0; *dcp = dc0;
 }
 
-void ufctrmain(p,hint,dcp)
-P p;
-int hint;
-DCP *dcp;
+void ufctrmain(P p,int hint,DCP *dcp)
 {
 	ML list;
 	DCP dc;
@@ -541,17 +498,7 @@ DCP *dcp;
 	}
 }
 
-struct oMF {
-	int m;
-	P f;
-};
-
-void calcphi();
-
-void cycm(v,n,dcp)
-V v;
-register int n;
-DCP *dcp;
+void cycm(V v,int n,DCP *dcp)
 {
 	register int i,j;
 	struct oMF *mfp;
@@ -574,10 +521,7 @@ DCP *dcp;
 	NEXT(dc) = 0; *dcp = dc0;
 }
 
-void cycp(v,n,dcp)
-V v;
-register int n;
-DCP *dcp;
+void cycp(V v,int n,DCP *dcp)
 {
 	register int i,j;
 	int n0;
@@ -603,10 +547,7 @@ DCP *dcp;
 	NEXT(dc) = 0; *dcp = dc0;
 }
 
-void calcphi(v,n,mfp)
-V v;
-int n;
-register struct oMF *mfp;
+void calcphi(V v,int n,struct oMF *mfp)
 {
 	register int i,m;
 	P t,s,tmp;
@@ -620,10 +561,7 @@ register struct oMF *mfp;
 		error("calcphi: cannot happen");
 }
 
-void mkssum(v,e,s,sgn,r)
-V v;
-int e,s,sgn;
-P *r;
+void mkssum(V v,int e,int s,int sgn,P *r)
 {
 	register int i,sgnt;
 	DCP dc,dc0;
@@ -640,8 +578,7 @@ P *r;
 	NEXT(dc) = 0; MKP(v,dc0,*r);
 }
 
-int iscycp(f)
-P f;
+int iscycp(P f)
 {
 	DCP dc;
 	dc = DC(f);
@@ -654,8 +591,7 @@ P f;
 	return ( 1 );	
 }
 
-int iscycm(f)
-P f;
+int iscycm(P f)
 {
 	DCP dc;
 
@@ -668,8 +604,7 @@ P f;
 	return ( 1 );	
 }
 
-void sortfs(dcp)
-DCP *dcp;
+void sortfs(DCP *dcp)
 {
 	int i,k,n,k0,d;
 	DCP dc,dct,t;
@@ -697,8 +632,7 @@ DCP *dcp;
 	NEXT(dct) = 0;
 }
 
-void sortfsrev(dcp)
-DCP *dcp;
+void sortfsrev(DCP *dcp)
 {
 	int i,k,n,k0,d;
 	DCP dc,dct,t;
@@ -726,11 +660,7 @@ DCP *dcp;
 	NEXT(dct) = 0;
 }
 
-void nthrootchk(f,dc,fp,dcp)
-P f;
-struct oDUM *dc;
-ML fp;
-DCP *dcp;
+void nthrootchk(P f,struct oDUM *dc,ML fp,DCP *dcp)
 {
 	register int i,k;
 	int e,n,dr,tmp,t;
@@ -781,10 +711,7 @@ DCP *dcp;
 	}
 }
 
-void sqfrp(vl,f,dcp)
-VL vl;
-P f;
-DCP *dcp;
+void sqfrp(VL vl,P f,DCP *dcp)
 {
 	P c,p;
 	DCP dc,dc0;
@@ -805,10 +732,7 @@ DCP *dcp;
 /* 
  * f : must be a poly with int coef, ignore int content
  */
-void msqfr(vl,f,dcp)
-VL vl;
-P f;
-DCP *dcp;
+void msqfr(VL vl,P f,DCP *dcp)
 {
 	DCP dc,dct,dcs;
 	P c,p,t,s,pc;
@@ -846,9 +770,7 @@ DCP *dcp;
 	}
 }
 
-void usqp(f,dcp)
-P f;
-DCP *dcp;
+void usqp(P f,DCP *dcp)
 {
 	int index,nindex;
 	P g,c,h;
@@ -864,10 +786,7 @@ DCP *dcp;
 	*dcp = dc;
 }
 
-void msqfrmain(vl,p,dcp)
-VL vl;
-P p;
-DCP *dcp;
+void msqfrmain(VL vl,P p,DCP *dcp)
 {
 	int i,j;
 	VL nvl,tvl;
@@ -995,14 +914,7 @@ END:
 	}
 }
 
-void msqfrmainmain(vl,p,vn,p0,dc0,dcp,pp)
-VL vl;
-P p;
-VN vn;
-P p0;
-DCP dc0;
-DCP *dcp;
-P *pp;
+void msqfrmainmain(VL vl,P p,VN vn,P p0,DCP dc0,DCP *dcp,P *pp)
 {
 	int i,j,k,np;
 	DCP *a;
@@ -1102,12 +1014,7 @@ P *pp;
 	*dcp = dcr0;
 }
 
-void mfctrhen2(vl,vn,f,f0,g0,h0,lcg,lch,gp)
-VL vl;
-VN vn;
-P f;
-P f0,g0,h0,lcg,lch;
-P *gp;
+void mfctrhen2(VL vl,VN vn,P f,P f0,P g0,P h0,P lcg,P lch,P *gp)
 {
 	V v;
 	P f1,lc,lc0,lcg0,lch0;
@@ -1153,8 +1060,7 @@ P *gp;
 		*gp = 0;
 }
 
-int sqfrchk(p)
-P p;
+int sqfrchk(P p)
 {
 	Q c;
 	P f;
@@ -1167,8 +1073,7 @@ P p;
 		return ( 1 );
 }
 
-int cycchk(p)
-P p;
+int cycchk(P p)
 {
 	Q c;
 	P f;
@@ -1180,10 +1085,7 @@ P p;
 		return 1;
 }
 
-int zerovpchk(vl,p,vn)
-VL vl;
-P p;
-VN vn;
+int zerovpchk(VL vl,P p,VN vn)
 {
 	P t;
 
@@ -1194,10 +1096,7 @@ VN vn;
 		return ( 1 );
 }
 
-int valideval(vl,dc,vn)
-VL vl;
-DCP dc;
-VN vn;
+int valideval(VL vl,DCP dc,VN vn)
 {
 	DCP dct;
 	Q *a;
@@ -1223,12 +1122,7 @@ VN vn;
 	return ( 1 );
 }
 
-void estimatelc(vl,c,dc,vn,lcp)
-VL vl;
-Q c;
-DCP dc;
-VN vn;
-P *lcp;
+void estimatelc(VL vl,Q c,DCP dc,VN vn,P *lcp)
 {
 	int i;
 	DCP dct;
@@ -1256,11 +1150,7 @@ P *lcp;
 	*lcp = r;
 }
 
-void monomialfctr(vl,p,pr,dcp)
-VL vl;
-P p;
-P *pr;
-DCP *dcp;
+void monomialfctr(VL vl,P p,P *pr,DCP *dcp)
 {
 	VL nvl,avl;
 	Q d;
@@ -1280,10 +1170,7 @@ DCP *dcp;
 	*pr = f; *dcp = dc0;
 }
 
-void afctr(vl,p0,p,dcp)
-VL vl;
-P p,p0;
-DCP *dcp;
+void afctr(VL vl,P p0,P p,DCP *dcp)
 {
 	DCP dc,dc0,dcr,dct,dcs;
 	P t;
@@ -1326,11 +1213,7 @@ DCP *dcp;
 	*dcp = dc0;
 }
 
-void afctrmain(vl,p0,p,init,dcp)
-VL vl;
-P p,p0;
-int init;
-DCP *dcp;
+void afctrmain(VL vl,P p0,P p,int init,DCP *dcp)
 {
 	P x,y,s,m,a,t,u,pt,pt1,res,g;
 	Q q;

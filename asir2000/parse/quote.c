@@ -1,12 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.4 2001/09/04 05:14:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.5 2001/09/05 09:01:28 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
 
-void addquote(vl,a,b,c)
-VL vl;
-QUOTE a,b;
-QUOTE *c;
+void addquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
 
@@ -14,10 +11,7 @@ QUOTE *c;
 	MKQUOTE(*c,fn);
 }
 
-void subquote(vl,a,b,c)
-VL vl;
-QUOTE a,b;
-QUOTE *c;
+void subquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
 
@@ -25,10 +19,7 @@ QUOTE *c;
 	MKQUOTE(*c,fn);
 }
 
-void mulquote(vl,a,b,c)
-VL vl;
-QUOTE a,b;
-QUOTE *c;
+void mulquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
 
@@ -36,10 +27,7 @@ QUOTE *c;
 	MKQUOTE(*c,fn);
 }
 
-void divquote(vl,a,b,c)
-VL vl;
-QUOTE a,b;
-QUOTE *c;
+void divquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
 
@@ -47,10 +35,7 @@ QUOTE *c;
 	MKQUOTE(*c,fn);
 }
 
-void pwrquote(vl,a,b,c)
-VL vl;
-QUOTE a,b;
-QUOTE *c;
+void pwrquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
 
@@ -60,9 +45,7 @@ QUOTE *c;
 	MKQUOTE(*c,fn);
 }
 
-void chsgnquote(a,c)
-QUOTE a;
-QUOTE *c;
+void chsgnquote(QUOTE a,QUOTE *c)
 {
 	FNODE fn;
 
@@ -70,12 +53,7 @@ QUOTE *c;
 	MKQUOTE(*c,fn);
 }
 
-void polytoquote(), dctoquote(), vartoquote();
-void dptoquote(), mptoquote();
-
-void objtoquote(a,c)
-Obj a;
-QUOTE *c;
+void objtoquote(Obj a,QUOTE *c)
 {
 	QUOTE nm,dn;
 	NODE arg,t0,t,t1,t2,t3;
@@ -173,9 +151,7 @@ QUOTE *c;
 	}
 }
 
-void polytoquote(a,c)
-P a;
-QUOTE *c;
+void polytoquote(P a,QUOTE *c)
 {
 	DCP dc,t;
 	DCP *dca;
@@ -201,9 +177,7 @@ QUOTE *c;
 	*c = r;
 }
 
-void dptoquote(a,c)
-DP a;
-QUOTE *c;
+void dptoquote(DP a,QUOTE *c)
 {
 	MP t;
 	MP *m;
@@ -228,30 +202,27 @@ QUOTE *c;
 	*c = r;
 }
 
-void dctoquote(dc,v,c)
-DCP dc;
-QUOTE v;
-QUOTE *c;
+void dctoquote(DCP dc,QUOTE v,QUOTE *c)
 {
-	QUOTE r,d,s,u;
+	QUOTE d,s,u;
 
 	if ( UNIQ(COEF(dc)) ) {
 		if ( DEG(dc) ) {
 			if ( UNIQ(DEG(dc)) )
 				*c = v;
 			else {
-				objtoquote(DEG(dc),&d);
+				objtoquote((Obj)DEG(dc),&d);
 				pwrquote(CO,v,d,c);
 			}
 		} else
-			objtoquote(ONE,c);	
+			objtoquote((Obj)ONE,c);	
 	} else {
-		objtoquote(COEF(dc),&u);
+		objtoquote((Obj)COEF(dc),&u);
 		if ( DEG(dc) ) {
 			if ( UNIQ(DEG(dc)) )
 				s = v;
 			else {
-				objtoquote(DEG(dc),&d);
+				objtoquote((Obj)DEG(dc),&d);
 				pwrquote(CO,v,d,&s);
 			}
 			mulquote(CO,u,s,c);
@@ -260,10 +231,7 @@ QUOTE *c;
 	}
 }
 
-void mptoquote(m,n,c)
-MP m;
-int n;
-QUOTE *c;
+void mptoquote(MP m,int n,QUOTE *c)
 {
 	QUOTE s,u;
 	NODE t,t1;
@@ -272,9 +240,9 @@ QUOTE *c;
 	DL dl;
 	int i;
 
-	objtoquote(C(m),&s);
+	objtoquote((Obj)C(m),&s);
 	dl = m->dl;
-	for ( i = n-1; i >= 0; i-- ) {
+	for ( i = n-1, t = 0; i >= 0; i-- ) {
 		STOQ(dl->d[i],q);
 		f = mkfnode(1,I_FORMULA,q);
 		MKNODE(t1,f,t);
@@ -284,9 +252,7 @@ QUOTE *c;
 	mulquote(CO,s,u,c);
 }
 
-void vartoquote(v,c)
-V v;
-QUOTE *c;
+void vartoquote(V v,QUOTE *c)
 {
 	P x;
 	PF pf;
