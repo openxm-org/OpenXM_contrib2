@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.5 2001/06/07 04:54:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.6 2001/06/25 01:35:21 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -349,6 +349,14 @@ UM p1,p2;
 		c2[i] = c1[i];
 }
 
+void clearum(p,n)
+UM p;
+int n;
+{
+	DEG(p) = -1;
+	bzero(COEF(p),(n+1)*sizeof(int));
+}
+
 void degum(f,n)
 UM f;
 int n;
@@ -392,6 +400,8 @@ int n,bound;
 	return p;
 }
 
+/* n = deg in x, bound = deg in y, c[i] <-> the coef of y^i (poly in x) */
+
 BM BMALLOC(n,bound)
 int n,bound;
 {
@@ -399,12 +409,12 @@ int n,bound;
 	UM *c;
 	int i;
 
-	p = (BM)MALLOC(TRUESIZE(oBM,n,UM));
-	DEG(p) = n;
-	for ( i = 0, c = (UM *)COEF(p); i <= n; i++ ) {
-		c[i] = UMALLOC(bound);
+	p = (BM)MALLOC(TRUESIZE(oBM,bound,UM));
+	DEG(p) = bound;
+	for ( i = 0, c = (UM *)COEF(p); i < bound; i++ ) {
+		c[i] = UMALLOC(n);
 		DEG(c[i]) = -1;
-		bzero((char *)COEF(c[i]),(bound+1)*sizeof(int));
+		bzero((char *)COEF(c[i]),(n+1)*sizeof(int));
 	}
 	return p;
 }
@@ -449,6 +459,31 @@ LUM p,r;
 		i <= DEG(p); i++ ) 
 		for ( j = 0; j < bound; j++ ) 
 			ppr[i][j] = pp[i][j];
+}
+
+int isequalum(f1,f2)
+UM f1,f2;
+{
+	int i;
+
+	if ( DEG(f1) < 0 )
+		if ( DEG(f2) < 0 )
+			return 1;
+		else
+			return 0;
+	else if ( DEG(f2) < 0 )
+		return 0;
+	else {
+		if ( DEG(f1) != DEG(f2) )
+			return 0;
+		for ( i = 0; i <= DEG(f1); i++ )
+			if ( COEF(f1)[i] != COEF(f2)[i] )
+				break;
+		if ( i < DEG(f1) )
+			return 0;
+		else
+			return 1;
+	}
 }
 
 void pwrlum(mod,bound,p,n,r)

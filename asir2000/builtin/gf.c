@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.5 2001/05/09 01:41:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.6 2001/06/25 01:35:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -204,17 +204,13 @@ NODE *rp;
 {
 	ML lift;
 	int i;
-	P s,u;
+	P s;
 	NODE t,top;
-	VL vl,vl1;
 
-	NEWVL(vl1); vl1->v = y; NEXT(vl1) = 0;
-	NEWVL(vl); vl->v = x; NEXT(vl) = vl1;
 	sfhensel(5,f,x,&lift);
 	for ( i = lift->n-1, top = 0; i >= 0; i-- ) {
-		sflumtop(lift->bound,lift->c[i],x,y,&s);
-		reorderp(CO,vl,s,&u);
-		MKNODE(t,u,top); top = t;
+		sfbmtop(CO,lift->bound,lift->c[i],x,y,&s);
+		MKNODE(t,s,top); top = t;
 	}
 	*rp = top;
 }
