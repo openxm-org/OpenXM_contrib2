@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/lex.c,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
@@ -25,6 +25,47 @@ static int Getc();
 static void Ungetc();
 static void Gets();
 
+#define NBUFSIZ (BUFSIZ*10)
+#define TBUFSIZ (BUFSIZ)
+
+#define REALLOC_NBUF \
+if ( i >= nbufsize ) {\
+	nbufsize += NBUFSIZ;\
+	if ( nbuf == nbuf0 ) {\
+		nbuf = (char *)MALLOC_ATOMIC(nbufsize);\
+		bcopy(nbuf0,nbuf,nbufsize-NBUFSIZ);\
+	} else\
+		nbuf = REALLOC(nbuf,nbufsize);\
+}
+
+#define REALLOC_TBUF \
+if ( i >= tbufsize ) {\
+	tbufsize += TBUFSIZ;\
+	if ( tbuf == tbuf0 ) {\
+		tbuf = (char *)MALLOC_ATOMIC(tbufsize);\
+		bcopy(tbuf0,tbuf,tbufsize-TBUFSIZ);\
+	} else\
+		tbuf = REALLOC(tbuf,tbufsize);\
+}
+
+#define READ_ALNUM_NBUF \
+while ( 1 ) {\
+	c = Getc();\
+	if ( isalnum(c) ) {\
+		REALLOC_NBUF nbuf[i++] = c;\
+	} else\
+		break;\
+}
+
+#define READ_DIGIT_NBUF \
+while ( 1 ) {\
+	c = Getc();\
+	if ( isdigit(c) ) {\
+		REALLOC_NBUF nbuf[i++] = c;\
+	} else\
+		break;\
+}
+
 yylex()
 {
 #define yylvalp (&yylval)
@@ -32,15 +73,17 @@ yylex()
 	register int *ptr;
 	char *cptr;
 	int d,i,j;
-#if defined(__MWERKS__)
-	char nbuf[BUFSIZ],tbuf[BUFSIZ];
-#else
-	char nbuf[BUFSIZ*10],tbuf[BUFSIZ];
-#endif
+	char nbuf0[NBUFSIZ],tbuf0[TBUFSIZ];
+	char *nbuf, *tbuf;
+	int nbufsize, tbufsize;
 	N n,n1;
 	Q q;
 	Obj r;
 	
+	/* initialize buffer pointers */
+	nbuf = nbuf0; tbuf = tbuf0;
+	nbufsize = NBUFSIZ; tbufsize = TBUFSIZ;
+
 	switch ( c = skipspace() ) {
 		case EOF :	
 			asir_terminate(2); break;
@@ -51,8 +94,8 @@ yylex()
 			} else if ( c == 'x' ) {
 				for ( i = 0; i < 8; i++ ) 
 					nbuf[i] = '0';
-				for ( ; isalnum(c = Getc()); nbuf[i++] = c );
-				Ungetc(c); nbuf[i] = 0;	
+				READ_ALNUM_NBUF
+				Ungetc(c); REALLOC_NBUF nbuf[i] = 0;
 				hexton(nbuf,&n1); 
 				NTOQ(n1,1,q); r = (Obj)q;
 				yylvalp->p = (pointer)r;
@@ -60,8 +103,8 @@ yylex()
 			} else if ( c == 'b' ) {
 				for ( i = 0; i < 32; i++ ) 
 					nbuf[i] = '0';
-				for ( ; isalnum(c = Getc()); nbuf[i++] = c );
-				Ungetc(c); nbuf[i] = 0;	
+				READ_ALNUM_NBUF
+				Ungetc(c); REALLOC_NBUF nbuf[i] = 0;
 				binaryton(nbuf,&n1); 
 				NTOQ(n1,1,q); r = (Obj)q;
 				yylvalp->p = (pointer)r;
@@ -78,16 +121,13 @@ yylex()
 					break;
 				if ( c == '\\' )
 					c = Getc();
-				tbuf[i] = c;
+				REALLOC_TBUF tbuf[i] = c;
 			}
-			tbuf[i] = 0;
+			REALLOC_TBUF tbuf[i] = 0;
 			cptr = (char *)MALLOC(strlen(tbuf)+1); strcpy(cptr,tbuf);
 			yylvalp->p = (pointer)cptr;
 			return LCASE; break;
 		case '"' :
-#if 0
-			for ( i = 0; (nbuf[i] = Getc()) != '"'; i++ );
-#endif
 			i = 0;
 			do {
 				c = Getc();
@@ -95,11 +135,12 @@ yylex()
 					c1 = Getc();
 					if ( c1 == 'n' )
 						c1 = '\n';
-					nbuf[i++] = c1;
-				} else
-					nbuf[i++] = c;
+					REALLOC_NBUF nbuf[i++] = c1;
+				} else {
+					REALLOC_NBUF nbuf[i++] = c;
+				}
 			} while ( c != '"' );
-			nbuf[i-1] = 0;
+			nbuf[i-1] = 0; /* REALLOC_NBUF is not necessary */
 			cptr = (char *)MALLOC(strlen(nbuf)+1);
 			strcpy(cptr,nbuf); yylvalp->p = (pointer) cptr;
 			return ( STR ); break;
@@ -155,22 +196,26 @@ yylex()
 	if ( isdigit(c) ) {
 		for ( i = 0; i < DLENGTH; i++ ) 
 			nbuf[i] = '0';
-		for ( nbuf[i++] = c; isdigit(c = Getc()); nbuf[i++] = c);
+		REALLOC_NBUF nbuf[i++] = c;
+		READ_DIGIT_NBUF
 		if ( c == '.' ) {
 			double dbl;
 			Real real;
 			double atof();
 			extern int bigfloat;
 
-			for ( nbuf[i++] = c; isdigit(c = Getc()); nbuf[i++] = c);
+			REALLOC_NBUF nbuf[i++] = c;
+			READ_DIGIT_NBUF
 			if ( c == 'e' ) {
-				nbuf[i++] = c;
-				if ( ((c = Getc()) == '+') || (c == '-') ) {
-					nbuf[i++] = c; c = Getc();
-				}
-				for ( ; isdigit(c); nbuf[i++] = c, c = Getc());
+				REALLOC_NBUF nbuf[i++] = c;
+				c = Getc();
+				if ( (c == '+') || (c == '-') ) {
+					REALLOC_NBUF nbuf[i++] = c;
+				} else
+					Ungetc(c);
+				READ_DIGIT_NBUF
 			}
-			Ungetc(c); nbuf[i] = 0;
+			Ungetc(c); REALLOC_NBUF nbuf[i] = 0;
 #if PARI
 			if ( !bigfloat ) {
 				dbl = (double)atof(nbuf+DLENGTH);
@@ -194,9 +239,16 @@ yylex()
 		yylvalp->p = (pointer)r;
 		return ( FORMULA );
 	} else if ( isalpha(c) ) {
-		for ( i = 1, tbuf[0] = c; isalpha(c = Getc())||isdigit(c)||(c=='_'); i++ ) 
-			tbuf[i] = c;
-		tbuf[i] = 0; Ungetc(c); 
+		i = 0;
+		tbuf[i++] = c;
+		while ( 1 ) {
+			c = Getc();
+			if ( isalpha(c)||isdigit(c)||(c=='_') ) {
+				REALLOC_TBUF tbuf[i++] = c;
+			} else
+				break;
+		}
+		REALLOC_TBUF tbuf[i] = 0; Ungetc(c); 
 		if ( isupper(tbuf[0]) ) {
 			cptr = (char *)MALLOC(strlen(tbuf)+1); strcpy(cptr,tbuf);
 			yylvalp->p = (pointer)cptr;
@@ -214,8 +266,11 @@ yylex()
 		}
 	} else if ( c == '@' ) {
 		if ( isdigit(c = Getc()) ) {
-			for ( i = 1, nbuf[0] = c; isdigit(c = Getc()); nbuf[i++] = c);
-			Ungetc(c); nbuf[i] = 0; yylvalp->i = atoi(nbuf);
+			i = 0;
+			nbuf[i++] = c;
+			READ_DIGIT_NBUF
+			Ungetc(c); REALLOC_NBUF nbuf[i] = 0;
+			yylvalp->i = atoi(nbuf);
 			return ANS;
 		} else if ( c == '@' ) {
 			yylvalp->i = MAX(0,APVS->n-1);
@@ -250,9 +305,17 @@ yylex()
 					return FOP_AND; break;
 			}
 		} else if ( isalpha(c) ) {
-			for ( i = 2, tbuf[0] = '@', tbuf[1] = c;
-				isalpha(c = Getc()); tbuf[i++] = c);
-			Ungetc(c); tbuf[i] = 0;
+			i = 0;
+			tbuf[i++] = '@';
+			tbuf[i++] = c;
+			while ( 1 ) {
+				c = Getc();
+				if ( isalpha(c) ) {
+					REALLOC_TBUF tbuf[i++] = c;
+				} else
+					break;
+			}
+			Ungetc(c); REALLOC_TBUF tbuf[i] = 0;
 			if ( !strcmp(tbuf,"@p") )
 				return GFPNGEN;
 			else if ( !strcmp(tbuf,"@i") ) {

@@ -13,8 +13,9 @@ extern int prtime,nez,echoback,bigfloat;
 extern int GC_free_space_numerator,GC_free_space_divisor,debug_up,no_prompt;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
 extern int do_message;
-extern int ox_batch,ox_check,ox_exchange_mathcap;
+extern int ox_batch,ox_check;
 extern int f4_nocheck;
+extern int fortran_output;
 
 static struct {
 	char *key;
@@ -33,8 +34,8 @@ static struct {
 	{"no_prompt",&no_prompt},
 	{"ox_batch",&ox_batch},
 	{"ox_check",&ox_check},
-	{"ox_exchange_mathcap",&ox_exchange_mathcap},
 	{"f4_nocheck",&f4_nocheck},
+	{"fortran_output",&fortran_output},
 	{0,0},
 };
 

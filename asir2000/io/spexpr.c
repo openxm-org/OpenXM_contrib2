@@ -1,5 +1,6 @@
-/* $OpenXM: OpenXM/src/asir99/io/spexpr.c,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "ca.h"
+#include "al.h"
 #include "parse.h"
 #include "comp.h"
 #include "base.h"
@@ -8,10 +9,14 @@
 #define SPRINT
 #endif
 
+#define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
+
 #ifdef FPRINT
 FILE *asir_out;
 #define OUT asir_out
 char DFORMAT[BUFSIZ];
+int hex_output;
+int fortran_output;
 
 #define TAIL
 #define PUTS(s) fputs(s,OUT)
@@ -19,6 +24,8 @@ char DFORMAT[BUFSIZ];
 #define PRINTN printn
 #define PRINTBF printbf
 #define PRINTCPLX printcplx
+#define PRINTLM printlm
+#define PRINTUP2 printup2
 #define PRINTV printv
 #define PRINTEXPR printexpr
 #define PRINTNUM printnum
@@ -30,12 +37,24 @@ char DFORMAT[BUFSIZ];
 #define PRINTSTR printstr
 #define PRINTCOMP printcomp
 #define PRINTDP printdp
+#define PRINTUI printui
+#define PRINTGF2MAT printgf2mat
+#define PRINTGFMMAT printgfmmat
+#define PRINTERR printerr
+#define PRINTLF printlf
+#define PRINTLOP printlop
+#define PRINTFOP printfop
+#define PRINTEOP printeop
+#define PRINTQOP printqop
+#define PRINTUP printup
 #endif
 
 #ifdef SPRINT
 static char *buf;
 #define OUT buf
 extern char DFORMAT[BUFSIZ];
+extern int hex_output;
+extern int fortran_output;
 
 #define TAIL while ( *OUT ) OUT++;
 #define PUTS(s) strcat(OUT,s)
@@ -43,6 +62,8 @@ extern char DFORMAT[BUFSIZ];
 #define PRINTN sprintn
 #define PRINTBF sprintbf
 #define PRINTCPLX sprintcplx
+#define PRINTLM sprintlm
+#define PRINTUP2 sprintup2
 #define PRINTV sprintv
 #define PRINTEXPR sprintexpr
 #define PRINTNUM sprintnum
@@ -54,23 +75,18 @@ extern char DFORMAT[BUFSIZ];
 #define PRINTSTR sprintstr
 #define PRINTCOMP sprintcomp
 #define PRINTDP sprintdp
+#define PRINTUI sprintui
+#define PRINTGF2MAT sprintgf2mat
+#define PRINTGFMMAT sprintgfmmat
+#define PRINTERR sprinterr
+#define PRINTLF sprintlf
+#define PRINTLOP sprintlop
+#define PRINTFOP sprintfop
+#define PRINTEOP sprinteop
+#define PRINTQOP sprintqop
+#define PRINTUP sprintup
 #endif
 
-#if defined(THINK_C)
-void PRINTEXPR(VL,Obj);
-void PRINTNUM(Num);
-void PRINTN(N);
-void PRINTV(VL,V);
-void PRINTP(VL,P);
-void PRINTR(VL,R);
-void PRINTLIST(VL,LIST);
-void PRINTVECT(VL,VECT);
-void PRINTMAT(VL,MAT);
-void PRINTSTR(STRING);
-void PRINTCOMP(VL,COMP);
-void PRINTDP(VL,DP);
-void PRINTCPLX(C);
-#else
 void PRINTEXPR();
 void PRINTNUM();
 void PRINTN();
@@ -83,8 +99,14 @@ void PRINTMAT();
 void PRINTSTR();
 void PRINTCOMP();
 void PRINTDP();
+void PRINTUI();
+void PRINTGF2MAT();
+void PRINTGFMMAT();
+void PRINTERR();
 void PRINTCPLX();
-#endif
+void PRINTLM();
+void PRINTLF();
+void PRINTUP2();
 
 #ifdef FPRINT
 void output_init() {
@@ -107,7 +129,7 @@ P p;
 }
 
 #if PARI
-printbf(a)
+void printbf(a)
 BF a;
 {
 	sor(a->body,'g',-1,0);
@@ -164,6 +186,18 @@ Obj p;
 			PRINTCOMP(vl,(COMP)p); break;
 		case O_DP:
 			PRINTDP(vl,(DP)p); break;
+		case O_USINT:
+			PRINTUI(vl,(USINT)p); break;
+		case O_GF2MAT:
+			PRINTGF2MAT(vl,(GF2MAT)p); break;
+		case O_ERR:
+			PRINTERR(vl,(ERR)p); break;
+		case O_MATHCAP:
+			PRINTLIST(vl,((MATHCAP)p)->body); break;
+		case O_F:
+			PRINTLF(vl,(F)p); break;
+		case O_GFMMAT:
+			PRINTGFMMAT(vl,(GFMMAT)p); break;
 		default:
 			break;
 	}
@@ -179,11 +213,24 @@ N n;
 		PUTS("0");
 		return;
 	}
-	ntobn(DBASE,n,&tn);
-	ptr = BD(tn);
-	TAIL PRINTF(OUT,"%d",ptr[PL(tn) - 1]);
-	for ( i = PL(tn) - 2; i >= 0; i-- ) {
-		TAIL PRINTF(OUT,DFORMAT,ptr[i]);
+	if ( hex_output ) {
+		ptr = BD(n);
+		TAIL PRINTF(OUT,"0x%x",ptr[PL(n)-1]);
+		if ( hex_output < 0 )
+			for ( i = PL(n) - 2; i >= 0; i-- ) {
+				TAIL PRINTF(OUT,"|%08x",ptr[i]);
+			}
+		else
+			for ( i = PL(n) - 2; i >= 0; i-- ) {
+				TAIL PRINTF(OUT,"%08x",ptr[i]);
+			}
+	} else {
+		ntobn(DBASE,n,&tn);
+		ptr = BD(tn);
+		TAIL PRINTF(OUT,"%d",ptr[PL(tn) - 1]);
+		for ( i = PL(tn) - 2; i >= 0; i-- ) {
+			TAIL PRINTF(OUT,DFORMAT,ptr[i]);
+		}
 	}
 }
 
@@ -216,7 +263,17 @@ Num q;
 		case N_C:
 			PRINTCPLX((C)q); break;
 		case N_M:
-			TAIL PRINTF(OUT,"%d",CONT((MQ)q));
+			TAIL PRINTF(OUT,"%d",CONT((MQ)q)); break;
+		case N_LM:
+			PRINTN(((LM)q)->body); break;
+		case N_GF2N:
+			if ( hex_output )
+				PRINTN((N)(((GF2N)q)->body));
+			else
+				PRINTUP2(((GF2N)q)->body);
+			break;
+		case N_GFPN:
+			PRINTUP((UP)(((GFPN)q)->body));
 			break;
 	}
 }
@@ -262,7 +319,7 @@ P p;
 				}
 				PRINTV(vl,v); 
 				if ( cmpq(DEG(dc),ONE) ) {
-					PUTS("^"); 
+					PRINTHAT;
 					if ( INT(DEG(dc)) && SGN(DEG(dc))>0 )
 						PRINTNUM((Num)DEG(dc));
 					else {
@@ -290,6 +347,8 @@ P p;
 		}
 }
 
+int hideargs;
+
 void PRINTV(vl,v)
 VL vl;
 V v;
@@ -303,28 +362,43 @@ V v;
 	else if ( (vid)v->attr == V_PF ) {
 		pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
 		if ( !strcmp(NAME(pf),"pow") ) {
-			PUTS("("); PRINTR(vl,(R)ad[0].arg); PUTS(")^(");
+			PUTS("("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
 			PRINTR(vl,(R)ad[1].arg); PUTS(")");
 		} else if ( !pf->argc ) {
 			TAIL PRINTF(OUT,"%s",NAME(pf));
 		} else {
-			for ( i = 0; i < pf->argc; i++ )
-				if ( ad[i].d )
-					break;
-			if ( i < pf->argc ) {
-				TAIL PRINTF(OUT,"%s(%d",NAME(pf),ad[0].d);
-				for ( i = 1; i < pf->argc; i++ ) {
-					TAIL PRINTF(OUT,",%d",ad[i].d);
+			if ( hideargs ) {
+				for ( i = 0; i < pf->argc; i++ )
+					if ( ad[i].d )
+						break;
+				if ( i < pf->argc ) {
+					TAIL PRINTF(OUT,"%s{%d",NAME(pf),ad[0].d);
+					for ( i = 1; i < pf->argc; i++ ) {
+						TAIL PRINTF(OUT,",%d",ad[i].d);
+					}
+					PUTS("}");
+				} else {
+					TAIL PRINTF(OUT,"%s",NAME(pf));
 				}
-				PUTS(")(");
 			} else {
-				TAIL PRINTF(OUT,"%s(",NAME(pf));
+				for ( i = 0; i < pf->argc; i++ )
+					if ( ad[i].d )
+						break;
+				if ( i < pf->argc ) {
+					TAIL PRINTF(OUT,"%s{%d",NAME(pf),ad[0].d);
+					for ( i = 1; i < pf->argc; i++ ) {
+						TAIL PRINTF(OUT,",%d",ad[i].d);
+					}
+					PUTS("}(");
+				} else {
+					TAIL PRINTF(OUT,"%s(",NAME(pf));
+				}
+				PRINTR(vl,(R)ad[0].arg);
+				for ( i = 1; i < pf->argc; i++ ) {
+					PUTS(","); PRINTR(vl,(R)ad[i].arg);
+				}
+				PUTS(")");
 			}
-			PRINTR(vl,(R)ad[0].arg);
-			for ( i = 1; i < pf->argc; i++ ) {
-				PUTS(","); PRINTR(vl,(R)ad[i].arg);
-			}
-			PUTS(")");
 		}
 	}
 }
@@ -438,5 +512,236 @@ DP d;
 		PUTS(">>");
 		if ( NEXT(m) )
 			PUTS("+");
+	}
+}
+
+void PRINTUI(vl,u)
+VL vl;
+USINT u;
+{
+	TAIL PRINTF(OUT,"%u",BDY(u));
+}
+
+void PRINTGF2MAT(vl,mat)
+VL vl;
+GF2MAT mat;
+{
+	int row,col,w,i,j,k,m;
+	unsigned int t;
+	unsigned int **b;
+
+	row = mat->row;
+	col = mat->col;
+	w = (col+BSH-1)/BSH;
+	b = mat->body;
+	for ( i = 0; i < row; i++ ) {
+		for ( j = 0, m = 0; j < w; j++ ) {
+			t = b[i][j];
+			for ( k = 0; m < col && k < BSH; k++, m++ )
+				if ( t & (1<<k) )
+					PUTS("1");
+				else
+					PUTS("0");
+		}
+		PUTS("\n");
+	}
+}
+
+void PRINTGFMMAT(vl,mat)
+VL vl;
+GFMMAT mat;
+{
+	int row,col,i,j;
+	unsigned int t;
+	unsigned int **b;
+
+	row = mat->row;
+	col = mat->col;
+	b = mat->body;
+	for ( i = 0; i < row; i++ ) {
+		PUTS("[");
+		for ( j = 0; j < col; j++ ) {
+			TAIL PRINTF(OUT,"%8d",b[i][j]);
+		}
+		PUTS("]\n");
+	}
+}
+
+void PRINTERR(vl,e)
+VL vl;
+ERR e;
+{
+	PUTS("error("); PRINTEXPR(vl,e->body); PUTS(")");
+}
+
+void PRINTUP2(p)
+UP2 p;
+{
+	int d,i;
+
+	if ( !p ) {
+		TAIL PRINTF(OUT,"0");
+	} else {
+		d = degup2(p);
+		TAIL PRINTF(OUT,"(");
+		if ( !d ) {
+			TAIL PRINTF(OUT,"1");
+		} else if ( d == 1 ) {
+			TAIL PRINTF(OUT,"@");
+		} else {
+			PUTS("@"); PRINTHAT; TAIL PRINTF(OUT,"%d",d);
+		}
+		for ( i = d-1; i >= 0; i-- ) {
+			if ( p->b[i/BSH] & (1<<(i%BSH)) )
+				if ( !i ) {
+					TAIL PRINTF(OUT,"+1");
+				} else if ( i == 1 ) {
+					TAIL PRINTF(OUT,"+@");
+				} else {
+					PUTS("+@"); PRINTHAT; TAIL PRINTF(OUT,"%d",i);
+				}
+		}
+		TAIL PRINTF(OUT,")");
+	}
+}
+
+void PRINTLF(vl,f)
+VL vl;
+F f;
+{
+	switch ( FOP(f) ) {
+		case AL_TRUE:
+			TAIL PRINTF(OUT,"@true");
+			break;
+		case AL_FALSE:
+			TAIL PRINTF(OUT,"@false");
+			break;
+
+		case AL_OR: case AL_AND:
+			PRINTFOP(vl,f); break;
+		case AL_NOT: case AL_IMPL: case AL_REPL: case AL_EQUIV:
+			PRINTEOP(vl,f); break;
+
+		case AL_EQUAL: case AL_NEQ: case AL_LESSP:
+		case AL_GREATERP: case AL_LEQ: case AL_GEQ:
+			PRINTLOP(vl,f); break;
+
+		case AL_EX: case AL_ALL:
+			PRINTQOP(vl,f); break;
+		default:
+			break;
+	}
+}
+
+PRINTFOP(vl,f)
+VL vl;
+F f;
+{
+	char *op;
+	NODE n;
+
+	op = FOP(f)==AL_OR?" @|| ":" @&& ";
+	n = FJARG(f);
+	PUTS("("); PRINTEXPR(vl,BDY(n)); PUTS(")");
+	for ( n = NEXT(n); n; n = NEXT(n) ) {
+		PUTS(op); PUTS("("); PRINTEXPR(vl,BDY(n)); PUTS(")");
+	}
+}
+
+PRINTEOP(vl,f)
+VL vl;
+F f;
+{
+	oFOP op;
+	char *sop;
+
+	if ( (op = FOP(f)) == AL_NOT ) {
+		PUTS("(@! "); PRINTEXPR(vl,(Obj)FARG(f)); PUTS(")"); return;
+	}
+	switch ( op ) {
+		case AL_IMPL:
+			sop = " @impl "; break;
+		case AL_REPL:
+			sop = " @repl "; break;
+		case AL_EQUIV:
+			sop = " @equiv "; break;
+		default:
+			break;
+	}
+	PUTS("("); 
+	PRINTEXPR(vl,(Obj)FLHS(f)); 
+	PUTS(sop);
+	PRINTEXPR(vl,(Obj)FRHS(f)); 
+	PUTS(")");
+}
+
+PRINTLOP(vl,f)
+VL vl;
+F f;
+{
+	char *op;
+
+	switch ( FOP(f) ) {
+		case AL_EQUAL:
+			op = " @== "; break;
+		case AL_NEQ:
+			op = " @!= "; break;
+		case AL_LESSP:
+			op = " @< "; break;
+		case AL_GREATERP:
+			op = " @> "; break;
+		case AL_LEQ:
+			op = " @<= "; break;
+		case AL_GEQ:
+			op = " @>= "; break;
+		default:
+			error("PRINTLOP : invalid operator");
+			break;
+	}
+	PRINTEXPR(vl,(Obj)FPL(f)); PUTS(op); PUTS("0");
+}
+
+PRINTQOP(vl,f)
+VL vl;
+F f;
+{
+	char *op;
+
+	op = FOP(f)==AL_EX?"ex":"all";
+	TAIL PRINTF(OUT,"%s(%s,",op,NAME(FQVR(f)));
+	PRINTEXPR(vl,(Obj)FQMAT(f)); PUTS(")");
+}
+
+PRINTUP(n)
+UP n;
+{
+	int i,d;
+
+	if ( !n )
+		PUTS("0");
+	else if ( !n->d )
+		PRINTNUM(n->c[0]);
+	else {
+		d = n->d;
+		PUTS("(");
+		if ( !d ) {
+			PRINTNUM(n->c[d]);
+		} else if ( d == 1 ) {
+			PRINTNUM(n->c[d]);
+			PUTS("*@p");
+		} else {
+			PRINTNUM(n->c[d]);
+			PUTS("*@p"); PRINTHAT; TAIL PRINTF(OUT,"%d",d);
+		}
+		for ( i = d-1; i >= 0; i-- ) {
+			if ( n->c[i] ) {
+				PUTS("+("); PRINTNUM(n->c[i]); PUTS(")");
+				if ( i >= 2 ) {
+					PUTS("*@p"); PRINTHAT; TAIL PRINTF(OUT,"%d",i);
+				} else if ( i == 1 )
+					PUTS("*@p");
+			}
+		}
+		PUTS(")");
 	}
 }

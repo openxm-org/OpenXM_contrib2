@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/pexpr.c,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
@@ -9,12 +9,14 @@
 #define FPRINT
 #endif
 
-int hex_output;
+#define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
 #ifdef FPRINT
 FILE *asir_out;
 #define OUT asir_out
 char DFORMAT[BUFSIZ];
+int hex_output;
+int fortran_output;
 
 #define TAIL
 #define PUTS(s) fputs(s,OUT)
@@ -51,6 +53,8 @@ char DFORMAT[BUFSIZ];
 static char *buf;
 #define OUT buf
 extern char DFORMAT[BUFSIZ];
+extern int hex_output;
+extern int fortran_output;
 
 #define TAIL while ( *OUT ) OUT++;
 #define PUTS(s) strcat(OUT,s)
@@ -80,29 +84,9 @@ extern char DFORMAT[BUFSIZ];
 #define PRINTFOP sprintfop
 #define PRINTEOP sprinteop
 #define PRINTQOP sprintqop
+#define PRINTUP sprintup
 #endif
 
-#if defined(THINK_C)
-void PRINTEXPR(VL,Obj);
-void PRINTNUM(Num);
-void PRINTN(N);
-void PRINTV(VL,V);
-void PRINTP(VL,P);
-void PRINTR(VL,R);
-void PRINTLIST(VL,LIST);
-void PRINTVECT(VL,VECT);
-void PRINTMAT(VL,MAT);
-void PRINTSTR(STRING);
-void PRINTCOMP(VL,COMP);
-void PRINTDP(VL,DP);
-void PRINTUI(VL,USINT);
-void PRINTGF2MAT(VL,GF2MAT);
-void PRINTGFMMAT(VL,GFMMAT);
-void PRINTERR(VL,ERR);
-void PRINTCPLX(C);
-void PRINTLM(LM);
-void PRINTLF(VL,F);
-#else
 void PRINTEXPR();
 void PRINTNUM();
 void PRINTN();
@@ -122,7 +106,7 @@ void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
 void PRINTLF();
-#endif
+void PRINTUP2();
 
 #ifdef FPRINT
 void output_init() {
@@ -145,11 +129,6 @@ P p;
 }
 
 #if PARI
-
-#if defined(THINK_C)
-void sor(long *,char,long,long);
-#endif
-
 void printbf(a)
 BF a;
 {
@@ -169,7 +148,12 @@ char *s;
 void sprintbf(a)
 BF a;
 {
-	/* XXX : not implemented yet */
+	char *str;
+	char *GENtostr();
+
+	str = GENtostr(a->body);
+	TAIL PRINTF(OUT,"%s",str);
+	free(str);
 }
 #endif
 #endif
@@ -335,7 +319,7 @@ P p;
 				}
 				PRINTV(vl,v); 
 				if ( cmpq(DEG(dc),ONE) ) {
-					PUTS("^"); 
+					PRINTHAT;
 					if ( INT(DEG(dc)) && SGN(DEG(dc))>0 )
 						PRINTNUM((Num)DEG(dc));
 					else {
@@ -378,7 +362,7 @@ V v;
 	else if ( (vid)v->attr == V_PF ) {
 		pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
 		if ( !strcmp(NAME(pf),"pow") ) {
-			PUTS("("); PRINTR(vl,(R)ad[0].arg); PUTS(")^(");
+			PUTS("("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
 			PRINTR(vl,(R)ad[1].arg); PUTS(")");
 		} else if ( !pf->argc ) {
 			TAIL PRINTF(OUT,"%s",NAME(pf));
@@ -595,27 +579,29 @@ UP2 p;
 {
 	int d,i;
 
-	if ( !p )
-		fprintf(asir_out,"0");
-	else {
+	if ( !p ) {
+		TAIL PRINTF(OUT,"0");
+	} else {
 		d = degup2(p);
-		fprintf(asir_out,"(");
-		if ( !d )
-			fprintf(asir_out,"1");
-		else if ( d == 1 )
-			fprintf(asir_out,"@");
-		else
-			fprintf(asir_out,"@^%d",d);
+		TAIL PRINTF(OUT,"(");
+		if ( !d ) {
+			TAIL PRINTF(OUT,"1");
+		} else if ( d == 1 ) {
+			TAIL PRINTF(OUT,"@");
+		} else {
+			PUTS("@"); PRINTHAT; TAIL PRINTF(OUT,"%d",d);
+		}
 		for ( i = d-1; i >= 0; i-- ) {
 			if ( p->b[i/BSH] & (1<<(i%BSH)) )
-				if ( !i )
-					fprintf(asir_out,"+1");
-				else if ( i == 1 )
-					fprintf(asir_out,"+@");
-				else
-					fprintf(asir_out,"+@^%d",i);
+				if ( !i ) {
+					TAIL PRINTF(OUT,"+1");
+				} else if ( i == 1 ) {
+					TAIL PRINTF(OUT,"+@");
+				} else {
+					PUTS("+@"); PRINTHAT; TAIL PRINTF(OUT,"%d",i);
+				}
 		}
-		fprintf(asir_out,")");
+		TAIL PRINTF(OUT,")");
 	}
 }
 
@@ -745,13 +731,13 @@ UP n;
 			PUTS("*@p");
 		} else {
 			PRINTNUM(n->c[d]);
-			TAIL PRINTF(OUT,"*@p^%d",d);
+			PUTS("*@p"); PRINTHAT; TAIL PRINTF(OUT,"%d",d);
 		}
 		for ( i = d-1; i >= 0; i-- ) {
 			if ( n->c[i] ) {
 				PUTS("+("); PRINTNUM(n->c[i]); PUTS(")");
 				if ( i >= 2 ) {
-					TAIL PRINTF(OUT,"*@p^%d",i);
+					PUTS("*@p"); PRINTHAT; TAIL PRINTF(OUT,"%d",i);
 				} else if ( i == 1 )
 					PUTS("*@p");
 			}
