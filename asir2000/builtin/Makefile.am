@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/builtin/Makefile.am,v 1.6 2003/10/21 00:52:50 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/builtin/Makefile.am,v 1.7 2003/12/02 03:24:24 noro Exp $
 
 asirdir  = ${prefix}/lib/asir
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
@@ -12,4 +12,4 @@ libfunc_a_SOURCES = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c \
                     rat.c reduct.c result.c itvnum.c mattran.c isolv.c \
                     strobj.c subst.c time.c type.c var.c compobj.c \
                     gr.c dp-supp.c gf.c math.c numerical.c ec.c al.c \
-                    batch.c sha1.c user.c round.c
+                    batch.c sha1.c user.c round.c iarray.c

@@ -107,7 +107,7 @@ libfunc_a_SOURCES = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c \
                     rat.c reduct.c result.c itvnum.c mattran.c isolv.c \
                     strobj.c subst.c time.c type.c var.c compobj.c \
                     gr.c dp-supp.c gf.c math.c numerical.c ec.c al.c \
-                    batch.c sha1.c user.c round.c
+                    batch.c sha1.c user.c round.c iarray.c
 
 subdir = builtin
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -126,7 +126,7 @@ am_libfunc_a_OBJECTS = ftab.$(OBJEXT) algnum.$(OBJEXT) array.$(OBJEXT) \
 	type.$(OBJEXT) var.$(OBJEXT) compobj.$(OBJEXT) gr.$(OBJEXT) \
 	dp-supp.$(OBJEXT) gf.$(OBJEXT) math.$(OBJEXT) \
 	numerical.$(OBJEXT) ec.$(OBJEXT) al.$(OBJEXT) batch.$(OBJEXT) \
-	sha1.$(OBJEXT) user.$(OBJEXT) round.$(OBJEXT)
+	sha1.$(OBJEXT) user.$(OBJEXT) round.$(OBJEXT) iarray.$(OBJEXT)
 libfunc_a_OBJECTS = $(am_libfunc_a_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@
@@ -139,7 +139,8 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 @AMDEP_TRUE@	$(DEPDIR)/ctrl.Po $(DEPDIR)/dp-supp.Po \
 @AMDEP_TRUE@	$(DEPDIR)/dp.Po $(DEPDIR)/ec.Po $(DEPDIR)/fctr.Po \
 @AMDEP_TRUE@	$(DEPDIR)/file.Po $(DEPDIR)/ftab.Po $(DEPDIR)/gf.Po \
-@AMDEP_TRUE@	$(DEPDIR)/gr.Po $(DEPDIR)/help.Po $(DEPDIR)/int.Po \
+@AMDEP_TRUE@	$(DEPDIR)/gr.Po $(DEPDIR)/help.Po \
+@AMDEP_TRUE@	$(DEPDIR)/iarray.Po $(DEPDIR)/int.Po \
 @AMDEP_TRUE@	$(DEPDIR)/isolv.Po $(DEPDIR)/itvnum.Po \
 @AMDEP_TRUE@	$(DEPDIR)/list.Po $(DEPDIR)/math.Po \
 @AMDEP_TRUE@	$(DEPDIR)/mattran.Po $(DEPDIR)/miscf.Po \
@@ -203,6 +204,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/gf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/gr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/help.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/iarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/int.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/isolv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/itvnum.Po@am__quote@
