@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.21 2004/03/17 03:22:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.22 2004/05/14 06:02:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -85,6 +85,7 @@ static int total_length;
 #define PRINTGFMMAT length_gfmmat
 #define PRINTBYTEARRAY length_bytearray
 #define PRINTQUOTE length_QUOTE
+#define PRINTQUOTEARG length_QUOTEARG
 #define PRINTSYMBOL length_SYMBOL
 #define PRINTRANGE length_RANGE
 #define PRINTTB length_TB
@@ -329,6 +330,13 @@ void PRINTQUOTE(VL vl,QUOTE quote)
 		/* <...quoted...> */
 		total_length += 20;
 	}
+}
+
+void PRINTQUOTEARG(VL vl,QUOTEARG quote)
+{
+	/* XXX */
+	/* <...quoted...> */
+	total_length += 20;
 }
 
 void PRINTSYMBOL(SYMBOL sym)

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.2 2004/03/26 08:25:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.3 2004/05/14 06:02:54 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -19,6 +19,7 @@ void PRINTGF2MAT();
 void PRINTGFMMAT();
 void PRINTBYTEARRAY();
 void PRINTQUOTE();
+void PRINTQUOTEARG();
 void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
@@ -83,6 +84,8 @@ Obj p;
 				PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
 			case O_QUOTE:
 				PRINTQUOTE(vl,(QUOTE)p); break;
+			case O_QUOTEARG:
+				PRINTQUOTEARG(vl,(QUOTEARG)p); break;
 			case O_SYMBOL:
 				PRINTSYMBOL((SYMBOL)p); break;
 			case O_RANGE:
@@ -996,6 +999,13 @@ QUOTE quote;
 	} else {
 		PUTS("<...quoted...>");
 	}
+}
+
+void PRINTQUOTEARG(vl,quote)
+VL vl;
+QUOTEARG quote;
+{
+	PUTS("<...quoted...>");
 }
 
 void PRINTTB(VL vl,TB p)

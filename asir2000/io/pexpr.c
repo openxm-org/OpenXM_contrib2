@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.35 2004/03/17 03:22:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.36 2004/05/14 06:02:54 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -107,6 +107,7 @@ int printmode = PRINTF_G;
 #define PRINTGFMMAT printgfmmat
 #define PRINTBYTEARRAY printbytearray
 #define PRINTQUOTE printquote
+#define PRINTQUOTEARG printquotearg
 #define PRINTERR printerr
 #define PRINTLF printlf
 #define PRINTLOP printlop

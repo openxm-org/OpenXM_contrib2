@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.15 2004/07/08 02:58:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.16 2004/07/08 03:00:30 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -49,7 +49,7 @@ void chsgnquote(QUOTE a,QUOTE *c)
 {
 	FNODE fn;
 
-	fn = mkfnode(3,I_BOP,subfs,0,BDY(a));
+	fn = mkfnode(1,I_MINUS,BDY(a));
 	MKQUOTE(*c,fn);
 }
 
@@ -343,52 +343,43 @@ void vartoquote(V v,QUOTE *c)
 	}
 }
 
-typedef enum {
-	A_arg,A_arf,A_int,A_str,A_internal,A_node,A_notimpl,A_func,A_end
-} farg_type;
-
-typedef struct fid_spec {
-	fid id;
-	farg_type type[10];
-} *fid_spec_p;
-
 struct fid_spec fid_spec_tab[] = {
-	{I_BOP,A_arf,A_arg,A_arg,A_end},
-	{I_COP,A_int,A_arg,A_arg,A_end},
-	{I_AND,A_arg,A_arg,A_end},
-	{I_OR,A_arg,A_arg,A_end},
-	{I_NOT,A_arg,A_end},
-	{I_CE,A_arg,A_arg,A_end},
-	{I_PRESELF,A_arf,A_arg,A_end},
-	{I_POSTSELF,A_arf,A_arg,A_end},
-	{I_FUNC,A_func,A_arg,A_end},
-	{I_FUNC_OPT,A_func,A_arg,A_arg,A_end},
-	{I_IFUNC,A_arg,A_arg,A_end},
-	{I_MAP,A_func,A_arg,A_end},
-	{I_RECMAP,A_func,A_arg,A_end},
+	{I_BOP,A_arf,A_fnode,A_fnode,A_end},
+	{I_COP,A_int,A_fnode,A_fnode,A_end},
+	{I_AND,A_fnode,A_fnode,A_end},
+	{I_OR,A_fnode,A_fnode,A_end},
+	{I_NOT,A_fnode,A_end},
+	{I_CE,A_fnode,A_fnode,A_end},
+	{I_PRESELF,A_arf,A_fnode,A_end},
+	{I_POSTSELF,A_arf,A_fnode,A_end},
+	{I_FUNC,A_func,A_fnode,A_end},
+	{I_FUNC_OPT,A_func,A_fnode,A_fnode,A_end},
+	{I_IFUNC,A_fnode,A_fnode,A_end},
+	{I_MAP,A_func,A_fnode,A_end},
+	{I_RECMAP,A_func,A_fnode,A_end},
 	{I_PFDERIV,A_notimpl,A_end},
 	{I_ANS,A_int,A_end},
 	{I_PVAR,A_int,A_node,A_end},
-	{I_ASSPVAR,A_arg,A_arg,A_end},
+	{I_ASSPVAR,A_fnode,A_fnode,A_end},
 	{I_FORMULA,A_internal,A_end},
 	{I_LIST,A_node,A_end},
 	{I_STR,A_str,A_end},
 	{I_NEWCOMP,A_int,A_end},
-	{I_CAR,A_arg,A_end},
-	{I_CDR,A_arg,A_end},
+	{I_CAR,A_fnode,A_end},
+	{I_CDR,A_fnode,A_end},
 	{I_CAST,A_notimpl,A_end},
-	{I_INDEX,A_arg,A_node,A_end},
+	{I_INDEX,A_fnode,A_node,A_end},
 	{I_EV,A_node,A_end},
-	{I_TIMER,A_arg,A_arg,A_arg,A_end},
+	{I_TIMER,A_fnode,A_fnode,A_fnode,A_end},
 	{I_GF2NGEN,A_end},
 	{I_GFPNGEN,A_end},
 	{I_GFSNGEN,A_end},
-	{I_LOP,A_int,A_arg,A_arg,A_end},
-	{I_OPT,A_str,A_arg,A_end},
+	{I_LOP,A_int,A_fnode,A_fnode,A_end},
+	{I_OPT,A_str,A_fnode,A_end},
 	{I_GETOPT,A_str,A_end},
-	{I_POINT,A_arg,A_str,A_end},
-	{I_PAREN,A_arg,A_end},
-	{I_MINUS,A_arg,A_end},
+	{I_POINT,A_fnode,A_str,A_end},
+	{I_PAREN,A_fnode,A_end},
+	{I_MINUS,A_fnode,A_end},
 	{I_NARYOP,A_notimpl,A_end}
 };
 
@@ -443,7 +434,7 @@ FNODE flatten_fnode(FNODE f,char *opname)
 		for ( i = 0; type[i] != A_end; i++ );
 		NEWFNODE(r,i); ID(r) = f->id;
 		for ( i = 0; type[i] != A_end; i++ ) {
-			if ( type[i] == A_arg )
+			if ( type[i] == A_fnode )
 				r->arg[i] = (pointer)flatten_fnode(f->arg[i],opname);
 			else
 				r->arg[i] = f->arg[i];

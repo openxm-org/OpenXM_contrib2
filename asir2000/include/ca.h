@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.48 2004/03/10 02:41:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.49 2004/05/14 06:02:54 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,6 +123,7 @@ typedef void * pointer;
 #define O_RANGE 20
 #define O_TB 21
 #define O_DPV 22
+#define O_QUOTEARG 23
 #define O_VOID -1
 
 #define N_Q 0
@@ -140,6 +141,10 @@ typedef void * pointer;
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
 #define ORD_LEX 2
+
+typedef enum {
+	A_end=0,A_fnode,A_arf,A_int,A_str,A_internal,A_node,A_notimpl,A_func
+} farg_type;
 
 #if defined(LONG_IS_32BIT)
 #if defined(VISUAL)
@@ -365,6 +370,13 @@ typedef struct oQUOTE {
 	short pad;
 	pointer body;
 } *QUOTE;
+
+typedef struct oQUOTEARG {
+	short id;
+	short pad;
+	farg_type type;
+	pointer body;
+} *QUOTEARG;
 
 typedef struct oOPTLIST {
 	short id;
@@ -732,6 +744,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWMATHCAP(e) ((e)=(MATHCAP)MALLOC(sizeof(struct oMATHCAP)),OID(e)=O_MATHCAP)
 #define NEWBYTEARRAY(e) ((e)=(BYTEARRAY)MALLOC(sizeof(struct oBYTEARRAY)),OID(e)=O_BYTEARRAY)
 #define NEWQUOTE(e) ((e)=(QUOTE)MALLOC(sizeof(struct oQUOTE)),OID(e)=O_QUOTE)
+#define NEWQUOTEARG(e) ((e)=(QUOTEARG)MALLOC(sizeof(struct oQUOTEARG)),OID(e)=O_QUOTEARG)
 #define NEWOPTLIST(l) ((l)=(OPTLIST)MALLOC(sizeof(struct oOPTLIST)),OID(l)=O_OPTLIST)
 #define NEWSYMBOL(l) ((l)=(SYMBOL)MALLOC(sizeof(struct oSYMBOL)),OID(l)=O_SYMBOL)
 #define NEWRANGE(l) ((l)=(RANGE)MALLOC(sizeof(struct oRANGE)),OID(l)=O_RANGE)
@@ -791,6 +804,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKBYTEARRAY(m,l) \
 (NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
 #define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b))
+#define MKQUOTEARG(q,t,b) (NEWQUOTEARG(q),(q)->type=(t),(q)->body=(pointer)(b))
 
 #define NEXTDC(r,c) \
 if(!(r)){NEWDC(r);(c)=(r);}else{NEWDC(NEXT(c));(c)=NEXT(c);}

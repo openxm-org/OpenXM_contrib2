@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.30 2004/05/14 09:20:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.31 2004/07/07 07:40:19 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -133,6 +133,11 @@ struct oTKWD {
 	char *name;
 	int token;
 };
+
+typedef struct fid_spec {
+    fid id;
+	farg_type type[10];
+} *fid_spec_p;
 
 typedef struct oARF {
 	char *name;

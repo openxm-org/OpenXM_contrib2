@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.46 2004/03/25 01:56:00 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.47 2004/07/07 07:40:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,6 +76,7 @@ void Pquotetotex_tb();
 void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
+void Pquote_to_funargs(),Pfunargs_to_quote();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 char *conv_rule(char *name);
@@ -103,6 +104,8 @@ struct ftab str_tab[] = {
 	{"quotetotex",Pquotetotex,1},
 	{"quotetotex_env",Pquotetotex_env,-99999999},
 	{"flatten_quote",Pflatten_quote,2},
+	{"quote_to_funargs",Pquote_to_funargs,1},
+	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{0,0,0},
 };
 
@@ -1283,12 +1286,130 @@ int top_is_minus(FNODE f)
 
 FNODE flatten_fnode(FNODE,char *);
 
-void Pflatten_quote(NODE arg,QUOTE *rp)
+void Pflatten_quote(NODE arg,Obj *rp)
 {
 	FNODE f;
 	QUOTE q;
 
-	f = flatten_fnode(BDY((QUOTE)ARG0(arg)),BDY((STRING)ARG1(arg)));
-	MKQUOTE(q,f);
-	*rp = q;
+	if ( !ARG0(arg) || OID((Obj)ARG0(arg)) != O_QUOTE )
+		*rp = (Obj)ARG0(arg);
+	else {
+		f = flatten_fnode(BDY((QUOTE)ARG0(arg)),BDY((STRING)ARG1(arg)));
+		MKQUOTE(q,f);
+		*rp = (Obj)q;
+	}
+}
+
+void Pquote_to_funargs(NODE arg,LIST *rp)
+{
+	fid_spec_p spec;
+	QUOTE q;
+	QUOTEARG qa;
+	FNODE f;
+	STRING s;
+	QUOTE r;
+	int i;
+	Q id,a;
+	NODE t0,t;
+
+	q = (QUOTE)ARG0(arg);
+	if ( !q || OID(q) != O_QUOTE )
+		error("quote_to_funargs : invalid argument");
+	f = BDY(q);
+	if ( !f ) {
+		MKLIST(*rp,0);
+		return;
+	}
+	get_fid_spec(f->id,&spec);
+	if ( !spec )
+		error("quote_to_funargs : not supported yet");
+	t0 = 0;
+	STOQ((int)f->id,id);
+	NEXTNODE(t0,t);
+	BDY(t) = (pointer)id;
+	for ( i = 0; spec->type[i] != A_end; i++ ) {
+		NEXTNODE(t0,t);
+		switch ( spec->type[i] ) {
+			case A_fnode:
+				MKQUOTE(r,(FNODE)f->arg[i]);
+				BDY(t) = (pointer)r;
+				break;
+			case A_int:
+				STOQ((int)f->arg[i],a);
+				BDY(t) = (pointer)a;
+				break;
+			case A_str:
+				MKSTR(s,(char *)f->arg[i]);
+				BDY(t) = (pointer)s;
+				break;
+			case A_internal:
+				BDY(t) = (pointer)f->arg[i];
+				break;
+			default:
+				MKQUOTEARG(qa,spec->type[i],f->arg[i]);	
+				BDY(t) = (pointer)qa;
+				break;
+		}
+	}
+	if ( t0 ) NEXT(t) = 0;
+	MKLIST(*rp,t0);
+}
+
+void Pfunargs_to_quote(NODE arg,QUOTE *rp)
+{
+	fid_spec_p spec;
+	QUOTE q;
+	QUOTEARG qa;
+	FNODE f;
+	STRING s;
+	QUOTE r;
+	int i;
+	LIST l;
+	fid id;
+	Obj a;
+	NODE t0,t;
+
+	l = (LIST)ARG0(arg);
+	if ( !l || OID(l) != O_LIST || !(t=BDY(l)) )
+		error("funargs_to_quote : invalid argument");
+	t = BDY(l);
+	id = (fid)QTOS((Q)BDY(t)); t = NEXT(t);
+	get_fid_spec(id,&spec);
+	if ( !spec )
+		error("funargs_to_quote : not supported yet");
+	for ( i = 0; spec->type[i] != A_end; i++ );
+	NEWFNODE(f,i);
+	f->id = id;
+	for ( i = 0; spec->type[i] != A_end; i++, t = NEXT(t) ) {
+		if ( !t )
+			error("funargs_to_quote : argument mismatch");
+		a = (Obj)BDY(t);
+		switch ( spec->type[i] ) {
+			case A_fnode:
+				if ( !a || OID(a) != O_QUOTE )
+					error("funargs_to_quote : invalid argument");
+				f->arg[i] = BDY((QUOTE)a);
+				break;
+			case A_int:
+				if ( !INT(a) )
+					error("funargs_to_quote : invalid argument");
+				f->arg[i] = (pointer)QTOS((Q)a);
+				break;
+			case A_str:
+				if ( !a || OID(a) != O_STR )
+					error("funargs_to_quote : invalid argument");
+				f->arg[i] = (pointer)BDY((STRING)a);
+				break;
+			case A_internal:
+				f->arg[i] = (pointer)a;
+				break;
+			default:
+				if ( !a || OID(a) != O_QUOTEARG || 
+					((QUOTEARG)a)->type != spec->type[i] )
+					error("funargs_to_quote : invalid argument");
+				f->arg[i] = BDY((QUOTEARG)a);
+				break;
+		}
+	}
+	MKQUOTE(*rp,f);
 }
