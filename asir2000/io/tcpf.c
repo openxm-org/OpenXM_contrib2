@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.41 2003/05/23 00:11:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.42 2003/09/19 02:33:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,6 +79,8 @@ static struct m_c {
 static int m_c_i,m_c_s;
 int I_am_server;
 
+extern int little_endian;
+
 #if defined(MPI)
 extern int mpi_nprocs;
 #define valid_mctab_index(ind)\
@@ -93,6 +95,11 @@ if((ind)<0||(ind)>=m_c_i||\
 if((ind)<0||(ind)>=m_c_i||\
 ((m_c_tab[ind].m<0)&&(m_c_tab[ind].c<0))){(ind)=-1;}
 #endif
+
+static struct IOFP iofp_102[MAXIOFP];
+
+void flush_stream_102(int rank), flush_stream_force_102(int rank);
+int register_102(int s,int rank, int is_master);
 
 int register_server();
 int get_mcindex(int);
@@ -120,6 +127,8 @@ void Pregister_server();
 void Pox_get_serverinfo();
 void Pox_mpi_myid(), Pox_mpi_nprocs();
 void Pnd_exec_f4_red();
+void Paccept_102(),Pconnect_102();
+void Pox_send_cmo_102(),Pox_recv_cmo_102();
 
 void ox_launch_generic();
 
@@ -130,6 +139,10 @@ struct ftab tcp_tab[] = {
 	{"ox_recv_raw_cmo",Pox_recv_raw_cmo,1},
 	{"ox_get_serverinfo",Pox_get_serverinfo,-1},
 	{"generate_port",Pgenerate_port,-1},
+	{"ox_send_cmo_102",Pox_send_cmo_102,2},
+	{"ox_recv_cmo_102",Pox_recv_cmo_102,1},
+	{"accept_102",Paccept_102,2},
+	{"connect_102",Pconnect_102,3},
 	{"try_bind_listen",Ptry_bind_listen,1},
 	{"try_connect",Ptry_connect,2},
 	{"try_accept",Ptry_accept,2},
@@ -262,6 +275,57 @@ void Pgenerate_port(NODE arg,Obj *rp)
 		MKSTR(str,s);
 		*rp = (Obj)str;
 	}
+}
+
+/* accept_102(port,rank) */
+
+void Paccept_102(NODE arg,Q *rp)
+{
+	char port_str[BUFSIZ];
+	int port,s,use_unix,rank;
+
+	if ( IS_CYGWIN || !ARG0(arg) || NUM(ARG0(arg)) ) {
+		port = QTOS((Q)ARG0(arg));
+		sprintf(port_str,"%d",port);
+		use_unix = 0;
+	} else {
+		strcpy(port_str,BDY((STRING)ARG0(arg)));
+		use_unix = 1;
+	}
+	s = try_bind_listen(use_unix,port_str);
+	s = try_accept(use_unix,s);
+	rank = QTOS((Q)ARG1(arg));
+	if ( register_102(s,rank,1) < 0 )
+		STOQ(-1,*rp);
+	else
+		*rp = 0;
+}
+
+/*
+ connect_102(host,port,rank)
+*/
+
+void Pconnect_102(NODE arg,Q *rp)
+{
+	char port_str[BUFSIZ];
+	char *host;
+	int port,s,use_unix,rank;
+
+	if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
+		port = QTOS((Q)ARG1(arg));
+		sprintf(port_str,"%d",port);
+		use_unix = 0;
+	} else {
+		strcpy(port_str,BDY((STRING)ARG1(arg)));
+		use_unix = 1;
+	}
+	host = BDY((STRING)ARG0(arg));
+	s = try_connect(use_unix,host,port_str);
+	rank = QTOS((Q)ARG2(arg));
+	if ( register_102(s,rank,0) < 0 )
+		STOQ(-1,*rp);
+	else
+		*rp = 0;
 }
 
 /*
@@ -894,6 +958,27 @@ void Pox_recv_raw_cmo(NODE arg,Obj *rp)
 	ox_read_cmo(s,rp);
 }
 
+void Pox_send_cmo_102(NODE arg,Obj *rp)
+{
+	FILE *fp;
+	int rank = QTOS((Q)ARG0(arg));
+
+	fp = iofp_102[rank].out;
+	write_cmo(fp,(Obj)ARG1(arg));
+	/* flush always */
+	flush_stream_102(rank);
+	*rp = 0;
+}
+
+void Pox_recv_cmo_102(NODE arg,Obj *rp)
+{
+	FILE *fp;
+	int rank = QTOS((Q)ARG0(arg));
+
+	fp = iofp_102[rank].in;
+	read_cmo(fp,rp);
+}
+
 void Pox_push_local(NODE arg,Obj *rp)
 {
 	int s;
@@ -1309,4 +1394,66 @@ int get_ox_server_id(int index)
 {
 	valid_mctab_index(index);
 	return m_c_tab[index].c;
+}
+
+int register_102(int s1,int rank,int is_master)
+{
+	unsigned char c,rc;
+
+	if ( rank >= MAXIOFP ) return -1;
+	iofp_102[rank].s = s1;
+#if defined(VISUAL)
+	iofp_102[rank].in = WSIO_open(s1,"r");
+	iofp_102[rank].out = WSIO_open(s1,"w");
+#else
+	iofp_102[rank].in = fdopen(s1,"r");
+	iofp_102[rank].out = fdopen(s1,"w");
+#if !defined(__CYGWIN__)
+	setbuffer(iofp_102[rank].in,iofp_102[rank].inbuf = 
+		(char *)GC_malloc_atomic(LBUFSIZ),LBUFSIZ);
+	setbuffer(iofp_102[rank].out,iofp_102[rank].outbuf = 
+		(char *)GC_malloc_atomic(LBUFSIZ),LBUFSIZ);
+#endif
+#endif
+	if ( little_endian )
+		c = 1;
+	else
+		c = 0xff;
+	if ( is_master ) {
+		/* server : write -> read */
+		write_char((FILE *)iofp_102[rank].out,&c);
+		flush_stream_force_102(rank);
+		read_char((FILE *)iofp_102[rank].in,&rc);
+	} else {
+		/* client : read -> write */
+		read_char((FILE *)iofp_102[rank].in,&rc);
+		/* special care for a failure of spawing a server */
+		if ( rc !=0 && rc != 1 && rc != 0xff )
+			return -1;	
+		write_char((FILE *)iofp_102[rank].out,&c);
+		flush_stream_force_102(rank);
+	}
+	iofp_102[rank].conv = c == rc ? 0 : 1;
+	iofp_102[rank].socket = 0;
+	return 0;
+}
+
+extern int ox_batch;
+
+void flush_stream_102(int rank)
+{
+	if ( !ox_batch )
+		flush_stream_force_102(rank);
+}
+
+void flush_stream_force_102(int rank)
+{
+	if ( iofp_102[rank].out )
+#if defined(VISUAL)
+		cflush(iofp_102[rank].out);
+#elif MPI
+		cflush(iofp_102[rank].out);
+#else
+		fflush(iofp_102[rank].out);
+#endif
 }

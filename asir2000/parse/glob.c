@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.39 2003/10/20 09:17:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.40 2003/11/11 06:14:08 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -738,7 +738,7 @@ void copyright() {
 #endif
 	printf("Copyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\n");
 	printf("Copyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\n");
-	printf("GC 6.1(alpha5) copyright 2001, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n");
+	printf("GC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n");
 #if PARI
 #if 0
 	printf("PARI 2.2.4, copyright (C) 2002 The PARI Group.\n");
