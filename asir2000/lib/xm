@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/lib/xm,v 1.4 1999/11/18 03:22:07 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 /**  xm  **/
 Xm_noX = 0$  
 /* 1 : using X-window system. 0 : not using X-window system. */
@@ -38,9 +38,9 @@ ToAsir_Debug = 0$
 
 def ox_help(A) {
   if (type(A) == 0) {
-    shell("ls "+getenv("OpenXM_HOME")+"/lib/asir/help/xm.eg.help");
+    shell("ls "+getenv("OpenXM_HOME")+"/lib/asir/help/xm.help");
   }else{
-    help("xm.eg.help/"+A)$
+    help("xm.help/"+A)$
   }
 }
 
