@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.18 2001/10/09 01:36:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.19 2001/12/21 08:23:15 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -126,6 +126,12 @@ int yylex()
 	N n,n1;
 	Q q;
 	Obj r;
+	int floatingpoint = 0;
+	double dbl;
+	Real real;
+	double atof();
+	extern int bigfloat;
+
 	
 	/* initialize buffer pointers */
 	nbuf = nbuf0; tbuf = tbuf0;
@@ -246,10 +252,7 @@ int yylex()
 		REALLOC_NBUF nbuf[i++] = c;
 		READ_DIGIT_NBUF
 		if ( c == '.' ) {
-			double dbl;
-			Real real;
-			double atof();
-			extern int bigfloat;
+			floatingpoint = 1;
 
 			REALLOC_NBUF nbuf[i++] = c;
 			READ_DIGIT_NBUF
@@ -262,6 +265,17 @@ int yylex()
 					Ungetc(c);
 				READ_DIGIT_NBUF
 			}
+		} else if ( c == 'e' ) {
+			floatingpoint = 1;
+			REALLOC_NBUF nbuf[i++] = c;
+			c = Getc();
+			if ( (c == '+') || (c == '-') ) {
+				REALLOC_NBUF nbuf[i++] = c;
+			} else
+				Ungetc(c);
+			READ_DIGIT_NBUF
+		}
+		if ( floatingpoint ) {
 			Ungetc(c); REALLOC_NBUF nbuf[i] = 0;
 #if PARI
 			if ( !bigfloat ) {
