@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.11 2001/09/05 09:01:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.12 2001/10/03 01:47:31 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -65,7 +65,7 @@
 
 extern int gdef;
 extern SNODE parse_snode;
-extern int main_parser;
+extern int main_parser, allow_create_var;
 
 int prresult;
 
@@ -323,7 +323,7 @@ pexpr	: STR
 			{ $$ = mkfnode(1,I_PAREN,$2); }
 		| UCASE
 			{ 
-				if ( main_parser )
+				if ( main_parser || allow_create_var )
 					$$ = mkfnode(2,I_PVAR,makepvar($1),0);
 				else {
 					ind = searchpvar($1);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.7 2000/08/22 05:04:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.8 2001/10/09 01:36:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -213,7 +213,7 @@ Obj *rp;
 	}
 #endif
 	cmd = BDY((STRING)ARG0(arg));
-	exprparse(0,cmd,&fnode);
+	exprparse_create_var(0,cmd,&fnode);
 	*rp = eval(fnode);
 }
 

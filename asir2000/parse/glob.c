@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.27 2002/07/26 00:33:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.28 2002/09/11 08:57:21 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -85,7 +85,7 @@ char *asir_pager;
 
 NODE usrf,sysf,noargsysf,ubinf,parif;
 NODE ONENODE;
-int main_parser, ox_do_copy, ox_do_count, ox_count_length;
+int main_parser, allow_create_var, ox_do_copy, ox_do_count, ox_count_length;
 int ox_file_io, ox_need_conv;
 char *ox_copy_bptr;
 char *parse_strp;
