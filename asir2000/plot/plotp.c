@@ -1,8 +1,9 @@
-/* $OpenXM: OpenXM/src/asir99/plot/plotp.c,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.1.1.1 1999/12/03 07:39:13 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "ifplot.h"
+#include <math.h>
 
 #if defined(sun) && !defined(__svr4__)
 #define EXP10(a) exp10(a)
