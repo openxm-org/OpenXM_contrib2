@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.95 2004/03/15 08:44:52 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.96 2004/03/17 08:16:24 noro Exp $ */
 
 #include "nd.h"
 
@@ -33,7 +33,8 @@ static RHist *nd_red;
 static int *nd_work_vector;
 static int **nd_matrix;
 static int nd_matrix_len;
-
+static struct weight_or_block *nd_worb;
+static int nd_worb_len;
 static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
@@ -437,6 +438,67 @@ int ndl_matrix_compare(UINT *d1,UINT *d2)
 			s += v[j]*nd_work_vector[j];
 		if ( s > 0 ) return 1;
 		else if ( s < 0 ) return -1;
+	}
+	return 0;
+}
+
+int ndl_composite_compare(UINT *d1,UINT *d2)
+{
+	int i,j,s,start,end,len,o;
+	int *v;
+	struct sparse_weight *sw;
+
+	for ( j = 0; j < nd_nvar; j++ )
+		nd_work_vector[j] = GET_EXP(d1,j)-GET_EXP(d2,j);
+	for ( i = 0; i < nd_worb_len; i++ ) {
+		len = nd_worb[i].length;
+		switch ( nd_worb[i].type ) {
+			case IS_DENSE_WEIGHT:
+				v = nd_worb[i].body.dense_weight;
+				for ( j = 0, s = 0; j < len; j++ )
+					s += v[j]*nd_work_vector[j];
+				if ( s > 0 ) return 1;
+				else if ( s < 0 ) return -1;
+				break;
+			case IS_SPARSE_WEIGHT:
+				sw = nd_worb[i].body.sparse_weight;
+				for ( j = 0, s = 0; j < len; j++ )
+					s += sw[j].value*nd_work_vector[sw[j].pos];
+				if ( s > 0 ) return 1;
+				else if ( s < 0 ) return -1;
+				break;
+			case IS_BLOCK:
+				o = nd_worb[i].body.block.order;
+				start = nd_worb[i].body.block.start;
+				switch ( o ) {
+					case 0:
+						end = start+len;
+						for ( j = start, s = 0; j < end; j++ )
+							s += MUL_WEIGHT(nd_work_vector[j],j);
+						if ( s > 0 ) return 1;
+						else if ( s < 0 ) return -1;
+						for ( j = end-1; j >= start; j-- )
+							if ( nd_work_vector[j] < 0 ) return 1;
+							else if ( nd_work_vector[j] > 0 ) return -1;
+						break;
+					case 1:
+						end = start+len;
+						for ( j = start, s = 0; j < end; j++ )
+							s += MUL_WEIGHT(nd_work_vector[j],j);
+						if ( s > 0 ) return 1;
+						else if ( s < 0 ) return -1;
+						for ( j = start; j < end; j++ )
+							if ( nd_work_vector[j] > 0 ) return 1;
+							else if ( nd_work_vector[j] < 0 ) return -1;
+						break;
+					case 2:
+						for ( j = start; j < end; j++ )
+							if ( nd_work_vector[j] > 0 ) return 1;
+							else if ( nd_work_vector[j] < 0 ) return -1;
+						break;
+				}
+				break;
+		}
 	}
 	return 0;
 }
@@ -3463,7 +3525,12 @@ void nd_init_ord(struct order_spec *ord)
 			ndl_compare_function = ndl_matrix_compare;
 			break;
 		case 3:
-			error("nd_init_ord : composite order is not supported yet.");
+			/* composite order */
+			nd_dcomp = -1;
+			nd_isrlex = 0;
+			nd_worb_len = ord->ord.composite.length;
+			nd_worb = ord->ord.composite.w_or_b;
+			ndl_compare_function = ndl_composite_compare;
 			break;
 	}
 	nd_ord = ord;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.43 2004/03/15 06:44:50 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.44 2004/03/19 01:18:54 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -894,12 +894,12 @@ void fnodetotex_tb(FNODE f,TB tb)
 					break;
 				case C_GT:
 					fnodetotex_tb((FNODE)FA1(f),tb);
-					write_tb(" \\gt ",tb);
+					write_tb(" > ",tb);
 					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
 				case C_LT:
 					fnodetotex_tb((FNODE)FA1(f),tb);
-					write_tb(" \\lt ",tb);
+					write_tb(" < ",tb);
 					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
 				case C_GE:
@@ -929,12 +929,12 @@ void fnodetotex_tb(FNODE f,TB tb)
 					break;
 				case L_GT:
 					fnodetotex_tb((FNODE)FA1(f),tb);
-					write_tb(" \\gt ",tb);
+					write_tb(" > ",tb);
 					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
 				case L_LT:
 					fnodetotex_tb((FNODE)FA1(f),tb);
-					write_tb(" \\lt ",tb);
+					write_tb(" < ",tb);
 					fnodetotex_tb((FNODE)FA2(f),tb);
 					break;
 				case L_GE:

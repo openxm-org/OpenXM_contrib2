@@ -258,6 +258,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2);
 INLINE int ndl_lex_compare(UINT *d1,UINT *d2);
 INLINE int ndl_block_compare(UINT *d1,UINT *d2);
 INLINE int ndl_matrix_compare(UINT *d1,UINT *d2);
+INLINE int ndl_composite_compare(UINT *d1,UINT *d2);
 INLINE int ndl_equal(UINT *d1,UINT *d2);
 INLINE void ndl_copy(UINT *d1,UINT *d2);
 INLINE void ndl_zero(UINT *d);
