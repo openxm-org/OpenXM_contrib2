@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.53 2004/12/17 03:09:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.54 2004/12/18 09:25:58 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -780,7 +780,7 @@ char *get_intervalversion()
 
 void copyright()
 {
-	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2004, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2005, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
 	printf(format, get_intervalversion(), get_asir_version(), get_asir_distribution(), get_pariversion());
 }
 
@@ -789,7 +789,7 @@ char *scopyright()
 	static char *notice;
 	char *s1, *s2, *s3;
 	int d, len;
-	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2005, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
 	if (!notice) {
 		s1 = get_intervalversion();
 		s2 = get_asir_distribution();
