@@ -313,21 +313,31 @@ def makeret(Res,Vars,FLAG){
 
 	ResVec=newvect(ResNum)$
 
-        for(M=0,I=0;I<ResNum;I++){
+	if(FLAG)
+		M=0$
+	else
+		M=-1$
+
+        for(I=0;I<ResNum;I++){
                 if(member(Res[I][0],Vars)){
                         ResVec[I]=Res[I][1]$
 
-                        if(FLAG && type(ResVec[I])==1){
-                                if(M==0)
-                                        M=ResVec[I]$
-                                else
-                                        if(ResVec[I]<M)
-                                                M=ResVec[I]$
-                        }
-                }
+                        if(FLAG){
+				if(type(ResVec[I])==1){
+                                	if(M==0)
+                                        	M=ResVec[I]$
+                                	else
+                                        	if(ResVec[I]<M)
+                                                	M=ResVec[I]$
+				}
+				else
+					M=-1$
+			}
+		}
         }               
 
-	if(M!=0)
+
+	if(M!=-1)
 		ResVec=ResVec/M;
 
  	RET=newvect(VarsNum,Vars)$
