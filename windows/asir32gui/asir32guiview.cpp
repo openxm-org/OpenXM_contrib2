@@ -15,7 +15,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-const TextBufferSize     = 32768;
+// const TextBufferSize     = 32768;
+const TextBufferSize     = 16384;
 
 CAsir32guiView *theView;
 
