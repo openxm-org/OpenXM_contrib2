@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.37 2004/09/15 01:43:32 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.38 2004/09/21 05:23:13 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1172,6 +1172,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 	int *rind,*cind;
 	int count;
 	struct oEGT eg_mul,eg_inv,tmp0,tmp1;
+	int period;
 
 	a0 = (Q **)mat->body;
 	row = mat->row; col = mat->col;
@@ -1219,6 +1220,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 			*cindp = cind = (int *)MALLOC_ATOMIC((ri)*sizeof(int));
 
 			init_eg(&eg_mul); init_eg(&eg_inv);
+			period = F4_INTRAT_PERIOD;
 			for ( q = ONE, count = 0; ; count++ ) {
 				fprintf(stderr,".");
 				/* wc = -b mod md */
@@ -1259,20 +1261,22 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				add_eg(&eg_mul,&tmp0,&tmp1);
 				/* q = q*md */
 				mulq(q,mdq,&u); q = u;
-				if ( !(count % F4_INTRAT_PERIOD) && intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
-					for ( j = k = l = 0; j < col; j++ )
-						if ( cinfo[j] )
-							rind[k++] = j;	
-						else
-							cind[l++] = j;
-					if ( gensolve_check(mat,*nmmat,*dn,rind,cind) ) {
-						fprintf(stderr,"\n");
-						print_eg("INV",&eg_inv);
-						print_eg("MUL",&eg_mul);
-						fflush(asir_out);
-						return rank;
-					}
-				}
+				if ( !(count % period) )
+					if ( intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
+						for ( j = k = l = 0; j < col; j++ )
+							if ( cinfo[j] )
+								rind[k++] = j;	
+							else
+								cind[l++] = j;
+						if ( gensolve_check(mat,*nmmat,*dn,rind,cind) ) {
+							fprintf(stderr,"\n");
+							print_eg("INV",&eg_inv);
+							print_eg("MUL",&eg_mul);
+							fflush(asir_out);
+							return rank;
+						}
+					} else
+						period *=2;
 			}
 	}
 }
