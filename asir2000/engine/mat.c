@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.10 2003/05/22 07:01:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.11 2004/07/26 07:15:46 saito Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
 
 extern int StrassenSize;
+void mulmatmat_miser();
 
 void addmat(vl,a,b,c)
 VL vl;
