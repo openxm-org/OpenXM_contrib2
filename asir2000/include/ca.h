@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.7 2000/12/05 01:24:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.8 2000/12/05 06:59:17 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -551,6 +551,8 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWGFPN(r) ((r)=(GFPN)MALLOC(sizeof(struct oGFPN)),OID(r)=O_N,NID(r)=N_GFPN)
 #define NEWDL(d,n) \
 ((d)=(DL)MALLOC_ATOMIC(TRUESIZE(oDL,(n)-1,int)),bzero((char *)(d),TRUESIZE(oDL,(n)-1,int)))
+#define NEWDL_NOINIT(d,n) \
+((d)=(DL)MALLOC_ATOMIC(TRUESIZE(oDL,(n)-1,int)))
 
 #define MKP(v,dc,p) \
 (!DEG(dc)?((p)=COEF(dc)):(NEWP(p),VR(p)=(v),DC(p)=(dc),(p)))
@@ -588,6 +590,8 @@ if(!(r)){NEWDC(r);(c)=(r);}else{NEWDC(NEXT(c));(c)=NEXT(c);}
 if(!(r)){NEWNODE(r);(c)=(r);}else{NEWNODE(NEXT(c));(c)=NEXT(c);}
 #define NEXTMP(r,c) \
 if(!(r)){NEWMP(r);(c)=(r);}else{NEWMP(NEXT(c));(c)=NEXT(c);}
+#define NEXTMP2(r,c,s) \
+if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
 
 /* convertors */
 #define NTOQ(n,s,q) \

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.4 2000/11/07 06:06:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.5 2000/12/05 06:59:16 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -70,6 +70,14 @@ MP _mp_free_list;
 DP _dp_free_list;
 DL _dl_free_list;
 int current_dl_length;
+
+void _free_private_storage()
+{
+	_mp_free_list = 0;
+	_dp_free_list = 0;
+	_dl_free_list = 0;
+	GC_gcollect();
+}
 
 void _DL_alloc()
 {

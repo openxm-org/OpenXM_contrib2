@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.4 2000/12/05 01:24:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.5 2000/12/05 06:59:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1537,4 +1537,33 @@ DP *rp;
 	if ( d )
 		d->sugar = sugar;
 	_dptodp(d,rp); _free_dp(d);
+}
+
+void _dp_sp_mod(p1,p2,mod,rp)
+DP p1,p2;
+int mod;
+DP *rp;
+{
+	int i,n,td;
+	int *w;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,u;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+	w = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, td = 0; i < n; i++ ) {
+		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
+	}
+	NEWDL(d,n); d->td = td - d1->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d1->d[i];
+	NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td; mulmd_dup(mod,s,p1,&t);
+	NEWDL(d,n); d->td = td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = w[i] - d2->d[i];
+	NEWMP(m); m->dl = d; m->c = STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td; mulmd_dup(mod,s,p2,&u);
+	addmd_destructive(mod,t,u,rp);
 }

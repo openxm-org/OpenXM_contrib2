@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.6 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.7 2000/12/05 06:59:16 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -57,11 +57,14 @@ void comm_mulmd();
 void weyl_mulmd();
 void weyl_mulmdm();
 void weyl_mulmmm();
-void _comm_mulmd();
-void _weyl_mulmd();
-void _weyl_mulmmm();
-void _weyl_mulmdm();
 
+void mulmdm_dup();
+void comm_mulmd_dup();
+void weyl_mulmd_dup();
+void weyl_mulmdm_dup();
+void weyl_mulmmm_dup();
+void comm_mulmd_tab_destructive();
+void adddl_dup();
 void ptomd(vl,mod,dvl,p,pr)
 VL vl,dvl;
 int mod;
@@ -616,4 +619,373 @@ DP d;
 		if ( NEXT(m) )
 			printf("+");
 	}
+}
+
+/* merge p1 and p2 into pr */
+
+void addmd_destructive(mod,p1,p2,pr)
+int mod;
+DP p1,p2,*pr;
+{
+	int n;
+	MP m1,m2,mr,mr0,s;
+	int t;
+
+	if ( !p1 )
+		*pr = p2;
+	else if ( !p2 )
+		*pr = p1;
+	else {
+		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; )
+			switch ( (*cmpdl)(n,m1->dl,m2->dl) ) {
+				case 0:
+					t = (ITOS(C(m1))+ITOS(C(m2))) - mod;
+					if ( t < 0 )
+						t += mod;
+					s = m1; m1 = NEXT(m1);
+					if ( t ) {
+						NEXTMP2(mr0,mr,s); C(mr) = STOI(t);
+					}
+					s = m2; m2 = NEXT(m2);
+					break;
+				case 1:
+					s = m1; m1 = NEXT(m1); NEXTMP2(mr0,mr,s);
+					break;
+				case -1:
+					s = m2; m2 = NEXT(m2); NEXTMP2(mr0,mr,s);
+					break;
+			}
+		if ( !mr0 )
+			if ( m1 )
+				mr0 = m1;
+			else if ( m2 )
+				mr0 = m2;
+			else {
+				*pr = 0;
+				return;
+			}
+		else if ( m1 )
+			NEXT(mr) = m1;
+		else if ( m2 )
+			NEXT(mr) = m2;
+		else
+			NEXT(mr) = 0;
+		MKDP(NV(p1),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = MAX(p1->sugar,p2->sugar);
+	}
+}
+
+void mulmd_dup(mod,p1,p2,pr)
+int mod;
+DP p1,p2,*pr;
+{
+	if ( !do_weyl )
+		comm_mulmd_dup(mod,p1,p2,pr);
+	else
+		weyl_mulmd_dup(mod,p1,p2,pr);
+}
+
+void comm_mulmd_dup(mod,p1,p2,pr)
+int mod;
+DP p1,p2,*pr;
+{
+	MP m;
+	DP s,t,u;
+	int i,l,l1;
+	static MP *w;
+	static int wlen;
+
+	if ( !p1 || !p2 )
+		*pr = 0;
+	else {
+		for ( m = BDY(p1), l1 = 0; m; m = NEXT(m), l1++ );
+		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
+		if ( l1 < l ) {
+			t = p1; p1 = p2; p2 = t;
+			l = l1;
+		}
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
+		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		for ( s = 0, i = l-1; i >= 0; i-- ) {
+			mulmdm_dup(mod,p1,w[i],&t); addmd_destructive(mod,s,t,&u); s = u;
+		}
+		bzero(w,l*sizeof(MP));
+		*pr = s;
+	}
+}
+
+void weyl_mulmd_dup(mod,p1,p2,pr)
+int mod;
+DP p1,p2,*pr;
+{
+	MP m;
+	DP s,t,u;
+	int i,l,l1;
+	static MP *w;
+	static int wlen;
+
+	if ( !p1 || !p2 )
+		*pr = 0;
+	else {
+		for ( m = BDY(p1), l = 0; m; m = NEXT(m), l++ );
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
+		for ( m = BDY(p1), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		for ( s = 0, i = l-1; i >= 0; i-- ) {
+			weyl_mulmdm_dup(mod,w[i],p2,&t); addmd_destructive(mod,s,t,&u); s = u;
+		}
+		bzero(w,l*sizeof(MP));
+		*pr = s;
+	}
+}
+
+void mulmdm_dup(mod,p,m0,pr)
+int mod;
+DP p;
+MP m0;
+DP *pr;
+{
+	MP m,mr,mr0;
+	DL d,dt,dm;
+	int c,n,r,i;
+	int *pt,*p1,*p2;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		for ( mr0 = 0, m = BDY(p), c = ITOS(C(m0)), d = m0->dl, n = NV(p); 
+			m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr);
+			C(mr) = STOI(dmar(ITOS(C(m)),c,0,mod));
+			NEWDL_NOINIT(dt,n); mr->dl = dt;
+			dm = m->dl;
+			dt->td = d->td + dm->td;
+			for ( i = 0, pt = dt->d, p1=d->d, p2 = dm->d; i < n; i++ )
+				*pt++ = *p1++ + *p2++;
+		}
+		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = p->sugar + m0->dl->td;
+	}
+}
+
+void weyl_mulmdm_dup(mod,m0,p,pr)
+int mod;
+MP m0;
+DP p;
+DP *pr;
+{
+	DP r,t,t1;
+	MP m;
+	DL d0;
+	int n,n2,l,i,j,tlen;
+	static MP *w,*psum;
+	static struct cdlm *tab;
+	static int wlen;
+	static int rtlen;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
+		for ( m = BDY(p), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+		n = NV(p); n2 = n>>1;
+		d0 = m0->dl;
+
+		for ( i = 0, tlen = 1; i < n2; i++ )
+			tlen *= d0->d[n2+i]+1;
+		if ( tlen > rtlen ) {
+			if ( tab ) GC_free(tab);
+			if ( psum ) GC_free(psum);
+			rtlen = tlen;
+			tab = (struct cdlm *)MALLOC(rtlen*sizeof(struct cdlm));
+			psum = (MP *)MALLOC(rtlen*sizeof(MP));
+		}
+		bzero(psum,tlen*sizeof(MP));
+		for ( i = l-1; i >= 0; i-- ) {
+			bzero(tab,tlen*sizeof(struct cdlm));
+			weyl_mulmmm_dup(mod,m0,w[i],n,tab,tlen);
+			for ( j = 0; j < tlen; j++ ) {
+				if ( tab[j].c ) {
+					NEWMP(m); m->dl = tab[j].d;
+					C(m) = STOI(tab[j].c); NEXT(m) = psum[j];
+					psum[j] = m;
+				}
+			}
+		}
+		for ( j = tlen-1, r = 0; j >= 0; j-- ) 
+			if ( psum[j] ) {
+				MKDP(n,psum[j],t); addmd_destructive(mod,r,t,&t1); r = t1;
+			}
+		if ( r )
+			r->sugar = p->sugar + m0->dl->td;
+		*pr = r;
+	}
+}
+
+/* m0 = x0^d0*x1^d1*... * dx0^d(n/2)*dx1^d(n/2+1)*... */
+
+void weyl_mulmmm_dup(mod,m0,m1,n,rtab,rtablen)
+int mod;
+MP m0,m1;
+int n;
+struct cdlm *rtab;
+int rtablen;
+{
+	MP m,mr,mr0;
+	DP r,t,t1;
+	int c,c0,c1,cc;
+	DL d,d0,d1,dt;
+	int i,j,a,b,k,l,n2,s,min,h,curlen;
+	struct cdlm *p;
+	static int *ctab;
+	static struct cdlm *tab;
+	static int tablen;
+	static struct cdlm *tmptab;
+	static int tmptablen;
+
+	if ( !m0 || !m1 ) {
+		rtab[0].c = 0;
+		rtab[0].d = 0;
+		return;
+	}
+	c0 = ITOS(C(m0)); c1 = ITOS(C(m1));
+	c = dmar(c0,c1,0,mod);
+	d0 = m0->dl; d1 = m1->dl;
+	n2 = n>>1;
+	curlen = 1;
+
+	NEWDL(d,n);
+	if ( n & 1 )
+		/* offset of h-degree */
+		d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
+	else
+		d->td = 0;
+	rtab[0].c = c;
+	rtab[0].d = d;
+
+	if ( rtablen > tmptablen ) {
+		if ( tmptab ) GC_free(tmptab);
+		tmptab = (struct cdlm *)MALLOC(rtablen*sizeof(struct cdlm));
+		tmptablen = rtablen; 
+	}
+
+	for ( i = 0; i < n2; i++ ) {
+		a = d0->d[i]; b = d1->d[n2+i];
+		k = d0->d[n2+i]; l = d1->d[i];
+		if ( !k || !l ) {
+			a += l;
+			b += k;
+			s = a+b;
+			for ( j = 0, p = rtab; j < curlen; j++, p++ ) {
+				if ( p->c ) {
+					dt = p->d;
+					dt->d[i] = a;
+					dt->d[n2+i] = b;
+					dt->td += s;
+				}
+			}
+			curlen *= k+1;
+			continue;
+		}
+		if ( k+1 > tablen ) {
+			if ( tab ) GC_free(tab);
+			if ( ctab ) GC_free(ctab);
+			tablen = k+1;
+			tab = (struct cdlm *)MALLOC(tablen*sizeof(struct cdlm));
+			ctab = (int *)MALLOC(tablen*sizeof(int));
+		}
+		/* degree of xi^a*(Di^k*xi^l)*Di^b */
+		s = a+k+l+b;
+		/* compute xi^a*(Di^k*xi^l)*Di^b */
+		min = MIN(k,l);
+		mkwcm(k,l,mod,ctab);
+		bzero(tab,(k+1)*sizeof(struct cdlm));
+		/* n&1 != 0 => homogenized computation; dx-xd=h^2 */
+		if ( n & 1 )
+			for ( j = 0; j <= min; j++ ) {
+				NEWDL(d,n);
+				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->td = s;
+				d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+				tab[j].d = d;
+				tab[j].c = ctab[j];
+			}
+		else
+			for ( j = 0; j <= min; j++ ) {
+				NEWDL(d,n);
+				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+				d->td = d->d[i]+d->d[n2+i]; /* XXX */
+				tab[j].d = d;
+				tab[j].c = ctab[j];
+			}
+		comm_mulmd_tab_destructive(mod,n,rtab,curlen,tab,k+1);
+		curlen *= k+1;
+	}
+}
+
+void comm_mulmd_tab_destructive(mod,nv,t,n,t1,n1)
+int mod;
+int nv;
+struct cdlm *t;
+int n;
+struct cdlm *t1;
+int n1;
+{
+	int i,j;
+	struct cdlm *p;
+	int c;
+	DL d;
+
+	for ( j = 1, p = t+n; j < n1; j++ ) {
+		c = t1[j].c;
+		d = t1[j].d;
+		if ( !c )
+			break;
+		for ( i = 0; i < n; i++, p++ ) {
+			if ( t[i].c ) {
+				p->c = dmar(t[i].c,c,0,mod);
+				adddl_dup(nv,t[i].d,d,&p->d);
+			}
+		}
+	}
+	c = t1[0].c;
+	d = t1[0].d;
+	for ( i = 0, p = t; i < n; i++, p++ )
+		if ( t[i].c ) {
+			p->c = dmar(t[i].c,c,0,mod);
+			/* t[i].d += d */
+			adddl_destructive(nv,t[i].d,d);
+		}
+}
+
+void adddl_dup(n,d1,d2,dr)
+int n;
+DL d1,d2;
+DL *dr;
+{
+	DL dt;
+	int i;
+
+	NEWDL(dt,n);
+	*dr = dt;
+	dt->td = d1->td + d2->td;
+	for ( i = 0; i < n; i++ )
+		dt->d[i] = d1->d[i]+d2->d[i];
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.11 2000/12/05 01:24:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.12 2000/12/05 06:59:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -82,6 +82,8 @@ int TP,NBP,NMP,NFP,NDP,ZR,NZR;
 
 extern int (*cmpdl)();
 extern int do_weyl;
+
+extern DP_Print;
 
 void print_stat(void);
 void init_stat(void);
@@ -631,7 +633,7 @@ int m;
 		blist = 0; s0 = 0;
 		/* asph : sum of all head terms of spoly */
 		for ( t = dm; t; t = NEXT(t) ) {
-			_dp_sp_mod_dup(ps[t->dp1],ps[t->dp2],m,&sp);
+			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
 				s0 = symb_merge(s0,dp_dllist(sp),nv);
@@ -646,7 +648,7 @@ int m;
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				_dp_mod(sd,m,0,&sdm);
-				_mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
+				mulmd_dup(m,sdm,ps[(int)BDY(r)],&f2);
 				MKNODE(bt,f2,blist); blist = bt;
 				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
@@ -739,13 +741,10 @@ int m;
 		for ( j = 0, i = 0; j < spcol; j++ )
 			if ( colstat[j] ) {
 				mp0 = 0;
-				NEXTMP(mp0,mp);
-				_dltodl(st[j],&mp->dl);
-				mp->c = STOI(1);
+				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = STOI(1);
 				for ( k = j+1; k < spcol; k++ )
 					if ( !colstat[k] && spmat[i][k] ) {
-						NEXTMP(mp0,mp);
-						_dltodl(st[k],&mp->dl);
+						NEXTMP(mp0,mp); mp->dl = st[k];
 						mp->c = STOI(spmat[i][k]);
 				}
 				NEXT(mp) = 0;
@@ -756,8 +755,6 @@ int m;
 				gall = append_one(gall,nh);
 				i++;
 			}
-		for ( i = 0, r = blist; i < row; i++, r = NEXT(r) )
-			_free_dp(BDY(r));
 	}
 	if ( DP_Print ) {
 		print_eg("Symb",&eg_symb);
