@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.50 2003/12/13 08:03:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.51 2004/02/13 05:48:36 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -605,11 +605,13 @@ void asir_popString()
 		buf = (char *)ALLOCA(l+1);
 		soutput_init(buf);
 		sprintexpr(CO,val);
+#if 0
 		l = strlen(buf);
 		obuf = (char *)MALLOC(l+1);
 		strcpy(obuf,buf);
+#endif
 	}
-	MKSTR(str,obuf);
+	MKSTR(str,buf);
 	ox_send_data(0,str);
 }
 
