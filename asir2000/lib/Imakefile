@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.8 2000/01/19 05:16:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.9 2000/01/19 06:02:35 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\
@@ -15,7 +15,7 @@ install-lib::
 	MakeDir($(ASIR_LIBDIR))
 	-$(CP) -R $(SRCS) $(ASIR_LIBDIR)
 	$(RM) $(ASIR_LIBDIR)/help
-	$(LN) $(ASIR_LIBDIR)/help-eg $(ASIR_LIBDIR)/help
+	$(LN) -f $(ASIR_LIBDIR)/help-eg $(ASIR_LIBDIR)/help
 #if 0
 	$(RM) -r $(ASIR_LIBDIR)/help-jp
 	$(RM) -r $(ASIR_LIBDIR)/help-eg
