@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.7 2000/02/11 04:30:16 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.8 2000/04/13 04:30:23 takayama Exp $ */
 /**  xm  **/
 Xm_noX = 0$  
 /* 1 : using X-window system. 0 : not using X-window system. */
@@ -6,8 +6,8 @@ Xm_noX = 0$
          cf. var.sm1,  debugMode
 */
 
-print("xm version 20000202. Copyright (C) OpenXM Developing Team. 2000.")$
-print("http://www.math.sci.kobe-u.ac.jp/OpenXM ")$
+print("xm version 20000715. Copyright (C) OpenXM Developing Team. 2000.")$
+print("http://www.openxm.org")$
 print("ox_help(0); ox_help(\"keyword\"); ox_grep(\"keyword\"); for help message ")$
 XM_debug=1$
 
