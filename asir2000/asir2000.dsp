@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /YX /c
-# ADD CPP /nologo /MT /W3 /GX /Z7 /Ox /Ot /Og /Oi /Op /I "..\windows\pari2\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "NDEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D PARI /D INET /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
+# ADD CPP /nologo /MT /W3 /GX /Z7 /Ox /Ot /Og /Oi /Op /I "..\windows\pari20\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "NDEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D "PARI" /D "INET" /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
 # SUBTRACT CPP /Oa /Ow
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
 # ADD RSC /l 0x411 /d "NDEBUG"
@@ -51,7 +51,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 ..\windows\pari2\win32com\release\libpari.lib ws2_32.lib advapi32.lib user32.lib /nologo /stack:0x1000000 /subsystem:console /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"msvcrt.lib" /out:".\Release/asir.exe"
+# ADD LINK32 ..\windows\pari20\win32com\release\libpari.lib ws2_32.lib advapi32.lib user32.lib /nologo /stack:0x1000000 /subsystem:console /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"msvcrt.lib" /out:".\Release/asir.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "asir2000 - Win32 Debug"
@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /YX /c
-# ADD CPP /nologo /MTd /W3 /GX /Z7 /Od /I "..\windows\pari2\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "_DEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D PARI /D INET /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
+# ADD CPP /nologo /MTd /W3 /GX /Z7 /Od /I "..\windows\pari20\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "_DEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D "PARI" /D "INET" /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
 # ADD BASE RSC /l 0x411 /d "_DEBUG"
 # ADD RSC /l 0x411 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -76,7 +76,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386
-# ADD LINK32 ..\windows\pari2\win32com\debug\libpari.lib ws2_32.lib advapi32.lib user32.lib /nologo /stack:0x1000000 /subsystem:console /incremental:no /debug /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:".\Debug/asir.exe"
+# ADD LINK32 ..\windows\pari20\win32com\debug\libpari.lib ws2_32.lib advapi32.lib user32.lib /nologo /stack:0x1000000 /subsystem:console /incremental:no /debug /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:".\Debug/asir.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -430,6 +430,10 @@ SOURCE=.\engine\mat.c
 # Begin Source File
 
 SOURCE=.\builtin\math.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\builtin\mattran.c
 # End Source File
 # Begin Source File
 
