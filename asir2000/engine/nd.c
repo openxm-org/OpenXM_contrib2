@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.84 2003/10/18 01:39:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.85 2003/10/28 03:23:40 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -4183,6 +4183,7 @@ NODE nd_f4(int m)
 			d = nd_reconstruct(m,0,d);
 			continue;
 		}
+		if ( bucket->m < 0 ) continue;
 		col = nd_symbolic_preproc(bucket,&s0vect,&rp0);
 		if ( !col ) {
 			for ( t = l; NEXT(t); t = NEXT(t) );
