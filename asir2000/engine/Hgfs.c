@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.6 2001/06/25 06:05:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.7 2001/06/25 06:10:48 noro Exp $ */
 
 #include "ca.h"
 
@@ -13,6 +13,10 @@ void lnfsf(int,UM,UM,struct p_pair *,UM,UM);
 void minipolysf(UM,UM,UM);
 void czsfum(UM,UM *);
 void gensqfrsfum(UM,DUM);
+void sfbmtop(int,BM,V,V,P *);
+void pp_sfp(VL,P,P *);
+void sfcsump(VL,P,P *);
+void mulsfbmarray(int,BM,ML,int,int *,V,V,P *);
 
 void fctrsf(p,dcp)
 P p;
@@ -539,10 +543,12 @@ void ptosfbm(int,P,BM);
 
 /* f = f(x,y) */
 
-void sfhensel(count,f,x,listp)
+void sfhensel(count,f,x,evp,sfp,listp)
 int count;
 P f;
 V x;
+GFS *evp;
+P *sfp;
 ML *listp;
 {
 	int i,j;
@@ -553,7 +559,7 @@ ML *listp;
 	V y;
 	int dx,dy,mev;
 	GFS ev;
-	P f1,t,yev,c;
+	P f1,t,yev,c,sf;
 	DCP dc;
 	UM w,w1,q,fm,hm;
 	UM *gm;
@@ -593,6 +599,9 @@ ML *listp;
 	ptosfbm(bound,f,fl);
 	shiftsfbm(bound,fl,FTOIF(CONT(ev)));
 
+	/* sf = f(x+ev) */
+	sfbmtop(bound,fl,x,y,&sf);
+
 	/* fm = fl mod y */
 	fm = W_UMALLOC(dx);
 	cpyum(COEF(fl)[0],fm);
@@ -612,12 +621,14 @@ ML *listp;
 	/* finally, fl must be the lift of gm[fn-1] */
 	rlist->c[i] = fl;
 
+#if 0
 	/* y -> y-a */
-	w = W_UMALLOC(bound);
-	w1 = W_UMALLOC(bound);
 	mev = _chsgnsf(FTOIF(CONT(ev)));
 	for ( i = 0; i < fn; i++ )
 		shiftsfbm(bound,(BM)(rlist->c[i]),mev);
+#endif
+	*evp = ev;
+	*sfp = sf;
 	*listp = rlist;
 }
 
@@ -794,7 +805,7 @@ BM *gp;
 	int ng,nh;
 	BM fk,gk,hk;
 	
-	n = f->d;
+	n = degsfbm(bound,f);
 	ng = g0->d;
 	nh = h0->d;
 
@@ -804,8 +815,10 @@ BM *gp;
 	wg1 = W_UMALLOC(2*n); wh1 = W_UMALLOC(2*n);
 
 	/* fk = gk*hk mod y^k */
-	W_BMALLOC(n,bound,fk); cpyum(COEF(f)[0],COEF(fk)[0]);
-	gk = BMALLOC(ng,bound); cpyum(g0,COEF(gk)[0]);
+	W_BMALLOC(n,bound,fk);
+	cpyum(COEF(f)[0],COEF(fk)[0]);
+	gk = BMALLOC(ng,bound);
+	cpyum(g0,COEF(gk)[0]);
 	W_BMALLOC(nh,bound,hk);
 	cpyum(h0,COEF(hk)[0]);
 
@@ -936,8 +949,8 @@ BM fl;
 		for ( i = 0; i <= DEG(t); i++ )
 			COEF(COEF(fl)[i])[d] = COEF(t)[i];
 	}
-	n = UDEG(f);
-	for ( i = 0; i <= n; i++ )
+	n = QTOS(DEG(DC(f)));
+	for ( i = 0; i < bound; i++ )
 		degum(COEF(fl)[i],n);
 }
 
@@ -972,26 +985,297 @@ P *fp;
 
 /* x : main variable */
 
-void sfbmtop(vl,bound,f,x,y,fp)
-VL vl;
+void sfbmtop(bound,f,x,y,fp)
 int bound;
 BM f;
 V x,y;
 P *fp;
 {
 	UM *c;
-	P yv,r,s,t,u,yvd;
-	Q d;
-	int i;
+	int i,j,d,a;
+	GFS b;
+	DCP dc0,dc,dct;
 
-	c = f->c;
-	MKV(y,yv);
-	r = 0;
-	for ( i = 0; i < bound; i++ ) {
-		STOQ(i,d); sfumtop(x,c[i],&t);
-		pwrp(vl,yv,d,&yvd);
-		mulp(vl,t,yvd,&s);
-		addp(vl,r,s,&u); r = u;
+	c = COEF(f);
+	d = DEG(c[0]);
+	for ( i = 1; i < bound; i++ )
+		d = MAX(DEG(c[i]),d);
+
+	dc0 = 0;
+	for ( i = 0; i <= d; i++ ) {
+		dc = 0;
+		for ( j = 0; j < bound; j++ ) {
+			if ( DEG(c[j]) >= i && (a = COEF(c[j])[i]) ) {
+				NEWDC(dct);
+				STOQ(j,DEG(dct));
+				MKGFS(IFTOF(a),b);
+				COEF(dct) = (P)b;
+				NEXT(dct) = dc;
+				dc = dct;
+			}
+		}
+		if ( dc ) {
+			NEWDC(dct);
+			STOQ(i,DEG(dct));
+			MKP(y,dc,COEF(dct));
+			NEXT(dct) = dc0;
+			dc0 = dct;
+		}
 	}
-	*fp = r;
+	if ( dc0 )
+		MKP(x,dc0,*fp);
+	else
+		*fp = 0;
+}
+
+void sfdtest(P,ML,V,V,DCP *);
+
+void sfbfctr(f,x,y,evp,dcp)
+P f;
+V x,y;
+GFS *evp;
+DCP *dcp;
+{
+	ML list;
+	P sf;
+
+	/* sf(x) = f(x+ev) = list->c[0]*list->c[1]*... */
+	sfhensel(5,f,x,evp,&sf,&list);
+	sfdtest(sf,list,x,y,dcp);
+}
+
+/* f = f(x,y) = list->c[0]*list->c[1]*... mod y^list->bound */
+
+void sfdtest(f,list,x,y,dcp)
+P f;
+ML list;
+V x,y;
+DCP *dcp;
+{
+	int n,np,bound;
+	int i,j,k;
+	int *win;
+	P g,lcg,factor,cofactor,lcyx;
+	P csum,csumt;
+	DCP dcf,dcf0,dc;
+	BM *c;
+	BM lcy;
+	ML wlist;
+	struct oVL vl1,vl0;
+	VL vl;
+	int z;
+
+	/* vl = [x,y] */
+	vl0.v = x; vl0.next = &vl1; vl1.v = y; vl1.next = 0; vl = &vl0;
+
+	n = UDEG(f); np = list->n; bound = list->bound; win = W_ALLOC(np+1);
+
+	/* csum = lc(f)*f(1) */
+	sfcsump(vl,f,&csum); mulp(vl,csum,COEF(DC(f)),&csumt); csum = csumt;
+
+	wlist = W_MLALLOC(np); wlist->n = list->n;
+	wlist->bound = list->bound;
+	c = (BM *)COEF(wlist);
+	bcopy((char *)COEF(list),(char *)c,(int)(sizeof(BM)*np));
+
+	/* initialize g by f */
+	g = f; mulp(vl,g,COEF(DC(g)),&lcg);
+
+	/* initialize lcy by LC(f) */
+	W_BMALLOC(0,bound,lcy);
+	NEWDC(dc); COEF(dc) = COEF(DC(g));
+	DEG(dc) = 0; 
+	NEWP(lcyx); VR(lcyx) = x; DC(lcyx) = dc;
+	ptosfbm(bound,lcyx,lcy);
+
+	fprintf(stderr,"np = %d\n",np);
+	for ( g = f, k = 1, dcf = dcf0 = 0, win[0] = 1, --np, z = 0; ; z++ ) {
+		if ( !(z % 1000) ) fprintf(stderr,".");
+		if ( sfdtestmain(vl,lcg,lcy,csum,wlist,k,win,&factor,&cofactor) ) {
+			NEXTDC(dcf0,dcf); DEG(dcf) = ONE; COEF(dcf) = factor;
+			g = cofactor;
+
+			/* update csum */
+			sfcsump(vl,g,&csum); mulp(vl,csum,COEF(DC(g)),&csumt); csum = csumt;
+
+			/* update lcg */
+			mulp(vl,g,COEF(DC(g)),&lcg);
+
+			/* update lcy */
+			clearsfbm(bound,0,lcy);
+			COEF(dc) = COEF(DC(g)); ptosfbm(bound,lcyx,lcy);
+
+			for ( i = 0; i < k - 1; i++ ) 
+				for ( j = win[i] + 1; j < win[i + 1]; j++ ) 
+					c[j-i-1] = c[j];
+			for ( j = win[k-1] + 1; j <= np; j++ ) 	
+					c[j-k] = c[j];
+			if ( ( np -= k ) < k ) 
+				break;
+			if ( np - win[0] + 1 < k ) 
+				if ( ++k > np )
+					break;
+				else
+					for ( i = 0; i < k; i++ ) 
+						win[i] = i + 1;
+			else 
+				for ( i = 1; i < k; i++ ) 
+					win[i] = win[0] + i;
+		} else if ( !ncombi(1,np,k,win) ) 
+			if ( k == np ) 
+				break;
+			else
+				for ( i = 0, ++k; i < k; i++ ) 
+					win[i] = i + 1;
+	}
+	fprintf(stderr,"\n");
+	NEXTDC(dcf0,dcf); COEF(dcf) = g;
+	DEG(dcf) = ONE; NEXT(dcf) = 0; *dcp = dcf0;
+}
+
+/* lcy = LC(g), lcg = lcy*g */
+int sfdtestmain(vl,lcg,lcy,csum,list,k,in,fp,cofp)
+VL vl;
+P lcg;
+BM lcy;
+P csum;
+ML list;
+int k;
+int *in;
+P *fp,*cofp;
+{
+	P fmul,csumg,q;
+	V x,y;
+
+	x = vl->v;
+	y = vl->next->v;
+#if 0
+	if (!sfctest(g,list,k,in))
+		return 0;
+#endif
+	mulsfbmarray(UDEG(lcg),lcy,list,k,in,x,y,&fmul);
+	if ( csum ) {
+		sfcsump(vl,fmul,&csumg);
+		if ( csumg ) {
+			if ( !divtp(vl,csum,csumg,&q) )
+				return 0;
+		} 
+	}
+	if ( divtp(vl,lcg,fmul,&q) ) {
+		pp_sfp(vl,fmul,fp);
+		pp_sfp(vl,q,cofp);
+		return 1;
+	} else
+		return 0;
+}
+
+#if 0
+int sfctest(g,list,k,in)
+P g;
+ML list;
+int k;
+int *in;
+{
+	register int i;
+	int q,bound;
+	int *wm,*wm1,*tmpp;
+	DCP dc;
+	Q dvr;
+	N lcn,cstn,dndn,dmyn,rn;
+	LUM *l;
+
+	for ( dc = DC(g); dc && DEG(dc); dc = NEXT(dc) );
+	if ( dc ) 
+		cstn = NM((Q)COEF(dc));
+	else 
+		return 1;
+	q = list->mod; bound = list->bound;
+	ntobn(q,NM((Q)COEF(DC(g))),&lcn);;
+	W_CALLOC(bound+1,int,wm); W_CALLOC(bound+1,int,wm1); 
+	for ( i = 0; i < PL(lcn); i++ ) 
+		wm[i] = BD(lcn)[i];
+	for ( i = 0, l = (LUM *)list->c; i < k; i++ ) {
+		mulpadic(q,bound,wm,COEF(l[in[i]])[0],wm1);
+		tmpp = wm; wm = wm1; wm1 = tmpp;
+	}
+	padictoq(q,bound,wm,&dvr);
+	kmuln(NM((Q)COEF(DC(g))),cstn,&dndn); divn(dndn,NM(dvr),&dmyn,&rn);
+	return rn ? 0 : 1;
+}
+#endif
+
+/* main var of f is x */
+
+void mulsfbmarray(n,lcy,list,k,in,x,y,g)
+int n;
+BM lcy;
+ML list;
+int k;
+int *in;
+V x,y;
+P *g;
+{
+	int bound,i;
+	BM wb0,wb1,t,lcbm;
+	BM *l;
+
+	bound = list->bound;
+	W_BMALLOC(n,bound,wb0); W_BMALLOC(n,bound,wb1);
+	l = (BM *)list->c;
+	clearsfbm(bound,n,wb0);
+	mulsfbm(bound,lcy,l[in[0]],wb0);
+	for ( i = 1; i < k; i++ ) {
+		clearsfbm(bound,n,wb1);
+		mulsfbm(bound,l[in[i]],wb0,wb1);
+		t = wb0; wb0 = wb1; wb1 = t;
+	}
+	sfbmtop(bound,wb0,x,y,g);
+}
+
+void sfcsump(vl,f,s)
+VL vl;
+P f;
+P *s;
+{
+	P t,u;
+	DCP dc;
+
+	for ( dc = DC(f), t = 0; dc; dc = NEXT(dc) ) {
+		addp(vl,COEF(dc),t,&u); t = u;
+	}
+	*s = t;
+}
+
+/* *fp = primitive part of f w.r.t. x */
+
+void pp_sfp(vl,f,fp)
+VL vl;
+P f;
+P *fp;
+{
+	V x,y;
+	int d;
+	UM t,s,gcd;
+	DCP dc;
+	P dvr;
+
+	x = vl->v;
+	y = vl->next->v;
+	d = getdeg(y,f);
+	if ( d == 0 )
+		*fp = f;  /* XXX */
+	else {
+		t = W_UMALLOC(2*d);
+		s = W_UMALLOC(2*d);
+		gcd = W_UMALLOC(2*d);
+		dc = DC(f);
+		ptosfum(COEF(dc),gcd);
+		for ( dc = NEXT(dc); dc; dc = NEXT(dc) ) {
+			ptosfum(COEF(dc),t);
+			gcdsfum(gcd,t,s);
+			cpyum(s,gcd);
+		}
+		sfumtop(y,gcd,&dvr);
+		divsp(vl,f,dvr,fp);
+	}
 }

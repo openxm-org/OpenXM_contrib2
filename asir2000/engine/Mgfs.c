@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.4 2001/06/25 04:11:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.5 2001/06/25 05:30:49 noro Exp $ */
 
 #include "ca.h"
 
@@ -366,12 +366,8 @@ BM f1,f2,fr;
 	if ( DEG(f1) < bound || DEG(f2) < bound )
 		error("mulsfbm : invalid input");
 
-	d1 = DEG(COEF(f1)[0]);
-	for ( i = 1; i < bound; i++ )
-		d1 = MAX(DEG(COEF(f1)[i]),d1);
-	d2 = DEG(COEF(f2)[0]);
-	for ( i = 1; i < bound; i++ )
-		d2 = MAX(DEG(COEF(f2)[i]),d2);
+	d1 = degsfbm(bound,f1);
+	d2 = degsfbm(bound,f2);
 	t = W_UMALLOC(d1+d2);
 	s = W_UMALLOC(d1+d2);
 
@@ -389,6 +385,18 @@ BM f1,f2,fr;
 	DEG(fr) = bound;
 }
 
+int degsfbm(bound,f)
+int bound;
+BM f;
+{
+	int d,i;
+
+	d = DEG(COEF(f)[0]);
+	for ( i = 1; i < bound; i++ )
+		d = MAX(DEG(COEF(f)[i]),d);
+	return d;
+}
+
 /* g += f */
 
 void addtosfbm(bound,f,g)
@@ -398,12 +406,8 @@ BM f,g;
 	int i,d1,d2;
 	UM t;
 
-	d1 = DEG(COEF(f)[0]);
-	for ( i = 1; i < bound; i++ )
-		d1 = MAX(DEG(COEF(f)[i]),d1);
-	d2 = DEG(COEF(g)[0]);
-	for ( i = 1; i < bound; i++ )
-		d2 = MAX(DEG(COEF(g)[i]),d2);
+	d1 = degsfbm(bound,f);
+	d2 = degsfbm(bound,g);
 	t = W_UMALLOC(MAX(d1,d2));
 	for ( i = 0; i < bound; i++ ) {
 		addsfum(COEF(f)[i],COEF(g)[i],t);
