@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.12 2000/09/23 00:57:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.13 2000/09/25 04:33:37 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -533,17 +533,17 @@ char *control_port_str,*server_port_str;
 		if ( dname )
 			if ( use_ssh )
 			sprintf(cmd,
-"%s -f -n %s \"xterm -name %s -title ox_launch:%s -geometry 60x10 -e %s %s %s %s %s %s %s>&/dev/null\">/dev/null",
+"%s -f -n %s \"xterm -name %s -title ox_launch:%s -geometry 60x10 -e %s %s %s %s %s %s %s >&/dev/null\">/dev/null",
 				rsh,host,OX_XTERM,host,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,"1");
 			else
 			sprintf(cmd,
-"%s -n %s \"xterm -name %s -title ox_launch:%s -display %s -geometry 60x10 -e %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
+"%s -n %s \"xterm -name %s -title ox_launch:%s -display %s -geometry 60x10 -e %s %s %s %s %s %s %s >&/dev/null&\">/dev/null",
 				rsh,host,OX_XTERM,host,dname,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,dname);
 		else
 			sprintf(cmd,
-"%s -n %s \"%s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
+"%s -n %s \"%s %s %s %s %s %s %s >&/dev/null&\">/dev/null",
 				rsh,host,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,"0");
 		system(cmd);
