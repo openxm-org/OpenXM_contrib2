@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.4 2003/01/16 04:44:19 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Pcar(), Pcdr(), Pcons(), Pappend(), Preverse(), Plength();
+void Pcar(), Pcdr(), Pcons(), Pappend(), Pconcat(), Preverse(), Plength();
 
 struct ftab list_tab[] = {
 	{"car",Pcar,1},
@@ -116,7 +116,7 @@ LIST *rp;
 
 void Pconcat(arg,rp)
 NODE arg;
-LISR *rp;
+LIST *rp;
 {
 	NODE a1,a2,n;
 
