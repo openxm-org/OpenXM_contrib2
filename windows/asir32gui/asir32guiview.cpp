@@ -236,12 +236,12 @@ void CAsir32guiView::DeleteTop()
     }
   }
   if ( Logging ) {
-    len1 = (len0 - len - LogStart);
-    if ( len1 > 0 ) {
-      fwrite(buf+LogStart,1,len1,Logfp);
-      LogStart = 0;
-    } else
-      LogStart = -len1;
+    if ( len < LogStart )
+    	LogStart -= len;
+    else {
+    	fwrite(buf+LogStart,1,len-LogStart,Logfp);
+    	LogStart = 0;	
+    }
   }
   UnlockBuffer();
   if ( q ) {
