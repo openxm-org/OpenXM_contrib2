@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.50 2004/06/30 06:26:39 fujiwara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.51 2004/11/24 06:01:04 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -83,7 +83,7 @@ extern FILE *asir_out;
 
 INFILE asir_infile;
 JMP_BUF main_env,debug_env,timer_env,exec_env;
-int little_endian,debug_mode;
+int little_endian,debug_mode,no_debug_on_error;
 char *asir_libdir;
 char *asir_pager;
 
@@ -727,7 +727,7 @@ void error(char *s)
 	if ( debug_mode )
 		LONGJMP(debug_env,1);
 	if ( CPVS != GPVS )
-		if ( do_server_in_X11 || isatty(0) )
+		if ( !no_debug_on_error && (do_server_in_X11 || isatty(0)) )
 			bp(error_snode);
 	if ( read_exec_file )
 		read_exec_file = 0;
