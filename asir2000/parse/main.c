@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.22 2003/10/19 02:54:41 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.23 2003/12/23 06:30:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,6 +92,8 @@ main(int argc,char *argv[])
 	extern int read_exec_file;
 	extern int do_asirrc;
 	extern int do_file;
+	extern char *do_filename;
+	extern int asir_setenv;
 	extern FILE *in_fp;
 	extern int *StackBottom;
 	char *getenv();
@@ -190,7 +192,12 @@ main(int argc,char *argv[])
 	}
 
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		input_init(ifp,ifname);
+		if (!asir_setenv) {
+			input_init(ifp,ifname);
+		}else {
+			asir_infile=NULL;
+			loadasirfile(ifname);
+		}
 		if ( !SETJMP(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
@@ -199,9 +206,14 @@ main(int argc,char *argv[])
 		fclose(ifp);
 	}
 
-	if ( do_file )
-		input_init(in_fp,"stdin");
-	else
+	if ( do_file ) {
+		if (!asir_setenv) {
+			input_init(in_fp,"stdin");
+		}else {
+			asir_infile=NULL;
+			loadasirfile(do_filename);
+		}
+	}else
 		input_init(stdin,"stdin");
 	prompt();
 	while ( 1 ) {

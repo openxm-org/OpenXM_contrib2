@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.26 2003/10/21 04:28:48 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.27 2003/12/02 06:56:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,6 +76,7 @@ extern int use_new_hensel;
 extern int print_quote;
 extern int show_crossref;
 extern Obj user_defined_prompt;
+extern int asir_setenv;
 
 static struct {
 	char *key;
@@ -95,6 +96,7 @@ static struct {
 	{"message",&do_message},
 	{"debug_up",&debug_up},
 	{"no_prompt",&do_quiet},
+	{"asir_setenv",&asir_setenv},
 	{"ox_batch",&ox_batch},
 	{"ox_check",&ox_check},
 	{"ox_exchange_mathcap",&ox_exchange_mathcap},

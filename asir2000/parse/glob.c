@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.40 2003/11/11 06:14:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.41 2003/12/03 09:32:36 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -179,9 +179,11 @@ void notdef(VL vl,Obj a,Obj b,Obj *c)
 
 int do_asirrc;
 int do_file;
+char *do_filename;
 int do_message;
 int do_fep;
 int read_exec_file;
+int asir_setenv;
 static int buserr_sav;
 static char asir_history[BUFSIZ];
 
@@ -334,7 +336,10 @@ void process_args(int ac,char **av)
 				asir_terminate(1);
 			}
 			do_file = 1;
+			do_filename = *(av+1);
 			av += 2; ac -= 2;
+		} else if ( !strcmp(*av,"-E") ) {
+			asir_setenv = 1; av++; ac--;
 		} else if ( !strcmp(*av,"-quiet") ) {
 			do_quiet = 1; av++; ac--;
 		} else if ( !strcmp(*av,"-norc") ) {
