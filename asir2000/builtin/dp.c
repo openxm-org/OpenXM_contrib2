@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.47 2004/03/09 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.48 2004/03/12 05:18:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -93,6 +93,13 @@ void Pdp_lnf_f();
 void Pnd_gr(),Pnd_gr_trace(),Pnd_f4();
 void Pnd_weyl_gr(),Pnd_weyl_gr_trace();
 void Pnd_nf();
+void Pdp_initial_term();
+void Pdp_order();
+
+LIST dp_initial_term();
+LIST dp_order();
+void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
+	int *modular,struct order_spec **ord);
 
 LIST remove_zero_from_list(LIST);
 
@@ -208,6 +215,8 @@ struct ftab dp_supp_tab[] = {
 	{"dp_ht",Pdp_ht,1},
 	{"dp_hc",Pdp_hc,1},
 	{"dp_rest",Pdp_rest,1},
+	{"dp_initial_term",Pdp_initial_term,1},
+	{"dp_order",Pdp_order,1},
 
 	/* degree and size */
 	{"dp_td",Pdp_td,1},
@@ -1074,6 +1083,62 @@ Q *rp;
 		STOQ(p->sugar,*rp);
 }
 
+void Pdp_initial_term(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	struct order_spec *ord;
+	Num homo;
+	int modular,is_list;
+	LIST v,f,l,initiallist;
+	NODE n;
+
+	f = (LIST)ARG0(arg);
+	if ( f && OID(f) == O_LIST ) 
+		is_list = 1;
+	else {
+		n = mknode(1,f); MKLIST(l,n); f = l;
+		is_list = 0;
+	}
+	if ( argc(arg) == 2 && OID(ARG1(arg)) == O_OPTLIST )
+		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	else
+		ord = dp_current_spec;
+	initiallist = dp_initial_term(f,ord);		
+	if ( !is_list )
+		*rp = (Obj)BDY(BDY(initiallist));
+	else
+		*rp = (Obj)initiallist;
+}
+
+void Pdp_order(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	struct order_spec *ord;
+	Num homo;
+	int modular,is_list;
+	LIST v,f,l,ordlist;
+	NODE n;
+
+	f = (LIST)ARG0(arg);
+	if ( f && OID(f) == O_LIST ) 
+		is_list = 1;
+	else {
+		n = mknode(1,f); MKLIST(l,n); f = l;
+		is_list = 0;
+	}
+	if ( argc(arg) == 2 && OID(ARG1(arg)) == O_OPTLIST )
+		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	else
+		ord = dp_current_spec;
+	ordlist = dp_order(f,ord);		
+	if ( !is_list )
+		*rp = (Obj)BDY(BDY(ordlist));
+	else
+		*rp = (Obj)ordlist;
+}
+
 void Pdp_set_sugar(arg,rp)
 NODE arg;
 Q *rp;
@@ -1456,7 +1521,7 @@ LIST *rp;
 		asir_assert(ARG1(arg),O_LIST,"dp_gr_main");
 		asir_assert(ARG2(arg),O_N,"dp_gr_main");
 		asir_assert(ARG3(arg),O_N,"dp_gr_main");
-		f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+		v = (LIST)ARG1(arg);
 		homo = (Num)ARG2(arg);
 		m = (Q)ARG3(arg);
 		if ( !m )
@@ -1754,27 +1819,36 @@ LIST *rp;
 	LIST f,v;
 	Num homo;
 	Q m;
-	int modular;
+	int modular,ac;
 	struct order_spec *ord;
 
+
 	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_main");
-	asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_main");
-	asir_assert(ARG2(arg),O_N,"dp_weyl_gr_main");
-	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_main");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = (LIST)ARG0(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	homo = (Num)ARG2(arg);
-	m = (Q)ARG3(arg);
-	if ( !m )
-		modular = 0;
-	else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 && BD(NM(m))[0] >= 0x80000000) )
-		error("dp_gr_main : too large modulus");
+	if ( argc(arg) == 5 ) {	
+		asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_main");
+		asir_assert(ARG2(arg),O_N,"dp_weyl_gr_main");
+		asir_assert(ARG3(arg),O_N,"dp_weyl_gr_main");
+		v = (LIST)ARG1(arg);
+		homo = (Num)ARG2(arg);
+		m = (Q)ARG3(arg);
+		if ( !m )
+			modular = 0;
+		else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 && BD(NM(m))[0] >= 0x80000000) )
+			error("dp_weyl_gr_main : too large modulus");
+		else
+			modular = QTOS(m);
+		create_order_spec(0,ARG4(arg),&ord);
+	} else if (  (ac=argc(arg)) == 2 && OID(ARG1(arg)) == O_OPTLIST )
+		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	else if ( ac == 1 )
+		parse_gr_option(f,0,&v,&homo,&modular,&ord);
 	else
-		modular = QTOS(m);
-	create_order_spec(0,ARG4(arg),&ord);
+		error("dp_weyl_gr_main : invalid argument");
 	do_weyl = 1;
 	dp_gr_main(f,v,homo,modular,0,ord,rp);
 	do_weyl = 0;

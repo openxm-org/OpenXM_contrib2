@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.30 2004/03/05 02:26:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.31 2004/03/09 09:40:46 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1989,3 +1989,160 @@ void dp_sort(DP p,DP *rp)
 	*rp = r;
 }
 
+DP extract_initial_term_from_dp(DP p,int *weight,int n);
+LIST extract_initial_term(LIST f,int *weight,int n);
+
+DP extract_initial_term_from_dp(DP p,int *weight,int n)
+{
+	int w,t,i;
+	MP m,r0,r;
+	DP dp;
+
+	if ( !p ) return 0;
+	w = -1;
+	for ( m = BDY(p); m; m = NEXT(m) ) {
+		for ( i = 0, t = 0; i < n; i++ )	
+			t += weight[i]*m->dl->d[i];
+		if ( t > w ) {
+			r0 = 0;
+			w = t;
+		}
+		if ( t == w ) {
+			NEXTMP(r0,r);
+			r->dl = m->dl;
+			r->c = m->c;
+		}
+	}
+	NEXT(r) = 0;
+	MKDP(p->nv,r0,dp);
+	return dp;
+}
+
+LIST extract_initial_term(LIST f,int *weight,int n)
+{
+	NODE nd,r0,r;
+	Obj p;
+	LIST l;
+
+	nd = BDY(f);
+	for ( r0 = 0; nd; nd = NEXT(nd) ) {
+		NEXTNODE(r0,r);
+		p = (Obj)BDY(nd);
+		BDY(r) = (pointer)extract_initial_term_from_dp((DP)p,weight,n);
+	}
+	if ( r0 ) NEXT(r) = 0;
+	MKLIST(l,r0);
+	return l;
+}
+
+LIST dp_initial_term(LIST f,struct order_spec *ord)
+{
+	int n,l,i;
+	struct weight_or_block *worb;
+	int *weight;
+
+	switch ( ord->id ) {
+		case 2: /* matrix order */
+			/* extract the first row */
+			n = ord->nv;
+			weight = ord->ord.matrix.matrix[0];
+			return extract_initial_term(f,weight,n);
+		case 3: /* composite order */
+			/* the first w_or_b */
+			worb = ord->ord.composite.w_or_b;
+			switch ( worb->type ) {
+				case IS_DENSE_WEIGHT:
+					n = worb->length;
+					weight = worb->body.dense_weight;
+					return extract_initial_term(f,weight,n);
+				case IS_SPARSE_WEIGHT:
+					n = ord->nv;
+					weight = (int *)ALLOCA(n*sizeof(int));
+					l = worb->length;
+					for ( i = 0; i < l; i++ )
+						weight[worb->body.sparse_weight[i].pos]
+							=  worb->body.sparse_weight[i].value;
+					return extract_initial_term(f,weight,n);
+				default:
+					error("dp_initial_term : unsupported order");
+			}
+		default:
+			error("dp_initial_term : unsupported order");
+	}
+}
+
+int highest_order_dp(DP p,int *weight,int n);
+LIST highest_order(LIST f,int *weight,int n);
+
+int highest_order_dp(DP p,int *weight,int n)
+{
+	int w,t,i;
+	MP m;
+
+	if ( !p ) return -1;
+	w = -1;
+	for ( m = BDY(p); m; m = NEXT(m) ) {
+		for ( i = 0, t = 0; i < n; i++ )	
+			t += weight[i]*m->dl->d[i];
+		if ( t > w )
+			w = t;
+	}
+	return w;
+}
+
+LIST highest_order(LIST f,int *weight,int n)
+{
+	int h;
+	NODE nd,r0,r;
+	Obj p;
+	LIST l;
+	Q q;
+
+	nd = BDY(f);
+	for ( r0 = 0; nd; nd = NEXT(nd) ) {
+		NEXTNODE(r0,r);
+		p = (Obj)BDY(nd);
+		h = highest_order_dp((DP)p,weight,n);
+		STOQ(h,q);
+		BDY(r) = (pointer)q;
+	}
+	if ( r0 ) NEXT(r) = 0;
+	MKLIST(l,r0);
+	return l;
+}
+
+LIST dp_order(LIST f,struct order_spec *ord)
+{
+	int n,l,i;
+	struct weight_or_block *worb;
+	int *weight;
+
+	switch ( ord->id ) {
+		case 2: /* matrix order */
+			/* extract the first row */
+			n = ord->nv;
+			weight = ord->ord.matrix.matrix[0];
+			return highest_order(f,weight,n);
+		case 3: /* composite order */
+			/* the first w_or_b */
+			worb = ord->ord.composite.w_or_b;
+			switch ( worb->type ) {
+				case IS_DENSE_WEIGHT:
+					n = worb->length;
+					weight = worb->body.dense_weight;
+					return highest_order(f,weight,n);
+				case IS_SPARSE_WEIGHT:
+					n = ord->nv;
+					weight = (int *)ALLOCA(n*sizeof(int));
+					l = worb->length;
+					for ( i = 0; i < l; i++ )
+						weight[worb->body.sparse_weight[i].pos]
+							=  worb->body.sparse_weight[i].value;
+					return highest_order(f,weight,n);
+				default:
+					error("dp_initial_term : unsupported order");
+			}
+		default:
+			error("dp_initial_term : unsupported order");
+	}
+}
