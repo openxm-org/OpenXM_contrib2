@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.31 2003/08/13 03:13:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.32 2003/08/19 04:38:09 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -67,8 +67,9 @@ typedef struct oND_pairs {
 	unsigned int lcm[1];
 } *ND_pairs;
 
-int (*nm_compare_generic)(NM a,NM b);
-int (*nmv_compare_generic)(NMV a,NMV b);
+int (*nm_compare_function)(NM a,NM b);
+int (*nmv_compare_function)(NMV a,NMV b);
+int (*ndp_compare_function)(ND_pairs a,ND_pairs b);
 
 double nd_scale=2;
 static unsigned int **nd_bound;
@@ -84,7 +85,6 @@ ND_pairs _ndp_free_list;
 
 static NDV *nd_ps;
 static NDV *nd_psq;
-int *nd_psl;
 RHist *nd_psh;
 int nd_psn,nd_pslen;
 
@@ -108,11 +108,20 @@ extern int Top,Reverse;
 #define TD(a) ((a)->td)
 #define SG(a) ((a)->sugar)
 #define LEN(a) ((a)->len)
+#define LCM(a) ((a)->lcm)
 
 #define NM_COMPARE(m1,m2)\
-nd_degcompat?(TD(m1)>TD(m2)?1\
+(nd_degcompat?(TD(m1)>TD(m2)?1\
                            :(TD(m1)<TD(m2)?-1:ndl_compare(DL(m1),DL(m2))))\
-            :(*nm_compare_generic)(m1,m2)
+            :(*nm_compare_function)(m1,m2))
+#define NMV_COMPARE(m1,m2)\
+(nd_degcompat?(TD(m1)>TD(m2)?1\
+                           :(TD(m1)<TD(m2)?-1:ndl_compare(DL(m1),DL(m2))))\
+            :(*nmv_compare_function)(m1,m2))
+#define NDP_COMPARE(m1,m2)\
+(nd_degcompat?(TD(m1)>TD(m2)?1\
+                           :(TD(m1)<TD(m2)?-1:ndl_compare(LCM(m1),LCM(m2))))\
+            :(*ndp_compare_function)(m1,m2))
 #define NM_ADV(m) (m = (NM)(((char *)m)+nm_adv))
 #define NEWRHist(r) \
 ((r)=(RHist)MALLOC(sizeof(struct oRHist)+(nd_wpd-1)*sizeof(unsigned int)))
@@ -1619,20 +1628,12 @@ again:
 
 int ndv_compare(NDV *p1,NDV *p2)
 {
-	int td1,td2;
-
-	if ( nd_degcompat ) {
-		td1 = HTD(*p1); td2 = HTD(*p2);
-		if ( td1 > td2 ) return 1;
-		else if ( td1 < td2 ) return -1;
-		else return ndl_compare(HDL(*p1),HDL(*p2));
-	} else
-		return (*nmv_compare_generic)(BDY(*p1),BDY(*p2));
+	return NMV_COMPARE(BDY(*p1),BDY(*p2));
 }
 
 int ndv_compare_rev(NDV *p1,NDV *p2)
 {
-	return -ndv_compare(p1,p2);
+	return -NMV_COMPARE(BDY(*p1),BDY(*p2));
 }
 
 NODE nd_reduceall(int m,NODE f)
@@ -1912,38 +1913,20 @@ ND_pairs nd_minp( ND_pairs d, ND_pairs *prest )
 {
 	ND_pairs m,ml,p,l;
 	unsigned int *lcm;
-	int s,td,len,tlen,c;
+	int s,td,len,tlen,c,c1;
 
 	if ( !(p = NEXT(m = d)) ) {
 		*prest = p;
 		NEXT(m) = 0;
 		return m;
 	}
-	lcm = m->lcm;
 	s = SG(m);
-	td = TD(m);
-	len = nd_psl[m->i1]+nd_psl[m->i2];
-	for ( ml = 0, l = m; p; p = NEXT(l = p) ) {
-		if (SG(p) < s)
-			goto find;
-		else if ( SG(p) == s ) {
-			if ( TD(p) < td )
-				goto find;
-			else if ( TD(p) == td ) {
-				c = ndl_compare(p->lcm,lcm);
-				if ( c < 0 )
-					goto find;
-			}
+	for ( ml = 0, l = m; p; p = NEXT(l = p) )
+		if ( (SG(p) < s) || ((SG(p) == s) && (NDP_COMPARE(p,m) < 0)) ) {
+			ml = l;
+			m = p;
+			s = SG(m);
 		}
-		continue;
-find:
-		ml = l;
-		m = p;
-		lcm = m->lcm;
-		s = SG(m);
-		td = TD(m);
-		len = tlen;
-	}
 	if ( !ml ) *prest = NEXT(m);
 	else {
 		NEXT(ml) = NEXT(m);
@@ -1961,7 +1944,6 @@ int nd_newps(int mod,ND a)
 
 	if ( nd_psn == nd_pslen ) {
 		nd_pslen *= 2;
-		nd_psl = (int *)REALLOC((char *)nd_psl,nd_pslen*sizeof(int));
 		nd_ps = (NDV *)REALLOC((char *)nd_ps,nd_pslen*sizeof(NDV));
 		nd_psq = (NDV *)REALLOC((char *)nd_psq,nd_pslen*sizeof(NDV));
 		nd_psh = (RHist *)REALLOC((char *)nd_psh,nd_pslen*sizeof(RHist));
@@ -1978,7 +1960,6 @@ int nd_newps(int mod,ND a)
 		nd_ps[nd_psn] = b;
 	else
 		nd_psq[nd_psn] = b;
-	nd_psl[nd_psn] = len;
 	nd_free(a);
 	return nd_psn++;
 }
@@ -1991,7 +1972,6 @@ int nd_newps_trace(int mod,ND nf,ND nfq)
 
 	if ( nd_psn == nd_pslen ) {
 		nd_pslen *= 2;
-		nd_psl = (int *)REALLOC((char *)nd_psl,nd_pslen*sizeof(int));
 		nd_ps = (NDV *)REALLOC((char *)nd_ps,nd_pslen*sizeof(NDV));
 		nd_psq = (NDV *)REALLOC((char *)nd_psq,nd_pslen*sizeof(NDV));
 		nd_psh = (RHist *)REALLOC((char *)nd_psh,nd_pslen*sizeof(RHist));
@@ -2008,10 +1988,6 @@ int nd_newps_trace(int mod,ND nf,ND nfq)
 	nd_bound[nd_psn] = nd_compute_bound(nfq);
 	NEWRHist(r); SG(r) = SG(nf); TD(r) = HTD(nf); ndl_copy(HDL(nf),DL(r)); 
 	nd_psh[nd_psn] = r;
-
-	len = LEN(nd_psq[nd_psn]);
-	nd_psl[nd_psn] = len;
-
 	nd_free(nf); nd_free(nfq);
 	return nd_psn++;
 }
@@ -2027,7 +2003,6 @@ void nd_setup(int mod,NODE f)
 	nd_found = 0; nd_notfirst = 0; nd_create = 0;
 
 	nd_psn = length(f); nd_pslen = 2*nd_psn;
-	nd_psl = (int *)MALLOC(nd_pslen*sizeof(int));
 	nd_ps = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_psq = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_psh = (RHist *)MALLOC(nd_pslen*sizeof(RHist));
@@ -2082,7 +2057,6 @@ void nd_setup_trace(int mod,NODE f)
 	nd_found = 0; nd_notfirst = 0; nd_create = 0;
 
 	nd_psn = length(f); nd_pslen = 2*nd_psn;
-	nd_psl = (int *)MALLOC(nd_pslen*sizeof(int));
 	nd_ps = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_psq = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_psh = (RHist *)MALLOC(nd_pslen*sizeof(RHist));
@@ -2184,11 +2158,6 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 		initd(&ord1);
 		nd_nvar++;
 	} else {
-		switch ( ord->ord.simple ) {
-			case 0: nd_isrlex = 1; nd_degcompat = 1; break;
-			case 1: nd_isrlex = 0; nd_degcompat = 1; break;
-			default: error("nd_gr : unsupported order");
-		}
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 			ptod(CO,vv,(P)BDY(t),&c);
 			if ( c ) {
@@ -2197,6 +2166,7 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		in0 = fd0;
+		nd_init_ord(ord);
 	}
 	do {
 		nd_setup_trace(m,fd0);
