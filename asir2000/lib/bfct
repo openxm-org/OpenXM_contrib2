@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.10 2000/12/15 01:34:31 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.11 2000/12/15 01:52:36 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -83,10 +83,9 @@ def ann(F)
 		if ( !member(y1,VL) && !member(y2,VL) )
 			G1 = cons(E,G1);
 	}
-	G2 = map(subst,G1,dt,1);
-	G3 = map(b_subst,G2,t);
-	G4 = map(subst,G3,t,-1-s);
-	return G4;
+	G2 = map(psi,G1,t,dt);
+	G3 = map(subst,G2,t,-1-s);
+	return G3;
 }
 
 /*
@@ -128,15 +127,14 @@ def ann0(F)
 		if ( !member(y1,VL) && !member(y2,VL) )
 			G1 = cons(E,G1);
 	}
-	G2 = map(subst,G1,dt,1);
-	G3 = map(b_subst,G2,t);
-	G4 = map(subst,G3,t,-1-s);
+	G2 = map(psi,G1,t,dt);
+	G3 = map(subst,G2,t,-1-s);
 
-	/* G4 = J_f(s) */
+	/* G3 = J_f(s) */
 
 	V1 = cons(s,V); DV1 = cons(ds,DV); V1DV1 = append(V1,DV1);
-	G5 = dp_weyl_gr_main(cons(F,G4),V1DV1,0,1,0);
-	Bf = weyl_minipoly(G5,V1DV1,0,s);
+	G4 = dp_weyl_gr_main(cons(F,G3),V1DV1,0,1,0);
+	Bf = weyl_minipoly(G4,V1DV1,0,s);
 
 	FList = cdr(fctr(Bf));
 	for ( T = FList, Min = 0; T != []; T = cdr(T) ) {
@@ -145,7 +143,7 @@ def ann0(F)
 		if ( dn(Root) == 1 && Root < Min )
 			Min = Root;
 	}
-	return [Min,map(subst,G4,s,Min)];
+	return [Min,map(subst,G3,s,Min)];
 }
 
 def indicial1(F,V)
@@ -164,7 +162,6 @@ def indicial1(F,V)
 	/* homogenized (heuristics) */
 	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
 	G1 = map(subst,G0,y1,1);
-	Mat = newmat(2,2,[[-1,1],[0,1]]);
 	G2 = map(psi,G1,t,dt);
 	G3 = map(subst,G2,t,-s-1);
 	return G3;
