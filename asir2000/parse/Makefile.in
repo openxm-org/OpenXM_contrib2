@@ -105,7 +105,7 @@ CLEANFILES = y.tab.c y.tab.h
 BUILT_SOURCES = y.tab.c y.tab.h
 noinst_LIBRARIES = libparse.a
 libparse_a_SOURCES = arith.c comp.c debug.c eval.c evall.c function.c \
-    gc_risa.c glob.c kwd.c lex.c load.c parser.c puref.c pvar.c quote.c \
+    glob.c kwd.c lex.c load.c parser.c puref.c pvar.c quote.c \
     struct.c util.c xdeb.c ${inc_HEADERS}
 
 nodist_libparse_a_SOURCES = y.tab.c y.tab.h
@@ -118,9 +118,9 @@ libparse_a_AR = $(AR) cru
 libparse_a_LIBADD =
 am_libparse_a_OBJECTS = arith.$(OBJEXT) comp.$(OBJEXT) debug.$(OBJEXT) \
 	eval.$(OBJEXT) evall.$(OBJEXT) function.$(OBJEXT) \
-	gc_risa.$(OBJEXT) glob.$(OBJEXT) kwd.$(OBJEXT) lex.$(OBJEXT) \
-	load.$(OBJEXT) parser.$(OBJEXT) puref.$(OBJEXT) pvar.$(OBJEXT) \
-	quote.$(OBJEXT) struct.$(OBJEXT) util.$(OBJEXT) xdeb.$(OBJEXT)
+	glob.$(OBJEXT) kwd.$(OBJEXT) lex.$(OBJEXT) load.$(OBJEXT) \
+	parser.$(OBJEXT) puref.$(OBJEXT) pvar.$(OBJEXT) quote.$(OBJEXT) \
+	struct.$(OBJEXT) util.$(OBJEXT) xdeb.$(OBJEXT)
 nodist_libparse_a_OBJECTS = y.tab.$(OBJEXT)
 libparse_a_OBJECTS = $(am_libparse_a_OBJECTS) \
 	$(nodist_libparse_a_OBJECTS)
@@ -132,12 +132,12 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 @AMDEP_TRUE@DEP_FILES = $(DEPDIR)/arith.Po $(DEPDIR)/comp.Po \
 @AMDEP_TRUE@	$(DEPDIR)/debug.Po $(DEPDIR)/eval.Po \
 @AMDEP_TRUE@	$(DEPDIR)/evall.Po $(DEPDIR)/function.Po \
-@AMDEP_TRUE@	$(DEPDIR)/gc_risa.Po $(DEPDIR)/glob.Po \
-@AMDEP_TRUE@	$(DEPDIR)/kwd.Po $(DEPDIR)/lex.Po $(DEPDIR)/load.Po \
-@AMDEP_TRUE@	$(DEPDIR)/parser.Po $(DEPDIR)/puref.Po \
-@AMDEP_TRUE@	$(DEPDIR)/pvar.Po $(DEPDIR)/quote.Po \
-@AMDEP_TRUE@	$(DEPDIR)/struct.Po $(DEPDIR)/util.Po \
-@AMDEP_TRUE@	$(DEPDIR)/xdeb.Po $(DEPDIR)/y.tab.Po
+@AMDEP_TRUE@	$(DEPDIR)/glob.Po $(DEPDIR)/kwd.Po $(DEPDIR)/lex.Po \
+@AMDEP_TRUE@	$(DEPDIR)/load.Po $(DEPDIR)/parser.Po \
+@AMDEP_TRUE@	$(DEPDIR)/puref.Po $(DEPDIR)/pvar.Po \
+@AMDEP_TRUE@	$(DEPDIR)/quote.Po $(DEPDIR)/struct.Po \
+@AMDEP_TRUE@	$(DEPDIR)/util.Po $(DEPDIR)/xdeb.Po \
+@AMDEP_TRUE@	$(DEPDIR)/y.tab.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -183,7 +183,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/eval.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/evall.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/function.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/gc_risa.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/glob.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/kwd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/lex.Po@am__quote@

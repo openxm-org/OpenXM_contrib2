@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/parse/Makefile.am,v 1.1 2003/02/23 03:05:39 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/parse/Makefile.am,v 1.2 2003/03/12 08:22:54 ohara Exp $
 
 incdir      = ${prefix}/include/asir
 inc_HEADERS = comp.h cpp.h parse.h w_stdio.h
@@ -12,7 +12,7 @@ CLEANFILES         = y.tab.c y.tab.h
 BUILT_SOURCES      = y.tab.c y.tab.h
 noinst_LIBRARIES   = libparse.a
 libparse_a_SOURCES = arith.c comp.c debug.c eval.c evall.c function.c \
-    gc_risa.c glob.c kwd.c lex.c load.c parser.c puref.c pvar.c quote.c \
+    glob.c kwd.c lex.c load.c parser.c puref.c pvar.c quote.c \
     struct.c util.c xdeb.c ${inc_HEADERS}
 nodist_libparse_a_SOURCES = y.tab.c y.tab.h
 

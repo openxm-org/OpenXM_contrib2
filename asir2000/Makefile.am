@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.11 2003/03/19 00:52:26 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.12 2003/03/19 07:12:02 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -22,14 +22,13 @@ FLIB  = fft/libdft.a
 IOLIB = io/libio.a
 PLIB  = parse/libparse.a
 
-# The ASIRLIB cannot be rearrenged.
 ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
 LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS}
 # EXTRALIBS = @EXTRALIBS@
 
 bin_PROGRAMS   = asir
 asir_SOURCES   = parse/main.c
-asir_LDADD     = ${ASIRLIB} ${GLIB}
+asir_LDADD     = libasir.a libasir-gc.a
 noinst_LIBRARIES  = libasir.a libasir-gc.a
 CLEANFILES     = libasir.a libasir-gc.a asir${EXEEXT}
 
@@ -38,7 +37,7 @@ libasir_gc_a_SOURCES =
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a: parse/gc_risa.o
+libasir-gc.a:
 	-if [ "${USE_GC_ZEROPAGE}" = yes \
             -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
 	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \
@@ -53,9 +52,10 @@ libasir-gc.a: parse/gc_risa.o
 	    touch ${top_srcdir}/gc/.configure_done ; \
 	fi
 	(cd ${top_srcdir}/gc; ${MAKE})
-	cp ${top_srcdir}/gc/.libs/libgc.a ${top_srcdir}/${GLIB}
-	${AR} q ${top_srcdir}/${GLIB} ${top_srcdir}/parse/gc_risa.o
-	${RANLIB} ${top_srcdir}/${GLIB}
+	cp ${top_srcdir}/gc/.libs/libgc.a ${GLIB}
+	(cd ${top_srcdir}/parse; ${MAKE} gc_risa.o)
+	${AR} q ${GLIB} ${top_srcdir}/parse/gc_risa.o
+	${RANLIB} ${GLIB}
 
 libasir.a: ${ASIRLIB}
 	-mkdir ${top_srcdir}/libtmp
