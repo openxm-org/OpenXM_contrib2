@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.19 2002/01/29 02:03:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.20 2002/01/29 05:37:12 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -249,9 +249,9 @@ def generic_bfct(F,V,DV,W)
 	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
 	
 	/* compute a groebner basis of FH w.r.t. MWH */
-	dp_gr_flags(["Top",1]);
+	dp_gr_flags(["Top",1,"NoRA",1]);
 	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
-	dp_gr_flags(["Top",0]);
+	dp_gr_flags(["Top",0,"NoRA",0]);
 
 	/* dehomigenize GH */
 	G = map(subst,GH,h,1);
@@ -410,7 +410,7 @@ def bfct_via_gbfct(F)
 	V1 = cons(t,V); DV1 = cons(dt,DV);
 	W = newvect(N+1);
 	W[0] = 1;
-	R = generic_bfct_1(B,V1,DV1,W);
+	R = generic_bfct(B,V1,DV1,W);
 
 	return subst(R,s,-s-1);
 }
@@ -484,7 +484,7 @@ def bfct_via_gbfct_weight_1(F,V)
 	V1 = append(V,[t]); DV1 = append(DV,[dt]);
 	W = newvect(N+1);
 	W[N] = 1;
-	R = generic_bfct(B,V1,DV1,W);
+	R = generic_bfct_1(B,V1,DV1,W);
 	dp_set_weight(0);
 	return subst(R,s,-s-1);
 }
