@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.40 2001/11/19 01:40:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.41 2002/01/28 00:54:41 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -108,6 +108,7 @@ static int Denominator = 1;
 static int Top = 0;
 static int Reverse = 0;
 static int Max_mag = 0;
+static int Max_coef = 0;
 static char *Demand = 0;
 static int PtozpRA = 0;
 
@@ -338,7 +339,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 	}
 	print_stat();
 	if ( ShowMag )
-		fprintf(asir_out,"\nMax_mag=%d\n",Max_mag);
+		fprintf(asir_out,"\nMax_mag=%d, Max_coef=%d\n",Max_mag, Max_coef);
 }
 
 void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp)
@@ -1537,7 +1538,7 @@ void minsugar(DP_pairs d,DP_pairs *dm,DP_pairs *dr)
 
 NODE gb(NODE f,int m,NODE subst)
 {
-	int i,nh,prev,mag;
+	int i,nh,prev,mag,mag0,magt;
 	NODE r,g,gall;
 	DP_pairs d;
 	DP_pairs l;
@@ -1551,6 +1552,7 @@ NODE gb(NODE f,int m,NODE subst)
 	static prev_sugar = -1;
 
 	Max_mag = 0;
+	Max_coef = 0;
 	prev = 1;
 	doing_f4 = 0;
 	if ( m ) {
@@ -1625,8 +1627,12 @@ skip_nf:
 			g = updbase(g,nh);
 			gall = append_one(gall,nh);
 			if ( !dp_fcoeffs && ShowMag ) {
-				for ( mag = 0, mp = BDY(h); mp; mp = NEXT(mp) )
-					mag += p_mag((P)mp->c);
+				for ( mag = 0, mag0 = 0, mp = BDY(h); mp; mp = NEXT(mp) ) {
+					magt = p_mag((P)mp->c);
+					mag0 = MAX(mag0,magt);
+					mag += magt;
+				}
+				Max_coef = MAX(Max_coef,mag0);
 				Max_mag = MAX(Max_mag,mag);
 			}
 			if ( DP_Print ) {
@@ -1638,7 +1644,7 @@ skip_nf:
 					l->dp1,l->dp2,length(g),length(gall),DPPlength(d),
 					pss[nh]);
 				if ( ShowMag )
-					fprintf(asir_out,",mag=%d",mag);
+					fprintf(asir_out,",mag=(%d,%d)",mag,mag0);
 				fprintf(asir_out,"\n"); fflush(asir_out);
 			} else if ( DP_PrintShort ) {
 				fprintf(asir_out,"+"); fflush(asir_out);
