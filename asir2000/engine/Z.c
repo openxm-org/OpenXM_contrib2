@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include "ca.h"
 #include "inline.h"
 #endif
@@ -12,13 +12,13 @@ typedef struct oZ {
 #define IMM_MIN -1073741823
 
 /* immediate int -> Z */
-#define IMMTOZ(c,n) ((c)>=IMM_MIN&&(c)<=IMM_MAX?(n)=(Z)(((c)<<1)|1):(n)=immtoz(c))
+#define IMMTOZ(c,n) (n)=((c)>=IMM_MIN&&(c)<=IMM_MAX?((Z)(((c)<<1)|1)):immtoz(c))
 /* immediate Z ? */
 #define IS_IMM(c) (((unsigned int)c)&1)
 /* Z can be conver to immediate ? */
 #define IS_IMMZ(n) (SL(n) == 1&&BD(n)[0]<=IMM_MAX)
 /* Z -> immediate Z */
-#define IMMZTOZ(n,z) (SL(n)<0?(z)=(Z)(((-BD(n)[0])<<1)|1):(Z)(((BD(n)[0])<<1)|1))
+#define IMMZTOZ(n,z) (z)=(Z)(SL(n)<0?(((-BD(n)[0])<<1)|1):(((BD(n)[0])<<1)|1))
 /* Z -> immediate int */
 #define ZTOIMM(c) (((int)(c))>>1)
 #define ZALLOC(d) ((Z)MALLOC_ATOMIC(TRUESIZE(oZ,(d)-1,int)))
@@ -69,7 +69,7 @@ int sgnz(Z n)
 
 z_mag(Z n)
 {
-	int n;
+	int c,i;
 
 	if ( !n ) return 0;
 	else if ( IS_IMM(n) ) {
@@ -84,6 +84,7 @@ z_mag(Z n)
 Z qtoz(Q n)
 {
 	Z r,t;
+	int c;
 
 	if ( !n ) return 0;
 	else if ( !INT(n) )
@@ -91,11 +92,12 @@ Z qtoz(Q n)
 	else {
 		t = (Z)NM(n);
 		if ( IS_IMMZ(t) ) {
-			IMMZTOZ(t,r);
+			c = SGN(n) < 0 ? -BD(t)[0] : BD(t)[0];
+			IMMTOZ(c,r);
 		} else {
 			r = dupz((Z)t);
+			if ( SGN(n) < 0 ) SL(r) = -SL(r);
 		}
-		if ( SGN(n) < 0 ) SL(r) = -SL(r);
 		return r;
 	}
 }
@@ -306,7 +308,7 @@ Z mulz(Z n1,Z n2)
 }
 
 /* kokokara */
-
+#if 0
 Z divsz(Z n1,Z n2)
 {
 	int sgn,d1,d2;
@@ -427,6 +429,7 @@ Z array_gcdz(Z *b,int n)
 		gcd = gcdz(gcd,a[i]);
 	return gcd;
 }
+#endif
 
 void _copyz(Z n1,Z n2)
 {
@@ -675,11 +678,14 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 
 void printz(Z n)
 {
-	int sd;
+	int sd,u;
 
 	if ( !n )
 		fprintf(asir_out,"0");
-	else {
+	else if ( IS_IMM(n) ) {
+		u = ZTOIMM(n);
+		fprintf(asir_out,"%d",u);
+	} else {
 		if ( (sd = SL(n)) < 0 ) { SL(n) = -SL(n); fprintf(asir_out,"-"); }
 		printn((N)n);
 		if ( sd < 0 ) SL(n) = -SL(n);

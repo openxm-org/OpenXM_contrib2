@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.1 2002/08/14 03:51:38 noro Exp $ */
 
 /* a sample file for adding builtin functions */
 
@@ -7,13 +7,53 @@
 
 void Ppartial_derivative();
 void partial_derivative(VL vl,P p,V v,P *r);
+void Pzadd(),Pzsub(),Pzmul();
 
 struct ftab user_tab[] = {
 /*
   {"partial_derivative",Ppartial_derivative,2},
 */
+  {"zadd",Pzadd,2},
+  {"zsub",Pzsub,2},
+  {"zmul",Pzmul,2},
   {0,0,0},
 };
+
+pointer qtoz(Q);
+Q ztoq(pointer);
+pointer addz(pointer,pointer), subz(pointer,pointer), mulz(pointer,pointer);
+void Pzadd(NODE arg,Q *rp)
+{
+	pointer z0,z1,z2;
+
+	z0 = qtoz((Q)ARG0(arg));
+	z1 = qtoz((Q)ARG1(arg));
+	z2 = addz(z0,z1);
+	printz(z2); printf(" ");
+	*rp = ztoq(z2);
+}
+
+void Pzsub(NODE arg,Q *rp)
+{
+	pointer z0,z1,z2;
+
+	z0 = qtoz((Q)ARG0(arg));
+	z1 = qtoz((Q)ARG1(arg));
+	z2 = subz(z0,z1);
+	printz(z2); printf(" ");
+	*rp = ztoq(z2);
+}
+
+void Pzmul(NODE arg,Q *rp)
+{
+	pointer z0,z1,z2;
+
+	z0 = qtoz((Q)ARG0(arg));
+	z1 = qtoz((Q)ARG1(arg));
+	z2 = mulz(z0,z1);
+	printz(z2); printf(" ");
+	*rp = ztoq(z2);
+}
 
 /*
 void Ppartial_derivative(NODE arg,P *rp)
