@@ -1,11 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.8 2002/11/01 05:43:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.9 2002/11/01 06:47:41 noro Exp $ */
 
 #include "ca.h"
 
 void cont_pp_mv_sf(VL vl,VL rvl,P p,P *c,P *pp);
 void gcdsf_main(VL vl,P *pa,int m,P *r);
 void ugcdsf(P *pa,int m,P *r);
-void head_monomial(V v,P p,P *coef,P *term);
+void head_monomial(VL vl,V v,P p,P *coef,P *term);
 void sqfrsfmain(VL vl,P f,DCP *dcp);
 void pthrootsf(P f,Q m,P *r);
 void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp);
@@ -351,7 +351,7 @@ void gcdsf_main(VL vl,P *pa,int m,P *r)
 	for ( i = 0; i < m; i++ ) {
 		reorderp(nvl,vl,pa[i],&t);
 		cont_pp_mv_sf(nvl,rvl,t,&pc[i],&ps[i]);
-		head_monomial(vmin,ps[i],&ph[i],&t);
+		head_monomial(nvl,vmin,ps[i],&ph[i],&t);
 	}
 	ugcdsf(pc,m,&cont);
 	ugcdsf(ph,m,&hg);
@@ -377,7 +377,7 @@ void gcdsf_main(VL vl,P *pa,int m,P *r)
 				substp(nvl,ps[i],vmin,s,&ph[i]);
 			/* ge = GCD(ps[0]|x=s,...,ps[m-1]|x=s) */
 			gcdsf(nvl,ph,m,&ge);
-			head_monomial(vmin,ge,&ce,&he);
+			head_monomial(nvl,vmin,ge,&ce,&he);
 			if ( NUM(he) ) {
 				*r = cont;
 				return;
@@ -444,12 +444,11 @@ void gcdsf_main(VL vl,P *pa,int m,P *r)
 	}
 }
 
-void head_monomial(V v,P p,P *coef,P *term)
+void head_monomial(VL vl,V v,P p,P *coef,P *term)
 {
 	P t,s,u;
 	DCP dc;
 	GFS one;
-	VL vl;
 
 	itogfs(1,&one);
 	t = (P)one;
@@ -480,7 +479,7 @@ void cont_pp_mv_sf(VL vl,VL rvl,P p,P *c,P *pp)
 	ps = (P *)ALLOCA(m*sizeof(P));
 	for ( t = BDY(dp), i = 0; t; t = NEXT(t), i++ )
 		ps[i] = C(t);
-	ugcdsf(ps,m,c);
+	gcdsf(vl,ps,m,c);
 	divsp(vl,p,*c,pp);
 }
 
@@ -515,7 +514,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	P *l,*tl;
 	P gcd,g,df,dfmin;
 	P pa[2];
-	P g0,pp0,spp0,c,c0,x,y,u,v,lcf,lcu,lcv,u0,v0,t,s;
+	P f0,pp0,spp0,c,c0,x,y,u,v,lcf,lcu,lcv,u0,v0,t,s;
 	P ype,yme;
 	GFS ev,evy;
 	P *fp0;
@@ -579,7 +578,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	}
 	NEXT(tvl) = 0;
 
-	reorderp(nvl,vl,f,&g);
+	reorderp(nvl,vl,f,&g); f = g;
 	vx = nvl->v;
 	vy = NEXT(nvl)->v;
 	MKV(vx,x);
@@ -588,7 +587,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	rvl = NEXT(NEXT(nvl));
 	if ( !rvl ) {
 		/* bivariate */
-		sfbfctr(g,vx,vy,getdeg(vx,g),&dc1);
+		sfbfctr(f,vx,vy,getdeg(vx,f),&dc1);
 		for ( dc0 = 0; dc1; dc1 = NEXT(dc1) ) {
 			NEXTDC(dc0,dc);
 			DEG(dc) = ONE;
@@ -602,21 +601,25 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	/* find good evaluation pt for X */
 	mev = (int *)CALLOC(n-2,sizeof(int));
 	while ( 1 ) {
-		substvp_sf(nvl,rvl,g,mev,&g0);
-		pa[0] = g0;
-		diffp(nvl,g0,vx,&pa[1]);
-		if ( pa[1] ) {
-			gcdsf(nvl,pa,2,&gcd);
+		/* lcf(mev)=0 => invalid */
+		substvp_sf(nvl,rvl,COEF(DC(f)),mev,&t);
+		if ( t ) {
+			substvp_sf(nvl,rvl,f,mev,&f0);
+			pa[0] = f0;
+			diffp(nvl,f0,vx,&pa[1]);
+			if ( pa[1] ) {
+				gcdsf(nvl,pa,2,&gcd);
 			/* XXX maybe we have to accept the case where gcd is a poly of y */
-			if ( NUM(gcd) )
-				break;
+				if ( NUM(gcd) )
+					break;
+			}
 		}
 		/* XXX if generated indices exceed q of GF(q) => error in indextogfs */
 		next_evaluation_point(mev,n-2);
 	}
-	/* g0 = g(x,y,mev) */
-	/* separate content; g0 may have the content wrt x */
-	cont_pp_sfp(nvl,g0,&c0,&pp0);
+	/* f0 = f(x,y,mev) */
+	/* separate content; f0 may have the content wrt x */
+	cont_pp_sfp(nvl,f0,&c0,&pp0);
 
 	/* factorize pp0; pp0 = pp0(x,y+evy) = prod dc */
 	sfbfctr_shift(pp0,vx,vy,getdeg(vx,pp0),&evy,&spp0,&dc); pp0 = spp0;
@@ -671,7 +674,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 			mulp(nvl,u0,fp0[win[i]],&t); u0 = t;
 		}
 		/* we have to consider the content */
-		/* g0 = c0*u0*v0 */
+		/* f0 = c0*u0*v0 */
 		mulp(nvl,LC(u0),c0,&c); estimatelc_sf(nvl,rvl,c,lcfdc,&lcu);
 		divsp(nvl,pp0,u0,&v0);
 		mulp(nvl,LC(v0),c0,&c); estimatelc_sf(nvl,rvl,c,lcfdc,&lcv);
@@ -709,16 +712,15 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 					for ( i = 0, ++k; i < k; i++ ) 
 						win[i] = i + 1;
 		}
-		reorderp(vl,nvl,f,&t);
-		/* x -> x-mev, y -> y-evy */
-		shift_sf(vl,rvl,t,mev,-1,&s); substp(vl,s,vy,yme,tl++);
-		*tl = 0;
-
-		for ( dc0 = 0, i = 0; l[i]; i++ ) {
-			NEXTDC(dc0,dc); DEG(dc) = ONE; COEF(dc) = l[i];
-		}
-		NEXT(dc) = 0; *dcp = dc0;
 	}
+	reorderp(vl,nvl,f,&t);
+	/* x -> x-mev, y -> y-evy */
+	shift_sf(vl,rvl,t,mev,-1,&s); substp(vl,s,vy,yme,tl++);
+	*tl = 0;
+	for ( dc0 = 0, i = 0; l[i]; i++ ) {
+		NEXTDC(dc0,dc); DEG(dc) = ONE; COEF(dc) = l[i];
+	}
+	NEXT(dc) = 0; *dcp = dc0;
 }
 
 void next_evaluation_point(int *e,int n)
@@ -833,8 +835,11 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	/* adjust coeffs */
 	/* u0 = am x^m+ ... -> lcu*x^m + a(m-1)*(lcu(0)/am)*x^(m-1)+... */
 	/* v0 = bm x^l+ ... -> lcv*x^l + b(l-1)*(lcv(0)/bl)*x^(l-1)+... */
+	/* f                -> lcu*lcv*x^(m+l)+... */
 	adjust_coef_sf(vl,rvl,lcu,u0,&u);
 	adjust_coef_sf(vl,rvl,lcv,v0,&v);
+	mulp(vl,lcu,lcv,&t); divsp(vl,t,LC(f),&m); mulp(vl,m,f,&t); f = t;
+
 	vx = vl->v; vy = NEXT(vl)->v;
 	n = getdeg(vx,f);
 	dy = getdeg(vy,f)+1;
@@ -843,11 +848,11 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	cv = (P *)ALLOCA((n+1)*sizeof(P));
 
 	/* ydy = y^dy */
-	ydy = C_UMALLOC(dy); DEG(ydy) = dy; COEF(ydy)[dy] = 1;
+	ydy = C_UMALLOC(dy); DEG(ydy) = dy; COEF(ydy)[dy] = _onesf();
 	setmod_gfsn(ydy);
 
 	/* (R[y]/(y^dy))[x,X] */
-	poly_to_gfsn_poly(vl,f,vy,&t); ff = t;
+	poly_to_gfsn_poly(vl,f,vy,&ff);
 	poly_to_gfsn_poly(vl,u,vy,&t); u = t;
 	poly_to_gfsn_poly(vl,v,vy,&t); v = t;
 	substvp_sf(vl,rvl,u,0,&u0);
@@ -856,16 +861,30 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	/* compute a(x,y), b(x,y) s.t. a*u0+b*v0 = 1 mod y^dy */
 	extended_gcd_modyk(u0,v0,vx,vy,dy,&cu[0],&cv[0]);
 
-	/* du0 = LC(u0)^(-1)*u0 mod y^dy */
 	/* dv0 = LC(v0)^(-1)*v0 mod y^dy */
-	invgfsn((GFSN)LC(u0),&inv); mulp(vl,u0,(P)inv,&du0);
 	invgfsn((GFSN)LC(v0),&inv); mulp(vl,v0,(P)inv,&dv0);
 
 	/* cu[i]*u0+cv[i]*v0 = x^i mod y^dy */
+	/* (x*cu[i])*u0+(x*cv[i])*v0 = x^(i+1) */
+	/* x*cu[i] = q*dv0+r => cu[i+1] = r */
+	/* cv[i+1]*v0 = x*cv[i]*v0+q*u0*dv0 = (x*cv[i]+q*u0*inv)*v0 */
 	for ( i = 1; i <= n; i++ ) {
 		mulp(vl,x,cu[i-1],&m); divsrp(vl,m,dv0,&q,&cu[i]);
-		mulp(vl,x,cv[i-1],&m); divsrp(vl,m,du0,&q,&cv[i]);
+		mulp(vl,x,cv[i-1],&m); mulp(vl,q,(P)inv,&t);
+		mulp(vl,t,u0,&s);
+		addp(vl,m,s,&cv[i]);
 	}
+
+#if 0
+	/* XXX : check */
+	for ( i = 0; i <= n; i++ ) {
+		mulp(vl,cu[i],u0,&m); mulp(vl,cv[i],v0,&s);
+		addp(vl,m,s,&w);
+		printexpr(vl,w);
+		fprintf(asir_out,"\n");
+	}
+#endif
+
 	dbd = dbound(vx,f)+1;	
 
 	/* extract homogeneous parts */
@@ -878,7 +897,7 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	for ( nv = 0, tvl = rvl; tvl; tvl = NEXT(tvl), nv++ );
 	md = (int *)ALLOCA(nv*sizeof(int));
 	for ( i = 0, tvl = rvl; i < nv; tvl = NEXT(tvl), i++ )
-		md[i] = getdeg(tvl->v,ff);
+		md[i] = getdeg(tvl->v,f);
 
 	/* XXX for removing content of factor wrt vx */
 	NEWVL(onevl); onevl->v = vx; NEXT(onevl) = 0;
@@ -892,10 +911,11 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 		for ( i = 0, t = 0; i <= j; i++ ) {
 			mulp(vl,uh[i],vh[j-i],&s); addp(vl,s,t,&w); t = w;
 		}
+
 		/* s = degree j part of (f-uv) */
 		exthpc(vl,vx,ff,j,&fj); subp(vl,fj,t,&s);
 		for ( i = 0, wu = 0, wv = 0; i <= n; i++ ) {
-			if ( s )
+			if ( !s )
 				si = 0;
 			else if ( VR(s) == vx )
 				coefp(s,i,&si);
@@ -904,20 +924,20 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 			else
 				si = 0;
 			if ( si ) {
-				mulp(vl,si,cu[i],&m); addp(vl,wu,m,&t); wu = t;
-				mulp(vl,si,cv[i],&m); addp(vl,wv,m,&t); wv = t;
+				mulp(vl,si,cv[i],&m); addp(vl,wu,m,&t); wu = t;
+				mulp(vl,si,cu[i],&m); addp(vl,wv,m,&t); wv = t;
 			}
 		}
 		if ( !wu ) {
-			gfsn_poly_to_poly(vl,u,vy,&t); u = t;
-			if ( divtp(vl,f,u,&q) ) {
-				cont_pp_mv_sf(vl,onevl,u,&cont,up);
+			gfsn_poly_to_poly(vl,u,vy,&t);
+			if ( divtp(vl,f,t,&q) ) {
+				cont_pp_mv_sf(vl,onevl,t,&cont,up);
 				return;
 			}
 		}
 		if ( !wv ) {
-			gfsn_poly_to_poly(vl,v,vy,&t); v = t;
-			if ( divtp(vl,f,u,&q) ) {
+			gfsn_poly_to_poly(vl,v,vy,&t);
+			if ( divtp(vl,f,t,&q) ) {
 				cont_pp_mv_sf(vl,onevl,q,&cont,up);
 				return;
 			}

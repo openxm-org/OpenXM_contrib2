@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.32 2001/12/25 02:39:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.33 2002/01/28 00:54:43 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -1867,8 +1867,8 @@ int berlekampsf(UM p,int df,UM *tab,UM *r);
 void minipolysf(UM f,UM p,UM mp);
 int find_rootsf(UM p,int *root);
 void canzassf(UM f,int d,UM *r);
-void sfhensel(int count,P f,V x,int degbound,GFS *evp,P *sfp,ML *listp);
-int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp);
+void sfhensel(int count,P f,V x,V y,int degbound,GFS *evp,P *sfp,ML *listp);
+int sfberle(V x,V y,P f,int count,GFS *ev,DCP *dcp);
 void sfgcdgen(P f,ML blist,ML *clistp);
 void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp);
 void ptosfbm(int dy,P f,BM fl);

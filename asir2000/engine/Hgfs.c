@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.26 2002/10/25 02:43:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.27 2002/11/01 05:43:35 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -506,21 +506,21 @@ void canzassf(UM f,int d,UM *r)
 
 /* Hensel related functions */
 
-int sfberle(VL,P,int,GFS *,DCP *);
+int sfberle(V,V,P,int,GFS *,DCP *);
 void sfgcdgen(P,ML,ML *);
 void sfhenmain2(BM,UM,UM,int,BM *);
 void ptosfbm(int,P,BM);
+void sfhensel(int count,P f,V x,V y,int degbound,GFS *evp,P *sfp,ML *listp);
 
 /* f = f(x,y) */
 
-void sfhensel(int count,P f,V x,int degbound,GFS *evp,P *sfp,ML *listp)
+void sfhensel(int count,P f,V x,V y,int degbound,GFS *evp,P *sfp,ML *listp)
 {
 	int i;
 	int fn;
 	ML rlist;
 	BM fl;
 	VL vl,nvl;
-	V y;
 	int dx,dy,bound;
 	GFS ev;
 	P f1,t,c,sf;
@@ -534,14 +534,15 @@ void sfhensel(int count,P f,V x,int degbound,GFS *evp,P *sfp,ML *listp)
 		reordvar(vl,x,&nvl); reorderp(nvl,vl,f,&f1);
 		vl = nvl; f = f1;
 	}
-	y = vl->next->v;
+	if ( vl->next )
+		y = vl->next->v;
 	dx = getdeg(x,f);
 	dy = getdeg(y,f);
 	if ( dx == 1 ) {
 		*listp = rlist = MLALLOC(1); rlist->n = 1; rlist->c[0] = 0;
 		return;
 	}
-	fn = sfberle(vl,f,count,&ev,&dc);
+	fn = sfberle(x,y,f,count,&ev,&dc);
 	if ( fn <= 1 ) {
 		/* fn == 0 => short of evaluation points */
 		*listp = rlist = MLALLOC(1); rlist->n = fn; rlist->c[0] = 0;
@@ -640,20 +641,20 @@ void sfhensel(int count,P f,V x,int degbound,GFS *evp,P *sfp,ML *listp)
 
 /* main variable of f = x */
 
-int sfberle(VL vl,P f,int count,GFS *ev,DCP *dcp)
+int sfberle(V x,V y,P f,int count,GFS *ev,DCP *dcp)
 {
 	UM wf,wf1,wf2,wfs,gcd;
 	int fn,n;
 	GFS m,fm;
 	DCP dc,dct,dc0;
-	VL nvl;
-	V x,y;
+	VL vl;
 	P lc,lc0,f0;
 	Obj obj;
 	int j,q,index,i;
 
-	clctv(vl,f,&nvl); vl = nvl;
-	x = vl->v; y = vl->next->v;
+	NEWVL(vl); vl->v = x;
+	NEWVL(NEXT(vl)); NEXT(vl)->v = y;
+	NEXT(NEXT(vl)) =0;
 	simp_ff((Obj)f,&obj); f = (P)obj;
 	n = QTOS(DEG(DC(f)));
 	wf = W_UMALLOC(n); wf1 = W_UMALLOC(n); wf2 = W_UMALLOC(n);
@@ -1077,7 +1078,7 @@ void sfbfctr(P f,V x,V y,int degbound,DCP *dcp)
 	int dx,dy;
 
 	/* sf(x) = f(x+ev) = list->c[0]*list->c[1]*... */
-	sfhensel(5,f,x,degbound,&ev,&sf,&list);
+	sfhensel(5,f,x,y,degbound,&ev,&sf,&list);
 	if ( list->n == 0 )
 		error("sfbfctr : short of evaluation points");
 	else if ( list->n == 1 ) {
@@ -1111,7 +1112,7 @@ void sfbfctr_shift(P f,V x,V y,int degbound,GFS *evp,P *sfp,DCP *dcp)
 	int dx,dy;
 
 	/* sf(x) = f(x+ev) = list->c[0]*list->c[1]*... */
-	sfhensel(5,f,x,degbound,&ev,&sf,&list);
+	sfhensel(5,f,x,y,degbound,&ev,&sf,&list);
 	if ( list->n == 0 )
 		error("sfbfctr_shift : short of evaluation points");
 	else if ( list->n == 1 ) {
