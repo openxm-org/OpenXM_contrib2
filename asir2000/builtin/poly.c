@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.18 2003/01/16 00:33:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.19 2003/06/19 07:08:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,7 @@
 
 void Pranp();
 
+void Pheadsgn();
 void Pmul_trunc();
 void Pumul(),Pumul_ff(),Pusquare(),Pusquare_ff(),Putmul(),Putmul_ff();
 void Pkmul(),Pksquare(),Pktmul();
@@ -112,6 +113,7 @@ void field_order_ff(N *);
 int current_ff;
 
 struct ftab poly_tab[] = {
+	{"headsgn",Pheadsgn,1},
 	{"mul_trunc",Pmul_trunc,3},
 	{"homogeneous_deg",Phomogeneous_deg,-2},
 	{"homogeneous_part",Phomogeneous_part,-3},
@@ -224,6 +226,14 @@ struct ftab poly_tab[] = {
 	{"get_next_fft_prime",Pget_next_fft_prime,2},
 	{0,0,0},
 };
+
+void Pheadsgn(NODE arg,Q *rp)
+{
+	int s;
+
+	s = headsgn((P)ARG0(arg));
+	STOQ(s,*rp);
+}
 
 void Pmul_trunc(NODE arg,P *rp)
 {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.16 2002/09/03 08:12:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.17 2002/09/03 09:57:51 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -1077,8 +1077,14 @@ def gb_comp(A,B)
 	LB = length(B);
 	if ( LA != LB )
 		return 0;
-	A1 = qsort(newvect(LA,A));
-	B1 = qsort(newvect(LB,B));
+	A = newvect(LA,A);
+	B = newvect(LB,B);
+	for ( I = 0; I < LA; I++ )
+		A[I] *= headsgn(A[I]);
+	for ( I = 0; I < LB; I++ )
+		B[I] *= headsgn(B[I]);
+	A1 = qsort(A);
+	B1 = qsort(B);
 	for ( I = 0; I < LA; I++ )
 		if ( A1[I] != B1[I] && A1[I] != -B1[I] )
 			break;
