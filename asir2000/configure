@@ -4925,6 +4925,13 @@ _ACEOF
 *-*-cygwin*)
     asm_obj="${i386_aout_obj}"
     ;;
+i[3-6]86-*-interix*)
+    asm_obj="${generic_obj}"
+    cat >>confdefs.h <<\_ACEOF
+#define _ALL_SOURCE 1
+_ACEOF
+
+    ;;
 sparc-sun-solaris2.*)
     case "`uname -m`" in
     sun4[dm]) asm_obj="${sparc_v8_obj}" ;;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.41 2003/12/03 09:32:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.42 2004/01/07 06:25:42 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -54,7 +54,7 @@
 #if defined(PARI)
 #include "genpari.h"
 #endif
-#if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__)
+#if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX)
 #include <sgtty.h>
 #endif
 

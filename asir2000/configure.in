@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.14 2003/09/07 16:49:37 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.15 2003/12/22 09:31:41 noro Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -166,6 +166,10 @@ case "${host}" in
     ;;
 *-*-cygwin*)
     asm_obj="${i386_aout_obj}"
+    ;;
+[i[3-6]86-*-interix*])
+    asm_obj="${generic_obj}"
+    AC_DEFINE([_ALL_SOURCE])
     ;;
 sparc-sun-solaris2.*)
     case "`uname -m`" in
