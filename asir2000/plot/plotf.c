@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.12 2002/07/10 05:29:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.13 2002/08/02 02:28:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -133,6 +133,7 @@ void Pifplot(NODE arg,Q *rp)
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
 	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
 	for ( ; arg; arg = NEXT(arg) )
 		if ( !BDY(arg) )
 			stream = 0;
@@ -340,6 +341,7 @@ void Pconplot(NODE arg,Q *rp)
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
 	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
 	for ( ; arg; arg = NEXT(arg) )
 		if ( !BDY(arg) )
 			stream = 0;
@@ -456,6 +458,7 @@ void Pplot(NODE arg,Q *rp)
 	STOQ(-2,m2); STOQ(2,p2);
 	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
 	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = 0;
 	for ( ; arg; arg = NEXT(arg) )
 		if ( !BDY(arg) )
 			stream = 0;
