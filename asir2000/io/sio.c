@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9.2.1 2000/11/08 08:18:14 maekawa Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9.2.2 2000/11/08 08:31:55 maekawa Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -86,19 +86,16 @@ void getremotename(s,name)
 int s;
 char *name;
 {
-	union {
-		struct sockaddr sa;
-		char data[SOCK_MAXADDRLEN];
-	} dummy;
+	struct sockaddr_strorage ss;
 	struct sockaddr *sa;
 	socklen_t len;
 	char host[NI_MAXHOST];
 	int rs;
 
 	rs = getremotesocket(s);
-	len = SOCK_MAXADDRLEN;
-	getpeername(rs, (struct sockaddr *)dummy.data, &len);
-	sa = &(dummy.sa);
+	len = sizeof(ss);
+	getpeername(rs, (struct sockaddr *)&ss, &len);
+	sa = (struct sockaddr *)&ss;
 	getnameinfo(sa, sa->sa_len, host, sizeof(host), NULL, 0, 0);
 	strcpy(name, host);
 }
@@ -151,6 +148,7 @@ char *port_str;
 		return (-1);
 	}
 
+	s = -1;
 	for (ai = res ; ai != NULL ; ai = ai->ai_next) {
 		if ((s = socket(ai->ai_family, ai->ai_socktype,
 				ai->ai_protocol)) < 0 ) {
@@ -198,21 +196,18 @@ char *port_str;
 int try_accept(s)
 int s;
 {
-	union {
-		struct sockaddr sa;
-		char data[SOCK_MAXADDRLEN];
-	} dummy;
+	struct sockaddr_storage ss;
 	socklen_t len;
 	int c, i;
 
-	len = SOCK_MAXADDRLEN;
-	if (getsockname(s, (struct sockaddr *)dummy.data, &len) < 0) {
+	len = sizeof(ss);
+	if (getsockname(s, (struct sockaddr *)&ss, &len) < 0) {
 		close(s);
 		return (-1)
 	}
 
 	for (i = 0 ; i < 10 ; i++) {
-		c = accept(s, &(dummy.sa), &len);
+		c = accept(s, (struct sockaddr *)&ss, &len);
 		if (c >= 0) {
 			close(s);
 			return (c);
@@ -248,6 +243,7 @@ char *host,*port_str;
 		return (-1);
 	}
 	for (i = 0 ; i < 10 ; i++) {
+		s = -1;
 		for (ai = res ; ai != NULL ; ai = ai->ai_next) {
 			if ((s = socket(ai->ai_family, ai->ai_socktype,
 					ai->ai_protocol)) < 0 ) {
