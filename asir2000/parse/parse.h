@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.20 2003/05/16 09:34:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.21 2003/08/21 08:05:02 saito Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -315,7 +315,7 @@ extern int Verbose;
 #define fflush w_fflush
 #endif
 
-#if defined(VISUAL) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
+#if defined(__GNUC__) || defined(VISUAL) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 NODE mknode(int,...);
 FNODE mkfnode(int,fid,...);
 SNODE mksnode(int,sid,...);
