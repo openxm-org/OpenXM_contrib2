@@ -224,7 +224,9 @@ install-doc:
 
 install-lib:
 	-mkdir -p ${DESTDIR}${asirdir}
-	${INSTALL_DATA} ${RR} ${DESTDIR}${asirdir}
+	-for i in ${RR} ; do \
+		${INSTALL_DATA} $$i ${DESTDIR}${asirdir} ; \
+	done
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

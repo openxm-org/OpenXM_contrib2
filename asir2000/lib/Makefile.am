@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.6 2003/03/20 07:34:11 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.7 2003/04/20 07:15:35 noro Exp $
 
 asirdir = ${libdir}/asir
 RR      = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
@@ -17,4 +17,6 @@ install-doc:
 
 install-lib:
 	-mkdir -p ${DESTDIR}${asirdir}
-	${INSTALL_DATA} ${RR} ${DESTDIR}${asirdir}
+	-for i in ${RR} ; do \
+		${INSTALL_DATA} $$i ${DESTDIR}${asirdir} ; \
+	done
