@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.4 2003/07/25 12:34:47 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.5 2003/10/20 07:18:42 saito Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -135,35 +135,11 @@ printexpr(CO, bi);
 printexpr(CO, bs);
 #endif
 
-#if 1
 		addnum(0,ai,bi,&inf);
 		addnum(0,as,bs,&sup);
 		istoitv(inf,sup,(Itv *)&tmp);
 		addulp((IntervalBigFloat)tmp, c);
 		return;
-#else
-		ltop = avma;
-		ritopa(ai,&pa);
-		ritopa(bi,&pb);
-		lbot = avma;
-		z = gerepile(ltop,lbot,PariAddDown(pa,pb));
-		patori(z,&inf); cgiv(z);
-
-	/* MUST check if ai, as, bi, bs are bigfloat. */
-
-		/*  as + bs = ( - ( (-as) + (-bs) ) ) */
-		chsgnbf(as,&mas);
-		chsgnbf(bs,&mbs);
-		ltop = avma;
-		ritopa(mas,&pa);
-		ritopa(mbs,&pb);
-		lbot = avma;
-		z = gerepile(ltop,lbot,PariAddDown(pa,pb));
-		patori(z,&tmp); cgiv(z);
-
-		chsgnbf(tmp,&sup);
-		istoitv(inf,sup,c);
-#endif
 	}
 }
 
@@ -185,35 +161,10 @@ void subitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
 		ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
 		itvtois((Itv)b,&inf,&sup);
 		ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
-#if 1
 		subnum(0,ai,bs,&inf);
 		subnum(0,as,bi,&sup);
 		istoitv(inf,sup,(Itv *)&tmp);
 		addulp((IntervalBigFloat)tmp, c);
-#else
-
-/* MUST check if ai, as, bi, bs are bigfloat. */
-		/* ai - bs = ai + (-bs)  */
-		chsgnbf(bs,&mbs);
-		ltop = avma;
-		ritopa(ai,&pa);
-		ritopa(mbs,&pb);
-		lbot = avma;
-		z = gerepile(ltop,lbot,PariAddDown(pa,pb));
-		patori(z,&inf); cgiv(z);
-
-		/* as - bi = ( - ( bi + (-as) ) ) */
-		chsgnbf(as,&mas);
-		ltop = avma;
-		ritopa(mas,&pa);
-		ritopa(bi,&pb);
-		lbot = avma;
-		z = gerepile(ltop,lbot,PariAddDown(pa,pb));
-		patori(z,&tmp); cgiv(z);
-
-		chsgnbf(tmp,&sup);
-		istoitv(inf,sup,c);
-#endif
 	}
 }
 
