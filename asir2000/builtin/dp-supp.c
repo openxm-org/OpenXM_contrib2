@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.22 2002/12/27 07:37:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.23 2003/01/04 09:06:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1261,6 +1261,27 @@ void dp_nf_tab_mod(DP p,LIST *tab,int mod,DP *rp)
 			i++;
 		mulmdc(CO,mod,(DP)BDY(NEXT(BDY(tab[i]))),m->c,&t);
 		addmd(CO,mod,s,t,&u); s = u;
+	}
+	*rp = s;
+}
+
+void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
+{
+	DP s,t,u;
+	MP m;
+	DL h;
+	int i,n;
+
+	if ( !p ) {
+		*rp = p; return;
+	}
+	n = p->nv;
+	for ( s = 0, i = 0, m = BDY(p); m; m = NEXT(m) ) {
+		h = m->dl;
+		while ( !dl_equal(n,h,BDY((DP)BDY(BDY(tab[i])))->dl ) )
+			i++;
+		muldc(CO,(DP)BDY(NEXT(BDY(tab[i]))),m->c,&t);
+		addd(CO,s,t,&u); s = u;
 	}
 	*rp = s;
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.26 2003/01/04 09:06:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.27 2003/01/06 01:16:37 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -72,7 +72,7 @@ void Pdp_gr_mod_main(),Pdp_gr_f_main();
 void Pdp_gr_main(),Pdp_gr_hm_main(),Pdp_gr_d_main(),Pdp_gr_flags();
 void Pdp_f4_main(),Pdp_f4_mod_main(),Pdp_f4_f_main();
 void Pdp_gr_print();
-void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod();
+void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod(), Pdp_nf_tab_f();
 void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 void Pdp_gr_checklist();
@@ -114,6 +114,7 @@ struct ftab dp_tab[] = {
 	{"dp_nf_mod",Pdp_nf_mod,5},
 	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
 	{"dp_lnf_mod",Pdp_lnf_mod,3},
+	{"dp_nf_tab_f",Pdp_nf_tab_f,2},
 	{"dp_nf_tab_mod",Pdp_nf_tab_mod,3},
 	{"dp_lnf_f",Pdp_lnf_f,2},
 
@@ -375,6 +376,15 @@ DP *rp;
 	asir_assert(ARG2(arg),O_N,"dp_nf_tab_mod");
 	dp_nf_tab_mod((DP)ARG0(arg),(LIST *)BDY((VECT)ARG1(arg)),
 		QTOS((Q)ARG2(arg)),rp);
+}
+
+void Pdp_nf_tab_f(arg,rp)
+NODE arg;
+DP *rp;
+{
+	asir_assert(ARG0(arg),O_DP,"dp_nf_tab_f");
+	asir_assert(ARG1(arg),O_VECT,"dp_nf_tab_f");
+	dp_nf_tab_f((DP)ARG0(arg),(LIST *)BDY((VECT)ARG1(arg)),rp);
 }
 
 void Pdp_ord(arg,rp)
