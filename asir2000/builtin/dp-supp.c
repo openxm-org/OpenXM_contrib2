@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.23 2003/01/04 09:06:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.24 2003/01/15 04:53:03 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -387,6 +387,28 @@ int have_sf_coef(P p)
 	}
 }
 
+void head_coef(P p,Num *c)
+{
+	if ( !p )
+		*c = 0;
+	else if ( NUM(p) )
+		*c = (Num)p;
+	else
+		head_coef(COEF(DC(p)),c);
+}
+
+void dp_monic_sf(DP p,DP *rp)
+{
+	Num c;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		head_coef(BDY(p)->c,&c);
+		divsdc(CO,p,(P)c,rp);
+	}
+}
+
 void dp_prim(DP p,DP *rp)
 {
 	P t,g;
@@ -403,7 +425,7 @@ void dp_prim(DP p,DP *rp)
 		for ( m = BDY(p); m; m = NEXT(m) )
 			if ( OID(m->c) == O_N ) {
 				/* GCD of coeffs = 1 */
-				*rp = p;
+				dp_monic_sf(p,rp);
 				return;
 			} else break;
 		/* compute GCD over the finite fieid */
@@ -413,12 +435,13 @@ void dp_prim(DP p,DP *rp)
 			w[i] = m->c;
 		gcdsf(CO,w,n,&g);
 		if ( NUM(g) )
-			*rp = p;
+			dp_monic_sf(p,rp);
 		else {
 			for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
 				NEXTMP(mr0,mr); divsp(CO,m->c,g,&mr->c); mr->dl = m->dl;
 			}
-			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+			NEXT(mr) = 0; MKDP(p->nv,mr0,p1); p1->sugar = p->sugar;
+			dp_monic_sf(p1,rp);
 		}
 		return;
 	} else if ( dp_fcoeffs )
