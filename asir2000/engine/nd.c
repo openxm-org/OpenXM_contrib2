@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.58 2003/09/05 07:00:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.59 2003/09/05 13:20:14 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -136,6 +136,7 @@ extern int *current_weyl_weight_vector;
 #define LEN(a) ((a)->len)
 #define LCM(a) ((a)->lcm)
 #define GET_EXP(d,a) (((d)[nd_epos[a].i]>>nd_epos[a].s)&nd_mask0)
+#define GET_EXP_MASK(d,a,m) ((((d)[nd_epos[a].i]&(m)[nd_epos[a].i])>>nd_epos[a].s)&nd_mask0)
 #define PUT_EXP(r,a,e) ((r)[nd_epos[a].i] |= ((e)<<nd_epos[a].s))
 #define XOR_EXP(r,a,e) ((r)[nd_epos[a].i] ^= ((e)<<nd_epos[a].s))
 
@@ -557,11 +558,17 @@ int ndl_weight(unsigned int *d)
 	unsigned int t,u;
 	int i,j;
 
-	for ( t = 0, i = nd_exporigin; i < nd_wpd; i++ ) {
-		u = d[i];
-		for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
-			t += (u&nd_mask0); 
-	}
+	if ( current_dl_weight_vector )
+		for ( i = 0, t = 0; i < nd_nvar; i++ ) {
+			u = GET_EXP(d,i);
+			t += MUL_WEIGHT(u,i);
+		}
+	else
+		for ( t = 0, i = nd_exporigin; i < nd_wpd; i++ ) {
+			u = d[i];
+			for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
+				t += (u&nd_mask0); 
+		}
 	return t;
 }
 
@@ -572,11 +579,17 @@ int ndl_weight_mask(unsigned int *d,int index)
 	int i,j;
 
 	mask = nd_blockmask->mask[index];
-	for ( t = 0, i = nd_exporigin; i < nd_wpd; i++ ) {
-		u = d[i]&mask[i];
-		for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
-			t += (u&nd_mask0); 
-	}
+	if ( current_dl_weight_vector )
+		for ( i = 0, t = 0; i < nd_nvar; i++ ) {
+			u = GET_EXP_MASK(d,i,mask);
+			t += MUL_WEIGHT(u,i);
+		}
+	else
+		for ( t = 0, i = nd_exporigin; i < nd_wpd; i++ ) {
+			u = d[i]&mask[i];
+			for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
+				t += (u&nd_mask0); 
+		}
 	return t;
 }
 
