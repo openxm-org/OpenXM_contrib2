@@ -4910,7 +4910,7 @@ fi
 i386_elf_obj=asmi_l.o
 i386_aout_obj=asmi.o
 sparc_v8_obj="sparc-2.o asm4-2.o edr-2.o"
-sparc_v9_obj="sparc-2.o asm5-2.o edr-2.o"
+sparc_v9_obj=asmalpha.o
 generic_obj=asmalpha.o
 
 case "${host}" in

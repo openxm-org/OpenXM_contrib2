@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.17 2004/02/27 18:32:21 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.18 2004/03/25 16:32:45 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -155,7 +155,7 @@ dnl generic_obj:   for 32bits/64bits generic micro processors
 i386_elf_obj=asmi_l.o
 i386_aout_obj=asmi.o
 sparc_v8_obj="sparc-2.o asm4-2.o edr-2.o"
-sparc_v9_obj="sparc-2.o asm5-2.o edr-2.o"
+sparc_v9_obj=asmalpha.o
 generic_obj=asmalpha.o
 
 case "${host}" in
