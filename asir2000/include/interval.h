@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.4 2002/01/04 17:01:40 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.5 2002/01/08 04:14:38 kondoh Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -72,6 +72,14 @@ static char	*Interval_dummy;
 #define	FPPLUSINF	fpsetround(FP_RP);
 #define	FPMINUSINF	fpsetround(FP_RM);
 #define	FPTOZERO	fpsetround(FP_RZ);
+#endif
+
+#if defined(VISUAL)
+#include <float.h>
+#define FPNEAREST _controlfp(_RC_NEAR,_MCW_RC);
+#define FPPLUSINF _controlfp(_RC_UP,_MCW_RC);
+#define FPMINUSINF _controlfp(_RC_DOWN,_MCW_RC);
+#define FPTOZERO _controlfp(_RC_CHOP,_MCW_RC);
 #endif
 
 /* no control function of floating point rounding */
