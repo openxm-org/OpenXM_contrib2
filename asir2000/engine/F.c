@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.3 2000/08/21 08:31:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.4 2000/08/22 05:04:04 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -273,13 +273,14 @@ VL vl;
 P p;
 DCP *dcp;
 {
-	int i,j,k,*win,np;
+	int i,j,k,*win,np,x;
 	VL nvl,tvl;
 	VN vn,vnt,vn1;
 	P p0,f,g,f0,g0,s,t,lp,m;
 	P *fp0,*fpt,*l,*tl;
 	DCP dc,dc0,dcl;
 	int count,nv;
+	int *nonzero;
 
 	if ( !cmpq(DEG(DC(p)),ONE) ) {
 		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = p; NEXT(dc) = 0;
@@ -289,9 +290,54 @@ DCP *dcp;
 	for ( nv = 0, tvl = nvl; tvl; tvl = NEXT(tvl), nv++);
 	W_CALLOC(nv,struct oVN,vn); W_CALLOC(nv,struct oVN,vnt);
 	W_CALLOC(nv,struct oVN,vn1);
+	W_CALLOC(nv,int,nonzero);
+
 	for ( i = 0, tvl = NEXT(nvl); tvl; tvl = NEXT(tvl), i++ ) 
 		vn1[i].v = vn[i].v = tvl->v;
 	vn1[i].v = vn[i].v = 0;
+
+	/* determine a heuristic bound of deg(GCD(p,p')) */
+	while ( 1 ) {
+		for ( i = 0; vn1[i].v; i++ )
+			vn1[i].n = ((unsigned int)random())%256+1;
+		substvp(nvl,LC(p),vn1,&p0);
+		if ( p0 ) {
+			substvp(nvl,p,vn1,&p0);
+			if ( sqfrchk(p0) ) {
+				ufctr(p0,1,&dc0); 
+				if ( NEXT(NEXT(dc0)) == 0 ) {
+					NEWDC(dc); DEG(dc) = ONE; COEF(dc) = p; NEXT(dc) = 0;
+					*dcp = dc;
+					return;
+				} else {
+					for ( dc0 = NEXT(dc0), np = 0; dc0; dc0 = NEXT(dc0), np++ );
+					break;
+				}
+			}
+		}
+	}
+	
+	for ( i = 0; vn1[i].v; i++ ) {
+		x = vn1[i].n; vn1[i].n = 0;
+		substvp(nvl,LC(p),vn1,&p0);
+		if ( !p0 )
+			vn1[i].n = x;
+		else {
+			substvp(nvl,p,vn1,&p0);
+			if ( !sqfrchk(p0) )
+				vn1[i].n = x;
+			else {
+				ufctr(p0,1,&dc0); 
+				for ( dc0 = NEXT(dc0), j = 0; dc0; dc0 = NEXT(dc0), j++ );
+				if ( j > np )
+					vn1[i].n = x;
+			}
+		}
+	}
+	for ( i = 0; vn1[i].v; i++ )
+		if (vn1[i].n )
+			nonzero[i] = 1;
+
 	count = 0;
 	while  ( 1 ) {
 		while ( 1 ) {
@@ -315,14 +361,26 @@ DCP *dcp;
 						NEWDC(dc); DEG(dc) = ONE; COEF(dc) = p; NEXT(dc) = 0;
 						*dcp = dc;
 						return;
-					} else
-						goto MAIN;
-				} 
+					} else {
+						for ( dc = NEXT(dc0), i = 0; dc; dc = NEXT(dc), i++ );
+						if ( i <= np )
+							goto MAIN;
+						if ( i < np )
+							np = i;
+					}
+				}
 			}
 			if ( nextbin(vnt,j) ) 
 				break;
 		}
-		next(vn);
+		while ( 1 ) {
+			next(vn);
+			for ( i = 0; vn[i].v; i++ )
+				if ( nonzero[i] && !vn[i].n )
+					break;
+			if ( !vn[i].v )
+				break;
+		}
 	}
 MAIN :
 #if 0
@@ -776,6 +834,29 @@ DCP *dcp;
 	for ( i = 0, tvl = NEXT(nvl); tvl; tvl = NEXT(tvl), i++ ) 
 		vn1[i].v = vn[i].v = tvl->v;
 	vn1[i].v = vn[i].v = 0;
+
+	/* determine a heuristic bound of deg(GCD(p,p')) */
+	while ( 1 ) {
+		for ( i = 0; vn1[i].v; i++ )
+			vn1[i].n = ((unsigned int)random())%256+1;
+		substvp(nvl,LC(p),vn1,&tmp);
+		if ( tmp ) {
+			substvp(nvl,p,vn1,&p0);
+			usqp(p0,&dc0);
+			for ( d1 = 0, dc = dc0; dc; dc = NEXT(dc) )
+				if ( DEG(dc) )
+					d1 += (QTOS(DEG(dc))-1)*UDEG(COEF(dc));
+			if ( d1 == 0 ) {
+				/* p is squarefree */
+				NEWDC(dc); DEG(dc) = ONE; COEF(dc) = p; NEXT(dc) = 0;
+				*dcp = dc;
+				return;
+			} else {
+				d = d1;
+				break;
+			}
+		}
+	}
 
 	for  ( dcr0 = 0, g = p, d = deg(VR(g),g), found = 0; ; ) {
 		while ( 1 ) {
