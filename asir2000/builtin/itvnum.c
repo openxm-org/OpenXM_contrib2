@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.2 2002/01/08 04:14:36 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.3 2005/02/08 16:42:39 saito Exp $
  */
 
 #include "ca.h"
@@ -56,7 +56,7 @@ struct ftab interval_tab[] = {
 
 #if defined(INTERVAL)
 static void
-Pitvversion(Obj *rp)
+Pitvversion(Q *rp)
 {
 	STOQ(ASIR_VERSION, *rp);
 }
