@@ -1,0 +1,232 @@
+#include<defs.h>
+load("solve")$
+
+def nonposdegchk(Res){
+
+	for(I=0;I<length(Res);I++)
+		if(Res[I][1]<=0)
+			return 0$
+
+	return 1$
+}
+
+def extmat(Mat,OneMat,N,M,I,J){
+
+	if(J<N)
+		return Mat[I][J]$
+
+	if(OneMat[J][0]<=I && I<=OneMat[J][1])
+		if(J==M-1)
+			return 1$
+		else
+			return -1$
+	else
+		return 0$
+
+}
+
+def resvars(Res,Vars){
+
+	ResVars=newvect(length(Vars),Vars)$
+
+	for(I=0;I<length(Res);I++){
+	
+		for(J=0;J<size(ResVars)[0];J++)
+			if(Res[I][0]==ResVars[J])
+				break$
+
+		ResVars[J]=Res[I][1]$
+	}
+
+	return(ResVars)$
+}
+
+def makeret(Res,Vars,B){
+
+	VarsNum=length(Vars)$
+
+	ResMat=newvect(VarsNum)$
+	for(I=0;I<VarsNum;I++)
+		ResMat[I]=newvect(2)$
+
+	for(I=0;I<VarsNum;I++){
+		ResMat[I][0]=Vars[I]$
+		ResMat[I][1]=Vars[I]$
+	}
+	
+	for(I=0;I<length(Res);I++){
+
+		for(J=0;J<size(ResMat)[0];J++)
+			if(Res[I][0]==ResMat[J][0])
+				break$
+
+		if(J<VarsNum)
+			ResMat[J][1]=Res[I][1]*B$
+	}
+
+	for(I=0;I<VarsNum;I++)
+		for(J=0;J<length(Vars);J++)
+			ResMat[I][1]=subst(ResMat[I][1],Vars[J],
+				strtov(rtostr(Vars[J])+"_deg"))$
+
+	ResMat=map(vtol,ResMat)$
+	return(vtol(ResMat))$
+
+}
+
+def afo(A,B){
+
+	for(I=0;I<size(A)[0];I++){
+		if(A[I]<B[I])
+			return 1$
+		
+		if(A[I]>B[I])
+			return -1$
+	}
+
+	return 0$
+}
+
+def weight(PolyList,Vars){
+
+	dp_ord(2)$
+
+	PolyListNum=length(PolyList)$
+
+	ExpMat=[]$
+	for(I=0;I<PolyListNum;I++)
+		for(Poly=dp_ptod(PolyList[I],Vars);Poly!=0;Poly=dp_rest(Poly))
+			ExpMat=cons(dp_etov(dp_ht(Poly)),ExpMat)$
+
+	ExpMat=reverse(ExpMat)$
+	ExpMat=newvect(length(ExpMat),ExpMat)$
+
+	ExpMatRowNum=size(ExpMat)[0]$
+	ExpMatColNum=size(ExpMat[0])[0]$
+	ExtMatRowNum=ExpMatRowNum$
+	ExtMatColNum=ExpMatColNum+PolyListNum$
+
+	OneMat=newmat(ExtMatColNum,2)$
+
+	for(I=0;I<ExpMatColNum;I++){
+		OneMat[I][0]=0$
+		OneMat[I][1]=ExtMatRowNum-1$
+	}
+
+	for(I=ExpMatColNum,SUM=0;I<ExtMatColNum;I++){
+		OneMat[I][0]=SUM$
+		SUM=SUM+nmono(PolyList[I-ExpMatColNum])$
+		OneMat[I][1]=SUM-1$
+	}
+
+	NormMat=newmat(ExtMatColNum-1,ExtMatColNum)$
+
+	for(I=0;I<ExtMatColNum-1;I++)
+		for(J=0;J<ExtMatColNum-1;J++){
+			ST=MAX(OneMat[I][0],OneMat[J][0])$
+			ED=MIN(OneMat[I][1],OneMat[J][1])$
+			if(ST>ED)
+				continue$
+			for(K=ST;K<=ED;K++){
+				NormMat[I][J]=NormMat[I][J]+
+					extmat(ExpMat,OneMat,ExpMatColNum,ExtMatColNum,K,I)*
+					extmat(ExpMat,OneMat,ExpMatColNum,ExtMatColNum,K,J)$
+			}
+		}
+
+	for(I=0;I<ExtMatColNum-1;I++){
+		ST=MAX(OneMat[I][0],OneMat[ExtMatColNum-1][0])$
+		ED=MIN(OneMat[I][1],OneMat[ExtMatColNum-1][1])$
+		if(ST>ED)
+			continue$
+
+		for(K=ST;K<=ED;K++){
+			NormMat[I][ExtMatColNum-1]=NormMat[I][ExtMatColNum-1]+
+				extmat(ExpMat,OneMat,ExpMatColNum,ExtMatColNum,K,I)*
+				extmat(ExpMat,OneMat,ExpMatColNum,ExtMatColNum,K,ExtMatColNum-1)$
+		}
+	}
+
+	ExtVars=Vars$
+	for(I=0;I<PolyListNum-1;I++)
+		ExtVars=append(ExtVars,[uc()])$
+
+	SolveList=[]$
+	for(I=0;I<ExtMatColNum-1;I++){
+		TMP=0$
+		for(J=0;J<ExtMatColNum-1;J++)
+			TMP=TMP+NormMat[I][J]*ExtVars[J]$
+
+		TMP=TMP-NormMat[I][ExtMatColNum-1]$
+		SolveList=cons(TMP,SolveList)$
+	}
+
+	ReaVars=vars(SolveList)$
+	Res=solve(SolveList,reverse(ExtVars))$
+
+	if(nonposdegchk(Res)){
+
+		ResVars=resvars(Res,ExtVars)$
+
+		for(I=0;I<ExtMatRowNum;I++){
+			TMP=0$
+			for(J=0;J<ExtMatColNum-1;J++)
+				if((K=extmat(ExpMat,OneMat,ExpMatColNum,ExtMatColNum,I,J))!=0)
+					TMP=TMP+K*ResVars[J]$
+		
+			if(TMP!=extmat(ExpMat,OneMat,ExpMatColNum,ExtMatColNum,I,ExtMatColNum-1))
+				break$
+		}
+
+		if(I==ExtMatRowNum){
+			print("complitely homogenized")$
+			return(makeret(Res,Vars,1))$
+		}
+		else
+			print(makeret(Res,Vars,1.0))$
+	}
+
+	ExpMat=qsort(ExpMat,afo)$
+	ExpMat2=[]$
+	for(I=0;I<size(ExpMat)[0];I++)
+		if(car(ExpMat2)!=ExpMat[I])
+			ExpMat2=cons(ExpMat[I],ExpMat2)$
+
+	ExpMat=newvect(length(ExpMat2),ExpMat2)$
+	ExpMatRowNum=size(ExpMat)[0]$
+	ExpMatColNum=size(ExpMat[0])[0]$
+
+	NormMat=newmat(ExpMatColNum,ExpMatColNum+1)$
+
+	for(I=0;I<ExpMatColNum;I++)
+		for(J=0;J<ExpMatColNum;J++)
+			for(K=0;K<ExpMatRowNum;K++)
+				NormMat[I][J]=NormMat[I][J]+ExpMat[K][I]*ExpMat[K][J]$
+
+	for(I=0;I<ExpMatColNum;I++)
+		for(K=0;K<ExpMatRowNum;K++)
+			NormMat[I][ExpMatColNum]=NormMat[I][ExpMatColNum]+ExpMat[K][I]$
+
+	SolveList=[]$
+	for(I=0;I<ExpMatColNum;I++){
+		TMP=0$
+		for(J=0;J<ExpMatColNum;J++)
+			TMP=TMP+NormMat[I][J]*Vars[J]$
+
+		TMP=TMP-NormMat[I][ExpMatColNum]$
+		SolveList=cons(TMP,SolveList)$
+	}
+
+	Res=solve(SolveList,Vars)$
+	if(nonposdegchk(Res))
+		return(makeret(Res,Vars,1.0))$
+
+	Ret=[]$
+	for(I=0;I<length(Vars);I++)
+		Ret=cons([Vars[I],1.0],Ret)$
+
+	return reverse(Ret)$
+
+}
+
+end$
