@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.2 2000/02/08 04:47:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.3 2000/04/13 06:51:09 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -40,6 +40,7 @@ static void asir_popSerializedLocalObject();
 static char *name_of_cmd(unsigned int);
 static char *name_of_id(int);
 static void asir_do_cmd(unsigned int,unsigned int);
+static LIST asir_GetErrorList();
 
 static void create_error(ERR *err,unsigned int serial,char *msg)
 {
@@ -136,8 +137,20 @@ static void process_ox()
 static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 {
 	MATHCAP client_mathcap;
+	LIST list;
+	int i;
+	Q q;
 
 	switch ( cmd ) {
+		case SM_dupErrors:
+			list = asir_GetErrorList();
+			asir_push_one((Obj)list);
+			break;
+		case SM_getsp:
+			i = plot_OperandStackPtr+1;
+			STOQ(i,q);
+			asir_push_one((Obj)q);
+			break;
 		case SM_popSerializedLocalObject:
 			asir_popSerializedLocalObject();
 			break;
@@ -434,6 +447,23 @@ static void asir_push_one(Obj obj)
 		}
 		plot_OperandStack[plot_OperandStackPtr] = obj;
 	}
+}
+
+static LIST asir_GetErrorList()
+{
+	int i;
+	NODE n,n0;
+	LIST err;
+	Obj obj;
+
+	for ( i = 0, n0 = 0; i <= plot_OperandStackPtr; i++ )
+		if ( (obj = plot_OperandStack[i]) && (OID(obj) == O_ERR) ) {
+			NEXTNODE(n0,n); BDY(n) = (pointer)obj;
+		}
+	if ( n0 )
+		NEXT(n) = 0;
+	MKLIST(err,n0);
+	return err;
 }
 
 static Obj asir_pop_one() {
