@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.1 2001/06/20 09:32:13 noro Exp $ */
 
 #include "ca.h"
 
@@ -186,4 +186,82 @@ UM f;
 	inv = _invsf(*sp);
 	for ( ; i >= 0; i--, sp-- )
 		*sp = _mulsf(*sp,inv);
+}
+
+void addsf_trunc(int,int *,int *);
+void mulsf_trunc(int,int *,int *,int *);
+
+void mulsflum(n,f1,f2,fr)
+int n;
+LUM f1,f2,fr;
+{
+	int max;
+	int i,j,**p1,**p2,*px;
+	int *w,*w1,*w2;
+
+	p1 = (int **)COEF(f1); p2 = (int **)COEF(f2);
+	w = W_ALLOC(2*(n+1)); w1 = W_ALLOC(DEG(f1)); w2 = W_ALLOC(DEG(f2));
+	for ( i = DEG(f1); i >= 0; i-- ) {
+		for ( j = n - 1, px = p1[i]; ( j >= 0 ) && ( px[j] == 0 ); j-- );
+		w1[i] = ( j == -1 ? 0 : 1 );
+	}
+	for ( i = DEG(f2); i >= 0; i-- ) {
+		for ( j = n - 1, px = p2[i]; ( j >= 0 ) && ( px[j] == 0 ); j-- );
+		w2[i] = ( j == -1 ? 0 : 1 );
+	}
+	for ( j = DEG(fr) = DEG(f1) + DEG(f2); j >= 0; j-- ) {
+		for ( i = n - 1, px = COEF(fr)[j]; i >= 0; i-- ) 
+			px[i] = 0;
+		for ( max = MIN(DEG(f1),j), i = MAX(0,j-DEG(f2)); i <= max; i++ ) 
+			if ( w1[i] != 0 && w2[j - i] != 0 ) {
+				mulsf_trunc(n,p1[i],p2[j - i],w); addsf_trunc(n,w,px);
+			}
+	}
+}
+
+void addsf_trunc(n,a1,a2)
+int n;
+int *a1,*a2;
+{
+	/* XXX */
+}
+
+void mulsf_trunc(n,a1,a2,r)
+int n;
+int *a1,*a2,*r;
+{
+	/* XXX */
+}
+
+void eucsfum(f1,f2,a,b)
+UM f1,f2,a,b;
+{
+	UM g1,g2,a1,a2,a3,wm,q,tum;
+	int d,dr;
+
+	/* XXX */
+	d = DEG(f1) + DEG(f2) + 10;
+	g1 = W_UMALLOC(d); g2 = W_UMALLOC(d); a1 = W_UMALLOC(d);
+	a2 = W_UMALLOC(d); a3 = W_UMALLOC(d); wm = W_UMALLOC(d);
+	q = W_UMALLOC(d);
+	DEG(a1) = 0; COEF(a1)[0] = 1; DEG(a2) = -1;
+	cpyum(f1,g1); cpyum(f2,g2);
+	while ( 1 ) {
+		dr = divsfum(g1,g2,q); tum = g1; g1 = g2; g2 = tum;
+		if ( ( DEG(g2) = dr ) == -1 ) 
+			break;
+		mulsfum(a2,q,wm); subsfum(a1,wm,a3); dr = divsfum(a3,f2,q);
+		tum = a1; a1 = a2; a2 = a3; a3 = tum; DEG(a3) = dr;
+	}
+	if ( COEF(g1)[0] != 1 )
+		mulssfum(a2,_invsf(COEF(g1)[0]),a);
+	else 
+		cpyum(a2,a);
+	mulsfum(a,f1,wm);
+	if ( DEG(wm) >= 0 ) 
+		COEF(wm)[0] = _subsf(COEF(wm)[0],_onesf());
+	else {
+		DEG(wm) = 0; COEF(wm)[0] = _chsgnsf(_onesf());
+	}
+	divsfum(wm,f2,q); mulssfum(q,_chsgnsf(_onesf()),b);
 }

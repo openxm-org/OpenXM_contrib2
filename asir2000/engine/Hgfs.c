@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.1 2001/06/20 09:32:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.2 2001/06/21 07:47:02 noro Exp $ */
 
 #include "ca.h"
 
@@ -528,3 +528,235 @@ int d;
 	}
 }
 
+/* Hensel related functions */
+
+int sfberle(VL,P,int,GFS *,DCP *);
+void sfgcdgen(P,ML,ML *);
+void sfhenmain(LUM,ML,ML,ML *);
+void ptosflum(int,P,LUM);
+
+/* f = f(x,y) */
+
+void sfhensel(count,f,x,listp)
+int count;
+P f;
+V x;
+ML *listp;
+{
+	int i,j;
+	int fn,n,bound;
+	int *p;
+	int **pp;
+	ML blist,clist,rlist;
+	UM *b;
+	LUM fl,tl;
+	LUM *l;
+	VL vl,nvl;
+	V y;
+	int dx,dy;
+	GFS ev;
+	P f1,g,g0,t,yev,c;
+	DCP dc;
+	LUM gl;
+
+	clctv(CO,f,&vl);
+	if ( vl->v != x ) {
+		reordvar(vl,x,&nvl); reorderp(nvl,vl,f,&f1);
+		vl = nvl; f = f1;
+	}
+	y = vl->next->v;
+	dx = getdeg(x,f);
+	dy = getdeg(y,f);
+	if ( dx == 1 ) {
+		*listp = blist = MLALLOC(1); blist->n = 1; blist->c[0] = 0;
+		return;
+	}
+	fn = sfberle(vl,f,count,&ev,&dc);
+	if ( fn <= 1 ) {
+		/* fn == 0 => short of evaluation points */
+		*listp = blist = MLALLOC(1); blist->n = fn; blist->c[0] = 0;
+		return;
+	}
+	/* pass the the leading coeff. to the first element */
+	c = dc->c; dc = NEXT(dc);
+	mulp(vl,dc->c,c,&t); dc->c = t;
+	blist = MLALLOC(n); 
+	blist->n = fn;
+	for ( i = 0; i < fn; i++, dc = NEXT(dc) ) {
+		blist->c[i] = W_UMALLOC(UDEG(dc->c));
+		ptosfum(dc->c,blist->c[i]);
+	}
+	/* f(x,y) -> g = f(x,y+ev) */
+	MKV(y,t); addp(vl,t,(P)ev,&yev);
+	substp(vl,f,y,yev,&g);
+	substp(vl,g,y,0,&g0);
+
+	sfgcdgen(g0,blist,&clist);
+	blist->bound = clist->bound = dy;
+	W_LUMALLOC(dx,bound,gl);
+	ptosflum(bound,g,gl);
+	sfhenmain(gl,blist,clist,listp);
+}
+
+/* main variable of f = x */
+
+int sfberle(vl,f,count,ev,dcp)
+VL vl;
+P f;
+int count;
+GFS *ev;
+DCP *dcp;
+{
+	UM wf,wf1,wf2,wfs,gcd;
+	ML flist;
+	int fn,fn1,n;
+	GFS m,fm;
+	DCP dc,dct,dc0;
+	VL nvl;
+	V x,y;
+	P g,lc,lc0,f0;
+	int j,q1,index,i;
+
+	clctv(vl,f,&nvl); vl = nvl;
+	x = vl->v; y = vl->next->v;
+	simp_ff(f,&g); g = f;
+	n = QTOS(DEG(DC(f)));
+	wf = W_UMALLOC(n); wf1 = W_UMALLOC(n); wf2 = W_UMALLOC(n);
+	wfs = W_UMALLOC(n); gcd = W_UMALLOC(n);
+	q1 = field_order_sf()-1;
+	lc = DC(f)->c;
+	for ( j = 0, fn = n + 1, index = 0; 
+		index < q1 && j < count && fn > 1; ) {
+		MKGFS(index,m);
+		substp(vl,lc,y,(P)m,&lc0);
+		if ( lc0 ) {
+			substp(vl,f,y,(P)m,&f0);
+			ptosfum(m,f,wf); cpyum(wf,wf1); 
+			diffsfum(m,wf1,wf2); gcdsfum(m,wf1,wf2,gcd);
+			if ( DEG(gcd) == 0 ) {
+				fctrsf(f0,&dc);
+				for ( dct = NEXT(dc), i = 0; dct; dct = NEXT(dct), i++ );
+				if ( i < fn ) {
+					dc0 = dc; fn = i; fm = m;
+				}
+				j++;
+			}
+		}
+	}
+	if ( index == q1 )
+		return 0;
+	else if ( fn == 1 )
+		return 1;
+	else {
+		*dcp = dc0;
+		*ev = fm;
+		return fn;
+	}
+}
+
+void sfgcdgen(f,blist,clistp)
+P f;
+ML blist,*clistp;
+{
+	int i;
+	int n,d,np;
+	UM wf,wm,wx,wy,wu,wv,wa,wb,wg,q,tum;
+	UM *in,*out;
+	ML clist;
+
+	n = UDEG(f); np = blist->n;
+	d = 2*n;
+	q = W_UMALLOC(d); wf = W_UMALLOC(d);
+	wm = W_UMALLOC(d); wx = W_UMALLOC(d);
+	wy = W_UMALLOC(d); wu = W_UMALLOC(d);
+	wv = W_UMALLOC(d); wg = W_UMALLOC(d);
+	wa = W_UMALLOC(d); wb = W_UMALLOC(d);
+	ptosfum(f,wf); DEG(wg) = 0; COEF(wg)[0] = _onesf();
+	*clistp = clist = MLALLOC(np); clist->n = np;
+	for ( i = 0, in = (UM *)blist->c, out = (UM *)clist->c; i < np; i++ ) {
+		divsfum(wf,in[i],q); tum = wf; wf = q; q = tum;
+		cpyum(wf,wx); cpyum(in[i],wy);
+		eucsfum(wx,wy,wa,wb); mulsfum(wa,wg,wm);
+		DEG(wm) = divsfum(wm,in[i],q); out[i] = UMALLOC(DEG(wm));
+		cpyum(wm,out[i]); mulsfum(q,wf,wu);
+		mulsfum(wg,wb,wv); addsfum(wu,wv,wg);
+	}
+}
+
+/*
+	sfhenmain(fl,bqlist,cqlist,listp)
+*/
+
+void sfhenmain(f,bqlist,cqlist,listp)
+LUM f;
+ML bqlist,cqlist,*listp;
+{
+	int i,j,k;
+	int *px,*py;
+	int **pp,**pp1;
+	int n,np,bound,dr,tmp;
+	UM wt,wq0,wq,wr,wm,wm0,wa,q;
+	LUM wb0,wb1,tlum;
+	UM *b,*c;
+	LUM *l;
+	ML list;
+
+	n = DEG(f); np = bqlist->n; bound = bqlist->bound;
+	*listp = list = MLALLOC(n);
+	list->n = np; list->bound = bound;
+	W_LUMALLOC(n,bound,wb0); W_LUMALLOC(n,bound,wb1);
+	wt = W_UMALLOC(n); wq0 = W_UMALLOC(n); wq = W_UMALLOC(n);
+	wr = W_UMALLOC(n); wm = W_UMALLOC(2*n); wm0 = W_UMALLOC(2*n);
+	wa = W_UMALLOC(2*n); q = W_UMALLOC(2*n);
+	b = (UM *)bqlist->c; c = (UM *)cqlist->c; l = (LUM *)list->c; 
+	for ( i = 0; i < np; i++ ) {
+		l[i] = LUMALLOC(DEG(b[i]),bound);
+		for ( j = DEG(b[i]), pp = COEF(l[i]), px = COEF(b[i]); j >= 0; j-- ) 
+			pp[j][0] = px[j];
+	}
+	for ( i = 1; i < bound; i++ ) {
+		mulsflum(i+1,l[0],l[1],wb0);
+		for ( j = 2; j < np; j++ ) {
+			mulsflum(i+1,l[j],wb0,wb1);
+			tlum = wb0; wb0 = wb1; wb1 = tlum;
+		}
+		for ( j = n, px = COEF(wt); j >= 0; j-- )
+			px[j] = 0;
+		for ( j = n, pp = COEF(f), pp1 = COEF(wb0); j >= 0; j-- )
+			COEF(wt)[j] = _subsf(pp[j][i],pp1[j][i]);
+		degum(wt,n);
+		for ( j = n, px = COEF(wq0); j >= 0; j-- )
+			px[j] = 0;
+		for ( j = 1; j < np; j++ ) {
+			mulsfum(wt,c[j],wm); dr = divsfum(wm,b[j],q);
+			for ( k = DEG(q), px = COEF(wq0), py = COEF(q); k >= 0; k-- ) 
+				px[k] = _addsf(px[k],py[k]);
+			for ( k = dr, pp = COEF(l[j]), px = COEF(wm); k >= 0; k-- ) 
+				pp[k][i] = px[k];
+		}
+		degum(wq0,n); mulsfum(wq0,b[0],wm);
+		mulsfum(wt,c[0],wm0); addsfum(wm,wm0,wa);
+		for ( j = DEG(wa), pp = COEF(l[0]), px = COEF(wa); j >= 0; j-- ) 
+			pp[j][i] = px[j];
+		for ( j = n, px = COEF(wq0); j >= 0; j-- ) 
+			px[j] = 0;
+	}
+}
+
+void ptosflum(bound,f,fl)
+int bound;
+P f;
+LUM fl;
+{
+	DCP dc;
+	int **pp;
+	int d;
+	UM t;
+
+	t = UMALLOC(bound);
+	for ( dc = DC(f), pp = COEF(fl); dc; dc = NEXT(dc) ) {
+		d = QTOS(DEG(dc));
+		ptosfum(COEF(dc),t);
+		bcopy(t->c,pp[d],(t->d+1)*sizeof(int));
+	}
+}
