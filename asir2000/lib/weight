@@ -416,7 +416,7 @@ def qcheckmain(PolyList,Vars){
 		Poly=dp_ptod(PolyList[I],Vars)$
 		BASE0=dp_etov(dp_ht(Poly))$
 		Poly=dp_rest(Poly)$
-		for(;Poly!=0;Poly=dp_rest(Poly)){
+		for(;L!=VarsNum && Poly!=0;Poly=dp_rest(Poly)){
 			ExpMat[L]=dp_etov(dp_ht(Poly))-BASE0$
 			L=chkou(L,ExpMat,CHAGORD)$
 			if(L==VarsNum-1)
