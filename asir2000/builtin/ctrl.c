@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.3 2000/02/07 03:14:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.4 2000/02/07 03:19:19 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -34,7 +34,7 @@ static struct {
 	{"no_prompt",&no_prompt},
 	{"ox_batch",&ox_batch},
 	{"ox_check",&ox_check},
-	{"ox_exchange_mathcap",&ox_exchange_mat},
+	{"ox_exchange_mathcap",&ox_exchange_mathcap},
 	{"f4_nocheck",&f4_nocheck},
 	{"fortran_output",&fortran_output},
 	{0,0},
