@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.9 2003/04/24 07:54:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.10 2003/05/07 06:26:51 noro Exp $ */
 
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
@@ -3158,7 +3158,7 @@ def ideal_uniq(L) /* sub procedure of welldec and normposdec */
 			R = append(R,[L[I]]);
 		else {
 			for (J = 0; J < length(R); J++)
-				if ( gb_comp(L[I],R[J]) )
+				if ( gb_comp_old(L[I],R[J]) )
 					break;
 			if ( J == length(R) )
 				R = append(R,[L[I]]);
@@ -3174,7 +3174,7 @@ def ideal_uniq_by_first(L) /* sub procedure of welldec and normposdec */
 			R = append(R,[L[I]]);
 		else {
 			for (J = 0; J < length(R); J++)
-				if ( gb_comp(L[I][0],R[J][0]) )
+				if ( gb_comp_old(L[I][0],R[J][0]) )
 					break;
 			if ( J == length(R) )
 				R = append(R,[L[I]]);
@@ -3235,7 +3235,7 @@ def gr_fctr_sf(FL,VL,Ord)
 	for (TP = [],I = 0; I<length(FL); I++ ) {
 		F = FL[I];
 		SF = idealsqfr_sf(F);
-		if ( !gb_comp(F,SF) ) 
+		if ( !gb_comp_old(F,SF) ) 
 			F = dp_gr_f_main(SF,VL,0,Ord);
 		CID_SF=[1];
 		SP = gr_fctr_sub_sf(F,VL,Ord);
@@ -3259,7 +3259,7 @@ def gr_fctr_sub_sf(G,VL,Ord)
 				W = cons(FL[J][0],G);
 				NG = dp_gr_f_main(W,VL,0,Ord);
 				TNG = idealsqfr_sf(NG);
-				if ( !gb_comp(NG,TNG) )
+				if ( !gb_comp_old(NG,TNG) )
 					NG = dp_gr_f_main(TNG,VL,0,Ord);
 				if ( !inclusion_test(CID_SF,NG,VL,Ord) ) {
 					DG = gr_fctr_sub_sf(NG,VL,Ord);
@@ -3277,5 +3277,21 @@ def gr_fctr_sub_sf(G,VL,Ord)
 	if (I == length(G))
 		RL = append([G],RL);
 	return RL;
+}
+
+def gb_comp_old(A,B)
+{
+	LA = length(A);
+	LB = length(B);
+	if ( LA != LB )
+		return 0;
+	A = newvect(LA,A);
+	B = newvect(LB,B);
+	A1 = qsort(A);
+	B1 = qsort(B);
+	for ( I = 0; I < LA; I++ )
+		if ( A1[I] != B1[I] && A1[I] != -B1[I] )
+			break;
+	return I == LA ? 1 : 0;
 }
 end$
