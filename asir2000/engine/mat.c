@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.6 2002/04/10 02:59:10 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.7 2002/05/27 03:00:12 noro Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -106,9 +106,28 @@ void mulmat(vl,a,b,c)
 VL vl;
 Obj a,b,*c;
 {
-	if ( !a || !b ) 
+	VECT vect;
+	MAT mat;
+
+	if ( !a && !b )
 		*c = 0;
-	else if ( OID(a) <= O_R )
+	else if ( !a || !b ) {
+		if ( !a )
+			a = b;	
+		switch ( OID(a) ) {
+			case O_VECT:
+				MKVECT(vect,((VECT)a)->len);
+				*c = (Obj)vect;
+				break;
+			case O_MAT:
+				MKMAT(mat,((MAT)a)->row,((MAT)a)->col);
+				*c = (Obj)mat;
+				break;
+			default:
+				*c = 0;
+				break;
+		}
+	} else if ( OID(a) <= O_R )
 		mulrmat(vl,(Obj)a,(MAT)b,(MAT *)c);
 	else if ( OID(b) <= O_R )
 		mulrmat(vl,(Obj)b,(MAT)a,(MAT *)c);
@@ -180,9 +199,22 @@ MAT a;
 Obj r;
 MAT *c;
 {
+	int n,i;
+	MAT t;
+
 	if ( !a )
 		*c = 0;
-	else if ( !r || !NUM(r) || !RATN(r) || 
+	else if ( !r ) {
+		if ( a->row != a->col ) {
+			*c = 0; error("pwrmat : non square matrix");
+		} else {
+			n = a->row;
+    		MKMAT(t,n,n);
+			for ( i = 0; i < n; i++ )
+				t->body[i][i] = ONE;
+			*c = t;
+		}
+	} else if ( !NUM(r) || !RATN(r) || 
 		!INT(r) || (SGN((Q)r)<0) || (PL(NM((Q)r))>1) ) {
 		*c = 0; error("pwrmat : invalid exponent");
 	} else if ( a->row != a->col ) {

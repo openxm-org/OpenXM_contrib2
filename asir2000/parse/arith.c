@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.7 2001/10/09 01:36:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.8 2002/08/02 05:34:03 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -140,9 +140,17 @@ Obj a,b,*r;
 {
 	int mid;
 
-	if ( !a || !b )
+	if ( !a && !b )
 		*r = 0;
-	else if ( OID(a) == OID(b) )
+	else if ( !a || !b ) {
+		if ( !a )
+			a = b;
+		/* compute a*0 */
+		if ( OID(a) == O_MAT || OID(a) == O_VECT )
+			(*(afunc[O_MAT].mul))(vl,a,0,r);
+		else
+			*r = 0;
+	} else if ( OID(a) == OID(b) )
 		(*(afunc[OID(a)].mul))(vl,a,b,r);
 	else if ( (mid = MAX(OID(a),OID(b))) <= O_R || 
 		(mid == O_MAT) || (mid == O_VECT) || (mid == O_DP) )
@@ -197,9 +205,12 @@ Obj a,e,*r;
 			*r = 0;
 	else if ( OID(a) == O_QUOTE )
 		(*(afunc[O_QUOTE].pwr))(vl,a,e,r);
-	else if ( !e )
-		*r = (pointer)ONE;
-	else if ( (OID(e) <= O_N) && INT(e) ) {
+	else if ( !e ) {
+		if ( OID(a) == O_MAT )
+			(*(afunc[O_MAT].pwr))(vl,a,e,r);
+		else	
+			*r = (pointer)ONE;
+	} else if ( (OID(e) <= O_N) && INT(e) ) {
 		if ( (OID(a) == O_P) && (SGN((Q)e) < 0) ) {
 			MKRAT((P)a,(P)ONE,1,t);
 			(*(afunc[O_R].pwr))(vl,t,e,r);
