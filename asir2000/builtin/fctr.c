@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.19 2003/01/13 06:40:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.20 2004/05/13 12:12:43 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -338,13 +338,14 @@ P *rp;
 
 void Pptozp(arg,rp)
 NODE arg;
-P *rp;
+Obj *rp;
 {
 	Q t;
-
     NODE opt,tt,p;
     NODE n,n0;
     char *key;
+	P pp;
+	LIST list;
     int get_factor=0;
 
 	asir_assert(ARG0(arg),O_P,"ptozp");
@@ -363,20 +364,17 @@ P *rp;
       }
     }
 
-	ptozp((P)ARG0(arg),1,&t,rp);
+	ptozp((P)ARG0(arg),1,&t,&pp);
 
     /* printexpr(NULL,t); */
 	/* if the option factor is given, then it returns the answer
        in the format [zpoly, num] where num*zpoly is equal to the argument.*/
     if (get_factor) {
-      n0 = n0 = 0;
-      NEXTNODE(n0,n);
-      BDY(n) = (pointer) *rp;
-      NEXTNODE(n0,n);
-      BDY(n) = (pointer) t;
-      if (n0) NEXT(n) = 0;
-      MKLIST(*((LIST *)rp),n0);
-    }
+	  n0 = mknode(2,pp,t);
+      MKLIST(list,n0);
+	  *rp = (Obj)list;
+    } else
+      *rp = (Obj)pp;
 }
 
 void Pafctr(arg,rp)
