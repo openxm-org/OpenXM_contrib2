@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/num.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/num.c,v 1.4 2001/09/03 07:01:06 noro Exp $ 
 */
 #include "ca.h"
 
@@ -122,5 +122,24 @@ Num *c;
 			break;
 		default:
 			error("one_ff : not implemented yet");
+	}
+}
+
+int negative_number(c)
+Num c;
+{
+	if ( !c )
+		return 0;
+	else {
+		switch ( NID(c) ) {
+			case N_Q:
+				return SGN((Q)c)<0;
+			case N_R:
+				return BDY((Real)c)<0;
+			case N_B:
+				return 0; /* XXX */
+			default:
+				return 0;
+		}
 	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.9 2001/09/03 01:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.10 2001/09/03 07:01:10 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -357,7 +357,7 @@ expr 	: pexpr
 	 	| '+' expr 	%prec PLUS
 			{ $$ = $2; }
 	 	| '-' expr 	%prec MINUS
-			{ $$ = mkfnode(3,I_BOP,$1,0,$2); }
+			{ $$ = mkfnode(1,I_MINUS,$2); }
 	 	| expr '+' expr
 			{ $$ = mkfnode(3,I_BOP,$2,$1,$3); }
 	 	| expr '-' expr

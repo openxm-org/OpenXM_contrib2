@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.3 2001/09/04 02:46:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.4 2001/09/04 05:14:04 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -80,6 +80,7 @@ QUOTE *c;
 	QUOTE nm,dn;
 	NODE arg,t0,t,t1,t2,t3;
 	FNODE fn;
+	Obj obj;
 	Obj *b;
 	Obj **m;
 	int i,j,len,row,col;
@@ -92,6 +93,14 @@ QUOTE *c;
 	}
 	switch ( OID(a) ) {
 		case O_N:
+			if ( negative_number((Num)a) ) {
+				arf_chsgn(a,&obj);
+				MKQUOTE(*c,mkfnode(1,I_MINUS,
+					mkfnode(1,I_FORMULA,(pointer)obj)));
+			} else {
+				MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
+			}
+			break;
 		case O_STR:
 			MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
 			break;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.11 2001/09/04 03:12:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.12 2001/09/05 04:43:58 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -127,7 +127,7 @@ Obj *rp;
 	}
 	switch ( f->id ) {
 		/* unary operators */
-		case I_NOT: case I_PAREN:
+		case I_NOT: case I_PAREN: case I_MINUS:
 			MKSTR(head,"u_op");
 			switch ( f->id ) {
 				case I_NOT:
@@ -135,6 +135,9 @@ Obj *rp;
 					break;
 				case I_PAREN:
 					MKSTR(op,"()");
+					break;
+				case I_MINUS:
+					MKSTR(op,"-");
 					break;
 			}
 			fnodetotree((FNODE)FA0(f),&a1);
@@ -309,7 +312,7 @@ FNODE f;
 
 	switch ( f->id ) {
 		/* unary operators */
-		case I_NOT: case I_PAREN:
+		case I_NOT: case I_PAREN: case I_MINUS:
 			a1 = eval_pvar_in_fnode((FNODE)FA0(f));
 			return mkfnode(1,f->id,a1);
 
@@ -387,7 +390,7 @@ FNODE g;
 
 	switch ( f->id ) {
 		/* unary operators */
-		case I_NOT: case I_PAREN:
+		case I_NOT: case I_PAREN: case I_MINUS:
 			a1 = subst_in_fnode((FNODE)FA0(f),v,g);
 			return mkfnode(1,f->id,a1);
 

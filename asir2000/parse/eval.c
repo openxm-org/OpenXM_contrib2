@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.12 2001/09/03 01:04:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.13 2001/09/03 07:01:10 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -83,6 +83,7 @@ FNODE f;
 	UP2 up2;
 	UP up;
 	UM um;
+	Obj obj;
 	GF2N gf2n;
 	GFPN gfpn;
 	GFSN gfsn;
@@ -104,6 +105,11 @@ FNODE f;
 	switch ( f->id ) {
 		case I_PAREN:
 			val = eval((FNODE)(FA0(f)));
+			break;
+		case I_MINUS:
+			a1 = eval((FNODE)(FA0(f)));
+			arf_chsgn((Obj)a1,&obj);
+			val = (pointer)obj;
 			break;
 		case I_BOP:
 			a1 = eval((FNODE)FA1(f)); a2 = eval((FNODE)FA2(f));
