@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.49 2004/05/14 06:02:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.50 2004/07/13 07:59:53 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -774,7 +774,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 ((d)=(DL)MALLOC_ATOMIC(TRUESIZE(oDL,(n)-1,int)))
 
 #define MKP(v,dc,p) \
-(!DEG(dc)?((p)=COEF(dc)):(NEWP(p),VR(p)=(v),DC(p)=(dc),(p)))
+((!DEG(dc)&&!NEXT(dc))?((p)=COEF(dc)):(NEWP(p),VR(p)=(v),DC(p)=(dc),(p)))
 #define MKV(v,p) \
 (NEWP(p),VR(p)=(v),NEWDC(DC(p)),\
 DEG(DC(p))=ONE,COEF(DC(p))=(P)ONE,NEXT(DC(p))=0)

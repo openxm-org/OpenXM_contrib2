@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.96 2004/03/17 08:16:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.97 2004/03/25 01:31:03 noro Exp $ */
 
 #include "nd.h"
 
@@ -3316,7 +3316,7 @@ ND ptond(VL vl,VL dvl,P p)
 		w = (DCP *)ALLOCA(k*sizeof(DCP));
 		for ( dc = DC(p), j = 0; j < k; dc = NEXT(dc), j++ ) w[j] = dc;
 		for ( i = 0, tvl = dvl, v = VR(p);
-			vl && tvl->v != v; tvl = NEXT(tvl), i++ );
+			tvl && tvl->v != v; tvl = NEXT(tvl), i++ );
 		if ( !tvl ) {
 			for ( j = k-1, s = 0, MKV(v,x); j >= 0; j-- ) {
 				t = ptond(vl,dvl,COEF(w[j]));

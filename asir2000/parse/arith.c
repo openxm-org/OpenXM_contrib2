@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.15 2004/06/15 16:14:50 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.16 2004/06/27 03:15:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -237,6 +237,8 @@ Obj a,b,*r;
 		notdef(vl,a,b,r);
 }
 
+int allow_laurent;
+
 void arf_pwr(vl,a,e,r)
 VL vl;
 Obj a,e,*r;
@@ -259,10 +261,21 @@ Obj a,e,*r;
 			*r = (pointer)ONE;
 	} else if ( (OID(e) <= O_N) && INT(e) ) {
 		if ( (OID(a) == O_P) && (SGN((Q)e) < 0) ) {
-			MKRAT((P)a,(P)ONE,1,t);
-			(*(afunc[O_R].pwr))(vl,t,e,r);
+			if ( allow_laurent )
+				(*(afunc[O_P].pwr))(vl,a,e,r);
+			else {
+				MKRAT((P)a,(P)ONE,1,t);
+				(*(afunc[O_R].pwr))(vl,t,e,r);
+			}
 		} else
 			(*(afunc[OID(a)].pwr))(vl,a,e,r);
+	} else if ( (OID(e) <= O_N) && RATN(e) ) {
+		if ( (OID(a) == O_P) && allow_laurent )
+			(*(afunc[O_P].pwr))(vl,a,e,r);
+		else if ( OID(a) <= O_R )
+			mkpow(vl,a,e,r);
+		else
+			notdef(vl,a,e,r);
 	} else if ( OID(a) <= O_R )
 		mkpow(vl,a,e,r);
 	else
