@@ -1,3 +1,5 @@
+/* $OpenXM$ */
+
 #define INTERVAL
 #include "ca.h"
 #include "parse.h"
