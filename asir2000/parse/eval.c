@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.17 2001/12/21 08:23:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.18 2001/12/25 02:39:06 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -456,7 +456,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 	NODE tn,sn,opts,opt1;
     VS pvs;
 	char errbuf[BUFSIZ];
-	static int stack_size;
+	static unsigned int stack_size;
 	static void *stack_base;
 
 	if ( f->id == A_UNDEF ) {
