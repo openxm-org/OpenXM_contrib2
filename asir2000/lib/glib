@@ -1,31 +1,27 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.3 2002/06/07 06:00:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.4 2002/07/10 08:40:58 takayama Exp $ */
 /* $Id$ */
 
-/* Todo:
-     1. Some functions should be moved to longname
-*/
 
 /* #define CLIP  1 */
 /* #define DEBUG 1 */
 #define LIST  4
 
-/* General sugar functions */
-def floor(N) {
+def glib_floor(N) {
   return(pari(floor,N));
 }
 
+/*
 def join(A,B) {
   if (type(B) == 0) return(A);
   return(append(A,B));
 }
-
 def eigenvalues(M) {
   return(pari(eigen,M));
 }
-
 def roots(F) {
   return(pari(roots,F));
 }
+*/
 
 /*  ---------------------------------------------- */
 def ox_get_errors(P) {
@@ -39,6 +35,8 @@ def reset_plot() {
   ox_reset(Glib_process);
   print("  Done.");
 }
+Glib_ps = 0$
+Glib_h = []$
 Glib_canvas_x = 400$
 Glib_canvas_y = 400$
 Glib_xmin=0$  Glib_xmax=Glib_canvas_x$
@@ -118,6 +116,11 @@ def glib_clear() {
   clear_canvas(Glib_process,Glib_canvas);
 }
 
+/*&usage begin: glib_window(Xmin,Ymin,Xmax,Ymax)
+  It generates a window with the left top corner [{Xmin},{Ymin}] and
+  the right bottom corner [{Xmax},{Ymax}].
+  example: glib_window(-1,-1,10,10);
+end: */
 def glib_window(Xmin,Ymin,Xmax,Ymax) {
   extern Glib_xmin,  Glib_xmax, Glib_ymin, Glib_ymax,
          Glib_canvas_x, Glib_canvas_y, Glib_process, Glib_canvas,
@@ -144,41 +147,51 @@ def glib_check_arg(X,Y) {
   }
 }
 
+/*&usage begin: glib_putpixel(X,Y | color)
+  It puts a pixel at [{X},{Y}] with {color}
+  example: glib_putpixel(1,2 | color=0xffff00);
+end: */
 def glib_putpixel(X,Y) {
   extern Glib_process, Glib_canvas,
-         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag, Glib_ps;
   if (Glib_canvas < 0) glib_open();
   glib_check();
   glib_check_arg(X,Y);
   C = getopt(color);
-  if ( type(C) != -1 )
-    draw_obj(Glib_process,Glib_canvas,
-           [floor(Glib_xmag*(X+Glib_xoffset)),
-            floor(Glib_ymag*(Y+Glib_yoffset))],C);
-  else
-    draw_obj(Glib_process,Glib_canvas,
-           [floor(Glib_xmag*(X+Glib_xoffset)),
-            floor(Glib_ymag*(Y+Glib_yoffset))]);
+  Pos = [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+         glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+  if ( type(C) != -1 ) {
+    draw_obj(Glib_process,Glib_canvas,Pos,C);
+    if (Glib_ps) glib_history(["putpixel",Pos,C]);
+  }else{
+    draw_obj(Glib_process,Glib_canvas,Pos);
+    if (Glib_ps) glib_history(["putpixel",Pos,0]);
+  }
 }
 
+/*&usage begin: glib_line(X0,Y0,X1,Y1 | color)
+  It draw the line [{X0},{Y0}]-- [{X1},{Y1}]with {color}
+  example: glib_line(0,0,5,3/2 | color=0xff00ff);
+end: */
 def glib_line(X0,Y0,X1,Y1) {
   extern Glib_xmag, Glib_ymag, Glib_xoffset, Glib_yoffset;
   C = getopt(color);
   glib_check_arg(X0,Y0);
   glib_check_arg(X1,Y1);
-  glib_clip_line(floor(Glib_xmag*(X0+Glib_xoffset)),
-                 floor(Glib_ymag*(Y0+Glib_yoffset)),
-                 floor(Glib_xmag*(X1+Glib_xoffset)),
-                 floor(Glib_ymag*(Y1+Glib_yoffset)),C);
+  glib_clip_line(glib_floor(Glib_xmag*(X0+Glib_xoffset)),
+                 glib_floor(Glib_ymag*(Y0+Glib_yoffset)),
+                 glib_floor(Glib_xmag*(X1+Glib_xoffset)),
+                 glib_floor(Glib_ymag*(Y1+Glib_yoffset)),C);
 }
 
 def glib_clip_line(X0,Y0,X1,Y1,Color) {
   /* X0, Y0, X1, Y1 should be integers. 
      Coordinates are already translated. */
-  extern Glib_process, Glib_canvas, Glib_canvas_x, Glib_canvas_y;
+  extern Glib_process, Glib_canvas, Glib_canvas_x, Glib_canvas_y,
+         Glib_ps;
   if (Glib_canvas < 0) glib_open();
 
-#ifdef CLIP
+if (Glib_ps) {
 #ifdef DEBUG
   print(["clip_line",[X0,Y0,X1,Y1]]);
 #endif
@@ -214,14 +227,17 @@ def glib_clip_line(X0,Y0,X1,Y1,Color) {
 #ifdef DEBUG
   print([X0,Y0,X1,Y1]);
 #endif
-#endif
+}
+
   glib_check();
-  if ( type(Color) != -1 )
-    draw_obj(Glib_process,Glib_canvas,
-           [floor(X0),floor(Y0),floor(X1),floor(Y1)],Color);
-  else
-    draw_obj(Glib_process,Glib_canvas,
-           [floor(X0),floor(Y0),floor(X1),floor(Y1)]);
+  Pos = [glib_floor(X0),glib_floor(Y0),glib_floor(X1),glib_floor(Y1)];
+  if ( type(Color) != -1 ) {
+    draw_obj(Glib_process,Glib_canvas,Pos,Color);
+    if (Glib_ps) glib_history(["line",Pos,Color]);
+  }else{
+    draw_obj(Glib_process,Glib_canvas,Pos);
+    if (Glib_ps) glib_history(["line",Pos,0]);
+  }
 }
 
 def glib_clip0_x(X0,Y0,X1,Y1,Clip) {
@@ -271,18 +287,93 @@ def glib_clip1_y(X0,Y0,X1,Y1,Clip) {
 end: */
 def glib_print(X,Y,Text) {
   extern Glib_process, Glib_canvas,
-         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag, Glib_ps;
   if (Glib_canvas < 0) glib_open();
   glib_check();
   glib_check_arg(X,Y);
   if (type(Text) != 7) error("glib_print(X,Y,Text): Text must be a string.");
   C = getopt(color);
-  if ( type(C) != -1 )
-    draw_string(Glib_process,Glib_canvas,
-                [X,Y],Text,C);
-  else
-    draw_string(Glib_process,Glib_canvas,
-                [X,Y],Text);
+  Pos = [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+         glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+  if ( type(C) != -1 ) {
+    draw_string(Glib_process,Glib_canvas,Pos,Text,C);
+    if (Glib_ps) glib_history(["print",Pos,Text,C]);
+  }else{
+    draw_string(Glib_process,Glib_canvas,Pos,Text);
+    if (Glib_ps) glib_history(["print",Pos,Text,0]);
+  }
+}
+
+def glib_history(L) {
+  extern Glib_h, Glib_canvas_x, Glib_canvas_y;
+  if (L[0] == "putpixel" || L[0] == "print") {
+    if (L[1][0] <= Glib_canvas_x && L[1][0] >= 0) {
+      if (L[1][1] <= Glib_canvas_x && L[1][1] >= 0) 
+         Glib_h = cons(L,Glib_h);
+    }
+  }else {
+    Glib_h = cons(L,Glib_h);
+  }
+  return 0;
+}
+
+/*&usage begin:glib_tops()
+  If Glib_ps is set to 1, 
+  it returns a postscript program to draw the picture on the canvas.
+end: */
+def glib_tops() {
+  extern Glib_h;
+  return glib_ps(Glib_h);
+}
+def glib_ps(L) {
+  PS = "";
+  Prev_color = 0;
+  /* Prolog */
+  PS += "%%!PS-Adobe-1.0\n";
+  PS += "%%BoundingBox: 0 0 " +
+          rtostr(Glib_canvas_x) + " " + rtostr(Glib_canvas_y) + "\n";
+  PS += "%%Creator: This is generated by ifplot\n";
+  PS += "%%Title: ifplot\n";
+  PS += "%%EndComments: \n";
+  PS += "0.1 setlinewidth \n";
+  PS += "2 setlinecap \n";
+  PS += "2 setlinejoin \n";
+  PS += "/ifplot_putpixel {  \n";
+  PS += "    /yyy 2 1 roll def /xxx 2 1 roll def \n";
+  PS += "    gsave newpath xxx yyy .5 0 360 arc \n";
+  PS += "    fill grestore \n";
+  PS += "} def \n";
+
+  L = reverse(L);
+  N = length(L);
+  for (I=0; I<N; I++) {
+    C = L[I];
+    if (C[length(C)-1] != Prev_color) {
+      Prev_color = C[length(C)-1];
+      PS += rtostr(deval(ishift(Prev_color,16)/256)) + " " +
+            rtostr(deval(iand(ishift(Prev_color,8),0xff)/256)) + " " +
+            rtostr(deval(iand(Prev_color,0xff)/256)) + " setrgbcolor \n";
+    }
+    if (C[0] == "putpixel") {
+       PS += rtostr(C[1][0]) + " " + rtostr(C[1][1]) + " ifplot_putpixel \n";
+    }
+    if (C[0] == "line") {
+       PS += " newpath ";
+       PS += rtostr(C[1][0]) + " " + rtostr(C[1][1]) + " moveto " +
+             rtostr(C[1][2]) + " " + rtostr(C[1][3]) + " lineto stroke \n";
+    }
+    if (C[0] == "print") {
+       PS += "/Times-Roman findfont 10 scalefont setfont \n";
+       PS += rtostr(C[1][0]) + " " + rtostr(C[1][1]) + " moveto ";
+       PS += "(" + C[2] + ")  show \n";
+    }
+  }
+
+  /* Epilog */
+  PS += "0 0 0 setrgbcolor \n";
+  PS += "showpage \n";
+
+  return PS;
 }
 end$
 
