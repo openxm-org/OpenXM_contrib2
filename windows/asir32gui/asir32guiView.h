@@ -70,6 +70,8 @@ public:
 	afx_msg void OnEditPaste();
 	afx_msg void OnFont();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnContribhelp();
+	afx_msg void OnUpdateContribhelp(CCmdUI* pCmdUI);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

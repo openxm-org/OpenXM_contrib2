@@ -8,6 +8,7 @@
 #include "asir32guiView.h"
 #include "FatalDialog.h"
 #include <direct.h>
+#include <io.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -66,6 +67,8 @@ BEGIN_MESSAGE_MAP(CAsir32guiView, CEditView)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
 	ON_COMMAND(IDR_FONT, OnFont)
 	ON_WM_CREATE()
+	ON_COMMAND(ID_CONTRIBHELP, OnContribhelp)
+	ON_UPDATE_COMMAND_UI(ID_CONTRIBHELP, OnUpdateContribhelp)
 	//}}AFX_MSG_MAP
 	// 標準印刷コマンド
 //	ON_COMMAND(ID_FILE_PRINT, CEditView::OnFilePrint)
@@ -548,4 +551,27 @@ int CAsir32guiView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	GetEditCtrl().SetTabStops(m_nTabStops);
 
 	return 0;
+}
+
+void CAsir32guiView::OnContribhelp() 
+{
+	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
+	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
+
+	get_rootdir(root,sizeof(root),errmsg);
+	sprintf(helpfile,"%s\\bin\\cmanhelp.chm",root);
+	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+}
+
+void CAsir32guiView::OnUpdateContribhelp(CCmdUI* pCmdUI) 
+{
+	// TODO: この位置に command update UI ハンドラ用のコードを追加してください
+	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
+
+	get_rootdir(root,sizeof(root),errmsg);
+	sprintf(helpfile,"%s\\bin\\cmanhelp.chm",root);
+	if ( _access(helpfile,04) != -1 )
+		pCmdUI->Enable( TRUE );
+	else
+		pCmdUI->Enable( FALSE );
 }

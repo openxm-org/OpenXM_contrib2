@@ -15,15 +15,15 @@ Class3=CAsir32guiView
 Class4=CMainFrame
 
 ResourceCount=6
-Resource1=IDD_FATAL
-Resource2=IDR_DEBUGFRAME
+Resource1=IDD_FORMVIEW
+Resource2=IDR_MAINFRAME
 Class5=CAboutDlg
 Class6=CFatalDialog
 Class7=CAsirEdit
-Resource3=IDD_FORMVIEW
-Resource4=IDD_DEBUG
-Resource5=IDD_ABOUTBOX
-Resource6=IDR_MAINFRAME
+Resource3=IDD_DEBUG
+Resource4=IDD_ABOUTBOX
+Resource5=IDR_DEBUGFRAME
+Resource6=IDD_FATAL
 
 [CLS:CAsir32guiApp]
 Type=0
@@ -57,7 +57,7 @@ Type=0
 HeaderFile=MainFrm.h
 ImplementationFile=MainFrm.cpp
 Filter=T
-LastObject=IDR_FONT
+LastObject=CMainFrame
 BaseClass=CFrameWnd
 VirtualFilter=fWC
 
@@ -92,8 +92,9 @@ Command8=ID_VIEW_TOOLBAR
 Command9=ID_VIEW_STATUS_BAR
 Command10=IDR_FONT
 Command11=ID_ASIRHELP
-Command12=ID_APP_ABOUT
-CommandCount=12
+Command12=ID_CONTRIBHELP
+Command13=ID_APP_ABOUT
+CommandCount=13
 
 [ACL:IDR_MAINFRAME]
 Type=1

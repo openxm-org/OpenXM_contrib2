@@ -125,7 +125,8 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&User's Manual",                   ID_ASIRHELP
+        MENUITEM "&User's Manual",              ID_ASIRHELP
+        MENUITEM "Asir-contrib user's manual",  ID_CONTRIBHELP
         MENUITEM "&About asir32gui...",         ID_APP_ABOUT
     END
 END
