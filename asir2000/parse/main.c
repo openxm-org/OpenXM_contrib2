@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.15 2001/12/28 02:17:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.16 2001/12/28 06:18:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -98,7 +98,7 @@ main(int argc,char *argv[])
 	char *homedir;
 	char *ptr;
 #if !defined(VISUAL)
-	char *slash,*bslash,*binname;
+	char *slash,*bslash,*binname,*p;
 #endif
 
 	StackBottom = &tmp;
@@ -124,6 +124,8 @@ main(int argc,char *argv[])
 		binname = bslash+1;
 	else
 		binname = argv[0];
+	for ( p = binname; *p; p++ )
+		*p = tolower(*p);
 	if ( !strncmp(binname,"ox_asir",strlen("ox_asir")) ) {
 		/* never return */
 		ox_main(argc,argv);
