@@ -128,7 +128,11 @@ GC_bool GC_print_back_height = 0;
   int GC_all_interior_pointers = 0;
 #endif
 
+#if 0
 long GC_large_alloc_warn_interval = 5;
+#else
+long GC_large_alloc_warn_interval = LONG_MAX;
+#endif
 	/* Interval between unsuppressed warnings.	*/
 
 long GC_large_alloc_warn_suppressed = 0;

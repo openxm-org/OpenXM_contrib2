@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.52 2003/07/16 05:31:21 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.53 2003/07/18 10:13:12 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -97,7 +97,7 @@ int NoGCD = 0;
 int GenTrace = 0;
 int OXCheck = -1;
 
-static int NoSugar = 0;
+int NoSugar = 0;
 static int NoCriB = 0;
 static int NoGC = 0;
 static int NoMC = 0;
@@ -109,7 +109,7 @@ int Top = 0;
 int Reverse = 0;
 static int Max_mag = 0;
 static int Max_coef = 0;
-static char *Demand = 0;
+char *Demand = 0;
 static int PtozpRA = 0;
 
 int doing_f4;
