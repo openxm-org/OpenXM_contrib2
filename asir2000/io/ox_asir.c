@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.10 2000/03/16 01:07:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.11 2000/03/16 04:55:21 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -732,12 +732,17 @@ void asir_ox_push_cmd(unsigned int cmd)
 	extern char LastError[];
 
 	if ( ret = setjmp(env) ) {
+		asir_reset_handler();
 		if ( ret == 1 ) {
 			create_error(&err,0,LastError); /* XXX */
 			asir_push_one((Obj)err);
 		}
-	} else
+	} else {
+		asir_save_handler();
+		asir_set_handler();
 		asir_do_cmd(cmd,0);
+		asir_reset_handler();
+	}
 }
 
 /*
@@ -754,12 +759,17 @@ void asir_ox_execute_string(char *s)
 	MKSTR(str,s);
 	asir_push_one((Obj)str);
 	if ( ret = setjmp(env) ) {
+		asir_reset_handler();
 		if ( ret == 1 ) {
 			create_error(&err,0,LastError); /* XXX */
 			asir_push_one((Obj)err);
 		}
-	} else
+	} else {
+		asir_save_handler();
+		asir_set_handler();
 		asir_executeString();
+		asir_reset_handler();
+	}
 }
 
 /*
@@ -862,4 +872,5 @@ void asir_ox_init(int byteorder)
 		lib_ox_need_conv = 0;
 	do_message = 0;
 	create_my_mathcap("ox_asir");
+	asir_reset_handler();
 }
