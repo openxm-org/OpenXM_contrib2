@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.29 2001/12/25 08:59:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.30 2001/12/26 09:28:36 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -538,7 +538,7 @@ void spawn_server(char *host,char *launcher,char *server,
 	char *control_port_str,char *server_port_str)
 {
 	char localhost[BUFSIZ];
-	char *dname,*conn_str,*rsh,*dname0;
+	char *dname,*conn_str,*rsh,*dname0,*asirhost;
 	char AsirExe[BUFSIZ];
 	STRING rootdir;
 	char prog[BUFSIZ];
@@ -566,7 +566,11 @@ void spawn_server(char *host,char *launcher,char *server,
 		 */
 		use_ssh = 1;
 	}
-	gethostname(localhost,BUFSIZ);
+	asirhost = (char *)getenv("ASIRHOSTNAME");
+	if ( asirhost )
+		strcpy(localhost,asirhost);
+	else
+		gethostname(localhost,BUFSIZ);
 #if defined(VISUAL)
 	if ( !use_unix )
 		error("spawn_server : not implemented on Windows");
