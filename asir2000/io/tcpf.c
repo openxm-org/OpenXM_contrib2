@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.2 1999/12/13 01:56:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.3 1999/12/21 04:20:42 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -401,6 +401,7 @@ char *control_port_str,*server_port_str;
 	conn_str = conn_to_serv ? "1" : "0";
 	rsh = use_ssh ? "ssh" : RSH;
 	gethostname(localhost,BUFSIZ);
+#if !defined(VISUAL)
 	if ( use_unix ) {
 		if ( !fork() ) {
 			setpgid(0,getpid());
@@ -426,7 +427,9 @@ char *control_port_str,*server_port_str;
 		fprintf(stderr,"%s\n",cmd);
 		sleep(20);
 /*		system(cmd); */
-	} else {
+	} else 
+#endif /* VISUAL */
+	{
 		if ( dname )
 			sprintf(cmd,
 				"%s -n %s \"xterm -name %s -display %s -geometry 60x10 -e %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",

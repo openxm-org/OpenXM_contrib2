@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/io/sio.c,v 1.3 1999/11/18 09:00:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "ox.h"
@@ -75,10 +75,11 @@ int use_unix;
 char *port_str;
 {
 	struct sockaddr_in sin;
-	struct sockaddr_un s_un;
 	struct sockaddr *saddr;
 	int len;
 	int service;
+#if !defined(VISUAL)
+	struct sockaddr_un s_un;
 
 	if ( use_unix ) {
 		service = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -95,7 +96,9 @@ char *port_str;
 		len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
 #endif
 		saddr = (struct sockaddr *)&s_un;
-	} else {
+	} else 
+#endif
+	{
 		service = socket(AF_INET, SOCK_STREAM, 0);
 		if ( service < 0 ) {
 			perror("in socket");
@@ -142,14 +145,17 @@ int try_accept(af_unix,s)
 int af_unix,s;
 {
 	int len,c,i;
-	struct sockaddr_un s_un;
 	struct sockaddr_in sin;
 
+#if !defined(VISUAL)
+	struct sockaddr_un s_un;
 	if ( af_unix ) {
 		len = sizeof(s_un);
 		for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
 			c = accept(s, (struct sockaddr *) &s_un, &len);
-	} else {
+	} else 
+#endif
+	{
 
 		len = sizeof(sin);
 		for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
@@ -166,12 +172,15 @@ int use_unix;
 char *host,*port_str;
 {
 	struct sockaddr_in sin;
-	struct sockaddr_un s_un;
 	struct sockaddr *saddr;
 	struct hostent *hp;
 	int len,s,i;
+#if !defined(VISUAL)
+	struct sockaddr_un s_un;
+#endif
 
 	for ( i = 0; i < 10; i++ ) {
+#if !defined(VISUAL)
 		if ( use_unix ) {
 			if ( (s = socket(AF_UNIX,SOCK_STREAM,0)) < 0 ) {
 				perror("socket");
@@ -187,7 +196,9 @@ char *host,*port_str;
 			len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
 #endif
 			saddr = (struct sockaddr *)&s_un;
-		} else {
+		} else 
+#endif /* VISUAL */
+		{
 			if ( (s = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
 				perror("socket");
 				return -1;
@@ -209,7 +220,11 @@ char *host,*port_str;
 			break;
 		else {
 			close(s);
+#if defined(VISUAL)
+			Sleep(100);
+#else
 			usleep(100000);
+#endif
 		}
 	}
 	if ( i == 10 ) {
