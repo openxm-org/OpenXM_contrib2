@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.8 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.9 2000/08/22 05:03:58 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1499,7 +1499,8 @@ NODE subst;
 		if ( m ) {
 			get_eg(&tspm0);
 			_dp_sp_mod_dup(psm[l->dp1],psm[l->dp2],m,&h);
-			new_sugar = h->sugar;
+			if ( h )
+				new_sugar = h->sugar;
 			get_eg(&tspm1); add_eg(&eg_spm,&tspm0,&tspm1);
 			get_eg(&tnfm0);
 			_dp_nf_mod_destructive(gall,h,psm,m,0,&nfm);
@@ -1525,7 +1526,8 @@ NODE subst;
 				STOQ(l->dp1,q); ARG1(BDY((LIST)BDY(NEXT(TraceList)))) = q;
 				STOQ(l->dp2,q); ARG1(BDY((LIST)BDY(TraceList))) = q;
 			}
-			new_sugar = h->sugar;
+			if ( h )
+				new_sugar = h->sugar;
 			get_eg(&tsp1); add_eg(&eg_sp,&tsp0,&tsp1);
 			get_eg(&tnf0);
 			t_0 = get_rtime();
