@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.10 2000/11/13 01:48:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.11 2000/12/05 01:24:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -409,9 +409,17 @@ int len;
 	HKEY	hOpenKey;
 	DWORD	Type;
 	char	*slash;
-		
+
 	if ( rootdir.body ) {
 		strcpy(name,rootdir.body);
+		return;
+	}
+
+	if ( access("UseCurrentDir",0) >= 0 ) {
+		GetCurrentDirectory(BUFSIZ,name);
+		slash = strrchr(name,'\\');
+		if ( slash )
+			*slash = 0;
 		return;
 	}
 	name[0] = 0;
