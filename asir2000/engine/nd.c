@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.66 2003/09/12 08:26:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.67 2003/09/12 14:51:27 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -3928,7 +3928,7 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 	}
 }
 
-NODE nd_sp_f4(int m,ND_pairs l,PGeoBucket bucket)
+int nd_sp_f4(int m,ND_pairs l,PGeoBucket bucket,NODE *s)
 {
 	ND_pairs t;
 	NODE sp0,sp;
@@ -3944,7 +3944,8 @@ NODE nd_sp_f4(int m,ND_pairs l,PGeoBucket bucket)
 			add_pbucket_symbolic(bucket,spol);
 		}
 	}
-	return sp0;
+	*s = sp0;
+	return 1;
 }
 
 int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
@@ -4020,8 +4021,16 @@ NODE nd_f4(int m)
 		l = nd_minsugarp(d,&d);
 		sugar = SG(l);
 		bucket = create_pbucket();
-		if ( !(sp0 = nd_sp_f4(m,l,bucket)) 
-			|| !(col = nd_symbolic_preproc(bucket,&s0vect,&rp0)) ) {
+		stat = nd_sp_f4(m,l,bucket,&sp0);
+		if ( !stat ) {
+			for ( t = l; NEXT(t); t = NEXT(t) );
+			NEXT(t) = d; d = l;
+			d = nd_reconstruct(m,0,d);
+			continue;
+		}
+		if ( !sp0 ) continue;
+		col = nd_symbolic_preproc(bucket,&s0vect,&rp0);
+		if ( !col ) {
 			for ( t = l; NEXT(t); t = NEXT(t) );
 			NEXT(t) = d; d = l;
 			d = nd_reconstruct(m,0,d);
