@@ -565,7 +565,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 			return RET$
 		}
 		else{
-			RET=append(RET,[[ID,Vars,vtol(TMP1[1]*1.0)]])$
+			RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
 			return RET$
 		}
 	}
