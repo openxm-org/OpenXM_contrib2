@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.13 2003/07/30 00:55:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.14 2003/07/30 07:57:45 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -98,7 +98,8 @@ NODE append_one(NODE,int);
 #define SG(a) ((a)->sugar)
 #define LEN(a) ((a)->len)
 
-#define NEWRHist(r) ((r)=(RHist)MALLOC(sizeof(struct oRHist)))
+#define NEWRHist(r) \
+((r)=(RHist)MALLOC(sizeof(struct oRHist)+(nd_wpd-1)*sizeof(unsigned int)))
 #define NEWND_pairs(m) if(!_ndp_free_list)_NDP_alloc(); (m)=_ndp_free_list; _ndp_free_list = NEXT(_ndp_free_list)   
 #define NEWNM(m) if(!_nm_free_list)_NM_alloc(); (m)=_nm_free_list; _nm_free_list = NEXT(_nm_free_list)   
 #define MKND(n,m,d) if(!_nd_free_list)_ND_alloc(); (d)=_nd_free_list; _nd_free_list = (ND)BDY(_nd_free_list); (d)->nv=(n); BDY(d)=(m)
@@ -1882,7 +1883,7 @@ ND_pairs nd_reconstruct(ND_pairs d)
 	RHist mr0,mr;
 	RHist r;
 	ND_pairs s0,s,t,prev_ndp_free_list;
-	
+
 	obpe = nd_bpe;
 #if USE_NDV
 	oadv = nmv_adv;
@@ -1953,6 +1954,8 @@ void ndl_dup(int obpe,unsigned int *d,unsigned int *r)
 	oepw = (sizeof(unsigned int)*8)/obpe;
 	cepw = nd_epw;
 	cbpe = nd_bpe;
+	for ( i = 0; i < nd_wpd; i++ )
+		r[i] = 0;
 	if ( is_rlex )
 		for ( i = 0; i < n; i++ ) {
 			ei = (d[(n-1-i)/oepw]>>((oepw-((n-1-i)%oepw)-1)*obpe))
@@ -2188,7 +2191,10 @@ void ndv_realloc(NDV p,int obpe,int oadv)
 
 	if ( p ) {
 		m = BDY(p); len = LEN(p);
-		mr0 = (NMV)REALLOC(BDY(p),len*nmv_adv);
+		if ( nmv_adv > oadv )
+			mr0 = (NMV)REALLOC(BDY(p),len*nmv_adv);
+		else
+			mr0 = BDY(p);
 		m = (NMV)((char *)mr0+(len-1)*oadv);
 		mr = (NMV)((char *)mr0+(len-1)*nmv_adv);
 		t = (NMV)ALLOCA(nmv_adv);
