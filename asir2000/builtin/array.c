@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.33 2003/11/08 01:12:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.34 2003/11/27 02:20:51 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -157,13 +157,28 @@ int generic_comp_obj(Obj *a,Obj *b)
 void Pqsort(NODE arg,VECT *rp)
 {
 	VECT vect;
-	NODE n;
+	NODE n,n1;
 	P p;
 	V v;
 	FUNC func;
+	int len,i;
+	pointer *a;
+	Obj t;
 
-	asir_assert(ARG0(arg),O_VECT,"qsort");
-	vect = (VECT)ARG0(arg);
+	t = ARG0(arg);
+    if (OID(t) == O_LIST) {
+        n = (NODE)BDY((LIST)t);
+        len = length(n);
+        MKVECT(vect,len);
+        for ( i = 0; i < len; i++, n = NEXT(n) ) {
+            BDY(vect)[i] = BDY(n);
+        }
+        
+    }else if (OID(t) != O_VECT) {
+        error("qsort : invalid argument");
+    }else {
+        vect = (VECT)t;
+    }
 	if ( argc(arg) == 1 )
 		qsort(BDY(vect),vect->len,sizeof(Obj),(int (*)(const void *,const void *))comp_obj);
 	else {
@@ -181,7 +196,15 @@ void Pqsort(NODE arg,VECT *rp)
 		MKNODE(n,0,0); MKNODE(generic_comp_obj_arg,0,n);	
 		qsort(BDY(vect),vect->len,sizeof(Obj),(int (*)(const void *,const void *))generic_comp_obj);
 	}
-	*rp = vect;
+    if (OID(t) == O_LIST) {
+        a = BDY(vect);
+        for ( i = len - 1, n = 0; i >= 0; i-- ) {
+            MKNODE(n1,a[i],n); n = n1;
+        }
+        MKLIST((LIST)*rp,n);
+    }else {
+        *rp = vect;
+    }
 }
 
 void PNBmul_gf2n(NODE arg,GF2N *rp)
