@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.1 2001/06/20 09:32:13 noro Exp $ */
 
 #include "ca.h"
 
@@ -128,12 +128,12 @@ void randsfum(d,p)
 int d;
 UM p;
 {
-	unsigned int n;
 	int i;
 
-	n = ((unsigned int)random()) % d; DEG(p) = n; COEF(p)[n] = _onesf();
-	for ( i = 0; i < (int)n; i++ )
+	for ( i = 0; i < d; i++ )
 		COEF(p)[i] = _randomsf();
+	for ( i = d-1; i >= 0 && !COEF(p)[i]; i-- );
+	p->d = i;
 }
 
 void pwrmodsfum(p,e,f,pr)
@@ -166,7 +166,7 @@ UM p,f,pr;
 	}
 }
 
-void spwrum0sf(m,f,e,r)
+void spwrsfum(m,f,e,r)
 UM f,m,r;
 N e;
 {
@@ -180,7 +180,7 @@ N e;
 		cpyum(f,r);
 	else {
 		a = divin(e,2,&e1);
-		t = W_UMALLOC(2*DEG(m)); spwrum0sf(m,f,e1,t);
+		t = W_UMALLOC(2*DEG(m)); spwrsfum(m,f,e1,t);
 		s = W_UMALLOC(2*DEG(m)); q = W_UMALLOC(2*DEG(m));
 		mulsfum(t,t,s); DEG(s) = divsfum(s,m,q);
 		if ( a ) {
@@ -188,6 +188,28 @@ N e;
         } else
 			cpyum(s,r);
 	}
+}
+
+void tracemodsfum(m,f,e,r)
+UM f,m,r;
+int e;
+{
+	UM t,s,q,u;
+	int i;
+
+	q = W_UMALLOC(2*DEG(m)+DEG(f)); /* XXX */
+	t = W_UMALLOC(2*DEG(m));
+	s = W_UMALLOC(2*DEG(m));
+	u = W_UMALLOC(2*DEG(m));
+	DEG(f) = divsfum(f,m,q);
+	cpyum(f,s);
+	cpyum(f,t);
+	for ( i = 1; i < e; i++ ) {
+		mulsfum(t,t,u);
+		DEG(u) = divsfum(u,m,q); cpyum(u,t);
+		addsfum(t,s,u); cpyum(u,s);
+	}
+	cpyum(s,r);
 }
 
 void make_qmatsf(p,tab,mp)
@@ -469,7 +491,7 @@ int d;
 	UM t,s,u,w,g,o;
 	N n1,n2,n3,n4,n5;
 	UM *b;
-	int n,m,i,q;
+	int n,m,i,q,ed;
 
 	if ( DEG(f) == d ) {
 		r[0] = UMALLOC(d); cpyum(f,r[0]);
@@ -483,11 +505,19 @@ int d;
 		w = W_UMALLOC(DEG(f)); g = W_UMALLOC(DEG(f));
 		o = W_UMALLOC(0); DEG(o) = 0; COEF(o)[0] = _onesf();
 		q = field_order_sf();
-		STON(q,n1); pwrn(n1,d,&n2); subn(n2,ONEN,&n3);
-		STON(2,n4); divsn(n3,n4,&n5);
+		if ( q % 2 ) {
+			STON(q,n1); pwrn(n1,d,&n2); subn(n2,ONEN,&n3);
+			STON(2,n4); divsn(n3,n4,&n5);
+		} else
+			ed = d*extdeg_sf();
 		while ( 1 ) {
-			randsfum(2*d,t); spwrum0sf(f,t,n5,s);
-			subsfum(s,o,u); cpyum(f,w); gcdsfum(w,u,g);
+			randsfum(2*d,t);
+			if ( q % 2 ) {
+				spwrsfum(f,t,n5,s); subsfum(s,o,u);
+			} else
+				tracemodsfum(f,t,ed,u);
+			cpyum(f,w);
+			gcdsfum(w,u,g);
 			if ( (DEG(g) >= 1) && (DEG(g) < DEG(f)) ) {
 				canzassf(g,d,r); 
 				cpyum(f,w); divsfum(w,g,s);

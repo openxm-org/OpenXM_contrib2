@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.5 2001/05/28 08:22:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.6 2001/06/20 09:30:34 noro Exp $
 */
 #include "ca.h"
 
@@ -1077,3 +1077,7 @@ int characteristic_sf()
 	return current_gfs_p;
 }
 
+int extdeg_sf()
+{
+	return UDEG(current_gfs_ext);
+}
