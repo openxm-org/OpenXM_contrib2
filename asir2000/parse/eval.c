@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.25 2003/05/16 09:34:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.26 2003/05/17 11:47:51 takayama Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -908,6 +908,12 @@ void appenduf_local(char *name,FUNC *r)
 	FUNC f;
 	MODULE mod;
 
+	for ( tn = CUR_MODULE->usrf_list; tn; tn = NEXT(tn) )
+		if ( !strcmp(((FUNC)BDY(tn))->name,name) )
+			break;
+	if ( tn )
+		return;
+
 	f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
 	f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
 	f->name = name;
@@ -933,6 +939,7 @@ void mkparif(char *name,FUNC *r)
 
 	*r = f =(FUNC)MALLOC(sizeof(struct oFUNC)); 
 	f->name = name; f->id = A_PARI; f->argc = 0; f->f.binf = 0;
+	f->fullname = name;
 }
 
 void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc,MODULE module)

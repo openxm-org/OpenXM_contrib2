@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.3 2000/08/22 05:04:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.4 2001/10/09 01:36:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,7 @@ void searchpf(char *name,FUNC *fp)
 			pf = (PF)node->body;
 			*fp = t = (FUNC)MALLOC(sizeof(struct oFUNC));
 			t->name = name; t->id = A_PURE; t->argc = pf->argc;
-			t->f.puref = pf;
+			t->f.puref = pf; t->fullname = name;
 			return;
 		}
 	*fp = 0;
@@ -81,7 +81,7 @@ void searchc(char *name,FUNC *fp)
 			pf = (PF)node->body;
 			*fp = t = (FUNC)MALLOC(sizeof(struct oFUNC));
 			t->name = name; t->id = A_PURE; t->argc = pf->argc;
-			t->f.puref = pf;
+			t->f.puref = pf; t->fullname = name;
 			return;
 		}
 	*fp = 0;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.17 2003/05/16 07:56:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.18 2003/05/16 09:34:50 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -63,7 +63,7 @@
 
 #define NOPR (prresult=0)
 
-extern int gdef,mgdef;
+extern int gdef,mgdef,ldef;
 extern SNODE parse_snode;
 extern int main_parser, allow_create_var;
 
@@ -89,7 +89,8 @@ extern jmp_buf env;
 	pointer p;
 }
 
-%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND GLOBAL MGLOBAL LOCALF CMP OR AND CAR CDR QUOTED
+%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND 
+%token <i> GLOBAL MGLOBAL LOCAL LOCALF CMP OR AND CAR CDR QUOTED
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
@@ -131,13 +132,15 @@ start 	: stat
 stat 	: tail
 			{ $$ = 0; }
 		| GLOBAL { gdef=1; } pvars { gdef=0; } tail
-			{ $$ = 0; }
-		| LOCALF vars tail
-			{ appenduflist($2); $$ = 0; }
+			{ $$ = 0; NOPR; }
 		| MGLOBAL { mgdef=1; } pvars { mgdef=0; } tail
-			{ $$ = 0; }
+			{ $$ = 0; NOPR; }
+		| LOCAL { ldef=1; } pvars { ldef=0; } tail
+			{ $$ = 0; NOPR; }
+		| LOCALF vars tail
+			{ appenduflist($2); $$ = 0; NOPR; }
 		| STRUCT rawstr '{' members '}' tail
-			{ structdef($2,$4); $$ = 0; }
+			{ structdef($2,$4); $$ = 0; NOPR; }
 		| expr tail
 			{ $$ = mksnode(1,S_SINGLE,$1); }
 		| complex
@@ -164,10 +167,10 @@ stat 	: tail
 			{ $$ = mksnode(3,S_PFDEF,$1,$3,$7); NOPR; }
 		| PFDEF LCASE '(' node ')'
 			{ $$ = mksnode(3,S_PFDEF,$2,$4,0); NOPR; }
-		| FDEF LCASE { mkpvs($2); } '(' node ')' desc '{' stats '}'
+		| FDEF LCASE { mkpvs($2); } '(' { ldef = 1; } node { ldef = -1; } ')' desc '{' stats '}'
 			{
-				mkuf($2,asir_infile->name,$5,
-					mksnode(1,S_CPLX,$9),$1,asir_infile->ln,$7,CUR_MODULE); 
+				mkuf($2,asir_infile->name,$6,
+					mksnode(1,S_CPLX,$11),$1,asir_infile->ln,$9,CUR_MODULE); 
 				$$ = 0; NOPR; 
 			}
 		| MODDEF LCASE tail

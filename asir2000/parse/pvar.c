@@ -45,19 +45,31 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.10 2003/05/16 07:56:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.11 2003/05/16 09:34:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 NODE PVSS;
 extern char *CUR_FUNC;
+int gdef,mgdef,ldef;
+
 
 void mkpvs(char *fname)
 {
 	VS pvs;
 	char *fullname;
+	FUNC f;
 
+	if ( CUR_MODULE ) {
+		/* function must be declared in advance */
+		searchf(CUR_MODULE->usrf_list,fname,&f);
+		if ( !f ) {
+			fprintf(stderr,"\"%s\", near line %d: undeclared function `%s'",
+				asir_infile->name,asir_infile->ln,fname);
+			error("");
+		}
+	}
 	pvs = (VS)MALLOC(sizeof(struct oVS));
 	pvs->va = (struct oPV *)MALLOC(DEFSIZE*sizeof(struct oPV));
 	pvs->n = 0;
@@ -111,8 +123,6 @@ void poppvs() {
 		nextbplevel--;
 }
 
-int gdef,mgdef;
-
 #define IS_LOCAL 0
 #define IS_GLOBAL 1
 #define IS_MGLOBAL 2
@@ -120,7 +130,7 @@ int gdef,mgdef;
 
 unsigned int makepvar(char *str)
 {
-	int c,c1;
+	int c,c1,created;
 
 	/* EPVS : global list of the current file */
 	/* add to the local variable list */
@@ -154,9 +164,24 @@ unsigned int makepvar(char *str)
 			/* inside function */
 			CPVS->va[c].attr = IS_MGLOBAL;
 		}
+	} else if ( ldef > 0 ) {
+		/* if ldef > 0, then local variables are being declared */
+		c = getpvar(CPVS,str,0);
+		CPVS->va[c].attr = IS_LOCAL;
 	} else if ( CPVS != GPVS ) {
 		/* inside function */
-		c = getpvar(CPVS,str,0);
+		if ( CUR_MODULE ) {
+			/* search only */
+			c = getpvar(CPVS,str,1);
+			if ( c < 0 ) {
+				c = getpvar(CPVS,str,0);
+				created = 1;		
+			} else
+				created = 0;
+		} else {
+			/* may be created */
+			c = getpvar(CPVS,str,0);
+		}
 		switch ( CPVS->va[c].attr ) {
 			case IS_GLOBAL:
 				c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
@@ -173,6 +198,13 @@ unsigned int makepvar(char *str)
 				} else if ( getpvar(EPVS,str,1) >= 0 ) {
 					CPVS->va[c].attr = IS_GLOBAL;
 					c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
+				} else if ( CUR_MODULE && created && (ldef == 0) ) {
+					/* not declared */
+					/* if ldef == 0, at least one local variables has been
+					   declared */
+					fprintf(stderr,
+						"Warning: \"%s\", near line %d: undeclared local variable `%s'\n",
+						asir_infile->name,asir_infile->ln,str);
 				}
 				break;
 		}
@@ -277,6 +309,7 @@ void resetpvs()
 {
 	if ( !NEXT(asir_infile) ) {
 		PVSS = 0; CPVS = GPVS; MPVS = 0; CUR_MODULE = 0; nextbp = 0;
+		gdef = mgdef = ldef = 0;
 		if ( EPVS->va ) {
 			bzero((char *)EPVS->va,(int)(EPVS->asize*sizeof(struct oPV))); EPVS->n = 0;
 		}
