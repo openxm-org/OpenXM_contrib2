@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.5 2000/12/05 01:24:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.6 2001/10/09 01:36:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -100,23 +100,54 @@ void poppvs() {
 		nextbplevel--;
 }
 
-int gdef;
+int gdef,mgdef;
 
-int makepvar(char *str)
+#define IS_LOCAL 0
+#define IS_GLOBAL 1
+#define IS_MGLOBAL 2
+
+unsigned int makepvar(char *str)
 {
-	int c;
+	int c,c1;
 
+	/* EPVS : global list of the current file */
+	/* add to the local variable list */
 	c = getpvar(CPVS,str,0);
 	if ( gdef ) {
+		/* add to the external variable list */
 		getpvar(EPVS,str,0);
 		if ( CPVS != GPVS ) {
+			/* inside function : we add the name to the global list */
 			getpvar(GPVS,str,0);
-			CPVS->va[c].attr = 1;
+			CPVS->va[c].attr = IS_GLOBAL;
 		}
-	} else if ( (CPVS != GPVS) && 
-		(CPVS->va[c].attr || (getpvar(EPVS,str,1) >= 0)) ) {
-		CPVS->va[c].attr = 1;
-		c = (getpvar(GPVS,str,1)|MSB);
+	} else if ( mgdef ) {
+		getpvar(CUR_MODULE->pvs,str,0);
+		if ( CPVS != GPVS ) {
+			/* inside function */
+			CPVS->va[c].attr = IS_MGLOBAL;
+		}
+	} else if ( CPVS != GPVS ) {
+		/* inside function */
+		switch ( CPVS->va[c].attr ) {
+			case IS_GLOBAL:
+				c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
+				break;
+			case IS_MGLOBAL:
+				c1 = getpvar(CUR_MODULE->pvs,str,1); c = PVMGLOBAL((unsigned int)c1);
+				break;
+			case IS_LOCAL:
+			default:
+				if ( CUR_MODULE && 
+					((c1 = getpvar(CUR_MODULE->pvs,str,1)) >= 0) ) {
+					CPVS->va[c].attr = IS_MGLOBAL;
+					c = PVMGLOBAL((unsigned int)c1);
+				} else if ( getpvar(EPVS,str,1) >= 0 ) {
+					CPVS->va[c].attr = IS_GLOBAL;
+					c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
+				}
+				break;
+		}
 	}
 	return c;
 }
@@ -126,16 +157,35 @@ extern FUNC parse_targetf;
 int searchpvar(char *str)
 {
 	VS pvs;
-	int i;
+	MODULE mod;
+	int c;
 
 	if ( parse_targetf && parse_targetf->id != A_USR )
-		return -1;
-	pvs = parse_targetf ? parse_targetf->f.usrf->pvs : GPVS;
-	i = getpvar(pvs,str,1);
-	if ( ((i>=0)&&pvs->va[i].attr) || (i<0) )
-		return getpvar(GPVS,str,1)|MSB;
-	else
-		return i;
+		c = -1;
+	else if ( parse_targetf ) {
+		pvs = parse_targetf->f.usrf->pvs;
+		mod = parse_targetf->f.usrf->module;
+		if ( (c = getpvar(pvs,str,1)) >= 0 ) {
+			switch ( pvs->va[c].attr ) {
+				case IS_GLOBAL:
+					c = getpvar(GPVS,str,1);
+					c = PVGLOBAL((unsigned int)c);
+					break;
+				case IS_MGLOBAL:
+					c = getpvar(mod->pvs,str,1);
+					c = PVMGLOBAL((unsigned int)c);
+					break;
+				default:
+					break;
+			}
+		} else if ( mod && (c = getpvar(mod->pvs,str,1)) >= 0 )
+			c = PVMGLOBAL((unsigned int)c);
+		else if ( (c = getpvar(GPVS,str,1)) >= 0 )
+			c = PVGLOBAL((unsigned int)c);
+		else
+			c = -1;
+	}
+	return c;
 }
 
 int getpvar(VS pvs,char *str,int searchonly)
@@ -154,7 +204,7 @@ int getpvar(VS pvs,char *str,int searchonly)
 	v = &pvs->va[pvs->n]; 
 	NAME(v) = (char *)CALLOC(strlen(str)+1,sizeof(char));
 	strcpy(NAME(v),str); v->priv = 0;
-	v->attr= 0; v->type = -1; i = pvs->n; pvs->n++;
+	v->attr= IS_LOCAL; v->type = -1; i = pvs->n; pvs->n++;
 	return i;
 }
 
@@ -215,42 +265,3 @@ void storeans(pointer p)
 		reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
 	APVS->va[APVS->n++].priv = p; 
 }
-
-#if 0
-pointer evalpv(int id,NODE2 tree,pointer f)
-{
-	pointer a,val = 0;
-	pointer *addr;
-	int pv;
-	NODE ind,tn;
-
-	switch ( id ) {
-		case I_PRESELF:
-			getmemberp((FNODE)tree,(Obj **)&addr);
-			(*((ARF)f)->fp)(CO,*addr,ONE,&val); *addr = val; break;
-		case I_POSTSELF:
-			getmemberp((FNODE)tree,(Obj **)&addr);
-			val = *addr; (*((ARF)f)->fp)(CO,*addr,ONE,&a); *addr = a; break;
-		case I_PVAR:
-			pv = (int)BDY1(tree); ind = (NODE)BDY2(tree); GETPV(pv,a);
-			if ( !ind )
-				val = a;
-			else {
-				evalnodebody(ind,&tn); getarray(a,tn,&val); 
-			}
-			break;
-		case I_ASSPVAR:
-			pv = (int)BDY1(tree); ind = (NODE)BDY2(tree);
-			if ( !ind ) {
-				val = eval(f); ASSPV(pv,val);
-			} else {
-				GETPV(pv,a);
-				if ( a ) { 
-					evalnodebody(ind,&tn); putarray(a,tn,val = eval(f)); 
-				}
-			}
-			break;
-	}
-	return val;
-}
-#endif

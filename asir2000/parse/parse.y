@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.13 2002/12/09 00:42:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.14 2002/12/22 02:08:29 takayama Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -63,7 +63,7 @@
 
 #define NOPR (prresult=0)
 
-extern int gdef;
+extern int gdef,mgdef;
 extern SNODE parse_snode;
 extern int main_parser, allow_create_var;
 
@@ -89,7 +89,7 @@ extern jmp_buf env;
 	pointer p;
 }
 
-%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF GLOBAL CMP OR AND CAR CDR QUOTED
+%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF GLOBAL MGLOBAL CMP OR AND CAR CDR QUOTED
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
@@ -132,6 +132,8 @@ stat 	: tail
 			{ $$ = 0; }
 		| GLOBAL { gdef=1; } pvars { gdef=0; } tail
 			{ $$ = 0; }
+		| MGLOBAL { mgdef=1; } pvars { mgdef=0; } tail
+			{ $$ = 0; }
 		| STRUCT rawstr '{' members '}' tail
 			{ structdef($2,$4); $$ = 0; }
 		| expr tail
@@ -163,8 +165,13 @@ stat 	: tail
 		| FDEF LCASE { mkpvs(); } '(' node ')' desc '{' stats '}'
 			{
 				mkuf($2,asir_infile->name,$5,
-					mksnode(1,S_CPLX,$9),$1,asir_infile->ln,$7); 
+					mksnode(1,S_CPLX,$9),$1,asir_infile->ln,$7,CUR_MODULE); 
 				$$ = 0; NOPR; 
+			}
+		| MODDEF LCASE { CUR_MODULE = mkmodule($2); } '{' stats '}'
+			{
+				CUR_MODULE = 0;
+				$$ = 0; NOPR;
 			}
 	  	| error tail
 			{ yyerrok; $$ = 0; }

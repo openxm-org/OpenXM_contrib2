@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.16 2002/01/28 00:54:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.17 2003/04/02 09:43:33 ohara Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -96,7 +96,7 @@ typedef enum { A_UNDEF, A_BIN, A_USR, A_PURE, A_PARI } aid;
 
 typedef enum { V_IND, V_UC, V_PF, V_SR } vid;
 
-struct oVS {
+typedef struct oVS {
 	unsigned int n;
 	unsigned int asize;
 	unsigned int at;
@@ -104,19 +104,21 @@ struct oVS {
 	struct oFUNC *usrf;
 	struct oPV *va;
 	NODE opt;
-};
+} *VS;
 
-typedef struct oVS *VS;
+typedef struct oMODULE {
+	char *name;
+	VS pvs;
+	NODE usrf_list;
+} *MODULE;
 
-struct oPV {
+typedef struct oPV {
 	char *name;
 	short attr,type;
 	pointer priv;
-};
+} *PV;
 
-typedef struct oPV *PV;
-
-struct oINFILE {
+typedef struct oINFILE {
 	char *name;
 	FILE *fp;
 	int ln;
@@ -124,23 +126,19 @@ struct oINFILE {
 	char *tname;
 	int encoded;
 	short vol;
-};
-
-typedef struct oINFILE *INFILE;
+} *INFILE;
 
 struct oTKWD {
 	char *name;
 	int token;
 };
 
-struct oARF {
+typedef struct oARF {
 	char *name;
 	void (*fp)();
-};
+} *ARF;
 
-typedef struct oARF *ARF;
-
-struct oFUNC {
+typedef struct oFUNC {
 	char *name;
 	int argc;
 	int type;
@@ -150,23 +148,19 @@ struct oFUNC {
 		struct oUSRF *usrf;
 		struct oPF *puref;
 	} f;
-};
+} *FUNC;
 
-typedef struct oFUNC *FUNC;
-
-struct oUSRF {
+typedef struct oUSRF {
 	char *fname;
-	short vol;
+	MODULE module;
 	int startl,endl;
 	NODE args;
 	VS pvs;
 	char *desc;
 	struct oSNODE *body;
-};
+} *USRF;
 
-typedef struct oUSRF *USRF;
-
-struct oPF {
+typedef struct oPF {
 	char *name;
 	int argc;
 	Obj body;
@@ -176,60 +170,46 @@ struct oPF {
 	int (*pari)();
 	double (*libm)();
 	int (*simplify)();
-};
+} *PF;
 
-typedef struct oPF *PF;
-
-struct oPFAD {
+typedef struct oPFAD {
 	Obj arg;
 	int d;
-};
+} *PFAD;
 
-typedef struct oPFAD *PFAD;
-
-struct oPFINS {
+typedef struct oPFINS {
 	struct oPF *pf;	
 	struct oPFAD ad[1];
-};
-
-typedef struct oPFINS *PFINS;
+} *PFINS;
 
 #define NEWPF(p) ((p)=(PF)MALLOC(sizeof(struct oPF)))
 
-struct oFNODE {
+typedef struct oFNODE {
 	fid id;
 	pointer arg[1];
-};
-
-typedef struct oFNODE *FNODE;
+} *FNODE;
 
 #define NEWFNODE(a,b) \
 ((a)=(FNODE)MALLOC(sizeof(struct oFNODE)+sizeof(pointer)*(b-1)))
 
-struct oSNODE {
+typedef struct oSNODE {
 	sid id;
 	int ln;
 	pointer arg[1];
-};
-
-typedef struct oSNODE *SNODE;
+} *SNODE;
 
 #define NEWSNODE(a,b) \
 ((a)=(SNODE)MALLOC(sizeof(struct oSNODE)+sizeof(pointer)*(b-1)),(a)->ln=asir_infile->ln)
 
-struct oPVI {
+typedef struct oPVI {
 	int pv;
 	NODE index;
-};
+} *PVI;
 
-typedef struct oPVI *PVI;
-
-struct oNODE2 {
+typedef struct oNODE2 {
 	pointer body1,body2;
 	struct oNODE2 *next;
-};
-
-typedef struct oNODE2 *NODE2;
+} *NODE2;
 
 struct ftab {
 	char *name;
@@ -283,16 +263,26 @@ switch ( id ) {\
 }
 
 #define DEFSIZE 32
-#define MSB (1<<31)
+#define PVGLOBAL(i) (((unsigned int)(i))|(1<<30))
+#define PVMGLOBAL(i) (((unsigned int)(i))|(3<<30))
+#define PVATTR(i) (((unsigned int)(i))>>30)
+#define PVIND(i) (((unsigned int)(i))&0x3fffffff)
 #define GETPV(i,p) \
-((int)(i)>=0	? (int)((p)=CPVS->va[(unsigned int)(i)].priv)\
-		: (int)((p)=GPVS->va[(unsigned int)(i)&(~MSB)].priv))
+(PVATTR(i)==0?(int)((p)=CPVS->va[(unsigned int)(i)].priv)\
+             :PVATTR(i)==1?(int)((p)=GPVS->va[PVIND(i)].priv)\
+                          :(int)((p)=MPVS->va[PVIND(i)].priv))
+#define GETPVREF(i,p) \
+(PVATTR(i)==0?(int)((p)=&(CPVS->va[(unsigned int)(i)].priv))\
+             :PVATTR(i)==1?(int)((p)=&(GPVS->va[PVIND(i)].priv))\
+                          :(int)((p)=&(MPVS->va[PVIND(i)].priv)))
 #define GETPVNAME(i,p) \
-((int)(i)>=0	? (int)((p)=CPVS->va[(unsigned int)(i)].name)\
-		: (int)((p)=GPVS->va[(unsigned int)(i)&(~MSB)].name))
+(PVATTR(i)==0?(int)((p)=CPVS->va[(unsigned int)(i)].name)\
+             :PVATTR(i)==1?(int)((p)=GPVS->va[PVIND(i)].name)\
+                          :(int)((p)=MPVS->va[PVIND(i)].name))
 #define ASSPV(i,p) \
-((int)(i)>=0	? (int)(CPVS->va[(unsigned int)(i)].priv=(pointer)(p))\
-		: (int)(GPVS->va[(unsigned int)(i)&(~MSB)].priv=(pointer)(p)))
+(PVATTR(i)==0?(int)(CPVS->va[(unsigned int)(i)].priv=(pointer)(p))\
+             :PVATTR(i)==1?(int)(GPVS->va[PVIND(i)].priv=(pointer)(p))\
+                          :(int)(MPVS->va[PVIND(i)].priv=(pointer)(p)))
 
 #define NEWNODE2(a) ((a)=(NODE2)MALLOC(sizeof(struct oNODE2)))
 #define MKNODE2(a,b,c,d) \
@@ -300,7 +290,9 @@ switch ( id ) {\
 #define BDY1(a) ((a)->body1)
 #define BDY2(a) ((a)->body2)
 
-extern VS GPVS,CPVS,EPVS,APVS;
+extern VS GPVS,CPVS,EPVS,APVS,MPVS;
+extern MODULE CUR_MODULE;
+extern NODE MODULE_LIST;
 extern ARF addfs, subfs, mulfs, divfs, remfs, pwrfs;
 extern INFILE asir_infile;
 extern NODE usrf,sysf,noargsysf,ubinf,parif,ONENODE;
@@ -502,7 +494,7 @@ int gettype(unsigned int);
 int indextotype(int,int);
 int loadfile(char *);
 int loadfiles(NODE);
-int makepvar(char *);
+unsigned int makepvar(char *);
 int membertoindex(int,char *);
 int qcoefp(Obj);
 int qcoefr(Obj);
@@ -550,7 +542,7 @@ void instov(PFINS ,V *);
 Obj memberofstruct(COMP,char *);
 void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(),PF *);
 void mkpfins(PF ,V *,V *);
-void mkuf(char *,char *,NODE,SNODE,int,int,char *);
+void mkuf(char *,char *,NODE,SNODE,int,int,char *,MODULE);
 void newstruct(int,struct oCOMP **);
 void optobj(Obj *);
 void println(int, char **, int);
@@ -778,7 +770,7 @@ int small_jacobi(int a,int m);
 void mkpvs();
 void pushpvs(FUNC f);
 void poppvs();
-int makepvar(char *str);
+unsigned int makepvar(char *str);
 int searchpvar(char *str);
 int getpvar(VS pvs,char *str,int searchonly);
 void closecurrentinput();
@@ -891,7 +883,7 @@ void gen_searchf(char *name,FUNC *r);
 void searchf(NODE fn,char *name,FUNC *r);
 void appenduf(char *name,FUNC *r);
 void mkparif(char *name,FUNC *r);
-void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc);
+void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc,MODULE module);
 Obj getopt_from_cpvs(char *key);
 void	des_enc(unsigned long *, unsigned char *, unsigned long *);
 unsigned long	round_func(unsigned long , unsigned char *);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.c,v 1.4 2000/12/05 01:24:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.c,v 1.5 2001/06/04 02:49:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,7 @@ void call_usrf(FUNC f,...)
 	va_list ap;
 	int ac,i;
 	pointer *c;
+	VS prev_mpvs;
 	NODE tn;
 
 	va_start(ap,f);
@@ -71,6 +72,10 @@ void call_usrf(FUNC f,...)
 		notdef(0,0,0,0);
 	else {
 		pushpvs(f);
+		if ( f->f.usrf->module ) {
+			prev_mpvs = MPVS;
+			MPVS = f->f.usrf->module->pvs;
+		}
 		ac = va_arg(ap,int);
 		for ( i = 0, tn = f->f.usrf->args; i < ac;
 			i++, tn = NEXT(tn) )
@@ -78,6 +83,8 @@ void call_usrf(FUNC f,...)
 		c = va_arg(ap,pointer *); *c = evalstat(BDY(f->f.usrf));
 		va_end(ap);
 		f_return = 0; poppvs();
+		if ( f->f.usrf->module )
+			MPVS = prev_mpvs;
 	}
 }
 #else
@@ -88,6 +95,7 @@ va_dcl
 	int ac,i;
 	FUNC f;
 	pointer a,b,*c;
+	VS prev_mpvs;
 	NODE tn;
 
 	va_start(ap); f = va_arg(ap,FUNC);
@@ -95,12 +103,18 @@ va_dcl
 		notdef(0,0,0,0);
 	else {
 		pushpvs(f);
+		if ( f->f.usrf->module ) {
+			prev_mpvs = MPVS;
+			MPVS = f->f.usrf->module->pvs;
+		}
 		ac = va_arg(ap,int);
 		for ( i = 0, tn = f->f.usrf->args; i < ac;
 			i++, tn = NEXT(tn) )
 			ASSPV((int)FA0((FNODE)BDY(tn)),va_arg(ap,pointer));
 		c = va_arg(ap,pointer *); *c = evalstat(BDY(f->f.usrf));
 		f_return = 0; poppvs();
+		if ( f->f.usrf->module )
+			MPVS = prev_mpvs;
 	}
 }
 #endif

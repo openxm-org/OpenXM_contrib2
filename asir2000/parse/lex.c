@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.22 2003/02/14 22:29:18 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.23 2003/03/07 03:12:31 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -304,7 +304,7 @@ int yylex()
 		tbuf[i++] = c;
 		while ( 1 ) {
 			c = Getc();
-			if ( isalpha(c)||isdigit(c)||(c=='_') ) {
+			if ( isalpha(c)||isdigit(c)||(c=='_')||(c=='.') ) {
 				REALLOC_TBUF tbuf[i++] = c;
 			} else
 				break;

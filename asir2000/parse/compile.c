@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.4 2003/02/14 22:29:17 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -590,12 +590,13 @@ FUNC *r;
 	f->name = name; f->id = A_PARI; f->argc = 0; f->f.binf = 0;
 }
 
-void mkuf(name,fname,args,body,startl,endl,desc)
+void mkuf(name,fname,args,body,startl,endl,desc,module)
 char *name,*fname;
 NODE args;
 SNODE body;
 int startl,endl;
 char *desc;
+MODULE module;
 {
 	FUNC f;
 	USRF t;
@@ -629,8 +630,8 @@ char *desc;
 		fprintf(stderr,"%s() defined.\n",name); */
 	t=(USRF)MALLOC(sizeof(struct oUSRF));
 	t->args=args; BDY(t)=body; t->pvs = CPVS; t->fname = fname; 
-	t->startl = startl; t->endl = endl; t->vol = asir_infile->vol;
-	t->desc = desc;
+	t->startl = startl; t->endl = endl;
+	t->desc = desc; t->module = module;
 	f->id = A_USR; f->argc = argc; f->f.usrf = t;
 	CPVS = GPVS;
 	clearbp(f);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.19 2002/12/11 10:54:12 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.20 2003/02/14 22:29:18 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -73,7 +73,8 @@ pointer eval(FNODE f)
 	NODE tn,ind;
 	R u;
 	DP dp;
-	int pv,c;
+	unsigned int pv;
+	int c;
 	FNODE f1;
 	UP2 up2;
 	UP up;
@@ -195,7 +196,7 @@ pointer eval(FNODE f)
 		case I_PRESELF:
 			f1 = (FNODE)FA1(f);
 			if ( ID(f1) == I_PVAR ) {
-				pv = (int)FA0(f1); ind = (NODE)FA1(f1); GETPV(pv,a); 
+				pv = (unsigned int)FA0(f1); ind = (NODE)FA1(f1); GETPV(pv,a); 
 				if ( !ind ) {
 					(*((ARF)FA0(f))->fp)(CO,a,ONE,&val); ASSPV(pv,val); 
 				} else if ( a ) {
@@ -208,7 +209,7 @@ pointer eval(FNODE f)
 		case I_POSTSELF:
 			f1 = (FNODE)FA1(f);
 			if ( ID(f1) == I_PVAR ) {
-				pv = (int)FA0(f1); ind = (NODE)FA1(f1); GETPV(pv,val); 
+				pv = (unsigned int)FA0(f1); ind = (NODE)FA1(f1); GETPV(pv,val); 
 				if ( !ind ) {
 					(*((ARF)FA0(f))->fp)(CO,val,ONE,&u); ASSPV(pv,u);
 				} else if ( val ) {
@@ -220,7 +221,7 @@ pointer eval(FNODE f)
 				error("-- : not implemented yet");
 			break;
 		case I_PVAR:
-			pv = (int)FA0(f); ind = (NODE)FA1(f); GETPV(pv,a); 
+			pv = (unsigned int)FA0(f); ind = (NODE)FA1(f); GETPV(pv,a); 
 			if ( !ind )
 				val = a;
 			else {
@@ -230,7 +231,7 @@ pointer eval(FNODE f)
 		case I_ASSPVAR:
 			f1 = (FNODE)FA0(f);
 			if ( ID(f1) == I_PVAR ) {
-				pv = (int)FA0(f1); ind = (NODE)FA1(f1);
+				pv = (unsigned int)FA0(f1); ind = (NODE)FA1(f1);
 				if ( !ind ) {
 					val = eval((FNODE)FA1(f)); ASSPV(pv,val);
 				} else {
@@ -454,7 +455,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 	pointer val;
 	int i,n,level;
 	NODE tn,sn,opts,opt1;
-    VS pvs;
+    VS pvs,prev_mpvs;
 	char errbuf[BUFSIZ];
 	static unsigned int stack_size;
 	static void *stack_base;
@@ -537,7 +538,13 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			for ( tn = f->f.usrf->args, sn = BDY(args); 
 				sn; tn = NEXT(tn), sn = NEXT(sn) )
 				ASSPV((int)FA0((FNODE)BDY(tn)),BDY(sn));
-			val = evalstat((SNODE)BDY(f->f.usrf)); 
+			if ( f->f.usrf->module ) {
+				prev_mpvs = MPVS;
+				MPVS = f->f.usrf->module->pvs;
+				val = evalstat((SNODE)BDY(f->f.usrf)); 
+				MPVS = prev_mpvs;
+			} else
+				val = evalstat((SNODE)BDY(f->f.usrf)); 
 			f_return = f_break = f_continue = 0; poppvs(); 
 			break;
 		case A_PURE:
@@ -784,11 +791,40 @@ void evalnodebody(NODE sn,NODE *dnp)
 	NEXT(n) = 0; *dnp = n0;
 }
 
+MODULE searchmodule(char *name)
+{
+	MODULE mod;
+	NODE m;
+
+	for ( m = MODULE_LIST; m; m = NEXT(m) ) {
+		mod = (MODULE)BDY(m);
+		if ( !strcmp(mod->name,name) )
+			return mod;
+	}
+	return 0;
+}
+
 void gen_searchf(char *name,FUNC *r)
 {
-	FUNC val;
+	FUNC val = 0;
+	MODULE mod;
+	char *name0,*dot;
 
-	searchf(sysf,name,&val);
+	if ( CUR_MODULE )
+		searchf(CUR_MODULE->usrf_list,name,&val);
+	if ( !val ) {
+		if ( dot = strchr(name,'.') ) {
+			name0 = (char *)ALLOCA(strlen(name)+1);
+			strcpy(name0,name);
+			dot = strchr(name0,'.');
+			*dot = 0;
+			mod = searchmodule(name0);
+			if ( mod )
+				searchf(mod->usrf_list,dot+1,&val);
+		}
+	}
+	if ( !val )
+		searchf(sysf,name,&val);
 	if ( !val )
 		searchf(ubinf,name,&val);
 	if ( !val )
@@ -820,7 +856,11 @@ void appenduf(char *name,FUNC *r)
 
 	f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
 	f->name = name; f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
-	MKNODE(tn,f,usrf); usrf = tn;
+	if ( CUR_MODULE ) {
+		MKNODE(tn,f,CUR_MODULE->usrf_list); CUR_MODULE->usrf_list = tn;
+	} else {
+		MKNODE(tn,f,usrf); usrf = tn;
+	}
 	*r = f;
 }
 
@@ -832,18 +872,21 @@ void mkparif(char *name,FUNC *r)
 	f->name = name; f->id = A_PARI; f->argc = 0; f->f.binf = 0;
 }
 
-void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc)
+void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc,MODULE module)
 {
 	FUNC f;
 	USRF t;
-	NODE sn,tn;
+	NODE usrf_list,sn,tn;
 	FNODE fn;
+	char *longname;
 	int argc;
 
-	searchf(sysf,name,&f);
-	if ( f ) {
-		fprintf(stderr,"def : builtin function %s() cannot be redefined.\n",name);
-		CPVS = GPVS; return;
+	if ( !module ) {
+		searchf(sysf,name,&f);
+		if ( f ) {
+			fprintf(stderr,"def : builtin function %s() cannot be redefined.\n",name);
+			CPVS = GPVS; return;
+		}
 	}
 	for ( argc = 0, sn = args; sn; argc++, sn = NEXT(sn) ) {
 		fn = (FNODE)BDY(sn);
@@ -852,21 +895,28 @@ void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *
 			CPVS = GPVS; return;
 		}
 	}
-	for ( sn = usrf; sn && strcmp(NAME((FUNC)BDY(sn)),name); sn = NEXT(sn) );
+	usrf_list = module ? module->usrf_list : usrf;
+	for ( sn = usrf_list; sn && strcmp(NAME((FUNC)BDY(sn)),name); sn = NEXT(sn) );
 	if ( sn )
 		f = (FUNC)BDY(sn);
 	else {
 		f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
 		f->name = name; 
-		MKNODE(tn,f,usrf); usrf = tn;
+		MKNODE(tn,f,usrf_list); usrf_list = tn;
+		if ( module )
+			module->usrf_list = usrf_list;
+		else
+			usrf = usrf_list;
 	}
-	if ( Verbose && f->id != A_UNDEF )
-		fprintf(stderr,"Warning : %s() redefined.\n",name);
-/*	else
-		fprintf(stderr,"%s() defined.\n",name); */
+	if ( Verbose && f->id != A_UNDEF ) {
+		if ( module )
+			fprintf(stderr,"Warning : %s.%s() redefined.\n",module->name,name);
+		else
+			fprintf(stderr,"Warning : %s() redefined.\n",name);
+	}
 	t=(USRF)MALLOC(sizeof(struct oUSRF));
 	t->args=args; BDY(t)=body; t->pvs = CPVS; t->fname = fname; 
-	t->startl = startl; t->endl = endl; t->vol = asir_infile->vol;
+	t->startl = startl; t->endl = endl; t->module = module;
 	t->desc = desc;
 	f->id = A_USR; f->argc = argc; f->f.usrf = t;
 	CPVS = GPVS;
@@ -899,4 +949,35 @@ Obj getopt_from_cpvs(char *key)
 		return VOIDobj;
 	}
 
+}
+
+extern NODE MODULE_LIST;
+
+MODULE mkmodule(char *name)
+{
+	MODULE mod;
+	NODE m;
+	int len;
+	VS mpvs;
+
+	for ( m = MODULE_LIST; m; m = NEXT(m) ) {
+		mod = (MODULE)m->body;
+		if ( !strcmp(mod->name,name) )
+			break;
+	}
+	if ( m )
+		return mod;
+	else {
+		mod = (MODULE)MALLOC(sizeof(struct oMODULE));
+		len = strlen(name);
+		mod->name = (char *)MALLOC_ATOMIC(len+1);
+		strcpy(mod->name,name);
+		mod->pvs = mpvs = (VS)MALLOC(sizeof(struct oVS));
+		reallocarray((char **)&mpvs->va,(int *)&mpvs->asize,
+			(int *)&mpvs->n,(int)sizeof(struct oPV));
+		mod->usrf_list = 0;
+		MKNODE(m,mod,MODULE_LIST);
+		MODULE_LIST = m;
+		return mod;
+	}
 }

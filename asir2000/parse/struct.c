@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.4 2000/09/21 09:19:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.5 2001/10/09 01:36:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -127,79 +127,6 @@ int getcompsize(int type)
 {
 	return LSS->sa[type].n;
 }
-
-#if 0
-void getmember(FNODE expr,Obj *memp)
-{
-	int i;
-	FNODE root;
-	COMP t;
-	PV v0;
-	NODE2 mchain;
-
-	root = (FNODE)FA1(expr); mchain = (NODE2)FA2(expr);
-	if ( ID(root) == I_PVAR ) {
-		i = (int)FA0(root);
-		v0 = i>=0?&CPVS->va[(unsigned int)i]:&GPVS->va[((unsigned int)i)&~MSB];
-		t = (COMP)v0->priv;
-	} else
-		t = (COMP)eval(root);
-	for ( ; mchain; mchain = NEXT(mchain) )
-		t = (COMP)(t->member[(int)BDY1(mchain)]);
-	*memp = (Obj)t;
-}
-
-void getmemberp(FNODE expr,Obj **addrp)
-{
-	int i;
-	FNODE root;
-	COMP t;
-	PV v0;
-	COMP *addr;
-	NODE2 mchain;
-
-	root = (FNODE)FA1(expr); mchain = (NODE2)FA2(expr);
-	if ( ID(root) == I_PVAR ) {
-		i = (int)FA0(root);
-		v0 = i>=0?&CPVS->va[(unsigned int)i]:&GPVS->va[((unsigned int)i)&~MSB];
-		addr = (COMP *)&v0->priv;
-	} else {
-		t = (COMP)eval(root);
-		addr = (COMP *)&t;
-	}
-	for ( ; mchain; mchain = NEXT(mchain) )
-		addr = (COMP *)&((*addr)->member[(int)BDY1(mchain)]);
-	*addrp = (Obj *)addr;
-}
-
-void getarrayp(Obj a,NODE ind,Obj **addrp)
-{
-	Obj len,row,col;
-	Obj *addr;
-
-	switch ( OID(a) ) {
-		case O_VECT:
-			len = (Obj)BDY(ind);
-			if ( !rangecheck(len,((VECT)a)->len) )
-				error("getarrayp : Out of range");
-			else
-				addr = (Obj *)&(BDY((VECT)a)[QTOS((Q)len)]);
-			break;
-		case O_MAT:
-			row = (Obj)BDY(ind); col = (Obj)BDY(NEXT(ind));
-			if ( !rangecheck(row,((MAT)a)->row) 
-				|| !rangecheck(col,((MAT)a)->col) )
-				error("getarrayp : Out of range");
-			else
-				addr = (Obj *)&(BDY((MAT)a)[QTOS((Q)row)][QTOS((Q)col)]);
-			break;
-		default:
-				addr = 0;
-			break;
-	}
-	*addrp = addr;
-}
-#endif
 
 Obj memberofstruct(COMP a,char *name)
 {
