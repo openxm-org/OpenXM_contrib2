@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.12 2004/02/26 07:06:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.13 2004/02/26 10:07:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,10 +63,17 @@ extern char *parse_strp;
 void Prtostr(), Pstrtov(), Peval_str();
 void Pstrtoascii(), Pasciitostr();
 void Pstr_len(), Pstr_chr(), Psub_str();
-void Popen_textbuffer();
-void Pclose_textbuffer();
-void Pwrite_to_textbuffer();
-void Ptextbuffer_to_string();
+void Pwrite_to_tb();
+void Ptb_to_string();
+void Pclear_tb();
+void Pstring_to_tb();
+void Pquotetotex_tb();
+void Pquotetotex();
+void fnodetotex_tb(FNODE f,TB tb);
+char *symbol_name(char *name);
+void tb_to_string(TB tb,STRING *rp);
+void fnodenodetotex_tb(NODE n,TB tb);
+void fargstotex_tb(char *opname,FNODE f,TB tb);
 
 struct ftab str_tab[] = {
 	{"rtostr",Prtostr,1},
@@ -77,92 +84,98 @@ struct ftab str_tab[] = {
 	{"str_len",Pstr_len,1},
 	{"str_chr",Pstr_chr,3},
 	{"sub_str",Psub_str,3},
-	{"open_textbuffer",Popen_textbuffer,0},
-	{"close_textbuffer",Pclose_textbuffer,1},
-	{"write_to_textbuffer",Pwrite_to_textbuffer,2},
-	{"textbuffer_to_string",Ptextbuffer_to_string,1},
+	{"write_to_tb",Pwrite_to_tb,2},
+	{"clear_tb",Pclear_tb,1},
+	{"tb_to_string",Ptb_to_string,1},
+	{"string_to_tb",Pstring_to_tb,1},
+	{"quotetotex_tb",Pquotetotex_tb,2},
+	{"quotetotex",Pquotetotex,1},
 	{0,0,0},
 };
 
-typedef struct oAsirTextBuffer {
-	int size,next;
-	char **body;
-} *AsirTextBuffer;
-
-static AsirTextBuffer *TBArray;
-static int TBArrayLen;
-
-void Popen_textbuffer(Q *rp)
+void write_tb(char *s,TB tb)
 {
-	int i;
-	AsirTextBuffer tb;
-
-	if ( !TBArray ) {
-		TBArrayLen = 256;
-		TBArray = (AsirTextBuffer *)MALLOC(TBArrayLen*sizeof(AsirTextBuffer));
+	if ( tb->next == tb->size ) {
+		tb->size *= 2;
+		tb->body = (char **)REALLOC(tb->body,tb->size*sizeof(char *));
 	}
-	for ( i = 0; i < TBArrayLen; i++ )
-		if ( !TBArray[i] ) break;
-	if ( i == TBArrayLen ) {
-		TBArrayLen *= 2;
-		TBArray = (AsirTextBuffer *)REALLOC(TBArray,
-			TBArrayLen*sizeof(AsirTextBuffer));
-	}
-	TBArray[i] = tb = (AsirTextBuffer)MALLOC(sizeof(struct oAsirTextBuffer));
-	tb->size = 256;
-	tb->next = 0;
-	tb->body = (char **)MALLOC(tb->size*sizeof(char *));
-	STOQ(i,*rp);
+	tb->body[tb->next] = s;
+	tb->next++;
 }
 
-void Pclose_textbuffer(NODE arg,Q *rp)
+void Pwrite_to_tb(NODE arg,Q *rp)
 {
 	int i;
 
-	i = QTOS((Q)ARG0(arg));
-	if ( i >= 0 && i < TBArrayLen )
-		TBArray[i] = 0;
-	else
-		error("close_textbuffer : invalid argument");
-	*rp = 0;
-}
-
-void Pwrite_to_textbuffer(NODE arg,Q *rp)
-{
-	int i;
-	AsirTextBuffer tb;
-
-	i = QTOS((Q)ARG0(arg));
-	if ( i >= 0 && i < TBArrayLen && (tb = TBArray[i])) {
-		if ( tb->next == tb->size ) {
-			tb->size *= 2;
-			tb->body = (char **)REALLOC(tb->body,tb->size*sizeof(char *));
-		}
-		tb->body[tb->next] = BDY((STRING)ARG1(arg));
-		tb->next++;
-	} else
-		error("write_to_textbuffer : invalid argument");
+	asir_assert(ARG1(arg),O_TB,"write_to_tb");
+	write_tb(BDY((STRING)ARG0(arg)),ARG1(arg));
 	*rp = 0;	
 }
 
-void Ptextbuffer_to_string(NODE arg,STRING *rp)
+void Pquotetotex(NODE arg,STRING *rp)
 {
-	int i,j,len;
-	AsirTextBuffer tb;
+	TB tb;
+
+	NEWTB(tb);
+	fnodetotex_tb(BDY((QUOTE)ARG0(arg)),tb);
+	tb_to_string(tb,rp);
+}
+
+void Pquotetotex_tb(NODE arg,Q *rp)
+{
+	int i;
+	TB tb;
+
+	asir_assert(ARG1(arg),O_TB,"quotetotex_tb");
+	fnodetotex_tb(BDY((QUOTE)ARG0(arg)),ARG1(arg));
+	*rp = 0;	
+}
+
+void Pstring_to_tb(NODE arg,TB *rp)
+{
+	TB tb;
+
+	asir_assert(ARG0(arg),O_STR,"string_to_tb");
+	NEWTB(tb);
+	tb->body[0] = BDY((STRING)ARG0(arg));
+	tb->next++;
+	*rp = tb;
+}
+
+void Ptb_to_string(NODE arg,STRING *rp)
+{
+	TB tb;
+
+	asir_assert(ARG0(arg),O_TB,"tb_to_string");
+	tb = (TB)ARG0(arg);
+	tb_to_string(tb,rp);
+}
+
+void tb_to_string(TB tb,STRING *rp)
+{
+	int j,len;
 	char *all,*p,*q;
 
-	i = QTOS((Q)ARG0(arg));
-	if ( i >= 0 && i < TBArrayLen && (tb = TBArray[i])) {
-		tb = TBArray[i];
-		for ( j = 0, len = 0; j < tb->next; j++ )
-			len += strlen(tb->body[j]);
-		all = (char *)MALLOC_ATOMIC((len+1)*sizeof(char));
-		for ( j = 0, p = all; j < tb->next; j++ )
-			for ( q = tb->body[j]; *q; *p++ = *q++ );
-		*p = 0;
-		MKSTR(*rp,all);
-	} else
-		error("textbuffer_to_string : invalid argument");
+	for ( j = 0, len = 0; j < tb->next; j++ )
+		len += strlen(tb->body[j]);
+	all = (char *)MALLOC_ATOMIC((len+1)*sizeof(char));
+	for ( j = 0, p = all; j < tb->next; j++ )
+		for ( q = tb->body[j]; *q; *p++ = *q++ );
+	*p = 0;
+	MKSTR(*rp,all);
+}
+
+void Pclear_tb(NODE arg,Q *rp)
+{
+	TB tb;
+	int j;
+
+	asir_assert(ARG0(arg),O_TB,"clear_tb");
+	tb = (TB)ARG0(arg);
+	for ( j = 0; j < tb->next; j++ )
+		tb->body[j] = 0;
+	tb->next = 0;
+	*rp = 0;
 }
 
 void Pstr_len(arg,rp)
@@ -344,4 +357,287 @@ P *rp;
 #else
 	makevar(p,rp);
 #endif
+}
+
+char *symbol_name(char *name)
+{
+	/* XXX */
+	return name;
+}
+
+void fnodetotex_tb(FNODE f,TB tb)
+{
+	NODE n,t,t0;
+	char vname[BUFSIZ];
+	char *opname;
+	Obj obj;
+	int i,len;
+
+	write_tb(" ",tb);
+	if ( !f ) {
+		write_tb("0",tb);
+		return;
+	}
+	switch ( f->id ) {
+		/* unary operators */
+		case I_NOT: case I_PAREN: case I_MINUS:
+			switch ( f->id ) {
+				case I_NOT:
+					write_tb("\\neg (",tb);
+					fnodetotex_tb((FNODE)FA0(f),tb);
+					write_tb(")",tb);
+					break;
+				case I_PAREN:
+					write_tb("(",tb);
+					fnodetotex_tb((FNODE)FA0(f),tb);
+					write_tb(")",tb);
+					break;
+				case I_MINUS:
+					write_tb("-",tb);
+					fnodetotex_tb((FNODE)FA0(f),tb);
+					break;
+			}
+			break;
+
+		/* binary operators */
+		case I_BOP: case I_COP: case I_LOP: case I_AND: case I_OR:
+			/* arg list */
+			/* I_AND, I_OR => FA0(f), FA1(f) */
+			/* otherwise   => FA1(f), FA2(f) */
+
+			/* op */
+			switch ( f->id ) {
+				case I_BOP:
+					opname = ((ARF)FA0(f))->name;
+					if ( !strcmp(opname,"+") ) {
+						fnodetotex_tb((FNODE)FA1(f),tb);
+						write_tb(opname,tb);
+						fnodetotex_tb((FNODE)FA2(f),tb);
+					} else if ( !strcmp(opname,"-") ) {
+						if ( FA1(f) ) fnodetotex_tb((FNODE)FA1(f),tb);
+						write_tb(opname,tb);
+						fnodetotex_tb((FNODE)FA2(f),tb);
+					} else if ( !strcmp(opname,"*") ) {
+						fnodetotex_tb((FNODE)FA1(f),tb);
+						write_tb(" ",tb);
+						fnodetotex_tb((FNODE)FA2(f),tb);
+					} else if ( !strcmp(opname,"/") ) {
+						write_tb("\\frac{",tb);
+						fnodetotex_tb((FNODE)FA1(f),tb);
+						write_tb("} {",tb);
+						fnodetotex_tb((FNODE)FA2(f),tb);
+						write_tb("}",tb);
+					} else if ( !strcmp(opname,"^") ) {
+						fnodetotex_tb((FNODE)FA1(f),tb);
+						write_tb("^{",tb);
+						fnodetotex_tb((FNODE)FA2(f),tb);
+						write_tb("} ",tb);
+					} else if ( !strcmp(opname,"%") ) {
+						fnodetotex_tb((FNODE)FA1(f),tb);
+						write_tb(" {\\rm mod}\\, ",tb);
+						fnodetotex_tb((FNODE)FA2(f),tb);
+					} else
+						error("invalid binary operator");
+
+				case I_COP:
+					switch( (cid)FA0(f) ) {
+						case C_EQ:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" = ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case C_NE:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\neq ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case C_GT:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\gt ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case C_LT:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\lt ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case C_GE:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\geq ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case C_LE:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\leq ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+					}
+					break;
+
+				case I_LOP:
+					switch( (lid)FA0(f) ) {
+						case L_EQ:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" = ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_NE:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\neq ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_GT:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\gt ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_LT:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\lt ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_GE:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\geq ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_LE:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" \\leq ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_AND:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" {\\rm \\ and\\ } ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_OR:
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(" {\\rm \\ or\\ } ",tb);
+							fnodetotex_tb((FNODE)FA2(f),tb);
+							break;
+						case L_NOT:
+							/* XXX : L_NOT is a unary operator */
+							write_tb("\\neg (",tb);
+							fnodetotex_tb((FNODE)FA1(f),tb);
+							write_tb(")",tb);
+							return;
+					}
+					break;
+
+				case I_AND:
+					fnodetotex_tb((FNODE)FA0(f),tb);
+					write_tb(" {\\rm \\ and\\ } ",tb);
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					break;
+
+				case I_OR:
+					fnodetotex_tb((FNODE)FA0(f),tb);
+					write_tb(" {\\rm \\ or\\ } ",tb);
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					break;
+			}
+			break;
+
+		/* ternary operators */
+		case I_CE:
+			error("fnodetotex_tb : not implemented yet");
+			break;
+
+		/* lists */
+		case I_LIST:
+			write_tb(" [ ",tb);
+			n = (NODE)FA0(f);
+			fnodenodetotex_tb(n,tb);
+			write_tb("]",tb);
+			break;
+
+		/* function */
+		case I_FUNC: case I_CAR: case I_CDR: case I_EV:
+			switch ( f->id ) {
+				case I_FUNC:
+					opname = symbol_name(((FUNC)FA0(f))->name);
+					write_tb(opname,tb);
+					write_tb("(",tb);
+					fargstotex_tb(opname,FA1(f),tb);
+					write_tb(")",tb);
+					break;
+				case I_CAR:
+					opname = symbol_name("car");
+					write_tb(opname,tb);
+					write_tb("(",tb);
+					fargstotex_tb(opname,FA0(f),tb);
+					write_tb(")",tb);
+					break;
+				case I_CDR:
+					opname = symbol_name("cdr");
+					write_tb(opname,tb);
+					write_tb("(",tb);
+					fargstotex_tb(opname,FA0(f),tb);
+					write_tb(")",tb);
+					break;
+				case I_EV:
+					n = (NODE)FA0(f);
+					for ( t0 = 0, i = 0; n; n = NEXT(n), i++ ) {
+						sprintf(vname,"x_{%d}^{",i);
+						write_tb(vname,tb);
+						fnodetotex_tb((FNODE)BDY(n),tb);
+						write_tb("} ",tb);
+					}
+					break;
+			}
+			break;
+
+		case I_STR:
+			write_tb((char *)FA0(f),tb);
+			break;
+
+		case I_FORMULA:
+			obj = (Obj)FA0(f);
+			if ( obj && OID(obj) == O_P ) {
+				opname = symbol_name(VR((P)obj)->name);
+			} else {
+				len = estimate_length(CO,obj);
+				opname = (char *)MALLOC_ATOMIC(len+1);
+				soutput_init(opname);
+				sprintexpr(CO,obj);
+			}
+			write_tb(opname,tb);
+			break;
+
+		case I_PVAR:
+			if ( FA1(f) )
+				error("fnodetotex_tb : not implemented yet");
+			GETPVNAME(FA0(f),opname);
+			write_tb(opname,tb);
+			break;
+
+		default:
+			error("fnodetotex_tb : not implemented yet");
+	}
+}
+
+void fnodenodetotex_tb(NODE n,TB tb)
+{
+	for ( ; n; n = NEXT(n) ) {
+		fnodetotex_tb((FNODE)BDY(n),tb);
+		if ( NEXT(n) ) write_tb(", ",tb);
+	}
+}
+
+void fargstotex_tb(char *name,FNODE f,TB tb)
+{
+	NODE n;
+
+	if ( !strcmp(name,"matrix") ) {
+		error("fargstotex_tb : not implemented yet");	
+	} else if ( !strcmp(name,"vector") ) {
+		error("fargstotex_tb : not implemented yet");	
+	} else {
+		if ( f->id == I_LIST ) {
+			n = (NODE)FA0(f);
+			fnodenodetotex_tb(n,tb);
+		} else
+			fnodetotex_tb(f,tb);
+	}
 }

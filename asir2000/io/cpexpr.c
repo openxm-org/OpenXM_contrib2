@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.16 2003/12/25 02:40:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.17 2004/02/09 08:23:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,6 +83,7 @@ extern int hex_output,fortran_output,double_output,real_digit;
 #define PRINTQUOTE length_QUOTE
 #define PRINTSYMBOL length_SYMBOL
 #define PRINTRANGE length_RANGE
+#define PRINTTB length_TB
 #define PRINTERR length_err
 #define PRINTLF length_lf
 #define PRINTLOP length_lop
@@ -112,6 +113,7 @@ void PRINTBYTEARRAY();
 void PRINTQUOTE();
 void PRINTSYMBOL();
 void PRINTRANGE();
+void PRINTTB();
 void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
@@ -197,6 +199,8 @@ void PRINTEXPR(VL vl,pointer p)
 			PRINTSYMBOL((SYMBOL)p); break;
 		case O_RANGE:
 			PRINTRANGE(vl,(RANGE)p); break;
+		case O_TB:
+			PRINTTB(vl,(TB)p); break;
 		default:
 			break;
 	}
@@ -558,6 +562,15 @@ void PRINTRANGE(VL vl,RANGE r)
 {
 	PUTS("range("); PRINTEXPR(vl,r->start);
 	PUTS(","); PRINTEXPR(vl,r->end); PUTS(")");
+}
+
+void PRINTTB(VL vl,TB p)
+{
+	int i;
+
+	for ( i = 0; i < p->next; i++ ) {
+		total_length += strlen(p->body[i]);
+	}
 }
 
 void PRINTERR(VL vl,ERR e)

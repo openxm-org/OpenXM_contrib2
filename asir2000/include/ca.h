@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.44 2004/02/05 08:28:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.45 2004/02/09 08:23:29 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,6 +121,7 @@ typedef void * pointer;
 #define O_OPTLIST 18
 #define O_SYMBOL 19
 #define O_RANGE 20
+#define O_TB 21
 #define O_VOID -1
 
 #define N_Q 0
@@ -376,6 +377,12 @@ typedef struct oRANGE {
 	struct oObj *start,*end;
 } *RANGE;
 
+typedef struct oTB {
+	short id;
+	short pad;
+	int size,next;
+	char **body;
+} *TB;
 
 typedef struct oObj {
 	short id;
@@ -711,6 +718,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWOPTLIST(l) ((l)=(OPTLIST)MALLOC(sizeof(struct oOPTLIST)),OID(l)=O_OPTLIST)
 #define NEWSYMBOL(l) ((l)=(SYMBOL)MALLOC(sizeof(struct oSYMBOL)),OID(l)=O_SYMBOL)
 #define NEWRANGE(l) ((l)=(RANGE)MALLOC(sizeof(struct oRANGE)),OID(l)=O_RANGE)
+#define NEWTB(l) ((l)=(TB)MALLOC(sizeof(struct oTB)),OID(l)=O_TB,(l)->size=256,(l)->next=0,(l)->body=(char **)MALLOC((l)->size*sizeof(char *)))
 
 #define NEWNODE(a) ((a)=(NODE)MALLOC(sizeof(struct oNODE)))
 #define NEWDC(dc) ((dc)=(DCP)MALLOC(sizeof(struct oDCP)))

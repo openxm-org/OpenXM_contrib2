@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.5 2001/09/05 09:01:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.6 2001/10/09 01:36:25 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -155,23 +155,26 @@ void polytoquote(P a,QUOTE *c)
 {
 	DCP dc,t;
 	DCP *dca;
-	int n,i;
+	int n,i,sgn;
 	QUOTE v,r,s,u;
 
 	if ( !a || (OID(a) == O_N) ) {
 		MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
 		return;
 	}
-	dc = DC((P)a);
 	vartoquote(VR((P)a),&v);
-	for ( t = dc, n = 0; t; t = NEXT(t), n++ );
-	dca = (DCP *)ALLOCA(n*sizeof(DCP));
-	for ( t = dc, i = 0; t; t = NEXT(t), i++ )
-		dca[i] = t;
-	dctoquote(dca[n-1],v,&r);
-	for ( i = n-2; i >= 0; i-- ) {
-		dctoquote(dca[i],v,&s);
-		addquote(CO,s,r,&u);
+	dc = DC((P)a);
+	dctoquote(dc,v,&r,&sgn);
+	if ( sgn == -1 ) {
+		MKQUOTE(u,mkfnode(1,I_MINUS,BDY(r)));
+		r = u;
+	}
+	for (dc = NEXT(dc); dc; dc = NEXT(dc) ) {
+		dctoquote(dc,v,&s,&sgn);
+		if ( sgn == -1 )
+			subquote(CO,r,s,&u);
+		else
+			addquote(CO,r,s,&u);
 		r = u;
 	}
 	*c = r;
@@ -202,33 +205,49 @@ void dptoquote(DP a,QUOTE *c)
 	*c = r;
 }
 
-void dctoquote(DCP dc,QUOTE v,QUOTE *c)
+void dctoquote(DCP dc,QUOTE v,QUOTE *q,int *sgn)
 {
-	QUOTE d,s,u;
+	QUOTE t,s,u,r;
+	P c;
+	Q d;
 
-	if ( UNIQ(COEF(dc)) ) {
-		if ( DEG(dc) ) {
-			if ( UNIQ(DEG(dc)) )
-				*c = v;
+	if ( mmono(COEF(dc)) ) {
+		/* -xyz... */
+		chsgnp(COEF(dc),&c);
+		*sgn = -1;
+	} else {
+		c = COEF(dc);
+		*sgn = 1;
+	}
+	d = DEG(dc);
+	if ( UNIQ(c) ) {
+		if ( d ) {
+			if ( UNIQ(d) )
+				r = v;
 			else {
-				objtoquote((Obj)DEG(dc),&d);
-				pwrquote(CO,v,d,c);
+				objtoquote((Obj)d,&t);
+				pwrquote(CO,v,t,&r);
 			}
 		} else
-			objtoquote((Obj)ONE,c);	
+			objtoquote((Obj)ONE,&r);	
 	} else {
-		objtoquote((Obj)COEF(dc),&u);
-		if ( DEG(dc) ) {
-			if ( UNIQ(DEG(dc)) )
+		objtoquote((Obj)c,&u);
+		if ( !NUM(c) && NEXT(DC(c)) ) {
+			MKQUOTE(t,mkfnode(1,I_PAREN,BDY(u)));
+			u = t;
+		}
+		if ( d ) {
+			if ( UNIQ(d) )
 				s = v;
 			else {
-				objtoquote((Obj)DEG(dc),&d);
-				pwrquote(CO,v,d,&s);
+				objtoquote((Obj)d,&t);
+				pwrquote(CO,v,t,&s);
 			}
-			mulquote(CO,u,s,c);
+			mulquote(CO,u,s,&r);
 		} else
-			*c = u;
+			r = u;
 	}
+	*q = r;
 }
 
 void mptoquote(MP m,int n,QUOTE *c)

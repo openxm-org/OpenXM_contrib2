@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.27 2004/02/09 08:23:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.28 2004/02/13 05:48:36 saito Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -109,6 +109,7 @@ int print_quote;
 #define PRINTSF printsf
 #define PRINTSYMBOL printsymbol
 #define PRINTRANGE printrange
+#define PRINTTB printtb
 #endif
 
 #ifdef SPRINT
@@ -158,6 +159,7 @@ extern int print_quote;
 #define PRINTSF sprintsf
 #define PRINTSYMBOL sprintsymbol
 #define PRINTRANGE sprintrange
+#define PRINTTB sprinttb
 #endif
 
 void PRINTEXPR();
@@ -191,6 +193,7 @@ void PRINTQOP();
 void PRINTSF();
 void PRINTSYMBOL();
 void PRINTRANGE();
+void PRINTTB();
 
 #ifdef FPRINT
 void output_init() {
@@ -309,6 +312,8 @@ Obj p;
 			PRINTSYMBOL((SYMBOL)p); break;
 		case O_RANGE:
 			PRINTRANGE(vl,(RANGE)p); break;
+		case O_TB:
+			PRINTTB(vl,(TB)p); break;
 		default:
 			break;
 	}
@@ -1198,4 +1203,13 @@ void PRINTRANGE(VL vl,RANGE p)
 	PUTS(",");
 	PRINTEXPR(vl,p->end);
 	PUTS(")");
+}
+
+void PRINTTB(VL vl,TB p)
+{
+	int i;
+
+	for ( i = 0; i < p->next; i++ ) {
+		PUTS(p->body[i]);
+	}
 }
