@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.31 2004/03/09 06:12:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.32 2004/03/09 07:18:26 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -185,7 +185,8 @@ char *conv_subscript(char *name)
 	len = strlen(name);
 	subs = (char **)ALLOCA(len*sizeof(char* ));
 	for ( i = 0, j = 0, start = i; ; j++ ) {
-		while ( (i < len) && (name[i] == '_' || name[i] == ',') ) i++;
+		while ( (i < len) && 
+			(name[i] == ' ' || name[i] == '_' || name[i] == ',') ) i++;
 		start = i;
 		if ( i == len ) break;
 		if ( name[i] == '{' ) {
