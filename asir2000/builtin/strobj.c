@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.17 2004/03/04 05:16:42 noro Exp $ 
+ * $OpenXM$
 */
 #include "ca.h"
 #include "parse.h"
@@ -113,6 +113,7 @@ void write_tb(char *s,TB tb)
 int register_symbol_table(Obj arg);
 int register_conv_rule(Obj arg);
 static struct TeXSymbol *user_texsymbol;
+static char *(*conv_rule)(char *);
 
 static struct {
 	char *name;
@@ -123,6 +124,44 @@ static struct {
 	{"conv_rule",0,register_conv_rule},
 	{0,0,0},
 };
+
+char *conv_rule_d(char *name)
+{
+	char *p,*h,*t,*u;
+	int l;
+
+	if ( *name == 'd' ) {
+		h = "\\partial";
+		if ( isdigit(name[1]) ) {
+			t = conv_rule_d(name+1);
+			/* 3 : _{} */
+			l = strlen(h)+strlen(t)+3;
+			u = (char *)MALLOC_ATOMIC(l+1);
+			sprintf(u,"%s_{%s}",h,t);	
+		} else {
+			/* XXX */
+			t = conv_rule_d(name+2);
+			/* 6 : _{ _{ }} */
+			l = strlen(h)+strlen(t)+6;
+			u = (char *)MALLOC_ATOMIC(l+1);
+			sprintf(u,"%s_{%c_{%s}}",h,name[1],t);
+		}
+		return u;
+	} else if ( p = strchr(name,'_') ) {
+		l = p-name;
+		h = (char *)ALLOCA(l+1);
+		strncpy(h,name,l);
+		h[l] = 0;
+		h = conv_rule_d(h);
+		t = conv_rule_d(p+1);
+		/* 3 : _{} */
+		l = strlen(h)+strlen(t)+3;
+		u = (char *)MALLOC_ATOMIC(l+1);
+		sprintf(u,"%s_{%s}",h,t);
+		return u;
+	} else
+		return name;
+}
 
 int register_symbol_table(Obj arg)
 {
@@ -162,6 +201,21 @@ int register_symbol_table(Obj arg)
 
 int register_conv_rule(Obj arg)
 {
+	if ( INT(arg) ) {
+		switch ( QTOS((Q)arg) ) {
+			case 0:
+				conv_rule = 0;
+				return 1;
+				break;
+			case 1:
+				conv_rule = conv_rule_d;
+				return 1;
+				break;
+			default:
+				return 0;
+				break;
+		}
+	} else return 0;
 }
 
 void Pquotetotex_setenv(NODE arg,Obj *rp)
@@ -551,7 +605,10 @@ char *symbol_name(char *name)
 	for ( i = 0; texsymbol[i].text; i++ )
 		if ( !strcmp(texsymbol[i].text,name) )
 			return texsymbol[i].symbol;
-	return name;
+	if ( conv_rule )
+		return (*conv_rule)(name);
+	else
+		return name;
 }
 
 void fnodetotex_tb(FNODE f,TB tb)
