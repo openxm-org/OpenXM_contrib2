@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.26 2001/09/17 07:16:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.27 2001/09/17 08:37:31 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -56,6 +56,10 @@
 
 #if defined(VISUAL)
 #include <stdlib.h>
+#endif
+
+#if !defined(VISUAL)
+#include <sys/param.h>
 #endif
 
 #if defined(linux) || (defined(sun) && !defined(SYSV)) || defined(news5000) || (defined(mips) && defined(ultrix))
@@ -497,6 +501,12 @@ typedef unsigned int ModNum;
 #endif
 
 /* general macros */
+#if defined(MAX)
+#undef MAX
+#endif
+#if defined(MIN)
+#undef MIN
+#endif
 #define MAX(a,b) ((a) > (b) ? (a) : (b) )
 #define MIN(a,b) ((a) > (b) ? (b) : (a) )
 #ifdef ABS
@@ -735,8 +745,13 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 
 #define NV(p) ((p)->nv)
 #define C(p) ((p)->c)
+#if 0
 #define ITOS(p) (((unsigned int)(p))&0x7fffffff)
 #define STOI(i) ((P)((unsigned int)(i)|0x80000000))
+#else
+#define ITOS(p) (((unsigned int)(p)))
+#define STOI(i) ((P)((unsigned int)(i)))
+#endif
 
 /* immediate GFS representation */
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.16 2001/09/17 01:18:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.17 2001/09/17 02:58:27 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -641,12 +641,12 @@ DP *rp;
 	for ( i = 0, td = 0; i < n; i++ ) {
 		w[i] = MAX(d1->d[i],d2->d[i]); td += w[i];
 	}
-	NEWDL(d,n); d->td = td - d1->td;
+	NEWDL_NOINIT(d,n); d->td = td - d1->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = w[i] - d1->d[i];
 	NEWMP(m); m->dl = d; m->c = (P)BDY(p2)->c; NEXT(m) = 0;
 	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p1,s,&t);
-	NEWDL(d,n); d->td = td - d2->td;
+	NEWDL_NOINIT(d,n); d->td = td - d2->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = w[i] - d2->d[i];
 	NEWMP(m); m->dl = d; m->c = (P)BDY(p1)->c; NEXT(m) = 0;

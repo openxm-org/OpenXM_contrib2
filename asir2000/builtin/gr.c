@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.32 2001/09/17 07:16:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.33 2001/09/17 08:37:30 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -59,9 +59,6 @@
 #else
 #define INLINE
 #endif
-
-#define ITOS(p) (((unsigned int)(p))&0x7fffffff)
-#define STOI(i) ((P)((unsigned int)(i)|0x80000000))
 
 #define NEXTVL(r,c) \
 if(!(r)){NEWVL(r);(c)=(r);}else{NEWVL(NEXT(c));(c)=NEXT(c);}
@@ -251,7 +248,7 @@ CDP *b;
 	r->psindex = (int)BDY(NEXT(tf));
 	r->body = (unsigned int *)MALLOC_ATOMIC(sizeof(unsigned int)*len);
 
-	NEWDL(s,nv);
+	NEWDL_NOINIT(s,nv);
 	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
 		d1 = m->dl;
 		s->td = t->td+d1->td;
@@ -309,7 +306,7 @@ DP f;
 	mp0 = 0;
 	for ( m = BDY(f); m; m = NEXT(m) ) {
 		NEXTNODE(mp0,mp);
-		NEWDL(t,nv);
+		NEWDL_NOINIT(t,nv);
 		d1 = m->dl;
 		t->td = d->td+d1->td;
 		for ( i = 0; i < nv; i++ )
