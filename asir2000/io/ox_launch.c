@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.7 2000/10/06 06:05:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.8 2000/11/07 06:35:39 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -313,11 +313,7 @@ char *dname;
 	av[5] = ox_kill;
 	av[6] = NULL;
 	Pget_rootdir(&rootdir);
-	if ( !strcmp(prog,"ox_plot") ) {
-//		sprintf(AsirExe,"d:\\home\\noro\\ox_plot\\debug\\ox_plot.exe");
-		sprintf(AsirExe,"%s\\bin\\ox_plot.exe",BDY(rootdir));
-	} else
-		sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
+	sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
 	_fileinfo = 1;
 	hProc = _spawnv(_P_NOWAIT,AsirExe,av);
 	return (int)hProc;
