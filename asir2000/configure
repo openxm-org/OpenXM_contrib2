@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.9 2002/07/25 04:47:40 noro Exp $
 
 use_plot=0
 use_pari=0
@@ -68,4 +68,4 @@ fi
 echo LIBPARI=$libpari >> include/config.h
 echo LIBASIR=$libname.a >> include/config.h
 
-(cd gc; configure)
+(cd gc; ./configure)
