@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.38 2003/10/19 02:54:41 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.39 2003/10/20 09:17:52 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -669,6 +669,27 @@ void error(char *s)
 	if ( CPVS != GPVS )
 		if ( do_server_in_X11 || isatty(0) )
 			bp(error_snode);
+	if ( read_exec_file )
+		read_exec_file = 0;
+	resetenv("return to toplevel");
+}
+
+void toplevel(char *s)
+{
+	SNODE *snp=0;
+
+#if !defined(VISUAL)
+	if ( timer_is_set )
+		alrm_handler(SIGVTALRM);
+#endif
+	fprintf(stderr,"%s\n",s);
+	if ( do_file ) {
+		char errbuf[BUFSIZ*5]; /* sufficient to store stack information ? */
+
+		sprintf(errbuf,"%s\n",s);
+		showpos_to_string(errbuf+strlen(errbuf));
+		ExitAsir();
+	}
 	if ( read_exec_file )
 		read_exec_file = 0;
 	resetenv("return to toplevel");

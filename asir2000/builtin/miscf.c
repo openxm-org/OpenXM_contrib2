@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.18 2003/05/16 07:56:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.19 2003/10/20 00:21:09 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,6 +60,7 @@
 #endif
 
 void Pquit(), Pdebug(), Pnmono(), Pnez(), Popt(), Pshell(), Pheap();
+void Ptoplevel();
 void Perror(), Perror3(), Pversion(), Pflist(), Pdelete_history(), Ppause(), Pxpause();
 void Pr2g(), Pread_cmo(), Pwrite_cmo();
 void Pgc(),Pbatch(),Psend_progress();
@@ -88,6 +89,7 @@ struct ftab misc_tab[] = {
 	{"heap",Pheap,-1},
 	{"version",Pversion,-99999},
 	{"nmono",Pnmono,1},
+	{"toplevel",Ptoplevel,-1},
 	{"error",Perror,1},
 	{"error3",Perror3,3},
 	{"nez",Pnez,1},
@@ -325,6 +327,20 @@ Q *rp;
 	else
 		s = BDY((STRING)ARG0(arg));
 	error(s);
+	*rp = 0;
+}
+
+void Ptoplevel(arg,rp)
+NODE arg;
+Q *rp;
+{
+	char *s;
+
+	if ( !arg || !ARG0(arg) || (OID((Obj)ARG0(arg)) != O_STR) )
+		s = "";
+	else
+		s = BDY((STRING)ARG0(arg));
+	toplevel(s);
 	*rp = 0;
 }
 
