@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.6 2003/01/20 17:44:51 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.7 2003/07/29 01:50:56 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pcar(), Pcdr(), Pcons(), Pappend(), Preverse(), Plength();
+void Plist();
 void Pnconc(), Preplcd(), Preplca();
 
 struct ftab list_tab[] = {
@@ -63,6 +64,7 @@ struct ftab list_tab[] = {
 	{"nconc",Pnconc,2},
 	{"replcd",Preplcd,2},
 	{"replca",Preplca,2},
+	{"list", Plist, -99999999},
 	{0,0,0},
 };
 
@@ -134,21 +136,6 @@ LIST *rp;
 	}
 }
 
-#if 0
-void Plength(arg,rp)
-NODE arg;
-Q *rp;
-{
-	NODE n;
-	int i;
-
-	asir_assert(ARG0(arg),O_LIST,"length");
-	n = BDY((LIST)ARG0(arg));
-	for ( i = 0; n; i++, n = NEXT(n) );
-	STOQ(i,*rp);
-}
-#endif
-
 void Plength(arg,rp)
 NODE arg;
 Q *rp;
@@ -168,6 +155,11 @@ Q *rp;
         error("length : invalid argument"); break;
     }
     STOQ(i,*rp);
+}
+
+void Plist(NODE arg, LIST *rp)
+{
+    MKLIST(*rp,arg);
 }
 
 void Pnconc(arg,rp)
