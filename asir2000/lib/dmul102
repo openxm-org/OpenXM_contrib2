@@ -1,0 +1,127 @@
+/* $OpenXM$ */
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#define MIN(a,b) ((a)>(b)?(b):(a))
+
+/* CAUTION: functions in this file are experimental. */
+
+Hosts = [
+"iyokan-0-g","iyokan-0-g",
+"iyokan-1-g","iyokan-1-g",
+"iyokan-2-g","iyokan-2-g",
+"iyokan-3-g","iyokan-3-g"
+]$
+
+def spawn102(Hosts,N)
+"spawn102(hostlist,nserver|debug=1)
+hostlist : [\"iyokan-0\",\"iyokan-1\",...]
+nserver : number of servers to be used in hostlist
+If debug is specified, the debug windows will appear."
+{
+	Debug = getopt(debug);
+	if ( type(Debug) == -1 )
+		Debug = 0;
+	else if ( Debug )
+		Debug = 1;
+	Procs = newvect(N);
+	for ( I = 0; I < N; I++ ) {
+		if ( Debug )
+			Procs[I] = ox_launch(Hosts[I],get_rootdir(),"ox_asir");
+		else
+			Procs[I] = ox_launch_nox(Hosts[I],get_rootdir(),"ox_asir");
+		ox_set_rank_102(Procs[I],N,I);
+		sleep(1000);
+	}
+	for ( I = 0; I < N; I++ )
+		for ( J = I+1; J < N; J++ ) {
+			P = generate_port();
+			ox_tcp_accept_102(Procs[I],P,J);
+			ox_tcp_connect_102(Procs[J],Hosts[I],P,I);
+		}
+	return Procs;
+}
+
+def urandompoly(N,D)
+"urandompoly(N,D)
+ generate a univariate random polynomial of degree N,
+ with D bit random coefficients."
+{
+	for(I=0,R=0;I<=N;I++)R+= lrandom(D)*x^I; return R;
+}	
+
+/*
+	return: F1*F2
+	if option 'proc' is supplied as a list of server id's, 
+	F1*F2 is calculated by distributed computation.
+*/
+
+def d_mul(F1,F2)
+"d_mul(F1,F2|proc=ProcList)
+ computes the product of F1 and F2.
+ If ProcList is specified, the product is computed in parallel."
+{
+	Procs = getopt(proc);
+	if ( type(Procs) == -1 ) return umul(F1,F2);
+	if ( !var(F1) || !var(F2) ) return F1*F2;
+	NP = length(Procs);
+	ox_push_cmo(Procs[0],[F1,F2]);
+	for ( I = 0; I < NP; I++ )
+		ox_cmo_rpc(Procs[I],"d_mul_main",0);
+	R = ox_pop_cmo(Procs[0]);
+	return R;
+}
+
+def d_mul_main(Root)
+{
+	Id = ox_get_rank_102();
+	NP = Id[0]; Rank = Id[1];
+	Arg = ox_bcast_102(Root);
+	F1 = Arg[0]; F2 = Arg[1];
+	L = setup_modarrays(F1,F2,NP);
+ 	Marray = L[0]; MIarray = L[1]; M = L[2];
+	R = umul_chrem(F1,F2,MIarray[Rank],Marray[Rank],M);
+	Arg = 0; F1 = 0; F2 = 0;
+	R = ox_reduce_102(Root,"+",R);
+	if ( Rank == Root )
+		R = uadj_coef(R%M,M,ishift(M,1));
+	return R;
+}
+
+/* 
+ * Marray[J] = FFTprime[Marray[J][0]]*...*FFTprime[Marray[J][...]]
+ * M = Marray[0]*...*Marray[NP-1]
+ */
+
+def setup_modarrays(F1,F2,NP)
+{
+	V = var(F1);
+	D1 = deg(F1,V); D2 = deg(F2,V);
+	Dmin = MIN(D1,D2);
+	Dfft = p_mag(D1+D2+1)+1;
+	Bound = maxblen(F1)+maxblen(F2)+p_mag(Dmin)+1;
+	if ( Bound < 32 ) Bound = 32;
+	Marray = newvect(NP); MIarray = newvect(NP);
+	for ( I = 0; I < NP; I++ ) {
+		Marray[I] = 1; MIarray[I] = [];
+	}
+	for ( M = 1, I = 0, J = 0; p_mag(M) <= Bound; J = (J+1)%NP ) {
+		T = get_next_fft_prime(I,Dfft);
+		if ( !T )
+			error("fft_mul_d : fft_prime exhausted.");
+		Marray[J] *= T[1];
+		MIarray[J] = cons(T[0],MIarray[J]);
+		M *= T[1];
+		I = T[0]+1;
+	}
+	return [Marray,MIarray,M];
+}
+
+def umul_chrem(F1,F2,Ind,M1,M)
+{
+	T0 = time();
+	C = umul_specialmod(F1,F2,Ind);
+	Mhat = idiv(M,M1);
+	MhatInv = inv(Mhat,M1);
+	R = Mhat*((MhatInv*C)%M1);
+	return R;
+}
+end$
