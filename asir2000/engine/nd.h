@@ -323,6 +323,10 @@ ND nd_quo(int mod,PGeoBucket p,NDV d);
 INLINE int nd_length(ND p);
 NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
+NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
+NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
+	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 
 /* NDV functions */
 ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);
@@ -352,10 +356,13 @@ ND ndvtond(int mod,NDV p);
 int nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r);
 IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
+int nd_to_vect_q(UINT *s0,int n,ND d,Q *r);
+NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect);
 
 /* elimination */
 int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 
 int ndl_ww_lex_compare(UINT *a1,UINT *a2);
+
 

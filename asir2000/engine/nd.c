@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.104 2004/09/17 01:27:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.105 2004/09/17 05:43:22 noro Exp $ */
 
 #include "nd.h"
 
@@ -4134,23 +4134,14 @@ NODE nd_f4(int m)
 NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 {
 	IndArray *imat;
-	int nsp,nred,spcol,sprow,a;
+	int nsp,nred,i;
 	int *rhead;
-	int i,j,k,l,rank;
-	NODE rp,r0,r;
+	NODE r0,rp;
 	ND_pairs sp;
-	ND spol;
-	int **spmat;
-	UINT *svect,*v;
-	int *colstat;
-	struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
 	NM_ind_pair *rvect;
-	int maxrs;
-	int *spsugar;
 
-	get_eg(&eg0);
 	for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
-	nred = length(rp0); spcol = col-nred;
+	nred = length(rp0);
 	imat = (IndArray *)ALLOCA(nred*sizeof(IndArray));
 	rhead = (int *)ALLOCA(col*sizeof(int));
 	for ( i = 0; i < col; i++ ) rhead[i] = 0;
@@ -4162,7 +4153,27 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 		imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,rvect[i]);
 		rhead[imat[i]->head] = 1;
 	}
+	r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred);
+	return r0;
+}
 
+NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred)
+{
+	int spcol,sprow,a;
+	int i,j,k,l,rank;
+	NODE r0,r;
+	ND_pairs sp;
+	ND spol;
+	int **spmat;
+	UINT *svect,*v;
+	int *colstat;
+	struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
+	int maxrs;
+	int *spsugar;
+
+	spcol = col-nred;
+	get_eg(&eg0);
 	/* elimination (1st step) */
 	spmat = (int **)ALLOCA(nsp*sizeof(UINT *));
 	svect = (UINT *)ALLOCA(col*sizeof(UINT));
