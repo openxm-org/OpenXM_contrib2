@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.4 2000/11/08 08:02:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -245,10 +245,11 @@ LIST a,b;
 			return -1;
 	else if ( !b )
 		return 1;
-	for ( i = 0, an = BDY(a); an; i++, an = NEXT(an) );
-	for ( an = BDY(b); an; i--, an = NEXT(an) );
-	if ( i )
-		return i > 0 ? 1 : -1;
+	for ( an = BDY(a), bn = BDY(b); an && bn; an = NEXT(an), bn = NEXT(bn) );
+	if ( an && !bn )
+		return 1;
+	else if ( !an && bn )
+		return -1;
 	for ( an = BDY(a), bn = BDY(b); an; an = NEXT(an), bn = NEXT(bn) )
 		if ( t = arf_comp(vl,BDY(an),BDY(bn)) )
 			return t;

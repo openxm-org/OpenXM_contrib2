@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.4 2000/11/08 08:02:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.5 2000/12/05 01:24:57 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -169,13 +169,13 @@ pointer *vp;
 				break;
 			case O_LIST:
 				n0 = BDY((LIST)a); i = QTOS((Q)BDY(ind));
-				for ( l = 0, n = n0; n; n = NEXT(n), l++ );
-				if ( i < 0 || i >= l )
+				if ( i < 0 )
 					error("getarray : Out of range");
-				else {
-					for ( n = n0, l = 0; l < i; l++, n = NEXT(n) );
+				for ( n = n0; i > 0 && n; n = NEXT(n), i-- );
+				if ( i || !n )
+					error("getarray : Out of range");
+				else	
 					a = (pointer)BDY(n);
-				}
 				break;
 			default:
 				error("getarray : array or list expected");
@@ -236,13 +236,13 @@ pointer b;
 			case O_LIST:
 				if ( NEXT(ind) ) {
 					n0 = BDY((LIST)a); i = QTOS((Q)BDY(ind));
-					for ( l = 0, n = n0; n; n = NEXT(n), l++ );
-					if ( i < 0 || i >= l )
+					if ( i < 0 )
 						error("putarray : Out of range");
-					else {
-						for ( n = n0, l = 0; l < i; l++, n = NEXT(n) );
+					for ( n = n0; i > 0 && n; n = NEXT(n), i-- );
+					if ( i || !n )
+						error("puarray : Out of range");
+					else
 						a = (pointer)BDY(n);
-					}
 				} else
 					error("putarray : invalid assignment");
 				break;
