@@ -4341,6 +4341,8 @@ if test "${enable_shared:=no}" != no ; then
    true
 fi
 
+CFLAGS="-g -O"
+
 libasir_postfix=""
 
 # Check whether --with-pari or --without-pari was given.
