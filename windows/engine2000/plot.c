@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.2 2001/10/05 10:23:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.3 2001/10/09 01:36:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -334,6 +334,11 @@ static void asir_executeFunction(int serial)
 		drawcircle(n);
 	} else if ( !strcmp(func,"draw_obj") ) {
 		if ( draw_obj(n) < 0 ) {
+			create_error(&err,serial,LastError);
+			asir_push_one((Obj)err);
+		}	
+	} else if ( !strcmp(func,"draw_string") ) {
+		if ( draw_string(n) < 0 ) {
 			create_error(&err,serial,LastError);
 			asir_push_one((Obj)err);
 		}	
