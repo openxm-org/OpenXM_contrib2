@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.4 2000/09/21 09:19:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.5 2000/12/05 01:24:57 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -74,6 +74,7 @@ static FNODE t;
 static NODE a,b;
 static NODE2 a2;
 static pointer val;
+static QUOTE quote;
 extern jmp_buf env;
 %}
 
@@ -88,7 +89,7 @@ extern jmp_buf env;
 	pointer p;
 }
 
-%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF GLOBAL CMP OR AND CAR CDR
+%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF GLOBAL CMP OR AND CAR CDR QUOTED
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP TIMER GF2NGEN GFPNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
@@ -410,5 +411,7 @@ expr 	: pexpr
 			{ $$ = mkfnode(1,I_EV,$2); }
 		| NEWSTRUCT '(' rawstr ')'
 			{ $$ = mkfnode(1,I_NEWCOMP,(int)structtoindex($3)); }
+		| QUOTED '(' expr ')'
+			{ MKQUOTE(quote,$3); $$ = mkfnode(1,I_FORMULA,(pointer)quote); }
 	 	;
 %%

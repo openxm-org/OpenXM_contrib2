@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.9 2001/03/13 01:10:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.10 2001/03/15 05:52:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,6 +77,7 @@ extern int hex_output,fortran_output,double_output,real_digit;
 #define PRINTGF2MAT length_gf2mat
 #define PRINTGFMMAT length_gfmmat
 #define PRINTBYTEARRAY length_bytearray
+#define PRINTQUOTE length_QUOTE
 #define PRINTERR length_err
 #define PRINTLF length_lf
 #define PRINTLOP length_lop
@@ -101,6 +102,7 @@ void PRINTUI();
 void PRINTGF2MAT();
 void PRINTGFMMAT();
 void PRINTBYTEARRAY();
+void PRINTQUOTE();
 void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
@@ -179,6 +181,8 @@ pointer p;
 			PRINTGFMMAT(vl,(GFMMAT)p); break;
 		case O_BYTEARRAY:
 			PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
+		case O_QUOTE:
+			PRINTQUOTE(vl,(QUOTE)p); break;
 		default:
 			break;
 	}
@@ -550,6 +554,14 @@ BYTEARRAY array;
 {
 	/* |xx xx ... xx| */
 	total_length += 1+3*array->len;
+}
+
+void PRINTQUOTE(vl,quote)
+VL vl;
+QUOTE quote;
+{
+	/* <...quoted...> */
+	total_length += 20;
 }
 
 void PRINTERR(vl,e)

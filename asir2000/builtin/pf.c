@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.2 2000/08/21 08:31:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -65,6 +65,7 @@ void simplify_pow(PFINS,Obj *);
 
 void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval();
 void Pregister_handler();
+void Peval_quote();
 
 struct ftab puref_tab[] = {
 	{"functor",Pfunctor,1},
@@ -74,6 +75,7 @@ struct ftab puref_tab[] = {
 	{"call",Pcall,2},
 	{"vtype",Pvtype,1},
 	{"deval",Pdeval,1},
+	{"eval_quote",Peval_quote,1},
 	{0,0,0},
 };
 
@@ -438,3 +440,10 @@ Obj *rp;
 	devalr(CO,(Obj)ARG0(arg),rp);
 }
 
+void Peval_quote(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	asir_assert(ARG0(arg),O_QUOTE,"eval_quote");
+	*rp = eval((FNODE)BDY((QUOTE)ARG0(arg)));
+}

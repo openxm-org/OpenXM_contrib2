@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.11 2000/12/22 10:03:29 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.12 2001/03/13 01:10:26 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -108,6 +108,7 @@ typedef void * pointer;
 #define O_F 14
 #define O_GFMMAT 15
 #define O_BYTEARRAY 16
+#define O_QUOTE 17
 #define O_VOID -1
 
 #define N_Q 0
@@ -331,6 +332,12 @@ typedef struct oBYTEARRAY {
 	unsigned char *body;
 } *BYTEARRAY;
 
+typedef struct oQUOTE {
+	short id;
+	short pad;
+	pointer body;
+} *QUOTE;
+
 typedef struct oObj {
 	short id;
 	short pad;
@@ -546,6 +553,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWERR(e) ((e)=(ERR)MALLOC(sizeof(struct oERR)),OID(e)=O_ERR)
 #define NEWMATHCAP(e) ((e)=(MATHCAP)MALLOC(sizeof(struct oMATHCAP)),OID(e)=O_MATHCAP)
 #define NEWBYTEARRAY(e) ((e)=(BYTEARRAY)MALLOC(sizeof(struct oBYTEARRAY)),OID(e)=O_BYTEARRAY)
+#define NEWQUOTE(e) ((e)=(QUOTE)MALLOC(sizeof(struct oQUOTE)),OID(e)=O_QUOTE)
 
 #define NEWNODE(a) ((a)=(NODE)MALLOC(sizeof(struct oNODE)))
 #define NEWDC(dc) ((dc)=(DCP)MALLOC(sizeof(struct oDCP)))
@@ -597,6 +605,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKMATHCAP(e,b) (NEWMATHCAP(e),(e)->body=(LIST)(b))
 #define MKBYTEARRAY(m,l) \
 (NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
+#define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b))
 
 #define NEXTDC(r,c) \
 if(!(r)){NEWDC(r);(c)=(r);}else{NEWDC(NEXT(c));(c)=NEXT(c);}

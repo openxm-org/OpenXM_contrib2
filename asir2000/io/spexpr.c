@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.11 2001/03/13 01:10:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.12 2001/03/15 05:52:12 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -88,6 +88,7 @@ int fortran_output;
 #define PRINTGF2MAT printgf2mat
 #define PRINTGFMMAT printgfmmat
 #define PRINTBYTEARRAY printbytearray
+#define PRINTQUOTE printquote
 #define PRINTERR printerr
 #define PRINTLF printlf
 #define PRINTLOP printlop
@@ -129,6 +130,7 @@ extern int real_digit;
 #define PRINTGF2MAT sprintgf2mat
 #define PRINTGFMMAT sprintgfmmat
 #define PRINTBYTEARRAY sprintbytearray
+#define PRINTQUOTE sprintquote
 #define PRINTERR sprinterr
 #define PRINTLF sprintlf
 #define PRINTLOP sprintlop
@@ -154,6 +156,7 @@ void PRINTUI();
 void PRINTGF2MAT();
 void PRINTGFMMAT();
 void PRINTBYTEARRAY();
+void PRINTQUOTE();
 void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
@@ -269,6 +272,8 @@ Obj p;
 			PRINTGFMMAT(vl,(GFMMAT)p); break;
 		case O_BYTEARRAY:
 			PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
+		case O_QUOTE:
+			PRINTQUOTE(vl,(QUOTE)p); break;
 		default:
 			break;
 	}
@@ -711,6 +716,13 @@ BYTEARRAY array;
 	}
 	TAIL PRINTF(OUT,"%02x",(unsigned int)b[i]);
 	PUTS("|");
+}
+
+void PRINTQUOTE(vl,quote)
+VL vl;
+QUOTE quote;
+{
+	PUTS("<...quoted...>");
 }
 
 void PRINTERR(vl,e)

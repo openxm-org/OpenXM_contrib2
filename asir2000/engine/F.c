@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.4 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.5 2001/04/19 04:52:41 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -317,6 +317,8 @@ DCP *dcp;
 		}
 	}
 	
+	/* determine the position of variables which is not allowed to
+	   be set to 0 */
 	for ( i = 0; vn1[i].v; i++ ) {
 		x = vn1[i].n; vn1[i].n = 0;
 		substvp(nvl,LC(p),vn1,&p0);
@@ -853,12 +855,15 @@ DCP *dcp;
 				return;
 			} else {
 				d = d1;
+				found = 1;
+				sp0 = p0; sdc0 = dc0;
+				bcopy((char *)vn1,(char *)svn1,(int)(sizeof(struct oVN)*nv));
 				break;
 			}
 		}
 	}
 
-	for  ( dcr0 = 0, g = p, d = deg(VR(g),g), found = 0; ; ) {
+	for  ( dcr0 = 0, g = p; ; ) {
 		while ( 1 ) {
 			for ( i = 0, j = 0; vn[i].v; i++ ) 
 				if ( vn[i].n ) vnt[j++].v = (V)i;
