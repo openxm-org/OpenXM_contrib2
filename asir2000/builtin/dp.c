@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.9 2000/12/08 02:39:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.10 2000/12/08 06:43:09 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -57,6 +57,7 @@ extern int dp_order_pair_length;
 extern struct order_pair *dp_order_pair;
 extern struct order_spec dp_current_spec;
 
+int do_weyl;
 
 void Pdp_ord(), Pdp_ptod(), Pdp_dtop();
 void Pdp_ptozp(), Pdp_ptozp2(), Pdp_red(), Pdp_red2(), Pdp_lcm(), Pdp_redble();
@@ -76,6 +77,10 @@ void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod();
 void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 
+void Pdp_weyl_red(),Pdp_weyl_sp(),Pdp_weyl_nf();
+void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main();
+void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main();
+
 struct ftab dp_tab[] = {
 	/* content reduction */
 	{"dp_ptozp",Pdp_ptozp,1},
@@ -84,6 +89,7 @@ struct ftab dp_tab[] = {
 	{"dp_red_coef",Pdp_red_coef,2},
 	{"dp_cont",Pdp_cont,1},
 
+/* polynomial ring */
 	/* s-poly */
 	{"dp_sp",Pdp_sp,2},
 	{"dp_sp_mod",Pdp_sp_mod,3},
@@ -107,6 +113,24 @@ struct ftab dp_tab[] = {
 	/* F4 algorithm */
 	{"dp_f4_main",Pdp_f4_main,3},
 	{"dp_f4_mod_main",Pdp_f4_mod_main,4},
+
+/* weyl algebra */
+	/* s-poly */
+	{"dp_weyl_sp",Pdp_weyl_sp,2},
+
+	/* m-reduction */
+	{"dp_weyl_red",Pdp_weyl_red,3},
+
+	/* normal form */
+	{"dp_weyl_nf",Pdp_weyl_nf,4},
+
+	/* Buchberger algorithm */
+	{"dp_weyl_gr_main",Pdp_weyl_gr_main,5},
+	{"dp_weyl_gr_mod_main",Pdp_weyl_gr_mod_main,5},
+
+	/* F4 algorithm */
+	{"dp_weyl_f4_main",Pdp_weyl_f4_main,3},
+	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
 
 	{0,0,0},
 };
@@ -445,10 +469,33 @@ DP *rp;
 	DP g;
 	int full;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_nf");
 	asir_assert(ARG1(arg),O_DP,"dp_nf");
 	asir_assert(ARG2(arg),O_VECT,"dp_nf");
 	asir_assert(ARG3(arg),O_N,"dp_nf");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		*rp = 0; return;
+	}
+	b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
+	full = (Q)ARG3(arg) ? 1 : 0;
+	dp_nf_ptozp(b,g,ps,full,DP_Multiple,rp);
+}
+
+void Pdp_weyl_nf(arg,rp)
+NODE arg;
+DP *rp;
+{
+	NODE b;
+	DP *ps;
+	DP g;
+	int full;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_nf");
+	asir_assert(ARG1(arg),O_DP,"dp_weyl_nf");
+	asir_assert(ARG2(arg),O_VECT,"dp_weyl_nf");
+	asir_assert(ARG3(arg),O_N,"dp_weyl_nf");
 	if ( !(g = (DP)ARG1(arg)) ) {
 		*rp = 0; return;
 	}
@@ -468,6 +515,7 @@ LIST *rp;
 	P dn;
 	int full;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_true_nf");
 	asir_assert(ARG1(arg),O_DP,"dp_true_nf");
 	asir_assert(ARG2(arg),O_VECT,"dp_true_nf");
@@ -494,6 +542,7 @@ DP *rp;
 	int mod,full,ac;
 	NODE n,n0;
 
+	do_weyl = 0;
 	ac = argc(arg);
 	asir_assert(ARG0(arg),O_LIST,"dp_nf_mod");
 	asir_assert(ARG1(arg),O_DP,"dp_nf_mod");
@@ -525,6 +574,7 @@ LIST *rp;
 	int mod,full;
 	NODE n;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_nf_mod");
 	asir_assert(ARG1(arg),O_DP,"dp_nf_mod");
 	asir_assert(ARG2(arg),O_VECT,"dp_nf_mod");
@@ -619,6 +669,7 @@ LIST *rp;
 	P dmy;
 	NODE n;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_DP,"dp_red_mod");
 	asir_assert(ARG1(arg),O_DP,"dp_red_mod");
 	asir_assert(ARG2(arg),O_DP,"dp_red_mod");
@@ -649,9 +700,28 @@ LIST *rp;
 	DP head,rest,dmy1;
 	P dmy;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_DP,"dp_red");
 	asir_assert(ARG1(arg),O_DP,"dp_red");
 	asir_assert(ARG2(arg),O_DP,"dp_red");
+	dp_red((DP)ARG0(arg),(DP)ARG1(arg),(DP)ARG2(arg),&head,&rest,&dmy,&dmy1);
+	NEWNODE(n); BDY(n) = (pointer)head;
+	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)rest;
+	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
+}
+
+void Pdp_weyl_red(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE n;
+	DP head,rest,dmy1;
+	P dmy;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_DP,"dp_weyl_red");
+	asir_assert(ARG1(arg),O_DP,"dp_weyl_red");
+	asir_assert(ARG2(arg),O_DP,"dp_weyl_red");
 	dp_red((DP)ARG0(arg),(DP)ARG1(arg),(DP)ARG2(arg),&head,&rest,&dmy,&dmy1);
 	NEWNODE(n); BDY(n) = (pointer)head;
 	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)rest;
@@ -664,8 +734,21 @@ DP *rp;
 {
 	DP p1,p2;
 
+	do_weyl = 0;
 	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
 	asir_assert(p1,O_DP,"dp_sp"); asir_assert(p2,O_DP,"dp_sp");
+	dp_sp(p1,p2,rp);
+}
+
+void Pdp_weyl_sp(arg,rp)
+NODE arg;
+DP *rp;
+{
+	DP p1,p2;
+
+	do_weyl = 1;
+	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
+	asir_assert(p1,O_DP,"dp_weyl_sp"); asir_assert(p2,O_DP,"dp_sp");
 	dp_sp(p1,p2,rp);
 }
 
@@ -676,6 +759,7 @@ DP *rp;
 	DP p1,p2;
 	int mod;
 
+	do_weyl = 0;
 	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
 	asir_assert(p1,O_DP,"dp_sp_mod"); asir_assert(p2,O_DP,"dp_sp_mod");
 	asir_assert(ARG2(arg),O_N,"dp_sp_mod");
@@ -1006,6 +1090,7 @@ LIST *rp;
 	int modular;
 	struct order_spec ord;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_gr_main");
 	asir_assert(ARG2(arg),O_N,"dp_gr_main");
@@ -1030,6 +1115,7 @@ LIST *rp;
 	LIST f,v;
 	struct order_spec ord;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
@@ -1045,6 +1131,7 @@ LIST *rp;
 	int m;
 	struct order_spec ord;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_f4_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_f4_main");
 	asir_assert(ARG2(arg),O_N,"dp_f4_main");
@@ -1062,10 +1149,93 @@ LIST *rp;
 	int m;
 	struct order_spec ord;
 
+	do_weyl = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_gr_mod_main");
 	asir_assert(ARG1(arg),O_LIST,"dp_gr_mod_main");
 	asir_assert(ARG2(arg),O_N,"dp_gr_mod_main");
 	asir_assert(ARG3(arg),O_N,"dp_gr_mod_main");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
+	create_order_spec(ARG4(arg),&ord);
+	dp_gr_mod_main(f,v,homo,m,&ord,rp);
+}
+
+/* for Weyl algebra */
+
+void Pdp_weyl_gr_main(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	Num homo;
+	Q m;
+	int modular;
+	struct order_spec ord;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_main");
+	asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_main");
+	asir_assert(ARG2(arg),O_N,"dp_weyl_gr_main");
+	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_main");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	homo = (Num)ARG2(arg);
+	m = (Q)ARG3(arg);
+	if ( !m )
+		modular = 0;
+	else if ( PL(NM(m))>1 || (PL(NM(m)) == 1 && BD(NM(m))[0] >= 0x80000000) )
+		error("dp_gr_main : too large modulus");
+	else
+		modular = QTOS(m);
+	create_order_spec(ARG4(arg),&ord);
+	dp_gr_main(f,v,homo,modular,&ord,rp);
+}
+
+void Pdp_weyl_f4_main(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	struct order_spec ord;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
+	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	create_order_spec(ARG2(arg),&ord);
+	dp_f4_main(f,v,&ord,rp);
+}
+
+void Pdp_weyl_f4_mod_main(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	int m;
+	struct order_spec ord;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
+	asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
+	asir_assert(ARG2(arg),O_N,"dp_f4_main");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+	create_order_spec(ARG3(arg),&ord);
+	dp_f4_mod_main(f,v,m,&ord,rp);
+}
+
+void Pdp_weyl_gr_mod_main(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	Num homo;
+	int m;
+	struct order_spec ord;
+
+	do_weyl = 1;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_gr_mod_main");
+	asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_mod_main");
+	asir_assert(ARG2(arg),O_N,"dp_weyl_gr_mod_main");
+	asir_assert(ARG3(arg),O_N,"dp_weyl_gr_mod_main");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
 	create_order_spec(ARG4(arg),&ord);

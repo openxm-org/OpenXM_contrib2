@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.2 2000/08/21 08:31:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.3 2000/08/22 05:04:20 noro Exp $ 
 */
 /* requires 'primdec' */
 
@@ -63,9 +63,8 @@ def ann(F)
 	for ( I = 0; I < N; I++ ) {
 		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
 	}
-	ctrl("do_weyl",1);
 	dp_nelim(2);
-	G0 = dp_gr_main(B,append(W,DW),0,0,6);
+	G0 = dp_weyl_gr_main(B,append(W,DW),0,0,6);
 	G1 = [];
 	for ( T = G0; T != []; T = cdr(T) ) {
 		E = car(T); VL = vars(E);
@@ -75,7 +74,6 @@ def ann(F)
 	G2 = map(subst,G1,dt,1);
 	G3 = map(b_subst,G2,t);
 	G4 = map(subst,G3,t,-1-s);
-	ctrl("do_weyl",0);
 	return G4;
 }
 
@@ -85,7 +83,6 @@ def bfct(F)
 {
 	G4 = ann(F);
 
-	ctrl("do_weyl",1);
 	V = vars(F);
 	N = length(V);
 	for ( I = N-1, DV = []; I >= 0; I-- )
@@ -111,13 +108,12 @@ def bfct(F)
 		M[I+2][I] = 1;
 #endif
 	V1 = cons(s,V); DV1 = cons(ds,DV);
-	G5 = dp_gr_main(cons(F,G4),append(V1,DV1),0,0,M);
+	G5 = dp_weyl_gr_main(cons(F,G4),append(V1,DV1),0,0,M);
 	for ( T = G5, G6 = []; T != []; T = cdr(T) ) {
 		E = car(T);
 		if ( intersection(vars(E),DV1) == [] )
 			G6 = cons(E,G6);
 	}
-	ctrl("do_weyl",0);
 	G6_0 = remove_zero(map(z_subst,G6,V));
 	F0 = flatmf(cdr(fctr(dp_gr_main(G6_0,[s],0,0,0)[0])));
 	for ( T = F0, BF = []; T != []; T = cdr(T) ) {

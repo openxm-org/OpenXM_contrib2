@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.8 2000/08/21 08:31:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.9 2000/08/22 05:03:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,7 +64,6 @@ extern int do_message;
 extern int ox_batch,ox_check,ox_exchange_mathcap;
 extern int f4_nocheck;
 extern int fortran_output;
-extern int do_weyl;
 
 static struct {
 	char *key;
@@ -88,7 +87,6 @@ static struct {
 	{"ox_exchange_mathcap",&ox_exchange_mathcap},
 	{"f4_nocheck",&f4_nocheck},
 	{"fortran_output",&fortran_output},
-	{"do_weyl",&do_weyl},
 	{0,0},
 };
 

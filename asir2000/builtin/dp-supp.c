@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.7 2000/12/08 02:39:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.8 2000/12/08 06:43:09 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -292,7 +292,7 @@ DP p,*rp;
 		if ( PCoeffs ) {
 			dp_ptozp(p,rp); return;
 		}	
-		if ( !dist || p_mag(BDY(p)->c) <= mpi_mag ) {
+		if ( !Dist || p_mag(BDY(p)->c) <= mpi_mag ) {
 			dist = 0; ndist = 0;
 			if ( DP_NFStat ) fprintf(asir_out,"L");
 		} else {
