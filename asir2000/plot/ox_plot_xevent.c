@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.3 2000/08/22 05:04:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.4 2000/10/14 07:43:52 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -408,7 +408,7 @@ static void output_to_printer(w,can,calldata)
 
   w = W;
   can = Can;
-  strcpy(psfile,"xerox");
+  strcpy(psfile,"lp");
   create_popup(can->shell,"Output PS file to printer",psfile,&fshell,&fdialog);
   n = 0;
   XtSetArg(arg[n], XtNlabel, "PS Printer Name : "); n++;
