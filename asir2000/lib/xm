@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.13 2001/03/09 00:50:37 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.14 2001/03/09 00:53:15 takayama Exp $ 
 */
 /**  xm  **/
 Xm_noX = 0$  
@@ -72,10 +72,10 @@ XM_debug=1$
 @chapter OpenXM-Contrib General Functions
 */
 /*&jp-texi
-@section{函数一覧}
+@section 函数一覧
 */ 
 /*&eg-texi
-@section{Functions}
+@section Functions
 */ 
 
 
@@ -116,7 +116,7 @@ def ox_check_errors(P) {
 * ox_check_errors2::
 @end menu
 @node ox_check_errors2,,, Top
-@subsection{@code{ox_check_errors2}}
+@subsection @code{ox_check_errors2}
 @findex ox_check_errors2
 @table @t
 @item ox_check_errors2(@var{p})
@@ -140,7 +140,7 @@ Number
 * ox_check_errors2::
 @end menu
 @node ox_check_errors2,,, Top
-@subsection{@code{ox_check_errors2}}
+@subsection @code{ox_check_errors2}
 @findex ox_check_errors2
 @table @t
 @item ox_check_errors2(@var{p})
