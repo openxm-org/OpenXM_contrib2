@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.10 2001/10/09 01:36:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.11 2002/07/12 08:05:23 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -397,16 +397,13 @@ struct pariftab pariftab[] = {
 {"keri",keri,1},
 {"kerint",kerint,1},
 {"kerintg1",kerint1,1},
-{"kerint2",kerint2,1},
 {"length",(GEN(*)())glength,1},
 {"lexsort",lexsort,1},
 {"lift",lift,1},
 {"lindep",lindep,1},
 {"lll",lll,1},
-{"lllg1",lll1,1},
 {"lllgen",lllgen,1},
 {"lllgram",lllgram,1},
-{"lllgramg1",lllgram1,1},
 {"lllgramgen",lllgramgen,1},
 {"lllgramint",lllgramint,1},
 {"lllgramkerim",lllgramkerim,1},
@@ -414,7 +411,6 @@ struct pariftab pariftab[] = {
 {"lllint",lllint,1},
 {"lllkerim",lllkerim,1},
 {"lllkerimgen",lllkerimgen,1},
-{"lllrat",lllrat,1},
 {"lngamma",glngamma,1},
 {"logagm",glogagm,1},
 {"mat",gtomat,1},
