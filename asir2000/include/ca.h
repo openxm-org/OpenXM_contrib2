@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.52 2004/10/06 11:58:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.53 2004/12/02 13:48:43 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1803,6 +1803,7 @@ void savep(FILE *,P);
 void savegf2n(FILE *,GF2N);
 void savegfpn(FILE *,GFPN);
 void savegfs(FILE *,GFS);
+void savedalg(FILE *,DAlg);
 void savelm(FILE *,LM);
 void savemi(FILE *,MQ);
 void savecplx(FILE *,C);
@@ -1828,6 +1829,7 @@ void loadgf2n(FILE *,GF2N *);
 void loadgfpn(FILE *,GFPN *);
 void loadgfs(FILE *,GFS *);
 void loadgfsn(FILE *,GFSN *);
+void loaddalg(FILE *,DAlg *);
 void loadlm(FILE *,LM *);
 void loadmi(FILE *,MQ *);
 void loadcplx(FILE *,C *);

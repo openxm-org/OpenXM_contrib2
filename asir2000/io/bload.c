@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.12 2003/02/14 22:29:15 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.13 2003/12/22 09:33:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -61,9 +61,9 @@ void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
 #if defined(INTERVAL)
 void loaditv();
 void loaditvd();
-void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn };
+void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loaditv, loaditvd, 0, loaditv, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn, loaddalg };
 #else
-void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn };
+void (*nloadf[])() = { loadq, loadreal, 0, loadbf, loadcplx, loadmi, loadlm, loadgf2n, loadgfpn, loadgfs, loadgfsn, loaddalg };
 #endif
 
 void loadobj(FILE *s,Obj *p)
@@ -264,6 +264,17 @@ void loadgfsn(FILE *s,GFSN *p)
 	body = UMALLOC(d); DEG(body) = d;
 	read_intarray(s,COEF(body),d+1);
 	MKGFSN(body,*p);
+}
+
+void loaddalg(FILE *s,DAlg *p)
+{
+	char dmy;
+	Obj nm,dn;
+
+	read_char(s,&dmy);
+	loadobj(s,&nm);
+	loadobj(s,&dn);
+	MKDAlg((DP)nm,(Q)dn,*p);
 }
 
 void loadp(FILE *s,P *p)

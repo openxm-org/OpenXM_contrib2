@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.22 2004/05/14 06:02:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.23 2004/07/13 07:59:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -135,6 +135,10 @@ void PRINTBF(BF a)
 
 void PRINTNUM(Num q)
 {
+	DAlg d;
+	DP nm;
+	Q dn;
+
 	if ( !q ) {
 		PUTS("0");
 		return;
@@ -182,6 +186,19 @@ void PRINTNUM(Num q)
 			break;
 		case N_GFSN:
 			PRINTUM(BDY((GFSN)q));
+			break;
+		case N_DA:
+			d = (DAlg)q;
+			nm = d->nm;
+			dn = d->dn;
+			if ( SGN((Q)dn) == -1 ) PUTS("-");
+			PUTS("(");
+			PRINTDP(CO,((DAlg)q)->nm);
+			PUTS(")");
+			if ( !UNIN(NM(dn)) ) {
+				PUTS("/");
+				PRINTN(NM(dn));
+			}
 			break;
 		default:
 			break;
