@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.11 2004/02/13 05:48:35 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.12 2004/02/26 07:06:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,6 +63,10 @@ extern char *parse_strp;
 void Prtostr(), Pstrtov(), Peval_str();
 void Pstrtoascii(), Pasciitostr();
 void Pstr_len(), Pstr_chr(), Psub_str();
+void Popen_textbuffer();
+void Pclose_textbuffer();
+void Pwrite_to_textbuffer();
+void Ptextbuffer_to_string();
 
 struct ftab str_tab[] = {
 	{"rtostr",Prtostr,1},
@@ -73,8 +77,93 @@ struct ftab str_tab[] = {
 	{"str_len",Pstr_len,1},
 	{"str_chr",Pstr_chr,3},
 	{"sub_str",Psub_str,3},
+	{"open_textbuffer",Popen_textbuffer,0},
+	{"close_textbuffer",Pclose_textbuffer,1},
+	{"write_to_textbuffer",Pwrite_to_textbuffer,2},
+	{"textbuffer_to_string",Ptextbuffer_to_string,1},
 	{0,0,0},
 };
+
+typedef struct oAsirTextBuffer {
+	int size,next;
+	char **body;
+} *AsirTextBuffer;
+
+static AsirTextBuffer *TBArray;
+static int TBArrayLen;
+
+void Popen_textbuffer(Q *rp)
+{
+	int i;
+	AsirTextBuffer tb;
+
+	if ( !TBArray ) {
+		TBArrayLen = 256;
+		TBArray = (AsirTextBuffer *)MALLOC(TBArrayLen*sizeof(AsirTextBuffer));
+	}
+	for ( i = 0; i < TBArrayLen; i++ )
+		if ( !TBArray[i] ) break;
+	if ( i == TBArrayLen ) {
+		TBArrayLen *= 2;
+		TBArray = (AsirTextBuffer *)REALLOC(TBArray,
+			TBArrayLen*sizeof(AsirTextBuffer));
+	}
+	TBArray[i] = tb = (AsirTextBuffer)MALLOC(sizeof(struct oAsirTextBuffer));
+	tb->size = 256;
+	tb->next = 0;
+	tb->body = (char **)MALLOC(tb->size*sizeof(char *));
+	STOQ(i,*rp);
+}
+
+void Pclose_textbuffer(NODE arg,Q *rp)
+{
+	int i;
+
+	i = QTOS((Q)ARG0(arg));
+	if ( i >= 0 && i < TBArrayLen )
+		TBArray[i] = 0;
+	else
+		error("close_textbuffer : invalid argument");
+	*rp = 0;
+}
+
+void Pwrite_to_textbuffer(NODE arg,Q *rp)
+{
+	int i;
+	AsirTextBuffer tb;
+
+	i = QTOS((Q)ARG0(arg));
+	if ( i >= 0 && i < TBArrayLen && (tb = TBArray[i])) {
+		if ( tb->next == tb->size ) {
+			tb->size *= 2;
+			tb->body = (char **)REALLOC(tb->body,tb->size*sizeof(char *));
+		}
+		tb->body[tb->next] = BDY((STRING)ARG1(arg));
+		tb->next++;
+	} else
+		error("write_to_textbuffer : invalid argument");
+	*rp = 0;	
+}
+
+void Ptextbuffer_to_string(NODE arg,STRING *rp)
+{
+	int i,j,len;
+	AsirTextBuffer tb;
+	char *all,*p,*q;
+
+	i = QTOS((Q)ARG0(arg));
+	if ( i >= 0 && i < TBArrayLen && (tb = TBArray[i])) {
+		tb = TBArray[i];
+		for ( j = 0, len = 0; j < tb->next; j++ )
+			len += strlen(tb->body[j]);
+		all = (char *)MALLOC_ATOMIC((len+1)*sizeof(char));
+		for ( j = 0, p = all; j < tb->next; j++ )
+			for ( q = tb->body[j]; *q; *p++ = *q++ );
+		*p = 0;
+		MKSTR(*rp,all);
+	} else
+		error("textbuffer_to_string : invalid argument");
+}
 
 void Pstr_len(arg,rp)
 NODE arg;
