@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.26 2003/05/17 11:47:51 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.27 2003/05/20 06:15:01 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -872,32 +872,22 @@ void appenduf(char *name,FUNC *r)
 	f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
 	f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
 	if ( dot = strchr(name,'.') ) {
-		/* undefined function in undefined module */
+		/* undefined function in a module */
 		len = dot-name;
 		modname = (char *)MALLOC_ATOMIC(len+1);
 		strncpy(modname,name,len); modname[len] = 0;
-		mod = mkmodule(modname);
 		fname = (char *)MALLOC_ATOMIC(strlen(name)-len+1);
 		strcpy(fname,dot+1);
 		f->name = fname;
 		f->fullname = name;
-		MKNODE(mod->usrf_list,f,0);
+		mod = searchmodule(modname);
+		if ( !mod )
+			mod = mkmodule(modname);
+		MKNODE(tn,f,mod->usrf_list); mod->usrf_list = tn;
 	} else {
 		f->name = name; 
-#if 0
-		if ( CUR_MODULE ) {
-			f->fullname =
-				(char *)MALLOC_ATOMIC(strlen(CUR_MODULE->name)+strlen(name)+1);
-			sprintf(f->fullname,"%s.%s",CUR_MODULE->name,name);
-			MKNODE(tn,f,CUR_MODULE->usrf_list); CUR_MODULE->usrf_list = tn;
-		} else {
-			f->fullname = name;
-			MKNODE(tn,f,usrf); usrf = tn;
-		}
-#else
 		f->fullname = name;
 		MKNODE(tn,f,usrf); usrf = tn;
-#endif
 	}
 	*r = f;
 }
