@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.47 2003/12/10 07:37:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.48 2003/12/11 05:48:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -131,6 +131,7 @@ void Pnd_exec_f4_red();
 void Pox_tcp_accept_102(),Pox_tcp_connect_102();
 void Pox_send_102(),Pox_recv_102();
 void Pox_set_rank_102();
+void Pox_get_rank_102();
 void Pox_reset_102();
 void Pox_bcast_102();
 void Pox_reduce_102();
@@ -151,6 +152,7 @@ struct ftab tcp_tab[] = {
 	{"ox_tcp_connect_102",Pox_tcp_connect_102,4},
 	{"ox_reset_102",Pox_reset_102,1},
 
+	{"ox_get_rank_102",Pox_get_rank_102,0},
 	{"ox_send_102",Pox_send_102,2},
 	{"ox_recv_102",Pox_recv_102,1},
 	{"ox_bcast_102",Pox_bcast_102,-2},
@@ -299,6 +301,17 @@ void Pox_reset_102(NODE arg,Q *rp)
 	s = m_c_tab[index].c;
 	ox_send_cmd(s,SM_reset_102);
 	ox_flush_stream_force(s);
+}
+
+void Pox_get_rank_102(LIST *rp)
+{
+	Q n,r;
+	NODE node;
+
+	STOQ(nserver_102,n);
+	STOQ(myrank_102,r);
+	node = mknode(2,n,r);
+	MKLIST(*rp,node);
 }
 
 void Pox_set_rank_102(NODE arg,Q *rp)

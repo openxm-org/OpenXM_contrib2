@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.46 2003/12/10 02:16:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.47 2003/12/11 05:48:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -565,7 +565,7 @@ void asir_tcp_connect_102(unsigned int serial)
 	rank = QTOS((Q)r);
 	if ( register_102(s,rank,1) < 0 ) {
 		create_error(&err,serial,
-			"failed to bind or accept in ox_tcp_connect_102");
+			"failed to connect in ox_tcp_connect_102");
 		asir_push_one((Obj)err);
 	}
 }
