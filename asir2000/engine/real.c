@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.3 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.4 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -203,9 +203,11 @@ Real *c;
 		*c = 0;
 	else {
 		t = ToReal(a)*ToReal(b);
+#if 0
 		if ( !t )
 			error("mulreal : Underflow"); /* XXX */
 		else
+#endif
 			MKReal(t,*c);
 	}
 }
@@ -220,9 +222,11 @@ Real *c;
 		*c = 0;
 	else {
 		t = ToReal(a)/ToReal(b);
+#if 0
 		if ( !t )
 			error("divreal : Underflow"); /* XXX */
 		else	
+#endif
 			MKReal(t,*c);
 	}
 }
@@ -255,16 +259,20 @@ Real *c;
 		*c = 0;
 	else if ( !RATN(b) || !INT(b) || (PL(NM((Q)b)) > 1) ) {
 		t = (double)pow((double)ToReal(a),(double)ToReal(b));
+#if 0
 		if ( !t )
 			error("pwrreal : Underflow"); /* XXX */
 		else	
+#endif
 			MKReal(t,*c);
 	} else {
 		t = pwrreal0(BDY((Real)a),BD(NM((Q)b))[0]);
 		t = SGN((Q)b)>0?t:1/t;
+#if 0
 		if ( !t )
 			error("pwrreal : Underflow"); /* XXX */
 		else	
+#endif
 			MKReal(t,*c);
 	}
 }
