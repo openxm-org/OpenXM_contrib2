@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.45 2004/02/09 08:23:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.46 2004/03/03 09:25:30 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -356,6 +356,7 @@ typedef struct oQUOTE {
 	short id;
 	short pad;
 	pointer body;
+	struct oNODE *attr;
 } *QUOTE;
 
 typedef struct oOPTLIST {
@@ -772,7 +773,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKMATHCAP(e,b) (NEWMATHCAP(e),(e)->body=(LIST)(b))
 #define MKBYTEARRAY(m,l) \
 (NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
-#define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b))
+#define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b),(q)->attr=0)
 
 #define NEXTDC(r,c) \
 if(!(r)){NEWDC(r);(c)=(r);}else{NEWDC(NEXT(c));(c)=NEXT(c);}

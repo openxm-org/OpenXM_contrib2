@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.8 2004/03/04 01:41:32 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.9 2004/03/04 03:31:28 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -67,6 +67,7 @@ void objtoquote(Obj a,QUOTE *c)
 
 	if ( !a ) {
 		MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
+		(*c)->attr = mknode(1,mknode(2,"RisaId",0));
 		return;
 	}
 	switch ( OID(a) ) {
@@ -78,9 +79,11 @@ void objtoquote(Obj a,QUOTE *c)
 			} else {
 				MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
 			}
+			(*c)->attr = mknode(1,mknode(2,"RisaId",O_N));
 			break;
 		case O_STR:
 			MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
+			(*c)->attr = mknode(1,mknode(2,"RisaId",O_STR));
 			break;
 		case O_P:
 			polytoquote((P)a,c);
@@ -89,6 +92,7 @@ void objtoquote(Obj a,QUOTE *c)
 			polytoquote(NM((R)a),&nm);
 			polytoquote(DN((R)a),&dn);
 			divquote(CO,nm,dn,c);
+			(*c)->attr = mknode(1,mknode(2,"RisaId",O_R));
 			break;
 		case O_LIST:
 			t0 = 0;
@@ -100,6 +104,7 @@ void objtoquote(Obj a,QUOTE *c)
 			if ( t0 )
 				NEXT(t) = 0;
 			MKQUOTE(*c,mkfnode(1,I_LIST,t0));
+			(*c)->attr = mknode(1,mknode(2,"RisaId",O_LIST));
 			break;
 		case O_VECT:
 			len = ((VECT)a)->len;
@@ -114,6 +119,7 @@ void objtoquote(Obj a,QUOTE *c)
 			t = mknode(2,mkfnode(1,I_FORMULA,q),mkfnode(1,I_LIST,t));
 			gen_searchf("vector",&f);
 			MKQUOTE(*c,mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,t)));
+			(*c)->attr = mknode(1,mknode(2,"RisaId",O_VECT));
 			break;
 		case O_MAT:
 			row = ((MAT)a)->row;
@@ -139,6 +145,7 @@ void objtoquote(Obj a,QUOTE *c)
 				mkfnode(1,I_FORMULA,qrow),mkfnode(1,I_FORMULA,qcol),fn);
 			gen_searchf("matrix",&f);
 			MKQUOTE(*c,mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,t)));
+			(*c)->attr = mknode(1,mknode(2,"RisaId",O_MAT));
 			break;
 		case O_DP:
 			dptoquote((DP)a,c);
@@ -158,8 +165,13 @@ void polytoquote(P a,QUOTE *c)
 	int n,i,sgn;
 	QUOTE v,r,s,u;
 
-	if ( !a || (OID(a) == O_N) ) {
+	if ( !a ) {
 		MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
+		(*c)->attr = mknode(1,mknode(2,"RisaId",0));
+		return;
+	} else if ( OID(a) == O_N ) {
+		MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
+		(*c)->attr = mknode(1,mknode(2,"RisaId",O_N));
 		return;
 	}
 	vartoquote(VR((P)a),&v);
@@ -178,6 +190,7 @@ void polytoquote(P a,QUOTE *c)
 		r = u;
 	}
 	*c = r;
+	(*c)->attr = mknode(1,mknode(2,"RisaId",O_P));
 }
 
 void dptoquote(DP a,QUOTE *c)
@@ -189,6 +202,7 @@ void dptoquote(DP a,QUOTE *c)
 
 	if ( !a ) {
 		MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)a));
+		(*c)->attr = mknode(1,mknode(2,"RisaId",0));
 		return;
 	}
 	nv = NV(a);
@@ -207,6 +221,7 @@ void dptoquote(DP a,QUOTE *c)
 		r = u;
 	}
 	*c = r;
+	(*c)->attr = mknode(1,mknode(2,"RisaId",O_DP));
 }
 
 void dctoquote(DCP dc,QUOTE v,QUOTE *q,int *sgn)
