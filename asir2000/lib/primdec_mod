@@ -342,7 +342,7 @@ def coefficientfrobeniuskernel_main(Poly)
 	Vars=vars(Poly);
 	QP=dp_ptod(Poly,Vars);
 	ANS=0;
-	FOrd=deg(setmod_ff()[1],x);
+	FOrd=deg(setmod_ff()[1],var(setmod_ff()[1]));
 	Char=setmod_ff()[0];
 	Pow=Char^(FOrd-1);
 
@@ -2083,13 +2083,13 @@ def convertsmallfield(PP,VSet,Ord)
 	dp_ord(Ord);
 	NVSet=length(VSet);
 	Char=setmod_ff()[0];
-	ExtDeg=deg(setmod_ff()[1],x);
+	ExtDeg=deg(setmod_ff()[1],var(setmod_ff()[1]));
 
-	NewV=pg;	
+	NewV=pgpgpgpgpgpgpg;	
 	MPP=map(monic_hc,PP,VSet);
 	MPP=map(sfptopsfp,MPP,NewV);
 
-	MinPoly=subst(setmod_ff()[1],x,NewV);
+	MinPoly=subst(setmod_ff()[1],var(setmod_ff()[1]),NewV);
 	XSet=cons(NewV,VSet);
 
 	Ord1=[[0,1],[Ord,NVSet]];
@@ -2109,7 +2109,7 @@ def checkgaloisorbit(PP,VSet,Ord,Flag)
 	{
 	NPP=length(PP);
 	TmpPP=PP;
-	ExtDeg=deg(setmod_ff()[1],x);
+	ExtDeg=deg(setmod_ff()[1],var(setmod_ff()[1]));
 	
 	ANS=[];
 	BNS=[];
