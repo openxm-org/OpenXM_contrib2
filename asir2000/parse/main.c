@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.13 2001/12/25 02:39:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.14 2001/12/27 07:51:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -121,17 +121,17 @@ main(int argc,char *argv[])
 		binname = slash+1;
 	else
 		binname = argv[0];
-	if ( !strcmp(binname,"ox_asir") ) {
+	if ( !strncmp(binname,"ox_asir",strlen("ox_asir")) ) {
 		/* never return */
 		ox_main(argc,argv);
 		exit(0);
 #if DO_PLOT
-	} else if ( !strcmp(binname,"ox_plot") ) {
+	} else if ( !strncmp(binname,"ox_plot",strlen("ox_plot")) ) {
 		/* never return */
 		ox_plot_main(argc,argv);
 		exit(0);
 #endif
-	} else if ( !strcmp(binname,"ox_launch") ) {
+	} else if ( !strncmp(binname,"ox_launch",strlen("ox_launch")) ) {
 		/* never return */
 		launch_main(argc,argv);
 		exit(0);
