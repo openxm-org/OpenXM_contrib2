@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.6 2001/12/25 05:28:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.7 2001/12/28 04:28:20 noro Exp $ 
 */
 #ifndef _COM_H_
 #define _COM_H_
@@ -90,6 +90,7 @@
 #if defined(VISUAL) || MPI
 struct IOFP {
 	STREAM *in,*out;
+	char *inbuf,*outbuf;
 	int s,conv;
 	char *socket;
 };
@@ -103,6 +104,7 @@ int ws_save_convv(V);
 #else
 struct IOFP {
 	FILE *in,*out;
+	char *inbuf,*outbuf;
 	int s,conv;
 	char *socket;
 };
