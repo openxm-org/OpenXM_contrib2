@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.12 2001/12/20 08:18:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.13 2001/12/25 02:39:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,8 @@
 #if PARI
 #include "genpari.h"
 
-extern JMP_BUF environnement;
+/* XXX : environment is defined in libpari.a */
+extern jmp_buf environnement;
 #endif
 
 extern JMP_BUF main_env;
@@ -198,7 +199,8 @@ main(int argc,char *argv[])
 	while ( 1 ) {
 #if PARI
 		recover(0);
-		if ( SETJMP(environnement) ) {
+		/* XXX environement is defined in libpari.a */
+		if ( setjmp(environnement) ) {
 			avma = top; recover(1);
 			resetenv("");
 		}

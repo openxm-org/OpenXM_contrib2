@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.13 2001/10/09 01:36:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.14 2001/12/25 02:39:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,8 @@ extern int asir_OperandStackSize;
 extern Obj *asir_OperandStack;
 extern int asir_OperandStackPtr;
 
-extern JMP_BUF environnement;
+/* environement is defined in libpari.a */
+extern jmp_buf environnement;
 
 extern int do_message;
 extern int ox_flushing;

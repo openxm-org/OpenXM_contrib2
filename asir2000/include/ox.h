@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.14 2001/12/21 08:23:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.15 2001/12/25 02:39:04 noro Exp $ 
 */
 #include "com.h"
 
@@ -159,7 +159,8 @@ typedef FILE *ox_stream;
 --->FIXIT
 #endif
 
-extern JMP_BUF environnement;
+/* environement is defined in libpari.a */
+extern jmp_buf environnement;
 
 extern JMP_BUF main_env;
 

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.34 2001/12/21 08:23:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.35 2001/12/25 02:39:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,7 +58,8 @@
 void ox_usr1_handler();
 int asir_ox_init();
 
-extern JMP_BUF environnement;
+/* environement is defined in libpari.a */
+extern jmp_buf environnement;
 
 extern int do_message;
 extern int ox_flushing;
@@ -488,7 +489,8 @@ int asir_executeString()
 	char *cmd;
 #if PARI
 	recover(0);
-	if ( SETJMP(environnement) ) {
+	/* environement is defined in libpari.a */
+	if ( setjmp(environnement) ) {
 		avma = top; recover(1);
 		resetenv("");
 	}
