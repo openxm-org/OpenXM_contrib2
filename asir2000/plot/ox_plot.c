@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.14 2001/12/25 02:39:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.15 2001/12/27 07:51:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -285,6 +285,11 @@ static void asir_executeFunction(int serial)
 			create_error(&err,serial,LastError);
 			asir_push_one((Obj)err);
 		}	
+	} else if ( !strcmp(func,"draw_string") ) {
+		if ( draw_string(n) < 0 ) {
+			create_error(&err,serial,LastError);
+			asir_push_one((Obj)err);
+		}
 	} else if ( !strcmp(func,"clear_canvas") ) {
 		clear_canvas(n);
 	}

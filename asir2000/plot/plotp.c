@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.8 2001/08/22 09:19:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.9 2001/10/09 01:36:28 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -297,6 +297,44 @@ void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int c
 	} else {
 		DRAWLINE(display,can->pix,drawGC,x,y,u,v);
 		DRAWLINE(display,can->window,drawGC,x,y,u,v);
+	}
+	XFlush(display);
+#endif
+}
+
+void draw_character_string(DISPLAY *display,struct canvas *can,int x,int y,char *str,int color)
+{
+#if defined(VISUAL)
+	HDC dc;
+	HPEN pen,oldpen;
+
+	if ( color ) {
+		pen = CreatePen(PS_SOLID,1,color);
+		oldpen = SelectObject(can->pix,pen);
+		DRAWSTRING(display,can->pix,drawGC,x,y,str,strlen(str));
+		SelectObject(can->pix,oldpen);
+
+		dc = GetDC(can->hwnd);
+		oldpen = SelectObject(dc,pen);
+		DRAWSTRING(display,dc,drawGC,x,y,str,strlen(str));
+		SelectObject(dc,oldpen);
+		ReleaseDC(can->hwnd,dc);
+
+		DeleteObject(pen);
+	} else {
+		DRAWSTRING(display,can->pix,drawGC,x,y,str,strlen(str));
+		dc = GetDC(can->hwnd);
+		DRAWSTRING(display,dc,drawGC,x,y,str,strlen(str));
+		ReleaseDC(can->hwnd,dc);
+	}
+#else
+	if ( color ) {
+		set_drawcolor(color);
+		DRAWSTRING(display,can->pix,cdrawGC,x,y,str,strlen(str));
+		DRAWSTRING(display,can->window,cdrawGC,x,y,str,strlen(str));
+	} else {
+		DRAWSTRING(display,can->pix,drawGC,x,y,str,strlen(str));
+		DRAWSTRING(display,can->window,drawGC,x,y,str,strlen(str));
 	}
 	XFlush(display);
 #endif

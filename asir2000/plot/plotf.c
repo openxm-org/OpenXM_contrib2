@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.10 2001/08/22 09:19:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.11 2001/10/09 01:36:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,7 +54,7 @@
 
 void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
 void Pmemory_ifplot();
-void Popen_canvas(), Pclear_canvas(), Pdraw_obj();
+void Popen_canvas(), Pclear_canvas(), Pdraw_obj(), Pdraw_string();
 void Pox_rpc();
 void Pox_cmo_rpc();
 
@@ -68,6 +68,7 @@ struct ftab plot_tab[] = {
 	{"open_canvas",Popen_canvas,-3},
 	{"clear_canvas",Pclear_canvas,2},
 	{"draw_obj",Pdraw_obj,-4},
+	{"draw_string",Pdraw_string,-5},
 /*
 	{"arrayplot",Parrayplot,2},
 */
@@ -593,6 +594,29 @@ void Pdraw_obj(NODE arg,Obj *rp)
 		arg = mknode(5,s_id,fname,index,obj,ARG3(arg));
 	else
 		arg = mknode(4,s_id,fname,index,obj);
+	Pox_cmo_rpc(arg,rp);
+}
+
+/* draw_string(s_id,cindex,pos,string,[,color]); pos=[x,y] */
+void Pdraw_string(NODE arg,Obj *rp)
+{
+	static STRING fname;
+	STRING str;
+	Q s_id,index;
+	LIST pos;
+
+	if ( !fname ) {
+		MKSTR(fname,"draw_string");
+	}
+	s_id = (Q)ARG0(arg);
+	index = (Q)ARG1(arg);
+	pos = (LIST)ARG2(arg);
+	str = (STRING)ARG3(arg);
+	/* ARG4(arg) = color */
+	if ( argc(arg) == 5 )
+		arg = mknode(6,s_id,fname,index,pos,str,ARG4(arg));
+	else
+		arg = mknode(5,s_id,fname,index,pos,str);
 	Pox_cmo_rpc(arg,rp);
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.7 2001/10/09 01:36:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.8 2001/12/25 02:39:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -301,6 +301,33 @@ int draw_obj(NODE arg)
 			set_lasterror("draw_obj : invalid request");
 			return -1;
 	}
+	return 0;
+}
+
+int draw_string(NODE arg)
+{
+	int index,x,y;
+	char *str;
+	NODE pos;
+	struct canvas *can;
+	int color;
+
+	index = QTOS((Q)ARG0(arg));
+	can = canvas[index];
+	if ( !can || !can->window ) {
+		set_lasterror("draw_string : canvas does not exist");
+		return -1;
+	}
+
+	pos = BDY((LIST)ARG1(arg));
+	str = BDY((STRING)ARG2(arg));
+	if ( argc(arg) == 4 )
+		color = QTOS((Q)ARG3(arg));
+	else
+		color = 0; /* black */
+	x = (int)ToReal((Q)ARG0(pos));
+	y = (int)ToReal((Q)ARG1(pos));
+	draw_character_string(display,can,x,y,str,color);
 	return 0;
 }
 
