@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.6 2004/12/07 15:15:52 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.7 2004/12/10 02:45:02 noro Exp $
 */
 
 #include "ca.h"
@@ -8,7 +8,7 @@
 static NumberField current_numberfield;
 extern struct order_spec *dp_current_spec;
 void simpdalg(DAlg da,DAlg *r);
-void invdalg(DAlg a,DAlg *c);
+int invdalg(DAlg a,DAlg *c);
 void rmcontdalg(DAlg a, DAlg *c);
 void algtodalg(Alg a,DAlg *r);
 void dalgtoalg(DAlg da,Alg *r);
@@ -62,7 +62,7 @@ void setfield_dalg(NODE alist)
 	nf->dim = dim = length(mblist);
 	nf->mb = mb = (DP *)MALLOC(dim*sizeof(DP));
 	for ( i = 0, t = mblist; t; t = NEXT(t), i++ )
-		mb[i] = (DP)BDY(t);	
+		mb[dim-i-1] = (DP)BDY(t);	
 }
 
 void qtodalg(Q q,DAlg *r)
@@ -463,6 +463,7 @@ void muldalg(DAlg a,DAlg b,DAlg *c)
 void divdalg(DAlg a,DAlg b,DAlg *c)
 {
 	DAlg inv,t;
+	int ret;
 
 	if ( !current_numberfield )
 		error("divdalg : current_numberfield is not set");
@@ -472,7 +473,10 @@ void divdalg(DAlg a,DAlg b,DAlg *c)
 		c = 0;
 	else {
 		qtodalg((Q)a,&t); a = t; qtodalg((Q)b,&t); b = t;
-		invdalg(b,&inv);
+		ret = invdalg(b,&inv);
+		if ( !ret ) {
+			error("divdalg : the denominator is not invertible");
+		}
 		muldalg(a,inv,c);
 	}
 }
@@ -496,10 +500,10 @@ void rmcontdalg(DAlg a, DAlg *r)
 	}
 }
 
-void invdalg(DAlg a,DAlg *c)
+int invdalg(DAlg a,DAlg *c)
 {
 	NumberField nf;
-	int dim,n,i,j;
+	int dim,n,i,j,k,l;
 	DP *mb;
 	DP m,d,u;
 	N ln,gn,qn;
@@ -510,6 +514,8 @@ void invdalg(DAlg a,DAlg *c)
 	Q **mat,**solmat;
 	MP mp0,mp;
 	int *rinfo,*cinfo;
+	int rank,nparam;
+	NODE nd0,nd,ndt;
 	struct order_spec *current_spec;
 	struct oEGT eg0,eg1;
 	extern struct oEGT eg_le;
@@ -530,12 +536,12 @@ void invdalg(DAlg a,DAlg *c)
 	MKDAlg(u,ONE,a0);
 	simp = (DAlg *)ALLOCA(dim*sizeof(DAlg));
 	current_spec = dp_current_spec; initd(nf->spec);
-	for ( i = dim-1; i >= 0; i-- ) {
+	for ( i = 0; i < dim; i++ ) {
 		m = mb[i];
-		for ( j = i+1; j < dim; j++ )
+		for ( j = i-1; j >= 0; j-- )
 			if ( dp_redble(m,mb[j]) )
 				break;
-		if ( j < dim ) {
+		if ( j >= 0 ) {
 			dp_subd(m,mb[j],&d);
 			muld(CO,d,simp[j]->nm,&u);
 			MKDAlg(u,simp[j]->dn,t);
@@ -551,29 +557,156 @@ void invdalg(DAlg a,DAlg *c)
 	NTOQ(ln,1,dn);
 	MKMAT(mobj,dim,dim+1);
 	mat = (Q **)BDY(mobj);
-	mulq(dn,a->dn,&mat[dim-1][dim]);
+	mulq(dn,a->dn,&mat[0][dim]);
 	for ( j = 0; j < dim; j++ ) {
 		divq(dn,simp[j]->dn,&mul);
-		for ( i = 0, mp = BDY(simp[j]->nm); mp && i < dim; i++ )
+		for ( i = dim-1, mp = BDY(simp[j]->nm); mp && i >= 0; i-- )
 			if ( dl_equal(n,BDY(mb[i])->dl,mp->dl) ) {
 				mulq(mul,(Q)mp->c,&mat[i][j]);
 				mp = NEXT(mp);
 			}
 	}
 	get_eg(&eg0);
-	generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);
+	rank = generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);
 	get_eg(&eg1); add_eg(&eg_le,&eg0,&eg1);
-	solmat = (Q **)BDY(sol);
-	for ( i = 0, mp0 = 0; i < dim; i++ )
-		if ( solmat[i][0] ) {
-			NEXTMP(mp0,mp);
-			mp->c = (P)solmat[i][0];
-			mp->dl = BDY(mb[i])->dl;
+	if ( cinfo[0] == dim ) {
+		/* the input is invertible */
+		solmat = (Q **)BDY(sol);
+		for ( i = dim-1, mp0 = 0; i >= 0; i-- )
+			if ( solmat[i][0] ) {
+				NEXTMP(mp0,mp);
+				mp->c = (P)solmat[i][0];
+				mp->dl = BDY(mb[i])->dl;
+			}
+		NEXT(mp) = 0; MKDP(n,mp0,u);
+		mulq(dnsol,nmc,&dn1);
+		MKDAlg(u,dn1,r);
+		rmcontdalg(r,c);
+		return 1;
+	} else
+		return 0;
+}
+
+NODE inv_or_split_dalg(DAlg a,DAlg *c)
+{
+	NumberField nf;
+	int dim,n,i,j,k,l;
+	DP *mb;
+	DP m,d,u;
+	N ln,gn,qn;
+	DAlg *simp;
+	DAlg t,a0,r;
+	Q dn,dnsol,mul,nmc,dn1;
+	MAT mobj,sol;
+	Q **mat,**solmat;
+	MP mp0,mp;
+	int *rinfo,*cinfo;
+	int rank,nparam;
+	NODE nd0,nd,ndt;
+	struct order_spec *current_spec;
+	struct oEGT eg0,eg1;
+	extern struct oEGT eg_le;
+
+	if ( !(nf=current_numberfield) )
+		error("invdalg : current_numberfield is not set");
+	if ( !a )
+		error("invdalg : division by 0");
+	else if ( NID(a) == N_Q ) {
+		invq((Q)a,&dn); *c = (DAlg)dn;
+		return;
+	}
+	dim = nf->dim;
+	mb = nf->mb;
+	n = nf->n;
+	ln = ONEN;
+	dp_ptozp(a->nm,&u); divq((Q)BDY(a->nm)->c,(Q)BDY(u)->c,&nmc);
+	MKDAlg(u,ONE,a0);
+	simp = (DAlg *)ALLOCA(dim*sizeof(DAlg));
+	current_spec = dp_current_spec; initd(nf->spec);
+	for ( i = 0; i < dim; i++ ) {
+		m = mb[i];
+		for ( j = i-1; j >= 0; j-- )
+			if ( dp_redble(m,mb[j]) )
+				break;
+		if ( j >= 0 ) {
+			dp_subd(m,mb[j],&d);
+			muld(CO,d,simp[j]->nm,&u);
+			MKDAlg(u,simp[j]->dn,t);
+			simpdalg(t,&simp[i]);
+		} else {
+			MKDAlg(m,ONE,t);
+			muldalg(t,a0,&simp[i]);
 		}
-	NEXT(mp) = 0; MKDP(n,mp0,u);
-	mulq(dnsol,nmc,&dn1);
-	MKDAlg(u,dn1,r);
-	rmcontdalg(r,c);
+		gcdn(NM(simp[i]->dn),ln,&gn); divsn(ln,gn,&qn);
+		muln(NM(simp[i]->dn),qn,&ln);
+	}
+	initd(current_spec);
+	NTOQ(ln,1,dn);
+	MKMAT(mobj,dim,dim+1);
+	mat = (Q **)BDY(mobj);
+	mulq(dn,a->dn,&mat[0][dim]);
+	for ( j = 0; j < dim; j++ ) {
+		divq(dn,simp[j]->dn,&mul);
+		for ( i = dim-1, mp = BDY(simp[j]->nm); mp && i >= 0; i-- )
+			if ( dl_equal(n,BDY(mb[i])->dl,mp->dl) ) {
+				mulq(mul,(Q)mp->c,&mat[i][j]);
+				mp = NEXT(mp);
+			}
+	}
+	get_eg(&eg0);
+	rank = generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);
+	get_eg(&eg1); add_eg(&eg_le,&eg0,&eg1);
+	if ( cinfo[0] == dim ) {
+		/* the input is invertible */
+		solmat = (Q **)BDY(sol);
+		for ( i = dim-1, mp0 = 0; i >= 0; i-- )
+			if ( solmat[i][0] ) {
+				NEXTMP(mp0,mp);
+				mp->c = (P)solmat[i][0];
+				mp->dl = BDY(mb[i])->dl;
+			}
+		NEXT(mp) = 0; MKDP(n,mp0,u);
+		mulq(dnsol,nmc,&dn1);
+		MKDAlg(u,dn1,r);
+		rmcontdalg(r,c);
+		return 0;
+	} else {
+		/* the input is not invertible */
+		nparam = (dim+1)-rank;
+		/* the index 'dim' should not be in cinfo[] */
+		solmat = (Q **)BDY(sol);
+		for ( k = 0; k < nparam; k++ )
+			if ( cinfo[k] == dim )
+				error("invdalg : cannot happen");
+		nd0 = 0;
+		for ( k = 0; k < nparam; k++ ) {
+			m = mb[cinfo[k]];
+			for ( ndt = nd0; ndt; ndt = NEXT(ndt) ) {
+				if ( dp_redble(m,(DP)BDY(ndt)) ) break;
+			}
+			/* skip a redundunt basis element */
+			if ( ndt ) continue;
+			/* construct a new basis element */
+			mp0 = 0;
+			NEXTMP(mp0,mp);
+			chsgnq(dnsol,&dn1); mp->c = (P)dn1;
+			mp->dl = BDY(m)->dl;
+			/* skip the last parameter */
+			for ( l = rank-2; l >= 0; l-- ) {
+				if ( solmat[l][k] ) {
+					NEXTMP(mp0,mp);
+					mp->c = (P)solmat[l][k];
+					mp->dl = BDY(mb[rinfo[l]])->dl;
+				}
+			}
+			NEXT(mp) = 0; MKDP(n,mp0,u);
+			NEXTNODE(nd0,nd);
+			BDY(nd) = (pointer)u;
+			NEXT(nd) = 0;
+		}
+		NEXT(nd) = 0;
+		return nd0;
+	}
 }
 
 void chsgndalg(DAlg a,DAlg *c)
@@ -597,6 +730,7 @@ void pwrdalg(DAlg a,Q e,DAlg *c)
 	Q q;
 	N en,qn;
 	int r;
+	int ret;
 
 	if ( !(nf=current_numberfield) )
 		error("pwrdalg : current_numberfield is not set");
@@ -610,7 +744,10 @@ void pwrdalg(DAlg a,Q e,DAlg *c)
 		*c = a;
 	else {
 		if ( SGN(e) < 0 ) {
-			invdalg(a,&t); a = t;
+			ret = invdalg(a,&t); 
+			if ( !ret )
+				error("pwrdalg : the denominator is not invertible");
+			a = t;
 		}
 		en = NM(e);
 		y = nf->one;

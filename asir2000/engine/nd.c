@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.121 2004/12/09 08:56:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.122 2004/12/09 13:20:33 noro Exp $ */
 
 #include "nd.h"
 
@@ -2366,6 +2366,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 			break;
 	}
 	nd_nalg = 0;
+	av = 0;
 	if ( !m ) {
 		get_algtree((Obj)f,&av);
 		for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++ );

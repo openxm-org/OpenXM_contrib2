@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.43 2004/12/18 16:50:10 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.44 2005/01/12 10:38:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -832,11 +832,12 @@ void Pinvmat(NODE arg,LIST *rp)
 	input : a row x col matrix A
 		A[I] <-> A[I][0]*x_0+A[I][1]*x_1+...
 
-	output : [B,R,C]
+	output : [B,D,R,C]
 		B : a rank(A) x col-rank(A) matrix
+		D : the denominator
 		R : a vector of length rank(A)
 		C : a vector of length col-rank(A)
-		B[I] <-> x_{R[I]}+B[I][0]x_{C[0]}+B[I][1]x_{C[1]}+...
+		B[I] <-> D*x_{R[I]}+B[I][0]x_{C[0]}+B[I][1]x_{C[1]}+...
 */
 
 void Pgeneric_gauss_elim(NODE arg,LIST *rp)

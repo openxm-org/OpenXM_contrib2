@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.8 2004/12/06 01:15:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.9 2004/12/06 09:29:34 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,6 +54,7 @@ void Pdefpoly(), Pnewalg(), Pmainalg(), Palgtorat(), Prattoalg(), Pgetalg();
 void Palg(), Palgv(), Pgetalgtree();
 void Pinvalg_le();
 void Pset_field(),Palgtodalg(),Pdalgtoalg();
+void Pinv_or_split_dalg();
 
 void mkalg(P,Alg *);
 int cmpalgp(P,P);
@@ -68,6 +69,7 @@ struct ftab alg_tab[] = {
 	{"set_field",Pset_field,1},
 	{"algtodalg",Palgtodalg,1},
 	{"dalgtoalg",Pdalgtoalg,1},
+	{"inv_or_split_dalg",Pinv_or_split_dalg,1},
 	{"invalg_le",Pinvalg_le,1},
 	{"defpoly",Pdefpoly,1},
 	{"newalg",Pnewalg,1},
@@ -97,6 +99,59 @@ void Palgtodalg(NODE arg,DAlg *rp)
 void Pdalgtoalg(NODE arg,Alg *rp)
 {
 	dalgtoalg((DAlg)ARG0(arg),rp);
+}
+
+NODE inv_or_split_dalg(DAlg,DAlg *);
+NumberField	get_numberfield();
+
+void Pinv_or_split_dalg(NODE arg,Obj *rp)
+{
+	NODE gen,t,nd0,nd;
+	LIST list;
+	int l,i,j,k,n;
+	DP *ps,*ps1,*psw;
+	NumberField nf;
+	DAlg inv;
+	extern struct order_spec *dp_current_spec;
+	struct order_spec *current_spec;
+
+	gen = inv_or_split_dalg((DAlg)ARG0(arg),&inv);
+	if ( !gen )
+		*rp = (Obj)inv;
+	else {
+		nf = get_numberfield();
+		current_spec = dp_current_spec; initd(nf->spec);
+		l = length(gen);
+		n = nf->n;
+		ps = nf->ps;
+		psw = (DP *)ALLOCA((n+l)*sizeof(DP));
+		for ( i = j = 0; i < n; i++ ) {
+			for ( t = gen; t; t = NEXT(t) )
+				if ( dp_redble(ps[i],(DP)BDY(t)) ) break;
+			if ( !t )
+				psw[j++] = ps[i];
+		}
+		nd0  = 0;
+		/* gen[0] < gen[1] < ... */
+		/* psw[0] > psw[1] > ... */
+		for ( i = j-1, t = gen; i >= 0 && t; ) {
+			NEXTNODE(nd0,nd);
+			if ( compd(CO,psw[i],(DP)BDY(t)) > 0 ) {
+				BDY(nd) = BDY(t); t = NEXT(t);
+			} else
+				BDY(nd) = (pointer)psw[i--];
+		}
+		for ( ; i >= 0; i-- ) {
+			NEXTNODE(nd0,nd); BDY(nd) = (pointer)psw[i];
+		}
+		for ( ; t; t = NEXT(t), k++ ) {
+			NEXTNODE(nd0,nd); BDY(nd) = BDY(t);
+		}
+		NEXT(nd) = 0;
+		MKLIST(list,nd0);
+		initd(current_spec);
+		*rp = (Obj)list;
+	}
 }
 
 void Pnewalg(arg,rp)
