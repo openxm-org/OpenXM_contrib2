@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.15 2002/06/12 08:19:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.16 2002/09/03 08:12:25 noro Exp $ 
 */
 extern INIT_COUNT,ITOR_FAIL$
 extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
@@ -126,6 +126,8 @@ def tolex_tl(G0,V,O,W,H)
 
 def tolex(G0,V,O,W)
 {
+	Procs = getopt(procs);
+
 	TM = TE = TNF = 0;
 	N = length(V); HM = hmlist(G0,V,O); ZD = zero_dim(HM,V,O);
 	if ( ZD )
@@ -157,7 +159,10 @@ def tolex(G0,V,O,W)
 		T0 = time()[0]; NF = gennf(G0,TL,V,O,W[N-1],ZD)[0];
 		TNF += time()[0] - T0;
 		T0 = time()[0];
-		R = tolex_main(V,O,NF,GM,M,MB);
+		if ( type(Procs) != -1 )
+			R = tolex_d_main(V,O,NF,GM,M,MB,Procs);
+		else
+			R = tolex_main(V,O,NF,GM,M,MB);
 		TE += time()[0] - T0;
 		if ( R ) {
 			if ( dp_gr_print() )
@@ -355,6 +360,85 @@ def tolex_main(V,O,NF,GM,M,MB)
 			print(["DN",B[1]]);
 	}
 	return SL;
+}
+
+def tolex_d_main(V,O,NF,GM,M,MB,Procs)
+{
+	map(ox_reset,Procs);
+	/* register data in servers */
+	map(ox_cmo_rpc,Procs,"register_data_for_find_base",NF,V,O,MB,M);
+	/* discard return value in stack */
+	map(ox_pop_cmo,Procs);
+	Free = Procs;
+	Busy = [];
+	T = GM;
+	SL = [];
+	while ( T != [] || Busy != []  ){
+		if ( Free == [] || T == [] ) {
+			/* someone is working; wait for data */
+			Ready = ox_select(Busy);
+			Busy = setminus(Busy,Ready);
+			Free = append(Ready,Free);
+			for ( ; Ready != []; Ready = cdr(Ready) )
+				SL = cons(ox_get(car(Ready)),SL);
+		} else {
+			P = car(Free);
+			Free = cdr(Free);
+			Busy = cons(P,Busy);
+			Template = car(T);
+			T = cdr(T);
+			ox_cmo_rpc(P,"find_base",Template);
+			ox_push_cmd(P,262); /* 262 = OX_popCMO */
+		}
+	}
+	return SL;
+}
+
+struct find_base_data { NF,V,O,MB,M,PosDim,DV }$
+extern Find_base$
+
+def register_data_for_find_base(NF,V,O,MB,M)
+{
+	Find_base = newstruct(find_base_data);
+	Find_base->NF = NF;
+	Find_base->V = V;
+	Find_base->O = O;
+	Find_base->M = M;
+	Find_base->MB = MB;
+
+	if ( MB ) {
+		Find_base->PosDim = 0;
+		DIM = length(MB);
+		Find_base->DV = newvect(DIM);
+	} else
+		Find_base->PosDim = 1;
+}
+
+def find_base(S) {
+	NF = Find_base->NF;
+	V = Find_base->V;
+	O = Find_base->O;
+	MB = Find_base->MB;
+	M = Find_base->M;
+	PosDim = Find_base->PosDim;
+	DV = Find_base->DV;
+
+	S = p_terms(S,V,2);
+	if ( PosDim ) {
+		MB = gather_nf_terms(S,NF,V,O);
+		DV = newvect(length(MB));
+	}
+	dp_ord(O); RHS = termstomat(NF,map(dp_ptod,cdr(S),V),MB,M);
+	dp_ord(O); NHT = nf_tab_gsl(dp_ptod(car(S),V),NF);
+	dptov(NHT[0],DV,MB);
+	dp_ord(O); B = hen_ttob_gsl([DV,NHT[1]],RHS,cdr(S),M);
+	if ( !B )
+		return 0;
+	Len = length(S);
+	for ( U = B[1]*car(S), I = 1; I < Len; I++  )
+		U += B[0][I-1]*S[I];
+	R = ptozp(U);
+	return R;
 }
 
 /*
