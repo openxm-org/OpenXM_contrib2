@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.10 2000/12/11 02:00:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.11 2000/12/13 05:37:29 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -839,6 +839,7 @@ DP *rp;
 	int *wb;
 	int hmag;
 	int sugar,psugar;
+	int fcoef;
 
 	if ( !g ) {
 		*rp = 0; return;
@@ -847,8 +848,21 @@ DP *rp;
 	wb = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
 		wb[i] = QTOS((Q)BDY(l));
-	hmag = multiple*HMAG(g);
+
+	/* check whether polys have coeffs in finite fields */
+	fcoef = 0;
+	for ( i = 0; i < n; i++ )
+		if ( has_fcoef(ps[wb[i]]) ) {
+			fcoef = 1;
+			break;
+		}
+	if ( has_fcoef(g) )
+		fcoef = 1;
+
+	if ( !fcoef )
+		hmag = multiple*HMAG(g);
 	sugar = g->sugar;
+
 	for ( d = 0; g; ) {
 		for ( u = 0, i = 0; i < n; i++ ) {
 			if ( dp_redble(g,p = ps[wb[i]]) ) {
@@ -867,12 +881,12 @@ DP *rp;
 		if ( u ) {
 			g = u;
 			if ( d ) {
-				if ( multiple && HMAG(d) > hmag ) {
+				if ( !fcoef && multiple && HMAG(d) > hmag ) {
 					dp_ptozp2(d,g,&t,&u); d = t; g = u;
 					hmag = multiple*HMAG(d);
 				}
 			} else {
-				if ( multiple && HMAG(g) > hmag ) {
+				if ( !fcoef && multiple && HMAG(g) > hmag ) {
 					dp_ptozp(g,&t); g = t;
 					hmag = multiple*HMAG(g);
 				}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PUM.c,v 1.2 2000/08/21 08:31:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PUM.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
 */
 #include "ca.h"
 
@@ -217,14 +217,14 @@ P p1,p2,*pr;
 
 		for ( i = n1; i >= n2; i-- ) {
 			if ( pw[i] ) {
-				m = pw[i];
+				chsgnmp(mod,pw[i],&m);
 				for ( j = i; j >= 0; j-- ) {
 					mulmp(vl,mod,pw[j],LC(p2),&m1); pw[j] = m1;
 				}
 
 				for ( dc = DC(p2), d = i - n2; dc; dc = NEXT(dc) ) {
 					mulmp(vl,mod,COEF(dc),m,&m1);
-					submp(vl,mod,pw[QTOS(DEG(dc))+d],m1,&m2); 
+					addmp(vl,mod,pw[QTOS(DEG(dc))+d],m1,&m2); 
 					pw[QTOS(DEG(dc))+d] = m2;
 				}
 			} else 

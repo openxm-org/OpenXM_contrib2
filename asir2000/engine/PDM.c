@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PDM.c,v 1.2 2000/08/21 08:31:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PDM.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
 */
 #ifndef MODULAR
 #define MODULAR
@@ -465,3 +465,111 @@ P f1,f2,*fqp,*frp;
 	plisttop((P *)pq,VR(f1),n1-n2,fqp); plisttop((P *)pr,VR(f1),n2-1,frp);
 }
 #endif
+
+#ifdef MODULAR
+
+int divtmp(vl,mod,p1,p2,q)
+VL vl;
+P p1,p2,*q;
+{
+	register int i,j,k;
+	register DCP dc1,dc2,dc;
+	P m,m1,s,dvr,t;
+	P *pq,*pr,*pd;
+	V v1,v2;
+	Q deg1,deg2;
+	int d1,d2,sgn;
+
+	if ( !p1 ) {
+		*q = 0;
+		return 1;
+	} else if ( NUM(p2) ) {
+		divsmp(vl,mod,p1,p2,q);
+		return 1;
+	} else if ( NUM(p1) ) {
+		*q = 0;
+		return 0;
+	} else if ( ( v1 = VR(p1) ) == ( v2 = VR(p2) ) ) {
+		dc1 = DC(p1); dc2 = DC(p2);
+		deg1 = DEG(dc1); deg2 = DEG(dc2);
+		sgn = cmpq(deg1,deg2);
+		if ( sgn == 0 )
+			if ( !divtmp(vl,mod,COEF(dc1),COEF(dc2),&m) ) {
+				*q = 0;
+				return 0;
+			} else {
+				mulmp(vl,mod,p2,m,&m1); submp(vl,mod,p1,m1,&s); 
+				if ( !s ) {
+					*q = m;
+					return 1;
+				} else {
+					*q = 0;
+					return 0;
+				}
+			}	
+		else if ( sgn < 0 ) {
+			*q = 0;
+			return 0;
+		} else {
+			if ( (PL(NM(deg1)) > 1) ) {
+				error("divtmp : invalid input");
+				*q = 0;
+				return ( 0 );
+			}
+			d1 = QTOS(deg1); d2 = QTOS(deg2); 
+			W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
+			for ( dc = dc1; dc; dc = NEXT(dc) ) 
+				pr[QTOS(DEG(dc))] = COEF(dc);
+			for ( dc = dc2; dc; dc = NEXT(dc) ) 
+				pd[QTOS(DEG(dc))] = COEF(dc);
+			for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
+				if ( !pr[i+d2] ) 
+					continue;
+				else if ( !divtmp(vl,mod,pr[i+d2],dvr,&m) ) {
+					*q = 0;
+					return 0;
+				} else {
+					pq[i] = m;
+					for ( j = d2; j >= 0; j-- ) {
+						mulmp(vl,mod,pq[i],pd[j],&m);
+						submp(vl,mod,pr[i + j],m,&s); pr[i + j] = s;
+					}
+				}
+			plisttop(pq,v1,d1 - d2,&m); plisttop(pr,v1,d1 - 1,&t);
+			if ( t ) {
+				*q = 0;
+				return 0;
+			} else {
+				*q = m;
+				return 1;
+			}
+		}
+	} else {
+		for ( ; (v1 != vl->v) && (v2 != vl->v); vl = NEXT(vl) );
+		if ( v2 == vl->v ) {
+			*q = 0;
+			return 0;
+		} else 
+			return divtdcmp(vl,mod,p1,p2,q);
+	}
+}
+
+int divtdcmp(vl,mod,p1,p2,q)
+VL vl;
+P p1,p2,*q;
+{
+
+	P m;
+	register DCP dc,dcr,dcr0,dct;
+
+	for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
+		if ( !divtmp(vl,mod,COEF(dc),p2,&m) ) {
+			*q = 0;
+			return 0;
+		} else {
+			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = m; NEXT(dcr) = 0;
+		}
+	MKP(VR(p1),dcr0,*q);
+	return 1;
+}
+#endif /* MODULAR */

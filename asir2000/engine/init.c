@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.6 2000/12/11 02:00:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.7 2000/12/22 10:03:28 saito Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -242,10 +242,13 @@ void resume_timer() {
 extern int lm_lazy, up_lazy;
 extern int GC_dont_gc;
 extern int do_weyl;
+extern int dp_fcoeffs;
 
 void reset_engine() {
-	lm_lazy = 0; up_lazy = 0;
+	lm_lazy = 0;
+	up_lazy = 0;
 	do_weyl = 0;
+	dp_fcoeffs = 0;
 	GC_dont_gc = 0;
 }
 
