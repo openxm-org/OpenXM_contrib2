@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.29 2004/02/04 07:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.30 2004/03/01 02:03:28 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -552,11 +552,8 @@ extern JMP_BUF main_env;
 
 void yyerror(char *s)
 {
-	if ( main_parser )
-		if ( I_am_server ) {
-			set_lasterror(s);
-			LONGJMP(main_env,1);
-		} else if ( ox_do_copy ) {
+	if ( main_parser ) {
+		if ( ox_do_copy ) {
 			/* push errors to DebugStack */
 		} else {
 			if ( asir_infile->fp == stdin )
@@ -564,7 +561,11 @@ void yyerror(char *s)
 			else
 				fprintf(stderr,"\"%s\", near line %d: %s\n",asir_infile->name,asir_infile->ln,s);
 		}
-	else
+		if ( I_am_server ) {
+			set_lasterror(s);
+			LONGJMP(main_env,1);
+		}
+	} else
 		fprintf(stderr,"exprparse : %s\n",s);
 }
 
