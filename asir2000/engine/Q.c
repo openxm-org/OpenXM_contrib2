@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.6 2000/12/08 06:43:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.7 2001/10/09 01:36:11 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -415,6 +415,7 @@ void mkwcm(int k,int l,int m,int *t)
 	}
 }
 
+#if 0
 void factorial(int n,Q *r)
 {
 	Q t,iq,s;
@@ -437,6 +438,64 @@ void factorial(int n,Q *r)
 		}
 		*r = t;
 	}
+}
+#endif
+
+void partial_factorial(int s,int e,N *r);
+
+void factorial(int n,Q *r)
+{
+	N nm;
+
+	if ( !n )
+		*r = ONE;
+	else if ( n < 0 ) 
+		*r = 0;
+	else {
+		partial_factorial(1,n,&nm);
+		NTOQ(nm,1,*r);
+	}
+}
+
+/* s*(s+1)*...*e */
+void partial_factorial(int s,int e,N *r)
+{
+	unsigned int len,i,m,m0,c;
+	unsigned int *p,*p1,*p2;
+	N nm,r1,r2;
+
+	/* XXX */
+	if ( e-s > 2000 ) {
+		m = (e+s)/2;
+		partial_factorial(s,m,&r1);
+		partial_factorial(m+1,e,&r2);
+		kmuln(r1,r2,r);	
+		return;
+	}
+	/* find i s.t. 2^(i-1) < m <= 2^i */
+	for ( i = 0, m = 1; m < e; m <<=1, i++ );
+	 /* XXX estimate of word length of the result */
+	len = (i*(e-s+1)+1+31)/32;
+	p = ALLOCA(len*sizeof(int));
+	p1 = ALLOCA(len*sizeof(int));
+	p[0] = s;
+	len = 1;
+	for ( i = s+1; (int)i <= e; ) {
+		for ( m0 = m = 1, c = 0; ((int)i <= e) && !c; i++ ) {
+			m0 = m; DM(m0,i,c,m)
+		}
+		if ( c ) {
+			m = m0; i--;
+		}
+		bzero(p1,(len+1)*sizeof(int));
+		muln_1(p,len,m,p1);
+		if ( p1[len] )
+			len++;
+		p2 = p; p = p1; p1 = p2;
+	}
+	*r = nm = NALLOC(len);
+	bcopy(p,BD(nm),sizeof(int)*len);
+	PL(nm) = len;
 }
 
 void invl(Q a,Q mod,Q *ar)
