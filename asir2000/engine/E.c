@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.5 2001/04/20 03:10:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.6 2001/05/02 09:03:53 noro Exp $ 
 */
 #include "ca.h"
 
@@ -294,9 +294,7 @@ Q *qp;
 	wm = W_UMALLOC(m+n); 
 
 	for ( q = ONE, t = 0, c = 0, index = 0; ; ) {
-		mod = lprime[index++];
-		if ( !mod )
-			error("henzq1 : lprime[] exhausted.");
+		mod = get_lprime(index++);
 		if ( !rem(NM((Q)LC(g)),mod) || !rem(NM((Q)LC(h)),mod) ) 
 			continue;
 		ptomp(mod,g,&tg); ptomp(mod,h,&th);
@@ -342,9 +340,7 @@ Q *qp;
 		mulp(CO,gc0,(P)q,&c); gc0 = c; mulp(CO,hc0,(P)q,&c); hc0 = c;
 	}
 	for ( index = 0; ; ) {
-		mod = lprime[index++];
-		if ( !mod )
-			error("henzq1 : lprime[] exhausted.");
+		mod = get_lprime(index++);
 		if ( !rem(NM((Q)zzz),mod) ||
 			!rem(NM((Q)LC(g)),mod) || 
 			!rem(NM((Q)LC(h)),mod) ) 

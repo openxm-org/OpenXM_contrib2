@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.10 2000/11/13 01:48:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.11 2000/12/05 06:59:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -808,7 +808,7 @@ int **rindp,**cindp;
 		if ( DP_Print ) {
 			fprintf(asir_out,"."); fflush(asir_out);
 		}
-		md = lprime[ind];
+		md = get_lprime(ind);
 		get_eg(&tmp0);
 		for ( i = 0; i < row; i++ )
 			for ( j = 0, bmi = bmat[i], wmi = wmat[i]; j < col; j++ )
@@ -953,7 +953,7 @@ int **rindp,**cindp;
 	row = mat->row; col = mat->col;
 	w = (int **)almat(row,col);
 	for ( ind = 0; ; ind++ ) {
-		md = lprime[ind];
+		md = get_lprime(ind);
 		STOQ(md,mdq);
 		for ( i = 0; i < row; i++ )
 			for ( j = 0, ai = a0[i], wi = w[i]; j < col; j++ )

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.12 2001/03/13 01:10:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.13 2001/04/20 02:34:22 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -734,11 +734,12 @@ extern UP2 ONEUP2;
 extern FILE *asir_out;
 #if defined(__GNUC__)
 extern const int sprime[];
-extern const int lprime[];
 #else
 extern int sprime[];
-extern int lprime[];
 #endif
+
+extern int lprime_size;
+extern int *lprime;
 
 extern void (*addnumt[])();
 extern void (*subnumt[])();

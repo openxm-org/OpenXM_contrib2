@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/D.c,v 1.2 2000/08/21 08:31:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/D.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
 */
 #include "ca.h"
 
@@ -338,9 +338,7 @@ N number,*root;
 	for ( index = 0, num = number; ; index++ ) {
 		if ( n == 1 )
 			goto TAIL;
-		p = lprime[index];
-		if ( !p )
-			error("nthrootn : lprime[] exhausted.");
+		p = get_lprime(index);
 		if ( !(num0 = rem(num,p)) ) 
 			continue;
 		STON(n,n1); STON(p-1,n2); gcdn(n1,n2,&gcd);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.4 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.5 2001/03/29 09:49:57 noro Exp $ 
 */
 #include "ca.h"
 
@@ -500,9 +500,7 @@ P p1,p2,*pr;
 	factorial(QTOS(n)+QTOS(m),&t);
 	mulq(u,t,&s); addq(s,s,&f);
 	for ( index = 0, q = ONE, c = 0; cmpq(f,q) >= 0; ) {
-		mod = lprime[index++];
-		if ( !mod )
-			error("sqfrum : lprime[] exhausted.");
+		mod = get_lprime(index++);
 		ptomp(mod,LC(q1),&tg);
 		if ( !tg ) 
 			continue;
@@ -549,9 +547,7 @@ P p1,p2,*pr;
 	factorial(QTOS(n)+QTOS(m),&t);
 	mulq(u,t,&s); addq(s,s,&f);
 	for ( index = 0, q = ONE, c = 0; cmpq(f,q) >= 0; ) {
-		mod = lprime[index++];
-		if ( !mod )
-			error("sqfrum : lprime[] exhausted.");
+		mod = get_lprime(index++);
 		ptomp(mod,LC(q1),&tg);
 		if ( !tg ) 
 			continue;

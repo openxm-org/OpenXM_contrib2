@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.7 2000/12/08 02:39:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.8 2000/12/21 02:45:16 murao Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -930,14 +930,15 @@ void Plprime(arg,rp)
 NODE arg;
 Q *rp;
 {
-	int i;
+	int i,p;
 
 	asir_assert(ARG0(arg),O_N,"lprime");
 	i = QTOS((Q)ARG0(arg));
-	if ( i < 0 || i >= 1000 )
+	if ( i < 0 )
 		*rp = 0;
-	else
-		STOQ(lprime[i],*rp);
+	else 
+		p = get_lprime(i);
+	STOQ(p,*rp);
 }
 
 extern int up_kara_mag, up_tkara_mag, up_fft_mag;

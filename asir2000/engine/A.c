@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/A.c,v 1.2 2000/08/21 08:31:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/A.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
 */
 #include "ca.h"
 
@@ -269,9 +269,7 @@ P p,p0,*pr;
 	wt = W_UMALLOC(m+n); ws = W_UMALLOC(m+n);
 	wm = W_UMALLOC(m+n); 
 	for ( q = ONE, t = 0, c = 0, index = 0; ; ) {
-		mod = lprime[index++];
-		if ( !mod )
-			error("pinva : lprime[] exhausted.");
+		mod = get_lprime(index++);
 		if ( !rem(NM((Q)LC(p)),mod) || !rem(NM((Q)LC(p0)),mod) ) 
 			continue;
 		ptomp(mod,p,&tg); ptomp(mod,p0,&th); srchump(mod,tg,th,&tr);

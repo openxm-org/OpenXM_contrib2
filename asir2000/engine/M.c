@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.4 2000/12/05 01:24:52 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -224,9 +224,7 @@ ML *pl;
 	mgcd = W_UMALLOC(n);
 
 	for ( j = 0, d = n; j < count && d; ) {
-		m = lprime[index++];
-		if ( !m )
-			error("sqfrum : lprime[] exhausted.");
+		m = get_lprime(index++);
 		if ( rem(NM((Q)COEF(DC(f))),m) == 0 ) continue;
 
 		ptoum(m,f,wf);
@@ -701,5 +699,3 @@ int sprime[] = {
 	16273,16301,16319,16333,16339,16349,16361,16363,16369,16381,
 	0
 };
-
-#include "prime.h"

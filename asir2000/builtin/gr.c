@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.17 2000/12/11 02:00:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.18 2001/01/12 09:03:33 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -296,7 +296,7 @@ LIST *rp;
 		modular = -modular; nochk = 1;
 	}
 	if ( modular )
-		m = modular > 1 ? modular : lprime[mindex];
+		m = modular > 1 ? modular : get_lprime(mindex);
 	else
 		m = 0;
 	makesubst(vc,&subst);
@@ -326,7 +326,7 @@ LIST *rp;
 			if ( modular > 1 ) {
 				*rp = 0; return;
 			} else
-				m = lprime[++mindex];
+				m = get_lprime(++mindex);
 		makesubst(vc,&subst);
 		psn = length(s);
 		for ( i = psn; i < pslen; i++ ) {

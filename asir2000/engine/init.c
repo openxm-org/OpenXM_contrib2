@@ -45,10 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.9 2001/03/08 07:49:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.10 2001/03/13 01:10:25 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
+#include "prime.h"
 
 struct oN oUNIN,oTWON,oTHREEN,oFOURN,oFIVEN,oSIXN,oSEVENN,oEIGHTN;
 struct oQ oUNIQ,oTWOQ,oTHREEQ,oFOURQ,oFIVEQ,oSIXQ,oSEVENQ,oEIGHTQ;
@@ -82,6 +83,9 @@ USINT VOIDobj = &oVOID;
 int bigfloat;
 int nez = 1;
 int current_mod = 0;
+
+static int *lprime;
+int lprime_size;
 
 #if PARI
 int paristack = 1<<16;
@@ -122,6 +126,7 @@ int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, cmpcplx, cmpmi, cmplm, cmpg
 #endif
 
 double get_current_time();
+void init_lprime();
 
 void nglob_init() {
 	PL(&oUNIN) = 1; BD(&oUNIN)[0] = 1;
@@ -178,6 +183,8 @@ void nglob_init() {
 	srandom((int)get_current_time());
 #endif
 	init_up2_tab();
+
+	init_lprime();
 }
 
 extern double gctime;
@@ -274,4 +281,50 @@ void create_error(ERR *err,unsigned int serial,char *msg)
 	MKSTR(errmsg,msg1);
 	MKNODE(n1,errmsg,0); MKNODE(n,ui,n1); MKLIST(list,n);
 	MKERR(*err,list);
+}
+
+void init_lprime()
+{
+	int s,i;
+
+	s = sizeof(lprime_init);
+	lprime = (int *)GC_malloc_atomic(s);
+	lprime_size = s/sizeof(int);	
+	for ( i = 0; i < lprime_size; i++ )
+		lprime[i] = lprime_init[lprime_size-i-1];
+}
+
+void create_new_lprimes(int);
+
+int get_lprime(index)
+{
+	if ( index >= lprime_size )
+		create_new_lprimes(index);
+	return lprime[index];
+}
+
+void create_new_lprimes(index)
+int index;
+{
+	int count,p,i,j,d;
+
+	if ( index < lprime_size )
+		return;
+	count = index-lprime_size+1;
+	if ( count < 256 )
+		count = 256;
+	lprime = (int *)GC_realloc(lprime,(lprime_size+count)*sizeof(int));
+	p = lprime[lprime_size-1]+2;
+	for ( i = 0; i < count; p += 2 ) {
+		for ( j = 0; d = sprime[j]; j++ ) {
+			if ( d*d > p ) {
+				lprime[i+lprime_size] = p;
+				i++;
+				break;
+			}
+			if ( !(p%d) )
+				break;
+		}
+	}
+	lprime_size += count;
 }
