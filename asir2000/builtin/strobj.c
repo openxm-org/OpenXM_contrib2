@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.3 2000/02/07 05:21:32 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.4 2000/02/07 06:04:56 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ctype.h"
@@ -6,10 +6,13 @@
 #include "genpari.h"
 extern jmp_buf environnement;
 #endif
+#include <string.h>
+
 extern char *parse_strp;
 
 void Prtostr(), Pstrtov(), Peval_str();
 void Pstrtoascii(), Pasciitostr();
+void Pstr_len(), Pstr_chr(), Psub_str();
 
 struct ftab str_tab[] = {
 	{"rtostr",Prtostr,1},
@@ -17,8 +20,85 @@ struct ftab str_tab[] = {
 	{"eval_str",Peval_str,1},
 	{"strtoascii",Pstrtoascii,1},
 	{"asciitostr",Pasciitostr,1},
+	{"str_len",Pstr_len,1},
+	{"str_chr",Pstr_chr,3},
+	{"sub_str",Psub_str,3},
 	{0,0,0},
 };
+
+void Pstr_len(arg,rp)
+NODE arg;
+Q *rp;
+{
+	STRING str;
+	int r;
+
+	str = (STRING)ARG0(arg);
+	asir_assert(str,O_STR,"str_chr");
+	r = strlen(BDY(str));
+	STOQ(r,*rp);
+}
+
+void Pstr_chr(arg,rp)
+NODE arg;
+Q *rp;
+{
+	STRING str,terminator;
+	Q start;
+	char *p,*ind;
+	int chr,spos,r;
+
+	str = (STRING)ARG0(arg);
+	start = (Q)ARG1(arg);
+	terminator = (STRING)ARG2(arg);
+	asir_assert(str,O_STR,"str_chr");
+	asir_assert(start,O_N,"str_chr");
+	asir_assert(terminator,O_STR,"str_chr");
+	p = BDY(str);
+	spos = QTOS(start);
+	chr = BDY(terminator)[0];
+	if ( spos > strlen(p) )
+		r = -1;
+	else {
+		ind = strchr(p+spos,chr);
+		if ( ind )
+			r = ind-p;
+		else
+			r = -1;
+	}
+	STOQ(r,*rp);
+}
+
+void Psub_str(arg,rp)
+NODE arg;
+STRING *rp;
+{
+	STRING str;
+	Q head,tail;
+	char *p,*r;
+	int spos,epos,len;
+
+	str = (STRING)ARG0(arg);
+	head = (Q)ARG1(arg);
+	tail = (Q)ARG2(arg);
+	asir_assert(str,O_STR,"sub_str");
+	asir_assert(head,O_N,"sub_str");
+	asir_assert(tail,O_N,"sub_str");
+	p = BDY(str);
+	spos = QTOS(head);
+	epos = QTOS(tail);
+	len = strlen(p);
+	if ( (spos >= len) || (epos < spos) ) {
+		*rp = 0; return;
+	}
+	if ( epos >= len )
+		epos = len-1;
+	len = epos-spos+1;
+	r = (char *)MALLOC(len+1);
+	strncpy(r,p+spos,len);
+	r[len] = 0;
+	MKSTR(*rp,r);
+}
 
 void Pstrtoascii(arg,rp)
 NODE arg;

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.2 2000/02/08 04:47:09 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -22,11 +22,15 @@ void Pload(), Pwhich(), Ploadfiles(), Poutput();
 void Pbsave(), Pbload(), Pbload27();
 void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
+void Popen_file(), Pclose_file(), Pget_line();
 
 extern int des_encryption;
 extern char *asir_libdir;
 
 struct ftab file_tab[] = {
+	{"open_file",Popen_file,1},
+	{"close_file",Pclose_file,1},
+	{"get_line",Pget_line,1},
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
 	{"load",Pload,-1},
@@ -45,6 +49,86 @@ struct ftab file_tab[] = {
 	{"bload_cmo",Pbload_cmo,1},
 	{0,0,0},
 };
+
+static FILE *file_ptrs[BUFSIZ];
+
+void Popen_file(arg,rp)
+NODE arg;
+Q *rp;
+{
+	char *name;
+	FILE *fp;
+	char errbuf[BUFSIZ];
+	int i;
+
+	asir_assert(ARG0(arg),O_STR,"open_file");
+	for ( i = 0; i < BUFSIZ && file_ptrs[i]; i++ );
+	if ( i == BUFSIZ )
+		error("open_file : too many open files");
+	name = BDY((STRING)ARG0(arg));
+	fp = fopen(name,"r");
+	if ( !fp ) {
+		sprintf(errbuf,"open_file : \"%s\" not found",name);
+		error(errbuf);
+	}
+	file_ptrs[i] = fp;
+	STOQ(i,*rp);
+}
+
+void Pclose_file(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int i;
+
+	asir_assert(ARG0(arg),O_N,"open_file");
+	i = QTOS((Q)ARG0(arg));
+	if ( file_ptrs[i] ) {
+		fclose(file_ptrs[i]);
+		file_ptrs[i] = 0;
+	} else
+		error("close_file : invalid argument");
+	*rp = ONE;
+}
+
+void Pget_line(arg,rp)
+NODE arg;
+STRING *rp;
+{
+	int i,j,c;
+	FILE *fp;
+	fpos_t head;
+	char *str;
+
+	asir_assert(ARG0(arg),O_N,"open_file");
+	i = QTOS((Q)ARG0(arg));
+	if ( fp = file_ptrs[i] ) {
+		if ( feof(fp) ) {
+			*rp = 0;
+			return;
+		}
+		fgetpos(fp,&head);
+		j = 0;
+		while ( 1 ) {
+			c = getc(fp);
+			if ( c == EOF ) {
+				if ( !j ) {
+					*rp = 0;
+					return;
+				} else
+					break;
+			}
+			j++;
+			if ( c == '\n' )
+				break;
+		}
+		fsetpos(fp,&head);
+		str = (char *)MALLOC_ATOMIC(j+1);	
+		fgets(str,j+1,fp);	
+		MKSTR(*rp,str);
+	} else
+		error("get_line : invalid argument");
+}
 
 void Pload(arg,rp)
 NODE arg;
