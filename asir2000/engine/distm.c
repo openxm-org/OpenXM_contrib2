@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.12 2003/07/20 08:55:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.13 2003/07/21 01:57:51 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -896,6 +896,8 @@ void adddl_dup(int n,DL d1,DL d2,DL *dr)
 #define INLINE
 #endif
 
+#define REDTAB_LEN 32003
+
 typedef struct oPGeoBucket {
 	int m;
 	struct oND *body[32];
@@ -930,9 +932,12 @@ unsigned int nd_mask0;
 NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
+NM *nd_red;
+int nd_red_len;
 
 extern int Top,Reverse;
 int nd_psn,nd_pslen;
+int nd_found,nd_create,nd_notfirst;
 
 void GC_gcollect();
 NODE append_one(NODE,int);
@@ -978,17 +983,23 @@ ND nd_mul_term(ND p,int td,unsigned int *d);
 ND nd_sp(ND_pairs p);
 ND nd_find_reducer(ND g);
 ND nd_nf(ND g,int full);
+ND nd_reduce(ND p1,ND p2);
+ND nd_reduce_special(ND p1,ND p2);
+void nd_free(ND p);
 void ndl_print(unsigned int *dl);
 void nd_print(ND p);
 void ndp_print(ND_pairs d);
 int nd_length(ND p);
 void nd_monic(ND p);
 void nd_mul_c(ND p,int mul);
+void nd_free_redlist();
+void nd_append_red(unsigned int *d,int td,int i);
 
 void nd_free_private_storage()
 {
 	_nd_free_list = 0;
 	_nm_free_list = 0;
+	nd_red = 0;
 	GC_gcollect();
 }
 
@@ -997,7 +1008,7 @@ void _NM_alloc()
 	NM p;
 	int i;
 
-	for ( i = 0; i < 10240; i++ ) {
+	for ( i = 0; i < 16; i++ ) {
 		p = (NM)GC_malloc(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _nm_free_list; _nm_free_list = p;
 	}
@@ -1388,6 +1399,105 @@ ND nd_reduce(ND p1,ND p2)
 	}
 }
 
+/* HDL(p1) = HDL(p2) */
+
+ND nd_reduce_special(ND p1,ND p2)
+{
+	int c,c1,c2,t,td,td2,mul;
+	NM m2,prev,head,cur,new;
+
+	if ( !p1 )
+		return 0;
+	else {
+		c2 = invm(HC(p2),nd_mod);
+		c1 = nd_mod-HC(p1);
+		DMAR(c1,c2,0,nd_mod,mul);
+		prev = 0; head = cur = BDY(p1);
+		NEWNM(new);
+		for ( m2 = BDY(p2); m2; ) {
+			td2 = new->td = m2->td;
+			if ( !cur ) {
+				c1 = C(m2);
+				DMAR(c1,mul,0,nd_mod,c2);
+				C(new) = c2;
+				bcopy(m2->dl,new->dl,nd_wpd*sizeof(unsigned int));
+				if ( !prev ) {
+					prev = new;
+					NEXT(prev) = 0;
+					head = prev;
+				} else {
+					NEXT(prev) = new;
+					NEXT(new) = 0;
+					prev = new;
+				}
+				m2 = NEXT(m2);
+				NEWNM(new);
+				continue;
+			}
+			if ( cur->td > td2 )
+				c = 1;
+			else if ( cur->td < td2 )
+				c = -1;
+			else
+				c = ndl_compare(cur->dl,m2->dl);
+			switch ( c ) {
+				case 0:
+					c2 = C(m2);
+					c1 = C(cur);
+					DMAR(c2,mul,c1,nd_mod,t);
+					if ( t )
+						C(cur) = t;
+					else if ( !prev ) {
+						head = NEXT(cur);
+						FREENM(cur);
+						cur = head;
+					} else {
+						NEXT(prev) = NEXT(cur);
+						FREENM(cur);
+						cur = NEXT(prev);
+					}
+					m2 = NEXT(m2);
+					break;
+				case 1:
+					prev = cur;
+					cur = NEXT(cur);
+					break;
+				case -1:
+					bcopy(m2->dl,new->dl,nd_wpd*sizeof(unsigned int));
+					if ( !prev ) {
+						/* cur = head */
+						prev = new;
+						c2 = C(m2);
+						DMAR(c2,mul,0,nd_mod,c1);
+						C(prev) = c1;
+						NEXT(prev) = head;
+						head = prev;
+					} else {
+						c2 = C(m2);
+						DMAR(c2,mul,0,nd_mod,c1);
+						C(new) = c1;
+						NEXT(prev) = new;
+						NEXT(new) = cur;
+						prev = new;
+					}
+					NEWNM(new);
+					m2 = NEXT(m2);
+					break;
+			}
+		}
+		FREENM(new);
+		if ( head ) {
+			BDY(p1) = head;
+			p1->sugar = MAX(p1->sugar,p2->sugar+td);
+			return p1;
+		} else {
+			FREEND(p1);
+			return 0;
+		}
+			
+	}
+}
+
 ND nd_sp(ND_pairs p)
 {
 	NM m;
@@ -1408,15 +1518,57 @@ ND nd_sp(ND_pairs p)
 	return nd_add(t1,t2);
 }
 
+int ndl_hash_value(int td,unsigned int *d)
+{
+	int i;
+	int r;
+
+	r = td;
+	for ( i = 0; i < nd_wpd; i++ )	
+		r = ((r<<16)+d[i])%REDTAB_LEN;
+	return r;
+}
+
 ND nd_find_reducer(ND g)
 {
 	NM m;
 	ND r,p;
 	int i,c1,c2,c;
+	int d,k;
+	NM t;
+
+#if 1
+	d = ndl_hash_value(HTD(g),HDL(g));
+	for ( m = nd_red[d], k = 0; m; m = NEXT(m), k++ ) {
+		if ( HTD(g) == m->td && ndl_equal(HDL(g),m->dl) ) {
+#if 1
+			if ( k > 0 ) nd_notfirst++;
+#endif
+			nd_found++;
+			p = nps[m->c];
+#if 1
+			c1 = invm(HC(p),nd_mod);
+			c2 = nd_mod-HC(g);
+			DMAR(c1,c2,0,nd_mod,c);
+			NEWNM(m);
+			C(m) = c;
+			m->td = HTD(g)-HTD(p);
+			ndl_sub(HDL(g),HDL(p),m->dl);
+			NEXT(m) = 0;
+			r = nd_mul_nm(p,m);
+			FREENM(m);
+			return r;
+#else
+			return p;
+#endif
+		}
+	}
+#endif
 
 	for ( i = 0; i < nd_psn; i++ ) {
 		p = nps[i];
 		if ( HTD(g) >= HTD(p) && ndl_reducible(HDL(g),HDL(p)) ) {
+			nd_create++;
 #if 1
 			NEWNM(m);
 			c1 = invm(HC(p),nd_mod);
@@ -1429,8 +1581,10 @@ ND nd_find_reducer(ND g)
 			r = nd_mul_nm(p,m);
 			FREENM(m);
 			r->sugar = m->td + p->sugar;
+			nd_append_red(HDL(g),HTD(g),i);
 			return r;
 #else
+			nd_append_red(HDL(g),HTD(g),i);
 			return p;
 #endif
 		}
@@ -1556,8 +1710,15 @@ ND nd_mul_term(ND p,int td,unsigned int *d)
 	else {
 		n = NV(p); m = BDY(p);
 		mr0 = 0;
+		NEWNM(mr0);
+		C(mr0) = C(m);
+		mr0->td = m->td+td;
+		ndl_add(m->dl,d,mr0->dl);
+		mr = mr0;
+		m = NEXT(m);
 		for ( ; m; m = NEXT(m) ) {
-			NEXTNM(mr0,mr);
+			NEWNM(NEXT(mr));
+			mr = NEXT(mr);
 			C(mr) = C(m);
 			mr->td = m->td+td;
 			ndl_add(m->dl,d,mr->dl);
@@ -1775,7 +1936,7 @@ ND nd_nf(ND g,int full)
 
 NODE nd_gb(NODE f)
 {
-	int i,nh;
+	int i,nh,sugar;
 	NODE r,g,gall;
 	ND_pairs d;
 	ND_pairs l;
@@ -1787,11 +1948,16 @@ NODE nd_gb(NODE f)
 		g = update_base(g,i);
 		gall = append_one(gall,i);
 	}
+	sugar = 0;
 	while ( d ) {
 #if 0
 		ndp_print(d);
 #endif
 		l = nd_minp(d,&d);
+		if ( l->sugar != sugar ) {
+			sugar = l->sugar;
+			fprintf(asir_out,"%d",sugar);
+		}
 		h = nd_sp(l);
 		nf = nd_nf(h,!Top);
 		if ( nf ) {
@@ -2087,15 +2253,18 @@ DP ndtodp(ND);
 
 NODE nd_setup(NODE f)
 {
-	int i;
+	int i,td;
 	NODE s,s0,f0;
 
+	nd_found = 0;
+	nd_notfirst = 0;
+	nd_create = 0;
 #if 0
 	f0 = f = NODE_sortb(f,1);
 #endif
 	nd_psn = length(f); nd_pslen = 2*nd_psn;
 	nps = (ND *)MALLOC(nd_pslen*sizeof(ND));
-	nd_bpe = 4;
+	nd_bpe = 6;
 	nd_epw = (sizeof(unsigned int)*8)/nd_bpe;
 	nd_wpd = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
 	if ( nd_bpe < 32 ) {
@@ -2107,10 +2276,13 @@ NODE nd_setup(NODE f)
 	for ( i = 0; i < nd_epw; i++ )
 		nd_mask[nd_epw-i-1] = (nd_mask0<<(i*nd_bpe));
 	nd_free_private_storage();
+	td = 0;
 	for ( i = 0; i < nd_psn; i++, f = NEXT(f) ) {
 		nps[i] = dptond((DP)BDY(f));
+		td = MAX(td,HTD(nps[i]));
 		nd_monic(nps[i]);
 	}
+	nd_red = (NM *)MALLOC(REDTAB_LEN*sizeof(NM));
 	for ( s0 = 0, i = 0; i < nd_psn; i++ ) {
 		NEXTNODE(s0,s); BDY(s) = (pointer)i;
 	}
@@ -2161,6 +2333,8 @@ void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
+	fprintf(asir_out,"found=%d,notfirst=%d,create=%d\n",
+		nd_found,nd_notfirst,nd_create);
 }
 
 void dltondl(int n,DL dl,unsigned int *r)
@@ -2309,4 +2483,33 @@ void nd_mul_c(ND p,int mul)
 		DMAR(c1,mul,0,nd_mod,c);
 		C(m) = c;
 	}
+}
+
+void nd_free(ND p)
+{
+	NM t,s;
+
+	if ( !p )
+		return;
+	t = BDY(p);
+	while ( t ) {
+		s = NEXT(t);
+		FREENM(t);
+		t = s;
+	}
+	FREEND(p);
+}
+
+void nd_append_red(unsigned int *d,int td,int i)
+{
+	NM m,m0;
+	int h;
+
+	NEWNM(m);
+	h = ndl_hash_value(td,d);
+	m->c = i;
+	m->td = td;
+	bcopy(d,m->dl,nd_wpd*sizeof(unsigned int));
+	NEXT(m) = nd_red[h];
+	nd_red[h] = m;
 }
