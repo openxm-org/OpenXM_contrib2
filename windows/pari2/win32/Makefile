@@ -25,7 +25,7 @@ PLOTLIBS   =
 #RLINCLUDE = -I..\readline
 #RLLIBS    = ..\readline\libreadline.a
 
-OBJS   =  kernel.obj mp.obj alglin1.obj alglin2.obj arith1.obj arith2.obj base1.obj base2.obj base3.obj base4.obj base5.obj bibli1.obj bibli2.obj buch1.obj buch2.obj buch3.obj buch4.obj gen1.obj gen2.obj gen3.obj highlvl.obj ifactor1.obj polarit1.obj polarit2.obj polarit3.obj rootpol.obj trans1.obj trans2.obj trans3.obj elliptic.obj galois.obj galconj.obj subgroup.obj kummer.obj mpqs.obj nffactor.obj stark.obj subfield.obj thue.obj anal.obj compat.obj errmsg.obj es.obj helpmsg.obj init.obj sumiter.obj
+OBJS   =  kernel.obj mp.obj alglin1.obj alglin2.obj arith1.obj arith2.obj base1.obj base2.obj base3.obj base4.obj base5.obj bibli1.obj bibli2.obj buch1.obj buch2.obj buch3.obj buch4.obj gen1.obj gen2.obj gen3.obj highlvl.obj ifactor1.obj polarit1.obj polarit2.obj polarit3.obj rootpol.obj trans1.obj trans2.obj trans3.obj elliptic.obj galois.obj galconj.obj subgroup.obj kummer.obj mpqs.obj nffactor.obj stark.obj subfield.obj thue.obj anal.obj compat.obj errmsg.obj es.obj helpmsg.obj init.obj sumiter.obj subcyclo.obj perm.obj aprcl.obj
 OBJSGP =  gp.obj gp_init.obj gp_rl.obj plot.obj plotport.obj
 OINLINE =  mpinl.obj
 
@@ -116,6 +116,10 @@ galconj.obj: $(HEADERS)  $(PARISRC)\basemath\galconj.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Fogalconj.obj $(PARISRC)\basemath\galconj.c
 subgroup.obj: $(HEADERS)  $(PARISRC)\basemath\subgroup.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Fosubgroup.obj $(PARISRC)\basemath\subgroup.c
+subcyclo.obj: $(HEADERS)  $(PARISRC)\basemath\subcyclo.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Fosubcyclo.obj $(PARISRC)\basemath\subcyclo.c
+perm.obj: $(HEADERS)  $(PARISRC)\basemath\perm.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Foperm.obj $(PARISRC)\basemath\perm.c
 kummer.obj: $(HEADERS)  $(PARISRC)\modules\kummer.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Fokummer.obj $(PARISRC)\modules\kummer.c
 mpqs.obj: $(HEADERS)  $(PARISRC)\modules\mpqs.c
@@ -128,6 +132,8 @@ subfield.obj: $(HEADERS)  $(PARISRC)\modules\subfield.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Fosubfield.obj $(PARISRC)\modules\subfield.c
 thue.obj: $(HEADERS)  $(PARISRC)\modules\thue.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Fothue.obj $(PARISRC)\modules\thue.c
+aprcl.obj: $(HEADERS)  $(PARISRC)\modules\aprcl.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Foaprcl.obj $(PARISRC)\modules\aprcl.c
 anal.obj: $(HEADERS) $(PARISRC)\language\anal.h $(PARISRC)\headers\parinf.h $(PARISRC)\language\anal.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS)  -Foanal.obj $(PARISRC)\language\anal.c
 compat.obj: $(HEADERS)  $(PARISRC)\language\compat.c
