@@ -957,10 +957,8 @@
 #	  define PROC_VDB
 #	endif
 #	define DYNAMIC_LOADING
-#
-#   added by noro
+/* added by noro */
 #   define USE_MMAP
-#
 #	if !defined(USE_MMAP) && defined(REDIRECT_MALLOC)
 #	    define USE_MMAP
 	    /* Otherwise we now use calloc.  Mmap may result in the	*/
