@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.25 2003/04/28 03:02:52 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.26 2003/10/20 00:58:47 takayama Exp $
  */
 /* requires 'primdec' */
 
@@ -58,8 +58,8 @@
 #define TMP_Y2 yyyyyyyy2
 #define TMP_DY2 dyyyyyyyy2
 
-if (!module_definedp("gr")) load("gr") $$
-if (!module_definedp("primdec")) load("primdec") $$
+if (!module_definedp("gr")) load("gr")$ else{ }$
+if (!module_definedp("primdec")) load("primdec")$ else{ }$
 module bfct $
   /* Empty for now. It will be used in a future. */
 endmodule $
