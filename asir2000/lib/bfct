@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.15 2001/01/11 08:43:23 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.16 2001/01/18 00:52:32 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -351,6 +351,75 @@ def bfct_via_gbfct(F)
 	return subst(R,s,-s-1);
 }
 
+/* use an order s.t. [t,x,y,z,...,dt,dx,dy,dz,...,h] */
+
+def bfct_via_gbfct_weight(F,V)
+{
+	N = length(V);
+	D = newvect(N);
+	Wt = getopt(weight);
+	if ( type(Wt) == 4 ) {
+		Tdeg = w_tdeg(F,V,Wt);
+		WtV = newvect(2*(N+1)+1);
+		WtV[0] = Tdeg;
+		WtV[N+1] = 1;
+		/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+		for ( I = 1; I <= N; I++ ) {
+			WtV[I] = Wt[I-1];
+			WtV[N+1+I] = Tdeg-Wt[I-1]+1;
+		}
+		WtV[2*(N+1)] = 1;
+		dp_set_weight(WtV);
+	}
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [t-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*dt,B);
+	}
+	V1 = cons(t,V); DV1 = cons(dt,DV);
+	W = newvect(N+1);
+	W[0] = 1;
+	R = generic_bfct(B,V1,DV1,W);
+
+	return subst(R,s,-s-1);
+}
+
+/* use an order s.t. [x,y,z,...,t,dx,dy,dz,...,dt,h] */
+
+def bfct_via_gbfct_weight_1(F,V)
+{
+	N = length(V);
+	D = newvect(N);
+	Wt = getopt(weight);
+	if ( type(Wt) == 4 ) {
+		Tdeg = w_tdeg(F,V,Wt);
+		WtV = newvect(2*(N+1));
+		/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+		for ( I = 0; I < N; I++ ) {
+			WtV[I] = Wt[I];
+			WtV[N+1+I] = Tdeg-Wt[I]+1;
+		}
+		WtV[N] = Tdeg;
+		WtV[2*N+1] = 1;
+		dp_set_weight(WtV);
+	}
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [t-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*dt,B);
+	}
+	V1 = append(V,[t]); DV1 = append(DV,[dt]);
+	W = newvect(N+1);
+	W[N] = 1;
+	R = generic_bfct(B,V1,DV1,W);
+
+	return subst(R,s,-s-1);
+}
+
 def weyl_minipolym(G,V,O,M,V0)
 {
 	N = length(V);
@@ -369,6 +438,7 @@ def weyl_minipolym(G,V,O,M,V0)
 		GI = cons(I,GI);
 
 	U = dp_mod(dp_ptod(V0,V),M,[]);
+	U = dp_weyl_nf_mod(GI,U,PS,1,M);
 
 	T = dp_mod(<<0>>,M,[]);
 	TT = dp_mod(dp_ptod(1,V),M,[]);
@@ -548,6 +618,17 @@ def v_factorial(V,N)
 {
 	for ( J = N-1, R = 1; J >= 0; J-- )
 		R *= V-J;
+	return R;
+}
+
+def w_tdeg(F,V,W)
+{
+	dp_set_weight(newvect(length(W),W));
+	T = dp_ptod(F,V);
+	for ( R = 0; T; T = cdr(T) ) {
+		D = dp_td(T);
+		if ( D > R ) R = D;
+	}
 	return R;
 }
 end$
