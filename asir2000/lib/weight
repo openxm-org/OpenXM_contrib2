@@ -120,9 +120,8 @@ def interval2value(A,Vars){
 		print("bug")$
 		return []$
 	}
-
-	if(length(B)==0){
-		if(A)
+	else if(length(B)==0){
+		if(fop(A)==0)
 			return [Vars,1]$
 		else
 			return []$
@@ -234,101 +233,23 @@ def bsort(A){
 	return A$
 }
 
-def perm(I,P,TMP){
+def wsort(A,B,C,ID){
 
-	if(I>0){
-		TMP=perm(I-1,P,TMP)$
-		for(J=I-1;J>=0;J--){
-			T=P[I]$
-			P[I]=P[J]$
-			P[J]=T$
-			TMP=perm(I-1,P,TMP)$
-			T=P[I]$
-			P[I]=P[J]$
-			P[J]=T$
-		}
+	D=newvect(length(B))$
+	for(I=0;I<length(B);I++)
+		D[I]=[A[I],B[I],C[I]]$
 
-		return TMP$
-	}
-	else{
-		for(TMP0=[],K=0;K<size(P)[0];K++)
-			TMP0=cons(P[K],TMP0)$
-				
-		TMP=cons(TMP0,TMP)$
-		return TMP$
-	}
-}
+	D=bsort(D)$
 
-def marge(A,B){
+	for(E=[],I=0;I<length(B);I++)
+		E=cons(D[I][1],E)$
+	E=reverse(E)$
 
-	RET=[]$
-	for(I=0;I<length(A);I++)
-		for(J=0;J<length(B);J++)
-			RET=cons(append(A[I],B[J]),RET)$
-
-	return RET$
-}
-
-def wsort(A,B,C,FLAG,ID){
-
-	if(FLAG==0){
-		D=newvect(length(B))$
-		for(I=0;I<length(B);I++)
-			D[I]=[A[I],B[I],C[I]]$
-
-		D=bsort(D)$
-		E=[]$
-		for(I=0;I<length(B);I++)
-			E=cons(D[I][1],E)$
-		E=reverse(E)$
-		F=[]$
-		for(I=0;I<length(B);I++)
-			F=cons(D[I][2],F)$
-		F=reverse(F)$
+	for(F=[],I=0;I<length(B);I++)
+		F=cons(D[I][2],F)$
+	F=reverse(F)$
 	
-		return [[ID,E,F]]$
-	}
-	else{
-		D=newvect(length(B))$
-		for(I=0;I<length(B);I++)
-			D[I]=[A[I],B[I],C[I]]$
-
-		D=qsort(D,worder)$
-		D0=[]$
-
-		for(I=0,J=0,TMP=[],X=0;I<size(D)[0];I++){
-			if(X==D[I][0])
-				TMP=cons(cdr(D[I]),TMP)$
-			else{
-				D0=cons(TMP,D0)$	
-				TMP=[]$
-				TMP=cons(cdr(D[I]),TMP)$
-				X=car(D[I])$
-			}
-		}
-		D0=cdr(reverse(cons(TMP,D0)))$
-		D0=map(ltov,D0)$
-		for(I=0,TMP=[[]];I<length(D0);I++){
-			TMP0=perm(length(D0[I])-1,D0[I],[])$
-			TMP=marge(TMP,TMP0)$
-		}
-		
-		RET=[]$
-		for(I=0;I<length(TMP);I++){
-			TMP0=[]$
-			TMP1=[]$
-			for(J=0;J<length(TMP[I]);J++){
-				TMP0=cons(TMP[I][J][0],TMP0)$
-				TMP1=cons(TMP[I][J][1],TMP1)$
-			}	
-			TMP0=reverse(TMP0)$
-			TMP1=reverse(TMP1)$
-
-			RET=cons([ID,TMP0,TMP1],RET)$
-		}
-		
-		return RET$
-	}	
+	return [[ID,E,F]]$
 }
 
 def nonposdegchk(Res){
@@ -588,57 +509,46 @@ def qcheck(PolyList,Vars,FLAG){
 
 	if(nonposdegchk(Res)){
 
-	   	ResVars=makeret(Res,Vars,0)$
+	   	TMP1=makeret(Res,Vars,0)$
 
-		if(checktd(PolyList,Vars,ResVars[1])==1){
-			if(ResVars[0]==0){
-				RET=append(RET,wsort(ResVars[1],Vars,
-					ResVars[1],FLAG,0))$
+		if(checktd(PolyList,Vars,TMP1[1])==1){
 
-				return RET$
-			}
-			else{
+			if(FLAG==0){
 
-				TMP=vtol(ResVars[1])$
+				if(TMP1[0]==0)
+					RET=append(RET,wsort(TMP1[1],Vars,TMP1[1],0))$
+				else{
 
-/*
-				RET=append(RET,[[0,Vars,TMP]])$
-*/
+					TMP=vtol(TMP1[1])$
 
-				if((TMP0=fixedpoint(TMP,0))!=[]){
+					if((TMP0=fixedpoint(TMP,0))!=[]){
 					
-					for(I=0;I<length(TMP0);I++)
-						TMP=map(subst,TMP,TMP0[I][0],
-							TMP0[I][1])$
+						for(I=0;I<length(TMP0);I++)
+							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
 
-					TMP=value2(Vars,TMP)$
+						TMP=value2(Vars,TMP)$
 
-					if(TMP!=[])
-						RET=append(RET,wsort(TMP,Vars,
-							TMP,FLAG,1/10))$
-				}	
-				else if((TMP0=fixedpoint(TMP,1))!=[]){
+						if(TMP!=[])
+							RET=append(RET,wsort(TMP,Vars,TMP,1/10))$
+					}	
+					else if((TMP0=fixedpoint(TMP,1))!=[]){
 					
-					for(I=0;I<length(TMP0);I++)
-						TMP=map(subst,TMP,TMP0[I][0],
-							TMP0[I][1])$
+						for(I=0;I<length(TMP0);I++)
+							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
 
-					TMP=value2(Vars,TMP)$
-
-					if(TMP!=[])
-						RET=append(RET,wsort(TMP,Vars,
-							TMP,FLAG,1/10))$
-				}	
-
-				return RET$
+						TMP=value2(Vars,TMP)$
+	
+						if(TMP!=[])
+							RET=append(RET,wsort(TMP,Vars,TMP,1/10))$
+					}
+				}
 			}
+			else if(FLAG==1)
+				RET=append(RET,[[0,Vars,vtol(TMP1[1])]])$
 		}
-		else
-			return []$
 	}
-	else
-		return []$
 
+	return RET$
 }
 
 def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
@@ -691,57 +601,49 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 
 		TMP1=makeret(Res,Vars,1)$
 
-		if(TMP1[0]==0){	
+		if(FLAG==0){
 
-			TMP=roundret(TMP1[1])$
+			if(TMP1[0]==0){	
 
-			RET=append(RET,wsort(TMP1[1],Vars,
-				map(drint,TMP1[1]*1.0),FLAG,ID))$
+				TMP=roundret(TMP1[1])$
 
-			if(TMP!=[])
-				RET=append(RET,wsort(TMP1[1],Vars,
-					TMP,FLAG,ID+1))$
+				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),ID))$
 
-			return RET$
+				if(TMP!=[])
+					RET=append(RET,wsort(TMP1[1],Vars,TMP,ID+1))$
+			}
+			else{
+
+				TMP=vtol(TMP1[1])$
+
+				if((TMP0=fixedpoint(TMP1[1],0))!=[]){
+					
+					for(I=0;I<length(TMP0);I++)
+						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
+
+					TMP=value2(Vars,TMP)$
+
+					if(TMP!=[])
+						RET=append(RET,wsort(TMP,Vars,TMP,ID+1/10))$
+				}	
+				else if((TMP0=fixedpoint(TMP1[1],1))!=[]){
+
+					for(I=0;I<length(TMP0);I++)
+						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
+
+					TMP=value2(Vars,TMP)$
+
+					if(TMP!=[])
+						RET=append(RET,wsort(TMP,Vars,TMP,ID+1/10))$
+				}
+			}
+
 		}
-		else{
-
-			TMP=vtol(TMP1[1])$
-
-/*	
+		else if(FLAG==1)
 			RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
-*/
-
-			if((TMP0=fixedpoint(TMP1[1],0))!=[]){
-					
-				for(I=0;I<length(TMP0);I++)
-					TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-
-				TMP=value2(Vars,TMP)$
-
-				if(TMP!=[])
-					RET=append(RET,
-						wsort(TMP,Vars,TMP,FLAG,ID+1/10))$
-
-			}	
-			else if((TMP0=fixedpoint(TMP1[1],1))!=[]){
-					
-				for(I=0;I<length(TMP0);I++)
-					TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-
-				TMP=value2(Vars,TMP)$
-
-				if(TMP!=[])
-					RET=append(RET,
-						wsort(TMP,Vars,TMP,FLAG,ID+1/10))$
-			}	
-
-			return RET$
-		}
 	}
-	else
-		return RET$
 
+	return RET$
 }
 
 def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
@@ -786,8 +688,7 @@ def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 	for(I=0;I<ExpMatColNum;I++)
 		for(J=0;J<PolyListNum;J++)
 			for(K=OneMat[J];K<OneMat[J+1];K++)
-				NormMat1[I][J+ExpMatColNum]-=
-					ExpMat[K][I]$
+				NormMat1[I][J+ExpMatColNum]-=ExpMat[K][I]$
 
 	for(I=0;I<PolyListNum;I++)
 		NormMat1[I+ExpMatColNum][I+ExpMatColNum]=OneMat[I+1]-OneMat[I]$
@@ -805,16 +706,18 @@ def unitweight(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 
 			TMP1=makeret(Res,Vars,1)$
 
-			TMP=roundret(TMP1[1])$
+			if(FLAG==0){		
+				TMP=roundret(TMP1[1])$
 
-			RET=append(RET,wsort(TMP1[1],Vars,
-				map(drint,TMP1[1]*1.0),FLAG,1))$
+				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),1))$
 
-			if(TMP!=[])
-				RET=append(RET,wsort(TMP1[1],Vars,
-					TMP,FLAG,2))$
+				if(TMP!=[])
+					RET=append(RET,wsort(TMP1[1],Vars,TMP,2))$
+			}
+			
+			if(FLAG==1)
+				RET=append(RET,[[1,Vars,vtol(TMP1[1])]])$
 		}
-
 	}	
 	
 	return [NormMat0,RET]$
