@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.13 2002/08/02 02:28:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.14 2002/08/02 05:39:22 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,7 @@
 #include "ifplot.h"
 
 void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
+void Ppolarplot();
 void Pmemory_ifplot();
 void Popen_canvas(), Pclear_canvas(), Pdraw_obj(), Pdraw_string();
 void Pox_rpc();
@@ -63,6 +64,7 @@ struct ftab plot_tab[] = {
 	{"memory_ifplot",Pmemory_ifplot,-7},
 	{"conplot",Pconplot,-8},
 	{"plot",Pplot,-6},
+	{"polarplot",Ppolarplot,-6},
 	{"plotover",Pplotover,3},
 	{"drawcircle",Pdrawcircle,5},
 	{"open_canvas",Popen_canvas,-3},
@@ -526,6 +528,89 @@ void Pplot(NODE arg,Q *rp)
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,s_id,fname,poly,xrange,0,0,geom,wname);
+	Pox_rpc(arg,&t);
+	*rp = s_id;
+}
+
+#define Pi 3.14159265358979323846264
+
+void Ppolarplot(NODE arg,Q *rp)
+{
+	Q m2,p2,w300,s_id;
+	NODE defrange;
+	LIST zrange,range[1],list,geom;
+	VL vl,vl0;
+	V v[1],av[1];
+	int stream,ri,i;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+	Real pi2;
+	Obj t;
+
+	MKReal(2*Pi,pi2);
+	MKNODE(n,pi2,0); MKNODE(defrange,0,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+			case O_P: case O_R:
+				poly = (P)BDY(arg);
+				get_vars_recursive((Obj)poly,&vl);
+				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+					if ( vl0->v->attr == (pointer)V_IND )
+						if ( i >= 1 )
+							error("polarplot : invalid argument");
+						else
+							v[i++] = vl0->v;
+				if ( i != 1 )
+					error("polarplot : invalid argument");
+				break;
+			case O_LIST:
+				list = (LIST)BDY(arg);
+				if ( OID(BDY(BDY(list))) == O_P )
+					if ( ri > 0 )
+						error("polarplot : invalid argument");
+					else
+						range[ri++] = list;
+				else
+					geom = list;
+				break;
+			case O_N:
+				stream = QTOS((Q)BDY(arg)); break;
+			case O_STR:
+				wname = (STRING)BDY(arg); break;
+			default:
+				error("polarplot : invalid argument"); break;
+		}
+	if ( !poly )
+		error("polarplot : invalid argument");
+	switch ( ri ) {
+		case 0:
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(zrange,n);
+			break;
+		case 1:
+			av[0] = VR((P)BDY(BDY(range[0])));
+			if ( v[0] == av[0] )
+				zrange = range[0];
+			else
+				error("polarplot : invalid argument");
+			break;
+		default:
+			error("polarplot : cannot happen"); break;
+	}
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"plot");
+	arg = mknode(8,s_id,fname,poly,0,0,zrange,geom,wname);
 	Pox_rpc(arg,&t);
 	*rp = s_id;
 }

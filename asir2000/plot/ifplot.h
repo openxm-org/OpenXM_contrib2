@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.9 2002/07/11 03:34:34 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.10 2002/07/29 03:08:16 noro Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -88,6 +88,7 @@
 
 #define MAXCANVAS 64
 #define MAXGC 16
+#define DEFAULTPOLARSTEP 400
 #define DEFAULTWIDTH 400
 #define DEFAULTHEIGHT 400
 
@@ -95,6 +96,7 @@
 #define MODE_CONPLOT 1
 #define MODE_PLOT 2
 #define MODE_INTERACTIVE 3
+#define MODE_POLARPLOT 4
 
 #define DIR_X 0
 #define DIR_Y 1

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.4 2001/08/22 09:19:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.5 2001/10/09 01:36:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,10 @@
 #include <math.h>
 #if PARI
 #include "genpari.h"
+#endif
+
+#ifndef MAXSHORT
+#define MAXSHORT ((short)0x7fff)
 #endif
 
 void calc(double **tab,struct canvas *can,int nox)
@@ -330,9 +334,6 @@ void plotcalc(struct canvas *can)
 	can->pa[0].length = w;
 	can->pa[0].pos = pa = (POINT *)MALLOC(w*sizeof(POINT));
 	for ( ix = 0; ix < w; ix++ ) {
-#ifndef MAXSHORT
-#define MAXSHORT ((short)0x7fff)
-#endif
 		double t;
 
 		XC(pa[ix]) = ix; 
@@ -343,5 +344,55 @@ void plotcalc(struct canvas *can)
 			YC(pa[ix]) = -MAXSHORT;
 		else
 			YC(pa[ix]) = (long)t;
+	}
+}
+
+void polarplotcalc(struct canvas *can)
+{
+	double xmax,xmin,ymax,ymin,dx,dy,pmin,pstep;
+	int i,nstep;
+	double usubstrp();
+	int w,h;
+	double tr,p;
+	double *tabx,*taby;
+	POINT *pa;
+	Real r;
+	Obj fr,t,s;
+
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr); 
+	w = can->width; h = can->height; nstep = can->nzstep;
+	pmin = can->zmin; pstep = (can->zmax-can->zmin)/nstep;
+	tabx = (double *)ALLOCA(nstep*sizeof(double));
+	taby = (double *)ALLOCA(nstep*sizeof(double));
+	MKReal(1,r); /* dummy real number */
+	for( i = 0, p = pmin; i < nstep ; i++, p += pstep ) {
+		/* full substitution */
+		BDY(r) = p;
+		substr(CO,0,fr,can->vx,p?(Obj)r:0,&s);
+		devalr(CO,(Obj)s,&t);
+		if ( t && (OID(t)!=O_N || NID((Num)t)!=N_R) )
+			error("polarplotcalc : invalid evaluation");
+		tr = ToReal((Num)t);	
+		tabx[i] = tr*cos(p);
+		taby[i] = tr*sin(p);
+	}
+	xmax = xmin = tabx[0];
+	ymax = ymin = taby[0];
+	for ( i = 1; i < nstep; i++ ) {
+		if ( tabx[i] > xmax ) xmax = tabx[i];
+		if ( tabx[i] < xmin ) xmin = tabx[i];
+		if ( taby[i] > ymax ) ymax = taby[i];
+		if ( taby[i] < ymin ) ymin = taby[i];
+	}
+	can->xmax = xmax; can->xmin = xmin;
+	can->ymax = ymax; can->ymin = ymin;
+	dx = xmax-xmin;
+	dy = ymax-ymin;
+	can->pa = (struct pa *)MALLOC(sizeof(struct pa));
+	can->pa[0].length = nstep;
+	can->pa[0].pos = pa = (POINT *)MALLOC(w*sizeof(POINT));
+	for ( i = 0; i < nstep; i++ ) {
+		XC(pa[i]) = (w-1)*(tabx[i]-xmin)/dx; 
+		YC(pa[i]) = (h-1)*(ymax-taby[i])/dy; 
 	}
 }
