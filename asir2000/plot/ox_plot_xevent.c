@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.10 2000/11/09 01:51:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.11 2000/11/09 02:30:44 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -643,7 +643,7 @@ static XtResource resources[] = {
 	offset(DashPixel),XtRPixel,(XtPointer)&dashPixel},
 };
 
-init_plot_display(argc,argv)
+int init_plot_display(argc,argv)
 int argc;
 char **argv;
 {
@@ -652,7 +652,9 @@ char **argv;
 	unsigned int tmp;
 
 	for ( ac = argc, av = argv; ac; ac--, av++ )
-		if ( index(*av,':') )
+		if ( !strcmp(*av,"nox") )
+			return 0;	
+		else if ( index(*av,':') )
 			dname = *av;
 	XtToolkitInitialize();
 	app_con = XtCreateApplicationContext();
@@ -660,7 +662,7 @@ char **argv;
 		options,XtNumber(options),&argc,argv);
 	if ( !display ) {
 		fprintf(stderr,"Can't open display\n");
-		exit(1);
+		return 0;	
 	}
 	toplevel = XtAppCreateShell(0,"Plot",applicationShellWidgetClass,
 		display,0,0);
@@ -681,6 +683,7 @@ char **argv;
 	create_gc();
 	create_font();
 	create_cursors();
+	return 1;
 }
 
 static char *scalefont = "*-8-80-*";

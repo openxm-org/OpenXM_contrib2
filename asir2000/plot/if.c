@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.4 2000/11/07 06:06:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.5 2000/11/09 01:51:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -135,6 +135,69 @@ int plot(NODE arg)
 		ifplotmain(can);
 	copy_to_canvas(can);
 	return id;
+}
+
+int memory_plot(NODE arg,LIST *bytes)
+{
+	int id;
+	NODE n;
+	struct canvas tmp_can;
+	struct canvas *can;
+	P formula;
+	LIST xrange,yrange,zrange,wsize;
+	int width,height;
+	double **tabe;
+	int i;
+	BYTEARRAY barray;
+	Q qw,qh;
+
+	formula = (P)ARG0(arg);
+	xrange = (LIST)ARG1(arg);
+	yrange = (LIST)ARG2(arg);
+	zrange = (LIST)ARG3(arg);
+	wsize = (LIST)ARG4(arg);
+
+	can = &tmp_can;
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax); 
+	if ( yrange ) {
+		n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+		can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+		can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax); 
+		if ( zrange ) {
+			n = NEXT(BDY(zrange));
+			can->zmin = ToReal(BDY(n)); n = NEXT(n); can->zmax = ToReal(BDY(n));
+			if ( n = NEXT(n) )
+				can->nzstep = QTOS((Q)BDY(n));
+			else
+				can->nzstep = MAXGC;
+			can->mode = MODE_CONPLOT;
+		} else
+			can->mode = MODE_IFPLOT;
+	} else
+		can->mode = MODE_PLOT;
+	if ( !wsize ) {
+		can->width = DEFAULTWIDTH; can->height = DEFAULTHEIGHT;
+	} else {
+		can->width = QTOS((Q)BDY(BDY(wsize)));
+		can->height = QTOS((Q)BDY(NEXT(BDY(wsize))));
+	}
+	can->wname = "";
+	can->formula = formula; 
+	if ( can->mode == MODE_PLOT )
+		plotcalc(can);
+	else {
+		width = can->width; height = can->height;
+		tabe = (double **)ALLOCA(width*sizeof(double *));
+		for ( i = 0; i < width; i++ )
+			tabe[i] = (double *)ALLOCA(height*sizeof(double));
+		calc(tabe,can,1);
+		memory_if_print(tabe,can,&barray);
+		STOQ(width,qw); STOQ(height,qh);
+		n = mknode(3,qw,qh,barray);
+		MKLIST(*bytes,n);
+	}
 }
 
 int plotover(NODE arg)
@@ -475,7 +538,7 @@ struct canvas *can;
 		tabe[i] = (double *)ALLOCA(height*sizeof(double));
 	define_cursor(can->window,runningcur);
 	set_busy(can); set_selection();
-	calc(tabe,can); if_print(display,tabe,can);
+	calc(tabe,can,0); if_print(display,tabe,can);
 	reset_selection(); reset_busy(can);
 	define_cursor(can->window,normalcur);
 }

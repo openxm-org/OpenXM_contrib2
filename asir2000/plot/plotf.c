@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.8 2000/11/22 04:03:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.9 2001/06/04 02:49:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,10 +53,12 @@
 #include "ifplot.h"
 
 void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
+void Pmemory_ifplot();
 void Popen_canvas(), Pclear_canvas(), Pdraw_obj();
 
 struct ftab plot_tab[] = {
 	{"ifplot",Pifplot,-7},
+	{"memory_ifplot",Pmemory_ifplot,-7},
 	{"conplot",Pconplot,-8},
 	{"plot",Pplot,-6},
 	{"plotover",Pplotover,3},
@@ -223,6 +225,111 @@ Obj *rp;
 	}
 	MKSTR(fname,"plot");
 	arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
+	Pox_rpc(arg,rp);
+}
+
+void Pmemory_ifplot(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	Q m2,p2,w300,s_id;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int stream,ri,id,i;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; stream = -1; ri = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+			case O_P:
+				poly = (P)BDY(arg); 
+				get_vars_recursive(poly,&vl);
+				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+					if ( vl0->v->attr == V_IND )
+						if ( i >= 2 )
+							error("ifplot : invalid argument");
+						else
+							v[i++] = vl0->v;
+				break;
+			case O_LIST:
+				list = (LIST)BDY(arg);
+				if ( OID(BDY(BDY(list))) == O_P )
+					if ( ri > 1 )
+						error("ifplot : invalid argument");
+					else
+						range[ri++] = list;
+				else
+					geom = list;
+				break;
+			case O_N:
+				stream = QTOS((Q)BDY(arg)); break;
+			default:
+				error("memory_ifplot : invalid argument"); break;
+		}
+	if ( !poly )
+		error("memory_ifplot : invalid argument");
+	switch ( ri ) {
+		case 0:
+			if ( !v[1] )
+				error("memory_ifplot : please specify all variables");
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			break;
+		case 1:
+			if ( !v[1] )
+				error("memory_ifplot : please specify all variables");
+			av[0] = VR((P)BDY(BDY(range[0])));
+			if ( v[0] == av[0] ) {
+				xrange = range[0];
+				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			} else if ( v[1] == av[0] ) {
+				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+				yrange = range[0];
+			} else
+				error("memory_ifplot : invalid argument");
+			break;
+		case 2:
+			av[0] = VR((P)BDY(BDY(range[0])));
+			av[1] = VR((P)BDY(BDY(range[1])));
+			if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+					xrange = range[0]; yrange = range[1];
+			} else
+					error("memory_ifplot : invalid argument");
+			break;
+		default:
+			error("memory_ifplot : cannot happen"); break;
+	}
+	/* memory_ifplot in ox_plot requires 
+	   [s_id (Q),
+	   	formula (Obj),
+	   	xrange=[x,xmin,xmax] (LIST),
+	   	yrange=[y,ymin,ymax] (LIST),
+	   	zrange=0,
+	   	geom=[xsize,ysize] (LIST)]
+	*/
+
+	if ( stream < 0 )
+		stream = current_s;
+	else
+		current_s = stream;
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"memory_plot");
+	arg = mknode(7,s_id,fname,poly,xrange,yrange,0,geom);
 	Pox_rpc(arg,rp);
 }
 

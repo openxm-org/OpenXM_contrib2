@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.2 2000/08/21 08:31:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.3 2000/08/22 05:04:30 noro Exp $ 
 */
 #include "ca.h"
 #include "ifplot.h"
@@ -56,9 +56,10 @@
 
 double usubstrp(P,double);
 
-void calc(tab,can)
+void calc(tab,can,nox)
 double **tab;
 struct canvas *can;
+int nox;
 {
 	double x,y,xmin,ymin,xstep,ystep;
 	int ix,iy;
@@ -68,7 +69,7 @@ struct canvas *can;
 	V vx,vy;
 	Obj t,s;
 
-	initmarker(can,"Evaluating...");
+	if ( !nox ) initmarker(can,"Evaluating...");
 	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
 	vx = can->vx;
 	vy = can->vy;
@@ -79,12 +80,12 @@ struct canvas *can;
 	for( ix = 0, x = xmin; ix < w ; ix++, x += xstep ) {
 #if 0
 		MKReal(x,r); substp(CO,fr,vx,(P)r,&g);
-		marker(can,DIR_X,ix);
+		if ( !nox ) marker(can,DIR_X,ix);
 		for( iy = 0, y = ymin; iy < h ; iy++, y += ystep )
 			tab[ix][iy] = usubstrp(g,y);
 #endif
 		BDY(rx) = x; substr(CO,0,fr,vx,x?(P)rx:0,&t); devalr(CO,t,&g);
-		marker(can,DIR_X,ix);
+		if ( !nox ) marker(can,DIR_X,ix);
 		for( iy = 0, y = ymin; iy < h ; iy++, y += ystep ) {
 			BDY(ry) = y;
 			substr(CO,0,g,vy,y?(P)ry:0,&t); devalr(CO,t,&s);

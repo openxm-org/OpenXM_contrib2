@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.10 2000/11/09 01:51:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.11 2001/08/20 09:03:28 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -102,11 +102,15 @@ void ox_plot_main(int argc,char **argv)
 	int ds;
 	fd_set r;
 	int n;
+	int use_x;
 
 #if !defined(VISUAL)
 	ox_asir_init(argc,argv);
-	init_plot_display(argc,argv);
-	ds = ConnectionNumber(display);
+	use_x = init_plot_display(argc,argv);
+	if ( use_x )
+		ds = ConnectionNumber(display);
+	else
+		fprintf(stderr,"Entering no X mode\n");
 #endif
 	if ( do_message )
 		fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
@@ -123,7 +127,7 @@ void ox_plot_main(int argc,char **argv)
 #else
 		if ( ox_data_is_available(0) )
 			process_ox();
-		else {
+		else if ( use_x ) {
 			FD_ZERO(&r);
 			FD_SET(3,&r); FD_SET(ds,&r);
 			select(FD_SETSIZE,&r,NULL,NULL,NULL);
@@ -249,6 +253,7 @@ int serial;
 	VL vl;
 	ERR err;
 	NODE n,n1; 
+	LIST bytes;
 
 	func = ((STRING)asir_pop_one())->body;
 	argc = (int)(((USINT)asir_pop_one())->body);
@@ -263,6 +268,8 @@ int serial;
 	if ( !strcmp(func,"plot") ) {
 		id = plot(n);
 		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"memory_plot") ) {
+		memory_plot(n,&bytes); asir_push_one((Obj)bytes);
 	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
 		STOQ(id,ret); asir_push_one((Obj)ret);
