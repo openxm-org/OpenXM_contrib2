@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.7 2003/07/25 07:25:16 noro Exp $ */
+/* $OpenXM$ */
 
 #include "ca.h"
 #include "inline.h"
@@ -149,6 +149,7 @@ NDV ndv_red;
 ND ndv_add(ND p1,NDV p2);
 NDV ndtondv(ND p);
 void ndv_mul_nm(NDV pv,NM m,NDV r);
+ND ndv_mul_nm_create(NDV p,NM m0);
 #endif
 
 void nd_free_private_storage()
@@ -773,10 +774,40 @@ int ndl_check_bound2(int index,unsigned int *d2)
 	}
 }
 
+#if USE_NDV
 int nd_sp(ND_pairs p,ND *rp)
 {
 	NM m;
-	ND p1,p2,t1,t2;
+	NDV p1,p2;
+	ND t1,t2;
+	unsigned int *lcm;
+	int td;
+
+	p1 = nd_psv[p->i1];
+	p2 = nd_psv[p->i2];
+	lcm = p->lcm;
+	td = p->td;
+	NEWNM(m);
+	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl);
+	if ( ndl_check_bound2(p->i1,m->dl) )
+		return 0;
+	t1 = ndv_mul_nm_create(p1,m);
+	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
+	if ( ndl_check_bound2(p->i2,m->dl) ) {
+		nd_free(t1);
+		return 0;
+	}
+	ndv_mul_nm(p2,m,ndv_red);
+	FREENM(m);
+	*rp = ndv_add(t1,ndv_red);
+	return 1;
+}
+#else
+int nd_sp(ND_pairs p,ND *rp)
+{
+	NM m;
+	ND p1,p2;
+	ND t1,t2;
 	unsigned int *lcm;
 	int td;
 
@@ -785,20 +816,21 @@ int nd_sp(ND_pairs p,ND *rp)
 	lcm = p->lcm;
 	td = p->td;
 	NEWNM(m);
-	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl); NEXT(m) = 0;
+	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl);
 	if ( ndl_check_bound2(p->i1,m->dl) )
 		return 0;
-	t1 = nd_mul_nm(p1,m);
+	t1 = nd_mul_ind_nm(p->i1,m);
 	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
 	if ( ndl_check_bound2(p->i2,m->dl) ) {
 		nd_free(t1);
 		return 0;
 	}
-	t2 = nd_mul_nm(p2,m);
+	t2 = nd_mul_ind_nm(p->i2,m);
 	FREENM(m);
 	*rp = nd_add(t1,t2);
 	return 1;
 }
+#endif
 
 INLINE int ndl_hash_value(int td,unsigned int *d)
 {
@@ -811,7 +843,7 @@ INLINE int ndl_hash_value(int td,unsigned int *d)
 	return r;
 }
 
-int nd_find_reducer(ND g)
+INLINE int nd_find_reducer(ND g)
 {
 	NM m;
 	ND p;
@@ -835,24 +867,6 @@ int nd_find_reducer(ND g)
 		}
 	}
 	return -1;
-}
-
-ND nd_find_monic_reducer(ND g)
-{
-	int *d;
-	ND p,r;
-	int i;
-
-	for ( i = 0; i < nd_psn; i++ ) {
-		p = nd_ps[i];
-		if ( HTD(g) >= HTD(p) && ndl_reducible(HDL(g),HDL(p)) ) {
-			d = (int *)ALLOCA(nd_wpd*sizeof(int));
-			ndl_sub(HDL(g),HDL(p),d);
-			r = nd_mul_term(p,HTD(g)-HTD(p),d);
-			return r;
-		}
-	}
-	return 0;
 }
 
 ND nd_add(ND p1,ND p2)
@@ -999,29 +1013,6 @@ ND nd_mul_ind_nm(int index,NM m0)
 	MKND(NV(p),mr0,r);
 	r->sugar = p->sugar + td;
 	return r;
-}
-
-ND nd_mul_term(ND p,int td,unsigned int *d)
-{
-	NM m,mr,mr0;
-	int c,n;
-	ND r;
-
-	if ( !p )
-		return 0;
-	else {
-		n = NV(p); m = BDY(p);
-		for ( mr0 = 0; m; m = NEXT(m) ) {
-			NEXTNM(mr0,mr);
-			C(mr) = C(m);
-			mr->td = m->td+td;
-			ndl_add(m->dl,d,mr->dl);
-		}
-		NEXT(mr) = 0; 
-		MKND(NV(p),mr0,r);
-		r->sugar = p->sugar + td;
-		return r;
-	}
 }
 
 #if 1
@@ -1916,7 +1907,8 @@ unsigned int *dp_compute_bound(DP p)
 			d2[i] = d[i] > d1[i] ? d[i] : d1[i];
 		t = d1; d1 = d2; d2 = t;
 	}
-	l = ((nd_nvar+(sizeof(unsigned int)-1))/sizeof(unsigned int))*sizeof(unsigned int);
+	l = ((nd_nvar+(sizeof(unsigned int)-1))
+		/sizeof(unsigned int))*sizeof(unsigned int);
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
 	bzero(t,l*sizeof(unsigned int));
 	bcopy(d1,t,nd_nvar*sizeof(unsigned int));
@@ -1926,7 +1918,7 @@ unsigned int *dp_compute_bound(DP p)
 unsigned int *nd_compute_bound(ND p)
 {
 	unsigned int *d1,*d2,*t;
-	int i;
+	int i,l;
 	NM m;
 
 	if ( !p )
@@ -1938,8 +1930,10 @@ unsigned int *nd_compute_bound(ND p)
 		ndl_lcm(m->dl,d1,d2);
 		t = d1; d1 = d2; d2 = t;
 	}
-	t = (unsigned int *)MALLOC_ATOMIC(nd_nvar*sizeof(unsigned int));
-	bzero(t,nd_nvar*sizeof(unsigned int));
+	l = ((nd_nvar+(sizeof(unsigned int)-1))
+		/sizeof(unsigned int))*sizeof(unsigned int);
+	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
+	bzero(t,l*sizeof(unsigned int));
 	for ( i = 0; i < nd_nvar; i++ )
 		t[i] = (d1[i/nd_epw]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))&nd_mask0;
 	return t;
@@ -2108,12 +2102,9 @@ void ndv_mul_nm(NDV p,NM m0,NDV r)
 		n = NV(p); m = BDY(p); len = p->len;
 		d = m0->dl; td = m0->td; c = C(m0);
 		mr = BDY(r);
-		for ( i = 0; i < len; i++, NMV_ADV(m), NMV_ADV(mr) ) {
-			c1 = C(m);
-			DMAR(c1,c,0,nd_mod,c2);
-			C(mr) = c2;
-			mr->td = m->td+td;
-			ndl_add(m->dl,d,mr->dl);
+		for ( ; len > 0; len--, NMV_ADV(m), NMV_ADV(mr) ) {
+			c1 = C(m); DMAR(c1,c,0,nd_mod,c2); C(mr) = c2;
+			mr->td = m->td+td; ndl_add(m->dl,d,mr->dl);
 		}
 		NV(r) = NV(p);
 		r->len = p->len;
@@ -2121,10 +2112,41 @@ void ndv_mul_nm(NDV p,NM m0,NDV r)
 	}
 }
 
+ND ndv_mul_nm_create(NDV p,NM m0)
+{
+	NM mr,mr0;
+	NMV m;
+	unsigned int *d,*dt,*dm;
+	int c,n,td,i,c1,c2,len;
+	ND r;
+
+	if ( !p )
+		return 0;
+	else {
+		n = NV(p); m = BDY(p);
+		d = m0->dl; td = m0->td; c = C(m0);
+		len = p->len;
+		mr0 = 0;
+		for ( i = 0; i < len; i++, NMV_ADV(m) ) {
+			NEXTNM(mr0,mr);
+			c1 = C(m);
+			DMAR(c1,c,0,nd_mod,c2);
+			C(mr) = c2;
+			mr->td = m->td+td;
+			ndl_add(m->dl,d,mr->dl);
+		}
+		NEXT(mr) = 0; 
+		MKND(NV(p),mr0,r);
+		r->sugar = p->sugar + td;
+		return r;
+	}
+}
+
 ND ndv_add(ND p1,NDV p2)
 {
+	register NM prev,cur,new;
 	int c,c1,c2,t,td,td2,mul,len,i;
-	NM prev,head,cur,new;
+	NM head;
 	unsigned int *d;
 	NMV m2;
 
@@ -2132,77 +2154,52 @@ ND ndv_add(ND p1,NDV p2)
 		return 0;
 	else {
 		prev = 0; head = cur = BDY(p1);
-		NEWNM(new);
-		len = p2->len;
-		for ( m2 = BDY(p2), i = 0; i < len; ) {
+		NEWNM(new); len = p2->len;
+		for ( m2 = BDY(p2), i = 0; cur && i < len; ) {
 			td2 = new->td = m2->td;
-			if ( !cur ) {
-				C(new) = C(m2);
-				ndl_copy(m2->dl,new->dl);
-				if ( !prev ) {
-					prev = new;
-					NEXT(prev) = 0;
-					head = prev;
-				} else {
-					NEXT(prev) = new;
-					NEXT(new) = 0;
-					prev = new;
-				}
-				NMV_ADV(m2); i++;
-				NEWNM(new);
-				continue;
-			}
-			if ( cur->td > td2 )
-				c = 1;
-			else if ( cur->td < td2 )
-				c = -1;
-			else
-				c = ndl_compare(cur->dl,m2->dl);
+			if ( cur->td > td2 ) c = 1;
+			else if ( cur->td < td2 ) c = -1;
+			else c = ndl_compare(cur->dl,m2->dl);
 			switch ( c ) {
 				case 0:
 					t = C(m2)+C(cur)-nd_mod;
-					if ( t < 0 )
-						t += nd_mod;
-					if ( t )
-						C(cur) = t;
+					if ( t < 0 ) t += nd_mod;
+					if ( t ) C(cur) = t;
 					else if ( !prev ) {
-						head = NEXT(cur);
-						FREENM(cur);
-						cur = head;
+						head = NEXT(cur); FREENM(cur); cur = head;
 					} else {
-						NEXT(prev) = NEXT(cur);
-						FREENM(cur);
-						cur = NEXT(prev);
+						NEXT(prev) = NEXT(cur); FREENM(cur); cur = NEXT(prev);
 					}
 					NMV_ADV(m2); i++;
 					break;
 				case 1:
-					prev = cur;
-					cur = NEXT(cur);
+					prev = cur; cur = NEXT(cur);
 					break;
 				case -1:
 					ndl_copy(m2->dl,new->dl);
+					C(new) = C(m2);
 					if ( !prev ) {
 						/* cur = head */
-						prev = new;
-						C(prev) = C(m2);
-						NEXT(prev) = head;
-						head = prev;
+						prev = new; NEXT(prev) = head; head = prev;
 					} else {
-						C(new) = C(m2);
-						NEXT(prev) = new;
-						NEXT(new) = cur;
-						prev = new;
+						NEXT(prev) = new; NEXT(new) = cur; prev = new;
 					}
-					NEWNM(new);
-					NMV_ADV(m2); i++;
+					NEWNM(new); NMV_ADV(m2); i++;
 					break;
 			}
 		}
+		for ( ; i < len; i++, NMV_ADV(m2) ) {
+			td2 = new->td = m2->td; C(new) = C(m2); ndl_copy(m2->dl,new->dl);
+			if ( !prev ) {
+				prev = new; NEXT(prev) = 0; head = prev;
+			} else {
+				NEXT(prev) = new; NEXT(new) = 0; prev = new;
+			}
+			NEWNM(new);
+		}
 		FREENM(new);
 		if ( head ) {
-			BDY(p1) = head;
-			p1->sugar = MAX(p1->sugar,p2->sugar);
+			BDY(p1) = head; p1->sugar = MAX(p1->sugar,p2->sugar);
 			return p1;
 		} else {
 			FREEND(p1);
