@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /machine:I386
-# ADD LINK32 ..\asir2000lib\release\\asir2000lib.lib ..\pari2\win32\libpariw.lib ws2_32.lib /nologo /stack:0x10000000 /subsystem:windows /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Release/engine.exe"
+# ADD LINK32 ..\asir2000lib\release\\asir2000lib.lib ..\pari2\win32\libpariw.lib ws2_32.lib user32.lib /nologo /stack:0x10000000 /subsystem:windows /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Release/engine.exe"
 
 !ELSEIF  "$(CFG)" == "engine2000 - Win32 Debug"
 
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 ..\asir2000lib\debug\asir2000lib.lib ..\pari2\win32\libpariw.lib ws2_32.lib /nologo /stack:0x10000000 /subsystem:windows /debug /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Debug/engine.exe" /pdbtype:sept
+# ADD LINK32 ..\asir2000lib\debug\asir2000lib.lib ..\pari2\win32\libpariw.lib ws2_32.lib user32.lib /nologo /stack:0x10000000 /subsystem:windows /debug /machine:I386 /nodefaultlib:"libc.lib" /nodefaultlib:"libcmt.lib" /nodefaultlib:"msvcrtd.lib" /out:"Debug/engine.exe" /pdbtype:sept
 
 !ENDIF 
 
