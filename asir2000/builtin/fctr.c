@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.18 2003/01/06 01:16:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.19 2003/01/13 06:40:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -342,8 +342,41 @@ P *rp;
 {
 	Q t;
 
+    NODE opt,tt,p;
+    NODE n,n0;
+    char *key;
+    int get_factor=0;
+
 	asir_assert(ARG0(arg),O_P,"ptozp");
+
+    /* analyze the option */
+    if ( argc(arg) == 2 && OID(ARG1(arg)) == O_OPTLIST ) {
+      opt = BDY((OPTLIST)ARG1(arg));
+      for ( tt = opt; tt; tt = NEXT(tt) ) {
+        p = BDY((LIST)BDY(tt));
+        key = BDY((STRING)BDY(p));
+        /*  value = (Obj)BDY(NEXT(p)); */
+        if ( !strcmp(key,"factor") )  get_factor=1;
+        else {
+          error("ptozp: unknown option.");
+        }
+      }
+    }
+
 	ptozp((P)ARG0(arg),1,&t,rp);
+
+    /* printexpr(NULL,t); */
+	/* if the option factor is given, then it returns the answer
+       in the format [zpoly, num] where num*zpoly is equal to the argument.*/
+    if (get_factor) {
+      n0 = n0 = 0;
+      NEXTNODE(n0,n);
+      BDY(n) = (pointer) *rp;
+      NEXTNODE(n0,n);
+      BDY(n) = (pointer) t;
+      if (n0) NEXT(n) = 0;
+      MKLIST(*((LIST *)rp),n0);
+    }
 }
 
 void Pafctr(arg,rp)
