@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.19 2004/03/17 02:10:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.20 2004/03/17 02:23:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,9 +54,13 @@
 #include "genpari.h"
 #endif
 
-extern int hex_output,fortran_output,double_output,real_digit;
+#ifndef CPRINT
+#define CPRINT
+#endif
 
-#define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
+extern int hex_output,fortran_output,double_output,real_digit;
+extern int hideargs,outputstyle;
+static int total_length;
 
 #define TAIL
 #define PUTS(s) (total_length+=strlen(s))
@@ -97,39 +101,9 @@ extern int hex_output,fortran_output,double_output,real_digit;
 #define PRINTFNODENODE length_fnodenode
 #define PRINTFNODE length_fnode
 
-void PRINTEXPR();
-void PRINTNUM();
-void PRINTN();
-void PRINTV();
-void PRINTP();
-void PRINTR();
-void PRINTLIST();
-void PRINTVECT();
-void PRINTMAT();
-void PRINTSTR();
-void PRINTCOMP();
-void PRINTDP();
-void PRINTUI();
-void PRINTGF2MAT();
-void PRINTGFMMAT();
-void PRINTBYTEARRAY();
-void PRINTQUOTE();
-void PRINTSYMBOL();
-void PRINTRANGE();
-void PRINTTB();
-void PRINTERR();
-void PRINTCPLX();
-void PRINTLM();
-void PRINTLF();
-void PRINTUP();
-void PRINTUM();
-void PRINTUP2();
-void PRINTFOP();
-void PRINTEOP();
-void PRINTLOP();
-void PRINTQOP();
-void PRINTSF();
-void PRINTFNODE();
+#include "pexpr_body.c"
+
+/* special functions for estimating length */
 
 static int total_length;
 
@@ -156,71 +130,6 @@ void PRINTBF(BF a)
 	free(str);
 }
 #endif
-
-void PRINTEXPR(VL vl,pointer p)
-{
-	if ( !p ) {
-		total_length++;
-		return;
-	}
-
-	switch ( OID(p) ) {
-		case O_N:
-			PRINTNUM((Num)p); break;
-		case O_P:
-			PRINTP(vl,(P)p); break;
-		case O_R:
-			PRINTR(vl,(R)p); break;
-		case O_LIST:
-			PRINTLIST(vl,(LIST)p); break;
-		case O_VECT:
-			PRINTVECT(vl,(VECT)p); break;
-		case O_MAT:
-			PRINTMAT(vl,(MAT)p); break;
-		case O_STR:
-			PRINTSTR((STRING)p); break;
-		case O_COMP:
-			PRINTCOMP(vl,(COMP)p); break;
-		case O_DP:
-			PRINTDP(vl,(DP)p); break;
-		case O_USINT:
-			PRINTUI(vl,(USINT)p); break;
-		case O_GF2MAT:
-			PRINTGF2MAT(vl,(GF2MAT)p); break;
-		case O_ERR:
-			PRINTERR(vl,(ERR)p); break;
-		case O_MATHCAP:
-			PRINTLIST(vl,((MATHCAP)p)->body); break;
-		case O_F:
-			PRINTLF(vl,(F)p); break;
-		case O_GFMMAT:
-			PRINTGFMMAT(vl,(GFMMAT)p); break;
-		case O_BYTEARRAY:
-			PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
-		case O_QUOTE:
-			PRINTQUOTE(vl,(QUOTE)p); break;
-		case O_SYMBOL:
-			PRINTSYMBOL((SYMBOL)p); break;
-		case O_RANGE:
-			PRINTRANGE(vl,(RANGE)p); break;
-		case O_TB:
-			PRINTTB(vl,(TB)p); break;
-		default:
-			break;
-	}
-}
-
-void PRINTN(N n)
-{
-	double ceil();
-
-	if ( !n )
-		PUTS("0");
-	else if ( hex_output )
-		total_length += 2+(int)(PL(n)*8);
-	else
-		total_length += (int)(ceil(0.31*((double)(BSH*PL(n))))+1);
-}
 
 void PRINTNUM(Num q)
 {
@@ -276,74 +185,6 @@ void PRINTNUM(Num q)
 			break;
 	}
 }
-
-void PRINTCPLX(C a)
-{
-	PUTS("(");
-	if ( a->r )
-		PRINTNUM(a->r);
-	if ( a->i ) {
-		if ( a->r && (compnum(0,a->i,0) > 0) )
-			PUTS("+");
-		PRINTNUM(a->i); PUTS("*@i");
-	}
-	PUTS(")");
-}
-
-void PRINTP(VL vl,P p)
-{
-	V v;
-	DCP dc;
-
-	if ( !p )
-		PUTS("0");
-	else if ( NUM(p) ) 
-		PRINTNUM((Num)p);
-	else
-		for ( dc = DC(p), v = VR(p); dc; dc = NEXT(dc) ) {
-			if ( !DEG(dc) )
-				PRINTP(vl,COEF(dc));
-			else {
-				if ( NUM(COEF(dc)) && UNIQ((Q)COEF(dc)) ) {
-					;
-				} else if ( NUM(COEF(dc)) && MUNIQ((Q)COEF(dc)) )
-					PUTS("-"); 
-				else if ( NUM(COEF(dc)) || !NEXT(DC(COEF(dc)))) {
-					PRINTP(vl,COEF(dc)); PUTS("*"); 
-				} else {
-					PUTS("("); PRINTP(vl,COEF(dc)); PUTS(")*"); 
-				}
-				PRINTV(vl,v); 
-				if ( cmpq(DEG(dc),ONE) ) {
-					PRINTHAT;
-					if ( INT(DEG(dc)) && SGN(DEG(dc))>0 )
-						PRINTNUM((Num)DEG(dc));
-					else {
-						PUTS("("); PRINTNUM((Num)DEG(dc)); PUTS(")");
-					}
-				}
-			}
-			if ( NEXT(dc) ) {
-				P t;
-
-				t = COEF(NEXT(dc));
-				if (!DEG(NEXT(dc))) {
-					if ( NUM(t) ) {
-						if ( !mmono(t) )
-							PUTS("+");
-					} else {
-						if (!mmono(COEF(DC(t))))
-							PUTS("+");
-					}
-				} else {
-					if ( !mmono(t) )
-						PUTS("+");
-				}
-			}
-		}
-}
-
-extern int hideargs;
 
 void PRINTV(VL vl,V v)
 {
@@ -401,59 +242,16 @@ void PRINTV(VL vl,V v)
 	}
 }
 
-void PRINTR(VL vl,R a)
+void PRINTN(N n)
 {
-	if ( !a ) 
+	double ceil();
+
+	if ( !n )
 		PUTS("0");
+	else if ( hex_output )
+		total_length += 2+(int)(PL(n)*8);
 	else
-		switch (OID(a)) {
-			case O_N: case O_P:
-				PRINTP(vl,(P)a); break;
-			default:
-				PUTS("("); PRINTP(vl,NM((R)a)); PUTS(")/("); PRINTP(vl,DN((R)a)); PUTS(")");
-				break;
-		}
-}
-
-void PRINTVECT(VL vl,VECT vect)
-{
-	int i;
-	pointer *ptr;
-
-	PUTS("[ ");
-	for ( i = 0, ptr = BDY(vect); i < vect->len; i++ ) {
-		PRINTEXPR(vl,ptr[i]); PUTS(" ");
-	}
-	PUTS("]");
-}
-
-void PRINTMAT(VL vl,MAT mat)
-{
-	int i,j,r,c;
-	pointer *ptr;
-
-	for ( i = 0, r = mat->row, c = mat->col; i < r; i++ ) {
-		PUTS("[ ");
-		for ( j = 0, ptr = BDY(mat)[i]; j < c; j++ ) {
-			PRINTEXPR(vl,ptr[j]); PUTS(" ");
-		}
-		PUTS("]");
-		if ( i < r - 1 )
-			PUTS("\n");
-	}
-}
-
-void PRINTLIST(VL vl,LIST list)
-{
-	NODE tnode;
-
-	PUTS("[");
-	for ( tnode = (NODE)list->body; tnode; tnode = NEXT(tnode) ) {
-		PRINTEXPR(vl,tnode->body);
-		if ( NEXT(tnode) )
-			PUTS(",");
-	}
-	PUTS("]");
+		total_length += (int)(ceil(0.31*((double)(BSH*PL(n))))+1);
 }
 
 void PRINTSTR(STRING str)
@@ -466,20 +264,6 @@ void PRINTSTR(STRING str)
 		else {
 			total_length += 1;
 		}
-}
-
-void PRINTCOMP(VL vl,COMP c)
-{
-	int n,i;
-
-	n = getcompsize((int)c->type);
-	PUTS("{");
-	for ( i = 0; i < n; i++ ) {
-		PRINTEXPR(vl,(pointer)c->member[i]);
-		if ( i < n-1 )
-			PUTS(",");
-	}
-	PUTS("}");
 }
 
 void PRINTDP(VL vl,DP d)
@@ -503,29 +287,6 @@ void PRINTDP(VL vl,DP d)
 void PRINTUI(VL vl,USINT u)
 {
 	total_length += 10;
-}
-
-void PRINTGF2MAT(VL vl,GF2MAT mat)
-{
-	int row,col,w,i,j,k,m;
-	unsigned int t;
-	unsigned int **b;
-
-	row = mat->row;
-	col = mat->col;
-	w = (col+BSH-1)/BSH;
-	b = mat->body;
-	for ( i = 0; i < row; i++ ) {
-		for ( j = 0, m = 0; j < w; j++ ) {
-			t = b[i][j];
-			for ( k = 0; m < col && k < BSH; k++, m++ )
-				if ( t & (1<<k) )
-					PUTS("1");
-				else
-					PUTS("0");
-		}
-		PUTS("\n");
-	}
 }
 
 void PRINTGFMMAT(VL vl,GFMMAT mat)
@@ -558,7 +319,7 @@ void PRINTQUOTE(VL vl,QUOTE quote)
 	LIST list;
 
 	if ( print_quote == 2 ) {
-		PRINTFNODE(BDY(quote));
+		PRINTFNODE(BDY(quote),0);
 	} else if ( print_quote == 1 ) {
 		/* XXX */
 		fnodetotree(BDY(quote),&list);
@@ -574,12 +335,6 @@ void PRINTSYMBOL(SYMBOL sym)
 	total_length += strlen(sym->name);
 }
 
-void PRINTRANGE(VL vl,RANGE r)
-{
-	PUTS("range("); PRINTEXPR(vl,r->start);
-	PUTS(","); PRINTEXPR(vl,r->end); PUTS(")");
-}
-
 void PRINTTB(VL vl,TB p)
 {
 	int i;
@@ -587,11 +342,6 @@ void PRINTTB(VL vl,TB p)
 	for ( i = 0; i < p->next; i++ ) {
 		total_length += strlen(p->body[i]);
 	}
-}
-
-void PRINTERR(VL vl,ERR e)
-{
-	PUTS("error("); PRINTEXPR(vl,e->body); PUTS(")");
 }
 
 void PRINTUP2(UP2 p)
@@ -624,94 +374,6 @@ void PRINTUP2(UP2 p)
 		}
 		PUTS(")");
 	}
-}
-
-void PRINTLF(VL vl,F f)
-{
-	switch ( FOP(f) ) {
-		case AL_TRUE:
-			PUTS("@true");
-			break;
-		case AL_FALSE:
-			PUTS("@false");
-			break;
-
-		case AL_OR: case AL_AND:
-			PRINTFOP(vl,f); break;
-		case AL_NOT: case AL_IMPL: case AL_REPL: case AL_EQUIV:
-			PRINTEOP(vl,f); break;
-
-		case AL_EQUAL: case AL_NEQ: case AL_LESSP:
-		case AL_GREATERP: case AL_LEQ: case AL_GEQ:
-			PRINTLOP(vl,f); break;
-
-		case AL_EX: case AL_ALL:
-			PRINTQOP(vl,f); break;
-		default:
-			break;
-	}
-}
-
-void PRINTFOP(VL vl,F f)
-{
-	char *op;
-	NODE n;
-
-	op = FOP(f)==AL_OR?" @|| ":" @&& ";
-	n = FJARG(f);
-	PUTS("("); PRINTEXPR(vl,BDY(n)); PUTS(")");
-	for ( n = NEXT(n); n; n = NEXT(n) ) {
-		PUTS(op); PUTS("("); PRINTEXPR(vl,BDY(n)); PUTS(")");
-	}
-}
-
-void PRINTEOP(VL vl,F f)
-{
-	oFOP op;
-	char *sop;
-
-	if ( (op = FOP(f)) == AL_NOT ) {
-		PUTS("(@! "); PRINTEXPR(vl,(Obj)FARG(f)); PUTS(")"); return;
-	}
-	switch ( op ) {
-		case AL_IMPL:
-			sop = " @impl "; break;
-		case AL_REPL:
-			sop = " @repl "; break;
-		case AL_EQUIV:
-			sop = " @equiv "; break;
-		default:
-			break;
-	}
-	PUTS("("); 
-	PRINTEXPR(vl,(Obj)FLHS(f)); 
-	PUTS(sop);
-	PRINTEXPR(vl,(Obj)FRHS(f)); 
-	PUTS(")");
-}
-
-void PRINTLOP(VL vl,F f)
-{
-	char *op;
-
-	switch ( FOP(f) ) {
-		case AL_EQUAL:
-			op = " @== "; break;
-		case AL_NEQ:
-			op = " @!= "; break;
-		case AL_LESSP:
-			op = " @< "; break;
-		case AL_GREATERP:
-			op = " @> "; break;
-		case AL_LEQ:
-			op = " @<= "; break;
-		case AL_GEQ:
-			op = " @>= "; break;
-		default:
-			error("PRINTLOP : invalid operator");
-			break;
-	}
-	PRINTEXPR(vl,(Obj)FPL(f)); PUTS(op); PUTS("0");
 }
 
 void PRINTQOP(VL vl,F f)
@@ -798,134 +460,8 @@ void PRINTSF(unsigned int i)
 		PUTS("0");
 	} else
 		total_length += 15;
-}
 
-
-void PRINTFNODENODE(NODE n)
-{
-	for ( ; n; n = NEXT(n) ) {
-		PRINTFNODE((FNODE)BDY(n),0);
-		if ( NEXT(n) ) PUTS(",");
-	}
-}
-
-void PRINTFARGS(FNODE f)
-{
-	NODE n;
-
-	if ( f->id == I_LIST ) {
-		n = (NODE)FA0(f);
-		PRINTFNODENODE(n);
-	} else
-		PRINTFNODE(f,0);
-}
-
-void PRINTFNODE(FNODE f,int paren)
-{
-	NODE n,t,t0;
-	char vname[BUFSIZ],prefix[BUFSIZ];
-	char *opname,*vname_conv,*prefix_conv;
-	Obj obj;
-	int i,len,allzero,elen,elen2;
-	C cplx;
-	char *r;
-	FNODE fi,f2;
-
-	if ( !f ) {
-		PUTS("(0)");
-		return;
-	}
-	if ( paren ) PUTS("(");
-	switch ( f->id ) {
-		/* unary operators */
-		case I_NOT: PUTS("!"); PRINTFNODE((FNODE)FA0(f),1); break;
-		case I_PAREN: PRINTFNODE((FNODE)FA0(f),0); break;
-		case I_MINUS: PUTS("-"); PRINTFNODE((FNODE)FA0(f),1); break;
-		/* binary operators */
-		/* arg list */
-		/* I_AND, I_OR => FA0(f), FA1(f) */
-		/* otherwise   => FA1(f), FA2(f) */
-		case I_BOP:
-			PRINTFNODE((FNODE)FA1(f),1);
-			PUTS(((ARF)FA0(f))->name);
-			PRINTFNODE((FNODE)FA2(f),1);
-			break;
-		case I_COP:
-			switch( (cid)FA0(f) ) {
-				case C_EQ: opname = ("=="); break;
-				case C_NE: opname = ("!="); break;
-				case C_GT: opname = (">"); break;
-				case C_LT: opname = ("<"); break;
-				case C_GE: opname = (">="); break;
-				case C_LE: opname = ("<="); break;
-			}
-			PRINTFNODE((FNODE)FA1(f),1);
-			PUTS(opname);
-			PRINTFNODE((FNODE)FA2(f),1);
-			break;
-		case I_LOP:
-			switch( (lid)FA0(f) ) {
-				case L_EQ: opname = ("@=="); break;
-				case L_NE: opname = ("@!="); break;
-				case L_GT: opname = ("@>"); break;
-				case L_LT: opname = ("@<"); break;
-				case L_GE: opname = ("@>="); break;
-				case L_LE: opname = ("@<="); break;
-				case L_AND: opname = ("@&&"); break;
-				case L_OR: opname = ("@||"); break;
-				case L_NOT: opname = ("@!"); break;
-			}
-			if ( (lid)FA0(f)==L_NOT ) {
-				PUTS(opname); PRINTFNODE((FNODE)FA1(f),1);
-			} else {
-				PRINTFNODE((FNODE)FA1(f),1);
-				PUTS(opname);
-				PRINTFNODE((FNODE)FA2(f),1);
-			}
-			break;
-		case I_AND:
-			PRINTFNODE((FNODE)FA0(f),1);
-			PUTS("&&");
-			PRINTFNODE((FNODE)FA1(f),1);
-			break;
-		case I_OR:
-			PRINTFNODE((FNODE)FA0(f),1);
-			PUTS("!!");
-			PRINTFNODE((FNODE)FA1(f),1);
-			break;
-		/* ternary operators */
-		case I_CE:
-			PRINTFNODE((FNODE)FA0(f),1); PUTS("?"); PRINTFNODE((FNODE)FA1(f),1);
-			PUTS(":"); PRINTFNODE((FNODE)FA2(f),1);
-			break;
-		/* lists */
-		case I_LIST: PUTS("["); PRINTFNODENODE((NODE)FA0(f)); PUTS("]"); break;
-		/* function */
-		case I_FUNC:
-			if ( !strcmp(((FUNC)FA0(f))->name,"@pi") ) PUTS("@pi");
-			else if ( !strcmp(((FUNC)FA0(f))->name,"@e") ) PUTS("@e");
-			else {
-				PUTS(((FUNC)FA0(f))->name);
-				PUTS("("); PRINTFARGS(FA1(f)); PUTS(")");
-			}
-			break;
-		/* XXX */
-		case I_CAR: PUTS("car("); PRINTFNODE(FA0(f),0); PUTS(")"); break;
-		case I_CDR: PUTS("cdr("); PRINTFNODE(FA0(f),0); PUTS(")"); break;
-		/* exponent vector */
-		case I_EV: PUTS("<<"); PRINTFNODENODE((NODE)FA0(f)); PUTS(">>"); break;
-		/* string */
-		case I_STR: PUTS((char *)FA0(f)); break;
-		/* internal object */
-		case I_FORMULA: obj = (Obj)FA0(f); PRINTEXPR(CO,obj); break;
-		/* program variable */
-		case I_PVAR:
-			if ( FA1(f) )
-				error("length_fnode : not implemented yet");
-			GETPVNAME(FA0(f),opname);
-			PUTS(opname);
-			break;
-		default: error("length_fnode : not implemented yet");
-	}
-	if ( paren ) PUTS(")");
+#ifndef CPRINT
+#define CPRINT
+#endif
 }
