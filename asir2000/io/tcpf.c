@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.28 2001/12/25 05:28:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.29 2001/12/25 08:59:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -590,8 +590,15 @@ void spawn_server(char *host,char *launcher,char *server,
 	if ( use_unix || !host ) {
 #if defined(__CYGWIN__)
 		get_launcher_path(win_launcher);
-		if ( dname && get_start_path(win_start) ) {
-  			sprintf(cmd,"%s %s %s %s %s %s %s 1",
+		if ( dname && strchr(dname,':') ) {
+			if ( !fork() ) {
+				setpgid(0,getpid());
+				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
+					"-geometry","60x10","-e",launcher,use_unix?".":"127.1",conn_str,
+					control_port_str,server_port_str,server,dname,0);
+			}
+		} else if ( dname && get_start_path(win_start) ) {
+  		sprintf(cmd,"%s %s %s %s %s %s %s 1",
 				win_start,win_launcher,use_unix?".":"127.1",conn_str,
 				control_port_str,server_port_str,server);	
 			system(cmd);
