@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.6 2000/03/06 08:24:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.7 2000/03/10 03:05:01 noro Exp $ */
 #include "config.h"
 
 #define USE_GCC
@@ -40,9 +40,13 @@ CC= cc
 
 CDEBUGFLAGS= -O6
 
-#if defined(SparcArchitecture)
+#if defined(SunArchitecture)
 #if SystemV4
+#if defined(SparcArchitecture)
 CDEBUGFLAGS= -O6 -mv8
+#else
+CDEBUGFLAGS= -O6
+#endif
 CCOPTIONS = -DSYSV -DSVR4
 AR=/usr/ccs/bin/ar cqs
 /* ranlib is dummy on Solaris 2. */
