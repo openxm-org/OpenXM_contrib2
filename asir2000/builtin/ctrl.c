@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.23 2003/10/19 02:54:41 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.24 2003/10/20 09:17:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -150,15 +150,17 @@ Q *rp;
 			*rp = (Q)user_defined_prompt;
 		} else {
 			c = (Q)ARG1(arg);
-			if ( !c || OID(c) == O_STR ) {
-				if ( OID(c) == O_STR ) {
-					str = BDY((STRING)c);
-				 	for ( i = 0, n = 0; str[i]; i++ )
-						if ( str[i] == '%' )
-							n++;
-					if ( n >= 2 )
-						error("ctrl : prompt : invalid prompt specification");	
-				}
+			if ( !c ) {
+				do_quiet = 1;
+				user_defined_prompt = 0;
+				*rp = 0;
+			} else if ( OID(c) == O_STR ) {
+				str = BDY((STRING)c);
+			 	for ( i = 0, n = 0; str[i]; i++ )
+					if ( str[i] == '%' )
+						n++;
+				if ( n >= 2 )
+					error("ctrl : prompt : invalid prompt specification");	
 				do_quiet = 1;
 				user_defined_prompt = (Obj)c;
 				*rp = c;
