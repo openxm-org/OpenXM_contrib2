@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.2 2000/05/29 08:54:46 noro Exp $ */
 #include "ca.h"
 #include "inline.h"
 
@@ -366,7 +366,7 @@ DP *pr;
 	DP r,t,t1;
 	P c,c0,c1,cc;
 	DL d,d0,d1;
-	int i,j,a,b,k,l,n2,s,min,h;
+	int i,j,a,b,k,l,n2,s,min;
 	static int *tab;
 	static int tablen;
 
@@ -380,71 +380,50 @@ DP *pr;
 		if ( n & 1 ) { 
 			/* homogenized computation; dx-xd=h^2 */
 			/* offset of h-degree */
-			NEWDL(d,n); d->d[n-1] = d0->d[n-1]+d1->d[n-1]; d->td = d->d[n-1];
+			NEWDL(d,n);
+			d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
 			NEWMP(mr); mr->c = (P)ONEM; mr->dl = d;
-			MKDP(n,mr,r); r->sugar = d->d[n-1];
+			MKDP(n,mr,r); r->sugar = d->td;
+		} else
+			r = (DP)ONEM;
+		for ( i = 0; i < n2; i++ ) {
+			a = d0->d[i]; b = d1->d[n2+i];
+			k = d0->d[n2+i]; l = d1->d[i];
+			/* degree of xi^a*(Di^k*xi^l)*Di^b */
+			s = a+k+l+b;
+			/* compute xi^a*(Di^k*xi^l)*Di^b */
+			min = MIN(k,l);
 
-			for ( i = 0; i < n2; i++ ) {
-				a = d0->d[i]; b = d1->d[n2+i];
-				k = d0->d[n2+i]; l = d1->d[i];
-				/* degree of xi^a*(Di^k*xi^l)*Di^b */
-				h = a+k+l+b;
-				/* compute xi^a*(Di^k*xi^l)*Di^b */
-				min = MIN(k,l);
-
-				if ( min+1 > tablen ) {
-					if ( tab ) GC_free(tab);
-					tab = (int *)MALLOC((min+1)*sizeof(int));
-					tablen = min+1;
-				}
-				mkwcm(k,l,mod,tab);
-				for ( mr0 = 0, j = 0; j <= min; j++ ) {
-					NEXTMP(mr0,mr);
-					NEWDL(d,n);
-					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-					d->td = h;
-					d->d[n-1] = h-(d->d[i]+d->d[n2+i]); 
-					STOMQ(tab[j],mq); mr->c = (P)mq;
-					mr->dl = d;
-				}
-				bzero(tab,(min+1)*sizeof(int));
-				if ( mr0 )
-					NEXT(mr) = 0;
-				MKDP(n,mr0,t);
-				if ( t )
-					t->sugar = h;
-				comm_mulmd(vl,mod,r,t,&t1); r = t1;
+			if ( min+1 > tablen ) {
+				if ( tab ) GC_free(tab);
+				tab = (int *)MALLOC((min+1)*sizeof(int));
+				tablen = min+1;
 			}
-		} else 
-			for ( i = 0, r = (DP)ONEM; i < n2; i++ ) {
-				a = d0->d[i]; b = d1->d[n2+i];
-				k = d0->d[n2+i]; l = d1->d[i];
-				/* compute xi^a*(Di^k*xi^l)*Di^b */
-				min = MIN(k,l);
-
-				if ( min+1 > tablen ) {
-					if ( tab ) GC_free(tab);
-					tab = (int *)MALLOC((min+1)*sizeof(int));
-					tablen = min+1;
+			mkwcm(k,l,mod,tab);
+			if ( n & 1 )
+				for ( mr0 = 0, j = 0; j <= min; j++ ) {
+					NEXTMP(mr0,mr); NEWDL(d,n);
+					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+					d->td = s;
+					d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+					STOMQ(tab[j],mq); mr->c = (P)mq; mr->dl = d;
 				}
-				mkwcm(k,l,mod,tab);
+			else
 				for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
-					NEXTMP(mr0,mr);
-					NEWDL(d,n);
+					NEXTMP(mr0,mr); NEWDL(d,n);
 					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
 					d->td = d->d[i]+d->d[n2+i]; /* XXX */
 					s = MAX(s,d->td); /* XXX */
-					STOMQ(tab[j],mq); mr->c = (P)mq;
-					mr->dl = d;
+					STOMQ(tab[j],mq); mr->c = (P)mq; mr->dl = d;
 				}
-				bzero(tab,(min+1)*sizeof(int));
-				if ( mr0 )
-					NEXT(mr) = 0;
-				MKDP(n,mr0,t);
-				if ( t )
-					t->sugar = s;
-				comm_mulmd(vl,mod,r,t,&t1); r = t1;
-			}
+			bzero(tab,(min+1)*sizeof(int));
+			if ( mr0 )
+				NEXT(mr) = 0;
+			MKDP(n,mr0,t);
+			if ( t )
+				t->sugar = s;
+			comm_mulmd(vl,mod,r,t,&t1); r = t1;
+		}
 		mulmdc(vl,mod,r,c,pr);
 	}
 }
@@ -500,8 +479,6 @@ DP *pr;
 			(*pr)->sugar = p->sugar;
 	}
 }
-
-#define MKDPM(n,m,d) (NEWDP(d),(d)->nv=(n),BDY(d)=(m))
 
 void _mdtop(vl,mod,dvl,p,pr)
 VL vl,dvl;
@@ -579,7 +556,7 @@ DP p1,p2,*pr;
 			NEXT(mr) = m2;
 		else
 			NEXT(mr) = 0;
-		MKDPM(NV(p1),mr0,*pr);
+		MKDP(NV(p1),mr0,*pr);
 		if ( *pr )
 			(*pr)->sugar = MAX(p1->sugar,p2->sugar);
 	}
@@ -611,7 +588,7 @@ DP p,*pr;
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr); C(mr) = STOI(mod - ITOS(C(m))); mr->dl = m->dl;
 		}
-		NEXT(mr) = 0; MKDPM(NV(p),mr0,*pr);
+		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
 			(*pr)->sugar = p->sugar;
 	}
@@ -713,7 +690,7 @@ DP *pr;
 			C(mr) = STOI(dmar(ITOS(C(m)),c,0,mod));
 			adddl(n,m->dl,d,&mr->dl);
 		}
-		NEXT(mr) = 0; MKDPM(NV(p),mr0,*pr);
+		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
 			(*pr)->sugar = p->sugar + m0->dl->td;
 	}
@@ -779,78 +756,53 @@ DP *pr;
 		d0 = m0->dl; d1 = m1->dl;
 		n2 = n>>1;
 
-		if ( n & 1 ) { 
+		NEWDL(d,n);
+		if ( n & 1 )
 			/* offset of h-degree */
-			NEWDL(d,n); d->d[n-1] = d0->d[n-1]+d1->d[n-1]; d->td = d->d[n-1];
-			NEWMP(mr); mr->c = STOI(c); mr->dl = d;
-			MKDPM(n,mr,r); r->sugar = d->d[n-1];
+			d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
+		else
+			d->td = 0;
+		NEWMP(mr); mr->c = STOI(c); mr->dl = d;
+		MKDP(n,mr,r); r->sugar = d->td;
 
-			/* homogenized computation; dx-xd=h^2 */
-			for ( i = 0; i < n2; i++ ) {
-				a = d0->d[i]; b = d1->d[n2+i];
-				k = d0->d[n2+i]; l = d1->d[i];
-				/* degree of xi^a*(Di^k*xi^l)*Di^b */
-				h = a+k+l+b;
-				/* compute xi^a*(Di^k*xi^l)*Di^b */
-				min = MIN(k,l);
+		/* homogenized computation; dx-xd=h^2 */
+		for ( i = 0; i < n2; i++ ) {
+			a = d0->d[i]; b = d1->d[n2+i];
+			k = d0->d[n2+i]; l = d1->d[i];
+			/* degree of xi^a*(Di^k*xi^l)*Di^b */
+			s = a+k+l+b;
+			/* compute xi^a*(Di^k*xi^l)*Di^b */
+			min = MIN(k,l);
 
-				if ( min+1 > tablen ) {
-					if ( tab ) GC_free(tab);
-					tab = (int *)MALLOC((min+1)*sizeof(int));
-					tablen = min+1;
-				}
-				mkwcm(k,l,mod,tab);
-				for ( mr0 = 0, j = 0; j <= min; j++ ) {
-					NEXTMP(mr0,mr);
-					NEWDL(d,n);
-					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-					d->td = h;
-					d->d[n-1] = h-(d->d[i]+d->d[n2+i]); 
-					mr->c = STOI(tab[j]);
-					mr->dl = d;
-				}
-				bzero(tab,(min+1)*sizeof(int));
-				if ( mr0 )
-					NEXT(mr) = 0;
-				MKDP(n,mr0,t);
-				if ( t )
-					t->sugar = h;
-				_comm_mulmd(vl,mod,r,t,&t1); r = t1;
+			if ( min+1 > tablen ) {
+				if ( tab ) GC_free(tab);
+				tab = (int *)MALLOC((min+1)*sizeof(int));
+				tablen = min+1;
 			}
-		} else {
-			NEWDL(d,n); d->td = 0;
-			NEWMP(mr); mr->c = STOI(c); mr->dl = d;
-			MKDPM(n,mr,r); r->sugar = 0;
-
-			for ( i = 0; i < n2; i++ ) {
-				a = d0->d[i]; b = d1->d[n2+i];
-				k = d0->d[n2+i]; l = d1->d[i];
-				/* compute xi^a*(Di^k*xi^l)*Di^b */
-				min = MIN(k,l);
-
-				if ( min+1 > tablen ) {
-					if ( tab ) GC_free(tab);
-					tab = (int *)MALLOC((min+1)*sizeof(int));
-					tablen = min+1;
+			mkwcm(k,l,mod,tab);
+			if ( n & 1 )
+				for ( mr0 = 0, j = 0; j <= min; j++ ) {
+					NEXTMP(mr0,mr); NEWDL(d,n);
+					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+					d->td = s;
+					d->d[n-1] = s-(d->d[i]+d->d[n2+i]); 
+					mr->c = STOI(tab[j]); mr->dl = d;
 				}
-				mkwcm(k,l,mod,tab);
+			else
 				for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
-					NEXTMP(mr0,mr);
-					NEWDL(d,n);
+					NEXTMP(mr0,mr); NEWDL(d,n);
 					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
 					d->td = d->d[i]+d->d[n2+i]; /* XXX */
 					s = MAX(s,d->td); /* XXX */
-					mr->c = STOI(tab[j]);
-					mr->dl = d;
+					mr->c = STOI(tab[j]); mr->dl = d;
 				}
-				bzero(tab,(min+1)*sizeof(int));
-				if ( mr0 )
-					NEXT(mr) = 0;
-				MKDP(n,mr0,t);
-				if ( t )
-					t->sugar = s;
-				_comm_mulmd(vl,mod,r,t,&t1); r = t1;
-			}
+			bzero(tab,(min+1)*sizeof(int));
+			if ( mr0 )
+				NEXT(mr) = 0;
+			MKDP(n,mr0,t);
+			if ( t )
+				t->sugar = s;
+			_comm_mulmd(vl,mod,r,t,&t1); r = t1;
 		}
 		*pr = r;
 	}
