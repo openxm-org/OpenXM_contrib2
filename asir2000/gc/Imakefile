@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/gc/Imakefile,v 1.1.1.1 1999/11/10 08:12:29 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.1.1.1 1999/12/03 07:39:09 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 CFLAGS= $(DEFINES) $(CDEBUGFLAGS) -DSILENT -DLARGE_CONFIG -DHEAP_START_ADDR=0x$(HEAP_START_ADDR)
@@ -7,7 +7,7 @@ OBJS= alloc.o reclaim.o allchblk.o misc.o mach_dep.o os_dep.o mark_rts.o headers
 
 SRCS= alloc.c reclaim.c allchblk.c misc.c mach_dep.c os_dep.c mark_rts.c headers.c mark.c obj_map.c blacklst.c finalize.c new_hblk.c dbg_mlc.c malloc.c mallocx.c stubborn.c solaris_threads.c typd_mlc.c ptr_chck.c dyn_load.c gc_risa.c
 
-NormalLibraryTarget(gc,$(OBJS))
+NormalLibraryTarget(asir-gc,$(OBJS))
 DependTarget()
 
 #if defined(AlphaArchitecture)

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.2 2000/01/19 02:08:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.3 2000/01/26 02:18:02 noro Exp $ */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
 
@@ -27,7 +27,7 @@ LOCAL_LIBRARIES = -L/usr/openwin/lib XawClientLibs $(XWCHARLIB)
 DEPLIBS = XawClientDepLibs
 
 PLIB = parse/libparse.a
-GLIB = gc/libgc.a
+GLIB = gc/libasir-gc.a
 ELIB = engine/libca.a
 E27LIB=engine-27/libca-27.a
 FLIB=fft/libdft.a
@@ -42,14 +42,17 @@ PLLIB =
 #endif
 
 PROGRAMS = asir
+LIBRARIES = libasir.a $(GLIB)
 
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)
 
 SUBDIRS = engine engine-27 fft asm gc parse builtin io plot lib
 
-LIBS = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(GLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+LIBS0 = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+LIBS = $(LIBS0) $(GLIB)
 PILIBS = $(IOLIB) $(GLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
+
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
@@ -57,7 +60,7 @@ DependSubdirs($(SUBDIRS))
 #if 0
 AllTarget($(PROGRAMS) asir.o)
 #else
-AllTarget($(PROGRAMS))
+AllTarget($(PROGRAMS) $(LIBRARIES))
 #endif
 
 #ifndef NormalRelocTarget
@@ -73,10 +76,21 @@ clean::									@@\
 NormalProgramTarget(asir,$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(KANLIB) $(GMPLIB) $(LAPACKLIB) $(LIBCLIB) $(EXTRASTDLIB) )
 NormalRelocTarget(asir.o,$(UOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(EXTRALIB) $(LIBCLIB) $(EXTRASTDLIB))
 
-install:: $(PROGRAMS)
-	MakeDir($(ASIR_BINDIR))
+libasir.a: $(LIBS0)
+	-mkdir libtmp
+	( cd libtmp; $(RM) * )
+	for i in $(LIBS); do ( cd libtmp; ar x ../$$i; chmod 644 * ) done
+	$(RM) $@
+	( cd libtmp; $(AR) ../$@ *.o )
+	$(RANLIB) $@
+	$(_NULLCMD_)
+
+install:: $(PROGRAMS) $(LIBRARIES)
 	MakeDir($(ASIR_LIBDIR))
-	$(INSTALL) -c $(PROGRAMS) $(ASIR_LIBDIR)
+	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_LIBDIR)
+	MakeDir($(ROOTDIR)/lib)
+	$(INSTALL) $(INSTALLFLAGS) $(LIBRARIES) $(ROOTDIR)/lib
+	for i in $(LIBRARIES); do $(RANLIB) $(ROOTDIR)/lib/`basename $$i` ;  done
 
 install-lib::
 	(cd lib; make install-lib)
@@ -91,3 +105,6 @@ install-lib::
 
 install-doc::
 	(cd lib; make install-doc)
+
+clean::
+	$(RM) -r libtmp $(LIBRARIES)
