@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.23 2000/12/16 07:12:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.24 2001/06/04 02:49:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -507,7 +507,7 @@ char *control_port_str,*server_port_str;
 	rsh = getenv("ASIR_RSH");
 	if ( !rsh )
 		rsh = use_ssh ? "ssh" : RSH;
-	if ( !use_unix && dname && strstr(rsh,"ssh") ) {
+	if ( !use_unix && strstr(rsh,"ssh") ) {
 		/*
 		 * if "ssh" is used to invoke a remote server,
 		 * we should not specify "-display".
@@ -563,17 +563,23 @@ char *control_port_str,*server_port_str;
 	} else {
 		if ( dname )
 			if ( use_ssh )
-			sprintf(cmd,
+				sprintf(cmd,
 "%s -f -n %s \"xterm -name %s -title ox_launch:%s -geometry 60x10 -e %s %s %s %s %s %s %s >&/dev/null\">/dev/null",
 				rsh,host,OX_XTERM,host,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,"1");
 			else
-			sprintf(cmd,
+				sprintf(cmd,
 "%s -n %s \"xterm -name %s -title ox_launch:%s -display %s -geometry 60x10 -e %s %s %s %s %s %s %s >&/dev/null&\">/dev/null",
 				rsh,host,OX_XTERM,host,dname,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,dname);
 		else
-			sprintf(cmd,
+			if ( use_ssh )
+				sprintf(cmd,
+"%s -f -n %s \"%s %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
+				rsh,host,launcher,localhost,conn_str,
+				control_port_str,server_port_str,server,"1","-nolog");
+			else
+				sprintf(cmd,
 "%s -n %s \"%s %s %s %s %s %s %s %s>&/dev/null&\">/dev/null",
 				rsh,host,launcher,localhost,conn_str,
 				control_port_str,server_port_str,server,dname0,"-nolog");

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.10 2000/11/08 06:21:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.11 2000/12/16 07:12:01 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -353,7 +353,7 @@ int nolog;
 				close(i);
 #endif
 		}
-		if ( !strcmp(dname,"1" ) ) /* XXX: for ssh */
+		if ( !nolog && !strcmp(dname,"1" ) ) /* XXX: for ssh */
 			execl(prog,prog,0);
 		else if ( nolog || !strcmp(dname,"0") ) {
 			FILE *null;
@@ -361,7 +361,11 @@ int nolog;
 			null = fopen("/dev/null","wb");
 			dup2(fileno(null),1);
 			dup2(fileno(null),2);
-			if ( strcmp(dname,"0") )
+			if ( !strcmp(dname,"1") ) {
+				/* XXX */
+				putenv("DISPLAY=");
+				execl(prog,prog,0);
+			} else if ( strcmp(dname,"0") )
 				execl(prog,prog,"-display",dname,0);
 			else {
 				putenv("DISPLAY=");
