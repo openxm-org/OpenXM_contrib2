@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.16 2003/07/22 10:11:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.17 2003/07/23 01:22:50 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -99,6 +99,42 @@ void mptomd(VL vl,int mod,VL dvl,P p,DP *pr)
 				*pr = s;
 			}
 		}
+	}
+}
+
+void mdtodp(DP p,DP *pr)
+{
+	MP m,mr0,mr;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); mr->dl = m->dl;
+			mptop(C(m),&C(mr));
+		}
+		NEXT(mr) = 0;
+		MKDP(NV(p),mr0,*pr);
+		(*pr)->sugar = p->sugar;
+	}
+}
+
+void _mdtodp(DP p,DP *pr)
+{
+	MP m,mr0,mr;
+	int i;
+	Q q;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); mr->dl = m->dl;
+			i = ITOS(m->c); STOQ(i,q); C(mr) = (P)q;
+		}
+		NEXT(mr) = 0;
+		MKDP(NV(p),mr0,*pr);
+		(*pr)->sugar = p->sugar;
 	}
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.54 2003/10/08 09:09:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.55 2003/12/25 08:46:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -469,11 +469,19 @@ void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp
 	reduceall_mod(x,m,&xx); x = xx;
 	if ( PCoeffs )
 		for ( r0 = 0; x; x = NEXT(x) ) {
-			NEXTNODE(r0,r); mdtop(CO,m,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+			NEXTNODE(r0,r); 
+			if ( input_is_dp )
+				mdtodp(ps[(int)BDY(x)],(DP *)&BDY(r));
+			else
+				mdtop(CO,m,vv,ps[(int)BDY(x)],(P *)&BDY(r));
 		}
 	else
 		for ( r0 = 0; x; x = NEXT(x) ) {
-			NEXTNODE(r0,r); _dtop_mod(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+			NEXTNODE(r0,r); 
+			if ( input_is_dp )
+				_mdtodp(ps[(int)BDY(x)],(DP *)&BDY(r));
+			else
+				_dtop_mod(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
 		}
 	print_stat();
 	if ( r0 ) NEXT(r) = 0;
@@ -559,7 +567,11 @@ void dp_f4_mod_main(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 		reduceall_mod(x,m,&xx); x = xx;
 	}
 	for ( r0 = 0; x; x = NEXT(x) ) {
-		NEXTNODE(r0,r); _dtop_mod(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+		NEXTNODE(r0,r);
+		if ( input_is_dp )
+			_mdtodp(ps[(int)BDY(x)],(DP *)&BDY(r));
+		else
+			_dtop_mod(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
