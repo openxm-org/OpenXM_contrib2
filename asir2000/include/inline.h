@@ -23,7 +23,7 @@
  * shall be made on your publication or presentation in any form of the
  * results obtained by use of the SOFTWARE.
  * (4) In the event that you modify the SOFTWARE, you shall notify FLL by
- * e-mail at risa-admin@flab.fujitsu.co.jp of the detailed specification
+ * e-mail at risa-admin@sec.flab.fujitsu.co.jp of the detailed specification
  * for such modification or the source code of the modified part of the
  * SOFTWARE.
  * 
@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.2 2000/02/04 09:27:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.3 2000/08/21 08:31:36 noro Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));

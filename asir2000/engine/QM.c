@@ -23,7 +23,7 @@
  * shall be made on your publication or presentation in any form of the
  * results obtained by use of the SOFTWARE.
  * (4) In the event that you modify the SOFTWARE, you shall notify FLL by
- * e-mail at risa-admin@flab.fujitsu.co.jp of the detailed specification
+ * e-mail at risa-admin@sec.flab.fujitsu.co.jp of the detailed specification
  * for such modification or the source code of the modified part of the
  * SOFTWARE.
  * 
@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/QM.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/QM.c,v 1.2 2000/08/21 08:31:27 noro Exp $ 
 */
 #include "ca.h"
 
