@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.6 2000/11/07 06:06:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.7 2000/11/09 01:51:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -382,6 +382,8 @@ Obj *rp;
 							error("ifplot : invalid argument");
 						else
 							v[i++] = vl0->v;
+				if ( i != 1 )
+					error("ifplot : invalid argument");
 				break;
 			case O_LIST:
 				list = (LIST)BDY(arg);
