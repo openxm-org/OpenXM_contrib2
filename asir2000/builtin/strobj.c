@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.2 2000/02/03 05:45:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.3 2000/02/07 05:21:32 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ctype.h"
@@ -61,7 +61,7 @@ STRING *rp;
 		q = (Q)BDY(n);
 		asir_assert(q,O_N,"asciitostr");
 		j = QTOS(q);
-		if ( j >= 256 || j < 0 )
+		if ( j >= 256 || j <= 0 )
 			error("asciitostr : argument out of range");
 		p[i] = j;
 	}
