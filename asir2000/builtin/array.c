@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.17 2001/09/10 05:55:13 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.18 2001/09/17 01:18:34 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1438,23 +1438,19 @@ int **indredp;
 	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
 */
 
-#define DMA0(a1,a2,a3,u,l)\
-asm volatile("movl  %2,%%eax; mull  %3; addl    %4,%%eax; adcl  $0,%%edx; movl    %%edx,%0; movl %%eax,%1" :"=g"(u), "=g"(l) :"g"(a1),"g"(a2),"g"(a3) :"ax","dx");
-
 int red_by_compress(m,p,r,hc,len)
 int m;
 unsigned int *p;
-struct oCM *r;
+register struct oCM *r;
 unsigned int hc;
-int len;
+register int len;
 {
-	int k;
-	register unsigned int up,lo;
+	unsigned int up,lo;
 	unsigned int dmy;
 	unsigned int *pj;
 
 	p[r->index] = 0; r++;
-	for ( k = 1; k < len; k++, r++ ) {
+	for ( len--; len; len--, r++ ) {
 		pj = p+r->index;
 		DMA0(r->c,hc,*pj,up,lo);
 		if ( up ) {

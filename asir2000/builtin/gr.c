@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.29 2001/09/13 03:19:56 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.30 2001/09/17 01:18:34 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -796,7 +796,6 @@ int m;
 			}
 		}
 		/* s0 : all the terms appeared in symbolic reduction */
-		rhtlist = 0;
 		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
 			for ( r = gall;	r; r = NEXT(r) )
 				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
@@ -808,7 +807,6 @@ int m;
 				/* list of [t,f] */
 				bt1 = mknode(2,BDY(sd)->dl,BDY(r));
 				MKNODE(bt,bt1,blist); blist = bt;
-				MKNODE(bt,BDY(dt),rhtlist); rhtlist = bt;
 				symb_merge(s,dt,nv);
 				nred++;
 			}
@@ -817,11 +815,6 @@ int m;
 		/* the first nred polys in blist are reducers */
 		/* row = the number of all the polys */
 		for ( r = blist, row = 0; r; r = NEXT(r), row++ );
-
-		/* head terms of reducers */
-		ht = (DL *)MALLOC(nred*sizeof(DL));
-		for ( r = rhtlist, i = 0; i < nred; r = NEXT(r), i++ )
-			ht[i] = BDY(r);
 
 		/* col = number of all terms */
 		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
@@ -842,9 +835,9 @@ int m;
 		/* XXX */
 /*		reduce_reducers_mod(redmat,nred,col,m); */
 		/* register the position of the head term */
-		indred = (int *)MALLOC(nred*sizeof(int));
+		indred = (int *)MALLOC_ATOMIC(nred*sizeof(int));
 		bzero(indred,nred*sizeof(int));
-		isred = (int *)MALLOC(col*sizeof(int));
+		isred = (int *)MALLOC_ATOMIC(col*sizeof(int));
 		bzero(isred,col*sizeof(int));
 		for ( i = 0; i < nred; i++ ) {
 			ri = redmat[i];
@@ -864,7 +857,7 @@ int m;
 		get_eg(&tmp1);
 		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
 		spmat = (int **)MALLOC(nsp*sizeof(int *));
-		w = (int *)MALLOC(col*sizeof(int));
+		w = (int *)MALLOC_ATOMIC(col*sizeof(int));
 
 		/* skip reducers in blist */
 		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ );
