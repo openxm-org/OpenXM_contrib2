@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.9 2001/06/26 03:00:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.10 2001/06/26 08:52:59 noro Exp $ */
 
 #include "ca.h"
 
@@ -1185,7 +1185,7 @@ P *fp,*cofp;
 				return 0;
 		} 
 	}
-	if ( divtp(vl,lcg,fmul,&q) ) {
+	if ( divtp_by_sfbm(vl,lcg,fmul,&q) ) {
 		pp_sfp(vl,fmul,fp);
 		pp_sfp(vl,q,cofp);
 		return 1;
@@ -1333,4 +1333,50 @@ P *fp;
 		sfumtop(y,gcd,&dvr);
 		divsp(vl,f,dvr,fp);
 	}
+}
+
+int divtp_by_sfbm(vl,f,g,qp)
+VL vl;
+P f,g;
+P *qp;
+{
+	V x,y;
+	int fx,fy,gx,gy;
+	BM fl,gl,ql;
+	UM *cf,*cg,*cq;
+	UM hg,q,t,s;
+	int i,j,dr;
+
+	x = vl->v; y = vl->next->v;
+	fx = getdeg(x,f); fy = getdeg(y,f);
+	gx = getdeg(x,g); gy = getdeg(y,g);
+
+	if ( fx < gx || fy < gy )
+		return 0;
+	W_BMALLOC(fx,fy+1,fl); ptosfbm(fy+1,f,fl); cf = COEF(fl);
+	W_BMALLOC(gx,gy+1,gl); ptosfbm(gy+1,g,gl); cg = COEF(gl);
+	W_BMALLOC(fx-gx,fy-gy+1,ql); cq = COEF(ql);
+
+	hg = cg[gy];
+	q = W_UMALLOC(fx); t = W_UMALLOC(fx); s = W_UMALLOC(fx);
+
+	for ( i = fy; i >= gy; i-- ) {
+		if ( DEG(cf[i]) < 0 )
+			continue;
+		dr = divsfum(cf[i],hg,q);
+		if ( dr >= 0 )
+			return 0;
+		if ( DEG(q) > fx-gx )
+			return 0;
+		cpyum(q,cq[i-gy]);
+		for ( j = 0; j <= gy; j++ ) {
+			mulsfum(cg[j],q,t);
+			subsfum(cf[j+i-gy],t,s);
+			cpyum(s,cf[j+i-gy]);
+		}
+	}
+	for ( j = gy-1; j >= 0 && DEG(cf[j]) < 0; j-- );
+	if ( j >= 0 )
+		return 0;
+	sfbmtop(DEG(ql),ql,x,y,qp);
 }
