@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.40 2003/03/12 07:56:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.41 2003/05/23 00:11:58 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -119,6 +119,7 @@ void Pgenerate_port(),Ptry_bind_listen(),Ptry_connect(),Ptry_accept();
 void Pregister_server();
 void Pox_get_serverinfo();
 void Pox_mpi_myid(), Pox_mpi_nprocs();
+void Pnd_exec_f4_red();
 
 void ox_launch_generic();
 
@@ -173,6 +174,8 @@ struct ftab tcp_tab[] = {
 	{"ox_execute_string",Pox_execute_string,2},
 	{"ox_execute_function",Pox_execute_function,3},
 
+	{"nd_exec_f4_red",Pnd_exec_f4_red,0},
+
 
 	{0,0,0},
 };
@@ -182,6 +185,12 @@ extern MATHCAP my_mathcap;
 extern int ox_exchange_mathcap;
 
 char *getenv();
+
+void Pnd_exec_f4_red(Q *rp)
+{
+	nd_exec_f4_red_dist();
+	*rp = 0;
+}
 
 #if defined(MPI)
 extern int mpi_myid, mpi_nprocs;
@@ -1294,4 +1303,10 @@ int validate_ox_plot_stream(int index)
 	ox_flush_stream_force(m_c_tab[i].c);
 #endif
 	return i;
+}
+
+int get_ox_server_id(int index)
+{
+	valid_mctab_index(index);
+	return m_c_tab[index].c;
 }

@@ -1,6 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.72 2003/09/17 08:14:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.73 2003/09/17 08:37:49 noro Exp $ */
 
 #include "ca.h"
+#include "parse.h"
+#include "ox.h"
 #include "inline.h"
 #include <time.h>
 
@@ -114,6 +116,7 @@ typedef struct oIndArray
 
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 
+static int ndv_alloc;
 static int nd_f4_nsp=0x7fffffff;
 static double nd_scale=2;
 static UINT **nd_bound;
@@ -142,6 +145,7 @@ static int nm_adv;
 static int nmv_adv;
 static int nd_dcomp;
 
+extern struct order_spec dp_current_spec;
 extern VL CO;
 extern int Top,Reverse,DP_Print,dp_nelim,do_weyl;
 extern int *current_weyl_weight_vector;
@@ -335,6 +339,8 @@ ND nd_add(int mod,ND p1,ND p2);
 ND nd_add_q(ND p1,ND p2);
 ND nd_add_sf(ND p1,ND p2);
 INLINE int nd_length(ND p);
+NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
+NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
 
 /* NDV functions */
 ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);
@@ -2240,8 +2246,9 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	int e,max,nvar;
 	NDV b;
 
+	ndv_alloc = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
-	nvar = length(vv);
+	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 	nd_init_ord(ord);
 	for ( t = BDY(f), max = 0; t; t = NEXT(t) )
 		for ( tv = vv; tv; tv = NEXT(tv) ) {
@@ -2265,6 +2272,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
+	fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
 }
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
@@ -2280,7 +2288,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	int obpe,oadv,wmax,i,len,cbpe;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
-	nvar = length(vv);
+	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 	nocheck = 0;
 	mindex = 0;
 
@@ -2458,7 +2466,7 @@ void nd_print_q(ND p)
 	else {
 		for ( m = BDY(p); m; m = NEXT(m) ) {
 			printf("+");
-			printexpr(CO,CQ(m));
+			printexpr(CO,(Obj)CQ(m));
 			printf("*");
 			ndl_print(DL(m));
 		}
@@ -3403,7 +3411,11 @@ NDV ndtondv(int mod,ND p)
 
 	if ( !p ) return 0;
 	len = LEN(p);
-	m0 = m = (NMV)(mod?MALLOC_ATOMIC(len*nmv_adv):MALLOC(len*nmv_adv));
+	if ( mod )
+		m0 = m = (NMV)GC_malloc_atomic_ignore_off_page(len*nmv_adv);
+	else
+		m0 = m = MALLOC(len*nmv_adv);
+	ndv_alloc += nmv_adv*len;
 	for ( t = BDY(p), i = 0; t; t = NEXT(t), i++, NMV_ADV(m) ) {
 		ndl_copy(DL(t),DL(m));
 		CQ(m) = CQ(t);
@@ -3461,7 +3473,7 @@ void ndv_print_q(NDV p)
 		len = LEN(p);
 		for ( m = BDY(p), i = 0; i < len; i++, NMV_ADV(m) ) {
 			printf("+");
-			printexpr(CO,CQ(m));
+			printexpr(CO,(Obj)CQ(m));
 			printf("*");
 			ndl_print(DL(m));
 		}
@@ -3616,7 +3628,7 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	union oNDC dn;
 
 	pltovl(v,&vv);
-	nvar = length(vv);
+	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 
 	/* get the degree bound */
 	for ( t = BDY(g), max = 0; t; t = NEXT(t) )
@@ -3667,6 +3679,24 @@ int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r)
 
 	for ( i = 0; i < n; i++ ) r[i] = 0;
 	for ( i = 0, s = s0, m = BDY(d); m; m = NEXT(m) ) {
+		t = DL(m);
+		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
+		r[i] = CM(m);
+	}
+	for ( i = 0; !r[i]; i++ );
+	return i;
+}
+
+int ndv_to_vect(int mod,UINT *s0,int n,NDV d,UINT *r)
+{
+	NMV m;
+	UINT *t,*s;
+	int i,j,len;
+
+	for ( i = 0; i < n; i++ ) r[i] = 0;
+	m = BDY(d);
+	len = LEN(d);
+	for ( i = j = 0, s = s0; j < len; j++, NMV_ADV(m)) {
 		t = DL(m);
 		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
 		r[i] = CM(m);
@@ -3747,7 +3777,7 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 }
 
 
-void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
+void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
 	int i,j,k,len,pos,prev;
 	UINT c,c1,c2,c3,up,lo,dmy;
@@ -3759,11 +3789,11 @@ void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
 	NMV mr;
 	NODE rp;
 
-	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+	for ( i = 0; i < nred; i++ ) {
 		ivect = imat[i];
 		k = ivect->head; svect[k] %= m;
 		if ( c = svect[k] ) {
-			c = m-c; redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
+			c = m-c; redv = nd_ps[rp0[i]->index];
 			len = LEN(redv); mr = BDY(redv);
 			svect[k] = 0; prev = k;
 			switch ( ivect->width ) {
@@ -3804,7 +3834,7 @@ void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
 		if ( svect[i] >= (UINT)m ) svect[i] %= m;
 }
 
-void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
+void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
 	int i,j,k,len,pos,prev;
 	UINT c,c1,c2,c3,up,lo,dmy;
@@ -3816,11 +3846,11 @@ void ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
 	NMV mr;
 	NODE rp;
 
-	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+	for ( i = 0; i < nred; i++ ) {
 		ivect = imat[i];
 		k = ivect->head; svect[k] %= m;
 		if ( c = svect[k] ) {
-			c = _chsgnsf(c); redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
+			c = _chsgnsf(c); redv = nd_ps[rp0[i]->index];
 			len = LEN(redv); mr = BDY(redv);
 			svect[k] = 0; prev = k;
 			switch ( ivect->width ) {
@@ -3861,7 +3891,8 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 	for ( j = 0, len = 0; j < spcol; j++ ) if ( vect[j] ) len++;
 	if ( !len ) return 0;
 	else {
-		mr0 = (NMV)MALLOC_ATOMIC(nmv_adv*len);
+		mr0 = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+		ndv_alloc += nmv_adv*len;
 		mr = mr0; 
 		p = s0vect;
 		for ( j = k = 0; j < col; j++, p += nd_wpd )
@@ -3875,23 +3906,20 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 	}
 }
 
-int nd_sp_f4(int m,ND_pairs l,PGeoBucket bucket,NODE *s)
+int nd_sp_f4(int m,ND_pairs l,PGeoBucket bucket)
 {
 	ND_pairs t;
 	NODE sp0,sp;
 	int stat;
 	ND spol;
 
-	sp0 = 0;
 	for ( t = l; t; t = NEXT(t) ) {
 		stat = nd_sp(m,0,t,&spol);
 		if ( !stat ) return 0;
 		if ( spol ) {
-			NEXTNODE(sp0,sp); BDY(sp) = (pointer)nd_dup(spol);
 			add_pbucket_symbolic(bucket,spol);
 		}
 	}
-	*s = sp0;
 	return 1;
 }
 
@@ -3935,7 +3963,6 @@ int nd_symbolic_preproc(PGeoBucket bucket,UINT **s0vect,NODE *r)
 	return col;
 }
 
-#if 0
 NODE nd_f4(int m)
 {
 	int i,nh,stat,index;
@@ -3944,123 +3971,7 @@ NODE nd_f4(int m)
 	ND spol,red;
 	NDV nf,redv;
 	NM s0,s;
-	NODE sp0,sp,rp0,rp;
-	int nsp,nred,col,rank,len,k,j,a;
-	UINT c;
-	UINT *s0vect,*svect,*p,*v;
-	int *colstat;
-	IndArray *imat;
-	int *rhead;
-	int spcol,sprow;
-	int sugar;
-	PGeoBucket bucket;
-	struct oEGT eg0,eg1,eg_f4;
-	static UINT **spmat;
-	static UINT *spb;
-	static int spblen;
-
-	if ( !m )
-		error("nd_f4 : not implemented");
-
-	g = 0; d = 0;
-	for ( i = 0; i < nd_psn; i++ ) {
-		d = update_pairs(d,g,i);
-		g = update_base(g,i);
-	}
-	if ( !spmat ) {
-		spmat = (UINT **)MALLOC(nd_f4_nsp*sizeof(UINT *));
-		spblen = 10000;
-		spb = (UINT *)MALLOC_ATOMIC(nd_f4_nsp*spblen*sizeof(UINT));
-	}
-	while ( d ) {
-		get_eg(&eg0);
-		l = nd_minsugarp(d,&d);
-		sugar = SG(l);
-		bucket = create_pbucket();
-		stat = nd_sp_f4(m,l,bucket,&sp0);
-		if ( !stat ) {
-			for ( t = l; NEXT(t); t = NEXT(t) );
-			NEXT(t) = d; d = l;
-			d = nd_reconstruct(m,0,d);
-			continue;
-		}
-		if ( !sp0 ) continue;
-		col = nd_symbolic_preproc(bucket,&s0vect,&rp0);
-		if ( !col ) {
-			for ( t = l; NEXT(t); t = NEXT(t) );
-			NEXT(t) = d; d = l;
-			d = nd_reconstruct(m,0,d);
-			continue;
-		}
-
-		nsp = length(sp0); nred = length(rp0); spcol = col-nred;
-		imat = (IndArray *)MALLOC(nred*sizeof(IndArray));
-		rhead = (int *)MALLOC_ATOMIC(col*sizeof(int));
-		for ( i = 0; i < col; i++ ) rhead[i] = 0;
-
-		/* construction of index arrays */
-		for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
-			imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,(NM_ind_pair)BDY(rp));
-			rhead[imat[i]->head] = 1;
-		}
-
-		/* elimination (1st step) */
-		svect = (UINT *)MALLOC_ATOMIC(col*sizeof(UINT));
-		if ( spcol > spblen ) {
-			spblen = spcol;
-			spb = REALLOC(spb,spblen*nd_f4_nsp*sizeof(UINT));
-		}
-
-		for ( a = sprow = 0, sp = sp0, p = spb; a < nsp; a++, sp = NEXT(sp) ) {
-			nd_to_vect(m,s0vect,col,BDY(sp),svect);
-			ndv_reduce_vect(m,svect,col,imat,rp0);
-			for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
-			if ( i < col ) {
-				spmat[sprow] = p;
-				v = spmat[sprow];
-				for ( j = k = 0; j < col; j++ )
-					if ( !rhead[j] ) v[k++] = svect[j];
-				sprow++;
-				p += k;
-			}
-		}
-		/* free index arrays */
-		for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
-
-		/* elimination (2nd step) */
-		colstat = (int *)ALLOCA(spcol*sizeof(int));
-		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
-
-		get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
-		if ( DP_Print ) {
-			fprintf(asir_out,"sugar=%d,nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
-				sugar,nsp,nred,sprow,spcol,rank);
-			fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
-		}
-
-		/* adding new bases */
-		for ( i = 0; i < rank; i++ ) {
-			nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
-			SG(nf) = sugar;
-			ndv_removecont(m,nf);
-			nh = ndv_newps(nf,0);
-			d = update_pairs(d,g,nh);
-			g = update_base(g,nh);
-		}
-	}
-	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
-	return g;
-}
-#else
-NODE nd_f4(int m)
-{
-	int i,nh,stat,index;
-	NODE r,g;
-	ND_pairs d,l,t;
-	ND spol,red;
-	NDV nf,redv;
-	NM s0,s;
-	NODE sp0,sp,rp0,rp;
+	NODE rp0,sp0,srp0,nflist;
 	int nsp,nred,col,rank,len,k,j,a;
 	UINT c;
 	UINT **spmat;
@@ -4075,7 +3986,7 @@ NODE nd_f4(int m)
 
 	if ( !m )
 		error("nd_f4 : not implemented");
-
+	ndv_alloc = 0;
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
 		d = update_pairs(d,g,i);
@@ -4086,7 +3997,7 @@ NODE nd_f4(int m)
 		l = nd_minsugarp(d,&d);
 		sugar = SG(l);
 		bucket = create_pbucket();
-		stat = nd_sp_f4(m,l,bucket,&sp0);
+		stat = nd_sp_f4(m,l,bucket);
 		if ( !stat ) {
 			for ( t = l; NEXT(t); t = NEXT(t) );
 			NEXT(t) = d; d = l;
@@ -4101,63 +4012,344 @@ NODE nd_f4(int m)
 			d = nd_reconstruct(m,0,d);
 			continue;
 		}
-
-		nsp = length(sp0); nred = length(rp0); spcol = col-nred;
-		imat = (IndArray *)MALLOC(nred*sizeof(IndArray));
-		rhead = (int *)MALLOC_ATOMIC(col*sizeof(int));
-		for ( i = 0; i < col; i++ ) rhead[i] = 0;
-
-		/* construction of index arrays */
-		for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
-			imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,(NM_ind_pair)BDY(rp));
-			rhead[imat[i]->head] = 1;
-		}
-
-		/* elimination (1st step) */
-		spmat = (UINT **)MALLOC(nsp*sizeof(UINT *));
-		svect = (UINT *)MALLOC_ATOMIC(col*sizeof(UINT));
-		for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
-			nd_to_vect(m,s0vect,col,BDY(sp),svect);
-			if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rp0);
-			else ndv_reduce_vect(m,svect,col,imat,rp0);
-			for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
-			if ( i < col ) {
-				spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
-				for ( j = k = 0; j < col; j++ )
-					if ( !rhead[j] ) v[k++] = svect[j];
-				sprow++;
-			}
-		}
-		/* free index arrays */
-		for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
-
-		/* elimination (2nd step) */
-		colstat = (int *)ALLOCA(spcol*sizeof(int));
-		if ( m == -1 )
-			rank = generic_gauss_elim_sf(spmat,sprow,spcol,m,colstat);
-		else
-			rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
-
 		get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
-		if ( DP_Print ) {
-			fprintf(asir_out,"sugar=%d,nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
-				sugar,nsp,nred,sprow,spcol,rank);
-			fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
-		}
-
+		if ( DP_Print )
+			fprintf(asir_out,"sugar=%d,symb=%fsec,",
+				sugar,eg_f4.exectime+eg_f4.gctime);
+		if ( 1 )
+			nflist = nd_f4_red(m,l,s0vect,col,rp0);
+		else
+			nflist = nd_f4_red_dist(m,l,s0vect,col,rp0);
 		/* adding new bases */
-		for ( i = 0; i < rank; i++ ) {
-			nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+		for ( r = nflist; r; r = NEXT(r) ) {
+			nf = (NDV)BDY(r);
 			SG(nf) = sugar;
 			ndv_removecont(m,nf);
 			nh = ndv_newps(nf,0);
 			d = update_pairs(d,g,nh);
 			g = update_base(g,nh);
-			GC_free(spmat[i]);
 		}
-		for ( ; i < sprow; i++ ) GC_free(spmat[i]);
 	}
 	for ( r = g; r; r = NEXT(r) ) BDY(r) = (pointer)nd_ps[(int)BDY(r)];
+	fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
 	return g;
 }
-#endif
+
+NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
+{
+	IndArray *imat;
+	int nsp,nred,spcol,sprow,a;
+	int *rhead;
+	int i,j,k,l,rank;
+	NODE rp,r0,r;
+	ND_pairs sp;
+	ND spol;
+	int **spmat;
+	UINT *svect,*v;
+	int *colstat;
+	struct oEGT eg0,eg1,eg_f4;
+	NM_ind_pair *rvect;
+
+	get_eg(&eg0);
+	for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
+	nred = length(rp0); spcol = col-nred;
+	imat = (IndArray *)ALLOCA(nred*sizeof(IndArray));
+	rhead = (int *)ALLOCA(col*sizeof(int));
+	for ( i = 0; i < col; i++ ) rhead[i] = 0;
+
+	/* construction of index arrays */
+	rvect = (NM_ind_pair *)ALLOCA(nred*sizeof(NM_ind_pair));
+	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+		rvect[i] = (NM_ind_pair)BDY(rp);
+		imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,rvect[i]);
+		rhead[imat[i]->head] = 1;
+	}
+
+	/* elimination (1st step) */
+	spmat = (int **)ALLOCA(nsp*sizeof(UINT *));
+	svect = (UINT *)ALLOCA(col*sizeof(UINT));
+	for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
+		nd_sp(m,0,sp,&spol);
+		nd_to_vect(m,s0vect,col,spol,svect);
+		nd_free(spol);
+		if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rvect,nred);
+		else ndv_reduce_vect(m,svect,col,imat,rvect,nred);
+		for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+		if ( i < col ) {
+			spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
+			for ( j = k = 0; j < col; j++ )
+				if ( !rhead[j] ) v[k++] = svect[j];
+			sprow++;
+		}
+	}
+	/* free index arrays */
+	for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
+
+	/* elimination (2nd step) */
+	colstat = (int *)ALLOCA(spcol*sizeof(int));
+	if ( m == -1 )
+		rank = generic_gauss_elim_sf(spmat,sprow,spcol,m,colstat);
+	else
+		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+	r0 = 0;
+	for ( i = 0; i < rank; i++ ) {
+		NEXTNODE(r0,r); BDY(r) = 
+			(pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+		GC_free(spmat[i]);
+	}
+	for ( ; i < sprow; i++ ) GC_free(spmat[i]);
+	get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
+	if ( DP_Print ) {
+		fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
+			nsp,nred,sprow,spcol,rank);
+		fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
+	}
+	return r0;
+}
+
+FILE *nd_write,*nd_read;
+
+void nd_send_int(int a) {
+	write_int(nd_write,&a);
+}
+
+void nd_send_intarray(int *p,int len) {
+	write_intarray(nd_write,p,len);
+}
+
+int nd_recv_int() {
+	int a;
+
+	read_int(nd_read,&a);
+	return a;
+}
+
+void nd_recv_intarray(int *p,int len) {
+	read_intarray(nd_read,p,len);
+}
+
+void nd_send_ndv(NDV p) {
+	int len,i;
+	NMV m;
+
+	if ( !p ) nd_send_int(0);
+	else {
+		len = LEN(p);
+		nd_send_int(len);
+		m = BDY(p);
+		for ( i = 0; i < len; i++, NMV_ADV(m) ) {
+			nd_send_int(CM(m));	
+			nd_send_intarray(DL(m),nd_wpd);
+		}
+	}
+}
+
+void nd_send_nd(ND p) {
+	int len,i;
+	NM m;
+
+	if ( !p ) nd_send_int(0);
+	else {
+		len = LEN(p);
+		nd_send_int(len);
+		m = BDY(p);
+		for ( i = 0; i < len; i++, m = NEXT(m) ) {
+			nd_send_int(CM(m));	
+			nd_send_intarray(DL(m),nd_wpd);
+		}
+	}
+}
+
+NDV nd_recv_ndv()
+{
+	int len,i;
+	NMV m,m0;
+	NDV r;
+
+	len = nd_recv_int();
+	if ( !len ) return 0;
+	else {
+		m0 = m = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+		ndv_alloc += len*nmv_adv;
+		for ( i = 0; i < len; i++, NMV_ADV(m) ) {
+			CM(m) = nd_recv_int();	
+			nd_recv_intarray(DL(m),nd_wpd);
+		}
+		MKNDV(nd_nvar,m0,len,r);
+		return r;	
+	}
+}
+
+int ox_exec_f4_red(Q proc)
+{
+	Obj obj;
+	STRING fname;
+	NODE arg;
+	int s;
+	extern int ox_need_conv,ox_file_io;
+
+	MKSTR(fname,"nd_exec_f4_red");
+	arg = mknode(2,proc,fname);
+	Pox_cmo_rpc(arg,&obj);
+	s = get_ox_server_id(QTOS(proc));
+	nd_write = iofp[s].out;
+	nd_read = iofp[s].in;
+	ox_need_conv = ox_file_io = 0;
+	return s;
+}
+
+NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
+{
+	int nsp,nred;
+	int i,rank,s;
+	NODE rp,r0,r;
+	ND_pairs sp;
+	NM_ind_pair pair;
+	NMV nmv;
+	NM nm;
+	NDV nf;
+	Obj proc,dmy;
+
+	ox_launch_main(0,0,&proc);
+	s = ox_exec_f4_red((Q)proc);
+
+	nd_send_int(m);
+	nd_send_int(nd_nvar);
+	nd_send_int(nd_bpe);
+	nd_send_int(nd_wpd);
+	nd_send_int(nmv_adv);
+
+	saveobj(nd_write,dp_current_spec.obj); fflush(nd_write);
+
+	nd_send_int(nd_psn);
+	for ( i = 0; i < nd_psn; i++ ) nd_send_ndv(nd_ps[i]);
+
+	for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
+	nd_send_int(nsp);
+	for ( i = 0, sp = sp0; i < nsp; i++, sp = NEXT(sp) ) {
+		nd_send_int(sp->i1); nd_send_int(sp->i2);
+	}
+
+	nd_send_int(col); nd_send_intarray(s0vect,col*nd_wpd);
+
+	nred = length(rp0); nd_send_int(nred);
+	for ( i = 0, rp = rp0; i < nred; i++, rp = NEXT(rp) ) {
+		pair = (NM_ind_pair)BDY(rp);
+		nd_send_int(pair->index);
+		nd_send_intarray(pair->mul->dl,nd_wpd);
+	}
+	fflush(nd_write);
+	rank = nd_recv_int();
+	fprintf(asir_out,"rank=%d\n",rank);
+	r0 = 0;
+	for ( i = 0; i < rank; i++ ) {
+		nf = nd_recv_ndv();
+		NEXTNODE(r0,r); BDY(r) = (pointer)nf;
+	}
+	Pox_shutdown(mknode(1,proc),&dmy);
+	return r0;
+}
+
+/* server side */
+
+void nd_exec_f4_red_dist()
+{
+	int m,i,nsp,col,s0size,nred,spcol,j,k;
+	NM_ind_pair *rp0;
+	NDV nf;
+	UINT *s0vect;
+	IndArray *imat;
+	int *rhead;
+	int **spmat;
+	UINT *svect,*v;
+	ND_pairs *sp0;
+	int *colstat;
+	int a,sprow,rank;
+	struct order_spec ord;
+	Obj ordspec;
+	ND spol;
+
+	nd_read = iofp[0].in;
+	nd_write = iofp[0].out;
+	m = nd_recv_int();
+	nd_nvar = nd_recv_int();
+	nd_bpe = nd_recv_int();
+	nd_wpd = nd_recv_int();
+	nmv_adv = nd_recv_int();
+
+	loadobj(nd_read,&ordspec);
+	create_order_spec(ordspec,&ord);
+	nd_init_ord(&ord);
+	nd_setup_parameters(nd_nvar,0);
+
+	nd_psn = nd_recv_int();
+	nd_ps = (NDV *)MALLOC(nd_psn*sizeof(NDV));
+	nd_bound = (UINT **)MALLOC(nd_psn*sizeof(UINT *));
+	for ( i = 0; i < nd_psn; i++ ) {
+		nd_ps[i] = nd_recv_ndv();
+		nd_bound[i] = ndv_compute_bound(nd_ps[i]);
+	}
+
+	nsp = nd_recv_int();
+	sp0 = (ND_pairs *)MALLOC(nsp*sizeof(ND_pairs));
+	for ( i = 0; i < nsp; i++ ) {
+		NEWND_pairs(sp0[i]);
+		sp0[i]->i1 = nd_recv_int(); sp0[i]->i2 = nd_recv_int();
+		ndl_lcm(HDL(nd_ps[sp0[i]->i1]),HDL(nd_ps[sp0[i]->i2]),LCM(sp0[i]));
+	}
+
+	col = nd_recv_int();
+	s0size = col*nd_wpd;
+	s0vect = (UINT *)MALLOC(s0size*sizeof(UINT));
+	nd_recv_intarray(s0vect,s0size);
+
+	nred = nd_recv_int();
+	rp0 = (NM_ind_pair *)MALLOC(nred*sizeof(NM_ind_pair));
+	for ( i = 0; i < nred; i++ ) {
+		rp0[i] = (NM_ind_pair)MALLOC(sizeof(struct oNM_ind_pair));
+		rp0[i]->index = nd_recv_int();
+		rp0[i]->mul = (NM)MALLOC(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
+		nd_recv_intarray(rp0[i]->mul->dl,nd_wpd);
+	}
+
+	spcol = col-nred;
+	imat = (IndArray *)MALLOC(nred*sizeof(IndArray));
+	rhead = (int *)MALLOC(col*sizeof(int));
+	for ( i = 0; i < col; i++ ) rhead[i] = 0;
+
+	/* construction of index arrays */
+	for ( i = 0; i < nred; i++ ) {
+		imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,rp0[i]);
+		rhead[imat[i]->head] = 1;
+	}
+
+	/* elimination (1st step) */
+	spmat = (int **)MALLOC(nsp*sizeof(UINT *));
+	svect = (UINT *)MALLOC(col*sizeof(UINT));
+	for ( a = sprow = 0; a < nsp; a++ ) {
+		nd_sp(m,0,sp0[a],&spol);
+		nd_to_vect(m,s0vect,col,spol,svect);
+		nd_free(spol);
+		if ( m == -1 ) ndv_reduce_vect_sf(m,svect,col,imat,rp0,nred);
+		else ndv_reduce_vect(m,svect,col,imat,rp0,nred);
+		for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+		if ( i < col ) {
+			spmat[sprow] = v = (UINT *)MALLOC(spcol*sizeof(UINT));
+			for ( j = k = 0; j < col; j++ )
+				if ( !rhead[j] ) v[k++] = svect[j];
+			sprow++;
+		}
+	}
+	/* elimination (2nd step) */
+	colstat = (int *)ALLOCA(spcol*sizeof(int));
+	if ( m == -1 )
+		rank = generic_gauss_elim_sf(spmat,sprow,spcol,m,colstat);
+	else
+		rank = generic_gauss_elim_mod(spmat,sprow,spcol,m,colstat);
+	nd_send_int(rank);
+	for ( i = 0; i < rank; i++ ) {
+		nf = vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+		nd_send_ndv(nf);
+	}
+	fflush(nd_write);
+}
