@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.13 2000/12/22 10:03:31 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.14 2001/03/08 07:49:13 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -94,6 +94,8 @@ FILE *ox_istream,*ox_ostream;
 int do_server_in_X11;
 Obj LastVal;
 char LastError[BUFSIZ];
+int timer_is_set;
+
 
 struct oV oVAR[] = {
 	{"x",0,0}, {"y",0,0}, {"z",0,0}, {"u",0,0},
@@ -396,6 +398,7 @@ char *s;
 	/* restore states */
 	reset_engine();
 	reset_io();
+	reset_timer();
 	longjmp(env,1);
 }
 
@@ -606,6 +609,8 @@ char *s;
 {
 	SNODE *snp;
 
+	if ( timer_is_set )
+		alrm_handler(SIGVTALRM);
 	fprintf(stderr,"%s\n",s);
 	set_lasterror(s);
 	if ( CPVS != GPVS ) {
@@ -649,6 +654,7 @@ int interval;
 	it.it_value.tv_usec = 0;
 	setitimer(ITIMER_VIRTUAL,&it,0);
 	signal(SIGVTALRM,alrm_handler);
+	timer_is_set = 1;
 }
 
 void reset_timer()
@@ -661,6 +667,7 @@ void reset_timer()
 	it.it_value.tv_usec = 0;
 	setitimer(ITIMER_VIRTUAL,&it,0);
 	signal(SIGVTALRM,SIG_IGN);
+	timer_is_set = 0;
 }
 #endif
 
