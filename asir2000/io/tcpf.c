@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.39 2003/03/07 06:39:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.40 2003/03/12 07:56:23 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -890,8 +890,11 @@ void Pox_push_local(NODE arg,Obj *rp)
 	int s;
 	struct oLIST dummy;
 	VL vl;
-	int index = QTOS((Q)ARG0(arg));
+	int index;
 
+	if ( !arg )
+		error("ox_push_local : too few arguments.");
+	index = QTOS((Q)ARG0(arg));
 	valid_mctab_index(index);
 	s = m_c_tab[index].c; arg = NEXT(arg);
 
@@ -907,8 +910,11 @@ void Pox_push_local(NODE arg,Obj *rp)
 void Pox_push_cmo(NODE arg,Obj *rp)
 {
 	int s;
-	int index = QTOS((Q)ARG0(arg));
+	int index;
 
+	if ( !arg )
+		error("ox_push_cmo : too few arguments.");
+	index = QTOS((Q)ARG0(arg));
 	valid_mctab_index(index);
 	s = m_c_tab[index].c; arg = NEXT(arg);
 	for ( ; arg; arg = NEXT(arg) )
