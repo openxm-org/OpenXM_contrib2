@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.2 2002/01/04 01:35:24 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.3 2002/06/07 06:00:28 noro Exp $ */
 /* $Id$ */
 
 /* Todo:
@@ -263,6 +263,26 @@ def glib_clip1_y(X0,Y0,X1,Y1,Clip) {
      return([X0,Y0,X1+(Clip-Y1)*(X0-X1)/(Y0-Y1),Clip]);
    }
    return([X0,Y0,X1,Y1]);
+}
+
+/*&usage begin:glib_print(X,Y,Text|color)
+  It put a string {Text} at [{X},{Y}] on the glib canvas.
+  example: glib_print(100,100,"Hello Worlds" | color=0xff0000);
+end: */
+def glib_print(X,Y,Text) {
+  extern Glib_process, Glib_canvas,
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
+  if (Glib_canvas < 0) glib_open();
+  glib_check();
+  glib_check_arg(X,Y);
+  if (type(Text) != 7) error("glib_print(X,Y,Text): Text must be a string.");
+  C = getopt(color);
+  if ( type(C) != -1 )
+    draw_string(Glib_process,Glib_canvas,
+                [X,Y],Text,C);
+  else
+    draw_string(Glib_process,Glib_canvas,
+                [X,Y],Text);
 }
 end$
 
