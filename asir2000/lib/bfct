@@ -45,9 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.21 2002/01/30 02:12:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.22 2003/04/20 08:54:28 noro Exp $
  */
 /* requires 'primdec' */
+
+#define TMP_S ssssssss
+#define TMP_T tttttttt
+#define TMP_Y1 yyyyyyyy1
+#define TMP_Y2 yyyyyyyy2
 
 extern LIBRARY_GR_LOADED$
 extern LIBRARY_PRIMDEC_LOADED$
@@ -59,6 +64,9 @@ if(!LIBRARY_PRIMDEC_LOADED) load("primdec"); else ; LIBRARY_PRIMDEC_LOADED = 1$
 
 def bfunction(F)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -75,6 +83,9 @@ def bfunction(F)
 
 def ann(F)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -117,6 +128,9 @@ def ann(F)
 
 def ann0(F)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -389,6 +403,9 @@ def initial_part(F,V,MW,W)
 
 def bfct(F)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -412,6 +429,9 @@ def bfct(F)
 
 def bfct_via_gbfct(F)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+
 	V = vars(F);
 	N = length(V);
 	D = newvect(N);
@@ -441,6 +461,10 @@ def bfct_via_gbfct(F)
 
 def bfct_via_gbfct_weight(F,V)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+	V = replace_vars_v(V);
+
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
@@ -478,6 +502,10 @@ def bfct_via_gbfct_weight(F,V)
 
 def bfct_via_gbfct_weight_1(F,V)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+	V = replace_vars_v(V);
+
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
@@ -513,6 +541,10 @@ def bfct_via_gbfct_weight_1(F,V)
 
 def bfct_via_gbfct_weight_2(F,V)
 {
+	/* XXX */
+	F = replace_vars_f(F);
+	V = replace_vars_v(V);
+
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
@@ -832,6 +864,33 @@ def w_tdeg(F,V,W)
 	for ( R = 0; T; T = cdr(T) ) {
 		D = dp_td(T);
 		if ( D > R ) R = D;
+	}
+	return R;
+}
+
+def replace_vars_f(F)
+{
+	return subst(F,s,TMP_S,t,TMP_T,y1,TMP_Y1,y2,TMP_Y2);
+}
+
+def replace_vars_v(V)
+{
+	V = replace_var(V,s,TMP_S);
+	V = replace_var(V,t,TMP_T);
+	V = replace_var(V,y1,TMP_Y1);
+	V = replace_var(V,y2,TMP_Y2);
+	return V;
+}
+
+def replace_var(V,X,Y)
+{
+	V = reverse(V);
+	for ( R = []; V != []; V = cdr(V) ) {
+		Z = car(V);
+		if ( Z == X )
+			R = cons(Y,R);
+		else
+			R = cons(Z,R);
 	}
 	return R;
 }
