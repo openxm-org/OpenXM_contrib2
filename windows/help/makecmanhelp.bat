@@ -15,6 +15,7 @@ nkf32 -s %srcdir%\top.texi > src\top.texi
 
 nkf32 -s %srcdir%\Diff-%lang%.texi > src\Diff-%lang%.texi
 nkf32 -s %srcdir%\Dmodule-%lang%.texi > src\Dmodule-%lang%.texi
+nkf32 -s %srcdir%\Matrix-%lang%.texi > src\Matrix-%lang%.texi
 nkf32 -s %srcdir%\base-auto-%lang%.texi > src\base-auto-%lang%.texi
 nkf32 -s %srcdir%\base-%lang%.texi > src\base-%lang%.texi
 nkf32 -s %srcdir%\calculus-%lang%.texi > src\calculus-%lang%.texi
@@ -26,16 +27,19 @@ nkf32 -s %srcdir%\glib-%lang%.texi > src\glib-%lang%.texi
 nkf32 -s %srcdir%\graphic-%lang%.texi > src\graphic-%lang%.texi
 nkf32 -s %srcdir%\hypergeometric-%lang%.texi > src\hypergeometric-%lang%.texi
 nkf32 -s %srcdir%\intro-%lang%.texi > src\intro-%lang%.texi
-nkf32 -s %srcdir%\longname-%lang%.texi > src\longname-%lang%.texi
 nkf32 -s %srcdir%\matrix-auto-%lang%.texi > src\matrix-auto-%lang%.texi
 nkf32 -s %srcdir%\matrix-%lang%.texi > src\matrix-%lang%.texi
 nkf32 -s %srcdir%\misc-%lang%.texi > src\misc-%lang%.texi
 nkf32 -s %srcdir%\names-%lang%.texi > src\names-%lang%.texi
+nkf32 -s %srcdir%\number-auto-%lang%.texi > src\number-auto-%lang%.texi
 nkf32 -s %srcdir%\number-%lang%.texi > src\number-%lang%.texi
+nkf32 -s %srcdir%\opening-%lang%.texi > src\opening-%lang%.texi
+nkf32 -s %srcdir%\otherfunc-%lang%.texi > src\otherfunc-%lang%.texi
 nkf32 -s %srcdir%\oxgnuplot-%lang%.texi > src\oxgnuplot-%lang%.texi
 nkf32 -s %srcdir%\oxmath-%lang%.texi > src\oxmath-%lang%.texi
 nkf32 -s %srcdir%\oxom-%lang%.texi > src\oxom-%lang%.texi
 nkf32 -s %srcdir%\oxphc-%lang%.texi > src\oxphc-%lang%.texi
+nkf32 -s %srcdir%\oxrfc100-%lang%.texi > src\oxrfc100-%lang%.texi
 nkf32 -s %srcdir%\oxsm1-%lang%.texi > src\oxsm1-%lang%.texi
 nkf32 -s %srcdir%\oxtigers-%lang%.texi > src\oxtigers-%lang%.texi
 nkf32 -s %srcdir%\oxxm-%lang%.texi > src\oxxm-%lang%.texi
@@ -49,6 +53,8 @@ nkf32 -s %srcdir%\print-auto-%lang%.texi > src\print-auto-%lang%.texi
 nkf32 -s %srcdir%\print-%lang%.texi > src\print-%lang%.texi
 nkf32 -s %srcdir%\series-%lang%.texi > src\series-%lang%.texi
 nkf32 -s %srcdir%\sm1-auto-%lang%.texi > src\sm1-auto-%lang%.texi
+nkf32 -s %srcdir%\util-auto-%lang%.texi > src\util-auto-%lang%.texi
+nkf32 -s %srcdir%\util-%lang%.texi > src\util-%lang%.texi
 nkf32 -s %srcdir%\windows-%lang%.texi > src\windows-%lang%.texi
 
 cd src

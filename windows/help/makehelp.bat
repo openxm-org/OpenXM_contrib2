@@ -30,7 +30,9 @@ nkf32 -s %srcdir%\parts\builtin\function.texi > parts\builtin\function.texi
 nkf32 -s %srcdir%\parts\builtin\io.texi > parts\builtin\io.texi
 nkf32 -s %srcdir%\parts\builtin\list.texi > parts\builtin\list.texi
 nkf32 -s %srcdir%\parts\builtin\misc.texi > parts\builtin\misc.texi
+nkf32 -s %srcdir%\parts\builtin\module.texi > parts\builtin\module.texi
 nkf32 -s %srcdir%\parts\builtin\num.texi > parts\builtin\num.texi
+nkf32 -s %srcdir%\parts\builtin\numeric.texi > parts\builtin\numeric.texi
 nkf32 -s %srcdir%\parts\builtin\poly.texi > parts\builtin\poly.texi
 nkf32 -s %srcdir%\parts\builtin\string.texi > parts\builtin\string.texi
 nkf32 -s %srcdir%\parts\builtin\structure.texi > parts\builtin\structure.texi
