@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.79 2003/10/10 07:18:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.80 2003/10/10 10:07:18 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -784,10 +784,24 @@ INLINE int ndl_equal(UINT *d1,UINT *d2)
 {
 	int i;
 
-	for ( i = 0; i < nd_wpd; i++ )
-		if ( *d1++ != *d2++ )
-			return 0;
-	return 1;
+	switch ( nd_wpd ) {
+		case 2:
+			if ( TD(d2) != TD(d1) ) return 0;
+			if ( d2[1] != d1[1] ) return 0;
+			return 1;
+			break;
+		case 3:
+			if ( TD(d2) != TD(d1) ) return 0;
+			if ( d2[1] != d1[1] ) return 0;
+			if ( d2[2] != d1[2] ) return 0;
+			return 1;
+			break;
+		default:
+			for ( i = 0; i < nd_wpd; i++ )
+				if ( *d1++ != *d2++ ) return 0;
+			return 1;
+			break;
+	}
 }
 
 INLINE void ndl_copy(UINT *d1,UINT *d2)
@@ -3823,7 +3837,7 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 	NDV p;
 	unsigned char *ivc;
 	unsigned short *ivs;
-	UINT *v,*ivi;
+	UINT *v,*ivi,*s0v;
 	int i,j,len,prev,diff,cdiff;
 	IndArray r;
 
@@ -3832,13 +3846,13 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 	p = nd_ps[pair->index];
 	len = LEN(p);
 	t = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
-	r = (IndArray)MALLOC(sizeof(struct oIndArray));
 	v = (unsigned int *)ALLOCA(len*sizeof(unsigned int));
 	for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
 		ndl_add(d,DL(mr),t);	
 		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
 		v[j] = i;
 	}
+	r = (IndArray)MALLOC(sizeof(struct oIndArray));
 	r->head = v[0];
 	diff = 0;
 	for ( i = 1; i < len; i++ ) {
