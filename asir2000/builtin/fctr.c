@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.12 2002/01/13 07:11:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.13 2002/09/27 08:40:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -342,7 +342,7 @@ LIST *rp;
 {
 	DCP dc;
 
-	sfsqfr(ARG0(arg),&dc);
+	sqfrsf(CO,ARG0(arg),&dc);
 	dcptolist(dc,rp);
 }
 
