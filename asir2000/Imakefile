@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.17 2001/12/25 02:37:21 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.18 2001/12/25 08:59:47 noro Exp $
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
@@ -108,16 +108,21 @@ install-bin-lib:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
 	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_BINDIR)
 	(cd lib; make ASIR_LIBDIR=$(ASIR_LIBDIR) install-lib)
+#if defined(cygwinArchitecture)
+	$(RM) $(ASIR_LIBDIR)/asir
+	$(RM) $(ASIR_LIBDIR)/asir.exe
+	(cd $(ASIR_LIBDIR); $(LN) ./../../bin/asir asir)
+	$(RM) $(ASIR_LIBDIR)/ox_launch
+	$(RM) $(ASIR_LIBDIR)/ox_launch.exe
+	(cd $(ASIR_LIBDIR); $(CP) ./../../bin/asir.exe ox_launch.exe)
+#else
 	$(RM) $(ASIR_LIBDIR)/asir
 	(cd $(ASIR_LIBDIR); $(LN) ./../../bin/asir asir)
-	$(RM) $(ASIR_LIBDIR)/ox_asir
-	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
 	$(RM) $(ASIR_LIBDIR)/ox_launch
-#if defined(cygwinArchitecture)
-	(cd $(ASIR_LIBDIR); $(CP) asir.exe ox_launch.exe)
-#else
 	(cd $(ASIR_LIBDIR); $(LN) asir ox_launch)
 #endif
+	$(RM) $(ASIR_LIBDIR)/ox_asir
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
 	$(RM) $(ASIR_LIBDIR)/ox_plot
 	(cd $(ASIR_LIBDIR); $(LN) asir ox_plot)
 
