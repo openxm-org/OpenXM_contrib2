@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.27 2003/12/02 06:56:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.28 2004/01/07 06:25:42 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,6 +54,7 @@ void Pctrl();
 
 struct ftab ctrl_tab[] = {
 	{"ctrl",Pctrl,-2},
+	{"asir_setenv",Pctrl,-2},
 	{0,0,0},
 };
 

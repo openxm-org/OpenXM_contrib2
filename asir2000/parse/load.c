@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.8 2001/10/09 01:36:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.9 2001/12/25 02:39:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -95,6 +95,7 @@ char *ASIRLOADPATH[32];
 
 char *getenv();
 void Pget_rootdir();
+char *search_executable(char *name);
 
 extern char *asir_libdir;
 extern char *asir_pager;
@@ -102,9 +103,36 @@ extern int read_exec_file;
 extern int main_parser;
 extern JMP_BUF exec_env;
 
+char *search_executable(char *name)
+{
+	char *c,*s,*ret;
+	int len;
+	char dir[BUFSIZ],path[BUFSIZ];
+	struct stat buf;
+
+	for ( s = (char *)getenv("PATH"); s; ) {
+		c = (char *)index(s,':');
+		if ( c ) {
+			len = c-s;
+			strncpy(dir,s,len); s = c+1; dir[len] = 0;
+		} else {
+			strcpy(dir,s); s = 0;
+		}
+		sprintf(path,"%s/%s",dir,name);
+		if ( !stat(path,&buf) && !(buf.st_mode & S_IFDIR) 
+			&& !access(path,X_OK) ) {
+			len = strlen(path)+1;
+			ret = (char *)MALLOC(len);
+			strcpy(ret,path);
+			return ret;
+		}
+	}
+	return 0;
+}
+
 void env_init() {
 	char *e,*p,*q;
-	int i,l;
+	int i,l,japanese;
 	char *getenv();
 	char *oxhome;
 	char rootname[BUFSIZ];
@@ -125,8 +153,18 @@ void env_init() {
 		}
 	}
 	if ( !(asir_pager = getenv("PAGER")) ) {
-		asir_pager = (char *)malloc(strlen(MORE)+1);
-		strcpy(asir_pager,MORE);
+		japanese = 0;
+		if ( (e = getenv("LANGUAGE")) && strstr(e,"ja") ) japanese = 1;
+		else if ( (e = getenv("LC_ALL")) && strstr(e,"ja") ) japanese = 1;
+		else if ( (e = getenv("LC_CTYPE")) && strstr(e,"ja") ) japanese = 1;
+		else if ( (e = getenv("LANG")) && strstr(e,"ja") ) japanese = 1;
+		if ( japanese )
+			asir_pager = search_executable("jless");
+		if ( !asir_pager ) {
+			/* default: more */
+			asir_pager = (char *)malloc(strlen(MORE)+1);
+			strcpy(asir_pager,MORE);
+		}
 	}
 	if ( e = getenv("ASIRLOADPATH" ) )
 		for ( i = 0; ; i++, e = p+1 ) {
