@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.41 2002/01/28 00:54:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.42 2002/07/17 09:45:49 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2067,6 +2067,7 @@ void dp_set_flag(Obj name,Obj value)
 {
 	char *n;
 	int v;
+	Q ratio;
 
 	if ( OID(name) != O_STR )
 		return;
@@ -2076,6 +2077,16 @@ void dp_set_flag(Obj name,Obj value)
 	}
 	if ( !strcmp(n,"Dist") ) {
 		Dist = (LIST)value; return;
+	}
+	if ( !strcmp(n,"Content") ) {
+		ratio = (Q)value;
+		if ( ratio ) {
+			DP_Multiple = BD(NM(ratio))[0];
+			Denominator = INT(ratio) ? 1 : BD(DN(ratio))[0];
+		} else {
+			DP_Multiple = 0;
+			Denominator = 1;
+		}
 	}
 	if ( value && OID(value) != O_N )
 		return;
@@ -2120,12 +2131,20 @@ void dp_set_flag(Obj name,Obj value)
 
 void dp_make_flaglist(LIST *list)
 {
-	Q v;
+	Q v,nm,dn;
 	STRING name,path;
 	NODE n,n1;
 
+#if 0
 	STOQ(DP_Multiple,v); MKNODE(n,v,0); MKSTR(name,"DP_Multiple"); MKNODE(n1,name,n); n = n1;
 	STOQ(Denominator,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Denominator"); MKNODE(n1,name,n); n = n1;
+#else
+	if ( DP_Multiple ) {
+		STOQ(DP_Multiple,nm); STOQ(Denominator,dn); divq(nm,dn,&v);
+	} else
+		v = 0;
+	MKNODE(n,v,0); MKSTR(name,"Content"); MKNODE(n1,name,n); n = n1;
+#endif
 	MKNODE(n1,Dist,n); n = n1; MKSTR(name,"Dist"); MKNODE(n1,name,n); n = n1;
 	STOQ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
 	STOQ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
