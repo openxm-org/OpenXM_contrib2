@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.48 2004/02/27 09:13:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.49 2004/05/14 09:20:57 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -809,7 +809,7 @@ char *get_intervalversion()
 
 void copyright()
 {
-	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2003, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2004, Risa/Asir committers, http://www.openxm.org/.\nGC 6.2(alpha6) copyright 1988-2003, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
 	if ( asir_texmacs ) printf("\2verbatim:");
 	printf(format, get_intervalversion(), get_asir_version(), get_asir_distribution(), get_pariversion());
 	if ( asir_texmacs ) putchar('\5');
