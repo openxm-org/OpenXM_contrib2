@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.17 2002/08/04 07:16:54 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.18 2002/08/10 11:12:32 takayama Exp $ 
 */
 /**  xm  **/
 Xm_noX = 0$  
@@ -243,6 +243,9 @@ load("sm1")$
 load("gnuplot")$
 load("tigers")$
 load("phc")$
-load("longname")$
+
+/* This module is obsolete and will no be supported.
+   See OpenXM/src/asir-contrib/packages/src/oxrfc100.rr
+*/
 
 end$
