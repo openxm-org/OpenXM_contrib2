@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.10 2000/08/21 08:31:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.11 2000/08/22 05:04:23 noro Exp $ 
 */
 /**  xm  **/
 Xm_noX = 0$  
@@ -54,9 +54,9 @@ Xm_noX = 0$
          cf. var.sm1,  debugMode
 */
 
-print("xm version 20000715. Copyright (C) OpenXM Developing Team. 2000.")$
+print("xm version 20000910. Copyright (C) OpenXM Developing Team. 2000.")$
 print("http://www.openxm.org")$
-print("ox_help(0); ox_help(\"keyword\"); ox_grep(\"keyword\"); for help message ")$
+print("help(\"keyword\"); ox_help(0); ox_help(\"keyword\"); ox_grep(\"keyword\"); for help message ")$
 XM_debug=1$
 
 /*&C-texi
