@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.2 2000/04/05 08:32:17 noro Exp $ */
 #include "ca.h"
 
 #define NV(p) ((p)->nv)
@@ -312,6 +312,59 @@ DP p1,p2,*pr;
 		MKDP(NV(p1),mr0,*pr);
 		if ( *pr )
 			(*pr)->sugar = MAX(p1->sugar,p2->sugar);
+	}
+}
+
+/* 
+ * destructive merge of two list
+ *
+ * p1, p2 : list of DL
+ * return : a merged list
+ */
+
+NODE symb_merge(m1,m2,n)
+NODE m1,m2;
+int n;
+{
+	NODE top,prev,cur,m,t;
+
+	if ( !m1 )
+		return m2;
+	else if ( !m2 )
+		return m1;
+	else {
+		switch ( (*cmpdl)(n,(DL)BDY(m1),(DL)BDY(m2)) ) {
+			case 0:
+				top = m1; m = NEXT(m2);
+				break;
+			case 1:
+				top = m1; m = m2;
+				break;
+			case -1:
+				top = m2; m = m1;
+				break;
+		}
+		prev = top; cur = NEXT(top);
+		/* BDY(prev) > BDY(m) always holds */
+		while ( cur && m ) {
+			switch ( (*cmpdl)(n,(DL)BDY(cur),(DL)BDY(m)) ) {
+				case 0:
+					m = NEXT(m);
+					prev = cur; cur = NEXT(cur);
+					break;
+				case 1:
+					t = NEXT(cur); NEXT(cur) = m; m = t;
+					prev = cur; cur = NEXT(cur);
+					break;
+				case -1:
+					NEXT(prev) = m; m = cur;
+					prev = NEXT(prev); cur = NEXT(prev);
+					break;
+			}
+		}
+		if ( !cur )
+			NEXT(prev) = m;
+		return top;
 	}
 }
 

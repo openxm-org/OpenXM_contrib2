@@ -836,14 +836,18 @@ int kind;
     
     if (rlh == 0) return;	/* No blocks of this kind.	*/
     rlh += sz;
+#if 0
 	GC_timerstart();
+#endif
     while ((hbp = *rlh) != 0) {
         hhdr = HDR(hbp);
         *rlh = hhdr -> hb_next;
         GC_reclaim_small_nonempty_block(hbp, FALSE);
         if (*flh != 0) break;
     }
+#if 0
 	GC_timerstop();
+#endif
 }
 
 /*

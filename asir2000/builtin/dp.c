@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/dp.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
@@ -1210,7 +1210,21 @@ DP *rp;
 	NEWDL(d,n); d->td = d1->td - d2->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = d1->d[i]-d2->d[i];
-	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td;
+	*rp = s;
+}
+
+void dltod(d,n,rp)
+DL d;
+int n;
+DP *rp;
+{
+	MP m;
+	DP s;
+
+	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td;
 	*rp = s;
 }
 

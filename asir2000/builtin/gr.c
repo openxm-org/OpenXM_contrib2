@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/gr.c,v 1.2 1999/11/18 05:42:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -93,9 +93,9 @@ void dp_gr_main(LIST,LIST,Num,int,struct order_spec *,LIST *);
 void dp_f4_main(LIST,LIST,struct order_spec *,LIST *);
 void dp_f4_mod_main(LIST,LIST,int,struct order_spec *,LIST *);
 double get_rtime();
-void dp_symb(DP,DP *);
 void _dpmod_to_vect(DP,DL *,int *);
 void dp_to_vect(DP,DL *,Q *);
+NODE dp_dllist(DP f),symb_merge(NODE,NODE,int);
 
 extern int dp_nelim;
 extern int dp_fcoeffs;
@@ -289,23 +289,30 @@ Q *b;
 	}
 }
 
-void dp_symb(f,rp)
+NODE dp_dllist(f)
 DP f;
-DP *rp;
 {
-	MP mp,mp0,m;
-	DP r;
+	MP m;
+	NODE mp,mp0;
 
-	if ( !f ) {
-		*rp = 0; return;
-	}
+	if ( !f )
+		return 0;
 	mp0 = 0;
 	for ( m = BDY(f); m; m = NEXT(m) ) {
-		NEXTMP(mp0,mp); mp->dl = m->dl; mp->c = (P)ONE;
+		NEXTNODE(mp0,mp); BDY(mp) = (pointer)m->dl;
 	}
 	NEXT(mp) = 0;
-	MKDP(f->nv,mp0,r); r->sugar = f->sugar;
-	*rp = r;
+	return mp0;
+}
+
+void pdl(f)
+NODE f;
+{
+	while ( f ) {
+		printdl(BDY(f)); f = NEXT(f);
+	}
+	fflush(stdout);
+	printf("\n");
 }
 
 void dp_gr_main(f,v,homo,modular,ord,rp)
@@ -536,8 +543,9 @@ NODE f;
 {
 	int i,j,k,nh,row,col,nv;
 	NODE r,g,gall;
+	NODE s,s0;
 	DP_pairs d,dm,dr,t;
-	DP h,nf,nf1,s,s0,s1,f1,f2,f21,f21r,sp,sp1,sd,sdm;
+	DP h,nf,nf1,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
 	MP mp,mp0;
 	NODE blist,bt,nt;
 	DL *ht,*at;
@@ -572,27 +580,21 @@ NODE f;
 			dp_sp(ps[t->dp1],ps[t->dp2],&sp);
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
-				dp_symb(sp,&sp1);
-				symb_addd(s0,sp1,&s1); s0 = s1;
+				s0 = symb_merge(s0,dp_dllist(sp),nv);
 			}
 		}
 		/* s0 : all the terms appeared in symbolic redunction */
-		s = s0;
-		nred = 0;
-		while ( s ) {
+		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
 			for ( r = gall;	r; r = NEXT(r) )
-				if ( dp_redble(s,ps[(int)BDY(r)] ) )
+				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
 					break;
 			if ( r ) {
-				dp_subd(s,ps[(int)BDY(r)],&sd);
+				dltod(BDY(s),nv,&tdp);
+				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				muld(CO,sd,ps[(int)BDY(r)],&f2);
 				MKNODE(bt,f2,blist); blist = bt;
-				dp_symb(f2,&f21); symb_addd(s0,f21,&s1); s0 = s1;
-				dp_rest(f21,&f21r);
-				dp_rest(s,&s1); symb_addd(s1,f21r,&s);
+				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
-			} else {
-				dp_rest(s,&s1); s = s1;
 			}
 		}
 
@@ -602,10 +604,10 @@ NODE f;
 		ht = (DL *)MALLOC(nred*sizeof(DL));
 		for ( r = blist, i = 0; i < nred; r = NEXT(r), i++ )
 			ht[i] = BDY((DP)BDY(r))->dl;
-		for ( mp = BDY(s0), col = 0; mp; mp = NEXT(mp), col++ );
+		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
 		at = (DL *)MALLOC(col*sizeof(DL));
-		for ( mp = BDY(s0), i = 0; i < col; mp = NEXT(mp), i++ )
-			at[i] = mp->dl;
+		for ( s = s0, i = 0; i < col; s = NEXT(s), i++ )
+			at[i] = (DL)BDY(s);
 		MKMAT(mat,row,col);
 		for ( i = 0, r = blist; i < row; r = NEXT(r), i++ )
 			dp_to_vect(BDY(r),at,(Q *)mat->body[i]);
@@ -657,8 +659,9 @@ int m;
 {
 	int i,j,k,nh,row,col,nv;
 	NODE r,g,gall;
+	NODE s,s0;
 	DP_pairs d,dm,dr,t;
-	DP h,nf,s,s0,s1,f1,f2,f21,f21r,sp,sp1,sd,sdm;
+	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
 	MP mp,mp0;
 	NODE blist,bt,nt;
 	DL *ht,*at;
@@ -688,28 +691,22 @@ int m;
 			_dp_sp_mod(ps[t->dp1],ps[t->dp2],m,&sp);
 			if ( sp ) {
 				MKNODE(bt,sp,blist); blist = bt;
-				dp_symb(sp,&sp1);
-				addd(CO,s0,sp1,&s1); s0 = s1;
+				s0 = symb_merge(s0,dp_dllist(sp),nv);
 			}
 		}
 		/* s0 : all the terms appeared in symbolic redunction */
-		s = s0;
-		nred = 0;
-		while ( s ) {
+		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
 			for ( r = gall;	r; r = NEXT(r) )
-				if ( dp_redble(s,ps[(int)BDY(r)] ) )
+				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
 					break;
 			if ( r ) {
-				dp_subd(s,ps[(int)BDY(r)],&sd);
+				dltod(BDY(s),nv,&tdp);
+				dp_subd(tdp,ps[(int)BDY(r)],&sd);
 				_dp_mod(sd,m,0,&sdm);
 				_mulmd(CO,m,sdm,ps[(int)BDY(r)],&f2);
 				MKNODE(bt,f2,blist); blist = bt;
-				dp_symb(f2,&f21); addd(CO,s0,f21,&s1); s0 = s1;
-				dp_rest(f21,&f21r);
-				dp_rest(s,&s1); addd(CO,s1,f21r,&s);
+				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
-			} else {
-				dp_rest(s,&s1); s = s1;
 			}
 		}
 
@@ -719,10 +716,10 @@ int m;
 		ht = (DL *)MALLOC(nred*sizeof(DL));
 		for ( r = blist, i = 0; i < nred; r = NEXT(r), i++ )
 			ht[i] = BDY((DP)BDY(r))->dl;
-		for ( mp = BDY(s0), col = 0; mp; mp = NEXT(mp), col++ );
+		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
 		at = (DL *)MALLOC(col*sizeof(DL));
-		for ( mp = BDY(s0), i = 0; i < col; mp = NEXT(mp), i++ )
-			at[i] = mp->dl;
+		for ( s = s0, i = 0; i < col; s = NEXT(s), i++ )
+			at[i] = (DL)BDY(s);
 		mat = almat(row,col);
 		for ( i = 0, r = blist; i < row; r = NEXT(r), i++ )
 			_dpmod_to_vect(BDY(r),at,mat[i]);
