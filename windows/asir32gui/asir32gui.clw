@@ -21,9 +21,9 @@ Class5=CAboutDlg
 Class6=CFatalDialog
 Class7=CAsirEdit
 Resource3=IDD_FORMVIEW
-Resource4=IDR_MAINFRAME
+Resource4=IDD_DEBUG
 Resource5=IDD_ABOUTBOX
-Resource6=IDD_DEBUG
+Resource6=IDR_MAINFRAME
 
 [CLS:CAsir32guiApp]
 Type=0
@@ -115,7 +115,8 @@ CommandCount=11
 Type=1
 Class=CMainFrame
 Command1=ID_FILE_OPEN
-CommandCount=1
+Command2=ID_FILE_LOG
+CommandCount=2
 
 [DLG:IDD_DEBUG]
 Type=1
