@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.89 2004/02/03 23:31:57 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.90 2004/03/13 06:49:15 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -1858,6 +1858,53 @@ again:
 	return g;
 }
 
+void do_diagonalize(int sugar,int m)
+{
+	int i,nh,stat;
+	NODE r,g,t;
+	ND h,nf,nfq,s,head;
+	NDV nfv,nfqv;
+	Q q,den,num;
+	union oNDC dn;
+
+	for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
+		/* for nd_ps */
+		s = ndvtond(m,nd_ps[i]);
+		s = nd_separate_head(s,&head);
+		nd_nf_pbucket(m,s,nd_ps,1,&nf);
+		nf = nd_add(m,head,nf);
+		ndv_free(nd_ps[i]);
+		nd_ps[i] = ndtondv(m,nf);
+		nd_free(nf);
+
+		/* for nd_ps_trace */
+		if ( nd_demand )
+			nfv = ndv_load(i);
+		else
+			nfv = nd_ps_trace[i];
+		s = ndvtond(0,nfv);
+		s = nd_separate_head(s,&head);
+		nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
+		NTOQ(NM(dn.z),SGN(dn.z),num);
+		mulq(HCQ(head),num,&q); HCQ(head) = q;
+		if ( DN(dn.z) ) {
+			NTOQ(DN(dn.z),1,den);
+			nd_mul_c_q(nf,den);
+		}
+		nf = nd_add(0,head,nf);
+		ndv_free(nfv);
+		nd_removecont(0,nf);
+		nfv = ndtondv(0,nf);
+		nd_free(nf);
+		nd_bound[i] = ndv_compute_bound(nfv);
+		if ( nd_demand ) {
+			ndv_save(nfv,i);
+			ndv_free(nfv);
+		} else
+			nd_ps_trace[i] = nfv;
+	}
+}
+
 NODE nd_gb_trace(int m,int ishomo)
 {
 	int i,nh,sugar,stat;
@@ -1879,44 +1926,7 @@ NODE nd_gb_trace(int m,int ishomo)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
-			if ( ishomo ) {
-				for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
-					/* for nd_ps */
-					s = ndvtond(m,nd_ps[i]);
-					s = nd_separate_head(s,&head);
-					nd_nf_pbucket(m,s,nd_ps,1,&nf);
-					nf = nd_add(m,head,nf);
-					ndv_free(nd_ps[i]);
-					nd_ps[i] = ndtondv(m,nf);
-					nd_free(nf);
-
-					/* for nd_ps_trace */
-					if ( nd_demand )
-						nfv = ndv_load(i);
-					else
-						nfv = nd_ps_trace[i];
-					s = ndvtond(0,nfv);
-					s = nd_separate_head(s,&head);
-					nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
-					NTOQ(NM(dn.z),SGN(dn.z),num);
-					mulq(HCQ(head),num,&q); HCQ(head) = q;
-					if ( DN(dn.z) ) {
-						NTOQ(DN(dn.z),1,den);
-						nd_mul_c_q(nf,den);
-					}
-					nf = nd_add(0,head,nf);
-					ndv_free(nfv);
-					nd_removecont(0,nf);
-					nfv = ndtondv(0,nf);
-					nd_free(nf);
-					nd_bound[i] = ndv_compute_bound(nfv);
-					if ( nd_demand ) {
-						ndv_save(nfv,i);
-						ndv_free(nfv);
-					} else
-						nd_ps_trace[i] = nfv;
-				}
-			}
+			if ( ishomo ) do_diagonalize(sugar,m);
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
