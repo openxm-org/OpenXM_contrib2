@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.7 2000/09/23 00:57:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.8 2000/10/06 06:05:23 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -65,6 +65,7 @@
 
 extern int little_endian;
 
+int I_am_server;
 struct IOFP iofp[MAXIOFP];
 
 #if !defined(_PA_RISC1_1)
@@ -285,6 +286,7 @@ char *host,*port_str;
 		return s;
 }
 
+#if 0
 close_allconnections()
 {
 	int s;
@@ -308,6 +310,12 @@ int s;
 		free_iofp(s);
 	}
 }
+#else
+close_allconnections()
+{
+	shutdown_all();
+}
+#endif
 
 free_iofp(s)
 int s;
@@ -419,4 +427,6 @@ int fd;
 			return i;
 	return -1;
 }
+
 #endif /* INET */
+

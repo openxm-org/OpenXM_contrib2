@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.7 2000/09/07 23:59:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.8 2000/09/12 06:05:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -94,9 +94,25 @@ static struct mathcap my_mc;
 static struct mathcap *remote_mc;
 static int remote_mc_len;
 
+#if defined(VISUAL)
+/* XXX : mainly used in engine2000/io.c, but declared here */
+HANDLE hStreamNotify,hStreamNotify_Ack;
+
+void cleanup_events()
+{
+	/* ox_watch_stream may be waiting for hStreamNotify_Ack to be set */
+
+	ResetEvent(hStreamNotify);
+	SetEvent(hStreamNotify_Ack);
+}
+#endif
+
 void ox_resetenv(s)
 char *s;
 {
+#if defined(VISUAL)
+	cleanup_events();
+#endif
 	fprintf(stderr,"%s\n",s);
 	longjmp(ox_env,1);
 }

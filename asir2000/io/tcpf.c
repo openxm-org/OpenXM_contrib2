@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.14 2000/09/27 09:27:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.15 2000/10/06 06:05:23 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -76,15 +76,21 @@ static struct m_c {
 } *m_c_tab;
 
 static int m_c_i,m_c_s;
+int I_am_server;
 
 #if MPI
 extern int mpi_nprocs;
 #define valid_mctab_index(ind)\
 if((ind)<0||(ind)>=mpi_nprocs){error("invalid server id");}
+#define check_valid_mctab_index(ind)\
+if((ind)<0||(ind)>=mpi_nprocs){(ind)=-1;}
 #else
 #define valid_mctab_index(ind)\
 if((ind)<0||(ind)>=m_c_i||\
 ((m_c_tab[ind].m<0)&&(m_c_tab[ind].c<0))){error("invalid server id");}
+#define check_valid_mctab_index(ind)\
+if((ind)<0||(ind)>=m_c_i||\
+((m_c_tab[ind].m<0)&&(m_c_tab[ind].c<0))){(ind)=-1;}
 #endif
 
 int register_server();
@@ -1157,3 +1163,25 @@ Q *rp;
 	*rp = 0;
 }
 #endif
+
+void shutdown_all() {
+	int s;
+	int i,index;
+	int status;
+
+	for ( i = I_am_server?1:0; i < m_c_i; i++ ) {
+		index = i;
+		check_valid_mctab_index(index);
+		if ( index < 0 )
+			continue;
+		s = m_c_tab[index].m;
+		ox_send_cmd(s,SM_shutdown);
+		free_iofp(s);
+#if !MPI && !defined(VISUAL)
+		if ( m_c_tab[index].af_unix )
+			wait(&status);
+#endif
+		m_c_tab[index].m = 0; m_c_tab[index].c = 0;
+		m_c_tab[index].af_unix = 0;
+	}
+}

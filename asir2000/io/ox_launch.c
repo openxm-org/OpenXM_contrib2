@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.6 2000/09/25 04:33:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.7 2000/10/06 06:05:23 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -228,7 +228,8 @@ int cmd;
 	switch ( cmd ) {
 		case SM_shutdown:
 			SetEvent(hKill);
-			exit(0); break;
+			ExitProcess(0);
+			break;
 		case SM_control_intr:
 			SetEvent(hIntr);
 			break;
