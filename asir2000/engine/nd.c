@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.90 2004/03/13 06:49:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.91 2004/03/13 07:32:08 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -1764,6 +1764,45 @@ ND normalize_pbucket(int mod,PGeoBucket g)
 	return r;
 }
 
+void do_diagonalize(int sugar,int m)
+{
+	int i,nh,stat;
+	NODE r,g,t;
+	ND h,nf,s,head;
+	NDV nfv;
+	Q q,num,den;
+	union oNDC dn;
+
+	for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
+		if ( nd_demand )
+			nfv = ndv_load(i);
+		else
+			nfv = nd_ps[i];
+		s = ndvtond(m,nfv);
+		s = nd_separate_head(s,&head);
+		nd_nf(m,s,nd_ps,1,&dn,&nf);
+		if ( !m ) { 
+			NTOQ(NM(dn.z),SGN(dn.z),num);
+			mulq(HCQ(head),num,&q); HCQ(head) = q;
+			if ( DN(dn.z) ) {
+				NTOQ(DN(dn.z),1,den);
+				nd_mul_c_q(nf,den);
+			}
+		}
+		nf = nd_add(m,head,nf);
+		ndv_free(nfv);
+		nd_removecont(m,nf);
+		nfv = ndtondv(m,nf);
+		nd_free(nf);
+		nd_bound[i] = ndv_compute_bound(nfv);
+		if ( nd_demand ) {
+			ndv_save(nfv,i);
+			ndv_free(nfv);
+		} else
+			nd_ps[i] = nfv;
+	}
+}
+
 /* return value = 0 => input is not a GB */
 
 NODE nd_gb(int m,int ishomo,int checkonly)
@@ -1787,36 +1826,8 @@ NODE nd_gb(int m,int ishomo,int checkonly)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
-			if ( ishomo ) {
-				for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
-					if ( nd_demand )
-						nfv = ndv_load(i);
-					else
-						nfv = nd_ps[i];
-					s = ndvtond(m,nfv);
-					s = nd_separate_head(s,&head);
-					nd_nf(m,s,nd_ps,1,&dn,&nf);
-					if ( !m ) { 
-						NTOQ(NM(dn.z),SGN(dn.z),num);
-						mulq(HCQ(head),num,&q); HCQ(head) = q;
-						if ( DN(dn.z) ) {
-							NTOQ(DN(dn.z),1,den);
-							nd_mul_c_q(nf,den);
-						}
-					}
-					nf = nd_add(m,head,nf);
-					ndv_free(nfv);
-					nd_removecont(m,nf);
-					nfv = ndtondv(m,nf);
-					nd_free(nf);
-					nd_bound[i] = ndv_compute_bound(nfv);
-					if ( nd_demand ) {
-						ndv_save(nfv,i);
-						ndv_free(nfv);
-					} else
-						nd_ps[i] = nfv;
-				}
-			}
+			if ( ishomo ) do_diagonalize(sugar,m);
+
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
@@ -1858,7 +1869,7 @@ again:
 	return g;
 }
 
-void do_diagonalize(int sugar,int m)
+void do_diagonalize_trace(int sugar,int m)
 {
 	int i,nh,stat;
 	NODE r,g,t;
