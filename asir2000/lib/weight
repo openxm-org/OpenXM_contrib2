@@ -455,14 +455,14 @@ def checktd(PolyList,Vars,ResVars){
 	return 1$
 }
 
-def value2(Vars,Ans){
+def value2(Vars,Ans,Ba){
 
 	N=length(Vars)$
 	Res=newvect(N)$
 	for(I=0;I<N;I++){
 		Res[I]=newvect(2)$
 		Res[I][0]=Vars[I]$
-		Res[I][1]=Ans[I]$
+		Res[I][1]=Ba*Ans[I]$
 	}
 	Res=map(vtol,Res)$
 	Res=vtol(Res)$
@@ -524,7 +524,7 @@ def qcheck(PolyList,Vars,FLAG){
 					
 						for(I=0;I<length(TMP0);I++)
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-						RET0=value2(Vars,TMP)$
+						RET0=value2(Vars,TMP,1)$
 						if(RET0!=[])
 							RET0=wsort(RET0,Vars,RET0,-1)$
 					}
@@ -534,7 +534,7 @@ def qcheck(PolyList,Vars,FLAG){
 					
 						for(I=0;I<length(TMP0);I++)
 							TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
-						RET0=value2(Vars,TMP)$
+						RET0=value2(Vars,TMP,-1)$
 	
 						if(RET0!=[])
 							RET0=wsort(RET0,Vars,RET0,-1)$
