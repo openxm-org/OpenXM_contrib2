@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.18 2002/03/01 00:40:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.19 2003/02/14 22:29:09 ohara Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -84,6 +84,7 @@ int bigfloat;
 int nez = 1;
 int current_mod = 0;
 int StrassenSize = 0;
+int prefixmode = 0;
 
 static int *lprime;
 int lprime_size;

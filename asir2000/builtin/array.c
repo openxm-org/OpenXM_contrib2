@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.26 2002/02/06 00:55:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.27 2003/01/06 01:16:37 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -84,6 +84,8 @@ void Pqsort();
 void Pexponent_vector();
 void Pmat_swap_row_destructive();
 void Pmat_swap_col_destructive();
+void Pvect();
+void Pmat();
 
 struct ftab array_tab[] = {
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
@@ -92,10 +94,12 @@ struct ftab array_tab[] = {
 	{"generic_gauss_elim",Pgeneric_gauss_elim,1},
 	{"generic_gauss_elim_mod",Pgeneric_gauss_elim_mod,2},
 	{"newvect",Pnewvect,-2},
+	{"vect",Pvect,-99999999},
 	{"vector",Pnewvect,-2},
 	{"exponent_vector",Pexponent_vector,-99999999},
 	{"newmat",Pnewmat,-3},
 	{"matrix",Pnewmat,-3},
+	{"mat",Pmat,-99999999},
 	{"newbytearray",Pnewbytearray,-2},
 	{"sepmat_destructive",Psepmat_destructive,2},
 	{"sepvect",Psepvect,2},
@@ -355,6 +359,24 @@ void Pnewvect(NODE arg,VECT *rp)
 	*rp = vect;
 }
 
+void Pvect(NODE arg,VECT *rp) {
+	int len,i,r;
+	VECT vect;
+	pointer *vb;
+	NODE tn;
+
+	if ( !arg ) {
+		*rp =0;
+		return;
+	}
+
+	for (len = 0, tn = arg; tn; tn = NEXT(tn), len++);
+	MKVECT(vect,len);
+	for ( i = 0, tn = arg, vb = BDY(vect); tn; i++, tn = NEXT(tn) )
+		vb[i] = (pointer)BDY(tn);
+	*rp = vect;
+}
+
 void Pexponent_vector(NODE arg,DP *rp)
 {
 	nodetod(arg,rp);
@@ -434,6 +456,27 @@ void Pnewmat(NODE arg,MAT *rp)
 				mb[i][j] = (pointer)BDY(sn);
 		}
 	}
+	*rp = m;
+}
+
+void Pmat(NODE arg, MAT *rp)
+{
+	int row,col;
+	MAT m;
+	pointer **mb;
+	NODE tn, sn;
+
+	if ( !arg ) {
+		*rp =0;
+		return;
+	}
+
+	for (row = 0, tn = arg; tn; tn = NEXT(tn), row++);
+	for (col = 0, tn = BDY((LIST)ARG0(arg)); tn ; tn = NEXT(tn), col++);
+	MKMAT(m,row,col);
+	for (row = 0, tn = arg, mb = BDY(m); tn; tn = NEXT(tn), row++)
+		for (col = 0, sn = BDY((LIST)BDY(tn)); sn; col++, sn = NEXT(sn) )
+			mb[row][col] = (pointer)BDY(sn);
 	*rp = m;
 }
 
