@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/engine/Makefile.am,v 1.3 2003/03/20 07:34:09 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/engine/Makefile.am,v 1.4 2003/07/23 01:22:50 noro Exp $
 
 asirdir  = ${prefix}/lib/asir
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
@@ -12,4 +12,4 @@ libca_a_SOURCES  = init.c mat.c vect.c str.c dist.c distm.c _distm.c ui.c \
   gf2n.c gfpn.c gfs.c gfspn.c \
   PU.c PUM.c R.c RU.c F.c  \
   D.c E.c Ebug.c EZ.c H.c M.c NEZ.c Mgfs.c Hgfs.c Fgfs.c \
-  C.c A.c alg.c p-itv.c f-itv.c d-itv.c pari-mp.c nd.c
+  C.c A.c alg.c p-itv.c f-itv.c d-itv.c pari-mp.c nd.c ndbug.c
