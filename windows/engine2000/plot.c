@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.3 2001/10/09 01:36:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.4 2002/07/10 06:08:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,7 +72,7 @@ extern char LastError[];
 void create_error(ERR *,unsigned int ,char *);
 
 void ox_io_init();
-void ox_asir_init(int,char **);
+void ox_asir_init(int,char **,char *);
 Obj asir_pop_one();
 void asir_push_one(Obj);
 void asir_end_flush();
@@ -118,11 +118,11 @@ void ox_plot_main(int argc,char **argv)
 	extern int plot_argc;
 	extern char **plot_argv;
 
-	ox_asir_init(plot_argc,plot_argv);
+	ox_asir_init(plot_argc,plot_argv,"ox_plot");
 	/* inform the watch thread of the completion of initialization */
 	SetEvent(hStreamNotify_Ack);
 #else
-	ox_asir_init(argc,argv);
+	ox_asir_init(argc,argv,"ox_plot");
 	init_plot_display(argc,argv);
 	ds = ConnectionNumber(display);
 #endif
