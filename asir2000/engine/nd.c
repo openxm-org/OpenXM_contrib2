@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.24 2003/08/05 08:06:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.25 2003/08/07 08:46:50 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -130,8 +130,10 @@ void ndv_mul_c_q(NDV p,Q mul);
 void nd_mul_c_q(ND p,Q mul);
 ND normalize_pbucket(int mod,PGeoBucket g);
 int head_pbucket(int mod,PGeoBucket g);
+int head_pbucket_q(PGeoBucket g);
 void add_pbucket(int mod,PGeoBucket g,ND d,int l);
 void free_pbucket(PGeoBucket b);
+void mulq_pbucket(PGeoBucket g,Q c);
 PGeoBucket create_pbucket();
 ND nd_remove_head(ND p);
 
@@ -1006,7 +1008,7 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 	int sugar,psugar,n,h_reducible;
 	PGeoBucket bucket;
 	int c,c1,c2;
-	Q cg,cred,gcd;
+	Q cg,cred,gcd,zzz;
 	RHist h;
 
 	if ( !g ) {
@@ -1020,7 +1022,7 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 	d = 0;
 	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	while ( 1 ) {
-		hindex = head_pbucket(mod,bucket);
+		hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
 		if ( hindex < 0 ) {
 			if ( d )
 				SG(d) = sugar;
@@ -1034,8 +1036,8 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 			ndl_sub(HDL(g),DL(h),DL(mul));
 			TD(mul) = HTD(g)-TD(h);
 			if ( ndl_check_bound2(index,DL(mul)) ) {
-				free_pbucket(bucket);
 				nd_free(d);
+				free_pbucket(bucket);
 				*rp = 0;
 				return 0;
 			}
@@ -1047,12 +1049,14 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 				p = nd_psq[index];
 				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
 				chsgnq(cg,&CQ(mul));
-				nd_mul_c_q(d,cred); nd_mul_c_q(g,cred);
+				nd_mul_c_q(d,cred);
+				mulq_pbucket(bucket,cred);
+				g = bucket->body[hindex];
 			}
 			red = ndv_mul_nm(mod,p,mul);
 			bucket->body[hindex] = nd_remove_head(g);
 			red = nd_remove_head(red);
-			add_pbucket(mod,bucket,red,LEN(p));
+			add_pbucket(mod,bucket,red,LEN(p)-1);
 			sugar = MAX(sugar,SG(p)+TD(mul));
 		} else if ( !full ) {
 			g = normalize_pbucket(mod,bucket);
@@ -1182,7 +1186,7 @@ PGeoBucket create_pbucket()
 void free_pbucket(PGeoBucket b) {
 	int i;
 
-	for ( i = 0; i < b->m; i++ )
+	for ( i = 0; i <= b->m; i++ )
 		if ( b->body[i] ) {
 			nd_free(b->body[i]);
 			b->body[i] = 0;
@@ -1203,6 +1207,14 @@ void add_pbucket(int mod,PGeoBucket g,ND d,int l)
 	}
 	g->body[k] = d;
 	g->m = MAX(g->m,k);
+}
+
+void mulq_pbucket(PGeoBucket g,Q c)
+{
+	int k;
+
+	for ( k = 0; k <= g->m; k++ )
+		nd_mul_c_q(g->body[k],c);
 }
 
 /* XXX not completed */
@@ -1253,6 +1265,59 @@ int head_pbucket(int mod,PGeoBucket g)
 			return -1;
 		else if ( sum ) {
 			HCM(gj) = sum;
+			return j;
+		} else
+			g->body[j] = nd_remove_head(gj);
+	}
+}
+
+int head_pbucket_q(PGeoBucket g)
+{
+	int j,i,c,k,nv;
+	Q sum,t;
+	unsigned int *di,*dj;
+	ND gi,gj;
+
+	k = g->m;
+	while ( 1 ) {
+		j = -1;
+		for ( i = 0; i <= k; i++ ) {
+			if ( !(gi = g->body[i]) )
+				continue;
+			if ( j < 0 ) {
+				j = i;
+				gj = g->body[j];
+				dj = HDL(gj);
+				sum = HCQ(gj);
+			} else {
+				di = HDL(gi);
+				nv = NV(gi);
+				if ( HTD(gi) > HTD(gj) )
+					c = 1;
+				else if ( HTD(gi) < HTD(gj) )
+					c = -1;
+				else
+					c = ndl_compare(di,dj);
+				if ( c > 0 ) {
+					if ( sum )
+						HCQ(gj) = sum;
+					else
+						g->body[j] = nd_remove_head(gj);
+					j = i;
+					gj = g->body[j];
+					dj = HDL(gj);
+					sum = HCQ(gj);
+				} else if ( c == 0 ) {
+					addq(sum,HCQ(gi),&t);
+					sum = t;
+					g->body[i] = nd_remove_head(gi);
+				}
+			}
+		}
+		if ( j < 0 )
+			return -1;
+		else if ( sum ) {
+			HCQ(gj) = sum;
 			return j;
 		} else
 			g->body[j] = nd_remove_head(gj);
