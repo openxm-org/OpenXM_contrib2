@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.4 2000/09/21 09:19:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/compobj.c,v 1.5 2002/01/22 01:00:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -95,6 +95,7 @@ Q *rp;
 	P t;
 	SDEF s;
 	int i;
+	FUNC func;
 
 	asir_assert(ARG0(arg),O_STR,"arfreg");
 	name = ((STRING)ARG0(arg))->body;
@@ -104,12 +105,12 @@ Q *rp;
 	if ( i == LSS->n )
 		error("arfreg : no such structure");
 		
-	t = (P)ARG1(arg); s[i].arf.add = !t ? 0 : (FUNC)VR(t)->priv;
-	t = (P)ARG2(arg); s[i].arf.sub = !t ? 0 : (FUNC)VR(t)->priv;
-	t = (P)ARG3(arg); s[i].arf.mul = !t ? 0 : (FUNC)VR(t)->priv;
-	t = (P)ARG4(arg); s[i].arf.div = !t ? 0 : (FUNC)VR(t)->priv;
-	t = (P)ARG5(arg); s[i].arf.pwr = !t ? 0 : (FUNC)VR(t)->priv;
-	t = (P)ARG6(arg); s[i].arf.chsgn = !t ? 0 : (FUNC)VR(t)->priv;
-	t = (P)ARG7(arg); s[i].arf.comp = !t ? 0 : (FUNC)VR(t)->priv;
+	t = (P)ARG1(arg); s[i].arf.add = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
+	t = (P)ARG2(arg); s[i].arf.sub = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
+	t = (P)ARG3(arg); s[i].arf.mul = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
+	t = (P)ARG4(arg); s[i].arf.div = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
+	t = (P)ARG5(arg); s[i].arf.pwr = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
+	t = (P)ARG6(arg); s[i].arf.chsgn = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
+	t = (P)ARG7(arg); s[i].arf.comp = !t ? 0 : (gen_searchf(NAME(VR(t)),&func), func);
 	*rp = ONE;
 }
