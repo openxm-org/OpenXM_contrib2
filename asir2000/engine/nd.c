@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.50 2003/08/27 01:48:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.51 2003/08/27 01:53:29 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -218,7 +218,7 @@ int crit_2( int dp1, int dp2 );
 
 /* top level functions */
 void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp);
-void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp);
+void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp);
 NODE nd_gb(int m,int checkonly);
 NODE nd_gb_trace(int m);
 
@@ -2018,16 +2018,27 @@ void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 	MKLIST(*rp,r0);
 }
 
-void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
+void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
 {
 	struct order_spec ord1;
 	VL fv,vv,vc;
 	NODE fd,fd0,in0,in,r,r0,t,s,cand;
+	int m,nocheck,nvar,mindex;
 	DP a,b,c,h;
 	P p;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
-	nd_nvar = length(vv);
+	nvar = length(vv);
+	nocheck = 0;
+	mindex = 0;
+
+	/* setup modulus */
+	if ( trace < 0 ) {
+		trace = -trace;
+		nocheck = 1;
+	}
+	m = trace > 1 ? trace : get_lprime(mindex);
+
 	initd(ord);
 	if ( homo ) {
 		homogenize_order(ord,nd_nvar,&ord1);
@@ -2040,9 +2051,6 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		if ( in0 ) NEXT(in) = 0;
-		nd_init_ord(&ord1);
-		initd(&ord1);
-		nd_nvar++;
 	} else {
 		for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 			ptod(CO,vv,(P)BDY(t),&c);
@@ -2052,17 +2060,32 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 		}
 		if ( fd0 ) NEXT(fd) = 0;
 		in0 = fd0;
-		nd_init_ord(ord);
 	}
-	do {
+	while ( 1 ) {
+		if ( homo ) {
+			nd_init_ord(&ord1);
+			initd(&ord1);
+			nd_nvar = nvar+1;
+		} else {
+			nd_init_ord(ord);
+			nd_nvar = nvar;
+		}
 		nd_setup(m,1,fd0);
 		cand = nd_gb_trace(m);
-		if ( !cand ) continue;
+		if ( !cand ) {
+			/* failure */
+			if ( trace > 1 ) {
+				*rp = 0; return;
+			} else
+				m = get_lprime(++mindex);
+			continue;
+		}
+
 		if ( homo ) {
 			/* dehomogenization */
 			for ( t = cand; t; t = NEXT(t) )
 				ndv_dehomogenize((NDV)BDY(t),ord);
-			nd_nvar--;
+			nd_nvar = nvar;
 			initd(ord);
 			nd_init_ord(ord);
 			nd_setup_parameters();
@@ -2078,7 +2101,16 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 		}
 		if ( r0 ) NEXT(r) = 0;
 		cand = r0;
-	} while ( !nd_check_candidate(in0,cand) );
+		if ( nocheck || nd_check_candidate(in0,cand) )
+			/* success */
+			break;
+		else if ( trace > 1 ) {
+			/* failure */
+			*rp = 0; return;	
+		} else
+			/* try the next modulus */
+			m = get_lprime(++mindex);
+	}
 	/* dp->p */
 	for ( r = cand; r; r = NEXT(r) ) {
 		dtop(CO,vv,BDY(r),&p);
@@ -2517,7 +2549,7 @@ int nd_get_exporigin(struct order_spec *ord)
 			/* d[0]:weight d[1]:w0,...,d[nd_exporigin-1]:w(n-1) */
 			return ord->ord.block.length+1;
 		case 2:
-			error("nd_setup_parameters : matrix order is not supported yet.");
+			error("nd_get_exporigin : matrix order is not supported yet.");
 	}
 }
 
