@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.42 2004/01/07 06:25:42 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.43 2004/01/25 11:54:10 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -134,6 +134,11 @@ NODE MODULE_LIST;
 MODULE CUR_MODULE;
 char *CUR_FUNC;
 
+struct oSymbol oGrlex, oGlex, oLex;
+Symbol Symbol_grlex = &oGrlex;
+Symbol Symbol_glex = &oGlex;
+Symbol Symbol_lex = &oLex;;
+
 struct oF oF_TRUE,oF_FALSE;
 F F_TRUE = &oF_TRUE;  
 F F_FALSE = &oF_FALSE;
@@ -162,6 +167,12 @@ void glob_init() {
 	MKNODE(ONENODE,mkfnode(1,I_FORMULA,ONE),0);
 	OID(F_TRUE)=O_F; FOP(F_TRUE)=AL_TRUE; F_TRUE->arg.dummy = 0;
 	OID(F_FALSE)=O_F; FOP(F_FALSE)=AL_FALSE; F_FALSE->arg.dummy = 0;
+	OID(Symbol_grlex) = O_SYMBOL; Symbol_grlex->name = "@grlex"; 
+	Symbol_grlex->value = 0;
+	OID(Symbol_glex) = O_SYMBOL; Symbol_glex->name = "@glex"; 
+	Symbol_glex->value = 1;
+	OID(Symbol_lex) = O_SYMBOL; Symbol_glex->name = "@lex"; 
+	Symbol_lex->value = 1;
 	sprintf(asirname,"%s/asir_symtab",asir_libdir);
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.27 2003/11/27 02:34:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.28 2004/01/25 11:54:10 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -436,6 +436,15 @@ int yylex()
 			} else if ( !strcmp(tbuf,"@equiv") ) {
 				yylvalp->i = (int)L_EQUIV;
 				return FOP_EQUIV;
+			} else if ( !strcmp(tbuf,"@grlex") ) {
+				yylvalp->p = Symbol_grlex;
+				return FORMULA;
+			} else if ( !strcmp(tbuf,"@glex") ) {
+				yylvalp->p = Symbol_glex;
+				return FORMULA;
+			} else if ( !strcmp(tbuf,"@lex") ) {
+				yylvalp->p = Symbol_lex;
+				return FORMULA;
 			} else {
 				cptr = (char *)MALLOC(strlen(tbuf)+1); strcpy(cptr,tbuf);
 				yylvalp->p = (pointer)cptr;

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.26 2003/12/24 08:00:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.27 2003/12/25 02:40:24 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -107,6 +107,7 @@ int print_quote;
 #define PRINTUP printup
 #define PRINTUM printum
 #define PRINTSF printsf
+#define PRINTSYMBOL printsymbol
 #endif
 
 #ifdef SPRINT
@@ -117,6 +118,7 @@ extern int hex_output;
 extern int fortran_output;
 extern int double_output;
 extern int real_digit;
+extern int real_binary;
 extern int print_quote;
 
 
@@ -153,6 +155,7 @@ extern int print_quote;
 #define PRINTUP sprintup
 #define PRINTUM sprintum
 #define PRINTSF sprintsf
+#define PRINTSYMBOL sprintsymbol
 #endif
 
 void PRINTEXPR();
@@ -184,6 +187,7 @@ void PRINTEOP();
 void PRINTLOP();
 void PRINTQOP();
 void PRINTSF();
+void PRINTSYMBOL();
 
 #ifdef FPRINT
 void output_init() {
@@ -294,6 +298,8 @@ Obj p;
 			PRINTBYTEARRAY(vl,(BYTEARRAY)p); break;
 		case O_QUOTE:
 			PRINTQUOTE(vl,(QUOTE)p); break;
+		case O_SYMBOL:
+			PRINTSYMBOL((Symbol)p); break;
 		default:
 			break;
 	}
@@ -1169,4 +1175,9 @@ unsigned int i;
 	} else {
 		TAIL PRINTF(OUT,"@_%d",IFTOF(i));
 	}
+}
+
+void PRINTSYMBOL(Symbol p)
+{
+	PUTS(p->name);
 }
