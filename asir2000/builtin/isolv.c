@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.2 2003/10/20 07:32:19 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.3 2003/10/23 01:32:59 saito Exp $
  */
 
 #include "ca.h"
@@ -77,7 +77,8 @@ NODE arg;
 Obj  *rp;
 {
 	pointer	p, Eps;
-	pointer	root, listp;
+	pointer	root;
+	LIST		listp;
 	V			v;
 	Q			eps;
 	NODE		n, n0, m0, m, ln0;
@@ -285,7 +286,7 @@ MAT root;
 {
 	Q	a, b, c, d, e;
 	P	p;
-	p = (P*)BDY(root)[indx][3];
+	p = (P)BDY(root)[indx][3];
 	addq(BDY(root)[indx][0], BDY(root)[indx][1], &c);
 	divq(c, TWO, &d);
 	ueval(p, BDY(root)[indx][1], &a);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.17 2004/08/18 00:17:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.18 2004/12/18 16:50:10 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -90,7 +90,7 @@ struct oAFUNC afunc[] = {
 /* O_TB=21 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_DPV=22 */	{adddv,subdv,muldv,notdef,notdef,chsgndv,compdv},
 /* ???=23 */	{0,0,0,0,0,0,0},
-/* O_MAT=24 */	{AddMatI,SubMatI,MulMatG,notdef,notdef,ChsgnI,notdef},
+/* O_MAT=24 */	{AddMatI,SubMatI,MulMatG,notdef,notdef,ChsgnI,(int(*)())notdef},
 };
 
 void arf_init() {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.44 2005/01/12 10:38:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.45 2005/01/23 14:03:47 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -158,7 +158,7 @@ int generic_comp_obj(Obj *a,Obj *b)
 }
 
 
-void Pqsort(NODE arg,VECT *rp)
+void Pqsort(NODE arg,LIST *rp)
 {
 	VECT vect;
 	NODE n,n1;
@@ -205,9 +205,9 @@ void Pqsort(NODE arg,VECT *rp)
         for ( i = len - 1, n = 0; i >= 0; i-- ) {
             MKNODE(n1,a[i],n); n = n1;
         }
-        MKLIST((LIST)*rp,n);
+        MKLIST(*rp,n);
     }else {
-        *rp = vect;
+        *rp = (LIST)vect;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.4 2003/07/25 12:34:48 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.5 2003/10/20 07:18:42 saito Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -50,9 +50,12 @@ void istoitv(Num inf, Num sup, Itv *rp)
 	} else {
 		i = inf;
 	}
-	if ( type )
-		NEWIntervalBigFloat((IntervalBigFloat)c);
-	else 
+	if ( type ) {
+//		NEWIntervalBigFloat((IntervalBigFloat)c);
+		c=MALLOC(sizeof(struct oIntervalBigFloat));
+		OID(c)=O_N;
+		NID(c)=N_IntervalBigFloat;
+	} else 
 		NEWItvP(c);
 
 	if ( compnum(0,i,s) >= 0 ) {

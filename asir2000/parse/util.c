@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.11 2004/06/21 00:58:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.12 2004/12/18 16:50:10 saito Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -175,7 +175,7 @@ pointer *vp;
 					((IMAT)a)->col < QTOS((Q)col) ||
 					(QTOS((Q)row) < 0) || (QTOS((Q)col) < 0))
 						error("putarray : Out of range");
-				GetIbody((IMAT)a, QTOS((Q)row), QTOS((Q)col), (Obj)&trg);
+				GetIbody((IMAT)a, QTOS((Q)row), QTOS((Q)col), (Obj*)&trg);
 				a = (pointer)trg;
 				break;
 			case O_LIST:
