@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/D.c,v 1.3 2000/08/22 05:04:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/D.c,v 1.4 2001/06/07 04:54:39 noro Exp $ 
 */
 #include "ca.h"
 
@@ -468,6 +468,62 @@ Q *qp;
 		for ( i = 0, ptr = BD(n); i < PL(n); i++ )
 			ptr[i] = c[i];	
 		bnton(mod,n,&tn); NTOQ(tn,sgn,*qp);
+	}
+}
+
+void padictoq_unsigned(int,int,int *,Q *);
+
+void lumtop_unsigned(v,mod,bound,f,g)
+V v;
+int mod;
+int bound;
+LUM f;
+P *g;
+{
+	DCP dc,dc0;
+	int **l;
+	int i;
+	Q q;
+
+	for ( dc0 = NULL, i = DEG(f), l = COEF(f); i >= 0; i-- ) {
+		padictoq_unsigned(mod,bound,l[i],&q);
+		if ( q ) {
+			NEXTDC(dc0,dc);
+			if ( i ) 
+				STOQ(i,DEG(dc));
+			else 
+				DEG(dc) = 0;
+			COEF(dc) = (P)q;
+		}
+	}
+	if ( !dc0 )
+		*g = 0;
+	else {
+		NEXT(dc) = 0; MKP(v,dc0,*g);
+	}
+}
+			
+void padictoq_unsigned(mod,bound,p,qp)
+int mod,bound,*p;
+Q *qp;
+{
+	register int h,i,t;
+	int br,sgn;
+	unsigned int *ptr;
+	N n,tn;
+	int *c;
+
+	c = W_ALLOC(bound);
+	for ( i = 0; i < bound; i++ )
+		c[i] = p[i];
+	for ( i = bound - 1; ( i >= 0 ) && ( c[i] == 0 ); i--);
+	if ( i == -1 ) 
+		*qp = 0;
+	else {
+		n = NALLOC(i+1); PL(n) = i+1;
+		for ( i = 0, ptr = BD(n); i < PL(n); i++ )
+			ptr[i] = c[i];	
+		bnton(mod,n,&tn); NTOQ(tn,1,*qp);
 	}
 }
 

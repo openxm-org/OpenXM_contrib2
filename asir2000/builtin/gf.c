@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.13 2001/09/03 07:56:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.14 2001/10/09 01:36:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,6 +56,7 @@ struct resf_dlist {
 
 int resf_degtest(int,int *,int,struct resf_dlist *);
 void uhensel(P,NODE,int,int,NODE *);
+void uhensel_incremental(P,NODE,int,int,int,NODE *);
 void resf_hensel(int,P,int,P *,ML *);
 void resf_dtest(P,ML,int,int *,int *,DCP *);
 void resf_dtest_special(P,ML,int,int *,int *,DCP *);
@@ -75,6 +76,7 @@ void pwr_mod(P,P,V,P,int,N,P *);
 void rem_mod(P,P,V,P,int,P *);
 
 void Pnullspace(),Pgcda_mod(),Pftest(),Presfmain(),Ppwr_mod(),Puhensel();
+void Puhensel_incremental();
 void Psfuhensel();
 
 void Pnullspace_ff();
@@ -98,6 +100,7 @@ struct ftab gf_tab[] = {
 	{"resfmain",Presfmain,4},
 	{"pwr_mod",Ppwr_mod,6},
 	{"uhensel",Puhensel,4},
+	{"uhensel_incremental",Puhensel_incremental,5},
 	{"sfuhensel",Psfuhensel,4},
 	{0,0,0},
 };
@@ -151,6 +154,23 @@ LIST *rp;
 	MKLIST(*rp,r);
 }
 
+void Puhensel_incremental(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	P f;
+	NODE mfl,r;
+	int mod,bound,start;
+
+	f = (P)ARG0(arg);
+	mfl = BDY((LIST)ARG1(arg));
+	mod = QTOS((Q)ARG2(arg));
+	start = QTOS((Q)ARG3(arg));
+	bound = QTOS((Q)ARG4(arg));
+	uhensel_incremental(f,mfl,mod,start,bound,&r);
+	MKLIST(*rp,r);
+}
+
 void uhensel(f,mfl,mod,bound,rp)
 P f;
 NODE mfl;
@@ -178,6 +198,47 @@ NODE *rp;
 	v = VR(f);
 	for ( i = nf-1, top = 0; i >= 0; i-- ) {
 		lumtop(v,mod,bound,rlist->c[i],&s);
+		MKNODE(t,s,top); top = t;
+	}
+	*rp = top;
+}
+
+void uhensel_incremental(f,mfl,mod,start,bound,rp)
+P f;
+NODE mfl;
+int mod,start,bound;
+NODE *rp;
+{
+	ML blist,clist,rlist;
+	LUM fl;
+	LUM *lblist;
+	int nf,i,j,k;
+	int **p;
+	P s;
+	V v;
+	NODE t,top;
+
+	nf = length(mfl);
+	blist = MLALLOC(nf); blist->n = nf; blist->mod = mod;
+	lblist = (LUM *)MALLOC(nf*sizeof(LUM));
+	for ( i = 0, t = mfl; i < nf; i++, t = NEXT(t) ) {
+		blist->c[i] = (pointer)UMALLOC(UDEG((P)BDY(t)));
+		ptoum(mod,(P)BDY(t),blist->c[i]);
+		W_LUMALLOC((int)UDEG((P)BDY(t)),bound,lblist[i]);
+		ptolum(mod,start,(P)BDY(t),lblist[i]);
+		p = lblist[i]->c;
+		for ( j = DEG(lblist[i]); j >= 0; j-- )
+			for ( k = start; k < bound; k++ )
+				p[j][k] = 0;
+	}
+	gcdgen(f,blist,&clist);	
+	clist->bound = bound;
+	W_LUMALLOC((int)UDEG(f),bound,fl);
+	ptolum(mod,bound,f,fl);
+	henmain_incremental(fl,lblist,clist,nf,mod,start,bound);
+	v = VR(f);
+	for ( i = nf-1, top = 0; i >= 0; i-- ) {
+		lumtop_unsigned(v,mod,bound,lblist[i],&s);
 		MKNODE(t,s,top); top = t;
 	}
 	*rp = top;

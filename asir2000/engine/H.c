@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.5 2001/07/04 07:19:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.6 2001/10/09 01:36:09 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -813,6 +813,78 @@ void henmain(LUM f,ML bqlist,ML cqlist,ML *listp)
 #endif
 }
 
+/*
+	henmain_incremental(fl,bqlist,cqlist,start)
+    fl = bqlist[0]*... mod q^start
+*/
+
+void henmain_incremental(LUM f,LUM *bqlist,ML cqlist,
+	int np, int mod, int start, int bound)
+{
+	register int i,j,k;
+	int *px,*py;
+	int **pp,**pp1;
+	int n,dr,tmp;
+	UM wt,wq0,wq,wr,wm,wm0,wa,q;
+	LUM wb0,wb1,tlum;
+	UM *b,*c;
+	LUM *l;
+	ML list;
+
+	n = DEG(f);
+	W_LUMALLOC(n,bound,wb0); W_LUMALLOC(n,bound,wb1);
+	wt = W_UMALLOC(n); wq0 = W_UMALLOC(n); wq = W_UMALLOC(n);
+	wr = W_UMALLOC(n); wm = W_UMALLOC(2*n); wm0 = W_UMALLOC(2*n);
+	wa = W_UMALLOC(2*n); q = W_UMALLOC(2*n);
+	c = (UM *)cqlist->c; l = bqlist;
+	b = (UM *)ALLOCA(n*sizeof(UM));
+	for ( i = 0; i < np; i++ ) {
+		j = DEG(l[i]);
+		b[i] = W_UMALLOC(j);
+		DEG(b[i]) = j;
+		for ( pp = COEF(l[i]), px = COEF(b[i]); j >= 0; j-- )
+			px[j] = pp[j][0];
+	}
+#if 0
+	fprintf(stderr,"bound=%d\n",bound);
+#endif
+	for ( i = start; i < bound; i++ ) {
+#if 0
+		fprintf(stderr,".");
+#endif
+		mullum(mod,i+1,l[0],l[1],wb0);
+		for ( j = 2; j < np; j++ ) {
+			mullum(mod,i+1,l[j],wb0,wb1);
+			tlum = wb0; wb0 = wb1; wb1 = tlum;
+		}
+		for ( j = n, px = COEF(wt); j >= 0; j-- )
+			px[j] = 0;
+		for ( j = n, pp = COEF(f), pp1 = COEF(wb0); j >= 0; j-- ) {
+			tmp = ( pp[j][i] - pp1[j][i] ) % mod;
+			COEF(wt)[j] = ( tmp < 0 ? tmp + mod : tmp );
+		}
+		degum(wt,n);
+		for ( j = n, px = COEF(wq0); j >= 0; j-- )
+			px[j] = 0;
+		for ( j = 1; j < np; j++ ) {
+			mulum(mod,wt,c[j],wm); dr = divum(mod,wm,b[j],q);
+			for ( k = DEG(q), px = COEF(wq0), py = COEF(q); k >= 0; k-- ) 
+				px[k] = ( px[k] + py[k] ) % mod;
+			for ( k = dr, pp = COEF(l[j]), px = COEF(wm); k >= 0; k-- ) 
+				pp[k][i] = px[k];
+		}
+		degum(wq0,n); mulum(mod,wq0,b[0],wm);
+		mulum(mod,wt,c[0],wm0); addum(mod,wm,wm0,wa);
+		for ( j = DEG(wa), pp = COEF(l[0]), px = COEF(wa); j >= 0; j-- ) 
+			pp[j][i] = px[j];
+		for ( j = n, px = COEF(wq0); j >= 0; j-- ) 
+			px[j] = 0;
+	}
+#if 0
+	fprintf(stderr,"\n");
+#endif
+}
+
 static double M;
 static int E;
 
@@ -900,7 +972,7 @@ void ptolum(int q,int bound,P f,LUM fl)
 		c = pp[QTOS(DEG(dc))]; w = (unsigned int *)W_ALLOC(d);
 		for ( i = 0; i < d; i++ )
 			w[i] = m[i];
-		for ( i = 0; d >= 1; ) {
+		for ( i = 0; i < bound && d >= 1; ) {
 			for ( j = d - 1, r = 0; j >= 0; j-- ) {
 				DSAB(q,r,w[j],w[j],r)
 			}
