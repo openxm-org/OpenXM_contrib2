@@ -450,7 +450,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG){
 	if(nonposdegchk(Res)){
 		TMP1=makeret(Res,Vars,1)$
 		if(TMP1[0]==0){	
-			TMP=roundret(TMP1[1]*1.0)$
+			TMP=roundret(TMP1[1])$
 			if(TMP!=[])
 				RET=append(RET,wsort(TMP1[1],Vars,TMP,FLAG))$
 
@@ -566,7 +566,7 @@ def weightr(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 
 			TMP1=makeret(Res,Vars,1)$
 			if(TMP1[0]==0){	
-				TMP=roundret(TMP1[1]*1.0)$
+				TMP=roundret(TMP1[1])$
 				if(TMP!=[])
 					RET=append(RET,wsort(TMP1[1],Vars,
 						TMP,FLAG))$
