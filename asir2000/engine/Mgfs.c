@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.6 2001/06/25 10:01:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.7 2001/06/27 04:07:57 noro Exp $ */
 
 #include "ca.h"
 
@@ -326,55 +326,25 @@ UM f;
 void addsfarray(int,int *,int *);
 void mulsfarray_trunc(int,int *,int *,int *);
 
-void mulsflum(n,f1,f2,fr)
-int n;
-LUM f1,f2,fr;
-{
-	int max;
-	int i,j,**p1,**p2,*px;
-	int *w,*w1,*w2;
-
-	p1 = (int **)COEF(f1); p2 = (int **)COEF(f2);
-	w = W_ALLOC(2*(n+1)); w1 = W_ALLOC(DEG(f1)); w2 = W_ALLOC(DEG(f2));
-	for ( i = DEG(f1); i >= 0; i-- ) {
-		for ( j = n - 1, px = p1[i]; ( j >= 0 ) && ( px[j] == 0 ); j-- );
-		w1[i] = ( j == -1 ? 0 : 1 );
-	}
-	for ( i = DEG(f2); i >= 0; i-- ) {
-		for ( j = n - 1, px = p2[i]; ( j >= 0 ) && ( px[j] == 0 ); j-- );
-		w2[i] = ( j == -1 ? 0 : 1 );
-	}
-	for ( j = DEG(fr) = DEG(f1) + DEG(f2); j >= 0; j-- ) {
-		for ( i = n - 1, px = COEF(fr)[j]; i >= 0; i-- ) 
-			px[i] = 0;
-		for ( max = MIN(DEG(f1),j), i = MAX(0,j-DEG(f2)); i <= max; i++ ) 
-			if ( w1[i] != 0 && w2[j - i] != 0 ) {
-				mulsfarray_trunc(n,p1[i],p2[j - i],w); addsfarray(n,w,px);
-			}
-	}
-}
-
 /* f1 = f1->c[0]+f1->c[1]*y+...,  f2 = f2->c[0]+f2->c[1]*y+... mod y^n */
 
-void mulsfbm(bound,f1,f2,fr)
-int bound;
+void mulsfbm(f1,f2,fr)
 BM f1,f2,fr;
 {
 	UM mul,t,s;
-	int i,j,h,d1,d2;
+	int i,j,h,d1,d2,dy;
 
-	if ( DEG(f1) < bound || DEG(f2) < bound )
-		error("mulsfbm : invalid input");
+	dy = MIN(DEG(f1),DEG(f2));
 
-	d1 = degsfbm(bound,f1);
-	d2 = degsfbm(bound,f2);
+	d1 = degbm(f1);
+	d2 = degbm(f2);
 	t = W_UMALLOC(d1+d2);
 	s = W_UMALLOC(d1+d2);
 
-	for ( i = 0; i < bound; i++ ) {
+	for ( i = 0; i <= dy; i++ ) {
 		mul = COEF(f2)[i];
 		if ( DEG(mul) >= 0 )
-		for ( j = 0; i+j < bound; j++ ) {
+		for ( j = 0; i+j <= dy; j++ ) {
 			if ( COEF(f1)[j] ) {
 				kmulsfum(COEF(f1)[j],mul,t);
 				addsfum(t,COEF(fr)[i+j],s);
@@ -382,65 +352,39 @@ BM f1,f2,fr;
 			}
 		}
 	}
-	DEG(fr) = bound;
+	DEG(fr) = dy;
 }
 
-int degsfbm(bound,f)
-int bound;
+int degbm(f)
 BM f;
 {
-	int d,i;
+	int d,i,dy;
 
+	dy = DEG(f);
 	d = DEG(COEF(f)[0]);
-	for ( i = 1; i < bound; i++ )
+	for ( i = 1; i <= dy; i++ )
 		d = MAX(DEG(COEF(f)[i]),d);
 	return d;
 }
 
 /* g += f */
 
-void addtosfbm(bound,f,g)
-int bound;
+void addtosfbm(f,g)
 BM f,g;
 {
-	int i,d1,d2;
+	int i,d1,d2,dy;
 	UM t;
 
-	d1 = degsfbm(bound,f);
-	d2 = degsfbm(bound,g);
+	dy = DEG(g);
+	if ( DEG(f) > dy )
+		error("addtosfbm : invalid input");
+	dy = MIN(DEG(f),dy);
+	d1 = degbm(f);
+	d2 = degbm(g);
 	t = W_UMALLOC(MAX(d1,d2));
-	for ( i = 0; i < bound; i++ ) {
+	for ( i = 0; i <= dy; i++ ) {
 		addsfum(COEF(f)[i],COEF(g)[i],t);
 		cpyum(t,COEF(g)[i]);
-	}
-}
-
-void addsfarray(n,a1,a2)
-int n;
-int *a1,*a2;
-{
-	int i;
-
-	for ( i = 0; i < n; i++, a1++, a2++ )
-		if ( *a1 )
-			*a2 = _ADDSF(*a1,*a2);
-}
-
-void mulsfarray_trunc(n,a1,a2,r)
-int n;
-int *a1,*a2,*r;
-{
-	int mul,i,j;
-	int *c1,*c2,*cr;
-	int *pc1,*pc2,*pcr;
-
-	bzero(r,n*sizeof(int));
-	c1 = a1; c2 = a2; cr = r;
-	for ( i = 0; i < n; i++, cr++ ) {
-		if ( mul = *c2++ )
-		for ( j = 0, pc1 = c1, pcr = cr; j+i < n; j++, pc1++, pcr++ )
-			if ( *pc1 )
-				*pcr = _ADDSF(_MULSF(*pc1,mul),*pcr);
 	}
 }
 
@@ -546,86 +490,49 @@ UM g;
 
 /* f(y) -> f(y+a) */
 
-void shiftsfbm(bound,f,a)
-int bound;
+void shiftsfbm(f,a)
 BM f;
 int a;
 {
-	int i,j,d;
+	int i,j,d,dy;
 	UM pwr,ya,w,t,s;
 	UM *c;
 
-	if ( bound <= 0 )
-		return;
-	else {
-		c = COEF(f);
-		d = DEG(c[0]);
-		for ( i = 1; i < bound; i++ )
-			d = MAX(DEG(c[i]),d);
+	dy = DEG(f);
+	c = COEF(f);
+	d = degbm(f);
 
-		w = W_UMALLOC(d);
-		t = W_UMALLOC(d);
-		s = W_UMALLOC(bound);
+	w = W_UMALLOC(d);
+	t = W_UMALLOC(d);
+	s = W_UMALLOC(dy);
 
-		/* pwr = 1 */
-		pwr = W_UMALLOC(bound); DEG(pwr) = 0; COEF(pwr)[0] = _onesf();
+	/* pwr = 1 */
+	pwr = W_UMALLOC(dy); DEG(pwr) = 0; COEF(pwr)[0] = _onesf();
 
-		/* ya = y+a */
-		ya = W_UMALLOC(1); DEG(ya) = 1; 
-		COEF(ya)[0] = a; COEF(ya)[1] = _onesf();
+	/* ya = y+a */
+	ya = W_UMALLOC(1); DEG(ya) = 1; 
+	COEF(ya)[0] = a; COEF(ya)[1] = _onesf();
 
-		for ( i = 0; i < bound; i++ ) {
-			/* c[i] does not change */
-			for ( j = 0; j < i; j++ ) {
-				mulssfum(c[i],COEF(pwr)[j],w);
-				addsfum(w,c[j],t); cpyum(t,c[j]);
-			}
-			if ( i < bound-1 ) {
-				mulsfum(pwr,ya,s); cpyum(s,pwr);
-			}
+	for ( i = 0; i <= dy; i++ ) {
+		/* c[i] does not change */
+		for ( j = 0; j < i; j++ ) {
+			mulssfum(c[i],COEF(pwr)[j],w);
+			addsfum(w,c[j],t); cpyum(t,c[j]);
+		}
+		if ( i < dy ) {
+			mulsfum(pwr,ya,s); cpyum(s,pwr);
 		}
 	}
 }
 
-/* clear the body of f */
-
-void clearsflum(bound,n,f)
-int bound,n;
-LUM f;
-{
-	int **c;
-	int i;
-
-	DEG(f) = 0;
-	for ( c = COEF(f), i = 0; i <= n; i++ )
-		bzero(c[i],(bound+1)*sizeof(int));
-}
-
-void clearsfbm(bound,n,f)
-int bound,n;
+void clearbm(n,f)
+int n;
 BM f;
 {
-	int i;
+	int i,dy;
 	UM *c;
 
-	DEG(f) = bound;
-	for ( c = COEF(f), i = 0; i < bound; i++ )
+	dy = DEG(f);
+	for ( c = COEF(f), i = 0; i <= dy; i++ )
 		clearum(c[i],n);
-}
-
-/* f += g */
-
-void addtosflum(bound,g,f)
-int bound;
-LUM g,f;
-{
-	int dg,i,j;
-	int **cg,**cf;
-
-	dg = DEG(g);
-	cg = COEF(g);
-	cf = COEF(f);
-	for ( i = 0; i <= dg; i++ )
-		for ( j = 0; j <= bound; j++ )
-			cf[i][j] = _ADDSF(cf[i][j],cg[i][j]);
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.2 2000/08/21 08:31:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -79,6 +79,13 @@ void minipoly_mod(int,UM,UM,UM);
 int find_root(int,UM,int *);
 void showum(UM);
 void showumat(int **,int);
+
+void henmain2(LUM,UM,UM,UM,UM,int,int,LUM *);
+void addtolum(int,int,LUM,LUM);
+void clearlum(int,int,LUM);
+void henprep2(int,int,int,UM,UM,UM,UM,UM,UM,UM);
+void henprep(P,ML,ML,ML *,ML *);
+
 #if 1
 #define Mulum mulum
 #define Divum divum  
@@ -277,6 +284,250 @@ ML *listp;
 	}
 }
 
+void hensel2(index,count,f,listp)
+int index,count;
+P f;
+ML *listp;
+{
+	register int i,j;
+	int mod,q,n,bound,dx;
+	int *p;
+	ML blist,clist,bqlist,cqlist,rlist;
+	UM fm,qfm,gm,qgm,hm,qhm,qam,qbm,w;
+	UM *b;
+	LUM fl,tl;
+	LUM *l;
+	int dr,k;
+
+	dx = UDEG(f);
+	if ( dx == 1 ) {
+		*listp = blist = MLALLOC(1); blist->n = 1; blist->c[0] = 0;
+		return;
+	}
+	berle(index,count,f,&blist);
+	n = blist->n;
+	mod = blist->mod;
+
+	if ( n == 1 ) {
+		*listp = blist = MLALLOC(1); blist->n = 1; blist->c[0] = 0;
+		return;
+	}
+	
+	/* find k s.t. mod^k <= 2^27 < mod^(k+1); set q = mod^k */
+	for ( k = 1, q = mod; q <= ((1<<27)/mod); q *= mod, k++ );
+
+	/* mignotte bound */
+	bound = mignotte(q,f);
+
+	*listp = rlist = MLALLOC(n); 
+	rlist->n = n;
+	rlist->mod = q;
+	rlist->bound = bound;
+
+	if ( bound == 1 ) {
+		gcdgen(f,blist,&clist);
+		henprep(f,blist,clist,&bqlist,&cqlist);
+
+		for ( i = 0, b = (UM *)bqlist->c; i < n; i++ ) {
+			COEF(rlist)[i] = tl = LUMALLOC(DEG(b[i]),1);
+			for ( j = 0; j <= DEG(tl); j++ )
+					COEF(tl)[j][0] = COEF(b[i])[j];
+			COEF(rlist)[i] = tl;
+		}
+	} else {
+		/* fl = f mod q */
+		fl = LUMALLOC(dx,bound);
+		ptolum(q,bound,f,fl);
+		/* fm = f mod mod */
+		fm = W_UMALLOC(dx);
+		ptoum(mod,f,fm);
+		/* fm = f mod q */
+		qfm = W_UMALLOC(dx);
+		ptoum(q,f,qfm);
+
+		gm = W_UMALLOC(dx); qgm = W_UMALLOC(dx);
+		hm = W_UMALLOC(dx); qhm = W_UMALLOC(dx);
+		qam = W_UMALLOC(dx); qbm = W_UMALLOC(dx);
+		w = W_UMALLOC(dx);
+		for ( i = 0; i < n-1; i++ ) {
+			cpyum(COEF(blist)[i],gm);
+			cpyum(fm,w);
+			divum(mod,w,gm,hm);
+
+			/* find am,bm s.t. qam*qgm+qbm*qhm=1 mod q, qgm=gm mod mod, qhm=hm mod mod */
+			henprep2(mod,q,k,qfm,gm,hm,qgm,qhm,qam,qbm);
+
+			henmain2(fl,qgm,qhm,qam,qbm,q,bound,&tl);
+			rlist->c[i] = (pointer)tl;
+			cpyum(hm,fm);
+			cpyum(qhm,qfm);
+		}
+		rlist->c[i] = fl;
+	}
+}
+
+/*
+	f = g0*h0 mod m -> f = gk*hk mod m^(bound), f is replaced by hk
+*/
+
+void henmain2(f,g0,h0,a0,b0,m,bound,gp)
+LUM f;
+UM g0,h0,a0,b0;
+int m,bound;
+LUM *gp;
+{
+	int n,dg,dh,i,k,j,dg1,dh1;
+	UM wu,wr,ws,wt,q,wh1,wg1,wc,wd,we,wz,w1,w2;
+	LUM wb0,wb1,wb2,fk,gk,hk;
+
+	n = DEG(f); dg = DEG(g0); dh = DEG(h0);
+
+	W_LUMALLOC(n,bound,wb0);
+	W_LUMALLOC(n,bound,wb1);
+	W_LUMALLOC(n,bound,wb2);
+
+	wt = W_UMALLOC(2*n); ws = W_UMALLOC(2*n);
+	wr = W_UMALLOC(2*n); wu = W_UMALLOC(2*n);
+	q = W_UMALLOC(2*n);
+	wh1 = W_UMALLOC(2*n); wg1 = W_UMALLOC(2*n);
+	
+	/* gk = g0 */
+	gk = LUMALLOC(n,bound);
+	DEG(gk) = dg;
+	for ( i = 0; i <= dg; i++ )
+		COEF(gk)[i][0] = COEF(g0)[i];
+
+	/* hk = h0 */
+	W_LUMALLOC(n,bound,hk);
+	DEG(hk) = dh;
+	for ( i = 0; i <= dh; i++ )
+		COEF(hk)[i][0] = COEF(h0)[i];
+
+	/* fk = gk*hk */
+	W_LUMALLOC(n,bound,fk);
+	mullum(m,bound,gk,hk,fk);
+
+	wc = W_UMALLOC(2*n); wd = W_UMALLOC(2*n);
+	we = W_UMALLOC(2*n); wz = W_UMALLOC(2*n);
+
+#if 0
+	mulum(m,a0,g0,wc);
+	mulum(m,b0,h0,wd);
+	addum(m,wc,wd,wz);
+	if ( DEG(wz) != 0 || COEF(wz)[0] != 1 )
+		error("henmain2 : cannot happen(extgcd)");
+#endif
+
+	fprintf(stderr,"bound=%d\n",bound);
+	for ( k = 1; k < bound; k++ ) {
+		fprintf(stderr,".");
+		/* at this point, f = gk*hk mod y^k */
+
+#if 0
+		for ( j = 0; j < k; j++ )
+			for ( i = 0; i <= n; i++ )
+				if ( COEF(f)[i][j] != COEF(f)[i][j] )
+					error("henmain2 : cannot happen(f=fk)");
+#endif
+
+		/* wt = (f-gk*hk)/y^k */
+		for ( i = 0; i <= n; i++ )
+			COEF(ws)[i] = COEF(f)[i][k];
+		degum(ws,n);
+		for ( i = 0; i <= n; i++ )
+			COEF(wu)[i] = COEF(fk)[i][k];
+		degum(wu,n);
+		subum(m,ws,wu,wt);
+		
+		/* compute wf1,wg1 s.t. wh1*g0+wg1*h0 = wt */
+		mulum(m,a0,wt,wh1); DEG(wh1) = divum(m,wh1,h0,q);
+		mulum(m,wh1,g0,wc); subum(m,wt,wc,wd); DEG(wd) = divum(m,wd,h0,wg1);
+
+		/* check */
+#if 0
+		if ( DEG(wd) >= 0 || DEG(wg1) > dg )
+			error("henmain2 : cannot happen(adj)");
+
+		mulum(m,wg1,h0,wc); mulum(m,wh1,g0,wd); addum(m,wc,wd,we);
+		subum(m,we,wt,wz);
+		if ( DEG(wz) >= 0 )
+			error("henmain2 : cannot happen(coef)");
+#endif
+
+		/* fk += ((wg1*hk+wh1*gk)*y^k+wg1*wh1*y^(2*k) mod m^bound */
+
+		/* wb0 = wh1*y^k */
+		clearlum(n,bound,wb0);
+		DEG(wb0) = dh1 = DEG(wh1);
+		for ( i = 0; i <= dh1; i++ )
+			COEF(wb0)[i][k] = COEF(wh1)[i];
+
+		/* wb2 = gk*wb0 mod y^bound */
+		clearlum(n,bound,wb2);
+		mullum(m,bound,gk,wb0,wb2);
+
+		/* fk += wb2 */
+		addtolum(m,bound,wb2,fk);
+
+		/* wb1 = wg1*y^k */
+		clearlum(n,bound,wb1);
+		DEG(wb1) = dg1 = DEG(wg1);
+		for ( i = 0; i <= n; i++ )
+			COEF(wb1)[i][k] = COEF(wg1)[i];
+
+		/* wb2 = hk*wb1 mod y^bound */
+		clearlum(n,bound,wb2);
+		mullum(m,bound,hk,wb1,wb2);
+
+		/* fk += wb2 */
+		addtolum(m,bound,wb2,fk);
+
+		/* fk += wg1*wh1*y^(2*k) mod y^bound) */
+		if ( 2*k < bound ) {
+			clearlum(n,bound,wb2);
+			mullum(m,bound,wb0,wb1,wb2);
+			addtolum(m,bound,wb2,fk);
+		}
+
+		/* gk += wg1*y^k, hk += wh1*y^k */
+		for ( i = 0; i <= DEG(wg1); i++ )
+			COEF(gk)[i][k] = COEF(wg1)[i];
+		for ( i = 0; i <= DEG(wh1); i++ )
+			COEF(hk)[i][k] = COEF(wh1)[i];
+	}
+	fprintf(stderr,"\n");
+	*gp = gk;
+	clearlum(n,bound,f);
+	DEG(f) = dh;
+	for ( i = 0; i <= dh; i++ )
+		for ( j = 0; j < bound; j++ )
+			COEF(f)[i][j] = COEF(hk)[i][j];
+}
+
+void clearlum(n,bound,f)
+int n,bound;
+LUM f;
+{
+	int i;
+
+	for ( i = 0; i <= n; i++ )
+		bzero(COEF(f)[i],bound*sizeof(int));
+}
+
+/* g += f */
+
+void addtolum(m,bound,f,g)
+int m,bound;
+LUM f;
+LUM g;
+{
+	int n,i;
+
+	n = DEG(f);
+	for ( i = 0; i <= n; i++ )
+		addpadic(m,bound,COEF(f)[i],COEF(g)[i]);
+}
+
 void hsq(index,count,f,nindex,dcp)
 int index,count,*nindex;
 P f;
@@ -435,8 +686,57 @@ ML blist,*clistp;
 	}
 }
 
+/* find a,b s.t. qa*qg+qb*qh=1 mod q, qg=g mod mod, qh=h mod mod */
+/* q = mod^k */
+
+void henprep2(mod,q,k,f,g,h,qg,qh,qa,qb)
+int mod,q,k;
+UM f,g,h,qg,qh,qa,qb;
+{
+	int n;
+	UM wg,wh,wa,wb;
+	UM wt,ws,wu;
+	ML bl,cl,bql,cql;
+	P ff;
+
+	n = DEG(f);
+	wg = W_UMALLOC(2*n); wh = W_UMALLOC(2*n);
+	wa = W_UMALLOC(2*n); wb = W_UMALLOC(2*n);
+	cpyum(g,wg); cpyum(h,wh);
+
+	/* wa*g+wb*h = 1 mod mod */
+	eucum(mod,wg,wh,wa,wb);
+
+#if 0
+	/* check */
+	wt = W_UMALLOC(2*n); ws = W_UMALLOC(2*n); wu = W_UMALLOC(2*n);
+	mulum(mod,wa,g,wt);
+	mulum(mod,wb,h,ws);
+	addum(mod,wt,ws,wu);
+ 	if ( DEG(wu) != 0 || COEF(wu)[0] != 1 )
+		error("henprep 1");
+#endif
+
+	bl = MLALLOC(2); bl->n = 2; bl->mod = mod; bl->c[0] = g; bl->c[1] = h;
+	cl = MLALLOC(2); cl->n = 2; cl->mod = mod; cl->c[0] = wb; cl->c[1] = wa;
+	umtop(CO->v,f,&ff); /* XXX */
+	henprep(ff,bl,cl,&bql,&cql); /* XXX */
+
+	cpyum(bql->c[0],qg); cpyum(bql->c[1],qh);
+	cpyum(cql->c[0],qb); cpyum(cql->c[1],qa);
+
+#if 0
+	/* check */
+	mulum(q,qa,qg,wt);
+	mulum(q,qb,qh,ws);
+	addum(q,wt,ws,wu);
+ 	if ( DEG(wu) != 0 || COEF(wu)[0] != 1 )
+		error("henprep 2");
+#endif
+}
+
 /*
-	henprep(f,&blist,&clist,&bqlist,&cqlist);
+	henprep(f,blist,clist,&bqlist,&cqlist);
  */
 
 void henprep(f,blist,clist,bqlistp,cqlistp)
@@ -549,7 +849,9 @@ ML bqlist,cqlist,*listp;
 		for ( j = DEG(b[i]), pp = COEF(l[i]), px = COEF(b[i]); j >= 0; j-- ) 
 			pp[j][0] = px[j];
 	}
+	fprintf(stderr,"bound=%d\n",bound);
 	for ( i = 1; i < bound; i++ ) {
+		fprintf(stderr,".");
 		mullum(mod,i+1,l[0],l[1],wb0);
 		for ( j = 2; j < np; j++ ) {
 			mullum(mod,i+1,l[j],wb0,wb1);
@@ -578,6 +880,7 @@ ML bqlist,cqlist,*listp;
 		for ( j = n, px = COEF(wq0); j >= 0; j-- ) 
 			px[j] = 0;
 	}
+	fprintf(stderr,"\n");
 }
 
 static double M;

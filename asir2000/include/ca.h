@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.16 2001/06/25 01:35:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.17 2001/06/25 04:11:43 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -538,17 +538,17 @@ bzero((char *)(p),(int)(((n)+1)*sizeof(type))))
 	(p) = ___q___;\
 }
 
-#define W_BMALLOC(n,bound,p)\
+#define W_BMALLOC(dx,dy,p)\
 {\
 	BM ___q___;\
 	int ___i___;\
 	UM *___c___;\
-	(___q___) = (BM)ALLOCA(TRUESIZE(oBM,(bound),UM));\
-	DEG(___q___) = bound;\
+	(___q___) = (BM)ALLOCA(TRUESIZE(oBM,(dy),UM));\
+	DEG(___q___) = dy;\
 	___c___ = (UM *)COEF(___q___);\
-	for ( ___i___ = 0; ___i___ < bound; ___i___++ ) {\
-		___c___[___i___] = W_UMALLOC(n);\
-		clearum(___c___[___i___],n);\
+	for ( ___i___ = 0; ___i___ <= dy; ___i___++ ) {\
+		___c___[___i___] = W_UMALLOC(dx);\
+		clearum(___c___[___i___],dx);\
 	}\
 	(p) = ___q___;\
 }

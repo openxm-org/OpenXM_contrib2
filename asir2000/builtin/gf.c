@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.8 2001/06/25 10:01:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.9 2001/06/28 08:57:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -241,10 +241,10 @@ NODE *rp;
 	}
 	dx = getdeg(x,f);
 	dy = getdeg(y,f);
-	if ( bound < dy+1 ) bound = dy+1;
-	fl = BMALLOC(dx,bound);
-	ptosfbm(bound,f,fl);
-	shiftsfbm(bound,fl,FTOIF(CONT(ev)));
+	dy = MAX(dy,bound);
+	fl = BMALLOC(dx,dy);
+	ptosfbm(dy,f,fl);
+	shiftsfbm(fl,FTOIF(CONT(ev)));
 
 	/* fm = fl mod y */
 	fm = W_UMALLOC(dx);
@@ -265,7 +265,7 @@ NODE *rp;
 	r[i] = fl;
 
 	for ( i = fn-1, top = 0; i >= 0; i-- ) {
-		sfbmtop(bound,r[i],x,y,&s);
+		sfbmtop(r[i],x,y,&s);
 		reorderp(CO,vl,s,&u);
 		MKNODE(t,u,top); top = t;
 	}
