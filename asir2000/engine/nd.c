@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.88 2003/12/24 02:20:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.89 2004/02/03 23:31:57 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -146,7 +146,6 @@ static int nd_psn,nd_pslen;
 static RHist *nd_red;
 
 static int nd_found,nd_create,nd_notfirst;
-static int nm_adv;
 static int nmv_adv;
 static int nd_dcomp;
 static int nd_demand;
@@ -178,6 +177,8 @@ extern int *current_weyl_weight_vector;
 
 #define GET_EXP_OLD(d,a) (((d)[oepos[a].i]>>oepos[a].s)&omask0)
 #define PUT_EXP_OLD(r,a,e) ((r)[oepos[a].i] |= ((e)<<oepos[a].s))
+
+#define ROUND_FOR_ALIGN(s) ((((s)+sizeof(void *)-1)/sizeof(void *))*sizeof(void *))
 
 /* macros for term comparison */
 #define TD_DL_COMPARE(d1,d2)\
@@ -2775,7 +2776,7 @@ void ndv_dehomogenize(NDV p,struct order_spec *ord)
 	for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ )
 		ndl_dehomogenize(DL(m));
 	if ( newwpd != nd_wpd ) {
-		newadv = sizeof(struct oNMV)+(newwpd-1)*sizeof(UINT);
+		newadv = ROUND_FOR_ALIGN(sizeof(struct oNMV)+(newwpd-1)*sizeof(UINT));
 		for ( m = r = BDY(p), i = 0; i < len; NMV_ADV(m), NDV_NADV(r), i++ ) {
 			CQ(r) = CQ(m);
 			for ( j = 0; j < newexporigin; j++ ) DL(r)[j] = DL(m)[j];
@@ -2971,8 +2972,7 @@ void nd_setup_parameters(int nvar,int max) {
 		nd_mask[nd_epw-i-1] = (nd_mask0<<(i*nd_bpe));
 		nd_mask1 |= (1<<(nd_bpe-1))<<(i*nd_bpe);
 	}
-	nm_adv = sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT);
-	nmv_adv = sizeof(struct oNMV)+(nd_wpd-1)*sizeof(UINT);
+	nmv_adv = ROUND_FOR_ALIGN(sizeof(struct oNMV)+(nd_wpd-1)*sizeof(UINT));
 	nd_epos = nd_create_epos(nd_ord);
 	nd_blockmask = nd_create_blockmask(nd_ord);
 }
