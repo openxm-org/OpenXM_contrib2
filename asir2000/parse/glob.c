@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.4 2000/01/19 01:49:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.5 2000/02/08 04:47:12 noro Exp $ */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
@@ -674,7 +674,10 @@ char *s;
 	set_lasterror(s);
 	if ( CPVS != GPVS ) {
 		searchsn(&BDY(CPVS->usrf->f.usrf),evalstatline,&snp);
-		error_snode = *snp;
+		if ( snp )
+			error_snode = *snp;
+		else
+			error_snode = 0;
 	} else
 		error_snode = 0;
 	if ( do_file ) {
