@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.13 2000/09/25 04:33:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.14 2000/09/27 09:27:24 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -58,7 +58,9 @@
 #include "ox.h"
 
 #if defined(VISUAL)
+#include <stdlib.h>
 #include <winsock.h>
+#include <process.h>
 #endif
 
 #define OX_XTERM "ox_xterm"
@@ -487,6 +489,10 @@ char *control_port_str,*server_port_str;
 	char localhost[BUFSIZ];
 	char *dname,*conn_str,*rsh;
 	char dname_str[BUFSIZ];
+	char AsirExe[BUFSIZ];
+	STRING rootdir;
+	char prog[BUFSIZ];
+	char *av[BUFSIZ];
 
 	dname = use_x ? (char *)getenv("DISPLAY") : 0;
 	conn_str = conn_to_serv ? "1" : "0";
@@ -501,7 +507,26 @@ char *control_port_str,*server_port_str;
 		use_ssh = 1;
 	}
 	gethostname(localhost,BUFSIZ);
-#if !defined(VISUAL)
+#if defined(VISUAL)
+	if ( !use_unix )
+		error("spawn_server : not implemented on Windows");
+	Pget_rootdir(&rootdir);
+	sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
+	strcpy(prog,server);
+	server = strrchr(prog,'/')+1;
+	av[0] = "ox_launch";
+	av[1] = "127.0.0.1";
+	av[2] = conn_str;
+	av[3] = control_port_str;
+	av[4] = server_port_str;
+	av[5] = server;
+	av[6] = use_x ? "1" : "0";
+	av[7] = 0;
+
+	_spawnv(_P_NOWAIT,AsirExe,av);
+//	_spawnv(_P_NOWAIT,"d:\\home\\noro\\engine2000\\debug\\engine.exe",av);
+//	printf("ox_launch 127.0.0.1 %s %s %s %s 0\n",conn_str,control_port_str,server_port_str,server);
+#else
 	if ( use_unix ) {
 		if ( !fork() ) {
 			setpgid(0,getpid());
@@ -527,9 +552,7 @@ char *control_port_str,*server_port_str;
 		fprintf(stderr,"%s\n",cmd);
 		sleep(20);
 /*		system(cmd); */
-	} else 
-#endif /* VISUAL */
-	{
+	} else {
 		if ( dname )
 			if ( use_ssh )
 			sprintf(cmd,
@@ -548,6 +571,7 @@ char *control_port_str,*server_port_str;
 				control_port_str,server_port_str,server,"0");
 		system(cmd);
 	}
+#endif /* VISUAL */
 }
 
 void Pox_launch(arg,rp)

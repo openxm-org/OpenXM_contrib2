@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.6 2000/08/22 05:04:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.7 2000/09/12 06:05:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -59,6 +59,10 @@
 
 void ox_usr1_handler();
 
+extern int asir_OperandStackSize;
+extern Obj *asir_OperandStack;
+extern int asir_OperandStackPtr;
+
 extern jmp_buf environnement;
 
 extern int do_message;
@@ -66,30 +70,27 @@ extern int ox_flushing;
 extern jmp_buf ox_env;
 extern MATHCAP my_mathcap;
 
-static int plot_OperandStackSize;
-static Obj *plot_OperandStack;
-static int plot_OperandStackPtr = -1;
-
 void create_error(ERR *,unsigned int ,char *);
 
-static void process_ox();
-static void ox_io_init();
-static void ox_asir_init(int,char **);
-static Obj asir_pop_one();
-static void asir_push_one(Obj);
-static void asir_end_flush();
-static void asir_executeFunction();
-static int asir_executeString();
-static void asir_evalName(unsigned int);
-static void asir_setName(unsigned int);
-static void asir_pops();
-static void asir_popString();
-static void asir_popCMO(unsigned int);
-static void asir_popSerializedLocalObject();
-static char *name_of_cmd(unsigned int);
-static char *name_of_id(int);
+void ox_io_init();
+void ox_asir_init(int,char **);
+Obj asir_pop_one();
+void asir_push_one(Obj);
+void asir_end_flush();
+int asir_executeString();
+void asir_evalName(unsigned int);
+void asir_setName(unsigned int);
+void asir_pops();
+void asir_popString();
+void asir_popCMO(unsigned int);
+void asir_popSerializedLocalObject();
+char *name_of_cmd(unsigned int);
+char *name_of_id(int);
+LIST asir_GetErrorList();
+
 static void asir_do_cmd(unsigned int,unsigned int);
-static LIST asir_GetErrorList();
+static void process_ox();
+static void asir_executeFunction();
 
 void ox_plot_main(int argc,char **argv) {
 	int ds;
@@ -183,7 +184,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 			asir_push_one((Obj)list);
 			break;
 		case SM_getsp:
-			i = plot_OperandStackPtr+1;
+			i = asir_OperandStackPtr+1;
 			STOQ(i,q);
 			asir_push_one((Obj)q);
 			break;
@@ -226,212 +227,6 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 	}
 }
 
-static char *name_of_id(int id)
-{
-	switch ( id ) {
-		case OX_COMMAND:
-			return "OX_COMMAND";
-			break;
-		case OX_DATA:
-			return "OX_DATA";
-			break;
-		case OX_LOCAL_OBJECT_ASIR:
-			return "OX_LOCAL_OBJECT_ASIR";
-			break;  
-		case OX_SYNC_BALL:
-			return "OX_SYNC_BALL";
-			break;
-		default:
-			return "Unknown id";
-			break;
-	}
-}
-
-static char *name_of_cmd(unsigned cmd)
-{
-	switch ( cmd ) {
-		case SM_popSerializedLocalObject:
-			return "SM_popSerializedLocalObject";
-			break;
-		case SM_popCMO:
-			return "SM_popCMO";
-			break;
-		case SM_popString:
-			return "SM_popString";
-			break;
-		case SM_pops:
-			return "SM_pops";
-			break;
-		case SM_setName:
-			return "SM_setName";
-			break;
-		case SM_evalName:
-			return "SM_evalName";
-			break;
-		case SM_executeStringByLocalParser:
-			return "SM_executeString";
-			break;
-		case SM_executeFunction:
-			return "SM_executeFunction";
-			break;
-		case SM_shutdown:
-			return "SM_shutdown";
-			break;
-		case SM_beginBlock:
-			return "SM_beginBlock";
-			break;
-		case SM_endBlock:
-			return "SM_endBlock";
-			break;
-		case SM_mathcap:
-			return "SM_mathcap";
-			break;
-		case SM_setMathcap:
-			return "SM_setMathcap";
-			break;
-		default:
-			return "Unknown cmd";
-			break;
-	}
-}
-
-static void asir_popSerializedLocalObject()
-{
-	Obj obj;
-	VL t,vl;
-
-	obj = asir_pop_one();
-	get_vars(obj,&vl);
-	for ( t = vl; t; t = NEXT(t) )
-		if ( t->v->attr == (pointer)V_UC || t->v->attr == (pointer)V_PF )
-			error("bsave : not implemented");
-	ox_send_cmd(0,SM_beginBlock);
-	ox_send_local_ring(0,vl);
-	ox_send_local_data(0,obj);
-	ox_send_cmd(0,SM_endBlock);
-}
-
-static void asir_popCMO(unsigned int serial)
-{
-	Obj obj;
-	ERR err;
-
-	obj = asir_pop_one();
-	if ( valid_as_cmo(obj) )
-		ox_send_data(0,obj);
-	else {
-		create_error(&err,serial,"cannot convert to CMO object");
-		ox_send_data(0,err);
-		asir_push_one(obj);
-	}
-}
-
-static void asir_popString()
-{
-	Obj val;
-	char *buf,*obuf;
-	int l;
-	STRING str;
-
-	val = asir_pop_one();
-	if ( !val )
-		obuf = 0;
-	else {
-		l = estimate_length(CO,val);
-		buf = (char *)ALLOCA(l+1);
-		soutput_init(buf);
-		sprintexpr(CO,val);
-		l = strlen(buf);
-		obuf = (char *)MALLOC(l+1);
-		strcpy(obuf,buf);
-	}
-	MKSTR(str,obuf);
-	ox_send_data(0,str);
-}
-
-static void asir_pops()
-{
-	int n;
-
-	n = (int)(((USINT)asir_pop_one())->body);
-	plot_OperandStackPtr = MAX(plot_OperandStackPtr-n,-1);
-}
-
-static void asir_setName(unsigned int serial)
-{
-	char *name;
-	int l,n;
-	char *dummy = "=0;";
-	SNODE snode;
-	ERR err;
-
-	name = ((STRING)asir_pop_one())->body;
-	l = strlen(name);
-	n = l+strlen(dummy)+1;
-	parse_strp = (char *)ALLOCA(n);
-	sprintf(parse_strp,"%s%s",name,dummy);
-	if ( mainparse(&snode) ) {
-		create_error(&err,serial,"cannot set to variable");
-		asir_push_one((Obj)err);
-	} else {
-		FA1((FNODE)FA0(snode)) = (pointer)mkfnode(1,I_FORMULA,asir_pop_one());
-		evalstat(snode);	
-	}
-}
-
-static void asir_evalName(unsigned int serial)
-{
-	char *name;
-	int l,n;
-	SNODE snode;
-	ERR err;
-	pointer val;
-
-	name = ((STRING)asir_pop_one())->body;
-	l = strlen(name);
-	n = l+2;
-	parse_strp = (char *)ALLOCA(n);
-	sprintf(parse_strp,"%s;",name);
-	if ( mainparse(&snode) ) {
-		create_error(&err,serial,"no such variable");
-		val = (pointer)err;
-	} else
-		val = evalstat(snode);	
-	asir_push_one(val);
-}
-
-static int asir_executeString()
-{
-	SNODE snode;
-	pointer val;
-	char *cmd;
-#if PARI
-	recover(0);
-	if ( setjmp(environnement) ) {
-		avma = top; recover(1);
-		resetenv("");
-	}
-#endif
-	cmd = ((STRING)asir_pop_one())->body;
-	parse_strp = cmd;
-	if ( mainparse(&snode) ) {
-		return -1;
-	}
-	val = evalstat(snode);
-	if ( NEXT(asir_infile) ) {
-		while ( NEXT(asir_infile) ) {
-			if ( mainparse(&snode) ) {
-				asir_push_one(val);
-				return -1;
-			}
-			nextbp = 0;
-			val = evalstat(snode);
-		}
-	}
-	asir_push_one(val);
-	return 0;
-}
-
 static void asir_executeFunction()
 { 
 	char *func;
@@ -464,143 +259,4 @@ static void asir_executeFunction()
 #if 0
 	asir_push_one((Obj)ret);
 #endif
-}
-
-static void asir_end_flush()
-{
-	ox_flushing = 0;
-}
-
-static void asir_push_one(Obj obj)
-{
-	if ( !obj || OID(obj) != O_VOID ) {
-		plot_OperandStackPtr++;
-		if ( plot_OperandStackPtr >= plot_OperandStackSize ) {
-			plot_OperandStackSize += BUFSIZ;
-			plot_OperandStack
-				= (Obj *)REALLOC(plot_OperandStack,
-					plot_OperandStackSize*sizeof(Obj));
-		}
-		plot_OperandStack[plot_OperandStackPtr] = obj;
-	}
-}
-
-static LIST asir_GetErrorList()
-{
-	int i;
-	NODE n,n0;
-	LIST err;
-	Obj obj;
-
-	for ( i = 0, n0 = 0; i <= plot_OperandStackPtr; i++ )
-		if ( (obj = plot_OperandStack[i]) && (OID(obj) == O_ERR) ) {
-			NEXTNODE(n0,n); BDY(n) = (pointer)obj;
-		}
-	if ( n0 )
-		NEXT(n) = 0;
-	MKLIST(err,n0);
-	return err;
-}
-
-static Obj asir_pop_one() {
-	if ( plot_OperandStackPtr < 0 ) {
-		if ( do_message )
-			fprintf(stderr,"OperandStack underflow");
-		return 0;
-	} else {
-		if ( do_message )
-			fprintf(stderr,"pop at %d\n",plot_OperandStackPtr);
-		return plot_OperandStack[plot_OperandStackPtr--];
-	}
-}
-
-static void ox_asir_init(int argc,char **argv)
-{
-	int tmp;
-	char ifname[BUFSIZ];
-	extern int GC_dont_gc;
-	extern int read_exec_file;
-	extern int do_asirrc;
-	extern int do_server_in_X11;
-	char *getenv();
-	static ox_asir_initialized = 0;
-	FILE *ifp;
-
-	do_server_in_X11 = 1; /* XXX */
-	asir_save_handler();
-#if PARI
-	risa_pari_init();
-#endif
-	srandom((int)get_current_time());
-
-#if defined(THINK_C)
-	param_init();
-#endif
-	StackBottom = &tmp + 1; /* XXX */
-	rtime_init();
-	env_init();
-	endian_init();
-#if !defined(VISUAL) && !defined(THINK_C)
-/*	check_key(); */
-#endif
-	GC_init();
-	process_args(--argc,++argv);
-#if 0
-	copyright();
-#endif
-	output_init();
-	arf_init();
-	nglob_init();
-	glob_init();
-	sig_init();
-	tty_init();
-	debug_init();
-	pf_init();
-	sysf_init();
-	parif_init();
-#if defined(VISUAL)
-	init_socket();
-#endif
-#if defined(UINIT)
-	reg_sysf();
-#endif
-#if defined(THINK_C)
-	sprintf(ifname,"asirrc");
-#else
-	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
-#endif
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		input_init(ifp,ifname);
-		if ( !setjmp(env) ) {
-			read_exec_file = 1;
-			read_eval_loop();
-			read_exec_file = 0;
-		}
-		fclose(ifp);
-	}
-	input_init(0,"string");
-	ox_io_init();
-	create_my_mathcap("ox_plot");
-}
-
-static void ox_io_init() {
-	unsigned char c,rc;
-	extern int little_endian;
-
-	endian_init();
-	iofp[0].in = fdopen(3,"r");
-	iofp[0].out = fdopen(4,"w");
-	setbuffer(iofp[0].in,(char *)malloc(LBUFSIZ),LBUFSIZ);
-	setbuffer(iofp[0].out,(char *)malloc(LBUFSIZ),LBUFSIZ);
-	plot_OperandStackSize = BUFSIZ;
-	plot_OperandStack = (Obj *)CALLOC(plot_OperandStackSize,sizeof(Obj));
-	plot_OperandStackPtr = -1;
-	signal(SIGUSR1,ox_usr1_handler);
-	if ( little_endian )
-		c = 1;
-	else
-		c = 0xff;
-	write_char(iofp[0].out,&c); ox_flush_stream(0);
-	read_char(iofp[0].in,&rc);
-	iofp[0].conv = c == rc ? 0 : 1;
 }

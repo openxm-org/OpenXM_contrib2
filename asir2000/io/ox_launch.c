@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.5 2000/09/23 00:57:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.6 2000/09/25 04:33:37 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -53,6 +53,7 @@
 #include "com.h"
 #include "ox.h"
 #if defined(VISUAL)
+#include <stdlib.h>
 #include <windows.h>
 #include <io.h>
 #include <fcntl.h>
@@ -287,7 +288,14 @@ char *dname;
 	HANDLE hProc;
 	STRING rootdir;
 	int mypid;
+	int newbs;
 		
+	DuplicateHandle(GetCurrentProcess(),(HANDLE)bs,
+					GetCurrentProcess(),(HANDLE *)&newbs,
+					0,TRUE,DUPLICATE_SAME_ACCESS);
+	close(bs);
+	bs = newbs;
+
 	mypid = GetCurrentProcessId();
 	sprintf(ox_intr,"ox_intr_%d",mypid);
 	sprintf(ox_reset,"ox_reset_%d",mypid);
@@ -298,12 +306,18 @@ char *dname;
 	sprintf(sock_id,"%d",bs);
 	av[0] = prog;
 	av[1] = sock_id;
-	av[2] = ox_intr;
-	av[3] = ox_reset;
-	av[4] = ox_kill;
-	av[5] = NULL;
+	av[2] = dname; /* if dname == "1" then a message window is opened */
+	av[3] = ox_intr;
+	av[4] = ox_reset;
+	av[5] = ox_kill;
+	av[6] = NULL;
 	Pget_rootdir(&rootdir);
-	sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
+	if ( !strcmp(prog,"ox_plot") ) {
+//		sprintf(AsirExe,"d:\\home\\noro\\ox_plot\\debug\\ox_plot.exe");
+		sprintf(AsirExe,"%s\\bin\\ox_plot.exe",BDY(rootdir));
+	} else
+		sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
+	_fileinfo = 1;
 	hProc = _spawnv(_P_NOWAIT,AsirExe,av);
 	return (int)hProc;
 #else /* VISUAL */

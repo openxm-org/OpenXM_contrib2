@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.6 2000/08/22 05:04:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.7 2000/09/23 00:57:43 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -107,11 +107,14 @@ char *port_str;
 	unsigned int port;
 	static int count=0;
 
+#if !defined(VISUAL)
 	if ( use_unix ) {
 		sprintf(port_str,"/tmp/ox%02x.XXXXXX",count);
 		count++;
 		mktemp(port_str);
-	} else {
+	} else 
+#endif
+	{
 		port = ((unsigned int)mt_genrand()+(unsigned int)get_current_time())
 			%(65536-1024)+1024;
 		sprintf(port_str,"%d",port);

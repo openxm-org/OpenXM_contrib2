@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.18 2000/09/07 23:59:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.19 2000/09/12 06:05:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,29 +72,30 @@ int lib_ox_need_conv;
 
 void create_error(ERR *,unsigned int ,char *);
 
-static int asir_OperandStackSize;
-static Obj *asir_OperandStack;
-static int asir_OperandStackPtr = -1;
+int asir_OperandStackSize;
+Obj *asir_OperandStack;
+int asir_OperandStackPtr = -1;
 
-static void ox_io_init();
-static void ox_asir_init(int,char **);
-static Obj asir_pop_one();
-static Obj asir_peek_one();
-static void asir_push_one(Obj);
-static void asir_end_flush();
-static void asir_executeFunction(int);
-static int asir_executeString();
-static void asir_evalName(unsigned int);
-static void asir_setName(unsigned int);
-static void asir_pops();
-static void asir_popString();
-static void asir_popCMO(unsigned int);
-static void asir_popSerializedLocalObject();
-static void asir_pushCMOtag(unsigned int);
-static LIST asir_GetErrorList();
-static char *name_of_cmd(int);
-static char *name_of_id(int);
+void ox_io_init();
+void ox_asir_init(int,char **);
+Obj asir_pop_one();
+Obj asir_peek_one();
+void asir_push_one(Obj);
+void asir_end_flush();
+int asir_executeString();
+void asir_evalName(unsigned int);
+void asir_setName(unsigned int);
+void asir_pops();
+void asir_popString();
+void asir_popCMO(unsigned int);
+void asir_popSerializedLocalObject();
+void asir_pushCMOtag(unsigned int);
+LIST asir_GetErrorList();
+char *name_of_cmd(int);
+char *name_of_id(int);
+
 static void asir_do_cmd(int,unsigned int);
+static void asir_executeFunction(int);
 
 #if MPI
 /* XXX : currently MPI version supports only a homogeneous cluster. */
@@ -265,7 +266,7 @@ static void asir_do_cmd(int cmd,unsigned int serial)
 	}
 }
 
-static char *name_of_id(int id)
+char *name_of_id(int id)
 {
 	switch ( id ) {
 		case OX_COMMAND:
@@ -286,7 +287,7 @@ static char *name_of_id(int id)
 	}
 }
 
-static char *name_of_cmd(int cmd)
+char *name_of_cmd(int cmd)
 {
 	switch ( cmd ) {
 		case SM_popSerializedLocalObject:
@@ -344,7 +345,7 @@ static char *name_of_cmd(int cmd)
 	}
 }
 
-static LIST asir_GetErrorList()
+LIST asir_GetErrorList()
 {
 	int i;
 	NODE n,n0;
@@ -361,7 +362,7 @@ static LIST asir_GetErrorList()
 	return err;
 }
 
-static void asir_popSerializedLocalObject()
+void asir_popSerializedLocalObject()
 {
 	Obj obj;
 	VL t,vl;
@@ -377,7 +378,7 @@ static void asir_popSerializedLocalObject()
 	ox_send_cmd(0,SM_endBlock);
 }
 
-static void asir_popCMO(unsigned int serial)
+void asir_popCMO(unsigned int serial)
 {
 	Obj obj;
 	ERR err;
@@ -392,7 +393,7 @@ static void asir_popCMO(unsigned int serial)
 	}
 }
 
-static void asir_pushCMOtag(unsigned int serial)
+void asir_pushCMOtag(unsigned int serial)
 {
 	Obj obj;
 	ERR err;
@@ -409,7 +410,7 @@ static void asir_pushCMOtag(unsigned int serial)
 	}
 }
 
-static void asir_popString()
+void asir_popString()
 {
 	Obj val;
 	char *buf,*obuf;
@@ -432,7 +433,7 @@ static void asir_popString()
 	ox_send_data(0,str);
 }
 
-static void asir_pops()
+void asir_pops()
 {
 	int n;
 
@@ -440,7 +441,7 @@ static void asir_pops()
 	asir_OperandStackPtr = MAX(asir_OperandStackPtr-n,-1);
 }
 
-static void asir_setName(unsigned int serial)
+void asir_setName(unsigned int serial)
 {
 	char *name;
 	int l,n;
@@ -462,7 +463,7 @@ static void asir_setName(unsigned int serial)
 	}
 }
 
-static void asir_evalName(unsigned int serial)
+void asir_evalName(unsigned int serial)
 {
 	char *name;
 	int l,n;
@@ -483,7 +484,7 @@ static void asir_evalName(unsigned int serial)
 	asir_push_one(val);
 }
 
-static int asir_executeString()
+int asir_executeString()
 {
 	SNODE snode;
 	pointer val;
@@ -588,7 +589,7 @@ error:
 	asir_push_one(result);
 }
 
-static void asir_end_flush()
+void asir_end_flush()
 {
 	ox_flushing = 0;
 }
@@ -600,7 +601,7 @@ static void asir_end_flush()
 */
 
 
-static void asir_push_one(Obj obj)
+void asir_push_one(Obj obj)
 {
 	if ( !obj || OID(obj) != O_VOID ) {
 		asir_OperandStackPtr++;
@@ -614,7 +615,7 @@ static void asir_push_one(Obj obj)
 	}
 }
 
-static Obj asir_pop_one() {
+Obj asir_pop_one() {
 	if ( asir_OperandStackPtr < 0 ) {
 		if ( do_message )
 			fprintf(stderr,"OperandStack underflow");
@@ -626,7 +627,7 @@ static Obj asir_pop_one() {
 	}
 }
 
-static Obj asir_peek_one() {
+Obj asir_peek_one() {
 	if ( asir_OperandStackPtr < 0 ) {
 		if ( do_message )
 			fprintf(stderr,"OperandStack underflow");
@@ -638,7 +639,7 @@ static Obj asir_peek_one() {
 	}
 }
 
-static void ox_asir_init(int argc,char **argv)
+void ox_asir_init(int argc,char **argv)
 {
 	int tmp;
 	char ifname[BUFSIZ];
@@ -722,7 +723,7 @@ static void ox_asir_init(int argc,char **argv)
 	create_my_mathcap("ox_asir");
 }
 
-static void ox_io_init() {
+void ox_io_init() {
 	unsigned char c,rc;
 
 	endian_init();
