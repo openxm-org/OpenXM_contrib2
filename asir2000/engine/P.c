@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.9 2004/03/11 09:52:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.10 2004/08/18 00:17:02 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -131,8 +131,8 @@ P *r;
 		*r = 0;
 	else {
 		if ( v == VR(p) ) {
-			for ( dc = DC(p), dcr0 = 0; 
-				dc && DEG(dc); dc = NEXT(dc) ) {
+			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+				if ( !DEG(dc) ) continue;
 				MULPQ(COEF(dc),(P)DEG(dc),&t);
 				if ( t ) {
 					NEXTDC(dcr0,dcr); SUBQ(DEG(dc),ONE,&DEG(dcr));
@@ -174,8 +174,8 @@ P *r;
 		*r = 0;
 	else {
 		if ( v == VR(p) ) {
-			for ( dc = DC(p), dcr0 = 0; 
-				  dc && DEG(dc); dc = NEXT(dc) ) {
+			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+				if ( !DEG(dc) ) continue;
 				MULPQ(COEF(dc),(P)DEG(dc),&t);
 				if ( t ) {
 					NEXTDC(dcr0,dcr);

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.54 2004/03/11 07:40:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.55 2004/06/15 09:04:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -565,6 +565,45 @@ void Pox_launch_generic(NODE arg,Q *rp)
 		use_unix,use_ssh,use_x,conn_to_serv,&ret);
 	*rp = ret;
 }
+
+#if 0
+void ox_launcher_101_generic(char *host,char *launcher,
+		int use_unix,int use_ssh,int use_x,int conn_to_serv,Q *rp)
+{
+	int cs,cn,ind,id;
+	char control_port_str[BUFSIZ];
+	Obj obj;
+
+#if !defined(VISUAL)
+	if ( use_unix && !find_executable("xterm") ) use_x = 0;
+#endif
+	control_port_str[0] = 0;
+	do { 
+		generate_port(use_unix,control_port_str);
+		if ( conn_to_serv ) {
+			spawn_server_101(host,launcher,
+				use_unix,use_ssh,use_x,conn_to_serv,
+					control_port_str);
+			cs = try_connect(use_unix,host,control_port_str);
+		} else {
+			cs = try_bind_listen(use_unix,control_port_str);
+			if ( cs < 0 ) continue;
+			spawn_laucher_101(host,launcher,
+				use_unix,use_ssh,use_x,conn_to_serv,
+					control_port_str);
+			cs = try_accept(use_unix,cs);
+		}
+	} while ( cs < 0 );
+
+	/* client mode */
+	cn = get_iofp(cs,control_port_str,0);
+
+	/* register server to the server list */
+	ind = register_server_101(use_unix,cn);
+
+	STOQ(ind,*rp);
+}
+#endif
 
 void ox_launch_generic(char *host,char *launcher,char *server,
 		int use_unix,int use_ssh,int use_x,int conn_to_serv,Q *rp)
