@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.22 2001/09/05 01:57:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.23 2001/09/05 08:09:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -215,6 +215,31 @@ int *b;
 		for ( ; !eqdl(nv,m->dl,at[i]); i++ );
 		b[i] = ITOS(m->c);
 	}
+}
+
+/* create compressed poly */
+
+void _dpmod_to_vect_compress(f,at,b)
+DP f;
+DL *at;
+CDP *b;
+{
+	int i,j,nv,len;
+	MP m;
+	CDP r;
+
+	nv = f->nv;
+	for ( m = BDY(f), len = 0; m; m = NEXT(m), len++ );
+	r = (CDP)MALLOC(sizeof(struct oCDP));
+ 	r->len = len;
+	r->body = (CMP)MALLOC(sizeof(struct oCMP)*len);
+
+	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
+		for ( ; !eqdl(nv,m->dl,at[i]); i++ );
+		r->body[j].index = i;
+		r->body[j].c = ITOS(m->c);
+	}
+	*b = r;
 }
 
 void dp_to_vect(f,at,b)
@@ -636,10 +661,12 @@ int m;
 	MP mp,mp0;
 	NODE blist,bt,nt;
 	DL *ht,*at,*st;
-	int **spmat,**redmat;
+	int **spmat;
+	CDP *redmat;
 	int *colstat,*w;
 	int rank,nred,nsp,nonzero,spcol;
-	int *indred,*isred,*ri;
+	int *indred,*isred;
+	CDP ri;
 	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim1,eg_split_elim2;
 	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
 
@@ -666,7 +693,27 @@ int m;
 				s0 = symb_merge(s0,dp_dllist(sp),nv);
 			}
 		}
-		/* s0 : all the terms appeared in symbolic redunction */
+		/* s0 : all the terms appeared in symbolic reduction */
+#if 0
+		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
+			for ( j = psn-1; j >= 0; j-- )
+				if ( _dl_redble(BDY(ps[j])->dl,BDY(s),nv) )
+					break;
+			if ( j >= 0 ) {
+				dltod(BDY(s),nv,&tdp);
+				dp_subd(tdp,ps[j],&sd);
+				for ( k = 0, i = 0; k < nv; k++ )
+					if ( BDY(sd)->dl->d[k] )
+						i++;
+				fprintf(stderr,"%c ",i<=1 ? 'o' : 'x');
+				_dp_mod(sd,m,0,&sdm);
+				mulmd_dup(m,sdm,ps[j],&f2);
+				MKNODE(bt,f2,blist); blist = bt;
+				s = symb_merge(s,dp_dllist(f2),nv);
+				nred++;
+			}
+		}
+#else
 		for ( s = s0, nred = 0; s; s = NEXT(s) ) {
 			for ( r = gall;	r; r = NEXT(r) )
 				if ( _dl_redble(BDY(ps[(int)BDY(r)])->dl,BDY(s),nv) )
@@ -681,6 +728,8 @@ int m;
 				nred++;
 			}
 		}
+#endif
+		fprintf(stderr,"\n");
 		
 		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
 		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
@@ -706,9 +755,9 @@ int m;
 		nsp = row-nred;
 
 		/* reducer matrix */
-		redmat = (int **)almat(nred,col);
+		redmat = (CDP *)MALLOC(nred*sizeof(CDP));
 		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ )
-			_dpmod_to_vect(BDY(r),at,redmat[i]);
+			_dpmod_to_vect_compress(BDY(r),at,&redmat[i]);
 		/* XXX */
 /*		reduce_reducers_mod(redmat,nred,col,m); */
 		/* register the position of the head term */
@@ -718,9 +767,8 @@ int m;
 		bzero(isred,col*sizeof(int));
 		for ( i = 0; i < nred; i++ ) {
 			ri = redmat[i];
-			for ( j = 0; j < col && !ri[j]; j++ );
-			indred[i] = j;
-			isred[j] = 1;
+			indred[i] = ri->body[0].index;
+			isred[indred[i]] = 1;
 		}
 
 		spcol = col-nred;
@@ -730,13 +778,14 @@ int m;
 			if ( !isred[j] )
 				st[k++] = at[j];
 
+		get_eg(&tmp1);
 		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
 		spmat = almat(nsp,spcol);
 		w = (int *)MALLOC(col*sizeof(int));
 		for ( ; i < row; r = NEXT(r), i++ ) {
 			bzero(w,col*sizeof(int));
 			_dpmod_to_vect(BDY(r),at,w);
-			reduce_sp_by_red_mod(w,redmat,indred,nred,col,m);
+			reduce_sp_by_red_mod_compress(w,redmat,indred,nred,col,m);
 			for ( j = 0, k = 0; j < col; j++ )
 				if ( !isred[j] )
 					spmat[i-nred][k++] = w[j];

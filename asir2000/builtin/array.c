@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.13 2001/06/07 05:14:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.14 2001/09/04 05:14:03 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1392,6 +1392,44 @@ int md;
 			tj = sp+j;
 			for ( k = col-j; k >= 0; k-- ) {
 				if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+			}
+		}
+	}
+}
+
+/*
+	mat[i] : compressed reducers (i=0,...,nred-1)
+	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
+*/
+
+void reduce_sp_by_red_mod_compress (sp,redmat,ind,nred,col,md)
+int *sp;
+CDP *redmat;
+int *ind;
+int nred,col;
+int md;
+{
+	int i,j,k,hc,c,len;
+	int *tj;
+	CDP ri;
+
+	/* reduce the spolys by redmat */
+	for ( i = nred-1; i >= 0; i-- ) {
+		/* reduce sp by redmat[i] */
+		if ( hc = sp[ind[i]] ) {
+			/* sp = sp-hc*redmat[i] */
+			hc = md-hc;
+			ri = redmat[i];
+			len = ri->len;
+			for ( k = 0; k < len; k++ ) {
+				j = ri->body[k].index;
+				c = ri->body[k].c;
+				tj = sp+j;
+#if 1
+				DMAR(c,hc,*tj,md,*tj);
+#else
+				*tj = ((hc*c)+(*tj))%md;
+#endif
 			}
 		}
 	}
