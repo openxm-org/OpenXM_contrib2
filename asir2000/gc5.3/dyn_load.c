@@ -297,14 +297,209 @@ void GC_register_dynamic_libraries()
 # endif /* !USE_PROC ... */
 # endif /* SUNOS */
 
-#if defined(LINUX) && defined(__ELF__) || defined(SCO_ELF)
+#if defined(LINUX) && defined(__ELF__) || defined(SCO_ELF) || \
+    (defined(NETBSD) && defined(__ELF__))
+
+#if 1
+/* #ifdef USE_PROC_FOR_LIBRARIES */
+
+#include <string.h>
+
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define MAPS_BUF_SIZE (32*1024)
+
+extern ssize_t GC_repeat_read(int fd, char *buf, size_t count);
+	/* Repeatedly read until buffer is filled, or EOF is encountered */
+	/* Defined in os_dep.c.  					 */
+
+static char *parse_map_entry(char *buf_ptr, word *start, word *end,
+                             char *prot_buf, unsigned int *maj_dev);
+
+/* Repeatedly perform a read call until the buffer is filled or	*/
+/* we encounter EOF.						*/
+ssize_t GC_repeat_read(int fd, char *buf, size_t count)
+{
+    ssize_t num_read = 0;
+    ssize_t result;
+    
+    while (num_read < count) {
+	result = read(fd, buf + num_read, count - num_read);
+	if (result < 0) return result;
+	if (result == 0) break;
+	num_read += result;
+    }
+    return num_read;
+}
+
+void GC_register_dynamic_libraries()
+{
+    int f;
+    int result;
+    char prot_buf[5];
+    int maps_size;
+    char maps_temp[32768];
+    char *maps_buf;
+    char *buf_ptr;
+    int count;
+    word start, end;
+    unsigned int maj_dev, min_dev;
+    word least_ha, greatest_ha;
+    unsigned i;
+    word datastart = (word)(DATASTART);
+
+    /* Read /proc/self/maps	*/
+        /* Note that we may not allocate, and thus can't use stdio.	*/
+        f = open("/proc/self/maps", O_RDONLY);
+        if (-1 == f) ABORT("Couldn't open /proc/self/maps");
+	/* stat() doesn't work for /proc/self/maps, so we have to
+	   read it to find out how large it is... */
+	maps_size = 0;
+	do {
+	    result = GC_repeat_read(f, maps_temp, sizeof(maps_temp));
+	    if (result <= 0) ABORT("Couldn't read /proc/self/maps");
+	    maps_size += result;
+	} while (result == sizeof(maps_temp));
+
+	if (maps_size > sizeof(maps_temp)) {
+	    /* If larger than our buffer, close and re-read it. */
+	    close(f);
+	    f = open("/proc/self/maps", O_RDONLY);
+	    if (-1 == f) ABORT("Couldn't open /proc/self/maps");
+	    maps_buf = alloca(maps_size);
+	    if (NULL == maps_buf) ABORT("/proc/self/maps alloca failed");
+	    result = GC_repeat_read(f, maps_buf, maps_size);
+	    if (result <= 0) ABORT("Couldn't read /proc/self/maps");
+	} else {
+	    /* Otherwise use the fixed size buffer */
+	    maps_buf = maps_temp;
+	}
+
+	close(f);
+        maps_buf[result] = '\0';
+        buf_ptr = maps_buf;
+    /* Compute heap bounds. Should be done by add_to_heap?	*/
+	least_ha = (word)(-1);
+	greatest_ha = 0;
+	for (i = 0; i < GC_n_heap_sects; ++i) {
+	    word sect_start = (word)GC_heap_sects[i].hs_start;
+	    word sect_end = sect_start + GC_heap_sects[i].hs_bytes;
+	    if (sect_start < least_ha) least_ha = sect_start;
+	    if (sect_end > greatest_ha) greatest_ha = sect_end;
+        }
+    	if (greatest_ha < (word)GC_scratch_last_end_ptr)
+	    greatest_ha = (word)GC_scratch_last_end_ptr; 
+    for (;;) {
+
+        buf_ptr = parse_map_entry(buf_ptr, &start, &end, prot_buf, &maj_dev);
+	if (buf_ptr == NULL) return;
+
+	if (prot_buf[1] == 'w') {
+	    /* This is a writable mapping.  Add it to		*/
+	    /* the root set unless it is already otherwise	*/
+	    /* accounted for.					*/
+	    if (start <= (word)GC_stackbottom && end >= (word)GC_stackbottom) {
+		/* Stack mapping; discard	*/
+		continue;
+	    }
+	    if (start <= datastart && end > datastart && maj_dev != 0) {
+		/* Main data segment; discard	*/
+		continue;
+	    }
+#	    ifdef THREADS
+	      if (GC_segment_is_thread_stack(start, end)) continue;
+#	    endif
+	    /* The rest of this assumes that there is no mapping	*/
+	    /* spanning the beginning of the data segment, or extending	*/
+	    /* beyond the entire heap at both ends.  			*/
+	    /* Empirically these assumptions hold.			*/
+	    
+	    if (start < (word)DATAEND && end > (word)DATAEND) {
+		/* Rld may use space at the end of the main data 	*/
+		/* segment.  Thus we add that in.			*/
+		start = (word)DATAEND;
+	    }
+	    if (start < least_ha && end > least_ha) {
+		end = least_ha;
+	    }
+	    if (start < greatest_ha && end > greatest_ha) {
+		start = greatest_ha;
+	    }
+	    if (start >= least_ha && end <= greatest_ha) continue;
+	    GC_add_roots_inner((char *)start, (char *)end, TRUE);
+	}
+     }
+}
+
+//
+//  parse_map_entry parses an entry from /proc/self/maps so we can
+//  locate all writable data segments that belong to shared libraries.
+//  The format of one of these entries and the fields we care about
+//  is as follows:
+//  XXXXXXXX-XXXXXXXX r-xp 00000000 30:05 260537     name of mapping...\n
+//  ^^^^^^^^ ^^^^^^^^ ^^^^          ^^
+//  start    end      prot          maj_dev
+//  0        9        18            32
+//
+//  The parser is called with a pointer to the entry and the return value
+//  is either NULL or is advanced to the next entry(the byte after the
+//  trailing '\n'.)
+//
+#define OFFSET_MAP_START   0
+#define OFFSET_MAP_END     9
+#define OFFSET_MAP_PROT   18
+#define OFFSET_MAP_MAJDEV 32
+
+static char *parse_map_entry(char *buf_ptr, word *start, word *end,
+                             char *prot_buf, unsigned int *maj_dev)
+{
+    int i;
+    unsigned int val;
+    char *tok;
+
+    if (buf_ptr == NULL || *buf_ptr == '\0') {
+        return NULL;
+    }
+
+    memcpy(prot_buf, buf_ptr+OFFSET_MAP_PROT, 4); // do the protections first
+    prot_buf[4] = '\0';
+
+    if (prot_buf[1] == 'w') { // we can skip all of this if it's not writable
+
+        tok = buf_ptr;
+        buf_ptr[OFFSET_MAP_START+8] = '\0';
+        *start = strtoul(tok, NULL, 16);
+
+        tok = buf_ptr+OFFSET_MAP_END;
+        buf_ptr[OFFSET_MAP_END+8] = '\0';
+        *end = strtoul(tok, NULL, 16);
+
+        buf_ptr += OFFSET_MAP_MAJDEV;
+        tok = buf_ptr;
+        while (*buf_ptr != ':') buf_ptr++;
+        *buf_ptr++ = '\0';
+        *maj_dev = strtoul(tok, NULL, 16);
+    }
+
+    while (*buf_ptr && *buf_ptr++ != '\n');
+
+    return buf_ptr;
+}
+
+#else /* !USE_PROC_FOR_LIBRARIES */
 
 /* Dynamic loading code for Linux running ELF. Somewhat tested on
  * Linux/x86, untested but hopefully should work on Linux/Alpha. 
  * This code was derived from the Solaris/ELF support. Thanks to
  * whatever kind soul wrote that.  - Patrick Bridges */
 
-#include <elf.h>
+#if defined(NETBSD)
+#  include <sys/exec_elf.h>
+#else
+#  include <elf.h>
+#endif
 #include <link.h>
 
 /* Newer versions of Linux/Alpha and Linux/x86 define this macro.  We
@@ -379,7 +574,9 @@ void GC_register_dynamic_libraries()
     }
 }
 
-#endif
+#endif /* !USE_PROC_FOR_LIBRARIES */
+
+#endif /* LINUX */
 
 #if defined(IRIX5) || defined(USE_PROC_FOR_LIBRARIES)
 
