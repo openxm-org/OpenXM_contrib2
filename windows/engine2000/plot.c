@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.4 2002/07/10 06:08:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.5 2002/08/02 02:48:22 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -235,7 +235,7 @@ static void process_ox(int id, Obj obj, unsigned int serial)
 
 static void process_resize(struct canvas *can,POINT startp,POINT endp)
 {
-	if ( can->mode == MODE_INTERACTIVE )
+	if ( can->mode == MODE_INTERACTIVE || can->mode == MODE_POLARPLOT )
 		return;
 
 	if ( can->mode == MODE_PLOT )
