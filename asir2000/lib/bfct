@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.16 2001/01/18 00:52:32 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.17 2002/01/28 01:02:03 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -270,6 +270,70 @@ def generic_bfct(F,V,DV,W)
 	return B;
 }
 
+/* all term reduction + interreduce */
+def generic_bfct_1(F,V,DV,W)
+{
+	N = length(V);
+	N2 = N*2;
+
+	/* If W is a list, convert it to a vector */
+	if ( type(W) == 4 )
+		W = newvect(length(W),W);
+	dp_weyl_set_weight(W);
+
+	/* create a term order M in D<x,d> (DRL) */
+	M = newmat(N2,N2);
+	for ( J = 0; J < N2; J++ )
+		M[0][J] = 1;
+	for ( I = 1; I < N2; I++ )
+		M[I][N2-I] = -1;
+	
+	VDV = append(V,DV);
+
+	/* create a non-term order MW in D<x,d> */
+	MW = newmat(N2+1,N2);
+	for ( J = 0; J < N; J++ )
+		MW[0][J] = -W[J];
+	for ( ; J < N2; J++ )
+		MW[0][J] = W[J-N];
+	for ( I = 1; I <= N2; I++ )
+		for ( J = 0; J < N2; J++ )
+			MW[I][J] = M[I-1][J];
+
+	/* create a homogenized term order MWH in D<x,d,h> */
+	MWH = newmat(N2+2,N2+1);
+	for ( J = 0; J <= N2; J++ )
+		MWH[0][J] = 1;
+	for ( I = 1; I <= N2+1; I++ )
+		for ( J = 0; J < N2; J++ )
+			MWH[I][J] = MW[I-1][J];
+
+	/* homogenize F */
+	VDVH = append(VDV,[h]);
+	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
+	
+	/* compute a groebner basis of FH w.r.t. MWH */
+/*	dp_gr_flags(["Top",1,"NoRA",1]); */
+	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
+/*	dp_gr_flags(["Top",0,"NoRA",0]); */
+
+	/* dehomigenize GH */
+	G = map(subst,GH,h,1);
+
+	/* G is a groebner basis w.r.t. a non term order MW */
+	/* take the initial part w.r.t. (-W,W) */
+	GIN = map(initial_part,G,VDV,MW,W);
+
+	/* GIN is a groebner basis w.r.t. a term order M */
+	/* As -W+W=0, gr_(-W,W)(D<x,d>) = D<x,d> */
+	
+	/* find b(W1*x1*d1+...+WN*xN*dN) in Id(GIN) */
+	for ( I = 0, T = 0; I < N; I++ )
+		T += W[I]*V[I]*DV[I];
+	B = weyl_minipoly(GIN,VDV,0,T); /* M represents DRL order */
+	return B;
+}
+
 def initial_part(F,V,MW,W)
 {
 	N2 = length(V);
@@ -346,7 +410,7 @@ def bfct_via_gbfct(F)
 	V1 = cons(t,V); DV1 = cons(dt,DV);
 	W = newvect(N+1);
 	W[0] = 1;
-	R = generic_bfct(B,V1,DV1,W);
+	R = generic_bfct_1(B,V1,DV1,W);
 
 	return subst(R,s,-s-1);
 }
@@ -358,19 +422,21 @@ def bfct_via_gbfct_weight(F,V)
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
-	if ( type(Wt) == 4 ) {
-		Tdeg = w_tdeg(F,V,Wt);
-		WtV = newvect(2*(N+1)+1);
-		WtV[0] = Tdeg;
-		WtV[N+1] = 1;
-		/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
-		for ( I = 1; I <= N; I++ ) {
-			WtV[I] = Wt[I-1];
-			WtV[N+1+I] = Tdeg-Wt[I-1]+1;
-		}
-		WtV[2*(N+1)] = 1;
-		dp_set_weight(WtV);
+	if ( type(Wt) != 4 ) {
+		for ( I = 0, Wt = []; I < N; I++ )
+			Wt = cons(1,Wt);
 	}
+	Tdeg = w_tdeg(F,V,Wt);
+	WtV = newvect(2*(N+1)+1);
+	WtV[0] = Tdeg;
+	WtV[N+1] = 1;
+	/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+	for ( I = 1; I <= N; I++ ) {
+		WtV[I] = Wt[I-1];
+		WtV[N+1+I] = Tdeg-Wt[I-1]+1;
+	}
+	WtV[2*(N+1)] = 1;
+	dp_set_weight(WtV);
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
@@ -381,8 +447,8 @@ def bfct_via_gbfct_weight(F,V)
 	V1 = cons(t,V); DV1 = cons(dt,DV);
 	W = newvect(N+1);
 	W[0] = 1;
-	R = generic_bfct(B,V1,DV1,W);
-
+	R = generic_bfct_1(B,V1,DV1,W);
+	dp_set_weight(0);
 	return subst(R,s,-s-1);
 }
 
@@ -393,18 +459,21 @@ def bfct_via_gbfct_weight_1(F,V)
 	N = length(V);
 	D = newvect(N);
 	Wt = getopt(weight);
-	if ( type(Wt) == 4 ) {
-		Tdeg = w_tdeg(F,V,Wt);
-		WtV = newvect(2*(N+1));
-		/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
-		for ( I = 0; I < N; I++ ) {
-			WtV[I] = Wt[I];
-			WtV[N+1+I] = Tdeg-Wt[I]+1;
-		}
-		WtV[N] = Tdeg;
-		WtV[2*N+1] = 1;
-		dp_set_weight(WtV);
+	if ( type(Wt) != 4 ) {
+		for ( I = 0, Wt = []; I < N; I++ )
+			Wt = cons(1,Wt);
 	}
+	Tdeg = w_tdeg(F,V,Wt);
+	WtV = newvect(2*(N+1)+1);
+	/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+	for ( I = 0; I < N; I++ ) {
+		WtV[I] = Wt[I];
+		WtV[N+1+I] = Tdeg-Wt[I]+1;
+	}
+	WtV[N] = Tdeg;
+	WtV[2*N+1] = 1;
+	WtV[2*(N+1)] = 1;
+	dp_set_weight(WtV);
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
 
@@ -416,7 +485,7 @@ def bfct_via_gbfct_weight_1(F,V)
 	W = newvect(N+1);
 	W[N] = 1;
 	R = generic_bfct(B,V1,DV1,W);
-
+	dp_set_weight(0);
 	return subst(R,s,-s-1);
 }
 
