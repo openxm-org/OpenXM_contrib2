@@ -1,4 +1,4 @@
-              Asir2000 の install のしかた  (standalone 版; 2000.9.1)
+              Asir2000 の install のしかた  (standalone 版; 2001.3.27)
 
 不明な点は, noro@math.kobe-u.aj.jp にお問い合わせ下さい. 
 
@@ -25,10 +25,10 @@ default はそこ).  もし個人的に使用する場合には, 自分が書き込める
 directory $Bを指定して下さい.  以下この directory を TARGETDIR と書きま
 す.
 
-2. pari-2.0.17.beta の install
+2. pari の install
 
-% gzip -dc pari-2.0.17.beta.tgz | tar xvf -
-% cd pari-2.0.17.beta
+% gzip -dc pari.tgz | tar xvf -
+% cd pari
 % ./Configure --prefix=TARGETDIR
 % make all
 % su                         <-- 必要がある場合

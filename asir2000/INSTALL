@@ -1,10 +1,10 @@
-              Installation of Asir2000 (standalone version; 2000.9.1)
+              Installation of Asir2000 (standalone version; 2001.3.27)
 
-Any questions are welcome by e-mails to noro@math.kobe-u.aj.jp.
+Any question is welcome by e-mails to noro@math.kobe-u.ac.jp.
 
 0. Compiler
 
-On SPARCK, gcc is used. Set the search path so that 
+On SPARC, gcc is used. Set the search path so that 
 '/usr/ccs/bin' is searched before '/usr/local/bin'.
 
 On PC/x86 gcc is used.
@@ -13,21 +13,20 @@ On Alpha the native compiler /usr/ccs/bin/cc is used.
 
 1. Determining the install directory
 
-In the install directory, the following are put
+In the install directory, the following subdirectories are put:
 
 bin       executables of PARI and Asir
-lib       library files of PARTI and Asir
+lib       library files of PARI and Asir
 include   header files of PARI
 
 These subdirectories are created automatically if they does not exist.
-If you can be a root, it is recommended to install the files in '
-/usr/local/lib'.  Otherwise select a directory. In the following the
-directory is denoted by TARGETDIR.
+If you can be a root, it is recommended to set the install directory
+to '/usr/local/lib'.  In the following the directory is denoted by TARGETDIR.
 
-2. Installation of pari-2.0.17.beta
+2. Installation of pari
 
-% gzip -dc pari-2.0.17.beta.tgz | tar xvf -
-% cd pari-2.0.17.beta
+% gzip -dc pari.tgz | tar xvf -
+% cd pari
 % ./Configure --prefix=TARGETDIR
 % make all
 % su                         <-- if necessary
@@ -38,7 +37,7 @@ directory is denoted by TARGETDIR.
 
 3. Installation of asir2000
 
-% gzip -dc asir2000.tgz | tar xvf -
+% gzip -dc asir.tgz | tar xvf -
 % cd asir2000
 % configure -oxhome TARGETDIR -pari -plot
 % xmkmf -a
@@ -52,17 +51,14 @@ directory is denoted by TARGETDIR.
 
 3. Environment variables
 
-If TARGETDIR is '/usr/local/lib', then no settings of environment variabls
-are required. If ASIR_LIBDIR is already set, unset it.
-If TARGETDIR is not '/usr/local/lib', then set the environment variable 
-ASIR_LIBDIR to TARGETDIR/asir.
+If ASIR_LIBDIR is already set, unset it.
 
 4. Making manuals
 
 'ptex', 'texi2html', 'makeinfo' (ver. 1.68 or later) are required.
 
-% gzip -dc asir2000-man.tgz | tar xvf -
-% cd asirdoc
+% gzip -dc asir-doc.tgz | tar xvf -
+% cd asir-doc
 % make
 
 
