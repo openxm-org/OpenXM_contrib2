@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.6 2000/12/13 05:37:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.7 2000/12/14 01:38:37 noro Exp $ 
 */
 /* requires 'primdec' */
 
@@ -54,12 +54,22 @@
 def ann(F)
 {
 	V = vars(F);
-	W = append([y1,y2,t],V);
 	N = length(V);
-	B = [1-y1*y2,t-y1*F];
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = N-1; I >= 0; I-- )
+		V = cons(D[I][1],V);
+
 	for ( I = N-1, DV = []; I >= 0; I-- )
 		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	W = append([y1,y2,t],V);
 	DW = append([dy1,dy2,dt],DV);
+
+	B = [1-y1*y2,t-y1*F];
 	for ( I = 0; I < N; I++ ) {
 		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
 	}
@@ -79,7 +89,6 @@ def ann(F)
 
 def indicial1(F,V)
 {
-	V = vars(F);
 	W = append([y1,t],V);
 	N = length(V);
 	B = [t-y1*F];
