@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.37 2003/09/12 01:12:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.38 2003/10/19 02:54:41 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -181,7 +181,6 @@ int do_asirrc;
 int do_file;
 int do_message;
 int do_fep;
-int no_prompt;
 int read_exec_file;
 static int buserr_sav;
 static char asir_history[BUFSIZ];
@@ -242,10 +241,16 @@ void param_init() {
 	else
 		little_endian = 0;
 }
-	
+
+Obj user_defined_prompt;
+
 void prompt() {
-	if ( !no_prompt && !do_fep && asir_infile->fp == stdin )
+	if ( !do_quiet && !do_fep && asir_infile->fp == stdin )
 		fprintf(asir_out,"[%d] ",APVS->n);
+	else if ( do_quiet && user_defined_prompt 
+		&& OID(user_defined_prompt)==O_STR) {
+		fprintf(asir_out,BDY((STRING)user_defined_prompt),APVS->n);
+	}
 	fflush(asir_out);
 }
 
@@ -331,13 +336,11 @@ void process_args(int ac,char **av)
 			do_file = 1;
 			av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-quiet") ) {
-			do_quiet = 1;	av++; ac--;
+			do_quiet = 1; av++; ac--;
 		} else if ( !strcmp(*av,"-norc") ) {
 			do_asirrc = 0; av++; ac--;
 		} else if ( !strcmp(*av,"-nomessage") ) {
 			do_message = 0; av++; ac--;
-		} else if ( !strcmp(*av,"-terse") ) {
-			no_prompt = 0; av++; ac--;
 		} else if ( !strcmp(*av,"-rootdir") && (ac >= 2) ) {
 			set_rootdir(*(av+1)); av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-maxheap") && (ac >= 2) ) {

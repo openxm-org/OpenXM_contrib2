@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.22 2003/06/07 16:40:24 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.23 2003/10/19 02:54:41 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,7 +58,7 @@ struct ftab ctrl_tab[] = {
 };
 
 extern int prtime,nez,echoback,bigfloat;
-extern int GC_free_space_numerator,GC_free_space_divisor,debug_up,no_prompt;
+extern int GC_free_space_numerator,GC_free_space_divisor,debug_up;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
 extern int do_message;
 extern int ox_batch,ox_check,ox_exchange_mathcap;
@@ -74,6 +74,7 @@ extern int double_output;
 extern int use_new_hensel;
 extern int print_quote;
 extern int show_crossref;
+extern Obj user_defined_prompt;
 
 static struct {
 	char *key;
@@ -92,7 +93,7 @@ static struct {
 	{"debug_window",&do_server_in_X11},
 	{"message",&do_message},
 	{"debug_up",&debug_up},
-	{"no_prompt",&no_prompt},
+	{"no_prompt",&do_quiet},
 	{"ox_batch",&ox_batch},
 	{"ox_check",&ox_check},
 	{"ox_exchange_mathcap",&ox_exchange_mathcap},
@@ -115,11 +116,12 @@ void Pctrl(arg,rp)
 NODE arg;
 Q *rp;
 {
-	int t,i;
+	int t,i,n;
 	N num,den;
 	Q c;
 	char *key;
 	char buf[BUFSIZ];
+	char *str;
 
 	if ( !arg ) {
 		*rp = 0;
@@ -141,6 +143,32 @@ Q *rp;
 			GC_free_space_numerator = BD(den)[0];
 		}
 		NDTOQ(num,den,1,*rp);
+		return;
+	} else if ( !strcmp(key,"prompt") ) {
+		/* special treatment is necessary for "prompt" */
+		if ( argc(arg) == 1 ) {
+			*rp = (Q)user_defined_prompt;
+		} else {
+			c = (Q)ARG1(arg);
+			if ( !c || OID(c) == O_STR ) {
+				if ( OID(c) == O_STR ) {
+					str = BDY((STRING)c);
+				 	for ( i = 0, n = 0; str[i]; i++ )
+						if ( str[i] == '%' )
+							n++;
+					if ( n >= 2 )
+						error("ctrl : prompt : invalid prompt specification");	
+				}
+				do_quiet = 1;
+				user_defined_prompt = (Obj)c;
+				*rp = c;
+			} else if ( NUM(c) && RATN(c) && UNIQ(c) ) {
+				user_defined_prompt = 0;
+				do_quiet = 0;
+			} else {
+				error("ctrl : prompt : invalid argument");	
+			}
+		}
 		return;
 	}
 	for ( i = 0; ctrls[i].key; i++ )
