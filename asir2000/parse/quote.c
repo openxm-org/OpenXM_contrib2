@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.16 2004/07/08 03:00:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.17 2004/07/13 07:59:54 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -405,6 +405,22 @@ FNODE strip_paren(FNODE f)
 	}
 }
 
+NODE flatten_fnodenode(NODE n,char *opname);
+FNODE flatten_fnode(FNODE f,char *opname);
+
+NODE flatten_fnodenode(NODE n,char *opname)
+{
+	NODE r0,r,t;
+
+	r0 = 0;
+	for ( t = n; t; t = NEXT(t) ) {
+		NEXTNODE(r0,r);
+		BDY(r) = (pointer)flatten_fnode((FNODE)BDY(t),opname);
+	}
+	if ( r0 ) NEXT(r) = 0;
+	return r0;
+}
+
 FNODE flatten_fnode(FNODE f,char *opname)
 {
 	fid_spec_p spec;
@@ -436,6 +452,8 @@ FNODE flatten_fnode(FNODE f,char *opname)
 		for ( i = 0; type[i] != A_end; i++ ) {
 			if ( type[i] == A_fnode )
 				r->arg[i] = (pointer)flatten_fnode(f->arg[i],opname);
+			else if ( type[i] == A_node )
+				r->arg[i] = (pointer)flatten_fnodenode(f->arg[i],opname);
 			else
 				r->arg[i] = f->arg[i];
 		}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.47 2004/07/07 07:40:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.48 2004/07/13 07:59:53 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1310,7 +1310,8 @@ void Pquote_to_funargs(NODE arg,LIST *rp)
 	QUOTE r;
 	int i;
 	Q id,a;
-	NODE t0,t;
+	LIST l;
+	NODE t0,t,w,u,u0;
 
 	q = (QUOTE)ARG0(arg);
 	if ( !q || OID(q) != O_QUOTE )
@@ -1345,6 +1346,17 @@ void Pquote_to_funargs(NODE arg,LIST *rp)
 			case A_internal:
 				BDY(t) = (pointer)f->arg[i];
 				break;
+			case A_node:
+				w = (NODE)f->arg[i];
+				for ( u0 = 0; w; w = NEXT(w) ){
+					NEXTNODE(u0,u);
+					MKQUOTE(r,(FNODE)BDY(w));
+					BDY(u) = (pointer)r;
+				}
+				if ( u0 ) NEXT(u) = 0;
+				MKLIST(l,u0);
+				BDY(t) = (pointer)l;
+				break;
 			default:
 				MKQUOTEARG(qa,spec->type[i],f->arg[i]);	
 				BDY(t) = (pointer)qa;
@@ -1362,12 +1374,12 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
 	QUOTEARG qa;
 	FNODE f;
 	STRING s;
-	QUOTE r;
+	QUOTE r,b;
 	int i;
 	LIST l;
 	fid id;
 	Obj a;
-	NODE t0,t;
+	NODE t0,t,u0,u,w;
 
 	l = (LIST)ARG0(arg);
 	if ( !l || OID(l) != O_LIST || !(t=BDY(l)) )
@@ -1402,6 +1414,20 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
 				break;
 			case A_internal:
 				f->arg[i] = (pointer)a;
+				break;
+			case A_node:
+				if ( !a || OID(a) != O_LIST )
+					error("funargs_to_quote : invalid argument");
+				u0 = 0;
+				for ( w = BDY((LIST)a); w; w = NEXT(w) ) {
+					NEXTNODE(u0,u);
+					b = (QUOTE)BDY(w);
+					if ( !b || OID(b) != O_QUOTE )
+						error("funargs_to_quote : invalid argument");
+					BDY(u) = BDY(b);
+				}
+				if ( u0 ) NEXT(u) = 0;
+				f->arg[i] = (pointer)u0;
 				break;
 			default:
 				if ( !a || OID(a) != O_QUOTEARG || 
