@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.3 2003/02/14 22:29:09 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.4 2003/07/25 12:34:48 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -371,7 +371,6 @@ void miditvp(Itv a, Num *b)
 {
 	Num	ai,as;
 	Num	t;
-	Q	TWO;
 
 	if ( ! a ) *b = 0;
 	else if ( (NID(a) <= N_B) )

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.36 2003/04/08 22:10:40 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.37 2003/07/09 07:11:09 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -855,6 +855,7 @@ extern VL CO,ALG;
 extern VL PVL;
 extern R ONER;
 extern Q ONE;
+extern Q TWO;
 extern MQ ONEM;
 extern LM ONELM;
 extern N ONEN;

@@ -2,12 +2,12 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/Imakefile,v 1.4 2002/08/14 03:51:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/Imakefile,v 1.5 2003/02/14 18:39:02 saito Exp $
  */
 #include "../include/Risa.tmpl"
 
-ITVSRC = itvnum.c
-ITVOBJ = itvnum.o
+ITVSRC = itvnum.c isolv.c
+ITVOBJ = itvnum.o isolv.o
 
 SRCS = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c\
 	fctr.c file.c help.c int.c list.c miscf.c\
