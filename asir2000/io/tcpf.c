@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.2 1999/12/13 01:56:04 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -93,7 +93,7 @@ struct ftab tcp_tab[] = {
 	{"ox_pop0_local",Pox_pop0_local,1},
 	{"ox_pop_cmo",Pox_pop_cmo,1},
 	{"ox_pop0_cmo",Pox_pop0_cmo,1},
-	{"ox_get",Pox_get,1},
+	{"ox_get",Pox_get,-1},
 	{"ox_pops",Pox_pops,-2},
 
 	{"ox_push_vl",Pox_push_vl,1},
@@ -736,13 +736,20 @@ void Pox_get(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	int index = QTOS((Q)ARG0(arg));
+	int index;
 	int s;
 
-	valid_mctab_index(index);
-	s = m_c_tab[index].c;
-	ox_flush_stream_force(s);
-	ox_get_result(s,rp);
+	if ( !arg ) {
+		/* client->server */
+		ox_get_result(0,rp);
+	} else {
+		/* server->client */
+		index = QTOS((Q)ARG0(arg));
+		valid_mctab_index(index);
+		s = m_c_tab[index].c;
+		ox_flush_stream_force(s);
+		ox_get_result(s,rp);
+	}
 }
 
 void Pox_pops(arg,rp)

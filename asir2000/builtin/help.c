@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/help.c,v 1.1.1.1 1999/11/10 08:12:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -43,6 +43,19 @@ char *s;
 {
 	extern char *asir_libdir;
 	extern char *asir_pager;
+	char *e;
+	static char helpdir[16];
+
+	if ( !helpdir[0] ) {
+		e = (char *)getenv("LANG");
+		if ( !e )
+			strcpy(helpdir,"help");
+		else if ( !strncmp(e,"japan",strlen("japan"))
+			|| !strncmp(e,"ja_JP",strlen("ja_JP")) )
+			strcpy(helpdir,"help-jp");
+		else
+			strcpy(helpdir,"help-eg");
+	}
 
 	if ( !s )
 		ghelp();
@@ -53,7 +66,7 @@ char *s;
 		char name[BUFSIZ],com[BUFSIZ];
 		FILE *fp;
 
-		sprintf(name,"%s/help/%s",asir_libdir,s);
+		sprintf(name,"%s/%s/%s",asir_libdir,helpdir,s);
 		if ( fp = fopen(name,"r") ) {
 			fclose(fp);
 			sprintf(com,"%s %s",asir_pager,name);
