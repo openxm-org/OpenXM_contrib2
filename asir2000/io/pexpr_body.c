@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.4 2004/07/13 07:59:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.5 2004/12/02 13:48:43 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -44,9 +44,6 @@ void PRINTEXPR(vl,p)
 VL vl;
 Obj p;
 {
-#if defined(FPRINT)
-	if ( asir_texmacs && !user_print_function ) printf("\2verbatim:");
-#endif
 	if ( !p ) {
 		PRINTR(vl,(R)p);
 	} else
@@ -98,10 +95,6 @@ Obj p;
 			default:
 				break;
 		}
-#if defined(FPRINT)
-	if ( asir_texmacs && !user_print_function ) 
-		{ putchar('\5'); fflush(stdout); }
-#endif
 }
 
 #if defined(FPRINT)

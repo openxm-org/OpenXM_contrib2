@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.24 2003/12/11 05:48:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.25 2004/08/28 12:50:30 takayama Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -404,10 +404,12 @@ void end_critical() {
 	}
 }
 
-extern FUNC registered_handler;
+extern NODE user_int_handler;
 
 void ox_usr1_handler(int sig)
 {
+	NODE t;
+
 #if !defined(VISUAL)
 	signal(SIGUSR1,ox_usr1_handler);
 #endif
@@ -416,10 +418,11 @@ void ox_usr1_handler(int sig)
 		ox_usr1_sent = 1;
 	} else {
 		ox_flushing = 1;
-		if ( registered_handler ) {
+		if ( user_int_handler ) {
 			fprintf(stderr,
-				"usr1 : calling the registered exception handler...");
-			bevalf(registered_handler,0);
+				"usr1 : calling the registered exception handlers...");
+			for ( t = user_int_handler; t; t = NEXT(t) )
+				bevalf((FUNC)BDY(t),0);
 			fprintf(stderr, "done.\n");
 		}
 		ox_resetenv("usr1 : return to toplevel by SIGUSR1");

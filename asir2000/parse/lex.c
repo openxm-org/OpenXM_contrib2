@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.32 2004/03/26 08:25:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.33 2004/04/30 08:25:38 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -479,8 +479,6 @@ void purge_stdin()
 --->FIXIT
 #endif
 }
-
-extern int asir_texmacs;
 
 static int skipspace() {
 	int c,c1;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.6 2003/06/07 16:40:26 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.7 2004/02/27 09:13:04 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -147,7 +147,6 @@ void read_eval_loop() {
 	double r0,r1;
 	double get_rtime();
 	extern Obj LastVal;
-	extern int asir_texmacs;
 
 	LastVal = 0;
 	while ( 1 ) {
@@ -166,18 +165,14 @@ void read_eval_loop() {
 					fflush(asir_out);
 				} else
 					printexpr(CO,LastVal);
-				if ( asir_texmacs ) printf("\2verbatim:");
 				if ( outputstyle == 1 ) {
 					putc(';',asir_out);
 				}
 				putc('\n',asir_out);
 				fflush(asir_out);
-				if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 			}
 			if ( prtime ) {
-				if ( asir_texmacs ) printf("\2verbatim:");
 				printtime(&egt0,&egt1,r1-r0);
-				if ( asir_texmacs ) { putchar('\5'); fflush(stdout); }
 			}
 			prompt();
 		}

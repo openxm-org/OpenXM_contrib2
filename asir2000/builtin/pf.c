@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.7 2004/06/22 09:17:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.8 2004/06/27 03:15:57 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -67,6 +67,9 @@ void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval();
 void Pregister_handler();
 void Peval_quote();
 void Pmapat();
+void Padd_handler();
+void Plist_handler();
+void Pclear_handler();
 
 struct ftab puref_tab[] = {
 	{"mapat",Pmapat,-99999999},
@@ -74,6 +77,9 @@ struct ftab puref_tab[] = {
 	{"args",Pargs,1},
 	{"funargs",Pfunargs,1},
 	{"register_handler",Pregister_handler,1},
+	{"add_handler",Padd_handler,2},
+	{"list_handler",Plist_handler,1},
+	{"clear_handler",Pclear_handler,1},
 	{"call",Pcall,2},
 	{"vtype",Pvtype,1},
 	{"deval",Pdeval,1},
@@ -393,7 +399,7 @@ Q *rp;
 		STOQ((int)VR(p)->attr,*rp);
 }
 
-extern FUNC registered_handler;
+extern NODE user_int_handler,user_quit_handler;
 
 void Pregister_handler(arg,rp)
 NODE arg;
@@ -401,12 +407,15 @@ Q *rp;
 {
 	P p;
 	V v;
+	NODE n;
 	FUNC func;
 
 	p = (P)ARG0(arg);
-	if ( !p )
-		registered_handler = 0;
-	else if ( OID(p) != 2 )
+	if ( !p ) {
+		user_int_handler = 0;
+		*rp = 0;
+		return;
+	} else if ( OID(p) != 2 )
 		error("register_hanlder : invalid argument");
 	v = VR(p);
 	if ( (int)v->attr != V_SR )	
@@ -416,10 +425,100 @@ Q *rp;
 		if ( func->argc )
 			error("register_hanlder : the function must be with no argument");
 		else {
-			registered_handler = func;
+			MKNODE(n,(pointer)func,user_int_handler);
+			user_int_handler = n;
 			*rp = ONE;
-		}	
+		}
 	}
+}
+
+void Padd_handler(arg,rp)
+NODE arg;
+Q *rp;
+{
+	P p;
+	V v;
+	NODE n;
+	FUNC func;
+	char *name;
+	NODE *hlistp;
+
+	asir_assert(ARG0(arg),O_STR,"add_handler");
+	name = BDY((STRING)ARG0(arg));
+	p = (P)ARG1(arg);
+	if ( !strcmp(name,"intr") )
+		hlistp = &user_int_handler;
+	else if ( !strcmp(name,"quit") )
+		hlistp = &user_quit_handler;
+	else
+		error("add_handler : invalid keyword (must be \"intr\" or \"quit\")");
+	if ( !p ) {
+		*hlistp = 0; *rp = 0;
+		return;
+	}
+	if ( OID(p) == 2 ) {
+		v = VR(p);
+		if ( (int)v->attr != V_SR )	
+			error("add_hanlder : no such function");
+		func = (FUNC)v->priv;
+	} else if ( OID(p) == O_STR ) {
+		gen_searchf_searchonly(BDY((STRING)p),&func);
+		if ( !func )
+			error("add_hanlder : no such function");
+	}
+	if ( func->argc )
+		error("register_hanlder : the function must be with no argument");
+	else {
+		MKNODE(n,(pointer)func,*hlistp);
+		*hlistp = n;
+		*rp = ONE;
+	}
+}
+
+void Plist_handler(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE r0,r,t;
+	char *name;
+	NODE hlist;
+	STRING fname;
+
+	asir_assert(ARG0(arg),O_STR,"list_handler");
+	name = BDY((STRING)ARG0(arg));
+	if ( !strcmp(name,"intr") )
+		hlist = user_int_handler;
+	else if ( !strcmp(name,"quit") )
+		hlist = user_quit_handler;
+	else
+		error("list_handler : invalid keyword (must be \"intr\" or \"quit\")");
+	for ( r0 = 0, t = hlist; t; t = NEXT(t) ) {
+		NEXTNODE(r0,r);
+		MKSTR(fname,((FUNC)BDY(t))->fullname);
+		BDY(r) = (pointer)fname;
+	}
+	if ( r0 ) NEXT(r) = 0;
+	MKLIST(*rp,r0);
+}
+
+void Pclear_handler(arg,rp)
+NODE arg;
+Q *rp;
+{
+	NODE r0,r,t;
+	char *name;
+	NODE hlist;
+	STRING fname;
+
+	asir_assert(ARG0(arg),O_STR,"clear_handler");
+	name = BDY((STRING)ARG0(arg));
+	if ( !strcmp(name,"intr") )
+		user_int_handler = 0;
+	else if ( !strcmp(name,"quit") )
+		user_quit_handler = 0;
+	else
+		error("clear_handler : invalid keyword (must be \"intr\" or \"quit\")");
+	*rp = 0;
 }
 
 void Pcall(NODE arg,Obj *rp)

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.36 2004/05/14 06:02:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.37 2004/07/13 07:59:54 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -72,7 +72,6 @@ int real_digit;
 int real_binary;
 int print_quote;
 int hideargs;
-extern int asir_texmacs;
 extern FUNC user_print_function;
 #if 0
 int printmode = PRINTF_E;
