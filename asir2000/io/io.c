@@ -44,12 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.10 2003/02/14 22:29:15 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.11 2003/03/07 03:12:28 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
 #include "parse.h"
-#if defined(VISUAL) || MPI
+#if defined(VISUAL) || defined(MPI)
 #include "wsio.h"
 #endif
 
@@ -141,7 +141,7 @@ int gen_fread (char *ptr,int size,int nitems,FILE *stream)
 		if ( _fileno(stream) < 0 )
 			n = cread(ptr,size,nitems,(STREAM *)stream);
 		else
-#elif MPI
+#elif defined(MPI)
 		if ( (char)fileno(stream) < 0 )
 			n = cread(ptr,size,nitems,(STREAM *)stream);
 		else
@@ -175,7 +175,7 @@ int gen_fwrite (char *ptr,int size,int nitems,FILE *stream)
 	if ( _fileno(stream) < 0 )
 		return cwrite(ptr,size,nitems,(STREAM *)stream);
 	else
-#elif MPI
+#elif defined(MPI)
 	if ( (char)fileno(stream) < 0 )
 		return cwrite(ptr,size,nitems,(STREAM *)stream);
 	else

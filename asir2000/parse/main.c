@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.18 2003/02/14 22:29:18 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.19 2003/03/07 03:12:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -102,7 +102,7 @@ main(int argc,char *argv[])
 #endif
 
 	StackBottom = &tmp;
-#if MPI
+#if defined(MPI)
 	mpi_init();
 	if ( mpi_myid ) {
 		int slave_argc;
@@ -130,7 +130,7 @@ main(int argc,char *argv[])
 		/* never return */
 		ox_main(argc,argv);
 		exit(0);
-#if DO_PLOT
+#if defined(DO_PLOT)
 	} else if ( !strncmp(binname,"ox_plot",strlen("ox_plot")) ) {
 		/* never return */
 		ox_plot_main(argc,argv);

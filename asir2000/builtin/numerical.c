@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/numerical.c,v 1.4 2003/02/14 22:29:07 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/numerical.c,v 1.5 2003/03/07 03:12:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-#if LAPACK
+#if defined(LAPACK)
 #include <f2c.h>
 
 void Pflinsolve();

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.21 2003/02/14 22:29:15 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.22 2003/03/07 03:12:28 noro Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -315,7 +315,7 @@ void free_iofp(int s)
 	r = &iofp[s];
 #if defined(VISUAL)
 	if ( r->s ) close(r->s);
-#elif !MPI
+#elif !defined(MPI)
 	if ( r->in ) fclose(r->in);
 	if ( r->out ) fclose(r->out);
 	if ( r->socket ) unlink(r->socket);
@@ -330,7 +330,7 @@ int get_iofp(int s1,char *af_sock,int is_server)
 	unsigned char c,rc;
 	extern int mpi_myid;
 
-#if MPI
+#if defined(MPI)
 	iofp[s1].s = s1;
 	if ( mpi_myid == s1 ) {
 		iofp[s1].in = 0;

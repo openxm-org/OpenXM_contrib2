@@ -44,9 +44,9 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.4 2003/02/14 22:29:16 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.5 2003/03/07 03:12:28 noro Exp $ 
 */
-#if defined(VISUAL) || MPI
+#if defined(VISUAL) || defined(MPI)
 #include<stdio.h>
 #include"wsio.h"
 
@@ -160,7 +160,7 @@ char* mode;
 	if (rst) {
 #if defined(VISUAL)
 		_fileno(&rst->fp) = -1;
-#elif MPI
+#elif defined(MPI)
 #if defined(sparc)
 		(&rst->fp)->_file = -1;
 #else
@@ -200,7 +200,7 @@ STREAM* s;
 
 #if defined(VISUAL)
 	size = recv(s->fildes,data,count,0);
-#elif MPI
+#elif defined(MPI)
 	{
 		MPI_Status status;
 
@@ -226,14 +226,14 @@ STREAM* s;
 #if defined(VISUAL)
 	size = send(s->fildes,data,count,0);
 	return size;
-#elif MPI
+#elif defined(MPI)
 	MPI_Ssend(&count,1,MPI_INT,s->fildes,0,MPI_COMM_WORLD);
 	MPI_Ssend(data,count,MPI_CHAR,s->fildes,0,MPI_COMM_WORLD);
 	return count;
 #endif
 }
 
-#if MPI
+#if defined(MPI)
 int mpi_nprocs,mpi_myid;
  
 void mpi_init()

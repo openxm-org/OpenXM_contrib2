@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.12 2003/02/14 22:29:18 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.13 2003/03/07 03:12:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -216,7 +216,7 @@ void debug(SNODE f)
 	extern int do_fep;
 	NODE pvss;
 
-#if !MPI && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL)
 	if ( !isatty(fileno(stdin)) && !do_server_in_X11 )
 		if ( do_file )
 			ExitAsir();
@@ -700,7 +700,7 @@ void bp(SNODE f)
 		CPVS->usrf->name,ln,CPVS->usrf->f.usrf->fname);
 	targetf = CPVS->usrf; curline = ln;
 	println(0,0,1);
-#if !MPI && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL)
 	if ( do_server_in_X11 || isatty(0) )
 #endif
 		debug(f);

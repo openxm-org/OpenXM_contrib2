@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.9 2003/02/14 22:29:14 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.10 2003/03/07 03:12:26 noro Exp $ 
 */
 #ifndef _COM_H_
 #define _COM_H_
-#if defined(VISUAL) || MPI
+#if defined(VISUAL) || defined(MPI)
 #include "wsio.h"
 #endif
 
@@ -87,7 +87,7 @@
 #define C_PRIV C_ENDARG+1
 #define C_SHUTDOWN 6
 
-#if defined(VISUAL) || MPI
+#if defined(VISUAL) || defined(MPI)
 struct IOFP {
 	STREAM *in,*out;
 	char *inbuf,*outbuf;

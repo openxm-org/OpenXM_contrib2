@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.31 2003/02/14 22:29:18 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.32 2003/03/07 03:12:31 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -211,7 +211,7 @@ void asir_terminate(int status)
 			LONGJMP(exec_env,status);
 	} else {
 		tty_reset();
-#if MPI
+#if defined(MPI)
 		if ( !mpi_myid )
 			close_allconnections();
 		mpi_finalize();
@@ -258,7 +258,7 @@ FILE *in_fp;
 void process_args(int ac,char **av)
 {
 	do_asirrc = 1;
-#if !MPI
+#if !defined(MPI)
 	do_message = 1;
 #endif
 	while ( ac > 0 ) {
