@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.49 2003/12/12 09:01:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.50 2003/12/13 08:03:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -59,7 +59,9 @@ void ox_usr1_handler();
 int asir_ox_init();
 
 /* environement is defined in libpari.a */
+# if !( PARI_VERSION_CODE > 131588)
 extern jmp_buf environnement;
+# endif
 extern int myrank_102,nserver_102;
 
 extern int do_message;
@@ -670,10 +672,12 @@ int asir_executeString()
 #if defined(PARI)
 	recover(0);
 	/* environement is defined in libpari.a */
+# if !(PARI_VERSION_CODE > 131588 )
 	if ( setjmp(environnement) ) {
 		avma = top; recover(1);
 		resetenv("");
 	}
+# endif
 #endif
 	cmd = ((STRING)asir_pop_one())->body;
 	parse_strp = cmd;

@@ -45,14 +45,16 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.9 2002/12/09 00:42:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.10 2003/02/14 22:29:07 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ctype.h"
 #if defined(PARI)
 #include "genpari.h"
+#  if !(PARI_VERSION_CODE > 131588)
 extern jmp_buf environnement;
+#  endif
 #endif
 #include <string.h>
 
@@ -207,10 +209,12 @@ Obj *rp;
 	void recover(int);
 
 	recover(0);
+#  if !(PARI_VERSION_CODE > 131588)
 	if ( setjmp(environnement) ) {
 		avma = top; recover(1);
 		resetenv("");
 	}
+#  endif
 #endif
 	cmd = BDY((STRING)ARG0(arg));
 	exprparse_create_var(0,cmd,&fnode);

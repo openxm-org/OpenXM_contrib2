@@ -1,12 +1,16 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari-mp.c,v 1.2 2000/12/26 06:12:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari-mp.c,v 1.3 2003/02/14 22:29:09 ohara Exp $
 */
 /* for f-itv.c */
 
 #if defined(PARI)
 
-#include "genpari.h"
+#include <genpari.h>
 #include "itv-pari.h"
+
+# if PARI_VERSION_CODE > 131588
+extern  ulong hiremainder, overflow;
+# endif
 
 
 GEN

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.4 2000/11/14 08:38:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.5 2003/02/14 22:29:17 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,8 +55,9 @@
 
 #if defined(PARI)
 #include "genpari.h"
-
+#  if !(PARI_VERSION_CODE > 131588)
 extern jmp_buf environnement;
+#  endif
 #endif
 
 extern jmp_buf env;
@@ -152,10 +153,12 @@ char *s;
 	Asir_Start();
 	asir_set_handler();
 	avloc = avma; tloc = tglobal; listloc = marklist();
+#  if !(PARI_VERSION_CODE > 131588)
 	if ( setjmp(environnement) ) {
 		avma = avloc; tglobal = tloc; recover(listloc);
 		resetenv("");
 	}
+#  endif
 #endif
 	if ( setjmp(env) ) {
 		asir_reset_handler();

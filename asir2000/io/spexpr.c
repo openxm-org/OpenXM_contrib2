@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.27 2004/02/09 08:23:30 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -237,7 +237,11 @@ char *s;
 void myoutbrute(g)
 GEN g;
 {
+# if PARI_VERSION_CODE > 131588
+	brute(g, 'f', -1);
+# else
 	bruteall(g,'f',-1,1);
+# endif
 }
 
 void sprintbf(a)
