@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.18 2004/03/02 10:34:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.19 2004/03/18 01:59:41 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -74,8 +74,6 @@ HANDLE hIntr,hReset,hKill;
 #endif
 
 static void put_log(char *);
-static int which_command(char *,char *);
-static int search_command(char *);
 static int ox_spawn(char *,int,char *,int);
 static void launch_error(char *);
 static void ox_io_init(int);
@@ -102,44 +100,6 @@ char *str;
 	fprintf(logfile,"%s\n",str);
 	fflush(logfile);
 }
-
-#if !defined(VISUAL)
-static int which_command(com,file)
-char *com,*file;
-{
-	char *c,*s;
-	int len;
-	char dir[BUFSIZ],path[BUFSIZ];
-
-	for ( s = (char *)getenv("PATH"); s; ) {
-		c = (char *)index(s,':');
-		if ( c ) {
-			len = c-s;
-			strncpy(dir,s,len); s = c+1; dir[len] = 0;
-		} else {
-			strcpy(dir,s); s = 0;
-		}
-		sprintf(path,"%s/%s",dir,com);
-		if ( search_command(path) ) {
-			strcpy(file,path); return 1;
-		}
-	}
-	file[0] = 0; return 0;
-}
-
-static int search_command(file)
-char *file;
-{
-	struct stat buf;
-
-	if ( stat(file,&buf) || (buf.st_mode & S_IFDIR) )
-		return 0;
-	if ( access(file,X_OK) )
-		return 0;
-	else
-		return 1;
-}
-#endif
 
 /*  
 	argv[1] : host to connect

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.53 2004/03/09 07:18:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.54 2004/03/11 07:40:42 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -490,6 +490,49 @@ void Pregister_server(NODE arg,Q *rp)
 	STOQ(ind,*rp);
 }
 
+#if !defined(VISUAL)
+#include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <pwd.h>
+
+static int find_executable(char *);
+static int find_executable_main(char *);
+
+static int find_executable(char *com)
+{
+	char *c,*s;
+	int len;
+	char dir[BUFSIZ],path[BUFSIZ];
+
+	for ( s = (char *)getenv("PATH"); s; ) {
+		c = (char *)index(s,':');
+		if ( c ) {
+			len = c-s;
+			strncpy(dir,s,len); s = c+1; dir[len] = 0;
+		} else {
+			strcpy(dir,s); s = 0;
+		}
+		sprintf(path,"%s/%s",dir,com);
+		if ( find_executable_main(path) )
+			return 1;
+	}
+	return 0;
+}
+
+static int find_executable_main(char *file)
+{
+	struct stat buf;
+
+	if ( stat(file,&buf) || (buf.st_mode & S_IFDIR) )
+		return 0;
+	if ( access(file,X_OK) )
+		return 0;
+	else
+		return 1;
+}
+
+#endif
 /*
   ox_launch_generic(host,launcher,server,use_unix,use_ssh,use_x,conn_to_serv)
 
@@ -532,6 +575,9 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 	Obj obj;
 	MATHCAP server_mathcap;
 
+#if !defined(VISUAL)
+	if ( use_unix && !find_executable("xterm") ) use_x = 0;
+#endif
 	control_port_str[0] = 0;
 	server_port_str[0] = 0;
 	do { 
