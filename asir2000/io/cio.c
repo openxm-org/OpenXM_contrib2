@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.5 2000/09/07 23:59:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.6 2000/11/08 08:02:51 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -75,6 +75,8 @@ Obj obj;
 			for ( m = BDY((LIST)obj); m; m = NEXT(m) )
 				if ( !valid_as_cmo(BDY(m)) )
 					return 0;
+			return 1;
+		case O_QUOTE:
 			return 1;
 		default:
 			return 0;
@@ -138,6 +140,9 @@ Obj obj;
 		case O_VOID:
 			r = ((USINT)obj)->body; write_int(s,&r);
 			break;
+		case O_QUOTE:
+			write_cmo_tree(s,(FNODE)(((QUOTE)obj)->body));
+			break;
 		default:
 			sprintf(errmsg, "write_cmo : id=%d not implemented.",OID(obj));
 			error(errmsg);
@@ -182,6 +187,8 @@ int *tag;
 			*tag = CMO_MATHCAP; break;
 		case O_ERR:
 			*tag = CMO_ERROR2; break;
+		case O_QUOTE:
+			*tag = CMO_TREE; break; break;
 		default:
 			return 0;
 	}
@@ -409,6 +416,88 @@ ERR e;
 	write_cmo(s,BDY(e));
 }
 
+/* XXX */
+
+write_cmo_tree(s,f)
+FILE *s;
+FNODE f;
+{
+	int r,i,n;
+	char opname[BUFSIZ];
+	NODE args,t;
+	FUNC fspec;
+	struct oSTRING str,nullstr;
+
+	/* null string */
+	nullstr.id = O_STR;
+	nullstr.body = 0;
+
+	/* name string */
+	str.id = O_STR;
+	str.body = opname;
+
+	switch ( f->id ) {
+		case I_BOP: case I_COP:
+		case I_AND: case I_OR:
+			/*
+			 * (CMO_TREE (CMO_STRING,op),(CMO_STRING,0)(CMO_LIST,2,arg1,arg2))
+			 */
+			switch ( f->id ) {
+				case I_BOP:
+					strcpy(opname,((ARF)FA0(f))->name); break;
+				case I_COP:
+					switch( (cid)FA0(f) ) {
+						case C_EQ: strcpy(opname,"=="); break;
+						case C_NE: strcpy(opname,"!="); break;
+						case C_GT: strcpy(opname,">"); break;
+						case C_LT: strcpy(opname,"<"); break;
+						case C_GE: strcpy(opname,">="); break;
+						case C_LE: strcpy(opname,"<="); break;
+					}
+					break;
+				case I_AND:
+					strcpy(opname,"&&"); break;
+				case I_OR:
+					strcpy(opname,"||"); break;
+			}
+			r = CMO_TREE; write_int(s,&r);
+			write_cmo_string(s,&str);	
+			write_cmo_string(s,&nullstr);
+			r = CMO_LIST; write_int(s,&r);
+			n = 2; write_int(s,&n);
+			write_cmo_tree(s,(FNODE)FA1(f));
+			write_cmo_tree(s,(FNODE)FA2(f));
+			break;
+			break;
+		case I_NOT:
+			r = CMO_TREE; write_int(s,&r);
+			strcpy(opname,"!");
+			write_cmo_string(s,&str);;
+			write_cmo_string(s,&nullstr);
+			r = CMO_LIST; write_int(s,&r);
+			n = 1; write_int(s,&n);
+			write_cmo_tree(s,(FNODE)FA1(f));
+			break;
+		case I_FUNC:
+			fspec = (FUNC)FA0(f);
+			strcpy(opname,fspec->name);
+			write_cmo_string(s,&str);	
+			write_cmo_string(s,&nullstr);
+			args = (NODE)FA0((FNODE)FA1(f));
+			r = CMO_LIST; write_int(s,&r);
+			for ( n = 0, t = args; t; t = NEXT(t), n++ );
+			write_int(s,&n);
+			for ( i = 0, t = args; i < n; t = NEXT(t), i++ )
+				write_cmo_tree(s,BDY(t));
+			break;
+		case I_FORMULA:
+			write_cmo(s,FA0(f));
+			break;
+		default:
+			break; /* XXX */
+	}
+}
+
 read_cmo(s,rp)
 FILE *s;
 Obj *rp;
@@ -498,6 +587,9 @@ Obj *rp;
 			break;
 		case CMO_RING_BY_NAME:
 			read_cmo(s,rp);
+			break;
+		case CMO_TREE:
+			read_cmo_tree(s,rp);
 			break;
 		default:
 			MKUSINT(t,id);
@@ -704,6 +796,98 @@ P *rp;
 	if ( dc0 )
 		NEXT(dc) = 0;
 	MKP(remote_vtab[ind],dc0,*rp);
+}
+
+/* XXX */
+
+extern struct oARF arf[];
+
+struct operator_tab {
+	char *name;
+	fid id;	
+	ARF arf;
+	cid cid;
+};
+
+static struct operator_tab optab[] = {
+	{"+",I_BOP,&arf[0],0}, /* XXX */
+	{"-",I_BOP,&arf[1],0},
+	{"*",I_BOP,&arf[2],0},
+	{"/",I_BOP,&arf[3],0},
+	{"%",I_BOP,&arf[4],0},
+	{"^",I_BOP,&arf[5],0},
+	{"==",I_COP,0,C_EQ},
+	{"!=",I_COP,0,C_NE},
+	{"<",I_COP,0,C_LT},
+	{"<=",I_COP,0,C_LE},
+	{">",I_COP,0,C_GT},
+	{">=",I_COP,0,C_GE},
+	{"&&",I_AND,0,0},
+	{"||",I_OR,0,0},
+	{"!",I_NOT,0,0},
+};
+
+static int optab_len = sizeof(optab)/sizeof(struct operator_tab);
+
+read_cmo_tree(s,rp)
+FILE *s;
+QUOTE *rp;
+{
+	int r,i,n;
+	char *opname;
+	STRING name,cd;
+	int op;
+	LIST alist;
+	NODE arg;
+	QUOTE quote;
+	FNODE fn;
+	fid id;
+
+	read_cmo(s,&name);
+	read_cmo(s,&cd); /* XXX: currently not used */
+	for ( i = 0; i < optab_len; i++ )
+		if ( !strcmp(optab[i].name,BDY(name)) )
+			break;
+	if ( i == optab_len ) {
+		/* may be a function name */
+	} else {
+		opname = optab[i].name;
+		id = optab[i].id;
+		switch ( id ) {
+			case I_BOP:
+				op = opname[0];
+				read_cmo(s,&alist);
+				arg = BDY(alist);
+				fn = mkfnode(3,I_BOP,optab[i].arf,ARG0(arg),ARG1(arg));
+				MKQUOTE(quote,fn);
+				break;
+			case I_COP:
+				read_cmo(s,&alist);
+				arg = BDY(alist);
+				fn = mkfnode(3,I_COP,optab[i].cid,ARG0(arg),ARG1(arg));
+				MKQUOTE(quote,fn);
+				break;
+			case I_AND:
+				read_cmo(s,&alist);
+				arg = BDY(alist);
+				fn = mkfnode(2,I_AND,ARG0(arg),ARG1(arg));
+				MKQUOTE(quote,fn);
+				break;
+			case I_OR:
+				read_cmo(s,&alist);
+				arg = BDY(alist);
+				fn = mkfnode(2,I_OR,ARG0(arg),ARG1(arg));
+				MKQUOTE(quote,fn);
+				break;
+			case I_NOT:
+				read_cmo(s,&alist);
+				arg = BDY(alist);
+				fn = mkfnode(1,I_OR,ARG0(arg));
+				MKQUOTE(quote,fn);
+				break;
+		}
+		*rp = quote;
+	}
 }
 
 localname_to_cmoname(a,b)
