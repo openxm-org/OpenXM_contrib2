@@ -1,5 +1,7 @@
+#if 0
 #include "ca.h"
 #include "inline.h"
+#endif
 
 typedef struct oZ {
 	int p;
@@ -22,12 +24,20 @@ Z gcdz(Z n1,Z n2);
 Z gcdz_cofactor(Z n1,Z n2,Z *c1,Z *c2);
 Z estimate_array_gcdz(Z *a,int n);
 Z array_gcdz(Z *a,int n);
+void mkwcz(int k,int l,Z *t);
 int remzi(Z n,int m);
 inline void _addz(Z n1,Z n2,Z nr);
 inline void _subz(Z n1,Z n2,Z nr);
 inline void _mulz(Z n1,Z n2,Z nr);
 inline int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr);
 inline int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr);
+
+sgnz(Z n)
+{
+	if ( !n ) return 0;
+	else if ( SL(n) < 0 ) return -1;
+	else return 1;
+}
 
 z_mag(Z n)
 {
@@ -219,10 +229,12 @@ Z divz(Z n1,Z n2,Z *rem)
 
 		sd1 = SL(n1);
 		n1 = dupz(n1);
-		if ( SL(n1) < 0 ) SL(n1) = -SL(n1);
+		if ( sd1 < 0 ) SL(n1) = -sd1;
+		if ( sd2 < 0 ) SL(n2) = -sd2;
 		divn((N)n1,(N)n2,&q,&r);
 		if ( q && ((sd1>0&&sd2<0)||(sd1<0&&sd2>0)) ) SL((Z)q) = -SL((Z)q);
 		if ( r && sd1 < 0 ) SL((Z)r) = -SL((Z)r);
+		SL(n2) = sd2;
 		*rem = (Z)r;
 		return (Z)q;
 	}
@@ -242,9 +254,11 @@ Z divsz(Z n1,Z n2)
 			
 		sd1 = SL(n1);
 		n1 = dupz(n1);
-		if ( SL(n1) < 0 ) SL(n1) = -SL(n1);
+		if ( sd1 < 0 ) SL(n1) = -sd1;
+		if ( sd2 < 0 ) SL(n2) = -sd2;
 		divsn((N)n1,(N)n2,&q);
 		if ( q && ((sd1>0&&sd2<0)||(sd1<0&&sd2>0)) ) SL((Z)q) = -SL((Z)q);
+		SL(n2) = sd2;
 		return (Z)q;
 	}
 }
@@ -590,5 +604,29 @@ void printz(Z n)
 		if ( (sd = SL(n)) < 0 ) { SL(n) = -SL(n); fprintf(asir_out,"-"); }
 		printn((N)n);
 		if ( sd < 0 ) SL(n) = -SL(n);
+	}
+}
+
+/*
+ *  Dx^k*x^l = W(k,l,0)*x^l*Dx^k+W(k,l,1)*x^(l-1)*x^(k-1)*+...
+ *
+ *  t = [W(k,l,0) W(k,l,1) ... W(k,l,min(k,l)]
+ *  where W(k,l,i) = i! * kCi * lCi
+ */
+
+void mkwcz(int k,int l,Z *t)
+{
+	int i,n,up,low;
+	N nm,d,c;
+
+	n = MIN(k,l);
+	for ( t[0] = (Z)ONEN, i = 1; i <= n; i++ ) {
+		DM(k-i+1,l-i+1,up,low);
+		if ( up ) {
+			nm = NALLOC(2); PL(nm) = 2; BD(nm)[0] = low; BD(nm)[1] = up;
+		} else {
+			nm = NALLOC(1); PL(nm) = 1; BD(nm)[0] = low;
+		}
+		kmuln((N)t[i-1],nm,&d); divin(d,i,&c); t[i] = (Z)c;
 	}
 }
