@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.56 2003/09/04 08:35:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.57 2003/09/05 05:02:53 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -121,6 +121,7 @@ static int nmv_adv;
 static int nd_dcomp;
 
 extern int Top,Reverse,dp_nelim,do_weyl;
+extern int *current_weyl_weight_vector;
 
 /* fundamental macros */
 #define TD(d) (d[0])
@@ -619,6 +620,24 @@ int ndl_block_compare(unsigned int *d1,unsigned int *d2)
 		}
 	}
 	return 0;
+}
+
+/* TDH -> WW -> TD-> RL */
+
+int ndl_ww_lex_compare(unsigned int *d1,unsigned int *d2)
+{
+	int i,m,e1,e2;
+
+	if ( TD(d1) > TD(d2) ) return 1;
+	else if ( TD(d1) < TD(d2) ) return -1;
+	m = nd_nvar>>1;
+	for ( i = 0, e1 = e2 = 0; i < m; i++ ) {
+		e1 += current_weyl_weight_vector[i]*(GET_EXP(d1,m+i)-GET_EXP(d1,i));
+		e2 += current_weyl_weight_vector[i]*(GET_EXP(d2,m+i)-GET_EXP(d2,i));
+	}
+	if ( e1 > e2 ) return 1;
+	else if ( e1 < e2 ) return -1;
+	return ndl_lex_compare(d1,d2);
 }
 
 INLINE int ndl_equal(unsigned int *d1,unsigned int *d2)
@@ -3137,6 +3156,12 @@ void nd_init_ord(struct order_spec *ord)
 					nd_dcomp = 0;
 					nd_isrlex = 0;
 					ndl_compare_function = ndl_lex_compare;
+					break;
+				case 11:
+					/* XXX */
+					nd_dcomp = 0;
+					nd_isrlex = 1;
+					ndl_compare_function = ndl_ww_lex_compare;
 					break;
 				default:
 					error("nd_gr : unsupported order");
