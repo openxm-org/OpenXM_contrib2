@@ -1,8 +1,6 @@
-              Asir2000 の install のしかた  (standalone 版; 1999.12.1)
+              Asir2000 の install のしかた  (standalone 版; 2000.9.1)
 
-                               (株)富士通研究所 CS研)SC研 野呂 正行
-
-不明な点は, noryo@flab.fujitsu.co.jp にお問い合わせ下さい. 
+不明な点は, noro@math.kobe-u.aj.jp にお問い合わせ下さい. 
 
 0. コンパイラについて
 
@@ -61,35 +59,7 @@ directory を指定して下さい.  以下この directory を TARGETDIR 
 $B%A$7$^$9. ASIRLOADPATH に, 旧版のlibrary directory が紛れ込まないよう
 に注意して下さい.
 
-6. asir_key の取得
-
-% TARGETDIR/bin/asir
-asir_key not found.
-ID for this machine is XXXXXXXX.
-See the file ASIR_INSTALL to get the correct key.
-
-こう表示されたら, email で key を取得する必要があります. ただし, 既に
-そのマシンで key を取得すみなら, 
-
-% cp SOMEWHERE/asir_key TARGETDIR/lib/asir
-
-で OK です. 新規に取得する場合には, 
-
-risa@sec.flab.fujitsu.co.jp
-
-宛に,
-
-ASIR XXXXXXXX
-
-という 1 行のみからなる e-mail を送って下さい. XXXXXXXX は表示された 
-ID です. 折り返し
-
-YYYYYYYY YYYYYYYY YYYYYYYY
-
-という形の 1 行のみからなる e-mail が届くので, この 1 行を含む `asir_key' な
-るファイルを作り, TARGETDIR に置いて下さい. 
-
-7. manual の make
+6. manual の make
 
 これは, ptex, texi2html, makeinfo (ver. 1.68 以上) が必要です. あらか
 じめ make したものが, man99.ps.gz および lib/html-jpです. 後者は 2. の 
@@ -99,8 +69,8 @@ make install2 で, lib directory に install されます.
 % make
 % make html
 
-html-jp は, HTML 形式の asir マニュアルで, man99.ps がほぼそのままの形
-で見られます. Table of Contents ファイルは html-jp/man99_toc.htmlです.
+html-jp は, HTML 形式の asir マニュアルです. Table of Contents ファイ
+ルは html-jp/man_toc.htmlです.
 
 
 
