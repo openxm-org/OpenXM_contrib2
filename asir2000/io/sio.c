@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.13 2001/12/21 08:23:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.14 2001/12/25 02:39:05 noro Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -241,6 +241,8 @@ int try_connect(int use_unix,char *host,char *port_str)
 		} else 
 #endif /* VISUAL */
 		{
+			if ( !host )
+				host = "127.0.0.1";
 			if ( (s = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
 				perror("socket");
 				return -1;
