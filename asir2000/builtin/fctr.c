@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.17 2003/01/04 09:06:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.18 2003/01/06 01:16:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -402,7 +402,9 @@ LIST *rp;
 		error("modfctr : invalid modulus");
 	p = (P)ARG0(arg);
 	clctv(CO,p,&vl);
-	if ( !NEXT(vl) )
+	if ( !vl ) {
+		NEWDC(dc); COEF(dc) = p; DEG(dc) = ONE; NEXT(dc) = 0;
+	} else if ( !NEXT(vl) )
 		modfctrp(ARG0(arg),mod,NEWDDD,&dc);
 	else {
 		/* XXX 16384 should be replaced by a macro */

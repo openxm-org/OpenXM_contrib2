@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.15 2003/01/04 09:06:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.16 2003/01/06 09:23:27 noro Exp $ */
 
 #include "ca.h"
 
@@ -24,6 +24,29 @@ void poly_to_gfsn_poly_main(P f,V v,P *r);
 void gfsn_poly_to_poly_main(P f,V v,P *r);
 void gfsn_univariate_to_sfbm(P f,int dy,BM *r);
 void sfbm_to_gfsn_univariate(BM f,V x,V y,P *r);
+
+void monomialfctr_sf(VL vl,P p,P *pr,DCP *dcp)
+{
+	VL nvl,avl;
+	Q d;
+	P f,t,s;
+	DCP dc0,dc;
+	Obj obj;
+
+	clctv(vl,p,&nvl);
+	for ( dc0 = 0, avl = nvl, f = p; avl; avl = NEXT(avl) ) {
+		getmindeg(avl->v,f,&d);
+		if ( d ) {
+			MKV(avl->v,t); 
+			simp_ff((Obj)t,&obj); t = (P)obj;
+			NEXTDC(dc0,dc); DEG(dc) = d; COEF(dc) = t;
+			pwrp(vl,t,d,&s); divsp(vl,f,s,&t); f = t;
+		}
+	}
+	if ( dc0 )
+		NEXT(dc) = 0;
+	*pr = f; *dcp = dc0;
+}
 
 void lex_lc(P f,P *c)
 {
@@ -55,7 +78,7 @@ void sqfrsf(VL vl, P f, DCP *dcp)
 
 	simp_ff((Obj)f,&obj); f = (P)obj;
 	lex_lc(f,&c); divsp(vl,f,c,&t); f = t;
-	monomialfctr(vl,f,&t,&dc); f = t;
+	monomialfctr_sf(vl,f,&t,&dc); f = t;
 	clctv(vl,f,&tvl); vl = tvl;
 	NEWVL(onevl); NEXT(onevl)=0;
 	if ( !vl )
