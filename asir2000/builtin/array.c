@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.11 2000/12/05 06:59:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.12 2001/06/07 04:54:38 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -895,7 +895,10 @@ RESET:
 			add_eg(&eg_chrem_split,&tmp0,&tmp1);
 
 			get_eg(&tmp0);
-			ret = intmtoratm(crmat,m1,*nm,dn);
+			if ( ind % 16 )
+				ret = 0;
+			else
+				ret = intmtoratm(crmat,m1,*nm,dn);
 			get_eg(&tmp1);
 			add_eg(&eg_intrat,&tmp0,&tmp1);
 			add_eg(&eg_intrat_split,&tmp0,&tmp1);
@@ -1035,7 +1038,7 @@ int **rindp,**cindp;
 				add_eg(&eg_mul,&tmp0,&tmp1);
 				/* q = q*md */
 				mulq(q,mdq,&u); q = u;
-				if ( !(count % 2) && intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
+				if ( !(count % 16) && intmtoratm_q(xmat,NM(q),*nmmat,dn) ) {
 					for ( j = k = l = 0; j < col; j++ )
 						if ( cinfo[j] )
 							rind[k++] = j;	
