@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.42 2003/10/17 05:16:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.43 2003/11/27 02:20:51 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -58,6 +58,7 @@ extern struct order_spec dp_current_spec;
 
 int do_weyl;
 
+void Pdp_sort();
 void Pdp_mul_trunc(),Pdp_quo();
 void Pdp_ord(), Pdp_ptod(), Pdp_dtop();
 void Pdp_ptozp(), Pdp_ptozp2(), Pdp_red(), Pdp_red2(), Pdp_lcm(), Pdp_redble();
@@ -176,6 +177,7 @@ struct ftab dp_tab[] = {
 
 struct ftab dp_supp_tab[] = {
 	/* setting flags */
+	{"dp_sort",Pdp_sort,1},
 	{"dp_ord",Pdp_ord,-1},
 	{"dp_set_kara",Pdp_set_kara,-1},
 	{"dp_nelim",Pdp_nelim,-1},
@@ -223,6 +225,13 @@ struct ftab dp_supp_tab[] = {
 
 	{0,0,0}
 };
+
+void Pdp_sort(arg,rp)
+NODE arg;
+DP *rp;
+{
+	dp_sort((DP)ARG0(arg),rp);
+}
 
 void Pdp_mdtod(arg,rp)
 NODE arg;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.24 2003/01/15 04:53:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.25 2003/01/18 02:38:56 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1696,3 +1696,38 @@ void _print_mp(int nv,MP m)
 	}
 	fprintf(stderr,"\n");
 }
+
+static int cmp_mp_nvar;
+
+int comp_mp(MP *a,MP *b)
+{
+	return -(*cmpdl)(cmp_mp_nvar,(*a)->dl,(*b)->dl);
+}
+
+void dp_sort(DP p,DP *rp)
+{
+	MP t,mp,mp0;
+	int i,n;
+	DP r;
+	MP *w;
+
+	if ( !p ) {
+		*rp = 0;
+		return;
+	}
+	for ( t = BDY(p), n = 0; t; t = NEXT(t), n++ );
+	w = (MP *)ALLOCA(n*sizeof(MP));
+	for ( t = BDY(p), i = 0; i < n; t = NEXT(t), i++ )
+		w[i] = t;
+	cmp_mp_nvar = NV(p);
+	qsort(w,n,sizeof(MP),(int (*)(const void *,const void *))comp_mp);
+	mp0 = 0;
+	for ( i = n-1; i >= 0; i-- ) {
+		NEWMP(mp); mp->dl = w[i]->dl; C(mp) = C(w[i]);
+		NEXT(mp) = mp0; mp0 = mp;
+	}
+	MKDP(p->nv,mp0,r);
+	r->sugar = p->sugar;
+	*rp = r;
+}
+
