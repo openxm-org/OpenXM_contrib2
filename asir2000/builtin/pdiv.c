@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/builtin/pdiv.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -236,11 +236,11 @@ LIST *rp;
 		change_mvar(CO,dnd,v,&dnd1); change_mvar(CO,dvr,v,&dvr1);
 		reordvar(CO,v,&vl);
 		ptomp(m,dnd1,&dndm); ptomp(m,dvr1,&dvrm);
-		divsrp(vl,dndm,dvrm,&q,&r); mptop(q,&q1); mptop(r,&r1);
+		divsrmp(vl,m,dndm,dvrm,&q,&r); mptop(q,&q1); mptop(r,&r1);
 		restore_mvar(CO,q1,v,&q); restore_mvar(CO,r1,v,&r);
 	} else {
 		ptomp(m,dnd,&dndm); ptomp(m,dvr,&dvrm);
-		divsrp(CO,dnd,dvr,&q1,&r1); mptop(q1,&q); mptop(r1,&r);
+		divsrmp(CO,m,dndm,dvrm,&q1,&r1); mptop(q1,&q); mptop(r1,&r);
 	}
 	MKNODE(tn,r,0); MKNODE(n,q,tn); MKLIST(*rp,n);
 }
