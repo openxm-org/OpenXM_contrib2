@@ -95,7 +95,7 @@ libasir_postfix = @libasir_postfix@
 asirdir = ${libdir}/asir
 RR = alpi bfct bgk const cyclic defs.h dfff dmul fctrdata fctrtest \
           fff glib gr ifplot katsura mat nf num primdec primdec_lex \
-          ratint robot solve sp sturm sym xm
+          ratint robot solve sp sturm sym xm primdec_mod
 
 subdir = lib
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
