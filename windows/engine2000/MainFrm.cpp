@@ -145,7 +145,7 @@ void CMainFrame::OnClose()
 {
 	// TODO: この位置にメッセージ ハンドラ用のコードを追加するかまたはデフォルトの処理を呼び出してください
 	m_wndView.DestroyCanvas();	
-//	CFrameWnd::OnClose();
+	CFrameWnd::OnClose();
 }
 
 void CMainFrame::OnAppExit() 

@@ -160,47 +160,32 @@ BOOL COx_plotApp::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: この位置に固有の処理を追加するか、または基本クラスを呼び出してください
 	CMainFrame *pFrame;
-	struct canvas *can;
 
-	switch ( pMsg->message ) {
-	  case WM_APP: // copy to canvas 
-	    can = canvas[pMsg->wParam];
-	    if ( !can->window ) {
-	      pFrame = new CMainFrame;
-	      /* XXX */
-	      pFrame->m_pWindowName = 
-		(char *)malloc(MAX(strlen(can->wname),strlen("ox_plot"))+10);
-	      sprintf(pFrame->m_pWindowName,"%s : %d",
-		strlen(can->wname)?can->wname:"ox_plot",can->index);
+	if ( pMsg->message == WM_APP ) {
+		struct canvas *can;
 
-	      pFrame->m_cansize.cx = can->width;
-	      pFrame->m_cansize.cy = can->height;
-	      pFrame->LoadFrame(IDR_MAINFRAME,
-		WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, NULL, NULL);
-	      can->window = (void *)pFrame;
-	      pFrame->m_wndView.can = can;
-	      pFrame->ShowWindow(SW_SHOW);
-	      pFrame->UpdateWindow();
-	      pFrame->BringWindowToTop();
-	      can->hwnd = pFrame->m_wndView.m_hWnd;
-	    } else
-	      pFrame = (CMainFrame *)can->window;
-	    pFrame->RedrawWindow();
-	    break;
-	  case WM_APP+1: // popup
-	    can = canvas[pMsg->wParam];
-	    pFrame = (CMainFrame *)can->window;
-	    pFrame->ShowWindow(SW_SHOW);
-	    break;
-	  case WM_APP+2: // popdown
-	    can = canvas[pMsg->wParam];
-	    pFrame = (CMainFrame *)can->window;
-	    pFrame->ShowWindow(SW_HIDE);
-	    closed_canvas[pMsg->wParam] = can;
-	    canvas[pMsg->wParam] = 0;
-	    break;
-	  default:
-	    break;
+		can = canvas[pMsg->wParam];
+		if ( !can->window ) {
+			pFrame = new CMainFrame;
+			/* XXX */
+			pFrame->m_pWindowName = (char *)malloc(MAX(strlen(can->wname),strlen("ox_plot"))+10);
+			sprintf(pFrame->m_pWindowName,"%s : %d",
+				strlen(can->wname)?can->wname:"ox_plot",can->index);
+
+			pFrame->m_cansize.cx = can->width;
+			pFrame->m_cansize.cy = can->height;
+			pFrame->LoadFrame(IDR_MAINFRAME,
+				WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, NULL, 
+				NULL);
+			can->window = (void *)pFrame;
+			pFrame->m_wndView.can = can;
+			pFrame->ShowWindow(SW_SHOW);
+			pFrame->UpdateWindow();
+			pFrame->BringWindowToTop();
+			can->hwnd = pFrame->m_wndView.m_hWnd;
+		} else
+			pFrame = (CMainFrame *)can->window;
+		pFrame->RedrawWindow();
 	}
 	return CWinApp::PreTranslateMessage(pMsg);
 }
