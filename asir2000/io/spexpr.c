@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.8 2000/12/16 06:16:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.9 2000/12/22 10:03:31 saito Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -104,6 +104,7 @@ extern char DFORMAT[BUFSIZ];
 extern int hex_output;
 extern int fortran_output;
 extern int double_output;
+extern int real_digit;
 
 #define TAIL while ( *OUT ) OUT++;
 #define PUTS(s) strcat(OUT,s)
@@ -309,6 +310,8 @@ extern int	printmode;
 void PRINTNUM(q)
 Num q;
 {
+	char real_format[20];
+
 	if ( !q ) {
 		PUTS("0");
 		return;
@@ -335,7 +338,13 @@ Num q;
 				case MID_PRINTF_G:
 #endif
 				default:
-				TAIL PRINTF(OUT,"%g",BDY((Real)q));
+				if ( real_digit ) {
+					sprintf(real_format,
+						double_output?"%%.%df":"%%.%dg",real_digit);
+					TAIL PRINTF(OUT,real_format,BDY((Real)q));
+				} else {
+					TAIL PRINTF(OUT,double_output?"%f":"%g",BDY((Real)q));
+				}
 				break;
 			}
 			break;

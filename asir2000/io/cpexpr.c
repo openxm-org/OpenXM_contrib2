@@ -44,14 +44,14 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.6 2000/11/10 08:28:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.7 2000/12/16 06:16:10 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "al.h"
 #include "base.h"
 
-extern int hex_output,fortran_output,double_output;
+extern int hex_output,fortran_output,double_output,real_digit;
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -215,9 +215,9 @@ Num q;
 			break;
 		case N_R:
 			if ( double_output )
-				total_length += 400; /* XXX */
+				total_length += 400+real_digit; /* XXX */
 			else
-				total_length += 20; /* XXX */
+				total_length += 20+real_digit; /* XXX */
 			break;
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");

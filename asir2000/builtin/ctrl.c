@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.11 2000/12/13 10:54:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.12 2000/12/22 09:58:32 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,7 @@ extern int do_message;
 extern int ox_batch,ox_check,ox_exchange_mathcap;
 extern int f4_nocheck;
 extern int fortran_output;
+extern int real_digit;
 #if defined(INTERVAL)
 extern int zerorewrite;
 #endif
@@ -91,6 +92,7 @@ static struct {
 	{"ox_exchange_mathcap",&ox_exchange_mathcap},
 	{"f4_nocheck",&f4_nocheck},
 	{"double_output",&double_output},
+	{"real_digit",&real_digit},
 	{"fortran_output",&fortran_output},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
