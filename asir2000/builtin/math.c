@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.2 2000/08/21 08:31:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -188,6 +188,10 @@ Q *rp;
 	d = floor(ToReal(ARG0(arg)));
 	if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
 		error("dfloor : OverFlow");
+	if ( !d ) {
+		*rp = 0;
+		return;
+	}
 	a = (L)d;
 	if ( a < 0 ) {
 		sgn = -1;
@@ -227,6 +231,10 @@ Q *rp;
 	d = ceil(ToReal(ARG0(arg)));
 	if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
 		error("dceil : OverFlow");
+	if ( !d ) {
+		*rp = 0;
+		return;
+	}
 	a = (L)d;
 	if ( a < 0 ) {
 		sgn = -1;
