@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/dmul102,v 1.1 2003/12/12 07:57:20 noro Exp $ */
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
@@ -36,6 +36,34 @@ If debug is specified, the debug windows will appear."
 			P = generate_port();
 			ox_tcp_accept_102(Procs[I],P,J);
 			ox_tcp_connect_102(Procs[J],Hosts[I],P,I);
+		}
+	return Procs;
+}
+
+def spawn102_local(N)
+"spawn102_local(nserver|debug=1)
+nserver : number of servers to be used in hostlist
+If debug is specified, the debug windows will appear."
+{
+	Debug = getopt(debug);
+	if ( type(Debug) == -1 )
+		Debug = 0;
+	else if ( Debug )
+		Debug = 1;
+	Procs = newvect(N);
+	for ( I = 0; I < N; I++ ) {
+		if ( Debug )
+			Procs[I] = ox_launch();
+		else
+			Procs[I] = ox_launch_nox();
+		ox_set_rank_102(Procs[I],N,I);
+		sleep(1000);
+	}
+	for ( I = 0; I < N; I++ )
+		for ( J = I+1; J < N; J++ ) {
+			P = generate_port(1);
+			ox_tcp_accept_102(Procs[I],P,J);
+			ox_tcp_connect_102(Procs[J],0,P,I);
 		}
 	return Procs;
 }
