@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.34 2002/08/02 09:43:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.35 2002/12/09 01:43:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1193,10 +1193,8 @@ void Pox_shutdown(NODE arg,Q *rp)
 	s = m_c_tab[index].m;
 	ox_send_cmd(s,SM_shutdown);
 	free_iofp(s);
-#if !defined(VISUAL)
 	s = m_c_tab[index].c;
 	free_iofp(s);
-#endif
 #if !MPI && !defined(VISUAL)
 	if ( m_c_tab[index].af_unix )
 		wait(&status);
@@ -1235,10 +1233,8 @@ void shutdown_all() {
 	Sleep(1000);
 #endif
 		free_iofp(s);
-#if !defined(VISUAL)
 		s = m_c_tab[index].c;
 		free_iofp(s);
-#endif
 #if !MPI && !defined(VISUAL)
 		if ( m_c_tab[index].af_unix )
 			wait(&status);
