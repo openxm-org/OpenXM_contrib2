@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.33 2004/03/09 07:25:35 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.34 2004/03/09 09:40:46 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,6 +83,7 @@ char *call_convfunc(char *name);
 void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
+int top_is_minus(FNODE f);
 
 struct ftab str_tab[] = {
 	{"rtostr",Prtostr,1},
@@ -803,7 +804,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 			opname = ((ARF)FA0(f))->name;
 			if ( !strcmp(opname,"+") ) {
 				fnodetotex_tb((FNODE)FA1(f),tb);
-				write_tb(opname,tb);
+				if ( !top_is_minus((FNODE)FA2(f)) ) write_tb(opname,tb);
 				fnodetotex_tb((FNODE)FA2(f),tb);
 			} else if ( !strcmp(opname,"-") ) {
 				if ( FA1(f) ) fnodetotex_tb((FNODE)FA1(f),tb);
@@ -1092,5 +1093,53 @@ void fargstotex_tb(char *name,FNODE f,TB tb)
 			fnodenodetotex_tb(n,tb);
 		} else
 			fnodetotex_tb(f,tb);
+	}
+}
+
+int top_is_minus(FNODE f)
+{
+	char *opname;
+	int len;
+	Obj obj;
+
+	if ( !f )
+		return 0;
+	switch ( f->id ) {
+		case I_MINUS:
+			return 1;
+		case I_BOP:
+			opname = ((ARF)FA0(f))->name;
+			switch ( opname[0] ) {
+				case '+': case '*': case '/': case '^': case '%': 
+					return top_is_minus((FNODE)FA1(f));
+				case '-':
+					if ( FA1(f) )
+						return top_is_minus((FNODE)FA1(f));
+					else
+						return 1;
+				default:
+					return 0;
+			}
+			break;
+		case I_COP:
+			return top_is_minus((FNODE)FA1(f));
+		case I_LOP:
+			if ( (lid)FA0(f) == L_NOT ) return 0;
+			else return top_is_minus((FNODE)FA1(f));
+		case I_AND: case I_OR:
+			return top_is_minus((FNODE)FA0(f));
+		case I_FORMULA:
+			obj = (Obj)FA0(f);
+			if ( obj && OID(obj) == O_P ) {
+				opname = conv_rule(VR((P)obj)->name);
+			} else {
+				len = estimate_length(CO,obj);
+				opname = (char *)MALLOC_ATOMIC(len+1);
+				soutput_init(opname);
+				sprintexpr(CO,obj);
+			}
+			return opname[0]=='-';
+		default:
+			return 0;
 	}
 }

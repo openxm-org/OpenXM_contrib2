@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.10 2004/03/09 08:02:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.11 2004/03/10 02:41:08 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -239,7 +239,7 @@ void dctoquote(DCP dc,QUOTE v,QUOTE *q,int *sgn)
 			objtoquote((Obj)ONE,&r);	
 	} else {
 		objtoquote((Obj)c,&u);
-		if ( !NUM(c) && NEXT(DC(c)) ) {
+		if ( !NUM(c) && NEXT(DC(c)) && d ) {
 			MKQUOTE(t,mkfnode(1,I_PAREN,BDY(u)));
 			u = t;
 		}
