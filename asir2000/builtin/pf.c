@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.4 2001/04/20 02:34:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.5 2001/10/09 01:36:06 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -79,7 +79,7 @@ struct ftab puref_tab[] = {
 	{0,0,0},
 };
 
-#if PARI
+#if defined(PARI)
 int p_pi(),p_e();
 int p_log(),p_exp(),p_pow();
 int p_sin(),p_cos(),p_tan(),p_asin(),p_acos(),p_atan();

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.12 2001/03/19 00:44:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.13 2001/10/09 01:36:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -95,7 +95,7 @@ struct ftab misc_tab[] = {
 	{"hex_dump",Phex_dump,2},
 	{"peek",Ppeek,1},
 	{"poke",Ppoke,2},
-#if !defined(VISUAL) && DO_PLOT
+#if !defined(VISUAL) && defined(DO_PLOT)
 	{"xpause",Pxpause,0},
 #endif
 #if 0
@@ -370,7 +370,7 @@ Q *rp;
 	STOQ(ret,*rp);	
 }
 
-#if !defined(VISUAL) && DO_PLOT
+#if !defined(VISUAL) && defined(DO_PLOT)
 void Pxpause(rp)
 Q *rp;
 {

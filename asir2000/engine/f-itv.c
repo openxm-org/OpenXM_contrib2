@@ -1,10 +1,10 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.1 2000/12/22 10:03:28 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.2 2002/01/08 04:14:37 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
 #include "base.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #include "itv-pari.h"
 extern long prec;
@@ -368,7 +368,7 @@ void pwritvf(Itv a, Num e, Itv *c)
 	else if ( NID(a) <= N_B )
 		pwrnum(0,(Num)a,e,(Num *)c);
 	else if ( !INT(e) ) {
-#if PARI && 0
+#if defined(PARI) && 0
 		GEN pa,pe,z;
 		int ltop,lbot;
 

@@ -44,12 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.10 2001/10/09 01:36:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.11 2002/01/08 04:14:38 kondoh Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 int get_lg(GEN);
 #endif
@@ -120,7 +120,7 @@ void loadreal(FILE *s,Real *p)
 
 void loadbf(FILE *s,BF *p)
 {
-#if PARI
+#if defined(PARI)
 	GEN z;
 	unsigned int uexpo,lexpo;
 	char dmy;

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/include/Risa.tmpl-alpha,v 1.1.1.1 1999/11/10 08:12:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl-alpha,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 /* #define USE_GCC */
 #define USE_PARI
 #define USE_PLOT
@@ -33,24 +33,24 @@ CC= cc -Wl,-D -Wl,$(HEAP_START_ADDR)
 REMOTE=1
 
 #ifdef USE_PARI
-PARI=1
-PARIINC = /usr/local/include/pari
+PARI= -DPARI
+PARIINC = -I/usr/local/include/pari
 #if 0
 PARIFLAGS = -DLONG_IS_32BIT -DULONG_NOT_DEFINED
 #endif
 PARIFLAGS = -DLONG_IS_64BIT
 PARILIB = -lpari
 #else
-PARI=0
-PARIINC = .
+PARI=
+PARIINC =
 PARIFLAGS =
 PARILIB =
 #endif
 
 #ifdef USE_PLOT
-DO_PLOT=1
+DO_PLOT= -DDO_PLOT
 #else
-DO_PLOT=0
+DO_PLOT=
 #endif
 
 #ifdef USE_READLINE
@@ -65,5 +65,5 @@ RLLIB =
 #define NullParameter
 #endif
 
-INCLUDES= -I$(TOP)/include -I$(TOP)/parse -I$(TOP)/io -I$(PARIINC)
-DEFINES= -DPARI=$(PARI) -DDO_PLOT=$(DO_PLOT) -DREADLINE=$(READLINE) -DREMOTE=$(REMOTE) $(PARIFLAGS)
+INCLUDES= -I$(TOP)/include -I$(TOP)/parse -I$(TOP)/io $(PARIINC)
+DEFINES= $(PARI) $(DO_PLOT) -DREADLINE=$(READLINE) -DREMOTE=$(REMOTE) $(PARIFLAGS)

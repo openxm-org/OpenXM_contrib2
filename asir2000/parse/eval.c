@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.18 2001/12/25 02:39:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.19 2002/12/11 10:54:12 saito Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -54,7 +54,7 @@
 #include "parse.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 
@@ -350,13 +350,13 @@ pointer evalstat(SNODE f)
 		case S_BP:
 			if ( !nextbp && (!FA1(f) || eval((FNODE)FA1(f))) ) {
 				if ( (FNODE)FA2(f) ) {
-#if PARI
+#if defined(PARI)
 					pari_outfile = stderr;
 #endif
 					asir_out = stderr;
 					printexpr(CO,eval((FNODE)FA2(f)));
 					putc('\n',asir_out); fflush(asir_out);
-#if PARI
+#if defined(PARI)
 					pari_outfile = stdout;
 #endif
 					asir_out = stdout;

@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /YX /c
-# ADD CPP /nologo /MT /W3 /GX /Z7 /Ox /Ot /Og /Oi /Op /I "..\windows\pari2\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "NDEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D PARI=1 /D INET=1 /D LAPACK=0 /D DO_PLOT=0 /D USE_FLOAT=0 /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
+# ADD CPP /nologo /MT /W3 /GX /Z7 /Ox /Ot /Og /Oi /Op /I "..\windows\pari2\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "NDEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D PARI /D INET /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
 # SUBTRACT CPP /Oa /Ow
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
 # ADD RSC /l 0x411 /d "NDEBUG"
@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /YX /c
-# ADD CPP /nologo /MTd /W3 /GX /Z7 /Od /I "..\windows\pari2\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "_DEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D PARI=1 /D INET=1 /D LAPACK=0 /D DO_PLOT=0 /D USE_FLOAT=0 /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
+# ADD CPP /nologo /MTd /W3 /GX /Z7 /Od /I "..\windows\pari2\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "_DEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D PARI /D INET /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
 # ADD BASE RSC /l 0x411 /d "_DEBUG"
 # ADD RSC /l 0x411 /d "_DEBUG"
 BSC32=bscmake.exe

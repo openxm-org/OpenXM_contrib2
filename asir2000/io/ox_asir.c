@@ -44,14 +44,14 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.39 2002/02/25 06:47:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.40 2002/08/02 02:28:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
 #include "ox.h"
 #include "version.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 
@@ -98,7 +98,7 @@ char *name_of_id(int);
 static void asir_do_cmd(int,unsigned int);
 static void asir_executeFunction(int);
 
-#if MPI
+#if defined(MPI)
 /* XXX : currently MPI version supports only a homogeneous cluster. */
 
 extern int mpi_nprocs,mpi_myid;
@@ -487,7 +487,7 @@ int asir_executeString()
 	SNODE snode;
 	pointer val;
 	char *cmd;
-#if PARI
+#if defined(PARI)
 	recover(0);
 	/* environement is defined in libpari.a */
 	if ( setjmp(environnement) ) {
@@ -653,11 +653,11 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	int tmp;
 #endif
 
-#if !defined(VISUAL) && !MPI
+#if !defined(VISUAL) && !defined(MPI)
 	do_server_in_X11 = 1; /* XXX */
 #endif
 	asir_save_handler();
-#if PARI
+#if defined(PARI)
 	risa_pari_init();
 #endif
 	srandom((int)get_current_time());
@@ -941,11 +941,11 @@ int asir_ox_init(int byteorder)
 	static ox_asir_initialized = 0;
 	FILE *ifp;
 
-#if !defined(VISUAL) && !MPI
+#if !defined(VISUAL) && !defined(MPI)
 	do_server_in_X11 = 0; /* XXX */
 #endif
 	asir_save_handler();
-#if PARI
+#if defined(PARI)
 	risa_pari_init();
 #endif
 	srandom((int)get_current_time());

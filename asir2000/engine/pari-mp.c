@@ -1,9 +1,9 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari-mp.c,v 1.1 2000/12/22 10:03:28 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari-mp.c,v 1.2 2000/12/26 06:12:36 noro Exp $
 */
 /* for f-itv.c */
 
-#if PARI
+#if defined(PARI)
 
 #include "genpari.h"
 #include "itv-pari.h"
@@ -350,11 +350,11 @@ PariMulirDown(GEN x, GEN y)
   avma=av;return z;
 }
 
-#ifdef LONG_IS_32BIT
+#if defined(LONG_IS_32BIT)
 #define DIVCONVI 14
 #endif
 
-#ifdef LONG_IS_64BIT
+#if defined(LONG_IS_64BIT)
 #define DIVCONVI 7
 #endif
 

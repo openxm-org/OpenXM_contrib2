@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.2 2000/08/21 08:31:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.3 2000/08/22 05:04:12 noro Exp $ 
 */
-#if LONG_IS_32BIT
+#if defined(LONG_IS_32BIT)
 #if defined(VISUAL)
 typedef unsigned _int64 UL;
 #else
@@ -62,13 +62,13 @@ struct PrimesS {
 	int  bitwid, d;
 };
 
-#if USE_FLOAT
+#if defined(USE_FLOAT)
 #define NPrimes 536
 #else
 #define NPrimes 13681
 #endif
 
-#if USE_FLOAT
+#if defined(USE_FLOAT)
 typedef float ModNum;
 
 #define AxBplusCmodP(ans,anstype,a,b,c,p,pinv) \

@@ -576,7 +576,7 @@
 /*	HEURISTIC1 reportedly no longer works under 2.7.  Thus we	*/
 /* 	switched to HEURISTIC2, eventhough it creates some debugging	*/
 /*	issues.								*/
-#if MPI
+#if defined(MPI)
 	extern int *StackBottom;
 #	define STACKBOTTOM (ptr_t)(StackBottom)
 #else

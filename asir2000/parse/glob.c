@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.29 2002/12/09 00:42:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.30 2003/01/06 01:16:40 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
 #include "ox.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 #if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__)
@@ -211,7 +211,7 @@ void asir_terminate(int status)
 			LONGJMP(exec_env,status);
 	} else {
 		tty_reset();
-#if MPI
+#if defined(MPI)
 		if ( !mpi_myid )
 			close_allconnections();
 		mpi_finalize();
@@ -223,7 +223,7 @@ void asir_terminate(int status)
 #endif
 		if ( asir_out )
 			fflush(asir_out);
-#if FEP
+#if defined(FEP)
 		if ( do_fep ) {
 			stifle_history(MAXHIST);
 			write_history(asir_history);
@@ -258,7 +258,7 @@ FILE *in_fp;
 void process_args(int ac,char **av)
 {
 	do_asirrc = 1;
-#if !MPI
+#if !defined(MPI)
 	do_message = 1;
 #endif
 	while ( ac > 0 ) {
@@ -302,11 +302,11 @@ void process_args(int ac,char **av)
 		} else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
 			strcpy(displayname,*(av+1)); av += 2; ac -= 2;
 #endif
-#if FEP
+#if defined(FEP)
 		} else if ( !strcmp(*av,"-fep") ) {
 			do_fep = 1; av++; ac--;
 #endif
-#if PARI
+#if defined(PARI)
 		} else if ( !strcmp(*av,"-paristack") ) {
 			extern int paristack;
 
@@ -317,7 +317,7 @@ void process_args(int ac,char **av)
 			asir_terminate(1);
 		}
 	}
-#if FEP
+#if defined(FEP)
 	if ( do_fep ) {
 		char *home;
 		home = (char *)getenv("HOME");
@@ -390,7 +390,7 @@ void resetenv(char *s)
 	w_noflush_stderr(0);
 #endif
 	asir_out = stdout;
-#if PARI
+#if defined(PARI)
 	pari_outfile = stdout;
 #endif
 	/* restore states */

@@ -26,7 +26,7 @@ typedef int (*QSCOMP)(const void *, const void *);
 #  define OLD_CODES
 #endif
 
-#ifdef LONG_IS_64BIT
+#if defined(LONG_IS_64BIT)
 #  define TWOPOTBYTES_IN_LONG  3
 #else
 #  define TWOPOTBYTES_IN_LONG  2
@@ -68,7 +68,7 @@ typedef int (*QSCOMP)(const void *, const void *);
 #  define SIGNnumBITS  2
 #endif
 
-#ifdef LONG_IS_64BIT
+#if defined(LONG_IS_64BIT)
 #  define   LGnumBITS 32
 #  define EXPOnumBITS 48
 #  define LGEFnumBITS 46 /* otherwise MAXVARN too large */

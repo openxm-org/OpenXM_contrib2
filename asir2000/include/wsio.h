@@ -45,18 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/wsio.h,v 1.3 2000/08/22 05:04:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/wsio.h,v 1.4 2000/11/15 01:20:26 noro Exp $ 
 */
 #ifndef WSIO_H
 #define WSIO_H
 #if defined(VISUAL)
 #include <winsock2.h>
-#elif MPI
+#elif defined(MPI)
 #include <sys/types.h>
 #include <mpi.h>
 #endif
 
-#if MPI
+#if defined(MPI)
 #define WSIO_STRING_LENGTH	(1048576)  /* Default size of buffer */
 #else
 #define WSIO_STRING_LENGTH	(16384)  /* Default size of buffer */

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.4 2000/11/14 08:38:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.5 2001/10/09 01:36:23 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,7 @@
 #include <console.h>
 #endif
 
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 
 extern jmp_buf environnement;
@@ -80,7 +80,7 @@ void Init_Asir(int argc,char **argv)
 		return;
 	asirlib_initialized = 1;
 	do_file = 1;
-#if PARI 
+#if defined(PARI)
     risa_pari_init();
 #endif 
 	srandom((int)get_current_time());
@@ -133,7 +133,7 @@ int Call_Asir(char *cmd,pointer *result)
 {
 	SNODE snode;
 	pointer val;
-#if PARI
+#if defined(PARI)
 	void recover(int);
 
 	recover(0);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.2 2000/08/21 08:31:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -193,14 +193,14 @@ SNODE f;
 		case S_BP:
 			if ( !nextbp && (!FA1(f) || compile((FNODE)FA1(f))) ) {
 				if ( (FNODE)FA2(f) ) {
-#if PARI
+#if defined(PARI)
 					extern FILE *outfile;
 					outfile = stderr;
 #endif
 					asir_out = stderr;
 					printexpr(CO,compile((FNODE)FA2(f)));
 					putc('\n',asir_out); fflush(asir_out);
-#if PARI
+#if defined(PARI)
 					outfile = stdout;
 #endif
 					asir_out = stdout;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.17 2002/08/02 02:28:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.18 2002/08/02 02:41:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,7 @@
 #include "ifplot.h"
 #include "version.h"
 #include <signal.h>
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 

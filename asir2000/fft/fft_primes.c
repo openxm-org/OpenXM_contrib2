@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/fft_primes.c,v 1.3 2000/08/22 05:04:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/fft_primes.c,v 1.4 2001/10/09 01:36:16 noro Exp $ 
 */
 #include "dft.h"
 
 struct PrimesS Primes[NPrimes+1] = {
-#if !USE_FLOAT
+#if !defined(USE_FLOAT)
 {536813569,234750831,29,13},
 {536752129,402492685,29,12},
 {536743937,186329165,29,12},

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.4 2000/11/14 08:38:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,7 @@
 #include <console.h>
 #endif
 
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 
 extern jmp_buf environnement;
@@ -145,7 +145,7 @@ char *s;
 {
 	SNODE snode;
 	pointer val;
-#if PARI
+#if defined(PARI)
 	static long tloc,listloc;
 	extern long avloc;
 

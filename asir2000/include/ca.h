@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.33 2002/01/28 00:54:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.34 2002/11/22 07:32:11 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -131,7 +131,7 @@ typedef void * pointer;
 #define ORD_GRADLEX 1
 #define ORD_LEX 2
 
-#if LONG_IS_32BIT
+#if defined(LONG_IS_32BIT)
 #if defined(VISUAL)
 typedef _int64 L;
 typedef unsigned _int64 UL;
@@ -512,7 +512,7 @@ struct oEGT {
 
 #define INDEX 100
 
-#if USE_FLOAT
+#if defined(USE_FLOAT)
 typedef float ModNum;
 #define NPrimes 536
 #else
@@ -756,7 +756,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define MKAlg(b,r) \
 (!(b)?((r)=0):NUM(b)?((r)=(Alg)(b)):(NEWAlg(r),BDY(r)=(Obj)(b),(r)))
 
-#if PARI
+#if defined(PARI)
 #define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):BIGFLOAT(a)?rtodbl(BDY((BF)a)):0)
 #else
 #define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):0.0)

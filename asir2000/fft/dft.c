@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.c,v 1.2 2000/08/21 08:31:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.c,v 1.3 2000/08/22 05:04:12 noro Exp $ 
 */
 /*
  *		store			arith		modulus
@@ -584,7 +584,7 @@ double Pinv;
   }
 }
 
-#if USE_FLOAT
+#if defined(USE_FLOAT)
 void C_PREP_ALPHA( r, log2ord, log2k, n, tbl, P, Pinv )
 ModNum r, tbl[], P;
 int log2ord, log2k, n;

@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.12 2002/09/04 04:57:46 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.13 2003/01/28 09:03:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 
 extern long prec;

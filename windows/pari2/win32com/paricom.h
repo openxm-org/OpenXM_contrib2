@@ -111,7 +111,7 @@ extern int new_galois_format;
 #  define PI (3.141592653589)
 #endif
 
-#ifdef LONG_IS_64BIT
+#if defined(LONG_IS_64BIT)
 #  define VERYBIGINT (9223372036854775807L) /* 2^63-1 */
 #  define EXP220 (1099511627776L)          /* 2^40   */
 #  define BIGINT (2147483647)              /* 2^31-1 */
@@ -138,7 +138,7 @@ extern int new_galois_format;
   ENDEXTERN
 #endif
 
-#ifndef LONG_IS_64BIT
+#if !defined(LONG_IS_64BIT)
 #  undef labs
 #  define labs(x) abs(x)
 #endif

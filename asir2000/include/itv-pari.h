@@ -1,10 +1,10 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/itv-pari.h,v 1.1 2000/12/22 10:03:29 saito Exp $
 */
 #ifndef	_ITVPARI_H
 #define	_ITVPARI_H
 
-#if PARI
+#if defined(PARI)
 GEN	PariAddDown(GEN, GEN);
 GEN	PariAddirDown(GEN, GEN);
 GEN	PariAddrrDown(GEN, GEN);

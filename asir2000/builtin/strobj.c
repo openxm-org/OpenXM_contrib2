@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.8 2001/10/09 01:36:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.9 2002/12/09 00:42:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ctype.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 extern jmp_buf environnement;
 #endif
@@ -203,7 +203,7 @@ Obj *rp;
 {
 	FNODE fnode;
 	char *cmd;
-#if PARI
+#if defined(PARI)
 	void recover(int);
 
 	recover(0);

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.13 2001/10/09 01:36:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.14 2002/09/02 05:16:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -127,7 +127,7 @@ int estimate_length(VL vl,pointer p)
 	return total_length;
 }
 
-#if PARI
+#if defined(PARI)
 void PRINTBF(BF a)
 {
 	char *str;
@@ -228,7 +228,7 @@ void PRINTNUM(Num q)
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
 			break;
-#if PARI
+#if defined(PARI)
 		case N_B:
 			PRINTBF((BF)q); break;
 #endif

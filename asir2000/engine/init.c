@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.17 2002/01/08 04:14:37 kondoh Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.18 2002/03/01 00:40:51 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -88,7 +88,7 @@ int StrassenSize = 0;
 static int *lprime;
 int lprime_size;
 
-#if PARI
+#if defined(PARI)
 int paristack = 1<<16;
 #define ADDBF addbf
 #define SUBBF subbf
@@ -178,7 +178,7 @@ void nglob_init() {
 
 /* moved to parse/main.c */
 #if 0
-#if PARI
+#if defined(PARI)
 	risa_pari_init();
 #endif
 	srandom((int)get_current_time());

@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.5 2001/10/09 01:36:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.6 2002/08/02 08:59:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ifplot.h"
 #include <math.h>
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 

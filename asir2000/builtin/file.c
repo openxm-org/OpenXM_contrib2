@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.15 2001/10/09 01:36:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.16 2002/10/01 09:58:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,7 +54,7 @@
 #if !defined(VISUAL)
 #include "unistd.h"
 #endif
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 
@@ -323,7 +323,7 @@ void Ploadfiles(NODE arg,Q *rp)
 
 void Poutput(NODE arg,Q *rp)
 {
-#if PARI
+#if defined(PARI)
 	extern FILE *outfile;
 #endif
 	FILE *fp;
@@ -341,7 +341,7 @@ void Poutput(NODE arg,Q *rp)
 				error("output : invalid filename");
 			break;
 	}
-#if PARI
+#if defined(PARI)
 	pari_outfile =
 #endif
 	asir_out = fp;

@@ -1,11 +1,11 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.1 2000/12/22 10:03:28 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.2 2002/01/08 04:14:37 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
 #include "ca.h"
 #include "base.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 
@@ -492,7 +492,7 @@ void	pwritvd(Num a, Num e, IntervalDouble *c)
 		pwrnum(0,a,e,c);
 #endif
 	} else if ( !INT(e) ) {
-#if PARI && 0
+#if defined(PARI) && 0
 		GEN pa,pe,z;
 		int ltop,lbot;
 

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.19 2002/09/02 05:16:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.20 2002/09/11 07:23:27 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -203,7 +203,7 @@ P p;
 		return (mmono(COEF(DC(p))));
 }
 
-#if PARI
+#if defined(PARI)
 void printbf(a)
 BF a;
 {
@@ -221,7 +221,7 @@ char *s;
 	s[0] = 0; buf = s;
 }
 
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 
 void myoutbrute(g)
@@ -406,7 +406,7 @@ Num q;
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
 			break;
-#if PARI
+#if defined(PARI)
 		case N_B:
 			PRINTBF((BF)q); break;
 #endif

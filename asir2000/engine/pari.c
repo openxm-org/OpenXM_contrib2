@@ -45,10 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.4 2000/12/05 01:24:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.5 2001/10/09 01:36:13 noro Exp $ 
 */
 #include "ca.h"
-#if PARI
+#if defined(PARI)
 #include "base.h"
 #include <math.h>
 #include "genpari.h"

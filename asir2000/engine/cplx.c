@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.4 2000/12/22 10:03:28 saito Exp $ 
 */
 #include "ca.h"
 #include "base.h"
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 void patori(GEN,Obj *);
 void patori_i(GEN,N *);
@@ -195,7 +195,7 @@ Num *c;
 	else if ( !a )
 		*c = 0;
 	else if ( !INT(e) ) {
-#if PARI
+#if defined(PARI)
 		GEN pa,pe,z;
 		int ltop,lbot;
 

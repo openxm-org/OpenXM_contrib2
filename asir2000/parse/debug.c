@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.10 2001/10/09 01:36:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.11 2001/12/25 02:39:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include <ctype.h>
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 #endif
 
@@ -216,7 +216,7 @@ void debug(SNODE f)
 	extern int do_fep;
 	NODE pvss;
 
-#if !MPI && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL)
 	if ( !isatty(fileno(stdin)) && !do_server_in_X11 )
 		if ( do_file )
 			ExitAsir();
@@ -234,14 +234,14 @@ void debug(SNODE f)
 	sprintf(prompt,"(debug) ");
 	SETJMP(debug_env);
 	while ( 1 ) {
-#if FEP
+#if defined(FEP)
 		if ( !do_fep )
 #endif
 			if ( !do_server_in_X11 )
 				fputs(prompt,stderr);
 		bzero(buf,BUFSIZ);
 		while ( 1 ) {
-#if FEP
+#if defined(FEP)
 			if ( do_fep ) {
 				line = (char *)readline_console(prompt);
 				strcpy(buf,line); free(line);
@@ -700,7 +700,7 @@ void bp(SNODE f)
 		CPVS->usrf->name,ln,CPVS->usrf->f.usrf->fname);
 	targetf = CPVS->usrf; curline = ln;
 	println(0,0,1);
-#if !MPI && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL)
 	if ( do_server_in_X11 || isatty(0) )
 #endif
 		debug(f);
@@ -765,8 +765,8 @@ void printvars(char *s,VS vs)
 			val = eval(expr); 
 		CPVS = cpvs;
 		if ( !err ) {
-#if PARI
-#if PARI1
+#if defined(PARI)
+#if defined(PARI1)
 			outfile = stderr;
 #else
 			pari_outfile = stderr;
@@ -784,8 +784,8 @@ void printvars(char *s,VS vs)
 #if defined(VISUAL_LIB)
 			w_noflush_stderr(0);
 #endif
-#if PARI
-#if PARI1
+#if defined(PARI)
+#if defined(PARI1)
 			outfile = stdout;
 #else
 			pari_outfile = stdout;

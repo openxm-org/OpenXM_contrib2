@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.35 2002/12/09 01:43:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.36 2003/01/24 08:01:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,7 +79,7 @@ static struct m_c {
 static int m_c_i,m_c_s;
 int I_am_server;
 
-#if MPI
+#if defined(MPI)
 extern int mpi_nprocs;
 #define valid_mctab_index(ind)\
 if((ind)<0||(ind)>=mpi_nprocs){error("invalid server id");}
@@ -143,11 +143,11 @@ struct ftab tcp_tab[] = {
 	{"ox_cmo_rpc",Pox_cmo_rpc,-99999999},
 
 	{"ox_sync",Pox_sync,1},
-#if MPI
+#if defined(MPI)
 	{"ox_mpi_myid",Pox_mpi_myid,0},
 	{"ox_mpi_nprocs",Pox_mpi_nprocs,0},
 #endif
-#if !MPI
+#if !defined(MPI)
 	{"ox_reset",Pox_reset,-2},
 	{"ox_intr",Pox_intr,1},
 	{"ox_select",Pox_select,-2},
@@ -183,7 +183,7 @@ extern int ox_exchange_mathcap;
 
 char *getenv();
 
-#if MPI
+#if defined(MPI)
 extern int mpi_myid, mpi_nprocs;
 
 void Pox_mpi_myid(Q *rp)
@@ -771,7 +771,7 @@ int register_server(int af_unix,int m,int c)
 		}
 		m_c_s = INIT_TAB_SIZ;
 	}
-#if !MPI
+#if !defined(MPI)
 	for ( i = 0; i < m_c_i; i++ )
 		if ( (m_c_tab[i].m<0) && (m_c_tab[i].c<0) )
 			break;
@@ -1195,7 +1195,7 @@ void Pox_shutdown(NODE arg,Q *rp)
 	free_iofp(s);
 	s = m_c_tab[index].c;
 	free_iofp(s);
-#if !MPI && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL)
 	if ( m_c_tab[index].af_unix )
 		wait(&status);
 #endif
@@ -1235,7 +1235,7 @@ void shutdown_all() {
 		free_iofp(s);
 		s = m_c_tab[index].c;
 		free_iofp(s);
-#if !MPI && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL)
 		if ( m_c_tab[index].af_unix )
 			wait(&status);
 #endif

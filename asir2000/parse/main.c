@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.16 2001/12/28 06:18:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.17 2001/12/28 06:44:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-#if PARI
+#if defined(PARI)
 #include "genpari.h"
 
 /* XXX : environment is defined in libpari.a */
@@ -102,7 +102,7 @@ main(int argc,char *argv[])
 #endif
 
 	StackBottom = &tmp;
-#if MPI
+#if defined(MPI)
 	mpi_init();
 	if ( mpi_myid ) {
 		int slave_argc;
@@ -130,7 +130,7 @@ main(int argc,char *argv[])
 		/* never return */
 		ox_main(argc,argv);
 		exit(0);
-#if DO_PLOT
+#if defined(DO_PLOT)
 	} else if ( !strncmp(binname,"ox_plot",strlen("ox_plot")) ) {
 		/* never return */
 		ox_plot_main(argc,argv);
@@ -151,7 +151,7 @@ main(int argc,char *argv[])
 	endian_init();
 	GC_init();
 	process_args(--argc,++argv);
-#if PARI 
+#if defined(PARI)
     risa_pari_init();
 #endif 
 	copyright();
@@ -202,7 +202,7 @@ main(int argc,char *argv[])
 		input_init(stdin,"stdin");
 	prompt();
 	while ( 1 ) {
-#if PARI
+#if defined(PARI)
 		recover(0);
 		/* XXX environement is defined in libpari.a */
 		if ( setjmp(environnement) ) {
