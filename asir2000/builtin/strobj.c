@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.49 2004/07/13 09:10:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.50 2004/07/13 10:57:26 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -844,6 +844,8 @@ char *symbol_name(char *name)
 	return 0;
 }
 
+FNODE strip_paren(FNODE);
+
 void fnodetotex_tb(FNODE f,TB tb)
 {
 	NODE n,t,t0;
@@ -916,7 +918,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 			} else if ( !strcmp(opname,"^") ) {
 				fnodetotex_tb((FNODE)FA1(f),tb);
 				write_tb("^{",tb);
-				fnodetotex_tb((FNODE)FA2(f),tb);
+				fnodetotex_tb(strip_paren((FNODE)FA2(f)),tb);
 				write_tb("} ",tb);
 			} else if ( !strcmp(opname,"%") ) {
 				fnodetotex_tb((FNODE)FA1(f),tb);
