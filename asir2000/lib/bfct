@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.10 2000/12/15 01:34:31 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -269,8 +269,11 @@ def weyl_minipolym(G,V,O,M,V0)
 
 def weyl_minipoly(G0,V0,O0,V)
 {
+	HM = hmlist(G0,V0,O0);
 	for ( I = 0; ; I++ ) {
 		Prime = lprime(I);
+		if ( !valid_modulus(HM,Prime) )
+			continue;
 		MP = weyl_minipolym(G0,V0,O0,Prime,V);
 		for ( D = deg(MP,V), TL = [], J = 0; J <= D; J++ )
 			TL = cons(V^J,TL);
