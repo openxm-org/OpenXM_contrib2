@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.86 2003/10/28 08:47:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.87 2003/11/05 08:02:45 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -2406,6 +2406,14 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	ndv_alloc = 0;
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+	switch ( ord->id ) {
+		case 1:
+			if ( ord->nv != nvar )
+				error("nd_{gr,f4} : invalid order specification");
+			break;
+		default:
+			break;
+	}
 	nd_init_ord(ord);
 	for ( t = BDY(f), max = 0; t; t = NEXT(t) )
 		for ( tv = vv; tv; tv = NEXT(tv) ) {
@@ -2450,6 +2458,14 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+	switch ( ord->id ) {
+		case 1:
+			if ( ord->nv != nvar )
+				error("nd_gr_trace : invalid order specification");
+			break;
+		default:
+			break;
+	}
 	nocheck = 0;
 	mindex = 0;
 
