@@ -2,14 +2,14 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.15 2000/08/22 01:30:26 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.16 2000/10/17 04:25:12 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const cyclic\
 	defs.h fctrdata fctrtest fff gr\
 	ifplot katsura mat nf num\
-	primdec ratint robot solve sp sturm xm dmul bfct
+	primdec ratint robot solve sp sturm xm dmul bfct dfff
 
 all::
 
