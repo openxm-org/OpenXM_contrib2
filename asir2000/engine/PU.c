@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.8 2001/10/09 01:36:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.9 2002/09/11 07:23:25 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1030,7 +1030,7 @@ int maxblenp(P p)
 		return n_bits(NM((Q)p))+(INT((Q)p)?0:n_bits(DN((Q)p)));
 	else {
 		for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
-			t = p_mag(COEF(dc));
+			t = maxblenp(COEF(dc));
 			s = MAX(t,s);
 		}
 		return s;
