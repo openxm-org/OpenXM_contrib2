@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.24 2003/06/19 07:08:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.25 2003/07/09 07:11:08 noro Exp $ 
 */
 #include "ca.h"
 
@@ -409,6 +409,10 @@ NODE symb_merge(NODE m1,NODE m2,int n)
 		while ( cur && m ) {
 			d1 = (DL)BDY(cur);
 			d2 = (DL)BDY(m);
+#if 1
+			switch ( (*cmpdl)(n,(DL)BDY(cur),(DL)BDY(m)) ) {
+#else
+			/* XXX only valid for DRL */
 			if ( d1->td > d2->td )
 				c = 1;
 			else if ( d1->td < d2->td )
@@ -422,9 +426,6 @@ NODE symb_merge(NODE m1,NODE m2,int n)
 				else
 					c = -1;
 			}
-#if 0
-			switch ( (*cmpdl)(n,(DL)BDY(cur),(DL)BDY(m)) ) {
-#else
 			switch ( c ) {
 #endif
 				case 0:
