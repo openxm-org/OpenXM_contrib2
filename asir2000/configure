@@ -1,9 +1,13 @@
 #!/bin/sh
-# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.1.1.1 1999/12/03 07:39:06 noro Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/configure,v 1.2 2000/02/08 04:47:08 noro Exp $
 
-oxhome=`( cd ../../OpenXM ; pwd )`
 use_plot=0
 use_pari=0
+oxhome=/usr/local
+
+if [ -d ../../OpenXM ]; then
+oxhome=`( cd ../../OpenXM ; pwd )`
+fi
 
 while [ $# -gt 0 ]
 do

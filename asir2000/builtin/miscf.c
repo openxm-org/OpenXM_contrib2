@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.2 2000/01/18 05:55:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.3 2000/02/08 04:47:09 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #if INET && !defined(VISUAL)
@@ -42,11 +42,13 @@ struct ftab misc_tab[] = {
 #if 0
 	{"opt",Popt,1},
 #endif
+#if !defined(VISUAL)
 /* test functions for library mode ox operations */
 	{"lib_ox_push_cmo",Plib_ox_push_cmo,1},
 	{"lib_ox_pop_cmo",Plib_ox_pop_cmo,0},
 	{"lib_ox_push_cmd",Plib_ox_push_cmd,1},
 	{"lib_ox_execute_string",Plib_ox_execute_string,1},
+#endif
 	{0,0,0},
 };
 
@@ -54,6 +56,7 @@ extern int little_endian;
 
 int lib_ox_initialized;
 
+#if !defined(VISUAL)
 void Plib_ox_push_cmo(arg,rp)
 NODE arg;
 Q *rp;
@@ -98,6 +101,7 @@ Q *rp;
 	asir_ox_execute_string(BDY((STRING)ARG0(arg)));
 	*rp = ONE;
 }
+#endif
 
 void Pgetenv(arg,rp)
 NODE arg;
