@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.7 2001/06/25 04:11:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.8 2001/06/25 10:01:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -84,7 +84,7 @@ void Plinear_form_to_vect(),Pvect_to_linear_form();
 void solve_linear_equation_gf2n(GF2N **,int,int,int *);
 void linear_form_to_array(P,VL,int,Num *);
 void array_to_linear_form(Num *,VL,int,P *);
-void sfuhensel(P,V,V,GFS *,NODE *);
+void sfuhensel(P,NODE,GFS,int,NODE *);
 
 extern int current_ff;
 
@@ -97,7 +97,7 @@ struct ftab gf_tab[] = {
 	{"resfmain",Presfmain,4},
 	{"pwr_mod",Ppwr_mod,6},
 	{"uhensel",Puhensel,4},
-	{"sfuhensel",Psfuhensel,3},
+	{"sfuhensel",Psfuhensel,4},
 	{0,0,0},
 };
 
@@ -187,38 +187,86 @@ NODE arg;
 LIST *rp;
 {
 	P f;
-	V x,y;
-	NODE n,r;
+	int bound;
+	NODE r,mfl;
 	GFS ev;
 
 	f = (P)ARG0(arg);
-	x = VR((P)ARG1(arg));
-	y = VR((P)ARG2(arg));
-	sfuhensel(f,x,y,&ev,&r);
-	MKNODE(n,ev,r);
-	MKLIST(*rp,n);
+	mfl = BDY((LIST)ARG1(arg));
+	ev = (GFS)ARG2(arg);
+	bound = QTOS((Q)ARG3(arg));
+	sfuhensel(f,mfl,ev,bound,&r);
+	MKLIST(*rp,r);
 }
 
-void sfuhensel(f,x,y,evp,rp)
+void sfuhensel(f,mfl,ev,bound,rp)
 P f;
-V x,y;
-GFS *evp;
+NODE mfl;
+GFS ev;
+int bound;
 NODE *rp;
 {
-	ML lift;
-	int i;
-	P s,u,sf;
+	BM fl;
+	BM *r;
+	VL vl,nvl;
+	int i,fn,dx,dy;
 	NODE t,top;
-	struct oVL vl1,vl;
+	UM fm,hm,q;
+	UM *gm;
+	V x,y;
+	P g,s,u;
 
-	sfhensel(5,f,x,evp,&sf,&lift);
+	clctv(CO,f,&vl);
+	if ( !vl || !vl->next || vl->next->next )
+		error("sfuhensel : f must be a bivariate poly");
 
-	vl1.v = y; vl1.next = 0;
-	vl.v = x; vl.next = &vl1;
+	for ( i = 0, t = mfl; t; i++, t = NEXT(t) );
+	fn = i;
 
-	for ( i = lift->n-1, top = 0; i >= 0; i-- ) {
-		sfbmtop(lift->bound,lift->c[i],x,y,&s);
-		reorderp(CO,&vl,s,&u);
+	gm = (UM *)MALLOC(fn*sizeof(UM));
+
+	/* XXX : more severe check is necessary */
+	x = VR((P)BDY(mfl));
+	y = vl->v == x ? vl->next->v : vl->v;
+
+	for ( i = 0, t = mfl; i < fn; i++, t = NEXT(t) ) {
+		gm[i] = (pointer)UMALLOC(getdeg(x,(P)BDY(t)));
+		ptosfum((P)BDY(t),gm[i]);
+	}
+
+	/* reorder f if necessary */
+	if ( vl->v != x ) {
+		reordvar(vl,x,&nvl); reorderp(nvl,vl,f,&g);
+		vl = nvl; f = g;
+	}
+	dx = getdeg(x,f);
+	dy = getdeg(y,f);
+	if ( bound < dy+1 ) bound = dy+1;
+	fl = BMALLOC(dx,bound);
+	ptosfbm(bound,f,fl);
+	shiftsfbm(bound,fl,FTOIF(CONT(ev)));
+
+	/* fm = fl mod y */
+	fm = W_UMALLOC(dx);
+	cpyum(COEF(fl)[0],fm);
+	hm = W_UMALLOC(dx);
+
+	q = W_UMALLOC(dx);
+	r = (BM *)MLALLOC(fn*sizeof(BM));
+	for ( i = 0; i < fn-1; i++ ) {
+		/* fl = gm[i]*hm mod y */
+		divsfum(fm,gm[i],hm);
+		/* fl is replaced by the cofactor of gk mod y^bound */
+		/* r[i] = gk */
+		sfhenmain2(fl,gm[i],hm,bound,r+i);
+		cpyum(hm,fm);
+	}
+	/* finally, fl must be the lift of gm[fn-1] */
+	r[i] = fl;
+
+	for ( i = fn-1, top = 0; i >= 0; i-- ) {
+		sfbmtop(bound,r[i],x,y,&s);
+		reorderp(CO,vl,s,&u);
 		MKNODE(t,u,top); top = t;
 	}
 	*rp = top;
