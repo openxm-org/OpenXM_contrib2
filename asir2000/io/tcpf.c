@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.38 2003/03/07 03:12:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.39 2003/03/07 06:39:57 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -425,17 +425,23 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 		generate_port(use_unix,server_port_str);
 		if ( !conn_to_serv ) {
 			cs = try_bind_listen(use_unix,control_port_str);
+			if ( cs < 0 ) continue;
 			ss = try_bind_listen(use_unix,server_port_str);
+			if ( ss < 0 ) continue;
 		}
 		spawn_server(host,launcher,server,
 			use_unix,use_ssh,use_x,conn_to_serv,
 				control_port_str,server_port_str);
 		if ( conn_to_serv ) {
 			cs = try_connect(use_unix,host,control_port_str);
+			if ( cs < 0 ) continue;
 			ss = try_connect(use_unix,host,server_port_str);
+			if ( ss < 0 ) continue;
 		} else {
 			cs = try_accept(use_unix,cs);
+			if ( cs < 0 ) continue;
 			ss = try_accept(use_unix,ss);
+			if ( ss < 0 ) continue;
 		}
 	} while ( cs < 0 || ss < 0 );
 
