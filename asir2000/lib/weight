@@ -827,7 +827,8 @@ def weight(PolyList,Vars,FLAG){
 	if(TMP[1]!=[])
 		RET=append(RET,TMP[1])$
 	else{
-		RET=append(RET,leastsq(0,ExpMat,Vars,FLAG,7))$
+		TMP=leastsq(0,ExpMat,Vars,FLAG,7)$
+		RET=append(RET,TMP)$
 	}
 
 	ExpMat=qsort(ExpMat,junban)$
@@ -843,22 +844,27 @@ def weight(PolyList,Vars,FLAG){
 		if(TMP[1]!=[])
 			RET=append(RET,TMP[1])$
 		else{
-			RET=append(RET,leastsq(0,ExpMat,Vars,FLAG,9))$
+			TMP=leastsq(0,ExpMat,Vars,FLAG,9)$
+			RET=append(RET,TMP)$
 		}
-
 	}
 	else{
-		TMP0=map(ltov,TMP0)$
+		TMP=map(ltov,TMP[1])$
 
-		for(I=0;I<length(TMP0);I++)
-			if(TMP0[I][0]==3)
-				TMP0[I][0]=5$
-			else if(TMP0[I][0]==4)
-				TMP0[I][0]=6$
+		for(I=0;I<length(TMP);I++){
+			if(TMP[I][0]==3)
+				TMP[I][0]=5$
+			else if(TMP[I][0]==4)
+				TMP[I][0]=6$
+			else if(TMP[I][0]==7)
+				TMP[I][0]=9$
+			else if(TMP[I][0]==8)
+				TMP[I][0]=10$
+		}
 
-		TMP0=map(vtol,TMP0)$
+		TMP=map(vtol,TMP)$
 
-		RET=append(RET,TMP0)$
+		RET=append(RET,TMP)$
 	}
 
 	return RET$
