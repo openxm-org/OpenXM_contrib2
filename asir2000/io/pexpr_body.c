@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.5 2004/12/02 13:48:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.6 2004/12/17 03:09:08 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -11,6 +11,7 @@ void PRINTR();
 void PRINTLIST();
 void PRINTVECT();
 void PRINTMAT();
+void PRINTIMAT(); /* IMAT */
 void PRINTSTR();
 void PRINTCOMP();
 void PRINTDP();
@@ -60,6 +61,10 @@ Obj p;
 				PRINTVECT(vl,(VECT)p); break;
 			case O_MAT:
 				PRINTMAT(vl,(MAT)p); break;
+/* IMAT */
+			case O_IMAT:
+				PRINTIMAT(vl,(IMAT)p); break;
+/* IMAT */
 			case O_STR:
 				PRINTSTR((STRING)p); break;
 			case O_COMP:
@@ -289,6 +294,49 @@ MAT mat;
 			break;
 	}
 }
+
+/* IMAT */
+#if !defined(CPRINT)
+void PRINTIMAT(vl,xmat)
+VL vl;
+IMAT xmat;
+{
+	int i,j,c;
+	int row, col, cr;
+	IMATC Im;
+	IENT ent;
+
+	row = xmat->row;
+	col = xmat->col;
+	Im = (pointer)xmat->root;
+	if ( xmat->clen == 0 ) {
+		for(j = 0; j< row; j++) {
+			PUTS("( ");
+			for(i = 0; i < col; i++) PUTS("0 ");
+			PUTS(")");
+			if ( j < row - 1 ) PUTS("\n");
+		}
+		return;
+	}
+	c = -1;
+	GetNextIent(&Im, &ent, &c);
+	for(j = 0; j < row; j++) {
+		PUTS("( ");
+		for(i = 0; i < col; i++) {
+			cr = j * row + i;
+			if( ent.cr == cr ) {
+				PRINTEXPR(vl, (pointer)ent.body); PUTS(" ");
+				GetNextIent(&Im, &ent, &c);
+			} else {
+				PUTS("0 ");
+			}
+		}
+		PUTS(")");
+		if ( j < row - 1 ) PUTS("\n");
+	}
+}
+#endif
+/* IMAT */
 
 void PRINTLIST(vl,list)
 VL vl;

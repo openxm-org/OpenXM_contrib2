@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.16 2004/06/27 03:15:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.17 2004/08/18 00:17:02 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,6 +89,8 @@ struct oAFUNC afunc[] = {
 /* O_RANGE=20 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_TB=21 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_DPV=22 */	{adddv,subdv,muldv,notdef,notdef,chsgndv,compdv},
+/* ???=23 */	{0,0,0,0,0,0,0},
+/* O_MAT=24 */	{AddMatI,SubMatI,MulMatG,notdef,notdef,ChsgnI,notdef},
 };
 
 void arf_init() {
@@ -152,11 +154,12 @@ Obj a,b,*r;
 	if ( !a && !b )
 		*r = 0;
 	else if ( !a || !b ) {
-		if ( !a )
-			a = b;
+		if ( !a ) a = b;
 		/* compute a*0 */
 		if ( OID(a) == O_MAT || OID(a) == O_VECT )
 			(*(afunc[O_MAT].mul))(vl,a,0,r);
+		else if ( OID(a) == O_IMAT )
+			(*(afunc[O_IMAT].mul))(vl,0,a,r);
 		else
 			*r = 0;
 	} else if ( (aid = OID(a)) == (bid = OID(b)) )
@@ -196,6 +199,9 @@ Obj a,b,*r;
 					(*afunc[bid].mul)(vl,a,b,r);
 				else
 					notdef(vl,a,b,r);
+				break;
+			case O_IMAT:
+				(*afunc[O_IMAT].mul)(vl,a,b,r);
 				break;
 			default:
 					notdef(vl,a,b,r);

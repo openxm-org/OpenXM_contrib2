@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.11 2004/07/26 07:15:46 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.12 2004/08/18 06:30:07 saito Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -366,50 +366,6 @@ void mulmatmat(vl,a,b,c)
 VL vl;
 MAT a,b,*c;
 {
-#if 0
-	int arow,bcol,i,j,k,m;
-	MAT t;
-	pointer s,u,v;
-	pointer *ab,*tb;
-
-	/* Mismach col and row */
-	if ( a->col != b->row ) {
-		*c = 0; error("mulmat : size mismatch"); 
-	} else {
-		arow = a->row; m = a->col; bcol = b->col;
-		MKMAt(t,arow,bcol);
-		for ( i = 0; i < arow; i++ )
-			for ( j = 0, ab = BDY(a)[i], tb = BDY(t)[i]; j < bcol; j++ ) {
-				for ( k = 0, s = 0; k < m; k++ ) {
-					arf_mul(vl,(Obj)ab[k],(Obj)BDY(b)[k][j],(Obj *)&u);
-					arf_add(vl,(Obj)s,(Obj)u,(Obj *)&v);
-					s = v;
-				}
-				tb[j] = s;
-			}
-		*c = t;
-	}
-}
-
-void Strassen(arg, c)
-NODE arg;
-Obj *c;
-{
-  AT a,b;
-	VL vl;
-
-	/* tomo */
-	a = (MAT)ARG0(arg);
-	b = (MAT)ARG1(arg);
-	vl = CO;
-	strassen(CO, a, b, c);
-}
-
-void strassen(vl,a,b,c)
-VL vl;
-MAT a,b,*c;
-{
-#endif
 	int arow,bcol,i,j,k,m, h, arowh, bcolh;
 	MAT t, a11, a12, a21, a22;
 	MAT p, b11, b12, b21, b22;
@@ -456,25 +412,6 @@ MAT a,b,*c;
 			m++;
 			pflag2 = 1;
 		}
-/*
-		MKMAT(aa, arow, m);
-		for (i = 0; i < a->row; i++) {
-			for (j = 0; j < a->col; j++) {
-				aa->body[i][j] = a->body[i][j];
-			}
-		}
-		i = bcol/2;
-		j = bcol - i;
-		if (i != j) {
-			bcol++;
-		}
-		MKMAT(bb, m, bcol);
-		for (i = 0; i < b->row; i++) {
-			for ( j = 0; j < b->col; j++) {
-				bb->body[i][j] = b->body[i][j];
-			}
-		} 
-*/
 
 		/* split matrix A and B */
 		a1row = arow/2; a1col = m/2;

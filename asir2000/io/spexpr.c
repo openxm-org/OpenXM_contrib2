@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.33 2004/05/14 06:02:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.34 2004/07/13 07:59:54 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -90,6 +90,7 @@ extern int hideargs;
 #define PRINTLIST sprintlist
 #define PRINTVECT sprintvect
 #define PRINTMAT sprintmat
+#define PRINTIMAT sprintimat
 #define PRINTSTR sprintstr
 #define PRINTCOMP sprintcomp
 #define PRINTDP sprintdp

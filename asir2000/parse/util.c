@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.10 2003/08/23 01:42:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.11 2004/06/21 00:58:32 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -120,7 +120,7 @@ pointer a;
 NODE ind;
 pointer *vp;
 {
-	Obj len,row,col;
+	Obj len,row,col,trg;
 	int i;
 	NODE n,n0;
 	VECT v;
@@ -166,6 +166,17 @@ pointer *vp;
 					v->body = (pointer *)BDY((MAT)a)[QTOS((Q)row)];
 					a = (pointer)v;
 				}
+				break;
+			case O_IMAT:
+				row = (Obj)BDY(ind);
+				ind = NEXT(ind);
+				col = (Obj)BDY(ind);
+				if ( ((IMAT)a)->row < QTOS((Q)row) ||
+					((IMAT)a)->col < QTOS((Q)col) ||
+					(QTOS((Q)row) < 0) || (QTOS((Q)col) < 0))
+						error("putarray : Out of range");
+				GetIbody((IMAT)a, QTOS((Q)row), QTOS((Q)col), (Obj)&trg);
+				a = (pointer)trg;
 				break;
 			case O_LIST:
 				n0 = BDY((LIST)a); i = QTOS((Q)BDY(ind));
@@ -232,6 +243,16 @@ pointer b;
 						BDY((MAT)a)[QTOS((Q)row)][QTOS((Q)col)] = b;
 				} else
 					error("putarray : invalid assignment");
+				break;
+			case O_IMAT:
+				row = (Obj)BDY(ind);
+				ind = NEXT(ind);
+				col = (Obj)BDY(ind);
+				if ( ((IMAT)a)->row < QTOS((Q)row) ||
+					((IMAT)a)->col < QTOS((Q)col) ||
+					(QTOS((Q)row) < 0) || (QTOS((Q)col) < 0))
+						error("putarray : Out of range");
+				PutIent((IMAT)a, QTOS((Q)row), QTOS((Q)col), (Obj)b);
 				break;
 			case O_LIST:
 				if ( NEXT(ind) ) {

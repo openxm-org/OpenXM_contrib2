@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.41 2004/12/04 09:39:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.42 2004/12/13 23:04:16 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -758,6 +758,10 @@ void Psize(NODE arg,LIST *rp)
 				break;
 			case O_MAT:
 				n = ((MAT)ARG0(arg))->row; m = ((MAT)ARG0(arg))->col;
+				STOQ(m,q); MKNODE(s,q,0); STOQ(n,q); MKNODE(t,q,s);
+				break;
+			case O_IMAT:
+				n = ((IMAT)ARG0(arg))->row; m = ((IMAT)ARG0(arg))->col;
 				STOQ(m,q); MKNODE(s,q,0); STOQ(n,q); MKNODE(t,q,s);
 				break;
 			default:

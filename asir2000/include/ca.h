@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.53 2004/12/02 13:48:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.54 2004/12/10 07:36:34 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,6 +125,9 @@ typedef void * pointer;
 #define O_DPV 22
 #define O_QUOTEARG 23
 #define O_VOID -1
+/* IMAT */
+#define O_IMAT 24
+/* IMAT */
 
 #define N_Q 0
 #define N_R 1
@@ -323,6 +326,28 @@ typedef struct oGF2MAT {
 	unsigned int **body;
 } *GF2MAT, *GFMMAT;
 
+/* IMAT */
+#define IMATCH 64
+
+typedef struct oIENT {
+	int cr;
+	int row, col;
+	pointer *body;
+} IENT;
+
+typedef struct oIMATC {
+	pointer *fore;
+	pointer *next;
+	IENT ient[IMATCH];
+} *IMATC;
+
+typedef struct oIMAT {
+	short id;
+	int row, col, clen;
+	pointer *root;
+	pointer *toor;
+} *IMAT;
+/* IMAT */
 typedef struct oLIST {
 	short id;
 	short pad;
@@ -788,6 +813,10 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWMAT(l) ((l)=(MAT)MALLOC(sizeof(struct oMAT)),OID(l)=O_MAT)
 #define NEWGF2MAT(l) ((l)=(GF2MAT)MALLOC(sizeof(struct oGF2MAT)),OID(l)=O_GF2MAT)
 #define NEWGFMMAT(l) ((l)=(GFMMAT)MALLOC(sizeof(struct oGF2MAT)),OID(l)=O_GFMMAT)
+/* IMAT */
+#define NEWIMAT(l) ((l)=(IMAT)MALLOC(sizeof(struct oIMAT)),OID(l)=O_IMAT,l->clen=0,l->root=0,l->toor=0)
+#define NEWIENT(l) ((l)=(IMATC)MALLOC(sizeof(struct oIMATC)),l->fore=0,l->next=0)
+/* IMAT */
 #define NEWReal(q) ((q)=(Real)MALLOC_ATOMIC(sizeof(struct oReal)),OID(q)=O_N,NID(q)=N_R)
 #define NEWAlg(r) ((r)=(Alg)MALLOC(sizeof(struct oAlg)),OID(r)=O_N,NID(r)=N_A)
 #define NEWDAlg(r) ((r)=(DAlg)MALLOC(sizeof(struct oDAlg)),OID(r)=O_N,NID(r)=N_DA)
@@ -2531,6 +2560,28 @@ void afctrmain(VL vl,P p0,P p,int init,DCP *dcp);
 int divtmp(VL vl,int mod,P p1,P p2,P *q);
 int divtdcmp(VL vl,int mod,P p1,P p2,P *q);
 void GC_gcollect();
+
+/* IMAT */
+void Pnewimat(NODE, IMAT *);
+void PChsgnI(NODE, IMAT *);
+void Pm2Im(NODE, IMAT *);
+void PIm2m(NODE, MAT *);
+
+void AddMatI(VL, IMAT, IMAT, IMAT *);
+void MulMatI(VL, IMAT, IMAT, IMAT *);
+void MulMatG(VL, Obj, Obj, Obj *);
+void MulrMatI(VL, Obj, Obj, Obj *);
+void MulMatS(VL, IMAT, IMAT, IMAT *);
+void PutIent(IMAT, int, int, Obj);
+void GetIent(IMAT, int, int, Obj);
+void GetIbody(IMAT, int, int, Obj *);
+void ChsgnI(IMAT, IMAT *c);
+void AppendIent(IMAT, int, int, Obj);
+void MEnt(int, int, int, Obj, IENT *);
+void GetForeIent(IMATC *, IENT *, int *);
+void GetNextIent(IMATC *, IENT *, int *);
+void SubMatI(VL, IMAT, IMAT, IMAT *);
+/* IMAT */
 
 Z stoz(int c);
 Z utoz(unsigned int c);
