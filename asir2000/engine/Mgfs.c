@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.1 2001/06/20 09:32:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.2 2001/06/22 08:51:12 noro Exp $ */
 
 #include "ca.h"
 
@@ -188,8 +188,8 @@ UM f;
 		*sp = _mulsf(*sp,inv);
 }
 
-void addsf_trunc(int,int *,int *);
-void mulsf_trunc(int,int *,int *,int *);
+void addsfarray(int,int *,int *);
+void mulsfarray_trunc(int,int *,int *,int *);
 
 void mulsflum(n,f1,f2,fr)
 int n;
@@ -214,23 +214,38 @@ LUM f1,f2,fr;
 			px[i] = 0;
 		for ( max = MIN(DEG(f1),j), i = MAX(0,j-DEG(f2)); i <= max; i++ ) 
 			if ( w1[i] != 0 && w2[j - i] != 0 ) {
-				mulsf_trunc(n,p1[i],p2[j - i],w); addsf_trunc(n,w,px);
+				mulsfarray_trunc(n,p1[i],p2[j - i],w); addsfarray(n,w,px);
 			}
 	}
 }
 
-void addsf_trunc(n,a1,a2)
+void addsfarray(n,a1,a2)
 int n;
 int *a1,*a2;
 {
-	/* XXX */
+	int i;
+
+	for ( i = 0; i < n; i++, a1++, a2++ )
+		if ( *a1 )
+			*a2 = _addsf(*a1,*a2);
 }
 
-void mulsf_trunc(n,a1,a2,r)
+void mulsfarray_trunc(n,a1,a2,r)
 int n;
 int *a1,*a2,*r;
 {
-	/* XXX */
+	int mul,i,j;
+	int *c1,*c2,*cr;
+	int *pc1,*pc2,*pcr;
+
+	bzero(r,n*sizeof(int));
+	c1 = a1; c2 = a2; cr = r;
+	for ( i = 0; i < n; i++, cr++ ) {
+		if ( mul = *c2++ )
+		for ( j = 0, pc1 = c1, pcr = cr; j+i < n; j++, pc1++, pcr++ )
+			if ( *pc1 )
+				*pcr = _addsf(_mulsf(*pc1,mul),*pcr);
+	}
 }
 
 void eucsfum(f1,f2,a,b)
@@ -244,7 +259,7 @@ UM f1,f2,a,b;
 	g1 = W_UMALLOC(d); g2 = W_UMALLOC(d); a1 = W_UMALLOC(d);
 	a2 = W_UMALLOC(d); a3 = W_UMALLOC(d); wm = W_UMALLOC(d);
 	q = W_UMALLOC(d);
-	DEG(a1) = 0; COEF(a1)[0] = 1; DEG(a2) = -1;
+	DEG(a1) = 0; COEF(a1)[0] = _onesf(); DEG(a2) = -1;
 	cpyum(f1,g1); cpyum(f2,g2);
 	while ( 1 ) {
 		dr = divsfum(g1,g2,q); tum = g1; g1 = g2; g2 = tum;
@@ -253,7 +268,7 @@ UM f1,f2,a,b;
 		mulsfum(a2,q,wm); subsfum(a1,wm,a3); dr = divsfum(a3,f2,q);
 		tum = a1; a1 = a2; a2 = a3; a3 = tum; DEG(a3) = dr;
 	}
-	if ( COEF(g1)[0] != 1 )
+	if ( COEF(g1)[0] != _onesf() )
 		mulssfum(a2,_invsf(COEF(g1)[0]),a);
 	else 
 		cpyum(a2,a);
@@ -264,4 +279,102 @@ UM f1,f2,a,b;
 		DEG(wm) = 0; COEF(wm)[0] = _chsgnsf(_onesf());
 	}
 	divsfum(wm,f2,q); mulssfum(q,_chsgnsf(_onesf()),b);
+}
+
+void shiftsfum(UM,int,UM);
+
+void shiftsflum(n,f,ev)
+int n;
+LUM f;
+int ev;
+{
+	int d,i,j;
+	UM w,w1;
+	int *coef;
+	int **c;
+
+	d = f->d;
+	c = f->c;
+	w = W_UMALLOC(n);
+	w1 = W_UMALLOC(n);
+	for ( i = 0; i <= d; i++ ) { 
+		coef = c[i];
+		for ( j = n-1; j >= 0 && coef[j] == 0; j-- );
+		if ( j <= 0 )
+			continue;	
+		DEG(w) = j; bcopy(coef,COEF(w),(j+1)*sizeof(int));
+		shiftsfum(w,ev,w1);
+		bcopy(COEF(w1),coef,(j+1)*sizeof(int));
+	}
+}
+
+/* f(x) -> g(x) = f(x+a) */
+
+void shiftsfum(f,a,g)
+UM f;
+int a;
+UM g;
+{
+	int n,i;
+	UM pwr,xa,w,t;
+	int *c;
+
+	n = DEG(f);
+	if ( n <= 0 )
+		cpyum(f,g);
+	else {
+		c = COEF(f);
+
+		/* g = 0 */
+		DEG(g) = -1;
+
+		/* pwr = 1 */
+		pwr = W_UMALLOC(n); DEG(pwr) = 0; COEF(pwr)[0] = _onesf();
+
+		/* xa = x+a */
+		xa = W_UMALLOC(n); DEG(xa) = 1; 
+		COEF(xa)[0] = a; COEF(xa)[1] = _onesf();
+
+		w = W_UMALLOC(n);
+		t = W_UMALLOC(n);
+
+		/* g += pwr*c[0] */
+		for ( i = 0; i <= n; i++ ) {
+			mulssfum(pwr,c[i],w); addsfum(g,w,t); cpyum(t,g);
+			if ( i < n ) {
+				mulsfum(pwr,xa,t); cpyum(t,pwr);
+			}
+		}
+	}
+}
+
+/* clear the body of f */
+
+void clearsflum(bound,n,f)
+int bound,n;
+LUM f;
+{
+	int **c;
+	int i;
+
+	DEG(f) = 0;
+	for ( c = COEF(f), i = 0; i <= n; i++ )
+		bzero(c[i],(bound+1)*sizeof(int));
+}
+
+/* f += g */
+
+void addtosflum(bound,g,f)
+int bound;
+LUM g,f;
+{
+	int dg,i,j;
+	int **cg,**cf;
+
+	dg = DEG(g);
+	cg = COEF(g);
+	cf = COEF(f);
+	for ( i = 0; i <= dg; i++ )
+		for ( j = 0; j <= bound; j++ )
+			cf[i][j] = _addsf(cf[i][j],cg[i][j]);
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.4 2000/08/22 05:03:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gf.c,v 1.5 2001/05/09 01:41:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -74,6 +74,7 @@ void pwr_mod(P,P,V,P,int,N,P *);
 void rem_mod(P,P,V,P,int,P *);
 
 void Pnullspace(),Pgcda_mod(),Pftest(),Presfmain(),Ppwr_mod(),Puhensel();
+void Psfuhensel();
 
 void Pnullspace_ff();
 
@@ -83,6 +84,7 @@ void Plinear_form_to_vect(),Pvect_to_linear_form();
 void solve_linear_equation_gf2n(GF2N **,int,int,int *);
 void linear_form_to_array(P,VL,int,Num *);
 void array_to_linear_form(Num *,VL,int,P *);
+void sfuhensel(P,V,V,NODE *);
 
 extern int current_ff;
 
@@ -95,6 +97,7 @@ struct ftab gf_tab[] = {
 	{"resfmain",Presfmain,4},
 	{"pwr_mod",Ppwr_mod,6},
 	{"uhensel",Puhensel,4},
+	{"sfuhensel",Psfuhensel,3},
 	{0,0,0},
 };
 
@@ -175,6 +178,43 @@ NODE *rp;
 	for ( i = nf-1, top = 0; i >= 0; i-- ) {
 		lumtop(v,mod,bound,rlist->c[i],&s);
 		MKNODE(t,s,top); top = t;
+	}
+	*rp = top;
+}
+
+void Psfuhensel(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	P f;
+	V x,y;
+	NODE r;
+
+	f = (P)ARG0(arg);
+	x = VR((P)ARG1(arg));
+	y = VR((P)ARG2(arg));
+	sfuhensel(f,x,y,&r);
+	MKLIST(*rp,r);
+}
+
+void sfuhensel(f,x,y,rp)
+P f;
+V x,y;
+NODE *rp;
+{
+	ML lift;
+	int i;
+	P s,u;
+	NODE t,top;
+	VL vl,vl1;
+
+	NEWVL(vl1); vl1->v = y; NEXT(vl1) = 0;
+	NEWVL(vl); vl->v = x; NEXT(vl) = vl1;
+	sfhensel(5,f,x,&lift);
+	for ( i = lift->n-1, top = 0; i >= 0; i-- ) {
+		sflumtop(lift->bound,lift->c[i],x,y,&s);
+		reorderp(CO,vl,s,&u);
+		MKNODE(t,u,top); top = t;
 	}
 	*rp = top;
 }

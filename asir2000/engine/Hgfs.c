@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.2 2001/06/21 07:47:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.3 2001/06/22 08:51:12 noro Exp $ */
 
 #include "ca.h"
 
@@ -534,6 +534,7 @@ int sfberle(VL,P,int,GFS *,DCP *);
 void sfgcdgen(P,ML,ML *);
 void sfhenmain(LUM,ML,ML,ML *);
 void ptosflum(int,P,LUM);
+void sfhenmain2(LUM,UM,UM,int,LUM *);
 
 /* f = f(x,y) */
 
@@ -545,19 +546,17 @@ ML *listp;
 {
 	int i,j;
 	int fn,n,bound;
-	int *p;
-	int **pp;
-	ML blist,clist,rlist;
-	UM *b;
-	LUM fl,tl;
-	LUM *l;
+	ML rlist;
+	LUM fl;
 	VL vl,nvl;
 	V y;
-	int dx,dy;
+	int dx,dy,mev;
 	GFS ev;
-	P f1,g,g0,t,yev,c;
+	P f1,t,yev,c;
 	DCP dc;
 	LUM gl;
+	UM w,w1,q,fm,hm;
+	UM *gm;
 
 	clctv(CO,f,&vl);
 	if ( vl->v != x ) {
@@ -568,34 +567,60 @@ ML *listp;
 	dx = getdeg(x,f);
 	dy = getdeg(y,f);
 	if ( dx == 1 ) {
-		*listp = blist = MLALLOC(1); blist->n = 1; blist->c[0] = 0;
+		*listp = rlist = MLALLOC(1); rlist->n = 1; rlist->c[0] = 0;
 		return;
 	}
 	fn = sfberle(vl,f,count,&ev,&dc);
 	if ( fn <= 1 ) {
 		/* fn == 0 => short of evaluation points */
-		*listp = blist = MLALLOC(1); blist->n = fn; blist->c[0] = 0;
+		*listp = rlist = MLALLOC(1); rlist->n = fn; rlist->c[0] = 0;
 		return;
 	}
 	/* pass the the leading coeff. to the first element */
 	c = dc->c; dc = NEXT(dc);
 	mulp(vl,dc->c,c,&t); dc->c = t;
-	blist = MLALLOC(n); 
-	blist->n = fn;
-	for ( i = 0; i < fn; i++, dc = NEXT(dc) ) {
-		blist->c[i] = W_UMALLOC(UDEG(dc->c));
-		ptosfum(dc->c,blist->c[i]);
-	}
-	/* f(x,y) -> g = f(x,y+ev) */
-	MKV(y,t); addp(vl,t,(P)ev,&yev);
-	substp(vl,f,y,yev,&g);
-	substp(vl,g,y,0,&g0);
 
-	sfgcdgen(g0,blist,&clist);
-	blist->bound = clist->bound = dy;
-	W_LUMALLOC(dx,bound,gl);
-	ptosflum(bound,g,gl);
-	sfhenmain(gl,blist,clist,listp);
+	/* convert mod y-a factors into UM */
+	gm = (UM *)ALLOCA(fn*sizeof(UM));
+	for ( i = 0; i < fn; i++, dc = NEXT(dc) ) {
+		gm[i] = W_UMALLOC(UDEG(dc->c));
+		ptosfum(dc->c,gm[i]);
+	}
+
+	bound = dy+1;
+	/* f(x,y) -> f(x,y+ev) */
+	fl = LUMALLOC(dx,bound);
+	ptosflum(bound,f,fl);
+	shiftsflum(bound,fl,FTOIF(CONT(ev)));
+
+	/* fm = fl mod y */
+	fm = W_UMALLOC(dx);
+	DEG(fm) = dx;
+	for ( i = 0; i <= dx; i++ )
+		COEF(fm)[i] = COEF(fl)[i][0];
+	hm = W_UMALLOC(dx);
+
+	q = W_UMALLOC(dx);
+	rlist = MLALLOC(fn); rlist->n = fn; rlist->bound = bound;
+	for ( i = 0; i < fn-1; i++ ) {
+		fprintf(stderr,"%d\n",i);
+		/* fl = gm[i]*hm mod y */
+		divsfum(fm,gm[i],hm);
+		/* fl is replaced by the cofactor of gk mod y^bound */
+		/* rlist->c[i] = gk */
+		sfhenmain2(fl,gm[i],hm,bound,(LUM *)&rlist->c[i]);
+		cpyum(hm,fm);
+	}
+	/* finally, fl must be the lift of gm[fn-1] */
+	rlist->c[i] = fl;
+
+	/* y -> y-a */
+	w = W_UMALLOC(bound);
+	w1 = W_UMALLOC(bound);
+	mev = _chsgnsf(FTOIF(CONT(ev)));
+	for ( i = 0; i < fn; i++ )
+		shiftsflum(bound,(LUM)(rlist->c[i]),mev);
+	*listp = rlist;
 }
 
 /* main variable of f = x */
@@ -626,13 +651,13 @@ DCP *dcp;
 	q1 = field_order_sf()-1;
 	lc = DC(f)->c;
 	for ( j = 0, fn = n + 1, index = 0; 
-		index < q1 && j < count && fn > 1; ) {
+		index < q1 && j < count && fn > 1; index++ ) {
 		MKGFS(index,m);
 		substp(vl,lc,y,(P)m,&lc0);
 		if ( lc0 ) {
 			substp(vl,f,y,(P)m,&f0);
-			ptosfum(m,f,wf); cpyum(wf,wf1); 
-			diffsfum(m,wf1,wf2); gcdsfum(m,wf1,wf2,gcd);
+			ptosfum(f0,wf); cpyum(wf,wf1); 
+			diffsfum(wf1,wf2); gcdsfum(wf1,wf2,gcd);
 			if ( DEG(gcd) == 0 ) {
 				fctrsf(f0,&dc);
 				for ( dct = NEXT(dc), i = 0; dct; dct = NEXT(dct), i++ );
@@ -715,11 +740,20 @@ ML bqlist,cqlist,*listp;
 			pp[j][0] = px[j];
 	}
 	for ( i = 1; i < bound; i++ ) {
+		fprintf(stderr,".");
+		/* at this point, f = l[0]*l[1]*...*l[np-1] mod y^i */
 		mulsflum(i+1,l[0],l[1],wb0);
 		for ( j = 2; j < np; j++ ) {
 			mulsflum(i+1,l[j],wb0,wb1);
 			tlum = wb0; wb0 = wb1; wb1 = tlum;
 		}
+#if 1
+		/* check */
+		for ( j = 0, pp = COEF(f), pp1 = COEF(wb0); j <= n; j++ )
+			for ( k = 0; k < i; k++ )
+				if ( pp[j][k] != pp1[j][k] )
+					error("henmain : cannot happen");
+#endif
 		for ( j = n, px = COEF(wt); j >= 0; j-- )
 			px[j] = 0;
 		for ( j = n, pp = COEF(f), pp1 = COEF(wb0); j >= 0; j-- )
@@ -741,6 +775,145 @@ ML bqlist,cqlist,*listp;
 		for ( j = n, px = COEF(wq0); j >= 0; j-- ) 
 			px[j] = 0;
 	}
+	fprintf(stderr,"\n");
+}
+
+/* f = g0*h0 mod y -> f = gk*hk mod y^bound, f is replaced by hk */
+
+void sfhenmain2(f,g0,h0,bound,gp)
+LUM f;
+UM g0,h0;
+int bound;
+LUM *gp;
+{
+	int i,j,k,l;
+	int *px,*py;
+	int **pp,**pp1;
+	int n,np,dr,tmp;
+	UM wt,wa,wb,wq,wm,q,w1,w2,wh1,wg1;
+	UM wc,wd,we,wz;
+	LUM wb0,wb1;
+	int ng,nh;
+	LUM fk,gk,hk;
+	
+	n = f->d;
+	ng = g0->d;
+	nh = h0->d;
+
+	W_LUMALLOC(n,bound,wb0); W_LUMALLOC(n,bound,wb1);
+	wt = W_UMALLOC(n); wq = W_UMALLOC(n); q = W_UMALLOC(2*n);
+	wg1 = W_UMALLOC(2*n); wh1 = W_UMALLOC(2*n);
+	/* fk = gk*hk mod y^k */
+	W_LUMALLOC(n,bound,fk);
+	DEG(fk) = n;
+	for ( j = 0; j <= n; j++ )
+		COEF(fk)[j][0] = COEF(f)[j][0];
+
+	gk = LUMALLOC(ng,bound);
+	DEG(gk) = ng;
+	for ( j = 0; j <= ng; j++ )
+		COEF(gk)[j][0] = COEF(g0)[j];
+
+	W_LUMALLOC(nh,bound,hk);
+	DEG(hk) = nh;
+	for ( j = 0; j <= nh; j++ )
+		COEF(hk)[j][0] = COEF(h0)[j];
+
+	wc = W_UMALLOC(2*n); wd = W_UMALLOC(2*n); we = W_UMALLOC(2*n); wz = W_UMALLOC(2*n);
+
+	/* compute wa,wb s.t. wa*g0+wb*h0 = 1 mod y */
+	w1 = W_UMALLOC(ng); cpyum(g0,w1);
+	w2 = W_UMALLOC(nh); cpyum(h0,w2);
+	wa = W_UMALLOC(2*n); wb = W_UMALLOC(2*n);  /* XXX */
+	eucsfum(w1,w2,wa,wb);
+
+#if 0
+	mulsfum(wa,g0,wc); mulsfum(wb,h0,wd); addsfum(wc,wd,we);
+	if ( DEG(we) != 0 || COEF(we)[0] != _onesf() )
+			error("henmain2 : cannot happen");
+#endif
+
+	fprintf(stderr,"bound=%d\n",bound);
+	for ( k = 1; k < bound; k++ ) {
+		fprintf(stderr,".");
+
+		/* at this point, f = gk*hk mod y^k */
+#if 0
+		for ( j = 0, pp = COEF(f), pp1 = COEF(fk); j <= n; j++ )
+			for ( l = 0; l < k; l++ )
+				if ( pp[j][l] != pp1[j][l] )
+					error("henmain2 : cannot happen");
+#endif
+
+		/* clear wt */
+		bzero(COEF(wt),(n+1)*sizeof(int));
+
+		/* wt = (f-gk*hk)/y^k */
+		pp = COEF(f); pp1 = COEF(fk);
+		for ( j = n; j >= 0; j-- )
+			COEF(wt)[j] = _subsf(pp[j][k],pp1[j][k]);
+		degum(wt,n);
+		
+		/* clear wq */
+		bzero(COEF(wq),(n+1)*sizeof(int));
+
+		/* compute wf1,wg1 s.t. wh1*g0+wg1*h0 = wt */
+		mulsfum(wa,wt,wh1); DEG(wh1) = divsfum(wh1,h0,q);
+		mulsfum(wh1,g0,wc); subsfum(wt,wc,wd); DEG(wd) = divsfum(wd,h0,wg1);
+
+		/* check */
+#if 0
+		if ( DEG(wd) >= 0 || DEG(wg1) > ng )
+			error("henmain2 : cannot happen");
+
+		mulsfum(wg1,h0,wc); mulsfum(wh1,g0,wd); addsfum(wc,wd,we);
+		subsfum(we,wt,wz);
+		if ( DEG(wz) >= 0 )
+			error("henmain2 : cannot happen");
+#endif
+
+		/* fk += ((wg1*hk+wh1*gk)*y^k+wg1*wh1*y^(2*k) mod y^bound */
+		/* wb0 = wh1*y^k */
+		clearsflum(bound,n,wb0);
+		DEG(wb0) = DEG(wh1);
+		for ( i = 0; i <= DEG(wh1); i++ )
+			COEF(wb0)[i][k] = COEF(wh1)[i];
+		/* wb1 = gk*wb0 mod y^bound */
+		clearsflum(bound,n,wb1);
+		mulsflum(bound,gk,wb0,wb1);
+		/* fk += wb1 */
+		addtosflum(bound,wb1,fk);
+
+		/* wb0 = wg1*y^k */
+		clearsflum(bound,n,wb0);
+		DEG(wb0) = DEG(wg1);
+		for ( i = 0; i <= DEG(wg1); i++ )
+			COEF(wb0)[i][k] = COEF(wg1)[i];
+		/* wb1 = hk*wb0 mod y^bound */
+		clearsflum(bound,n,wb1);
+		mulsflum(bound,hk,wb0,wb1);
+		/* fk += wb1 */
+		addtosflum(bound,wb1,fk);
+
+		/* fk += wg1*wh1*y^(2*k) mod y^bound */
+		if ( 2*k < bound ) {
+			mulsfum(wg1,wh1,wt);
+			for ( i = 0; i <= DEG(wt); i++ )
+				COEF(fk)[i][2*k] = _addsf(COEF(fk)[i][2*k],COEF(wt)[i]);
+		}
+
+		/* gk += wg1*y^k, hk += wh1*y^k */
+		for ( i = 0; i <= DEG(wg1); i++ )
+			COEF(gk)[i][k] = COEF(wg1)[i];
+		for ( i = 0; i <= DEG(wh1); i++ )
+			COEF(hk)[i][k] = COEF(wh1)[i];
+	}
+	fprintf(stderr,"\n");
+	*gp = gk;
+	for ( i = 0; i <= DEG(hk); i++ )
+		for ( j = 0; j <= bound; j++ )
+			COEF(f)[i][j] = COEF(hk)[i][j];
+	DEG(f) = DEG(hk);
 }
 
 void ptosflum(bound,f,fl)
@@ -759,4 +932,33 @@ LUM fl;
 		ptosfum(COEF(dc),t);
 		bcopy(t->c,pp[d],(t->d+1)*sizeof(int));
 	}
+}
+
+/* x : main variable */
+
+void sflumtop(bound,fl,x,y,fp)
+int bound;
+LUM fl;
+V x,y;
+P *fp;
+{
+	int i,j,n;
+	int **c;
+	UM w;
+	int *coef;
+	DCP dc,dct;
+
+	n = fl->d;
+	c = fl->c;
+	w = W_UMALLOC(bound);
+	for ( i = 0, dc = 0; i <= n; i++ ) {
+		coef = c[i];
+		for ( j = bound-1; j >= 0 && coef[j] == 0; j-- );
+		if ( j < 0 )
+			continue;
+		DEG(w) = j; bcopy(coef,COEF(w),(j+1)*sizeof(int));
+		NEWDC(dct); STOQ(i,DEG(dct));
+		sfumtop(y,w,&COEF(dct)); NEXT(dct) = dc; dc = dct;
+	}
+	MKP(x,dc,*fp);
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.4 2000/12/05 01:24:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/M.c,v 1.5 2001/06/07 04:54:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -388,6 +388,23 @@ int n,bound;
 	for ( i = 0, c = (int **)COEF(p); i <= n; i++ ) {
 		c[i] = (int *)MALLOC_ATOMIC((bound+1)*sizeof(int));
 		bzero((char *)c[i],(bound+1)*sizeof(int));
+	}
+	return p;
+}
+
+BM BMALLOC(n,bound)
+int n,bound;
+{
+	BM p;
+	UM *c;
+	int i;
+
+	p = (BM)MALLOC(TRUESIZE(oBM,n,UM));
+	DEG(p) = n;
+	for ( i = 0, c = (UM *)COEF(p); i <= n; i++ ) {
+		c[i] = UMALLOC(bound);
+		DEG(c[i]) = -1;
+		bzero((char *)COEF(c[i]),(bound+1)*sizeof(int));
 	}
 	return p;
 }

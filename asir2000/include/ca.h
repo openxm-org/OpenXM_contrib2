@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.14 2001/06/07 04:54:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.15 2001/06/20 09:30:34 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -370,15 +370,24 @@ typedef struct oNODE {
 	struct oNODE *next;
 } *NODE;
 
+/* univariate poly over small finite field; dense */
 typedef struct oUM {
 	int d;
 	int c[1];
 } *UM;
 
+/* univariate poly with padic coeff */
 typedef struct oLUM {
 	int d;
 	int *c[1];
 } *LUM;
+
+/* bivariate poly over small finite field; dense */
+
+typedef struct oBM {
+	int d;
+	UM c[1];
+} *BM;
 
 typedef struct oML {
 	int n;
@@ -525,6 +534,22 @@ bzero((char *)(p),(int)(((n)+1)*sizeof(type))))
 	for ( ___i___ = 0, ___c___ = (int **)COEF(___q___); ___i___ <= n; ___i___++ ) {\
 		___c___[___i___] = (int *)ALLOCA(((bound)+1)*sizeof(int));\
 		bzero((char *)___c___[___i___],((bound)+1)*sizeof(int));\
+	}\
+	(p) = ___q___;\
+}
+
+#define W_BMALLOC(n,bound,p)\
+{\
+	BM ___q___;\
+	int ___i___;\
+	UM *___c___;\
+	(___q___) = (BM)ALLOCA(TRUESIZE(oBM,(n),UM));\
+	DEG(___q___) = n;\
+	___c___ = (UM *)COEF(___q___);\
+	for ( ___i___ = 0; ___i___ <= n; ___i___++ ) {\
+		___c___[___i___] = W_UMALLOC(bound);\
+		DEG(___c___[___i___]) = -1\
+		bzero((char *)COEF(___c___[___i___]),((bound)+1)*sizeof(int));\
 	}\
 	(p) = ___q___;\
 }
@@ -1095,6 +1120,7 @@ int int_bits(int);
 
 
 LUM LUMALLOC(int, int);
+BM BMALLOC(int, int);
 Obj ToAlg(Num);
 UM *berlemain(register int, UM, UM *);
 void *Risa_GC_malloc(size_t);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.7 2001/05/28 08:22:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.8 2001/06/20 09:30:33 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -406,6 +406,12 @@ UM wf;
 	GFS c;
 	int i;
 	DCP dc;
+
+	if ( OID(f) == O_N ) {
+		DEG(wf) = 0;
+		COEF(wf)[0] = FTOIF(CONT((GFS)f));
+		return;
+	}
 
 	for ( i = UDEG(f); i >= 0; i-- ) 
 		COEF(wf)[i] = 0;
