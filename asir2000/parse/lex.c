@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.25 2003/05/30 00:47:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.26 2003/08/21 08:05:02 saito Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -186,8 +186,26 @@ int yylex()
 				c = Getc();
 				if ( c == '\\' ) {
 					c1 = Getc();
-					if ( c1 == 'n' )
+					if ( c1 == 'n' ) {
 						c1 = '\n';
+                    }else if ( c1 == 't' ) {
+                        c1 = '\t';
+                    }else if ( isdigit(c1) ){
+                        d = c1 - '0';
+                        c1 = Getc();
+                        if ( isdigit(c1) ) {
+                             d = 8*d + (c1 - '0');
+                             c1 = Getc();
+                             if ( isdigit(c1) ) {
+                                 d = 8*d + (c1 - '0');
+                             }else {
+                                 Ungetc(c1);
+                             }
+                        }else {
+                            Ungetc(c1);
+                        }
+                        c1 = d;
+                    }
 					REALLOC_NBUF nbuf[i++] = c1;
 				} else {
 					REALLOC_NBUF nbuf[i++] = c;
