@@ -970,7 +970,7 @@
 # 	endif
 #	define OS_TYPE "LINUX"
 #       define LINUX_STACKBOTTOM
-#       define USE_MMAP
+/* #       define USE_MMAP */
 #	if 0
 #	  define HEURISTIC1
 #         undef STACK_GRAN
