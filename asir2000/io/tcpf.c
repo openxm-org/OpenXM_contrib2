@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.10 2000/08/21 08:31:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.11 2000/08/22 05:04:18 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -352,6 +352,13 @@ Q *rp;
 	/* client mode */
 	cn = get_iofp(cs,cport_str,0);
 	sn = get_iofp(ss,sport_str,0);
+	/* get_iofp returns -1 if the laucher could not spawn the server */
+	if ( sn < 0 ) {
+		/* we should terminate the launcher */
+		ox_send_cmd(cn,SM_shutdown); ox_flush_stream_force(cn);
+		STOQ(-1,*rp);
+		return;
+	}
 
 	/* register server to the server list */
 	ind = register_server(use_unix,cn,sn);
@@ -441,6 +448,13 @@ Q *rp;
 	/* client mode */
 	cn = get_iofp(cs,control_port_str,0);
 	sn = get_iofp(ss,server_port_str,0);
+	/* get_iofp returns -1 if the laucher could not spawn the server */
+	if ( sn < 0 ) {
+		/* we should terminate the launcher */
+		ox_send_cmd(cn,SM_shutdown); ox_flush_stream_force(cn);
+		STOQ(-1,*rp);
+		return;
+	}
 
 	/* register server to the server list */
 	ind = register_server(use_unix,cn,sn);

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.5 2000/08/21 08:31:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.6 2000/08/22 05:04:18 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -368,6 +368,9 @@ int is_server;
 	} else {
 		/* client : read -> write */
 		read_char(iofp[i].in,&rc);
+		/* special care for a failure of spawing a server */
+		if ( rc !=0 && rc != 1 && rc != 0xff )
+			return -1;	
 		write_char(iofp[i].out,&c); ox_flush_stream_force(i);
 	}
 	iofp[i].conv = c == rc ? 0 : 1;

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.3 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.4 2000/08/22 05:04:18 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -312,6 +312,7 @@ char *dname;
 	int pid;
 	char wname[BUFSIZ];
 	char buf[BUFSIZ];
+	char errcode;
 
 	pid = fork();
 	if ( pid )
@@ -349,6 +350,10 @@ char *dname;
 			putenv("DISPLAY=");
 			execl(prog,prog,0);
 		}
+		/* On failure */
+		errcode = 2;
+		write(4,&errcode,1);
+		exit(1);
 	}
 #endif
 }
