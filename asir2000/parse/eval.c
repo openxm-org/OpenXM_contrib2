@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.5 2000/08/22 05:04:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.6 2000/09/21 09:19:27 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -185,7 +185,6 @@ FNODE f;
 			}
 			break;
 #endif
-#if 1
 		case I_PRESELF:
 			f1 = (FNODE)FA1(f);
 			if ( ID(f1) == I_PVAR ) {
@@ -233,15 +232,16 @@ FNODE f;
 					putarray(a,tn,val = eval((FNODE)FA1(f))); 
 				}
 			} else if ( ID(f1) == I_POINT ) {
-				/* a->member = a1 */
 				/* f1 <-> FA0(f1)->FA1(f1) */
 				a = eval(FA0(f1));
-				a1 = eval(FA1(f));
-				assign_to_member(a,(char *)FA1(f1),a1);
-				val = a1;
+				assign_to_member(a,(char *)FA1(f1),val = eval((FNODE)FA1(f)));
+			} else if ( ID(f1) == I_INDEX ) {
+				/* f1 <-> FA0(f1)[FA1(f1)] */
+				a = eval((FNODE)FA0(f1)); ind = (NODE)FA1(f1);
+				evalnodebody(ind,&tn);
+				putarray(a,tn,val = eval((FNODE)FA1(f)));
 			}
 			break;
-#endif
 		case I_ANS:
 			if ( (pv =(int)FA0(f)) < (int)APVS->n ) 
 				val = APVS->va[pv].priv;
