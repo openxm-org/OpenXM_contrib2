@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.20 2000/10/06 06:05:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.21 2000/11/07 06:35:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -665,7 +665,6 @@ void ox_asir_init(int argc,char **argv)
 #if defined(THINK_C)
 	param_init();
 #endif
-	StackBottom = &tmp + 1; /* XXX */
 	rtime_init();
 	env_init();
 	endian_init();
@@ -903,7 +902,6 @@ int asir_ox_init(int byteorder)
 #if defined(THINK_C)
 	param_init();
 #endif
-	StackBottom = &tmp + 1; /* XXX */
 	rtime_init();
 	env_init();
 	endian_init();

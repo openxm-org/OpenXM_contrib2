@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.2 2000/08/21 08:31:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.3 2000/08/22 05:04:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,7 +60,6 @@ extern jmp_buf environnement;
 #endif
 
 extern jmp_buf env;
-extern int *StackBottom;
 extern char *parse_strp;
 extern int do_file;
 
@@ -91,7 +90,6 @@ void Init_Asir(int argc,char **argv)
 #if defined(THINK_C)
 	param_init();
 #endif
-	StackBottom = &tmp + 1; /* XXX */
 	rtime_init();
 	env_init();
 	endian_init();

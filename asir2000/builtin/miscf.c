@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.7 2000/08/21 08:31:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.8 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,6 +60,8 @@ void Pr2g(), Pread_cmo(), Pwrite_cmo();
 void Pgc(),Pbatch(),Psend_progress();
 void Pnull_command();
 void Pgetenv();
+void Pget_addr(),Phex_dump();
+void Ppeek(),Ppoke();
 
 void delete_history(int,int);
 
@@ -82,6 +84,10 @@ struct ftab misc_tab[] = {
 	{"gc",Pgc,0},
 	{"batch",Pbatch,2},
 	{"send_progress",Psend_progress,-2},
+	{"get_addr",Pget_addr,1},
+	{"hex_dump",Phex_dump,2},
+	{"peek",Ppeek,1},
+	{"poke",Ppoke,2},
 #if INET && !defined(VISUAL) && DO_PLOT
 	{"xpause",Pxpause,0},
 #endif
@@ -395,6 +401,95 @@ void Psend_progress(NODE arg,Q *rp)
 		msg = "";
 	send_progress(per,msg);
 #endif
+	*rp = 0;
+}
+
+void Pget_addr(arg,rp)
+NODE arg;
+Q *rp;
+{
+	pointer obj;
+	unsigned int u,l;
+	N n;
+
+	obj = ARG0(arg);
+	if ( sizeof(pointer) == sizeof(unsigned int) ) {
+		UTOQ((unsigned int)obj,*rp);
+	} else {
+		/* a pointer must fit in long */
+		u = ((unsigned long)obj)>>32;
+		l = ((unsigned long)obj)&(unsigned long)0xffffffff;
+		if ( u ) {
+			n = NALLOC(2); PL(n) = 2; BD(n)[0] = l; BD(n)[1] = u;
+			NTOQ(n,1,*rp);
+		} else {
+			UTOQ(l,*rp);
+		}
+	}
+}
+
+unsigned char *qtoaddr(q)
+Q q;
+{
+	unsigned char *addr;
+	N n;
+
+	if ( !q )
+		return 0;
+	n = NM(q);
+	if ( (sizeof(pointer) == sizeof(unsigned int)) || (PL(n) == 1) )
+		addr = (char *)BD(n)[0];
+	else {
+		/* a pointer must fit in long */
+		addr = (char *)((((unsigned long)BD(n)[1])<<32) 
+			| ((unsigned long)BD(n)[0]));
+	}
+	return addr;
+}
+
+void Phex_dump(arg,rp)
+NODE arg;
+Q *rp;
+{
+	unsigned char *start;
+	int len,i;
+
+	*rp = 0;
+	start = qtoaddr((Q)ARG0(arg));
+	len = QTOS((Q)ARG1(arg));
+	for ( i = 0; i < len; i++ ) {
+		if ( !(i%16) )
+			fprintf(asir_out,"%08x: ",start+i);
+		fprintf(asir_out,"%02x",start[i]);
+		if ( !((i+1)%16) )
+			fprintf(asir_out,"\n");
+		else if ( !((i+1)%4) )
+			fprintf(asir_out," ");
+	}
+	if ( i%16 )
+		fprintf(asir_out,"\n");
+}
+
+void Ppeek(arg,rp)
+NODE arg;
+Q *rp;
+{
+	unsigned int b;
+	unsigned char *a;
+
+	a = qtoaddr((Q)ARG0(arg));
+	b = (unsigned int) (*a);
+	UTOQ(b,*rp);
+}
+
+void Ppoke(arg,rp)
+NODE arg;
+Q *rp;
+{
+	unsigned char *addr;
+
+	addr = qtoaddr((Q)ARG0(arg));
+	*addr = (unsigned char)QTOS((Q)ARG1(arg));
 	*rp = 0;
 }
 

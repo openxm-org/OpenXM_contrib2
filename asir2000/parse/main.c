@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.4 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.5 2000/08/22 05:04:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,7 +60,6 @@ extern jmp_buf environnement;
 #endif
 
 extern jmp_buf env;
-extern int *StackBottom;
 
 double get_current_time();
 extern int mpi_nprocs,mpi_myid;
@@ -89,7 +88,6 @@ char *argv[];
 	char *slash,*binname;
 	char *ptr;
 
-	StackBottom = &tmp + 1; /* XXX */
 #if MPI
 	mpi_init();
 	if ( mpi_myid ) {
