@@ -1,8 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.13 2002/09/27 04:24:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.14 2002/09/27 08:40:49 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
 
+extern int current_gfs_p;
 extern int up_kara_mag, current_gfs_q1;
 extern int *current_gfs_plus1;
 
@@ -319,7 +320,7 @@ void diffsfum(UM f,UM fd)
 
 	for ( i = DEG(f), dp = COEF(fd)+i-1, sp = COEF(f)+i; 
 		i >= 1; i--, dp--, sp-- ) {
-		*dp = _MULSF(*sp,_itosf(i));
+		*dp = _MULSF(*sp,_itosf(i%current_gfs_p));
 	}
 	degum(fd,DEG(f) - 1);
 }

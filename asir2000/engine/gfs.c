@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.12 2002/09/27 08:40:49 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.13 2002/09/30 06:13:07 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -1132,7 +1132,12 @@ int _itosf(int n)
 {
 	int i;
 
+	/* XXX */
+#if 0
 	n %= current_gfs_p;
+#else
+	n %= current_gfs_q;
+#endif
 	if ( !n )
 		return 0;
 	i = !current_gfs_ntoi ? n : current_gfs_ntoi[n];

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.12 2002/11/26 07:09:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.13 2002/11/26 08:21:49 noro Exp $ */
 
 #include "ca.h"
 
@@ -50,7 +50,7 @@ void sqfrsf(VL vl, P f, DCP *dcp)
 {
 	DCP dc,dct;
 	Obj obj;
-	P t,s,c;
+	P t,s,c,cont;
 	VL tvl,onevl;
 
 	simp_ff((Obj)f,&obj); f = (P)obj;
@@ -67,8 +67,8 @@ void sqfrsf(VL vl, P f, DCP *dcp)
 		t = f;
 		for ( tvl = vl; tvl; tvl = NEXT(tvl) ) {
 			onevl->v = tvl->v;
-			cont_pp_mv_sf(vl,onevl,t,&c,&s); t = s;
-			sqfrsf(vl,c,&dct);
+			cont_pp_mv_sf(vl,onevl,t,&cont,&s); t = s;
+			sqfrsf(vl,cont,&dct);
 			dc = append_dc(dc,NEXT(dct));
 		}
 		sqfrsfmain(vl,t,&dct);
