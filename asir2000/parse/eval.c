@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.36 2004/10/27 08:21:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.37 2004/11/22 02:26:56 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -988,6 +988,9 @@ void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *
 	char *longname;
 	int argc;
 
+	if ( getsecuremode() ) {
+		error("defining function is not permitted in the secure mode");
+	}
 	if ( *name == ':' )
 		name += 2;
 	if ( !module ) {
