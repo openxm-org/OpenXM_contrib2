@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.11 2000/03/16 04:55:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.12 2000/03/16 08:23:16 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -9,7 +9,7 @@
 #endif
 
 void ox_usr1_handler();
-void asir_ox_init();
+int asir_ox_init();
 
 extern jmp_buf environnement;
 
@@ -42,9 +42,9 @@ static void asir_popString();
 static void asir_popCMO(unsigned int);
 static void asir_popSerializedLocalObject();
 static LIST asir_GetErrorList();
-static char *name_of_cmd(unsigned int);
+static char *name_of_cmd(int);
 static char *name_of_id(int);
-static void asir_do_cmd(unsigned int,unsigned int);
+static void asir_do_cmd(int,unsigned int);
 
 #if MPI
 extern int mpi_nprocs,mpi_myid;
@@ -90,7 +90,7 @@ static void create_error(ERR *err,unsigned int serial,char *msg)
 
 void ox_main(int argc,char **argv) {
 	int id;
-	unsigned int cmd;
+	int cmd;
 	Obj obj;
 	USINT ui;
 	ERR err;
@@ -160,7 +160,7 @@ void ox_main(int argc,char **argv) {
 	}
 }
 
-static void asir_do_cmd(unsigned int cmd,unsigned int serial)
+static void asir_do_cmd(int cmd,unsigned int serial)
 {
 	MATHCAP client_mathcap;
 	Q q;
@@ -242,7 +242,7 @@ static char *name_of_id(int id)
 	}
 }
 
-static char *name_of_cmd(unsigned cmd)
+static char *name_of_cmd(int cmd)
 {
 	switch ( cmd ) {
 		case SM_popSerializedLocalObject:
@@ -725,7 +725,7 @@ int asir_ox_pop_cmo(void *cmo, int limit)
  * Executes an SM command.
  */
 
-void asir_ox_push_cmd(unsigned int cmd)
+void asir_ox_push_cmd(int cmd)
 {
 	int ret;
 	ERR err;
@@ -798,7 +798,7 @@ int asir_ox_peek_cmo_size()
  *          =1 => network byte order
  */
 
-void asir_ox_init(int byteorder)
+int asir_ox_init(int byteorder)
 {
 	int tmp;
 	char ifname[BUFSIZ];
@@ -873,4 +873,5 @@ void asir_ox_init(int byteorder)
 	do_message = 0;
 	create_my_mathcap("ox_asir");
 	asir_reset_handler();
+	return 0;
 }

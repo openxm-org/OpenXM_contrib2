@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.3 2000/02/08 04:47:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.4 2000/03/10 06:42:22 noro Exp $ */
 #include "com.h"
 
 /* version */
@@ -117,3 +117,11 @@ extern char *parse_strp;
 
 void ox_usr1_handler();
 unsigned int ox_recv();
+
+/* library functions */
+void asir_ox_push_cmo(void *);
+int asir_ox_pop_cmo(void *, int);
+void asir_ox_push_cmd(int);
+void asir_ox_execute_string(char *);
+int asir_ox_peek_cmo_size();
+int asir_ox_init(int);

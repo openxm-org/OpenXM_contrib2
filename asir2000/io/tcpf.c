@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.5 2000/01/11 06:43:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.6 2000/01/26 02:05:34 noro Exp $ */
 #if INET
 #include "ca.h"
 #include "parse.h"
@@ -986,11 +986,11 @@ void Pox_push_cmd(arg,rp)
 NODE arg;
 Q *rp;
 {
-	unsigned int ui;
+	int ui;
 	int index = QTOS((Q)ARG0(arg));
 
 	valid_mctab_index(index);
-	ui = (unsigned int)QTOS((Q)ARG1(arg));
+	ui = QTOS((Q)ARG1(arg));
 	ox_send_cmd(m_c_tab[index].c,ui);
 	*rp = 0;
 }
