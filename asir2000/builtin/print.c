@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.4 2001/08/06 01:48:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.5 2001/08/21 01:39:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -188,14 +188,13 @@ Obj *rp;
 			MKLIST(arg,t0);
 			switch ( f->id ) {
 				case I_LIST:
-					*rp = (Obj)arg; break;
+					MKSTR(head,"()"); break;
 				case I_EV:
-					MKSTR(head,"exponent_vector");
-					n = mknode(2,head,arg);
-					MKLIST(r,n);
-					*rp = (Obj)r;
-					break;
+					MKSTR(head,"exponent_vector"); break;
 			}
+			n = mknode(2,head,arg);
+			MKLIST(r,n);
+			*rp = (Obj)r;
 			break;
 		case I_FUNC:
 			fnodetotree((FNODE)FA1(f),&arg);
@@ -224,6 +223,10 @@ Obj *rp;
 			n = mknode(2,head,arg);
 			MKLIST(r,n);
 			*rp = (Obj)r;
+			break;
+		case I_STR:
+			MKSTR(head,FA0(f));
+			*rp = (Obj)head;
 			break;
 		case I_FORMULA:
 			*rp = (Obj)FA0(f);
