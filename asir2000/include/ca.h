@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.24 2001/09/11 01:30:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.25 2001/09/13 03:04:28 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -373,7 +373,8 @@ typedef struct oDL {
 
 typedef struct oCDP {
 	int len;
-	struct oCM *body;
+	int psindex;
+	unsigned short *body;
 } *CDP;
 
 typedef struct oCM {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.30 2001/09/17 01:18:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.31 2001/09/17 02:47:07 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -93,6 +93,7 @@ extern int do_weyl;
 
 extern DP_Print;
 
+void dptoca(DP,unsigned int **);
 void _tf_to_vect_compress(NODE,DL *,CDP *);
 NODE mul_dllist(DL,DP);
 void dp_imul_d(DP,Q,DP *);
@@ -227,31 +228,6 @@ int *b;
 	}
 }
 
-/* create compressed poly */
-
-void _dpmod_to_vect_compress(f,at,b)
-DP f;
-DL *at;
-CDP *b;
-{
-	int i,j,nv,len;
-	MP m;
-	CDP r;
-
-	nv = f->nv;
-	for ( m = BDY(f), len = 0; m; m = NEXT(m), len++ );
-	r = (CDP)MALLOC(sizeof(struct oCDP));
- 	r->len = len;
-	r->body = (CM)MALLOC_ATOMIC(sizeof(struct oCM)*len);
-
-	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
-		for ( ; !eqdl(nv,m->dl,at[i]); i++ );
-		r->body[j].index = i;
-		r->body[j].c = ITOS(m->c);
-	}
-	*b = r;
-}
-
 /* [t,findex] -> tf -> compressed vector */
 
 void _tf_to_vect_compress(tf,at,b)
@@ -272,7 +248,8 @@ CDP *b;
 	for ( m = BDY(f), len = 0; m; m = NEXT(m), len++ );
 	r = (CDP)MALLOC(sizeof(struct oCDP));
  	r->len = len;
-	r->body = (CM)MALLOC_ATOMIC(sizeof(struct oCM)*len);
+	r->psindex = (int)BDY(NEXT(tf));
+	r->body = (unsigned short *)MALLOC_ATOMIC(sizeof(unsigned short)*len);
 
 	NEWDL(s,nv);
 	for ( m = BDY(f), i = j = 0; m; m = NEXT(m), j++ ) {
@@ -281,33 +258,9 @@ CDP *b;
 		for ( k = 0; k < nv; k++ )
 			s->d[k] = t->d[k]+d1->d[k];
 		for ( ; !eqdl(nv,s,at[i]); i++ );
-		r->body[j].index = i;
-		r->body[j].c = ITOS(m->c);
+		r->body[j] = i;
 	}
 	*b = r;
-}
-
-/* dense vector -> CDP  */
-void compress_vect(a,n,rp)
-int *a;
-int n;
-CDP *rp;
-{
-	int i,j,nz;
-	CDP r;
-
-	for ( i = 0, nz = 0; i < n; i++ )
-		if ( a[i] ) nz++;
-	*rp = r = (CDP)MALLOC(sizeof(struct oCDP));
-	r->len = nz;
-	r->body = (CM)MALLOC(sizeof(struct oCM)*nz);
-	for ( i = 0, j = 0; i < n; i++ ) {
-		if ( a[i] ) {
-			r->body[j].index = i;
-			r->body[j].c = ITOS(a[i]);
-			j++;
-		}
-	}
 }
 
 void dp_to_vect(f,at,b)
@@ -751,6 +704,8 @@ NODE f;
 
 /* initial bases are monic */
 
+unsigned int **psca;
+
 NODE gb_f4_mod(f,m)
 NODE f;
 int m;
@@ -769,8 +724,13 @@ int m;
 	int rank,nred,nsp,nonzero,spcol;
 	int *indred,*isred;
 	CDP ri;
+	int pscalen;
 	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim1,eg_split_elim2;
 	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
+
+	/* initialize coeffcient array list of ps[] */
+	pscalen = pslen;
+	psca = (unsigned int **)MALLOC(pscalen*sizeof(unsigned int *));
 
 	init_eg(&eg_symb); init_eg(&eg_elim1); init_eg(&eg_elim2);
 	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
@@ -778,6 +738,7 @@ int m;
 		d = updpairs(d,g,i);
 		g = updbase(g,i);
 		gall = append_one(gall,i);
+		dptoca(ps[i],&psca[i]);
 	}
 	if ( gall )
 		nv = ((DP)ps[(int)BDY(gall)])->nv;
@@ -832,8 +793,7 @@ int m;
 		redmat = (CDP *)MALLOC(nred*sizeof(CDP));
 		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ )
 			_tf_to_vect_compress(BDY(r),at,&redmat[i]);
-		/* XXX */
-/*		reduce_reducers_mod(redmat,nred,col,m); */
+
 		/* register the position of the head term */
 		indred = (int *)MALLOC_ATOMIC(nred*sizeof(int));
 		bzero(indred,nred*sizeof(int));
@@ -841,7 +801,7 @@ int m;
 		bzero(isred,col*sizeof(int));
 		for ( i = 0; i < nred; i++ ) {
 			ri = redmat[i];
-			indred[i] = ri->body[0].index;
+			indred[i] = ri->body[0];
 			isred[indred[i]] = 1;
 		}
 
@@ -928,6 +888,12 @@ int m;
 				NEXT(mp) = 0;
 				MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
 				nh = newps_mod(nf,m);
+				if ( nh == pscalen ) {
+					psca = (unsigned int **)
+						REALLOC(psca,2*pscalen*sizeof(unsigned int *));
+					pscalen *= 2;
+				}
+				dptoca(ps[nh],&psca[nh]);
 				d = updpairs(d,g,nh);
 				g = updbase(g,nh);
 				gall = append_one(gall,nh);
@@ -2513,5 +2479,23 @@ VECT *rp;
 	MKVECT(r,n); *rp = r;
 	for ( i = 0; i < n; i++ )
 		mulq((Q)BDY(w)[i],(Q)c,(Q *)&BDY(r)[i]);
+}
+
+void dptoca(p,rp)
+DP p;
+unsigned int **rp;
+{
+	int i;
+	MP m;
+	unsigned int *r;
+
+	if ( !p )
+		*rp = 0;
+	else {
+		for ( m = BDY(p), i = 0; m; m = NEXT(m), i++ );
+		*rp = r = (unsigned int *)MALLOC_ATOMIC(i*sizeof(unsigned int));
+		for ( m = BDY(p), i = 0; m; m = NEXT(m), i++ )
+			r[i] = ITOS(C(m));
+	}
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.19 2001/09/17 02:47:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.20 2001/09/17 03:33:57 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1399,49 +1399,15 @@ int md;
 }
 
 /*
-	rlist : reducers list 
-	ht(BDY(rlist)) < ht(BDY(NEXT(rlist)) < ...  w.r.t. the term order
-*/
-
-void reduce_reducers_mod_compress(rlist,nred,at,col,md,redmatp,indredp)
-NODE rlist;
-int nred;
-DL *at;
-int col,md;
-CDP **redmatp;
-int **indredp;
-{
-	CDP *redmat;
-	CDP t;
-	int *indred,*w;
-	int i,k;
-	NODE r;
-
-	*redmatp = redmat = (CDP *)CALLOC(nred,sizeof(CDP));
-	*indredp = indred = (int *)CALLOC(nred,sizeof(int));
-	w = (int *)CALLOC(col,sizeof(int));
-
-	_dpmod_to_vect_compress(BDY(rlist),at,&redmat[0]);
-	indred[0] = redmat[0]->body[0].index;
-
-	for ( i = 1, r = NEXT(rlist); i < nred; i++, r = NEXT(r) ) {
-		bzero(w,col*sizeof(int));
-		_dpmod_to_vect(BDY(r),at,w);
-		reduce_sp_by_red_mod_compress(w,redmat,indred,i,col,md);
-		compress_vect(w,col,&redmat[i]);
-		indred[i] = redmat[i]->body[0].index;
-	}
-}
-
-/*
 	mat[i] : compressed reducers (i=0,...,nred-1)
 	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
 */
 
-int red_by_compress(m,p,r,hc,len)
+int red_by_compress(m,p,r,ri,hc,len)
 int m;
 unsigned int *p;
-register struct oCM *r;
+register unsigned int *r;
+register unsigned short *ri;
 unsigned int hc;
 register int len;
 {
@@ -1449,10 +1415,10 @@ register int len;
 	unsigned int dmy;
 	unsigned int *pj;
 
-	p[r->index] = 0; r++;
-	for ( len--; len; len--, r++ ) {
-		pj = p+r->index;
-		DMA(r->c,hc,*pj,up,lo);
+	p[*ri] = 0; r++; ri++;
+	for ( len--; len; len--, r++, ri++ ) {
+		pj = p+ *ri;
+		DMA(*r,hc,*pj,up,lo);
 		if ( up ) {
 			DSAB(m,up,lo,dmy,*pj);
 		} else
@@ -1482,6 +1448,8 @@ int len;
 		}
 }
 
+extern unsigned int **psca;
+
 void reduce_sp_by_red_mod_compress (sp,redmat,ind,nred,col,md)
 int *sp;
 CDP *redmat;
@@ -1494,7 +1462,6 @@ int md;
 	CDP ri;
 	unsigned int hc,up,lo,up1,lo1,c;
 	unsigned int *usp;
-	struct oCM *rib;
 
 	usp = (unsigned int *)sp;
 	/* reduce the spolys by redmat */
@@ -1506,7 +1473,7 @@ int md;
 			hc = md-hc;
 			ri = redmat[i];
 			len = ri->len;
-			red_by_compress(md,usp,ri->body,hc,len);
+			red_by_compress(md,usp,psca[ri->psindex],ri->body,hc,len);
 		}
 	}
 	for ( i = 0; i < col; i++ )
