@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.14 2002/09/27 08:40:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.15 2002/12/18 06:15:40 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -220,8 +220,8 @@ void kmulsfum(UM n1,UM n2,UM nr)
 	len = (d+1)*d2;
 	r0 = (unsigned int *)ALLOCA(len*sizeof(int));
 	bzero((char *)r0,len*sizeof(int));
-	m = W_UMALLOC(d2+1);
-	carry = W_UMALLOC(d2+1);
+	m = W_UMALLOC(d1+d2+1);
+	carry = W_UMALLOC(d1+d2+1);
 	t = W_UMALLOC(d1+d2+1);
 	s = W_UMALLOC(d1+d2+1);
 	for ( DEG(carry) = -1, i = 0, r = r0; i < d; i++, r += d2 ) {
@@ -245,16 +245,17 @@ void kmulsfum(UM n1,UM n2,UM nr)
 
 void kmulsfummain(UM n1,UM n2,UM nr)
 {
-	int d1,d2,h,len;
+	int d1,d2,h,len,d;
 	UM n1lo,n1hi,n2lo,n2hi,hi,lo,mid1,mid2,mid,s1,s2,t1,t2;
 
 	d1 = DEG(n1)+1; d2 = DEG(n2)+1; h = (d1+1)/2;
-	n1lo = W_UMALLOC(d1+1); n1hi = W_UMALLOC(d1+1);
-	n2lo = W_UMALLOC(d2+1); n2hi = W_UMALLOC(d2+1);
-	lo = W_UMALLOC(d1+d2+1); hi = W_UMALLOC(d1+d2+1);
-	mid1 = W_UMALLOC(d1+d2+1); mid2 = W_UMALLOC(d1+d2+1);
-	mid = W_UMALLOC(d1+d2+1);
-	s1 = W_UMALLOC(d1+d2+1); s2 = W_UMALLOC(d1+d2+1);
+	d = d1+d2+1;
+	n1lo = W_UMALLOC(d); n1hi = W_UMALLOC(d);
+	n2lo = W_UMALLOC(d); n2hi = W_UMALLOC(d);
+	lo = W_UMALLOC(d); hi = W_UMALLOC(d);
+	mid1 = W_UMALLOC(d); mid2 = W_UMALLOC(d);
+	mid = W_UMALLOC(d);
+	s1 = W_UMALLOC(d); s2 = W_UMALLOC(d);
 	extractum(n1,0,h,n1lo); extractum(n1,h,d1-h,n1hi);
 	extractum(n2,0,h,n2lo); extractum(n2,h,d2-h,n2hi);
 	kmulsfum(n1hi,n2hi,hi); kmulsfum(n1lo,n2lo,lo);

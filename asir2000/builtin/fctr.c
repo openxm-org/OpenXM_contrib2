@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.21 2004/05/13 14:02:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.22 2004/05/14 09:20:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -438,7 +438,7 @@ LIST *rp;
 		modfctrp(ARG0(arg),mod,NEWDDD,&dc);
 	else {
 		/* XXX 16384 should be replaced by a macro */
-		for ( i = 0, t = 1; t*mod < 16384; t *= mod, i++ );
+		for ( i = 1, t = 1; t*mod < 16384; t *= mod, i++ );
 		current_ff = FF_GFS;
 		setmod_sf(mod,i);
 		simp_ff((Obj)p,&u);
