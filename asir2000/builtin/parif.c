@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.6 2000/12/05 01:24:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.7 2000/12/22 09:58:32 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -228,8 +228,9 @@ NODE arg;
 	GEN a,v;
 	long ltop,lbot;
 	pointer r;
-	int ac;
+	int ac,opt;
 	char buf[BUFSIZ];
+	GEN (*dmy)();
 
 	if ( !f->f.binf ) {
 		sprintf(buf,"pari : %s undefined.",f->name);
@@ -244,19 +245,30 @@ NODE arg;
 			}
 			ltop = avma;
 			ritopa((Obj)ARG0(arg),&a);
-#if 1 || defined(__MWERKS__)
-		{
-			GEN (*dmy)();
-			
 			dmy = (GEN (*)())f->f.binf;
 			v = (*dmy)(a,MKPREC(arg,2,ARG1(arg)));
-		}
-#else
-			v = (GEN)(*f->f.binf)(a,MKPREC(arg,2,ARG1(arg)));
-#endif
 			lbot = avma;
 			patori(v,(Obj *)&r); gerepile(ltop,lbot,0);
 			return r;
+
+		case 2:
+			ac = argc(arg);
+			if ( !ac || ( ac > 2 ) ) {
+				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
+				error("");
+			}
+			if ( ac == 1 )
+				opt = 0;
+			else
+				opt = QTOS((Q)ARG1(arg));
+			ltop = avma;
+			ritopa((Obj)ARG0(arg),&a);
+			dmy = (GEN (*)())f->f.binf;
+			v = (*dmy)(a,opt);
+			lbot = avma;
+			patori(v,(Obj *)&r); gerepile(ltop,lbot,0);
+			return r;
+
 		default:
 			error("evalparif : not implemented yet.");
 	}
@@ -267,6 +279,12 @@ struct pariftab {
 	GEN (*f)();
 	int type;
 };
+
+/*
+ * type = 1 => argc = 1, second arg = precision
+ * type = 2 => argc = 1, second arg = optional (long int)
+ *
+ */
 
 struct pariftab pariftab[] = {
 {"abs",(GEN (*)())gabs,1},
@@ -392,6 +410,7 @@ struct pariftab pariftab[] = {
 {"wf",wf,1},
 {"wf2",wf2,1},
 {"zeta",gzeta,1},
+{"factorint",factorint,2},
 {0,0,0},
 };
 
