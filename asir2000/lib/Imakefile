@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/Imakefile,v 1.2 1999/12/21 04:20:43 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS= alpi bgk const contrib cyclic\
@@ -16,8 +16,8 @@ install2::
 	$(RM) -r $(ASIR_LIBDIR)/help-eg
 	$(RM) -r $(ASIR_LIBDIR)/html-jp
 	$(RM) -r $(ASIR_LIBDIR)/html-eg
-	gzip -dc help-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - )
-	gzip -dc help-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - )
-	gzip -dc html-jp.tgz | ( cd $(ASIR_LIBDIR); tar xf - )
-	gzip -dc html-eg.tgz | ( cd $(ASIR_LIBDIR); tar xf - )
+	uudecode -p help-jp.uu | gzip -dc | ( cd $(ASIR_LIBDIR); tar xf - )
+	uudecode -p help-eg.uu | gzip -dc | ( cd $(ASIR_LIBDIR); tar xf - )
+	uudecode -p html-jp.uu | gzip -dc | ( cd $(ASIR_LIBDIR); tar xf - )
+	uudecode -p html-eg.uu | gzip -dc | ( cd $(ASIR_LIBDIR); tar xf - )
 	$(LN) $(ASIR_LIBDIR)/help-eg $(ASIR_LIBDIR)/help
