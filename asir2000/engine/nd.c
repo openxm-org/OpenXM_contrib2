@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.77 2003/10/08 09:09:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.78 2003/10/10 01:51:09 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -2832,31 +2832,30 @@ int nd_get_exporigin(struct order_spec *ord)
 }
 
 void nd_setup_parameters(int nvar,int max) {
-	int i,j,n,elen,ord_o,ord_l,l,s;
+	int i,j,n,elen,ord_o,ord_l,l,s,wpd;
 	struct order_pair *op;
-	int bpe;
 
-	if ( !max ) bpe = nd_bpe;
-	else if ( max < 2 ) bpe = 1;
-	else if ( max < 4 ) bpe = 2;
-	else if ( max < 8 ) bpe = 3;
-	else if ( max < 16 ) bpe = 4;
-	else if ( max < 32 ) bpe = 5;
-	else if ( max < 64 ) bpe = 6;
-	else if ( max < 256 ) bpe = 8;
-	else if ( max < 1024 ) bpe = 10;
-	else if ( max < 65536 ) bpe = 16;
-	else bpe = 32;
-	if ( bpe != nd_bpe || nvar != nd_nvar )
-		nd_free_private_storage();
-	nd_bpe = bpe;
 	nd_nvar = nvar;
+	if ( max ) {
+		if ( max < 2 ) nd_bpe = 1;
+		else if ( max < 4 ) nd_bpe = 2;
+		else if ( max < 8 ) nd_bpe = 3;
+		else if ( max < 16 ) nd_bpe = 4;
+		else if ( max < 32 ) nd_bpe = 5;
+		else if ( max < 64 ) nd_bpe = 6;
+		else if ( max < 256 ) nd_bpe = 8;
+		else if ( max < 1024 ) nd_bpe = 10;
+		else if ( max < 65536 ) nd_bpe = 16;
+		else nd_bpe = 32;
+	}
 	nd_epw = (sizeof(UINT)*8)/nd_bpe;
 	elen = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
-
 	nd_exporigin = nd_get_exporigin(nd_ord);
-	nd_wpd = nd_exporigin+elen;
-
+	wpd = nd_exporigin+elen;
+	if ( wpd != nd_wpd ) {
+		nd_free_private_storage();
+		nd_wpd = wpd;
+	}
 	if ( nd_bpe < 32 ) {
 		nd_mask0 = (1<<nd_bpe)-1;
 	} else {
