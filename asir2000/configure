@@ -4791,7 +4791,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-if test SIZEOF_LONG = 8; then
+if test "${ac_cv_sizeof_long}" = 8; then
     cat >>confdefs.h <<\_ACEOF
 #define LONG_IS_64BIT 1
 _ACEOF
