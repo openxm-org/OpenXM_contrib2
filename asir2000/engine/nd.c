@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.117 2004/12/03 08:57:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.118 2004/12/04 09:39:27 noro Exp $ */
 
 #include "nd.h"
 
@@ -42,6 +42,7 @@ static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
 
+NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
 int nd_monic(int m,ND *p);
@@ -2210,13 +2211,21 @@ void ndv_setup(int mod,int trace,NODE f)
 	}
 }
 
+struct order_spec *append_block(struct order_spec *spec,
+    int nv,int nalg,int ord);
+
 void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 {
-	VL tv,fv,vv,vc;
-	NODE fd,fd0,r,r0,t,x,s,xx;
-	int e,max,nvar;
+	VL tv,fv,vv,vc,av;
+	NODE fd,fd0,r,r0,t,x,s,xx,alist;
+	int e,max,nvar,i;
 	NDV b;
-	int ishomo;
+	int ishomo,nalg;
+	Alg alpha,dp;
+	P p;
+	LIST f1,f2;
+	Obj obj;
+	NumberField nf;
 
 	if ( !m && Demand ) nd_demand = 1;
 	else nd_demand = 0;
@@ -2233,6 +2242,33 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 			break;
 		default:
 			break;
+	}
+	nd_nalg = 0;
+	if ( !m ) {
+		get_algtree((Obj)f,&av);
+		for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++ );
+		nd_nalg = nalg;
+		/* #i -> t#i */
+		if ( nalg ) {
+			for ( alist = 0, tv = av; tv; tv = NEXT(tv) ) {
+				NEXTNODE(alist,t); MKV(tv->v,p); 
+				MKAlg(p,alpha); BDY(t) = (pointer)alpha;
+				tv->v = tv->v->priv;
+			}
+			NEXT(t) = 0;
+			for ( tv = vv; NEXT(tv); tv = NEXT(tv) );
+			NEXT(tv) = av;
+			ord = append_block(ord,nvar,nalg,2);
+			nvar += nalg;
+			setfield_dalg(alist);
+			nf = get_numberfield();
+			for ( i = nalg-1, t = BDY(f); i >= 0; i-- ) {
+				MKAlg(nf->defpoly[i],dp);
+				MKNODE(s,dp,t); t = s;
+			}
+			MKLIST(f1,t);
+			algobjtorat(f1,&f2); f = f2;
+		}
 	}
 	nd_init_ord(ord);
 	for ( t = BDY(f), max = 0; t; t = NEXT(t) )
@@ -2258,6 +2294,13 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	for ( r0 = 0, t = x; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r); 
 		BDY(r) = ndvtop(m,CO,vv,BDY(t));
+		if ( nalg ) {
+			p = BDY(r);
+			for ( tv = av, s = alist; tv; tv = NEXT(tv), s = NEXT(s) ) {
+				substr(CO,0,(Obj)p,tv->v,(Obj)BDY(s),&obj); p = (P)obj;
+			}
+			BDY(r) = p;
+		}
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
@@ -2269,14 +2312,19 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
 {
 	struct order_spec *ord1;
-	VL tv,fv,vv,vc;
-	NODE fd,fd0,in0,in,r,r0,t,s,cand;
+	VL tv,fv,vv,vc,av;
+	NODE fd,fd0,in0,in,r,r0,t,s,cand,alist;
 	int m,nocheck,nvar,mindex,e,max;
 	NDV c;
 	NMV a;
 	P p;
 	EPOS oepos;
-	int obpe,oadv,wmax,i,len,cbpe,ishomo;
+	int obpe,oadv,wmax,i,len,cbpe,ishomo,nalg;
+	Alg alpha,dp;
+	P poly;
+	LIST f1,f2;
+	Obj obj;
+	NumberField nf;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -2288,6 +2336,32 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 		default:
 			break;
 	}
+
+	get_algtree((Obj)f,&av);
+	for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++ );
+	nd_nalg = nalg;
+	/* #i -> t#i */
+	if ( nalg ) {
+		for ( alist = 0, tv = av; tv; tv = NEXT(tv) ) {
+			NEXTNODE(alist,t); MKV(tv->v,poly); 
+			MKAlg(poly,alpha); BDY(t) = (pointer)alpha;
+			tv->v = tv->v->priv;
+		}
+		NEXT(t) = 0;
+		for ( tv = vv; NEXT(tv); tv = NEXT(tv) );
+		NEXT(tv) = av;
+		ord = append_block(ord,nvar,nalg,2);
+		nvar += nalg;
+		setfield_dalg(alist);
+		nf = get_numberfield();
+		for ( i = nalg-1, t = BDY(f); i >= 0; i-- ) {
+			MKAlg(nf->defpoly[i],dp);
+			MKNODE(s,dp,t); t = s;
+		}
+		MKLIST(f1,t);
+		algobjtorat(f1,&f2); f = f2;
+	}
+
 	nocheck = 0;
 	mindex = 0;
 
@@ -2377,7 +2451,16 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	/* dp->p */
 	nd_bpe = cbpe;
 	nd_setup_parameters(nd_nvar,0);
-	for ( r = cand; r; r = NEXT(r) ) BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
+	for ( r = cand; r; r = NEXT(r) ) {
+		BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
+		if ( nalg ) {
+			poly = BDY(r);
+			for ( tv = av, s = alist; tv; tv = NEXT(tv), s = NEXT(s) ) {
+				substr(CO,0,(Obj)poly,tv->v,(Obj)BDY(s),&obj); poly = (P)obj;
+			}
+			BDY(r) = poly;
+		}
+	}
 	MKLIST(*rp,cand);
 }
 
@@ -5150,8 +5233,6 @@ DL nd_separate_d(UINT *d,UINT *trans)
 	return a;
 }
 
-NumberField get_numberfield();
-
 int nd_monic(int mod,ND *p)
 {
 	UINT *trans,*t;
@@ -5244,9 +5325,4 @@ int nd_monic(int mod,ND *p)
 	nd_free(*p);
 	*p = r;
 	return 1;
-}
-
-void nd_set_nalg(int nalg)
-{
-	nd_nalg = nalg;
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.36 2004/05/14 09:20:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.37 2004/09/15 06:06:42 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1412,6 +1412,88 @@ void print_composite_order_spec(struct order_spec *spec)
 		}
 		printf("]\n");
 	}
+}
+
+struct order_spec *append_block(struct order_spec *spec,
+	int nv,int nalg,int ord)
+{
+	MAT m,mat;
+	int i,j,row,col,n;
+	Q **b,**wp;
+	int **w;
+	NODE t,s,s0;
+	struct order_pair *l,*l0;
+	int n0,nv0;
+	LIST list0,list1,list;
+	Q oq,nq;
+	struct order_spec *r;
+
+	r = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+	switch ( spec->id ) {
+		case 0:
+			STOQ(spec->ord.simple,oq); STOQ(nv,nq);
+			t = mknode(2,oq,nq); MKLIST(list0,t);
+			STOQ(ord,oq); STOQ(nalg,nq);
+			t = mknode(2,oq,nq); MKLIST(list1,t);
+			t = mknode(2,list0,list1); MKLIST(list,t);
+			l = (struct order_pair *)MALLOC_ATOMIC(2*sizeof(struct order_pair));
+			l[0].order = spec->ord.simple; l[0].length = nv;
+			l[1].order = ord; l[1].length = nalg;
+			r->id = 1;  r->obj = (Obj)list;
+			r->ord.block.order_pair = l;
+			r->ord.block.length = 2;
+			r->nv = nv+nalg;
+			break;
+		case 1:
+			if ( spec->nv != nv )
+				error("append_block : number of variables mismatch");
+			l0 = spec->ord.block.order_pair;
+			n0 = spec->ord.block.length;
+			nv0 = spec->nv;
+			list0 = (LIST)spec->obj;
+			n = n0+1;
+			l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
+			for ( i = 0; i < n0; i++ )
+				l[i] = l0[i];
+			l[i].order = ord; l[i].length = nalg;
+			 for ( t = BDY(list0), s0 = 0; t; t = NEXT(t) ) {
+				NEXTNODE(s0,s); BDY(s) = BDY(t);
+			}
+			STOQ(ord,oq); STOQ(nalg,nq);
+			t = mknode(2,oq,nq); MKLIST(list,t);
+			NEXTNODE(s0,s); BDY(s) = (pointer)list; NEXT(s) = 0;
+			MKLIST(list,s0);
+			r->id = 1;  r->obj = (Obj)list;
+			r->ord.block.order_pair = l;
+			r->ord.block.length = n;
+			r->nv = nv+nalg;
+			break;
+		case 2:
+			if ( spec->nv != nv )
+				error("append_block : number of variables mismatch");
+			m = (MAT)spec->obj;
+			row = m->row; col = m->col; b = (Q **)BDY(m);
+			w = almat(row+nalg,col+nalg);
+			MKMAT(mat,row+nalg,col+nalg); wp = (Q **)BDY(mat);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+					w[i][j] = QTOS(b[i][j]);
+					wp[i][j] = b[i][j];
+				}
+			for ( i = 0; i < nalg; i++ ) {
+				w[i+row][i+col] = 1;
+				wp[i+row][i+col] = ONE;
+			}
+			r->id = 2; r->obj = (Obj)mat;
+			r->nv = col+nalg; r->ord.matrix.row = row+nalg;
+			r->ord.matrix.matrix = w;
+			break;
+		case 3:
+		default:
+			/* XXX */
+			error("append_block : not implemented yet");
+	}
+	return r;
 }
 
 int comp_sw(struct sparse_weight *a, struct sparse_weight *b)

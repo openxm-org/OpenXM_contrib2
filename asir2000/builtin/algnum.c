@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.7 2004/12/02 13:48:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.8 2004/12/06 01:15:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -660,6 +660,79 @@ void get_algtree(Obj f,VL *r)
 				break;
 			default:
 				*r = 0;
+				break;
+		}
+}
+
+void algobjtorat(Obj f,Obj *r)
+{
+	Obj t;
+	DCP dc,dcr,dcr0;
+	P p,nm,dn;
+	R rat;
+	NODE b,s,s0;
+	VECT v;
+	MAT mat;
+	LIST list;
+	pointer *a;
+	pointer **m;
+	int len,row,col,i,j,l;
+
+	if ( !f ) *r = 0;
+	else
+		switch ( OID(f) ) {
+			case O_N:
+				algtorat((Num)f,r);
+				break;
+			case O_P:
+				dcr0 = 0;
+				for ( dc = DC((P)f); dc; dc = NEXT(dc) ) {
+					NEXTDC(dcr0,dcr);
+					algobjtorat((Obj)COEF(dc),&t);
+					COEF(dcr) = (P)t;
+					DEG(dcr) = DEG(dc);
+				}
+				NEXT(dcr) = 0; MKP(VR((P)f),dcr0,p); *r = (Obj)p;
+				break;
+			case O_R:
+				algobjtorat((Obj)NM((R)f),&t); nm = (P)t;
+				algobjtorat((Obj)DN((R)f),&t); dn = (P)t;
+				MKRAT(nm,dn,0,rat); *r = (Obj)rat;
+				break;
+			case O_LIST:
+				s0 = 0;
+				for ( b = BDY((LIST)f); b; b = NEXT(b) ) {
+					NEXTNODE(s0,s);
+					algobjtorat((Obj)BDY(b),&t);
+					BDY(s) = (pointer)t;
+				}
+				NEXT(s) = 0;
+				MKLIST(list,s0);
+				*r = (Obj)list;
+				break;
+			case O_VECT:
+				l = ((VECT)f)->len;
+				a = BDY((VECT)f);
+				MKVECT(v,l);
+				for ( i = 0; i < l; i++ ) {
+					algobjtorat((Obj)a[i],&t);
+					BDY(v)[i] = (pointer)t;
+				}
+				*r = (Obj)v;
+				break;
+			case O_MAT:
+				row = ((MAT)f)->row; col = ((MAT)f)->col;
+				m = BDY((MAT)f);
+				MKMAT(mat,row,col);
+				for ( i = 0; i < row; i++ )
+					for ( j = 0; j < col; j++ ) {
+						algobjtorat((Obj)m[i][j],&t);
+						BDY(mat)[i][j] = (pointer)t;
+					}
+				*r = (Obj)mat;
+				break;
+			default:
+				*r = f;
 				break;
 		}
 }
