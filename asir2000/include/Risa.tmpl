@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.8 2000/03/14 06:30:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.9 2000/04/10 08:31:37 noro Exp $ */
 #include "config.h"
 
 #define USE_GCC
@@ -41,14 +41,14 @@ CC= gcc
 CC= cc
 #endif
 
-CDEBUGFLAGS= -O6
+CDEBUGFLAGS= -O
 
 #if defined(SunArchitecture)
 #if SystemV4
 #if defined(SparcArchitecture)
-CDEBUGFLAGS= -O6 -mv8
+CDEBUGFLAGS= -O -mv8
 #else
-CDEBUGFLAGS= -O6
+CDEBUGFLAGS= -O
 #endif
 CCOPTIONS = -DSYSV -DSVR4
 AR=/usr/ccs/bin/ar cqs

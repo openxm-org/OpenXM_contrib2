@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.3 2000/04/20 02:20:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.4 2000/04/25 04:07:58 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "base.h"
@@ -33,6 +33,7 @@ int TP,NBP,NMP,NFP,NDP,ZR,NZR;
 #define NEWDP_pairs ((DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 
 extern int (*cmpdl)();
+extern int do_weyl;
 
 void Pdp_gr_flags(), Pdp_gr_print();
 void Pdp_gr_main(),Pdp_gr_mod_main(),Pdp_f4_main(),Pdp_f4_mod_main();
@@ -258,6 +259,8 @@ DL dl1,dl2;
 	else
 		return 0;
 }
+
+/* b[] should be cleared */
 
 void _dpmod_to_vect(f,at,b)
 DP f;
@@ -510,7 +513,7 @@ LIST *rp;
 	int i;
 	struct order_spec ord1;
 	VL fv,vv,vc;
-	DP b,c;
+	DP b,c,c1;
 	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
 
 	dp_fcoeffs = 0;
@@ -523,8 +526,9 @@ LIST *rp;
 	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 		ptod(CO,vv,(P)BDY(t),&b);
 		_dp_mod(b,m,0,&c);
+		_dp_monic(c,m,&c1);
 		if ( c ) {
-			NEXTNODE(fd0,fd); BDY(fd) = (pointer)c;
+			NEXTNODE(fd0,fd); BDY(fd) = (pointer)c1;
 		}
 	}
 	if ( fd0 ) NEXT(fd) = 0;
@@ -591,7 +595,7 @@ NODE f;
 			if ( r ) {
 				dltod(BDY(s),nv,&tdp);
 				dp_subd(tdp,ps[(int)BDY(r)],&sd);
-				muld(CO,ps[(int)BDY(r)],sd,&f2);
+				muld(CO,sd,ps[(int)BDY(r)],&f2);
 				MKNODE(bt,f2,blist); blist = bt;
 				s = symb_merge(s,dp_dllist(f2),nv);
 				nred++;
@@ -657,6 +661,8 @@ NODE f;
 	return g;
 }
 
+/* initial bases are monic */
+
 NODE gb_f4_mod(f,m)
 NODE f;
 int m;
@@ -668,14 +674,15 @@ int m;
 	DP h,nf,f1,f2,f21,f21r,sp,sp1,sd,sdm,tdp;
 	MP mp,mp0;
 	NODE blist,bt,nt;
-	DL *ht,*at;
-	int **mat;
-	int *colstat;
-	int rank,nred,nonzero;
-	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim;
-	extern struct oEGT eg_symb,eg_elim;
+	DL *ht,*at,*st;
+	int **spmat,**redmat;
+	int *colstat,*w;
+	int rank,nred,nsp,nonzero,spcol;
+	int *indred,*isred,*ri;
+	struct oEGT tmp0,tmp1,tmp2,eg_split_symb,eg_split_elim1,eg_split_elim2;
+	extern struct oEGT eg_symb,eg_elim1,eg_elim2;
 
-	init_eg(&eg_symb); init_eg(&eg_elim);
+	init_eg(&eg_symb); init_eg(&eg_elim1); init_eg(&eg_elim2);
 	for ( gall = g = 0, d = 0, r = f; r; r = NEXT(r) ) {
 		i = (int)BDY(r);
 		d = updpairs(d,g,i);
@@ -713,66 +720,112 @@ int m;
 				nred++;
 			}
 		}
+		
+		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
+		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
 
 		/* the first nred polys in blist are reducers */
 		/* row = the number of all the polys */
 		for ( r = blist, row = 0; r; r = NEXT(r), row++ );
+
+		/* head terms of reducers */
 		ht = (DL *)MALLOC(nred*sizeof(DL));
 		for ( r = blist, i = 0; i < nred; r = NEXT(r), i++ )
 			ht[i] = BDY((DP)BDY(r))->dl;
+
+		/* col = number of all terms */
 		for ( s = s0, col = 0; s; s = NEXT(s), col++ );
+
+		/* head terms of all terms */
 		at = (DL *)MALLOC(col*sizeof(DL));
 		for ( s = s0, i = 0; i < col; s = NEXT(s), i++ )
 			at[i] = (DL)BDY(s);
-		mat = almat(row,col);
-		for ( i = 0, r = blist; i < row; r = NEXT(r), i++ )
-			_dpmod_to_vect(BDY(r),at,mat[i]);
-		colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
-		for ( i = 0, nonzero=0; i < row; i++ )
-			for ( j = 0; j < col; j++ )
-				if ( mat[i][j] )
+
+		/* store coefficients separately in spmat and redmat */
+		nsp = row-nred;
+
+		/* reducer matrix */
+		redmat = (int **)almat(nred,col);
+		for ( i = 0, r = blist; i < nred; r = NEXT(r), i++ )
+			_dpmod_to_vect(BDY(r),at,redmat[i]);
+		/* XXX */
+/*		reduce_reducers_mod(redmat,nred,col,m); */
+		/* register the position of the head term */
+		indred = (int *)MALLOC(nred*sizeof(int));
+		bzero(indred,nred*sizeof(int));
+		isred = (int *)MALLOC(col*sizeof(int));
+		bzero(isred,col*sizeof(int));
+		for ( i = 0; i < nred; i++ ) {
+			ri = redmat[i];
+			for ( j = 0; j < col && !ri[j]; j++ );
+			indred[i] = j;
+			isred[j] = 1;
+		}
+
+		spcol = col-nred;
+		/* head terms not in ht */
+		st = (DL *)MALLOC(spcol*sizeof(DL));
+		for ( j = 0, k = 0; j < col; j++ )
+			if ( !isred[j] )
+				st[k++] = at[j];
+
+		/* spoly matrix; stored in reduced form; terms in ht[] are omitted */
+		spmat = almat(nsp,spcol);
+		w = (int *)MALLOC(col*sizeof(int));
+		for ( ; i < row; r = NEXT(r), i++ ) {
+			bzero(w,col*sizeof(int));
+			_dpmod_to_vect(BDY(r),at,w);
+			reduce_sp_by_red_mod(w,redmat,indred,nred,col,m);
+			for ( j = 0, k = 0; j < col; j++ )
+				if ( !isred[j] )
+					spmat[i-nred][k++] = w[j];
+		}
+
+		get_eg(&tmp0); add_eg(&eg_elim1,&tmp1,&tmp0);
+		init_eg(&eg_split_elim1); add_eg(&eg_split_elim1,&tmp1,&tmp0);
+
+		colstat = (int *)MALLOC_ATOMIC(spcol*sizeof(int));
+		for ( i = 0, nonzero=0; i < nsp; i++ )
+			for ( j = 0; j < spcol; j++ )
+				if ( spmat[i][j] )
 					nonzero++;
 		if ( Print )
-			fprintf(asir_out,"mat : %d x %d (nonzero=%f%%)...",
-				row,col,((double)nonzero*100)/(row*col));
-		get_eg(&tmp1); add_eg(&eg_symb,&tmp0,&tmp1);
-		init_eg(&eg_split_symb); add_eg(&eg_split_symb,&tmp0,&tmp1);
-		rank = generic_gauss_elim_mod(mat,row,col,m,colstat);
-		get_eg(&tmp2); add_eg(&eg_elim,&tmp1,&tmp2);
-		init_eg(&eg_split_elim); add_eg(&eg_split_elim,&tmp1,&tmp2);
+			fprintf(asir_out,"spmat : %d x %d (nonzero=%f%%)...",
+				nsp,spcol,((double)nonzero*100)/(nsp*spcol));
+		rank = generic_gauss_elim_mod(spmat,nsp,spcol,m,colstat);
+
+		get_eg(&tmp1); add_eg(&eg_elim2,&tmp0,&tmp1);
+		init_eg(&eg_split_elim2); add_eg(&eg_split_elim2,&tmp0,&tmp1);
+
 		if ( Print ) {
 			fprintf(asir_out,"done rank = %d\n",rank,row,col);
 			print_eg("Symb",&eg_split_symb);
-			print_eg("Elim",&eg_split_elim);
+			print_eg("Elim1",&eg_split_elim1);
+			print_eg("Elim2",&eg_split_elim2);
 			fprintf(asir_out,"\n");
 		}
-		for ( j = 0, i = 0; j < col; j++ )
+		for ( j = 0, i = 0; j < spcol; j++ )
 			if ( colstat[j] ) {
-				for ( k = 0; k < nred; k++ )
-					if ( !cmpdl(nv,at[j],ht[k]) )
-						break;
-				if ( k == nred ) {
-					/* this is a new base */
-					mp0 = 0;
-					NEXTMP(mp0,mp); mp->dl = at[j]; mp->c = STOI(1);
-					for ( k = j+1; k < col; k++ )
-						if ( !colstat[k] && mat[i][k] ) {
-							NEXTMP(mp0,mp); mp->dl = at[k];
-							mp->c = STOI(mat[i][k]);
-						}
-					NEXT(mp) = 0;
-					MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
-					nh = newps_mod(nf,m);
-					d = updpairs(d,g,nh);
-					g = updbase(g,nh);
-					gall = append_one(gall,nh);
+				mp0 = 0;
+				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = STOI(1);
+				for ( k = j+1; k < spcol; k++ )
+					if ( !colstat[k] && spmat[i][k] ) {
+						NEXTMP(mp0,mp); mp->dl = st[k];
+						mp->c = STOI(spmat[i][k]);
 				}
+				NEXT(mp) = 0;
+				MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
+				nh = newps_mod(nf,m);
+				d = updpairs(d,g,nh);
+				g = updbase(g,nh);
+				gall = append_one(gall,nh);
 				i++;
 			}
 	}
 	if ( Print ) {
 		print_eg("Symb",&eg_symb);
-		print_eg("Elim",&eg_elim);
+		print_eg("Elim1",&eg_elim1);
+		print_eg("Elim2",&eg_elim2);
 		fflush(asir_out);
 	}
 	return g;
@@ -1796,7 +1849,7 @@ DP *r;
 					ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
 				}
 				t_00 = get_rtime();
-				muld(CO,t1,shift,&t2);
+				muld(CO,shift,t1,&t2);
 				addd(CO,t,t2,&u);
 				tt = get_rtime(); t_m += tt-t_0;
 				ttt = get_rtime(); t_s += ttt-t_00;
@@ -1967,7 +2020,7 @@ DP *r;
 				ttt = get_rtime()-t_00; t_m2 += ttt/dp_nt(red);
 
 				t_00 = get_rtime();
-				muld(CO,t1,shift,&t2);
+				muld(CO,shift,t1,&t2);
 				addd(CO,t,t2,&u);
 				tt = get_rtime(); t_m += tt-t_0;
 				ttt = get_rtime(); t_s += ttt-t_00;
@@ -2148,13 +2201,16 @@ int t;
 		dl1 = DPPlength(d1); NFP += (dl-dl1); dl = dl1;
 	} else
 		dl = 1;
-	for ( dd = 0; d1; d1 = nd ) {
-		nd = NEXT(d1);
-		if ( !criterion_2( d1->dp1, d1->dp2 ) ) {
-			NEXT(d1) = dd;
-			dd = d1;
+	if ( !do_weyl )
+		for ( dd = 0; d1; d1 = nd ) {
+			nd = NEXT(d1);
+			if ( !criterion_2( d1->dp1, d1->dp2 ) ) {
+				NEXT(d1) = dd;
+				dd = d1;
+			}
 		}
-	}
+	else
+		dd = d1;
 	dl1 = DPPlength(dd); NDP += (dl-dl1);
 	get_eg(&tup1);
 	add_eg(&eg_up,&tup0,&tup1);
@@ -2182,7 +2238,12 @@ register int t;
 		last = p;
 		dp = p->dp1 = (int)BDY(r);  p->dp2 = t;
 		p->lcm = lcm_of_DL(CNVars, dl = psh[dp], tdl, (DL)0 );
-		p->sugar = (ts > (s = pss[dp] - dl->td) ? ts : s) + p->lcm->td;
+#if 0
+		if ( do_weyl )
+			p->sugar = dl_weight(p->lcm);
+		else
+#endif
+			p->sugar = (ts > (s = pss[dp] - dl->td) ? ts : s) + p->lcm->td;
 	}
 	return last;
 }
@@ -2355,6 +2416,17 @@ DL dl1, dl2;
 	for ( d1 = dl1->d, d2 = dl2->d, n = CNVars; --n >= 0; d1++, d2++ )
 		if ( *d1 < *d2 ) return 0;
 	return 1;
+}
+
+int dl_weight(dl)
+DL dl;
+{
+	int n,w,i;
+
+	n = CNVars/2;
+	for ( i = 0, w = 0; i < n; i++ )
+		w += (-dl->d[i]+dl->d[n+i]);
+	return w;
 }
 
 int gbcheck(f)

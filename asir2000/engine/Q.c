@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Q.c,v 1.2 2000/04/05 08:32:17 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "inline.h"
@@ -342,6 +342,24 @@ Q *t;
 			nm = NALLOC(1); PL(nm) = 1; BD(nm)[0] = low;
 		}
 		kmuln(NM(t[i-1]),nm,&d); divin(d,i,&c); NTOQ(c,1,t[i]);
+	}
+}
+
+/* mod m table */
+/* XXX : should be optimized */
+
+void mkwcm(k,l,m,t)
+int k,l,m;
+int *t;
+{
+	int i,n;
+	Q *s;
+
+	n = MIN(k,l);
+	s = (Q *)ALLOCA((n+1)*sizeof(Q));
+	mkwc(k,l,s);
+	for ( i = 0; i <= n; i++ ) {
+		t[i] = rem(NM(s[i]),m);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.1.1.1 1999/12/03 07:39:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.2 2000/04/13 06:01:01 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
@@ -1276,7 +1276,7 @@ P *dnp;
 		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
 	}
 	NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
-	muld(CO,p2,s,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
+	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
 	muldc(CO,p0,(P)c2,&h);
 	*head = h; *rest = r; *dnp = (P)c2;
 }
@@ -1313,16 +1313,6 @@ DP *rp;
 	NEWDL(d,n); d->td = td - d1->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = w[i] - d1->d[i];
-#if 0
-	NEWMP(m); m->dl = d; divsp(CO,ONE,BDY(p1)->c,&m->c); NEXT(m) = 0;
-	MKDP(n,m,s); muld(CO,p1,s,&t);
-
-	NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	NEWMP(m); m->dl = d; divsp(CO,ONE,BDY(p2)->c,&m->c); NEXT(m) = 0;
-	MKDP(n,m,s); muld(CO,p2,s,&u);
-#endif
 	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
 	if ( INT(c1) && INT(c2) ) {
 		gcdn(NM(c1),NM(c2),&gn);
@@ -1333,13 +1323,13 @@ DP *rp;
 	}
 
 	NEWMP(m); m->dl = d; m->c = (P)c2; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; muld(CO,p1,s,&t);
+	MKDP(n,m,s); s->sugar = d->td; muld(CO,s,p1,&t);
 
 	NEWDL(d,n); d->td = td - d2->td;
 	for ( i = 0; i < n; i++ )
 		d->d[i] = w[i] - d2->d[i];
 	NEWMP(m); m->dl = d; m->c = (P)c1; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; muld(CO,p2,s,&u);
+	MKDP(n,m,s); s->sugar = d->td; muld(CO,s,p2,&u);
 
 	subd(CO,t,u,rp);
 }

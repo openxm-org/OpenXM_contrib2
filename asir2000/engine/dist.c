@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.3 2000/04/13 06:01:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.4 2000/04/25 04:07:59 noro Exp $ */
 #include "ca.h"
 
 #define NV(p) ((p)->nv)
@@ -414,8 +414,9 @@ DP p1,p2,*pr;
 {
 	MP m;
 	DP s,t,u;
-	int i,l;
-	MP *w;
+	int i,l,l1;
+	static MP *w;
+	static int wlen;
 
 	if ( !p1 || !p2 )
 		*pr = 0;
@@ -424,13 +425,23 @@ DP p1,p2,*pr;
 	else if ( OID(p2) <= O_P )
 		muldc(vl,p1,(P)p2,pr);
 	else {
+		for ( m = BDY(p1), l1 = 0; m; m = NEXT(m), l1++ );
 		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
-		w = ALLOCA(l*sizeof(MP));
+		if ( l1 < l ) {
+			t = p1; p1 = p2; p2 = t;
+			l = l1;
+		}
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
 		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
 			w[i] = m;
 		for ( s = 0, i = l-1; i >= 0; i-- ) {
 			muldm(vl,p1,w[i],&t); addd(vl,s,t,&u); s = u;
 		}
+		bzero(w,l*sizeof(MP));
 		*pr = s;
 	}
 }
@@ -471,7 +482,8 @@ DP p1,p2,*pr;
 	MP m;
 	DP s,t,u;
 	int i,l;
-	MP *w;
+	static MP *w;
+	static int wlen;
 
 	if ( !p1 || !p2 )
 		*pr = 0;
@@ -481,12 +493,17 @@ DP p1,p2,*pr;
 		muldc(vl,p1,(P)p2,pr);
 	else {
 		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
-		w = ALLOCA(l*sizeof(MP));
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
 		for ( m = BDY(p2), i = 0; i < l; m = NEXT(m), i++ )
 			w[i] = m;
 		for ( s = 0, i = l-1; i >= 0; i-- ) {
 			weyl_muldm(vl,p1,w[i],&t); addd(vl,s,t,&u); s = u;
 		}
+		bzero(w,l*sizeof(MP));
 		*pr = s;
 	}
 }
@@ -500,19 +517,25 @@ DP *pr;
 	DP r,t,t1;
 	MP m;
 	int n,l,i;
-	MP *w;
+	static MP *w;
+	static int wlen;
 
 	if ( !p )
 		*pr = 0;
 	else {
 		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
-		w = ALLOCA(l*sizeof(MP));
+		if ( l > wlen ) {
+			if ( w ) GC_free(w);
+			w = (MP *)MALLOC(l*sizeof(MP));
+			wlen = l;
+		}
 		for ( m = BDY(p), i = 0; i < l; m = NEXT(m), i++ )
 			w[i] = m;
 		for ( r = 0, i = l-1, n = NV(p); i >= 0; i-- ) {
 			weyl_mulmm(vl,w[i],m0,n,&t);
 			addd(vl,r,t,&t1); r = t1;
 		}
+		bzero(w,l*sizeof(MP));
 		if ( r )
 			r->sugar = p->sugar + m0->dl->td;
 		*pr = r;
@@ -531,8 +554,9 @@ DP *pr;
 	DP r,t,t1;
 	P c,c0,c1,cc;
 	DL d,d0,d1;
-	int i,j,a,b,k,l,n2,s,min;
-	Q *tab;
+	int i,j,a,b,k,l,n2,s,min,h;
+	static Q *tab;
+	static int tablen;
 
 	if ( !m0 || !m1 )
 		*pr = 0;
@@ -541,29 +565,68 @@ DP *pr;
 		mulp(vl,c0,c1,&c);
 		d0 = m0->dl; d1 = m1->dl;
 		n2 = n>>1;
-		for ( i = 0, r = (DP)ONE; i < n2; i++ ) {
-			a = d0->d[i]; b = d1->d[n2+i];
-			k = d0->d[n2+i]; l = d1->d[i];
-			/* compute xi^a*(Di^k*xi^l)*Di^b */
-			min = MIN(k,l);
-			tab = (Q *)ALLOCA((min+1)*sizeof(Q));
-			mkwc(k,l,tab);
-			for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
-				NEXTMP(mr0,mr);
-				NEWDL(d,n);
-				d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
-				d->td = d->d[i]+d->d[n2+i]; /* XXX */
-				s = MAX(s,d->td); /* XXX */
-				mr->c = (P)tab[j];
-				mr->dl = d;
+		if ( n & 1 ) { 
+			/* homogenized computation; dx-xd=h^2 */
+			/* offset of h-degree */
+			NEWDL(d,n); d->d[n-1] = d0->d[n-1]+d1->d[n-1]; d->td = d->d[n-1];
+			NEWMP(mr); mr->c = (P)ONE; mr->dl = d;
+			MKDP(n,mr,r); r->sugar = d->d[n-1];
+
+			for ( i = 0; i < n2; i++ ) {
+				a = d0->d[i]; b = d1->d[n2+i];
+				k = d0->d[n2+i]; l = d1->d[i];
+				/* degree of xi^a*(Di^k*xi^l)*Di^b */
+				h = a+k+l+b;
+				/* compute xi^a*(Di^k*xi^l)*Di^b */
+				min = MIN(k,l);
+
+				if ( min+1 > tablen ) {
+					if ( tab ) GC_free(tab);
+					tab = (Q *)MALLOC((min+1)*sizeof(Q));
+					tablen = min+1;
+				}
+				mkwc(k,l,tab);
+				for ( mr0 = 0, j = 0; j <= min; j++ ) {
+					NEXTMP(mr0,mr);
+					NEWDL(d,n);
+					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+					d->td = h;
+					d->d[n-1] = h-(d->d[i]+d->d[n2+i]); 
+					mr->c = (P)tab[j];
+					mr->dl = d;
+				}
+				bzero(tab,(min+1)*sizeof(Q));
+				if ( mr0 )
+					NEXT(mr) = 0;
+				MKDP(n,mr0,t);
+				if ( t )
+					t->sugar = h;
+				comm_muld(vl,r,t,&t1); r = t1;
 			}
-			if ( mr0 )
-				NEXT(mr) = 0;
-			MKDP(n,mr0,t);
-			if ( t )
-				t->sugar = s;
-			comm_muld(vl,r,t,&t1); r = t1;
-		}
+		} else 
+			for ( i = 0, r = (DP)ONE; i < n2; i++ ) {
+				a = d0->d[i]; b = d1->d[n2+i];
+				k = d0->d[n2+i]; l = d1->d[i];
+				/* compute xi^a*(Di^k*xi^l)*Di^b */
+				min = MIN(k,l);
+				tab = (Q *)ALLOCA((min+1)*sizeof(Q));
+				mkwc(k,l,tab);
+				for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
+					NEXTMP(mr0,mr);
+					NEWDL(d,n);
+					d->d[i] = l-j+a; d->d[n2+i] = k-j+b;
+					d->td = d->d[i]+d->d[n2+i]; /* XXX */
+					s = MAX(s,d->td); /* XXX */
+					mr->c = (P)tab[j];
+					mr->dl = d;
+				}
+				if ( mr0 )
+					NEXT(mr) = 0;
+				MKDP(n,mr0,t);
+				if ( t )
+					t->sugar = s;
+				comm_muld(vl,r,t,&t1); r = t1;
+			}
 		muldc(vl,r,c,pr);
 	}
 }

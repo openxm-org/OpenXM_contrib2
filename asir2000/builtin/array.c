@@ -1,12 +1,13 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.2 2000/03/14 05:25:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.3 2000/04/20 02:20:15 noro Exp $ */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
 #include "inline.h"
-/*
+
+#if 0
 #undef DMAR
 #define DMAR(a1,a2,a3,d,r) (r)=dmar(a1,a2,a3,d);
-*/
+#endif
 
 extern int Print; /* XXX */
 
@@ -675,7 +676,7 @@ int row,col,md;
 		return -1;
 }
 
-struct oEGT eg_mod,eg_elim,eg_chrem,eg_gschk,eg_intrat,eg_symb;
+struct oEGT eg_mod,eg_elim,eg_elim1,eg_elim2,eg_chrem,eg_gschk,eg_intrat,eg_symb;
 
 int generic_gauss_elim(mat,nm,dn,rindp,cindp)
 MAT mat;
@@ -1148,13 +1149,153 @@ Q *dn;
 	return 1;
 }
 
+#define ONE_STEP1  if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+
+void reduce_reducers_mod(mat,row,col,md)
+int **mat;
+int row,col;
+int md;
+{
+	int i,j,k,l,hc,zzz;
+	int *t,*s,*tj,*ind;
+
+	/* reduce the reducers */
+	ind = (int *)ALLOCA(row*sizeof(int));
+	for ( i = 0; i < row; i++ ) {
+		t = mat[i];
+		for ( j = 0; j < col && !t[j]; j++ );
+		/* register the position of the head term */
+		ind[i] = j;
+		for ( l = i-1; l >= 0; l-- ) {
+			/* reduce mat[i] by mat[l] */
+			if ( hc = t[ind[l]] ) {
+				/* mat[i] = mat[i]-hc*mat[l] */
+				j = ind[l];
+				s = mat[l]+j;
+				tj = t+j;
+				hc = md-hc;
+				k = col-j;
+				for ( ; k >= 64; k -= 64 ) {
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+					ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
+				}
+				for ( ; k >= 0; k-- ) {
+					if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+				}
+			}
+		}
+	}
+}
+
+/*
+	mat[i] : reducers (i=0,...,nred-1)
+	         spolys (i=nred,...,row-1)
+	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
+	1. reduce the reducers
+	2. reduce spolys by the reduced reducers
+*/
+
+void pre_reduce_mod(mat,row,col,nred,md)
+int **mat;
+int row,col,nred;
+int md;
+{
+	int i,j,k,l,hc,inv;
+	int *t,*s,*tk,*ind;
+
+#if 1
+	/* reduce the reducers */
+	ind = (int *)ALLOCA(row*sizeof(int));
+	for ( i = 0; i < nred; i++ ) {
+		/* make mat[i] monic and mat[i] by mat[0],...,mat[i-1] */
+		t = mat[i];
+		for ( j = 0; j < col && !t[j]; j++ );
+		/* register the position of the head term */
+		ind[i] = j;
+		inv = invm(t[j],md);
+		for ( k = j; k < col; k++ )
+			if ( t[k] )
+				DMAR(t[k],inv,0,md,t[k])
+		for ( l = i-1; l >= 0; l-- ) {
+			/* reduce mat[i] by mat[l] */
+			if ( hc = t[ind[l]] ) {
+				/* mat[i] = mat[i]-hc*mat[l] */
+				for ( k = ind[l], hc = md-hc, s = mat[l]+k, tk = t+k;
+					k < col; k++, tk++, s++ )
+					if ( *s )
+						DMAR(*s,hc,*tk,md,*tk)
+			}
+		}
+	}
+	/* reduce the spolys */
+	for ( i = nred; i < row; i++ ) {
+		t = mat[i];
+		for ( l = nred-1; l >= 0; l-- ) {
+			/* reduce mat[i] by mat[l] */
+			if ( hc = t[ind[l]] ) {
+				/* mat[i] = mat[i]-hc*mat[l] */
+				for ( k = ind[l], hc = md-hc, s = mat[l]+k, tk = t+k;
+					k < col; k++, tk++, s++ )
+					if ( *s )
+						DMAR(*s,hc,*tk,md,*tk)
+			}
+		}
+	}
+#endif
+}
+/*
+	mat[i] : reducers (i=0,...,nred-1)
+	mat[0] < mat[1] < ... < mat[nred-1] w.r.t the term order
+*/
+
+void reduce_sp_by_red_mod(sp,redmat,ind,nred,col,md)
+int *sp,**redmat;
+int *ind;
+int nred,col;
+int md;
+{
+	int i,j,k,hc,zzz;
+	int *t,*s,*tj;
+
+	/* reduce the spolys by redmat */
+	for ( i = nred-1; i >= 0; i-- ) {
+		/* reduce sp by redmat[i] */
+		if ( hc = sp[ind[i]] ) {
+			/* sp = sp-hc*redmat[i] */
+			j = ind[i];
+			hc = md-hc;
+			s = redmat[i]+j;
+			tj = sp+j;
+			for ( k = col-j; k >= 0; k-- ) {
+				if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+			}
+		}
+	}
+}
+
+#define ONE_STEP2  if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
+
 int generic_gauss_elim_mod(mat,row,col,md,colstat)
 int **mat;
 int row,col,md;
 int *colstat;
 {
-	int i,j,k,l,inv,a,rank;
-	int *t,*pivot;
+	int i,j,k,l,inv,a,rank,zzz;
+	int *t,*pivot,*pk,*tk;
 
 	for ( rank = 0, j = 0; j < col; j++ ) {
 		for ( i = rank; i < row && !mat[i][j]; i++ );
@@ -1168,17 +1309,37 @@ int *colstat;
 		}
 		pivot = mat[rank];
 		inv = invm(pivot[j],md);
-		for ( k = j; k < col; k++ )
-			if ( pivot[k] ) {
-				DMAR(pivot[k],inv,0,md,pivot[k])
+		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+			if ( *pk ) {
+				DMAR(*pk,inv,0,md,*pk)
 			}
 		for ( i = rank+1; i < row; i++ ) {
 			t = mat[i];
-			if ( a = t[j] )
-				for ( k = j, a = md - a; k < col; k++ )
-					if ( pivot[k] ) {
-						DMAR(pivot[k],a,t[k],md,t[k])
-					}
+			if ( a = t[j] ) {
+				a = md - a; pk = pivot+j; tk = t+j;
+				k = col-j;
+				for ( ; k >= 64; k -= 64 ) {
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+				}
+				for ( ; k >= 0; k -- ) {
+					if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
+				}
+			}
 		}
 		rank++;
 	}
@@ -1187,11 +1348,31 @@ int *colstat;
 			pivot = mat[l];
 			for ( i = 0; i < l; i++ ) {
 				t = mat[i];
-				if ( a = t[j] )
-					for ( k = j, a = md-a; k < col; k++ )
-						if ( pivot[k] ) {
-							DMAR(pivot[k],a,t[k],md,t[k])
-						}
+				if ( a = t[j] ) {
+					a = md-a; pk = pivot+j; tk = t+j;
+					k = col-j;
+					for ( ; k >= 64; k -= 64 ) {
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					ONE_STEP2 ONE_STEP2 ONE_STEP2 ONE_STEP2
+					}
+					for ( ; k >= 0; k -- ) {
+						if ( zzz = *pk ) { DMAR(zzz,a,*tk,md,*tk) } pk++; tk++;
+					}
+				}
 			}
 			l--;
 		}
