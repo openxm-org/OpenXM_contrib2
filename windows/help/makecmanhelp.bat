@@ -7,7 +7,7 @@ del /Q src\*.*
 nkf32 -s %srcdir%\jtexinfo.tex > src\jtexinfo.tex
 nkf32 -s %srcdir%\texinfo-js.tex > src\texinfo-js.tex
 
-nkf32 -s %srcdir%\opening.texi > src\opening.texi
+copy %srcdir%\opening.texi src\opening.texi
 nkf32 -s %srcdir%\otherfunc.texi > src\otherfunc.texi
 nkf32 -s %srcdir%\template1.texi > src\template1.texi
 nkf32 -s %srcdir%\template2.texi > src\template2.texi
@@ -35,14 +35,13 @@ nkf32 -s %srcdir%\number-auto.%lang% > src\number-auto.%lang%
 nkf32 -s %srcdir%\number.%lang% > src\number.%lang%
 nkf32 -s %srcdir%\opening.texi  src\opening-%lang%.texi
 nkf32 -s %srcdir%\otherfunc.texi > src\otherfunc.%lang%
-nkf32 -s %srcdir%\oxgnuplot.%lang% > src\oxgnuplot.%lang%
-nkf32 -s %srcdir%\oxmath.%lang% > src\oxmath.%lang%
-nkf32 -s %srcdir%\oxom.%lang% > src\oxom.%lang%
-nkf32 -s %srcdir%\oxphc.%lang% > src\oxphc.%lang%
+nkf32 -s %srcdir%\gnuplot.%lang% > src\gnuplot.%lang%
+nkf32 -s %srcdir%\m.%lang% > src\m.%lang%
+nkf32 -s %srcdir%\phc.%lang% > src\phc.%lang%
 nkf32 -s %srcdir%\oxrfc100.%lang% > src\oxrfc100.%lang%
-nkf32 -s %srcdir%\oxsm1.%lang% > src\oxsm1.%lang%
-nkf32 -s %srcdir%\oxtigers.%lang% > src\oxtigers.%lang%
-nkf32 -s %srcdir%\oxxm.%lang% > src\oxxm.%lang%
+nkf32 -s %srcdir%\sm1.%lang% > src\sm1.%lang%
+nkf32 -s %srcdir%\tigers.%lang% > src\tigers.%lang%
+nkf32 -s %srcdir%\oxom.%lang% > src\oxom.%lang%
 nkf32 -s %srcdir%\pfp-auto.%lang% > src\pfp-auto.%lang%
 nkf32 -s %srcdir%\pfp.%lang% > src\pfp.%lang%
 nkf32 -s %srcdir%\plucker-auto.%lang% > src\plucker-auto.%lang%
