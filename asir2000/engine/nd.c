@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.120 2004/12/07 15:15:52 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.121 2004/12/09 08:56:43 noro Exp $ */
 
 #include "nd.h"
 
@@ -1537,7 +1537,7 @@ ND normalize_pbucket(int mod,PGeoBucket g)
 	return r;
 }
 
-void do_diagonalize(int sugar,int m)
+int do_diagonalize(int sugar,int m)
 {
 	int i,nh,stat;
 	NODE r,g,t;
@@ -1553,7 +1553,8 @@ void do_diagonalize(int sugar,int m)
 			nfv = nd_ps[i];
 		s = ndvtond(m,nfv);
 		s = nd_separate_head(s,&head);
-		nd_nf(m,s,nd_ps,1,&dn,&nf);
+		stat = nd_nf(m,s,nd_ps,1,&dn,&nf);
+		if ( !stat ) return 0;
 		if ( !m ) { 
 			NTOQ(NM(dn.z),SGN(dn.z),num);
 			mulq(HCQ(head),num,&q); HCQ(head) = q;
@@ -1574,6 +1575,7 @@ void do_diagonalize(int sugar,int m)
 		} else
 			nd_ps[i] = nfv;
 	}
+	return 1;
 }
 
 /* return value = 0 => input is not a GB */
@@ -1599,8 +1601,14 @@ NODE nd_gb(int m,int ishomo,int checkonly)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
-			if ( ishomo ) do_diagonalize(sugar,m);
-
+			if ( ishomo ) {
+				stat = do_diagonalize(sugar,m);
+				if ( !stat ) {
+					NEXT(l) = d; d = l;
+					d = nd_reconstruct(0,d);
+					goto again;
+				}
+			}
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
@@ -1646,7 +1654,7 @@ again:
 	return g;
 }
 
-void do_diagonalize_trace(int sugar,int m)
+int do_diagonalize_trace(int sugar,int m)
 {
 	int i,nh,stat;
 	NODE r,g,t;
@@ -1659,7 +1667,8 @@ void do_diagonalize_trace(int sugar,int m)
 		/* for nd_ps */
 		s = ndvtond(m,nd_ps[i]);
 		s = nd_separate_head(s,&head);
-		nd_nf_pbucket(m,s,nd_ps,1,&nf);
+		stat = nd_nf_pbucket(m,s,nd_ps,1,&nf);
+		if ( !stat ) return 0;
 		nf = nd_add(m,head,nf);
 		ndv_free(nd_ps[i]);
 		nd_ps[i] = ndtondv(m,nf);
@@ -1672,7 +1681,8 @@ void do_diagonalize_trace(int sugar,int m)
 			nfv = nd_ps_trace[i];
 		s = ndvtond(0,nfv);
 		s = nd_separate_head(s,&head);
-		nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
+		stat = nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
+		if ( !stat ) return 0;
 		NTOQ(NM(dn.z),SGN(dn.z),num);
 		mulq(HCQ(head),num,&q); HCQ(head) = q;
 		if ( DN(dn.z) ) {
@@ -1691,6 +1701,7 @@ void do_diagonalize_trace(int sugar,int m)
 		} else
 			nd_ps_trace[i] = nfv;
 	}
+	return 1;
 }
 
 static struct oEGT eg_invdalg;
@@ -1721,7 +1732,14 @@ NODE nd_gb_trace(int m,int ishomo)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
-			if ( ishomo ) do_diagonalize_trace(sugar,m);
+			if ( ishomo ) {
+				stat = do_diagonalize_trace(sugar,m);
+				if ( !stat ) {
+					NEXT(l) = d; d = l;
+					d = nd_reconstruct(1,d);
+					goto again;
+				}
+			}
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
@@ -2468,7 +2486,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *r
 	if ( in0 ) NEXT(in) = 0;
 	if ( fd0 ) NEXT(fd) = 0;
 	if ( !ishomo && homo ) {
-		for ( t = in0, wmax = 0; t; t = NEXT(t) ) {
+		for ( t = in0, wmax = max; t; t = NEXT(t) ) {
 			c = (NDV)BDY(t); len = LEN(c);
 			for ( a = BDY(c), i = 0; i < len; i++, NMV_ADV(a) )
 				wmax = MAX(TD(DL(a)),wmax);
