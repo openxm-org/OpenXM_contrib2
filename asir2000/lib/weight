@@ -610,7 +610,7 @@ def unitweight2(NormMat0,ExpMat,Vars,FLAG,ID){
 		}
 	}	
 	
-	return RET$
+	return [NormMat0,RET]$
 }
 
 def unitweight1(ExpMat,Vars,PolyListNum,OneMat,FLAG){
@@ -687,6 +687,102 @@ def unitweight1(ExpMat,Vars,PolyListNum,OneMat,FLAG){
 	return [NormMat0,RET]$
 }
 
+def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
+
+	RET=[]$
+
+	ExpMatRowNum=size(ExpMat)[0]$
+	ExpMatColNum=size(ExpMat[0])[0]$
+
+	if(NormMat==0){
+		NormMat=newmat(ExpMatColNum,ExpMatColNum)$
+
+		for(I=0;I<ExpMatColNum;I++)
+			for(J=I;J<ExpMatColNum;J++)
+				for(K=0;K<ExpMatRowNum;K++)
+					NormMat[I][J]+=
+						ExpMat[K][I]*ExpMat[K][J]$
+	}
+
+	BVec=newvect(ExpMatColNum)$
+
+	for(I=0;I<ExpMatColNum;I++)
+		for(J=0;J<ExpMatRowNum;J++)
+			BVec[I]+=ExpMat[J][I]$
+
+	SolveList=[]$
+	for(I=0;I<ExpMatColNum;I++){
+		TMP=0$
+		for(J=0;J<I;J++)
+			TMP+=NormMat[J][I]*Vars[J]$
+
+		for(J=I;J<ExpMatColNum;J++)
+			TMP+=NormMat[I][J]*Vars[J]$
+
+		TMP-=BVec[I]$
+		SolveList=cons(TMP,SolveList)$
+	}
+
+	Rea=vars(SolveList)$
+
+	VarsList=[]$
+	for(I=0;I<length(Vars);I++)
+		if(member(Vars[I],Rea))
+			VarsList=cons(Vars[I],VarsList)$
+
+	Res=solve(SolveList,VarsList)$
+	Res=getgcd(Res,Rea)$
+
+	if(nonposdegchk(Res)){
+
+		TMP1=makeret(Res,Vars,1)$
+
+		if(FLAG==0){
+
+			if(TMP1[0]==0){	
+
+				TMP=roundret(TMP1[1])$
+
+				RET=append(RET,wsort(TMP1[1],Vars,map(drint,TMP1[1]*1.0),ID))$
+
+				if(TMP!=[])
+					RET=append(RET,wsort(TMP1[1],Vars,TMP,ID+1))$
+			}
+			else{
+
+				TMP=vtol(TMP1[1])$
+				RET0=[]$
+				if((TMP0=fixedpoint(TMP,0))!=[]){
+					
+					for(I=0;I<length(TMP0);I++)
+						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
+					RET0=value2(Vars,TMP)$
+					if(RET0!=[])
+						RET0=wsort(RET0,Vars,RET0,-ID)$
+				}
+	
+				TMP=vtol(TMP1[1])$
+				if(RET0==[] && (TMP0=fixedpoint(TMP,1))!=[]){
+					
+					for(I=0;I<length(TMP0);I++)
+						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
+					RET0=value2(Vars,TMP)$
+	
+					if(RET0!=[])
+						RET0=wsort(RET0,Vars,RET0,-ID)$
+				}
+
+				RET=append(RET,RET0)$
+			}
+
+		}
+		else if(FLAG==1)
+			RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
+	}
+
+	return RET$
+}
+
 def weight(PolyList,Vars,FLAG){
 
 	Vars0=vars(PolyList)$
@@ -724,12 +820,15 @@ def weight(PolyList,Vars,FLAG){
 	ExpMat=newvect(length(ExpMat),ExpMat)$
 
 	TMP=unitweight1(ExpMat,Vars,PolyListNum,OneMat,FLAG)$
-
-	RET=append(RET,TMP[1])$
+	if(TMP[1]!=[])
+		RET=append(RET,TMP[1])$
 
 	TMP=unitweight2(TMP[0],ExpMat,Vars,FLAG,3)$
-
-	RET=append(RET,TMP)$
+	if(TMP[1]!=[])
+		RET=append(RET,TMP[1])$
+	else{
+		RET=append(RET,leastsq(0,ExpMat,Vars,FLAG,7))$
+	}
 
 	ExpMat=qsort(ExpMat,junban)$
 
@@ -740,7 +839,13 @@ def weight(PolyList,Vars,FLAG){
 
 	if(size(ExpMat)[0]!=length(ExpMat2)){
 		ExpMat=newvect(length(ExpMat2),ExpMat2)$
-		RET=append(RET,unitweight2(0,ExpMat,Vars,FLAG,5))$
+		TMP=unitweight2(0,ExpMat,Vars,FLAG,5)$
+		if(TMP[1]!=[])
+			RET=append(RET,TMP[1])$
+		else{
+			RET=append(RET,leastsq(0,ExpMat,Vars,FLAG,9))$
+		}
+
 	}
 	else{
 		TMP0=map(ltov,TMP0)$
@@ -760,3 +865,5 @@ def weight(PolyList,Vars,FLAG){
 }
 
 end$
+
+
