@@ -2,23 +2,23 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/Imakefile,v 1.8 2001/12/25 08:59:49 noro Exp $
+ * $OpenXM$
  */
 #include "../include/Risa.tmpl"
 
 SRCS = glob.c parser.c kwd.c parse.y lex.c debug.c\
 	eval.c arith.c function.c load.c util.c\
 	pvar.c struct.c puref.c comp.c main.c  xdeb.c  evall.c\
-	quote.c
+	quote.c gc_risa.c
 
 OBJS = glob.o parser.o kwd.o y.tab.o lex.o debug.o\
 	eval.o arith.o function.o load.o util.o\
 	pvar.o struct.o puref.o comp.o xdeb.o evall.o\
-	quote.o
+	quote.o gc_risa.o
 
 HEADERS = comp.h cpp.h parse.h w_stdio.h
 
-AllTarget(y.tab.c libparse.a main.o umain.o)
+AllTarget(y.tab.c libparse.a gc_risa.o main.o umain.o)
 NormalLibraryTarget(parse,$(OBJS))
 DependTarget()
 #if 0

@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.18 2001/12/25 08:59:47 noro Exp $
+ * $OpenXM$
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
@@ -41,7 +41,7 @@ DEPLIBS =
 #endif
 
 PLIB = parse/libparse.a
-GLIB = gc5.3/libasir-gc.a
+GLIB = gc/libasir-gc.a
 ELIB = engine/libca.a
 FLIB=fft/libdft.a
 ALIB = asm/libasm.a
@@ -63,7 +63,7 @@ PROGRAMS = asir
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)
 
-SUBDIRS = engine fft asm gc5.3 parse builtin io plot lib include
+SUBDIRS = engine fft asm parse builtin io plot lib include
 
 LIBS0 = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(ELIB) $(FLIB) $(ALIB)
 LIBS = $(LIBS0) $(GLIB)
@@ -99,6 +99,13 @@ $(LIBASIR): $(LIBS0)
 	$(RM) $@
 	( cd libtmp; $(AR) ../$@ *.o )
 	$(RANLIB) $@
+
+$(GLIB): parse/gc_risa.o
+	( cd gc; make)
+	-rm gc/libasir-gc.a
+	cp gc/.libs/libgc.a $(GLIB)
+	ar q $(GLIB) parse/gc_risa.o
+	$(RANLIB) $(GLIB)
 
 install:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
