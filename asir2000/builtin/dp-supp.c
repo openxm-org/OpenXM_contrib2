@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.8 2000/12/08 06:43:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.9 2000/12/08 08:26:08 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -731,6 +731,8 @@ P *dnp;
 	*head = h; *rest = r; *dnp = c2;
 }
 
+struct oEGT eg_red_mod;
+
 void _dp_red_mod_destructive(p1,p2,mod,rp)
 DP p1,p2;
 int mod;
@@ -741,6 +743,7 @@ DP *rp;
 	MP m;
 	DP t,s;
 	int c,c1;
+struct oEGT t0,t1;
 
 	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 	_NEWDL(d,n); d->td = d1->td - d2->td;
@@ -750,7 +753,9 @@ DP *rp;
 	_NEWMP(m); m->dl = d; m->c = STOI(mod-c1); NEXT(m) = 0;
 	_MKDP(n,m,s); s->sugar = d->td;
 	_mulmd_dup(mod,s,p2,&t); _free_dp(s);
+/* get_eg(&t0); */
 	_addmd_destructive(mod,p1,t,rp);
+/* get_eg(&t1); add_eg(&eg_red_mod,&t0,&t1); */
 }
 
 /*

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.3 2000/08/22 05:04:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.4 2000/12/08 08:26:09 noro Exp $ 
 */
 /* requires 'primdec' */
 
@@ -108,7 +108,19 @@ def bfct(F)
 		M[I+2][I] = 1;
 #endif
 	V1 = cons(s,V); DV1 = cons(ds,DV);
-	G5 = dp_weyl_gr_main(cons(F,G4),append(V1,DV1),0,0,M);
+	dp_nelim(0);
+/*	G4 = dp_weyl_gr_main(G4,append(V1,DV1),0,0,10); */
+	for ( PrimeIndex = 0; ; PrimeIndex++ ) {
+		Prime = lprime(PrimeIndex);
+		dp_nelim(0); /* XXX */
+		Success = dp_weyl_gr_main(cons(F,G4),append(V1,DV1),0,Prime,10);
+		if ( !Success )
+			continue;
+		dp_nelim(N+1);
+		G5 = dp_weyl_gr_main(cons(F,G4),append(V1,DV1),0,-Prime,10);
+		if ( G5 )
+			break;
+	}
 	for ( T = G5, G6 = []; T != []; T = cdr(T) ) {
 		E = car(T);
 		if ( intersection(vars(E),DV1) == [] )

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.15 2000/12/08 04:35:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.16 2000/12/08 06:43:09 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -355,6 +355,7 @@ LIST *rp;
 	VL fv,vv,vc;
 	NODE fd,fd0,r,r0,t,x,s,xx;
 	DP a,b,c;
+extern struct oEGT eg_red_mod;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
 	NVars = length((NODE)vv); PCoeffs = vc ? 1 : 0; VC = vc;
@@ -392,7 +393,9 @@ LIST *rp;
 	if ( homo ) {
 		initd(&ord1); CNVars = NVars+1;
 	}
+/* init_eg(&eg_red_mod); */
 	x = gb_mod(s,m);
+/* print_eg("Red_mod",&eg_red_mod); */
 	if ( homo ) {
 		reducebase_dehomo(x,&xx); x = xx;
 		initd(ord); CNVars = NVars;
@@ -728,11 +731,13 @@ int m;
 			for ( j = 0; j < spcol; j++ )
 				if ( spmat[i][j] )
 					nonzero++;
-		if ( DP_Print )
+		if ( DP_Print && nsp )
 			fprintf(asir_out,"spmat : %d x %d (nonzero=%f%%)...",
 				nsp,spcol,((double)nonzero*100)/(nsp*spcol));
-		rank = generic_gauss_elim_mod(spmat,nsp,spcol,m,colstat);
-
+		if ( nsp )
+			rank = generic_gauss_elim_mod(spmat,nsp,spcol,m,colstat);
+		else
+			rank = 0;
 		get_eg(&tmp1); add_eg(&eg_elim2,&tmp0,&tmp1);
 		init_eg(&eg_split_elim2); add_eg(&eg_split_elim2,&tmp0,&tmp1);
 
@@ -897,7 +902,11 @@ int m;
 	int i;
 	NODE s,s0,f0;
 
+#if 1
 	f0 = f = NODE_sortb(f,1);
+#else
+	f0 = f;
+#endif
 	psn = length(f); pslen = 2*psn;
 	ps = (DP *)MALLOC(pslen*sizeof(DP));
 	psh = (DL *)MALLOC(pslen*sizeof(DL));
@@ -1808,7 +1817,9 @@ NODE f;
 	while ( d ) {
 		l = d; d = NEXT(d);
 		get_eg(&tmp0);
-		dp_load(l->dp1,&dp1); dp_load(l->dp2,&dp2); dp_sp(dp1,dp2,&h);
+		dp_load(l->dp1,&dp1); dp_load(l->dp2,&dp2);
+		dp_sp(dp1,dp2,&h);
+/* fprintf(stderr,"{%d,%d}",l->dp1,l->dp2); */
 		_dp_nf(gall,h,ps,1,&nf);
 		get_eg(&tmp1); add_eg(&eg_gc,&tmp0,&tmp1);
 		if ( DP_Print || DP_PrintShort ) {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.10 2000/11/07 06:06:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.11 2000/12/05 06:59:16 noro Exp $ 
 */
 #include "ca.h"
 
@@ -59,6 +59,7 @@
 #define ORD_BGRADREV 7
 #define ORD_BLEXREV 8
 #define ORD_ELIM 9
+#define ORD_WEYL_ELIM 10
 
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
@@ -70,6 +71,8 @@ void weyl_mulmm(VL,MP,MP,int,struct cdl *,int);
 void comm_muld_tab(VL,int,struct cdl *,int,struct cdl *,int,struct cdl *);
 
 void mkwc(int,int,Q *);
+
+int cmpdl_weyl_elim();
 
 int do_weyl;
 
@@ -141,6 +144,8 @@ struct order_spec *spec;
 					cmpdl = cmpdl_blexrev; break;
 				case ORD_ELIM:
 					cmpdl = cmpdl_elim; break;
+				case ORD_WEYL_ELIM:
+					cmpdl = cmpdl_weyl_elim; break;
 				case ORD_LEX: default:
 					cmpdl = cmpdl_lex; break;
 			}
@@ -1067,6 +1072,26 @@ DL d1,d2;
 		return -1;
 	else 
 		return cmpdl_revgradlex(n,d1,d2);
+}
+
+int cmpdl_weyl_elim(n,d1,d2)
+int n;
+DL d1,d2;
+{
+	int e1,e2,i;
+
+	for ( i = 1, e1 = 0, e2 = 0; i <= dp_nelim; i++ ) {
+		e1 += d1->d[n-i]; e2 += d2->d[n-i];
+	}
+	if ( e1 > e2 )
+		return 1;
+	else if ( e1 < e2 )
+		return -1;
+	else if ( d1->td > d2->td )
+		return 1;
+	else if ( d1->td < d2->td )
+		return -1;
+	else return -cmpdl_revlex(n,d1,d2);
 }
 
 int cmpdl_order_pair(n,d1,d2)
