@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.37 2004/03/10 06:12:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.38 2004/03/11 03:39:39 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -161,8 +161,14 @@ char *conv_rule(char *name)
 	if ( conv_flag & CONV_DMODE ) {
 		if ( *name == 'd' ) {
 			body = conv_flag&CONV_SUBS?conv_subs(name+1):symbol_name(name+1);
-			r = MALLOC_ATOMIC((strlen(PARTIAL)+strlen(body)+5)*sizeof(char));
-			sprintf(r,strlen(body)==1?"{%s}_%s":"{%s}_{%s}",PARTIAL,body);
+			if ( !body ) {
+				r = MALLOC_ATOMIC((strlen(PARTIAL)+1)*sizeof(char));
+				strcpy(r,PARTIAL);
+			} else {
+				r = MALLOC_ATOMIC((strlen(PARTIAL)+strlen(body)+5)
+					*sizeof(char));
+				sprintf(r,strlen(body)==1?"{%s}_%s":"{%s}_{%s}",PARTIAL,body);
+			}
 			return r;
 		} else
 			return conv_flag&CONV_SUBS?conv_subs(name):symbol_name(name);
