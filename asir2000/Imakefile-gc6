@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/Imakefile-gc6,v 1.1 2002/07/24 09:52:10 noro Exp $
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
@@ -100,7 +100,7 @@ $(LIBASIR): $(LIBS0)
 	( cd libtmp; $(AR) ../$@ *.o )
 	$(RANLIB) $@
 
-$(GLIB): libs/libgc.a parse/gc_risa.o
+$(GLIB): parse/gc_risa.o
 	( cd gc; make)
 	-rm gc/libasir-gc.a
 	cp gc/.libs/libgc.a $(GLIB)
