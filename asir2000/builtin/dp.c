@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.39 2003/09/05 13:20:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.40 2003/09/11 09:03:52 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1307,8 +1307,10 @@ Q *rp;
 			case 1:
 				DP_Print = 1;
 				break;
-			case 2: default:
+			case 2:
 				DP_Print = 0; DP_PrintShort = 1;
+			default:
+				DP_Print = s; DP_PrintShort = 0;
 				break;
 		}
 	} else {
