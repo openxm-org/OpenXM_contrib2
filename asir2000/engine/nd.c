@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.48 2003/08/26 01:42:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.49 2003/08/26 01:54:18 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1618,8 +1618,8 @@ NODE nd_reduceall(int m,NODE f)
 	base.ps = (NDV *)ALLOCA((n-1)*sizeof(NDV));
 	base.bound = (unsigned int **)ALLOCA((n-1)*sizeof(unsigned int *));
 	base.len = n-1;
-	for ( i = 0; i < n; i++ ) {
-again:
+	i = 0;
+	while ( i < n ) {
 		for ( j = 0; j < i; j++ ) {
 			base.ps[j] = ps[j]; base.bound[j] = bound[j];
 		}
@@ -1628,15 +1628,16 @@ again:
 		}
 		g = ndvtond(m,ps[i]);
 		stat = nd_nf_direct(m,g,&base,1,&nf);
-		if ( !stat ) {
+		if ( !stat )
 			nd_reconstruct_direct(m,ps,n);
-			goto again;
-		}
 		else if ( !nf ) {
 			printf("."); fflush(stdout);
 			ndv_free(ps[i]);
-			for ( j = i+1; j < n; j++ ) ps[j-1] = ps[j];
+			for ( j = i+1; j < n; j++ ) {
+				ps[j-1] = ps[j]; bound[j-1] = bound[j];
+			}
 			n--;
+			base.len = n-1;
 		} else {
 			printf("."); fflush(stdout);
 			ndv_free(ps[i]);
@@ -1644,6 +1645,7 @@ again:
 			ps[i] = ndtondv(m,nf);
 			bound[i] = ndv_compute_bound(ps[i]);
 			nd_free(nf);
+			i++;
 		}
 	}
 	printf("\n");
@@ -2000,6 +2002,7 @@ void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 	x = nd_gb(m,0);
 	fprintf(asir_out,"found=%d,notfirst=%d,create=%d\n",
 		nd_found,nd_notfirst,nd_create);
+	x = nd_reducebase(x);
 	x = nd_reduceall(m,x);
 	for ( r0 = 0, t = x; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r); 
@@ -2063,8 +2066,8 @@ void nd_gr_trace(LIST f,LIST v,int m,int homo,struct order_spec *ord,LIST *rp)
 			initd(ord);
 			nd_init_ord(ord);
 			nd_setup_parameters();
-			cand = nd_reducebase(cand);
 		}
+		cand = nd_reducebase(cand);
 		fprintf(asir_out,"found=%d,notfirst=%d,create=%d\n",
 			nd_found,nd_notfirst,nd_create);
 		cand = nd_reduceall(0,cand);
