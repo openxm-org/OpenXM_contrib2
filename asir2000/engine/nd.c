@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.99 2004/09/14 07:23:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.100 2004/09/14 09:25:48 noro Exp $ */
 
 #include "nd.h"
 
@@ -3214,6 +3214,7 @@ ND nd_quo(ND p,ND d)
 			divq(HCQ(p),HCQ(d),&q);
 			chsgnq(q,&CQ(mq));
 			t = nd_mul_nm_trunc(mq,d,HDL(d));
+			CQ(mq) = q;
 			p = nd_add(0,p,t);
 		}
 		NEXT(mq) = 0;
