@@ -2,12 +2,12 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/io/Imakefile,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/Imakefile,v 1.2 2000/08/22 01:30:26 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
-SRCS= pexpr.c spexpr.c biovar.c bsave.c bload.c io.c sio.c cpexpr.c cio.c ox.c des.c ox_asir.c ox_launch.c tcpf.c ws_fileio.c
-OBJS= pexpr.o spexpr.o biovar.o bsave.o bload.o io.o sio.o cpexpr.o cio.o ox.o des.o ox_asir.o ox_launch.o tcpf.o ws_fileio.o
+SRCS= pexpr.c spexpr.c biovar.c bsave.c bload.c io.c sio.c cpexpr.c cio.c ox.c ox_asir.c ox_launch.c tcpf.c ws_fileio.c
+OBJS= pexpr.o spexpr.o biovar.o bsave.o bload.o io.o sio.o cpexpr.o cio.o ox.o ox_asir.o ox_launch.o tcpf.o ws_fileio.o
 
 AllTarget(libio.a)
 NormalLibraryTarget(io,$(OBJS))

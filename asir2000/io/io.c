@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.4 2000/08/21 08:31:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.5 2000/08/22 05:04:18 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -236,7 +236,7 @@ int l;
 {
 	int i;
 	unsigned int t;
-#if defined(VISUAL)
+#if defined(VISUAL) && defined(DES_ENC)
 	int l2;
 	unsigned int plain[2],encrypted[2];
 
@@ -345,7 +345,7 @@ int l;
 {
 	int i;
 	unsigned int t;
-#if defined(VISUAL)
+#if defined(VISUAL) && defined(DES_ENC)
 	int l2;
 	unsigned int plain[2],encrypted[2];
 
