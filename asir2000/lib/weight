@@ -203,32 +203,26 @@ def makeret(Res,Vars,FLAG){
 	ResNum=length(Res)$
 	VarsNum=length(Vars)$
 
-	ResVec=newvect(VarsNum,Vars)$
+	ResVec=newvect(ResNum)$
 
-	M=0$
-	for(I=0;I<ResNum;I++){
+        for(M=0,I=0;I<ResNum;I++){
+                if(member(Res[I][0],Vars)){
+                        ResVec[I]=Res[I][1]$
 
-		for(J=0;J<VarsNum;J++)
-			if(Vars[J]==Res[I][0])
-				break;
+                        if(FLAG && type(ResVec[I])==1){
+                                if(M==0)
+                                        M=ResVec[I]$
+                                else
+                                        if(ResVec[I]<M)
+                                                M=ResVec[I]$
+                        }
+                }
+        }               
 
-		if(J<VarsNum){
-			ResVec[J]=TMP=Res[I][1]$
-
-			if(FLAG && type(TMP)==1){
-				if(M==0)
-					M=TMP$
-				else
-					if(TMP<M)
-						M=TMP$
-			}
-		}
-	}		
-	
 	if(M!=0)
 		ResVec=ResVec/M;
 
-	RET=newvect(VarsNum,Vars)$
+ 	RET=newvect(VarsNum,Vars)$
 
 	for(I=0;I<ResNum;I++){
 		for(J=0;J<VarsNum;J++)
