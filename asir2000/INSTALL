@@ -40,7 +40,7 @@ directory is denoted by TARGETDIR.
 
 % gzip -dc asir2000.tgz | tar xvf -
 % cd asir2000
-% configure TARGETDIR
+% configure -oxhome TARGETDIR -pari -plot
 % xmkmf -a
 % make
 % su                        <-- if necessary
