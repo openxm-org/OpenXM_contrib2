@@ -1,9 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.10 2002/08/08 08:56:31 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.11 2002/09/10 06:18:46 takayama Exp $ */
 /* $Id$ */
 
 /* BUG: this library has not yet been adapted to the new automatic launcher
         of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
 */
+
+#define DO_NOT_START_SERVER_EXPLICITLY
 
 /* #define CLIP  1 */
 /* #define DEBUG 1 */
@@ -45,13 +47,7 @@ Glib_canvas_y = 400$
 Glib_xmin=0$  Glib_xmax=Glib_canvas_x$
 Glib_ymin=0$  Glib_ymax=Glib_canvas_y$
 Glib_math_coordinate=0$
-#define START_SERVER \
-extern Glib_server_started, Glib_process$ \
-if (type(Glib_server_started) == 0) { \
-  Glib_process = ox_launch_nox(0,"ox_plot")$ \
-  register_handler(reset_plot); \
-  Glib_server_started = 1$ \
-}$
+
 
 Glib_canvas = -1$
 Glib_xmag = 1$ Glib_ymag=1$ Glib_xoffset=0$ Glib_yoffset=0$
@@ -59,7 +55,10 @@ Glib_safe_mode = 2 $
 Glib_counter = 100$
 
 def open_Canvas(P,S) {
-  open_canvas(P,S);
+  extern Glib_process;
+  if (P < 0) P=open_canvas(S); /* BUG, get process No. */
+  else open_canvas(P,S);
+  Glib_process = P; 
   R = ox_pop_cmo(P);
 /*
   if (glib_ox_get_errors(P) == []) {
@@ -81,9 +80,20 @@ end: */
 
 def glib_open() {
   extern Glib_canvas_x, Glib_canvas_y,
-         Glib_process, Glib_canvas;
-  START_SERVER  
+         Glib_process, Glib_canvas,
+         Glib_server_started, Glib_process$
+#ifndef DO_NOT_START_SERVER_EXPLICITLY
+if (type(Glib_server_started) == 0) { 
+    Glib_process = ox_launch_nox(0,"ox_plot")$ 
+    register_handler(reset_plot); 
+    Glib_server_started = 1$ 
+  }$
   Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
+#else
+  Glib_canvas = open_Canvas(-1,[Glib_canvas_x,Glib_canvas_y])$
+  register_handler(reset_plot); 
+  Glib_server_started = 1$ 
+#endif
   glib_check_strict();
   return(Glib_canvas);
 }
