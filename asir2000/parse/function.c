@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.3 2000/08/22 05:04:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.4 2003/05/16 09:34:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,16 +96,33 @@ int argc;
 	appendbinf(&ubinf,name,func,argc);
 }
 
+int comp_dcp(DCP *a,DCP *b)
+{
+	int c;
+
+	c = arf_comp(CO,(Obj)(*a)->c,(Obj)(*b)->c);
+	if ( c > 0 ) return 1;
+	else if ( c < 0 ) return -1;
+	else return 0;
+}
+
 void dcptolist(dc,listp)
 DCP dc;
 LIST *listp;
 {
 	NODE node,tnode,ln0,ln1;
 	LIST l;
+	DCP *w,t;
+	int i,n;
 
-	for ( node = 0; dc; dc = NEXT(dc) ) {
+	for ( n = 0, t = dc; t; t = NEXT(t), n++ );
+	w = (DCP *)ALLOCA(n*sizeof(DCP));
+	for ( i = 0, t = dc; i < n; t = NEXT(t), i++ )
+		w[i] = t;
+	qsort(w,n,sizeof(DCP),(int (*)(const void *,const void *))comp_dcp);
+	for ( node = 0, i = 0; i < n; i++ ) {
 		NEXTNODE(node,tnode);
-		MKNODE(ln1,DEG(dc),0); MKNODE(ln0,COEF(dc),ln1);
+		MKNODE(ln1,DEG(w[i]),0); MKNODE(ln0,COEF(w[i]),ln1);
 		MKLIST(l,ln0); BDY(tnode) = (pointer)l;
 	}
 	NEXT(tnode) = 0; MKLIST(l,node); *listp = l;
