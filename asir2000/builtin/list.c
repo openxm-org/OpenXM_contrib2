@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.7 2003/07/29 01:50:56 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.8 2004/06/22 13:40:44 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pcar(), Pcdr(), Pcons(), Pappend(), Preverse(), Plength();
-void Plist();
+void Plist(), Passoc();
 void Pnconc(), Preplcd(), Preplca();
 
 struct ftab list_tab[] = {
@@ -65,6 +65,7 @@ struct ftab list_tab[] = {
 	{"replcd",Preplcd,2},
 	{"replca",Preplca,2},
 	{"list", Plist, -99999999},
+	{"assoc",Passoc,2},
 	{0,0,0},
 };
 
@@ -212,4 +213,24 @@ LIST *rp;
 		BDY(BDY((LIST)ARG0(arg))) = (LIST)ARG1(arg);
 		*rp = (LIST)ARG0(arg);
 	}
+}
+
+void Passoc(NODE arg, LIST *rp)
+{
+    NODE n,m,s1,t1,t2;
+    LIST s,t;
+
+    asir_assert(ARG0(arg),O_LIST,"assoc");
+    asir_assert(ARG1(arg),O_LIST,"assoc");
+    n = BDY((LIST)ARG0(arg));
+    m = BDY((LIST)ARG1(arg));
+    for ( s = 0, t2 = 0; n; n = NEXT(n) ) {
+        if (m) {
+            MKNODE(t2,BDY(m),0);
+            m = NEXT(m);
+        }
+        MKNODE(t1,BDY(n),t2); MKLIST(t,t1);
+        NEXTNODE(s,s1); BDY(s1) = t; NEXT(s1) = 0;
+    }
+    MKLIST(*rp,s);
 }
