@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.14 2004/03/18 01:59:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.15 2005/03/24 12:46:45 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -180,7 +180,7 @@ void env_init() {
 			if ( !p )
 				break;
 		}
-		i += 2;
+		i += 3;
         ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
 		for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
 		e = getenv("ASIRLOADPATH");
@@ -193,9 +193,13 @@ void env_init() {
 			if ( !p )
 				break;
 		}
+    }else{
+	  ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*3);
+	  ASIRLOADPATH[0] = NULL;
     }
 	for ( i = 0; ASIRLOADPATH[i]; i++ );
-	ASIRLOADPATH[i] = asir_libdir;
+	ASIRLOADPATH[i++] = asir_libdir;
+	ASIRLOADPATH[i] = NULL;
 }
 
 void searchasirpath(char *name,char **pathp)
