@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.3 2000/08/21 08:31:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.4 2000/08/22 05:03:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,6 +68,7 @@ void ritopa_i();
 #endif
 
 void Peval(),Psetprec(),p_pi(),p_e(),p_mul(),p_gcd();
+void asir_cgiv(GEN);
 
 struct ftab pari_tab[] = {
 	{"eval",Peval,-2}, {"setprec",Psetprec,-1}, {0,0,0},
@@ -76,9 +77,9 @@ struct ftab pari_tab[] = {
 #define MKPREC(a,i,b) (argc(a)==(i)?mkprec(QTOS((Q)(b))):prec)
 
 #define CALLPARI1(f,a,p,r)\
-ritopa((Obj)a,&_pt1_); _pt2_ = f(_pt1_,p); patori(_pt2_,r); cgiv(_pt2_); cgiv(_pt1_)
+ritopa((Obj)a,&_pt1_); _pt2_ = f(_pt1_,p); patori(_pt2_,r); asir_cgiv(_pt2_); asir_cgiv(_pt1_)
 #define CALLPARI2(f,a,b,p,r)\
-ritopa((Obj)a,&_pt1_); ritopa((Obj)b,&_pt2_); _pt3_ = f(_pt1_,_pt2_,p); patori(_pt3_,r); cgiv(_pt3_); cgiv(_pt2_); cgiv(_pt1_)
+ritopa((Obj)a,&_pt1_); ritopa((Obj)b,&_pt2_); _pt3_ = f(_pt1_,_pt2_,p); patori(_pt3_,r); asir_cgiv(_pt3_); asir_cgiv(_pt2_); asir_cgiv(_pt1_)
 
 #define PARIF1P(f,pf)\
 void f(NODE,Obj *);\
@@ -95,6 +96,17 @@ void f(ar,rp) NODE ar; Obj *rp;\
 #if defined(LONG_IS_64BIT)
 #define PREC_CONV		0.051905126
 #endif
+
+/* XXX : we should be more careful when we free PARI pointers. */
+
+void asir_cgiv(ptr)
+GEN ptr;
+{
+	if ( ptr != gzero && ptr != gun
+	&& ptr != gdeux && ptr != ghalf
+	&& ptr != polvar && ptr != gi )
+		cgiv(ptr);
+}
 
 mkprec(p)
 int p;
@@ -132,7 +144,7 @@ Obj *rp;
 	GEN x;
 
 	x = mppi(MKPREC(arg,1,ARG0(arg)));
-	patori(x,rp); cgiv(x);
+	patori(x,rp); asir_cgiv(x);
 }
 
 void p_e(arg,rp)
@@ -141,7 +153,7 @@ Obj *rp;
 {
 	GEN x;
 
-	x = gexp(gun,MKPREC(arg,1,ARG0(arg))); patori(x,rp); cgiv(x);
+	x = gexp(gun,MKPREC(arg,1,ARG0(arg))); patori(x,rp); asir_cgiv(x);
 }
 
 void p_mul(a,b,r)
@@ -151,7 +163,7 @@ Obj a,b,*r;
 
 	ritopa((Obj)a,&p1); ritopa((Obj)b,&p2);
 	p3 = mulii(p1,p2);
-	patori(p3,r); cgiv(p3); cgiv(p2); cgiv(p1);
+	patori(p3,r); asir_cgiv(p3); asir_cgiv(p2); asir_cgiv(p1);
 }
 
 void p_gcd(a,b,r)
@@ -161,7 +173,7 @@ N a,b,*r;
 
 	ritopa_i(a,1,&p1); ritopa_i(b,1,&p2);
 	p3 = mppgcd(p1,p2);
-	patori_i(p3,r); cgiv(p3); cgiv(p2); cgiv(p1);
+	patori_i(p3,r); asir_cgiv(p3); asir_cgiv(p2); asir_cgiv(p1);
 }
 
 PARIF1P(p_sin,gsin) PARIF1P(p_cos,gcos) PARIF1P(p_tan,gtan)
