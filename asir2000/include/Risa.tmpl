@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.
  * 
- * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.15 2000/12/22 10:03:29 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.16 2000/12/23 08:04:16 saito Exp $ 
 */
 #include "config.h"
 
@@ -90,10 +90,11 @@ PARIFLAGS = -DLONG_IS_32BIT
 #ifdef USE_PARI
 PARI=1
 PARIINC = $(ROOTDIR)/include/pari
+#if defined(OpenXM_HOME)
 PARILIB = $(ROOTDIR)/lib/libpari.a
-/*
+#else
 PARILIB = -L/usr/local/lib -lpari
-*/
+#endif
 #else
 PARI=0
 PARIINC = .
@@ -132,7 +133,11 @@ MPIINC=.
 
 #ifdef USE_FEP
 FEP=1
+#if defined(OpenXM_HOME)
+FEPLIB= $(ROOTDIR)/lib/libreadline.a
+#else
 FEPLIB = -lreadline -ltermcap
+#endif
 #else
 FEP=0
 FEPLIB =
