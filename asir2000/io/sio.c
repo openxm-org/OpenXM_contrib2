@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.14 2001/12/25 02:39:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.15 2001/12/27 04:07:15 noro Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -313,10 +313,14 @@ void free_iofp(int s)
 	struct IOFP *r;
 
 	r = &iofp[s];
-	r->in = r->out = 0; r->s = 0;
 #if !defined(VISUAL)
+	if ( r->in )
+		fclose(r->in);
+	if ( r->out )
+		fclose(r->out);
 	if ( r->socket )
 		unlink(r->socket);
+	r->in = r->out = 0; r->s = 0;
 #endif
 }
 
