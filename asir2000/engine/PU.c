@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.7 2001/10/01 01:58:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.8 2001/10/09 01:36:11 noro Exp $ 
 */
 #include "ca.h"
 
@@ -635,7 +635,7 @@ showmat(VL vl,P **mat,int n)
 
 	for ( i = 0; i < n; i++ ) {
 		for ( j = 0; j < n; j++ ) {
-			mptop(mat[i][j],&t); printp(vl,t); fprintf(out," ");
+			mptop(mat[i][j],&t); asir_printp(vl,t); fprintf(out," ");
 		}
 		fprintf(out,"\n");
 	}
@@ -646,7 +646,7 @@ showmp(VL vl,P p)
 {
 	P t;
 
-	mptop(p,&t); printp(vl,t); fprintf(out,"\n");
+	mptop(p,&t); asir_printp(vl,t); fprintf(out,"\n");
 }
 #endif
 

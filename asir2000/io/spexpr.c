@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.18 2002/01/08 04:14:39 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.19 2002/09/02 05:16:07 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -79,7 +79,7 @@ int print_quote;
 #define PRINTV printv
 #define PRINTEXPR printexpr
 #define PRINTNUM printnum
-#define PRINTP printp
+#define PRINTP asir_printp
 #define PRINTR printr
 #define PRINTLIST printlist
 #define PRINTVECT printvect
@@ -124,7 +124,7 @@ extern int print_quote;
 #define PRINTV sprintv
 #define PRINTEXPR sprintexpr
 #define PRINTNUM sprintnum
-#define PRINTP sprintp
+#define PRINTP asir_sprintp
 #define PRINTR sprintr
 #define PRINTLIST sprintlist
 #define PRINTVECT sprintvect
