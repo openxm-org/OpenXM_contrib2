@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/engine/F.c,v 1.1.1.1 1999/11/10 08:12:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ */
 #include "ca.h"
 #include <math.h>
 
@@ -90,6 +90,7 @@ DCP *dcp;
 	adjsgn(f,dc0); *dcp = dc0;
 }
 
+#if 0
 void adjsgn(p,dc)
 P p;
 DCP dc;
@@ -105,6 +106,24 @@ DCP dc;
 		chsgnp(COEF(dc),&c); COEF(dc) = c;
 	}
 }
+#else
+void adjsgn(p,dc)
+P p;
+DCP dc;
+{     
+	int sgn;
+	DCP dct;
+	P c;
+
+	if ( headsgn(COEF(dc)) != headsgn(p) ) {
+		chsgnp(COEF(dc),&c); COEF(dc) = c;
+	}
+	for ( dct = NEXT(dc); dct; dct = NEXT(dct) )
+		if ( headsgn(COEF(dct)) < 0 ) {
+			chsgnp(COEF(dct),&c); COEF(dct) = c;
+		}
+}
+#endif
 
 int headsgn(p)
 P p;
