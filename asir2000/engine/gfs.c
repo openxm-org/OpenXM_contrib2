@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.11 2002/09/27 04:24:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.12 2002/09/27 08:40:49 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -942,6 +942,21 @@ int cmpgfs(GFS a,GFS b)
 			else
 				return 0;
 		}
+}
+
+void pthrootgfs(GFS a,GFS *b)
+{
+	Q p;
+	int e,i;
+	GFS t,s;
+
+	STOQ(characteristic_sf(),p);
+	e = extdeg_sf()-1;
+	t = a;
+	for ( i = 0; i < e; i++ ) {
+		pwrgfs(t,p,&s); t = s;
+	}
+	*b = t;
 }
 
 void randomgfs(GFS *r)

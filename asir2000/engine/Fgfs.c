@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.2 2002/09/26 09:07:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.3 2002/09/27 08:40:48 noro Exp $ */
 
 #include "ca.h"
 
@@ -6,6 +6,152 @@ void cont_pp_mv_sf(VL vl,VL rvl,P p,P *c,P *pp);
 void gcdsf_main(VL vl,P *pa,int m,P *r);
 void ugcdsf(P *pa,int m,P *r);
 void head_monomial(V v,P p,P *coef,P *term);
+void sqfrsfmain(VL vl,P f,DCP *dcp);
+void pthrootsf(P f,Q m,P *r);
+void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp);
+void gcdsf(VL vl,P *pa,int k,P *r);
+
+void lex_lc(P f,P *c)
+{
+	if ( !f || NUM(f) )
+		*c = f;
+	else
+		lex_lc(COEF(DC(f)),c);
+}
+
+DCP append_dc(DCP dc,DCP dct)
+{
+	DCP dcs;
+
+	if ( !dc )
+		return dct;
+	else {
+		for ( dcs = dc; NEXT(dcs); dcs = NEXT(dcs) );
+		NEXT (dcs) = dct;
+		return dc;
+	}
+}
+
+void sqfrsf(VL vl, P f, DCP *dcp)
+{
+	DCP dc,dct;
+	Obj obj;
+	P t,s,c;
+	VL tvl,nvl;
+
+	simp_ff((Obj)f,&obj); f = (P)obj;
+	lex_lc(f,&c); divsp(vl,f,c,&t); f = t;
+	monomialfctr(vl,f,&t,&dc); f = t;
+	clctv(vl,f,&tvl); vl = tvl;
+	if ( !vl )
+		;
+	else if ( !NEXT(vl) ) {
+		sfusqfr(f,&dct);
+		dc = append_dc(dc,NEXT(dct));
+	} else {
+		t = f;
+		for ( tvl = vl; tvl; tvl = NEXT(tvl) ) {
+			reordvar(vl,tvl->v,&nvl);
+			cont_pp_mv_sf(vl,NEXT(nvl),t,&c,&s); t = s;
+			sqfrsf(vl,c,&dct);
+			dc = append_dc(dc,NEXT(dct));
+		}
+		sqfrsfmain(vl,t,&dct);
+		dc = append_dc(dc,dct);
+	}
+	NEWDC(dct); DEG(dct) = ONE; COEF(dct) = (P)c; NEXT(dct) = dc;
+	*dcp = dct;
+}
+
+void sqfrsfmain(VL vl,P f,DCP *dcp)
+{
+	VL tvl;
+	DCP dc,dct,dcs;
+	P t,s;
+	Q m,m1;
+	V v;
+
+	clctv(vl,f,&tvl); vl = tvl;
+	dc = 0;
+	t = f;
+	for ( tvl = vl; tvl; tvl = NEXT(tvl) ) {
+		v = tvl->v;
+		partial_sqfrsf(vl,v,t,&s,&dct); t = s;
+		dc = append_dc(dc,dct);
+	}
+	if ( !NUM(t) ) {
+		STOQ(characteristic_sf(),m);
+		pthrootsf(t,m,&s);
+		sqfrsfmain(vl,s,&dct);
+		for ( dcs = dct; dcs; dcs = NEXT(dcs) ) {
+			mulq(DEG(dcs),m,&m1); DEG(dcs) = m1;
+		}
+		dc = append_dc(dc,dct);
+	}
+	*dcp = dc;
+}
+
+void pthrootsf(P f,Q m,P *r)
+{
+	DCP dc,dc0,dct;
+	N qn,rn;
+
+	if ( NUM(f) )
+		pthrootgfs(f,r);
+	else {
+		dc = DC(f);
+		dc0 = 0;
+		for ( dc0 = 0; dc; dc = NEXT(dc) ) {
+			NEXTDC(dc0,dct);
+			pthrootsf(COEF(dc),m,&COEF(dct));
+			if ( DEG(dc) ) {
+				divn(NM(DEG(dc)),NM(m),&qn,&rn);
+				if ( rn )
+					error("pthrootsf : cannot happen");
+				NTOQ(qn,1,DEG(dct));
+			} else
+				DEG(dct) = 0;
+		}
+		NEXT(dct) = 0;
+		MKP(VR(f),dc0,*r);
+	}
+}
+
+void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp)
+{
+	P ps[2];
+	DCP dc0,dc;
+	int m;
+	P t,flat,flat1,g,df,q;
+
+	diffp(vl,f,v,&df);
+	if ( !df ) {
+		*dcp = 0;
+		*r = f;
+		return;
+	}
+	ps[0] = f; ps[1] = df;
+	gcdsf(vl,ps,2,&g);	
+	divsp(vl,f,g,&flat);
+	m = 0;
+	t = f;
+	dc0 = 0;
+	while ( !NUM(flat) ) {
+		while ( divtp(vl,t,flat,&q) ) {
+			t = q; m++;
+		}
+		ps[0] = t; ps[1] = flat;
+		gcdsf(vl,ps,2,&flat1);
+		divsp(vl,flat,flat1,&g);
+		flat = flat1;
+		NEXTDC(dc0,dc);
+		COEF(dc) = g;
+		STOQ(m,DEG(dc));
+	}
+	NEXT(dc) = 0;
+	*dcp = dc0;
+	*r = t;
+}
 
 void gcdsf(VL vl,P *pa,int k,P *r)
 {
@@ -113,6 +259,30 @@ void ugcdsf(P *pa,int m,P *r)
 	sfumtop(v,w1,r);
 }
 
+/* deg(HT(p),v), where p is considered as distributed poly over F[v] */
+int gethdeg(VL vl,V v,P p)
+{
+	DCP dc;
+	Q dmax;
+	P cmax;
+
+	if ( !p )
+		return -1;
+	else if ( NUM(p) )
+		return 0;
+	else if ( VR(p) != v )
+		/* HT(p) = HT(lc(p))*x^D */
+		return gethdeg(vl,v,COEF(DC(p)));
+	else {
+		/* VR(p) = v */
+		dc = DC(p); dmax = DEG(dc); cmax = COEF(dc);
+		for ( dc = NEXT(dc); dc; dc = NEXT(dc) )
+			if ( compp(vl,COEF(dc),cmax) > 0 ) {
+				dmax = DEG(dc); cmax = COEF(dc);
+			}
+		return QTOS(dmax);
+	}
+}
 
 /* all the pa[i]'s have the same variables (=vl) */
 
@@ -131,13 +301,13 @@ void gcdsf_main(VL vl,P *pa,int m,P *r)
 		ugcdsf(pa,m,r);
 		return;
 	}
-	/* find v s.t. min(deg(pa[i],v)) is minimal */
+	/* find v s.t. min(deg(pa[i],v)+gethdeg(pa[i],v)) is minimal */
 	tvl = vl;
 	do {
 		v = tvl->v;
 		i = 0;
 		do {
-			d = getdeg(v,pa[i]);
+			d = getdeg(v,pa[i])+gethdeg(vl,v,pa[i]);
 			if ( i == 0 || (d < d0) ) {
 				d0 = d; i0 = i; v0 = v;
 			}

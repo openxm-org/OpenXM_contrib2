@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.22 2002/09/27 04:24:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.23 2002/09/27 08:40:48 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -898,12 +898,8 @@ void sfsqfr(P f,DCP *dcp)
 		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = f; NEXT(dc) = 0; *dcp = dc;
 	} else if ( !NEXT(vl) )
 		sfusqfr(f,dcp);
-#if 0
-	else if ( !NEXT(NEXT(vl)) )
-		sfbsqfr(f,vl->v,NEXT(vl)->v,dcp);
-#endif
 	else
-		error("sfsqfr : not implemented yet");
+		sqfrsf(f,dcp);
 }
 
 void sfusqfr(P f,DCP *dcp)
@@ -934,6 +930,7 @@ void sfusqfr(P f,DCP *dcp)
 	*dcp = dct;
 }
 
+#if 0
 void sfbsqfrmain(P f,V x,V y,DCP *dcp)
 {
 	/* XXX*/
@@ -977,6 +974,7 @@ void sfbsqfr(P f,V x,V y,DCP *dcp)
 		*dcp = dcx;
 	}
 }
+#endif
 
 void sfdtest(P,ML,V,V,DCP *);
 
