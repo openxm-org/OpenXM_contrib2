@@ -1,5 +1,5 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.1 2000/12/22 09:58:32 saito Exp $
  */
 
 #include "ca.h"
@@ -86,20 +86,21 @@ Pitv(NODE arg, Obj *rp)
 			*rp = 0;
 			return;
 		}
-		else if ( NID(a) == N_IP || NID(a) == N_IF) {
+		else if ( NID(a) == N_IP || NID(a) == N_IntervalBigFloat) {
 			*rp = (Obj)a;
 			return;
 		}
-		else if ( NID(a) == N_ID ) {
-			inf = INF((ItvD)a);
-			sup = SUP((ItvD)a);
+		else if ( NID(a) == N_IntervalDouble ) {
+			inf = INF((IntervalDouble)a);
+			sup = SUP((IntervalDouble)a);
 			double2bf(inf, (BF *)&i);
 			double2bf(sup, (BF *)&s);
 			istoitv(i,s,&c);
 		}
 		else istoitv(a,a,&c);
 	}
-	if ( NID( c ) == N_IF ) addulp((ItvF)c, (ItvF *)rp);
+	if ( NID( c ) == N_IntervalBigFloat )
+		addulp((IntervalBigFloat)c, (IntervalBigFloat *)rp);
 	else *rp = (Obj)c;
 #endif
 }
@@ -132,13 +133,13 @@ Pitvbf(NODE arg, Obj *rp)
 			ToBf(s, &ss);
 			istoitv((Num)ii,(Num)ss,&c);
 		}
-		else if ( NID(a) == N_IF) {
+		else if ( NID(a) == N_IntervalBigFloat) {
 			*rp = (Obj)a;
 			return;
 		}
-		else if ( NID(a) == N_ID ) {
-			inf = INF((ItvD)a);
-			sup = SUP((ItvD)a);
+		else if ( NID(a) == N_IntervalDouble ) {
+			inf = INF((IntervalDouble)a);
+			sup = SUP((IntervalDouble)a);
 			double2bf(inf, (BF *)&i);
 			double2bf(sup, (BF *)&s);
 			istoitv(i,s,&c);
@@ -148,7 +149,8 @@ Pitvbf(NODE arg, Obj *rp)
 			istoitv(i,i,&c);
 		}
 	}
-	if ( c && OID( c ) == O_N && NID( c ) == N_IF ) addulp((ItvF)c, (ItvF *)rp);
+	if ( c && OID( c ) == O_N && NID( c ) == N_IntervalBigFloat )
+		addulp((IntervalBigFloat)c, (IntervalBigFloat *)rp);
 	else *rp = (Obj)c;
 }
 
@@ -158,7 +160,7 @@ Pitvd(NODE arg, Obj *rp)
 	double	inf, sup;
 	Num	a, a0, a1, t;
 	Itv	ia;
-	ItvD	d;
+	IntervalDouble	d;
 
 	asir_assert(ARG0(arg),O_N,"intvald");
 	a0 = (Num)ARG0(arg);
@@ -166,10 +168,10 @@ Pitvd(NODE arg, Obj *rp)
 		asir_assert(ARG1(arg),O_N,"intvald");
 		a1 = (Num)ARG1(arg);
 	} else {
-		if ( a0 && OID(a0)==O_N && NID(a0)==N_ID ) {
-			inf = INF((ItvD)a0);
-			sup = SUP((ItvD)a0);
-			MKItvD(inf,sup,d);
+		if ( a0 && OID(a0)==O_N && NID(a0)==N_IntervalDouble ) {
+			inf = INF((IntervalDouble)a0);
+			sup = SUP((IntervalDouble)a0);
+			MKIntervalDouble(inf,sup,d);
 			*rp = (Obj)d;
 			return;
 		}
@@ -180,7 +182,7 @@ Pitvd(NODE arg, Obj *rp)
 	}
 	inf = ToRealDown(a0);
 	sup = ToRealUp(a1);
-	MKItvD(inf,sup,d);
+	MKIntervalDouble(inf,sup,d);
 	*rp = (Obj)d;
 }
 
@@ -196,14 +198,14 @@ Pinf(NODE arg, Obj *rp)
 		*rp = 0;
 	} else if  ( OID(a) == O_N ) {
 		switch ( NID(a) ) {
-			case N_ID:
-				d = INF((ItvD)a);
+			case N_IntervalDouble:
+				d = INF((IntervalDouble)a);
 				MKReal(d, r);
 				*rp = (Obj)r;
 				break;
 			case N_IP:
-			case N_IF:
-			case N_IT:
+			case N_IntervalBigFloat:
+			case N_IntervalQuad:
 				itvtois((Itv)ARG0(arg),&i,&s);
 				*rp = (Obj)i;
 				break;
@@ -228,14 +230,14 @@ Psup(NODE arg, Obj *rp)
 		*rp = 0;
 	} else if  ( OID(a) == O_N ) {
 		switch ( NID(a) ) {
-			case N_ID:
-				d = SUP((ItvD)a);
+			case N_IntervalDouble:
+				d = SUP((IntervalDouble)a);
 				MKReal(d, r);
 				*rp = (Obj)r;
 				break;
 			case N_IP:
-			case N_IF:
-			case N_IT:
+			case N_IntervalBigFloat:
+			case N_IntervalQuad:
 				itvtois((Itv)ARG0(arg),&i,&s);
 				*rp = (Obj)s;
 				break;
@@ -260,14 +262,14 @@ Pmid(NODE arg, Obj *rp)
 		*rp = 0;
 	} else switch (OID(a)) {
 		case O_N:
-			if ( NID(a) == N_ID ) {
-				d = ( INF((ItvD)a)+SUP((ItvD)a) ) / 2.0;
+			if ( NID(a) == N_IntervalDouble ) {
+				d = ( INF((IntervalDouble)a)+SUP((IntervalDouble)a) ) / 2.0;
 				MKReal(d, r);
 				*rp = (Obj)r;
-			} else if ( NID(a) == N_IT ) {
+			} else if ( NID(a) == N_IntervalQuad ) {
 				error("mid: not supported operation");
 				*rp = 0;
-			} else if ( NID(a) == N_IP || NID(a) == N_IF ) {
+			} else if ( NID(a) == N_IP || NID(a) == N_IntervalBigFloat ) {
 				miditvp((Itv)ARG0(arg),&s);
 				*rp = (Obj)s;
 			} else {
@@ -297,8 +299,8 @@ Pcup(NODE arg, Obj *rp)
 	asir_assert(ARG1(arg),O_N,"cup");
 	a = (Num)ARG0(arg);
 	b = (Num)ARG1(arg);
-	if ( a && NID(a) == N_ID && b && NID(b) == N_ID ) {
-		cupitvd((ItvD)a, (ItvD)b, (ItvD *)rp);
+	if ( a && NID(a) == N_IntervalDouble && b && NID(b) == N_IntervalDouble ) {
+		cupitvd((IntervalDouble)a, (IntervalDouble)b, (IntervalDouble *)rp);
 	} else {
 		cupitvp((Itv)ARG0(arg),(Itv)ARG1(arg),&s);
 		*rp = (Obj)s;
@@ -315,8 +317,8 @@ Pcap(NODE arg, Obj *rp)
 	asir_assert(ARG1(arg),O_N,"cap");
 	a = (Num)ARG0(arg);
 	b = (Num)ARG1(arg);
-	if ( a && NID(a) == N_ID && b && NID(b) == N_ID ) {
-		capitvd((ItvD)a, (ItvD)b, (ItvD *)rp);
+	if ( a && NID(a) == N_IntervalDouble && b && NID(b) == N_IntervalDouble ) {
+		capitvd((IntervalDouble)a, (IntervalDouble)b, (IntervalDouble *)rp);
 	} else {
 		capitvp((Itv)ARG0(arg),(Itv)ARG1(arg),&s);
 		*rp = (Obj)s;
@@ -335,8 +337,8 @@ Obj *rp;
 	a = (Num)ARG0(arg);
 	if ( ! a ) {
 		*rp = 0;
-	} else if ( NID(a) == N_ID ) {
-		widthitvd((ItvD)a, (Num *)rp);
+	} else if ( NID(a) == N_IntervalDouble ) {
+		widthitvd((IntervalDouble)a, (Num *)rp);
 	} else {
 		widthitvp((Itv)ARG0(arg),&s);
 		*rp = (Obj)s;
@@ -355,8 +357,8 @@ Obj *rp;
 	a = (Num)ARG0(arg);
 	if ( ! a ) {
 		*rp = 0;
-	} else if ( NID(a) == N_ID ) {
-		absitvd((ItvD)a, (Num *)rp);
+	} else if ( NID(a) == N_IntervalDouble ) {
+		absitvd((IntervalDouble)a, (Num *)rp);
 	} else {
 		absitvp((Itv)ARG0(arg),&s);
 		*rp = (Obj)s;
@@ -375,8 +377,8 @@ Obj *rp;
 	asir_assert(ARG1(arg),O_N,"distance");
 	a = (Num)ARG0(arg);
 	b = (Num)ARG1(arg);
-	if ( a && NID(a) == N_ID && b && NID(b) == N_ID ) {
-		distanceitvd((ItvD)a, (ItvD)b, (Num *)rp);
+	if ( a && NID(a) == N_IntervalDouble && b && NID(b) == N_IntervalDouble ) {
+		distanceitvd((IntervalDouble)a, (IntervalDouble)b, (Num *)rp);
 	} else {
 		distanceitvp((Itv)ARG0(arg),(Itv)ARG1(arg),&s);
 		*rp = (Obj)s;
@@ -397,10 +399,10 @@ Obj *rp;
 		if ( ! ARG0(arg) ) s = 1;
 		else s = 0;
 	}
-	else if ( NID(ARG1(arg)) == N_ID ) {
-		s = initvd((Num)ARG0(arg),(ItvD)ARG1(arg));
+	else if ( NID(ARG1(arg)) == N_IntervalDouble ) {
+		s = initvd((Num)ARG0(arg),(IntervalDouble)ARG1(arg));
 
-	} else if ( NID(ARG1(arg)) == N_IP || NID(ARG1(arg)) == N_IF ) {
+	} else if ( NID(ARG1(arg)) == N_IP || NID(ARG1(arg)) == N_IntervalBigFloat ) {
 		if ( ! ARG0(arg) ) s = initvp((Num)ARG0(arg),(Itv)ARG1(arg));
 		else if ( NID(ARG0(arg)) == N_IP ) {
 			s = itvinitvp((Itv)ARG0(arg),(Itv)ARG1(arg));

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.9 2001/09/03 07:01:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.10 2001/10/09 01:36:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -172,13 +172,13 @@ void loaditv(FILE *s,Itv *p)
 	*p = q;
 }
 
-void loaditvd(FILE *s,ItvD *p)
+void loaditvd(FILE *s,IntervalDouble *p)
 {
-	ItvD q;
+	IntervalDouble q;
 	char dmy;
 
 	read_char(s,&dmy);
-	NEWItvD(q);
+	NEWIntervalDouble(q);
 	read_double(s,&INF(q));
 	read_double(s,&SUP(q));
 	*p = q;

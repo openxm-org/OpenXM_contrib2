@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.17 2001/10/09 01:36:22 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -189,7 +189,7 @@ P p;
 {
 	if ( NUM(p) )
 #if defined(INTERVAL)
-		if ( NID(p) != N_IP && NID(p) != N_ID && NID(p) != N_IT && NID(p) != N_IF
+		if ( NID(p) != N_IP && NID(p) != N_IntervalDouble && NID(p) != N_IntervalQuad && NID(p) != N_IntervalBigFloat
 			&& compnum(CO,(Num)p,0) < 0 ) 
 #else
 		if ( compnum(CO,(Num)p,0) < 0 ) 
@@ -412,31 +412,31 @@ Num q;
 #endif
 #if defined(INTERVAL)
 		case N_IP:
-		case N_IF:
+		case N_IntervalBigFloat:
 			PUTS("[");
 			PRINTNUM(INF((Itv)q));
 			PUTS(",");
 			PRINTNUM(SUP((Itv)q));
 			PUTS("]");
 			break;
-		case N_ID:
+		case N_IntervalDouble:
 			switch (printmode) {
 				case PRINTF_E:
-					TAIL PRINTF(OUT, "[%.16e,%.16e]",INF((ItvD)q),SUP((ItvD)q));
+					TAIL PRINTF(OUT, "[%.16e,%.16e]",INF((IntervalDouble)q),SUP((IntervalDouble)q));
 #if defined(ITVDEBUG)
-					printbin(INF((ItvD)q));
-					printbin(SUP((ItvD)q));
+					printbin(INF((IntervalDouble)q));
+					printbin(SUP((IntervalDouble)q));
 #endif
 					break;
 				case MID_PRINTF_G:
-					TAIL PRINTF(OUT, "<%g,%g>", (SUP((ItvD)q)+INF((ItvD)q))*0.5,(SUP((ItvD)q)-INF((ItvD)q))*0.5);
+					TAIL PRINTF(OUT, "<%g,%g>", (SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
 					break;
 				case MID_PRINTF_E:
-					TAIL PRINTF(OUT, "<%.16e,%.16e>", (SUP((ItvD)q)+INF((ItvD)q))*0.5,(SUP((ItvD)q)-INF((ItvD)q))*0.5);
+					TAIL PRINTF(OUT, "<%.16e,%.16e>", (SUP((IntervalDouble)q)+INF((IntervalDouble)q))*0.5,(SUP((IntervalDouble)q)-INF((IntervalDouble)q))*0.5);
 					break;
 				case PRINTF_G:
 				default:
-					TAIL PRINTF(OUT, "[%g,%g]",INF((ItvD)q),SUP((ItvD)q));
+					TAIL PRINTF(OUT, "[%g,%g]",INF((IntervalDouble)q),SUP((IntervalDouble)q));
 				break;
 			}
 			break;
@@ -474,8 +474,8 @@ C a;
 	if ( a->i ) {
 #if defined(INTERVAL)
 		if ( a->r && ((compnum(0,a->i,0) > 0)
-			|| NID(a->i) == N_IP || NID(a->i) == N_ID
-			|| NID(a->i) == N_IT || NID(a->i) == N_IF) )
+			|| NID(a->i) == N_IP || NID(a->i) == N_IntervalDouble
+			|| NID(a->i) == N_IntervalQuad || NID(a->i) == N_IntervalBigFloat) )
 #else
 		if ( a->r && (compnum(0,a->i,0) > 0) )
 #endif

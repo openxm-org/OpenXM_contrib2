@@ -1,5 +1,5 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.1 2000/12/22 10:03:28 saito Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -94,7 +94,7 @@ void getulp(BF a, BF *au)
 	cgiv(b);
 }
 
-void addulp(ItvF a, ItvF *c)
+void addulp(IntervalBigFloat a, IntervalBigFloat *c)
 {
 	Num	ai, as, aiu, asu, inf, sup;
 
@@ -110,7 +110,7 @@ void addulp(ItvF a, ItvF *c)
 	istoitv(inf,sup, (Itv *)c);
 }
 
-void additvf(ItvF a, ItvF b, ItvF *c)
+void additvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
 {
 	Num	ai,as,bi,bs,mas,mbs,tmp;
 	Num	inf,sup;
@@ -139,7 +139,7 @@ printexpr(CO, bs);
 		addnum(0,ai,bi,&inf);
 		addnum(0,as,bs,&sup);
 		istoitv(inf,sup,(Itv *)&tmp);
-		addulp((ItvF)tmp, c);
+		addulp((IntervalBigFloat)tmp, c);
 		return;
 #else
 		ltop = avma;
@@ -167,7 +167,7 @@ printexpr(CO, bs);
 	}
 }
 
-void subitvf(ItvF a, ItvF b, ItvF *c)
+void subitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
 {
 	Num	ai,as,bi,bs,mas, mbs;
 	Num	inf,sup,tmp;
@@ -189,7 +189,7 @@ void subitvf(ItvF a, ItvF b, ItvF *c)
 		subnum(0,ai,bs,&inf);
 		subnum(0,as,bi,&sup);
 		istoitv(inf,sup,(Itv *)&tmp);
-		addulp((ItvF)tmp, c);
+		addulp((IntervalBigFloat)tmp, c);
 #else
 
 /* MUST check if ai, as, bi, bs are bigfloat. */
@@ -217,7 +217,7 @@ void subitvf(ItvF a, ItvF b, ItvF *c)
 	}
 }
 
-void mulitvf(ItvF a, ItvF b, ItvF *c)
+void mulitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
 {
 	Num	ai,as,bi,bs,a1,a2,b1,b2,c1,c2,p,t,tmp;
 	Num	inf, sup;
@@ -278,7 +278,7 @@ void mulitvf(ItvF a, ItvF b, ItvF *c)
 			subnum(0,0,c1,&t);
 			istoitv(c2,t,(Itv *)&tmp);
 		}
-		addulp((ItvF)tmp, c);
+		addulp((IntervalBigFloat)tmp, c);
 	}
 }
 
@@ -302,7 +302,7 @@ int     itvinitvf(Itv a, Itv b)
 	else return 0;
 }
 
-void divitvf(ItvF a, ItvF b, ItvF *c)
+void divitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
 {
 	Num	ai,as,bi,bs,a1,a2,b1,b2,c1,c2,t,tmp;
 	Num	inf, sup;
@@ -352,7 +352,7 @@ void divitvf(ItvF a, ItvF b, ItvF *c)
 			subnum(0,0,c1,&t);
 			istoitv(c2,t,(Itv *)&tmp);
 		}
-		addulp((ItvF)tmp, c);
+		addulp((IntervalBigFloat)tmp, c);
 	}
 }
 
@@ -392,7 +392,7 @@ void pwritv0f(Itv a, int e, Itv *c)
 {
 	Num inf, sup;
 	Num ai,Xmin,Xmax;
-	ItvF tmp;
+	IntervalBigFloat tmp;
 	Q	ne;
 
 	if ( e == 1 )
@@ -426,7 +426,7 @@ void pwritv0f(Itv a, int e, Itv *c)
 		if ( ! Xmax )   sup = 0;
 		else            pwrbf(Xmax,(Num)ne,&sup);
 		istoitv(inf,sup,(Itv *)&tmp);
-		addulp(tmp, (ItvF *)c);
+		addulp(tmp, (IntervalBigFloat *)c);
 	}
 }
 
@@ -463,10 +463,11 @@ int cmpitvf(Itv a, Itv b)
 	} else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
-		s = compnum(0,ai,bi);
-		t = compnum(0,as,bs);
-		if ( !s && !t ) return 0;
-		else  return -1;
+		s = compnum(0,ai,bs) ;
+		t = compnum(0,bi,as) ;
+		if ( s > 0 ) return 1;
+		else if ( t > 0 ) return -1;
+		else  return 0;
 	}
 }
 

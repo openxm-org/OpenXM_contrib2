@@ -1,5 +1,5 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/p-itv.c,v 1.1 2000/12/22 10:03:28 saito Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -51,7 +51,7 @@ void istoitv(Num inf, Num sup, Itv *rp)
 		i = inf;
 	}
 	if ( type )
-		NEWItvF((ItvF)c);
+		NEWIntervalBigFloat((IntervalBigFloat)c);
 	else 
 		NEWItvP(c);
 
@@ -82,7 +82,7 @@ void additvp(Itv a, Itv b, Itv *c)
 		addnum(0,(Num)a,(Num)b,(Num *)c);
 	else if ( (NID(a) == N_IP) && (NID(b) == N_R ) 
 		||(NID(a) == N_R ) && (NID(b) == N_IP) )
-		additvd((Num)a,(Num)b,(ItvD *)c);
+		additvd((Num)a,(Num)b,(IntervalDouble *)c);
 	else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
@@ -105,7 +105,7 @@ void subitvp(Itv a, Itv b, Itv *c)
 		subnum(0,(Num)a,(Num)b,(Num *)c);
 	else if ( (NID(a) == N_IP) && (NID(b) == N_R ) 
 		||(NID(a) == N_R ) && (NID(b) == N_IP) )
-		subitvd((Num)a,(Num)b,(ItvD *)c);
+		subitvd((Num)a,(Num)b,(IntervalDouble *)c);
 	else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
@@ -126,7 +126,7 @@ void mulitvp(Itv a, Itv b, Itv *c)
 		mulnum(0,(Num)a,(Num)b,(Num *)c);
 	else if ( (NID(a) == N_IP) && (NID(b) == N_R ) 
 		||(NID(a) == N_R ) && (NID(b) == N_IP) )
-		mulitvd((Num)a,(Num)b,(ItvD *)c);
+		mulitvd((Num)a,(Num)b,(IntervalDouble *)c);
 	else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
@@ -208,7 +208,7 @@ void divitvp(Itv a, Itv b, Itv *c)
 		divnum(0,(Num)a,(Num)b,(Num *)c);
 	else if ( (NID(a) == N_IP) && (NID(b) == N_R ) 
 		||(NID(a) == N_R ) && (NID(b) == N_IP) )
-		divitvd((Num)a,(Num)b,(ItvD *)c);
+		divitvd((Num)a,(Num)b,(IntervalDouble *)c);
 	else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
@@ -351,10 +351,11 @@ int cmpitvp(Itv a, Itv b)
 	} else {
 		itvtois(a,&ai,&as);
 		itvtois(b,&bi,&bs);
-		s = compnum(0,ai,bi) ;
-		t = compnum(0,as,bs) ;
-		if ( !s && !t ) return 0;
-		else  return -1;
+		s = compnum(0,ai,bs) ;
+		t = compnum(0,bi,as) ;
+		if ( s > 0 ) return 1;
+		else if ( t > 0 ) return -1;
+		else  return 0;
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.3 2001/03/19 01:13:50 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.4 2002/01/04 17:01:40 saito Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -99,18 +99,20 @@ static char	*Interval_dummy;
 #undef  N_GFPN
 #undef  N_GFS
 #undef  N_GFSN
-#define N_IP	(N_B+1)
-#define N_ID	(N_B+2)
-#define N_IT	(N_B+3)
-#define N_IF	(N_B+4)
-#define N_PRE_C	N_IF
-#define N_C	(N_B+5)
-#define N_M	(N_B+6)
-#define N_LM	(N_B+7)
-#define N_GF2N	(N_B+8)
-#define N_GFPN	(N_B+9)
-#define N_GFS	(N_B+10)
-#define N_GFSN (N_B+11)
+#define	N_NEXT_B		(N_B+1)
+#define N_Quad			(N_NEXT_B)
+#define N_IP			(N_NEXT_B+1)
+#define N_IntervalDouble	(N_NEXT_B+2)
+#define N_IntervalQuad		(N_NEXT_B+3)
+#define N_IntervalBigFloat	(N_NEXT_B+4)
+#define N_PRE_C	N_IntervalBigFloat
+#define N_C	(N_NEXT_B+5)
+#define N_M	(N_NEXT_B+6)
+#define N_LM	(N_NEXT_B+7)
+#define N_GF2N	(N_NEXT_B+8)
+#define N_GFPN	(N_NEXT_B+9)
+#define N_GFS	(N_NEXT_B+10)
+#define N_GFSN	(N_NEXT_B+11)
 
 /* data structures */
 struct oItv {
@@ -123,7 +125,7 @@ struct oItv {
 
 typedef struct oItv *Itv;
 
-struct oItvD {
+struct oIntervalDouble {
         short	id;
         char	nid;
         char	pad;
@@ -131,7 +133,7 @@ struct oItvD {
         double	sup;
 };
 
-typedef struct oItvD *ItvD;
+typedef struct oIntervalDouble *IntervalDouble;
 
 struct oforth {
 	short	sign;
@@ -142,7 +144,7 @@ struct oforth {
 
 typedef struct oforth *forth;
 
-struct oItvT {
+struct oIntervalQuad {
         short	id;
         char	nid;
         char	pad;
@@ -150,9 +152,9 @@ struct oItvT {
         forth	sup;
 };
 
-typedef struct oItvT *ItvT;
+typedef struct oIntervalQuad *IntervalQuad;
 
-struct oItvF {
+struct oIntervalBigFloat {
         short	id;
         char	nid;
         char	pad;
@@ -160,7 +162,7 @@ struct oItvF {
         BF	sup;
 };
 
-typedef struct oItvF *ItvF;
+typedef struct oIntervalBigFloat *IntervalBigFloat;
 
 extern int zerorewrite;
 
@@ -170,26 +172,26 @@ extern int zerorewrite;
 
 #define NEWItvP(q)	((q)=(Itv)MALLOC(sizeof(struct oItv)),\
 					OID(q)=O_N,NID(q)=N_IP)
-#define NEWItvD(q)	((q)=(ItvD)MALLOC(sizeof(struct oItvD)),\
-					OID(q)=O_N,NID(q)=N_ID)
-#define NEWItvT(q)	((q)=(ItvD)MALLOC(sizeof(struct oItvT)),\
-					OID(q)=O_N,NID(q)=N_IT)
-#define NEWItvF(q)	((q)=(ItvF)MALLOC(sizeof(struct oItvF)),\
-					OID(q)=O_N,NID(q)=N_IF)
+#define NEWIntervalDouble(q)	((q)=(IntervalDouble)MALLOC(sizeof(struct oIntervalDouble)),\
+					OID(q)=O_N,NID(q)=N_IntervalDouble)
+#define NEWIntervalQuad(q)	((q)=(IntervalDouble)MALLOC(sizeof(struct oIntervalQuad)),\
+					OID(q)=O_N,NID(q)=N_IntervalQuad)
+#define NEWIntervalBigFloat(q)	((q)=(IntervalBigFloat)MALLOC(sizeof(struct oIntervalBigFloat)),\
+					OID(q)=O_N,NID(q)=N_IntervalBigFloat)
 #define MKItvP(a,b,c)	(NEWItvP(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKItvD(a,b,c)	if((zerorewrite) && ((a)<=0.0) && ((b)>=0.0)) (c)=0;\
-			else (NEWItvD(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKItvT(a,b,c)	(NEWItvT(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKItvF(a,b,c)	(NEWItvF(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalDouble(a,b,c)	if((zerorewrite) && ((a)<=0.0) && ((b)>=0.0)) (c)=0;\
+			else (NEWIntervalDouble(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalQuad(a,b,c)	(NEWIntervalQuad(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalBigFloat(a,b,c)	(NEWIntervalBigFloat(c),(INF(c)=(a),SUP(c)=(b)))
 
 #define ToItvP(a,c)	(NEWItvP(c),INF(c)=(a),SUP(c)=(a))
-#define ToItvD(a,c)	(NEWItvD(c),INF(c)=(ToReal(a)),SUP(c)=(ToReal(a)))
-#define ToItvF(a,c)	(NEWItvF(c),INF(c)=(a),SUP(c)=(a))
+#define ToIntervalDouble(a,c)	(NEWIntervalDouble(c),INF(c)=(ToReal(a)),SUP(c)=(ToReal(a)))
+#define ToIntervalBigFloat(a,c)	(NEWIntervalBigFloat(c),INF(c)=(a),SUP(c)=(a))
 
 #define ITVP(a) (NID(a)==N_IP)
-#define ITVD(a) (NID(a)==N_ID)
-#define ITVT(a) (NID(a)==N_IT)
-#define ITVF(a) (NID(a)==N_IF)
+#define ITVD(a) (NID(a)==N_IntervalDouble)
+#define ITVQ(a) (NID(a)==N_IntervalQuad)
+#define ITVF(a) (NID(a)==N_IntervalBigFloat)
 
 /***    engine/itv.c    ***/
 double  ToRealSup(Num);
@@ -238,13 +240,13 @@ void    distanceitvp(Itv, Itv, Num *);
 void	ToBf(Num, BF *);
 void	double2bf(double, BF *);
 double	bf2double(BF);
-void	addulp(ItvF, ItvF *);
+void	addulp(IntervalBigFloat, IntervalBigFloat *);
 void	getulp(BF, BF *);
 
-void    additvf(ItvF, ItvF, ItvF *);
-void    subitvf(ItvF, ItvF, ItvF *);
-void    mulitvf(ItvF, ItvF, ItvF *);
-void    divitvf(ItvF, ItvF, ItvF *);
+void    additvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
+void    subitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
+void    mulitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
+void    divitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
 void    chsgnitvf(Itv, Itv *);
 int     cmpitvf(Itv, Itv);
 void    pwritvf(Itv, Num, Itv *);
@@ -255,20 +257,20 @@ double	ToRealDown(Num);
 double	ToRealUp(Num);
 void	Num2double(Num, double *, double *);
 
-void    additvd(Num, Num, ItvD *);
-void    subitvd(Num, Num, ItvD *);
-void    mulitvd(Num, Num, ItvD *);
-void    divitvd(Num, Num, ItvD *);
-void    chsgnitvd(ItvD, ItvD *);
-int     cmpitvd(ItvD, ItvD);
-void    pwritvd(Num, Num, ItvD *);
-void    pwritv0d(ItvD, int, ItvD *);
-void    miditvd(ItvD, Num *);
-void    cupitvd(ItvD, ItvD, ItvD *);
-void    capitvd(ItvD, ItvD, ItvD *);
-void    widthitvd(ItvD, Num *);
-void    absitvd(ItvD, Num *);
-void    distanceitvd(ItvD, ItvD, Num *);
+void    additvd(Num, Num, IntervalDouble *);
+void    subitvd(Num, Num, IntervalDouble *);
+void    mulitvd(Num, Num, IntervalDouble *);
+void    divitvd(Num, Num, IntervalDouble *);
+void    chsgnitvd(IntervalDouble, IntervalDouble *);
+int     cmpitvd(IntervalDouble, IntervalDouble);
+void    pwritvd(Num, Num, IntervalDouble *);
+void    pwritv0d(IntervalDouble, int, IntervalDouble *);
+void    miditvd(IntervalDouble, Num *);
+void    cupitvd(IntervalDouble, IntervalDouble, IntervalDouble *);
+void    capitvd(IntervalDouble, IntervalDouble, IntervalDouble *);
+void    widthitvd(IntervalDouble, Num *);
+void    absitvd(IntervalDouble, Num *);
+void    distanceitvd(IntervalDouble, IntervalDouble, Num *);
 
 #endif /* end of INTERVAL */
 #endif /* end of _INTERVAL_H */

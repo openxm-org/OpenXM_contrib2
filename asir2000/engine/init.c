@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.15 2002/01/04 17:08:22 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.16 2002/01/04 18:19:19 saito Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -109,13 +109,13 @@ int paristack = 1<<16;
 
 #if defined(INTERVAL)
 int zerorewrite = 0;
-void (*addnumt[])() = { addq, addreal, addalg, ADDBF, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn };
-void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn };
-void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn };
-void (*divnumt[])() = { divq, divreal, divalg, DIVBF, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn };
-void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn };
-void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs , chsgngfsn};
-int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn };
+void (*addnumt[])() = { addq, addreal, addalg, ADDBF, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn };
+void (*subnumt[])() = { subq, subreal, subalg, SUBBF, 0, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn };
+void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, 0, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn };
+void (*divnumt[])() = { divq, divreal, divalg, DIVBF, 0, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn };
+void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, 0, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn };
+void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, 0, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs , chsgngfsn};
+int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, 0, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn };
 #else
 void (*addnumt[])() = { addq, addreal, addalg, ADDBF, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn };
 void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn };

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.9 2001/09/03 07:01:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.10 2001/10/09 01:36:20 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -148,7 +148,7 @@ void saveitv(FILE *s,Itv p)
 	saveobj(s,(Obj)SUP(p));
 }
 
-void saveitvd(FILE *s,ItvD p)
+void saveitvd(FILE *s,IntervalDouble p)
 {
 	write_double(s,&INF(p));
 	write_double(s,&SUP(p));

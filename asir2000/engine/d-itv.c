@@ -1,5 +1,5 @@
 /*
- * $OpenXM: $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.1 2000/12/22 10:03:28 saito Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -231,8 +231,8 @@ double	ToRealDown(Num a)
 		case N_IP:
 			inf = ToRealDown(INF((Itv)a));
 			break;
-		case N_ID:
-			inf = INF((ItvD)a); break;
+		case N_IntervalDouble:
+			inf = INF((IntervalDouble)a); break;
 		case N_A:
 		default:
 			inf = 0.0;
@@ -256,8 +256,8 @@ double	ToRealUp(Num a)
 			sup = PARI2doubleUp((BF)a); break;
 		case N_IP:
 			sup = ToRealUp(SUP((Itv)a)); break;
-		case N_ID:
-			sup = SUP((ItvD)a); break;
+		case N_IntervalDouble:
+			sup = SUP((IntervalDouble)a); break;
 		case N_A:
 		default:
 			sup = 0.0;
@@ -287,9 +287,9 @@ void	Num2double(Num a, double *inf, double *sup)
 			*inf = ToRealDown(INF((Itv)a));
 			*sup = ToRealUp(SUP((Itv)a));
 			break;
-		case N_ID:
-			*inf = INF((ItvD)a);
-			*sup = SUP((ItvD)a);
+		case N_IntervalDouble:
+			*inf = INF((IntervalDouble)a);
+			*sup = SUP((IntervalDouble)a);
 			break;
 		case N_A:
 		default:
@@ -301,15 +301,15 @@ void	Num2double(Num a, double *inf, double *sup)
 }
 
 
-void additvd(Num a, Num b, ItvD *c)
+void additvd(Num a, Num b, IntervalDouble *c)
 {
 	double	ai,as,mas, bi,bs;
 	double	inf,sup;
 
 	if ( !a ) {
-		*c = (ItvD)b;
+		*c = (IntervalDouble)b;
 	} else if ( !b ) {
-		*c = (ItvD)a;
+		*c = (IntervalDouble)a;
 #if	0
 	} else if ( (NID(a) <= N_IP) && (NID(b) <= N_IP ) ) {
 		addnum(0,a,b,c);
@@ -323,19 +323,19 @@ void additvd(Num a, Num b, ItvD *c)
 		inf = ai + bi;
 		sup = mas - bs;		/*  as + bs = ( - ( (-as) - bs ) ) */
 		FPNEAREST
-		MKItvD(inf,(-sup),*c);
+		MKIntervalDouble(inf,(-sup),*c);
 	}
 }
 
-void subitvd(Num a, Num b, ItvD *c)
+void subitvd(Num a, Num b, IntervalDouble *c)
 {
 	double	ai,as,mas, bi,bs;
 	double	inf,sup;
 
 	if ( !a ) {
-		*c = (ItvD)b;
+		*c = (IntervalDouble)b;
 	} else if ( !b ) {
-		*c = (ItvD)a;
+		*c = (IntervalDouble)a;
 #if	0
 	} else if ( (NID(a) <= N_IP) && (NID(b) <= N_IP ) ) {
 		addnum(0,a,b,c);
@@ -347,11 +347,11 @@ void subitvd(Num a, Num b, ItvD *c)
 		inf = ai - bs;
 		sup = ( bi - as );	/* as - bi = ( - ( bi - as ) ) */
 		FPNEAREST
-		MKItvD(inf,(-sup),*c);
+		MKIntervalDouble(inf,(-sup),*c);
 	}
 }
 
-void	mulitvd(Num a, Num b, ItvD *c)
+void	mulitvd(Num a, Num b, IntervalDouble *c)
 {
 	double	ai,as,bi,bs,a1,a2,b1,b2,c1,c2,p;
 	double	inf, sup;
@@ -405,15 +405,15 @@ void	mulitvd(Num a, Num b, ItvD *c)
 			sup = - c1;
 		}
 		FPNEAREST
-		MKItvD(inf,sup,*c);
+		MKIntervalDouble(inf,sup,*c);
 	}
 }
 
-int     initvd(Num a, ItvD b)
+int     initvd(Num a, IntervalDouble b)
 {
 	Real inf, sup;
 
-	if ( NID(b) == N_ID ) {
+	if ( NID(b) == N_IntervalDouble ) {
 		MKReal(INF(b), inf);
 		MKReal(SUP(b), sup);
 	} else return 0;
@@ -422,7 +422,7 @@ int     initvd(Num a, ItvD b)
 	else return 1;
 }
 
-void	divitvd(Num a, Num b, ItvD *c)
+void	divitvd(Num a, Num b, IntervalDouble *c)
 {
 	double	ai,as,bi,bs,a1,a2,b1,b2,c1,c2;
 	double	inf, sup;
@@ -474,17 +474,17 @@ void	divitvd(Num a, Num b, ItvD *c)
 			sup = - c1;
 		}
 		FPNEAREST
-		MKItvD(inf,sup,*c);
+		MKIntervalDouble(inf,sup,*c);
 	}
 }
 
-void	pwritvd(Num a, Num e, ItvD *c)
+void	pwritvd(Num a, Num e, IntervalDouble *c)
 {
 	int	ei;
-	ItvD	t;
+	IntervalDouble	t;
 
 	if ( !e ) {
-		*c = (ItvD)ONE;
+		*c = (IntervalDouble)ONE;
 	}  else if ( !a ) {
 		*c = 0;
 #if	0
@@ -504,7 +504,7 @@ void	pwritvd(Num a, Num e, ItvD *c)
 #endif
 	} else {
 		ei = QTOS((Q)e);
-		pwritv0d((ItvD)a,ei,&t);
+		pwritv0d((IntervalDouble)a,ei,&t);
 		if ( SGN((Q)e) < 0 )
 			divnum(0,(Num)ONE,(Num)t,(Num *)c);
 		else
@@ -512,7 +512,7 @@ void	pwritvd(Num a, Num e, ItvD *c)
 	}
 }
 
-void	pwritv0d(ItvD a, int e, ItvD *c)
+void	pwritv0d(IntervalDouble a, int e, IntervalDouble *c)
 {
 	double inf, sup;
 	double t, Xmin, Xmax;
@@ -545,11 +545,11 @@ void	pwritv0d(ItvD a, int e, ItvD *c)
 		FPMINUSINF
 		inf = (Xmin!=0.0)?pwrreal0(Xmin,e):0.0;
 		FPNEAREST
-		MKItvD(inf,sup,*c);
+		MKIntervalDouble(inf,sup,*c);
 	}
 }
 
-void	chsgnitvd(ItvD a, ItvD *c)
+void	chsgnitvd(IntervalDouble a, IntervalDouble *c)
 {
 	double inf,sup;
 
@@ -562,11 +562,14 @@ void	chsgnitvd(ItvD a, ItvD *c)
 	else {
 		inf = - SUP(a);
 		sup = - INF(a);
-		MKItvD(inf,sup,*c);
+		MKIntervalDouble(inf,sup,*c);
 	}
 }
 
-int	cmpitvd(ItvD a, ItvD b)
+int	cmpitvd(IntervalDouble a, IntervalDouble b)
+/*    a > b:  1       */
+/*    a = b:  0       */
+/*    a < b: -1       */
 {
 	double	ai,as,bi,bs;
 
@@ -601,7 +604,7 @@ int	cmpitvd(ItvD a, ItvD b)
 	}
 }
 
-void	miditvd(ItvD a, Num *b)
+void	miditvd(IntervalDouble a, Num *b)
 {
 	double	t;
 	Real	rp;
@@ -616,7 +619,7 @@ void	miditvd(ItvD a, Num *b)
 	}
 }
 
-void	cupitvd(ItvD a, ItvD b, ItvD *c)
+void	cupitvd(IntervalDouble a, IntervalDouble b, IntervalDouble *c)
 {
 	double	ai,as,bi,bs;
 	double	inf,sup;
@@ -627,10 +630,10 @@ void	cupitvd(ItvD a, ItvD b, ItvD *c)
 	bs = SUP(b);
 	inf = MIN(ai,bi);
 	sup = MAX(as,bs);
-	MKItvD(inf,sup,*c);
+	MKIntervalDouble(inf,sup,*c);
 }
 
-void	capitvd(ItvD a, ItvD b, ItvD *c)
+void	capitvd(IntervalDouble a, IntervalDouble b, IntervalDouble *c)
 {
 	double	ai,as,bi,bs;
 	double	inf,sup;
@@ -642,11 +645,11 @@ void	capitvd(ItvD a, ItvD b, ItvD *c)
 	inf = MAX(ai,bi);
 	sup = MIN(as,bs);
 	if ( inf > sup ) *c = 0;
-	else MKItvD(inf,sup,*c);
+	else MKIntervalDouble(inf,sup,*c);
 }
 
 
-void	widthitvd(ItvD a, Num *b)
+void	widthitvd(IntervalDouble a, Num *b)
 {
 	double	t;
 	Real	rp;
@@ -659,7 +662,7 @@ void	widthitvd(ItvD a, Num *b)
 	}
 }
 
-void	absitvd(ItvD a, Num *b)
+void	absitvd(IntervalDouble a, Num *b)
 {
 	double	ai,as,bi,bs;
 	double	t;
@@ -677,7 +680,7 @@ void	absitvd(ItvD a, Num *b)
 	}
 }
 
-void	distanceitvd(ItvD a, ItvD b, Num *c)
+void	distanceitvd(IntervalDouble a, IntervalDouble b, Num *c)
 {
 	double	ai,as,bi,bs;
 	double	di,ds;
