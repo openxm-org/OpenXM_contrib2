@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.53 2003/08/29 07:37:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.54 2003/08/31 07:42:23 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -120,7 +120,7 @@ static int nm_adv;
 static int nmv_adv;
 static int nd_dcomp;
 
-extern int Top,Reverse,dp_nelim;
+extern int Top,Reverse,dp_nelim,do_weyl;
 
 /* fundamental macros */
 #define TD(d) (d[0])
@@ -233,6 +233,7 @@ INLINE int ndl_block_compare(unsigned int *d1,unsigned int *d2);
 INLINE int ndl_equal(unsigned int *d1,unsigned int *d2);
 INLINE void ndl_copy(unsigned int *d1,unsigned int *d2);
 INLINE void ndl_add(unsigned int *d1,unsigned int *d2,unsigned int *d);
+INLINE void ndl_addto(unsigned int *d1,unsigned int *d2);
 INLINE void ndl_sub(unsigned int *d1,unsigned int *d2,unsigned int *d);
 INLINE int ndl_hash_value(unsigned int *d);
 
@@ -288,10 +289,13 @@ ND nd_add_q(ND p1,ND p2);
 INLINE int nd_length(ND p);
 
 /* NDV functions */
+ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);
+void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen);
+void weyl_mul_nm_nmv_q(int n,NM m0,NMV m1,NM *tab,int tlen);
 void ndv_mul_c(int mod,NDV p,int mul);
 void ndv_mul_c_q(NDV p,Q mul);
 void ndv_realloc(NDV p,int obpe,int oadv,EPOS oepos);
-ND ndv_mul_nm(int mod,NDV p,NM m0);
+ND ndv_mul_nm(int mod,NM m0,NDV p);
 void ndv_dehomogenize(NDV p,struct order_spec *spec);
 void ndv_removecont(int mod,NDV p);
 void ndv_print(NDV p);
@@ -658,6 +662,31 @@ INLINE void ndl_add(unsigned int *d1,unsigned int *d2,unsigned int *d)
 	}
 #else
 	for ( i = 0; i < nd_wpd; i++ ) d[i] = d1[i]+d2[i];
+#endif
+}
+
+/* d1 += d2 */
+INLINE void ndl_addto(unsigned int *d1,unsigned int *d2)
+{
+	int i;
+
+#if 1
+	switch ( nd_wpd ) {
+		case 2:
+			TD(d1) += TD(d2);
+			d1[1] += d2[1];
+			break;
+		case 3:
+			TD(d1) += TD(d2);
+			d1[1] += d2[1];
+			d1[2] += d2[2];
+			break;
+		default:
+			for ( i = 0; i < nd_wpd; i++ ) d1[i] += d2[i];
+			break;
+	}
+#else
+	for ( i = 0; i < nd_wpd; i++ ) d1[i] += d2[i];
 #endif
 }
 
@@ -1077,7 +1106,7 @@ int nd_nf(int mod,ND g,NDV *ps,int full,ND *rp)
 				chsgnq(cg,&CQ(mul));
 				nd_mul_c_q(d,cred); nd_mul_c_q(g,cred);
 			}
-			g = nd_add(mod,g,ndv_mul_nm(mod,p,mul));
+			g = nd_add(mod,g,ndv_mul_nm(mod,mul,p));
 			sugar = MAX(sugar,SG(p)+TD(DL(mul)));
 			if ( !mod && hmag && g && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
 				nd_removecont2(d,g);
@@ -1160,7 +1189,7 @@ int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *rp)
 				g = bucket->body[hindex];
 				gmag = (double)p_mag((P)HCQ(g));
 			}
-			red = ndv_mul_nm(mod,p,mul);
+			red = ndv_mul_nm(mod,mul,p);
 			bucket->body[hindex] = nd_remove_head(g);
 			red = nd_remove_head(red);
 			add_pbucket(mod,bucket,red);
@@ -1249,7 +1278,7 @@ int nd_nf_direct(int mod,ND g,BaseSet base,int full,ND *rp)
 				chsgnq(cg,&CQ(mul));
 				nd_mul_c_q(d,cred); nd_mul_c_q(g,cred);
 			}
-			g = nd_add(mod,g,ndv_mul_nm(mod,p,mul));
+			g = nd_add(mod,g,ndv_mul_nm(mod,mul,p));
 			sugar = MAX(sugar,SG(p)+TD(DL(mul)));
 			if ( !mod && hmag && g && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
 				nd_removecont2(d,g);
@@ -1659,15 +1688,19 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t)
 	d1 = nd_newpairs(g,t);
 	d1 = crit_M(d1);
 	d1 = crit_F(d1);
-	prev = 0; cur = head = d1;
-	while ( cur ) {
-		if ( crit_2( cur->i1,cur->i2 ) ) {
-			remove = cur;
-			if ( !prev ) head = cur = NEXT(cur);
-			else cur = NEXT(prev) = NEXT(cur);
-			FREENDP(remove);
-		} else {
-			prev = cur; cur = NEXT(cur);
+	if ( do_weyl )
+		head = d1;
+	else {
+		prev = 0; cur = head = d1;
+		while ( cur ) {
+			if ( crit_2( cur->i1,cur->i2 ) ) {
+				remove = cur;
+				if ( !prev ) head = cur = NEXT(cur);
+				else cur = NEXT(prev) = NEXT(cur);
+				FREENDP(remove);
+			} else {
+				prev = cur; cur = NEXT(cur);
+			}
 		}
 	}
 	if ( !d )
@@ -2751,7 +2784,7 @@ int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
 	CQ(m) = HCQ(p2);
 	ndl_sub(lcm,HDL(p1),DL(m));
 	if ( ndl_check_bound2(p->i1,DL(m)) ) return 0;
-	t1 = ndv_mul_nm(mod,p1,m);
+	t1 = ndv_mul_nm(mod,m,p1);
 	if ( mod ) CM(m) = mod-HCM(p1); 
 	else chsgnq(HCQ(p1),&CQ(m));
 	ndl_sub(lcm,HDL(p2),DL(m));
@@ -2759,7 +2792,7 @@ int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
 		nd_free(t1);
 		return 0;
 	}
-	t2 = ndv_mul_nm(mod,p2,m);
+	t2 = ndv_mul_nm(mod,m,p2);
 	*rp = nd_add(mod,t1,t2);
 	FREENM(m);
 	return 1;
@@ -2790,7 +2823,208 @@ void ndv_mul_c_q(NDV p,Q mul)
 	}
 }
 
-ND ndv_mul_nm(int mod,NDV p,NM m0)
+ND weyl_ndv_mul_nm(int mod,NM m0,NDV p) {
+	int n2,i,j,l,n,tlen;
+	unsigned int *d0;
+	NM *tab,*psum;
+	ND s,r;
+	NM t;
+	NMV m1;
+
+	if ( !p ) return 0;
+	n = NV(p); n2 = n>>1;
+	d0 = DL(m0);
+	l = LEN(p);
+	for ( i = 0, tlen = 1; i < n2; i++ ) tlen *= (GET_EXP(d0,n2+i)+1);
+	tab = (NM *)ALLOCA(tlen*sizeof(NM));
+	psum = (NM *)ALLOCA(tlen*sizeof(NM));
+	for ( i = 0; i < tlen; i++ ) psum[i] = 0;
+	for ( i = l-1, m1 = BDY(p)+nmv_adv*(l-1); i >= 0; i--, m1 -= nmv_adv ) {
+		/* m0(NM) * m1(NMV) => tab(NM) */
+		if ( mod )
+			weyl_mul_nm_nmv(mod,n,m0,m1,tab,tlen);
+		else
+			weyl_mul_nm_nmv_q(n,m0,m1,tab,tlen);
+		for ( j = 0; j < tlen; j++ ) {
+			if ( tab[j] ) {
+				NEXT(tab[j]) = psum[j];	psum[j] = tab[j];
+			}
+		}		
+	}
+	for ( i = tlen-1, r = 0; i >= 0; i-- )
+		if ( psum[i] ) {
+			for ( j = 0, t = psum[i]; t; t = NEXT(t), j++ );
+			MKND(n,psum[i],j,s);
+			r = nd_add(mod,r,s);
+		}
+	if ( s ) SG(s) = SG(p)+TD(d0);
+	return s;
+}
+
+void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
+{
+	int i,n2,j,s,curlen,homo,h,a,b,k,l,min;
+	unsigned int *d0,*d1,*d,*ctab;
+	unsigned int c0,c1,c;
+	NM *p;
+	NM m,t;
+
+	for ( i = 0; i < tlen; i++ ) tab[i] = 0;
+	if ( !m0 || !m1 ) return;
+	d0 = DL(m0); d1 = DL(m1); n2 = n>>1;
+	NEWNM(m); d = DL(m);
+	c0 = CM(m0); c1 = CM(m1); DMAR(c1,c,0,mod,c); CM(m) = c;
+	for ( i = 0; i < nd_wpd; i++ ) d[i] = 0;
+	homo = n&1 ? 1 : 0;
+	if ( homo ) {
+		/* offset of h-degree */
+		h = GET_EXP(d0,n-1)+GET_EXP(d1,n-1);
+		PUT_EXP(DL(m),n-1,h);
+		TD(DL(m)) = h;
+		/* XXX other weights */
+	}
+	tab[0] = m;
+	curlen = 1;
+	s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
+	NEWNM(m); d = DL(m);
+	for ( i = 0; i < n2; i++ ) {
+		a = GET_EXP(d0,i); b = GET_EXP(d1,n2+i);
+		k = GET_EXP(d0,n2+i); l = GET_EXP(d1,i);
+		/* xi^a*(Di^k*xi^l)*Di^b */
+		a += l; b += k;
+		if ( !k || !l ) {
+			for ( j = 0; j < curlen; j++ )
+				if ( m = tab[j] ) {
+					d = DL(m);
+					PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b); TD(d) += s;
+					/* XXX other weights */
+				}
+			curlen *= k+1;
+			continue;
+		}
+		min = MIN(k,l);
+		ctab = (unsigned int *)ALLOCA((min+1)*sizeof(unsigned int));
+		mkwcm(k,l,mod,ctab);
+		for ( j = 0; j < nd_wpd; i++ ) d[j] = 0;
+		p = tab+curlen;
+		for ( j = 1; j <= min; j++ ) {
+			PUT_EXP(d,i,a-j); PUT_EXP(d,n2+i,b-j);
+			h = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
+			if ( homo ) {
+				TD(d) = s;
+				PUT_EXP(d,n-1,h);
+			} else TD(d) = h;
+			/* XXX other weights */
+			c = ctab[j];
+			for ( k = 0; k < curlen; k++, p++ ) {
+				NEWNM(t);
+				ndl_add(DL(tab[k]),d,DL(t));
+				c0 = CM(tab[k]); DMAR(c0,c,0,mod,c1); CM(t) = c1;
+				*p = t;
+			}
+		}
+		/* destructive for j = 0 */	
+		PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b);
+		h = s-(MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i));
+		if ( homo ) {
+			TD(d) = s;
+			PUT_EXP(d,n-1,h);
+		} else TD(d) = h;
+		/* XXX other weights */
+		c = ctab[0];
+		p = tab;
+		for ( k = 0; k < curlen; k++, p++ ) {
+			ndl_addto(DL(tab[k]),d);
+			c0 = CM(tab[k]); DMAR(c0,c,0,mod,c1); CM(tab[k]) = c1;
+		}
+		curlen *= k+1;
+	}
+	FREENM(m);
+}
+
+void weyl_mul_nm_nmv_q(int n,NM m0,NMV m1,NM *tab,int tlen)
+{
+	int i,n2,j,s,curlen,homo,h,a,b,k,l,min;
+	unsigned int *d0,*d1,*d;
+	Q *ctab;
+	Q c0,c1,c;
+	NM *p;
+	NM m,t;
+
+	for ( i = 0; i < tlen; i++ ) tab[i] = 0;
+	if ( !m0 || !m1 ) return;
+	d0 = DL(m0); d1 = DL(m1); n2 = n>>1;
+	NEWNM(m); d = DL(m);
+	mulq(CQ(m0),CQ(m1),&CQ(m));
+	for ( i = 0; i < nd_wpd; i++ ) d[i] = 0;
+	homo = n&1 ? 1 : 0;
+	if ( homo ) {
+		/* offset of h-degree */
+		h = GET_EXP(d0,n-1)+GET_EXP(d1,n-1);
+		PUT_EXP(DL(m),n-1,h);
+		TD(DL(m)) = h;
+		/* XXX other weights */
+	}
+	tab[0] = m;
+	curlen = 1;
+	s = MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i);
+	NEWNM(m); d = DL(m);
+	for ( i = 0; i < n2; i++ ) {
+		a = GET_EXP(d0,i); b = GET_EXP(d1,n2+i);
+		k = GET_EXP(d0,n2+i); l = GET_EXP(d1,i);
+		/* xi^a*(Di^k*xi^l)*Di^b */
+		a += l; b += k;
+		if ( !k || !l ) {
+			for ( j = 0; j < curlen; j++ )
+				if ( m = tab[j] ) {
+					d = DL(m);
+					PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b); TD(d) += s;
+					/* XXX other weights */
+				}
+			curlen *= k+1;
+			continue;
+		}
+		min = MIN(k,l);
+		ctab = (Q *)ALLOCA((min+1)*sizeof(Q));
+		mkwc(k,l,ctab);
+		for ( j = 0; j < nd_wpd; i++ ) d[j] = 0;
+		p = tab+curlen;
+		for ( j = 1; j <= min; j++ ) {
+			PUT_EXP(d,i,a-j); PUT_EXP(d,n2+i,b-j);
+			h = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
+			if ( homo ) {
+				TD(d) = s;
+				PUT_EXP(d,n-1,h);
+			} else TD(d) = h;
+			/* XXX other weights */
+			c = ctab[j];
+			for ( k = 0; k < curlen; k++, p++ ) {
+				NEWNM(t);
+				ndl_add(DL(tab[k]),d,DL(t));
+				mulq(CQ(tab[k]),c,&CQ(t));
+				*p = t;
+			}
+		}
+		/* destructive for j = 0 */	
+		PUT_EXP(d,i,a); PUT_EXP(d,n2+i,b);
+		h = s-(MUL_WEIGHT(a,i)+MUL_WEIGHT(b,n2+i));
+		if ( homo ) {
+			TD(d) = s;
+			PUT_EXP(d,n-1,h);
+		} else TD(d) = h;
+		/* XXX other weights */
+		c = ctab[0];
+		p = tab;
+		for ( k = 0; k < curlen; k++, p++ ) {
+			ndl_addto(DL(tab[k]),d);
+			mulq(CQ(tab[k]),c,&CQ(tab[k]));
+		}
+		curlen *= k+1;
+	}
+	FREENM(m);
+}
+
+ND ndv_mul_nm(int mod,NM m0,NDV p)
 {
 	NM mr,mr0;
 	NMV m;
@@ -2800,6 +3034,8 @@ ND ndv_mul_nm(int mod,NDV p,NM m0)
 	ND r;
 
 	if ( !p ) return 0;
+	else if ( do_weyl )
+		return weyl_ndv_mul_nm(mod,m0,p);
 	else {
 		n = NV(p); m = BDY(p);
 		d = DL(m0);
