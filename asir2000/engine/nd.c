@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.33 2003/08/19 05:29:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.34 2003/08/20 06:06:07 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -288,7 +288,7 @@ INLINE int nd_length(ND p)
 	}
 }
 
-int ndl_reducible(unsigned int *d1,unsigned int *d2)
+INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 {
 	unsigned int u1,u2;
 	int i,j;
@@ -2078,7 +2078,7 @@ void dltondl(int n,DL dl,unsigned int *r)
 	int i;
 
 	d = dl->d;
-	bzero(r,(nd_wpd+1)*sizeof(unsigned int));
+	for ( i = 0; i <= nd_wpd; i++ ) r[i] = 0;
 	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
 			r[(n-1-i)/nd_epw+1] |= (d[i]<<((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe));
@@ -2409,7 +2409,8 @@ unsigned int *dp_compute_bound(DP p)
 	d1 = (unsigned int *)ALLOCA(nd_nvar*sizeof(unsigned int));
 	d2 = (unsigned int *)ALLOCA(nd_nvar*sizeof(unsigned int));
 	m = BDY(p);
-	bcopy(DL(m)->d,d1,nd_nvar*sizeof(unsigned int));
+	d = DL(m)->d;
+	for ( i = 0; i < nd_nvar; i++ ) d1[i] = d[i];
 	for ( m = NEXT(BDY(p)); m; m = NEXT(m) ) {
 		d = DL(m)->d;
 		for ( i = 0; i < nd_nvar; i++ )
@@ -2418,8 +2419,8 @@ unsigned int *dp_compute_bound(DP p)
 	}
 	l = (nd_nvar+31);
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
-	bzero(t,l*sizeof(unsigned int));
-	bcopy(d1,t,nd_nvar*sizeof(unsigned int));
+	for ( i = 0; i < nd_nvar; i++ ) t[i] = d1[i];
+	for ( ; i < l; i++ ) t[i] = 0;
 	return t;
 }
 
@@ -2433,16 +2434,17 @@ unsigned int *nd_compute_bound(ND p)
 		return 0;
 	d1 = (unsigned int *)ALLOCA(nd_wpd*sizeof(unsigned int));
 	d2 = (unsigned int *)ALLOCA(nd_wpd*sizeof(unsigned int));
-	bcopy(HDL(p),d1,nd_wpd*sizeof(unsigned int));
+	ndl_copy(HDL(p),d1);
 	for ( m = NEXT(BDY(p)); m; m = NEXT(m) ) {
 		ndl_lcm(DL(m),d1,d2);
 		t = d1; d1 = d2; d2 = t;
 	}
 	l = nd_nvar+31;
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
-	bzero(t,l*sizeof(unsigned int));
+	for ( i = 0; i < l; i++ ) t[i] = 0;
 	for ( i = 0; i < nd_nvar; i++ )
 		t[i] = (d1[i/nd_epw+1]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))&nd_mask0;
+	for ( ; i < l; i++ ) t[i] = 0;
 	return t;
 }
 
