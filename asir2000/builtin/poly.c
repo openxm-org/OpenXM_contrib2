@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.7 2001/03/14 06:04:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.8 2001/03/29 09:49:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -100,6 +100,9 @@ void Pis_irred_gf2();
 void Pis_irred_ddd_gf2();
 void Pget_next_fft_prime();
 void Puadj_coef();
+void Preorder();
+void Phomogeneous_part();
+void Phomogeneous_deg();
 void simp_ff(Obj,Obj *);
 void ranp(int,UP *);
 void field_order_ff(N *);
@@ -111,6 +114,9 @@ extern int lm_lazy;
 int current_ff;
 
 struct ftab poly_tab[] = {
+	{"homogeneous_deg",Phomogeneous_deg,-2},
+	{"homogeneous_part",Phomogeneous_part,-3},
+	{"reorder",Preorder,3},
 	{"uadj_coef",Puadj_coef,3},
 	{"ranp",Pranp,2},
 	{"p_mag",Pp_mag,1},
@@ -214,6 +220,60 @@ struct ftab poly_tab[] = {
 };
 
 extern V up_var;
+
+void Phomogeneous_part(arg,rp)
+NODE arg;
+P *rp;
+{
+	if ( argc(arg) == 2 )
+		exthp(CO,(P)ARG0(arg),QTOS((Q)ARG1(arg)),rp);
+	else
+		exthpc_generic(CO,(P)ARG0(arg),QTOS((Q)ARG2(arg)),
+			VR((P)ARG1(arg)),rp);
+}
+
+void Phomogeneous_deg(arg,rp)
+NODE arg;
+Q *rp;
+{
+	int d;
+
+	if ( argc(arg) == 1 )
+		d = homdeg((P)ARG0(arg));
+	else
+		d = getchomdeg(VR((P)ARG1(arg)),(P)ARG0(arg));
+	STOQ(d,*rp);
+}
+
+/* 
+	p1 = reorder(p,ovl,nvl) => p1 is 'sorted accoding to nvl.
+*/
+
+void Preorder(arg,rp)
+NODE arg;
+P *rp;
+{
+	VL ovl,nvl,tvl;
+	NODE n;
+
+	for ( ovl = 0, n = BDY((LIST)ARG1(arg)); n; n = NEXT(n) ) {
+		if ( !ovl ) {
+			NEWVL(ovl); tvl = ovl;
+		} else {
+			NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+		}
+			VR(tvl) = VR((P)BDY(n));
+	}
+	for ( nvl = 0, n = BDY((LIST)ARG2(arg)); n; n = NEXT(n) ) {
+		if ( !nvl ) {
+			NEWVL(nvl); tvl = nvl;
+		} else {
+			NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+		}
+			VR(tvl) = VR((P)BDY(n));
+	}
+	reorderp(nvl,ovl,(P)ARG0(arg),rp);
+}
 
 /*
 	uadj_coef(F,M,M2)

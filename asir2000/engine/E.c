@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.4 2001/04/20 02:27:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/E.c,v 1.5 2001/04/20 03:10:36 noro Exp $ 
 */
 #include "ca.h"
 
@@ -513,6 +513,41 @@ Q n,m,m2,*nr;
 			subn(NM(m),r,&s); NTOQ(s,-1*SGN(n),*nr);
 		} else 
 			NTOQ(r,SGN(n),*nr);
+	}
+}
+
+/* 
+	extract d-homogeneous part with respect to vl - {v}
+*/
+
+void exthpc_generic(vl,p,d,v,pr)
+VL vl;
+P p;
+int d;
+V v;
+P *pr;
+{
+	P w,x,t,t1,a,xd;
+	V v0;
+	DCP dc;
+
+	if ( d < 0 || !p )
+		*pr = 0;
+	else if ( NUM(p) )
+		if ( d == 0 )
+			*pr = p;
+		else
+			*pr = 0;
+	else if ( v == VR(p) )
+		exthpc(vl,v,p,d,pr);
+	else {
+		v0 = VR(p);
+		for ( MKV(v0,x), dc = DC(p), w = 0; dc; dc = NEXT(dc) ) {
+			exthpc_generic(vl,COEF(dc),d-QTOS(DEG(dc)),v,&t);
+			pwrp(vl,x,DEG(dc),&xd);
+			mulp(vl,xd,t,&t1); addp(vl,w,t1,&a); w = a;
+		}
+		*pr = w;
 	}
 }
 

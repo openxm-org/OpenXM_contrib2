@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.14 2001/02/21 07:10:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.15 2001/03/29 09:49:57 noro Exp $ 
 */
 #include "ca.h"
 
@@ -167,12 +167,13 @@ P p;
 DP *pr;
 {
 	int isconst = 0;
-	int n,i;
+	int n,i,j,k;
 	VL tvl;
 	V v;
 	DL d;
 	MP m;
 	DCP dc;
+	DCP *w;
 	DP r,s,t,u;
 	P x,c;
 
@@ -187,15 +188,25 @@ DP *pr;
 			for ( i = 0, tvl = dvl, v = VR(p);
 				tvl && tvl->v != v; tvl = NEXT(tvl), i++ );
 			if ( !tvl ) {
-				for ( dc = DC(p), s = 0, MKV(v,x); dc; dc = NEXT(dc) ) {
-					ptod(vl,dvl,COEF(dc),&t); pwrp(vl,x,DEG(dc),&c);
+				for ( dc = DC(p), k = 0; dc; dc = NEXT(dc), k++ );
+				w = (DCP *)ALLOCA(k*sizeof(DCP));
+				for ( dc = DC(p), j = 0; j < k; dc = NEXT(dc), j++ )
+					w[j] = dc;
+
+				for ( j = k-1, s = 0, MKV(v,x); j >= 0; j-- ) {
+					ptod(vl,dvl,COEF(w[j]),&t); pwrp(vl,x,DEG(w[j]),&c);
 					muldc(vl,t,c,&r); addd(vl,r,s,&t); s = t;
 				}
 				*pr = s;
 			} else {
-				for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
-					ptod(vl,dvl,COEF(dc),&t);
-					NEWDL(d,n); d->td = QTOS(DEG(dc)); d->d[i] = d->td;
+				for ( dc = DC(p), k = 0; dc; dc = NEXT(dc), k++ );
+				w = (DCP *)ALLOCA(k*sizeof(DCP));
+				for ( dc = DC(p), j = 0; j < k; dc = NEXT(dc), j++ )
+					w[j] = dc;
+
+				for ( j = k-1, s = 0; j >= 0; j-- ) {
+					ptod(vl,dvl,COEF(w[j]),&t);
+					NEWDL(d,n); d->td = QTOS(DEG(w[j])); d->d[i] = d->td;
 					NEWMP(m); m->dl = d; C(m) = (P)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
 					comm_muld(vl,t,u,&r); addd(vl,r,s,&t); s = t;
 				}
@@ -212,9 +223,10 @@ VL vl,dvl;
 DP p;
 P *pr;
 {
-	int n,i;
+	int n,i,j,k;
 	DL d;
 	MP m;
+	MP *a;
 	P r,s,t,u,w;
 	Q q;
 	VL tvl;
@@ -222,7 +234,13 @@ P *pr;
 	if ( !p )
 		*pr = 0;
 	else {
-		for ( n = p->nv, m = BDY(p), s = 0; m; m = NEXT(m) ) {
+		for ( k = 0, m = BDY(p); m; m = NEXT(m), k++ );
+		a = (MP *)ALLOCA(k*sizeof(MP));
+		for ( j = 0, m = BDY(p); j < k; m = NEXT(m), j++ )
+			a[j] = m;
+
+		for ( n = p->nv, j = k-1, s = 0; j >= 0; j-- ) {
+			m = a[j];
 			t = C(m);
 			if ( NUM(t) && NID((Num)t) == N_M ) {
 				mptop(t,&u); t = u;
