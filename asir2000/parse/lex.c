@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.28 2004/01/25 11:54:10 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.29 2004/02/04 07:42:07 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -547,11 +547,16 @@ int myatoi(char *s)
 }
 
 extern int ox_do_copy;
+extern int I_am_server;
+extern JMP_BUF main_env;
 
 void yyerror(char *s)
 {
 	if ( main_parser )
-		if ( ox_do_copy ) {
+		if ( I_am_server ) {
+			set_lasterror(s);
+			LONGJMP(main_env,1);
+		} else if ( ox_do_copy ) {
 			/* push errors to DebugStack */
 		} else {
 			if ( asir_infile->fp == stdin )

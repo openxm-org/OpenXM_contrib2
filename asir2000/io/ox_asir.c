@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.51 2004/02/13 05:48:36 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.52 2004/02/26 06:37:09 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -593,23 +593,18 @@ void asir_pushCMOtag(unsigned int serial)
 void asir_popString()
 {
 	Obj val;
-	char *buf,*obuf;
+	char *buf;
 	int l;
 	STRING str;
 
 	val = asir_pop_one();
 	if ( !val )
-		obuf = "0";
+		buf = "0";
 	else {
 		l = estimate_length(CO,val);
 		buf = (char *)ALLOCA(l+1);
 		soutput_init(buf);
 		sprintexpr(CO,val);
-#if 0
-		l = strlen(buf);
-		obuf = (char *)MALLOC(l+1);
-		strcpy(obuf,buf);
-#endif
 	}
 	MKSTR(str,buf);
 	ox_send_data(0,str);
