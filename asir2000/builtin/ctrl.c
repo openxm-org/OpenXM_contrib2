@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.21 2003/05/29 16:44:59 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.22 2003/06/07 16:40:24 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -86,6 +86,7 @@ static struct {
 	{"bigfloat",&bigfloat},
 #endif
 	{"verbose",&Verbose},
+	{"quiet_mode",&do_quiet},
 	{"hideargs",&hideargs},
 	{"hex",&hex_output},
 	{"debug_window",&do_server_in_X11},

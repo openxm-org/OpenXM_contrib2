@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.36 2003/05/16 07:56:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.37 2003/09/12 01:12:41 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -147,6 +147,7 @@ char asirname[BUFSIZ];
 char displayname[BUFSIZ];
 
 int Verbose;
+int do_quiet;
 
 void glob_init() {
 	int i;
@@ -302,6 +303,7 @@ void process_args(int ac,char **av)
 #if !defined(MPI)
 	do_message = 1;
 #endif
+	do_quiet = 0;
 	while ( ac > 0 ) {
 		if ( !strcmp(*av,"-heap") && (ac >= 2) ) {
 			void GC_expand_hp(int);
@@ -320,6 +322,7 @@ void process_args(int ac,char **av)
 		} else if ( !strcmp(*av,"-cpp") && (ac >= 2) ) {
 			strcpy(cppname,*(av+1)); av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-f") && (ac >= 2) ) {
+			do_quiet = 1;
 			in_fp = fopen(*(av+1),"r");
 			if ( !in_fp ) {
 				fprintf(stderr,"%s does not exist!",*(av+1));
@@ -327,6 +330,8 @@ void process_args(int ac,char **av)
 			}
 			do_file = 1;
 			av += 2; ac -= 2;
+		} else if ( !strcmp(*av,"-quiet") ) {
+			do_quiet = 1;	av++; ac--;
 		} else if ( !strcmp(*av,"-norc") ) {
 			do_asirrc = 0; av++; ac--;
 		} else if ( !strcmp(*av,"-nomessage") ) {

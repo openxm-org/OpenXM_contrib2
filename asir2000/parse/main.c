@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.20 2003/03/07 06:39:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.21 2003/04/02 09:43:33 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -155,7 +155,9 @@ main(int argc,char *argv[])
 #if defined(PARI)
     risa_pari_init();
 #endif 
-	copyright();
+	if (!do_quiet) {
+		copyright();
+	}
 	output_init();
 	arf_init();
 	nglob_init();
