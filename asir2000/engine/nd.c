@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.65 2003/09/12 08:01:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.66 2003/09/12 08:26:19 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -103,6 +103,16 @@ typedef struct oNM_ind_pair
 	int index;
 } *NM_ind_pair;
 
+typedef struct oIndArray
+{
+	char width;
+	int head;
+	union {
+		unsigned char *c;
+		unsigned short *s;
+		unsigned int *i;
+	} index;
+} *IndArray;
 
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 
@@ -349,7 +359,7 @@ P ndvtop(int mod,VL vl,VL dvl,NDV p);
 NDV ndtondv(int mod,ND p);
 ND ndvtond(int mod,NDV p);
 int nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair,UINT *r);
-void nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair,int *ind);
+IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
 
 void nd_free_private_storage()
@@ -3787,55 +3797,105 @@ int nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair,UINT *r)
 	return i;
 }
 
-void nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,
-	NM_ind_pair pair,int *ind)
+IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 {
 	NM m;
 	NMV mr;
 	UINT *d,*t,*s;
 	NDV p;
-	int i,j,len;
+	unsigned char *ivc;
+	unsigned short *ivs;
+	UINT *v,*ivi;
+	int i,j,len,prev,diff,cdiff;
+	IndArray r;
 
 	m = pair->mul;
 	d = DL(m);
 	p = nd_ps[pair->index];
 	len = LEN(p);
 	t = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	r = (IndArray)MALLOC(sizeof(struct oIndArray));
+	v = (unsigned int *)ALLOCA(len*sizeof(unsigned int));
 	for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
 		ndl_add(d,DL(mr),t);	
 		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
-		ind[j] = i;
+		v[j] = i;
 	}
+	r->head = v[0];
+	diff = 0;
+	for ( i = 1; i < len; i++ ) {
+		cdiff = v[i]-v[i-1]; diff = MAX(cdiff,diff);
+	}
+	if ( diff < 256 ) {
+		r->width = 1;
+		ivc = (unsigned char *)MALLOC_ATOMIC(len*sizeof(unsigned char));
+		r->index.c = ivc;
+		for ( i = 1, ivc[0] = 0; i < len; i++ ) ivc[i] = v[i]-v[i-1];
+	} else if ( diff < 65536 ) {
+		r->width = 2;
+		ivs = (unsigned short *)MALLOC_ATOMIC(len*sizeof(unsigned short));
+		r->index.s = ivs;
+		for ( i = 1, ivs[0] = 0; i < len; i++ ) ivs[i] = v[i]-v[i-1];
+	} else {
+		r->width = 4;
+		ivi = (unsigned int *)MALLOC_ATOMIC(len*sizeof(unsigned int));
+		r->index.i = ivi;
+		for ( i = 1, ivi[0] = 0; i < len; i++ ) ivi[i] = v[i]-v[i-1];
+	}
+	return r;
 }
 
 
-void ndv_reduce_vect(int m,UINT *svect,int col,int **imat,NODE rp0)
+void ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NODE rp0)
 {
-	int i,j,k,len,pos;
+	int i,j,k,len,pos,prev;
 	UINT c,c1,c2,c3,up,lo,dmy;
-	UINT *ivect;
+	IndArray ivect;
+	unsigned char *ivc;
+	unsigned short *ivs;
+	unsigned int *ivi;
 	NDV redv;
-	NMV mr0,mr;
+	NMV mr;
 	NODE rp;
 
 	for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
 		ivect = imat[i];
-		k = ivect[0];
-		svect[k] %= m;
+		k = ivect->head; svect[k] %= m;
 		if ( c = svect[k] ) {
-			c = m-c;
-			redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
-			len = LEN(redv);
-			mr0 = BDY(redv);
-			for ( j = 0, mr = mr0; j < len; j++, NMV_ADV(mr) ) {
-				pos = ivect[j];
-				c1 = CM(mr);
-				c2 = svect[pos];
-				DMA(c1,c,c2,up,lo);
-				if ( up ) {
-					DSAB(m,up,lo,dmy,c3); svect[pos] = c3;
-				} else
-					svect[pos] = lo;
+			c = m-c; redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
+			len = LEN(redv); mr = BDY(redv);
+			svect[k] = 0; prev = k;
+			switch ( ivect->width ) {
+				case 1:
+					ivc = ivect->index.c;
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivc[j]; c1 = CM(mr); c2 = svect[pos];
+						prev = pos;
+						DMA(c1,c,c2,up,lo);
+						if ( up ) { DSAB(m,up,lo,dmy,c3); svect[pos] = c3;
+						} else svect[pos] = lo;
+					}
+					break;
+				case 2:
+					ivs = ivect->index.s; 
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivs[j]; c1 = CM(mr); c2 = svect[pos];
+						prev = pos;
+						DMA(c1,c,c2,up,lo);
+						if ( up ) { DSAB(m,up,lo,dmy,c3); svect[pos] = c3;
+						} else svect[pos] = lo;
+					}
+					break;
+				case 4:
+					ivi = ivect->index.i;
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivi[j]; c1 = CM(mr); c2 = svect[pos];
+						prev = pos;
+						DMA(c1,c,c2,up,lo);
+						if ( up ) { DSAB(m,up,lo,dmy,c3); svect[pos] = c3;
+						} else svect[pos] = lo;
+					}
+					break;
 			}
 		}
 	}
@@ -3940,7 +4000,7 @@ NODE nd_f4(int m)
 	UINT **spmat;
 	UINT *s0vect,*svect,*p,*v;
 	int *colstat;
-	int **imat;
+	IndArray *imat;
 	int *rhead;
 	int spcol,sprow;
 	int sugar;
@@ -3969,17 +4029,14 @@ NODE nd_f4(int m)
 		}
 
 		nsp = length(sp0); nred = length(rp0); spcol = col-nred;
-		imat = (int **)MALLOC(nred*sizeof(int *));
+		imat = (IndArray *)MALLOC(nred*sizeof(IndArray));
 		rhead = (int *)MALLOC_ATOMIC(col*sizeof(int));
 		for ( i = 0; i < col; i++ ) rhead[i] = 0;
 
 		/* construction of index arrays */
 		for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
-			redv = nd_ps[((NM_ind_pair)BDY(rp))->index];
-			imat[i] = (int *)MALLOC_ATOMIC(LEN(redv)*sizeof(int));
-			nm_ind_pair_to_vect_compress(m,s0vect,col,
-				(NM_ind_pair)BDY(rp),imat[i]);
-			rhead[imat[i][0]] = 1;
+			imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,(NM_ind_pair)BDY(rp));
+			rhead[imat[i]->head] = 1;
 		}
 
 		/* elimination (1st step) */
@@ -3997,7 +4054,7 @@ NODE nd_f4(int m)
 			}
 		}
 		/* free index arrays */
-		for ( i = 0; i < nred; i++ ) GC_free(imat[i]);
+		for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
 
 		/* elimination (2nd step) */
 		colstat = (int *)ALLOCA(spcol*sizeof(int));
