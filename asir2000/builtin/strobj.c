@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.48 2004/07/13 07:59:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.49 2004/07/13 09:10:38 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -65,6 +65,7 @@ struct TeXSymbol {
 
 extern char *parse_strp;
 
+void Psprintf();
 void Prtostr(), Pstrtov(), Peval_str();
 void Pstrtoascii(), Pasciitostr();
 void Pstr_len(), Pstr_chr(), Psub_str();
@@ -88,6 +89,7 @@ void fargstotex_tb(char *opname,FNODE f,TB tb);
 int top_is_minus(FNODE f);
 
 struct ftab str_tab[] = {
+	{"sprintf",Psprintf,-99999999},
 	{"rtostr",Prtostr,1},
 	{"strtov",Pstrtov,1},
 	{"eval_str",Peval_str,1},
@@ -1198,6 +1200,42 @@ char *objtostr(Obj obj)
 	soutput_init(r);
 	sprintexpr(CO,obj);
 	return r;
+}
+
+void Psprintf(NODE arg,STRING *rp)
+{
+    STRING string;
+    char *s,*t,*r;
+    int argc,n,len;
+    NODE node;
+
+    string = (STRING)ARG0(arg);
+    asir_assert(string,O_STR,"sprintf");
+    s = BDY(string);
+    for(n = 0, t = s; *t; t++) {
+        if (*t=='%' && *(t+1)=='a') {
+            n++;
+        }
+    }
+    for(node = NEXT(arg), argc = 0, len = strlen(s); node; node = NEXT(node), argc++) {
+        len += estimate_length(CO,BDY(node));
+    }
+    if (argc < n) {
+        error("sprintf: invalid argument");
+    }
+    r = (char *)MALLOC_ATOMIC(len);
+    for(node = NEXT(arg), t = r; *s; s++) {
+        if (*s=='%' && *(s+1)=='a') {
+            strcpy(t,objtostr(BDY(node)));
+            node = NEXT(node);
+            t = strchr(t,0);
+            s++;
+        }else {
+            *t++ = *s;
+        }
+    }
+    *t = 0;
+    MKSTR(*rp,r);
 }
 
 void fnodenodetotex_tb(NODE n,TB tb)
