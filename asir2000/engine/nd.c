@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.105 2004/09/17 05:43:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.106 2004/09/21 02:23:49 noro Exp $ */
 
 #include "nd.h"
 
@@ -3769,19 +3769,17 @@ int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r)
 	return i;
 }
 
-int ndv_to_vect(int mod,UINT *s0,int n,NDV d,UINT *r)
+int nd_to_vect_q(UINT *s0,int n,ND d,Q *r)
 {
-	NMV m;
+	NM m;
 	UINT *t,*s;
-	int i,j,len;
+	int i;
 
 	for ( i = 0; i < n; i++ ) r[i] = 0;
-	m = BDY(d);
-	len = LEN(d);
-	for ( i = j = 0, s = s0; j < len; j++, NMV_ADV(m)) {
+	for ( i = 0, s = s0, m = BDY(d); m; m = NEXT(m) ) {
 		t = DL(m);
 		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
-		r[i] = CM(m);
+		r[i] = CQ(m);
 	}
 	for ( i = 0; !r[i]; i++ );
 	return i;
@@ -3858,6 +3856,58 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 	return r;
 }
 
+
+int ndv_reduce_vect_q(Q *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+{
+	int i,j,k,len,pos,prev;
+	Q cs,mcs,c1,c2,cr,gcd;
+	IndArray ivect;
+	unsigned char *ivc;
+	unsigned short *ivs;
+	unsigned int *ivi;
+	NDV redv;
+	NMV mr;
+	NODE rp;
+	int maxrs;
+
+	maxrs = 0;
+	for ( i = 0; i < nred; i++ ) {
+		ivect = imat[i];
+		k = ivect->head;
+		if ( svect[k] ) {
+			maxrs = MAX(maxrs,rp0[i]->sugar);
+			redv = nd_ps[rp0[i]->index];
+			len = LEN(redv); mr = BDY(redv);
+			igcd_cofactor(svect[k],CQ(mr),&gcd,&cs,&cr);
+			chsgnq(cs,&mcs);
+			svect[k] = 0; prev = k;
+			switch ( ivect->width ) {
+				case 1:
+					ivc = ivect->index.c;
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivc[j]; prev = pos;
+						mulq(svect[pos],cr,&c1); mulq(CQ(mr),mcs,&c2); addq(c1,c2,&svect[pos]);
+					}
+					break;
+				case 2:
+					ivs = ivect->index.s; 
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivs[j]; prev = pos;
+						mulq(svect[pos],cr,&c1); mulq(CQ(mr),mcs,&c2); addq(c1,c2,&svect[pos]);
+					}
+					break;
+				case 4:
+					ivi = ivect->index.i;
+					for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+						pos = prev+ivi[j]; prev = pos;
+						mulq(svect[pos],cr,&c1); mulq(CQ(mr),mcs,&c2); addq(c1,c2,&svect[pos]);
+					}
+					break;
+			}
+		}
+	}
+	return maxrs;
+}
 
 int ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
@@ -3991,6 +4041,34 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 			if ( !rhead[j] ) {
 				if ( c = vect[k++] ) {
 					ndl_copy(p,DL(mr)); CM(mr) = c; NMV_ADV(mr);
+				}
+			}
+		MKNDV(nd_nvar,mr0,len,r);
+		return r;
+	}
+}
+
+NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect)
+{
+	int j,k,len;
+	UINT *p;
+	Q c;
+	NDV r;
+	NMV mr0,mr;
+
+	for ( j = 0, len = 0; j < spcol; j++ ) if ( vect[j] ) len++;
+	if ( !len ) return 0;
+	else {
+		mr0 = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+#if 0
+		ndv_alloc += nmv_adv*len;
+#endif
+		mr = mr0; 
+		p = s0vect;
+		for ( j = k = 0; j < col; j++, p += nd_wpd )
+			if ( !rhead[j] ) {
+				if ( c = vect[k++] ) {
+					ndl_copy(p,DL(mr)); CQ(mr) = c; NMV_ADV(mr);
 				}
 			}
 		MKNDV(nd_nvar,mr0,len,r);
@@ -4153,7 +4231,10 @@ NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0)
 		imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,rvect[i]);
 		rhead[imat[i]->head] = 1;
 	}
-	r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred);
+	if ( m )
+		r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred);
+	else
+		r0 = nd_f4_red_q_main(sp0,nsp,s0vect,col,rvect,rhead,imat,nred);
 	return r0;
 }
 
@@ -4214,6 +4295,72 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
 	for ( i = 0; i < rank; i++ ) {
 		NEXTNODE(r0,r); BDY(r) = 
 			(pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+		SG((NDV)BDY(r)) = spsugar[i];
+		GC_free(spmat[i]);
+	}
+	for ( ; i < sprow; i++ ) GC_free(spmat[i]);
+	get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
+	init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
+	if ( DP_Print ) {
+		fprintf(asir_out,"elim2=%fsec\n",eg_f4_2.exectime+eg_f4_2.gctime);
+		fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
+			nsp,nred,sprow,spcol,rank);
+		fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
+	}
+	return r0;
+}
+
+NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred)
+{
+	int spcol,sprow,a;
+	int i,j,k,l,rank;
+	NODE r0,r;
+	ND_pairs sp;
+	ND spol;
+	Q **spmat;
+	Q *svect,*v;
+	int *colstat;
+	struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
+	int maxrs;
+	int *spsugar;
+
+	spcol = col-nred;
+	get_eg(&eg0);
+	/* elimination (1st step) */
+	spmat = (Q **)ALLOCA(nsp*sizeof(UINT *));
+	svect = (Q *)ALLOCA(col*sizeof(UINT));
+	spsugar = (int *)ALLOCA(nsp*sizeof(UINT));
+	for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
+		nd_sp(0,0,sp,&spol);
+		if ( !spol ) continue;
+		nd_to_vect_q(s0vect,col,spol,svect);
+		maxrs = ndv_reduce_vect_q(svect,col,imat,rvect,nred);
+		for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+		if ( i < col ) {
+			spmat[sprow] = v = (Q *)MALLOC_ATOMIC(spcol*sizeof(Q));
+			for ( j = k = 0; j < col; j++ )
+				if ( !rhead[j] ) v[k++] = svect[j];
+			spsugar[sprow] = MAX(maxrs,SG(spol));
+			sprow++;
+		}
+		nd_free(spol);
+	}
+	get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
+	if ( DP_Print ) {
+		fprintf(asir_out,"elim1=%fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+		fflush(asir_out);
+	}
+	/* free index arrays */
+	for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
+
+	/* elimination (2nd step) */
+	colstat = (int *)ALLOCA(spcol*sizeof(int));
+	rank = nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat);
+	r0 = 0;
+	for ( i = 0; i < rank; i++ ) {
+		NEXTNODE(r0,r); BDY(r) = 
+			(pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
 		SG((NDV)BDY(r)) = spsugar[i];
 		GC_free(spmat[i]);
 	}
@@ -4483,6 +4630,10 @@ void nd_exec_f4_red_dist()
 		nd_send_ndv(nf);
 	}
 	fflush(nd_write);
+}
+
+int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat)
+{
 }
 
 int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat)

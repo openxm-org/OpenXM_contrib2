@@ -362,6 +362,7 @@ NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect);
 /* elimination */
 int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat);
+int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat);
 
 int ndl_ww_lex_compare(UINT *a1,UINT *a2);
 
