@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.40 2004/03/11 07:40:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.41 2004/03/12 02:06:48 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1086,7 +1086,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 		case I_FORMULA:
 			obj = (Obj)FA0(f);
 			if ( !obj )
-				opname = "0";
+				write_tb("0",tb);
 			else if ( OID(obj) == O_N && NID(obj) == N_C ) {
 				cplx = (C)obj;
 				write_tb("(",tb);
