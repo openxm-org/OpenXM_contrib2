@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.11 2001/08/03 08:50:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.12 2001/10/09 01:36:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,7 @@ int ox_flushing;
 int ox_batch;
 int ox_check=1;
 int ox_exchange_mathcap=1;
-jmp_buf ox_env;
+JMP_BUF ox_env;
 
 MATHCAP my_mathcap;
 
@@ -110,7 +110,7 @@ void ox_resetenv(char *s)
 	cleanup_events();
 #endif
 	fprintf(stderr,"%s\n",s);
-	longjmp(ox_env,1);
+	LONGJMP(ox_env,1);
 }
 
 static int available_cmo[] = {
@@ -369,8 +369,6 @@ void end_critical() {
 
 void ox_usr1_handler(int sig)
 {
-	extern jmp_buf env;
-
 #if !defined(VISUAL)
 	signal(SIGUSR1,ox_usr1_handler);
 #endif

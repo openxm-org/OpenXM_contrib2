@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.12 2001/08/22 09:19:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.13 2001/10/09 01:36:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,11 +63,11 @@ extern int asir_OperandStackSize;
 extern Obj *asir_OperandStack;
 extern int asir_OperandStackPtr;
 
-extern jmp_buf environnement;
+extern JMP_BUF environnement;
 
 extern int do_message;
 extern int ox_flushing;
-extern jmp_buf ox_env;
+extern JMP_BUF ox_env;
 extern MATHCAP my_mathcap;
 extern char LastError[];
 
@@ -115,7 +115,7 @@ void ox_plot_main(int argc,char **argv)
 	if ( do_message )
 		fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
 
-	if ( setjmp(ox_env) ) {
+	if ( SETJMP(ox_env) ) {
 		while ( NEXT(asir_infile) )
 			closecurrentinput();
 		reset_current_computation();
@@ -159,7 +159,7 @@ static void process_ox()
 				break;
 			if ( do_message )
 				fprintf(stderr," %s\n",name_of_cmd(cmd));
-			if ( ret = setjmp(main_env) ) {
+			if ( ret = SETJMP(main_env) ) {
 				if ( ret == 1 ) {
 					create_error(&err,serial,LastError);
 					asir_push_one((Obj)err);

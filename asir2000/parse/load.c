@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.7 2001/08/20 09:14:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.8 2001/10/09 01:36:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -100,7 +100,7 @@ extern char *asir_libdir;
 extern char *asir_pager;
 extern int read_exec_file;
 extern int main_parser;
-extern jmp_buf exec_env;
+extern JMP_BUF exec_env;
 
 void env_init() {
 	char *e,*p,*q;
@@ -319,7 +319,7 @@ void load_and_execfile(char *name)
 	save_prresult = prresult;
 	fp = fopen(name,"rb");
 	input_init(fp,name);
-	if ( !setjmp(exec_env) ) {
+	if ( !SETJMP(exec_env) ) {
 		/* XXX : information for asir_teriminate() */
 		read_exec_file = 2;
 		read_eval_loop();

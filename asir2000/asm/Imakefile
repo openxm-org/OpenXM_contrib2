@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/Imakefile,v 1.4 2001/06/04 02:49:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/Imakefile,v 1.5 2001/06/15 07:56:02 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
@@ -26,6 +26,11 @@ mdepobj = asmi_l.o
 mdepsrc = asmi.s
 mdepobj = asmi.o
 #endif
+#endif
+
+#ifdef cygwinArchitecture
+mdepsrc = asmi.s
+mdepobj = asmi.o
 #endif
 
 #ifdef SunArchitecture

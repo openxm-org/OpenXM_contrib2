@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.16 2001/10/09 01:36:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.17 2001/12/21 08:23:15 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -58,7 +58,7 @@
 #include "genpari.h"
 #endif
 
-extern jmp_buf timer_env;
+extern JMP_BUF timer_env;
 
 int f_break,f_return,f_continue;
 int evalstatline;
@@ -182,7 +182,7 @@ pointer eval(FNODE f)
 				expired = (Obj)eval((FNODE)FA2(f));
 				set_timer(interval);
 				savepvs();
-				if ( !setjmp(timer_env) )
+				if ( !SETJMP(timer_env) )
 					val = eval((FNODE)FA1(f));
 				else {
 					val = (pointer)expired;

@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED
  * All rights reserved.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.15 2000/12/26 05:17:46 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.16 2001/04/20 10:34:41 noro Exp $
  */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
@@ -54,7 +54,11 @@ PLLIB = plot/libplot.a
 PLLIB =
 #endif
 
+#if defined(cygwinArchitecture)
+PROGRAMS = asir.exe
+#else
 PROGRAMS = asir
+#endif
 
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.9 2001/10/05 03:21:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.10 2001/10/09 01:36:23 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,7 +78,7 @@ static int curline = 1;
 extern NODE PVSS;
 extern unsigned int evalstatline;
 extern int debug_mode;
-extern jmp_buf debug_env;
+extern JMP_BUF debug_env;
 
 char *debcom[] = {
 	"next",
@@ -232,7 +232,7 @@ void debug(SNODE f)
 #endif
 		show_debug_window(1);
 	sprintf(prompt,"(debug) ");
-	setjmp(debug_env);
+	SETJMP(debug_env);
 	while ( 1 ) {
 #if FEP
 		if ( !do_fep )
@@ -761,7 +761,7 @@ void printvars(char *s,VS vs)
 		}
 	if ( exprparse(vs==GPVS?0:vs->usrf,s,&expr) ) {
 		cpvs = CPVS; CPVS = vs;
-		if ( !(err = setjmp(debug_env)) )
+		if ( !(err = SETJMP(debug_env)) )
 			val = eval(expr); 
 		CPVS = cpvs;
 		if ( !err ) {

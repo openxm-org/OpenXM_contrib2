@@ -45,14 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.6 2001/08/22 09:19:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.7 2001/10/09 01:36:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "ifplot.h"
 
-extern jmp_buf ox_env;
+extern JMP_BUF ox_env;
 
 int open_canvas(NODE arg)
 {
@@ -542,7 +542,7 @@ void qifplotmain(struct canvas *can)
 
 	width = can->width; height = can->height;
 	tabe = (char **)ALLOCA(width*sizeof(char *)+width*height*sizeof(char));
-	bzero(tabe,width*sizeof(char *)+width*height*sizeof(char));
+	bzero((void *)tabe,width*sizeof(char *)+width*height*sizeof(char));
 	for ( i = 0, tabeb = (char *)(tabe+width); i < width; i++ )
 		tabe[i] = tabeb + height*i;
 	define_cursor(can->window,runningcur);

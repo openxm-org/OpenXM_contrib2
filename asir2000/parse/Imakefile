@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/Imakefile,v 1.5 2001/06/15 07:56:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/Imakefile,v 1.6 2001/08/20 09:03:27 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
@@ -28,8 +28,11 @@ load.o: load.c
 	$(CC) -c $(CFLAGS) -DASIR_LIBDIR=\"$(ASIR_LIBDIR)\" $*.c
 #endif
 
+#if !defined(cygwinArchitecture)
+y.tab.c y.tab.h: $(TOP)/include/Risa.tmpl
 y.tab.h y.tab.c: parse.y
 	yacc -d parse.y
+#endif
 
 umain.o: main.c
 	$(CC) -c $(CFLAGS) -DUINIT main.c -o umain.o
@@ -40,7 +43,6 @@ y.tab.o:
 #endif
 
 glob.o lex.o debug.o main.o umain.o: $(TOP)/include/Risa.tmpl
-y.tab.c y.tab.h: $(TOP)/include/Risa.tmpl
 lex.o kwd.o: y.tab.h
 
 install-include::

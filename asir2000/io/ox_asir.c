@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.33 2001/10/22 09:14:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.34 2001/12/21 08:23:14 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,11 +58,11 @@
 void ox_usr1_handler();
 int asir_ox_init();
 
-extern jmp_buf environnement;
+extern JMP_BUF environnement;
 
 extern int do_message;
 extern int ox_flushing;
-extern jmp_buf ox_env;
+extern JMP_BUF ox_env;
 extern MATHCAP my_mathcap;
 
 extern int little_endian,ox_sock_id;
@@ -142,7 +142,7 @@ void ox_main(int argc,char **argv) {
 	ox_asir_init(argc,argv);
 	if ( do_message )
 		fprintf(stderr,"I'm an ox_asir, Version %d.\n",ASIR_VERSION);
-	if ( setjmp(ox_env) ) {
+	if ( SETJMP(ox_env) ) {
 		while ( NEXT(asir_infile) )
 			closecurrentinput();
 		ox_send_sync(0);
@@ -171,7 +171,7 @@ void ox_main(int argc,char **argv) {
 					break;
 				if ( do_message )
 					fprintf(stderr," %s\n",name_of_cmd(cmd));
-				if ( ret = setjmp(main_env) ) {
+				if ( ret = SETJMP(main_env) ) {
 					if ( ret == 1 ) {
 						create_error(&err,serial,LastError);
 						asir_push_one((Obj)err);
@@ -488,7 +488,7 @@ int asir_executeString()
 	char *cmd;
 #if PARI
 	recover(0);
-	if ( setjmp(environnement) ) {
+	if ( SETJMP(environnement) ) {
 		avma = top; recover(1);
 		resetenv("");
 	}
@@ -695,7 +695,7 @@ void ox_asir_init(int argc,char **argv)
 	}
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(main_env) ) {
+		if ( !SETJMP(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
 			read_exec_file = 0;
@@ -842,7 +842,7 @@ void asir_ox_push_cmd(int cmd)
 	ERR err;
 	extern char LastError[];
 
-	if ( ret = setjmp(main_env) ) {
+	if ( ret = SETJMP(main_env) ) {
 		asir_reset_handler();
 		if ( ret == 1 ) {
 			create_error(&err,0,LastError); /* XXX */
@@ -869,7 +869,7 @@ void asir_ox_execute_string(char *s)
 
 	MKSTR(str,s);
 	asir_push_one((Obj)str);
-	if ( ret = setjmp(main_env) ) {
+	if ( ret = SETJMP(main_env) ) {
 		asir_reset_handler();
 		if ( ret == 1 ) {
 			create_error(&err,0,LastError); /* XXX */
@@ -954,7 +954,7 @@ int asir_ox_init(int byteorder)
 	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(main_env) ) {
+		if ( !SETJMP(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
 			read_exec_file = 0;

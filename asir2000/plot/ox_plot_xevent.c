@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.11 2000/11/09 02:30:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.12 2001/08/22 09:19:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,7 +64,7 @@ static char *dname;
 static int remotes;
 static int depth,scrn;
 
-extern jmp_buf ox_env;
+extern JMP_BUF ox_env;
 static Widget toplevel;
 static XtAppContext app_con;
 

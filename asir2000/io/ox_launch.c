@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.14 2001/07/23 05:05:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.15 2001/10/09 01:36:21 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -336,12 +336,12 @@ int nolog;
 		return pid;
 	else {
 		setpgid(0,getpid());
-		if ( dup2(bs,3) != 3 )
+		if ( bs != 3 && dup2(bs,3) != 3 )
 			exit(1);
-		if ( dup2(bs,4) != 4 )
+		if ( bs != 4 && dup2(bs,4) != 4 )
 			exit(1);
 		{
-#if defined(linux) || defined(__NeXT__) || defined(ultrix)
+#if defined(linux) || defined(__NeXT__) || defined(ultrix) || defined(__CYGWIN__)
 #include <sys/param.h>
 			close(0);
 			for ( i = 5; i < NOFILE; i++ )

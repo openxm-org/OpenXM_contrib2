@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.11 2001/10/09 01:36:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.12 2001/12/20 08:18:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,10 +53,10 @@
 #if PARI
 #include "genpari.h"
 
-extern jmp_buf environnement;
+extern JMP_BUF environnement;
 #endif
 
-extern jmp_buf main_env;
+extern JMP_BUF main_env;
 
 #if defined(INTERVAL)
 #ifndef ASIRRCNAME
@@ -182,7 +182,7 @@ main(int argc,char *argv[])
 
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(main_env) ) {
+		if ( !SETJMP(main_env) ) {
 			read_exec_file = 1;
 			read_eval_loop();
 			read_exec_file = 0;
@@ -198,12 +198,12 @@ main(int argc,char *argv[])
 	while ( 1 ) {
 #if PARI
 		recover(0);
-		if ( setjmp(environnement) ) {
+		if ( SETJMP(environnement) ) {
 			avma = top; recover(1);
 			resetenv("");
 		}
 #endif
-		if ( setjmp(main_env) )
+		if ( SETJMP(main_env) )
 			prompt();
 		read_eval_loop();
 	}

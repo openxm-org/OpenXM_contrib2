@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.30 2001/11/19 00:57:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.31 2001/12/21 08:23:12 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -566,10 +566,21 @@ typedef unsigned int ModNum;
 #endif
 #define CALLOC(d,e) MALLOC((d)*(e))
 
-#if !defined(__CYGWIN__) && ((defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL)))
+#if !defined(__CYGWIN__) && (defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL))
 #define ALLOCA(d) alloca(d)
 #else
 #define ALLOCA(d) MALLOC(d)
+#endif
+
+/* for setjmp/longjmp compatibility */
+#if defined(__CYGWIN__)
+#define JMP_BUF sigjmp_buf
+#define SETJMP(x) sigsetjmp(x,~0)
+#define LONGJMP(x,y) siglongjmp(x,y)
+#else
+#define JMP_BUF jmp_buf
+#define SETJMP(x) setjmp(x)
+#define LONGJMP(x,y) longjmp(x,y)
 #endif
 
 #define TRUESIZE(type,n,atype) (sizeof(struct type)+MAX((n),0)*sizeof(atype))

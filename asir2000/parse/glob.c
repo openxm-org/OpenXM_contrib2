@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.24 2001/10/09 01:36:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.25 2001/12/21 08:23:15 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -78,7 +78,7 @@ extern int GC_free_space_numerator;
 extern FILE *asir_out;
 
 INFILE asir_infile;
-jmp_buf main_env,debug_env,timer_env,exec_env;
+JMP_BUF main_env,debug_env,timer_env,exec_env;
 int little_endian,debug_mode;
 char *asir_libdir;
 char *asir_pager;
@@ -206,9 +206,9 @@ void asir_terminate(int status)
 		t = read_exec_file;
 		read_exec_file = 0;
 		if ( t == 1 )
-			longjmp(main_env,status);
+			LONGJMP(main_env,status);
 		else
-			longjmp(exec_env,status);
+			LONGJMP(exec_env,status);
 	} else {
 		tty_reset();
 #if MPI
@@ -399,7 +399,7 @@ void resetenv(char *s)
 #if !defined(VISUAL)
 	reset_timer();
 #endif
-	longjmp(main_env,1);
+	LONGJMP(main_env,1);
 }
 
 void fatal(int n)
@@ -540,7 +540,7 @@ void ill_handler(int sig)
 void alrm_handler(int sig)
 {
 	fprintf(stderr,"interval timer expired (VTALRM)\n");
-	longjmp(timer_env,1);
+	LONGJMP(timer_env,1);
 }
 
 void bus_handler(int sig)
@@ -616,7 +616,7 @@ void error(char *s)
 		ExitAsir();
 	}
 	if ( debug_mode )
-		longjmp(debug_env,1);
+		LONGJMP(debug_env,1);
 	if ( CPVS != GPVS )
 		if ( do_server_in_X11 || isatty(0) )
 			bp(error_snode);

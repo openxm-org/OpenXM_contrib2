@@ -151,7 +151,7 @@ double get_current_time()
 	return (double)t.tv_sec + ((double)t.tv_usec)/((double)1000000);
 }
 
-#if defined(_PA_RISC1_1) || defined(__svr4__)
+#if defined(_PA_RISC1_1) || defined(__svr4__) || defined(__CYGWIN__)
 
 #include <sys/times.h>
 #include <limits.h>

@@ -44,12 +44,13 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.25 2001/06/06 02:21:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.26 2001/10/09 01:36:22 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
 #include <signal.h>
+#include <string.h>
 #if !defined(VISUAL)
 #include <sys/types.h>
 #include <pwd.h>
@@ -521,14 +522,28 @@ void spawn_server(char *host,char *launcher,char *server,
 #else
 	if ( use_unix ) {
 		if ( !fork() ) {
+#if 1
 			setpgid(0,getpid());
 			if ( dname )
+#if defined(__CYGWIN__)
+			{
+				execlp("start.exe","start",
+					"c:\\cygwin\\usr\\local\\lib\\asir\\ox_launch.exe",".",conn_str,
+					control_port_str,server_port_str,server,"1",0);
+			}
+#else
 				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
 					"-geometry","60x10","-e",launcher,".",conn_str,
 					control_port_str,server_port_str,server,dname,0);
-			else
+#endif
+			else 
 				execlp(launcher,launcher,".",conn_str,
 					control_port_str,server_port_str,server,dname0,"-nolog",0);
+#else
+	printf("ox_launch.exe . %s %s %s %s %s %s",conn_str,control_port_str,
+server_port_str,server,dname0,"-nolog");
+	exit(0);
+#endif
 		}
 	} else if ( conn_to_serv == 2 ) {
 		/* special support for java */
@@ -666,8 +681,8 @@ int register_server(int af_unix,int m,int c)
 #endif
 	if ( m_c_i == m_c_s ) {
 		s = (m_c_s+INIT_TAB_SIZ)*sizeof(struct m_c);
-		t = (struct m_c *)MALLOC_ATOMIC(s); bzero(m_c_tab,s);
-		bcopy(m_c_tab,t,m_c_s*sizeof(struct m_c));
+		t = (struct m_c *)MALLOC_ATOMIC(s); bzero((void *)m_c_tab,s);
+		bcopy((void *)m_c_tab,(void *)t,m_c_s*sizeof(struct m_c));
 		for ( i = 0; i < INIT_TAB_SIZ; i++ ) {
 			m_c_tab[m_c_s+i].af_unix = 0;
 			m_c_tab[m_c_s+i].m = m_c_tab[m_c_s+i].c = -1;
