@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.9 2003/07/25 09:04:47 noro Exp $ */
+/* $OpenXM$ */
 
 #include "ca.h"
 #include "inline.h"
@@ -53,8 +53,6 @@ typedef struct oND_pairs {
 	unsigned int lcm[1];
 } *ND_pairs;
 
-static ND *nd_ps;
-static NDV *nd_psv;
 static unsigned int **nd_bound;
 int nd_mod,nd_nvar;
 int is_rlex;
@@ -71,6 +69,7 @@ extern int Top,Reverse;
 int nd_psn,nd_pslen;
 int nd_found,nd_create,nd_notfirst;
 int *nd_psl;
+NM *nd_psh;
 
 void GC_gcollect();
 NODE append_one(NODE,int);
@@ -133,11 +132,13 @@ unsigned int *nd_compute_bound(ND p);
 unsigned int *dp_compute_bound(DP p);
 ND_pairs nd_reconstruct(ND_pairs);
 void nd_setup_parameters();
-ND nd_dup(ND p,int obpe);
+void nd_realloc(ND p,int obpe);
 ND nd_copy(ND p);
 void ndl_dup(int obpe,unsigned int *d,unsigned int *r);
 
 #if USE_NDV
+static NDV *nd_ps;
+
 #define NMV_ADV(m) (m = (NMV)(((char *)m)+nmv_adv))
 #define NEWNDV(d) ((d)=(NDV)MALLOC(sizeof(struct oNDV)))
 #define MKNDV(n,m,l,d) NEWNDV(d); (d)->nv=(n); BDY(d)=(m); (d)->len = l;
@@ -146,10 +147,18 @@ int nmv_adv;
 int nmv_len;
 NDV ndv_red;
 
+void ndv_mul_c(NDV p,int mul);
 ND ndv_add(ND p1,NDV p2);
 NDV ndtondv(ND p);
 void ndv_mul_nm(NDV pv,NM m,NDV r);
 ND ndv_mul_nm_create(NDV p,NM m0);
+void ndv_realloc(NDV p,int obpe,int oadv);
+NDV dptondv(DP);
+DP ndvtodp(NDV);
+#else
+static ND *nd_ps;
+ND dptond(DP);
+DP ndtodp(ND);
 #endif
 
 void nd_free_private_storage()
@@ -157,7 +166,7 @@ void nd_free_private_storage()
 	_nd_free_list = 0;
 	_nm_free_list = 0;
 	_ndp_free_list = 0;
-	nd_red = 0;
+	bzero(nd_red,sizeof(REDTAB_LEN*sizeof(NM)));
 	GC_gcollect();
 }
 
@@ -166,7 +175,7 @@ void _NM_alloc()
 	NM p;
 	int i;
 
-	for ( i = 0; i < 16; i++ ) {
+	for ( i = 0; i < 1024; i++ ) {
 		p = (NM)GC_malloc(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _nm_free_list; _nm_free_list = p;
 	}
@@ -188,7 +197,7 @@ void _NDP_alloc()
 	ND_pairs p;
 	int i;
 
-	for ( i = 0; i < 10240; i++ ) {
+	for ( i = 0; i < 1024; i++ ) {
 		p = (ND_pairs)GC_malloc(sizeof(struct oND_pairs)
 			+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _ndp_free_list; _ndp_free_list = p;
@@ -774,64 +783,6 @@ int ndl_check_bound2(int index,unsigned int *d2)
 	}
 }
 
-#if USE_NDV
-int nd_sp(ND_pairs p,ND *rp)
-{
-	NM m;
-	NDV p1,p2;
-	ND t1,t2;
-	unsigned int *lcm;
-	int td;
-
-	p1 = nd_psv[p->i1];
-	p2 = nd_psv[p->i2];
-	lcm = p->lcm;
-	td = p->td;
-	NEWNM(m);
-	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl);
-	if ( ndl_check_bound2(p->i1,m->dl) )
-		return 0;
-	t1 = ndv_mul_nm_create(p1,m);
-	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
-	if ( ndl_check_bound2(p->i2,m->dl) ) {
-		nd_free(t1);
-		return 0;
-	}
-	ndv_mul_nm(p2,m,ndv_red);
-	FREENM(m);
-	*rp = ndv_add(t1,ndv_red);
-	return 1;
-}
-#else
-int nd_sp(ND_pairs p,ND *rp)
-{
-	NM m;
-	ND p1,p2;
-	ND t1,t2;
-	unsigned int *lcm;
-	int td;
-
-	p1 = nd_ps[p->i1];
-	p2 = nd_ps[p->i2];
-	lcm = p->lcm;
-	td = p->td;
-	NEWNM(m);
-	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl);
-	if ( ndl_check_bound2(p->i1,m->dl) )
-		return 0;
-	t1 = nd_mul_ind_nm(p->i1,m);
-	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
-	if ( ndl_check_bound2(p->i2,m->dl) ) {
-		nd_free(t1);
-		return 0;
-	}
-	t2 = nd_mul_ind_nm(p->i2,m);
-	FREENM(m);
-	*rp = nd_add(t1,t2);
-	return 1;
-}
-#endif
-
 INLINE int ndl_hash_value(int td,unsigned int *d)
 {
 	int i;
@@ -846,7 +797,6 @@ INLINE int ndl_hash_value(int td,unsigned int *d)
 INLINE int nd_find_reducer(ND g)
 {
 	NM m;
-	ND p;
 	int d,k,i;
 
 	d = ndl_hash_value(HTD(g),HDL(g));
@@ -859,8 +809,8 @@ INLINE int nd_find_reducer(ND g)
 	}
 
 	for ( i = 0; i < nd_psn; i++ ) {
-		p = nd_ps[i];
-		if ( HTD(g) >= HTD(p) && ndl_reducible(HDL(g),HDL(p)) ) {
+		m = nd_psh[i];
+		if ( HTD(g) >= m->td && ndl_reducible(HDL(g),m->dl) ) {
 			nd_create++;
 			nd_append_red(HDL(g),HTD(g),i);
 			return i;
@@ -929,105 +879,19 @@ ND nd_add(ND p1,ND p2)
 	}
 }
 
-ND nd_mul_nm(ND p,NM m0)
-{
-	NM m,mr,mr0;
-	unsigned int *d,*dt,*dm;
-	int c,n,td,i,c1,c2;
-	int *pt,*p1,*p2;
-	ND r;
-
-	if ( !p )
-		return 0;
-	else {
-		n = NV(p); m = BDY(p);
-		d = m0->dl; td = m0->td; c = C(m0);
-		mr0 = 0;
-		for ( ; m; m = NEXT(m) ) {
-			NEXTNM(mr0,mr);
-			c1 = C(m);
-			DMAR(c1,c,0,nd_mod,c2);
-			C(mr) = c2;
-			mr->td = m->td+td;
-			ndl_add(m->dl,d,mr->dl);
-		}
-		NEXT(mr) = 0; 
-		MKND(NV(p),mr0,r);
-		r->sugar = p->sugar + td;
-		return r;
-	}
-}
-
-ND nd_mul_ind_nm(int index,NM m0)
-{
-	register int c1,c2,c;
-	register NM m,new,prev;
-	NM mr0;
-	unsigned int *d;
-	int n,td,i,len,d0,d1;
-	ND p,r;
-
-	p = nd_ps[index];
-	len = nd_psl[index];
-	n = NV(p); m = BDY(p);
-	d = m0->dl; td = m0->td; c = C(m0);
-
-	NEWNM(mr0);
-	c1 = C(m); DMAR(c1,c,0,nd_mod,c2); C(mr0) = c2;
-	mr0->td = m->td+td; ndl_add(m->dl,d,mr0->dl);
-	prev = mr0; m = NEXT(m);
-	len--;
-
-	switch ( nd_wpd ) {
-		case 1:
-			d0 = d[0];
-			while ( len-- ) {
-				c1 = C(m); DMAR(c1,c,0,nd_mod,c2); 
-				NEWNM(new); C(new) = c2;
-				new->td = m->td+td; new->dl[0] = m->dl[0]+d0;
-				m = NEXT(m); NEXT(prev) = new; prev = new;
-			}
-			break;
-		case 2:
-			d0 = d[0]; d1 = d[1];
-			while ( len-- ) {
-				c1 = C(m); DMAR(c1,c,0,nd_mod,c2); 
-				NEWNM(new); C(new) = c2;
-				new->td = m->td+td; 
-				new->dl[0] = m->dl[0]+d0;
-				new->dl[1] = m->dl[1]+d1;
-				m = NEXT(m); NEXT(prev) = new; prev = new;
-			}
-			break;
-		default:
-			while ( len-- ) {
-				c1 = C(m); DMAR(c1,c,0,nd_mod,c2);
-				NEWNM(new); C(new) = c2;
-				new->td = m->td+td; ndl_add(m->dl,d,new->dl);
-				m = NEXT(m); NEXT(prev) = new; prev = new;
-			}
-			break;
-	}
-
-	NEXT(prev) = 0; 
-	MKND(NV(p),mr0,r);
-	r->sugar = p->sugar + td;
-	return r;
-}
-
 #if 1
 /* ret=1 : success, ret=0 : overflow */
 int nd_nf(ND g,int full,ND *rp)
 {
-	ND p,d;
+	ND d;
 	NM m,mrd,tail;
 	NM mul;
 	int n,sugar,psugar,sugar0,stat,index;
 	int c,c1,c2;
 #if USE_NDV
-	NDV red;
+	NDV p,red;
 #else
-	ND red;
+	ND p,red;
 #endif
 
 	if ( !g ) {
@@ -1055,7 +919,7 @@ int nd_nf(ND g,int full,ND *rp)
 			c1 = invm(HC(p),nd_mod); c2 = nd_mod-HC(g);
 			DMAR(c1,c2,0,nd_mod,c); C(mul) = c;
 #if USE_NDV
-			ndv_mul_nm(nd_psv[index],mul,ndv_red);
+			ndv_mul_nm(nd_ps[index],mul,ndv_red);
 			g = ndv_add(g,ndv_red);
 			sugar = MAX(sugar,ndv_red->sugar);
 #else
@@ -1580,60 +1444,63 @@ find:
 int nd_newps(ND a)
 {
 	int len;
+	NM m;
 
 	if ( nd_psn == nd_pslen ) {
 		nd_pslen *= 2;
-		nd_ps = (ND *)REALLOC((char *)nd_ps,nd_pslen*sizeof(ND));
 		nd_psl = (int *)REALLOC((char *)nd_psl,nd_pslen*sizeof(int));
 #if USE_NDV
-		nd_psv = (NDV *)REALLOC((char *)nd_psv,nd_pslen*sizeof(NDV));
+		nd_ps = (NDV *)REALLOC((char *)nd_ps,nd_pslen*sizeof(NDV));
+#else
+		nd_ps = (ND *)REALLOC((char *)nd_ps,nd_pslen*sizeof(ND));
 #endif
+		nd_psh = (NM *)REALLOC((char *)nd_psh,nd_pslen*sizeof(NM));
 		nd_bound = (unsigned int **)
 			REALLOC((char *)nd_bound,nd_pslen*sizeof(unsigned int *));
 	}
 	nd_monic(a);
-	nd_ps[nd_psn] = a;
-	nd_psl[nd_psn] = nd_length(a);
 	nd_bound[nd_psn] = nd_compute_bound(a);
+	NEWNM(m); m->td = HTD(a); ndl_copy(HDL(a),m->dl); nd_psh[nd_psn] = m;
 #if USE_NDV
-	nd_psv[nd_psn] = ndtondv(a);
-	len = nd_psv[nd_psn]->len;
+	nd_ps[nd_psn]= ndtondv(a);
+	nd_psl[nd_psn] = len = nd_ps[nd_psn]->len;
 	if ( len > nmv_len ) {
 		nmv_len = 2*len;
 		BDY(ndv_red) = (NMV)REALLOC(BDY(ndv_red),nmv_len*nmv_adv);
 	}
+#else
+	nd_ps[nd_psn] = a;
+	nd_psl[nd_psn] = nd_length(a);
 #endif
 	return nd_psn++;
 }
-
-NODE NODE_sortb(NODE f,int);
-ND dptond(DP);
-DP ndtodp(ND);
 
 NODE nd_setup(NODE f)
 {
 	int i,j,td,len,max;
 	NODE s,s0,f0;
 	unsigned int *d;
+	NM m;
 
-	nd_found = 0;
-	nd_notfirst = 0;
-	nd_create = 0;
-#if 0
-	f0 = f = NODE_sortb(f,1);
-#endif
+	nd_found = 0; nd_notfirst = 0; nd_create = 0;
+
 	nd_psn = length(f); nd_pslen = 2*nd_psn;
-	nd_ps = (ND *)MALLOC(nd_pslen*sizeof(ND));
 	nd_psl = (int *)MALLOC(nd_pslen*sizeof(int));
 #if USE_NDV
-	nd_psv = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
+	nd_ps = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
+#else
+	nd_ps = (ND *)MALLOC(nd_pslen*sizeof(ND));
 #endif
+	nd_psh = (NM *)MALLOC(nd_pslen*sizeof(NM));
 	nd_bound = (unsigned int **)MALLOC(nd_pslen*sizeof(unsigned int *));
 	for ( max = 0, i = 0, s = f; i < nd_psn; i++, s = NEXT(s) ) {
 		nd_bound[i] = d = dp_compute_bound((DP)BDY(s));
 		for ( j = 0; j < nd_nvar; j++ )
 			max = MAX(d[j],max);
 	}
+	if ( !nd_red )
+		nd_red = (NM *)MALLOC(REDTAB_LEN*sizeof(NM));
+	bzero(nd_red,REDTAB_LEN*sizeof(NM));
 
 	if ( max < 2 )
 		nd_bpe = 2;
@@ -1652,15 +1519,18 @@ NODE nd_setup(NODE f)
 	nd_free_private_storage();
 	len = 0;
 	for ( i = 0; i < nd_psn; i++, f = NEXT(f) ) {
-		nd_ps[i] = dptond((DP)BDY(f));
-		nd_monic(nd_ps[i]);
-		nd_psl[i] = nd_length(nd_ps[i]);
 #if USE_NDV
-		nd_psv[i] = ndtondv(nd_ps[i]);
-		len = MAX(len,nd_psv[i]->len);
+		nd_ps[i] = dptondv((DP)BDY(f));
+		ndv_mul_c(nd_ps[i],invm(HC(nd_ps[i]),nd_mod));
+		len = MAX(len,nd_ps[i]->len);
+#else
+		nd_ps[i] = dptond((DP)BDY(f));
+		nd_mul_c(nd_ps[i],1);
+		nd_psl[i] = nd_length(nd_ps[i]);
 #endif
+		NEWNM(m); m->td = HTD(nd_ps[i]); ndl_copy(HDL(nd_ps[i]),m->dl);
+		nd_psh[i] = m;
 	}
-	nd_red = (NM *)MALLOC(REDTAB_LEN*sizeof(NM));
 #if USE_NDV
 	nmv_len = 16*len;
 	NEWNDV(ndv_red);
@@ -1711,7 +1581,11 @@ void nd_gr(LIST f,LIST v,int m,struct order_spec *ord,LIST *rp)
 #endif
 	for ( r0 = 0; x; x = NEXT(x) ) {
 		NEXTNODE(r0,r); 
+#if USE_NDV
+		a = ndvtodp(nd_ps[(int)BDY(x)]);
+#else
 		a = ndtodp(nd_ps[(int)BDY(x)]);
+#endif
 		_dtop_mod(CO,vv,a,(P *)&BDY(r));
 	}
 	if ( r0 ) NEXT(r) = 0;
@@ -1970,11 +1844,14 @@ void nd_setup_parameters() {
 
 ND_pairs nd_reconstruct(ND_pairs d)
 {
-	int i,obpe;
+	int i,obpe,oadv;
 	NM prev_nm_free_list,mr0,mr,m;
 	ND_pairs s0,s,t,prev_ndp_free_list;
 	
 	obpe = nd_bpe;
+#if USE_NDV
+	oadv = nmv_adv;
+#endif
 	if ( obpe < 4 )
 		nd_bpe = 4;
 	else if ( obpe < 6 )
@@ -1994,9 +1871,10 @@ ND_pairs nd_reconstruct(ND_pairs d)
 	_nm_free_list = 0;
 	_ndp_free_list = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
-		nd_ps[i] = nd_dup(nd_ps[i],obpe);
 #if USE_NDV
-		nd_psv[i] = ndtondv(nd_ps[i]);
+		ndv_realloc(nd_ps[i],obpe,oadv);
+#else
+		nd_realloc(nd_ps[i],obpe);
 #endif
 	}
 	s0 = 0;
@@ -2017,6 +1895,10 @@ ND_pairs nd_reconstruct(ND_pairs d)
 		}
 		if ( mr0 ) NEXT(mr) = 0;
 		nd_red[i] = mr0;
+	}
+	for ( i = 0; i < nd_psn; i++ ) {
+		NEWNM(m); m->td = nd_psh[i]->td; ndl_dup(obpe,nd_psh[i]->dl,m->dl);
+		nd_psh[i] = m;
 	}
 	if ( s0 ) NEXT(s) = 0;
 	prev_nm_free_list = 0;
@@ -2050,16 +1932,12 @@ void ndl_dup(int obpe,unsigned int *d,unsigned int *r)
 		}
 }
 
-ND nd_dup(ND p,int obpe)
+void nd_realloc(ND p,int obpe)
 {
 	NM m,mr,mr0;
-	int c,n;
-	ND r;
 
-	if ( !p )
-		return 0;
-	else {
-		n = NV(p); m = BDY(p);
+	if ( p ) {
+		m = BDY(p);
 		for ( mr0 = 0; m; m = NEXT(m) ) {
 			NEXTNM(mr0,mr);
 			C(mr) = C(m);
@@ -2067,9 +1945,7 @@ ND nd_dup(ND p,int obpe)
 			ndl_dup(obpe,m->dl,mr->dl);
 		}
 		NEXT(mr) = 0; 
-		MKND(NV(p),mr0,r);
-		r->sugar = p->sugar;
-		return r;
+		BDY(p) = mr0;
 	}
 }
 
@@ -2097,6 +1973,49 @@ ND nd_copy(ND p)
 }
 
 #if USE_NDV
+int nd_sp(ND_pairs p,ND *rp)
+{
+	NM m;
+	NDV p1,p2;
+	ND t1,t2;
+	unsigned int *lcm;
+	int td;
+
+	p1 = nd_ps[p->i1];
+	p2 = nd_ps[p->i2];
+	lcm = p->lcm;
+	td = p->td;
+	NEWNM(m);
+	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl);
+	if ( ndl_check_bound2(p->i1,m->dl) )
+		return 0;
+	t1 = ndv_mul_nm_create(p1,m);
+	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
+	if ( ndl_check_bound2(p->i2,m->dl) ) {
+		nd_free(t1);
+		return 0;
+	}
+	ndv_mul_nm(p2,m,ndv_red);
+	FREENM(m);
+	*rp = ndv_add(t1,ndv_red);
+	return 1;
+}
+
+void ndv_mul_c(NDV p,int mul)
+{
+	NMV m;
+	int c,c1,len,i;
+
+	if ( !p )
+		return;
+	len = p->len;
+	for ( m = BDY(p), i = 0; i < len; i++, NMV_ADV(m) ) {
+		c1 = C(m);
+		DMAR(c1,mul,0,nd_mod,c);
+		C(m) = c;
+	}
+}
+
 void ndv_mul_nm(NDV p,NM m0,NDV r)
 {
 	NMV m,mr,mr0;
@@ -2217,6 +2136,26 @@ ND ndv_add(ND p1,NDV p2)
 	}
 }
 
+void ndv_realloc(NDV p,int obpe,int oadv)
+{
+	NMV m,mr,mr0;
+	int len,i;
+
+#define NMV_OADV(m) (m = (NMV)(((char *)m)+oadv))
+
+	if ( p ) {
+		m = BDY(p); len = p->len;
+		mr0 = mr = (NMV)MALLOC_ATOMIC(len*nmv_adv);
+		bzero(mr0,len*nmv_adv);
+		for ( i = 0; i < len; i++, NMV_OADV(m), NMV_ADV(mr) ) {
+			C(mr) = C(m);
+			mr->td = m->td;
+			ndl_dup(obpe,m->dl,mr->dl);
+		}
+		BDY(p) = mr0;
+	}
+}
+
 NDV ndtondv(ND p)
 {
 	NDV d;
@@ -2238,6 +2177,51 @@ NDV ndtondv(ND p)
 	return d;
 }
 
+NDV dptondv(DP p)
+{
+	NDV d;
+	NMV m0,m;
+	MP t;
+	int l,i,n;
+
+	if ( !p )
+		return 0;
+	for ( t = BDY(p), l = 0; t; t = NEXT(t), l++ );
+	m0 = m = (NMV)MALLOC_ATOMIC(l*nmv_adv);
+	n = NV(p);
+	for ( t = BDY(p), i = 0; i < l; i++, t = NEXT(t), NMV_ADV(m) ) {
+		m->c = ITOS(t->c);
+		m->td = t->dl->td;
+		dltondl(n,t->dl,m->dl);
+	}
+	MKNDV(n,m0,l,d);
+	d->sugar = p->sugar;
+	return d;
+}
+
+DP ndvtodp(NDV p)
+{
+	DP d;
+	MP m0,m;
+	NMV t;
+	int len,i,n;
+
+	if ( !p )
+		return 0;
+	m0 = 0;
+	len = p->len;
+	n = NV(p);
+	for ( t = BDY(p), i = 0; i < len; i++, NMV_ADV(t) ) {
+		NEXTMP(m0,m);
+		m->c = STOI(t->c);
+		m->dl = ndltodl(n,t->td,t->dl);
+	}
+	NEXT(m) = 0;
+	MKDP(NV(p),m0,d);
+	d->sugar = p->sugar;
+	return d;
+}
+
 void ndv_print(NDV p)
 {
 	NMV m;
@@ -2253,5 +2237,119 @@ void ndv_print(NDV p)
 		}
 		printf("\n");
 	}
+}
+#else
+int nd_sp(ND_pairs p,ND *rp)
+{
+	NM m;
+	ND p1,p2;
+	ND t1,t2;
+	unsigned int *lcm;
+	int td;
+
+	p1 = nd_ps[p->i1];
+	p2 = nd_ps[p->i2];
+	lcm = p->lcm;
+	td = p->td;
+	NEWNM(m);
+	C(m) = HC(p2); m->td = td-HTD(p1); ndl_sub(lcm,HDL(p1),m->dl);
+	if ( ndl_check_bound2(p->i1,m->dl) )
+		return 0;
+	t1 = nd_mul_ind_nm(p->i1,m);
+	C(m) = nd_mod-HC(p1); m->td = td-HTD(p2); ndl_sub(lcm,HDL(p2),m->dl);
+	if ( ndl_check_bound2(p->i2,m->dl) ) {
+		nd_free(t1);
+		return 0;
+	}
+	t2 = nd_mul_ind_nm(p->i2,m);
+	FREENM(m);
+	*rp = nd_add(t1,t2);
+	return 1;
+}
+
+ND nd_mul_nm(ND p,NM m0)
+{
+	NM m,mr,mr0;
+	unsigned int *d,*dt,*dm;
+	int c,n,td,i,c1,c2;
+	int *pt,*p1,*p2;
+	ND r;
+
+	if ( !p )
+		return 0;
+	else {
+		n = NV(p); m = BDY(p);
+		d = m0->dl; td = m0->td; c = C(m0);
+		mr0 = 0;
+		for ( ; m; m = NEXT(m) ) {
+			NEXTNM(mr0,mr);
+			c1 = C(m);
+			DMAR(c1,c,0,nd_mod,c2);
+			C(mr) = c2;
+			mr->td = m->td+td;
+			ndl_add(m->dl,d,mr->dl);
+		}
+		NEXT(mr) = 0; 
+		MKND(NV(p),mr0,r);
+		r->sugar = p->sugar + td;
+		return r;
+	}
+}
+
+ND nd_mul_ind_nm(int index,NM m0)
+{
+	register int c1,c2,c;
+	register NM m,new,prev;
+	NM mr0;
+	unsigned int *d;
+	int n,td,i,len,d0,d1;
+	ND p,r;
+
+	p = nd_ps[index];
+	len = nd_psl[index];
+	n = NV(p); m = BDY(p);
+	d = m0->dl; td = m0->td; c = C(m0);
+
+	NEWNM(mr0);
+	c1 = C(m); DMAR(c1,c,0,nd_mod,c2); C(mr0) = c2;
+	mr0->td = m->td+td; ndl_add(m->dl,d,mr0->dl);
+	prev = mr0; m = NEXT(m);
+	len--;
+
+	switch ( nd_wpd ) {
+		case 1:
+			d0 = d[0];
+			while ( len-- ) {
+				c1 = C(m); DMAR(c1,c,0,nd_mod,c2); 
+				NEWNM(new); C(new) = c2;
+				new->td = m->td+td; new->dl[0] = m->dl[0]+d0;
+				m = NEXT(m); NEXT(prev) = new; prev = new;
+			}
+			break;
+		case 2:
+			d0 = d[0]; d1 = d[1];
+			while ( len-- ) {
+				c1 = C(m); DMAR(c1,c,0,nd_mod,c2); 
+				NEWNM(new); C(new) = c2;
+				new->td = m->td+td; 
+				new->dl[0] = m->dl[0]+d0;
+				new->dl[1] = m->dl[1]+d1;
+				m = NEXT(m); NEXT(prev) = new; prev = new;
+			}
+			break;
+		default:
+			while ( len-- ) {
+				c1 = C(m); DMAR(c1,c,0,nd_mod,c2);
+				NEWNM(new); C(new) = c2;
+				new->td = m->td+td; ndl_add(m->dl,d,new->dl);
+				m = NEXT(m); NEXT(prev) = new; prev = new;
+			}
+			break;
+	}
+
+	NEXT(prev) = 0; 
+	MKND(NV(p),mr0,r);
+	r->sugar = p->sugar + td;
+	return r;
 }
 #endif
