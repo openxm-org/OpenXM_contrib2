@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.22 2000/11/14 08:38:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.23 2000/12/05 01:24:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -419,7 +419,7 @@ void asir_popString()
 
 	val = asir_pop_one();
 	if ( !val )
-		obuf = 0;
+		obuf = "0";
 	else {
 		l = estimate_length(CO,val);
 		buf = (char *)ALLOCA(l+1);
