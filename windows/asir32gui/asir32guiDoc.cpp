@@ -14,6 +14,8 @@ static char THIS_FILE[] = __FILE__;
 
 extern "C" {
 	void flush_log();
+	void put_line(char *);
+	extern int asirgui_kind;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -93,6 +95,14 @@ BOOL CAsir32guiDoc::CanCloseFrame(CFrameWnd* pFrame)
 {
 	// TODO: この位置に固有の処理を追加するか、または基本クラスを呼び出してください
 	
+	if ( asirgui_kind == ASIRGUI_MESSAGE )
+		return FALSE;
+
+	if ( asirgui_kind == ASIRGUI_DEBUG ) {
+		put_line("quit");
+		return FALSE;
+	}
+
 	if( IDNO == ::MessageBox(NULL,"Really quit?","Asir",
 		MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) ) {
 		return FALSE;

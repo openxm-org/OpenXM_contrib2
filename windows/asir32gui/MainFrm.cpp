@@ -50,7 +50,7 @@ CMainFrame::~CMainFrame()
 }
 
 extern "C" {
-	extern int asir_main_window;
+	extern int asirgui_kind;
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -58,7 +58,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 	
-	if ( asir_main_window ) {
+	if ( asirgui_kind == ASIRGUI_MAIN ) {
 		if (!m_wndToolBar.Create(this) ||
 			!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
 		{
@@ -91,7 +91,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: この位置で CREATESTRUCT cs を修正して、Window クラスやスタイルを
 	//       修正してください。
-	if ( asir_main_window ) {
+	if ( asirgui_kind == ASIRGUI_MAIN ) {
 	   	cs.cx = ::GetSystemMetrics(SM_CXSCREEN)*2 / 3; 
 		cs.cy = ::GetSystemMetrics(SM_CYSCREEN)*2 / 3; 
 	} else {

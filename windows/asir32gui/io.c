@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <process.h>
 
+#include "asir32gui_io.h"
+
 #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\FSEcParamGen\\V1.0L10"
 #define ASIR_KEYNAME "SoftWare\\Fujitsu\\Asir\\1999.03.31"
 
@@ -13,7 +15,7 @@
 
 static int use_current_dir;
 
-int asir_main_window;
+int asirgui_kind;
 HANDLE hProc;
 static HANDLE hRead,hWrite;
 HANDLE hNotify,hNotify_Ack;
@@ -47,25 +49,24 @@ char *errmsg;
 		return TRUE;
 	}
 
+	GetCurrentDirectory(BUFSIZ,dir);
+	slash = strrchr(dir,'\\');
+	if ( slash )
+		*slash = 0;
+	ldir = strlen(dir)+1;
+	if ( access("UseCurrentDir",0) >= 0 ) {
+		use_current_dir = 1;
+		strcpy(rootdir,dir);
+		strcpy(name,dir);
+		rootdir_is_initialized = 1;
+		return TRUE;
+	}
 	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ECGEN_KEYNAME, 0,
 		KEY_QUERY_VALUE, &hOpenKey);
 	if ( ret != ERROR_SUCCESS )
 		ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ASIR_KEYNAME, 0,
 			KEY_QUERY_VALUE, &hOpenKey);
 	if( ret != ERROR_SUCCESS ) {
-		GetCurrentDirectory(BUFSIZ,dir);
-		slash = strrchr(dir,'\\');
-		if ( slash )
-			*slash = 0;
-		ldir = strlen(dir)+1;
-		if ( access("UseCurrentDir",0) >= 0 ) {
-			use_current_dir = 1;
-			strcpy(rootdir,dir);
-			strcpy(name,dir);
-			rootdir_is_initialized = 1;
-			return TRUE;
-		}
-
 		sprintf(message,"May I register '%s' as the ASIR main directory?",dir);
 		if( IDNO == MessageBox(NULL,message,"Asir",
 			MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) ) {
@@ -118,7 +119,7 @@ BOOL Init_IO(char *errmsg) {
 
 	_setargv();
 	if ( !strcmp(__argv[0],"debuggui") ) {
-		asir_main_window = 0;
+		asirgui_kind = ASIRGUI_DEBUG;
 		hRead = atoi(__argv[1]);
 		hWrite = atoi(__argv[2]);
 		hNotify = OpenEvent(EVENT_ALL_ACCESS|EVENT_MODIFY_STATE,TRUE,__argv[3]);
@@ -128,14 +129,14 @@ BOOL Init_IO(char *errmsg) {
 		hKill = OpenEvent(EVENT_ALL_ACCESS|EVENT_MODIFY_STATE,TRUE,__argv[7]);
 		return TRUE;
 	} else if ( !strcmp(__argv[0],"messagegui") ) {
-		asir_main_window = 0;
+		asirgui_kind = ASIRGUI_MESSAGE;
 		hRead = atoi(__argv[1]);
 		hWrite = atoi(__argv[2]);
 		hNotify = OpenEvent(EVENT_ALL_ACCESS|EVENT_MODIFY_STATE,TRUE,__argv[3]);
 		hNotify_Ack = OpenEvent(EVENT_ALL_ACCESS|EVENT_MODIFY_STATE,TRUE,__argv[4]);
 		return TRUE;
 	} else {
-		asir_main_window = 1;
+		asirgui_kind = ASIRGUI_MAIN;
 		mypid = GetCurrentProcessId();
 		sprintf(notify,"asir_notify_%d",mypid);
 		sprintf(notify_ack,"asir_notify_ack_%d",mypid);

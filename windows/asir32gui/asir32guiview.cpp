@@ -35,6 +35,7 @@ void insert_to_theView(char *);
 void get_rootdir(char *,int,char *);
 extern int bigfloat, prtime, prresult;
 extern char *asir_libdir;
+extern int asirgui_kind;
 
 void insert_to_theView(char *str)
 {
@@ -283,6 +284,10 @@ void CAsir32guiView::Paste(void) {
 	int i,j,l;
 	HGLOBAL hClip;
 
+	if ( asirgui_kind == ASIRGUI_MESSAGE ) {
+		Beep(); return;
+	}
+
 	if ( OpenClipboard() == FALSE ) {
     	Beep(); return;
     }
@@ -340,6 +345,10 @@ void CAsir32guiView::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 	// TODO: この位置にメッセージ ハンドラ用のコードを追加するかまたはデフォルトの処理を呼び出してください
 	char *exp_result;
 	
+	if ( asirgui_kind == ASIRGUI_MESSAGE ) {
+		Beep(); return;
+	}
+
 	switch ( nChar ) {
 	case CTRL('M'): case CTRL('J'):
 		UpdateCursor(EndPos);

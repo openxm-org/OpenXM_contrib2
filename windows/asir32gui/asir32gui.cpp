@@ -18,7 +18,7 @@ static char THIS_FILE[] = __FILE__;
 extern "C" {
 	extern HANDLE hNotify;
 	extern HANDLE hNotify_Ack;
-	extern int asir_main_window;
+	extern int asirgui_kind;
 	BOOL Init_IO(char *);
 	void read_and_insert();
 }
@@ -80,7 +80,7 @@ BOOL CAsir32guiApp::InitInstance()
 
 	CSingleDocTemplate* pDocTemplate;
 	pDocTemplate = new CSingleDocTemplate(
-		asir_main_window?IDR_MAINFRAME:IDR_DEBUGFRAME,
+		asirgui_kind==ASIRGUI_MAIN?IDR_MAINFRAME:IDR_DEBUGFRAME,
 		RUNTIME_CLASS(CAsir32guiDoc),
 		RUNTIME_CLASS(CMainFrame),       // メイン SDI フレーム ウィンドウ
 		RUNTIME_CLASS(CAsir32guiView));
