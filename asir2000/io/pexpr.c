@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.17 2001/10/09 01:36:21 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.18 2002/01/08 04:14:39 kondoh Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -555,8 +555,8 @@ V v;
 	else if ( (vid)v->attr == V_PF ) {
 		pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
 		if ( !strcmp(NAME(pf),"pow") ) {
-			PUTS("("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
-			PRINTR(vl,(R)ad[1].arg); PUTS(")");
+			PUTS("(("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
+			PRINTR(vl,(R)ad[1].arg); PUTS("))");
 		} else if ( !pf->argc ) {
 			TAIL PRINTF(OUT,"%s",NAME(pf));
 		} else {

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.12 2001/09/03 07:01:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.13 2001/10/09 01:36:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -338,8 +338,8 @@ void PRINTV(VL vl,V v)
 	else if ( (vid)v->attr == V_PF ) {
 		pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
 		if ( !strcmp(NAME(pf),"pow") ) {
-			PUTS("("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
-			PRINTR(vl,(R)ad[1].arg); PUTS(")");
+			PUTS("(("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
+			PRINTR(vl,(R)ad[1].arg); PUTS("))");
 		} else if ( !pf->argc )
 			PUTS(NAME(pf));
 		else {
