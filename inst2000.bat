@@ -1,8 +1,11 @@
-@rem set instdir=%1
+if afo%1 == afo goto DEFAULT
+set lang=%1
+goto MAIN
+
+:DEFAULT
+set lang=ja
+
+:MAIN
 set instdir="c:\program files\asir"
-copy asir2000\release\asir.exe %instdir%\bin
-copy asir2000\lib\* %instdir%\lib"
-copy windows\engine2000\release\engine.exe %instdir%\bin
-copy windows\asir32gui\release\asirgui.exe %instdir%\bin
-copy windows\cpp\release\cpp.exe %instdir%\bin
-copy windows\help\asirhelp.chm %instdir%\bin
+copy windows\%lang%\asir\bin\*.* %instdir%\bin
+copy windows\%lang%\asir\lib\*.* %instdir%\lib
