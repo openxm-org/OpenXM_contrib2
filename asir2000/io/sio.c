@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.8 2000/10/06 06:05:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.9 2000/11/07 06:35:39 noro Exp $ 
 */
 #if INET
 #include "ca.h"
@@ -86,17 +86,21 @@ void getremotename(s,name)
 int s;
 char *name;
 {
-	struct sockaddr_in peer;
-	struct hostent *hp;
-	int peerlen;
+	union {
+		struct sockaddr sa;
+		char data[SOCK_MAXADDRLEN];
+	} dummy;
+	struct sockaddr *sa;
+	socklen_t len;
+	char host[NI_MAXHOST];
+	int rs;
 
-	peerlen = sizeof(peer);
-	getpeername(getremotesocket(s),(struct sockaddr *)&peer,&peerlen);
-	hp = gethostbyaddr((char *)&peer.sin_addr,sizeof(struct in_addr),AF_INET);
-	if ( hp )
-		strcpy(name,hp->h_name);
-	else
-		strcpy(name,(char *)inet_ntoa(peer.sin_addr));
+	rs = getremotesocket(s);
+	len = SOCK_MAXADDRLEN;
+	getpeername(rs, (struct sockaddr *)dummy.data, &len);
+	sa = &(dummy.sa);
+	getnameinfo(sa, sa->sa_len, host, sizeof(host), NULL, 0, 0);
+	strcpy(name, host);
 }
 
 int generate_port(use_unix,port_str)
@@ -126,57 +130,56 @@ int try_bind_listen(use_unix,port_str)
 int use_unix;
 char *port_str;
 {
-	struct sockaddr_in sin;
-	struct sockaddr *saddr;
-	int len;
-	int service;
-#if !defined(VISUAL)
-	struct sockaddr_un s_un;
+	struct addrinfo hints, *res, *ai;
+	int s, error;
+	char *errstr;
 
-	if ( use_unix ) {
-		service = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (service < 0) {
-			perror("in socket");
-			return -1;
-		}
-		s_un.sun_family = AF_UNIX;
-		strcpy(s_un.sun_path,port_str);
-#if defined(__FreeBSD__)
-		len = SUN_LEN(&s_un);
-		s_un.sun_len = len+1; /* XXX */
+	memset(&hints, 0, sizeof(hints));
+#if defined(VISUAL)
+	hints.ai_family = PF_UNSPEC;
 #else
-		len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
-#endif
-		saddr = (struct sockaddr *)&s_un;
-	} else 
-#endif
-	{
-		service = socket(AF_INET, SOCK_STREAM, 0);
-		if ( service < 0 ) {
-			perror("in socket");
-			return -1;
+	if (use_unix)
+		hints.ai_family = PF_UNIX;
+	else
+		hints.ai_family = PF_UNSPEC;
+#endif /* VISUAL */
+	hints.ai_socktype = SOCK_STREAM;
+
+	error = getaddrinfo(NULL, port_str, &hints, &res);
+	if (error) {
+		warnx("try_bind_listen(): %s", gai_strerror(error));
+		return (-1);
+	}
+
+	for (ai = res ; ai != NULL ; ai = ai->ai_next) {
+		if ((s = socket(ai->ai_family, ai->ai_socktype,
+				ai->ai_protocol)) < 0 ) {
+			errstr = "in socket";
+			continue;
 		}
-		sin.sin_family = AF_INET; sin.sin_addr.s_addr = INADDR_ANY;
-		sin.sin_port = htons(atoi(port_str));
-		len = sizeof(sin);
-		saddr = (struct sockaddr *)&sin;
+
+		if (bind(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+			errstr = "in bind";
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		if (listen(s, SOCKQUEUELENGTH) < 0) {
+			errstr = "in listen";
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		/* established connection */
+		break;
 	}
-	if (bind(service, saddr, len) < 0) {
-		perror("in bind");
-		close(service);
-		return -1;
-	}
-	if (getsockname(service,saddr, &len) < 0) {
-	    perror("in getsockname");
-	    close(service);
-	    return -1;
-	}
-	if (listen(service, SOCKQUEUELENGTH) < 0) {
-		perror("in listen");
-		close(service);
-		return -1;
-	}
-	return service;
+	freeaddrinfo(res);
+
+	if (s < 0)
+		perror(errstr);
+	return (s);
 }
 
 /*
@@ -196,94 +199,88 @@ char *port_str;
 int try_accept(af_unix,s)
 int af_unix,s;
 {
-	int len,c,i;
-	struct sockaddr_in sin;
+	union {
+		struct sockaddr sa;
+		char data[SOCK_MAXADDRLEN];
+	} dummy;
+	socklen_t len;
+	int c, i;
 
-#if !defined(VISUAL)
-	struct sockaddr_un s_un;
-	if ( af_unix ) {
-		len = sizeof(s_un);
-		for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
-			c = accept(s, (struct sockaddr *) &s_un, &len);
-	} else 
-#endif
-	{
-
-		len = sizeof(sin);
-		for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
-			c = accept(s, (struct sockaddr *) &sin, &len);
+	len = SOCK_MAXADDRLEN;
+	if (getsockname(s, (struct sockaddr *)dummy.data, &len) < 0) {
+		close(s);
+		return (-1)
 	}
-	if ( i == 10 )
-		c = -1;
+
+	for (i = 0 ; i < 10 ; i++) {
+		c = accept(s, &(dummy.sa), &len);
+		if (c >= 0) {
+			close(s);
+			return (c);
+		}
+	}
+
 	close(s);
-	return c;
+	return (-1);
 }
 
 int try_connect(use_unix,host,port_str)
 int use_unix;
 char *host,*port_str;
 {
-	struct sockaddr_in sin;
-	struct sockaddr *saddr;
-	struct hostent *hp;
-	int len,s,i;
-#if !defined(VISUAL)
-	struct sockaddr_un s_un;
-#endif
+	struct addrinfo hints, *res, *ai;
+	int s, error, i;
+	char *errstr;
 
-	for ( i = 0; i < 10; i++ ) {
-#if !defined(VISUAL)
-		if ( use_unix ) {
-			if ( (s = socket(AF_UNIX,SOCK_STREAM,0)) < 0 ) {
-				perror("socket");
-				return -1;
-			}
-			bzero(&s_un,sizeof(s_un));
-			s_un.sun_family = AF_UNIX;
-			strcpy(s_un.sun_path,port_str);
-#if defined(__FreeBSD__)
-			len = SUN_LEN(&s_un);
-			s_un.sun_len = len+1; /* XXX */
-#else
-			len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
-#endif
-			saddr = (struct sockaddr *)&s_un;
-		} else 
-#endif /* VISUAL */
-		{
-			if ( (s = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
-				perror("socket");
-				return -1;
-			}
-			bzero(&sin,sizeof(sin));
-			sin.sin_port = htons(atoi(port_str));
-			sin.sin_addr.s_addr = inet_addr(host);
-			if ( sin.sin_addr.s_addr != -1 ) {
-				sin.sin_family = AF_INET;
-			} else {
-				hp = gethostbyname(host);
-				bcopy(hp->h_addr,&sin.sin_addr,hp->h_length);
-				sin.sin_family = hp->h_addrtype;
-			}
-			len = sizeof(sin);
-			saddr = (struct sockaddr *)&sin;
-		}
-		if ( connect(s,saddr,len) >= 0 )
-			break;
-		else {
-			close(s);
+	memset(&hints, 0, sizeof(hints));
 #if defined(VISUAL)
-			Sleep(100);
+	hints.ai_family = PF_UNSPEC;
 #else
-			usleep(100000);
-#endif
-		}
+	if (use_unix)
+		hints.ai_family = PF_UNIX;
+	else
+		hints.ai_family = PF_UNSPEC;
+#endif /* VISUAL */
+	hints.ai_socktype = SOCK_STREAM;
+
+	error = getaddrinfo(host, port_str, &hints, &res);
+	if (error) {
+		warnx("try_connect: %s", gai_strerror(error));
+		return (-1);
 	}
-	if ( i == 10 ) {
-		perror("connect");
-		return -1;
-	} else
-		return s;
+	for (i = 0 ; i < 10 ; i++) {
+		for (ai = res ; ai != NULL ; ai = ai->ai_next) {
+			if ((s = socket(ai->ai_family, ai->ai_socktype,
+					ai->ai_protocol)) < 0 ) {
+				errstr = "socket";
+				continue;
+			}
+			if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+				errstr = "connect";
+				close(s);
+				s = -1;
+				continue;
+			}
+
+			/* established a connection */
+			break;
+		}
+
+		if (s >= 0) {
+			freeaddrinfo(res);
+			return (s);
+		}
+
+#if defined(VISUAL)
+		Sleep(100);
+#else
+		usleep(100000);
+#endif
+	}
+	freeaddrinfo(res);
+
+	perror(errstr);
+	return (-1);
 }
 
 #if 0
