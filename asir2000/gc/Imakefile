@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.1.1.1 1999/12/03 07:39:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/gc/Imakefile,v 1.2 2000/02/07 07:19:59 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 CFLAGS= $(DEFINES) $(CDEBUGFLAGS) -DSILENT -DLARGE_CONFIG -DHEAP_START_ADDR=0x$(HEAP_START_ADDR)
@@ -36,3 +36,8 @@ mach_dep.o: mach_dep.c
 #endif
 
 os_dep.o: $(TOP)/include/Risa.tmpl
+
+install-include::
+	MakeDir($(GC_INCDIR))
+	-$(CP) gc*.h $(GC_INCDIR)
+

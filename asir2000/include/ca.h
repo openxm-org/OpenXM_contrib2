@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.2 2000/02/08 04:47:10 noro Exp $ */
 #include <stdio.h>
 
 #if defined(hpux)
@@ -565,7 +565,11 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define MKAlg(b,r) \
 (!(b)?((r)=0):NUM(b)?((r)=(Alg)(b)):(NEWAlg(r),BDY(r)=(Obj)(b),(r)))
 
-#define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):0)
+#if PARI
+#define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):BIGFLOAT(a)?rtodbl(BDY((BF)a)):0)
+#else
+#define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):0.0)
+#endif
 
 /* predicates */
 #define NUM(p) (OID(p)==O_N)
@@ -573,6 +577,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define INT(q) (!DN((Q)q))
 #define RATN(a) (NID(a)==N_Q)
 #define REAL(a) (NID(a)==N_R)
+#define BIGFLOAT(a) (NID(a)==N_B)
 #define SFF(a) (NID(a)==N_M)
 #define UNIQ(q) ((q)&&NUM(q)&&RATN(q)&&(SGN((Q)q)==1)&&UNIN(NM((Q)q))&&(!DN((Q)q)))
 #define UNIMQ(q) ((q)&&NUM(q)&&SFF(q)&&(CONT((MQ)q)==1))
@@ -974,6 +979,7 @@ void *GC_realloc(void *,size_t);
 double NatToReal(N,int *);
 double RatnToReal(Q);
 double pwrreal0(double,int);
+double rtodbl(); /* XXX */
 int **almat(int,int);
 pointer **almat_pointer(int,int);
 int berlecnt(register int,UM);

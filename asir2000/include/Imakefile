@@ -1,0 +1,12 @@
+/* $OpenXM$ */
+#include "../include/Risa.tmpl"
+
+SRCS= al.h b.h base.h bf.h ca-27.h ca.h com.h inline.h ox.h prime.h version.h wsio.h
+
+all::
+
+depend::
+
+install-include::
+	MakeDir($(ASIR_INCDIR))
+	-$(CP) $(SRCS) $(ASIR_INCDIR)

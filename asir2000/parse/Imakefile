@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/Imakefile,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/Imakefile,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS = glob.c parser.c kwd.c parse.y lex.c debug.c\
@@ -8,6 +8,8 @@ SRCS = glob.c parser.c kwd.c parse.y lex.c debug.c\
 OBJS = glob.o parser.o kwd.o y.tab.o lex.o debug.o\
 	eval.o arith.o function.o load.o util.o\
 	pvar.o struct.o puref.o comp.o id.o xdeb.o evall.o
+
+HEADERS = comp.h cpp.h parse.h w_stdio.h
 
 AllTarget(y.tab.c libparse.a main.o umain.o)
 NormalLibraryTarget(parse,$(OBJS))
@@ -28,3 +30,8 @@ y.tab.o:
 glob.o lex.o debug.o main.o umain.o: $(TOP)/include/Risa.tmpl
 y.tab.c y.tab.h: $(TOP)/include/Risa.tmpl
 lex.o kwd.o: y.tab.h
+
+install-include::
+	MakeDir($(ASIR_INCDIR))
+	-$(CP) $(HEADERS) $(ASIR_INCDIR)
+

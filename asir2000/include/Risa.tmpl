@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.5 2000/03/01 02:29:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/include/Risa.tmpl,v 1.6 2000/03/06 08:24:23 noro Exp $ */
 #include "config.h"
 
 #define USE_GCC
@@ -29,6 +29,8 @@ ROOTDIR=/usr/local
 
 ASIR_BINDIR=$(ROOTDIR)/bin
 ASIR_LIBDIR=$(ROOTDIR)/lib/asir
+ASIR_INCDIR=$(ROOTDIR)/include/asir
+GC_INCDIR=$(ROOTDIR)/include/gc
 
 #if defined(USE_GCC)
 CC= gcc

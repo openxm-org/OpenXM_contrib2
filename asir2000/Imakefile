@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.5 2000/02/08 04:47:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/Imakefile,v 1.6 2000/03/01 02:29:16 noro Exp $ */
 #define RISA_TOP_DIR
 #include "include/Risa.tmpl"
 
@@ -51,7 +51,7 @@ PROGRAMS = asir
 TOBJ = parse/main.o $(FOBJ)
 UOBJ = parse/umain.o $(FOBJ)
 
-SUBDIRS = engine engine-27 fft asm gc parse builtin io plot lib
+SUBDIRS = engine engine-27 fft asm gc parse builtin io plot lib include
 
 LIBS0 = $(BLIB) $(PLIB) $(IOLIB) $(PLLIB) $(ELIB) $(E27LIB) $(FLIB) $(ALIB)
 LIBS = $(LIBS0) $(GLIB)
@@ -77,7 +77,7 @@ clean::									@@\
 	$(RM) program
 #endif /* NormalRelocTarget */
 
-NormalProgramTarget(asir,$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(KANLIB) $(GMPLIB) $(LAPACKLIB) $(LIBCLIB) $(EXTRASTDLIB) )
+NormalProgramTarget(asir,$(TOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(LOCAL_LIBRARIES) $(EXTRALIB) $(LAPACKLIB) $(LIBCLIB) $(EXTRASTDLIB) )
 NormalRelocTarget(asir.o,$(UOBJ),$(LIBS),$(LIBS),$(PARILIB) $(RLLIB) $(EXTRALIB) $(LIBCLIB) $(EXTRASTDLIB))
 
 $(LIBASIR): $(LIBS0)
@@ -91,6 +91,19 @@ $(LIBASIR): $(LIBS0)
 install:: $(PROGRAMS)
 	MakeDir($(ASIR_LIBDIR))
 	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_LIBDIR)
+
+install-bin-lib:: $(PROGRAMS)
+	MakeDir($(ASIR_LIBDIR))
+	$(INSTALL) $(INSTALLFLAGS) $(PROGRAMS) $(ASIR_BINDIR)
+	(cd lib; make install-lib)
+	$(RM) $(ASIR_LIBDIR)/asir
+	(cd $(ASIR_LIBDIR); $(LN) $(ASIR_BINDIR)/asir asir)
+	$(RM) $(ASIR_LIBDIR)/ox_asir
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_asir)
+	$(RM) $(ASIR_LIBDIR)/ox_launch
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_launch)
+	$(RM) $(ASIR_LIBDIR)/ox_plot
+	(cd $(ASIR_LIBDIR); $(LN) asir ox_plot)
 
 install-libasir:: $(LIBASIR)
 	MakeDir($(ROOTDIR)/lib)
@@ -115,6 +128,11 @@ install-lib::
 
 install-doc::
 	(cd lib; make install-doc)
+
+install-include::
+	(cd include; make install-include)
+	(cd parse; make install-include)
+	(cd gc; make install-include)
 
 clean::
 	$(RM) -r libtmp $(LIBRARIES)

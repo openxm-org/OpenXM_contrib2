@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.6 2000/02/08 04:47:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.7 2000/02/09 00:37:21 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
@@ -739,10 +739,19 @@ void asir_ox_push_cmd(unsigned int cmd)
 void asir_ox_execute_string(char *s)
 {
 	STRING str;
+	int ret;
+	ERR err;
+	extern char LastError[];
 
 	MKSTR(str,s);
 	asir_push_one((Obj)str);
-	asir_executeString();
+	if ( ret = setjmp(env) ) {
+		if ( ret == 1 ) {
+			create_error(&err,0,LastError); /* XXX */
+			asir_push_one((Obj)err);
+		}
+	} else
+		asir_executeString();
 }
 
 /*
