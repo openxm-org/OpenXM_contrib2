@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.39 2003/08/21 03:13:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.40 2003/08/21 04:44:36 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -77,9 +77,10 @@ int (*nd_compare_function)(unsigned int *a1,unsigned int *a2);
 
 double nd_scale=2;
 static unsigned int **nd_bound;
+struct order_spec *nd_ord;
 int nd_nvar;
 int nd_isrlex;
-int nd_epw,nd_bpe,nd_wpd;
+int nd_epw,nd_bpe,nd_wpd,nd_exporigin;
 unsigned int nd_mask[32];
 unsigned int nd_mask0,nd_mask1;
 
@@ -116,13 +117,13 @@ extern int Top,Reverse,dp_nelim;
 
 /* macros for term comparison */
 #define TD_DL_COMPARE(d1,d2)\
-(TD(d1)>TD(d2)?1:(TD(d1)<TD(d2)?-1:ndl_lex_compare(d1+1,d2+1)))
+(TD(d1)>TD(d2)?1:(TD(d1)<TD(d2)?-1:ndl_lex_compare(d1,d2)))
 #define DL_COMPARE(d1,d2)\
 (nd_dcomp?TD_DL_COMPARE(d1,d2):(*nd_compare_function)(d1,d2))
 
 /* allocators */
 #define NEWRHist(r) \
-((r)=(RHist)MALLOC(sizeof(struct oRHist)+nd_wpd*sizeof(unsigned int)))
+((r)=(RHist)MALLOC(sizeof(struct oRHist)+(nd_wpd-1)*sizeof(unsigned int)))
 #define NEWND_pairs(m) \
 if(!_ndp_free_list)_NDP_alloc();\
 (m)=_ndp_free_list; _ndp_free_list = NEXT(_ndp_free_list)   
@@ -194,7 +195,6 @@ NODE nd_gb_trace(int m);
 int ndl_weight(unsigned int *d);
 void ndl_dehomogenize(unsigned int *p);
 void ndl_reconstruct(int obpe,unsigned int *d,unsigned int *r);
-INLINE int nd_length(ND p);
 INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2);
 INLINE int ndl_lex_compare(unsigned int *d1,unsigned int *d2);
 INLINE int ndl_equal(unsigned int *d1,unsigned int *d2);
@@ -254,6 +254,7 @@ unsigned int *dp_compute_bound(DP p);
 ND nd_copy(ND p);
 ND nd_add(int mod,ND p1,ND p2);
 ND nd_add_q(ND p1,ND p2);
+INLINE int nd_length(ND p);
 
 /* NDV functions */
 void ndv_mul_c(int mod,NDV p,int mul);
@@ -289,7 +290,7 @@ void _NM_alloc()
 	int i;
 
 	for ( i = 0; i < 1024; i++ ) {
-		p = (NM)GC_malloc(sizeof(struct oNM)+nd_wpd*sizeof(unsigned int));
+		p = (NM)GC_malloc(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _nm_free_list; _nm_free_list = p;
 	}
 }
@@ -312,7 +313,7 @@ void _NDP_alloc()
 
 	for ( i = 0; i < 1024; i++ ) {
 		p = (ND_pairs)GC_malloc(sizeof(struct oND_pairs)
-			+nd_wpd*sizeof(unsigned int));
+			+(nd_wpd-1)*sizeof(unsigned int));
 		p->next = _ndp_free_list; _ndp_free_list = p;
 	}
 }
@@ -338,7 +339,7 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 	if ( TD(d1) < TD(d2) ) return 0;
 	switch ( nd_bpe ) {
 		case 4:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( (u1&0xf0000000) < (u2&0xf0000000) ) return 0;
 				if ( (u1&0xf000000) < (u2&0xf000000) ) return 0;
@@ -352,7 +353,7 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 6:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( (u1&0x3f000000) < (u2&0x3f000000) ) return 0;
 				if ( (u1&0xfc0000) < (u2&0xfc0000) ) return 0;
@@ -363,7 +364,7 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 8:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( (u1&0xff000000) < (u2&0xff000000) ) return 0;
 				if ( (u1&0xff0000) < (u2&0xff0000) ) return 0;
@@ -373,7 +374,7 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 16:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( (u1&0xffff0000) < (u2&0xffff0000) ) return 0;
 				if ( (u1&0xffff) < (u2&0xffff) ) return 0;
@@ -381,12 +382,12 @@ INLINE int ndl_reducible(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 32:
-			for ( i = 1; i <= nd_wpd; i++ )
+			for ( i = nd_exporigin; i < nd_wpd; i++ )
 				if ( d1[i] < d2[i] ) return 0;
 			return 1;
 			break;
 		default:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				for ( j = 0; j < nd_epw; j++ )
 					if ( (u1&nd_mask[j]) < (u2&nd_mask[j]) ) return 0;
@@ -403,22 +404,22 @@ void ndl_dehomogenize(unsigned int *d)
 
 	if ( nd_isrlex ) {
 		if ( nd_bpe == 32 ) {
-			h = d[1];
-			for ( i = 2; i <= nd_wpd; i++ )
+			h = d[nd_exporigin];
+			for ( i = nd_exporigin+1; i < nd_wpd; i++ )
 				d[i-1] = d[i];
 			d[i-1] = 0;
 			TD(d) -= h;
 		} else {
 			bits = nd_epw*nd_bpe;
 			mask = bits==32?0xffffffff:((1<<(nd_epw*nd_bpe))-1);
-			h = (d[1]>>((nd_epw-1)*nd_bpe))&nd_mask0;
-			for ( i = 1; i <= nd_wpd; i++ )
+			h = (d[nd_exporigin]>>((nd_epw-1)*nd_bpe))&nd_mask0;
+			for ( i = nd_exporigin; i < nd_wpd; i++ )
 				d[i] = ((d[i]<<nd_bpe)&mask)
-					|(i+1<=nd_wpd?((d[i+1]>>((nd_epw-1)*nd_bpe))&nd_mask0):0);
+					|(i+1<nd_wpd?((d[i+1]>>((nd_epw-1)*nd_bpe))&nd_mask0):0);
 			TD(d) -= h;
 		}
 	} else 
-		TD(d) -= ((d[(nd_nvar-1)/nd_epw+1]>>
+		TD(d) -= ((d[(nd_nvar-1)/nd_epw+nd_exporigin]>>
 			((nd_epw-((nd_nvar-1)%nd_epw)-1)*nd_bpe))&((1<<nd_bpe)-1));
 }
 
@@ -429,7 +430,7 @@ void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 
 	switch ( nd_bpe ) {
 		case 4:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = (u1&0xf0000000); t2 = (u2&0xf0000000); u = t1>t2?t1:t2;
 				t1 = (u1&0xf000000); t2 = (u2&0xf000000); u |= t1>t2?t1:t2;
@@ -443,7 +444,7 @@ void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 			}
 			break;
 		case 6:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = (u1&0x3f000000); t2 = (u2&0x3f000000); u = t1>t2?t1:t2;
 				t1 = (u1&0xfc0000); t2 = (u2&0xfc0000); u |= t1>t2?t1:t2;
@@ -454,7 +455,7 @@ void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 			}
 			break;
 		case 8:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = (u1&0xff000000); t2 = (u2&0xff000000); u = t1>t2?t1:t2;
 				t1 = (u1&0xff0000); t2 = (u2&0xff0000); u |= t1>t2?t1:t2;
@@ -464,7 +465,7 @@ void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 			}
 			break;
 		case 16:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = (u1&0xffff0000); t2 = (u2&0xffff0000); u = t1>t2?t1:t2;
 				t1 = (u1&0xffff); t2 = (u2&0xffff); u |= t1>t2?t1:t2;
@@ -472,13 +473,13 @@ void ndl_lcm(unsigned int *d1,unsigned *d2,unsigned int *d)
 			}
 			break;
 		case 32:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i]; 
 				d[i] = u1>u2?u1:u2;
 			}
 			break;
 		default:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i]; 
 				for ( j = 0, u = 0; j < nd_epw; j++ ) {
 					t1 = (u1&nd_mask[j]); t2 = (u2&nd_mask[j]); u |= t1>t2?t1:t2;
@@ -495,7 +496,7 @@ int ndl_weight(unsigned int *d)
 	unsigned int t,u;
 	int i,j;
 
-	for ( t = 0, i = 1; i <= nd_wpd; i++ ) {
+	for ( t = 0, i = nd_exporigin; i < nd_wpd; i++ ) {
 		u = d[i];
 		for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
 			t += (u&nd_mask0); 
@@ -507,7 +508,9 @@ INLINE int ndl_lex_compare(unsigned int *d1,unsigned int *d2)
 {
 	int i;
 
-	for ( i = 0; i < nd_wpd; i++, d1++, d2++ )
+	d1 += nd_exporigin;
+	d2 += nd_exporigin;
+	for ( i = nd_exporigin; i < nd_wpd; i++, d1++, d2++ )
 		if ( *d1 > *d2 )
 			return nd_isrlex ? -1 : 1;
 		else if ( *d1 < *d2 )
@@ -519,8 +522,7 @@ INLINE int ndl_equal(unsigned int *d1,unsigned int *d2)
 {
 	int i;
 
-	if ( *d1++ != *d2++ ) return 0;
-	for ( i = 1; i <= nd_wpd; i++ )
+	for ( i = 0; i < nd_wpd; i++ )
 		if ( *d1++ != *d2++ )
 			return 0;
 	return 1;
@@ -531,17 +533,17 @@ INLINE void ndl_copy(unsigned int *d1,unsigned int *d2)
 	int i;
 
 	switch ( nd_wpd ) {
-		case 1:
+		case 2:
 			TD(d2) = TD(d1);
 			d2[1] = d1[1];
 			break;
-		case 2:
+		case 3:
 			TD(d2) = TD(d1);
 			d2[1] = d1[1];
 			d2[2] = d1[2];
 			break;
 		default:
-			for ( i = 0; i <= nd_wpd; i++ )
+			for ( i = 0; i < nd_wpd; i++ )
 				d2[i] = d1[i];
 			break;
 	}
@@ -551,17 +553,18 @@ INLINE void ndl_add(unsigned int *d1,unsigned int *d2,unsigned int *d)
 {
 	int i;
 
-	TD(d) = TD(d1)+TD(d2);
 	switch ( nd_wpd ) {
-		case 1:
+		case 2:
+			TD(d) = TD(d1)+TD(d2);
 			d[1] = d1[1]+d2[1];
 			break;
-		case 2:
+		case 3:
+			TD(d) = TD(d1)+TD(d2);
 			d[1] = d1[1]+d2[1];
 			d[2] = d1[2]+d2[2];
 			break;
 		default:
-			for ( i = 1; i <= nd_wpd; i++ )
+			for ( i = 0; i < nd_wpd; i++ )
 				d[i] = d1[i]+d2[i];
 			break;
 	}
@@ -571,7 +574,7 @@ INLINE void ndl_sub(unsigned int *d1,unsigned int *d2,unsigned int *d)
 {
 	int i;
 
-	for ( i = 0; i <= nd_wpd; i++ )
+	for ( i = 0; i < nd_wpd; i++ )
 		d[i] = d1[i]-d2[i];
 }
 
@@ -582,7 +585,7 @@ int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 
 	switch ( nd_bpe ) {
 		case 4:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = u1&0xf0000000; t2 = u2&0xf0000000; if ( t1&&t2 ) return 0;
 				t1 = u1&0xf000000; t2 = u2&0xf000000; if ( t1&&t2 ) return 0;
@@ -596,7 +599,7 @@ int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 6:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = u1&0x3f000000; t2 = u2&0x3f000000; if ( t1&&t2 ) return 0;
 				t1 = u1&0xfc0000; t2 = u2&0xfc0000; if ( t1&&t2 ) return 0;
@@ -607,7 +610,7 @@ int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 8:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = u1&0xff000000; t2 = u2&0xff000000; if ( t1&&t2 ) return 0;
 				t1 = u1&0xff0000; t2 = u2&0xff0000; if ( t1&&t2 ) return 0;
@@ -617,7 +620,7 @@ int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 16:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				t1 = u1&0xffff0000; t2 = u2&0xffff0000; if ( t1&&t2 ) return 0;
 				t1 = u1&0xffff; t2 = u2&0xffff; if ( t1&&t2 ) return 0;
@@ -625,12 +628,12 @@ int ndl_disjoint(unsigned int *d1,unsigned int *d2)
 			return 1;
 			break;
 		case 32:
-			for ( i = 1; i <= nd_wpd; i++ )
+			for ( i = nd_exporigin; i < nd_wpd; i++ )
 				if ( d1[i] && d2[i] ) return 0;
 			return 1;
 			break;
 		default:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				for ( j = 0; j < nd_epw; j++ ) {
 					if ( (u1&nd_mask0) && (u2&nd_mask0) ) return 0;
@@ -652,7 +655,7 @@ int ndl_check_bound2(int index,unsigned int *d2)
 	ind = 0;
 	switch ( nd_bpe ) {
 		case 4:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
 				if ( d1[ind++]+((u2>>28)&0xf) >= 0x10 ) return 1;
 				if ( d1[ind++]+((u2>>24)&0xf) >= 0x10 ) return 1;
@@ -666,7 +669,7 @@ int ndl_check_bound2(int index,unsigned int *d2)
 			return 0;
 			break;
 		case 6:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
 				if ( d1[ind++]+((u2>>24)&0x3f) >= 0x40 ) return 1;
 				if ( d1[ind++]+((u2>>18)&0x3f) >= 0x40 ) return 1;
@@ -677,7 +680,7 @@ int ndl_check_bound2(int index,unsigned int *d2)
 			return 0;
 			break;
 		case 8:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
 				if ( d1[ind++]+((u2>>24)&0xff) >= 0x100 ) return 1;
 				if ( d1[ind++]+((u2>>16)&0xff) >= 0x100 ) return 1;
@@ -687,7 +690,7 @@ int ndl_check_bound2(int index,unsigned int *d2)
 			return 0;
 			break;
 		case 16:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
 				if ( d1[ind++]+((u2>>16)&0xffff) > 0x10000 ) return 1;
 				if ( d1[ind++]+(u2&0xffff) > 0x10000 ) return 1;
@@ -695,12 +698,12 @@ int ndl_check_bound2(int index,unsigned int *d2)
 			return 0;
 			break;
 		case 32:
-			for ( i = 1; i <= nd_wpd; i++ )
+			for ( i = nd_exporigin; i < nd_wpd; i++ )
 				if ( d1[i]+d2[i]<d1[i] ) return 1;
 			return 0;
 			break;
 		default:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u2 = d2[i];
 				k = (nd_epw-1)*nd_bpe;
 				for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
@@ -718,7 +721,7 @@ int ndl_check_bound2_direct(unsigned int *d1,unsigned int *d2)
 
 	switch ( nd_bpe ) {
 		case 4:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( ((u1>>28)&0xf)+((u2>>28)&0xf) >= 0x10 ) return 1;
 				if ( ((u1>>24)&0xf)+((u2>>24)&0xf) >= 0x10 ) return 1;
@@ -732,7 +735,7 @@ int ndl_check_bound2_direct(unsigned int *d1,unsigned int *d2)
 			return 0;
 			break;
 		case 6:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( ((u1>>24)&0x3f)+((u2>>24)&0x3f) >= 0x40 ) return 1;
 				if ( ((u1>>18)&0x3f)+((u2>>18)&0x3f) >= 0x40 ) return 1;
@@ -743,7 +746,7 @@ int ndl_check_bound2_direct(unsigned int *d1,unsigned int *d2)
 			return 0;
 			break;
 		case 8:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				if ( ((u1>>24)&0xff)+((u2>>24)&0xff) >= 0x100 ) return 1;
 				if ( ((u1>>16)&0xff)+((u2>>16)&0xff) >= 0x100 ) return 1;
@@ -753,7 +756,7 @@ int ndl_check_bound2_direct(unsigned int *d1,unsigned int *d2)
 			return 0;
 			break;
 		case 16:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 					if ( ((u1>>16)&0xffff)+((u2>>16)&0xffff) > 0x10000 ) return 1;
 					if ( (u2&0xffff)+(u2&0xffff) > 0x10000 ) return 1;
@@ -761,12 +764,12 @@ int ndl_check_bound2_direct(unsigned int *d1,unsigned int *d2)
 			return 0;
 			break;
 		case 32:
-			for ( i = 1; i <= nd_wpd; i++ )
+			for ( i = nd_exporigin; i < nd_wpd; i++ )
 				if ( d1[i]+d2[i]<d1[i] ) return 1;
 			return 0;
 			break;
 		default:
-			for ( i = 1; i <= nd_wpd; i++ ) {
+			for ( i = nd_exporigin; i < nd_wpd; i++ ) {
 				u1 = d1[i]; u2 = d2[i];
 				k = (nd_epw-1)*nd_bpe;
 				for ( j = 0; j < nd_epw; j++, k -= nd_bpe )
@@ -784,7 +787,7 @@ INLINE int ndl_hash_value(unsigned int *d)
 	int r;
 
 	r = 0;
-	for ( i = 0; i <= nd_wpd; i++ )	
+	for ( i = 0; i < nd_wpd; i++ )	
 		r = ((r<<16)+d[i])%REDTAB_LEN;
 	return r;
 }
@@ -969,7 +972,7 @@ int nd_nf(int mod,ND g,int full,ND *rp)
 
 	sugar0 = sugar = SG(g);
 	n = NV(g);
-	mul = (NM)ALLOCA(sizeof(struct oNM)+nd_wpd*sizeof(unsigned int));
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	for ( d = 0; g; ) {
 		index = nd_find_reducer(g);
 		if ( index >= 0 ) {
@@ -1041,7 +1044,7 @@ int nd_nf_pbucket(int mod,ND g,int full,ND *rp)
 	bucket = create_pbucket();
 	add_pbucket(mod,bucket,g);
 	d = 0;
-	mul = (NM)ALLOCA(sizeof(struct oNM)+nd_wpd*sizeof(unsigned int));
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	while ( 1 ) {
 		hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
 		if ( hindex < 0 ) {
@@ -1139,7 +1142,7 @@ int nd_nf_direct(int mod,ND g,NDV *ps,int len,int full,ND *rp)
 
 	sugar0 = sugar = SG(g);
 	n = NV(g);
-	mul = (NM)ALLOCA(sizeof(struct oNM)+nd_wpd*sizeof(unsigned int));
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	for ( d = 0; g; ) {
 		index = nd_find_reducer_direct(g,ps,len);
 		if ( index >= 0 ) {
@@ -1215,7 +1218,7 @@ int nd_nf_direct_pbucket(int mod,ND g,NDV *ps,int len,int full,ND *rp)
 	bucket = create_pbucket();
 	add_pbucket(mod,bucket,g);
 	d = 0;
-	mul = (NM)ALLOCA(sizeof(struct oNM)+nd_wpd*sizeof(unsigned int));
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int));
 	while ( 1 ) {
 		hindex = mod?head_pbucket(mod,bucket):head_pbucket_q(bucket);
 		if ( hindex < 0 ) {
@@ -1494,7 +1497,11 @@ again:
 			d = nd_reconstruct(m,0,d);
 			goto again;
 		}
+#if USE_GEOBUCKET
 		stat = m?nd_nf_pbucket(m,h,!Top,&nf):nd_nf(m,h,!Top,&nf);
+#else
+		stat = nd_nf(m,h,!Top,&nf);
+#endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
 			d = nd_reconstruct(m,0,d);
@@ -1545,7 +1552,11 @@ again:
 			d = nd_reconstruct(m,1,d);
 			goto again;
 		}
+#if USE_GEOBUCKET
 		stat = nd_nf_pbucket(m,h,!Top,&nf);
+#else
+		stat = nd_nf(m,h,!Top,&nf);
+#endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
 			d = nd_reconstruct(m,1,d);
@@ -1686,7 +1697,7 @@ ND_pairs crit_B( ND_pairs d, int s )
 	t = DL(nd_psh[s]);
 	prev = 0;
 	head = cur = d;
-	lcm = (unsigned int *)ALLOCA((nd_wpd+1)*sizeof(unsigned int));
+	lcm = (unsigned int *)ALLOCA(nd_wpd*sizeof(unsigned int));
 	while ( cur ) {
 		tl = cur->lcm;
 		if ( ndl_reducible(tl,t)
@@ -2058,13 +2069,13 @@ void dltondl(int n,DL dl,unsigned int *r)
 	int i;
 
 	d = dl->d;
-	for ( i = 0; i <= nd_wpd; i++ ) r[i] = 0;
+	for ( i = 0; i < nd_wpd; i++ ) r[i] = 0;
 	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
-			r[(n-1-i)/nd_epw+1] |= (d[i]<<((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe));
+			r[(n-1-i)/nd_epw+nd_exporigin] |= (d[i]<<((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe));
 	else
 		for ( i = 0; i < n; i++ )
-			r[i/nd_epw+1] |= d[i]<<((nd_epw-(i%nd_epw)-1)*nd_bpe);
+			r[i/nd_epw+nd_exporigin] |= d[i]<<((nd_epw-(i%nd_epw)-1)*nd_bpe);
 	TD(r) = ndl_weight(r);
 }
 
@@ -2079,11 +2090,11 @@ DL ndltodl(int n,unsigned int *ndl)
 	d = dl->d;
 	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
-			d[i] = (ndl[(n-1-i)/nd_epw+1]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
+			d[i] = (ndl[(n-1-i)/nd_epw+nd_exporigin]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
 				&((1<<nd_bpe)-1);
 	else
 		for ( i = 0; i < n; i++ )
-			d[i] = (ndl[i/nd_epw+1]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))
+			d[i] = (ndl[i/nd_epw+nd_exporigin]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))
 				&((1<<nd_bpe)-1);
 	return dl;
 }
@@ -2144,12 +2155,12 @@ void ndl_print(unsigned int *dl)
 	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ )
 			printf(i==n-1?"%d":"%d,",
-				(dl[(n-1-i)/nd_epw+1]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
+				(dl[(n-1-i)/nd_epw+nd_exporigin]>>((nd_epw-((n-1-i)%nd_epw)-1)*nd_bpe))
 					&((1<<nd_bpe)-1));
 	else
 		for ( i = 0; i < n; i++ )
 			printf(i==n-1?"%d":"%d,",
-				(dl[i/nd_epw+1]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))
+				(dl[i/nd_epw+nd_exporigin]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))
 					&((1<<nd_bpe)-1));
 	printf(">>");
 }
@@ -2274,12 +2285,12 @@ void ndv_dehomogenize(NDV p)
 
 	len = p->len;
 	newnvar = nd_nvar-1;
-	newwpd = newnvar/nd_epw+(newnvar%nd_epw?1:0);
+	newwpd = newnvar/nd_epw+(newnvar%nd_epw?1:0)+nd_exporigin;
 	for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ )
 		ndl_dehomogenize(DL(m));
 	if ( newwpd != nd_wpd ) {
-		d = (unsigned int *)ALLOCA((newwpd+1)*sizeof(unsigned int));
-		newadv = sizeof(struct oNMV)+newwpd*sizeof(unsigned int);
+		d = (unsigned int *)ALLOCA(newwpd*sizeof(unsigned int));
+		newadv = sizeof(struct oNMV)+(newwpd-1)*sizeof(unsigned int);
 		for ( m = r = BDY(p), i = 0; i < len; NMV_ADV(m), NEWADV(r), i++ ) {
 			CQ(r) = CQ(m); ndl_copy(DL(m),d); ndl_copy(d,DL(r));
 		}
@@ -2423,7 +2434,7 @@ unsigned int *nd_compute_bound(ND p)
 	t = (unsigned int *)MALLOC_ATOMIC(l*sizeof(unsigned int));
 	for ( i = 0; i < l; i++ ) t[i] = 0;
 	for ( i = 0; i < nd_nvar; i++ )
-		t[i] = (d1[i/nd_epw+1]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))&nd_mask0;
+		t[i] = (d1[i/nd_epw+nd_exporigin]>>((nd_epw-(i%nd_epw)-1)*nd_bpe))&nd_mask0;
 	for ( ; i < l; i++ ) t[i] = 0;
 	return t;
 }
@@ -2433,6 +2444,19 @@ void nd_setup_parameters() {
 
 	nd_epw = (sizeof(unsigned int)*8)/nd_bpe;
 	nd_wpd = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
+	switch ( nd_ord->id ) {
+		case 0:
+			nd_exporigin = 1;
+			break;
+		case 1:
+			/* block order */
+			nd_exporigin = nd_ord->ord.block.length;
+			break;
+		case 2:
+			error("nd_setup_parameters : matrix order is not supported yet.");
+			break;
+	}
+	nd_wpd += nd_exporigin;
 	if ( nd_bpe < 32 ) {
 		nd_mask0 = (1<<nd_bpe)-1;
 	} else {
@@ -2444,11 +2468,9 @@ void nd_setup_parameters() {
 		nd_mask[nd_epw-i-1] = (nd_mask0<<(i*nd_bpe));
 		nd_mask1 |= (1<<(nd_bpe-1))<<(i*nd_bpe);
 	}
-	nm_adv = sizeof(struct oNM)+nd_wpd*sizeof(unsigned int);
-	nmv_adv = sizeof(struct oNMV)+nd_wpd*sizeof(unsigned int);
+	nm_adv = sizeof(struct oNM)+(nd_wpd-1)*sizeof(unsigned int);
+	nmv_adv = sizeof(struct oNMV)+(nd_wpd-1)*sizeof(unsigned int);
 }
-
-/* mod < 0 => realloc nd_ps and pd_psq */
 
 ND_pairs nd_reconstruct(int mod,int trace,ND_pairs d)
 {
@@ -2537,8 +2559,7 @@ void nd_reconstruct_direct(int mod,NDV *ps,int len)
 	prev_nm_free_list = _nm_free_list;
 	prev_ndp_free_list = _ndp_free_list;
 	_nm_free_list = 0; _ndp_free_list = 0;
-	if ( mod != 0 )
-		for ( i = len-1; i >= 0; i-- ) ndv_realloc(ps[i],obpe,oadv);
+	for ( i = len-1; i >= 0; i-- ) ndv_realloc(ps[i],obpe,oadv);
 	old_red = (RHist *)ALLOCA(REDTAB_LEN*sizeof(RHist));
 	for ( i = 0; i < REDTAB_LEN; i++ ) {
 		old_red[i] = nd_red[i];
@@ -2570,18 +2591,18 @@ void ndl_reconstruct(int obpe,unsigned int *d,unsigned int *r)
 	cepw = nd_epw;
 	cbpe = nd_bpe;
 	TD(r) = TD(d);
-	for ( i = 1; i <= nd_wpd; i++ ) r[i] = 0;
+	for ( i = nd_exporigin; i < nd_wpd; i++ ) r[i] = 0;
 	if ( nd_isrlex )
 		for ( i = 0; i < n; i++ ) {
-			ei = (d[(n-1-i)/oepw+1]>>((oepw-((n-1-i)%oepw)-1)*obpe))
+			ei = (d[(n-1-i)/oepw+nd_exporigin]>>((oepw-((n-1-i)%oepw)-1)*obpe))
 				&((1<<obpe)-1);
-			r[(n-1-i)/cepw+1] |= (ei<<((cepw-((n-1-i)%cepw)-1)*cbpe));
+			r[(n-1-i)/cepw+nd_exporigin] |= (ei<<((cepw-((n-1-i)%cepw)-1)*cbpe));
 		}
 	else
 		for ( i = 0; i < n; i++ ) {
-			ei = (d[i/oepw+1]>>((oepw-(i%oepw)-1)*obpe))
+			ei = (d[i/oepw+nd_exporigin]>>((oepw-(i%oepw)-1)*obpe))
 				&((1<<obpe)-1);
-			r[i/cepw+1] |= (ei<<((cepw-(i%cepw)-1)*cbpe));
+			r[i/cepw+nd_exporigin] |= (ei<<((cepw-(i%cepw)-1)*cbpe));
 		}
 }
 
@@ -2604,13 +2625,12 @@ void nd_realloc(ND p,int obpe)
 ND nd_copy(ND p)
 {
 	NM m,mr,mr0;
-	int c,n,s;
+	int c,n;
 	ND r;
 
 	if ( !p )
 		return 0;
 	else {
-		s = sizeof(struct oNM)+nd_wpd*sizeof(unsigned int);
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
 			NEXTNM(mr0,mr);
 			CM(mr) = CM(m);
@@ -2913,5 +2933,6 @@ void nd_init_ord(struct order_spec *ord)
 		default:
 			error("nd_gr : unsupported order");
 	}
+	nd_ord = ord;
 }
 
