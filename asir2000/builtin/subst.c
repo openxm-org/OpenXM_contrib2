@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.5 2001/10/09 01:36:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.6 2003/11/27 08:28:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -91,7 +91,8 @@ Obj *rp;
 			if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
 				arg = BDY(l);
 			while ( arg ) {
-				asir_assert(BDY(arg),O_P,"subst");
+				if ( !BDY(arg) || OID((Obj)BDY(arg)) != O_P )
+					error("subst : invalid argument");
 				v = VR((P)BDY(arg)); arg = NEXT(arg);
 				if ( !arg )
 					error("subst : invalid argument");

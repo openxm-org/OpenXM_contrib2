@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.5 2001/10/09 01:36:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.6 2003/02/14 22:29:07 ohara Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -66,8 +66,10 @@ void simplify_pow(PFINS,Obj *);
 void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval();
 void Pregister_handler();
 void Peval_quote();
+void Pmapat();
 
 struct ftab puref_tab[] = {
+	{"mapat",Pmapat,-99999999},
 	{"functor",Pfunctor,1},
 	{"args",Pargs,1},
 	{"funargs",Pfunargs,1},
@@ -310,7 +312,7 @@ P *rp;
 	else {
 		ins = (PFINS)VR(p)->priv; pf = ins->pf;
 		t = (FUNC)MALLOC(sizeof(struct oFUNC));
-		t->name = pf->name; t->id = A_PURE; t->argc = pf->argc;
+		t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
 		t->f.puref = pf;
 		makesrvar(t,rp);
 	}
@@ -360,7 +362,7 @@ LIST *rp;
 	else {
 		ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
 		t = (FUNC)MALLOC(sizeof(struct oFUNC));
-		t->name = pf->name; t->id = A_PURE; t->argc = pf->argc;
+		t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
 		t->f.puref = pf;
 		makesrvar(t,&f);
 		n = n0 = 0; NEXTNODE(n0,n); BDY(n) = (pointer)f;
@@ -414,9 +416,7 @@ Q *rp;
 	}
 }
 
-void Pcall(arg,rp)
-NODE arg;
-Obj *rp;
+void Pcall(NODE arg,Obj *rp)
 {
 	P p;
 	V v;
@@ -430,6 +430,84 @@ Obj *rp;
 
 	else
 		*rp = (Obj)bevalf((FUNC)v->priv,BDY((LIST)ARG1(arg)));
+}
+
+/* at=position of arg to be used for iteration */
+
+void Pmapat(NODE arg,Obj *rp)
+{
+	LIST args;
+	NODE node,rest,t0,t,n,r,r0;
+	P fpoly;
+	V fvar;
+	FUNC f;
+	VECT v,rv;
+	MAT m,rm;
+	LIST rl;
+	int len,row,col,i,j,pos;
+	Obj iter;
+	pointer val;
+
+	if ( argc(arg) < 3 )
+		error("mapat : too few arguments");
+
+	fpoly = (P)ARG0(arg);
+	if ( !fpoly || OID(fpoly) != O_P )
+		error("mapat : invalid function specification");
+	fvar = VR(fpoly);
+	if ( fvar->attr != (pointer)V_SR || !(f=(FUNC)fvar->priv) )
+		error("mapat : invalid function specification");
+	if ( !INT(ARG1(arg)) )
+		error("mapat : invalid position");
+	pos = QTOS((Q)ARG1(arg));
+	node = NEXT(NEXT(arg));
+	len = length(node);
+	if ( pos >= len )
+		error("evalmapatf : invalid position");
+	r0 = 0;
+	for ( i = 0, t = node; i < pos; i++, t = NEXT(t) ) {
+		NEXTNODE(r0,r);
+		BDY(r) = BDY(t);
+	}
+	NEXTNODE(r0,r);
+	iter = BDY(t); rest = NEXT(t);
+	if ( !iter ) {
+		*rp = bevalf(f,node);
+		return;
+	}
+	switch ( OID(iter) ) {
+		case O_VECT:
+			v = (VECT)iter; len = v->len; MKVECT(rv,len);
+			for ( i = 0; i < len; i++ ) {
+				BDY(r) = BDY(v)[i]; NEXT(r) = rest;
+				BDY(rv)[i] = bevalf(f,r0);
+			}
+			*rp = (Obj)rv;
+			break;
+		case O_MAT:
+			m = (MAT)iter; row = m->row; col = m->col; MKMAT(rm,row,col);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+					BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
+					BDY(rm)[i][j] = bevalf(f,r0);
+				}
+			*rp = (Obj)rm;
+			break;
+		case O_LIST:
+			n = BDY((LIST)iter);
+			for ( t0 = t = 0; n; n = NEXT(n) ) {
+				BDY(r) = BDY(n); NEXT(r) = rest;
+				NEXTNODE(t0,t); BDY(t) = bevalf(f,r0);
+			}
+			if ( t0 )
+				NEXT(t) = 0;
+			MKLIST(rl,t0);
+			*rp = (Obj)rl;
+			break;
+		default:
+			*rp = bevalf(f,node);
+			break;
+	}
 }
 
 void Pdeval(arg,rp)
