@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.1 2004/12/02 08:23:25 noro Exp $
 */
 
 #include "ca.h"
@@ -26,10 +26,11 @@ typedef struct oDAlg {
 
 #define N_DA 11
 #define NEWDAlg(r) ((r)=(DAlg)MALLOC(sizeof(struct oDAlg)),OID(r)=O_N,NID(r)=N_DA)
-#define MKDAlg(dp,dn,r) (NEWDAlg(r),(r)->nm = (dp),(r)->dn=(dn))
+#define MKDAlg(dp,den,r) (NEWDAlg(r),(r)->nm = (dp),(r)->dn=(den))
 
 static NumberField current_numberfield;
 extern struct order_spec *dp_current_spec;
+void simpdalg(DAlg da,DAlg *r);
 
 void setfield_dalg(NODE alist)
 {
@@ -100,19 +101,34 @@ void algtodalg(Alg a,DAlg *r)
 	initd(nf->spec);
 	ptod(ALG,nf->vl,p,&dp);
 	MKDAlg(dp,dn,da);
-	*r = da;
+	simpdalg(da,r);
 }
 
-void dalgtoalg(DAlg da,Num *a)
+void dalgtoalg(DAlg da,Alg *r)
 {
-	if ( !current_numberfield )
+	NumberField nf;
+	P p,p1;
+	Q inv;
+
+	if ( !(nf=current_numberfield) )
 		error("algtodalg : current_numberfield is not set");
+	dtop(ALG,nf->vl,da->nm,&p);
+	invq(da->dn,&inv);
+	mulpq(p,(P)inv,&p1);
+	MKAlg(p1,*r);
 }
 
 void simpdalg(DAlg da,DAlg *r)
 {
-	if ( !current_numberfield )
+	NumberField nf;
+	DP nm;
+	Q dn,dn1;
+
+	if ( !(nf=current_numberfield) )
 		error("algtodalg : current_numberfield is not set");
+	dp_true_nf(nf->ind,da->nm,nf->ps,1,&nm,&dn);
+	mulq(da->dn,dn,&dn1);
+	MKDAlg(nm,dn1,*r);
 }
 
 void adddalg(DAlg a,DAlg b,DAlg *c)
@@ -126,6 +142,13 @@ void subdalg(DAlg a,DAlg b,DAlg *c)
 	if ( !current_numberfield )
 		error("algtodalg : current_numberfield is not set");
 }
+
+void muldalg(DAlg a,DAlg b,DAlg *c)
+{
+	if ( !current_numberfield )
+		error("algtodalg : current_numberfield is not set");
+}
+
 
 void divdalg(DAlg a,DAlg b,DAlg *c)
 {
@@ -151,6 +174,4 @@ void pwrdalg(DAlg a,Q b,DAlg *c)
 
 int cmpgdalg(DAlg a,DAlg b)
 {
-	if ( !current_numberfield )
-		error("algtodalg : current_numberfield is not set");
 }
