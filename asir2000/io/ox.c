@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.15 2002/08/02 02:28:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.16 2002/08/02 02:41:03 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -125,6 +125,17 @@ static int available_cmo[] = {
 	0
 };
 
+static int asir_available_sm[] = {
+	SM_dupErrors, SM_getsp, SM_popSerializedLocalObject,
+	SM_popCMO, SM_popString, SM_pushCMOtag, SM_setName,
+	SM_evalName, SM_executeStringByLocalParser,
+	SM_executeStringByLocalParserInBatchMode,
+	SM_executeFunction, SM_shutdown, SM_pops,
+	SM_mathcap, SM_setMathcap, SM_nop,
+	SM_beginBlock, SM_endBlock,
+	0
+};
+
 static int ox_asir_available_sm[] = {
 	SM_dupErrors, SM_getsp, SM_popSerializedLocalObject,
 	SM_popCMO, SM_popString, SM_pushCMOtag, SM_setName,
@@ -175,7 +186,11 @@ void create_my_mathcap(char *system)
 
 	/* sm tag */
 	n0 = 0;
-	if ( !strcmp(system,"ox_asir") ) {
+	if ( !strcmp(system,"asir") ) {
+		for ( i = 0; k = asir_available_sm[i]; i++ ) {
+			NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
+		}
+	} else if ( !strcmp(system,"ox_asir") ) {
 		for ( i = 0; k = ox_asir_available_sm[i]; i++ ) {
 			NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
 		}
