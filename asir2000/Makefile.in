@@ -519,27 +519,27 @@ libasir.a: ${ASIRLIB}
 #	ld -r $@ umain.o ${ASIRLIB} ${GLIB} ${LIBS} ${EXTRALIBS}
 
 install-exec-hook:
-	-mkdir -p ${prefix}/lib/asir
-	-if [ -x ${prefix}/bin/asir ]; then \
-		mv ${prefix}/bin/asir${EXEEXT} ${prefix}/lib/asir/ ; \
+	-mkdir -p ${DESTDIR}${prefix}/lib/asir
+	-if [ -x ${DESTDIR}${prefix}/bin/asir ]; then \
+		mv ${DESTDIR}${prefix}/bin/asir${EXEEXT} ${DESTDIR}${prefix}/lib/asir/ ; \
 	fi
 
 install-libasir: libasir.a
-	mkdir -p ${prefix}/lib
-	${INSTALL_DATA} libasir.a ${prefix}/lib/libasir${libasir_postfix}.a
+	mkdir -p ${DESTDIR}${prefix}/lib
+	${INSTALL_DATA} libasir.a ${DESTDIR}${prefix}/lib/libasir${libasir_postfix}.a
 
 install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
-	-mkdir -p ${prefix}/bin
-	${INSTALL_PROGRAM} asir ${prefix}/bin/
-	-mkdir -p ${prefix}/lib/asir
+	-mkdir -p ${DESTDIR}${prefix}/bin
+	${INSTALL_PROGRAM} asir ${DESTDIR}${prefix}/bin/
+	-mkdir -p ${DESTDIR}${prefix}/lib/asir
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
-	${INSTALL_DATA} libasir.a    ${prefix}/lib/libasir${libasir_postfix}.a
-	${INSTALL_DATA} libasir-gc.a ${prefix}/lib/libasir-gc.a
-	-rm -f ${prefix}/bin/ox_asir${EXEEXT}
-	(cd ${prefix}/bin ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
-	-(cd ${prefix}/lib/asir; \
+	${INSTALL_DATA} libasir.a    ${DESTDIR}${prefix}/lib/libasir${libasir_postfix}.a
+	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${prefix}/lib/libasir-gc.a
+	-rm -f ${DESTDIR}${prefix}/bin/ox_asir${EXEEXT}
+	(cd ${DESTDIR}${prefix}/bin ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
+	-(cd ${DESTDIR}${prefix}/lib/asir; \
     rm -f asir${EXEEXT} ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
-	(cd ${prefix}/lib/asir ; \
+	(cd ${DESTDIR}${prefix}/lib/asir ; \
 	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
@@ -549,18 +549,25 @@ install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
 
 install-lib:
 	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
-	-(cd ${prefix}/lib/asir; \
+	-(cd ${DESTDIR}${prefix}/lib/asir; \
 	rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
-	(cd ${prefix}/lib/asir ; \
+	(cd ${DESTDIR}${prefix}/lib/asir ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
-	-mkdir -p ${prefix}/bin
-	-rm -f ${prefix}/bin/asir${EXEEXT}
-	(cd ${prefix}/bin ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
+	-mkdir -p ${DESTDIR}${prefix}/bin
+	-rm -f ${DESTDIR}${prefix}/bin/asir${EXEEXT}
+	(cd ${DESTDIR}${prefix}/bin ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
 
 install-doc:
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc)
+
+tarball:
+	-rm -rf tmp
+	-mkdir tmp
+	DESTDIR=`cd tmp; pwd` ${MAKE} install-openxm
+	(cd tmp${prefix}; tar cf - * ) | gzip -c > asir-openxm-${VERSION}.tgz
+	-rm -rf tmp
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

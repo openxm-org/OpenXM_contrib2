@@ -212,18 +212,18 @@ uninstall-am: uninstall-info-am
 
 
 install-doc:
-	-mkdir -p ${prefix}/lib/asir
+	-mkdir -p ${DESTDIR}${prefix}/lib/asir
 	-for i in jp eg ; do \
 		uudecode help-$$i.uu ; \
-		gzip -dc help-$$i.tgz | ( cd ${prefix}/lib/asir; tar xf - ) ; \
+		gzip -dc help-$$i.tgz | ( cd ${DESTDIR}${prefix}/lib/asir; tar xf - ) ; \
 		rm -f help-$$i.tgz ; \
 	done
-	-rm ${prefix}/lib/asir/help
-	(cd ${prefix}/lib/asir; ${LN_S} help-eg help)
+	-rm ${DESTDIR}${prefix}/lib/asir/help
+	(cd ${DESTDIR}${prefix}/lib/asir; ${LN_S} help-eg help)
 
 install-lib:
-	-mkdir -p ${prefix}/lib/asir
-	${INSTALL_DATA} ${RR} ${prefix}/lib/asir/
+	-mkdir -p ${DESTDIR}${prefix}/lib/asir
+	${INSTALL_DATA} ${RR} ${DESTDIR}${prefix}/lib/asir/
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
