@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.11 2004/02/04 07:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.12 2004/03/03 09:25:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -112,6 +112,8 @@ Obj a,b,*r;
 	else if ( OID(a) == OID(b) )
 		(*afunc[OID(a)].add)(vl,a,b,r);
 	else if ( (mid = MAX(OID(a),OID(b))) <= O_R )
+		(*afunc[mid].add)(vl,a,b,r);
+	else if ( (mid = MAX(OID(a),OID(b))) == O_DP && MIN(OID(a),OID(b)) <= O_R )
 		(*afunc[mid].add)(vl,a,b,r);
 	else
 		notdef(vl,a,b,r);

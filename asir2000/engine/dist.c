@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.28 2004/02/05 08:28:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.29 2004/03/05 02:26:52 noro Exp $ 
 */
 #include "ca.h"
 
@@ -298,12 +298,23 @@ void addd(VL vl,DP p1,DP p2,DP *pr)
 	int n;
 	MP m1,m2,mr,mr0;
 	P t;
+	DL d;
 
 	if ( !p1 )
 		*pr = p2;
 	else if ( !p2 )
 		*pr = p1;
 	else {
+		if ( OID(p1) <= O_R ) {
+			n = NV(p2);	NEWDL(d,n);
+			NEWMP(m1); m1->dl = d; C(m1) = p1; NEXT(m1) = 0;
+			MKDP(n,m1,p1); (p1)->sugar = 0;
+		}
+		if ( OID(p2) <= O_R ) {
+			n = NV(p1);	NEWDL(d,n);
+			NEWMP(m2); m2->dl = d; C(m2) = p2; NEXT(m2) = 0;
+			MKDP(n,m2,p2); (p2)->sugar = 0;
+		}
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; )
 			switch ( (*cmpdl)(n,m1->dl,m2->dl) ) {
 				case 0:
