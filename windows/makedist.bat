@@ -9,6 +9,7 @@ copy engine2000\release\engine.exe %instdir%\bin
 copy asir32gui\release\asirgui-%lang%.exe %instdir%\bin\asirgui.exe
 copy cpp\release\cpp.exe %instdir%\bin
 copy help\asirhelp-%lang%.chm %instdir%\bin\asirhelp.chm
+copy help\cmanhelp-%lang%.chm %instdir%\bin\cmanhelp.chm
 copy asir32gui\UseCurrentDir %instdir%\bin
 cd %lang%
 tar czf asirwin-%lang%.tgz asir
@@ -25,6 +26,7 @@ copy engine2000\release\engine.exe %instdir%\bin
 copy asir32gui\release\asirgui-%lang%.exe %instdir%\bin\asirgui.exe
 copy cpp\release\cpp.exe %instdir%\bin
 copy help\asirhelp-%lang%.chm %instdir%\bin\asirhelp.chm
+copy help\cmanhelp-%lang%.chm %instdir%\bin\cmanhelp.chm
 copy asir32gui\UseCurrentDir %instdir%\bin
 cd %lang%
 tar czf asirwin-%lang%.tgz asir

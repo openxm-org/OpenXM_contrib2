@@ -7,8 +7,10 @@ mkdir src
 mkdir src\parts
 mkdir src\parts\builtin
 
-nkf32 -s %srcdir%\jtexinfo.tex > src\jtexinfo.tex
-nkf32 -s %srcdir%\texinfo-js.tex > src\texinfo-js.tex
+nkf32 -s %srcdir%\texinfo.tex > src\texinfo.tex
+nkf32 -s %srcdir%\texinfo.ini > src\texinfo.ini
+nkf32 -s %srcdir%\txi-ja.tex > src\txi-ja.tex
+nkf32 -s %srcdir%\txi-en.tex > src\txi-en.tex
 
 nkf32 -s %srcdir%\man.texi > man.texi
 nkf32 -s %srcdir%\parts\algnum.texi > parts\algnum.texi
@@ -48,6 +50,7 @@ cd src
 jperl ..\texi2html -menu -split_node man.texi
 cd ..
 mkdir html
+del /Q html\*.*
 move src\*.* html
 gen_hh html .
 hhc asirhelp.hhp

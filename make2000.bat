@@ -21,8 +21,10 @@ call makehelp JP
 move asirhelp.chm asirhelp-ja.chm
 call makehelp EG
 move asirhelp.chm asirhelp-en.chm
+call makecmanhelp ja
+call makecmanhelp en
 
 cd ..
-makedist
+call makedist
 
 cd ..
