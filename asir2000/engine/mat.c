@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.4 2002/01/04 17:08:23 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.5 2002/03/01 06:27:23 saito Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -455,6 +455,34 @@ MAT a,b,*c;
 		/* C21 = w1+u1+A22*(B21-t2) */
 		submat(vl, b21, t2, &ans1);
 		mulmatmat(vl, a22, ans1, &ans2);
+		addmat(vl, w1, u1, &ans1);
+		addmat(vl, ans1, ans2, &c21);
+
+		/* C22 = w1 + u1 + v1 */
+		addmat(vl, ans1, v1, &c22);
+	}
+
+	for(i =0; i<c11->row; i++) {
+		for ( j=0; j < c11->col; j++) {
+			t->body[i][j] = c11->body[i][j];
+		}
+	}
+	if (pflag1 == 0) {
+			k = c21->row;
+	} else {
+			k = c21->row - 1;
+	}
+	for(i =0; i<k; i++) {
+		for ( j=0; j < c21->col; j++) {
+			t->body[i+c11->row][j] = c21->body[i][j];
+		}
+	}
+	if (pflag2 == 0) {
+		h = c12->col;
+	} else {
+		h = c12->col -1;
+	}
+	for(i =0; i<c12->row; i++) {
 		for ( j=0; j < k; j++) {
 			t->body[i][j+c11->col] = c12->body[i][j];
 		}
