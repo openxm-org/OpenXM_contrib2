@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.15 2001/09/11 08:56:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.16 2001/09/17 01:18:34 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -852,7 +852,6 @@ DP *rp;
 /* get_eg(&t0); */
 	_addmd_destructive(mod,p1,t,rp);
 /* get_eg(&t1); add_eg(&eg_red_mod,&t0,&t1); */
-	_print_mp(NV(*rp),BDY(*rp));
 }
 
 /*
@@ -1729,7 +1728,7 @@ MP m;
 {
 	int i;
 
-	if ( m )
+	if ( !m )
 		return;
 	for ( ; m; m = NEXT(m) ) {
 		fprintf(stderr,"%d<",ITOS(C(m)));
