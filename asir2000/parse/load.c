@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.15 2005/03/24 12:46:45 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.16 2005/03/24 22:54:22 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -90,7 +90,10 @@ char **ASIRLOADPATH;
 #endif
 
 #ifndef ASIR_LIBDIR
-#define ASIR_LIBDIR "."
+#define ASIR_LIBDIR "/usr/local/lib/asir"
+#endif
+#ifndef ASIR_CONTRIB_DIR
+#define ASIR_CONTRIB_DIR "/usr/local/lib/asir-contrib"
 #endif
 
 char *getenv();
@@ -98,6 +101,7 @@ void Pget_rootdir();
 char *search_executable(char *name);
 
 extern char *asir_libdir;
+extern char *asir_contrib_dir;
 extern char *asir_pager;
 extern int read_exec_file;
 extern int main_parser;
@@ -149,13 +153,29 @@ void env_init() {
 #if defined(VISUAL)
 			get_rootdir(rootname,sizeof(rootname));
 			asir_libdir = (char *)malloc(strlen(rootname)+strlen("/lib")+1);
-			sprintf(asir_libdir,"%s/lib",rootname);
 #else
 			asir_libdir = (char *)malloc(strlen(ASIR_LIBDIR)+1);
 			strcpy(asir_libdir,ASIR_LIBDIR);
 #endif
 		}
 	}
+
+	if ( !(asir_contrib_dir = getenv("ASIR_CONTRIB_DIR")) ) {
+		if ( oxhome = getenv("OpenXM_HOME") ) {
+			asir_contrib_dir = (char *)malloc(strlen(oxhome)+strlen("/lib/asir-contrib")+1);
+			sprintf(asir_contrib_dir,"%s/lib/asir-contrib",oxhome);
+		} else {
+#if defined(VISUAL)
+			get_rootdir(rootname,sizeof(rootname));
+			asir_contrib_dir = (char *)malloc(strlen(rootname)+strlen("/lib-asir-contrib")+1);
+			sprintf(asir_contrib_dir,"%s/lib-asir-contrib",rootname);
+#else
+			asir_contrib_dir = (char *)malloc(strlen(ASIR_CONTRIB_DIR)+1);
+			strcpy(asir_contrib_dir,ASIR_CONTRIB_DIR);
+#endif
+		}
+	}
+
 	if ( !(asir_pager = getenv("PAGER")) ) {
 		japanese = 0;
 		if ( (e = getenv("LANGUAGE")) && 
@@ -180,7 +200,7 @@ void env_init() {
 			if ( !p )
 				break;
 		}
-		i += 3;
+		i += 4;
         ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
 		for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
 		e = getenv("ASIRLOADPATH");
@@ -196,9 +216,11 @@ void env_init() {
     }else{
 	  ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*3);
 	  ASIRLOADPATH[0] = NULL;
-    }
+	}
+
 	for ( i = 0; ASIRLOADPATH[i]; i++ );
-	ASIRLOADPATH[i++] = asir_libdir;
+	if (asir_contrib_dir) ASIRLOADPATH[i++] = asir_contrib_dir;
+	if (asir_libdir) ASIRLOADPATH[i++] = asir_libdir;
 	ASIRLOADPATH[i] = NULL;
 }
 
