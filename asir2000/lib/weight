@@ -622,7 +622,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 						TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
 					RET0=value2(Vars,TMP)$
 					if(RET0!=[])
-						RET0=wsort(RET0,Vars,RET0,1/10)$
+						RET0=wsort(RET0,Vars,RET0,ID+1/10)$
 				}
 	
 				TMP=vtol(TMP1[1])$
@@ -633,7 +633,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 					RET0=value2(Vars,TMP)$
 	
 					if(RET0!=[])
-						RET0=wsort(RET0,Vars,RET0,1/10)$
+						RET0=wsort(RET0,Vars,RET0,ID+1/10)$
 				}
 
 				RET=append(RET,RET0)$
