@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.30 2004/04/14 07:27:41 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.31 2004/05/14 06:02:54 noro Exp $ 
 */
 #include "ca.h"
 
@@ -599,6 +599,8 @@ void chsgnd(DP p,DP *pr)
 
 	if ( !p )
 		*pr = 0;
+	else if ( OID(p) <= O_R )
+		chsgnr(p,pr);
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr); chsgnp(C(m),&C(mr)); mr->dl = m->dl;
