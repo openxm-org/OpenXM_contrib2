@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.6 2001/06/20 09:30:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.7 2001/06/21 07:47:02 noro Exp $
 */
 #include "ca.h"
 
@@ -668,6 +668,22 @@ GFS *c;
 	*c = t;
 }
 
+/* GF(pn)={0,1,a,a^2,...} -> GF(pm)={0,1,b,b^2,...}; a->b^k */
+
+void gfs_embed(z,k,pm,c)
+GFS z;
+int k,pm;
+GFS *c;
+{
+	int t;
+
+	if ( !z )
+		*c = 0;
+	else {
+		t = dmar(k,CONT(z),0,pm-1);
+		MKGFS(t,*c);
+	}
+}
 void qtogfs(a,c)
 Q a;
 GFS *c;

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.11 2001/06/26 09:47:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.12 2001/06/27 04:07:57 noro Exp $ */
 
 #include "ca.h"
 
@@ -1073,6 +1073,14 @@ DCP *dcp;
 
 	/* sf(x) = f(x+ev) = list->c[0]*list->c[1]*... */
 	sfhensel(5,f,x,&ev,&sf,&list);
+	if ( list->n == 0 )
+		error("sfbfctr : short of evaluation points");
+	else if ( list->n == 1 ) {
+		/* f is irreducible */
+		NEWDC(dc); DEG(dc) = ONE; COEF(dc) = f; NEXT(dc) = 0;
+		*dcp = dc;
+		return;
+	}
 	sfdtest(sf,list,x,y,&dc);
 	n = getdeg(x,sf);
 	bound = list->bound;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.8 2001/06/20 09:30:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.9 2001/06/25 01:35:20 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -294,6 +294,36 @@ P *pr;
 	} else {
 		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
 			sf_galois_action(COEF(dc),e,&t);
+			if ( t ) {
+				NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+			}
+		}
+		if ( !dcr0 ) 
+			*pr = 0;
+		else {
+			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+		}
+	}
+}
+
+/* GF(pn)={0,1,a,a^2,...} -> GF(pm)={0,1,b,b^2,..} ; a -> b^k */
+
+void sf_embed(p,k,pm,pr)
+P p;
+int k,pm;
+P *pr;
+{
+	DCP dc,dcr,dcr0;
+	GFS a;
+	P t;
+
+	if ( !p )
+		*pr = 0;
+	else if ( NUM(p) ) {
+		gfs_embed(p,k,pm,&a); *pr = (P)a;
+	} else {
+		for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+			sf_embed(COEF(dc),k,pm,&t);
 			if ( t ) {
 				NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
 			}

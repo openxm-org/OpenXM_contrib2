@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.10 2001/05/09 01:41:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.11 2001/05/28 08:22:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,8 @@ void Pp_mag(),Pmaxblen();
 void Pmergelist(), Pch_mv(), Pre_mv(), Pdeglist();
 void Pptomp(),Pmptop();
 void Pptolmp(),Plmptop();
-void Pptosfp(),Psfptop(),Psf_galois_action();
+void Pptosfp(),Psfptop(),Psf_galois_action(),Psf_embed(),Psf_find_root();
+void Psf_minipoly();
 void Pptogf2n(),Pgf2ntop(),Pgf2ntovect();
 void Pptogfpn(),Pgfpntop();
 void Pfind_root_gf2n();
@@ -151,9 +152,11 @@ struct ftab poly_tab[] = {
 	{"lmptop",Plmptop,1},
 
 	{"sf_galois_action",Psf_galois_action,2},
+	{"sf_find_root",Psf_find_root,1},
+	{"sf_minipoly",Psf_minipoly,2},
+	{"sf_embed",Psf_embed,3},
 	{"ptosfp",Pptosfp,1},
 	{"sfptop",Psfptop,1},
-
 	{"ptogf2n",Pptogf2n,1},
 	{"gf2ntop",Pgf2ntop,-2},
 	{"gf2ntovect",Pgf2ntovect,1},
@@ -1186,6 +1189,64 @@ NODE arg;
 P *rp;
 {
 	sf_galois_action(ARG0(arg),ARG1(arg),rp);
+}
+
+/*
+  sf_embed(F,B,PM)
+  F : an element of GF(pn)
+  B : the image of the primitive root of GF(pn)
+  PM : order of GF(pm)
+*/
+
+void Psf_embed(arg,rp)
+NODE arg;
+P *rp;
+{
+	int k,pm;
+
+	/* GF(pn)={0,1,a,a^2,...}->GF(pm)={0,1,b,b^2,...}; a->b^k */
+	k = CONT((GFS)ARG1(arg));
+	pm = QTOS((Q)ARG2(arg));
+	sf_embed((P)ARG0(arg),k,pm,rp);
+}
+
+void Psf_find_root(arg,rp)
+NODE arg;
+GFS *rp;
+{
+	P p;
+	Obj t;
+	int d;
+	UM u;
+	int *root;
+
+	p = (P)ARG0(arg);
+	simp_ff((Obj)p,&t); p = (P)t;
+	d = getdeg(VR(p),p);
+	u = W_UMALLOC(d);
+	ptosfum(p,u);
+	root = (int *)ALLOCA(d*sizeof(int));
+	find_rootsf(u,root);
+	MKGFS(IFTOF(root[0]),*rp);
+}
+
+void Psf_minipoly(arg,rp)
+NODE arg;
+P *rp;
+{
+	Obj t;
+	P p1,p2;
+	int d1,d2;
+	UM up1,up2,m;
+
+	p1 = (P)ARG0(arg); simp_ff((Obj)p1,&t); p1 = (P)t;
+	p2 = (P)ARG1(arg); simp_ff((Obj)p2,&t); p2 = (P)t;
+	d1 = getdeg(VR(p1),p1); up1 = W_UMALLOC(d1); ptosfum(p1,up1);
+	d2 = getdeg(VR(p2),p2); up2 = W_UMALLOC(d2); ptosfum(p2,up2);
+	m = W_UMALLOC(d2);
+	minipolysf(up1,up2,m);
+	sfumtop(VR(p2),m,&p1);
+	sfptop(p1,rp);
 }
 
 void Pptosfp(arg,rp)
