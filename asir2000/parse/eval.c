@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.37 2004/11/22 02:26:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.38 2004/11/22 04:11:36 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -223,7 +223,9 @@ pointer eval(FNODE f)
 				error("-- : not implemented yet");
 			break;
 		case I_PVAR:
-			pv = (unsigned int)FA0(f); ind = (NODE)FA1(f); GETPV(pv,a); 
+			pv = (unsigned int)FA0(f);
+			ind = (NODE)FA1(f);
+			GETPV(pv,a); 
 			if ( !ind )
 				val = a;
 			else {
@@ -691,7 +693,7 @@ pointer bevalf(FUNC f,NODE a)
 	pointer val;
 	int i,n;
 	NODE tn,sn;
-    VS pvs;
+    VS pvs,prev_mpvs;
 	char errbuf[BUFSIZ];
 
 	if ( f->id == A_UNDEF ) {
@@ -743,7 +745,13 @@ pointer bevalf(FUNC f,NODE a)
 			for ( tn = f->f.usrf->args, sn = a; 
 				sn; tn = NEXT(tn), sn = NEXT(sn) )
 				ASSPV((int)FA0((FNODE)BDY(tn)),BDY(sn));
-			val = evalstat((SNODE)BDY(f->f.usrf)); 
+			if ( f->f.usrf->module ) {
+				prev_mpvs = MPVS;
+				MPVS = f->f.usrf->module->pvs;
+				val = evalstat((SNODE)BDY(f->f.usrf)); 
+				MPVS = prev_mpvs;
+			} else
+				val = evalstat((SNODE)BDY(f->f.usrf)); 
 			f_return = f_break = f_continue = 0; poppvs(); 
 			break;
 		case A_PURE:
