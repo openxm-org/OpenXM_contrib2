@@ -45,25 +45,16 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.3 2000/08/21 08:31:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.4 2000/08/22 05:04:27 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
-#if defined(THINK_C)
-#include <string.h>
-#include        <StandardFile.h>
-#include        <Windows.h>
-#include        <OSUtils.h>
-#include        <ToolUtils.h>
-#else
+
 #if defined(VISUAL)
 #include <string.h>
 #include <fcntl.h>
-#if defined(GO32)
-#include <unistd.h>
-#endif
 #include <sys/stat.h>
-#else
+#else /* VISUAL */
 #if defined(_PA_RISC1_1) || defined(SYSV) || defined(__SVR4)
 #include <unistd.h>
 #include <string.h>
@@ -73,7 +64,6 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#endif
 #endif
 
 #if defined(linux)
@@ -91,41 +81,6 @@ char *ASIRLOADPATH[32];
 
 void encrypt_file(char *,char *);
 void decrypt_file(char *,char *);
-
-#if defined(THINK_C)
-void searchasirpath(char *,char **);
-void loadasirfile(char *);
-
-short initvol;
-
-void initVol();
-short getVol();
-void setDir(short);
-void resetDir();
-
-void initVol() {
-	char buf[BUFSIZ];
-	
-	GetVol((StringPtr)buf,&initvol);
-}
-
-short getVol() {
-	short vol;
-	char buf[BUFSIZ];
-	
-	GetVol((StringPtr)buf,&vol);
-	return vol;
-}
-
-void setDir(short vol)
-{
-	SetVol(0,vol);
-}
-
-void resetDir() {
-	SetVol(0,initvol);
-}
-#endif
 
 #if defined(VISUAL)
 #define ENVDELIM ';'
@@ -192,7 +147,7 @@ char **pathp;
 	char **p;
 	char *q;
 	int l;
-#if !defined(THINK_C) && !defined(VISUAL)
+#if !defined(VISUAL)
 	struct stat sbuf;
 	
 	if ( (name[0] == '/') || ( name[0] == '.') || strchr(name,':')
@@ -219,7 +174,7 @@ char **pathp;
 		}
 		*pathp = 0;
 	}
-#elif defined(VISUAL)
+#else
 	if ( (name[0] == '/') || ( name[0] == '.') || strchr(name,':')
 		|| !ASIRLOADPATH[0] )
 		*pathp = name;
@@ -234,26 +189,10 @@ char **pathp;
 		}
 		*pathp = 0;
 	}
-#else
-	if ( (name[0] == '/') || ( name[0] == '.') || !ASIRLOADPATH[0] )
-		*pathp = name;
-	else {
-		for ( p = ASIRLOADPATH; *p; p++ ) {
-			l = strlen(*p)+strlen(name)+2;
-			q = (char *)ALLOCA(l); sprintf(q,"%s/%s",*p,name);
-			*pathp = (char *)MALLOC(l); strcpy(*pathp,q);
-			return;
-		}
-		*pathp = 0;
-	}
 #endif
 }
 
-#if defined(THINK_C)
-#define DELIM ':'
-#elif defined(VISUAL)
 #define DELIM '/'
-#endif
 
 void Eungetc(int,FILE *);
 
@@ -263,62 +202,76 @@ char *name0;
 	FILE *in;
 	IN t;
 	extern char cppname[];
-#if defined(THINK_C) || defined(VISUAL)
-	char tname[BUFSIZ],dname[BUFSIZ],ibuf1[BUFSIZ],ibuf2[BUFSIZ];
+#if defined(VISUAL)
+	char ibuf1[BUFSIZ],ibuf2[BUFSIZ];
 	int ac;
-#if defined(__MWERKS__)
-	char *av[64];
-#else
 	char *av[BUFSIZ];
-#endif
 	char *p,*c;
 	FILE *fp;
-	char name[BUFSIZ],tname0[BUFSIZ];
+	char dname[BUFSIZ],tname0[BUFSIZ];
+	char *name,*tname;
 	int encoded;
+	static char prefix[BUFSIZ];
+	int process_id();
+	char CppExe[BUFSIZ];
+	char nbuf[BUFSIZ],tnbuf[BUFSIZ];
+	STRING rootdir;
 
-#if defined(VISUAL)
+	/* create the unique prefix */
+	if ( !prefix[0] )
+		sprintf(prefix,"asir%d",process_id());
+
 	fp = fopen(name0,"rb");
 	if ( getc(fp) == 0xff ) {
 		/* encoded file */
 		fclose(fp);
-		sprintf(name,"%s.$$$",name0);	
+		name = tempnam(NULL,prefix);
 		decrypt_file(name0,name);
+		/* the file 'name' created */
 		encoded = 1;
 	} else {
 		fclose(fp);
-		strcpy(name,name0);
+		name = name0;
 		encoded = 0;
 	}
-#else
-	strcpy(name,name0);
-#endif
 
 	strcpy(dname,name);
+	av[0] = "cpp";
+	sprintf(nbuf,"\"%s\"",name);
+	av[1] = nbuf; 
+	tname = tempnam(NULL,prefix);
+	sprintf(tnbuf,"\"%s\"",tname);
+	av[2] = tnbuf;
+	sprintf(ibuf1,"-I\"%s\"",asir_libdir);
+	av[3] = ibuf1;
+	av[4] = "-DWINDOWS";
+
+	/* set the include directory */
 	p = strrchr(dname,DELIM);
-	av[0] = "cpp"; av[1] = name; av[2] = tname;
-	sprintf(ibuf1,"-I%s",asir_libdir); av[3] = ibuf1; av[4] = "-DWINDOWS";
 	if ( !p ) {
-		sprintf(tname,"%s.___",name); av[5] = 0; ac = 5;
+		av[5] = 0; ac = 5;
 	} else {
-		*p++ = 0;
-#if defined(VISUAL)
-		if ( c = strchr(dname,':') ) {
-			*c = 0;
-			sprintf(tname,"%s:%s%c%s.___",dname,c+1,DELIM,p);
-			*c = ':';
-		} else
-			
-#endif
-		sprintf(tname,"%s%c%s.___",dname,DELIM,p);
-		sprintf(ibuf2,"-I%s",dname); av[5] = ibuf2; av[6] = 0; ac = 6;
+		*p = 0;
+		sprintf(ibuf2,"-I\"%s\"",dname);
+		av[5] = ibuf2;
+		av[6] = 0; ac = 6;
 	}
-	cpp_main(ac,av);
+//	cpp_main(ac,av);
+	Pget_rootdir(&rootdir);
+	sprintf(CppExe,"%s\\bin\\cpp.exe",BDY(rootdir));
+	call_exe(CppExe,av);
+			
+	/* the file tname created */
 	if ( encoded ) {
-		unlink(name);
-		strcpy(tname0,tname);
-		sprintf(tname,"%s.###",tname0);
+		unlink(name); free(name);
+
+		strcpy(tname0,tname); free(tname);
+		tname = tempnam(NULL,prefix);
+
 		encrypt_file(tname0,tname);
+		/* the file tname created */
 		unlink(tname0);
+
 		in = fopen(tname,"rb");
 	} else
 		in = fopen(tname,"r");
@@ -327,12 +280,9 @@ char *name0;
 		error("load : failed");
 	}
 	t = (IN)MALLOC(sizeof(struct oIN));
-	t->name = (char *)MALLOC(strlen(name)+1); strcpy(t->name,name);
-	t->tname = (char *)MALLOC(strlen(tname)+1); strcpy(t->tname,tname);
+	t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
+	t->tname = (char *)MALLOC(strlen(tname)+1); strcpy(t->tname,tname); free(tname);
 	t->encoded = encoded;
-#if defined(THINK_C)
-	t->vol = getVol(); 
-#endif
 #else
 	char com[BUFSIZ];
 

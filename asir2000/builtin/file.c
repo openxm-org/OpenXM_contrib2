@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.7 2000/11/08 06:21:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.8 2000/11/08 08:44:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,6 +57,7 @@
 
 #if defined(VISUAL)
 #include <windows.h>
+#include <process.h>
 /* #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\WinECgen\\1.00.000" */
 #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\FSEcParamGen\\V1.0L10"
 #define ASIR_KEYNAME "SoftWare\\Fujitsu\\Asir\\1999.03.31"
@@ -610,3 +611,17 @@ Q *rp;
 	else
 		*rp = 0;
 }
+
+#if defined(VISUAL)
+int process_id()
+{
+	return GetCurrentProcessId();
+}
+
+void call_exe(name,av)
+char *name;
+char **av;
+{
+	_spawnv(_P_WAIT,name,av);
+}
+#endif
