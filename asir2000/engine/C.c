@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.6 2001/03/14 06:04:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.7 2001/05/28 08:22:01 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -393,6 +393,57 @@ P *f;
 				NEXTDC(dc0,dc);
 				STOQ(i,DEG(dc));
 				STOQ(c[i],q), COEF(dc) = (P)q;
+			}
+		NEXT(dc) = 0;
+		MKP(v,dc0,*f);
+	}
+}
+
+void ptosfum(f,wf)
+P f;
+UM wf;
+{
+	GFS c;
+	int i;
+	DCP dc;
+
+	for ( i = UDEG(f); i >= 0; i-- ) 
+		COEF(wf)[i] = 0;
+
+	for ( dc = DC(f); dc; dc = NEXT(dc) ) {
+		c = (GFS)COEF(dc);
+		if ( c )
+			COEF(wf)[QTOS(DEG(dc))] = FTOIF(CONT(c));
+	}
+	degum(wf,UDEG(f));
+}
+
+void sfumtop(v,w,f)
+V v;
+UM w;
+P *f;
+{
+	int *c;
+	DCP dc,dc0;
+	int i,t;
+	GFS q;
+
+	if ( DEG(w) < 0 )
+		*f = 0;
+	else if ( DEG(w) == 0 ) {
+		t = COEF(w)[0];
+		t = IFTOF(t);
+		MKGFS(t,q);
+		*f = (P)q;
+	} else {
+		for ( i = DEG(w), c = COEF(w), dc0 = 0; i >= 0; i-- ) 
+			if ( c[i] ) {
+				NEXTDC(dc0,dc);
+				STOQ(i,DEG(dc));
+				t = COEF(w)[i];
+				t = IFTOF(t);
+				MKGFS(t,q);
+				COEF(dc) = (P)q;
 			}
 		NEXT(dc) = 0;
 		MKP(v,dc0,*f);

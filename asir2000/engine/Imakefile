@@ -2,7 +2,7 @@
  * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
  * All rights reserved.  
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/Imakefile,v 1.4 2000/12/22 10:03:28 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/Imakefile,v 1.5 2001/03/13 01:10:25 noro Exp $
  */
 #include "../include/Risa.tmpl"
 
@@ -12,7 +12,7 @@ PSRC = P.c PM.c PD.c PDM.c up.c up_lm.c up_gf2n.c up2.c gf2n.c gfpn.c gfs.c
 PUSRC = PU.c PUM.c
 RSRC = R.c RU.c
 FSRC = F.c 
-HSRC = D.c E.c Ebug.c EZ.c H.c M.c NEZ.c
+HSRC = D.c E.c Ebug.c EZ.c H.c M.c NEZ.c Mgfs.c Hgfs.c 
 OSRC = C.c A.c alg.c
 ISRC = p-itv.c f-itv.c d-itv.c pari-mp.c
 
@@ -24,7 +24,7 @@ POBJ = P.o PM.o PD.o PDM.o up.o up_lm.o up_gf2n.o up2.o gf2n.o gfpn.o gfs.o
 PUOBJ = PU.o PUM.o
 ROBJ = R.o RU.o
 FOBJ = F.o 
-HOBJ = D.o E.o Ebug.o EZ.o H.o M.o NEZ.o
+HOBJ = D.o E.o Ebug.o EZ.o H.o M.o NEZ.o Mgfs.o Hgfs.o
 OOBJ = C.o A.o alg.o
 IOBJ = p-itv.o f-itv.o d-itv.o pari-mp.o
 

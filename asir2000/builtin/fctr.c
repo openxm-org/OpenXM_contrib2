@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.4 2001/03/29 09:49:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.5 2001/05/28 08:25:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,6 +54,7 @@ void Pfctr(), Pgcd(), Pgcdz(), Plcm(), Psqfr(), Pufctrhint();
 void Pptozp(), Pcont();
 void Pafctr(), Pagcd();
 void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
+void Psffctr();
 void Pirred_check(), Pnfctr_mod();
 
 struct ftab fctr_tab[] = {
@@ -69,6 +70,7 @@ struct ftab fctr_tab[] = {
 	{"agcd",Pagcd,3},
 	{"modsqfr",Pmodsqfr,2},
 	{"modfctr",Pmodfctr,2},
+	{"sffctr",Psffctr,1},
 #if 0
 	{"ddd",Pddd,2},
 	{"newddd",Pnewddd,2},
@@ -311,6 +313,20 @@ LIST *rp;
 	if ( mod < 0 )
 		error("modfctr : invalid modulus");
 	modfctrp(ARG0(arg),mod,NEWDDD,&dc);
+	if ( !dc ) {
+		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
+	}
+	dcptolist(dc,rp);
+}
+
+void Psffctr(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	DCP dc;
+	int mod;
+
+	fctrsf(ARG0(arg),&dc);
 	if ( !dc ) {
 		NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
 	}

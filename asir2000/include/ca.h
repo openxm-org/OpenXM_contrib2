@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.13 2001/04/20 02:34:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.14 2001/06/07 04:54:41 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -676,6 +676,11 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define C(p) ((p)->c)
 #define ITOS(p) (((unsigned int)(p))&0x7fffffff)
 #define STOI(i) ((P)((unsigned int)(i)|0x80000000))
+
+/* immediate GFS representation */
+
+#define IFTOF(p) ((int)(((unsigned int)(p))&0x7fffffff))
+#define FTOIF(i) ((int)(((unsigned int)(i)|0x80000000)))
 
 struct cdl {
 	P c;
