@@ -1,8 +1,9 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.9 2003/03/16 17:43:47 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.10 2003/03/16 18:37:56 ohara Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
 AM_INIT_AUTOMAKE(asir, 20030307)
+AM_MAINTAINER_MODE
 
 AC_CANONICAL_SYSTEM
 
