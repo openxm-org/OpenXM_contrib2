@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.8 2002/08/02 05:34:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.9 2003/03/27 02:59:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -138,7 +138,7 @@ void arf_mul(vl,a,b,r)
 VL vl;
 Obj a,b,*r;
 {
-	int mid;
+	int mid,aid,bid;
 
 	if ( !a && !b )
 		*r = 0;
@@ -150,13 +150,49 @@ Obj a,b,*r;
 			(*(afunc[O_MAT].mul))(vl,a,0,r);
 		else
 			*r = 0;
-	} else if ( OID(a) == OID(b) )
-		(*(afunc[OID(a)].mul))(vl,a,b,r);
-	else if ( (mid = MAX(OID(a),OID(b))) <= O_R || 
-		(mid == O_MAT) || (mid == O_VECT) || (mid == O_DP) )
+	} else if ( (aid = OID(a)) == (bid = OID(b)) )
+		(*(afunc[aid].mul))(vl,a,b,r);
+	else if ( (mid = MAX(aid,bid)) <= O_R )
 		(*afunc[mid].mul)(vl,a,b,r);
-	else
-		notdef(vl,a,b,r);
+	else {
+		switch ( aid ) {
+			case O_N: case O_P:
+				(*afunc[mid].mul)(vl,a,b,r);
+				break;
+			case O_R:
+				/* rat * something; bid > O_R */
+				if ( bid == O_VECT || bid == O_MAT )
+					(*afunc[mid].mul)(vl,a,b,r);
+				else 
+					notdef(vl,a,b,r);
+				break;
+			case O_MAT:
+				if ( bid <= O_R || bid == O_VECT || bid == O_DP )
+					(*afunc[O_MAT].mul)(vl,a,b,r);
+				else
+					notdef(vl,a,b,r);
+				break;
+			case O_VECT:
+				if ( bid <= O_R || bid == O_DP )
+					(*afunc[O_VECT].mul)(vl,a,b,r);
+				else if ( bid == O_MAT )
+					(*afunc[O_MAT].mul)(vl,a,b,r);
+				else
+					notdef(vl,a,b,r);
+				break;
+			case O_DP:
+				if ( bid <= O_P )
+					(*afunc[O_DP].mul)(vl,a,b,r);
+				else if ( bid == O_MAT || bid == O_VECT )
+					(*afunc[bid].mul)(vl,a,b,r);
+				else
+					notdef(vl,a,b,r);
+				break;
+			default:
+					notdef(vl,a,b,r);
+				break;
+		}
+	}
 }
 
 void arf_div(vl,a,b,r)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/vect.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/vect.c,v 1.4 2003/05/20 07:19:41 noro Exp $ 
 */
 #include "ca.h"
 
@@ -102,9 +102,9 @@ Obj a,b,*c;
 {
 	if ( !a || !b )
 		*c = 0;
-	else if ( OID(a) <= O_R )
+	else if ( OID(a) <= O_R || OID(a) == O_DP )
 		mulrvect(vl,a,(VECT)b,(VECT *)c);
-	else if ( OID(b) <= O_R )
+	else if ( OID(b) <= O_R || OID(b) == O_DP )
 		mulrvect(vl,b,(VECT)a,(VECT *)c);
 	else
 		notdef(vl,a,b,c);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.8 2003/03/27 02:59:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.9 2003/05/20 07:19:41 noro Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -127,9 +127,9 @@ Obj a,b,*c;
 				*c = 0;
 				break;
 		}
-	} else if ( OID(a) <= O_R )
+	} else if ( OID(a) <= O_R || OID(a) == O_DP )
 		mulrmat(vl,(Obj)a,(MAT)b,(MAT *)c);
-	else if ( OID(b) <= O_R )
+	else if ( OID(b) <= O_R || OID(b) == O_DP )
 		mulrmat(vl,(Obj)b,(MAT)a,(MAT *)c);
 	else
 		switch ( OID(a) ) {
