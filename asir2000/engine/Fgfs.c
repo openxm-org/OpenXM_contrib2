@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.7 2002/10/30 08:07:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.8 2002/11/01 05:43:35 noro Exp $ */
 
 #include "ca.h"
 
@@ -843,7 +843,7 @@ void mfctrsf_hensel(VL vl,VL rvl,P f,P pp0,P u0,P v0,P lcu,P lcv,P *up)
 	cv = (P *)ALLOCA((n+1)*sizeof(P));
 
 	/* ydy = y^dy */
-	ydy = C_UMALLOC(dy); COEF(ydy)[dy] = 1;
+	ydy = C_UMALLOC(dy); DEG(ydy) = dy; COEF(ydy)[dy] = 1;
 	setmod_gfsn(ydy);
 
 	/* (R[y]/(y^dy))[x,X] */
@@ -980,6 +980,8 @@ void gfsn_univariate_to_sfbm(P f,int dy,BM *r)
 		for ( i = DEG(cy); i >= 0; i-- )
 			COEF(COEF(b)[i])[d] = COEF(cy)[i];
 	}
+	for ( i = 0; i <= dy; i++ )
+		degum(COEF(b)[i],dx);
 	*r = b;
 }
 
@@ -1021,9 +1023,9 @@ void poly_to_gfsn_poly_main(P f,V v,P *r)
 	GFSN g;
 	DCP dc,dct,dc0;
 
-	if ( !f || NUM(f) )
+	if ( !f )
 		*r = f;
-	else if ( VR(f) == v ) {
+	else if ( NUM(f) || VR(f) == v ) {
 		d = getdeg(v,f);
 		u = UMALLOC(d);
 		ptosfum(f,u);		
@@ -1080,3 +1082,26 @@ void gfsn_poly_to_poly_main(P f,V v,P *r)
 		MKP(VR(f),dc0,*r);
 	}
 }
+
+void printsfum(UM f)
+{
+	int i;
+
+	for ( i = DEG(f); i >= 0; i-- ) {
+		printf("+(");
+		printf("%d",IFTOF(COEF(f)[i])); 
+		printf(")*y^%d",i);
+	}
+}
+
+void printsfbm(BM f)
+{
+	int i;
+
+	for ( i = DEG(f); i >= 0; i-- ) {
+		printf("+(");
+		printsfum(COEF(f)[i]); 
+		printf(")*y^%d",i);
+	}
+}
+

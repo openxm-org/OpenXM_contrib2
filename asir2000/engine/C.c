@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.10 2001/06/29 09:08:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/C.c,v 1.11 2001/10/09 01:36:09 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -404,7 +404,8 @@ void ptosfum(P f,UM wf)
 
 	if ( OID(f) == O_N ) {
 		DEG(wf) = 0;
-		COEF(wf)[0] = FTOIF(CONT((GFS)f));
+		ntogfs((Obj)f,&c);
+		COEF(wf)[0] = FTOIF(CONT(c));
 		return;
 	}
 
@@ -412,7 +413,7 @@ void ptosfum(P f,UM wf)
 		COEF(wf)[i] = 0;
 
 	for ( dc = DC(f); dc; dc = NEXT(dc) ) {
-		c = (GFS)COEF(dc);
+		ntogfs((Obj)COEF(dc),&c);
 		if ( c )
 			COEF(wf)[QTOS(DEG(dc))] = FTOIF(CONT(c));
 	}
