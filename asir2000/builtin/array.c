@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.40 2004/12/02 13:53:31 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.41 2004/12/04 09:39:27 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1224,7 +1224,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 			init_eg(&eg_check); init_eg(&eg_intrat);
 			period = F4_INTRAT_PERIOD;
 			for ( q = ONE, count = 0; ; count++ ) {
-				if ( DP_Print )
+				if ( DP_Print > 3 )
 					fprintf(stderr,"o");
 				/* wc = -b mod md */
 				for ( i = 0; i < rank; i++ )
@@ -1278,7 +1278,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 						ret = gensolve_check(mat,*nmmat,*dn,rind,cind);
 						get_eg(&tmp1); add_eg(&eg_check,&tmp0,&tmp1);
 						if ( ret ) {
-							if ( DP_Print ) {
+							if ( DP_Print > 3 ) {
 								fprintf(stderr,"\n");
 								print_eg("INV",&eg_inv);
 								print_eg("MUL",&eg_mul);
