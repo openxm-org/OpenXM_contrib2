@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.6 2001/10/09 01:36:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.7 2003/05/14 06:20:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -232,7 +232,7 @@ void closecurrentinput()
 void resetpvs()
 {
 	if ( !NEXT(asir_infile) ) {
-		PVSS = 0; CPVS = GPVS; nextbp = 0;
+		PVSS = 0; CPVS = GPVS; MPVS = 0; CUR_MODULE = 0; nextbp = 0;
 		if ( EPVS->va ) {
 			bzero((char *)EPVS->va,(int)(EPVS->asize*sizeof(struct oPV))); EPVS->n = 0;
 		}

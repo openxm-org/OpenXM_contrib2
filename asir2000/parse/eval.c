@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.20 2003/02/14 22:29:18 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.21 2003/05/14 06:20:12 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -804,25 +804,29 @@ MODULE searchmodule(char *name)
 	return 0;
 }
 
-void gen_searchf(char *name,FUNC *r)
+void searchuf(char *name,FUNC *r)
 {
-	FUNC val = 0;
 	MODULE mod;
 	char *name0,*dot;
 
+	if ( dot = strchr(name,'.') ) {
+		name0 = (char *)ALLOCA(strlen(name)+1);
+		strcpy(name0,name);
+		dot = strchr(name0,'.');
+		*dot = 0;
+		mod = searchmodule(name0);
+		if ( mod )
+			searchf(mod->usrf_list,dot+1,r);
+	} else
+		searchf(usrf,name,r);
+}
+
+void gen_searchf(char *name,FUNC *r)
+{
+	FUNC val = 0;
+
 	if ( CUR_MODULE )
 		searchf(CUR_MODULE->usrf_list,name,&val);
-	if ( !val ) {
-		if ( dot = strchr(name,'.') ) {
-			name0 = (char *)ALLOCA(strlen(name)+1);
-			strcpy(name0,name);
-			dot = strchr(name0,'.');
-			*dot = 0;
-			mod = searchmodule(name0);
-			if ( mod )
-				searchf(mod->usrf_list,dot+1,&val);
-		}
-	}
 	if ( !val )
 		searchf(sysf,name,&val);
 	if ( !val )
@@ -830,7 +834,7 @@ void gen_searchf(char *name,FUNC *r)
 	if ( !val )
 		searchpf(name,&val);
 	if ( !val )
-		searchf(usrf,name,&val);
+		searchuf(name,&val);
 	if ( !val )
 		appenduf(name,&val);
 	*r = val;
@@ -849,17 +853,35 @@ void searchf(NODE fn,char *name,FUNC *r)
 	*r = 0;
 }
 
+MODULE mkmodule(char *);
+
 void appenduf(char *name,FUNC *r)
 {
 	NODE tn;
 	FUNC f;
+	int len;
+	MODULE mod;
+	char *modname,*fname,*dot;
 
 	f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
-	f->name = name; f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
-	if ( CUR_MODULE ) {
-		MKNODE(tn,f,CUR_MODULE->usrf_list); CUR_MODULE->usrf_list = tn;
+	f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
+	if ( dot = strchr(name,'.') ) {
+		/* undefined function in undefined module */
+		len = dot-name;
+		modname = (char *)MALLOC_ATOMIC(len+1);
+		strncpy(modname,name,len); modname[len] = 0;
+		mod = mkmodule(modname);
+		fname = (char *)MALLOC_ATOMIC(strlen(name)-len+1);
+		strcpy(fname,dot+1);
+		f->name = fname;
+		MKNODE(mod->usrf_list,f,0);
 	} else {
-		MKNODE(tn,f,usrf); usrf = tn;
+		f->name = name; 
+		if ( CUR_MODULE ) {
+			MKNODE(tn,f,CUR_MODULE->usrf_list); CUR_MODULE->usrf_list = tn;
+		} else {
+			MKNODE(tn,f,usrf); usrf = tn;
+		}
 	}
 	*r = f;
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.13 2003/03/07 03:12:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.14 2003/03/07 06:39:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -355,7 +355,7 @@ void setf(int ac,char **av)
 
 	if ( !ac )
 		return;
-	searchf(usrf,av[0],&r);
+	searchuf(av[0],&r);
 	if ( r ) {
 		targetf = r;
 		curline = targetf->f.usrf->startl;
@@ -381,7 +381,7 @@ void setbp(char *p)
 	char *buf,*savp;
 	char *fname;
 	FUNC r;
-	USRF t;
+	USRF uf,t;
 	SNODE *snp = 0;
 	FNODE cond;
 	NODE tn;
@@ -393,8 +393,11 @@ void setbp(char *p)
 	if ( !strcmp(av[0],"at") ) {
 		if ( !targetf )
 			return;
-		n = atoi(av[1]); fname = targetf->f.usrf->fname;
-		for ( tn = usrf; tn; tn = NEXT(tn) ) {
+		n = atoi(av[1]);
+		uf = targetf->f.usrf;
+		fname = uf->fname;
+		tn = uf->module?uf->module->usrf_list:usrf;
+		for ( ; tn; tn = NEXT(tn) ) {
 			r = (FUNC)BDY(tn); t = r->f.usrf;
 			if ( t && t->fname && !strcmp(t->fname,fname) 
 				&& ( t->startl <= n ) && ( n <= t->endl ) )
@@ -408,7 +411,7 @@ void setbp(char *p)
 		}
 		at = 1; searchsn(&BDY(t),n,&snp);
 	} else if ( !strcmp(av[0],"in") ) {
-		searchf(usrf,av[1],&r);
+		searchuf(av[1],&r);
 		if ( !r ) {
 			fprintf(stderr,"%s() : no such function\n",av[1]);
 			return;
@@ -494,7 +497,7 @@ void settp(char *p)
 		}
 		at = 1; searchsn(&BDY(t),n,&snp);
 	} else if ( !strcmp(av[0],"in") ) {
-		searchf(usrf,av[1],&r);
+		searchuf(av[1],&r);
 		if ( !r ) {
 			fprintf(stderr,"%s() : no such function\n",av[1]);
 			return;
@@ -719,7 +722,7 @@ void println(int ac,char **av,int l)
 	else if ( isdigit(av[0][0]) )
 		ln = atoi(av[0]);
 	else {
-		searchf(usrf,av[0],&r);
+		searchuf(av[0],&r);
 		if ( r && r->id != A_UNDEF ) {
 			targetf = r;
 			ln = r->f.usrf->startl;
