@@ -1,13 +1,13 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/Imakefile,v 1.1.1.1 1999/12/03 07:39:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/Imakefile,v 1.2 2000/03/10 03:05:05 noro Exp $ */
 #include "../include/Risa.tmpl"
 
 SRCS = glob.c parser.c kwd.c parse.y lex.c debug.c\
 	eval.c arith.c function.c load.c util.c\
-	pvar.c struct.c puref.c comp.c main.c id.c xdeb.c  evall.c
+	pvar.c struct.c puref.c comp.c main.c  xdeb.c  evall.c
 
 OBJS = glob.o parser.o kwd.o y.tab.o lex.o debug.o\
 	eval.o arith.o function.o load.o util.o\
-	pvar.o struct.o puref.o comp.o id.o xdeb.o evall.o
+	pvar.o struct.o puref.o comp.o xdeb.o evall.o
 
 HEADERS = comp.h cpp.h parse.h w_stdio.h
 
