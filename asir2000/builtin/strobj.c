@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.32 2004/03/09 07:18:26 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.33 2004/03/09 07:25:35 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -384,6 +384,11 @@ void Pquotetotex_env(NODE arg,Obj *rp)
 		NEXT(n) = 0;
 		MKLIST(l,n0);
 		*rp = (Obj)l;
+	} else if ( ac == 1 && !ARG0(arg) ) {
+		/* set to default */
+		for ( i = 0; qtot_env[i].name; i++ )
+			qtot_env[i].value = 0;
+		*rp = 0;
 	} else if ( ac == 1 || ac == 2 ) {
 		asir_assert(ARG0(arg),O_STR,"quotetotex_env");
 		name = BDY((STRING)ARG0(arg));

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.29 2004/02/09 08:23:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.30 2004/03/05 02:26:52 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1671,6 +1671,8 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 	int length,nv,row,i,j;
 	int **newm,**oldm;
 	struct order_spec *new;
+	int onv,nnv,nlen,olen,owlen;
+	struct weight_or_block *owb,*nwb;
 
 	*newp = new = (struct order_spec *)MALLOC(sizeof(struct order_spec));
 	switch ( old->id ) {
@@ -1720,6 +1722,46 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 			}
 			new->id = 2; new->nv = nv+1;
 			new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
+			break;
+		case 3:
+			onv = old->nv;
+			nnv = onv+1;
+			olen = old->ord.composite.length;
+			nlen = olen+1;
+			owb = old->ord.composite.w_or_b;
+			nwb = (struct weight_or_block *)
+				MALLOC(nlen*sizeof(struct weight_or_block));
+			for ( i = 0; i < olen; i++ ) {
+				nwb[i].type = owb[i].type;
+				switch ( owb[i].type ) {
+					case IS_DENSE_WEIGHT:
+						owlen = owb[i].length;
+						nwb[i].length = owlen+1;
+						nwb[i].body.dense_weight = (int *)MALLOC((owlen+1)*sizeof(int));
+						for ( j = 0; j < owlen; j++ )
+							nwb[i].body.dense_weight[j] = owb[i].body.dense_weight[j];
+						nwb[i].body.dense_weight[owlen] = 0;
+						break;
+					case IS_SPARSE_WEIGHT:
+						nwb[i].length = owb[i].length;
+						nwb[i].body.sparse_weight = owb[i].body.sparse_weight;
+						break;
+					case IS_BLOCK:
+						nwb[i].length = owb[i].length;
+						nwb[i].body.block = owb[i].body.block;
+						break;
+				}
+			}
+			nwb[i].type = IS_SPARSE_WEIGHT;
+			nwb[i].body.sparse_weight = 
+				(struct sparse_weight *)MALLOC(sizeof(struct sparse_weight));
+			nwb[i].body.sparse_weight[0].pos = onv;
+			nwb[i].body.sparse_weight[0].value = 1;
+			new->id = 3;
+			new->nv = nnv;
+			new->ord.composite.length = nlen;
+			new->ord.composite.w_or_b = nwb;
+			print_composite_order_spec(new);
 			break;
 		default:
 			error("homogenize_order : invalid input");
