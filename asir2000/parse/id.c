@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM/src/asir99/parse/id.c,v 1.1.1.1 1999/11/10 08:12:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/id.c,v 1.1.1.1 1999/12/03 07:39:12 noro Exp $ */
 #include <stdio.h>
 
 static table1(),namemain(),host(),cgen(),instruction();
@@ -136,16 +136,29 @@ check_key()
 			return;
 		}
 	}
-	fprintf(stderr,"Incorrect key file : \"%s\".\n",key_file);
+	fprintf(stderr,"Key for this machine not found in \"%s\".\n",key_file);
 	instruction();
 }
 
 static instruction()
 {
 	unsigned int id;
+	extern char *asir_libdir;
 
 	host(&id);
-	fprintf(stderr,"ID for this machine is %08x.\n",id);
-	fprintf(stderr,"See the file ASIR_INSTALL to get the correct key.\n");
+	fprintf(stderr,
+"\nYou need a key for each machine on which you want to run Asir.
+In order to get the key, send an e-mail consisting of the following
+single line to risa@sec.flab.fujitsu.co.jp.
+
+ASIR %08x
+
+After a while, an e-mail will be returned containing only one line like
+
+YYYYYYYY YYYYYYYY YYYYYYYY
+
+Create '%s/asir_key'
+if necessary and append the returned string to the file.\n",
+id,asir_libdir,asir_libdir);
 	ExitAsir();
 }
