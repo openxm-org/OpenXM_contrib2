@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.41 2004/03/12 02:06:48 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.42 2004/03/12 02:15:23 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -336,7 +336,10 @@ int register_conv_rule(Obj arg)
 
 int register_conv_func(Obj arg)
 {
-	if ( OID(arg) == O_P && (int)(VR((P)arg))->attr == V_SR ) {
+	if ( !arg ) {
+		convfunc = 0;
+		return 1;
+	} else if ( OID(arg) == O_P && (int)(VR((P)arg))->attr == V_SR ) {
 		convfunc = (FUNC)(VR((P)arg)->priv);
 		/* f must be a function which takes single argument */
 		return 1;
@@ -410,8 +413,10 @@ void Pquotetotex_env(NODE arg,Obj *rp)
 		*rp = (Obj)l;
 	} else if ( ac == 1 && !ARG0(arg) ) {
 		/* set to default */
-		for ( i = 0; qtot_env[i].name; i++ )
+		for ( i = 0; qtot_env[i].name; i++ ) {
+			(qtot_env[i].reg)(0);
 			qtot_env[i].value = 0;
+		}
 		*rp = 0;
 	} else if ( ac == 1 || ac == 2 ) {
 		asir_assert(ARG0(arg),O_STR,"quotetotex_env");
