@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.31 2004/02/09 08:23:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.32 2004/04/30 08:25:38 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -454,7 +454,6 @@ extern NODE PVSS;
 pointer evalf(FUNC f,FNODE a,FNODE opt)
 {
 	LIST args;
-	OPTLIST optlist;
 	pointer val;
 	int i,n,level;
 	NODE tn,sn,opts,opt1,dmy;
@@ -495,12 +494,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 				(*f->f.binf)(&val);
 			} else {
 				args = (LIST)eval(a);
-				if ( opts ) {
-					NEWOPTLIST(optlist);
-					BDY(optlist) = opts;
-					appendtonode(BDY(args),(pointer)optlist,&dmy);
-					if ( !BDY(args) ) BDY(args) = dmy;
-				}
+				current_option = opts;
 				cur_binf = f;
 				(*f->f.binf)(args?BDY(args):0,&val);
 			}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.20 2004/05/13 12:12:43 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.21 2004/05/13 14:02:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -341,7 +341,7 @@ NODE arg;
 Obj *rp;
 {
 	Q t;
-    NODE opt,tt,p;
+    NODE tt,p;
     NODE n,n0;
     char *key;
 	P pp;
@@ -351,9 +351,8 @@ Obj *rp;
 	asir_assert(ARG0(arg),O_P,"ptozp");
 
     /* analyze the option */
-    if ( argc(arg) == 2 && OID(ARG1(arg)) == O_OPTLIST ) {
-      opt = BDY((OPTLIST)ARG1(arg));
-      for ( tt = opt; tt; tt = NEXT(tt) ) {
+    if ( current_option ) {
+      for ( tt = current_option; tt; tt = NEXT(tt) ) {
         p = BDY((LIST)BDY(tt));
         key = BDY((STRING)BDY(p));
         /*  value = (Obj)BDY(NEXT(p)); */

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.47 2004/02/25 06:43:52 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.48 2004/02/27 09:13:04 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -100,7 +100,7 @@ int do_server_in_X11;
 Obj LastVal;
 char LastError[BUFSIZ];
 int timer_is_set;
-
+NODE current_option;
 
 struct oV oVAR[] = {
 	{"x",0,0}, {"y",0,0}, {"z",0,0}, {"u",0,0},

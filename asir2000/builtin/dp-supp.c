@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.34 2004/04/22 07:52:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.35 2004/05/14 06:02:54 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1565,7 +1565,6 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 		w_or_b[n].body.block.order = 0;
 		spec->ord.composite.length = n+1;
 	}
-	if ( 1 ) print_composite_order_spec(spec);
 }
 
 /* module order spec */

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.51 2004/04/30 08:25:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.52 2004/05/14 06:02:54 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -195,7 +195,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_gr_print",Pdp_gr_print,-1},
 
 	/* converters */
-	{"dp_ptod",Pdp_ptod,2},
+	{"dp_ptod",Pdp_ptod,-2},
 	{"dp_dtop",Pdp_dtop,2},
 	{"dp_homo",Pdp_homo,1},
 	{"dp_dehomo",Pdp_dehomo,1},
@@ -205,7 +205,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_mdtod",Pdp_mdtod,1},
 	{"dp_mod",Pdp_mod,3},
 	{"dp_rat",Pdp_rat,1},
-	{"dp_ltod",Pdp_ltod,2},
+	{"dp_ltod",Pdp_ltod,-2},
 
 	/* criteria */
 	{"dp_cri1",Pdp_cri1,2},
@@ -442,8 +442,8 @@ Obj *rp;
 	if ( !arg )
 		*rp = dp_current_spec->obj;
 	else {
-		if ( ARG0(arg) && OID(ARG0(arg)) == O_OPTLIST )
-			parse_gr_option(&f,BDY((OPTLIST)ARG0(arg)),&v,&homo,&modular,&spec);
+		if ( current_option )
+			parse_gr_option(&f,current_option,&v,&homo,&modular,&spec);
 		else if ( !create_order_spec(0,(Obj)ARG0(arg),&spec) )
 			error("dp_ord : invalid order specification");
 		initd(spec); *rp = spec->obj;
@@ -454,12 +454,31 @@ void Pdp_ptod(arg,rp)
 NODE arg;
 DP *rp;
 {
+	P p;
 	NODE n;
 	VL vl,tvl;
+	struct oLIST f;
+	int ac;
+	LIST v;
+	Num homo;
+	int modular;
+	struct order_spec *ord;
 
 	asir_assert(ARG0(arg),O_P,"dp_ptod");
-	asir_assert(ARG1(arg),O_LIST,"dp_ptod");
-	for ( vl = 0, n = BDY((LIST)ARG1(arg)); n; n = NEXT(n) ) {
+	p = (P)ARG0(arg);
+	ac = argc(arg);
+	if ( ac == 1 ) {
+		if ( current_option ) {
+			f.id = O_LIST; f.body = mknode(1,p);
+			parse_gr_option(&f,current_option,&v,&homo,&modular,&ord);
+			dp_current_spec = ord;
+		} else
+			error("dp_ptod : invalid argument");
+	} else {
+		asir_assert(ARG1(arg),O_LIST,"dp_ptod");
+		v = (LIST)ARG1(arg);
+	}
+	for ( vl = 0, n = BDY(v); n; n = NEXT(n) ) {
 		if ( !vl ) {
 			NEWVL(vl); tvl = vl;
 		} else {
@@ -469,7 +488,7 @@ DP *rp;
 	}
 	if ( vl )
 		NEXT(tvl) = 0;
-	ptod(CO,vl,(P)ARG0(arg),rp);
+	ptod(CO,vl,p,rp);
 }
 
 void Pdp_ltod(arg,rp)
@@ -478,14 +497,27 @@ DPV *rp;
 {
 	NODE n;
 	VL vl,tvl;
-	int sugar,i,len;
+	LIST f,v;
+	int sugar,i,len,ac,modular;
+	Num homo;
+	struct order_spec *ord;
 	DP *e;
 	NODE nd,t;
 
+	ac = argc(arg);
 	asir_assert(ARG0(arg),O_LIST,"dp_ptod");
-	nd = BDY((LIST)ARG0(arg));
-	asir_assert(ARG1(arg),O_LIST,"dp_ptod");
-	for ( vl = 0, n = BDY((LIST)ARG1(arg)); n; n = NEXT(n) ) {
+	f = (LIST)ARG0(arg);
+	if ( ac == 1 ) {
+		if ( current_option ) {
+			parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
+			dp_current_spec = ord;
+		} else
+			error("dp_ltod : invalid argument");
+	} else {
+		asir_assert(ARG1(arg),O_LIST,"dp_ptod");
+		v = (LIST)ARG1(arg);
+	}
+	for ( vl = 0, n = BDY(v); n; n = NEXT(n) ) {
 		if ( !vl ) {
 			NEWVL(vl); tvl = vl;
 		} else {
@@ -495,6 +527,8 @@ DPV *rp;
 	}
 	if ( vl )
 		NEXT(tvl) = 0;
+
+	nd = BDY(f);
 	len = length(nd);
 	e = (DP *)MALLOC(len*sizeof(DP));
 	sugar = 0;
@@ -1142,8 +1176,8 @@ Obj *rp;
 		n = mknode(1,f); MKLIST(l,n); f = l;
 		is_list = 0;
 	}
-	if ( argc(arg) == 2 && OID(ARG1(arg)) == O_OPTLIST )
-		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	if ( current_option )
+		parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
 	else
 		ord = dp_current_spec;
 	initiallist = dp_initial_term(f,ord);		
@@ -1170,8 +1204,8 @@ Obj *rp;
 		n = mknode(1,f); MKLIST(l,n); f = l;
 		is_list = 0;
 	}
-	if ( argc(arg) == 2 && OID(ARG1(arg)) == O_OPTLIST )
-		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	if ( current_option )
+		parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
 	else
 		ord = dp_current_spec;
 	ordlist = dp_order(f,ord);		
@@ -1562,7 +1596,7 @@ LIST *rp;
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	if ( argc(arg) == 5 ) {
+	if ( (ac = argc(arg)) == 5 ) {
 		asir_assert(ARG1(arg),O_LIST,"dp_gr_main");
 		asir_assert(ARG2(arg),O_N,"dp_gr_main");
 		asir_assert(ARG3(arg),O_N,"dp_gr_main");
@@ -1576,8 +1610,8 @@ LIST *rp;
 		else
 			modular = QTOS(m);
 		create_order_spec(0,ARG4(arg),&ord);
-	} else if ( (ac=argc(arg)) == 2 && OID(ARG1(arg)) == O_OPTLIST )
-		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	} else if ( current_option )
+		parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
 	else if ( ac == 1 )
 		parse_gr_option(f,0,&v,&homo,&modular,&ord);
 	else
@@ -1874,7 +1908,7 @@ LIST *rp;
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	if ( argc(arg) == 5 ) {	
+	if ( (ac = argc(arg)) == 5 ) {	
 		asir_assert(ARG1(arg),O_LIST,"dp_weyl_gr_main");
 		asir_assert(ARG2(arg),O_N,"dp_weyl_gr_main");
 		asir_assert(ARG3(arg),O_N,"dp_weyl_gr_main");
@@ -1888,8 +1922,8 @@ LIST *rp;
 		else
 			modular = QTOS(m);
 		create_order_spec(0,ARG4(arg),&ord);
-	} else if (  (ac=argc(arg)) == 2 && OID(ARG1(arg)) == O_OPTLIST )
-		parse_gr_option(f,BDY((OPTLIST)ARG1(arg)),&v,&homo,&modular,&ord);
+	} else if ( current_option )
+		parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
 	else if ( ac == 1 )
 		parse_gr_option(f,0,&v,&homo,&modular,&ord);
 	else
