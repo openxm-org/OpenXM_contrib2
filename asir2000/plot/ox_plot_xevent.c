@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.14 2002/01/30 08:31:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.15 2002/07/11 03:34:34 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1218,6 +1218,28 @@ static int sm_count(struct sm_btree *rootp)
   return (1+sm_count(rootp->left)+sm_count(rootp->right));
 }
 
+static int setTableOfxcolorForPS(struct sm_btree *rootp,
+                                 struct xcolorForPS *table,int k,int size)
+{
+  int m;
+  m = k;
+  if (rootp == NULL) return;
+  if (k >= size) {
+    warning(Can,"internal error of setTableOfxcolorForPS");
+  }
+  if (rootp->left != NULL) {
+    m = setTableOfxcolorForPS(rootp->left,table,k,size);
+  }
+  
+  (table[m]).pixel = rootp->p;
+  m++;
+  if (rootp->right != NULL) {
+    m = setTableOfxcolorForPS(rootp->right,table,m,size);
+  }
+  return m;
+}
+
+
 static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
                                     struct xcolorForPS **tableOfxcolorForPS) 
 {
@@ -1225,6 +1247,12 @@ static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
   int size;
   struct sm_btree root;
   struct xcolorForPS *table;
+  XStandardColormap scm;
+  Colormap cm;
+  XColor color;
+  XColor white;
+  int screen,i;
+
   root.p = 0;
   root.left = NULL; root.right=NULL;
   /* get color size */
@@ -1241,8 +1269,50 @@ static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
 	return 0;
   }
   /* Set rgb values standing for the pixel values.
-	 Not implemented.
   */
+  if (setTableOfxcolorForPS(&root,table,0,size) != size) {
+	warning(Can,"internal error.");
+	return ;
+  }
+
+  screen = DefaultScreen(display);
+  cm = DefaultColormap(display,screen);
+  /*  BUG: it does not work.
+  if (!XGetStandardColormap(display,RootWindow(display,DefaultScreen(display)),&scm,XA_RGB_DEFAULT_MAP)) {
+	warning(Can,"failed to open the X Standard Colormap.");
+	scm.red_max = 0xffff;
+	scm.green_max = 0xffff;
+	scm.blue_max = 0xffff;
+  }
+  */
+  /* Set by hand. */
+  scm.red_max = 0xffff;
+  scm.green_max = 0xffff;
+  scm.blue_max = 0xffff;
+  XParseColor(display,cm,"White",&white);
+  for (i=0; i<size; i++) {
+    color.pixel=(table[i]).pixel;
+    /*
+    {
+      char s[254];
+      sprintf(s,"%ld",color.pixel);
+      warning(Can,s);
+    }
+    */
+    XQueryColor(display,cm,&color);
+    (table[i]).r = ((double) color.red)/((double) scm.red_max);
+    (table[i]).g = ((double) color.green)/((double) scm.green_max);
+    (table[i]).b = ((double) color.blue)/((double) scm.blue_max);
+    if ((table[i]).r > 1.0) (table[i]).r = 1.0;
+    if ((table[i]).g > 1.0) (table[i]).g = 1.0;
+    if ((table[i]).b > 1.0) (table[i]).b = 1.0;
+    if (color.red == white.red && color.green == white.green
+        && color.blue == white.blue) {
+      (table[i]).print = 0;
+    }else{
+      (table[i]).print = 1;
+    }
+  }
 
   *tableOfxcolorForPS = table;
   return size;

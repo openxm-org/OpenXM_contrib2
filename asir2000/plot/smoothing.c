@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.5 2001/04/07 10:53:15 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.6 2002/07/11 03:34:34 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -134,21 +134,22 @@ generatePS_from_image(FILE *fp,XImage *image,int xsize, int ysize,
   polyLine_outputProlog(0,0,Xsize,Ysize);
   switch(Strategy_generate_PS) {
   default:
-	fprintf(Fp,"%% debug info : colorSize=%d\n",colorSize);
-	for (c=0; c<colorSize; c++) {
-	  /* Set color by looking at tableOfxcolorForPS.
-         It has not yet been implemented.
+    fprintf(Fp,"%% debug info : colorSize=%d\n",colorSize);
+    for (c=0; c<colorSize; c++) {
+      /* Set color by looking at tableOfxcolorForPS.
       */
-	  for (x=0; x<Xsize; x++) {
-		for (y=0; y<Ysize; y++) {
-		  if ((int) XGetPixel(image,x,y) == color[c]){
-			fprintf(Fp," %d %d ", translateX(x),translateY(y) );
-			fprintf(Fp," ifplot_putpixel\n");
-		  }
-		}
-	  }
-	}
-	break;
+      fprintf(Fp,"%f %f %f setrgbcolor \n",(tableOfxcolorForPS[c]).r,(tableOfxcolorForPS[c]).g,(tableOfxcolorForPS[c]).b);
+      for (x=0; x<Xsize; x++) {
+        for (y=0; y<Ysize; y++) {
+          if ((tableOfxcolorForPS[c]).print &&
+              XGetPixel(image,x,y) == (tableOfxcolorForPS[c]).pixel){
+            fprintf(Fp," %d %d ", translateX(x),translateY(y) );
+            fprintf(Fp," ifplot_putpixel\n");
+          }
+        }
+      }
+    }
+    break;
   }
   polyLine_pline(can);
   polyLine_outputEpilog();
