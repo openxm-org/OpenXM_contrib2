@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.21 2002/08/02 02:28:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.22 2002/08/02 08:59:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,6 +54,13 @@
 #include "cursor.h"
 #include <X11/Xaw/MenuButton.h>
 #include <X11/Xaw/Paned.h>
+
+static Atom wm_delete_window;
+
+static void quit(Widget w, XEvent *ev, String *params,Cardinal *nparams)
+{
+    XBell(display,0);
+}
 
 /* XXX : these lines are in plotg.c, but ld says they are not defined */
 #if __DARWIN__
@@ -490,6 +497,7 @@ char *s;
 	create_popup(can->shell,"warning",s,&warnshell,&warndialog);
 	XawDialogAddButton(warndialog,"dismiss",popdown_warning,warnshell);
 	XtPopup(warnshell,XtGrabNone);
+	XSetWMProtocols(display,XtWindow(warnshell),&wm_delete_window,1);
 }
 
 void popdown_warning(w,client,call) 
@@ -512,6 +520,7 @@ XtPointer calldata;
 	create_popup(can->shell,"formula",buf,&fshell,&fdialog);
 	XawDialogAddButton(fdialog,"dismiss",popdown_formula,w);
 	XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
+	XSetWMProtocols(display,XtWindow(fshell),&wm_delete_window,1);
 }
 
 void popdown_formula(w,fbutton,call) 
@@ -632,7 +641,7 @@ struct canvas *can;
 	if ( can->mode != MODE_IFPLOT || !qpcheck((Obj)can->formula) )
 		XtSetSensitive(precise,False);
 	XtPopup(can->shell,XtGrabNone);
-
+	XSetWMProtocols(display,XtWindow(can->shell),&wm_delete_window,1);
 	window = can->window = XtWindow(canvas);
 	pix = can->pix = XCreatePixmap(display,window,width,height,depth);
 	XFillRectangle(display,pix,clearGC,0,0,width,height);
@@ -709,6 +718,11 @@ char **argv;
 	scrn = DefaultScreen(display);
 	depth = DefaultDepth(display,scrn);
 	rootwin = RootWindow(display,scrn);
+
+	/* for handling DELETE message */
+	wm_delete_window = XInternAtom(display,"WM_DELETE_WINDOW",False);
+	XtOverrideTranslations(toplevel,
+		XtParseTranslationTable("<Message>WM_PROTOCOLS: quit()"));
 
 	if ( reverse ) {
 		tmp = forePixel; forePixel = backPixel; backPixel = tmp;
@@ -935,6 +949,7 @@ static void print_canvas(w,can,calldata)
   XawDialogAddButton(fdialog,"method",printing_method,w);
   XawDialogAddButton(fdialog,"dismiss",cancel_output_to_file,w);
   XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone); 
+  XSetWMProtocols(display,XtWindow(fshell),&wm_delete_window,1);
 }
 
 static void set_printing_method(Widget w,XtPointer number,XtPointer call_data) {
@@ -969,6 +984,7 @@ static void printing_method(w,can,calldata)
 	XawDialogAddButton(fdialog,Printing_methods[i],set_printing_method,(XtPointer) i);
   }
   XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
+  XSetWMProtocols(display,XtWindow(fshell),&wm_delete_window,1);
 }
 static void print_canvas_to_file(w,can,calldata)
 	 Widget w;
@@ -997,6 +1013,7 @@ static void print_canvas_to_file(w,can,calldata)
   XawDialogAddButton(fdialog,"cancel",cancel_output_to_file,w);
   PrintDialog = fdialog;
   XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
+  XSetWMProtocols(display,XtWindow(fshell),&wm_delete_window,1);
 }
 static void output_to_printer(w,can,calldata)
 	 Widget w;
@@ -1025,6 +1042,7 @@ static void output_to_printer(w,can,calldata)
   XawDialogAddButton(fdialog,"cancel",cancel_output_to_file,w);
   PrintDialog_lp = fdialog;
   XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
+  XSetWMProtocols(display,XtWindow(fshell),&wm_delete_window,1);
 }
 
 static void cancel_output_to_file(w,fbutton,call) 
