@@ -25,10 +25,10 @@ default はそこ).  もし個人的に使用する場合には, 自分が書き込める
 directory $Bを指定して下さい.  以下この directory を TARGETDIR と書きま
 す.
 
-2. pari の install
+2. pari-2.2 の install
 
-% gzip -dc pari.tgz | tar xvf -
-% cd pari
+% gzip -dc pari-2.2.tgz | tar xvf -
+% cd pari-2.2
 % ./Configure --prefix=TARGETDIR
 % make all
 % su                         <-- 必要がある場合

@@ -25,8 +25,8 @@ to '/usr/local'.  In the following the directory is denoted by TARGETDIR.
 
 2. Installation of pari
 
-% gzip -dc pari.tgz | tar xvf -
-% cd pari
+% gzip -dc pari-2.2.tgz | tar xvf -
+% cd pari-2.2
 % ./Configure --prefix=TARGETDIR
 % make all
 % su                         <-- if necessary
