@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.16 2003/03/20 07:06:31 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.17 2003/03/20 07:34:07 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -71,13 +71,15 @@ install-libasir: libasir.a
 	mkdir -p ${DESTDIR}${libdir}
 	${INSTALL_DATA} libasir.a ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
 
-install-openxm: asir${EXEEXT} libasir.a libasir-gc.a
+install-libasir-gc: libasir-gc.a
+	mkdir -p ${DESTDIR}${libdir}
+	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir-gc.a
+
+install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
 	-mkdir -p ${DESTDIR}${bindir}
 	${INSTALL_PROGRAM} asir ${DESTDIR}${bindir}
 	-mkdir -p ${DESTDIR}${asirdir}
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
-	${INSTALL_DATA} libasir.a    ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
-	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir-gc.a
 	-rm -f ${DESTDIR}${bindir}/ox_asir${EXEEXT}
 	(cd ${DESTDIR}${bindir} ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
 	-(cd ${DESTDIR}${asirdir}; \
