@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.27 2002/11/01 05:43:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.28 2002/11/22 07:32:10 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -79,6 +79,7 @@ void gensqfrsfum(UM p,struct oDUM *dc)
 {
 	int n,i,j,d,mod;
 	UM t,s,g,f,f1,b;
+	GFS u,v;
 
 	if ( (n = DEG(p)) == 1 ) {
 		dc[0].f = UMALLOC(DEG(p)); cpyum(p,dc[0].f); dc[0].n = 1;
@@ -117,8 +118,11 @@ void gensqfrsfum(UM p,struct oDUM *dc)
 				break;
 			else {
 				DEG(s) = DEG(t)/mod;
-				for ( j = 0; j <= DEG(t); j++ )
-					COEF(s)[j] = COEF(t)[j*mod];	
+				for ( j = 0; j <= DEG(t); j++ ) {
+					iftogfs(COEF(t)[j*mod],&u);
+					pthrootgfs(u,&v);
+					COEF(s)[j] = v?FTOIF(CONT(v)):0;
+				}
 				cpyum(s,b); d *= mod;
 			}
 		}

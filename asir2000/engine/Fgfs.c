@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.9 2002/11/01 06:47:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Fgfs.c,v 1.10 2002/11/22 07:32:10 noro Exp $ */
 
 #include "ca.h"
 
@@ -556,7 +556,7 @@ void mfctrsfmain(VL vl, P f, DCP *dcp)
 	}
 	pa[0] = f;
 	pa[1] = dfmin;
-	gcdsf_main(vl,pa,2,&gcd);
+	gcdsf(vl,pa,2,&gcd);
 	if ( !NUM(gcd) ) {
 		/* f = gcd * f/gcd */	
 		mfctrsfmain(vl,gcd,&dc1);
