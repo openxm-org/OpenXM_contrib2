@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.13 2003/03/20 02:02:39 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.14 2003/03/20 05:07:59 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -29,7 +29,7 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 bin_PROGRAMS   = asir
 asir_SOURCES   = parse/main.c
 asir_LDADD     = libasir.a libasir-gc.a
-CLEANFILES     = libasir.a libasir-gc.a asir${EXEEXT}
+CLEANFILES     = ${asir_LDADD}
 
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
