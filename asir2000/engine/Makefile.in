@@ -155,6 +155,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 @AMDEP_TRUE@	$(DEPDIR)/lmi.Po $(DEPDIR)/mat.Po $(DEPDIR)/mi.Po \
 @AMDEP_TRUE@	$(DEPDIR)/mt19937.Po $(DEPDIR)/nd.Po \
 @AMDEP_TRUE@	$(DEPDIR)/ndbug.Po $(DEPDIR)/num.Po \
+@AMDEP_TRUE@	$(DEPDIR)/p-itv.Po \
 @AMDEP_TRUE@	$(DEPDIR)/pari.Po $(DEPDIR)/real.Po \
 @AMDEP_TRUE@	$(DEPDIR)/str.Po $(DEPDIR)/ui.Po $(DEPDIR)/up.Po \
 @AMDEP_TRUE@	$(DEPDIR)/up2.Po $(DEPDIR)/up_gf2n.Po \
