@@ -105,7 +105,7 @@ libfunc_a_SOURCES = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c \
                     rat.c reduct.c result.c itvnum.c mattran.c isolv.c \
                     strobj.c subst.c time.c type.c var.c compobj.c \
                     gr.c dp-supp.c gf.c math.c numerical.c ec.c al.c \
-                    batch.c sha1.c user.c
+                    batch.c sha1.c user.c round.c
 
 subdir = builtin
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -124,7 +124,7 @@ am_libfunc_a_OBJECTS = ftab.$(OBJEXT) algnum.$(OBJEXT) array.$(OBJEXT) \
 	type.$(OBJEXT) var.$(OBJEXT) compobj.$(OBJEXT) gr.$(OBJEXT) \
 	dp-supp.$(OBJEXT) gf.$(OBJEXT) math.$(OBJEXT) \
 	numerical.$(OBJEXT) ec.$(OBJEXT) al.$(OBJEXT) batch.$(OBJEXT) \
-	sha1.$(OBJEXT) user.$(OBJEXT)
+	sha1.$(OBJEXT) user.$(OBJEXT) round.$(OBJEXT)
 libfunc_a_OBJECTS = $(am_libfunc_a_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@
@@ -145,10 +145,10 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 @AMDEP_TRUE@	$(DEPDIR)/pdiv.Po $(DEPDIR)/pf.Po $(DEPDIR)/poly.Po \
 @AMDEP_TRUE@	$(DEPDIR)/print.Po $(DEPDIR)/rat.Po \
 @AMDEP_TRUE@	$(DEPDIR)/reduct.Po $(DEPDIR)/result.Po \
-@AMDEP_TRUE@	$(DEPDIR)/sha1.Po $(DEPDIR)/strobj.Po \
-@AMDEP_TRUE@	$(DEPDIR)/subst.Po $(DEPDIR)/time.Po \
-@AMDEP_TRUE@	$(DEPDIR)/type.Po $(DEPDIR)/user.Po \
-@AMDEP_TRUE@	$(DEPDIR)/var.Po
+@AMDEP_TRUE@	$(DEPDIR)/round.Po $(DEPDIR)/sha1.Po \
+@AMDEP_TRUE@	$(DEPDIR)/strobj.Po $(DEPDIR)/subst.Po \
+@AMDEP_TRUE@	$(DEPDIR)/time.Po $(DEPDIR)/type.Po \
+@AMDEP_TRUE@	$(DEPDIR)/user.Po $(DEPDIR)/var.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -217,6 +217,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/rat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/reduct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/result.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/round.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/strobj.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/subst.Po@am__quote@
