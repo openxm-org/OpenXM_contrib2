@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.106 2004/09/21 02:23:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.107 2004/09/21 02:34:12 noro Exp $ */
 
 #include "nd.h"
 
@@ -4634,6 +4634,24 @@ void nd_exec_f4_red_dist()
 
 int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat)
 {
+	int mod,i,j,t;
+	int **wmat;
+
+	/* XXX */
+	mod = 99999989;
+	wmat = (int **)ALLOCA(row*sizeof(int *));
+	for ( i = 0; i < row; i++ ) {
+		wmat[i] = (int *)ALLOCA(col*sizeof(int));
+		for ( j = 0; j < col; j++ ) {
+			if ( mat0[i][j] ) {
+				t = rem(NM(mat0[i][j]),mod);
+				if ( SGN(mat0[i][j]) < 0 ) t = mod-t;
+				wmat[i][j] = t;
+			} else
+				wmat[i][j] = 0;
+		}
+	}
+	nd_gauss_elim_mod(wmat,sugar,row,col,mod,colstat);
 }
 
 int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat)
