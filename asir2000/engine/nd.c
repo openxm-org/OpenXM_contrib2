@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.52 2003/08/27 02:21:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.53 2003/08/29 07:37:30 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1605,11 +1605,9 @@ NODE nd_reduceall(int m,NODE f)
 	for ( n = 0, t = f; t; t = NEXT(t), n++ );
 	ps = (NDV *)ALLOCA(n*sizeof(NDV));
 	bound = (unsigned int **)ALLOCA(n*sizeof(unsigned int *));
-	for ( i = 0, t = f; i < n; i++, t = NEXT(t) ) {
-		ps[i] = (NDV)BDY(t);
-		bound[i] = ndv_compute_bound(ps[i]);
-	}
+	for ( i = 0, t = f; i < n; i++, t = NEXT(t) ) ps[i] = (NDV)BDY(t);
 	qsort(ps,n,sizeof(NDV),(int (*)(const void *,const void *))ndv_compare);
+	for ( i = 0; i < n; i++ ) bound[i] = ndv_compute_bound(ps[i]);
 	base.ps = (NDV *)ALLOCA((n-1)*sizeof(NDV));
 	base.bound = (unsigned int **)ALLOCA((n-1)*sizeof(unsigned int *));
 	base.len = n-1;
