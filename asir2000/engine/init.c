@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.20 2003/05/29 16:45:00 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.21 2003/06/07 16:40:25 saito Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -110,21 +110,21 @@ int paristack = 1<<16;
 
 #if defined(INTERVAL)
 int zerorewrite = 0;
-void (*addnumt[])() = { addq, addreal, addalg, ADDBF, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn };
-void (*subnumt[])() = { subq, subreal, subalg, SUBBF, 0, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn };
-void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, 0, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn };
-void (*divnumt[])() = { divq, divreal, divalg, DIVBF, 0, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn };
-void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, 0, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn };
-void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, 0, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs , chsgngfsn};
-int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, 0, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn };
+void (*addnumt[])() = { addq, addreal, addalg, ADDBF, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
+void (*subnumt[])() = { subq, subreal, subalg, SUBBF, 0, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn, subdalg };
+void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, 0, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn, muldalg };
+void (*divnumt[])() = { divq, divreal, divalg, DIVBF, 0, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn, divdalg };
+void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, 0, pwritvp, pwritvd, 0, pwritvf, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn, pwrdalg };
+void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, 0, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs , chsgngfsn, chsgndalg};
+int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, 0, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn, cmpdalg };
 #else
-void (*addnumt[])() = { addq, addreal, addalg, ADDBF, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn };
-void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn };
-void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn };
-void (*divnumt[])() = { divq, divreal, divalg, DIVBF, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn };
-void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn };
-void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs, chsgngfsn };
-int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn };
+void (*addnumt[])() = { addq, addreal, addalg, ADDBF, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
+void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn, subdalg };
+void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn, muldalg };
+void (*divnumt[])() = { divq, divreal, divalg, DIVBF, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn, divdalg };
+void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn, pwrdalg };
+void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs, chsgngfsn, chsgndalg };
+int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn, cmpdalg };
 #endif
 
 double get_current_time();

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.3 2004/05/14 06:02:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.4 2004/07/13 07:59:54 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -38,6 +38,7 @@ void PRINTTB();
 void PRINTDPV();
 void PRINTFNODE();
 void PRINTBF();
+void PRINTDAlg();
 
 void PRINTEXPR(vl,p)
 VL vl;
@@ -600,6 +601,9 @@ void PRINTNUM(q)
 Num q;
 {
 	char real_format[20];
+	DAlg d;
+	DP nm;
+	Q dn;
 
 	if ( !q ) {
 		PUTS("0");
@@ -820,6 +824,19 @@ Num q;
 			break;
 		case N_GFSN:
 			PRINTUM(BDY((GFSN)q));
+			break;
+		case N_DA:
+			d = (DAlg)q;
+			nm = d->nm;
+			dn = d->dn;
+			if ( SGN((Q)dn) == -1 ) PUTS("-");
+			PUTS("(");
+			PRINTDP(CO,((DAlg)q)->nm);
+			PUTS(")");
+			if ( !UNIN(NM(dn)) ) {
+				PUTS("/");
+				PRINTN(NM(dn));
+			}
 			break;
 	}
 }

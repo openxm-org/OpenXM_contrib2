@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.51 2004/08/18 00:17:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.52 2004/10/06 11:58:52 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,6 +137,7 @@ typedef void * pointer;
 #define N_GFPN 8
 #define N_GFS 9
 #define N_GFSN 10
+#define N_DA 11
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
@@ -250,6 +251,15 @@ typedef struct oGFPN {
 	char pad;
 	struct oUP *body;
 } *GFPN;
+
+typedef struct oDAlg {
+	short id;
+	char nid;
+	char pad;
+	struct oDP *nm;
+	struct oQ *dn;
+} *DAlg;
+
 
 typedef struct oNum {
 	short id;
@@ -588,6 +598,18 @@ struct modorder_spec {
 	int *degree_shift;
 };
 
+typedef struct oNumberField {
+	int n;
+	int dim;
+	VL vl;
+	P *defpoly;
+	DP *mb;
+	DP *ps;
+	struct oDAlg *one;
+	NODE ind;
+	struct order_spec *spec;
+} *NumberField;
+
 /* structure for cputime */
 
 struct oEGT {
@@ -768,6 +790,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWGFMMAT(l) ((l)=(GFMMAT)MALLOC(sizeof(struct oGF2MAT)),OID(l)=O_GFMMAT)
 #define NEWReal(q) ((q)=(Real)MALLOC_ATOMIC(sizeof(struct oReal)),OID(q)=O_N,NID(q)=N_R)
 #define NEWAlg(r) ((r)=(Alg)MALLOC(sizeof(struct oAlg)),OID(r)=O_N,NID(r)=N_A)
+#define NEWDAlg(r) ((r)=(DAlg)MALLOC(sizeof(struct oDAlg)),OID(r)=O_N,NID(r)=N_DA)
 #define NEWBF(q,l) ((q)=(BF)MALLOC_ATOMIC(TRUESIZE(oBF,(l)-1,long)),OID(q)=O_N,NID(q)=N_B)
 #define NEWC(r) ((r)=(C)MALLOC(sizeof(struct oC)),OID(r)=O_N,NID(r)=N_C)
 #define NEWLM(r) ((r)=(LM)MALLOC(sizeof(struct oLM)),OID(r)=O_N,NID(r)=N_LM)
@@ -860,6 +883,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define MKReal(a,b) (!(a)?((b)=0):(NEWReal(b),BDY(b)=(a),(b)))
 #define MKAlg(b,r) \
 (!(b)?((r)=0):NUM(b)?((r)=(Alg)(b)):(NEWAlg(r),BDY(r)=(Obj)(b),(r)))
+#define MKDAlg(dp,den,r) (NEWDAlg(r),(r)->nm = (dp),(r)->dn=(den))
 
 #define IMM_MAX 1073741823
 #define IMM_MIN -1073741823
@@ -1449,6 +1473,14 @@ void divgfsn(GFSN,GFSN,GFSN *);
 void chsgngfsn(GFSN,GFSN *);
 void pwrgfsn(GFSN,Q, GFSN *);
 int cmpgfsn(GFSN,GFSN);
+
+void adddalg(DAlg,DAlg,DAlg *);
+void subdalg(DAlg,DAlg,DAlg *);
+void muldalg(DAlg,DAlg,DAlg *);
+void divdalg(DAlg,DAlg,DAlg *);
+void chsgndalg(DAlg,DAlg *);
+void pwrdalg(DAlg,Q, DAlg *);
+int cmpdalg(DAlg,DAlg);
 
 void addalg(Num,Num,Num *);
 void addbf(Num,Num,Num *);

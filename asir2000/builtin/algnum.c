@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.5 2001/10/09 01:36:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.6 2004/12/01 08:49:42 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,6 +53,7 @@
 void Pdefpoly(), Pnewalg(), Pmainalg(), Palgtorat(), Prattoalg(), Pgetalg();
 void Palg(), Palgv(), Pgetalgtree();
 void Pinvalg_le();
+void Pset_field(),Palgtodalg(),Pdalgtoalg();
 
 void mkalg(P,Alg *);
 int cmpalgp(P,P);
@@ -63,6 +64,9 @@ void ptoalgp(P,P *);
 void clctalg(P,VL *);
 
 struct ftab alg_tab[] = {
+	{"set_field",Pset_field,1},
+	{"algtodalg",Palgtodalg,1},
+	{"dalgtoalg",Pdalgtoalg,1},
 	{"invalg_le",Pinvalg_le,1},
 	{"defpoly",Pdefpoly,1},
 	{"newalg",Pnewalg,1},
@@ -77,6 +81,22 @@ struct ftab alg_tab[] = {
 };
 
 static int UCN,ACNT;
+
+void Pset_field(NODE arg,Q *rp)
+{
+	setfield_dalg(BDY((LIST)ARG0(arg)));
+	*rp = 0;
+}
+
+void Palgtodalg(NODE arg,DAlg *rp)
+{
+	algtodalg((Alg)ARG0(arg),rp);
+}
+
+void Pdalgtoalg(NODE arg,Alg *rp)
+{
+	dalgtoalg((DAlg)ARG0(arg),rp);
+}
 
 void Pnewalg(arg,rp)
 NODE arg;
