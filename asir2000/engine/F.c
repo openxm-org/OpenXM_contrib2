@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.9 2001/07/04 07:19:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.10 2001/10/09 01:36:09 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -160,9 +160,9 @@ void mfctr_wrt_v(VL vl,P f,V v,DCP *dcp)
 	NEWDC(dc0); dc = dc0; COEF(dc) = (P)c; DEG(dc) = ONE; NEXT(dc) = 0;
 	msqfr(vl,p,&dct);
 	for ( ; dct; dct = NEXT(dct) ) {
-		clctv(vl,f,&nvl);
+		clctv(vl,COEF(dct),&nvl);
 		reordvar(nvl,v,&mvl);
-		reorderp(mvl,vl,f,&pmin);
+		reorderp(mvl,vl,COEF(dct),&pmin);
 		pcp(mvl,pmin,&ppmin,&cmin);
 		if ( !NUM(cmin) ) {
 			mfctrmain(mvl,cmin,&dcs);
