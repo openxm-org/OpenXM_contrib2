@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.12 2000/12/15 07:15:18 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/bfct,v 1.13 2000/12/27 07:17:39 noro Exp $
  */
 /* requires 'primdec' */
 
@@ -212,7 +212,7 @@ def generic_bfct(F,V,DV,W)
 	N = length(V);
 	N2 = N*2;
 
-	/* create a term order M in D<x,d> */
+	/* create a term order M in D<x,d> (DRL) */
 	M = newmat(N2,N2);
 	for ( J = 0; J < N2; J++ )
 		M[0][J] = 1;
@@ -244,7 +244,7 @@ def generic_bfct(F,V,DV,W)
 	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
 	
 	/* compute a groebner basis of FH w.r.t. MWH */
-	GH = dp_weyl_gr_main(FH,VDVH,0,0,MWH);
+	GH = dp_weyl_gr_main(FH,VDVH,0,1,MWH);
 
 	/* dehomigenize GH */
 	G = map(subst,GH,h,1);
@@ -259,7 +259,7 @@ def generic_bfct(F,V,DV,W)
 	/* find b(W1*x1*d1+...+WN*xN*dN) in Id(GIN) */
 	for ( I = 0, T = 0; I < N; I++ )
 		T += W[I]*V[I]*DV[I];
-	B = weyl_minipoly(GIN,VDV,M,T);
+	B = weyl_minipoly(GIN,VDV,0,T); /* M represents DRL order */
 	return B;
 }
 
@@ -315,6 +315,35 @@ def bfct(F)
 	return Minipoly;
 }
 
+/* b-function computation via generic_bfct() (experimental) */
+
+def bfct_via_gbfct(F)
+{
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = 0; I < N; I++ )
+		V = cons(D[I][1],V);
+	V = reverse(V);
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [t-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*dt,B);
+	}
+	V1 = cons(t,V); DV1 = cons(dt,DV);
+	W = newvect(N+1);
+	W[0] = 1;
+	R = generic_bfct(B,V1,DV1,W);
+
+	return subst(R,s,-s-1);
+}
+
 def weyl_minipolym(G,V,O,M,V0)
 {
 	N = length(V);
@@ -339,14 +368,18 @@ def weyl_minipolym(G,V,O,M,V0)
 	G = H = [[TT,T]];
 
 	for ( I = 1; ; I++ ) {
+		if ( dp_gr_print() )
+			print(".",2);
 		T = dp_mod(<<I>>,M,[]);
 
 		TT = dp_weyl_nf_mod(GI,dp_weyl_mul_mod(TT,U,M),PS,1,M);
 		H = cons([TT,T],H);
 		L = dp_lnf_mod([TT,T],G,M);
-		if ( !L[0] )
+		if ( !L[0] ) {
+			if ( dp_gr_print() )
+				print("");
 			return dp_dtop(L[1],[t]); /* XXX */
-		else
+		} else
 			G = insert(G,L);
 	}
 }
@@ -377,6 +410,8 @@ def weyl_minipoly(G0,V0,O0,P)
 		LCM = 1;
 
 		for ( J = 1; J <= D; J++ ) {
+			if ( dp_gr_print() )
+				print(".",2);
 			NFPrev = car(NF);
 			NFJ = weyl_nf(GI,
 				dp_weyl_mul(NFP[0],NFPrev[0]),NFP[1]*NFPrev[1],PS);
@@ -384,6 +419,8 @@ def weyl_minipoly(G0,V0,O0,P)
 			NF = cons(NFJ,NF);
 			LCM = ilcm(LCM,NFJ[1]);
 		}
+		if ( dp_gr_print() )
+			print("");
 		U = NF[0][0]*idiv(LCM,NF[0][1]);
 		Coef = [];
 		for ( J = D-1; J >= 0; J-- ) {
