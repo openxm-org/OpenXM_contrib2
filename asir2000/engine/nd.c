@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.124 2005/02/09 07:58:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.125 2005/02/09 08:32:32 noro Exp $ */
 
 #include "nd.h"
 
@@ -5098,7 +5098,7 @@ void nd_det(int mod,MAT f,P *rp)
 	pointer **m;
 	Q mone;
 	P **w;
-	P mp;
+	P mp,r;
 	NDV **dm;
 	NDV *t,*mi,*mj;
 	NDV d,s,mij,mjj;
@@ -5107,6 +5107,8 @@ void nd_det(int mod,MAT f,P *rp)
 	UINT *bound;
 	PGeoBucket bucket;
 	struct order_spec *ord;
+	Q dq,dt,ds;
+	N gn,qn,dn0,nm,dn;
 
 	create_order_spec(0,0,&ord);
 	nd_init_ord(ord);
@@ -5129,6 +5131,28 @@ void nd_det(int mod,MAT f,P *rp)
 			mptop(mp,rp);
 		}
 		return;
+	}
+	
+	if ( !mod ) {
+		w = (P **)almat_pointer(n,n);
+		dq = ONE;
+		for ( i = 0; i < n; i++ ) {
+			dn0 = ONEN;
+			for ( j = 0; j < n; j++ ) {
+				if ( !m[i][j] ) continue;
+				lgp(m[i][j],&nm,&dn);
+				gcdn(dn0,dn,&gn); divsn(dn0,gn,&qn); muln(qn,dn,&dn0);
+			}
+			if ( !UNIN(dn0) ) {
+				NTOQ(dn0,1,ds);
+				for ( j = 0; j < n; j++ )
+					mulp(CO,(P)m[i][j],(P)ds,&w[i][j]);
+				mulq(dq,ds,&dt); dq = dt;
+			} else
+				for ( j = 0; j < n; j++ )
+					w[i][j] = (P)m[i][j];
+		}
+		m = (pointer **)w;
 	}
 
 	for ( i = 0, max = 0; i < n; i++ )
@@ -5212,7 +5236,11 @@ void nd_det(int mod,MAT f,P *rp)
 			ndv_mul_c(mod,d,mod-1);
 		else
 			ndv_mul_c_q(d,mone);
-	*rp = ndvtop(mod,CO,fv,d);
+	r = ndvtop(mod,CO,fv,d);
+	if ( !mod && !UNIQ(dq) )
+		divsp(CO,r,(P)dq,rp);
+	else
+		*rp = r;
 }
 
 ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d)
