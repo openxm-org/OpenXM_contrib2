@@ -839,11 +839,13 @@ get_pty_master()
 	return;
     }
 #ifdef __CYGWIN32__
-    for (i = 0; i < 16; i++) {
-	sprintf (master_tty, "/dev/ptmx");
-	master = open (master_tty, O_RDWR);
-	if (master >= 0) {
-	    sprintf (slave_tty, "/dev/tty%x",i);
+    sprintf (master_tty, "/dev/ptmx");
+    master = open (master_tty, O_RDWR);
+    if (master >= 0) {
+	char *name;
+	name = (char *)ptsname(master);
+	if ( name != 0 ) {
+	    strcpy(slave_tty, name);
 	    goto FOUND;
 	}
     }
