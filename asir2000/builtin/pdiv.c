@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.5 2001/02/21 07:10:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.6 2001/03/29 09:49:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Psdiv(), Psrem(), Ptdiv(), Psqr(), Pinva_mod();
-void Psdiv_gf2n(), Psrem_gf2n();
+void Psdiv_gf2n(), Psrem_gf2n(), Pgcd_gf2n();
 void Psdivm(), Psremm(), Psqrm();
 void Psrem_mod();
 void Pugcd();
@@ -63,6 +63,7 @@ struct ftab pdiv_tab[] = {
 	{"srem",Psrem,-3},
 	{"sdiv_gf2n",Psdiv_gf2n,2},
 	{"srem_gf2n",Psrem_gf2n,2},
+	{"gcd_gf2n",Pgcd_gf2n,2},
 	{"sqr",Psqr,-3},
 	{"tdiv",Ptdiv,-3},
 	{"udiv",Pudiv,2},
@@ -174,6 +175,24 @@ GF2N *rp;
 	else {
 		qrup2(dnd->body,dvr->body,&q,&r);
 		MKGF2N(r,*rp);		
+	}
+}
+
+void Pgcd_gf2n(arg,rp)
+NODE arg;
+GF2N *rp;
+{
+	GF2N p1,p2;
+	UP2 gcd;
+
+	p1 = (GF2N)ARG0(arg); p2 = (GF2N)ARG1(arg);
+	if ( !p1 )
+		*rp = p2;
+	else if ( !p2 )
+		*rp = p1;
+	else {
+		gcdup2(p1->body,p2->body,&gcd);
+		MKGF2N(gcd,*rp);		
 	}
 }
 
