@@ -112,6 +112,92 @@ def jacobi(N,A,W){
 	return 1;
 }
 
+def interval2value(A,Vars){
+
+	B=atl(A)$
+
+	if(length(B)>2){
+		print("bug")$
+		return []$
+	}
+
+	if(length(B)==0){
+		if(A)
+			return [Vars,1]$
+		else
+			return []$
+	}
+	else if(length(B)==1){
+		
+		C=fargs(B[0])$
+		D=vars(C)$
+		E=solve(C,D)$
+
+		if(fop(B[0])==15)
+			return [Vars,E[0][1]+1]$
+		else if(fop(B[0])==11)
+			return [Vars,E[0][1]-1]$
+		else
+			return []$
+	}
+	else{
+
+		C=fargs(B[0])$
+		D=vars(C)$
+		E=solve(C,D)$
+
+		C=fargs(B[1])$
+		D=vars(C)$
+		F=solve(C,D)$
+	
+		return [Vars,(E[0][1]+F[0][1])/2]$
+	}
+
+} 
+
+def fixpointmain(F,Vars){
+
+	RET=[]$
+	for(I=length(Vars)-1;I>=1;I--){
+
+		for(H=[],J=0;J<I;J++)
+			H=cons(Vars[J],H)$
+
+		G=interval2value(qe(ex(H,F)),Vars[I])$
+
+		if(G==[])
+			return RET$
+		else
+			RET=cons(G,RET)$
+
+		F=subf(F,G[0],G[1])$
+	}
+
+	G=interval2value(simpl(F),Vars[0])$
+
+	if(G==[])
+		return RET$
+	else
+		RET=cons(G,RET)$
+
+	return RET$
+}
+
+
+def fixedpoint(A,FLAG){
+
+	Vars=vars(A)$
+
+	N=length(A)$
+
+	if (FLAG==0)
+		for(F=@true,I=0;I < N; I++ ) { F = F @&& A[I] @> 0$ }
+	else if (FLAG==1)
+		for(F=@true,I=0;I < N; I++ ) { F = F @&& A[I] @< 0$ }
+
+	return fixpointmain(F,Vars)$
+}
+
 def nonzerovec(A){
 
 	for(I=0;I<size(A)[0];I++)
@@ -449,6 +535,26 @@ def checktd(PolyList,Vars,ResVars){
 	return 1$
 }
 
+def value2(Vars,Ans){
+
+	N=length(Vars)$
+	Res=newvect(N)$
+	for(I=0;I<N;I++){
+		Res[I]=newvect(2)$
+		Res[I][0]=Vars[I]$
+		Res[I][1]=Ans[I]$
+	}
+
+	Res=getgcd(Res,Vars)$
+
+	if(nonposdegchk(Res)){
+		TMP1=makeret(Res,Vars,1)$
+		return vtol(TMP1[1])$
+	}
+	else
+		return []$
+}
+
 def qcheck(PolyList,Vars,FLAG){
 
 	RET=[]$
@@ -490,7 +596,38 @@ def qcheck(PolyList,Vars,FLAG){
 				return RET$
 			}
 			else{
-				RET=append(RET,[[0,Vars,vtol(ResVars[1])]])$
+
+				TMP=vtol(ResVars[1])$
+
+/*
+				RET=append(RET,[[0,Vars,TMP]])$
+*/
+
+				if((TMP0=fixedpoint(TMP,0))!=[]){
+					
+					for(I=0;I<length(TMP0);I++)
+						TMP=map(subst,TMP,TMP0[I][0],
+							TMP0[I][1])$
+
+					TMP=value2(Vars,TMP)$
+
+					if(TMP!=[])
+						RET=append(RET,wsort(TMP,Vars,
+							TMP,FLAG,1/10))$
+				}	
+				else if((TMP0=fixedpoint(TMP,1))!=[]){
+					
+					for(I=0;I<length(TMP0);I++)
+						TMP=map(subst,TMP,TMP0[I][0],
+							TMP0[I][1])$
+
+					TMP=value2(Vars,TMP)$
+
+					if(TMP!=[])
+						RET=append(RET,wsort(TMP,Vars,
+							TMP,FLAG,1/10))$
+				}	
+
 				return RET$
 			}
 		}
@@ -553,6 +690,7 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 		TMP1=makeret(Res,Vars,1)$
 
 		if(TMP1[0]==0){	
+
 			TMP=roundret(TMP1[1])$
 
 			RET=append(RET,wsort(TMP1[1],Vars,
@@ -565,7 +703,37 @@ def leastsq(NormMat,ExpMat,Vars,FLAG,ID){
 			return RET$
 		}
 		else{
+
+			TMP=vtol(TMP1[1])$
+
+/*	
 			RET=append(RET,[[ID,Vars,vtol(TMP1[1])]])$
+*/
+
+			if((TMP0=fixedpoint(TMP1[1],0))!=[]){
+					
+				for(I=0;I<length(TMP0);I++)
+					TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
+
+				TMP=value2(Vars,TMP)$
+
+				if(TMP!=[])
+					RET=append(RET,
+						wsort(TMP,Vars,TMP,FLAG,ID+1/10))$
+
+			}	
+			else if((TMP0=fixedpoint(TMP1[1],1))!=[]){
+					
+				for(I=0;I<length(TMP0);I++)
+					TMP=map(subst,TMP,TMP0[I][0],TMP0[I][1])$
+
+				TMP=value2(Vars,TMP)$
+
+				if(TMP!=[])
+					RET=append(RET,
+						wsort(TMP,Vars,TMP,FLAG,ID+1/10))$
+			}	
+
 			return RET$
 		}
 	}
@@ -709,7 +877,10 @@ def weight(PolyList,Vars,FLAG){
 		TMP0=map(ltov,TMP0)$
 
 		for(I=0;I<length(TMP0);I++)
-			TMP0[I][0]+=2$
+			if(TMP0[I][0]==3)
+				TMP0[I][0]=5$
+			else if(TMP0[I][0]==4)
+				TMP0[I][0]=6$
 
 		TMP0=map(vtol,TMP0)$
 
