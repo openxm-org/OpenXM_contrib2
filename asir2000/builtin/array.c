@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.28 2003/05/29 16:44:59 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.29 2003/06/09 16:18:09 saito Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -495,11 +495,21 @@ void Pmat(NODE arg, MAT *rp)
 	}
 
 	for (row = 0, tn = arg; tn; tn = NEXT(tn), row++);
+	if ( row == 1 ) {
+		if ( OID(ARG0(arg)) == O_MAT ) {
+			*rp=ARG0(arg);
+			return;
+		} else if ( !(OID(ARG0(arg)) == O_LIST || OID(ARG0(arg)) == O_VECT)) {
+			error("mat : invalid argument");
+		}
+	}
 	if ( OID(ARG0(arg)) == O_VECT ) {
 		v = ARG0(arg);
 		col = v->len;
 	} else if ( OID(ARG0(arg)) == O_LIST ) {
 		for (col = 0, tn = BDY((LIST)ARG0(arg)); tn ; tn = NEXT(tn), col++);
+	} else {
+		error("mat : invalid argument");
 	}
 
 	MKMAT(m,row,col);
@@ -536,11 +546,21 @@ void Pmatc(NODE arg, MAT *rp)
 	}
 
 	for (col = 0, tn = arg; tn; tn = NEXT(tn), col++);
+	if ( col == 1 ) {
+		if ( OID(ARG0(arg)) == O_MAT ) {
+			*rp=ARG0(arg);
+			return;
+		} else if ( !(OID(ARG0(arg)) == O_LIST || OID(ARG0(arg)) == O_VECT)) {
+			error("matc : invalid argument");
+		}
+	}
 	if ( OID(ARG0(arg)) == O_VECT ) {
 		v = ARG0(arg);
 		row = v->len;
 	} else if ( OID(ARG0(arg)) == O_LIST ) {
 		for (row = 0, tn = BDY((LIST)ARG0(arg)); tn ; tn = NEXT(tn), row++);
+	} else {
+		error("matc : invalid argument");
 	}
 
 	MKMAT(m,row,col);
