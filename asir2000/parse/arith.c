@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.18 2004/12/18 16:50:10 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.19 2005/02/08 18:06:05 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,8 @@ struct oARF arf[6];
 ARF addfs, subfs, mulfs, divfs, remfs, pwrfs;
 
 void divsdc();
+int compqa();
+int compquote();
 
 struct oAFUNC afunc[] = {
 /* ???=0 */	{0,0,0,0,0,0,0},
@@ -83,13 +85,13 @@ struct oAFUNC afunc[] = {
 /* O_F=14 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_GFMMAT=15 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_BYTEARRAY=16 */	{notdef,notdef,notdef,notdef,notdef,notdef,compbytearray},
-/* O_QUOTE=17 */	{addquote,subquote,mulquote,divquote,pwrquote,chsgnquote,(int(*)())notdef},
+/* O_QUOTE=17 */	{addquote,subquote,mulquote,divquote,pwrquote,chsgnquote,compquote},
 /* O_OPTLIST=18 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_SYMBOL=19 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_RANGE=20 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_TB=21 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_DPV=22 */	{adddv,subdv,muldv,notdef,notdef,chsgndv,compdv},
-/* ???=23 */	{0,0,0,0,0,0,0},
+/* O_QUOTEARG=23 */	{notdef,notdef,notdef,notdef,notdef,notdef,compqa},
 /* O_MAT=24 */	{AddMatI,SubMatI,MulMatG,notdef,notdef,ChsgnI,(int(*)())notdef},
 };
 

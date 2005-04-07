@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.19 2004/08/05 00:56:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.20 2004/08/09 06:42:53 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -342,6 +342,18 @@ void vartoquote(V v,QUOTE *c)
 	}
 }
 
+/* 
+ * A_arf : arithmetic function
+ * A_int : machine integer
+ * A_fnode : FNODE
+ * A_node : NODE with FNODE bodies
+ * A_internal : internal object
+ * A_str : string
+ * A_end : terminal
+ * A_func : FUNC
+ * A_notimpl : not implemented
+ */
+
 struct fid_spec fid_spec_tab[] = {
 	{I_BOP,A_arf,A_fnode,A_fnode,A_end},
 	{I_COP,A_int,A_fnode,A_fnode,A_end},
@@ -458,4 +470,91 @@ FNODE flatten_fnode(FNODE f,char *opname)
 		}
 		return r;
 	}
+}
+
+/* comparison of QUOTE */
+
+int compquote(VL vl,QUOTE q1,QUOTE q2)
+{
+	return compfnode(BDY(q1),BDY(q2));
+}
+
+/* comparison of QUOTEARG */
+/* XXX : executes a non-sense comparison for bodies */
+
+int compqa(VL vl,QUOTEARG q1,QUOTEARG q2)
+{
+	if ( !q1 ) return q2?-1:0;
+	else if ( !q2 ) return 1;
+	else if ( OID(q1) > OID(q2) ) return 1;
+	else if ( OID(q1) < OID(q2) ) return -1;
+	else if ( q1->type > q2->type ) return 1;
+	else if ( q1->type < q2->type ) return -1;
+	else switch ( q1->type ) {
+		case A_func:
+			return strcmp(((FUNC)q1->body)->name,((FUNC)q2->body)->name);		
+		case A_arf:
+			return strcmp(((ARF)q1->body)->name,((ARF)q2->body)->name);		
+		default:
+			if ( (unsigned)q1->body  > (unsigned)q2->body ) return 1;
+			else if ( (unsigned)q1->body  < (unsigned)q2->body ) return -1;
+			else return 0;
+	}
+}
+
+int compfnode(FNODE f1,FNODE f2)
+{
+	fid_spec_p spec;
+	int t,s1,s2,i;
+	NODE n1,n2;
+
+	if ( !f1 ) return f2 ? -1 : 1;
+	else if ( !f2 ) return 1;
+    else if ( f1->id > f2->id ) return 1;
+	else if ( f1->id < f2->id ) return -1;
+	spec = fid_spec_tab+f1->id;
+	for ( i = 0; spec->type[i] != A_end; i++ ) {
+		switch ( spec->type[i] ) {
+			case A_fnode:
+				return compfnode((FNODE)f1->arg[i],(FNODE)f2->arg[i]);
+				break;
+			case A_int:
+				s1 = (int)f1->arg[i];
+				s2 = (int)f2->arg[i];
+				if ( s1 > s2 ) return 1;
+				else if ( s1 < s2 ) return -1;
+				break;
+			case A_str:
+				t = strcmp((char *)f1->arg[i],(char *)f2->arg[i]);
+				if ( t ) return t;
+				break;
+			case A_internal:
+				t = arf_comp(CO,(Obj)f1->arg[i],(Obj)f2->arg[i]);
+				if ( t ) return t;
+				break;
+			case A_node:
+				n1 = (NODE)f1->arg[i];
+				n2 = (NODE)f2->arg[i];
+				for ( ; n1 && n2; n1 = NEXT(n1), n2 = NEXT(n2) ) {
+					t = compfnode(BDY(n1),BDY(n2));
+					if ( t ) return t;
+				}
+				if ( n1 ) return 1;
+				else if ( n2 ) return -1;
+				break;
+			case A_arf:
+				 t = strcmp(((ARF)f1->arg[i])->name,((ARF)f2->arg[i])->name);
+				if ( t ) return t;
+				break;
+			case A_func:
+				 t = strcmp(((FUNC)f1->arg[i])->name,((FUNC)f2->arg[i])->name);
+				if ( t ) return t;
+				break;
+			case A_notimpl:
+			default:
+				error("compfnode : not implemented");
+				break;
+		}
+	}
+	return 0;
 }
