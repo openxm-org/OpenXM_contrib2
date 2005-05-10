@@ -306,7 +306,7 @@ void CAsir32guiView::Paste(void) {
     }
     hClip = GetClipboardData(CF_TEXT);
     src = (const char *)::GlobalLock(hClip);
-    if ( !src || (l = strlen(src)) >= sizeof(Buffer) ) {
+    if ( !src || (l=strlen(src)) >= sizeof(Buffer)-EndPos ) {
     	::CloseClipboard();
     	Beep(); return;
     }
@@ -316,12 +316,13 @@ void CAsir32guiView::Paste(void) {
     buf[j] = 0;
     ::GlobalUnlock(hClip);
     ::CloseClipboard();
-    if ( EndPos+j >= sizeof(Buffer)-1 ) {
-        Beep(); return;
-    }
     GetEditCtrl().ReplaceSel(buf);
-    strncpy(Buffer+EndPos,buf,j);
-    EndPos += j; CurrentPos = EndPos;
+    l = strlen(buf);
+    for ( i = EndPos-1; i >= CurrentPos; i-- )
+	Buffer[i+l] = Buffer[i];
+    for ( j = 0, i = CurrentPos; j < l; j++, i++ )
+	Buffer[i] = buf[j];
+    EndPos += l; CurrentPos += l;
 }
 
 #define CTRL(c) (c)&0x1f
