@@ -73,6 +73,16 @@ public:
 	afx_msg void OnContribhelp();
 	afx_msg void OnUpdateContribhelp(CCmdUI* pCmdUI);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnDsolv();
+	afx_msg void OnGnuplot();
+	afx_msg void OnOkdiff();
+	afx_msg void OnOkdmodule();
+	afx_msg void OnOm();
+	afx_msg void OnPfpcoh();
+	afx_msg void OnPlucker();
+	afx_msg void OnSm1();
+	afx_msg void OnTigers();
+	afx_msg void OnTodoparametrize();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

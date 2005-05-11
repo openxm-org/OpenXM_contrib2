@@ -25,6 +25,16 @@
 #define ID_BUTTON32774                  32774
 #define IDR_FONT                        32775
 #define ID_CONTRIBHELP                  32776
+#define ID_DSOLV                        32777
+#define ID_GNUPLOT                      32778
+#define ID_OKDIFF                       32779
+#define ID_OKDMODULE                    32780
+#define ID_OM                           32781
+#define ID_PFPCOH                       32782
+#define ID_PLUCKER                      32783
+#define ID_SM1                          32784
+#define ID_TIGERS                       32785
+#define ID_TODOPARAMETRIZE              32787
 #define ID_FILE_LOG                     57610
 
 // Next default values for new objects
@@ -33,7 +43,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        142
-#define _APS_NEXT_COMMAND_VALUE         32777
+#define _APS_NEXT_COMMAND_VALUE         32788
 #define _APS_NEXT_CONTROL_VALUE         1008
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

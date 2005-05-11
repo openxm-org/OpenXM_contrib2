@@ -57,7 +57,7 @@ Type=0
 HeaderFile=MainFrm.h
 ImplementationFile=MainFrm.cpp
 Filter=T
-LastObject=CMainFrame
+LastObject=ID_TODOPARAMETRIZE
 BaseClass=CFrameWnd
 VirtualFilter=fWC
 
@@ -93,8 +93,18 @@ Command9=ID_VIEW_STATUS_BAR
 Command10=IDR_FONT
 Command11=ID_ASIRHELP
 Command12=ID_CONTRIBHELP
-Command13=ID_APP_ABOUT
-CommandCount=13
+Command13=ID_DSOLV
+Command14=ID_GNUPLOT
+Command15=ID_OKDIFF
+Command16=ID_OKDMODULE
+Command17=ID_OM
+Command18=ID_PFPCOH
+Command19=ID_PLUCKER
+Command20=ID_SM1
+Command21=ID_TIGERS
+Command22=ID_TODOPARAMETRIZE
+Command23=ID_APP_ABOUT
+CommandCount=23
 
 [ACL:IDR_MAINFRAME]
 Type=1

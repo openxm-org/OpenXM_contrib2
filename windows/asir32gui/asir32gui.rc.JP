@@ -127,6 +127,19 @@ BEGIN
     BEGIN
         MENUITEM "ユーザーズマニュアル",                        ID_ASIRHELP
         MENUITEM "Asir-contrib ユーザーズマニュアル",           ID_CONTRIBHELP
+        POPUP "Component manuals"
+        BEGIN
+            MENUITEM "dsolv",                       ID_DSOLV
+            MENUITEM "gnuplot",                     ID_GNUPLOT
+            MENUITEM "ok_diff",                     ID_OKDIFF
+            MENUITEM "ok_dmodule",                  ID_OKDMODULE
+            MENUITEM "om",                          ID_OM
+            MENUITEM "pfpcoh",                      ID_PFPCOH
+            MENUITEM "plucker",                     ID_PLUCKER
+            MENUITEM "sm1",                         ID_SM1
+            MENUITEM "tigers",                      ID_TIGERS
+            MENUITEM "todo_parametrize",            ID_TODOPARAMETRIZE
+        END
         MENUITEM "ﾊﾞｰｼﾞｮﾝ情報(asir32gui) (&A)...", ID_APP_ABOUT
     END
 END
