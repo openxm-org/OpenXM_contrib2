@@ -7,6 +7,7 @@ del /Q src\*.*
 
 nkf32 -s %srcdir%\%name%\%name%-%lang%.texi > src\%name%-%lang%.texi
 nkf32 -s %srcdir%\%name%\%name%.%lang% > src\%name%.%lang%
+nkf32 -s %srcdir%\%name%\%name%-auto.%lang% > src\%name%-auto.%lang%
 
 cd src
 jperl ..\texi2html -menu -split_node %name%-%lang%.texi
