@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asir2000lib", "asir2000lib.vcproj", "{E7D47DF6-87D6-4586-9D93-BF394251F64E}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{E7D47DF6-87D6-4586-9D93-BF394251F64E}.Debug.ActiveCfg = Debug|Win32
+		{E7D47DF6-87D6-4586-9D93-BF394251F64E}.Debug.Build.0 = Debug|Win32
+		{E7D47DF6-87D6-4586-9D93-BF394251F64E}.Release.ActiveCfg = Release|Win32
+		{E7D47DF6-87D6-4586-9D93-BF394251F64E}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

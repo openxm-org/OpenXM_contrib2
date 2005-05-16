@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pari20", "pari20.vcproj", "{451370D8-150D-439B-85EC-BEC18D121B65}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{451370D8-150D-439B-85EC-BEC18D121B65}.Debug.ActiveCfg = Debug|Win32
+		{451370D8-150D-439B-85EC-BEC18D121B65}.Debug.Build.0 = Debug|Win32
+		{451370D8-150D-439B-85EC-BEC18D121B65}.Release.ActiveCfg = Release|Win32
+		{451370D8-150D-439B-85EC-BEC18D121B65}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

@@ -494,7 +494,7 @@ void CAsir32guiView::OnAsirhelp()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\asirhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 }
 
 void CAsir32guiView::OnFileLog() 
@@ -597,7 +597,7 @@ void CAsir32guiView::OnContribhelp()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\cmanhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 }
 
 void CAsir32guiView::OnSize(UINT nType, int cx, int cy) 
@@ -615,7 +615,7 @@ void CAsir32guiView::OnDsolv()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\dsolvhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 }
 
 void CAsir32guiView::OnGnuplot() 
@@ -625,7 +625,7 @@ void CAsir32guiView::OnGnuplot()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\gnuplothelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -636,7 +636,7 @@ void CAsir32guiView::OnOkdiff()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\ok_diffhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -647,7 +647,7 @@ void CAsir32guiView::OnOkdmodule()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\ok_dmodulehelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -658,7 +658,7 @@ void CAsir32guiView::OnOm()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\omhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -669,7 +669,7 @@ void CAsir32guiView::OnPfpcoh()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\pfpcohhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -680,7 +680,7 @@ void CAsir32guiView::OnPlucker()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\pluckerhelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -691,7 +691,7 @@ void CAsir32guiView::OnSm1()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\sm1help.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -702,7 +702,7 @@ void CAsir32guiView::OnTigers()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\tigershelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
 
@@ -713,6 +713,6 @@ void CAsir32guiView::OnTodoparametrize()
 
 	get_rootdir(root,sizeof(root),errmsg);
 	sprintf(helpfile,"%s\\help\\todo_parametrizehelp.chm",root);
-	HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
 }
