@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.10 2002/07/10 05:29:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.11 2002/07/10 09:13:53 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,7 +79,7 @@ void if_print(DISPLAY *display,double **tab,struct canvas *can)
 			iy<height-1 ;iy++, px++, px1++, px2++ )
 			if ( ((*px >= 0) && ((*px1 <= 0) || (*px2 <= 0))) ||
 				 ((*px <= 0) && ((*px1 >= 0) || (*px2 >= 0))) ) {
-				DRAWPOINT(display,pix,drawGC,ix,height-iy-1);
+				DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
 				count_and_flush();
 			}
 	flush();
@@ -153,7 +153,7 @@ void con_print(DISPLAY *display,double **tab,struct canvas *can)
 	flush();
 	for ( parray = can->pa, iz = 0; iz <= can->nzstep; iz++, parray++ )
 		for ( pa = parray->pos, len = parray->length, ix = 0; ix < len; ix++ ) {
-			DRAWPOINT(display,pix,drawGC,XC(pa[ix]),YC(pa[ix]));
+			DRAWPOINT(display,pix,cdrawGC,XC(pa[ix]),YC(pa[ix]));
 			count_and_flush();
 		}
 	flush();
@@ -216,7 +216,7 @@ void qif_print(DISPLAY *display,char **tab,struct canvas *can)
 	for( ix = 0; ix < width; ix++ )
 		for(iy = 0, px = tab[ix]; iy < height ;iy++, px++ )
 			if ( *px ) {
-				DRAWPOINT(display,pix,drawGC,ix,height-iy-1);
+				DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
 				count_and_flush();
 			}
 	flush();
@@ -252,14 +252,9 @@ void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color)
 	SetPixel(dc,x,y,(COLORREF)color);
 	ReleaseDC(can->hwnd,dc);
 #else
-	if ( color ) {
-		set_drawcolor(color);
-		DRAWPOINT(display,can->pix,cdrawGC,x,y);
-		DRAWPOINT(display,can->window,cdrawGC,x,y);
-	} else {
-		DRAWPOINT(display,can->pix,drawGC,x,y);
-		DRAWPOINT(display,can->window,drawGC,x,y);
-	}
+	set_drawcolor(color);
+	DRAWPOINT(display,can->pix,cdrawGC,x,y);
+	DRAWPOINT(display,can->window,cdrawGC,x,y);
 	XFlush(display);
 #endif
 }
@@ -290,14 +285,9 @@ void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int c
 		ReleaseDC(can->hwnd,dc);
 	}
 #else
-	if ( color ) {
-		set_drawcolor(color);
-		DRAWLINE(display,can->pix,cdrawGC,x,y,u,v);
-		DRAWLINE(display,can->window,cdrawGC,x,y,u,v);
-	} else {
-		DRAWLINE(display,can->pix,drawGC,x,y,u,v);
-		DRAWLINE(display,can->window,drawGC,x,y,u,v);
-	}
+	set_drawcolor(color);
+	DRAWLINE(display,can->pix,cdrawGC,x,y,u,v);
+	DRAWLINE(display,can->window,cdrawGC,x,y,u,v);
 	XFlush(display);
 #endif
 }
@@ -325,14 +315,9 @@ void draw_character_string(DISPLAY *display,struct canvas *can,int x,int y,char 
 		ReleaseDC(can->hwnd,dc);
 	}
 #else
-	if ( color ) {
-		set_drawcolor(color);
-		DRAWSTRING(display,can->pix,cdrawGC,x,y,str,strlen(str));
-		DRAWSTRING(display,can->window,cdrawGC,x,y,str,strlen(str));
-	} else {
-		DRAWSTRING(display,can->pix,drawGC,x,y,str,strlen(str));
-		DRAWSTRING(display,can->window,drawGC,x,y,str,strlen(str));
-	}
+	set_drawcolor(color);
+	DRAWSTRING(display,can->pix,cdrawGC,x,y,str,strlen(str));
+	DRAWSTRING(display,can->window,cdrawGC,x,y,str,strlen(str));
 	XFlush(display);
 #endif
 }

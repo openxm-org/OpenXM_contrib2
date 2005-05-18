@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.23 2004/03/01 01:23:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.24 2004/03/01 05:48:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -840,8 +840,13 @@ copy_to_canvas(can)
 struct canvas *can;
 {
 	if ( display ) {
-		XCopyArea(display,can->pix,can->window,
-			drawGC,0,0,can->width,can->height,0,0);
+		if ( can->color ) {
+			set_drawcolor(can->color);
+			XCopyArea(display,can->pix,can->window,
+				cdrawGC,0,0,can->width,can->height,0,0);
+		} else
+			XCopyArea(display,can->pix,can->window,
+				drawGC,0,0,can->width,can->height,0,0);
 		pline(display,can,can->window);
 		XFlush(display);
 	}

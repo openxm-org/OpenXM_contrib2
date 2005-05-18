@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.15 2002/08/02 08:59:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.16 2002/10/02 01:38:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -65,7 +65,7 @@ struct ftab plot_tab[] = {
 	{"conplot",Pconplot,-8},
 	{"plot",Pplot,-6},
 	{"polarplot",Ppolarplot,-6},
-	{"plotover",Pplotover,3},
+	{"plotover",Pplotover,-4},
 	{"drawcircle",Pdrawcircle,5},
 	{"open_canvas",Popen_canvas,-3},
 	{"clear_canvas",Pclear_canvas,2},
@@ -627,7 +627,10 @@ void Pplotover(NODE arg,Q *rp)
 	s_id = (Q)ARG1(arg);
 	index = (Q)ARG2(arg);
 	MKSTR(fname,"plotover");
-	arg = mknode(4,s_id,fname,index,poly);
+	if ( argc(arg) == 4 )
+		arg = mknode(5,s_id,fname,index,poly,(Q)ARG3(arg));
+	else
+		arg = mknode(4,s_id,fname,index,poly);
 	Pox_rpc(arg,&t);
 	*rp = s_id;
 }
