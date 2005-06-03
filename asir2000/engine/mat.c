@@ -45,13 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.12 2004/08/18 06:30:07 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.13 2004/12/18 16:50:10 saito Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
 
 extern int StrassenSize;
+/* remove miser type
 void mulmatmat_miser();
+*/
 
 void addmat(vl,a,b,c)
 VL vl;
@@ -103,6 +105,7 @@ MAT a,b,*c;
   }
 }
 
+/* remove miser type
 void addmat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
 VL vl;
 MAT a,b,*c;
@@ -197,6 +200,7 @@ int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
     *c = t;
   }
 }
+*/
 
 void mulmat(vl,a,b,c)
 VL vl;
@@ -242,7 +246,10 @@ Obj a,b,*c;
 					case O_VECT:
 						mulmatvect(vl,(MAT)a,(VECT)b,(VECT *)c); break;
 					case O_MAT:
+						mulmatmat(vl, (MAT)a, (MAT)b, (MAT *)c); break;
+/* remove miser type
 						mulmatmat_miser(vl,(MAT)a,(MAT)b,(MAT *)c, 0,0, ((MAT)a)->row-1, ((MAT)a)->col-1, 0,0,((MAT)b)->row-1, ((MAT)b)->col-1); break;
+*/
 					default:
 						notdef(vl,a,b,c); break;
 				}
@@ -571,6 +578,8 @@ MAT a,b,*c;
 	*c = t;
 }
 
+#if 0
+/* remove miser type */
 void mulmatmat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
 VL vl;
 MAT a,b,*c;
@@ -743,6 +752,7 @@ int ar0, ac0, ar1, ac1, br0, bc0, br1, bc1;
 	}
 	*c = t;
 }
+#endif
 
 void mulmatvect(vl,a,b,c)
 VL vl;
