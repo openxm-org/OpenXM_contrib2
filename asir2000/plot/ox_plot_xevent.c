@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.24 2004/03/01 05:48:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.25 2005/05/18 03:27:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,6 +56,10 @@
 #include <X11/Xaw/Paned.h>
 
 static void Quit();
+static void print_canvas(Widget w, struct canvas *can, XtPointer calldata);
+static void output_to_printer(Widget w, struct canvas *can, XtPointer calldata);
+static void print_canvas_to_file(Widget w, struct canvas *can, XtPointer calldata);
+static void printing_method(Widget w, struct canvas *can, XtPointer calldata);
 
 static Atom wm_delete_window;
 
@@ -554,7 +558,6 @@ struct canvas *can;
 	int i,width,height;
 	Arg arg[6];
 	char buf[BUFSIZ];
-	static void print_canvas();
 
 	width = can->width; height = can->height;
 
@@ -961,9 +964,6 @@ static void print_canvas(w,can,calldata)
   Widget entry;
   int i;
   Arg arg[1];
-  static void output_to_printer();
-  static void print_canvas_to_file();
-  static void printing_method();
 
   W = w;
   Can = can;
