@@ -285,7 +285,6 @@ void D_CHSGNP(p,pr)
 P p,*pr;
 {
 	register DCP dc,dcr,dcr0;
-	P t;
 
 	if ( !p ) 
 		*pr = NULL;
@@ -299,7 +298,7 @@ P p,*pr;
 		NEWMQ(mq); CONT(mq)=mod-CONT((MQ)p); *pr = (P)mq;
 #endif
 #else
-		CHSGNNUM(p,t); *pr = t;
+		CHSGNNUM(p,*pr);
 #endif
 	} else {
 		for ( dcr0 = 0, dc = DC(p); dc; dc = NEXT(dc) ) {

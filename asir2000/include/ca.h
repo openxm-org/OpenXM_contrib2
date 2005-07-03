@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.54 2004/12/10 07:36:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.55 2004/12/18 16:50:10 saito Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1021,9 +1021,6 @@ extern const int sprime[];
 #else
 extern int sprime[];
 #endif
-
-extern int lprime_size;
-extern int *lprime;
 
 extern void (*addnumt[])();
 extern void (*subnumt[])();

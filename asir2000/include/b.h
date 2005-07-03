@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/b.h,v 1.2 2000/08/21 08:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/b.h,v 1.3 2000/08/22 05:04:14 noro Exp $ 
 */
 #ifdef FBASE
 #define D_ADDP(x,y,z,u) addp(x,y,z,u)
@@ -80,10 +80,12 @@
 #define MULNUM(x,y,z) (*mulnumt[MAX(NID((Q)x),NID((Q)y))])(x,y,z)
 #define DIVNUM(x,y,z) (*divnumt[MAX(NID((Q)x),NID((Q)y))])(x,y,z)
 #define PWRNUM(x,y,z) (*pwrnumt[NID((Q)x)])(x,y,z)
-#define CHSGNNUM(x,y) \
-(NID((Q)x)==N_Q?(DUPQ((Q)x,(Q)y),SGN((Q)y)= -SGN((Q)y),(y))\
-	:NID((Q)x)==N_R?(NEWReal((Real)y),BDY((Real)y)= -BDY((Real)x),(y))\
-		:((*chsgnnumt[NID((Q)x)])(x,&y),(y)))
+#define CHSGNNUM(x,y) { \
+    if (NID((Q)x)==N_Q) { \
+        Q t; DUPQ((Q)(x),t); SGN((Q)t)= -SGN(t); (y)= t; } \
+    else if (NID((Q)x)==N_R) { \
+        Real t; NEWReal(t); BDY(t)= -BDY((Real)x); (y) = t; } \
+    else {P t; (*chsgnnumt[NID((Q)x)])(x,&t); (y) = t; } }
 #define ADDQ(x,y,z) addq(x,y,z)
 #define SUBQ(x,y,z) subq(x,y,z)
 #define MULQ(x,y,z) mulq(x,y,z)
@@ -134,7 +136,7 @@
 #define MULNUM(x,y,z) mulmq(mod,(MQ)x,(MQ)y,(MQ *)z)
 #define DIVNUM(x,y,z) divmq(mod,(MQ)x,(MQ)y,(MQ *)z)
 #define PWRNUM(x,y,z) pwrmq(mod,(MQ)x,y,(MQ *)z)
-#define CHSGNNUM(x,y) (NEWMQ((MQ)y),CONT((MQ)(y))=mod-CONT((MQ)(x)))
+#define CHSGNNUM(x,y) {MQ t; NEWMQ(t),CONT(t)=mod-CONT((MQ)(x)); (y)=t; }
 #define ADDQ(x,y,z) addmq(mod,x,y,z)
 #define SUBQ(x,y,z) submq(mod,x,y,z)
 #define MULQ(x,y,z) mulmq(mod,x,y,z)

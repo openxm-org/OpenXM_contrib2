@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.21 2003/06/07 16:40:25 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.22 2004/12/02 13:48:43 noro Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -87,7 +87,7 @@ int StrassenSize = 0;
 int outputstyle = 0;
 
 static int *lprime;
-int lprime_size;
+static int lprime_size;
 
 #if defined(PARI)
 int paristack = 1<<16;

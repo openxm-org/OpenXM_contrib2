@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/igcdhack.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/igcdhack.c,v 1.4 2000/12/21 02:51:45 murao Exp $ 
 */
 #if 0
 #include "base.h"
@@ -869,7 +869,7 @@ int a, *u, lu, b, *v, lv, *ans;
   unsigned
 #endif
   int i, l, c, d, s, t, w, rsh, *p = ans, lsh, hi;
-  static int bw_int32();
+  extern int bw_int32();
 
   BitWidth( a, c );  BitWidth( u[lu -1], s );
   BitWidth( b, d );  BitWidth( v[lv -1], t );
