@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/A.c,v 1.4 2001/06/07 04:54:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/A.c,v 1.5 2001/10/09 01:36:09 noro Exp $ 
 */
 #include "ca.h"
 
@@ -298,4 +298,65 @@ P p,p0,*pr;
 			break;
 	}
 	ptozp(c,1,&s,pr); 
+}
+
+/* 
+ * compute g s.t. h*p0+g*p = res(v,p0,p)
+ */
+
+void inva_chrem(P p0, P p, NODE *pr)
+{
+	V v;
+	Q f,q,q1;
+	Q u,t,a,b,s,dn;
+	P c,c0,c1;
+	P tg,th,tr;
+	P z,zz,zzz;
+	UM wg,wh,ws,wt,wm;
+	int n,m,modres,mod,index,i;
+
+	v = VR(p); n=deg(v,p); m=deg(v,p0);
+	norm(p,&a); norm(p0,&b);
+	STOQ(m,u); pwrq(a,u,&t); STOQ(n,u); pwrq(b,u,&s); 
+	mulq(t,s,&u); 
+	factorial(n+m,&t); mulq(u,t,&s); addq(s,s,&f); 
+	wg = W_UMALLOC(m+n); wh = W_UMALLOC(m+n);
+	wt = W_UMALLOC(m+n); ws = W_UMALLOC(m+n);
+	wm = W_UMALLOC(m+n); 
+	for ( q = ONE, t = 0, c = 0, index = 0; ; ) {
+		mod = get_lprime(index++);
+		if ( !rem(NM((Q)LC(p)),mod) || !rem(NM((Q)LC(p0)),mod) ) 
+			continue;
+		ptomp(mod,p,&tg); ptomp(mod,p0,&th); srchump(mod,tg,th,&tr);
+		if ( !tr )
+			continue;
+		else
+			modres = CONT((MQ)tr);
+		mptoum(tg,wg); mptoum(th,wh); 
+		eucum(mod,wg,wh,ws,wt); /* wg * ws + wh * wt = 1 */
+		DEG(wm) = 0; COEF(wm)[0] = modres;
+		mulum(mod,ws,wm,wt);
+		for ( i = DEG(wt); i >= 0; i-- ) 
+			if ( ( COEF(wt)[i] * 2 ) > mod ) 
+				COEF(wt)[i] -= mod;
+		chnrem(mod,v,c,q,wt,&c1,&q1); 
+		if ( !ucmpp(c,c1) ) {
+			mulp(CO,c,p,&z); divsrp(CO,z,p0,&zz,&zzz);
+			if ( NUM(zzz) ) {
+				q = (Q)zzz; break;
+			}
+		}
+		q = q1; c = c1;
+		if ( cmpq(f,q) < 0 ) {
+			mulp(CO,c,p,&z); divsrp(CO,z,p0,&zz,&zzz);
+			q = (Q)zzz;
+			break;
+		}
+	}
+	/* c*p = q mod p0 */
+	/* c = s*c0 */
+	ptozp(c,1,&s,&c0); 
+	/* c/q = c0/(q/s) */
+	divq(q,s,&dn);
+	*pr = (NODE)mknode(2,c0,dn);
 }

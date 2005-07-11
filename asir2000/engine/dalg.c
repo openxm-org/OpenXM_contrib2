@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.7 2004/12/10 02:45:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.8 2005/01/23 14:03:47 noro Exp $
 */
 
 #include "ca.h"
@@ -294,7 +294,7 @@ void algtodalg(Alg a,DAlg *r)
 				NTOQ(NM(c),SGN(c),c1);
 				NTOQ(DN(c),1,d1);
 				muldc(CO,nf->one->nm,(P)c1,&dp);
-				MKDAlg(dp,c1,*r);
+				MKDAlg(dp,d1,*r);
 			}
 			break;
 		case N_A:
@@ -775,3 +775,48 @@ int cmpdalg(DAlg a,DAlg b)
 	else
 		return SGN((Q)BDY(c->nm)->c);
 }
+
+/* convert da to a univariate poly; return the position of variable */
+
+int dalgtoup(DAlg da,P *up,Q *dn)
+{
+	int nv,i,hi,current_d;
+	DCP dc0,dc;
+	MP h,mp0,mp,t;
+	DL hd,d;
+	DP c;
+	DAlg cc;
+	P v;
+
+	nv = da->nm->nv;
+	h = BDY(da->nm);
+	*dn = da->dn;
+	hd = h->dl;
+	for ( i = 0; i < nv; i++ )
+		if ( hd->d[i] ) break;
+	hi = i;
+	current_d = hd->d[i];
+	dc0 = 0;
+	mp0 = 0;
+	for ( t = h; t; t = NEXT(t) ) {
+		NEWDL(d,nv);
+		for ( i = 0; i <= hi; i++ ) d->d[i] = 0;
+		for ( ; i < nv; i++ ) d->d[i] = t->dl->d[i];
+		d->td = t->dl->td - t->dl->d[hi];
+		if ( t->dl->d[hi] != current_d ) {
+			NEXT(mp) = 0; MKDP(nv,mp0,c); MKDAlg(c,ONE,cc);
+			NEXTDC(dc0,dc); STOQ(current_d,DEG(dc)); COEF(dc) = (P)cc;
+			current_d = t->dl->d[hi];
+			mp0 = 0;
+		}
+		NEXTMP(mp0,mp);
+		mp->c = t->c; mp->dl = d;
+	}
+	NEXT(mp) = 0; MKDP(nv,mp0,c); MKDAlg(c,ONE,cc);
+	NEXTDC(dc0,dc); STOQ(current_d,DEG(dc)); COEF(dc) = (P)cc;
+	NEXT(dc) = 0;
+	makevar("x",&v);
+	MKP(VR(v),dc0,*up);
+	return hi;
+}
+

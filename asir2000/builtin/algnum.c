@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.9 2004/12/06 09:29:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.10 2005/01/23 14:03:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,6 +55,9 @@ void Palg(), Palgv(), Pgetalgtree();
 void Pinvalg_le();
 void Pset_field(),Palgtodalg(),Pdalgtoalg();
 void Pinv_or_split_dalg();
+void Pdalgtoup();
+void Pget_field_defpoly();
+void Pget_field_generator();
 
 void mkalg(P,Alg *);
 int cmpalgp(P,P);
@@ -64,12 +67,21 @@ void rattoalg(Obj,Alg *);
 void ptoalgp(P,P *);
 void clctalg(P,VL *);
 void get_algtree(Obj f,VL *r);
+void Pinvalg_chrem();
+void Pdalgtodp();
+void Pdptodalg();
 
 struct ftab alg_tab[] = {
 	{"set_field",Pset_field,1},
+	{"get_field_defpoly",Pget_field_defpoly,1},
+	{"get_field_generator",Pget_field_generator,1},
 	{"algtodalg",Palgtodalg,1},
 	{"dalgtoalg",Pdalgtoalg,1},
+	{"dalgtodp",Pdalgtodp,1},
+	{"dalgtoup",Pdalgtoup,1},
+	{"dptodalg",Pdptodalg,1},
 	{"inv_or_split_dalg",Pinv_or_split_dalg,1},
+	{"invalg_chrem",Pinvalg_chrem,2},
 	{"invalg_le",Pinvalg_le,1},
 	{"defpoly",Pdefpoly,1},
 	{"newalg",Pnewalg,1},
@@ -101,8 +113,72 @@ void Pdalgtoalg(NODE arg,Alg *rp)
 	dalgtoalg((DAlg)ARG0(arg),rp);
 }
 
+void Pdalgtodp(NODE arg,LIST *r)
+{
+	NODE b;
+	DP nm;
+	Q dn;
+	DAlg da;
+
+	da = (DAlg)ARG0(arg);
+	nm = da->nm;
+	dn = da->dn;
+	b = mknode(2,nm,dn);
+	MKLIST(*r,b);
+}
+
+void Pdptodalg(NODE arg,DAlg *r)
+{
+	DP d;
+
+	d = (DP)ARG0(arg);
+	MKDAlg(d,ONE,*r);
+}
+
+void Pdalgtoup(NODE arg,LIST *r)
+{
+	NODE b;
+	int pos;
+	P up;
+	DP nm;
+	Q dn,q;
+
+	pos = dalgtoup((DAlg)ARG0(arg),&up,&dn);
+	STOQ(pos,q);
+	b = mknode(3,up,dn,q);
+	MKLIST(*r,b);
+}
+
 NODE inv_or_split_dalg(DAlg,DAlg *);
 NumberField	get_numberfield();
+
+void Pget_field_defpoly(NODE arg,DAlg *r)
+{
+	NumberField nf;
+	DP d;
+
+	nf = get_numberfield();
+	d = nf->ps[QTOS((Q)ARG0(arg))];
+	MKDAlg(d,ONE,*r);
+}
+
+void Pget_field_generator(NODE arg,DAlg *r)
+{
+	int index,n,i;
+	DL dl;
+	MP m;
+	DP d;
+
+	index = QTOS((Q)ARG0(arg));
+	n = get_numberfield()->n;
+	NEWDL(dl,n);
+	for ( i = 0; i < n; i++ ) dl->d[i] = 0;
+	dl->d[index] = 1; dl->td = 1;
+	NEWMP(m); m->dl = dl; m->c = (P)ONE; NEXT(m) = 0;
+	MKDP(n,m,d);
+	MKDAlg(d,ONE,*r);
+}
+
 
 void Pinv_or_split_dalg(NODE arg,Obj *rp)
 {
@@ -492,6 +568,14 @@ P p,*r;
 		}
 		NEXT(dcr) = 0; MKP((V)(VR(p)->priv),dcr0,*r);
 	}
+}
+
+void Pinvalg_chrem(NODE arg,LIST *r)
+{
+	NODE n;
+
+	inva_chrem((P)ARG0(arg),(P)ARG1(arg),&n);
+	MKLIST(*r,n);
 }
 
 void invalg_le(Alg a,LIST *r);
