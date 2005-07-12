@@ -523,7 +523,7 @@ umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
 libasir-gc.a: ${gc}.tar.gz ${gc}-risa.diff parse/gc_risa.c
-	-if [! -f ${top_srcdir}/.gc-risa_done ]; then \
+	-if [ ! -f ${top_srcdir}/.gc-risa_done ]; then \
 	    (cd ${top_srcdir}; tar xzvf ${gc}.tar.gz; patch -p0 < ${gc}-risa.diff) ; \
 	    touch ${top_srcdir}/.gc-risa_done ; \
 	fi
