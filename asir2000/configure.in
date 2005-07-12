@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.21 2005/02/09 08:32:32 noro Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.22 2005/02/09 15:28:26 saito Exp $
 
 AC_INIT([LICENSE])
 AC_PREREQ(2.53)
@@ -35,6 +35,15 @@ if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
 elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
+
+AC_ARG_WITH([distdir],
+[  --with-distdir          specify the spool for fetching. [[no]]],
+[with_distdir=${withval}],[with_distdir=no])
+GC_DISTDIR='${prefix}/../OpenXM_dist'
+if test ${with_distdir:=no} != no -a ${with_distdir} != yes ; then
+    GC_DISTDIR=${with_distdir}
+fi   
+AC_SUBST([GC_DISTDIR])
 
 AC_ARG_ENABLE([gc-zeropage],
 [  --enable-gc-zeropage    enable to avoid the kernel zeropage bug.  [[no]]],
