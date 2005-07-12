@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.19 2004/02/27 18:32:21 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.20 2004/06/25 13:41:33 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -15,9 +15,11 @@ asir_SOURCES  = parse/main.c
 asir_LDADD    = libasir.a libasir-gc.a
 CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
+gc            = gc6.5
+
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           -I${top_srcdir}/gc/include \
+           -I${top_srcdir}/${gc}/include \
            @PARIINC@ @MPIINC@ @X_CFLAGS@
 
 GLIB  = libasir-gc.a
@@ -35,32 +37,36 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a: parse/gc_risa.c
+libasir-gc.a: ${gc}.tar.gz ${gc}-risa.diff parse/gc_risa.c
+	-if [ ! -f ${top_srcdir}/.gc-risa_done ]; then \
+	    (cd ${top_srcdir}; tar xzvf ${gc}.tar.gz; patch -p0 < ${gc}-risa.diff) ; \
+	    touch ${top_srcdir}/.gc-risa_done ; \
+	fi
 	-if [ "${USE_GC_ZEROPAGE}" = yes \
-            -a ! -f ${top_srcdir}/gc/.patch_gc_zeropage_done ]; then \
-	    (cd ${top_srcdir}/gc; patch < ../gc_zeropage.diff) ; \
-	    touch ${top_srcdir}/gc/.patch_gc_zeropage_done ; \
+            -a ! -f ${top_srcdir}/${gc}/.patch_gc_zeropage_done ]; then \
+	    (cd ${top_srcdir}/${gc}; patch < ../gc_zeropage.diff) ; \
+	    touch ${top_srcdir}/${gc}/.patch_gc_zeropage_done ; \
 	fi
 	-if [ "${USE_GC_INTERIX}" = yes \
-            -a ! -f ${top_srcdir}/gc/.patch_gc_interix_done ]; then \
-	    (cd ${top_srcdir}/gc; patch -p0 < ../gc_interix.diff) ; \
-	    touch ${top_srcdir}/gc/.patch_gc_interix_done ; \
+            -a ! -f ${top_srcdir}/${gc}/.patch_gc_interix_done ]; then \
+	    (cd ${top_srcdir}/${gc}; patch -p0 < ../gc_interix.diff) ; \
+	    touch ${top_srcdir}/${gc}/.patch_gc_interix_done ; \
 	fi
 	-if [ "${USE_GC_SPARC64}" = yes \
-            -a ! -f ${top_srcdir}/gc/.patch_gc_sparc64_done ]; then \
-	    (cd ${top_srcdir}/gc; patch -p0 < ../gc_sparc64.diff) ; \
-	    touch ${top_srcdir}/gc/.patch_gc_sparc64_done ; \
+            -a ! -f ${top_srcdir}/${gc}/.patch_gc_sparc64_done ]; then \
+	    (cd ${top_srcdir}/${gc}; patch -p0 < ../gc_sparc64.diff) ; \
+	    touch ${top_srcdir}/${gc}/.patch_gc_sparc64_done ; \
 	fi
-	-if [ ! -f ${top_srcdir}/gc/.configure_done ]; then \
+	-if [ ! -f ${top_srcdir}/${gc}/.configure_done ]; then \
 	    if [ -n "${host_alias}" ]; then \
-	        (cd ${top_srcdir}/gc; ./configure --host=${host_alias} --disable-threads) ; \
+	        (cd ${top_srcdir}/${gc}; ./configure --host=${host_alias} --disable-threads) ; \
 	    else \
-	        (cd ${top_srcdir}/gc; ./configure --disable-threads) ; \
+	        (cd ${top_srcdir}/${gc}; ./configure --disable-threads) ; \
 	    fi ; \
-	    touch ${top_srcdir}/gc/.configure_done ; \
+	    touch ${top_srcdir}/${gc}/.configure_done ; \
 	fi
-	(cd ${top_srcdir}/gc; ${MAKE})
-	cp ${top_srcdir}/gc/.libs/libgc.a ${GLIB}
+	(cd ${top_srcdir}/${gc}; ${MAKE})
+	cp ${top_srcdir}/${gc}/.libs/libgc.a ${GLIB}
 	(cd ${top_srcdir}/parse; ${MAKE} gc_risa.o)
 	${AR} q ${GLIB} ${top_srcdir}/parse/gc_risa.o
 	${RANLIB} ${GLIB}
