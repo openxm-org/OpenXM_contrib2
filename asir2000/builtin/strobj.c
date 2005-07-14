@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.51 2004/08/05 00:56:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.52 2005/04/05 02:29:44 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,6 +78,7 @@ void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
+void Pquote_unify();
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 char *conv_rule(char *name);
@@ -87,6 +88,7 @@ void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
 int top_is_minus(FNODE f);
+NODE quote_unify(Obj f,Obj pat);
 
 struct ftab str_tab[] = {
 	{"sprintf",Psprintf,-99999999},
@@ -107,6 +109,7 @@ struct ftab str_tab[] = {
 	{"quotetotex_env",Pquotetotex_env,-99999999},
 	{"flatten_quote",Pflatten_quote,2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
+	{"quote_unify",Pquote_unify,2},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{"get_function_name",Pget_function_name,1},
 	{0,0,0},
@@ -502,6 +505,109 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 			write_tb(tb->body[i],ARG1(arg));
 	}
 	*rp = 0;	
+}
+
+void Pquote_unify(NODE arg,LIST *rp)
+{
+	NODE r;
+
+	r = quote_unify((Obj)ARG0(arg),(Obj)ARG1(arg));
+	MKLIST(*rp,r);
+}
+
+/* 
+/* consistency check and merge */
+
+NODE merge_matching_node(NODE n,NODE a)
+{
+	NODE ta,ba,tn,bn;
+	QUOTE pa,va,pn,vn;
+
+	if ( !n )
+		return a;
+	for ( ta = a; ta; ta = NEXT(ta) ) {
+		ba = BDY((LIST)BDY(ta));
+		pa = (QUOTE)BDY(ba); va = (QUOTE)BDY(NEXT(ba));
+		for ( tn = n; tn; tn = NEXT(tn) ) {
+			bn = BDY((LIST)BDY(tn));	
+			pn = (QUOTE)BDY(bn); vn = (QUOTE)BDY(NEXT(bn));
+			if ( !compquote(CO,pa,pn) && !compquote(CO,va,vn) )
+				break;
+		}
+		if ( !tn ) {
+			MKNODE(tn,(pointer)BDY(ta),n);
+			n = tn;
+		}
+	}
+	return n;
+}
+
+NODE quote_unify_node(NODE f,NODE pat) {
+	NODE r,a,tf,tp;
+
+	if ( length(f) != length(pat) ) return 0;
+	r = 0;
+	for ( tf = f, tp = pat; tf; tf = NEXT(tf), tp = NEXT(tp) ) {
+		a = quote_unify((Obj)BDY(tf),(Obj)BDY(tp));
+		r = merge_matching_node(r,a);
+		if ( !r ) return 0;
+	}
+	return r;
+}
+
+void get_quote_id_arg(QUOTE f,int *id,NODE *r)
+{
+	LIST fa;
+	NODE arg,fab;
+
+	arg = mknode(1,f); Pquote_to_funargs(arg,&fa); fab = BDY((LIST)fa);
+	*id = QTOS((Q)BDY(fab)); *r = NEXT(fab);
+}
+
+/* ret : [[quote(A),quote(1)],...] */
+
+NODE quote_unify(Obj f, Obj pat)
+{
+	NODE tf,tp,head,body;
+	NODE parg,farg,r;
+	LIST fa,l;
+	int pid,id;
+
+	if ( OID(pat) == O_LIST ) {
+		if ( OID(f) == O_LIST )
+			return quote_unify_node(BDY((LIST)f),BDY((LIST)pat));
+		else
+			return 0;
+	} else if ( OID(pat) == O_QUOTE ) {
+		if ( OID(f) != O_QUOTE ) return 0;
+		get_quote_id_arg((QUOTE)pat,&pid,&parg);
+		get_quote_id_arg((QUOTE)f,&id,&farg);
+		switch ( pid ) {
+			case I_PVAR:
+				/* [[pat,f]] */
+				r = mknode(2,pat,f); MKLIST(l,r);
+				return mknode(1,l);
+			case I_IFUNC:
+				/* F(X,Y,...) = ... */
+				if ( id == I_FUNC ) {
+					head = quote_unify(BDY(farg),BDY(parg));
+					if ( !head ) return 0;
+					body = quote_unify(BDY(NEXT(farg)),BDY(NEXT(parg)));
+					if ( !body ) return 0;
+					return merge_matching_node(head,body);
+				} else
+					return 0;
+			case I_BOP:
+				/* X+Y = ... */
+				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
+				return quote_unify_node(NEXT(farg),NEXT(parg));
+			default:
+				if ( pid == id )
+					return quote_unify_node(farg,parg);
+				else
+					return 0;
+		}
+	}
 }
 
 void Pquotetotex(NODE arg,STRING *rp)
