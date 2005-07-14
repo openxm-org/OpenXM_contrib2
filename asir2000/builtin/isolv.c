@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.3 2003/10/23 01:32:59 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.4 2005/02/08 18:06:05 saito Exp $
  */
 
 #include "ca.h"
@@ -66,7 +66,7 @@ Obj  *rp;
 			fprintf(stderr,"solve,");
 			error(" : Sorry, not yet implement of multivars");
 			break;
-		defaults:
+		default:
 			*rp = 0;
 	}
 }
@@ -129,7 +129,7 @@ Obj  *rp;
 			fprintf(stderr,"solve,");
 			error(" : Sorry, not yet implement of multivars");
 			break;
-		defaults:
+		default:
 			*rp = 0;
 	}
 }

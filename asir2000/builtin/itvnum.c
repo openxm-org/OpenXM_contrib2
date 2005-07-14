@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.3 2005/02/08 16:42:39 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.4 2005/02/08 16:53:00 saito Exp $
  */
 
 #include "ca.h"
@@ -209,7 +209,7 @@ Pinf(NODE arg, Obj *rp)
 				itvtois((Itv)ARG0(arg),&i,&s);
 				*rp = (Obj)i;
 				break;
-			defaults:
+			default:
 				*rp = (Obj)a;
 				break;
 		}
@@ -241,7 +241,7 @@ Psup(NODE arg, Obj *rp)
 				itvtois((Itv)ARG0(arg),&i,&s);
 				*rp = (Obj)s;
 				break;
-			defaults:
+			default:
 				*rp = (Obj)a;
 				break;
 		}
@@ -283,7 +283,7 @@ Pmid(NODE arg, Obj *rp)
 		case O_VECT:
 		case O_MAT:
 #endif
-		defaults:
+		default:
 			*rp = (Obj)a;
 			break;
 	}
