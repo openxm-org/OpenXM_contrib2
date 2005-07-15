@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.52 2005/04/05 02:29:44 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.53 2005/07/14 04:07:31 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -590,8 +590,8 @@ NODE quote_unify(Obj f, Obj pat)
 			case I_IFUNC:
 				/* F(X,Y,...) = ... */
 				if ( id == I_FUNC ) {
-					head = quote_unify(BDY(farg),BDY(parg));
-					if ( !head ) return 0;
+					r = mknode(2,BDY(parg),BDY(farg)); MKLIST(l,r);
+					head = mknode(1,l);
 					body = quote_unify(BDY(NEXT(farg)),BDY(NEXT(parg)));
 					if ( !body ) return 0;
 					return merge_matching_node(head,body);
