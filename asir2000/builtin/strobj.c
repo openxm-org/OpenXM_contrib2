@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.53 2005/07/14 04:07:31 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.54 2005/07/15 00:23:26 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -527,12 +527,16 @@ NODE merge_matching_node(NODE n,NODE a)
 		return a;
 	for ( ta = a; ta; ta = NEXT(ta) ) {
 		ba = BDY((LIST)BDY(ta));
+		if ( !ba ) continue;
 		pa = (QUOTE)BDY(ba); va = (QUOTE)BDY(NEXT(ba));
 		for ( tn = n; tn; tn = NEXT(tn) ) {
 			bn = BDY((LIST)BDY(tn));	
+			if ( !bn ) continue;
 			pn = (QUOTE)BDY(bn); vn = (QUOTE)BDY(NEXT(bn));
-			if ( !compquote(CO,pa,pn) && !compquote(CO,va,vn) )
-				break;
+			if ( !compquote(CO,pa,pn) ) {
+				if ( !compquote(CO,va,vn) ) break;
+				else return 0;
+			}
 		}
 		if ( !tn ) {
 			MKNODE(tn,(pointer)BDY(ta),n);
@@ -549,6 +553,7 @@ NODE quote_unify_node(NODE f,NODE pat) {
 	r = 0;
 	for ( tf = f, tp = pat; tf; tf = NEXT(tf), tp = NEXT(tp) ) {
 		a = quote_unify((Obj)BDY(tf),(Obj)BDY(tp));
+		if ( !a ) return 0;
 		r = merge_matching_node(r,a);
 		if ( !r ) return 0;
 	}
@@ -572,6 +577,7 @@ NODE quote_unify(Obj f, Obj pat)
 	NODE parg,farg,r;
 	LIST fa,l;
 	int pid,id;
+	FUNC ff,pf;
 
 	if ( OID(pat) == O_LIST ) {
 		if ( OID(f) == O_LIST )
@@ -583,6 +589,16 @@ NODE quote_unify(Obj f, Obj pat)
 		get_quote_id_arg((QUOTE)pat,&pid,&parg);
 		get_quote_id_arg((QUOTE)f,&id,&farg);
 		switch ( pid ) {
+			case I_FORMULA:
+				if ( compquote(CO,f,pat) )
+					return 0;
+				else {
+					MKLIST(l,0);
+					return mknode(1,l);
+				}
+				break;
+			case I_LIST:
+				return quote_unify_node(BDY((LIST)BDY(farg)),BDY((LIST)BDY(parg)));
 			case I_PVAR:
 				/* [[pat,f]] */
 				r = mknode(2,pat,f); MKLIST(l,r);
@@ -598,9 +614,12 @@ NODE quote_unify(Obj f, Obj pat)
 				} else
 					return 0;
 			case I_BOP:
+			case I_FUNC:
 				/* X+Y = ... */
+				/* f(...) = ... */
 				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
 				return quote_unify_node(NEXT(farg),NEXT(parg));
+				break;
 			default:
 				if ( pid == id )
 					return quote_unify_node(farg,parg);
