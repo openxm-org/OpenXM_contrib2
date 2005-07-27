@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.25 2004/06/21 09:05:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.26 2005/04/07 08:33:12 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -181,9 +181,13 @@ stat 	: tail
 				$$ = 0; NOPR; 
 			}
 		| MODDEF LCASE tail
-			{ CUR_MODULE = mkmodule($2); MPVS = CUR_MODULE->pvs; $$ = 0; NOPR; }
+			{ 
+				CUR_MODULE = mkmodule($2);
+				MPVS = CUR_MODULE->pvs; 
+				$$ = mksnode(1,S_MODULE,CUR_MODULE); NOPR;
+			}
 		| MODEND tail
-			{ CUR_MODULE = 0; MPVS = 0; $$ = 0; NOPR; }
+			{ CUR_MODULE = 0; MPVS = 0; $$ = mksnode(1,S_MODULE,0); NOPR; }
 	  	| error tail
 			{ yyerrok; $$ = 0; }
 		;

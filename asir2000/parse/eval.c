@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.38 2004/11/22 04:11:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.39 2004/12/18 03:27:17 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -430,6 +430,13 @@ pointer evalstat(SNODE f)
 					break;
 			}
 			f_break = 0; break;
+		case S_MODULE:
+			CUR_MODULE = (MODULE)FA0(f);
+			if ( CUR_MODULE )
+					MPVS = CUR_MODULE->pvs;
+			else
+					MPVS = 0;
+			break;
 		default:
 			error("evalstat : unknown id");
 			break;

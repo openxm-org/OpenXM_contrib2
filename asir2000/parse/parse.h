@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.33 2004/10/27 08:21:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.34 2005/01/12 10:38:07 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -78,7 +78,8 @@ typedef enum {
 	S_BP, S_PFDEF,
 	S_SINGLE, S_CPLX, 
 	S_IFELSE, S_FOR, S_DO,
-	S_BREAK, S_RETURN, S_CONTINUE
+	S_BREAK, S_RETURN, S_CONTINUE,
+	S_MODULE
 } sid;
 
 /* identifiers for comparison operators */
