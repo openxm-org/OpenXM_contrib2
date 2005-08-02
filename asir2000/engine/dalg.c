@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.8 2005/01/23 14:03:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.9 2005/07/11 00:24:02 noro Exp $
 */
 
 #include "ca.h"
@@ -59,6 +59,48 @@ void setfield_dalg(NODE alist)
 	nf->ind = b;
 	dp_mbase(hlist,&mblist);
 	initd(current_spec);	
+	nf->dim = dim = length(mblist);
+	nf->mb = mb = (DP *)MALLOC(dim*sizeof(DP));
+	for ( i = 0, t = mblist; t; t = NEXT(t), i++ )
+		mb[dim-i-1] = (DP)BDY(t);	
+}
+
+void setfield_gb(NODE gb,VL vl,struct order_spec *spec)
+{
+	NumberField nf;
+	VL vl1,vl2;
+	int n,i,dim;
+	Alg *gen;
+	P *defpoly;
+	P p;
+	Q c,iq,two;
+	DP *ps,*mb;
+	DP one;
+	NODE t,b,b1,b2,hlist,mblist;
+	struct order_spec *current_spec;
+
+	nf = (NumberField)MALLOC(sizeof(struct oNumberField));
+	current_numberfield = nf;
+	for ( vl1 = vl, n = 0; vl1; vl1 = NEXT(vl1), n++ );
+	nf->n = n;
+	nf->psn = length(gb);
+	nf->vl = vl;
+	nf->defpoly = defpoly = (P *)MALLOC(nf->psn*sizeof(P));
+	nf->ps = ps = (DP *)MALLOC(nf->psn*sizeof(DP));
+	current_spec = dp_current_spec;
+	nf->spec = spec;
+	initd(nf->spec);	
+	for ( b = hlist = 0, i = 0, t = gb; i < nf->psn; t = NEXT(t), i++ ) {
+		ptozp((P)BDY(t),1,&c,&defpoly[i]);
+		ptod(CO,vl,defpoly[i],&ps[i]);
+		STOQ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
+		MKNODE(b2,(pointer)ps[i],hlist); hlist = b2;
+	}
+	ptod(ALG,vl,(P)ONE,&one);
+	MKDAlg(one,ONE,nf->one);
+	nf->ind = b;
+	dp_mbase(hlist,&mblist);
+	initd(current_spec);
 	nf->dim = dim = length(mblist);
 	nf->mb = mb = (DP *)MALLOC(dim*sizeof(DP));
 	for ( i = 0, t = mblist; t; t = NEXT(t), i++ )
@@ -358,10 +400,13 @@ void simpdalg(DAlg da,DAlg *r)
 	}
 	current_spec = dp_current_spec; initd(nf->spec);
 	dp_true_nf(nf->ind,da->nm,nf->ps,1,&nm,&dn);
-	initd(current_spec);
-	mulq(da->dn,dn,&dn1);
-	MKDAlg(nm,dn1,d);
-	rmcontdalg(d,r);
+	if ( !nm ) *r = 0;
+	else {
+		initd(current_spec);
+		mulq(da->dn,dn,&dn1);
+		MKDAlg(nm,dn1,d);
+		rmcontdalg(d,r);
+	}
 }
 
 void adddalg(DAlg a,DAlg b,DAlg *c)

@@ -1,0 +1,231 @@
+module de;
+
+localf split_lexgb;
+localf sort_lex_dec,sort_lex_inc;
+localf inverse_or_split, linear_dim;
+localf sp_sqrt,calcb,dp_monic_mod,monic_gb;
+localf dp_chrem,intdptoratdp,intdpltoratdpl;
+localf comp_by_ht,dp_gr_mod,gr_chrem;
+
+/*
+ * G : a 0-dim lex gb, reduced
+ * if there exists a non-monic g = g(x')x^k+...
+ * then g(x') is a zero divisor and Id(G) splits
+ */
+
+def split_lexgb(G,V)
+{
+	G = map(ptozp,G);
+	G = sort_lex_dec(G,V);
+	TG = G;
+	for ( ; TG != []; TG = cdr(TG) ) {
+		F = car(TG);
+		for ( TV = V; !deg(F,car(TV)); TV = cdr(TV) );
+		VF = car(TV);
+		DF = deg(F,VF);
+		CF = coef(F,DF,VF);
+		if ( type(CF) == 2 ) {
+			L = inverse_or_split(V,G,CF);
+			R = map(split_lexgb,L,V);
+			return append(R[0],R[1]);
+		}
+	}
+	return [G];
+}
+
+/* 
+ * V : a variable list
+ * Id : a 0-dim radical ideal represented by a lex basis
+ * F : a poly
+ * if F is a unit of Q[V]/Id, then 1/F is returned
+ * else F is a zero divisor and Id = (Id:F)\cap(Id+<F>)
+ *      [GB(Id:F),GB(Id+<F>)] is returned.
+ */
+
+def inverse_or_split(V,Id,F)
+{
+	Id = map(ptozp,Id);
+	N = length(V);
+	dp_ord(2);
+	set_field(Id,V,2);
+	DF = dptodalg(dp_ptod(F,V));
+	Ret = inv_or_split_dalg(DF);
+	if ( type(Ret) == 1 ) {
+		/* Ret = 1/F */
+		return Ret;
+	} else {
+		/* Ret = GB(Id:F) */
+		/* compute GB(Id+<f>) */
+		Gquo = append(map(ptozp,map(dp_dtop,Ret,V)),Id);
+		Gquo = nd_gr(Gquo,V,0,2);
+		DTotal = linear_dim(Id,V,2);
+		Dquo = linear_dim(Gquo,V,2);
+		Drem = DTotal-Dquo;
+		B = cons(F,Id);
+		Grem = gr_chrem(B,V,2,Drem);
+		return [map(ptozp,Gquo),map(ptozp,Grem)];
+	}
+}
+
+def sort_lex_dec(B,V)
+{
+	dp_ord(2);
+	B = map(dp_ptod,B,V);
+	B = vtol(qsort(ltov(B),comp_by_ht));
+	B = map(dp_dtop,B,V);
+	return reverse(B);
+}
+
+def sort_lex_inc(B,V)
+{
+	dp_ord(2);
+	B = map(dp_ptod,B,V);
+	B = vtol(qsort(ltov(B),comp_by_ht));
+	B = map(dp_dtop,B,V);
+	return B;
+}
+
+def linear_dim(G,V,Ord)
+{
+	dp_ord(Ord);
+	MB = dp_mbase(map(dp_ptod,G,V));
+	return length(MB);
+}
+
+def gr_chrem(B,V,O,Dim)
+{
+	B = map(ptozp,B);
+	G = []; HS = []; Mod = 1;
+	for ( I = 0; ; I++ ) {
+		P = lprime(I);
+		GM = nd_gr(B,V,P,O);
+		if ( linear_dim(GM,V,O) != Dim ) continue;
+		L = monic_gb(GM,V,O,P); GM = L[0]; HSM = L[1];
+		G = dp_chrem(G,HS,Mod,GM,HSM,P);
+		Mod *= P;
+		if ( G != [] )
+			HS = HSM;
+		R1 = intdpltoratdpl(G,Mod);
+		if ( R1 ) {
+			if ( Found && R == R1 )
+				break;
+			else {
+				R = R1; Found = 1;
+			}
+		}
+	}
+	return map(dp_dtop,R,V);
+}
+
+def comp_by_ht(A,B)
+{
+	HA = dp_ht(A); HB = dp_ht(B);
+	if ( HA > HB )
+		return 1;
+	else if ( HA < HB )
+		return -1;
+	else
+		return 0;
+}
+
+def intdpltoratdpl(G,Mod)
+{
+	R = [];
+	M = calcb(Mod);
+	for ( ; G != []; G = cdr(G) ) {
+		T = intdptoratdp(car(G),Mod,M);
+		if ( !T )
+			return 0;
+		else
+			R = cons(T,R);
+	}
+	R = reverse(R);
+	return vtol(qsort(newvect(length(R),R),comp_by_ht));
+}
+
+def intdptoratdp(F,Mod,M)
+{
+	for ( T = F, N = 0; T; T = dp_rest(T), N++ );
+	C = newvect(N);
+	for ( I = 0, T = F; I < N; T = dp_rest(T), I++ ) {
+		L = inttorat(dp_hc(T),Mod,M);
+		if ( !L )
+			return 0;
+		else
+			C[I] = (L[0]/L[1])*dp_ht(T);
+	}
+	for ( R = 0, I = N-1; I >= 0; I-- )
+		R += C[I];
+	return R;
+}
+
+def dp_chrem(G,HS,Mod,GM,HSM,P)
+{
+	if ( G == [] )
+		return GM;
+	if ( HS != HSM )
+		return [];
+	R = [];
+	M1 = inv(Mod,P);
+	for ( ; G != []; G = cdr(G), GM = cdr(GM) ) {
+		E = car(G); EM = car(GM);
+		E1 = E+(EM-E)*Mod*M1;
+		R = cons(E1,R);
+	}
+	return reverse(R);
+}
+
+def monic_gb(G,V,O,P)
+{
+	dp_ord(O); setmod(P);
+	D = map(dp_ptod,G,V);
+	D = map(dp_monic_mod,D,P);
+	D = vtol(qsort(newvect(length(D),D),comp_by_ht));
+	return [D,map(dp_ht,D)];
+}
+
+def dp_monic_mod(F,P)
+{
+	FP = dp_mod(F,P,[]);
+	return dp_rat(FP/dp_hc(FP));
+}
+
+def calcb(M) {
+	N = 2*M;
+	T = sp_sqrt(N);
+	if ( T^2 <= N && N < (T+1)^2 )
+		return idiv(T,2);
+	else
+		error("afo");
+}
+
+def sp_sqrt(A) {
+	for ( J = 0, T = A; T >= 2^27; J++ ) {
+		T = idiv(T,2^27)+1;
+	}
+	for ( I = 0; T >= 2; I++ ) {
+		S = idiv(T,2);
+		if ( T = S+S )
+			T = S;
+		else
+			T = S+1;
+	}
+	X = (2^27)^idiv(J,2)*2^idiv(I,2);
+	while ( 1 ) {
+		if ( (Y=X^2) < A )
+			X += X;
+		else if ( Y == A )
+			return X;
+		else
+			break;
+	}
+	while ( 1 )
+		if ( (Y = X^2) <= A )
+			return X;
+		else
+			X = idiv(A + Y,2*X);
+}
+
+endmodule;
+end$
+end$

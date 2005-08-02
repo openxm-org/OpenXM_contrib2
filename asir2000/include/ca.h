@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.55 2004/12/18 16:50:10 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.56 2005/07/03 10:19:23 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -625,6 +625,7 @@ struct modorder_spec {
 
 typedef struct oNumberField {
 	int n;
+	int psn;
 	int dim;
 	VL vl;
 	P *defpoly;

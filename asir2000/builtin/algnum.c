@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.10 2005/01/23 14:03:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.11 2005/07/11 00:24:02 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,7 +72,7 @@ void Pdalgtodp();
 void Pdptodalg();
 
 struct ftab alg_tab[] = {
-	{"set_field",Pset_field,1},
+	{"set_field",Pset_field,-3},
 	{"get_field_defpoly",Pget_field_defpoly,1},
 	{"get_field_generator",Pget_field_generator,1},
 	{"algtodalg",Palgtodalg,1},
@@ -99,7 +99,24 @@ static int UCN,ACNT;
 
 void Pset_field(NODE arg,Q *rp)
 {
-	setfield_dalg(BDY((LIST)ARG0(arg)));
+	int ac;
+	NODE a0,a1;
+	VL vl0,vl;
+	struct order_spec *spec;
+
+	if ( (ac = argc(arg)) == 1 )
+		setfield_dalg(BDY((LIST)ARG0(arg)));
+	else if ( ac == 3 ) {
+		a0 = BDY((LIST)ARG0(arg));
+		a1 = BDY((LIST)ARG1(arg));
+		for ( vl0 = 0; a1; a1 = NEXT(a1) ) {
+			NEXTVL(vl0,vl);
+			vl->v = VR((P)BDY(a1));
+		}
+		if ( vl0 ) NEXT(vl) = 0;
+		create_order_spec(0,ARG2(arg),&spec);
+		setfield_gb(a0,vl0,spec);
+	}
 	*rp = 0;
 }
 
@@ -130,9 +147,11 @@ void Pdalgtodp(NODE arg,LIST *r)
 void Pdptodalg(NODE arg,DAlg *r)
 {
 	DP d;
+	DAlg t;
 
 	d = (DP)ARG0(arg);
-	MKDAlg(d,ONE,*r);
+	MKDAlg(d,ONE,t);
+	simpdalg(t,r);
 }
 
 void Pdalgtoup(NODE arg,LIST *r)
