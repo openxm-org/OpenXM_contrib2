@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.19 2003/10/20 00:58:47 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.20 2004/07/21 05:12:29 noro Exp $ 
 */
 
 module gr $
@@ -510,6 +510,15 @@ def minipoly(G0,V,O,P,V0)
 
 def gennf(G,TL,V,O,V0,FLAG)
 {
+	F = dp_gr_flags();
+	for ( T = F; T != []; T = cdr(T) ) {
+		Key = car(T); T = cdr(T);
+		if ( Key == "Demand" ) {
+			Dir = car(T); break;
+		}
+	}
+	if ( Dir )
+		return gennf_demand(G,TL,V,O,V0,FLAG,Dir);
 	N = length(V); Len = length(G); dp_ord(O); PS = newvect(Len);
 	for ( I = 0, T = G, HL = []; T != []; T = cdr(T), I++ ) {
 		PS[I] = dp_ptod(car(T),V); HL = cons(dp_ht(PS[I]),HL);
@@ -559,6 +568,78 @@ def gennf(G,TL,V,O,V0,FLAG)
 	if ( dp_gr_print() )
 		print("gennf(TAB="+rtostr(TTAB)+" NF="+rtostr(TNF)+")");
 	return [[map(adj_dn,H,LCM),LCM],PS,GI];
+}
+
+def gennf_demand(G,TL,V,O,V0,FLAG,Dir)
+{
+	N = length(V); Len = length(G); dp_ord(O); PS = newvect(Len);
+	NTL = length(TL);
+	for ( I = 0, T = G, HL = []; T != []; T = cdr(T), I++ ) {
+		PS[I] = dp_ptod(car(T),V); HL = cons(dp_ht(PS[I]),HL);
+	}
+	for ( I = 0, DTL = []; TL != []; TL = cdr(TL) )
+		DTL = cons(dp_ptod(car(TL),V),DTL);
+	for ( I = Len - 1, GI = []; I >= 0; I-- )
+		GI = cons(I,GI);
+
+	USE_TAB = (FLAG != 0);
+	if ( USE_TAB ) {
+		T0 = time()[0];
+		MB = dp_mbase(HL); DIM = length(MB);
+		U = dp_ptod(V0,V);
+		UTAB = newvect(DIM);
+		for ( I = 0; I < DIM; I++ ) {
+			UTAB[I] = [MB[I],remove_cont(dp_true_nf(GI,U*MB[I],PS,1))];
+			if ( dp_gr_print() )
+				print(".",2);
+		}
+		if ( dp_gr_print() )
+			print("");
+		TTAB = time()[0]-T0;
+	}
+
+	T0 = time()[0];
+	for ( LCM = 1, Index = 0, H = []; DTL != []; Index++ ) {
+		if ( dp_gr_print() )
+			print(".",2);
+		T = car(DTL); DTL = cdr(DTL);
+		if ( L = search_redble(T,H) ) {
+			L = nf_load(Dir,L[0]);
+			DD = dp_subd(T,L[1]);
+			if ( USE_TAB && (DD == U) ) {
+				NF = nf_tab(L[0],UTAB);
+				NF = [NF[0],dp_hc(L[1])*NF[1]*T];
+			} else
+				NF = nf(GI,L[0]*dp_subd(T,L[1]),dp_hc(L[1])*T,PS);
+		} else
+			NF = nf(GI,T,T,PS);
+		NF = remove_cont(NF);
+		nf_save(NF,Dir,Index);
+		H = cons([Index,NF[1]],H);
+		LCM = ilcm(LCM,dp_hc(NF[1]));
+	}
+	TNF = time()[0]-T0;
+	if ( dp_gr_print() )
+		print("gennf(TAB="+rtostr(TTAB)+" NF="+rtostr(TNF)+")");
+	
+	for ( I = 0; I < NTL; I++ ) {
+		NF = nf_load(Dir,I);
+		NF = adj_dn(NF,LCM);
+		nf_save(NF,Dir,I);
+	}
+	for ( H = [], I = NTL-1; I >= 0; I-- )
+		H = cons(nf_load(Dir,I),H);
+	return [[H,LCM],PS,GI];
+}
+
+def nf_load(Dir,I)
+{
+	return bload(Dir+"/nf"+rtostr(I));
+}
+
+def nf_save(NF,Dir,I)
+{
+	bsave(NF,Dir+"/nf"+rtostr(I));
 }
 
 def adj_dn(P,D)
