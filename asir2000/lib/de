@@ -4,6 +4,7 @@ localf split_lexgb;
 localf sort_lex_dec,sort_lex_inc;
 localf inverse_or_split, linear_dim;
 localf sp_sqrt,calcb,dp_monic_mod,monic_gb;
+localf membership_test;
 localf dp_chrem,intdptoratdp,intdpltoratdpl;
 localf comp_by_ht,dp_gr_mod,gr_chrem;
 
@@ -57,7 +58,8 @@ def inverse_or_split(V,Id,F)
 		/* Ret = GB(Id:F) */
 		/* compute GB(Id+<f>) */
 		Gquo = append(map(ptozp,map(dp_dtop,Ret,V)),Id);
-		Gquo = nd_interreduce(Gquo,V,0,2);
+		/* inter-reduction */
+		Gquo = nd_gr_postproc(Gquo,V,0,2,0);
 		DTotal = linear_dim(Id,V,2);
 		Dquo = linear_dim(Gquo,V,2);
 		Drem = DTotal-Dquo;
@@ -92,6 +94,15 @@ def linear_dim(G,V,Ord)
 	return length(MB);
 }
 
+def membership_test(B,G,V,O)
+{
+	B = map(ptozp,B);
+	G = map(ptozp,G);
+	for ( T = B; T != []; T = cdr(T) )
+		if ( nd_nf(car(T),G,V,O,0) ) return 0;
+	return 1;
+}
+
 def gr_chrem(B,V,O,Dim)
 {
 	B = map(ptozp,B);
@@ -107,14 +118,16 @@ def gr_chrem(B,V,O,Dim)
 			HS = HSM;
 		R1 = intdpltoratdpl(G,Mod);
 		if ( R1 ) {
-			if ( Found && R == R1 )
+			if ( Found && R == R1 
+				&& (GB=nd_gr_postproc(map(dp_dtop,R,V),V,0,O,1))
+				&& membership_test(B,GB,V,O) )
 				break;
 			else {
 				R = R1; Found = 1;
 			}
 		}
 	}
-	return map(dp_dtop,R,V);
+	return GB;
 }
 
 def comp_by_ht(A,B)
