@@ -57,7 +57,7 @@ def inverse_or_split(V,Id,F)
 		/* Ret = GB(Id:F) */
 		/* compute GB(Id+<f>) */
 		Gquo = append(map(ptozp,map(dp_dtop,Ret,V)),Id);
-		Gquo = nd_gr(Gquo,V,0,2);
+		Gquo = nd_interreduce(Gquo,V,0,2);
 		DTotal = linear_dim(Id,V,2);
 		Dquo = linear_dim(Gquo,V,2);
 		Drem = DTotal-Dquo;

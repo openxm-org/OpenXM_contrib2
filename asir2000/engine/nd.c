@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.125 2005/02/09 08:32:32 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.126 2005/02/09 14:30:47 noro Exp $ */
 
 #include "nd.h"
 
@@ -2412,6 +2412,86 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 #if 0
 	fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
 #endif
+}
+
+void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST *rp)
+{
+	VL tv,fv,vv,vc,av;
+	NODE fd,fd0,r,r0,t,x,s,xx,alist;
+	int e,max,nvar,i;
+	NDV b;
+	int ishomo,nalg;
+	Alg alpha,dp;
+	P p;
+	LIST f1,f2;
+	Obj obj;
+	NumberField nf;
+	struct order_spec *ord1;
+
+	get_vars((Obj)f,&fv); pltovl(v,&vv);
+	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+	switch ( ord->id ) {
+		case 1:
+			if ( ord->nv != nvar )
+				error("nd_check : invalid order specification");
+			break;
+		default:
+			break;
+	}
+	nd_nalg = 0;
+	av = 0;
+	if ( !m ) {
+		get_algtree((Obj)f,&av);
+		for ( nalg = 0, tv = av; tv; tv = NEXT(tv), nalg++ );
+		nd_ntrans = nvar;
+		nd_nalg = nalg;
+		/* #i -> t#i */
+		if ( nalg ) {
+			preprocess_algcoef(vv,av,ord,f,&ord1,&f1,&alist);
+			ord = ord1;
+			f = f1;
+		}
+		nvar += nalg;
+	}
+	nd_init_ord(ord);
+	for ( t = BDY(f), max = 0; t; t = NEXT(t) )
+		for ( tv = vv; tv; tv = NEXT(tv) ) {
+			e = getdeg(tv->v,(P)BDY(t));
+			max = MAX(e,max);
+		}
+	nd_setup_parameters(nvar,max);
+	ishomo = 1;
+	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
+		b = (pointer)ptondv(CO,vv,(P)BDY(t));
+		if ( ishomo )
+			ishomo = ishomo && ndv_ishomo(b);
+		if ( m ) ndv_mod(m,b);
+		if ( b ) { NEXTNODE(fd0,fd); BDY(fd) = (pointer)b; }
+	}
+	if ( fd0 ) NEXT(fd) = 0;
+	ndv_setup(m,0,fd0);
+	for ( x = 0, i = 0; i < nd_psn; i++ )
+		x = update_base(x,i);
+	if ( do_check ) {
+		x = nd_gb(m,ishomo,1);
+		if ( !x ) {
+			*rp = 0;
+			return;
+		}
+	} else {
+		for ( t = x; t; t = NEXT(t) )
+			BDY(t) = (pointer)nd_ps[(int)BDY(t)];
+	}
+	x = ndv_reducebase(x);
+	x = ndv_reduceall(m,x);
+	for ( r0 = 0, t = x; t; t = NEXT(t) ) {
+		NEXTNODE(r0,r); 
+		BDY(r) = ndvtop(m,CO,vv,BDY(t));
+	}
+	if ( r0 ) NEXT(r) = 0;
+	if ( nalg )
+		r0 = postprocess_algcoef(av,alist,r0);
+	MKLIST(*rp,r0);
 }
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp)
