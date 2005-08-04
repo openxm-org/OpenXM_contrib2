@@ -3,10 +3,11 @@ module de;
 localf split_lexgb;
 localf sort_lex_dec,sort_lex_inc;
 localf inverse_or_split, linear_dim;
-localf sp_sqrt,calcb,dp_monic_mod,monic_gb;
+localf dp_monic_mod,monic_gb;
 localf membership_test;
 localf dp_chrem,intdptoratdp,intdpltoratdpl;
 localf comp_by_ht,dp_gr_mod,gr_chrem;
+localf construct_sqfrbasis;
 
 /*
  * G : a 0-dim lex gb, reduced
@@ -53,7 +54,8 @@ def inverse_or_split(V,Id,F)
 	Ret = inv_or_split_dalg(DF);
 	if ( type(Ret) == 1 ) {
 		/* Ret = 1/F */
-		return Ret;
+		Dp = dalgtodp(Ret);
+		return dp_dtop(Dp[0],V)/Dp[1];
 	} else {
 		/* Ret = GB(Id:F) */
 		/* compute GB(Id+<f>) */
@@ -66,6 +68,46 @@ def inverse_or_split(V,Id,F)
 		B = cons(F,Id);
 		Grem = gr_chrem(B,V,2,Drem);
 		return [map(ptozp,Gquo),map(ptozp,Grem)];
+	}
+}
+
+/* add F(X,V) to Id(B) */
+/* returns a list of splitted ideals */
+/* B should be a triangular basis */
+
+def construct_sqfrbasis(F,X,B,V)
+{
+	B = sort_lex_dec(B,V);
+	V1 = cons(X,V);
+	F = nd_nf(F,reverse(B),cons(X,V),2,0);
+	D = deg(F,X);
+	H = coef(F,D,X);
+	if ( type(H) == 1 )
+		return [];
+	else if ( type(H) == 2 ) {
+		Ret = inverse_or_split(V,B,H);
+		if ( type(Ret) == 4 ) {
+			/* H != 0 on Id_nz, H = 0 on Id_z */
+			B0=construct_sqfrbasis(F,X,Ret[0],V);
+			B1=construct_sqfrbasis(F,X,Ret[1],V);
+			return append(B0,B1);
+		} else
+			F = nd_nf(F*Ret,reverse(B),cons(X,V),2,0);
+	}
+	B1 = cons(F,B);
+	/* F is monic */
+	M = minipoly(B1,V1,2,X,zzz);
+	S = sqfr(M); S = cdr(S);
+	if ( length(S) == 1 && car(S)[1] == 1 )
+		return [cons(F,B)];
+	else {
+		R = [];
+		for ( T = S; T != []; T = cdr(T) ) {
+			G = nd_gr_trace(cons(car(T),B1),V1,1,1,2);
+			R1 = split_lexgb(G,V1);
+			R = append(R1,R);
+		}
+		return R;
 	}
 }
 
@@ -116,7 +158,8 @@ def gr_chrem(B,V,O,Dim)
 		Mod *= P;
 		if ( G != [] )
 			HS = HSM;
-		R1 = intdpltoratdpl(G,Mod);
+		M = idiv(isqrt(2*Mod),2);
+		R1 = intdpltoratdpl(G,Mod,M);
 		if ( R1 ) {
 			if ( Found && R == R1 
 				&& (GB=nd_gr_postproc(map(dp_dtop,R,V),V,0,O,1))
@@ -141,11 +184,9 @@ def comp_by_ht(A,B)
 		return 0;
 }
 
-def intdpltoratdpl(G,Mod)
+def intdpltoratdpl(G,Mod,M)
 {
-	R = [];
-	M = calcb(Mod);
-	for ( ; G != []; G = cdr(G) ) {
+	for ( R = []; G != []; G = cdr(G) ) {
 		T = intdptoratdp(car(G),Mod,M);
 		if ( !T )
 			return 0;
@@ -180,9 +221,10 @@ def dp_chrem(G,HS,Mod,GM,HSM,P)
 		return [];
 	R = [];
 	M1 = inv(Mod,P);
+	ModM1 = Mod*M1;
 	for ( ; G != []; G = cdr(G), GM = cdr(GM) ) {
 		E = car(G); EM = car(GM);
-		E1 = E+(EM-E)*Mod*M1;
+		E1 = E+(EM-E)*ModM1;
 		R = cons(E1,R);
 	}
 	return reverse(R);
@@ -203,42 +245,5 @@ def dp_monic_mod(F,P)
 	return dp_rat(FP/dp_hc(FP));
 }
 
-def calcb(M) {
-	N = 2*M;
-	T = sp_sqrt(N);
-	if ( T^2 <= N && N < (T+1)^2 )
-		return idiv(T,2);
-	else
-		error("afo");
-}
-
-def sp_sqrt(A) {
-	for ( J = 0, T = A; T >= 2^27; J++ ) {
-		T = idiv(T,2^27)+1;
-	}
-	for ( I = 0; T >= 2; I++ ) {
-		S = idiv(T,2);
-		if ( T = S+S )
-			T = S;
-		else
-			T = S+1;
-	}
-	X = (2^27)^idiv(J,2)*2^idiv(I,2);
-	while ( 1 ) {
-		if ( (Y=X^2) < A )
-			X += X;
-		else if ( Y == A )
-			return X;
-		else
-			break;
-	}
-	while ( 1 )
-		if ( (Y = X^2) <= A )
-			return X;
-		else
-			X = idiv(A + Y,2*X);
-}
-
 endmodule;
-end$
 end$
