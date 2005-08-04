@@ -4,10 +4,10 @@
 /* $Id$ */
 
 #ifndef WINCE
-#  include "../../../../OpenXM_contrib/pari/src/kernel/ix86/level0.h"
+#  include "../pari-2.0.17.beta/src/kernel/ix86/level0.h"
 #else
-#  include "../../../../OpenXM_contrib/pari/src/kernel/none/level0.h"
+#  include "../pari-2.0.17.beta/src/kernel/none/level0.h"
 #endif
 
-#include "../../../../OpenXM_contrib/pari/src/kernel/none/level1.h"
+#include "../pari-2.0.17.beta/src/kernel/none/level1.h"
 

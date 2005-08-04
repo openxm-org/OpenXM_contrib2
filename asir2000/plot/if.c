@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.16 2004/03/26 08:25:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.17 2005/05/18 03:27:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -238,7 +238,9 @@ int plotover(NODE arg)
 		can->color = QTOS((Q)ARG2(arg));
 	else
 		can->color = 0;
+#if !defined(VISUAL)
 	set_drawcolor(can->color);
+#endif
 	current_can = can;
 	fakecan = *can; fakecan.formula = formula;
 	if ( can->mode == MODE_PLOT ) {

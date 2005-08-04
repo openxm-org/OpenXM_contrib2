@@ -1,5 +1,10 @@
 @echo off
 
+cd pari20
+wget ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/pari-2.0.17.beta.tgz
+tar xzvf pari-2.0.17.beta.tgz
+cd ..
+
 msdev pari20\win32com\pari20.dsp /make "pari20 - release"
 msdev ..\asir2000\asir2000.dsp /make "asir2000 - release"
 msdev asir2000lib\asir2000lib.dsp /make "asir2000lib - release"
