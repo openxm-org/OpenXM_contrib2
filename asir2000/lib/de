@@ -77,14 +77,14 @@ def inverse_or_split(V,Id,F)
 
 def construct_sqfrbasis(F,X,B,V)
 {
+	if ( type(F) == 1 )
+		return [];
 	B = sort_lex_dec(B,V);
 	V1 = cons(X,V);
 	F = nd_nf(F,reverse(B),cons(X,V),2,0);
 	D = deg(F,X);
 	H = coef(F,D,X);
-	if ( type(H) == 1 )
-		return [];
-	else if ( type(H) == 2 ) {
+	if ( type(H) == 2 ) {
 		Ret = inverse_or_split(V,B,H);
 		if ( type(Ret) == 4 ) {
 			/* H != 0 on Id_nz, H = 0 on Id_z */
@@ -103,7 +103,7 @@ def construct_sqfrbasis(F,X,B,V)
 	else {
 		R = [];
 		for ( T = S; T != []; T = cdr(T) ) {
-			G = nd_gr_trace(cons(car(T),B1),V1,1,1,2);
+			G = nd_gr_trace(cons(subst(car(T)[0],zzz,X),B1),V1,1,1,2);
 			R1 = split_lexgb(G,V1);
 			R = append(R1,R);
 		}
