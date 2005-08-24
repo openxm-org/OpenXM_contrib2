@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/solve,v 1.3 2000/08/22 05:04:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/solve,v 1.4 2003/11/11 02:58:12 noro Exp $ 
 */
 def kenzan(El,Sl)
 {
@@ -138,12 +138,6 @@ def solvemain(Mat,Index,N,M)
 			Mat[I][J] = sdiv(Mat[I][J]*D-W[J],U);
 	}
 	return [L,D];
-}
-
-def length(L)
-{
-	for ( I = 0; L != []; L = cdr(L), I++ );
-	return I;
 }
 
 def solve_ltov(P,VL,W)
