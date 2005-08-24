@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/R.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/R.c,v 1.4 2004/03/11 09:52:56 noro Exp $ 
 */
 #include "ca.h"
 
@@ -191,11 +191,14 @@ Obj a,q,*c;
 		*c = (Obj)ONE;
 	else if ( !a )
 		*c = 0;
-	else if ( !RAT(a) )
-		pwrp(vl,(P)a,(Q)q,(P *)c);
 	else if ( !NUM(q) || !RATN(q) || !INT(q) )
 		notdef(vl,a,q,c);
-	else {
+	else if ( !RAT(a) && (SGN((Q)q) > 0) ) {
+			pwrp(vl,(P)a,(Q)q,&t); *c = (Obj)t;
+	} else {
+		if ( !RAT(a) ) {
+			PTOR((P)a,r); a = (Obj)r;
+		}
 		if ( SGN((Q)q) < 0 ) {
 			chsgnq((Q)q,&q1); pwrp(vl,DN((R)a),q1,&t); pwrp(vl,NM((R)a),q1,&s);
 		} else {

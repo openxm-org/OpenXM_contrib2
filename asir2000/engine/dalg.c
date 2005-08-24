@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.9 2005/07/11 00:24:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.10 2005/08/02 07:16:42 noro Exp $
 */
 
 #include "ca.h"
@@ -675,15 +675,20 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 				break;
 		if ( j >= 0 ) {
 			dp_subd(m,mb[j],&d);
-			muld(CO,d,simp[j]->nm,&u);
-			MKDAlg(u,simp[j]->dn,t);
-			simpdalg(t,&simp[i]);
+			if ( simp[j] ) {
+				muld(CO,d,simp[j]->nm,&u);
+				MKDAlg(u,simp[j]->dn,t);
+				simpdalg(t,&simp[i]);
+			} else
+				simp[i] = 0;
 		} else {
 			MKDAlg(m,ONE,t);
 			muldalg(t,a0,&simp[i]);
 		}
-		gcdn(NM(simp[i]->dn),ln,&gn); divsn(ln,gn,&qn);
-		muln(NM(simp[i]->dn),qn,&ln);
+		if ( simp[i] ) {
+			gcdn(NM(simp[i]->dn),ln,&gn); divsn(ln,gn,&qn);
+			muln(NM(simp[i]->dn),qn,&ln);
+		}
 	}
 	initd(current_spec);
 	NTOQ(ln,1,dn);
@@ -691,12 +696,14 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 	mat = (Q **)BDY(mobj);
 	mulq(dn,a->dn,&mat[0][dim]);
 	for ( j = 0; j < dim; j++ ) {
-		divq(dn,simp[j]->dn,&mul);
-		for ( i = dim-1, mp = BDY(simp[j]->nm); mp && i >= 0; i-- )
-			if ( dl_equal(n,BDY(mb[i])->dl,mp->dl) ) {
-				mulq(mul,(Q)mp->c,&mat[i][j]);
-				mp = NEXT(mp);
-			}
+		if ( simp[j] ) {
+			divq(dn,simp[j]->dn,&mul);
+			for ( i = dim-1, mp = BDY(simp[j]->nm); mp && i >= 0; i-- )
+				if ( dl_equal(n,BDY(mb[i])->dl,mp->dl) ) {
+					mulq(mul,(Q)mp->c,&mat[i][j]);
+					mp = NEXT(mp);
+				}
+		}
 	}
 	get_eg(&eg0);
 	rank = generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);

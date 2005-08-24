@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.57 2004/12/09 08:56:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.58 2005/08/03 05:01:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -441,7 +441,7 @@ Obj *rp;
 	int modular;
 	
 	f.id = O_LIST; f.body = 0;
-	if ( !arg )
+	if ( !arg && !current_option )
 		*rp = dp_current_spec->obj;
 	else {
 		if ( current_option )

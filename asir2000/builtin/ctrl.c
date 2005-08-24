@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.34 2004/12/15 22:51:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.35 2005/02/17 03:12:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -62,7 +62,7 @@ extern int error_in_timer;
 extern int prtime,nez,echoback,bigfloat;
 extern int GC_free_space_numerator,GC_free_space_divisor,debug_up;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
-extern int do_message;
+extern int do_message,do_terse;
 extern int ox_batch,ox_check,ox_exchange_mathcap;
 extern int f4_nocheck;
 extern int StrassenSize;
@@ -100,6 +100,7 @@ static struct {
 	{"hex",&hex_output},
 	{"debug_window",&do_server_in_X11},
 	{"message",&do_message},
+	{"terse",&do_terse},
 	{"debug_up",&debug_up},
 	{"no_prompt",&do_quiet},
 	{"asir_setenv",&asir_setenv},

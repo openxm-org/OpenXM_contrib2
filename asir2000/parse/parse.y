@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.26 2005/04/07 08:33:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.27 2005/07/27 04:35:11 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -67,7 +67,7 @@ extern int gdef,mgdef,ldef;
 extern SNODE parse_snode;
 extern int main_parser, allow_create_var;
 
-int prresult;
+int prresult,saveresult;
 
 static int ind;
 static FNODE t;
@@ -169,7 +169,7 @@ stat 	: tail
 		| WHILE '(' node ')' stat
 			{ $$ = mksnode(5,S_FOR,$1,0,$3,0,$5); $5?$$->ln=$5->ln:0; NOPR; }
 		| DO stat WHILE '(' node ')' tail
-			{ $$ = mksnode(3,S_DO,$1,$2,$5); }
+			{ $$ = mksnode(3,S_DO,$1,$2,$5); NOPR; }
 		| LCASE '(' node ')' ':' '=' expr tail
 			{ $$ = mksnode(3,S_PFDEF,$1,$3,$7); NOPR; }
 		| PFDEF LCASE '(' node ')' tail
@@ -178,7 +178,7 @@ stat 	: tail
 			{
 				mkuf($2,asir_infile->name,$6,
 					mksnode(1,S_CPLX,$11),$1,asir_infile->ln,$9,CUR_MODULE); 
-				$$ = 0; NOPR; 
+				$$ = 0; NOPR;
 			}
 		| MODDEF LCASE tail
 			{ 

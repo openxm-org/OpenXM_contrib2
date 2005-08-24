@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.56 2005/03/24 23:40:50 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.57 2005/07/12 02:37:32 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -194,6 +194,7 @@ int do_asirrc;
 int do_file;
 char *do_filename;
 int do_message;
+int do_terse;
 int do_fep;
 int read_exec_file;
 int asir_setenv;
@@ -227,10 +228,12 @@ void asir_terminate(int status)
 			LONGJMP(exec_env,status);
 	} else {
 		if ( user_quit_handler ) {
-			fprintf(stderr,"Calling the registered quit callbacks...");
+			if ( !do_terse )
+				fprintf(stderr,"Calling the registered quit callbacks...");
 			for ( n = user_quit_handler; n; n = NEXT(n) )
 				bevalf((FUNC)BDY(n),0);
-			fprintf(stderr, "done.\n");
+			if ( !do_terse )
+				fprintf(stderr, "done.\n");
 		}
 		tty_reset();
 #if defined(MPI)
@@ -556,11 +559,13 @@ void int_handler(int sig)
 				restore_handler();
 				if ( c == 'u' ) {
 					if ( user_int_handler ) {
-						fprintf(stderr,
-							"Calling the registered exception callbacks...");
+						if ( !do_terse )
+							fprintf(stderr,
+								"Calling the registered exception callbacks...");
 						for ( t = user_int_handler; t; t = NEXT(t) )
 							bevalf((FUNC)BDY(t),0);
-						fprintf(stderr, "done.\n");
+						if ( !do_terse )
+							fprintf(stderr, "done.\n");
 					}
 				}
 				if ( read_exec_file ) {
