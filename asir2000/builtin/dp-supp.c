@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.37 2004/09/15 06:06:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.38 2004/12/06 09:29:34 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -120,6 +120,32 @@ void dp_ptozp2(DP p0,DP p1,DP *hp,DP *rp)
 	if ( r )
 		r->sugar = p1->sugar;
 	*hp = h; *rp = r;
+}
+
+void dp_ptozp3(DP p,Q *dvr,DP *rp)
+{
+	MP m,mr,mr0;
+	int i,n;
+	Q *w;
+	P t;
+
+	if ( !p ) {
+		*rp = 0; *dvr = 0;
+	}else {
+		for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
+		w = (Q *)ALLOCA(n*sizeof(Q));
+		for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+			if ( NUM(m->c) )
+				w[i] = (Q)m->c;
+			else
+				ptozp(m->c,1,&w[i],&t);
+		sortbynm(w,n);	
+		qltozl(w,n,dvr);
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			NEXTMP(mr0,mr); divsp(CO,m->c,(P)(*dvr),&mr->c); mr->dl = m->dl;
+		}
+		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+	}
 }
 
 void dp_idiv(DP p,Q c,DP *rp)

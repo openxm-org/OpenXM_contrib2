@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.58 2005/08/03 05:01:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.59 2005/08/24 06:28:39 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -568,10 +568,42 @@ extern LIST Dist;
 
 void Pdp_ptozp(arg,rp)
 NODE arg;
-DP *rp;
+Obj *rp;
 {
+	Q t;
+    NODE tt,p;
+    NODE n,n0;
+    char *key;
+	DP pp;
+	LIST list;
+    int get_factor=0;
+
 	asir_assert(ARG0(arg),O_DP,"dp_ptozp");
-	dp_ptozp((DP)ARG0(arg),rp);
+
+    /* analyze the option */
+    if ( current_option ) {
+      for ( tt = current_option; tt; tt = NEXT(tt) ) {
+        p = BDY((LIST)BDY(tt));
+        key = BDY((STRING)BDY(p));
+        /*  value = (Obj)BDY(NEXT(p)); */
+        if ( !strcmp(key,"factor") )  get_factor=1;
+        else {
+          error("ptozp: unknown option.");
+        }
+      }
+    }
+
+	dp_ptozp3((DP)ARG0(arg),&t,&pp);
+
+    /* printexpr(NULL,t); */
+	/* if the option factor is given, then it returns the answer
+       in the format [zpoly, num] where num*zpoly is equal to the argument.*/
+    if (get_factor) {
+	  n0 = mknode(2,pp,t);
+      MKLIST(list,n0);
+	  *rp = (Obj)list;
+    } else
+      *rp = (Obj)pp;
 }
 	
 void Pdp_ptozp2(arg,rp)

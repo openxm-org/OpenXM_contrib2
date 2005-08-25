@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.34 2005/01/12 10:38:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.35 2005/07/27 04:35:11 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -345,6 +345,7 @@ void dp_ptozp_d(DP,DP *);
 void dp_vtod(Q *,DP,DP *);
 void dp_idivv_hist(Q,DP *);
 void dp_igcdv_hist(DP,Q *);
+void dp_ptozp3(DP,Q *,DP *);
 void dp_ptozp2(DP,DP,DP *,DP *);
 void dp_ptozp(DP,DP *);
 void dp_nf_tab_mod(DP,LIST *,int,DP *);
