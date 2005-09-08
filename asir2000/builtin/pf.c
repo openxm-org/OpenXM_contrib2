@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.8 2004/06/27 03:15:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.9 2004/12/17 03:09:08 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -63,7 +63,7 @@ void make_tri(void);
 void make_exp(void);
 void simplify_pow(PFINS,Obj *);
 
-void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval();
+void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval(),Pfunargs_ext();
 void Pregister_handler();
 void Peval_quote();
 void Pmapat();
@@ -76,6 +76,7 @@ struct ftab puref_tab[] = {
 	{"functor",Pfunctor,1},
 	{"args",Pargs,1},
 	{"funargs",Pfunargs,1},
+	{"funargs_ext",Pfunargs_ext,1},
 	{"register_handler",Pregister_handler,1},
 	{"add_handler",Padd_handler,2},
 	{"list_handler",Plist_handler,1},
@@ -306,8 +307,8 @@ Obj *rp;
 }
 
 #define ISPFINS(p)\
-(p)&&(ID(p) == O_P)&&((int)VR((P)p)->attr!=V_PF)&&\
-UNIQ(DEG(DC((P)p)))&&UNIQ(COEF(DC((P)p)))
+((p)&&(ID(p) == O_P)&&((int)VR((P)p)->attr==V_PF)&&\
+UNIQ(DEG(DC((P)p)))&&UNIQ(COEF(DC((P)p))))
 
 void Pfunctor(arg,rp)
 NODE arg;
@@ -382,6 +383,43 @@ LIST *rp;
 			NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
 		}
 		NEXT(n) = 0;
+		MKLIST(*rp,n0);	
+	}
+}
+
+void Pfunargs_ext(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	P p;
+	P f;
+	FUNC t;
+	PF pf;
+	PFINS ins;
+	PFAD ad;
+	NODE n,n0,d,d0,a,a0;
+	LIST alist,dlist;
+	Q q;
+	int i;
+
+	p = (P)ARG0(arg);
+	if ( !ISPFINS(p) )
+		*rp = 0;
+	else {
+		ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
+		t = (FUNC)MALLOC(sizeof(struct oFUNC));
+		t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
+		t->f.puref = pf;
+		makesrvar(t,&f);
+
+		d0 = a0 = 0;
+		for ( i = 0; i < pf->argc; i++ ) {
+			NEXTNODE(d0,d); STOQ(ad[i].d,q); BDY(d) = (pointer)q;
+			NEXTNODE(a0,a); BDY(a) = (pointer)ad[i].arg;
+		}
+		NEXT(d) = 0; NEXT(a) = 0; MKLIST(alist,a0); MKLIST(dlist,d0);
+
+		n0 = mknode(3,f,dlist,alist);
 		MKLIST(*rp,n0);	
 	}
 }
