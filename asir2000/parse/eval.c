@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.40 2005/07/27 04:35:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.41 2005/09/13 06:40:46 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -174,16 +174,6 @@ pointer eval(FNODE f)
 			val = evalmapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
 		case I_RECMAP:
 			val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
-		case I_UNIFY:
-			MKQUOTE(expr,(FNODE)FA0(f));
-			MKQUOTE(pattern,(FNODE)FA1(f));
-			ret = quote_unify(expr,pattern,&match);
-			if ( !ret ) val = 0;
-			else {
-				do_assign(match);
-				val = (pointer)ONE;
-			}
-			break;
 		case I_IFUNC:
 			val = evalif((FNODE)FA0(f),(FNODE)FA1(f)); break;
 #if !defined(VISUAL)

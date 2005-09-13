@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.55 2005/07/26 01:33:46 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.56 2005/09/13 06:40:45 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -507,15 +507,16 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 	*rp = 0;	
 }
 
-void Pquote_unify(NODE arg,LIST *rp)
+void Pquote_unify(NODE arg,Q *rp)
 {
 	NODE r;
 	int ret;
 
 	ret = quote_unify((Obj)ARG0(arg),(Obj)ARG1(arg),&r);
-	if ( ret )
-		MKLIST(*rp,r);
-	else
+	if ( ret ) {
+		do_assign(r);
+		*rp = ONE;
+	} else
 		*rp = 0;
 }
 
