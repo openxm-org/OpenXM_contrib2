@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.39 2004/12/18 03:27:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.40 2005/07/27 04:35:11 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -71,11 +71,11 @@ pointer eval(FNODE f)
 	STRING str;
 	pointer val = 0;
 	pointer a,a1,a2;
-	NODE tn,ind;
+	NODE tn,ind,match;
 	R u;
 	DP dp;
 	unsigned int pv;
-	int c;
+	int c,ret;
 	FNODE f1;
 	UP2 up2;
 	UP up;
@@ -85,6 +85,7 @@ pointer eval(FNODE f)
 	GFPN gfpn;
 	GFSN gfsn;
 	RANGE range;
+	QUOTE expr,pattern;
 
 #if defined(VISUAL)
 	if ( recv_intr ) {
@@ -173,6 +174,16 @@ pointer eval(FNODE f)
 			val = evalmapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
 		case I_RECMAP:
 			val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
+		case I_UNIFY:
+			MKQUOTE(expr,(FNODE)FA0(f));
+			MKQUOTE(pattern,(FNODE)FA1(f));
+			ret = quote_unify(expr,pattern,&match);
+			if ( !ret ) val = 0;
+			else {
+				do_assign(match);
+				val = (pointer)ONE;
+			}
+			break;
 		case I_IFUNC:
 			val = evalif((FNODE)FA0(f),(FNODE)FA1(f)); break;
 #if !defined(VISUAL)
@@ -775,11 +786,15 @@ pointer bevalf(FUNC f,NODE a)
 pointer evalif(FNODE f,FNODE a)
 {
 	Obj g;
+	FNODE t;
 
 	g = (Obj)eval(f);
 	if ( g && (OID(g) == O_P) && (VR((P)g)->attr == (pointer)V_SR) )
 		return evalf((FUNC)VR((P)g)->priv,a,0);
-	else {
+	else if ( g && OID(g) == O_QUOTEARG && ((QUOTEARG)g)->type == A_func ) {
+		t = mkfnode(2,I_FUNC,((QUOTEARG)g)->body,a);
+		return eval(t);
+	} else {
 		error("invalid function pointer");
 		/* NOTREACHED */
 		return (pointer)-1;

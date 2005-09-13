@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.54 2005/07/15 00:23:26 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.55 2005/07/26 01:33:46 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -88,7 +88,7 @@ void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
 int top_is_minus(FNODE f);
-NODE quote_unify(Obj f,Obj pat);
+int quote_unify(Obj f,Obj pat,NODE *rp);
 
 struct ftab str_tab[] = {
 	{"sprintf",Psprintf,-99999999},
@@ -510,21 +510,43 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 void Pquote_unify(NODE arg,LIST *rp)
 {
 	NODE r;
+	int ret;
 
-	r = quote_unify((Obj)ARG0(arg),(Obj)ARG1(arg));
-	MKLIST(*rp,r);
+	ret = quote_unify((Obj)ARG0(arg),(Obj)ARG1(arg),&r);
+	if ( ret )
+		MKLIST(*rp,r);
+	else
+		*rp = 0;
+}
+
+void do_assign(NODE arg)
+{
+	NODE t,pair;
+	int pv;
+
+	QUOTE value;
+
+	for ( t = arg; t; t = NEXT(t) ) {
+		pair = BDY((LIST)BDY(t));
+		pv = (int)FA0((FNODE)BDY((QUOTE)BDY(pair)));
+		value = (QUOTE)(BDY(NEXT(pair)));
+		ASSPV(pv,value);
+	}
 }
 
 /* 
-/* consistency check and merge */
+/* consistency check and merge
+ */
 
-NODE merge_matching_node(NODE n,NODE a)
+int merge_matching_node(NODE n,NODE a,NODE *rp)
 {
 	NODE ta,ba,tn,bn;
 	QUOTE pa,va,pn,vn;
 
-	if ( !n )
-		return a;
+	if ( !n ) {
+		*rp = a;
+		return 1;
+	}
 	for ( ta = a; ta; ta = NEXT(ta) ) {
 		ba = BDY((LIST)BDY(ta));
 		if ( !ba ) continue;
@@ -543,21 +565,25 @@ NODE merge_matching_node(NODE n,NODE a)
 			n = tn;
 		}
 	}
-	return n;
+	*rp = n;
+	return 1;
 }
 
-NODE quote_unify_node(NODE f,NODE pat) {
-	NODE r,a,tf,tp;
+int quote_unify_node(NODE f,NODE pat,NODE *rp) {
+	NODE r,a,tf,tp,r1;
+	int ret;
 
 	if ( length(f) != length(pat) ) return 0;
 	r = 0;
 	for ( tf = f, tp = pat; tf; tf = NEXT(tf), tp = NEXT(tp) ) {
-		a = quote_unify((Obj)BDY(tf),(Obj)BDY(tp));
-		if ( !a ) return 0;
-		r = merge_matching_node(r,a);
-		if ( !r ) return 0;
+		ret = quote_unify((Obj)BDY(tf),(Obj)BDY(tp),&a);
+		if ( !ret ) return 0;
+		ret = merge_matching_node(r,a,&r1);
+		if ( !ret ) return 0;
+		else r = r1;
 	}
-	return r;
+	*rp = r;
+	return 1;
 }
 
 void get_quote_id_arg(QUOTE f,int *id,NODE *r)
@@ -569,19 +595,20 @@ void get_quote_id_arg(QUOTE f,int *id,NODE *r)
 	*id = QTOS((Q)BDY(fab)); *r = NEXT(fab);
 }
 
-/* ret : [[quote(A),quote(1)],...] */
+/* *rp : [[quote(A),quote(1)],...] */
 
-NODE quote_unify(Obj f, Obj pat)
+int quote_unify(Obj f, Obj pat, NODE *rp)
 {
 	NODE tf,tp,head,body;
 	NODE parg,farg,r;
 	LIST fa,l;
 	int pid,id;
 	FUNC ff,pf;
+	int ret;
 
 	if ( OID(pat) == O_LIST ) {
 		if ( OID(f) == O_LIST )
-			return quote_unify_node(BDY((LIST)f),BDY((LIST)pat));
+			return quote_unify_node(BDY((LIST)f),BDY((LIST)pat),rp);
 		else
 			return 0;
 	} else if ( OID(pat) == O_QUOTE ) {
@@ -593,24 +620,27 @@ NODE quote_unify(Obj f, Obj pat)
 				if ( compquote(CO,f,pat) )
 					return 0;
 				else {
-					MKLIST(l,0);
-					return mknode(1,l);
+					*rp = 0;
+					return 1;
 				}
 				break;
 			case I_LIST:
-				return quote_unify_node(BDY((LIST)BDY(farg)),BDY((LIST)BDY(parg)));
+				return quote_unify_node(BDY((LIST)BDY(farg)),
+							BDY((LIST)BDY(parg)),rp);
 			case I_PVAR:
 				/* [[pat,f]] */
 				r = mknode(2,pat,f); MKLIST(l,r);
-				return mknode(1,l);
+				*rp =  mknode(1,l);
+				return 1;
 			case I_IFUNC:
 				/* F(X,Y,...) = ... */
 				if ( id == I_FUNC ) {
 					r = mknode(2,BDY(parg),BDY(farg)); MKLIST(l,r);
 					head = mknode(1,l);
-					body = quote_unify(BDY(NEXT(farg)),BDY(NEXT(parg)));
-					if ( !body ) return 0;
-					return merge_matching_node(head,body);
+					ret = quote_unify(BDY(NEXT(farg)),
+								BDY(NEXT(parg)),&body);
+					if ( !ret ) return 0;
+					else return merge_matching_node(head,body,rp);
 				} else
 					return 0;
 			case I_BOP:
@@ -618,11 +648,11 @@ NODE quote_unify(Obj f, Obj pat)
 				/* X+Y = ... */
 				/* f(...) = ... */
 				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
-				return quote_unify_node(NEXT(farg),NEXT(parg));
+				return quote_unify_node(NEXT(farg),NEXT(parg),rp);
 				break;
 			default:
 				if ( pid == id )
-					return quote_unify_node(farg,parg);
+					return quote_unify_node(farg,parg,rp);
 				else
 					return 0;
 		}

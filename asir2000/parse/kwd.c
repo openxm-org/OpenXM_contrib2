@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.11 2003/05/20 06:15:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.12 2003/05/23 00:11:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -80,6 +80,7 @@ struct oTKWD kwd[] = {
 	{"pari",PARIF},
 	{"map",MAP},
 	{"recmap",RECMAP},
+	{"unify",UNIFY},
 	{"getopt",GETOPT},
 	{"timer",TIMER},
 	{"quote",QUOTED},
