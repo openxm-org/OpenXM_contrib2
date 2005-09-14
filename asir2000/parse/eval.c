@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.41 2005/09/13 06:40:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.42 2005/09/13 06:54:22 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -64,6 +64,7 @@ int f_break,f_return,f_continue;
 int evalstatline;
 int recv_intr;
 int show_crossref;
+void gen_searchf_searchonly(char *name,FUNC *r);
 
 pointer eval(FNODE f)
 {
@@ -333,14 +334,18 @@ pointer eval(FNODE f)
 	return ( val );
 }
 
+V searchvar(char *name);
+
 pointer evalstat(SNODE f)
 {
 	pointer val = 0,t,s,s1;
 	P u;
 	NODE tn;
 	int i,ac;
+	V v;
 	V *a;
 	char *buf;
+	FUNC func;
 
 	if ( !f )
 		return ( 0 );
@@ -379,7 +384,13 @@ pointer evalstat(SNODE f)
 				makevar(buf,&u); a[i] = VR(u);
 				substr(CO,0,(Obj)s,VR((P)t),(Obj)u,(Obj *)&s1); s = s1;
 			}
-			mkpf((char *)FA0(f),(Obj)s,ac,a,0,0,0,(PF *)&val); val = 0; break;
+			mkpf((char *)FA0(f),(Obj)s,ac,a,0,0,0,(PF *)&val); val = 0;
+			v = searchvar((char *)FA0(f));
+			if ( v ) {
+				searchpf((char *)FA0(f),&func);
+				makesrvar(func,&u);
+			}
+			break;
 		case S_SINGLE:
 			val = eval((FNODE)FA0(f)); break;
 		case S_CPLX:
@@ -469,10 +480,15 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 	char errbuf[BUFSIZ];
 	static unsigned int stack_size;
 	static void *stack_base;
+	FUNC f1;
 
 	if ( f->id == A_UNDEF ) {
-		sprintf(errbuf,"evalf : %s undefined",NAME(f));
-		error(errbuf);
+		gen_searchf_searchonly(f->fullname,&f1);
+		if ( f1->id == A_UNDEF ) {
+			sprintf(errbuf,"evalf : %s undefined",NAME(f));
+			error(errbuf);
+		} else
+			*f = *f1;
 	}
 	if ( getsecuremode() && !PVSS && !f->secure ) {
 		sprintf(errbuf,"evalf : %s not permitted",NAME(f));

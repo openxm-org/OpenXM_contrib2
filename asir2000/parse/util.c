@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.12 2004/12/18 16:50:10 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.13 2005/02/08 18:06:05 saito Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -57,8 +57,7 @@
 #endif
 #include <ctype.h>
 
-int length(n)
-NODE n;
+int length(NODE n)
 {
 	int i;
 
@@ -66,8 +65,7 @@ NODE n;
 	return i;
 }
 
-int argc(a)
-NODE a;
+int argc(NODE a)
 {
 	int i;
 
@@ -75,10 +73,7 @@ NODE a;
 	return ( i );
 }
 
-void stoarg(s,acp,av)
-char *s;
-int *acp;
-char **av;
+void stoarg(char *s,int *acp,char **av)
 {
 	int i;
 
@@ -96,9 +91,7 @@ char **av;
 }
 
 #if 0
-unsigned int ator(addr,r)
-unsigned int addr;
-Obj *r;
+unsigned int ator(unsigned int addr,Obj *r)
 {
 	N n;
 	Q q;
@@ -115,10 +108,7 @@ Obj *r;
 }
 #endif
 
-void getarray(a,ind,vp)
-pointer a;
-NODE ind;
-pointer *vp;
+void getarray(pointer a,NODE ind,pointer *vp)
 {
 	Obj len,row,col,trg;
 	int i;
@@ -196,10 +186,7 @@ pointer *vp;
 	*vp = a;
 }
 
-void putarray(a,ind,b)
-pointer a;
-NODE ind;
-pointer b;
+void putarray(pointer a,NODE ind,pointer b)
 {
 	Obj len,row,col;
 	int i;
@@ -274,9 +261,7 @@ pointer b;
 	}
 }
 
-int rangecheck(a,n)
-Obj a;
-int n;
+int rangecheck(Obj a,int n)
 {
 	N m;
 
@@ -290,8 +275,7 @@ int n;
 	return 1;
 }
 
-int zp(p)
-P p;
+int zp(P p)
 {
 	int r;
 	DCP dc;
@@ -404,9 +388,17 @@ va_dcl
 }
 #endif
 
-void makevar(str,p)
-char *str;
-P *p;
+V searchvar(char *str)
+{
+	VL vl;
+
+	for ( vl = CO; ;vl = NEXT(vl) ) 
+		if ( NAME(VR(vl)) && !strcmp(NAME(VR(vl)),str) )
+			return VR(vl);
+	return 0;
+}
+
+void makevar(char *str,P *p)
 {
 	VL vl;
 	V v;
@@ -427,9 +419,7 @@ P *p;
 			vl = NEXT(vl);
 }
 
-void makesrvar(f,p)
-FUNC f;
-P *p;
+void makesrvar(FUNC f,P *p)
 {
 	VL vl;
 	V v;
@@ -452,10 +442,7 @@ P *p;
 			vl = NEXT(vl);
 }
 
-void appendtonode(n,a,nrp)
-NODE n;
-pointer a;
-NODE *nrp;
+void appendtonode(NODE n,pointer a,NODE *nrp)
 {
 	NODE tn;
 
@@ -467,10 +454,7 @@ NODE *nrp;
 	}
 }
 
-void appendtonode2(n,a,b,nrp)
-NODE2 n;
-pointer a,b;
-NODE2 *nrp;
+void appendtonode2(NODE2 n,pointer a,pointer b,NODE2 *nrp)
 {
 	NODE2 tn;
 
@@ -482,9 +466,7 @@ NODE2 *nrp;
 	}
 }
 
-void appendvar(vl,v)
-VL vl;
-V v;
+void appendvar(VL vl,V v)
 {
 	while (1)
 		if ( vl->v == v )
@@ -496,10 +478,7 @@ V v;
 			vl = NEXT(vl);
 }
 
-void reallocarray(arrayp,sizep,indexp,esize)
-char **arrayp;
-int *sizep,*indexp;
-int esize;
+void reallocarray(char **arrayp,int *sizep,int *indexp,int esize)
 {
 	char *new;
 
