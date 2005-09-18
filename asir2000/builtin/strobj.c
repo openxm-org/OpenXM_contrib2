@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.56 2005/09/13 06:40:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.57 2005/09/13 06:54:22 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,6 +79,7 @@ void Pquotetotex_env();
 void Pflatten_quote();
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_unify();
+void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
 char *conv_rule(char *name);
