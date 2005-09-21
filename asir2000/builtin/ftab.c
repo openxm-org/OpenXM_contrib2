@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.12 2003/12/02 03:24:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.13 2004/12/18 16:50:10 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -100,8 +100,8 @@ void sysf_init() {
 
 	for ( j = 0, sysf = 0; tab = ftabs[j]; j++ )
 		for ( i = 0; tab[i].name; i++ )
-			appendbinf(&sysf,tab[i].name,tab[i].f,tab[i].argc);
+			appendbinf(&sysf,tab[i].name,tab[i].f,tab[i].argc,tab[i].quote);
 	for ( i = 0, noargsysf = 0; nasysftab[i].name; i++ )
-		appendbinf(&noargsysf,nasysftab[i].name, nasysftab[i].f,nasysftab[i].argc);
+		appendbinf(&noargsysf,nasysftab[i].name, nasysftab[i].f,nasysftab[i].argc,0);
 	parif_init();
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.36 2005/08/25 18:59:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.37 2005/09/13 06:40:46 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -151,6 +151,7 @@ typedef struct oFUNC {
 	int type;
 	int secure;
 	aid id;
+	unsigned int quote;
 	union {
 		void (*binf)();
 		struct oUSRF *usrf;
@@ -223,6 +224,7 @@ struct ftab {
 	char *name;
 	void (*f)();
 	int argc;
+	unsigned int quote;
 };
 
 #define MKPVI(a,b,c)\
@@ -483,8 +485,8 @@ void closecurrentinput(void);
 void asir_terminate(int);
 void searchasirpath(char *,char **);
 void get_vars(Obj,VL *);
-void appendbinf(NODE *,char *,void(*)(),int);
-void appendubinf(char *,void(*)(),int);
+void appendbinf(NODE *,char *,void(*)(),int,unsigned int);
+void appendubinf(char *,void(*)(),int,unsigned int);
 void parif_init(void);
 void sysf_init(void);
 void makesrvar(FUNC, P *);
@@ -514,15 +516,6 @@ int qcoefp(Obj);
 int qcoefr(Obj);
 int rangecheck(Obj,int);
 int structtoindex(char *);
-pointer eval(FNODE);
-pointer evalf(FUNC,FNODE,FNODE);
-pointer bevalf(FUNC,NODE);
-pointer evalif(FNODE,FNODE);
-pointer evalnode(NODE node);
-pointer evalpf(PF,NODE);
-pointer evalparif(FUNC,NODE);
-pointer evalpv(int,FNODE,pointer);
-pointer evalstat(SNODE f);
 void _mkpfins(PF ,Obj *,V *);
 void appendpfins(V ,V *);
 void appenduf(char *,FUNC *);
@@ -883,12 +876,14 @@ pointer eval(FNODE f);
 pointer evalstat(SNODE f);
 pointer evalnode(NODE node);
 pointer evalf(FUNC f,FNODE a,FNODE opt);
+pointer evalparif(FUNC f,NODE a);
+pointer evalf_deriv(FUNC f,FNODE a,FNODE deriv);
 pointer evalmapf(FUNC f,FNODE a);
 pointer eval_rec_mapf(FUNC f,FNODE a);
 pointer beval_rec_mapf(FUNC f,NODE node);
 pointer bevalf(FUNC f,NODE a);
 pointer evalif(FNODE f,FNODE a);
-pointer evalpf(PF pf,NODE args);
+pointer evalpf(PF pf,NODE args,NODE deriv);
 void evalnodebody(NODE sn,NODE *dnp);
 void gen_searchf(char *name,FUNC *r);
 void searchf(NODE fn,char *name,FUNC *r);

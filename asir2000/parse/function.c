@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.6 2004/10/27 08:21:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.7 2004/11/16 01:47:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,18 +79,19 @@ int setsecureflag(char *name,int value)
 	return -1;
 }
 
-void appendbinf(flistp,name,func,argc)
+void appendbinf(flistp,name,func,argc,quote)
 NODE *flistp;
 char *name;
 void (*func)();
 int argc;
+unsigned int quote;
 {
 	FUNC t;
 	NODE n;
 
 	t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
 	t->name = name; t->id = A_BIN; t->argc = argc; t->f.binf = func;
-	t->fullname = name;
+	t->fullname = name; t->quote = quote;
 	MKNODE(n,t,*flistp); *flistp = n;
 }
 
@@ -109,20 +110,22 @@ int type;
 	MKNODE(n,t,*flistp); *flistp = n;
 }
 
-void appendsysf(name,func,argc)
+void appendsysf(name,func,argc,quote)
 char *name;
 void (*func)();
 int argc;
+unsigned int quote;
 {
-	appendbinf(&sysf,name,func,argc);
+	appendbinf(&sysf,name,func,argc,quote);
 }
 
-void appendubinf(name,func,argc)
+void appendubinf(name,func,argc,quote)
 char *name;
 void (*func)();
 int argc;
+unsigned int quote;
 {
-	appendbinf(&ubinf,name,func,argc);
+	appendbinf(&ubinf,name,func,argc,quote);
 }
 
 int comp_dcp(DCP *a,DCP *b)

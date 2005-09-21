@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.57 2005/09/13 06:54:22 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.58 2005/09/18 08:14:22 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -105,12 +105,12 @@ struct ftab str_tab[] = {
 	{"clear_tb",Pclear_tb,1},
 	{"tb_to_string",Ptb_to_string,1},
 	{"string_to_tb",Pstring_to_tb,1},
-	{"quotetotex_tb",Pquotetotex_tb,2},
-	{"quotetotex",Pquotetotex,1},
-	{"quotetotex_env",Pquotetotex_env,-99999999},
-	{"flatten_quote",Pflatten_quote,2},
-	{"quote_to_funargs",Pquote_to_funargs,1},
-	{"quote_unify",Pquote_unify,2},
+	{"quotetotex_tb",Pquotetotex_tb,2,0x1},
+	{"quotetotex",Pquotetotex,1,0x1},
+	{"quotetotex_env",Pquotetotex_env,-99999999,0x1},
+	{"flatten_quote",Pflatten_quote,2,0x1},
+	{"quote_to_funargs",Pquote_to_funargs,1,0x1},
+	{"quote_unify",Pquote_unify,2,0x3},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{"get_function_name",Pget_function_name,1},
 	{0,0,0},

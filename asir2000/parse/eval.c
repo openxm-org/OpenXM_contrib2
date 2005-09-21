@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.42 2005/09/13 06:54:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.43 2005/09/14 02:48:38 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -169,8 +169,7 @@ pointer eval(FNODE f)
 		case I_FUNC_OPT:
 			val = evalf((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
 		case I_PFDERIV:
-			error("eval : not implemented yet");
-			break;
+			val = evalf_deriv((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
 		case I_MAP:
 			val = evalmapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
 		case I_RECMAP:
@@ -470,6 +469,33 @@ pointer evalnode(NODE node)
 extern FUNC cur_binf;
 extern NODE PVSS;
 
+LIST eval_arg(FNODE a,unsigned int quote)
+{
+	LIST l;
+	FNODE fn;
+	NODE n,n0,tn;
+	QUOTE q;
+	int i;
+
+	for ( tn = (NODE)FA0(a), n0 = 0, i = 0; tn; tn = NEXT(tn), i++ ) {
+		NEXTNODE(n0,n);
+		if ( quote & (1<<i) ) {
+			fn = (FNODE)(BDY(tn));
+			if ( fn->id == I_FORMULA && FA0(fn) 
+				&& OID((Obj)FA0(fn))== O_QUOTE )
+		 		BDY(n) = FA0(fn);		
+			else {
+				MKQUOTE(q,(FNODE)BDY(tn));
+				BDY(n) = (pointer)q;
+			}
+		} else
+			BDY(n) = eval((FNODE)BDY(tn));
+	}
+	if ( n0 ) NEXT(n) = 0;
+	MKLIST(l,n0);
+	return l;
+}
+
 pointer evalf(FUNC f,FNODE a,FNODE opt)
 {
 	LIST args;
@@ -521,7 +547,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 				cur_binf = f;
 				(*f->f.binf)(&val);
 			} else {
-				args = (LIST)eval(a);
+				args = (LIST)eval_arg(a,f->quote);
 				current_option = opts;
 				cur_binf = f;
 				(*f->f.binf)(args?BDY(args):0,&val);
@@ -547,7 +573,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			if ( (stack_base - (void *)&args) +0x100000 > stack_size )
 				error("stack overflow");
 #endif
-			args = (LIST)eval(a);
+			args = (LIST)eval_arg(a,f->quote);
 			if ( opt ) {
 				opts = BDY((LIST)eval(opt));
 				/* opts = ["opt1",arg1],... */
@@ -594,10 +620,32 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			break;
 		case A_PURE:
 			args = (LIST)eval(a);
-			val = evalpf(f->f.puref,args?BDY(args):0);
+			val = evalpf(f->f.puref,args?BDY(args):0,0);
 			break;
 		default:
 			sprintf(errbuf,"evalf : %s undefined",NAME(f));
+			error(errbuf);
+			break;
+	}
+	return val;
+}
+
+pointer evalf_deriv(FUNC f,FNODE a,FNODE deriv)
+{
+	LIST args,dargs;
+	pointer val;
+	char errbuf[BUFSIZ];
+
+	switch ( f->id ) {
+		case A_PURE:
+			args = (LIST)eval(a);
+			dargs = (LIST)eval(deriv);
+			val = evalpf(f->f.puref,
+				args?BDY(args):0,dargs?BDY(dargs):0);
+			break;
+		default:
+			sprintf(errbuf,
+				"evalf : %s is not a pure function",NAME(f));
 			error(errbuf);
 			break;
 	}
@@ -615,7 +663,7 @@ pointer evalmapf(FUNC f,FNODE a)
 	int len,row,col,i,j;
 	pointer val;
 
-	args = (LIST)eval(a);
+	args = (LIST)eval_arg(a,f->quote);
 	node = BDY(args); head = (Obj)BDY(node); rest = NEXT(node);
 	if ( !head ) {
 		val = bevalf(f,node);
@@ -658,7 +706,7 @@ pointer eval_rec_mapf(FUNC f,FNODE a)
 {
 	LIST args;
 
-	args = (LIST)eval(a);
+	args = (LIST)eval_arg(a,f->quote);
 	return beval_rec_mapf(f,BDY(args));
 }
 
@@ -717,7 +765,7 @@ pointer bevalf(FUNC f,NODE a)
 	pointer val;
 	int i,n;
 	NODE tn,sn;
-    VS pvs,prev_mpvs;
+	VS pvs,prev_mpvs;
 	char errbuf[BUFSIZ];
 
 	if ( f->id == A_UNDEF ) {
@@ -779,7 +827,7 @@ pointer bevalf(FUNC f,NODE a)
 			f_return = f_break = f_continue = 0; poppvs(); 
 			break;
 		case A_PURE:
-			val = evalpf(f->f.puref,a);
+			val = evalpf(f->f.puref,a,0);
 			break;
 		default:
 			sprintf(errbuf,"bevalf : %s undefined",NAME(f));
@@ -807,20 +855,25 @@ pointer evalif(FNODE f,FNODE a)
 	}
 }
 
-pointer evalpf(PF pf,NODE args)
+pointer evalpf(PF pf,NODE args,NODE dargs)
 {
 	Obj s,s1;
 	int i;
-	NODE node;
+	NODE node,dnode;
 	PFINS ins;
 	PFAD ad;
 	
 	if ( !pf->body ) {
 		ins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
 		ins->pf = pf;
-		for ( i = 0, node = args, ad = ins->ad;
-			node; node = NEXT(node), i++ ) {
-			ad[i].d = 0; ad[i].arg = (Obj)node->body;	
+		for ( i = 0, node = args, dnode = dargs, ad = ins->ad;
+			node; i++ ) {
+			ad[i].arg = (Obj)node->body;	
+			if ( !dnode ) ad[i].d = 0;
+			else
+				ad[i].d = QTOS((Q)dnode->body);
+			node = NEXT(node);
+			if ( dnode ) dnode = NEXT(dnode);
 		}
 		simplify_ins(ins,&s);
 	} else {
