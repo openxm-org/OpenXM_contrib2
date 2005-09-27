@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.59 2005/09/21 23:39:32 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.60 2005/09/22 00:23:18 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -110,7 +110,7 @@ struct ftab str_tab[] = {
 	{"quotetotex_env",Pquotetotex_env,-99999999},
 	{"flatten_quote",Pflatten_quote,2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
-	{"quote_unify",Pquote_unify,2,0x2},
+	{"quote_unify",Pquote_unify,2,0x3},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{"get_function_name",Pget_function_name,1},
 	{0,0,0},
@@ -508,12 +508,18 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 	*rp = 0;	
 }
 
+FNODE partial_eval(FNODE);
+
 void Pquote_unify(NODE arg,Q *rp)
 {
+	FNODE f,g;
+	QUOTE q;
 	NODE r;
 	int ret;
 
-	ret = quote_unify((Obj)ARG0(arg),(Obj)ARG1(arg),&r);
+	g = partial_eval(BDY(((QUOTE)ARG0(arg))));
+	MKQUOTE(q,g);
+	ret = quote_unify((Obj)q,(Obj)ARG1(arg),&r);
 	if ( ret ) {
 		do_assign(r);
 		*rp = ONE;

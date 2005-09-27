@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.43 2005/09/14 02:48:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.44 2005/09/21 23:39:32 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -331,6 +331,78 @@ pointer eval(FNODE f)
 			break;
 	}
 	return ( val );
+}
+
+NODE partial_eval_node(NODE n);
+FNODE partial_eval(FNODE f);
+
+FNODE partial_eval(FNODE f)
+{
+	FNODE a0,a1,a2;
+	NODE n;
+	pointer val;
+
+	if ( !f )
+		return f;
+	switch ( f->id ) {
+		case I_NOT: case I_PAREN: case I_MINUS:
+		case I_CAR: case I_CDR:
+			a0 = partial_eval((FNODE)FA0(f));
+			return mkfnode(1,f->id,a0);
+
+		case I_BOP: case I_COP: case I_LOP:
+			a1 = partial_eval((FNODE)FA1(f));
+			a2 = partial_eval((FNODE)FA2(f));
+			return mkfnode(3,f->id,FA0(f),a1,a2);
+
+		case I_AND: case I_OR:
+			a0 = partial_eval((FNODE)FA0(f));
+			a1 = partial_eval((FNODE)FA1(f));
+			return mkfnode(2,f->id,a0,a1);
+
+		/* ternary operators */
+		case I_CE:
+			a0 = partial_eval((FNODE)FA0(f));
+			a1 = partial_eval((FNODE)FA1(f));
+			a2 = partial_eval((FNODE)FA2(f));
+			return mkfnode(3,f->id,a0,a1,a2);
+			break;
+
+		/* function */
+		case I_FUNC:
+			a1 = partial_eval((FNODE)FA1(f));
+			return mkfnode(2,f->id,FA0(f),a1);
+
+		case I_LIST: case I_EV:
+			n = partial_eval_node((NODE)FA0(f));
+			return mkfnode(1,f->id,n);
+
+		case I_STR: case I_FORMULA:
+			return f;
+
+		/* program variable */
+		case I_PVAR:
+			val = eval(f);
+			if ( val && OID((Obj)val) == O_QUOTE )
+				return partial_eval((FNODE)BDY((QUOTE)val));
+			else
+				return mkfnode(1,I_FORMULA,val);
+
+		default:
+			error("partial_eval : not implemented yet");
+	}
+}
+
+NODE partial_eval_node(NODE n)
+{
+	NODE r0,r,t;
+
+	for ( r0 = 0, t = n; t; t = NEXT(t) ) {
+		NEXTNODE(r0,r);
+		BDY(r) = partial_eval((FNODE)BDY(t));
+	}
+	if ( r0 ) NEXT(r) = 0;
+	return r0;
 }
 
 V searchvar(char *name);

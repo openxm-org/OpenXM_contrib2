@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.9 2004/12/17 03:09:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.10 2005/09/08 08:37:02 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -84,7 +84,7 @@ struct ftab puref_tab[] = {
 	{"call",Pcall,2},
 	{"vtype",Pvtype,1},
 	{"deval",Pdeval,1},
-	{"eval_quote",Peval_quote,1},
+	{"eval_quote",Peval_quote,-2},
 	{0,0,0},
 };
 
@@ -665,6 +665,14 @@ void Peval_quote(arg,rp)
 NODE arg;
 Obj *rp;
 {
+	FNODE a;
+	QUOTE q;
+
 	asir_assert(ARG0(arg),O_QUOTE,"eval_quote");
-	*rp = eval((FNODE)BDY((QUOTE)ARG0(arg)));
+	if ( argc(arg) == 2 && ARG1(arg) ) {
+		a = partial_eval((FNODE)BDY((QUOTE)ARG0(arg)));
+		MKQUOTE(q,a);
+		*rp = (Obj)q;
+	} else
+		*rp = eval((FNODE)BDY((QUOTE)ARG0(arg)));
 }

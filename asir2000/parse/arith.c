@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.19 2005/02/08 18:06:05 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.20 2005/04/07 08:33:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -116,7 +116,7 @@ Obj a,b,*r;
 		*r = a;
 	else if ( OID(a) == OID(b) )
 		(*afunc[OID(a)].add)(vl,a,b,r);
-	else if ( (mid = MAX(OID(a),OID(b))) <= O_R )
+	else if ( (mid = MAX(OID(a),OID(b))) <= O_R || mid == O_QUOTE )
 		(*afunc[mid].add)(vl,a,b,r);
 	else if ( (mid = MAX(OID(a),OID(b))) == O_DP && MIN(OID(a),OID(b)) <= O_R )
 		(*afunc[mid].add)(vl,a,b,r);
@@ -139,7 +139,7 @@ Obj a,b,*r;
 		*r = a;
 	else if ( OID(a) == OID(b) )
 		(*afunc[OID(a)].sub)(vl,a,b,r);
-	else if ( (mid = MAX(OID(a),OID(b))) <= O_R )
+	else if ( (mid = MAX(OID(a),OID(b))) <= O_R || mid == O_QUOTE )
 		(*afunc[mid].sub)(vl,a,b,r);
 	else if ( (mid = MAX(OID(a),OID(b))) == O_DP && MIN(OID(a),OID(b)) <= O_R )
 		(*afunc[mid].sub)(vl,a,b,r);
@@ -166,7 +166,7 @@ Obj a,b,*r;
 			*r = 0;
 	} else if ( (aid = OID(a)) == (bid = OID(b)) )
 		(*(afunc[aid].mul))(vl,a,b,r);
-	else if ( (mid = MAX(aid,bid)) <= O_R )
+	else if ( (mid = MAX(aid,bid)) <= O_R || mid == O_QUOTE )
 		(*afunc[mid].mul)(vl,a,b,r);
 	else {
 		switch ( aid ) {
@@ -225,7 +225,7 @@ Obj a,b,*r;
 	else if ( (OID(a) == OID(b)) )
 		(*(afunc[OID(a)].div))(vl,a,b,r);
 	else if ( (mid = MAX(OID(a),OID(b))) <= O_R || 
-		(mid == O_MAT) || (mid == O_VECT) || (mid == O_DP) )
+		(mid == O_MAT) || (mid == O_VECT) || (mid == O_DP) || mid == O_QUOTE )
 		(*afunc[mid].div)(vl,a,b,r);
 	else
 		notdef(vl,a,b,r);
@@ -260,7 +260,7 @@ Obj a,e,*r;
 			*r = 0;
 		else
 			mkpow(vl,a,e,r);
-	} else if ( OID(a) == O_QUOTE )
+	} else if ( OID(a) == O_QUOTE || OID(e) == O_QUOTE )
 		(*(afunc[O_QUOTE].pwr))(vl,a,e,r);
 	else if ( !e ) {
 		if ( OID(a) == O_MAT )

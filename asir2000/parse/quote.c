@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.20 2004/08/09 06:42:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.21 2005/04/07 08:33:12 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -6,7 +6,9 @@
 void addquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
+	QUOTE t;
 
+	objtoquote((Obj)a,&t); a = t; objtoquote((Obj)b,&t); b = t;
 	fn = mkfnode(3,I_BOP,addfs,BDY(a),BDY(b));
 	MKQUOTE(*c,fn);
 }
@@ -14,7 +16,9 @@ void addquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 void subquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
+	QUOTE t;
 
+	objtoquote((Obj)a,&t); a = t; objtoquote((Obj)b,&t); b = t;
 	fn = mkfnode(3,I_BOP,subfs,BDY(a),BDY(b));
 	MKQUOTE(*c,fn);
 }
@@ -22,7 +26,9 @@ void subquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 void mulquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
+	QUOTE t;
 
+	objtoquote((Obj)a,&t); a = t; objtoquote((Obj)b,&t); b = t;
 	fn = mkfnode(3,I_BOP,mulfs,BDY(a),BDY(b));
 	MKQUOTE(*c,fn);
 }
@@ -30,7 +36,9 @@ void mulquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 void divquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
+	QUOTE t;
 
+	objtoquote((Obj)a,&t); a = t; objtoquote((Obj)b,&t); b = t;
 	fn = mkfnode(3,I_BOP,divfs,BDY(a),BDY(b));
 	MKQUOTE(*c,fn);
 }
@@ -38,9 +46,9 @@ void divquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 void pwrquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 {
 	FNODE fn;
+	QUOTE t;
 
-	if ( !b || OID(b) != O_QUOTE )
-		error("pwrquote : invalid argument");
+	objtoquote((Obj)a,&t); a = t; objtoquote((Obj)b,&t); b = t;
 	fn = mkfnode(3,I_BOP,pwrfs,BDY(a),BDY(b));
 	MKQUOTE(*c,fn);
 }
@@ -48,7 +56,9 @@ void pwrquote(VL vl,QUOTE a,QUOTE b,QUOTE *c)
 void chsgnquote(QUOTE a,QUOTE *c)
 {
 	FNODE fn;
+	QUOTE t;
 
+	objtoquote((Obj)a,&t); a = t;
 	fn = mkfnode(1,I_MINUS,BDY(a));
 	MKQUOTE(*c,fn);
 }
@@ -452,8 +462,8 @@ FNODE flatten_fnode(FNODE f,char *opname)
 		f2 = strip_paren(f2);
 		if ( f1->id == I_BOP && !strcmp(((ARF)FA0(f1))->name,opname) ) {
 			/* [op [op A B] C] => [op A [op B C]] */
-			return mkfnode(3,I_BOP,(ARF)FA0(f),FA1(f1),
-				mkfnode(3,I_BOP,(ARF)FA0(f),FA2(f1),f2));
+			f2 = flatten_fnode(mkfnode(3,I_BOP,(ARF)FA0(f),FA2(f1),f2),opname);
+			return mkfnode(3,I_BOP,(ARF)FA0(f),FA1(f1),f2);
 		} else
 			return mkfnode(3,I_BOP,(ARF)FA0(f),f1,f2);
 	} else {
