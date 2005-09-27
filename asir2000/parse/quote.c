@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.21 2005/04/07 08:33:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.22 2005/09/27 03:00:21 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -526,7 +526,8 @@ int compfnode(FNODE f1,FNODE f2)
 	for ( i = 0; spec->type[i] != A_end; i++ ) {
 		switch ( spec->type[i] ) {
 			case A_fnode:
-				return compfnode((FNODE)f1->arg[i],(FNODE)f2->arg[i]);
+				t = compfnode((FNODE)f1->arg[i],(FNODE)f2->arg[i]);
+				if ( t ) return t;
 				break;
 			case A_int:
 				s1 = (int)f1->arg[i];
