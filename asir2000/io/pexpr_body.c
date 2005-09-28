@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.7 2004/12/18 16:50:10 saito Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.8 2005/01/17 07:43:24 saito Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -553,6 +553,14 @@ void PRINTFNODE(FNODE f,int paren)
 			PRINTFNODE((FNODE)FA1(f),1);
 			PUTS(((ARF)FA0(f))->name);
 			PRINTFNODE((FNODE)FA2(f),1);
+			break;
+		case I_NARYOP:
+			t = (NODE)FA1(f);
+			PRINTFNODE((FNODE)BDY(t),1);
+			for ( t = NEXT(t); t; t = NEXT(t) )	{
+				PUTS(((ARF)FA0(f))->name);
+				PRINTFNODE((FNODE)BDY(t),1);
+			}
 			break;
 		case I_COP:
 			switch( (cid)FA0(f) ) {

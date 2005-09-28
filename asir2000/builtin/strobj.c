@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.61 2005/09/27 03:00:21 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.62 2005/09/27 09:32:22 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,7 +78,8 @@ void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
-void Pquote_unify();
+void Pquote_unify(),Pget_quote_id();
+void Pquote_bin_to_nary(),Pquote_nary_to_bin();
 void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
@@ -105,6 +106,9 @@ struct ftab str_tab[] = {
 	{"clear_tb",Pclear_tb,1},
 	{"tb_to_string",Ptb_to_string,1},
 	{"string_to_tb",Pstring_to_tb,1},
+	{"get_quote_id",Pget_quote_id,1},
+	{"quote_bin_to_nary",Pquote_bin_to_nary,1},
+	{"quote_nary_to_bin",Pquote_nary_to_bin,2},
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
 	{"quotetotex_env",Pquotetotex_env,-99999999},
@@ -508,7 +512,26 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 	*rp = 0;	
 }
 
-FNODE partial_eval(FNODE);
+FNODE partial_eval(FNODE), quote_bin_to_nary(FNODE), quote_nary_to_bin(FNODE,int);
+
+void Pquote_bin_to_nary(NODE arg,QUOTE *rp)
+{
+	FNODE f;
+
+	f = quote_bin_to_nary(BDY((QUOTE)ARG0(arg)));
+	MKQUOTE(*rp,f);	
+}
+
+void Pquote_nary_to_bin(NODE arg,QUOTE *rp)
+{
+	FNODE f;
+	int direction;
+
+	direction = QTOS((Q)ARG1(arg));
+	f = quote_nary_to_bin(BDY((QUOTE)ARG0(arg)),direction);
+
+	MKQUOTE(*rp,f);	
+}
 
 void Pquote_unify(NODE arg,Q *rp)
 {
@@ -1522,6 +1545,18 @@ void Pflatten_quote(NODE arg,Obj *rp)
 		MKQUOTE(q,f);
 		*rp = (Obj)q;
 	}
+}
+
+void Pget_quote_id(NODE arg,Q *rp)
+{
+	FNODE f;
+	QUOTE q;
+
+	q = (QUOTE)ARG0(arg);
+	if ( !q || OID(q) != O_QUOTE )
+		error("get_quote_id : invalid argument");
+	f = BDY(q);
+	STOQ((int)f->id,*rp);
 }
 
 void Pquote_to_funargs(NODE arg,LIST *rp)
