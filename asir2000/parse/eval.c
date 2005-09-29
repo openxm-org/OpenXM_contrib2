@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.45 2005/09/27 03:00:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.46 2005/09/28 08:08:34 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -343,35 +343,38 @@ pointer eval(FNODE f)
 	return ( val );
 }
 
-NODE quote_bin_to_nary_node(NODE);
-NODE quote_nary_to_bin_node(NODE,int);
+NODE quote_to_nary_node(NODE);
+NODE quote_to_bin_node(NODE,int);
 
-FNODE quote_bin_to_nary(FNODE f)
+FNODE quote_to_nary(FNODE f)
 {
 	FNODE a0,a1,a2;
-	NODE n,t;
+	NODE n,t,t0;
 	pointer val;
 	char *op;
 
 	if ( !f )
 		return f;
 	switch ( f->id ) {
+		case I_NARYOP:
+				n = quote_to_nary_node((NODE)FA1(f));
+				return mkfnode(2,I_NARYOP,FA0(f),n);
+
 		case I_BOP: 
-			a1 = quote_bin_to_nary((FNODE)FA1(f));
-			a2 = quote_bin_to_nary((FNODE)FA2(f));
+			a1 = quote_to_nary((FNODE)FA1(f));
+			a2 = quote_to_nary((FNODE)FA2(f));
 			op = ((ARF)FA0(f))->name;
 			if ( !strcmp(op,"+") || !strcmp(op,"*") ) {
 				if ( a1->id == I_NARYOP && !strcmp(op,((ARF)FA0(a1))->name) ) {
-					for ( t = (NODE)FA1(a1); NEXT(t); t = NEXT(t));
+					for ( n = (NODE)FA1(a1); NEXT(n); n = NEXT(n) );
 					if ( a2->id == I_NARYOP && !strcmp(op,((ARF)FA0(a2))->name) )
-						NEXT(t) = (NODE)FA1(a2);
+						NEXT(n) = (NODE)FA1(a2);
 					else
-						MKNODE(NEXT(t),a2,0);
+						MKNODE(NEXT(n),a2,0);
 					return a1;
 				} else if ( a2->id == I_NARYOP && !strcmp(op,((ARF)FA0(a2))->name) ) {
 					MKNODE(t,a1,(NODE)FA1(a2));
-					FA1(a2) = (pointer)t;
-					return a2;
+					return mkfnode(2,I_NARYOP,FA0(f),t);
 				} else {
 					t = mknode(2,a1,a2);
 					return mkfnode(2,I_NARYOP,FA0(f),t);
@@ -381,45 +384,45 @@ FNODE quote_bin_to_nary(FNODE f)
 
 		case I_NOT: case I_PAREN: case I_MINUS:
 		case I_CAR: case I_CDR:
-			a0 = quote_bin_to_nary((FNODE)FA0(f));
+			a0 = quote_to_nary((FNODE)FA0(f));
 			return mkfnode(1,f->id,a0);
 
 		case I_COP: case I_LOP:
-			a1 = quote_bin_to_nary((FNODE)FA1(f));
-			a2 = quote_bin_to_nary((FNODE)FA2(f));
+			a1 = quote_to_nary((FNODE)FA1(f));
+			a2 = quote_to_nary((FNODE)FA2(f));
 			return mkfnode(3,f->id,FA0(f),a1,a2);
 
 		case I_AND: case I_OR:
-			a0 = quote_bin_to_nary((FNODE)FA0(f));
-			a1 = quote_bin_to_nary((FNODE)FA1(f));
+			a0 = quote_to_nary((FNODE)FA0(f));
+			a1 = quote_to_nary((FNODE)FA1(f));
 			return mkfnode(2,f->id,a0,a1);
 
 		/* ternary operators */
 		case I_CE:
-			a0 = quote_bin_to_nary((FNODE)FA0(f));
-			a1 = quote_bin_to_nary((FNODE)FA1(f));
-			a2 = quote_bin_to_nary((FNODE)FA2(f));
+			a0 = quote_to_nary((FNODE)FA0(f));
+			a1 = quote_to_nary((FNODE)FA1(f));
+			a2 = quote_to_nary((FNODE)FA2(f));
 			return mkfnode(3,f->id,a0,a1,a2);
 			break;
 
 		/* function */
 		case I_FUNC:
-			a1 = quote_bin_to_nary((FNODE)FA1(f));
+			a1 = quote_to_nary((FNODE)FA1(f));
 			return mkfnode(2,f->id,FA0(f),a1);
 
 		case I_LIST: case I_EV:
-			n = quote_bin_to_nary_node((NODE)FA0(f));
+			n = quote_to_nary_node((NODE)FA0(f));
 			return mkfnode(1,f->id,n);
 
 		case I_STR: case I_FORMULA: case I_PVAR:
 			return f;
 
 		default:
-			error("quote_bin_to_nary : not implemented yet");
+			error("quote_to_nary : not implemented yet");
 	}
 }
 
-FNODE quote_nary_to_bin(FNODE f,int dir)
+FNODE quote_to_bin(FNODE f,int dir)
 {
 	FNODE a0,a1,a2;
 	NODE n,t;
@@ -436,7 +439,7 @@ FNODE quote_nary_to_bin(FNODE f,int dir)
 			len = length((NODE)FA1(f));
 			arg = (FNODE *)ALLOCA(len*sizeof(FNODE));
 			for ( i = 0, t = (NODE)FA1(f); i < len; i++, t = NEXT(t) )
-				arg[i] = quote_nary_to_bin((FNODE)BDY(t),dir);
+				arg[i] = quote_to_bin((FNODE)BDY(t),dir);
 			if ( dir ) {
 				a2 = mkfnode(3,I_BOP,fun,arg[len-2],arg[len-1]);
 				for ( i = len-3; i >= 0; i-- )
@@ -450,41 +453,41 @@ FNODE quote_nary_to_bin(FNODE f,int dir)
 
 		case I_NOT: case I_PAREN: case I_MINUS:
 		case I_CAR: case I_CDR:
-			a0 = quote_nary_to_bin((FNODE)FA0(f),dir);
+			a0 = quote_to_bin((FNODE)FA0(f),dir);
 			return mkfnode(1,f->id,a0);
 
 		case I_BOP: case I_COP: case I_LOP:
-			a1 = quote_nary_to_bin((FNODE)FA1(f),dir);
-			a2 = quote_nary_to_bin((FNODE)FA2(f),dir);
+			a1 = quote_to_bin((FNODE)FA1(f),dir);
+			a2 = quote_to_bin((FNODE)FA2(f),dir);
 			return mkfnode(3,f->id,FA0(f),a1,a2);
 
 		case I_AND: case I_OR:
-			a0 = quote_nary_to_bin((FNODE)FA0(f),dir);
-			a1 = quote_nary_to_bin((FNODE)FA1(f),dir);
+			a0 = quote_to_bin((FNODE)FA0(f),dir);
+			a1 = quote_to_bin((FNODE)FA1(f),dir);
 			return mkfnode(2,f->id,a0,a1);
 
 		/* ternary operators */
 		case I_CE:
-			a0 = quote_nary_to_bin((FNODE)FA0(f),dir);
-			a1 = quote_nary_to_bin((FNODE)FA1(f),dir);
-			a2 = quote_nary_to_bin((FNODE)FA2(f),dir);
+			a0 = quote_to_bin((FNODE)FA0(f),dir);
+			a1 = quote_to_bin((FNODE)FA1(f),dir);
+			a2 = quote_to_bin((FNODE)FA2(f),dir);
 			return mkfnode(3,f->id,a0,a1,a2);
 			break;
 
 		/* function */
 		case I_FUNC:
-			a1 = quote_nary_to_bin((FNODE)FA1(f),dir);
+			a1 = quote_to_bin((FNODE)FA1(f),dir);
 			return mkfnode(2,f->id,FA0(f),a1);
 
 		case I_LIST: case I_EV:
-			n = quote_nary_to_bin_node((NODE)FA0(f),dir);
+			n = quote_to_bin_node((NODE)FA0(f),dir);
 			return mkfnode(1,f->id,n);
 
 		case I_STR: case I_FORMULA: case I_PVAR:
 			return f;
 
 		default:
-			error("quote_nary_to_bin : not implemented yet");
+			error("quote_to_bin : not implemented yet");
 	}
 }
 
@@ -560,25 +563,25 @@ NODE partial_eval_node(NODE n)
 	return r0;
 }
 
-NODE quote_bin_to_nary_node(NODE n)
+NODE quote_to_nary_node(NODE n)
 {
 	NODE r0,r,t;
 
 	for ( r0 = 0, t = n; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r);
-		BDY(r) = quote_bin_to_nary((FNODE)BDY(t));
+		BDY(r) = quote_to_nary((FNODE)BDY(t));
 	}
 	if ( r0 ) NEXT(r) = 0;
 	return r0;
 }
 
-NODE quote_nary_to_bin_node(NODE n,int dir)
+NODE quote_to_bin_node(NODE n,int dir)
 {
 	NODE r0,r,t;
 
 	for ( r0 = 0, t = n; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r);
-		BDY(r) = quote_nary_to_bin((FNODE)BDY(t),dir);
+		BDY(r) = quote_to_bin((FNODE)BDY(t),dir);
 	}
 	if ( r0 ) NEXT(r) = 0;
 	return r0;

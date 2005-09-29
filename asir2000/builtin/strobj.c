@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.62 2005/09/27 09:32:22 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.63 2005/09/28 08:08:34 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,7 +79,7 @@ void Pquotetotex_env();
 void Pflatten_quote();
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_unify(),Pget_quote_id();
-void Pquote_bin_to_nary(),Pquote_nary_to_bin();
+void Pquote_to_nary(),Pquote_to_bin();
 void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
@@ -107,8 +107,8 @@ struct ftab str_tab[] = {
 	{"tb_to_string",Ptb_to_string,1},
 	{"string_to_tb",Pstring_to_tb,1},
 	{"get_quote_id",Pget_quote_id,1},
-	{"quote_bin_to_nary",Pquote_bin_to_nary,1},
-	{"quote_nary_to_bin",Pquote_nary_to_bin,2},
+	{"quote_to_nary",Pquote_to_nary,1},
+	{"quote_to_bin",Pquote_to_bin,2},
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
 	{"quotetotex_env",Pquotetotex_env,-99999999},
@@ -512,23 +512,23 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 	*rp = 0;	
 }
 
-FNODE partial_eval(FNODE), quote_bin_to_nary(FNODE), quote_nary_to_bin(FNODE,int);
+FNODE partial_eval(FNODE), quote_to_nary(FNODE), quote_to_bin(FNODE,int);
 
-void Pquote_bin_to_nary(NODE arg,QUOTE *rp)
+void Pquote_to_nary(NODE arg,QUOTE *rp)
 {
 	FNODE f;
 
-	f = quote_bin_to_nary(BDY((QUOTE)ARG0(arg)));
+	f = quote_to_nary(BDY((QUOTE)ARG0(arg)));
 	MKQUOTE(*rp,f);	
 }
 
-void Pquote_nary_to_bin(NODE arg,QUOTE *rp)
+void Pquote_to_bin(NODE arg,QUOTE *rp)
 {
 	FNODE f;
 	int direction;
 
 	direction = QTOS((Q)ARG1(arg));
-	f = quote_nary_to_bin(BDY((QUOTE)ARG0(arg)),direction);
+	f = quote_to_bin(BDY((QUOTE)ARG0(arg)),direction);
 
 	MKQUOTE(*rp,f);	
 }
@@ -640,6 +640,8 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 	int pid,id;
 	FUNC ff,pf;
 	int ret;
+	QUOTE q;
+	FNODE g;
 
 	if ( OID(pat) == O_LIST ) {
 		if ( OID(f) == O_LIST )
@@ -678,9 +680,27 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 					else return merge_matching_node(head,body,rp);
 				} else
 					return 0;
+
+			case I_NARYOP:
 			case I_BOP:
-			case I_FUNC:
 				/* X+Y = ... */
+				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
+
+				/* XXX converting to I_BOP */
+				if ( ((FNODE)BDY((QUOTE)pat))->id == I_NARYOP ) {
+					g = quote_to_bin(BDY((QUOTE)pat),1);
+					MKQUOTE(q,g);
+					get_quote_id_arg((QUOTE)q,&pid,&parg);
+				}
+				if ( ((FNODE)BDY((QUOTE)f))->id == I_NARYOP ) {
+					g = quote_to_bin(BDY((QUOTE)f),1);
+					MKQUOTE(q,g);
+					get_quote_id_arg((QUOTE)q,&id,&farg);
+				}
+				return quote_unify_node(NEXT(farg),NEXT(parg),rp);
+				break;
+
+			case I_FUNC:
 				/* f(...) = ... */
 				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
 				return quote_unify_node(NEXT(farg),NEXT(parg),rp);
