@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.37 2005/09/13 06:40:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.38 2005/09/21 23:39:32 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -69,7 +69,7 @@ typedef enum {
 	I_FORMULA, I_LIST, I_STR, I_NEWCOMP, I_CAR, I_CDR, I_CAST,
 	I_INDEX, I_EV, I_TIMER, I_GF2NGEN, I_GFPNGEN, I_GFSNGEN,
 	I_LOP, I_OPT, I_GETOPT, I_POINT, I_PAREN, I_MINUS,
-	I_NARYOP, I_UNIFY
+	I_NARYOP, I_CONS
 } fid;
 
 /* identifiers for statements */

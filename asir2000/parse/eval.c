@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.46 2005/09/28 08:08:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.47 2005/09/29 08:55:26 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -72,7 +72,7 @@ pointer eval(FNODE f)
 	STRING str;
 	pointer val = 0;
 	pointer a,a1,a2;
-	NODE tn,ind,match;
+	NODE tn,tn1,ind,match;
 	R u;
 	DP dp;
 	unsigned int pv;
@@ -300,6 +300,14 @@ pointer eval(FNODE f)
 			 val = FA0(f); break;
 		case I_LIST:
 			evalnodebody((NODE)FA0(f),&tn); MKLIST(t,tn); val = (pointer)t; break;
+		case I_CONS:
+			evalnodebody((NODE)FA0(f),&tn); a2 = eval(FA1(f));
+			if ( !a2 || OID(a2) != O_LIST )
+					error("cons : invalid argument");
+			for ( tn1 = tn; NEXT(tn1); tn1 = NEXT(tn1) );
+			NEXT(tn1) = BDY((LIST)a2);
+			MKLIST(t,tn); val = (pointer)t;
+			break;
 		case I_NEWCOMP:
 			newstruct((int)FA0(f),(struct oCOMP **)&val); break;
 		case I_CAR:

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.63 2005/09/28 08:08:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.64 2005/09/29 08:55:26 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -112,7 +112,7 @@ struct ftab str_tab[] = {
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
 	{"quotetotex_env",Pquotetotex_env,-99999999},
-	{"flatten_quote",Pflatten_quote,2},
+	{"flatten_quote",Pflatten_quote,-2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
 	{"quote_unify",Pquote_unify,2},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
@@ -536,6 +536,7 @@ void Pquote_to_bin(NODE arg,QUOTE *rp)
 void Pquote_unify(NODE arg,Q *rp)
 {
 	FNODE f,g;
+	Obj obj;
 	QUOTE q;
 	NODE r;
 	int ret;
@@ -545,7 +546,11 @@ void Pquote_unify(NODE arg,Q *rp)
 	MKQUOTE(q,g);
 	ret = quote_unify((Obj)q,(Obj)ARG1(arg),&r);
 #else
-	ret = quote_unify((Obj)ARG0(arg),(Obj)ARG1(arg),&r);
+	obj = (Obj)ARG0(arg);
+	if ( !obj || OID(obj) != O_QUOTE) {
+		objtoquote(obj,&q); obj = (Obj)q;
+	}
+	ret = quote_unify(obj,(Obj)ARG1(arg),&r);
 #endif
 	if ( ret ) {
 		do_assign(r);
@@ -1560,7 +1565,12 @@ void Pflatten_quote(NODE arg,Obj *rp)
 
 	if ( !ARG0(arg) || OID((Obj)ARG0(arg)) != O_QUOTE )
 		*rp = (Obj)ARG0(arg);
-	else {
+	else if ( argc(arg) == 1 ) {
+		f = flatten_fnode(BDY((QUOTE)ARG0(arg)),"+");
+		f = flatten_fnode(f,"*");
+		MKQUOTE(q,f);
+		*rp = (Obj)q;
+	} else {
 		f = flatten_fnode(BDY((QUOTE)ARG0(arg)),BDY((STRING)ARG1(arg)));
 		MKQUOTE(q,f);
 		*rp = (Obj)q;
