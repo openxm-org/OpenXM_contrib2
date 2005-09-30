@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.64 2005/09/29 08:55:26 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.65 2005/09/30 01:35:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -626,6 +626,40 @@ int quote_unify_node(NODE f,NODE pat,NODE *rp) {
 	return 1;
 }
 
+/* f = [a,b,c,...] pat = [X,Y,...] rpat matches the rest of f */
+
+int quote_unify_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
+	QUOTE q;
+	Q id;
+	FNODE fn;
+	NODE r,a,tf,tp,r1,arg;
+	int ret;
+	LIST list,alist;
+
+	/* matching of the head part */
+	if ( length(f) < length(pat) ) return 0;
+	r = 0;
+	for ( tf = f, tp = pat; tp; tf = NEXT(tf), tp = NEXT(tp) ) {
+		ret = quote_unify((Obj)BDY(tf),(Obj)BDY(tp),&a);
+		if ( !ret ) return 0;
+		ret = merge_matching_node(r,a,&r1);
+		if ( !ret ) return 0;
+		else r = r1;
+	}
+	/* matching of the rest */
+	MKLIST(list,tf);
+	STOQ(I_LIST,id); a = mknode(2,id,list);
+	MKLIST(alist,a);
+	arg = mknode(1,alist);
+	Pfunargs_to_quote(arg,&q);
+	ret = quote_unify((Obj)q,rpat,&a);
+	if ( !ret ) return 0;
+	ret = merge_matching_node(r,a,&r1);
+	if ( !ret ) return 0;
+	*rp = r1;
+	return 1;
+}
+
 void get_quote_id_arg(QUOTE f,int *id,NODE *r)
 {
 	LIST fa;
@@ -641,6 +675,7 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 {
 	NODE tf,tp,head,body;
 	NODE parg,farg,r;
+	Obj rpat;
 	LIST fa,l;
 	int pid,id;
 	FUNC ff,pf;
@@ -669,6 +704,11 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 			case I_LIST:
 				return quote_unify_node(BDY((LIST)BDY(farg)),
 							BDY((LIST)BDY(parg)),rp);
+			case I_CONS:
+				tf = BDY((LIST)BDY(farg));
+				tp = BDY((LIST)BDY(parg));
+				rpat = (Obj)BDY(NEXT(parg));
+				return quote_unify_cons(tf,tp,rpat,rp);
 			case I_PVAR:
 				/* [[pat,f]] */
 				r = mknode(2,pat,f); MKLIST(l,r);
