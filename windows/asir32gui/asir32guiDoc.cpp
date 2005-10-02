@@ -94,12 +94,14 @@ extern "C" {
 BOOL CAsir32guiDoc::CanCloseFrame(CFrameWnd* pFrame) 
 {
 	// TODO: この位置に固有の処理を追加するか、または基本クラスを呼び出してください
+	char tmp[BUFSIZ];
 	
 	if ( asirgui_kind == ASIRGUI_MESSAGE )
 		return FALSE;
 
 	if ( asirgui_kind == ASIRGUI_DEBUG ) {
-		put_line("quit");
+		sprintf(tmp,"quit");
+		put_line(tmp);
 		return FALSE;
 	}
 

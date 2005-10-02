@@ -370,6 +370,7 @@ void CAsir32guiView::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	// TODO: この位置にメッセージ ハンドラ用のコードを追加するかまたはデフォルトの処理を呼び出してください
 	char *exp_result;
+	char tmp[BUFSIZ];
 	
 	if ( asirgui_kind == ASIRGUI_MESSAGE ) {
 		Beep(); return;
@@ -430,7 +431,8 @@ void CAsir32guiView::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case CTRL('C'):
 		send_intr();
 		/* wake up the engine */
-		put_line("");
+		tmp[0] = 0;
+		put_line(tmp);
 		return;
 	default :
 		if ( nChar >= 0x20 && nChar < 0x7f )
