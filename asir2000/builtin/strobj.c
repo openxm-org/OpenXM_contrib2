@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.65 2005/09/30 01:35:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.66 2005/09/30 02:20:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -547,9 +547,6 @@ void Pquote_unify(NODE arg,Q *rp)
 	ret = quote_unify((Obj)q,(Obj)ARG1(arg),&r);
 #else
 	obj = (Obj)ARG0(arg);
-	if ( !obj || OID(obj) != O_QUOTE) {
-		objtoquote(obj,&q); obj = (Obj)q;
-	}
 	ret = quote_unify(obj,(Obj)ARG1(arg),&r);
 #endif
 	if ( ret ) {
@@ -683,39 +680,56 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 	QUOTE q;
 	FNODE g;
 
-	if ( OID(pat) == O_LIST ) {
+	if ( !f )
+		if ( !pat ) {
+			*rp = 0; return 1;
+		} else
+			return 0;
+	else if ( OID(pat) == O_LIST ) {
 		if ( OID(f) == O_LIST )
 			return quote_unify_node(BDY((LIST)f),BDY((LIST)pat),rp);
 		else
 			return 0;
 	} else if ( OID(pat) == O_QUOTE ) {
-		if ( OID(f) != O_QUOTE ) return 0;
-		get_quote_id_arg((QUOTE)pat,&pid,&parg);
-		get_quote_id_arg((QUOTE)f,&id,&farg);
+		pid = ((FNODE)BDY((QUOTE)pat))->id;
 		switch ( pid ) {
 			case I_FORMULA:
 				if ( compquote(CO,f,pat) )
 					return 0;
 				else {
-					*rp = 0;
-					return 1;
+					*rp = 0; return 1;
 				}
 				break;
-			case I_LIST:
-				return quote_unify_node(BDY((LIST)BDY(farg)),
-							BDY((LIST)BDY(parg)),rp);
-			case I_CONS:
-				tf = BDY((LIST)BDY(farg));
+
+			case I_LIST: case I_CONS:
+				get_quote_id_arg((QUOTE)pat,&pid,&parg);
+				if ( OID(f) == O_LIST )
+					tf = BDY((LIST)f);
+				else if ( OID(f) == O_QUOTE 
+					&& ((FNODE)BDY((QUOTE)f))->id == pid ) {
+					get_quote_id_arg((QUOTE)f,&id,&farg);
+					tf = BDY((LIST)BDY(farg));
+				} else
+					return 0;
+
 				tp = BDY((LIST)BDY(parg));
-				rpat = (Obj)BDY(NEXT(parg));
-				return quote_unify_cons(tf,tp,rpat,rp);
+				if ( pid == I_LIST )
+					return quote_unify_node(tf,tp,rp);
+				else {
+					rpat = (Obj)BDY(NEXT(parg));
+					return quote_unify_cons(tf,tp,rpat,rp);
+				}
+
 			case I_PVAR:
 				/* [[pat,f]] */
 				r = mknode(2,pat,f); MKLIST(l,r);
 				*rp =  mknode(1,l);
 				return 1;
+
 			case I_IFUNC:
 				/* F(X,Y,...) = ... */
+				get_quote_id_arg((QUOTE)f,&id,&farg);
+				get_quote_id_arg((QUOTE)pat,&pid,&parg);
 				if ( id == I_FUNC ) {
 					r = mknode(2,BDY(parg),BDY(farg)); MKLIST(l,r);
 					head = mknode(1,l);
@@ -726,35 +740,36 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 				} else
 					return 0;
 
-			case I_NARYOP:
-			case I_BOP:
+			case I_NARYOP: case I_BOP: case I_FUNC:
 				/* X+Y = ... */
-				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
-
-				/* XXX converting to I_BOP */
-				if ( ((FNODE)BDY((QUOTE)pat))->id == I_NARYOP ) {
-					g = quote_to_bin(BDY((QUOTE)pat),1);
-					MKQUOTE(q,g);
-					get_quote_id_arg((QUOTE)q,&pid,&parg);
-				}
-				if ( ((FNODE)BDY((QUOTE)f))->id == I_NARYOP ) {
-					g = quote_to_bin(BDY((QUOTE)f),1);
-					MKQUOTE(q,g);
-					get_quote_id_arg((QUOTE)q,&id,&farg);
-				}
-				return quote_unify_node(NEXT(farg),NEXT(parg),rp);
-				break;
-
-			case I_FUNC:
 				/* f(...) = ... */
+				if ( OID(f) != O_QUOTE ) return 0;
+				id = ((FNODE)BDY((QUOTE)f))->id;
+				if ( pid == I_FUNC )
+					;
+				else {
+					/* XXX converting to I_BOP */
+					if ( pid == I_NARYOP ) {
+						g = quote_to_bin(BDY((QUOTE)pat),1);
+						MKQUOTE(q,g); pat = (Obj)q;
+					}
+					if ( id == I_NARYOP ) {
+						g = quote_to_bin(BDY((QUOTE)f),1);
+						MKQUOTE(q,g); f = (Obj)q;
+					}
+				}
+				get_quote_id_arg((QUOTE)pat,&pid,&parg);
+				get_quote_id_arg((QUOTE)f,&id,&farg);
 				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
 				return quote_unify_node(NEXT(farg),NEXT(parg),rp);
-				break;
+
 			default:
-				if ( pid == id )
-					return quote_unify_node(farg,parg,rp);
-				else
-					return 0;
+				if ( OID(f) != O_QUOTE ) return 0;
+				id = ((FNODE)BDY((QUOTE)f))->id;
+				if ( id != pid ) return 0;
+				get_quote_id_arg((QUOTE)pat,&pid,&parg);
+				get_quote_id_arg((QUOTE)f,&id,&farg);
+				return quote_unify_node(farg,parg,rp);
 		}
 	}
 }
