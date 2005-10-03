@@ -474,6 +474,7 @@ void CAsir32guiView::OnFileOpen()
 
 	_chdir(prevdir);
 	CFileDialog	fileDialog(TRUE);
+	fileDialog.m_ofn.lpstrInitialDir = prevdir;
 	if ( fileDialog.DoModal() == IDOK ) {
 		CString pathName = fileDialog.GetPathName();
 		sprintf(cmd,"load(\"%s\");",pathName);
