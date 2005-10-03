@@ -203,9 +203,7 @@ void CAsir32guiView::DeleteChar(int count) {
 
   if ( count > (EndPos-CurrentPos) )
     count = EndPos - CurrentPos;
-  if ( count == 0 )
-    Beep();
-  else {
+  if ( count > 0 ) {
     EndPos -= count;
     for ( i = CurrentPos; i < EndPos; i++ )
       Buffer[i] = Buffer[i+count];
