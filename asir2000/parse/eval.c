@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.48 2005/09/30 01:35:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.49 2005/10/05 07:38:08 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -520,6 +520,10 @@ FNODE partial_eval(FNODE f)
 			a1 = partial_eval((FNODE)FA1(f));
 			a2 = partial_eval((FNODE)FA2(f));
 			return mkfnode(3,f->id,FA0(f),a1,a2);
+
+		case I_NARYOP:
+			n = partial_eval_node((NODE)FA1(f));
+			return mkfnode(2,f->id,FA0(f),n);
 
 		case I_AND: case I_OR:
 			a0 = partial_eval((FNODE)FA0(f));
@@ -1179,14 +1183,17 @@ pointer bevalf(FUNC f,NODE a)
 pointer evalif(FNODE f,FNODE a)
 {
 	Obj g;
+	QUOTE q;
 	FNODE t;
+	LIST l;
 
 	g = (Obj)eval(f);
 	if ( g && (OID(g) == O_P) && (VR((P)g)->attr == (pointer)V_SR) )
 		return evalf((FUNC)VR((P)g)->priv,a,0);
 	else if ( g && OID(g) == O_QUOTEARG && ((QUOTEARG)g)->type == A_func ) {
 		t = mkfnode(2,I_FUNC,((QUOTEARG)g)->body,a);
-		return eval(t);
+		MKQUOTE(q,t);
+		return q;
 	} else {
 		error("invalid function pointer");
 		/* NOTREACHED */
