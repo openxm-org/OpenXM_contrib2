@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.47 2005/09/29 08:55:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.48 2005/09/30 01:35:25 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -566,6 +566,83 @@ NODE partial_eval_node(NODE n)
 	for ( r0 = 0, t = n; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r);
 		BDY(r) = partial_eval((FNODE)BDY(t));
+	}
+	if ( r0 ) NEXT(r) = 0;
+	return r0;
+}
+
+NODE rewrite_fnode_node(NODE n,NODE arg);
+FNODE rewrite_fnode(FNODE f,NODE arg);
+
+FNODE rewrite_fnode(FNODE f,NODE arg)
+{
+	FNODE a0,a1,a2,value;
+	NODE n,t,pair;
+	pointer val;
+	int pv,ind;
+
+	if ( !f )
+		return f;
+	switch ( f->id ) {
+		case I_NOT: case I_PAREN: case I_MINUS:
+		case I_CAR: case I_CDR:
+			a0 = rewrite_fnode((FNODE)FA0(f),arg);
+			return mkfnode(1,f->id,a0);
+
+		case I_BOP: case I_COP: case I_LOP:
+			a1 = rewrite_fnode((FNODE)FA1(f),arg);
+			a2 = rewrite_fnode((FNODE)FA2(f),arg);
+			return mkfnode(3,f->id,FA0(f),a1,a2);
+
+		case I_AND: case I_OR:
+			a0 = rewrite_fnode((FNODE)FA0(f),arg);
+			a1 = rewrite_fnode((FNODE)FA1(f),arg);
+			return mkfnode(2,f->id,a0,a1);
+
+		/* ternary operators */
+		case I_CE:
+			a0 = rewrite_fnode((FNODE)FA0(f),arg);
+			a1 = rewrite_fnode((FNODE)FA1(f),arg);
+			a2 = rewrite_fnode((FNODE)FA2(f),arg);
+			return mkfnode(3,f->id,a0,a1,a2);
+			break;
+
+		/* function */
+		case I_FUNC:
+			a1 = rewrite_fnode((FNODE)FA1(f),arg);
+			return mkfnode(2,f->id,FA0(f),a1);
+
+		case I_LIST: case I_EV:
+			n = rewrite_fnode_node((NODE)FA0(f),arg);
+			return mkfnode(1,f->id,n);
+
+		case I_STR: case I_FORMULA:
+			return f;
+
+		/* program variable */
+		case I_PVAR:
+			pv = (int)FA0(f);
+			for ( t = arg; t; t = NEXT(t) ) {
+				pair = (NODE)BDY(t);
+				ind = (int)BDY(pair); value = (FNODE)BDY(NEXT(pair));
+				if ( pv == ind )
+					return value;
+			}
+			return f;
+			break;
+
+		default:
+			error("rewrite_fnode : not implemented yet");
+	}
+}
+
+NODE rewrite_fnode_node(NODE n,NODE arg)
+{
+	NODE r0,r,t;
+
+	for ( r0 = 0, t = n; t; t = NEXT(t) ) {
+		NEXTNODE(r0,r);
+		BDY(r) = rewrite_fnode((FNODE)BDY(t),arg);
 	}
 	if ( r0 ) NEXT(r) = 0;
 	return r0;

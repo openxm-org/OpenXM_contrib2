@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.10 2005/09/08 08:37:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.11 2005/09/27 03:00:21 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -667,8 +667,13 @@ Obj *rp;
 {
 	FNODE a;
 	QUOTE q;
+	Obj f;
 
-	asir_assert(ARG0(arg),O_QUOTE,"eval_quote");
+	f = (Obj)ARG0(arg);
+	if ( !f || OID(f) != O_QUOTE ) {
+		*rp = f;
+		return;
+	}
 	if ( argc(arg) == 2 && ARG1(arg) ) {
 		a = partial_eval((FNODE)BDY((QUOTE)ARG0(arg)));
 		MKQUOTE(q,a);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.66 2005/09/30 02:20:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.67 2005/10/03 00:06:40 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,7 +78,7 @@ void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
-void Pquote_unify(),Pget_quote_id();
+void Pquote_unify(),Pget_quote_id(),Pquote_match_rewrite();
 void Pquote_to_nary(),Pquote_to_bin();
 void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
@@ -115,6 +115,7 @@ struct ftab str_tab[] = {
 	{"flatten_quote",Pflatten_quote,-2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
 	{"quote_unify",Pquote_unify,2},
+	{"quote_match_rewrite",Pquote_match_rewrite,-4},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{"get_function_name",Pget_function_name,1},
 	{0,0,0},
@@ -554,6 +555,49 @@ void Pquote_unify(NODE arg,Q *rp)
 		*rp = ONE;
 	} else
 		*rp = 0;
+}
+
+FNODE rewrite_fnode(FNODE,NODE);
+
+extern Obj VOIDobj;
+
+void Pquote_match_rewrite(NODE arg,Obj *rp)
+{
+	FNODE f,g,h,c,value;
+	Obj obj;
+	QUOTE q;
+	NODE r,t,s,s0,pair;
+	int ret,ind,ac;
+
+	obj = (Obj)ARG0(arg);
+	ret = quote_unify(obj,(Obj)ARG1(arg),&r);
+	if ( ret ) {
+		for ( t = r, s0 = 0; t; t = NEXT(t) ) {
+			NEXTNODE(s0,s);
+			pair = BDY((LIST)BDY(t));
+			ind = (int)FA0((FNODE)BDY((QUOTE)BDY(pair)));
+			value = mkfnode(1,I_FORMULA,BDY(NEXT(pair)));
+			BDY(s) = mknode(2,ind,value);
+		}
+		if ( s0 ) NEXT(s) = 0;
+		switch ( ac = argc(arg) ) {
+			case 3:
+				h = rewrite_fnode(BDY((QUOTE)ARG2(arg)),s0);
+				*rp = eval(h);
+				break;
+			case 4:
+				c = rewrite_fnode(BDY((QUOTE)ARG2(arg)),s0);
+				if ( eval(c) ) {
+					h = rewrite_fnode(BDY((QUOTE)ARG3(arg)),s0);
+					*rp = eval(h);
+				} else
+					*rp = VOIDobj;
+				break;
+			default:
+				error("quote_match_rewrite : invalid argument");
+		}
+	} else
+		*rp = VOIDobj;
 }
 
 void do_assign(NODE arg)
