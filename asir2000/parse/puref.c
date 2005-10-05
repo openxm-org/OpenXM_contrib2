@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.6 2004/03/11 09:52:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.7 2004/08/18 00:50:37 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -281,6 +281,29 @@ void derivr(VL vl,Obj a,V v,Obj *b)
 					mulp(vl,(P)dn,(P)dn,(P *)&m); divr(vl,t,m,b);
 				}
 				break;
+	}
+}
+
+int obj_is_dependent(Obj a,V v)
+{
+	if ( !a || OID(a) <= O_N ) return 0;
+	else if ( OID(a) == O_P ) return poly_is_dependent((P)a,v);
+	else if ( OID(a) == O_R ) return poly_is_dependent(NM((R)a),v) 
+		|| poly_is_dependent(DN((R)a),v);
+	else
+		error("obj_is_dependent : not implemented");
+}
+
+int poly_is_dependent(P p,V v)
+{
+	DCP dc;
+
+	if ( !p || OID(p) <= O_N ) return 0;
+	else if ( v == VR(p) ) return 1;
+	else {
+		for ( dc = DC(p); dc; dc = NEXT(dc) )
+			if ( poly_is_dependent(COEF(dc),v) ) return 1;
+		return 0;
 	}
 }
 

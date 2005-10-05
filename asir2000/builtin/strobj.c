@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.67 2005/10/03 00:06:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.68 2005/10/05 07:38:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,6 +77,10 @@ void Pquotetotex_tb();
 void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
+
+void Pquote_is_integer(),Pquote_is_rational(),Pquote_is_number();
+void Pquote_is_dependent(),Pquote_is_function();
+
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_unify(),Pget_quote_id(),Pquote_match_rewrite();
 void Pquote_to_nary(),Pquote_to_bin();
@@ -107,6 +111,13 @@ struct ftab str_tab[] = {
 	{"tb_to_string",Ptb_to_string,1},
 	{"string_to_tb",Pstring_to_tb,1},
 	{"get_quote_id",Pget_quote_id,1},
+
+	{"quote_is_number",Pquote_is_number,1},
+	{"quote_is_rational",Pquote_is_rational,1},
+	{"quote_is_integer",Pquote_is_integer,1},
+	{"quote_is_function",Pquote_is_function,1},
+	{"quote_is_dependent",Pquote_is_dependent,2},
+
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},
 	{"quotetotex_tb",Pquotetotex_tb,2},
@@ -533,6 +544,73 @@ void Pquote_to_bin(NODE arg,QUOTE *rp)
 
 	MKQUOTE(*rp,f);	
 }
+
+void Pquote_is_number(NODE arg,Q *rp)
+{
+	QUOTE q;
+	int ret;
+
+	q = (QUOTE)ARG0(arg);
+	asir_assert(q,O_QUOTE,"quote_is_number");
+	ret = fnode_is_number(BDY(q));
+	STOQ(ret,*rp);
+}
+
+void Pquote_is_rational(NODE arg,Q *rp)
+{
+	QUOTE q;
+	int ret;
+
+	q = (QUOTE)ARG0(arg);
+	asir_assert(q,O_QUOTE,"quote_is_rational");
+	ret = fnode_is_rational(BDY(q));
+	STOQ(ret,*rp);
+}
+
+void Pquote_is_integer(NODE arg,Q *rp)
+{
+	QUOTE q;
+	int ret;
+
+	q = (QUOTE)ARG0(arg);
+	asir_assert(q,O_QUOTE,"quote_is_integer");
+	ret = fnode_is_integer(BDY(q));
+	STOQ(ret,*rp);
+}
+
+void Pquote_is_function(NODE arg,Q *rp)
+{
+	QUOTE q;
+	int ret;
+
+	q = (QUOTE)ARG0(arg);
+	asir_assert(q,O_QUOTE,"quote_is_function");
+	if ( q->id == I_FUNC || q->id == I_IFUNC )
+		ret = 1;
+	else
+		ret = 0;
+	STOQ(ret,*rp);
+}
+
+void Pquote_is_dependent(NODE arg,Q *rp)
+{
+	P x;
+	QUOTE q,v;
+	int ret;
+	V var;
+
+	q = (QUOTE)ARG0(arg);
+	v = (QUOTE)ARG1(arg);
+	asir_assert(q,O_QUOTE,"quote_is_dependent");
+	asir_assert(v,O_QUOTE,"quote_is_dependent");
+	x = (P)eval(BDY(v));
+	if ( !x || OID(x) != O_P )
+		*rp = 0;
+	var = VR(x);
+	ret = fnode_is_dependent(BDY(q),var);
+	STOQ(ret,*rp);
+}
+
 
 void Pquote_unify(NODE arg,Q *rp)
 {
@@ -1826,4 +1904,145 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
 		}
 	}
 	MKQUOTE(*rp,f);
+}
+
+int fnode_is_number(FNODE f)
+{
+	Obj obj;
+
+	switch ( f->id ) {
+		case I_MINUS: case I_PAREN:
+			return fnode_is_number(FA0(f));
+				
+		case I_FORMULA:
+			obj = FA0(f);
+			if ( !obj ) return 1;
+			else if ( OID(obj) == O_QUOTE ) 
+				return fnode_is_number(BDY((QUOTE)obj));
+			else if ( NUM(obj) ) return 1;
+			else return 0;
+		
+		case I_BOP:
+			return fnode_is_number(FA1(f)) && fnode_is_number(FA2(f));
+		
+		default:
+			return 0;
+	}
+}
+
+int fnode_is_rational(FNODE f)
+{
+	Obj obj;
+
+	switch ( f->id ) {
+		case I_MINUS: case I_PAREN:
+			return fnode_is_number(FA0(f));
+				
+		case I_FORMULA:
+			obj = FA0(f);
+			if ( !obj ) return 1;
+			else if ( OID(obj) == O_QUOTE ) 
+				return fnode_is_rational(BDY((QUOTE)obj));
+			else if ( NUM(obj) && RATN(obj) ) return 1;
+			else return 0;
+		
+		case I_BOP:
+			if ( !strcmp(((ARF)FA0(f))->name,"^")  )
+				return fnode_is_rational(FA1(f)) && fnode_is_integer(FA2(f));
+			else
+				return fnode_is_rational(FA1(f)) && fnode_is_rational(FA2(f));
+		
+		default:
+			return 0;
+	}
+}
+
+int fnode_is_integer(FNODE f)
+{
+	Obj obj;
+
+	switch ( f->id ) {
+		case I_MINUS: case I_PAREN:
+			return fnode_is_integer(FA0(f));
+				
+		case I_FORMULA:
+			obj = FA0(f);
+			if ( !obj ) return 1;
+			else if ( OID(obj) == O_QUOTE ) 
+				return fnode_is_integer(BDY((QUOTE)obj));
+			else if ( INT(obj)) return 1;
+			else return 0;
+		
+		case I_BOP:
+			if ( !strcmp(((ARF)FA0(f))->name,"^")  )
+				return fnode_is_integer(FA1(f)) 
+					&& fnode_is_nonnegative_integer(FA2(f));
+			else if ( !strcmp(((ARF)FA0(f))->name,"/")  )
+				return fnode_is_integer(FA1(f)) && 
+					( fnode_is_one(FA2(f)) || fnode_is_minusone(FA2(f)) );
+			else
+				return fnode_is_integer(FA1(f)) && fnode_is_integer(FA2(f));
+		
+		default:
+			return 0;
+	}
+}
+
+int fnode_is_nonnegative_integer(FNODE f)
+{
+	Q n;
+
+	n = eval(f);
+	if ( !n || (INT(n) && SGN(n) > 0) ) return 1;
+	else return 0;
+}
+
+int fnode_is_one(FNODE f)
+{
+	Q n;
+
+	n = eval(f);
+	if ( UNIQ(n) ) return 1;
+	else return 0;
+}
+
+int fnode_is_minusone(FNODE f)
+{
+	Q n;
+
+	n = eval(f);
+	if ( MUNIQ(n) ) return 1;
+	else return 0;
+}
+
+int fnode_is_dependent(FNODE f,V v)
+{
+	Obj obj;
+	FNODE arg;
+	NODE t;
+
+	switch ( f->id ) {
+		case I_MINUS: case I_PAREN:
+			return fnode_is_dependent(FA0(f),v);
+				
+		case I_FORMULA:
+			obj = FA0(f);
+			if ( !obj ) return 0;
+			else if ( OID(obj) == O_QUOTE ) 
+				return fnode_is_dependent(BDY((QUOTE)obj),v);
+			else if ( obj_is_dependent(obj,v) ) return 1;
+			else return 0;
+		
+		case I_BOP:
+			return fnode_is_dependent(FA1(f),v) || fnode_is_dependent(FA2(f),v);
+	
+		case I_FUNC:
+			arg = (FNODE)FA1(f);
+			for ( t = FA0(arg); t; t = NEXT(t) )
+				if ( fnode_is_dependent(BDY(t),v) ) return 1;
+			return 0;
+
+		default:
+			return 0;
+	}
 }
