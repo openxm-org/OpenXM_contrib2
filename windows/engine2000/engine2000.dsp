@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MTd /W3 /GX /O2 /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\..\asir2000\plot" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /c
+# ADD CPP /nologo /MTd /W3 /GX /O2 /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\..\asir2000\plot" /I "..\pari20\win32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /D "PARI" /FD /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\..\asir2000\plot" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /GX /Z7 /Od /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\..\asir2000\plot" /I "..\pari20\win32" /D "_DEBUG" /D "PARI" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VISUAL" /D "VISUAL_LIB" /FD /GZ /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
