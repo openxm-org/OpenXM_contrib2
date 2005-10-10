@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.5 2001/10/09 01:36:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.6 2003/02/14 22:29:09 ohara Exp $ 
 */
 #include "ca.h"
 #if defined(PARI)
@@ -76,7 +76,11 @@ int index;
 	if ( index > max_varn ) {
 		for ( i = max_varn+1; i <= index; i++ ) {
 			sprintf(name,"x%d",i);
+#if (PARI_VERSION_CODE < 131594)
 			fetch_named_var(name,0);
+#else
+			fetch_named_var(name);
+#endif
 		}
 		max_varn = index;
 	}
