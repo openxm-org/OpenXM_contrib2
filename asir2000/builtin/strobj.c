@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.68 2005/10/05 07:38:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.69 2005/10/05 08:57:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -80,6 +80,7 @@ void Pflatten_quote();
 
 void Pquote_is_integer(),Pquote_is_rational(),Pquote_is_number();
 void Pquote_is_dependent(),Pquote_is_function();
+void Pquote_normalize();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_unify(),Pget_quote_id(),Pquote_match_rewrite();
@@ -117,6 +118,8 @@ struct ftab str_tab[] = {
 	{"quote_is_integer",Pquote_is_integer,1},
 	{"quote_is_function",Pquote_is_function,1},
 	{"quote_is_dependent",Pquote_is_dependent,2},
+
+	{"quote_normalize",Pquote_normalize,1},
 
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},
@@ -524,13 +527,14 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 	*rp = 0;	
 }
 
-FNODE partial_eval(FNODE), quote_to_nary(FNODE), quote_to_bin(FNODE,int);
+FNODE partial_eval(FNODE), fnode_to_nary(FNODE), fnode_to_bin(FNODE,int);
+FNODE fnode_normalize(FNODE);
 
 void Pquote_to_nary(NODE arg,QUOTE *rp)
 {
 	FNODE f;
 
-	f = quote_to_nary(BDY((QUOTE)ARG0(arg)));
+	f = fnode_to_nary(BDY((QUOTE)ARG0(arg)));
 	MKQUOTE(*rp,f);	
 }
 
@@ -540,7 +544,7 @@ void Pquote_to_bin(NODE arg,QUOTE *rp)
 	int direction;
 
 	direction = QTOS((Q)ARG1(arg));
-	f = quote_to_bin(BDY((QUOTE)ARG0(arg)),direction);
+	f = fnode_to_bin(BDY((QUOTE)ARG0(arg)),direction);
 
 	MKQUOTE(*rp,f);	
 }
@@ -872,11 +876,11 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 				else {
 					/* XXX converting to I_BOP */
 					if ( pid == I_NARYOP ) {
-						g = quote_to_bin(BDY((QUOTE)pat),1);
+						g = fnode_to_bin(BDY((QUOTE)pat),1);
 						MKQUOTE(q,g); pat = (Obj)q;
 					}
 					if ( id == I_NARYOP ) {
-						g = quote_to_bin(BDY((QUOTE)f),1);
+						g = fnode_to_bin(BDY((QUOTE)f),1);
 						MKQUOTE(q,g); f = (Obj)q;
 					}
 				}
@@ -1294,47 +1298,56 @@ void fnodetotex_tb(FNODE f,TB tb)
 		/* otherwise   => FA1(f), FA2(f) */
 		case I_BOP:
 			opname = ((ARF)FA0(f))->name;
-			if ( !strcmp(opname,"+") ) {
-				fnodetotex_tb((FNODE)FA1(f),tb);
-				if ( !top_is_minus((FNODE)FA2(f)) ) write_tb(opname,tb);
-				fnodetotex_tb((FNODE)FA2(f),tb);
-			} else if ( !strcmp(opname,"-") ) {
-				if ( FA1(f) ) fnodetotex_tb((FNODE)FA1(f),tb);
-				write_tb(opname,tb);
-				fnodetotex_tb((FNODE)FA2(f),tb);
-			} else if ( !strcmp(opname,"*") ) {
-				fnodetotex_tb((FNODE)FA1(f),tb);
-				write_tb(" ",tb);
-				/* XXX special care for DP */
-				f2 = (FNODE)FA2(f);
-				if ( f2->id == I_EV ) {
-					n = (NODE)FA0(f2);
-					for ( i = 0; n; n = NEXT(n), i++ ) {
-						fi = (FNODE)BDY(n);
-						if ( fi->id != I_FORMULA || FA0(fi) )
-							break;
-					}
-					if ( n )
-						fnodetotex_tb((FNODE)FA2(f),tb);
-				} else
+			switch ( opname[0] ) {
+				case '+':
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					if ( !top_is_minus((FNODE)FA2(f)) ) write_tb(opname,tb);
 					fnodetotex_tb((FNODE)FA2(f),tb);
-			} else if ( !strcmp(opname,"/") ) {
-				write_tb("\\frac{",tb);
-				fnodetotex_tb((FNODE)FA1(f),tb);
-				write_tb("} {",tb);
-				fnodetotex_tb((FNODE)FA2(f),tb);
-				write_tb("}",tb);
-			} else if ( !strcmp(opname,"^") ) {
-				fnodetotex_tb((FNODE)FA1(f),tb);
-				write_tb("^{",tb);
-				fnodetotex_tb(strip_paren((FNODE)FA2(f)),tb);
-				write_tb("} ",tb);
-			} else if ( !strcmp(opname,"%") ) {
-				fnodetotex_tb((FNODE)FA1(f),tb);
-				write_tb(" {\\rm mod}\\, ",tb);
-				fnodetotex_tb((FNODE)FA2(f),tb);
-			} else
-				error("invalid binary operator");
+					break;
+				case '-':
+					if ( FA1(f) ) fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(opname,tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case '*':
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" ",tb);
+					/* XXX special care for DP */
+					f2 = (FNODE)FA2(f);
+					if ( f2->id == I_EV ) {
+						n = (NODE)FA0(f2);
+						for ( i = 0; n; n = NEXT(n), i++ ) {
+							fi = (FNODE)BDY(n);
+							if ( fi->id != I_FORMULA || FA0(fi) )
+								break;
+						}
+						if ( n )
+							fnodetotex_tb((FNODE)FA2(f),tb);
+					} else
+						fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				case '/':
+					write_tb("\\frac{",tb);
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb("} {",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					write_tb("}",tb);
+					break;
+				case '^':
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb("^{",tb);
+					fnodetotex_tb(strip_paren((FNODE)FA2(f)),tb);
+					write_tb("} ",tb);
+					break;
+				case '%':
+					fnodetotex_tb((FNODE)FA1(f),tb);
+					write_tb(" {\\rm mod}\\, ",tb);
+					fnodetotex_tb((FNODE)FA2(f),tb);
+					break;
+				default:
+					error("invalid binary operator");
+					break;
+			}
 			break;
 
 		case I_COP:
@@ -1906,6 +1919,30 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
 	MKQUOTE(*rp,f);
 }
 
+FNODE fnode_apply(FNODE f,FNODE (*func)());
+FNODE fnode_normalize(FNODE f);
+FNODE fnode_normalize_monomial(FNODE f);
+
+void Pquote_normalize(NODE arg,QUOTE *rp)
+{
+	QUOTE q,r;
+	FNODE f;
+
+	q = (QUOTE)ARG0(arg);
+	if ( !q || OID(q) != O_QUOTE ) {
+		*rp = q;
+		return;
+	} else {
+		f = fnode_normalize(BDY(q));
+		f = flatten_fnode(f,"+");
+		f = flatten_fnode(f,"*");
+		f = fnode_to_nary(f);
+		f = fnode_normalize_monomial(f); 
+		MKQUOTE(r,f);
+		*rp = r;
+	}
+}
+
 int fnode_is_number(FNODE f)
 {
 	Obj obj;
@@ -1974,18 +2011,30 @@ int fnode_is_integer(FNODE f)
 			else return 0;
 		
 		case I_BOP:
-			if ( !strcmp(((ARF)FA0(f))->name,"^")  )
-				return fnode_is_integer(FA1(f)) 
-					&& fnode_is_nonnegative_integer(FA2(f));
-			else if ( !strcmp(((ARF)FA0(f))->name,"/")  )
-				return fnode_is_integer(FA1(f)) && 
-					( fnode_is_one(FA2(f)) || fnode_is_minusone(FA2(f)) );
-			else
-				return fnode_is_integer(FA1(f)) && fnode_is_integer(FA2(f));
-		
+			switch ( ((ARF)FA0(f))->name[0] ) {
+				case '^':
+					return fnode_is_integer(FA1(f)) 
+						&& fnode_is_nonnegative_integer(FA2(f));
+				case '/':
+					return fnode_is_integer(FA1(f)) && 
+						( fnode_is_one(FA2(f)) || fnode_is_minusone(FA2(f)) );
+				default:
+					return fnode_is_integer(FA1(f)) && fnode_is_integer(FA2(f));
+			}
+			break;
+
 		default:
 			return 0;
 	}
+}
+
+int fnode_is_zero(FNODE f)
+{
+	Q n;
+
+	n = eval(f);
+	if ( !n ) return 1;
+	else return 0;
 }
 
 int fnode_is_nonnegative_integer(FNODE f)
@@ -2046,3 +2095,161 @@ int fnode_is_dependent(FNODE f,V v)
 			return 0;
 	}
 }
+
+FNODE fnode_normalize(FNODE f)
+{
+	FNODE a2,mone;
+	Q q;
+	NODE n;
+
+	f = fnode_apply(f,fnode_normalize);
+	switch ( f->id ) {
+		case I_PAREN:
+			return FA0(f);
+				
+		case I_BOP:
+			/* arf fnode fnode */
+			switch ( ((ARF)FA0(f))->name[0] ) {
+				case '-':
+					a2 = mkfnode(1,I_MINUS,FA2(f));
+					return mkfnode(3,I_BOP,addfs,FA1(f),a2);
+				case '/':
+					STOQ(-1,q);
+					mone = mkfnode(1,I_FORMULA,q);
+					a2 = mkfnode(3,I_BOP,pwrfs,FA2(f),mone);
+					return mkfnode(3,I_BOP,mulfs,FA1(f),a2);
+				default:
+					return f;
+			}
+			break;
+	
+		default:
+			return f;
+	}
+}
+
+NODE fnode_simplify_monomial(NODE n);
+
+FNODE fnode_normalize_monomial(FNODE f)
+{
+	NODE n;
+
+	f = fnode_apply(f,fnode_normalize_monomial);
+	switch ( f->id ) {
+		case I_PAREN:
+			return FA0(f);
+				
+		case I_NARYOP:
+			switch ( ((ARF)FA0(f))->name[0] ) {
+				case '*':
+					n = fnode_simplify_monomial((NODE)FA1(f));
+					if ( !n )
+						return mkfnode(1,I_FORMULA,0);
+					else
+						return mkfnode(2,I_NARYOP,FA0(f),n);
+				default:
+					return f;
+			}
+			break;
+	
+		default:
+			return f;
+			break;
+	}
+}
+
+FNODE fnode_apply(FNODE f,FNODE (*func)())
+{
+	fid_spec_p spec;
+	FNODE r;
+	int i,n;
+	NODE t,t0,s;
+
+	get_fid_spec(f->id,&spec);
+	for ( n = 0; spec->type[n] != A_end; n++ );
+	NEWFNODE(r,n); r->id = f->id;
+	for ( i = 0; i < n; i++ ) {
+		switch ( spec->type[i] ) {
+			case A_fnode:
+				r->arg[i] = func(f->arg[i]);
+				break;
+			case A_node:
+				s = (NODE)f->arg[i];
+				for ( t0 = 0; s; s = NEXT(s) ) {
+					NEXTNODE(t0,t);
+					BDY(t) = (pointer)func((FNODE)BDY(s));
+				}
+				if ( t0 ) NEXT(t) = 0;
+				r->arg[i] = t0;
+				break;
+			default:
+				r->arg[i] = f->arg[i];
+				break;
+		}
+	}
+	return r;
+}
+
+NODE fnode_simplify_monomial(NODE n)
+{
+	int l,i,j;
+	FNODE *b;
+	Obj *e;
+	NODE t,r,r1;
+	FNODE f,base;
+	QUOTE q;
+	Obj exp,exp1;
+	Num c,c1;
+
+	for ( l = 0, t = n; t; t = NEXT(t), l++ );
+	b = (FNODE *)MALLOC(l*sizeof(FNODE));
+	e = (Obj *)MALLOC(l*sizeof(Obj));
+	c = (Num)ONE;
+	for ( i = 0, t = n; t; t = NEXT(t) ) {
+		f = (FNODE)BDY(t);
+		if ( fnode_is_number(f) ) {
+			if ( fnode_is_zero(f) ) return 0;
+			else {
+				mulnum(0,c,(Num)eval(f),&c1); c = c1;
+			}
+		} else {
+			if ( f->id == I_BOP && ((ARF)FA0(f))->name[0] == '^' ) {
+				base = FA1(f); 
+				exp = (Obj)eval(FA2(f));
+			} else {
+				base = f; exp = (Obj)ONE;
+			}
+			if ( i > 0 && !compfnode(b[i-1],base) ) {
+				arf_add(CO,e[i-1],exp,&exp1);
+				if ( !exp1 )
+					i--;
+				else
+					e[i-1] = exp1;
+			} else {
+				b[i] = base;
+				e[i] = exp;
+				i++;
+			}
+		}
+	}
+	if ( !i ) {
+		/* coeff only */
+		MKNODE(r,c,0);
+		return r;
+	} else {
+		r = 0;
+		for ( j = i-1; j >= 0; j-- ) {
+			if ( UNIQ(e[j]) )
+				f = b[j];
+			else {
+				objtoquote(e[j],&q);
+				f = mkfnode(3,I_BOP,pwrfs,b[j],BDY(q));
+			}
+			MKNODE(r1,f,r); r = r1;
+		}
+		f = mkfnode(1,I_FORMULA,c);
+		MKNODE(r1,f,r); r = r1;
+		return r;
+	}
+}
+
