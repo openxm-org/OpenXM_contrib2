@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.69 2005/10/05 08:57:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.70 2005/10/12 03:31:04 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -62,6 +62,8 @@ struct TeXSymbol {
 	char *text;
 	char *symbol;
 };
+
+#define OPNAME(f) (((ARF)FA0(f))->name[0])
 
 extern char *parse_strp;
 
@@ -1921,7 +1923,7 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
 
 FNODE fnode_apply(FNODE f,FNODE (*func)());
 FNODE fnode_normalize(FNODE f);
-FNODE fnode_normalize_monomial(FNODE f);
+FNODE fnode_normalize_nary(FNODE f);
 
 void Pquote_normalize(NODE arg,QUOTE *rp)
 {
@@ -1933,11 +1935,13 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 		*rp = q;
 		return;
 	} else {
-		f = fnode_normalize(BDY(q));
-		f = flatten_fnode(f,"+");
+#if 0
+		f = flatten_fnode(BDY(q),"+");
 		f = flatten_fnode(f,"*");
+#endif
+		f = fnode_normalize(BDY(q));
 		f = fnode_to_nary(f);
-		f = fnode_normalize_monomial(f); 
+		f = fnode_normalize_nary(f); 
 		MKQUOTE(r,f);
 		*rp = r;
 	}
@@ -2102,13 +2106,17 @@ FNODE fnode_normalize(FNODE f)
 	Q q;
 	NODE n;
 
-	f = fnode_apply(f,fnode_normalize);
 	switch ( f->id ) {
 		case I_PAREN:
-			return FA0(f);
-				
+			return fnode_normalize(FA0(f));
+		
+		case I_MINUS:
+			f = fnode_normalize(FA0(f));
+			return f->id==I_MINUS ? FA0(f) : mkfnode(1,I_MINUS,f);
+
 		case I_BOP:
 			/* arf fnode fnode */
+			f = fnode_apply(f,fnode_normalize);
 			switch ( ((ARF)FA0(f))->name[0] ) {
 				case '-':
 					a2 = mkfnode(1,I_MINUS,FA2(f));
@@ -2124,36 +2132,40 @@ FNODE fnode_normalize(FNODE f)
 			break;
 	
 		default:
-			return f;
+			return fnode_apply(f,fnode_normalize);
 	}
 }
 
-NODE fnode_simplify_monomial(NODE n);
+FNODE fnode_simplify_add(FNODE f);
+FNODE fnode_simplify_mul(FNODE f);
 
-FNODE fnode_normalize_monomial(FNODE f)
+FNODE fnode_normalize_nary(FNODE f)
 {
 	NODE n;
 
-	f = fnode_apply(f,fnode_normalize_monomial);
 	switch ( f->id ) {
 		case I_PAREN:
-			return FA0(f);
+			return fnode_normalize_nary(FA0(f));
 				
+		case I_MINUS:
+			f = fnode_normalize_nary(FA0(f));
+			return f->id==I_MINUS ? FA0(f) : mkfnode(1,I_MINUS,f);
+
 		case I_NARYOP:
+			f = fnode_apply(f,fnode_normalize_nary);
 			switch ( ((ARF)FA0(f))->name[0] ) {
+				/* XXX */
+				case '+':
+					return fnode_simplify_add(f);
 				case '*':
-					n = fnode_simplify_monomial((NODE)FA1(f));
-					if ( !n )
-						return mkfnode(1,I_FORMULA,0);
-					else
-						return mkfnode(2,I_NARYOP,FA0(f),n);
+					return fnode_simplify_mul(f);
 				default:
 					return f;
 			}
 			break;
 	
 		default:
-			return f;
+			return fnode_apply(f,fnode_normalize_nary);
 			break;
 	}
 }
@@ -2190,34 +2202,143 @@ FNODE fnode_apply(FNODE f,FNODE (*func)())
 	return r;
 }
 
-NODE fnode_simplify_monomial(NODE n)
+NODE2 fnode_add_monomial(NODE2 s0,FNODE g);
+
+FNODE fnode_simplify_add(FNODE f)
+{
+	NODE n;
+	NODE r0,r,t,u;
+	NODE2 s,s0;
+	FNODE g,m;
+	QUOTE q;
+
+	n = (NODE)FA1(f);
+	s0 = 0;
+	for ( t = n; t; t = NEXT(t) ) {
+		g = (FNODE)BDY(t);
+		s0 = fnode_add_monomial(s0,g);
+	}
+	if ( !s0 )
+		return mkfnode(1,I_FORMULA,0);
+	else {
+		for ( s = s0, r0 = 0; s; s = NEXT(s) ) {
+			NEXTNODE(r0,r);
+			if ( UNIQ(s->body1) )
+				BDY(r) = s->body2;
+			else if ( MUNIQ(s->body1) )
+				BDY(r) = mkfnode(1,I_MINUS,s->body2);
+			else {
+				objtoquote(s->body1,&q);
+				m = (FNODE)s->body2;
+				if ( m->id == I_NARYOP && OPNAME(m) == '*' ) {
+					MKNODE(u,BDY(q),FA1(m)); FA1(m) = u;
+					BDY(r) = m;
+				} else {
+					u = mknode(2,BDY(q),m);
+					BDY(r) = mkfnode(2,I_NARYOP,mulfs,u);
+				}
+			}
+		}
+		if ( r0 ) NEXT(r) = 0;
+		if ( length(r0) == 1 )
+			return (FNODE)BDY(r0);
+		else
+			return mkfnode(2,I_NARYOP,FA0(f),r0);
+	}
+}
+
+NODE2 fnode_add_monomial(NODE2 r,FNODE g)
+{
+	Num c,c1;
+	FNODE b;
+	NODE arg;
+	NODE2 prev,cur,t;
+	int a;
+
+	if ( fnode_is_number(g) ) {
+		c = (Num)eval(g);
+		b = mkfnode(1,I_FORMULA,ONE);
+	} else if ( g->id == I_NARYOP && OPNAME(g) == '*' ) {
+		arg = (NODE)FA1(g);
+		if ( fnode_is_number(BDY(arg)) ) {
+			c = (Num)eval(BDY(arg));
+			if ( length(arg) > 2 )
+				b = mkfnode(2,I_NARYOP,FA0(g),NEXT(arg));
+			else
+				b = BDY(NEXT(arg));
+		} else {
+			c = (Num)ONE;
+			b = g;
+		}
+	} else {
+		c = (Num)ONE;
+		b = g;
+	}
+
+	for ( prev = 0, cur = r; cur; prev = cur, cur = NEXT(cur) ) {
+		a = compfnode(b,cur->body2);
+		if ( a > 0 ) {
+			MKNODE2(t,c,b,cur);
+			if ( !prev )
+				return t;
+			else {
+				NEXT(prev) = t; return r;
+			}
+		} else if ( a == 0 ) {
+			addnum(0,cur->body1,c,&c1);
+			if ( !c1 ) {
+				if ( !prev )
+					return NEXT(cur);
+				else {
+					NEXT(prev) = NEXT(cur); return r;
+				}
+			} else {
+				cur->body1 = c1; return r;
+			}
+		}
+	}
+	MKNODE2(t,c,b,0);
+	if ( !r )
+		return t;
+	else {
+		NEXT(prev) = t; return r;
+	}
+}
+
+FNODE fnode_simplify_mul(FNODE f)
 {
 	int l,i,j;
 	FNODE *b;
 	Obj *e;
-	NODE t,r,r1;
-	FNODE f,base;
+	NODE n,t,r,r1;
+	FNODE g,base;
 	QUOTE q;
 	Obj exp,exp1;
 	Num c,c1;
 
+	n = (NODE)FA1(f);
 	for ( l = 0, t = n; t; t = NEXT(t), l++ );
 	b = (FNODE *)MALLOC(l*sizeof(FNODE));
 	e = (Obj *)MALLOC(l*sizeof(Obj));
 	c = (Num)ONE;
 	for ( i = 0, t = n; t; t = NEXT(t) ) {
-		f = (FNODE)BDY(t);
-		if ( fnode_is_number(f) ) {
-			if ( fnode_is_zero(f) ) return 0;
+		g = (FNODE)BDY(t);
+		if ( fnode_is_number(g) ) {
+			if ( fnode_is_zero(g) )
+				return mkfnode(1,I_FORMULA,0);
 			else {
-				mulnum(0,c,(Num)eval(f),&c1); c = c1;
+				mulnum(0,c,(Num)eval(g),&c1); c = c1;
 			}
 		} else {
-			if ( f->id == I_BOP && ((ARF)FA0(f))->name[0] == '^' ) {
-				base = FA1(f); 
-				exp = (Obj)eval(FA2(f));
+			if ( g->id == I_MINUS ) {
+				chsgnnum(c,&c1); c = c1;
+				g = FA0(g);
+			}
+			if ( g->id == I_BOP && ((ARF)FA0(g))->name[0] == '^' ) {
+				base = FA1(g); 
+				exp = (Obj)eval(FA2(g));
 			} else {
-				base = f; exp = (Obj)ONE;
+				base = g; exp = (Obj)ONE;
 			}
 			if ( i > 0 && !compfnode(b[i-1],base) ) {
 				arf_add(CO,e[i-1],exp,&exp1);
@@ -2234,22 +2355,21 @@ NODE fnode_simplify_monomial(NODE n)
 	}
 	if ( !i ) {
 		/* coeff only */
-		MKNODE(r,c,0);
-		return r;
+		g = mkfnode(1,I_FORMULA,c);
+		return g;
 	} else {
 		r = 0;
 		for ( j = i-1; j >= 0; j-- ) {
 			if ( UNIQ(e[j]) )
-				f = b[j];
+				g = b[j];
 			else {
 				objtoquote(e[j],&q);
-				f = mkfnode(3,I_BOP,pwrfs,b[j],BDY(q));
+				g = mkfnode(3,I_BOP,pwrfs,b[j],BDY(q));
 			}
-			MKNODE(r1,f,r); r = r1;
+			MKNODE(r1,g,r); r = r1;
 		}
-		f = mkfnode(1,I_FORMULA,c);
-		MKNODE(r1,f,r); r = r1;
-		return r;
+		g = mkfnode(1,I_FORMULA,c);
+		MKNODE(r1,g,r); r = r1;
+		return mkfnode(2,I_NARYOP,FA0(f),r);
 	}
 }
-

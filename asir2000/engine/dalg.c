@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.10 2005/08/02 07:16:42 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.11 2005/08/24 06:28:39 noro Exp $
 */
 
 #include "ca.h"
@@ -651,6 +651,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 	struct order_spec *current_spec;
 	struct oEGT eg0,eg1;
 	extern struct oEGT eg_le;
+	extern int DP_Print;
 
 	if ( !(nf=current_numberfield) )
 		error("invdalg : current_numberfield is not set");
@@ -669,6 +670,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 	simp = (DAlg *)ALLOCA(dim*sizeof(DAlg));
 	current_spec = dp_current_spec; initd(nf->spec);
 	for ( i = 0; i < dim; i++ ) {
+		if ( DP_Print ) { fprintf(asir_out,"."); fflush(asir_out); }
 		m = mb[i];
 		for ( j = i-1; j >= 0; j-- )
 			if ( dp_redble(m,mb[j]) )
