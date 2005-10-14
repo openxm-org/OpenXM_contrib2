@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.72 2005/10/14 06:00:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.73 2005/10/14 07:39:38 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2225,7 +2225,8 @@ FNODE fnode_normalize_add(FNODE f1,FNODE f2)
 		} else {
 			addnum(0,c1,c2,&c);
 			if ( c ) {
-				NEXTNODE(r0,r); BDY(r) = fnode_normalize_mul_coef(c,b1);
+				NEXTNODE(r0,r);
+				BDY(r) = UNIQ(c) ? b1 : fnode_normalize_mul_coef(c,b1);
 			}
 			n1 = NEXT(n1); n2 = NEXT(n2);
 		}
@@ -2401,18 +2402,28 @@ FNODE fnode_normalize_mul_coef(Num c,FNODE f)
 
 	if ( !c )
 		return mkfnode(I_FORMULA,0);
+	else if ( UNIQ(c) )
+		return f;
 	else if ( fnode_is_number(f) ) {
 		mulnum(0,c,eval(f),&c1); return mkfnode(1,I_FORMULA,c1);
 	} else if ( f->id == I_NARYOP && OPNAME(f) == '*' ) {
 		cc = (FNODE)BDY((NODE)FA1(f));
 		if ( fnode_is_number(cc) ) {
-			mulnum(0,c,eval(cc),&c2); cc = mkfnode(1,I_FORMULA,c2);
-			MKNODE(n,cc,NEXT((NODE)FA1(f)));
+			mulnum(0,c,eval(cc),&c2);
+			if ( UNIQ(c2) )
+				n = NEXT((NODE)FA1(f));
+			else {
+				cc = mkfnode(1,I_FORMULA,c2);
+				MKNODE(n,cc,NEXT((NODE)FA1(f)));
+			}
 		} else { 
 			cc = mkfnode(1,I_FORMULA,c);
 			MKNODE(n,cc,(NODE)FA1(f));
 		}
-		return mkfnode(2,I_NARYOP,FA0(f),n);
+		if ( NEXT(n) )
+			return mkfnode(2,I_NARYOP,FA0(f),n);
+		else
+			return (FNODE)BDY(n);
 	} else if ( f->id == I_NARYOP && OPNAME(f) == '+' ) {
 		for ( r0 = 0, n = (NODE)FA1(f); n; n = NEXT(n) ) {
 			NEXTNODE(r0,r);
