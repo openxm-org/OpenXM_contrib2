@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.73 2005/10/14 07:39:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.74 2005/10/14 07:49:21 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,9 @@ struct TeXSymbol {
 };
 
 #define OPNAME(f) (((ARF)FA0(f))->name[0])
+#define IS_BINARYPWR(f) (((f)->id==I_BOP) &&(OPNAME(f)=='^'))
+#define IS_NARYADD(f) (((f)->id==I_NARYOP) &&(OPNAME(f)=='+'))
+#define IS_NARYMUL(f) (((f)->id==I_NARYOP) &&(OPNAME(f)=='*'))
 
 extern char *parse_strp;
 
@@ -2098,6 +2101,8 @@ FNODE fnode_normalize_mul(FNODE a1,FNODE a2);
 FNODE fnode_normalize_pwr(FNODE a1,FNODE a2);
 FNODE to_narymul(FNODE f);
 FNODE to_naryadd(FNODE f);
+FNODE fnode_node_to_naryadd(NODE n);
+FNODE fnode_node_to_narymul(NODE n);
 FNODE fnode_normalize_mul_coef(Num c,FNODE f);
 void fnode_base_exp(FNODE f,FNODE *bp,FNODE *ep);
 void fnode_coef_body(FNODE f,Num *cp,FNODE *bp);
@@ -2107,7 +2112,6 @@ FNODE fnode_normalize(FNODE f)
 {
 	FNODE a1,a2,mone,r,b2;
 	NODE n;
-	Num invc2,c2;
 	Q q;
 
 	STOQ(-1,q);
@@ -2209,24 +2213,19 @@ FNODE fnode_normalize_add(FNODE f1,FNODE f2)
 
 	if ( fnode_is_zero(f1) ) return f2;
 	else if ( fnode_is_zero(f2) ) return f1;
-	if ( f1->id != I_NARYOP || OPNAME(f1) != '+' ) f1 = to_naryadd(f1);
-	if ( f2->id != I_NARYOP || OPNAME(f2) != '+' ) f2 = to_naryadd(f2);
-	n1 = (NODE)FA1(f1);
-	n2 = (NODE)FA1(f2);
+	f1 = to_naryadd(f1); f2 = to_naryadd(f2);
+	n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
 	r0 = 0;
 	while ( n1 && n2 ) {
-		fnode_coef_body(BDY(n1),&c1,&b1);
-		fnode_coef_body(BDY(n2),&c2,&b2);
-		s = compfnode(b1,b2);
-		if ( s > 0 ) {
+		fnode_coef_body(BDY(n1),&c1,&b1); fnode_coef_body(BDY(n2),&c2,&b2);
+		if ( (s = compfnode(b1,b2)) > 0 ) {
 			NEXTNODE(r0,r); BDY(r) = BDY(n1); n1 = NEXT(n1);
 		} else if ( s < 0 ) {
 			NEXTNODE(r0,r); BDY(r) = BDY(n2); n2 = NEXT(n2);
 		} else {
 			addnum(0,c1,c2,&c);
 			if ( c ) {
-				NEXTNODE(r0,r);
-				BDY(r) = UNIQ(c) ? b1 : fnode_normalize_mul_coef(c,b1);
+				NEXTNODE(r0,r); BDY(r) = fnode_normalize_mul_coef(c,b1);
 			}
 			n1 = NEXT(n1); n2 = NEXT(n2);
 		}
@@ -2240,12 +2239,21 @@ FNODE fnode_normalize_add(FNODE f1,FNODE f2)
 	else if ( r0 )
 		NEXT(r) = 0;
 
-	if ( !r0 )
-		return mkfnode(1,I_FORMULA,0);
-	else if ( !NEXT(r0) )
-		return BDY(r0);
-	else
-		return mkfnode(2,I_NARYOP,addfs,r0);
+	return fnode_node_to_naryadd(r0);
+}
+
+FNODE fnode_node_to_naryadd(NODE n)
+{
+	if ( !n ) return mkfnode(1,I_FORMULA,0);
+	else if ( !NEXT(n) ) return BDY(n);
+	else return mkfnode(2,I_NARYOP,addfs,n);
+}
+
+FNODE fnode_node_to_narymul(NODE n)
+{
+	if ( !n ) return mkfnode(1,I_FORMULA,ONE);
+	else if ( !NEXT(n) ) return BDY(n);
+	else return mkfnode(2,I_NARYOP,mulfs,n);
 }
 
 FNODE fnode_normalize_mul(FNODE f1,FNODE f2)
@@ -2255,66 +2263,43 @@ FNODE fnode_normalize_mul(FNODE f1,FNODE f2)
 	FNODE *m;
 	int s;
 	Num c1,c2,c,e;
-	int l1,l2,l,i,j;
+	int l1,l,i,j;
 
 	if ( fnode_is_zero(f1) || fnode_is_zero(f2) ) return 0;
+	else if ( fnode_is_number(f1) ) 
+		return fnode_normalize_mul_coef((Num)eval(f1),f2);
+	else if ( fnode_is_number(f2) ) 
+		return fnode_normalize_mul_coef((Num)eval(f2),f1);
 
-	if ( f1->id != I_NARYOP || OPNAME(f1) != '*' ) f1 = to_narymul(f1);
-	if ( f2->id != I_NARYOP || OPNAME(f2) != '*' ) f2 = to_narymul(f2);
-	n1 = (NODE)FA1(f1);
-	n2 = (NODE)FA1(f2);
-	if ( fnode_is_number(BDY(n1)) )
-		if ( fnode_is_number(BDY(n2)) ) {
-			mulnum(0,eval(BDY(n1)),eval(BDY(n2)),&c);
-			n1 = NEXT(n1); n2 = NEXT(n2);
-		} else {
-			c = eval(BDY(n1)); n1 = NEXT(n1);
-		}
-	else if ( fnode_is_number(BDY(n2)) ) {
-		c = eval(BDY(n2)); n2 = NEXT(n2);
-	} else
-		c = (Num)ONE;
+	fnode_coef_body(f1,&c1,&b1); fnode_coef_body(f2,&c2,&b2);
+	mulnum(0,c1,c2,&c);
 	if ( !c ) return mkfnode(1,I_FORMULA,0);
 
-	l1 = length(n1);
-	l2 = length(n2);
-	l = l1+l2;
+	n1 = (NODE)FA1(to_narymul(b1)); n2 = (NODE)FA1(to_narymul(b2));
+	l1 = length(n1); l = l1+length(n2);
 	m = (FNODE *)ALLOCA(l*sizeof(FNODE));
 	for ( r = n1, i = 0; i < l1; r = NEXT(r), i++ ) m[i] = BDY(r);
 	for ( r = n2; r; r = NEXT(r) ) {
 		if ( i == 0 )
 			m[i++] = BDY(r);
 		else {
-			fnode_base_exp(m[i-1],&b1,&e1);
-			fnode_base_exp(BDY(r),&b2,&e2);
-			if ( compfnode(b1,b2) ) {
-				for ( j = i-1; j >= 0; j-- ) {
-					MKNODE(r1,m[j],r); r = r1;
-				}
-				cc = mkfnode(1,I_FORMULA,c);
-				MKNODE(r1,cc,r); r = r1;
-				return mkfnode(2,I_NARYOP,mulfs,r);
-			} else {
-				addnum(0,eval(e1),eval(e2),&e);
-				if ( !e ) i--;
-				else if ( UNIQ(e) )
-					m[i-1] = b1;
-				else
-					m[i-1] = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,e));
-			}
+			fnode_base_exp(m[i-1],&b1,&e1); fnode_base_exp(BDY(r),&b2,&e2);
+			if ( compfnode(b1,b2) ) break;
+			addnum(0,eval(e1),eval(e2),&e);
+			if ( !e ) i--;
+			else if ( UNIQ(e) )
+				m[i-1] = b1;
+			else
+				m[i-1] = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,e));
 		}
 	}
-	if ( !i ) return mkfnode(1,I_FORMULA,c);
-	else {
-		r = 0;
-		for ( j = i-1; j >= 0; j-- ) {
-			MKNODE(r1,m[j],r); r = r1;
-		}
-		cc = mkfnode(1,I_FORMULA,c);
-		MKNODE(r1,cc,r); 
-		r = r1;
-		return mkfnode(2,I_NARYOP,mulfs,r);
+	for ( j = i-1; j >= 0; j-- ) {
+		MKNODE(r1,m[j],r); r = r1;
 	}
+	if ( !UNIQ(c) ) {
+		cc = mkfnode(1,I_FORMULA,c); MKNODE(r1,cc,r); r = r1;
+	}
+	return fnode_node_to_narymul(r);
 }
 
 FNODE fnode_normalize_pwr(FNODE f1,FNODE f2)
@@ -2332,28 +2317,22 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2)
 			return mkfnode(1,I_FORMULA,c);
 		} else
 			return mkfnode(3,I_BOP,pwrfs,f1,f2);
-	else if ( f1->id == I_BOP && OPNAME(f1) == '^' ) {
+	else if ( IS_BINARYPWR(f1) ) {
 		b1 = FA1(f1); e1 = FA2(f1);
 		e = fnode_normalize_mul(e1,f2);
 		if ( fnode_is_one(e) )
 			return b1;
 		else
 			return mkfnode(3,I_BOP,FA0(f1),b1,e);
-	} else if ( f1->id == I_NARYOP && OPNAME(f1) == '*' ) {
+	} else if ( IS_NARYMUL(f1) && fnode_is_integer(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
-		if ( fnode_is_integer(f2) ) {
-			pwrnum(0,(Num)c1,(Num)eval(f2),&c);
-			cc = mkfnode(1,I_FORMULA,c);
-			b = fnode_normalize_pwr(b1,f2);
-			if ( fnode_is_one(cc) )
-				return b;
-			else {
-				NEWFNODE(r,2);
-				r->id = I_NARYOP; FA0(r) = mulfs; FA1(r) = mknode(2,cc,b);
-				return r;
-			}
-		} else
-			return mkfnode(3,I_BOP,pwrfs,f1,f2);
+		pwrnum(0,(Num)c1,(Num)eval(f2),&c);
+		cc = mkfnode(1,I_FORMULA,c);
+		b = fnode_normalize_pwr(b1,f2);
+		if ( fnode_is_one(cc) )
+			return b;
+		else
+			return fnode_node_to_narymul(mknode(2,cc,b));
 	} else
 		return mkfnode(3,I_BOP,pwrfs,f1,f2);
 }
@@ -2361,7 +2340,7 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2)
 /* f = b^e */
 void fnode_base_exp(FNODE f,FNODE *bp,FNODE *ep)
 {
-	if ( f->id == I_BOP && OPNAME(f) == '^' ) {
+	if ( IS_BINARYPWR(f) ) {
 		*bp = FA1(f); *ep = FA2(f);
 	} else {
 		*bp = f; *ep = mkfnode(1,I_FORMULA,ONE);		
@@ -2373,11 +2352,10 @@ FNODE to_naryadd(FNODE f)
 	FNODE r;
 	NODE n;
 
-	NEWFNODE(r,2);
-	r->id = I_NARYOP;
-	FA0(r) = addfs;
-	MKNODE(n,f,0);
-	FA1(r) = n;
+	if ( IS_NARYADD(f) ) return f;
+
+	NEWFNODE(r,2); r->id = I_NARYOP;
+	FA0(r) = addfs; MKNODE(n,f,0); FA1(r) = n;
 	return r;
 }
 
@@ -2386,76 +2364,55 @@ FNODE to_narymul(FNODE f)
 	FNODE r;
 	NODE n;
 
-	NEWFNODE(r,2);
-	r->id = I_NARYOP;
-	FA0(r) = mulfs;
-	MKNODE(n,f,0);
-	FA1(r) = n;
+	if ( IS_NARYMUL(f) ) return f;
+
+	NEWFNODE(r,2); r->id = I_NARYOP;
+	FA0(r) = mulfs; MKNODE(n,f,0); FA1(r) = n;
 	return r;
 }
 
 FNODE fnode_normalize_mul_coef(Num c,FNODE f)
 {
-	FNODE cc;
+	FNODE b1,cc,r;
 	Num c1,c2;
-	NODE n,r0,r;
+	NODE n;
 
 	if ( !c )
 		return mkfnode(I_FORMULA,0);
-	else if ( UNIQ(c) )
-		return f;
-	else if ( fnode_is_number(f) ) {
-		mulnum(0,c,eval(f),&c1); return mkfnode(1,I_FORMULA,c1);
-	} else if ( f->id == I_NARYOP && OPNAME(f) == '*' ) {
-		cc = (FNODE)BDY((NODE)FA1(f));
-		if ( fnode_is_number(cc) ) {
-			mulnum(0,c,eval(cc),&c2);
-			if ( UNIQ(c2) )
-				n = NEXT((NODE)FA1(f));
-			else {
-				cc = mkfnode(1,I_FORMULA,c2);
-				MKNODE(n,cc,NEXT((NODE)FA1(f)));
+	else {
+		fnode_coef_body(f,&c1,&b1);
+		mulnum(0,c,c1,&c2);
+		if ( UNIQ(c2) ) return b1;
+		else {
+			cc = mkfnode(1,I_FORMULA,c2);
+			if ( fnode_is_number(b1) ) {
+				if ( !fnode_is_one(b1) )
+					error("fnode_normalize_mul_coef : cannot happen");
+				else
+					return cc;
+			} else
+			if ( IS_NARYMUL(b1) ) {
+				MKNODE(n,cc,FA1(b1));
+			} else {
+				n = mknode(2,cc,b1);
 			}
-		} else { 
-			cc = mkfnode(1,I_FORMULA,c);
-			MKNODE(n,cc,(NODE)FA1(f));
+			r = fnode_node_to_narymul(n);
+			return r;
 		}
-		if ( NEXT(n) )
-			return mkfnode(2,I_NARYOP,FA0(f),n);
-		else
-			return (FNODE)BDY(n);
-	} else if ( f->id == I_NARYOP && OPNAME(f) == '+' ) {
-		for ( r0 = 0, n = (NODE)FA1(f); n; n = NEXT(n) ) {
-			NEXTNODE(r0,r);
-			BDY(r) = fnode_normalize_mul_coef(c,BDY(n));
-		}
-		if ( r0 ) NEXT(r) = 0;
-		return mkfnode(2,I_NARYOP,FA0(f),r0);
-	} else {
-		cc = mkfnode(1,I_FORMULA,c);
-		n = mknode(2,cc,f);
-		return mkfnode(2,I_NARYOP,mulfs,n);
 	}
 }
 
 void fnode_coef_body(FNODE f,Num *cp,FNODE *bp)
 {
 	FNODE c;
-	NODE n;
 
 	if ( fnode_is_number(f) ) {
 		*cp = eval(f); *bp = mkfnode(1,I_FORMULA,ONE);
-	} else if ( f->id == I_NARYOP && OPNAME(f) == '*' ) {
-		c = (FNODE)BDY((NODE)FA1(f));
+	} else if ( IS_NARYMUL(f) ) {
+		c=(FNODE)BDY((NODE)FA1(f));
 		if ( fnode_is_number(c) ) {
 			*cp = eval(c);
-			n = NEXT((NODE)FA1(f));
-			if ( !n )
-				*bp = mkfnode(1,I_FORMULA,ONE);
-			else if ( !NEXT(n) )
-				*bp = BDY(n);
-			else
-				*bp = mkfnode(2,I_NARYOP,FA0(f),n);
+			*bp = fnode_node_to_narymul(NEXT((NODE)FA1(f)));
 		} else {
 			*cp = (Num)ONE; *bp = f;
 		}
