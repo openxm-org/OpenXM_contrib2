@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.75 2005/10/15 01:10:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.76 2005/10/15 02:34:13 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,7 @@ struct TeXSymbol {
 };
 
 #define OPNAME(f) (((ARF)FA0(f))->name[0])
+#define IS_ZERO(f) (((f)->id==I_FORMULA) && FA0(f)==0 )
 #define IS_BINARYPWR(f) (((f)->id==I_BOP) &&(OPNAME(f)=='^'))
 #define IS_NARYADD(f) (((f)->id==I_NARYOP) &&(OPNAME(f)=='+'))
 #define IS_NARYMUL(f) (((f)->id==I_NARYOP) &&(OPNAME(f)=='*'))
@@ -2031,15 +2032,6 @@ int fnode_is_integer(FNODE f)
 	}
 }
 
-int fnode_is_zero(FNODE f)
-{
-	Q n;
-
-	n = eval(f);
-	if ( !n ) return 1;
-	else return 0;
-}
-
 int fnode_is_nonnegative_integer(FNODE f)
 {
 	Q n;
@@ -2216,8 +2208,8 @@ FNODE fnode_normalize_add(FNODE f1,FNODE f2,int expand)
 	int s;
 	Num c1,c2,c;
 
-	if ( fnode_is_zero(f1) ) return f2;
-	else if ( fnode_is_zero(f2) ) return f1;
+	if ( IS_ZERO(f1) ) return f2;
+	else if ( IS_ZERO(f2) ) return f1;
 	f1 = to_naryadd(f1); f2 = to_naryadd(f2);
 	n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
 	r0 = 0;
@@ -2270,7 +2262,7 @@ FNODE fnode_normalize_mul(FNODE f1,FNODE f2,int expand)
 	Num c1,c2,c,e;
 	int l1,l,i,j;
 
-	if ( fnode_is_zero(f1) || fnode_is_zero(f2) ) return 0;
+	if ( IS_ZERO(f1) || IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,0);
 	else if ( fnode_is_number(f1) ) 
 		return fnode_normalize_mul_coef((Num)eval(f1),f2,expand);
 	else if ( fnode_is_number(f2) ) 
@@ -2332,8 +2324,8 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2,int expand)
 	NODE arg,n;
 	Q q;
 
-	if ( fnode_is_zero(f2) ) return mkfnode(1,I_FORMULA,ONE);
-	else if ( fnode_is_zero(f1) ) return mkfnode(1,I_FORMULA,0);
+	if ( IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,ONE);
+	else if ( IS_ZERO(f1) ) return mkfnode(1,I_FORMULA,0);
 	else if ( fnode_is_one(f2) ) return f1;
 	else if ( fnode_is_number(f1) )
 		if ( fnode_is_integer(f2) ) {
@@ -2371,7 +2363,7 @@ FNODE fnode_expand_pwr(FNODE f,int n)
 	FNODE f1,f2;
 
 	if ( !n ) return mkfnode(1,I_FORMULA,ONE);
-	else if ( fnode_is_zero(f) ) return mkfnode(1,I_FORMULA,0);
+	else if ( IS_ZERO(f) ) return mkfnode(1,I_FORMULA,0);
 	else if ( n == 1 ) return f;
 	else {
 		n1 = n/2;
