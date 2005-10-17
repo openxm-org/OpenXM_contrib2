@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.76 2005/10/15 02:34:13 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.77 2005/10/15 07:40:59 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2182,7 +2182,7 @@ FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand)
 	for ( i = 0; i < n; i++ ) {
 		switch ( spec->type[i] ) {
 			case A_fnode:
-				r->arg[i] = func(f->arg[i]);
+				r->arg[i] = func(f->arg[i],expand);
 				break;
 			case A_node:
 				s = (NODE)f->arg[i];
