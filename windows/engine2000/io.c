@@ -70,7 +70,7 @@ static struct ErrMsg Errmsg;
  * interrupt_state : flag to distinguish an Asir error and a cancellation
  */
 
-static int emergency;
+int emergency;
 static int interrupt_state;
 int debuggui_is_present;
 int messagegui_is_present;

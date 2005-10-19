@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.5 2001/10/05 10:23:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.6 2001/10/09 01:36:25 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,6 +61,7 @@ static struct w_buf {
 } W_BUF;
 
 static int noflush;
+extern int emergency;
 
 #define INBUF_EMPTY (W_BUF.inpos >= W_BUF.inlen)
 
@@ -73,12 +74,19 @@ void w_purge_stdin(void)
 int w_filbuf(void)
 {
   int status = get_line(W_BUF.inbuf);
+
+  /* XXX */
+  if ( emergency ) return 0;
+
   W_BUF.inpos = 0;
   W_BUF.inlen = strlen(W_BUF.inbuf);
   return status;
 }
 
 int w_flushbuf(void) {
+  /* XXX */
+  if ( emergency ) return 0;
+
   W_BUF.outbuf[W_BUF.outpos] = 0;
   W_BUF.outpos = 0;
   put_line(W_BUF.outbuf);

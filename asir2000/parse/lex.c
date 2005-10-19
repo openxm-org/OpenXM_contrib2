@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.33 2004/04/30 08:25:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.34 2004/12/17 03:09:08 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -720,7 +720,7 @@ char *readline_console(char *prompt)
                         exp_result = history_expand(line,&expansion);
                         if ( !exp_result ) {
                                 free(expansion);
-                                for ( ; isspace(*line); line++ );
+                                for ( ; isspace((unsigned char)*line); line++ );
                                 add_history(line);
                                 break;
                         } else if ( exp_result > 0 ) {

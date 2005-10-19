@@ -54,7 +54,7 @@ char *errmsg;
 	if ( slash )
 		*slash = 0;
 	ldir = strlen(dir)+1;
-	if ( access("UseCurrentDir",0) >= 0 ) {
+	if ( 1 || access("UseCurrentDir",0) >= 0 ) {
 		use_current_dir = 1;
 		strcpy(rootdir,dir);
 		strcpy(name,dir);
@@ -164,8 +164,9 @@ BOOL Init_IO(char *errmsg) {
 		if ( get_rootdir(name,len,errmsg) == FALSE ) {
 			return FALSE;
 		}
-		sprintf(AsirExe,"%s\\bin\\engine.exe",name);
+//		sprintf(AsirExe,"%s\\bin\\engine.exe",name);
 //		sprintf(AsirExe,"c:\\home\\noro\\engine2000\\debug\\engine.exe");
+		sprintf(AsirExe,"d:\\cygwin\\home\\noro\\OpenXM_contrib2\\\\windows\\engine2000\\debug\\engine.exe");
 		if ( !getenv("HOME") ) {
 			sprintf(home,"HOME=%s",name);
 			_putenv(home);

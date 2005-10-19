@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.13 2005/02/08 18:06:05 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.14 2005/09/14 02:48:38 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -78,9 +78,10 @@ void stoarg(char *s,int *acp,char **av)
 	int i;
 
 	for ( i = 0; ; i++ ) {
-		for ( ; *s && isspace(*s); s++ );
+		for ( ; *s && isspace((unsigned char)*s); s++ );
 		if ( *s ) {
-			for ( av[i] = s; *s && !isspace(*s); s++ );
+			for ( av[i] = s; *s && 
+				!isspace((unsigned char)*s); s++ );
 			if ( *s )
 				*s++ = 0;
 		} else {
