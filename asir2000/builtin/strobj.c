@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.77 2005/10/15 07:40:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.78 2005/10/17 00:38:11 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -663,20 +663,20 @@ void Pquote_match_rewrite(NODE arg,Obj *rp)
 			NEXTNODE(s0,s);
 			pair = BDY((LIST)BDY(t));
 			ind = (int)FA0((FNODE)BDY((QUOTE)BDY(pair)));
-			value = mkfnode(1,I_FORMULA,BDY(NEXT(pair)));
+			value = BDY((QUOTE)(BDY(NEXT(pair))));
 			BDY(s) = mknode(2,ind,value);
 		}
 		if ( s0 ) NEXT(s) = 0;
 		switch ( ac = argc(arg) ) {
 			case 3:
 				h = rewrite_fnode(BDY((QUOTE)ARG2(arg)),s0);
-				*rp = eval(h);
+				MKQUOTE(q,h); *rp = (Obj)q;
 				break;
 			case 4:
 				c = rewrite_fnode(BDY((QUOTE)ARG2(arg)),s0);
 				if ( eval(c) ) {
 					h = rewrite_fnode(BDY((QUOTE)ARG3(arg)),s0);
-					*rp = eval(h);
+					MKQUOTE(q,h); *rp = (Obj)q;
 				} else
 					*rp = VOIDobj;
 				break;
