@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.51 2005/10/12 03:31:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.52 2005/10/19 04:52:59 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -445,6 +445,8 @@ FNODE fnode_to_bin(FNODE f,int dir)
 		case I_NARYOP: 
 			fun = (ARF)FA0(f);
 			len = length((NODE)FA1(f));
+			if ( len==1 ) return BDY((NODE)(FA1(f)));
+
 			arg = (FNODE *)ALLOCA(len*sizeof(FNODE));
 			for ( i = 0, t = (NODE)FA1(f); i < len; i++, t = NEXT(t) )
 				arg[i] = fnode_to_bin((FNODE)BDY(t),dir);
