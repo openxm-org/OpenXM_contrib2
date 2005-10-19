@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.50 2005/10/05 09:39:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.51 2005/10/12 03:31:04 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -611,7 +611,12 @@ FNODE rewrite_fnode(FNODE f,NODE arg)
 			return mkfnode(3,f->id,a0,a1,a2);
 			break;
 
-		/* function */
+		/* nary operators */
+		case I_NARYOP:
+			n = rewrite_fnode_node((NODE)FA1(f),arg);
+			return mkfnode(2,f->id,FA0(f),n);
+
+		/* and function */
 		case I_FUNC:
 			a1 = rewrite_fnode((FNODE)FA1(f),arg);
 			return mkfnode(2,f->id,FA0(f),a1);
