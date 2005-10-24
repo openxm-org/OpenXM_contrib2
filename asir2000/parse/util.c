@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.14 2005/09/14 02:48:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.15 2005/10/19 04:51:15 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -393,7 +393,7 @@ V searchvar(char *str)
 {
 	VL vl;
 
-	for ( vl = CO; ;vl = NEXT(vl) ) 
+	for ( vl = CO; vl ;vl = NEXT(vl) ) 
 		if ( NAME(VR(vl)) && !strcmp(NAME(VR(vl)),str) )
 			return VR(vl);
 	return 0;
