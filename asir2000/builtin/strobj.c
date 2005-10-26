@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.82 2005/10/26 08:39:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.83 2005/10/26 10:44:50 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2487,11 +2487,6 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 	char *nm1,*nm2;
 	FNODE b1,b2,e1,e2,g;
 	Num ee,ee1,c1,c2;
-
-	if ( IS_ZERO(f1) )
-		if ( IS_ZERO(f2) ) return 0;
-		else return -1;
-	else if ( IS_ZERO(f2) ) return 1;
 
 	if ( IS_NARYADD(f1) || IS_NARYADD(f2) ) {
 		f1 = to_naryadd(f1); f2 = to_naryadd(f2);
