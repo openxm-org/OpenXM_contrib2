@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.83 2005/10/26 10:44:50 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.84 2005/10/26 10:47:00 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2496,9 +2496,7 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 			else {
 				n1 = NEXT(n1); n2 = NEXT(n2);
 			}
-		if ( n1 ) return 1;
-		else if ( n2 ) return -1;
-		else return 0;
+		return n1?1:(n2?-1:0);
 	}
 	if ( IS_NARYMUL(f1) || IS_NARYMUL(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
@@ -2511,9 +2509,7 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 				n1 = NEXT(n1); n2 = NEXT(n2);
 			}
 			if ( !n1 || !n2 ) {
-				if ( n1 ) return 1;
-				else if ( n2 ) return -1;
-				else return 0;
+				return n1?1:(n2?-1:0);
 			}
 			fnode_base_exp(BDY(n1),&b1,&e1);
 			fnode_base_exp(BDY(n2),&b2,&e2);
@@ -2528,16 +2524,9 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 				if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
 					/* f1 = t b^e1 ... , f2 = t b^e2 ... */
 					subnum(0,eval(e1),eval(e2),&ee);
-					r = compnum(0,ee,0);
-					if ( r > 0 ) {
-						/* e1>e2 */
+					if ( ee ) {
 						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
 						MKNODE(n1,g,n1);
-					} else if ( r < 0 ) {
-						/* e1<e2 */
-						chsgnnum(ee,&ee1); ee = ee1;
-						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
-					MKNODE(n2,g,n2);
 					}
 				} else {
 					r = fnode_normalize_comp(e1,e2);
@@ -2579,9 +2568,7 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 							else {
 								n1 = NEXT(n1); n2 = NEXT(n2);
 							}
-						if ( n1 ) return 1;
-						else if ( n2 ) return -1;
-						else return 0;
+						return n1?1:(n2?-1:0);
 					}
 					break;
 				case I_PVAR:
