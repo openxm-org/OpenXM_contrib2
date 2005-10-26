@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.80 2005/10/26 02:58:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.81 2005/10/26 07:33:03 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2364,7 +2364,8 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2,int expand)
 			return b;
 		else
 			return fnode_node_to_narymul(mknode(2,cc,b));
-	} else if ( expand && fnode_is_nonnegative_integer(f2) ) {
+	} else if ( expand && fnode_is_integer(f2) 
+			&& fnode_is_nonnegative_integer(f2) ) {
 		q = (Q)eval(f2);
 		if ( PL(NM(q)) > 1 ) error("fnode_normalize_pwr : exponent too large");
 		return fnode_expand_pwr(f1,QTOS(q));
@@ -2483,7 +2484,7 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 {
 	NODE n1,n2;
 	int r,i1,i2;
-	FUNC fp1,fp2;
+	char *nm1,*nm2;
 	FNODE b1,b2,e1,e2,g;
 	Num ee,ee1;
 
@@ -2562,15 +2563,18 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 				case I_FORMULA:
 					return 1;
 				case I_FUNC:
-					fp1 = (FUNC)FA0(f1); fp2 = (FUNC)FA0(f2);
-					if ( fp1 > fp2 ) return 1;
-					else if ( fp1 < fp2 ) return -1;
+					nm1 = ((FUNC)FA0(f1))->name; nm2 = ((FUNC)FA0(f2))->name;
+					r = strcmp(nm1,nm2);
+					if ( r > 0 ) return 1;
+					else if ( r < 0 ) return -1;
 					else {
 						/* compare args */
 						n1 = FA0((FNODE)FA1(f1)); n2 = FA0((FNODE)FA1(f2));
 						while ( n1 && n2 )
-							if ( r = fnode_normalize_comp(BDY(n1),BDY(n2)) )
-								return r;
+							if ( r = fnode_normalize_comp(BDY(n1),BDY(n2)) ) return r;
+							else {
+								n1 = NEXT(n1); n2 = NEXT(n2);
+							}
 						if ( n1 ) return 1;
 						else if ( n2 ) return -1;
 						else return 0;
