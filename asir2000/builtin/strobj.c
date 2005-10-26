@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.84 2005/10/26 10:47:00 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.85 2005/10/26 11:07:50 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -127,7 +127,7 @@ struct ftab str_tab[] = {
 	{"quote_is_dependent",Pquote_is_dependent,2},
 
 	{"quote_normalize",Pquote_normalize,-2},
-	{"quote_normalize_comp",Pquote_normalize_comp,2,0x3},
+	{"quote_normalize_comp",Pquote_normalize_comp,2},
 
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},
@@ -2524,9 +2524,14 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 				if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
 					/* f1 = t b^e1 ... , f2 = t b^e2 ... */
 					subnum(0,eval(e1),eval(e2),&ee);
-					if ( ee ) {
+					r = compnum(0,ee,0);
+					if ( r > 0 ) {
 						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
 						MKNODE(n1,g,n1);
+					} else if ( r < 0 ) {
+						chsgnnum(ee,&ee1);
+						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee1));
+						MKNODE(n2,g,n2);
 					}
 				} else {
 					r = fnode_normalize_comp(e1,e2);
