@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.81 2005/10/26 07:33:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.82 2005/10/26 08:39:58 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2486,7 +2486,7 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 	int r,i1,i2;
 	char *nm1,*nm2;
 	FNODE b1,b2,e1,e2,g;
-	Num ee,ee1;
+	Num ee,ee1,c1,c2;
 
 	if ( IS_ZERO(f1) )
 		if ( IS_ZERO(f2) ) return 0;
@@ -2506,8 +2506,11 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 		else return 0;
 	}
 	if ( IS_NARYMUL(f1) || IS_NARYMUL(f2) ) {
-		f1 = to_narymul(f1); f2 = to_narymul(f2);
-		n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
+		fnode_coef_body(f1,&c1,&b1);
+		fnode_coef_body(f2,&c2,&b2);
+		if ( !compfnode(b1,b2) ) return compnum(0,c1,c2);
+		b1 = to_narymul(b1); b2 = to_narymul(b2);
+		n1 = (NODE)FA1(b1); n2 = (NODE)FA1(b2);
 		while ( 1 ) {
 			while ( n1 && n2 && !compfnode(BDY(n1),BDY(n2)) ) {
 				n1 = NEXT(n1); n2 = NEXT(n2);
@@ -2519,27 +2522,33 @@ int fnode_normalize_comp(FNODE f1,FNODE f2)
 			}
 			fnode_base_exp(BDY(n1),&b1,&e1);
 			fnode_base_exp(BDY(n2),&b2,&e2);
-			n1 = NEXT(n1); n2 = NEXT(n2);
 
-			if ( r = fnode_normalize_comp(b1,b2) ) return r;
-			else if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
-				/* f1 = t b^e1 ... , f2 = t b^e2 ... */
-				subnum(0,eval(e1),eval(e2),&ee);
-				r = compnum(0,ee,0);
-				if ( r > 0 ) {
-					/* e1>e2 */
-					g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
-					MKNODE(n1,g,n1);
-				} else if ( r < 0 ) {
-					/* e1<e2 */
-					chsgnnum(ee,&ee1); ee1 = ee;
-					g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
-					MKNODE(n2,g,n2);
-				}
+			if ( r = fnode_normalize_comp(b1,b2) ) {
+				if ( r > 0 )
+					return fnode_normalize_comp(e1,mkfnode(1,I_FORMULA,0));
+				else if ( r < 0 )
+					return fnode_normalize_comp(mkfnode(1,I_FORMULA,0),e2);
 			} else {
-				r = fnode_normalize_comp(e1,e2);
-				if ( r > 0 ) return 1;
-				else if ( r < 0 ) return -1;
+				n1 = NEXT(n1); n2 = NEXT(n2);
+				if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
+					/* f1 = t b^e1 ... , f2 = t b^e2 ... */
+					subnum(0,eval(e1),eval(e2),&ee);
+					r = compnum(0,ee,0);
+					if ( r > 0 ) {
+						/* e1>e2 */
+						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
+						MKNODE(n1,g,n1);
+					} else if ( r < 0 ) {
+						/* e1<e2 */
+						chsgnnum(ee,&ee1); ee = ee1;
+						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
+					MKNODE(n2,g,n2);
+					}
+				} else {
+					r = fnode_normalize_comp(e1,e2);
+					if ( r > 0 ) return 1;
+					else if ( r < 0 ) return -1;
+				}
 			}
 		}
 	}
@@ -2610,6 +2619,10 @@ int fnode_normalize_comp_pwr(FNODE f1,FNODE f2)
 
 	fnode_base_exp(f1,&b1,&e1);
 	fnode_base_exp(f2,&b2,&e2);
-	if ( r = fnode_normalize_comp(b1,b2) ) return r;
-	else return fnode_normalize_comp(e1,e2);
+	if ( r = fnode_normalize_comp(b1,b2) ) {
+		if ( r > 0 )
+			return fnode_normalize_comp(e1,mkfnode(1,I_FORMULA,0));
+		else if ( r < 0 )
+			return fnode_normalize_comp(mkfnode(1,I_FORMULA,0),e2);
+	} else return fnode_normalize_comp(e1,e2);
 }
