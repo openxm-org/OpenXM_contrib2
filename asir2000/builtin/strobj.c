@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.78 2005/10/17 00:38:11 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.79 2005/10/19 10:31:18 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -87,6 +87,7 @@ void Pflatten_quote();
 void Pquote_is_integer(),Pquote_is_rational(),Pquote_is_number();
 void Pquote_is_dependent(),Pquote_is_function();
 void Pquote_normalize();
+void Pquote_normalize_comp();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_unify(),Pget_quote_id(),Pquote_match_rewrite();
@@ -126,6 +127,7 @@ struct ftab str_tab[] = {
 	{"quote_is_dependent",Pquote_is_dependent,2},
 
 	{"quote_normalize",Pquote_normalize,-2},
+	{"quote_normalize_comp",Pquote_normalize_comp,2},
 
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},
@@ -1947,6 +1949,19 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 	}
 }
 
+void Pquote_normalize_comp(NODE arg,Q *rp)
+{
+	FNODE f1,f2;
+	int r;
+
+	f1 = BDY((QUOTE)ARG0(arg));
+	f2 = BDY((QUOTE)ARG1(arg));
+	f1 = fnode_normalize(f1,0);
+	f2 = fnode_normalize(f2,0);
+	r = fnode_normalize_comp(f1,f2);
+	STOQ(r,*rp);
+}
+
 int fnode_is_number(FNODE f)
 {
 	Obj obj;
@@ -2215,7 +2230,7 @@ FNODE fnode_normalize_add(FNODE f1,FNODE f2,int expand)
 	r0 = 0;
 	while ( n1 && n2 ) {
 		fnode_coef_body(BDY(n1),&c1,&b1); fnode_coef_body(BDY(n2),&c2,&b2);
-		if ( (s = compfnode(b1,b2)) > 0 ) {
+		if ( (s = fnode_normalize_comp(b1,b2)) > 0 ) {
 			NEXTNODE(r0,r); BDY(r) = BDY(n1); n1 = NEXT(n1);
 		} else if ( s < 0 ) {
 			NEXTNODE(r0,r); BDY(r) = BDY(n2); n2 = NEXT(n2);
@@ -2460,4 +2475,137 @@ void fnode_coef_body(FNODE f,Num *cp,FNODE *bp)
 	} else {
 		*cp = (Num)ONE; *bp = f;
 	}
+}
+
+int fnode_normalize_comp_pwr(FNODE f1,FNODE f2);
+
+int fnode_normalize_comp(FNODE f1,FNODE f2)
+{
+	NODE n1,n2;
+	int r,i1,i2;
+	FUNC fp1,fp2;
+	FNODE b1,b2,e1,e2,g;
+	Num ee,ee1;
+
+	if ( IS_ZERO(f1) )
+		if ( IS_ZERO(f2) ) return 0;
+		else return -1;
+	else if ( IS_ZERO(f2) ) return 1;
+
+	if ( IS_NARYADD(f1) || IS_NARYADD(f2) ) {
+		f1 = to_naryadd(f1); f2 = to_naryadd(f2);
+		n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
+		while ( n1 && n2 )
+			if ( r = fnode_normalize_comp(BDY(n1),BDY(n2)) ) return r;
+			else {
+				n1 = NEXT(n1); n2 = NEXT(n2);
+			}
+		if ( n1 ) return 1;
+		else if ( n2 ) return -1;
+		else return 0;
+	}
+	if ( IS_NARYMUL(f1) || IS_NARYMUL(f2) ) {
+		f1 = to_narymul(f1); f2 = to_narymul(f2);
+		n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
+		while ( 1 ) {
+			while ( n1 && n2 && !compfnode(BDY(n1),BDY(n2)) ) {
+				n1 = NEXT(n1); n2 = NEXT(n2);
+			}
+			if ( !n1 || !n2 ) {
+				if ( n1 ) return 1;
+				else if ( n2 ) return -1;
+				else return 0;
+			}
+			fnode_base_exp(BDY(n1),&b1,&e1);
+			fnode_base_exp(BDY(n2),&b2,&e2);
+			n1 = NEXT(n1); n2 = NEXT(n2);
+
+			if ( r = fnode_normalize_comp(b1,b2) ) return r;
+			else if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
+				/* f1 = t b^e1 ... , f2 = t b^e2 ... */
+				subnum(0,eval(e1),eval(e2),&ee);
+				r = compnum(0,ee,0);
+				if ( r > 0 ) {
+					/* e1>e2 */
+					g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
+					MKNODE(n1,g,n1);
+				} else if ( r < 0 ) {
+					/* e1<e2 */
+					chsgnnum(ee,&ee1); ee1 = ee;
+					g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
+					MKNODE(n2,g,n2);
+				}
+			} else {
+				r = fnode_normalize_comp(e1,e2);
+				if ( r > 0 ) return 1;
+				else if ( r < 0 ) return -1;
+			}
+		}
+	}
+	if ( IS_BINARYPWR(f1) || IS_BINARYPWR(f2) )
+		return fnode_normalize_comp_pwr(f1,f2);
+				
+	/* now, IDs of f1 and f2 must be I_FORMULA, I_FUNC, or I_PVAR */
+	switch ( f1->id ) {
+		case I_FORMULA:
+			switch ( f2->id ) {
+				case I_FORMULA:
+					return arf_comp(CO,FA0(f1),FA0(f2));
+				case I_FUNC: case I_PVAR:
+					return -1;
+				default:
+					error("fnode_normalize_comp : undefined");
+			}
+			break;
+		case I_FUNC:
+			switch ( f2->id ) {
+				case I_FORMULA:
+					return 1;
+				case I_FUNC:
+					fp1 = (FUNC)FA0(f1); fp2 = (FUNC)FA0(f2);
+					if ( fp1 > fp2 ) return 1;
+					else if ( fp1 < fp2 ) return -1;
+					else {
+						/* compare args */
+						n1 = FA0((FNODE)FA1(f1)); n2 = FA0((FNODE)FA1(f2));
+						while ( n1 && n2 )
+							if ( r = fnode_normalize_comp(BDY(n1),BDY(n2)) )
+								return r;
+						if ( n1 ) return 1;
+						else if ( n2 ) return -1;
+						else return 0;
+					}
+					break;
+				case I_PVAR:
+					return -1;
+				default:
+					error("fnode_normalize_comp : undefined");
+			}
+		case I_PVAR:
+			switch ( f2->id ) {
+				case I_FORMULA: case I_FUNC:
+					return 1;
+				case I_PVAR:
+					i1 = (int)FA0(f1); i2 = (int)FA0(f2);
+					if ( i1 > i2 ) return 1;
+					else if ( i1 < i2 ) return -1;
+					else return 0;
+				default:
+					error("fnode_normalize_comp : undefined");
+			}
+			break;
+		default:
+			error("fnode_normalize_comp : undefined");
+	}
+}
+
+int fnode_normalize_comp_pwr(FNODE f1,FNODE f2)
+{
+	FNODE b1,b2,e1,e2;
+	int r;
+
+	fnode_base_exp(f1,&b1,&e1);
+	fnode_base_exp(f2,&b2,&e2);
+	if ( r = fnode_normalize_comp(b1,b2) ) return r;
+	else return fnode_normalize_comp(e1,e2);
 }
