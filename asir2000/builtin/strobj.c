@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.79 2005/10/19 10:31:18 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.80 2005/10/26 02:58:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -127,7 +127,7 @@ struct ftab str_tab[] = {
 	{"quote_is_dependent",Pquote_is_dependent,2},
 
 	{"quote_normalize",Pquote_normalize,-2},
-	{"quote_normalize_comp",Pquote_normalize_comp,2},
+	{"quote_normalize_comp",Pquote_normalize_comp,2,0x3},
 
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.13 2003/05/20 06:26:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.14 2003/11/12 07:01:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -126,16 +126,22 @@ void poppvs() {
 #define IS_LOCAL 0
 #define IS_GLOBAL 1
 #define IS_MGLOBAL 2
+#define IS_PATTERN 3
 
 
 unsigned int makepvar(char *str)
 {
 	int c,c1,created;
 
-	/* EPVS : global list of the current file */
-	/* add to the local variable list */
-	if ( gdef ) {
-		/* add to the external variable list */
+	if ( str[0] == '_' ) {
+		/* pattern variable */
+		c1 = getpvar(PPVS,str,0);
+		c = PVPATTERN((unsigned int)c1);
+		PPVS->va[c1].attr = IS_PATTERN;
+	} else if ( gdef ) {
+		/* EPVS : global list of the current file */
+		/* add to the local variable list */
+		/* also add to the external variable list */
 		c = getpvar(CPVS,str,0);
 		getpvar(EPVS,str,0);
 		if ( CUR_MODULE ) {

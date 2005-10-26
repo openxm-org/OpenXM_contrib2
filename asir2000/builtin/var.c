@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.4 2001/10/09 01:36:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -194,13 +194,18 @@ void Puc(Obj *p)
 	V v;
 	P t;
 	char buf[BUFSIZ];
+	char *n,*nv;
 	static int UCN;
 
 	NEWV(v); v->attr = (pointer)V_UC;
 	sprintf(buf,"_%d",UCN++);
-	NAME(v) = (char *)CALLOC(strlen(buf)+1,sizeof(char));
+	nv = NAME(v) = (char *)CALLOC(strlen(buf)+1,sizeof(char));
 	strcpy(NAME(v),buf);
-	for ( vl = CO; NEXT(vl); vl = NEXT(vl) );
-	NEWVL(NEXT(vl)); VR(NEXT(vl)) = v; NEXT(NEXT(vl)) = 0;
+	for ( vl = CO; vl; vl = NEXT(vl) )
+		if ( (n=NAME(VR(vl))) && !strcmp(n,nv) ) break;
+		else if ( !NEXT(vl) ) {
+			NEWVL(NEXT(vl)); VR(NEXT(vl)) = v; NEXT(NEXT(vl)) = 0;
+			break;
+		}
 	MKV(v,t); *p = (Obj)t;
 }

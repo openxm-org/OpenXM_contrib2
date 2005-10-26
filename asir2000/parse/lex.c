@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.34 2004/12/17 03:09:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.35 2005/10/19 04:51:15 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -319,7 +319,7 @@ int yylex()
 		}
 		yylvalp->p = (pointer)r;
 		return ( FORMULA );
-	} else if ( isalpha(c) || c == ':' ) {
+	} else if ( isalpha(c) || c == ':' || c == '_' ) {
 		if ( c == ':' ) {
 			c1 = Getc();
 			if ( c1 != ':' ) {
@@ -347,7 +347,7 @@ int yylex()
 				break;
 		}
 		REALLOC_TBUF tbuf[i] = 0; Ungetc(c); 
-		if ( isupper(tbuf[0]) ) {
+		if ( isupper(tbuf[0]) || (tbuf[0] == '_' && isupper(tbuf[1])) ) {
 			cptr = (char *)MALLOC(strlen(tbuf)+1); strcpy(cptr,tbuf);
 			yylvalp->p = (pointer)cptr;
 			return UCASE;

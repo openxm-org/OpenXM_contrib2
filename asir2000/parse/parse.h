@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.38 2005/09/21 23:39:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.39 2005/09/30 01:35:25 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -274,25 +274,33 @@ switch ( id ) {\
 
 #define DEFSIZE 32
 #define PVGLOBAL(i) (((unsigned int)(i))|(1<<30))
-#define PVMGLOBAL(i) (((unsigned int)(i))|(3<<30))
+#define PVMGLOBAL(i) (((unsigned int)(i))|(2<<30))
+#define PVPATTERN(i) (((unsigned int)(i))|(3<<30))
 #define PVATTR(i) (((unsigned int)(i))>>30)
 #define PVIND(i) (((unsigned int)(i))&0x3fffffff)
 #define GETPV(i,p) \
 (PVATTR(i)==0?(int)((p)=CPVS->va[(unsigned int)(i)].priv)\
-             :PVATTR(i)==1?(int)((p)=GPVS->va[PVIND(i)].priv)\
-                          :(int)((p)=MPVS->va[PVIND(i)].priv))
+   :PVATTR(i)==1?(int)((p)=GPVS->va[PVIND(i)].priv)\
+      :PVATTR(i)==2?(int)((p)=MPVS->va[PVIND(i)].priv)\
+         :(int)((p)=PPVS->va[PVIND(i)].priv))
+
 #define GETPVREF(i,p) \
 (PVATTR(i)==0?(int)((p)=&(CPVS->va[(unsigned int)(i)].priv))\
-             :PVATTR(i)==1?(int)((p)=&(GPVS->va[PVIND(i)].priv))\
-                          :(int)((p)=&(MPVS->va[PVIND(i)].priv)))
+   :PVATTR(i)==1?(int)((p)=&(GPVS->va[PVIND(i)].priv))\
+      :PVATTR(i)==2?(int)((p)=&(MPVS->va[PVIND(i)].priv))\
+         :(int)((p)=&(PPVS->va[PVIND(i)].priv)))
+
 #define GETPVNAME(i,p) \
 (PVATTR(i)==0?(int)((p)=CPVS->va[(unsigned int)(i)].name)\
-             :PVATTR(i)==1?(int)((p)=GPVS->va[PVIND(i)].name)\
-                          :(int)((p)=MPVS->va[PVIND(i)].name))
+   :PVATTR(i)==1?(int)((p)=GPVS->va[PVIND(i)].name)\
+      :PVATTR(i)==2?(int)((p)=MPVS->va[PVIND(i)].name)\
+         :(int)((p)=PPVS->va[PVIND(i)].name))
+
 #define ASSPV(i,p) \
 (PVATTR(i)==0?(int)(CPVS->va[(unsigned int)(i)].priv=(pointer)(p))\
-             :PVATTR(i)==1?(int)(GPVS->va[PVIND(i)].priv=(pointer)(p))\
-                          :(int)(MPVS->va[PVIND(i)].priv=(pointer)(p)))
+   :PVATTR(i)==1?(int)(GPVS->va[PVIND(i)].priv=(pointer)(p))\
+      :PVATTR(i)==2?(int)(MPVS->va[PVIND(i)].priv=(pointer)(p))\
+         :(int)(PPVS->va[PVIND(i)].priv=(pointer)(p)))
 
 #define NEWNODE2(a) ((a)=(NODE2)MALLOC(sizeof(struct oNODE2)))
 #define MKNODE2(a,b,c,d) \
@@ -300,7 +308,7 @@ switch ( id ) {\
 #define BDY1(a) ((a)->body1)
 #define BDY2(a) ((a)->body2)
 
-extern VS GPVS,CPVS,EPVS,APVS,MPVS;
+extern VS GPVS,CPVS,EPVS,APVS,MPVS,PPVS;
 extern MODULE CUR_MODULE;
 extern NODE MODULE_LIST;
 extern char *CUR_FUNC;
