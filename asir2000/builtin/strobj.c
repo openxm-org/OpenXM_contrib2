@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.85 2005/10/26 11:07:50 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.86 2005/10/26 23:43:23 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1942,22 +1942,27 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 	if ( !q || OID(q) != O_QUOTE ) {
 		*rp = q;
 		return;
-	} else {
+	} else if ( q->normalized && (q->expanded || !expand) )
+		*rp = q;
+	else {
 		f = fnode_normalize(BDY(q),expand);
 		MKQUOTE(r,f);
+		r->normalized = 1;
+		if ( expand ) r->expanded = 1;
 		*rp = r;
 	}
 }
 
 void Pquote_normalize_comp(NODE arg,Q *rp)
 {
+	QUOTE q1,q2;
 	FNODE f1,f2;
 	int r;
 
-	f1 = BDY((QUOTE)ARG0(arg));
-	f2 = BDY((QUOTE)ARG1(arg));
-	f1 = fnode_normalize(f1,0);
-	f2 = fnode_normalize(f2,0);
+	q1 = (QUOTE)ARG0(arg); f1 = (FNODE)BDY(q1);
+	q2 = (QUOTE)ARG1(arg); f2 = (FNODE)BDY(q2);
+	if ( !q1->normalized ) f1 = fnode_normalize(f1,0);
+	if ( !q2->normalized ) f2 = fnode_normalize(f2,0);
 	r = fnode_normalize_comp(f1,f2);
 	STOQ(r,*rp);
 }
@@ -2613,3 +2618,104 @@ int fnode_normalize_comp_pwr(FNODE f1,FNODE f2)
 			return fnode_normalize_comp(mkfnode(1,I_FORMULA,0),e2);
 	} else return fnode_normalize_comp(e1,e2);
 }
+
+int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
+{
+	NODE m,m1,m2,base,exp,fa,pa,n;
+	LIST l;
+	QUOTE qp,qf;
+	FNODE fbase,fexp;
+	FUNC ff,pf;
+	int r;
+
+	switch ( pat->id ) {
+		case I_PVAR:
+			/* [[pat,f]] */
+			MKQUOTE(qf,f);
+			MKQUOTE(qp,pat);
+			n = mknode(2,qp,qf); MKLIST(l,n);
+			*rp =  mknode(1,l);
+			return 1;
+
+		case I_FORMULA:
+			if ( !arf_comp(CO,(Obj)FA0(f),(Obj)FA0(pat)) ) {
+				*rp = 0; return 1;
+			} else
+				return 0;
+
+		case I_BOP:
+			/* OPNAME should be "^" */
+			if ( !IS_BINARYPWR(pat) )
+				error("fnode_normalize_unify : invalid BOP");
+			if ( IS_BINARYPWR(f) ) {
+				fbase = FA1(f); fexp = FA2(f);
+			} else {
+				fbase = f; fexp = mkfnode(1,I_FORMULA,ONE);
+			}
+			r = fnode_normalize_unify(fbase,FA1(pat),&base);
+			if ( !r ) return 0;
+			r = fnode_normalize_unify(fexp,FA2(pat),&exp);
+			if ( !r ) return 0;
+			else return merge_matching_node(base,exp,rp);
+			break;
+		
+		case I_FUNC:
+			if ( f->id != I_FUNC ) return 0;
+			ff = (FUNC)FA0(f); pf = (FUNC)FA0(pat);
+			if ( strcmp(ff->fullname,pf->fullname) ) return 0;
+			/* FA1(f) and FA1(pat) are I_LIST */
+			fa = (NODE)FA0((FNODE)FA1(f));
+			pa = (NODE)FA0((FNODE)FA1(pat));
+			m = 0;
+			while ( fa && pa ) {
+				r = fnode_normalize_unify(BDY(fa),BDY(pa),&m1);
+				if ( !r ) return 0;
+				r = merge_matching_node(m,m1,&m2);
+				if ( !r ) return 0;
+				else m = m2;
+			}
+			if ( fa || pa ) return 0;
+			else {
+				*rp = m;
+				return 1;
+			}
+
+		case I_NARYOP:
+			if ( IS_NARYADD(pat) )
+				return fnode_normalize_unify_naryadd(f,pat,rp);
+			else if ( IS_NARYMUL(pat) )
+				return fnode_normalize_unify_narymul(f,pat,rp);
+			else
+				error("fnode_normalize_unify : invalid NARYOP");
+			break;
+
+		default:
+			error("fnode_normalize_unify : invalid pattern");
+	}
+}
+
+int fnode_normalize_unify_naryadd(FNODE f,FNODE pat,NODE *rp){}
+
+int fnode_normalize_unify_narymul(FNODE f,FNODE pat,NODE *rp){}
+
+/*
+int fnode_normalize_unify_naryadd(FNODE f,FNODE pat,NODE *rp)
+{
+	int lf,lp;
+
+	f = to_naryadd(f);
+	lf = length((NODE)FA1(f));
+	lp = length((NODE)FA1(pat));
+	if ( lf < lp ) return 0;
+	else if ( lp == 1 ) {
+		if ( lf == 1 )
+			return fnode_normalize_unify(
+				BDY((NODE)FA1(f)),BDY((NODE)FA1(pat)),rp);
+		else
+			return 0;
+	} else {
+		sel = (int *)ALLOCA(lf);
+	}
+}
+*/
+
