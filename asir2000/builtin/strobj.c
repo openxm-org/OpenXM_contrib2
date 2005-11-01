@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.86 2005/10/26 23:43:23 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.87 2005/10/31 10:03:48 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -88,10 +88,12 @@ void Pquote_is_integer(),Pquote_is_rational(),Pquote_is_number();
 void Pquote_is_dependent(),Pquote_is_function();
 void Pquote_normalize();
 void Pquote_normalize_comp();
+void Pquote_normalize_unify();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_unify(),Pget_quote_id(),Pquote_match_rewrite();
 void Pquote_to_nary(),Pquote_to_bin();
+void fnode_do_assign(NODE arg);
 void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
 char *symbol_name(char *name);
@@ -137,6 +139,7 @@ struct ftab str_tab[] = {
 	{"flatten_quote",Pflatten_quote,-2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
 	{"quote_unify",Pquote_unify,2},
+	{"quote_normalize_unify",Pquote_normalize_unify,2},
 	{"quote_match_rewrite",Pquote_match_rewrite,-4},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{"get_function_name",Pget_function_name,1},
@@ -646,6 +649,23 @@ void Pquote_unify(NODE arg,Q *rp)
 		*rp = 0;
 }
 
+void Pquote_normalize_unify(NODE arg,Q *rp)
+{
+	QUOTE fq,pq;
+	FNODE f,p;
+	int ret;
+	NODE r;
+
+	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,0),&fq); f = (FNODE)BDY(fq);
+	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,0),&pq); p = (FNODE)BDY(pq);
+	ret = fnode_normalize_unify(f,p,&r);
+	if ( ret ) {
+		fnode_do_assign(r);
+		*rp = ONE;
+	} else
+		*rp = 0;
+}
+
 FNODE rewrite_fnode(FNODE,NODE);
 
 extern Obj VOIDobj;
@@ -700,6 +720,24 @@ void do_assign(NODE arg)
 		pair = BDY((LIST)BDY(t));
 		pv = (int)FA0((FNODE)BDY((QUOTE)BDY(pair)));
 		value = (QUOTE)(BDY(NEXT(pair)));
+		ASSPV(pv,value);
+	}
+}
+
+/* [[index,fnode],...] */
+
+void fnode_do_assign(NODE arg)
+{
+	NODE t,pair;
+	int pv;
+	FNODE f;
+	QUOTE value;
+
+	for ( t = arg; t; t = NEXT(t) ) {
+		pair = (NODE)BDY(t);
+		pv = (int)BDY(pair);
+		f = (FNODE)(BDY(NEXT(pair)));
+		MKQUOTE(value,f);
 		ASSPV(pv,value);
 	}
 }
@@ -2619,22 +2657,34 @@ int fnode_normalize_comp_pwr(FNODE f1,FNODE f2)
 	} else return fnode_normalize_comp(e1,e2);
 }
 
+NODE append_node(NODE a1,NODE a2)
+{
+	NODE t,t0;
+
+	if ( !a1 )
+		return a2;
+	else {
+		for ( t0 = 0; a1; a1 = NEXT(a1) ) {
+			NEXTNODE(t0,t); BDY(t) = BDY(a1);
+		}
+		NEXT(t) = a2;
+		return t0;
+	}
+}
+
 int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 {
 	NODE m,m1,m2,base,exp,fa,pa,n;
 	LIST l;
 	QUOTE qp,qf;
-	FNODE fbase,fexp;
+	FNODE fbase,fexp,a;
 	FUNC ff,pf;
 	int r;
 
 	switch ( pat->id ) {
 		case I_PVAR:
 			/* [[pat,f]] */
-			MKQUOTE(qf,f);
-			MKQUOTE(qp,pat);
-			n = mknode(2,qp,qf); MKLIST(l,n);
-			*rp =  mknode(1,l);
+			*rp = mknode(1,mknode(2,(int)FA0(pat),f),0);
 			return 1;
 
 		case I_FORMULA:
@@ -2652,11 +2702,13 @@ int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 			} else {
 				fbase = f; fexp = mkfnode(1,I_FORMULA,ONE);
 			}
-			r = fnode_normalize_unify(fbase,FA1(pat),&base);
-			if ( !r ) return 0;
-			r = fnode_normalize_unify(fexp,FA2(pat),&exp);
-			if ( !r ) return 0;
-			else return merge_matching_node(base,exp,rp);
+			if ( !fnode_normalize_unify(fbase,FA1(pat),&base) ) return 0;
+			a = rewrite_fnode(FA2(pat),base);
+			if ( !fnode_normalize_unify(fexp,a,&exp) ) return 0;
+			else {
+				*rp = append_node(base,exp);
+				return 1;
+			}
 			break;
 		
 		case I_FUNC:
@@ -2668,11 +2720,10 @@ int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 			pa = (NODE)FA0((FNODE)FA1(pat));
 			m = 0;
 			while ( fa && pa ) {
-				r = fnode_normalize_unify(BDY(fa),BDY(pa),&m1);
-				if ( !r ) return 0;
-				r = merge_matching_node(m,m1,&m2);
-				if ( !r ) return 0;
-				else m = m2;
+				a = rewrite_fnode(BDY(pa),m);
+				if ( !fnode_normalize_unify(BDY(fa),a,&m1) ) return 0;
+				m = append_node(m1,m);
+				fa = NEXT(fa); pa = NEXT(pa);
 			}
 			if ( fa || pa ) return 0;
 			else {
@@ -2694,28 +2745,172 @@ int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 	}
 }
 
-int fnode_normalize_unify_naryadd(FNODE f,FNODE pat,NODE *rp){}
+/* remove i-th element */
 
-int fnode_normalize_unify_narymul(FNODE f,FNODE pat,NODE *rp){}
-
-/*
-int fnode_normalize_unify_naryadd(FNODE f,FNODE pat,NODE *rp)
+FNODE fnode_removeith_naryadd(FNODE p,int i)
 {
-	int lf,lp;
+	int k,l;
+	NODE t,r0,r,a;
+
+	a = (NODE)FA1(p);
+	l = length(a);
+	if ( i < 0 || i >= l ) error("fnode_removeith_naryadd: invalid index");
+	else if ( i == 0 )
+		return fnode_node_to_naryadd(NEXT(a));
+	else {
+		for ( r0 = 0, k = 0, t = a; k < i; k++, t = NEXT(t) ) {
+			NEXTNODE(r0,r);
+			BDY(r) = BDY(t);
+		}
+		t = NEXT(t);
+		NEXT(r) = 0;
+		return fnode_node_to_naryadd(r0);
+	}
+	
+}
+
+/* a0,...,a(i-1) */
+FNODE fnode_left_narymul(FNODE p,int i)
+{
+	int k,l;
+	NODE t,r0,r,a;
+
+	a = (NODE)FA1(p);
+	l = length(a);
+	if ( i < 0 || i >= l ) error("fnode_left_narymul : invalid index");
+	if ( i == 0 ) return mkfnode(1,I_FORMULA,ONE);
+	else if ( i == 1 ) return (FNODE)BDY(a);
+	else {
+		for ( r0 = 0, k = 0, t = a; k < i; k++, t = NEXT(t) ) {
+			NEXTNODE(r0,r);
+			BDY(r) = BDY(t);
+		}
+		NEXT(r) = 0;
+		return fnode_node_to_narymul(r0);
+	}
+}
+
+/* a(i+1),...,a(l-1) */
+FNODE fnode_right_narymul(FNODE p,int i)
+{
+	NODE a,t;
+	int l,k;
+
+	a = (NODE)FA1(p);
+	l = length(a);
+	if ( i < 0 || i >= l ) error("fnode_right_narymul : invalid index");
+	if ( i == l-1 ) return mkfnode(1,I_FORMULA,ONE);
+	else {
+		for ( k = 0, t = a; k <= i; k++, t = NEXT(t) );
+		return fnode_node_to_narymul(t);
+	}
+}
+
+int fnode_normalize_unify_naryadd(FNODE f,FNODE p,NODE *rp)
+{
+	int fl,pl,fi,pi;
+	NODE fa,pa,t,s,m,m1;
+	FNODE fr,pr,prr,pivot;
 
 	f = to_naryadd(f);
-	lf = length((NODE)FA1(f));
-	lp = length((NODE)FA1(pat));
-	if ( lf < lp ) return 0;
-	else if ( lp == 1 ) {
-		if ( lf == 1 )
-			return fnode_normalize_unify(
-				BDY((NODE)FA1(f)),BDY((NODE)FA1(pat)),rp);
+	fa = (NODE)FA1(f); fl = length(fa);
+	pa = (NODE)FA1(p); pl = length(pa);
+	if ( fl < pl ) return 0;
+	else if ( pl == 1 ) {
+		if ( fl == 1 )
+			return fnode_normalize_unify(BDY(fa),BDY(pa),rp);
 		else
 			return 0;
 	} else {
-		sel = (int *)ALLOCA(lf);
+		for ( t = pa, pi = 0; t; t = NEXT(t), pi++ )
+			if ( ((FNODE)BDY(t))->id != I_PVAR ) break;
+		if ( !t ) {
+			/* all are I_PVAR */
+			m = 0;
+			for ( t = pa, s = fa; NEXT(t); t = NEXT(t), s = NEXT(s) ) {
+				fnode_normalize_unify(BDY(s),BDY(t),&m1);
+				m = append_node(m1,m);
+			}
+			if ( !NEXT(s) )
+				fr = (FNODE)BDY(s);
+			else
+				fr = mkfnode(2,I_NARYOP,FA0(f),s);
+			fnode_normalize_unify(fr,BDY(t),&m1);
+			*rp = append_node(m1,m);
+			return 1;
+		} else {
+			pivot = (FNODE)BDY(t);
+			pr = fnode_removeith_naryadd(p,pi);
+			for ( s = fa, fi = 0; s; s = NEXT(s), fi++ ) {
+				if ( fnode_normalize_unify(BDY(s),pivot,&m) ) {
+					fr = fnode_removeith_naryadd(f,fi);
+					prr = rewrite_fnode(pr,m);
+					if ( fnode_normalize_unify(fr,prr,&m1) ) {
+						*rp = append_node(m,m1);
+						return 1;
+					}
+				}
+			}
+			return 0;
+		}
 	}
 }
-*/
 
+int fnode_normalize_unify_narymul(FNODE f,FNODE p,NODE *rp)
+{
+	int fl,pl,fi,pi;
+	NODE fa,pa,t,s,m,m1;
+	FNODE fr,pr,pleft,pleft1,pright,pright1,fleft,fright,pivot;
+
+	f = to_narymul(f);
+	fa = (NODE)FA1(f); fl = length(fa);
+	pa = (NODE)FA1(p); pl = length(pa);
+	if ( fl < pl ) return 0;
+	else if ( pl == 1 ) {
+		if ( fl == 1 )
+			return fnode_normalize_unify(BDY(fa),BDY(pa),rp);
+		else
+			return 0;
+	} else {
+		for ( t = pa, pi = 0; t; t = NEXT(t), pi++ )
+			if ( ((FNODE)BDY(t))->id != I_PVAR ) break;
+		if ( !t ) {
+			/* all are I_PVAR */
+			m = 0;
+			for ( t = pa, s = fa; NEXT(t); t = NEXT(t), s = NEXT(s) ) {
+				pr = rewrite_fnode(BDY(t),m);
+				if ( !fnode_normalize_unify(BDY(s),pr,&m1) ) return 0;
+				m = append_node(m1,m);
+			}
+			if ( !NEXT(s) )
+				fr = (FNODE)BDY(s);
+			else
+				fr = mkfnode(2,I_NARYOP,FA0(f),s);
+			pr = rewrite_fnode(BDY(t),m);
+			if ( !fnode_normalize_unify(fr,pr,&m1) ) return 0;
+			*rp = append_node(m1,m);
+			return 1;
+		} else {
+			pivot = (FNODE)BDY(t);
+			pleft = fnode_left_narymul(p,pi);
+			pright = fnode_right_narymul(p,pi);
+			/* XXX : incomplete */
+			for ( s = fa, fi = 0; s; s = NEXT(s), fi++ ) {
+				if ( fnode_normalize_unify(BDY(s),pivot,&m) ) {
+					fleft = fnode_left_narymul(f,fi);
+					pleft1 = rewrite_fnode(pleft,m);
+					if ( fnode_normalize_unify(fleft,pleft1,&m1) ) {
+						m = append_node(m1,m);
+						fright = fnode_right_narymul(f,fi);
+						pright1 = rewrite_fnode(pright,m);
+						if ( fnode_normalize_unify(fright,pright1,&m1) ) {
+							*rp = append_node(m1,m);
+							return 1;
+						}
+					}
+				}
+			}
+			return 0;
+		}
+	}
+}
