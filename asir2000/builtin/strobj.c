@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.89 2005/11/02 05:18:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.90 2005/11/02 05:39:23 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1314,14 +1314,14 @@ FNODE strip_paren(FNODE);
 
 void fnodetotex_tb(FNODE f,TB tb)
 {
-	NODE n,t,t0;
+	NODE n,t,t0,args;
 	char vname[BUFSIZ],prefix[BUFSIZ];
 	char *opname,*vname_conv,*prefix_conv;
 	Obj obj;
 	int i,len,allzero,elen,elen2,si;
 	C cplx;
 	char *r;
-	FNODE fi,f2;
+	FNODE fi,f2,f1;
 
 	write_tb(" ",tb);
 	if ( !f ) {
@@ -1401,6 +1401,46 @@ void fnodetotex_tb(FNODE f,TB tb)
 					error("invalid binary operator");
 					break;
 			}
+			break;
+		case I_NARYOP:
+			args = (NODE)FA1(f);
+			write_tb("(",tb);
+			switch ( OPNAME(f) ) {
+				case '+':
+					fnodetotex_tb((FNODE)BDY(args),tb);
+					for ( args = NEXT(args); args; args = NEXT(args) ) {
+						write_tb("+",tb);
+						fnodetotex_tb((FNODE)BDY(args),tb);
+					}
+					break;
+				case '*':
+					f1 = (FNODE)BDY(args);
+					if ( f1->id == I_FORMULA && MUNIQ(FA0(f1)) )
+						write_tb("-",tb);
+					else
+						fnodetotex_tb(f1,tb);
+					write_tb(" ",tb);
+					for ( args = NEXT(args); args; args = NEXT(args) ) {
+						/* XXX special care for DP */
+						f2 = (FNODE)BDY(args);
+						if ( f2->id == I_EV ) {
+							n = (NODE)FA0(f2);
+							for ( i = 0; n; n = NEXT(n), i++ ) {
+								fi = (FNODE)BDY(n);
+								if ( fi->id != I_FORMULA || FA0(fi) )
+									break;
+							}
+							if ( n )
+								fnodetotex_tb(f2,tb);
+						} else
+							fnodetotex_tb(f2,tb);
+					}
+					break;
+				default:
+					error("invalid nary op");
+					break;
+			}
+			write_tb(")",tb);
 			break;
 
 		case I_COP:
@@ -1794,6 +1834,9 @@ int top_is_minus(FNODE f)
 						return opname[0]=='-';
 				}
 			}
+		case I_NARYOP:
+			return top_is_minus((FNODE)BDY((NODE)FA1(f)));
+
 		default:
 			return 0;
 	}
