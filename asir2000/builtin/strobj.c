@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.88 2005/11/01 07:24:11 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.89 2005/11/02 05:18:41 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,10 +96,10 @@ void Pquote_is_integer(),Pquote_is_rational(),Pquote_is_number();
 void Pquote_is_dependent(),Pquote_is_function();
 void Pquote_normalize();
 void Pquote_normalize_comp();
-void Pquote_normalize_unify();
+void Pquote_normalize_match();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
-void Pquote_unify(),Pget_quote_id(),Pquote_match_rewrite();
+void Pquote_match(),Pget_quote_id(),Pquote_match_rewrite();
 void Pquote_to_nary(),Pquote_to_bin();
 void fnode_do_assign(NODE arg);
 void do_assign(NODE arg);
@@ -112,7 +112,7 @@ void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
 int top_is_minus(FNODE f);
-int quote_unify(Obj f,Obj pat,NODE *rp);
+int quote_match(Obj f,Obj pat,NODE *rp);
 
 struct ftab str_tab[] = {
 	{"sprintf",Psprintf,-99999999},
@@ -146,8 +146,8 @@ struct ftab str_tab[] = {
 	{"quotetotex_env",Pquotetotex_env,-99999999},
 	{"flatten_quote",Pflatten_quote,-2},
 	{"quote_to_funargs",Pquote_to_funargs,1},
-	{"quote_unify",Pquote_unify,2},
-	{"quote_normalize_unify",Pquote_normalize_unify,2},
+	{"quote_match",Pquote_match,2},
+	{"quote_normalize_match",Pquote_normalize_match,2},
 	{"quote_match_rewrite",Pquote_match_rewrite,-4},
 	{"funargs_to_quote",Pfunargs_to_quote,1},
 	{"get_function_name",Pget_function_name,1},
@@ -634,7 +634,7 @@ void Pquote_is_dependent(NODE arg,Q *rp)
 }
 
 
-void Pquote_unify(NODE arg,Q *rp)
+void Pquote_match(NODE arg,Q *rp)
 {
 	FNODE f,g;
 	Obj obj;
@@ -645,10 +645,10 @@ void Pquote_unify(NODE arg,Q *rp)
 #if 0
 	g = partial_eval(BDY(((QUOTE)ARG0(arg))));
 	MKQUOTE(q,g);
-	ret = quote_unify((Obj)q,(Obj)ARG1(arg),&r);
+	ret = quote_match((Obj)q,(Obj)ARG1(arg),&r);
 #else
 	obj = (Obj)ARG0(arg);
-	ret = quote_unify(obj,(Obj)ARG1(arg),&r);
+	ret = quote_match(obj,(Obj)ARG1(arg),&r);
 #endif
 	if ( ret ) {
 		do_assign(r);
@@ -657,7 +657,7 @@ void Pquote_unify(NODE arg,Q *rp)
 		*rp = 0;
 }
 
-void Pquote_normalize_unify(NODE arg,Q *rp)
+void Pquote_normalize_match(NODE arg,Q *rp)
 {
 	QUOTE fq,pq;
 	FNODE f,p;
@@ -666,7 +666,7 @@ void Pquote_normalize_unify(NODE arg,Q *rp)
 
 	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,0),&fq); f = (FNODE)BDY(fq);
 	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,0),&pq); p = (FNODE)BDY(pq);
-	ret = fnode_normalize_unify(f,p,&r);
+	ret = fnode_normalize_match(f,p,&r);
 	if ( ret ) {
 		fnode_do_assign(r);
 		*rp = ONE;
@@ -687,7 +687,7 @@ void Pquote_match_rewrite(NODE arg,Obj *rp)
 	int ret,ind,ac;
 
 	obj = (Obj)ARG0(arg);
-	ret = quote_unify(obj,(Obj)ARG1(arg),&r);
+	ret = quote_match(obj,(Obj)ARG1(arg),&r);
 	if ( ret ) {
 		for ( t = r, s0 = 0; t; t = NEXT(t) ) {
 			NEXTNODE(s0,s);
@@ -785,14 +785,14 @@ int merge_matching_node(NODE n,NODE a,NODE *rp)
 	return 1;
 }
 
-int quote_unify_node(NODE f,NODE pat,NODE *rp) {
+int quote_match_node(NODE f,NODE pat,NODE *rp) {
 	NODE r,a,tf,tp,r1;
 	int ret;
 
 	if ( length(f) != length(pat) ) return 0;
 	r = 0;
 	for ( tf = f, tp = pat; tf; tf = NEXT(tf), tp = NEXT(tp) ) {
-		ret = quote_unify((Obj)BDY(tf),(Obj)BDY(tp),&a);
+		ret = quote_match((Obj)BDY(tf),(Obj)BDY(tp),&a);
 		if ( !ret ) return 0;
 		ret = merge_matching_node(r,a,&r1);
 		if ( !ret ) return 0;
@@ -804,7 +804,7 @@ int quote_unify_node(NODE f,NODE pat,NODE *rp) {
 
 /* f = [a,b,c,...] pat = [X,Y,...] rpat matches the rest of f */
 
-int quote_unify_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
+int quote_match_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
 	QUOTE q;
 	Q id;
 	FNODE fn;
@@ -816,7 +816,7 @@ int quote_unify_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
 	if ( length(f) < length(pat) ) return 0;
 	r = 0;
 	for ( tf = f, tp = pat; tp; tf = NEXT(tf), tp = NEXT(tp) ) {
-		ret = quote_unify((Obj)BDY(tf),(Obj)BDY(tp),&a);
+		ret = quote_match((Obj)BDY(tf),(Obj)BDY(tp),&a);
 		if ( !ret ) return 0;
 		ret = merge_matching_node(r,a,&r1);
 		if ( !ret ) return 0;
@@ -828,7 +828,7 @@ int quote_unify_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
 	MKLIST(alist,a);
 	arg = mknode(1,alist);
 	Pfunargs_to_quote(arg,&q);
-	ret = quote_unify((Obj)q,rpat,&a);
+	ret = quote_match((Obj)q,rpat,&a);
 	if ( !ret ) return 0;
 	ret = merge_matching_node(r,a,&r1);
 	if ( !ret ) return 0;
@@ -847,7 +847,7 @@ void get_quote_id_arg(QUOTE f,int *id,NODE *r)
 
 /* *rp : [[quote(A),quote(1)],...] */
 
-int quote_unify(Obj f, Obj pat, NODE *rp)
+int quote_match(Obj f, Obj pat, NODE *rp)
 {
 	NODE tf,tp,head,body;
 	NODE parg,farg,r;
@@ -866,7 +866,7 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 			return 0;
 	else if ( OID(pat) == O_LIST ) {
 		if ( OID(f) == O_LIST )
-			return quote_unify_node(BDY((LIST)f),BDY((LIST)pat),rp);
+			return quote_match_node(BDY((LIST)f),BDY((LIST)pat),rp);
 		else
 			return 0;
 	} else if ( OID(pat) == O_QUOTE ) {
@@ -893,10 +893,10 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 
 				tp = BDY((LIST)BDY(parg));
 				if ( pid == I_LIST )
-					return quote_unify_node(tf,tp,rp);
+					return quote_match_node(tf,tp,rp);
 				else {
 					rpat = (Obj)BDY(NEXT(parg));
-					return quote_unify_cons(tf,tp,rpat,rp);
+					return quote_match_cons(tf,tp,rpat,rp);
 				}
 
 			case I_PVAR:
@@ -912,7 +912,7 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 				if ( id == I_FUNC ) {
 					r = mknode(2,BDY(parg),BDY(farg)); MKLIST(l,r);
 					head = mknode(1,l);
-					ret = quote_unify(BDY(NEXT(farg)),
+					ret = quote_match(BDY(NEXT(farg)),
 								BDY(NEXT(parg)),&body);
 					if ( !ret ) return 0;
 					else return merge_matching_node(head,body,rp);
@@ -940,7 +940,7 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 				get_quote_id_arg((QUOTE)pat,&pid,&parg);
 				get_quote_id_arg((QUOTE)f,&id,&farg);
 				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
-				return quote_unify_node(NEXT(farg),NEXT(parg),rp);
+				return quote_match_node(NEXT(farg),NEXT(parg),rp);
 
 			default:
 				if ( OID(f) != O_QUOTE ) return 0;
@@ -948,7 +948,7 @@ int quote_unify(Obj f, Obj pat, NODE *rp)
 				if ( id != pid ) return 0;
 				get_quote_id_arg((QUOTE)pat,&pid,&parg);
 				get_quote_id_arg((QUOTE)f,&id,&farg);
-				return quote_unify_node(farg,parg,rp);
+				return quote_match_node(farg,parg,rp);
 		}
 	}
 }
@@ -2707,7 +2707,7 @@ NODE append_node(NODE a1,NODE a2)
 	}
 }
 
-int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
+int fnode_normalize_match(FNODE f,FNODE pat,NODE *rp)
 {
 	NODE m,m1,m2,base,exp,fa,pa,n;
 	LIST l;
@@ -2731,15 +2731,15 @@ int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 		case I_BOP:
 			/* OPNAME should be "^" */
 			if ( !IS_BINARYPWR(pat) )
-				error("fnode_normalize_unify : invalid BOP");
+				error("fnode_normalize_match : invalid BOP");
 			if ( IS_BINARYPWR(f) ) {
 				fbase = FA1(f); fexp = FA2(f);
 			} else {
 				fbase = f; fexp = mkfnode(1,I_FORMULA,ONE);
 			}
-			if ( !fnode_normalize_unify(fbase,FA1(pat),&base) ) return 0;
+			if ( !fnode_normalize_match(fbase,FA1(pat),&base) ) return 0;
 			a = rewrite_fnode(FA2(pat),base);
-			if ( !fnode_normalize_unify(fexp,a,&exp) ) return 0;
+			if ( !fnode_normalize_match(fexp,a,&exp) ) return 0;
 			else {
 				*rp = append_node(base,exp);
 				return 1;
@@ -2756,7 +2756,7 @@ int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 			m = 0;
 			while ( fa && pa ) {
 				a = rewrite_fnode(BDY(pa),m);
-				if ( !fnode_normalize_unify(BDY(fa),a,&m1) ) return 0;
+				if ( !fnode_normalize_match(BDY(fa),a,&m1) ) return 0;
 				m = append_node(m1,m);
 				fa = NEXT(fa); pa = NEXT(pa);
 			}
@@ -2768,15 +2768,15 @@ int fnode_normalize_unify(FNODE f,FNODE pat,NODE *rp)
 
 		case I_NARYOP:
 			if ( IS_NARYADD(pat) )
-				return fnode_normalize_unify_naryadd(f,pat,rp);
+				return fnode_normalize_match_naryadd(f,pat,rp);
 			else if ( IS_NARYMUL(pat) )
-				return fnode_normalize_unify_narymul(f,pat,rp);
+				return fnode_normalize_match_narymul(f,pat,rp);
 			else
-				error("fnode_normalize_unify : invalid NARYOP");
+				error("fnode_normalize_match : invalid NARYOP");
 			break;
 
 		default:
-			error("fnode_normalize_unify : invalid pattern");
+			error("fnode_normalize_match : invalid pattern");
 	}
 }
 
@@ -2841,7 +2841,7 @@ FNODE fnode_right_narymul(FNODE p,int i)
 	}
 }
 
-int fnode_normalize_unify_naryadd(FNODE f,FNODE p,NODE *rp)
+int fnode_normalize_match_naryadd(FNODE f,FNODE p,NODE *rp)
 {
 	int fl,pl,fi,pi;
 	NODE fa,pa,t,s,m,m1;
@@ -2853,7 +2853,7 @@ int fnode_normalize_unify_naryadd(FNODE f,FNODE p,NODE *rp)
 	if ( fl < pl ) return 0;
 	else if ( pl == 1 ) {
 		if ( fl == 1 )
-			return fnode_normalize_unify(BDY(fa),BDY(pa),rp);
+			return fnode_normalize_match(BDY(fa),BDY(pa),rp);
 		else
 			return 0;
 	} else {
@@ -2863,24 +2863,24 @@ int fnode_normalize_unify_naryadd(FNODE f,FNODE p,NODE *rp)
 			/* all are I_PVAR */
 			m = 0;
 			for ( t = pa, s = fa; NEXT(t); t = NEXT(t), s = NEXT(s) ) {
-				fnode_normalize_unify(BDY(s),BDY(t),&m1);
+				fnode_normalize_match(BDY(s),BDY(t),&m1);
 				m = append_node(m1,m);
 			}
 			if ( !NEXT(s) )
 				fr = (FNODE)BDY(s);
 			else
 				fr = mkfnode(2,I_NARYOP,FA0(f),s);
-			fnode_normalize_unify(fr,BDY(t),&m1);
+			fnode_normalize_match(fr,BDY(t),&m1);
 			*rp = append_node(m1,m);
 			return 1;
 		} else {
 			pivot = (FNODE)BDY(t);
 			pr = fnode_removeith_naryadd(p,pi);
 			for ( s = fa, fi = 0; s; s = NEXT(s), fi++ ) {
-				if ( fnode_normalize_unify(BDY(s),pivot,&m) ) {
+				if ( fnode_normalize_match(BDY(s),pivot,&m) ) {
 					fr = fnode_removeith_naryadd(f,fi);
 					prr = rewrite_fnode(pr,m);
-					if ( fnode_normalize_unify(fr,prr,&m1) ) {
+					if ( fnode_normalize_match(fr,prr,&m1) ) {
 						*rp = append_node(m,m1);
 						return 1;
 					}
@@ -2891,7 +2891,7 @@ int fnode_normalize_unify_naryadd(FNODE f,FNODE p,NODE *rp)
 	}
 }
 
-int fnode_normalize_unify_narymul(FNODE f,FNODE p,NODE *rp)
+int fnode_normalize_match_narymul(FNODE f,FNODE p,NODE *rp)
 {
 	int fl,pl,fi,pi;
 	NODE fa,pa,t,s,m,m1;
@@ -2903,7 +2903,7 @@ int fnode_normalize_unify_narymul(FNODE f,FNODE p,NODE *rp)
 	if ( fl < pl ) return 0;
 	else if ( pl == 1 ) {
 		if ( fl == 1 )
-			return fnode_normalize_unify(BDY(fa),BDY(pa),rp);
+			return fnode_normalize_match(BDY(fa),BDY(pa),rp);
 		else
 			return 0;
 	} else {
@@ -2914,7 +2914,7 @@ int fnode_normalize_unify_narymul(FNODE f,FNODE p,NODE *rp)
 			m = 0;
 			for ( t = pa, s = fa; NEXT(t); t = NEXT(t), s = NEXT(s) ) {
 				pr = rewrite_fnode(BDY(t),m);
-				if ( !fnode_normalize_unify(BDY(s),pr,&m1) ) return 0;
+				if ( !fnode_normalize_match(BDY(s),pr,&m1) ) return 0;
 				m = append_node(m1,m);
 			}
 			if ( !NEXT(s) )
@@ -2922,7 +2922,7 @@ int fnode_normalize_unify_narymul(FNODE f,FNODE p,NODE *rp)
 			else
 				fr = mkfnode(2,I_NARYOP,FA0(f),s);
 			pr = rewrite_fnode(BDY(t),m);
-			if ( !fnode_normalize_unify(fr,pr,&m1) ) return 0;
+			if ( !fnode_normalize_match(fr,pr,&m1) ) return 0;
 			*rp = append_node(m1,m);
 			return 1;
 		} else {
@@ -2931,14 +2931,14 @@ int fnode_normalize_unify_narymul(FNODE f,FNODE p,NODE *rp)
 			pright = fnode_right_narymul(p,pi);
 			/* XXX : incomplete */
 			for ( s = fa, fi = 0; s; s = NEXT(s), fi++ ) {
-				if ( fnode_normalize_unify(BDY(s),pivot,&m) ) {
+				if ( fnode_normalize_match(BDY(s),pivot,&m) ) {
 					fleft = fnode_left_narymul(f,fi);
 					pleft1 = rewrite_fnode(pleft,m);
-					if ( fnode_normalize_unify(fleft,pleft1,&m1) ) {
+					if ( fnode_normalize_match(fleft,pleft1,&m1) ) {
 						m = append_node(m1,m);
 						fright = fnode_right_narymul(f,fi);
 						pright1 = rewrite_fnode(pright,m);
-						if ( fnode_normalize_unify(fright,pright1,&m1) ) {
+						if ( fnode_normalize_match(fright,pright1,&m1) ) {
 							*rp = append_node(m1,m);
 							return 1;
 						}
