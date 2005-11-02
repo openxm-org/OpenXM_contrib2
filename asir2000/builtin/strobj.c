@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.90 2005/11/02 05:39:23 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.91 2005/11/02 06:32:44 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2449,21 +2449,24 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2,int expand)
 
 	if ( IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,ONE);
 	else if ( IS_ZERO(f1) ) return mkfnode(1,I_FORMULA,0);
-	else if ( fnode_is_one(f2) ) return f1;
-	else if ( fnode_is_number(f1) )
+	else if ( fnode_is_number(f1) ) {
 		if ( fnode_is_integer(f2) ) {
-			pwrnum(0,(Num)eval(f1),(Num)eval(f2),&c);
-			return mkfnode(1,I_FORMULA,c);
+			if ( fnode_is_one(f2) ) return f1;
+			else {
+				pwrnum(0,(Num)eval(f1),(Num)eval(f2),&c);
+				return mkfnode(1,I_FORMULA,c);
+			}
 		} else
 			return mkfnode(3,I_BOP,pwrfs,f1,f2);
-	else if ( IS_BINARYPWR(f1) ) {
+	} else if ( IS_BINARYPWR(f1) ) {
 		b1 = FA1(f1); e1 = FA2(f1);
 		e = fnode_normalize_mul(e1,f2,expand);
 		if ( fnode_is_one(e) )
 			return b1;
 		else
 			return mkfnode(3,I_BOP,FA0(f1),b1,e);
-	} else if ( expand && IS_NARYMUL(f1) && fnode_is_integer(f2) ) {
+	} else if ( expand && IS_NARYMUL(f1) && fnode_is_number(f2) 
+		&& fnode_is_integer(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
 		nf2 = (Num)eval(f2);
 		pwrnum(0,(Num)c1,nf2,&c);
@@ -2474,11 +2477,12 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2,int expand)
 		else {
 			STOQ(-1,q);
 			mone = mkfnode(1,I_FORMULA,q);
+			b1 = to_narymul(b1);
 			for ( t0 = 0, n = (NODE)FA1(b1); n; n = NEXT(n) ) {
 				inv = mkfnode(3,I_BOP,pwrfs,BDY(n),mone);
 				MKNODE(t1,inv,t0); t0 = t1;
 			}
-			b1 = mkfnode(2,I_NARYOP,FA0(f1),t0);
+			b1 = fnode_node_to_narymul(t0);
 			b = fnode_expand_pwr(b1,-ee);
 		}
 		if ( fnode_is_one(cc) )
