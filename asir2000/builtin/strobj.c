@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.87 2005/10/31 10:03:48 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.88 2005/11/01 07:24:11 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,6 +57,14 @@ extern jmp_buf environnement;
 #  endif
 #endif
 #include <string.h>
+
+#if defined(__GNUC__)
+#define INLINE inline
+#elif defined(VISUAL)
+#define INLINE __inline
+#else
+#define INLINE
+#endif
 
 struct TeXSymbol {
 	char *text;
@@ -2005,7 +2013,7 @@ void Pquote_normalize_comp(NODE arg,Q *rp)
 	STOQ(r,*rp);
 }
 
-int fnode_is_number(FNODE f)
+INLINE int fnode_is_number(FNODE f)
 {
 	Obj obj;
 
@@ -2168,15 +2176,18 @@ FNODE fnode_normalize(FNODE f,int expand)
 	NODE n;
 	Q q;
 
+	if ( f->normalized && (f->expanded || !expand) ) return f;
 	STOQ(-1,q);
 	mone = mkfnode(1,I_FORMULA,q);
 	switch ( f->id ) {
 		case I_PAREN:
-			return fnode_normalize(FA0(f),expand);
+			r = fnode_normalize(FA0(f),expand);
+			break;
 		
 		case I_MINUS:
-			return fnode_normalize_mul_coef((Num)q,
+			r = fnode_normalize_mul_coef((Num)q,
 				fnode_normalize(FA0(f),expand),expand);
+			break;
 
 		case I_BOP:
 			/* arf fnode fnode */
@@ -2184,19 +2195,25 @@ FNODE fnode_normalize(FNODE f,int expand)
 			a2 = fnode_normalize(FA2(f),expand);
 			switch ( OPNAME(f) ) {
 				case '+':
-					return fnode_normalize_add(a1,a2,expand);
+					r = fnode_normalize_add(a1,a2,expand);
+					break;
 				case '-':
 					a2 = fnode_normalize_mul_coef((Num)q,a2,expand);
-					return fnode_normalize_add(a1,a2,expand);
+					r = fnode_normalize_add(a1,a2,expand);
+					break;
 				case '*':
-					return fnode_normalize_mul(a1,a2,expand);
+					r = fnode_normalize_mul(a1,a2,expand);
+					break;
 				case '/':
 					a2 = fnode_normalize_pwr(a2,mone,expand);
-					return fnode_normalize_mul(a1,a2,expand);
+					r = fnode_normalize_mul(a1,a2,expand);
+					break;
 				case '^':
-					return fnode_normalize_pwr(a1,a2,expand);
+					r = fnode_normalize_pwr(a1,a2,expand);
+					break;
 				default:
-					return mkfnode(3,I_BOP,FA0(f),a1,a2);
+					r = mkfnode(3,I_BOP,FA0(f),a1,a2);
+					break;
 			}
 			break;
 
@@ -2209,7 +2226,7 @@ FNODE fnode_normalize(FNODE f,int expand)
 						a1 = fnode_normalize(BDY(n),expand);
 						r = fnode_normalize_add(r,a1,expand);
 					}
-					return r;
+					break;
 				case '*':
 					n = (NODE)FA1(f);
 					r = fnode_normalize(BDY(n),expand); n = NEXT(n);
@@ -2217,14 +2234,18 @@ FNODE fnode_normalize(FNODE f,int expand)
 						a1 = fnode_normalize(BDY(n),expand);
 						r = fnode_normalize_mul(r,a1,expand);
 					}
-					return r;
+					break;
 				default:
 					error("fnode_normallize : cannot happen");
 			}
+			break;
 
 		default:
 			return fnode_apply(f,fnode_normalize,expand);
 	}
+	r->normalized = 1;
+	r->expanded = expand;
+	return r;
 }
 
 FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand)
@@ -2377,9 +2398,10 @@ FNODE fnode_normalize_mul(FNODE f1,FNODE f2,int expand)
 
 FNODE fnode_normalize_pwr(FNODE f1,FNODE f2,int expand)
 {
-	FNODE b,b1,e1,e,cc,r;
-	Num c,c1;
-	NODE arg,n;
+	FNODE b,b1,e1,e,cc,r,mf2,mone,inv;
+	Num c,c1,nf2;
+	int ee;
+	NODE arg,n,t0,t1;
 	Q q;
 
 	if ( IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,ONE);
@@ -2398,11 +2420,24 @@ FNODE fnode_normalize_pwr(FNODE f1,FNODE f2,int expand)
 			return b1;
 		else
 			return mkfnode(3,I_BOP,FA0(f1),b1,e);
-	} else if ( IS_NARYMUL(f1) && fnode_is_integer(f2) ) {
+	} else if ( expand && IS_NARYMUL(f1) && fnode_is_integer(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
-		pwrnum(0,(Num)c1,(Num)eval(f2),&c);
+		nf2 = (Num)eval(f2);
+		pwrnum(0,(Num)c1,nf2,&c);
+		ee = QTOS((Q)nf2);
 		cc = mkfnode(1,I_FORMULA,c);
-		b = fnode_normalize_pwr(b1,f2,expand);
+		if ( fnode_is_nonnegative_integer(f2) )
+			b = fnode_expand_pwr(b1,ee);
+		else {
+			STOQ(-1,q);
+			mone = mkfnode(1,I_FORMULA,q);
+			for ( t0 = 0, n = (NODE)FA1(b1); n; n = NEXT(n) ) {
+				inv = mkfnode(3,I_BOP,pwrfs,BDY(n),mone);
+				MKNODE(t1,inv,t0); t0 = t1;
+			}
+			b1 = mkfnode(2,I_NARYOP,FA0(f1),t0);
+			b = fnode_expand_pwr(b1,-ee);
+		}
 		if ( fnode_is_one(cc) )
 			return b;
 		else

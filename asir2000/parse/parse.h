@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.39 2005/09/30 01:35:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.40 2005/10/26 07:33:03 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -136,7 +136,7 @@ struct oTKWD {
 };
 
 typedef struct fid_spec {
-    fid id;
+	fid id;
 	farg_type type[10];
 } *fid_spec_p;
 
@@ -194,7 +194,9 @@ typedef struct oPFINS {
 #define NEWPF(p) ((p)=(PF)MALLOC(sizeof(struct oPF)))
 
 typedef struct oFNODE {
-	fid id;
+	short id;
+	char normalized;
+	char expanded;
 	pointer arg[1];
 } *FNODE;
 
