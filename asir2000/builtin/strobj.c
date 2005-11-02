@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.91 2005/11/02 06:32:44 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.92 2005/11/02 08:22:39 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2770,7 +2770,7 @@ int fnode_normalize_match(FNODE f,FNODE pat,NODE *rp)
 			return 1;
 
 		case I_FORMULA:
-			if ( !arf_comp(CO,(Obj)FA0(f),(Obj)FA0(pat)) ) {
+			if ( f->id == I_FORMULA && !arf_comp(CO,(Obj)FA0(f),(Obj)FA0(pat)) ) {
 				*rp = 0; return 1;
 			} else
 				return 0;
