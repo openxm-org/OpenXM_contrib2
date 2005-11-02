@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.92 2005/11/02 08:22:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.93 2005/11/02 09:39:10 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2844,8 +2844,7 @@ FNODE fnode_removeith_naryadd(FNODE p,int i)
 			NEXTNODE(r0,r);
 			BDY(r) = BDY(t);
 		}
-		t = NEXT(t);
-		NEXT(r) = 0;
+		NEXT(r) = NEXT(t);
 		return fnode_node_to_naryadd(r0);
 	}
 	
