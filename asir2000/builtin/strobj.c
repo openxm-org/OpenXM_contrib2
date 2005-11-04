@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.94 2005/11/02 10:02:32 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.95 2005/11/03 07:41:22 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -747,8 +747,8 @@ void fnode_do_assign(NODE arg)
 		pair = (NODE)BDY(t);
 		pv = (int)BDY(pair);
 		f = (FNODE)(BDY(NEXT(pair)));
-		if ( f->id == I_FUNC ) {
-			/* XXX : used for wrapping A_func */
+		if ( f->id == I_FUNC_HEAD ) {
+			/* XXX : I_FUNC_HEAD is a dummy id to pass FUNC */
 			MKQUOTEARG(qa,A_func,FA0(f));
 			value = (QUOTE)qa;
 		} else
@@ -2794,7 +2794,7 @@ int nfnode_match(FNODE f,FNODE pat,NODE *rp)
 	NODE m,m1,m2,base,exp,fa,pa,n;
 	LIST l;
 	QUOTE qp,qf;
-	FNODE fbase,fexp,a;
+	FNODE fbase,fexp,a,fh;
 	FUNC ff,pf;
 	int r;
 
@@ -2836,8 +2836,9 @@ int nfnode_match(FNODE f,FNODE pat,NODE *rp)
 				if ( strcmp(ff->fullname,pf->fullname) ) return 0;
 				m = 0;
 			} else {
-				/* XXX only FA0(f) is used */
-				m = mknode(1,mknode(2,FA0((FNODE)FA0(pat)),f),0);
+				/* XXX : I_FUNC_HEAD is a dummy id to pass FUNC */
+				fh = mkfnode(1,I_FUNC_HEAD,FA0(f));
+				m = mknode(1,mknode(2,FA0((FNODE)FA0(pat)),fh),0);
 			}
 			/* FA1(f) and FA1(pat) are I_LIST */
 			fa = (NODE)FA0((FNODE)FA1(f));
