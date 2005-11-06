@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.57 2005/08/02 07:16:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.58 2005/10/31 10:03:48 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -407,8 +407,7 @@ typedef struct oBYTEARRAY {
 
 typedef struct oQUOTE {
 	short id;
-	char normalized;
-	char expanded;
+	short pad;
 	pointer body;
 } *QUOTE;
 

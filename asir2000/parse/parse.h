@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.41 2005/11/02 05:18:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.42 2005/11/04 07:03:38 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -69,7 +69,7 @@ typedef enum {
 	I_FORMULA, I_LIST, I_STR, I_NEWCOMP, I_CAR, I_CDR, I_CAST,
 	I_INDEX, I_EV, I_TIMER, I_GF2NGEN, I_GFPNGEN, I_GFSNGEN,
 	I_LOP, I_OPT, I_GETOPT, I_POINT, I_PAREN, I_MINUS,
-	I_NARYOP, I_CONS, I_FUNC_HEAD
+	I_NARYOP, I_CONS, I_FUNC_HEAD, I_ARF_OP
 } fid;
 
 /* identifiers for statements */
@@ -195,8 +195,9 @@ typedef struct oPFINS {
 
 typedef struct oFNODE {
 	short id;
-	char normalized;
-	char expanded;
+	unsigned normalized:1;
+	unsigned expanded:1;
+	unsigned coef:1;
 	pointer arg[1];
 } *FNODE;
 

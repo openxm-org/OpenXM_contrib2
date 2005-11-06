@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.95 2005/11/03 07:41:22 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.96 2005/11/04 07:03:38 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2035,16 +2035,11 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 	if ( !ac ) error("quote_normalize : invalid argument");
 	q = (QUOTE)ARG0(arg);
 	expand = ac==2 && ARG1(arg);
-	if ( !q || OID(q) != O_QUOTE ) {
-		*rp = q;
-		return;
-	} else if ( q->normalized && (q->expanded || !expand) )
+	if ( !q || OID(q) != O_QUOTE )
 		*rp = q;
 	else {
 		f = fnode_normalize(BDY(q),expand);
 		MKQUOTE(r,f);
-		r->normalized = 1;
-		if ( expand ) r->expanded = 1;
 		*rp = r;
 	}
 }
@@ -2057,8 +2052,8 @@ void Pnquote_comp(NODE arg,Q *rp)
 
 	q1 = (QUOTE)ARG0(arg); f1 = (FNODE)BDY(q1);
 	q2 = (QUOTE)ARG1(arg); f2 = (FNODE)BDY(q2);
-	if ( !q1->normalized ) f1 = fnode_normalize(f1,0);
-	if ( !q2->normalized ) f2 = fnode_normalize(f2,0);
+	f1 = fnode_normalize(f1,0);
+	f2 = fnode_normalize(f2,0);
 	r = nfnode_comp(f1,f2);
 	STOQ(r,*rp);
 }
@@ -2798,6 +2793,14 @@ int nfnode_match(FNODE f,FNODE pat,NODE *rp)
 	FUNC ff,pf;
 	int r;
 
+	if ( !pat )
+		if ( !f ) {
+			*rp = 0;
+			return 1;
+		} else
+			return 0;
+	else if ( !f )
+		return 0;
 	switch ( pat->id ) {
 		case I_PVAR:
 			/* [[pat,f]] */
@@ -2901,7 +2904,7 @@ FNODE fnode_left_narymul(FNODE p,int i)
 	a = (NODE)FA1(p);
 	l = length(a);
 	if ( i < 0 || i >= l ) error("fnode_left_narymul : invalid index");
-	if ( i == 0 ) return mkfnode(1,I_FORMULA,ONE);
+	if ( i == 0 ) return 0;
 	else if ( i == 1 ) return (FNODE)BDY(a);
 	else {
 		for ( r0 = 0, k = 0, t = a; k < i; k++, t = NEXT(t) ) {
@@ -2922,7 +2925,7 @@ FNODE fnode_right_narymul(FNODE p,int i)
 	a = (NODE)FA1(p);
 	l = length(a);
 	if ( i < 0 || i >= l ) error("fnode_right_narymul : invalid index");
-	if ( i == l-1 ) return mkfnode(1,I_FORMULA,ONE);
+	if ( i == l-1 ) return 0;
 	else {
 		for ( k = 0, t = a; k <= i; k++, t = NEXT(t) );
 		return fnode_node_to_narymul(t);
@@ -3019,6 +3022,7 @@ int nfnode_match_narymul(FNODE f,FNODE p,NODE *rp)
 			pright = fnode_right_narymul(p,pi);
 			/* XXX : incomplete */
 			for ( s = fa, fi = 0; s; s = NEXT(s), fi++ ) {
+				if ( fi < pi ) continue;
 				if ( nfnode_match(BDY(s),pivot,&m) ) {
 					fleft = fnode_left_narymul(f,fi);
 					pleft1 = rewrite_fnode(pleft,m);
