@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.59 2005/08/24 06:28:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.60 2005/08/25 18:59:11 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
 
+extern int dp_fcoeffs;
 extern int dp_nelim;
 extern int dp_order_pair_length;
 extern struct order_pair *dp_order_pair;
@@ -668,7 +669,7 @@ DP *rp;
 	DP g;
 	int full;
 
-	do_weyl = 0;
+	do_weyl = 0; dp_fcoeffs = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_nf");
 	asir_assert(ARG1(arg),O_DP,"dp_nf");
 	asir_assert(ARG2(arg),O_VECT,"dp_nf");
@@ -793,7 +794,7 @@ LIST *rp;
 	P dn;
 	int full;
 
-	do_weyl = 0;
+	do_weyl = 0; dp_fcoeffs = 0;
 	asir_assert(ARG0(arg),O_LIST,"dp_true_nf");
 	asir_assert(ARG1(arg),O_DP,"dp_true_nf");
 	asir_assert(ARG2(arg),O_VECT,"dp_true_nf");
