@@ -40,9 +40,9 @@ int get_heapsize()
 	return GC_heapsize;
 }
 
-int get_allocwords()
+long get_allocwords()
 {
-	return GC_words_allocd_before_gc;
+	return GC_words_allocd_before_gc + GC_words_allocd;
 }
 
 double gctime;

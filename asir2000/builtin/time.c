@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.2 2000/08/21 08:31:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -103,12 +103,22 @@ LIST *listp;
 	Real re,rg,rr;
 	NODE a,b,w,r;
 	Q words;
-	int t;
+	long t;
 	double rtime;
 	double get_rtime();
 
 	rtime = get_rtime(); MKReal(rtime,rr);
-	t = get_allocwords(); STOQ(t,words);
+	t = get_allocwords();
+#if defined(LONG_IS_64BIT)
+	u = t>>32; l = t&(0xffffffff);
+	if ( !u ) STOQ(l,words);
+	else {
+		n = NALLOC(2); PL(n)=2; BD(n)[0] = l; BD(n)[1] = u;
+		NTOQ(n,1,words);
+	}
+#else
+	STOQ(t,words);
+#endif
 	get_eg(&eg); MKReal(eg.exectime,re); MKReal(eg.gctime,rg);
 	MKNODE(r,rr,0); MKNODE(w,words,r); MKNODE(a,rg,w); MKNODE(b,re,a);
 	MKLIST(*listp,b);
