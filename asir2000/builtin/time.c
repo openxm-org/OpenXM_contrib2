@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.4 2005/11/12 08:10:56 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -104,6 +104,8 @@ LIST *listp;
 	NODE a,b,w,r;
 	Q words;
 	long t;
+	int u,l;
+	N n;
 	double rtime;
 	double get_rtime();
 
