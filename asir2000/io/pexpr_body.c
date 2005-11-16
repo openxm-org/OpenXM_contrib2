@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.8 2005/01/17 07:43:24 saito Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.9 2005/09/28 08:08:34 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -21,6 +21,7 @@ void PRINTGFMMAT();
 void PRINTBYTEARRAY();
 void PRINTQUOTE();
 void PRINTQUOTEARG();
+void PRINTNBP();
 void PRINTERR();
 void PRINTCPLX();
 void PRINTLM();
@@ -89,6 +90,8 @@ Obj p;
 				PRINTQUOTE(vl,(QUOTE)p); break;
 			case O_QUOTEARG:
 				PRINTQUOTEARG(vl,(QUOTEARG)p); break;
+			case O_NBP:
+				PRINTNBP(vl,(NBP)p); break;
 			case O_SYMBOL:
 				PRINTSYMBOL((SYMBOL)p); break;
 			case O_RANGE:
@@ -1072,6 +1075,28 @@ VL vl;
 QUOTEARG quote;
 {
 	PUTS("<...quoted...>");
+}
+
+void PRINTNBP(VL vl,NBP p)
+{
+	NODE t;
+	NBM m;
+	int d,i;
+	unsigned int *b;
+	if ( !p ) PUTS("0");
+	else {
+		for ( t = BDY(p); t; t = NEXT(t) ) {
+			m = (NBM)BDY(t);
+			PRINTEXPR(vl,(Obj)m->c);
+			d = m->d;
+			b = m->b;
+			for ( i = 0; i < d; i++ ) {
+				if ( NBM_GET(b,i) ) PUTS("x");
+				else PUTS("y");
+			}
+			if ( NEXT(t) ) PUTS("+");
+		}
+	}
 }
 
 void PRINTTB(VL vl,TB p)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.96 2005/11/04 07:03:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.97 2005/11/06 01:27:28 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -98,6 +98,9 @@ void Pquote_normalize();
 void Pnquote_comp();
 void Pnquote_match();
 
+void Pquote_to_nbp();
+void Pshuffle_mul_nbp();
+
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_match(),Pget_quote_id(),Pquote_match_rewrite();
 void Pquote_to_nary(),Pquote_to_bin();
@@ -139,8 +142,11 @@ struct ftab str_tab[] = {
 	{"quote_normalize",Pquote_normalize,-2},
 	{"quote_match",Pquote_match,2},
 	{"quote_match_rewrite",Pquote_match_rewrite,-4},
+
 	{"nquote_comp",Pnquote_comp,2},
 	{"nquote_match",Pnquote_match,2},
+	{"quote_to_nbp",Pquote_to_nbp,1},
+	{"shuffle_mul_nbp",Pshuffle_mul_nbp,2},
 
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},
@@ -2041,6 +2047,71 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 		f = fnode_normalize(BDY(q),expand);
 		MKQUOTE(r,f);
 		*rp = r;
+	}
+}
+
+NBP fnode_to_nbp(FNODE f);
+
+void Pquote_to_nbp(NODE arg,NBP *rp)
+{
+	QUOTE q;
+	FNODE f;
+
+	q = (QUOTE)ARG0(arg); f = (FNODE)BDY(q);
+	f = fnode_normalize(f,0);
+	*rp = fnode_to_nbp(f);
+}
+
+void Pshuffle_mul_nbp(NODE arg,NBP *rp)
+{
+	NBP p1,p2;
+
+	p1 = (NBP)ARG0(arg);
+	p2 = (NBP)ARG1(arg);
+	shuffle_mulnbp(CO,p1,p2,rp);
+}
+
+NBP fnode_to_nbp(FNODE f)
+{
+	Q r;
+	int n,i;
+	NBM m;
+	V v;
+	NBP u,u1,u2;
+	NODE t,b;
+
+	if ( f->id == I_FORMULA ) {
+		r = eval(f);
+		NEWNBM(m);
+		if ( OID(r) == O_N ) {
+			m->d = 0; m->c = (Q)r; m->b = 0;
+		} else {
+			v = VR((P)r);
+			m->d = 1; m->c = ONE; NEWNBMBDY(m,1);
+			if ( !strcmp(NAME(v),"x") ) NBM_SET(m->b,0);
+			else NBM_CLR(m->b,0);
+		}
+		MKNODE(b,m,0); MKNBP(u,b);
+		return u;
+	} else if ( IS_NARYADD(f) ) {
+		t = (NODE)FA1(f); u = fnode_to_nbp((FNODE)BDY(t));
+		for ( t = NEXT(t); t; t = NEXT(t) ) {
+			u1 = fnode_to_nbp((FNODE)BDY(t));
+			addnbp(CO,u,u1,&u2); u = u2;
+		}
+		return u;
+	} else if ( IS_NARYMUL(f) ) {
+		t = (NODE)FA1(f); u = fnode_to_nbp((FNODE)BDY(t));
+		for ( t = NEXT(t); t; t = NEXT(t) ) {
+			u1 = fnode_to_nbp((FNODE)BDY(t));
+			mulnbp(CO,u,u1,&u2); u = u2;
+		}
+		return u;
+	} else if ( IS_BINARYPWR(f) ) {
+		u = fnode_to_nbp((FNODE)FA1(f));
+		r = eval((FNODE)FA2(f));
+		pwrnbp(CO,u,r,&u1);
+		return u1;
 	}
 }
 

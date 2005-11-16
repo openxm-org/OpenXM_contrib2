@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.31 2004/05/14 06:02:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.32 2004/06/15 16:14:50 ohara Exp $ 
 */
 #include "ca.h"
 
@@ -596,12 +596,13 @@ void subd(VL vl,DP p1,DP p2,DP *pr)
 void chsgnd(DP p,DP *pr)
 {
 	MP m,mr,mr0;
+	Obj r;
 
 	if ( !p )
 		*pr = 0;
-	else if ( OID(p) <= O_R )
-		chsgnr(p,pr);
-	else {
+	else if ( OID(p) <= O_R ) {
+		chsgnr((Obj)p,&r); *pr = (DP)r;
+	} else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr); chsgnp(C(m),&C(mr)); mr->dl = m->dl;
 		}
@@ -1775,5 +1776,329 @@ int compdv(VL vl,DPV p1,DPV p2)
 			if ( t = compd(vl,p1->body[i],p2->body[i]) )
 				return t;
 		return 0;
+	}
+}
+
+int ni_next(int *a,int n)
+{
+	int i,j,k,kj;
+
+	/* find the first nonzero a[j] */
+	for ( j = 0; a[j] == 0; j++ );
+	/* find the first zero a[k] after a[j] */
+	for ( k = j; k < n && a[k] == 1; k++ );
+	if ( k == n ) return 0;
+	/* a[0] = 0, ... , a[j-1] = 0, a[j] = 1, ..., a[k-1] = 1, a[k] = 0 */
+	/* a[0] = 1,..., a[k-j-2] = 1, a[k-j-1] = 0, ..., a[k-1] = 0, a[k] = 1 */
+	kj = k-j-1;
+	for ( i = 0; i < kj; i++ ) a[i] = 1;
+	for ( ; i < k; i++ ) a[i] = 0;
+	a[k] = 1;
+	return 1;
+}
+
+int comp_nbm(NBM a,NBM b)
+{
+	int d,i,w;
+	int *ab,*bb;
+
+	if ( a->d > b->d ) return 1;
+	else if ( a->d < b->d ) return -1;
+	else {
+		d = a->d; ab = a->b; bb = b->b;
+		w = (d+31)/32;
+		for ( i = 0; i < w; i++ ) 
+			if ( ab[i] > bb[i] ) return 1;
+			else if ( ab[i] < bb[i] ) return -1;
+		return 0;
+	}
+}
+
+NBM mul_nbm(NBM a,NBM b)
+{
+	int ad,bd,d,i,j;
+	int *ab,*bb,*mb;
+	NBM m;
+	Q c,c1;
+	NODE r;
+	NBP u;
+
+	ad = a->d; bd = b->d; ab = a->b; bb = b->b;
+	d = ad + bd;
+	NEWNBM(m); NEWNBMBDY(m,d);
+	m->d = d; mulq(a->c,b->c,&m->c); mb = m->b; 
+	j = 0;
+	for ( i = 0; i < ad; i++, j++ )
+		if ( NBM_GET(ab,i) ) NBM_SET(mb,j);
+		else NBM_CLR(mb,j);
+	for ( i = 0; i < bd; i++, j++ )
+		if ( NBM_GET(bb,i) ) NBM_SET(mb,j);
+		else NBM_CLR(mb,j);
+	return m;
+}
+
+NBP shuffle_mul_nbm(NBM a,NBM b)
+{
+	int ad,bd,d,i,ai,bi,bit,s;
+	int *ab,*bb,*wmb,*w;
+	NBM wm,tm;
+	Q c,c1;
+	NODE r,t,t1,p;
+	NBP u;
+
+	ad = a->d; bd = b->d; ab = a->b; bb = b->b;
+	d = ad + bd;
+	w = (int *)ALLOCA(d*sizeof(int));
+	NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+	for ( i = 0; i < ad; i++ ) w[i] = 1;
+	for ( ; i < d; i++ ) w[i] = 0;
+	mulq(a->c,b->c,&c);
+	r = 0;
+	do {
+		wm->d = d; wm->c = c;
+		ai = 0; bi = 0;
+		for ( i = 0; i < d; i++ ) {
+			if ( w[i] ) { bit = NBM_GET(ab,ai); ai++; }
+			else { bit = NBM_GET(bb,bi); bi++; }
+			if ( bit ) NBM_SET(wmb,i);
+			else NBM_CLR(wmb,i);
+		}
+		for ( p = 0, t = r; t; p = t, t = NEXT(t) ) {
+			tm = (NBM)BDY(t);
+			s = comp_nbm(tm,wm);
+			if ( s < 0 ) {
+				/* insert */
+				MKNODE(t1,wm,t);
+				if ( !p ) r = t1;
+				else NEXT(p) = t1;
+				NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+				break;
+			} else if ( s == 0 ) {
+				/* add coefs */
+				addq(tm->c,c,&c1);
+				if ( c1 ) tm->c = c1;
+				else NEXT(p) = NEXT(t);
+				break;
+			}
+		}
+		if ( !t ) {
+			/* append */
+			MKNODE(t1,wm,t);
+			if ( !p ) r = t1;
+			else NEXT(p) = t1;
+			NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+		}
+	} while ( ni_next(w,d) );
+	MKNBP(u,r);
+	return u;
+}
+
+void addnbp(VL vl,NBP p1,NBP p2, NBP *rp)
+{
+	NODE b1,b2,br,br0;
+	NBM m1,m2,m;
+	Q c;
+
+	if ( !p1 )
+		*rp = p2;
+	else if ( !p2 )
+		*rp = p1;
+	else {
+		for ( b1 = BDY(p1), b2 = BDY(p2), br0 = 0; b1 && b2; ) {
+			m1 = (NBM)BDY(b1); m2 = (NBM)BDY(b2);
+			switch ( comp_nbm(m1,m2) ) {
+				case 0:
+					addq(m1->c,m2->c,&c);
+					if ( c ) {
+						NEXTNODE(br0,br);
+						NEWNBM(m); m->d = m1->d; m->c = c; m->b = m1->b;
+						BDY(br) = (pointer)m;
+					}
+					b1 = NEXT(b1); b2 = NEXT(b2); break;
+				case 1:
+					NEXTNODE(br0,br); BDY(br) = BDY(b1);
+					b1 = NEXT(b1); break;
+				case -1:
+					NEXTNODE(br0,br); BDY(br) = BDY(b2);
+					b2 = NEXT(b2); break;
+			}
+			if ( !br0 )
+				if ( b1 )
+					br0 = b1;
+				else if ( b2 )
+					br0 = b2;
+				else {
+					*rp = 0;
+					return;
+				}
+			else if ( b1 )
+				NEXT(br) = b1;
+			else if ( b2 )
+				NEXT(br) = b2;
+			else
+				NEXT(br) = 0;
+			MKNBP(*rp,br0);
+		}
+	}
+}
+
+void subnbp(VL vl,NBP p1,NBP p2, NBP *rp)
+{
+	NBP t;
+
+	chsgnnbp(p2,&t);
+	addnbp(vl,p1,t,rp);
+}
+
+void chsgnnbp(NBP p,NBP *rp)
+{
+	NODE r0,r,b;
+	NBM m,m1;
+
+	for ( r0 = 0, b = BDY(p); b; b = NEXT(b) ) {
+		NEXTNODE(r0,r);
+		m = (NBM)BDY(b);
+		NEWNBM(m1); m1->d = m->d; m1->b = m->b; chsgnq(m->c,&m1->c);
+		BDY(r) = m;
+	}
+	if ( r0 ) NEXT(r) = 0;
+	MKNBP(*rp,r0);
+}
+
+void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp);
+void mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp);
+
+void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
+{
+	NODE b;
+	NBP r,t,s;
+
+	if ( !p1 || !p2 ) *rp = 0;
+	else if ( length(BDY(p1)) < length(BDY(p2)) ) {
+		for ( r = 0, b = BDY(p1); b; b = NEXT(b) ) {
+			mulnbmnbp(vl,(NBM)BDY(b),p2,&t);
+			addnbp(vl,r,t,&s); r = s;
+		}
+		*rp = r;
+	} else {
+		for ( r = 0, b = BDY(p2); b; b = NEXT(b) ) {
+			mulnbpnbm(vl,p1,(NBM)BDY(b),&t);
+			addnbp(vl,r,t,&s); r = s;
+		}
+		*rp = r;
+	}
+}
+
+void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp)
+{
+	NODE b,r0,r;
+
+	if ( !p ) *rp = 0;
+	else {
+		for ( r0 = 0, b = BDY(p); b; b = NEXT(b) ) {
+			NEXTNODE(r0,r);
+			BDY(r) = mul_nbm(m,(NBM)BDY(b));
+		}
+		if ( r0 ) NEXT(r) = 0;
+		MKNBP(*rp,r0);
+	}
+}
+
+void mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp)
+{
+	NODE b,r0,r;
+
+	if ( !p ) *rp = 0;
+	else {
+		for ( r0 = 0, b = BDY(p); b; b = NEXT(b) ) {
+			NEXTNODE(r0,r);
+			BDY(r) = mul_nbm((NBM)BDY(b),m);
+		}
+		if ( r0 ) NEXT(r) = 0;
+		MKNBP(*rp,r0);
+	}
+}
+
+void pwrnbp(VL vl,NBP a,Q q,NBP *c)
+{
+	int t;
+	NBP a1,a2;
+	N n1;
+	Q q1;
+	NBM m;
+	NODE r;
+
+	if ( !q ) {
+		 NEWNBM(m); m->d = 0; m->c = ONE; m->b = 0;
+		 MKNODE(r,m,0); MKNBP(*c,r);
+	} else if ( !a )
+		*c = 0;
+	else if ( UNIQ(q) )
+		*c = a;
+	else {
+		t = divin(NM(q),2,&n1); NTOQ(n1,1,q1);
+		pwrnbp(vl,a,q1,&a1);
+		mulnbp(vl,a1,a1,&a2);
+		if ( t )
+			mulnbp(vl,a2,a,c);
+		else
+			*c = a2;
+	}
+}
+
+void shuffle_mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp);
+void shuffle_mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp);
+void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+
+void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
+{
+	NODE b;
+	NBP r,t,s;
+
+	if ( !p1 || !p2 ) *rp = 0;
+	else if ( length(BDY(p1)) < length(BDY(p2)) ) {
+		for ( r = 0, b = BDY(p1); b; b = NEXT(b) ) {
+			shuffle_mulnbmnbp(vl,(NBM)BDY(b),p2,&t);
+			addnbp(vl,r,t,&s); r = s;
+		}
+		*rp = r;
+	} else {
+		for ( r = 0, b = BDY(p2); b; b = NEXT(b) ) {
+			shuffle_mulnbpnbm(vl,p1,(NBM)BDY(b),&t);
+			addnbp(vl,r,t,&s); r = s;
+		}
+		*rp = r;
+	}
+}
+
+void shuffle_mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp)
+{
+	NODE b;
+	NBP t,s,r;
+
+	if ( !p ) *rp = 0;
+	else {
+		r = 0;
+		for ( b = BDY(p); b; b = NEXT(b) ) {
+			t = shuffle_mul_nbm(m,(NBM)BDY(b));
+			addnbp(vl,r,t,&s); r = s;
+		}
+		*rp = r;
+	}
+}
+
+void shuffle_mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp)
+{
+	NODE b;
+	NBP t,s,r;
+
+	if ( !p ) *rp = 0;
+	else {
+		r = 0;
+		for ( b = BDY(p); b; b = NEXT(b) ) {
+			t = shuffle_mul_nbm((NBM)BDY(b),m);
+			addnbp(vl,r,t,&s); r = s;
+		}
+		*rp = r;
 	}
 }

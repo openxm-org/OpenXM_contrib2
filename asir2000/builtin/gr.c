@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.58 2004/04/22 09:45:24 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.59 2005/02/17 06:27:35 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,7 +69,7 @@ double get_rtime();
 
 struct oEGT eg_nf,eg_nfm;
 struct oEGT eg_znfm,eg_pz,eg_np,eg_ra,eg_mc,eg_gc;
-int TP,NBP,NMP,NFP,NDP,ZR,NZR;
+int TP,N_BP,NMP,NFP,NDP,ZR,NZR;
 
 extern int (*cmpdl)();
 extern int do_weyl;
@@ -1884,7 +1884,7 @@ DP_pairs updpairs( DP_pairs d, NODE /* of index */ g, int t)
 	if ( !NoCriB && d ) {
 		dl = DPPlength(d);
 		d = criterion_B( d, t );
-		dl -= DPPlength(d); NBP += dl;
+		dl -= DPPlength(d); N_BP += dl;
 	}
 	d1 = newpairs( g, t );
 	if ( NEXT(d1) ) {
@@ -2371,7 +2371,7 @@ void init_stat() {
 	init_eg(&eg_nf); init_eg(&eg_nfm); init_eg(&eg_znfm);
 	init_eg(&eg_pz); init_eg(&eg_np);
 	init_eg(&eg_ra); init_eg(&eg_mc); init_eg(&eg_gc);
-	ZR = NZR = TP = NMP = NBP = NFP = NDP = 0;
+	ZR = NZR = TP = NMP = N_BP = NFP = NDP = 0;
 }
 
 void print_stat() {
@@ -2380,7 +2380,7 @@ void print_stat() {
 	print_eg("NF",&eg_nf); print_eg("NFM",&eg_nfm); print_eg("ZNFM",&eg_znfm);
 	print_eg("PZ",&eg_pz); print_eg("NP",&eg_np);
 	print_eg("RA",&eg_ra); print_eg("MC",&eg_mc); print_eg("GC",&eg_gc);
-	fprintf(asir_out,"T=%d,B=%d M=%d F=%d D=%d ZR=%d NZR=%d\n",TP,NBP,NMP,NFP,NDP,ZR,NZR);
+	fprintf(asir_out,"T=%d,B=%d M=%d F=%d D=%d ZR=%d NZR=%d\n",TP,N_BP,NMP,NFP,NDP,ZR,NZR);
 }
 
 /*

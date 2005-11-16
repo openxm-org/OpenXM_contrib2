@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.59 2005/11/06 01:27:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.60 2005/11/12 08:10:56 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -128,6 +128,7 @@ typedef void * pointer;
 /* IMAT */
 #define O_IMAT 24
 /* IMAT */
+#define O_NBP 25
 
 #define N_Q 0
 #define N_R 1
@@ -443,6 +444,30 @@ typedef struct oTB {
 	int size,next;
 	char **body;
 } *TB;
+
+typedef struct oNBP {
+	short id;
+	short pad;
+	struct oNODE *body;
+} *NBP;
+
+/* non-commutative bivariate monomial */
+
+typedef struct oNBM {
+	int d;
+	Q c;
+	unsigned int *b;
+} *NBM;
+
+#define NEWNBM(p) ((p)=(NBM)MALLOC(sizeof(struct oNBM)))
+#define NEWNBMBDY(p,d) \
+((p)->b=(unsigned int *)MALLOC((((d)+31)/32)*sizeof(unsigned int)))
+#define NEWNBP(p) ((p)=(NBP)MALLOC(sizeof(struct oNBP)),OID(p)=O_NBP)
+#define MKNBP(p,b) (NEWNBP(p),BDY(p)=(b))
+
+#define NBM_GET(a,j) (((a)[(j)>>5]&(1<<((j)&31)))?1:0)
+#define NBM_SET(a,j) ((a)[(j)>>5]|=(1<<((j)&31)))
+#define NBM_CLR(a,j) ((a)[(j)>>5]&=(~(1<<((j)&31))))
 
 typedef struct oObj {
 	short id;
@@ -2607,3 +2632,9 @@ void bzero(const void *,int);
 void bcopy(const void *,void *,int);
 char *index(char *,int);
 #endif
+
+void chsgnnbp(NBP p,NBP *rp);
+void subnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void addnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void pwrnbp(VL vl,NBP p1,Q n, NBP *rp);
