@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.32 2004/06/15 16:14:50 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.33 2005/11/16 23:42:53 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1893,6 +1893,104 @@ NBP shuffle_mul_nbm(NBM a,NBM b)
 	return u;
 }
 
+int nbmtoxky(NBM a,int *b)
+{
+	int d,i,j,k;
+	int *p;
+
+	d = a->d; p = a->b;
+	for ( i = j = 0, k = 1; i < d; i++ ) {
+		if ( !NBM_GET(p,i) ) {
+			b[j++] = k;
+			k = 1;
+			i++;
+		} else k++;
+	}
+	return j;
+}
+
+NBP harmonic_mul_nbm(NBM a,NBM b)
+{
+	int da,db,d,la,lb,lmax,lmin,l,lab,la1,lb1,lab1;
+	int i,j,k,ia,ib,s;
+	int *wa,*wb,*w,*wab,*wa1,*wmb;
+	Q c,c1;
+	NBM wm,tm;
+	NODE r,t1,t,p;
+	NBP u;
+
+	da = a->d; db = b->d; d = da+db;
+	wa = (int *)ALLOCA(da*sizeof(int));
+	wb = (int *)ALLOCA(db*sizeof(int));
+	la = nbmtoxky(a,wa);
+	lb = nbmtoxky(b,wb);
+	mulq(a->c,b->c,&c);
+	/* wa[0],..,wa[la-1] <-> x^wa[0]y x^wa[1]y .. */	
+	/* lmax : total length */
+	lmax = la+lb;
+	lmin = la>lb?la:lb;	
+	w = (int *)ALLOCA(lmax*sizeof(int));
+	/* position of a+b */
+	wab = (int *)ALLOCA(lmax*sizeof(int));
+	/* position of a */
+	wa1 = (int *)ALLOCA(lmax*sizeof(int));
+	NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+	for ( l = lmin, r = 0; l <= lmax; l++ ) {
+		lab = lmax - l;
+		la1 = la - lab;
+		lb1 = lb - lab;
+		lab1 = l-lab;
+		/* partion l into three parts: a, b, a+b */
+		/* initialize wab */
+		for ( i = 0; i < lab; i++ ) wab[i] = 1;
+		for ( ; i < l; i++ ) wab[i] = 0;
+		do {
+			/* initialize wa1 */
+			for ( i = 0; i < la1; i++ ) wa1[i] = 1;
+			for ( ; i < lab1; i++ ) wa1[i] = 0;
+			do {
+				ia = 0; ib = 0;
+				for ( i = j = 0; i < l; i++ )
+					if ( wab[i] ) w[i] = wa[ia++]+wb[ib++];
+					else if ( wa1[j++] ) w[i] = wa[ia++];
+					else w[i] = wb[ib++];
+				for ( i = j = 0; i < l; i++ ) {
+					for ( k = w[i]-1; k > 0; k--, j++ ) NBM_SET(wmb,j);
+					NBM_CLR(wmb,j); j++;
+				}
+				wm->d = j; wm->c = c;
+				for ( p = 0, t = r; t; p = t, t = NEXT(t) ) {
+					tm = (NBM)BDY(t);
+					s = comp_nbm(tm,wm);
+					if ( s < 0 ) {
+						/* insert */
+						MKNODE(t1,wm,t);
+						if ( !p ) r = t1;
+						else NEXT(p) = t1;
+						NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+						break;
+					} else if ( s == 0 ) {
+						/* add coefs */
+						addq(tm->c,c,&c1);
+						if ( c1 ) tm->c = c1;
+						else NEXT(p) = NEXT(t);
+						break;
+					}
+				}
+				if ( !t ) {
+					/* append */
+					MKNODE(t1,wm,t);
+					if ( !p ) r = t1;
+					else NEXT(p) = t1;
+					NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+				}
+			} while ( ni_next(wa1,lab1) );
+		} while ( ni_next(wab,l) );
+	}
+	MKNBP(u,r);
+	return u;
+}
+
 void addnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
 	NODE b1,b2,br,br0;
@@ -1922,23 +2020,23 @@ void addnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 					NEXTNODE(br0,br); BDY(br) = BDY(b2);
 					b2 = NEXT(b2); break;
 			}
-			if ( !br0 )
-				if ( b1 )
-					br0 = b1;
-				else if ( b2 )
-					br0 = b2;
-				else {
-					*rp = 0;
-					return;
-				}
-			else if ( b1 )
-				NEXT(br) = b1;
-			else if ( b2 )
-				NEXT(br) = b2;
-			else
-				NEXT(br) = 0;
-			MKNBP(*rp,br0);
 		}
+		if ( !br0 )
+			if ( b1 )
+				br0 = b1;
+			else if ( b2 )
+				br0 = b2;
+			else {
+				*rp = 0;
+				return;
+			}
+		else if ( b1 )
+			NEXT(br) = b1;
+		else if ( b2 )
+				NEXT(br) = b2;
+		else
+			NEXT(br) = 0;
+		MKNBP(*rp,br0);
 	}
 }
 
@@ -1959,7 +2057,7 @@ void chsgnnbp(NBP p,NBP *rp)
 		NEXTNODE(r0,r);
 		m = (NBM)BDY(b);
 		NEWNBM(m1); m1->d = m->d; m1->b = m->b; chsgnq(m->c,&m1->c);
-		BDY(r) = m;
+		BDY(r) = m1;
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKNBP(*rp,r0);
@@ -2046,59 +2144,36 @@ void pwrnbp(VL vl,NBP a,Q q,NBP *c)
 	}
 }
 
-void shuffle_mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp);
-void shuffle_mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp);
-void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
-
 void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
-	NODE b;
+	NODE b1,b2;
 	NBP r,t,s;
+	NBM m;
 
 	if ( !p1 || !p2 ) *rp = 0;
-	else if ( length(BDY(p1)) < length(BDY(p2)) ) {
-		for ( r = 0, b = BDY(p1); b; b = NEXT(b) ) {
-			shuffle_mulnbmnbp(vl,(NBM)BDY(b),p2,&t);
-			addnbp(vl,r,t,&s); r = s;
-		}
-		*rp = r;
-	} else {
-		for ( r = 0, b = BDY(p2); b; b = NEXT(b) ) {
-			shuffle_mulnbpnbm(vl,p1,(NBM)BDY(b),&t);
-			addnbp(vl,r,t,&s); r = s;
-		}
+	else {
+		for ( r = 0, b1 = BDY(p1); b1; b1 = NEXT(b1) )
+			for ( m = BDY(b1), b2 = BDY(p2); b2; b2 = NEXT(b2) ) {
+				t = shuffle_mul_nbm(m,(NBM)BDY(b2));
+				addnbp(vl,r,t,&s); r = s;
+			}
 		*rp = r;
 	}
 }
 
-void shuffle_mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp)
+void harmonic_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
-	NODE b;
-	NBP t,s,r;
+	NODE b1,b2;
+	NBP r,t,s;
+	NBM m;
 
-	if ( !p ) *rp = 0;
+	if ( !p1 || !p2 ) *rp = 0;
 	else {
-		r = 0;
-		for ( b = BDY(p); b; b = NEXT(b) ) {
-			t = shuffle_mul_nbm(m,(NBM)BDY(b));
-			addnbp(vl,r,t,&s); r = s;
-		}
-		*rp = r;
-	}
-}
-
-void shuffle_mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp)
-{
-	NODE b;
-	NBP t,s,r;
-
-	if ( !p ) *rp = 0;
-	else {
-		r = 0;
-		for ( b = BDY(p); b; b = NEXT(b) ) {
-			t = shuffle_mul_nbm((NBM)BDY(b),m);
-			addnbp(vl,r,t,&s); r = s;
-		}
+		for ( r = 0, b1 = BDY(p1); b1; b1 = NEXT(b1) )
+			for ( m = BDY(b1), b2 = BDY(p2); b2; b2 = NEXT(b2) ) {
+				t = harmonic_mul_nbm(m,(NBM)BDY(b2));
+				addnbp(vl,r,t,&s); r = s;
+			}
 		*rp = r;
 	}
 }
