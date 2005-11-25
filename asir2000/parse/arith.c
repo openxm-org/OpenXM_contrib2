@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.22 2005/10/03 00:29:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.23 2005/11/16 23:42:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -171,7 +171,7 @@ Obj a,b,*r;
 		(*afunc[mid].mul)(vl,a,b,r);
 	else {
 		switch ( aid ) {
-			case O_N: case O_P:
+			case O_N: case O_P: case O_NBP:
 				(*afunc[mid].mul)(vl,a,b,r);
 				break;
 			case O_R:

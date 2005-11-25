@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.98 2005/11/16 23:42:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.99 2005/11/24 08:16:03 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -100,6 +100,7 @@ void Pnquote_match();
 
 void Pquote_to_nbp();
 void Pshuffle_mul_nbp(), Pharmonic_mul_nbp();
+void Pnbp_hm(), Pnbp_ht(), Pnbp_hc(), Pnbp_rest(), Pnbm_hp(), Pnbm_rest();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pquote_match(),Pget_quote_id(),Pquote_match_rewrite();
@@ -148,6 +149,13 @@ struct ftab str_tab[] = {
 	{"quote_to_nbp",Pquote_to_nbp,1},
 	{"shuffle_mul_nbp",Pshuffle_mul_nbp,2},
 	{"harmonic_mul_nbp",Pharmonic_mul_nbp,2},
+
+	{"nbp_hm", Pnbp_hm,1},
+	{"nbp_ht", Pnbp_ht,1},
+	{"nbp_hc", Pnbp_hc,1},
+	{"nbp_rest", Pnbp_rest,1},
+	{"nbm_hp", Pnbm_hp,1},
+	{"nbm_rest", Pnbm_rest,1},
 
 	{"quote_to_nary",Pquote_to_nary,1},
 	{"quote_to_bin",Pquote_to_bin,2},
@@ -2081,6 +2089,130 @@ void Pharmonic_mul_nbp(NODE arg,NBP *rp)
 	harmonic_mulnbp(CO,p1,p2,rp);
 }
 
+void Pnbp_hm(NODE arg, NBP *rp)
+{
+	NBP p;
+	NODE n;
+	NBM m;
+
+	p = (NBP)ARG0(arg);
+	if ( !p ) *rp = 0;
+	else {
+		m = (NBM)BDY(BDY(p));
+		MKNODE(n,m,0);
+		MKNBP(*rp,n);
+	}
+}
+	
+void Pnbp_ht(NODE arg, NBP *rp)
+{
+	NBP p;
+	NODE n;
+	NBM m,m1;
+
+	p = (NBP)ARG0(arg);
+	if ( !p ) *rp = 0;
+	else {
+		m = (NBM)BDY(BDY(p));
+		NEWNBM(m1);
+		m1->d = m->d; m1->c = ONE; m1->b = m->b;
+		MKNODE(n,m1,0);
+		MKNBP(*rp,n);
+	}
+}
+
+void Pnbp_hc(NODE arg, Q *rp)
+{
+	NBP p;
+	NBM m;
+
+	p = (NBP)ARG0(arg);
+	if ( !p ) *rp = 0;
+	else {
+		m = (NBM)BDY(BDY(p));
+		*rp = m->c;
+	}
+}
+
+void Pnbp_rest(NODE arg, NBP *rp)
+{
+	NBP p;
+	NODE n;
+
+	p = (NBP)ARG0(arg);
+	if ( !p ) *rp = 0;
+	else {
+		n = BDY(p);
+		if ( !NEXT(n) ) *rp = 0;
+		else
+			MKNBP(*rp,NEXT(n));
+	}
+}
+
+void Pnbm_hp(NODE arg, LIST *rp)
+{
+	NBP p;
+	NBM m;
+	int d,i,xy;
+	int *b;
+	Q qxy,qi;
+	NODE n;
+
+	p = (NBP)ARG0(arg);
+	if ( !p ) {
+		MKLIST(*rp,0);
+	} else {
+		m = (NBM)BDY(BDY(p));
+		b = m->b;
+		d = m->d;
+		if ( !d )
+			MKLIST(*rp,0);
+		else {
+			xy = NBM_GET(b,0);
+			for ( i = 1; i < d; i++ )
+				if ( NBM_GET(b,i) != xy ) break;
+			STOQ(xy,qxy);
+			STOQ(i,qi);
+			n = mknode(2,qxy,qi);	
+			MKLIST(*rp,n);
+		}
+	}
+}
+
+void Pnbm_rest(NODE arg,NBP *rp)
+{
+	NBP p;
+	NBM m,m1;
+	int d,xy,i,d1,i1;
+	int *b,*b1;
+	NODE n;
+
+	p = (NBP)ARG0(arg);
+	if ( !p )
+		*rp = 0;
+	else {
+		m = (NBM)BDY(BDY(p));
+		b = m->b;
+		d = m->d;
+		if ( !d )
+			*rp = p;
+		else {
+			xy = NBM_GET(b,0);
+			for ( i = 1; i < d; i++ )
+				if ( NBM_GET(b,i) != xy ) break;
+			d1 = d-i;
+			NEWNBM(m1);
+			m1->d = d1; m1->c = m->c;
+			NEWNBMBDY(m1,d1);
+			b1 = m1->b;
+			for ( i1 = 0; i < d; i++, i1++ )
+				if ( NBM_GET(b,i) ) NBM_SET(b1,i1);
+				else NBM_CLR(b1,i1);
+			MKNODE(n,m1,0);
+			MKNBP(*rp,n);
+		}
+	}
+}
 
 NBP fnode_to_nbp(FNODE f)
 {
