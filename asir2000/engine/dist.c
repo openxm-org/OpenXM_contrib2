@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.33 2005/11/16 23:42:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.34 2005/11/24 08:16:03 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1784,7 +1784,7 @@ int ni_next(int *a,int n)
 	int i,j,k,kj;
 
 	/* find the first nonzero a[j] */
-	for ( j = 0; a[j] == 0; j++ );
+	for ( j = 0; j < n && a[j] == 0; j++ );
 	/* find the first zero a[k] after a[j] */
 	for ( k = j; k < n && a[k] == 1; k++ );
 	if ( k == n ) return 0;
@@ -1903,7 +1903,6 @@ int nbmtoxky(NBM a,int *b)
 		if ( !NBM_GET(p,i) ) {
 			b[j++] = k;
 			k = 1;
-			i++;
 		} else k++;
 	}
 	return j;
