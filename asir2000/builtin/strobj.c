@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.99 2005/11/24 08:16:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.100 2005/11/25 07:18:31 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -99,7 +99,7 @@ void Pnquote_comp();
 void Pnquote_match();
 
 void Pquote_to_nbp();
-void Pshuffle_mul_nbp(), Pharmonic_mul_nbp();
+void Pshuffle_mul(), Pharmonic_mul();
 void Pnbp_hm(), Pnbp_ht(), Pnbp_hc(), Pnbp_rest(), Pnbm_hp(), Pnbm_rest();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
@@ -147,8 +147,8 @@ struct ftab str_tab[] = {
 	{"nquote_comp",Pnquote_comp,2},
 	{"nquote_match",Pnquote_match,2},
 	{"quote_to_nbp",Pquote_to_nbp,1},
-	{"shuffle_mul_nbp",Pshuffle_mul_nbp,2},
-	{"harmonic_mul_nbp",Pharmonic_mul_nbp,2},
+	{"shuffle_mul",Pshuffle_mul,2},
+	{"harmonic_mul",Pharmonic_mul,2},
 
 	{"nbp_hm", Pnbp_hm,1},
 	{"nbp_ht", Pnbp_ht,1},
@@ -2071,7 +2071,7 @@ void Pquote_to_nbp(NODE arg,NBP *rp)
 	*rp = fnode_to_nbp(f);
 }
 
-void Pshuffle_mul_nbp(NODE arg,NBP *rp)
+void Pshuffle_mul(NODE arg,NBP *rp)
 {
 	NBP p1,p2;
 
@@ -2080,7 +2080,7 @@ void Pshuffle_mul_nbp(NODE arg,NBP *rp)
 	shuffle_mulnbp(CO,p1,p2,rp);
 }
 
-void Pharmonic_mul_nbp(NODE arg,NBP *rp)
+void Pharmonic_mul(NODE arg,NBP *rp)
 {
 	NBP p1,p2;
 

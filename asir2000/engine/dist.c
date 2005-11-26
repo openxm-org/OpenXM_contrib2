@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.35 2005/11/25 02:43:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.36 2005/11/25 07:18:32 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1837,6 +1837,89 @@ NBM mul_nbm(NBM a,NBM b)
 	return m;
 }
 
+NBP nbmtonbp(NBM m)
+{
+	NODE n;
+	NBP u;
+
+	MKNODE(n,m,0);
+	MKNBP(u,n);
+	return u;
+}
+
+/* a=c*x*rest -> a0= x*rest, ah=x, ar=rest */
+
+Q separate_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar)
+{
+	int i,d1;
+	NBM t;
+
+	if ( !a->d ) error("separate_nbm : invalid argument");
+
+	NEWNBM(t); t->d = a->d; t->b = a->b; t->c = ONE;
+	*a0 = nbmtonbp(t);
+
+	NEWNBM(t); NEWNBMBDY(t,1); t->d = 1; t->c = ONE;
+	if ( NBM_GET(a->b,0) ) NBM_SET(t->b,0);
+	else NBM_CLR(t->b,0);
+	*ah = nbmtonbp(t);
+
+	d1 = a->d-1;
+	NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = ONE;
+	for ( i = 0; i < d1; i++ ) {
+		if ( NBM_GET(a->b,i+1) ) NBM_SET(t->b,i);
+		else NBM_CLR(t->b,i);
+	}
+	*ar = nbmtonbp(t);
+	return a->c;
+}
+
+NBP make_xky(int k)
+{
+	int k1,i;
+	NBM t;
+
+	NEWNBM(t); NEWNBMBDY(t,k); t->d = k; t->c = ONE;
+	k1 = k-1;
+	for ( i = 0; i < k1; i++ ) NBM_SET(t->b,i);
+	NBM_CLR(t->b,i);
+	return nbmtonbp(t);
+}
+
+/* a=c*x^(k-1)*y*rest -> a0= x^(k-1)*y*rest, ah=x^(k-1)*y, ar=rest */
+
+Q separate_xky_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar)
+{
+	int i,d1,k,k1;
+	NBM t;
+
+	if ( !a->d )
+		error("separate_nbm : invalid argument");
+	for ( i = 0; i < a->d && NBM_GET(a->b,i); i++ );
+	if ( i == a->d )
+		error("separate_nbm : invalid argument");
+	k1 = i;
+	k = i+1;
+
+	NEWNBM(t); t->d = a->d; t->b = a->b; t->c = ONE;
+	*a0 = nbmtonbp(t);
+
+	NEWNBM(t); NEWNBMBDY(t,k); t->d = k; t->c = ONE;
+	for ( i = 0; i < k1; i++ ) NBM_SET(t->b,i);
+	NBM_CLR(t->b,i);
+	*ah = nbmtonbp(t);
+
+	d1 = a->d-k;
+	NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = ONE;
+	for ( i = 0; i < d1; i++ ) {
+		if ( NBM_GET(a->b,i+k) ) NBM_SET(t->b,i);
+		else NBM_CLR(t->b,i);
+	}
+	*ar = nbmtonbp(t);
+
+	return a->c;
+}
+#if 0
 NBP shuffle_mul_nbm(NBM a,NBM b)
 {
 	int ad,bd,d,i,ai,bi,bit,s;
@@ -1892,6 +1975,28 @@ NBP shuffle_mul_nbm(NBM a,NBM b)
 	MKNBP(u,r);
 	return u;
 }
+#else
+void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void harmonic_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+
+NBP shuffle_mul_nbm(NBM a,NBM b)
+{
+	NBP u,a0,ah,ar,b0,bh,br,a1,b1,t;
+	Q ac,bc,c;
+
+	if ( !a->d || !b->d )
+		u = nbmtonbp(mul_nbm(a,b));
+	else {
+		ac = separate_nbm(a,&a0,&ah,&ar);
+		bc = separate_nbm(b,&b0,&bh,&br);
+		mulq(ac,bc,&c);
+		shuffle_mulnbp(CO,ar,b0,&t); mulnbp(CO,ah,t,&a1);
+		shuffle_mulnbp(CO,a0,br,&t); mulnbp(CO,bh,t,&b1);
+		addnbp(CO,a1,b1,&t); mulnbp(CO,(NBP)c,t,&u);
+	}
+	return u;
+}
+#endif
 
 int nbmtoxky(NBM a,int *b)
 {
@@ -1908,6 +2013,7 @@ int nbmtoxky(NBM a,int *b)
 	return j;
 }
 
+#if 0
 NBP harmonic_mul_nbm(NBM a,NBM b)
 {
 	int da,db,d,la,lb,lmax,lmin,l,lab,la1,lb1,lab1;
@@ -1989,6 +2095,29 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 	MKNBP(u,r);
 	return u;
 }
+#else
+NBP harmonic_mul_nbm(NBM a,NBM b)
+{
+	NBP u,a0,ah,ar,b0,bh,br,a1,b1,t,s,abk,ab1;
+	Q ac,bc,c;
+
+	if ( !a->d || !b->d )
+		u = nbmtonbp(mul_nbm(a,b));
+	else {
+		mulq(a->c,b->c,&c);
+		ac = separate_xky_nbm(a,&a0,&ah,&ar);
+		bc = separate_xky_nbm(b,&b0,&bh,&br);
+		mulq(ac,bc,&c);
+		harmonic_mulnbp(CO,ar,b0,&t); mulnbp(CO,ah,t,&a1);
+		harmonic_mulnbp(CO,a0,br,&t); mulnbp(CO,bh,t,&b1);
+		abk = make_xky(((NBM)BDY(BDY(ah)))->d+((NBM)BDY(BDY(bh)))->d);
+		harmonic_mulnbp(CO,ar,br,&t); mulnbp(CO,abk,t,&ab1);
+		addnbp(CO,a1,b1,&t); addnbp(CO,t,ab1,&s); mulnbp(CO,(NBP)c,s,&u);
+	}
+	return u;
+
+}
+#endif
 
 void addnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
@@ -2075,12 +2204,14 @@ void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 		*rp = 0; return;
 	}
 	if ( OID(p1) != O_NBP ) {
-		if ( !NUM(p1) || !RATN(p1) ) error("mulnbp : invalid argument");
+		if ( !NUM(p1) || !RATN(p1) ) 
+			error("mulnbp : invalid argument");
 		NEWNBM(m); m->d = 0; m->b = 0; m->c = (Q)p1;	
 		MKNODE(n,m,0); MKNBP(p1,n);
 	}
 	if ( OID(p2) != O_NBP ) {
-		if ( !NUM(p2) || !RATN(p2) ) error("mulnbp : invalid argument");
+		if ( !NUM(p2) || !RATN(p2) ) 
+			error("mulnbp : invalid argument");
 		NEWNBM(m); m->d = 0; m->b = 0; m->c = (Q)p2;	
 		MKNODE(n,m,0); MKNBP(p2,n);
 	}
@@ -2166,12 +2297,14 @@ void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 		*rp = 0; return;
 	}
 	if ( OID(p1) != O_NBP ) {
-		if ( !NUM(p1) || !RATN(p1) ) error("mulnbp : invalid argument");
+		if ( !NUM(p1) || !RATN(p1) ) 
+			error("shuffle_mulnbp : invalid argument");
 		NEWNBM(m); m->d = 0; m->b = 0; m->c = (Q)p1;	
 		MKNODE(n,m,0); MKNBP(p1,n);
 	}
 	if ( OID(p2) != O_NBP ) {
-		if ( !NUM(p2) || !RATN(p2) ) error("mulnbp : invalid argument");
+		if ( !NUM(p2) || !RATN(p2) ) 
+			error("shuffle_mulnbp : invalid argument");
 		NEWNBM(m); m->d = 0; m->b = 0; m->c = (Q)p2;	
 		MKNODE(n,m,0); MKNBP(p2,n);
 	}
@@ -2193,12 +2326,14 @@ void harmonic_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 		*rp = 0; return;
 	}
 	if ( OID(p1) != O_NBP ) {
-		if ( !NUM(p1) || !RATN(p1) ) error("mulnbp : invalid argument");
+		if ( !NUM(p1) || !RATN(p1) ) 
+			error("harmonic_mulnbp : invalid argument");
 		NEWNBM(m); m->d = 0; m->b = 0; m->c = (Q)p1;	
 		MKNODE(n,m,0); MKNBP(p1,n);
 	}
 	if ( OID(p2) != O_NBP ) {
-		if ( !NUM(p2) || !RATN(p2) ) error("mulnbp : invalid argument");
+		if ( !NUM(p2) || !RATN(p2) ) 
+			error("harmonic_mulnbp : invalid argument");
 		NEWNBM(m); m->d = 0; m->b = 0; m->c = (Q)p2;	
 		MKNODE(n,m,0); MKNBP(p2,n);
 	}
