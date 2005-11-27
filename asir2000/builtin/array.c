@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.45 2005/01/23 14:03:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.46 2005/02/08 18:06:05 saito Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -876,6 +876,8 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
 		B : a rank(A) x col-rank(A) matrix
 		R : a vector of length rank(A)
 		C : a vector of length col-rank(A)
+		RN : a vector of length rank(A) indicating useful rows
+
 		B[I] <-> x_{R[I]}+B[I][0]x_{C[0]}+B[I][1]x_{C[1]}+...
 */
 
@@ -883,11 +885,11 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 {
 	NODE n0;
 	MAT m,mat;
-	VECT rind,cind;
+	VECT rind,cind,rnum;
 	Q **tmat;
-	int **wmat;
-	Q *rib,*cib;
-	int *colstat;
+	int **wmat,**row0;
+	Q *rib,*cib,*rnb;
+	int *colstat,*p;
 	Q q;
 	int md,i,j,k,l,row,col,t,rank;
 
@@ -896,6 +898,10 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 	m = (MAT)ARG0(arg); md = QTOS((Q)ARG1(arg));
 	row = m->row; col = m->col; tmat = (Q **)m->body;
 	wmat = (int **)almat(row,col);
+
+	row0 = (int **)ALLOCA(row*sizeof(int *));
+	for ( i = 0; i < row; i++ ) row0[i] = wmat[i];
+
 	colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
 	for ( i = 0; i < row; i++ )
 		for ( j = 0; j < col; j++ )
@@ -907,6 +913,13 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 			} else
 				wmat[i][j] = 0;
 	rank = generic_gauss_elim_mod(wmat,row,col,md,colstat);
+
+	MKVECT(rnum,rank);
+	rnb = (Q *)rnum->body;
+	for ( i = 0; i < rank; i++ )
+		for ( j = 0, p = wmat[i]; j < row; j++ )
+			if ( p == row0[j] )
+				STOQ(j,rnb[i]);
 
 	MKMAT(mat,rank,col-rank);
 	tmat = (Q **)mat->body;
@@ -925,7 +938,7 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 		} else {
 			STOQ(j,cib[l]); l++;
 		}
-	n0 = mknode(3,mat,rind,cind);
+	n0 = mknode(4,mat,rind,cind,rnum);
 	MKLIST(*rp,n0);
 }
 

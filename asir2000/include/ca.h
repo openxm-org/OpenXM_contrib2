@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.60 2005/11/12 08:10:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.61 2005/11/16 23:42:54 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2638,3 +2638,4 @@ void subnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void addnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void pwrnbp(VL vl,NBP p1,Q n, NBP *rp);
+int compnbp(VL vl,NBP p1,NBP p2);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.36 2005/11/25 07:18:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.37 2005/11/26 01:28:12 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1856,21 +1856,28 @@ Q separate_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar)
 
 	if ( !a->d ) error("separate_nbm : invalid argument");
 
-	NEWNBM(t); t->d = a->d; t->b = a->b; t->c = ONE;
-	*a0 = nbmtonbp(t);
-
-	NEWNBM(t); NEWNBMBDY(t,1); t->d = 1; t->c = ONE;
-	if ( NBM_GET(a->b,0) ) NBM_SET(t->b,0);
-	else NBM_CLR(t->b,0);
-	*ah = nbmtonbp(t);
-
-	d1 = a->d-1;
-	NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = ONE;
-	for ( i = 0; i < d1; i++ ) {
-		if ( NBM_GET(a->b,i+1) ) NBM_SET(t->b,i);
-		else NBM_CLR(t->b,i);
+	if ( a0 ) {
+		NEWNBM(t); t->d = a->d; t->b = a->b; t->c = ONE;
+		*a0 = nbmtonbp(t);
 	}
-	*ar = nbmtonbp(t);
+
+	if ( ah ) {
+		NEWNBM(t); NEWNBMBDY(t,1); t->d = 1; t->c = ONE;
+		if ( NBM_GET(a->b,0) ) NBM_SET(t->b,0);
+		else NBM_CLR(t->b,0);
+		*ah = nbmtonbp(t);
+	}
+
+	if ( ar ) {
+		d1 = a->d-1;
+		NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = ONE;
+		for ( i = 0; i < d1; i++ ) {
+			if ( NBM_GET(a->b,i+1) ) NBM_SET(t->b,i);
+			else NBM_CLR(t->b,i);
+		}
+		*ar = nbmtonbp(t);
+	}
+
 	return a->c;
 }
 
@@ -1901,83 +1908,35 @@ Q separate_xky_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar)
 	k1 = i;
 	k = i+1;
 
-	NEWNBM(t); t->d = a->d; t->b = a->b; t->c = ONE;
-	*a0 = nbmtonbp(t);
-
-	NEWNBM(t); NEWNBMBDY(t,k); t->d = k; t->c = ONE;
-	for ( i = 0; i < k1; i++ ) NBM_SET(t->b,i);
-	NBM_CLR(t->b,i);
-	*ah = nbmtonbp(t);
-
-	d1 = a->d-k;
-	NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = ONE;
-	for ( i = 0; i < d1; i++ ) {
-		if ( NBM_GET(a->b,i+k) ) NBM_SET(t->b,i);
-		else NBM_CLR(t->b,i);
+	if ( a0 ) {
+		NEWNBM(t); t->d = a->d; t->b = a->b; t->c = ONE;
+		*a0 = nbmtonbp(t);
 	}
-	*ar = nbmtonbp(t);
+
+	if ( ah ) {
+		NEWNBM(t); NEWNBMBDY(t,k); t->d = k; t->c = ONE;
+		for ( i = 0; i < k1; i++ ) NBM_SET(t->b,i);
+		NBM_CLR(t->b,i);
+		*ah = nbmtonbp(t);
+	}
+
+	if ( ar ) {
+		d1 = a->d-k;
+		NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = ONE;
+		for ( i = 0; i < d1; i++ ) {
+			if ( NBM_GET(a->b,i+k) ) NBM_SET(t->b,i);
+			else NBM_CLR(t->b,i);
+		}
+		*ar = nbmtonbp(t);
+	}
 
 	return a->c;
 }
-#if 0
-NBP shuffle_mul_nbm(NBM a,NBM b)
-{
-	int ad,bd,d,i,ai,bi,bit,s;
-	int *ab,*bb,*wmb,*w;
-	NBM wm,tm;
-	Q c,c1;
-	NODE r,t,t1,p;
-	NBP u;
 
-	ad = a->d; bd = b->d; ab = a->b; bb = b->b;
-	d = ad + bd;
-	w = (int *)ALLOCA(d*sizeof(int));
-	NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
-	for ( i = 0; i < ad; i++ ) w[i] = 1;
-	for ( ; i < d; i++ ) w[i] = 0;
-	mulq(a->c,b->c,&c);
-	r = 0;
-	do {
-		wm->d = d; wm->c = c;
-		ai = 0; bi = 0;
-		for ( i = 0; i < d; i++ ) {
-			if ( w[i] ) { bit = NBM_GET(ab,ai); ai++; }
-			else { bit = NBM_GET(bb,bi); bi++; }
-			if ( bit ) NBM_SET(wmb,i);
-			else NBM_CLR(wmb,i);
-		}
-		for ( p = 0, t = r; t; p = t, t = NEXT(t) ) {
-			tm = (NBM)BDY(t);
-			s = comp_nbm(tm,wm);
-			if ( s < 0 ) {
-				/* insert */
-				MKNODE(t1,wm,t);
-				if ( !p ) r = t1;
-				else NEXT(p) = t1;
-				NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
-				break;
-			} else if ( s == 0 ) {
-				/* add coefs */
-				addq(tm->c,c,&c1);
-				if ( c1 ) tm->c = c1;
-				else NEXT(p) = NEXT(t);
-				break;
-			}
-		}
-		if ( !t ) {
-			/* append */
-			MKNODE(t1,wm,t);
-			if ( !p ) r = t1;
-			else NEXT(p) = t1;
-			NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
-		}
-	} while ( ni_next(w,d) );
-	MKNBP(u,r);
-	return u;
-}
-#else
 void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void harmonic_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp);
+void mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp);
 
 NBP shuffle_mul_nbm(NBM a,NBM b)
 {
@@ -1996,106 +1955,7 @@ NBP shuffle_mul_nbm(NBM a,NBM b)
 	}
 	return u;
 }
-#endif
 
-int nbmtoxky(NBM a,int *b)
-{
-	int d,i,j,k;
-	int *p;
-
-	d = a->d; p = a->b;
-	for ( i = j = 0, k = 1; i < d; i++ ) {
-		if ( !NBM_GET(p,i) ) {
-			b[j++] = k;
-			k = 1;
-		} else k++;
-	}
-	return j;
-}
-
-#if 0
-NBP harmonic_mul_nbm(NBM a,NBM b)
-{
-	int da,db,d,la,lb,lmax,lmin,l,lab,la1,lb1,lab1;
-	int i,j,k,ia,ib,s;
-	int *wa,*wb,*w,*wab,*wa1,*wmb;
-	Q c,c1;
-	NBM wm,tm;
-	NODE r,t1,t,p;
-	NBP u;
-
-	da = a->d; db = b->d; d = da+db;
-	wa = (int *)ALLOCA(da*sizeof(int));
-	wb = (int *)ALLOCA(db*sizeof(int));
-	la = nbmtoxky(a,wa);
-	lb = nbmtoxky(b,wb);
-	mulq(a->c,b->c,&c);
-	/* wa[0],..,wa[la-1] <-> x^wa[0]y x^wa[1]y .. */	
-	/* lmax : total length */
-	lmax = la+lb;
-	lmin = la>lb?la:lb;	
-	w = (int *)ALLOCA(lmax*sizeof(int));
-	/* position of a+b */
-	wab = (int *)ALLOCA(lmax*sizeof(int));
-	/* position of a */
-	wa1 = (int *)ALLOCA(lmax*sizeof(int));
-	NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
-	for ( l = lmin, r = 0; l <= lmax; l++ ) {
-		lab = lmax - l;
-		la1 = la - lab;
-		lb1 = lb - lab;
-		lab1 = l-lab;
-		/* partion l into three parts: a, b, a+b */
-		/* initialize wab */
-		for ( i = 0; i < lab; i++ ) wab[i] = 1;
-		for ( ; i < l; i++ ) wab[i] = 0;
-		do {
-			/* initialize wa1 */
-			for ( i = 0; i < la1; i++ ) wa1[i] = 1;
-			for ( ; i < lab1; i++ ) wa1[i] = 0;
-			do {
-				ia = 0; ib = 0;
-				for ( i = j = 0; i < l; i++ )
-					if ( wab[i] ) w[i] = wa[ia++]+wb[ib++];
-					else if ( wa1[j++] ) w[i] = wa[ia++];
-					else w[i] = wb[ib++];
-				for ( i = j = 0; i < l; i++ ) {
-					for ( k = w[i]-1; k > 0; k--, j++ ) NBM_SET(wmb,j);
-					NBM_CLR(wmb,j); j++;
-				}
-				wm->d = j; wm->c = c;
-				for ( p = 0, t = r; t; p = t, t = NEXT(t) ) {
-					tm = (NBM)BDY(t);
-					s = comp_nbm(tm,wm);
-					if ( s < 0 ) {
-						/* insert */
-						MKNODE(t1,wm,t);
-						if ( !p ) r = t1;
-						else NEXT(p) = t1;
-						NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
-						break;
-					} else if ( s == 0 ) {
-						/* add coefs */
-						addq(tm->c,c,&c1);
-						if ( c1 ) tm->c = c1;
-						else NEXT(p) = NEXT(t);
-						break;
-					}
-				}
-				if ( !t ) {
-					/* append */
-					MKNODE(t1,wm,t);
-					if ( !p ) r = t1;
-					else NEXT(p) = t1;
-					NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
-				}
-			} while ( ni_next(wa1,lab1) );
-		} while ( ni_next(wab,l) );
-	}
-	MKNBP(u,r);
-	return u;
-}
-#else
 NBP harmonic_mul_nbm(NBM a,NBM b)
 {
 	NBP u,a0,ah,ar,b0,bh,br,a1,b1,t,s,abk,ab1;
@@ -2117,7 +1977,6 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 	return u;
 
 }
-#endif
 
 void addnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
@@ -2190,9 +2049,6 @@ void chsgnnbp(NBP p,NBP *rp)
 	if ( r0 ) NEXT(r) = 0;
 	MKNBP(*rp,r0);
 }
-
-void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp);
-void mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp);
 
 void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
@@ -2287,6 +2143,32 @@ void pwrnbp(VL vl,NBP a,Q q,NBP *c)
 	}
 }
 
+int compnbp(VL vl,NBP p1,NBP p2)
+{
+	NODE n1,n2;
+	NBM m1,m2;
+	int t;
+
+	if ( !p1 )
+		return p2 ? -1 : 0;
+	else if ( !p2 )
+		return 1;
+	else {
+		for ( n1 = BDY(p1), n2 = BDY(p2);
+			n1 && n2; n1 = NEXT(n1), n2 = NEXT(n2) ) {
+			m1 = (NBM)BDY(n1); m2 = (NBM)BDY(n2);
+			if ( (t = comp_nbm(m1,m2)) || (t = cmpq(m1->c,m2->c) ) )
+				return t;
+		}
+		if ( n1 )
+			return 1;
+		else if ( n2 )
+			return -1;
+		else
+			return 0;
+	}
+}
+
 void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
 	NODE b1,b2,n;
@@ -2344,3 +2226,158 @@ void harmonic_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 		}
 	*rp = r;
 }
+
+#if 0
+NBP shuffle_mul_nbm(NBM a,NBM b)
+{
+	int ad,bd,d,i,ai,bi,bit,s;
+	int *ab,*bb,*wmb,*w;
+	NBM wm,tm;
+	Q c,c1;
+	NODE r,t,t1,p;
+	NBP u;
+
+	ad = a->d; bd = b->d; ab = a->b; bb = b->b;
+	d = ad + bd;
+	w = (int *)ALLOCA(d*sizeof(int));
+	NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+	for ( i = 0; i < ad; i++ ) w[i] = 1;
+	for ( ; i < d; i++ ) w[i] = 0;
+	mulq(a->c,b->c,&c);
+	r = 0;
+	do {
+		wm->d = d; wm->c = c;
+		ai = 0; bi = 0;
+		for ( i = 0; i < d; i++ ) {
+			if ( w[i] ) { bit = NBM_GET(ab,ai); ai++; }
+			else { bit = NBM_GET(bb,bi); bi++; }
+			if ( bit ) NBM_SET(wmb,i);
+			else NBM_CLR(wmb,i);
+		}
+		for ( p = 0, t = r; t; p = t, t = NEXT(t) ) {
+			tm = (NBM)BDY(t);
+			s = comp_nbm(tm,wm);
+			if ( s < 0 ) {
+				/* insert */
+				MKNODE(t1,wm,t);
+				if ( !p ) r = t1;
+				else NEXT(p) = t1;
+				NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+				break;
+			} else if ( s == 0 ) {
+				/* add coefs */
+				addq(tm->c,c,&c1);
+				if ( c1 ) tm->c = c1;
+				else NEXT(p) = NEXT(t);
+				break;
+			}
+		}
+		if ( !t ) {
+			/* append */
+			MKNODE(t1,wm,t);
+			if ( !p ) r = t1;
+			else NEXT(p) = t1;
+			NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+		}
+	} while ( ni_next(w,d) );
+	MKNBP(u,r);
+	return u;
+}
+
+int nbmtoxky(NBM a,int *b)
+{
+	int d,i,j,k;
+	int *p;
+
+	d = a->d; p = a->b;
+	for ( i = j = 0, k = 1; i < d; i++ ) {
+		if ( !NBM_GET(p,i) ) {
+			b[j++] = k;
+			k = 1;
+		} else k++;
+	}
+	return j;
+}
+
+NBP harmonic_mul_nbm(NBM a,NBM b)
+{
+	int da,db,d,la,lb,lmax,lmin,l,lab,la1,lb1,lab1;
+	int i,j,k,ia,ib,s;
+	int *wa,*wb,*w,*wab,*wa1,*wmb;
+	Q c,c1;
+	NBM wm,tm;
+	NODE r,t1,t,p;
+	NBP u;
+
+	da = a->d; db = b->d; d = da+db;
+	wa = (int *)ALLOCA(da*sizeof(int));
+	wb = (int *)ALLOCA(db*sizeof(int));
+	la = nbmtoxky(a,wa);
+	lb = nbmtoxky(b,wb);
+	mulq(a->c,b->c,&c);
+	/* wa[0],..,wa[la-1] <-> x^wa[0]y x^wa[1]y .. */	
+	/* lmax : total length */
+	lmax = la+lb;
+	lmin = la>lb?la:lb;	
+	w = (int *)ALLOCA(lmax*sizeof(int));
+	/* position of a+b */
+	wab = (int *)ALLOCA(lmax*sizeof(int));
+	/* position of a */
+	wa1 = (int *)ALLOCA(lmax*sizeof(int));
+	NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+	for ( l = lmin, r = 0; l <= lmax; l++ ) {
+		lab = lmax - l;
+		la1 = la - lab;
+		lb1 = lb - lab;
+		lab1 = l-lab;
+		/* partion l into three parts: a, b, a+b */
+		/* initialize wab */
+		for ( i = 0; i < lab; i++ ) wab[i] = 1;
+		for ( ; i < l; i++ ) wab[i] = 0;
+		do {
+			/* initialize wa1 */
+			for ( i = 0; i < la1; i++ ) wa1[i] = 1;
+			for ( ; i < lab1; i++ ) wa1[i] = 0;
+			do {
+				ia = 0; ib = 0;
+				for ( i = j = 0; i < l; i++ )
+					if ( wab[i] ) w[i] = wa[ia++]+wb[ib++];
+					else if ( wa1[j++] ) w[i] = wa[ia++];
+					else w[i] = wb[ib++];
+				for ( i = j = 0; i < l; i++ ) {
+					for ( k = w[i]-1; k > 0; k--, j++ ) NBM_SET(wmb,j);
+					NBM_CLR(wmb,j); j++;
+				}
+				wm->d = j; wm->c = c;
+				for ( p = 0, t = r; t; p = t, t = NEXT(t) ) {
+					tm = (NBM)BDY(t);
+					s = comp_nbm(tm,wm);
+					if ( s < 0 ) {
+						/* insert */
+						MKNODE(t1,wm,t);
+						if ( !p ) r = t1;
+						else NEXT(p) = t1;
+						NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+						break;
+					} else if ( s == 0 ) {
+						/* add coefs */
+						addq(tm->c,c,&c1);
+						if ( c1 ) tm->c = c1;
+						else NEXT(p) = NEXT(t);
+						break;
+					}
+				}
+				if ( !t ) {
+					/* append */
+					MKNODE(t1,wm,t);
+					if ( !p ) r = t1;
+					else NEXT(p) = t1;
+					NEWNBM(wm); NEWNBMBDY(wm,d); wmb = wm->b;
+				}
+			} while ( ni_next(wa1,lab1) );
+		} while ( ni_next(wab,l) );
+	}
+	MKNBP(u,r);
+	return u;
+}
+#endif
