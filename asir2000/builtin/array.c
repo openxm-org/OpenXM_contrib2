@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.46 2005/02/08 18:06:05 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.47 2005/11/27 00:07:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -842,17 +842,34 @@ void Pinvmat(NODE arg,LIST *rp)
 
 void Pgeneric_gauss_elim(NODE arg,LIST *rp)
 {
-	NODE n0;
+	NODE n0,opt,p;
 	MAT m,nm;
 	int *ri,*ci;
 	VECT rind,cind;
 	Q dn,q;
 	int i,j,k,l,row,col,t,rank;
+	int is_hensel = 0;
+	char *key;
+	Obj value;
 
+	if ( current_option ) {
+		for ( opt = current_option; opt; opt = NEXT(opt) ) {
+			p = BDY((LIST)BDY(opt));
+			key = BDY((STRING)BDY(p));
+			value = (Obj)BDY(NEXT(p));
+			if ( !strcmp(key,"hensel") && value ) {
+				is_hensel = value ? 1 : 0;
+				break;
+			}
+		}
+	}
 	asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim");
 	m = (MAT)ARG0(arg);
 	row = m->row; col = m->col;
-	rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
+	if ( is_hensel )
+		rank = generic_gauss_elim_hensel(m,&nm,&dn,&ri,&ci);
+	else
+		rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
 	t = col-rank;
 	MKVECT(rind,rank);
 	MKVECT(cind,t);
@@ -1213,7 +1230,13 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				} else
 					wi[j] = 0;
 
+		if ( DP_Print ) {
+			fprintf(asir_out,"LU decomposition.."); fflush(asir_out);
+		}
 		rank = find_lhs_and_lu_mod((unsigned int **)w,row,col,md,&rinfo,&cinfo);
+		if ( DP_Print ) {
+			fprintf(asir_out,"done.\n"); fflush(asir_out);
+		}
 		a = (Q **)almat_pointer(rank,rank); /* lhs mat */
 		MKMAT(bmat,rank,col-rank); b = (Q **)bmat->body; /* lhs mat */
 		for ( j = li = ri = 0; j < col; j++ )
@@ -1250,7 +1273,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 			wx = (int *)MALLOC_ATOMIC(wxsize*sizeof(int));
 			for ( i = 0; i < wxsize; i++ ) wx[i] = 0;
 			for ( q = ONE, count = 0; ; ) {
-				if ( DP_Print > 3 )
+				if ( DP_Print )
 					fprintf(stderr,"o");
 				/* wc = -b mod md */
 				get_eg(&tmp0);
