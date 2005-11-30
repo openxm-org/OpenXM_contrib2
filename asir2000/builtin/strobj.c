@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.101 2005/11/26 01:28:11 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.102 2005/11/27 00:07:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -685,11 +685,13 @@ void Pnquote_match(NODE arg,Q *rp)
 {
 	QUOTE fq,pq;
 	FNODE f,p;
+	Q two;
 	int ret;
 	NODE r;
 
-	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,0),&fq); f = (FNODE)BDY(fq);
-	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,0),&pq); p = (FNODE)BDY(pq);
+	STOQ(2,two);
+	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,two),&fq); f = (FNODE)BDY(fq);
+	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,two),&pq); p = (FNODE)BDY(pq);
 	ret = nfnode_match(f,p,&r);
 	if ( ret ) {
 		fnode_do_assign(r);
@@ -697,6 +699,7 @@ void Pnquote_match(NODE arg,Q *rp)
 	} else
 		*rp = 0;
 }
+
 
 FNODE rewrite_fnode(FNODE,NODE);
 
@@ -2057,7 +2060,8 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 	ac = argc(arg);
 	if ( !ac ) error("quote_normalize : invalid argument");
 	q = (QUOTE)ARG0(arg);
-	expand = ac==2 && ARG1(arg);
+	if ( ac == 2 )
+		expand = QTOS((Q)ARG1(arg));
 	if ( !q || OID(q) != O_QUOTE )
 		*rp = q;
 	else {
@@ -2460,7 +2464,7 @@ FNODE nfnode_add(FNODE a1,FNODE a2,int expand);
 FNODE nfnode_mul(FNODE a1,FNODE a2,int expand);
 FNODE nfnode_pwr(FNODE a1,FNODE a2,int expand);
 FNODE nfnode_mul_coef(Num c,FNODE f,int expand);
-FNODE fnode_expand_pwr(FNODE f,int n);
+FNODE fnode_expand_pwr(FNODE f,int n,int expand);
 FNODE to_narymul(FNODE f);
 FNODE to_naryadd(FNODE f);
 FNODE fnode_node_to_naryadd(NODE n);
@@ -2475,7 +2479,7 @@ FNODE fnode_normalize(FNODE f,int expand)
 	NODE n;
 	Q q;
 
-	if ( f->normalized && (f->expanded || !expand) ) return f;
+	if ( f->normalized && (f->expanded == expand) ) return f;
 	STOQ(-1,q);
 	mone = mkfnode(1,I_FORMULA,q);
 	switch ( f->id ) {
@@ -2673,7 +2677,7 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 	m = (FNODE *)ALLOCA(l*sizeof(FNODE));
 	for ( r = n1, i = 0; i < l1; r = NEXT(r), i++ ) m[i] = BDY(r);
 	for ( r = n2; r; r = NEXT(r) ) {
-		if ( i == 0 )
+		if ( i == 0 || (expand == 2) )
 			m[i++] = BDY(r);
 		else {
 			fnode_base_exp(m[i-1],&b1,&e1); fnode_base_exp(BDY(r),&b2,&e2);
@@ -2729,7 +2733,7 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
 		ee = QTOS((Q)nf2);
 		cc = mkfnode(1,I_FORMULA,c);
 		if ( fnode_is_nonnegative_integer(f2) )
-			b = fnode_expand_pwr(b1,ee);
+			b = fnode_expand_pwr(b1,ee,expand);
 		else {
 			STOQ(-1,q);
 			mone = mkfnode(1,I_FORMULA,q);
@@ -2739,7 +2743,7 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
 				MKNODE(t1,inv,t0); t0 = t1;
 			}
 			b1 = fnode_node_to_narymul(t0);
-			b = fnode_expand_pwr(b1,-ee);
+			b = fnode_expand_pwr(b1,-ee,expand);
 		}
 		if ( fnode_is_one(cc) )
 			return b;
@@ -2749,25 +2753,37 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
 			&& fnode_is_nonnegative_integer(f2) ) {
 		q = (Q)eval(f2);
 		if ( PL(NM(q)) > 1 ) error("nfnode_pwr : exponent too large");
-		return fnode_expand_pwr(f1,QTOS(q));
+		return fnode_expand_pwr(f1,QTOS(q),expand);
 	} else
 		return mkfnode(3,I_BOP,pwrfs,f1,f2);
 }
 
-FNODE fnode_expand_pwr(FNODE f,int n)
+FNODE fnode_expand_pwr(FNODE f,int n,int expand)
 {
-	int n1;
-	FNODE f1,f2;
+	int n1,i;
+	FNODE f1,f2,fn;
+	Q q;
 
 	if ( !n ) return mkfnode(1,I_FORMULA,ONE);
 	else if ( IS_ZERO(f) ) return mkfnode(1,I_FORMULA,0);
 	else if ( n == 1 ) return f;
 	else {
-		n1 = n/2;
-		f1 = fnode_expand_pwr(f,n1);
-		f2 = nfnode_mul(f1,f1,1);
-		if ( n%2 ) f2 = nfnode_mul(f2,f,1);
-		return f2;
+		switch ( expand ) {
+			case 1:
+				n1 = n/2;
+				f1 = fnode_expand_pwr(f,n1,expand);
+				f2 = nfnode_mul(f1,f1,expand);
+				if ( n%2 ) f2 = nfnode_mul(f2,f,1);
+				return f2;
+			case 2:
+				for ( i = 1, f1 = f; i < n; i++ )
+					f1 = nfnode_mul(f1,f,expand);
+				return f1;
+			case 0: default:
+				STOQ(n,q);
+				fn = mkfnode(1,I_FORMULA,q);
+				return mkfnode(3,I_BOP,pwrfs,f,fn);
+		}
 	}
 }
 
@@ -3058,7 +3074,7 @@ int nfnode_match(FNODE f,FNODE pat,NODE *rp)
 	switch ( pat->id ) {
 		case I_PVAR:
 			/* [[pat,f]] */
-			*rp = mknode(1,mknode(2,(int)FA0(pat),f),0);
+			*rp = mknode(1,mknode(2,(int)FA0(pat),f));
 			return 1;
 
 		case I_FORMULA:
