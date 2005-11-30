@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.102 2005/11/27 00:07:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.103 2005/11/30 04:51:46 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -149,7 +149,7 @@ struct ftab str_tab[] = {
 	{"quote_match_rewrite",Pquote_match_rewrite,-4},
 
 	{"nquote_comp",Pnquote_comp,2},
-	{"nquote_match",Pnquote_match,2},
+	{"nquote_match",Pnquote_match,-3},
 	{"quote_to_nbp",Pquote_to_nbp,1},
 	{"shuffle_mul",Pshuffle_mul,2},
 	{"harmonic_mul",Pharmonic_mul,2},
@@ -685,13 +685,13 @@ void Pnquote_match(NODE arg,Q *rp)
 {
 	QUOTE fq,pq;
 	FNODE f,p;
-	Q two;
 	int ret;
+	Q mode;
 	NODE r;
 
-	STOQ(2,two);
-	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,two),&fq); f = (FNODE)BDY(fq);
-	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,two),&pq); p = (FNODE)BDY(pq);
+	mode = argc(arg)==3 ? (Q)ARG2(arg) : 0;
+	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,mode),&fq); f = (FNODE)BDY(fq);
+	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,mode),&pq); p = (FNODE)BDY(pq);
 	ret = nfnode_match(f,p,&r);
 	if ( ret ) {
 		fnode_do_assign(r);
