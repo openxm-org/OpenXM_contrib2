@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.53 2005/10/19 14:09:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.54 2005/11/06 01:27:28 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -508,6 +508,8 @@ FNODE partial_eval(FNODE f)
 {
 	FNODE a0,a1,a2;
 	NODE n;
+	Obj obj;
+	QUOTE q;
 	pointer val;
 
 	if ( !f )
@@ -540,10 +542,14 @@ FNODE partial_eval(FNODE f)
 			return mkfnode(3,f->id,a0,a1,a2);
 			break;
 
-		/* function */
+		/* XXX : function is evaluated */
 		case I_FUNC:
 			a1 = partial_eval((FNODE)FA1(f));
-			return mkfnode(2,f->id,FA0(f),a1);
+			a1 =  mkfnode(2,f->id,FA0(f),a1);
+			obj = eval(a1);
+			objtoquote(obj,&q);
+			return BDY(q);
+			break;
 
 		case I_LIST: case I_EV:
 			n = partial_eval_node((NODE)FA0(f));
