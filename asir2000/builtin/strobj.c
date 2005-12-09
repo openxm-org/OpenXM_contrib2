@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.103 2005/11/30 04:51:46 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.104 2005/11/30 05:08:00 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,13 +92,14 @@ void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
 
-void Pquote_is_integer(),Pquote_is_rational(),Pquote_is_number();
-void Pquote_is_dependent(),Pquote_is_function();
-void Pquote_normalize();
-void Pnquote_comp();
-void Pnquote_match();
+void Pqt_is_integer(),Pqt_is_rational(),Pqt_is_number();
+void Pqt_is_dependent(),Pqt_is_function();
+void Pqt_set_ord();
+void Pqt_normalize();
+void Pnqt_comp();
+void Pnqt_match();
 
-void Pquote_to_nbp();
+void Pqt_to_nbp();
 void Pshuffle_mul(), Pharmonic_mul();
 void Pnbp_hm(), Pnbp_ht(), Pnbp_hc(), Pnbp_rest();
 void Pnbm_deg();
@@ -107,8 +108,8 @@ void Pnbm_hxky(), Pnbm_xky_rest();
 void Pnbm_hv(), Pnbm_rest();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
-void Pquote_match(),Pget_quote_id(),Pquote_match_rewrite();
-void Pquote_to_nary(),Pquote_to_bin();
+void Pqt_match(),Pget_quote_id(),Pqt_match_rewrite();
+void Pqt_to_nary(),Pqt_to_bin();
 void fnode_do_assign(NODE arg);
 void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
@@ -120,7 +121,7 @@ void tb_to_string(TB tb,STRING *rp);
 void fnodenodetotex_tb(NODE n,TB tb);
 void fargstotex_tb(char *opname,FNODE f,TB tb);
 int top_is_minus(FNODE f);
-int quote_match(Obj f,Obj pat,NODE *rp);
+int qt_match(Obj f,Obj pat,NODE *rp);
 
 struct ftab str_tab[] = {
 	{"sprintf",Psprintf,-99999999},
@@ -138,19 +139,20 @@ struct ftab str_tab[] = {
 	{"string_to_tb",Pstring_to_tb,1},
 	{"get_quote_id",Pget_quote_id,1},
 
-	{"quote_is_number",Pquote_is_number,1},
-	{"quote_is_rational",Pquote_is_rational,1},
-	{"quote_is_integer",Pquote_is_integer,1},
-	{"quote_is_function",Pquote_is_function,1},
-	{"quote_is_dependent",Pquote_is_dependent,2},
+	{"qt_is_number",Pqt_is_number,1},
+	{"qt_is_rational",Pqt_is_rational,1},
+	{"qt_is_integer",Pqt_is_integer,1},
+	{"qt_is_function",Pqt_is_function,1},
+	{"qt_is_dependent",Pqt_is_dependent,2},
 
-	{"quote_normalize",Pquote_normalize,-2},
-	{"quote_match",Pquote_match,2},
-	{"quote_match_rewrite",Pquote_match_rewrite,-4},
+	{"qt_set_ord",Pqt_set_ord,-1},
+	{"qt_normalize",Pqt_normalize,-2},
+	{"qt_match",Pqt_match,2},
+	{"qt_match_rewrite",Pqt_match_rewrite,-4},
 
-	{"nquote_comp",Pnquote_comp,2},
-	{"nquote_match",Pnquote_match,-3},
-	{"quote_to_nbp",Pquote_to_nbp,1},
+	{"nqt_comp",Pnqt_comp,2},
+	{"nqt_match",Pnqt_match,-3},
+	{"qt_to_nbp",Pqt_to_nbp,1},
 	{"shuffle_mul",Pshuffle_mul,2},
 	{"harmonic_mul",Pharmonic_mul,2},
 
@@ -165,8 +167,8 @@ struct ftab str_tab[] = {
 	{"nbm_hv", Pnbm_hv,1},
 	{"nbm_rest", Pnbm_rest,1},
 
-	{"quote_to_nary",Pquote_to_nary,1},
-	{"quote_to_bin",Pquote_to_bin,2},
+	{"qt_to_nary",Pqt_to_nary,1},
+	{"qt_to_bin",Pqt_to_bin,2},
 
 	{"quotetotex_tb",Pquotetotex_tb,2},
 	{"quotetotex",Pquotetotex,1},
@@ -572,7 +574,7 @@ void Pwrite_to_tb(NODE arg,Q *rp)
 
 FNODE partial_eval(FNODE), fnode_to_nary(FNODE), fnode_to_bin(FNODE,int);
 
-void Pquote_to_nary(NODE arg,QUOTE *rp)
+void Pqt_to_nary(NODE arg,QUOTE *rp)
 {
 	FNODE f;
 
@@ -580,7 +582,7 @@ void Pquote_to_nary(NODE arg,QUOTE *rp)
 	MKQUOTE(*rp,f);	
 }
 
-void Pquote_to_bin(NODE arg,QUOTE *rp)
+void Pqt_to_bin(NODE arg,QUOTE *rp)
 {
 	FNODE f;
 	int direction;
@@ -591,46 +593,46 @@ void Pquote_to_bin(NODE arg,QUOTE *rp)
 	MKQUOTE(*rp,f);	
 }
 
-void Pquote_is_number(NODE arg,Q *rp)
+void Pqt_is_number(NODE arg,Q *rp)
 {
 	QUOTE q;
 	int ret;
 
 	q = (QUOTE)ARG0(arg);
-	asir_assert(q,O_QUOTE,"quote_is_number");
+	asir_assert(q,O_QUOTE,"qt_is_number");
 	ret = fnode_is_number(BDY(q));
 	STOQ(ret,*rp);
 }
 
-void Pquote_is_rational(NODE arg,Q *rp)
+void Pqt_is_rational(NODE arg,Q *rp)
 {
 	QUOTE q;
 	int ret;
 
 	q = (QUOTE)ARG0(arg);
-	asir_assert(q,O_QUOTE,"quote_is_rational");
+	asir_assert(q,O_QUOTE,"qt_is_rational");
 	ret = fnode_is_rational(BDY(q));
 	STOQ(ret,*rp);
 }
 
-void Pquote_is_integer(NODE arg,Q *rp)
+void Pqt_is_integer(NODE arg,Q *rp)
 {
 	QUOTE q;
 	int ret;
 
 	q = (QUOTE)ARG0(arg);
-	asir_assert(q,O_QUOTE,"quote_is_integer");
+	asir_assert(q,O_QUOTE,"qt_is_integer");
 	ret = fnode_is_integer(BDY(q));
 	STOQ(ret,*rp);
 }
 
-void Pquote_is_function(NODE arg,Q *rp)
+void Pqt_is_function(NODE arg,Q *rp)
 {
 	QUOTE q;
 	int ret;
 
 	q = (QUOTE)ARG0(arg);
-	asir_assert(q,O_QUOTE,"quote_is_function");
+	asir_assert(q,O_QUOTE,"qt_is_function");
 	if ( q->id == I_FUNC || q->id == I_IFUNC )
 		ret = 1;
 	else
@@ -638,7 +640,7 @@ void Pquote_is_function(NODE arg,Q *rp)
 	STOQ(ret,*rp);
 }
 
-void Pquote_is_dependent(NODE arg,Q *rp)
+void Pqt_is_dependent(NODE arg,Q *rp)
 {
 	P x;
 	QUOTE q,v;
@@ -647,8 +649,8 @@ void Pquote_is_dependent(NODE arg,Q *rp)
 
 	q = (QUOTE)ARG0(arg);
 	v = (QUOTE)ARG1(arg);
-	asir_assert(q,O_QUOTE,"quote_is_dependent");
-	asir_assert(v,O_QUOTE,"quote_is_dependent");
+	asir_assert(q,O_QUOTE,"qt_is_dependent");
+	asir_assert(v,O_QUOTE,"qt_is_dependent");
 	x = (P)eval(BDY(v));
 	if ( !x || OID(x) != O_P )
 		*rp = 0;
@@ -658,7 +660,7 @@ void Pquote_is_dependent(NODE arg,Q *rp)
 }
 
 
-void Pquote_match(NODE arg,Q *rp)
+void Pqt_match(NODE arg,Q *rp)
 {
 	FNODE f,g;
 	Obj obj;
@@ -669,10 +671,10 @@ void Pquote_match(NODE arg,Q *rp)
 #if 0
 	g = partial_eval(BDY(((QUOTE)ARG0(arg))));
 	MKQUOTE(q,g);
-	ret = quote_match((Obj)q,(Obj)ARG1(arg),&r);
+	ret = qt_match((Obj)q,(Obj)ARG1(arg),&r);
 #else
 	obj = (Obj)ARG0(arg);
-	ret = quote_match(obj,(Obj)ARG1(arg),&r);
+	ret = qt_match(obj,(Obj)ARG1(arg),&r);
 #endif
 	if ( ret ) {
 		do_assign(r);
@@ -681,7 +683,7 @@ void Pquote_match(NODE arg,Q *rp)
 		*rp = 0;
 }
 
-void Pnquote_match(NODE arg,Q *rp)
+void Pnqt_match(NODE arg,Q *rp)
 {
 	QUOTE fq,pq;
 	FNODE f,p;
@@ -690,8 +692,8 @@ void Pnquote_match(NODE arg,Q *rp)
 	NODE r;
 
 	mode = argc(arg)==3 ? (Q)ARG2(arg) : 0;
-	fq = (QUOTE)ARG0(arg); Pquote_normalize(mknode(2,fq,mode),&fq); f = (FNODE)BDY(fq);
-	pq = (QUOTE)ARG1(arg); Pquote_normalize(mknode(2,pq,mode),&pq); p = (FNODE)BDY(pq);
+	fq = (QUOTE)ARG0(arg); Pqt_normalize(mknode(2,fq,mode),&fq); f = (FNODE)BDY(fq);
+	pq = (QUOTE)ARG1(arg); Pqt_normalize(mknode(2,pq,mode),&pq); p = (FNODE)BDY(pq);
 	ret = nfnode_match(f,p,&r);
 	if ( ret ) {
 		fnode_do_assign(r);
@@ -705,7 +707,7 @@ FNODE rewrite_fnode(FNODE,NODE);
 
 extern Obj VOIDobj;
 
-void Pquote_match_rewrite(NODE arg,Obj *rp)
+void Pqt_match_rewrite(NODE arg,Obj *rp)
 {
 	FNODE f,g,h,c,value;
 	Obj obj;
@@ -714,7 +716,7 @@ void Pquote_match_rewrite(NODE arg,Obj *rp)
 	int ret,ind,ac;
 
 	obj = (Obj)ARG0(arg);
-	ret = quote_match(obj,(Obj)ARG1(arg),&r);
+	ret = qt_match(obj,(Obj)ARG1(arg),&r);
 	if ( ret ) {
 		for ( t = r, s0 = 0; t; t = NEXT(t) ) {
 			NEXTNODE(s0,s);
@@ -738,7 +740,7 @@ void Pquote_match_rewrite(NODE arg,Obj *rp)
 					*rp = VOIDobj;
 				break;
 			default:
-				error("quote_match_rewrite : invalid argument");
+				error("qt_match_rewrite : invalid argument");
 		}
 	} else
 		*rp = VOIDobj;
@@ -818,14 +820,14 @@ int merge_matching_node(NODE n,NODE a,NODE *rp)
 	return 1;
 }
 
-int quote_match_node(NODE f,NODE pat,NODE *rp) {
+int qt_match_node(NODE f,NODE pat,NODE *rp) {
 	NODE r,a,tf,tp,r1;
 	int ret;
 
 	if ( length(f) != length(pat) ) return 0;
 	r = 0;
 	for ( tf = f, tp = pat; tf; tf = NEXT(tf), tp = NEXT(tp) ) {
-		ret = quote_match((Obj)BDY(tf),(Obj)BDY(tp),&a);
+		ret = qt_match((Obj)BDY(tf),(Obj)BDY(tp),&a);
 		if ( !ret ) return 0;
 		ret = merge_matching_node(r,a,&r1);
 		if ( !ret ) return 0;
@@ -837,7 +839,7 @@ int quote_match_node(NODE f,NODE pat,NODE *rp) {
 
 /* f = [a,b,c,...] pat = [X,Y,...] rpat matches the rest of f */
 
-int quote_match_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
+int qt_match_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
 	QUOTE q;
 	Q id;
 	FNODE fn;
@@ -849,7 +851,7 @@ int quote_match_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
 	if ( length(f) < length(pat) ) return 0;
 	r = 0;
 	for ( tf = f, tp = pat; tp; tf = NEXT(tf), tp = NEXT(tp) ) {
-		ret = quote_match((Obj)BDY(tf),(Obj)BDY(tp),&a);
+		ret = qt_match((Obj)BDY(tf),(Obj)BDY(tp),&a);
 		if ( !ret ) return 0;
 		ret = merge_matching_node(r,a,&r1);
 		if ( !ret ) return 0;
@@ -861,7 +863,7 @@ int quote_match_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
 	MKLIST(alist,a);
 	arg = mknode(1,alist);
 	Pfunargs_to_quote(arg,&q);
-	ret = quote_match((Obj)q,rpat,&a);
+	ret = qt_match((Obj)q,rpat,&a);
 	if ( !ret ) return 0;
 	ret = merge_matching_node(r,a,&r1);
 	if ( !ret ) return 0;
@@ -880,7 +882,7 @@ void get_quote_id_arg(QUOTE f,int *id,NODE *r)
 
 /* *rp : [[quote(A),quote(1)],...] */
 
-int quote_match(Obj f, Obj pat, NODE *rp)
+int qt_match(Obj f, Obj pat, NODE *rp)
 {
 	NODE tf,tp,head,body;
 	NODE parg,farg,r;
@@ -899,7 +901,7 @@ int quote_match(Obj f, Obj pat, NODE *rp)
 			return 0;
 	else if ( OID(pat) == O_LIST ) {
 		if ( OID(f) == O_LIST )
-			return quote_match_node(BDY((LIST)f),BDY((LIST)pat),rp);
+			return qt_match_node(BDY((LIST)f),BDY((LIST)pat),rp);
 		else
 			return 0;
 	} else if ( OID(pat) == O_QUOTE ) {
@@ -926,10 +928,10 @@ int quote_match(Obj f, Obj pat, NODE *rp)
 
 				tp = BDY((LIST)BDY(parg));
 				if ( pid == I_LIST )
-					return quote_match_node(tf,tp,rp);
+					return qt_match_node(tf,tp,rp);
 				else {
 					rpat = (Obj)BDY(NEXT(parg));
-					return quote_match_cons(tf,tp,rpat,rp);
+					return qt_match_cons(tf,tp,rpat,rp);
 				}
 
 			case I_PVAR:
@@ -945,7 +947,7 @@ int quote_match(Obj f, Obj pat, NODE *rp)
 				if ( id == I_FUNC ) {
 					r = mknode(2,BDY(parg),BDY(farg)); MKLIST(l,r);
 					head = mknode(1,l);
-					ret = quote_match(BDY(NEXT(farg)),
+					ret = qt_match(BDY(NEXT(farg)),
 								BDY(NEXT(parg)),&body);
 					if ( !ret ) return 0;
 					else return merge_matching_node(head,body,rp);
@@ -973,7 +975,7 @@ int quote_match(Obj f, Obj pat, NODE *rp)
 				get_quote_id_arg((QUOTE)pat,&pid,&parg);
 				get_quote_id_arg((QUOTE)f,&id,&farg);
 				if ( compqa(CO,BDY(farg),BDY(parg)) ) return 0;
-				return quote_match_node(NEXT(farg),NEXT(parg),rp);
+				return qt_match_node(NEXT(farg),NEXT(parg),rp);
 
 			default:
 				if ( OID(f) != O_QUOTE ) return 0;
@@ -981,7 +983,7 @@ int quote_match(Obj f, Obj pat, NODE *rp)
 				if ( id != pid ) return 0;
 				get_quote_id_arg((QUOTE)pat,&pid,&parg);
 				get_quote_id_arg((QUOTE)f,&id,&farg);
-				return quote_match_node(farg,parg,rp);
+				return qt_match_node(farg,parg,rp);
 		}
 	}
 }
@@ -2051,14 +2053,69 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
 FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand);
 FNODE fnode_normalize(FNODE f,int expand);
 
-void Pquote_normalize(NODE arg,QUOTE *rp)
+VL reordvars(VL vl0,NODE head)
+{
+	VL vl,svl,tvl;
+	int i,j;
+	NODE n;
+	P t;
+	V *va;
+	V v;
+
+	for ( vl = 0, i = 0, n = head; n; n = NEXT(n), i++ ) {
+		NEXTVL(vl,tvl);
+		if ( !(t = (P)BDY(n)) || (OID(t) != O_P) )
+			error("reordvars : invalid argument");
+		VR(tvl) = VR(t);
+	}
+	va = (V *)ALLOCA(i*sizeof(V));
+	for ( j = 0, svl = vl; j < i; j++, svl = NEXT(svl) )
+		va[j] = VR(svl);
+	for ( svl = vl0; svl; svl = NEXT(svl) ) {
+		v = VR(svl);
+		for ( j = 0; j < i; j++ )
+			if ( v == va[j] )
+				break;
+		if ( j == i ) {
+			NEXTVL(vl,tvl);
+			VR(tvl) = v;
+		}
+	}
+	if ( vl )
+		NEXT(tvl) = 0;
+	return vl;
+}
+
+VL qt_current_ord;
+LIST qt_current_ord_obj;
+
+void Pqt_set_ord(NODE arg,LIST *rp)
+{
+	NODE r0,r;
+	VL vl;
+	P v;
+
+	if ( !argc(arg) ) 
+		*rp = qt_current_ord_obj;
+	else {
+		qt_current_ord = reordvars(CO,BDY((LIST)ARG0(arg)));
+		for ( r0 = 0, vl = qt_current_ord; vl; vl = NEXT(vl) ) {
+			NEXTNODE(r0,r); MKV(vl->v,v); BDY(r) = v;
+		}
+		if ( r0 ) NEXT(r) = 0;
+		MKLIST(*rp,r0);
+		qt_current_ord_obj = *rp;
+	}
+}
+
+void Pqt_normalize(NODE arg,QUOTE *rp)
 {
 	QUOTE q,r;
 	FNODE f;
 	int expand,ac;
 
 	ac = argc(arg);
-	if ( !ac ) error("quote_normalize : invalid argument");
+	if ( !ac ) error("qt_normalize : invalid argument");
 	q = (QUOTE)ARG0(arg);
 	if ( ac == 2 )
 		expand = QTOS((Q)ARG1(arg));
@@ -2073,7 +2130,7 @@ void Pquote_normalize(NODE arg,QUOTE *rp)
 
 NBP fnode_to_nbp(FNODE f);
 
-void Pquote_to_nbp(NODE arg,NBP *rp)
+void Pqt_to_nbp(NODE arg,NBP *rp)
 {
 	QUOTE q;
 	FNODE f;
@@ -2302,7 +2359,7 @@ NBP fnode_to_nbp(FNODE f)
 	}
 }
 
-void Pnquote_comp(NODE arg,Q *rp)
+void Pnqt_comp(NODE arg,Q *rp)
 {
 	QUOTE q1,q2;
 	FNODE f1,f2;
@@ -2947,7 +3004,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 		case I_FORMULA:
 			switch ( f2->id ) {
 				case I_FORMULA:
-					return arf_comp(CO,FA0(f1),FA0(f2));
+					return arf_comp(qt_current_ord?qt_current_ord:CO,FA0(f1),FA0(f2));
 				case I_FUNC: case I_IFUNC: case I_PVAR:
 					return -1;
 				default:
