@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.35 2005/10/19 04:51:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.36 2005/10/26 07:33:03 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -67,6 +67,7 @@ static int skipspace();
 
 extern INFILE asir_infile;
 extern struct oTKWD kwd[];
+extern Obj VOIDobj;
 
 extern int main_parser;
 extern char *parse_strp;
@@ -418,7 +419,10 @@ int yylex()
 				return GFPNGEN;
 			else if ( !strcmp(tbuf,"@s") )
 				return GFSNGEN;
-			else if ( !strcmp(tbuf,"@i") ) {
+			else if ( !strcmp(tbuf,"@void") ) {
+				yylvalp->p = VOIDobj;
+				return FORMULA;
+			} else if ( !strcmp(tbuf,"@i") ) {
 				extern pointer IU;
 
 				yylvalp->p = IU;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.55 2005/12/02 07:13:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.56 2005/12/09 08:10:44 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -65,6 +65,7 @@ int evalstatline;
 int recv_intr;
 int show_crossref;
 void gen_searchf_searchonly(char *name,FUNC *r);
+LIST eval_arg(FNODE a,unsigned int quote);
 
 pointer eval(FNODE f)
 {
@@ -178,6 +179,9 @@ pointer eval(FNODE f)
 			val = evalf((FUNC)FA0(f),(FNODE)FA1(f),0); break;
 		case I_FUNC_OPT:
 			val = evalf((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
+		case I_FUNC_QARG:
+			tn = BDY(eval_arg((FNODE)FA1(f),(unsigned int)0xffffffff));
+			val = bevalf((FUNC)FA0(f),tn); break;
 		case I_PFDERIV:
 			val = evalf_deriv((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
 		case I_MAP:
@@ -544,11 +548,11 @@ FNODE partial_eval(FNODE f)
 			break;
 
 		/* XXX : function is evaluated */
-		case I_FUNC:
+		case I_FUNC: case I_FUNC_QARG:
 			a1 = partial_eval((FNODE)FA1(f));
 			func = (FUNC)FA0(f);
-			a1 =  mkfnode(2,f->id,func,a1);
-			if ( func->id == A_UNDEF )
+			a1 =  mkfnode(2,I_FUNC,func,a1);
+			if ( f->id == I_FUNC_QARG || func->id == A_UNDEF )
 				return a1;
 			else {
 				obj = eval(a1);
@@ -589,10 +593,10 @@ NODE partial_eval_node(NODE n)
 	return r0;
 }
 
-NODE rewrite_fnode_node(NODE n,NODE arg);
-FNODE rewrite_fnode(FNODE f,NODE arg);
+NODE rewrite_fnode_node(NODE n,NODE arg,int qarg);
+FNODE rewrite_fnode(FNODE f,NODE arg,int qarg);
 
-FNODE rewrite_fnode(FNODE f,NODE arg)
+FNODE rewrite_fnode(FNODE f,NODE arg,int qarg)
 {
 	FNODE a0,a1,a2,value;
 	NODE n,t,pair;
@@ -604,39 +608,39 @@ FNODE rewrite_fnode(FNODE f,NODE arg)
 	switch ( f->id ) {
 		case I_NOT: case I_PAREN: case I_MINUS:
 		case I_CAR: case I_CDR:
-			a0 = rewrite_fnode((FNODE)FA0(f),arg);
+			a0 = rewrite_fnode((FNODE)FA0(f),arg,qarg);
 			return mkfnode(1,f->id,a0);
 
 		case I_BOP: case I_COP: case I_LOP:
-			a1 = rewrite_fnode((FNODE)FA1(f),arg);
-			a2 = rewrite_fnode((FNODE)FA2(f),arg);
+			a1 = rewrite_fnode((FNODE)FA1(f),arg,qarg);
+			a2 = rewrite_fnode((FNODE)FA2(f),arg,qarg);
 			return mkfnode(3,f->id,FA0(f),a1,a2);
 
 		case I_AND: case I_OR:
-			a0 = rewrite_fnode((FNODE)FA0(f),arg);
-			a1 = rewrite_fnode((FNODE)FA1(f),arg);
+			a0 = rewrite_fnode((FNODE)FA0(f),arg,qarg);
+			a1 = rewrite_fnode((FNODE)FA1(f),arg,qarg);
 			return mkfnode(2,f->id,a0,a1);
 
 		/* ternary operators */
 		case I_CE:
-			a0 = rewrite_fnode((FNODE)FA0(f),arg);
-			a1 = rewrite_fnode((FNODE)FA1(f),arg);
-			a2 = rewrite_fnode((FNODE)FA2(f),arg);
+			a0 = rewrite_fnode((FNODE)FA0(f),arg,qarg);
+			a1 = rewrite_fnode((FNODE)FA1(f),arg,qarg);
+			a2 = rewrite_fnode((FNODE)FA2(f),arg,qarg);
 			return mkfnode(3,f->id,a0,a1,a2);
 			break;
 
 		/* nary operators */
 		case I_NARYOP:
-			n = rewrite_fnode_node((NODE)FA1(f),arg);
+			n = rewrite_fnode_node((NODE)FA1(f),arg,qarg);
 			return mkfnode(2,f->id,FA0(f),n);
 
 		/* and function */
 		case I_FUNC:
-			a1 = rewrite_fnode((FNODE)FA1(f),arg);
-			return mkfnode(2,f->id,FA0(f),a1);
+			a1 = rewrite_fnode((FNODE)FA1(f),arg,qarg);
+			return mkfnode(2,qarg?I_FUNC_QARG:f->id,FA0(f),a1);
 
 		case I_LIST: case I_EV:
-			n = rewrite_fnode_node((NODE)FA0(f),arg);
+			n = rewrite_fnode_node((NODE)FA0(f),arg,qarg);
 			return mkfnode(1,f->id,n);
 
 		case I_STR: case I_FORMULA:
@@ -647,7 +651,8 @@ FNODE rewrite_fnode(FNODE f,NODE arg)
 			pv = (int)FA0(f);
 			for ( t = arg; t; t = NEXT(t) ) {
 				pair = (NODE)BDY(t);
-				ind = (int)BDY(pair); value = (FNODE)BDY(NEXT(pair));
+				ind = (int)BDY(pair);
+				value = (FNODE)BDY(NEXT(pair));
 				if ( pv == ind )
 					return value;
 			}
@@ -659,13 +664,13 @@ FNODE rewrite_fnode(FNODE f,NODE arg)
 	}
 }
 
-NODE rewrite_fnode_node(NODE n,NODE arg)
+NODE rewrite_fnode_node(NODE n,NODE arg,int qarg)
 {
 	NODE r0,r,t;
 
 	for ( r0 = 0, t = n; t; t = NEXT(t) ) {
 		NEXTNODE(r0,r);
-		BDY(r) = rewrite_fnode((FNODE)BDY(t),arg);
+		BDY(r) = rewrite_fnode((FNODE)BDY(t),arg,qarg);
 	}
 	if ( r0 ) NEXT(r) = 0;
 	return r0;

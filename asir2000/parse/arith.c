@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.24 2005/11/25 07:18:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.25 2005/11/27 00:07:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -66,9 +66,11 @@ ARF addfs, subfs, mulfs, divfs, remfs, pwrfs;
 void divsdc();
 int compqa();
 int compquote();
+int compvoid();
 
-struct oAFUNC afunc[] = {
-/* ???=0 */	{0,0,0,0,0,0,0},
+struct oAFUNC afunc0[] = {
+/* O_VOID=-1 */ {notdef,notdef,notdef,notdef,notdef,notdef,compvoid},
+/* ???=0 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_N=1 */	{addnum,subnum,mulnum,divnum,pwrnum,chsgnnum,compnum},
 /* O_P=2 */	{addp,subp,mulp,divr,pwrp,chsgnp,compp},
 /* O_R=3 */	{addr,subr,mulr,divr,pwrr,chsgnr,compr},
@@ -96,6 +98,8 @@ struct oAFUNC afunc[] = {
 /* O_NBP=25 */	{addnbp,subnbp,mulnbp,notdef,pwrnbp,chsgnnbp,compnbp},
 };
 
+struct oAFUNC *afunc = &afunc0[1];
+
 void arf_init() {
 	addfs = &arf[0]; addfs->name = "+"; addfs->fp = arf_add;
 	subfs = &arf[1]; subfs->name = "-"; subfs->fp = arf_sub;
@@ -105,9 +109,7 @@ void arf_init() {
 	pwrfs = &arf[5]; pwrfs->name = "^"; pwrfs->fp = arf_pwr;
 }
 
-void arf_add(vl,a,b,r)
-VL vl;
-Obj a,b,*r;
+void arf_add(VL vl,Obj a,Obj b,Obj *r)
 {
 	int mid;
 
@@ -125,9 +127,7 @@ Obj a,b,*r;
 		notdef(vl,a,b,r);
 }
 
-void arf_sub(vl,a,b,r)
-VL vl;
-Obj a,b,*r;
+void arf_sub(VL vl,Obj a,Obj b,Obj *r)
 {
 	int mid;
 
@@ -148,9 +148,7 @@ Obj a,b,*r;
 		notdef(vl,a,b,r);
 }
 
-void arf_mul(vl,a,b,r)
-VL vl;
-Obj a,b,*r;
+void arf_mul(VL vl,Obj a,Obj b,Obj *r)
 {
 	int mid,aid,bid;
 
@@ -213,9 +211,7 @@ Obj a,b,*r;
 	}
 }
 
-void arf_div(vl,a,b,r)
-VL vl;
-Obj a,b,*r;
+void arf_div(VL vl,Obj a,Obj b,Obj *r)
 {
 	int mid;
 
@@ -232,9 +228,7 @@ Obj a,b,*r;
 		notdef(vl,a,b,r);
 }
 
-void arf_remain(vl,a,b,r)
-VL vl;
-Obj a,b,*r;
+void arf_remain(VL vl,Obj a,Obj b,Obj *r)
 {
 	if ( !b )
 		error("rem : division by 0");
@@ -248,9 +242,7 @@ Obj a,b,*r;
 
 int allow_laurent;
 
-void arf_pwr(vl,a,e,r)
-VL vl;
-Obj a,e,*r;
+void arf_pwr(VL vl,Obj a,Obj e,Obj *r)
 {
 	R t;
 
@@ -291,8 +283,7 @@ Obj a,e,*r;
 		notdef(vl,a,e,r);
 }
 
-void arf_chsgn(a,r)
-Obj a,*r;
+void arf_chsgn(Obj a,Obj *r)
 {
 	if ( !a )
 		*r = 0;
@@ -300,9 +291,7 @@ Obj a,*r;
 		(*(afunc[OID(a)].chsgn))(a,r);
 }
 
-int arf_comp(vl,a,b)
-VL vl;
-Obj a,b;
+int arf_comp(VL vl,Obj a,Obj b)
 {
 	if ( !a )
 		if ( !b )
@@ -317,9 +306,7 @@ Obj a,b;
 		return (*afunc[OID(a)].comp)(vl,a,b);
 }
 
-int complist(vl,a,b)
-VL vl;
-LIST a,b;
+int complist(VL vl,LIST a,LIST b)
 {
 	int t;
 	NODE an,bn;
@@ -340,4 +327,16 @@ LIST a,b;
 		if ( t = arf_comp(vl,BDY(an),BDY(bn)) )
 			return t;
 	return 0;
+}
+
+int compvoid(VL vl,Obj a,Obj b)
+{
+	if ( !a )
+		if ( !b ) return 0;
+		else return -1;
+	else if ( !b )
+		return 1;
+	else if ( OID(a) > OID(b) ) return 1;
+	else if ( OID(b) < OID(a) ) return -1;
+	else return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.24 2005/09/28 08:40:31 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/quote.c,v 1.25 2005/09/30 02:20:06 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -402,7 +402,9 @@ struct fid_spec fid_spec_tab[] = {
 	{I_PAREN,A_fnode,A_end},
 	{I_MINUS,A_fnode,A_end},
 	{I_NARYOP,A_arf,A_node,A_end},
-	{I_CONS,A_node,A_fnode,A_end}
+	{I_CONS,A_node,A_fnode,A_end},
+	{I_FUNC_QARG,A_func,A_fnode,A_end},
+	{I_FUNC_HEAD,A_func,A_end},
 };
 
 #define N_FID_SPEC (sizeof(fid_spec_tab)/sizeof(struct fid_spec))

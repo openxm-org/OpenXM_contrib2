@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.9 2005/09/28 08:08:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.10 2005/11/16 23:42:54 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -616,7 +616,7 @@ void PRINTFNODE(FNODE f,int paren)
 		/* lists */
 		case I_LIST: PUTS("["); PRINTFNODENODE((NODE)FA0(f)); PUTS("]"); break;
 		/* function */
-		case I_FUNC:
+		case I_FUNC: case I_FUNC_QARG:
 			if ( !strcmp(((FUNC)FA0(f))->name,"@pi") ) PUTS("@pi");
 			else if ( !strcmp(((FUNC)FA0(f))->name,"@e") ) PUTS("@e");
 			else {
