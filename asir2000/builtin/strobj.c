@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.106 2005/12/10 14:14:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.107 2005/12/11 05:27:30 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,9 +92,9 @@ void Pquotetotex();
 void Pquotetotex_env();
 void Pflatten_quote();
 
-void Pqt_is_integer(),Pqt_is_rational(),Pqt_is_number();
-void Pqt_is_dependent(),Pqt_is_function();
-void Pqt_set_ord();
+void Pqt_is_integer(),Pqt_is_rational(),Pqt_is_number(),Pqt_is_coef();
+void Pqt_is_dependent(),Pqt_is_function(),Pqt_is_var();
+void Pqt_set_ord(),Pqt_set_coef();
 void Pqt_normalize();
 void Pnqt_comp();
 void Pnqt_match();
@@ -127,13 +127,13 @@ FNODE partial_eval(FNODE), fnode_to_nary(FNODE), fnode_to_bin(FNODE,int);
 FNODE nfnode_add(FNODE a1,FNODE a2,int expand);
 FNODE nfnode_mul(FNODE a1,FNODE a2,int expand);
 FNODE nfnode_pwr(FNODE a1,FNODE a2,int expand);
-FNODE nfnode_mul_coef(Num c,FNODE f,int expand);
+FNODE nfnode_mul_coef(Obj c,FNODE f,int expand);
 FNODE fnode_expand_pwr(FNODE f,int n,int expand);
 FNODE to_narymul(FNODE f);
 FNODE to_naryadd(FNODE f);
 FNODE fnode_node_to_nary(ARF op,NODE n);
 void fnode_base_exp(FNODE f,FNODE *bp,FNODE *ep);
-void fnode_coef_body(FNODE f,Num *cp,FNODE *bp);
+void fnode_coef_body(FNODE f,Obj *cp,FNODE *bp);
 FNODE nfnode_match_rewrite(FNODE f,FNODE p,FNODE c,FNODE a,int mode);
 FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand);
 FNODE fnode_normalize(FNODE f,int expand);
@@ -155,12 +155,15 @@ struct ftab str_tab[] = {
 	{"string_to_tb",Pstring_to_tb,1},
 	{"get_quote_id",Pget_quote_id,1},
 
+	{"qt_is_var",Pqt_is_var,1},
+	{"qt_is_coef",Pqt_is_coef,1},
 	{"qt_is_number",Pqt_is_number,1},
 	{"qt_is_rational",Pqt_is_rational,1},
 	{"qt_is_integer",Pqt_is_integer,1},
 	{"qt_is_function",Pqt_is_function,1},
 	{"qt_is_dependent",Pqt_is_dependent,2},
 
+	{"qt_set_coef",Pqt_set_coef,-1},
 	{"qt_set_ord",Pqt_set_ord,-1},
 	{"qt_normalize",Pqt_normalize,-2},
 	{"qt_match",Pqt_match,2},
@@ -605,6 +608,28 @@ void Pqt_to_bin(NODE arg,QUOTE *rp)
 	f = fnode_to_bin(BDY((QUOTE)ARG0(arg)),direction);
 
 	MKQUOTE(*rp,f);	
+}
+
+void Pqt_is_var(NODE arg,Q *rp)
+{
+	QUOTE q;
+	int ret;
+
+	q = (QUOTE)ARG0(arg);
+	asir_assert(q,O_QUOTE,"qt_is_var");
+	ret = fnode_is_var(BDY(q));
+	STOQ(ret,*rp);
+}
+
+void Pqt_is_coef(NODE arg,Q *rp)
+{
+	QUOTE q;
+	int ret;
+
+	q = (QUOTE)ARG0(arg);
+	asir_assert(q,O_QUOTE,"qt_is_coef");
+	ret = fnode_is_coef(BDY(q));
+	STOQ(ret,*rp);
 }
 
 void Pqt_is_number(NODE arg,Q *rp)
@@ -2141,8 +2166,8 @@ VL reordvars(VL vl0,NODE head)
 	return vl;
 }
 
-VL qt_current_ord;
-LIST qt_current_ord_obj;
+VL qt_current_ord, qt_current_coef;
+LIST qt_current_ord_obj,qt_current_coef_obj;
 
 void Pqt_set_ord(NODE arg,LIST *rp)
 {
@@ -2160,6 +2185,30 @@ void Pqt_set_ord(NODE arg,LIST *rp)
 		if ( r0 ) NEXT(r) = 0;
 		MKLIST(*rp,r0);
 		qt_current_ord_obj = *rp;
+	}
+}
+
+void Pqt_set_coef(NODE arg,LIST *rp)
+{
+	NODE r0,r,n;
+	VL vl0,vl;
+	P v;
+
+	if ( !argc(arg) ) 
+		*rp = qt_current_coef_obj;
+	else {
+		n = BDY((LIST)ARG0(arg));
+		for ( vl0 = 0, r0 = 0; n; n = NEXT(n) ) {
+			NEXTNODE(r0,r);
+			NEXTVL(vl0,vl);
+			vl->v = VR((P)BDY(n));
+			MKV(vl->v,v); BDY(r) = v;
+		}
+		if ( r0 ) NEXT(r) = 0;
+		if ( vl0 ) NEXT(vl) = 0;
+		qt_current_coef = vl0;
+		MKLIST(*rp,r0);
+		qt_current_coef_obj = *rp;
 	}
 }
 
@@ -2428,7 +2477,65 @@ void Pnqt_comp(NODE arg,Q *rp)
 	STOQ(r,*rp);
 }
 
-INLINE int fnode_is_number(FNODE f)
+int fnode_is_var(FNODE f)
+{
+	Obj obj;
+	VL vl,t,s;
+	DCP dc;
+
+	if ( fnode_is_coef(f) ) return 0;
+	switch ( f->id ) {
+		case I_PAREN:
+			return fnode_is_var(FA0(f));
+				
+		case I_FORMULA:
+			obj = FA0(f);
+			if ( obj && OID(obj) == O_P ) {
+				dc = DC((P)obj);
+				if ( !cmpq(DEG(dc),ONE) && !NEXT(dc) 
+					&& !arf_comp(CO,(Obj)COEF(dc),(Obj)ONE) ) return 1;
+				else return 0;
+			} else return 0;
+		
+		default:
+			return 0;
+	}
+}
+
+int fnode_is_coef(FNODE f)
+{
+	Obj obj;
+	VL vl,t,s;
+
+	switch ( f->id ) {
+		case I_MINUS: case I_PAREN:
+			return fnode_is_coef(FA0(f));
+				
+		case I_FORMULA:
+			obj = FA0(f);
+			if ( !obj ) return 1;
+			else if ( OID(obj) == O_QUOTE ) 
+				return fnode_is_coef(BDY((QUOTE)obj));
+			else if ( NUM(obj) ) return 1;
+			else if ( OID(obj) == O_P || OID(obj) == O_R) {
+				get_vars_recursive(obj,&vl);
+				for ( t = vl; t; t = NEXT(t) ) {
+					for ( s = qt_current_coef; s; s = NEXT(s) )
+						if ( t->v == s->v ) break;
+					if ( !s ) return 0;
+				}
+				return 1;
+			} else return 0;
+		
+		case I_BOP:
+			return fnode_is_coef(FA1(f)) && fnode_is_coef(FA2(f));
+		
+		default:
+			return 0;
+	}
+}
+
+int fnode_is_number(FNODE f)
 {
 	Obj obj;
 
@@ -2588,7 +2695,7 @@ FNODE fnode_normalize(FNODE f,int expand)
 			break;
 		
 		case I_MINUS:
-			r = nfnode_mul_coef((Num)q,
+			r = nfnode_mul_coef((Obj)q,
 				fnode_normalize(FA0(f),expand),expand);
 			break;
 
@@ -2601,7 +2708,7 @@ FNODE fnode_normalize(FNODE f,int expand)
 					r = nfnode_add(a1,a2,expand);
 					break;
 				case '-':
-					a2 = nfnode_mul_coef((Num)q,a2,expand);
+					a2 = nfnode_mul_coef((Obj)q,a2,expand);
 					r = nfnode_add(a1,a2,expand);
 					break;
 				case '*':
@@ -2688,7 +2795,7 @@ FNODE nfnode_add(FNODE f1,FNODE f2,int expand)
 	NODE n1,n2,r0,r;
 	FNODE b1,b2;
 	int s;
-	Num c1,c2,c;
+	Obj c1,c2,c;
 
 	if ( IS_ZERO(f1) ) return f2;
 	else if ( IS_ZERO(f2) ) return f1;
@@ -2702,7 +2809,7 @@ FNODE nfnode_add(FNODE f1,FNODE f2,int expand)
 		} else if ( s < 0 ) {
 			NEXTNODE(r0,r); BDY(r) = BDY(n2); n2 = NEXT(n2);
 		} else {
-			addnum(0,c1,c2,&c);
+			arf_add(CO,c1,c2,&c);
 			if ( c ) {
 				NEXTNODE(r0,r); BDY(r) = nfnode_mul_coef(c,b1,expand);
 			}
@@ -2738,14 +2845,15 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 	FNODE b1,b2,e1,e2,cc,t,t1;
 	FNODE *m;
 	int s;
-	Num c1,c2,c,e;
+	Obj c1,c2,c;
+	Num e;
 	int l1,l,i,j;
 
 	if ( IS_ZERO(f1) || IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,0);
-	else if ( fnode_is_number(f1) ) 
-		return nfnode_mul_coef((Num)eval(f1),f2,expand);
-	else if ( fnode_is_number(f2) ) 
-		return nfnode_mul_coef((Num)eval(f2),f1,expand);
+	else if ( fnode_is_coef(f1) ) 
+		return nfnode_mul_coef((Obj)eval(f1),f2,expand);
+	else if ( fnode_is_coef(f2) ) 
+		return nfnode_mul_coef((Obj)eval(f2),f1,expand);
 
 	if ( expand && IS_NARYADD(f1) ) {
 		t = mkfnode(1,I_FORMULA,0);
@@ -2765,7 +2873,7 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 	}
 
 	fnode_coef_body(f1,&c1,&b1); fnode_coef_body(f2,&c2,&b2);
-	mulnum(0,c1,c2,&c);
+	arf_mul(CO,c1,c2,&c);
 	if ( !c ) return mkfnode(1,I_FORMULA,0);
 
 
@@ -2799,22 +2907,25 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
 {
 	FNODE b,b1,e1,e,cc,r,mf2,mone,inv;
-	Num c,c1,nf2;
+	Obj c,c1;
+	Num nf2;
 	int ee;
 	NODE arg,n,t0,t1;
 	Q q;
 
 	if ( IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,ONE);
 	else if ( IS_ZERO(f1) ) return mkfnode(1,I_FORMULA,0);
-	else if ( fnode_is_number(f1) ) {
+	else if ( fnode_is_coef(f1) ) {
 		if ( fnode_is_integer(f2) ) {
 			if ( fnode_is_one(f2) ) return f1;
 			else {
-				pwrnum(0,(Num)eval(f1),(Num)eval(f2),&c);
+				arf_pwr(CO,eval(f1),(Obj)eval(f2),&c);
 				return mkfnode(1,I_FORMULA,c);
 			}
-		} else
+		} else {
+			f1 = mkfnode(1,I_FORMULA,eval(f1));
 			return mkfnode(3,I_BOP,pwrfs,f1,f2);
+		}
 	} else if ( IS_BINARYPWR(f1) ) {
 		b1 = FA1(f1); e1 = FA2(f1);
 		e = nfnode_mul(e1,f2,expand);
@@ -2826,7 +2937,7 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
 		&& fnode_is_integer(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
 		nf2 = (Num)eval(f2);
-		pwrnum(0,(Num)c1,nf2,&c);
+		arf_pwr(CO,c1,(Obj)nf2,&c);
 		ee = QTOS((Q)nf2);
 		cc = mkfnode(1,I_FORMULA,c);
 		if ( fnode_is_nonnegative_integer(f2) )
@@ -2918,17 +3029,17 @@ FNODE to_narymul(FNODE f)
 	return r;
 }
 
-FNODE nfnode_mul_coef(Num c,FNODE f,int expand)
+FNODE nfnode_mul_coef(Obj c,FNODE f,int expand)
 {
 	FNODE b1,cc;
-	Num c1,c2;
+	Obj c1,c2;
 	NODE n,r,r0;
 
 	if ( !c )
 		return mkfnode(I_FORMULA,0);
 	else {
 		fnode_coef_body(f,&c1,&b1);
-		mulnum(0,c,c1,&c2);
+		arf_mul(CO,c,c1,&c2);
 		if ( UNIQ(c2) ) return b1;
 		else {
 			cc = mkfnode(1,I_FORMULA,c2);
@@ -2953,22 +3064,22 @@ FNODE nfnode_mul_coef(Num c,FNODE f,int expand)
 	}
 }
 
-void fnode_coef_body(FNODE f,Num *cp,FNODE *bp)
+void fnode_coef_body(FNODE f,Obj *cp,FNODE *bp)
 {
 	FNODE c;
 
-	if ( fnode_is_number(f) ) {
-		*cp = eval(f); *bp = mkfnode(1,I_FORMULA,ONE);
+	if ( fnode_is_coef(f) ) {
+		*cp = (Obj)eval(f); *bp = mkfnode(1,I_FORMULA,ONE);
 	} else if ( IS_NARYMUL(f) ) {
 		c=(FNODE)BDY((NODE)FA1(f));
-		if ( fnode_is_number(c) ) {
-			*cp = eval(c);
+		if ( fnode_is_coef(c) ) {
+			*cp = (Obj)eval(c);
 			*bp = fnode_node_to_nary(mulfs,NEXT((NODE)FA1(f)));
 		} else {
-			*cp = (Num)ONE; *bp = f;
+			*cp = (Obj)ONE; *bp = f;
 		}
 	} else {
-		*cp = (Num)ONE; *bp = f;
+		*cp = (Obj)ONE; *bp = f;
 	}
 }
 
@@ -2980,7 +3091,8 @@ int nfnode_comp(FNODE f1,FNODE f2)
 	int r,i1,i2,ret;
 	char *nm1,*nm2;
 	FNODE b1,b2,e1,e2,g,a1,a2,fn1,fn2;
-	Num ee,ee1,c1,c2;
+	Num ee,ee1;
+	Obj c1,c2;
 
 	if ( IS_NARYADD(f1) || IS_NARYADD(f2) ) {
 		f1 = to_naryadd(f1); f2 = to_naryadd(f2);
@@ -2995,7 +3107,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 	if ( IS_NARYMUL(f1) || IS_NARYMUL(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
 		fnode_coef_body(f2,&c2,&b2);
-		if ( !compfnode(b1,b2) ) return compnum(0,c1,c2);
+		if ( !compfnode(b1,b2) ) return arf_comp(CO,c1,c2);
 		b1 = to_narymul(b1); b2 = to_narymul(b2);
 		n1 = (NODE)FA1(b1); n2 = (NODE)FA1(b2);
 		while ( 1 ) {

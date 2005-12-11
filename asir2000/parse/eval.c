@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.57 2005/12/10 14:14:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.58 2005/12/11 05:27:30 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -551,7 +551,7 @@ FNODE partial_eval(FNODE f)
 		case I_FUNC:
 			a1 = partial_eval((FNODE)FA1(f));
 			func = (FUNC)FA0(f);
-			if ( func->id == A_UNDEF ) {
+			if ( func->id == A_UNDEF || func->id != A_USR ) {
 				a1 =  mkfnode(2,I_FUNC,func,a1);
 				return a1;
 			} else {
