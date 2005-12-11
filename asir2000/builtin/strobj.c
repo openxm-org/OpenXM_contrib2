@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.105 2005/12/09 08:10:44 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.106 2005/12/10 14:14:15 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -109,7 +109,7 @@ void Pnbm_hxky(), Pnbm_xky_rest();
 void Pnbm_hv(), Pnbm_rest();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
-void Pqt_match(),Pget_quote_id(),Pqt_match_rewrite();
+void Pqt_match(),Pget_quote_id();
 void Pqt_to_nary(),Pqt_to_bin();
 void fnode_do_assign(NODE arg);
 void do_assign(NODE arg);
@@ -137,6 +137,7 @@ void fnode_coef_body(FNODE f,Num *cp,FNODE *bp);
 FNODE nfnode_match_rewrite(FNODE f,FNODE p,FNODE c,FNODE a,int mode);
 FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand);
 FNODE fnode_normalize(FNODE f,int expand);
+FNODE rewrite_fnode(FNODE f,NODE arg,int qarg);
 
 struct ftab str_tab[] = {
 	{"sprintf",Psprintf,-99999999},
@@ -163,7 +164,6 @@ struct ftab str_tab[] = {
 	{"qt_set_ord",Pqt_set_ord,-1},
 	{"qt_normalize",Pqt_normalize,-2},
 	{"qt_match",Pqt_match,2},
-	{"qt_match_rewrite",Pqt_match_rewrite,-4},
 	{"nqt_match_rewrite",Pnqt_match_rewrite,3},
 
 	{"nqt_comp",Pnqt_comp,2},
@@ -710,50 +710,6 @@ void Pnqt_match(NODE arg,Q *rp)
 		*rp = 0;
 }
 
-
-FNODE rewrite_fnode(FNODE,NODE,int);
-
-extern Obj VOIDobj;
-
-void Pqt_match_rewrite(NODE arg,Obj *rp)
-{
-	FNODE f,g,h,c,value;
-	Obj obj;
-	QUOTE q;
-	NODE r,t,s,s0,pair;
-	int ret,ind,ac;
-
-	obj = (Obj)ARG0(arg);
-	ret = qt_match(obj,(Obj)ARG1(arg),&r);
-	if ( ret ) {
-		for ( t = r, s0 = 0; t; t = NEXT(t) ) {
-			NEXTNODE(s0,s);
-			pair = BDY((LIST)BDY(t));
-			ind = (int)FA0((FNODE)BDY((QUOTE)BDY(pair)));
-			value = BDY((QUOTE)(BDY(NEXT(pair))));
-			BDY(s) = mknode(2,ind,value);
-		}
-		if ( s0 ) NEXT(s) = 0;
-		switch ( ac = argc(arg) ) {
-			case 3:
-				h = rewrite_fnode(BDY((QUOTE)ARG2(arg)),s0,0);
-				MKQUOTE(q,h); *rp = (Obj)q;
-				break;
-			case 4:
-				c = rewrite_fnode(BDY((QUOTE)ARG2(arg)),s0,0);
-				if ( eval(c) ) {
-					h = rewrite_fnode(BDY((QUOTE)ARG3(arg)),s0,0);
-					MKQUOTE(q,h); *rp = (Obj)q;
-				} else
-					*rp = VOIDobj;
-				break;
-			default:
-				error("qt_match_rewrite : invalid argument");
-		}
-	} else
-		*rp = VOIDobj;
-}
-
 void Pnqt_match_rewrite(NODE arg,Obj *rp)
 {
 	FNODE f,p,c,a,r;
@@ -800,7 +756,7 @@ FNODE nfnode_match_rewrite(FNODE f,FNODE p,FNODE c,FNODE a,int mode)
 	ARF op;
 	NODE arg,h0,t,h,valuen;
 	NODE r,s0,s,pair;
-	FNODE any,pany,head,tail,a1;
+	FNODE any,pany,head,tail,a1,a2;
 	QUOTE q;
 	int ret;
 	FNODE value;
@@ -841,8 +797,9 @@ FNODE nfnode_match_rewrite(FNODE f,FNODE p,FNODE c,FNODE a,int mode)
 		ret = nfnode_match(f,p,&r) && eval(rewrite_fnode(c,r,1));
 
 	if ( ret ) {
-		a1 = rewrite_fnode(a,r,1);
-		return fnode_normalize(partial_eval(a1),mode);
+		a1 = rewrite_fnode(a,r,0);
+		a2 = partial_eval(a1);
+		return fnode_normalize(a2,mode);
 	} else
 		return 0;
 }
