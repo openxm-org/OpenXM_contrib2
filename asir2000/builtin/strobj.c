@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.108 2005/12/11 07:21:43 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.109 2005/12/14 06:07:30 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -3122,8 +3122,6 @@ void fnode_coef_body(FNODE f,Obj *cp,FNODE *bp)
 	}
 }
 
-int nfnode_comp_pwr(FNODE f1,FNODE f2);
-
 int nfnode_weight(struct wtab *tab,FNODE f)
 {
 	NODE n;
@@ -3180,12 +3178,6 @@ int nfnode_weight(struct wtab *tab,FNODE f)
 
 int nfnode_comp(FNODE f1,FNODE f2)
 {
-	NODE n1,n2;
-	int r,i1,i2,ret;
-	char *nm1,*nm2;
-	FNODE b1,b2,e1,e2,g,a1,a2,fn1,fn2;
-	Num ee,ee1;
-	Obj c1,c2;
 	int w1,w2;
 
 	if ( qt_weight_tab ) {
@@ -3194,12 +3186,24 @@ int nfnode_comp(FNODE f1,FNODE f2)
 		if ( w1 > w2 ) return 1;
 		if ( w1 < w2 ) return -1;
 	}
+	return nfnode_comp_lex(f1,f2);
+}
+
+int nfnode_comp_lex(FNODE f1,FNODE f2)
+{
+	NODE n1,n2;
+	int r,i1,i2,ret;
+	char *nm1,*nm2;
+	FNODE b1,b2,e1,e2,g,a1,a2,fn1,fn2;
+	Num ee,ee1;
+	Obj c1,c2;
+	int w1,w2;
 
 	if ( IS_NARYADD(f1) || IS_NARYADD(f2) ) {
 		f1 = to_naryadd(f1); f2 = to_naryadd(f2);
 		n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
 		while ( n1 && n2 )
-			if ( r = nfnode_comp(BDY(n1),BDY(n2)) ) return r;
+			if ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) return r;
 			else {
 				n1 = NEXT(n1); n2 = NEXT(n2);
 			}
@@ -3221,11 +3225,11 @@ int nfnode_comp(FNODE f1,FNODE f2)
 			fnode_base_exp(BDY(n1),&b1,&e1);
 			fnode_base_exp(BDY(n2),&b2,&e2);
 
-			if ( r = nfnode_comp(b1,b2) ) {
+			if ( r = nfnode_comp_lex(b1,b2) ) {
 				if ( r > 0 )
-					return nfnode_comp(e1,mkfnode(1,I_FORMULA,0));
+					return nfnode_comp_lex(e1,mkfnode(1,I_FORMULA,0));
 				else if ( r < 0 )
-					return nfnode_comp(mkfnode(1,I_FORMULA,0),e2);
+					return nfnode_comp_lex(mkfnode(1,I_FORMULA,0),e2);
 			} else {
 				n1 = NEXT(n1); n2 = NEXT(n2);
 				if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
@@ -3241,15 +3245,23 @@ int nfnode_comp(FNODE f1,FNODE f2)
 						MKNODE(n2,g,n2);
 					}
 				} else {
-					r = nfnode_comp(e1,e2);
+					r = nfnode_comp_lex(e1,e2);
 					if ( r > 0 ) return 1;
 					else if ( r < 0 ) return -1;
 				}
 			}
 		}
 	}
-	if ( IS_BINARYPWR(f1) || IS_BINARYPWR(f2) )
-		return nfnode_comp_pwr(f1,f2);
+	if ( IS_BINARYPWR(f1) || IS_BINARYPWR(f2) ) {
+		fnode_base_exp(f1,&b1,&e1);
+		fnode_base_exp(f2,&b2,&e2);
+		if ( r = nfnode_comp_lex(b1,b2) ) {
+			if ( r > 0 )
+				return nfnode_comp_lex(e1,mkfnode(1,I_FORMULA,0));
+			else if ( r < 0 )
+				return nfnode_comp_lex(mkfnode(1,I_FORMULA,0),e2);
+		} else return nfnode_comp_lex(e1,e2);
+	}
 				
 	/* now, IDs of f1 and f2 must be I_FORMULA, I_FUNC, I_IFUNC or I_PVAR */
 	/* I_IFUNC > I_PVAR > I_FUNC=I_FUNC_QARG > I_FORMULA */
@@ -3261,7 +3273,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 				case I_FUNC: case I_IFUNC: case I_PVAR:
 					return -1;
 				default:
-					error("nfnode_comp : undefined");
+					error("nfnode_comp_lex : undefined");
 			}
 			break;
 		case I_FUNC: case I_FUNC_QARG:
@@ -3279,7 +3291,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 						/* compare args */
 						n1 = FA0((FNODE)FA1(f1)); n2 = FA0((FNODE)FA1(f2));
 						while ( n1 && n2 )
-							if ( r = nfnode_comp(BDY(n1),BDY(n2)) ) return r;
+							if ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) return r;
 							else {
 								n1 = NEXT(n1); n2 = NEXT(n2);
 							}
@@ -3287,7 +3299,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 					}
 					break;
 				default:
-					error("nfnode_comp : undefined");
+					error("nfnode_comp_lex : undefined");
 			}
 		case I_PVAR:
 			switch ( f2->id ) {
@@ -3301,7 +3313,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 					else if ( i1 < i2 ) return -1;
 					else return 0;
 				default:
-					error("nfnode_comp : undefined");
+					error("nfnode_comp_lex : undefined");
 			}
 			break;
 		case I_IFUNC:
@@ -3317,7 +3329,7 @@ int nfnode_comp(FNODE f1,FNODE f2)
 						/* compare args */
 						n1 = FA0((FNODE)FA1(f1)); n2 = FA0((FNODE)FA1(f2));
 						while ( n1 && n2 )
-							if ( r = nfnode_comp(BDY(n1),BDY(n2)) ) return r;
+							if ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) return r;
 							else {
 								n1 = NEXT(n1); n2 = NEXT(n2);
 							}
@@ -3326,27 +3338,12 @@ int nfnode_comp(FNODE f1,FNODE f2)
 					break;
 
 				default:
-					error("nfnode_comp : undefined");
+					error("nfnode_comp_lex : undefined");
 			}
 			break;
 		default:
-			error("nfnode_comp : undefined");
+			error("nfnode_comp_lex : undefined");
 	}
-}
-
-int nfnode_comp_pwr(FNODE f1,FNODE f2)
-{
-	FNODE b1,b2,e1,e2;
-	int r;
-
-	fnode_base_exp(f1,&b1,&e1);
-	fnode_base_exp(f2,&b2,&e2);
-	if ( r = nfnode_comp(b1,b2) ) {
-		if ( r > 0 )
-			return nfnode_comp(e1,mkfnode(1,I_FORMULA,0));
-		else if ( r < 0 )
-			return nfnode_comp(mkfnode(1,I_FORMULA,0),e2);
-	} else return nfnode_comp(e1,e2);
 }
 
 NODE append_node(NODE a1,NODE a2)
