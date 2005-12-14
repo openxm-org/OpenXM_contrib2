@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.107 2005/12/11 05:27:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.108 2005/12/11 07:21:43 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -94,7 +94,7 @@ void Pflatten_quote();
 
 void Pqt_is_integer(),Pqt_is_rational(),Pqt_is_number(),Pqt_is_coef();
 void Pqt_is_dependent(),Pqt_is_function(),Pqt_is_var();
-void Pqt_set_ord(),Pqt_set_coef();
+void Pqt_set_ord(),Pqt_set_coef(),Pqt_set_weight();
 void Pqt_normalize();
 void Pnqt_comp();
 void Pnqt_match();
@@ -165,6 +165,7 @@ struct ftab str_tab[] = {
 
 	{"qt_set_coef",Pqt_set_coef,-1},
 	{"qt_set_ord",Pqt_set_ord,-1},
+	{"qt_set_weight",Pqt_set_weight,-1},
 	{"qt_normalize",Pqt_normalize,-2},
 	{"qt_match",Pqt_match,2},
 	{"nqt_match_rewrite",Pnqt_match_rewrite,3},
@@ -2166,8 +2167,15 @@ VL reordvars(VL vl0,NODE head)
 	return vl;
 }
 
+struct wtab {
+	V v;
+	int w;
+};
+
+struct wtab *qt_weight_tab;
 VL qt_current_ord, qt_current_coef;
-LIST qt_current_ord_obj,qt_current_coef_obj;
+LIST qt_current_ord_obj,qt_current_coef_obj,qt_current_weight_obj;
+LIST qt_current_weight_obj;
 
 void Pqt_set_ord(NODE arg,LIST *rp)
 {
@@ -2177,7 +2185,10 @@ void Pqt_set_ord(NODE arg,LIST *rp)
 
 	if ( !argc(arg) ) 
 		*rp = qt_current_ord_obj;
-	else {
+	else if ( !ARG0(arg) ) {
+		qt_current_ord_obj = 0;
+		qt_current_ord = 0;
+	} else {
 		qt_current_ord = reordvars(CO,BDY((LIST)ARG0(arg)));
 		for ( r0 = 0, vl = qt_current_ord; vl; vl = NEXT(vl) ) {
 			NEXTNODE(r0,r); MKV(vl->v,v); BDY(r) = v;
@@ -2185,6 +2196,32 @@ void Pqt_set_ord(NODE arg,LIST *rp)
 		if ( r0 ) NEXT(r) = 0;
 		MKLIST(*rp,r0);
 		qt_current_ord_obj = *rp;
+	}
+}
+
+void Pqt_set_weight(NODE arg,LIST *rp)
+{
+	NODE n,pair;
+	int l,i;
+	struct wtab *tab;
+
+	if ( !argc(arg) ) 
+		*rp = qt_current_weight_obj;
+	else if ( !ARG0(arg) ) {
+		qt_current_weight_obj = 0;
+		qt_weight_tab = 0;
+	} else {
+		n = BDY((LIST)ARG0(arg));
+		l = length(n);
+		tab = qt_weight_tab = (struct wtab *)MALLOC((l+1)*sizeof(struct wtab));
+		for ( i = 0; i < l; i++, n = NEXT(n) ) {
+			pair = BDY((LIST)BDY(n));
+			tab[i].v = VR((P)ARG0(pair));
+			tab[i].w = QTOS((Q)ARG1(pair));
+		}
+		tab[i].v = 0;
+		qt_current_weight_obj = (LIST)ARG0(arg);
+		*rp = qt_current_weight_obj;
 	}
 }
 
@@ -2196,7 +2233,10 @@ void Pqt_set_coef(NODE arg,LIST *rp)
 
 	if ( !argc(arg) ) 
 		*rp = qt_current_coef_obj;
-	else {
+	else if ( !ARG0(arg) ) {
+		qt_current_coef_obj = 0;
+		qt_current_coef = 0;
+	} else {
 		n = BDY((LIST)ARG0(arg));
 		for ( vl0 = 0, r0 = 0; n; n = NEXT(n) ) {
 			NEXTNODE(r0,r);
@@ -2845,8 +2885,7 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 	FNODE b1,b2,e1,e2,cc,t,t1;
 	FNODE *m;
 	int s;
-	Obj c1,c2,c;
-	Num e;
+	Obj c1,c2,c,e;
 	int l1,l,i,j;
 
 	if ( IS_ZERO(f1) || IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,0);
@@ -2887,7 +2926,7 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 		else {
 			fnode_base_exp(m[i-1],&b1,&e1); fnode_base_exp(BDY(r),&b2,&e2);
 			if ( compfnode(b1,b2) ) break;
-			addnum(0,eval(e1),eval(e2),&e);
+			arf_add(CO,eval(e1),eval(e2),&e);
 			if ( !e ) i--;
 			else if ( UNIQ(e) )
 				m[i-1] = b1;
@@ -3085,6 +3124,60 @@ void fnode_coef_body(FNODE f,Obj *cp,FNODE *bp)
 
 int nfnode_comp_pwr(FNODE f1,FNODE f2);
 
+int nfnode_weight(struct wtab *tab,FNODE f)
+{
+	NODE n;
+	int w,w1;
+	int i;
+	Q a2;
+	V v;
+
+	switch ( f->id ) {
+		case I_FORMULA:
+			if ( fnode_is_coef(f) ) return 0;
+			else if ( fnode_is_var(f) ) {
+				v = VR((P)FA0(f));
+				for ( i = 0; tab[i].v; i++ )
+					if ( v == tab[i].v ) return tab[i].w;
+				return w;
+			} else return 0;
+
+		/* XXX */
+		case I_PVAR: return 1;
+		/* XXX */
+		case I_FUNC: I_FUNC: I_FUNC_QARG:
+			/* w(f) = 1 */
+			/* w(f(a1,...,an)=w(a1)+...+w(an) */
+			n = FA0((FNODE)FA1(f));
+			for ( w = 0; n; n = NEXT(n) )
+				w += nfnode_weight(tab,BDY(n));
+			return w;
+		case I_NARYOP:
+			n = (NODE)FA1(f);
+			if ( IS_NARYADD(f) )
+				for ( w = nfnode_weight(tab,BDY(n)),
+					n = NEXT(n); n; n = NEXT(n) ) {
+					w1 = nfnode_weight(tab,BDY(n));
+					w = MAX(w,w1);
+				}
+			else
+				for ( w = 0; n; n = NEXT(n) )
+					w += nfnode_weight(tab,BDY(n));
+			return w;
+		case I_BOP:
+			/* must be binary power */
+			/* XXX w(2^x)=0 ? */
+			if ( fnode_is_rational(FA2(f)) ) {
+				a2 = (Q)eval(FA2(f));
+				w = QTOS(a2);
+			} else
+				w = nfnode_weight(tab,FA2(f));
+			return nfnode_weight(tab,FA1(f))*w;
+		default:
+			error("nfnode_weight : not_implemented");
+	}
+}
+
 int nfnode_comp(FNODE f1,FNODE f2)
 {
 	NODE n1,n2;
@@ -3093,6 +3186,14 @@ int nfnode_comp(FNODE f1,FNODE f2)
 	FNODE b1,b2,e1,e2,g,a1,a2,fn1,fn2;
 	Num ee,ee1;
 	Obj c1,c2;
+	int w1,w2;
+
+	if ( qt_weight_tab ) {
+		w1 = nfnode_weight(qt_weight_tab,f1);
+		w2 = nfnode_weight(qt_weight_tab,f2);
+		if ( w1 > w2 ) return 1;
+		if ( w1 < w2 ) return -1;
+	}
 
 	if ( IS_NARYADD(f1) || IS_NARYADD(f2) ) {
 		f1 = to_naryadd(f1); f2 = to_naryadd(f2);
