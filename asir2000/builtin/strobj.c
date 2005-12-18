@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.109 2005/12/14 06:07:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.110 2005/12/14 09:06:54 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,6 +76,7 @@ struct TeXSymbol {
 #define IS_BINARYPWR(f) (((f)->id==I_BOP) &&(OPNAME(f)=='^'))
 #define IS_NARYADD(f) (((f)->id==I_NARYOP) &&(OPNAME(f)=='+'))
 #define IS_NARYMUL(f) (((f)->id==I_NARYOP) &&(OPNAME(f)=='*'))
+#define IS_MUL(f) (((f)->id==I_NARYOP||(f)->id==I_BOP) &&(OPNAME(f)=='*'))
 
 extern char *parse_strp;
 
@@ -96,7 +97,7 @@ void Pqt_is_integer(),Pqt_is_rational(),Pqt_is_number(),Pqt_is_coef();
 void Pqt_is_dependent(),Pqt_is_function(),Pqt_is_var();
 void Pqt_set_ord(),Pqt_set_coef(),Pqt_set_weight();
 void Pqt_normalize();
-void Pnqt_comp();
+void Pnqt_comp(),Pnqt_weight();
 void Pnqt_match();
 void Pnqt_match_rewrite();
 
@@ -170,6 +171,7 @@ struct ftab str_tab[] = {
 	{"qt_match",Pqt_match,2},
 	{"nqt_match_rewrite",Pnqt_match_rewrite,3},
 
+	{"nqt_weight",Pnqt_weight,1},
 	{"nqt_comp",Pnqt_comp,2},
 	{"nqt_match",Pnqt_match,-3},
 	{"qt_to_nbp",Pqt_to_nbp,1},
@@ -1430,6 +1432,7 @@ void Pget_function_name(NODE arg,STRING *rp)
 }
 
 FNODE strip_paren(FNODE);
+void objtotex_tb(Obj obj,TB tb);
 
 void fnodetotex_tb(FNODE f,TB tb)
 {
@@ -1438,7 +1441,6 @@ void fnodetotex_tb(FNODE f,TB tb)
 	char *opname,*vname_conv,*prefix_conv;
 	Obj obj;
 	int i,len,allzero,elen,elen2,si;
-	C cplx;
 	char *r;
 	FNODE fi,f2,f1;
 
@@ -1506,7 +1508,14 @@ void fnodetotex_tb(FNODE f,TB tb)
 					write_tb("}",tb);
 					break;
 				case '^':
-					fnodetotex_tb((FNODE)FA1(f),tb);
+					f1 = (FNODE)FA1(f);
+					if ( fnode_is_var(f1) )
+						fnodetotex_tb(f1,tb);
+					else {
+						write_tb("(",tb);
+						fnodetotex_tb(f1,tb);
+						write_tb(")",tb);
+					}
 					write_tb("^{",tb);
 					fnodetotex_tb(strip_paren((FNODE)FA2(f)),tb);
 					write_tb("} ",tb);
@@ -1523,43 +1532,41 @@ void fnodetotex_tb(FNODE f,TB tb)
 			break;
 		case I_NARYOP:
 			args = (NODE)FA1(f);
-			write_tb("(",tb);
 			switch ( OPNAME(f) ) {
 				case '+':
 					fnodetotex_tb((FNODE)BDY(args),tb);
 					for ( args = NEXT(args); args; args = NEXT(args) ) {
 						write_tb("+",tb);
-						fnodetotex_tb((FNODE)BDY(args),tb);
+						f1 = (FNODE)BDY(args);
+						if ( fnode_is_var(f1) || IS_MUL(f1) )
+							fnodetotex_tb(f1,tb);
+						else {
+							write_tb("(",tb);
+							fnodetotex_tb(f1,tb);
+							write_tb(")",tb);
+						}
 					}
 					break;
 				case '*':
 					f1 = (FNODE)BDY(args);
-					if ( f1->id == I_FORMULA && MUNIQ(FA0(f1)) )
-						write_tb("-",tb);
-					else
-						fnodetotex_tb(f1,tb);
-					write_tb(" ",tb);
-					for ( args = NEXT(args); args; args = NEXT(args) ) {
-						/* XXX special care for DP */
+					if ( f1->id == I_FORMULA && MUNIQ(FA0(f1)) ) {
+						write_tb("- ",tb); args = NEXT(args);
+					}
+					for ( ; args; args = NEXT(args) ) {
 						f2 = (FNODE)BDY(args);
-						if ( f2->id == I_EV ) {
-							n = (NODE)FA0(f2);
-							for ( i = 0; n; n = NEXT(n), i++ ) {
-								fi = (FNODE)BDY(n);
-								if ( fi->id != I_FORMULA || FA0(fi) )
-									break;
-							}
-							if ( n )
-								fnodetotex_tb(f2,tb);
-						} else
+						if ( fnode_is_var(f2) || IS_BINARYPWR(f2) )
 							fnodetotex_tb(f2,tb);
+						else {
+							write_tb("(",tb);
+							fnodetotex_tb(f2,tb);
+							write_tb(")",tb);
+						}
 					}
 					break;
 				default:
 					error("invalid nary op");
 					break;
 			}
-			write_tb(")",tb);
 			break;
 
 		case I_COP:
@@ -1784,33 +1791,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 
 		/* internal object */
 		case I_FORMULA:
-			obj = (Obj)FA0(f);
-			if ( !obj )
-				write_tb("0",tb);
-			else if ( OID(obj) == O_N && NID(obj) == N_C ) {
-				cplx = (C)obj;
-				write_tb("(",tb);
-				if ( cplx->r ) {
-					r = objtostr((Obj)cplx->r); write_tb(r,tb);
-				}
-				if ( cplx->i ) {
-					if ( cplx->r && compnum(0,cplx->i,0) > 0 ) {
-						write_tb("+",tb);
-						if ( !UNIQ(cplx->i) ) {
-							r = objtostr((Obj)cplx->i); write_tb(r,tb);
-						}
-					} else if ( MUNIQ(cplx->i) )
-						write_tb("-",tb);
-					else if ( !UNIQ(cplx->i) ) {
-						r = objtostr((Obj)cplx->i); write_tb(r,tb);
-					}
-					write_tb("\\sqrt{-1}",tb);
-				}
-				write_tb(")",tb);
-			} else if ( OID(obj) == O_P )
-				write_tb(conv_rule(VR((P)obj)->name),tb);
-			else
-				write_tb(objtostr(obj),tb);
+			objtotex_tb((Obj)FA0(f),tb);
 			break;
 
 		/* program variable */
@@ -1823,6 +1804,103 @@ void fnodetotex_tb(FNODE f,TB tb)
 
 		default:
 			error("fnodetotex_tb : not implemented yet");
+	}
+}
+
+void objtotex_tb(Obj obj,TB tb)
+{
+	C cplx;
+	char *r;
+	P t;
+	DCP dc;
+	char *v;
+
+	if ( !obj ) {
+		write_tb("0",tb);
+		return;
+	}
+	switch ( OID(obj) ) {
+		case O_N:
+			switch ( NID(obj) ) {
+				case N_C:
+					cplx = (C)obj;
+					write_tb("(",tb);
+					if ( cplx->r ) {
+						r = objtostr((Obj)cplx->r); write_tb(r,tb);
+					}
+					if ( cplx->i ) {
+						if ( cplx->r && compnum(0,cplx->i,0) > 0 ) {
+							write_tb("+",tb);
+							if ( !UNIQ(cplx->i) ) {
+								r = objtostr((Obj)cplx->i); write_tb(r,tb);
+							}
+						} else if ( MUNIQ(cplx->i) )
+							write_tb("-",tb);
+						else if ( !UNIQ(cplx->i) ) {
+							r = objtostr((Obj)cplx->i); write_tb(r,tb);
+						}
+						write_tb("\\sqrt{-1}",tb);
+					}
+					write_tb(")",tb);
+					break;
+				default:
+					write_tb(objtostr(obj),tb);
+					break;
+			}
+			break;
+		case O_P:
+			v = conv_rule(VR((P)obj)->name);
+			for ( dc = DC((P)obj); dc; dc = NEXT(dc) ) {
+				if ( !DEG(dc) )
+					objtotex_tb((Obj)COEF(dc),tb);
+				else {
+					if ( NUM(COEF(dc)) && UNIQ((Q)COEF(dc)) )
+						;
+					else if ( NUM(COEF(dc)) && MUNIQ((Q)COEF(dc)) )
+						write_tb("-",tb);
+					else if ( NUM(COEF(dc)) || !NEXT(DC(COEF(dc)))) 
+						objtotex_tb((Obj)COEF(dc),tb); 
+					else {
+						write_tb("(",tb); objtotex_tb((Obj)COEF(dc),tb);
+						write_tb(")",tb);
+					}
+					write_tb(v,tb);
+					if ( cmpq(DEG(dc),ONE) ) {
+						write_tb("^",tb);
+						if ( INT(DEG(dc)) && SGN(DEG(dc))>0 ) {
+							write_tb("{",tb);
+							objtotex_tb((Obj)DEG(dc),tb);
+							write_tb("}",tb);
+						} else {
+							write_tb("{",tb); objtotex_tb((Obj)DEG(dc),tb);
+							write_tb("}",tb);
+						}
+					}
+				}
+				if ( NEXT(dc) ) {
+					t = COEF(NEXT(dc));
+					if ( !DEG(NEXT(dc)) ) {
+						if ( NUM(t) ) {
+							if ( !mmono(t) ) write_tb("+",tb);
+						} else {
+							if ( !mmono(COEF(DC(t))) ) write_tb("+",tb);
+						}
+					} else {
+						if ( !mmono(t) ) write_tb("+",tb);
+					}
+				}
+			}
+			break;
+		case O_R:
+			write_tb("\\frac{",tb);
+			objtotex_tb((Obj)NM((R)obj),tb);
+			write_tb("}{",tb);
+			objtotex_tb((Obj)DN((R)obj),tb);
+			write_tb("}",tb);
+			break;
+		default:
+			write_tb(objtostr(obj),tb);
+			break;
 	}
 }
 
@@ -1941,9 +2019,13 @@ int top_is_minus(FNODE f)
 					case O_N:
 						return mmono((P)obj);
 					case O_P:
+#if 0
 						/* must be a variable */
 						opname = conv_rule(VR((P)obj)->name);
 						return opname[0]=='-';
+#else
+						return mmono((P)obj);
+#endif
 					default:
 						/* ??? */
 						len = estimate_length(CO,obj);
@@ -2503,6 +2585,18 @@ NBP fnode_to_nbp(FNODE f)
 	}
 }
 
+void Pnqt_weight(NODE arg,Q *rp)
+{
+	QUOTE q;
+	FNODE f;
+	int w;
+
+	q = (QUOTE)ARG0(arg); f = (FNODE)BDY(q);
+	f = fnode_normalize(f,0);
+	w = nfnode_weight(f);
+	STOQ(w,*rp);
+}
+
 void Pnqt_comp(NODE arg,Q *rp)
 {
 	QUOTE q1,q2;
@@ -2560,9 +2654,11 @@ int fnode_is_coef(FNODE f)
 			else if ( OID(obj) == O_P || OID(obj) == O_R) {
 				get_vars_recursive(obj,&vl);
 				for ( t = vl; t; t = NEXT(t) ) {
+					if ( t->v->attr == (pointer)V_PF ) continue;
 					for ( s = qt_current_coef; s; s = NEXT(s) )
 						if ( t->v == s->v ) break;
-					if ( !s ) return 0;
+					if ( !s )
+						return 0;
 				}
 				return 1;
 			} else return 0;
