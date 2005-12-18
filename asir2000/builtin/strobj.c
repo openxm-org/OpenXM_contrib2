@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.111 2005/12/18 01:44:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.112 2005/12/18 01:57:21 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -3017,14 +3017,24 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 	m = (FNODE *)ALLOCA(l*sizeof(FNODE));
 	for ( r = n1, i = 0; i < l1; r = NEXT(r), i++ ) m[i] = BDY(r);
 	for ( r = n2; r; r = NEXT(r) ) {
-		if ( i == 0 || (expand == 2) )
+		if ( i == 0 )
 			m[i++] = BDY(r);
 		else {
 			fnode_base_exp(m[i-1],&b1,&e1); fnode_base_exp(BDY(r),&b2,&e2);
 			if ( compfnode(b1,b2) ) break;
 			arf_add(CO,eval(e1),eval(e2),&e);
 			if ( !e ) i--;
-			else if ( UNIQ(e) )
+			else if ( expand == 2 ) {
+				if ( INT(e) && SGN((Q)e) < 0 ) {
+					t1 = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,e));
+					/* r=(r0|rest)->(r0,t1|rest) */
+					t = BDY(r);
+					MKNODE(r1,t1,NEXT(r));
+					MKNODE(r,t,r1);
+					i--;
+				} else
+					m[i++] = BDY(r);
+			} else if ( UNIQ(e) )
 				m[i-1] = b1;
 			else
 				m[i-1] = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,e));
@@ -3230,11 +3240,11 @@ int nfnode_weight(struct wtab *tab,FNODE f)
 		case I_FORMULA:
 			if ( fnode_is_coef(f) ) return 0;
 			else if ( fnode_is_var(f) ) {
-				if ( !tab ) return 1;
+				if ( !tab ) return 0;
 				v = VR((P)FA0(f));
 				for ( i = 0; tab[i].v; i++ )
 					if ( v == tab[i].v ) return tab[i].w;
-				return 1;
+				return 0;
 			} else return 0;
 
 		/* XXX */
