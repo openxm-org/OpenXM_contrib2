@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.110 2005/12/14 09:06:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.111 2005/12/18 01:44:16 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2593,7 +2593,7 @@ void Pnqt_weight(NODE arg,Q *rp)
 
 	q = (QUOTE)ARG0(arg); f = (FNODE)BDY(q);
 	f = fnode_normalize(f,0);
-	w = nfnode_weight(f);
+	w = nfnode_weight(qt_weight_tab,f);
 	STOQ(w,*rp);
 }
 
@@ -3230,10 +3230,11 @@ int nfnode_weight(struct wtab *tab,FNODE f)
 		case I_FORMULA:
 			if ( fnode_is_coef(f) ) return 0;
 			else if ( fnode_is_var(f) ) {
+				if ( !tab ) return 1;
 				v = VR((P)FA0(f));
 				for ( i = 0; tab[i].v; i++ )
 					if ( v == tab[i].v ) return tab[i].w;
-				return w;
+				return 1;
 			} else return 0;
 
 		/* XXX */
