@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.112 2005/12/18 01:57:21 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.113 2005/12/18 06:54:28 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1538,9 +1538,9 @@ void fnodetotex_tb(FNODE f,TB tb)
 					for ( args = NEXT(args); args; args = NEXT(args) ) {
 						write_tb("+",tb);
 						f1 = (FNODE)BDY(args);
-						if ( fnode_is_var(f1) || IS_MUL(f1) )
+						/* if ( fnode_is_var(f1) || IS_MUL(f1) )
 							fnodetotex_tb(f1,tb);
-						else {
+						else */ {
 							write_tb("(",tb);
 							fnodetotex_tb(f1,tb);
 							write_tb(")",tb);
@@ -3301,7 +3301,7 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
 	NODE n1,n2;
 	int r,i1,i2,ret;
 	char *nm1,*nm2;
-	FNODE b1,b2,e1,e2,g,a1,a2,fn1,fn2;
+	FNODE b1,b2,e1,e2,g,a1,a2,fn1,fn2,h1,h2;
 	Num ee,ee1;
 	Obj c1,c2;
 	int w1,w2;
@@ -3309,12 +3309,14 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
 	if ( IS_NARYADD(f1) || IS_NARYADD(f2) ) {
 		f1 = to_naryadd(f1); f2 = to_naryadd(f2);
 		n1 = (NODE)FA1(f1); n2 = (NODE)FA1(f2);
-		while ( n1 && n2 )
-			if ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) return r;
-			else {
-				n1 = NEXT(n1); n2 = NEXT(n2);
-			}
-		return n1?1:(n2?-1:0);
+		for ( ; n1 && n2; n1 = NEXT(n1), n2 = NEXT(n2) ) {
+			r = nfnode_comp_lex(BDY(n1),BDY(n2));
+			if ( r ) return r;
+		}
+		if ( !n1 && !n2 ) return 0;
+		h1 = n1 ? (FNODE)BDY(n1) : mkfnode(1,I_FORMULA,0);
+		h2 = n2 ? (FNODE)BDY(n2) : mkfnode(1,I_FORMULA,0);
+		return nfnode_comp_lex(h1,h2);
 	}
 	if ( IS_NARYMUL(f1) || IS_NARYMUL(f2) ) {
 		fnode_coef_body(f1,&c1,&b1);
@@ -3322,42 +3324,14 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
 		if ( !compfnode(b1,b2) ) return arf_comp(CO,c1,c2);
 		b1 = to_narymul(b1); b2 = to_narymul(b2);
 		n1 = (NODE)FA1(b1); n2 = (NODE)FA1(b2);
-		while ( 1 ) {
-			while ( n1 && n2 && !compfnode(BDY(n1),BDY(n2)) ) {
-				n1 = NEXT(n1); n2 = NEXT(n2);
-			}
-			if ( !n1 || !n2 ) {
-				return n1?1:(n2?-1:0);
-			}
-			fnode_base_exp(BDY(n1),&b1,&e1);
-			fnode_base_exp(BDY(n2),&b2,&e2);
-
-			if ( r = nfnode_comp_lex(b1,b2) ) {
-				if ( r > 0 )
-					return nfnode_comp_lex(e1,mkfnode(1,I_FORMULA,0));
-				else if ( r < 0 )
-					return nfnode_comp_lex(mkfnode(1,I_FORMULA,0),e2);
-			} else {
-				n1 = NEXT(n1); n2 = NEXT(n2);
-				if ( fnode_is_number(e1) && fnode_is_number(e2) ) {
-					/* f1 = t b^e1 ... , f2 = t b^e2 ... */
-					subnum(0,eval(e1),eval(e2),&ee);
-					r = compnum(0,ee,0);
-					if ( r > 0 ) {
-						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee));
-						MKNODE(n1,g,n1);
-					} else if ( r < 0 ) {
-						chsgnnum(ee,&ee1);
-						g = mkfnode(3,I_BOP,pwrfs,b1,mkfnode(1,I_FORMULA,ee1));
-						MKNODE(n2,g,n2);
-					}
-				} else {
-					r = nfnode_comp_lex(e1,e2);
-					if ( r > 0 ) return 1;
-					else if ( r < 0 ) return -1;
-				}
-			}
+		for ( ; n1 && n2; n1 = NEXT(n1), n2 = NEXT(n2) ) {
+			r = nfnode_comp_lex(BDY(n1),BDY(n2));
+			if ( r ) return r;
 		}
+		if ( !n1 && !n2 ) return 0;
+		h1 = n1 ? (FNODE)BDY(n1) : mkfnode(1,I_FORMULA,ONE);
+		h2 = n2 ? (FNODE)BDY(n2) : mkfnode(1,I_FORMULA,ONE);
+		return nfnode_comp_lex(h1,h2);
 	}
 	if ( IS_BINARYPWR(f1) || IS_BINARYPWR(f2) ) {
 		fnode_base_exp(f1,&b1,&e1);
