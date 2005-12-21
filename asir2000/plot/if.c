@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.17 2005/05/18 03:27:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.18 2005/08/04 04:34:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -173,6 +173,7 @@ int memory_plot(NODE arg,LIST *bytes)
 	zrange = (LIST)ARG3(arg);
 	wsize = (LIST)ARG4(arg);
 
+	bzero((char *)&tmp_can,sizeof(tmp_can));
 	can = &tmp_can;
 	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
 	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
@@ -201,9 +202,13 @@ int memory_plot(NODE arg,LIST *bytes)
 	}
 	can->wname = "";
 	can->formula = formula; 
-	if ( can->mode == MODE_PLOT )
+	if ( can->mode == MODE_PLOT ) {
 		plotcalc(can);
-	else {
+		memory_print(can,&barray);
+		STOQ(can->width,qw); STOQ(can->height,qh);
+		n = mknode(3,qw,qh,barray);
+		MKLIST(*bytes,n);
+	} else {
 		width = can->width; height = can->height;
 		tabe = (double **)ALLOCA(width*sizeof(double *));
 		for ( i = 0; i < width; i++ )

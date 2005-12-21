@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.16 2002/10/02 01:38:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.17 2005/05/18 03:27:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,16 +54,18 @@
 
 void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
 void Ppolarplot();
-void Pmemory_ifplot();
+void Pmemory_ifplot(),Pmemory_conplot(),Pmemory_plot();
 void Popen_canvas(), Pclear_canvas(), Pdraw_obj(), Pdraw_string();
 void Pox_rpc();
 void Pox_cmo_rpc();
 
 struct ftab plot_tab[] = {
 	{"ifplot",Pifplot,-7},
-	{"memory_ifplot",Pmemory_ifplot,-7},
+	{"memory_ifplot",Pmemory_ifplot,-6},
 	{"conplot",Pconplot,-8},
+	{"memory_conplot",Pmemory_conplot,-7},
 	{"plot",Pplot,-6},
+	{"memory_plot",Pmemory_plot,-5},
 	{"polarplot",Ppolarplot,-6},
 	{"plotover",Pplotover,-4},
 	{"drawcircle",Pdrawcircle,5},
@@ -119,7 +121,19 @@ void Popen_canvas(NODE arg,Q *rp)
 	*rp = s_id;
 }
 
-void Pifplot(NODE arg,Q *rp)
+void ifplot_main(NODE arg,int is_memory, Obj *rp);
+
+void Pifplot(NODE arg,Obj *rp)
+{
+	ifplot_main(arg,0,rp);
+}
+
+void Pmemory_ifplot(NODE arg,Obj *rp)
+{
+	ifplot_main(arg,1,rp);
+}
+
+void ifplot_main(NODE arg,int is_memory, Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -219,115 +233,33 @@ void Pifplot(NODE arg,Q *rp)
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
-	MKSTR(fname,"plot");
-	arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
-	Pox_rpc(arg,&t);
-	*rp = s_id;
+	if ( is_memory ) {
+		MKSTR(fname,"memory_plot");
+		arg = mknode(7,s_id,fname,poly,xrange,yrange,0,geom);
+		Pox_rpc(arg,&t);
+		arg = mknode(1,s_id);
+		Pox_pop_cmo(arg,rp);
+	} else {
+		MKSTR(fname,"plot");
+		arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
+		Pox_rpc(arg,&t);
+		*rp = (Obj)s_id;
+	}
 }
 
-void Pmemory_ifplot(NODE arg,Q *rp)
+void conplot_main(NODE arg,int is_memory, Obj *rp);
+
+void Pconplot(NODE arg,Obj *rp)
 {
-	Q m2,p2,w300,s_id;
-	NODE defrange;
-	LIST xrange,yrange,range[2],list,geom;
-	VL vl,vl0;
-	V v[2],av[2];
-	int stream,ri,i;
-	P poly;
-	P var;
-	NODE n,n0;
-	STRING fname;
-	Obj t;
-
-	STOQ(-2,m2); STOQ(2,p2);
-	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
-	poly = 0; vl = 0; geom = 0; stream = -1; ri = 0;
-	for ( ; arg; arg = NEXT(arg) )
-		if ( !BDY(arg) )
-			stream = 0;
-		else
-		switch ( OID(BDY(arg)) ) {
-			case O_P:
-				poly = (P)BDY(arg); 
-				get_vars_recursive((Obj)poly,&vl);
-				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-					if ( vl0->v->attr == (pointer)V_IND )
-						if ( i >= 2 )
-							error("ifplot : invalid argument");
-						else
-							v[i++] = vl0->v;
-				break;
-			case O_LIST:
-				list = (LIST)BDY(arg);
-				if ( OID(BDY(BDY(list))) == O_P )
-					if ( ri > 1 )
-						error("ifplot : invalid argument");
-					else
-						range[ri++] = list;
-				else
-					geom = list;
-				break;
-			case O_N:
-				stream = QTOS((Q)BDY(arg)); break;
-			default:
-				error("memory_ifplot : invalid argument"); break;
-		}
-	if ( !poly )
-		error("memory_ifplot : invalid argument");
-	switch ( ri ) {
-		case 0:
-			if ( !v[1] )
-				error("memory_ifplot : please specify all variables");
-			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
-			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
-			break;
-		case 1:
-			if ( !v[1] )
-				error("memory_ifplot : please specify all variables");
-			av[0] = VR((P)BDY(BDY(range[0])));
-			if ( v[0] == av[0] ) {
-				xrange = range[0];
-				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
-			} else if ( v[1] == av[0] ) {
-				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
-				yrange = range[0];
-			} else
-				error("memory_ifplot : invalid argument");
-			break;
-		case 2:
-			av[0] = VR((P)BDY(BDY(range[0])));
-			av[1] = VR((P)BDY(BDY(range[1])));
-			if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
-				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
-					xrange = range[0]; yrange = range[1];
-			} else
-					error("memory_ifplot : invalid argument");
-			break;
-		default:
-			error("memory_ifplot : cannot happen"); break;
-	}
-	/* memory_ifplot in ox_plot requires 
-	   [s_id (Q),
-	   	formula (Obj),
-	   	xrange=[x,xmin,xmax] (LIST),
-	   	yrange=[y,ymin,ymax] (LIST),
-	   	zrange=0,
-	   	geom=[xsize,ysize] (LIST)]
-	*/
-
-	stream = validate_ox_plot_stream(stream);
-	STOQ(stream,s_id);
-	if ( !geom ) {
-		STOQ(300,w300);
-		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
-	}
-	MKSTR(fname,"memory_plot");
-	arg = mknode(7,s_id,fname,poly,xrange,yrange,0,geom);
-	Pox_rpc(arg,&t);
-	*rp = s_id;
+	conplot_main(arg,0,rp);
 }
 
-void Pconplot(NODE arg,Q *rp)
+void Pmemory_conplot(NODE arg,Obj *rp)
+{
+	conplot_main(arg,1,rp);
+}
+
+void conplot_main(NODE arg,int is_memory,Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -438,13 +370,33 @@ void Pconplot(NODE arg,Q *rp)
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
-	MKSTR(fname,"plot");
-	arg = mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
-	Pox_rpc(arg,&t);
-	*rp = s_id;
+	if ( is_memory ) {
+		MKSTR(fname,"memory_plot");
+		arg = mknode(7,s_id,fname,poly,xrange,yrange,zrange,geom);
+		Pox_rpc(arg,&t);
+		arg = mknode(1,s_id);
+		Pox_pop_cmo(arg,rp);
+	} else {
+		MKSTR(fname,"plot");
+		arg = mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
+		Pox_rpc(arg,&t);
+		*rp = (Obj)s_id;
+	}
 }
 
-void Pplot(NODE arg,Q *rp)
+void plot_main(NODE arg,int is_memory,Obj *rp);
+
+void Pplot(NODE arg,Obj *rp)
+{
+	plot_main(arg,0,rp);
+}
+
+void Pmemory_plot(NODE arg,Obj *rp)
+{
+	plot_main(arg,1,rp);
+}
+
+void plot_main(NODE arg,int is_memory,Obj *rp)
 {
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -527,10 +479,18 @@ void Pplot(NODE arg,Q *rp)
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
-	MKSTR(fname,"plot");
-	arg = mknode(8,s_id,fname,poly,xrange,0,0,geom,wname);
-	Pox_rpc(arg,&t);
-	*rp = s_id;
+	if ( is_memory ) {
+		MKSTR(fname,"memory_plot");
+		arg = mknode(7,s_id,fname,poly,xrange,0,0,geom);
+		Pox_rpc(arg,&t);
+		arg = mknode(1,s_id);
+		Pox_pop_cmo(arg,rp);
+	} else {
+		MKSTR(fname,"plot");
+		arg = mknode(8,s_id,fname,poly,xrange,0,0,geom,wname);
+		Pox_rpc(arg,&t);
+		*rp = (Obj)s_id;
+	}
 }
 
 #define Pi 3.14159265358979323846264

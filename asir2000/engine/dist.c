@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.37 2005/11/26 01:28:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.38 2005/11/27 00:07:05 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1121,6 +1121,8 @@ int compd(VL vl,DP p1,DP p2)
 		return p2 ? -1 : 0;
 	else if ( !p2 )
 		return 1;
+	else if ( NV(p1) != NV(p2) )
+		error("compd : size mismatch");
 	else {
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2);
 			m1 && m2; m1 = NEXT(m1), m2 = NEXT(m2) )
@@ -1496,6 +1498,8 @@ int cmpdl_order_pair(int n,DL d1,DL d2)
 	struct order_pair *pair;
 
 	len = dp_current_spec->ord.block.length;
+	if ( n != dp_current_spec->nv )
+		error("cmpdl_order_pair : incompatible order specification");
 	pair = dp_current_spec->ord.block.order_pair;
 
 	head = 0;

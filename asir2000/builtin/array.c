@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.47 2005/11/27 00:07:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.48 2005/11/27 05:37:53 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -64,7 +64,7 @@ extern int DP_Print; /* XXX */
 
 void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm();
 void Pinvmat();
-void Pnewbytearray();
+void Pnewbytearray(),Pmemoryplot_to_coord();
 
 void Pgeneric_gauss_elim();
 void Pgeneric_gauss_elim_mod();
@@ -107,6 +107,7 @@ struct ftab array_tab[] = {
 	{"matr",Pmat,-99999999},
 	{"matc",Pmatc,-99999999},
 	{"newbytearray",Pnewbytearray,-2},
+	{"memoryplot_to_coord",Pmemoryplot_to_coord,1},
 	{"sepmat_destructive",Psepmat_destructive,2},
 	{"sepvect",Psepvect,2},
 	{"qsort",Pqsort,-2},
@@ -475,6 +476,37 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
 		}
 	}
 	*rp = array;
+}
+
+#define MEMORY_GETPOINT(a,len,x,y) (((a)[(len)*(y)+((x)>>3)])&(1<<((x)&7)))
+
+void Pmemoryplot_to_coord(NODE arg,LIST *rp)
+{
+	int len,blen,y,i,j;
+	char *a;
+	NODE r0,r,n;
+	LIST l;
+	BYTEARRAY ba;
+	Q iq,jq;
+
+	asir_assert(ARG0(arg),O_LIST,"memoryplot_to_coord");
+	arg = BDY((LIST)ARG0(arg));
+	len = QTOS((Q)ARG0(arg));
+	blen = (len+7)/8;
+	y = QTOS((Q)ARG1(arg));
+	ba = (BYTEARRAY)ARG2(arg); a = ba->body;
+	r0 = 0;
+	for ( j = 0; j < y; j++ )
+		for ( i = 0; i < len; i++ )
+			if ( MEMORY_GETPOINT(a,blen,i,j) ) {
+				NEXTNODE(r0,r);
+				STOQ(i,iq); STOQ(j,jq);
+				n = mknode(2,iq,jq);
+				MKLIST(l,n);
+				BDY(r) = l;
+			}
+	if ( r0 ) NEXT(r) = 0;
+	MKLIST(*rp,r0);
 }
 
 void Pnewmat(NODE arg,MAT *rp)

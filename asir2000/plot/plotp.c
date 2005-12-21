@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.11 2002/07/10 09:13:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.12 2005/05/18 03:27:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -203,6 +203,24 @@ void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
 		for ( pa = parray->pos, len = parray->length, ix = 0; ix < len; ix++ ) {
 			MEMORY_DRAWPOINT(array,scan_len,XC(pa[ix]),YC(pa[ix]));
 		}
+}
+
+void memory_print(struct canvas *can,BYTEARRAY *bytes)
+{
+	int len,scan_len,i;
+	POINT *pa;
+	char *array;
+
+	/* scan_len = byte length of the scan line */
+	scan_len = (can->width+7)/8;
+	MKBYTEARRAY(*bytes,scan_len*can->height);
+	array = BDY(*bytes);
+
+	len = can->pa[0].length;
+	pa = can->pa[0].pos;
+	for ( i = 0; i < len; i++ ) {
+		MEMORY_DRAWPOINT(array,scan_len,pa[i].x,pa[i].y);
+	}
 }
 
 void qif_print(DISPLAY *display,char **tab,struct canvas *can)
