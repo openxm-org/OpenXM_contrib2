@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.48 2005/11/27 05:37:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.49 2005/12/21 23:18:15 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1366,10 +1366,205 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 					ret = intmtoratm_q(xmat,NM(q),*nmmat,dn);
 					get_eg(&tmp1); add_eg(&eg_intrat,&tmp0,&tmp1);
 					if ( ret ) {
+						rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+						cind = (int *)MALLOC_ATOMIC((col-rank)*sizeof(int));
 						for ( j = k = l = 0; j < col; j++ )
 							if ( cinfo[j] )
 								rind[k++] = j;	
 							else
+								cind[l++] = j;
+						get_eg(&tmp0);
+						ret = gensolve_check(mat,*nmmat,*dn,rind,cind);
+						get_eg(&tmp1); add_eg(&eg_check,&tmp0,&tmp1);
+						if ( ret ) {
+							if ( DP_Print > 3 ) {
+								fprintf(stderr,"\n");
+								print_eg("INV",&eg_inv);
+								print_eg("MUL",&eg_mul);
+								print_eg("INTRAT",&eg_intrat);
+								print_eg("CHECK",&eg_check);
+								fflush(asir_out);
+							}
+							*rindp = rind;
+							*cindp = cind;
+							for ( j = k = 0; j < col; j++ )
+								if ( !cinfo[j] )
+									cind[k++] = j;
+							return rank;
+						}
+					} else {
+						period = period*3/2;
+						count = 0;
+						nsize += period;
+						wxsize += rank*ri*nsize;
+						wx = (int *)REALLOC(wx,wxsize*sizeof(int));
+						for ( i = 0; i < wxsize; i++ ) wx[i] = 0;
+					}
+				}
+			}
+	}
+}
+
+int generic_gauss_elim_hensel_dalg(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
+{
+	MAT bmat,xmat;
+	Q **a0,**a,**b,**x,**nm;
+	Q *ai,*bi,*xi;
+	int row,col;
+	int **w;
+	int *wi;
+	int **wc;
+	Q mdq,q,s,u;
+	N tn;
+	int ind,md,i,j,k,l,li,ri,rank;
+	unsigned int t;
+	int *cinfo,*rinfo;
+	int *rind,*cind;
+	int count;
+	int ret;
+	struct oEGT eg_mul,eg_inv,eg_intrat,eg_check,tmp0,tmp1;
+	int period;
+	int *wx,*ptr;
+	int wxsize,nsize;
+	N wn;
+	Q wq;
+	NumberField nf;
+	DP *mb;
+	DP m;
+	int col1;
+
+	nf = get_numberfield();
+	mb = nf->mb;
+	a0 = (Q **)mat->body;
+	row = mat->row; col = mat->col;
+	w = (int **)almat(row,col);
+	for ( ind = 0; ; ind++ ) {
+		md = get_lprime(ind);
+		STOQ(md,mdq);
+		for ( i = 0; i < row; i++ )
+			for ( j = 0, ai = a0[i], wi = w[i]; j < col; j++ )
+				if ( q = (Q)ai[j] ) {
+					t = rem(NM(q),md);
+					if ( t && SGN(q) < 0 )
+						t = (md - t) % md;
+					wi[j] = t;
+				} else
+					wi[j] = 0;
+
+		if ( DP_Print ) {
+			fprintf(asir_out,"LU decomposition.."); fflush(asir_out);
+		}
+		rank = find_lhs_and_lu_mod((unsigned int **)w,row,col,md,&rinfo,&cinfo);
+		if ( DP_Print ) {
+			fprintf(asir_out,"done.\n"); fflush(asir_out);
+		}
+		for ( i = 0; i < col-1; i++ ) {
+			if ( !cinfo[i] ) {
+				m = mb[i];
+				for ( j = i+1; j < col-1; j++ )
+					if ( dp_redble(mb[j],m) )
+						cinfo[j] = -1;
+			}
+		}
+		a = (Q **)almat_pointer(rank,rank); /* lhs mat */
+		MKMAT(bmat,rank,col-rank); b = (Q **)bmat->body; /* lhs mat */
+		for ( j = li = ri = 0; j < col; j++ )
+			if ( cinfo[j] > 0 ) {
+				/* the column is in lhs */
+				for ( i = 0; i < rank; i++ ) {
+					w[i][li] = w[i][j];
+					a[i][li] = a0[rinfo[i]][j];
+				}
+				li++;
+			} else if ( !cinfo[j] ) {
+				/* the column is in rhs */
+				for ( i = 0; i < rank; i++ )
+					b[i][ri] = a0[rinfo[i]][j];
+				ri++;
+			}
+
+			/* solve Ax+B=0; A: rank x rank, B: rank x ri */
+			MKMAT(xmat,rank,ri); x = (Q **)(xmat)->body;
+			MKMAT(*nmmat,rank,ri); nm = (Q **)(*nmmat)->body;
+			/* use the right part of w as work area */
+			wc = (int **)almat(rank,ri);
+			for ( i = 0; i < rank; i++ )
+				wc[i] = w[i]+rank;
+			*rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+			*cindp = cind = (int *)MALLOC_ATOMIC((col-rank)*sizeof(int));
+			init_eg(&eg_mul); init_eg(&eg_inv);
+			init_eg(&eg_check); init_eg(&eg_intrat);
+			period = F4_INTRAT_PERIOD;
+			nsize = period;
+			wxsize = rank*ri*nsize;
+			wx = (int *)MALLOC_ATOMIC(wxsize*sizeof(int));
+			for ( i = 0; i < wxsize; i++ ) wx[i] = 0;
+			for ( q = ONE, count = 0; ; ) {
+				if ( DP_Print )
+					fprintf(stderr,"o");
+				/* wc = -b mod md */
+				get_eg(&tmp0);
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
+						if ( u = (Q)bi[j] ) {
+							t = rem(NM(u),md);
+							if ( t && SGN(u) > 0 )
+								t = (md - t) % md;
+							wi[j] = t;
+						} else
+							wi[j] = 0;
+				/* wc = A^(-1)wc; wc is not normalized */
+				solve_by_lu_mod(w,rank,md,wc,ri,0);
+				/* wx += q*wc */
+				ptr = wx;
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0, wi = wc[i]; j < ri; j++ ) {
+						if ( wi[j] )
+							muln_1(BD(NM(q)),PL(NM(q)),wi[j],ptr);
+						ptr += nsize;
+					}
+				count++;
+				get_eg(&tmp1);
+				add_eg(&eg_inv,&tmp0,&tmp1);
+				get_eg(&tmp0);
+				for ( i = 0; i < rank; i++ )
+					for ( j = 0; j < ri; j++ ) {
+						inner_product_mat_int_mod(a,wc,rank,i,j,&u);
+						addq(b[i][j],u,&s);
+						if ( s ) {
+							t = divin(NM(s),md,&tn);
+							if ( t )
+								error("generic_gauss_elim_hensel:incosistent");	
+							NTOQ(tn,SGN(s),b[i][j]);
+						} else
+							b[i][j] = 0;
+					}
+				get_eg(&tmp1);
+				add_eg(&eg_mul,&tmp0,&tmp1);
+				/* q = q*md */
+				mulq(q,mdq,&u); q = u;
+				if ( count == period ) {
+					get_eg(&tmp0);
+					ptr = wx;
+					for ( i = 0; i < rank; i++ )
+						for ( j = 0, xi = x[i]; j < ri;
+							j++, ptr += nsize ) {
+							for ( k = nsize-1; k >= 0 && !ptr[k]; k-- );
+							if ( k >= 0 ) {
+								wn = NALLOC(k+1);
+								PL(wn) = k+1;
+								for ( l = 0; l <= k; l++ ) BD(wn)[l] = (unsigned int)ptr[l];
+								NTOQ(wn,1,wq);
+								subq(xi[j],wq,&u); xi[j] = u;
+							}
+						}
+					ret = intmtoratm_q(xmat,NM(q),*nmmat,dn);
+					get_eg(&tmp1); add_eg(&eg_intrat,&tmp0,&tmp1);
+					if ( ret ) {
+						for ( j = k = l = 0; j < col; j++ )
+							if ( cinfo[j] > 0 )
+								rind[k++] = j;	
+							else if ( !cinfo[j] )
 								cind[l++] = j;
 						get_eg(&tmp0);
 						ret = gensolve_check(mat,*nmmat,*dn,rind,cind);

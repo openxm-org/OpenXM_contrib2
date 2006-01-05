@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.11 2005/08/24 06:28:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.12 2005/10/12 14:43:36 noro Exp $
 */
 
 #include "ca.h"
@@ -708,7 +708,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 		}
 	}
 	get_eg(&eg0);
-	rank = generic_gauss_elim_hensel(mobj,&sol,&dnsol,&rinfo,&cinfo);
+	rank = generic_gauss_elim_hensel_dalg(mobj,&sol,&dnsol,&rinfo,&cinfo);
 	get_eg(&eg1); add_eg(&eg_le,&eg0,&eg1);
 	if ( cinfo[0] == dim ) {
 		/* the input is invertible */
@@ -726,21 +726,12 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 		return 0;
 	} else {
 		/* the input is not invertible */
-		nparam = (dim+1)-rank;
-		/* the index 'dim' should not be in cinfo[] */
+		nparam = sol->col;
 		solmat = (Q **)BDY(sol);
-		for ( k = 0; k < nparam; k++ )
-			if ( cinfo[k] == dim )
-				error("invdalg : cannot happen");
 		nd0 = 0;
 		for ( k = 0; k < nparam; k++ ) {
-			m = mb[cinfo[k]];
-			for ( ndt = nd0; ndt; ndt = NEXT(ndt) ) {
-				if ( dp_redble(m,(DP)BDY(ndt)) ) break;
-			}
-			/* skip a redundunt basis element */
-			if ( ndt ) continue;
 			/* construct a new basis element */
+			m = mb[cinfo[k]];
 			mp0 = 0;
 			NEXTMP(mp0,mp);
 			chsgnq(dnsol,&dn1); mp->c = (P)dn1;
