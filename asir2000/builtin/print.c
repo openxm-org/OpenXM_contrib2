@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.19 2005/09/28 08:08:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.20 2005/12/10 14:14:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,8 @@ struct ftab print_tab[] = {
 	{"set_print_function",Pset_print_function,-1},
 	{0,0,0},
 };
+
+extern int I_am_server;
 
 void Pprint(NODE arg,pointer *rp)
 {
@@ -92,6 +94,9 @@ void Pprint(NODE arg,pointer *rp)
 			putc('\n',asir_out);
 		}
 	}
+	/* XXX : if ox_asir, we have to fflush always */
+	if ( I_am_server )
+		fflush(asir_out);
 	*rp = 0;
 }
 
