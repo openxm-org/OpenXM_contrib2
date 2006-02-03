@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.19 2003/11/12 07:48:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.20 2004/04/26 05:28:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,7 +77,7 @@ void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
 void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
 void Ppurge_stdin();
-void Pexec();
+void Pexec(),Pimport();
 
 extern int des_encryption;
 extern char *asir_libdir;
@@ -93,6 +93,7 @@ struct ftab file_tab[] = {
 	{"access",Paccess,1},
 	{"load",Pload,-1},
 	{"exec",Pexec,1},
+	{"import",Pimport,1},
 	{"which",Pwhich,1},
 	{"loadfiles",Ploadfiles,1},
 	{"output",Poutput,-1},
@@ -300,7 +301,38 @@ void Pexec(NODE arg,Q *rp)
 	if ( !name )
 		ret = -1;
 	else {
-		execasirfile(name);
+		load_and_execfile(name);
+		ret = 0;
+	}
+	STOQ(ret,*rp);
+}
+
+NODE imported_files;
+
+void Pimport(NODE arg,Q *rp)
+{
+	int ret;
+	char *name0,*name;
+	NODE t,opt,p;
+
+	name0 = BDY((STRING)ARG0(arg));
+	searchasirpath(name0,&name);
+	if ( !name )
+		ret = -1;
+	else {
+		for ( t = imported_files; t; t = NEXT(t) )
+			if ( !strcmp((char *)BDY(t),name) ) break;
+		if ( !t ) {
+			load_and_execfile(name);
+			MKNODE(t,name,imported_files); 
+			imported_files = t;
+		} else if ( current_option ) {
+			for ( opt = current_option; opt; opt = NEXT(opt) ) {
+				p = BDY((LIST)BDY(opt));
+				if ( !strcmp(BDY((STRING)BDY(p)),"reimport") && BDY(NEXT(p)) )
+					load_and_execfile(name);
+			}
+		}
 		ret = 0;
 	}
 	STOQ(ret,*rp);

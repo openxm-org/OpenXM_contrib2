@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.59 2005/10/10 15:16:38 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.60 2005/10/26 07:33:03 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -479,7 +479,13 @@ void resetenv(char *s)
 #if !defined(VISUAL)
 	reset_timer();
 #endif
-	LONGJMP(main_env,1);
+	if ( read_exec_file <= 1 ) {
+		read_exec_file = 0;
+		LONGJMP(main_env,1);
+	} else {
+		read_exec_file = 0;
+		LONGJMP(exec_env,1);
+	}
 }
 
 void fatal(int n)
@@ -570,10 +576,9 @@ void int_handler(int sig)
 							fprintf(stderr, "done.\n");
 					}
 				}
-				if ( read_exec_file ) {
-					read_exec_file = 0;
+				if ( read_exec_file )
 					resetenv("initialization aborted; return to toplevel");
-				} else
+				else
 					resetenv("return to toplevel");
 				break;
 			case 'd':
@@ -707,8 +712,6 @@ void error(char *s)
 	if ( CPVS != GPVS )
 		if ( !no_debug_on_error && (do_server_in_X11 || isatty(0)) )
 			bp(error_snode);
-	if ( read_exec_file )
-		read_exec_file = 0;
 	resetenv("return to toplevel");
 }
 
@@ -728,8 +731,6 @@ void toplevel(char *s)
 		showpos_to_string(errbuf+strlen(errbuf));
 		ExitAsir();
 	}
-	if ( read_exec_file )
-		read_exec_file = 0;
 	resetenv("return to toplevel");
 }
 
