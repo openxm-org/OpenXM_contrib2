@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.8 2004/12/10 07:36:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.9 2005/02/08 16:42:40 saito Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -34,8 +34,10 @@ static char	*Interval_dummy;
 #include	<fpu_control.h>
 #if 1
 #define	LINUX_FPU_RC_MASK				0xf3ff
-#define	LINUX_FPU_SETCW(c)			{_FPU_GETCW(__fpu_control);\
-				_FPU_SETCW(__fpu_control & LINUX_FPU_RC_MASK | c);}
+#define	LINUX_FPU_SETCW(c)			\
+{fpu_control_t __tmp__; _FPU_GETCW(__fpu_control);\
+ __tmp__ = (__fpu_control & LINUX_FPU_RC_MASK | c);\
+ _FPU_SETCW(__tmp__);}
 #define	FPNEAREST	LINUX_FPU_SETCW(_FPU_RC_NEAREST);
 #define	FPPLUSINF	LINUX_FPU_SETCW(_FPU_RC_UP);
 #define	FPMINUSINF	LINUX_FPU_SETCW(_FPU_RC_DOWN);
