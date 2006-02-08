@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.19 2003/02/14 22:29:19 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.20 2004/02/13 05:48:36 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -74,7 +74,7 @@ extern JMP_BUF ox_env;
 extern MATHCAP my_mathcap;
 extern char LastError[];
 
-void create_error(ERR *,unsigned int ,char *);
+void create_error(ERR *,unsigned int ,char *,LIST );
 
 void ox_io_init();
 void ox_asir_init(int,char **,char *);
@@ -164,7 +164,7 @@ static void process_ox()
 				fprintf(stderr," %s\n",name_of_cmd(cmd));
 			if ( ret = SETJMP(main_env) ) {
 				if ( ret == 1 ) {
-					create_error(&err,serial,LastError);
+					create_error(&err,serial,LastError,0);
 					asir_push_one((Obj)err);
 				}
 				break;
@@ -285,12 +285,12 @@ static void asir_executeFunction(int serial)
 		drawcircle(n);
 	} else if ( !strcmp(func,"draw_obj") ) {
 		if ( draw_obj(n) < 0 ) {
-			create_error(&err,serial,LastError);
+			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}	
 	} else if ( !strcmp(func,"draw_string") ) {
 		if ( draw_string(n) < 0 ) {
-			create_error(&err,serial,LastError);
+			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}
 	} else if ( !strcmp(func,"clear_canvas") ) {

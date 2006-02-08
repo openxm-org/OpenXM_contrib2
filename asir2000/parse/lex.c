@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.36 2005/10/26 07:33:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.37 2005/12/10 14:14:16 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -577,7 +577,7 @@ void yyerror(char *s)
 
 int echoback;
 
-extern int read_exec_file, do_fep, do_file;
+extern int do_fep, do_file;
 
 unsigned char encrypt_char(unsigned char);
 unsigned char decrypt_char(unsigned char);
@@ -610,9 +610,7 @@ int Egetc(FILE *fp)
 		if ( asir_infile->encoded )
 			c = decrypt_char((unsigned char)c);
 		return c;
-	} else if ( read_exec_file )
-		return EOF;
-	else {
+	} else {
 		c = *parse_strp++;
 		if ( !c )
 			return EOF;
@@ -650,7 +648,7 @@ static int Getc() {
 					else
 						c = Getc();
 					break;
-				} else if ( read_exec_file || do_file )
+				} else if ( asir_infile->fp || do_file )
 					asir_terminate(2);
 				else {
 					if ( asir_infile->fp )

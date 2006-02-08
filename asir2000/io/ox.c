@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.25 2004/08/28 12:50:30 takayama Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.26 2004/12/17 03:09:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -514,7 +514,7 @@ void ox_send_data(int s,pointer p)
 	ERR err;
 
 	if ( ox_check && !ox_check_cmo(s,(Obj)p) ) {
-		create_error(&err,ox_serial,"ox_send_data : Mathcap violation");
+		create_error(&err,ox_serial,"ox_send_data : Mathcap violation",0);
 		p = (pointer)err;
 	}
 	begin_critical();

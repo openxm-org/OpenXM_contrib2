@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.18 2005/03/28 09:20:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.19 2006/02/05 08:28:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -103,7 +103,6 @@ char *search_executable(char *name);
 extern char *asir_libdir;
 extern char *asir_contrib_dir;
 extern char *asir_pager;
-extern int read_exec_file;
 extern int main_parser;
 extern JMP_BUF exec_env;
 
@@ -385,32 +384,11 @@ void loadasirfile(char *name0)
 void execasirfile(char *name)
 {
 	loadasirfile(name);
-	read_exec_file = 1;
-	read_eval_loop();
-	read_exec_file = 0;
-}
-
-void load_and_execfile(char *name)
-{
-	FILE *fp;
-	INFILE save_asir_infile;
-	int save_prresult;
-	extern prresult;
-
-	savepvs();
-	save_asir_infile = asir_infile;
-	save_prresult = prresult;
-	asir_infile = 0;
-	loadasirfile(name);
-	if ( !SETJMP(exec_env) ) {
-		/* XXX : information for asir_teriminate() */
-		read_exec_file = 2;
+	if ( !SETJMP(asir_infile->jmpbuf) ) {
+		asir_infile->ready_for_longjmp = 1;
 		read_eval_loop();
-		read_exec_file = 0;
 	}
-	restorepvs();
-	asir_infile = save_asir_infile;
-	prresult = save_prresult;
+	closecurrentinput();
 }
 
 static NODE objfile = 0;

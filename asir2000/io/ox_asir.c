@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.57 2004/06/15 00:56:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.58 2005/07/26 00:58:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,11 +70,13 @@ extern JMP_BUF ox_env;
 extern MATHCAP my_mathcap;
 
 extern int little_endian,ox_sock_id;
+extern char LastError[];
+extern LIST LastStackTrace;
 
 int ox_sock_id;
 int lib_ox_need_conv;
 
-void create_error(ERR *,unsigned int ,char *);
+void create_error(ERR *,unsigned int ,char *,LIST trace);
 
 int asir_OperandStackSize;
 Obj *asir_OperandStack;
@@ -147,7 +149,6 @@ void ox_main(int argc,char **argv) {
 	ERR err;
 	unsigned int serial;
 	int ret;
-	extern char LastError[];
 
 	ox_asir_init(argc,argv,"ox_asir");
 	if ( do_message )
@@ -186,7 +187,7 @@ void ox_main(int argc,char **argv) {
 					fprintf(stderr," %s\n",name_of_cmd(cmd));
 				if ( ret = SETJMP(main_env) ) {
 					if ( ret == 1 ) {
-						create_error(&err,serial,LastError);
+						create_error(&err,serial,LastError,LastStackTrace);
 						asir_push_one((Obj)err);
 						while ( NEXT(asir_infile) )
 							closecurrentinput();
@@ -434,7 +435,7 @@ void asir_popCMO(unsigned int serial)
 	if ( valid_as_cmo(obj) )
 		ox_send_data(0,obj);
 	else {
-		create_error(&err,serial,"cannot convert to CMO object");
+		create_error(&err,serial,"cannot convert to CMO object",0);
 		ox_send_data(0,err);
 		asir_push_one(obj);
 	}
@@ -460,7 +461,7 @@ void asir_reduce_102(unsigned int serial)
 	else if ( !strcmp(opname,"*") )
 		func = arf_mul;
 	if ( !func ) {
-		create_error(&err,serial,"Invalid opration in ox_reduce_102");
+		create_error(&err,serial,"Invalid opration in ox_reduce_102",0);
 		asir_push_one(obj);
 	} else
 		ox_reduce_102(root,func);
@@ -513,7 +514,7 @@ void asir_set_rank_102(unsigned int serial)
 	}
 	if ( !stat ) return;
 	else {
-		create_error(&err,serial,"Invalid argument(s) in ox_set_rank_102");
+		create_error(&err,serial,"Invalid argument(s) in ox_set_rank_102",0);
 		asir_push_one(obj);
 	}
 }
@@ -541,7 +542,7 @@ void asir_tcp_accept_102(unsigned int serial)
 	rank = QTOS((Q)r);
 	if ( register_102(s,rank,1) < 0 ) {
 		create_error(&err,serial,
-			"failed to bind or accept in ox_tcp_accept_102");
+			"failed to bind or accept in ox_tcp_accept_102",0);
 		asir_push_one((Obj)err);
 	}
 }
@@ -573,7 +574,7 @@ void asir_tcp_connect_102(unsigned int serial)
 	rank = QTOS((Q)r);
 	if ( register_102(s,rank,1) < 0 ) {
 		create_error(&err,serial,
-			"failed to connect in ox_tcp_connect_102");
+			"failed to connect in ox_tcp_connect_102",0);
 		asir_push_one((Obj)err);
 	}
 }
@@ -590,7 +591,7 @@ void asir_pushCMOtag(unsigned int serial)
 		MKUSINT(ui,tag);
 		asir_push_one((Obj)ui);
 	} else {
-		create_error(&err,serial,"cannot convert to CMO object");
+		create_error(&err,serial,"cannot convert to CMO object",0);
 		asir_push_one((Obj)err);
 	}
 }
@@ -637,7 +638,7 @@ void asir_setName(unsigned int serial)
 	parse_strp = (char *)ALLOCA(n);
 	sprintf(parse_strp,"%s%s",name,dummy);
 	if ( mainparse(&snode) ) {
-		create_error(&err,serial,"cannot set to variable");
+		create_error(&err,serial,"cannot set to variable",0);
 		asir_push_one((Obj)err);
 	} else {
 		FA1((FNODE)FA0(snode)) = (pointer)mkfnode(1,I_FORMULA,asir_pop_one());
@@ -659,7 +660,7 @@ void asir_evalName(unsigned int serial)
 	parse_strp = (char *)ALLOCA(n);
 	sprintf(parse_strp,"%s;",name);
 	if ( mainparse(&snode) ) {
-		create_error(&err,serial,"no such variable");
+		create_error(&err,serial,"no such variable",0);
 		val = (pointer)err;
 	} else
 		val = evalstat(snode);	
@@ -754,6 +755,7 @@ static void asir_executeFunction(int serial)
 	if ( n )
 		NEXT(n1) = 0;
 
+#if 0
 	if ( !strcmp(func,"load") ) {
 		fname = (STRING)BDY(n);
 		if ( OID(fname) == O_STR ) {
@@ -768,6 +770,7 @@ static void asir_executeFunction(int serial)
 		}
 		result = 0;
 	} else {
+#endif
 		searchf(noargsysf,func,&f);
 		if ( !f )
 			searchf(sysf,func,&f); 
@@ -781,12 +784,14 @@ static void asir_executeFunction(int serial)
 		} else {
 			result = (Obj)bevalf(f,n);
 		}
+#if 0
 	}
+#endif
 	asir_push_one(result);
 	return;
 
 error:
-	create_error(&err,serial,buf);
+	create_error(&err,serial,buf,0);
 	result = (Obj)err;
 	asir_push_one(result);
 }
@@ -845,7 +850,6 @@ void ox_asir_init(int argc,char **argv,char *servername)
 {
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
-	extern int read_exec_file;
 	extern int do_asirrc;
 	extern int do_server_in_X11;
 	extern char displayname[];
@@ -906,16 +910,15 @@ void ox_asir_init(int argc,char **argv,char *servername)
 		}
 		sprintf(ifname,"%s/.asirrc",homedir);
 	}
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		input_init(ifp,ifname);
-		if ( !SETJMP(main_env) ) {
-			read_exec_file = 1;
-			read_eval_loop();
-			read_exec_file = 0;
-		}
-		fclose(ifp);
-	}
+
+	/* the bottom of the input stack */
 	input_init(0,"string");
+
+	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
+		fclose(ifp);
+		execasirfile(ifname);
+	}
+
 /* XXX Windows compatibility */
 	ox_io_init();
 	create_my_mathcap(servername);
@@ -1009,7 +1012,7 @@ int asir_ox_pop_cmo(void *cmo, int limit)
 	obj = asir_pop_one();
 	if ( !valid_as_cmo(obj) ) {
 		asir_push_one(obj);
-		create_error(&err,0,"The object at the stack top is invalid as a CMO.");
+		create_error(&err,0,"The object at the stack top is invalid as a CMO.",0);
 		obj = (Obj)err;
 	}
 	len = count_as_cmo(obj);
@@ -1058,7 +1061,7 @@ void asir_ox_push_cmd(int cmd)
 	if ( ret = SETJMP(main_env) ) {
 		asir_reset_handler();
 		if ( ret == 1 ) {
-			create_error(&err,0,LastError); /* XXX */
+			create_error(&err,0,LastError,LastStackTrace); /* XXX */
 			asir_push_one((Obj)err);
 		}
 	} else {
@@ -1085,7 +1088,7 @@ void asir_ox_execute_string(char *s)
 	if ( ret = SETJMP(main_env) ) {
 		asir_reset_handler();
 		if ( ret == 1 ) {
-			create_error(&err,0,LastError); /* XXX */
+			create_error(&err,0,LastError,LastStackTrace); /* XXX */
 			asir_push_one((Obj)err);
 		}
 	} else {
@@ -1140,7 +1143,6 @@ int asir_ox_init(int byteorder)
 	int tmp;
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
-	extern int read_exec_file;
 	extern int do_asirrc;
 	extern int do_server_in_X11;
 	char *getenv();
@@ -1180,10 +1182,9 @@ int asir_ox_init(int byteorder)
 	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !SETJMP(main_env) ) {
-			read_exec_file = 1;
+		if ( !SETJMP(asir_infile->jmpbuf) ) {
+			asir_infile->ready_for_longjmp;
 			read_eval_loop();
-			read_exec_file = 0;
 		}
 		fclose(ifp);
 	}

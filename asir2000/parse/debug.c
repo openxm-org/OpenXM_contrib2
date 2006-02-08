@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.14 2003/03/07 06:39:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.15 2003/05/14 07:08:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -838,6 +838,40 @@ void showpos_to_string(char *buf)
 			buf += strlen(buf);
 		}
 	}
+}
+
+/* [[file,line,name],...] */
+
+void showpos_to_list(LIST *r)
+{
+	NODE n,u,u1,t;
+	VS vs;
+	STRING null,name,fname;
+	LIST l;
+	Q q;
+
+	u = 0;
+	if ( PVSS ) {
+		if ( cur_binf ) {
+			/* builtin : [0,0,name] */
+			MKSTR(null,"");
+			MKSTR(name,cur_binf->name);
+			t = mknode(3,null,name,0);
+			MKLIST(l,t);
+			MKNODE(u1,l,0); u = u1;
+		}
+		((VS)BDY(PVSS))->at = evalstatline;
+		for ( n = PVSS; n; n = NEXT(n) ) {
+			vs = (VS)BDY(n);
+			MKSTR(fname,vs->usrf->f.usrf->fname);
+			STOQ(vs->at,q);
+			MKSTR(name,vs->usrf->name);
+			t = mknode(3,fname,name,q);
+			MKLIST(l,t);
+			MKNODE(u1,l,u); u = u1;
+		}
+	}
+	MKLIST(*r,u);
 }
 
 void change_stack(int level,NODE *pvss)

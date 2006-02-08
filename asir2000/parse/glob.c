@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.60 2005/10/26 07:33:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.61 2006/02/03 03:55:18 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -99,6 +99,7 @@ FUNC parse_targetf;
 FILE *ox_istream,*ox_ostream;
 int do_server_in_X11;
 Obj LastVal;
+LIST LastStackTrace;
 char LastError[BUFSIZ];
 int timer_is_set;
 NODE current_option;
@@ -198,7 +199,6 @@ char *do_filename;
 int do_message;
 int do_terse;
 int do_fep;
-int read_exec_file;
 int asir_setenv;
 static int buserr_sav;
 static char asir_history[BUFSIZ];
@@ -221,14 +221,9 @@ void asir_terminate(int status)
 	int t;
 	NODE n;
 
-	if ( read_exec_file ) {
-		t = read_exec_file;
-		read_exec_file = 0;
-		if ( t == 1 )
-			LONGJMP(main_env,status);
-		else
-			LONGJMP(exec_env,status);
-	} else {
+	if ( asir_infile && asir_infile->ready_for_longjmp )
+		LONGJMP(asir_infile->jmpbuf,status);
+	else {
 		if ( user_quit_handler ) {
 			if ( !do_terse )
 				fprintf(stderr,"Calling the registered quit callbacks...");
@@ -358,7 +353,7 @@ void process_args(int ac,char **av)
 			do_quiet = 1;
 			in_fp = fopen(*(av+1),"r");
 			if ( !in_fp ) {
-				fprintf(stderr,"%s does not exist!",*(av+1));
+				fprintf(stderr,"%s does not exist!\n",*(av+1));
 				asir_terminate(1);
 			}
 			do_file = 1;
@@ -454,6 +449,8 @@ void asir_reset_handler() {
 	signal(SIGINT,old_int);
 }
 
+extern int I_am_server;
+
 void resetenv(char *s)
 {
 	extern FILE *outfile;
@@ -479,13 +476,7 @@ void resetenv(char *s)
 #if !defined(VISUAL)
 	reset_timer();
 #endif
-	if ( read_exec_file <= 1 ) {
-		read_exec_file = 0;
-		LONGJMP(main_env,1);
-	} else {
-		read_exec_file = 0;
-		LONGJMP(exec_env,1);
-	}
+	LONGJMP(main_env,1);
 }
 
 void fatal(int n)
@@ -541,7 +532,6 @@ void int_handler(int sig)
 					fprintf(stderr,"Abort this session? (y or n) "); fflush(stderr);
 					fgets(buf,BUFSIZ,stdin);
 					if ( !strncmp(buf,"y",1) ) {
-						read_exec_file = 0;
 						fprintf(stderr,"Bye\n");
 						asir_terminate(1);
 					} else if ( !strncmp(buf,"n",1) ) {
@@ -576,10 +566,7 @@ void int_handler(int sig)
 							fprintf(stderr, "done.\n");
 					}
 				}
-				if ( read_exec_file )
-					resetenv("initialization aborted; return to toplevel");
-				else
-					resetenv("return to toplevel");
+				resetenv("return to toplevel");
 				break;
 			case 'd':
 #if 0
@@ -712,6 +699,8 @@ void error(char *s)
 	if ( CPVS != GPVS )
 		if ( !no_debug_on_error && (do_server_in_X11 || isatty(0)) )
 			bp(error_snode);
+	if ( I_am_server )
+		showpos_to_list(&LastStackTrace);	
 	resetenv("return to toplevel");
 }
 

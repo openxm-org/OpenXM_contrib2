@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.24 2004/10/27 08:21:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.25 2004/11/16 01:47:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -264,12 +264,11 @@ Q *rp;
 void Pquit(rp)
 pointer *rp;
 {
-	if ( !NEXT(asir_infile) )
-		asir_terminate(2); 
+	if ( asir_infile && NEXT(asir_infile) && asir_infile->ready_for_longjmp )
+		LONGJMP(asir_infile->jmpbuf,1);
 	else {
 		closecurrentinput();
-		if ( !asir_infile->fp && strcmp(asir_infile->name,"string") )
-			asir_terminate(2);
+		asir_terminate(2);
 	}
 	*rp = 0;
 }

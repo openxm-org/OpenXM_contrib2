@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.61 2005/11/16 23:42:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.62 2005/11/27 00:07:05 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2472,7 +2472,7 @@ void resume_timer() ;
 void reset_engine() ;
 unsigned int get_asir_version() ;
 char *get_asir_distribution();
-void create_error(ERR *err,unsigned int serial,char *msg);
+void create_error(ERR *err,unsigned int serial,char *msg,LIST trace);
 void init_lprime();
 int get_lprime(int index);
 void create_new_lprimes(int index);

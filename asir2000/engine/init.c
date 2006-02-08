@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.22 2004/12/02 13:48:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.23 2005/07/03 10:19:22 ohara Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -260,7 +260,7 @@ char *get_asir_distribution() {
 }
 
 
-void create_error(ERR *err,unsigned int serial,char *msg)
+void create_error(ERR *err,unsigned int serial,char *msg,LIST trace)
 {
 	int len;
 	USINT ui;
@@ -274,7 +274,7 @@ void create_error(ERR *err,unsigned int serial,char *msg)
 	msg1 = (char *)MALLOC(len+1);
 	strcpy(msg1,msg);
 	MKSTR(errmsg,msg1);
-	MKNODE(n1,errmsg,0); MKNODE(n,ui,n1); MKLIST(list,n);
+	n = mknode(3,ui,errmsg,trace); MKLIST(list,n);
 	MKERR(*err,list);
 }
 

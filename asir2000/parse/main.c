@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.26 2004/03/05 02:26:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.27 2004/06/15 00:56:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -91,7 +91,6 @@ main(int argc,char *argv[])
 	FILE *ifp;
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
-	extern int read_exec_file;
 	extern int do_asirrc;
 	extern int do_file;
 	extern char *do_filename;
@@ -195,30 +194,20 @@ main(int argc,char *argv[])
 		sprintf(ifname,"%s/." ASIRRCNAME,homedir);
 	}
 
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		if (!asir_setenv) {
-			input_init(ifp,ifname);
-		}else {
-			asir_infile=NULL;
-			loadasirfile(ifname);
-		}
-		if ( !SETJMP(main_env) ) {
-			read_exec_file = 1;
-			read_eval_loop();
-			read_exec_file = 0;
-		}
-		fclose(ifp);
+	if ( do_file ) {
+		asir_infile=NULL;
+		loadasirfile(do_filename);
+	} else {
+		/* the bottom of the input stack */
+		input_init(stdin,"stdin");
 	}
 
-	if ( do_file ) {
-		if (!asir_setenv) {
-			input_init(in_fp,"stdin");
-		}else {
-			asir_infile=NULL;
-			loadasirfile(do_filename);
-		}
-	}else
-		input_init(stdin,"stdin");
+	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
+		fclose(ifp);
+		if ( !SETJMP(main_env) )
+			execasirfile(ifname);
+	}
+
 	prompt();
 	while ( 1 ) {
 #if defined(PARI)
@@ -233,6 +222,10 @@ main(int argc,char *argv[])
 #endif
 		if ( SETJMP(main_env) )
 			prompt();
+		if ( SETJMP(asir_infile->jmpbuf) )
+			prompt();
+		else
+			asir_infile->ready_for_longjmp = 1;
 		restore_handler();
 		read_eval_loop();
 	}

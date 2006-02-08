@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.7 2004/02/13 05:48:36 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.8 2004/06/15 00:56:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,7 +72,6 @@ void Init_Asir(int argc,char **argv)
 	FILE *ifp;
 	char ifname[BUFSIZ];
 	extern int GC_dont_gc;
-	extern int read_exec_file;
 	extern int do_asirrc;
 	char *getenv();
 	static asirlib_initialized=0;
@@ -119,11 +118,8 @@ void Init_Asir(int argc,char **argv)
 #endif
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		input_init(ifp,ifname);
-		if ( !setjmp(env) ) {
-			read_exec_file = 1;
+		if ( !setjmp(asir_infile->jmpbuf) )
 			read_eval_loop();
-			read_exec_file = 0;
-		}
 		fclose(ifp);
 	} else
 		error(".asirrc not found");

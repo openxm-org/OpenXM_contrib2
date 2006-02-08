@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.20 2004/04/26 05:28:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.21 2006/02/03 03:55:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,7 +77,7 @@ void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
 void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
 void Ppurge_stdin();
-void Pexec(),Pimport();
+void Pimport();
 
 extern int des_encryption;
 extern char *asir_libdir;
@@ -92,8 +92,7 @@ struct ftab file_tab[] = {
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
 	{"load",Pload,-1},
-	{"exec",Pexec,1},
-	{"import",Pimport,1},
+	{"import",Pimport,-1},
 	{"which",Pwhich,1},
 	{"loadfiles",Ploadfiles,1},
 	{"output",Poutput,-1},
@@ -277,11 +276,7 @@ void Pload(NODE arg,Q *rp)
 					sprintf(errbuf,"load : \"%s\" not found in the search path",name0);
 					error(errbuf);
 				}
-				ret = loadfile(name);
-				if ( !ret ) {
-					sprintf(errbuf,"load : \"%s\" could not be loaded",name);
-					error(errbuf);
-				}
+				execasirfile(name);
 				break;
 			default:
 				error("load : invalid argument");
@@ -291,51 +286,31 @@ void Pload(NODE arg,Q *rp)
 	STOQ(ret,*rp);
 }
 
-void Pexec(NODE arg,Q *rp)
-{
-	int ret;
-	char *name0,*name;
-
-	name0 = BDY((STRING)ARG0(arg));
-	searchasirpath(name0,&name);
-	if ( !name )
-		ret = -1;
-	else {
-		load_and_execfile(name);
-		ret = 0;
-	}
-	STOQ(ret,*rp);
-}
-
 NODE imported_files;
 
 void Pimport(NODE arg,Q *rp)
 {
-	int ret;
-	char *name0,*name;
-	NODE t,opt,p;
+	char *name;
+	NODE t,p,opt;
 
-	name0 = BDY((STRING)ARG0(arg));
-	searchasirpath(name0,&name);
-	if ( !name )
-		ret = -1;
-	else {
-		for ( t = imported_files; t; t = NEXT(t) )
-			if ( !strcmp((char *)BDY(t),name) ) break;
-		if ( !t ) {
-			load_and_execfile(name);
-			MKNODE(t,name,imported_files); 
-			imported_files = t;
-		} else if ( current_option ) {
-			for ( opt = current_option; opt; opt = NEXT(opt) ) {
-				p = BDY((LIST)BDY(opt));
-				if ( !strcmp(BDY((STRING)BDY(p)),"reimport") && BDY(NEXT(p)) )
-					load_and_execfile(name);
+	name = BDY((STRING)ARG0(arg));
+	for ( t = imported_files; t; t = NEXT(t) )
+		if ( !strcmp((char *)BDY(t),name) ) break;
+	if ( !t ) {
+		Pload(arg,rp);
+		MKNODE(t,name,imported_files); 
+		imported_files = t;
+		return;
+	} else if ( current_option ) {
+		for ( opt = current_option; opt; opt = NEXT(opt) ) {
+			p = BDY((LIST)BDY(opt));
+			if ( !strcmp(BDY((STRING)BDY(p)),"reimport") && BDY(NEXT(p)) ) {
+				Pload(arg,rp);
+				return;
 			}
 		}
-		ret = 0;
 	}
-	STOQ(ret,*rp);
+	*rp = 0;
 }
 
 void Pwhich(NODE arg,STRING *rp)
