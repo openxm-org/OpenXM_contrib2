@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.61 2006/02/03 03:55:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.62 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -214,12 +214,16 @@ void ExitAsir() {
 /*
  * status = 1 abnormal termination (error() etc.)
  * status = 2 normal termination (end(), quit() etc.)
+ * status = 3 absolute termination
  */
 
 void asir_terminate(int status)
 {
 	int t;
 	NODE n;
+
+	/* called from engine in Windows */
+	if ( status == 3 ) asir_infile = 0;
 
 	if ( asir_infile && asir_infile->ready_for_longjmp )
 		LONGJMP(asir_infile->jmpbuf,status);
