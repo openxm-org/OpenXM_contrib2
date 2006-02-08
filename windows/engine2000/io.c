@@ -130,7 +130,7 @@ void watch_intr() {
 			default:
 				terminate_debug_gui();
 				emergency = 1; /* XXX */
-				asir_terminate(2);
+				asir_terminate(3);
 				exit(0);
 				/* NOTREACHED */
 				break;
@@ -162,7 +162,7 @@ void ox_watch_intr() {
 				ResetEvent(hOxKill);
 				terminate_debug_gui();
 				emergency = 1; /* XXX */
-				asir_terminate(2);
+				asir_terminate(3);
 				/* NOTREACHED */
 				break;
 		}

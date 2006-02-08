@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.5 2002/08/02 02:48:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.6 2002/08/02 09:30:23 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -283,7 +283,8 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 			asir_executeFunction();
 			break;
 		case SM_shutdown:
-			asir_terminate(2);
+			asir_infile = 0;
+			asir_terminate(3);
 			break;
 		case SM_pops:
 			asir_pops();
