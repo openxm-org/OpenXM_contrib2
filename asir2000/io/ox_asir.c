@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.58 2005/07/26 00:58:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.59 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -916,7 +916,8 @@ void ox_asir_init(int argc,char **argv,char *servername)
 
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		fclose(ifp);
-		execasirfile(ifname);
+		if ( !SETJMP(main_env) )
+			execasirfile(ifname);
 	}
 
 /* XXX Windows compatibility */
@@ -1179,16 +1180,13 @@ int asir_ox_init(int byteorder)
 #if defined(UINIT)
 	reg_sysf();
 #endif
+	input_init(0,"string");
 	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		input_init(ifp,ifname);
-		if ( !SETJMP(asir_infile->jmpbuf) ) {
-			asir_infile->ready_for_longjmp;
-			read_eval_loop();
-		}
 		fclose(ifp);
+		if ( !SETJMP(main_env) )
+			execasirfile(ifname);
 	}
-	input_init(0,"string");
 
 	asir_OperandStackSize = BUFSIZ;
 	asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));
