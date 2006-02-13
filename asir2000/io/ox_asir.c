@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.59 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.60 2006/02/11 09:10:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -858,6 +858,7 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	FILE *ifp;
 	char *homedir;
 	char *ptr;
+	int do_server_sav;
 #if !defined(VISUAL)
 	int tmp;
 #endif
@@ -916,8 +917,11 @@ void ox_asir_init(int argc,char **argv,char *servername)
 
 	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
 		fclose(ifp);
+		do_server_sav = do_server_in_X11;
+		do_server_in_X11 = 0;
 		if ( !SETJMP(main_env) )
 			execasirfile(ifname);
+		do_server_in_X11 = do_server_sav;
 	}
 
 /* XXX Windows compatibility */
