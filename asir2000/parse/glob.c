@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.63 2006/02/08 04:33:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.64 2006/02/10 23:56:44 fujiwara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -537,6 +537,8 @@ void int_handler(int sig)
 					fgets(buf,BUFSIZ,stdin);
 					if ( !strncmp(buf,"y",1) ) {
 						fprintf(stderr,"Bye\n");
+						/* for terminating myself */
+						asir_infile = 0;
 						asir_terminate(1);
 					} else if ( !strncmp(buf,"n",1) ) {
 						restore_handler();

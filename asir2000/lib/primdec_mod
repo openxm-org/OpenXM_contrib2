@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.13 2004/02/09 23:37:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_mod,v 1.14 2004/07/30 02:24:11 noro Exp $ */
 
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
@@ -1974,6 +1974,7 @@ def contraction(P,V,W)
 	/* This procedure is called by zeroprimedecomposition.	*/
 	/* So, P is supposed to be a GB w.r.t. DRL.		*/
 
+	Ord0 = dp_ord();
 	Ord=0;
 	YSet=setminus(W,V);
 
@@ -1991,6 +1992,7 @@ def contraction(P,V,W)
 	for ( T = G; T != []; T = cdr(T) )
 		if ( !member(Vt,vars(car(T))) )
 			R = cons(car(T),R);
+	dp_ord(Ord0);
 	return [R,F];
 	}
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/primdec_lex,v 1.1 2001/04/02 04:33:47 noro Exp $
 */
 /*   Primary decomposition & Radical decomposition program      */
 /*   written by T.Shimoyama, Fujitsu Lab. Date: 1995.10.12      */
@@ -1384,8 +1384,8 @@ def zraddec(F,X)
 /* contraction from V to X */
 def radcont(Q,V,X)
 {
-	dp_ord(irem(PRIMEORD,3)); 
 	for (R=[],I=length(Q)-1;I>=0;I--) {
+		dp_ord(irem(PRIMEORD,3)); 
 		G=Q[I];
 		for (E=1,J=0;J<length(G);J++)
 			E = lcm(E,dp_hc(dp_ptod(G[J],V)));
