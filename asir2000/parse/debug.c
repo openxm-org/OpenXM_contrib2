@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.15 2003/05/14 07:08:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.16 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -842,6 +842,8 @@ void showpos_to_string(char *buf)
 
 /* [[file,line,name],...] */
 
+extern int at_root;
+
 void showpos_to_list(LIST *r)
 {
 	NODE n,u,u1,t;
@@ -871,6 +873,10 @@ void showpos_to_list(LIST *r)
 			MKNODE(u1,l,u); u = u1;
 		}
 	}
+	/* line number at the toplevel */
+	MKSTR(fname,"toplevel"); STOQ(at_root,q);
+	t = mknode(2,fname,q); MKLIST(l,t); MKNODE(u1,l,u); u = u1;
+
 	MKLIST(*r,u);
 }
 

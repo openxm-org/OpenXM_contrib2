@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.27 2004/06/15 00:56:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.28 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -222,10 +222,12 @@ main(int argc,char *argv[])
 #endif
 		if ( SETJMP(main_env) )
 			prompt();
-		if ( SETJMP(asir_infile->jmpbuf) )
-			prompt();
-		else
-			asir_infile->ready_for_longjmp = 1;
+		if ( !do_file ) {
+			if ( SETJMP(asir_infile->jmpbuf) )
+				prompt();
+			else
+				asir_infile->ready_for_longjmp = 1;
+		}
 		restore_handler();
 		read_eval_loop();
 	}

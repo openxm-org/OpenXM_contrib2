@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.58 2005/12/11 05:27:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.59 2005/12/11 07:21:43 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -59,11 +59,14 @@
 #endif
 
 extern JMP_BUF timer_env;
+extern FUNC cur_binf;
+extern NODE PVSS;
 
 int f_break,f_return,f_continue;
 int evalstatline;
 int recv_intr;
 int show_crossref;
+int at_root;
 void gen_searchf_searchonly(char *name,FUNC *r);
 LIST eval_arg(FNODE a,unsigned int quote);
 
@@ -721,6 +724,7 @@ pointer evalstat(SNODE f)
 		bp(f);
 	}
 	evalstatline = f->ln;
+	if ( !PVSS ) at_root = evalstatline;
 
 	switch ( f->id ) {
 		case S_BP:
@@ -834,8 +838,6 @@ pointer evalnode(NODE node)
 	return ( val );
 }
 
-extern FUNC cur_binf;
-extern NODE PVSS;
 
 LIST eval_arg(FNODE a,unsigned int quote)
 {

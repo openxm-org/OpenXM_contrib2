@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.60 2006/02/11 09:10:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.61 2006/02/13 10:07:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -703,6 +703,7 @@ int asir_executeString()
 #else
 	parse_strp = cmd;
 #endif
+	asir_infile->ln = 1;
 	if ( mainparse(&snode) ) {
 		return -1;
 	}
