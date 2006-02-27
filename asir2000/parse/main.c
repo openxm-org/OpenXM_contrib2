@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.28 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.29 2006/02/25 06:33:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -75,6 +75,7 @@ extern JMP_BUF main_env;
 double get_current_time();
 void init_socket();
 void recover();
+void set_stacksize();
 
 extern int mpi_nprocs,mpi_myid;
 
@@ -104,6 +105,7 @@ main(int argc,char *argv[])
 	char *slash,*bslash,*binname,*p;
 #endif
 
+	set_stacksize();
 	StackBottom = &tmp;
 	GC_init();
 #if defined(MPI)
@@ -239,3 +241,17 @@ main(int argc,char *argv[])
 void set_error(int code,char *reason,char *action)
 {}
 #endif
+
+void set_stacksize()
+{
+#if !defined(VISUAL)
+	struct rlimit rlim;
+	int c,m;
+
+	getrlimit(RLIMIT_STACK,&rlim);
+	if ( rlim.rlim_cur < (1<<26) ) {
+		rlim.rlim_cur = MIN(1<<26,rlim.rlim_max);
+		setrlimit(RLIMIT_STACK,&rlim);
+	}
+#endif
+}
