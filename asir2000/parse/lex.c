@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.37 2005/12/10 14:14:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.38 2006/02/08 02:11:19 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -537,6 +537,7 @@ int aftercomment() {
 	int c,c1;
 
 	for ( c = Getc(); ; ) {
+		if ( c == '\n' ) asir_infile->ln++;
 		c1 = Getc();
 		if ( (c == '*') && (c1 == '/') )
 			return Getc();
