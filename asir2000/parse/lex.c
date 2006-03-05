@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.38 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.39 2006/03/05 07:11:52 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -556,9 +556,16 @@ int myatoi(char *s)
 extern int ox_do_copy;
 extern int I_am_server;
 extern JMP_BUF main_env;
+extern int at_root;
+extern LIST LastStackTrace;
 
 void yyerror(char *s)
 {
+	STRING fname;
+	Q q;
+	NODE t;
+	LIST l,l2;
+
 	if ( main_parser ) {
 		if ( ox_do_copy ) {
 			/* push errors to DebugStack */
@@ -569,6 +576,20 @@ void yyerror(char *s)
 				fprintf(stderr,"\"%s\", near line %d: %s\n",asir_infile->name,asir_infile->ln,s);
 		}
 		if ( I_am_server ) {
+			if ( NEXT(asir_infile) ) {
+				/* error in a file; record the position */
+				MKSTR(fname,asir_infile->name); STOQ(asir_infile->ln,q);
+				t = mknode(2,fname,q); MKLIST(l,t);
+				/* line number at the toplevel */
+				MKSTR(fname,"toplevel"); STOQ(at_root,q);
+				t = mknode(2,fname,q); MKLIST(l2,t);
+				t = mknode(2,l2,l); 
+			} else {
+				MKSTR(fname,"toplevel"); STOQ(asir_infile->ln,q);
+				t = mknode(2,fname,q); MKLIST(l,t);
+				t = mknode(1,l);
+			}
+			MKLIST(LastStackTrace,t);
 			set_lasterror(s);
 			LONGJMP(main_env,1);
 		}
