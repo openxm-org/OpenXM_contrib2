@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.16 2004/03/14 12:56:47 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.17 2006/03/03 10:36:18 takayama Exp $ */
 
 /* BUG: this library has not yet been adapted to the new automatic launcher
         of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
@@ -504,9 +504,46 @@ def glib_plot(F) {
   taka_glib_plot(F,Opt);
 }
 
+/*&usage begin: glib_flush();
+  Flush the output. 
+ (Cfep only. It also set initGL to 1.).
+end: */
 def glib_flush() {
   extern Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
   if (Cfep_loaded) cfep.draw_flush(Glib_canvas);
 }
+/*&usage begin: glib_set_pixel_size(P)
+  Set the size of putpixel to P. 1.0 is the default.
+ (cfep only).
+end: */
+def glib_set_pixel_size(X) {
+  extern  Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (!Cfep_loaded) /*Not implemented.*/ ;
+  else cfep.glib_set_pixel_size(X);
+}
+/*&usage begin: glib_clear()
+  Clear the screen.
+ (cfep only).
+end: */
+def glib_clear() {
+  extern  Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (!Cfep_loaded) /*Not implemented.*/ ;
+  else cfep.glib_clear();
+}
+/*&usage begin: glib_remove_last()
+  Remove the last object.  glib_flush() should also be called to remove
+  the last object.
+ (cfep only).
+end: */
+def glib_remove_last() {
+  extern  Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (!Cfep_loaded) /*Not implemented.*/ ;
+  else cfep.glib_remove_last();
+}
+
 end$
 
