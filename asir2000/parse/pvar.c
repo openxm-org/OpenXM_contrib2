@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.15 2005/10/26 07:33:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.16 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,16 +58,16 @@ int gdef,mgdef,ldef;
 void mkpvs(char *fname)
 {
 	VS pvs;
-	char *fullname;
+	char *fullname,*buf;
 	FUNC f;
 
 	if ( CUR_MODULE ) {
 		/* function must be declared in advance */
 		searchf(CUR_MODULE->usrf_list,fname,&f);
 		if ( !f ) {
-			fprintf(stderr,"\"%s\", near line %d: undeclared function `%s'",
-				asir_infile->name,asir_infile->ln,fname);
-			error("");
+			buf = ALLOCA(strlen("undeclared function "+strlen(fname)+10));
+			sprintf(buf,"undeclared function `%s'",fname);
+			yyerror(buf);
 		}
 	}
 	pvs = (VS)MALLOC(sizeof(struct oVS));
@@ -132,6 +132,7 @@ void poppvs() {
 unsigned int makepvar(char *str)
 {
 	int c,c1,created;
+	char *buf;
 
 	if ( str[0] == '_' ) {
 		/* pattern variable */
@@ -232,9 +233,9 @@ unsigned int makepvar(char *str)
 			c = PVGLOBAL((unsigned int)c);
 		} else {
 			/* not declared as static or extern */
-			fprintf(stderr,"\"%s\", near line %d: undeclared variable `%s'",
-				asir_infile->name,asir_infile->ln,str);
-			error("");
+			buf = ALLOCA(strlen("undeclared variable"+strlen(str)+10));
+			sprintf(buf,"undeclared variable `%s'",str);
+			yyerror(buf);
 		}
 	} else {
 		/* outside function, outside module */
@@ -243,9 +244,9 @@ unsigned int makepvar(char *str)
 	return c;
 
 CONFLICTION:
-	fprintf(stderr,"\"%s\", near line %d: conflicting declarations for `%s'",
-		asir_infile->name,asir_infile->ln,str);
-	error("");
+	buf = ALLOCA(strlen("conflicting declarations for "+strlen(str)+10));
+	sprintf(buf,"conflicting declarations for `%s'",str);
+	yyerror(buf);
 }
 
 extern FUNC parse_targetf;
