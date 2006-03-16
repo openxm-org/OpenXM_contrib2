@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.62 2005/11/27 00:07:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.63 2006/02/08 02:11:19 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -885,7 +885,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKERR(e,b) (NEWERR(e),(e)->body=(Obj)(b))
 #define MKMATHCAP(e,b) (NEWMATHCAP(e),(e)->body=(LIST)(b))
 #define MKBYTEARRAY(m,l) \
-(NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
+(NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(unsigned char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
 #define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b))
 #define MKQUOTEARG(q,t,b) (NEWQUOTEARG(q),(q)->type=(t),(q)->body=(pointer)(b))
 

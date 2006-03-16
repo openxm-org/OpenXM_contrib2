@@ -45,12 +45,16 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.49 2005/12/21 23:18:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.50 2006/01/05 00:21:20 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
 #include "inline.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define F4_INTRAT_PERIOD 8 
 
@@ -444,13 +448,28 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
 	char *str;
 	LIST list;
 	NODE tn;
+	int ac;
+	struct stat sbuf;
+	char *fname;
+	FILE *fp;
 
-	asir_assert(ARG0(arg),O_N,"newbytearray");
-	len = QTOS((Q)ARG0(arg)); 
-	if ( len < 0 )
-		error("newbytearray : invalid size");
-	MKBYTEARRAY(array,len);
-	if ( argc(arg) == 2 ) {
+	ac = argc(arg);
+	if ( ac == 1 ) {
+		/* ARG0(arg) must be a filename */
+		asir_assert(ARG0(arg),O_STR,"newbytearray");
+		fname = BDY((STRING)ARG0(arg));
+		fp = fopen(fname,"rb");
+		if ( !fp ) error("newbytearray : fopen failed");
+		if ( stat(fname,&sbuf) < 0 ) error("newbytearray : stat failed");
+		len = sbuf.st_size;
+		MKBYTEARRAY(array,len);
+		fread(BDY(array),len,sizeof(char),fp);
+	} else if ( ac == 2 ) {
+		asir_assert(ARG0(arg),O_N,"newbytearray");
+		len = QTOS((Q)ARG0(arg)); 
+		if ( len < 0 )
+			error("newbytearray : invalid size");
+		MKBYTEARRAY(array,len);
 		if ( !ARG1(arg) )
 			error("newbytearray : invalid initialization");
 		switch ( OID((Obj)ARG1(arg)) ) {
@@ -474,7 +493,8 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
 				if ( !ARG1(arg) )
 					error("newbytearray : invalid initialization");
 		}
-	}
+	} else
+		error("newbytearray : invalid argument");
 	*rp = array;
 }
 
@@ -483,7 +503,7 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
 void Pmemoryplot_to_coord(NODE arg,LIST *rp)
 {
 	int len,blen,y,i,j;
-	char *a;
+	unsigned char *a;
 	NODE r0,r,n;
 	LIST l;
 	BYTEARRAY ba;

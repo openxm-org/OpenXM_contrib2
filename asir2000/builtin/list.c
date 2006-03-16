@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.9 2004/06/29 15:06:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/list.c,v 1.10 2004/08/25 05:43:35 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -191,6 +191,9 @@ Q *rp;
         n = BDY((LIST)ARG0(arg));
         for ( i = 0; n; i++, n = NEXT(n) );
         break;
+	case O_BYTEARRAY:
+		i = ((BYTEARRAY)ARG0(arg))->len;
+		break;
     default:
         error("length : invalid argument"); break;
     }
