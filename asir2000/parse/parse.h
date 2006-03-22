@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.44 2005/12/10 14:14:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.45 2006/02/08 02:11:19 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -198,7 +198,7 @@ typedef struct oPFINS {
 typedef struct oFNODE {
 	short id;
 	unsigned normalized:1;
-	unsigned expanded:1;
+	unsigned expanded:2;
 	unsigned coef:1;
 	pointer arg[1];
 } *FNODE;
