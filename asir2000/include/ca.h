@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.63 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.64 2006/03/16 10:08:21 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -455,7 +455,7 @@ typedef struct oNBP {
 
 typedef struct oNBM {
 	int d;
-	Q c;
+	P c;
 	unsigned int *b;
 } *NBM;
 
@@ -956,6 +956,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define NUM(p) (OID(p)==O_N)
 #define RAT(p) (OID(p)==O_R)
 #define RATN(a) (NID(a)==N_Q)
+#define POLY(a) (!(a) ||(OID(a)<=O_P))
 #define INT(q) (!(q)||(NUM(q)&&RATN((Num)q)&&!DN((Q)q)))
 #define REAL(a) (NID(a)==N_R)
 #define BIGFLOAT(a) (NID(a)==N_B)
