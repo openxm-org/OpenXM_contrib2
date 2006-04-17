@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.127 2005/08/03 05:01:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.128 2005/08/03 06:10:47 noro Exp $ */
 
 #include "nd.h"
 
@@ -47,6 +47,7 @@ NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
 int nd_monic(int m,ND *p);
+NDV plain_vect_to_ndv_q(Q *mat,int col,UINT *s0vect);
 
 void nd_free_private_storage()
 {
@@ -4082,6 +4083,29 @@ int nd_to_vect_q(UINT *s0,int n,ND d,Q *r)
 	return i;
 }
 
+Q *nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair)
+{
+	NM m;
+	NMV mr;
+	UINT *d,*t,*s;
+	NDV p;
+	int i,j,len;
+	Q *r;
+
+	m = pair->mul;
+	d = DL(m);
+	p = nd_ps[pair->index];
+	len = LEN(p);
+	r = (Q *)CALLOC(n,sizeof(Q));
+	t = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+	for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
+		ndl_add(d,DL(mr),t);	
+		for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
+		r[i] = CQ(mr);
+	}
+	return r;
+}
+
 IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 {
 	NM m;
@@ -4327,6 +4351,8 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
 	}
 }
 
+/* for preprocessed vector */
+
 NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect)
 {
 	int j,k,len;
@@ -4351,6 +4377,36 @@ NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect)
 						error("afo");
 					ndl_copy(p,DL(mr)); CQ(mr) = c; NMV_ADV(mr);
 				}
+			}
+		MKNDV(nd_nvar,mr0,len,r);
+		return r;
+	}
+}
+
+/* for plain vector */
+
+NDV plain_vect_to_ndv_q(Q *vect,int col,UINT *s0vect)
+{
+	int j,k,len;
+	UINT *p;
+	Q c;
+	NDV r;
+	NMV mr0,mr;
+
+	for ( j = 0, len = 0; j < col; j++ ) if ( vect[j] ) len++;
+	if ( !len ) return 0;
+	else {
+		mr0 = (NMV)GC_malloc(nmv_adv*len);
+#if 0
+		ndv_alloc += nmv_adv*len;
+#endif
+		mr = mr0; 
+		p = s0vect;
+		for ( j = k = 0; j < col; j++, p += nd_wpd, k++ )
+			if ( c = vect[k] ) {
+				if ( DN(c) )
+					error("afo");
+				ndl_copy(p,DL(mr)); CQ(mr) = c; NMV_ADV(mr);
 			}
 		MKNDV(nd_nvar,mr0,len,r);
 		return r;
@@ -4476,6 +4532,14 @@ NODE nd_f4(int m)
 		for ( r = nflist; r; r = NEXT(r) ) {
 			nf = (NDV)BDY(r);
 			ndv_removecont(m,nf);
+			if ( !m && nd_nalg ) {
+				ND nf1;
+
+				nf1 = ndvtond(m,nf);
+				nd_monic(0,&nf1);
+				nd_removecont(m,nf1);
+				nf = ndtondv(m,nf1);
+			}
 			nh = ndv_newps(m,nf,0);
 			d = update_pairs(d,g,nh);
 			g = update_base(g,nh);
@@ -4590,6 +4654,7 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
 	return r0;
 }
 
+#if 0
 NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
         NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred)
 {
@@ -4657,6 +4722,64 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
 	}
 	return r0;
 }
+#else
+void printm(Q **mat,int row,int col)
+{
+	int i,j;
+	printf("[");
+	for ( i = 0; i < row; i++ ) {
+		for ( j = 0; j < col; j++ ) {
+			printexpr(CO,mat[i][j]); printf(" ");
+		}
+		printf("]\n");
+	}
+}
+
+NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred)
+{
+	int row,a;
+	int i,j,rank;
+	NODE r0,r;
+	ND_pairs sp;
+	ND spol;
+	Q **mat;
+	int *colstat;
+	int *sugar;
+
+	row = nsp+nred;
+	/* make the matrix */
+	mat = (Q **)ALLOCA(row*sizeof(Q *));
+	sugar = (int *)ALLOCA(row*sizeof(int));
+	for ( row = a = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
+		nd_sp(0,0,sp,&spol);
+		if ( !spol ) continue;
+		mat[row] = (Q *)MALLOC(col*sizeof(Q));
+		nd_to_vect_q(s0vect,col,spol,mat[row]);
+		sugar[row] = SG(spol);
+		row++;
+	}
+	for ( i = 0; i < nred; i++, row++ ) {
+		mat[row] = nm_ind_pair_to_vect(0,s0vect,col,rvect[i]);
+		sugar[row] = rvect[i]->sugar;
+	}
+	/* elimination */
+	colstat = (int *)ALLOCA(col*sizeof(int));
+	rank = nd_gauss_elim_q(mat,sugar,row,col,colstat);
+	r0 = 0;
+	for ( i = 0; i < rank; i++ ) {
+		for ( j = 0; j < col; j++ ) if ( mat[i][j] ) break;
+		if ( j == col ) error("nd_f4_red_q_main : cannot happen");
+		if ( rhead[j] ) continue;
+		NEXTNODE(r0,r); BDY(r) = 
+			(pointer)plain_vect_to_ndv_q(mat[i],col,s0vect);
+		SG((NDV)BDY(r)) = sugar[i];
+	}
+	if ( r0 ) NEXT(r) = 0;
+	printf("\n");
+	return r0;
+}
+#endif
 
 FILE *nd_write,*nd_read;
 
