@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.50 2006/01/05 00:21:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.51 2006/03/16 10:08:20 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1282,11 +1282,11 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				} else
 					wi[j] = 0;
 
-		if ( DP_Print ) {
+		if ( DP_Print > 3 ) {
 			fprintf(asir_out,"LU decomposition.."); fflush(asir_out);
 		}
 		rank = find_lhs_and_lu_mod((unsigned int **)w,row,col,md,&rinfo,&cinfo);
-		if ( DP_Print ) {
+		if ( DP_Print > 3 ) {
 			fprintf(asir_out,"done.\n"); fflush(asir_out);
 		}
 		a = (Q **)almat_pointer(rank,rank); /* lhs mat */
@@ -1325,7 +1325,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 			wx = (int *)MALLOC_ATOMIC(wxsize*sizeof(int));
 			for ( i = 0; i < wxsize; i++ ) wx[i] = 0;
 			for ( q = ONE, count = 0; ; ) {
-				if ( DP_Print )
+				if ( DP_Print > 3 )
 					fprintf(stderr,"o");
 				/* wc = -b mod md */
 				get_eg(&tmp0);

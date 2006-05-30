@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.35 2005/02/17 03:12:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.36 2005/08/24 06:28:39 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -82,6 +82,7 @@ extern Obj user_defined_prompt;
 extern int asir_setenv;
 extern int show_orderspec;
 extern int no_debug_on_error;
+extern int diag_period;
 
 static struct {
 	char *key;
@@ -120,6 +121,7 @@ static struct {
 	{"allow_laurent",&allow_laurent},
 	{"show_orderspec",&show_orderspec},
 	{"no_debug_on_error",&no_debug_on_error},
+	{"diag_period",&diag_period},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
 #endif

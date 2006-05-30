@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.128 2005/08/03 06:10:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.129 2006/04/17 04:35:20 noro Exp $ */
 
 #include "nd.h"
 
@@ -1707,6 +1707,7 @@ int do_diagonalize_trace(int sugar,int m)
 
 static struct oEGT eg_invdalg;
 struct oEGT eg_le;
+int diag_period = 6;
 
 NODE nd_gb_trace(int m,int ishomo)
 {
@@ -1719,6 +1720,7 @@ NODE nd_gb_trace(int m,int ishomo)
 	Q q,den,num;
 	union oNDC dn;
 	struct oEGT eg_monic,egm0,egm1;
+	int diag_count = 0;
 
 	init_eg(&eg_monic);
 	init_eg(&eg_invdalg);
@@ -1733,14 +1735,17 @@ NODE nd_gb_trace(int m,int ishomo)
 again:
 		l = nd_minp(d,&d);
 		if ( SG(l) != sugar ) {
+#if 1
 			if ( ishomo ) {
 				stat = do_diagonalize_trace(sugar,m);
+				diag_count = 0;
 				if ( !stat ) {
 					NEXT(l) = d; d = l;
 					d = nd_reconstruct(1,d);
 					goto again;
 				}
 			}
+#endif
 			sugar = SG(l);
 			if ( DP_Print ) fprintf(asir_out,"%d",sugar);
 		}
@@ -1789,6 +1794,15 @@ again:
 					nd_removecont(m,nf); nfv = ndtondv(m,nf); nd_free(nf);
 				}
 				nh = ndv_newps(0,nfv,nfqv);
+				if ( ishomo && ++diag_count == diag_period ) {
+					diag_count = 0;
+					stat = do_diagonalize_trace(sugar,m);
+					if ( !stat ) {
+						NEXT(l) = d; d = l;
+						d = nd_reconstruct(1,d);
+						goto again;
+					}
+				}
 				d = update_pairs(d,g,nh);
 				g = update_base(g,nh);
 			} else {
