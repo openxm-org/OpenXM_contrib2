@@ -1,7 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.129 2006/04/17 04:35:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.130 2006/05/30 07:35:31 noro Exp $ */
 
 #include "nd.h"
 
+int diag_period = 6;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 int nd_dcomp;
 NM _nm_free_list;
@@ -1591,6 +1592,7 @@ NODE nd_gb(int m,int ishomo,int checkonly)
 	NDV nfv;
 	Q q,num,den;
 	union oNDC dn;
+	int diag_count = 0;
 
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
@@ -1638,6 +1640,15 @@ again:
 			}
 			nfv = ndtondv(m,nf); nd_free(nf);
 			nh = ndv_newps(m,nfv,0);
+			if ( ishomo && ++diag_count == diag_period ) {
+				diag_count = 0;
+				stat = do_diagonalize(sugar,m);
+				if ( !stat ) {
+					NEXT(l) = d; d = l;
+					d = nd_reconstruct(0,d);
+					goto again;
+				}
+			}
 			d = update_pairs(d,g,nh);
 			g = update_base(g,nh);
 			FREENDP(l);
@@ -1707,7 +1718,6 @@ int do_diagonalize_trace(int sugar,int m)
 
 static struct oEGT eg_invdalg;
 struct oEGT eg_le;
-int diag_period = 6;
 
 NODE nd_gb_trace(int m,int ishomo)
 {
