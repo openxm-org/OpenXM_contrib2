@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.130 2006/05/30 07:35:31 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.131 2006/06/05 01:01:41 noro Exp $ */
 
 #include "nd.h"
 
@@ -1592,7 +1592,6 @@ NODE nd_gb(int m,int ishomo,int checkonly)
 	NDV nfv;
 	Q q,num,den;
 	union oNDC dn;
-	int diag_count = 0;
 
 	g = 0; d = 0;
 	for ( i = 0; i < nd_psn; i++ ) {
@@ -1640,15 +1639,6 @@ again:
 			}
 			nfv = ndtondv(m,nf); nd_free(nf);
 			nh = ndv_newps(m,nfv,0);
-			if ( ishomo && ++diag_count == diag_period ) {
-				diag_count = 0;
-				stat = do_diagonalize(sugar,m);
-				if ( !stat ) {
-					NEXT(l) = d; d = l;
-					d = nd_reconstruct(0,d);
-					goto again;
-				}
-			}
 			d = update_pairs(d,g,nh);
 			g = update_base(g,nh);
 			FREENDP(l);
