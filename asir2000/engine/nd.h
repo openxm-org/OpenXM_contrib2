@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.13 2005/08/03 06:10:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.14 2006/04/17 04:35:20 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -247,10 +247,11 @@ int ndv_newps(int m,NDV a,NDV aq);
 
 /* top level functions */
 void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp);
-void nd_gr_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp);
+void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp);
 NODE nd_f4(int m);
 NODE nd_gb(int m,int ishomo,int checkonly);
 NODE nd_gb_trace(int m,int ishomo);
+NODE nd_f4_trace(int m);
 
 /* ndl functions */
 int ndl_weight(UINT *d);
@@ -325,11 +326,11 @@ ND nd_add_q(ND p1,ND p2);
 ND nd_add_sf(ND p1,ND p2);
 ND nd_quo(int mod,PGeoBucket p,NDV d);
 INLINE int nd_length(ND p);
-NODE nd_f4_red(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
-NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0);
+NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz);
+NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0, ND_pairs *nz);
 NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
-NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,UINT *s0vect,int col,
+	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
 	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 
 /* NDV functions */
@@ -364,7 +365,7 @@ int nd_to_vect_q(UINT *s0,int n,ND d,Q *r);
 NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect);
 
 /* elimination */
-int nd_gauss_elim_mod(int **mat0,int *sugar,int row,int col,int md,int *colstat);
+int nd_gauss_elim_mod(int **mat0,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
 int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat);
 

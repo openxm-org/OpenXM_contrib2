@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.60 2005/08/25 18:59:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.61 2005/11/12 09:43:01 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -93,7 +93,7 @@ void Pdp_weyl_set_weight();
 void Pdp_set_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
 void Pdp_lnf_f();
-void Pnd_gr(),Pnd_gr_trace(),Pnd_f4();
+void Pnd_gr(),Pnd_gr_trace(),Pnd_f4(),Pnd_f4_trace();
 void Pnd_gr_postproc();
 void Pnd_weyl_gr(),Pnd_weyl_gr_trace();
 void Pnd_nf();
@@ -147,6 +147,7 @@ struct ftab dp_tab[] = {
 	{"nd_f4",Pnd_f4,4},
 	{"nd_gr",Pnd_gr,4},
 	{"nd_gr_trace",Pnd_gr_trace,5},
+	{"nd_f4_trace",Pnd_f4_trace,5},
 	{"nd_gr_postproc",Pnd_gr_postproc,5},
 	{"nd_weyl_gr",Pnd_weyl_gr,4},
 	{"nd_weyl_gr_trace",Pnd_weyl_gr_trace,5},
@@ -1877,7 +1878,31 @@ LIST *rp;
 	homo = QTOS((Q)ARG2(arg));
 	m = QTOS((Q)ARG3(arg));
 	create_order_spec(0,ARG4(arg),&ord);
-	nd_gr_trace(f,v,m,homo,ord,rp);
+	nd_gr_trace(f,v,m,homo,0,ord,rp);
+}
+
+void Pnd_f4_trace(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	int m,homo;
+	struct order_spec *ord;
+
+	do_weyl = 0;
+	asir_assert(ARG0(arg),O_LIST,"nd_gr_trace");
+	asir_assert(ARG1(arg),O_LIST,"nd_gr_trace");
+	asir_assert(ARG2(arg),O_N,"nd_gr_trace");
+	asir_assert(ARG3(arg),O_N,"nd_gr_trace");
+	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
+	homo = QTOS((Q)ARG2(arg));
+	m = QTOS((Q)ARG3(arg));
+	create_order_spec(0,ARG4(arg),&ord);
+	nd_gr_trace(f,v,m,homo,1,ord,rp);
 }
 
 void Pnd_weyl_gr(arg,rp)
