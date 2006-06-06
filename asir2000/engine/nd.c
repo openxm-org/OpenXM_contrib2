@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.132 2006/06/05 01:29:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.133 2006/06/05 08:11:10 noro Exp $ */
 
 #include "nd.h"
 
@@ -4185,7 +4185,9 @@ int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 
 	v.id = O_VECT; v.len = col; v.body = (pointer *)svect;
 	maxrs = 0;
-	hmag = p_mag((P)svect[0])*nd_scale;
+	for ( i = 0; i < col && !svect[i]; i++ );
+	if ( i == col ) return maxrs;
+	hmag = p_mag((P)svect[i])*nd_scale;
 	for ( i = 0; i < nred; i++ ) {
 		ivect = imat[i];
 		k = ivect->head;
@@ -4224,9 +4226,13 @@ int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 					}
 					break;
 			}
+			for ( j = k+1; j < col && !svect[j]; j++ );
+			if ( j == col ) break;
+			if ( hmag && ((double)p_mag((P)svect[j]) > hmag) ) {
+				igcdv(&v,&t);
+				hmag = ((double)p_mag((P)svect[j]))*nd_scale;
+			}
 		}
-		if ( hmag && ((double)p_mag((P)svect[0]) > hmag) )
-			igcdv(&v,&t);
 	}
 	igcdv(&v,&t);
 	if ( DP_Print ) { 
