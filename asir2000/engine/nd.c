@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.133 2006/06/05 08:11:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.134 2006/06/06 07:14:16 noro Exp $ */
 
 #include "nd.h"
 
@@ -4168,9 +4168,26 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
 	return r;
 }
 
+int compress_array(Q *svect,Q *cvect,int n)
+{
+	int i,j;
+
+	for ( i = j = 0; i < n; i++ )
+		if ( svect[i] ) cvect[j++] = svect[i];
+	return j;
+}
+
+void expand_array(Q *svect,Q *cvect,int n)
+{
+	int i,j;
+
+	for ( i = j = 0; j < n;  i++  )
+		if ( svect[i] ) svect[i] = cvect[j++];
+}
+
 int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
-	int i,j,k,len,pos,prev;
+	int i,j,k,len,pos,prev,nz;
 	Q cs,mcs,c1,c2,cr,gcd,t;
 	IndArray ivect;
 	unsigned char *ivc;
@@ -4181,13 +4198,13 @@ int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 	NODE rp;
 	int maxrs;
 	double hmag;
-	struct oVECT v;
+	Q *cvect;
 
-	v.id = O_VECT; v.len = col; v.body = (pointer *)svect;
 	maxrs = 0;
 	for ( i = 0; i < col && !svect[i]; i++ );
 	if ( i == col ) return maxrs;
 	hmag = p_mag((P)svect[i])*nd_scale;
+	cvect = (Q *)ALLOCA(col*sizeof(Q));
 	for ( i = 0; i < nred; i++ ) {
 		ivect = imat[i];
 		k = ivect->head;
@@ -4229,12 +4246,16 @@ int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 			for ( j = k+1; j < col && !svect[j]; j++ );
 			if ( j == col ) break;
 			if ( hmag && ((double)p_mag((P)svect[j]) > hmag) ) {
-				igcdv(&v,&t);
+				nz = compress_array(svect,cvect,col);
+				removecont_array(cvect,nz);
+				expand_array(svect,cvect,nz);
 				hmag = ((double)p_mag((P)svect[j]))*nd_scale;
 			}
 		}
 	}
-	igcdv(&v,&t);
+	nz = compress_array(svect,cvect,col);
+	removecont_array(cvect,nz);
+	expand_array(svect,cvect,nz);
 	if ( DP_Print ) { 
 		fprintf(asir_out,"-"); fflush(asir_out);
 	}
@@ -4853,8 +4874,8 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
 		SG((NDV)BDY(r)) = spsugar[i];
 /*		GC_free(spmat[i]); */
 	}
-	if ( r0 ) NEXT(r) = 0;
 
+	if ( r0 ) NEXT(r) = 0;
 /*	for ( ; i < sprow; i++ ) GC_free(spmat[i]); */
 	get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
 	init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
