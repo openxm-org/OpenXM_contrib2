@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.61 2005/11/12 09:43:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.62 2006/06/05 08:11:10 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -75,6 +75,7 @@ void Pdp_minp(),Pdp_sp_mod();
 void Pdp_homo(),Pdp_dehomo();
 void Pdp_gr_mod_main(),Pdp_gr_f_main();
 void Pdp_gr_main(),Pdp_gr_hm_main(),Pdp_gr_d_main(),Pdp_gr_flags();
+void Pdp_interreduce();
 void Pdp_f4_main(),Pdp_f4_mod_main(),Pdp_f4_f_main();
 void Pdp_gr_print();
 void Pdp_mbase(),Pdp_lnf_mod(),Pdp_nf_tab_mod(),Pdp_mdtod(), Pdp_nf_tab_f();
@@ -141,6 +142,7 @@ struct ftab dp_tab[] = {
 
 	/* Buchberger algorithm */
 	{"dp_gr_main",Pdp_gr_main,-5},
+	{"dp_interreduce",Pdp_interreduce,3},
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
 	{"dp_gr_f_main",Pdp_gr_f_main,4},
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
@@ -1655,6 +1657,30 @@ LIST *rp;
 	else
 		error("dp_gr_main : invalid argument");
 	dp_gr_main(f,v,homo,modular,0,ord,rp);
+}
+
+void Pdp_interreduce(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	LIST f,v;
+	VL vl;
+	int ac;
+	struct order_spec *ord;
+
+	do_weyl = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_interreduce");
+	f = (LIST)ARG0(arg);
+	f = remove_zero_from_list(f);
+	if ( !BDY(f) ) {
+		*rp = f; return;
+	}
+	if ( (ac = argc(arg)) == 3 ) {
+		asir_assert(ARG1(arg),O_LIST,"dp_interreduce");
+		v = (LIST)ARG1(arg);
+		create_order_spec(0,ARG2(arg),&ord);
+	}
+	dp_interreduce(f,v,0,ord,rp);
 }
 
 void Pdp_gr_f_main(arg,rp)

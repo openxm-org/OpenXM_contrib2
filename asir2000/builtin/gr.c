@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.59 2005/02/17 06:27:35 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.60 2005/11/16 23:42:53 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -405,6 +405,52 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 	print_stat();
 	if ( ShowMag )
 		fprintf(asir_out,"\nMax_mag=%d, Max_coef=%d\n",Max_mag, Max_coef);
+}
+
+void dp_interreduce(LIST f,LIST v,int field,struct order_spec *ord,LIST *rp)
+{
+	int i,mindex,m,nochk;
+	struct order_spec *ord1;
+	Q q;
+	VL fv,vv,vc;
+	NODE fd,fd0,fi,fi0,r,r0,t,subst,x,s,xx;
+	NODE ind,ind0;
+	LIST trace,gbindex;
+	int input_is_dp = 0;
+
+	mindex = 0; nochk = 0; dp_fcoeffs = field;
+	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&vc);
+	NVars = length((NODE)vv); PCoeffs = vc ? 1 : 0; VC = vc;
+	CNVars = NVars;
+	if ( ord->id && NVars != ord->nv )
+		error("dp_interreduce : invalid order specification");
+	initd(ord);
+	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
+		NEXTNODE(fd0,fd);
+		if ( BDY(t) && OID(BDY(t)) == O_DP ) {
+			dp_sort((DP)BDY(t),(DP *)&BDY(fd)); input_is_dp = 1;
+		} else
+			ptod(CO,vv,(P)BDY(t),(DP *)&BDY(fd));
+	}
+	if ( fd0 ) NEXT(fd) = 0;
+	fi0 = fd0;
+	setup_arrays(fd0,0,&s);
+	init_stat();
+	x = s;
+	reduceall(x,&xx); x = xx;
+	for ( r0 = 0, ind0 = 0; x; x = NEXT(x) ) {
+		NEXTNODE(r0,r); dp_load((int)BDY(x),&ps[(int)BDY(x)]);
+		if ( input_is_dp )
+			BDY(r) = (pointer)ps[(int)BDY(x)];
+		else
+			dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+		NEXTNODE(ind0,ind);
+		STOQ((int)BDY(x),q); BDY(ind) = q;
+	}
+	if ( r0 ) NEXT(r) = 0;
+	if ( ind0 ) NEXT(ind) = 0;
+	MKLIST(*rp,r0);
+	MKLIST(gbindex,ind0);
 }
 
 void dp_gr_mod_main(LIST f,LIST v,Num homo,int m,struct order_spec *ord,LIST *rp)
