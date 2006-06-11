@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.134 2006/06/06 07:14:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.135 2006/06/06 09:00:38 noro Exp $ */
 
 #include "nd.h"
 
@@ -2083,7 +2083,7 @@ ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest )
 NODE update_base(NODE nd,int ndp)
 {
 	UINT *dl, *dln;
-	NODE last, p, head;
+	NODE last, p, head, cur, prev;
 
 	dl = DL(nd_psh[ndp]);
 	for ( head = last = 0, p = nd; p; ) {
@@ -2096,7 +2096,17 @@ NODE update_base(NODE nd,int ndp)
 			p = NEXT(last = p);
 		}
 	}
+#if 1
 	head = append_one(head,ndp);
+#else
+	for ( prev = 0, cur = head;  cur; prev = cur, cur = NEXT(cur) )
+		if ( ndv_compare(&(nd_ps[ndp]),&(nd_ps[(int)BDY(cur)]))<0 ) break;
+	MKNODE(p,(pointer)ndp,cur);
+	if ( !prev ) 
+		head = p;
+	else
+		NEXT(prev) = p;
+#endif
 	return head;
 }
 
