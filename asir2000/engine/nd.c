@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.135 2006/06/06 09:00:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.136 2006/06/11 06:01:55 noro Exp $ */
 
 #include "nd.h"
 
@@ -2083,7 +2083,7 @@ ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest )
 NODE update_base(NODE nd,int ndp)
 {
 	UINT *dl, *dln;
-	NODE last, p, head, cur, prev;
+	NODE last, p, head;
 
 	dl = DL(nd_psh[ndp]);
 	for ( head = last = 0, p = nd; p; ) {
@@ -2096,17 +2096,7 @@ NODE update_base(NODE nd,int ndp)
 			p = NEXT(last = p);
 		}
 	}
-#if 1
 	head = append_one(head,ndp);
-#else
-	for ( prev = 0, cur = head;  cur; prev = cur, cur = NEXT(cur) )
-		if ( ndv_compare(&(nd_ps[ndp]),&(nd_ps[(int)BDY(cur)]))<0 ) break;
-	MKNODE(p,(pointer)ndp,cur);
-	if ( !prev ) 
-		head = p;
-	else
-		NEXT(prev) = p;
-#endif
 	return head;
 }
 
@@ -4844,6 +4834,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
 	struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
 	int maxrs;
 	int *spsugar;
+	pointer *w;
 
 	spcol = col-nred;
 	get_eg(&eg0);
@@ -4877,15 +4868,22 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
 	/* elimination (2nd step) */
 	colstat = (int *)ALLOCA(spcol*sizeof(int));
 	rank = nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat);
-	r0 = 0;
+	w = (pointer *)ALLOCA(rank*sizeof(pointer));
 	for ( i = 0; i < rank; i++ ) {
-		NEXTNODE(r0,r); BDY(r) = 
-			(pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
-		SG((NDV)BDY(r)) = spsugar[i];
+		w[rank-i-1] = (pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
+		SG((NDV)w[rank-i-1]) = spsugar[i];
 /*		GC_free(spmat[i]); */
 	}
-
+#if 1
+	qsort(w,rank,sizeof(NDV),
+		(int (*)(const void *,const void *))ndv_compare);
+#endif
+	r0 = 0;
+	for ( i = 0; i < rank; i++ ) {
+		NEXTNODE(r0,r); BDY(r) = w[i];
+	}
 	if ( r0 ) NEXT(r) = 0;
+
 /*	for ( ; i < sprow; i++ ) GC_free(spmat[i]); */
 	get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
 	init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
