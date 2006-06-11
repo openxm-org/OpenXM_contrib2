@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.136 2006/06/11 06:01:55 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.137 2006/06/11 06:57:54 noro Exp $ */
 
 #include "nd.h"
 
@@ -4874,7 +4874,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
 		SG((NDV)w[rank-i-1]) = spsugar[i];
 /*		GC_free(spmat[i]); */
 	}
-#if 1
+#if 0
 	qsort(w,rank,sizeof(NDV),
 		(int (*)(const void *,const void *))ndv_compare);
 #endif
