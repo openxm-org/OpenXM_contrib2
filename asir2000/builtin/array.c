@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.51 2006/03/16 10:08:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.52 2006/05/30 07:35:30 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -94,8 +94,10 @@ void Pvect();
 void Pmat();
 void Pmatc();
 void Pnd_det();
+void Plu_mat();
 
 struct ftab array_tab[] = {
+	{"lu_mat",Plu_mat,1},
 	{"solve_by_lu_gfmmat",Psolve_by_lu_gfmmat,4},
 	{"lu_gfmmat",Plu_gfmmat,2},
 	{"mat_to_gfmmat",Pmat_to_gfmmat,2},
@@ -1242,6 +1244,121 @@ RESET:
 	}
 }
 
+/* XXX broken */
+int lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm)
+{
+	Q **a0,**b;
+	Q *aiq;
+	N **a;
+	N *ai;
+	Q q,q1,dn2,a1,q0,bik;
+	MAT m;
+	unsigned int md;
+	int n,ind,i,j,rank,t,inv,t1,ret,min,k;
+	int **w;
+	int *wi,*rinfo0,*rinfo;
+	N m1,m2,m3,u,s;
+
+	a0 = (Q **)mat->body;
+	n = mat->row;
+	if ( n != mat->col )
+		error("lu_dec_cr : non-square matrix");
+	w = (int **)almat(n,n);
+	MKMAT(m,n,n);
+	a = (N **)m->body;
+	UTON(1,m1);
+	rinfo0 = 0;
+	ind = 0;
+	while ( 1 ) {
+		md = get_lprime(ind);
+		/* mat mod md */
+		for ( i = 0; i < n; i++ )
+			for ( j = 0, aiq = a0[i], wi = w[i]; j < n; j++ )
+				if ( q = aiq[j] ) {
+					t = rem(NM(q),md);
+					if ( t && SGN(q) < 0 )
+						t = (md - t) % md;
+					wi[j] = t;
+				} else
+					wi[j] = 0;
+
+		if ( !lu_mod((unsigned int **)w,n,md,&rinfo) ) continue;
+		printf("."); fflush(stdout);
+		if ( !rinfo0 )
+			*perm = rinfo0 = rinfo;
+		else {
+			for ( i = 0; i < n; i++ )
+				if ( rinfo[i] != rinfo0[i] ) break;
+			if ( i < n ) continue;
+		}
+		if ( UNIN(m1) ) {
+			for ( i = 0; i < n; i++ )
+				for ( j = 0, ai = a[i], wi = w[i]; j < n; j++ ) {
+					UTON(wi[j],u); ai[j] = u;
+				}
+			UTON(md,m1);
+		} else {
+			inv = invm(rem(m1,md),md);
+			UTON(md,m2); muln(m1,m2,&m3);
+			for ( i = 0; i < n; i++ )			
+				for ( j = 0, ai = a[i], wi = w[i]; j < n; j++ )
+					if ( ai[i] ) {
+					/* f3 = f1+m1*(m1 mod m2)^(-1)*(f2 - f1 mod m2) */
+						t = rem(ai[j],md);
+						if ( wi[j] >= t )
+							t = wi[j]-t;
+						else
+							t = md-(t-wi[j]);
+						DMAR(t,inv,0,md,t1)
+						UTON(t1,u);
+						muln(m1,u,&s);
+						addn(ai[j],s,&u); ai[j] = u;
+					} else if ( wi[j] ) {
+						/* f3 = m1*(m1 mod m2)^(-1)*f2 */
+						DMAR(wi[j],inv,0,md,t)
+						UTON(t,u);
+						muln(m1,u,&s); ai[j] = s;
+					}
+			m1 = m3;
+		}
+		if ( (++ind%8) == 0 ) {
+			ret = intmtoratm(m,m1,lu,dn);
+			if ( ret ) {
+				b = (Q **)lu->body;
+				mulq(*dn,*dn,&dn2);
+				for ( i = 0; i < n; i++ ) {
+					for ( j = 0; j < n; j++ ) {
+						q = 0;
+						min = MIN(i,j);
+						for ( k = 0; k <= min; k++ ) {
+							bik = k==i ? *dn : b[i][k];
+							mulq(bik,b[k][j],&q0);
+							addq(q,q0,&q1); q = q1;
+						}
+						mulq(a0[rinfo0[i]][j],dn2,&q1);
+						if ( cmpq(q,q1) ) break;
+					}
+					if ( j < n ) break;
+				}
+				if ( i == n )
+					return;
+			}
+		}
+	}
+}
+
+int nmat(N **m,int n)
+{
+	int i,j;
+
+	for ( i = 0; i < n; i++ ) {
+		for ( j = 0; j < n; j++ ) {
+			printn(m[i][j]); printf(" ");
+		}
+		printf("\n");
+	}
+}
+
 int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 {
 	MAT bmat,xmat;
@@ -1701,10 +1818,13 @@ int intmtoratm(MAT mat,N md,MAT nm,Q *dn)
 		return 0;
 	row = mat->row; col = mat->col;
 	bshiftn(md,1,&t);
+	isqrt(t,&b);
+#if 0
 	isqrt(t,&s);
 	bshiftn(s,64,&b);
 	if ( !b )
 		b = ONEN;
+#endif
 	dn0 = ONE;
 	tmat = (N **)mat->body;
 	rmat = (Q **)nm->body;
@@ -2199,6 +2319,40 @@ int find_lhs_and_lu_mod(unsigned int **a,int row,int col,
 	return d;
 }
 
+int lu_mod(unsigned int **a,int n,unsigned int md,int **rinfo)
+{
+	int i,j,k;
+	int *rp;
+	unsigned int *t,*pivot;
+	unsigned int inv,m;
+
+	*rinfo = rp = (int *)MALLOC_ATOMIC(n*sizeof(int));
+	for ( i = 0; i < n; i++ ) rp[i] = i;
+	for ( k = 0; k < n; k++ ) {
+		for ( i = k; i < n && !a[i][k]; i++ );
+		if ( i == n ) return 0;
+		if ( i != k ) {
+			j = rp[i]; rp[i] = rp[k]; rp[k] = j;
+			t = a[i]; a[i] = a[k]; a[k] = t;
+		}
+		pivot = a[k];
+		inv = invm(pivot[k],md);
+		for ( i = k+1; i < n; i++ ) {
+			t = a[i];
+			if ( m = t[k] ) {
+				DMAR(inv,m,0,md,t[k])
+				for ( j = k+1, m = md - t[k]; j < n; j++ )
+					if ( pivot[j] ) {
+						unsigned int tj;
+						DMAR(m,pivot[j],t[j],md,tj)
+						t[j] = tj;
+					}
+			}
+		}
+	}
+	return 1;
+}
+
 /*
   Input
 	a : n x n matrix; a result of LU-decomposition
@@ -2462,6 +2616,28 @@ void solve_by_lu_gfmmat(GFMMAT lu,unsigned int md,
 	}
 }
 
+void Plu_mat(NODE arg,LIST *rp)
+{
+	MAT m,lu;
+	Q dn;
+	Q *v;
+	int n,i;
+	int *iperm;
+	VECT perm;
+	NODE n0;
+
+	asir_assert(ARG0(arg),O_MAT,"lu_mat");
+	m = (MAT)ARG0(arg);
+	n = m->row;
+	MKMAT(lu,n,n);
+	lu_dec_cr(m,lu,&dn,&iperm);
+	MKVECT(perm,n);
+	for ( i = 0, v = (Q *)perm->body; i < n; i++ )
+		STOQ(iperm[i],v[i]);
+	n0 = mknode(3,lu,dn,perm);
+	MKLIST(*rp,n0);
+}
+
 void Plu_gfmmat(NODE arg,LIST *rp)
 {
 	MAT m;
@@ -2473,8 +2649,8 @@ void Plu_gfmmat(NODE arg,LIST *rp)
 	VECT perm;
 	NODE n0;
 
-	asir_assert(ARG0(arg),O_MAT,"mat_to_gfmmat");
-	asir_assert(ARG1(arg),O_N,"mat_to_gfmmat");
+	asir_assert(ARG0(arg),O_MAT,"lu_gfmmat");
+	asir_assert(ARG1(arg),O_N,"lu_gfmmat");
 	m = (MAT)ARG0(arg); md = (unsigned int)QTOS((Q)ARG1(arg));
 	mat_to_gfmmat(m,md,&mm);
 	row = m->row;
