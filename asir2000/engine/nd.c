@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.137 2006/06/11 06:57:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.138 2006/06/11 11:41:15 noro Exp $ */
 
 #include "nd.h"
 
@@ -2208,9 +2208,15 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort)
 	for ( nd_psn = 0, s = f; s; s = NEXT(s) ) if ( BDY(s) ) nd_psn++;
 	w = (NDV *)ALLOCA(nd_psn*sizeof(NDV));
 	for ( i = 0, s = f; s; s = NEXT(s) ) if ( BDY(s) ) w[i++] = BDY(s);
-	if ( !dont_sort )
-		qsort(w,nd_psn,sizeof(NDV),
-			(int (*)(const void *,const void *))ndv_compare);
+	if ( !dont_sort ) {
+		/* XXX heuristic */
+		if ( !nd_ord->id && (nd_ord->ord.simple<2) )
+			qsort(w,nd_psn,sizeof(NDV),
+				(int (*)(const void *,const void *))ndv_compare_rev);
+		else
+			qsort(w,nd_psn,sizeof(NDV),
+				(int (*)(const void *,const void *))ndv_compare);
+	}
 	nd_pslen = 2*nd_psn;
 	nd_ps = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_ps_trace = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
