@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.62 2006/06/05 08:11:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.63 2006/06/09 09:59:12 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -62,7 +62,7 @@ int do_weyl;
 
 void Pdp_sort();
 void Pdp_mul_trunc(),Pdp_quo();
-void Pdp_ord(), Pdp_ptod(), Pdp_dtop();
+void Pdp_ord(), Pdp_ptod(), Pdp_dtop(), Phomogenize();
 void Pdp_ptozp(), Pdp_ptozp2(), Pdp_red(), Pdp_red2(), Pdp_lcm(), Pdp_redble();
 void Pdp_sp(), Pdp_hm(), Pdp_ht(), Pdp_hc(), Pdp_rest(), Pdp_td(), Pdp_sugar();
 void Pdp_set_sugar();
@@ -201,6 +201,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_gr_print",Pdp_gr_print,-1},
 
 	/* converters */
+	{"homogenize",Phomogenize,3},
 	{"dp_ptod",Pdp_ptod,-2},
 	{"dp_dtop",Pdp_dtop,2},
 	{"dp_homo",Pdp_homo,1},
@@ -495,6 +496,43 @@ DP *rp;
 	if ( vl )
 		NEXT(tvl) = 0;
 	ptod(CO,vl,p,rp);
+}
+
+void Phomogenize(arg,rp)
+NODE arg;
+P *rp;
+{
+	P p;
+	DP d,h;
+	NODE n;
+	V hv;
+	VL vl,tvl,last;
+	struct oLIST f;
+	LIST v;
+
+	asir_assert(ARG0(arg),O_P,"homogenize");
+	p = (P)ARG0(arg);
+	asir_assert(ARG1(arg),O_LIST,"homogenize");
+	v = (LIST)ARG1(arg);
+	asir_assert(ARG2(arg),O_P,"homogenize");
+	hv = VR((P)ARG2(arg));
+	for ( vl = 0, n = BDY(v); n; n = NEXT(n) ) {
+		if ( !vl ) {
+			NEWVL(vl); tvl = vl;
+		} else {
+			NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+		}
+		VR(tvl) = VR((P)BDY(n));
+	}
+	if ( vl ) {
+		last = tvl;
+		NEXT(tvl) = 0;
+	}
+	ptod(CO,vl,p,&d);
+	dp_homo(d,&h);
+	NEWVL(NEXT(last)); last = NEXT(last);
+	VR(last) = hv; NEXT(last) = 0;
+	dtop(CO,vl,h,rp);
 }
 
 void Pdp_ltod(arg,rp)
