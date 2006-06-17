@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.52 2006/05/30 07:35:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.53 2006/06/12 11:52:10 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1818,13 +1818,10 @@ int intmtoratm(MAT mat,N md,MAT nm,Q *dn)
 		return 0;
 	row = mat->row; col = mat->col;
 	bshiftn(md,1,&t);
-	isqrt(t,&b);
-#if 0
 	isqrt(t,&s);
 	bshiftn(s,64,&b);
 	if ( !b )
 		b = ONEN;
-#endif
 	dn0 = ONE;
 	tmat = (N **)mat->body;
 	rmat = (Q **)nm->body;

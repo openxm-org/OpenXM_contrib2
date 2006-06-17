@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.139 2006/06/12 00:46:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.140 2006/06/12 21:51:33 noro Exp $ */
 
 #include "nd.h"
 
@@ -1641,7 +1641,7 @@ again:
 			}
 			nfv = ndtondv(m,nf); nd_free(nf);
 			nh = ndv_newps(m,nfv,0);
-			if ( ishomo && ++diag_count == diag_period ) {
+			if ( !m && (ishomo && ++diag_count == diag_period) ) {
 				diag_count = 0;
 				stat = do_diagonalize(sugar,m);
 				if ( !stat ) {
