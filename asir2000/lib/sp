@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.13 2004/04/13 07:43:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.14 2005/08/18 23:35:20 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
@@ -659,6 +659,15 @@ def ufctrhint2(P,HINT,PP,AL)
 		return [[P,1]];
 	if ( AL == [] )
 		return ufctrhint(P,HINT);
+	
+	/* if P != norm(PP) then call the generic ufctrhint() */
+	for ( T = AL, E = 1; T != []; T = cdr(T) ) {
+		D = defpoly(car(T)); E *= deg(D,var(D));
+	}
+	if ( E*deg(PP,var(PP)) != deg(P,var(P)) )
+		return ufctrhint(P,HINT);
+
+	/* P = norm(PP) */
 	L = resfctr(algptorat(PP),map(defpoly,AL),map(algtorat,AL),P);
 	for ( T = reverse(L[1]), DL = []; T != []; T = cdr(T) )
 		DL = cons(deg(car(car(T)),a_),DL);
