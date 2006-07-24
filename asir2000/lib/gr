@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.21 2005/08/02 07:21:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.22 2006/07/24 06:36:01 noro Exp $ 
 */
 
 module gr $
@@ -1766,7 +1766,6 @@ def generating_relation(Trace,V)
 	return Tab;
 }
 
-end$
 /*
  * realloc NFArray so that it can hold * an element as NFArray[Ind].
  */
