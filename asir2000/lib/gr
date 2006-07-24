@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.20 2004/07/21 05:12:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.21 2005/08/02 07:21:48 noro Exp $ 
 */
 
 module gr $
@@ -1726,6 +1726,47 @@ def show_trace(Trace,V)
 	}
 }
 
+def generating_relation(Trace,V)
+{
+	Trace = cdr(Trace);
+	Tab = [];
+	for ( T = Trace; T != []; T = cdr(T) ) {
+		HL = car(T);
+		J = car(HL); HL = HL[1];
+		L = length(HL);
+		LHS = strtov("f"+rtostr(J));
+		Dn = 1;
+		for ( First = 1, S = HL; S != []; S = cdr(S) ) {
+			H = car(S);
+	
+			Coeff = H[0];
+			Index = H[1];
+			Monomial = type(H[2])==9?dp_dtop(H[2],V):H[2];
+			Denominator = H[3];
+			F = strtov("f"+rtostr(Index));
+			for ( Z = Tab; Z != []; Z = cdr(Z) )
+				if ( Z[0][0] == F ) break;
+			if ( Z != [] ) Value = Z[0][1];
+			else Value = [F,1];
+			if ( First ) {
+				RHS = Monomial*Value[0];
+				Dn *= Value[1];
+			} else {
+				RHS = RHS*Coeff*Value[1]+Dn*Value[0]*Monomial;
+				Dn = Value[1]*Dn*Denominator;
+			}
+			VVVV = tttttttt;
+			P = ptozp(Dn*VVVV+RHS);
+			RHS = coef(P,0,VVVV);
+			Dn = coef(P,1,VVVV);
+			if ( First ) First = 0;
+		}
+		Tab = cons([LHS,[RHS,Dn]],Tab);
+	}
+	return Tab;
+}
+
+end$
 /*
  * realloc NFArray so that it can hold * an element as NFArray[Ind].
  */
