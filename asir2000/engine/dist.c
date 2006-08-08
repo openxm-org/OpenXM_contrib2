@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.39 2005/12/21 23:18:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.40 2006/04/16 00:51:13 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1803,17 +1803,26 @@ int ni_next(int *a,int n)
 
 int comp_nbm(NBM a,NBM b)
 {
-	int d,i,w;
+	int d,i,w,ai,bi;
 	int *ab,*bb;
 
 	if ( a->d > b->d ) return 1;
 	else if ( a->d < b->d ) return -1;
 	else {
 		d = a->d; ab = a->b; bb = b->b;
+#if 0
 		w = (d+31)/32;
 		for ( i = 0; i < w; i++ ) 
 			if ( ab[i] > bb[i] ) return 1;
 			else if ( ab[i] < bb[i] ) return -1;
+#else
+		for ( i = 0; i < d; i++ ) {
+			ai = NBM_GET(ab,i);
+			bi = NBM_GET(bb,i);
+			if ( ai > bi ) return 1;
+			else if ( ai < bi ) return -1;
+		}
+#endif
 		return 0;
 	}
 }
