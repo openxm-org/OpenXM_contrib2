@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.13 2003/12/22 09:33:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.14 2004/12/10 07:36:35 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -57,8 +57,11 @@
 int get_lg(GEN);
 #endif
 
+void savenbp(FILE *s,NBP p);
+
 void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
-	savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat, savebytearray };
+	savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat,
+	savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  savenbp };
 #if defined(INTERVAL)
 void saveitv();
 void saveitvd();
@@ -203,8 +206,8 @@ void savegfsn(FILE *s,GFSN p)
 
 void savedalg(FILE *s,DAlg p)
 {
-	saveobj(s,p->nm);
-	saveobj(s,p->dn);
+	saveobj(s,(Obj)p->nm);
+	saveobj(s,(Obj)p->dn);
 }
 
 void savep(FILE *s,P p)
@@ -344,4 +347,21 @@ void savebytearray(FILE *s,BYTEARRAY p)
 {
 	write_short(s,&OID(p)); write_int(s,&p->len);
 	write_string(s,p->body,p->len);
+}
+
+void savenbp(FILE *s,NBP p)
+{
+	int i,n;
+	NODE t;
+	NBM m;
+
+	write_short(s,&OID(p));
+	for ( n = 0, t = BDY(p); t; t = NEXT(t), n++ );
+	write_int(s,&n);
+	for ( i = 0, t = BDY(p); i < n; t = NEXT(t), i++ ) {
+		m = (NBM)BDY(t);
+		saveobj(s,(Obj)m->c);
+		write_int(s,&m->d);
+		write_intarray(s,m->b,(m->d+31)/32);
+	}
 }

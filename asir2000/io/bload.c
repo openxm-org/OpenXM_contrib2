@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.13 2003/12/22 09:33:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.14 2004/12/10 07:36:35 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,8 +56,12 @@ int get_lg(GEN);
 
 extern VL file_vl;
 
+void loadnbp(FILE *s,NBP *p);
+
 void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
-	loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat, loadbytearray };
+	loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat, 
+	loadbytearray, 0, 0, 0, 0, 0, 0, 0, 0,  loadnbp };
+
 #if defined(INTERVAL)
 void loaditv();
 void loaditvd();
@@ -464,4 +468,22 @@ void loadgfmmat(FILE *s,GFMMAT *p)
 	for ( i = 0; i < row; i++ )
 		read_intarray(s,a[i],col);
 	*p = mat;
+}
+
+void loadnbp(FILE *s,NBP *p)
+{
+	int n,i;
+	NBM m;
+	NODE r0,r;
+
+	read_int(s,&n);
+	for ( i = 0, r0 = 0; i < n; i++ ) {
+		NEWNBM(m);
+		loadobj(s,(Obj *)&m->c);
+		read_int(s,&m->d); 
+		NEWNBMBDY(m,m->d); read_intarray(s,m->b,(m->d+31)/32);
+		NEXTNODE(r0,r); BDY(r) = (pointer)m;
+	}
+	if ( r0 ) NEXT(r) = 0;
+	MKNBP(*p,r0);
 }
