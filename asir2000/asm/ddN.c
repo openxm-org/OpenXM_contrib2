@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.4 2001/10/09 01:36:03 noro Exp $ 
+ * $OpenXM$
 */
 #ifndef FBASE
 #define FBASE
@@ -553,7 +553,7 @@ void muln(N n1,N n2,N *nr)
 {
 	unsigned int tmp,carry,mul;
 	unsigned int *p1,*pp,*m1,*m2;
-	int i,j,d1,d2,d;
+	int i,j,d1,d2;
 	N r;
 
 	if ( !n1 || !n2 )
@@ -570,9 +570,9 @@ void muln(N n1,N n2,N *nr)
 		} else
 			STON(tmp,*nr);
 	} else {
-		d1 = PL(n1); d2 = PL(n2); d = d1+d2;
-		*nr = r = NALLOC(d); INITRC(r);
-		for ( i = 0, pp = BD(r); i < d; i++, pp++ ) *pp = 0;
+		d1 = PL(n1); d2 = PL(n2);
+		*nr = r = NALLOC(d1+d2); INITRC(r);
+		bzero((char *)BD(r),(int)((d1+d2)*sizeof(int)));
 		for ( i = 0, m1 = BD(n1), m2 = BD(n2); i < d2; i++, m2++ )
 			if ( mul = *m2 ) {
 				for ( j = d1, carry = 0, p1 = m1, pp = BD(r)+i;
