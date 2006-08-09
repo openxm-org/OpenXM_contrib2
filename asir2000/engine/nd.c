@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.140 2006/06/12 21:51:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.141 2006/06/17 10:12:06 noro Exp $ */
 
 #include "nd.h"
 
@@ -1548,7 +1548,8 @@ int do_diagonalize(int sugar,int m)
 	Q q,num,den;
 	union oNDC dn;
 
-	for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
+	for ( i = nd_psn-1; i >= 0; i-- ) {
+		if ( SG(nd_psh[i]) != sugar ) continue;
 		if ( nd_demand )
 			nfv = ndv_load(i);
 		else
@@ -1676,7 +1677,8 @@ int do_diagonalize_trace(int sugar,int m)
 	Q q,den,num;
 	union oNDC dn;
 
-	for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
+	for ( i = nd_psn-1; i >= 0; i-- ) {
+		if ( SG(nd_psh[i]) != sugar ) continue;
 		/* for nd_ps */
 		s = ndvtond(m,nd_ps[i]);
 		s = nd_separate_head(s,&head);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.22 2006/07/24 06:36:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.23 2006/07/24 07:31:17 noro Exp $ 
 */
 
 module gr $
@@ -1766,6 +1766,38 @@ def generating_relation(Trace,V)
 	return Tab;
 }
 
+def generating_relation_mod(Trace,V,M)
+{
+	Trace = cdr(Trace);
+	Tab = [];
+	for ( T = Trace; T != []; T = cdr(T) ) {
+		HL = car(T);
+		J = car(HL); HL = HL[1];
+		L = length(HL);
+		LHS = strtov("f"+rtostr(J));
+		Dn = 1;
+		for ( First = 1, S = HL; S != []; S = cdr(S) ) {
+			H = car(S);
+	
+			Coeff = H[0];
+			Index = H[1];
+			Monomial = type(H[2])==9?dp_dtop(H[2],V):H[2];
+			F = strtov("f"+rtostr(Index));
+			for ( Z = Tab; Z != []; Z = cdr(Z) )
+				if ( Z[0][0] == F ) break;
+			if ( Z != [] ) Value = Z[0][1];
+			else Value = F;
+			if ( First ) {
+				RHS = (Monomial*Value)%M;
+			} else {
+				RHS = ((RHS*Coeff+Value*Monomial)*inv(H[3],M))%M;
+			}
+			if ( First ) First = 0;
+		}
+		Tab = cons([LHS,RHS],Tab);
+	}
+	return Tab;
+}
 /*
  * realloc NFArray so that it can hold * an element as NFArray[Ind].
  */
