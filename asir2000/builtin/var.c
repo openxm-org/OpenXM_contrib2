@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.4 2001/10/09 01:36:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.5 2005/10/26 07:33:03 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -179,6 +179,14 @@ void get_vars(Obj t,VL *vlp)
 				mp = ((DP)t)->body;
 				for ( vl = 0; mp; mp = NEXT(mp) ) {
 					get_vars((Obj)mp->c,&vl1); mergev(CO,vl,vl1,&vl2);
+					vl = vl2;
+				}
+				break;
+			case O_NBP:
+				n = BDY((NBP)t);
+				for ( vl = 0; n; n = NEXT(n) ) {
+					get_vars((Obj)(((NBM)BDY(n))->c),&vl1); 
+					mergev(CO,vl,vl1,&vl2);
 					vl = vl2;
 				}
 				break;
