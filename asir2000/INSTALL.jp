@@ -1,4 +1,4 @@
-              Asir2000 の install のしかた  (standalone 版; 2003.3.11)
+         Asir2000 の install のしかた  (standalone 版; 2006.8.15)
 
 不明な点は, noro@math.kobe-u.ac.jp にお問い合わせ下さい. 
 
@@ -24,6 +24,11 @@ include   pari の include ファイル
 default はそこ).  もし個人的に使用する場合には, 自分が書き込める 
 directory を指定して下さい.  以下この directory を TARGETDIR と書きま
 す.
+
+PARI ライブラリは, bigfloat 計算や初等関数の値の計算に必要です. asir 
+は, 現状ではライセンスの制限のため libpari.a.2.0 を link します. PARI 
+の最新版は 2.2.x のため, PARI, asir はプライベートなディレクトリにイン
+ストールすることをお勧めします.
 
 2. pari-2.0 の install
 
@@ -52,17 +57,30 @@ directory を指定して下さい.  以下この directory を TARGETDIR 
 
 3. asir2000 $B$N install
 
-% gzip -dc asir2000.tgz | tar xvf -
+以下のスイッチがあります.
+
+--prefix=dir
+  インストールディレクトリを 'dir' にする. PARI をインストールするとき 
+  に指定した TARGETDIR と同一でなければならない.
+
+--with-pari
+  PARI を link する場合に必要.
+
+--enable-plot
+  plot 関数をが必要な場合に必要.
+
+% gzip -dc asir-head.tgz | tar xvf -
 % cd asir2000
-% configure --prefix=TARGETDIR --with-pari --enable-plot
+% configure --prefix=TARGETDIR                         <- without plot and PARI
+% configure --prefix=TARGETDIR --enable-plot         <- with plot, without PARI
+% configure --prefix=TARGETDIR --with-pari --enable-plot  <- with plot and PARI
 % make
-% su                        <-- 必要がある場合
+% su     <- if necessary
 # make install
 # make install-lib
 # make install-doc
 # exit
 %	
-
 5. 環境変数について
 
 上記の手順で install した場合, 環境変数の設定なしで全て正常に動作する
@@ -72,18 +90,12 @@ directory を指定して下さい.  以下この directory を TARGETDIR 
 $B%A$7$^$9. ASIRLOADPATH に, 旧版のlibrary directory が紛れ込まないよう
 に注意して下さい.
 
-6. manual の make
+6. manual
 
-これは, ptex, texi2html, makeinfo (ver. 1.68 以上) が必要です. あらか
-じめ make したものが, man99.ps.gz および lib/html-jpです. 後者は 2. の 
-make install2 で, lib directory に install されます. 
+asir-doc.tgz は dvi 形式と html 形式のマニュアルを含みます.
 
-% cd asir2000/doc
-% make
-% make html
+% gzip -dc asir-doc.tgz | tar xf -
 
-html-jp は, HTML 形式の asir マニュアルです. Table of Contents ファイ
-ルは html-jp/man_toc.htmlです.
 
 
 

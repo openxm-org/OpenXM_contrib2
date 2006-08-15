@@ -75,8 +75,7 @@ The following switch is available:
 % configure --prefix=TARGETDIR --enable-plot         <- with plot, without PARI
 % configure --prefix=TARGETDIR --with-pari --enable-plot  <- with plot and PARI
 % make
-// Become the root if necessary
-% su
+% su     <- if necessary
 # make install
 # make install-lib
 # make install-doc
