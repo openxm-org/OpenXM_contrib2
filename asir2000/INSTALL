@@ -1,4 +1,4 @@
-              Installation of Asir2000 (standalone version; 2003.3.11)
+       Installation of Asir2000 (standalone version; 2006.8.15)
 
 Any question is welcome by e-mails to noro@math.kobe-u.ac.jp.
 
@@ -15,13 +15,19 @@ On Alpha the native compiler /usr/ccs/bin/cc is used.
 
 In the install directory, the following subdirectories are put:
 
-bin       executables of PARI and Asir
-lib       library files of PARI and Asir
+bin       executables of PARI and asir
+lib       library files of PARI and asir
 include   header files of PARI
 
 These subdirectories are created automatically if they does not exist.
 If you can be a root, it is recommended to set the install directory
 to '/usr/local'.  In the following the directory is denoted by TARGETDIR.
+
+The PARI library is necessary for bigfloat computation and evaluation of
+elementary functions. Currently asir links the old PARI library,
+libpari.a.2.0 because of the license restriction. The latest version of
+PARI is 2.2.x and it is recommended to install PARI and asir in a private
+directory.
 
 2. Installation of pari
 
@@ -51,11 +57,26 @@ will be generated.
 
 3. Installation of asir2000
 
-% gzip -dc asir.tgz | tar xvf -
+The following switch is available:
+
+--prefix=dir
+  Set the install directory to 'dir'. It should be the same as TARGETDIR
+  specified in the installation of PARI.
+
+--with-pari
+  This should be specified if PARI is to be linked.
+
+--enable-plot
+  This should be specified if plotting functions is necessary. 
+
+% gzip -dc asir-head.tgz | tar xvf -
 % cd asir2000
-% configure --prefix=TARGETDIR --with-pari --enable-plot
+% configure --prefix=TARGETDIR                         <- without plot and PARI
+% configure --prefix=TARGETDIR --enable-plot         <- with plot, without PARI
+% configure --prefix=TARGETDIR --with-pari --enable-plot  <- with plot and PARI
 % make
-% su                        <-- if necessary
+// Become the root if necessary
+% su
 # make install
 # make install-lib
 # make install-doc
@@ -66,13 +87,8 @@ will be generated.
 
 If ASIR_LIBDIR is already set, unset it.
 
-4. Making manuals
+4. Manuals
 
-'ptex', 'texi2html', 'makeinfo' (ver. 1.68 or later) are required.
+The file asir-doc.tgz contains dvi files and HTML manuals.
 
 % gzip -dc asir-doc.tgz | tar xvf -
-% cd asir-doc
-% make
-
-
-
