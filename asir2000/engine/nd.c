@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.143 2006/08/09 02:48:49 noro Exp $ */
 
 #include "nd.h"
 
@@ -2376,7 +2376,8 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	NDV b;
 	int ishomo,nalg;
 	Alg alpha,dp;
-	P p;
+	P p,zp;
+	Q dmy;
 	LIST f1,f2;
 	Obj obj;
 	NumberField nf;
@@ -2422,7 +2423,8 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	nd_setup_parameters(nvar,max);
 	ishomo = 1;
 	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-		b = (pointer)ptondv(CO,vv,(P)BDY(t));
+		ptozp((P)BDY(t),1,&dmy,&zp);
+		b = (pointer)ptondv(CO,vv,zp);
 		if ( ishomo )
 			ishomo = ishomo && ndv_ishomo(b);
 		if ( m ) ndv_mod(m,b);
@@ -2455,7 +2457,8 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
 	NDV b;
 	int ishomo,nalg;
 	Alg alpha,dp;
-	P p;
+	P p,zp;
+	Q dmy;
 	LIST f1,f2;
 	Obj obj;
 	NumberField nf;
@@ -2495,7 +2498,8 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
 	nd_setup_parameters(nvar,max);
 	ishomo = 1;
 	for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-		b = (pointer)ptondv(CO,vv,(P)BDY(t));
+		ptozp((P)BDY(t),1,&dmy,&zp);
+		b = (pointer)ptondv(CO,vv,zp);
 		if ( ishomo )
 			ishomo = ishomo && ndv_ishomo(b);
 		if ( m ) ndv_mod(m,b);
@@ -2534,7 +2538,8 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 	int m,nocheck,nvar,mindex,e,max;
 	NDV c;
 	NMV a;
-	P p;
+	P p,zp;
+	Q dmy;
 	EPOS oepos;
 	int obpe,oadv,wmax,i,len,cbpe,ishomo,nalg;
 	Alg alpha,dp;
@@ -2589,7 +2594,8 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 	obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos;
 	ishomo = 1;
 	for ( in0 = 0, fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-		c = ptondv(CO,vv,(P)BDY(t));
+		ptozp((P)BDY(t),1,&dmy,&zp);
+		c = (pointer)ptondv(CO,vv,zp);
 		if ( ishomo )
 			ishomo = ishomo && ndv_ishomo(c);
 		if ( c ) { 
