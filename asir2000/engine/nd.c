@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.143 2006/08/09 02:48:49 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.144 2006/08/26 03:09:55 noro Exp $ */
 
 #include "nd.h"
 
@@ -2548,6 +2548,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 	Obj obj;
 	NumberField nf;
 	struct order_spec *ord1;
+	struct oEGT eg_check,eg0,eg1;
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -2640,6 +2641,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 		cbpe = nd_bpe;
 		if ( nocheck )
 			break;
+		get_eg(&eg0);
 		if ( ndv_check_candidate(in0,obpe,oadv,oepos,cand) )
 			/* success */
 			break;
@@ -2659,6 +2661,9 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 			}
 		}
 	}
+	get_eg(&eg1); init_eg(&eg_check); add_eg(&eg_check,&eg0,&eg1);
+	if ( DP_Print )
+		fprintf(asir_out,"check=%fsec\n",eg_check.exectime+eg_check.gctime);
 	/* dp->p */
 	nd_bpe = cbpe;
 	nd_setup_parameters(nd_nvar,0);
