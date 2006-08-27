@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.40 2006/04/16 00:51:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.41 2006/08/08 02:39:17 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1885,6 +1885,40 @@ P separate_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar)
 		NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = (P)ONE;
 		for ( i = 0; i < d1; i++ ) {
 			if ( NBM_GET(a->b,i+1) ) NBM_SET(t->b,i);
+			else NBM_CLR(t->b,i);
+		}
+		*ar = nbmtonbp(t);
+	}
+
+	return a->c;
+}
+
+/* a=c*rest*x -> a0= rest*x, ar=rest, at=x */
+
+P separate_tail_nbm(NBM a,NBP *a0,NBP *ar,NBP *at)
+{
+	int i,d,d1;
+	NBM t;
+
+	if ( !(d=a->d) ) error("separate_tail_nbm : invalid argument");
+
+	if ( a0 ) {
+		NEWNBM(t); t->d = a->d; t->b = a->b; t->c = (P)ONE;
+		*a0 = nbmtonbp(t);
+	}
+
+	d1 = a->d-1;
+	if ( at ) {
+		NEWNBM(t); NEWNBMBDY(t,1); t->d = 1; t->c = (P)ONE;
+		if ( NBM_GET(a->b,d1) ) NBM_SET(t->b,0);
+		else NBM_CLR(t->b,0);
+		*at = nbmtonbp(t);
+	}
+
+	if ( ar ) {
+		NEWNBM(t); NEWNBMBDY(t,d1); t->d = d1; t->c = (P)ONE;
+		for ( i = 0; i < d1; i++ ) {
+			if ( NBM_GET(a->b,i) ) NBM_SET(t->b,i);
 			else NBM_CLR(t->b,i);
 		}
 		*ar = nbmtonbp(t);

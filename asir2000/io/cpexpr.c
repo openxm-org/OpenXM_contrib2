@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.24 2004/12/10 07:36:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.25 2005/11/16 23:42:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -494,10 +494,12 @@ void PRINTNBP(VL vl,NBP p)
 			PRINTEXPR(vl,(Obj)m->c);
 			d = m->d;
 			b = m->b;
-			for ( i = 0; i < d; i++ ) {
-				if ( NBM_GET(b,i) ) PUTS("x");
-				else PUTS("y");
-			}
+			if ( d )
+				for ( i = 0; i < d; i++ ) {
+					if ( NBM_GET(b,i) ) PUTS("x");
+					else PUTS("y");
+				}
+			else PUTS("1");
 			if ( NEXT(t) ) PUTS("+");
 		}
 	}

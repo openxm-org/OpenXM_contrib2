@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.11 2005/12/10 14:14:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.12 2006/04/16 00:51:14 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -1092,10 +1092,12 @@ void PRINTNBP(VL vl,NBP p)
 			PUTS(")*");
 			d = m->d;
 			b = m->b;
-			for ( i = 0; i < d; i++ ) {
-				if ( NBM_GET(b,i) ) PUTS("x");
-				else PUTS("y");
-			}
+			if ( d ) 
+				for ( i = 0; i < d; i++ ) {
+					if ( NBM_GET(b,i) ) PUTS("x");
+					else PUTS("y");
+				}
+			else PUTS("1");
 			if ( NEXT(t) ) PUTS("+");
 		}
 	}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.115 2006/08/09 05:05:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.116 2006/08/19 05:35:07 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -108,7 +108,7 @@ void Pnbp_tm(), Pnbp_tt(), Pnbp_tc(), Pnbp_trest();
 void Pnbm_deg();
 void Pnbm_hp_rest();
 void Pnbm_hxky(), Pnbm_xky_rest();
-void Pnbm_hv(), Pnbm_tv(), Pnbm_rest();
+void Pnbm_hv(), Pnbm_tv(), Pnbm_rest(),Pnbm_trest();
 
 void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
 void Pqt_match(),Pget_quote_id();
@@ -194,6 +194,7 @@ struct ftab str_tab[] = {
 	{"nbm_hv", Pnbm_hv,1},
 	{"nbm_tv", Pnbm_tv,1},
 	{"nbm_rest", Pnbm_rest,1},
+	{"nbm_trest", Pnbm_trest,1},
 
 	{"qt_to_nary",Pqt_to_nary,1},
 	{"qt_to_bin",Pqt_to_bin,2},
@@ -2606,26 +2607,6 @@ void Pnbm_hv(NODE arg, NBP *rp)
 		separate_nbm((NBM)BDY(BDY(p)),0,rp,0);
 }
 
-void Pnbm_tv(NODE arg, NBP *rp)
-{
-	NBP p;
-	NBM m,t;
-	int d;
-	
-	p = (NBP)ARG0(arg);
-	if ( !p )
-		*rp = 0;
-	else {
-		m = (NBM)BDY(BDY(p));
-		d = m->d;
-		if ( !d ) error("nbm_tv : invalid argument");
-		NEWNBM(t); NEWNBMBDY(t,1); t->d = 1; t->c = (P)ONE;
-		if ( NBM_GET(m->b,d-1) ) NBM_SET(t->b,0);
-		else NBM_CLR(t->b,0);
-		*rp = (NBP)nbmtonbp(t);
-	}
-}
-
 void Pnbm_rest(NODE arg, NBP *rp)
 {
 	NBP p;
@@ -2635,6 +2616,28 @@ void Pnbm_rest(NODE arg, NBP *rp)
 		*rp = 0;
 	else
 		separate_nbm((NBM)BDY(BDY(p)),0,0,rp);
+}
+
+void Pnbm_tv(NODE arg, NBP *rp)
+{
+	NBP p;
+	
+	p = (NBP)ARG0(arg);
+	if ( !p )
+		*rp = 0;
+	else
+		separate_tail_nbm((NBM)BDY(BDY(p)),0,0,rp);
+}
+
+void Pnbm_trest(NODE arg, NBP *rp)
+{
+	NBP p;
+	
+	p = (NBP)ARG0(arg);
+	if ( !p )
+		*rp = 0;
+	else
+		separate_tail_nbm((NBM)BDY(BDY(p)),0,rp,0);
 }
 
 NBP fnode_to_nbp(FNODE f)
