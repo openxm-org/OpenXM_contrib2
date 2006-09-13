@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.21 2006/02/03 03:55:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.22 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -267,6 +267,7 @@ void Pload(NODE arg,Q *rp)
 	char *name,*name0;
 	char errbuf[BUFSIZ];
 
+	if ( !arg ) error("load : invalid argument");
 	if ( ARG0(arg) ) {
 		switch (OID(ARG0(arg))) {
 			case O_STR:

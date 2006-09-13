@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.19 2006/02/05 08:28:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.20 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -224,19 +224,22 @@ void env_init() {
 	ASIRLOADPATH[i] = NULL;
 }
 
+#if defined(VISUAL)
+#define R_OK 4
+#endif
+
 void searchasirpath(char *name,char **pathp)
 {
 	char **p;
 	char *q;
-	int l;
-#if !defined(VISUAL)
+	int l,ret;
 	struct stat sbuf;
 	
 	if ( (name[0] == '/') || ( name[0] == '.') || strchr(name,':')
 		|| !ASIRLOADPATH[0] ) {
 		if ( access(name,R_OK) >= 0 ) {
-			stat(name,&sbuf);
-			if ( (sbuf.st_mode & S_IFMT) != S_IFDIR )
+			ret = stat(name,&sbuf);
+			if ( ret == 0 && (sbuf.st_mode & S_IFMT) != S_IFDIR )
 				*pathp = name;
 			else
 				*pathp = 0;
@@ -247,8 +250,8 @@ void searchasirpath(char *name,char **pathp)
 			l = strlen(*p)+strlen(name)+2;
 			q = (char *)ALLOCA(l); sprintf(q,"%s/%s",*p,name);
 			if ( access(q,R_OK) >= 0 ) {
-				stat(q,&sbuf);
-				if ( (sbuf.st_mode & S_IFMT) != S_IFDIR ) {
+				ret = stat(q,&sbuf);
+				if ( ret == 0 && (sbuf.st_mode & S_IFMT) != S_IFDIR ) {
 					*pathp = (char *)MALLOC(l); strcpy(*pathp,q);
 					return;
 				}
@@ -256,22 +259,6 @@ void searchasirpath(char *name,char **pathp)
 		}
 		*pathp = 0;
 	}
-#else
-	if ( (name[0] == '/') || ( name[0] == '.') || strchr(name,':')
-		|| !ASIRLOADPATH[0] )
-		*pathp = name;
-	else {
-		for ( p = ASIRLOADPATH; *p; p++ ) {
-			l = strlen(*p)+strlen(name)+2;
-			q = (char *)ALLOCA(l); sprintf(q,"%s/%s",*p,name);
-			if ( access(q,04) >= 0 ) {
-				*pathp = (char *)MALLOC(l); strcpy(*pathp,q);
-				return;
-			}
-		}
-		*pathp = 0;
-	}
-#endif
 }
 
 #define DELIM '/'
