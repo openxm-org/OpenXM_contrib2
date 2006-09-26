@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.30 2006/02/27 00:20:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.31 2006/09/25 04:57:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -271,7 +271,7 @@ void batch_loop()
 	inbuf = (char *)malloc(size);
 	while ( 1 ) {
 		for ( i = 0; ; i++ ) {
-			c = getchar();
+			c = w_fgetc(stdin);
 			if ( c == '0xff' ) {
 				inbuf[i] = 0;
 				break;

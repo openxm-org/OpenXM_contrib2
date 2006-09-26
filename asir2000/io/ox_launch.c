@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.19 2004/03/18 01:59:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.20 2004/06/15 09:04:41 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -74,7 +74,7 @@ HANDLE hIntr,hReset,hKill;
 #endif
 
 static void put_log(char *);
-static int ox_spawn(char *,int,char *,int);
+static int ox_spawn(char *,int,char *,char *);
 static void launch_error(char *);
 static void ox_io_init(int);
 static void push_one(Obj);
@@ -110,6 +110,7 @@ char *str;
 	argv[5] : server
 	argv[6] : display or "0"
 	argv[7] : if exists, it should be "-nolog"
+	XXX : argv[7] is used to pass the path of engine.exe in Windows.
 */
 
 void launch_main(argc,argv)
@@ -125,9 +126,9 @@ char **argv;
 	Obj obj;
 	int cs,ss;
 	unsigned int cmd;
-	int use_unix,accept_client,nolog;
+	int use_unix,accept_client;
 	char *control_port_str,*server_port_str;
-	char *rhost,*server,*dname;
+	char *rhost,*server,*dname,*nolog;
 	char *e,*s;
 
 	GC_init(); nglob_init();
@@ -139,7 +140,7 @@ char **argv;
 	server_port_str = argv[4];
 	server = argv[5];
 	dname = argv[6];
-	nolog = argc > 7 ? 1 : 0;
+	nolog = argc > 7 ? argv[7]: 0;
 
 #if defined(VISUAL)
 		init_socket();
@@ -259,7 +260,7 @@ static int ox_spawn(prog,bs,dname,nolog)
 char *prog;
 int bs;
 char *dname;
-int nolog;
+char *nolog;
 {
 #if defined(VISUAL)
 	char *av[BUFSIZ];
@@ -291,8 +292,13 @@ int nolog;
 	av[4] = ox_reset;
 	av[5] = ox_kill;
 	av[6] = NULL;
-	Pget_rootdir(&rootdir);
-	sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
+	if ( nolog ) {
+		sprintf(AsirExe,"\"%s\"",nolog);
+		strcpy(AsirExe,nolog);
+	} else {
+		Pget_rootdir(&rootdir);
+		sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
+	}
 	_fileinfo = 1;
 	hProc = _spawnv(_P_NOWAIT,AsirExe,av);
 	return (int)hProc;

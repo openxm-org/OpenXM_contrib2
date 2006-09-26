@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.20 2005/12/10 14:14:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.21 2006/02/01 07:29:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -67,11 +67,26 @@ struct ftab print_tab[] = {
 
 extern int I_am_server;
 
+int wfep_mode;
+
 void Pprint(NODE arg,pointer *rp)
 {
 	Obj obj;
+	STRING nl;
 	Q opt;
 
+	/* engine for wfep */
+	if ( wfep_mode ) {
+		if ( arg ) {
+			print_to_wfep((Obj)ARG0(arg));
+			if ( !NEXT(arg) || ARG1(arg) ) {
+				MKSTR(nl,"\r\n");
+				print_to_wfep((Obj)nl);
+			}
+		}
+		*rp = 0;
+		return;
+	}
 	if ( arg ) {
 		obj = (Obj)ARG0(arg);
 		if ( NEXT(arg) ) {
