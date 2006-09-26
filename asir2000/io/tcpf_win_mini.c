@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf_win_mini.c,v 1.1 2006/09/26 05:35:26 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -58,6 +58,8 @@ int win_ox_launch()
 	return 0;
 }
 
+void win_get_rootdir(char *dir);
+
 void win_spawn_server(char *control_port_str,char *server_port_str)
 {
 	char AsirExe[BUFSIZ];
@@ -65,8 +67,8 @@ void win_spawn_server(char *control_port_str,char *server_port_str)
 	char rootdir[BUFSIZ];
 	char *av[BUFSIZ];
 
-//	win_get_rootdir(rootdir);
-	strcpy(rootdir,"c:\\program files\\asir");
+	win_get_rootdir(rootdir);
+//	strcpy(rootdir,"c:\\program files\\asir");
 	sprintf(AsirExe,"%s\\bin\\engine.exe",rootdir);
 	sprintf(AsirExePath,"\"%s\"",AsirExe);
 	av[0] = "ox_launch";
@@ -80,6 +82,15 @@ void win_spawn_server(char *control_port_str,char *server_port_str)
 	av[8] = 0;
 
 	_spawnv(_P_NOWAIT,AsirExe,av);
+}
+
+void win_get_rootdir(char *dir)
+{
+	char *slash;
+
+	GetCurrentDirectory(BUFSIZ,dir);
+	slash = strrchr(dir,'\\');
+	if ( slash ) *slash = 0;
 }
 
 char *win_pop_string()
