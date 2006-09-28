@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.31 2006/09/25 04:57:55 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.32 2006/09/26 05:35:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,10 +76,8 @@ double get_current_time();
 void init_socket();
 void recover();
 void set_stacksize();
-void batch_loop();
 
 extern int mpi_nprocs,mpi_myid;
-extern int do_batch;
 
 #if defined(VISUAL_LIB)
 void Main(int argc,char *argv[])
@@ -162,7 +160,7 @@ main(int argc,char *argv[])
 #if defined(PARI)
     risa_pari_init();
 #endif 
-	if (!do_batch && !do_quiet) {
+	if (!do_quiet) {
 		copyright();
 	}
 	output_init();
@@ -211,8 +209,6 @@ main(int argc,char *argv[])
 		if ( !SETJMP(main_env) )
 			execasirfile(ifname);
 	}
-	if ( do_batch )
-		batch_loop();
 
 	prompt();
 	while ( 1 ) {
@@ -258,67 +254,4 @@ void set_stacksize()
 		setrlimit(RLIMIT_STACK,&rlim);
 	}
 #endif
-}
-
-void batch_loop()
-{
-	char *inbuf;
-	int i,c,size;
-
-	input_init(0,"string");
-
-	size = 2;
-	inbuf = (char *)malloc(size);
-	while ( 1 ) {
-		for ( i = 0; ; i++ ) {
-			c = w_fgetc(stdin);
-			if ( c == '0xff' ) {
-				inbuf[i] = 0;
-				break;
-			} else
-				inbuf[i] = c;
-			if ( i == size-1 ) {
-				size *= 2;
-				inbuf = realloc(inbuf,size);
-			}
-		}
-		execute_string(inbuf);
-	}
-}
-
-/* a function for batch-loop mode */
-
-extern char *parse_strp;
-
-int execute_string(char *cmd)
-{
-	SNODE snode;
-	pointer val;
-#if defined(PARI)
-	recover(0);
-	/* environement is defined in libpari.a */
-# if !(PARI_VERSION_CODE > 131588 )
-	if ( setjmp(environnement) ) {
-		avma = top; recover(1);
-		resetenv("");
-	}
-# endif
-#endif
-	parse_strp = cmd;
-	asir_infile->ln = 1;
-	if ( mainparse(&snode) ) {
-		return -1;
-	}
-	val = evalstat(snode);
-	if ( NEXT(asir_infile) ) {
-		while ( NEXT(asir_infile) ) {
-			if ( mainparse(&snode) ) {
-				return -1;
-			}
-			nextbp = 0;
-			val = evalstat(snode);
-		}
-	}
-	printexpr(CO,val);
-	return 0;
 }

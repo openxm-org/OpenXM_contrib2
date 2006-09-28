@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.65 2006/02/24 01:15:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.66 2006/09/25 04:57:54 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -156,7 +156,7 @@ char asirname[BUFSIZ];
 char displayname[BUFSIZ];
 
 int Verbose;
-int do_quiet, do_batch;
+int do_quiet;
 
 void glob_init() {
 	int i;
@@ -391,8 +391,6 @@ void process_args(int ac,char **av)
 
 			paristack = atoi(*(av+1)); av += 2; ac -= 2;
 #endif
-		} else if ( !strcmp(*av,"-batch") ) {
-			do_batch = 1; av++; ac--;
 		} else {
 			fprintf(stderr,"%s : unknown option.\n",*av);
 			asir_terminate(1);
