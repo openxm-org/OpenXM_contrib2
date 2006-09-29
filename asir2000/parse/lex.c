@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.40 2006/03/05 08:02:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.41 2006/03/05 08:21:59 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -563,7 +563,7 @@ extern char *CUR_FUNC;
 void yyerror(char *s)
 {
 	STRING fname,name,kwd;
-	Q q;
+	USINT u;
 	NODE t;
 	LIST l,l2;
 
@@ -584,15 +584,15 @@ void yyerror(char *s)
 					MKSTR(name,"");
 				else
 					MKSTR(name,CUR_FUNC);
-				STOQ(asir_infile->ln,q);
-				t = mknode(3,fname,name,q); MKLIST(l,t);
+				MKUSINT(u,asir_infile->ln);
+				t = mknode(3,fname,name,u); MKLIST(l,t);
 				/* line number at the toplevel */
-				MKSTR(fname,"toplevel"); STOQ(at_root,q);
-				t = mknode(2,fname,q); MKLIST(l2,t);
+				MKSTR(fname,"toplevel"); MKUSINT(u,at_root);
+				t = mknode(2,fname,u); MKLIST(l2,t);
 				t = mknode(2,l2,l); 
 			} else {
-				MKSTR(fname,"toplevel"); STOQ(asir_infile->ln,q);
-				t = mknode(2,fname,q); MKLIST(l,t);
+				MKSTR(fname,"toplevel"); MKUSINT(u,asir_infile->ln);
+				t = mknode(2,fname,u); MKLIST(l,t);
 				t = mknode(1,l);
 			}
 			MKLIST(l,t);
