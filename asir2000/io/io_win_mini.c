@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/io_win_mini.c,v 1.1 2006/09/26 05:35:26 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -8,12 +8,17 @@
 
 #define ISIZ sizeof(int)
 
+#define _NEWNODE(n) ((n)=(NODE)malloc(sizeof(struct oNODE)))
 #define _NEWSTR(l) ((l)=(STRING)malloc(sizeof(struct oSTRING)),OID(l)=O_STR)
 #define _NEWUSINT(u) ((u)=(USINT)malloc(sizeof(struct oUSINT)),OID(u)=O_USINT)
 #define _NEWERR(e) ((e)=(ERR)malloc(sizeof(struct oERR)),OID(e)=O_ERR)
+#define _NEWLIST(l) ((l)=(LIST)malloc(sizeof(struct oLIST)),OID(l)=O_LIST)
 #define _MKSTR(u,b) (_NEWSTR(u),(u)->body=(unsigned)(b))
 #define _MKUSINT(u,b) (_NEWUSINT(u),(u)->body=(unsigned)(b))
 #define _MKERR(e,b) (_NEWERR(e),(e)->body=(Obj)(b))
+#define _MKLIST(l,b) (_NEWLIST(l),(l)->body=(Obj)(b))
+#define _MKNODE(a,b,c) \
+(_NEWNODE(a),(a)->body=(pointer)b,NEXT(a)=(NODE)(c))
 
 int ox_usr1_sent, ox_int_received, critical_when_signal;
 unsigned int ox_serial;
@@ -25,7 +30,7 @@ int little_endian=1;
 int terminate;
 
 static int available_cmo[] = {
-	CMO_NULL, CMO_INT32, CMO_STRING,
+	CMO_NULL, CMO_INT32, CMO_STRING,CMO_LIST,
 	CMO_ERROR, CMO_ERROR2, CMO_ZERO,
 	0
 };
@@ -194,6 +199,9 @@ void write_cmo(FILE *s,Obj obj)
 		case O_USINT:
 			write_cmo_uint(s,(USINT)obj);
 			break;
+		case O_LIST:
+			write_cmo_list(s,(LIST)obj);
+			break;
 		case O_ERR:
 			write_cmo_error(s,(ERR)obj);
 			break;
@@ -211,6 +219,8 @@ int cmo_tag(Obj obj,int *tag)
 			*tag = CMO_STRING; break;
 		case O_USINT:
 			*tag = CMO_INT32; break;
+		case O_LIST:
+			*tag = CMO_LIST; break;
 		case O_ERR:
 			*tag = CMO_ERROR2; break;
 		default:
@@ -241,6 +251,18 @@ void write_cmo_string(FILE *s,STRING str)
 		write_string(s,p,size);
 }
 
+void write_cmo_list(FILE *s,LIST list)
+{
+	NODE m;
+	int i,n,r;
+
+	for ( n = 0, m = BDY(list); m; m = NEXT(m), n++ );
+	r = CMO_LIST; write_int(s,&r);
+	write_int(s,&n);
+	for ( i = 0, m = BDY(list); i < n; i++, m = NEXT(m) )
+		write_cmo(s,BDY(m));
+}
+
 void write_cmo_error(FILE *s,ERR e)
 {
 	int r;
@@ -253,6 +275,7 @@ void read_cmo(FILE *s,Obj *rp)
 {
 	int id;
 	STRING str;
+	LIST list;
 	USINT t;
 	Obj obj;
 	ERR e;
@@ -268,6 +291,9 @@ void read_cmo(FILE *s,Obj *rp)
 			break;
 		case CMO_STRING:
 			loadstring(s,&str); *rp = (Obj)str;
+			break;
+		case CMO_LIST:
+			read_cmo_list(s,&list); *rp = (Obj)list;
 			break;
 		case CMO_ERROR:
 			_MKERR(e,0); *rp = (Obj)e;
@@ -292,6 +318,25 @@ void read_cmo_uint(FILE *s,USINT *rp)
 
 	read_int(s,&body);
 	_MKUSINT(*rp,body);
+}
+
+void read_cmo_list(FILE *s,Obj *rp)
+{
+	int len;
+	Obj *w;
+	int i;
+	NODE n0,n1;
+	LIST list;
+
+	read_int(s,&len);
+	w = (Obj *)ALLOCA(len*sizeof(Obj));
+	for ( i = 0; i < len; i++ )
+		read_cmo(s,&w[i]);		
+	for ( i = len-1, n0 = 0; i >= 0; i-- ) {
+		_MKNODE(n1,w[i],n0); n0 = n1;
+	}
+	_MKLIST(list,n0);
+	*rp = (Obj)list;
 }
 
 void loadstring(FILE *s,STRING *p)

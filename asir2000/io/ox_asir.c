@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.63 2006/06/21 09:46:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.64 2006/09/26 05:35:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -603,6 +603,8 @@ void print_to_wfep(Obj obj)
 	asir_popString();
 }
 
+extern int wfep_mode;
+
 void asir_popString()
 {
 	Obj val;
@@ -613,7 +615,10 @@ void asir_popString()
 	val = asir_pop_one();
 	if ( !val )
 		buf = "0";
-	else {
+	else if ( wfep_mode && OID(val) == O_ERR ) {
+		/* XXX : for wfep */
+		ox_send_data(0,val); return;
+	} else {
 		l = estimate_length(CO,val);
 		buf = (char *)ALLOCA(l+1);
 		soutput_init(buf);

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf_win_mini.c,v 1.1 2006/09/26 05:35:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf_win_mini.c,v 1.2 2006/09/26 05:50:31 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -12,16 +12,18 @@
 static int control_port,server_port;
 int win_ox_launch();
 void win_spawn_server(char *control_port_str,char *server_port_str);
-void win_get_rootdir(rootdir);
-char *win_pop_string();
-static int launched=0;
+void win_get_rootdir();
+int win_pop_string(Obj *);
+void free_obj(Obj obj);
 extern int terminate;
+static char rootdir[BUFSIZ];
 
 int win_ox_launch()
 {
 	int cs,ss,cn,sn;
 	char control_port_str[BUFSIZ];
 	char server_port_str[BUFSIZ];
+	static int launched=0;
 
 	if ( launched ) return 0;
 
@@ -58,18 +60,17 @@ int win_ox_launch()
 	return 0;
 }
 
-void win_get_rootdir(char *dir);
+void win_get_rootdir();
 
 void win_spawn_server(char *control_port_str,char *server_port_str)
 {
 	char AsirExe[BUFSIZ];
 	char AsirExePath[BUFSIZ];
-	char rootdir[BUFSIZ];
 	char *av[BUFSIZ];
 
-	win_get_rootdir(rootdir);
 //	strcpy(rootdir,"c:\\program files\\asir");
-	sprintf(AsirExe,"%s\\bin\\engine.exe",rootdir);
+//	sprintf(AsirExe,"%s\\bin\\engine.exe",rootdir);
+	sprintf(AsirExe,"c:\\Program Files\\asir\\bin\\engine.exe",rootdir);
 	sprintf(AsirExePath,"\"%s\"",AsirExe);
 	av[0] = "ox_launch";
 	av[1] = "127.0.0.1";
@@ -84,39 +85,58 @@ void win_spawn_server(char *control_port_str,char *server_port_str)
 	_spawnv(_P_NOWAIT,AsirExe,av);
 }
 
-void win_get_rootdir(char *dir)
+void win_get_rootdir()
 {
 	char *slash;
 
-	GetCurrentDirectory(BUFSIZ,dir);
-	slash = strrchr(dir,'\\');
+	GetCurrentDirectory(BUFSIZ,rootdir);
+	slash = strrchr(rootdir,'\\');
 	if ( slash ) *slash = 0;
 }
 
-char *win_pop_string()
+// ret=1 : data, ret=0 : void, ret=-1 : terminate
+
+int win_pop_string(Obj *obj)
 {
-	Obj obj;
 	int id,serial;
 
-	if ( !launched ) return "";
-	serial = ox_recv(server_port,&id,&obj);
-	if ( serial < 0 ) return 0;
+	serial = ox_recv(server_port,&id,obj);
+	if ( serial < 0 ) return -1;
+
+	if ( id == OX_DATA )
+		return 1;
+	else {
+		if ( id == OX_SYNC_BALL ) {
+			ox_send_sync(server_port);
+			ox_flush_stream_force(server_port);
+		}
+		*obj = 0;
+		return 0;
+	}
+}
+
+/* ret=1 => data, ret=0 => void, ret=-1 => terminated */
+
+int win_pop_one(Obj *obj)
+{
+	int id,serial;
+
+	serial = ox_recv(server_port,&id,obj);
+	if ( serial < 0 ) return -1;
 
 	if ( id == OX_DATA ) {
-		if ( obj && OID(obj) == O_STR ) return BDY((STRING)obj);
-		else return "";
+		return 1;
 	} else if ( id == OX_SYNC_BALL ) {
 		ox_send_sync(server_port);
 		ox_flush_stream_force(server_port);
-		return "";
-	} else return "";
+		return 0;
+	} else return 0;
 }
 
 void win_execute_string(char *cmd)
 {
 	struct oSTRING str;
 
-	if ( !launched ) return;
 	OID(&str) = O_STR;
 	BDY(&str) = cmd;
 	ox_send_data(server_port,&str);
@@ -131,7 +151,6 @@ void ox_reset()
 	int id;
 	Obj obj;
 
-	if ( !launched ) return;
 	ox_send_cmd(control_port,SM_control_reset_connection);
 	ox_flush_stream_force(control_port);
 	ox_recv(control_port,&id,&obj); t = (USINT)obj;
@@ -142,10 +161,38 @@ void ox_reset()
 
 void ox_shutdown()
 {
-	if ( !launched ) return;
 	terminate = 1;
 	ox_send_cmd(server_port,SM_shutdown);
 	Sleep(100);
 	ox_send_cmd(control_port,SM_shutdown);
+}
+
+void free_obj(Obj obj)
+{
+	NODE n,n1;
+
+	if ( !obj ) return;
+	switch ( OID(obj) ) {
+		case O_USINT:
+			break;
+		case O_STR:
+			free(BDY((STRING)obj));
+			break;
+		case O_LIST:
+			n = BDY((LIST)obj);
+			while ( n ) {
+				free_obj(BDY(n));
+				n1 = NEXT(n);
+				free(n);
+				n = n1;
+			}
+			break;
+		case O_ERR:
+			free_obj(BDY((LIST)obj));
+			break;
+		default:
+			break;
+	}
+	free(obj);
 }
 
