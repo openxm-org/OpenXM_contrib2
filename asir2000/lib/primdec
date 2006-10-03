@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/primdec,v 1.6 2003/12/12 03:08:29 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/primdec,v 1.7 2006/02/24 01:15:56 noro Exp $ 
 */
 /*   Primary decomposition & Radical decomposition program      */
 /*   written by T.Shimoyama, Fujitsu Lab. Date: 1995.10.12      */
@@ -457,11 +457,17 @@ def extraction(GF,Pr,VL)
 	V = minalgdep(Pr,VL,PRIMEORD);
 	U = listminus(VL,V);
 	V0 = append(V,U);
+#if 0
+	/* This may be a bug. GF is not a GB w.r.t the elimination order */
 	if ( V0 != VL ) {
 		ORD = [[TMPORD1,length(V)],[TMPORD2,length(U)]];
 		GR(G,GF,V0,ORD);
 	} else
 		G = GF;
+#else
+	ORD = [[TMPORD1,length(V)],[TMPORD2,length(U)]];
+	GR(G,GF,V0,ORD);
+#endif
 	dp_ord(TMPORD1);
 	for (LL = [],HC = 1,I = 0; I < length(G); I++)
 		LL = append(LL,cdr(fctr(dp_hc(dp_ptod(G[I],V)))));
