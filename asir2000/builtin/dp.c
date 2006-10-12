@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.63 2006/06/09 09:59:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.64 2006/06/13 04:13:26 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2012,7 +2012,7 @@ LIST *rp;
 	homo = QTOS((Q)ARG2(arg));
 	m = QTOS((Q)ARG3(arg));
 	create_order_spec(0,ARG4(arg),&ord);
-	nd_gr_trace(f,v,m,homo,ord,rp);
+	nd_gr_trace(f,v,m,homo,0,ord,rp);
 }
 
 void Pnd_nf(arg,rp)
