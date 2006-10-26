@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.53 2006/06/12 11:52:10 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.54 2006/06/17 10:12:06 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1542,7 +1542,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 	}
 }
 
-int generic_gauss_elim_hensel_dalg(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
+int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 {
 	MAT bmat,xmat;
 	Q **a0,**a,**b,**x,**nm;
@@ -1566,12 +1566,9 @@ int generic_gauss_elim_hensel_dalg(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **ci
 	N wn;
 	Q wq;
 	NumberField nf;
-	DP *mb;
 	DP m;
 	int col1;
 
-	nf = get_numberfield();
-	mb = nf->mb;
 	a0 = (Q **)mat->body;
 	row = mat->row; col = mat->col;
 	w = (int **)almat(row,col);

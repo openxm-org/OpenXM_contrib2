@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.64 2006/06/13 04:13:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.65 2006/10/12 08:20:37 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -100,6 +100,7 @@ void Pnd_weyl_gr(),Pnd_weyl_gr_trace();
 void Pnd_nf();
 void Pdp_initial_term();
 void Pdp_order();
+void Pdp_inv_or_split();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -185,6 +186,7 @@ struct ftab dp_tab[] = {
 	{"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
 
 	/* misc */
+	{"dp_inv_or_split",Pdp_inv_or_split,3},
 	{"dp_set_weight",Pdp_set_weight,-1},
 	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
 	{0,0,0},
@@ -248,6 +250,32 @@ struct ftab dp_supp_tab[] = {
 
 	{0,0,0}
 };
+
+void Pdp_inv_or_split(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	NODE gb,newgb;
+	DP f,inv;
+	struct order_spec *spec;
+	LIST list;
+
+	do_weyl = 0; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_inv_or_split");
+	asir_assert(ARG1(arg),O_DP,"dp_inv_or_split");
+	if ( !create_order_spec(0,(Obj)ARG2(arg),&spec) )
+		error("dp_inv_or_split : invalid order specification");
+	gb = BDY((LIST)ARG0(arg));
+	f = (DP)ARG1(arg);
+	newgb = (NODE)dp_inv_or_split(gb,f,spec,&inv);
+	if ( !newgb ) {
+		/* invertible */
+		*rp = (Obj)inv;
+	} else {
+		MKLIST(list,newgb);
+		*rp = (Obj)list;
+	}
+}
 
 void Pdp_sort(arg,rp)
 NODE arg;

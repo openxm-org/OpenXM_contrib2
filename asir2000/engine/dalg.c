@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.12 2005/10/12 14:43:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.13 2006/01/05 00:21:20 noro Exp $
 */
 
 #include "ca.h"
@@ -667,7 +667,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 	ln = ONEN;
 	dp_ptozp(a->nm,&u); divq((Q)BDY(a->nm)->c,(Q)BDY(u)->c,&nmc);
 	MKDAlg(u,ONE,a0);
-	simp = (DAlg *)ALLOCA(dim*sizeof(DAlg));
+	simp = (DAlg *)MALLOC(dim*sizeof(DAlg));
 	current_spec = dp_current_spec; initd(nf->spec);
 	for ( i = 0; i < dim; i++ ) {
 		if ( DP_Print ) { fprintf(asir_out,"."); fflush(asir_out); }
@@ -708,7 +708,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 		}
 	}
 	get_eg(&eg0);
-	rank = generic_gauss_elim_hensel_dalg(mobj,&sol,&dnsol,&rinfo,&cinfo);
+	rank = generic_gauss_elim_hensel_dalg(mobj,mb,&sol,&dnsol,&rinfo,&cinfo);
 	get_eg(&eg1); add_eg(&eg_le,&eg0,&eg1);
 	if ( cinfo[0] == dim ) {
 		/* the input is invertible */
@@ -745,6 +745,129 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 				}
 			}
 			NEXT(mp) = 0; MKDP(n,mp0,u);
+			NEXTNODE(nd0,nd);
+			BDY(nd) = (pointer)u;
+			NEXT(nd) = 0;
+		}
+		NEXT(nd) = 0;
+		return nd0;
+	}
+}
+
+NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
+{
+	int dim,n,i,j,k,l,nv;
+	DP *mb,*ps;
+	DP m,d,u,nm;
+	N ln,gn,qn;
+	DAlg *simp;
+	DAlg a0,r;
+	Q dn,dnsol,mul,nmc,dn1,iq;
+	MAT mobj,sol;
+	Q **mat,**solmat;
+	MP mp0,mp;
+	int *rinfo,*cinfo;
+	int rank,nparam;
+	NODE nd0,nd,ndt,ind,indt,t,mblist;
+	struct oEGT eg0,eg1;
+	extern struct oEGT eg_le;
+	extern int DP_Print;
+	initd(spec);
+	dp_ptozp(f,&u); f = u;
+
+	n = length(gb);
+	ps = (DP *)MALLOC(n*sizeof(DP));
+	for ( ind = 0, i = 0, t = gb; i < n; i++, t = NEXT(t) ) {
+		ps[i] = (DP)BDY(t);
+		NEXTNODE(ind,indt);
+		STOQ(i,iq); BDY(indt) = iq;
+	}
+	if ( ind ) NEXT(indt) = 0;
+	dp_true_nf(ind,f,ps,1,&nm,&dn);
+	if ( !nm ) error("dp_inv_or_split : input is 0");
+	f = nm;
+
+	dp_mbase(gb,&mblist);
+	dim = length(mblist);
+	mb = (DP *)MALLOC(dim*sizeof(DP));
+	for ( i = 0, t = mblist; i < dim; i++, t = NEXT(t) )
+		mb[dim-i-1] = (DP)BDY(t);
+	nv = mb[0]->nv;
+	ln = ONEN;
+	simp = (DAlg *)MALLOC(dim*sizeof(DAlg));
+	for ( i = 0; i < dim; i++ ) {
+		if ( DP_Print ) { fprintf(asir_out,"."); fflush(asir_out); }
+		m = mb[i];
+		for ( j = i-1; j >= 0; j-- )
+			if ( dp_redble(m,mb[j]) )
+				break;
+		if ( j >= 0 ) {
+			dp_subd(m,mb[j],&d);
+			if ( simp[j] ) {
+				muld(CO,d,simp[j]->nm,&u);
+				dp_true_nf(ind,u,ps,1,&nm,&dn);
+				mulq(simp[j]->dn,dn,&dn1);
+				MKDAlg(nm,dn1,simp[i]);
+			} else
+				simp[i] = 0;
+		} else {
+			dp_true_nf(ind,f,ps,1,&nm,&dn);
+			MKDAlg(nm,dn,simp[i]);
+		}
+		if ( simp[i] ) {
+			gcdn(NM(simp[i]->dn),ln,&gn); divsn(ln,gn,&qn);
+			muln(NM(simp[i]->dn),qn,&ln);
+		}
+	}
+	NTOQ(ln,1,dn);
+	MKMAT(mobj,dim,dim+1);
+	mat = (Q **)BDY(mobj);
+	mat[0][dim] = dn;
+	for ( j = 0; j < dim; j++ ) {
+		if ( simp[j] ) {
+			divq(dn,simp[j]->dn,&mul);
+			for ( i = dim-1, mp = BDY(simp[j]->nm); mp && i >= 0; i-- )
+				if ( dl_equal(nv,BDY(mb[i])->dl,mp->dl) ) {
+					mulq(mul,(Q)mp->c,&mat[i][j]);
+					mp = NEXT(mp);
+				}
+		}
+	}
+	get_eg(&eg0);
+	rank = generic_gauss_elim_hensel_dalg(mobj,mb,&sol,&dnsol,&rinfo,&cinfo);
+	get_eg(&eg1); add_eg(&eg_le,&eg0,&eg1);
+	if ( cinfo[0] == dim ) {
+		/* the input is invertible */
+		solmat = (Q **)BDY(sol);
+		for ( i = dim-1, mp0 = 0; i >= 0; i-- )
+			if ( solmat[i][0] ) {
+				NEXTMP(mp0,mp);
+				mp->c = (P)solmat[i][0];
+				mp->dl = BDY(mb[i])->dl;
+			}
+		NEXT(mp) = 0; MKDP(nv,mp0,*inv);
+		return 0;
+	} else {
+		/* the input is not invertible */
+		nparam = sol->col;
+		solmat = (Q **)BDY(sol);
+		nd0 = 0;
+		for ( k = 0; k < nparam; k++ ) {
+			/* construct a new basis element */
+			m = mb[cinfo[k]];
+			mp0 = 0;
+			NEXTMP(mp0,mp);
+			chsgnq(dnsol,&dn1); mp->c = (P)dn1;
+			mp->dl = BDY(m)->dl;
+			/* skip the last parameter */
+			for ( l = rank-2; l >= 0; l-- ) {
+				if ( solmat[l][k] ) {
+					NEXTMP(mp0,mp);
+					mp->c = (P)solmat[l][k];
+					mp->dl = BDY(mb[rinfo[l]])->dl;
+				}
+			}
+			NEXT(mp) = 0; MKDP(nv,mp0,u);
 			NEXTNODE(nd0,nd);
 			BDY(nd) = (pointer)u;
 			NEXT(nd) = 0;
