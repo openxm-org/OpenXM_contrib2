@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.7 2002/02/08 08:28:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pdiv.c,v 1.8 2004/06/30 04:29:38 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -131,6 +131,10 @@ P *rp;
 	asir_assert(ARG0(arg),O_P,"prem");
 	asir_assert(ARG1(arg),O_P,"prem");
 	dnd = (P)ARG0(arg); dvr = (P)ARG1(arg);
+	if ( !dvr ) error("prem : division by 0");
+	if ( !dnd ) {
+		*rp = 0; return;
+	}
 	if ( argc(arg) == 3 ) {
 		v = VR((P)ARG2(arg));
 		change_mvar(CO,dnd,v,&dnd1); change_mvar(CO,dvr,v,&dvr1);

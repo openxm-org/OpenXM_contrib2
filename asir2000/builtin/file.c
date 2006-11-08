@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.22 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.23 2006/09/13 02:26:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,6 +76,7 @@ void Pbsave(), Pbload(), Pbload27();
 void Pbsave_compat(), Pbload_compat();
 void Pbsave_cmo(), Pbload_cmo();
 void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
+void Pput_word(), Pget_word();
 void Ppurge_stdin();
 void Pimport();
 
@@ -88,6 +89,8 @@ struct ftab file_tab[] = {
 	{"close_file",Pclose_file,1},
 	{"get_byte",Pget_byte,1},
 	{"put_byte",Pput_byte,2},
+	{"get_word",Pget_word,1},
+	{"put_word",Pput_word,2},
 	{"get_line",Pget_line,-1},
 	{"remove_file",Premove_file,1},
 	{"access",Paccess,1},
@@ -235,6 +238,24 @@ void Pget_byte(NODE arg,Q *rp)
 		error("get_byte : invalid argument");
 }
 
+void Pget_word(NODE arg,Q *rp)
+{
+	int i,c;
+	FILE *fp;
+
+	asir_assert(ARG0(arg),O_N,"get_word");
+	i = QTOS((Q)ARG0(arg));
+	if ( fp = file_ptrs[i] ) {
+		if ( feof(fp) ) {
+			error("get_word : end of file");
+			return;
+		}
+		read_int(fp,&c);
+		STOQ(c,*rp);
+	} else
+		error("get_word : invalid argument");
+}
+
 void Pput_byte(NODE arg,Obj *rp)
 {
 	int i,j,c;
@@ -258,6 +279,24 @@ void Pput_byte(NODE arg,Obj *rp)
 		for ( j = 0; j < tb->next; j++ )
 			fputs(tb->body[j],fp);
 	}
+	*rp = obj;
+}
+
+void Pput_word(NODE arg,Obj *rp)
+{
+	int i,c;
+	FILE *fp;
+	Obj obj;
+
+	asir_assert(ARG0(arg),O_N,"put_word");
+	asir_assert(ARG1(arg),O_N,"put_word");
+	i = QTOS((Q)ARG0(arg));
+	if ( !(fp = file_ptrs[i]) )
+		error("put_word : invalid argument");
+
+	obj = (Q)ARG1(arg);
+	c = QTOS((Q)obj);
+	write_int(fp,&c);
 	*rp = obj;
 }
 
