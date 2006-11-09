@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.19 2005/12/21 23:18:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.20 2006/11/09 03:41:47 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -223,16 +223,15 @@ int memory_plot(NODE arg,LIST *bytes)
 
 int plotover(NODE arg)
 {
-	int index, org_color;
+	int index, color;
 	P formula;
 	struct canvas *can;
-	struct canvas fakecan;
 	VL vl,vl0;
 
 	index = QTOS((Q)ARG0(arg));
 	formula = (P)ARG1(arg);
 	can = canvas[index];
-	org_color = can->color;
+	color = can->color;
 	if ( !can->window )
 		return -1;
 	get_vars_recursive((Obj)formula,&vl);
@@ -248,14 +247,17 @@ int plotover(NODE arg)
 	set_drawcolor(can->color);
 #endif
 	current_can = can;
-	fakecan = *can; fakecan.formula = formula;
+	can->formula = formula;
 	if ( can->mode == MODE_PLOT ) {
-		plotcalc(&fakecan);
-		plot_print(display,&fakecan);
+		plotcalc(can);
+		plot_print(display,can);
 	} else
-		ifplotmain(&fakecan);
-	copy_to_canvas(&fakecan);
-	can->color = org_color;
+		ifplotmain(can);
+	copy_to_canvas(can);
+	can->color = color;
+#if !defined(VISUAL)
+	set_drawcolor(can->color);
+#endif
 	return index;
 }
 
@@ -268,23 +270,25 @@ int drawcircle(NODE arg)
 	Q ret;
 	LIST xyr;
 	Obj x,y,r;
-	int wx,wy,wr;
+	int wx,wy,wr,c;
 	struct canvas *can;
-	struct canvas fakecan;
 
 	index = QTOS((Q)ARG0(arg));
 	xyr = (LIST)ARG1(arg); 
 	x = (Obj)ARG0(BDY(xyr)); y = (Obj)ARG1(BDY(xyr)); r = (Obj)ARG2(BDY(xyr));
+	c = QTOS((Q)ARG2(arg));
 	can = canvas[index];
 	if ( !can->window )
 		return -1;
 	else {
 		current_can = can;
+		set_drawcolor(c);
 		wx = (ToReal(x)-can->xmin)*can->width/(can->xmax-can->xmin);
 		wy = (can->ymax-ToReal(y))*can->height/(can->ymax-can->ymin);
 		wr = ToReal(r);
-		XFillArc(display,can->pix,colorGC,wx-wr/2,wy-wr/2,wr,wr,0,360*64);
+		XFillArc(display,can->pix,cdrawGC,wx-wr/2,wy-wr/2,wr,wr,0,360*64);
 		copy_to_canvas(can);
+		set_drawcolor(can->color);
 		return index;
 	}
 #endif
@@ -341,6 +345,9 @@ int draw_obj(NODE arg)
 			set_lasterror("draw_obj : invalid request");
 			return -1;
 	}
+#if !defined(VISUAL)
+	set_drawcolor(can->color);
+#endif
 	return 0;
 }
 
@@ -374,6 +381,9 @@ int draw_string(NODE arg)
 	x = (int)ToReal((Q)ARG0(pos));
 	y = (int)ToReal((Q)ARG1(pos));
 	draw_character_string(display,can,x,y,str,color);
+#if !defined(VISUAL)
+	set_drawcolor(can->color);
+#endif
 	return 0;
 }
 

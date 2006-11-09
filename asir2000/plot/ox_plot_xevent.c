@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.25 2005/05/18 03:27:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.26 2005/07/03 13:11:28 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1175,7 +1175,7 @@ static void output_to_ps_printer(w,fbutton,call)
 /* test sequence
    ox_launch(0,"ox_plot");
    ifplot(x^2-y^3);
-   drawcircle(0,0,100,0,0);
+   drawcircle(0,0,100,0xff000,0);
    */
 static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
                                     struct xcolorForPS **tableOfxcolorForPS);

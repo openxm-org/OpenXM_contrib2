@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.17 2005/05/18 03:27:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.18 2005/12/21 23:18:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,7 +68,7 @@ struct ftab plot_tab[] = {
 	{"memory_plot",Pmemory_plot,-5},
 	{"polarplot",Ppolarplot,-6},
 	{"plotover",Pplotover,-4},
-	{"drawcircle",Pdrawcircle,5},
+	{"drawcircle",Pdrawcircle,6},
 	{"open_canvas",Popen_canvas,-3},
 	{"clear_canvas",Pclear_canvas,2},
 	{"draw_obj",Pdraw_obj,-4},
@@ -595,7 +595,7 @@ void Pplotover(NODE arg,Q *rp)
 	*rp = s_id;
 }
 
-/* arg = [x,y,r,s_id,index] */
+/* arg = [x,y,r,c,s_id,index] */
 
 void Pdrawcircle(NODE arg,Q *rp)
 {
@@ -609,11 +609,12 @@ void Pdrawcircle(NODE arg,Q *rp)
 	x = (Obj)ARG0(arg);
 	y = (Obj)ARG1(arg);
 	r = (Obj)ARG2(arg);
-	s_id = (Q)ARG3(arg);
-	index = (Q)ARG4(arg);
+	c = (Obj)ARG3(arg);
+	s_id = (Q)ARG4(arg);
+	index = (Q)ARG5(arg);
 	MKSTR(fname,"drawcircle");
 	n = mknode(3,x,y,r); MKLIST(pos,n);
-	arg = mknode(4,s_id,fname,index,pos);
+	arg = mknode(5,s_id,fname,index,pos,c);
 	Pox_rpc(arg,&t);
 	*rp = s_id;
 }
