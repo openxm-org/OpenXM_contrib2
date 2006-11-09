@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.18 2005/08/04 04:34:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.19 2005/12/21 23:18:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -223,7 +223,7 @@ int memory_plot(NODE arg,LIST *bytes)
 
 int plotover(NODE arg)
 {
-	int index;
+	int index, org_color;
 	P formula;
 	struct canvas *can;
 	struct canvas fakecan;
@@ -232,6 +232,7 @@ int plotover(NODE arg)
 	index = QTOS((Q)ARG0(arg));
 	formula = (P)ARG1(arg);
 	can = canvas[index];
+	org_color = can->color;
 	if ( !can->window )
 		return -1;
 	get_vars_recursive((Obj)formula,&vl);
@@ -254,6 +255,7 @@ int plotover(NODE arg)
 	} else
 		ifplotmain(&fakecan);
 	copy_to_canvas(&fakecan);
+	can->color = org_color;
 	return index;
 }
 
