@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.18 2005/12/21 23:18:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.19 2006/11/09 15:54:35 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -600,7 +600,7 @@ void Pplotover(NODE arg,Q *rp)
 void Pdrawcircle(NODE arg,Q *rp)
 {
 	Q s_id,index;
-	Obj x,y,r;
+	Obj x,y,r,c;
 	STRING fname;
 	NODE n;
 	LIST pos;
