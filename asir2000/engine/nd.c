@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.145 2006/08/26 05:38:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.146 2006/11/27 07:31:25 noro Exp $ */
 
 #include "nd.h"
 
@@ -1733,6 +1733,17 @@ int do_diagonalize_trace(int sugar,int m)
 static struct oEGT eg_invdalg;
 struct oEGT eg_le;
 
+void nd_subst_vector(VL vl,P p,NODE subst,P *r)
+{
+	NODE tn;
+	P p1;
+
+	for ( tn = subst; tn; tn = NEXT(NEXT(tn)) ) {
+		substp(vl,p,BDY(tn),BDY(NEXT(tn)),&p1); p = p1;
+	}
+	*r = p;
+}
+
 NODE nd_gb_trace(int m,int ishomo)
 {
 	int i,nh,sugar,stat;
@@ -1742,6 +1753,7 @@ NODE nd_gb_trace(int m,int ishomo)
 	ND h,nf,nfq,s,head;
 	NDV nfv,nfqv;
 	Q q,den,num;
+	P hc;
 	union oNDC dn;
 	struct oEGT eg_monic,egm0,egm1;
 	int diag_count = 0;
@@ -1803,7 +1815,11 @@ again:
 			}
 			if ( nfq ) {
 				/* m|HC(nfq) => failure */
-				if ( !rem(NM(HCQ(nfq)),m) ) return 0;
+				if ( nd_vc ) {
+					nd_subst_vector(nd_vc,HCP(nfq),nd_subst,&hc); q = (Q)hc;
+				} else
+					q = HCQ(nfq);
+				if ( !rem(NM(q),m) ) return 0;
 
 				if ( DP_Print ) { printf("+"); fflush(stdout); }
 				if ( nd_nalg ) {
@@ -3710,9 +3726,8 @@ void ndv_mod(int mod,NDV p)
 	NMV t,d;
 	int r,s,u;
 	int i,len,dlen;
+	P cp;
 	Q c;
-	P cp,cp1;
-	NODE tn;
 	Obj gfs;
 
 	if ( !p ) return;
@@ -3730,9 +3745,7 @@ void ndv_mod(int mod,NDV p)
 	else
 		for ( t = d = BDY(p), i = 0; i < len; i++, NMV_ADV(t) ) {
 			if ( nd_vc ) {
-				for ( tn = nd_subst, cp = CP(t); tn; tn = NEXT(NEXT(tn)) ) {
-					substp(nd_vc,cp,BDY(tn),BDY(NEXT(tn)),&cp1); cp = cp1;
-				}
+				nd_subst_vector(nd_vc,CP(t),nd_subst,&cp);
 				c = (Q)cp;
 			} else
 				c = CQ(t);
