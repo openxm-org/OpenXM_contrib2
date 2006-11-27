@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.14 2006/04/17 04:35:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.15 2006/06/05 08:11:10 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -48,6 +48,7 @@ typedef union oNDC {
 	int m;
 	Q z;
 	P p;
+	R r;
 	DAlg a;
 } *NDC;
 
@@ -218,7 +219,8 @@ NODE append_one(NODE,int);
 /* manipulation of coefficients */
 void nd_removecont(int mod,ND p);
 void nd_removecont2(ND p1,ND p2);
-void removecont_array(Q *c,int n);
+void removecont_array(P *c,int n);
+void removecont_array_q(Q *c,int n);
 
 /* GeoBucket functions */
 ND normalize_pbucket(int mod,PGeoBucket g);
@@ -275,7 +277,7 @@ INLINE int ndl_hash_value(UINT *d);
 /* normal forms */
 INLINE int ndl_find_reducer(UINT *g);
 int nd_sp(int mod,int trace,ND_pairs p,ND *nf);
-int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *nf);
+int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *nf);
 int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *nf);
 
 /* finalizers */
@@ -311,7 +313,7 @@ ND nd_dup(ND p);
 /* ND functions */
 int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand);
 void nd_mul_c(int mod,ND p,int mul);
-void nd_mul_c_q(ND p,Q mul);
+void nd_mul_c_q(ND p,P mul);
 void nd_mul_c_p(VL vl,ND p,P mul);
 ND nd_remove_head(ND p);
 ND nd_separate_head(ND p,ND *head);

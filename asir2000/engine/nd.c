@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.144 2006/08/26 03:09:55 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.145 2006/08/26 05:38:06 noro Exp $ */
 
 #include "nd.h"
 
@@ -9,6 +9,8 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 
+static NODE nd_subst;
+static VL nd_vc;
 static int nd_ntrans;
 static int nd_nalg;
 #if 0
@@ -976,13 +978,13 @@ ND nd_add(int mod,ND p1,ND p2)
 int nm_destructive_add_q(NM *m1,NM *m2,NM *mr0,NM *mr)
 {
 	NM s;
-	Q t;
+	P t;
 	int can;
 
-	addq(CQ(*m1),CQ(*m2),&t);
+	addp(nd_vc,CP(*m1),CP(*m2),&t);
 	s = *m1; *m1 = NEXT(*m1);
 	if ( t ) {
-		can = 1; NEXTNM2(*mr0,*mr,s); CQ(*mr) = (t);
+		can = 1; NEXTNM2(*mr0,*mr,s); CP(*mr) = (t);
 	} else {
 		can = 2; FREENM(s);
 	}
@@ -995,7 +997,7 @@ ND nd_add_q(ND p1,ND p2)
 	int n,c,can;
 	ND r;
 	NM m1,m2,mr0,mr,s;
-	Q t;
+	P t;
 
 	if ( !p1 ) return p2;
 	else if ( !p2 ) return p1;
@@ -1008,10 +1010,10 @@ ND nd_add_q(ND p1,ND p2)
 #if defined(__x86_64__)
 					can += nm_destructive_add_q(&m1,&m2,&mr0,&mr);
 #else
-					addq(CQ(m1),CQ(m2),&t);
+					addp(nd_vc,CP(m1),CP(m2),&t);
 					s = m1; m1 = NEXT(m1);
 					if ( t ) {
-						can++; NEXTNM2(mr0,mr,s); CQ(mr) = (t);
+						can++; NEXTNM2(mr0,mr,s); CP(mr) = (t);
 					} else {
 						can += 2; FREENM(s);
 					}
@@ -1088,10 +1090,41 @@ ND nd_add_sf(ND p1,ND p2)
 	}
 }
 
-/* ret=1 : success, ret=0 : overflow */
-int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *rp)
+ND nd_reduce2(int mod,ND d,ND g,NDV p,NM mul,NDC dn)
 {
-	ND d;
+	int c,c1,c2;
+	Q cg,cred,gcd,tq;
+	P cgp,credp,gcdp;
+	Obj tr,tr1;
+
+	if ( mod == -1 )
+		CM(mul) = _mulsf(_invsf(HCM(p)),_chsgnsf(HCM(g)));
+	else if ( mod ) {
+		c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
+		DMAR(c1,c2,0,mod,c); CM(mul) = c;
+	} else if ( nd_vc ) {
+		ezgcdpz(nd_vc,HCP(g),HCP(p),&gcdp);
+		divsp(nd_vc,HCP(g),gcdp,&cgp); divsp(nd_vc,HCP(p),gcdp,&credp);
+		chsgnp(cgp,&CP(mul));
+		nd_mul_c_q(d,credp); nd_mul_c_q(g,credp);
+		if ( dn ) {
+			mulr(nd_vc,(Obj)dn->r,(Obj)credp,&tr);
+			reductr(nd_vc,tr,&tr1); dn->r = (R)tr1;
+		}
+	} else {
+		igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
+		chsgnq(cg,&CQ(mul));
+		nd_mul_c_q(d,(P)cred); nd_mul_c_q(g,(P)cred);
+		if ( dn ) {
+			mulq(dn->z,cred,&tq); dn->z = tq;
+		}
+	}
+	return nd_add(mod,g,ndv_mul_nm(mod,mul,p));
+}
+
+/* ret=1 : success, ret=0 : overflow */
+int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *rp)
+{
 	NM m,mrd,tail;
 	NM mul;
 	int n,sugar,psugar,sugar0,stat,index;
@@ -1100,23 +1133,29 @@ int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *rp)
 	NDV p,red;
 	Q cg,cred,gcd,tq,qq;
 	double hmag;
+	P tp,tp1;
+	Obj tr,tr1;
 
 	if ( dn ) {
 		if ( mod )
 			dn->m = 1;
+		else if ( nd_vc )
+			dn->r = (R)ONE;
 		else
 			dn->z = ONE;
 	}
 	if ( !g ) {
-		*rp = 0;
+		*rp = d;
 		return 1;
 	}
-	if ( !mod ) hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+	if ( !mod ) hmag = ((double)p_mag(HCP(g)))*nd_scale;
 
 	sugar0 = sugar = SG(g);
 	n = NV(g);
 	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
-	for ( d = 0; g; ) {
+	if ( d )
+		for ( tail = BDY(d); NEXT(tail); tail = NEXT(tail) );
+	for ( ; g; ) {
 		index = ndl_find_reducer(HDL(g));
 		if ( index >= 0 ) {
 			h = nd_psh[index];
@@ -1125,32 +1164,23 @@ int nd_nf(int mod,ND g,NDV *ps,int full,NDC dn,ND *rp)
 				nd_free(g); nd_free(d);
 				return 0;
 			}
-			if ( nd_demand )
-				p = ndv_load(index);
-			else
-				p = ps[index];
-			if ( mod == -1 )
-				CM(mul) = _mulsf(_invsf(HCM(p)),_chsgnsf(HCM(g)));
-			else if ( mod ) {
-				c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
-				DMAR(c1,c2,0,mod,c); CM(mul) = c;
-			} else {
-				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
-				chsgnq(cg,&CQ(mul));
-				nd_mul_c_q(d,cred); nd_mul_c_q(g,cred);
-				if ( dn ) {
-					mulq(dn->z,cred,&tq); dn->z = tq;
-				}
-			}
-			g = nd_add(mod,g,ndv_mul_nm(mod,mul,p));
+			p = nd_demand ? ndv_load(index) : ps[index];
+			g = nd_reduce2(mod,d,g,p,mul,dn);
 			sugar = MAX(sugar,SG(p)+TD(DL(mul)));
-			if ( !mod && hmag && g && ((double)(p_mag((P)HCQ(g))) > hmag) ) {
-				tq = HCQ(g);
+			if ( !mod && g && ((double)(p_mag(HCP(g))) > hmag) ) {
+				tp = HCP(g);
 				nd_removecont2(d,g);
 				if ( dn ) {
-					divq(tq,HCQ(g),&qq); divq(dn->z,qq,&tq); dn->z = tq;
+					if ( nd_vc ) {
+						divsp(nd_vc,tp,HCP(g),&tp1);
+						divr(nd_vc,(Obj)dn->r,(Obj)tp1,&tr);
+						reductr(nd_vc,(Obj)tr,&tr1); dn->r = (R)tr1;
+					} else {
+						divq((Q)tp,HCQ(g),&qq);
+						divq(dn->z,qq,&tq); dn->z = tq;
+					}
 				}
-				hmag = ((double)p_mag((P)HCQ(g)))*nd_scale;
+				hmag = ((double)p_mag(HCP(g)))*nd_scale;
 			}
 		} else if ( !full ) {
 			*rp = g;
@@ -1231,7 +1261,7 @@ int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *rp)
 			} else {
 				igcd_cofactor(HCQ(g),HCQ(p),&gcd,&cg,&cred);
 				chsgnq(cg,&CQ(mul));
-				nd_mul_c_q(d,cred);
+				nd_mul_c_q(d,(P)cred);
 				mulq_pbucket(bucket,cred);
 				g = bucket->body[hindex];
 				gmag = (double)p_mag((P)HCQ(g));
@@ -1297,7 +1327,7 @@ again:
 		else
 			r = (NDV)BDY(t);
 		d = ndvtond(0,r);
-		stat = nd_nf(0,d,nd_ps,0,0,&nf);
+		stat = nd_nf(0,0,d,nd_ps,0,0,&nf);
 		if ( !stat ) {
 			nd_reconstruct(0,0);
 			goto again;
@@ -1404,7 +1434,7 @@ void mulq_pbucket(PGeoBucket g,Q c)
 	int k;
 
 	for ( k = 0; k <= g->m; k++ )
-		nd_mul_c_q(g->body[k],c);
+		nd_mul_c_q(g->body[k],(P)c);
 }
 
 NM remove_head_pbucket_symbolic(PGeoBucket g)
@@ -1546,7 +1576,7 @@ int do_diagonalize(int sugar,int m)
 	ND h,nf,s,head;
 	NDV nfv;
 	Q q,num,den;
-	union oNDC dn;
+	P nm,nmp,dn,mnp,dnp;
 
 	for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
 		if ( nd_demand )
@@ -1555,17 +1585,8 @@ int do_diagonalize(int sugar,int m)
 			nfv = nd_ps[i];
 		s = ndvtond(m,nfv);
 		s = nd_separate_head(s,&head);
-		stat = nd_nf(m,s,nd_ps,1,&dn,&nf);
+		stat = nd_nf(m,head,s,nd_ps,1,0,&nf);
 		if ( !stat ) return 0;
-		if ( !m ) { 
-			NTOQ(NM(dn.z),SGN(dn.z),num);
-			mulq(HCQ(head),num,&q); HCQ(head) = q;
-			if ( DN(dn.z) ) {
-				NTOQ(DN(dn.z),1,den);
-				nd_mul_c_q(nf,den);
-			}
-		}
-		nf = nd_add(m,head,nf);
 		ndv_free(nfv);
 		nd_removecont(m,nf);
 		nfv = ndtondv(m,nf);
@@ -1623,9 +1644,9 @@ again:
 			goto again;
 		}
 #if USE_GEOBUCKET
-		stat = m?nd_nf_pbucket(m,h,nd_ps,!Top,&nf):nd_nf(m,h,nd_ps,!Top,0,&nf);
+		stat = m?nd_nf_pbucket(m,h,nd_ps,!Top,&nf):nd_nf(m,0,h,nd_ps,!Top,0,&nf);
 #else
-		stat = nd_nf(m,h,nd_ps,!Top,0,&nf);
+		stat = nd_nf(m,0,h,nd_ps,!Top,0,&nf);
 #endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
@@ -1674,7 +1695,6 @@ int do_diagonalize_trace(int sugar,int m)
 	ND h,nf,nfq,s,head;
 	NDV nfv,nfqv;
 	Q q,den,num;
-	union oNDC dn;
 
 	for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
 		/* for nd_ps */
@@ -1694,15 +1714,8 @@ int do_diagonalize_trace(int sugar,int m)
 			nfv = nd_ps_trace[i];
 		s = ndvtond(0,nfv);
 		s = nd_separate_head(s,&head);
-		stat = nd_nf(0,s,nd_ps_trace,1,&dn,&nf);
+		stat = nd_nf(0,head,s,nd_ps_trace,1,0,&nf);
 		if ( !stat ) return 0;
-		NTOQ(NM(dn.z),SGN(dn.z),num);
-		mulq(HCQ(head),num,&q); HCQ(head) = q;
-		if ( DN(dn.z) ) {
-			NTOQ(DN(dn.z),1,den);
-			nd_mul_c_q(nf,den);
-		}
-		nf = nd_add(0,head,nf);
 		ndv_free(nfv);
 		nd_removecont(0,nf);
 		nfv = ndtondv(0,nf);
@@ -1769,7 +1782,7 @@ again:
 #if USE_GEOBUCKET
 		stat = nd_nf_pbucket(m,h,nd_ps,!Top,&nf);
 #else
-		stat = nd_nf(m,h,nd_ps,!Top,0,&nf);
+		stat = nd_nf(m,0,h,nd_ps,!Top,0,&nf);
 #endif
 		if ( !stat ) {
 			NEXT(l) = d; d = l;
@@ -1782,7 +1795,7 @@ again:
 			} else
 				nfq = 0;
 			if ( !nfq ) {
-				if ( !nd_sp(0,1,l,&h) || !nd_nf(0,h,nd_ps_trace,!Top,0,&nfq) ) {
+				if ( !nd_sp(0,1,l,&h) || !nd_nf(0,0,h,nd_ps_trace,!Top,0,&nfq) ) {
 					NEXT(l) = d; d = l;
 					d = nd_reconstruct(1,d);
 					goto again;
@@ -1869,20 +1882,11 @@ NODE ndv_reduceall(int m,NODE f)
 	for ( i = 0; i < n; ) {
 		g = ndvtond(m,nd_ps[i]);
 		g = nd_separate_head(g,&head);
-		stat = nd_nf(m,g,nd_ps,1,&dn,&nf);
+		stat = nd_nf(m,head,g,nd_ps,1,0,&nf);
 		if ( !stat )
 			nd_reconstruct(0,0);
 		else {
 			if ( DP_Print ) { printf("."); fflush(stdout); }
-			if ( !m ) { 
-				NTOQ(NM(dn.z),SGN(dn.z),num);
-				mulq(HCQ(head),num,&q); HCQ(head) = q;
-				if ( DN(dn.z) ) {
-					NTOQ(DN(dn.z),1,den);
-					nd_mul_c_q(nf,den);
-				}
-			}
-			nf = nd_add(m,head,nf);
 			ndv_free(nd_ps[i]);
 			nd_removecont(m,nf);
 			nd_ps[i] = ndtondv(m,nf); nd_free(nf);
@@ -2234,6 +2238,11 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort)
 	nd_psh = (RHist *)MALLOC(nd_pslen*sizeof(RHist));
 	nd_bound = (UINT **)MALLOC(nd_pslen*sizeof(UINT *));
 
+	if ( trace && nd_vc )
+		makesubst(nd_vc,&nd_subst);
+	else
+		nd_subst = 0;
+
 	if ( !nd_red )
 		nd_red = (RHist *)MALLOC(REDTAB_LEN*sizeof(RHist));
 	for ( i = 0; i < REDTAB_LEN; i++ ) nd_red[i] = 0;
@@ -2389,7 +2398,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 #if 0
 	ndv_alloc = 0;
 #endif
-	get_vars((Obj)f,&fv); pltovl(v,&vv);
+	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 	switch ( ord->id ) {
 		case 1:
@@ -2464,7 +2473,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
 	NumberField nf;
 	struct order_spec *ord1;
 
-	get_vars((Obj)f,&fv); pltovl(v,&vv);
+	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 	switch ( ord->id ) {
 		case 1:
@@ -2550,7 +2559,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 	struct order_spec *ord1;
 	struct oEGT eg_check,eg0,eg1;
 
-	get_vars((Obj)f,&fv); pltovl(v,&vv);
+	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 	switch ( ord->id ) {
 		case 1:
@@ -2800,7 +2809,7 @@ void nd_removecont(int mod,ND p)
 		v.len = n;
 		v.body = (pointer *)w;
 		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ ) w[i] = CQ(m);
-		removecont_array(w,n);
+		removecont_array((P *)w,n);
 		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
 	}
 }
@@ -2827,16 +2836,18 @@ void nd_removecont2(ND p1,ND p2)
 	v.body = (pointer *)w;
 	for ( m = BDY(p1), i = 0; i < n1; m = NEXT(m), i++ ) w[i] = CQ(m);
 	for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = CQ(m);
-	removecont_array(w,n);
+	removecont_array((P *)w,n);
 	for ( m = BDY(p1), i = 0; i < n1; m = NEXT(m), i++ ) CQ(m) = w[i];	
 	for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
 }
 
 void ndv_removecont(int mod,NDV p)
 {
-	int i,len;
-	Q *w;
+	int i,len,all_p;
+	Q *c;
+	P *w;
 	Q dvr,t;
+	P g,cont,tp;
 	NMV m;
 
 	if ( mod == -1 )
@@ -2845,12 +2856,24 @@ void ndv_removecont(int mod,NDV p)
 		ndv_mul_c(mod,p,invm(HCM(p),mod));
 	else {
 		len = p->len;
-		w = (Q *)ALLOCA(len*sizeof(Q));
-		for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ ) w[i] = CQ(m);
-		sortbynm(w,len);
-		qltozl(w,len,&dvr);
-		for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ ) {
-			divq(CQ(m),dvr,&t); CQ(m) = t;
+		w = (P *)ALLOCA(len*sizeof(P));
+		c = (Q *)ALLOCA(len*sizeof(Q));
+		for ( m = BDY(p), all_p = 1, i = 0; i < len; NMV_ADV(m), i++ ) {
+			ptozp(CP(m),1,&c[i],&w[i]);
+			all_p = all_p && !NUM(w[i]);
+		}
+		if ( all_p ) {
+			qltozl(c,len,&dvr); heu_nezgcdnpz(nd_vc,w,len,&g);
+			mulp(nd_vc,(P)dvr,g,&cont);
+			for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ ) {
+				divsp(nd_vc,CP(m),cont,&tp); CP(m) = tp;
+			}
+		} else {
+			sortbynm((Q *)c,len);
+			qltozl((Q *)c,len,&dvr);
+			for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ ) {
+				divsp(nd_vc,CP(m),(P)dvr,&tp); CP(m) = tp;
+			}
 		}
 	}
 }
@@ -2901,7 +2924,32 @@ void ndv_dehomogenize(NDV p,struct order_spec *ord)
 	NV(p)--;
 }
 
-void removecont_array(Q *c,int n)
+void removecont_array(P *p,int n)
+{
+	int all_p,all_q,i;
+	Q *c;
+	P *w;
+	P t,s;
+
+	for ( all_q = 1, i = 0; i < n; i++ )
+		all_q = all_q && NUM(p[i]);
+	if ( all_q ) {
+		removecont_array_q((Q *)p,n);
+	} else {
+		c = (Q *)ALLOCA(n*sizeof(Q));
+		w = (P *)ALLOCA(n*sizeof(P));
+		for ( i = 0; i < n; i++ ) {
+			ptozp(p[i],1,&c[i],&w[i]);
+		}
+		removecont_array_q(c,n);
+		heu_nezgcdnpz(nd_vc,w,n,&t);
+		for ( i = 0; i < n; i++ ) {
+			divsp(nd_vc,w[i],t,&s); mulp(nd_vc,s,(P)c[i],&p[i]);
+		}
+	}
+}
+
+void removecont_array_q(Q *c,int n)
 {
 	struct oVECT v;
 	Q d0,d1,a,u,u1,gcd;
@@ -2952,15 +3000,15 @@ void nd_mul_c(int mod,ND p,int mul)
 		}
 }
 
-void nd_mul_c_q(ND p,Q mul)
+void nd_mul_c_q(ND p,P mul)
 {
 	NM m;
-	Q c;
+	P c;
 
 	if ( !p ) return;
 	if ( UNIQ(mul) ) return;
 	for ( m = BDY(p); m; m = NEXT(m) ) {
-		mulq(CQ(m),mul,&c); CQ(m) = c;
+		mulp(nd_vc,CP(m),mul,&c); CP(m) = c;
 	}
 }
 
@@ -3274,7 +3322,7 @@ int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
 	t1 = ndv_mul_nm(mod,m,p1);
 	if ( mod == -1 ) CM(m) = _chsgnsf(HCM(p1));
 	else if ( mod ) CM(m) = mod-HCM(p1); 
-	else chsgnq(HCQ(p1),&CQ(m));
+	else chsgnp(HCP(p1),&CP(m));
 	ndl_sub(lcm,HDL(p2),DL(m));
 	if ( ndl_check_bound2(p->i2,DL(m)) ) {
 		nd_free(t1);
@@ -3484,7 +3532,7 @@ ND ndv_mul_nm(int mod,NM m0,NDV p)
 	NMV m;
 	UINT *d,*dt,*dm;
 	int c,n,td,i,c1,c2,len;
-	Q q;
+	P q;
 	ND r;
 
 	if ( !p ) return 0;
@@ -3516,10 +3564,10 @@ ND ndv_mul_nm(int mod,NM m0,NDV p)
 				ndl_add(DL(m),d,DL(mr));
 			}
 		} else {
-			q = CQ(m0);
+			q = CP(m0);
 			for ( i = 0; i < len; i++, NMV_ADV(m) ) {
 				NEXTNM(mr0,mr);
-				mulq(CQ(m),q,&CQ(mr));
+				mulp(nd_vc,CP(m),q,&CP(mr));
 				ndl_add(DL(m),d,DL(mr));
 			}
 		}
@@ -3662,6 +3710,9 @@ void ndv_mod(int mod,NDV p)
 	NMV t,d;
 	int r,s,u;
 	int i,len,dlen;
+	Q c;
+	P cp,cp1;
+	NODE tn;
 	Obj gfs;
 
 	if ( !p ) return;
@@ -3678,12 +3729,19 @@ void ndv_mod(int mod,NDV p)
 		}
 	else
 		for ( t = d = BDY(p), i = 0; i < len; i++, NMV_ADV(t) ) {
-			r = rem(NM(CQ(t)),mod);
+			if ( nd_vc ) {
+				for ( tn = nd_subst, cp = CP(t); tn; tn = NEXT(NEXT(tn)) ) {
+					substp(nd_vc,cp,BDY(tn),BDY(NEXT(tn)),&cp1); cp = cp1;
+				}
+				c = (Q)cp;
+			} else
+				c = CQ(t);
+			r = rem(NM(c),mod);
 			if ( r ) {
-				if ( SGN(CQ(t)) < 0 )
+				if ( SGN(c) < 0 )
 					r = mod-r;
-				if ( DN(CQ(t)) ) {
-					s = rem(DN(CQ(t)),mod);
+				if ( DN(c) ) {
+					s = rem(DN(c),mod);
 					if ( !s )
 						error("ndv_mod : division by 0");
 					s = invm(s,mod);
@@ -4043,6 +4101,8 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	VL vv,tv;
 	int stat,nvar,max,e;
 	union oNDC dn;
+	Q cont;
+	P pp;
 
 	if ( !f ) {
 		*rp = 0;
@@ -4068,7 +4128,8 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	/* conversion to ndv */
 	for ( in0 = 0, t = BDY(g); t; t = NEXT(t) ) {
 		NEXTNODE(in0,in);
-		BDY(in) = (pointer)ptondv(CO,vv,(P)BDY(t));
+		ptozp((P)BDY(t),1,&cont,&pp);
+		BDY(in) = (pointer)ptondv(CO,vv,pp);
 		if ( m ) ndv_mod(m,(NDV)BDY(in));
 	}
 	NEXTNODE(in0,in);
@@ -4082,7 +4143,7 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	nd_scale=2;
 	while ( 1 ) {
 		nd = (pointer)ndvtond(m,nd_ps[nd_psn]);
-		stat = nd_nf(m,nd,nd_ps,1,0,&nf);
+		stat = nd_nf(m,0,nd,nd_ps,1,0,&nf);
 		if ( !stat ) {
 			nd_psn++;
 			nd_reconstruct(0,0);
@@ -4275,14 +4336,14 @@ int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 			if ( j == col ) break;
 			if ( hmag && ((double)p_mag((P)svect[j]) > hmag) ) {
 				nz = compress_array(svect,cvect,col);
-				removecont_array(cvect,nz);
+				removecont_array((P *)cvect,nz);
 				expand_array(svect,cvect,nz);
 				hmag = ((double)p_mag((P)svect[j]))*nd_scale;
 			}
 		}
 	}
 	nz = compress_array(svect,cvect,col);
-	removecont_array(cvect,nz);
+	removecont_array((P *)cvect,nz);
 	expand_array(svect,cvect,nz);
 	if ( DP_Print ) { 
 		fprintf(asir_out,"-"); fflush(asir_out);
