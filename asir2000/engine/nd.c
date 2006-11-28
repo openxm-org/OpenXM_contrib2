@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.146 2006/11/27 07:31:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.147 2006/11/27 07:54:41 noro Exp $ */
 
 #include "nd.h"
 
@@ -3314,10 +3314,12 @@ ND nd_copy(ND p)
 
 int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
 {
-	NM m;
+	NM m1,m2;
 	NDV p1,p2;
 	ND t1,t2;
 	UINT *lcm;
+	P gp,tp;
+	Q g,t;
 	int td;
 
 	if ( !mod && nd_demand ) {
@@ -3330,23 +3332,29 @@ int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
 		}
 	}
 	lcm = LCM(p);
-	NEWNM(m);
-	CQ(m) = HCQ(p2);
-	ndl_sub(lcm,HDL(p1),DL(m));
-	if ( ndl_check_bound2(p->i1,DL(m)) )
-		return 0;
-	t1 = ndv_mul_nm(mod,m,p1);
-	if ( mod == -1 ) CM(m) = _chsgnsf(HCM(p1));
-	else if ( mod ) CM(m) = mod-HCM(p1); 
-	else chsgnp(HCP(p1),&CP(m));
-	ndl_sub(lcm,HDL(p2),DL(m));
-	if ( ndl_check_bound2(p->i2,DL(m)) ) {
-		nd_free(t1);
-		return 0;
+	NEWNM(m1); ndl_sub(lcm,HDL(p1),DL(m1));
+	if ( ndl_check_bound2(p->i1,DL(m1)) ) {
+		FREENM(m1); return 0;
 	}
-	t2 = ndv_mul_nm(mod,m,p2);
+	NEWNM(m2); ndl_sub(lcm,HDL(p2),DL(m2));
+	if ( ndl_check_bound2(p->i2,DL(m2)) ) {
+		FREENM(m1); FREENM(m2); return 0;
+	}
+
+	if ( mod == -1 ) {
+		CM(m1) = HCM(p2); CM(m2) = _chsgnsf(HCM(p1));
+	} else if ( mod ) {
+		CM(m1) = HCM(p2); CM(m2) = mod-HCM(p1); 
+	} else if ( nd_vc ) {
+		ezgcdpz(nd_vc,HCP(p1),HCP(p2),&gp);
+		divsp(nd_vc,HCP(p2),gp,&CP(m1));
+		divsp(nd_vc,HCP(p1),gp,&tp); chsgnp(tp,&CP(m2));
+	} else {
+		igcd_cofactor(HCQ(p1),HCQ(p2),&g,&t,&CQ(m1)); chsgnq(t,&CQ(m2));
+	}
+	t1 = ndv_mul_nm(mod,m1,p1); t2 = ndv_mul_nm(mod,m2,p2);
 	*rp = nd_add(mod,t1,t2);
-	FREENM(m);
+	FREENM(m1); FREENM(m2);
 	return 1;
 }
 
