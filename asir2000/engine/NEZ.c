@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/NEZ.c,v 1.3 2000/08/22 05:04:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/NEZ.c,v 1.4 2002/12/09 07:24:52 noro Exp $ 
 */
 #include "ca.h"
 
@@ -311,9 +311,9 @@ P p0,*ps,*pr;
 	P *tps;
 	VL nvl1,nvl2,nvl,tvl;
 	V v;
-	int i,j,k,d0,dg,dg0,dmin;
-	VN vn0,vn1,vnt;
-	int nv,flag;
+	int i,j,k,d0,dg,dg0,dmin,z;
+	VN vn1;
+	int nv,flag,max;
 
 	/* set-up */
 	if ( NUM(p0) ) {
@@ -348,24 +348,20 @@ P p0,*ps,*pr;
 
 	mulp(nvl,p0,lg,&lgp0); k = dbound(v,lgp0)+1; cbound(nvl,lgp0,(Q *)&cbd);
 	for ( nv = 0, tvl = nvl; tvl; tvl = NEXT(tvl), nv++ );
-	W_CALLOC(nv,struct oVN,vn0); W_CALLOC(nv,struct oVN,vnt);
 	W_CALLOC(nv,struct oVN,vn1);
 	for ( i = 0, tvl = NEXT(nvl); tvl; tvl = NEXT(tvl), i++ )
-		vn1[i].v = vn0[i].v = tvl->v;
-	if ( !nonzero_const_term(p0) ) {
-		for ( i = 0; i < nv; i++ )
-			vn0[i].n = ((unsigned int)random())%256+1;
-	}
+		vn1[i].v = tvl->v;
 
 	/* main loop */
-	for ( dg = deg(v,tps[0]) + 1; ; next(vn0) )
-		do {
-			for ( i = 0, j = 0; vn0[i].v; i++ ) 
-				if ( vn0[i].n ) vnt[j++].v = (V)i;
-			vnt[j].n = 0;
+	/* finally, 'max' random evaluations will be generated */
+	for ( max = 1, dg = deg(v,tps[0]) + 1; ; max = 2*max )
+		for ( z = 0; z < max; z++ ) {
+			for ( i = 0; vn1[i].v; i++ )
+				vn1[i].n = mt_genrand()%max;
 
 			/* find b s.t. LC(p0)(b), LC(tps[i])(b) != 0 */
-			mulsgn(vn0,vnt,j,vn1); substvp(nvl,p0,vn1,&p00);
+			
+			substvp(nvl,p0,vn1,&p00);
 			flag = (!zerovpchk(nvl,lp0,vn1) && sqfrchk(p00));
 			for ( i = 0; flag && (i < m); i++ )
 				flag &= (!zerovpchk(nvl,LC(tps[i]),vn1));
@@ -398,7 +394,7 @@ P p0,*ps,*pr;
 					}
 				}
 			}
-		} while ( !nextbin(vnt,j) );
+		}
 }
 
 void intersectv(vl1,vl2,vlp)
