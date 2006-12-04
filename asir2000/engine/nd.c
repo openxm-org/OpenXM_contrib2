@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.147 2006/11/27 07:54:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.148 2006/11/28 02:17:54 noro Exp $ */
 
 #include "nd.h"
 
@@ -51,6 +51,8 @@ UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
 int nd_monic(int m,ND *p);
 NDV plain_vect_to_ndv_q(Q *mat,int col,UINT *s0vect);
+
+extern int Denominator,DP_Multiple;
 
 void nd_free_private_storage()
 {
@@ -1685,6 +1687,7 @@ again:
 	else
 		for ( t = g; t; t = NEXT(t) )
 			BDY(t) = (pointer)nd_ps[(int)BDY(t)];
+	if ( !checkonly && DP_Print ) { printf("nd_gb done.\n"); fflush(stdout); }
 	return g;
 }
 
@@ -1864,6 +1867,7 @@ again:
 		print_eg("invdalg",&eg_invdalg);
 		print_eg("le",&eg_le);
 	}
+	if ( DP_Print ) { printf("nd_gb_trace done.\n"); fflush(stdout); }
 	return g;
 }
 
@@ -2411,6 +2415,8 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 	if ( !m && Demand ) nd_demand = 1;
 	else nd_demand = 0;
 
+	if ( DP_Multiple )
+		nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
 #if 0
 	ndv_alloc = 0;
 #endif
@@ -2574,6 +2580,9 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 	NumberField nf;
 	struct order_spec *ord1;
 	struct oEGT eg_check,eg0,eg1;
+
+	if ( DP_Multiple )
+		nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
 
 	get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
 	for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
