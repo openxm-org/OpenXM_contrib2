@@ -323,10 +323,14 @@ void set_debug_handles(int on)
 	}
 }
 
+extern int wfep_mode;
+
 void Init_IO()
 {
 	_setargv();
-	if ( !strcmp(__argv[0],"ox_asir") ) {
+	if ( !strncmp(__argv[0],"ox_asir",strlen("ox_asir")) ) {
+		/* ox_asir or ox_asir_wfep */
+		if ( !strcmp(__argv[0],"ox_asir_wfep") ) wfep_mode = 1;
 		OxAsirMain(__argc,__argv);
 		exit(0);
 	} else if ( !strcmp(__argv[0],"ox_plot") ) 
