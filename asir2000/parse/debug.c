@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.17 2006/02/25 06:33:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.18 2006/02/28 08:36:39 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -850,7 +850,7 @@ void showpos_to_list(LIST *r)
 	VS vs;
 	STRING null,name,fname,kwd;
 	LIST l,b;
-	Q q;
+	USINT us;
 
 	u = 0;
 	if ( PVSS ) {
@@ -866,16 +866,16 @@ void showpos_to_list(LIST *r)
 		for ( n = PVSS; n; n = NEXT(n) ) {
 			vs = (VS)BDY(n);
 			MKSTR(fname,vs->usrf->f.usrf->fname);
-			STOQ(vs->at,q);
+			MKUSINT(us,vs->at);
 			MKSTR(name,vs->usrf->name);
-			t = mknode(3,fname,name,q);
+			t = mknode(3,fname,name,us);
 			MKLIST(l,t);
 			MKNODE(u1,l,u); u = u1;
 		}
 	}
 	/* line number at the toplevel */
-	MKSTR(fname,"toplevel"); STOQ(at_root,q);
-	t = mknode(2,fname,q); MKLIST(l,t); MKNODE(u1,l,u); u = u1;
+	MKSTR(fname,"toplevel"); MKUSINT(us,at_root);
+	t = mknode(2,fname,us); MKLIST(l,t); MKNODE(u1,l,u); u = u1;
 	MKLIST(b,u);
 
 	MKSTR(kwd,"asir_where");

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/io_win_mini.c,v 1.1 2006/09/26 05:35:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/io_win_mini.c,v 1.2 2006/09/29 09:02:49 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -352,10 +352,9 @@ void loadstr(FILE *s,char **p)
 	char *t;
 
 	read_int(s,&len);
-	if ( len ) {
-		t = (char *)malloc(len+1); read_string(s,t,len); t[len] = 0;
-	} else
-		t = "";
+	t = (char *)malloc(len+1);
+	if ( len ) read_string(s,t,len);
+	t[len] = 0;
 	*p = t;
 }
 
