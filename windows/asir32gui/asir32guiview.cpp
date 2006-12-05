@@ -93,7 +93,7 @@ CAsir32guiView::CAsir32guiView()
 {
 	// TODO: この場所に構築用のコードを追加してください。
 	static int tmpView_created = 0;
-	char errmsg[BUFSIZ];
+	char errmsg[BUFSIZ],view_handle[BUFSIZ];
 
 	init_input_history();
 	read_input_history();
@@ -716,4 +716,15 @@ void CAsir32guiView::OnTodoparametrize()
 	sprintf(helpfile,"%s\\help\\todo_parametrizehelp.chm",root);
 	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
 	
+}
+
+BOOL CAsir32guiView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext) 
+{
+	// TODO: この位置に固有の処理を追加するか、または基本クラスを呼び出してください
+	
+	BOOL ret = CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
+	FILE *fp = fopen("asirgui.hnd","w");
+	fprintf(fp,"%d",(unsigned int)theView->m_hWnd);
+	fclose(fp);
+	return ret;
 }

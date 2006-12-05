@@ -21,9 +21,9 @@ Class5=CAboutDlg
 Class6=CFatalDialog
 Class7=CAsirEdit
 Resource3=IDR_DEBUGFRAME
-Resource4=IDR_MAINFRAME
+Resource4=IDD_FATAL
 Resource5=IDD_FORMVIEW
-Resource6=IDD_FATAL
+Resource6=IDR_MAINFRAME
 
 [CLS:CAsir32guiApp]
 Type=0
