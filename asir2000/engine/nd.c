@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.148 2006/11/28 02:17:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.149 2006/12/04 01:40:51 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,6 +8,7 @@ int nd_dcomp;
 NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
+NODE nd_hcf;
 
 static NODE nd_subst;
 static VL nd_vc;
@@ -1571,6 +1572,68 @@ ND normalize_pbucket(int mod,PGeoBucket g)
 	return r;
 }
 
+#if 0
+void register_hcf(NDV p)
+{
+	DCP dc,t;
+	P hc,h;
+	int c;
+	NODE l,l1,prev;
+
+	hc = p->body->c.p;
+	if ( !nd_vc || NUM(hc) ) return;
+	fctrp(nd_vc,hc,&dc);
+	for ( t = dc; t; t = NEXT(t) ) {
+		h = t->c;
+		if ( NUM(h) ) continue;
+		for ( prev = 0, l = nd_hcf; l; prev = l, l = NEXT(l) ) {
+			c = compp(nd_vc,h,(P)BDY(l));
+			if ( c >= 0 ) break;
+		}
+		if ( !l || c > 0  ) {
+			MKNODE(l1,h,l);
+			if ( !prev )
+				nd_hcf = l1;
+			else
+				NEXT(prev) = l1;
+		}
+	}
+}
+#else
+void register_hcf(NDV p)
+{
+	DCP dc,t;
+	P hc,h,q;
+	Q dmy;
+	int c;
+	NODE l,l1,prev;
+
+	hc = p->body->c.p;
+	if ( NUM(hc) ) return;
+	ptozp(hc,1,&dmy,&h);
+#if 1
+	for ( l = nd_hcf; l; l = NEXT(l) ) {
+		while ( 1 ) {
+			if ( divtpz(nd_vc,h,(P)BDY(l),&q) ) h = q;
+			else break;
+		}
+	}
+	if ( NUM(h) ) return;
+#endif
+	for ( prev = 0, l = nd_hcf; l; prev = l, l = NEXT(l) ) {
+		c = compp(nd_vc,h,(P)BDY(l));
+		if ( c >= 0 ) break;
+	}
+	if ( !l || c > 0  ) {
+		MKNODE(l1,h,l);
+		if ( !prev )
+			nd_hcf = l1;
+		else
+			NEXT(prev) = l1;
+	}
+}
+#endif
+
 int do_diagonalize(int sugar,int m)
 {
 	int i,nh,stat;
@@ -1594,6 +1657,7 @@ int do_diagonalize(int sugar,int m)
 		nfv = ndtondv(m,nf);
 		nd_free(nf);
 		nd_bound[i] = ndv_compute_bound(nfv);
+		if ( !m ) register_hcf(nfv);
 		if ( nd_demand ) {
 			ndv_save(nfv,i);
 			ndv_free(nfv);
@@ -1724,6 +1788,7 @@ int do_diagonalize_trace(int sugar,int m)
 		nfv = ndtondv(0,nf);
 		nd_free(nf);
 		nd_bound[i] = ndv_compute_bound(nfv);
+		register_hcf(nfv);
 		if ( nd_demand ) {
 			ndv_save(nfv,i);
 			ndv_free(nfv);
@@ -1776,7 +1841,9 @@ again:
 		if ( SG(l) != sugar ) {
 #if 1
 			if ( ishomo ) {
+				if ( DP_Print > 2 ) fprintf(asir_out,"|");
 				stat = do_diagonalize_trace(sugar,m);
+				if ( DP_Print > 2 ) fprintf(asir_out,"|");
 				diag_count = 0;
 				if ( !stat ) {
 					NEXT(l) = d; d = l;
@@ -1839,7 +1906,9 @@ again:
 				nh = ndv_newps(0,nfv,nfqv);
 				if ( ishomo && ++diag_count == diag_period ) {
 					diag_count = 0;
+					if ( DP_Print > 2 ) fprintf(asir_out,"|");
 					stat = do_diagonalize_trace(sugar,m);
+					if ( DP_Print > 2 ) fprintf(asir_out,"|");
 					if ( !stat ) {
 						NEXT(l) = d; d = l;
 						d = nd_reconstruct(1,d);
@@ -2211,9 +2280,11 @@ int ndv_newps(int m,NDV a,NDV aq)
 	nd_ps[nd_psn] = a;
 	if ( aq ) {
 		nd_ps_trace[nd_psn] = aq;
+		register_hcf(aq);
 		nd_bound[nd_psn] = ndv_compute_bound(aq);
 		SG(r) = SG(aq); ndl_copy(HDL(aq),DL(r));
 	} else {
+		if ( !m ) register_hcf(a);
 		nd_bound[nd_psn] = ndv_compute_bound(a);
 		SG(r) = SG(a); ndl_copy(HDL(a),DL(r));
 	}
@@ -2257,6 +2328,7 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort)
 	nd_ps_trace = (NDV *)MALLOC(nd_pslen*sizeof(NDV));
 	nd_psh = (RHist *)MALLOC(nd_pslen*sizeof(RHist));
 	nd_bound = (UINT **)MALLOC(nd_pslen*sizeof(UINT *));
+	nd_hcf = 0;
 
 	if ( trace && nd_vc )
 		makesubst(nd_vc,&nd_subst);
@@ -2270,12 +2342,14 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort)
 		if ( trace ) {
 			a = nd_ps_trace[i] = ndv_dup(0,w[i]);
 			ndv_removecont(0,a);
+			register_hcf(a);
 			am = nd_ps[i] = ndv_dup(mod,a);
 			ndv_mod(mod,am);
 			ndv_removecont(mod,am);
 		} else {
 			a = nd_ps[i] = ndv_dup(mod,w[i]);
 			ndv_removecont(mod,a);
+			if ( !mod ) register_hcf(a);
 		}
 		NEWRHist(r); SG(r) = HTD(a); ndl_copy(HDL(a),DL(r));
 		nd_bound[i] = ndv_compute_bound(a);
@@ -2834,7 +2908,7 @@ void nd_removecont(int mod,ND p)
 		v.len = n;
 		v.body = (pointer *)w;
 		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ ) w[i] = CQ(m);
-		removecont_array((P *)w,n);
+		removecont_array((P *)w,n,1);
 		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
 	}
 }
@@ -2848,22 +2922,23 @@ void nd_removecont2(ND p1,ND p2)
 	struct oVECT v;
 	N q,r;
 
-	if ( !p1 ) {
-		nd_removecont(0,p2); return;
-	} else if ( !p2 ) {
-		nd_removecont(0,p1); return;
-	}
 	n1 = nd_length(p1);
 	n2 = nd_length(p2);
 	n = n1+n2;
 	w = (Q *)ALLOCA(n*sizeof(Q));
 	v.len = n;
 	v.body = (pointer *)w;
-	for ( m = BDY(p1), i = 0; i < n1; m = NEXT(m), i++ ) w[i] = CQ(m);
-	for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = CQ(m);
-	removecont_array((P *)w,n);
-	for ( m = BDY(p1), i = 0; i < n1; m = NEXT(m), i++ ) CQ(m) = w[i];	
-	for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
+	i = 0;
+	if ( p1 )
+		for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) w[i] = CQ(m);
+	if ( p2 )
+		for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = CQ(m);
+	removecont_array((P *)w,n,1);
+	i = 0;
+	if ( p1 )
+		for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) CQ(m) = w[i];	
+	if ( p2 )
+		for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) CQ(m) = w[i];	
 }
 
 void ndv_removecont(int mod,NDV p)
@@ -2888,7 +2963,7 @@ void ndv_removecont(int mod,NDV p)
 			all_p = all_p && !NUM(w[i]);
 		}
 		if ( all_p ) {
-			qltozl(c,len,&dvr); heu_nezgcdnpz(nd_vc,w,len,&g);
+			qltozl(c,len,&dvr); nd_heu_nezgcdnpz(nd_vc,w,len,1,&g);
 			mulp(nd_vc,(P)dvr,g,&cont);
 			for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ ) {
 				divsp(nd_vc,CP(m),cont,&tp); CP(m) = tp;
@@ -2949,7 +3024,39 @@ void ndv_dehomogenize(NDV p,struct order_spec *ord)
 	NV(p)--;
 }
 
-void removecont_array(P *p,int n)
+void nd_heu_nezgcdnpz(VL vl,P *pl,int m,int full,P *pr)
+{
+	int i;
+	P *tpl,*tpl1;
+	NODE l;
+	P h,gcd,t;
+
+	tpl = (P *)ALLOCA(m*sizeof(P));
+	tpl1 = (P *)ALLOCA(m*sizeof(P));
+	bcopy(pl,tpl,m*sizeof(P));
+	gcd = (P)ONE;
+	for ( l = nd_hcf; l; l = NEXT(l) ) {
+		h = (P)BDY(l);
+		while ( 1 ) {
+			for ( i = 0; i < m; i++ )
+				if ( !divtpz(vl,tpl[i],h,&tpl1[i]) )
+					break;
+			if ( i == m ) {
+				bcopy(tpl1,tpl,m*sizeof(P));
+				mulp(vl,gcd,h,&t); gcd = t;
+			} else
+				break;
+		}
+	}
+	if ( DP_Print > 2 ){fprintf(asir_out,"[%d]",nmonop(gcd)); fflush(asir_out);}
+	if ( full ) {
+		heu_nezgcdnpz(vl,tpl,m,&t);
+		mulp(vl,gcd,t,pr);
+	} else
+		*pr = gcd;
+}
+
+void removecont_array(P *p,int n,int full)
 {
 	int all_p,all_q,i;
 	Q *c;
@@ -2967,7 +3074,7 @@ void removecont_array(P *p,int n)
 			ptozp(p[i],1,&c[i],&w[i]);
 		}
 		removecont_array_q(c,n);
-		heu_nezgcdnpz(nd_vc,w,n,&t);
+		nd_heu_nezgcdnpz(nd_vc,w,n,full,&t);
 		for ( i = 0; i < n; i++ ) {
 			divsp(nd_vc,w[i],t,&s); mulp(nd_vc,s,(P)c[i],&p[i]);
 		}
@@ -4366,14 +4473,14 @@ int ndv_reduce_vect_q(Q *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 			if ( j == col ) break;
 			if ( hmag && ((double)p_mag((P)svect[j]) > hmag) ) {
 				nz = compress_array(svect,cvect,col);
-				removecont_array((P *)cvect,nz);
+				removecont_array((P *)cvect,nz,1);
 				expand_array(svect,cvect,nz);
 				hmag = ((double)p_mag((P)svect[j]))*nd_scale;
 			}
 		}
 	}
 	nz = compress_array(svect,cvect,col);
-	removecont_array((P *)cvect,nz);
+	removecont_array((P *)cvect,nz,1);
 	expand_array(svect,cvect,nz);
 	if ( DP_Print ) { 
 		fprintf(asir_out,"-"); fflush(asir_out);

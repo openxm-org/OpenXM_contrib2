@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.15 2006/06/05 08:11:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.16 2006/11/27 07:31:26 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -219,7 +219,7 @@ NODE append_one(NODE,int);
 /* manipulation of coefficients */
 void nd_removecont(int mod,ND p);
 void nd_removecont2(ND p1,ND p2);
-void removecont_array(P *c,int n);
+void removecont_array(P *c,int n,int full);
 void removecont_array_q(Q *c,int n);
 
 /* GeoBucket functions */

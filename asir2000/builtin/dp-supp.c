@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.38 2004/12/06 09:29:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.39 2005/08/25 18:59:11 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -511,7 +511,9 @@ void heu_nezgcdnpz(VL vl,P *pl,int m,P *pr)
 	int i,r;
 	P gcd,t,s1,s2,u;
 	Q rq;
-	
+	DCP dc;
+	extern int DP_Print;
+
 	while ( 1 ) {
 		for ( i = 0, s1 = 0; i < m; i++ ) {
 			r = random(); UTOQ(r,rq);
@@ -522,6 +524,8 @@ void heu_nezgcdnpz(VL vl,P *pl,int m,P *pr)
 			mulp(vl,pl[i],(P)rq,&t); addp(vl,s2,t,&u); s2 = u;
 		}
 		ezgcdp(vl,s1,s2,&gcd);
+		if ( DP_Print > 2 ) 
+			{ fprintf(asir_out,"(%d)",nmonop(gcd)); fflush(asir_out); }
 		for ( i = 0; i < m; i++ ) {
 			if ( !divtpz(vl,pl[i],gcd,&t) )
 				break;
