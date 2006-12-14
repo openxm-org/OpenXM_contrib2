@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.16 2006/11/27 07:31:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.17 2006/12/12 11:50:37 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -301,7 +301,7 @@ void ndp_print(ND_pairs d);
 /* setup, reconstruct */
 void nd_init_ord(struct order_spec *spec);
 ND_pairs nd_reconstruct(int trace,ND_pairs ndp);
-void ndv_setup(int mod,int trace,NODE f,int dont_sort);
+void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont);
 void nd_setup_parameters(int nvar,int max);
 BlockMask nd_create_blockmask(struct order_spec *ord);
 EPOS nd_create_epos(struct order_spec *ord);

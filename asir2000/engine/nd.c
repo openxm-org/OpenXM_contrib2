@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.149 2006/12/04 01:40:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.150 2006/12/12 11:50:37 noro Exp $ */
 
 #include "nd.h"
 
@@ -1319,7 +1319,7 @@ int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
 	NODE t,s;
 	union oNDC dn;
 
-	ndv_setup(0,0,cand,0);
+	ndv_setup(0,0,cand,0,1);
 	n = length(cand);
 
 	/* membercheck : list is a subset of Id(cand) ? */
@@ -1967,7 +1967,7 @@ NODE ndv_reduceall(int m,NODE f)
 		(int (*)(const void *,const void *))ndv_compare);
 	for ( t = f, i = 0; t; i++, t = NEXT(t) ) BDY(t) = (pointer)w[i];
 #endif
-	ndv_setup(m,0,f,0);
+	ndv_setup(m,0,f,0,1);
 	for ( i = 0; i < n; ) {
 		g = ndvtond(m,nd_ps[i]);
 		g = nd_separate_head(g,&head);
@@ -2300,7 +2300,7 @@ int ndv_newps(int m,NDV a,NDV aq)
 	return nd_psn++;
 }
 
-void ndv_setup(int mod,int trace,NODE f,int dont_sort)
+void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
 {
 	int i,j,td,len,max;
 	NODE s,s0,f0;
@@ -2341,14 +2341,14 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort)
 	for ( i = 0; i < nd_psn; i++ ) {
 		if ( trace ) {
 			a = nd_ps_trace[i] = ndv_dup(0,w[i]);
-			ndv_removecont(0,a);
+			if ( !dont_removecont) ndv_removecont(0,a);
 			register_hcf(a);
 			am = nd_ps[i] = ndv_dup(mod,a);
 			ndv_mod(mod,am);
 			ndv_removecont(mod,am);
 		} else {
 			a = nd_ps[i] = ndv_dup(mod,w[i]);
-			ndv_removecont(mod,a);
+			if ( mod || !dont_removecont ) ndv_removecont(mod,a);
 			if ( !mod ) register_hcf(a);
 		}
 		NEWRHist(r); SG(r) = HTD(a); ndl_copy(HDL(a),DL(r));
@@ -2536,7 +2536,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 		if ( b ) { NEXTNODE(fd0,fd); BDY(fd) = (pointer)b; }
 	}
 	if ( fd0 ) NEXT(fd) = 0;
-	ndv_setup(m,0,fd0,0);
+	ndv_setup(m,0,fd0,0,0);
 	x = f4?nd_f4(m):nd_gb(m,ishomo,0);
 	nd_demand = 0;
 	x = ndv_reducebase(x);
@@ -2611,7 +2611,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
 		if ( b ) { NEXTNODE(fd0,fd); BDY(fd) = (pointer)b; }
 	}
 	if ( fd0 ) NEXT(fd) = 0;
-	ndv_setup(m,0,fd0,0);
+	ndv_setup(m,0,fd0,0,1);
 	for ( x = 0, i = 0; i < nd_psn; i++ )
 		x = update_base(x,i);
 	if ( do_check ) {
@@ -2729,7 +2729,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 	while ( 1 ) {
 		if ( Demand )
 			nd_demand = 1;
-		ndv_setup(m,1,fd0,0);
+		ndv_setup(m,1,fd0,0,0);
 		cand = f4?nd_f4_trace(m):nd_gb_trace(m,ishomo || homo);
 		if ( !cand ) {
 			/* failure */
@@ -4274,8 +4274,8 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
 	if ( m ) ndv_mod(m,(NDV)BDY(in));
 	NEXT(in) = 0;
 
-	/* dont sort */
-	ndv_setup(m,0,in0,1);
+	/* dont sort, dont removecont */
+	ndv_setup(m,0,in0,1,1);
 	nd_psn--;
 	nd_scale=2;
 	while ( 1 ) {
