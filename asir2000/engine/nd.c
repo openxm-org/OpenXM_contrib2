@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.150 2006/12/12 11:50:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.151 2006/12/14 02:49:59 noro Exp $ */
 
 #include "nd.h"
 
@@ -50,6 +50,7 @@ static int nd_demand;
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
+void nd_heu_nezgcdnpz(VL vl,P *pl,int m,int full,P *pr);
 int nd_monic(int m,ND *p);
 NDV plain_vect_to_ndv_q(Q *mat,int col,UINT *s0vect);
 
