@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.4 2005/02/08 18:06:05 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/isolv.c,v 1.5 2005/07/14 22:46:03 kondoh Exp $
  */
 
 #include "ca.h"
@@ -118,11 +118,11 @@ Obj  *rp;
 				ToBf(r, &breal);
 				NEXTNODE( n0, n );
 				MKNODE(ln0, breal, NEXT(m));
-				MKLIST((LIST)listp, ln0);
+				MKLIST(listp, ln0);
 				BDY(n) = (pointer)listp;
 			}
 			NEXT(n) = 0;
-			MKLIST((LIST)listp,n0);
+			MKLIST(listp,n0);
 			*rp = (pointer)listp;
 			break;
 		case O_LIST:
