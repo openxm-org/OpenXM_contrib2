@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.23 2006/07/24 07:31:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.24 2006/08/09 02:43:38 noro Exp $ 
 */
 
 module gr $
@@ -153,7 +153,14 @@ def tolex(G0,V,O,W)
 				TL = cons(dp_dtop(dp_vtoe(D),W),TL);
 			while ( nextm(D,DL,N) );
 		} else {
-			GM = dp_gr_mod_main(G0,W,0,M,2);
+			HVN = "h";
+			WN = map(rtostr,W);
+			while ( member(HVN,WN) ) HVN += "h";
+			HV = strtov(HVN);
+			G0H = map(homogenize,G0,W,HV);
+			GMH = nd_gr(G0H,append(W,[HV]),M,1);
+			GMH=map(subst,GMH,HV,1);
+			GM = nd_gr_postproc(GMH,W,M,2,0);
 			dp_ord(2);
 			for ( T = GM, S = 0; T != []; T = cdr(T) )
 				for ( D = dp_ptod(car(T),V); D; D = dp_rest(D) )
@@ -197,6 +204,7 @@ def tolex_gsl(G0,V,O,W)
 		while ( nextm(D,DL,N) );
 		L = npos_check(DL); NPOSV = L[0]; DIM = L[1];
 		if ( NPOSV >= 0 ) {
+			if ( dp_gr_print() ) print("shape base");
 			V0 = W[NPOSV];
 			T0 = time()[0]; NFL = gennf(G0,TL,V,O,V0,1);
 			TNF += time()[0] - T0;
