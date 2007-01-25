@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.36 2005/08/24 06:28:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.37 2006/05/30 07:35:30 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -73,6 +73,7 @@ extern int real_binary;
 extern int allow_laurent;
 #if defined(INTERVAL)
 extern int zerorewrite;
+extern int Itvplot;
 #endif
 extern int double_output;
 extern int use_new_hensel;
@@ -124,6 +125,7 @@ static struct {
 	{"diag_period",&diag_period},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
+	{"itvplotsize",&Itvplot},
 #endif
 	{0,0},
 };
