@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.26 2005/07/03 13:11:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.27 2006/11/09 15:54:35 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1184,6 +1184,7 @@ static void generate_psfile(can,fp)
 	 struct canvas *can;
 	 FILE *fp;
 {
+#if 0
   int x,y;
   XImage *image;
   int color[1];
@@ -1208,6 +1209,7 @@ static void generate_psfile(can,fp)
 	method_is_not_available();
   }
   fflush(NULL);
+#endif
 }
 
 static void method_is_not_available() {
