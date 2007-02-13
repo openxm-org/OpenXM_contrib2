@@ -724,7 +724,20 @@ BOOL CAsir32guiView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD
 	
 	BOOL ret = CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 	FILE *fp = fopen("asirgui.hnd","w");
+	char *temp;
+
 	fprintf(fp,"%d",(unsigned int)theView->m_hWnd);
 	fclose(fp);
+	if ( temp = getenv("TEMP") ) {
+		int len;
+		char *name;
+
+		len = strlen(temp);
+		name = (char *)malloc(len+BUFSIZ);
+		sprintf(name,"%s\\asirgui.hnd",temp);
+		fopen(name,"w");
+		fprintf(fp,"%d",(unsigned int)theView->m_hWnd);
+		fclose(fp);
+	}
 	return ret;
 }
