@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.13 2006/01/05 00:21:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.14 2006/10/26 10:49:17 noro Exp $
 */
 
 #include "ca.h"
@@ -378,10 +378,13 @@ void dalgtoalg(DAlg da,Alg *r)
 
 	if ( !(nf=current_numberfield) )
 		error("dalgtoalg : current_numberfield is not set");
-	dtop(ALG,nf->vl,da->nm,&p);
-	invq(da->dn,&inv);
-	mulpq(p,(P)inv,&p1);
-	MKAlg(p1,*r);
+	if ( !da ) *r = 0;
+	else {
+		dtop(ALG,nf->vl,da->nm,&p);
+		invq(da->dn,&inv);
+		mulpq(p,(P)inv,&p1);
+		MKAlg(p1,*r);
+	}
 }
 
 void simpdalg(DAlg da,DAlg *r)
