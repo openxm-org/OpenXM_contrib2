@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.66 2006/11/29 05:08:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.67 2007/01/30 03:25:52 saito Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -940,7 +940,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define MKReal(a,b) (!(a)?((b)=0):(NEWReal(b),BDY(b)=(a),(b)))
 #define MKAlg(b,r) \
 (!(b)?((r)=0):NUM(b)?((r)=(Alg)(b)):(NEWAlg(r),BDY(r)=(Obj)(b),(r)))
-#define MKDAlg(dp,den,r) (!(dp)?((r)=0):(NEWDAlg(r),(r)->nm = (dp),(r)->dn=(den)))
+#define MKDAlg(dp,den,r) (!(dp)?(void *)((r)=0):(void *)(NEWDAlg(r),(r)->nm = (dp),(r)->dn=(den)))
 
 #define IMM_MAX 1073741823
 #define IMM_MIN -1073741823

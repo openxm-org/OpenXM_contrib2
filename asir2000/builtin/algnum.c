@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.11 2005/07/11 00:24:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.12 2005/08/02 07:16:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -146,12 +146,28 @@ void Pdalgtodp(NODE arg,LIST *r)
 
 void Pdptodalg(NODE arg,DAlg *r)
 {
-	DP d;
+	DP d,nm,nm1;
+	MP m;
+	Q c,a;
 	DAlg t;
-
+	
 	d = (DP)ARG0(arg);
-	MKDAlg(d,ONE,t);
-	simpdalg(t,r);
+	if ( !d ) *r = 0;
+	else {
+		for ( m = BDY(d); m; m = NEXT(m) )
+			if ( !INT((Q)m->c) ) break;
+		if ( !m ) {
+			MKDAlg(d,(Q)ONE,t);
+		} else {
+			dp_ptozp(d,&nm);
+			divq((Q)BDY(d)->c,(Q)BDY(nm)->c,&c);
+			NTOQ(NM(c),SGN(c),a);
+			muldc(CO,nm,(P)a,&nm1);
+			NTOQ(DN(c),1,a);
+			MKDAlg(nm1,a,t);
+		}
+		simpdalg(t,r);
+	}
 }
 
 void Pdalgtoup(NODE arg,LIST *r)
