@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.21 2005/07/12 01:23:20 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.22 2005/07/12 14:47:13 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -41,7 +41,7 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a: ${GC}-risa.diff parse/gc_risa.c
+libasir-gc.a: gc6.5-risa.diff parse/gc_risa.c
 	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
 		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
 			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
@@ -49,7 +49,8 @@ libasir-gc.a: ${GC}-risa.diff parse/gc_risa.c
 		touch ${top_srcdir}/.gc_fetch_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/.gc_risa_done ]; then \
-	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}; patch -p0 < ${GC}-risa.diff) ; \
+	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}) ; \
+	    (cd ${top_srcdir}/${GC}; patch -p1 < ../gc6.5-risa.diff) ; \
 	    touch ${top_srcdir}/.gc_risa_done ; \
 	fi
 	-if [ "${USE_GC_ZEROPAGE}" = yes \

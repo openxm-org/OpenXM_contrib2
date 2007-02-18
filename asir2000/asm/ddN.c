@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.6 2006/08/09 02:48:49 noro Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -288,7 +288,7 @@ void bxprintn(N n)
 	}
 }
 
-#if defined(VISUAL) || defined(i386)
+#if defined(VISUAL) || ( defined(i386) && !defined(__DARWIN__) )
 void muln(N n1,N n2,N *nr)
 {
 	unsigned int tmp,carry,mul;

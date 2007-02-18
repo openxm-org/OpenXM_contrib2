@@ -98,10 +98,11 @@ libasir_postfix = @libasir_postfix@
 incdir = ${prefix}/include/asir
 inc_HEADERS = comp.h cpp.h parse.h w_stdio.h
 
+GC = gc
 asirdir = ${prefix}/lib/asir
 DEFS = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           -I${top_srcdir}/gc/include \
+           -I${top_srcdir}/${GC}/include \
            @PARIINC@ @MPIINC@ @X_CFLAGS@
 
 

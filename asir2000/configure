@@ -5618,7 +5618,7 @@ sparc-sun-solaris2.*)
 _ACEOF
 
     ;;
-powerpc-apple-darwin*)
+*-apple-darwin*)
     asm_obj="${generic_obj}"
     cat >>confdefs.h <<\_ACEOF
 #define __DARWIN__ 1

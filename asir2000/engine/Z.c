@@ -702,7 +702,7 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	adc eax,eax
 	mov c,eax
 	}
-#elif defined(i386)
+#elif ( defined(i386) && !defined(__DARWIN__) )
 	asm volatile("\
 	movl	%1,%%esi;\
 	movl	%2,%%edi;\
@@ -792,7 +792,7 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	adc eax,eax
 	mov br,eax
 	}
-#elif defined(i386)
+#elif ( defined(i386) && !defined(__DARWIN__) )
 	asm volatile("\
 	movl	%1,%%esi;\
 	movl	%2,%%edi;\

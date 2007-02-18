@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.6 2003/09/02 07:00:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.7 2004/12/04 09:39:27 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 
-#if defined(VISUAL) || defined(i386)
+#if defined(VISUAL) || ( defined(i386) && !defined(__DARWIN__) )
 void addn(N n1,N n2,N *nr)
 {
 	unsigned int *m1,*m2,*mr;
