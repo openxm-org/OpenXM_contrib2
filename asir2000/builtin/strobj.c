@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.116 2006/08/19 05:35:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.117 2006/08/27 22:17:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -105,7 +105,7 @@ void Pqt_to_nbp();
 void Pshuffle_mul(), Pharmonic_mul();
 void Pnbp_hm(), Pnbp_ht(), Pnbp_hc(), Pnbp_rest();
 void Pnbp_tm(), Pnbp_tt(), Pnbp_tc(), Pnbp_trest();
-void Pnbm_deg();
+void Pnbm_deg(), Pnbm_index();
 void Pnbm_hp_rest();
 void Pnbm_hxky(), Pnbm_xky_rest();
 void Pnbm_hv(), Pnbm_tv(), Pnbm_rest(),Pnbm_trest();
@@ -188,6 +188,7 @@ struct ftab str_tab[] = {
 	{"nbp_tc", Pnbp_tc,1},
 	{"nbp_trest", Pnbp_trest,1},
 	{"nbm_deg", Pnbm_deg,1},
+	{"nbm_index", Pnbm_index,1},
 	{"nbm_hxky", Pnbm_hxky,1},
 	{"nbm_xky_rest", Pnbm_xky_rest,1},
 	{"nbm_hp_rest", Pnbm_hp_rest,1},
@@ -2532,6 +2533,28 @@ void Pnbm_deg(NODE arg, Q *rp)
 	else {
 		m = (NBM)BDY(BDY(p));	
 		STOQ(m->d,*rp);
+	}
+}
+
+void Pnbm_index(NODE arg, Q *rp)
+{
+	NBP p;
+	NBM m;
+	unsigned int *b;
+	int d,i,r;
+
+	p = (NBP)ARG0(arg);
+	if ( !p )
+		STOQ(0,*rp);
+	else {
+		m = (NBM)BDY(BDY(p));	
+		d = m->d;
+		if ( d > 32 )
+			error("nbm_index : weight too large");
+		b = m->b;
+		for ( r = 0, i = d-2; i > 0; i-- )
+			if ( !NBM_GET(b,i) ) r |= (1<<(d-2-i));
+		STOQ(r,*rp);
 	}
 }
 
