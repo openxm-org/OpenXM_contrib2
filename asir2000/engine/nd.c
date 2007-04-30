@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.151 2006/12/14 02:49:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.152 2006/12/21 07:45:02 ohara Exp $ */
 
 #include "nd.h"
 
@@ -5806,7 +5806,9 @@ void nd_det(int mod,MAT f,P *rp)
 			sgn = -sgn;
 		}
 		bound = nd_det_compute_bound(dm,n,j);
-		if ( ndl_check_bound(bound,bound) )
+		for ( k = 0; k < nd_nvar; k++ )
+			if ( bound[k]*2 > nd_mask0 ) break;
+		if ( k < nd_nvar )
 			nd_det_reconstruct(dm,n,j,d);
 
 		for ( i = j+1, mj = dm[j], mjj = mj[j]; i < n; i++ ) {
@@ -5936,24 +5938,23 @@ void nd_det_reconstruct(NDV **dm,int n,int j,NDV d)
 #endif
 }
 
+/* returns a UINT array containing degree bounds */
+
 UINT *nd_det_compute_bound(NDV **dm,int n,int j)
 {
 	UINT *d0,*d1,*d,*t,*r;
-	int k,l;
+	int k,l,i;
 
-	d0 = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
-	d1 = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
-	for ( k = 0; k < nd_wpd; k++ ) d0[k] = 0;
+	d0 = (UINT *)MALLOC(nd_nvar*sizeof(UINT));
+	for ( k = 0; k < nd_nvar; k++ ) d0[k] = 0;
 	for ( k = j; k < n; k++ )
 		for ( l = j; l < n; l++ )
 			if ( dm[k][l] ) {
 				d = ndv_compute_bound(dm[k][l]);
-				ndl_lcm(d,d0,d1);
-				t = d1; d1 = d0; d0 = t;
+				for ( i = 0; i < nd_nvar; i++ )
+					d0[i] = MAX(d0[i],d[i]);
 			}
-	r = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
-	for ( k = 0; k < nd_wpd; k++ ) r[k] = d0[k];
-	return r;
+	return d0;
 }
 
 DL nd_separate_d(UINT *d,UINT *trans)
