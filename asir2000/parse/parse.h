@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.45 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.46 2006/03/22 09:40:03 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -123,7 +123,7 @@ typedef struct oPV {
 typedef struct oINFILE {
 	char *name;
 	FILE *fp;
-	jmp_buf jmpbuf;
+	JMP_BUF jmpbuf;
 	int ready_for_longjmp;
 	int ln;
 	struct oINFILE *next;
