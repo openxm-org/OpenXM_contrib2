@@ -173,3 +173,17 @@ diff -u -r gc6.5/reclaim.c gc6.5-risa/reclaim.c
  #   ifdef PRINTTIMES
  	GET_TIME(done_time);
  	GC_printf1("Disposing of reclaim lists took %lu msecs\n",
+diff -u -r gc6.5/include/private/gc_priv.h gc6.5-risa/include/private/gc_priv.h
+--- gc6.5/include/private/gc_priv.h	Sat Feb 11 04:38:40 2006
++++ gc6.5-risa/include/private/gc_priv.h	Tue May 22 20:00:39 2007
+@@ -227,6 +227,10 @@
+ # define EXTRA_BYTES 0
+ #endif
+ 
++/* Added by ohara */
++# ifndef LARGE_CONFIG
++#   define LARGE_CONFIG
++# endif
+ 
+ # ifndef LARGE_CONFIG
+ #   define MINHINCR 16	 /* Minimum heap increment, in blocks of HBLKSIZE  */
