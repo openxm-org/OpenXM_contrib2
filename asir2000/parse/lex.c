@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.42 2006/09/29 08:58:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.43 2007/02/18 05:36:28 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -58,6 +58,9 @@
 #include "ytab.h"
 #else
 #include "y.tab.h"
+#endif
+#if FEP
+#include <readline/readline.h>
 #endif
 
 static int Getc();

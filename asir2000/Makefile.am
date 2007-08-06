@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.23 2007/02/18 05:36:27 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.24 2007/02/18 08:46:47 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -17,6 +17,7 @@ CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
 GC            = gc6.8
 GC_TAR_GZ     = ${GC}.tar.gz
+GC_PATCH      = gc6.5-risa.diff
 GC_DISTDIR    = @GC_DISTDIR@
 GC_MASTER_SITE=ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH      = ${bindir}/oxfetch.sh
@@ -41,7 +42,7 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a: gc6.5-risa.diff parse/gc_risa.c
+libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
 		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
 			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
@@ -50,7 +51,7 @@ libasir-gc.a: gc6.5-risa.diff parse/gc_risa.c
 	fi
 	-if [ ! -f ${top_srcdir}/.gc_risa_done ]; then \
 	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}) ; \
-	    (cd ${top_srcdir}/${GC}; patch -p1 < ../gc6.5-risa.diff) ; \
+	    (cd ${top_srcdir}/${GC}; patch -p1 < ../${GC_PATCH}) ; \
 	    touch ${top_srcdir}/.gc_risa_done ; \
 	fi
 	-if [ "${USE_GC_ZEROPAGE}" = yes \
