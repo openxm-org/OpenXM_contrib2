@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.65 2006/10/12 08:20:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.66 2006/10/26 10:49:16 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -68,7 +68,7 @@ void Pdp_sp(), Pdp_hm(), Pdp_ht(), Pdp_hc(), Pdp_rest(), Pdp_td(), Pdp_sugar();
 void Pdp_set_sugar();
 void Pdp_cri1(),Pdp_cri2(),Pdp_subd(),Pdp_mod(),Pdp_red_mod(),Pdp_tdiv();
 void Pdp_prim(),Pdp_red_coef(),Pdp_mag(),Pdp_set_kara(),Pdp_rat();
-void Pdp_nf(),Pdp_true_nf();
+void Pdp_nf(),Pdp_true_nf(),Pdp_true_nf_marked();
 void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
 void Pdp_minp(),Pdp_sp_mod();
@@ -134,6 +134,7 @@ struct ftab dp_tab[] = {
 	{"dp_nf",Pdp_nf,4},
 	{"dp_nf_f",Pdp_nf_f,4},
 	{"dp_true_nf",Pdp_true_nf,4},
+	{"dp_true_nf_marked",Pdp_true_nf_marked,4},
 	{"dp_nf_mod",Pdp_nf_mod,5},
 	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
 	{"dp_lnf_mod",Pdp_lnf_mod,3},
@@ -874,6 +875,35 @@ LIST *rp;
 		b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
 		full = (Q)ARG3(arg) ? 1 : 0;
 		dp_true_nf(b,g,ps,full,&nm,&dn);
+	}
+	NEWNODE(n); BDY(n) = (pointer)nm;
+	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)dn;
+	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
+}
+
+void Pdp_true_nf_marked(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE b,n;
+	DP *ps,*hps;
+	DP g;
+	DP nm;
+	P dn;
+	int full;
+
+	do_weyl = 0; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_true_nf_marked");
+	asir_assert(ARG1(arg),O_DP,"dp_true_nf_marked");
+	asir_assert(ARG2(arg),O_VECT,"dp_true_nf_marked");
+	asir_assert(ARG3(arg),O_VECT,"dp_true_nf_marked");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		nm = 0; dn = (P)ONE;
+	} else {
+		b = BDY((LIST)ARG0(arg)); 
+		ps = (DP *)BDY((VECT)ARG2(arg));
+		hps = (DP *)BDY((VECT)ARG3(arg));
+		dp_true_nf_marked(b,g,ps,hps,&nm,&dn);
 	}
 	NEWNODE(n); BDY(n) = (pointer)nm;
 	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)dn;

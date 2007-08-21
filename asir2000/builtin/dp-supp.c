@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.39 2005/08/25 18:59:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.40 2006/12/12 11:50:37 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -813,6 +813,53 @@ void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
 	*head = h; *rest = r; *dnp = (P)c2;
 }
 
+/*
+ * m-reduction by a marked poly
+ * do content reduction over Z or Q(x,...)
+ * do nothing over finite fields
+ *
+ */
+
+
+void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,r,h;
+	Q c,c1,c2;
+	N gn,tn;
+	P g,a;
+	P p[2];
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
+	NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(hp2)->c;
+	if ( dp_fcoeffs == N_GFS ) {
+		p[0] = (P)c1; p[1] = (P)c2;
+		gcdsf(CO,p,2,&g);
+		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+	} else if ( dp_fcoeffs ) {
+		/* do nothing */
+	} else if ( INT(c1) && INT(c2) ) {
+		gcdn(NM(c1),NM(c2),&gn);
+		if ( !UNIN(gn) ) {
+			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+		}
+	} else {
+		ezgcdpz(CO,(P)c1,(P)c2,&g);
+		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+	}
+	NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+	*multp = s;
+	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
+	muldc(CO,p0,(P)c2,&h);
+	*head = h; *rest = r; *dnp = (P)c2;
+}
+
 /* m-reduction over a field */
 
 void dp_red_f(DP p1,DP p2,DP *rest)
@@ -950,6 +997,59 @@ void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
 			}
 			*rp = g; *dnp = dn; return;
 		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d; *dnp = dn;
+}
+
+/* true nf by a marked GB */
+
+void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
+{
+	DP u,p,d,s,t,dmy,hp;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int sugar,psugar;
+	P dn,tdn,tdn1;
+
+	dn = (P)ONE;
+	if ( !g ) {
+		*rp = 0; *dnp = dn; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,hp = hps[wb[i]]) ) {
+				p = ps[wb[i]];
+				dp_red_marked(d,g,p,hp,&t,&u,&tdn,&dmy);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; *dnp = dn; return;
+				} else {
+					d = t;
+					mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+				}
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else {
 			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
 			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
 			addd(CO,d,t,&s); d = s;
