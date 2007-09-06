@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.40 2006/12/12 11:50:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.41 2007/08/21 23:53:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2446,4 +2446,120 @@ int dpv_ht(DPV p,DP *h)
 		MKDP(e[maxi]->nv,mr,*h); (*h)->sugar = mr->dl->td;  /* XXX */
 		return maxi;
 	}
+}
+
+/* return 1 if 0 <_w1 v && v <_w2 0 */
+
+int in_c12(int n,int *v,int row1,int **w1,int row2, int **w2)
+{
+	int t1,t2;
+
+	t1 = compare_zero(n,v,row1,w1);
+	t2 = compare_zero(n,v,row2,w2);
+	if ( t1 > 0 && t2 < 0 ) return 1;
+	else return 0;
+}
+
+/* 0 < u => 1, 0 > u => -1 */
+
+int compare_zero(int n,int *u,int row,int **w)
+{
+	int i,j,t;
+	int *wi;
+
+	for ( i = 0; i < row; i++ ) {
+		wi = w[i];
+		for ( j = 0, t = 0; j < n; j++ ) t += u[j]*wi[j];
+		if ( t > 0 ) return 1;
+		else if ( t < 0 ) return -1;
+	}
+	return 0;
+}
+
+/* functions for generic groebner walk */
+/* u=0 means u=-infty */
+
+int compare_facet_preorder(int n,int *u,int *v,
+	int row1,int **w1,int row2,int **w2)
+{
+	int i,j,s,t,tu,tv;
+	int *w2i,*uv;
+
+	if ( !u ) return 1;
+	uv = W_ALLOC(n);
+	for ( i = 0; i < row2; i++ ) {
+		w2i = w2[i];
+		for ( j = 0, tu = tv = 0; j < n; j++ )
+			if ( s = w2i[j] ) {
+				tu += s*u[j]; tv += s*v[j];
+			}
+		for ( j = 0; j < n; j++ ) uv[j] = u[j]*tv-v[j]*tu;
+		t = compare_zero(n,uv,row1,w1);
+		if ( t > 0 ) return 1;
+		else if ( t < 0 ) return 0;
+	}
+	return 1;
+}
+
+/* return 0 if last_w = infty */
+
+NODE compute_last_w(NODE g,NODE gh,int n,int **w,
+	int row1,int **w1,int row2,int **w2)
+{
+	DP d;
+	MP f,m0,m;
+	int *wt,*v,*h;
+	NODE t,s,n0,tn,n1,r0,r;
+	int i;
+
+	wt = W_ALLOC(n);
+	n0 = 0;
+	for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
+		f = BDY((DP)BDY(t));
+		h = BDY((DP)BDY(s))->dl->d;
+		for ( ; f; f = NEXT(f) ) {
+			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+			for ( i = 0; i < n && !wt[i]; i++ );
+			if ( i == n ) continue;
+
+			if ( in_c12(n,wt,row1,w1,row2,w2) && 
+				compare_facet_preorder(n,*w,wt,row1,w1,row2,w2) ) {
+				v = (int *)MALLOC_ATOMIC(n*sizeof(int));
+				for ( i = 0; i < n; i++ ) v[i] = wt[i];
+				MKNODE(n1,v,n0); n0 = n1;
+			}
+		}
+	}
+	if ( !n0 ) return 0;
+	for ( t = n0; t; t = NEXT(t) ) {
+		v = (int *)BDY(t);
+		for ( s = n0; s; s = NEXT(s) )
+			if ( !compare_facet_preorder(n,v,(int *)BDY(s),row1,w1,row2,w2) )
+				break;
+		if ( !s ) {
+			*w = v;
+			break;
+		}
+	}
+	if ( !t )
+		error("compute_last_w : cannot happen");
+	r0 = 0;
+	for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
+		f = BDY((DP)BDY(t));
+		h = BDY((DP)BDY(s))->dl->d;
+		for ( m0 = 0; f; f = NEXT(f) ) {
+			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+			for ( i = 0; i < n && !wt[i]; i++ );
+			if ( i == n  ||
+				(compare_facet_preorder(n,wt,*w,row1,w1,row2,w2)
+				&& compare_facet_preorder(n,*w,wt,row1,w1,row2,w2)) ) {
+				NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
+			}
+			NEXT(m) = 0;
+		}
+		MKDP(((DP)BDY(t))->nv,m0,d);  d->sugar = ((DP)BDY(t))->sugar;
+		NEXTNODE(r0,r); BDY(r) = (pointer)d;
+	}
+	NEXT(r) = 0;
+	return r0;
 }

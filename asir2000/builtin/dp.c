@@ -6,8 +6,7 @@
  * non-exclusive and royalty-free license to use, copy, modify and
  * redistribute, solely for non-commercial and non-profit purposes, the
  * computer program, "Risa/Asir" ("SOFTWARE"), subject to the terms and
- * conditions of this Agreement. For the avoidance of doubt, you acquire
- * only a limited right to use the SOFTWARE hereunder, and FLL or any
+ * conditions of this Agreement. For the avoidance of doubt, you acquire * only a limited right to use the SOFTWARE hereunder, and FLL or any
  * third party developer retains all rights, including but not limited to
  * copyrights, in and to the SOFTWARE.
  * 
@@ -45,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.66 2006/10/26 10:49:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.67 2007/08/21 23:53:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -101,6 +100,7 @@ void Pnd_nf();
 void Pdp_initial_term();
 void Pdp_order();
 void Pdp_inv_or_split();
+void Pdp_compute_last_w();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -248,9 +248,54 @@ struct ftab dp_supp_tab[] = {
 	{"dp_idiv",Pdp_idiv,2},
 	{"dp_tdiv",Pdp_tdiv,2},
 	{"dp_minp",Pdp_minp,2},
+	{"dp_compute_last_w",Pdp_compute_last_w,5},
 
 	{0,0,0}
 };
+
+NODE compute_last_w(NODE g,NODE gh,int n,int **v,int row1,int **m1,int row2,int **m2);
+
+void Pdp_compute_last_w(NODE arg,LIST *rp)
+{
+	NODE g,gh,r;
+	VECT w,rv;
+	LIST l;
+	MAT w1,w2;
+	int row1,row2,i,j,n;
+	int *v;
+	int **m1,**m2;
+	Q q;
+
+	g = (NODE)BDY((LIST)ARG0(arg));
+	gh = (NODE)BDY((LIST)ARG1(arg));
+	w = (VECT)ARG2(arg);
+	w1 = (MAT)ARG3(arg);
+	w2 = (MAT)ARG4(arg);
+	n = w1->col;
+	row1 = w1->row;
+	row2 = w2->row;
+	if ( w ) {
+		v = W_ALLOC(n);
+		for ( i = 0; i < n; i++ ) v[i] = QTOS((Q)w->body[i]);
+	} else v = 0;
+	m1 = almat(row1,n);
+	for ( i = 0; i < row1; i++ )
+		for ( j = 0; j < n; j++ ) m1[i][j] = QTOS((Q)w1->body[i][j]);
+	m2 = almat(row2,n);
+	for ( i = 0; i < row2; i++ )
+		for ( j = 0; j < n; j++ ) m2[i][j] = QTOS((Q)w2->body[i][j]);
+	r = compute_last_w(g,gh,n,&v,row1,m1,row2,m2);
+	if ( !r ) *rp = 0;
+	else {
+		MKVECT(rv,n);
+		for ( i = 0; i < n; i++ ) {
+			STOQ(v[i],q); rv->body[i] = (pointer)q;
+		}
+		MKLIST(l,r);
+		r = mknode(2,rv,l);
+		MKLIST(*rp,r);
+	}
+}
 
 void Pdp_inv_or_split(arg,rp)
 NODE arg;
