@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.41 2007/08/21 23:53:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.42 2007/09/06 02:23:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1008,18 +1008,72 @@ void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
 	*rp = d; *dnp = dn;
 }
 
+void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Q *contp)
+{
+	struct oVECT v;
+	int i,n1,n2,n;
+	MP m,m0,t;
+	Q *w;
+	Q h;
+
+	if ( p1 ) {
+		for ( i = 0, m = BDY(p1); m; m = NEXT(m), i++ );
+		n1 = i;
+	} else
+		n1 = 0;
+	if ( p2 ) {
+		for ( i = 0, m = BDY(p2); m; m = NEXT(m), i++ );
+		n2 = i;
+	} else
+		n2 = 0;
+	n = n1+n2;
+	if ( !n ) {
+		*r1p = 0; *r2p = 0; *contp = ONE; return;
+	}
+	w = (Q *)ALLOCA(n*sizeof(Q));
+	v.len = n;
+	v.body = (pointer *)w;
+	i = 0;
+	if ( p1 )
+		for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) w[i] = (Q)m->c;
+	if ( p2 )
+		for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = (Q)m->c;
+	h = w[0]; removecont_array((P *)w,n,1); divq(h,w[0],contp);
+	i = 0;
+	if ( p1 ) {
+		for ( m0 = 0, t = BDY(p1); i < n1; i++, t = NEXT(t) ) {
+			NEXTMP(m0,m); m->c = (P)w[i]; m->dl = t->dl;
+		}
+		NEXT(m) = 0;
+		MKDP(p1->nv,m0,*r1p); (*r1p)->sugar = p1->sugar;
+	} else
+		*r1p = 0;
+	if ( p2 ) {
+		for ( m0 = 0, t = BDY(p2); i < n; i++, t = NEXT(t) ) {
+			NEXTMP(m0,m); m->c = (P)w[i]; m->dl = t->dl;
+		}
+		NEXT(m) = 0;
+		MKDP(p2->nv,m0,*r2p); (*r2p)->sugar = p2->sugar;
+	} else
+		*r2p = 0;
+}
+
 /* true nf by a marked GB */
 
-void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
+void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
 {
 	DP u,p,d,s,t,dmy,hp;
 	NODE l;
 	MP m,mr;
-	int i,n;
+	int i,n,hmag;
 	int *wb;
-	int sugar,psugar;
-	P dn,tdn,tdn1;
+	int sugar,psugar,multiple;
+	P nm,tnm1,dn,tdn,tdn1;
+	Q cont;
 
+	multiple = 0;
+	hmag = multiple*HMAG(g);
+	nm = (P)ONE;
 	dn = (P)ONE;
 	if ( !g ) {
 		*rp = 0; *dnp = dn; return;
@@ -1037,9 +1091,7 @@ void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; *dnp = dn; return;
+					goto last;
 				} else {
 					d = t;
 					mulp(CO,dn,tdn,&tdn1); dn = tdn1;
@@ -1047,18 +1099,30 @@ void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
 				break;
 			}
 		}
-		if ( u )
+		if ( u ) {
 			g = u;
-		else {
+			if ( multiple && ((d && HMAG(d)>hmag) || (HMAG(g)>hmag)) ) {
+				dp_removecont2(d,g,&t,&u,&cont); d = t; g = u;
+				mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
+				if ( d )
+					hmag = multiple*HMAG(d);
+				else
+					hmag = multiple*HMAG(g);
+			}
+		} else {
 			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
 			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
 			addd(CO,d,t,&s); d = s;
 			dp_rest(g,&t); g = t;
 		}
 	}
-	if ( d )
+last:
+	if ( d ) {
+		dp_removecont2(d,0,&t,&u,&cont); d = t;
+		mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
 		d->sugar = sugar;
-	*rp = d; *dnp = dn;
+	}
+	*rp = d; *nmp = nm; *dnp = dn;
 }
 
 /* nf computation over Z */
@@ -2555,8 +2619,8 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
 				&& compare_facet_preorder(n,*w,wt,row1,w1,row2,w2)) ) {
 				NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
 			}
-			NEXT(m) = 0;
 		}
+		NEXT(m) = 0;
 		MKDP(((DP)BDY(t))->nv,m0,d);  d->sugar = ((DP)BDY(t))->sugar;
 		NEXTNODE(r0,r); BDY(r) = (pointer)d;
 	}

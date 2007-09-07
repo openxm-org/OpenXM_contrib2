@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.67 2007/08/21 23:53:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.68 2007/09/06 02:23:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -934,6 +934,7 @@ LIST *rp;
 	DP *ps,*hps;
 	DP g;
 	DP nm;
+	Q cont;
 	P dn;
 	int full;
 
@@ -948,11 +949,10 @@ LIST *rp;
 		b = BDY((LIST)ARG0(arg)); 
 		ps = (DP *)BDY((VECT)ARG2(arg));
 		hps = (DP *)BDY((VECT)ARG3(arg));
-		dp_true_nf_marked(b,g,ps,hps,&nm,&dn);
+		dp_true_nf_marked(b,g,ps,hps,&nm,&cont,&dn);
 	}
-	NEWNODE(n); BDY(n) = (pointer)nm;
-	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)dn;
-	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
+	n = mknode(3,nm,cont,dn);
+	MKLIST(*rp,n);
 }
 
 void Pdp_weyl_nf_mod(arg,rp)
