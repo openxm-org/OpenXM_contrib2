@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.7 2004/12/04 09:39:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.8 2007/02/18 05:36:27 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 
-#if defined(VISUAL) || ( defined(i386) && !defined(__DARWIN__) )
+#if defined(VISUAL) || defined(i386)
 void addn(N n1,N n2,N *nr)
 {
 	unsigned int *m1,*m2,*mr;
@@ -98,6 +98,7 @@ void addn(N n1,N n2,N *nr)
 		}
 #else
 		asm volatile("\
+		pushl	%%ebx;\
 		movl	%1,%%esi;\
 		movl	%2,%%edi;\
 		movl	%3,%%ebx;\
@@ -115,10 +116,11 @@ void addn(N n1,N n2,N *nr)
 		jnz Lstart_addn;\
 		movl	$0,%%eax;\
 		adcl	%%eax,%%eax;\
-		movl	%%eax,%0"\
+		movl	%%eax,%0;\
+		popl	%%ebx"\
 		:"=m"(c)\
 		:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
-		:"eax","ebx","ecx","edx","esi","edi");
+		:"eax","ecx","edx","esi","edi");
 #endif
 		for ( i = d2, m1 += d2, mr += d2; (i < d1) && c ; i++ ) {
 			tmp = *m1++ + c;
@@ -202,6 +204,7 @@ int subn(N n1,N n2,N *nr)
 		}
 #else
 		asm volatile("\
+		pushl	%%ebx;\
 		movl	%1,%%esi;\
 		movl	%2,%%edi;\
 		movl	%3,%%ebx;\
@@ -219,10 +222,11 @@ int subn(N n1,N n2,N *nr)
 		jnz Lstart_subn;\
 		movl	$0,%%eax;\
 		adcl	%%eax,%%eax;\
-		movl	%%eax,%0"\
+		movl	%%eax,%0;\
+		popl	%%ebx"\
 		:"=m"(br)\
 		:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
-		:"eax","ebx","ecx","edx","esi","edi");
+		:"eax","ecx","edx","esi","edi");
 #endif
 		for ( i = d2, m1 += d2, mr += d2; (i < d1) && br; i++ ) {
 			t = *m1++;
@@ -284,6 +288,7 @@ void _addn(N n1,N n2,N nr)
 		}
 #else
 		asm volatile("\
+		pushl	%%ebx;\
 		movl	%1,%%esi;\
 		movl	%2,%%edi;\
 		movl	%3,%%ebx;\
@@ -301,10 +306,11 @@ void _addn(N n1,N n2,N nr)
 		jnz Lstart__addn;\
 		movl	$0,%%eax;\
 		adcl	%%eax,%%eax;\
-		movl	%%eax,%0"\
+		movl	%%eax,%0;\
+		popl	%%ebx"\
 		:"=m"(c)\
 		:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
-		:"eax","ebx","ecx","edx","esi","edi");
+		:"eax","ecx","edx","esi","edi");
 #endif
 		for ( i = d2, m1 += d2, mr += d2; (i < d1) && c ; i++ ) {
 			tmp = *m1++ + c;
@@ -387,6 +393,7 @@ int _subn(N n1,N n2,N nr)
 		}
 #else
 		asm volatile("\
+		pushl	%%ebx;\
 		movl	%1,%%esi;\
 		movl	%2,%%edi;\
 		movl	%3,%%ebx;\
@@ -404,10 +411,11 @@ int _subn(N n1,N n2,N nr)
 		jnz Lstart__subn;\
 		movl	$0,%%eax;\
 		adcl	%%eax,%%eax;\
-		movl	%%eax,%0"\
+		movl	%%eax,%0;\
+		popl	%%ebx"\
 		:"=m"(br)\
 		:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
-		:"eax","ebx","ecx","edx","esi","edi");
+		:"eax","ecx","edx","esi","edi");
 #endif
 		for ( i = d2, m1 += d2, mr += d2; (i < d1) && br; i++ ) {
 			t = *m1++;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.6 2006/08/09 02:48:49 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.7 2007/02/18 05:36:27 ohara Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -288,7 +288,7 @@ void bxprintn(N n)
 	}
 }
 
-#if defined(VISUAL) || ( defined(i386) && !defined(__DARWIN__) )
+#if defined(VISUAL) || defined(i386)
 void muln(N n1,N n2,N *nr)
 {
 	unsigned int tmp,carry,mul;
@@ -374,6 +374,7 @@ void muln_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 	}
 #else
 	asm volatile("\
+	pushl	%%ebx;\
 	movl	%0,%%esi;\
 	movl	%1,%%edi;\
 	movl	$0,%%ebx;\
@@ -390,10 +391,11 @@ void muln_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 	leal	4(%%edi),%%edi;\
 	decl	%3;\
 	jnz		Lstart_muln;\
-	movl	%%ebx,(%%edi)"\
+	movl	%%ebx,(%%edi);\
+	popl	%%ebx"\
 	:\
 	:"m"(p),"m"(r),"m"(d),"m"(s)\
-	:"eax","ebx","edx","esi","edi");
+	:"eax","edx","esi","edi");
 #endif
 }
 
@@ -523,6 +525,7 @@ unsigned int divn_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 	unsigned int borrow;
 
 	asm volatile("\
+	pushl	%%ebx;\
 	movl	%1,%%esi;\
 	movl	%2,%%edi;\
 	movl	$0,%%ebx;\
@@ -538,10 +541,11 @@ unsigned int divn_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 	leal	4(%%edi),%%edi;\
 	decl	%4;\
 	jnz		Lstart_divn;\
-	movl	%%ebx,%0"\
+	movl	%%ebx,%0;\
+	popl	%%ebx"\
 	:"=m"(borrow)\
 	:"m"(p),"m"(r),"m"(d),"m"(s)\
-	:"eax","ebx","edx","esi","edi");
+	:"eax","edx","esi","edi");
 
 	return borrow;
 #endif

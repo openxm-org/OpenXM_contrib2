@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.42 2007/09/06 02:23:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.43 2007/09/07 00:45:50 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -860,6 +860,34 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
 	*head = h; *rest = r; *dnp = (P)c2;
 }
 
+void dp_red_marked_mod(DP p0,DP p1,DP p2,DP hp2,int mod,DP *head,DP *rest,P *dnp)
+{
+	int i,n;
+	DL d1,d2,d;
+	MP m;
+	DP t,s,r,h;
+	P c1,c2,g,u;
+
+	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
+	NEWDL(d,n); d->td = d1->td - d2->td;
+	for ( i = 0; i < n; i++ )
+		d->d[i] = d1->d[i]-d2->d[i];
+	c1 = (P)BDY(p1)->c; c2 = (P)BDY(hp2)->c;
+	gcdprsmp(CO,mod,c1,c2,&g);
+	divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
+	if ( NUM(c2) ) {
+		divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
+	}
+	NEWMP(m); m->dl = d; chsgnmp(mod,(P)c1,&m->c); NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,s,p2,&t);
+	if ( NUM(c2) ) {
+		addmd(CO,mod,p1,t,&r); h = p0;
+	} else {
+		mulmdc(CO,mod,p1,c2,&s); addmd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
+	}
+	*head = h; *rest = r; *dnp = c2;
+}
+
 /* m-reduction over a field */
 
 void dp_red_f(DP p1,DP p2,DP *rest)
@@ -1123,6 +1151,57 @@ last:
 		d->sugar = sugar;
 	}
 	*rp = d; *nmp = nm; *dnp = dn;
+}
+
+void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
+{
+	DP hp,u,p,d,s,t;
+	NODE l;
+	MP m,mr;
+	int i,n;
+	int *wb;
+	int sugar,psugar;
+	P dn,tdn,tdn1;
+
+	dn = (P)ONEM;
+	if ( !g ) {
+		*rp = 0; *dnp = dn; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+		wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,hp = hps[wb[i]]) ) {
+				p = ps[wb[i]];
+				dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn);	
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				if ( !u ) {
+					if ( d )
+						d->sugar = sugar;
+					*rp = d; *dnp = dn; return;
+				} else {
+					d = t;
+					mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+				}
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addmd(CO,mod,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+	if ( d )
+		d->sugar = sugar;
+	*rp = d; *dnp = dn;
 }
 
 /* nf computation over Z */
@@ -2626,4 +2705,89 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
 	}
 	NEXT(r) = 0;
 	return r0;
+}
+
+/* compute a sufficient set of d(f)=u-v */
+static int comp_vector_lex_nv;
+
+int comp_vector_lex(int **a,int **b)
+{
+	int i;
+	int *pa,*pb;
+
+	pa = *a; pb = *b;
+	for ( i = 0; i < comp_vector_lex_nv; i++ )
+		if ( pa[i] < pb[i] ) return -1;
+		else if ( pa[i] > pb[i] ) return 1;
+	return 0;
+}
+
+NODE compute_essential_df(DP *g,DP *gh,int ng)
+{
+	VECT v;
+	Q q;
+	MP m;
+	NODE r,r1;
+	int nv,len,i,j,k;
+	int *p,*dm,*mi,*mj,*h;
+	int **mat;
+
+	nv = comp_vector_lex_nv = g[0]->nv;
+	for ( len = 0, j = 0; j < ng; j++ ) {
+		for ( m = BDY(g[j]); m; m = NEXT(m), len++ );
+	}
+	mat = almat(len,nv);
+	for ( i = 0, j = 0; j < ng; j++ ) {
+		h = BDY(gh[j])->dl->d;
+		for ( m = BDY(g[j]); m; m = NEXT(m) ) {
+			dm = m->dl->d;
+			for ( k = 0; k < nv; k++ )
+				if ( dm[k] ) break;
+			if ( k == nv ) continue;
+			else {
+				p = mat[i];
+				for ( k = 0; k < nv; k++ )
+					p[k] = h[k]-dm[k];
+				i++;
+			}
+		}
+	}
+	len = i;
+	qsort(mat,len,sizeof(int *),
+		(int (*)(const void *,const void *))comp_vector_lex);
+	for ( i = 0; i < len; i++ ) {
+		for ( j = 0; j < nv; j++ )
+			printf("%d ",mat[i][j]);
+		printf("\n");
+	}
+	for ( i = 0; i < len; i++ ) {
+		mi = mat[i];
+		if ( !mi ) continue;
+		for ( j = i+1; j < len; j++ ) {
+			mj = mat[j];
+			if ( !mj ) continue;
+			for ( k = 0; k < nv; k++ )
+				if ( mi[k] > mj[k] )  break;
+			if ( k == nv ) mat[j] = 0;
+		}
+	}
+	for ( i = 0; i < len; i++ ) {
+		if ( mat[i] ) {
+			for ( j = 0; j < nv; j++ )
+				printf("%d ",mat[i][j]);
+			printf("\n");
+		}
+	}
+	r = 0;
+	for ( i = 0; i < len; i++ ) {
+		if ( mi = mat[i] ) {
+			MKVECT(v,nv);
+			for ( k = 0; k < nv; k++ ) {
+				STOQ(mi[k],q);
+				v->body[k] = (pointer)q;
+			}
+			MKNODE(r1,v,r); r = r1;
+		}
+	}
+	return r;
 }

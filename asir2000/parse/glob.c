@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.67 2006/09/28 07:43:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.68 2007/01/03 15:48:08 fujiwara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -621,6 +621,14 @@ void ill_handler(int sig)
 #endif
 }
 
+#if defined(__DARWIN__)
+#define SIGNAL_FOR_TIMER SIGALRM
+#define ITIMER_TYPE ITIMER_REAL
+#else
+#define SIGNAL_FOR_TIMER SIGVTALRM
+#define ITIMER_TYPE ITIMER_VIRTUAL
+#endif
+
 void alrm_handler(int sig)
 {
 	fprintf(stderr,"interval timer expired (VTALRM)\n");
@@ -679,7 +687,7 @@ void error(char *s)
 
 #if !defined(VISUAL)
 	if ( !error_in_timer && timer_is_set )
-		alrm_handler(SIGVTALRM);
+		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
 	fprintf(stderr,"%s\n",s);
 	set_lasterror(s);
@@ -716,7 +724,7 @@ void toplevel(char *s)
 
 #if !defined(VISUAL)
 	if ( timer_is_set )
-		alrm_handler(SIGVTALRM);
+		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
 	fprintf(stderr,"%s\n",s);
 	if ( do_file ) {
@@ -740,8 +748,8 @@ void set_timer(int interval)
 	it.it_interval.tv_usec = 0;
 	it.it_value.tv_sec = interval;
 	it.it_value.tv_usec = 0;
-	setitimer(ITIMER_VIRTUAL,&it,0);
-	signal(SIGVTALRM,alrm_handler);
+	setitimer(ITIMER_TYPE,&it,0);
+	signal(SIGNAL_FOR_TIMER,alrm_handler);
 	timer_is_set = 1;
 }
 
@@ -753,8 +761,8 @@ void reset_timer()
 	it.it_interval.tv_usec = 0;
 	it.it_value.tv_sec = 0;
 	it.it_value.tv_usec = 0;
-	setitimer(ITIMER_VIRTUAL,&it,0);
-	signal(SIGVTALRM,SIG_IGN);
+	setitimer(ITIMER_TYPE,&it,0);
+	signal(SIGNAL_FOR_TIMER,SIG_IGN);
 	timer_is_set = 0;
 }
 #endif

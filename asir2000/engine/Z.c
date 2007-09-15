@@ -702,8 +702,9 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	adc eax,eax
 	mov c,eax
 	}
-#elif ( defined(i386) && !defined(__DARWIN__) )
+#elif defined(i386)
 	asm volatile("\
+	pushl	%%ebx;\
 	movl	%1,%%esi;\
 	movl	%2,%%edi;\
 	movl	%3,%%ebx;\
@@ -721,10 +722,11 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	jnz Lstart__addz;\
 	movl	$0,%%eax;\
 	adcl	%%eax,%%eax;\
-	movl	%%eax,%0"\
+	movl	%%eax,%0;\
+	popl	%%ebx"\
 	:"=m"(c)\
 	:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
-	:"eax","ebx","ecx","edx","esi","edi");
+	:"eax","ecx","edx","esi","edi");
 #else
 	for ( i = 0, c = 0; i < d2; i++, m1++, m2++, mr++ ) {
 		tmp = *m1 + *m2;
@@ -792,8 +794,9 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	adc eax,eax
 	mov br,eax
 	}
-#elif ( defined(i386) && !defined(__DARWIN__) )
+#elif defined(i386)
 	asm volatile("\
+	pushl	%%ebx;\
 	movl	%1,%%esi;\
 	movl	%2,%%edi;\
 	movl	%3,%%ebx;\
@@ -811,10 +814,11 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	jnz Lstart__subz;\
 	movl	$0,%%eax;\
 	adcl	%%eax,%%eax;\
-	movl	%%eax,%0"\
+	movl	%%eax,%0;\
+	popl	%%ebx"\
 	:"=m"(br)\
 	:"m"(m1),"m"(m2),"m"(mr),"m"(d2)\
-	:"eax","ebx","ecx","edx","esi","edi");
+	:"eax","ecx","edx","esi","edi");
 #else
 	for ( i = 0, br = 0; i < d2; i++, mr++ ) {
 		t = *m1++;

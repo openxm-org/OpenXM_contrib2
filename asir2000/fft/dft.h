@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.3 2000/08/22 05:04:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.4 2003/02/14 22:29:10 ohara Exp $ 
 */
 #if defined(LONG_IS_32BIT)
 #if defined(VISUAL)
@@ -98,6 +98,12 @@ typedef float ModNum;
 #include "inline.h"
 
 typedef unsigned int ModNum;
+
+/* XXX */
+#if defined(__DARWIN__)
+#undef DMAR
+#define DMAR(a1,a2,a3,d,r) (r)=dmar(a1,a2,a3,d);
+#endif
 
 #define AxBplusCmodP(ans,anstype,a,b,c,p,pinv) \
   { DMAR(a,b,c,p,ans) }
