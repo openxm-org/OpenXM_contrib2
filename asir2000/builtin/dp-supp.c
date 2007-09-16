@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.43 2007/09/07 00:45:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.44 2007/09/15 10:17:08 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2708,86 +2708,67 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
 }
 
 /* compute a sufficient set of d(f)=u-v */
-static int comp_vector_lex_nv;
-
-int comp_vector_lex(int **a,int **b)
-{
-	int i;
-	int *pa,*pb;
-
-	pa = *a; pb = *b;
-	for ( i = 0; i < comp_vector_lex_nv; i++ )
-		if ( pa[i] < pb[i] ) return -1;
-		else if ( pa[i] > pb[i] ) return 1;
-	return 0;
-}
 
 NODE compute_essential_df(DP *g,DP *gh,int ng)
 {
-	VECT v;
-	Q q;
+	int nv,i,j,k,t,lj;
+	NODE r,r1,ri,rt,r0;
 	MP m;
-	NODE r,r1;
-	int nv,len,i,j,k;
-	int *p,*dm,*mi,*mj,*h;
-	int **mat;
+	MP *mj;
+	DL di,hj,dl,dlt;
+	int *d,*dt;
+	LIST l;
+	Q q;
 
-	nv = comp_vector_lex_nv = g[0]->nv;
-	for ( len = 0, j = 0; j < ng; j++ ) {
-		for ( m = BDY(g[j]); m; m = NEXT(m), len++ );
-	}
-	mat = almat(len,nv);
-	for ( i = 0, j = 0; j < ng; j++ ) {
-		h = BDY(gh[j])->dl->d;
-		for ( m = BDY(g[j]); m; m = NEXT(m) ) {
-			dm = m->dl->d;
-			for ( k = 0; k < nv; k++ )
-				if ( dm[k] ) break;
-			if ( k == nv ) continue;
-			else {
-				p = mat[i];
-				for ( k = 0; k < nv; k++ )
-					p[k] = h[k]-dm[k];
-				i++;
-			}
-		}
-	}
-	len = i;
-	qsort(mat,len,sizeof(int *),
-		(int (*)(const void *,const void *))comp_vector_lex);
-	for ( i = 0; i < len; i++ ) {
-		for ( j = 0; j < nv; j++ )
-			printf("%d ",mat[i][j]);
-		printf("\n");
-	}
-	for ( i = 0; i < len; i++ ) {
-		mi = mat[i];
-		if ( !mi ) continue;
-		for ( j = i+1; j < len; j++ ) {
-			mj = mat[j];
-			if ( !mj ) continue;
-			for ( k = 0; k < nv; k++ )
-				if ( mi[k] > mj[k] )  break;
-			if ( k == nv ) mat[j] = 0;
-		}
-	}
-	for ( i = 0; i < len; i++ ) {
-		if ( mat[i] ) {
-			for ( j = 0; j < nv; j++ )
-				printf("%d ",mat[i][j]);
-			printf("\n");
-		}
-	}
+	nv = g[0]->nv;
 	r = 0;
-	for ( i = 0; i < len; i++ ) {
-		if ( mi = mat[i] ) {
-			MKVECT(v,nv);
-			for ( k = 0; k < nv; k++ ) {
-				STOQ(mi[k],q);
-				v->body[k] = (pointer)q;
-			}
-			MKNODE(r1,v,r); r = r1;
+	for ( j = 0; j < ng; j++ ) {
+		for ( m = BDY(g[j]), lj = 0; m; m = NEXT(m), lj++ );
+		mj = (MP *)ALLOCA(lj*sizeof(MP));
+		for ( m = BDY(g[j]), k = 0; m; m = NEXT(m), k++ )
+			mj[k] = m;
+		for ( i = 0; i < lj; i++ ) {
+			for ( di = mj[i]->dl, k = i+1; k < lj; k++ )
+				if ( _dl_redble(di,mj[k]->dl,nv) ) break;
+			if ( k < lj ) mj[i] = 0;
 		}
+		hj = BDY(gh[j])->dl;
+		_NEWDL(dl,nv); d = dl->d;
+		r0 = r;
+		for ( i = 0; i < lj; i++ ) {
+			if ( mj[i] && !dl_equal(nv,di=mj[i]->dl,hj) ) {
+				for ( k = 0, t = 0; k < nv; k++ ) {
+					d[k] = hj->d[k]-di->d[k];
+					t += d[k];
+				}
+				dl->td = t;	
+#if 1
+				for ( rt = r0; rt; rt = NEXT(rt) ) {
+					dlt = (DL)BDY(rt);
+					if ( dlt->td != dl->td ) continue;
+					for ( dt = dlt->d, k = 0; k < nv; k++ )
+						if ( d[k] != dt[k] ) break;
+					if ( k == nv ) break;
+				}
+#else
+				rt = 0;
+#endif
+				if ( !rt ) {
+					MKNODE(r1,dl,r); r = r1;
+					_NEWDL(dl,nv); d = dl->d;
+				}
+			}
+		}
+	}
+	for ( rt = r; rt; rt = NEXT(rt) ) {
+		dl = (DL)BDY(rt); d = dl->d;
+		ri = 0;
+		for ( k = nv-1; k >= 0; k-- ) {
+			STOQ(d[k],q);
+			MKNODE(r1,q,ri); ri = r1;
+		}
+		MKNODE(r1,0,ri); MKLIST(l,r1);
+		BDY(rt) = (pointer)l;
 	}
 	return r;
 }
