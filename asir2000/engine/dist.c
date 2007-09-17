@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.41 2006/08/08 02:39:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.42 2006/08/27 22:17:27 noro Exp $ 
 */
 #include "ca.h"
 
@@ -65,8 +65,10 @@
 #define ORD_HOMO_WW_DRL_ZIGZAG 13
 
 int cmpdl_drl_zigzag(), cmpdl_homo_ww_drl_zigzag();
+int cmpdl_top_weight();
 
 int (*cmpdl)()=cmpdl_revgradlex;
+int (*cmpdl_tie_breaker)();
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
 
 int do_weyl;
@@ -118,8 +120,13 @@ int has_sfcoef_p(P f)
 	}
 }
 
+extern N *current_top_weight_vector;
+static int current_top_weight_len;
+
 void initd(struct order_spec *spec)
 {
+	int len,i;
+
 	switch ( spec->id ) {
 		case 3:
 			cmpdl = cmpdl_composite;
@@ -164,6 +171,14 @@ void initd(struct order_spec *spec)
 					cmpdl = cmpdl_lex; break;
 			}
 			break;
+	}
+	if ( current_top_weight_vector ) {
+		cmpdl_tie_breaker = cmpdl;
+		cmpdl = cmpdl_top_weight;
+		for ( len = 0, i = 0; i < spec->nv; i++ )
+			if ( current_top_weight_vector[i] )
+				len = MAX(PL(current_top_weight_vector[i]),len);
+		current_top_weight_len = len;
 	}
 	dp_current_spec = spec;
 }
@@ -1638,6 +1653,50 @@ int cmpdl_matrix(int n,DL d1,DL d2)
 			return -1;
 	}
 	return 0;
+}
+
+int cmpdl_top_weight(int n,DL d1,DL d2)
+{
+	int *w;
+	N sum,wm,wma,t;
+	N *a;
+	struct oN tn;
+	int len,i,sgn,tsgn;
+	int *t1,*t2;
+
+	w = (int *)ALLOCA(n*sizeof(int));
+	len = current_top_weight_len+3;
+	t1 = d1->d; t2 = d2->d;
+	for ( i = 0; i < n; i++ ) w[i] = t1[i]-t2[i];
+	sum = (N)W_ALLOC(len); sgn = 0;
+	wm = (N)W_ALLOC(len);
+	wma = (N)W_ALLOC(len);
+	a = current_top_weight_vector;
+	for ( i = 0; i < n; i++ ) {
+		if ( !a[i] || !w[i] ) continue;
+		tn.p = 1;
+		if ( w[i] > 0 ) {
+			tn.b[0] = w[i]; tsgn = 1;
+		} else {
+			tn.b[0] = -w[i]; tsgn = -1;
+		}
+		_muln(a[i],&tn,wm);
+		if ( !sgn ) {
+			sgn = tsgn;
+			t = wm; wm = sum; sum = t;
+		} else if ( sgn == tsgn ) {
+			_addn(sum,wm,wma);
+			if ( !PL(wma) )
+				sgn = 0;
+			t = wma; wma = sum; sum = t;
+		} else {
+			sgn *= _subn(sum,wm,wma);
+			t = wma; wma = sum; sum = t;
+		}
+	}
+	if ( sgn > 0 ) return 1;
+	else if ( sgn < 0 ) return -1;
+	else return (*cmpdl_tie_breaker)(n,d1,d2);
 }
 
 GeoBucket create_bucket()

@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.69 2007/09/07 00:45:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.70 2007/09/15 10:17:08 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -90,7 +90,7 @@ void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main(),Pdp_weyl_gr_f_main();
 void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main(),Pdp_weyl_f4_f_main();
 void Pdp_weyl_mul(),Pdp_weyl_mul_mod();
 void Pdp_weyl_set_weight();
-void Pdp_set_weight();
+void Pdp_set_weight(),Pdp_set_top_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
 void Pdp_lnf_f();
 void Pnd_gr(),Pnd_gr_trace(),Pnd_f4(),Pnd_f4_trace();
@@ -191,6 +191,7 @@ struct ftab dp_tab[] = {
 	/* misc */
 	{"dp_inv_or_split",Pdp_inv_or_split,3},
 	{"dp_set_weight",Pdp_set_weight,-1},
+	{"dp_set_top_weight",Pdp_set_top_weight,-1},
 	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
 	{0,0,0},
 };
@@ -2361,6 +2362,47 @@ VECT *rp;
 		for ( i = 0; i < n; i++ )
 			current_dl_weight_vector[i] = QTOS((Q)v->body[i]);
 		*rp = v;
+	}
+}
+
+VECT current_top_weight_vector_obj;
+N *current_top_weight_vector;
+
+void Pdp_set_top_weight(arg,rp)
+NODE arg;
+VECT *rp;
+{
+	VECT v;
+	int i,n;
+	NODE node;
+
+	if ( !arg )
+		*rp = current_top_weight_vector_obj;
+	else if ( !ARG0(arg) ) {
+		current_top_weight_vector = 0;
+		current_top_weight_vector_obj = 0;
+		*rp = 0;
+	} else {
+		if ( OID(ARG0(arg)) != O_VECT && OID(ARG0(arg)) != O_LIST )
+			error("dp_set_top_weight : invalid argument");
+		if ( OID(ARG0(arg)) == O_VECT )
+			v = (VECT)ARG0(arg);
+		else {
+			node = (NODE)BDY((LIST)ARG0(arg));
+			n = length(node);
+			MKVECT(v,n);
+			for ( i = 0; i < n; i++, node = NEXT(node) )
+				BDY(v)[i] = BDY(node);
+		}
+		for ( i = 0; i < v->len; i++ )
+			if ( !INT(BDY(v)[i]) || SGN((Q)BDY(v)[i]) < 0 )
+				error("dp_set_top_weight : each element must be a non-negative integer");
+		current_top_weight_vector_obj = v;
+		current_top_weight_vector = (N *)MALLOC(v->len*sizeof(N));
+		for ( i = 0; i < v->len; i++ ) {
+			current_top_weight_vector[i] = NM((Q)BDY(v)[i]);
+		}
+		*rp = current_top_weight_vector_obj;
 	}
 }
 
