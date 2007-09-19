@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.44 2007/09/15 10:17:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.45 2007/09/16 09:08:25 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -70,6 +70,30 @@ void print_composite_order_spec(struct order_spec *spec);
  * content reduction
  *
  */
+
+static NODE RatDenomList;
+
+void init_denomlist()
+{
+	RatDenomList = 0;
+}
+
+void add_denomlist(P f)
+{
+	NODE n;
+
+	if ( OID(f)==O_P ) {
+		MKNODE(n,f,RatDenomList); RatDenomList = n;
+	}
+}
+
+LIST get_denomlist()
+{
+	LIST l;
+
+	MKLIST(l,RatDenomList); RatDenomList = 0;
+	return l;
+}
 
 void dp_ptozp(DP p,DP *rp)
 {
@@ -448,6 +472,7 @@ void dp_prim(DP p,DP *rp)
 	P *w;
 	Q *c;
 	Q dvr;
+	NODE tn;
 
 	if ( !p )
 		*rp = 0;
@@ -502,6 +527,7 @@ void dp_prim(DP p,DP *rp)
 				NEXTMP(mr0,mr); divsp(CO,m->c,g,&mr->c); mr->dl = m->dl;
 			}
 			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+			add_denomlist(g);
 		}
 	}
 }
@@ -805,6 +831,7 @@ void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
 	} else {
 		ezgcdpz(CO,(P)c1,(P)c2,&g);
 		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+		add_denomlist(g);
 	}
 	NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
 	*multp = s;

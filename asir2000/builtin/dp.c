@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.70 2007/09/15 10:17:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.71 2007/09/17 12:47:45 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -102,6 +102,7 @@ void Pdp_order();
 void Pdp_inv_or_split();
 void Pdp_compute_last_w();
 void Pdp_compute_essential_df();
+void Pdp_get_denomlist();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -193,6 +194,8 @@ struct ftab dp_tab[] = {
 	{"dp_set_weight",Pdp_set_weight,-1},
 	{"dp_set_top_weight",Pdp_set_top_weight,-1},
 	{"dp_weyl_set_weight",Pdp_weyl_set_weight,-1},
+
+	{"dp_get_denomlist",Pdp_get_denomlist,0},
 	{0,0,0},
 };
 
@@ -2404,6 +2407,13 @@ VECT *rp;
 		}
 		*rp = current_top_weight_vector_obj;
 	}
+}
+
+LIST get_denomlist();
+
+void Pdp_get_denomlist(LIST *rp)
+{
+	*rp = get_denomlist();
 }
 
 static VECT current_weyl_weight_vector_obj;

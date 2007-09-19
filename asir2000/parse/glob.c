@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.68 2007/01/03 15:48:08 fujiwara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.69 2007/09/15 10:17:08 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -480,6 +480,7 @@ void resetenv(char *s)
 #if !defined(VISUAL)
 	reset_timer();
 #endif
+	init_denomlist();
 	LONGJMP(main_env,1);
 }
 

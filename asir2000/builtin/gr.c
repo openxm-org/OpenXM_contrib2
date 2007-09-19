@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.61 2006/06/09 09:59:12 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.62 2006/12/04 01:40:51 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1746,6 +1746,7 @@ NODE gb(NODE f,int m,NODE subst)
 	Max_coef = 0;
 	prev = 1;
 	doing_f4 = 0;
+	init_denomlist();
 	if ( m ) {
 		psm = (DP *)MALLOC(pslen*sizeof(DP));
 		for ( i = 0; i < psn; i++ )
