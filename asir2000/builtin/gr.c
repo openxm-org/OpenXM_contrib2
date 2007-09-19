@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.62 2006/12/04 01:40:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.63 2007/09/19 05:42:59 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1807,6 +1807,7 @@ skip_nf:
 			get_eg(&tpz0);
 			prim_part(nf,0,&h);
 			get_eg(&tpz1); add_eg(&eg_pz,&tpz0,&tpz1);
+			add_denomlist(BDY(h)->c);
 			get_eg(&tnp0);
 			if ( Demand && skip_nf_flag )
 				nh = newps_nosave(h,m,subst);
