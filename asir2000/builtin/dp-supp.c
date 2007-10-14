@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.45 2007/09/16 09:08:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.46 2007/09/19 05:42:59 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -880,9 +880,9 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
 		ezgcdpz(CO,(P)c1,(P)c2,&g);
 		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
 	}
-	NEWMP(m); m->dl = d; chsgnp((P)c1,&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+	NEWMP(m); m->dl = d; m->c = (P)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
 	*multp = s;
-	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); addd(CO,s,t,&r);
+	muld(CO,s,p2,&t); muldc(CO,p1,(P)c2,&s); subd(CO,s,t,&r);
 	muldc(CO,p0,(P)c2,&h);
 	*head = h; *rest = r; *dnp = (P)c2;
 }
@@ -1229,6 +1229,63 @@ void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
 	if ( d )
 		d->sugar = sugar;
 	*rp = d; *dnp = dn;
+}
+
+/* true nf by a marked GB and collect quotients */
+
+DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
+{
+	DP u,p,d,s,t,dmy,hp,mult;
+	DP *q;
+	NODE l;
+	MP m,mr;
+	int i,n,j;
+	int *wb;
+	int sugar,psugar,multiple;
+	P nm,tnm1,dn,tdn,tdn1;
+	Q cont;
+
+	dn = (P)ONE;
+	if ( !g ) {
+		*rp = 0; *dnp = dn; return;
+	}
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	q = (DP *)MALLOC(n*sizeof(DP));
+	for ( i = 0; i < n; i++ ) q[i] = 0;
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,hp = hps[wb[i]]) ) {
+				p = ps[wb[i]];
+				dp_red_marked(d,g,p,hp,&t,&u,&tdn,&mult);
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				for ( j = 0; j < n; j++ ) {
+					muldc(CO,q[j],(P)tdn,&dmy); q[j] = dmy;
+				}
+				addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
+				mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+				d = t;
+				if ( !u ) goto last;
+				break;
+			}
+		}
+		if ( u ) {
+			g = u;
+		} else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addd(CO,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+last:
+	if ( d ) d->sugar = sugar;
+	*rp = d; *dnp = dn;
+	return q;
 }
 
 /* nf computation over Z */
