@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.72 2007/09/19 05:42:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.73 2007/10/14 02:32:21 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -101,6 +101,7 @@ void Pnd_nf();
 void Pdp_initial_term();
 void Pdp_order();
 void Pdp_inv_or_split();
+void Pdp_compute_last_t();
 void Pdp_compute_last_w();
 void Pdp_compute_essential_df();
 void Pdp_get_denomlist();
@@ -257,12 +258,32 @@ struct ftab dp_supp_tab[] = {
 	{"dp_tdiv",Pdp_tdiv,2},
 	{"dp_minp",Pdp_minp,2},
 	{"dp_compute_last_w",Pdp_compute_last_w,5},
+	{"dp_compute_last_t",Pdp_compute_last_t,5},
 	{"dp_compute_essential_df",Pdp_compute_essential_df,2},
 
 	{0,0,0}
 };
 
 NODE compute_last_w(NODE g,NODE gh,int n,int **v,int row1,int **m1,int row2,int **m2);
+Q compute_last_t(NODE g,NODE gh,Q t,VECT w1,VECT w2,NODE *homo,VECT *wp);
+
+void Pdp_compute_last_t(NODE arg,LIST *rp)
+{
+	NODE g,gh,homo,n;
+	LIST hlist;
+	VECT v1,v2,w;
+	Q t;
+
+	g = (NODE)BDY((LIST)ARG0(arg));
+	gh = (NODE)BDY((LIST)ARG1(arg));
+	t = (Q)ARG2(arg);
+	v1 = (VECT)ARG3(arg);
+	v2 = (VECT)ARG4(arg);
+	t = compute_last_t(g,gh,t,v1,v2,&homo,&w);
+	MKLIST(hlist,homo);
+	n = mknode(3,t,w,hlist);
+	MKLIST(*rp,n);
+}
 
 void Pdp_compute_last_w(NODE arg,LIST *rp)
 {
@@ -2432,12 +2453,12 @@ VECT *rp;
 				BDY(v)[i] = BDY(node);
 		}
 		for ( i = 0; i < v->len; i++ )
-			if ( !INT(BDY(v)[i]) || SGN((Q)BDY(v)[i]) < 0 )
+			if ( !INT(BDY(v)[i]) || (BDY(v)[i] && SGN((Q)BDY(v)[i]) < 0) )
 				error("dp_set_top_weight : each element must be a non-negative integer");
 		current_top_weight_vector_obj = v;
 		current_top_weight_vector = (N *)MALLOC(v->len*sizeof(N));
 		for ( i = 0; i < v->len; i++ ) {
-			current_top_weight_vector[i] = NM((Q)BDY(v)[i]);
+			current_top_weight_vector[i] = !BDY(v)[i]?0:NM((Q)BDY(v)[i]);
 		}
 		*rp = current_top_weight_vector_obj;
 	}

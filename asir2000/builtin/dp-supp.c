@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.46 2007/09/19 05:42:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.47 2007/10/14 02:32:21 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2726,6 +2726,95 @@ int compare_facet_preorder(int n,int *u,int *v,
 		else if ( t < 0 ) return 0;
 	}
 	return 1;
+}
+
+Q inner_product_with_small_vector(VECT w,int *v)
+{
+	int n,i;
+	Q q,s,t,u;
+
+	n = w->len;
+	s = 0;
+	for ( i = 0; i < n; i++ ) {
+		STOQ(v[i],q); mulq((Q)w->body[i],q,&t); addq(t,s,&u); s = u;
+	}
+	return s;
+}
+
+Q compute_last_t(NODE g,NODE gh,Q t,VECT w1,VECT w2,NODE *homo,VECT *wp)
+{
+	int n,i;
+	int *wt;
+	Q last,d1,d2,dn,nm,s,t1;
+	VECT wd,wt1,wt2,w;
+	NODE tg,tgh;
+	MP f;
+	int *h;
+	NODE r0,r;
+	MP m0,m;
+	DP d;
+
+	n = w1->len;
+	wt = W_ALLOC(n);
+	last = ONE;
+	/* t1 = 1-t */
+	for ( tg = g, tgh = gh; tg; tg = NEXT(tg), tgh = NEXT(tgh ) ) {
+		f = BDY((DP)BDY(tg));
+		h = BDY((DP)BDY(tgh))->dl->d;
+		for ( ; f; f = NEXT(f) ) {
+			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+			for ( i = 0; i < n && !wt[i]; i++ );
+			if ( i == n ) continue;
+			d1 = inner_product_with_small_vector(w1,wt);
+			d2 = inner_product_with_small_vector(w2,wt);
+			nm = d1; subq(d1,d2,&dn);
+			/* if d1=d2 then nothing happens */
+			if ( !dn ) continue;
+			/* s satisfies ds = 0*/
+			divq(nm,dn,&s);
+
+			if ( cmpq(s,t) > 0 && cmpq(s,last) < 0 ) 
+				last = s;
+			else if ( !cmpq(s,t) ) {
+				if ( cmpq(d2,0) < 0 ) {
+					last = t;
+					break;
+				}
+			}
+		}
+	}
+	if ( !last ) {
+		dn = ONE; nm = 0;
+	} else {
+		NTOQ(NM(last),1,nm);
+		if ( INT(last) ) dn = ONE;
+		else {
+			NTOQ(DN(last),1,dn);
+		}
+	}
+	/* (1-n/d)*w1+n/d*w2 -> w=(d-n)*w1+n*w2 */
+	subq(dn,nm,&t1); mulvect(CO,(Obj)w1,(Obj)t1,(Obj *)&wt1); 
+	mulvect(CO,(Obj)w2,(Obj)nm,(Obj *)&wt2); addvect(CO,wt1,wt2,&w);
+
+	r0 = 0;
+	for ( tg = g, tgh = gh; tg; tg = NEXT(tg), tgh = NEXT(tgh ) ) {
+		f = BDY((DP)BDY(tg));
+		h = BDY((DP)BDY(tgh))->dl->d;
+		for ( m0 = 0; f; f = NEXT(f) ) {
+			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+			for ( i = 0; i < n && !wt[i]; i++ );
+			if ( !inner_product_with_small_vector(w,wt) ) {
+				NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
+			}
+		}
+		NEXT(m) = 0;
+		MKDP(((DP)BDY(tg))->nv,m0,d);  d->sugar = ((DP)BDY(tg))->sugar;
+		NEXTNODE(r0,r); BDY(r) = (pointer)d;
+	}
+	NEXT(r) = 0;
+	*homo = r0;
+	*wp = w;
+	return last;
 }
 
 /* return 0 if last_w = infty */
