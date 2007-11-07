@@ -45,11 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.21 2006/02/01 07:29:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.22 2006/09/26 05:35:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
+void Pprintf();
 void Pprint();
 void Pquotetolist();
 void Pobjtoquote();
@@ -57,6 +58,7 @@ void Peval_variables_in_quote();
 void Pset_print_function();
 
 struct ftab print_tab[] = {
+	{"printf",Pprintf,-99999999},
 	{"print",Pprint,-2},
 	{"objtoquote",Pobjtoquote,1},
 	{"quotetolist",Pquotetolist,1},
@@ -68,6 +70,26 @@ struct ftab print_tab[] = {
 extern int I_am_server;
 
 int wfep_mode;
+
+void Pprintf(NODE arg,pointer *rp)
+{
+	STRING s;
+	if ( arg ) {
+		Psprintf(arg,&s);
+		/* engine for wfep */
+		if ( wfep_mode ) {
+			print_to_wfep(s);
+		}else {
+			printexpr(CO,s);
+			/* XXX : if ox_asir, we have to fflush always */
+			if ( I_am_server ) {
+				fflush(asir_out);
+			}
+		}
+	}
+	*rp = 0;
+	return;
+}
 
 void Pprint(NODE arg,pointer *rp)
 {
