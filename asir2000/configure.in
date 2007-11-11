@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.24 2007/02/18 05:36:27 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.25 2007/11/11 08:44:12 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -42,8 +42,21 @@ GC_CONFIGURE_ARGS=--disable-threads
 if [ -n "${host_alias}" ]; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
+AC_ARG_WITH([gc7],
+[  --with-gc7              use Boehm's GC 7.x. [[no]]],
+[with_gc7=${withval}],[with_gc7=no])
+if test ${with_gc7:=no} != no; then
+   case "${with_gc7}" in
+   [7*]) GC_VERSION=${with_gc7} ;;
+   *)    GC_VERSION=7.0 ;;
+   esac
+   GC=gc-${GC_VERSION}
+   AC_DEFINE([GC7])
+   USE_GC7="yes"
+fi
 AC_SUBST([GC])
 AC_SUBST([GC_CONFIGURE_ARGS])
+AM_CONDITIONAL([USE_GC7],[test "$with_gc7" != no])
 
 AC_ARG_WITH([distdir],
 [  --with-distdir          specify the spool for fetching. [[no]]],

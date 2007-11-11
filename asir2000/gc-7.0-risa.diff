@@ -1,0 +1,178 @@
+%% $OpenXM$
+%% This patch is based on gc6.5-risa.diff.
+diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
+--- gc-7.0.orig/alloc.c	2007-06-22 11:40:30.000000000 +0900
++++ gc-7.0/alloc.c	2007-11-09 17:29:38.000000000 +0900
+@@ -100,6 +100,7 @@
+ GC_bool GC_dont_expand = 0;
+ 
+ word GC_free_space_divisor = 3;
++word GC_free_space_numerator = 1;
+ 
+ extern GC_bool GC_collection_in_progress();
+ 		/* Collection is in progress, or was abandoned.	*/
+@@ -160,9 +161,9 @@
+     scan_size = 2 * GC_composite_in_use + GC_atomic_in_use
+ 		+ total_root_size;
+     if (TRUE_INCREMENTAL) {
+-        return scan_size / (2 * GC_free_space_divisor);
++        return scan_size * GC_free_space_numerator / (2 * GC_free_space_divisor);
+     } else {
+-        return scan_size / GC_free_space_divisor;
++        return scan_size * GC_free_space_numerator / GC_free_space_divisor;
+     }
+ }
+ 
+@@ -451,6 +452,7 @@
+ #   if defined(REGISTER_LIBRARIES_EARLY)
+         GC_cond_register_dynamic_libraries();
+ #   endif
++	GC_timerstart();
+     STOP_WORLD();
+     IF_THREADS(GC_world_stopped = TRUE);
+     if (GC_print_stats) {
+@@ -479,6 +481,7 @@
+ 		    GC_deficit = i; /* Give the mutator a chance. */
+                     IF_THREADS(GC_world_stopped = FALSE);
+ 	            START_WORLD();
++				GC_timerstop();
+ 	            return(FALSE);
+ 	    }
+ 	    if (GC_mark_some((ptr_t)(&dummy))) break;
+@@ -503,6 +506,7 @@
+     
+     IF_THREADS(GC_world_stopped = FALSE);
+     START_WORLD();
++    GC_timerstop();
+     if (GC_print_stats) {
+       GET_TIME(current_time);
+       GC_log_printf("World-stopped marking took %lu msecs\n",
+@@ -603,6 +607,7 @@
+         /* FIXME: Add more checks.				*/
+         GC_check_tls();
+ #   endif
++	GC_timerstart();
+ 
+     if (GC_print_stats)
+       GET_TIME(start_time);
+@@ -722,6 +727,7 @@
+ 	              MS_TIME_DIFF(finalize_time,start_time),
+ 	              MS_TIME_DIFF(done_time,finalize_time));
+     }
++    GC_timerstop();
+ }
+ 
+ /* Externally callable routine to invoke full, stop-world collection */
+@@ -908,6 +914,9 @@
+         if (GC_collect_at_heapsize < GC_heapsize /* wrapped */)
+          GC_collect_at_heapsize = (word)(-1);
+ #     endif
++#if defined(VISUAL_LIB)
++    SendHeapSize();
++#endif
+     return(TRUE);
+ }
+ 
+@@ -991,6 +1000,22 @@
+     
+     if (gran == 0) return(0);
+ 
++#if defined(VISUAL)
++    {
++#include <signal.h>
++        extern int recv_intr;
++        if ( recv_intr ) {
++            if ( recv_intr == 1 ) {
++                recv_intr = 0;
++                int_handler();
++            } else {
++                recv_intr = 0;
++                ox_usr1_handler(0);
++            }
++        }
++    }
++#endif
++
+     while (*flh == 0) {
+       ENTER_GC();
+       /* Do our share of marking work */
+diff -urN gc-7.0.orig/include/private/gc_priv.h gc-7.0/include/private/gc_priv.h
+--- gc-7.0.orig/include/private/gc_priv.h	2007-06-24 11:01:15.000000000 +0900
++++ gc-7.0/include/private/gc_priv.h	2007-11-09 17:24:21.000000000 +0900
+@@ -161,6 +161,10 @@
+ # define MAX_EXTRA_BYTES 0
+ #endif
+ 
++/* Added by ohara */
++# ifndef LARGE_CONFIG
++#   define LARGE_CONFIG
++# endif
+ 
+ # ifndef LARGE_CONFIG
+ #   define MINHINCR 16	 /* Minimum heap increment, in blocks of HBLKSIZE  */
+diff -urN gc-7.0.orig/include/private/gcconfig.h gc-7.0/include/private/gcconfig.h
+--- gc-7.0.orig/include/private/gcconfig.h	2007-06-29 09:00:09.000000000 +0900
++++ gc-7.0/include/private/gcconfig.h	2007-11-09 17:24:21.000000000 +0900
+@@ -62,6 +62,13 @@
+ # endif
+ 
+ /* Determine the machine type: */
++/* T.Saito */
++# if defined(FREEBSD) && defined(__amd64__)
++#    define X86_64
++#    define mach_type_known
++# endif
++
++/* Determine the machine type: */
+ # if defined(__arm__) || defined(__thumb__)
+ #    define ARM32
+ #    if !defined(LINUX) && !defined(NETBSD)
+@@ -1975,6 +1982,28 @@
+ #	endif
+ #       define DATAEND  /* not needed */
+ #   endif
++#   ifdef FREEBSD /* T.Saito */
++#       define OS_TYPE "FREEBSD"
++#       ifndef GC_FREEBSD_THREADS
++#           define MPROTECT_VDB
++#       endif
++#       define SIG_SUSPEND SIGUSR1
++#       define SIG_THR_RESTART SIGUSR2
++#       define FREEBSD_STACKBOTTOM
++#       ifdef __ELF__
++#           define DYNAMIC_LOADING
++#       endif
++	extern int _etext[];
++        extern char etext[];
++	extern char edata[];
++	extern char end[];
++        extern char * GC_FreeBSDGetDataStart();
++#	define DATASTART ((ptr_t)((((word) (_etext)) + 0xfff) & ~0xfff))
++#	define NEED_FIND_LIMIT
++#	define DATAEND (GC_find_limit (DATASTART, TRUE))
++#	define DATASTART2 ((ptr_t)(&edata))
++#	define DATAEND2 ((ptr_t)(&end))
++#   endif /* end T.Saito */
+ # endif
+ 
+ #if defined(LINUX) && defined(USE_MMAP)
+diff -urN gc-7.0.orig/reclaim.c gc-7.0/reclaim.c
+--- gc-7.0.orig/reclaim.c	2007-06-07 09:24:17.000000000 +0900
++++ gc-7.0/reclaim.c	2007-11-09 17:32:31.000000000 +0900
+@@ -577,7 +577,7 @@
+ 	
+     if (GC_print_stats == VERBOSE)
+ 	GET_TIME(start_time);
+-    
++    GC_timerstart();    
+     for (kind = 0; kind < GC_n_kinds; kind++) {
+     	ok = &(GC_obj_kinds[kind]);
+     	rlp = ok -> ok_reclaim_list;
+@@ -599,6 +599,7 @@
+             }
+         }
+     }
++    GC_timerstop();
+     if (GC_print_stats == VERBOSE) {
+ 	GET_TIME(done_time);
+ 	GC_log_printf("Disposing of reclaim lists took %lu msecs\n",

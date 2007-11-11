@@ -715,6 +715,8 @@ X_LIBS
 X_EXTRA_LIBS
 GC
 GC_CONFIGURE_ARGS
+USE_GC7_TRUE
+USE_GC7_FALSE
 GC_DISTDIR
 USE_GC_ZEROPAGE
 PARIINC
@@ -1343,6 +1345,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-x                use the X Window System
+  --with-gc7              use Boehm's GC 7.x. [no]
   --with-distdir          specify the spool for fetching. [no]
   --with-pari             use the PARI library. [no]
 
@@ -5318,6 +5321,34 @@ if  -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
 
+# Check whether --with-gc7 was given.
+if test "${with_gc7+set}" = set; then
+  withval=$with_gc7; with_gc7=${withval}
+else
+  with_gc7=no
+fi
+
+if test ${with_gc7:=no} != no; then
+   case "${with_gc7}" in
+   7*) GC_VERSION=${with_gc7} ;;
+   *)    GC_VERSION=7.0 ;;
+   esac
+   GC=gc-${GC_VERSION}
+   cat >>confdefs.h <<\_ACEOF
+#define GC7 1
+_ACEOF
+
+   USE_GC7="yes"
+fi
+
+
+ if test "$with_gc7" != no; then
+  USE_GC7_TRUE=
+  USE_GC7_FALSE='#'
+else
+  USE_GC7_TRUE='#'
+  USE_GC7_FALSE=
+fi
 
 
 
@@ -6892,6 +6923,13 @@ echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
+if test -z "${USE_GC7_TRUE}" && test -z "${USE_GC7_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"USE_GC7\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"USE_GC7\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 if test -z "${USE_PLOT_TRUE}" && test -z "${USE_PLOT_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"USE_PLOT\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
@@ -7566,6 +7604,8 @@ X_LIBS!$X_LIBS$ac_delim
 X_EXTRA_LIBS!$X_EXTRA_LIBS$ac_delim
 GC!$GC$ac_delim
 GC_CONFIGURE_ARGS!$GC_CONFIGURE_ARGS$ac_delim
+USE_GC7_TRUE!$USE_GC7_TRUE$ac_delim
+USE_GC7_FALSE!$USE_GC7_FALSE$ac_delim
 GC_DISTDIR!$GC_DISTDIR$ac_delim
 USE_GC_ZEROPAGE!$USE_GC_ZEROPAGE$ac_delim
 PARIINC!$PARIINC$ac_delim
@@ -7587,7 +7627,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 24; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 26; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

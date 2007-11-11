@@ -42,7 +42,12 @@ int get_heapsize()
 
 long get_allocwords()
 {
+#if !defined(GC7)
 	return GC_words_allocd_before_gc + GC_words_allocd;
+#else
+	long n = GC_bytes_allocd_before_gc + GC_bytes_allocd;
+	return BYTES_TO_WORDS(n);
+#endif
 }
 
 double gctime;

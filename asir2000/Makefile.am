@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.25 2007/08/06 08:15:25 saito Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.26 2007/11/11 08:44:12 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -16,7 +16,11 @@ asir_LDADD    = libasir.a libasir-gc.a
 CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
 GC_TAR_GZ     = ${GC}.tar.gz
+if USE_GC7
+GC_PATCH      = gc-7.0-risa.diff
+else
 GC_PATCH      = gc6.5-risa.diff
+endif
 GC_DISTDIR    = @GC_DISTDIR@
 GC_MASTER_SITE=ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH      = ${bindir}/oxfetch.sh
