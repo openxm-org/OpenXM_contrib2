@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.24 2007/02/18 08:46:47 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.25 2007/08/06 08:15:25 saito Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -15,7 +15,6 @@ asir_SOURCES  = parse/main.c
 asir_LDADD    = libasir.a libasir-gc.a
 CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
-GC            = gc6.8
 GC_TAR_GZ     = ${GC}.tar.gz
 GC_PATCH      = gc6.5-risa.diff
 GC_DISTDIR    = @GC_DISTDIR@
@@ -70,11 +69,7 @@ libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	    touch ${top_srcdir}/${GC}/.patch_gc_sparc64_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/${GC}/.configure_done ]; then \
-	    if [ -n "${host_alias}" ]; then \
-	        (cd ${top_srcdir}/${GC}; ./configure --host=${host_alias} --disable-threads) ; \
-	    else \
-	        (cd ${top_srcdir}/${GC}; ./configure --disable-threads) ; \
-	    fi ; \
+	    (cd ${top_srcdir}/${GC}; ./configure ${GC_CONFIGURE_ARGS}) ; \
 	    touch ${top_srcdir}/${GC}/.configure_done ; \
 	fi
 	(cd ${top_srcdir}/${GC}; ${MAKE})

@@ -1,11 +1,11 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.23 2005/07/12 14:47:13 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.24 2007/02/18 05:36:27 ohara Exp $
 
-AC_INIT([LICENSE])
-AC_PREREQ(2.53)
+AC_INIT
+AC_CONFIG_SRCDIR([LICENSE])
+AC_PREREQ(2.61)
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(asir, 20030307)
 AM_MAINTAINER_MODE
-
-AC_CANONICAL_SYSTEM
 
 dnl AM_PROG_AS
 AC_PROG_CC
@@ -35,6 +35,15 @@ if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
 elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
+
+GC=gc6.8
+dnl GC_CONFIGURE_ARGS=--disable-threads --enable-shared=no
+GC_CONFIGURE_ARGS=--disable-threads
+if [ -n "${host_alias}" ]; then
+    GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
+fi
+AC_SUBST([GC])
+AC_SUBST([GC_CONFIGURE_ARGS])
 
 AC_ARG_WITH([distdir],
 [  --with-distdir          specify the spool for fetching. [[no]]],
@@ -218,4 +227,5 @@ dnl for Solaris 2.x
 AC_CHECK_FUNC(socket, , [AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname, , [AC_CHECK_LIB(nsl,gethostbyname)])
 
-AC_OUTPUT([Makefile engine/Makefile asm/Makefile builtin/Makefile fft/Makefile include/Makefile io/Makefile lib/Makefile parse/Makefile plot/Makefile])
+AC_CONFIG_FILES([Makefile engine/Makefile asm/Makefile builtin/Makefile fft/Makefile include/Makefile io/Makefile lib/Makefile parse/Makefile plot/Makefile])
+AC_OUTPUT
