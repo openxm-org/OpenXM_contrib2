@@ -45,13 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.59 2005/12/11 07:21:43 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.60 2006/02/25 06:33:31 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
 #include "al.h"
 #include "base.h"
 #include "parse.h"
+#include "gc.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #if defined(PARI)
@@ -938,8 +939,15 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 				getrlimit(RLIMIT_STACK,&rl);
 				stack_size = rl.rlim_cur;
 			}
-			if ( !stack_base )
-				stack_base = (void *)GC_get_stack_base();
+            if ( !stack_base ) {
+#if defined(GC7)
+                struct GC_stack_base sb;
+                GC_get_stack_base(&sb);
+                stack_base = (void *)sb.mem_base;
+#else
+                stack_base = (void *)GC_get_stack_base();
+#endif
+            }
 			if ( (stack_base - (void *)&args) +0x100000 > stack_size )
 				error("stack overflow");
 #endif
