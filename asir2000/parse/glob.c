@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.70 2007/09/19 05:43:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.71 2007/09/19 05:56:01 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -770,6 +770,15 @@ void reset_timer()
 unsigned int get_asir_version();
 char *get_asir_distribution();
 
+char *get_gcversion() 
+{
+#if defined(GC7)
+	return "GC 7.0 copyright 1988-2007, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
+#else
+	return "GC 6.5 copyright 1988-2005, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
+#endif
+}
+
 char *get_pariversion() 
 {
 #if PARI
@@ -793,24 +802,25 @@ char *get_intervalversion()
 
 void copyright()
 {
-	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2007, Risa/Asir committers, http://www.openxm.org/.\nGC 6.5 Copyright 1988-2005, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
-	printf(format, get_intervalversion(), get_asir_version(), get_asir_distribution(), get_pariversion());
+	char *scopyright();
+	fputs(scopyright(), stdout);
 }
 
 char *scopyright()
 {
 	static char *notice;
-	char *s1, *s2, *s3;
+	char *s1, *s2, *s3, *s4;
 	int d, len;
-	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2007, Risa/Asir committers, http://www.openxm.org/.\nGC 6.5 copyright 1988-2005, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n%s";
+	char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2007, Risa/Asir committers, http://www.openxm.org/.\n%s%s";
 	if (!notice) {
 		s1 = get_intervalversion();
 		s2 = get_asir_distribution();
-		s3 = get_pariversion();
+		s3 = get_gcversion();
+		s4 = get_pariversion();
 		d  = get_asir_version();
-		len = (strlen(format)-8)+strlen(s1)+strlen(s2)+strlen(s3)+sizeof(int)*3;
+		len = (strlen(format)-8)+strlen(s1)+strlen(s2)+strlen(s3)+strlen(s4)+sizeof(int)*3;
 		notice = MALLOC(len+1);
-		sprintf(notice, format, s1, d, s2, s3);
+		sprintf(notice, format, s1, d, s2, s3, s4);
 	}
 	return notice;
 }
