@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.22 2006/09/26 05:35:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.23 2007/11/07 19:26:17 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -81,10 +81,7 @@ void Pprintf(NODE arg,pointer *rp)
 			print_to_wfep(s);
 		}else {
 			printexpr(CO,s);
-			/* XXX : if ox_asir, we have to fflush always */
-			if ( I_am_server ) {
-				fflush(asir_out);
-			}
+			fflush(asir_out);
 		}
 	}
 	*rp = 0;
