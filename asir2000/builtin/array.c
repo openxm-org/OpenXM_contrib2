@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.54 2006/06/17 10:12:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.55 2006/10/26 10:49:16 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -391,11 +391,13 @@ void Pnewvect(NODE arg,VECT *rp)
 	if ( argc(arg) == 2 ) {
 		list = (LIST)ARG1(arg);
 		asir_assert(list,O_LIST,"newvect");
+#if 0
 		for ( r = 0, tn = BDY(list); tn; r++, tn = NEXT(tn) );
 		if ( r > len ) {
 			*rp = vect;
 			return;
 		}
+#endif
 		for ( i = 0, tn = BDY(list), vb = BDY(vect); tn; i++, tn = NEXT(tn) )
 			vb[i] = (pointer)BDY(tn);
 	}
