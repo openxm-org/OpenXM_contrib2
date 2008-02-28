@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.152 2006/12/21 07:45:02 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.153 2007/04/30 02:11:12 noro Exp $ */
 
 #include "nd.h"
 
@@ -213,7 +213,7 @@ void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int weight)
 {
 	int w,i,e,n,omask0;
 
-	omask0 = (1<<obpe)-1;
+	omask0 = obpe==32?0xffffffff:((1<<obpe)-1);
 	n = nd_nvar-1;
 	ndl_zero(r);
 	for ( i = 0; i < n; i++ ) {
