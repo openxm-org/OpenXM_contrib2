@@ -718,7 +718,6 @@ GC_CONFIGURE_ARGS
 USE_GC7_TRUE
 USE_GC7_FALSE
 GC_DISTDIR
-USE_GC_ZEROPAGE
 PARIINC
 PARILIB
 GREP
@@ -731,7 +730,6 @@ MPIINC
 MPILIB
 LAPACKLIB
 libasir_postfix
-USE_GC_INTERIX
 USE_GC_SPARC64
 asm_obj
 LIBOBJS
@@ -1336,7 +1334,6 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-shared         enable linking shared libraries.  [no]
-  --enable-gc-zeropage    enable to avoid the kernel zeropage bug.  [no]
   --enable-plot           enable plot feature. [no]
   --enable-interval       enable interval feature. [no]
   --enable-fft-float      enable FFT-FLOAT feature. [no]
@@ -5365,19 +5362,6 @@ if test ${with_distdir:=no} != no -a ${with_distdir} != yes ; then
 fi
 
 
-# Check whether --enable-gc-zeropage was given.
-if test "${enable_gc_zeropage+set}" = set; then
-  enableval=$enable_gc_zeropage; enable_gc_zeropage=yes
-else
-  enable_gc_zeropage=no
-fi
-
-
-if test "${enable_gc_zeropage:=no}" != no ; then
-    USE_GC_ZEROPAGE="yes"
-fi
-
-
 libasir_postfix=""
 
 # Check whether --with-pari was given.
@@ -6416,8 +6400,6 @@ _ACEOF
     ;;
 i[3-6]86-*-interix*)
     asm_obj="${i386_aout_obj}"
-    USE_GC_INTERIX="yes"
-
     cat >>confdefs.h <<\_ACEOF
 #define _ALL_SOURCE 1
 _ACEOF
@@ -7607,7 +7589,6 @@ GC_CONFIGURE_ARGS!$GC_CONFIGURE_ARGS$ac_delim
 USE_GC7_TRUE!$USE_GC7_TRUE$ac_delim
 USE_GC7_FALSE!$USE_GC7_FALSE$ac_delim
 GC_DISTDIR!$GC_DISTDIR$ac_delim
-USE_GC_ZEROPAGE!$USE_GC_ZEROPAGE$ac_delim
 PARIINC!$PARIINC$ac_delim
 PARILIB!$PARILIB$ac_delim
 GREP!$GREP$ac_delim
@@ -7620,14 +7601,13 @@ MPIINC!$MPIINC$ac_delim
 MPILIB!$MPILIB$ac_delim
 LAPACKLIB!$LAPACKLIB$ac_delim
 libasir_postfix!$libasir_postfix$ac_delim
-USE_GC_INTERIX!$USE_GC_INTERIX$ac_delim
 USE_GC_SPARC64!$USE_GC_SPARC64$ac_delim
 asm_obj!$asm_obj$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 26; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 24; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

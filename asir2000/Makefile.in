@@ -139,9 +139,7 @@ RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
-USE_GC_INTERIX = @USE_GC_INTERIX@
 USE_GC_SPARC64 = @USE_GC_SPARC64@
-USE_GC_ZEROPAGE = @USE_GC_ZEROPAGE@
 VERSION = @VERSION@
 XMKMF = @XMKMF@
 XPMLIB = @XPMLIB@
@@ -216,7 +214,7 @@ asir_SOURCES = parse/main.c
 asir_LDADD = libasir.a libasir-gc.a
 CLEANFILES = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 GC_TAR_GZ = ${GC}.tar.gz
-@USE_GC7_FALSE@GC_PATCH = gc6.5-risa.diff
+@USE_GC7_FALSE@GC_PATCH = gc6.diff gc6-risa.diff
 @USE_GC7_TRUE@GC_PATCH = gc-7.0-risa.diff
 GC_MASTER_SITE = ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH = ${bindir}/oxfetch.sh
@@ -712,18 +710,10 @@ libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	fi
 	-if [ ! -f ${top_srcdir}/.gc_risa_done ]; then \
 	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}) ; \
-	    (cd ${top_srcdir}/${GC}; patch -p1 < ../${GC_PATCH}) ; \
+		for i in ${GC_PATCH} ; do \
+	    (cd ${top_srcdir}/${GC}; patch -p1 < ../$$i) ; \
+		done ; \
 	    touch ${top_srcdir}/.gc_risa_done ; \
-	fi
-	-if [ "${USE_GC_ZEROPAGE}" = yes \
-            -a ! -f ${top_srcdir}/${GC}/.patch_gc_zeropage_done ]; then \
-	    (cd ${top_srcdir}/${GC}; patch < ../gc_zeropage.diff) ; \
-	    touch ${top_srcdir}/${GC}/.patch_gc_zeropage_done ; \
-	fi
-	-if [ "${USE_GC_INTERIX}" = yes \
-            -a ! -f ${top_srcdir}/${GC}/.patch_gc_interix_done ]; then \
-	    (cd ${top_srcdir}/${GC}; patch -p0 < ../gc_interix.diff) ; \
-	    touch ${top_srcdir}/${GC}/.patch_gc_interix_done ; \
 	fi
 	-if [ "${USE_GC_SPARC64}" = yes \
             -a ! -f ${top_srcdir}/${GC}/.patch_gc_sparc64_done ]; then \

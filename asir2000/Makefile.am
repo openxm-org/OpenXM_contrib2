@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.26 2007/11/11 08:44:12 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.27 2007/11/11 15:54:02 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -19,7 +19,7 @@ GC_TAR_GZ     = ${GC}.tar.gz
 if USE_GC7
 GC_PATCH      = gc-7.0-risa.diff
 else
-GC_PATCH      = gc6.5-risa.diff
+GC_PATCH      = gc6.diff gc6-risa.diff
 endif
 GC_DISTDIR    = @GC_DISTDIR@
 GC_MASTER_SITE=ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/
@@ -54,18 +54,10 @@ libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	fi
 	-if [ ! -f ${top_srcdir}/.gc_risa_done ]; then \
 	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}) ; \
-	    (cd ${top_srcdir}/${GC}; patch -p1 < ../${GC_PATCH}) ; \
+		for i in ${GC_PATCH} ; do \
+	    (cd ${top_srcdir}/${GC}; patch -p1 < ../$$i) ; \
+		done ; \
 	    touch ${top_srcdir}/.gc_risa_done ; \
-	fi
-	-if [ "${USE_GC_ZEROPAGE}" = yes \
-            -a ! -f ${top_srcdir}/${GC}/.patch_gc_zeropage_done ]; then \
-	    (cd ${top_srcdir}/${GC}; patch < ../gc_zeropage.diff) ; \
-	    touch ${top_srcdir}/${GC}/.patch_gc_zeropage_done ; \
-	fi
-	-if [ "${USE_GC_INTERIX}" = yes \
-            -a ! -f ${top_srcdir}/${GC}/.patch_gc_interix_done ]; then \
-	    (cd ${top_srcdir}/${GC}; patch -p0 < ../gc_interix.diff) ; \
-	    touch ${top_srcdir}/${GC}/.patch_gc_interix_done ; \
 	fi
 	-if [ "${USE_GC_SPARC64}" = yes \
             -a ! -f ${top_srcdir}/${GC}/.patch_gc_sparc64_done ]; then \
