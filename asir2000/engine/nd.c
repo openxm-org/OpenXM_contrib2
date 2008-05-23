@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.154 2008/02/28 01:25:31 noro Exp $ */
+/* $OpenXM$ */
 
 #include "nd.h"
 
@@ -3265,21 +3265,20 @@ void nd_setup_parameters(int nvar,int max) {
 	struct order_pair *op;
 
 	nd_nvar = nvar;
-
-	if ( !max ) max = 1;
-	/* XXX */
-	if ( do_weyl ) nd_bpe = 32;
-	else if ( max < 2 ) nd_bpe = 1;
-	else if ( max < 4 ) nd_bpe = 2;
-	else if ( max < 8 ) nd_bpe = 3;
-	else if ( max < 16 ) nd_bpe = 4;
-	else if ( max < 32 ) nd_bpe = 5;
-	else if ( max < 64 ) nd_bpe = 6;
-	else if ( max < 256 ) nd_bpe = 8;
-	else if ( max < 1024 ) nd_bpe = 10;
-	else if ( max < 65536 ) nd_bpe = 16;
-	else nd_bpe = 32;
-
+	if ( max ) {
+		/* XXX */
+		if ( do_weyl ) nd_bpe = 32;
+		else if ( max < 2 ) nd_bpe = 1;
+		else if ( max < 4 ) nd_bpe = 2;
+		else if ( max < 8 ) nd_bpe = 3;
+		else if ( max < 16 ) nd_bpe = 4;
+		else if ( max < 32 ) nd_bpe = 5;
+		else if ( max < 64 ) nd_bpe = 6;
+		else if ( max < 256 ) nd_bpe = 8;
+		else if ( max < 1024 ) nd_bpe = 10;
+		else if ( max < 65536 ) nd_bpe = 16;
+		else nd_bpe = 32;
+	}
 	nd_epw = (sizeof(UINT)*8)/nd_bpe;
 	elen = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
 	nd_exporigin = nd_get_exporigin(nd_ord);
