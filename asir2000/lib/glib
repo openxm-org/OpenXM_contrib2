@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.18 2006/03/08 04:58:15 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/lib/glib,v 1.19 2006/03/08 07:59:15 takayama Exp $ */
 
 /* BUG: this library has not yet been adapted to the new automatic launcher
         of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
@@ -235,9 +235,10 @@ def glib_putpixel(X,Y) {
   }
 }
 
-/*&usage begin: glib_line(X0,Y0,X1,Y1|color)
-  It draws the line [{X0},{Y0}]-- [{X1},{Y1}] with {color}
+/*&usage begin: glib_line(X0,Y0,X1,Y1|color,shape)
+  It draws the line [{X0},{Y0}]-- [{X1},{Y1}] with {color} and {shape}
   example: glib_line(0,0,5,3/2 | color=0xff00ff);
+           glib_line(0,0,10,0 | shape=arrow);
 end: */
 def glib_line(X0,Y0,X1,Y1) {
   extern Glib_xmag, Glib_ymag, Glib_xoffset, Glib_yoffset;
@@ -248,6 +249,16 @@ def glib_line(X0,Y0,X1,Y1) {
                  glib_floor(Glib_ymag*(Y0+Glib_yoffset)),
                  glib_floor(Glib_xmag*(X1+Glib_xoffset)),
                  glib_floor(Glib_ymag*(Y1+Glib_yoffset)),C);
+  Shape = getopt(shape);
+  if (type(Shape) != 2) return;
+  Px = X0+(7/8)*(X1-X0);
+  Py = Y0+(7/8)*(Y1-Y0);
+  Qx = (Y0-Y1)/8;
+  Qy = (X1-X0)/8;
+  if (type(C)>0) glib_line(X1,Y1,Px+Qx,Py+Qy | color=C);
+  else glib_line(X1,Y1,Px+Qx,Py+Qy);
+  if (type(C)>0) glib_line(X1,Y1,Px-Qx,Py-Qy | color=C);
+  else glib_line(X1,Y1,Px-Qx,Py-Qy);
 }
 
 def glib_clip_line(X0,Y0,X1,Y1,Color) {
