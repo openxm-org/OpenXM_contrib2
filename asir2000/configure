@@ -5374,16 +5374,11 @@ fi
 
 if test ${with_pari:=no} != no ; then
     libasir_postfix=${libasir_postfix}_pari
-    if test ${with_pari} = new ; then
-        libpari=pari-2.2
-    else
-        libpari=pari
-    fi
     PARIINC='-I${prefix}/include/pari'
     if test "${enable_shared}" != yes ; then
-        PARILIB='${prefix}'"/lib/lib${libpari}.a"
+        PARILIB='${prefix}'"/lib/libpari.a"
     else
-        PARILIB='-L${prefix}/lib'" -l${libpari}"
+        PARILIB='-L${prefix}/lib'" -lpari"
     fi
     cat >>confdefs.h <<\_ACEOF
 #define PARI 1

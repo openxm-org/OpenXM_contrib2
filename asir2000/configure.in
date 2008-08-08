@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.26 2007/11/11 15:54:02 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.27 2008/03/19 07:05:55 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -74,16 +74,11 @@ AC_ARG_WITH([pari],
 
 if test ${with_pari:=no} != no ; then
     libasir_postfix=${libasir_postfix}_pari
-    if test ${with_pari} = new ; then
-        libpari=pari-2.2
-    else
-        libpari=pari
-    fi
     PARIINC='-I${prefix}/include/pari'
     if test "${enable_shared}" != yes ; then
-        PARILIB='${prefix}'"/lib/lib${libpari}.a"
+        PARILIB='${prefix}'"/lib/libpari.a"
     else
-        PARILIB='-L${prefix}/lib'" -l${libpari}"
+        PARILIB='-L${prefix}/lib'" -lpari"
     fi
     AC_DEFINE([PARI])
 fi
