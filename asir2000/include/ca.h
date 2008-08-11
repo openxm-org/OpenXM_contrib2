@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.70 2008/08/11 16:23:24 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.71 2008/08/11 16:51:30 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>

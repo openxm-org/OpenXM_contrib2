@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.27 2008/03/19 07:05:55 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.28 2008/08/08 05:47:21 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -73,6 +73,9 @@ AC_ARG_WITH([pari],
 [with_pari=${withval}],[with_pari=no])
 
 if test ${with_pari:=no} != no ; then
+    if test "${with_pari}" = new -o "${with_pari}" = 2.3 ; then
+        AC_DEFINE([PARI23])
+    fi
     libasir_postfix=${libasir_postfix}_pari
     PARIINC='-I${prefix}/include/pari'
     if test "${enable_shared}" != yes ; then
