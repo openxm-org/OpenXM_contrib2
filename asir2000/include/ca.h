@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.68 2007/02/15 02:06:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.69 2008/08/08 11:16:34 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2642,7 +2642,3 @@ void addnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void pwrnbp(VL vl,NBP p1,Q n, NBP *rp);
 int compnbp(VL vl,NBP p1,NBP p2);
-
-/* imported from FreeBSD ports collection */
-/* pari-2.2.8.alpha change rename 'prec' -> 'precreal' [ from paripriv.h ] */
-#define prec precreal
