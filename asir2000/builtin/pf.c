@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.11 2005/09/27 03:00:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.12 2005/10/05 07:38:08 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -66,13 +66,14 @@ void simplify_pow(PFINS,Obj *);
 void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval(),Pfunargs_ext();
 void Pregister_handler();
 void Peval_quote();
-void Pmapat();
+void Pmapat(), Pmap();
 void Padd_handler();
 void Plist_handler();
 void Pclear_handler();
 
 struct ftab puref_tab[] = {
 	{"mapat",Pmapat,-99999999},
+	{"map",Pmap,-99999999},
 	{"functor",Pfunctor,1},
 	{"args",Pargs,1},
 	{"funargs",Pfunargs,1},
@@ -612,6 +613,77 @@ void Pmapat(NODE arg,Obj *rp)
 		NEXTNODE(r0,r);
 		BDY(r) = BDY(t);
 	}
+	NEXTNODE(r0,r);
+	iter = BDY(t); rest = NEXT(t);
+	if ( !iter ) {
+		*rp = bevalf(f,node);
+		return;
+	}
+	switch ( OID(iter) ) {
+		case O_VECT:
+			v = (VECT)iter; len = v->len; MKVECT(rv,len);
+			for ( i = 0; i < len; i++ ) {
+				BDY(r) = BDY(v)[i]; NEXT(r) = rest;
+				BDY(rv)[i] = bevalf(f,r0);
+			}
+			*rp = (Obj)rv;
+			break;
+		case O_MAT:
+			m = (MAT)iter; row = m->row; col = m->col; MKMAT(rm,row,col);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+					BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
+					BDY(rm)[i][j] = bevalf(f,r0);
+				}
+			*rp = (Obj)rm;
+			break;
+		case O_LIST:
+			n = BDY((LIST)iter);
+			for ( t0 = t = 0; n; n = NEXT(n) ) {
+				BDY(r) = BDY(n); NEXT(r) = rest;
+				NEXTNODE(t0,t); BDY(t) = bevalf(f,r0);
+			}
+			if ( t0 )
+				NEXT(t) = 0;
+			MKLIST(rl,t0);
+			*rp = (Obj)rl;
+			break;
+		default:
+			*rp = bevalf(f,node);
+			break;
+	}
+}
+
+/* An implementation of 'map' as builtin function. */
+void Pmap(NODE arg,Obj *rp)
+{
+	LIST args;
+	NODE node,rest,t0,t,n,r,r0;
+	P fpoly;
+	V fvar;
+	FUNC f;
+	VECT v,rv;
+	MAT m,rm;
+	LIST rl;
+	int len,row,col,i,j;
+	Obj iter;
+	pointer val;
+
+	if ( argc(arg) < 2 )
+		error("mapat : too few arguments");
+
+	fpoly = (P)ARG0(arg);
+	if ( !fpoly || OID(fpoly) != O_P )
+		error("map : invalid function specification");
+	fvar = VR(fpoly);
+	if ( fvar->attr != (pointer)V_SR || !(f=(FUNC)fvar->priv) )
+		error("map : invalid function specification");
+
+	node = NEXT(arg);
+	len = length(node);
+	if ( 0 >= len )
+		error("evalmapf : invalid position");
+	r0 = 0;
 	NEXTNODE(r0,r);
 	iter = BDY(t); rest = NEXT(t);
 	if ( !iter ) {
