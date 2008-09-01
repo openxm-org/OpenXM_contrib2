@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.61 2007/11/15 06:24:59 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.62 2007/12/20 03:31:01 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -195,7 +195,7 @@ pointer eval(FNODE f)
 		case I_RECMAP:
 			val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
 		case I_IFUNC:
-			val = evalif((FNODE)FA0(f),(FNODE)FA1(f)); break;
+			val = evalif((FNODE)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
 #if !defined(VISUAL)
 		case I_TIMER:
 			{
@@ -1217,7 +1217,7 @@ pointer bevalf(FUNC f,NODE a)
 	return val;
 }
 
-pointer evalif(FNODE f,FNODE a)
+pointer evalif(FNODE f,FNODE a,FNODE opt)
 {
 	Obj g;
 	QUOTE q;
@@ -1226,7 +1226,7 @@ pointer evalif(FNODE f,FNODE a)
 
 	g = (Obj)eval(f);
 	if ( g && (OID(g) == O_P) && (VR((P)g)->attr == (pointer)V_SR) )
-		return evalf((FUNC)VR((P)g)->priv,a,0);
+		return evalf((FUNC)VR((P)g)->priv,a,opt);
 	else if ( g && OID(g) == O_QUOTEARG && ((QUOTEARG)g)->type == A_func ) {
 		t = mkfnode(2,I_FUNC,((QUOTEARG)g)->body,a);
 		MKQUOTE(q,t);
