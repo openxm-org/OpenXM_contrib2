@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.12 2005/10/05 07:38:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.13 2008/09/01 07:53:59 ohara Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -564,6 +564,11 @@ void Pcall(NODE arg,Obj *rp)
 {
 	P p;
 	V v;
+    NODE n,n1;
+    LIST list;
+    VECT vect;
+    pointer *a;
+    int len,i;
 
 	p = (P)ARG0(arg);
 	if ( !p || OID(p) != 2 )
@@ -571,9 +576,26 @@ void Pcall(NODE arg,Obj *rp)
 	v = VR(p);
 	if ( (int)v->attr != V_SR )	
 		error("call : no such function");
-
-	else
-		*rp = (Obj)bevalf((FUNC)v->priv,BDY((LIST)ARG1(arg)));
+	else {
+        list = (LIST) ARG1(arg);
+        if ( list ) {
+            switch (OID(list)) {
+            case O_VECT:
+                vect = (VECT)list; len = vect->len; a = BDY(vect);
+                for ( i = len - 1, n = 0; i >= 0; i-- ) {
+                    MKNODE(n1,a[i],n); n = n1;
+                }
+                MKLIST(list,n);
+                /* falling next case */
+            case O_LIST:
+                *rp = (Obj)bevalf((FUNC)v->priv,BDY(list));
+                return;
+            default:
+                break;
+            }
+        }           
+        error("call : invalid argument");
+	}
 }
 
 /* at=position of arg to be used for iteration */
