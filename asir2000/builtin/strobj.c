@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.117 2006/08/27 22:17:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.118 2007/04/15 11:01:01 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -470,7 +470,7 @@ int register_conv_func(Obj arg)
 	if ( !arg ) {
 		convfunc = 0;
 		return 1;
-	} else if ( OID(arg) == O_P && (int)(VR((P)arg))->attr == V_SR ) {
+	} else if ( OID(arg) == O_P && (long)(VR((P)arg))->attr == V_SR ) {
 		convfunc = (FUNC)(VR((P)arg)->priv);
 		/* f must be a function which takes single argument */
 		return 1;
@@ -849,7 +849,7 @@ void do_assign(NODE arg)
 
 	for ( t = arg; t; t = NEXT(t) ) {
 		pair = BDY((LIST)BDY(t));
-		pv = (int)FA0((FNODE)BDY((QUOTE)BDY(pair)));
+		pv = (long)FA0((FNODE)BDY((QUOTE)BDY(pair)));
 		value = (QUOTE)(BDY(NEXT(pair)));
 		ASSPV(pv,value);
 	}
@@ -1288,6 +1288,7 @@ NODE arg;
 Obj *rp;
 {
 	FNODE fnode;
+	SNODE snode;
 	char *cmd;
 #if defined(PARI)
 	void recover(int);
@@ -1301,8 +1302,13 @@ Obj *rp;
 #  endif
 #endif
 	cmd = BDY((STRING)ARG0(arg));
+#if 0
 	exprparse_create_var(0,cmd,&fnode);
 	*rp = eval(fnode);
+#else
+	exprparse_create_var(0,cmd,&snode);
+	*rp = evalstat(snode);
+#endif
 }
 
 void Prtostr(arg,rp)

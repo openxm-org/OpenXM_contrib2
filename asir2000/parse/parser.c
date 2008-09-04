@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.7 2004/02/27 09:13:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.8 2004/12/17 03:09:08 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -57,8 +57,7 @@ extern SNODE parse_snode;
 extern FUNC parse_targetf;
 extern int outputstyle;
 
-int mainparse(snodep)
-SNODE *snodep;
+int mainparse(SNODE *snodep)
 {
 	int ret;
 
@@ -68,10 +67,7 @@ SNODE *snodep;
 	return ret;
 }
 
-int exprparse(f,str,exprp)
-FUNC f;
-char *str;
-FNODE *exprp;
+int exprparse(FUNC f,char *str,FNODE *exprp)
 {
 	char buf0[BUFSIZ];
 	char *buf;
@@ -103,11 +99,9 @@ FNODE *exprp;
 }
 
 /* allows to create a new variable */
+/* returns SNODE */
 
-int exprparse_create_var(f,str,exprp)
-FUNC f;
-char *str;
-FNODE *exprp;
+int exprparse_create_var(FUNC f,char *str,SNODE *statp)
 {
 	char buf0[BUFSIZ];
 	char *buf;
@@ -131,11 +125,19 @@ FNODE *exprp;
 	parse_targetf = f;
 	main_parser = 0;
 	allow_create_var = 1;
+#if 0
 	if ( yyparse() || !parse_snode || parse_snode->id != S_SINGLE ) {
 		*exprp = 0; return 0;
 	} else {
 		*exprp = (FNODE)FA0(parse_snode); return 1;
 	}
+#else
+	if ( yyparse() || !parse_snode ) {
+		*statp = 0; return 0;
+	} else {
+		*statp = parse_snode; return 1;
+	}
+#endif
 }
 
 extern FUNC user_print_function;
