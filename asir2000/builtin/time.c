@@ -45,17 +45,19 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.4 2005/11/12 08:10:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.5 2005/11/12 08:13:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Ptime(), Pcputime(), Pcurrenttime(), Ptstart(), Ptstop();
+void Pdcurrenttime();
 
 struct ftab time_tab[] = {
 	{"time",Ptime,0},
 	{"cputime",Pcputime,1},
 	{"currenttime",Pcurrenttime,0},
+	{"dcurrenttime",Pdcurrenttime,0},
 	{"tstart",Ptstart,0},
 	{"tstop",Ptstop,0},
 	{0,0,0},
@@ -71,6 +73,14 @@ Q *rp;
 	int t;
 
 	t = (int)get_current_time(); STOQ(t,*rp);
+}
+
+void Pdcurrenttime(rp)
+Real *rp;
+{
+	double t;
+
+	t = get_current_time(); MKReal(t,*rp);
 }
 
 void Ptstart(rp)
