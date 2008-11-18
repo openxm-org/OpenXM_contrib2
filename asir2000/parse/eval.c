@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.62 2007/12/20 03:31:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.63 2008/09/01 06:20:33 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -1187,6 +1187,84 @@ pointer bevalf(FUNC f,NODE a)
     		CPVS = (VS)ALLOCA(sizeof(struct oVS)); BDY(PVSS) = (pointer)CPVS;
     		CPVS->usrf = f; CPVS->n = CPVS->asize = pvs->n;
 			CPVS->opt = 0;
+    		if ( CPVS->n ) {
+        		CPVS->va = (struct oPV *)ALLOCA(CPVS->n*sizeof(struct oPV));
+        		bcopy((char *)pvs->va,(char *)CPVS->va,
+					(int)(pvs->n*sizeof(struct oPV)));
+    		}
+    		if ( nextbp )
+        		nextbplevel++;
+			for ( tn = f->f.usrf->args, sn = a; 
+				sn; tn = NEXT(tn), sn = NEXT(sn) )
+				ASSPV((int)FA0((FNODE)BDY(tn)),BDY(sn));
+			if ( f->f.usrf->module ) {
+				prev_mpvs = MPVS;
+				MPVS = f->f.usrf->module->pvs;
+				val = evalstat((SNODE)BDY(f->f.usrf)); 
+				MPVS = prev_mpvs;
+			} else
+				val = evalstat((SNODE)BDY(f->f.usrf)); 
+			f_return = f_break = f_continue = 0; poppvs(); 
+			break;
+		case A_PURE:
+			val = evalpf(f->f.puref,a,0);
+			break;
+		default:
+			sprintf(errbuf,"bevalf : %s undefined",NAME(f));
+			error(errbuf);
+			break;
+	}
+	return val;
+}
+
+pointer bevalf_with_opts(FUNC f,NODE a,NODE opts)
+{
+	pointer val;
+	int i,n;
+	NODE tn,sn;
+	VS pvs,prev_mpvs;
+	char errbuf[BUFSIZ];
+
+	if ( f->id == A_UNDEF ) {
+		sprintf(errbuf,"bevalf : %s undefined",NAME(f));
+		error(errbuf);
+	}
+	if ( getsecuremode() && !PVSS && !f->secure ) {
+		sprintf(errbuf,"bevalf : %s not permitted",NAME(f));
+		error(errbuf);
+	}
+	if ( f->id != A_PARI ) {
+		for ( i = 0, tn = a; tn; i++, tn = NEXT(tn) );
+		if ( ((n = f->argc)>= 0 && i != n) || (n < 0 && i > -n) ) {
+			sprintf(errbuf,"bevalf : argument mismatch in %s()",NAME(f));
+			error(errbuf);
+		}
+	}
+	switch ( f->id ) {
+		case A_BIN:
+			current_option = opts;
+			if ( !n ) {
+				cur_binf = f;
+				(*f->f.binf)(&val);
+			} else {
+				cur_binf = f;
+				(*f->f.binf)(a,&val);
+			}
+			cur_binf = 0;
+			break;
+		case A_PARI:
+			cur_binf = f;
+			val = evalparif(f,a);
+			cur_binf = 0;
+			break;
+		case A_USR:
+    		pvs = f->f.usrf->pvs;
+    		if ( PVSS )
+        		((VS)BDY(PVSS))->at = evalstatline;
+    		MKNODE(tn,pvs,PVSS); PVSS = tn;
+    		CPVS = (VS)ALLOCA(sizeof(struct oVS)); BDY(PVSS) = (pointer)CPVS;
+    		CPVS->usrf = f; CPVS->n = CPVS->asize = pvs->n;
+			CPVS->opt = opts;
     		if ( CPVS->n ) {
         		CPVS->va = (struct oPV *)ALLOCA(CPVS->n*sizeof(struct oPV));
         		bcopy((char *)pvs->va,(char *)CPVS->va,

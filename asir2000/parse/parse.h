@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.47 2007/04/30 02:14:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.48 2008/09/01 06:20:33 noro Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -895,6 +895,7 @@ pointer evalmapf(FUNC f,FNODE a);
 pointer eval_rec_mapf(FUNC f,FNODE a);
 pointer beval_rec_mapf(FUNC f,NODE node);
 pointer bevalf(FUNC f,NODE a);
+pointer bevalf_with_opts(FUNC f,NODE a,NODE opts);
 pointer evalif(FNODE f,FNODE a,FNODE opt);
 pointer evalpf(PF pf,NODE args,NODE deriv);
 void evalnodebody(NODE sn,NODE *dnp);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.13 2008/09/01 07:53:59 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.14 2008/09/02 17:23:33 ohara Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -588,7 +588,7 @@ void Pcall(NODE arg,Obj *rp)
                 MKLIST(list,n);
                 /* falling next case */
             case O_LIST:
-                *rp = (Obj)bevalf((FUNC)v->priv,BDY(list));
+                *rp = (Obj)bevalf_with_opts((FUNC)v->priv,BDY(list),current_option);
                 return;
             default:
                 break;
