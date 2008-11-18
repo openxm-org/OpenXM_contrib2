@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.23 2006/09/13 02:26:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.24 2006/11/08 07:34:33 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,12 +78,14 @@ void Pbsave_cmo(), Pbload_cmo();
 void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
 void Pput_word(), Pget_word();
 void Ppurge_stdin();
+void Pfprintf();
 void Pimport();
 
 extern int des_encryption;
 extern char *asir_libdir;
 
 struct ftab file_tab[] = {
+	{"fprintf",Pfprintf,-99999999},
 	{"purge_stdin",Ppurge_stdin,0},
 	{"open_file",Popen_file,-2},
 	{"close_file",Pclose_file,1},
@@ -115,6 +117,25 @@ struct ftab file_tab[] = {
 };
 
 static FILE *file_ptrs[BUFSIZ];
+
+void Pfprintf(NODE arg,pointer *rp)
+{
+	FILE *fp;
+	STRING s;
+	asir_assert(ARG0(arg),O_N,"fprintf");
+	fp = file_ptrs[QTOS((Q)ARG0(arg))];
+	if ( !fp ) {
+		error("fprintf : invalid argument");
+	}
+	arg = NEXT(arg);
+	if ( arg ) {
+		Psprintf(arg,&s);
+		fputs(BDY(s),fp);
+		fflush(fp);
+	}
+	*rp = 0;
+	return;
+}
 
 void Ppurge_stdin(Q *rp)
 {
