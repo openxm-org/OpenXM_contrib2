@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.24 2006/11/08 07:34:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.25 2008/11/18 09:17:31 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -131,7 +131,7 @@ void Pfprintf(NODE arg,pointer *rp)
 	if ( arg ) {
 		Psprintf(arg,&s);
 		fputs(BDY(s),fp);
-		fflush(fp);
+		/* fflush(fp); */
 	}
 	*rp = 0;
 	return;
