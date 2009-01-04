@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.47 2007/10/14 02:32:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.48 2007/10/21 07:47:59 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1683,7 +1683,8 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 	struct order_pair *l;
 	NODE node,t,tn;
 	MAT m;
-	pointer **b;
+	VECT v;
+	pointer **b,*bv;
 	int **w;
 
 	if ( vl && obj && OID(obj) == O_LIST ) {
@@ -1720,6 +1721,14 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		spec->id = 2; spec->obj = obj;
 		spec->nv = col; spec->ord.matrix.row = row;
 		spec->ord.matrix.matrix = w;
+		return 1;
+	} else if ( OID(obj) == O_VECT ) {
+		v = (VECT)obj; bv = BDY(v);
+		if ( v->len < 2 ) error("create_order_spec : invalid argument");
+		create_order_spec(0,(Obj)bv[1],&spec);
+		spec->id += 256; spec->obj = obj;
+		spec->istop = bv[0]==0;
+		*specp = spec;
 		return 1;
 	} else
 		return 0;

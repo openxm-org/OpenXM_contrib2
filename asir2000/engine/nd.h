@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.17 2006/12/12 11:50:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.18 2006/12/14 02:49:59 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -152,6 +152,7 @@ extern int *current_weyl_weight_vector;
 
 #define GET_EXP_OLD(d,a) (((d)[oepos[a].i]>>oepos[a].s)&omask0)
 #define PUT_EXP_OLD(r,a,e) ((r)[oepos[a].i] |= ((e)<<oepos[a].s))
+#define MPOS(d) (d[nd_mpos])
 
 #define ROUND_FOR_ALIGN(s) ((((s)+sizeof(void *)-1)/sizeof(void *))*sizeof(void *))
 

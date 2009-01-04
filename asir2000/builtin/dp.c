@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.74 2007/10/21 07:47:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.75 2008/01/06 00:36:32 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2072,9 +2072,9 @@ LIST *rp;
 	struct order_spec *ord;
 
 	do_weyl = 0;
-	asir_assert(ARG0(arg),O_LIST,"nd_gr");
-	asir_assert(ARG1(arg),O_LIST,"nd_gr");
-	asir_assert(ARG2(arg),O_N,"nd_gr");
+	asir_assert(ARG0(arg),O_LIST,"nd_f4");
+	asir_assert(ARG1(arg),O_LIST,"nd_f4");
+	asir_assert(ARG2(arg),O_N,"nd_f4");
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
