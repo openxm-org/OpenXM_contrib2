@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.156 2008/05/23 01:24:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.157 2009/01/04 05:44:51 noro Exp $ */
 
 #include "nd.h"
 
@@ -2895,10 +2895,10 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     P p,zp;
     Q dmy;
     EPOS oepos;
-    int obpe,oadv,wmax,i,len,cbpe,ishomo,nalg;
+    int obpe,oadv,wmax,i,len,cbpe,ishomo,nalg,mrank,trank;
     Alg alpha,dp;
     P poly;
-    LIST f1,f2;
+    LIST f1,f2,zpl;
     Obj obj;
     NumberField nf;
     struct order_spec *ord1;
@@ -2942,18 +2942,34 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         nocheck = 1;
     }
     m = trace > 1 ? trace : get_lprime(mindex);
+    nd_init_ord(ord);
+    mrank = 0;
     for ( t = BDY(f), max = 0; t; t = NEXT(t) )
         for ( tv = vv; tv; tv = NEXT(tv) ) {
-            e = getdeg(tv->v,(P)BDY(t));
-            max = MAX(e,max);
+            if ( nd_module ) {
+                s = BDY((LIST)BDY(t));
+                trank = length(s);
+                mrank = MAX(mrank,trank);
+                for ( ; s; s = NEXT(s) ) {
+                    e = getdeg(tv->v,(P)BDY(s));
+                    max = MAX(e,max);
+                }
+            } else {
+                e = getdeg(tv->v,(P)BDY(t));
+                max = MAX(e,max);
+            }
         }
-    nd_init_ord(ord);
     nd_setup_parameters(nvar,max);
     obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos;
     ishomo = 1;
     for ( in0 = 0, fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-        ptozp((P)BDY(t),1,&dmy,&zp);
-        c = (pointer)ptondv(CO,vv,zp);
+	if ( nd_module ) {
+	    pltozpl((LIST)BDY(t),&dmy,&zpl);
+            c = (pointer)pltondv(CO,vv,zpl);
+        } else {
+            ptozp((P)BDY(t),1,&dmy,&zp);
+            c = (pointer)ptondv(CO,vv,zp);
+	}
         if ( ishomo )
             ishomo = ishomo && ndv_ishomo(c);
         if ( c ) { 
@@ -3024,8 +3040,10 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     /* dp->p */
     nd_bpe = cbpe;
     nd_setup_parameters(nd_nvar,0);
-    for ( r = cand; r; r = NEXT(r) )
-        BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
+    for ( r = cand; r; r = NEXT(r) ) {
+	if ( nd_module ) BDY(r) = ndvtopl(0,CO,vv,BDY(r),mrank);
+        else BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
+    }
     if ( nalg )
         cand = postprocess_algcoef(av,alist,cand);
     MKLIST(*rp,cand);

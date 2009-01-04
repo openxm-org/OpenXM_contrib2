@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.48 2007/10/21 07:47:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.49 2009/01/04 05:44:51 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2193,17 +2193,18 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 					error("homogenize_order : invalid input");
 			}
 			break;
-		case 1:
+		case 1: case 257:
 			length = old->ord.block.length;
 			l = (struct order_pair *)
 				MALLOC_ATOMIC((length+1)*sizeof(struct order_pair));
 			bcopy((char *)old->ord.block.order_pair,(char *)l,length*sizeof(struct order_pair));
 			l[length].order = 2; l[length].length = 1;
-			new->id = 1; new->nv = n+1;
+			new->id = old->id; new->nv = n+1;
 			new->ord.block.order_pair = l;
 			new->ord.block.length = length+1;
+			new->istop = old->istop;
 			break;
-		case 2:
+		case 2: case 258:
 			nv = old->nv; row = old->ord.matrix.row;
 			oldm = old->ord.matrix.matrix; newm = almat(row+1,nv+1);
 			for ( i = 0; i <= nv; i++ )
@@ -2213,10 +2214,11 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 					newm[i+1][j] = oldm[i][j];
 				newm[i+1][j] = 0;
 			}
-			new->id = 2; new->nv = nv+1;
+			new->id = old->id; new->nv = nv+1;
 			new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
+			new->istop = old->istop;
 			break;
-		case 3:
+		case 3: case 259:
 			onv = old->nv;
 			nnv = onv+1;
 			olen = old->ord.composite.length;
@@ -2250,11 +2252,32 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 				(struct sparse_weight *)MALLOC(sizeof(struct sparse_weight));
 			nwb[i].body.sparse_weight[0].pos = onv;
 			nwb[i].body.sparse_weight[0].value = 1;
-			new->id = 3;
+			new->id = old->id;
 			new->nv = nnv;
 			new->ord.composite.length = nlen;
 			new->ord.composite.w_or_b = nwb;
+			new->istop = old->istop;
 			print_composite_order_spec(new);
+			break;
+		case 256: /* simple module order */
+			switch ( old->ord.simple ) {
+				case 0:
+					new->id = 256; new->ord.simple = 0; break;
+				case 1:
+					l = (struct order_pair *)
+						MALLOC_ATOMIC(2*sizeof(struct order_pair));
+					l[0].length = n; l[0].order = old->ord.simple;
+					l[1].length = 1; l[1].order = 2;
+					new->id = 257;
+					new->ord.block.order_pair = l;
+					new->ord.block.length = 2; new->nv = n+1;
+					break;
+				case 2:
+					new->id = 256; new->ord.simple = 1; break;
+				default:
+					error("homogenize_order : invalid input");
+			}
+			new->istop = old->istop;
 			break;
 		default:
 			error("homogenize_order : invalid input");
