@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.160 2009/01/05 01:47:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.161 2009/01/05 02:08:18 noro Exp $ */
 
 #include "nd.h"
 
@@ -727,6 +727,10 @@ INLINE void ndl_add(UINT *d1,UINT *d2,UINT *d)
 {
     int i;
 
+    if ( nd_module ) {
+        if ( MPOS(d1) && MPOS(d2) && (MPOS(d1) != MPOS(d2)) ) 
+	    error("ndl_add : invalid operation");
+    }
 #if 1
     switch ( nd_wpd ) {
         case 2:
@@ -745,11 +749,6 @@ INLINE void ndl_add(UINT *d1,UINT *d2,UINT *d)
 #else
     for ( i = 0; i < nd_wpd; i++ ) d[i] = d1[i]+d2[i];
 #endif
-    if ( nd_module ) {
-        if ( MPOS(d1) && MPOS(d2) && (MPOS(d1) != MPOS(d2)) ) 
-	    error("ndl_add : invalid operation");
-        MPOS(d) = MPOS(d1);
-    }
 }
 
 /* d1 += d2 */
@@ -757,6 +756,10 @@ INLINE void ndl_addto(UINT *d1,UINT *d2)
 {
     int i;
 
+    if ( nd_module ) {
+        if ( MPOS(d1) && MPOS(d2) && (MPOS(d1) != MPOS(d2)) ) 
+            error("ndl_addto : invalid operation");
+    }
 #if 1
     switch ( nd_wpd ) {
         case 2:
@@ -775,11 +778,6 @@ INLINE void ndl_addto(UINT *d1,UINT *d2)
 #else
     for ( i = 0; i < nd_wpd; i++ ) d1[i] += d2[i];
 #endif
-    if ( nd_module ) {
-        if ( MPOS(d1) && MPOS(d2) && (MPOS(d1) != MPOS(d2)) ) 
-            error("ndl_addto : invalid operation");
-        MPOS(d1) = MPOS(d2);
-    }
 }
 
 INLINE void ndl_sub(UINT *d1,UINT *d2,UINT *d)
