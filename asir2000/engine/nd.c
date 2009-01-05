@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.158 2009/01/04 10:02:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.159 2009/01/05 00:52:20 noro Exp $ */
 
 #include "nd.h"
 
@@ -46,7 +46,7 @@ static int nd_worb_len;
 static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
-static int nd_module,nd_istop,nd_mpos;
+static int nd_module,nd_ispot,nd_mpos;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -568,7 +568,7 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 {
     int i;
 
-    if ( nd_istop ) {
+    if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -577,7 +577,7 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
     for ( i = nd_nvar-1; i >= 0; i-- )
         if ( GET_EXP(d1,i) < GET_EXP(d2,i) ) return 1;
         else if ( GET_EXP(d1,i) > GET_EXP(d2,i) ) return -1;
-    if ( !nd_istop ) {
+    if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -588,7 +588,7 @@ int ndl_module_glex_compare(UINT *d1,UINT *d2)
 {
     int i;
 
-    if ( nd_istop ) {
+    if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -597,7 +597,7 @@ int ndl_module_glex_compare(UINT *d1,UINT *d2)
     for ( i = 0; i < nd_nvar; i++ )
         if ( GET_EXP(d1,i) > GET_EXP(d2,i) ) return 1;
         else if ( GET_EXP(d1,i) < GET_EXP(d2,i) ) return -1;
-    if ( !nd_istop ) {
+    if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -608,14 +608,14 @@ int ndl_module_lex_compare(UINT *d1,UINT *d2)
 {
     int i;
 
-    if ( nd_istop ) {
+    if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
     for ( i = 0; i < nd_nvar; i++ )
         if ( GET_EXP(d1,i) > GET_EXP(d2,i) ) return 1;
         else if ( GET_EXP(d1,i) < GET_EXP(d2,i) ) return -1;
-    if ( !nd_istop ) {
+    if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -626,12 +626,12 @@ int ndl_module_block_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_istop ) {
+    if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
     if ( c = ndl_block_compare(d1,d2) ) return c;
-    if ( !nd_istop ) {
+    if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -642,12 +642,12 @@ int ndl_module_matrix_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_istop ) {
+    if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
     if ( c = ndl_matrix_compare(d1,d2) ) return c;
-    if ( !nd_istop ) {
+    if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -658,12 +658,12 @@ int ndl_module_composite_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_istop ) {
+    if ( nd_ispot ) {
         if ( MPOS(d1) > MPOS(d2) ) return 1;
         else if ( MPOS(d1) < MPOS(d2) ) return -1;
     }
     if ( c = ndl_composite_compare(d1,d2) ) return c;
-    if ( !nd_istop ) {
+    if ( !nd_ispot ) {
         if ( MPOS(d1) > MPOS(d2) ) return 1;
         else if ( MPOS(d1) < MPOS(d2) ) return -1;
     }
@@ -4453,7 +4453,7 @@ void nd_init_ord(struct order_spec *ord)
 
         /* module order */
         case 256:
-            nd_istop = ord->istop;
+            nd_ispot = ord->ispot;
             nd_dcomp = -1;
             nd_isrlex = 0;
             switch ( ord->ord.simple ) {

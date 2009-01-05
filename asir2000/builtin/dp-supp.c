@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.49 2009/01/04 05:44:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.50 2009/01/04 10:02:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1727,7 +1727,7 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		if ( v->len < 2 ) error("create_order_spec : invalid argument");
 		create_order_spec(0,(Obj)bv[1],&spec);
 		spec->id += 256; spec->obj = obj;
-		spec->istop = bv[0]==0;
+		spec->ispot = (bv[0]==1);
 		*specp = spec;
 		return 1;
 	} else
@@ -2202,7 +2202,7 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 			new->id = old->id; new->nv = n+1;
 			new->ord.block.order_pair = l;
 			new->ord.block.length = length+1;
-			new->istop = old->istop;
+			new->ispot = old->ispot;
 			break;
 		case 2: case 258:
 			nv = old->nv; row = old->ord.matrix.row;
@@ -2216,7 +2216,7 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 			}
 			new->id = old->id; new->nv = nv+1;
 			new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
-			new->istop = old->istop;
+			new->ispot = old->ispot;
 			break;
 		case 3: case 259:
 			onv = old->nv;
@@ -2256,7 +2256,7 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 			new->nv = nnv;
 			new->ord.composite.length = nlen;
 			new->ord.composite.w_or_b = nwb;
-			new->istop = old->istop;
+			new->ispot = old->ispot;
 			print_composite_order_spec(new);
 			break;
 		case 256: /* simple module order */
@@ -2277,7 +2277,7 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 				default:
 					error("homogenize_order : invalid input");
 			}
-			new->istop = old->istop;
+			new->ispot = old->ispot;
 			break;
 		default:
 			error("homogenize_order : invalid input");
