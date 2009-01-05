@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.18 2006/12/14 02:49:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.19 2009/01/04 05:44:51 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -128,6 +128,7 @@ extern char *Demand;
 extern VL CO;
 extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar;
 extern int *current_weyl_weight_vector;
+extern int *current_module_weight_vector;
 
 /* fundamental macros */
 #define TD(d) (d[0])

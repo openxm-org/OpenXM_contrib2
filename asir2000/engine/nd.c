@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.159 2009/01/05 00:52:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.160 2009/01/05 01:47:30 noro Exp $ */
 
 #include "nd.h"
 
@@ -399,6 +399,8 @@ int ndl_weight(UINT *d)
             for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
                 t += (u&nd_mask0); 
         }
+	if ( nd_module && current_module_weight_vector && MPOS(d) )
+		t += current_module_weight_vector[MPOS(d)];
     return t;
 }
 
