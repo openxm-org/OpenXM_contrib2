@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.161 2009/01/05 02:08:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.162 2009/01/05 02:47:39 noro Exp $ */
 
 #include "nd.h"
 
@@ -230,9 +230,9 @@ void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int weight)
     }
     w = TD(d);
     PUT_EXP(r,nd_nvar-1,weight-w);
+    if ( nd_module ) MPOS(r) = MPOS(d);
     TD(r) = weight;
     if ( nd_blockmask ) ndl_weight_mask(r);
-    if ( nd_module ) MPOS(r) = MPOS(d);
 }
 
 void ndl_dehomogenize(UINT *d)
@@ -364,9 +364,9 @@ void ndl_lcm(UINT *d1,unsigned *d2,UINT *d)
         d[i] = u;
     }
 #endif
+    if ( nd_module ) MPOS(d) = MPOS(d1);
     TD(d) = ndl_weight(d);
     if ( nd_blockmask ) ndl_weight_mask(d);
-    if ( nd_module ) MPOS(d) = MPOS(d1);
 }
 
 void ndl_max(UINT *d1,unsigned *d2,UINT *d)
@@ -2209,16 +2209,24 @@ ND_pairs crit_B( ND_pairs d, int s )
     lcm = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
     while ( cur ) {
         tl = cur->lcm;
-        if ( ndl_reducible(tl,t)
-            && (ndl_lcm(DL(nd_psh[cur->i1]),t,lcm),!ndl_equal(lcm,tl))
-            && (ndl_lcm(DL(nd_psh[cur->i2]),t,lcm),!ndl_equal(lcm,tl)) ) {
-            remove = cur;
-            if ( !prev ) {
-                head = cur = NEXT(cur);
-            } else {
-                cur = NEXT(prev) = NEXT(cur);
-            }
-            FREENDP(remove);
+        if ( ndl_reducible(tl,t) ) {
+            ndl_lcm(DL(nd_psh[cur->i1]),t,lcm);
+			if ( !ndl_equal(lcm,tl) ) {
+            	ndl_lcm(DL(nd_psh[cur->i2]),t,lcm);
+				if (!ndl_equal(lcm,tl)) {
+            		remove = cur;
+            		if ( !prev ) {
+                		head = cur = NEXT(cur);
+            		} else {
+                		cur = NEXT(prev) = NEXT(cur);
+            		}
+            		FREENDP(remove);
+				} else {
+            		prev = cur; cur = NEXT(cur);
+				}
+			} else {
+            		prev = cur; cur = NEXT(cur);
+			}
         } else {
             prev = cur; cur = NEXT(cur);
         }
@@ -2637,6 +2645,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     NumberField nf;
     struct order_spec *ord1;
 
+	nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
     else nd_demand = 0;
 
@@ -2823,6 +2832,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     struct order_spec *ord1;
     struct oEGT eg_check,eg0,eg1;
 
+	nd_module = 0;
     if ( DP_Multiple )
         nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
 
@@ -3773,6 +3783,7 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
     }
     if ( nd_module ) {
         mpos = MPOS(d1);
+		TD(d1) = ndl_weight(d1);
         if ( MPOS(d0) ) error("weyl_mul_nm_nmv : invalid operation");
     }
     tab[0] = m;
@@ -3809,8 +3820,11 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
                 TD(d) = s;
                 PUT_EXP(d,n-1,s-h);
             } else TD(d) = h;
+            if ( nd_module ) { 
+				MPOS(d) = mpos;
+				TD(d) = ndl_weight(d);
+			}
             if ( nd_blockmask ) ndl_weight_mask(d);
-            if ( nd_module ) MPOS(d) = mpos;
             if ( mod ) c = ctab[j];
             else q = ctab_q[j];
             p = tab+curlen*j;
@@ -4150,9 +4164,12 @@ NDV pltondv(VL vl,VL dvl,LIST p)
     r = 0;
     for ( i = 1, t = BDY(p); t; t = NEXT(t), i++ ) {
         ri = ptond(vl,dvl,(P)BDY(t));
-	if ( ri ) 
-            for ( m = BDY(ri); m; m = NEXT(m) ) 
-                MPOS(DL(m)) = i;
+        if ( ri ) 
+            for ( m = BDY(ri); m; m = NEXT(m) ) {
+			    MPOS(DL(m)) = i;
+			    TD(DL(m)) = ndl_weight(DL(m));
+                if ( nd_blockmask ) ndl_weight_mask(DL(m));
+            }
         r = nd_add(0,r,ri);
     }
     return ndtondv(0,r);
@@ -6416,9 +6433,9 @@ int nd_monic(int mod,ND *p)
                 PUT_EXP(DL(mr),i+nd_ntrans,e);
                 td += MUL_WEIGHT(e,i+nd_ntrans);
             }
+            if ( nd_module ) MPOS(DL(mr)) = MPOS(DL(m));
             TD(DL(mr)) = td;
             if ( nd_blockmask) ndl_weight_mask(DL(mr));
-            if ( nd_module ) MPOS(DL(mr)) = MPOS(DL(m));
         }
     }
     NEXT(mr) = 0;
