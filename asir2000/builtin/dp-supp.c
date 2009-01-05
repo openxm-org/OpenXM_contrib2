@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.50 2009/01/04 10:02:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.51 2009/01/05 01:47:30 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1727,7 +1727,7 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		if ( v->len < 2 ) error("create_order_spec : invalid argument");
 		create_order_spec(0,(Obj)bv[1],&spec);
 		spec->id += 256; spec->obj = obj;
-		spec->ispot = (bv[0]==1);
+		spec->ispot = (bv[0]!=0);
 		*specp = spec;
 		return 1;
 	} else
