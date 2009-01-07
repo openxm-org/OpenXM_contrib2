@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.51 2009/01/05 01:47:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.52 2009/01/05 02:14:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1701,6 +1701,16 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		return 1;
 	} else if ( OID(obj) == O_LIST ) {
 		node = BDY((LIST)obj); 
+		if ( !BDY(node) || NUM(BDY(node)) ) {
+			if ( length(node) < 2 ) 
+				error("create_order_spec : invalid argument");
+			create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
+			spec->id += 256; spec->obj = obj;
+			spec->ispot = (BDY(node)!=0);
+			*specp = spec;
+			return 1;
+		}
+
 		for ( n = 0, t = node; t; t = NEXT(t), n++ );
 		l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
 		for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
@@ -1721,14 +1731,6 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		spec->id = 2; spec->obj = obj;
 		spec->nv = col; spec->ord.matrix.row = row;
 		spec->ord.matrix.matrix = w;
-		return 1;
-	} else if ( OID(obj) == O_VECT ) {
-		v = (VECT)obj; bv = BDY(v);
-		if ( v->len < 2 ) error("create_order_spec : invalid argument");
-		create_order_spec(0,(Obj)bv[1],&spec);
-		spec->id += 256; spec->obj = obj;
-		spec->ispot = (bv[0]!=0);
-		*specp = spec;
 		return 1;
 	} else
 		return 0;

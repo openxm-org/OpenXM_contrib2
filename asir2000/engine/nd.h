@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.19 2009/01/04 05:44:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.20 2009/01/05 02:08:18 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -260,7 +260,7 @@ NODE nd_f4_trace(int m);
 /* ndl functions */
 int ndl_weight(UINT *d);
 void ndl_weight_mask(UINT *d);
-void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int weight);
+void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int ompos,int weight);
 void ndl_dehomogenize(UINT *p);
 void ndl_reconstruct(UINT *d,UINT *r,int obpe,EPOS oepos);
 INLINE int ndl_reducible(UINT *d1,UINT *d2);
@@ -347,7 +347,7 @@ ND ndv_mul_nm(int mod,NM m0,NDV p);
 ND ndv_mul_nmv_trunc(int mod,NMV m0,NDV p,UINT *d);
 void ndv_realloc(NDV p,int obpe,int oadv,EPOS oepos);
 NDV ndv_dup_realloc(NDV p,int obpe,int oadv,EPOS oepos);
-void ndv_homogenize(NDV p,int obpe,int oadv,EPOS eops);
+void ndv_homogenize(NDV p,int obpe,int oadv,EPOS eops,int ompos);
 void ndv_dehomogenize(NDV p,struct order_spec *spec);
 void ndv_removecont(int mod,NDV p);
 void ndv_print(NDV p);

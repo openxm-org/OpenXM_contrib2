@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.162 2009/01/05 02:47:39 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.163 2009/01/05 06:29:46 noro Exp $ */
 
 #include "nd.h"
 
@@ -217,7 +217,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
  * order is either 0 or 2.
  */
 
-void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int weight)
+void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int ompos,int weight)
 {
     int w,i,e,n,omask0;
 
@@ -230,7 +230,7 @@ void ndl_homogenize(UINT *d,UINT *r,int obpe,EPOS oepos,int weight)
     }
     w = TD(d);
     PUT_EXP(r,nd_nvar-1,weight-w);
-    if ( nd_module ) MPOS(r) = MPOS(d);
+    if ( nd_module ) MPOS(r) = d[ompos];
     TD(r) = weight;
     if ( nd_blockmask ) ndl_weight_mask(r);
 }
@@ -568,7 +568,7 @@ int ndl_ww_lex_compare(UINT *d1,UINT *d2)
 
 int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 {
-    int i;
+    int i,c;
 
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
@@ -576,9 +576,7 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
     }
     if ( TD(d1) > TD(d2) ) return 1;
     else if ( TD(d1) < TD(d2) ) return -1;
-    for ( i = nd_nvar-1; i >= 0; i-- )
-        if ( GET_EXP(d1,i) < GET_EXP(d2,i) ) return 1;
-        else if ( GET_EXP(d1,i) > GET_EXP(d2,i) ) return -1;
+	if ( c = ndl_lex_compare(d1,d2) ) return c;
     if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -588,7 +586,7 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 
 int ndl_module_glex_compare(UINT *d1,UINT *d2)
 {
-    int i;
+    int i,c;
 
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
@@ -596,9 +594,7 @@ int ndl_module_glex_compare(UINT *d1,UINT *d2)
     }
     if ( TD(d1) > TD(d2) ) return 1;
     else if ( TD(d1) < TD(d2) ) return -1;
-    for ( i = 0; i < nd_nvar; i++ )
-        if ( GET_EXP(d1,i) > GET_EXP(d2,i) ) return 1;
-        else if ( GET_EXP(d1,i) < GET_EXP(d2,i) ) return -1;
+	if ( c = ndl_lex_compare(d1,d2) ) return c;
     if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -608,15 +604,13 @@ int ndl_module_glex_compare(UINT *d1,UINT *d2)
 
 int ndl_module_lex_compare(UINT *d1,UINT *d2)
 {
-    int i;
+    int i,c;
 
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
-    for ( i = 0; i < nd_nvar; i++ )
-        if ( GET_EXP(d1,i) > GET_EXP(d2,i) ) return 1;
-        else if ( GET_EXP(d1,i) < GET_EXP(d2,i) ) return -1;
+	if ( c = ndl_lex_compare(d1,d2) ) return c;
     if ( !nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -2823,7 +2817,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     P p,zp;
     Q dmy;
     EPOS oepos;
-    int obpe,oadv,wmax,i,len,cbpe,ishomo,nalg,mrank,trank;
+    int obpe,oadv,wmax,i,len,cbpe,ishomo,nalg,mrank,trank,ompos;
     Alg alpha,dp;
     P poly;
     LIST f1,f2,zpl;
@@ -2889,7 +2883,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
             }
         }
     nd_setup_parameters(nvar,max);
-    obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos;
+    obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos; ompos = nd_mpos;
     ishomo = 1;
     for ( in0 = 0, fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
 	if ( nd_module ) {
@@ -2918,7 +2912,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         nd_init_ord(ord1);
         nd_setup_parameters(nvar+1,wmax);
         for ( t = fd0; t; t = NEXT(t) )
-            ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos);
+            ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
     while ( 1 ) {
         if ( Demand )
@@ -3180,7 +3174,7 @@ void ndv_removecont(int mod,NDV p)
 
 /* koko */
 
-void ndv_homogenize(NDV p,int obpe,int oadv,EPOS oepos)
+void ndv_homogenize(NDV p,int obpe,int oadv,EPOS oepos,int ompos)
 {
     int len,i,max;
     NMV m,mr0,mr,t;
@@ -3193,7 +3187,7 @@ void ndv_homogenize(NDV p,int obpe,int oadv,EPOS oepos)
     mr = (NMV)((char *)mr0+(len-1)*nmv_adv);
     t = (NMV)ALLOCA(nmv_adv);
     for ( i = 0; i < len; i++, NMV_OPREV(m), NMV_PREV(mr) ) {
-        ndl_homogenize(DL(m),DL(t),obpe,oepos,max);
+        ndl_homogenize(DL(m),DL(t),obpe,oepos,ompos,max);
         CQ(mr) = CQ(m);
         ndl_copy(DL(t),DL(mr));
     }
@@ -3203,7 +3197,8 @@ void ndv_homogenize(NDV p,int obpe,int oadv,EPOS oepos)
 
 void ndv_dehomogenize(NDV p,struct order_spec *ord)
 {
-    int i,j,adj,len,newnvar,newwpd,newadv,newexporigin;
+    int i,j,adj,len,newnvar,newwpd,newadv,newexporigin,newmpos;
+	int pos;
     Q *w;
     Q dvr,t;
     NMV m,r;
@@ -3211,6 +3206,7 @@ void ndv_dehomogenize(NDV p,struct order_spec *ord)
     len = p->len;
     newnvar = nd_nvar-1;
     newexporigin = nd_get_exporigin(ord);
+	if ( nd_module ) newmpos = newexporigin-1;
     newwpd = newnvar/nd_epw+(newnvar%nd_epw?1:0)+newexporigin;
     for ( m = BDY(p), i = 0; i < len; NMV_ADV(m), i++ )
         ndl_dehomogenize(DL(m));
@@ -3218,9 +3214,13 @@ void ndv_dehomogenize(NDV p,struct order_spec *ord)
         newadv = ROUND_FOR_ALIGN(sizeof(struct oNMV)+(newwpd-1)*sizeof(UINT));
         for ( m = r = BDY(p), i = 0; i < len; NMV_ADV(m), NDV_NADV(r), i++ ) {
             CQ(r) = CQ(m);
+			if ( nd_module ) pos = MPOS(DL(m));
             for ( j = 0; j < newexporigin; j++ ) DL(r)[j] = DL(m)[j];
             adj = nd_exporigin-newexporigin;
             for ( ; j < newwpd; j++ ) DL(r)[j] = DL(m)[j+adj];
+			if ( nd_module ) {
+				DL(r)[newmpos] = pos;
+			}
         }
     }
     NV(p)--;
@@ -4472,15 +4472,17 @@ void nd_init_ord(struct order_spec *ord)
         case 256:
             nd_ispot = ord->ispot;
             nd_dcomp = -1;
-            nd_isrlex = 0;
             switch ( ord->ord.simple ) {
                 case 0:
+            		nd_isrlex = 1;
                     ndl_compare_function = ndl_module_grlex_compare;
                     break;
                 case 1:
+            		nd_isrlex = 0;
                     ndl_compare_function = ndl_module_glex_compare;
                     break;
                 case 2:
+            		nd_isrlex = 0;
                     ndl_compare_function = ndl_module_lex_compare;
                     break;
                 default:
@@ -4514,7 +4516,7 @@ BlockMask nd_create_blockmask(struct order_spec *ord)
     BlockMask bm;
 
     /* we only create mask table for block order */
-    if ( ord->id != 1 )
+    if ( ord->id != 1 && ord->id != 257 )
         return 0;
     n = ord->ord.block.length;
     bm = (BlockMask)MALLOC(sizeof(struct oBlockMask));
@@ -4538,7 +4540,7 @@ EPOS nd_create_epos(struct order_spec *ord)
 
     epos = (EPOS)MALLOC_ATOMIC(nd_nvar*sizeof(struct oEPOS));
     switch ( ord->id ) {
-        case 0:
+        case 0: case 256:
             if ( nd_isrlex ) {
                 for ( i = 0; i < nd_nvar; i++ ) {
                     epos[i].i = nd_exporigin + (nd_nvar-1-i)/nd_epw;
@@ -4551,7 +4553,7 @@ EPOS nd_create_epos(struct order_spec *ord)
                 }
             }
             break;
-        case 1:
+        case 1: case 257:
             /* block order */
             l = ord->ord.block.length;
             op = ord->ord.block.order_pair;
