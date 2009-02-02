@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.163 2009/01/05 06:29:46 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.164 2009/01/07 05:33:18 noro Exp $ */
 
 #include "nd.h"
 
@@ -3799,6 +3799,10 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
                 if ( t = tab[j] ) {
                     dt = DL(t);
                     PUT_EXP(dt,i,a); PUT_EXP(dt,n2+i,b); TD(dt) += s;
+            		if ( nd_module ) { 
+						MPOS(dt) = mpos;
+						TD(dt) = ndl_weight(dt);
+					}
                     if ( nd_blockmask ) ndl_weight_mask(dt);
                 }
             curlen *= k+1;
