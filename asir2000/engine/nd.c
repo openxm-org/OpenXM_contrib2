@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.164 2009/01/07 05:33:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.165 2009/02/02 02:40:42 noro Exp $ */
 
 #include "nd.h"
 
@@ -3767,6 +3767,9 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
     for ( i = 0; i < tlen; i++ ) tab[i] = 0;
     if ( !m0 || !m1 ) return;
     d0 = DL(m0); d1 = DL(m1); n2 = n>>1;
+    if ( nd_module )
+        if ( MPOS(d0) ) error("weyl_mul_nm_nmv : invalid operation");
+
     NEWNM(m); d = DL(m);
     if ( mod ) {
         c0 = CM(m0); c1 = CM(m1); DMAR(c0,c1,0,mod,c); CM(m) = c;
@@ -3781,11 +3784,6 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
         TD(DL(m)) = h;
         if ( nd_blockmask ) ndl_weight_mask(DL(m));
     }
-    if ( nd_module ) {
-        mpos = MPOS(d1);
-		TD(d1) = ndl_weight(d1);
-        if ( MPOS(d0) ) error("weyl_mul_nm_nmv : invalid operation");
-    }
     tab[0] = m;
     NEWNM(m); d = DL(m);
     for ( i = 0, curlen = 1; i < n2; i++ ) {
@@ -3799,10 +3797,6 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
                 if ( t = tab[j] ) {
                     dt = DL(t);
                     PUT_EXP(dt,i,a); PUT_EXP(dt,n2+i,b); TD(dt) += s;
-            		if ( nd_module ) { 
-						MPOS(dt) = mpos;
-						TD(dt) = ndl_weight(dt);
-					}
                     if ( nd_blockmask ) ndl_weight_mask(dt);
                 }
             curlen *= k+1;
@@ -3824,10 +3818,6 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
                 TD(d) = s;
                 PUT_EXP(d,n-1,s-h);
             } else TD(d) = h;
-            if ( nd_module ) { 
-				MPOS(d) = mpos;
-				TD(d) = ndl_weight(d);
-			}
             if ( nd_blockmask ) ndl_weight_mask(d);
             if ( mod ) c = ctab[j];
             else q = ctab_q[j];
@@ -3860,6 +3850,15 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
         curlen *= k+1;
     }
     FREENM(m);
+	if ( nd_module ) {
+        mpos = MPOS(d1);
+		for ( i = 0; i < tlen; i++ )
+			if ( tab[i] ) {
+				d = DL(tab[i]);
+				MPOS(d) = mpos;
+				TD(d) = ndl_weight(d);
+			}
+	}
 }
 
 ND ndv_mul_nm_symbolic(NM m0,NDV p)
