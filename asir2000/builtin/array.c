@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.55 2006/10/26 10:49:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.56 2007/11/23 05:43:23 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -459,15 +459,29 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
 
 	ac = argc(arg);
 	if ( ac == 1 ) {
-		/* ARG0(arg) must be a filename */
-		asir_assert(ARG0(arg),O_STR,"newbytearray");
-		fname = BDY((STRING)ARG0(arg));
-		fp = fopen(fname,"rb");
-		if ( !fp ) error("newbytearray : fopen failed");
-		if ( stat(fname,&sbuf) < 0 ) error("newbytearray : stat failed");
-		len = sbuf.st_size;
-		MKBYTEARRAY(array,len);
-		fread(BDY(array),len,sizeof(char),fp);
+		if ( !OID((Obj)ARG0(arg)) ) error("newbytearray : invalid argument");
+		switch ( OID((Obj)ARG0(arg)) ) {
+			case O_STR:
+				fname = BDY((STRING)ARG0(arg));
+				fp = fopen(fname,"rb");
+				if ( !fp ) error("newbytearray : fopen failed");
+				if ( stat(fname,&sbuf) < 0 ) 
+					error("newbytearray : stat failed");
+				len = sbuf.st_size;
+				MKBYTEARRAY(array,len);
+				fread(BDY(array),len,sizeof(char),fp);
+				break;
+			case O_N:
+				if ( !RATN(ARG0(arg)) )
+					error("newbytearray : invalid argument");
+				len = QTOS((Q)ARG0(arg)); 
+				if ( len < 0 )
+					error("newbytearray : invalid size");
+				MKBYTEARRAY(array,len);
+				break;
+			default:
+				error("newbytearray : invalid argument");
+		}
 	} else if ( ac == 2 ) {
 		asir_assert(ARG0(arg),O_N,"newbytearray");
 		len = QTOS((Q)ARG0(arg)); 
