@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.27 2007/11/11 15:54:02 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.28 2008/03/19 07:05:55 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -69,22 +69,16 @@ libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	    touch ${top_srcdir}/${GC}/.configure_done ; \
 	fi
 	(cd ${top_srcdir}/${GC}; ${MAKE})
-	cp ${top_srcdir}/${GC}/.libs/libgc.a ${GLIB}
-	(cd ${top_srcdir}/parse; ${MAKE} gc_risa.o)
-	${AR} q ${GLIB} ${top_srcdir}/parse/gc_risa.o
-	${RANLIB} ${GLIB}
+	cp ${top_srcdir}/${GC}/.libs/libgc.a $@
 
-libasir.a: ${ASIRLIB}
+libasir.a: ${ASIRLIB} ${GLIB}
 	-mkdir ${top_srcdir}/libtmp
 	-rm -f ${top_srcdir}/libtmp/*  ${top_srcdir}/$@
 	for i in ${ASIRLIB}; do (cd ${top_srcdir}/libtmp; ar x ../$$i; chmod 644 *) done
+	(cd ${top_srcdir}/parse; ${MAKE} gc_risa.o; cp gc_risa.o ../libtmp)
 	(cd ${top_srcdir}/libtmp; ${AR} cq ../$@ *.o)
 	(cd ${top_srcdir}; ${RANLIB} $@)
 	-rm -rf ${top_srcdir}/libtmp
-
-#asir.o: umain.o ${ASIRLIB} ${GLIB}
-#	-rm $@
-#	ld -r $@ umain.o ${ASIRLIB} ${GLIB} ${LIBS} ${EXTRALIBS}
 
 install-libasir: libasir.a
 	mkdir -p ${DESTDIR}${libdir}
