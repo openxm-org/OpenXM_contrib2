@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.73 2009/01/04 05:44:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.74 2009/01/05 01:47:30 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1427,6 +1427,8 @@ LUM LUMALLOC(int, int);
 BM BMALLOC(int, int);
 Obj ToAlg(Num);
 UM *berlemain(register int, UM, UM *);
+void Risa_GC_set_adj(int,int);
+void Risa_GC_get_adj(int *,int *);
 void *Risa_GC_malloc(size_t);
 void *Risa_GC_malloc_atomic(size_t);
 void *Risa_GC_realloc(void *,size_t);

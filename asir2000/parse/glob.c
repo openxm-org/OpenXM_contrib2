@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.73 2008/01/04 16:42:19 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.74 2008/03/19 07:05:56 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -77,8 +77,6 @@
 
 #define MAXHIST 100
 
-extern int GC_free_space_divisor;
-extern int GC_free_space_numerator;
 extern FILE *asir_out;
 
 INFILE asir_infile;
@@ -331,6 +329,7 @@ FILE *in_fp;
 
 void process_args(int ac,char **av)
 {
+	int nm,dv;
 	do_asirrc = 1;
 #if !defined(MPI)
 	do_message = 1;
@@ -343,13 +342,15 @@ void process_args(int ac,char **av)
 			GC_expand_hp(atoi(*(av+1))); av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-adj") && (ac >= 2) ) {
 			char *slash;
-
 			slash = strrchr(*(av+1),'/');
 			if ( slash ) {
 				*slash = 0;
-				GC_free_space_numerator = atoi(slash+1);
+				nm = atoi(slash+1);
+			}else {
+				nm = 1;
 			}
-			GC_free_space_divisor = atoi(*(av+1));
+			dv = atoi(*(av+1));
+			Risa_GC_set_adj(nm,dv);
 			av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-cpp") && (ac >= 2) ) {
 			strcpy(cppname,*(av+1)); av += 2; ac -= 2;

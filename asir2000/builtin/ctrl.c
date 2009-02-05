@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.37 2006/05/30 07:35:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.38 2007/01/25 16:19:40 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,7 +60,7 @@ struct ftab ctrl_tab[] = {
 
 extern int error_in_timer;
 extern int prtime,nez,echoback,bigfloat;
-extern int GC_free_space_numerator,GC_free_space_divisor,debug_up;
+extern int debug_up;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
 extern int do_message,do_terse;
 extern int ox_batch,ox_check,ox_exchange_mathcap;
@@ -135,6 +135,7 @@ NODE arg;
 Q *rp;
 {
 	int t,i,n;
+	int nm,dv;
 	N num,den;
 	Q c;
 	char *key;
@@ -149,16 +150,18 @@ Q *rp;
 	if ( !strcmp(key,"adj") ) {
 		/* special treatment is necessary for "adj" */
 		if ( argc(arg) == 1 ) {
-			UTON(GC_free_space_divisor,num);
-			UTON(GC_free_space_numerator,den);
+			Risa_GC_get_adj(&nm,&dv);
+			UTON(dv,num);
+			UTON(nm,den);
 		} else {
 			c = (Q)ARG1(arg);
 			if ( !c )
 				error("ctrl : adj : invalid argument");
 			num = NM(c);
 			den = !DN(c)?ONEN:DN(c);
-			GC_free_space_divisor = BD(num)[0];
-			GC_free_space_numerator = BD(den)[0];
+			dv = BD(num)[0];
+			nm = BD(den)[0];
+			Risa_GC_set_adj(nm,dv);
 		}
 		NDTOQ(num,den,1,*rp);
 		return;

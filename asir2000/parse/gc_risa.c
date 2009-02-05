@@ -186,6 +186,18 @@ double get_clock()
 #endif
 #endif
 
+extern int GC_free_space_numerator;
+
+void Risa_GC_get_adj(int *nm, int *dn) {
+	*nm = GC_free_space_numerator;
+	*dn = GC_free_space_divisor;
+}
+
+void Risa_GC_set_adj(int nm, int dn) {
+	GC_free_space_numerator = nm;
+	GC_free_space_divisor = dn;
+}
+
 void GC_timerstart() {
 	gcstart = get_clock();
 }
