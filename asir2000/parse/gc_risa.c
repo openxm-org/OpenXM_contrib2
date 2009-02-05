@@ -1,4 +1,4 @@
-#include "private/gc_priv.h"
+#include "gc.h"
 #include <time.h>
 
 void error(char *);
@@ -37,17 +37,17 @@ void *Risa_GC_realloc(void *p,size_t d)
 
 int get_heapsize()
 {
-	return GC_heapsize;
+	return GC_get_heap_size();
 }
+
+#if !defined(BYTES_TO_WORDS)
+#define BYTES_TO_WORDS(x)   ((x)>>2)
+#endif
 
 long get_allocwords()
 {
-#if !defined(GC7)
-	return GC_words_allocd_before_gc + GC_words_allocd;
-#else
-	long n = GC_bytes_allocd_before_gc + GC_bytes_allocd;
-	return BYTES_TO_WORDS(n);
-#endif
+	size_t n = GC_get_total_bytes();
+	return (long)BYTES_TO_WORDS(n); /* bytes to words */
 }
 
 double gctime;
