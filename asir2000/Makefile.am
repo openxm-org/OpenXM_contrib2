@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.28 2008/03/19 07:05:55 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.29 2009/02/04 12:10:07 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -45,7 +45,7 @@ LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRA
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
+libasir-gc.a: ${GC_PATCH}
 	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
 		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
 			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
@@ -71,7 +71,7 @@ libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	(cd ${top_srcdir}/${GC}; ${MAKE})
 	cp ${top_srcdir}/${GC}/.libs/libgc.a $@
 
-libasir.a: ${ASIRLIB} ${GLIB}
+libasir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
 	-mkdir ${top_srcdir}/libtmp
 	-rm -f ${top_srcdir}/libtmp/*  ${top_srcdir}/$@
 	for i in ${ASIRLIB}; do (cd ${top_srcdir}/libtmp; ar x ../$$i; chmod 644 *) done

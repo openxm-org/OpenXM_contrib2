@@ -707,7 +707,7 @@ uninstall-am: uninstall-asirPROGRAMS
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
+libasir-gc.a: ${GC_PATCH}
 	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
 		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
 			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
@@ -733,7 +733,7 @@ libasir-gc.a: ${GC_PATCH} parse/gc_risa.c
 	(cd ${top_srcdir}/${GC}; ${MAKE})
 	cp ${top_srcdir}/${GC}/.libs/libgc.a $@
 
-libasir.a: ${ASIRLIB} ${GLIB}
+libasir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
 	-mkdir ${top_srcdir}/libtmp
 	-rm -f ${top_srcdir}/libtmp/*  ${top_srcdir}/$@
 	for i in ${ASIRLIB}; do (cd ${top_srcdir}/libtmp; ar x ../$$i; chmod 644 *) done
