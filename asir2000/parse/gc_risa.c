@@ -1,3 +1,5 @@
+/* $OpenXM$ */
+
 #include "gc.h"
 #include <time.h>
 
