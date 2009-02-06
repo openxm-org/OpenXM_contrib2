@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.6 2009/02/05 11:25:59 ohara Exp $ */
 
 #include "gc.h"
 #include <time.h>
@@ -52,8 +52,7 @@ long get_allocwords()
 	return (long)BYTES_TO_WORDS(n); /* bytes to words */
 }
 
-double gctime;
-static double gcstart,asir_start_time;
+static double asir_start_time;
 
 double get_clock(), get_rtime(), get_current_time();
 
@@ -73,8 +72,6 @@ double get_rtime()
 {
 	return get_current_time() - asir_start_time;
 }
-
-#if defined(THINK_C) || defined(__MWERKS__) || defined(VISUAL) || defined(MSWIN32)
 
 #if defined(VISUAL)
 #include <windows.h>
@@ -131,7 +128,7 @@ double get_clock()
 	} else
 		return get_current_time();
 }
-#else
+#elif defined(THINK_C) || defined(__MWERKS__) || defined(MSWIN32)
 double get_current_time()
 {
 	return get_clock();
@@ -144,8 +141,6 @@ double get_clock()
 	c = clock();
 	return (double)c/(double)CLOCKS_PER_SEC;
 }
-#endif
-
 #else
 #include <sys/time.h>
 
@@ -172,7 +167,6 @@ double get_clock()
 }
 #else
 
-#include <sys/time.h>
 #include <sys/resource.h>
 
 double get_clock()
@@ -188,6 +182,7 @@ double get_clock()
 #endif
 #endif
 
+#if 1
 extern int GC_free_space_numerator;
 
 void Risa_GC_get_adj(int *nm, int *dn) {
@@ -199,14 +194,20 @@ void Risa_GC_set_adj(int nm, int dn) {
 	GC_free_space_numerator = nm;
 	GC_free_space_divisor = dn;
 }
-
-void GC_timerstart() {
-	gcstart = get_clock();
+#else
+void Risa_GC_get_adj(int *nm, int *dn) {
+	*nm = 1;
+	*dn = GC_free_space_divisor;
 }
 
-void GC_timerstop() {
-	gctime += get_clock() - gcstart;
+void Risa_GC_set_adj(int nm, int dn) {
+	GC_free_space_divisor = dn/nm;
 }
+
+double GC_get_gctime() {
+	return 0.0;
+}
+#endif
 
 #if defined(MSWIN32) && !defined(VISUAL)
 #include <signal.h>

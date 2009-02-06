@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.26 2006/02/25 06:33:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.27 2007/01/25 16:19:41 saito Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -190,12 +190,13 @@ void nglob_init() {
 	init_lprime();
 }
 
-extern double gctime;
+extern double GC_get_gctime();
 double suspend_start;
 double suspended_time=0;
 
 void get_eg(struct oEGT *p)
 {
+	double gctime = GC_get_gctime();
 	p->exectime = get_clock() - gctime - suspended_time; p->gctime = gctime;
 }
 
