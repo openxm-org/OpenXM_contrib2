@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.29 2009/02/04 12:10:07 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.30 2009/02/05 09:01:07 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -12,7 +12,7 @@ SUBDIRS  = asm builtin engine fft include io lib parse ${PLOTDIR}
 asirdir       = ${libdir}/asir
 asir_PROGRAMS = asir
 asir_SOURCES  = parse/main.c
-asir_LDADD    = libasir.a libasir-gc.a
+asir_LDADD    = libasir.a @ASIR_GCLIB@
 CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
 GC_TAR_GZ     = ${GC}.tar.gz
@@ -27,10 +27,9 @@ OX_FETCH      = ${bindir}/oxfetch.sh
 
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           -I${top_srcdir}/${GC}/include \
-           @PARIINC@ @MPIINC@ @X_CFLAGS@
+           @GCINC@ @PARIINC@ @MPIINC@ @X_CFLAGS@
 
-GLIB  = libasir-gc.a
+GLIB  = @ASIR_GCLIB@
 ALIB  = asm/libasm.a
 BLIB  = builtin/libfunc.a
 ELIB  = engine/libca.a
@@ -39,7 +38,7 @@ IOLIB = io/libio.a
 PLIB  = parse/libparse.a
 
 ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
-LIBS     = @LIBS@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS}
+LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS}
 # EXTRALIBS = @EXTRALIBS@
 
 umain.o: parse/main.c

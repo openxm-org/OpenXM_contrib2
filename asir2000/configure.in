@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.28 2008/08/08 05:47:21 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.29 2008/08/11 16:58:30 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -37,13 +37,24 @@ elif test `basename ./"${CC}"` = "icc" ; then
 fi
 
 GC=gc6.8
+AC_ARG_WITH([asir-gc],
+[  --with-asir-gc          modify Boehm's GC [[yes]]],
+[with_asir_gc=${withval}],[with_asir_gc=yes])
+if test ${with_asir_gc:=yes} != no; then
+   ASIR_GCLIB=libasir-gc.a
+   GCINC='-I${top_srcdir}/${GC}/include'
+else
+   GCLIB='-L${prefix}/lib -lgc'
+   GCINC='-I${prefix}/include'
+   AC_DEFINE([NO_ASIR_GC])
+fi
 dnl GC_CONFIGURE_ARGS=--disable-threads --enable-shared=no
 GC_CONFIGURE_ARGS=--disable-threads
 if [ -n "${host_alias}" ]; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
 AC_ARG_WITH([gc7],
-[  --with-gc7              use Boehm's GC 7.x. [[no]]],
+[  --with-gc7              use GC 7.x (if --with-asir-gc=yes) [[no]]],
 [with_gc7=${withval}],[with_gc7=no])
 if test ${with_gc7:=no} != no; then
    case "${with_gc7}" in
@@ -52,8 +63,12 @@ if test ${with_gc7:=no} != no; then
    esac
    GC=gc-${GC_VERSION}
    AC_DEFINE([GC7])
-   USE_GC7="yes"
 fi
+
+AC_SUBST([ASIR_GCLIB])
+AC_SUBST([GCLIB])
+AC_SUBST([GCINC])
+
 AC_SUBST([GC])
 AC_SUBST([GC_CONFIGURE_ARGS])
 AM_CONDITIONAL([USE_GC7],[test "$with_gc7" != no])
@@ -79,9 +94,9 @@ if test ${with_pari:=no} != no ; then
     libasir_postfix=${libasir_postfix}_pari
     PARIINC='-I${prefix}/include/pari'
     if test "${enable_shared}" != yes ; then
-        PARILIB='${prefix}'"/lib/libpari.a"
+        PARILIB='${libdir}/libpari.a'
     else
-        PARILIB='-L${prefix}/lib'" -lpari"
+        PARILIB='-L${libdir} -lpari'
     fi
     AC_DEFINE([PARI])
 fi

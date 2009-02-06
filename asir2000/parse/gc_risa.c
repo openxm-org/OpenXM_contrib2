@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.6 2009/02/05 11:25:59 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.7 2009/02/06 08:58:28 ohara Exp $ */
 
 #include "gc.h"
 #include <time.h>
@@ -182,7 +182,7 @@ double get_clock()
 #endif
 #endif
 
-#if 1
+#if !defined(NO_ASIR_GC)
 extern int GC_free_space_numerator;
 
 void Risa_GC_get_adj(int *nm, int *dn) {
