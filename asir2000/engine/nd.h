@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.20 2009/01/05 02:08:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.21 2009/01/07 05:33:18 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -116,6 +116,11 @@ typedef struct oIndArray
 	} index;
 } *IndArray;
 
+typedef struct oNDVI {
+	NDV p;
+	int i;
+} *NDVI;
+
 extern int (*ndl_compare_function)(UINT *a1,UINT *a2);
 extern int nd_dcomp;
 
@@ -126,7 +131,7 @@ extern ND_pairs _ndp_free_list;
 extern struct order_spec *dp_current_spec;
 extern char *Demand;
 extern VL CO;
-extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar;
+extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar,GenTrace;
 extern int *current_weyl_weight_vector;
 extern int *current_module_weight_vector;
 
@@ -134,6 +139,7 @@ extern int *current_module_weight_vector;
 #define TD(d) (d[0])
 #define HDL(d) ((d)->body->dl)
 #define HTD(d) (TD(HDL(d)))
+#define HCU(d) ((d)->body->c)
 #define HCM(d) ((d)->body->c.m)
 #define HCQ(d) ((d)->body->c.z)
 #define HCP(d) ((d)->body->c.p)
@@ -252,10 +258,10 @@ int ndv_newps(int m,NDV a,NDV aq);
 /* top level functions */
 void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp);
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp);
-NODE nd_f4(int m);
-NODE nd_gb(int m,int ishomo,int checkonly);
-NODE nd_gb_trace(int m,int ishomo);
-NODE nd_f4_trace(int m);
+NODE nd_f4(int m,int **indp);
+NODE nd_gb(int m,int ishomo,int checkonly,int **indp);
+NODE nd_gb_trace(int m,int ishomo,int **indp);
+NODE nd_f4_trace(int m,int **indp);
 
 /* ndl functions */
 int ndl_weight(UINT *d);
@@ -283,7 +289,7 @@ int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *nf);
 int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *nf);
 
 /* finalizers */
-NODE ndv_reducebase(NODE x);
+NODE ndv_reducebase(NODE x,int *perm);
 NODE ndv_reduceall(int m,NODE f);
 
 /* allocators */
