@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.63 2007/09/19 05:42:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.64 2007/09/19 05:56:01 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -95,6 +95,7 @@ int DP_NFStat = 0;
 LIST Dist = 0;
 int NoGCD = 0;
 int GenTrace = 0;
+int GenSyz = 0;
 int OXCheck = -1;
 
 int NoSugar = 0;
@@ -2320,6 +2321,8 @@ void dp_set_flag(Obj name,Obj value)
 		GenTrace = v;
 	else if ( !strcmp(n,"OXCheck") )
 		OXCheck = v;
+	else if ( !strcmp(n,"GenSyz") )
+		GenSyz = v;
 }
 
 void dp_make_flaglist(LIST *list)
@@ -2346,6 +2349,7 @@ void dp_make_flaglist(LIST *list)
 	STOQ(DP_NFStat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NFStat"); MKNODE(n1,name,n); n = n1;
 	STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
 	STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
+	STOQ(GenSyz,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenSyz"); MKNODE(n1,name,n); n = n1;
 	STOQ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
 	STOQ(ShowMag,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"ShowMag"); MKNODE(n1,name,n); n = n1;
 	STOQ(Top,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Top"); MKNODE(n1,name,n); n = n1;

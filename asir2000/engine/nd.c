@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.166 2009/02/03 08:08:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.167 2009/02/08 02:47:09 noro Exp $ */
 
 #include "nd.h"
 
@@ -1483,13 +1483,17 @@ int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
     NDV r;
     NODE t,s;
     union oNDC dn;
+    Q q;
+    LIST list;
 
-    ndv_setup(0,0,cand,0,1);
+    ndv_setup(0,0,cand,GenTrace?1:0,1);
     n = length(cand);
 
+	if ( GenTrace ) { nd_alltracelist = 0; nd_tracelist = 0; }
     /* membercheck : list is a subset of Id(cand) ? */
-    for ( t = input; t; t = NEXT(t) ) {
+    for ( t = input, i = 0; t; t = NEXT(t), i++ ) {
 again:
+		nd_tracelist = 0;
         if ( nd_bpe > obpe )
             r = ndv_dup_realloc((NDV)BDY(t),obpe,oadv,oepos);
         else
@@ -1500,12 +1504,16 @@ again:
             nd_reconstruct(0,0);
             goto again;
         } else if ( nf ) return 0;
+		if ( GenTrace ) {
+			nd_tracelist = reverse_node(nd_tracelist);
+			MKLIST(list,nd_tracelist);
+			STOQ(i,q); s = mknode(2,q,list); MKLIST(list,s);
+			MKNODE(s,list,nd_alltracelist);
+			nd_alltracelist = s; nd_tracelist = 0;
+		}
         if ( DP_Print ) { printf("."); fflush(stdout); }
     }
     if ( DP_Print ) { printf("\n"); }
-    /* gbcheck : cand is a GB of Id(cand) ? */
-    if ( !nd_gb(0,0,1,0) ) return 0;
-    /* XXX */
     return 1;
 }
 
@@ -1845,7 +1853,7 @@ int do_diagonalize(int sugar,int m)
 
 /* return value = 0 => input is not a GB */
 
-NODE nd_gb(int m,int ishomo,int checkonly,int **indp)
+NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
 {
     int i,nh,sugar,stat;
     NODE r,g,t;
@@ -1861,7 +1869,7 @@ NODE nd_gb(int m,int ishomo,int checkonly,int **indp)
 
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
-        d = update_pairs(d,g,i);
+        d = update_pairs(d,g,i,gensyz);
         g = update_base(g,i);
     }
     sugar = 0;
@@ -1898,7 +1906,7 @@ again:
             d = nd_reconstruct(0,d);
             goto again;
         } else if ( nf ) {
-            if ( checkonly ) return 0;
+            if ( checkonly || gensyz ) return 0;
             if ( DP_Print ) { printf("+"); fflush(stdout); }
             hc = HCU(nf);
             nd_removecont(m,nf);
@@ -1925,10 +1933,17 @@ again:
                     goto again;
                 }
             }
-            d = update_pairs(d,g,nh);
+            d = update_pairs(d,g,nh,0);
             g = update_base(g,nh);
             FREENDP(l);
         } else {
+		    if ( GenTrace && gensyz ) {
+                nd_tracelist = reverse_node(nd_tracelist); 
+				MKLIST(list,nd_tracelist);
+                STOQ(-1,q); t = mknode(2,q,list); MKLIST(list,t);
+                MKNODE(t,list,nd_alltracelist); 
+				nd_alltracelist = t; nd_tracelist = 0;
+			}
             if ( DP_Print ) { printf("."); fflush(stdout); }
             FREENDP(l);
         }
@@ -2028,7 +2043,7 @@ NODE nd_gb_trace(int m,int ishomo,int **indp)
     init_eg(&eg_le);
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
-        d = update_pairs(d,g,i);
+        d = update_pairs(d,g,i,0);
         g = update_base(g,i);
     }
     sugar = 0;
@@ -2121,7 +2136,7 @@ again:
                         goto again;
                     }
                 }
-                d = update_pairs(d,g,nh);
+                d = update_pairs(d,g,nh,0);
                 g = update_base(g,nh);
             } else {
                 if ( DP_Print ) { printf("*"); fflush(stdout); }
@@ -2223,16 +2238,28 @@ NODE ndv_reduceall(int m,NODE f)
     return a0;
 }
 
-ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t)
+ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
 {
     ND_pairs d1,nd,cur,head,prev,remove;
 
     if ( !g ) return d;
+	/* for testing */
+	if ( gensyz && GenSyz == 2 ) {
+    	d1 = nd_newpairs(g,t);
+    	if ( !d )
+       	 return d1;
+    	else {
+       	 nd = d;
+       	 while ( NEXT(nd) ) nd = NEXT(nd);
+       	 NEXT(nd) = d1;
+       	 return d;
+    	}
+	}
     d = crit_B(d,t);
     d1 = nd_newpairs(g,t);
     d1 = crit_M(d1);
     d1 = crit_F(d1);
-    if ( do_weyl )
+    if ( gensyz || do_weyl )
         head = d1;
     else {
         prev = 0; cur = head = d1;
@@ -2619,8 +2646,8 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
         }
         if ( GenTrace ) {
             STOQ(i,iq); STOQ(w[i].i,jq); node = mknode(3,iq,jq,ONE);
-            ARG2(node) = (pointer)
-                ndc_div(trace?0:mod,hc,HCU(a));
+			if ( !dont_removecont )
+                ARG2(node) = (pointer)ndc_div(trace?0:mod,hc,HCU(a));
             MKLIST(l,node); NEXTNODE(nd_tracelist,tn); BDY(tn) = l;
         }
         NEWRHist(r); SG(r) = HTD(a); ndl_copy(HDL(a),DL(r));
@@ -2837,7 +2864,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     if ( GenTrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
-    x = f4?nd_f4(m,&perm):nd_gb(m,ishomo,0,&perm);
+    x = f4?nd_f4(m,&perm):nd_gb(m,ishomo,0,0,&perm);
     nd_demand = 0;
     x = ndv_reducebase(x,perm);
     if ( GenTrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
@@ -2937,7 +2964,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
     for ( x = 0, i = 0; i < nd_psn; i++ )
         x = update_base(x,i);
     if ( do_check ) {
-        x = nd_gb(m,ishomo,1,&perm);
+        x = nd_gb(m,ishomo,1,0,&perm);
         if ( !x ) {
             *rp = 0;
             return;
@@ -2976,10 +3003,10 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     NumberField nf;
     struct order_spec *ord1;
     struct oEGT eg_check,eg0,eg1;
-    NODE tr,tl1,tl2;
-    LIST l1,l2,l3;
+    NODE tr,tl1,tl2,tl3,tl4;
+    LIST l1,l2,l3,l4,l5;
     int *perm;
-    int j;
+    int j,ret;
     Q jq;
 
     nd_module = 0;
@@ -3101,9 +3128,17 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         if ( nocheck )
             break;
         get_eg(&eg0);
-        if ( ndv_check_candidate(in0,obpe,oadv,oepos,cand) )
-            /* success */
-            break;
+        if ( ret = ndv_check_candidate(in0,obpe,oadv,oepos,cand) ) {
+            if ( GenTrace ) { 
+			    tl3 = nd_alltracelist; nd_alltracelist = 0; 
+		    } else tl3 = 0;
+            /* gbcheck : cand is a GB of Id(cand) ? */
+            ret = nd_gb(0,0,1,GenSyz?1:0,0)!=0;
+            if ( GenTrace && GenSyz ) { 
+			    tl4 = nd_alltracelist; nd_alltracelist = 0; 
+		    } else tl4 = 0;
+		}
+		if ( ret ) break;
         else if ( trace > 1 ) {
             /* failure */
             *rp = 0; return;    
@@ -3135,6 +3170,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     MKLIST(*rp,cand);
     if ( GenTrace ) {
         tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
+		tl3 = reverse_node(tl3);
 		/* tl2 = [[i,[[*,j,*,*],...]],...] */
         for ( t = tl2; t; t = NEXT(t) ) {
 			/* s = [i,[*,j,*,*],...] */
@@ -3148,8 +3184,9 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 		for ( j = length(cand)-1, t = 0; j >= 0; j-- ) {
 		    STOQ(perm[j],jq); MKNODE(s,jq,t); t = s;
 		}
-        MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t);
-        tr = mknode(5,*rp,homo?ONE:0,l1,l2,l3); MKLIST(*rp,tr);
+        MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
+		MKLIST(l5,tl4);
+        tr = mknode(7,*rp,homo?ONE:0,l1,l2,l3,l4,l5); MKLIST(*rp,tr);
     }
 }
 
@@ -5346,7 +5383,7 @@ NODE nd_f4(int m,int **indp)
 #endif
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
-        d = update_pairs(d,g,i);
+        d = update_pairs(d,g,i,0);
         g = update_base(g,i);
     }
     while ( d ) {
@@ -5390,7 +5427,7 @@ NODE nd_f4(int m,int **indp)
                 nf = ndtondv(m,nf1);
             }
             nh = ndv_newps(m,nf,0);
-            d = update_pairs(d,g,nh);
+            d = update_pairs(d,g,nh,0);
             g = update_base(g,nh);
         }
     }
@@ -5424,7 +5461,7 @@ NODE nd_f4_trace(int m,int **indp)
 
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
-        d = update_pairs(d,g,i);
+        d = update_pairs(d,g,i,0);
         g = update_base(g,i);
     }
     while ( d ) {
@@ -5490,7 +5527,7 @@ NODE nd_f4_trace(int m,int **indp)
             ndv_mod(m,nfv);
             ndv_removecont(m,nfv);
             nh = ndv_newps(0,nfv,nfqv);
-            d = update_pairs(d,g,nh);
+            d = update_pairs(d,g,nh,0);
             g = update_base(g,nh);
         }
     }

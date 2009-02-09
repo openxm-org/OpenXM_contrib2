@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.21 2009/01/07 05:33:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.22 2009/02/08 02:47:10 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -131,7 +131,7 @@ extern ND_pairs _ndp_free_list;
 extern struct order_spec *dp_current_spec;
 extern char *Demand;
 extern VL CO;
-extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar,GenTrace;
+extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar,GenTrace,GenSyz;
 extern int *current_weyl_weight_vector;
 extern int *current_module_weight_vector;
 
@@ -247,7 +247,7 @@ ND_pairs nd_newpairs( NODE g, int t );
 ND_pairs nd_minp( ND_pairs d, ND_pairs *prest );
 ND_pairs nd_minsugarp( ND_pairs d, ND_pairs *prest );
 NODE update_base(NODE nd,int ndp);
-ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t);
+ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz);
 ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest );
 ND_pairs crit_B( ND_pairs d, int s );
 ND_pairs crit_M( ND_pairs d1 );
@@ -259,7 +259,7 @@ int ndv_newps(int m,NDV a,NDV aq);
 void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp);
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp);
 NODE nd_f4(int m,int **indp);
-NODE nd_gb(int m,int ishomo,int checkonly,int **indp);
+NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp);
 NODE nd_gb_trace(int m,int ishomo,int **indp);
 NODE nd_f4_trace(int m,int **indp);
 
