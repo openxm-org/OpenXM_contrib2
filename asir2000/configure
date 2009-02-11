@@ -5545,7 +5545,7 @@ _ACEOF
 
 fi
 GC_CONFIGURE_ARGS=--disable-threads
-if  -n "${host_alias}" ; then
+if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
 
