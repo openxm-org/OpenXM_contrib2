@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.168 2009/02/09 10:21:29 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.169 2009/02/10 06:33:08 noro Exp $ */
 
 #include "nd.h"
 
@@ -1476,7 +1476,7 @@ int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *rp)
 
 /* input : list of NDV, cand : list of NDV */
 
-int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
+int ndv_check_membership(int m,NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
 {
     int n,i,stat;
     ND nf,d;
@@ -1486,7 +1486,7 @@ int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
     Q q;
     LIST list;
 
-    ndv_setup(0,0,cand,GenTrace?1:0,1);
+    ndv_setup(m,0,cand,GenTrace?1:0,1);
     n = length(cand);
 
 	if ( GenTrace ) { nd_alltracelist = 0; nd_tracelist = 0; }
@@ -2785,11 +2785,13 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     Obj obj;
     NumberField nf;
     struct order_spec *ord1;
-    NODE tr,tl1,tl2;
-    LIST l1,l2,l3;
+    NODE tr,tl1,tl2,tl3,tl4;
+    LIST l1,l2,l3,l4,l5;
 	int j;
 	Q jq;
     int *perm;
+    EPOS oepos;
+    int obpe,oadv,ompos;
 
     nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
@@ -2843,6 +2845,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
             }
         }
     nd_setup_parameters(nvar,max);
+    obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos; ompos = nd_mpos;
     ishomo = 1;
     for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
         if ( nd_module ) {
@@ -2869,6 +2872,17 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     x = ndv_reducebase(x,perm);
     if ( GenTrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
     x = ndv_reduceall(m,x);
+    if ( GenTrace ) { 
+        tl2 = nd_alltracelist; nd_alltracelist = 0;
+        ndv_check_membership(m,fd0,obpe,oadv,oepos,x);
+        if ( GenTrace ) { 
+            tl3 = nd_alltracelist; nd_alltracelist = 0; 
+        } else tl3 = 0;
+        nd_gb(m,0,1,GenSyz?1:0,0)!=0;
+        if ( GenTrace && GenSyz ) { 
+            tl4 = nd_alltracelist; nd_alltracelist = 0; 
+        } else tl4 = 0;
+    }
     for ( r0 = 0, t = x; t; t = NEXT(t) ) {
         NEXTNODE(r0,r); 
     if ( nd_module ) BDY(r) = ndvtopl(m,CO,vv,BDY(t),mrank);
@@ -2879,8 +2893,8 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
         r0 = postprocess_algcoef(av,alist,r0);
     MKLIST(*rp,r0);
     if ( GenTrace ) {
-        tl2 = nd_alltracelist; nd_alltracelist = 0;
         tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
+	tl3 = reverse_node(tl3);
 		/* tl2 = [[i,[[*,j,*,*],...]],...] */
         for ( t = tl2; t; t = NEXT(t) ) {
 			/* s = [i,[*,j,*,*],...] */
@@ -2894,8 +2908,9 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 		for ( j = length(x)-1, t = 0; j >= 0; j-- ) {
 		    STOQ(perm[j],jq); MKNODE(s,jq,t); t = s;
 		}
-        MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t);
-        tr = mknode(5,*rp,0,l1,l2,l3); MKLIST(*rp,tr);
+       MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
+       MKLIST(l5,tl4);
+      tr = mknode(7,*rp,0,l1,l2,l3,l4,l5); MKLIST(*rp,tr);
     }
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
@@ -3128,7 +3143,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         if ( nocheck )
             break;
         get_eg(&eg0);
-        if ( ret = ndv_check_candidate(in0,obpe,oadv,oepos,cand) ) {
+        if ( ret = ndv_check_membership(0,in0,obpe,oadv,oepos,cand) ) {
             if ( GenTrace ) { 
 			    tl3 = nd_alltracelist; nd_alltracelist = 0; 
 		    } else tl3 = 0;

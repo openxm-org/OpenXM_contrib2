@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.22 2009/02/08 02:47:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.23 2009/02/09 10:21:29 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -319,7 +319,7 @@ NDV ndv_dup(int mod,NDV p);
 ND nd_dup(ND p);
 
 /* ND functions */
-int ndv_check_candidate(NODE input,int obpe,int oadv,EPOS oepos,NODE cand);
+int ndv_check_membership(int m,NODE input,int obpe,int oadv,EPOS oepos,NODE cand);
 void nd_mul_c(int mod,ND p,int mul);
 void nd_mul_c_q(ND p,P mul);
 void nd_mul_c_p(VL vl,ND p,P mul);
