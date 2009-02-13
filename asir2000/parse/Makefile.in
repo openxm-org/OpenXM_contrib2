@@ -117,8 +117,6 @@ LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
-MPIINC = @MPIINC@
-MPILIB = @MPILIB@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -203,7 +201,7 @@ inc_HEADERS = comp.h cpp.h parse.h w_stdio.h
 asirdir = ${prefix}/lib/asir
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/${GC}/include \
-           @PARIINC@ @MPIINC@ @X_CFLAGS@
+           @PARIINC@ @X_CFLAGS@
 
 CLEANFILES = y.tab.c y.tab.h
 BUILT_SOURCES = y.tab.c y.tab.h

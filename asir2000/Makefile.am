@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.30 2009/02/05 09:01:07 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.31 2009/02/06 10:11:11 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -27,7 +27,7 @@ OX_FETCH      = ${bindir}/oxfetch.sh
 
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           @GCINC@ @PARIINC@ @MPIINC@ @X_CFLAGS@
+           @GCINC@ @PARIINC@ @X_CFLAGS@
 
 GLIB  = @ASIR_GCLIB@
 ALIB  = asm/libasm.a
@@ -38,7 +38,7 @@ IOLIB = io/libio.a
 PLIB  = parse/libparse.a
 
 ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
-LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @MPILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS}
+LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} -lm ${EXTRALIBS}
 # EXTRALIBS = @EXTRALIBS@
 
 umain.o: parse/main.c
