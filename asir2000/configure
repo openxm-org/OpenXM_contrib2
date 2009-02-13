@@ -774,6 +774,7 @@ with_pari
 enable_plot
 enable_interval
 enable_fft_float
+with_mpi
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1437,6 +1438,7 @@ Optional Packages:
   --with-gc7              use GC 7.x (if --with-asir-gc=yes) [no]
   --with-distdir          specify the spool for fetching. [no]
   --with-pari             use the PARI library. [no]
+  --with-mpi              use the MPI library. [no]
 
 Some influential environment variables:
   CC          C compiler command
@@ -6560,9 +6562,15 @@ _ACEOF
 fi
 
 
+# Check whether --with-mpi was given.
+if test "${with_mpi+set}" = set; then
+  withval=$with_mpi; with_mpi=${withval}
+else
+  with_mpi=no
+fi
+
+
 if test "${with_mpi:=no}" != no ; then
-    MPIINC="-I/opt/FJSVmpi2/include"
-    MPILIB="-L/opt/FJSVmpi2/lib -lmpi -L/opt/FSUNaprun/lib -lmpl -lemi -lthread"
     cat >>confdefs.h <<\_ACEOF
 #define MPI 1
 _ACEOF

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.26 2004/12/17 03:09:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.27 2006/02/08 02:11:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -459,6 +459,11 @@ int ox_data_is_available(int s)
 }
 
 void wait_for_data(int s)
+{
+	return;
+}
+
+void wait_for_data_102(int rank)
 {
 	return;
 }

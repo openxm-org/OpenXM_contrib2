@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.7 2009/02/07 22:41:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.8 2009/02/07 22:52:30 ohara Exp $ 
 */
 #if defined(VISUAL) || defined(MPI)
 #include<stdio.h>
@@ -165,8 +165,10 @@ char* mode;
 		(&rst->fp)->_file = -1;
 #endif
 #elif defined(MPI)
-#if defined(sparc)
+#if defined(sparc) || defined(__FreeBSD__)
 		(&rst->fp)->_file = -1;
+#elif defined(linux)
+		(&rst->fp)->_fileno = -1;
 #else
 		fileno(&rst->fp) = -1;
 #endif

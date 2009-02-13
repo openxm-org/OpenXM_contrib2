@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.30 2009/02/06 10:11:12 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.31 2009/02/11 21:48:15 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -156,13 +156,11 @@ if test "${enable_fft_float:=no}" != no ; then
     AC_DEFINE([USE_FLOAT])
 fi
 
-dnl AC_ARG_WITH([mpi],
-dnl [  --with-mpi              use the MPI library. [[no]]],
-dnl [with_mpi=${withval}],[with_mpi=no])
+AC_ARG_WITH([mpi],
+[  --with-mpi              use the MPI library. [[no]]],
+[with_mpi=${withval}],[with_mpi=no])
 
 if test "${with_mpi:=no}" != no ; then
-    MPIINC="-I/opt/FJSVmpi2/include"
-    MPILIB="-L/opt/FJSVmpi2/lib -lmpi -L/opt/FSUNaprun/lib -lmpl -lemi -lthread"
     AC_DEFINE([MPI])
 fi
 AC_SUBST([MPIINC])
