@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.31 2009/02/11 21:48:15 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.32 2009/02/13 11:25:48 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -163,8 +163,6 @@ AC_ARG_WITH([mpi],
 if test "${with_mpi:=no}" != no ; then
     AC_DEFINE([MPI])
 fi
-AC_SUBST([MPIINC])
-AC_SUBST([MPILIB])
 
 dnl AC_ARG_WITH([lapack],
 dnl [  --with-lapack           use the LAPACK library. [[no]]],

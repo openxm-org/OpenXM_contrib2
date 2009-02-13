@@ -752,8 +752,6 @@ XPMLIB
 USE_PLOT_TRUE
 USE_PLOT_FALSE
 FEPLIB
-MPIINC
-MPILIB
 LAPACKLIB
 libasir_postfix
 USE_GC_SPARC64
@@ -6576,8 +6574,6 @@ if test "${with_mpi:=no}" != no ; then
 _ACEOF
 
 fi
-
-
 
 
 if test "${with_lapack:=no}" != no ; then
