@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.4 2000/08/22 05:03:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.5 2004/06/25 05:20:09 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -93,15 +93,17 @@ char *s;
 	extern char *asir_pager;
 	char *e;
 	static char helpdir[16];
+	static int  ja_JP_UTF_8 = 0;
 
 	if ( !helpdir[0] ) {
 		e = (char *)getenv("LANG");
 		if ( !e )
 			strcpy(helpdir,"help");
 		else if ( !strncmp(e,"japan",strlen("japan"))
-			|| !strncmp(e,"ja_JP",strlen("ja_JP")) )
+				  || !strncmp(e,"ja_JP",strlen("ja_JP")) ) {
 			strcpy(helpdir,"help-jp");
-		else
+			if (strcmp(e,"ja_JP.UTF-8")==0) ja_JP_UTF_8 = 1;
+		}else
 			strcpy(helpdir,"help-eg");
 	}
 
@@ -117,7 +119,10 @@ char *s;
 		sprintf(name,"%s/%s/%s",asir_libdir,helpdir,s);
 		if ( fp = fopen(name,"r") ) {
 			fclose(fp);
-			sprintf(com,"%s %s",asir_pager,name);
+			if (!ja_JP_UTF_8)
+			  sprintf(com,"%s %s",asir_pager,name);
+			else
+			  sprintf(com,"nkf -w %s | %s ",name,asir_pager);
 			system(com);
 		} else {
 			gen_searchf_searchonly(s,&f);
