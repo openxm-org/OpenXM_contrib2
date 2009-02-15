@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.170 2009/02/11 03:04:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.171 2009/02/11 06:30:21 noro Exp $ */
 
 #include "nd.h"
 
@@ -49,6 +49,7 @@ static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
+static int nd_gentrace,nd_gensyz;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -67,6 +68,7 @@ P ndc_div(int mod,union oNDC a,union oNDC b);
 P ndctop(int mod,union oNDC c);
 void finalize_tracelist(int i,P cont);
 void conv_ilist(int demand,int trace,NODE g,int **indp);
+void parse_nd_option(NODE opt);
 
 extern int Denominator,DP_Multiple;
 
@@ -1325,7 +1327,7 @@ int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *rp)
             p = nd_demand ? ndv_load(index) : ps[index];
             /* d+g -> div*(d+g)+mul*p */
             g = nd_reduce2(mod,d,g,p,mul,dn,&div);
-            if ( GenTrace ) {
+            if ( nd_gentrace ) {
                 /* Trace=[div,index,mul,ONE] */
                 STOQ(index,iq);
                 nmtodp(mod,mul,&dmul);
@@ -1335,7 +1337,7 @@ int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *rp)
             if ( !mod && g && ((double)(p_mag(HCP(g))) > hmag) ) {
                 hg = HCU(g);
                 nd_removecont2(d,g);
-                if ( dn || GenTrace ) {
+                if ( dn || nd_gentrace ) {
                     /* overwrite cont : Trace=[div,index,mul,cont] */
                     cont = ndc_div(mod,hg,HCU(g));
                     if ( dn ) {
@@ -1344,7 +1346,7 @@ int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *rp)
                             reductr(nd_vc,(Obj)tr,&tr1); dn->r = (R)tr1;
                         } else divq(dn->z,(Q)cont,&dn->z);
                     }
-                    if ( GenTrace && !UNIQ(cont) ) ARG3(node) = (pointer)cont;
+                    if ( nd_gentrace && !UNIQ(cont) ) ARG3(node) = (pointer)cont;
                 }
                 hmag = ((double)p_mag(HCP(g)))*nd_scale;
             }
@@ -1486,10 +1488,10 @@ int ndv_check_membership(int m,NODE input,int obpe,int oadv,EPOS oepos,NODE cand
     Q q;
     LIST list;
 
-    ndv_setup(m,0,cand,GenTrace?1:0,1);
+    ndv_setup(m,0,cand,nd_gentrace?1:0,1);
     n = length(cand);
 
-	if ( GenTrace ) { nd_alltracelist = 0; nd_tracelist = 0; }
+	if ( nd_gentrace ) { nd_alltracelist = 0; nd_tracelist = 0; }
     /* membercheck : list is a subset of Id(cand) ? */
     for ( t = input, i = 0; t; t = NEXT(t), i++ ) {
 again:
@@ -1504,7 +1506,7 @@ again:
             nd_reconstruct(0,0);
             goto again;
         } else if ( nf ) return 0;
-		if ( GenTrace ) {
+		if ( nd_gentrace ) {
 			nd_tracelist = reverse_node(nd_tracelist);
 			MKLIST(list,nd_tracelist);
 			STOQ(i,q); s = mknode(2,q,list); MKLIST(list,s);
@@ -1821,7 +1823,7 @@ int do_diagonalize(int sugar,int m)
     Q iq;
 
     for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
-        if ( GenTrace ) {
+        if ( nd_gentrace ) {
             /* Trace = [1,index,1,1] */
             STOQ(i,iq); node = mknode(4,ONE,iq,ONE,ONE);
             MKLIST(l,node); MKNODE(nd_tracelist,l,0);
@@ -1837,7 +1839,7 @@ int do_diagonalize(int sugar,int m)
         ndv_free(nfv);
         hc = HCU(nf); nd_removecont(m,nf);
         cont = ndc_div(m,hc,HCU(nf));
-		if ( GenTrace ) finalize_tracelist(i,cont);
+		if ( nd_gentrace ) finalize_tracelist(i,cont);
         nfv = ndtondv(m,nf);
         nd_free(nf);
         nd_bound[i] = ndv_compute_bound(nfv);
@@ -1896,7 +1898,7 @@ again:
             goto again;
         }
 #if USE_GEOBUCKET
-        stat = (m&&!GenTrace)?nd_nf_pbucket(m,h,nd_ps,!Top,&nf)
+        stat = (m&&!nd_gentrace)?nd_nf_pbucket(m,h,nd_ps,!Top,&nf)
                :nd_nf(m,0,h,nd_ps,!Top,0,&nf);
 #else
         stat = nd_nf(m,0,h,nd_ps,!Top,0,&nf);
@@ -1914,7 +1916,7 @@ again:
                 nd_monic(0,&nf);
                 nd_removecont(m,nf);
             }
-            if ( GenTrace ) {
+            if ( nd_gentrace ) {
 				cont = ndc_div(m,hc,HCU(nf));
 				if ( m || !UNIQ(cont) ) {
                     t = mknode(4,0,0,0,cont);
@@ -1937,7 +1939,7 @@ again:
             g = update_base(g,nh);
             FREENDP(l);
         } else {
-		    if ( GenTrace && gensyz ) {
+		    if ( nd_gentrace && gensyz ) {
                 nd_tracelist = reverse_node(nd_tracelist); 
 				MKLIST(list,nd_tracelist);
                 STOQ(-1,q); t = mknode(2,q,list); MKLIST(list,t);
@@ -1967,7 +1969,7 @@ int do_diagonalize_trace(int sugar,int m)
     P cont,cont1;
 
     for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
-        if ( GenTrace ) {
+        if ( nd_gentrace ) {
             /* Trace = [1,index,1,1] */
             STOQ(i,iq); node = mknode(4,ONE,iq,ONE,ONE);
             MKLIST(l,node); MKNODE(nd_tracelist,l,0);
@@ -1994,7 +1996,7 @@ int do_diagonalize_trace(int sugar,int m)
         ndv_free(nfv);
         hc = HCU(nf); nd_removecont(0,nf);
 		cont = ndc_div(0,hc,HCU(nf));
-        if ( GenTrace ) finalize_tracelist(i,cont);
+        if ( nd_gentrace ) finalize_tracelist(i,cont);
         nfv = ndtondv(0,nf);
         nd_free(nf);
         nd_bound[i] = ndv_compute_bound(nfv);
@@ -2116,7 +2118,7 @@ again:
                     nd_removecont(0,nfq); nfqv = ndtondv(0,nfq); nd_free(nfq);
                     nd_removecont(m,nf); nfv = ndtondv(m,nf); nd_free(nf);
                 }
-                if ( GenTrace ) {
+                if ( nd_gentrace ) {
 				   cont = ndc_div(0,hnfq,HCU(nfqv));
 				   if ( !UNIQ(cont) ) {
                        t = mknode(4,0,0,0,cont);
@@ -2193,12 +2195,12 @@ NODE ndv_reduceall(int m,NODE f)
     n = length(f);
     ndv_setup(m,0,f,0,1);
 	perm = (int *)MALLOC(n*sizeof(int));
-	if ( GenTrace ) {
+	if ( nd_gentrace ) {
 	    for ( t = nd_tracelist, i = 0; i < n; i++, t = NEXT(t) )
 		    perm[i] = QTOS((Q)ARG1(BDY((LIST)BDY(t))));
 	}
     for ( i = 0; i < n; ) {
-        if ( GenTrace ) {
+        if ( nd_gentrace ) {
             /* Trace = [1,index,1,1] */
             STOQ(i,iq); node = mknode(4,ONE,iq,ONE,ONE);
             MKLIST(l,node); MKNODE(nd_tracelist,l,0);
@@ -2212,7 +2214,7 @@ NODE ndv_reduceall(int m,NODE f)
             if ( DP_Print ) { printf("."); fflush(stdout); }
             ndv_free(nd_ps[i]);
             hc = HCU(nf); nd_removecont(m,nf);
-            if ( GenTrace ) {
+            if ( nd_gentrace ) {
 				for ( t = nd_tracelist; t; t = NEXT(t) ) {
                     jq = ARG1(BDY((LIST)BDY(t))); j = QTOS(jq);
                     STOQ(perm[j],jq); ARG1(BDY((LIST)BDY(t))) = jq;
@@ -2228,7 +2230,7 @@ NODE ndv_reduceall(int m,NODE f)
     if ( DP_Print ) { printf("\n"); }
     for ( a0 = 0, i = 0; i < n; i++ ) {
         NEXTNODE(a0,a);
-		if ( !GenTrace ) BDY(a) = (pointer)nd_ps[i];
+		if ( !nd_gentrace ) BDY(a) = (pointer)nd_ps[i];
 		else {
 			for ( j = 0; j < n; j++ ) if ( perm[j] == i ) break;
 			BDY(a) = (pointer)nd_ps[j];
@@ -2244,7 +2246,7 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
 
     if ( !g ) return d;
 	/* for testing */
-	if ( gensyz && GenSyz == 2 ) {
+	if ( gensyz && nd_gensyz == 2 ) {
     	d1 = nd_newpairs(g,t);
     	if ( !d )
        	 return d1;
@@ -2573,7 +2575,7 @@ int ndv_newps(int m,NDV a,NDV aq)
             nd_ps[nd_psn] = 0;
         }
     }
-    if ( GenTrace ) {
+    if ( nd_gentrace ) {
         /* reverse the tracelist and append it to alltracelist */
         nd_tracelist = reverse_node(nd_tracelist); MKLIST(l,nd_tracelist);
         STOQ(nd_psn,iq); tn = mknode(2,iq,l); MKLIST(l,tn);
@@ -2644,7 +2646,7 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
             if ( mod || !dont_removecont ) ndv_removecont(mod,a);
             if ( !mod ) register_hcf(a);
         }
-        if ( GenTrace ) {
+        if ( nd_gentrace ) {
             STOQ(i,iq); STOQ(w[i].i,jq); node = mknode(3,iq,jq,ONE);
 			if ( !dont_removecont )
                 ARG2(node) = (pointer)ndc_div(trace?0:mod,hc,HCU(a));
@@ -2663,7 +2665,7 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
             }
         }
     }
-    if ( GenTrace && nd_tracelist ) NEXT(tn) = 0;
+    if ( nd_gentrace && nd_tracelist ) NEXT(tn) = 0;
 }
 
 struct order_spec *append_block(struct order_spec *spec,
@@ -2793,9 +2795,10 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     EPOS oepos;
     int obpe,oadv,ompos;
 
-    nd_module = 0;
+    nd_module;
     if ( !m && Demand ) nd_demand = 1;
     else nd_demand = 0;
+    parse_nd_option(current_option);
 
     if ( DP_Multiple )
         nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
@@ -2849,11 +2852,11 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     ishomo = 1;
     for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
         if ( nd_module ) {
-			if ( !m && !GenTrace ) pltozpl((LIST)BDY(t),&dmy,&zpl);
+			if ( !m && !nd_gentrace ) pltozpl((LIST)BDY(t),&dmy,&zpl);
 			else zpl = (LIST)BDY(t);
             b = (pointer)pltondv(CO,vv,zpl);
         } else {
-			if ( !m && !GenTrace ) ptozp((P)BDY(t),1,&dmy,&zp);
+			if ( !m && !nd_gentrace ) ptozp((P)BDY(t),1,&dmy,&zp);
 			else zp = (P)BDY(t);
             b = (pointer)ptondv(CO,vv,zp);
         }
@@ -2864,22 +2867,22 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     }
     if ( fd0 ) NEXT(fd) = 0;
     ndv_setup(m,0,fd0,0,0);
-    if ( GenTrace ) {
+    if ( nd_gentrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
     x = f4?nd_f4(m,&perm):nd_gb(m,ishomo,0,0,&perm);
     nd_demand = 0;
     x = ndv_reducebase(x,perm);
-    if ( GenTrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
+    if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
     x = ndv_reduceall(m,x);
-    if ( GenTrace ) { 
+    if ( nd_gentrace ) { 
         tl2 = nd_alltracelist; nd_alltracelist = 0;
         ndv_check_membership(m,fd0,obpe,oadv,oepos,x);
-        if ( GenTrace ) { 
+        if ( nd_gentrace ) { 
             tl3 = nd_alltracelist; nd_alltracelist = 0; 
         } else tl3 = 0;
-        nd_gb(m,0,1,GenSyz?1:0,0)!=0;
-        if ( GenTrace && GenSyz ) { 
+        nd_gb(m,0,1,nd_gensyz?1:0,0)!=0;
+        if ( nd_gentrace && nd_gensyz ) { 
             tl4 = nd_alltracelist; nd_alltracelist = 0; 
         } else tl4 = 0;
     }
@@ -2892,7 +2895,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     if ( nalg )
         r0 = postprocess_algcoef(av,alist,r0);
     MKLIST(*rp,r0);
-    if ( GenTrace ) {
+    if ( nd_gentrace ) {
         tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
 	tl3 = reverse_node(tl3);
 		/* tl2 = [[i,[[*,j,*,*],...]],...] */
@@ -3025,6 +3028,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     Q jq;
 
     nd_module = 0;
+    parse_nd_option(current_option);
     if ( DP_Multiple )
         nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
 
@@ -3085,11 +3089,11 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     ishomo = 1;
     for ( in0 = 0, fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
         if ( nd_module ) {
-			if ( !GenTrace ) pltozpl((LIST)BDY(t),&dmy,&zpl);
+			if ( !nd_gentrace ) pltozpl((LIST)BDY(t),&dmy,&zpl);
 			else zpl = (LIST)BDY(t);
             c = (pointer)pltondv(CO,vv,zpl);
         } else {
-			if ( !GenTrace ) ptozp((P)BDY(t),1,&dmy,&zp);
+			if ( !nd_gentrace ) ptozp((P)BDY(t),1,&dmy,&zp);
 			else zp = (P)BDY(t);
             c = (pointer)ptondv(CO,vv,zp);
         }
@@ -3118,7 +3122,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         if ( Demand )
             nd_demand = 1;
         ndv_setup(m,1,fd0,0,0);
-        if ( GenTrace ) {
+        if ( nd_gentrace ) {
             MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
         }
         cand = f4?nd_f4_trace(m,&perm):nd_gb_trace(m,ishomo || homo,&perm);
@@ -3136,20 +3140,20 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         }
         nd_demand = 0;
         cand = ndv_reducebase(cand,perm);
-        if ( GenTrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
+        if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
         cand = ndv_reduceall(0,cand);
         cbpe = nd_bpe;
-        if ( GenTrace ) { tl2 = nd_alltracelist; nd_alltracelist = 0; }
+        if ( nd_gentrace ) { tl2 = nd_alltracelist; nd_alltracelist = 0; }
         if ( nocheck )
             break;
         get_eg(&eg0);
         if ( ret = ndv_check_membership(0,in0,obpe,oadv,oepos,cand) ) {
-            if ( GenTrace ) { 
+            if ( nd_gentrace ) { 
 			    tl3 = nd_alltracelist; nd_alltracelist = 0; 
 		    } else tl3 = 0;
             /* gbcheck : cand is a GB of Id(cand) ? */
-            ret = nd_gb(0,0,1,GenSyz?1:0,0)!=0;
-            if ( GenTrace && GenSyz ) { 
+            ret = nd_gb(0,0,1,nd_gensyz?1:0,0)!=0;
+            if ( nd_gentrace && nd_gensyz ) { 
 			    tl4 = nd_alltracelist; nd_alltracelist = 0; 
 		    } else tl4 = 0;
 		}
@@ -3183,7 +3187,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     if ( nalg )
         cand = postprocess_algcoef(av,alist,cand);
     MKLIST(*rp,cand);
-    if ( GenTrace ) {
+    if ( nd_gentrace ) {
         tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
 		tl3 = reverse_node(tl3);
 		/* tl2 = [[i,[[*,j,*,*],...]],...] */
@@ -3929,7 +3933,7 @@ int nd_sp(int mod,int trace,ND_pairs p,ND *rp)
     }
     t1 = ndv_mul_nm(mod,m1,p1); t2 = ndv_mul_nm(mod,m2,p2);
     *rp = nd_add(mod,t1,t2);
-    if ( GenTrace ) {
+    if ( nd_gentrace ) {
         /* nd_tracelist is initialized */
         STOQ(p->i1,iq); nmtodp(mod,m1,&d); node = mknode(4,ONE,iq,d,ONE);
         MKLIST(hist,node); MKNODE(nd_tracelist,hist,0);
@@ -6788,4 +6792,22 @@ void conv_ilist(int demand,int trace,NODE g,int **indp)
 		BDY(t) = (pointer)(demand?ndv_load(j):(trace?nd_ps_trace[j]:nd_ps[j]));
 	}
 	if ( indp ) *indp = ind;
+}
+
+void parse_nd_option(NODE opt)
+{
+    NODE t,p;
+    char *key;
+    Obj value;
+
+    nd_gentrace = 0; nd_gensyz = 0;
+    for ( t = opt; t; t = NEXT(t) ) {
+        p = BDY((LIST)BDY(t));
+        key = BDY((STRING)BDY(p));
+        value = (Obj)BDY(NEXT(p));
+        if ( !strcmp(key,"gentrace") )
+            nd_gentrace = value?1:0;
+        else if ( !strcmp(key,"gensyz") )
+            nd_gensyz = value?1:0;
+    }
 }

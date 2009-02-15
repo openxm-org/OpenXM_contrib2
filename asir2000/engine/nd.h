@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.23 2009/02/09 10:21:29 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.24 2009/02/11 03:04:42 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -131,7 +131,7 @@ extern ND_pairs _ndp_free_list;
 extern struct order_spec *dp_current_spec;
 extern char *Demand;
 extern VL CO;
-extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar,GenTrace,GenSyz;
+extern int Top,Reverse,DP_Print,dp_nelim,do_weyl,NoSugar;
 extern int *current_weyl_weight_vector;
 extern int *current_module_weight_vector;
 
