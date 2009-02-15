@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.171 2009/02/11 06:30:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.172 2009/02/15 03:07:41 noro Exp $ */
 
 #include "nd.h"
 
@@ -49,7 +49,7 @@ static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz;
+static int nd_gentrace,nd_gensyz,nd_nora;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -2192,6 +2192,7 @@ NODE ndv_reduceall(int m,NODE f)
     union oNDC hc;
     P cont,cont1;
 
+    if ( nd_nora ) return f;
     n = length(f);
     ndv_setup(m,0,f,0,1);
 	perm = (int *)MALLOC(n*sizeof(int));
@@ -3144,9 +3145,9 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         cand = ndv_reduceall(0,cand);
         cbpe = nd_bpe;
         if ( nd_gentrace ) { tl2 = nd_alltracelist; nd_alltracelist = 0; }
+        get_eg(&eg0);
         if ( nocheck )
             break;
-        get_eg(&eg0);
         if ( ret = ndv_check_membership(0,in0,obpe,oadv,oepos,cand) ) {
             if ( nd_gentrace ) { 
 			    tl3 = nd_alltracelist; nd_alltracelist = 0; 
@@ -6800,7 +6801,7 @@ void parse_nd_option(NODE opt)
     char *key;
     Obj value;
 
-    nd_gentrace = 0; nd_gensyz = 0;
+    nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -6809,5 +6810,7 @@ void parse_nd_option(NODE opt)
             nd_gentrace = value?1:0;
         else if ( !strcmp(key,"gensyz") )
             nd_gensyz = value?1:0;
+        else if ( !strcmp(key,"nora") )
+            nd_nora = value?1:0;
     }
 }
