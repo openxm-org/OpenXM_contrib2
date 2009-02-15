@@ -138,6 +138,93 @@ long GC_large_alloc_warn_interval = LONG_MAX;
 long GC_large_alloc_warn_suppressed = 0;
 	/* Number of warnings suppressed so far.	*/
 
+#include <time.h>
+
+#if defined(VISUAL)
+#include <windows.h>
+
+static double get_clock()
+{
+	static int initialized = 0;
+	static int is_winnt = 0;
+	static HANDLE curproc;
+
+	if ( !initialized ) {
+		OSVERSIONINFO vinfo;
+
+		curproc = GetCurrentProcess();		
+		vinfo.dwOSVersionInfoSize = sizeof(vinfo);
+		GetVersionEx(&vinfo);
+		if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
+			is_winnt = 1;
+		else
+			is_winnt = 0;
+	}
+	if ( is_winnt ) {
+		FILETIME c,e,k,u;
+
+		GetProcessTimes(curproc,&c,&e,&k,&u);
+		return ((double)k.dwLowDateTime+(double)u.dwLowDateTime
+			+4294967296.0*((double)k.dwHighDateTime+(double)u.dwHighDateTime))/10000000.0;
+	} else
+//		return (double)clock()/(double)CLOCKS_PER_SEC;
+		return ((double)GetTickCount())/1000.0;
+}
+
+#elif defined(THINK_C) || defined(__MWERKS__) || defined(MSWIN32)
+
+static double get_clock()
+{
+	clock_t c;
+
+	c = clock();
+	return (double)c/(double)CLOCKS_PER_SEC;
+}
+
+#elif defined(_PA_RISC1_1) || defined(__svr4__) || defined(__CYGWIN__)
+
+#include <sys/time.h>
+#include <limits.h>
+
+static double get_clock()
+{
+	struct tms buf;
+
+	times(&buf);
+	return (double)(buf.tms_utime+buf.tms_stime)/(double)CLK_TCK;
+}
+
+#else
+
+#include <sys/time.h>
+#include <sys/resource.h>
+
+static double get_clock()
+{
+	int tv_sec,tv_usec;
+	struct rusage ru;
+
+	getrusage(RUSAGE_SELF,&ru);
+	tv_sec = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec;
+	tv_usec = ru.ru_utime.tv_usec + ru.ru_stime.tv_usec;
+	return (double)tv_sec+(double)tv_usec/(double)1000000;
+}
+#endif
+
+static double gctime, gcstart;
+
+void GC_timerstart() {
+	gcstart = get_clock();
+}
+
+void GC_timerstop() {
+	gctime += get_clock() - gcstart;
+}
+
+double GC_get_gctime() {
+	return gctime;
+}
+
 /*ARGSUSED*/
 GC_PTR GC_default_oom_fn GC_PROTO((size_t bytes_requested))
 {
