@@ -1,5 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.7 2009/02/06 08:58:28 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.8 2009/02/06 10:11:12 ohara Exp $ */
 
+#if defined(VISUAL)
+#include "private/gcconfig.h"
+#endif
 #include "gc.h"
 #include <time.h>
 
