@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.9 2003/10/21 00:52:50 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/lib/Makefile.am,v 1.10 2003/12/12 08:03:12 noro Exp $
 
 asirdir = ${libdir}/asir
 RR      = alpi bfct bgk const cyclic defs.h dfff dmul dmul102 fctrdata fctrtest \
@@ -13,6 +13,8 @@ install-doc:
 		rm -f help-$$i.tgz ; \
 	done
 	-rm ${DESTDIR}${asirdir}/help
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-jp help-ja)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-eg help-en)
 	(cd ${DESTDIR}${asirdir}; ${LN_S} help-eg help)
 
 install-lib:

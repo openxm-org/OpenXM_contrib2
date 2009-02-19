@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.5 2004/06/25 05:20:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.6 2009/02/14 08:46:14 takayama Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -101,10 +101,10 @@ char *s;
 			strcpy(helpdir,"help");
 		else if ( !strncmp(e,"japan",strlen("japan"))
 				  || !strncmp(e,"ja_JP",strlen("ja_JP")) ) {
-			strcpy(helpdir,"help-jp");
+			strcpy(helpdir,"help-ja");
 			if (strcmp(e,"ja_JP.UTF-8")==0) ja_JP_UTF_8 = 1;
 		}else
-			strcpy(helpdir,"help-eg");
+			strcpy(helpdir,"help-en");
 	}
 
 	if ( !s )

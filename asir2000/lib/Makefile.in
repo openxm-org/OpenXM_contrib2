@@ -333,6 +333,8 @@ install-doc:
 		rm -f help-$$i.tgz ; \
 	done
 	-rm ${DESTDIR}${asirdir}/help
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-jp help-ja)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-eg help-en)
 	(cd ${DESTDIR}${asirdir}; ${LN_S} help-eg help)
 
 install-lib:

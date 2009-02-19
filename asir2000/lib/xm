@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.19 2003/05/18 00:13:14 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/xm,v 1.20 2003/05/21 23:31:54 takayama Exp $ 
 */
 /**  xm  **/
 Xm_noX = 0$  
@@ -224,9 +224,9 @@ def ox_grep(A) {
   }
 
   if (ox_getenv("LANG") == "ja_JP.EUC") {
-    F = get_rootdir()+"/help-jp/";
+    F = get_rootdir()+"/help-ja/";
   }else{
-    F = get_rootdir()+"/help-eg/";
+    F = get_rootdir()+"/help-en/";
   }
   Pager = ox_getenv("PAGER");
   if (Pager == 0) Pager="more";
