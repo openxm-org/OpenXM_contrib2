@@ -327,15 +327,15 @@ uninstall-am:
 
 install-doc:
 	-mkdir -p ${DESTDIR}${asirdir}
-	-for i in jp eg ; do \
+	-for i in ja en ; do \
 		uudecode help-$$i.uu ; \
 		gzip -dc help-$$i.tgz | ( cd ${DESTDIR}${asirdir}; tar xf - ) ; \
 		rm -f help-$$i.tgz ; \
 	done
 	-rm ${DESTDIR}${asirdir}/help
-	(cd ${DESTDIR}${asirdir}; ${LN_S} help-jp help-ja)
-	(cd ${DESTDIR}${asirdir}; ${LN_S} help-eg help-en)
-	(cd ${DESTDIR}${asirdir}; ${LN_S} help-eg help)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-ja help-jp)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-en help-eg)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-en help)
 
 install-lib:
 	-mkdir -p ${DESTDIR}${asirdir}
