@@ -1,4 +1,4 @@
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/asir2000/gc6.diff,v 1.1 2008/03/19 07:05:55 ohara Exp $
 # Patches not depend on Risa/Asir
 diff -urN gc6.8.orig/include/private/gcconfig.h gc6.8/include/private/gcconfig.h
 --- gc6.8.orig/include/private/gcconfig.h	2006-07-08 06:08:05.000000000 +0900
@@ -263,17 +263,6 @@ diff -urN gc6.8.orig/include/private/gc_priv.h gc6.8/include/private/gc_priv.h
  #if defined(mips) && defined(SYSTYPE_BSD) && defined(sony_news)
      /* sony RISC NEWS, NEWSOS 4 */
  #   define BSD_TIME
-@@ -227,6 +231,10 @@
- # define EXTRA_BYTES 0
- #endif
- 
-+/* Added by ohara */
-+# ifndef LARGE_CONFIG
-+#   define LARGE_CONFIG
-+# endif
- 
- # ifndef LARGE_CONFIG
- #   define MINHINCR 16	 /* Minimum heap increment, in blocks of HBLKSIZE  */
 diff -urN gc6.8.orig/misc.c gc6.8/misc.c
 --- gc6.8.orig/misc.c	2006-02-11 04:38:46.000000000 +0900
 +++ gc6.8/misc.c	2008-03-19 13:31:36.000000000 +0900
@@ -286,3 +275,53 @@ diff -urN gc6.8.orig/misc.c gc6.8/misc.c
  
  
  GC_bool GC_debugging_started = FALSE;
+diff -urN gc6.8.orig/configure.in gc6.8/configure.in
+--- gc6.8.orig/configure.in	2006-06-07 14:01:52.000000000 +0900
++++ gc6.8/configure.in	2009-02-24 01:01:02.000000000 +0900
+@@ -478,6 +478,14 @@
+     fi
+ fi
+ 
++AC_ARG_ENABLE(large-config,
++    [AC_HELP_STRING([--enable-large-config],
++	[Optimize for large (> 100 MB) heap or root set])])
++
++if test "${enable_large_config}" = yes; then
++    AC_DEFINE(LARGE_CONFIG, 1, [Define to optimize for large heaps or root sets])
++fi
++
+ AC_ARG_ENABLE(gc-assertions,
+ [  --enable-gc-assertions  collector-internal assertion checking])
+ if test "${enable_gc_assertions}" = yes; then
+diff -urN gc6.8.orig/configure gc6.8/configure
+--- gc6.8.orig/configure	2006-03-24 09:42:55.000000000 +0900
++++ gc6.8/configure	2009-02-24 01:04:38.000000000 +0900
+@@ -1043,6 +1043,7 @@
+   --disable-libtool-lock  avoid locking (might break parallel builds)
+   --enable-full-debug	include full support for pointer backtracing etc.
+   --enable-redirect-malloc  redirect malloc and friends to GC routines
++  --enable-large-config   Optimize for large (> 100 MB) heap or root set
+   --enable-gc-assertions  collector-internal assertion checking
+ 
+ Optional Packages:
+@@ -9825,6 +9826,20 @@
+     fi
+ fi
+ 
++# Check whether --enable-large-config or --disable-large-config was given.
++if test "${enable_large_config+set}" = set; then
++  enableval="$enable_large_config"
++
++fi;
++
++if test "${enable_large_config}" = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define LARGE_CONFIG 1
++_ACEOF
++
++fi
++
+ # Check whether --enable-gc-assertions or --disable-gc-assertions was given.
+ if test "${enable_gc_assertions+set}" = set; then
+   enableval="$enable_gc_assertions"

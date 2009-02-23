@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.32 2009/02/13 11:25:48 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.33 2009/02/13 13:24:16 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -49,7 +49,7 @@ else
    AC_DEFINE([NO_ASIR_GC])
 fi
 dnl GC_CONFIGURE_ARGS=--disable-threads --enable-shared=no
-GC_CONFIGURE_ARGS=--disable-threads
+GC_CONFIGURE_ARGS="--disable-threads --enable-large-config"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi

@@ -5544,7 +5544,7 @@ else
 _ACEOF
 
 fi
-GC_CONFIGURE_ARGS=--disable-threads
+GC_CONFIGURE_ARGS="--disable-threads --enable-large-config"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
