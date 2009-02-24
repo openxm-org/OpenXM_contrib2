@@ -866,16 +866,26 @@ get_pty_master()
 	master = 1;
 	return;
     }
-#ifdef __CYGWIN32__
+#if defined(__CYGWIN32__) || defined(__linux__)
     sprintf (master_tty, "/dev/ptmx");
     master = open (master_tty, O_RDWR);
     if (master >= 0) {
+#if defined(__linux__)
+	char name[BUFSIZ];
+	grantpt(master);
+	unlockpt(master);
+	if ( !ptsname_r(master,name,sizeof(name)) ) {
+	    strcpy(slave_tty, name);
+	    goto FOUND;
+	}
+#else
 	char *name;
 	name = (char *)ptsname(master);
 	if ( name != 0 ) {
 	    strcpy(slave_tty, name);
 	    goto FOUND;
 	}
+#endif
     }
 #else
     for (c = 'p'; c <= 's'; c++) {
