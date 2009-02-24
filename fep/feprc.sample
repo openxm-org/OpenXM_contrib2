@@ -6,7 +6,7 @@
 set alarm-on-eof
 set savehist=50
 
-#sed editmode=vi
+#set editmode=vi
 
 echo "Welcome to fep! Editmode is" $editmode
 echo "I'm a front end processor for" $command
