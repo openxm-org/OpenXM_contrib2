@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.8 2007/02/18 05:36:27 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/N.c,v 1.9 2007/09/15 10:17:08 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 
-#if defined(VISUAL) || defined(i386)
+#if defined(_M_IX86) || defined(i386)
 void addn(N n1,N n2,N *nr)
 {
 	unsigned int *m1,*m2,*mr;
@@ -71,7 +71,7 @@ void addn(N n1,N n2,N *nr)
 		}
 		*nr = r = NALLOC(d1 + 1); INITRC(r); mr = BD(r);
 
-#if defined(VISUAL)
+#if defined(_M_IX86)
 		__asm {
 		push	esi
 		push	edi
@@ -177,7 +177,7 @@ int subn(N n1,N n2,N *nr)
 		}
 		*nr = r = NALLOC(d1); INITRC(r); mr = BD(r);
 
-#if defined(VISUAL)
+#if defined(_M_IX86)
 		__asm {
 		push	esi
 		push	edi
@@ -261,7 +261,7 @@ void _addn(N n1,N n2,N nr)
 		}
 		mr = BD(nr);
 
-#if defined(VISUAL)
+#if defined(_M_IX86)
 		__asm {
 		push	esi
 		push	edi
@@ -366,7 +366,7 @@ int _subn(N n1,N n2,N nr)
 		}
 		mr = BD(nr);
 
-#if defined(VISUAL)
+#if defined(_M_IX86)
 		__asm {
 		push	esi
 		push	edi

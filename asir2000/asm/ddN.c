@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.7 2007/02/18 05:36:27 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.8 2007/09/15 10:17:07 noro Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -288,7 +288,7 @@ void bxprintn(N n)
 	}
 }
 
-#if defined(VISUAL) || defined(i386)
+#if defined(_M_IX86) || defined(i386)
 void muln(N n1,N n2,N *nr)
 {
 	unsigned int tmp,carry,mul;
@@ -347,7 +347,7 @@ void _muln(N n1,N n2,N nr)
 void muln_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 {
 	/* esi : p, edi : r, carry : ebx, s : ecx */
-#if defined(VISUAL)
+#if defined(_M_IX86)
 	__asm {
 	push esi
 	push edi
@@ -496,7 +496,7 @@ unsigned int divn_1(unsigned int *p,int s,unsigned int d,unsigned int *r)
 	return borrow;
 */
 	/* esi : p, edi : r, borrow : ebx, s : ecx */
-#if defined(VISUAL)
+#if defined(_M_IX86)
 	__asm {
 	push esi
 	push edi

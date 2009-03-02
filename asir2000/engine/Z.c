@@ -677,7 +677,7 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 		t = m1; m1 = m2; m2 = t;
 		d = d1; d1 = d2; d2 = d;
 	}
-#if defined(VISUAL)
+#if defined(_M_IX86)
 	__asm {
 	push	esi
 	push	edi
@@ -769,7 +769,7 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 		m = m1; m1 = m2; m2 = m;
 		d = d1; d1 = d2; d2 = d;
 	}
-#if defined(VISUAL)
+#if defined(_M_IX86)
 	__asm {
 	push	esi
 	push	edi
