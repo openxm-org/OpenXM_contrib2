@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.6 2004/06/25 09:53:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddM.c,v 1.7 2004/06/25 14:09:03 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -132,9 +132,6 @@ void diffum(int mod,UM f,UM fd)
 {
 	int *dp,*sp;
 	int i;
-#if !defined(VISUAL)
-	UL ltmp;
-#endif
 
 	for ( i = DEG(f), dp = COEF(fd)+i-1, sp = COEF(f)+i; 
 		i >= 1; i--, dp--, sp-- ) {
