@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.56 2007/11/23 05:43:23 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.57 2009/02/03 00:39:23 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -54,7 +54,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#if !defined(_MSC_VER)
 #include <unistd.h>
+#endif
 
 #define F4_INTRAT_PERIOD 8 
 
@@ -2076,8 +2078,7 @@ void red_by_compress(int m,unsigned int *p,unsigned int *r,
 
 void red_by_vect(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)
 {
-	register unsigned int up,lo;
-	unsigned int dmy;
+	unsigned int up,lo,dmy;
 
 	*p++ = 0; r++; len--;
 	for ( ; len; len--, r++, p++ )
