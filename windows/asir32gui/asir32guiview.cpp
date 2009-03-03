@@ -93,7 +93,6 @@ CAsir32guiView::CAsir32guiView()
 {
 	// TODO: この場所に構築用のコードを追加してください。
 	static int tmpView_created = 0;
-	char errmsg[BUFSIZ],view_handle[BUFSIZ];
 
 	init_input_history();
 	read_input_history();
@@ -242,7 +241,7 @@ void CAsir32guiView::DeleteTop()
   const char *p,*q;
   const char *buf;
   char null = 0;
-  int len,len0,len1;
+  int len,len0;
 
   buf = LockBuffer();
   len0 = len = strlen(buf);
@@ -480,10 +479,11 @@ void CAsir32guiView::OnFileOpen()
 			if ( *p == '\\' )
 				*p = '/';
 		put_line(cmd);
-		p = strrchr(pathName,'\\');
+		strcpy(cmd,pathName);
+		p = strrchr(cmd,'\\');
 		if ( p ) {
 			*p = 0;
-			strcpy(prevdir,pathName);
+			strcpy(prevdir,cmd);
 		}
 	}
 }
