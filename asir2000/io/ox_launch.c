@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.20 2004/06/15 09:04:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.21 2006/09/26 05:35:26 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -299,7 +299,9 @@ char *nolog;
 		Pget_rootdir(&rootdir);
 		sprintf(AsirExe,"%s\\bin\\engine.exe",BDY(rootdir));
 	}
+#if _MSC_VER < 1400
 	_fileinfo = 1;
+#endif
 	hProc = _spawnv(_P_NOWAIT,AsirExe,av);
 	return (int)hProc;
 #else /* VISUAL */
