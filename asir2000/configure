@@ -5559,7 +5559,7 @@ fi
 if test ${with_gc7:=no} != no; then
    case "${with_gc7}" in
    7*) GC_VERSION=${with_gc7} ;;
-   *)    GC_VERSION=7.0 ;;
+   *)    GC_VERSION=7.1 ;;
    esac
    GC=gc-${GC_VERSION}
    cat >>confdefs.h <<\_ACEOF

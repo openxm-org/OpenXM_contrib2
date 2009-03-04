@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.33 2009/02/13 13:24:16 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.34 2009/02/23 16:51:06 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -59,7 +59,7 @@ AC_ARG_WITH([gc7],
 if test ${with_gc7:=no} != no; then
    case "${with_gc7}" in
    [7*]) GC_VERSION=${with_gc7} ;;
-   *)    GC_VERSION=7.0 ;;
+   *)    GC_VERSION=7.1 ;;
    esac
    GC=gc-${GC_VERSION}
    AC_DEFINE([GC7])

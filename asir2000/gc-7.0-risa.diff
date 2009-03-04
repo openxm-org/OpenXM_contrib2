@@ -1,4 +1,4 @@
-%% $OpenXM$
+%% $OpenXM: OpenXM_contrib2/asir2000/gc-7.0-risa.diff,v 1.1 2007/11/11 15:54:02 ohara Exp $
 %% This patch is based on gc6.5-risa.diff.
 diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
 --- gc-7.0.orig/alloc.c	2007-06-22 11:40:30.000000000 +0900
@@ -77,7 +77,7 @@ diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
      
      if (gran == 0) return(0);
  
-+#if defined(VISUAL)
++#if defined(_MSC_VER)
 +    {
 +#include <signal.h>
 +        extern int recv_intr;
@@ -96,66 +96,6 @@ diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
      while (*flh == 0) {
        ENTER_GC();
        /* Do our share of marking work */
-diff -urN gc-7.0.orig/include/private/gc_priv.h gc-7.0/include/private/gc_priv.h
---- gc-7.0.orig/include/private/gc_priv.h	2007-06-24 11:01:15.000000000 +0900
-+++ gc-7.0/include/private/gc_priv.h	2007-11-09 17:24:21.000000000 +0900
-@@ -161,6 +161,10 @@
- # define MAX_EXTRA_BYTES 0
- #endif
- 
-+/* Added by ohara */
-+# ifndef LARGE_CONFIG
-+#   define LARGE_CONFIG
-+# endif
- 
- # ifndef LARGE_CONFIG
- #   define MINHINCR 16	 /* Minimum heap increment, in blocks of HBLKSIZE  */
-diff -urN gc-7.0.orig/include/private/gcconfig.h gc-7.0/include/private/gcconfig.h
---- gc-7.0.orig/include/private/gcconfig.h	2007-06-29 09:00:09.000000000 +0900
-+++ gc-7.0/include/private/gcconfig.h	2007-11-09 17:24:21.000000000 +0900
-@@ -62,6 +62,13 @@
- # endif
- 
- /* Determine the machine type: */
-+/* T.Saito */
-+# if defined(FREEBSD) && defined(__amd64__)
-+#    define X86_64
-+#    define mach_type_known
-+# endif
-+
-+/* Determine the machine type: */
- # if defined(__arm__) || defined(__thumb__)
- #    define ARM32
- #    if !defined(LINUX) && !defined(NETBSD)
-@@ -1975,6 +1982,28 @@
- #	endif
- #       define DATAEND  /* not needed */
- #   endif
-+#   ifdef FREEBSD /* T.Saito */
-+#       define OS_TYPE "FREEBSD"
-+#       ifndef GC_FREEBSD_THREADS
-+#           define MPROTECT_VDB
-+#       endif
-+#       define SIG_SUSPEND SIGUSR1
-+#       define SIG_THR_RESTART SIGUSR2
-+#       define FREEBSD_STACKBOTTOM
-+#       ifdef __ELF__
-+#           define DYNAMIC_LOADING
-+#       endif
-+	extern int _etext[];
-+        extern char etext[];
-+	extern char edata[];
-+	extern char end[];
-+        extern char * GC_FreeBSDGetDataStart();
-+#	define DATASTART ((ptr_t)((((word) (_etext)) + 0xfff) & ~0xfff))
-+#	define NEED_FIND_LIMIT
-+#	define DATAEND (GC_find_limit (DATASTART, TRUE))
-+#	define DATASTART2 ((ptr_t)(&edata))
-+#	define DATAEND2 ((ptr_t)(&end))
-+#   endif /* end T.Saito */
- # endif
- 
- #if defined(LINUX) && defined(USE_MMAP)
 diff -urN gc-7.0.orig/reclaim.c gc-7.0/reclaim.c
 --- gc-7.0.orig/reclaim.c	2007-06-07 09:24:17.000000000 +0900
 +++ gc-7.0/reclaim.c	2007-11-09 17:32:31.000000000 +0900
@@ -176,3 +116,100 @@ diff -urN gc-7.0.orig/reclaim.c gc-7.0/reclaim.c
      if (GC_print_stats == VERBOSE) {
  	GET_TIME(done_time);
  	GC_log_printf("Disposing of reclaim lists took %lu msecs\n",
+diff -urN gc-7.1.orig/misc.c gc-7.1/misc.c
+--- gc-7.1.orig/misc.c	2008-02-21 07:20:52.000000000 +0900
++++ gc-7.1/misc.c	2009-03-04 14:01:58.000000000 +0900
+@@ -122,6 +122,93 @@
+ long GC_large_alloc_warn_suppressed = 0;
+ 	/* Number of warnings suppressed so far.	*/
+ 
++#include <time.h>
++
++#if defined(_MSC_VER)
++#include <windows.h>
++
++static double get_clock()
++{
++	static int initialized = 0;
++	static int is_winnt = 0;
++	static HANDLE curproc;
++
++	if ( !initialized ) {
++		OSVERSIONINFO vinfo;
++
++		curproc = GetCurrentProcess();		
++		vinfo.dwOSVersionInfoSize = sizeof(vinfo);
++		GetVersionEx(&vinfo);
++		if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
++			is_winnt = 1;
++		else
++			is_winnt = 0;
++	}
++	if ( is_winnt ) {
++		FILETIME c,e,k,u;
++
++		GetProcessTimes(curproc,&c,&e,&k,&u);
++		return ((double)k.dwLowDateTime+(double)u.dwLowDateTime
++			+4294967296.0*((double)k.dwHighDateTime+(double)u.dwHighDateTime))/10000000.0;
++	} else
++//		return (double)clock()/(double)CLOCKS_PER_SEC;
++		return ((double)GetTickCount())/1000.0;
++}
++
++#elif defined(THINK_C) || defined(__MWERKS__) || defined(MSWIN32)
++
++static double get_clock()
++{
++	clock_t c;
++
++	c = clock();
++	return (double)c/(double)CLOCKS_PER_SEC;
++}
++
++#elif defined(_PA_RISC1_1) || defined(__svr4__) || defined(__CYGWIN__)
++
++#include <sys/time.h>
++#include <limits.h>
++
++static double get_clock()
++{
++	struct tms buf;
++
++	times(&buf);
++	return (double)(buf.tms_utime+buf.tms_stime)/(double)CLK_TCK;
++}
++
++#else
++
++#include <sys/time.h>
++#include <sys/resource.h>
++
++static double get_clock()
++{
++	int tv_sec,tv_usec;
++	struct rusage ru;
++
++	getrusage(RUSAGE_SELF,&ru);
++	tv_sec = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec;
++	tv_usec = ru.ru_utime.tv_usec + ru.ru_stime.tv_usec;
++	return (double)tv_sec+(double)tv_usec/(double)1000000;
++}
++#endif
++
++static double gctime, gcstart;
++
++void GC_timerstart() {
++	gcstart = get_clock();
++}
++
++void GC_timerstop() {
++	gctime += get_clock() - gcstart;
++}
++
++double GC_get_gctime() {
++	return gctime;
++}
++
+ /*ARGSUSED*/
+ void * GC_default_oom_fn(size_t bytes_requested)
+ {

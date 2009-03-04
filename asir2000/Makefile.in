@@ -704,6 +704,8 @@ uninstall-am: uninstall-asirPROGRAMS
 
 # EXTRALIBS = @EXTRALIBS@
 
+all-recursive: ${GLIB}
+
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
