@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.32 2009/02/13 13:21:19 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.33 2009/03/04 06:51:41 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -127,3 +127,9 @@ tarball:
 	DESTDIR=`cd tmp; pwd` ${MAKE} install-openxm
 	(cd tmp${prefix}; tar cf - * ) | gzip -c > asir-openxm-${VERSION}.tgz
 	-rm -rf tmp
+
+clean-gc:
+	-rm -rf ${top_srcdir}/.gc_*_done ${top_srcdir}/${GC}
+	-rm -rf ${top_srcdir}/autom4te.cache
+
+distclean-recursive: clean-gc

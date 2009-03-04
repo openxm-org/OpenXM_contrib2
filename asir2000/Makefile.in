@@ -790,6 +790,12 @@ tarball:
 	DESTDIR=`cd tmp; pwd` ${MAKE} install-openxm
 	(cd tmp${prefix}; tar cf - * ) | gzip -c > asir-openxm-${VERSION}.tgz
 	-rm -rf tmp
+
+clean-gc:
+	-rm -rf ${top_srcdir}/.gc_*_done ${top_srcdir}/${GC}
+	-rm -rf ${top_srcdir}/autom4te.cache
+
+distclean-recursive: clean-gc
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

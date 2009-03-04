@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.63 2008/09/01 06:20:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.64 2008/11/18 20:52:47 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -943,9 +943,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			}
             if ( !stack_base ) {
 #if defined(GC7)
-                struct GC_stack_base sb;
-                GC_get_stack_base(&sb);
-                stack_base = (void *)sb.mem_base;
+                stack_base = (void *)GC_get_main_stack_base();
 #else
                 stack_base = (void *)GC_get_stack_base();
 #endif
