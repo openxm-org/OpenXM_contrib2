@@ -1,0 +1,43 @@
+## $OpenXM$
+## Makefile for Visual Studio 2008
+##
+## usage:
+##    nmake -f Makefile.vc LANG=en
+## or
+##    nmake -f Makefile.vc LANG=ja
+
+!if "$(LANG)" == "en" || "$(LANG)" == "C"
+RESSRC = asir32gui.rc.EG
+RES = asir32gui-en.res
+ASIRGUI= asirgui-en.exe
+!else
+RESSRC = asir32gui.rc.JP
+RES = asir32gui-ja.res
+ASIRGUI= asirgui.exe
+!endif
+
+CFLAGS=-nologo -MT -W3 -EHsc -Ox -D WIN32 -D NDEBUG -D _WINDOWS -D _MBCS
+CPPFLAGS=$(CFLAGS)
+RFLAGS=-l 0x411 -d NDEBUG
+LD=link
+LDFLAGS= advapi32.lib /nologo /subsystem:windows /incremental:no
+OBJS= FatalDialog.obj MainFrm.obj StdAfx.obj history.obj io.obj \
+  asir32gui.obj asir32guiDoc.obj asir32guiView.obj
+
+all: $(ASIRGUI)
+
+$(ASIRGUI): $(OBJS) $(RES)
+    $(LD) $(LDFLAGS) /out:$@ $**
+
+$(RES): $(RESSRC)
+	copy /y $(RESSRC) $*.rc
+	$(RC) $(RFLAGS) -fo$@ $*.rc
+
+clean:
+	-@del *.obj
+	-@del *.res
+	-@del *.rc
+
+distclean: clean
+	-@del asirgui.exe
+	-@del asirgui-en.exe

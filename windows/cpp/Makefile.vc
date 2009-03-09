@@ -1,0 +1,19 @@
+## $OpenXM$
+## Makefile for Visual Studio 2008
+
+CFLAGS= -nologo -MT -W3 -EHsc -Ox -D WIN32 -D NDEBUG -D _WINDOWS -D _MBCS
+CPPFLAGS= $(CFLAGS)
+LD=link
+LDFLAGS=/nologo /subsystem:windows /incremental:no
+OBJS= cpp.obj cpp_main.obj StdAfx.obj
+
+all: cpp.exe
+
+cpp.exe: $(OBJS)
+    $(LD) $(LDFLAGS) /out:$@ $(OBJS)
+
+clean:
+	-@del *.obj
+
+distclean: clean
+	-@del cpp.exe

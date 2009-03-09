@@ -1,0 +1,467 @@
+## $OpenXM$
+## Makefile for Visual Studio 2008
+
+!if "$(ARCH)" == ""
+ARCH=$(PROCESSOR_ARCHITECTURE)
+!endif
+
+!if "$(ARCH)" == "AMD64"
+CPU_OBJ= asmalpha.obj
+!else
+CPU_OBJ= asmiw.obj gf2m_mul_w.obj 
+!endif
+
+SRCDIR=..\..\asir2000
+
+PARIDEF=
+PARIINC=
+
+GCDIR= ..\gc-7.1
+GCINC = -I $(GCDIR)\include
+
+DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D LONG_IS_32BIT -D HAVE_UNSIGNED_LONG_LONG -D HMEXT -D ULONG_NOT_DEFINED -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D _MBCS -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
+INCLUDES = $(PARIINC) $(GCINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot 
+CFLAGS=-nologo -MT -W3 -EHsc -Ox $(INCLUDES) $(DEFS)
+
+LD=link
+LDFLAGS=/nologo
+
+OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
+  asir_lib.obj batch.obj bf.obj biovar.obj bload.obj \
+  bsave.obj C.obj cio.obj comp.obj compobj.obj cpexpr.obj cplx.obj \
+  cplxnum.obj cpp.obj ctrl.obj D.obj dalg.obj ddM.obj ddN.obj debug.obj \
+  des.obj dft.obj dist.obj distm.obj dp-supp.obj dp.obj E.obj Ebug.obj \
+  ec.obj eval.obj evall.obj EZ.obj F.obj fctr.obj fft_primes.obj Fgfs.obj \
+  file.obj ftab.obj function.obj gc_risa.obj gf.obj gf2n.obj \
+  gfpn.obj gfs.obj gfspn.obj glob.obj gr.obj H.obj help.obj Hgfs.obj \
+  iarray.obj init.obj int.obj io.obj kwd.obj lex.obj list.obj lmi.obj \
+  load.obj M.obj main.obj mat.obj math.obj mattran.obj Mgfs.obj mi.obj \
+  miscf.obj mt19937.obj N.obj nd.obj NEZ.obj num.obj numerical.obj ox.obj \
+  P.obj pari.obj parif.obj parser.obj PD.obj pdiv.obj PDM.obj \
+  pexpr.obj pf.obj PM.obj polmul.obj poly.obj print.obj PU.obj PUM.obj \
+  puref.obj pvar.obj Q.obj QM.obj quote.obj R.obj rat.obj real.obj \
+  reduct.obj result.obj round.obj RU.obj sha1.obj sio.obj spexpr.obj \
+  str.obj strobj.obj struct.obj subst.obj tcpf.obj time.obj type.obj Ui.obj \
+  up.obj up2.obj up_gf2n.obj up_lm.obj user.obj util.obj var.obj vect.obj \
+  ws_fileio.obj xdeb.obj ytab.obj Z.obj plotf.obj stdio.obj
+
+VPATH=$(SRCDIR)\asm;$(SRCDIR)\builtin;$(SRCDIR)\engine;$(SRCDIR)\fft;$(SRCDIR)\io;$(SRCDIR)\parse;$(SRCDIR)\plot
+
+all: asir2000lib.lib
+
+clean:
+	-@del *.obj
+
+distclean: clean
+	-@del asir2000lib.lib
+
+asir2000lib.lib: $(OBJS) $(CPU_OBJ)
+    $(LD) -lib $(LDFLAGS) /out:$@ $**
+
+asmiw.obj: {$(VPATH)}asmiw.c
+	$(CC) -c $(CFLAGS) $**
+
+asmalpha.obj: {$(VPATH)}asmalpha.c
+	$(CC) -c $(CFLAGS) $**
+
+ddM.obj: {$(VPATH)}ddM.c
+	$(CC) -c $(CFLAGS) $**
+
+ddN.obj: {$(VPATH)}ddN.c
+	$(CC) -c $(CFLAGS) $**
+
+gf2m_mul_w.obj: {$(VPATH)}gf2m_mul_w.c
+	$(CC) -c $(CFLAGS) $**
+
+al.obj: {$(VPATH)}al.c
+	$(CC) -c $(CFLAGS) $**
+
+algnum.obj: {$(VPATH)}algnum.c
+	$(CC) -c $(CFLAGS) $**
+
+array.obj: {$(VPATH)}array.c
+	$(CC) -c $(CFLAGS) $**
+
+batch.obj: {$(VPATH)}batch.c
+	$(CC) -c $(CFLAGS) $**
+
+compobj.obj: {$(VPATH)}compobj.c
+	$(CC) -c $(CFLAGS) $**
+
+cplxnum.obj: {$(VPATH)}cplxnum.c
+	$(CC) -c $(CFLAGS) $**
+
+ctrl.obj: {$(VPATH)}ctrl.c
+	$(CC) -c $(CFLAGS) $**
+
+dp-supp.obj: {$(VPATH)}dp-supp.c
+	$(CC) -c $(CFLAGS) $**
+
+dp.obj: {$(VPATH)}dp.c
+	$(CC) -c $(CFLAGS) $**
+
+ec.obj: {$(VPATH)}ec.c
+	$(CC) -c $(CFLAGS) $**
+
+fctr.obj: {$(VPATH)}fctr.c
+	$(CC) -c $(CFLAGS) $**
+
+file.obj: {$(VPATH)}file.c
+	$(CC) -c $(CFLAGS) $**
+
+ftab.obj: {$(VPATH)}ftab.c
+	$(CC) -c $(CFLAGS) $**
+
+gf.obj: {$(VPATH)}gf.c
+	$(CC) -c $(CFLAGS) $**
+
+gr.obj: {$(VPATH)}gr.c
+	$(CC) -c $(CFLAGS) $**
+
+help.obj: {$(VPATH)}help.c
+	$(CC) -c $(CFLAGS) $**
+
+iarray.obj: {$(VPATH)}iarray.c
+	$(CC) -c $(CFLAGS) $**
+
+int.obj: {$(VPATH)}int.c
+	$(CC) -c $(CFLAGS) $**
+
+list.obj: {$(VPATH)}list.c
+	$(CC) -c $(CFLAGS) $**
+
+math.obj: {$(VPATH)}math.c
+	$(CC) -c $(CFLAGS) $**
+
+mattran.obj: {$(VPATH)}mattran.c
+	$(CC) -c $(CFLAGS) $**
+
+miscf.obj: {$(VPATH)}miscf.c
+	$(CC) -c $(CFLAGS) $**
+
+numerical.obj: {$(VPATH)}numerical.c
+	$(CC) -c $(CFLAGS) $**
+
+parif.obj: {$(VPATH)}parif.c
+	$(CC) -c $(CFLAGS) $**
+
+pdiv.obj: {$(VPATH)}pdiv.c
+	$(CC) -c $(CFLAGS) $**
+
+pf.obj: {$(VPATH)}pf.c
+	$(CC) -c $(CFLAGS) $**
+
+poly.obj: {$(VPATH)}poly.c
+	$(CC) -c $(CFLAGS) $**
+
+print.obj: {$(VPATH)}print.c
+	$(CC) -c $(CFLAGS) $**
+
+rat.obj: {$(VPATH)}rat.c
+	$(CC) -c $(CFLAGS) $**
+
+reduct.obj: {$(VPATH)}reduct.c
+	$(CC) -c $(CFLAGS) $**
+
+result.obj: {$(VPATH)}result.c
+	$(CC) -c $(CFLAGS) $**
+
+round.obj: {$(VPATH)}round.c
+	$(CC) -c $(CFLAGS) $**
+
+sha1.obj: {$(VPATH)}sha1.c
+	$(CC) -c $(CFLAGS) $**
+
+strobj.obj: {$(VPATH)}strobj.c
+	$(CC) -c $(CFLAGS) $**
+
+subst.obj: {$(VPATH)}subst.c
+	$(CC) -c $(CFLAGS) $**
+
+time.obj: {$(VPATH)}time.c
+	$(CC) -c $(CFLAGS) $**
+
+type.obj: {$(VPATH)}type.c
+	$(CC) -c $(CFLAGS) $**
+
+user.obj: {$(VPATH)}user.c
+	$(CC) -c $(CFLAGS) $**
+
+var.obj: {$(VPATH)}var.c
+	$(CC) -c $(CFLAGS) $**
+
+A.obj: {$(VPATH)}A.c
+	$(CC) -c $(CFLAGS) $**
+
+C.obj: {$(VPATH)}C.c
+	$(CC) -c $(CFLAGS) $**
+
+D.obj: {$(VPATH)}D.c
+	$(CC) -c $(CFLAGS) $**
+
+E.obj: {$(VPATH)}E.c
+	$(CC) -c $(CFLAGS) $**
+
+EZ.obj: {$(VPATH)}EZ.c
+	$(CC) -c $(CFLAGS) $**
+
+Ebug.obj: {$(VPATH)}Ebug.c
+	$(CC) -c $(CFLAGS) $**
+
+F.obj: {$(VPATH)}F.c
+	$(CC) -c $(CFLAGS) $**
+
+Fgfs.obj: {$(VPATH)}Fgfs.c
+	$(CC) -c $(CFLAGS) $**
+
+H.obj: {$(VPATH)}H.c
+	$(CC) -c $(CFLAGS) $**
+
+Hgfs.obj: {$(VPATH)}Hgfs.c
+	$(CC) -c $(CFLAGS) $**
+
+M.obj: {$(VPATH)}M.c
+	$(CC) -c $(CFLAGS) $**
+
+Mgfs.obj: {$(VPATH)}Mgfs.c
+	$(CC) -c $(CFLAGS) $**
+
+N.obj: {$(VPATH)}N.c
+	$(CC) -c $(CFLAGS) $**
+
+NEZ.obj: {$(VPATH)}NEZ.c
+	$(CC) -c $(CFLAGS) $**
+
+P.obj: {$(VPATH)}P.c
+	$(CC) -c $(CFLAGS) $**
+
+PD.obj: {$(VPATH)}PD.c
+	$(CC) -c $(CFLAGS) $**
+
+PDM.obj: {$(VPATH)}PDM.c
+	$(CC) -c $(CFLAGS) $**
+
+PM.obj: {$(VPATH)}PM.c
+	$(CC) -c $(CFLAGS) $**
+
+PU.obj: {$(VPATH)}PU.c
+	$(CC) -c $(CFLAGS) $**
+
+PUM.obj: {$(VPATH)}PUM.c
+	$(CC) -c $(CFLAGS) $**
+
+Q.obj: {$(VPATH)}Q.c
+	$(CC) -c $(CFLAGS) $**
+
+QM.obj: {$(VPATH)}QM.c
+	$(CC) -c $(CFLAGS) $**
+
+R.obj: {$(VPATH)}R.c
+	$(CC) -c $(CFLAGS) $**
+
+RU.obj: {$(VPATH)}RU.c
+	$(CC) -c $(CFLAGS) $**
+
+Ui.obj: {$(VPATH)}Ui.c
+	$(CC) -c $(CFLAGS) $**
+
+Z.obj: {$(VPATH)}Z.c
+	$(CC) -c $(CFLAGS) $**
+
+_distm.obj: {$(VPATH)}_distm.c
+	$(CC) -c $(CFLAGS) $**
+
+alg.obj: {$(VPATH)}alg.c
+	$(CC) -c $(CFLAGS) $**
+
+bf.obj: {$(VPATH)}bf.c
+	$(CC) -c $(CFLAGS) $**
+
+cplx.obj: {$(VPATH)}cplx.c
+	$(CC) -c $(CFLAGS) $**
+
+dalg.obj: {$(VPATH)}dalg.c
+	$(CC) -c $(CFLAGS) $**
+
+dist.obj: {$(VPATH)}dist.c
+	$(CC) -c $(CFLAGS) $**
+
+distm.obj: {$(VPATH)}distm.c
+	$(CC) -c $(CFLAGS) $**
+
+gf2n.obj: {$(VPATH)}gf2n.c
+	$(CC) -c $(CFLAGS) $**
+
+gfpn.obj: {$(VPATH)}gfpn.c
+	$(CC) -c $(CFLAGS) $**
+
+gfs.obj: {$(VPATH)}gfs.c
+	$(CC) -c $(CFLAGS) $**
+
+gfspn.obj: {$(VPATH)}gfspn.c
+	$(CC) -c $(CFLAGS) $**
+
+init.obj: {$(VPATH)}init.c
+	$(CC) -c $(CFLAGS) $**
+
+lmi.obj: {$(VPATH)}lmi.c
+	$(CC) -c $(CFLAGS) $**
+
+mat.obj: {$(VPATH)}mat.c
+	$(CC) -c $(CFLAGS) $**
+
+mi.obj: {$(VPATH)}mi.c
+	$(CC) -c $(CFLAGS) $**
+
+mt19937.obj: {$(VPATH)}mt19937.c
+	$(CC) -c $(CFLAGS) $**
+
+nd.obj: {$(VPATH)}nd.c
+	$(CC) -c $(CFLAGS) $**
+
+num.obj: {$(VPATH)}num.c
+	$(CC) -c $(CFLAGS) $**
+
+pari.obj: {$(VPATH)}pari.c
+	$(CC) -c $(CFLAGS) $**
+
+real.obj: {$(VPATH)}real.c
+	$(CC) -c $(CFLAGS) $**
+
+str.obj: {$(VPATH)}str.c
+	$(CC) -c $(CFLAGS) $**
+
+up.obj: {$(VPATH)}up.c
+	$(CC) -c $(CFLAGS) $**
+
+up2.obj: {$(VPATH)}up2.c
+	$(CC) -c $(CFLAGS) $**
+
+up_gf2n.obj: {$(VPATH)}up_gf2n.c
+	$(CC) -c $(CFLAGS) $**
+
+up_lm.obj: {$(VPATH)}up_lm.c
+	$(CC) -c $(CFLAGS) $**
+
+vect.obj: {$(VPATH)}vect.c
+	$(CC) -c $(CFLAGS) $**
+
+dft.obj: {$(VPATH)}dft.c
+	$(CC) -c $(CFLAGS) $**
+
+fft_primes.obj: {$(VPATH)}fft_primes.c
+	$(CC) -c $(CFLAGS) $**
+
+polmul.obj: {$(VPATH)}polmul.c
+	$(CC) -c $(CFLAGS) $**
+
+biovar.obj: {$(VPATH)}biovar.c
+	$(CC) -c $(CFLAGS) $**
+
+bload.obj: {$(VPATH)}bload.c
+	$(CC) -c $(CFLAGS) $**
+
+bsave.obj: {$(VPATH)}bsave.c
+	$(CC) -c $(CFLAGS) $**
+
+cio.obj: {$(VPATH)}cio.c
+	$(CC) -c $(CFLAGS) $**
+
+cpexpr.obj: {$(VPATH)}cpexpr.c
+	$(CC) -c $(CFLAGS) $**
+
+des.obj: {$(VPATH)}des.c
+	$(CC) -c $(CFLAGS) $**
+
+io.obj: {$(VPATH)}io.c
+	$(CC) -c $(CFLAGS) $**
+
+ox.obj: {$(VPATH)}ox.c
+	$(CC) -c $(CFLAGS) $**
+
+pexpr.obj: {$(VPATH)}pexpr.c
+	$(CC) -c $(CFLAGS) $**
+
+sio.obj: {$(VPATH)}sio.c
+	$(CC) -c $(CFLAGS) $**
+
+spexpr.obj: {$(VPATH)}spexpr.c
+	$(CC) -c $(CFLAGS) $**
+
+tcpf.obj: {$(VPATH)}tcpf.c
+	$(CC) -c $(CFLAGS) $**
+
+ws_fileio.obj: {$(VPATH)}ws_fileio.c
+	$(CC) -c $(CFLAGS) $**
+
+arith.obj: {$(VPATH)}arith.c
+	$(CC) -c $(CFLAGS) $**
+
+asir_lib.obj: {$(VPATH)}asir_lib.c
+	$(CC) -c $(CFLAGS) $**
+
+comp.obj: {$(VPATH)}comp.c
+	$(CC) -c $(CFLAGS) $**
+
+cpp.obj: {$(VPATH)}cpp.c
+	$(CC) -c $(CFLAGS) $**
+
+debug.obj: {$(VPATH)}debug.c
+	$(CC) -c $(CFLAGS) $**
+
+eval.obj: {$(VPATH)}eval.c
+	$(CC) -c $(CFLAGS) $**
+
+evall.obj: {$(VPATH)}evall.c
+	$(CC) -c $(CFLAGS) $**
+
+function.obj: {$(VPATH)}function.c
+	$(CC) -c $(CFLAGS) $**
+
+gc_risa.obj: {$(VPATH)}gc_risa.c
+	$(CC) -c $(CFLAGS) $**
+
+glob.obj: {$(VPATH)}glob.c
+	$(CC) -c $(CFLAGS) $**
+
+kwd.obj: {$(VPATH)}kwd.c
+	$(CC) -c $(CFLAGS) $**
+
+lex.obj: {$(VPATH)}lex.c
+	$(CC) -c $(CFLAGS) $**
+
+load.obj: {$(VPATH)}load.c
+	$(CC) -c $(CFLAGS) $**
+
+main.obj: {$(VPATH)}main.c
+	$(CC) -c $(CFLAGS) $**
+
+parser.obj: {$(VPATH)}parser.c
+	$(CC) -c $(CFLAGS) $**
+
+puref.obj: {$(VPATH)}puref.c
+	$(CC) -c $(CFLAGS) $**
+
+pvar.obj: {$(VPATH)}pvar.c
+	$(CC) -c $(CFLAGS) $**
+
+quote.obj: {$(VPATH)}quote.c
+	$(CC) -c $(CFLAGS) $**
+
+struct.obj: {$(VPATH)}struct.c
+	$(CC) -c $(CFLAGS) $**
+
+util.obj: {$(VPATH)}util.c
+	$(CC) -c $(CFLAGS) $**
+
+xdeb.obj: {$(VPATH)}xdeb.c
+	$(CC) -c $(CFLAGS) $**
+
+ytab.obj: {$(VPATH)}ytab.c
+	$(CC) -c $(CFLAGS) $**
+
+plotf.obj: {$(VPATH)}plotf.c
+	$(CC) -c $(CFLAGS) $**
+
+stdio.obj: {$(VPATH)}stdio.c
+	$(CC) -c $(CFLAGS) $**
