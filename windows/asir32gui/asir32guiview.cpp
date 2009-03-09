@@ -487,15 +487,21 @@ void CAsir32guiView::OnFileOpen()
 		}
 	}
 }
+void CAsir32guiView::viewHtmlHelp(char *help)
+{
+#if _MSC_VER < 1300
+    /* Visual C++ 6.0 */
+	char root[BUFSIZ],errmsg[BUFSIZ], helpfile[BUFSIZ];
+	get_rootdir(root,sizeof(root),errmsg);
+	sprintf(helpfile,"%s\\help\\%shelp.chm",root,help);
+	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+#endif
+}
 
 void CAsir32guiView::OnAsirhelp() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\asirhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	viewHtmlHelp("asir");
 }
 
 void CAsir32guiView::OnFileLog() 
@@ -594,11 +600,7 @@ int CAsir32guiView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CAsir32guiView::OnContribhelp() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\cmanhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	viewHtmlHelp("cman");
 }
 
 void CAsir32guiView::OnSize(UINT nType, int cx, int cy) 
@@ -612,110 +614,61 @@ void CAsir32guiView::OnSize(UINT nType, int cx, int cy)
 void CAsir32guiView::OnDsolv() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\dsolvhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+	viewHtmlHelp("dsolv");
 }
 
 void CAsir32guiView::OnGnuplot() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\gnuplothelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("gnuplot");
 }
 
 void CAsir32guiView::OnOkdiff() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\ok_diffhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("ok_diff");
 }
 
 void CAsir32guiView::OnOkdmodule() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\ok_dmodulehelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("ok_dmodule");
 }
 
 void CAsir32guiView::OnOm() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\omhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("om");
 }
 
 void CAsir32guiView::OnPfpcoh() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\pfpcohhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("pfpcoh");
 }
 
 void CAsir32guiView::OnPlucker() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\pluckerhelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("plucker");
 }
 
 void CAsir32guiView::OnSm1() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\sm1help.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("sm1");
 }
 
 void CAsir32guiView::OnTigers() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\tigershelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("tigers");
 }
 
 void CAsir32guiView::OnTodoparametrize() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	char root[BUFSIZ],errmsg[BUFSIZ],helpfile[BUFSIZ];
-
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\todo_parametrizehelp.chm",root);
-	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
-	
+	viewHtmlHelp("todo_parametrize");
 }
 
 BOOL CAsir32guiView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext) 

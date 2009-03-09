@@ -54,6 +54,7 @@ public:
 	void Beep(void);
 	void ReplaceString(char *);
 	void UpdateMetrics();
+	void viewHtmlHelp(char *);
 
 protected:
 
