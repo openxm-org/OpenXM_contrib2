@@ -1,0 +1,67 @@
+## $OpenXM$
+## Makefile for Visual C++ 6.0
+
+SRCDIR=..\..\asir2000
+ASIRLIB=..\asir2000lib\asir2000lib.lib
+
+!if "$(WITH_PARI)" == "no" 
+
+PARIDEF=
+PARIINC=
+PARILIB=
+
+!else
+
+PARIDEF= -D PARI
+PARIDIR=..\pari20
+PARIINC= -I $(PARIDIR)\win32com
+PARILIB=$(PARIDIR)\libpari.lib
+
+!endif
+
+INCLUDES = -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)
+DEFS = -D NDEBUG -D WIN32 -D _WINDOWS -D _MBCS -D VISUAL -D VISUAL_LIB $(PARIDEF)
+CFLAGS= -nologo -MT -W3 -GX -Ox $(DEFS) $(INCLUDES)
+CPPFLAGS = $(CFLAGS)
+
+RC=rc
+RFLAGS=-l 0x411 -d NDEBUG
+
+LD=link
+LDFLAGS=/nologo /stack:0x10000000 /subsystem:windows /incremental:no /machine:I386 $(ASIRLIB) $(PARILIB) ws2_32.lib user32.lib
+
+OBJS= engine2000.res ChildView.obj MainFrm.obj StdAfx.obj calc.obj \
+  if.obj io.obj ox_asir.obj ox_launch.obj ox_plot.obj ox_plot_win.obj \
+  plot.obj plotg.obj plotp.obj 
+
+VPATH=$(SRCDIR)\plot;$(SRCDIR)\io
+
+all: engine.exe
+
+clean:
+	-@del *.obj
+	-@del engine2000.res
+
+distclean: clean
+	-@del engine.exe
+
+engine.exe: $(OBJS)
+    $(LD) $(LDFLAGS) /out:$@ $(OBJS)
+
+calc.obj: {$(VPATH)}calc.c
+	$(CC) -c $(CFLAGS) $**
+
+if.obj: {$(VPATH)}if.c
+	$(CC) -c $(CFLAGS) $**
+
+ox_asir.obj: {$(VPATH)}ox_asir.c
+	$(CC) -c $(CFLAGS) $**
+
+ox_launch.obj: {$(VPATH)}ox_launch.c
+	$(CC) -c $(CFLAGS) $**
+
+plotg.obj: {$(VPATH)}plotg.c
+	$(CC) -c $(CFLAGS) $**
+
+plotp.obj: {$(VPATH)}plotp.c
+	$(CC) -c $(CFLAGS) $**

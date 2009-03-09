@@ -1,0 +1,164 @@
+## $OpenXM$
+## Makefile for Visual C++ 6.0
+
+SRCDIR= pari-2.0.17.beta\src
+
+CFLAGS=-nologo -MT -W3 -GX -Ox -I win32com -I $(SRCDIR)\headers -D WIN32 -D NDEBUG -D _MBCS -D _LIB 
+
+LD=link
+LDFLAGS=/nologo 
+OBJS= alglin1.obj alglin2.obj anal.obj arith1.obj arith2.obj \
+  base1.obj base2.obj base3.obj base4.obj base5.obj bibli1.obj bibli2.obj \
+  buch1.obj buch2.obj buch3.obj buch4.obj compat.obj elliptic.obj errmsg.obj \
+  es.obj galconj.obj galois.obj gen1.obj gen2.obj gen3.obj helpmsg.obj \
+  ifactor1.obj init.obj kummer.obj l0asm.obj mp.obj mpqs.obj nffactor.obj \
+  polarit1.obj polarit2.obj polarit3.obj rootpol.obj stark.obj subfield.obj \
+  subgroup.obj sumiter.obj thue.obj trans1.obj trans2.obj trans3.obj 
+
+all: libpari.lib
+
+clean:
+	-@del *.obj
+
+distclean: clean
+	-@del libpari.lib
+
+libpari.lib: $(OBJS)
+    $(LD) -lib $(LDFLAGS) /out:$@ $(OBJS)
+
+VPATH=$(SRCDIR)\basemath;$(SRCDIR)\language;$(SRCDIR)\modules;$(SRCDIR)\kernel
+
+alglin1.obj: {$(VPATH)}alglin1.c
+	$(CC) -c $(CFLAGS) $**
+
+alglin2.obj: {$(VPATH)}alglin2.c
+	$(CC) -c $(CFLAGS) $**
+
+anal.obj: {$(VPATH)}anal.c
+	$(CC) -c $(CFLAGS) $**
+
+arith1.obj: {$(VPATH)}arith1.c
+	$(CC) -c $(CFLAGS) $**
+
+arith2.obj: {$(VPATH)}arith2.c
+	$(CC) -c $(CFLAGS) $**
+
+base1.obj: {$(VPATH)}base1.c
+	$(CC) -c $(CFLAGS) $**
+
+base2.obj: {$(VPATH)}base2.c
+	$(CC) -c $(CFLAGS) $**
+
+base3.obj: {$(VPATH)}base3.c
+	$(CC) -c $(CFLAGS) $**
+
+base4.obj: {$(VPATH)}base4.c
+	$(CC) -c $(CFLAGS) $**
+
+base5.obj: {$(VPATH)}base5.c
+	$(CC) -c $(CFLAGS) $**
+
+bibli1.obj: {$(VPATH)}bibli1.c
+	$(CC) -c $(CFLAGS) $**
+
+bibli2.obj: {$(VPATH)}bibli2.c
+	$(CC) -c $(CFLAGS) $**
+
+buch1.obj: {$(VPATH)}buch1.c
+	$(CC) -c $(CFLAGS) $**
+
+buch2.obj: {$(VPATH)}buch2.c
+	$(CC) -c $(CFLAGS) $**
+
+buch3.obj: {$(VPATH)}buch3.c
+	$(CC) -c $(CFLAGS) $**
+
+buch4.obj: {$(VPATH)}buch4.c
+	$(CC) -c $(CFLAGS) $**
+
+compat.obj: {$(VPATH)}compat.c
+	$(CC) -c $(CFLAGS) $**
+
+elliptic.obj: {$(VPATH)}elliptic.c
+	$(CC) -c $(CFLAGS) $**
+
+errmsg.obj: {$(VPATH)}errmsg.c
+	$(CC) -c $(CFLAGS) $**
+
+es.obj: {$(VPATH)}es.c
+	$(CC) -c $(CFLAGS) $**
+
+galconj.obj: {$(VPATH)}galconj.c
+	$(CC) -c $(CFLAGS) $**
+
+galois.obj: {$(VPATH)}galois.c
+	$(CC) -c $(CFLAGS) $**
+
+gen1.obj: {$(VPATH)}gen1.c
+	$(CC) -c $(CFLAGS) $**
+
+gen2.obj: {$(VPATH)}gen2.c
+	$(CC) -c $(CFLAGS) $**
+
+gen3.obj: {$(VPATH)}gen3.c
+	$(CC) -c $(CFLAGS) $**
+
+helpmsg.obj: {$(VPATH)}helpmsg.c
+	$(CC) -c $(CFLAGS) $**
+
+ifactor1.obj: {$(VPATH)}ifactor1.c
+	$(CC) -c $(CFLAGS) $**
+
+init.obj: {$(VPATH)}init.c
+	$(CC) -c $(CFLAGS) $**
+
+kummer.obj: {$(VPATH)}kummer.c
+	$(CC) -c $(CFLAGS) $**
+
+l0asm.obj: {$(VPATH)}ix86\l0asm.c
+	$(CC) -c $(CFLAGS) $**
+
+mp.obj: {$(VPATH)}none\mp.c
+	$(CC) -c $(CFLAGS) $**
+
+mpqs.obj: {$(VPATH)}mpqs.c
+	$(CC) -c $(CFLAGS) $**
+
+nffactor.obj: {$(VPATH)}nffactor.c
+	$(CC) -c $(CFLAGS) $**
+
+polarit1.obj: {$(VPATH)}polarit1.c
+	$(CC) -c $(CFLAGS) $**
+
+polarit2.obj: {$(VPATH)}polarit2.c
+	$(CC) -c $(CFLAGS) $**
+
+polarit3.obj: {$(VPATH)}polarit3.c
+	$(CC) -c $(CFLAGS) $**
+
+rootpol.obj: {$(VPATH)}rootpol.c
+	$(CC) -c $(CFLAGS) $**
+
+stark.obj: {$(VPATH)}stark.c
+	$(CC) -c $(CFLAGS) $**
+
+subfield.obj: {$(VPATH)}subfield.c
+	$(CC) -c $(CFLAGS) $**
+
+subgroup.obj: {$(VPATH)}subgroup.c
+	$(CC) -c $(CFLAGS) $**
+
+sumiter.obj: {$(VPATH)}sumiter.c
+	$(CC) -c $(CFLAGS) $**
+
+thue.obj: {$(VPATH)}thue.c
+	$(CC) -c $(CFLAGS) $**
+
+trans1.obj: {$(VPATH)}trans1.c
+	$(CC) -c $(CFLAGS) $**
+
+trans2.obj: {$(VPATH)}trans2.c
+	$(CC) -c $(CFLAGS) $**
+
+trans3.obj: {$(VPATH)}trans3.c
+	$(CC) -c $(CFLAGS) $**
