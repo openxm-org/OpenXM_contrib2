@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.2 2009/03/10 16:26:12 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR=..\..\asir2000
@@ -20,7 +20,7 @@ PARILIB=$(PARIDIR)\libpari.lib
 !endif
 
 INCLUDES = -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)
-DEFS = -D NDEBUG -D WIN32 -D _WINDOWS -D _MBCS -D VISUAL -D VISUAL_LIB $(PARIDEF)
+DEFS = -D NDEBUG -D WIN32 -D _WINDOWS -D _MBCS -D VISUAL $(PARIDEF)
 CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
 
