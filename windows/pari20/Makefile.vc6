@@ -1,19 +1,19 @@
-## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.2 2009/03/10 16:26:12 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR= pari-2.0.17.beta\src
 
-CFLAGS=-nologo -MT -W3 -Ox -I win32com -I $(SRCDIR)\headers -D WIN32 -D NDEBUG -D _MBCS -D _LIB 
+CFLAGS=-nologo -MT -W3 -Ox -I win32 -I $(SRCDIR)\headers -D WIN32 -D NDEBUG -D _MBCS -D _LIB
 
 LD=link
-LDFLAGS=/nologo 
+LDFLAGS=/nologo
 OBJS= alglin1.obj alglin2.obj anal.obj arith1.obj arith2.obj \
   base1.obj base2.obj base3.obj base4.obj base5.obj bibli1.obj bibli2.obj \
   buch1.obj buch2.obj buch3.obj buch4.obj compat.obj elliptic.obj errmsg.obj \
   es.obj galconj.obj galois.obj gen1.obj gen2.obj gen3.obj helpmsg.obj \
   ifactor1.obj init.obj kummer.obj l0asm.obj mp.obj mpqs.obj nffactor.obj \
   polarit1.obj polarit2.obj polarit3.obj rootpol.obj stark.obj subfield.obj \
-  subgroup.obj sumiter.obj thue.obj trans1.obj trans2.obj trans3.obj 
+  subgroup.obj sumiter.obj thue.obj trans1.obj trans2.obj trans3.obj
 
 all: libpari.lib
 

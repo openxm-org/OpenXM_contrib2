@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.1 2009/03/09 16:00:42 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.2 2009/03/10 16:26:11 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -22,7 +22,7 @@ PARIINC=
 
 PARIDEF= -D PARI
 PARIDIR= ..\pari20
-PARIINC= -I $(PARIDIR)\win32com
+PARIINC= -I $(PARIDIR)\win32
 
 !endif
 

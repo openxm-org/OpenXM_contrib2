@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc6,v 1.2 2009/03/10 16:26:11 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 !if "$(WITH_PARI)" == "no" 
@@ -11,7 +11,7 @@ PARILIB=
 
 PARIDEF= -D PARI
 PARIDIR= ..\windows\pari20
-PARIINC= -I $(PARIDIR)\win32com
+PARIINC= -I $(PARIDIR)\win32
 PARILIB= $(PARIDIR)\libpari.lib
 
 !endif
