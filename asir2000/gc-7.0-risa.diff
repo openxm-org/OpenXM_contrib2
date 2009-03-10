@@ -1,4 +1,4 @@
-%% $OpenXM: OpenXM_contrib2/asir2000/gc-7.0-risa.diff,v 1.1 2007/11/11 15:54:02 ohara Exp $
+%% $OpenXM: OpenXM_contrib2/asir2000/gc-7.0-risa.diff,v 1.2 2009/03/04 06:51:41 ohara Exp $
 %% This patch is based on gc6.5-risa.diff.
 diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
 --- gc-7.0.orig/alloc.c	2007-06-22 11:40:30.000000000 +0900
@@ -67,7 +67,7 @@ diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
          if (GC_collect_at_heapsize < GC_heapsize /* wrapped */)
           GC_collect_at_heapsize = (word)(-1);
  #     endif
-+#if defined(VISUAL_LIB)
++#if defined(VISUAL)
 +    SendHeapSize();
 +#endif
      return(TRUE);
