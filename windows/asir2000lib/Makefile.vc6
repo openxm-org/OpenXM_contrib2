@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR=..\..\asir2000
@@ -7,7 +7,6 @@ SRCDIR=..\..\asir2000
 
 PARIDEF=
 PARIINC=
-PARILIB=
 
 !else
 
@@ -22,7 +21,7 @@ GCINC= -I $(SRCDIR)\gc\include
 
 DEFS = $(PARIDEF) $(GCDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D LONG_IS_32BIT -D HMEXT -D ULONG_NOT_DEFINED -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D _MBCS -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
 INCLUDES = $(PARIINC) $(GCINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot 
-CFLAGS=-nologo -MT -W3 -G5 -GX -Ox -Op $(INCLUDES) $(DEFS)
+CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
 LDFLAGS=/nologo
@@ -539,4 +538,3 @@ typd_mlc.obj: {$(VPATH)}typd_mlc.c
 
 win32_threads.obj: {$(VPATH)}win32_threads.c
 	$(CC) -c $(CFLAGS) $**
-

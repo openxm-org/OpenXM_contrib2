@@ -1,9 +1,9 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR= pari-2.0.17.beta\src
 
-CFLAGS=-nologo -MT -W3 -GX -Ox -I win32com -I $(SRCDIR)\headers -D WIN32 -D NDEBUG -D _MBCS -D _LIB 
+CFLAGS=-nologo -MT -W3 -Ox -I win32com -I $(SRCDIR)\headers -D WIN32 -D NDEBUG -D _MBCS -D _LIB 
 
 LD=link
 LDFLAGS=/nologo 

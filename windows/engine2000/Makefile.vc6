@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR=..\..\asir2000
@@ -21,14 +21,14 @@ PARILIB=$(PARIDIR)\libpari.lib
 
 INCLUDES = -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)
 DEFS = -D NDEBUG -D WIN32 -D _WINDOWS -D _MBCS -D VISUAL -D VISUAL_LIB $(PARIDEF)
-CFLAGS= -nologo -MT -W3 -GX -Ox $(DEFS) $(INCLUDES)
+CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
 
 RC=rc
 RFLAGS=-l 0x411 -d NDEBUG
 
 LD=link
-LDFLAGS=/nologo /stack:0x10000000 /subsystem:windows /incremental:no /machine:I386 $(ASIRLIB) $(PARILIB) ws2_32.lib user32.lib
+LDFLAGS=/nologo /stack:0x10000000 /subsystem:windows /incremental:no $(ASIRLIB) $(PARILIB) ws2_32.lib user32.lib
 
 OBJS= engine2000.res ChildView.obj MainFrm.obj StdAfx.obj calc.obj \
   if.obj io.obj ox_asir.obj ox_launch.obj ox_plot.obj ox_plot_win.obj \

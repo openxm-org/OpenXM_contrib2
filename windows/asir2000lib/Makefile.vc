@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.1 2009/03/09 16:00:42 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -13,15 +13,25 @@ CPU_OBJ= asmiw.obj gf2m_mul_w.obj
 
 SRCDIR=..\..\asir2000
 
+!if "$(WITH_PARI)" == "no"
+
 PARIDEF=
 PARIINC=
+
+!else
+
+PARIDEF= -D PARI
+PARIDIR= ..\pari20
+PARIINC= -I $(PARIDIR)\win32com
+
+!endif
 
 GCDIR= ..\gc-7.1
 GCINC = -I $(GCDIR)\include
 
 DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D LONG_IS_32BIT -D HAVE_UNSIGNED_LONG_LONG -D HMEXT -D ULONG_NOT_DEFINED -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D _MBCS -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
 INCLUDES = $(PARIINC) $(GCINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot 
-CFLAGS=-nologo -MT -W3 -EHsc -Ox $(INCLUDES) $(DEFS)
+CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
 LDFLAGS=/nologo

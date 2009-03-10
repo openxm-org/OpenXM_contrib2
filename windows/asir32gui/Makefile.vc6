@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc6,v 1.1 2009/03/09 09:33:30 ohara Exp $
 ## Makefile for Visual C++ 6.0
 ##
 ## usage:
@@ -17,11 +17,11 @@ ASIRGUI= asirgui.exe
 !endif
 
 HHDIR="c:\Program Files\Html Help Workshop"
-CFLAGS=-nologo -MT -W3 -GX -Ox -I $(HHDIR)\include -D WIN32 -D NDEBUG -D _WINDOWS -D _MBCS
+CFLAGS=-nologo -MT -W3 -EHsc -Ox -I $(HHDIR)\include -D WIN32 -D NDEBUG -D _WINDOWS -D _MBCS
 CPPFLAGS=$(CFLAGS)
 RFLAGS=-l 0x411 -d NDEBUG
 LD=link
-LDFLAGS= advapi32.lib $(HHDIR)\lib\htmlhelp.lib /nologo /subsystem:windows /incremental:no /machine:I386
+LDFLAGS= advapi32.lib $(HHDIR)\lib\htmlhelp.lib /nologo /subsystem:windows /incremental:no
 OBJS= FatalDialog.obj MainFrm.obj StdAfx.obj history.obj io.obj \
   asir32gui.obj asir32guiDoc.obj asir32guiView.obj
 
