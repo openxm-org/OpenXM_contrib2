@@ -949,7 +949,7 @@ word n;
     GC_prev_heap_addr = GC_last_heap_addr;
     GC_last_heap_addr = (ptr_t)space;
     GC_add_to_heap(space, bytes);
-#if defined(VISUAL_LIB)
+#if defined(VISUAL)
 	SendHeapSize();
 #endif
     return(TRUE);
