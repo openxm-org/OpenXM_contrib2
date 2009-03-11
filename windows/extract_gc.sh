@@ -1,4 +1,6 @@
 #!/bin/sh
+# $OpenXM$
+(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
 OpenXM_HOME=${OpenXM_HOME:-../../OpenXM}
 OpenXM_dist=${OpenXM_HOME}/../OpenXM_dist
 GC=gc-7.1
