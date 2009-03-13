@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.25 2008/11/18 09:17:31 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.26 2008/11/19 13:12:43 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -65,6 +65,7 @@
 /* #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\WinECgen\\1.00.000" */
 #define ECGEN_KEYNAME "SoftWare\\Fujitsu\\FSEcParamGen\\V1.0L10"
 #define ASIR_KEYNAME "SoftWare\\Fujitsu\\Asir\\1999.03.31"
+#define R_OK 0x04
 #endif
 
 void Pget_rootdir();
@@ -104,7 +105,7 @@ struct ftab file_tab[] = {
 	{"bsave",Pbsave,2},
 	{"bload",Pbload,1},
 	{"get_rootdir",Pget_rootdir,0},
-#if defined(VISUAL) && defined(DES_ENC)
+#if defined(DES_ENC)
 	{"bsave_enc",Pbsave_enc,2},
 	{"bload_enc",Pbload_enc,1},
 #endif
@@ -582,7 +583,7 @@ void Pget_rootdir(STRING *rp)
 	*rp = &rootdir;
 }
 
-#if defined(VISUAL) && defined(DES_ENC)
+#if defined(DES_ENC)
 void Pbsave_enc(NODE arg,Obj *rp)
 {
 	init_deskey();
@@ -678,11 +679,7 @@ void Premove_file(NODE arg,Q *rp)
 
 void Paccess(NODE arg,Q *rp)
 {
-#if defined(VISUAL)
-	if ( access(BDY((STRING)ARG0(arg)),04) >= 0 )
-#else
 	if ( access(BDY((STRING)ARG0(arg)),R_OK) >= 0 )
-#endif
 		*rp = ONE;
 	else
 		*rp = 0;

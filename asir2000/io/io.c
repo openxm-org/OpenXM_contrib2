@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.11 2003/03/07 03:12:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.12 2003/03/07 06:39:57 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -210,7 +210,7 @@ void write_int(FILE *f,unsigned int *p)
 		gen_fwrite((char *)p,sizeof(unsigned int),1,f);
 }
 
-#if defined(VISUAL) && defined(DES_ENC)
+#if defined(DES_ENC)
 int des_encryption;
 static unsigned char asir_deskey[8] = {0xc7,0xe0,0xfc,0xb5,0xc3,0xad,0x8e,0x3a};
 static unsigned char deskey_string[96];
@@ -230,7 +230,7 @@ void write_intarray(FILE *f,unsigned int *p,int l)
 {
 	int i;
 	unsigned int t;
-#if defined(VISUAL) && defined(DES_ENC)
+#if defined(DES_ENC)
 	int l2;
 	unsigned int plain[2],encrypted[2];
 
@@ -322,7 +322,7 @@ void read_int(FILE *f,unsigned int *p)
 void read_intarray(FILE *f,unsigned int *p,int l)
 {
 	int i;
-#if defined(VISUAL) && defined(DES_ENC)
+#if defined(DES_ENC)
 	int l2;
 	unsigned int plain[2],encrypted[2];
 
