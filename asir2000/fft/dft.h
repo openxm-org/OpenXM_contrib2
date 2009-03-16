@@ -45,16 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.5 2007/09/15 10:17:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.6 2009/03/16 16:43:02 ohara Exp $ 
 */
-#if SIZEOF_LONG == 4
-#if defined(VISUAL)
-typedef unsigned _int64 UL;
-#else
-typedef unsigned long long UL;
-#endif
-#else
+#if SIZEOF_LONG == 8
 typedef unsigned long UL;
+#elif defined(HAVE_UNSIGNED_LONG_LONG)
+typedef unsigned long long UL;
+#elif defined(_MSC_VER)
+typedef unsigned _int64 UL;
 #endif
 
 struct PrimesS {

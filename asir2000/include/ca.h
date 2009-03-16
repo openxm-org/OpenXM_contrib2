@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.75 2009/02/05 08:37:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.76 2009/03/16 16:43:03 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,9 +57,6 @@
 
 #if !defined(VISUAL)
 #include <unistd.h>
-#endif
-
-#if !defined(VISUAL)
 #include <sys/param.h>
 #endif
 
@@ -153,17 +150,15 @@ typedef enum {
 	A_end=0,A_fnode,A_arf,A_int,A_str,A_internal,A_node,A_notimpl,A_func
 } farg_type;
 
-#if SIZEOF_LONG == 4
-#if defined(VISUAL)
-typedef _int64 L;
-typedef unsigned _int64 UL;
-#else
-typedef long long L;
-typedef unsigned long long UL;
-#endif
-#else
+#if SIZEOF_LONG == 8
 typedef long L;
 typedef unsigned long UL;
+#elif defined(HAVE_UNSIGNED_LONG_LONG)
+typedef long long L;
+typedef unsigned long long UL;
+#elif defined(_MSC_VER)
+typedef _int64 L;
+typedef unsigned _int64 UL;
 #endif
 
 typedef struct oN {

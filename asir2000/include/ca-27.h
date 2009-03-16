@@ -45,19 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.4 2003/02/14 22:29:13 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.5 2009/03/16 16:43:03 ohara Exp $ 
 */
-#if SIZEOF_LONG == 4
-#if defined(VISUAL)
-typedef _int64 L;
-typedef unsigned _int64 UL;
-#else
-typedef long long L;
-typedef unsigned long long UL;
-#endif
-#else
+#if SIZEOF_LONG == 8
 typedef long L;
 typedef unsigned long UL;
+#elif defined(HAVE_UNSIGNED_LONG_LONG)
+typedef long long L;
+typedef unsigned long long UL;
+#elif defined(_MSC_VER)
+typedef _int64 L;
+typedef unsigned _int64 UL;
 #endif
 /* data structures */
 
