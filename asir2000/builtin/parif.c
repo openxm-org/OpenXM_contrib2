@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.13 2003/01/28 09:03:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.14 2003/02/14 22:29:07 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,13 +96,10 @@ void f(ar,rp) NODE ar; Obj *rp;\
 
 #if defined(INTERVAL)
 #define	PREC_CONV	pariK1
-#else
-#if defined(LONG_IS_32BIT)
+#elif SIZEOF_LONG == 4
 #define PREC_CONV		0.103810253
-#endif
-#if defined(LONG_IS_64BIT)
+#elif SIZEOF_LONG == 8
 #define PREC_CONV		0.051905126
-#endif
 #endif
 
 /* XXX : we should be more careful when we free PARI pointers. */

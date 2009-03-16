@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.4 2003/02/14 22:29:10 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.5 2007/09/15 10:17:08 noro Exp $ 
 */
-#if defined(LONG_IS_32BIT)
+#if SIZEOF_LONG == 4
 #if defined(VISUAL)
 typedef unsigned _int64 UL;
 #else

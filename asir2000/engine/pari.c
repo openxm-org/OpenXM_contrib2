@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.6 2003/02/14 22:29:09 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.7 2005/10/10 15:16:38 saito Exp $ 
 */
 #include "ca.h"
 #if defined(PARI)
@@ -250,7 +250,7 @@ Obj *rp;
 	}
 }
 
-#if defined(LONG_IS_32BIT)
+#if SIZEOF_LONG == 4
 void ritopa_i(a,s,rp)
 N a;
 int s;
@@ -285,9 +285,8 @@ N *rp;
 	for ( j = 0, b = (unsigned int *)BD(z); j < l; j++ )
 		b[l-j-1] = ((unsigned int *)g)[j+2];
 }
-#endif
 
-#if defined(LONG_IS_64BIT)
+#elif SIZEOF_LONG == 8
 void ritopa_i(a,s,rp)
 N a;
 int s;

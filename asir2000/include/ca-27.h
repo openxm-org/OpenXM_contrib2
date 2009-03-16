@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.3 2000/08/22 05:04:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.4 2003/02/14 22:29:13 ohara Exp $ 
 */
-#if defined(LONG_IS_32BIT)
+#if SIZEOF_LONG == 4
 #if defined(VISUAL)
 typedef _int64 L;
 typedef unsigned _int64 UL;

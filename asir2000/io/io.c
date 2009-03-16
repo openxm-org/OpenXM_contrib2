@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.12 2003/03/07 06:39:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.13 2009/03/13 04:45:16 ohara Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -263,7 +263,7 @@ void write_intarray(FILE *f,unsigned int *p,int l)
 		gen_fwrite((char *)p,sizeof(unsigned int),l,f);
 }
 
-#if defined(LONG_IS_64BIT)
+#if SIZEOF_LONG == 8
 void write_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;
@@ -353,7 +353,7 @@ void read_intarray(FILE *f,unsigned int *p,int l)
 	}
 }
 
-#if defined(LONG_IS_64BIT)
+#if SIZEOF_LONG == 8
 void read_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;

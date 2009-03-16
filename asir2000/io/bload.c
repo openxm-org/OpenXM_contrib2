@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.14 2004/12/10 07:36:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.15 2006/08/09 02:40:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -138,7 +138,7 @@ void loadbf(FILE *s,BF *p)
 	read_int(s,&uexpo);
 	read_int(s,&lexpo);
 
-#if defined(LONG_IS_32BIT)
+#if SIZEOF_LONG == 4
 	if ( uexpo )
 		error("loadbf : exponent too large");
 	read_int(s,&len);
@@ -149,7 +149,7 @@ void loadbf(FILE *s,BF *p)
 	setsigne(z,(long)sign);
 	setexpo(z,(long)lexpo);
 	read_intarray(s,(int *)(z+2),len);
-#elif defined(LONG_IS_64BIT)
+#elif SIZEOF_LONG == 8
 	expo = (((UL)uexpo)<<32)|((UL)lexpo);
 	read_int(s,&len);
 	NEWBF(q,(len+5)/2); /* 2+(len+1)/2 */

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.5 2005/11/12 08:13:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.6 2008/09/11 15:17:55 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -121,7 +121,7 @@ LIST *listp;
 
 	rtime = get_rtime(); MKReal(rtime,rr);
 	t = get_allocwords();
-#if defined(LONG_IS_64BIT)
+#if SIZEOF_LONG == 8
 	u = t>>32; l = t&(0xffffffff);
 	if ( !u ) STOQ(l,words);
 	else {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.74 2009/01/05 01:47:30 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.75 2009/02/05 08:37:02 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,7 +153,7 @@ typedef enum {
 	A_end=0,A_fnode,A_arf,A_int,A_str,A_internal,A_node,A_notimpl,A_func
 } farg_type;
 
-#if defined(LONG_IS_32BIT)
+#if SIZEOF_LONG == 4
 #if defined(VISUAL)
 typedef _int64 L;
 typedef unsigned _int64 UL;
