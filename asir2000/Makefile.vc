@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.2 2009/03/10 16:26:11 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.3 2009/03/10 20:21:34 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -19,7 +19,7 @@ PARILIB=
 
 !else
 
-PARIDEF= -D PARI
+PARIDEF= -D PARI -D ULONG_NOT_DEFINED
 PARIDIR= ..\windows\pari20
 PARIINC= -I $(PARIDIR)\win32
 PARILIB= $(PARIDIR)\libpari.lib
@@ -30,7 +30,7 @@ GCDIR= ..\windows\gc-7.1
 GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
-DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D LONG_IS_32BIT -D HAVE_UNSIGNED_LONG_LONG -D HMEXT -D ULONG_NOT_DEFINED -D ASIR_LIBDIR=\"c:/asir/stdlib\"
+DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D LONG_IS_32BIT -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\"
 INCLUDES= $(PARIINC) $(GCINC) -I include -I parse
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 

@@ -5497,11 +5497,6 @@ fi
 fi
 
 
-cat >>confdefs.h <<\_ACEOF
-#define HMEXT 1
-_ACEOF
-
-
 # Check whether --enable-shared was given.
 if test "${enable_shared+set}" = set; then
   enableval=$enable_shared; enable_shared=yes
