@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc6,v 1.4 2009/03/16 16:08:05 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc6,v 1.5 2009/03/16 16:43:03 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR=..\..\asir2000
@@ -16,15 +16,15 @@ PARIINC= -I $(PARIDIR)\win32
 
 !endif
 
-GCDEF= -D ALL_INTERIOR_POINTERS -D LARGE_CONFIG -D DES_ENC
+GCDEF= -D ALL_INTERIOR_POINTERS -D SILENT -D WIN32
 GCINC= -I $(SRCDIR)\gc\include
 
-DEFS = $(PARIDEF) $(GCDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D SIZEOF_LONG=4 -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D _MBCS -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
+DEFS = $(PARIDEF) $(GCDEF) -D NDEBUG -D VISUAL -D INET -D SIZEOF_LONG=4 -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D _MBCS -D DES_ENC -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
 INCLUDES = $(PARIINC) $(GCINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
-LDFLAGS=/nologo
+LDFLAGS=-nologo
 
 GC_OBJS= allchblk.obj alloc.obj blacklst.obj checksums.obj dbg_mlc.obj \
   dyn_load.obj finalize.obj headers.obj mach_dep.obj malloc.obj mallocx.obj \
@@ -62,7 +62,7 @@ distclean: clean
 	-@del asir2000lib.lib
 
 asir2000lib.lib: $(OBJS) $(GC_OBJS)
-    $(LD) -lib $(LDFLAGS) /out:$@ $**
+    $(LD) -lib $(LDFLAGS) -out:$@ $**
 
 asmiw.obj: {$(VPATH)}asmiw.c
 	$(CC) -c $(CFLAGS) $**

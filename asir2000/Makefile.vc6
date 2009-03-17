@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc6,v 1.4 2009/03/16 16:08:05 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc6,v 1.5 2009/03/16 16:43:02 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 !if "$(WITH_PARI)" == "no" 
@@ -17,15 +17,15 @@ PARILIB= $(PARIDIR)\libpari.lib
 !endif
 
 GCINC= -I gc\include
-GCDEF= -D ALL_INTERIOR_POINTERS -D LARGE_CONFIG -D DES_ENC
+GCDEF= -D ALL_INTERIOR_POINTERS -D SILENT -D WIN32
 
-DEFS = $(PARIDEF) $(GCDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D SIZEOF_LONG=4 -D ASIR_LIBDIR=\"c:/asir/stdlib\"
+DEFS = $(PARIDEF) $(GCDEF) -D NDEBUG -D VISUAL -D INET -D SIZEOF_LONG=4 -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D DES_ENC
 INCLUDES= $(PARIINC) $(GCINC) -I include -I parse
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
-LDFLAGS= $(PARILIB) ws2_32.lib advapi32.lib user32.lib /nologo \
-  /stack:0x1000000 /subsystem:console /incremental:no
+LDFLAGS= $(PARILIB) ws2_32.lib advapi32.lib user32.lib -nologo \
+  -stack:0x1000000 -subsystem:console -incremental:no
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
   asir2000_dummy.obj asmiw.obj batch.obj bf.obj biovar.obj bload.obj \
@@ -57,7 +57,7 @@ VPATH=asm;builtin;engine;fft;io;parse;gc
 all: asir.exe
 
 asir.exe: $(OBJS) $(GC_OBJS)
-    $(LD) $(LDFLAGS) /out:$@ $**
+    $(LD) $(LDFLAGS) -out:$@ $**
 
 clean:
 	-@del *.obj

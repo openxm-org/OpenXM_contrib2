@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.3 2009/03/10 16:45:29 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.4 2009/03/10 20:21:35 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR=..\..\asir2000
@@ -20,7 +20,7 @@ PARILIB=$(PARIDIR)\libpari.lib
 !endif
 
 INCLUDES= -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)
-DEFS= -D NDEBUG -D WIN32 -D _WINDOWS -D _MBCS -D VISUAL $(PARIDEF)
+DEFS= -D NDEBUG -D _MBCS -D VISUAL $(PARIDEF)
 CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
 
@@ -28,7 +28,7 @@ RC=rc
 RFLAGS=-l 0x411 -d NDEBUG
 
 LD=link
-LDFLAGS=/nologo /stack:0x10000000 /subsystem:windows /incremental:no $(ASIRLIB) $(PARILIB) ws2_32.lib user32.lib
+LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -incremental:no $(ASIRLIB) $(PARILIB) ws2_32.lib user32.lib
 
 OBJS= engine2000.res ChildView.obj MainFrm.obj StdAfx.obj calc.obj \
   if.obj io.obj ox_asir.obj ox_launch.obj ox_plot.obj ox_plot_win.obj \
@@ -46,7 +46,7 @@ distclean: clean
 	-@del engine.exe
 
 engine.exe: $(OBJS)
-    $(LD) $(LDFLAGS) /out:$@ $(OBJS)
+    $(LD) $(LDFLAGS) -out:$@ $**
 
 calc.obj: {$(VPATH)}calc.c
 	$(CC) -c $(CFLAGS) $**

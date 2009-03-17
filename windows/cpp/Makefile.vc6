@@ -1,16 +1,16 @@
-## $OpenXM: OpenXM_contrib2/windows/cpp/Makefile.vc6,v 1.2 2009/03/09 14:01:14 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/cpp/Makefile.vc6,v 1.3 2009/03/10 16:26:12 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
-CFLAGS= -nologo -ML -W3 -EHsc -Ox -D WIN32 -D NDEBUG -D _WINDOWS -D _MBCS
+CFLAGS= -nologo -ML -W3 -EHsc -Ox -D NDEBUG -D _MBCS
 CPPFLAGS= $(CFLAGS)
 LD=link
-LDFLAGS=/nologo /subsystem:windows /incremental:no
+LDFLAGS=-nologo -subsystem:windows -incremental:no
 OBJS= cpp.obj cpp_main.obj StdAfx.obj
 
 all: cpp.exe
 
 cpp.exe: $(OBJS)
-    $(LD) $(LDFLAGS) /out:$@ $(OBJS)
+    $(LD) $(LDFLAGS) -out:$@ $**
 
 clean:
 	-@del *.obj

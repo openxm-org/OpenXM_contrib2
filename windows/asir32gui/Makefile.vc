@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.1 2009/03/09 16:00:42 ohara Exp $
 ## Makefile for Visual Studio 2008
 ##
 ## usage:
@@ -16,18 +16,18 @@ RES = asir32gui-ja.res
 ASIRGUI= asirgui.exe
 !endif
 
-CFLAGS=-nologo -MT -W3 -EHsc -Ox -D WIN32 -D NDEBUG -D _WINDOWS -D _MBCS
+CFLAGS=-nologo -MT -W3 -EHsc -Ox -D NDEBUG -D _MBCS
 CPPFLAGS=$(CFLAGS)
 RFLAGS=-l 0x411 -d NDEBUG
 LD=link
-LDFLAGS= advapi32.lib /nologo /subsystem:windows /incremental:no
+LDFLAGS= advapi32.lib -nologo -subsystem:windows -incremental:no
 OBJS= FatalDialog.obj MainFrm.obj StdAfx.obj history.obj io.obj \
   asir32gui.obj asir32guiDoc.obj asir32guiView.obj
 
 all: $(ASIRGUI)
 
 $(ASIRGUI): $(OBJS) $(RES)
-    $(LD) $(LDFLAGS) /out:$@ $**
+    $(LD) $(LDFLAGS) -out:$@ $**
 
 $(RES): $(RESSRC)
 	copy /y $(RESSRC) $*.rc

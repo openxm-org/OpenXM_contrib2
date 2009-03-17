@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.4 2009/03/16 16:08:05 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.5 2009/03/16 16:43:02 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -30,12 +30,12 @@ GCDIR= ..\windows\gc-7.1
 GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
-DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D WIN32 -D __WIN32__ -D CONSOLE -D SILENT -D INET -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\"
+DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D WIN32 -D INET -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\"
 INCLUDES= $(PARIINC) $(GCINC) -I include -I parse
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
-LDFLAGS= /nologo /stack:0x10000000 /subsystem:console /incremental:no /nodefaultlib:libcmt.lib $(PARILIB) $(GCLIB) ws2_32.lib advapi32.lib user32.lib 
+LDFLAGS= -nologo -stack:0x10000000 -subsystem:console -incremental:no -nodefaultlib:libcmt.lib $(PARILIB) $(GCLIB) ws2_32.lib advapi32.lib user32.lib 
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
   asir2000_dummy.obj batch.obj bf.obj biovar.obj bload.obj \
@@ -61,7 +61,7 @@ VPATH=asm;builtin;engine;fft;io;parse;gc
 all: asir.exe
 
 asir.exe: $(OBJS) $(CPU_OBJ)
-    $(LD) $(LDFLAGS) /out:$@ $**
+    $(LD) $(LDFLAGS) -out:$@ $**
 
 clean:
 	-@del *.obj
