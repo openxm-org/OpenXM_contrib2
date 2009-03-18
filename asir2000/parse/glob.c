@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.74 2008/03/19 07:05:56 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.75 2009/02/05 08:37:02 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -774,7 +774,7 @@ char *get_asir_distribution();
 char *get_gcversion() 
 {
 #if defined(GC7)
-	return "GC 7.0 copyright 1988-2007, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
+	return "GC 7.1 copyright 1988-2008, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
 #else
 	return "GC 6.8 copyright 1988-2006, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
 #endif
