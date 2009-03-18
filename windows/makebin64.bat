@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.3 2009/03/17 13:38:22 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.4 2009/03/18 05:14:22 ohara Exp $
 @echo off
 
 set ARCH=AMD64
