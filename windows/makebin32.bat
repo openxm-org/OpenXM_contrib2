@@ -1,18 +1,15 @@
-@rem $OpenXM$
+@rem $OpenXM: OpenXM_contrib2/windows/makebin32.bat,v 1.1 2009/03/11 09:52:06 ohara Exp $
 @echo off
 
 set ARCH=x86
-if not defined WITH_PARI set WITH_PARI=yes
 
 cd gc-7.1
 nmake -f NT_STATIC_THREADS_MAKEFILE gc.lib
 cd ..
 
-if "%WITH_PARI%" == "yes" (
-  cd pari20
-  nmake -f Makefile.vc6
-  cd ..
-)
+cd pari20
+nmake -f Makefile.vc6
+cd ..
 
 for %%i in ( asir2000lib engine2000 cpp asir32gui ) do (
   cd %%i

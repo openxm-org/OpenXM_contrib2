@@ -1,23 +1,13 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.4 2009/03/10 20:21:35 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc6,v 1.5 2009/03/17 14:58:23 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR=..\..\asir2000
 ASIRLIB=..\asir2000lib\asir2000lib.lib
 
-!if "$(WITH_PARI)" == "no"
-
-PARIDEF=
-PARIINC=
-PARILIB=
-
-!else
-
 PARIDEF= -D PARI
 PARIDIR=..\pari20
 PARIINC= -I $(PARIDIR)\win32
 PARILIB=$(PARIDIR)\libpari.lib
-
-!endif
 
 INCLUDES= -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)
 DEFS= -D NDEBUG -D _MBCS -D VISUAL $(PARIDEF)

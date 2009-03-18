@@ -1,20 +1,10 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc6,v 1.5 2009/03/16 16:43:02 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc6,v 1.6 2009/03/17 14:58:23 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
-!if "$(WITH_PARI)" == "no" 
-
-PARIDEF=
-PARIINC=
-PARILIB=
-
-!else
-
-PARIDEF= -D PARI -D ULONG_NOT_DEFINED -D LONG_IS_32BIT
+PARIDEF= -D PARI -D LONG_IS_32BIT
 PARIDIR= ..\windows\pari20
 PARIINC= -I $(PARIDIR)\win32
 PARILIB= $(PARIDIR)\libpari.lib
-
-!endif
 
 GCINC= -I gc\include
 GCDEF= -D ALL_INTERIOR_POINTERS -D SILENT -D WIN32
@@ -24,8 +14,7 @@ INCLUDES= $(PARIINC) $(GCINC) -I include -I parse
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
-LDFLAGS= $(PARILIB) ws2_32.lib advapi32.lib user32.lib -nologo \
-  -stack:0x1000000 -subsystem:console -incremental:no
+LDFLAGS= -nologo -stack:0x1000000 -subsystem:console -incremental:no $(PARILIB) ws2_32.lib advapi32.lib user32.lib
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
   asir2000_dummy.obj asmiw.obj batch.obj bf.obj biovar.obj bload.obj \
