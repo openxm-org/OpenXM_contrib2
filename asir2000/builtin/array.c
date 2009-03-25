@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.57 2009/02/03 00:39:23 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.58 2009/03/03 10:04:10 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -97,6 +97,7 @@ void Pmat();
 void Pmatc();
 void Pnd_det();
 void Plu_mat();
+void Pmat_col();
 
 struct ftab array_tab[] = {
 	{"lu_mat",Plu_mat,1},
@@ -142,6 +143,7 @@ struct ftab array_tab[] = {
 	{"nbpoly_up2",Pnbpoly_up2,2},
 	{"mat_swap_row_destructive",Pmat_swap_row_destructive,3},
 	{"mat_swap_col_destructive",Pmat_swap_col_destructive,3},
+	{"mat_col",Pmat_col,2},
 	{0,0,0},
 };
 
@@ -3452,4 +3454,26 @@ void Pnd_det(NODE arg,P *rp)
 		nd_det(0,ARG0(arg),rp);
 	else
 		nd_det(QTOS((Q)ARG1(arg)),ARG0(arg),rp);
+}
+
+void Pmat_col(NODE arg,P *rp)
+{
+	int i,j,n;
+	pointer t;
+	MAT mat;
+	VECT vect;
+
+	asir_assert(ARG0(arg),O_MAT,"mat_col");
+	asir_assert(ARG1(arg),O_N,"mat_col");
+	mat = (MAT)ARG0(arg);
+	j = QTOS((Q)ARG1(arg));
+	if ( j < 0 || j >= mat->col) {
+		error("mat_col : Out of range");
+	}
+	n = mat->row;
+	MKVECT(vect,n);
+	for(i=0; i<n; i++) {
+		BDY(vect)[i] = BDY(mat)[i][j];
+	}
+	*rp = vect;
 }
