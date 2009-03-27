@@ -45,15 +45,20 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.14 2003/02/14 22:29:07 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.15 2009/03/16 16:43:02 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 #if defined(PARI)
 #include "genpari.h"
+// PARI_VERSION(2,2,8) == 131592
+#if PARI_VERSION_CODE >= 131592
+#define mppgcd(a,b)  (gcdii((a),(b)))
+#endif
 
-extern long prec;
+long get_pariprec();
+void set_pariprec(long p);
 
 void patori(GEN,Obj *);
 void patori_i(GEN,N *);
@@ -78,7 +83,7 @@ struct ftab pari_tab[] = {
 	{0,0,0},
 };
 
-#define MKPREC(a,i,b) (argc(a)==(i)?mkprec(QTOS((Q)(b))):prec)
+#define MKPREC(a,i,b) (argc(a)==(i)?mkprec(QTOS((Q)(b))):get_pariprec())
 
 #define CALLPARI1(f,a,p,r)\
 ritopa((Obj)a,&_pt1_); _pt2_ = f(_pt1_,p); patori(_pt2_,r); asir_cgiv(_pt2_); asir_cgiv(_pt1_)
@@ -168,6 +173,7 @@ Obj *rp;
 {
 	int p;
 	Q q;
+	long prec = get_pariprec();
 
 #if defined(INTERVAL) || 1
 	p = (int)((prec-2)/PREC_CONV); STOQ(p,q); *rp = (Obj)q;
@@ -184,6 +190,7 @@ Obj *rp;
 		prec = mkprec(QTOS((Q)ARG0(arg)));
 	}
 #endif
+	set_pariprec(prec);
 }
 
 #if defined(INTERVAL) || 1
@@ -193,6 +200,7 @@ Obj *rp;
 {
 	int p;
 	Q q;
+	long prec = get_pariprec();
 
 	p = (int)((prec-2)); STOQ(p,q); *rp = (Obj)q;
 	if ( arg ) {
@@ -202,6 +210,7 @@ Obj *rp;
 			prec = p + 2;
 		}
 	}
+	set_pariprec(prec);
 }
 #endif
 

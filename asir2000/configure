@@ -5603,12 +5603,6 @@ fi
 
 
 if test ${with_pari:=no} != no ; then
-    if test "${with_pari}" = new -o "${with_pari}" = 2.3 ; then
-        cat >>confdefs.h <<\_ACEOF
-#define PARI23 1
-_ACEOF
-
-    fi
     libasir_postfix=${libasir_postfix}_pari
     PARIINC='-I${prefix}/include/pari'
     if test "${enable_shared}" != yes ; then

@@ -45,16 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.4 2000/12/22 10:03:28 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.5 2003/02/14 22:29:08 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #if defined(PARI)
 #include "genpari.h"
-void patori(GEN,Obj *);
-void patori_i(GEN,N *);
-void ritopa(Obj,GEN *);
-void ritopa_i(N,int,GEN *);
 #endif
 
 void toreim(a,rp,ip)
@@ -188,7 +184,6 @@ Num *c;
 {
 	int ei;
 	Num t;
-	extern long prec;
 
 	if ( !e )
 		*c = (Num)ONE;
@@ -196,12 +191,7 @@ Num *c;
 		*c = 0;
 	else if ( !INT(e) ) {
 #if defined(PARI)
-		GEN pa,pe,z;
-		int ltop,lbot;
-
-		ltop = avma; ritopa((Obj)a,&pa); ritopa((Obj)e,&pe); lbot = avma;
-		z = gerepile(ltop,lbot,gpui(pa,pe,prec));
-		patori(z,(Obj *)c); cgiv(z);
+		gpui_ri((Obj)a,(Obj)c,(Obj *)c);
 #else
 		error("pwrcplx : can't calculate a fractional power");
 #endif

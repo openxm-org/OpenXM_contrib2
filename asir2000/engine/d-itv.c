@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.2 2002/01/08 04:14:37 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.3 2003/02/14 22:29:08 ohara Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -493,12 +493,7 @@ void	pwritvd(Num a, Num e, IntervalDouble *c)
 #endif
 	} else if ( !INT(e) ) {
 #if defined(PARI) && 0
-		GEN pa,pe,z;
-		int ltop,lbot;
-
-		ltop = avma; ritopa(a,&pa); ritopa(e,&pe); lbot = avma;
-		z = gerepile(ltop,lbot,gpui(pa,pe,prec));
-		patori(z,c); cgiv(z);
+		gpui_ri((Obj)a,(Obj)c,(Obj *)c);
 #else
 		error("pwritvd : can't calculate a fractional power");
 #endif

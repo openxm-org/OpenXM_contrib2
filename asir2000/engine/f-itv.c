@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.5 2003/10/20 07:18:42 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.6 2005/01/11 07:12:51 saito Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -7,7 +7,7 @@
 #if defined(PARI)
 #include "genpari.h"
 #include "itv-pari.h"
-extern long prec;
+long get_pariprec();
 #endif
 
 void ToBf(Num a, BF *rp)
@@ -24,7 +24,7 @@ void ToBf(Num a, BF *rp)
 		case N_Q:
 			ltop = avma;
 			ritopa_i(NM((Q)a), SGN((Q)a), &pa);
-			pb = cgetr(prec);
+			pb = cgetr(get_pariprec());
 			mpaff(pa, pb);
 			if ( INT((Q)a) ) {
 				lbot = avma;
@@ -35,7 +35,7 @@ void ToBf(Num a, BF *rp)
 			} else {
 				patori(pb, &bn);
 				ritopa_i(DN((Q)a), 1, &pa);
-				pb = cgetr(prec);
+				pb = cgetr(get_pariprec());
 				mpaff(pa, pb);
 				lbot = avma;
 				pb = gerepile(ltop, lbot, pb);
@@ -320,12 +320,7 @@ void pwritvf(Itv a, Num e, Itv *c)
 		pwrnum(0,(Num)a,e,(Num *)c);
 	else if ( !INT(e) ) {
 #if defined(PARI) && 0
-		GEN pa,pe,z;
-		int ltop,lbot;
-
-		ltop = avma; ritopa(a,&pa); ritopa(e,&pe); lbot = avma;
-		z = gerepile(ltop,lbot,gpui(pa,pe,prec));
-		patori(z,c); cgiv(z);
+		gpui_ri((Obj)a,(Obj)c,(Obj *)c);
 #else
 		error("pwritv : can't calculate a fractional power");
 #endif

@@ -45,15 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.4 2003/02/14 22:29:08 ohara Exp $ 
 */
 #include "ca.h"
 #if defined(PARI)
 #include "base.h"
 #include <math.h>
 #include "genpari.h"
-
-extern long prec;
 
 void ritopa(Obj,GEN *);
 void patori(GEN,Obj *);
@@ -141,17 +139,12 @@ void pwrbf(a,e,c)
 Num a,e;
 Num *c;
 {
-	GEN pa,pe,z;
-	long ltop,lbot;
-
 	if ( !e )
 		*c = (Num)ONE;
 	else if ( !a )
 		*c = 0;
 	else {
-		ltop = avma; ritopa((Obj)a,&pa); ritopa((Obj)e,&pe); lbot = avma;
-		z = gerepile(ltop,lbot,gpui(pa,pe,prec));
-		patori(z,(Obj *)c); cgiv(z);
+		gpui_ri((Obj)a,(Obj)c,(Obj *)c);
 	}
 }
 

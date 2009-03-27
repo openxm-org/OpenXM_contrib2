@@ -45,9 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.7 2005/10/10 15:16:38 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.8 2009/03/16 16:43:02 ohara Exp $ 
 */
 #include "ca.h"
+
 #if defined(PARI)
 #include "base.h"
 #include <math.h>
@@ -58,12 +59,23 @@ void patori_i(GEN,N *);
 void ritopa(Obj,GEN *);
 void ritopa_i(N,int,GEN *);
 
+// PARI_VERSION(2,2,12) == 131596
+#if PARI_VERSION_CODE >= 131596
+#define prec precreal
+#endif
 extern long prec;
 extern int paristack;
 
+long get_pariprec() {
+	return prec;
+}
+void set_pariprec(long p) {
+	prec = p;
+}
+
 void risa_pari_init() {
 	pari_init(paristack,2);
-	prec = 4;
+	set_pariprec(4);
 }
 
 void create_pari_variable(index)
@@ -90,6 +102,16 @@ int get_lg(a)
 GEN a;
 {
 	return lg(a);
+}
+
+void gpui_ri(Obj a, Obj e, Obj *c)
+{
+	GEN pa,pe,z;
+	int ltop,lbot;
+
+	ltop = avma; ritopa(a,&pa); ritopa(e,&pe); lbot = avma;
+	z = gerepile(ltop,lbot,gpui(pa,pe,get_pariprec()));
+	patori(z,c); cgiv(z);
 }
 
 void ritopa(a,rp)
