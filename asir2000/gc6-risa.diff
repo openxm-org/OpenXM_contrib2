@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/asir2000/gc6-risa.diff,v 1.2 2009/02/06 08:58:28 ohara Exp $
+# $OpenXM: OpenXM_contrib2/asir2000/gc6-risa.diff,v 1.3 2009/03/10 16:36:15 ohara Exp $
 # Patches depend on Risa/Asir
 diff -urN gc6.8/configure gc6.8-risa/configure
 --- gc6.8/configure	2006-03-24 09:42:55.000000000 +0900
@@ -178,7 +178,7 @@ diff -urN gc6.8/reclaim.c gc6.8-risa/reclaim.c
 +
 +#elif defined(_PA_RISC1_1) || defined(__svr4__) || defined(__CYGWIN__)
 +
-+#include <sys/time.h>
++#include <sys/times.h>
 +#include <limits.h>
 +
 +static double get_clock()
