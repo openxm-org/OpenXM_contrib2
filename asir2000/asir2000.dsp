@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /YX /c
-# ADD CPP /nologo /MT /W3 /GX /Z7 /Ox /Ot /Og /Oi /Op /I "..\windows\pari20\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "NDEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D "PARI" /D "INET" /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
+# ADD CPP /nologo /MT /W3 /GX /Z7 /Ox /Ot /Og /Oi /Op /I "..\windows\pari20\win32com" /I ".\include" /I ".\parse" /I ".\gc\include" /D "NDEBUG" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "SILENT" /D "ALL_INTERIOR_POINTERS" /D "LARGE_CONFIG" /D "PARI" /D "INET" /D "LONG_IS_32BIT" /D "SIZEOF_LONG=4" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "DES_ENC" /FR /YX /FD /D ASIR_LIBDIR=\"/asir/stdlib\" /c
 # SUBTRACT CPP /Oa /Ow
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
 # ADD RSC /l 0x411 /d "NDEBUG"

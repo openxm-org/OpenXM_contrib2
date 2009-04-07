@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir ".\Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /c
-# ADD CPP /nologo /G5 /MT /W3 /GX /Ox /Ot /Og /Oi /Op /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\pari20\win32" /I "..\..\asir2000\plot" /I "..\..\asir2000\gc\include" /D "DES_ENC" /D "VISUAL_LIB" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "ALL_INTERIOR_POINTERS" /D "SILENT" /D "PARI" /D "INET" /D KAN=0 /D READLINE=0 /D REMOTE=0 /D "LONG_IS_32BIT" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "_MBCS" /D "LARGE_CONFIG" /D "DO_PLOT" /FD /D ASIR_LIBDIR=\"c:/asir/stdlib\" /c
+# ADD CPP /nologo /G5 /MT /W3 /GX /Ox /Ot /Og /Oi /Op /I "..\..\asir2000\include" /I "..\..\asir2000\parse" /I "..\pari20\win32" /I "..\..\asir2000\plot" /I "..\..\asir2000\gc\include" /D "DES_ENC" /D "VISUAL_LIB" /D "VISUAL" /D "WIN32" /D "__WIN32__" /D "CONSOLE" /D "ALL_INTERIOR_POINTERS" /D "SILENT" /D "PARI" /D "INET" /D KAN=0 /D READLINE=0 /D REMOTE=0 /D "LONG_IS_32BIT" /D "SIZEOF_LONG=4" /D "HMEXT" /D "ULONG_NOT_DEFINED" /D "_MBCS" /D "LARGE_CONFIG" /D "DO_PLOT" /FD /D ASIR_LIBDIR=\"c:/asir/stdlib\" /c
 # ADD BASE RSC /l 0x411
 # ADD RSC /l 0x411
 BSC32=bscmake.exe
