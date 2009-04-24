@@ -104,6 +104,10 @@ CAsir32guiView::CAsir32guiView()
 	Logfp = NULL;
 	ResetIndex();
 	theView = this;
+#if _MSC_VER > 1300
+	/* VS2003.NET or later */
+	(AfxGetApp())->EnableHtmlHelp();
+#endif
 }
 
 CAsir32guiView::~CAsir32guiView()
@@ -489,12 +493,23 @@ void CAsir32guiView::OnFileOpen()
 }
 void CAsir32guiView::viewHtmlHelp(char *help)
 {
+	char *helpfile;
+	char fmt[] = "%s\\help\\%shelp.chm";
+	char root[BUFSIZ],errmsg[BUFSIZ];
+	get_rootdir(root,sizeof(root),errmsg);
+	helpfile = (char *)malloc(sizeof(fmt) + strlen(root) + strlen(help));
+	sprintf(helpfile,fmt,root,help);
 #if _MSC_VER < 1300
     /* Visual C++ 6.0 */
-	char root[BUFSIZ],errmsg[BUFSIZ], helpfile[BUFSIZ];
-	get_rootdir(root,sizeof(root),errmsg);
-	sprintf(helpfile,"%s\\help\\%shelp.chm",root,help);
 	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);
+#else
+	CWinApp *top = AfxGetApp();
+	top->SetHelpMode(AFX_HELP_TYPE::afxHTMLHelp);
+	if (top->m_pszHelpFilePath) {
+		free((void*)top->m_pszHelpFilePath);
+	}
+	top->m_pszHelpFilePath = helpfile;
+	HtmlHelp(HH_DISPLAY_TOPIC, 0);
 #endif
 }
 
