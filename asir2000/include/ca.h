@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.77 2009/03/16 16:56:35 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.78 2009/03/27 14:42:29 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -621,6 +621,7 @@ struct order_spec {
 	Obj obj;
 	int nv;
 	int ispot; /* 1 means Position over Term (Pos then Term) */
+	int pot_nelim; /* size of positions for pot-elimination order */
 	union {
 		int simple;
 		struct {

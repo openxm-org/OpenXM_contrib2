@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.52 2009/01/05 02:14:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.53 2009/01/07 05:33:18 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1707,6 +1707,13 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 			create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
 			spec->id += 256; spec->obj = obj;
 			spec->ispot = (BDY(node)!=0);
+			if ( spec->ispot ) {
+				n = QTOS((Q)BDY(node));
+				if ( n < 0 )
+					spec->pot_nelim = -n;
+				else
+					spec->pot_nelim = 0;
+			}
 			*specp = spec;
 			return 1;
 		}

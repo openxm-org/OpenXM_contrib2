@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.172 2009/02/15 03:07:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.173 2009/02/15 09:22:07 noro Exp $ */
 
 #include "nd.h"
 
@@ -46,7 +46,7 @@ static int nd_worb_len;
 static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
-static int nd_module,nd_ispot,nd_mpos;
+static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora;
@@ -581,6 +581,14 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
     int i,c;
 
     if ( nd_ispot ) {
+		if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
+            if ( TD(d1) > TD(d2) ) return 1;
+            else if ( TD(d1) < TD(d2) ) return -1;
+            if ( c = ndl_lex_compare(d1,d2) ) return c;
+            if ( MPOS(d1) < MPOS(d2) ) return 1;
+            else if ( MPOS(d1) > MPOS(d2) ) return -1;
+            return 0;
+		}
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
@@ -2796,7 +2804,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     EPOS oepos;
     int obpe,oadv,ompos;
 
-    nd_module;
+    nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
     else nd_demand = 0;
     parse_nd_option(current_option);
@@ -4740,6 +4748,7 @@ void nd_init_ord(struct order_spec *ord)
         /* module order */
         case 256:
             nd_ispot = ord->ispot;
+            nd_pot_nelim = ord->pot_nelim;
             nd_dcomp = -1;
             switch ( ord->ord.simple ) {
                 case 0:
@@ -4760,16 +4769,28 @@ void nd_init_ord(struct order_spec *ord)
             break;
         case 257:
             /* block order */
+            nd_ispot = ord->ispot;
+            nd_pot_nelim = ord->pot_nelim;
+            nd_dcomp = -1;
+            nd_isrlex = 0;
             ndl_compare_function = ndl_module_block_compare;
             break;
         case 258:
             /* matrix order */
+            nd_ispot = ord->ispot;
+            nd_pot_nelim = ord->pot_nelim;
+            nd_dcomp = -1;
+            nd_isrlex = 0;
             nd_matrix_len = ord->ord.matrix.row;
             nd_matrix = ord->ord.matrix.matrix;
             ndl_compare_function = ndl_module_matrix_compare;
             break;
         case 259:
             /* composite order */
+            nd_ispot = ord->ispot;
+            nd_pot_nelim = ord->pot_nelim;
+            nd_dcomp = -1;
+            nd_isrlex = 0;
             nd_worb_len = ord->ord.composite.length;
             nd_worb = ord->ord.composite.w_or_b;
             ndl_compare_function = ndl_module_composite_compare;
