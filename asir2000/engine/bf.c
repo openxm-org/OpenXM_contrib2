@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.4 2003/02/14 22:29:08 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.5 2009/03/27 14:42:29 ohara Exp $ 
 */
 #include "ca.h"
 #if defined(PARI)
@@ -144,7 +144,7 @@ Num *c;
 	else if ( !a )
 		*c = 0;
 	else {
-		gpui_ri((Obj)a,(Obj)c,(Obj *)c);
+		gpui_ri((Obj)a,(Obj)e,(Obj *)c);
 	}
 }
 
