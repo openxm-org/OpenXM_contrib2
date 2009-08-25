@@ -259,19 +259,25 @@ void read_and_insert()
 	}
 }
 
+static char history_path[BUFSIZ];
+static char history_errmsg[BUFSIZ];
+
 void init_input_history()
 {
+	char rootdir[BUFSIZ];
+	get_rootdir(rootdir,sizeof(rootdir),history_errmsg);
+	sprintf(history_path,"%s\\bin\\%s",rootdir,HISTORY);
 	init_hist(MAXHIST);
 }
 
 void write_input_history()
 {
-	write_hist(HISTORY);
+	write_hist(history_path);
 }
 
 void read_input_history()
 {
-	read_hist(HISTORY);
+	read_hist(history_path);
 }
 
 void send_intr() {
