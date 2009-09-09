@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.76 2009/01/04 05:44:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.77 2009/01/05 02:08:17 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2546,7 +2546,11 @@ VECT *rp;
 
 	if ( !arg )
 		*rp = current_weyl_weight_vector_obj;
-	else {
+	else if ( !ARG0(arg) ) {
+		current_weyl_weight_vector_obj = 0;
+		current_weyl_weight_vector = 0;
+		*rp = 0;
+	} else {
 		asir_assert(ARG0(arg),O_VECT,"dp_weyl_set_weight");
 		v = (VECT)ARG0(arg);
 		current_weyl_weight_vector_obj = v;

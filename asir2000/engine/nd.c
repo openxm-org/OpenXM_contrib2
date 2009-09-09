@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.173 2009/02/15 09:22:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.174 2009/06/01 07:31:54 noro Exp $ */
 
 #include "nd.h"
 
@@ -2997,8 +2997,13 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
             return;
         }
     } else {
+#if 0
+		/* bug ? */
         for ( t = x; t; t = NEXT(t) )
             BDY(t) = (pointer)nd_ps[(long)BDY(t)];
+#else
+		conv_ilist(0,0,x,&perm);
+#endif
     }
     x = ndv_reducebase(x,perm);
     x = ndv_reduceall(m,x);
