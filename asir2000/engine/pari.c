@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.8 2009/03/16 16:43:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.9 2009/03/27 14:42:29 ohara Exp $ 
 */
 #include "ca.h"
 
@@ -107,7 +107,7 @@ GEN a;
 void gpui_ri(Obj a, Obj e, Obj *c)
 {
 	GEN pa,pe,z;
-	int ltop,lbot;
+	long ltop,lbot;
 
 	ltop = avma; ritopa(a,&pa); ritopa(e,&pe); lbot = avma;
 	z = gerepile(ltop,lbot,gpui(pa,pe,get_pariprec()));
