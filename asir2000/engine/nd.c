@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.174 2009/06/01 07:31:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.175 2009/09/09 08:13:24 noro Exp $ */
 
 #include "nd.h"
 
@@ -5584,6 +5584,109 @@ NODE nd_f4_trace(int m,int **indp)
     return g;
 }
 
+NODE nd_f4_pseudo_trace(int m,int **indp)
+{
+    int i,nh,stat,index;
+    NODE r,g;
+    ND_pairs d,l,l0,t;
+    ND spol,red;
+    NDV nf,redv,nfqv,nfv;
+    NM s0,s;
+    NODE rp0,srp0,nflist;
+    int nsp,nred,col,rank,len,k,j,a;
+    UINT c;
+    UINT **spmat;
+    UINT *s0vect,*svect,*p,*v;
+    int *colstat;
+    IndArray *imat;
+    int *rhead;
+    int spcol,sprow;
+    int sugar;
+    PGeoBucket bucket;
+    struct oEGT eg0,eg1,eg_f4;
+
+    g = 0; d = 0;
+    for ( i = 0; i < nd_psn; i++ ) {
+        d = update_pairs(d,g,i,0);
+        g = update_base(g,i);
+    }
+    while ( d ) {
+        get_eg(&eg0);
+        l = nd_minsugarp(d,&d);
+        sugar = SG(l);
+        bucket = create_pbucket();
+        stat = nd_sp_f4(m,0,l,bucket);
+        if ( !stat ) {
+            for ( t = l; NEXT(t); t = NEXT(t) );
+            NEXT(t) = d; d = l;
+            d = nd_reconstruct(1,d);
+            continue;
+        }
+        if ( bucket->m < 0 ) continue;
+        col = nd_symbolic_preproc(bucket,0,&s0vect,&rp0);
+        if ( !col ) {
+            for ( t = l; NEXT(t); t = NEXT(t) );
+            NEXT(t) = d; d = l;
+            d = nd_reconstruct(1,d);
+            continue;
+        }
+        get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
+        if ( DP_Print )
+            fprintf(asir_out,"sugar=%d,symb=%fsec,",
+                sugar,eg_f4.exectime+eg_f4.gctime);
+        nflist = nd_f4_red(m,l,0,s0vect,col,rp0,&l0);
+        if ( !l0 ) continue;
+        l = l0;
+
+        /* over Q */
+		while ( 1 ) {
+        	bucket = create_pbucket();
+        	stat = nd_sp_f4(0,1,l,bucket);
+        	if ( !stat ) {
+            	for ( t = l; NEXT(t); t = NEXT(t) );
+            	NEXT(t) = d; d = l;
+            	d = nd_reconstruct(1,d);
+            	continue;
+        	}
+        	if ( bucket->m < 0 ) continue;
+        	col = nd_symbolic_preproc(bucket,1,&s0vect,&rp0);
+        	if ( !col ) {
+            	for ( t = l; NEXT(t); t = NEXT(t) );
+            	NEXT(t) = d; d = l;
+            	d = nd_reconstruct(1,d);
+            	continue;
+        	}
+        	nflist = nd_f4_red(0,l,1,s0vect,col,rp0,0);
+		}
+
+        /* adding new bases */
+        for ( r = nflist; r; r = NEXT(r) ) {
+            nfqv = (NDV)BDY(r);
+            ndv_removecont(0,nfqv);
+            if ( !rem(NM(HCQ(nfqv)),m) ) return 0;
+            if ( nd_nalg ) {
+                ND nf1;
+
+                nf1 = ndvtond(m,nfqv);
+                nd_monic(0,&nf1);
+                nd_removecont(0,nf1);
+                nfqv = ndtondv(0,nf1); nd_free(nf1);
+            }
+            nfv = ndv_dup(0,nfqv);
+            ndv_mod(m,nfv);
+            ndv_removecont(m,nfv);
+            nh = ndv_newps(0,nfv,nfqv);
+            d = update_pairs(d,g,nh,0);
+            g = update_base(g,nh);
+        }
+    }
+#if 0
+    fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
+#endif
+	conv_ilist(0,1,g,indp);
+    return g;
+}
+
 NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz)
 {
     IndArray *imat;
@@ -6092,31 +6195,13 @@ void nd_exec_f4_red_dist()
 
 int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat)
 {
-    int mod,i,j,t,c,rank,rank0,inv;
+    int i,j,t,c,rank,inv;
     int *ci,*ri;
     Q dn;
     MAT m,nm;
-    int **wmat;
 
-    /* XXX */
-    mod = 99999989;
-    wmat = (int **)ALLOCA(row*sizeof(int *));
-    for ( i = 0; i < row; i++ ) {
-        wmat[i] = (int *)ALLOCA(col*sizeof(int));
-        for ( j = 0; j < col; j++ ) {
-            if ( mat0[i][j] ) {
-                t = rem(NM(mat0[i][j]),mod);
-                if ( SGN(mat0[i][j]) < 0 ) t = mod-t;
-                wmat[i][j] = t;
-            } else
-                wmat[i][j] = 0;
-        }
-    }
-    rank0 = nd_gauss_elim_mod(wmat,sugar,0,row,col,mod,colstat);
     NEWMAT(m); m->row = row; m->col = col; m->body = (pointer **)mat0;
     rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
-    if ( rank != rank0 )
-        error("afo");
     for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ )
             mat0[i][j] = 0;
@@ -6126,19 +6211,6 @@ int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat)
         for ( j = 0; j < c; j++ )
             mat0[i][ci[j]] = (Q)BDY(nm)[i][j];
     }
-    inv = invm(rem(NM(dn),mod),mod);
-    if ( SGN(dn) < 0 ) inv = mod-inv;
-    for ( i = 0; i < row; i++ )
-        for ( j = 0; j < col; j++ ) {
-            if ( mat0[i][j] ) {
-                t = rem(NM(mat0[i][j]),mod);
-                if ( SGN(mat0[i][j]) < 0 ) t = mod-t;
-            } else
-                t = 0;
-            c = dmar(t,inv,0,mod);
-            if ( wmat[i][j] != c )
-                error("afo");
-        }
     return rank;
 }
 
