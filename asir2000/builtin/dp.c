@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.77 2009/01/05 02:08:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.78 2009/09/09 08:13:24 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -68,7 +68,7 @@ void Pdp_set_sugar();
 void Pdp_cri1(),Pdp_cri2(),Pdp_subd(),Pdp_mod(),Pdp_red_mod(),Pdp_tdiv();
 void Pdp_prim(),Pdp_red_coef(),Pdp_mag(),Pdp_set_kara(),Pdp_rat();
 void Pdp_nf(),Pdp_true_nf(),Pdp_true_nf_marked(),Pdp_true_nf_marked_mod();
-void Pdp_true_nf_and_quotient_marked();
+void Pdp_true_nf_and_quotient_marked(),Pdp_true_nf_and_quotient_marked_mod();
 void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
 void Pdp_minp(),Pdp_sp_mod();
@@ -140,6 +140,7 @@ struct ftab dp_tab[] = {
 	{"dp_true_nf",Pdp_true_nf,4},
 	{"dp_true_nf_marked",Pdp_true_nf_marked,4},
 	{"dp_true_nf_and_quotient_marked",Pdp_true_nf_and_quotient_marked,4},
+	{"dp_true_nf_and_quotient_marked_mod",Pdp_true_nf_and_quotient_marked_mod,5},
 	{"dp_true_nf_marked_mod",Pdp_true_nf_marked_mod,5},
 	{"dp_nf_mod",Pdp_nf_mod,5},
 	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
@@ -1027,6 +1028,40 @@ LIST *rp;
 		hps = (DP *)BDY((VECT)ARG3(arg));
 		NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
 		quo->body = (pointer *)dp_true_nf_and_quotient_marked(b,g,ps,hps,&nm,&dn);
+	}
+	n = mknode(3,nm,dn,quo);
+	MKLIST(*rp,n);
+}
+
+DP *dp_true_nf_and_quotient_marked_mod (NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp);
+
+void Pdp_true_nf_and_quotient_marked_mod(arg,rp)
+NODE arg;
+LIST *rp;
+{
+	NODE b,n;
+	DP *ps,*hps;
+	DP g;
+	DP nm;
+	VECT quo;
+	P dn;
+	int full,mod;
+
+	do_weyl = 0; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG1(arg),O_DP,"dp_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG2(arg),O_VECT,"dp_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG3(arg),O_VECT,"dp_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG4(arg),O_N,"dp_true_nf_and_quotient_marked_mod");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		nm = 0; dn = (P)ONE;
+	} else {
+		b = BDY((LIST)ARG0(arg)); 
+		ps = (DP *)BDY((VECT)ARG2(arg));
+		hps = (DP *)BDY((VECT)ARG3(arg));
+		mod = QTOS((Q)ARG4(arg));
+		NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
+		quo->body = (pointer *)dp_true_nf_and_quotient_marked_mod(b,g,ps,hps,mod,&nm,&dn);
 	}
 	n = mknode(3,nm,dn,quo);
 	MKLIST(*rp,n);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.53 2009/01/07 05:33:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.54 2009/06/01 07:31:54 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -887,7 +887,7 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
 	*head = h; *rest = r; *dnp = (P)c2;
 }
 
-void dp_red_marked_mod(DP p0,DP p1,DP p2,DP hp2,int mod,DP *head,DP *rest,P *dnp)
+void dp_red_marked_mod(DP p0,DP p1,DP p2,DP hp2,int mod,DP *head,DP *rest,P *dnp,DP *multp)
 {
 	int i,n;
 	DL d1,d2,d;
@@ -905,12 +905,14 @@ void dp_red_marked_mod(DP p0,DP p1,DP p2,DP hp2,int mod,DP *head,DP *rest,P *dnp
 	if ( NUM(c2) ) {
 		divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
 	}
-	NEWMP(m); m->dl = d; chsgnmp(mod,(P)c1,&m->c); NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,s,p2,&t);
+	NEWMP(m); m->dl = d; m->c = (P)c1; NEXT(m) = 0;
+	MKDP(n,m,s); s->sugar = d->td;
+	*multp = s;
+	mulmd(CO,mod,s,p2,&t);
 	if ( NUM(c2) ) {
-		addmd(CO,mod,p1,t,&r); h = p0;
+		submd(CO,mod,p1,t,&r); h = p0;
 	} else {
-		mulmdc(CO,mod,p1,c2,&s); addmd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
+		mulmdc(CO,mod,p1,c2,&s); submd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
 	}
 	*head = h; *rest = r; *dnp = c2;
 }
@@ -1182,7 +1184,7 @@ last:
 
 void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
 {
-	DP hp,u,p,d,s,t;
+	DP hp,u,p,d,s,t,dmy;
 	NODE l;
 	MP m,mr;
 	int i,n;
@@ -1203,7 +1205,7 @@ void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
 		for ( u = 0, i = 0; i < n; i++ ) {
 			if ( dp_redble(g,hp = hps[wb[i]]) ) {
 				p = ps[wb[i]];
-				dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn);	
+				dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&dmy);	
 				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
 				sugar = MAX(sugar,psugar);
 				if ( !u ) {
@@ -1284,6 +1286,61 @@ DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
 	}
 last:
 	if ( d ) d->sugar = sugar;
+	*rp = d; *dnp = dn;
+	return q;
+}
+
+DP *dp_true_nf_and_quotient_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
+{
+	DP u,p,d,s,t,dmy,hp,mult;
+	DP *q;
+	NODE l;
+	MP m,mr;
+	int i,n,j;
+	int *wb;
+	int sugar,psugar;
+	P dn,tdn,tdn1;
+
+	for ( n = 0, l = b; l; l = NEXT(l), n++ );
+	q = (DP *)MALLOC(n*sizeof(DP));
+	for ( i = 0; i < n; i++ ) q[i] = 0;
+	dn = (P)ONEM;
+	if ( !g ) {
+		*rp = 0; *dnp = dn; return;
+	}
+	wb = (int *)ALLOCA(n*sizeof(int));
+	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+		wb[i] = QTOS((Q)BDY(l));
+	sugar = g->sugar;
+	for ( d = 0; g; ) {
+		for ( u = 0, i = 0; i < n; i++ ) {
+			if ( dp_redble(g,hp = hps[wb[i]]) ) {
+				p = ps[wb[i]];
+				dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&mult);	
+				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+				sugar = MAX(sugar,psugar);
+				for ( j = 0; j < n; j++ ) {
+					mulmdc(CO,mod,q[j],(P)tdn,&dmy); q[j] = dmy;
+				}
+				addmd(CO,mod,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
+				mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+				d = t;
+				if ( !u ) goto last;
+				break;
+			}
+		}
+		if ( u )
+			g = u;
+		else {
+			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+			addmd(CO,mod,d,t,&s); d = s;
+			dp_rest(g,&t); g = t;
+		}
+	}
+last:
+	if ( d )
+		d->sugar = sugar;
 	*rp = d; *dnp = dn;
 	return q;
 }
