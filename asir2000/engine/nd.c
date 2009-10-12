@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.175 2009/09/09 08:13:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.176 2009/09/24 07:13:00 noro Exp $ */
 
 #include "nd.h"
 
@@ -2594,8 +2594,9 @@ int ndv_newps(int m,NDV a,NDV aq)
 }
 
 /* nd_tracelist = [[0,index,div],...,[nd_psn-1,index,div]] */
+/* return 1 if success, 0 if failure (HC(a mod p)) */
 
-void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
+int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
 {
     int i,j,td,len,max;
     NODE s,s0,f0,tn;
@@ -2649,6 +2650,8 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
             register_hcf(a);
             am = nd_ps[i] = ndv_dup(mod,a);
             ndv_mod(mod,am);
+	    if ( DL_COMPARE(HDL(am),HDL(a)) ) 
+	    	return 0;
             ndv_removecont(mod,am);
         } else {
             a = nd_ps[i] = ndv_dup(mod,w[i].p);
@@ -2675,6 +2678,7 @@ void ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
         }
     }
     if ( nd_gentrace && nd_tracelist ) NEXT(tn) = 0;
+    return 1;
 }
 
 struct order_spec *append_block(struct order_spec *spec,
@@ -3135,12 +3139,13 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     while ( 1 ) {
         if ( Demand )
             nd_demand = 1;
-        ndv_setup(m,1,fd0,0,0);
         if ( nd_gentrace ) {
             MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
         }
-        cand = f4?nd_f4_trace(m,&perm):nd_gb_trace(m,ishomo || homo,&perm);
-        if ( !cand ) {
+        ret = ndv_setup(m,1,fd0,0,0);
+        if ( ret )
+            cand = f4?nd_f4_trace(m,&perm):nd_gb_trace(m,ishomo || homo,&perm);
+        if ( !ret || !cand ) {
             /* failure */
             if ( trace > 1 ) { *rp = 0; return; }
             else m = get_lprime(++mindex);
