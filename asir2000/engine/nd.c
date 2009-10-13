@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.176 2009/09/24 07:13:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.177 2009/10/12 10:43:45 noro Exp $ */
 
 #include "nd.h"
 
@@ -2845,7 +2845,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
     }
     nd_init_ord(ord);
     mrank = 0;
-    for ( t = BDY(f), max = 0; t; t = NEXT(t) )
+    for ( t = BDY(f), max = 1; t; t = NEXT(t) )
         for ( tv = vv; tv; tv = NEXT(tv) ) {
             if ( nd_module ) {
                 s = BDY((LIST)BDY(t));
@@ -2975,7 +2975,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
         nvar += nalg;
     }
     nd_init_ord(ord);
-    for ( t = BDY(f), max = 0; t; t = NEXT(t) )
+    for ( t = BDY(f), max = 1; t; t = NEXT(t) )
         for ( tv = vv; tv; tv = NEXT(tv) ) {
             e = getdeg(tv->v,(P)BDY(t));
             max = MAX(e,max);
@@ -3087,7 +3087,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     m = trace > 1 ? trace : get_lprime(mindex);
     nd_init_ord(ord);
     mrank = 0;
-    for ( t = BDY(f), max = 0; t; t = NEXT(t) )
+    for ( t = BDY(f), max = 1; t; t = NEXT(t) )
         for ( tv = vv; tv; tv = NEXT(tv) ) {
             if ( nd_module ) {
                 s = BDY((LIST)BDY(t));
@@ -3448,7 +3448,7 @@ void ndv_homogenize(NDV p,int obpe,int oadv,EPOS oepos,int ompos)
     NMV m,mr0,mr,t;
 
     len = p->len;
-    for ( m = BDY(p), i = 0, max = 0; i < len; NMV_OADV(m), i++ )
+    for ( m = BDY(p), i = 0, max = 1; i < len; NMV_OADV(m), i++ )
         max = MAX(max,TD(DL(m)));
     mr0 = nmv_adv>oadv?(NMV)REALLOC(BDY(p),len*nmv_adv):BDY(p);
     m = (NMV)((char *)mr0+(len-1)*oadv);
@@ -4908,7 +4908,7 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 
     /* get the degree bound */
-    for ( t = BDY(g), max = 0; t; t = NEXT(t) )
+    for ( t = BDY(g), max = 1; t; t = NEXT(t) )
         for ( tv = vv; tv; tv = NEXT(tv) ) {
             e = getdeg(tv->v,(P)BDY(t));
             max = MAX(e,max);
@@ -6503,7 +6503,7 @@ void nd_det(int mod,MAT f,P *rp)
         m = (pointer **)w;
     }
 
-    for ( i = 0, max = 0; i < n; i++ )
+    for ( i = 0, max = 1; i < n; i++ )
         for ( j = 0; j < n; j++ )
             for ( tv = fv; tv; tv = NEXT(tv) ) {
                 e = getdeg(tv->v,(P)m[i][j]);
@@ -6511,7 +6511,7 @@ void nd_det(int mod,MAT f,P *rp)
             }
     nd_setup_parameters(nvar,max);
     dm = (NDV **)almat_pointer(n,n);
-    for ( i = 0, max = 0; i < n; i++ )
+    for ( i = 0, max = 1; i < n; i++ )
         for ( j = 0; j < n; j++ ) {
             dm[i][j] = ptondv(CO,fv,m[i][j]);
             if ( mod ) ndv_mod(mod,dm[i][j]);
