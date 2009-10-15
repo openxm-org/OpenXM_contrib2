@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.54 2009/06/01 07:31:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.55 2009/10/09 04:02:11 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2365,9 +2365,12 @@ void qltozl(Q *w,int n,Q *dvr)
 		v.id = O_VECT; v.len = n; v.body = (pointer *)w;
 		igcdv(&v,dvr); return;
 	}
-	c = w[0]; nm = NM(c); dn = INT(c) ? ONEN : DN(c);
-	for ( i = 1; i < n; i++ ) {
-		c = w[i]; l1 = INT(c) ? ONEN : DN(c);
+	for ( i = 0; !w[i]; i++ );
+	c = w[i]; nm = NM(c); dn = INT(c) ? ONEN : DN(c);
+	for ( i++; i < n; i++ ) {
+		c = w[i]; 
+		if ( !c ) continue;
+		l1 = INT(c) ? ONEN : DN(c);
 		gcdn(nm,NM(c),&g); nm = g;
 		gcdn(dn,l1,&l2); muln(dn,l1,&l3); divsn(l3,l2,&dn);
 	}
