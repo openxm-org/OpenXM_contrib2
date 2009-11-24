@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.14 2005/06/03 07:16:16 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mat.c,v 1.15 2005/12/21 23:18:16 noro Exp $ 
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -382,13 +382,13 @@ MAT a,b,*c;
 	pointer *ab,*tb;
 	int a1row,a2row, a3row,a4row, a1col, a2col, a3col, a4col;
 	int b1row,b2row, b3row,b4row, b1col, b2col, b3col, b4col;
-	int pflag1, pflag2;
+	int pflag1, pflag2, pflag3;
 	/* mismach col and row */
 	if ( a->col != b->row ) {
 		*c = 0; error("mulmat : size mismatch");
 	}
 	else {
-		pflag1 = 0; pflag2 = 0;
+		pflag1 = 0; pflag2 = 0; pflag3 = 0;
 		arow = a->row; m = a->col; bcol = b->col;
 		MKMAT(t,arow,bcol);
 		/* StrassenSize == 0 or matrix size less then StrassenSize,
@@ -418,6 +418,13 @@ MAT a,b,*c;
 		if (i != j) {
 			m++;
 			pflag2 = 1;
+		}
+
+		i = bcol/2;
+		j = bcol - i;
+		if (i != j) {
+			bcol++;
+			pflag3 = 1;
 		}
 
 		/* split matrix A and B */
@@ -489,6 +496,39 @@ MAT a,b,*c;
 				b22->body[i-b1row][j-b1col] = b->body[i][j];
 			}
 		}
+
+		/* extension by zero */
+		if (pflag1) {
+			for (j = 0; j < a1col; j++) {
+				a21->body[a1row-1][j] = 0; /* null */
+			}
+			for (j = a1col; j < a->col; j++) {
+				a22->body[a1row-1][j-a1col] = 0;
+			}
+		}
+		if (pflag2) {
+			for (i = 0; i < a1row; i++) {
+				a12->body[i][a1col-1] = 0;
+			}
+			for (i = a1row; i < a->row; i++) {
+				a22->body[i-a1row][a1col-1] = 0;
+			}
+			for (j = 0; j < b1col; j++) {
+				b21->body[b1row-1][j] = 0;
+			}
+			for (j = b1col; j < b->col; j++) {
+				b22->body[b1row-1][j-b1col] = 0;
+			}
+		}
+		if (pflag3) {
+			for (i = 0; i < b1row; i++) {
+				b12->body[i][b1col-1] = 0;
+			}
+			for (i = b1row; i < b->row; i++) {
+				b22->body[i-b1row][b1col-1] = 0;
+			}
+		}
+
 		/* expand matrix by Strassen-Winograd algorithm */
 		/* s1=A21+A22 */
 		addmat(vl,a21,a22,&s1);
