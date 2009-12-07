@@ -85,6 +85,9 @@ public:
 	afx_msg void OnSm1();
 	afx_msg void OnTigers();
 	afx_msg void OnTodoparametrize();
+	afx_msg void OnNoromatrix();
+	afx_msg void OnNoromwl();
+	afx_msg void OnNnndbf();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

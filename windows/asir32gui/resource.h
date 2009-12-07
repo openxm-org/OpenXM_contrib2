@@ -35,6 +35,9 @@
 #define ID_SM1                          32784
 #define ID_TIGERS                       32785
 #define ID_TODOPARAMETRIZE              32787
+#define ID_NOROMATRIX              	32789
+#define ID_NOROMWL              	32790
+#define ID_NNNDBF              		32791
 #define ID_FILE_LOG                     57610
 
 // Next default values for new objects
