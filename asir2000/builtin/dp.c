@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.78 2009/09/09 08:13:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.79 2009/10/09 04:02:11 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -105,6 +105,7 @@ void Pdp_compute_last_t();
 void Pdp_compute_last_w();
 void Pdp_compute_essential_df();
 void Pdp_get_denomlist();
+void Pdp_symb_add();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -246,6 +247,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_rest",Pdp_rest,1},
 	{"dp_initial_term",Pdp_initial_term,1},
 	{"dp_order",Pdp_order,1},
+	{"dp_symb_add",Pdp_symb_add,2},
 
 	/* degree and size */
 	{"dp_td",Pdp_td,1},
@@ -1259,6 +1261,30 @@ DP *rp;
 	dp_subd(p1,p2,rp);
 }
 
+void Pdp_symb_add(arg,rp)
+NODE arg;
+DP *rp;
+{
+	DP p1,p2,r;
+	NODE s0;
+	MP mp0,mp;
+	int nv;
+
+	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
+	asir_assert(p1,O_DP,"dp_symb_add");
+	asir_assert(p2,O_DP,"dp_symb_add");
+	if ( p1->nv != p2->nv )
+		error("dp_sumb_add : invalid input");
+	nv = p1->nv;
+	s0 = symb_merge(dp_dllist(p1),dp_dllist(p2),nv);
+	for ( mp0 = 0; s0; s0 = NEXT(s0) ) {
+		NEXTMP(mp0,mp); mp->dl = (DL)BDY(s0); mp->c = (P)ONE;
+	}
+	NEXT(mp) = 0;
+	MKDP(nv,mp0,r); r->sugar = MAX(p1->sugar,p2->sugar);
+	*rp = r;
+}
+
 void Pdp_mul_trunc(arg,rp)
 NODE arg;
 DP *rp;
@@ -2181,12 +2207,13 @@ LIST *rp;
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
-		*rp = f; return;
+		*rp = f; do_weyl = 0; return;
 	}
 	m = QTOS((Q)ARG2(arg));
 	create_order_spec(0,ARG3(arg),&ord);
 	do_check = ARG4(arg) ? 1 : 0;
 	nd_gr_postproc(f,v,m,ord,do_check,rp);
+	do_weyl = 0;
 }
 
 void Pnd_gr_trace(arg,rp)
@@ -2252,11 +2279,12 @@ LIST *rp;
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
-		*rp = f; return;
+		*rp = f; do_weyl = 0; return;
 	}
 	m = QTOS((Q)ARG2(arg));
 	create_order_spec(0,ARG3(arg),&ord);
 	nd_gr(f,v,m,0,ord,rp);
+	do_weyl = 0;
 }
 
 void Pnd_weyl_gr_trace(arg,rp)
@@ -2275,12 +2303,13 @@ LIST *rp;
 	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
 	f = remove_zero_from_list(f);
 	if ( !BDY(f) ) {
-		*rp = f; return;
+		*rp = f; do_weyl = 0; return;
 	}
 	homo = QTOS((Q)ARG2(arg));
 	m = QTOS((Q)ARG3(arg));
 	create_order_spec(0,ARG4(arg),&ord);
 	nd_gr_trace(f,v,m,homo,0,ord,rp);
+	do_weyl = 0;
 }
 
 void Pnd_nf(arg,rp)
