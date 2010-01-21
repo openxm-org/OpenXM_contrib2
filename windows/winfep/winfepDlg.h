@@ -20,9 +20,9 @@ public:
 // ダイアログ データ
 	//{{AFX_DATA(CWinfepDlg)
 	enum { IDD = IDD_WINFEP_DIALOG };
+	CEdit	m_currentline;
 	CStatic	m_after;
 	CStatic	m_before;
-	CStatic	m_currentline;
 	CStatic	m_currentfile;
 	//}}AFX_DATA
 
@@ -51,6 +51,8 @@ protected:
 	afx_msg void OnPrev();
 	afx_msg void OnPrev10();
 	afx_msg void OnNext10();
+	virtual void OnOK();
+	afx_msg void OnQuit();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 	void show_line(int);

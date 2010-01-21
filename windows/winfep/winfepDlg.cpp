@@ -95,7 +95,6 @@ CWinfepDlg::CWinfepDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CWinfepDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CWinfepDlg)
-		// メモ: この位置に ClassWizard によってメンバの初期化が追加されます。
 	//}}AFX_DATA_INIT
 	// メモ: LoadIcon は Win32 の DestroyIcon のサブシーケンスを要求しません。
     get_asirhwnd();
@@ -106,9 +105,9 @@ void CWinfepDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CWinfepDlg)
+	DDX_Control(pDX, IDC_CURRENTLINE, m_currentline);
 	DDX_Control(pDX, IDC_AFTER, m_after);
 	DDX_Control(pDX, IDC_BEFORE, m_before);
-	DDX_Control(pDX, IDC_CURRENTLINE, m_currentline);
 	DDX_Control(pDX, IDC_CURRENTFILE, m_currentfile);
 	//}}AFX_DATA_MAP
 }
@@ -125,6 +124,7 @@ BEGIN_MESSAGE_MAP(CWinfepDlg, CDialog)
 	ON_BN_CLICKED(IDC_PREV, OnPrev)
 	ON_BN_CLICKED(IDC_PREV10, OnPrev10)
 	ON_BN_CLICKED(IDC_NEXT10, OnNext10)
+	ON_BN_CLICKED(IDC_QUIT, OnQuit)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -217,7 +217,9 @@ void CWinfepDlg::OnSend()
 	// TODO: この位置にコントロール通知ハンドラ用のコードを追加してください
 	if ( !infile ) return;
     if ( currentline >= 0 && currentline < nlines ) {
-      char *line = lineptr[currentline];
+	  CString str;
+	  m_currentline.GetWindowText(str);
+      LPCSTR line = (LPCSTR)str;
       for ( int i = 0; line[i]; i++ ) {
 	if ( line[i] == '\t' )
         	::SendMessage(asirhwnd,WM_CHAR,' ',8);
@@ -350,4 +352,17 @@ void CWinfepDlg::OnNext10()
     currentline += 10;
 	if ( currentline >= nlines ) currentline = nlines;
 	show_line(currentline);
+}
+
+void CWinfepDlg::OnOK() 
+{
+	// TODO: この位置にその他の検証用のコードを追加してください
+    OnSend();
+}
+
+void CWinfepDlg::OnQuit() 
+{
+	// TODO: この位置にコントロール通知ハンドラ用のコードを追加してください
+	CDialog::OnOK();
+	
 }
