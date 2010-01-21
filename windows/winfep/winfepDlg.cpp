@@ -215,12 +215,16 @@ HCURSOR CWinfepDlg::OnQueryDragIcon()
 void CWinfepDlg::OnSend() 
 {
 	// TODO: この位置にコントロール通知ハンドラ用のコードを追加してください
-	if ( !infile ) return;
+    int i;
+    if ( !infile ) return;
     if ( currentline >= 0 && currentline < nlines ) {
 	  CString str;
 	  m_currentline.GetWindowText(str);
       LPCSTR line = (LPCSTR)str;
-      for ( int i = 0; line[i]; i++ ) {
+      for ( i = 0; line[i] && isspace(line[i]); i++ );
+      if ( line[i] &&
+        !strncmp(line+i,"end$",4) || !strncmp(line+i,"end;",4) ) return;
+      for ( i = 0; line[i]; i++ ) {
 	if ( line[i] == '\t' )
         	::SendMessage(asirhwnd,WM_CHAR,' ',8);
 	else

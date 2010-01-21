@@ -96,7 +96,7 @@ BEGIN
     CONTROL         "Current file :",IDC_STATIC,"Static",SS_SIMPLE | 
                     WS_GROUP,13,13,46,9
     PUSHBUTTON      "Asir‚ð‹N“®",IDC_BUTTON3,15,149,50,14
-    LTEXT           "Current line :",IDC_STATIC,13,73,46,8
+    LTEXT           "Current line :",IDC_STATIC,13,73,44,8
     PUSHBUTTON      "Next",IDC_NEXT,309,130,50,14
     PUSHBUTTON      "Prev",IDC_PREV,309,112,50,14
     CONTROL         "",IDC_AFTER,"Static",SS_LEFTNOWORDWRAP | SS_SUNKEN | 
