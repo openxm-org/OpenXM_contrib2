@@ -45,20 +45,82 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.6 2003/11/27 08:28:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.7 2004/06/22 09:17:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Psubst(), Ppsubst(), Psubstf(), Psubst_quote();
+void Psubstr2np();
 
 struct ftab subst_tab[] = {
 	{"subst",Psubst,-99999999},
+	{"substr2np",Psubstr2np,2},
 	{"subst_quote",Psubst_quote,-99999999},
 	{"psubst",Ppsubst,-99999999},
 	{"substf",Psubstf,-99999999},
 	{0,0,0},
 };
+
+extern Obj VOIDobj;
+
+void Psubstr2np(NODE arg,Obj *rp)
+{
+	Obj a;
+	P nm,dn,p;
+	R r;
+	VL vl,tvl;
+	int nv,i;
+	NODE slist,t,ps;
+	P s;
+	P *svect;
+	V v;
+	V *vvect;
+
+	a = (Obj)ARG0(arg);
+	if ( !a || NUM(a) ) {
+		*rp = a;
+		return;
+	}
+	asir_assert(ARG0(arg),O_R,"substr2np");
+	asir_assert(ARG1(arg),O_LIST,"substr2np");
+	get_vars(a,&vl);
+	for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ );
+	nv = i;
+	vvect = (V *)MALLOC(nv*sizeof(V));
+	for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ ) vvect[i] = tvl->v;
+	svect = (P *)MALLOC(nv*sizeof(P));
+	slist = BDY((LIST)ARG1(arg));
+	for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
+	for ( t = slist; t; t = NEXT(t) ) {
+		ps = BDY((LIST)BDY(t)); p = (P)BDY(ps); s = (P)BDY(NEXT(ps));	
+		asir_assert(p,O_P,"substr2np"); asir_assert(s,O_N,"substr2np");
+		v = VR(p);
+		for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
+		svect[i] = s;
+	}
+	
+	switch ( OID(a) ) {
+		case O_P:
+			substpp(vl,(P)a,vvect,svect,nv,&nm); *rp = (Obj)nm;
+			return;
+		case O_R:
+			substpp(vl,(P)NM((R)a),vvect,svect,nv,&nm);
+			substpp(vl,(P)DN((R)a),vvect,svect,nv,&dn);
+			if ( !dn )
+				error("substr2np: division by 0");
+			else if ( NUM(dn) ) {
+				divsp(vl,nm,dn,&p);
+				*rp = (Obj)p;
+			} else {
+				MKRAT(nm,dn,0,r);
+				*rp = (Obj)r;
+			}
+			return;
+		default:
+			error("substr2np: invalid argument");
+	}
+}
 
 void Psubst(arg,rp)
 NODE arg;
@@ -162,7 +224,7 @@ Obj *rp;
 
 			break;
 		default:
-			error("subst invalid argument");
+			error("subst : invalid argument");
 	}
 }
 

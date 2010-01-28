@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.11 2004/09/14 07:23:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.12 2004/09/14 09:25:48 noro Exp $ 
 */
 #include "ca.h"
 
@@ -111,6 +111,57 @@ void substp(VL vl,P p,V v0,P p0,P *pr)
 			c = m;
 		}
 		*pr = c;
+	}
+}
+
+void substpp(VL vl,P p,V *vvect,P *svect,int nv,P *pr);
+
+void substpp(VL vl,P p,V *vvect,P *svect,int nv,P *pr)
+{
+	P x,t,m,c,s,a,p0,c1;
+	DCP dc;
+	Q d;
+	V v;
+	int i;
+
+	if ( !p ) 
+		*pr = 0;
+	else if ( NUM(p) ) 
+		*pr = p;
+	else {
+		v = VR(p);
+		for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
+		if ( OID(svect[i]) < 0 ) {
+			MKV(VR(p),x);
+			for ( c = 0, dc = DC(p); dc; dc = NEXT(dc) ) {
+				substpp(vl,COEF(dc),vvect,svect,nv,&t);
+				if ( DEG(dc) ) {
+					pwrp(vl,x,DEG(dc),&s); mulp(vl,s,t,&m); 
+					addp(vl,m,c,&a); 
+					c = a;
+				} else {
+					addp(vl,t,c,&a); 
+					c = a;
+				}
+			}
+			*pr = c;
+		} else {
+			p0 = svect[i];
+			dc = DC(p);
+			substpp(vl,COEF(dc),vvect,svect,nv,&c);
+			for ( d = DEG(dc), dc = NEXT(dc); 
+				dc; d = DEG(dc), dc = NEXT(dc) ) {
+					subq(d,DEG(dc),(Q *)&t); pwrp(vl,p0,(Q)t,&s); 
+					mulp(vl,s,c,&m); 
+					substpp(vl,COEF(dc),vvect,svect,nv,&c1);
+					addp(vl,m,c1,&c); 
+			}
+			if ( d ) {
+				pwrp(vl,p0,d,&t); mulp(vl,t,c,&m); 
+				c = m;
+			}
+			*pr = c;
+		}
 	}
 }
 
