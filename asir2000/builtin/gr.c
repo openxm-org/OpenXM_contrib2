@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.64 2007/09/19 05:56:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.65 2009/02/09 10:21:29 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -97,6 +97,7 @@ int NoGCD = 0;
 int GenTrace = 0;
 int GenSyz = 0;
 int OXCheck = -1;
+int OneZeroHomo = 0;
 
 int NoSugar = 0;
 static int NoCriB = 0;
@@ -2323,6 +2324,8 @@ void dp_set_flag(Obj name,Obj value)
 		OXCheck = v;
 	else if ( !strcmp(n,"GenSyz") )
 		GenSyz = v;
+	else if ( !strcmp(n,"OneZeroHomo") )
+		OneZeroHomo = v;
 }
 
 void dp_make_flaglist(LIST *list)

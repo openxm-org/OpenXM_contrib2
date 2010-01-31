@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.7 2004/06/22 09:17:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.8 2010/01/28 08:56:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -109,6 +109,8 @@ void Psubstr2np(NODE arg,Obj *rp)
 			substpp(vl,(P)DN((R)a),vvect,svect,nv,&dn);
 			if ( !dn )
 				error("substr2np: division by 0");
+			else if ( !nm )
+				*rp = 0;
 			else if ( NUM(dn) ) {
 				divsp(vl,nm,dn,&p);
 				*rp = (Obj)p;

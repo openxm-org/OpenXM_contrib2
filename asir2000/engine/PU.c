@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.12 2004/09/14 09:25:48 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.13 2010/01/28 08:56:26 noro Exp $ 
 */
 #include "ca.h"
 
@@ -131,7 +131,7 @@ void substpp(VL vl,P p,V *vvect,P *svect,int nv,P *pr)
 	else {
 		v = VR(p);
 		for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
-		if ( OID(svect[i]) < 0 ) {
+		if ( svect[i] && OID(svect[i]) < 0 ) {
 			MKV(VR(p),x);
 			for ( c = 0, dc = DC(p); dc; dc = NEXT(dc) ) {
 				substpp(vl,COEF(dc),vvect,svect,nv,&t);
