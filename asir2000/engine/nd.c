@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.177 2009/10/12 10:43:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.178 2009/10/13 08:53:51 noro Exp $ */
 
 #include "nd.h"
 
@@ -4052,7 +4052,9 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
     NEWNM(m); d = DL(m);
     if ( mod ) {
         c0 = CM(m0); c1 = CM(m1); DMAR(c0,c1,0,mod,c); CM(m) = c;
-    } else
+    } else if ( nd_vc )
+        mulp(nd_vc,CP(m0),CP(m1),&CP(m));
+	else
         mulq(CQ(m0),CQ(m1),&CQ(m));
     for ( i = 0; i < nd_wpd; i++ ) d[i] = 0;
     homo = n&1 ? 1 : 0;
