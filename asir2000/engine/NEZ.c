@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/NEZ.c,v 1.4 2002/12/09 07:24:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/NEZ.c,v 1.5 2006/12/03 01:04:10 noro Exp $ 
 */
 #include "ca.h"
 
@@ -65,6 +65,9 @@ int m;
 	P **cp;
 	int *cn;
 
+	if ( m == 1 ) {
+		*pr = ps[0]; return;
+	}
 	pl = (P *)ALLOCA(m*sizeof(P)); 
 	ml = (DCP *)ALLOCA(m*sizeof(DCP)); 
 	cl = (Q *)ALLOCA(m*sizeof(Q));
