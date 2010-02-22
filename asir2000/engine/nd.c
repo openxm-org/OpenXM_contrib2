@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.180 2010/02/05 04:24:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.181 2010/02/05 05:18:38 noro Exp $ */
 
 #include "nd.h"
 
@@ -3139,10 +3139,10 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     while ( 1 ) {
         if ( Demand )
             nd_demand = 1;
+        ret = ndv_setup(m,1,fd0,0,0);
         if ( nd_gentrace ) {
             MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
         }
-        ret = ndv_setup(m,1,fd0,0,0);
         if ( ret )
             cand = f4?nd_f4_trace(m,&perm):nd_gb_trace(m,ishomo || homo,&perm);
         if ( !ret || !cand ) {
