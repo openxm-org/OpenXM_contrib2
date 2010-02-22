@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.181 2010/02/05 05:18:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.182 2010/02/22 02:20:43 noro Exp $ */
 
 #include "nd.h"
 
@@ -3137,6 +3137,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
             ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
     while ( 1 ) {
+		tl1 = tl2 = tl3 = tl4 = 0;
         if ( Demand )
             nd_demand = 1;
         ret = ndv_setup(m,1,fd0,0,0);
