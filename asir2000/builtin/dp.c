@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.79 2009/10/09 04:02:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.80 2010/01/19 06:17:22 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2130,7 +2130,8 @@ NODE arg;
 LIST *rp;
 {
 	LIST f,v;
-	int m,homo;
+	int m,find;
+	Obj homo;
 	struct order_spec *ord;
 
 	do_weyl = 0;
@@ -2144,7 +2145,8 @@ LIST *rp;
 	}
 	m = QTOS((Q)ARG2(arg));
 	create_order_spec(0,ARG3(arg),&ord);
-	nd_gr(f,v,m,1,ord,rp);
+	find = get_opt("homo",&homo);
+	nd_gr(f,v,m,find&&homo,1,ord,rp);
 }
 
 void Pnd_gr(arg,rp)
@@ -2152,7 +2154,8 @@ NODE arg;
 LIST *rp;
 {
 	LIST f,v;
-	int m,homo;
+	int m,find;
+	Obj homo;
 	struct order_spec *ord;
 
 	do_weyl = 0;
@@ -2166,7 +2169,8 @@ LIST *rp;
 	}
 	m = QTOS((Q)ARG2(arg));
 	create_order_spec(0,ARG3(arg),&ord);
-	nd_gr(f,v,m,0,ord,rp);
+	find = get_opt("homo",&homo);
+	nd_gr(f,v,m,find&&homo,0,ord,rp);
 }
 
 void Pnd_gr_postproc(arg,rp)
@@ -2269,7 +2273,8 @@ NODE arg;
 LIST *rp;
 {
 	LIST f,v;
-	int m,homo;
+	int m,find;
+	Obj homo;
 	struct order_spec *ord;
 
 	do_weyl = 1;
@@ -2283,7 +2288,8 @@ LIST *rp;
 	}
 	m = QTOS((Q)ARG2(arg));
 	create_order_spec(0,ARG3(arg),&ord);
-	nd_gr(f,v,m,0,ord,rp);
+	find = get_opt("homo",&homo);
+	nd_gr(f,v,m,find&&homo,0,ord,rp);
 	do_weyl = 0;
 }
 
@@ -2790,3 +2796,22 @@ int dpv_hp(DPV p)
 			break;
 	}
 }
+
+int get_opt(char *key0,Obj *r) {
+   NODE tt,p;
+   char *key;
+
+   if ( current_option ) {
+     for ( tt = current_option; tt; tt = NEXT(tt) ) {
+       p = BDY((LIST)BDY(tt));
+       key = BDY((STRING)BDY(p));
+       /*  value = (Obj)BDY(NEXT(p)); */
+       if ( !strcmp(key,key0) )  {
+	     *r = (Obj)BDY(NEXT(p));
+	     return 1;
+	   }
+     }
+   }
+   return 0;
+}
+

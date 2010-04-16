@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.25 2009/02/15 03:07:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.26 2009/10/12 10:43:45 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -256,7 +256,7 @@ int crit_2( int dp1, int dp2 );
 int ndv_newps(int m,NDV a,NDV aq);
 
 /* top level functions */
-void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp);
+void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp);
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp);
 NODE nd_f4(int m,int **indp);
 NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp);

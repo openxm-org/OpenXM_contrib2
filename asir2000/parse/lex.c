@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.43 2007/02/18 05:36:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.44 2007/08/06 08:15:26 saito Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -681,11 +681,12 @@ static int Getc() {
 					else
 						c = Getc();
 					break;
-				} else if ( asir_infile->fp || do_file )
-					asir_terminate(2);
-				else {
+				} else if ( asir_infile->fp || do_file ) {
 					if ( asir_infile->fp )
 						clearerr(asir_infile->fp);
+					asir_terminate(2);
+				} else {
+					error("end-of-line detected during parsing");
 				}
 			else
 				break;

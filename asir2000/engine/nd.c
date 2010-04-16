@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.182 2010/02/22 02:20:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.183 2010/02/22 05:27:53 noro Exp $ */
 
 #include "nd.h"
 
@@ -2786,13 +2786,14 @@ NODE postprocess_algcoef(VL av,NODE alist,NODE r)
     return u0;
 }
 
-void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
+void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
 {
     VL tv,fv,vv,vc,av;
     NODE fd,fd0,r,r0,t,x,s,xx,alist;
     int e,max,nvar,i;
     NDV b;
-    int ishomo,nalg,mrank,trank;
+    int ishomo,nalg,mrank,trank,wmax,len;
+	NMV a;
     Alg alpha,dp;
     P p,zp;
     Q dmy;
@@ -2879,11 +2880,31 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
         if ( b ) { NEXTNODE(fd0,fd); BDY(fd) = (pointer)b; }
     }
     if ( fd0 ) NEXT(fd) = 0;
+
+	if ( !ishomo && homo ) {
+        for ( t = fd0, wmax = max; t; t = NEXT(t) ) {
+            b = (NDV)BDY(t); len = LEN(b);
+            for ( a = BDY(b), i = 0; i < len; i++, NMV_ADV(a) )
+                wmax = MAX(TD(DL(a)),wmax);
+        }
+        homogenize_order(ord,nvar,&ord1);
+        nd_init_ord(ord1);
+        nd_setup_parameters(nvar+1,wmax);
+        for ( t = fd0; t; t = NEXT(t) )
+            ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
+    }
+
     ndv_setup(m,0,fd0,0,0);
     if ( nd_gentrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
     x = f4?nd_f4(m,&perm):nd_gb(m,ishomo,0,0,&perm);
+	if ( !ishomo && homo ) {
+	   	/* dehomogenization */
+		for ( t = x; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
+		nd_init_ord(ord);
+		nd_setup_parameters(nvar,0);
+	}
     nd_demand = 0;
     x = ndv_reducebase(x,perm);
     if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
@@ -2926,7 +2947,7 @@ void nd_gr(LIST f,LIST v,int m,int f4,struct order_spec *ord,LIST *rp)
 		}
        MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
        MKLIST(l5,tl4);
-      tr = mknode(7,*rp,0,l1,l2,l3,l4,l5); MKLIST(*rp,tr);
+      tr = mknode(7,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5); MKLIST(*rp,tr);
     }
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
@@ -6568,16 +6589,24 @@ void nd_det(int mod,MAT f,P *rp)
                 bucket = create_pbucket();
                 if ( mi[k] ) {
                     nmv = BDY(mjj); len = LEN(mjj);
+					fprintf(stderr,"len=%d\n",len);
                     for ( a = 0; a < len; a++, NMV_ADV(nmv) ) {
+						fprintf(stderr,".");
                         u = ndv_mul_nmv_trunc(mod,nmv,mi[k],DL(BDY(d)));
                         add_pbucket(mod,bucket,u);
+						if ( !(a%1000) ) 
+							fprintf(stderr,"%d\n",a);
                     }
                 }
                 if ( mj[k] && mij ) {
                     nmv = BDY(mij); len = LEN(mij);
+					fprintf(stderr,"len=%d\n",len);
                     for ( a = 0; a < len; a++, NMV_ADV(nmv) ) {
+						fprintf(stderr,".");
                         u = ndv_mul_nmv_trunc(mod,nmv,mj[k],DL(BDY(d)));
                         add_pbucket(mod,bucket,u);
+						if ( !(a%1000) ) 
+							fprintf(stderr,"%d\n",a);
                     }
                 }
                 u = nd_quo(mod,bucket,d);
