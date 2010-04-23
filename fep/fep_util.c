@@ -8,6 +8,7 @@ static char rcsid[]=
 #ifndef MKARGDEBUG
 
 #include <stdio.h>
+#include <string.h>
 #include <pwd.h>
 #include <sys/types.h>
 #if defined(__CYGWIN__) || defined(sun)

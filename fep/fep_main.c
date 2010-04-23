@@ -6,6 +6,8 @@ static char rcsid[]=
 #endif /* lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -545,7 +547,7 @@ int set_buffer (bp, size)
     BUFFER *bp;
     int size;
 {
-    char *newbuf, *malloc(), *realloc();
+    char *newbuf;
 
     if (bp->b_buf)
 	newbuf = (char *) realloc (bp->b_buf, size);

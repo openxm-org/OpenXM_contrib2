@@ -6,6 +6,7 @@ static char rcsid[]=
 #endif /* lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "fep_defs.h"
 #include "fep_glob.h"
 

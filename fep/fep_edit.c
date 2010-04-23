@@ -6,6 +6,8 @@ static char rcsid[]=
 #endif /* lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -24,7 +26,7 @@ static char rcsid[]=
 #if defined(__CYGWIN__)
 #include <sys/dirent.h>
 #define direct dirent
-#elif defined(sun)
+#elif defined(sun) || defined(__FreeBSD__)
 #include <dirent.h>
 #define direct dirent
 #include <unistd.h>

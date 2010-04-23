@@ -6,6 +6,8 @@ static char rcsid[]=
 #endif /* lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #ifdef TERMIOS
 #include <termios.h>
