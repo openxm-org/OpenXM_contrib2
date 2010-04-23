@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.184 2010/04/16 07:13:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.185 2010/04/23 04:44:51 noro Exp $ */
 
 #include "nd.h"
 
@@ -2899,7 +2899,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
     if ( nd_gentrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
-    x = f4?nd_f4(m,&perm):nd_gb(m,ishomo,0,0,&perm);
+    x = f4?nd_f4(m,&perm):nd_gb(m,ishomo || homo,0,0,&perm);
 	if ( !ishomo && homo ) {
 	   	/* dehomogenization */
 		for ( t = x; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
