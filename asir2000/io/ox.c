@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.27 2006/02/08 02:11:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.28 2009/02/13 11:25:48 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -145,7 +145,7 @@ static int ox_asir_available_sm[] = {
 	SM_executeStringByLocalParserInBatchMode,
 	SM_executeFunction, SM_shutdown, SM_pops,
 	SM_mathcap, SM_setMathcap, SM_nop,
-	SM_beginBlock, SM_endBlock,
+	SM_beginBlock, SM_endBlock,  SM_executeFunctionSync,
 	SM_set_rank_102, SM_tcp_accept_102, SM_tcp_connect_102, SM_reset_102,
 	SM_bcast_102, SM_reduce_102,
 	0

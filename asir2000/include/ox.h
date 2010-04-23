@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.21 2004/01/25 11:54:09 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.22 2007/02/18 05:36:28 ohara Exp $ 
 */
 #include "com.h"
 
@@ -144,6 +144,9 @@
 #define SM_reduce_102 283
 
 #define SM_nop 300
+
+/* local SM command in ox_asir */
+#define SM_executeFunctionSync 400
 
 #define SM_control_kill 				1024
 #define SM_control_intr 				1025

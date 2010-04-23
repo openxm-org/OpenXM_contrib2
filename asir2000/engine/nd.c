@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.183 2010/02/22 05:27:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.184 2010/04/16 07:13:42 noro Exp $ */
 
 #include "nd.h"
 
@@ -49,7 +49,7 @@ static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz,nd_nora;
+static int nd_gentrace,nd_gensyz,nd_nora,nd_incr;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -2308,6 +2308,7 @@ ND_pairs nd_newpairs( NODE g, int t )
     for ( r0 = 0, h = g; h; h = NEXT(h) ) {
         if ( nd_module && (MPOS(DL(nd_psh[(long)BDY(h)])) != MPOS(dl)) )
                 continue;
+		if ( (long)BDY(h) < nd_incr && t < nd_incr ) continue;
         NEXTND_pairs(r0,r);
         r->i1 = (long)BDY(h);
         r->i2 = t;
@@ -2894,7 +2895,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
             ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
 
-    ndv_setup(m,0,fd0,0,0);
+    ndv_setup(m,0,fd0,nd_incr?1:0,0);
     if ( nd_gentrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
@@ -3161,7 +3162,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 		tl1 = tl2 = tl3 = tl4 = 0;
         if ( Demand )
             nd_demand = 1;
-        ret = ndv_setup(m,1,fd0,0,0);
+        ret = ndv_setup(m,1,fd0,nd_incr?1:0,0);
         if ( nd_gentrace ) {
             MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
         }
@@ -6940,7 +6941,7 @@ void parse_nd_option(NODE opt)
     char *key;
     Obj value;
 
-    nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0;
+    nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_incr = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -6951,5 +6952,7 @@ void parse_nd_option(NODE opt)
             nd_gensyz = value?1:0;
         else if ( !strcmp(key,"nora") )
             nd_nora = value?1:0;
+        else if ( !strcmp(key,"incr") )
+            nd_incr = QTOS((Q)value);
     }
 }

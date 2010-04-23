@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.65 2006/09/29 09:02:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.66 2008/11/27 08:27:04 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -108,6 +108,7 @@ char *name_of_id(int);
 
 static void asir_do_cmd(int,unsigned int);
 static void asir_executeFunction(int);
+static void asir_executeFunctionSync(int);
 
 #if defined(MPI)
 /* XXX : currently MPI version supports only a homogeneous cluster. */
@@ -258,6 +259,9 @@ static void asir_do_cmd(int cmd,unsigned int serial)
 		case SM_executeFunction:
 			asir_executeFunction(serial);
 			break;
+		case SM_executeFunctionSync:
+			asir_executeFunctionSync(serial);
+			break;
 		case SM_shutdown:
 			asir_terminate(2);
 			break;
@@ -387,6 +391,9 @@ char *name_of_cmd(int cmd)
 			break;
 		case SM_reduce_102:
 			return "SM_reduce_102";
+			break;
+		case SM_executeFunctionSync:
+			return "SM_executeFunctionSync";
 			break;
 		default:
 			return "Unknown cmd";
@@ -800,6 +807,7 @@ static void asir_executeFunction(int serial)
 #if 0
 	}
 #endif
+	printf("executeFunction done\n");
 	asir_push_one(result);
 	return;
 
@@ -807,6 +815,84 @@ error:
 	create_error(&err,serial,buf,0);
 	result = (Obj)err;
 	asir_push_one(result);
+}
+
+static void asir_executeFunctionSync(int serial)
+{ 
+	char *func;
+	int argc,i;
+	FUNC f;
+	Obj result=0;
+	NODE n,n1; 
+	STRING fname;
+	char *path;
+	ERR err;
+	Obj arg;
+	static char buf[BUFSIZ];
+
+	arg = asir_pop_one();
+	if ( !arg || OID(arg) != O_STR ) {
+		sprintf(buf,"executeFunction : invalid function name");
+		goto error;
+	} else
+		func = ((STRING)arg)->body;
+
+	arg = asir_pop_one();
+	if ( !arg || OID(arg) != O_USINT ) {
+		sprintf(buf,"executeFunction : invalid argc");
+		goto error;
+	} else
+		argc = (int)(((USINT)arg)->body);
+
+	for ( n = 0; argc; argc-- ) {
+		NEXTNODE(n,n1);
+		BDY(n1) = (pointer)asir_pop_one();
+	}
+	if ( n )
+		NEXT(n1) = 0;
+
+	ox_send_data(0,ONE);
+
+#if 0
+	if ( !strcmp(func,"load") ) {
+		fname = (STRING)BDY(n);
+		if ( OID(fname) == O_STR ) {
+			searchasirpath(BDY(fname),&path);
+			if ( path ) {
+				if ( do_message )
+					fprintf(stderr,"loading %s\n",path);
+				execasirfile(path);
+			} else 
+				if ( do_message )
+					fprintf(stderr,"load : %s not found in the search path\n",BDY(fname));
+		}
+		result = 0;
+	} else {
+#endif
+		searchf(noargsysf,func,&f);
+		if ( !f )
+			searchf(sysf,func,&f); 
+		if ( !f )
+			searchf(ubinf,func,&f);
+		if ( !f )
+			searchf(usrf,func,&f);
+		if ( !f ) {
+			sprintf(buf,"executeFunction : the function %s not found",func);
+			goto error;
+		} else {
+			result = (Obj)bevalf(f,n);
+		}
+#if 0
+	}
+#endif
+	printf("executeFunctionSync done\n");
+	ox_send_data(0,result);
+	return;
+
+error:
+	create_error(&err,serial,buf,0);
+	result = (Obj)err;
+	ox_send_data(0,result);
 }
 
 void asir_end_flush()

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.64 2008/11/18 20:52:47 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.65 2009/03/04 09:15:36 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -987,6 +987,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			for ( tn = f->f.usrf->args, sn = BDY(args); 
 				sn; tn = NEXT(tn), sn = NEXT(sn) )
 				ASSPV((int)FA0((FNODE)BDY(tn)),BDY(sn));
+			f_return = f_break = f_continue = 0;
 			if ( f->f.usrf->module ) {
 				prev_mpvs = MPVS;
 				MPVS = f->f.usrf->module->pvs;
@@ -1195,6 +1196,7 @@ pointer bevalf(FUNC f,NODE a)
 			for ( tn = f->f.usrf->args, sn = a; 
 				sn; tn = NEXT(tn), sn = NEXT(sn) )
 				ASSPV((int)FA0((FNODE)BDY(tn)),BDY(sn));
+			f_return = f_break = f_continue = 0;
 			if ( f->f.usrf->module ) {
 				prev_mpvs = MPVS;
 				MPVS = f->f.usrf->module->pvs;
@@ -1273,6 +1275,7 @@ pointer bevalf_with_opts(FUNC f,NODE a,NODE opts)
 			for ( tn = f->f.usrf->args, sn = a; 
 				sn; tn = NEXT(tn), sn = NEXT(sn) )
 				ASSPV((int)FA0((FNODE)BDY(tn)),BDY(sn));
+			f_return = f_break = f_continue = 0;
 			if ( f->f.usrf->module ) {
 				prev_mpvs = MPVS;
 				MPVS = f->f.usrf->module->pvs;

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.55 2004/06/15 09:04:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.56 2004/08/18 01:10:59 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1017,9 +1017,9 @@ int get_mcindex(int i)
 
 void Pox_select(NODE arg,LIST *rp)
 {
-	int fd,n,i,index,mcind;
+	int fd,n,i,index,mcind,s;
 	fd_set r,w,e;
-	NODE list,t,t1;
+	NODE list,t,t1,t0;
 	Q q;
 	double max;
 	struct timeval interval;
@@ -1035,11 +1035,20 @@ void Pox_select(NODE arg,LIST *rp)
 		tvp = 0;
 
 	FD_ZERO(&r); FD_ZERO(&w); FD_ZERO(&e);
-	for ( t = list; t; t = NEXT(t) ) {
+	for ( t = list, t0 = 0; t; t = NEXT(t) ) {
 		index = QTOS((Q)BDY(t));
 		valid_mctab_index(index);
-		fd = get_fd(m_c_tab[index].c); FD_SET((unsigned int)fd,&r);
+		s = m_c_tab[index].c;
+		if ( ox_data_is_available(s) ) {
+			MKNODE(t1,(Q)BDY(t),t0); t0 = t1;
+		} else {
+			fd = get_fd(s); FD_SET((unsigned int)fd,&r);
+		}
 	}
+	if ( t0 ) {
+		MKLIST(*rp,t0); return;
+	}
+
 	n = select(FD_SETSIZE,&r,&w,&e,tvp);
 	for ( i = 0, t = 0; n && i < FD_SETSIZE; i++ )
 		if ( FD_ISSET(i,&r) ) {
@@ -1364,9 +1373,12 @@ void Pox_cmo_rpc(NODE arg,Obj *rp)
 	STRING f;
 	USINT ui;
 	NODE t;
+	Obj dmy;
 	pointer *w;
 	int index = QTOS((Q)ARG0(arg));
+	int sync,find;
 
+	find = get_opt("sync",&sync);
 	valid_mctab_index(index);
 	s = m_c_tab[index].c; arg = NEXT(arg);
 	f = (STRING)BDY(arg); arg = NEXT(arg);
@@ -1379,7 +1391,11 @@ void Pox_cmo_rpc(NODE arg,Obj *rp)
 	MKUSINT(ui,n);
 	ox_send_data(s,ui);
 	ox_send_data(s,f);
-	ox_send_cmd(s,SM_executeFunction);
+	if ( find && sync ) {
+		ox_send_cmd(s,SM_executeFunctionSync);
+		ox_get_result(s,&dmy);
+	} else
+		ox_send_cmd(s,SM_executeFunction);
 	*rp = 0;
 }
 
