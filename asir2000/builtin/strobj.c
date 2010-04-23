@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.118 2007/04/15 11:01:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.119 2008/09/04 01:42:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1330,6 +1330,7 @@ NODE arg;
 P *rp;
 {
 	char *p;
+	FUNC f;
 
 	p = BDY((STRING)ARG0(arg));
 #if 0
@@ -1343,7 +1344,11 @@ P *rp;
 			makevar(p,rp);
 	}
 #else
-	makevar(p,rp);
+	gen_searchf_searchonly(p,&f);
+	if ( f )
+		makesrvar(f,rp);
+	else
+		makevar(p,rp);
 #endif
 }
 
