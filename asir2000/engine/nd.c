@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.186 2010/04/23 07:35:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.187 2010/04/26 01:06:22 noro Exp $ */
 
 #include "nd.h"
 
@@ -2316,10 +2316,8 @@ ND_pairs nd_newpairs( NODE g, int t )
 				if ( t0 >= min && t0 <= max && t >= min && t <= max )
 					break;
 			}
-			if ( nd_gbblock[i] >= 0 ) {
-				fprintf(stderr,"(%d,%d)",t0,t);
+			if ( nd_gbblock[i] >= 0 )
 				continue;
-			}
 		}
         NEXTND_pairs(r0,r);
         r->i1 = (long)BDY(h);
