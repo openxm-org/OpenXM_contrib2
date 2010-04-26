@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.185 2010/04/23 04:44:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.186 2010/04/23 07:35:44 noro Exp $ */
 
 #include "nd.h"
 
@@ -49,7 +49,8 @@ static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz,nd_nora,nd_incr;
+static int nd_gentrace,nd_gensyz,nd_nora;
+static int *nd_gbblock;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -2300,7 +2301,7 @@ ND_pairs nd_newpairs( NODE g, int t )
 {
     NODE h;
     UINT *dl;
-    int ts,s;
+    int ts,s,i,t0,min,max;
     ND_pairs r,r0;
 
     dl = DL(nd_psh[t]);
@@ -2308,7 +2309,18 @@ ND_pairs nd_newpairs( NODE g, int t )
     for ( r0 = 0, h = g; h; h = NEXT(h) ) {
         if ( nd_module && (MPOS(DL(nd_psh[(long)BDY(h)])) != MPOS(dl)) )
                 continue;
-		if ( (long)BDY(h) < nd_incr && t < nd_incr ) continue;
+		if ( nd_gbblock ) {
+			t0 = (long)BDY(h);
+			for ( i = 0; nd_gbblock[i] >= 0; i += 2 ) {
+				min = nd_gbblock[i]; max = nd_gbblock[i+1];
+				if ( t0 >= min && t0 <= max && t >= min && t <= max )
+					break;
+			}
+			if ( nd_gbblock[i] >= 0 ) {
+				fprintf(stderr,"(%d,%d)",t0,t);
+				continue;
+			}
+		}
         NEXTND_pairs(r0,r);
         r->i1 = (long)BDY(h);
         r->i2 = t;
@@ -2895,7 +2907,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
             ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
 
-    ndv_setup(m,0,fd0,nd_incr?1:0,0);
+    ndv_setup(m,0,fd0,nd_gbblock?1:0,0);
     if ( nd_gentrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
@@ -3162,7 +3174,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 		tl1 = tl2 = tl3 = tl4 = 0;
         if ( Demand )
             nd_demand = 1;
-        ret = ndv_setup(m,1,fd0,nd_incr?1:0,0);
+        ret = ndv_setup(m,1,fd0,nd_gbblock?1:0,0);
         if ( nd_gentrace ) {
             MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
         }
@@ -6937,11 +6949,12 @@ void conv_ilist(int demand,int trace,NODE g,int **indp)
 
 void parse_nd_option(NODE opt)
 {
-    NODE t,p;
+    NODE t,p,u;
+	int i,s;
     char *key;
     Obj value;
 
-    nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_incr = 0;
+    nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -6952,7 +6965,17 @@ void parse_nd_option(NODE opt)
             nd_gensyz = value?1:0;
         else if ( !strcmp(key,"nora") )
             nd_nora = value?1:0;
-        else if ( !strcmp(key,"incr") )
-            nd_incr = QTOS((Q)value);
+        else if ( !strcmp(key,"gbblock") ) {
+			if ( !value || OID(value) != O_LIST )
+				error("nd_* : invalid value for gbblock option");
+			u = BDY((LIST)value);
+            nd_gbblock = MALLOC(2*length(t)+1);
+			for ( i = 0; u; u = NEXT(u) ) {
+				p = BDY((LIST)BDY(u));
+				s = nd_gbblock[i++] = QTOS((Q)BDY(p));
+				nd_gbblock[i++] = s+QTOS((Q)BDY(NEXT(p)))-1;
+			}
+			nd_gbblock[i] = -1;
+		}
     }
 }
