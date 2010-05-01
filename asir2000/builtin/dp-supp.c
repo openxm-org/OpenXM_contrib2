@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.55 2009/10/09 04:02:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.56 2009/10/15 07:08:40 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -3043,6 +3043,90 @@ NODE compute_essential_df(DP *g,DP *gh,int ng)
 		}
 		MKNODE(r1,0,ri); MKLIST(l,r1);
 		BDY(rt) = (pointer)l;
+	}
+	return r;
+}
+
+int comp_bits_divisible(int *a,int *b,int n)
+{
+	int bpi,i,wi,bi;
+
+	bpi = (sizeof(int)/sizeof(char))*8;
+	for ( i = 0; i < n; i++ ) {
+		wi = i/bpi; bi = i%bpi;
+		if ( !(a[wi]&(1<<bi)) && (b[wi]&(1<<bi)) ) return 0;
+	}
+	return 1;
+}
+
+int comp_bits_lex(int *a,int *b,int n)
+{
+	int bpi,i,wi,ba,bb,bi;
+
+	bpi = (sizeof(int)/sizeof(char))*8;
+	for ( i = 0; i < n; i++ ) {
+		wi = i/bpi; bi = i%bpi;
+		ba = (a[wi]&(1<<bi))?1:0;
+		bb = (b[wi]&(1<<bi))?1:0;
+		if ( ba > bb ) return 1;
+		else if ( ba < bb ) return -1;
+	}
+	return 0;
+}
+
+NODE mono_raddec(NODE ideal)
+{
+	DP p;
+	int nv,w,i,bpi,di,c,len;
+	int *d,*s,*u,*new;
+	NODE t,t1,v,r,rem,prev;
+
+	if( !ideal ) return 0;
+	p = (DP)BDY(ideal);
+	nv = NV(p);
+	bpi = (sizeof(int)/sizeof(char))*8;
+	w = (nv+(bpi-1))/bpi;
+	d = p->body->dl->d;
+	if ( !NEXT(ideal) )	{
+		for ( t = 0, i = nv-1; i >= 0; i-- ) {
+			if ( d[i] ) {
+				s = (int *)CALLOC(w,sizeof(int));
+				s[i/bpi] |= 1<<(i%bpi);
+				MKNODE(t1,s,t);
+				t = t1;
+			}
+		}
+		return t;
+	}
+	rem = mono_raddec(NEXT(ideal));
+	r = 0;
+	len = w*sizeof(int);
+	u = (int *)CALLOC(w,sizeof(int));
+	for ( i = nv-1; i >= 0; i-- ) {
+		if ( d[i] ) {
+			for ( t = rem; t; t = NEXT(t) ) {
+				bcopy((char *)BDY(t),(char *)u,len);
+				u[i/bpi] |= 1<<(i%bpi);
+				for ( v = r; v; v = NEXT(v) ) {
+					if ( comp_bits_divisible(u,(int *)BDY(v),nv) ) break;
+				}
+				if ( v ) continue;
+				for ( v = r, prev = 0; v; v = NEXT(v) ) {
+					if ( comp_bits_divisible((int *)BDY(v),u,nv) ) {
+						if ( prev ) NEXT(prev) = NEXT(v);
+						else r = NEXT(r); 
+					} else prev =v;
+				}
+				for ( v = r, prev = 0; v; prev = v, v = NEXT(v) ) {
+					if ( comp_bits_lex(u,(int *)BDY(v),nv) < 0 ) break;
+				}
+				new = (int *)CALLOC(w,sizeof(int));
+				bcopy((char *)u,(char *)new,len);
+				MKNODE(t1,new,v);
+				if ( prev ) NEXT(prev) = t1;
+				else r = t1;
+			}
+		}
 	}
 	return r;
 }

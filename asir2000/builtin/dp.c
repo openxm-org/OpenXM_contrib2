@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.80 2010/01/19 06:17:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.81 2010/04/16 07:13:42 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -106,6 +106,7 @@ void Pdp_compute_last_w();
 void Pdp_compute_essential_df();
 void Pdp_get_denomlist();
 void Pdp_symb_add();
+void Pdp_mono_raddec();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -265,6 +266,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_compute_last_w",Pdp_compute_last_w,5},
 	{"dp_compute_last_t",Pdp_compute_last_t,5},
 	{"dp_compute_essential_df",Pdp_compute_essential_df,2},
+	{"dp_mono_raddec",Pdp_mono_raddec,2},
 
 	{0,0,0}
 };
@@ -2629,6 +2631,47 @@ VECT *rp;
 		for ( i = 0; i < n; i++ )
 			current_weyl_weight_vector[i] = QTOS((Q)v->body[i]);
 		*rp = v;
+	}
+}
+
+NODE mono_raddec(NODE ideal);
+
+void Pdp_mono_raddec(NODE arg,LIST *rp)
+{
+	NODE ideal,rd,t,t1,r,r1,u;
+	VL vl0,vl;
+	int nv,i,bpi;
+	int *s;
+	DP dp;
+	P *v;
+	LIST l;
+
+	ideal = BDY((LIST)ARG0(arg));
+	if ( !ideal ) *rp = (LIST)ARG0(arg);
+	else {
+		t = BDY((LIST)ARG1(arg));
+		nv = length(t);
+		v = (P)MALLOC(nv*sizeof(P));
+		for ( vl0 = 0, i = 0; t; t = NEXT(t), i++ ) {
+			NEXTVL(vl0,vl); VR(vl) = VR((P)BDY(t));
+			MKV(VR(vl),v[i]);
+		}
+		if ( vl0 ) NEXT(vl) = 0;
+		for ( t = 0, r = ideal; r; r = NEXT(r) ) {
+			ptod(CO,vl0,BDY(r),&dp); MKNODE(t1,dp,t); t = t1;
+		}
+		rd = mono_raddec(t);
+		r = 0;
+		bpi = (sizeof(int)/sizeof(char))*8;
+		for ( u = rd; u; u = NEXT(u) ) {
+			s = (int *)BDY(u);
+			for ( i = nv-1, t = 0; i >= 0; i-- )
+				if ( s[i/bpi]&(1<<(i%bpi)) ) {
+					MKNODE(t1,v[i],t); t = t1;
+				}
+			MKLIST(l,t); MKNODE(r1,l,r); r = r1;
+		}
+		MKLIST(*rp,r);
 	}
 }
 
