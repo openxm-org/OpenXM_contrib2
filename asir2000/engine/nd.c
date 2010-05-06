@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.187 2010/04/26 01:06:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.188 2010/04/26 01:10:04 noro Exp $ */
 
 #include "nd.h"
 
@@ -6967,7 +6967,7 @@ void parse_nd_option(NODE opt)
 			if ( !value || OID(value) != O_LIST )
 				error("nd_* : invalid value for gbblock option");
 			u = BDY((LIST)value);
-            nd_gbblock = MALLOC(2*length(t)+1);
+            nd_gbblock = MALLOC((2*length(u)+1)*sizeof(int));
 			for ( i = 0; u; u = NEXT(u) ) {
 				p = BDY((LIST)BDY(u));
 				s = nd_gbblock[i++] = QTOS((Q)BDY(p));
