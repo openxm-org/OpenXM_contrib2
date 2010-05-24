@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.65 2009/03/04 09:15:36 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.66 2010/04/23 04:44:52 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -996,6 +996,8 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			} else
 				val = evalstat((SNODE)BDY(f->f.usrf)); 
 			f_return = f_break = f_continue = 0; poppvs(); 
+			if ( PVSS )
+        		evalstatline = ((VS)BDY(PVSS))->at;
 			break;
 		case A_PURE:
 			args = (LIST)eval(a);
