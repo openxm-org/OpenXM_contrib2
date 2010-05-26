@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.75 2009/02/05 08:37:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.76 2009/03/18 05:13:47 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -529,8 +529,12 @@ void int_handler(int sig)
 
 		fprintf(stderr,"interrupt ?(q/t/c/d/u/w/?) "); fflush(stderr);
 		buf[0] = '\n';
-		while ( buf[0] == '\n' )
+		while ( !feof(stdin) && buf[0] == '\n' )
 			fgets(buf,BUFSIZ,stdin);
+		if ( feof(stdin) ) {
+			clearerr(stdin);
+			continue;
+		}
 		switch ( c = buf[0] ) {
 			case 'q':
 				while ( 1 ) {
