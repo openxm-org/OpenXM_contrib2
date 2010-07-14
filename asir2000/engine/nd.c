@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.188 2010/04/26 01:10:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.189 2010/05/06 09:22:09 noro Exp $ */
 
 #include "nd.h"
 
@@ -6600,24 +6600,16 @@ void nd_det(int mod,MAT f,P *rp)
                 bucket = create_pbucket();
                 if ( mi[k] ) {
                     nmv = BDY(mjj); len = LEN(mjj);
-					fprintf(stderr,"len=%d\n",len);
                     for ( a = 0; a < len; a++, NMV_ADV(nmv) ) {
-						fprintf(stderr,".");
                         u = ndv_mul_nmv_trunc(mod,nmv,mi[k],DL(BDY(d)));
                         add_pbucket(mod,bucket,u);
-						if ( !(a%1000) ) 
-							fprintf(stderr,"%d\n",a);
                     }
                 }
                 if ( mj[k] && mij ) {
                     nmv = BDY(mij); len = LEN(mij);
-					fprintf(stderr,"len=%d\n",len);
                     for ( a = 0; a < len; a++, NMV_ADV(nmv) ) {
-						fprintf(stderr,".");
                         u = ndv_mul_nmv_trunc(mod,nmv,mj[k],DL(BDY(d)));
                         add_pbucket(mod,bucket,u);
-						if ( !(a%1000) ) 
-							fprintf(stderr,"%d\n",a);
                     }
                 }
                 u = nd_quo(mod,bucket,d);
