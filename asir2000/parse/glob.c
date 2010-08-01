@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.76 2009/03/18 05:13:47 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.77 2010/05/26 06:32:49 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -318,7 +318,10 @@ static int which(char *prog, char *path, char *buf, size_t size)
 void cppname_init()
 {
 #if !defined(VISUAL)
-    if (access(cppname, X_OK&R_OK) != 0) {
+    char oxcpp[BUFSIZ];
+    if(which("ox_cpp", getenv("PATH"), oxcpp, BUFSIZ) && access(oxcpp, X_OK&R_OK) == 0) {
+        strncpy(cppname,oxcpp,BUFSIZ-1);
+    }else if (access(cppname, X_OK&R_OK) != 0) {
         which("cpp", "/lib:/usr/ccs/lib:/usr/bin", cppname, BUFSIZ) ||
         which("cpp", getenv("PATH"), cppname, BUFSIZ);
     }
