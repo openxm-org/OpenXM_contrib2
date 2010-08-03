@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.44 2007/08/06 08:15:26 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.45 2010/04/16 07:13:42 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -510,7 +510,7 @@ static int skipspace() {
 
 int afternl() {
 	int c,ac,i,quote;
-	char *ptr;
+	char *ptr,*buf0;
 	char *av[BUFSIZ];
 	static int ilevel = 0;
 	char buf[BUFSIZ];
@@ -519,12 +519,15 @@ int afternl() {
 		asir_infile->ln++;
 	while ( (c = Getc()) == '#' ) {
 		Gets(buf);
-		for ( quote = 0, ptr = buf; *ptr; ptr++ )
+#define LINE "line"
+		if ( !strncmp(buf,LINE,strlen(LINE)) ) buf0 = buf+strlen(LINE);
+		else buf0 = buf;
+		for ( quote = 0, ptr = buf0; *ptr; ptr++ )
 			if ( *ptr == '"' )
 				quote = quote ? 0 : 1;
 			else if ( quote && (*ptr == ' ') )
 				*ptr = '_';
-		stoarg(buf,&ac,av);
+		stoarg(buf0,&ac,av);
 		if ( ac == 3 )
 			if ( (i = atoi(av[2])) == 1 )
 				ilevel++;

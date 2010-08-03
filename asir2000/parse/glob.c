@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.77 2010/05/26 06:32:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.78 2010/08/01 08:44:15 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -318,10 +318,20 @@ static int which(char *prog, char *path, char *buf, size_t size)
 void cppname_init()
 {
 #if !defined(VISUAL)
-    char oxcpp[BUFSIZ];
-    if(which("ox_cpp", getenv("PATH"), oxcpp, BUFSIZ) && access(oxcpp, X_OK&R_OK) == 0) {
-        strncpy(cppname,oxcpp,BUFSIZ-1);
-    }else if (access(cppname, X_OK&R_OK) != 0) {
+	char *oxhome;
+	char oxcpp[BUFSIZ];
+#define OXCPP "/bin/ox_cpp"
+
+	if ( oxhome = getenv("OpenXM_HOME") ) {
+		if ( strlen(oxhome)+strlen(OXCPP)<BUFSIZ ) {
+			sprintf(oxcpp,"%s%s",oxhome,OXCPP);
+			if ( access(oxcpp,X_OK&R_OK) == 0 ) {
+        		strcpy(cppname,oxcpp);
+				return;
+			}
+		}
+	}
+    if (access(cppname, X_OK&R_OK) != 0) {
         which("cpp", "/lib:/usr/ccs/lib:/usr/bin", cppname, BUFSIZ) ||
         which("cpp", getenv("PATH"), cppname, BUFSIZ);
     }
