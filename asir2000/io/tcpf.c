@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.56 2004/08/18 01:10:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.57 2010/04/23 04:44:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -826,7 +826,7 @@ void spawn_server(char *host,char *launcher,char *server,
 				setpgid(0,getpid());
 				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
 					"-geometry","60x10","-xrm","XTerm*locale:false","-e",launcher,use_unix?".":"127.1",conn_str,
-					control_port_str,server_port_str,server,dname,0);
+					control_port_str,server_port_str,server,dname,(char *)0);
 			}
 		} else if ( dname && get_start_path(win_start) ) {
   		sprintf(cmd,"%s %s %s %s %s %s %s 1",
@@ -837,7 +837,7 @@ void spawn_server(char *host,char *launcher,char *server,
 			if ( !fork() ) {
 				setpgid(0,getpid());
 				execlp(launcher,launcher,use_unix?".":"127.1",conn_str,
-					control_port_str,server_port_str,server,dname0,"-nolog",0);
+					control_port_str,server_port_str,server,dname0,"-nolog",(char *)0);
 			}
 		}
 #else
@@ -846,10 +846,10 @@ void spawn_server(char *host,char *launcher,char *server,
 			if ( dname )
 				execlp("xterm","xterm","-name",OX_XTERM,"-T","ox_launch:local","-display",dname,
 					"-geometry","60x10","-xrm","XTerm*locale:false","-e",launcher,use_unix?".":"127.1",conn_str,
-					control_port_str,server_port_str,server,dname,0);
+					control_port_str,server_port_str,server,dname,(char *)0);
 			else 
 				execlp(launcher,launcher,use_unix?".":"127.1",conn_str,
-					control_port_str,server_port_str,server,dname0,"-nolog",0);
+					control_port_str,server_port_str,server,dname0,"-nolog",(char *)0);
 		}
 #endif
 	} else if ( conn_to_serv == 2 ) {

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.11 2007/09/15 10:17:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.12 2009/03/02 16:28:30 ohara Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));
@@ -334,3 +334,7 @@ asm volatile("movl	%2,%%eax; mull	%3; addl	%4,%%eax; adcl	$0,%%edx; divl	%5; mov
 asm volatile("movl	%1,%%eax; mull	%2; addl	%3,%%eax; adcl	$0,%%edx; divl	%4; movl	%%edx,%0" :"=g"(r) :"g"(a1),"g"(a2),"g"(a3),"g"(d) :"ax","dx");
 #endif
 
+#if defined(i386) && defined(__DARWIN__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__ == 4 && __GNUC_MINOR__ == 4
+#undef DMAR
+#define DMAR(a1,a2,a3,d,r) (r)=dmar(a1,a2,a3,d);
+#endif

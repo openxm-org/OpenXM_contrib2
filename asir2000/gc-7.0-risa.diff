@@ -1,69 +1,67 @@
-%% $OpenXM: OpenXM_contrib2/asir2000/gc-7.0-risa.diff,v 1.3 2009/03/10 16:36:15 ohara Exp $
-%% This patch is based on gc6.5-risa.diff.
-diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
---- gc-7.0.orig/alloc.c	2007-06-22 11:40:30.000000000 +0900
-+++ gc-7.0/alloc.c	2007-11-09 17:29:38.000000000 +0900
-@@ -100,6 +100,7 @@
- GC_bool GC_dont_expand = 0;
+diff -urN gc-7.2alpha4.org/alloc.c gc-7.2alpha4/alloc.c
+--- gc-7.2alpha4.org/alloc.c	2010-01-04 16:54:50.892052700 -0500
++++ gc-7.2alpha4/alloc.c	2010-01-04 17:03:29.952052700 -0500
+@@ -117,6 +117,7 @@
+ #endif
  
- word GC_free_space_divisor = 3;
+ word GC_free_space_divisor = GC_FREE_SPACE_DIVISOR;
 +word GC_free_space_numerator = 1;
  
- extern GC_bool GC_collection_in_progress();
- 		/* Collection is in progress, or was abandoned.	*/
-@@ -160,9 +161,9 @@
-     scan_size = 2 * GC_composite_in_use + GC_atomic_in_use
+ GC_INNER int GC_CALLBACK GC_never_stop_func(void)
+ {
+@@ -222,9 +223,9 @@
+     scan_size = 2 * GC_composite_in_use + GC_atomic_in_use / 4
  		+ total_root_size;
-     if (TRUE_INCREMENTAL) {
+     if (GC_incremental) {
 -        return scan_size / (2 * GC_free_space_divisor);
 +        return scan_size * GC_free_space_numerator / (2 * GC_free_space_divisor);
      } else {
 -        return scan_size / GC_free_space_divisor;
-+        return scan_size * GC_free_space_numerator / GC_free_space_divisor;
++        return scan_size * GC_free_space_numerator / (2 * GC_free_space_divisor);
      }
  }
  
-@@ -451,6 +452,7 @@
- #   if defined(REGISTER_LIBRARIES_EARLY)
-         GC_cond_register_dynamic_libraries();
+@@ -581,6 +582,7 @@
+         GET_TIME(start_time);
  #   endif
+ 
 +	GC_timerstart();
      STOP_WORLD();
-     IF_THREADS(GC_world_stopped = TRUE);
-     if (GC_print_stats) {
-@@ -479,6 +481,7 @@
- 		    GC_deficit = i; /* Give the mutator a chance. */
-                     IF_THREADS(GC_world_stopped = FALSE);
+ #   ifdef THREAD_LOCAL_ALLOC
+       GC_world_stopped = TRUE;
+@@ -613,6 +615,7 @@
+                       GC_world_stopped = FALSE;
+ #                   endif
  	            START_WORLD();
 +				GC_timerstop();
  	            return(FALSE);
  	    }
  	    if (GC_mark_some((ptr_t)(&dummy))) break;
-@@ -503,6 +506,7 @@
-     
-     IF_THREADS(GC_world_stopped = FALSE);
+@@ -635,6 +638,7 @@
+       GC_world_stopped = FALSE;
+ #   endif
      START_WORLD();
 +    GC_timerstop();
+ #   ifndef SMALL_CONFIG
      if (GC_print_stats) {
-       GET_TIME(current_time);
-       GC_log_printf("World-stopped marking took %lu msecs\n",
-@@ -603,6 +607,7 @@
+         unsigned long time_diff;
+@@ -784,6 +788,7 @@
          /* FIXME: Add more checks.				*/
          GC_check_tls();
  #   endif
 +	GC_timerstart();
  
+ #   ifndef SMALL_CONFIG
      if (GC_print_stats)
-       GET_TIME(start_time);
-@@ -722,6 +727,7 @@
- 	              MS_TIME_DIFF(finalize_time,start_time),
+@@ -917,6 +922,7 @@
  	              MS_TIME_DIFF(done_time,finalize_time));
      }
+ #   endif
 +    GC_timerstop();
  }
  
- /* Externally callable routine to invoke full, stop-world collection */
-@@ -908,6 +914,9 @@
+ /* If stop_func == 0 then GC_default_stop_func is used instead.         */
+@@ -1169,6 +1175,9 @@
          if (GC_collect_at_heapsize < GC_heapsize /* wrapped */)
           GC_collect_at_heapsize = (word)(-1);
  #     endif
@@ -73,10 +71,10 @@ diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
      return(TRUE);
  }
  
-@@ -991,6 +1000,22 @@
+@@ -1278,6 +1287,21 @@
+     GC_bool retry = FALSE;
      
      if (gran == 0) return(0);
- 
 +#if defined(_MSC_VER)
 +    {
 +#include <signal.h>
@@ -92,36 +90,34 @@ diff -urN gc-7.0.orig/alloc.c gc-7.0/alloc.c
 +        }
 +    }
 +#endif
-+
+ 
      while (*flh == 0) {
        ENTER_GC();
-       /* Do our share of marking work */
-diff -urN gc-7.0.orig/reclaim.c gc-7.0/reclaim.c
---- gc-7.0.orig/reclaim.c	2007-06-07 09:24:17.000000000 +0900
-+++ gc-7.0/reclaim.c	2007-11-09 17:32:31.000000000 +0900
-@@ -577,7 +577,7 @@
+diff -urN gc-7.2alpha4.org/reclaim.c gc-7.2alpha4/reclaim.c
+--- gc-7.2alpha4.org/reclaim.c	2010-01-04 17:04:36.987052700 -0500
++++ gc-7.2alpha4/reclaim.c	2010-01-04 17:06:56.439052700 -0500
+@@ -572,6 +572,7 @@
  	
      if (GC_print_stats == VERBOSE)
  	GET_TIME(start_time);
--    
 +    GC_timerstart();    
+ #   endif
+ 
      for (kind = 0; kind < GC_n_kinds; kind++) {
-     	ok = &(GC_obj_kinds[kind]);
-     	rlp = ok -> ok_reclaim_list;
-@@ -599,6 +599,7 @@
-             }
+@@ -596,6 +597,7 @@
          }
      }
+ #   ifndef SMALL_CONFIG
 +    GC_timerstop();
      if (GC_print_stats == VERBOSE) {
  	GET_TIME(done_time);
  	GC_log_printf("Disposing of reclaim lists took %lu msecs\n",
-diff -urN gc-7.1.orig/misc.c gc-7.1/misc.c
---- gc-7.1.orig/misc.c	2008-02-21 07:20:52.000000000 +0900
-+++ gc-7.1/misc.c	2009-03-04 14:01:58.000000000 +0900
-@@ -122,6 +122,93 @@
- long GC_large_alloc_warn_suppressed = 0;
- 	/* Number of warnings suppressed so far.	*/
+diff -urN gc-7.2alpha4.org/misc.c gc-7.2alpha4/misc.c
+--- gc-7.2alpha4.org/misc.c	2010-01-04 17:07:45.244052700 -0500
++++ gc-7.2alpha4/misc.c	2010-01-04 17:13:03.397052700 -0500
+@@ -128,6 +128,93 @@
+ GC_INNER long GC_large_alloc_warn_interval = GC_LARGE_ALLOC_WARN_INTERVAL;
+                         /* Interval between unsuppressed warnings.      */
  
 +#include <time.h>
 +
@@ -211,5 +207,5 @@ diff -urN gc-7.1.orig/misc.c gc-7.1/misc.c
 +}
 +
  /*ARGSUSED*/
- void * GC_default_oom_fn(size_t bytes_requested)
+ STATIC void * GC_CALLBACK GC_default_oom_fn(size_t bytes_requested)
  {
