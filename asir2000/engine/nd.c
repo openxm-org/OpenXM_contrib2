@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.189 2010/05/06 09:22:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.190 2010/07/14 04:36:59 noro Exp $ */
 
 #include "nd.h"
 
@@ -4928,16 +4928,17 @@ EPOS nd_create_epos(struct order_spec *ord)
 
 /* external interface */
 
-void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
+void nd_nf_p(Obj f,LIST g,LIST v,int m,struct order_spec *ord,Obj *rp)
 {
     NODE t,in0,in;
-    ND nd,nf;
-    NDV ndv;
+    ND ndf,nf;
+    NDV ndvf;
     VL vv,tv;
-    int stat,nvar,max,e;
+    int stat,nvar,max,mrank;
     union oNDC dn;
     Q cont;
     P pp;
+    LIST ppl;
 
     if ( !f ) {
         *rp = 0;
@@ -4946,47 +4947,48 @@ void nd_nf_p(P f,LIST g,LIST v,int m,struct order_spec *ord,P *rp)
     pltovl(v,&vv);
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
 
-    /* get the degree bound */
-    for ( t = BDY(g), max = 1; t; t = NEXT(t) )
-        for ( tv = vv; tv; tv = NEXT(tv) ) {
-            e = getdeg(tv->v,(P)BDY(t));
-            max = MAX(e,max);
-        }
-    for ( tv = vv; tv; tv = NEXT(tv) ) {
-        e = getdeg(tv->v,f);
-        max = MAX(e,max);
-    }
+    /* max=65536 implies nd_bpe=32 */
+    max = 65536; 
 
+	nd_module = 0;
+	/* nd_module will be set if ord is a module ordering */
     nd_init_ord(ord);
     nd_setup_parameters(nvar,max);
-
+    if ( nd_module && OID(f) != O_LIST )
+        error("nd_nf_p : the first argument must be a list");
+	if ( nd_module ) mrank = length(BDY((LIST)f));
     /* conversion to ndv */
     for ( in0 = 0, t = BDY(g); t; t = NEXT(t) ) {
         NEXTNODE(in0,in);
-        ptozp((P)BDY(t),1,&cont,&pp);
-        BDY(in) = (pointer)ptondv(CO,vv,pp);
+        if ( nd_module ) {
+          if ( !BDY(t) || OID(BDY(t)) != O_LIST 
+               || length(BDY((LIST)BDY(t))) != mrank )
+              error("nd_nf_p : inconsistent basis element");
+          if ( !m ) pltozpl((LIST)BDY(t),&cont,&ppl);
+          else ppl = (LIST)BDY(t);
+          BDY(in) = (pointer)pltondv(CO,vv,ppl);
+        } else {
+          if ( !m ) ptozp((P)BDY(t),1,&cont,&pp);
+          else pp = (P)BDY(t);
+          BDY(in) = (pointer)ptondv(CO,vv,pp);
+        }
         if ( m ) ndv_mod(m,(NDV)BDY(in));
     }
-    NEXTNODE(in0,in);
-    BDY(in) = (pointer)ptondv(CO,vv,f);
-    if ( m ) ndv_mod(m,(NDV)BDY(in));
-    NEXT(in) = 0;
+    if ( in0 ) NEXT(in) = 0;
+
+    if ( nd_module ) ndvf = pltondv(CO,vv,(LIST)f);
+    else ndvf = ptondv(CO,vv,(P)f);
+    if ( m ) ndv_mod(m,ndvf);
+    ndf = (pointer)ndvtond(m,ndvf);
 
     /* dont sort, dont removecont */
     ndv_setup(m,0,in0,1,1);
-    nd_psn--;
     nd_scale=2;
-    while ( 1 ) {
-        nd = (pointer)ndvtond(m,nd_ps[nd_psn]);
-        stat = nd_nf(m,0,nd,nd_ps,1,0,&nf);
-        if ( !stat ) {
-            nd_psn++;
-            nd_reconstruct(0,0);
-            nd_psn--;
-        } else
-            break;
-    }
-    *rp = ndvtop(m,CO,vv,ndtondv(m,nf));
+    stat = nd_nf(m,0,ndf,nd_ps,1,0,&nf);
+    if ( !stat )
+        error("nd_nf_p : exponent too large");
+    if ( nd_module ) *rp = (Obj)ndvtopl(m,CO,vv,ndtondv(m,nf),mrank);
+    else *rp = (Obj)ndvtop(m,CO,vv,ndtondv(m,nf));
 }
 
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r)
