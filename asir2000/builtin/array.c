@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.58 2009/03/03 10:04:10 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.59 2009/03/25 07:06:30 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -154,6 +154,7 @@ int comp_obj(Obj *a,Obj *b)
 
 static FUNC generic_comp_obj_func;
 static NODE generic_comp_obj_arg;
+static NODE generic_comp_obj_option;
 
 int generic_comp_obj(Obj *a,Obj *b)
 {
@@ -161,7 +162,7 @@ int generic_comp_obj(Obj *a,Obj *b)
 	
 	BDY(generic_comp_obj_arg)=(pointer)(*a);
 	BDY(NEXT(generic_comp_obj_arg))=(pointer)(*b);
-	r = (Q)bevalf(generic_comp_obj_func,generic_comp_obj_arg);
+	r = (Q)bevalf_with_opts(generic_comp_obj_func,generic_comp_obj_arg,generic_comp_obj_option);
 	if ( !r )
 		return 0;
 	else
@@ -208,7 +209,8 @@ void Pqsort(NODE arg,LIST *rp)
 			func = (FUNC)v->priv;
 		}
 		generic_comp_obj_func = func;
-		MKNODE(n,0,0); MKNODE(generic_comp_obj_arg,0,n);	
+		MKNODE(n,0,0); MKNODE(generic_comp_obj_arg,0,n);
+		generic_comp_obj_option = current_option;
 		qsort(BDY(vect),vect->len,sizeof(Obj),(int (*)(const void *,const void *))generic_comp_obj);
 	}
     if (OID(t) == O_LIST) {
