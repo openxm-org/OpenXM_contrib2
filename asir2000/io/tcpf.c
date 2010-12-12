@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.57 2010/04/23 04:44:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.58 2010/09/01 08:01:09 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -64,6 +64,7 @@
 #include <process.h>
 #endif
 
+#define INIT_TAB_SIZ 64
 #define OX_XTERM "ox_xterm"
 
 #if !defined(_PA_RISC1_1)
@@ -471,7 +472,7 @@ void Pregister_server(NODE arg,Q *rp)
 	}
 
 	/* register server to the server list */
-	ind = register_server(use_unix,cn,sn);
+	ind = register_server(use_unix,cn,sn,-1);
 
 	if ( ox_exchange_mathcap ) {
 		/* request remote mathcap */
@@ -613,7 +614,26 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 	char server_port_str[BUFSIZ];
 	Obj obj;
 	MATHCAP server_mathcap;
+    Q value;
+    char *key;
+    int fd=-1;
+    NODE opt,n0;
 
+    if ( current_option ) {
+        for ( opt = current_option; opt; opt = NEXT(opt) ) {
+            n0 = BDY((LIST)BDY(opt));
+            key = BDY((STRING)BDY(n0));
+            value = (Q)BDY(NEXT(n0));
+            if ( !strcmp(key,"fd") && value ) {
+                fd = QTOS(value);
+                break;
+            }
+        }
+    }
+    if (!available_mcindex(fd)) {
+        STOQ(-1,*rp);
+        return;
+    }
 #if !defined(VISUAL)
 	if ( use_unix && !find_executable("xterm") ) use_x = 0;
 #endif
@@ -656,7 +676,7 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 	}
 
 	/* register server to the server list */
-	ind = register_server(use_unix,cn,sn);
+	ind = register_server(use_unix,cn,sn,fd);
 
 	if ( ox_exchange_mathcap ) {
 		/* request remote mathcap */
@@ -959,22 +979,55 @@ void ox_launch_main(int with_x,NODE arg,Obj *p)
 	*p = (Obj)ret;
 }
 
-int register_server(int af_unix,int m,int c)
+void extend_mctab(int bound)
+{
+	int s,i,n;
+	struct m_c *t;
+    if ( !m_c_tab ) {
+        n = (bound/INIT_TAB_SIZ + 1)*INIT_TAB_SIZ;
+        t = (struct m_c *)MALLOC_ATOMIC(n*sizeof(struct m_c));
+        for ( i = m_c_s; i < n; i++ ) {
+            t[i].af_unix = 0;
+            t[i].m = t[i].c = -1;
+        }
+        m_c_s = n; m_c_tab = t;
+    }else if (bound >= m_c_s) {
+        n = (bound/INIT_TAB_SIZ + 1)*INIT_TAB_SIZ;
+        t = (struct m_c *)MALLOC_ATOMIC(n*sizeof(struct m_c));
+        bzero((void *)t,s);
+        bcopy((void *)m_c_tab,(void *)t,m_c_s*sizeof(struct m_c));
+        for ( i = m_c_s; i < n; i++ ) {
+            t[i].af_unix = 0;
+            t[i].m = t[i].c = -1;
+        }
+        m_c_s = n; m_c_tab = t;
+    }else {
+        return;
+    }
+}
+
+int available_mcindex(int ind)
+{
+	if (ind < 0) return 1; 
+	extend_mctab(ind);
+	return m_c_tab[ind].m<0 && m_c_tab[ind].c<0;
+}
+
+int register_server(int af_unix,int m,int c,int ind)
 {
 	int s,i;
 	struct m_c *t;
-#define INIT_TAB_SIZ 64
-
 	if ( c < 0 )
 		return -1;
-	if ( !m_c_tab ) {
-		s = INIT_TAB_SIZ*sizeof(struct m_c);
-		m_c_tab = (struct m_c *)MALLOC_ATOMIC(s);
-		for ( i = 0; i < INIT_TAB_SIZ; i++ ) {
-			m_c_tab[i].af_unix = 0;
-			m_c_tab[i].m = m_c_tab[i].c = -1;
+	extend_mctab( (ind<0)? 0: ind );
+	if(ind >= 0) {
+		if (m_c_tab[ind].m<0 && m_c_tab[ind].c<0) {
+			m_c_tab[ind].m = m; m_c_tab[ind].c = c;
+			m_c_tab[ind].af_unix = af_unix;
+			if (ind>=m_c_i) m_c_i = ind+1;
+			return ind;
 		}
-		m_c_s = INIT_TAB_SIZ;
+		return -1;
 	}
 #if !defined(MPI)
 	for ( i = 0; i < m_c_i; i++ )
