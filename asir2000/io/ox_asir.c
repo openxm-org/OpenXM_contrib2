@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.66 2008/11/27 08:27:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.67 2010/04/23 04:44:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -122,7 +122,7 @@ void ox_mpi_master_init() {
 		/* ordering information is not exchanged */
 		/* idx should be equal to i */
 		idx = get_iofp(i,0,0);
-		register_server(0,idx,idx);
+		register_server(0,idx,idx,-1);
 	}
 }
 
@@ -135,7 +135,7 @@ void ox_mpi_slave_init() {
 		/* ordering information is not exchanged */
 		/* idx should be equal to i */
 		idx = get_iofp(i,0,0);
-		register_server(0,idx,idx);
+		register_server(0,idx,idx,-1);
 	}
 	asir_OperandStackSize = BUFSIZ;
 	asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));
@@ -1081,7 +1081,7 @@ void ox_io_init() {
 	read_char(iofp[0].in,&rc);
 	iofp[0].conv = c == rc ? 0 : 1;
 	/* XXX; for raw I/O */
-	register_server(0,0,0);
+	register_server(0,0,0,-1);
 }
 
 #if !defined(VISUAL)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.22 2007/02/18 05:36:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.23 2010/04/23 04:44:52 noro Exp $ 
 */
 #include "com.h"
 
@@ -306,7 +306,7 @@ void spawn_server(char *host,char *launcher,char *server,
 	int use_unix,int use_ssh,int use_x,int conn_to_serv,
 	char *control_port_str,char *server_port_str);
 void ox_launch_main(int with_x,NODE arg,Obj *p);
-int register_server(int af_unix,int m,int c);
+int register_server(int af_unix,int m,int c,int fd);
 int get_mcindex(int i);
 void shutdown_all();
 
