@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.190 2010/07/14 04:36:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.191 2010/09/27 05:05:58 noro Exp $ */
 
 #include "nd.h"
 
@@ -49,7 +49,7 @@ static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz,nd_nora;
+static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim;
 static int *nd_gbblock;
 
 NumberField get_numberfield();
@@ -1918,6 +1918,11 @@ again:
             goto again;
         } else if ( nf ) {
             if ( checkonly || gensyz ) return 0;
+			if ( nd_newelim ) {
+				if ( nd_module ) {
+					if ( MPOS(HDL(nf)) > 1 ) return 0;
+				} else if ( !(HDL(nf)[nd_exporigin] & nd_mask[0]) ) return 0;
+			}
             if ( DP_Print ) { printf("+"); fflush(stdout); }
             hc = HCU(nf);
             nd_removecont(m,nf);
@@ -2910,6 +2915,9 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
     x = f4?nd_f4(m,&perm):nd_gb(m,ishomo || homo,0,0,&perm);
+	if ( !x ) {
+		*rp = 0; return;
+	}
 	if ( !ishomo && homo ) {
 	   	/* dehomogenization */
 		for ( t = x; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
@@ -6947,6 +6955,7 @@ void parse_nd_option(NODE opt)
     Obj value;
 
     nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
+	nd_newelim = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -6968,6 +6977,7 @@ void parse_nd_option(NODE opt)
 				nd_gbblock[i++] = s+QTOS((Q)BDY(NEXT(p)))-1;
 			}
 			nd_gbblock[i] = -1;
-		}
+		} else if ( !strcmp(key,"newelim") )
+            nd_newelim = value?1:0;
     }
 }
