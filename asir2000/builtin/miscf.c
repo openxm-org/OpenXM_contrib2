@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.26 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.27 2008/08/26 16:17:03 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,6 +56,7 @@
 #endif
 
 #if defined(VISUAL)
+#include <direct.h>
 #include <stdlib.h>
 #include <windows.h>
 #else
@@ -84,10 +85,8 @@ void Ptest();
 void delete_history(int,int);
 
 struct ftab misc_tab[] = {
-#if !defined(VISUAL)
 	{"pwd",Pgetcwd,0},
 	{"chdir",Pchdir,1},
-#endif
 	{"set_secure_mode",Pset_secure_mode,-1},
 	{"set_secure_flag",Pset_secure_flag,-2},
 	{"module_list",Pmodule_list,0},
@@ -127,12 +126,16 @@ struct ftab misc_tab[] = {
 	{0,0,0},
 };
 
-#if !defined(VISUAL)
 void Pgetcwd(STRING *rp)
 {
 	char *r;
+#if defined(VISUAL)
+	char buf[_MAX_PATH];
+	_getcwd(buf, _MAX_PATH);
+#else
 	char buf[MAXPATHLEN];
 	getcwd(buf, MAXPATHLEN);
+#endif
 	r = (char *)MALLOC_ATOMIC(strlen(buf)+1);
 	strcpy(r,buf);
 	MKSTR(*rp,r);
@@ -141,10 +144,13 @@ void Pgetcwd(STRING *rp)
 void Pchdir(NODE arg, Q *rp)
 {
 	char *dir = BDY((STRING)ARG0(arg));
+#if defined(VISUAL)
+	int status = _chdir(dir);
+#else
 	int status = chdir(dir);
+#endif
 	STOQ(status,*rp);
 }
-#endif
 
 void Pset_secure_mode(NODE arg,Q *rp)
 {
