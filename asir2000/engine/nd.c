@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.192 2010/12/14 05:29:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.193 2010/12/22 09:33:57 noro Exp $ */
 
 #include "nd.h"
 
@@ -2823,7 +2823,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
 	Q jq;
     int *perm;
     EPOS oepos;
-    int obpe,oadv,ompos;
+    int obpe,oadv,ompos,cbpe;
 
     nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
@@ -2928,20 +2928,23 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
     x = ndv_reducebase(x,perm);
     if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
     x = ndv_reduceall(m,x);
+    cbpe = nd_bpe;
     if ( nd_gentrace ) { 
         tl2 = nd_alltracelist; nd_alltracelist = 0;
         ndv_check_membership(m,fd0,obpe,oadv,oepos,x);
         if ( nd_gentrace ) { 
             tl3 = nd_alltracelist; nd_alltracelist = 0; 
         } else tl3 = 0;
-        nd_gb(m,0,1,nd_gensyz?1:0,0)!=0;
+        nd_gb(m,0,1,nd_gensyz?1:0,0);
         if ( nd_gentrace && nd_gensyz ) { 
             tl4 = nd_alltracelist; nd_alltracelist = 0; 
         } else tl4 = 0;
     }
+    nd_bpe = cbpe;
+    nd_setup_parameters(nd_nvar,0);
     for ( r0 = 0, t = x; t; t = NEXT(t) ) {
         NEXTNODE(r0,r); 
-    if ( nd_module ) BDY(r) = ndvtopl(m,CO,vv,BDY(t),mrank);
+        if ( nd_module ) BDY(r) = ndvtopl(m,CO,vv,BDY(t),mrank);
         else BDY(r) = ndvtop(m,CO,vv,BDY(t));
     }
     if ( r0 ) NEXT(r) = 0;
