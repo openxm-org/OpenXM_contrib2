@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.58 2010/09/01 08:01:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.59 2010/12/12 03:20:53 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1070,7 +1070,7 @@ int get_mcindex(int i)
 
 void Pox_select(NODE arg,LIST *rp)
 {
-	int fd,n,i,index,mcind,s;
+	int fd,n,i,index,mcind,s,maxfd,minfd;
 	fd_set r,w,e;
 	NODE list,t,t1,t0;
 	Q q;
@@ -1088,6 +1088,7 @@ void Pox_select(NODE arg,LIST *rp)
 		tvp = 0;
 
 	FD_ZERO(&r); FD_ZERO(&w); FD_ZERO(&e);
+	maxfd = minfd = -1;
 	for ( t = list, t0 = 0; t; t = NEXT(t) ) {
 		index = QTOS((Q)BDY(t));
 		valid_mctab_index(index);
@@ -1096,6 +1097,8 @@ void Pox_select(NODE arg,LIST *rp)
 			MKNODE(t1,(Q)BDY(t),t0); t0 = t1;
 		} else {
 			fd = get_fd(s); FD_SET((unsigned int)fd,&r);
+			maxfd = maxfd<0 ? fd : MAX(fd,maxfd);
+			minfd = minfd<0 ? fd : MIN(fd,minfd);
 		}
 	}
 	if ( t0 ) {
@@ -1103,7 +1106,11 @@ void Pox_select(NODE arg,LIST *rp)
 	}
 
 	n = select(FD_SETSIZE,&r,&w,&e,tvp);
+#if defined(VISUAL)
+	for ( i = minfd, t = 0; n && i <= maxfd; i++ )
+#else
 	for ( i = 0, t = 0; n && i < FD_SETSIZE; i++ )
+#endif
 		if ( FD_ISSET(i,&r) ) {
 			/* index : index to iofp array */
 			index = get_index(i);
