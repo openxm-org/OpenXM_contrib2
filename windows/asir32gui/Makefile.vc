@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.1 2009/03/09 16:00:42 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.2 2009/03/17 14:58:23 ohara Exp $
 ## Makefile for Visual Studio 2008
 ##
 ## usage:
@@ -16,7 +16,7 @@ RES = asir32gui-ja.res
 ASIRGUI= asirgui.exe
 !endif
 
-CFLAGS=-nologo -MT -W3 -EHsc -Ox -D NDEBUG -D _MBCS
+CFLAGS=-nologo -MT -W3 -EHsc -Ox -D NDEBUG -D _MBCS -D _CRT_SECURE_NO_WARNINGS
 CPPFLAGS=$(CFLAGS)
 RFLAGS=-l 0x411 -d NDEBUG
 LD=link
