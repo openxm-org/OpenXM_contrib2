@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.3 2009/03/10 20:21:35 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.4 2009/03/17 13:30:28 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR= pari-2.0.17.beta\src
@@ -13,7 +13,7 @@ CPU_OBJ=
 CPU_OBJ= l0asm.obj
 !endif
 
-CFLAGS=-nologo -MT -W3 -Ox -I win32 -I $(SRCDIR)\headers -D NDEBUG -D _MBCS
+CFLAGS=-nologo -MT -W3 -Ox -I win32 -I $(SRCDIR)\headers -D NDEBUG -D _MBCS -D _CRT_SECURE_NO_WARNING
 
 LD=link
 LDFLAGS=-nologo
