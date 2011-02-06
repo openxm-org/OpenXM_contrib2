@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.22 2009/03/03 14:57:32 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.23 2010/09/01 08:01:09 noro Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -274,7 +274,7 @@ char *nolog;
 	DuplicateHandle(GetCurrentProcess(),(HANDLE)bs,
 					GetCurrentProcess(),(HANDLE *)&newbs,
 					0,TRUE,DUPLICATE_SAME_ACCESS);
-	close(bs);
+	closesocket(bs);
 	bs = newbs;
 
 	mypid = GetCurrentProcessId();

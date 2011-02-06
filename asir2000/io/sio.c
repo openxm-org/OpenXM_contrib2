@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.22 2003/03/07 03:12:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.23 2003/03/07 06:39:57 noro Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -75,6 +75,10 @@ struct IOFP iofp[MAXIOFP];
 #endif
 
 void init_socket(void);
+
+#if !defined(VISUAL)
+#define closesocket(s)   (close((s)))
+#endif
 
 int getremotesocket(int s)
 {
@@ -156,17 +160,17 @@ int try_bind_listen(int use_unix,char *port_str)
 	}
 	if (bind(service, saddr, len) < 0) {
 		perror("in bind");
-		close(service);
+		closesocket(service);
 		return -1;
 	}
 	if (getsockname(service,saddr, &len) < 0) {
 	    perror("in getsockname");
-	    close(service);
+	    closesocket(service);
 	    return -1;
 	}
 	if (listen(service, SOCKQUEUELENGTH) < 0) {
 		perror("in listen");
-		close(service);
+		closesocket(service);
 		return -1;
 	}
 	return service;
@@ -207,7 +211,7 @@ int try_accept(int af_unix,int s)
 	}
 	if ( i == 10 )
 		c = -1;
-	close(s);
+	closesocket(s);
 	return c;
 }
 
@@ -263,7 +267,7 @@ int try_connect(int use_unix,char *host,char *port_str)
 		if ( connect(s,saddr,len) >= 0 )
 			break;
 		else {
-			close(s);
+			closesocket(s);
 #if defined(VISUAL)
 			Sleep(100);
 #else
@@ -314,7 +318,7 @@ void free_iofp(int s)
 
 	r = &iofp[s];
 #if defined(VISUAL)
-	if ( r->s ) close(r->s);
+	if ( r->s ) closesocket(r->s);
 #elif !defined(MPI)
 	if ( r->in ) fclose(r->in);
 	if ( r->out ) fclose(r->out);
