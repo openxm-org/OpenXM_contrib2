@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.193 2010/12/22 09:33:57 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.194 2011/01/06 04:41:47 noro Exp $ */
 
 #include "nd.h"
 
@@ -49,7 +49,7 @@ static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim;
+static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect;
 static int *nd_gbblock;
 
 NumberField get_numberfield();
@@ -2311,6 +2311,7 @@ ND_pairs nd_newpairs( NODE g, int t )
 
     dl = DL(nd_psh[t]);
     ts = SG(nd_psh[t]) - TD(dl);
+	if ( nd_module && nd_intersect && (MPOS(dl) > 1) ) return 0;
     for ( r0 = 0, h = g; h; h = NEXT(h) ) {
         if ( nd_module && (MPOS(DL(nd_psh[(long)BDY(h)])) != MPOS(dl)) )
                 continue;
@@ -2925,6 +2926,14 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
 		nd_setup_parameters(nvar,0);
 	}
     nd_demand = 0;
+	if ( nd_module && nd_intersect ) {
+		for ( j = nd_psn-1, x = 0; j >= 0; j-- )
+			if ( MPOS(DL(nd_psh[j])) > 1 ) { 
+				MKNODE(xx,(pointer)j,x); x = xx; 
+			}
+	  conv_ilist(nd_demand,0,x,0);
+	  goto FINAL;
+	}
     x = ndv_reducebase(x,perm);
     if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
     x = ndv_reduceall(m,x);
@@ -2942,6 +2951,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
     }
     nd_bpe = cbpe;
     nd_setup_parameters(nd_nvar,0);
+FINAL:
     for ( r0 = 0, t = x; t; t = NEXT(t) ) {
         NEXTNODE(r0,r); 
         if ( nd_module ) BDY(r) = ndvtopl(m,CO,vv,BDY(t),mrank);
@@ -6958,7 +6968,7 @@ void parse_nd_option(NODE opt)
     Obj value;
 
     nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
-	nd_newelim = 0;
+	nd_newelim = 0; nd_intersect = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -6982,5 +6992,7 @@ void parse_nd_option(NODE opt)
 			nd_gbblock[i] = -1;
 		} else if ( !strcmp(key,"newelim") )
             nd_newelim = value?1:0;
+		else if ( !strcmp(key,"intersect") )
+            nd_intersect = value?1:0;
     }
 }

@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.82 2010/05/01 02:17:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.83 2010/09/27 05:05:58 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -107,6 +107,7 @@ void Pdp_compute_essential_df();
 void Pdp_get_denomlist();
 void Pdp_symb_add();
 void Pdp_mono_raddec();
+void Pdp_mono_reduce();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -268,6 +269,7 @@ struct ftab dp_supp_tab[] = {
 	{"dp_compute_last_t",Pdp_compute_last_t,5},
 	{"dp_compute_essential_df",Pdp_compute_essential_df,2},
 	{"dp_mono_raddec",Pdp_mono_raddec,2},
+	{"dp_mono_reduce",Pdp_mono_reduce,2},
 
 	{0,0,0}
 };
@@ -2691,6 +2693,29 @@ void Pdp_mono_raddec(NODE arg,LIST *rp)
 		}
 		MKLIST(*rp,r);
 	}
+}
+
+void Pdp_mono_reduce(NODE arg,LIST *rp)
+{
+	NODE t,t0,t1,r0,r;
+	int i,n;
+	DP m;
+	DP *a;
+
+	t0 = BDY((LIST)ARG0(arg));
+	t1 = BDY((LIST)ARG1(arg));
+	n = length(t0);
+	a = (DP *)MALLOC(n*sizeof(DP));
+	for ( i = 0; i < n; i++, t0 = NEXT(t0) ) a[i] = (DP)BDY(t0);
+	for ( t = t1; t; t = NEXT(t) ) {
+		m = (DP)BDY(t);
+		for ( i = 0; i < n; i++ )
+			if ( a[i] && dp_redble(a[i],m) ) a[i] = 0;
+	}
+	for ( i = n-1, r0 = 0; i >= 0; i-- )
+		if ( a[i] ) { NEXTNODE(r0,r); BDY(r) = a[i]; }
+	if ( r0 ) NEXT(r) = 0;
+	MKLIST(*rp,r0);
 }
 
 LIST remove_zero_from_list(LIST l)

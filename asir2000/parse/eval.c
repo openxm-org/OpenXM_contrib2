@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.66 2010/04/23 04:44:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.67 2010/05/24 01:59:52 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -917,6 +917,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			} else
 				opts = 0;
 			if ( !n ) {
+				current_option = opts;
 				cur_binf = f;
 				(*f->f.binf)(&val);
 			} else {
@@ -1166,6 +1167,7 @@ pointer bevalf(FUNC f,NODE a)
 	}
 	switch ( f->id ) {
 		case A_BIN:
+			current_option = 0;
 			if ( !n ) {
 				cur_binf = f;
 				(*f->f.binf)(&val);
