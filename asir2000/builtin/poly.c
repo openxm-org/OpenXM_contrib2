@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.20 2003/06/21 02:09:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.21 2003/06/24 09:49:35 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,7 +57,7 @@ void Pheadsgn();
 void Pmul_trunc(),Pquo_trunc();
 void Pumul(),Pumul_ff(),Pusquare(),Pusquare_ff(),Putmul(),Putmul_ff();
 void Pkmul(),Pksquare(),Pktmul();
-void Pord(), Pcoef0(), Pcoef(), Pdeg(), Pmindeg(), Psetmod();
+void Pord(), Premove_vars(), Pcoef0(), Pcoef(), Pdeg(), Pmindeg(), Psetmod();
 void Pcoef_gf2n();
 void getcoef(), getdeglist(), mergedeglist(), change_mvar(), restore_mvar();
 
@@ -124,6 +124,7 @@ struct ftab poly_tab[] = {
 	{"p_mag",Pp_mag,1},
 	{"maxblen",Pmaxblen,1},
 	{"ord",Pord,-1},
+	{"remove_vars",Premove_vars,1},
 	{"coef0",Pcoef0,-3},
 	{"coef",Pcoef,-3},
 	{"coef_gf2n",Pcoef_gf2n,2},
@@ -490,6 +491,40 @@ void Pord(NODE arg,LIST *listp)
 		NEXTNODE(n,tn); MKV(VR(vl),t); BDY(tn) = (pointer)t;
 	}
 	NEXT(tn) = 0; MKLIST(l,n); *listp = l;
+}
+
+void Premove_vars(NODE arg,LIST *listp)
+{
+	NODE l,nd,tnd;
+	V *v,*va;
+	int n,na,i,j;
+	VL vl,vl1;
+	P t;
+	LIST list;
+
+	asir_assert(ARG0(arg),O_LIST,"remove_vars");
+	l = BDY((LIST)ARG0(arg)); n = length(l);
+	v = (V *)ALLOCA(n*sizeof(V));
+	for ( i = 0; i < n; i++, l = NEXT(l) ) 
+		if ( !(t = (P)BDY(l)) || (OID(t) != O_P) )
+			error("ord : invalid argument");
+		else v[i] = VR(t);
+
+	for ( na = 0, vl = CO; vl; vl = NEXT(vl), na++ );
+	va = (V *)ALLOCA(na*sizeof(V));
+	for ( i = 0, vl = CO; i < na; i++, vl = NEXT(vl) ) va[i] = VR(vl);
+	for ( i = 0; i < na; i++ )
+		for ( j = 0; j < n; j++ ) if ( va[i] == v[j] ) va[i] = 0;
+	for ( vl = 0, i = na-1; i >= 0; i-- )
+		if ( va[i] ) {
+			NEWVL(vl1); VR(vl1) = va[i]; NEXT(vl1) = vl; vl = vl1;
+		}
+	CO = vl;
+	for ( nd = 0, vl = CO; vl; vl = NEXT(vl) ) {
+		NEXTNODE(nd,tnd); MKV(VR(vl),t); BDY(tnd) = (pointer)t;
+	}
+	if ( nd ) NEXT(tnd) = 0;
+	MKLIST(list,nd); *listp = list;
 }
 
 void Pcoef0(NODE arg,Obj *rp)

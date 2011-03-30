@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.42 2006/08/27 22:17:27 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.43 2007/09/17 12:47:45 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1104,16 +1104,10 @@ void adddl(int n,DL d1,DL d2,DL *dr)
 	DL dt;
 	int i;
 
-	if ( !d1->td )
-		*dr = d2;
-	else if ( !d2->td )
-		*dr = d1;
-	else {
-		*dr = dt = (DL)MALLOC_ATOMIC((n+1)*sizeof(int));
-		dt->td = d1->td + d2->td;
-		for ( i = 0; i < n; i++ )
-			dt->d[i] = d1->d[i]+d2->d[i];
-	}
+	*dr = dt = (DL)MALLOC_ATOMIC((n+1)*sizeof(int));
+	dt->td = d1->td + d2->td;
+	for ( i = 0; i < n; i++ )
+		dt->d[i] = d1->d[i]+d2->d[i];
 }
 
 /* d1 += d2 */

@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.83 2010/09/27 05:05:58 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.84 2011/02/18 02:54:48 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2634,6 +2634,7 @@ NODE arg;
 VECT *rp;
 {
 	VECT v;
+	NODE node;
 	int i,n;
 
 	if ( !arg )
@@ -2643,8 +2644,17 @@ VECT *rp;
 		current_weyl_weight_vector = 0;
 		*rp = 0;
 	} else {
-		asir_assert(ARG0(arg),O_VECT,"dp_weyl_set_weight");
-		v = (VECT)ARG0(arg);
+		if ( OID(ARG0(arg)) != O_VECT && OID(ARG0(arg)) != O_LIST )
+			error("dp_weyl_set_weight : invalid argument");
+		if ( OID(ARG0(arg)) == O_VECT )
+			v = (VECT)ARG0(arg);
+		else {
+			node = (NODE)BDY((LIST)ARG0(arg));
+			n = length(node);
+			MKVECT(v,n);
+			for ( i = 0; i < n; i++, node = NEXT(node) )
+				BDY(v)[i] = BDY(node);
+		}
 		current_weyl_weight_vector_obj = v;
 		n = v->len;
 		current_weyl_weight_vector = (int *)CALLOC(n,sizeof(int));

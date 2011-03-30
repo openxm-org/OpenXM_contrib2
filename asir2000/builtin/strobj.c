@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.119 2008/09/04 01:42:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.120 2010/04/23 06:53:30 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1436,18 +1436,23 @@ char *symbol_name(char *name)
 
 void Pget_function_name(NODE arg,STRING *rp)
 {
-		QUOTEARG qa;
-		ARF f;
-		char *opname;
+	QUOTEARG qa;
 
-		qa = (QUOTEARG)BDY(arg);
-		if ( !qa || OID(qa) != O_QUOTEARG || qa->type != A_arf )
+	qa = (QUOTEARG)BDY(arg);
+	if ( !qa || OID(qa) != O_QUOTEARG ) {
+		*rp = 0; return;
+	}
+	switch ( qa->type ) {
+		case A_arf:
+			MKSTR(*rp,((ARF)BDY(qa))->name);
+			break;
+		case A_func:
+			MKSTR(*rp,((FUNC)BDY(qa))->name);
+			break;
+		default:
 			*rp = 0;
-		else {
-			f = (ARF)BDY(qa);
-			opname = f->name;
-			MKSTR(*rp,opname);
-		}
+			break;
+	}
 }
 
 FNODE strip_paren(FNODE);
