@@ -45,10 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.6 2008/09/11 15:17:55 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.7 2009/03/16 16:43:02 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
+#include <limits.h>
 
 void Ptime(), Pcputime(), Pcurrenttime(), Ptstart(), Ptstop();
 void Pdcurrenttime();
@@ -113,24 +114,24 @@ LIST *listp;
 	Real re,rg,rr;
 	NODE a,b,w,r;
 	Q words;
-	long t;
-	int u,l;
+	size_t t;
+	unsigned int u,l;
 	N n;
 	double rtime;
 	double get_rtime();
 
 	rtime = get_rtime(); MKReal(rtime,rr);
 	t = get_allocwords();
-#if SIZEOF_LONG == 8
-	u = t>>32; l = t&(0xffffffff);
-	if ( !u ) STOQ(l,words);
-	else {
-		n = NALLOC(2); PL(n)=2; BD(n)[0] = l; BD(n)[1] = u;
-		NTOQ(n,1,words);
+	if(sizeof(size_t)>sizeof(int)) {
+		u = t>>(sizeof(int)*CHAR_BIT); l = t&(~0);
+		if ( !u ) STOQ(l,words);
+		else {
+			n = NALLOC(2); PL(n)=2; BD(n)[0] = l; BD(n)[1] = u;
+			NTOQ(n,1,words);
+		}
+	}else {
+		STOQ(t,words);
 	}
-#else
-	STOQ(t,words);
-#endif
 	get_eg(&eg); MKReal(eg.exectime,re); MKReal(eg.gctime,rg);
 	MKNODE(r,rr,0); MKNODE(w,words,r); MKNODE(a,rg,w); MKNODE(b,re,a);
 	MKLIST(*listp,b);

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.8 2009/02/06 10:11:12 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.9 2009/02/16 17:23:52 ohara Exp $ */
 
 #if defined(VISUAL)
 #include "private/gcconfig.h"
@@ -49,10 +49,10 @@ int get_heapsize()
 #define BYTES_TO_WORDS(x)   ((x)>>2)
 #endif
 
-long get_allocwords()
+size_t get_allocwords()
 {
 	size_t n = GC_get_total_bytes();
-	return (long)BYTES_TO_WORDS(n); /* bytes to words */
+	return BYTES_TO_WORDS(n); /* bytes to words */
 }
 
 static double asir_start_time;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.78 2009/03/27 14:42:29 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.79 2009/06/01 07:31:54 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1318,7 +1318,7 @@ void copyn(N,int,int *);
 void kmulnmain(N,N,N *);
 int qcoefp(Obj);
 int qcoefr(Obj);
-long get_allocwords(void);
+size_t get_allocwords(void);
 double get_clock(void);
 void get_eg(struct oEGT *);
 void printtime(struct oEGT *,struct oEGT *,double);
