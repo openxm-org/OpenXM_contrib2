@@ -287,7 +287,7 @@ initEmacsBindings (cft, aft)
  * Main function of front end program
  */
 CHAR *
-getline()
+mygetline()
 {
     int c;
     CHAR *execute_command, *check_alias();

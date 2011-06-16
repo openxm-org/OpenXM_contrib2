@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.19 2006/11/09 15:54:35 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.20 2006/11/15 01:28:44 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -235,13 +235,13 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 	}
 	if ( is_memory ) {
 		MKSTR(fname,"memory_plot");
-		arg = mknode(7,s_id,fname,poly,xrange,yrange,0,geom);
+		arg = mknode(7,s_id,fname,poly,xrange,yrange,NULLP,geom);
 		Pox_rpc(arg,&t);
 		arg = mknode(1,s_id);
 		Pox_pop_cmo(arg,rp);
 	} else {
 		MKSTR(fname,"plot");
-		arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
+		arg = mknode(8,s_id,fname,poly,xrange,yrange,NULLP,geom,wname);
 		Pox_rpc(arg,&t);
 		*rp = (Obj)s_id;
 	}
@@ -481,13 +481,13 @@ void plot_main(NODE arg,int is_memory,Obj *rp)
 	}
 	if ( is_memory ) {
 		MKSTR(fname,"memory_plot");
-		arg = mknode(7,s_id,fname,poly,xrange,0,0,geom);
+		arg = mknode(7,s_id,fname,poly,xrange,NULLP,NULLP,geom);
 		Pox_rpc(arg,&t);
 		arg = mknode(1,s_id);
 		Pox_pop_cmo(arg,rp);
 	} else {
 		MKSTR(fname,"plot");
-		arg = mknode(8,s_id,fname,poly,xrange,0,0,geom,wname);
+		arg = mknode(8,s_id,fname,poly,xrange,NULLP,NULLP,geom,wname);
 		Pox_rpc(arg,&t);
 		*rp = (Obj)s_id;
 	}
@@ -571,7 +571,7 @@ void Ppolarplot(NODE arg,Q *rp)
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
 	MKSTR(fname,"plot");
-	arg = mknode(8,s_id,fname,poly,0,0,zrange,geom,wname);
+	arg = mknode(8,s_id,fname,poly,NULLP,NULLP,zrange,geom,wname);
 	Pox_rpc(arg,&t);
 	*rp = s_id;
 }

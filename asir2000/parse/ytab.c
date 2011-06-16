@@ -2022,7 +2022,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 160 "parse.y"
-    { (yyval.s) = mksnode(1,S_RETURN,0); }
+    { (yyval.s) = mksnode(1,S_RETURN,NULLP); }
     break;
 
   case 20:
@@ -2036,7 +2036,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 164 "parse.y"
-    { (yyval.s) = mksnode(4,S_IFELSE,(yyvsp[(1) - (5)].i),(yyvsp[(3) - (5)].n),(yyvsp[(5) - (5)].s),0); (yyvsp[(5) - (5)].s)?(yyval.s)->ln=(yyvsp[(5) - (5)].s)->ln:0; NOPR; }
+    { (yyval.s) = mksnode(4,S_IFELSE,(yyvsp[(1) - (5)].i),(yyvsp[(3) - (5)].n),(yyvsp[(5) - (5)].s),NULLP); (yyvsp[(5) - (5)].s)?(yyval.s)->ln=(yyvsp[(5) - (5)].s)->ln:0; NOPR; }
     break;
 
   case 22:
@@ -2057,7 +2057,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 170 "parse.y"
-    { (yyval.s) = mksnode(5,S_FOR,(yyvsp[(1) - (5)].i),0,(yyvsp[(3) - (5)].n),0,(yyvsp[(5) - (5)].s)); (yyvsp[(5) - (5)].s)?(yyval.s)->ln=(yyvsp[(5) - (5)].s)->ln:0; NOPR; }
+    { (yyval.s) = mksnode(5,S_FOR,(yyvsp[(1) - (5)].i),NULLP,(yyvsp[(3) - (5)].n),NULLP,(yyvsp[(5) - (5)].s)); (yyvsp[(5) - (5)].s)?(yyval.s)->ln=(yyvsp[(5) - (5)].s)->ln:0; NOPR; }
     break;
 
   case 25:
@@ -2078,7 +2078,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 176 "parse.y"
-    { (yyval.s) = mksnode(3,S_PFDEF,(yyvsp[(2) - (6)].p),(yyvsp[(4) - (6)].n),0); NOPR; }
+    { (yyval.s) = mksnode(3,S_PFDEF,(yyvsp[(2) - (6)].p),(yyvsp[(4) - (6)].n),NULLP); NOPR; }
     break;
 
   case 28:
@@ -2128,7 +2128,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 190 "parse.y"
-    { CUR_MODULE = 0; MPVS = 0; (yyval.s) = mksnode(1,S_MODULE,0); NOPR; }
+    { CUR_MODULE = 0; MPVS = 0; (yyval.s) = mksnode(1,S_MODULE,NULLP); NOPR; }
     break;
 
   case 34:
@@ -2343,11 +2343,11 @@ yyreduce:
 
 				searchf(noargsysf,(yyvsp[(1) - (1)].p),&f);
 				if ( f )
-					 (yyval.f) = mkfnode(2,I_FUNC,f,0);
+					 (yyval.f) = mkfnode(2,I_FUNC,f,NULLP);
 				else {
 					searchc((yyvsp[(1) - (1)].p),&f);
 					if ( f )
-						(yyval.f) = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,0));
+						(yyval.f) = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,NULLP));
 					else {
 						gen_searchf_searchonly((yyvsp[(1) - (1)].p),(FUNC *)&f);
 						if ( f )
@@ -2429,7 +2429,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 319 "parse.y"
     {
-				(yyval.f) = mkfnode(2,I_GETOPT,0);
+				(yyval.f) = mkfnode(2,I_GETOPT,NULLP);
 			}
     break;
 
@@ -2450,7 +2450,7 @@ yyreduce:
 				searchf(parif,(yyvsp[(3) - (4)].p),(FUNC *)&val);
 				if ( !val )
 					mkparif((yyvsp[(3) - (4)].p),(FUNC *)&val);
-				(yyval.f) = mkfnode(2,I_FUNC,val,0);
+				(yyval.f) = mkfnode(2,I_FUNC,val,NULLP);
 			}
     break;
 
@@ -2471,7 +2471,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 341 "parse.y"
     {
-				(yyval.f) = mkfnode(2,I_IFUNC,(yyvsp[(3) - (7)].f),mkfnode(1,I_LIST,(yyvsp[(6) - (7)].n)),0);
+				(yyval.f) = mkfnode(2,I_IFUNC,(yyvsp[(3) - (7)].f),mkfnode(1,I_LIST,(yyvsp[(6) - (7)].n)),NULLP);
 			}
     break;
 
@@ -2491,14 +2491,14 @@ yyreduce:
 #line 350 "parse.y"
     {
 				if ( main_parser || allow_create_var )
-					t = mkfnode(2,I_PVAR,makepvar((yyvsp[(1) - (4)].p)),0);
+					t = mkfnode(2,I_PVAR,makepvar((yyvsp[(1) - (4)].p)),NULLP);
 				else {
 					ind = searchpvar((yyvsp[(1) - (4)].p));
 					if ( ind == -1 ) {
 						fprintf(stderr,"%s : no such variable.\n",(yyvsp[(1) - (4)].p));
 						YYABORT;
 					} else
-						t = mkfnode(2,I_PVAR,ind,0);
+						t = mkfnode(2,I_PVAR,ind,NULLP);
 				}
 				(yyval.f) = mkfnode(2,I_IFUNC,t,mkfnode(1,I_LIST,(yyvsp[(3) - (4)].n)));
 			}
@@ -2531,14 +2531,14 @@ yyreduce:
 #line 370 "parse.y"
     { 
 				if ( main_parser || allow_create_var )
-					(yyval.f) = mkfnode(2,I_PVAR,makepvar((yyvsp[(1) - (1)].p)),0);
+					(yyval.f) = mkfnode(2,I_PVAR,makepvar((yyvsp[(1) - (1)].p)),NULLP);
 				else {
 					ind = searchpvar((yyvsp[(1) - (1)].p));
 					if ( ind == -1 ) {
 						fprintf(stderr,"%s : no such variable.\n",(yyvsp[(1) - (1)].p));
 						YYABORT;
 					} else
-						(yyval.f) = mkfnode(2,I_PVAR,ind,0);
+						(yyval.f) = mkfnode(2,I_PVAR,ind,NULLP);
 				}
 			}
     break;
@@ -2576,7 +2576,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 398 "parse.y"
-    { (yyval.f) = mkfnode(3,I_CAST,structtoindex((yyvsp[(3) - (5)].p)),(yyvsp[(5) - (5)].f),0); }
+    { (yyval.f) = mkfnode(3,I_CAST,structtoindex((yyvsp[(3) - (5)].p)),(yyvsp[(5) - (5)].f),NULLP); }
     break;
 
   case 85:
@@ -2702,7 +2702,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 434 "parse.y"
-    { (yyval.f) = mkfnode(3,I_LOP,(yyvsp[(1) - (2)].i),(yyvsp[(2) - (2)].f),0); }
+    { (yyval.f) = mkfnode(3,I_LOP,(yyvsp[(1) - (2)].i),(yyvsp[(2) - (2)].f),NULLP); }
     break;
 
   case 103:

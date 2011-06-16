@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.78 2010/08/01 08:44:15 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.79 2010/08/03 04:34:44 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -167,7 +167,7 @@ void glob_init() {
 	reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
 	reallocarray((char **)&PPVS->va,(int *)&PPVS->asize,(int *)&PPVS->n,(int)sizeof(struct oPV));
 	CPVS = GPVS;
-	MKNODE(ONENODE,mkfnode(1,I_FORMULA,ONE),0);
+	MKNODE(ONENODE,mkfnode(1,I_FORMULA,ONE),NULLP);
 	OID(F_TRUE)=O_F; FOP(F_TRUE)=AL_TRUE; F_TRUE->arg.dummy = 0;
 	OID(F_FALSE)=O_F; FOP(F_FALSE)=AL_FALSE; F_FALSE->arg.dummy = 0;
 	OID(Symbol_grlex) = O_SYMBOL; Symbol_grlex->name = "@grlex"; 

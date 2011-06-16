@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.18 2006/02/28 08:36:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.19 2006/12/05 01:47:08 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -443,7 +443,7 @@ void setbp(char *p)
 				default:
 					ln = (*snp)->ln; break;
 			}
-			*snp = (SNODE)mksnode(3,S_BP,*snp,cond,0);
+			*snp = (SNODE)mksnode(3,S_BP,*snp,cond,NULLP);
 			(*snp)->ln = ln;
 			if ( cond ) {
 				bpt[bpi].cond = (char *)MALLOC(strlen(savp)+1);
@@ -858,7 +858,7 @@ void showpos_to_list(LIST *r)
 			/* builtin : [0,0,name] */
 			MKSTR(null,"");
 			MKSTR(name,cur_binf->name);
-			t = mknode(3,null,name,0);
+			t = mknode(3,null,name,NULLP);
 			MKLIST(l,t);
 			MKNODE(u1,l,0); u = u1;
 		}

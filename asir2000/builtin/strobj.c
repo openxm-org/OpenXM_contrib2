@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.120 2010/04/23 06:53:30 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.121 2011/03/30 02:43:18 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -3106,7 +3106,7 @@ FNODE fnode_node_to_nary(ARF op,NODE n)
 {
 	if ( !n ) {
 		if ( op->name[0] == '+' )
-			return mkfnode(1,I_FORMULA,0);
+			return mkfnode(1,I_FORMULA,NULLP);
 		else
 			return mkfnode(1,I_FORMULA,ONE);
 	} else if ( !NEXT(n) ) return BDY(n);
@@ -3122,14 +3122,14 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 	Obj c1,c2,c,e;
 	int l1,l,i,j;
 
-	if ( IS_ZERO(f1) || IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,0);
+	if ( IS_ZERO(f1) || IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,NULLP);
 	else if ( fnode_is_coef(f1) ) 
 		return nfnode_mul_coef((Obj)eval(f1),f2,expand);
 	else if ( fnode_is_coef(f2) ) 
 		return nfnode_mul_coef((Obj)eval(f2),f1,expand);
 
 	if ( expand && IS_NARYADD(f1) ) {
-		t = mkfnode(1,I_FORMULA,0);
+		t = mkfnode(1,I_FORMULA,NULLP);
 		for ( n1 = (NODE)FA1(f1); n1; n1 = NEXT(n1) ) {
 			t1 = nfnode_mul(BDY(n1),f2,expand);
 			t = nfnode_add(t,t1,expand);
@@ -3137,7 +3137,7 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 		return t;
 	}
 	if ( expand && IS_NARYADD(f2) ) {
-		t = mkfnode(1,I_FORMULA,0);
+		t = mkfnode(1,I_FORMULA,NULLP);
 		for ( n2 = (NODE)FA1(f2); n2; n2 = NEXT(n2) ) {
 			t1 = nfnode_mul(f1,BDY(n2),expand);
 			t = nfnode_add(t,t1,expand);
@@ -3147,7 +3147,7 @@ FNODE nfnode_mul(FNODE f1,FNODE f2,int expand)
 
 	fnode_coef_body(f1,&c1,&b1); fnode_coef_body(f2,&c2,&b2);
 	arf_mul(CO,c1,c2,&c);
-	if ( !c ) return mkfnode(1,I_FORMULA,0);
+	if ( !c ) return mkfnode(1,I_FORMULA,NULLP);
 
 
 	n1 = (NODE)FA1(to_narymul(b1)); n2 = (NODE)FA1(to_narymul(b2));
@@ -3197,7 +3197,7 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
 	Q q;
 
 	if ( IS_ZERO(f2) ) return mkfnode(1,I_FORMULA,ONE);
-	else if ( IS_ZERO(f1) ) return mkfnode(1,I_FORMULA,0);
+	else if ( IS_ZERO(f1) ) return mkfnode(1,I_FORMULA,NULLP);
 	else if ( fnode_is_coef(f1) ) {
 		if ( fnode_is_integer(f2) ) {
 			if ( fnode_is_one(f2) ) return f1;
@@ -3256,7 +3256,7 @@ FNODE fnode_expand_pwr(FNODE f,int n,int expand)
 	Q q;
 
 	if ( !n ) return mkfnode(1,I_FORMULA,ONE);
-	else if ( IS_ZERO(f) ) return mkfnode(1,I_FORMULA,0);
+	else if ( IS_ZERO(f) ) return mkfnode(1,I_FORMULA,NULLP);
 	else if ( n == 1 ) return f;
 	else {
 		switch ( expand ) {
@@ -3319,7 +3319,7 @@ FNODE nfnode_mul_coef(Obj c,FNODE f,int expand)
 	NODE n,r,r0;
 
 	if ( !c )
-		return mkfnode(I_FORMULA,0);
+		return mkfnode(1,I_FORMULA,NULLP);
 	else {
 		fnode_coef_body(f,&c1,&b1);
 		arf_mul(CO,c,c1,&c2);
@@ -3452,8 +3452,8 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
 			if ( r ) return r;
 		}
 		if ( !n1 && !n2 ) return 0;
-		h1 = n1 ? (FNODE)BDY(n1) : mkfnode(1,I_FORMULA,0);
-		h2 = n2 ? (FNODE)BDY(n2) : mkfnode(1,I_FORMULA,0);
+		h1 = n1 ? (FNODE)BDY(n1) : mkfnode(1,I_FORMULA,NULLP);
+		h2 = n2 ? (FNODE)BDY(n2) : mkfnode(1,I_FORMULA,NULLP);
 		return nfnode_comp_lex(h1,h2);
 	}
 	if ( IS_NARYMUL(f1) || IS_NARYMUL(f2) ) {
@@ -3476,9 +3476,9 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
 		fnode_base_exp(f2,&b2,&e2);
 		if ( r = nfnode_comp_lex(b1,b2) ) {
 			if ( r > 0 )
-				return nfnode_comp_lex(e1,mkfnode(1,I_FORMULA,0));
+				return nfnode_comp_lex(e1,mkfnode(1,I_FORMULA,NULLP));
 			else if ( r < 0 )
-				return nfnode_comp_lex(mkfnode(1,I_FORMULA,0),e2);
+				return nfnode_comp_lex(mkfnode(1,I_FORMULA,NULLP),e2);
 		} else return nfnode_comp_lex(e1,e2);
 	}
 				
@@ -3637,7 +3637,7 @@ int nfnode_match(FNODE f,FNODE pat,NODE *rp)
 			} else {
 				/* XXX : I_FUNC_HEAD is a dummy id to pass FUNC */
 				fh = mkfnode(1,I_FUNC_HEAD,FA0(f));
-				m = mknode(1,mknode(2,FA0((FNODE)FA0(pat)),fh),0);
+				m = mknode(1,mknode(2,FA0((FNODE)FA0(pat)),fh),NULLP);
 			}
 			/* FA1(f) and FA1(pat) are I_LIST */
 			fa = (NODE)FA0((FNODE)FA1(f));

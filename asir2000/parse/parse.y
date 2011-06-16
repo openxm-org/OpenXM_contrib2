@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.32 2005/09/30 01:35:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.33 2008/09/01 06:20:33 noro Exp $ 
 */
 %{
 #define malloc(x) GC_malloc(x)
@@ -157,23 +157,23 @@ stat 	: tail
 		| CONTINUE tail
 			{ $$ = mksnode(0,S_CONTINUE); }
 		| RETURN tail
-			{ $$ = mksnode(1,S_RETURN,0); }
+			{ $$ = mksnode(1,S_RETURN,NULLP); }
 		| RETURN expr tail
 			{ $$ = mksnode(1,S_RETURN,$2); }
 		| IF '(' node ')' stat
-			{ $$ = mksnode(4,S_IFELSE,$1,$3,$5,0); $5?$$->ln=$5->ln:0; NOPR; }
+			{ $$ = mksnode(4,S_IFELSE,$1,$3,$5,NULLP); $5?$$->ln=$5->ln:0; NOPR; }
 		| IF '(' node ')' stat ELSE stat
 			{ $$ = mksnode(4,S_IFELSE,$1,$3,$5,$7); $7?$$->ln=$7->ln:0; NOPR; }
 		| FOR '(' node ';' node ';' node ')' stat
 			{ $$ = mksnode(5,S_FOR,$1,$3,$5?$5:ONENODE,$7,$9); $9?$$->ln=$9->ln:0; NOPR; }
 		| WHILE '(' node ')' stat
-			{ $$ = mksnode(5,S_FOR,$1,0,$3,0,$5); $5?$$->ln=$5->ln:0; NOPR; }
+			{ $$ = mksnode(5,S_FOR,$1,NULLP,$3,NULLP,$5); $5?$$->ln=$5->ln:0; NOPR; }
 		| DO stat WHILE '(' node ')' tail
 			{ $$ = mksnode(3,S_DO,$1,$2,$5); NOPR; }
 		| LCASE '(' node ')' ':' '=' expr tail
 			{ $$ = mksnode(3,S_PFDEF,$1,$3,$7); NOPR; }
 		| PFDEF LCASE '(' node ')' tail
-			{ $$ = mksnode(3,S_PFDEF,$2,$4,0); NOPR; }
+			{ $$ = mksnode(3,S_PFDEF,$2,$4,NULLP); NOPR; }
 		| FDEF LCASE { mkpvs($2); } '(' { ldef = 1; } node { ldef = -1; } ')' desc '{' stats '}'
 			{
 				mkuf($2,asir_infile->name,$6,
@@ -187,7 +187,7 @@ stat 	: tail
 				$$ = mksnode(1,S_MODULE,CUR_MODULE); NOPR;
 			}
 		| MODEND tail
-			{ CUR_MODULE = 0; MPVS = 0; $$ = mksnode(1,S_MODULE,0); NOPR; }
+			{ CUR_MODULE = 0; MPVS = 0; $$ = mksnode(1,S_MODULE,NULLP); NOPR; }
 	  	| error tail
 			{ yyerrok; $$ = 0; }
 		;
@@ -265,11 +265,11 @@ pexpr	: STR
 
 				searchf(noargsysf,$1,&f);
 				if ( f )
-					 $$ = mkfnode(2,I_FUNC,f,0);
+					 $$ = mkfnode(2,I_FUNC,f,NULLP);
 				else {
 					searchc($1,&f);
 					if ( f )
-						$$ = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,0));
+						$$ = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,NULLP));
 					else {
 						gen_searchf_searchonly($1,(FUNC *)&f);
 						if ( f )
@@ -317,7 +317,7 @@ pexpr	: STR
 			}
 		| GETOPT '(' ')'
 			{
-				$$ = mkfnode(2,I_GETOPT,0);
+				$$ = mkfnode(2,I_GETOPT,NULLP);
 			}
 		| TIMER '(' expr ',' expr ',' expr ')'
 			{
@@ -328,7 +328,7 @@ pexpr	: STR
 				searchf(parif,$3,(FUNC *)&val);
 				if ( !val )
 					mkparif($3,(FUNC *)&val);
-				$$ = mkfnode(2,I_FUNC,val,0);
+				$$ = mkfnode(2,I_FUNC,val,NULLP);
 			}
 		| PARIF '(' LCASE ',' node ')'
 			{
@@ -339,7 +339,7 @@ pexpr	: STR
 			}
 		| '('  '*' expr ')' '(' node ')'
 			{
-				$$ = mkfnode(2,I_IFUNC,$3,mkfnode(1,I_LIST,$6),0);
+				$$ = mkfnode(2,I_IFUNC,$3,mkfnode(1,I_LIST,$6),NULLP);
 			}	
 		| '('  '*' expr ')' '(' node '|' optlist ')'
 			{
@@ -349,14 +349,14 @@ pexpr	: STR
 		| UCASE '(' node ')'
 			{
 				if ( main_parser || allow_create_var )
-					t = mkfnode(2,I_PVAR,makepvar($1),0);
+					t = mkfnode(2,I_PVAR,makepvar($1),NULLP);
 				else {
 					ind = searchpvar($1);
 					if ( ind == -1 ) {
 						fprintf(stderr,"%s : no such variable.\n",$1);
 						YYABORT;
 					} else
-						t = mkfnode(2,I_PVAR,ind,0);
+						t = mkfnode(2,I_PVAR,ind,NULLP);
 				}
 				$$ = mkfnode(2,I_IFUNC,t,mkfnode(1,I_LIST,$3));
 			}	
@@ -369,14 +369,14 @@ pexpr	: STR
 		| UCASE
 			{ 
 				if ( main_parser || allow_create_var )
-					$$ = mkfnode(2,I_PVAR,makepvar($1),0);
+					$$ = mkfnode(2,I_PVAR,makepvar($1),NULLP);
 				else {
 					ind = searchpvar($1);
 					if ( ind == -1 ) {
 						fprintf(stderr,"%s : no such variable.\n",$1);
 						YYABORT;
 					} else
-						$$ = mkfnode(2,I_PVAR,ind,0);
+						$$ = mkfnode(2,I_PVAR,ind,NULLP);
 				}
 			}
 		| pexpr '[' expr ']'
@@ -395,7 +395,7 @@ pexpr	: STR
 expr 	: pexpr
 			{ $$ = $1; }
 		| '(' STRUCT rawstr ')' pexpr
-			{ $$ = mkfnode(3,I_CAST,structtoindex($3),$5,0); }
+			{ $$ = mkfnode(3,I_CAST,structtoindex($3),$5,NULLP); }
 		| expr '=' expr
 			{ $$ = mkfnode(2,I_ASSPVAR,$1,$3); }
 		| expr BOPASS expr
@@ -431,7 +431,7 @@ expr 	: pexpr
 	 	| expr AND expr
 			{ $$ = mkfnode(2,I_AND,$1,$3); }
 		| FOP_NOT expr
-			{ $$ = mkfnode(3,I_LOP,$1,$2,0); }
+			{ $$ = mkfnode(3,I_LOP,$1,$2,NULLP); }
 		| expr FOP_AND expr
 			{ $$ = mkfnode(3,I_LOP,$2,$1,$3); }
 		| expr FOP_OR expr

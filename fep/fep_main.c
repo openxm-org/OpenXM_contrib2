@@ -341,7 +341,7 @@ recover_signal ()
 input_handler()
 {
     char   *inputline;
-    char   *getline ();
+    char   *mygetline ();
 
     /*
      * Get slave tty descriptor for auto-tty-fix
@@ -349,7 +349,7 @@ input_handler()
     if ((slave = open (slave_tty, O_RDONLY)) < 0)
 	perror ("open");
 
-    while (inputline = getline ()) {
+    while (inputline = mygetline ()) {
 	/*
 	 * XXX: nbyte should be greater than 0 only for ^@ input in emacs.
 	 * This solution is very ugly.. but it will takes a half day
@@ -365,7 +365,7 @@ input_handler()
 
 	/*
 	 * NOTE:
-	 * Saving command line to output buffer is done in getline().
+	 * Saving command line to output buffer is done in mygetline().
 	 * Because inputline here is converted by alias.
 	 */
 

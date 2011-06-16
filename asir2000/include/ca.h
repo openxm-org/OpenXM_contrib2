@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.79 2009/06/01 07:31:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.80 2011/05/11 06:03:53 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +89,8 @@ typedef void * pointer;
 #define bcopy(x,y,len) memcpy(y,x,len)
 #endif
 #endif
+
+#define NULLP ((void *)0)
 
 #define TODO		printf("%s: not implemented!\n", __func__)
 

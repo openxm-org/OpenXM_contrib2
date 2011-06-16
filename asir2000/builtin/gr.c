@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.65 2009/02/09 10:21:29 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.66 2010/01/31 03:25:54 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1656,7 +1656,7 @@ void reducebase_dehomo(NODE f,NODE *g)
 				NODE node;
 
 				STOQ(r[i],q);
-				node = mknode(4,0,q,0,0);
+				node = mknode(4,NULLP,q,NULLP,NULLP);
 				MKLIST(hist,node);
 				MKNODE(TraceList,hist,0);
 			}
@@ -2570,7 +2570,7 @@ void _dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *r)
 				if ( GenTrace ) {
 					/* u = cr*rp + (-cred)*shift*red */ 
 					STOQ((int)BDY(l),cq);
-					node = mknode(4,cr,cq,0,0);
+					node = mknode(4,cr,cq,NULLP,NULLP);
 					mulq(cred,rc,&rcred);
 					chsgnnum((Num)rcred,(Num *)&mrcred);
 					muldc(CO,shift,(P)mrcred,(DP *)&ARG2(node));

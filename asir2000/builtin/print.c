@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.23 2007/11/07 19:26:17 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.24 2007/11/22 05:14:48 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -165,7 +165,7 @@ void fnodetotree(FNODE f,LIST *rp)
 
 	if ( !f ) {
 		MKSTR(head,"internal");
-		n = mknode(2,head,0);
+		n = mknode(2,head,NULLP);
 		MKLIST(*rp,n);
 		return;
 	}

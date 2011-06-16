@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.56 2009/10/15 07:08:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.57 2010/05/01 02:17:49 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -651,11 +651,11 @@ void dp_sp(DP p1,DP p2,DP *rp)
 		LIST hist;
 		NODE node;
 
-		node = mknode(4,ONE,0,s1,ONE);
+		node = mknode(4,ONE,NULLP,s1,ONE);
 		MKLIST(hist,node);
 		MKNODE(TraceList,hist,0);
 
-		node = mknode(4,ONE,0,0,ONE);
+		node = mknode(4,ONE,NULLP,NULLP,ONE);
 		chsgnd(s2,(DP *)&ARG2(node));
 		MKLIST(hist,node);
 		MKNODE(node,hist,TraceList); TraceList = node;
@@ -704,11 +704,11 @@ void _dp_sp_dup(DP p1,DP p2,DP *rp)
 		LIST hist;
 		NODE node;
 
-		node = mknode(4,ONE,0,s1,ONE);
+		node = mknode(4,ONE,NULLP,s1,ONE);
 		MKLIST(hist,node);
 		MKNODE(TraceList,hist,0);
 
-		node = mknode(4,ONE,0,0,ONE);
+		node = mknode(4,ONE,NULLP,NULLP,ONE);
 		chsgnd(s2,(DP *)&ARG2(node));
 		MKLIST(hist,node);
 		MKNODE(node,hist,TraceList); TraceList = node;

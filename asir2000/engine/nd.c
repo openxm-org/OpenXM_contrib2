@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.194 2011/01/06 04:41:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.195 2011/02/18 02:54:48 noro Exp $ */
 
 #include "nd.h"
 
@@ -1933,7 +1933,7 @@ again:
             if ( nd_gentrace ) {
 				cont = ndc_div(m,hc,HCU(nf));
 				if ( m || !UNIQ(cont) ) {
-                    t = mknode(4,0,0,0,cont);
+                    t = mknode(4,NULLP,NULLP,NULLP,cont);
                     MKLIST(list,t); MKNODE(t,list,nd_tracelist);
 					nd_tracelist = t;
 				}
@@ -2135,7 +2135,7 @@ again:
                 if ( nd_gentrace ) {
 				   cont = ndc_div(0,hnfq,HCU(nfqv));
 				   if ( !UNIQ(cont) ) {
-                       t = mknode(4,0,0,0,cont);
+                       t = mknode(4,NULLP,NULLP,NULLP,cont);
                        MKLIST(list,t); MKNODE(t,list,nd_tracelist);
 					   nd_tracelist = t;
 				   }
@@ -6933,7 +6933,7 @@ void finalize_tracelist(int i,P cont)
      Q iq;
 
 	 if ( !UNIQ(cont) ) {
-         node = mknode(4,0,0,0,cont);
+         node = mknode(4,NULLP,NULLP,NULLP,cont);
          MKLIST(l,node); MKNODE(node,l,nd_tracelist);
 		 nd_tracelist = node;
 	 }
