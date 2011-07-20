@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.21 2003/06/24 09:49:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.22 2011/03/30 02:43:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -445,13 +445,28 @@ void Pp_mag(NODE arg,Q *rp)
 
 void Pord(NODE arg,LIST *listp)
 {
-	NODE n,tn;
+	NODE n,tn,p,opt;
+	char *key;
+	Obj value;
+	int overwrite=0;
 	LIST l;
 	VL vl,tvl,svl;
 	P t;
 	int i,j;
 	V *va;
 	V v;
+
+	if ( current_option ) {
+		for ( opt = current_option; opt; opt = NEXT(opt) ) {
+			p = BDY((LIST)BDY(opt));
+			key = BDY((STRING)BDY(p));
+			value = (Obj)BDY(NEXT(p));
+			if ( !strcmp(key,"overwrite") && value ) {
+				overwrite = value ? 1 : 0;
+				break;
+			}
+		}
+	}
 
 	if ( argc(arg) ) {
 		asir_assert(ARG0(arg),O_LIST,"ord");
@@ -466,21 +481,23 @@ void Pord(NODE arg,LIST *listp)
 				error("ord : invalid argument");
 			VR(tvl) = VR(t);
 		}
-		va = (V *)ALLOCA(i*sizeof(V));
-		for ( j = 0, svl = vl; j < i; j++, svl = NEXT(svl) )
-			va[j] = VR(svl);
-		for ( svl = CO; svl; svl = NEXT(svl) ) {
-			v = VR(svl);
-			for ( j = 0; j < i; j++ )
-				if ( v == va[j] )
-					break;
-			if ( j == i ) {
-				if ( !vl ) {
-					NEWVL(vl); tvl = vl;
-				} else {
-					NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+		if ( !overwrite ) {
+			va = (V *)ALLOCA(i*sizeof(V));
+			for ( j = 0, svl = vl; j < i; j++, svl = NEXT(svl) )
+				va[j] = VR(svl);
+			for ( svl = CO; svl; svl = NEXT(svl) ) {
+				v = VR(svl);
+				for ( j = 0; j < i; j++ )
+					if ( v == va[j] )
+						break;
+				if ( j == i ) {
+					if ( !vl ) {
+						NEWVL(vl); tvl = vl;
+					} else {
+						NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+					}
+					VR(tvl) = v;
 				}
-				VR(tvl) = v;
 			}
 		}
 		if ( vl )
