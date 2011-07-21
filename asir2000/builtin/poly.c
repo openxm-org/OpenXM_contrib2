@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.22 2011/03/30 02:43:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.23 2011/07/20 03:19:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -498,6 +498,11 @@ void Pord(NODE arg,LIST *listp)
 					}
 					VR(tvl) = v;
 				}
+			}
+		} else {
+			for ( svl = vl; svl; svl = NEXT(svl) ) {
+				if ( svl->v->attr == (pointer)V_PF )
+					((PFINS)svl->v->priv)->pf->ins = 0;
 			}
 		}
 		if ( vl )
