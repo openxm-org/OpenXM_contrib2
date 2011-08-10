@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.12 2004/03/26 08:25:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.13 2005/05/18 03:27:00 noro Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -97,6 +97,9 @@
 #define MODE_PLOT 2
 #define MODE_INTERACTIVE 3
 #define MODE_POLARPLOT 4
+#if defined(INTERVAL)
+#define MODE_INEQNP 5
+#endif
 
 #define DIR_X 0
 #define DIR_Y 1
@@ -197,6 +200,10 @@ struct canvas {
 extern struct canvas *canvas[];
 extern struct canvas *closed_canvas[];
 extern struct canvas *current_can;
+#if defined(INTERVAL)
+extern Pixel BackPixel;
+extern int Itvplot;
+#endif
 
 extern VL CO;
 extern int stream;
@@ -214,45 +221,74 @@ extern XFontStruct *sffs;
 #endif
 
 struct xcolorForPS {
-  unsigned long pixel;
-  double r,g,b;
-  int print;
+	unsigned long pixel;
+	double r,g,b;
+	int print;
 };
 
 /* prototypes */
-void calc(double **tab,struct canvas *can,int nox);
-double usubstrp(P p,double r);
-void qcalc(char **tab,struct canvas *can);
-void sturmseq(VL vl,P p,VECT *rp);
-void seproot(VECT s,int min,int max,int *ar);
-int numch(VECT s,Q n,Q a0);
-void usubstqp(P p,Q r,Q *v);
-void plotcalc(struct canvas *can);
-int open_canvas(NODE arg);
-int plot(NODE arg);
-int memory_plot(NODE arg,LIST *bytes);
-int plotover(NODE arg);
-int drawcircle(NODE arg);
-int draw_obj(NODE arg);
-int clear_canvas(NODE arg);
-int arrayplot(NODE arg);
-void ifplot_resize(struct canvas *can,POINT spos,POINT epos);
-void plot_resize(struct canvas *can,POINT spos,POINT epos);
-void ifplotmain(struct canvas *can);
-void qifplotmain(struct canvas *can);
-void if_print(DISPLAY *display,double **tab,struct canvas *can);
-void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes);
-void con_print(DISPLAY *display,double **tab,struct canvas *can);
-void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes);
-void qif_print(DISPLAY *display,char **tab,struct canvas *can);
-void plot_print(DISPLAY *display,struct canvas *can);
-void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color);
-void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color);
-void pline(DISPLAY *display,struct canvas *can,DRAWABLE d);
-double adjust_scale(double e,double w);
-void initmarker(struct canvas *can,char *message);
-void marker(struct canvas *can,int dir,int p);
-void define_cursor(WINDOW w,CURSOR cur);
+void calc(double **,struct canvas *,int);
+double usubstrp(P,double);
+void qcalc(char **,struct canvas *);
+void sturmseq(VL,P,VECT *);
+void seproot(VECT,int,int,int *);
+int numch(VECT,Q,Q);
+void usubstqp(P,Q,Q *);
+void plotcalc(struct canvas *);
+int open_canvas(NODE);
+int plot(NODE);
+int memory_plot(NODE,LIST *);
+int plotover(NODE);
+int drawcircle(NODE);
+int draw_obj(NODE);
+int clear_canvas(NODE);
+int arrayplot(NODE);
+#if defined(INTERVAL)
+int itvifplot(NODE);
+int itvplot1(NODE);
+int itvplot2(NODE);
+int itvplot3(NODE);
+int itvplot4(NODE);
+int objcp(NODE);
+int ineqn(NODE);
+int ineqnover(NODE);
+int ineqnand(NODE);
+int ineqnor(NODE);
+int ineqnxor(NODE);
+void ineqnmain(struct canvas *, int, int);
+void obj_op(struct canvas *, struct canvas *, int);
+void area_print(DISPLAY *, int **, struct canvas *, int);
+void itvcalc(int **, struct canvas *, int, int);
+void reccalc(P,V,V,int,int,int,int,double*,double*,int, int **, int);
+void itvplotmain(struct canvas *, int);
+void itvcalc1(int **, struct canvas *, int);
+void itvcalc2(int **, struct canvas *, int);
+void itvcalc3(int **, struct canvas *, int, int);
+void itvcalc4(int **, struct canvas *, int, int);
+void reccalc3(P,V,V,int,int,int,int,double*,double*, int, int **, int);
+void reccalc4(P,V,V,int,int,int,int,double*,double*, int, int **, int);
+void itvplotmain1(struct canvas *);
+void itvplotmain2(struct canvas *);
+void itvplotmain3(struct canvas *, int);
+void itvplotmain4(struct canvas *, int);
+#endif
+void ifplot_resize(struct canvas *,POINT,POINT);
+void plot_resize(struct canvas *,POINT,POINT);
+void ifplotmain(struct canvas *);
+void qifplotmain(struct canvas *);
+void if_print(DISPLAY *,double **,struct canvas *);
+void memory_if_print(double **,struct canvas *,BYTEARRAY *);
+void con_print(DISPLAY *,double **,struct canvas *);
+void memory_con_print(double **,struct canvas *,BYTEARRAY *);
+void qif_print(DISPLAY *,char **,struct canvas *);
+void plot_print(DISPLAY *,struct canvas *);
+void draw_point(DISPLAY *,struct canvas *,int,int,int);
+void draw_line(DISPLAY *,struct canvas *,int,int,int,int,int);
+void pline(DISPLAY *,struct canvas *,DRAWABLE);
+double adjust_scale(double,double);
+void initmarker(struct canvas *,char *);
+void marker(struct canvas *,int,int);
+void define_cursor(WINDOW,CURSOR);
 void count_and_flush();
 void flush();
 

@@ -45,12 +45,52 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.20 2006/11/09 03:41:47 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.21 2006/11/09 15:54:35 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "ifplot.h"
+
+#if defined(INTERVAL)
+/* Time message and func*/
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+
+static struct oEGT ltime;
+static double r0;
+double get_rtime();
+#if defined(ITV_TIME_CHECK)
+void tstart()
+{
+	get_eg(&ltime);
+	r0 = get_rtime();
+}
+
+void tstop(struct canvas *can)
+{
+	struct oEGT egt1;
+	double e, g, r;
+	char ts[100];
+	void popdown_warning();
+	Widget warnshell,warndialog;
+
+	get_eg(&egt1);
+	e = egt1.exectime - ltime.exectime;
+	g = egt1.gctime - ltime.gctime;
+	r = get_rtime() - r0;
+	sprintf(ts,"(%8.6f + gc %8.6f) total %8.6f \n",e,g,r);
+	create_popup(can->shell,"Message",&ts,&warnshell,&warndialog);
+	XawDialogAddButton(warndialog,"OK",popdown_warning,warnshell);
+	XtPopup(warnshell,XtGrabNone);
+	SetWM_Proto(warnshell);
+}
+#else
+#define tstart()
+#define tstop(a)
+#endif
+#endif
 
 extern JMP_BUF ox_env;
 
@@ -606,15 +646,21 @@ void ifplotmain(struct canvas *can)
 	double **tabe;
 	int i;
 
+#if defined(INTERVAL)
+	tstart();
+#endif
 	width = can->width; height = can->height;
-	tabe = (double **)ALLOCA(width*sizeof(double *));
+	tabe = (double **)ALLOCA((width+1)*sizeof(double *));
 	for ( i = 0; i < width; i++ )
-		tabe[i] = (double *)ALLOCA(height*sizeof(double));
+		tabe[i] = (double *)ALLOCA((height+1)*sizeof(double));
 	define_cursor(can->window,runningcur);
 	set_busy(can); set_selection();
 	calc(tabe,can,0); if_print(display,tabe,can);
 	reset_selection(); reset_busy(can);
 	define_cursor(can->window,normalcur);
+#if defined(INTERVAL)
+	tstop(can);
+#endif
 }
 
 void qifplotmain(struct canvas *can)
@@ -634,3 +680,551 @@ void qifplotmain(struct canvas *can)
 	reset_selection(); reset_busy(can);
 	define_cursor(can->window,normalcur);
 }
+
+#if defined(INTERVAL)
+int objcp(NODE arg)
+{
+	int idsrc, idtrg, op_code;
+	struct canvas *cansrc, *cantrg;
+
+	idsrc = QTOS((Q)ARG0(arg));
+	idtrg = QTOS((Q)ARG1(arg));
+	op_code = QTOS((Q)ARG2(arg));
+	cansrc = canvas[idsrc];
+	cantrg = canvas[idtrg];
+	obj_op(cansrc, cantrg, op_code);
+	return idsrc;
+}
+
+void obj_op(struct canvas *cansrc, struct canvas *cantrg, int op)
+{
+	XImage *imgsrc, *imgtrg;
+	int width, height, i, j;
+	unsigned long src, trg, black, white;
+
+	width = cansrc->width; height = cansrc->height;
+	imgsrc = XGetImage(display, cansrc->pix, 0, 0, width, height, -1, ZPixmap);
+	imgtrg = XGetImage(display, cantrg->pix, 0, 0, width, height, -1, ZPixmap);
+	black=GetColor(display, "black");
+	white=GetColor(display, "white");
+	flush();
+	define_cursor(cantrg->window,runningcur);
+	set_busy(cantrg); set_selection();
+	cantrg->precise = cansrc->precise;
+	cantrg->noaxis = cansrc->noaxis;
+	cantrg->noaxisb = cansrc->noaxisb;
+	cantrg->vx = cansrc->vx;
+	cantrg->vy = cansrc->vy;
+	cantrg->formula = cansrc->formula;
+	cantrg->width = cansrc->width;
+	cantrg->height = cansrc->height;
+	cantrg->xmin = cansrc->xmin;
+	cantrg->xmax = cansrc->xmax;
+	cantrg->ymin = cansrc->ymin;
+	cantrg->ymax = cansrc->ymax;
+	cantrg->zmin = cansrc->zmin;
+	cantrg->zmax = cansrc->zmax;
+	cantrg->nzstep = cansrc->nzstep;
+	cantrg->qxmin = cansrc->qxmin;
+	cantrg->qxmax = cansrc->qxmax;
+	cantrg->qymin = cansrc->qymin;
+	cantrg->qymax = cansrc->qymax;
+	cantrg->pa = cansrc->pa;
+	switch (op) {
+		case 1:/* and case */
+			for(i=0;i<width;i++)for(j=0;j<height;j++){
+				src = XGetPixel(imgsrc,i,j);
+				trg = XGetPixel(imgtrg,i,j);
+				if ( (src == black) || (trg == black) )
+					XPutPixel(imgtrg,i,j,black);
+				else if ( (src == white) || (trg == white) )
+					XPutPixel(imgtrg,i,j,white);
+				else XPutPixel(imgtrg,i,j,(src & trg));
+			}
+			break;
+		case 3:/* copy case */
+			imgtrg->data = imgsrc->data;
+			break;
+		case 6:/* xor case */
+			for(i=0;i<width;i++)for(j=0;j<height;j++){
+				src = XGetPixel(imgsrc,i,j);
+				trg = XGetPixel(imgtrg,i,j);
+				if ( (src == black) || (trg == black) )
+					XPutPixel(imgtrg,i,j,black);
+				else if ( (src == white) && (trg == white) )
+					XPutPixel(imgtrg,i,j,trg|src);
+				else if ( (src != white) && (trg != white) )
+					XPutPixel(imgtrg,i,j,white);
+				else if ( src == white )
+					XPutPixel(imgtrg,i,j,src);
+			}
+			break;
+		case 7:/* or case */
+			for(i=0;i<width;i++)for(j=0;j<height;j++){
+				src = XGetPixel(imgsrc,i,j);
+				trg = XGetPixel(imgtrg,i,j);
+				if ( (src == black) || (trg == black) )
+					XPutPixel(imgtrg,i,j,black);
+				else if (src == white)
+					XPutPixel(imgtrg,i,j,trg);
+				else if (trg == white)
+					XPutPixel(imgtrg,i,j,src);
+			}
+			break;
+		default:
+			break;
+	}
+	XPutImage(display, cantrg->pix, drawGC, imgtrg, 0, 0, 0, 0, width, height);
+	reset_selection(); reset_busy(cantrg);
+	define_cursor(cantrg->window,normalcur);
+	copy_to_canvas(cantrg);
+	count_and_flush();
+	flush();
+}
+
+int ineqn(NODE arg)
+{
+	int id, op_code, orgcolor;
+	struct canvas *can;
+	LIST xrange, yrange, geom;
+	NODE n;
+	STRING wname;
+	double **tbl;
+
+	can = canvas[id = search_canvas()];
+	orgcolor = can->color;
+	can->formula = (P)ARG0(arg);
+	can->color = QTOS((Q)ARG1(arg));
+	xrange = (LIST)ARG2(arg);
+	yrange = (LIST)ARG3(arg);
+	geom   = (LIST)ARG4(arg);
+	wname  = (STRING)ARG5(arg);
+	op_code = 3;
+	/* set canvas data */
+	can->mode = MODE_INEQNP;
+	can->width = QTOS((Q)BDY(BDY(geom)));
+	can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax);
+	n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+	can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+	can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax);
+	can->mode = MODE_INEQNP;
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	ineqnmain(can, orgcolor, op_code);
+	return id;
+}
+
+int ineqnover(NODE arg)
+{
+	int id;
+	struct canvas *can;
+	int orgcolor, op_code;
+
+	id = QTOS((Q)ARG0(arg));
+	can = canvas[id];
+	orgcolor = can->color;
+	can->formula = (P)ARG1(arg);
+	can->color   = QTOS((Q)ARG2(arg));
+	op_code      = QTOS((Q)ARG3(arg));
+	can->mode    = MODE_INEQNP;
+	ineqnmain(can, orgcolor, op_code);
+	return id;
+}
+
+void ineqnmain(struct canvas *can, int orgcolor, int op_code)
+{
+	int **mask;
+	double **tbl;
+	int i,j;
+
+	current_can = can;
+	tbl = (double **)ALLOCA((can->height+1)*sizeof(double *));
+	for ( i = 0; i <= can->height; i++ )
+		tbl[i] = (double *)ALLOCA((can->width+1)*sizeof(double));
+	mask = (int **)ALLOCA(can->height*sizeof(int *));
+	for ( i = 0; i < can->height; i++)
+		mask[i] = (int *)ALLOCA(can->width*sizeof(int));
+
+	define_cursor(can->window,runningcur);
+	set_busy(can); set_selection();
+	ineqncalc(tbl, can, 1);
+	for (j = 0; j < can->height; j++){
+		for (i = 0; i < can->width; i++){
+			if ( tbl[j][i] >= 0 ){
+				if ( (tbl[j+1][i] <= 0 ) ||
+					(tbl[j][i+1] <= 0) ||
+					(tbl[j+1][i+1] <= 0) ) mask[j][i] = 0;
+				else mask[j][i] = 1;
+			} else {
+				if( (tbl[j+1][i] >= 0) ||
+					(tbl[j][i+1] >= 0) ||
+					(tbl[j+1][i+1] >= 0) ) mask[j][i] = 0;
+				else mask[j][i] = -1;
+			}
+		}
+	}
+	area_print(display, mask, can, op_code);
+	reset_selection();
+	reset_busy(can);
+	define_cursor(can->window,normalcur);
+#if !defined(VISUAL)
+	set_drawcolor(orgcolor);
+	can->color = orgcolor;
+#endif
+	copy_to_canvas(can);
+}
+
+#if defined(INTERVAL)
+int itvifplot(NODE arg)
+{
+	int id, op_code, orgcolor;
+	struct canvas *can;
+	LIST xrange, yrange, zrange, geom;
+	NODE n;
+	STRING wname;
+	double **tbl;
+	int itvsize;
+
+	can = canvas[id = search_canvas()];
+	orgcolor = can->color;
+	can->formula = (P)ARG0(arg);
+	xrange = (LIST)ARG1(arg);
+	yrange = (LIST)ARG2(arg);
+	zrange = (LIST)ARG3(arg);
+	geom   = (LIST)ARG4(arg);
+	wname  = (STRING)ARG5(arg);
+	itvsize = QTOS((Q)ARG6(arg));
+	/* set canvas data */
+	can->mode = MODE_INEQNP;
+	can->width = QTOS((Q)BDY(BDY(geom)));
+	can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax);
+	n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+	can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+	can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax);
+	can->mode = MODE_INEQNP;
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	itvplotmain(can, itvsize);
+#if !defined(VISUAL)
+	set_drawcolor(orgcolor);
+	can->color = orgcolor;
+#endif
+	copy_to_canvas(can);
+	return id;
+}
+
+void itvplotmain(struct canvas *can, int itvsize)
+{
+	int **mask;
+	double **tbl;
+	int i,j;
+	int op_code;
+	pointer *prp;
+
+	tstart(); /* time calc */
+	op_code=3;
+	current_can = can;
+	can->color=0xff00;
+	mask = (int **)ALLOCA(can->height*sizeof(int *));
+	for ( i = 0; i < can->height; i++){
+		mask[i] = (int *)ALLOCA(can->width*sizeof(int));
+		for (j = 0; j< can->width; j++) mask[i][j] = -1;
+	}
+	define_cursor(can->window,runningcur);
+	set_busy(can); set_selection();
+	itvcalc(mask, can, 1, itvsize);
+	area_print(display, mask, can, op_code);
+	reset_selection();
+	reset_busy(can);
+	define_cursor(can->window,normalcur);
+	tstop(can); /* time calc */
+}
+
+// NORMAL type
+int itvplot1(NODE arg)
+{
+	int id, op_code, orgcolor;
+	struct canvas *can;
+	LIST xrange, yrange, zrange, geom;
+	NODE n;
+	STRING wname;
+	double **tbl;
+
+	can = canvas[id = search_canvas()];
+	orgcolor = can->color;
+	can->formula = (P)ARG0(arg);
+	xrange = (LIST)ARG1(arg);
+	yrange = (LIST)ARG2(arg);
+	zrange = (LIST)ARG3(arg);
+	geom   = (LIST)ARG4(arg);
+	wname  = (STRING)ARG5(arg);
+	/* set canvas data */
+	can->mode = MODE_INEQNP;
+	can->width = QTOS((Q)BDY(BDY(geom)));
+	can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax);
+	n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+	can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+	can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax);
+	can->mode = MODE_INEQNP;
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	itvplotmain1(can);
+#if !defined(VISUAL)
+	set_drawcolor(orgcolor);
+	can->color = orgcolor;
+#endif
+	copy_to_canvas(can);
+	return id;
+}
+
+void itvplotmain1(struct canvas *can)
+{
+	int **mask;
+	double **tbl;
+	int i,j;
+	int op_code;
+
+	op_code=3;
+	current_can = can;
+	mask = (int **)ALLOCA(can->height*sizeof(int *));
+	for ( i = 0; i < can->height; i++){
+		mask[i] = (int *)ALLOCA(can->width*sizeof(int));
+		for (j = 0; j< can->width; j++) mask[i][j] = -1;
+	}
+
+	define_cursor(can->window,runningcur);
+	set_busy(can); set_selection();
+	itvcalc1(mask, can, 1);
+	area_print(display, mask, can, op_code);
+	reset_selection();
+	reset_busy(can);
+	define_cursor(can->window,normalcur);
+}
+
+// TRANSFER type
+int itvplot2(NODE arg)
+{
+	int id, op_code, orgcolor;
+	struct canvas *can;
+	LIST xrange, yrange, zrange, geom;
+	NODE n;
+	STRING wname;
+	double **tbl;
+
+	can = canvas[id = search_canvas()];
+	orgcolor = can->color;
+	can->formula = (P)ARG0(arg);
+	xrange = (LIST)ARG1(arg);
+	yrange = (LIST)ARG2(arg);
+	zrange = (LIST)ARG3(arg);
+	geom   = (LIST)ARG4(arg);
+	wname  = (STRING)ARG5(arg);
+	/* set canvas data */
+	can->mode = MODE_INEQNP;
+	can->width = QTOS((Q)BDY(BDY(geom)));
+	can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax);
+	n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+	can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+	can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax);
+	can->mode = MODE_INEQNP;
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	itvplotmain2(can);
+#if !defined(VISUAL)
+	set_drawcolor(orgcolor);
+	can->color = orgcolor;
+#endif
+	copy_to_canvas(can);
+	return id;
+}
+
+void itvplotmain2(struct canvas *can)
+{
+	int **mask;
+	double **tbl;
+	int i,j;
+	int op_code;
+
+	op_code=3;
+	current_can = can;
+
+	mask = (int **)ALLOCA(can->height*sizeof(int *));
+	for ( i = 0; i < can->height; i++){
+		mask[i] = (int *)ALLOCA(can->width*sizeof(int));
+		for (j = 0; j< can->width; j++) mask[i][j] = -1;
+	}
+
+	define_cursor(can->window,runningcur);
+	set_busy(can); set_selection();
+	itvcalc2(mask, can, 1);
+	area_print(display, mask, can, op_code);
+	reset_selection();
+	reset_busy(can);
+	define_cursor(can->window,normalcur);
+}
+
+// RECURSION type
+int itvplot3(NODE arg)
+{
+	int id, op_code, orgcolor;
+	struct canvas *can;
+	LIST xrange, yrange, zrange, geom;
+	NODE n;
+	STRING wname;
+	double **tbl;
+	int itvsize;
+
+	can = canvas[id = search_canvas()];
+	orgcolor = can->color;
+	can->formula = (P)ARG0(arg);
+	xrange = (LIST)ARG1(arg);
+	yrange = (LIST)ARG2(arg);
+	zrange = (LIST)ARG3(arg);
+	geom   = (LIST)ARG4(arg);
+	wname  = (STRING)ARG5(arg);
+	itvsize = QTOS((Q)ARG6(arg));
+	/* set canvas data */
+	can->mode = MODE_INEQNP;
+	can->width = QTOS((Q)BDY(BDY(geom)));
+	can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax);
+	n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+	can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+	can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax);
+	can->mode = MODE_INEQNP;
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	itvplotmain3(can, itvsize);
+#if !defined(VISUAL)
+	set_drawcolor(orgcolor);
+	can->color = orgcolor;
+#endif
+	copy_to_canvas(can);
+	return id;
+}
+
+void itvplotmain3(struct canvas *can, int itvsize)
+{
+	int **mask;
+	double **tbl;
+	int i,j;
+	int op_code;
+
+	op_code=3;
+	current_can = can;
+
+	mask = (int **)ALLOCA(can->height*sizeof(int *));
+	for ( i = 0; i < can->height; i++)
+		mask[i] = (int *)ALLOCA(can->width*sizeof(int));
+
+	define_cursor(can->window,runningcur);
+	set_busy(can); set_selection();
+	itvcalc3(mask, can, 1, itvsize);
+	area_print(display, mask, can, op_code);
+	reset_selection();
+	reset_busy(can);
+	define_cursor(can->window,normalcur);
+}
+
+// RECURSION and TRANSFER type
+int itvplot4(NODE arg)
+{
+	int id, op_code, orgcolor;
+	struct canvas *can;
+	LIST xrange, yrange, zrange, geom;
+	NODE n;
+	STRING wname;
+	double **tbl;
+	int itvsize;
+
+	can = canvas[id = search_canvas()];
+	orgcolor = can->color;
+	can->formula = (P)ARG0(arg);
+	xrange = (LIST)ARG1(arg);
+	yrange = (LIST)ARG2(arg);
+	zrange = (LIST)ARG3(arg);
+	geom   = (LIST)ARG4(arg);
+	wname  = (STRING)ARG5(arg);
+	itvsize = QTOS((Q)ARG6(arg));
+	/* set canvas data */
+	can->mode = MODE_INEQNP;
+	can->width = QTOS((Q)BDY(BDY(geom)));
+	can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+	n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+	can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+	can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax);
+	n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+	can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+	can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax);
+	can->mode = MODE_INEQNP;
+	if ( wname )
+		can->wname = BDY(wname);
+	else
+		can->wname = "";
+	create_canvas(can);
+	itvplotmain4(can, itvsize);
+#if !defined(VISUAL)
+	set_drawcolor(orgcolor);
+	can->color = orgcolor;
+#endif
+	copy_to_canvas(can);
+	return id;
+}
+
+void itvplotmain4(struct canvas *can, int itvsize)
+{
+	int **mask;
+	double **tbl;
+	int i,j;
+	int op_code;
+
+	tstart();/* time calc */
+	op_code=3;
+	current_can = can;
+
+	mask = (int **)ALLOCA(can->height*sizeof(int *));
+	for ( i = 0; i < can->height; i++){
+		mask[i] = (int *)ALLOCA(can->width*sizeof(int));
+		for (j = 0; j< can->width; j++) mask[i][j] = -1;
+	}
+
+	define_cursor(can->window,runningcur);
+	set_busy(can); set_selection();
+	itvcalc4(mask, can, 1, itvsize);
+	area_print(display, mask, can, op_code);
+	reset_selection();
+	reset_busy(can);
+	define_cursor(can->window,normalcur);
+	tstop(can); /* time calc */
+}
+#endif
+#endif

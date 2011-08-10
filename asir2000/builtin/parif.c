@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.15 2009/03/16 16:43:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.16 2009/03/27 14:42:29 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -100,7 +100,7 @@ void f(ar,rp) NODE ar; Obj *rp;\
 { GEN _pt1_,_pt2_,_pt3_; CALLPARI2(pf,ARG0(ar),ARG1(ar),MKPREC(ar,3,ARG2(ar)),rp); }
 
 #if defined(INTERVAL)
-#define	PREC_CONV	pariK1
+#define	PREC_CONV	(0.103810253/(BYTES_IN_LONG/4))  /* log(10)/(SL*log(2)) */
 #elif SIZEOF_LONG == 4
 #define PREC_CONV		0.103810253
 #elif SIZEOF_LONG == 8

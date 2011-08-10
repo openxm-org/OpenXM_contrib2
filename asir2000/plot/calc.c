@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.6 2002/08/02 08:59:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.7 2003/02/14 22:29:19 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,12 +78,6 @@ void calc(double **tab,struct canvas *can,int nox)
 	ymin = can->ymin; ystep = (can->ymax-can->ymin)/h;
 	MKReal(1.0,rx); MKReal(1.0,ry); /* dummy real */
 	for( ix = 0, x = xmin; ix < w ; ix++, x += xstep ) {
-#if 0
-		MKReal(x,r); substp(CO,fr,vx,(P)r,&g);
-		if ( !nox ) marker(can,DIR_X,ix);
-		for( iy = 0, y = ymin; iy < h ; iy++, y += ystep )
-			tab[ix][iy] = usubstrp(g,y);
-#endif
 		BDY(rx) = x; substr(CO,0,fr,vx,x?(Obj)rx:0,&t);
 		devalr(CO,t,&g);
 		if ( !nox ) marker(can,DIR_X,ix);
@@ -127,7 +121,6 @@ void qcalc(char **tab,struct canvas *can)
 	int *a,*pa;
 	VECT ss;
 
-	
 	subq(can->qxmax,can->qxmin,&dx); STOQ(can->width,w); divq(dx,w,&xstep);
 	subq(can->qymax,can->qymin,&dy); STOQ(can->height,h); divq(dy,h,&ystep);
 	MKV(can->vx,x); mulp(CO,(P)xstep,x,&t); 
@@ -314,9 +307,6 @@ void plotcalc(struct canvas *can)
 		if ( t && (OID(t)!=O_N || NID((Num)t)!=N_R) )
 			error("plotcalc : invalid evaluation");
 		tab[ix] = ToReal((Num)t);	
-#if 0
-		tab[ix] = usubstrp(fr,x);
-#endif
 	}
 	if ( can->ymax == can->ymin ) {
 		for ( ymax = ymin = tab[0], ix = 1; ix < w; ix++ ) {
@@ -396,3 +386,368 @@ void polarplotcalc(struct canvas *can)
 		YC(pa[i]) = (h-1)*(ymax-taby[i])/dy; 
 	}
 }
+
+#if defined(INTERVAL)
+#define NORMAL 1
+#define TRANSFER 1
+#define RECURSION 1
+#define RECTRANS 1
+
+void ineqncalc(double **tab,struct canvas *can,int nox)
+{
+	double x, y, xmin, ymax, xstep, ystep;
+	int ix, iy;
+	Real r, rx, ry;
+	Obj fr, g, t, s;
+	int w, h;
+	V vx, vy;
+
+	if ( !nox ) initmarker(can,"Evaluating...");
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	vx = can->vx; vy = can->vy;
+	w = can->width; h = can->height; 
+	xmin = can->xmin; xstep = (can->xmax-can->xmin)/w;
+	ymax = can->ymax; ystep = (can->ymax-can->ymin)/h;
+	MKReal(1.0,rx); MKReal(1.0,ry); /* dummy real */
+
+	for( iy = 0, y = ymax; iy <= h ; iy++, y -= ystep ) {
+		BDY(ry) = y; substr(CO,0,fr,vy,y?(Obj)ry:0,&t);
+		devalr(CO,t,&g);
+		if ( !nox ) marker(can,DIR_Y,iy);
+		for( ix = 0, x = xmin; ix <= w ; ix++, x += xstep ) {
+			BDY(rx) = x;
+			substr(CO,0,g,vx,x?(Obj)rx:0,&t);
+			devalr(CO,t,&s);
+			tab[iy][ix] = ToReal(s);
+		}
+	}
+}
+
+void reccalc(P fr, V vx, V vy, int ixlw, int ixhg, int iylw, int iyhg,
+	double *xval, double *yval, int w, int **mask, int itvsize)
+{
+	int i, j;
+	int ixmd, iymd;
+	double inf, sup, dt;
+	Real rxwid, rywid, rxlw, rylw, rzero;
+	Itv itx, ity;
+	Obj fr1;
+	P py, px, tmp;
+
+	double **tbl , xs, ys;
+	int ywidth, xwidth;
+	Real rx, ry;
+	Obj g, t, s;
+
+	if ( (ixlw > ixhg) || (iylw > iyhg) ) return;
+	NEWItvP(itx); NEWItvP(ity);
+	MKReal(xval[ixhg + 1] - xval[ixlw], rxwid);
+	MKReal(yval[iyhg + 1] - yval[iylw], rywid);
+	MKReal(0.0,rzero);
+	istoitv((Num)rzero, (Num)rxwid, &itx);
+	istoitv((Num)rzero, (Num)rywid, &ity);
+
+	MKReal(xval[ixlw],rxlw);MKReal(yval[iylw],rylw);
+	MKV(vx,tmp); addp(CO,(P)tmp,(P)rxlw,&px);
+	MKV(vy,tmp); addp(CO,(P)tmp,(P)rylw,&py);
+	substp(CO,(P)fr,(V)vx,(P)px,(P*)&fr1);
+	substp(CO,(P)fr1,(V)vy,(P)py,(P*)&fr1);
+	substr(CO,0,(Obj)fr1,vx,(Obj)itx,&fr1);
+	substr(CO,0,(Obj)fr1,vy,(Obj)ity,&fr1);
+	Num2double((Num)fr1,&inf,&sup);
+
+	if(inf > sup){dt=inf;inf=sup;sup=dt;}
+	if ( inf <= 0.0 && sup >= 0.0 ) {
+		if ( (ixhg - ixlw <= itvsize) && (iyhg - iylw <= itvsize) ){
+			ywidth = iyhg - iylw + 2; xwidth = ixhg - ixlw + 2;
+			MKReal(1.0, rx); MKReal(1.0, ry);
+			tbl = (double **)ALLOCA((ywidth)*sizeof(double *));
+			for (i=0;i<ywidth;i++)
+				tbl[i] = (double *)ALLOCA((xwidth)*sizeof(double));
+			for (i = 0; i < ywidth; i++){
+				BDY(ry) = yval[iylw+i];
+				substr(CO,0,(Obj)fr,vy,(Obj)ry,&t);
+				devalr(CO, t, &g);
+				for (j = 0; j < xwidth; j++){
+					BDY(rx) = xval[ixlw+j];
+					substr(CO,0,g,vx,(Obj)rx,&t);
+					devalr(CO, t, &s);
+					tbl[i][j] = ToReal(s);
+				}
+			}
+			for ( i = 0; i < ywidth - 1; i++){
+				for ( j = 0; j < xwidth - 1; j++){
+					if ( tbl[i][j] >= 0.0 ){
+						if ( (tbl[i+1][j] <= 0.0) ||
+							(tbl[i+1][j+1] <= 0.0) ||
+							(tbl[i][j+1]   <= 0.0) ) mask[w-(i+iylw)][j+ixlw] = 0;
+						else mask[w-(i+iylw)][j+ixlw] = 1;
+					} else {
+						if ( (tbl[i+1][j] >= 0.0) ||
+							(tbl[i+1][j+1] >= 0.0) ||
+							(tbl[i][j+1]   >= 0.0) ) mask[w-(i+iylw)][j+ixlw] = 0;
+						else mask[w-(i+iylw)][j+ixlw] = 1;
+					}
+				}
+			}
+		} else {
+			ixmd = (ixhg + ixlw)/2; iymd = (iyhg + iylw)/2;
+			reccalc((P)fr,vx,vy,ixlw,ixmd,iylw,iymd,xval,yval,w,mask,itvsize);
+			reccalc((P)fr,vx,vy,ixmd+1,ixhg,iylw,iymd,xval,yval,w,mask,itvsize);
+			reccalc((P)fr,vx,vy,ixlw,ixmd,iymd+1,iyhg,xval,yval,w,mask,itvsize);
+			reccalc((P)fr,vx,vy,ixmd+1,ixhg,iymd+1,iyhg,xval,yval,w,mask,itvsize);
+		}
+	} else {
+		for (i=w-iyhg; i> w-iylw; i--)
+			for (j=ixlw; j <= ixhg; j++) mask[i][j] = -1;
+	}
+}
+
+void itvcalc(int **mask, struct canvas *can, int nox, int itvsize)
+{
+	double xstep, ystep, xv, yv, *xval, *yval;
+	int imx, imy, i, w, h;
+	Real r;
+	Obj fr;
+	V vx, vy;
+
+	if ( !nox ) initmarker(can,"Evaluating...");
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	vx = can->vx; vy = can->vy;
+	w = can->width; h = can->height; 
+	xstep = (can->xmax - can->xmin)/w;
+	ystep = (can->ymax - can->ymin)/h;
+
+	xval = (double *)ALLOCA((w+1)*sizeof(double));
+	yval = (double *)ALLOCA((h+1)*sizeof(double));
+	for (i=0, xv=can->xmin; i<= w; i++, xv += xstep) xval[i] = xv;
+	for (i=0, yv=can->ymin; i<= h; i++, yv += ystep) yval[i] = yv;
+	imx = w/2; imy = h/2;
+
+	reccalc((P)fr,vx,vy,0,imx,0,imy,xval,yval,w-1,mask,itvsize);
+	reccalc((P)fr,vx,vy,imx+1,w-1,0,imy,xval,yval,w-1,mask,itvsize);
+	reccalc((P)fr,vx,vy,0,imx,imy+1,h-1,xval,yval,w-1,mask,itvsize);
+	reccalc((P)fr,vx,vy,imx+1,w-1,imy+1,h-1,xval,yval,w-1,mask,itvsize);
+}
+
+#if NORMAL
+void itvcalc1(int **mask, struct canvas *can, int nox)
+{
+	double x, y, xstep, ystep;
+	int ix, iy, w, h;
+	Itv ity, itx;
+	Real r, rx, ry, rx1, ry1;
+	Obj fr, g, t;
+	V vx, vy;
+
+	if ( !nox ) initmarker(can,"Evaluating...");
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	vx = can->vx; vy = can->vy;
+	w = can->width; h = can->height; 
+	xstep = (can->xmax - can->xmin)/w;
+	ystep = (can->ymax - can->ymin)/h;
+
+	for( iy = 0, y = can->ymax; iy < h ; iy++, y -= ystep ) {
+		MKReal(y, ry);
+		MKReal(y-ystep,ry1);
+		istoitv((Num)(ry1),(Num)ry,&ity);
+		substr(CO,0,(Obj)fr,vy,(Obj)ity,&t);
+		for( ix = 0, x = can->xmin; ix < w ; ix++, x += xstep ) {
+			MKReal(x,rx);
+			MKReal(x+xstep,rx1);
+			istoitv((Num)rx,(Num)rx1,&itx);
+			substr(CO,0,(Obj)t,vx,(Obj)itx,&g);
+			if (compnum(0,0,(Num)g)) mask[iy][ix] = -1;
+			else mask[iy][ix] = 0;
+		}
+	}
+}
+#endif
+
+#if TRANSFER
+void itvcalc2(int **mask, struct canvas *can, int nox)
+{
+	double x, y, xstep, ystep;
+	int ix, iy, w, h;
+	Itv ity, itx;
+	Real r, rx, ry, rzero;
+	Obj fr, g, t, s;
+	V vx, vy;
+	P mp, fr2;
+	Real qx,qy;
+
+	if ( !nox ) initmarker(can,"Evaluating...");
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	vx = can->vx; vy = can->vy;
+	w = can->width; h = can->height; 
+	xstep = (can->xmax - can->xmin)/w;
+	ystep = (can->ymax - can->ymin)/h;
+
+	MKReal(0.0, rzero);
+	MKReal(ystep,ry);
+	istoitv((Num)rzero,(Num)ry,&ity);
+	MKReal(xstep,rx);
+	istoitv((Num)rzero,(Num)rx,&itx);
+	for( iy = 0, y = can->ymin; iy < h ; iy++, y += ystep ) {
+		MKReal(y,qy);
+		MKV(vy,mp);subp(CO,mp,(P)qy,&mp);
+		substp(CO,(P)fr,(V)vy,(P)mp,&fr2);
+		substr(CO,0,(Obj)fr2,vy,(Obj)ity,&t);
+		for( ix = 0, x = can->xmin; ix < w ; ix++, x += xstep ) {
+			MKReal(x,qx);
+			MKV(vx,mp);addp(CO,mp,(P)qx,&mp);
+			substp(CO,(P)t,(V)vx,(P)mp,(P*)&s);
+			substr(CO,0,(Obj)s,vx,(Obj)itx,&g);
+			if (compnum(0,0,(Num)g)) mask[iy][ix] = -1;
+			else mask[iy][ix] = 0;
+		}
+	}
+}
+#endif
+
+#if RECURSION
+void reccalc3(P fr, V vx, V vy, int ixlw, int ixhg, int iylw, int iyhg,
+	double *xval, double *yval,int w, int **mask, int itvsize)
+{
+	int i, j, ixmd, iymd;
+	double inf, sup, dt;
+	Real rxlw, rxhg, rylw, ryhg;
+	Itv itx, ity;
+	Obj fr1;
+
+	NEWItvP(itx); NEWItvP(ity);
+
+	if ( (ixlw > ixhg) || (iylw > iyhg) ) return;
+
+	MKReal(xval[ixlw], rxlw); MKReal(xval[ixhg + 1], rxhg);
+	MKReal(yval[iylw], rylw); MKReal(yval[iyhg + 1], ryhg);
+	istoitv((Num)rxlw, (Num)rxhg, &itx);
+	istoitv((Num)rylw, (Num)ryhg, &ity);
+	substr(CO, 0, (Obj)fr, vy, (Obj)ity, &fr1);
+	substr(CO, 0, (Obj)fr1, vx, (Obj)itx, &fr1);
+	Num2double((Num)fr1, &inf, &sup);
+
+	if( itvsize <= 0 ) itvsize = 1;
+	if(inf > sup){dt = inf; inf = sup; sup = dt;}
+	if ( inf <= 0.0 && sup >= 0.0 ) {
+		if ( (ixhg - ixlw < itvsize) || (iyhg - iylw < itvsize) ){
+			for(i = iylw; i <=iyhg; i++)
+				for(j = ixlw; j <=ixhg; j++) mask[w-i][j] = 0;
+		} else {
+			ixmd = (ixhg + ixlw)/2; iymd = (iyhg + iylw)/2;
+			reccalc3((P)fr,vx,vy,ixlw,ixmd,iylw,iymd,xval,yval,w,mask,itvsize);
+			reccalc3((P)fr,vx,vy,ixmd+1,ixhg,iylw,iymd,xval,yval,w,mask,itvsize);
+			reccalc3((P)fr,vx,vy,ixlw,ixmd,iymd+1,iyhg,xval,yval,w,mask,itvsize);
+			reccalc3((P)fr,vx,vy,ixmd+1,ixhg,iymd+1,iyhg,xval,yval,w,mask,itvsize);
+		}
+	} else {
+		for (i = iylw; i<= iyhg; i++)
+			for (j = ixlw; j <= ixhg; j++) mask[w-i][j] = -1;
+	}
+}
+
+void itvcalc3(int **mask, struct canvas *can, int nox, int itvsize)
+{
+	double xstep, ystep, xv, yv, *xval, *yval;
+	int i, imx, imy, w, h;
+	Real r;
+	Obj fr;
+	V vx, vy;
+
+	if ( !nox ) initmarker(can,"Evaluating...");
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	vx = can->vx; vy = can->vy;
+	w = can->width; h = can->height; 
+	xstep = (can->xmax - can->xmin)/w;
+	ystep = (can->ymax - can->ymin)/h;
+
+	xval = (double *)ALLOCA((w+1)*sizeof(double));
+	yval = (double *)ALLOCA((h+1)*sizeof(double));
+	for (i = 0, xv = can->xmin; i <= w; i++, xv += xstep) xval[i] = xv;
+	for (i = 0, yv = can->ymin; i <= h; i++, yv += ystep) yval[i] = yv;
+	imx = w/2; imy = h/2;
+
+	reccalc3((P)fr,vx,vy,0,imx,0,imy,xval,yval,w-1,mask,itvsize);
+	reccalc3((P)fr,vx,vy,imx+1,w-1,0,imy,xval,yval,w-1,mask,itvsize);
+	reccalc3((P)fr,vx,vy,0,imx,imy+1,h-1,xval,yval,w-1,mask,itvsize);
+	reccalc3((P)fr,vx,vy,imx+1,w-1,imy+1,h-1,xval,yval,w-1,mask,itvsize);
+}
+#endif
+
+#if RECTRANS
+void reccalc4(P fr, V vx, V vy, int ixlw, int ixhg, int iylw, int iyhg,
+	double *xval, double *yval, int w, int **mask, int itvsize)
+{
+	int i, j;
+	int ixmd, iymd;
+	double inf, sup, dt;
+	Real rxlw, rylw, rzero, rxwid, rywid;
+	Itv itx, ity;
+	Obj fr1;
+	P py, px, tmp;
+
+	if ( (ixlw > ixhg) || (iylw > iyhg)) return;
+	NEWItvP(itx); NEWItvP(ity);
+
+	MKReal(0.0,rzero);
+	MKReal(xval[ixhg + 1] - xval[ixlw], rxwid);
+	MKReal(yval[iyhg + 1] - yval[iylw], rywid);
+	istoitv((Num)rzero, (Num)rxwid, &itx);
+	istoitv((Num)rzero, (Num)rywid, &ity);
+
+	MKReal(xval[ixlw], rxlw); MKReal(yval[iylw], rylw);
+	MKV(vx,tmp);addp(CO, (P)tmp, (P)rxlw, &px);
+	MKV(vy,tmp);addp(CO, (P)tmp, (P)rylw, &py);
+	substp(CO, (P)fr, (V)vx, (P)px, (P*)&fr1);
+	substp(CO, (P)fr1, (V)vy, (P)py, (P*)&fr1);
+	substr(CO, 0, (Obj)fr1, vx, (Obj)itx, &fr1);
+	substr(CO, 0, (Obj)fr1, vy, (Obj)ity, &fr1);
+	Num2double((Num)fr1, &inf, &sup);
+
+	if(inf > sup){dt=inf;inf=sup;sup=dt;}
+	if ( inf <= 0.0 && sup >= 0.0 ) {
+		if ( (ixhg - ixlw <= itvsize) && (iyhg - iylw <= itvsize) ){
+			for(i = iylw; i <= iyhg; i++)
+				for(j = ixlw; j <= ixhg; j++) mask[w-i][j]=0;
+		} else {
+			ixmd = (ixhg + ixlw)/2; iymd = (iyhg + iylw)/2;
+
+			reccalc4((P)fr,vx,vy,ixlw,ixmd,iylw,iymd,xval,yval,w,mask,itvsize);
+			reccalc4((P)fr,vx,vy,ixmd+1,ixhg,iylw,iymd,xval,yval,w,mask,itvsize);
+			reccalc4((P)fr,vx,vy,ixlw,ixmd,iymd+1,iyhg,xval,yval,w,mask,itvsize);
+			reccalc4((P)fr,vx,vy,ixmd+1,ixhg,iymd+1,iyhg,xval,yval,w,mask,itvsize);
+		}
+	} else {
+		for (i = iylw; i<= iyhg; i++)
+			for (j = ixlw; j <= ixhg; j++) mask[w-i][j] = -1;
+	}
+}
+
+void itvcalc4(int **mask, struct canvas *can, int nox, int itvsize)
+{
+	double xstep, ystep, xv, yv, *xval, *yval;
+	int i, imx, imy, w, h;
+	Real r;
+	Obj fr;
+	V vx, vy;
+
+	if ( !nox ) initmarker(can,"Evaluating...");
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	vx = can->vx; vy = can->vy;
+	w = can->width; h = can->height; 
+	xstep = (can->xmax - can->xmin)/w;
+	ystep = (can->ymax - can->ymin)/h;
+
+	xval = (double *)ALLOCA((w+1)*sizeof(double));
+	yval = (double *)ALLOCA((h+1)*sizeof(double));
+	for (i=0, xv=can->xmin; i <= w; i++, xv += xstep) xval[i] = xv;
+	for (i=0, yv=can->ymin; i <= h; i++, yv += ystep) yval[i] = yv;
+	imx = w/2; imy = h/2;
+
+	reccalc4((P)fr,vx,vy,0,imx,0,imy,xval,yval,w-1,mask,itvsize);
+	reccalc4((P)fr,vx,vy,imx+1,w-1,0,imy,xval,yval,w-1,mask,itvsize);
+	reccalc4((P)fr,vx,vy,0,imx,imy+1,h-1,xval,yval,w-1,mask,itvsize);
+	reccalc4((P)fr,vx,vy,imx+1,w-1,imy+1,h-1,xval,yval,w-1,mask,itvsize);
+}
+#endif
+#endif

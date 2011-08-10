@@ -1,10 +1,11 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.4 2005/02/08 16:53:00 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.5 2005/07/14 22:46:03 kondoh Exp $
  */
 
 #include "ca.h"
 #include "parse.h"
 #include "version.h"
+#include "../plot/ifplot.h"
 
 #if defined(INTERVAL)
 
@@ -24,6 +25,10 @@ static void Pdistance(NODE, Obj *);
 static void Pitvversion(Q *);
 #endif
 static void Pprintmode(NODE, Obj *);
+
+/* plot time check func */
+static void ccalc(double **, struct canvas *, int);
+static void Pifcheck(NODE, Obj *);
 
 #if	defined(__osf__) && 0
 int	end;
@@ -50,11 +55,175 @@ struct ftab interval_tab[] = {
 	{"diam",Pwidth,1},
 	{"distance",Pdistance,2},
 	{"iversion",Pitvversion,0},
+/* plot time check */
+	{"ifcheck",Pifcheck,-7},
 #endif
 	{0,0,0},
 };
 
 #if defined(INTERVAL)
+
+/* plot time check */
+static void
+Pifcheck(NODE arg, Obj *rp)
+{
+	Q m2,p2,s_id;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int ri,i,j,sign;
+	P poly;
+	P var;
+	NODE n,n0;
+	Obj t;
+
+	struct canvas *can;
+	MAT m;
+	pointer **mb;
+	double **tabe, *px, *px1, *px2;
+	Q one;
+	int width, height, ix, iy;
+	int id;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	STOQ(1,one);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n);
+	poly = 0; vl = 0; geom = 0; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) ){
+		switch ( OID(BDY(arg)) ) {
+		case O_P:
+			poly = (P)BDY(arg);
+			get_vars_recursive((Obj)poly,&vl);
+			for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+				if ( vl0->v->attr == (pointer)V_IND )
+					if ( i >= 2 )
+						error("ifplot : invalid argument");
+					else
+						v[i++] = vl0->v;
+			break;
+		case O_LIST:
+			list = (LIST)BDY(arg);
+			if ( OID(BDY(BDY(list))) == O_P )
+				if ( ri > 1 )
+					error("ifplot : invalid argument");
+				else
+					range[ri++] = list;
+			else
+				geom = list;
+			break;
+		default:
+			error("ifplot : invalid argument"); break;
+		}
+	}
+	if ( !poly ) error("ifplot : invalid argument");
+	switch ( ri ) {
+		case 0:
+			if ( !v[1] ) error("ifplot : please specify all variables");
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			break;
+		case 1:
+			if ( !v[1] ) error("ifplot : please specify all variables");
+			av[0] = VR((P)BDY(BDY(range[0])));
+			if ( v[0] == av[0] ) {
+				xrange = range[0];
+				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			} else if ( v[1] == av[0] ) {
+				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+				yrange = range[0];
+			} else
+				error("ifplot : invalid argument");
+			break;
+		case 2:
+			av[0] = VR((P)BDY(BDY(range[0])));
+			av[1] = VR((P)BDY(BDY(range[1])));
+			if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+					xrange = range[0]; yrange = range[1];
+			} else error("ifplot : invalid argument");
+			break;
+		default:
+			error("ifplot : cannot happen"); break;
+	}
+	can = canvas[id = search_canvas()];
+	if ( !geom ) {
+		width = 300;
+		height = 300;
+		can->width = 300;
+		can->height = 300;
+	} else {
+		can->width = QTOS((Q)BDY(BDY(geom)));
+		can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+		width = can->width;
+		height = can->height;
+	}
+	if ( xrange ) {
+		n = BDY(xrange); can->vx = VR((P)BDY(n)); n = NEXT(n);
+		can->qxmin = (Q)BDY(n); n = NEXT(n); can->qxmax = (Q)BDY(n);
+		can->xmin = ToReal(can->qxmin); can->xmax = ToReal(can->qxmax); 
+	}
+	if ( yrange ) {
+		n = BDY(yrange); can->vy = VR((P)BDY(n)); n = NEXT(n);
+		can->qymin = (Q)BDY(n); n = NEXT(n); can->qymax = (Q)BDY(n);
+		can->ymin = ToReal(can->qymin); can->ymax = ToReal(can->qymax); 
+	}
+	can->wname = "ifcheck";
+	can->formula = poly;
+	tabe = (double **)ALLOCA((width+1)*sizeof(double *));
+	for ( i = 0; i <= width; i++ )
+		tabe[i] = (double *)ALLOCA((height+1)*sizeof(double));
+	for(i=0;i<=width;i++)for(j=0;j<=height;j++)tabe[i][j]=0;
+	ccalc(tabe,can,0);
+	MKMAT(m,width,height);
+	mb = BDY(m);
+	for( ix=0; ix<width; ix++ ){
+		for( iy=0; iy<height; iy++){
+			if ( tabe[ix][iy] >= 0 ){
+				if ( (tabe[ix+1][iy] <= 0) ||
+					(tabe[ix][iy+1] <= 0 ) ||
+					(tabe[ix+1][iy+1] <= 0 ) ) mb[ix][iy] = (Obj)one;
+			} else {
+				if ( (tabe[ix+1][iy] >= 0 ) ||
+					( tabe[ix][iy+1] >= 0 ) ||
+					( tabe[ix+1][iy+1] >= 0 )) mb[ix][iy] = (Obj)one;
+			}
+		}
+	}
+	*rp = (Obj)m;
+}
+
+void ccalc(double **tab,struct canvas *can,int nox)
+{
+	 double x,y,xmin,ymin,xstep,ystep;
+	 int ix,iy;
+	 Real r,rx,ry;
+	 Obj fr,g;
+	 int w,h;
+	 V vx,vy;
+	 Obj t,s;
+
+	 MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+	 vx = can->vx;
+	 vy = can->vy;
+	 w = can->width; h = can->height; 
+	 xmin = can->xmin; xstep = (can->xmax-can->xmin)/w;
+	 ymin = can->ymin; ystep = (can->ymax-can->ymin)/h;
+	 MKReal(1.0,rx); MKReal(1.0,ry);
+	 for( ix = 0, x = xmin; ix < w+1 ; ix++, x += xstep ) {
+	    BDY(rx) = x; substr(CO,0,fr,vx,x?(Obj)rx:0,&t);
+	    devalr(CO,t,&g);
+	    for( iy = 0, y = ymin; iy < h+1 ; iy++, y += ystep ) {
+	       BDY(ry) = y;
+	       substr(CO,0,g,vy,y?(Obj)ry:0,&t);
+	       devalr(CO,t,&s);
+	       tab[ix][iy] = ToReal(s);
+	    }
+	 }
+}
+/* end plot time check */
+
 static void
 Pitvversion(Q *rp)
 {

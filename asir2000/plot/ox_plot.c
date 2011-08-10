@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.20 2004/02/13 05:48:36 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.21 2006/02/08 02:11:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -273,6 +273,32 @@ static void asir_executeFunction(int serial)
 		STOQ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"memory_plot") ) {
 		memory_plot(n,&bytes); asir_push_one((Obj)bytes);
+#if defined(INTERVAL)
+	} else if ( !strcmp(func,"itvifplot") ) {
+		id = itvifplot(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"itvplot1") ) {
+		id = itvplot1(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"itvplot2") ) {
+		id = itvplot2(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"itvplot3") ) {
+		id = itvplot3(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"itvplot4") ) {
+		id = itvplot4(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"ineqnover") ) {
+		id = ineqnover(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"ineqn") ) {
+		id = ineqn(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	} else if ( !strcmp(func,"objcp") ) {
+		id = objcp(n);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+#endif
 	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
 		STOQ(id,ret); asir_push_one((Obj)ret);

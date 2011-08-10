@@ -45,23 +45,53 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.20 2006/11/15 01:28:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.21 2011/06/16 08:17:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "ifplot.h"
 
-void Pifplot(), Pconplot(), Pplotover(), Pplot(), Parrayplot(), Pdrawcircle();
-void Ppolarplot();
-void Pmemory_ifplot(),Pmemory_conplot(),Pmemory_plot();
-void Popen_canvas(), Pclear_canvas(), Pdraw_obj(), Pdraw_string();
-void Pox_rpc();
-void Pox_cmo_rpc();
+void Pifplot(NODE, Obj *), Pconplot(NODE, Obj *), Pplotover(NODE, Q *);
+void Pplot(NODE, Obj *), Parrayplot(NODE, Q *), Pdrawcircle(NODE, Q *);
+#if defined(INTERVAL)
+void Pitvplot1(NODE, Obj *), itvplot_main1(NODE, Obj *); //NORMAL
+void Pitvplot2(NODE, Obj *), itvplot_main2(NODE, Obj *); //TRANSFER
+void Pitvplot3(NODE, Obj *), itvplot_main3(NODE, Obj *); //RECURSION
+void Pitvplot4(NODE, Obj *), itvplot_main4(NODE, Obj *); //RECURSION+TRANSFER
+void Pitvplot(NODE, Obj *), itvplot_main(NODE, Obj *); //NEWTYPE
+void Pobj_cp(NODE, Obj *);
+void Pineqn(NODE, Obj *), Pineqnor(NODE, Obj *), Pineqnand(NODE, Obj *);
+void Pineqnxor(NODE, Obj *), Pmemory_ineqn(NODE, Obj *);
+void ineqn_main(NODE, int, Obj *);
+void ineqn_main_op(NODE, int, int, Obj *);
+#endif
+void Ppolarplot(NODE, Q *);
+void Pmemory_ifplot(NODE, Obj *), Pmemory_conplot(NODE, Obj *);
+void Pmemory_plot(NODE, Obj *);
+void Popen_canvas(NODE, Q *), Pclear_canvas(NODE, Q *), Pdraw_obj(NODE, Q *);
+void Pdraw_string(NODE, Q *);
+void Pox_rpc(), Pox_cmo_rpc();
+void ifplot_main(NODE, int, Obj *);
+void conplot_main(NODE, int, Obj *);
+void plot_main(NODE, int, Obj *);
 
 struct ftab plot_tab[] = {
 	{"ifplot",Pifplot,-7},
 	{"memory_ifplot",Pmemory_ifplot,-6},
+#if defined(INTERVAL)
+	{"itvplot1",Pitvplot1,-7},
+	{"itvplot2",Pitvplot2,-7},
+	{"itvplot3",Pitvplot3,-7},
+	{"itvplot4",Pitvplot4,-7},
+	{"itvplot",Pitvplot,-7},
+	{"ineqn",Pineqn,-8},
+	{"ineqnor",Pineqnor,-7},
+	{"ineqnand",Pineqnand,-7},
+	{"ineqnxor",Pineqnxor,-7},
+	{"memory_ineqn",Pmemory_ineqn,-6},
+	{"obj_cp",Pobj_cp,4},
+#endif
 	{"conplot",Pconplot,-8},
 	{"memory_conplot",Pmemory_conplot,-7},
 	{"plot",Pplot,-6},
@@ -73,9 +103,6 @@ struct ftab plot_tab[] = {
 	{"clear_canvas",Pclear_canvas,2},
 	{"draw_obj",Pdraw_obj,-4},
 	{"draw_string",Pdraw_string,-5},
-/*
-	{"arrayplot",Parrayplot,2},
-*/
 	{0,0,0},
 };
 
@@ -93,22 +120,16 @@ void Popen_canvas(NODE arg,Q *rp)
 			stream = 0;
 		else
 		switch ( OID(BDY(arg)) ) {
-			case O_LIST:
-				geom = (LIST)BDY(arg);
-				break;
-			case O_N:
-				stream = QTOS((Q)BDY(arg)); break;
-			case O_STR:
-				wname = (STRING)BDY(arg); break;
-			default:
-				error("open_canvas : invalid argument"); break;
+		case O_LIST:
+			geom = (LIST)BDY(arg);
+			break;
+		case O_N:
+			stream = QTOS((Q)BDY(arg)); break;
+		case O_STR:
+			wname = (STRING)BDY(arg); break;
+		default:
+			error("open_canvas : invalid argument"); break;
 		}
-	/* open_canvas in ox_plot requires 
-	   [s_id (Q),
-	   	geom=[xsize,ysize] (LIST),
-	   	wname=name (STRING)]
-	*/
-
 	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	if ( !geom ) {
@@ -120,8 +141,6 @@ void Popen_canvas(NODE arg,Q *rp)
 	Pox_cmo_rpc(arg,rp);
 	*rp = s_id;
 }
-
-void ifplot_main(NODE arg,int is_memory, Obj *rp);
 
 void Pifplot(NODE arg,Obj *rp)
 {
@@ -140,7 +159,318 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 	LIST xrange,yrange,range[2],list,geom;
 	VL vl,vl0;
 	V v[2],av[2];
-	int stream,ri,i;
+	int stream,ri,i,sign;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+	Obj t;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) ) stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+		case O_P:
+			poly = (P)BDY(arg); 
+			get_vars_recursive((Obj)poly,&vl);
+			for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+				if ( vl0->v->attr == (pointer)V_IND )
+					if ( i >= 2 ) error("ifplot : invalid argument");
+					else v[i++] = vl0->v;
+			break;
+		case O_LIST:
+			list = (LIST)BDY(arg);
+			if ( OID(BDY(BDY(list))) == O_P )
+				if ( ri > 1 ) error("ifplot : invalid argument");
+				else range[ri++] = list;
+			else geom = list;
+			break;
+		case O_N:
+			stream = QTOS((Q)BDY(arg)); break;
+		case O_STR:
+			wname = (STRING)BDY(arg); break;
+		default:
+			error("ifplot : invalid argument"); break;
+		}
+	if ( !poly ) error("ifplot : invalid argument");
+	switch ( ri ) {
+	case 0:
+		if ( !v[1] ) error("ifplot : please specify all variables");
+		MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+		MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		break;
+	case 1:
+		if ( !v[1] ) error("ifplot : please specify all variables");
+		av[0] = VR((P)BDY(BDY(range[0])));
+		if ( v[0] == av[0] ) {
+			xrange = range[0];
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		} else if ( v[1] == av[0] ) {
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			yrange = range[0];
+		} else error("ifplot : invalid argument");
+		break;
+	case 2:
+		av[0] = VR((P)BDY(BDY(range[0])));
+		av[1] = VR((P)BDY(BDY(range[1])));
+		if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+			((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+			xrange = range[0]; yrange = range[1];
+		} else error("ifplot : invalid argument");
+		break;
+	default:
+		error("ifplot : cannot happen"); break;
+	}
+	/* ifplot in ox_plot requires 
+		[s_id (Q),
+		formula (Obj),
+		xrange=[x,xmin,xmax] (LIST),
+		yrange=[y,ymin,ymax] (LIST),
+		zrange=0,
+		geom=[xsize,ysize] (LIST),
+		wname=name (STRING)]
+	*/
+
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	if ( is_memory ) {
+		MKSTR(fname,"memory_plot");
+		arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom);
+		Pox_rpc(arg,&t);
+		arg = mknode(1,s_id);
+		Pox_pop_cmo(arg,rp);
+	} else {
+		MKSTR(fname,"plot");
+		arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
+		Pox_rpc(arg,&t);
+		*rp = (Obj)s_id;
+	}
+}
+
+#if defined(INTERVAL)
+void Pitvplot(NODE arg, Obj *rp)
+{
+	itvplot_main(arg, rp);
+}
+
+void itvplot_main(NODE arg, Obj *rp)
+{
+	Q m2,p2,w300,s_id, itvsize;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int stream,ri,i,sign;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+	Obj t;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) ) stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+		case O_P:
+			poly = (P)BDY(arg); 
+			get_vars_recursive((Obj)poly,&vl);
+			for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+				if ( vl0->v->attr == (pointer)V_IND )
+					if ( i >= 2 ) error("itvplot : invalid argument");
+					else v[i++] = vl0->v;
+			break;
+		case O_LIST:
+			list = (LIST)BDY(arg);
+			if ( OID(BDY(BDY(list))) == O_P )
+				if ( ri > 1 ) error("itvplot : invalid argument");
+				else range[ri++] = list;
+			else geom = list;
+			break;
+		case O_N:
+			stream = QTOS((Q)BDY(arg)); break;
+		case O_STR:
+			wname = (STRING)BDY(arg); break;
+		default:
+			error("itvplot : invalid argument"); break;
+	}
+	if ( !poly ) error("itvplot : invalid argument");
+	switch ( ri ) {
+	case 0:
+		if ( !v[1] ) error("itvplot : please specify all variables");
+		MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+		MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		break;
+	case 1:
+		if ( !v[1] ) error("itvplot : please specify all variables");
+		av[0] = VR((P)BDY(BDY(range[0])));
+		if ( v[0] == av[0] ) {
+			xrange = range[0];
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		} else if ( v[1] == av[0] ) {
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			yrange = range[0];
+		} else error("itvplot : invalid argument");
+		break;
+	case 2:
+		av[0] = VR((P)BDY(BDY(range[0])));
+		av[1] = VR((P)BDY(BDY(range[1])));
+		if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+			((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+			xrange = range[0]; yrange = range[1];
+		} else error("itvplot : invalid argument");
+		break;
+	default:
+		error("itvplot : cannot happen"); break;
+	}
+	/* itvplot in ox_plot requires 
+	   [s_id (Q),
+	   	formula (Obj),
+	   	xrange=[x,xmin,xmax] (LIST),
+	   	yrange=[y,ymin,ymax] (LIST),
+	   	zrange=0,
+	   	geom=[xsize,ysize] (LIST),
+	   	wname=name (STRING)]
+	*/
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"itvifplot");
+	STOQ(Itvplot, itvsize);
+	arg = mknode(9,s_id,fname,poly,xrange,yrange,0,geom,wname,itvsize);
+	Pox_rpc(arg,&t);
+	*rp = (Obj)s_id;
+}
+
+void Pitvplot1(NODE arg, Obj *rp)
+{
+	itvplot_main1(arg, rp);
+}
+
+void Pitvplot2(NODE arg, Obj *rp)
+{
+	itvplot_main2(arg, rp);
+}
+
+void Pitvplot3(NODE arg, Obj *rp)
+{
+	itvplot_main3(arg, rp);
+}
+
+void Pitvplot4(NODE arg, Obj *rp)
+{
+	itvplot_main4(arg, rp);
+}
+
+// NORMAL type
+void itvplot_main1(NODE arg, Obj *rp)
+{
+	Q m2,p2,w300,s_id;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int stream,ri,i,sign;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+	Obj t;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) ) stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+		case O_P:
+			poly = (P)BDY(arg); 
+			get_vars_recursive((Obj)poly,&vl);
+			for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+				if ( vl0->v->attr == (pointer)V_IND )
+					if ( i >= 2 ) error("itvplot : invalid argument");
+					else v[i++] = vl0->v;
+			break;
+		case O_LIST:
+			list = (LIST)BDY(arg);
+			if ( OID(BDY(BDY(list))) == O_P )
+				if ( ri > 1 ) error("itvplot : invalid argument");
+				else range[ri++] = list;
+			else geom = list;
+			break;
+		case O_N:
+			stream = QTOS((Q)BDY(arg)); break;
+		case O_STR:
+			wname = (STRING)BDY(arg); break;
+		default:
+			error("itvplot : invalid argument"); break;
+		}
+	if ( !poly ) error("itvplot : invalid argument");
+	switch ( ri ) {
+	case 0:
+		if ( !v[1] ) error("itvplot : please specify all variables");
+		MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+		MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		break;
+	case 1:
+		if ( !v[1] ) error("itvplot : please specify all variables");
+		av[0] = VR((P)BDY(BDY(range[0])));
+		if ( v[0] == av[0] ) {
+			xrange = range[0];
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		} else if ( v[1] == av[0] ) {
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			yrange = range[0];
+		} else error("itvplot : invalid argument");
+		break;
+	case 2:
+		av[0] = VR((P)BDY(BDY(range[0])));
+		av[1] = VR((P)BDY(BDY(range[1])));
+		if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+			((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+			xrange = range[0]; yrange = range[1];
+		} else error("itvplot : invalid argument");
+		break;
+	default:
+		error("itvplot : cannot happen"); break;
+	}
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"itvplot1");
+	arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
+	Pox_rpc(arg,&t);
+	*rp = (Obj)s_id;
+}
+
+// TRANSFER TYPE
+void itvplot_main2(NODE arg, Obj *rp)
+{
+	Q m2,p2,w300,s_id;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int stream,ri,i,sign;
 	P poly;
 	P var;
 	NODE n,n0;
@@ -162,7 +492,7 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
 					if ( vl0->v->attr == (pointer)V_IND )
 						if ( i >= 2 )
-							error("ifplot : invalid argument");
+							error("itvplot : invalid argument");
 						else
 							v[i++] = vl0->v;
 				break;
@@ -170,7 +500,7 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 				list = (LIST)BDY(arg);
 				if ( OID(BDY(BDY(list))) == O_P )
 					if ( ri > 1 )
-						error("ifplot : invalid argument");
+						error("itvplot : invalid argument");
 					else
 						range[ri++] = list;
 				else
@@ -181,20 +511,20 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 			case O_STR:
 				wname = (STRING)BDY(arg); break;
 			default:
-				error("ifplot : invalid argument"); break;
+				error("itvplot : invalid argument"); break;
 		}
 	if ( !poly )
-		error("ifplot : invalid argument");
+		error("itvplot : invalid argument");
 	switch ( ri ) {
 		case 0:
 			if ( !v[1] )
-				error("ifplot : please specify all variables");
+				error("itvplot : please specify all variables");
 			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
 			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
 			break;
 		case 1:
 			if ( !v[1] )
-				error("ifplot : please specify all variables");
+				error("itvplot : please specify all variables");
 			av[0] = VR((P)BDY(BDY(range[0])));
 			if ( v[0] == av[0] ) {
 				xrange = range[0];
@@ -203,7 +533,7 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
 				yrange = range[0];
 			} else
-				error("ifplot : invalid argument");
+				error("itvplot : invalid argument");
 			break;
 		case 2:
 			av[0] = VR((P)BDY(BDY(range[0])));
@@ -212,12 +542,205 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
 					xrange = range[0]; yrange = range[1];
 			} else
-					error("ifplot : invalid argument");
+					error("itvplot : invalid argument");
 			break;
 		default:
-			error("ifplot : cannot happen"); break;
+			error("itvplot : cannot happen"); break;
 	}
-	/* ifplot in ox_plot requires 
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"itvplot2");
+	arg = mknode(8,s_id,fname,poly,xrange,yrange,0,geom,wname);
+	Pox_rpc(arg,&t);
+	*rp = (Obj)s_id;
+}
+// RECURSION TYPE
+void itvplot_main3(NODE arg, Obj *rp)
+{
+	Q m2,p2,w300,s_id, itvsize;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int stream,ri,i,sign;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+	Obj t;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+			case O_P:
+				poly = (P)BDY(arg); 
+				get_vars_recursive((Obj)poly,&vl);
+				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+					if ( vl0->v->attr == (pointer)V_IND )
+						if ( i >= 2 )
+							error("itvplot : invalid argument");
+						else
+							v[i++] = vl0->v;
+				break;
+			case O_LIST:
+				list = (LIST)BDY(arg);
+				if ( OID(BDY(BDY(list))) == O_P )
+					if ( ri > 1 )
+						error("itvplot : invalid argument");
+					else
+						range[ri++] = list;
+				else
+					geom = list;
+				break;
+			case O_N:
+				stream = QTOS((Q)BDY(arg)); break;
+			case O_STR:
+				wname = (STRING)BDY(arg); break;
+			default:
+				error("itvplot : invalid argument"); break;
+		}
+	if ( !poly )
+		error("itvplot : invalid argument");
+	switch ( ri ) {
+		case 0:
+			if ( !v[1] )
+				error("itvplot : please specify all variables");
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			break;
+		case 1:
+			if ( !v[1] )
+				error("itvplot : please specify all variables");
+			av[0] = VR((P)BDY(BDY(range[0])));
+			if ( v[0] == av[0] ) {
+				xrange = range[0];
+				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			} else if ( v[1] == av[0] ) {
+				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+				yrange = range[0];
+			} else
+				error("itvplot : invalid argument");
+			break;
+		case 2:
+			av[0] = VR((P)BDY(BDY(range[0])));
+			av[1] = VR((P)BDY(BDY(range[1])));
+			if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+					xrange = range[0]; yrange = range[1];
+			} else
+					error("itvplot : invalid argument");
+			break;
+		default:
+			error("itvplot : cannot happen"); break;
+	}
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname,"itvplot3");
+	STOQ(Itvplot, itvsize);
+	arg = mknode(9,s_id,fname,poly,xrange,yrange,0,geom,wname,itvsize);
+	Pox_rpc(arg,&t);
+	*rp = (Obj)s_id;
+}
+// RECURSION and TRANSFER TYPE
+void itvplot_main4(NODE arg, Obj *rp)
+{
+	Q m2,p2,w300,s_id,itvsize;
+	NODE defrange;
+	LIST xrange,yrange,range[2],list,geom;
+	VL vl,vl0;
+	V v[2],av[2];
+	int stream,ri,i,sign;
+	P poly;
+	P var;
+	NODE n,n0;
+	STRING fname,wname;
+	Obj t;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+			case O_P:
+				poly = (P)BDY(arg); 
+				get_vars_recursive((Obj)poly,&vl);
+				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+					if ( vl0->v->attr == (pointer)V_IND )
+						if ( i >= 2 )
+							error("itvplot : invalid argument");
+						else
+							v[i++] = vl0->v;
+				break;
+			case O_LIST:
+				list = (LIST)BDY(arg);
+				if ( OID(BDY(BDY(list))) == O_P )
+					if ( ri > 1 )
+						error("itvplot : invalid argument");
+					else
+						range[ri++] = list;
+				else
+					geom = list;
+				break;
+			case O_N:
+				stream = QTOS((Q)BDY(arg)); break;
+			case O_STR:
+				wname = (STRING)BDY(arg); break;
+			default:
+				error("itvplot : invalid argument"); break;
+		}
+	if ( !poly )
+		error("itvplot : invalid argument");
+	switch ( ri ) {
+		case 0:
+			if ( !v[1] )
+				error("itvplot : please specify all variables");
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			break;
+		case 1:
+			if ( !v[1] )
+				error("itvplot : please specify all variables");
+			av[0] = VR((P)BDY(BDY(range[0])));
+			if ( v[0] == av[0] ) {
+				xrange = range[0];
+				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			} else if ( v[1] == av[0] ) {
+				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+				yrange = range[0];
+			} else
+				error("itvplot : invalid argument");
+			break;
+		case 2:
+			av[0] = VR((P)BDY(BDY(range[0])));
+			av[1] = VR((P)BDY(BDY(range[1])));
+			if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+					xrange = range[0]; yrange = range[1];
+			} else
+					error("itvplot : invalid argument");
+			break;
+		default:
+			error("itvplot : cannot happen"); break;
+	}
+	/* itvplot in ox_plot requires 
 	   [s_id (Q),
 	   	formula (Obj),
 	   	xrange=[x,xmin,xmax] (LIST),
@@ -233,25 +756,176 @@ void ifplot_main(NODE arg,int is_memory, Obj *rp)
 		STOQ(300,w300);
 		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
-	if ( is_memory ) {
-		MKSTR(fname,"memory_plot");
-		arg = mknode(7,s_id,fname,poly,xrange,yrange,NULLP,geom);
-		Pox_rpc(arg,&t);
-		arg = mknode(1,s_id);
-		Pox_pop_cmo(arg,rp);
-	} else {
-		MKSTR(fname,"plot");
-		arg = mknode(8,s_id,fname,poly,xrange,yrange,NULLP,geom,wname);
-		Pox_rpc(arg,&t);
-		*rp = (Obj)s_id;
-	}
+	MKSTR(fname,"itvplot4");
+	STOQ(Itvplot, itvsize);
+	arg = mknode(9,s_id,fname,poly,xrange,yrange,0,geom,wname,itvsize);
+	Pox_rpc(arg,&t);
+	*rp = (Obj)s_id;
 }
 
-void conplot_main(NODE arg,int is_memory, Obj *rp);
+void Pineqn(NODE arg, Obj *rp)
+{
+	ineqn_main(arg, 1, rp);
+}
+
+void ineqn_main(NODE arg,int is_memory, Obj *rp)
+{
+	Q s_id, m2, p2, w300, color;
+	NODE defrange, n, n0;
+	P poly, var;
+	VL vl, vl0;
+	V v[2], av[2];
+	LIST xrange, yrange, range[2], list, geom;
+	int stream, ri, i,sign;
+	STRING fname,wname;
+
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n);
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	/* get polynomial */
+	if ( !(OID(BDY(arg)) == O_P || (OID(BDY(arg)) ==O_R)) )
+		error("ineqn : first argument must be a polynormial");
+	else {
+		poly = (P)BDY(arg);
+		/* get vars */
+		get_vars_recursive((Obj)poly,&vl);
+		for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+		if ( vl0->v->attr == (pointer)V_IND )
+		if ( i >= 2 )
+			error(
+				"ineqn : first argument must be a univariate or bivariate polynormial");
+		else
+			v[i++] = vl0->v;
+	}
+	/* get color */
+	arg = NEXT(arg);
+	if ( OID(BDY(arg)) != O_N )
+		error("ineqn : second argument must be color code");
+	else
+		color = (Q)BDY(arg);
+	/* other argument is optional */
+	arg = NEXT(arg);
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
+		case O_LIST:
+			list = (LIST)BDY(arg);
+			if ( OID(BDY(BDY(list))) == O_P )
+				if ( ri > 1 )
+					error("ineqn : invalid list argument");
+				else
+					range[ri++] = list;
+			else
+			geom = list;
+			break;
+		case O_N:
+			stream = QTOS((Q)BDY(arg)); break;
+		case O_STR:
+			wname = (STRING)BDY(arg); break;
+		default:
+			error("ineqn : invalid argument"); break;
+	}
+	switch ( ri ) {
+	case 0:
+		if ( !v[1] ) error("ineqn : please specify all variables");
+		MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+		MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		break;
+	case 1:
+		if ( !v[1] ) error("ineqn : please specify all variables");
+		av[0] = VR((P)BDY(BDY(range[0])));
+		if ( v[0] == av[0] ) {
+			xrange = range[0];
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+		} else if ( v[1] == av[0] ) {
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			yrange = range[0];
+		} else error("ineqn : invalid argument");
+		break;
+	case 2:
+		av[0] = VR((P)BDY(BDY(range[0])));
+		av[1] = VR((P)BDY(BDY(range[1])));
+		if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+				((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+			xrange = range[0]; yrange = range[1];
+		} else error("ineqn : invalid argument");
+		break;
+	default:
+		error("ineqn : cannot happen"); break;
+	}
+
+	stream = validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	if ( !geom ) {
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
+	MKSTR(fname, "ineqn");
+	arg = mknode(8, s_id, fname, poly, color, xrange, yrange, geom, wname);
+	Pox_cmo_rpc(arg,rp);
+}
+
+void Pineqnor(NODE arg, Obj *rp)
+{
+	ineqn_main_op(arg, 7, 0, rp);
+}
+
+void Pineqnand(NODE arg, Obj *rp)
+{
+	ineqn_main_op(arg, 1, 0, rp);
+}
+
+void Pineqnxor(NODE arg, Obj *rp)
+{
+	ineqn_main_op(arg, 6, 0, rp);
+}
+
+void Pmemory_ineqn(NODE arg, Obj *rp)
+{
+	ineqn_main(arg, 1, rp);
+}
+
+void ineqn_main_op(NODE arg, int op, int is_memory, Obj *rp)
+{
+	Q s_id, index, color, op_code;
+	P poly;
+	STRING fname;
+	Obj t;
+
+	poly  = (P)ARG0(arg);
+	color = (Q)ARG1(arg);
+	s_id  = (Q)ARG2(arg);
+	index = (Q)ARG3(arg);
+	STOQ( op, op_code);
+	MKSTR(fname, "ineqnover");
+	arg = mknode(6, s_id, fname, index, poly, color, op_code);
+	Pox_rpc(arg, &t);
+	*rp = (Obj)s_id;
+}
+
+void Pobj_cp(NODE arg, Obj *rp)
+{
+	Q sysid, index_A, index_B, op_code;
+	STRING fname;
+	Obj t;
+
+	sysid = (Q)ARG0(arg);
+	index_A = (Q)ARG1(arg);
+	index_B = (Q)ARG2(arg);
+	op_code = (Q)ARG3(arg);
+	MKSTR(fname, "objcp");
+	arg = mknode(5, sysid, fname, index_A, index_B, op_code);
+	Pox_rpc(arg, &t);
+	*rp = (Obj)sysid;
+}
+#endif
 
 void Pconplot(NODE arg,Obj *rp)
 {
-	conplot_main(arg,0,rp);
+	conplot_main(arg, 0, rp);
 }
 
 void Pmemory_conplot(NODE arg,Obj *rp)
@@ -383,8 +1057,6 @@ void conplot_main(NODE arg,int is_memory,Obj *rp)
 		*rp = (Obj)s_id;
 	}
 }
-
-void plot_main(NODE arg,int is_memory,Obj *rp);
 
 void Pplot(NODE arg,Obj *rp)
 {
@@ -595,7 +1267,7 @@ void Pplotover(NODE arg,Q *rp)
 	*rp = s_id;
 }
 
-/* arg = [x,y,r,c,s_id,index] */
+/* arg = [x,y,r,s_id,index] */
 
 void Pdrawcircle(NODE arg,Q *rp)
 {
@@ -613,7 +1285,7 @@ void Pdrawcircle(NODE arg,Q *rp)
 	s_id = (Q)ARG4(arg);
 	index = (Q)ARG5(arg);
 	MKSTR(fname,"drawcircle");
-	n = mknode(3,x,y,r); MKLIST(pos,n);
+	n = mknode(3,x,y,r,c); MKLIST(pos,n);
 	arg = mknode(5,s_id,fname,index,pos,c);
 	Pox_rpc(arg,&t);
 	*rp = s_id;

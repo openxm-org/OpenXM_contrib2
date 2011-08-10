@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.12 2005/05/18 03:27:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.13 2005/12/21 23:18:16 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -62,6 +62,69 @@
 #if defined(VISUAL)
 static POINT oldpos;
 #endif
+
+unsigned long GetColor(Display *, char *);
+
+unsigned long GetColor(Display *dis, char *color_name)
+{
+	Colormap cmap;
+	XColor near_color, true_color;
+
+	cmap = DefaultColormap( dis, 0 );
+	XAllocNamedColor( dis, cmap, color_name, &near_color, &true_color );
+	return( near_color.pixel );
+}
+
+void area_print(DISPLAY *display, int **mask, struct canvas *can, int GXcode)
+{
+	int ix, iy;
+	XImage *image;
+	unsigned long color, black, white;
+	int wc;
+
+	flush();
+	black = GetColor(display, "black");
+	white = GetColor(display, "white");
+	image = XGetImage(display, can->pix, 0, 0, can->width, can->height,
+		-1, ZPixmap);
+	for(iy = 0; iy < can->height; iy++){
+		for(ix = 0; ix < can->width; ix++){
+			color = XGetPixel(image, ix, iy);
+			if (color == white) wc = -1;
+			else if (color == black) wc = 0;
+			else wc = 1;
+			if ( wc != 0 ) {//XPutPixel(image,ix,iy,black);
+				if ( mask[iy][ix] == 0 ) XPutPixel(image, ix, iy, black);
+				else {
+					switch (GXcode) {
+					case 3: /* copy case */
+						if (mask[iy][ix] == 1 ) XPutPixel(image, ix, iy, can->color);
+						else XPutPixel(image, ix, iy, BackPixel);
+						break;
+					case 1: /* and case */
+						if ((mask[iy][ix] == 1) && (wc == 1))
+							XPutPixel(image, ix, iy, can->color);
+						else XPutPixel(image, ix, iy, BackPixel);
+						break;
+					case 7: /* or case */
+						if ((mask[iy][ix] == 1) || (wc == 1))
+							XPutPixel(image, ix, iy, can->color);
+						else XPutPixel(image, ix, iy, BackPixel);
+						break;
+					case 6: /* xor case */
+						if ((mask[iy][ix] == 1) ^ (wc == 1))
+							XPutPixel(image, ix, iy, can->color);
+						else XPutPixel(image, ix, iy, BackPixel);
+						break;
+					}
+				}
+			}
+		}
+	}
+	XPutImage(display,can->pix,drawGC,image,0,0,0,0,can->width, can->height);
+	count_and_flush();
+	flush();
+}
 
 void if_print(DISPLAY *display,double **tab,struct canvas *can)
 {
