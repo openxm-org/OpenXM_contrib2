@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.21 2006/11/09 15:54:35 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.22 2011/08/10 04:51:58 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -880,7 +880,6 @@ void ineqnmain(struct canvas *can, int orgcolor, int op_code)
 	copy_to_canvas(can);
 }
 
-#if defined(INTERVAL)
 int itvifplot(NODE arg)
 {
 	int id, op_code, orgcolor;
@@ -1226,5 +1225,4 @@ void itvplotmain4(struct canvas *can, int itvsize)
 	define_cursor(can->window,normalcur);
 	tstop(can); /* time calc */
 }
-#endif
 #endif

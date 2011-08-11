@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.13 2005/12/21 23:18:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.14 2011/08/10 04:51:58 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,6 +63,7 @@
 static POINT oldpos;
 #endif
 
+#if defined(INTERVAL)
 unsigned long GetColor(Display *, char *);
 
 unsigned long GetColor(Display *dis, char *color_name)
@@ -125,6 +126,7 @@ void area_print(DISPLAY *display, int **mask, struct canvas *can, int GXcode)
 	count_and_flush();
 	flush();
 }
+#endif
 
 void if_print(DISPLAY *display,double **tab,struct canvas *can)
 {
