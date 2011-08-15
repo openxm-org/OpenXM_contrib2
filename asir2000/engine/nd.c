@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.195 2011/02/18 02:54:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.196 2011/06/16 08:17:15 noro Exp $ */
 
 #include "nd.h"
 
@@ -3002,6 +3002,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
     struct order_spec *ord1;
     int *perm;
 
+    parse_nd_option(current_option);
     get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
     switch ( ord->id ) {
