@@ -45,14 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.7 2003/12/24 08:00:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.8 2003/12/26 05:47:37 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 #include "parse.h"
 
 void Pdsqrt(),Pdsin(),Pdcos(),Pdtan(),Pdasin(),Pdacos(),Pdatan(),Pdlog(),Pdexp();
-void Pabs(),Pdfloor(),Pdceil(),Pdrint();
+void Pabs(),Pdfloor(),Pdceil(),Pdrint(),Pdisnan();
 
 struct ftab math_tab[] = {
 	{"dsqrt",Pdsqrt,1},
@@ -71,6 +71,7 @@ struct ftab math_tab[] = {
 	{"dceil",Pdceil,1},
 	{"rint",Pdrint,1},
 	{"drint",Pdrint,1},
+	{"disnan",Pdisnan,1},
 	{0,0,0},
 };
 
@@ -359,4 +360,20 @@ Q *rp;
 	} else
 		q = 0;
 	*rp = q;
+}
+
+void Pdisnan(NODE arg,Q *rp)
+{
+	Real r;
+	double d;
+
+	r = (Real)ARG0(arg);
+	if ( !r || !NUM(r) || !REAL(r) ) {
+		*rp = 0;
+		return;
+	}
+	d = ToReal(r);
+	if ( isnan(d) ) *rp = ONE;
+	else if ( isinf(d) ) STOQ(2,*rp);
+	else *rp = 0;
 }
