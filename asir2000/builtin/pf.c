@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.15 2008/11/18 20:52:47 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.16 2009/07/23 01:04:29 ohara Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -713,7 +713,7 @@ void Pmap(NODE arg,Obj *rp)
 		error("evalmapf : invalid position");
 	r0 = 0;
 	NEXTNODE(r0,r);
-	iter = BDY(t); rest = NEXT(t);
+	iter = BDY(node); rest = NEXT(node);
 	if ( !iter ) {
 		*rp = bevalf_with_opts(f,node,option);
 		return;
