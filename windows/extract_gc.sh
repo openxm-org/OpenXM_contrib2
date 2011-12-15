@@ -1,6 +1,6 @@
-#!/bin/sh
-# $OpenXM: OpenXM_contrib2/windows/extract_gc.sh,v 1.2 2009/03/11 11:32:07 ohara Exp $
-(shopt -s igncr) 2>/dev/null && eval 'shopt -s igncr';#
+#!/bin/bash
+# $OpenXM: OpenXM_contrib2/windows/extract_gc.sh,v 1.3 2009/11/24 05:00:23 ohara Exp $
+(set -o igncr) 2>/dev/null && set -o igncr;#
 OpenXM_HOME=${OpenXM_HOME:-../../OpenXM}
 OpenXM_dist=${OpenXM_HOME}/../OpenXM_dist
 GC=gc-7.1
