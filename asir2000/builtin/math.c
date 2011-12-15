@@ -45,11 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.8 2003/12/26 05:47:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.9 2011/08/24 07:20:09 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 #include "parse.h"
+#if defined(VISUAL)
+#include <float.h>
+#endif
 
 void Pdsqrt(),Pdsin(),Pdcos(),Pdtan(),Pdasin(),Pdacos(),Pdatan(),Pdlog(),Pdexp();
 void Pabs(),Pdfloor(),Pdceil(),Pdrint(),Pdisnan();
@@ -366,6 +369,9 @@ void Pdisnan(NODE arg,Q *rp)
 {
 	Real r;
 	double d;
+#if defined(VISUAL)
+    int c;
+#endif
 
 	r = (Real)ARG0(arg);
 	if ( !r || !NUM(r) || !REAL(r) ) {
@@ -373,7 +379,13 @@ void Pdisnan(NODE arg,Q *rp)
 		return;
 	}
 	d = ToReal(r);
+#if defined(VISUAL)
+	c = _fpclass(d);
+	if ( c == _FPCLASS_SNAN || c == _FPCLASS_QNAN ) *rp = ONE;
+	else if ( c == _FPCLASS_PINF || c == _FPCLASS_NINF ) STOQ(2,*rp);
+#else
 	if ( isnan(d) ) *rp = ONE;
 	else if ( isinf(d) ) STOQ(2,*rp);
+#endif
 	else *rp = 0;
 }
