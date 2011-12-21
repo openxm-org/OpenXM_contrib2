@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.9 2009/03/27 14:42:29 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.10 2009/09/10 01:51:54 noro Exp $ 
 */
 #include "ca.h"
 
@@ -119,7 +119,7 @@ Obj a;
 GEN *rp;
 {
 	long ltop;
-	GEN pnm,z,w;
+	GEN pnm,z,w,u;
 	DCP dc;
 	int i,j,l,row,col;
 	VL vl;
@@ -137,7 +137,7 @@ GEN *rp;
 						*rp = pnm;
 					else {
 						*rp = z = cgetg(3,4); z[1] = (long)pnm;
-						ritopa_i(DN((Q)a),1,(GEN *)&z[2]);
+						ritopa_i(DN((Q)a),1,&u); z[2] = u;
 					}
 					break;
 				case N_R:
@@ -146,7 +146,8 @@ GEN *rp;
 					*rp = gcopy((GEN)BDY(((BF)a))); break;
 				case N_C:
 					z = cgetg(3,6);
-					ritopa((Obj)((C)a)->r,(GEN *)&z[1]); ritopa((Obj)((C)a)->i,(GEN *)&z[2]);
+					ritopa((Obj)((C)a)->r,&u); z[1] = u; 
+					ritopa((Obj)((C)a)->i,&u); z[2] = u;
 					*rp = z;
 					break;
 				default:
@@ -163,21 +164,24 @@ GEN *rp;
 			setlgef(z,l+3);
 			for ( i = l+2; i >= 2; i-- )
 				z[i] = (long)gzero;
-			for ( dc = DC((P)a); dc; dc = NEXT(dc) )
-				ritopa((Obj)COEF(dc),(GEN *)&z[QTOS(DEG(dc))+2]);
+			for ( dc = DC((P)a); dc; dc = NEXT(dc) ) {
+				ritopa((Obj)COEF(dc),&u); z[QTOS(DEG(dc))+2] = u;
+			}
 			break;
 		case O_VECT:
 			l = ((VECT)a)->len; z = cgetg(l+1,17);
-			for ( i = 0; i < l; i++ )
-				ritopa((Obj)BDY((VECT)a)[i],(GEN *)&z[i+1]);
+			for ( i = 0; i < l; i++ ) {
+				ritopa((Obj)BDY((VECT)a)[i],&u); z[i+1] = u;
+			}
 			*rp = z;
 			break;
 		case O_MAT:
 			row = ((MAT)a)->row; col = ((MAT)a)->col; z = cgetg(col+1,19);
 			for ( j = 0; j < col; j++ ) {
 				w = cgetg(row+1,18);
-				for ( i = 0; i < row; i++ )
-					ritopa((Obj)BDY((MAT)a)[i][j],(GEN *)&w[i+1]);
+				for ( i = 0; i < row; i++ ) {
+					ritopa((Obj)BDY((MAT)a)[i][j],&u); w[i+1] = u;
+				}
 				z[j+1] = (long)w;
 			}
 			*rp = z;
