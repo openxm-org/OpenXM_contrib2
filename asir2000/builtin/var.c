@@ -45,20 +45,56 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.5 2005/10/26 07:33:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.6 2006/08/09 10:08:46 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Pvar(), Pvars(), Puc(), Pvars_recursive();
+void Pvar(), Pvars(), Puc(), Pvars_recursive(),Psimple_is_eq();
 
 struct ftab var_tab[] = {
 	{"var",Pvar,1},
 	{"vars",Pvars,1},
 	{"vars_recursive",Pvars_recursive,1},
 	{"uc",Puc,0},
+	{"simple_is_eq",Psimple_is_eq,2},
 	{0,0,0},
 };
+
+void Psimple_is_eq(NODE arg,Q *rp)
+{
+	int ret;
+
+	ret = is_eq(ARG0(arg),ARG1(arg));
+	STOQ(ret,*rp);
+}
+
+int is_eq(Obj a0,Obj a1)
+{
+	P p0,p1;
+	DCP dc0,dc1;
+
+	if ( !a0 ) return a1?0:1;
+	else if ( !a1 ) return 0;
+	else if ( OID(a0) != OID(a1) ) return 0;
+	else {
+		switch ( OID(a0) ) {
+			case O_P:
+				p0 = (P)a0; p1 = (P)a1;
+				if ( VR(p0) == VR(p1) ) {
+					for ( dc0 = DC(p0), dc1 = DC(p1); dc0 && dc1; dc0 = NEXT(dc0), dc1 = NEXT(dc1) ) {
+						if ( cmpq(DEG(dc0),DEG(dc1)) ) return 0;
+						if ( !is_eq((Obj)COEF(dc0),(Obj)COEF(dc1)) ) return 0;
+					}
+					return (dc0||dc1)?0:1;
+				} else return 0;
+				break;
+			default:
+				return !arf_comp(CO,a0,a1);
+				break;
+		}
+	}
+}
 
 void Pvar(NODE arg,Obj *rp)
 {
