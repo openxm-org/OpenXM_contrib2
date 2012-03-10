@@ -14,4 +14,6 @@ call makepart tigers %lang%
 call makepart todo_parametrize %lang%
 call makepart noro_matrix %lang%
 call makepart noro_mwl %lang%
+call makepart noro_pd %lang%
 call makepart nn_ndbf %lang%
+call makepart ns_twistedlog %lang%

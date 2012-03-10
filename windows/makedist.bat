@@ -28,7 +28,9 @@ copy help\tigershelp-%lang%.chm %instdir%\help\tigershelp.chm
 copy help\todo_parametrizehelp-%lang%.chm %instdir%\help\todo_parametrizehelp.chm
 copy help\noro_matrixhelp-%lang%.chm %instdir%\help\noro_matrixhelp.chm
 copy help\noro_mwlhelp-%lang%.chm %instdir%\help\noro_mwlhelp.chm
+copy help\noro_pdhelp-%lang%.chm %instdir%\help\noro_pdhelp.chm
 copy help\nn_ndbfhelp-%lang%.chm %instdir%\help\nn_ndbfhelp.chm
+copy help\ns_twistedloghelp-%lang%.chm %instdir%\help\ns_twistedloghelp.chm
 copy asir32gui\UseCurrentDir %instdir%\bin
 cd %lang%
 tar czf asirwin-%lang%.tgz asir
@@ -63,7 +65,9 @@ copy help\tigershelp-%lang%.chm %instdir%\help\tigershelp.chm
 copy help\todo_parametrizehelp-%lang%.chm %instdir%\help\todo_parametrizehelp.chm
 copy help\noro_matrixhelp-%lang%.chm %instdir%\help\noro_matrixhelp.chm
 copy help\noro_mwlhelp-%lang%.chm %instdir%\help\noro_mwlhelp.chm
+copy help\noro_pdhelp-%lang%.chm %instdir%\help\noro_pdhelp.chm
 copy help\nn_ndbfhelp-%lang%.chm %instdir%\help\nn_ndbfhelp.chm
+copy help\ns_twistedloghelp-%lang%.chm %instdir%\help\ns_twistedloghelp.chm
 copy asir32gui\UseCurrentDir %instdir%\bin
 cd %lang%
 tar czf asirwin-%lang%.tgz asir

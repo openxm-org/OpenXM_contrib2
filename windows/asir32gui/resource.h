@@ -38,6 +38,8 @@
 #define ID_NOROMATRIX              	32789
 #define ID_NOROMWL              	32790
 #define ID_NNNDBF              		32791
+#define ID_NOROPD              		32792
+#define ID_NSTWLG              		32793
 #define ID_FILE_LOG                     57610
 
 // Next default values for new objects

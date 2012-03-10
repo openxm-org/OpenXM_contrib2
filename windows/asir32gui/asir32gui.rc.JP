@@ -141,7 +141,9 @@ BEGIN
             MENUITEM "todo_parametrize",            ID_TODOPARAMETRIZE
             MENUITEM "noro_matrix",            ID_NOROMATRIX
             MENUITEM "noro_mwl",            ID_NOROMWL
+            MENUITEM "noro_pd",            ID_NOROPD
             MENUITEM "nn_ndbf",            ID_NNNDBF
+            MENUITEM "ns_twistedlog",            ID_NSTWLG
         END
         MENUITEM " ﬁ∞ºﬁÆ›èÓïÒ(asir32gui) (&A)...", ID_APP_ABOUT
     END

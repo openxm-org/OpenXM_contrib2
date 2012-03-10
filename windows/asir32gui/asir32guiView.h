@@ -87,7 +87,9 @@ public:
 	afx_msg void OnTodoparametrize();
 	afx_msg void OnNoromatrix();
 	afx_msg void OnNoromwl();
+	afx_msg void OnNoropd();
 	afx_msg void OnNnndbf();
+	afx_msg void OnNstwistedlog();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

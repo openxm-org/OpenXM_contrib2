@@ -82,6 +82,8 @@ BEGIN_MESSAGE_MAP(CAsir32guiView, CEditView)
 	ON_COMMAND(ID_NOROMATRIX, OnNoromatrix)
 	ON_COMMAND(ID_NOROMWL, OnNoromwl)
 	ON_COMMAND(ID_NNNDBF, OnNnndbf)
+	ON_COMMAND(ID_NOROPD, OnNoropd)
+	ON_COMMAND(ID_NSTWLG, OnNstwistedlog)
 	//}}AFX_MSG_MAP
 	// 標準印刷コマンド
 //	ON_COMMAND(ID_FILE_PRINT, CEditView::OnFilePrint)
@@ -701,10 +703,22 @@ void CAsir32guiView::OnNoromwl()
 	viewHtmlHelp("noro_mwl");
 }
 
+void CAsir32guiView::OnNoropd() 
+{
+	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
+	viewHtmlHelp("noro_pd");
+}
+
 void CAsir32guiView::OnNnndbf() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
 	viewHtmlHelp("nn_ndbf");
+}
+
+void CAsir32guiView::OnNstwistedlog() 
+{
+	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
+	viewHtmlHelp("ns_twistedlog");
 }
 
 BOOL CAsir32guiView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext) 

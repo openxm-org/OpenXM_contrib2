@@ -288,7 +288,7 @@ void CWinfepDlg::OnAsir()
 	CFileDialog fileDialog(TRUE);
 	if ( fileDialog.DoModal() == IDOK ) {
 		CString pathName = fileDialog.GetPathName();
-		_spawnl(_P_NOWAIT,pathName,pathName,NULL); 
+		_spawnl(_P_NOWAIT,pathName,"asirgui",NULL); 
 		Sleep(5000);
 		get_asirhwnd();
 	}
