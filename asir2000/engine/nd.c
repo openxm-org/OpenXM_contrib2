@@ -1,6 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.196 2011/06/16 08:17:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.197 2011/08/15 09:21:00 noro Exp $ */
 
 #include "nd.h"
+
+struct oEGT eg_search;
 
 int diag_period = 6;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
@@ -70,6 +72,8 @@ P ndctop(int mod,union oNDC c);
 void finalize_tracelist(int i,P cont);
 void conv_ilist(int demand,int trace,NODE g,int **indp);
 void parse_nd_option(NODE opt);
+void dltondl(int n,DL dl,UINT *r);
+DP ndvtodp(int mod,NDV p);
 
 extern int Denominator,DP_Multiple;
 
@@ -2821,7 +2825,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
     NODE tr,tl1,tl2,tl3,tl4;
     LIST l1,l2,l3,l4,l5;
 	int j;
-	Q jq;
+	Q jq,bpe;
     int *perm;
     EPOS oepos;
     int obpe,oadv,ompos,cbpe;
@@ -2941,11 +2945,9 @@ void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
     if ( nd_gentrace ) { 
         tl2 = nd_alltracelist; nd_alltracelist = 0;
         ndv_check_membership(m,fd0,obpe,oadv,oepos,x);
-        if ( nd_gentrace ) { 
-            tl3 = nd_alltracelist; nd_alltracelist = 0; 
-        } else tl3 = 0;
-        nd_gb(m,0,1,nd_gensyz?1:0,0);
-        if ( nd_gentrace && nd_gensyz ) { 
+        tl3 = nd_alltracelist; nd_alltracelist = 0; 
+        if ( nd_gensyz ) { 
+        	nd_gb(m,0,1,1,0);
             tl4 = nd_alltracelist; nd_alltracelist = 0; 
         } else tl4 = 0;
     }
@@ -2977,9 +2979,10 @@ FINAL:
 		for ( j = length(x)-1, t = 0; j >= 0; j-- ) {
 		    STOQ(perm[j],jq); MKNODE(s,jq,t); t = s;
 		}
-       MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
-       MKLIST(l5,tl4);
-      tr = mknode(7,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5); MKLIST(*rp,tr);
+      MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
+      MKLIST(l5,tl4);
+	  STOQ(nd_bpe,bpe);
+      tr = mknode(8,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe); MKLIST(*rp,tr);
     }
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
@@ -3075,6 +3078,147 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
     MKLIST(*rp,r0);
 }
 
+NDV recompute_trace(NODE trace,NDV *p,int m);
+void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,LIST *rp);
+
+NDV recompute_trace(NODE ti,NDV *p,int mod)
+{
+	int c,c1,c2,i;
+	NM mul,m,tail;
+	ND d,r,rm;
+	NODE sj;
+	NDV red;
+	Obj mj;
+	static int afo=0;
+
+	afo++;
+	mul = (NM)ALLOCA(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
+	CM(mul) = 1;
+	tail = 0;
+	for ( i = 0, d = r = 0; ti; ti = NEXT(ti), i++ ) {
+		sj = BDY((LIST)BDY(ti));
+		if ( ARG0(sj) ) {
+			red = p[QTOS((Q)ARG1(sj))];
+			mj = (Obj)ARG2(sj);
+			if ( OID(mj) != O_DP ) ndl_zero(DL(mul));
+			else dltondl(nd_nvar,BDY((DP)mj)->dl,DL(mul));
+			rm = ndv_mul_nm(mod,mul,red);
+			if ( !r ) r = rm;
+			else {
+				for ( m = BDY(r); m && !ndl_equal(m->dl,BDY(rm)->dl); m = NEXT(m), LEN(r)-- ) {
+					if ( d ) {
+						NEXT(tail) = m; tail = m; LEN(d)++;
+					} else {
+						MKND(nd_nvar,m,1,d); tail = BDY(d);
+					}
+				}
+				if ( !m ) return 0; /* failure */
+				else {
+					BDY(r) = m;
+					c1 = invm(HCM(rm),mod); c2 = mod-HCM(r);
+					DMAR(c1,c2,0,mod,c);
+					nd_mul_c(mod,rm,c);
+					r = nd_add(mod,r,rm);
+				}
+			}
+		}
+	}
+	if ( tail ) NEXT(tail) = 0;
+	d = nd_add(mod,d,r);
+	nd_mul_c(mod,d,invm(HCM(d),mod));
+	return ndtondv(mod,d);
+}
+
+void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,LIST *rp)
+{
+    VL tv,fv,vv,vc,av;
+    NODE fd,fd0,r,r0,t,x,s,xx,alist;
+    int e,max,nvar,i;
+    NDV b;
+    int ishomo,nalg;
+    Alg alpha,dp;
+    P p,zp;
+    Q dmy;
+    LIST f1,f2;
+    Obj obj;
+    NumberField nf;
+    struct order_spec *ord1;
+	NODE permtrace,intred,ind,perm,trace,ti;
+	int len,n,j;
+	NDV *db,*pb;
+
+    parse_nd_option(current_option);
+    get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+    switch ( ord->id ) {
+        case 1:
+            if ( ord->nv != nvar )
+                error("nd_check : invalid order specification");
+            break;
+        default:
+            break;
+    }
+    nd_init_ord(ord);
+	nd_bpe = QTOS((Q)ARG7(BDY(tlist)));
+    nd_setup_parameters(nvar,0);
+
+	len = length(BDY(f));
+	db = (NDV *)MALLOC(len*sizeof(NDV *));
+	for ( i = 0, t = BDY(f); t; i++, t = NEXT(t) ) {
+	    ptozp((P)BDY(t),1,&dmy,&zp);
+	    b = ptondv(CO,vv,zp);
+        ndv_mod(m,b);
+		ndv_mul_c(m,b,invm(HCM(b),m));
+		db[i] = b;
+    }
+
+	permtrace = BDY((LIST)ARG2(BDY(tlist))); 
+	intred = BDY((LIST)ARG3(BDY(tlist))); 
+	ind = BDY((LIST)ARG4(BDY(tlist)));
+	perm = BDY((LIST)ARG0(permtrace));
+	trace = NEXT(permtrace);
+
+	for ( i = length(perm)-1, t = trace; t; t = NEXT(t) ) {
+		j = QTOS((Q)ARG0(BDY((LIST)BDY(t))));
+		if ( j > i ) i = j;
+	}
+	n = i+1;
+	pb = (NDV *)MALLOC(n*sizeof(NDV *));
+	for ( t = perm, i = 0; t; t = NEXT(t), i++ ) {
+		ti = BDY((LIST)BDY(t));
+		pb[QTOS((Q)ARG0(ti))] = db[QTOS((Q)ARG1(ti))];
+	}
+	for ( t = trace; t; t = NEXT(t) ) {
+		ti = BDY((LIST)BDY(t));
+		pb[QTOS((Q)ARG0(ti))] = recompute_trace(BDY((LIST)ARG1(ti)),pb,m);
+		if ( !pb[QTOS((Q)ARG0(ti))] ) { *rp = 0; return; }
+    	if ( DP_Print ) { 
+       		fprintf(asir_out,"."); fflush(asir_out);
+    	}
+	}
+	for ( t = intred; t; t = NEXT(t) ) {
+		ti = BDY((LIST)BDY(t));
+		pb[QTOS((Q)ARG0(ti))] = recompute_trace(BDY((LIST)ARG1(ti)),pb,m);
+		if ( !pb[QTOS((Q)ARG0(ti))] ) { *rp = 0; return; }
+    	if ( DP_Print ) { 
+       		fprintf(asir_out,"*"); fflush(asir_out);
+    	}
+	}
+    for ( r0 = 0, t = ind; t; t = NEXT(t) ) {
+        NEXTNODE(r0,r); 
+		b = pb[QTOS((Q)BDY(t))];
+        ndv_mul_c(m,b,invm(HCM(b),m));
+#if 0
+        BDY(r) = ndvtop(m,CO,vv,pb[QTOS((Q)BDY(t))]);
+#else
+        BDY(r) = ndvtodp(m,pb[QTOS((Q)BDY(t))]);
+#endif
+    }
+    if ( r0 ) NEXT(r) = 0;
+    MKLIST(*rp,r0);
+    if ( DP_Print ) fprintf(asir_out,"\n");
+}
+
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp)
 {
     VL tv,fv,vv,vc,av;
@@ -3097,7 +3241,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     LIST l1,l2,l3,l4,l5;
     int *perm;
     int j,ret;
-    Q jq;
+    Q jq,bpe;
 
     nd_module = 0;
     parse_nd_option(current_option);
@@ -3279,7 +3423,8 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
 		}
         MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
 		MKLIST(l5,tl4);
-        tr = mknode(7,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5); MKLIST(*rp,tr);
+	  	STOQ(nd_bpe,bpe);
+        tr = mknode(8,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe); MKLIST(*rp,tr);
     }
 }
 
@@ -4697,6 +4842,27 @@ ND ndvtond(int mod,NDV p)
     return d;
 }
 
+DP ndvtodp(int mod,NDV p)
+{
+    MP m,m0;
+	DP d;
+    NMV t;
+    int i,len;
+
+    if ( !p ) return 0;
+    m0 = 0;
+    len = p->len;
+    for ( t = BDY(p), i = 0; i < len; NMV_ADV(t), i++ ) {
+        NEXTMP(m0,m);
+    	m->dl = ndltodl(nd_nvar,DL(t));
+    	m->c = ndctop(mod,t->c);
+    }
+    NEXT(m) = 0;
+	MKDP(nd_nvar,m0,d);
+    SG(d) = SG(p);
+    return d;
+}
+
 void ndv_print(NDV p)
 {
     NMV m;
@@ -5079,6 +5245,7 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
     UINT *v,*ivi,*s0v;
     int i,j,len,prev,diff,cdiff;
     IndArray r;
+struct oEGT eg0,eg1;
 
     m = pair->mul;
     d = DL(m);
@@ -5086,11 +5253,13 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
     len = LEN(p);
     t = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
     v = (unsigned int *)ALLOCA(len*sizeof(unsigned int));
+get_eg(&eg0);
     for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
         ndl_add(d,DL(mr),t);    
         for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
         v[j] = i;
     }
+get_eg(&eg1); add_eg(&eg_search,&eg0,&eg1);
     r = (IndArray)MALLOC(sizeof(struct oIndArray));
     r->head = v[0];
     diff = 0;
@@ -5471,6 +5640,7 @@ int nd_symbolic_preproc(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
     return col;
 }
 
+
 NODE nd_f4(int m,int **indp)
 {
     int i,nh,stat,index;
@@ -5763,7 +5933,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
     NODE r0,rp;
     ND_pairs sp;
     NM_ind_pair *rvect;
-
+init_eg(&eg_search);
     for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
     nred = length(rp0);
     imat = (IndArray *)ALLOCA(nred*sizeof(IndArray));
@@ -5781,6 +5951,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
         r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
     else
         r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
+print_eg("search",&eg_search);
     return r0;
 }
 
