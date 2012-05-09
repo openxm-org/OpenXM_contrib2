@@ -1,9 +1,9 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.5 2009/03/18 05:19:43 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.6 2010/02/26 17:58:23 ohara Exp $
 @echo off
 
 set ARCH=AMD64
 
-cd gc-7.1
+cd gc-7.2alpha6
 nmake -f NT_X64_STATIC_THREADS_MAKEFILE gc.lib
 cd ..
 

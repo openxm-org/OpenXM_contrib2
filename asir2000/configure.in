@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.36 2009/03/16 16:08:05 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.37 2009/03/27 14:42:29 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -34,7 +34,7 @@ elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
 
-GC=gc6.8
+GC=gc-7.2alpha6
 AC_ARG_WITH([asir-gc],
 [  --with-asir-gc          modify Boehm's GC [[yes]]],
 [with_asir_gc=${withval}],[with_asir_gc=yes])
@@ -51,25 +51,13 @@ GC_CONFIGURE_ARGS="--disable-threads --enable-large-config"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
-AC_ARG_WITH([gc7],
-[  --with-gc7              use GC 7.x (if --with-asir-gc=yes) [[no]]],
-[with_gc7=${withval}],[with_gc7=no])
-if test ${with_gc7:=no} != no; then
-   case "${with_gc7}" in
-   [7*]) GC_VERSION=${with_gc7} ;;
-   *)    GC_VERSION=7.1 ;;
-   esac
-   GC=gc-${GC_VERSION}
-   AC_DEFINE([GC7])
-fi
 
+AC_DEFINE([GC7])
 AC_SUBST([ASIR_GCLIB])
 AC_SUBST([GCLIB])
 AC_SUBST([GCINC])
-
 AC_SUBST([GC])
 AC_SUBST([GC_CONFIGURE_ARGS])
-AM_CONDITIONAL([USE_GC7],[test "$with_gc7" != no])
 
 AC_ARG_WITH([distdir],
 [  --with-distdir          specify the spool for fetching. [[no]]],

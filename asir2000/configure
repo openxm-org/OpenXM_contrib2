@@ -616,8 +616,6 @@ GREP
 PARILIB
 PARIINC
 GC_DISTDIR
-USE_GC7_FALSE
-USE_GC7_TRUE
 GC_CONFIGURE_ARGS
 GC
 GCINC
@@ -733,7 +731,6 @@ enable_dependency_tracking
 with_x
 enable_shared
 with_asir_gc
-with_gc7
 with_distdir
 with_pari
 enable_plot
@@ -1390,7 +1387,6 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-x                use the X Window System
   --with-asir-gc          modify Boehm's GC [yes]
-  --with-gc7              use GC 7.x (if --with-asir-gc=yes) [no]
   --with-distdir          specify the spool for fetching. [no]
   --with-pari             use the PARI library. [no]
   --with-mpi              use the MPI library. [no]
@@ -4951,7 +4947,7 @@ elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
 
-GC=gc6.8
+GC=gc-7.2alpha6
 
 # Check whether --with-asir-gc was given.
 if test "${with_asir_gc+set}" = set; then :
@@ -4974,36 +4970,12 @@ if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
 
-# Check whether --with-gc7 was given.
-if test "${with_gc7+set}" = set; then :
-  withval=$with_gc7; with_gc7=${withval}
-else
-  with_gc7=no
-fi
-
-if test ${with_gc7:=no} != no; then
-   case "${with_gc7}" in
-   7*) GC_VERSION=${with_gc7} ;;
-   *)    GC_VERSION=7.1 ;;
-   esac
-   GC=gc-${GC_VERSION}
-   $as_echo "#define GC7 1" >>confdefs.h
-
-fi
+$as_echo "#define GC7 1" >>confdefs.h
 
 
 
 
 
-
-
- if test "$with_gc7" != no; then
-  USE_GC7_TRUE=
-  USE_GC7_FALSE='#'
-else
-  USE_GC7_TRUE='#'
-  USE_GC7_FALSE=
-fi
 
 
 
@@ -5768,10 +5740,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${USE_GC7_TRUE}" && test -z "${USE_GC7_FALSE}"; then
-  as_fn_error $? "conditional \"USE_GC7\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USE_PLOT_TRUE}" && test -z "${USE_PLOT_FALSE}"; then
