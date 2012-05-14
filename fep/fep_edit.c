@@ -164,7 +164,8 @@ init_edit_params ()
 	    set_var ("editmode", "emacs");
     }
 
-    set_var ("showhist", itoa (lines - 1));
+    sprintf (sbuf, "%d", lines);
+    set_var ("showhist", sbuf);
 
     /*
      * Read startup file

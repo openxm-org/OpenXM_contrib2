@@ -1075,6 +1075,7 @@ usageAndExit()
  */
 void sigwinch(int dummy)
 {
+    char *itoa(int i);
 #ifdef TIOCGWINSZ			/* 4.3BSD */
     struct winsize win;
 
