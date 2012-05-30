@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.10 2011/02/07 06:15:23 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.11 2012/05/09 06:17:13 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -16,7 +16,7 @@ PARIDIR= ..\windows\pari20
 PARIINC= -I $(PARIDIR)\win32
 PARILIB= $(PARIDIR)\libpari.lib
 
-GCDIR= ..\windows\gc-7.2alpha6
+GCDIR= ..\windows\gc-7.2
 GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 

@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.11 2011/02/07 06:15:23 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.12 2012/05/09 06:17:13 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 SRCDIR=..\..\asir2000
@@ -9,7 +9,7 @@ PARIDIR=..\pari20
 PARIINC= -I $(PARIDIR)\win32
 PARILIB=$(PARIDIR)\libpari.lib
 
-GCDIR= ..\gc-7.2alpha6
+GCDIR= ..\gc-7.2
 GCLIB= $(GCDIR)\gc.lib
 
 INCLUDES= -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)

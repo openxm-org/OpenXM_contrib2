@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.37 2009/03/27 14:42:29 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.38 2012/05/09 06:17:13 ohara Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([LICENSE])
@@ -34,7 +34,7 @@ elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
 
-GC=gc-7.2alpha6
+GC=gc-7.2
 AC_ARG_WITH([asir-gc],
 [  --with-asir-gc          modify Boehm's GC [[yes]]],
 [with_asir_gc=${withval}],[with_asir_gc=yes])

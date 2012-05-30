@@ -4947,7 +4947,7 @@ elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
 
-GC=gc-7.2alpha6
+GC=gc-7.2
 
 # Check whether --with-asir-gc was given.
 if test "${with_asir_gc+set}" = set; then :
