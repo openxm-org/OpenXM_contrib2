@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.197 2011/08/15 09:21:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.198 2012/04/10 07:15:07 noro Exp $ */
 
 #include "nd.h"
 
@@ -2807,7 +2807,7 @@ NODE postprocess_algcoef(VL av,NODE alist,NODE r)
     return u0;
 }
 
-void nd_gr(LIST f,LIST v,int m,int homo,int f4,struct order_spec *ord,LIST *rp)
+void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp)
 {
     VL tv,fv,vv,vc,av;
     NODE fd,fd0,r,r0,t,x,s,xx,alist;
@@ -2957,7 +2957,8 @@ FINAL:
     for ( r0 = 0, t = x; t; t = NEXT(t) ) {
         NEXTNODE(r0,r); 
         if ( nd_module ) BDY(r) = ndvtopl(m,CO,vv,BDY(t),mrank);
-        else BDY(r) = ndvtop(m,CO,vv,BDY(t));
+        else if ( retdp ) BDY(r) = ndvtodp(m,BDY(t));
+		else BDY(r) = ndvtop(m,CO,vv,BDY(t));
     }
     if ( r0 ) NEXT(r) = 0;
     if ( nalg )
