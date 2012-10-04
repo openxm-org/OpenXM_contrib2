@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.21 2011/06/16 08:17:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.22 2011/08/10 04:51:58 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -866,6 +866,7 @@ void ineqn_main(NODE arg,int is_memory, Obj *rp)
 	MKSTR(fname, "ineqn");
 	arg = mknode(8, s_id, fname, poly, color, xrange, yrange, geom, wname);
 	Pox_cmo_rpc(arg,rp);
+	*rp = (Obj)s_id;
 }
 
 void Pineqnor(NODE arg, Obj *rp)
