@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.17 2003/07/23 01:22:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.18 2003/12/26 02:38:10 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -277,7 +277,7 @@ void comm_mulmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 			l = l1;
 		}
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -308,7 +308,7 @@ void weyl_mulmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 	else {
 		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -362,7 +362,7 @@ void weyl_mulmdm(VL vl,int mod,DP p,MP m0,DP *pr)
 	else {
 		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -421,7 +421,7 @@ void weyl_mulmmm(VL vl,int mod,MP m0,MP m1,int n,DP *pr)
 			min = MIN(k,l);
 
 			if ( min+1 > tablen ) {
-				if ( tab ) GC_free(tab);
+				if ( tab ) GCFREE(tab);
 				tab = (int *)MALLOC((min+1)*sizeof(int));
 				tablen = min+1;
 			}
@@ -663,7 +663,7 @@ void comm_mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 			l = l1;
 		}
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -690,7 +690,7 @@ void weyl_mulmd_dup(int mod,DP p1,DP p2,DP *pr)
 	else {
 		for ( m = BDY(p1), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -746,7 +746,7 @@ void weyl_mulmdm_dup(int mod,MP m0,DP p,DP *pr)
 	else {
 		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -758,8 +758,8 @@ void weyl_mulmdm_dup(int mod,MP m0,DP p,DP *pr)
 		for ( i = 0, tlen = 1; i < n2; i++ )
 			tlen *= d0->d[n2+i]+1;
 		if ( tlen > rtlen ) {
-			if ( tab ) GC_free(tab);
-			if ( psum ) GC_free(psum);
+			if ( tab ) GCFREE(tab);
+			if ( psum ) GCFREE(psum);
 			rtlen = tlen;
 			tab = (struct cdlm *)MALLOC(rtlen*sizeof(struct cdlm));
 			psum = (MP *)MALLOC(rtlen*sizeof(MP));
@@ -821,7 +821,7 @@ void weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 	rtab[0].d = d;
 
 	if ( rtablen > tmptablen ) {
-		if ( tmptab ) GC_free(tmptab);
+		if ( tmptab ) GCFREE(tmptab);
 		tmptab = (struct cdlm *)MALLOC(rtablen*sizeof(struct cdlm));
 		tmptablen = rtablen; 
 	}
@@ -848,8 +848,8 @@ void weyl_mulmmm_dup(int mod,MP m0,MP m1,int n,struct cdlm *rtab,int rtablen)
 			continue;
 		}
 		if ( k+1 > tablen ) {
-			if ( tab ) GC_free(tab);
-			if ( ctab ) GC_free(ctab);
+			if ( tab ) GCFREE(tab);
+			if ( ctab ) GCFREE(ctab);
 			tablen = k+1;
 			tab = (struct cdlm *)MALLOC(tablen*sizeof(struct cdlm));
 			ctab = (int *)MALLOC(tablen*sizeof(int));

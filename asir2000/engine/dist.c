@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.43 2007/09/17 12:47:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.44 2011/03/30 02:43:18 noro Exp $ 
 */
 #include "ca.h"
 
@@ -657,7 +657,7 @@ void comm_muld(VL vl,DP p1,DP p2,DP *pr)
 			l = l1;
 		}
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -695,7 +695,7 @@ void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr)
 			l = l1;
 		}
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -829,7 +829,7 @@ void weyl_muld(VL vl,DP p1,DP p2,DP *pr)
 	else {
 		for ( m = BDY(p1), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -861,7 +861,7 @@ void weyl_muldm(VL vl,MP m0,DP p,DP *pr)
 	else {
 		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
-			if ( w ) GC_free(w);
+			if ( w ) GCFREE(w);
 			w = (MP *)MALLOC(l*sizeof(MP));
 			wlen = l;
 		}
@@ -873,8 +873,8 @@ void weyl_muldm(VL vl,MP m0,DP p,DP *pr)
 		for ( i = 0, tlen = 1; i < n2; i++ )
 			tlen *= d0->d[n2+i]+1;
 		if ( tlen > rtlen ) {
-			if ( tab ) GC_free(tab);
-			if ( psum ) GC_free(psum);
+			if ( tab ) GCFREE(tab);
+			if ( psum ) GCFREE(psum);
 			rtlen = tlen;
 			tab = (struct cdl *)MALLOC(rtlen*sizeof(struct cdl));
 			psum = (MP *)MALLOC(rtlen*sizeof(MP));
@@ -936,7 +936,7 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 	rtab[0].d = d;
 
 	if ( rtablen > tmptablen ) {
-		if ( tmptab ) GC_free(tmptab);
+		if ( tmptab ) GCFREE(tmptab);
 		tmptab = (struct cdl *)MALLOC(rtablen*sizeof(struct cdl));
 		tmptablen = rtablen;
 	}
@@ -962,8 +962,8 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 			continue;
 		}
 		if ( k+1 > tablen ) {
-			if ( tab ) GC_free(tab);
-			if ( ctab ) GC_free(ctab);
+			if ( tab ) GCFREE(tab);
+			if ( ctab ) GCFREE(ctab);
 			tablen = k+1;
 			tab = (struct cdl *)MALLOC(tablen*sizeof(struct cdl));
 			ctab = (Q *)MALLOC(tablen*sizeof(Q));

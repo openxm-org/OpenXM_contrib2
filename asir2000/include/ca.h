@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.80 2011/05/11 06:03:53 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.81 2011/06/16 08:17:15 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -726,15 +726,11 @@ typedef unsigned int ModNum;
 
 /* memory allocators (W_... : uses alloca) */
 
-#if 0
 #define MALLOC(d) Risa_GC_malloc(d)
 #define MALLOC_ATOMIC(d) Risa_GC_malloc_atomic(d)
+#define MALLOC_ATOMIC_IGNORE_OFF_PAGE(d) Risa_GC_malloc_atomic_ignore_off_page(d)
 #define REALLOC(p,d) Risa_GC_realloc(p,d)
-#else
-#define MALLOC(d) GC_malloc(d)
-#define MALLOC_ATOMIC(d) GC_malloc_atomic(d)
-#define REALLOC(p,d) GC_realloc(p,d)
-#endif
+#define GCFREE(p) Risa_GC_free(p)
 #define CALLOC(d,e) MALLOC((d)*(e))
 
 #if !defined(__CYGWIN__) && (defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL))

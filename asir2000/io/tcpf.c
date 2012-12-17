@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.60 2011/01/18 09:09:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.61 2011/06/16 08:17:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1642,9 +1642,9 @@ int register_102(int s1,int rank,int is_master)
 	iofp_102[rank].out = fdopen(s1,"w");
 #if !defined(__CYGWIN__)
 	setbuffer(iofp_102[rank].in,iofp_102[rank].inbuf = 
-		(char *)GC_malloc_atomic(LBUFSIZ),LBUFSIZ);
+		(char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
 	setbuffer(iofp_102[rank].out,iofp_102[rank].outbuf = 
-		(char *)GC_malloc_atomic(LBUFSIZ),LBUFSIZ);
+		(char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
 #endif
 #endif
 	if ( little_endian )

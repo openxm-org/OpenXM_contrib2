@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.9 2009/02/16 17:23:52 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.10 2011/05/11 06:03:53 ohara Exp $ */
 
 #if defined(VISUAL)
 #include "private/gcconfig.h"
@@ -9,12 +9,16 @@
 void error(char *);
 
 int *StackBottom;
+int in_gc, caught_intr;
 
 void *Risa_GC_malloc(size_t d)
 {
 	void *ret;
 
+	in_gc = 1;
 	ret = (void *)GC_malloc(d);
+	in_gc = 0;
+	if ( caught_intr ) { caught_intr = 0; int_handler(); }
 	if ( !ret )
 		error("GC_malloc : failed to allocate memory");
 	return ret;
@@ -24,9 +28,25 @@ void *Risa_GC_malloc_atomic(size_t d)
 {
 	void *ret;
 
+	in_gc = 1;
 	ret = (void *)GC_malloc_atomic(d);
+	in_gc = 0;
+	if ( caught_intr ) { caught_intr = 0; int_handler(); }
 	if ( !ret )
 		error("GC_malloc_atomic : failed to allocate memory");
+	return ret;
+}
+
+void *Risa_GC_malloc_atomic_ignore_off_page(size_t d)
+{
+	void *ret;
+
+	in_gc = 1;
+	ret = (void *)GC_malloc_atomic_ignore_off_page(d);
+	in_gc = 0;
+	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+	if ( !ret )
+		error("GC_malloc_atomic_ignore_off_page : failed to allocate memory");
 	return ret;
 }
 
@@ -34,11 +54,23 @@ void *Risa_GC_realloc(void *p,size_t d)
 {
 	void *ret;
 
+	in_gc = 1;
 	ret = (void *)GC_realloc(p,d);
+	in_gc = 0;
+	if ( caught_intr ) { caught_intr = 0; int_handler(); }
 	if ( !ret )
 		error("GC_realloc : failed to reallocate memory");
 	return ret;
 }
+
+void Risa_GC_free(void *p)
+{
+	in_gc = 1;
+	GC_free(p);
+	in_gc = 0;
+	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+}
+
 
 int get_heapsize()
 {

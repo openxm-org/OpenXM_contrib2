@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.81 2012/05/09 06:17:13 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.82 2012/05/30 02:24:33 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -503,6 +503,7 @@ void fatal(int n)
 }
 
 extern int ox_int_received, critical_when_signal;
+extern int in_gc, caught_intr;
 
 void int_handler(int sig)
 {
@@ -515,6 +516,10 @@ void int_handler(int sig)
 	}
 	if ( critical_when_signal ) {
 		ox_int_received = 1;
+		return;
+	}
+	if ( in_gc ) {
+		caught_intr = 1;
 		return;
 	}
 #if defined(VISUAL)

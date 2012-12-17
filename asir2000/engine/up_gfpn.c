@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gfpn.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gfpn.c,v 1.4 2003/12/24 08:00:38 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -267,7 +267,7 @@ UP *r;
 			k[j] += c2*f[i][j];
 	}
 	uiarraytoup(sum,len,d,&s);
-	GC_free(sum_b);
+	GCFREE(sum_b);
 
 	u = UPALLOC(d);
 	for ( j = 0; j <= d; j++ ) {

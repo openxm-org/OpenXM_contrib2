@@ -4938,7 +4938,7 @@ elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
 
-GC=gc6.8
+GC=gc-7.2
 
 # Check whether --with-asir-gc was given.
 if test "${with_asir_gc+set}" = set; then :
@@ -4960,6 +4960,8 @@ GC_CONFIGURE_ARGS="--disable-threads --enable-large-config"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
+
+$as_echo "#define GC7 1" >>confdefs.h
 
 
 

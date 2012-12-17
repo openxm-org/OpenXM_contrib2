@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.33 2008/09/01 06:20:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.34 2011/06/16 08:17:15 noro Exp $ 
 */
 %{
-#define malloc(x) GC_malloc(x)
-#define realloc(x,y) GC_realloc(x,y)
-#define free(x) GC_free(x)
+#define malloc(x) Risa_GC_malloc(x)
+#define realloc(x,y) Risa_GC_realloc(x,y)
+#define free(x) Risa_GC_free(x)
 
 #if defined(TOWNS)
 #include <alloca.h>

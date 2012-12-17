@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.6 2001/10/09 01:36:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.7 2003/12/24 08:00:38 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -251,7 +251,7 @@ void crup_lm(ModNum **f,int d,int *mod,int index,N m,N lm_mod,UP *r)
 			k[j] += c2*f[i][j];
 	}
 	uiarraytoup(sum,len,d,&s);
-	GC_free(sum_b);
+	GCFREE(sum_b);
 
 	u = UPALLOC(d);
 	for ( j = 0; j <= d; j++ ) {

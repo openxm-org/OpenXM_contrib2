@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.66 2010/01/31 03:25:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.67 2011/06/16 08:17:14 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -911,8 +911,8 @@ NODE gb_f4_mod(NODE f,int m)
 
 		/* XXX free redmat explicitly */
 		for ( k = 0; k < nred; k++ ) {
-			GC_free(BDY(redmat[k]));
-			GC_free(redmat[k]);
+			GCFREE(BDY(redmat[k]));
+			GCFREE(redmat[k]);
 		}
 
 		get_eg(&tmp0); add_eg(&eg_elim1,&tmp1,&tmp0);
@@ -975,7 +975,7 @@ NODE gb_f4_mod(NODE f,int m)
 
 		/* XXX free spmat[] explicitly */
 		for ( j = 0; j < nsp; j++ ) {
-			GC_free(spmat[j]);
+			GCFREE(spmat[j]);
 		}
 	}
 	if ( DP_Print ) {

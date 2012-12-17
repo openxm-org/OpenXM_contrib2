@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.198 2012/04/10 07:15:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.199 2012/08/27 05:38:00 noro Exp $ */
 
 #include "nd.h"
 
@@ -64,7 +64,6 @@ LIST ndvtopl(int mod,VL vl,VL dvl,NDV p,int rank);
 NDV pltondv(VL vl,VL dvl,LIST p);
 void pltozpl(LIST l,Q *cont,LIST *pp);
 void ndl_max(UINT *d1,unsigned *d2,UINT *d);
-pointer GC_malloc_atomic_ignore_off_page(int);
 void nmtodp(int mod,NM m,DP *r);
 NODE reverse_node(NODE n);
 P ndc_div(int mod,union oNDC a,union oNDC b);
@@ -92,7 +91,7 @@ void _NM_alloc()
     int i;
 
     for ( i = 0; i < 1024; i++ ) {
-        p = (NM)GC_malloc(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
+        p = (NM)MALLOC(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
         p->next = _nm_free_list; _nm_free_list = p;
     }
 }
@@ -103,7 +102,7 @@ void _ND_alloc()
     int i;
 
     for ( i = 0; i < 1024; i++ ) {
-        p = (ND)GC_malloc(sizeof(struct oND));
+        p = (ND)MALLOC(sizeof(struct oND));
         p->body = (NM)_nd_free_list; _nd_free_list = p;
     }
 }
@@ -114,7 +113,7 @@ void _NDP_alloc()
     int i;
 
     for ( i = 0; i < 1024; i++ ) {
-        p = (ND_pairs)GC_malloc(sizeof(struct oND_pairs)
+        p = (ND_pairs)MALLOC(sizeof(struct oND_pairs)
             +(nd_wpd-1)*sizeof(UINT));
         p->next = _ndp_free_list; _ndp_free_list = p;
     }
@@ -1581,7 +1580,7 @@ void free_pbucket(PGeoBucket b) {
             nd_free(b->body[i]);
             b->body[i] = 0;
         }
-    GC_free(b);
+    GCFREE(b);
 }
 
 void add_pbucket_symbolic(PGeoBucket g,ND d)
@@ -3842,7 +3841,7 @@ void nd_free(ND p)
 
 void ndv_free(NDV p)
 {
-    GC_free(BDY(p));
+    GCFREE(BDY(p));
 }
 
 void nd_append_red(UINT *d,int i)
@@ -4807,7 +4806,7 @@ NDV ndtondv(int mod,ND p)
     if ( !p ) return 0;
     len = LEN(p);
     if ( mod )
-        m0 = m = (NMV)GC_malloc_atomic_ignore_off_page(len*nmv_adv);
+        m0 = m = (NMV)MALLOC_ATOMIC_IGNORE_OFF_PAGE(len*nmv_adv);
     else
         m0 = m = MALLOC(len*nmv_adv);
 #if 0
@@ -5502,7 +5501,7 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
     for ( j = 0, len = 0; j < spcol; j++ ) if ( vect[j] ) len++;
     if ( !len ) return 0;
     else {
-        mr0 = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+        mr0 = (NMV)MALLOC_ATOMIC_IGNORE_OFF_PAGE(nmv_adv*len);
 #if 0
         ndv_alloc += nmv_adv*len;
 #endif
@@ -5532,7 +5531,7 @@ NDV vect_to_ndv_q(Q *vect,int spcol,int col,int *rhead,UINT *s0vect)
     for ( j = 0, len = 0; j < spcol; j++ ) if ( vect[j] ) len++;
     if ( !len ) return 0;
     else {
-        mr0 = (NMV)GC_malloc(nmv_adv*len);
+        mr0 = (NMV)MALLOC(nmv_adv*len);
 #if 0
         ndv_alloc += nmv_adv*len;
 #endif
@@ -5564,7 +5563,7 @@ NDV plain_vect_to_ndv_q(Q *vect,int col,UINT *s0vect)
     for ( j = 0, len = 0; j < col; j++ ) if ( vect[j] ) len++;
     if ( !len ) return 0;
     else {
-        mr0 = (NMV)GC_malloc(nmv_adv*len);
+        mr0 = (NMV)MALLOC(nmv_adv*len);
 #if 0
         ndv_alloc += nmv_adv*len;
 #endif
@@ -6005,7 +6004,7 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         fflush(asir_out);
     }
     /* free index arrays */
-    for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c);
+    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c);
 
     /* elimination (2nd step) */
     colstat = (int *)ALLOCA(spcol*sizeof(int));
@@ -6018,11 +6017,11 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         NEXTNODE(r0,r); BDY(r) = 
             (pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
         SG((NDV)BDY(r)) = spsugar[i];
-        GC_free(spmat[i]);
+        GCFREE(spmat[i]);
     }
     if ( r0 ) NEXT(r) = 0;
 
-    for ( ; i < sprow; i++ ) GC_free(spmat[i]);
+    for ( ; i < sprow; i++ ) GCFREE(spmat[i]);
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
@@ -6086,7 +6085,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
         fflush(asir_out);
     }
     /* free index arrays */
-/*    for ( i = 0; i < nred; i++ ) GC_free(imat[i]->index.c); */
+/*    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c); */
 
     /* elimination (2nd step) */
     colstat = (int *)ALLOCA(spcol*sizeof(int));
@@ -6095,7 +6094,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     for ( i = 0; i < rank; i++ ) {
         w[rank-i-1] = (pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
         SG((NDV)w[rank-i-1]) = spsugar[i];
-/*        GC_free(spmat[i]); */
+/*        GCFREE(spmat[i]); */
     }
 #if 0
     qsort(w,rank,sizeof(NDV),
@@ -6107,7 +6106,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     }
     if ( r0 ) NEXT(r) = 0;
 
-/*    for ( ; i < sprow; i++ ) GC_free(spmat[i]); */
+/*    for ( ; i < sprow; i++ ) GCFREE(spmat[i]); */
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
@@ -6239,7 +6238,7 @@ NDV nd_recv_ndv()
     len = nd_recv_int();
     if ( !len ) return 0;
     else {
-        m0 = m = (NMV)GC_malloc_atomic_ignore_off_page(nmv_adv*len);
+        m0 = m = (NMV)MALLOC_ATOMIC_IGNORE_OFF_PAGE(nmv_adv*len);
 #if 0
         ndv_alloc += len*nmv_adv;
 #endif

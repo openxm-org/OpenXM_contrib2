@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.59 2009/03/25 07:06:30 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.60 2010/11/09 16:23:45 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -344,8 +344,8 @@ void Psepmat_destructive(NODE arg,LIST *rp)
 			sgn = SGN(ent);
 			divn(nm,mod,&quo,&rem);
 /*			if ( quo != nm && rem != nm ) */
-/*				GC_free(nm); */
-/*			GC_free(ent); */
+/*				GCFREE(nm); */
+/*			GCFREE(ent); */
 			NTOQ(rem,sgn,a[i][j]); NTOQ(quo,sgn,a1[i][j]);	
 		}
 	MKNODE(n1,mat1,0); MKNODE(n0,mat,n1);
@@ -2963,10 +2963,10 @@ void inner_product_int(Q *a,Q *b,int n,Q *r)
 			t = wma; wma = sum; sum = t;
 		}
 	}
-	GC_free(wm);
-	GC_free(wma);
+	GCFREE(wm);
+	GCFREE(wma);
 	if ( !sgn ) {
-		GC_free(sum);
+		GCFREE(sum);
 		*r = 0;
 	} else
 		NTOQ(sum,sgn,*r);
@@ -3021,10 +3021,10 @@ void inner_product_mat_int_mod(Q **a,int **b,int n,int k,int l,Q *r)
 			t = wma; wma = sum; sum = t;
 		}
 	}
-	GC_free(wm);
-	GC_free(wma);
+	GCFREE(wm);
+	GCFREE(wma);
 	if ( !sgn ) {
-		GC_free(sum);
+		GCFREE(sum);
 		*r = 0;
 	} else
 		NTOQ(sum,sgn,*r);

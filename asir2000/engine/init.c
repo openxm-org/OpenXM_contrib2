@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.27 2007/01/25 16:19:41 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.28 2009/02/06 08:58:28 ohara Exp $ 
 */
 #include "ca.h"
 #include "version.h"
@@ -288,7 +288,7 @@ void init_lprime()
 	int s,i;
 
 	s = sizeof(lprime_init);
-	lprime = (int *)GC_malloc_atomic(s);
+	lprime = (int *)MALLOC_ATOMIC(s);
 	lprime_size = s/sizeof(int);	
 	for ( i = 0; i < lprime_size; i++ )
 		lprime[i] = lprime_init[lprime_size-i-1];

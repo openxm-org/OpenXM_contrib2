@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.20 2006/02/08 02:11:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.21 2006/09/13 02:26:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,7 +76,7 @@
 
 #ifdef MALLOC
 #undef MALLOC
-#define MALLOC(x) GC_malloc((x)+4)
+#define MALLOC(x) Risa_GC_malloc((x)+4)
 #endif
 
 char **ASIRLOADPATH;

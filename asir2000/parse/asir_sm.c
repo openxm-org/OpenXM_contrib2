@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.6 2004/02/13 05:48:36 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_sm.c,v 1.7 2004/06/15 00:56:52 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -202,7 +202,7 @@ char *Asir_PopString()
 		soutput_init(buf);
 		sprintexpr(CO,val);
 		l = strlen(buf);
-		obuf = (char *)GC_malloc(l+1);
+		obuf = (char *)MALLOC(l+1);
 		strcpy(obuf,buf);
 		return obuf;
 	}
@@ -259,7 +259,7 @@ int *size;
 	saveobj(0,val);
 	*size = ox_count_length;
 	ox_count_length = 0; ox_do_count = 0;
-	ox_copy_bptr = buf = (char *)GC_malloc(*size);
+	ox_copy_bptr = buf = (char *)MALLOC(*size);
 	savevl(0,vl);
 	saveobj(0,val);
 	ox_copy_bptr = 0;

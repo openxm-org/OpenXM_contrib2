@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.23 2003/03/07 06:39:57 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.24 2011/02/06 07:07:39 ohara Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -359,8 +359,8 @@ int get_iofp(int s1,char *af_sock,int is_server)
 	iofp[i].in = fdopen(s1,"r");
 	iofp[i].out = fdopen(s1,"w");
 #if !defined(__CYGWIN__)
-	setbuffer(iofp[i].in,iofp[i].inbuf = (char *)GC_malloc_atomic(LBUFSIZ),LBUFSIZ);
-	setbuffer(iofp[i].out,iofp[i].outbuf = (char *)GC_malloc_atomic(LBUFSIZ),LBUFSIZ);
+	setbuffer(iofp[i].in,iofp[i].inbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
+	setbuffer(iofp[i].out,iofp[i].outbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
 #endif
 #endif
 	if ( little_endian )

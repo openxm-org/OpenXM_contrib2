@@ -70,9 +70,9 @@
 /* Line 189 of yacc.c  */
 #line 50 "parse.y"
 
-#define malloc(x) GC_malloc(x)
-#define realloc(x,y) GC_realloc(x,y)
-#define free(x) GC_free(x)
+#define malloc(x) Risa_GC_malloc(x)
+#define realloc(x,y) Risa_GC_realloc(x,y)
+#define free(x) Risa_GC_free(x)
 
 #if defined(TOWNS)
 #include <alloca.h>
