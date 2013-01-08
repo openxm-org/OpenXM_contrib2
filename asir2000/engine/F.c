@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.10 2001/10/09 01:36:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/F.c,v 1.11 2002/01/15 01:09:55 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -130,13 +130,13 @@ void mfctr(VL vl,P f,DCP *dcp)
 #endif
 		pcp(mvl,pmin,&ppmin,&cmin);
 		if ( !NUM(cmin) ) {
-			mfctrmain(mvl,cmin,&dcs);
-			for ( dcr = dcs; dcr; dcr = NEXT(dcr) ) {
+			mfctr(mvl,cmin,&dcs);
+			for ( dcr = NEXT(dcs); dcr; dcr = NEXT(dcr) ) {
 				DEG(dcr) = DEG(dct);
 				reorderp(vl,mvl,COEF(dcr),&t); COEF(dcr) = t;
 			}
 			for ( ; NEXT(dc); dc = NEXT(dc) );
-			NEXT(dc) = dcs;
+			NEXT(dc) = NEXT(dcs);
 		}
 		mfctrmain(mvl,ppmin,&dcs);
 		for ( dcr = dcs; dcr; dcr = NEXT(dcr) ) {
