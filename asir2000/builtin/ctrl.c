@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.38 2007/01/25 16:19:40 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.39 2009/02/05 08:37:02 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -84,6 +84,7 @@ extern int asir_setenv;
 extern int show_orderspec;
 extern int no_debug_on_error;
 extern int diag_period;
+extern int weight_check;
 
 static struct {
 	char *key;
@@ -123,6 +124,7 @@ static struct {
 	{"show_orderspec",&show_orderspec},
 	{"no_debug_on_error",&no_debug_on_error},
 	{"diag_period",&diag_period},
+	{"weight_check",&weight_check},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
 	{"itvplotsize",&Itvplot},

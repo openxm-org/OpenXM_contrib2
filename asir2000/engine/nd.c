@@ -1,10 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.200 2012/12/17 07:20:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.201 2013/01/30 07:44:48 noro Exp $ */
 
 #include "nd.h"
 
 struct oEGT eg_search;
 
 int diag_period = 6;
+int weight_check = 1;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 int nd_dcomp;
 NM _nm_free_list;
@@ -3952,7 +3953,7 @@ void nd_setup_parameters(int nvar,int max) {
         else if ( max < 65536 ) nd_bpe = 16;
         else nd_bpe = 32;
     }
-    if ( !do_weyl && current_dl_weight_vector ) {
+    if ( !do_weyl && weight_check && current_dl_weight_vector ) {
         UINT t;
 		/* t = max(weights) */
         for ( i = 0, t = 0; i < nd_nvar; i++ )
