@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.201 2013/01/30 07:44:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.202 2013/01/30 08:03:18 noro Exp $ */
 
 #include "nd.h"
 
@@ -3953,20 +3953,31 @@ void nd_setup_parameters(int nvar,int max) {
         else if ( max < 65536 ) nd_bpe = 16;
         else nd_bpe = 32;
     }
-    if ( !do_weyl && weight_check && current_dl_weight_vector ) {
+    if ( !do_weyl && weight_check && (current_dl_weight_vector || nd_matrix) ) {
         UINT t;
-		/* t = max(weights) */
-        for ( i = 0, t = 0; i < nd_nvar; i++ )
-			if ( t < current_dl_weight_vector[i] )
-				t = current_dl_weight_vector[i];
-		/* i = bitsize of t */
-		for ( i = 0; t; t >>=1, i++ );
-		/* i += bitsize of nd_nvar */
-		for ( t = nd_nvar; t; t >>=1, i++);
-		/* nd_bpe+i = bitsize of max(weights)*max(exp)*nd_nvar */
-		if ( (nd_bpe+i) >= 31 )
-			error("nd_setup_parameters : too large weight");
-	}
+		int st;
+        int *v;
+	/* t = max(weights) */
+        t = 0;
+        if ( current_dl_weight_vector )
+            for ( i = 0, t = 0; i < nd_nvar; i++ ) {
+                if ( (st=current_dl_weight_vector[i]) < 0 ) st = -st;
+                if ( t < st ) t = st;
+            }
+        if ( nd_matrix )
+            for ( i = 0; i < nd_matrix_len; i++ )
+                for ( j = 0, v = nd_matrix[i]; j < nd_nvar; j++ ) {
+                    if ( (st=v[j]) < 0 ) st = -st;
+                    if ( t < st ) t = st;
+				}
+        /* i = bitsize of t */
+        for ( i = 0; t; t >>=1, i++ );
+        /* i += bitsize of nd_nvar */
+        for ( t = nd_nvar; t; t >>=1, i++);
+        /* nd_bpe+i = bitsize of max(weights)*max(exp)*nd_nvar */
+        if ( (nd_bpe+i) >= 31 )
+            error("nd_setup_parameters : too large weight");
+    }
     nd_epw = (sizeof(UINT)*8)/nd_bpe;
     elen = nd_nvar/nd_epw+(nd_nvar%nd_epw?1:0);
     nd_exporigin = nd_get_exporigin(nd_ord);
@@ -4946,6 +4957,8 @@ NODE ndv_reducebase(NODE x,int *perm)
 void nd_init_ord(struct order_spec *ord)
 {
     nd_module = (ord->id >= 256);
+	nd_matrix = 0;
+	nd_matrix_len = 0;
     switch ( ord->id ) {
         case 0:
             switch ( ord->ord.simple ) {
