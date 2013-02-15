@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.7 2004/08/18 00:50:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.8 2005/10/05 08:57:25 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -281,6 +281,28 @@ void derivr(VL vl,Obj a,V v,Obj *b)
 					mulp(vl,(P)dn,(P)dn,(P *)&m); divr(vl,t,m,b);
 				}
 				break;
+	}
+}
+
+void simple_derivr(VL vl,Obj a,V v,Obj *b)
+{
+	Obj r,s,t,u,nm,dn;
+
+	if ( !a || NUM(a) ) 
+		*b = 0;
+	else
+		switch ( OID(a) ) {
+			case O_P:
+				pderivr(vl,a,v,b); break;
+			case O_R:
+				nm = (Obj)NM((R)a); dn = (Obj)DN((R)a);
+				/* (nm/dn)' = nm'/dn - dn'/dn*nm/dn */
+				pderivr(vl,nm,v,&s); divr(vl,s,dn,&u); reductr(vl,u,&t);
+				pderivr(vl,dn,v,&s); divr(vl,s,dn,&u); reductr(vl,u,&s); mulr(vl,s,a,&u);
+				subr(vl,t,u,&s); reductr(vl,s,b);
+				break;
+			default:
+				error("simple_derivr : invalid argument");
 	}
 }
 

@@ -45,18 +45,19 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/rat.c,v 1.3 2000/08/22 05:03:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/rat.c,v 1.4 2003/12/23 10:39:57 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-void Pnm(), Pdn(), Pderiv(), Pederiv();
+void Pnm(), Pdn(), Pderiv(), Pederiv(), Prderiv();
 
 struct ftab rat_tab[] = {
 	{"nm",Pnm,1},
 	{"dn",Pdn,1},
 	{"diff",Pderiv,-99999999},
 	{"ediff",Pederiv,-99999999},
+	{"rdiff",Prderiv,-99999999},
 	{0,0,0},
 };
 
@@ -143,6 +144,32 @@ Obj *rp;
 		if ( !(v = (P)BDY(n)) || OID(v) != O_P )
 			error("diff : invalid argument");
 		derivr(CO,a,VR(v),&t); a = t;
+	}
+	*rp = a;
+}
+
+/* simple derivation with reduction */
+void Prderiv(arg,rp)
+NODE arg;
+Obj *rp;
+{
+	Obj a,t;
+	LIST l;
+	P v;
+	NODE n;
+
+	if ( !arg ) {
+		*rp = 0; return;
+	}
+	asir_assert(ARG0(arg),O_R,"rdiff");
+	a = (Obj)ARG0(arg);
+	n = NEXT(arg);
+	if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
+		n = BDY(l);
+	for ( ; n; n = NEXT(n) ) {
+		if ( !(v = (P)BDY(n)) || OID(v) != O_P )
+			error("rdiff : invalid argument");
+		simple_derivr(CO,a,VR(v),&t); a = t;
 	}
 	*rp = a;
 }

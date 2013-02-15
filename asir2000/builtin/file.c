@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.26 2008/11/19 13:12:43 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.27 2009/03/13 04:45:15 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -81,6 +81,7 @@ void Pput_word(), Pget_word();
 void Ppurge_stdin();
 void Pfprintf();
 void Pimport();
+void Pgetpid();
 
 extern int des_encryption;
 extern char *asir_libdir;
@@ -114,6 +115,7 @@ struct ftab file_tab[] = {
 	{"bload_compat",Pbload_compat,1},
 	{"bsave_cmo",Pbsave_cmo,2},
 	{"bload_cmo",Pbload_cmo,1},
+	{"getpid",Pgetpid,0},
 	{0,0,0},
 };
 
@@ -581,6 +583,18 @@ void Pget_rootdir(STRING *rp)
 		rootdir.body = DirName;
 	}
 	*rp = &rootdir;
+}
+
+void Pgetpid(Q *rp)
+{
+	int id;
+
+#if defined(VISUAL)
+	id = GetCurrentProcessId();
+#else
+	id = getpid();
+#endif
+	STOQ(id,*rp);
 }
 
 #if defined(DES_ENC)
