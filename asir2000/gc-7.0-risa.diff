@@ -209,3 +209,22 @@ diff -urN gc-7.2alpha6.orig/reclaim.c gc-7.2alpha6/reclaim.c
        if (GC_print_stats == VERBOSE) {
          GET_TIME(done_time);
          GC_log_printf("Disposing of reclaim lists took %lu msecs\n",
+diff -urN gc-7.2.orig/NT_X64_STATIC_THREADS_MAKEFILE gc-7.2/NT_X64_STATIC_THREADS_MAKEFILE
+--- gc-7.2.orig/NT_X64_STATIC_THREADS_MAKEFILE	2012-05-12 02:09:00.000000000 +0900
++++ gc-7.2/NT_X64_STATIC_THREADS_MAKEFILE	2013-06-13 14:43:07.000000000 +0900
+@@ -22,13 +22,13 @@
+ all: gctest.exe cord\de.exe test_cpp.exe
+ 
+ .c.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj /wd4701
++	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj /wd4701
+ # Disable "may not be initialized" warnings.  They're too approximate.
+ # Disable crt security warnings, since unfortunately they warn about all sorts
+ # of safe uses of strncpy.  It would be nice to leave the rest enabled.
+ 
+ .cpp.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
++	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
+ 
+ $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\private\msvc_dbg.h
+ 
