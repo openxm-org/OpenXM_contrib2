@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.61 2011/06/16 08:17:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.62 2012/12/17 07:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,8 +58,8 @@
 #endif
 #include "ox.h"
 
-#if defined(VISUAL)
 #include <stdlib.h>
+#if defined(VISUAL)
 #include <winsock2.h>
 #include <process.h>
 #endif
@@ -213,7 +213,8 @@ extern struct IOFP iofp[];
 extern MATHCAP my_mathcap;
 extern int ox_exchange_mathcap;
 
-char *getenv();
+Obj asir_pop_one();
+void asir_push_one(Obj);
 
 void Pnd_exec_f4_red(Q *rp)
 {

@@ -45,9 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.28 2009/02/06 08:58:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.29 2012/12/17 07:20:44 noro Exp $ 
 */
 #include "ca.h"
+#include "parse.h"
 #include "version.h"
 #include "prime.h"
 

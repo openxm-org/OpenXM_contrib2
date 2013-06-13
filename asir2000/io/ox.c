@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.28 2009/02/13 11:25:48 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.29 2010/04/23 04:44:52 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -91,6 +91,8 @@ static struct mathcap *remote_mc;
 static int remote_mc_len;
 
 void mclist_to_mc(LIST mclist,struct mathcap *mc);
+Obj asir_pop_one();
+void asir_push_one(Obj);
 
 #if defined(VISUAL)
 /* XXX : mainly used in engine2000/io.c, but declared here */

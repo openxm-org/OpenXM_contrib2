@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.11 2012/12/17 07:20:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.12 2013/06/13 07:45:28 ohara Exp $ */
 
 #if defined(VISUAL)
 #include "private/gcconfig.h"
@@ -7,6 +7,7 @@
 #include <time.h>
 
 void error(char *);
+void int_handler();
 
 int *StackBottom;
 int in_gc, caught_intr;
