@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.28 2010/12/25 23:10:15 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.29 2013/06/13 07:45:28 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -369,13 +369,13 @@ Q *rp;
 	h = get_heapsize();
 	if(sizeof(size_t)>sizeof(int)) {
 		u = h>>(sizeof(int)*CHAR_BIT); l = h&(~0);
-		if ( !u ) STOQ(l,*rp);
+		if ( !u ) UTOQ(l,*rp);
 		else {
 			n = NALLOC(2); PL(n)=2; BD(n)[0] = l; BD(n)[1] = u;
 			NTOQ(n,1,*rp);
 		}
 	}else {
-		STOQ(h,*rp);
+		UTOQ(h,*rp);
 	}
 }
 
