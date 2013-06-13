@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.49 2008/11/18 20:52:47 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.50 2013/06/13 07:45:28 ohara Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -467,7 +467,6 @@ void tty_reset(void);
 void set_timer(int);
 void reset_timer(void);
 void int_handler(int);
-void int_handler(int);
 void segv_handler(int);
 void bus_handler(int);
 void fpe_handler(int);
@@ -515,9 +514,7 @@ void printv(VL,V);
 void sprintv(VL,V);
 int arf_comp(VL, Obj, Obj);
 int complist(VL, LIST, LIST);
-int complist(VL, LIST, LIST);
 int getcompsize(int);
-int getpvar(VS,char *,int);
 int getpvar(VS,char *,int);
 int gettype(unsigned int);
 int indextotype(int,int);
