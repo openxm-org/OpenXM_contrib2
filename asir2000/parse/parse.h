@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.48 2008/09/01 06:20:33 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.49 2008/11/18 20:52:47 ohara Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -486,7 +486,7 @@ int yyparse(void);
 void nodetod(NODE,DP *);
 void poppvs(void);
 int length(NODE);
-int get_heapsize(void);
+size_t get_heapsize(void);
 int searchpvar(char *);
 void mkparif(char *,FUNC *);
 void makevar(char *,P *);

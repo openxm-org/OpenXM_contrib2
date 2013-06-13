@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.10 2011/05/11 06:03:53 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.11 2012/12/17 07:20:45 noro Exp $ */
 
 #if defined(VISUAL)
 #include "private/gcconfig.h"
@@ -71,8 +71,7 @@ void Risa_GC_free(void *p)
 	if ( caught_intr ) { caught_intr = 0; int_handler(); }
 }
 
-
-int get_heapsize()
+size_t get_heapsize()
 {
 	return GC_get_heap_size();
 }
