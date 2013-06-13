@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.81 2011/06/16 08:17:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.82 2012/12/17 07:20:45 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1426,6 +1426,8 @@ void Risa_GC_get_adj(int *,int *);
 void *Risa_GC_malloc(size_t);
 void *Risa_GC_malloc_atomic(size_t);
 void *Risa_GC_realloc(void *,size_t);
+void Risa_GC_free(void *);
+void *Risa_GC_malloc_atomic_ignore_off_page(size_t);
 void *GC_malloc(size_t);
 void *GC_malloc_atomic(size_t);
 void *GC_realloc(void *,size_t);
