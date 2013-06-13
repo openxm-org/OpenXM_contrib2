@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.29 2013/06/13 07:45:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.30 2013/06/13 08:11:55 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -276,7 +276,7 @@ NODE arg;
 STRING *rp;
 {
 	char *e,*f;
-	int len;
+	size_t len;
 
 	e = (char *)getenv(BDY((STRING)ARG0(arg)));
 	if ( e ) {

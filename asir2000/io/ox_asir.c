@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.69 2011/01/12 03:05:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.70 2011/01/13 08:00:07 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -646,7 +646,7 @@ void asir_pops()
 void asir_setName(unsigned int serial)
 {
 	char *name;
-	int l,n;
+	size_t l,n;
 	char *dummy = "=0;";
 	SNODE snode;
 	ERR err;
@@ -668,7 +668,7 @@ void asir_setName(unsigned int serial)
 void asir_evalName(unsigned int serial)
 {
 	char *name;
-	int l,n;
+	size_t l,n;
 	SNODE snode;
 	ERR err;
 	pointer val;
