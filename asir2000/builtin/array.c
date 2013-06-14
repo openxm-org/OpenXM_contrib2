@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.60 2010/11/09 16:23:45 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.61 2012/12/17 07:20:44 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -411,7 +411,7 @@ void Pnewvect(NODE arg,VECT *rp)
 }
 
 void Pvect(NODE arg,VECT *rp) {
-	int len,i,r;
+	int len,i;
 	VECT vect;
 	pointer *vb;
 	NODE tn;
@@ -923,7 +923,7 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
 	int *ri,*ci;
 	VECT rind,cind;
 	Q dn,q;
-	int i,j,k,l,row,col,t,rank;
+	int i,row,col,t,rank;
 	int is_hensel = 0;
 	char *key;
 	Obj value;
@@ -3458,10 +3458,9 @@ void Pnd_det(NODE arg,P *rp)
 		nd_det(QTOS((Q)ARG1(arg)),ARG0(arg),rp);
 }
 
-void Pmat_col(NODE arg,P *rp)
+void Pmat_col(NODE arg,VECT *rp)
 {
 	int i,j,n;
-	pointer t;
 	MAT mat;
 	VECT vect;
 
