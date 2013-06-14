@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.86 2012/04/10 07:15:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.87 2012/08/27 05:38:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -114,6 +114,7 @@ LIST dp_initial_term();
 LIST dp_order();
 void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
 	int *modular,struct order_spec **ord);
+NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv);
 
 LIST remove_zero_from_list(LIST);
 

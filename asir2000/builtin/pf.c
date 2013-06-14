@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.16 2009/07/23 01:04:29 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.17 2011/09/14 06:41:20 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -62,6 +62,7 @@ void make_itri(void);
 void make_tri(void);
 void make_exp(void);
 void simplify_pow(PFINS,Obj *);
+FNODE partial_eval(FNODE f);
 
 void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval(),Pfunargs_ext();
 void Pregister_handler();
