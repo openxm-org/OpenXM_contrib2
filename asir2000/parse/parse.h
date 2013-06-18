@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.50 2013/06/13 07:45:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.51 2013/06/13 17:57:21 ohara Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -823,7 +823,6 @@ void prompt() ;
 void sprompt(char *ptr);
 void process_args(int ac,char **av);
 void sig_init() ;
-static void (*old_int)(int);;
 void asir_save_handler() ;
 void asir_set_handler() ;
 void asir_reset_handler() ;
