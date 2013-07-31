@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.82 2012/12/17 07:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.83 2013/06/13 18:03:14 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +69,7 @@
 #endif
 
 #if defined(VISUAL)
+#include <limits.h>
 #include <malloc.h>
 #endif
 

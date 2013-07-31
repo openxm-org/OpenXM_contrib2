@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.6 2009/02/14 08:46:14 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.7 2009/02/19 15:48:26 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -129,6 +129,12 @@ char *s;
 			if ( f && f->id == A_USR && f->f.usrf->desc )
 				fprintf(stderr,"%s\n",f->f.usrf->desc);
 		}
+#else
+		FUNC f;
+		gen_searchf_searchonly(s,&f);
+		if ( f && f->id == A_USR && f->f.usrf->desc )
+			fprintf(stderr,"%s\n",f->f.usrf->desc);
+
 #endif
 	}
 }
