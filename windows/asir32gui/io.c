@@ -38,9 +38,9 @@ char *errmsg;
 	LONG	ret;
 	HKEY	hOpenKey;
 	DWORD	Type,dw;
-	char	dir[BUFSIZ],message[BUFSIZ];
+	char	dir[BUFSIZ],message[BUFSIZ],engine[BUFSIZ];
 	char	*slash;
-	int		ldir;	
+	size_t	ldir;	
 	static  char rootdir[BUFSIZ];
 	static  int rootdir_is_initialized;
 
@@ -49,6 +49,22 @@ char *errmsg;
 		return TRUE;
 	}
 
+    if(GetModuleFileName(NULL,dir,BUFSIZ)) {
+        slash = strrchr(dir,'\\'); 
+        *slash = 0;
+        sprintf(engine,"%s\\engine.exe", dir);
+        if ( access(engine,0) >= 0 ) {
+            slash = strrchr(dir,'\\');
+            if ( slash ) {
+                *slash = 0;
+            }
+            use_current_dir = 1;
+            strcpy(rootdir,dir);
+            strcpy(name,dir);
+            rootdir_is_initialized = 1;
+            return TRUE;
+        }
+    }
 	GetCurrentDirectory(BUFSIZ,dir);
 	slash = strrchr(dir,'\\');
 	if ( slash )
@@ -86,7 +102,7 @@ char *errmsg;
 				NULL);
 			return FALSE;
 		}
-		if ( ret = RegSetValueEx(hOpenKey,"Directory",NULL,REG_SZ,dir,ldir) ) {
+		if ( ret = RegSetValueEx(hOpenKey,"Directory",0,REG_SZ,dir,ldir) ) {
 			FormatMessage(
 				FORMAT_MESSAGE_FROM_SYSTEM |
 				FORMAT_MESSAGE_IGNORE_INSERTS,
