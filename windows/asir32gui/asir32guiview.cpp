@@ -33,7 +33,7 @@ void loadfile(char *);
 void put_line(char *);
 void send_intr(void);
 void insert_to_theView(char *);
-void get_rootdir(char *,int,char *);
+BOOL get_rootdir(char *,int,char *);
 extern int bigfloat, prtime, prresult;
 extern char *asir_libdir;
 extern int asirgui_kind;
@@ -577,7 +577,7 @@ void CAsir32guiView::UpdateMetrics()
 void CAsir32guiView::OnFont() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	int ret;
+	INT_PTR ret;
 	LOGFONT lf;
 
 	GetFont()->GetLogFont(&lf);
@@ -726,14 +726,19 @@ BOOL CAsir32guiView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD
 	// TODO: この位置に固有の処理を追加するか、または基本クラスを呼び出してください
 	
 	BOOL ret = CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
-	FILE *fp = fopen("asirgui.hnd","w");
+	FILE *fp = NULL;
 	char *temp;
+	char rootdir[BUFSIZ], errmsg[BUFSIZ], hndname[_MAX_PATH];
 
+	if (get_rootdir(rootdir, BUFSIZ, errmsg)) {
+		sprintf(hndname, "%s\\bin\\asirgui.hnd", rootdir);
+		fp = fopen(hndname,"w");
+	}
 	if ( fp ) {
 		fprintf(fp,"%d",(unsigned int)theView->m_hWnd);
 		fclose(fp);
 		if ( temp = getenv("TEMP") ) {
-			int len;
+			size_t len;
 			char *name;
 	
 			len = strlen(temp);
