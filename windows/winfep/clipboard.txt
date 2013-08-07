@@ -1,0 +1,83 @@
+下の記述により、次のようなコードになると思われる。
+str に送りたい文字列が入っているとする。
+
+int len=strlen(str)+1;
+if (!OpenClipboard(NULL) ) return;
+HGLOBAL hMem = GlobalAlloc(GMEM_FIXED,len);
+LPTSTR pMem = (LPTSTR)hMem;
+lstrcpy(pMem,(LPCTSTR)str);
+EmptyClipboard();
+SetClipboardData(CF_TEXT,hMem);
+CloseClipboard();
+SendMessage(asirhwnd,WM_CHAR,0x19,1); // 0x19=CTRL(Y) -> asirgui で Paste 
+SendMessage(asirhwnd,WM_CHAR,'\n',1);
+
+---------------------------------------
+
+ここでは、クリップボードにテキストデータをコピーしたり、 クリップボードからテキストデータを取得する方法を説明する。
+
+クリップボードへテキストデータをコピーする
+CClipboardというクラスを作成し、以下のような関数を定義する。 
+この関数は、引数に設定したテキストをクリップボードへコピーするというものである。
+
+    	BOOL CClipboard::SetClipboardText(LPCTSTR lpszText)
+    	{
+    		CString strText(lpszText);
+
+    		// 文字列が空の場合はコピーしない
+    		if( strText.IsEmpty() )
+    			return FALSE;
+
+    		// クリップボードのオープン
+    		if( !::OpenClipboard(NULL) )
+    			return FALSE;
+
+    		// ヒープ上にメモリ領域を確保し、文字列をコピー
+    		int iStrLen = strText.GetLength() + 1;
+    		HGLOBAL hMem = ::GlobalAlloc(GMEM_FIXED, iStrLen);
+    		LPTSTR pMem = (LPTSTR)hMem;
+    		::lstrcpy(pMem, (LPCTSTR)strText);
+
+    		// クリップボードへ文字列をコピーし、クローズ
+    		::EmptyClipboard();	// クリップボードの中身を空にする
+    		::SetClipboardData(CF_TEXT, hMem);
+    		::CloseClipboard();
+
+    		return TRUE;
+    	}
+
+クリップボードへコピーするデータは、GlobalAlloc APIを使って確保したメモリ領域に設定する必要がある。 
+ここでは第１引数にGMEM_FIXEDを指定しているので、 戻り値であるハンドルhMemをキャストするだけでポインタpMemが取得できる。 
+第１引数にGMEM_MOVEABLEを指定した場合には、GlobalLock APIでポインタを取得する必要がある。
+また、ヒープ上に確保したメモリ領域を解放（GlobalFree API）していないが、 SetClipboardData APIでクリップボードへ設定した
+メモリ領域は以後クリップボードが制御するため、 アプリケーションが解放する必要はない（というか解放してはいけない）。
+なお、OpenClipboard APIでクリップボードをオープンすると他のアプリケーションからは使えなくなるので、 
+必要がなくなったらすぐにCloseClipboard APIでクローズすること。
+
+クリップボードのテキストデータを取得する
+CClipboardというクラスに以下のような関数を定義する。 この関数は、クリップボードにクリップされたテキストデータが
+あればそれを取得する。
+
+    	CString CClipboard::GetClipboardText()
+    	{
+    		CString strText;
+    		strText.Empty();
+
+    		// クリップボードにテキストデータが入っているかを調べる
+    		if( !::IsClipboardFormatAvailable(CF_TEXT) )
+    			return strText;
+
+    		// クリップボードのオープン
+    		if( !::OpenClipboard(NULL) )
+    			return strText;
+
+    		// クリップボードからデータを取得し、strTextへコピー
+    		HANDLE hMem = ::GetClipboardData(CF_TEXT);
+    		LPTSTR pMem = (LPTSTR)::GlobalLock(hMem);
+    		::lstrcpy((LPTSTR)(LPCTSTR)strText, pMem);
+    		::GlobalUnlock(hMem);
+    		::CloseClipboard();
+
+    		return strText;
+    	}
+
