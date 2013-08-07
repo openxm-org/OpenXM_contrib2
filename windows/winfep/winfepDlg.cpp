@@ -224,11 +224,29 @@ void CWinfepDlg::OnSend()
       for ( i = 0; line[i] && isspace(line[i]); i++ );
       if ( line[i] &&
         !strncmp(line+i,"end$",4) || !strncmp(line+i,"end;",4) ) return;
-      for ( i = 0; line[i]; i++ ) {
-	if ( line[i] == '\t' )
-        	::SendMessage(asirhwnd,WM_CHAR,' ',8);
-	else
-        	::SendMessage(asirhwnd,WM_CHAR,line[i],1);
+
+//      for ( i = 0; line[i]; i++ ) {
+//	if ( line[i] == '\t' )
+//       	::SendMessage(asirhwnd,WM_CHAR,' ',8);
+//	else
+//       	::SendMessage(asirhwnd,WM_CHAR,line[i],1);
+//      }
+//      ::SendMessage(asirhwnd,WM_CHAR,'\n',1);
+      if ( line[i] ) {
+#if 0
+        m_currentline.SetSel(0,str.GetLength());
+        m_currentline.Copy();
+#else
+        int len=str.GetLength()+1;
+        if (!::OpenClipboard(NULL) ) return;
+        HGLOBAL hMem = ::GlobalAlloc(GMEM_FIXED,len);
+        LPTSTR pMem = (LPTSTR)hMem;
+        ::lstrcpy(pMem,(LPCTSTR)line);
+        ::EmptyClipboard();
+        ::SetClipboardData(CF_TEXT,hMem);
+        ::CloseClipboard();
+#endif
+        ::SendMessage(asirhwnd,WM_CHAR,0x19,1);
       }
       ::SendMessage(asirhwnd,WM_CHAR,'\n',1);
       show_line(++currentline);
