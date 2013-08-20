@@ -1,8 +1,8 @@
 #!/bin/bash
-# $OpenXM: OpenXM_contrib2/windows/extract_gc.sh,v 1.5 2012/05/09 06:17:13 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/extract_gc.sh,v 1.6 2012/05/30 02:24:33 ohara Exp $
 (set -o igncr) 2>/dev/null && set -o igncr;#
 OpenXM_HOME=${OpenXM_HOME:-../../OpenXM}
-OpenXM_dist=${OpenXM_HOME}/../OpenXM_dist
+OpenXM_dist="$(realpath -m ${OpenXM_HOME}/../OpenXM_dist)"
 GC=gc-7.2
 GC_TARGZ=gc-7.2b.tar.gz
 GC_PATCH=gc-7.0-risa.diff
