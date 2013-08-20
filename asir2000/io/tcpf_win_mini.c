@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf_win_mini.c,v 1.2 2006/09/26 05:50:31 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/tcpf_win_mini.c,v 1.3 2006/09/29 09:02:49 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -60,8 +60,6 @@ int win_ox_launch()
 	return 0;
 }
 
-void win_get_rootdir();
-
 void win_spawn_server(char *control_port_str,char *server_port_str)
 {
 	char AsirExe[BUFSIZ];
@@ -89,7 +87,9 @@ void win_get_rootdir()
 {
 	char *slash;
 
-	GetCurrentDirectory(BUFSIZ,rootdir);
+	GetModuleFileName(NULL,rootdir,BUFSIZ);
+	slash = strrchr(rootdir,'\\');
+	*slash = 0;
 	slash = strrchr(rootdir,'\\');
 	if ( slash ) *slash = 0;
 }

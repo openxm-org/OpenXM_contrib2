@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.27 2009/03/13 04:45:15 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.28 2013/02/15 07:05:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -518,11 +518,11 @@ void get_rootdir(char *name,int len)
 		strcpy(name,rootdir.body);
 		return;
 	}
-
-	if ( access("UseCurrentDir",0) >= 0 ) {
-		GetCurrentDirectory(BUFSIZ,name);
+	if ( GetModuleFileName(NULL,name,BUFSIZ) ) {
 		slash = strrchr(name,'\\');
-		if ( slash )
+		*slash = 0;
+		slash = strrchr(name,'\\');
+		if ( slash ) 
 			*slash = 0;
 		return;
 	}
