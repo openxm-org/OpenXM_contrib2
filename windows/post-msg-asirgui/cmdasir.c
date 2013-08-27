@@ -1,9 +1,11 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.1 2013/08/27 05:51:50 takayama Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <io.h>
 #include <process.h>
 
 char *winname2uxname(char winname[]);
@@ -11,17 +13,18 @@ FILE *findAsirHandler();
 int sendFileName(HWND hnd,char uname[]);
 int loadFile(HWND hnd, char *uname);
 int terminateAsir(HWND hnd);
+int hasTemp(char *s);
+int pasteFile(HWND hnd, char *uname);
 
 int main(int argc, char *argv[])
 {
   HWND hnd;
-  int i,j,c,ii;
+  int c,ii;
   char *uname=NULL;
   FILE *fp=NULL;
   FILE *fp2=NULL;
   char snameWin[1024];
   char *snameUx;
-  char *s;
   char msg[1024];
   char cmd[1024];
   int paste_contents=0;
@@ -121,13 +124,19 @@ char *winname2uxname(char wname[]) {
   return(uname);
 }
 
+#if 0
 int hasTemp(char *s) {
-  int i,n;
-  n=strlen(s);
+  int i;
+  size_t n=strlen(s);
   for (i=0; i<n-3; i++) {
     if (strncmp(&(s[i]),"Temp",4)==0) return(1);
   }
   return(0);
+}
+#endif
+
+int hasTemp(char *s) {
+	return strstr(s, "Temp")!=NULL;
 }
 
 FILE *findAsirHandler() {
@@ -163,8 +172,7 @@ int sendFileName_ascii(HWND hnd,char uname[]) {
 }
 #endif
 int sendFileName(HWND hnd,char uname[]) {
-    int j;
-    int len=strlen(uname)+1;
+    size_t len=strlen(uname)+1;
     HGLOBAL hMem;
     LPTSTR pMem;
     if (!OpenClipboard(NULL) ) return 1;
@@ -208,4 +216,5 @@ int pasteFile(HWND hnd, char *uname) {
 	sendFileName(hnd,s);
 	free(s);
 	PostMessage(hnd,WM_CHAR,0xa,1);
+	return 0;
 }
