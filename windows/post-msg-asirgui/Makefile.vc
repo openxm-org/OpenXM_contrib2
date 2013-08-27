@@ -1,0 +1,15 @@
+## $OpenXM$
+## Makefile for Visual Studio 2010
+
+CFLAGS= -nologo -W3 -Ox -D _CRT_SECURE_NO_WARNINGS
+LD=link
+LDFLAGS=-nologo -subsystem:console -incremental:no user32.lib
+
+all: cmdasir.exe
+
+clean:
+	-@del cmdasir.obj
+	-@del cmdasir.exe
+
+cmdasir.exe: cmdasir.obj
+	$(LD) $(LDFLAGS) -out:$@ cmdasir.obj 
