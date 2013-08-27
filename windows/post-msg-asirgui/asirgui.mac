@@ -1,0 +1,85 @@
+// $OpenXM$
+// Keep shift-jis code! 
+call Main;
+endmacro;
+Main:
+menu "asirgui起動","編集中のファイルの実行","選択範囲の実行","行の実行","選択範囲の実行(paste)","行の実行(paste)";
+if (result==0) endmacro;
+else if (result == 1) {
+  run getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\asirgui";
+} else if (result == 2) {
+  run "cmd /c "+getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\cmdasir %f";
+} else if (result == 3) {
+  call ExecuteSelectedArea;
+} else if (result == 4) {
+  call ExecuteSelectedLine;
+} else if (result == 5) {
+  call ExecuteSelectedAreaByPaste;
+} else if (result == 6) {
+  call ExecuteSelectedLineByPaste;
+}
+return true;
+ExecuteSelectedArea:
+  if(selecting) { 
+  $s = gettext(seltopx,seltopy,selendx,selendy); 
+//  message "選択範囲は、" + $s + "です. ステルスウインドウに書き出すのはまだ書いてない.";
+    $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
+    run "cmd /c del "+$tmp_fname ;
+    call MakeFile $tmp_fname,$s;
+    run "cmd /c "+getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\cmdasir "+$tmp_fname;
+  } else { 
+  message "範囲選択されていません";
+  }
+  return true; 
+ExecuteSelectedLine:
+  golinetop;
+  beginsel;
+  golineend;
+//  message(str(seltopx) + "," + str(seltopy) + "," + str(selendx) + "," + str(selendy));
+  call ExecuteSelectedArea;
+  return true;
+
+// MakeFile in cmd_perl. See 
+//	http://d.hatena.ne.jp/ohtorii/
+//	https://github.com/ohtorii
+
+MakeFile:
+	$$tmp_filename	= $$1;
+	##old_charset	= charset;
+	$$text=$$2;
+	##prev_hidemaru = hidemaruhandle(0);
+
+	openfile "/h " + $$tmp_filename;
+	if(! result){
+		message("テンポラリファイルのオープンに失敗。\n" + $$tmp_filename);
+		return false;
+	}
+	##new_hidemaru = hidemaruhandle(0);
+	setencode ##old_charset,1;
+	insert $$text;
+
+	save;
+	setactivehidemaru	##prev_hidemaru;
+	closehidemaruforced ##new_hidemaru;
+	return true;
+
+ExecuteSelectedAreaByPaste:
+  if(selecting) { 
+  $s = gettext(seltopx,seltopy,selendx,selendy); 
+//  message "選択範囲は、" + $s + "です. ステルスウインドウに書き出すのはまだ書いてない.";
+    $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
+    run "cmd /c del "+$tmp_fname ;
+    call MakeFile $tmp_fname,$s;
+    run "cmd /c "+getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\cmdasir --paste-contents "+$tmp_fname;
+  } else { 
+  message "範囲選択されていません";
+  }
+  return true; 
+ExecuteSelectedLineByPaste:
+  golinetop;
+  beginsel;
+  golineend;
+//  message(str(seltopx) + "," + str(seltopy) + "," + str(selendx) + "," + str(selendy));
+  call ExecuteSelectedAreaByPaste;
+  return true;
+

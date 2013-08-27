@@ -1,0 +1,42 @@
+text editor から asirgui を操作するためのライブラリ.
+
+Install (windows 7 以上):
+1. 配布している(http://www.math.kobe-u.ac.jp/Asir) asir は Desktop に置く.
+2. Desktop/asir/bin へ cmdasir.exe をコピー.
+
+--------
+以下は editor 毎の対応.
+
+◎ 秀丸.  asirgui.mac をマクロに登録.
+◎ emacs.  asir-mode.el を emacs のライブラリに入れる.  
+編集するファイルに .rr が付いてたら これを autoload するように, .emacs に設定.
+◎ TeraPad. やり方を書く(todo). 概略は, 
+   cmdasir %f    (編集中のファイルをロード)
+   cmdasir %t    (選択範囲を実行)
+を登録.
+その他。要望におおじて対応.
+
+---------
+機能.
+editor でキャレットのある行を asirgui にペーストして、実行する.
+editor で範囲選択した範囲を asirgui にペーストして、実行する.
+editor で編集中のファイルを asirgui にロードする.
+これらの操作がすべて editor 側で可能となります。
+キャレットのある行を asirgui にペースとして実行する機能はデモに便利.
+
+-----
+仕組み.
+cmdasir.exe が asirgui の windows handler へメッセージを送る.
+cmdasir.exe は引数のファイルをメッセージの内容とする.
+
+----
+作者. 高山、小原, (野呂).
+
+
+-------- 開発者メモ.
+directory 構造の提案.
+  cmdasir.exe は asir/bin へコピー.
+  その他のファイルは mkdir asir/share/editor してそこへコピー
+  
+
+$OpenXM$
