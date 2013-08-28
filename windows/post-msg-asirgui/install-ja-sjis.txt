@@ -8,8 +8,23 @@ Install (windows 7 以上):
 以下は editor 毎の対応.
 
 ◎ 秀丸.  asirgui.mac をマクロに登録.
-◎ emacs.  asir-mode.el を emacs のライブラリに入れる.  
-編集するファイルに .rr が付いてたら これを autoload するように, .emacs に設定.
+
+◎ emacs (または Meadow3.0).  まず, 以下の各行を設定ファイル .emacs に追加する.  
+
+---ここから---
+;; この設定の意味は, asir-mode.el を emacs のライブラリに入れて, autoload する.  
+;; そして, 編集するファイルの拡張子が .rr ならば, asir-mode にする.
+;; asir は Desktop または c:\ にインストールすること.
+
+(setq load-path (append load-path '("~/Desktop/asir/share/editor" "c:/asir/share/editor")))
+(setq auto-mode-alist (cons '("\\.rr$" . asir-mode) auto-mode-alist))
+(autoload 'asir-mode "asir-mode" "Asir mode" t)
+---ここまで---
+
+次に, emacs から、M-x byte-compile-file を行い, 
+~/Desktop/asir/share/editor/asir-mode.el を選択する.
+asir-mode は (asirgui の操作を除いて) unix でも使用できる.  
+
 ◎ TeraPad. やり方を書く(todo). 概略は, 
    cmdasir %f    (編集中のファイルをロード)
    cmdasir %t    (選択範囲を実行)
@@ -39,4 +54,4 @@ directory 構造の提案.
   その他のファイルは mkdir asir/share/editor してそこへコピー
   
 
-$OpenXM$
+$OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/install-ja-sjis.txt,v 1.1 2013/08/27 05:51:50 takayama Exp $
