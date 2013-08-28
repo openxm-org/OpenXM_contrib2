@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.1 2013/08/27 05:51:50 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.2 2013/08/27 07:41:22 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
