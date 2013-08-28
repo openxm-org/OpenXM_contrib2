@@ -32,11 +32,11 @@ diff -urN gc-7.2alpha6.orig/alloc.c gc-7.2alpha6/alloc.c
 @@ -629,6 +631,7 @@
                GC_world_stopped = FALSE;
  #           endif
- 	            START_WORLD();
-+				GC_timerstop();
- 	            return(FALSE);
- 	    }
- 	    if (GC_mark_some((ptr_t)(&dummy))) break;
+             START_WORLD();
++            GC_timerstop();
+             return(FALSE);
+           }
+           if (GC_mark_some((ptr_t)(&dummy))) break;
 @@ -651,6 +654,7 @@
        GC_world_stopped = FALSE;
  #   endif
