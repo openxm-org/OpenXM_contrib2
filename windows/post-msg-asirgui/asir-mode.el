@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM$
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.1 2013/08/27 05:51:50 takayama Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -128,6 +128,12 @@ Each list item should be a regexp matching a single identifier.")
 		      ;; Add bindings which are only useful for asir
 		      map)
   "Keymap used in asir-mode buffers.")
+
+;; Key binding for asir-mode
+(define-key asir-mode-map (kbd "C-c s") 'asir-start-asirgui)
+(define-key asir-mode-map (kbd "C-c t") 'asir-terminate-asirgui)
+(define-key asir-mode-map (kbd "C-c l") 'asir-execute-current-buffer-on-asir)
+(define-key asir-mode-map (kbd "C-c r") 'asir-execute-region-on-asir)
 
 (easy-menu-define asir-menu asir-mode-map "asir Mode Commands"
 		  ;; Can use `asir' as the language for `c-mode-menu'
