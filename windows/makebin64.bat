@@ -1,9 +1,9 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.11 2013/08/27 07:07:42 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.12 2013/08/30 18:18:11 ohara Exp $
 @echo off
 
 set ARCH=AMD64
 
-if not exist gc-7.2 ( echo run ./extract_gc.sh in cyngwin & exit /b 1 )
+if not exist gc-7.2 ( c:\cygwin\bin\bash -c 'PATH=/bin:$PATH ./extract_gc.sh' )
 pushd gc-7.2
 nmake -f NT_X64_STATIC_THREADS_MAKEFILE gc.lib
 popd
