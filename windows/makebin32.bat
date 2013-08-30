@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makebin32.bat,v 1.8 2013/08/05 11:47:03 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makebin32.bat,v 1.9 2013/08/27 07:07:42 ohara Exp $
 @echo off
 
 set ARCH=x86
@@ -12,16 +12,8 @@ pushd pari20
 nmake -f Makefile.vc6
 popd
 
-for %%i in ( asir2000lib engine2000 mcpp asir32gui post-msg-asirgui ) do (
+for %%i in ( asir2000lib engine2000 mcpp asir32gui post-msg-asirgui ..\asir2000 ) do (
   pushd %%i
   nmake -f Makefile.vc
   popd
 )
-
-pushd asir32gui
-nmake -f Makefile.vc LANG=en
-popd
-
-pushd ..\asir2000
-nmake -f Makefile.vc
-popd

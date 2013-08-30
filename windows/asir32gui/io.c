@@ -122,6 +122,27 @@ char *errmsg;
 	return TRUE;
 }
 
+const char *get_helpdir() {
+    static char helpdir[BUFSIZ];
+    static int helpdir_is_initialized;
+    char lang[BUFSIZ];
+    char file[BUFSIZ];
+    char root[BUFSIZ];
+    char errmsg[BUFSIZ];
+
+    if( !helpdir_is_initialized ) {
+        get_rootdir(root,sizeof(root),errmsg);
+        GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SISO639LANGNAME, lang, BUFSIZ);
+        sprintf(helpdir, "%s\\help\\%s", root, lang);
+        sprintf(file, "%s\\asirhelp.chm", helpdir);
+        if ( access(file,0) < 0 ) {
+            sprintf(helpdir, "%s\\help", root);
+        }
+        helpdir_is_initialized = 1;
+    }
+    return helpdir;
+}
+
 BOOL Init_IO(char *errmsg) {
 	int i;
 	char *av[BUFSIZ];

@@ -34,6 +34,7 @@ void put_line(char *);
 void send_intr(void);
 void insert_to_theView(char *);
 BOOL get_rootdir(char *,int,char *);
+const char *get_helpdir();
 extern int bigfloat, prtime, prresult;
 extern char *asir_libdir;
 extern int asirgui_kind;
@@ -501,14 +502,14 @@ void CAsir32guiView::OnFileOpen()
 		}
 	}
 }
+
 void CAsir32guiView::viewHtmlHelp(char *help)
 {
 	char *helpfile;
-	char fmt[] = "%s\\help\\%shelp.chm";
-	char root[BUFSIZ],errmsg[BUFSIZ];
-	get_rootdir(root,sizeof(root),errmsg);
-	helpfile = (char *)malloc(sizeof(fmt) + strlen(root) + strlen(help));
-	sprintf(helpfile,fmt,root,help);
+	char fmt[] = "%s\\%shelp.chm";
+	const char *dir = get_helpdir();
+	helpfile = (char *)malloc(sizeof(fmt) + strlen(dir) + strlen(help));
+	sprintf(helpfile,fmt,dir,help);
 #if _MSC_VER < 1300
     /* Visual C++ 6.0 */
 	::HtmlHelp(NULL, helpfile, HH_DISPLAY_TOPIC, 0);

@@ -8,6 +8,9 @@
 #include "asir32guiDoc.h"
 #include "Asir32guiView.h"
 #include "FatalDialog.h"
+#include <winnls.h>
+#include <string.h>
+#include <stdio.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -20,6 +23,7 @@ extern "C" {
 	extern HANDLE hNotify_Ack;
 	extern int asirgui_kind;
 	BOOL Init_IO(char *);
+	BOOL get_rootdir(char *,int,char *);
 	void read_and_insert();
 }
 
@@ -67,6 +71,20 @@ BOOL CAsir32guiApp::InitInstance()
 	// もしこれらの機能を使用せず、実行ファイルのサイズを小さく
 	// したければ以下の特定の初期化ルーチンの中から不必要なもの
 	// を削除してください。
+
+    char lang[BUFSIZ];
+    char dll[BUFSIZ];
+    char root[BUFSIZ];
+    char errmsg[BUFSIZ];
+    HINSTANCE hRes;
+    get_rootdir(root,sizeof(root),errmsg);
+    if(GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SISO639LANGNAME, lang, BUFSIZ)) {
+        sprintf(dll, "%s\\bin\\%s.dll", root, lang);
+        hRes = LoadLibrary(dll);
+        if(hRes) {
+            AfxSetResourceHandle(hRes);
+        }
+    }
 
 #ifdef _AFXDLL
 	Enable3dControls();			// 共有 DLL の中で MFC を使用する場合にはここをコールしてください。 
