@@ -1,4 +1,7 @@
-#!/usr/bin/perl
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}' && eval 'exec perl -S $0 $argv:q'
+        if 0;
+'di ';
+'ig 00 ';
 #+##############################################################################
 #                                                                              #
 # File: texi2html                                                              #
@@ -7,8 +10,13 @@
 #                                                                              #
 #-##############################################################################
 
-# @(#)texi2html	1.52 01/05/98	Written (mainly) by Lionel Cons, Lionel.Cons@cern.ch
+# From @(#)texi2html	1.52 01/05/98	Written (mainly) by Lionel Cons, Lionel.Cons@cern.ch
+# $Id$
+# This version of texi2html is currently maintained at
+# ftp://ftp.cs.umb.edu/pub/tex/texi2html by kb@cs.umb.edu.
 
+# The man page for this program is included at the end of this file and can be
+# viewed using the command 'nroff -man texi2html'.
 # Please read the copyright at the end of the man page.
 
 #+++############################################################################
@@ -33,7 +41,8 @@ $NODESRE = '[^@{}:\'`"]+';		# RE for a list of node names
 $XREFRE = '[^@{}]+';			# RE for a xref (should use NODERE)
 
 $ERROR = "***";			        # prefix for errors and warnings
-$THISPROG = "texi2html 1.52";			# program name and version
+$THISVERSION = "1.56k";
+$THISPROG = "texi2html $THISVERSION";	# program name and version
 $HOMEPAGE = "http://wwwinfo.cern.ch/dis/texi2html/"; # program home page
 $TODAY = &pretty_date;			# like "20 September 1993"
 $SPLITTAG = "<!-- SPLIT HERE -->\n";	# tag to know where to split
@@ -118,8 +127,11 @@ $html2_doctype = '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0 Strict Level 2//E
 	       # cf. makeinfo.c
 	       "*", "<BR>",		# HTML+
 	       " ", " ",
+	       "\t", " ",
+  	       "-", "&#173;",	# soft hyphen
 	       "\n", "\n",
 	       "|", "",
+	       'tab', '<\/TD><TD>',
 	       # spacing commands
 	       ":", "",
 	       "!", "!",
@@ -245,7 +257,10 @@ $html2_doctype = '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0 Strict Level 2//E
 	    # comments
 	    'c', 1,
 	    'comment', 1,
+            'ifnothtml', 1,
 	    # useless
+	    'detailmenu', 1,
+            'direntry', 1,
 	    'contents', 1,
 	    'shortcontents', 1,
 	    'summarycontents', 1,
@@ -259,6 +274,7 @@ $html2_doctype = '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0 Strict Level 2//E
 	    'cropmarks', 1,
 	    'finalout', 1,
 	    'headings', 1,
+            'sp', 1,
 	    'need', 1,
 	    'page', 1,
 	    'setchapternewpage', 1,
@@ -320,6 +336,7 @@ To convert a Texinfo file to HMTL: $0 [options] file
     -usage         : print usage instructions
     -verbose       : verbose output
 To check converted files: $0 -check [-verbose] files
+It accepts only ja_JP.EUC and ascii files. 
 EOT
 
 while (@ARGV && $ARGV[0] =~ /^-/) {
@@ -361,6 +378,8 @@ if (($split_node || $split_chapter) && $monolithic) {
 if ($expandinfo) {
     $to_skip{'ifinfo'}++;
     $to_skip{'end ifinfo'}++;
+    $to_skip{'ifnottex'}++;
+    $to_skip{'end ifnottex'}++;
 } else {
     $to_skip{'iftex'}++;
     $to_skip{'end iftex'}++;
@@ -390,7 +409,7 @@ if ($monolithic) {
 # variables
 #
 $value{'html'} = 1;			# predefine html (the output format)
-$value{'texi2html'} = '1.52';		# predefine texi2html (the translator)
+$value{'texi2html'} = $THISVERSION;	# predefine texi2html (the translator)
 # _foo: internal to track @foo
 foreach ('_author', '_title', '_subtitle',
 	 '_settitle', '_setfilename') {
@@ -514,9 +533,9 @@ while ($_ = &next_line) {
     #
     $tag = '';
     $end_tag = '';
-    if (/^\@end\s+(\w+)\b/) {
+    if (/^\s*\@end\s+(\w+)\b/) {
 	$end_tag = $1;
-    } elsif (/^\@(\w+)\b/) {
+    } elsif (/^\s*\@(\w+)\b/) {
 	$tag = $1;
     }
     #
@@ -649,7 +668,7 @@ while ($_ = &next_line) {
 	    push(@lines, &debug("<$format_map{$tag}>\n", __LINE__));
 	    next;
 	} elsif ($tag eq 'table') {
-	    if (/^\@(|f|v|multi)table\s+\@(\w+)/) {
+	    if (/^\s*\@(|f|v|multi)table\s+\@(\w+)/) {
 		$in_table = $2;
 		unshift(@tables, join($;, $table_type, $in_table));
 		if ($table_type eq "multi") {
@@ -691,6 +710,18 @@ while ($_ = &next_line) {
 		$valid_index{$1} = 1;
 	    } else {
 		warn "$ERROR Bad defindex line: $_";
+	    }
+	    next;
+	} elsif ($tag eq 'lowersections') {
+	    local ($sec, $level);
+	    while (($sec, $level) = each %sec2level) {
+		$sec2level{$sec} = $level + 1;
+	    }
+	    next;
+	} elsif ($tag eq 'raisesections') {
+	    local ($sec, $level);
+	    while (($sec, $level) = each %sec2level) {
+		$sec2level{$sec} = $level - 1;
 	    }
 	    next;
 	} elsif (defined($def_map{$tag})) {
@@ -839,7 +870,7 @@ while ($_ = &next_line) {
 		$name = $1;
 		$name =~ s/\s+$//;
 		$level = $sec2level{$tag};
-		$name = &update_sec_num($tag, $level) . "  $name"
+		$name = &update_sec_num($tag, $level) . " $name"
 		    if $number_sections && $tag !~ /^unnumbered/;
 		if ($tag =~ /heading$/) {
 		    push(@lines, &html_debug("\n", __LINE__));
@@ -847,7 +878,7 @@ while ($_ = &next_line) {
 			# We are in a nice pickle here. We are trying to get a H? heading
 			# even though we are not in the body level. So, we convert it to a
 			# nice, bold, line by itself.
-			$_ = &debug("\n\n<P><STRONG>$name</STRONG></P>\n\n", __LINE__);
+			$_ = &debug("\n\n<P><STRONG>$name</STRONG>\n\n", __LINE__);
 		    } else {
 			$_ = &debug("<H$level>$name</H$level>\n", __LINE__);
 			&html_push_if('body');
@@ -971,7 +1002,7 @@ EOC
 		next;
 	    }
 	    # list item
-	    if (/^\@itemx?\s+/) {
+	    if (/^\s*\@itemx?\s+/) {
 		$what = $';
 		$what =~ s/\s+$//;
 		if ($in_bibliography && $use_bibliography) {
@@ -1031,7 +1062,7 @@ EOC
 	next if $#lines >= 0 && $lines[$#lines] eq "\n";
 	if ($html_element eq 'P') {
 	    push(@lines, "\n");
-	    $_ = &debug("</P>\n", __LINE__);
+	    $_ = &debug("\n", __LINE__);
 	    &html_pop;
 	}
     } elsif ($html_element eq 'body' || $html_element eq 'BLOCKQUOTE') {
@@ -1215,6 +1246,24 @@ while (@lines) {
 	    $_ = "$before$;0xref{$nodes}$after";
 	}
     }
+    
+    if (/^\@image\s*{/) {
+      s/\@image\s*{//;
+      my (@args) = split (/,/);
+      my $base = $args[0];
+      my $image;
+      if (-r "$base.jpg") {
+        $image = "$base.jpg";
+      } elsif (-r "$base.png") {
+        $image = "$base.png";
+      } elsif (-r "$base.gif") {
+        $image = "$base.gif";
+      } else {
+        warn "$ERROR no image file for $base: $_";
+      }
+      $_ = "<IMG SRC=\"$image\" ALT=\"$base\">";
+    }
+
     #
     # try to guess bibliography references or glossary terms
     #
@@ -1378,8 +1427,7 @@ print "# end of pass 4\n" if $verbose;
 #---############################################################################
 
 $header = <<EOT;
-<!-- This HTML file has been created by $THISPROG
-     from $docu on $TODAY -->
+<!-- Created by $THISPROG from $docu on $TODAY -->
 EOT
 
 $full_title = $value{'_title'} || $value{'_settitle'} || "Untitled Document";
@@ -1506,6 +1554,7 @@ print "# that's all folks\n" if $verbose;
 
 sub update_sec_num {
     local($name, $level) = @_;
+    my $ret;
 
     $level--; # here we start at 0
     if ($name =~ /^appendix/) {
@@ -1515,7 +1564,7 @@ sub update_sec_num {
 	} else {
 	    @appendix_sec_num = ('A', 0, 0, 0);
 	}
-	return(join('.', @appendix_sec_num[0..$level]));
+	$ret = join('.', @appendix_sec_num[0..$level]);
     } else {
 	# normal style
 	if (defined(@normal_sec_num)) {
@@ -1523,8 +1572,11 @@ sub update_sec_num {
 	} else {
 	    @normal_sec_num = (1, 0, 0, 0);
 	}
-	return(join('.', @normal_sec_num[0..$level]));
+	$ret = join('.', @normal_sec_num[0..$level]);
     }
+    
+    $ret .= "." if $level == 0;
+    return $ret;
 }
 
 sub incr_sec_num {
@@ -1782,7 +1834,7 @@ sub anchor {
 sub pretty_date {
     local(@MoY, $sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst);
 
-    @MoY = ('January', 'Febuary', 'March', 'April', 'May', 'June',
+    @MoY = ('January', 'February', 'March', 'April', 'May', 'June',
 	    'July', 'August', 'September', 'October', 'November', 'December');
     ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
     $year += ($year < 70) ? 2000 : 1900;
@@ -1832,6 +1884,7 @@ sub print_header {
     }
     print FILE <<EOT;
 <HTML>
+<meta http-equiv="Content-Type" content="text/html; charset=shift_jis">
 <HEAD>
 $header
 <TITLE>$_</TITLE>
@@ -1875,9 +1928,8 @@ EOT
 sub print_toplevel_footer {
     &print_ruler;
     print FILE <<EOT;
-This document was generated on $TODAY using the
-<A HREF=\"$HOMEPAGE\">texi2html</A>
-translator version 1.52.</P>
+This document was generated on $TODAY using
+<A HREF=\"$HOMEPAGE\">texi2html</A>&nbsp;$value{texi2html}.
 EOT
     &print_footer;
 }
@@ -1924,3 +1976,156 @@ sub byalpha {
     $key2alpha{$a} cmp $key2alpha{$b};
 }
 
+##############################################################################
+
+	# These next few lines are legal in both Perl and nroff.
+
+.00 ;			# finish .ig
+ 
+'di			\" finish diversion--previous line must be blank
+.nr nl 0-1		\" fake up transition to first page again
+.nr % 0			\" start at page 1
+'; __END__ ############# From here on it's a standard manual page ############
+.TH TEXI2HTML 1 "01/05/98"
+.AT 3
+.SH NAME
+texi2html \- a Texinfo to HTML converter
+.SH SYNOPSIS
+.B texi2html [options] file
+.PP
+.B texi2html -check [-verbose] files
+.SH DESCRIPTION
+.I Texi2html
+converts the given Texinfo file to a set of HTML files. It tries to handle
+most of the Texinfo commands. It creates hypertext links for cross-references,
+footnotes...
+.PP
+It also tries to add links from a reference to its corresponding entry in the
+bibliography (if any). It may also handle a glossary (see the
+.B \-glossary
+option).
+.PP
+.I Texi2html
+creates several files depending on the contents of the Texinfo file and on
+the chosen options (see FILES).
+.PP
+The HTML files created by
+.I texi2html
+are closer to TeX than to Info, that's why
+.I texi2html
+converts @iftex sections and not @ifinfo ones by default. You can reverse
+this with the \-expandinfo option.
+.SH OPTIONS
+.TP 12
+.B \-check
+Check the given file and give the list of all things that may be Texinfo commands.
+This may be used to check the output of
+.I texi2html
+to find the Texinfo commands that have been left in the HTML file.
+.TP
+.B \-expandinfo
+Expand @ifinfo sections, not @iftex ones.
+.TP
+.B \-glossary
+Use the section named 'Glossary' to build a list of terms and put links in the HTML
+document from each term toward its definition.
+.TP
+.B \-invisible \fIname\fP
+Use \fIname\fP to create invisible destination anchors for index links
+(you can for instance use the invisible.xbm file shipped with this program).
+This is a workaround for a known bug of many WWW browsers, including netscape.
+.TP
+.B \-I \fIdir\fP
+Look also in \fIdir\fP to find included files.
+.TP
+.B \-menu
+Show the Texinfo menus; by default they are ignored.
+.TP
+.B \-monolithic
+Output only one file, including the table of contents and footnotes.
+.TP
+.B \-number
+Number the sections.
+.TP
+.B \-split_chapter
+Split the output into several HTML files (one per main section:
+chapter, appendix...).
+.TP
+.B \-split_node
+Split the output into several HTML files (one per node).
+.TP
+.B \-usage
+Print usage instructions, listing the current available command-line options.
+.TP
+.B \-verbose
+Give a verbose output. Can be used with the
+.B \-check
+option.
+.PP
+.SH FILES
+By default
+.I texi2html
+creates the following files (foo being the name of the Texinfo file):
+.TP 16
+.B foo_toc.html
+The table of contents.
+.TP
+.B foo.html
+The document's contents.
+.TP
+.B foo_foot.html
+The footnotes (if any).
+.PP
+When used with the
+.B \-split
+option, it creates several files (one per chapter or node), named
+.B foo_n.html
+(n being the indice of the chapter or node), instead of the single
+.B foo.html
+file.
+.PP
+When used with the
+.B \-monolithic
+option, it creates only one file:
+.B foo.html
+.SH VARIABLES
+.I texi2html
+predefines the following variables: \fBhtml\fP, \fBtexi2html\fP.
+.SH ADDITIONAL COMMANDS
+.I texi2html
+implements the following non-Texinfo commands (maybe they are in Texinfo now...):
+.TP 16
+.B @ifhtml
+This indicates the start of an HTML section, this section will passed through
+without any modification.
+.TP
+.B @end ifhtml
+This indicates the end of an HTML section.
+.SH VERSION
+This is \fItexi2html\fP version 1.56k, 1999-02-20.
+.PP
+The latest version of \fItexi2html\fP can be found in WWW, cf. URLs
+http://wwwinfo.cern.ch/dis/texi2html/
+.br
+http://texinfo.org/texi2html/
+.SH AUTHOR
+The main author is Lionel Cons, CERN IT/DIS/OSE, Lionel.Cons@cern.ch.
+Many other people around the net contributed to this program.
+.SH COPYRIGHT
+This program is the intellectual property of the European
+Laboratory for Particle Physics (known as CERN). No guarantee whatsoever is
+provided by CERN. No liability whatsoever is accepted for any loss or damage
+of any kind resulting from any defect or inaccuracy in this information or
+code.
+.PP
+CERN, 1211 Geneva 23, Switzerland
+.SH "SEE ALSO"
+GNU Texinfo Documentation Format,
+HyperText Markup Language (HTML),
+World Wide Web (WWW).
+.SH BUGS
+This program does not understand all Texinfo commands (yet).
+.PP
+TeX specific commands (normally enclosed in @iftex) will be
+passed unmodified.
+.ex
