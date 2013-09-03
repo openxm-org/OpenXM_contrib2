@@ -1,4 +1,7 @@
+@rem $OpenXM$
 @echo off
+
+setlocal
 
 set PATH=..;..\..;%PATH%
 set lang=%~1
