@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.88 2013/06/14 04:47:17 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.89 2013/09/09 07:29:25 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -168,7 +168,7 @@ struct ftab dp_tab[] = {
 #if  0
 	{"nd_gr_recompute_trace",Pnd_gr_recompute_trace,5},
 #endif
-	{"nd_btog",Pnd_btog,5},
+	{"nd_btog",Pnd_btog,-6},
 	{"nd_weyl_gr_postproc",Pnd_weyl_gr_postproc,5},
 	{"nd_weyl_gr",Pnd_weyl_gr,4},
 	{"nd_weyl_gr_trace",Pnd_weyl_gr_trace,5},
@@ -2232,12 +2232,15 @@ LIST *rp;
 }
 #endif
 
+Obj nd_btog_one(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,int pos);
+Obj nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist);
+
 void Pnd_btog(arg,rp)
 NODE arg;
-MAT *rp;
+Obj *rp;
 {
 	LIST f,v,tlist;
-	int m;
+	int m,ac,pos;
 	struct order_spec *ord;
 
 	do_weyl = 0;
@@ -2248,7 +2251,14 @@ MAT *rp;
 	m = QTOS((Q)ARG2(arg));
 	create_order_spec(0,ARG3(arg),&ord);
 	tlist = (LIST)ARG4(arg);
-	*rp = nd_btog(f,v,m,ord,tlist);
+	if ( (ac = argc(arg)) == 6 ) {
+		asir_assert(ARG5(arg),O_N,"nd_btog");
+		pos = QTOS((Q)ARG5(arg));
+		*rp = nd_btog_one(f,v,m,ord,tlist,pos);
+	} else if ( ac == 5 )
+		*rp = nd_btog(f,v,m,ord,tlist);
+	else
+		error("nd_btog : argument mismatch");
 }
 
 void Pnd_weyl_gr_postproc(arg,rp)

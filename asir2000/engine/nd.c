@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.203 2013/01/31 01:13:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.204 2013/09/09 07:29:25 noro Exp $ */
 
 #include "nd.h"
 
@@ -7224,7 +7224,9 @@ void parse_nd_option(NODE opt)
 ND mdptond(DP d);
 ND nd_mul_nm(int mod,NM m0,ND p);
 ND *recompute_trace(NODE ti,ND **p,int nb,int mod);
+ND recompute_trace_one(NODE ti,ND *p,int nb,int mod);
 MAT nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,MAT *rp);
+VECT nd_btog_one(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,int pos,MAT *rp);
 
 /* d:monomial */
 ND mdptond(DP d)
@@ -7304,6 +7306,37 @@ ND *recompute_trace(NODE ti,ND **p,int nb,int mod)
    return rd;
 }
 
+ND recompute_trace_one(NODE ti,ND *p,int nb,int mod)
+{
+  PGeoBucket r;
+  int i,ci;
+  NODE t,s;
+  ND m,tp;
+  ND pi,rd;
+  P c;
+
+  r = create_pbucket();
+  for ( t = ti; t; t = NEXT(t) ) {
+	s = BDY((LIST)BDY(t));
+    if ( ARG0(s) ) {
+	  m = mdptond((DP)ARG2(s));
+	  ptomp(mod,(P)HCQ(m),&c);
+	  if ( ci = ((MQ)c)->cont ) {
+	    HCM(m) = ci;
+	    pi = p[QTOS((Q)ARG1(s))];
+		tp = nd_mul_nm(mod,BDY(m),pi);
+	    add_pbucket(mod,r,tp);
+	  }
+	  ci = 1;
+    } else {
+	  ptomp(mod,(P)ARG3(s),&c); ci = ((MQ)c)->cont;
+	  ci = invm(ci,mod);
+	}
+  }
+  rd = normalize_pbucket(mod,r);
+  if ( ci != 1 ) nd_mul_c(mod,rd,ci);
+  return rd;
+}
 
 MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
 {
@@ -7376,3 +7409,70 @@ MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
   return mat;
 }
 
+VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
+  LIST tlist,int pos,MAT *rp)
+{
+  int i,j,n,m,nb,pi0,pi1,nvar;
+  VL fv,tv,vv;
+  NODE permtrace,perm,trace,intred,ind,t,pi,ti;
+  ND *p;
+  ND *c;
+  ND u;
+  P inv;
+  VECT vect;
+
+  parse_nd_option(current_option);
+  get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+  switch ( ord->id ) {
+    case 1:
+      if ( ord->nv != nvar )
+        error("nd_check : invalid order specification");
+      break;
+    default:
+      break;
+  }
+  nd_init_ord(ord);
+#if 0
+  nd_bpe = QTOS((Q)ARG7(BDY(tlist)));
+#else
+  nd_bpe = 32;
+#endif
+  nd_setup_parameters(nvar,0);
+  permtrace = BDY((LIST)ARG2(BDY(tlist))); 
+  intred = BDY((LIST)ARG3(BDY(tlist))); 
+  ind = BDY((LIST)ARG4(BDY(tlist)));
+  perm = BDY((LIST)BDY(permtrace)); trace =NEXT(permtrace);
+  for ( i = length(perm)-1, t = trace; t; t = NEXT(t) ) {
+  	j = QTOS((Q)BDY(BDY((LIST)BDY(t))));
+	if ( j > i ) i = j;
+  }
+  n = i+1;
+  nb = length(BDY(f));
+  p = (ND *)MALLOC(n*sizeof(ND *));
+  for ( t = perm, i = 0; t; t = NEXT(t), i++ ) {
+    pi = BDY((LIST)BDY(t)); 
+	pi0 = QTOS((Q)ARG0(pi)); pi1 = QTOS((Q)ARG1(pi));
+	if ( pi1 == pos ) {
+	  ptomp(mod,(P)ARG2(pi),&inv);
+	  u = ptond(CO,vv,(P)ONE);
+	  HCM(u) = ((MQ)inv)->cont;
+	  p[pi0] = u;
+    }
+  }
+  for ( t = trace,i=0; t; t = NEXT(t), i++ ) {
+	printf("%d ",i); fflush(stdout);
+    ti = BDY((LIST)BDY(t));
+    p[j=QTOS((Q)ARG0(ti))] = recompute_trace_one(BDY((LIST)ARG1(ti)),p,nb,mod);
+  }
+  for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
+	printf("%d ",i); fflush(stdout);
+    ti = BDY((LIST)BDY(t));
+    p[j=QTOS((Q)ARG0(ti))] = recompute_trace_one(BDY((LIST)ARG1(ti)),p,nb,mod);
+  }
+  m = length(ind);
+  MKVECT(vect,m);
+  for ( j = 0, t = ind; j < m; j++, t = NEXT(t) ) 
+	BDY(vect)[j] = ndtodp(mod,p[QTOS((Q)BDY(t))]);
+  return vect;
+}
