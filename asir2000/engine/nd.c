@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.202 2013/01/30 08:03:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.203 2013/01/31 01:13:47 noro Exp $ */
 
 #include "nd.h"
 
@@ -74,6 +74,7 @@ void conv_ilist(int demand,int trace,NODE g,int **indp);
 void parse_nd_option(NODE opt);
 void dltondl(int n,DL dl,UINT *r);
 DP ndvtodp(int mod,NDV p);
+DP ndtodp(int mod,ND p);
 
 extern int Denominator,DP_Multiple;
 
@@ -3079,6 +3080,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
     MKLIST(*rp,r0);
 }
 
+#if 0
 NDV recompute_trace(NODE trace,NDV *p,int m);
 void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,LIST *rp);
 
@@ -3219,6 +3221,7 @@ void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist
     MKLIST(*rp,r0);
     if ( DP_Print ) fprintf(asir_out,"\n");
 }
+#endif
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp)
 {
@@ -4879,6 +4882,27 @@ DP ndvtodp(int mod,NDV p)
     m0 = 0;
     len = p->len;
     for ( t = BDY(p), i = 0; i < len; NMV_ADV(t), i++ ) {
+        NEXTMP(m0,m);
+    	m->dl = ndltodl(nd_nvar,DL(t));
+    	m->c = ndctop(mod,t->c);
+    }
+    NEXT(m) = 0;
+	MKDP(nd_nvar,m0,d);
+    SG(d) = SG(p);
+    return d;
+}
+
+DP ndtodp(int mod,ND p)
+{
+    MP m,m0;
+	DP d;
+    NM t;
+    int i,len;
+
+    if ( !p ) return 0;
+    m0 = 0;
+    len = p->len;
+    for ( t = BDY(p); t; t = NEXT(t) ) {
         NEXTMP(m0,m);
     	m->dl = ndltodl(nd_nvar,DL(t));
     	m->c = ndctop(mod,t->c);
@@ -7196,3 +7220,159 @@ void parse_nd_option(NODE opt)
             nd_intersect = value?1:0;
     }
 }
+
+ND mdptond(DP d);
+ND nd_mul_nm(int mod,NM m0,ND p);
+ND *recompute_trace(NODE ti,ND **p,int nb,int mod);
+MAT nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,MAT *rp);
+
+/* d:monomial */
+ND mdptond(DP d)
+{
+  NM m;
+  ND r;
+
+  if ( OID(d) == 1 )
+	r = ptond(CO,CO,(P)d);
+  else {
+    NEWNM(m);
+    dltondl(NV(d),BDY(d)->dl,DL(m));
+    CQ(m) = (Q)BDY(d)->c;
+    NEXT(m) = 0;
+    MKND(NV(d),m,1,r);
+  }
+    return r;
+}
+
+ND nd_mul_nm(int mod,NM m0,ND p)
+{
+  UINT *d0;
+  int c0,c1,c;
+  NM tm,mr,mr0;
+  ND r;
+
+  if ( !p ) return 0;
+  d0 = DL(m0);
+  c0 = CM(m0);
+  mr0 = 0;
+  for ( tm = BDY(p); tm; tm = NEXT(tm) ) {
+    NEXTNM(mr0,mr);
+	c = CM(tm); DMAR(c0,c,0,mod,c1); CM(mr) = c1;
+	ndl_add(d0,DL(tm),DL(mr));
+  }
+  NEXT(mr) = 0;
+  MKND(NV(p),mr0,LEN(p),r);
+  return r;
+}
+
+ND *recompute_trace(NODE ti,ND **p,int nb,int mod)
+{
+  PGeoBucket *r;
+  int i,ci;
+  NODE t,s;
+  ND m,tp;
+  ND *pi,*rd;
+  P c;
+
+  r = (PGeoBucket *)MALLOC(nb*sizeof(PGeoBucket));
+  for ( i = 0; i < nb; i++ )
+  	r[i] = create_pbucket();
+  for ( t = ti; t; t = NEXT(t) ) {
+	s = BDY((LIST)BDY(t));
+    if ( ARG0(s) ) {
+	  m = mdptond((DP)ARG2(s));
+	  ptomp(mod,(P)HCQ(m),&c);
+	  if ( ci = ((MQ)c)->cont ) {
+	    HCM(m) = ci;
+	    pi = p[QTOS((Q)ARG1(s))];
+	    for ( i = 0; i < nb; i++ ) {
+		  tp = nd_mul_nm(mod,BDY(m),pi[i]);
+	      add_pbucket(mod,r[i],tp);
+	    }
+	  }
+	  ci = 1;
+    } else {
+	  ptomp(mod,(P)ARG3(s),&c); ci = ((MQ)c)->cont;
+	  ci = invm(ci,mod);
+	}
+  }
+  rd = (ND *)MALLOC(nb*sizeof(ND));
+  for ( i = 0; i < nb; i++ )
+	rd[i] = normalize_pbucket(mod,r[i]);
+  if ( ci != 1 )
+    for ( i = 0; i < nb; i++ ) nd_mul_c(mod,rd[i],ci);
+   return rd;
+}
+
+
+MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
+{
+  int i,j,n,m,nb,pi0,pi1,nvar;
+  VL fv,tv,vv;
+  NODE permtrace,perm,trace,intred,ind,t,pi,ti;
+  ND **p;
+  ND *c;
+  ND u;
+  P inv;
+  MAT mat;
+
+  parse_nd_option(current_option);
+  get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+  switch ( ord->id ) {
+    case 1:
+      if ( ord->nv != nvar )
+        error("nd_check : invalid order specification");
+      break;
+    default:
+      break;
+  }
+  nd_init_ord(ord);
+#if 0
+  nd_bpe = QTOS((Q)ARG7(BDY(tlist)));
+#else
+  nd_bpe = 32;
+#endif
+  nd_setup_parameters(nvar,0);
+  permtrace = BDY((LIST)ARG2(BDY(tlist))); 
+  intred = BDY((LIST)ARG3(BDY(tlist))); 
+  ind = BDY((LIST)ARG4(BDY(tlist)));
+  perm = BDY((LIST)BDY(permtrace)); trace =NEXT(permtrace);
+  for ( i = length(perm)-1, t = trace; t; t = NEXT(t) ) {
+  	j = QTOS((Q)BDY(BDY((LIST)BDY(t))));
+	if ( j > i ) i = j;
+  }
+  n = i+1;
+  nb = length(BDY(f));
+  p = (ND **)MALLOC(n*sizeof(ND *));
+  for ( t = perm, i = 0; t; t = NEXT(t), i++ ) {
+    pi = BDY((LIST)BDY(t)); 
+	pi0 = QTOS((Q)ARG0(pi)); pi1 = QTOS((Q)ARG1(pi));
+	p[pi0] = c = (ND *)MALLOC(nb*sizeof(ND));
+	ptomp(mod,(P)ARG2(pi),&inv);
+	u = ptond(CO,vv,(P)ONE);
+	HCM(u) = ((MQ)inv)->cont;
+	c[pi1] = u;
+  }
+  for ( t = trace,i=0; t; t = NEXT(t), i++ ) {
+	printf("%d ",i); fflush(stdout);
+    ti = BDY((LIST)BDY(t));
+    p[j=QTOS((Q)ARG0(ti))] = recompute_trace(BDY((LIST)ARG1(ti)),p,nb,mod);
+    if ( j == 441 )
+		printf("afo");
+  }
+  for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
+	printf("%d ",i); fflush(stdout);
+    ti = BDY((LIST)BDY(t));
+    p[j=QTOS((Q)ARG0(ti))] = recompute_trace(BDY((LIST)ARG1(ti)),p,nb,mod);
+    if ( j == 441 )
+		printf("afo");
+  }
+  m = length(ind);
+  MKMAT(mat,nb,m);
+  for ( j = 0, t = ind; j < m; j++, t = NEXT(t) ) 
+    for ( i = 0, c = p[QTOS((Q)BDY(t))]; i < nb; i++ ) 
+		BDY(mat)[i][j] = ndtodp(mod,c[i]);
+  return mat;
+}
+

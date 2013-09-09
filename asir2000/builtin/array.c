@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.61 2012/12/17 07:20:44 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.62 2013/06/14 05:55:24 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -98,6 +98,8 @@ void Pmatc();
 void Pnd_det();
 void Plu_mat();
 void Pmat_col();
+void Plusolve_prep();
+void Plusolve_main();
 
 struct ftab array_tab[] = {
 	{"lu_mat",Plu_mat,1},
@@ -144,8 +146,204 @@ struct ftab array_tab[] = {
 	{"mat_swap_row_destructive",Pmat_swap_row_destructive,3},
 	{"mat_swap_col_destructive",Pmat_swap_col_destructive,3},
 	{"mat_col",Pmat_col,2},
+	{"lusolve_prep",Plusolve_prep,1},
+	{"lusolve_main",Plusolve_main,1},
 	{0,0,0},
 };
+
+typedef struct _ent { int j; unsigned int e; } ent;
+
+ent *get_row(FILE *,int *l);
+void put_row(FILE *out,int l,ent *a);
+int lu_elim(int *l,ent **a,int k,int i,int mul,int mod);
+
+static int *ul,*ll;
+static ent **u,**l;
+static int modulus;
+
+void Plusolve_prep(NODE arg,Q *rp)
+{
+	char *fname;
+	FILE *in;
+	int len,i,rank;
+	int *rhs;
+
+	fname = BDY((STRING)ARG0(arg));
+	in = fopen(fname,"r");
+	modulus = getw(in);
+	len = getw(in);
+	ul = (int *)MALLOC_ATOMIC(len*sizeof(int));
+	u = (ent **)MALLOC(len*sizeof(ent *));
+	ll = (int *)MALLOC_ATOMIC(len*sizeof(int));
+	l = (ent **)MALLOC(len*sizeof(ent *));
+	for ( i = 0; i < len; i++ ) {
+		u[i] = get_row(in,&ul[i]);
+	}
+	for ( i = 0; i < len; i++ ) {
+		l[i] = get_row(in,&ll[i]);
+	}
+	fclose(in);
+	*rp = ONE;
+}
+
+void Plusolve_main(NODE arg,VECT *rp)
+{
+	Q *d,*p;
+	VECT v,r;
+	int len,i;
+	int *rhs;
+
+	v = (VECT)ARG0(arg); len = v->len;
+	d = (Q *)BDY(v);
+	rhs = (int *)MALLOC_ATOMIC(len*sizeof(int));
+	for ( i = 0; i < len; i++ ) rhs[i] = QTOS(d[i]);
+	solve_l(ll,l,len,rhs,modulus);
+	solve_u(ul,u,len,rhs,modulus);
+	NEWVECT(r); r->len = len;
+	r->body = (pointer *)MALLOC(len*sizeof(pointer));
+	p = (Q *)r->body;
+	for ( i = 0; i < len; i++ )
+		STOQ(rhs[i],p[i]);	
+	*rp = r;
+}
+
+ent *get_row(FILE *in,int *l)
+{
+	int len,i;
+	ent *a;
+
+	*l = len = getw(in);
+	a = (ent *)MALLOC_ATOMIC(len*sizeof(ent));
+	for ( i = 0; i < len; i++ ) {
+		a[i].j = getw(in);
+		a[i].e = getw(in);
+	}
+	return a;
+}
+
+int lu_gauss(int *ul,ent **u,int *ll,ent **l,int n,int mod)
+{
+	int i,j,k,s,mul;
+	unsigned int inv;
+	int *ll2;
+
+	ll2 = (int *)MALLOC_ATOMIC(n*sizeof(int));
+	for ( i = 0; i < n; i++ ) ll2[i] = 0;
+	for ( i = 0; i < n; i++ ) {
+		fprintf(stderr,"i=%d\n",i);
+		inv = invm(u[i][0].e,mod);
+		for ( k = i+1; k < n; k++ )
+			if ( u[k][0].j == n-i ) {
+				s = u[k][0].e;
+				DMAR(s,inv,0,mod,mul);
+				lu_elim(ul,u,k,i,mul,mod);
+				lu_append(ll,l,ll2,k,i,mul);
+			}
+	}
+}
+
+#define INITLEN 10
+
+lu_append(int *l,ent **a,int *l2,int k,int i,int mul)
+{
+	int len;
+	ent *p;
+
+	len = l[k]; 
+	if ( !len ) {
+		a[k] = p = (ent *)MALLOC_ATOMIC(INITLEN*sizeof(ent));
+		p[0].j = i; p[0].e = mul;
+		l[k] = 1; l2[k] = INITLEN;
+	} else {
+		if ( l2[k] == l[k] ) {
+			l2[k] *= 2;
+			a[k] = REALLOC(a[k],l2[k]*sizeof(ent));
+		}
+		p =a[k];
+		p[l[k]].j = i; p[l[k]].e = mul;
+		l[k]++;
+	}
+}
+
+/* a[k] = a[k]-mul*a[i] */ 
+
+int lu_elim(int *l,ent **a,int k,int i,int mul,int mod)
+{
+	ent *ak,*ai,*w;
+	int lk,li,j,m,p,q,r,s,t,j0;
+
+	ak = a[k]; ai = a[i]; lk = l[k]; li = l[i];
+	w = (ent *)alloca((lk+li)*sizeof(ent));
+	p = 0; q = 0; j = 0;
+	mul = mod-mul;
+	while ( p < lk && q < li ) {
+		if ( ak[p].j > ai[q].j ) {
+			w[j] = ak[p]; j++; p++;
+		} else if ( ak[p].j < ai[q].j ) {
+			w[j].j = ai[q].j;
+			t = ai[q].e;
+			DMAR(t,mul,0,mod,r);
+			w[j].e = r;
+			j++; q++;
+		} else {
+			t = ai[q].e; s = ak[p].e;
+			DMAR(t,mul,s,mod,r);
+			if ( r ) {
+				w[j].j = ai[q].j; w[j].e = r; j++;
+			}
+			p++; q++;
+		}
+	}
+	if ( q == li )
+		while ( p < lk ) {
+			w[j] = ak[p]; j++; p++;
+		}
+	else if ( p == lk )
+		while ( q < li ) {
+			w[j].j = ai[q].j;
+			t = ai[q].e;
+			DMAR(t,mul,0,mod,r);
+			w[j].e = r;
+			j++; q++;
+		}
+	if ( j <= lk ) {
+		for ( m = 0; m < j; m++ ) ak[m] = w[m];
+	} else {
+		a[k] = ak = (ent *)MALLOC_ATOMIC(j*sizeof(ent));
+		for ( m = 0; m < j; m++ ) ak[m] = w[m];
+	}
+	l[k] = j;
+}
+
+int solve_l(int *ll,ent **l,int n,int *rhs,int mod)
+{
+	int j,k,s,len;
+	ent *p;
+
+	for ( j = 0; j < n; j++ ) {
+		len = ll[j]; p = l[j];
+		for ( k = 0, s = 0; k < len; k++ )
+			s = dmar(p[k].e,rhs[p[k].j],s,mod);
+		rhs[j] -=  s;
+		if ( rhs[j] < 0 ) rhs[j] += mod;
+	}
+}
+
+int solve_u(int *ul,ent **u,int n,int *rhs,int mod)
+{
+	int j,k,s,len,inv;
+	ent *p;
+
+	for ( j = n-1; j >= 0; j-- ) {
+		len = ul[j]; p = u[j];
+		for ( k = 1, s = 0; k < len; k++ )
+			s = dmar(p[k].e,rhs[p[k].j],s,mod);
+		rhs[j] -=  s;
+		if ( rhs[j] < 0 ) rhs[j] += mod;
+		inv = invm((unsigned int)p[0].e,mod);
+		rhs[j] = dmar(rhs[j],inv,0,mod);
+	}
+}
 
 int comp_obj(Obj *a,Obj *b)
 {
