@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.204 2013/09/09 07:29:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.205 2013/09/09 09:47:09 noro Exp $ */
 
 #include "nd.h"
 
@@ -6681,6 +6681,32 @@ void ndv_save(NDV p,int index)
     fclose(s);
 }
 
+void nd_save_mod(ND p,int index)
+{
+    FILE *s;
+    char name[BUFSIZ];
+    int nv,sugar,len,c;
+    NM m;
+
+    sprintf(name,"%s/%d",Demand,index);
+    s = fopen(name,"w");
+    if ( !p ) { 
+		len = 0;
+    	write_int(s,&len);
+		fclose(s);
+        return;
+    }
+    nv = NV(p);
+    sugar = SG(p);
+    len = LEN(p);
+    write_int(s,&nv); write_int(s,&sugar); write_int(s,&len);
+	for ( m = BDY(p); m; m = NEXT(m) ) {
+	  c = CM(m); write_int(s,&c);
+	  write_intarray(s,DL(m),nd_wpd);
+	}
+    fclose(s);
+}
+
 NDV ndv_load(int index)
 {
     FILE *s;
@@ -6722,6 +6748,36 @@ NDV ndv_load(int index)
     fclose(s);
     MKNDV(nv,m0,len,d);
     SG(d) = sugar;
+    return d;
+}
+
+ND nd_load_mod(int index)
+{
+    FILE *s;
+    char name[BUFSIZ];
+    int nv,sugar,len,i,c;
+	ND d;
+    NM m0,m;
+
+    sprintf(name,"%s/%d",Demand,index);
+    s = fopen(name,"r");
+	/* if the file does not exist, it means p[index]=0 */
+    if ( !s ) return 0;
+
+    read_int(s,&nv);
+	if ( !nv ) { fclose(s); return 0; }
+
+    read_int(s,&sugar);
+    read_int(s,&len);
+	for ( m0 = 0, i = 0; i < len; i++ ) {
+		NEXTNM(m0,m);
+		read_int(s,&c); CM(m) = c;
+		read_intarray(s,DL(m),nd_wpd);
+	}
+	NEXT(m) = 0;
+    MKND(nv,m0,len,d);
+    SG(d) = sugar;
+	fclose(s);
     return d;
 }
 
@@ -7309,7 +7365,7 @@ ND *recompute_trace(NODE ti,ND **p,int nb,int mod)
 ND recompute_trace_one(NODE ti,ND *p,int nb,int mod)
 {
   PGeoBucket r;
-  int i,ci;
+  int i,ci,j;
   NODE t,s;
   ND m,tp;
   ND pi,rd;
@@ -7323,9 +7379,16 @@ ND recompute_trace_one(NODE ti,ND *p,int nb,int mod)
 	  ptomp(mod,(P)HCQ(m),&c);
 	  if ( ci = ((MQ)c)->cont ) {
 	    HCM(m) = ci;
-	    pi = p[QTOS((Q)ARG1(s))];
-		tp = nd_mul_nm(mod,BDY(m),pi);
-	    add_pbucket(mod,r,tp);
+	    pi = p[j=QTOS((Q)ARG1(s))];
+		if ( !pi ) {
+		  pi = nd_load_mod(j);
+		  tp = nd_mul_nm(mod,BDY(m),pi);
+		  nd_free(pi);
+	      add_pbucket(mod,r,tp);
+		} else {
+		  tp = nd_mul_nm(mod,BDY(m),pi);
+	      add_pbucket(mod,r,tp);
+	    }
 	  }
 	  ci = 1;
     } else {
@@ -7334,6 +7397,7 @@ ND recompute_trace_one(NODE ti,ND *p,int nb,int mod)
 	}
   }
   rd = normalize_pbucket(mod,r);
+  free_pbucket(r);
   if ( ci != 1 ) nd_mul_c(mod,rd,ci);
   return rd;
 }
@@ -7464,15 +7528,28 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
 	printf("%d ",i); fflush(stdout);
     ti = BDY((LIST)BDY(t));
     p[j=QTOS((Q)ARG0(ti))] = recompute_trace_one(BDY((LIST)ARG1(ti)),p,nb,mod);
+    if ( Demand ) {
+        nd_save_mod(p[j],j); nd_free(p[j]); p[j] = 0;
+	}
   }
   for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
 	printf("%d ",i); fflush(stdout);
     ti = BDY((LIST)BDY(t));
     p[j=QTOS((Q)ARG0(ti))] = recompute_trace_one(BDY((LIST)ARG1(ti)),p,nb,mod);
+    if ( Demand ) {
+        nd_save_mod(p[j],j); nd_free(p[j]); p[j] = 0;
+	}
   }
   m = length(ind);
   MKVECT(vect,m);
-  for ( j = 0, t = ind; j < m; j++, t = NEXT(t) ) 
-	BDY(vect)[j] = ndtodp(mod,p[QTOS((Q)BDY(t))]);
+  for ( j = 0, t = ind; j < m; j++, t = NEXT(t) ) {
+	u = p[QTOS((Q)BDY(t))];
+	if ( !u ) {
+	  u = nd_load_mod(QTOS((Q)BDY(t)));
+	  BDY(vect)[j] = ndtodp(mod,u);
+	  nd_free(u);
+	} else
+	  BDY(vect)[j] = ndtodp(mod,u);
+  }
   return vect;
 }
