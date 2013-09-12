@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.205 2013/09/09 09:47:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.206 2013/09/10 02:10:00 noro Exp $ */
 
 #include "nd.h"
 
@@ -3080,7 +3080,6 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
     MKLIST(*rp,r0);
 }
 
-#if 0
 NDV recompute_trace(NODE trace,NDV *p,int m);
 void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,LIST *rp);
 
@@ -3221,7 +3220,6 @@ void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist
     MKLIST(*rp,r0);
     if ( DP_Print ) fprintf(asir_out,"\n");
 }
-#endif
 
 void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp)
 {
@@ -7279,8 +7277,8 @@ void parse_nd_option(NODE opt)
 
 ND mdptond(DP d);
 ND nd_mul_nm(int mod,NM m0,ND p);
-ND *recompute_trace(NODE ti,ND **p,int nb,int mod);
-ND recompute_trace_one(NODE ti,ND *p,int nb,int mod);
+ND *btog(NODE ti,ND **p,int nb,int mod);
+ND btog_one(NODE ti,ND *p,int nb,int mod);
 MAT nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,MAT *rp);
 VECT nd_btog_one(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,int pos,MAT *rp);
 
@@ -7323,7 +7321,7 @@ ND nd_mul_nm(int mod,NM m0,ND p)
   return r;
 }
 
-ND *recompute_trace(NODE ti,ND **p,int nb,int mod)
+ND *btog(NODE ti,ND **p,int nb,int mod)
 {
   PGeoBucket *r;
   int i,ci;
@@ -7362,7 +7360,7 @@ ND *recompute_trace(NODE ti,ND **p,int nb,int mod)
    return rd;
 }
 
-ND recompute_trace_one(NODE ti,ND *p,int nb,int mod)
+ND btog_one(NODE ti,ND *p,int nb,int mod)
 {
   PGeoBucket r;
   int i,ci,j;
@@ -7454,14 +7452,14 @@ MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
   for ( t = trace,i=0; t; t = NEXT(t), i++ ) {
 	printf("%d ",i); fflush(stdout);
     ti = BDY((LIST)BDY(t));
-    p[j=QTOS((Q)ARG0(ti))] = recompute_trace(BDY((LIST)ARG1(ti)),p,nb,mod);
+    p[j=QTOS((Q)ARG0(ti))] = btog(BDY((LIST)ARG1(ti)),p,nb,mod);
     if ( j == 441 )
 		printf("afo");
   }
   for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
 	printf("%d ",i); fflush(stdout);
     ti = BDY((LIST)BDY(t));
-    p[j=QTOS((Q)ARG0(ti))] = recompute_trace(BDY((LIST)ARG1(ti)),p,nb,mod);
+    p[j=QTOS((Q)ARG0(ti))] = btog(BDY((LIST)ARG1(ti)),p,nb,mod);
     if ( j == 441 )
 		printf("afo");
   }
@@ -7527,7 +7525,7 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
   for ( t = trace,i=0; t; t = NEXT(t), i++ ) {
 	printf("%d ",i); fflush(stdout);
     ti = BDY((LIST)BDY(t));
-    p[j=QTOS((Q)ARG0(ti))] = recompute_trace_one(BDY((LIST)ARG1(ti)),p,nb,mod);
+    p[j=QTOS((Q)ARG0(ti))] = btog_one(BDY((LIST)ARG1(ti)),p,nb,mod);
     if ( Demand ) {
         nd_save_mod(p[j],j); nd_free(p[j]); p[j] = 0;
 	}
@@ -7535,7 +7533,7 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
   for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
 	printf("%d ",i); fflush(stdout);
     ti = BDY((LIST)BDY(t));
-    p[j=QTOS((Q)ARG0(ti))] = recompute_trace_one(BDY((LIST)ARG1(ti)),p,nb,mod);
+    p[j=QTOS((Q)ARG0(ti))] = btog_one(BDY((LIST)ARG1(ti)),p,nb,mod);
     if ( Demand ) {
         nd_save_mod(p[j],j); nd_free(p[j]); p[j] = 0;
 	}

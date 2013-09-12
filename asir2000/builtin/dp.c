@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.89 2013/09/09 07:29:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.90 2013/09/09 09:47:09 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -165,9 +165,7 @@ struct ftab dp_tab[] = {
 	{"nd_gr_trace",Pnd_gr_trace,5},
 	{"nd_f4_trace",Pnd_f4_trace,5},
 	{"nd_gr_postproc",Pnd_gr_postproc,5},
-#if  0
 	{"nd_gr_recompute_trace",Pnd_gr_recompute_trace,5},
-#endif
 	{"nd_btog",Pnd_btog,-6},
 	{"nd_weyl_gr_postproc",Pnd_weyl_gr_postproc,5},
 	{"nd_weyl_gr",Pnd_weyl_gr,4},
@@ -2211,7 +2209,6 @@ LIST *rp;
 	nd_gr_postproc(f,v,m,ord,do_check,rp);
 }
 
-#if 0
 void Pnd_gr_recompute_trace(arg,rp)
 NODE arg;
 LIST *rp;
@@ -2230,7 +2227,6 @@ LIST *rp;
 	tlist = (LIST)ARG4(arg);
 	nd_gr_recompute_trace(f,v,m,ord,tlist,rp);
 }
-#endif
 
 Obj nd_btog_one(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,int pos);
 Obj nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist);
