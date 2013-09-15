@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.206 2013/09/10 02:10:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.207 2013/09/12 06:46:16 noro Exp $ */
 
 #include "nd.h"
 
@@ -54,6 +54,7 @@ static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect;
 static int *nd_gbblock;
+static NODE nd_nzlist;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -2823,7 +2824,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     Obj obj;
     NumberField nf;
     struct order_spec *ord1;
-    NODE tr,tl1,tl2,tl3,tl4;
+    NODE tr,tl1,tl2,tl3,tl4,nzlist;
     LIST l1,l2,l3,l4,l5;
 	int j;
 	Q jq,bpe;
@@ -2883,7 +2884,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
                 max = MAX(e,max);
             }
         }
-    nd_setup_parameters(nvar,max);
+    nd_setup_parameters(nvar,nd_nzlist?0:max);
     obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos; ompos = nd_mpos;
     ishomo = 1;
     for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
@@ -2939,11 +2940,12 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
 	  conv_ilist(nd_demand,0,x,0);
 	  goto FINAL;
 	}
+    if ( nd_gentrace  && f4 ) { nzlist = nd_alltracelist; }
     x = ndv_reducebase(x,perm);
-    if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
+    if ( nd_gentrace  && !f4 ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
     x = ndv_reduceall(m,x);
     cbpe = nd_bpe;
-    if ( nd_gentrace ) { 
+    if ( nd_gentrace && !f4 ) { 
         tl2 = nd_alltracelist; nd_alltracelist = 0;
         ndv_check_membership(m,fd0,obpe,oadv,oepos,x);
         tl3 = nd_alltracelist; nd_alltracelist = 0; 
@@ -2962,29 +2964,34 @@ FINAL:
 		else BDY(r) = ndvtop(m,CO,vv,BDY(t));
     }
     if ( r0 ) NEXT(r) = 0;
-    if ( nalg )
+    if ( !m && nd_nalg )
         r0 = postprocess_algcoef(av,alist,r0);
     MKLIST(*rp,r0);
     if ( nd_gentrace ) {
-        tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
-	tl3 = reverse_node(tl3);
-		/* tl2 = [[i,[[*,j,*,*],...]],...] */
-        for ( t = tl2; t; t = NEXT(t) ) {
-			/* s = [i,[*,j,*,*],...] */
-            s = BDY((LIST)BDY(t));
-            j = perm[QTOS((Q)ARG0(s))]; STOQ(j,jq); ARG0(s) = (pointer)jq;
-			for ( s = BDY((LIST)ARG1(s)); s; s = NEXT(s) ) {
-                j = perm[QTOS((Q)ARG1(BDY((LIST)BDY(s))))]; STOQ(j,jq); 
-				ARG1(BDY((LIST)BDY(s))) = (pointer)jq;
+	if ( f4 ) {
+            STOQ(16,bpe);
+            tr = mknode(4,*rp,(!ishomo&&homo)?ONE:0,BDY(nzlist),bpe); MKLIST(*rp,tr);
+        } else {
+            tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
+            tl3 = reverse_node(tl3);
+            /* tl2 = [[i,[[*,j,*,*],...]],...] */
+            for ( t = tl2; t; t = NEXT(t) ) {
+            /* s = [i,[*,j,*,*],...] */
+                s = BDY((LIST)BDY(t));
+                j = perm[QTOS((Q)ARG0(s))]; STOQ(j,jq); ARG0(s) = (pointer)jq;
+                for ( s = BDY((LIST)ARG1(s)); s; s = NEXT(s) ) {
+                    j = perm[QTOS((Q)ARG1(BDY((LIST)BDY(s))))]; STOQ(j,jq); 
+                    ARG1(BDY((LIST)BDY(s))) = (pointer)jq;
+                }
             }
-		}
-		for ( j = length(x)-1, t = 0; j >= 0; j-- ) {
-		    STOQ(perm[j],jq); MKNODE(s,jq,t); t = s;
-		}
-      MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
-      MKLIST(l5,tl4);
-	  STOQ(nd_bpe,bpe);
-      tr = mknode(8,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe); MKLIST(*rp,tr);
+            for ( j = length(x)-1, t = 0; j >= 0; j-- ) {
+                STOQ(perm[j],jq); MKNODE(s,jq,t); t = s;
+            }
+            MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
+            MKLIST(l5,tl4);
+            STOQ(nd_bpe,bpe);
+            tr = mknode(8,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe); MKLIST(*rp,tr);
+        }
     }
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
@@ -3075,7 +3082,7 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
         BDY(r) = ndvtop(m,CO,vv,BDY(t));
     }
     if ( r0 ) NEXT(r) = 0;
-    if ( nalg )
+    if ( !m && nd_nalg )
         r0 = postprocess_algcoef(av,alist,r0);
     MKLIST(*rp,r0);
 }
@@ -3404,7 +3411,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     if ( nd_module ) BDY(r) = ndvtopl(0,CO,vv,BDY(r),mrank);
         else BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
     }
-    if ( nalg )
+    if ( nd_nalg )
         cand = postprocess_algcoef(av,alist,cand);
     MKLIST(*rp,cand);
     if ( nd_gentrace ) {
@@ -5694,13 +5701,14 @@ int nd_symbolic_preproc(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
 NODE nd_f4(int m,int **indp)
 {
     int i,nh,stat,index;
-    NODE r,g;
-    ND_pairs d,l,t;
+    NODE r,g,tn0,tn,node;
+    ND_pairs d,l,t,ll0,ll;
+	LIST l0,l1;
     ND spol,red;
     NDV nf,redv;
     NM s0,s;
-    NODE rp0,srp0,nflist;
-    int nsp,nred,col,rank,len,k,j,a;
+    NODE rp0,srp0,nflist,nzlist;
+    int nsp,nred,col,rank,len,k,j,a,i1s,i2s;
     UINT c;
     UINT **spmat;
     UINT *s0vect,*svect,*p,*v;
@@ -5711,7 +5719,7 @@ NODE nd_f4(int m,int **indp)
     int sugar;
     PGeoBucket bucket;
     struct oEGT eg0,eg1,eg_f4;
-
+    Q i1,i2,sugarq;
 #if 0
     ndv_alloc = 0;
 #endif
@@ -5720,10 +5728,32 @@ NODE nd_f4(int m,int **indp)
         d = update_pairs(d,g,i,0);
         g = update_base(g,i);
     }
+	nzlist = 0;
     while ( d ) {
         get_eg(&eg0);
         l = nd_minsugarp(d,&d);
         sugar = SG(l);
+        if ( nd_nzlist ) {
+            for ( tn = nd_nzlist; tn; tn = NEXT(tn) ) {
+                node = BDY((LIST)BDY(tn));
+			    if ( QTOS((Q)ARG0(node)) == sugar ) break;
+            }
+            if ( !tn ) error("nd_f4 : inconsistend non-zero list");
+			for ( t = l, ll0 = 0; t; t = NEXT(t) ) {
+                for ( tn = BDY((LIST)ARG1(node)); tn; tn = NEXT(tn) ) {
+				  i1s = QTOS((Q)ARG0(BDY((LIST)BDY(tn))));
+				  i2s = QTOS((Q)ARG1(BDY((LIST)BDY(tn))));
+				  if ( t->i1 == i1s && t->i2 == i2s ) break;
+				}
+			    if ( tn ) {
+				    if ( !ll0 ) ll0 = t;
+					else NEXT(ll) = t;
+					ll = t;
+				}
+            }
+			if ( ll0 ) NEXT(ll) = 0;
+		    l = ll0;
+        }
         bucket = create_pbucket();
         stat = nd_sp_f4(m,0,l,bucket);
         if ( !stat ) {
@@ -5745,9 +5775,9 @@ NODE nd_f4(int m,int **indp)
             fprintf(asir_out,"sugar=%d,symb=%fsec,",
                 sugar,eg_f4.exectime+eg_f4.gctime);
         if ( 1 )
-            nflist = nd_f4_red(m,l,0,s0vect,col,rp0,0);
+            nflist = nd_f4_red(m,l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
         else
-            nflist = nd_f4_red_dist(m,l,s0vect,col,rp0,0);
+            nflist = nd_f4_red_dist(m,l,s0vect,col,rp0,nd_gentrace?&ll:0);
         /* adding new bases */
         for ( r = nflist; r; r = NEXT(r) ) {
             nf = (NDV)BDY(r);
@@ -5764,6 +5794,21 @@ NODE nd_f4(int m,int **indp)
             d = update_pairs(d,g,nh,0);
             g = update_base(g,nh);
         }
+        if ( nd_gentrace ) {
+			for ( t = ll, tn0 = 0; t; t = NEXT(t) ) {
+				NEXTNODE(tn0,tn);
+                STOQ(t->i1,i1); STOQ(t->i2,i2);
+                node = mknode(2,i1,i2); MKLIST(l0,node);
+				BDY(tn) = l0;
+			}
+			if ( tn0 ) NEXT(tn) = 0; MKLIST(l0,tn0);
+            STOQ(sugar,sugarq); node = mknode(2,sugarq,l0); MKLIST(l1,node);
+            MKNODE(node,l1,nzlist); nzlist = node;
+        }
+    }
+    if ( nd_gentrace ) {
+		MKLIST(l0,reverse_node(nzlist));
+        MKNODE(nd_alltracelist,l0,0);
     }
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
@@ -7246,7 +7291,7 @@ void parse_nd_option(NODE opt)
     Obj value;
 
     nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
-	nd_newelim = 0; nd_intersect = 0;
+	nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -7272,6 +7317,11 @@ void parse_nd_option(NODE opt)
             nd_newelim = value?1:0;
 		else if ( !strcmp(key,"intersect") )
             nd_intersect = value?1:0;
+		else if ( !strcmp(key,"trace") ) {
+           u = BDY((LIST)value);
+		   nd_nzlist = BDY((LIST)ARG2(u));
+		   nd_bpe = QTOS((Q)ARG3(u));
+		}
     }
 }
 
