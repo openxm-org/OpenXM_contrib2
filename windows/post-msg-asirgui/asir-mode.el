@@ -2,12 +2,14 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.5 2013/09/21 06:16:05 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.6 2013/09/21 06:34:14 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
+
+(require 'shell)
 
 ;;;; AsirGUI for Windows
 (defvar asir-exec-path '("~/Desktop/asir/bin" "c:/Program Files/asir/bin" "c:/Program Files (x64)/asir/bin" "c:/asir/bin")
@@ -51,9 +53,16 @@
     (save-excursion
       (if (not (get-buffer asir-cmd-buffer-name))
           (let ((current-frame (selected-frame)))
-            (or (not window-system)
-                (select-frame (make-frame)))
-            (shell (get-buffer-create asir-cmd-buffer-name)) ;; Switch to new buffer automatically
+            (if window-system 
+                (progn 
+                  (select-frame (make-frame))
+                  (shell (get-buffer-create asir-cmd-buffer-name)) ;; Switch to new buffer automatically
+                  (delete-other-windows))
+              (if (>= emacs-major-version 24)
+                  (progn 
+                    (split-window)
+                    (other-window -1)))
+              (shell (get-buffer-create asir-cmd-buffer-name)))
             (sleep-for 1)
             (goto-char (point-max))
             (insert "asir")
