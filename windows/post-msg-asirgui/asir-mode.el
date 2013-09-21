@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.4 2013/09/21 03:52:05 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.5 2013/09/21 06:16:05 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -101,14 +101,19 @@
   "Paste region to asir"
   (interactive)
   (if mark-active
-      (save-excursion
-        (let ((buffer (current-buffer))
-              (start (region-beginning))
-              (end (region-end)))
-          (set-buffer asir-cmd-buffer-name)
-          (goto-char (point-max))
-          (insert-buffer-substring buffer start end)
-          (comint-send-input)))))
+      (if (eq system-type 'windows-nt)
+          (let ((temp-file (make-temp-file (format "%s/cmdasir-" (getenv "TEMP"))))
+                (exec-path (asir-effective-exec-path)))
+            (write-region (region-beginning) (region-end) temp-file)
+            (start-process "asir-proc-cmdasir" nil "cmdasir" "--paste-contents" temp-file))
+        (save-excursion
+          (let ((buffer (current-buffer))
+                (start (region-beginning))
+                (end (region-end)))
+            (set-buffer asir-cmd-buffer-name)
+            (goto-char (point-max))
+            (insert-buffer-substring buffer start end)
+            (comint-send-input))))))
 
 ;;;; Extension for CC-mode.
 
