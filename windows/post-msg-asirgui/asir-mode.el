@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.2 2013/08/29 17:39:29 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.3 2013/09/19 19:57:32 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -78,13 +78,13 @@
 				 (delete-frame asir-cmd-frame)))))))
 
 (defun asir-execute-current-buffer ()
-  "Execute the current buffer on asir"
+  "Execute current buffer on asir"
   (interactive)
   (let ((exec-path (asir-effective-exec-path)))
 	(asir-cmd-load (buffer-file-name))))
 
 (defun asir-execute-region ()
-  "Execute the region on asir"
+  "Execute region on asir"
   (interactive)
   (save-excursion
 	(if mark-active
@@ -96,6 +96,19 @@
 		  (write-region (point-min) (point-max) temp-file t) ;; append
 		  (kill-buffer temp-buffer)
 		  (asir-cmd-load temp-file)))))
+
+(defun asir-paste-region ()
+  "Paste region to asir"
+  (interactive)
+  (if mark-active
+      (save-excursion
+        (let ((buffer (current-buffer))
+              (start (region-beginning))
+              (end (region-end)))
+          (set-buffer asir-cmd-buffer-name)
+          (goto-char (point-max))
+          (insert-buffer-substring buffer start end)
+          (comint-send-input)))))
 
 ;;;; Extension for CC-mode.
 
@@ -137,6 +150,7 @@
 			["Terminate Asir" asir-terminate t]
 			["Execute Current Buffer on Asir" asir-execute-current-buffer (buffer-file-name)]
 			["Execute Region on Asir" asir-execute-region mark-active]
+			["Paste Region to Asir" asir-paste-region mark-active]
 			)))
 
 (defvar asir-font-lock-extra-types nil
@@ -174,6 +188,7 @@ Each list item should be a regexp matching a single identifier.")
 (define-key asir-mode-map (kbd "C-c t") 'asir-terminate)
 (define-key asir-mode-map (kbd "C-c l") 'asir-execute-current-buffer)
 (define-key asir-mode-map (kbd "C-c r") 'asir-execute-region)
+(define-key asir-mode-map (kbd "C-c p") 'asir-paste-region)
 
 (easy-menu-define asir-menu asir-mode-map "asir Mode Commands"
 		  ;; Can use `asir' as the language for `c-mode-menu'
