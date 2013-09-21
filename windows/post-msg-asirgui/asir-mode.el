@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.3 2013/09/19 19:57:32 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.4 2013/09/21 03:52:05 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -16,13 +16,13 @@
 (defun asir-effective-exec-path ()
   "Search path for command"
   (let* ((dir (getenv "ASIR_ROOTDIR"))
-		 (path (append asir-exec-path exec-path)))
-	(if dir (cons (concat dir "/bin") path) path)))
+         (path (append asir-exec-path exec-path)))
+    (if dir (cons (concat dir "/bin") path) path)))
 
 (defun asir-executable-find (command)
   "Search for command"
   (let* ((exec-path (asir-effective-exec-path)))
-	(executable-find command)))
+    (executable-find command)))
 
 ;;;; Asir for UNIX
 (defvar asir-cmd-buffer-name "*asir-cmd*")
@@ -30,72 +30,72 @@
 (defun asir-cmd-load (filename)
   "Send `load' command to running asir process"
   (if (eq system-type 'windows-nt)
-	  (let ((exec-path (asir-effective-exec-path)))
-		(start-process "asir-proc-cmdasir" nil "cmdasir" filename))
-	(save-excursion
-	  (if (get-buffer asir-cmd-buffer-name)
-		  (progn
-			(set-buffer asir-cmd-buffer-name)
-			(goto-char (point-max))
-			(insert (format "load(\"%s\");" filename))
-			(comint-send-input))))))
+      (let ((exec-path (asir-effective-exec-path)))
+        (start-process "asir-proc-cmdasir" nil "cmdasir" filename))
+    (save-excursion
+      (if (get-buffer asir-cmd-buffer-name)
+          (progn
+            (set-buffer asir-cmd-buffer-name)
+            (goto-char (point-max))
+            (insert (format "load(\"%s\");" filename))
+            (comint-send-input))))))
 
 (defun asir-start ()
   "Start asir process"
   (interactive)
   (if (eq system-type 'windows-nt)
     ;; for Windows
-	  (let ((exec-path (asir-effective-exec-path)))
-		(start-process "asir-proc-asirgui" nil "asirgui"))
+      (let ((exec-path (asir-effective-exec-path)))
+        (start-process "asir-proc-asirgui" nil "asirgui"))
     ;; for UNIX
-	(save-excursion
-	  (if (not (get-buffer asir-cmd-buffer-name))
-		  (let ((current-frame (selected-frame)))
-			(or (not window-system)
-				(select-frame (make-frame)))
-			(shell (get-buffer-create asir-cmd-buffer-name)) ;; Switch to new buffer automatically
-			(sleep-for 1)
-			(goto-char (point-max))
-			(insert "asir")
-			(comint-send-input)
-			(select-frame current-frame))))))
+    (save-excursion
+      (if (not (get-buffer asir-cmd-buffer-name))
+          (let ((current-frame (selected-frame)))
+            (or (not window-system)
+                (select-frame (make-frame)))
+            (shell (get-buffer-create asir-cmd-buffer-name)) ;; Switch to new buffer automatically
+            (sleep-for 1)
+            (goto-char (point-max))
+            (insert "asir")
+            (comint-send-input)
+            (select-frame current-frame))))))
 
 (defun asir-terminate ()
   "Terminate asir process"
   (interactive)
   (if (eq system-type 'windows-nt)
     ;; for Windows
-	  (let ((exec-path (asir-effective-exec-path)))
-		(start-process "asir-proc-cmdasir" nil "cmdasir" "--quit"))
+      (let ((exec-path (asir-effective-exec-path)))
+        (start-process "asir-proc-cmdasir" nil "cmdasir" "--quit"))
     ;; for UNIX
-	(if (get-buffer asir-cmd-buffer-name)
-		(if (not window-system)
-			(let ((asir-cmd-window (get-buffer-window asir-cmd-buffer-name)))
-			  (and (kill-buffer asir-cmd-buffer-name)
-				   (or (not asir-cmd-window) (delete-window asir-cmd-window))))
-		  (let ((asir-cmd-frame (window-frame (get-buffer-window asir-cmd-buffer-name 0))))
-			(and (kill-buffer asir-cmd-buffer-name)
-				 (delete-frame asir-cmd-frame)))))))
+    (if (get-buffer asir-cmd-buffer-name)
+        (if (not window-system)
+            (let ((asir-cmd-window (get-buffer-window asir-cmd-buffer-name)))
+              (and (kill-buffer asir-cmd-buffer-name)
+                   (or (not asir-cmd-window) (delete-window asir-cmd-window))))
+          (let ((asir-cmd-frame (window-frame (get-buffer-window asir-cmd-buffer-name 0))))
+            (and (kill-buffer asir-cmd-buffer-name)
+                 (delete-frame asir-cmd-frame)))))))
 
 (defun asir-execute-current-buffer ()
   "Execute current buffer on asir"
   (interactive)
   (let ((exec-path (asir-effective-exec-path)))
-	(asir-cmd-load (buffer-file-name))))
+    (asir-cmd-load (buffer-file-name))))
 
 (defun asir-execute-region ()
   "Execute region on asir"
   (interactive)
-  (save-excursion
-	(if mark-active
-		(let ((temp-file (make-temp-file (format "%s/cmdasir-" (or (getenv "TEMP") "/var/tmp"))))
-			  (temp-buffer (generate-new-buffer " *asir-temp*")))
-		  (write-region (region-beginning) (region-end) temp-file)
-		  (set-buffer temp-buffer)
-		  (insert " end$")
-		  (write-region (point-min) (point-max) temp-file t) ;; append
-		  (kill-buffer temp-buffer)
-		  (asir-cmd-load temp-file)))))
+  (if mark-active
+      (save-excursion
+        (let ((temp-file (make-temp-file (format "%s/cmdasir-" (or (getenv "TEMP") "/var/tmp"))))
+              (temp-buffer (generate-new-buffer " *asir-temp*")))
+          (write-region (region-beginning) (region-end) temp-file)
+          (set-buffer temp-buffer)
+          (insert " end$")
+          (write-region (point-min) (point-max) temp-file t) ;; append
+          (kill-buffer temp-buffer)
+          (asir-cmd-load temp-file)))))
 
 (defun asir-paste-region ()
   "Paste region to asir"
