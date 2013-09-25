@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.207 2013/09/12 06:46:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.208 2013/09/15 04:30:28 noro Exp $ */
 
 #include "nd.h"
 
@@ -54,7 +54,8 @@ static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect;
 static int *nd_gbblock;
-static NODE nd_nzlist;
+static NODE nd_nzlist,nd_check_splist;
+static int nd_splist;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -1868,6 +1869,29 @@ int do_diagonalize(int sugar,int m)
     return 1;
 }
 
+LIST compute_splist()
+{
+	NODE g,tn0,tn,node;
+	LIST l0;
+	ND_pairs d,t;
+	int i;
+	Q i1,i2;
+
+    g = 0; d = 0;
+    for ( i = 0; i < nd_psn; i++ ) {
+        d = update_pairs(d,g,i,0);
+        g = update_base(g,i);
+    }
+	for ( t = d, tn0 = 0; t; t = NEXT(t) ) {
+		NEXTNODE(tn0,tn);
+        STOQ(t->i1,i1); STOQ(t->i2,i2);
+        node = mknode(2,i1,i2); MKLIST(l0,node);
+		BDY(tn) = l0;
+	}
+	if ( tn0 ) NEXT(tn) = 0; MKLIST(l0,tn0);
+	return l0;
+}
+
 /* return value = 0 => input is not a GB */
 
 NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
@@ -1973,6 +1997,45 @@ again:
 	conv_ilist(nd_demand,0,g,indp);
     if ( !checkonly && DP_Print ) { printf("nd_gb done.\n"); fflush(stdout); }
     return g;
+}
+
+/* splist = [[i1,i2],...] */
+
+int check_splist(int m,NODE splist)
+{
+	NODE t,p;
+	ND_pairs d,r,l;
+	int stat;
+	ND h,nf;
+
+	for ( d = 0, t = splist; t; t = NEXT(t) ) {
+		p = BDY((LIST)BDY(t));
+        NEXTND_pairs(d,r);
+        r->i1 = QTOS((Q)ARG0(p)); r->i2 = QTOS((Q)ARG1(p));
+        ndl_lcm(DL(nd_psh[r->i1]),DL(nd_psh[r->i2]),r->lcm);
+		SG(r) = TD(LCM(r)); /* XXX */
+	}
+	if ( d ) NEXT(r) = 0;
+
+    while ( d ) {
+again:
+        l = nd_minp(d,&d);
+        stat = nd_sp(m,0,l,&h);
+        if ( !stat ) {
+            NEXT(l) = d; d = l;
+            d = nd_reconstruct(0,d);
+            goto again;
+        }
+        stat = nd_nf(m,0,h,nd_ps,!Top,0,&nf);
+        if ( !stat ) {
+            NEXT(l) = d; d = l;
+            d = nd_reconstruct(0,d);
+            goto again;
+        } else if ( nf ) return 0;
+		if ( DP_Print) { printf("."); fflush(stdout); }
+    }
+	if ( DP_Print) { printf("done.\n"); fflush(stdout); }
+	return 1;
 }
 
 int do_diagonalize_trace(int sugar,int m)
@@ -2917,10 +2980,19 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
             ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
 
-    ndv_setup(m,0,fd0,nd_gbblock?1:0,0);
+    ndv_setup(m,0,fd0,(nd_gbblock||nd_splist)?1:0,0);
     if ( nd_gentrace ) {
         MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
     }
+	if ( nd_splist ) {
+		*rp = compute_splist();
+		return;
+	}
+	if ( nd_check_splist ) {
+		if ( check_splist(m,nd_check_splist) ) *rp = (LIST)ONE;
+		else *rp = 0;
+		return;
+	}
     x = f4?nd_f4(m,&perm):nd_gb(m,ishomo || homo,0,0,&perm);
 	if ( !x ) {
 		*rp = 0; return;
@@ -5697,7 +5769,6 @@ int nd_symbolic_preproc(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
     return col;
 }
 
-
 NODE nd_f4(int m,int **indp)
 {
     int i,nh,stat,index;
@@ -5738,7 +5809,7 @@ NODE nd_f4(int m,int **indp)
                 node = BDY((LIST)BDY(tn));
 			    if ( QTOS((Q)ARG0(node)) == sugar ) break;
             }
-            if ( !tn ) error("nd_f4 : inconsistend non-zero list");
+            if ( !tn ) error("nd_f4 : inconsistent non-zero list");
 			for ( t = l, ll0 = 0; t; t = NEXT(t) ) {
                 for ( tn = BDY((LIST)ARG1(node)); tn; tn = NEXT(tn) ) {
 				  i1s = QTOS((Q)ARG0(BDY((LIST)BDY(tn))));
@@ -7292,6 +7363,7 @@ void parse_nd_option(NODE opt)
 
     nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
 	nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
+	nd_splist = 0; nd_check_splist = 0;
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -7321,6 +7393,10 @@ void parse_nd_option(NODE opt)
            u = BDY((LIST)value);
 		   nd_nzlist = BDY((LIST)ARG2(u));
 		   nd_bpe = QTOS((Q)ARG3(u));
+		} else if ( !strcmp(key,"splist") )
+            nd_splist = value?1:0;
+		else if ( !strcmp(key,"check_splist") ) {
+			nd_check_splist = BDY((LIST)value);
 		}
     }
 }
