@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.9 2001/06/07 04:54:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.10 2001/10/09 01:36:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -508,6 +508,7 @@ void igcdv(VECT a,Q *rp)
 		NTOQ(*c,1,*rp); return;
 	}
 	gcdn(c[0],c[1],&g);
+#if 0
 	for ( i = 2; i < n; i++ ) {
 		divn(c[i],g,&q,&r);
 		gcdn(g,r,&gt);
@@ -520,6 +521,11 @@ void igcdv(VECT a,Q *rp)
 		} else
 			g = gt;
 	}
+#else
+	for ( i = 2; i < n; i++ ) {
+		gcdn(g,c[i],&gt); g = gt;
+	}
+#endif
 	NTOQ(g,1,*rp);
 }
 
