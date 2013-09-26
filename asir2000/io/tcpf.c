@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.62 2012/12/17 07:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.63 2013/06/13 18:40:31 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -128,7 +128,6 @@ void Pgenerate_port(),Ptry_bind_listen(),Ptry_connect(),Ptry_accept();
 void Pregister_server();
 void Pox_get_serverinfo();
 void Pox_mpi_myid(), Pox_mpi_nprocs();
-void Pnd_exec_f4_red();
 void Pox_tcp_accept_102(),Pox_tcp_connect_102();
 void Pox_send_102(),Pox_recv_102();
 void Pox_set_rank_102();
@@ -203,9 +202,6 @@ struct ftab tcp_tab[] = {
 	{"ox_execute_string",Pox_execute_string,2},
 	{"ox_execute_function",Pox_execute_function,3},
 
-	{"nd_exec_f4_red",Pnd_exec_f4_red,0},
-
-
 	{0,0,0},
 };
 
@@ -215,12 +211,6 @@ extern int ox_exchange_mathcap;
 
 Obj asir_pop_one();
 void asir_push_one(Obj);
-
-void Pnd_exec_f4_red(Q *rp)
-{
-	nd_exec_f4_red_dist();
-	*rp = 0;
-}
 
 #if defined(MPI)
 extern int mpi_myid, mpi_nprocs;

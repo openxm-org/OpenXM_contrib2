@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.208 2013/09/15 04:30:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.209 2013/09/25 02:36:24 noro Exp $ */
 
 #include "nd.h"
 
@@ -5363,7 +5363,7 @@ Q *nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair)
     return r;
 }
 
-IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
+IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,int *s0hash,NM_ind_pair pair)
 {
     NM m;
     NMV mr;
@@ -5372,7 +5372,7 @@ IndArray nm_ind_pair_to_vect_compress(int mod,UINT *s0,int n,NM_ind_pair pair)
     unsigned char *ivc;
     unsigned short *ivs;
     UINT *v,*ivi,*s0v;
-    int i,j,len,prev,diff,cdiff;
+    int i,j,len,prev,diff,cdiff,h;
     IndArray r;
 struct oEGT eg0,eg1;
 
@@ -5385,7 +5385,8 @@ struct oEGT eg0,eg1;
 get_eg(&eg0);
     for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
         ndl_add(d,DL(mr),t);    
-        for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
+		h = ndl_hash_value(t);
+        for ( ; h != s0hash[i] || !ndl_equal(t,s); s += nd_wpd, i++ );
         v[j] = i;
     }
 get_eg(&eg1); add_eg(&eg_search,&eg0,&eg1);
@@ -5845,10 +5846,7 @@ NODE nd_f4(int m,int **indp)
         if ( DP_Print )
             fprintf(asir_out,"sugar=%d,symb=%fsec,",
                 sugar,eg_f4.exectime+eg_f4.gctime);
-        if ( 1 )
-            nflist = nd_f4_red(m,l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
-        else
-            nflist = nd_f4_red_dist(m,l,s0vect,col,rp0,nd_gentrace?&ll:0);
+        nflist = nd_f4_red(m,l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
         /* adding new bases */
         for ( r = nflist; r; r = NEXT(r) ) {
             nf = (NDV)BDY(r);
@@ -6099,6 +6097,9 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
     NODE r0,rp;
     ND_pairs sp;
     NM_ind_pair *rvect;
+    UINT *s;
+    int *s0hash;
+
 init_eg(&eg_search);
     for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
     nred = length(rp0);
@@ -6108,9 +6109,12 @@ init_eg(&eg_search);
 
     /* construction of index arrays */
     rvect = (NM_ind_pair *)ALLOCA(nred*sizeof(NM_ind_pair));
+    s0hash = (int *)ALLOCA(col*sizeof(int));
+    for ( i = 0, s = s0vect; i < col; i++, s += nd_wpd )
+        s0hash[i] = ndl_hash_value(s);
     for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
         rvect[i] = (NM_ind_pair)BDY(rp);
-        imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,rvect[i]);
+        imat[i] = nm_ind_pair_to_vect_compress(m,s0vect,col,s0hash,rvect[i]);
         rhead[imat[i]->head] = 1;
     }
     if ( m )
@@ -6435,6 +6439,7 @@ int ox_exec_f4_red(Q proc)
     return s;
 }
 
+#if 0
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0,ND_pairs *nz)
 {
     int nsp,nred;
@@ -6597,6 +6602,7 @@ void nd_exec_f4_red_dist()
     }
     fflush(nd_write);
 }
+#endif
 
 int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat)
 {
