@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.211 2013/09/26 08:55:11 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.212 2013/09/27 02:35:15 noro Exp $ */
 
 #include "nd.h"
 
@@ -6184,17 +6184,10 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         rank = nd_gauss_elim_mod(spmat,spsugar,spactive,sprow,spcol,m,colstat);
     r0 = 0;
     for ( i = 0; i < rank; i++ ) {
-#if 0
         NEXTNODE(r0,r); BDY(r) = 
             (pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
         SG((NDV)BDY(r)) = spsugar[i];
         GCFREE(spmat[i]);
-#else
-        NEXTNODE(r0,r); BDY(r) = 
-            (pointer)vect_to_ndv(spmat[rank-i-1],spcol,col,rhead,s0vect);
-        SG((NDV)BDY(r)) = spsugar[rank-i-1];
-        GCFREE(spmat[rank-i-1]);
-#endif
     }
     if ( r0 ) NEXT(r) = 0;
 
@@ -6269,8 +6262,13 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     rank = nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat);
     w = (pointer *)ALLOCA(rank*sizeof(pointer));
     for ( i = 0; i < rank; i++ ) {
+#if 0
         w[rank-i-1] = (pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
         SG((NDV)w[rank-i-1]) = spsugar[i];
+#else
+        w[i] = (pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
+        SG((NDV)w[i]) = spsugar[i];
+#endif
 /*        GCFREE(spmat[i]); */
     }
 #if 0
