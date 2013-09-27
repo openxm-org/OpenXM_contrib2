@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.212 2013/09/27 02:35:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.213 2013/09/27 02:45:17 noro Exp $ */
 
 #include "nd.h"
 
@@ -2038,6 +2038,46 @@ again:
 	return 1;
 }
 
+int check_splist_f4(int m,NODE splist)
+{
+	UINT *s0vect;
+    PGeoBucket bucket;
+	NODE p,rp0,t;
+	ND_pairs d,r,l,ll;
+	int col,stat;
+
+	for ( d = 0, t = splist; t; t = NEXT(t) ) {
+		p = BDY((LIST)BDY(t));
+        NEXTND_pairs(d,r);
+        r->i1 = QTOS((Q)ARG0(p)); r->i2 = QTOS((Q)ARG1(p));
+        ndl_lcm(DL(nd_psh[r->i1]),DL(nd_psh[r->i2]),r->lcm);
+		SG(r) = TD(LCM(r)); /* XXX */
+	}
+	if ( d ) NEXT(r) = 0;
+
+    while ( d ) {
+        l = nd_minsugarp(d,&d);
+        bucket = create_pbucket();
+        stat = nd_sp_f4(m,0,l,bucket);
+        if ( !stat ) {
+            for ( ll = l; NEXT(ll); ll = NEXT(ll) );
+            NEXT(ll) = d; d = l;
+            d = nd_reconstruct(0,d);
+            continue;
+        }
+        if ( bucket->m < 0 ) continue;
+        col = nd_symbolic_preproc(bucket,0,&s0vect,&rp0);
+        if ( !col ) {
+            for ( ll = l; NEXT(ll); ll = NEXT(ll) );
+            NEXT(ll) = d; d = l;
+            d = nd_reconstruct(0,d);
+            continue;
+        }
+        if ( nd_f4_red(m,l,0,s0vect,col,rp0,0) ) return 0;
+    }
+    return 1;
+}
+
 int do_diagonalize_trace(int sugar,int m)
 {
     int i,nh,stat;
@@ -2989,8 +3029,13 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
 		return;
 	}
 	if ( nd_check_splist ) {
-		if ( check_splist(m,nd_check_splist) ) *rp = (LIST)ONE;
-		else *rp = 0;
+        if ( f4 ) {
+            if ( check_splist_f4(m,nd_check_splist) ) *rp = (LIST)ONE;
+            else *rp = 0;
+        } else {
+            if ( check_splist(m,nd_check_splist) ) *rp = (LIST)ONE;
+            else *rp = 0;
+        }
 		return;
 	}
     x = f4?nd_f4(m,&perm):nd_gb(m,ishomo || homo,0,0,&perm);
