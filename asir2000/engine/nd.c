@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.210 2013/09/26 00:38:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.211 2013/09/26 08:55:11 noro Exp $ */
 
 #include "nd.h"
 
@@ -6184,10 +6184,17 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         rank = nd_gauss_elim_mod(spmat,spsugar,spactive,sprow,spcol,m,colstat);
     r0 = 0;
     for ( i = 0; i < rank; i++ ) {
+#if 0
         NEXTNODE(r0,r); BDY(r) = 
             (pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
         SG((NDV)BDY(r)) = spsugar[i];
         GCFREE(spmat[i]);
+#else
+        NEXTNODE(r0,r); BDY(r) = 
+            (pointer)vect_to_ndv(spmat[rank-i-1],spcol,col,rhead,s0vect);
+        SG((NDV)BDY(r)) = spsugar[rank-i-1];
+        GCFREE(spmat[rank-i-1]);
+#endif
     }
     if ( r0 ) NEXT(r) = 0;
 
