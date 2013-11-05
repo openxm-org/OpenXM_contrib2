@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.2 2013/08/27 07:41:22 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.3 2013/08/28 05:33:02 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -201,7 +201,7 @@ int pasteFile(HWND hnd, char *uname) {
 		return -1;
 	}
 	s = (char *)malloc(size+1);
-	i = 0;
+	i = 0;s[0]=0;
 	while ((c=fgetc(fp)) != EOF) {
 		s[i] = c; s[i+1]=0;
 		if (i >= size-1) {
@@ -213,8 +213,24 @@ int pasteFile(HWND hnd, char *uname) {
 		}
 		i++;
 	}
-	sendFileName(hnd,s);
+	if (containEnd(s)) {
+		MessageBox(NULL,TEXT("The string contains end$ or end;"),TEXT(uname),MB_OK);
+		return(0);
+	}
+	if (strlen(s)>0) sendFileName(hnd,s); else {
+		MessageBox(NULL,TEXT("Empty string: "),TEXT(uname),MB_OK);
+		return 0;
+	}
 	free(s);
 	PostMessage(hnd,WM_CHAR,0xa,1);
 	return 0;
+}
+
+containEnd(char s[]) {
+	int i;
+	for (i=0; i<strlen(s)-4; i++) {
+		if (strncmp(&(s[i]),"end$",4)==0) return 1;
+		if (strncmp(&(s[i]),"end;",4)==0) return 1;
+	}
+	return(0);
 }
