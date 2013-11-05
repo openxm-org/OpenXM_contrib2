@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.67 2011/06/16 08:17:14 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.68 2012/12/17 07:20:44 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,7 @@
 #include "ox.h"
 
 #if defined(__GNUC__)
-#define INLINE inline
+#define INLINE static inline
 #elif defined(VISUAL)
 #define INLINE __inline
 #else

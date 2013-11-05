@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.51 2013/06/13 17:57:21 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.52 2013/06/18 18:19:44 ohara Exp $ 
 */
 # if defined(VISUAL)
 #include <time.h>
@@ -651,7 +651,6 @@ void dp_mbase(NODE hlist,NODE *mbase);
 void dp_idiv(DP p,Q c,DP *rp);
 void dp_ptozp2(DP p0,DP p1,DP *hp,DP *rp);
 void dp_ptozp(DP p,DP *rp);
-int eqdl(int nv,DL dl1,DL dl2);
 void _dpmod_to_vect(DP f,DL *at,int *b);
 void _tf_to_vect_compress(NODE tf,DL *at,CDP *b);
 void dp_to_vect(DP f,DL *at,Q *b);

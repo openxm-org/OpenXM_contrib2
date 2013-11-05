@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.15 2002/12/18 06:15:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.16 2004/07/30 07:34:40 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -8,7 +8,7 @@ extern int up_kara_mag, current_gfs_q1;
 extern int *current_gfs_plus1;
 
 #if defined(__GNUC__)
-#define INLINE inline
+#define INLINE static inline
 #elif defined(VISUAL)
 #define INLINE __inline
 #else

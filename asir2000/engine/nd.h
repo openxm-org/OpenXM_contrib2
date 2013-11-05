@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.28 2012/08/27 05:38:00 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.29 2013/09/26 00:38:47 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -7,7 +7,7 @@
 #include <time.h>
 
 #if defined(__GNUC__)
-#define INLINE inline
+#define INLINE static inline
 #elif defined(VISUAL)
 #define INLINE __inline
 #else
@@ -325,7 +325,7 @@ void nd_mul_c_q(ND p,P mul);
 void nd_mul_c_p(VL vl,ND p,P mul);
 ND nd_remove_head(ND p);
 ND nd_separate_head(ND p,ND *head);
-int nd_length(ND p);
+INLINE int nd_length(ND p);
 void nd_append_red(UINT *d,int i);
 UINT *ndv_compute_bound(NDV p);
 UINT *nd_compute_bound(ND p);

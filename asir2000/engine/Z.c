@@ -3,7 +3,7 @@
 #include "inline.h"
 
 #if defined(__GNUC__)
-#define INLINE inline
+#define INLINE static inline
 #elif defined(VISUAL)
 #define INLINE __inline
 #else
