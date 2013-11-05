@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.14 2006/10/26 10:49:17 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.15 2007/02/13 07:12:54 noro Exp $
 */
 
 #include "ca.h"
@@ -574,7 +574,7 @@ int invdalg(DAlg a,DAlg *c)
 		error("invdalg : division by 0");
 	else if ( NID(a) == N_Q ) {
 		invq((Q)a,&dn); *c = (DAlg)dn;
-		return;
+		return 1;
 	}
 	dim = nf->dim;
 	mb = nf->mb;
@@ -662,7 +662,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 		error("invdalg : division by 0");
 	else if ( NID(a) == N_Q ) {
 		invq((Q)a,&dn); *c = (DAlg)dn;
-		return;
+		return 1;
 	}
 	dim = nf->dim;
 	mb = nf->mb;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.9 2009/03/02 16:28:30 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.10 2009/03/02 19:01:43 ohara Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -591,7 +591,7 @@ void muln(N n1,N n2,N *nr)
 
 void _muln(N n1,N n2,N nr)
 {
-	unsigned int carry,mul;
+	unsigned int carry=0,mul;
 	unsigned int *p1,*pp,*m1,*m2;
 	int i,j,d1,d2;
 

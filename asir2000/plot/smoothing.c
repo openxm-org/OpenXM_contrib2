@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.8 2002/07/20 02:28:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/plot/smoothing.c,v 1.9 2007/01/25 16:19:41 saito Exp $ */
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -17,10 +17,11 @@ static FILE *Fp = NULL;
 static void PSProlog(int, int, int, int);
 static void PSDashedLine(int, int, int, int);
 static void polyLine_outputPS_dashed_line(int x0,int y0,int x1,int y1);
+void PSFromImage(FILE *fp,XImage *image,struct canvas *can);
 
 static int Strategy_generate_PS = 0;
 
-PSFromImage(FILE *fp,XImage *image,struct canvas *can) {
+void PSFromImage(FILE *fp,XImage *image,struct canvas *can) {
   int x, y, ir, ig, ib;
   float r, g, b;
   int srcc, trg,grux, gruy, ix, iy;

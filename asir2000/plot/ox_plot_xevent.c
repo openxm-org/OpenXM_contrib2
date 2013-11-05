@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.28 2007/01/30 00:28:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.29 2007/01/30 03:25:52 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,6 +60,23 @@ static void print_canvas(Widget w, struct canvas *can, XtPointer calldata);
 static void output_to_printer(Widget w, struct canvas *can, XtPointer calldata);
 static void print_canvas_to_file(Widget w, struct canvas *can, XtPointer calldata);
 static void printing_method(Widget w, struct canvas *can, XtPointer calldata);
+void clear_pixmap(struct canvas *);
+void create_gc();
+void create_font();
+void create_cursors();
+void copy_to_canvas(struct canvas *can);
+void draw_level(struct canvas *can,int index,GC gc);
+void draw_frame(Window window,POINT spos,POINT opos,POINT epos);
+void draw_frame0( Window window,POINT spos,POINT epos);
+void draw_coord(struct canvas *can,POINT pos);
+void draw_wideframe(struct canvas *can);
+void redraw_canvas(struct canvas *can);
+void reset_busy(struct canvas *can);
+int search_canvas();
+int search_active_canvas();
+void PSFromImage(FILE *fp,XImage *image,struct canvas *can);
+
+
 
 static Atom wm_delete_window;
 
@@ -70,10 +87,12 @@ void SetWM_Proto(Widget w)
 	XSetWMProtocols(display,XtWindow(w),&wm_delete_window,1);
 }
 
+#if 0
 static void quit(Widget w, XEvent *ev, String *params,Cardinal *nparams)
 {
     XBell(display,0);
 }
+#endif
 
 /* XXX : these lines are in plotg.c, but ld says they are not defined */
 #if __DARWIN__
@@ -135,7 +154,7 @@ Cursor create_cursor();
 
 #define LABELWIDTH 150
 
-process_xevent() {
+void process_xevent() {
 	XEvent ev;
 
 	while ( XPending(display) ) {
@@ -148,10 +167,7 @@ process_xevent() {
 
 static POINT spos,cpos;
 
-void press(w,can,ev)
-Widget w;
-struct canvas *can;
-XButtonEvent *ev;
+void press(Widget w,struct canvas *can,XButtonEvent *ev)
 {
 	POINT p;
 
@@ -159,16 +175,13 @@ XButtonEvent *ev;
 		case Button1:
 			XC(spos) = ev->x; YC(spos) = ev->y; cpos = spos; break;
 		case Button3:
-			XC(p) = ev->x; YC(p) = ev->y; draw_coord(can,&p); break;
+			XC(p) = ev->x; YC(p) = ev->y; draw_coord(can,p); break;
 		default:
 			break;
 	}
 }
 
-void motion(w,can,ev)
-Widget w;
-struct canvas *can;
-XMotionEvent *ev;
+void motion(Widget w,struct canvas *can,XMotionEvent *ev)
 {
 
 	POINT o,p;
@@ -182,10 +195,7 @@ XMotionEvent *ev;
 	}
 }
 
-void release(w,can,ev)
-Widget w;
-struct canvas *can;
-XButtonEvent *ev;
+void release(Widget w,struct canvas *can,XButtonEvent *ev)
 {
 	POINT e;
 
@@ -207,10 +217,7 @@ XButtonEvent *ev;
 	}
 }
 
-void structure(w,can,ev)
-Widget w;
-struct canvas *can;
-XEvent *ev;
+void structure(Widget w,struct canvas *can,XEvent *ev)
 {
 	switch ( ev->xany.type ) {
 		case Expose: 
@@ -226,19 +233,13 @@ XEvent *ev;
 
 static int lindex;
 
-void lpress(w,can,ev)
-Widget w;
-struct canvas *can;
-XButtonEvent *ev;
+void lpress(Widget w,struct canvas *can,XButtonEvent *ev)
 {
 	lindex = (can->height-ev->y)/(can->height/can->nzstep);
 	draw_level(can,lindex,hlGC);
 }
 
-void jumpproc(w,can,percent)
-Widget w;
-struct canvas *can;
-float *percent;
+void jumpproc(Widget w,struct canvas *can,float *percent)
 {
 	int index;
 
@@ -251,10 +252,7 @@ float *percent;
 	draw_level(can,lindex,hlGC); 
 }
 
-void jumpproc_m(w,can,percent)
-Widget w;
-struct canvas *can;
-float *percent;
+void jumpproc_m(Widget w,struct canvas *can,float *percent)
 {
 	int index;
 
@@ -265,26 +263,17 @@ float *percent;
 	}
 }
 
-void lrelease(w,can,ev)
-Widget w;
-struct canvas *can;
-XButtonEvent *ev;
+void lrelease(Widget w,struct canvas *can,XButtonEvent *ev)
 {
 	draw_level(can,lindex,drawGC); lindex = -1;
 }
 
-void lrelease_m(w,can,ev)
-Widget w;
-struct canvas *can;
-XButtonEvent *ev;
+void lrelease_m(Widget w,struct canvas *can,XButtonEvent *ev)
 {
 	lindex = -1;
 }
 
-draw_level(can,index,gc)
-struct canvas *can;
-int index;
-GC gc;
+void draw_level(struct canvas *can,int index,GC gc)
 {
 	Pixmap pix;
 	struct pa *pa;
@@ -304,18 +293,14 @@ GC gc;
 	copy_to_canvas(can);
 }
 
-draw_frame(window,spos,opos,epos)
-Window window;
-POINT spos,opos,epos;
+void draw_frame(Window window,POINT spos,POINT opos,POINT epos)
 {
 	if ( XC(opos) != XC(epos) || YC(opos) != YC(epos) )
 		draw_frame0(window,spos,opos);
 	draw_frame0(window,spos,epos);
 }
 
-draw_frame0(window,spos,epos)
-Window window;
-POINT spos,epos;
+void draw_frame0(Window window,POINT spos,POINT epos)
 {
 	int ulx,uly,w,h;
 
@@ -327,9 +312,7 @@ POINT spos,epos;
 	XFlush(display);
 }
 
-draw_coord(can,pos)
-struct canvas *can;
-POINT pos;
+void draw_coord(struct canvas *can,POINT pos)
 {
 	char buf[BUFSIZ];
 	Arg arg[2];
@@ -353,8 +336,7 @@ POINT pos;
 	XtSetValues(can->ycoord,arg,2);
 }
 
-redraw_canvas(can)
-struct canvas *can;
+void redraw_canvas(struct canvas *can)
 {
 	if ( can->wide )
 		draw_wideframe(can);
@@ -362,7 +344,7 @@ struct canvas *can;
 		copy_to_canvas(can);
 }
 
-search_canvas()
+int search_canvas()
 {
 	int i;
 
@@ -371,9 +353,10 @@ search_canvas()
 			canvas[i] = (struct canvas *)MALLOC(sizeof(struct canvas));
 			canvas[i]->index = i; return i;
 		}
+	return -1;
 }
 
-search_active_canvas()
+int search_active_canvas()
 {
 	int i;
 
@@ -383,17 +366,14 @@ search_active_canvas()
 	return -1;
 }
 
-void popup_canvas(index)
+void popup_canvas(int index)
 {
 	clear_pixmap(canvas[index]);
 	XtPopup(canvas[index]->shell,XtGrabNone);
 	copy_to_canvas(canvas[index]);
 }
 
-void destroy_canvas(w,can,calldata)
-Widget w;
-struct canvas *can;
-XtPointer calldata;
+void destroy_canvas(Widget w,struct canvas *can,XtPointer calldata)
 {
 	XtPopdown(can->shell); 
 /*	XtDestroyWidget(can->shell); */
@@ -407,10 +387,7 @@ XtPointer calldata;
 	canvas[can->index] = 0;
 }
 
-void precise_canvas(w,can,calldata)
-Widget w;
-struct canvas *can;
-XtPointer calldata;
+void precise_canvas(Widget w,struct canvas *can,XtPointer calldata)
 {
 	if ( can->precise )
 		can->precise = 0;
@@ -418,10 +395,7 @@ XtPointer calldata;
 		can->precise = 1;
 }
 
-void wide_canvas(w,can,calldata)
-Widget w;
-struct canvas *can;
-XtPointer calldata;
+void wide_canvas(Widget w,struct canvas *can,XtPointer calldata)
 {
 	if ( can->wide ) {
 		can->wide = 0; copy_to_canvas(can); 
@@ -430,10 +404,7 @@ XtPointer calldata;
 	}
 }
 
-void noaxis_canvas(w,can,calldata)
-Widget w;
-struct canvas *can;
-XtPointer calldata;
+void noaxis_canvas(Widget w,struct canvas *can,XtPointer calldata)
 {
 	if ( can->noaxis )
 		can->noaxis = 0;
@@ -445,9 +416,7 @@ XtPointer calldata;
 		copy_to_canvas(can); 
 }
 
-toggle_button(w,flag)
-Widget w;
-int flag;
+void toggle_button(Widget w,int flag)
 {
 	Arg arg[2];
 
@@ -461,11 +430,10 @@ int flag;
 	XtSetValues(w,arg,2); XFlush(display);
 }
 
-draw_wideframe(can)
-struct canvas *can;
+void draw_wideframe(struct canvas *can)
 {
 	struct canvas fakecan;
-	double xmin,xmax,ymin,ymax,xmid,ymid,dx,dy;
+	double xmid,ymid,dx,dy;
 	POINT s,e;
 
 	fakecan = *can;
@@ -483,10 +451,7 @@ struct canvas *can;
 	draw_frame0(can->window,s,e);
 }
 
-create_popup(parent,name,str,shell,dialog)
-Widget parent;
-char *name,*str;
-Widget *shell,*dialog;
+void create_popup(Widget parent,char *name,char *str,Widget *shell,Widget *dialog)
 {
 	Arg arg[3];
 	Position x,y;
@@ -498,14 +463,10 @@ Widget *shell,*dialog;
 	*dialog = XtCreateManagedWidget("dialog",dialogWidgetClass,*shell,arg,1);
 }
 
-warning(can,s)
-struct canvas *can;
-char *s;
+void warning(struct canvas *can,char *s)
 {
 	void popdown_warning();
 	Widget warnshell,warndialog;
-	Position x,y;
-	Arg arg[3];
 
 	if ( !can->shell )
 		return;
@@ -515,17 +476,12 @@ char *s;
 	SetWM_Proto(warnshell);
 }
 
-void popdown_warning(w,client,call) 
-Widget w;
-XtPointer client,call;
+void popdown_warning(Widget w,XtPointer client,XtPointer call)
 {
 	XtPopdown(client); XtDestroyWidget(client);
 }
 
-void show_formula(w,can,calldata)
-Widget w;
-struct canvas *can;
-XtPointer calldata;
+void show_formula(Widget w,struct canvas *can,XtPointer calldata)
 {
 	void popdown_formula();
 	Widget fshell,fdialog;
@@ -538,9 +494,7 @@ XtPointer calldata;
 	SetWM_Proto(fshell);
 }
 
-void popdown_formula(w,fbutton,call) 
-Widget w,fbutton;
-XtPointer call;
+void popdown_formula(Widget w,Widget fbutton,XtPointer call)
 {
 	Widget shell = XtParent(XtParent(w));
 	XtPopdown(shell); XtDestroyWidget(shell);
@@ -549,15 +503,13 @@ XtPointer call;
 
 #define NormalSelection ButtonPressMask|ButtonReleaseMask|Button1MotionMask|Button3MotionMask|StructureNotifyMask| ExposureMask
 
-create_canvas(can)
-struct canvas *can;
+void create_canvas(struct canvas *can)
 {
-	XEvent event;
 	Widget box,frame,commands,
 		coords,quit,print,wide,precise,canvas,formula;
 	Window window;
 	Pixmap pix;
-	int i,width,height;
+	int width,height;
 	Arg arg[6];
 	char buf[BUFSIZ];
 
@@ -582,21 +534,21 @@ struct canvas *can;
 	commands = XtCreateManagedWidget("commands",boxWidgetClass,frame,arg,2);
 
 	quit = XtCreateManagedWidget("quit",commandWidgetClass,commands,NULL,0);
-	XtAddCallback(quit,XtNcallback,destroy_canvas,can);
+	XtAddCallback(quit,XtNcallback,(XtCallbackProc)destroy_canvas,can);
 	print = XtCreateManagedWidget("print",commandWidgetClass,commands,NULL,0);
-	XtAddCallback(print,XtNcallback,print_canvas,can);
+	XtAddCallback(print,XtNcallback,(XtCallbackProc)print_canvas,can);
 	can->wideb = wide = 
 		XtCreateManagedWidget("wide",toggleWidgetClass,commands,NULL,0);
-	XtAddCallback(wide,XtNcallback,wide_canvas,can);
+	XtAddCallback(wide,XtNcallback,(XtCallbackProc)wide_canvas,can);
 	can->preciseb = precise = 
 		XtCreateManagedWidget("precise",toggleWidgetClass,commands,NULL,0);
-	XtAddCallback(precise,XtNcallback,precise_canvas,can);
+	XtAddCallback(precise,XtNcallback,(XtCallbackProc)precise_canvas,can);
 	formula = 
 		XtCreateManagedWidget("formula",commandWidgetClass,commands,NULL,0);
-	XtAddCallback(formula,XtNcallback,show_formula,can);
+	XtAddCallback(formula,XtNcallback,(XtCallbackProc)show_formula,can);
 	can->noaxisb =
 		XtCreateManagedWidget("noaxis",toggleWidgetClass,commands,NULL,0);
-	XtAddCallback(can->noaxisb,XtNcallback,noaxis_canvas,can);
+	XtAddCallback(can->noaxisb,XtNcallback,(XtCallbackProc)noaxis_canvas,can);
 
 	XtSetArg(arg[0],XtNfromVert,commands);
 	XtSetArg(arg[1],XtNwidth,width); 
@@ -630,16 +582,14 @@ struct canvas *can;
 	XtSetArg(arg[0],XtNwidth,LABELWIDTH);
 	can->ycoord = XtCreateManagedWidget("ycoord",labelWidgetClass,coords,arg,1);
 
-	XtAddEventHandler(canvas,ButtonPressMask,False,press,can);
-	XtAddEventHandler(canvas,ButtonReleaseMask,False,release,can);
-	XtAddEventHandler(canvas,Button1MotionMask,False,motion,can);
-	XtAddEventHandler(canvas,Button3MotionMask,False,motion,can);
-	XtAddEventHandler(canvas,StructureNotifyMask,False,structure,can);
-	XtAddEventHandler(canvas,ExposureMask,False,structure,can);
+	XtAddEventHandler(canvas,ButtonPressMask,False,(XtEventHandler)press,can);
+	XtAddEventHandler(canvas,ButtonReleaseMask,False,(XtEventHandler)release,can);
+	XtAddEventHandler(canvas,Button1MotionMask,False,(XtEventHandler)motion,can);
+	XtAddEventHandler(canvas,Button3MotionMask,False,(XtEventHandler)motion,can);
+	XtAddEventHandler(canvas,StructureNotifyMask,False,(XtEventHandler)structure,can);
+	XtAddEventHandler(canvas,ExposureMask,False,(XtEventHandler)structure,can);
 
 	if ( can->mode == MODE_CONPLOT ) {
-		Widget scale;
-
 		XtSetArg(arg[0],XtNwidth,LABELWIDTH);
 		can->level = XtCreateManagedWidget("level",labelWidgetClass,
 			commands,arg,1);
@@ -647,11 +597,11 @@ struct canvas *can;
 		XtSetArg(arg[0],XtNsensitive,True); 
 		XtSetValues(can->ydone,arg,1);
 		if ( depth >= 2 ) {
-			XtAddCallback(can->ydone,XtNjumpProc,jumpproc,can);
-			XtAddEventHandler(can->ydone,ButtonReleaseMask,False,lrelease,can);
+			XtAddCallback(can->ydone,XtNjumpProc,(XtCallbackProc)jumpproc,can);
+			XtAddEventHandler(can->ydone,ButtonReleaseMask,False,(XtEventHandler)lrelease,can);
 		} else {
-			XtAddCallback(can->ydone,XtNjumpProc,jumpproc_m,can);
-			XtAddEventHandler(can->ydone,ButtonReleaseMask,False,lrelease_m,can);
+			XtAddCallback(can->ydone,XtNjumpProc,(XtCallbackProc)jumpproc_m,can);
+			XtAddEventHandler(can->ydone,ButtonReleaseMask,False,(XtEventHandler)lrelease_m,can);
 		}
 	}
 	if ( can->mode != MODE_IFPLOT || !qpcheck((Obj)can->formula) )
@@ -669,8 +619,7 @@ struct canvas *can;
 	current_can = can;
 }
 
-alloc_pixmap(can)
-struct canvas *can;
+void alloc_pixmap(struct canvas *can)
 {
 	can->pix = XCreatePixmap(display,can->window,
 		can->width,can->height,depth);
@@ -714,9 +663,7 @@ static void Quit(Widget w, XEvent *ev, String *params,Cardinal *nparams)
     XBell(XtDisplay(w),0);
 }
 
-int init_plot_display(argc,argv)
-int argc;
-char **argv;
+int init_plot_display(int argc,char **argv)
 {
 	int ac;
 	char **av;
@@ -765,7 +712,7 @@ char **argv;
 
 static char *scalefont = "*-8-80-*";
 
-create_font() {
+void create_font() {
 	Font sfid;
 
 	sfid = XLoadFont(display,scalefont);
@@ -773,9 +720,8 @@ create_font() {
 	XSetFont(display,scaleGC,sfid);
 }
 
-create_gc() {
+void create_gc() {
 	static XColor color = {0,0x0,0x0,0x0,DoRed|DoGreen|DoBlue,0};
-	int i,b,step;
 
 	drawGC = XCreateGC(display,rootwin,0,NULL);
 	dashGC = XCreateGC(display,rootwin,0,NULL);
@@ -808,8 +754,7 @@ create_gc() {
 	XSetForeground(display,colorGC,color.pixel);
 }
 
-set_drawcolor(c)
-unsigned int c;
+void set_drawcolor(unsigned int c)
 {
 	XColor color = {0,0x0,0x0,0x0,DoRed|DoGreen|DoBlue,0};
 
@@ -820,7 +765,7 @@ unsigned int c;
 	XSetForeground(display,cdrawGC,color.pixel);
 }
 
-create_cursors() {
+void create_cursors() {
 	static XColor fg = {0, 0x0, 0x0, 0x0,DoRed|DoGreen|DoBlue,0};
 	static XColor bg = {0, 0xffff, 0xffff, 0xffff,DoRed|DoGreen|DoBlue,0};
 
@@ -834,10 +779,7 @@ create_cursors() {
 		m_width/2,m_height/2,&fg,&bg);
 }
 
-Cursor create_cursor(image,mask,width,height,xhot,yhot,fg,bg)
-char *image,*mask;
-int width,height,xhot,yhot;
-XColor *fg,*bg;
+Cursor create_cursor(char *image,char *mask,int width,int height,int xhot,int yhot,XColor *fg,XColor *bg)
 {
 	Pixmap ipix,mpix;
 
@@ -846,8 +788,7 @@ XColor *fg,*bg;
 	return XCreatePixmapCursor(display,ipix,mpix,fg,bg,xhot,yhot);
 }
 
-copy_to_canvas(can)
-struct canvas *can;
+void copy_to_canvas(struct canvas *can)
 {
 	if ( display ) {
 		if ( can->color ) {
@@ -862,9 +803,7 @@ struct canvas *can;
 	}
 }
 
-copy_subimage(subcan,can,pos)
-struct canvas *subcan,*can;
-XPoint pos;
+void copy_subimage(struct canvas *subcan,struct canvas *can,XPoint pos)
 {
 	if ( display ) {
 		XCopyArea(display,subcan->pix,can->pix,
@@ -876,22 +815,21 @@ XPoint pos;
 #include <signal.h>
 #include <fcntl.h>
 
-set_selection() {
+void set_selection() {
 	if ( current_can ) {
 		XSelectInput(display,current_can->window,0);
 		XFlush(display);
 	}
 }
 
-reset_selection() {
+void reset_selection() {
 	if ( current_can ) {
 		XSelectInput(display,current_can->window,NormalSelection);
 		XFlush(display);
 	}
 }
 
-set_busy(can)
-struct canvas *can;
+void set_busy(struct canvas *can)
 {
 	busy = 1;
 	XtSetSensitive(can->wideb,False);
@@ -900,8 +838,7 @@ struct canvas *can;
 	XFlush(display);
 }
 
-reset_busy(can)
-struct canvas *can;
+void reset_busy(struct canvas *can)
 {
 	busy = 0;
 	if ( can->window ) {
@@ -913,7 +850,7 @@ struct canvas *can;
 	}
 }
 
-reset_current_computation()
+void reset_current_computation()
 {
 	if ( current_can ) {
 		reset_selection(); reset_busy(current_can);
@@ -960,25 +897,19 @@ static Widget create_printing_method_bar(Widget parent) {
 */
 
 
-static void print_canvas(w,can,calldata)
-	 Widget w;
-	 struct canvas *can;
-	 XtPointer calldata;
+static void print_canvas(Widget w,struct canvas *can,XtPointer calldata)
 {
 	Widget fshell,fdialog;
 	extern struct canvas *Can;
 	extern Widget W;
-	Widget entry;
-	int i;
-	Arg arg[1];
 
 	W = w;
 	Can = can;
 	create_popup(can->shell,"Print/Output PS file","",&fshell,&fdialog);
-	XawDialogAddButton(fdialog,"print",output_to_printer,w);
-	XawDialogAddButton(fdialog,"output PS file",print_canvas_to_file,w);
-	XawDialogAddButton(fdialog,"method",printing_method,w);
-	XawDialogAddButton(fdialog,"dismiss",cancel_output_to_file,w);
+	XawDialogAddButton(fdialog,"print",(XtCallbackProc)output_to_printer,w);
+	XawDialogAddButton(fdialog,"output PS file",(XtCallbackProc)print_canvas_to_file,w);
+	XawDialogAddButton(fdialog,"method",(XtCallbackProc)printing_method,w);
+	XawDialogAddButton(fdialog,"dismiss",(XtCallbackProc)cancel_output_to_file,w);
 	XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone); 
 	SetWM_Proto(fshell);
 }
@@ -988,15 +919,12 @@ static void set_printing_method(Widget w,XtPointer number,XtPointer call_data)
 	Widget shell;
 	extern int PrintingMethod;
 	PrintingMethod = (int) number;
-	fprintf(stderr,"PrintingMethod=%d\n",number);
+	fprintf(stderr,"PrintingMethod=%d\n",(int)number);
 	shell = XtParent(XtParent(w));
 	XtPopdown(shell); XtDestroyWidget(shell);
 }
 
-static void printing_method(w,can,calldata)
-	Widget w;
-	struct canvas *can;
-	XtPointer calldata;
+static void printing_method(Widget w,struct canvas *can,XtPointer calldata)
 {
 	Arg arg[10];
 	int i,n;
@@ -1019,12 +947,9 @@ static void printing_method(w,can,calldata)
 	XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
 	SetWM_Proto(fshell);
 }
-static void print_canvas_to_file(w,can,calldata)
-	Widget w;
-	struct canvas *can;
-	XtPointer calldata;
+
+static void print_canvas_to_file(Widget w,struct canvas *can,XtPointer calldata)
 {
-	FILE *fp;
 	Arg arg[10];
 	int n;
 	static char *psfile = NULL;
@@ -1048,12 +973,9 @@ static void print_canvas_to_file(w,can,calldata)
 	XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
 	SetWM_Proto(fshell);
 }
-static void output_to_printer(w,can,calldata)
-	Widget w;
-	struct canvas *can;
-	XtPointer calldata;
+
+static void output_to_printer(Widget w,struct canvas *can,XtPointer calldata)
 {
-	FILE *fp;
 	Arg arg[10];
 	int n;
 	static char *psfile = NULL;
@@ -1078,23 +1000,19 @@ static void output_to_printer(w,can,calldata)
 	SetWM_Proto(fshell);
 }
 
-static void cancel_output_to_file(w,fbutton,call)
-	Widget w;
-	XtPointer fbutton, call;
+static void cancel_output_to_file(Widget w,XtPointer fbutton,XtPointer call)
 {
 	Widget shell = XtParent(XtParent(w));
 	XtPopdown(shell); XtDestroyWidget(shell);
 	XtSetSensitive(fbutton,True);
 }
 
-static void output_to_file(w,fbutton,call) 
-	Widget w;
-	XtPointer fbutton, call;
+static void output_to_file(Widget w,XtPointer fbutton,XtPointer call)
 {
 	char *fname;
 	FILE *fp;
 	int i;
-	char *m;
+
 	extern struct canvas *Can;
 	extern Widget PrintDialog;
 	extern int PrintingMethod;
@@ -1130,9 +1048,7 @@ static void output_to_file(w,fbutton,call)
 	XtSetSensitive(fbutton,True);
 }
 
-static void output_to_ps_printer(w,fbutton,call) 
-	Widget w;
-	XtPointer fbutton, call;
+static void output_to_ps_printer(Widget w, XtPointer fbutton, XtPointer call)
 {
 	char *printerName;
 	FILE *fp;
@@ -1152,7 +1068,7 @@ static void output_to_ps_printer(w,fbutton,call)
 		return;
 	}
 
-	sprintf(fname,"/tmp/ox_plot_%d.eps",(int) getpid(),id++);
+	sprintf(fname,"/tmp/ox_plot_%d_%d.eps",(int) getpid(),id++);
 
 	printerName = XawDialogGetValueString(PrintDialog_lp);
 	PrinterName = (char *)malloc(sizeof(char)*strlen(printerName)+1);
@@ -1186,20 +1102,12 @@ static void output_to_ps_printer(w,fbutton,call)
    ifplot(x^2-y^3);
    drawcircle(0,0,100,0xff000,0);
    */
-static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
-                                    struct xcolorForPS **tableOfxcolorForPS);
-
-static void generate_psfile(can,fp)
-	struct canvas *can;
-	FILE *fp;
+static void generate_psfile(struct canvas *can, FILE *fp)
 {
-	int x,y;
 	XImage *image;
 	int color[1];
-	int colorSize = 1;
-	char *m;
-	struct xcolorForPS *tableOfxcolorForPS;
 	extern int PrintingMethod;
+
 	fprintf(stderr,"generate_psfile\n");
 	if (PrintingMethod == PRINTING_METHOD_BITMAP) {
 		if ( display ) {
@@ -1228,26 +1136,29 @@ static void method_is_not_available() {
   warning(Can,m);
 }
 
-clear_pixmap(can)
-struct canvas *can;
+void clear_pixmap(struct canvas *can)
 {
 	XFillRectangle(display,can->pix,clearGC,0,0,can->width,can->height);
 	XFlush(display);
 }
 
+#if 0
 /* 
    The following functions are used to generate color postscript file. 
 */
 /* In order to count colorSize, binary tree (sm_btree) is used. */
 static struct sm_btree *sm_newNode(unsigned long v);
-static int sm_insert(struct sm_btree *node,unsigned long v);
+static void sm_insert(struct sm_btree *node,unsigned long v);
 static int sm_count(struct sm_btree *rootp);
+static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
+                                    struct xcolorForPS **tableOfxcolorForPS);
 
 struct sm_btree {
   unsigned long p;
   struct sm_btree * left;
   struct sm_btree * right;
 };
+
 static struct sm_btree *sm_newNode(unsigned long v) {
   struct sm_btree * n;
   n = (struct sm_btree *)MALLOC(sizeof(struct sm_btree));
@@ -1257,7 +1168,8 @@ static struct sm_btree *sm_newNode(unsigned long v) {
   n->right = NULL;
   return n;
 }
-static int sm_insert(struct sm_btree *node,unsigned long v)
+
+static void sm_insert(struct sm_btree *node,unsigned long v)
 {
   if (node->p == v) return;
   if (node->p > v) {
@@ -1275,6 +1187,8 @@ static int sm_insert(struct sm_btree *node,unsigned long v)
     sm_insert(node->right,v);
   }
 }
+
+
 static int sm_count(struct sm_btree *rootp) 
 {
   if (rootp == NULL) return 0;
@@ -1286,7 +1200,7 @@ static int setTableOfxcolorForPS(struct sm_btree *rootp,
 {
   int m;
   m = k;
-  if (rootp == NULL) return;
+  if (rootp == NULL) return 0;
   if (k >= size) {
     warning(Can,"internal error of setTableOfxcolorForPS");
   }
@@ -1301,7 +1215,6 @@ static int setTableOfxcolorForPS(struct sm_btree *rootp,
   }
   return m;
 }
-
 
 static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
                                     struct xcolorForPS **tableOfxcolorForPS) 
@@ -1335,7 +1248,7 @@ static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
   */
   if (setTableOfxcolorForPS(&root,table,0,size) != size) {
 	warning(Can,"internal error.");
-	return ;
+	return 0;
   }
 
   screen = DefaultScreen(display);
@@ -1380,3 +1293,5 @@ static int getColorSizeOfImageForPS(int xsize,int ysize,XImage *image,
   *tableOfxcolorForPS = table;
   return size;
 }
+#endif
+

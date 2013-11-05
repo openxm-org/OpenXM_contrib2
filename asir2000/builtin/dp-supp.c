@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.57 2010/05/01 02:17:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.58 2011/06/16 08:17:14 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1249,7 +1249,7 @@ DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
 
 	dn = (P)ONE;
 	if ( !g ) {
-		*rp = 0; *dnp = dn; return;
+		*rp = 0; *dnp = dn; return 0;
 	}
 	for ( n = 0, l = b; l; l = NEXT(l), n++ );
 	wb = (int *)ALLOCA(n*sizeof(int));
@@ -1306,7 +1306,7 @@ DP *dp_true_nf_and_quotient_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp
 	for ( i = 0; i < n; i++ ) q[i] = 0;
 	dn = (P)ONEM;
 	if ( !g ) {
-		*rp = 0; *dnp = dn; return;
+		*rp = 0; *dnp = dn; return 0;
 	}
 	wb = (int *)ALLOCA(n*sizeof(int));
 	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )

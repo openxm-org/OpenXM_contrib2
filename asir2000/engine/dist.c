@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.44 2011/03/30 02:43:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.45 2012/12/17 07:20:44 noro Exp $ 
 */
 #include "ca.h"
 
@@ -524,7 +524,7 @@ NODE symb_mul_merge(NODE m1,DL dl,DP f,int n)
 					if ( !cur ) {
 						MKDP(n,m,g);
 						NEXT(prev) = mul_dllist(dl,g);
-						return;
+						return top;
 					}
 					m = NEXT(m);
 					if ( m ) _adddl(n,m->dl,dl,t);
@@ -534,7 +534,7 @@ NODE symb_mul_merge(NODE m1,DL dl,DP f,int n)
 					if ( !cur ) {
 						MKDP(n,m,g);
 						NEXT(prev) = mul_dllist(dl,g);
-						return;
+						return top;
 					}
 					break;
 				case -1:

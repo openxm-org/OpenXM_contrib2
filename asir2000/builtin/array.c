@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.62 2013/06/14 05:55:24 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.63 2013/09/09 07:29:25 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1464,8 +1464,10 @@ RESET:
 	}
 }
 
+void lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm);
+
 /* XXX broken */
-int lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm)
+void lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm)
 {
 	Q **a0,**b;
 	Q *aiq;
@@ -1567,7 +1569,7 @@ int lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm)
 	}
 }
 
-int nmat(N **m,int n)
+void nmat(N **m,int n)
 {
 	int i,j;
 

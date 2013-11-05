@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.30 2013/06/13 08:11:55 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.31 2013/06/13 18:42:11 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -83,6 +83,7 @@ void Pmodule_definedp();
 void Ptest();
 
 void delete_history(int,int);
+void grab_pointer();
 
 struct ftab misc_tab[] = {
 	{"pwd",Pgetcwd,0},
@@ -609,7 +610,7 @@ init_display()
 	rootwin = RootWindow(display,DefaultScreen(display));
 }
 
-grab_pointer()
+void grab_pointer()
 {
 	XEvent ev;
 	static Cursor cursor;
