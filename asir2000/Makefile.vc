@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.11 2012/05/09 06:17:13 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.12 2012/05/30 02:24:33 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -54,7 +54,7 @@ asir.exe: $(OBJS) $(CPU_OBJ)
     $(LD) $(LDFLAGS) -out:$@ $**
 
 clean:
-	-@del *.obj
+	-@del /q *.obj
 
 distclean: clean
 	-@del asir.exe

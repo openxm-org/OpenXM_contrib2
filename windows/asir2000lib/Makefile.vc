@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.11 2012/05/09 06:17:13 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.12 2012/05/30 02:24:33 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -51,7 +51,7 @@ VPATH=$(SRCDIR)\asm;$(SRCDIR)\builtin;$(SRCDIR)\engine;$(SRCDIR)\fft;$(SRCDIR)\i
 all: asir2000lib.lib
 
 clean:
-	-@del *.obj
+	-@del /q *.obj
 
 distclean: clean
 	-@del asir2000lib.lib

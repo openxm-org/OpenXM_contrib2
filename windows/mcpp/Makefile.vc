@@ -1,4 +1,4 @@
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/windows/mcpp/Makefile.vc,v 1.1 2010/02/26 17:42:36 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -25,7 +25,7 @@ cpp.exe: $(OBJS)
 main.obj directive.obj eval.obj expand.obj support.obj system.obj mbchar.obj: system.H internal.H noconfig.H
 
 clean:
-	-@del *.obj
+	-@del /q *.obj
 
 distclean: clean
 	-@del cpp.exe

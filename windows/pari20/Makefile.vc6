@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.6 2011/02/07 06:15:23 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/pari20/Makefile.vc6,v 1.7 2013/06/13 08:43:55 ohara Exp $
 ## Makefile for Visual C++ 6.0
 
 SRCDIR= pari-2.0.17.beta\src
@@ -28,7 +28,7 @@ OBJS= alglin1.obj alglin2.obj anal.obj arith1.obj arith2.obj \
 all: libpari.lib
 
 clean:
-	-@del *.obj
+	-@del /q *.obj
 
 distclean: clean
 	-@del libpari.lib

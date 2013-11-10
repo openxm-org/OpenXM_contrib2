@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.4 2011/02/07 06:15:23 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.5 2013/08/30 18:18:11 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 RESSRC = asir32gui.rc.EG
@@ -27,10 +27,10 @@ ja.dll: asir32gui.rc.JP
 	$(LD) $(LDFLAGS) -dll -noentry -out:ja.dll ja.res
 
 clean:
-	-@del *.obj
-	-@del *.res
-	-@del *.rc
+	-@del /q *.obj
+	-@del /q *.res
+	-@del /q *.rc
 
 distclean: clean
 	-@del asirgui.exe
-	-@del asirgui-en.exe
+	-@del ja.dll
