@@ -1,4 +1,4 @@
-@rem $OpenXM$
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.1 2013/09/03 12:32:43 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -26,7 +26,7 @@ copy /b help\en\*.chm asir\help
 for %%i in ( asirgui.mac  asir-mode.el install-ja-sjis.txt ) do ( 
   copy /b post-msg-asirgui\%%i asir\share\editor
 )
-
+copy /b ..\asir2000\LICENSE asir
 xcopy /q /s ..\asir2000\lib asir\lib
 del /q asir\lib\Makefile*
 del /q asir\lib\help*.uu
@@ -36,6 +36,8 @@ copy /b ..\..\OpenXM\src\asir-contrib\testing\noro\ndbf.rr asir\lib-asir-contrib
 for %%i in ( de.rr gw.rr module_syz.rr mwl.rr pd.rr rewrite.rr ) do (
   copy /b ..\..\OpenXM\src\asir-contrib\testing\noro\%%i asir\lib-asir-contrib\noro_%%i
 )
+del /q asir\lib-asir-contrib\Makefile.in
+del /q asir\lib-asir-contrib\y_prime\.keepme
 
 if /i "%Platform%" == "X64" (
   zip -r asir_win64-%DATE:/=.%.zip asir
