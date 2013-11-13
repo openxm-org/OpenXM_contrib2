@@ -1,14 +1,15 @@
-// $OpenXM$
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.1 2013/08/27 05:51:50 takayama Exp $
 // Keep shift-jis code! 
 call Main;
 endmacro;
 Main:
+$asirpath=getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\";
 menu "asirgui起動","編集中のファイルの実行","選択範囲の実行","行の実行","選択範囲の実行(paste)","行の実行(paste)";
 if (result==0) endmacro;
 else if (result == 1) {
-  run getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\asirgui";
+  run $asirpath+"asirgui";
 } else if (result == 2) {
-  run "cmd /c "+getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\cmdasir %f";
+  run "cmd /c "+$asirpath+"cmdasir %f";
 } else if (result == 3) {
   call ExecuteSelectedArea;
 } else if (result == 4) {
@@ -26,7 +27,7 @@ ExecuteSelectedArea:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c "+getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\cmdasir "+$tmp_fname;
+    run "cmd /c "+$asirpath+"cmdasir "+$tmp_fname;
   } else { 
   message "範囲選択されていません";
   }
@@ -70,7 +71,7 @@ ExecuteSelectedAreaByPaste:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c "+getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\cmdasir --paste-contents "+$tmp_fname;
+    run "cmd /c "+$asirpath+"cmdasir --paste-contents "+$tmp_fname;
   } else { 
   message "範囲選択されていません";
   }
