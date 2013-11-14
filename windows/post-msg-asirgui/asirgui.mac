@@ -1,9 +1,13 @@
-// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.1 2013/08/27 05:51:50 takayama Exp $
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.2 2013/11/13 15:43:31 ohara Exp $
 // Keep shift-jis code! 
 call Main;
 endmacro;
 Main:
 $asirpath=getenv("HOMEPATH")+"\\Desktop\\asir\\bin\\";
+$asir_rootdir=getenv("ASIR_ROOTDIR");
+if($asir_rootdir!="" && existfile($asir_rootdir+"\\bin\\asirgui.exe")) {
+    $asirpath=$asir_rootdir+"\\bin\\";
+}
 menu "asirgui起動","編集中のファイルの実行","選択範囲の実行","行の実行","選択範囲の実行(paste)","行の実行(paste)";
 if (result==0) endmacro;
 else if (result == 1) {
