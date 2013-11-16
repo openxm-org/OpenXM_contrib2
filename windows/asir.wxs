@@ -9,9 +9,9 @@
                     <Directory Name="bin" Id="BIN">
                         <Component Id="asirgui.exe" Guid="AEB0BF56-E0E8-4BD3-B768-D0E9DC87C503">
                             <File Id="ASIRGUI.EXE" Name="asirgui.exe" Source="asir\bin\asirgui.exe" KeyPath="yes">
-                                <Shortcut Id="desktop_ASIRGUI" Name="asirgui.exe" Description="Asir for Windows" Directory="DesktopFolder" Advertise="yes" Icon="asirgui.exe">
+                                <Shortcut Id="desktop_ASIRGUI" Name="asirgui" Description="Asir for Windows" Directory="DesktopFolder" Advertise="yes" Icon="asirgui.exe">
                                 </Shortcut>
-                                <Shortcut Id="menu_ASIRGUI" Name="asirgui.exe" Description="Asir for Windows" Directory="ProgramMenuDir" Advertise="yes" Icon="asirgui.exe" />
+                                <Shortcut Id="menu_ASIRGUI" Name="asirgui" Description="Asir for Windows" Directory="ProgramMenuDir" Advertise="yes" Icon="asirgui.exe" />
                             </File>
                             <RemoveFile Id="asirgui.hnd" Name="asirgui.hnd" On="uninstall" />
                             <RemoveFile Id="history" Name="history" On="uninstall" />
