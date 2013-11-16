@@ -23,7 +23,7 @@ Install (windows 7 以上):
 
 次に, emacs から、M-x byte-compile-file を行い, 
 ~/Desktop/asir/share/editor/asir-mode.el を選択する.
-asir-mode は (asirgui の操作を除いて) unix でも使用できる.  
+asir-mode は unix でも使用できる.  (unix では shell-mode で asir を起動する)
 
 ◎ TeraPad. やり方を書く(todo). 概略は, 
    cmdasir %f    (編集中のファイルをロード)
@@ -54,4 +54,4 @@ directory 構造の提案.
   その他のファイルは mkdir asir/share/editor してそこへコピー
   
 
-$OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/install-ja-sjis.txt,v 1.1 2013/08/27 05:51:50 takayama Exp $
+$OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/install-ja-sjis.txt,v 1.2 2013/08/28 07:09:38 ohara Exp $

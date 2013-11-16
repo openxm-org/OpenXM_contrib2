@@ -2,12 +2,38 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.6 2013/09/21 06:34:14 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.7 2013/09/21 10:51:45 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
+
+;; 1. Install 
+;;
+;; **(for Windows) Write the following configuration to your .emacs file.
+;;
+;; (setq load-path (append load-path '((concat (getenv "ASIR_ROOTDIR") "/share/editor"))))
+;; (setq auto-mode-alist (cons '("\\.rr$" . asir-mode) auto-mode-alist))
+;; (autoload 'asir-mode "asir-mode" "Asir mode" t)
+;;
+;; **(for unix) Copy this file to your emacs site-lisp folder and 
+;;              write the following configuration to your .emacs file.
+;;
+;; (setq auto-mode-alist (cons '("\\.rr$" . asir-mode) auto-mode-alist))
+;; (autoload 'asir-mode "asir-mode" "Asir mode" t)
+;;
+;; Please run byte-compile for speed up.
+;;
+;; 2. Use
+;;
+;; If you open Risa/Asir source file (*.rr) by emacs, then asir-mode starts up automatically.
+;; The following key binding can be used:
+;; C-c s     Asir starts up in another window.
+;; C-c t     Asir terminates.
+;; C-c l     The current buffer is loaded to Asir as a file.
+;; C-c r     Selected region is loaded to Asir as a file.
+;; C-c p     Selected region is pasted to Asir.
 
 (require 'shell)
 
