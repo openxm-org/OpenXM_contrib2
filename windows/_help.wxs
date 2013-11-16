@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="HELP">
+            <Component Id="cmpCDAA8E2CDE03C99635CAA595CADCF8F5" Guid="BF72C9E9-0551-4EAB-A62C-2E3D38F9807D">
+                <File Id="fil7085DFF856C34DAA52241F4D1CB838C8" KeyPath="yes" Source="$(var.helpDir)\asirhelp.chm" />
+            </Component>
+            <Component Id="cmpAA1512833A084864AAA3B805CA25341F" Guid="F11635EB-5FE0-490B-87D2-81B6EB73926D">
+                <File Id="fil22CE5BF120D5E221D2913986B29A8B59" KeyPath="yes" Source="$(var.helpDir)\cmanhelp.chm" />
+            </Component>
+            <Component Id="cmpB14A23DDC594ECBD625B3098FC31A1AB" Guid="12B9429E-2AF0-4311-B03F-B057404F3776">
+                <File Id="filB18FA5463CD8AF1FCCEFC5755BF7B26F" KeyPath="yes" Source="$(var.helpDir)\dsolvhelp.chm" />
+            </Component>
+            <Component Id="cmpB28E8A6E0BD490B14F17F4B604DD7DA8" Guid="CBACE205-3B78-4A3D-9151-BF533243DF0B">
+                <File Id="filD1F96221B4256E8E9AD7213DE1B1EFD7" KeyPath="yes" Source="$(var.helpDir)\gnuplothelp.chm" />
+            </Component>
+            <Component Id="cmpE3D8F4C17F2FB4480116231E3D6F2337" Guid="238360E3-6B87-4BBC-8AC5-6AE5AF99C523">
+                <File Id="fil6A442E35BDB877C47694823C97511F18" KeyPath="yes" Source="$(var.helpDir)\mathematicahelp.chm" />
+            </Component>
+            <Component Id="cmp8A02D0B1519395BF4DC7C9C9CD9E67C5" Guid="85A86535-FD0F-4562-BDF2-9E5939C61827">
+                <File Id="filAA9F0E39C2238C7E5DAED69F4A2CEAFC" KeyPath="yes" Source="$(var.helpDir)\nn_ndbfhelp.chm" />
+            </Component>
+            <Component Id="cmpBF78ECC286B9D7888D386B3EB40F9A66" Guid="A51B40A6-88B3-4C0C-AB42-EC41ABD082C7">
+                <File Id="fil9B5649D8D2F4436D10CC5E30919175E1" KeyPath="yes" Source="$(var.helpDir)\ns_twistedloghelp.chm" />
+            </Component>
+            <Component Id="cmp769986B46E65271500423D13463E02CA" Guid="DE504FD3-84F9-487F-8035-78DB5D2EAD7F">
+                <File Id="filA0D83B481951FB58A0900BC8BB00C764" KeyPath="yes" Source="$(var.helpDir)\ok_diffhelp.chm" />
+            </Component>
+            <Component Id="cmp52C0CCEF7E3BF450DFF5D87C745252C1" Guid="6005C3C0-A910-459D-B53D-3C910DC451DD">
+                <File Id="fil17D1D5B5F834A62AC03C17DC74B39E8C" KeyPath="yes" Source="$(var.helpDir)\ok_dmodulehelp.chm" />
+            </Component>
+            <Component Id="cmpE8F51617AF775A7C8CC410415BB04A5E" Guid="C73F4E29-36A4-40B8-9BBC-71FAC57DBC33">
+                <File Id="filB8A26843A8923DB032B04B8DE388C75C" KeyPath="yes" Source="$(var.helpDir)\omhelp.chm" />
+            </Component>
+            <Component Id="cmp601756674F066425106F411C1923B6C5" Guid="C3FC95AC-C83D-4B29-80BE-428B46ABE47F">
+                <File Id="fil154C10532731CA11BC2C177D447A1B17" KeyPath="yes" Source="$(var.helpDir)\pfpcohhelp.chm" />
+            </Component>
+            <Component Id="cmp65531E9E6A893DFBDB52D5D620FF3F75" Guid="12FEC1ED-3962-4FA5-87D8-063FA30FAA26">
+                <File Id="filC6F32DD09648DDDBAD3865763C333DC2" KeyPath="yes" Source="$(var.helpDir)\phchelp.chm" />
+            </Component>
+            <Component Id="cmp3450CB93C21FCCDDB275E66A01ABD468" Guid="3CB07CC1-3B1E-40A8-B181-190A7733CE5D">
+                <File Id="fil266C56CD1898DB590F258FA2BD8B7D16" KeyPath="yes" Source="$(var.helpDir)\pluckerhelp.chm" />
+            </Component>
+            <Component Id="cmpC575F612285D13C5B95164D6E20E8BBE" Guid="D6EC1ADA-76CB-4060-964D-0A6537E1351C">
+                <File Id="fil0DA504F1BA07D074E3EB60BD2DD7B1D1" KeyPath="yes" Source="$(var.helpDir)\sm1help.chm" />
+            </Component>
+            <Component Id="cmpDBABB06C51111C138DE2E5F0AC836E99" Guid="B4E8F028-D740-49C5-95CF-37C83F684F81">
+                <File Id="fil8C93A86AADAF12D397AD375E015EFB89" KeyPath="yes" Source="$(var.helpDir)\tigershelp.chm" />
+            </Component>
+            <Directory Id="dir7A1B75AEAF6466E960F455535043A684" Name="ja">
+                <Component Id="cmp08675404C6E8F0B810F7F4A76105458E" Guid="E7E633F0-A139-4AAE-A99B-A69ADD19CBED">
+                    <File Id="filBDF5278C2D0D18766DFA3838C223B725" KeyPath="yes" Source="$(var.helpDir)\ja\asirhelp.chm" />
+                </Component>
+                <Component Id="cmpB54C72149EB1AE7AD27383FBFC2F60F3" Guid="E3977256-58EF-46C5-8CF9-C0CF31D359BF">
+                    <File Id="filBE04F98F4BDDB8E9DF11AC84AD1E78FD" KeyPath="yes" Source="$(var.helpDir)\ja\cmanhelp.chm" />
+                </Component>
+                <Component Id="cmp05853C54260D631C9FD1603A909AAE94" Guid="9C113F21-69F7-45A1-96A9-6EFAB7BE84EC">
+                    <File Id="fil29DFE2D851D63C18C7C4CDDE5ACB9C7B" KeyPath="yes" Source="$(var.helpDir)\ja\dsolvhelp.chm" />
+                </Component>
+                <Component Id="cmpB5EE062F96FF420914F85611B1869C98" Guid="C2A48A2C-A8E2-4475-994F-BD646E4228B2">
+                    <File Id="filC215F68B91E51D5952B2B133CDC852FC" KeyPath="yes" Source="$(var.helpDir)\ja\gnuplothelp.chm" />
+                </Component>
+                <Component Id="cmp77A4D38A2C1A02E1EF7856E063134C67" Guid="2FAEF1C9-14C3-48F8-BEAE-3AE36F8B3312">
+                    <File Id="filB944CCF9AA99A2181533F5FC5F42AD1B" KeyPath="yes" Source="$(var.helpDir)\ja\mathematicahelp.chm" />
+                </Component>
+                <Component Id="cmp7BE23D426C3BFE14B8647F3D54F63962" Guid="9EF09FE8-201B-43F1-B0C7-4F932B28D363">
+                    <File Id="fil9DCCCE9C6FFA6A0A30E6E4C14FDC0719" KeyPath="yes" Source="$(var.helpDir)\ja\nn_ndbfhelp.chm" />
+                </Component>
+                <Component Id="cmpB90B97AFB0086C492C07ED4F73F93A5C" Guid="759E72A9-5A8A-4B73-9B37-E5A40E656C98">
+                    <File Id="filBFE2A708CF9FC7B6D1588C79665F348E" KeyPath="yes" Source="$(var.helpDir)\ja\ns_twistedloghelp.chm" />
+                </Component>
+                <Component Id="cmpD2218810279D512291FF206DCB3D5D5F" Guid="3F49C744-E322-4673-B70D-63D96BB4A63C">
+                    <File Id="fil0C2E6B9EA8B7CC6464AB5E773CEF1B4A" KeyPath="yes" Source="$(var.helpDir)\ja\ok_diffhelp.chm" />
+                </Component>
+                <Component Id="cmpD7640B9518D1CBB28A10201207AB7F0F" Guid="2AEDC307-4349-4F19-9FF7-FD1340F852B2">
+                    <File Id="filBFFB89CB04EB47E2A94A1DFC7948CA47" KeyPath="yes" Source="$(var.helpDir)\ja\ok_dmodulehelp.chm" />
+                </Component>
+                <Component Id="cmpDDD4BB9FB1B9716747BA2BF938B53667" Guid="6D215D65-B4A1-4187-AC68-E2E52B721984">
+                    <File Id="filAC9DB8D4D854FD6222B00088FB1BA24E" KeyPath="yes" Source="$(var.helpDir)\ja\omhelp.chm" />
+                </Component>
+                <Component Id="cmp74C184E2774706950B00E3143AEB4CD0" Guid="412F53EB-C959-4CB9-80D9-76DFFE1BABC6">
+                    <File Id="fil5587B60594CD02FCBB07B8B75872D9F1" KeyPath="yes" Source="$(var.helpDir)\ja\pfpcohhelp.chm" />
+                </Component>
+                <Component Id="cmpDAE6D9A4B71379C231B92A3790C47CE6" Guid="516A25D4-83F2-42B8-A95B-F9B51FBF3EDF">
+                    <File Id="filA8F0720F6FBF5A005DB726768EF63CCE" KeyPath="yes" Source="$(var.helpDir)\ja\phchelp.chm" />
+                </Component>
+                <Component Id="cmpE6828B72415367486801027FAECC263A" Guid="C06B75D0-9383-47DF-BB71-F95795B8E77F">
+                    <File Id="fil4ABCF0DE3833B6E7A82A6CDE8A825E94" KeyPath="yes" Source="$(var.helpDir)\ja\pluckerhelp.chm" />
+                </Component>
+                <Component Id="cmpF8A74083D3D12A1B9DD539539519252A" Guid="FF3E254C-B745-4434-B186-5D95D24BCA88">
+                    <File Id="fil6151157102B90085E5F151543270322D" KeyPath="yes" Source="$(var.helpDir)\ja\sm1help.chm" />
+                </Component>
+                <Component Id="cmp85862E7DA8EEA1B8C9992630C4B8C44C" Guid="4952B437-D793-466C-B1A8-10F2732AD843">
+                    <File Id="fil7FFD40E452E88869B644137294C44A5C" KeyPath="yes" Source="$(var.helpDir)\ja\tigershelp.chm" />
+                </Component>
+            </Directory>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="HelpGrp">
+            <ComponentRef Id="cmpCDAA8E2CDE03C99635CAA595CADCF8F5" />
+            <ComponentRef Id="cmpAA1512833A084864AAA3B805CA25341F" />
+            <ComponentRef Id="cmpB14A23DDC594ECBD625B3098FC31A1AB" />
+            <ComponentRef Id="cmpB28E8A6E0BD490B14F17F4B604DD7DA8" />
+            <ComponentRef Id="cmpE3D8F4C17F2FB4480116231E3D6F2337" />
+            <ComponentRef Id="cmp8A02D0B1519395BF4DC7C9C9CD9E67C5" />
+            <ComponentRef Id="cmpBF78ECC286B9D7888D386B3EB40F9A66" />
+            <ComponentRef Id="cmp769986B46E65271500423D13463E02CA" />
+            <ComponentRef Id="cmp52C0CCEF7E3BF450DFF5D87C745252C1" />
+            <ComponentRef Id="cmpE8F51617AF775A7C8CC410415BB04A5E" />
+            <ComponentRef Id="cmp601756674F066425106F411C1923B6C5" />
+            <ComponentRef Id="cmp65531E9E6A893DFBDB52D5D620FF3F75" />
+            <ComponentRef Id="cmp3450CB93C21FCCDDB275E66A01ABD468" />
+            <ComponentRef Id="cmpC575F612285D13C5B95164D6E20E8BBE" />
+            <ComponentRef Id="cmpDBABB06C51111C138DE2E5F0AC836E99" />
+            <ComponentRef Id="cmp08675404C6E8F0B810F7F4A76105458E" />
+            <ComponentRef Id="cmpB54C72149EB1AE7AD27383FBFC2F60F3" />
+            <ComponentRef Id="cmp05853C54260D631C9FD1603A909AAE94" />
+            <ComponentRef Id="cmpB5EE062F96FF420914F85611B1869C98" />
+            <ComponentRef Id="cmp77A4D38A2C1A02E1EF7856E063134C67" />
+            <ComponentRef Id="cmp7BE23D426C3BFE14B8647F3D54F63962" />
+            <ComponentRef Id="cmpB90B97AFB0086C492C07ED4F73F93A5C" />
+            <ComponentRef Id="cmpD2218810279D512291FF206DCB3D5D5F" />
+            <ComponentRef Id="cmpD7640B9518D1CBB28A10201207AB7F0F" />
+            <ComponentRef Id="cmpDDD4BB9FB1B9716747BA2BF938B53667" />
+            <ComponentRef Id="cmp74C184E2774706950B00E3143AEB4CD0" />
+            <ComponentRef Id="cmpDAE6D9A4B71379C231B92A3790C47CE6" />
+            <ComponentRef Id="cmpE6828B72415367486801027FAECC263A" />
+            <ComponentRef Id="cmpF8A74083D3D12A1B9DD539539519252A" />
+            <ComponentRef Id="cmp85862E7DA8EEA1B8C9992630C4B8C44C" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>

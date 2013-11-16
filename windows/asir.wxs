@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="$(var.productID)" Name="Asir for Windows" Language="1033" Version="$(var.productVer)" Manufacturer="OpenXM committers" UpgradeCode="$(var.upgradeID)">
+        <Package Description="Asir installer for Windows" Comments="Asir installer for Windows" InstallerVersion="200" Compressed="yes" />
+        <Media Id="1" Cabinet="simple.cab" EmbedCab="yes" />
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="$(var.programfilesDir)" Name="PFiles">
+                <Directory Name="asir" Id="ASIR">
+                    <Directory Name="bin" Id="BIN">
+                        <Component Id="asirgui.exe" Guid="AEB0BF56-E0E8-4BD3-B768-D0E9DC87C503">
+                            <File Id="ASIRGUI.EXE" Name="asirgui.exe" Source="asir\bin\asirgui.exe" KeyPath="yes">
+                                <Shortcut Id="desktop_ASIRGUI" Name="asirgui.exe" Description="Asir for Windows" Directory="DesktopFolder" Advertise="yes" Icon="asirgui.exe">
+                                </Shortcut>
+                                <Shortcut Id="menu_ASIRGUI" Name="asirgui.exe" Description="Asir for Windows" Directory="ProgramMenuDir" Advertise="yes" Icon="asirgui.exe" />
+                            </File>
+                            <RemoveFile Id="asirgui.hnd" Name="asirgui.hnd" On="uninstall" />
+                            <RemoveFile Id="history" Name="history" On="uninstall" />
+                            <Environment Id="ASIR_ROOTDIR" Name="ASIR_ROOTDIR" Value="[ASIR]" Permanent="no" System="no" Action="set" />
+                        </Component>
+                        <Component Id="engine.exe" Guid="1B6281B2-4D9D-47D0-88AE-6977EFEDB6E7">
+                            <File Id="ENGINE.EXE" Name="engine.exe" Source="asir\bin\engine.exe" />
+                        </Component>
+                        <Component Id="asir.exe" Guid="F3F1FE91-656E-4420-8135-52342D01F052">
+                            <File Id="ASIR.EXE" Name="asir.exe" Source="asir\bin\asir.exe" />
+                        </Component>
+                        <Component Id="cpp.exe" Guid="99C2B6A6-E252-4BE7-8D5A-75D0AD85437F">
+                            <File Id="CPP.EXE" Name="cpp.exe" Source="asir\bin\cpp.exe" />
+                        </Component>
+                        <Component Id="cmdasir.exe" Guid="2D5C53A0-42A1-4DA3-AF6D-25FEDCC345EB">
+                            <File Id="CMDASIR.EXE" Name="cmdasir.exe" Source="asir\bin\cmdasir.exe" />
+                        </Component>
+                        <Component Id="ja.dll" Guid="AC9CAD69-E31C-47A3-AE8B-F11F5F18C327">
+                            <File Id="JA.DLL" Name="ja.dll" Source="asir\bin\ja.dll" />
+                        </Component>
+                    </Directory>
+                    <Directory Name="help" Id="HELP">
+                        <Directory Id="HELP_JA" Name="ja" />
+                    </Directory>
+                    <Directory Name="lib" Id="LIB" />
+                    <Directory Name="lib-asir-contrib" Id="LIB_ASIR_CONTRIB" />
+                    <Directory Name="share" Id="SHARE">
+                        <Directory Id="EDITOR" Name="editor" />
+                    </Directory>
+                    <Component Id="LICENSE" Guid="02A83B99-8E61-499B-BCDB-C25B931EEC36">
+                        <File Id="LICENSE" Name="LICENSE" Source="asir\LICENSE" />
+                    </Component>
+                </Directory>
+            </Directory>
+            <Directory Id="ProgramMenuFolder" Name="RootMenu">
+                <Directory Id="ProgramMenuDir" Name="Asir">
+                    <Component Id="ProgramMenuDir" Guid="2840B02D-DF63-425A-B1CD-A5254BD44C83">
+                        <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+                        <RegistryValue Type="string" Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" KeyPath="yes" Value="" />
+                    </Component>
+                </Directory>
+            </Directory>
+            <Directory Id="DesktopFolder" Name="Desktop" />
+        </Directory>
+        <Feature Id="DefaultFeature" Title="Main Feature" Level="1">
+            <ComponentGroupRef Id="LibGrp" />
+            <ComponentGroupRef Id="HelpGrp" />
+            <ComponentGroupRef Id="ContribGrp" />
+            <ComponentGroupRef Id="ShareGrp" />
+            <ComponentRef Id="asirgui.exe" />
+            <ComponentRef Id="engine.exe" />
+            <ComponentRef Id="asir.exe" />
+            <ComponentRef Id="cpp.exe" />
+            <ComponentRef Id="cmdasir.exe" />
+            <ComponentRef Id="ja.dll" />
+            <ComponentRef Id="LICENSE" />
+            <ComponentRef Id="ProgramMenuDir" />
+        </Feature>
+        <UI />
+        <UIRef Id="WixUI_InstallDir" />
+        <Property Id="WIXUI_INSTALLDIR" Value="ASIR" />
+        <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+        <Icon Id="asirgui.exe" SourceFile="asir\bin\asirgui.exe" />
+    </Product>
+</Wix>

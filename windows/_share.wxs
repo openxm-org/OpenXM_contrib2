@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="SHARE">
+            <Directory Id="dirA1FF46CE821C4C46DD22473D0C14B3C3" Name="editor">
+                <Component Id="cmpB935FB433F94DF4A43975DF5F86610D1" Guid="817DC4B3-3410-4EEB-B3B6-11C179A90C8E">
+                    <File Id="fil3B41818B515197505B9FD9BAFF77F794" KeyPath="yes" Source="$(var.shareDir)\editor\asir-mode.el" />
+                </Component>
+                <Component Id="cmp31F5E351526E95C98D9EF596CC66C44A" Guid="08948E45-F51A-47A0-A296-E88FB78A69BD">
+                    <File Id="fil436563C563F24657A94405616C5EA938" KeyPath="yes" Source="$(var.shareDir)\editor\asirgui.mac" />
+                </Component>
+                <Component Id="cmp41BF5374DD763399B8D4DC4A95664132" Guid="CC35ABDF-9683-462D-B2AF-66765030721A">
+                    <File Id="filBB16005BB1D14239C2A81BE18AA1AD39" KeyPath="yes" Source="$(var.shareDir)\editor\install-ja-sjis.txt" />
+                </Component>
+            </Directory>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="ShareGrp">
+            <ComponentRef Id="cmpB935FB433F94DF4A43975DF5F86610D1" />
+            <ComponentRef Id="cmp31F5E351526E95C98D9EF596CC66C44A" />
+            <ComponentRef Id="cmp41BF5374DD763399B8D4DC4A95664132" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>
