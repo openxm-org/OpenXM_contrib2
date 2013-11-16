@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/Makefile.vc,v 1.1 2013/08/27 07:05:24 ohara Exp $
 ## Makefile for Visual Studio 2010
 
 CFLAGS= -nologo -W3 -Ox -D _CRT_SECURE_NO_WARNINGS
@@ -10,6 +10,8 @@ all: cmdasir.exe
 clean:
 	-@del cmdasir.obj
 	-@del cmdasir.exe
+
+distclean: clean
 
 cmdasir.exe: cmdasir.obj
 	$(LD) $(LDFLAGS) -out:$@ cmdasir.obj 
