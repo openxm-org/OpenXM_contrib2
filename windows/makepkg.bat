@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.1 2013/09/03 12:32:43 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.2 2013/11/11 04:23:51 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -40,9 +40,9 @@ del /q asir\lib-asir-contrib\Makefile.in
 del /q asir\lib-asir-contrib\y_prime\.keepme
 
 if /i "%Platform%" == "X64" (
-  zip -r asir_win64-%DATE:/=.%.zip asir
+  zip -r asir_win64_%DATE:/=.%.zip asir
 ) else (
-  zip -r asir_win32-%DATE:/=.%.zip asir
+  zip -r asir_win32_%DATE:/=.%.zip asir
 )
 
 exit /b 0
