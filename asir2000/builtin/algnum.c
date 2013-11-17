@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.12 2005/08/02 07:16:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.13 2007/02/15 02:06:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -219,7 +219,7 @@ void Pinv_or_split_dalg(NODE arg,Obj *rp)
 {
 	NODE gen,t,nd0,nd;
 	LIST list;
-	int l,i,j,k,n;
+	int l,i,j,n;
 	DP *ps,*ps1,*psw;
 	NumberField nf;
 	DAlg inv;
@@ -255,7 +255,7 @@ void Pinv_or_split_dalg(NODE arg,Obj *rp)
 		for ( ; i >= 0; i-- ) {
 			NEXTNODE(nd0,nd); BDY(nd) = (pointer)psw[i];
 		}
-		for ( ; t; t = NEXT(t), k++ ) {
+		for ( ; t; t = NEXT(t) ) {
 			NEXTNODE(nd0,nd); BDY(nd) = BDY(t);
 		}
 		NEXT(nd) = 0;
