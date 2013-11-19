@@ -1,15 +1,19 @@
 text editor から asirgui を操作するためのライブラリ.
 
-Install (windows 7 以上):
+Install (windows 7 以上, zip 版):
 1. 配布している(http://www.math.kobe-u.ac.jp/Asir) asir は Desktop に置く.
-2. Desktop/asir/bin へ cmdasir.exe をコピー.
+
+Installer 版は installer の指示に従う.
+インストールされたフォルダ名は環境変数 ASIR_ROOTDIR に設定される. 
+環境変数 ASIR_ROOTDIR は reboot の後に有効になる.
 
 --------
 以下は editor 毎の対応.
 
-◎ 秀丸.  asirgui.mac をマクロに登録.
+◎ 秀丸.  asirgui.mac をマクロに登録. asirgui.mac は asir\share\editor の下にあり.
 
 ◎ emacs (または Meadow3.0).  まず, 以下の各行を設定ファイル .emacs に追加する.  
+  (これは Desktop に asir フォルダを置いた場合の設定)
 
 ---ここから---
 ;; この設定の意味は, asir-mode.el を emacs のライブラリに入れて, autoload する.  
@@ -25,9 +29,9 @@ Install (windows 7 以上):
 ~/Desktop/asir/share/editor/asir-mode.el を選択する.
 asir-mode は unix でも使用できる.  (unix では shell-mode で asir を起動する)
 
-◎ TeraPad. やり方を書く(todo). 概略は, 
-   cmdasir %f    (編集中のファイルをロード)
-   cmdasir %t    (選択範囲を実行)
+◎ TeraPad. やり方を書く(todo). Installer 版の場合, 概略は, 
+   %ASIR_ROOTDIR%\bin\cmdasir %f    (編集中のファイルをロード)
+   %ASIR_ROOTDIR%\bin\cmdasir %t    (選択範囲を実行)
 を登録.
 その他。要望におおじて対応.
 
@@ -54,4 +58,4 @@ directory 構造の提案.
   その他のファイルは mkdir asir/share/editor してそこへコピー
   
 
-$OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/install-ja-sjis.txt,v 1.2 2013/08/28 07:09:38 ohara Exp $
+$OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/install-ja-sjis.txt,v 1.3 2013/11/16 06:54:12 ohara Exp $
