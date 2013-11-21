@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.63 2013/06/13 18:40:31 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.64 2013/09/26 00:38:47 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -972,7 +972,7 @@ void ox_launch_main(int with_x,NODE arg,Obj *p)
 
 void extend_mctab(int bound)
 {
-	int s,i,n;
+	int i,n;
 	struct m_c *t;
     if ( !m_c_tab ) {
         n = (bound/INIT_TAB_SIZ + 1)*INIT_TAB_SIZ;
@@ -985,7 +985,7 @@ void extend_mctab(int bound)
     }else if (bound >= m_c_s) {
         n = (bound/INIT_TAB_SIZ + 1)*INIT_TAB_SIZ;
         t = (struct m_c *)MALLOC_ATOMIC(n*sizeof(struct m_c));
-        bzero((void *)t,s);
+        bzero((void *)t,n*sizeof(struct m_c));
         bcopy((void *)m_c_tab,(void *)t,m_c_s*sizeof(struct m_c));
         for ( i = m_c_s; i < n; i++ ) {
             t[i].af_unix = 0;
