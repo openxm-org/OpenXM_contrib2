@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.67 2010/05/24 01:59:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.68 2011/02/18 02:54:49 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -1344,7 +1344,7 @@ pointer evalpf(PF pf,NODE args,NODE dargs)
 		simplify_ins(ins,&s);
 	} else {
 		s = pf->body;
-		if ( dnode ) {
+		if ( dargs ) {
 			for ( i = 0, dnode = dargs; dnode; dnode = NEXT(dnode), i++ ) {
 				di = QTOS((Q)dnode->body);
 				for ( j = 0; j < di; j++ ) {
