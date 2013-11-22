@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.64 2013/09/26 00:38:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.65 2013/11/21 23:15:37 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1032,11 +1032,11 @@ int register_server(int af_unix,int m,int c,int ind)
 #endif
 	if ( m_c_i == m_c_s ) {
 		s = (m_c_s+INIT_TAB_SIZ)*sizeof(struct m_c);
-		t = (struct m_c *)MALLOC_ATOMIC(s); bzero((void *)m_c_tab,s);
+		t = (struct m_c *)MALLOC_ATOMIC(s);
 		bcopy((void *)m_c_tab,(void *)t,m_c_s*sizeof(struct m_c));
 		for ( i = 0; i < INIT_TAB_SIZ; i++ ) {
-			m_c_tab[m_c_s+i].af_unix = 0;
-			m_c_tab[m_c_s+i].m = m_c_tab[m_c_s+i].c = -1;
+			t[m_c_s+i].af_unix = 0;
+			t[m_c_s+i].m = m_c_tab[m_c_s+i].c = -1;
 		}
 		m_c_s += INIT_TAB_SIZ; m_c_tab = t;
 	}
