@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.11 2013/11/27 04:40:41 takayama Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.12 2013/11/27 13:39:08 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 ;; The following key binding can be used:
 ;; C-c s     Asir starts up in another window.
 ;; C-c t     Asir terminates.
+;; C-c a     Abort current calculation.
 ;; C-c l     The current buffer is loaded to Asir as a file.
 ;; C-c r     Selected region is loaded to Asir as a file.
 ;; C-c p     Selected region is pasted to Asir.
@@ -150,6 +151,25 @@
             (insert-buffer-substring buffer start end)
             (comint-send-input))))))
 
+(defun asir-abort ()
+  "Abort calculation on asir"
+  (interactive)
+  (if (eq system-type 'windows-nt)
+    ;; for Windows
+      (let ((exec-path (asir-effective-exec-path)))
+        (start-process "asir-proc-cmdasir" nil "cmdasir" "--abort"))
+    ;; for UNIX
+    (save-excursion
+      (if (get-buffer asir-cmd-buffer-name)
+          (progn
+            (set-buffer asir-cmd-buffer-name)
+            (comint-kill-input)
+            (comint-interrupt-subjob)
+            (goto-char (point-max))
+            (insert "t\ny")
+            (comint-send-input)
+            )))))
+
 ;;;; Extension for CC-mode.
 
 (require 'cc-mode)
@@ -188,6 +208,7 @@
 		  '("----" 
 			["Start Asir" asir-start t]
 			["Terminate Asir" asir-terminate t]
+			["Abort calcuration on Asir" asir-abort t]
 			["Execute Current Buffer on Asir" asir-execute-current-buffer (buffer-file-name)]
 			["Execute Region on Asir" asir-execute-region mark-active]
 			["Paste Region to Asir" asir-paste-region mark-active]
@@ -226,6 +247,7 @@ Each list item should be a regexp matching a single identifier.")
 ;; Key binding for asir-mode
 (define-key asir-mode-map (kbd "C-c s") 'asir-start)
 (define-key asir-mode-map (kbd "C-c t") 'asir-terminate)
+(define-key asir-mode-map (kbd "C-c a") 'asir-abort)
 (define-key asir-mode-map (kbd "C-c l") 'asir-execute-current-buffer)
 (define-key asir-mode-map (kbd "C-c r") 'asir-execute-region)
 (define-key asir-mode-map (kbd "C-c p") 'asir-paste-region)
