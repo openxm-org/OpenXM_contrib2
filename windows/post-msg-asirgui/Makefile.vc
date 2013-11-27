@@ -1,9 +1,10 @@
-## $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/Makefile.vc,v 1.1 2013/08/27 07:05:24 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/Makefile.vc,v 1.2 2013/11/16 08:26:16 ohara Exp $
 ## Makefile for Visual Studio 2010
 
 CFLAGS= -nologo -W3 -Ox -D _CRT_SECURE_NO_WARNINGS
 LD=link
-LDFLAGS=-nologo -subsystem:console -incremental:no user32.lib
+#LDFLAGS=-nologo -subsystem:console -incremental:no user32.lib
+LDFLAGS=-nologo -subsystem:windows -incremental:no user32.lib
 
 all: cmdasir.exe
 

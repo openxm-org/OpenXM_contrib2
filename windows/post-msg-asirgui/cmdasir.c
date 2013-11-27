@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.5 2013/11/27 04:23:07 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.6 2013/11/27 14:59:43 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -17,6 +17,12 @@ int hasTemp(char *s);
 int pasteFile(HWND hnd, char *uname);
 int containEnd(char s[]);
 int abortAsir(HWND hnd);
+int main(int argc, char *argv[]);
+
+int WINAPI WinMain(HINSTANCE hins, HINSTANCE prev, LPSTR arg, int show) {
+    main(__argc, __argv);
+    return 0;
+}
 
 int main(int argc, char *argv[])
 {
