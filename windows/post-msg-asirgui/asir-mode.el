@@ -2,12 +2,13 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM$
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.11 2013/11/27 04:40:41 takayama Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
+
 ;; 1. Install 
 ;;
 ;; **(for Windows) Write the following configuration to your .emacs file.
