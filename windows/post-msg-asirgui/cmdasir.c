@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.3 2013/08/28 05:33:02 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.4 2013/11/05 23:59:20 takayama Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
   char msg[1024];
   char cmd[1024];
   int paste_contents=0;
+  int abort=0;
 
   /* MessageBox(NULL,TEXT("test"),TEXT("Error in cmdasir.c"),MB_OK); */
   sprintf(snameWin,"%s\\cmdasir-%d.txt",getenv("TEMP"),getpid());
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
     system(cmd);
     return(0);
   }
+
   fp = findAsirHandler();
   if (fp == NULL) {
     fprintf(stderr,"handler file is not found.\n"); return(-1);
@@ -46,12 +48,15 @@ int main(int argc, char *argv[])
   if ((argc > 1) && (strcmp(argv[1],"--quit")==0)) {
     return terminateAsir(hnd);
   }
+  if ((argc > 1) && (strcmp(argv[1],"--abort")==0)) {
+    return abortAsir(hnd);
+  }
   printf("Handler is %d\n",hnd);
   paste_contents=0;
   for (ii=1; ii<argc; ii++) {
-  	if (strcmp(argv[ii],"--paste-contents")==0) {
-  		paste_contents=1; continue;
-  	}
+    if (strcmp(argv[ii],"--paste-contents")==0) {
+      paste_contents=1; continue;
+    }
     uname = NULL;
     if (hasTemp(argv[ii])) {
       fp = fopen(winname2uxname(argv[ii]),"r");
@@ -226,11 +231,33 @@ int pasteFile(HWND hnd, char *uname) {
 	return 0;
 }
 
-containEnd(char s[]) {
+int containEnd(char s[]) {
 	int i;
 	for (i=0; i<strlen(s)-4; i++) {
 		if (strncmp(&(s[i]),"end$",4)==0) return 1;
 		if (strncmp(&(s[i]),"end;",4)==0) return 1;
 	}
 	return(0);
+}
+
+int abortAsir(int hnd) {
+  int c;
+  int result;
+  result=MessageBox(NULL,TEXT("Do you abort this computation?"),TEXT("Abort"),MB_OKCANCEL);
+  if (result == IDCANCEL) return(0);
+  c=0x3;
+  if (!PostMessage(hnd,WM_CHAR,c,1)) {
+    MessageBox(NULL,TEXT("asirgui is not running."), TEXT("ERROR in cmdasir.c"),MB_OK);
+    return(-1);
+  }
+        
+  printf("Sending ctrl-C\n");
+  /* Sleep(3*1000); */
+  result=MessageBox(NULL,TEXT("Interrupt is displayed in asirgui?"),TEXT("Sent ctrl-C."),MB_OKCANCEL);
+  if (result == IDCANCEL) return(0);
+  c='t'; PostMessage(hnd,WM_CHAR,c,1);
+  c=0xd; PostMessage(hnd,WM_CHAR,c,1); 
+  c='y'; PostMessage(hnd,WM_CHAR,c,1);
+  c=0xd; PostMessage(hnd,WM_CHAR,c,1);
+  return(0);
 }
