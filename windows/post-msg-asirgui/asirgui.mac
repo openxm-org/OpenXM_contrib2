@@ -1,4 +1,4 @@
-// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.4 2013/11/14 17:28:29 ohara Exp $
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.5 2013/11/19 13:03:59 takayama Exp $
 // Keep shift-jis code! 
 call Main;
 endmacro;
@@ -13,7 +13,7 @@ if (result==0) endmacro;
 else if (result == 1) {
   run $asirpath+"asirgui";
 } else if (result == 2) {
-  run "cmd /c \""+$asirpath+"cmdasir\" %f";
+  run "cmd /c "+$asirpath+"cmdasir %f";
 } else if (result == 3) {
   call ExecuteSelectedArea;
 } else if (result == 4) {
@@ -31,7 +31,7 @@ ExecuteSelectedArea:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c \""+$asirpath+"cmdasir\" "+$tmp_fname;
+    run "cmd /c "+$asirpath+"cmdasir "+$tmp_fname;
   } else { 
   message "”ÍˆÍ‘I‘ð‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ";
   }
@@ -75,7 +75,7 @@ ExecuteSelectedAreaByPaste:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c \""+$asirpath+"cmdasir\" --paste-contents "+$tmp_fname;
+    run "cmd /c "+$asirpath+"cmdasir --paste-contents "+$tmp_fname;
   } else { 
   message "”ÍˆÍ‘I‘ð‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ";
   }
