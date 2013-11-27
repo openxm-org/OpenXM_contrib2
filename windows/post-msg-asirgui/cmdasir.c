@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.4 2013/11/05 23:59:20 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.5 2013/11/27 04:23:07 takayama Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -15,6 +15,8 @@ int loadFile(HWND hnd, char *uname);
 int terminateAsir(HWND hnd);
 int hasTemp(char *s);
 int pasteFile(HWND hnd, char *uname);
+int containEnd(char s[]);
+int abortAsir(HWND hnd);
 
 int main(int argc, char *argv[])
 {
@@ -240,7 +242,7 @@ int containEnd(char s[]) {
 	return(0);
 }
 
-int abortAsir(int hnd) {
+int abortAsir(HWND hnd) {
   int c;
   int result;
   result=MessageBox(NULL,TEXT("Do you abort this computation?"),TEXT("Abort"),MB_OKCANCEL);
