@@ -1,5 +1,6 @@
-// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.5 2013/11/19 13:03:59 takayama Exp $
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.6 2013/11/27 04:34:04 takayama Exp $
 // Keep shift-jis code! 
+//   run "cmd /c "+$asirpath+"cmdasir %f" + " >con"; output debugmsg
 call Main;
 endmacro;
 Main:
@@ -8,12 +9,12 @@ $asir_rootdir=getenv("ASIR_ROOTDIR");
 if($asir_rootdir!="" && existfile($asir_rootdir+"\\bin\\asirgui.exe")) {
     $asirpath=$asir_rootdir+"\\bin\\";
 }
-menu "asirgui起動","編集中のファイルの実行","選択範囲の実行","行の実行","選択範囲の実行(paste)","行の実行(paste)";
+menu "asirgui起動","編集中のファイルの実行","選択範囲の実行","行の実行","選択範囲の実行(paste)","行の実行(paste)","計算中断";
 if (result==0) endmacro;
 else if (result == 1) {
   run $asirpath+"asirgui";
 } else if (result == 2) {
-  run "cmd /c "+$asirpath+"cmdasir %f";
+  run "cmd /c \""+$asirpath+"cmdasir\" %f";
 } else if (result == 3) {
   call ExecuteSelectedArea;
 } else if (result == 4) {
@@ -22,6 +23,8 @@ else if (result == 1) {
   call ExecuteSelectedAreaByPaste;
 } else if (result == 6) {
   call ExecuteSelectedLineByPaste;
+} else if (result == 7) {
+  call AbortAsir;
 }
 return true;
 ExecuteSelectedArea:
@@ -31,7 +34,7 @@ ExecuteSelectedArea:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c "+$asirpath+"cmdasir "+$tmp_fname;
+    run "cmd /c \""+$asirpath+"cmdasir\" "+$tmp_fname;
   } else { 
   message "範囲選択されていません";
   }
@@ -75,7 +78,7 @@ ExecuteSelectedAreaByPaste:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c "+$asirpath+"cmdasir --paste-contents "+$tmp_fname;
+    run "cmd /c \""+$asirpath+"cmdasir\" --paste-contents "+$tmp_fname;
   } else { 
   message "範囲選択されていません";
   }
@@ -86,5 +89,9 @@ ExecuteSelectedLineByPaste:
   golineend;
 //  message(str(seltopx) + "," + str(seltopy) + "," + str(selendx) + "," + str(selendy));
   call ExecuteSelectedAreaByPaste;
+  return true;
+
+AbortAsir:
+  run "\""+$asirpath+"cmdasir\" --abort"+" >null";
   return true;
 
