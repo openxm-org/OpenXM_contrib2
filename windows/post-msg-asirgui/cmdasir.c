@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.6 2013/11/27 14:59:43 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.7 2013/11/27 15:47:18 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -7,6 +7,7 @@
 #include <string.h>
 #include <io.h>
 #include <process.h>
+#include <fcntl.h>
 
 char *winname2uxname(char winname[]);
 FILE *findAsirHandler();
@@ -19,7 +20,25 @@ int containEnd(char s[]);
 int abortAsir(HWND hnd);
 int main(int argc, char *argv[]);
 
+FILE *open_stdio(DWORD type) {
+    HANDLE hnd;
+    int fd;
+    if((hnd = GetStdHandle(type)) != INVALID_HANDLE_VALUE && (fd = _open_osfhandle((intptr_t)hnd, _O_TEXT)) >= 0) {
+        return _fdopen(fd, "w");
+    }
+    return NULL;
+}
+
 int WINAPI WinMain(HINSTANCE hins, HINSTANCE prev, LPSTR arg, int show) {
+    FILE *fp;
+#if (_WIN32_WINNT > 0x0500)
+    if(AttachConsole(ATTACH_PARENT_PROCESS)) {
+        if(fp = open_stdio(STD_OUTPUT_HANDLE)) {
+            *stdout = *fp;
+            setvbuf(stdout, NULL, _IONBF, 0);
+        }
+    }
+#endif
     main(__argc, __argv);
     return 0;
 }
@@ -39,7 +58,7 @@ int main(int argc, char *argv[])
   int abort=0;
 
   /* MessageBox(NULL,TEXT("test"),TEXT("Error in cmdasir.c"),MB_OK); */
-  sprintf(snameWin,"%s\\cmdasir-%d.txt",getenv("TEMP"),getpid());
+  sprintf(snameWin,"%s\\cmdasir-%d.txt",getenv("TEMP"),_getpid());
   snameUx = winname2uxname(snameWin);
   if ((argc > 1) && (strcmp(argv[1],"--delete-tmp")==0)) {
     sprintf(cmd,"del %s\\cmdasir-*",getenv("TEMP"));
@@ -49,7 +68,7 @@ int main(int argc, char *argv[])
 
   fp = findAsirHandler();
   if (fp == NULL) {
-    fprintf(stderr,"handler file is not found.\n"); return(-1);
+    printf("handler file is not found.\n"); return(-1);
   }
   fscanf(fp,"%d",&hnd);
   fclose(fp);
@@ -80,7 +99,7 @@ int main(int argc, char *argv[])
       uname=snameUx;
     }
     printf("filename=%s\n",argv[ii]);
-    if(access(argv[ii],0)==0) {
+    if(_access(argv[ii],0)==0) {
     	if (paste_contents) return pasteFile(hnd, (uname != NULL)? uname: winname2uxname(argv[ii]));
     	else return loadFile(hnd, (uname != NULL)? uname: winname2uxname(argv[ii]));
     }
