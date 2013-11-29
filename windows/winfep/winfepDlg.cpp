@@ -125,6 +125,7 @@ BEGIN_MESSAGE_MAP(CWinfepDlg, CDialog)
 	ON_BN_CLICKED(IDC_PREV10, OnPrev10)
 	ON_BN_CLICKED(IDC_NEXT10, OnNext10)
 	ON_BN_CLICKED(IDC_QUIT, OnQuit)
+	ON_BN_CLICKED(IDC_INTR, OnIntr)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -387,4 +388,10 @@ void CWinfepDlg::OnQuit()
 	// TODO: この位置にコントロール通知ハンドラ用のコードを追加してください
 	CDialog::OnOK();
 	
+}
+
+void CWinfepDlg::OnIntr() 
+{
+	// TODO: この位置にコントロール通知ハンドラ用のコードを追加してください
+	::SendMessage(asirhwnd,WM_CHAR,0x3,1);
 }

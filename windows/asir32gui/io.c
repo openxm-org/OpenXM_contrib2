@@ -201,8 +201,8 @@ BOOL Init_IO(char *errmsg) {
 		if ( get_rootdir(name,len,errmsg) == FALSE ) {
 			return FALSE;
 		}
-		sprintf(AsirExe,"%s\\bin\\engine.exe",name);
-//		sprintf(AsirExe,"c:\\home\\noro\\engine2000\\debug\\engine.exe");
+//		sprintf(AsirExe,"%s\\bin\\engine.exe",name);
+		sprintf(AsirExe,"d:\\cygwin\\home\\noro\\new\\OpenXM_contrib2\\windows\\engine2000\\debug\\engine.exe");
 		if ( !getenv("HOME") ) {
 			sprintf(home,"HOME=%s",name);
 			_putenv(home);
@@ -318,7 +318,11 @@ void read_input_history()
 }
 
 void send_intr() {
+	HANDLE handle[1];
+
 	PulseEvent(hIntr);
+	handle[0] = hIntr_Ack;
+	WaitForMultipleObjects(1,(CONST HANDLE *)handle,FALSE,(DWORD)-1);
 }
 
 void terminate_asir() {

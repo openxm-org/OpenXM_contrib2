@@ -125,6 +125,7 @@ void watch_intr() {
 					send_intr();
 				/* for Asir; recv_intr is reset to 0 in Asir */
 				recv_intr = 1;
+				PulseEvent(hIntr_Ack);
 				break;
 			case WAIT_OBJECT_0+1: /* hKill */
 			default:

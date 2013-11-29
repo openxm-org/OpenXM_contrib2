@@ -53,6 +53,7 @@ protected:
 	afx_msg void OnNext10();
 	virtual void OnOK();
 	afx_msg void OnQuit();
+	afx_msg void OnIntr();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 	void show_line(int);

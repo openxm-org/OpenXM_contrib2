@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.82 2012/05/30 02:24:33 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.83 2012/12/17 07:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -843,3 +843,19 @@ char *scopyright()
 	}
 	return notice;
 }
+
+#if defined(VISUAL)
+void check_intr()
+{
+	extern int recv_intr;
+	if ( recv_intr ) {
+		if ( recv_intr == 1 ) {
+			recv_intr = 0;
+			int_handler(0);
+		} else {
+			recv_intr = 0;
+			ox_usr1_handler(0);
+		}
+	}
+}
+#endif
