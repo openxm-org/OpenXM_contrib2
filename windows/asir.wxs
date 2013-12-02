@@ -75,5 +75,14 @@
         <Property Id="WIXUI_INSTALLDIR" Value="ASIR" />
         <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
         <Icon Id="asirgui.exe" SourceFile="asir\bin\asirgui.exe" />
+        <Upgrade Id="$(var.upgradeID)">
+            <UpgradeVersion Property="PREVIOUSFOUND" OnlyDetect="no" Minimum="1.0.0" IncludeMinimum="yes" Maximum="$(var.productVer)" IncludeMaximum="no" />
+            <UpgradeVersion Property="NEWERFOUND" IncludeMinimum="no" Minimum="$(var.productVer)" OnlyDetect="yes" />
+        </Upgrade>
+        <CustomAction Error="Newer version is already installed." Id="PreventDowngrading" />
+        <InstallExecuteSequence>
+            <Custom Action="PreventDowngrading" After="FindRelatedProducts">NEWERFOUND</Custom>
+            <RemoveExistingProducts After="InstallInitialize">PREVIOUSFOUND</RemoveExistingProducts>
+        </InstallExecuteSequence>
     </Product>
 </Wix>

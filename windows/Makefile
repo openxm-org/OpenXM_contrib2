@@ -1,4 +1,4 @@
-# $OpenXM$
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.1 2013/11/16 08:31:31 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -8,18 +8,18 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 OS = win64
 CANDLE_ARCH = -nologo -arch x64
 PGDIR=ProgramFiles64Folder
-PRODUCTID=D1DCD556-D731-4945-8A6B-FABA98592818
+PRODUCTID=06720E1D-70E6-4BF9-87FE-97CD310D015A
 !else
 OS = win32
 CANDLE_ARCH = -nologo
 PGDIR=ProgramFilesFolder
-PRODUCTID=CB31249B-D861-4D97-9146-08FADCBA312A
+PRODUCTID=F6421937-684B-40CF-8F64-806B0A8B6577
 !endif
 
 UPGRADEID=B7A582F5-0484-4030-9D38-BFAE00707F0D
-PRODUCTVER=1.0.0
+PRODUCTVER=1.0.1
 
-TARGET= asir_$(OS).msi
+TARGET= asir$(OS).msi
 SRCS= asir.wxs _lib.wxs _contrib.wxs _help.wxs _share.wxs
 # OBJS= asir.wixobj _lib.wixobj _contrib.wixobj _help.wixobj _share.wixobj
 OBJS= $(SRCS:.wxs=.wixobj)
@@ -30,7 +30,7 @@ CANDLE_FLAGS = $(CANDLE_ARCH) -dprogramfilesDir=$(PGDIR) \
   -dlibDir=asir\lib -dcontribDir=asir\lib-asir-contrib \
   -dhelpDir=asir\help -dshareDir=asir\share 
 LIGHT = light -nologo
-LTFLAGS = -ext WixUIExtension
+LTFLAGS = -ext WixUIExtension -ext WixUtilExtension
 HEAT = heat
 HEATFLAGS = -nologo -gg -g1 -sfrag -srd
 
