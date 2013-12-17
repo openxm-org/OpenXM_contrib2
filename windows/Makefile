@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.1 2013/11/16 08:31:31 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.2 2013/12/02 14:44:23 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -8,16 +8,16 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 OS = win64
 CANDLE_ARCH = -nologo -arch x64
 PGDIR=ProgramFiles64Folder
-PRODUCTID=06720E1D-70E6-4BF9-87FE-97CD310D015A
+PRODUCTID=A73252DC-E8C3-4C0D-8DAE-FA580B948B20
 !else
 OS = win32
 CANDLE_ARCH = -nologo
 PGDIR=ProgramFilesFolder
-PRODUCTID=F6421937-684B-40CF-8F64-806B0A8B6577
+PRODUCTID=FC1DC24C-9B40-416D-8C8D-B087B8CE5375
 !endif
 
 UPGRADEID=B7A582F5-0484-4030-9D38-BFAE00707F0D
-PRODUCTVER=1.0.1
+PRODUCTVER=1.0.2
 
 TARGET= asir$(OS).msi
 SRCS= asir.wxs _lib.wxs _contrib.wxs _help.wxs _share.wxs
@@ -46,10 +46,10 @@ msi: $(TARGET)
 
 wxs: $(SRCS)
 
-build_zip:
+zip:
 	@makepkg.bat
 
-$(TARGET): $(OBJS) LICENSE.rtf build_zip
+$(TARGET): $(OBJS) LICENSE.rtf zip
 	$(LIGHT) $(LTFLAGS) -out $(TARGET) $(OBJS)
 
 ## generating wxs files by heat if the directory asir exists

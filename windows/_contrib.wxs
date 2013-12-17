@@ -263,6 +263,9 @@
             <Component Id="cmpF61E7DDCA2B0497A1297AD1D991BD57A" Guid="FE76F6AA-C0C4-4D8F-8398-6F23E1C7D733">
                 <File Id="fil7FFEA67E57D6C7CACF76B0A0481A050D" KeyPath="yes" Source="$(var.contribDir)\tk_cform.rr" />
             </Component>
+            <Component Id="cmp301DA0BF07FDC694224C862E092D05CA" Guid="2BA54D3E-8B68-45A8-A2AE-46E5A97CEC34">
+                <File Id="fil9B6A3B901BCFC0980FDDFB932A0BEC53" KeyPath="yes" Source="$(var.contribDir)\tk_intde-1.rr" />
+            </Component>
             <Component Id="cmp73DAB3216C9E9CC2129561F8359EBA26" Guid="68CA52BF-DAEE-4A5F-86B8-34763CAB99D6">
                 <File Id="filAEEDFDF9EEB3D520463B699B91040E82" KeyPath="yes" Source="$(var.contribDir)\tk_jack.rr" />
             </Component>
