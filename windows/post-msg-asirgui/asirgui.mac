@@ -1,4 +1,4 @@
-// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.6 2013/11/27 04:34:04 takayama Exp $
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.7 2013/11/28 03:02:19 takayama Exp $
 // Keep shift-jis code! 
 //   run "cmd /c "+$asirpath+"cmdasir %f" + " >con"; output debugmsg
 call Main;
@@ -92,6 +92,6 @@ ExecuteSelectedLineByPaste:
   return true;
 
 AbortAsir:
-  run "\""+$asirpath+"cmdasir\" --abort"+" >null";
+  run "\""+$asirpath+"cmdasir\" --abort"+" >nul";
   return true;
 
