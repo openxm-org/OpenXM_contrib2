@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.14 2011/08/10 04:51:58 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.15 2011/08/11 06:25:06 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -76,95 +76,181 @@ unsigned long GetColor(Display *dis, char *color_name)
 	return( near_color.pixel );
 }
 
-void area_print(DISPLAY *display, int **mask, struct canvas *can, int GXcode)
-{
-	int ix, iy;
+void area_print(DISPLAY *display,double **tab,struct canvas *can,int GXcode){
+	int ix,iy,width,height,wc,**mask;
 	XImage *image;
-	unsigned long color, black, white;
-	int wc;
-
+	DRAWABLE pix;
+	unsigned long color,black,white,c2;
+	double *px,*px1,*px2;
+	//GXcode 0:new 1:cp 2:and 3:or 4:xor
+	width=can->width;
+	height=can->height;
+	pix=can->pix;
+	mask=(int **)ALLOCA((width)*sizeof(int *));
+	for(ix=0;ix<width;ix++)mask[ix]=(int *)ALLOCA((height)*sizeof(int));
+	// create mask table values boundary:0 positive:1 negativ:-1
+	for(ix=0;ix<width;ix++)for(iy=0;iy<height;iy++)
+		if((tab[ix][iy]>0)&&(tab[ix+1][iy]>0)&&(tab[ix][iy+1]>0)&&
+			(tab[ix+1][iy+1]>0)) mask[ix][iy]=1;//all postive
+		else if((tab[ix][iy]<0)&&(tab[ix+1][iy]<0)&&(tab[ix][iy+1]<0)&&
+			(tab[ix+1][iy+1]<0)) mask[ix][iy]=-1;//all negativ
+		else mask[ix][iy]=0;//boundary
 	flush();
-	black = GetColor(display, "black");
-	white = GetColor(display, "white");
-	image = XGetImage(display, can->pix, 0, 0, can->width, can->height,
-		-1, ZPixmap);
-	for(iy = 0; iy < can->height; iy++){
-		for(ix = 0; ix < can->width; ix++){
-			color = XGetPixel(image, ix, iy);
-			if (color == white) wc = -1;
-			else if (color == black) wc = 0;
-			else wc = 1;
-			if ( wc != 0 ) {//XPutPixel(image,ix,iy,black);
-				if ( mask[iy][ix] == 0 ) XPutPixel(image, ix, iy, black);
+	black=GetColor(display,"black");
+	white=GetColor(display,"white");
+	set_drawcolor(can->color);
+	color=can->color;
+	image=XGetImage(display,pix,0,0,width,height,-1,ZPixmap);
+	for(ix=0;ix<width;ix++){
+		for(iy=0;iy<height;iy++){
+			c2=XGetPixel(image,ix,height-iy-1);
+			if(c2==white)wc=-1;
+			else if(c2==black)wc=0;
+			else wc=1;
+			if(wc!=0){//XPutPixel(image,ix,iy,black);
+				if(mask[ix][iy]==0)XPutPixel(image,ix,height-iy-1,black);//boundary
 				else {
-					switch (GXcode) {
-					case 3: /* copy case */
-						if (mask[iy][ix] == 1 ) XPutPixel(image, ix, iy, can->color);
-						else XPutPixel(image, ix, iy, BackPixel);
+					switch (GXcode){
+					case 0: //new window
+					case 1: //cp
+						if(mask[ix][iy]==1)XPutPixel(image,ix,height-iy-1,color);
+						else XPutPixel(image,ix,height-iy-1,BackPixel);
 						break;
-					case 1: /* and case */
-						if ((mask[iy][ix] == 1) && (wc == 1))
-							XPutPixel(image, ix, iy, can->color);
-						else XPutPixel(image, ix, iy, BackPixel);
+					case 2: //and
+						if((mask[ix][iy]==1)&&(wc==1))XPutPixel(image,ix,height-iy-1,color);
+						else XPutPixel(image,ix,height-iy-1,BackPixel);
 						break;
-					case 7: /* or case */
-						if ((mask[iy][ix] == 1) || (wc == 1))
-							XPutPixel(image, ix, iy, can->color);
-						else XPutPixel(image, ix, iy, BackPixel);
+					case 3: //or
+						if((mask[ix][iy]==1)||(wc==1))XPutPixel(image,ix,height-iy-1,color);
+						else XPutPixel(image,ix,height-iy-1,BackPixel);
 						break;
-					case 6: /* xor case */
-						if ((mask[iy][ix] == 1) ^ (wc == 1))
-							XPutPixel(image, ix, iy, can->color);
-						else XPutPixel(image, ix, iy, BackPixel);
+					case 4: //xor
+						if((mask[ix][iy]==1)^(wc==1))XPutPixel(image,ix,height-iy-1,color);
+						else XPutPixel(image,ix,height-iy-1,BackPixel);
 						break;
 					}
 				}
 			}
 		}
 	}
-	XPutImage(display,can->pix,drawGC,image,0,0,0,0,can->width, can->height);
+	XPutImage(display,pix,drawGC,image,0,0,0,0,width,height);
 	count_and_flush();
+	flush();
+}
+
+void over_print(DISPLAY *display,double **tab,struct canvas *can,int GXcode){
+	int ix,iy,width,height;
+	DRAWABLE pix;
+	double vmin,vmax;
+	//GXcode 0:over 1:cp 2:and 3:or 4:xor
+	pix=can->pix; width=can->width; height=can->height;
+	for(ix=0;ix<width;ix++){
+		for(iy=0;iy<height;iy++){
+			vmax=
+			MAX(MAX(tab[ix][iy],tab[ix][iy+1]),MAX(tab[ix+1][iy],tab[ix+1][iy+1]));
+			vmin=
+			MIN(MIN(tab[ix][iy],tab[ix][iy+1]),MIN(tab[ix+1][iy],tab[ix+1][iy+1]));
+			if(vmin<=0.0&vmax>=0.0)DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+		}
+		count_and_flush();
+	}
 	flush();
 }
 #endif
 
-void if_print(DISPLAY *display,double **tab,struct canvas *can)
-{
+void if_print(DISPLAY *display,double **tab,struct canvas *can,int cond){
 	int ix,iy,width,height;
-	double *px,*px1,*px2;
+	double zst,zed,zsp;
 	DRAWABLE pix;
-
-	if ( can->mode == MODE_CONPLOT ) {
-		con_print(display,tab,can); return;
+	width=can->width; height=can->height; pix=can->pix;
+	if(cond==0){
+		//MODE_IFPLOTB
+		for(iy=0;iy<height-1;iy++)for(ix=0;ix<width-1;ix++)
+			if(tab[ix][iy]==0.0) DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+	} else {
+		//MODE_IFPLOT,MODE_IFPLOTD,MODE_IFPLOTQ
+		for(iy=0;iy<height-1;iy++)for(ix=0;ix<width-1;ix++){
+			if(tab[ix][iy]==0.0) DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+			else if(tab[ix][iy]>0){
+				if(tab[ix+1][iy+1]<0||tab[ix][iy+1]<0||tab[ix+1][iy]<0)
+					DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+			} else if(tab[ix+1][iy+1]>0||tab[ix][iy+1]>0||tab[ix+1][iy]>0)
+				DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+			count_and_flush();
+		}
 	}
 	flush();
-	width = can->width; height = can->height; pix = can->pix;
-	for( ix=0; ix<width-1; ix++ )
-		for(iy=0, px=tab[ix], px1 = tab[ix+1], px2 = px+1;
-			iy<height-1 ;iy++, px++, px1++, px2++ )
-			if ( ((*px >= 0) && ((*px1 <= 0) || (*px2 <= 0))) ||
-				 ((*px <= 0) && ((*px1 >= 0) || (*px2 >= 0))) ) {
+}
+
+void if_printOld(DISPLAY *display,double **tab,struct canvas *can){
+	int i,ix,iy,width,height;
+	double *px,*px1,*px2;
+	double **vmax,**vmin,*zst,zstep,zv,u,l;
+	DRAWABLE pix;
+	POINT *pa,*pa1;
+	struct pa *parray;
+
+	if(can->mode==MODE_CONPLOT){
+		width=can->width;height=can->height;pix=can->pix;
+		//con_print(display,tab,can);
+	  // calc all cell max,min value
+		vmax=((double **)ALLOCA((width+1)*sizeof(double *)));
+		vmin=((double **)ALLOCA((width+1)*sizeof(double *)));
+		for(i=0;i<width;i++){
+			vmax[i]=(double *)ALLOCA((height+1)*sizeof(double));
+			vmin[i]=(double *)ALLOCA((height+1)*sizeof(double));
+		}
+		for(ix=0;ix<width;ix++){
+			for(iy=0;iy<height;iy++){
+				vmax[ix][iy]=
+				MAX(MAX(tab[ix][iy],tab[ix][iy+1]),MAX(tab[ix+1][iy],tab[ix+1][iy+1]));
+				vmin[ix][iy]=
+				MIN(MIN(tab[ix][iy],tab[ix][iy+1]),MIN(tab[ix+1][iy],tab[ix+1][iy+1]));
+			}
+		}
+		if(can->zmax==can->zmin)zstep=(can->vmax-can->vmin)/can->nzstep;
+		else zstep=(can->zmax-can->zmin)/can->nzstep;
+		zst=(double *)ALLOCA((can->nzstep+1)*sizeof(double));
+		zv=can->xmin;
+		for(i=0,zv=can->xmin;i<can->nzstep;zv+=zstep,i++)zst[i]=zv;
+		for(iy=0;iy<height-1;iy++){
+			for(ix=0;ix<width-1;ix++){
+				for(i=0;i<can->nzstep;i++){
+					if(vmin[ix][iy]<=zst[i] && vmax[ix][iy]>=zst[i]){
+						DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+						break;
+					}
+					count_and_flush();
+				}
+			}
+		}
+	} else {
+		width=can->width;height=can->height;pix=can->pix;
+		for(ix=0;ix<width-1;ix++)
+		for(iy=0,px=tab[ix],px1=tab[ix+1],px2=px+1;iy<height-1;
+			iy++,px++,px1++,px2++)
+			if(((*px>=0)&&((*px1<=0)||(*px2<=0)))||
+				((*px<=0)&&((*px1>=0)||(*px2>=0)))){
 				DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
 				count_and_flush();
 			}
+	}
 	flush();
 }
 
 #define MEMORY_DRAWPOINT(a,len,x,y) (((a)[(len)*(y)+((x)>>3)]) |= (1<<((x)&7)))
 
-void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
-{
+void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes){
 	int ix,iy,width,height;
 	double *px,*px1,*px2;
 	unsigned char *array;
 	int scan_len;
-
-	if ( can->mode == MODE_CONPLOT ) {
-		memory_con_print(tab,can,bytes); return;
+	if ( can->mode == MODE_CONPLOT ){
+		memory_con_print(tab,can,bytes);
+		return;
 	}
 	width = can->width; height = can->height;
-
-	/* scan_len = byte length of the scan line */
+	// scan_len = byte length of the scan line
 	scan_len = (width+7)/8;
 	MKBYTEARRAY(*bytes,scan_len*height);
 	array = BDY(*bytes);
@@ -177,55 +263,49 @@ void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
 			}
 }
 
-void con_print(DISPLAY *display,double **tab,struct canvas *can)
-{
-	int ix,iy,iz,width,height,pas,pai,len;
-	double zstep,z;
+void con_print(DISPLAY *display,double **tab,struct canvas *can){
+	int i,ix,iy,width,height;
 	double *px,*px1,*px2;
+	double **vmax,**vmin,*zst,zstep,zv,u,l;
 	DRAWABLE pix;
 	POINT *pa,*pa1;
 	struct pa *parray;
 
-	
-	width = can->width; height = can->height; pix = can->pix;
-	zstep = (can->zmax-can->zmin)/can->nzstep;
-	can->pa = (struct pa *)MALLOC((can->nzstep+1)*sizeof(struct pa));
-	pas = width;
-	pa = (POINT *)ALLOCA(pas*sizeof(POINT));
-	initmarker(can,"Drawing...");
-	for ( z = can->zmin, iz = 0; z <= can->zmax; z += zstep, iz++ ) {
-		marker(can,DIR_Z,iz);
-		pai = 0;	
-		for( ix=0; ix<width-1; ix++ )
-			for(iy=0, px=tab[ix], px1 = tab[ix+1], px2 = px+1;
-				iy<height-1 ;iy++, px++, px1++, px2++ )
-				if ( ((*px >= z) && ((*px1 <= z) || (*px2 <= z))) ||
-				 	 ((*px <= z) && ((*px1 >= z) || (*px2 >= z))) ) {
-					if ( pai == pas ) {
-						pa1 = (POINT *)ALLOCA(2*pas*sizeof(POINT));
-						bcopy((char *)pa,(char *)pa1,pas*sizeof(POINT)); pa = pa1;
-						pas += pas;
-					}
-					XC(pa[pai]) = ix; YC(pa[pai]) = height-iy-1; pai++;
+	width=can->width;height=can->height;pix=can->pix;
+	vmax=((double **)ALLOCA((width+1)*sizeof(double *)));
+	vmin=((double **)ALLOCA((width+1)*sizeof(double *)));
+	for(i=0;i<width;i++){
+		vmax[i]=(double *)ALLOCA((height+1)*sizeof(double));
+		vmin[i]=(double *)ALLOCA((height+1)*sizeof(double));
+	}
+	for(ix=0;ix<width;ix++){
+		for(iy=0;iy<height;iy++){
+			vmax[ix][iy]=
+			MAX(MAX(tab[ix][iy],tab[ix][iy+1]),MAX(tab[ix+1][iy],tab[ix+1][iy+1]));
+			vmin[ix][iy]=
+			MIN(MIN(tab[ix][iy],tab[ix][iy+1]),MIN(tab[ix+1][iy],tab[ix+1][iy+1]));
+		}
+	}
+	if(can->zmax==can->zmin)zstep=(can->vmax-can->vmin)/can->nzstep;
+	else zstep=(can->zmax-can->zmin)/can->nzstep;
+	zst=(double *)ALLOCA((can->nzstep+1)*sizeof(double));
+	zv=can->xmin;
+	for(i=0,zv=can->xmin;i<can->nzstep;zv+=zstep,i++)zst[i]=zv;
+	for(iy=0;iy<height-1;iy++){
+		for(ix=0;ix<width-1;ix++){
+			for(i=0;i<can->nzstep;i++){
+				if(vmin[ix][iy]<=zst[i] && vmax[ix][iy]>=zst[i]){
+					DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+					break;
 				}
-		can->pa[iz].length = pai;
-		if ( pai ) {
-			pa1 = (POINT *)MALLOC(pai*sizeof(POINT));
-			bcopy((char *)pa,(char *)pa1,pai*sizeof(POINT));
-			can->pa[iz].pos = pa1;
+				count_and_flush();
+			}
 		}
 	}
 	flush();
-	for ( parray = can->pa, iz = 0; iz <= can->nzstep; iz++, parray++ )
-		for ( pa = parray->pos, len = parray->length, ix = 0; ix < len; ix++ ) {
-			DRAWPOINT(display,pix,cdrawGC,XC(pa[ix]),YC(pa[ix]));
-			count_and_flush();
-		}
-	flush();
 }
 
-void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
-{
+void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes){
 	int ix,iy,iz,width,height,pas,pai,len;
 	double zstep,z;
 	double *px,*px1,*px2;
@@ -270,8 +350,7 @@ void memory_con_print(double **tab,struct canvas *can,BYTEARRAY *bytes)
 		}
 }
 
-void memory_print(struct canvas *can,BYTEARRAY *bytes)
-{
+void memory_print(struct canvas *can,BYTEARRAY *bytes){
 	int len,scan_len,i;
 	POINT *pa;
 	char *array;
@@ -288,8 +367,7 @@ void memory_print(struct canvas *can,BYTEARRAY *bytes)
 	}
 }
 
-void qif_print(DISPLAY *display,char **tab,struct canvas *can)
-{
+void qif_print(DISPLAY *display,char **tab,struct canvas *can){
 	int ix,iy,width,height;
 	char *px;
 	DRAWABLE pix;
@@ -305,8 +383,7 @@ void qif_print(DISPLAY *display,char **tab,struct canvas *can)
 	flush();
 }
 
-void plot_print(DISPLAY *display,struct canvas *can)
-{
+void plot_print(DISPLAY *display,struct canvas *can){
 	int len;
 	POINT *pa;
 
@@ -325,8 +402,7 @@ void plot_print(DISPLAY *display,struct canvas *can)
 #endif
 }
 
-void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color)
-{
+void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color){
 #if defined(VISUAL)
 	HDC dc;
 
@@ -342,8 +418,8 @@ void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color)
 #endif
 }
 
-void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color)
-{
+void draw_line(
+	DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color){
 #if defined(VISUAL)
 	HDC dc;
 	HPEN pen,oldpen;
@@ -375,8 +451,8 @@ void draw_line(DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int c
 #endif
 }
 
-void draw_character_string(DISPLAY *display,struct canvas *can,int x,int y,char *str,int color)
-{
+void draw_character_string(
+	DISPLAY *display,struct canvas *can,int x,int y,char *str,int color){
 #if defined(VISUAL)
 	HDC dc;
 	COLORREF oldcolor;
@@ -407,8 +483,7 @@ void draw_character_string(DISPLAY *display,struct canvas *can,int x,int y,char 
 
 #define D 5
 
-void pline(DISPLAY *display,struct canvas *can,DRAWABLE d)
-{
+void pline(DISPLAY *display,struct canvas *can,DRAWABLE d){
 	double w,w1,e,n;
 	int x0,y0,x,y,xadj,yadj;
 	char buf[BUFSIZ];
@@ -469,8 +544,7 @@ void pline(DISPLAY *display,struct canvas *can,DRAWABLE d)
 	}
 }
 
-double adjust_scale(double e,double w)
-{
+double adjust_scale(double e,double w){
 	switch ( (int)floor(w/e) ) {
 		case 1:
 			return e/4; break;
@@ -484,8 +558,7 @@ double adjust_scale(double e,double w)
 	}
 }
 
-void initmarker(struct canvas *can,char *message)
-{
+void initmarker(struct canvas *can,char *message){
 #if defined(VISUAL)
 	can->real_can->percentage = 0;
 	can->real_can->prefix = message;
@@ -496,8 +569,7 @@ void initmarker(struct canvas *can,char *message)
 #endif
 }
 
-void marker(struct canvas *can,int dir,int p)
-{
+void marker(struct canvas *can,int dir,int p){
 #if defined(VISUAL)
 	if ( dir == DIR_X )
 		can->real_can->percentage = (int)ceil((float)p/(float)can->real_can->width*100);
@@ -519,8 +591,7 @@ void marker(struct canvas *can,int dir,int p)
 #endif
 }
 
-void define_cursor(WINDOW w,CURSOR cur)
-{
+void define_cursor(WINDOW w,CURSOR cur){
 #if !defined(VISUAL)
 	XDefineCursor(display,w,cur); flush();
 #endif
@@ -533,14 +604,14 @@ static int flush_count;
 #define MAX_COUNT 32
 #endif
 
-void count_and_flush() {
+void count_and_flush(){
 #if !defined(VISUAL)
 	if ( ++flush_count == MAX_COUNT )
 		flush();
 #endif
 }
 
-void flush() {
+void flush(){
 #if !defined(VISUAL)
 	flush_count = 0;
 	XFlush(display);

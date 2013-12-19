@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.21 2006/02/08 02:11:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.22 2011/08/10 04:51:58 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,7 @@ extern int asir_OperandStackSize;
 extern Obj *asir_OperandStack;
 extern int asir_OperandStackPtr;
 
-/* environement is defined in libpari.a */
+// environement is defined in libpari.a
 #if !(PARI_VERSION_CODE > 131588)
 extern jmp_buf environnement;
 #endif
@@ -109,42 +109,34 @@ void ox_plot_main(int argc,char **argv)
 
 #if !defined(VISUAL)
 	ox_asir_init(argc,argv,"ox_plot");
-	use_x = init_plot_display(argc,argv);
-	if ( use_x )
-		ds = ConnectionNumber(display);
-	else
-		fprintf(stderr,"Entering no X mode\n");
+	use_x=init_plot_display(argc,argv);
+	if(use_x) ds=ConnectionNumber(display);
+	else fprintf(stderr,"Entering no X mode\n");
 #endif
-	if ( do_message )
-		fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
+	if(do_message)fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
 
-	if ( SETJMP(ox_env) ) {
-		while ( NEXT(asir_infile) )
-			closecurrentinput();
+	if(SETJMP(ox_env)){
+		while(NEXT(asir_infile))closecurrentinput();
 		reset_current_computation();
 		ox_send_sync(0);
 	}
-	while ( 1 ) {
+	while (1){
 #if defined(VISUAL)
 		process_ox();
 #else
-		if ( ox_data_is_available(0) )
-			process_ox();
-		else if ( use_x ) {
+		if(ox_data_is_available(0)) process_ox();
+		else if(use_x){
 			FD_ZERO(&r);
 			FD_SET(3,&r); FD_SET(ds,&r);
 			select(FD_SETSIZE,&r,NULL,NULL,NULL);
-			if ( FD_ISSET(3,&r) )
-				process_ox();
-			else if ( FD_ISSET(ds,&r) )
-				process_xevent();
+			if(FD_ISSET(3,&r)) process_ox();
+			else if(FD_ISSET(ds,&r)) process_xevent();
 		}
 	}
 #endif
 }
 
-static void process_ox()
-{
+static void process_ox(){
 	int id;
 	unsigned int cmd;
 	Obj obj;
@@ -152,18 +144,15 @@ static void process_ox()
 	unsigned int serial;
 	int ret;
 
-	serial = ox_recv(0,&id,&obj);
-	if ( do_message )
-		fprintf(stderr,"#%d Got %s",serial,name_of_id(id));
-	switch ( id ) {
+	serial=ox_recv(0,&id,&obj);
+	if(do_message) fprintf(stderr,"#%d Got %s",serial,name_of_id(id));
+	switch (id){
 		case OX_COMMAND:
-			cmd = ((USINT)obj)->body;
-			if ( ox_flushing )
-				break;
-			if ( do_message )
-				fprintf(stderr," %s\n",name_of_cmd(cmd));
-			if ( ret = SETJMP(main_env) ) {
-				if ( ret == 1 ) {
+			cmd=((USINT)obj)->body;
+			if(ox_flushing) break;
+			if(do_message) fprintf(stderr," %s\n",name_of_cmd(cmd));
+			if(ret=SETJMP(main_env)){
+				if(ret==1){
 					create_error(&err,serial,LastError,0);
 					asir_push_one((Obj)err);
 				}
@@ -173,36 +162,32 @@ static void process_ox()
 			break;
 		case OX_DATA:
 		case OX_LOCAL_OBJECT_ASIR:
-			if ( ox_flushing )
-				break;
-			if ( do_message )
-				fprintf(stderr," -> data pushed");
+			if(ox_flushing)break;
+			if(do_message)fprintf(stderr," -> data pushed");
 			asir_push_one(obj);
 			break;
 		case OX_SYNC_BALL:
-				asir_end_flush();
+			asir_end_flush();
 			break;
 		default:
 			break;
 	}
-	if ( do_message )
-		fprintf(stderr,"\n");
+	if(do_message)fprintf(stderr,"\n");
 }
 
-static void asir_do_cmd(unsigned int cmd,unsigned int serial)
-{
+static void asir_do_cmd(unsigned int cmd,unsigned int serial){
 	MATHCAP client_mathcap;
 	LIST list;
 	int i;
 	Q q;
 
-	switch ( cmd ) {
+	switch (cmd){
 		case SM_dupErrors:
-			list = asir_GetErrorList();
+			list=asir_GetErrorList();
 			asir_push_one((Obj)list);
 			break;
 		case SM_getsp:
-			i = asir_OperandStackPtr+1;
+			i=asir_OperandStackPtr+1;
 			STOQ(i,q);
 			asir_push_one((Obj)q);
 			break;
@@ -237,7 +222,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 			asir_push_one((Obj)my_mathcap);
 			break;
 		case SM_setMathcap:
-			client_mathcap = (MATHCAP)asir_pop_one();
+			client_mathcap=(MATHCAP)asir_pop_one();
 			store_remote_mathcap(0,client_mathcap);
 			break;
 		case SM_nop:
@@ -246,11 +231,9 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 	}
 }
 
-static void asir_executeFunction(int serial)
-{ 
-	char *func;
-	int argc;
-	int id;
+static void asir_executeFunction(int serial){ 
+	char *fn;
+	int argc,id;
 	FUNC f;
 	Q ret;
 	VL vl;
@@ -258,68 +241,82 @@ static void asir_executeFunction(int serial)
 	NODE n,n1; 
 	LIST bytes;
 
-	func = ((STRING)asir_pop_one())->body;
-	argc = (int)(((USINT)asir_pop_one())->body);
-
-	for ( n = 0; argc; argc-- ) {
+	fn=((STRING)asir_pop_one())->body;
+	argc=(int)(((USINT)asir_pop_one())->body);
+	for(n=0;argc;argc--){
 		NEXTNODE(n,n1);
-		BDY(n1) = (pointer)asir_pop_one();
+		BDY(n1)=(pointer)asir_pop_one();
 	}
-	if ( n )
-		NEXT(n1) = 0;
-	id = -1;
-	if ( !strcmp(func,"plot") ) {
-		id = plot(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"memory_plot") ) {
-		memory_plot(n,&bytes); asir_push_one((Obj)bytes);
-#if defined(INTERVAL)
-	} else if ( !strcmp(func,"itvifplot") ) {
-		id = itvifplot(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"itvplot1") ) {
-		id = itvplot1(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"itvplot2") ) {
-		id = itvplot2(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"itvplot3") ) {
-		id = itvplot3(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"itvplot4") ) {
-		id = itvplot4(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"ineqnover") ) {
-		id = ineqnover(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"ineqn") ) {
-		id = ineqn(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"objcp") ) {
-		id = objcp(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-#endif
-	} else if ( !strcmp(func,"arrayplot") ) {
-		id = arrayplot(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"open_canvas") ) {
-		id = open_canvas(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
-	} else if ( !strcmp(func,"plotover") ) {
+	if(n)NEXT(n1)=0;
+	id=-1;
+	if(!strcmp(fn,"plot")){
+		id=plot(n,MODE_PLOT);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!strcmp(fn,"ifplot")){
+		id=plot(n,MODE_IFPLOT);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!strcmp(fn,"conplot")){
+		id=plot(n,MODE_CONPLOT);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!strcmp(fn,"polarplot")){
+		id=plot(n,MODE_POLARPLOT);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!strcmp(fn,"memory_plot")){
+		memory_plot(n,&bytes);
+		asir_push_one((Obj)bytes);
+	} else if(!strcmp(fn,"arrayplot")){
+		id=arrayplot(n);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!strcmp(fn,"open_canvas")){
+		id=open_canvas(n);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!strcmp(fn,"plotover")){
 		plotover(n);
-	} else if ( !strcmp(func,"drawcircle") ) {
+	} else if(!strcmp(fn,"drawcircle")){
 		drawcircle(n);
-	} else if ( !strcmp(func,"draw_obj") ) {
-		if ( draw_obj(n) < 0 ) {
+	} else if(!strcmp(fn,"draw_obj")){
+		if(draw_obj(n) < 0 ){
 			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}	
-	} else if ( !strcmp(func,"draw_string") ) {
-		if ( draw_string(n) < 0 ) {
+	} else if(!strcmp(fn,"draw_string")){
+		if(draw_string(n) < 0 ){
 			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}
-	} else if ( !strcmp(func,"clear_canvas") ) {
+	} else if(!strcmp(fn,"clear_canvas")){
 		clear_canvas(n);
+// ifplotNG
+	} else if(!strcmp(fn,"objcp")){
+		id=objcp(n);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!(
+		strcmp(fn,"ifplotD")&strcmp(fn,"ifplotQ")&strcmp(fn,"ifplotB")&
+		strcmp(fn,"ineqnD")&strcmp(fn,"ineqnQ")&strcmp(fn,"ineqnB")&
+		strcmp(fn,"conplotD")&strcmp(fn,"conplotQ")&strcmp(fn,"conplotB"))){
+		id=ifplotNG(n,fn);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+	} else if(!(
+		strcmp(fn,"ineqnandD")&strcmp(fn,"ineqnandQ")&strcmp(fn,"ineqnandB")&
+		strcmp(fn,"ineqnorD")&strcmp(fn,"ineqnorQ")&strcmp(fn,"ineqnorB")&
+		strcmp(fn,"ineqnxorD")&strcmp(fn,"ineqnxorQ")&strcmp(fn,"ineqnxorB")&
+		strcmp(fn,"plotoverD")&strcmp(fn,"plotoverQ")&strcmp(fn,"plotoverB"))){
+		id=ifplotOP(n,fn);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+#if defined(INTERVAL)
+	} else if(!strcmp(fn,"itvifplot")){
+		id=ifplotNG(n,fn);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+#endif
 	}
 }

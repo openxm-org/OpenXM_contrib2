@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.13 2005/05/18 03:27:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.14 2011/08/10 04:51:58 saito Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -97,9 +97,29 @@
 #define MODE_PLOT 2
 #define MODE_INTERACTIVE 3
 #define MODE_POLARPLOT 4
-#if defined(INTERVAL)
-#define MODE_INEQNP 5
-#endif
+#define MODE_PLOTOVER 5
+#define MODE_IFPLOTD 6
+#define MODE_IFPLOTQ 7
+#define MODE_IFPLOTB 8
+#define MODE_INEQND 9
+#define MODE_INEQNQ 10
+#define MODE_INEQNB 11
+#define MODE_INEQNANDD 12
+#define MODE_INEQNANDQ 13
+#define MODE_INEQNANDB 14
+#define MODE_INEQNORD 15
+#define MODE_INEQNORQ 16
+#define MODE_INEQNORB 17
+#define MODE_INEQNXORD 18
+#define MODE_INEQNXORQ 19
+#define MODE_INEQNXORB 20
+#define MODE_CONPLOTD 21
+#define MODE_CONPLOTQ 22
+#define MODE_CONPLOTB 23
+#define MODE_ITVIFPLOT 24
+#define MODE_PLOTOVERD 25
+#define MODE_PLOTOVERQ 26
+#define MODE_PLOTOVERB 27
 
 #define DIR_X 0
 #define DIR_Y 1
@@ -188,6 +208,7 @@ struct canvas {
 	double xmin,xmax;
 	double ymin,ymax;
 	double zmin,zmax;
+	double vmin,vmax;
 	int nzstep;
 	Q qxmin,qxmax;
 	Q qymin,qymax;
@@ -195,6 +216,7 @@ struct canvas {
 	/* to register the history in the interactive mode */
 	NODE history;
 	int color;
+	int division;
 };
 
 extern struct canvas *canvas[];
@@ -236,47 +258,45 @@ int numch(VECT,Q,Q);
 void usubstqp(P,Q,Q *);
 void plotcalc(struct canvas *);
 int open_canvas(NODE);
-int plot(NODE);
+int plot(NODE,int);
+int ifplotold(NODE);
+int polarplot(NODE);
+int conplotD(NODE);
 int memory_plot(NODE,LIST *);
 int plotover(NODE);
+int plotoverD(NODE);
 int drawcircle(NODE);
 int draw_obj(NODE);
 int clear_canvas(NODE);
 int arrayplot(NODE);
-#if defined(INTERVAL)
-int itvifplot(NODE);
-int itvplot1(NODE);
-int itvplot2(NODE);
-int itvplot3(NODE);
-int itvplot4(NODE);
-int objcp(NODE);
-int ineqn(NODE);
 int ineqnover(NODE);
 int ineqnand(NODE);
 int ineqnor(NODE);
 int ineqnxor(NODE);
 void ineqnmain(struct canvas *, int, int);
+void conplotmainD(struct canvas *);
 void obj_op(struct canvas *, struct canvas *, int);
-void area_print(DISPLAY *, int **, struct canvas *, int);
-void itvcalc(int **, struct canvas *, int, int);
-void reccalc(P,V,V,int,int,int,int,double*,double*,int, int **, int);
+void area_print(DISPLAY *,double **, struct canvas *, int);
+#if defined(INTERVAL)
+int itvifplot(NODE);
+//int itvplot1(NODE);
+//int itvplot2(NODE);
+//int itvplot3(NODE);
+//int itvplot4(NODE);
+int objcp(NODE);
+int ineqn(NODE);
+void itvcalc(double **, struct canvas *, int);
 void itvplotmain(struct canvas *, int);
-void itvcalc1(int **, struct canvas *, int);
-void itvcalc2(int **, struct canvas *, int);
-void itvcalc3(int **, struct canvas *, int, int);
-void itvcalc4(int **, struct canvas *, int, int);
-void reccalc3(P,V,V,int,int,int,int,double*,double*, int, int **, int);
-void reccalc4(P,V,V,int,int,int,int,double*,double*, int, int **, int);
 void itvplotmain1(struct canvas *);
-void itvplotmain2(struct canvas *);
-void itvplotmain3(struct canvas *, int);
-void itvplotmain4(struct canvas *, int);
 #endif
 void ifplot_resize(struct canvas *,POINT,POINT);
 void plot_resize(struct canvas *,POINT,POINT);
+void ifplotmainOld(struct canvas *);
 void ifplotmain(struct canvas *);
+void ifplotmains(struct canvas *);
 void qifplotmain(struct canvas *);
-void if_print(DISPLAY *,double **,struct canvas *);
+void if_print(DISPLAY *,double **,struct canvas *,int);
+void if_printOld(DISPLAY *,double **,struct canvas *);
 void memory_if_print(double **,struct canvas *,BYTEARRAY *);
 void con_print(DISPLAY *,double **,struct canvas *);
 void memory_con_print(double **,struct canvas *,BYTEARRAY *);
