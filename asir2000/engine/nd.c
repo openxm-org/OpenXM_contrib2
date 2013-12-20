@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.214 2013/09/27 07:00:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.215 2013/12/20 02:02:24 noro Exp $ */
 
 #include "nd.h"
 
@@ -6978,18 +6978,17 @@ int nd_gauss_elim_gz(GZ **mat0,int *sugar,int row,int col,int *colstat)
 {
     int i,j,t,c,rank,inv;
     int *ci,*ri;
-    GZ *dn;
+    GZ dn;
     MAT m,nm;
 
     NEWMAT(m); m->row = row; m->col = col; m->body = (pointer **)mat0;
-	dn = (GZ *)MALLOC(row*sizeof(GZ));
-    rank = gz_generic_gauss_elim2(m,&nm,dn,&ri,&ci);
+    rank = gz_generic_gauss_elim(m,&nm,&dn,&ri,&ci);
     for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ )
             mat0[i][j] = 0;
     c = col-rank;
     for ( i = 0; i < rank; i++ ) {
-        mat0[i][ri[i]] = dn[i];    
+        mat0[i][ri[i]] = dn;    
         for ( j = 0; j < c; j++ )
             mat0[i][ci[j]] = (GZ)BDY(nm)[i][j];
     }
