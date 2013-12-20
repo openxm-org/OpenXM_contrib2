@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.39 2012/12/17 07:20:44 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.40 2013/12/20 02:02:23 noro Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -24,7 +24,7 @@ OX_FETCH      = ${bindir}/oxfetch.sh
 
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           @GCINC@ @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @GCINC@ @PARIINC@ @X_CFLAGS@
 
 GLIB  = @ASIR_GCLIB@
 ALIB  = asm/libasm.a

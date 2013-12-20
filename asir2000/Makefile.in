@@ -279,7 +279,7 @@ GC_PATCH = gc-7.diff gc-7.0-risa.diff
 GC_MASTER_SITE = ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH = ${bindir}/oxfetch.sh
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           @GCINC@ @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @GCINC@ @PARIINC@ @X_CFLAGS@
 
 GLIB = @ASIR_GCLIB@
 ALIB = asm/libasm.a
