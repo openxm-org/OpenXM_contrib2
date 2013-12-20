@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.22 2011/08/10 04:51:58 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.23 2013/12/19 05:48:24 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -292,6 +292,7 @@ static void asir_executeFunction(int serial){
 		}
 	} else if(!strcmp(fn,"clear_canvas")){
 		clear_canvas(n);
+#if defined(INTERVAL)
 // ifplotNG
 	} else if(!strcmp(fn,"objcp")){
 		id=objcp(n);
@@ -312,7 +313,6 @@ static void asir_executeFunction(int serial){
 		id=ifplotOP(n,fn);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-#if defined(INTERVAL)
 	} else if(!strcmp(fn,"itvifplot")){
 		id=ifplotNG(n,fn);
 		STOQ(id,ret);

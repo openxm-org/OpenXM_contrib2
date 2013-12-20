@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.23 2011/08/11 06:25:06 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.24 2013/12/19 05:48:24 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -780,6 +780,7 @@ void ifplotmain(struct canvas *can){
 		calcb(tabe,can,0);
 		if_print(display,tabe,can,0);
 		break;	
+#if defined(INTERVAL)
 	case MODE_INEQND:
 		calc(tabe,can,0);
 		area_print(display,tabe,can,0);
@@ -852,7 +853,6 @@ void ifplotmain(struct canvas *can){
 		calcb(tabe,can,0);
 		over_print(display,tabe,can,0);
 		break;
-#if defined(INTERVAL)
 	case MODE_ITVIFPLOT:
 		itvcalc(tabe,can,1);
 		if_print(display,tabe,can,1);
@@ -864,6 +864,7 @@ void ifplotmain(struct canvas *can){
 	define_cursor(can->window,normalcur);
 }
 
+#if defined(INTERVAL)
 int objcp(NODE arg){
 	int idsrc, idtrg, op_code;
 	struct canvas *cansrc, *cantrg;
@@ -1099,3 +1100,4 @@ int plotoverD(NODE arg){
 #endif
 	return index;
 }
+#endif
