@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/parse/Makefile.am,v 1.7 2007/11/11 08:44:13 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/parse/Makefile.am,v 1.8 2009/02/13 13:21:20 ohara Exp $
 
 incdir      = ${prefix}/include/asir
 inc_HEADERS = comp.h cpp.h parse.h w_stdio.h
@@ -7,7 +7,7 @@ asirdir  = ${prefix}/lib/asir
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/${GC}/include \
-           @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @PARIINC@ @X_CFLAGS@
 
 CLEANFILES         = y.tab.c y.tab.h
 BUILT_SOURCES      = y.tab.c y.tab.h

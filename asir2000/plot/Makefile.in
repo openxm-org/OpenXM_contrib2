@@ -213,7 +213,7 @@ top_srcdir = @top_srcdir@
 asirdir = ${prefix}/lib/asir
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/gc/include \
-           @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @PARIINC@ @X_CFLAGS@
 
 noinst_LIBRARIES = libplot.a
 libplot_a_SOURCES = calc.c if.c plotp.c plotg.c ox_plot.c plotf.c \

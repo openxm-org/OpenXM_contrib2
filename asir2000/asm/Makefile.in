@@ -210,7 +210,7 @@ top_srcdir = @top_srcdir@
 asirdir = ${prefix}/lib/asir
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
               -I${top_srcdir}/gc/include \
-              @PARIINC@ @X_CFLAGS@
+              -I${prefix}/include @PARIINC@ @X_CFLAGS@
 
 ASFLAGS = ${DEFS} ${DEFAULT_INCLUDES} ${INCLUDES}
 SOLARIS_AS = /usr/ccs/bin/as

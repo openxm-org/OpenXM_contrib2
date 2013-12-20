@@ -1,10 +1,10 @@
-## $OpenXM: OpenXM_contrib2/asir2000/engine/Makefile.am,v 1.9 2009/02/13 13:21:19 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/engine/Makefile.am,v 1.10 2013/12/20 02:02:24 noro Exp $
 
 asirdir  = ${prefix}/lib/asir
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/gc/include \
-           @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @PARIINC@ @X_CFLAGS@
 noinst_LIBRARIES = libca.a
 libca_a_SOURCES  = init.c mat.c vect.c str.c dist.c distm.c _distm.c ui.c \
   N.c Q.c QM.c real.c bf.c cplx.c num.c pari.c mi.c lmi.c mt19937.c \

@@ -221,7 +221,7 @@ top_srcdir = @top_srcdir@
 asirdir = ${prefix}/lib/asir
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/gc/include \
-           @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @PARIINC@ @X_CFLAGS@
 
 noinst_LIBRARIES = libfunc.a
 libfunc_a_SOURCES = ftab.c algnum.c array.c cplxnum.c ctrl.c dp.c \

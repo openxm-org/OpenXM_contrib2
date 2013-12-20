@@ -214,7 +214,7 @@ top_srcdir = @top_srcdir@
 asirdir = ${prefix}/lib/asir
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/gc/include \
-           @PARIINC@ @X_CFLAGS@
+           -I${prefix}/include @PARIINC@ @X_CFLAGS@
 
 noinst_LIBRARIES = libio.a
 libio_a_SOURCES = pexpr.c spexpr.c biovar.c bsave.c bload.c io.c sio.c \
