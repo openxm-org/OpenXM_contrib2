@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.63 2013/09/09 07:29:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.64 2013/11/05 02:55:02 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -2353,6 +2353,66 @@ int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat)
 			colstat[j] = 1;
 		if ( i != rank ) {
 			t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+		}
+		pivot = mat[rank];
+		inv = invm(pivot[j],md);
+		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+			if ( *pk ) {
+				if ( *pk >= (unsigned int)md )
+					*pk %= md;
+				DMAR(*pk,inv,0,md,*pk)
+			}
+		for ( i = rank+1; i < row; i++ ) {
+			t = mat[i];
+			if ( a = t[j] )
+				red_by_vect(md,t+j,pivot+j,md-a,col-j);
+		}
+		rank++;
+	}
+	for ( j = col-1, l = rank-1; j >= 0; j-- )
+		if ( colstat[j] ) {
+			pivot = mat[l];
+			for ( i = 0; i < l; i++ ) {
+				t = mat[i];
+				t[j] %= md;
+				if ( a = t[j] )
+					red_by_vect(md,t+j,pivot+j,md-a,col-j);
+			}
+			l--;
+		}
+	for ( j = 0, l = 0; l < rank; j++ )
+		if ( colstat[j] ) {
+			t = mat[l];
+			for ( k = j; k < col; k++ )
+				if ( t[k] >= (unsigned int)md )
+					t[k] %= md;
+			l++;
+		}
+	return rank;
+}
+
+int generic_gauss_elim_mod2(int **mat0,int row,int col,int md,int *colstat,int *rowstat)
+{
+	int i,j,k,l,inv,a,rank;
+	unsigned int *t,*pivot,*pk;
+	unsigned int **mat;
+
+	for ( i = 0; i < row; i++ ) rowstat[i] = i;
+	mat = (unsigned int **)mat0;
+	for ( rank = 0, j = 0; j < col; j++ ) {
+		for ( i = rank; i < row; i++ )
+			mat[i][j] %= md;
+		for ( i = rank; i < row; i++ )
+			if ( mat[i][j] )
+				break;
+		if ( i == row ) {
+			colstat[j] = 0;
+			continue;
+		} else
+			colstat[j] = 1;
+		if ( i != rank ) {
+			t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+			k = rowstat[i]; rowstat[i] = rowstat[rank]; rowstat[rank] = k;
 		}
 		pivot = mat[rank];
 		inv = invm(pivot[j],md);

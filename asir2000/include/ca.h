@@ -45,10 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.83 2013/06/13 18:03:14 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.84 2013/07/31 00:38:12 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <gmp.h>
 
 #if defined(hpux)
 #include <netinet/in.h>
@@ -77,6 +78,7 @@
 #include <sys/types.h>
 typedef caddr_t pointer;
 #endif
+
 
 typedef void * pointer;
 
@@ -144,6 +146,8 @@ typedef void * pointer;
 #define N_GFS 9
 #define N_GFSN 10
 #define N_DA 11
+#define N_GZ 12
+#define N_GQ 13
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
@@ -264,6 +268,19 @@ typedef struct oDAlg {
 	struct oQ *dn;
 } *DAlg;
 
+typedef struct oGZ {
+	short id;
+	char nid;
+	char pad;
+	mpz_t body;
+} *GZ;
+
+typedef struct oGQ {
+	short id;
+	char nid;
+	char pad;
+	mpq_t body;
+} *GQ;
 
 typedef struct oNum {
 	short id;
@@ -803,6 +820,8 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 ((q).b=(unsigned int *)ALLOCA((w)*sizeof(unsigned int)))
 
 /* cell allocators */
+#define NEWGZ(q) ((q)=(GZ)MALLOC(sizeof(struct oGZ)),OID(q)=O_N,NID(q)=N_GZ)
+#define NEWGQ(q) ((q)=(GQ)MALLOC(sizeof(struct oGQ)),OID(q)=O_N,NID(q)=N_GQ)
 #define NEWQ(q) ((q)=(Q)MALLOC(sizeof(struct oQ)),OID(q)=O_N,NID(q)=N_Q)
 #define NEWMQ(q) ((q)=(MQ)MALLOC_ATOMIC(sizeof(struct oMQ)),OID(q)=O_N,NID(q)=N_M)
 #define NEWGFS(q) ((q)=(GFS)MALLOC_ATOMIC(sizeof(struct oGFS)),OID(q)=O_N,NID(q)=N_GFS)
@@ -2642,3 +2661,59 @@ void addnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
 void pwrnbp(VL vl,NBP p1,Q n, NBP *rp);
 int compnbp(VL vl,NBP p1,NBP p2);
+
+#define WORDSIZE_IN_N(a) (ABS((a)->_mp_size)*GMP_LIMB_BITS/32)
+
+#define MPZTOGZ(g,q) \
+(!mpz_sgn(g)?((q)=0):(NEWGZ(q),BDY(q)[0]=(g)[0],(q)))
+#define MPQTOGQ(g,q) \
+(!mpq_sgn(g)?((q)=0):(NEWGQ(q),BDY(q)[0]=(g)[0],(q)))
+
+#define INTMPQ(a) (!mpz_cmp_ui(mpq_numref(a),1))
+
+#define UNIGZ(a) ((a)&&NID(a)==N_GZ&&!mpz_cmp_ui(BDY(a),1))
+#define MUNIGZ(a) ((a)&&NID(a)==N_GZ&&!mpz_cmp_si(BDY(a),-1))
+
+#define INTGQ(a) ((a)&&NID(a)==N_GQ&&!mpz_cmp_ui(mpq_denref(BDY(a)),1))
+
+#define UNIGQ(a) \
+((a)&&NID(a)==N_GQ&&!mpz_cmp_ui(mpq_numref(BDY(a)),1)&&!mpz_cmp_ui(mpq_denref(BDY(a)),1))
+#define MUNIGQ(a) \
+((a)&&NID(a)==N_GQ&&!mpz_cmp_si(mpq_numref(BDY(a)),-1)&&!mpz_cmp_ui(mpq_denref(BDY(a)),1))
+
+#define MPZTOMPQ(z,q) \
+(mpq_init(q),mpq_numref(q)[0] = (z)[0],mpz_set_ui(mpq_denref(q),1))
+
+extern mpz_t ONEMPZ;
+extern GZ ONEGZ;
+
+void *gc_realloc(void *p,size_t osize,size_t nsize);
+void gc_free(void *p,size_t size);
+void init_gmpq();
+GQ mpqtogzq(mpq_t a);
+GQ qtogq(Q a);
+Q gqtoq(GQ a);
+GZ ztogz(Q a);
+Q gztoz(GZ a);
+P ptogp(P a);
+P gptop(P a);
+void addgz(GZ n1,GZ n2,GZ *nr);
+void subgz(GZ n1,GZ n2,GZ *nr);
+void mulgz(GZ n1,GZ n2,GZ *nr);
+void divgz(GZ n1,GZ n2,GZ *nq);
+void chsgngz(GZ n,GZ *nr);
+void pwrgz(GZ n1,Q n,GZ *nr);
+int cmpgz(GZ q1,GZ q2);
+void gcdgz(GZ n1,GZ n2,GZ *nq);
+void gcdvgz(VECT v,GZ *q);
+void addgq(GQ n1,GQ n2,GQ *nr);
+void subgq(GQ n1,GQ n2,GQ *nr);
+void mulgq(GQ n1,GQ n2,GQ *nr);
+void divgq(GQ n1,GQ n2,GQ *nq);
+void chsgngq(GQ n,GQ *nr);
+void pwrgq(GQ n1,Q n,GQ *nr);
+int cmpgq(GQ n1,GQ n2);
+void mkgwc(int k,int l,GZ *t);
+void gz_ptozp(P p,int sgn,GQ *c,P *pr);
+void gz_lgp(P p,GZ *g,GZ *l);
+void gz_qltozl(GQ *w,int n,GZ *dvr);

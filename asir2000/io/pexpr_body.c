@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.12 2006/04/16 00:51:14 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.13 2006/08/27 22:17:28 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -889,6 +889,12 @@ Num q;
 				PUTS("/");
 				PRINTN(NM(dn));
 			}
+			break;
+		case N_GZ:
+			mpz_out_str(OUT,10,BDY((GZ)q));
+			break;
+		case N_GQ:
+			mpq_out_str(OUT,10,BDY((GQ)q));
 			break;
 	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.29 2012/12/17 07:20:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.30 2013/06/13 18:40:31 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -189,6 +189,7 @@ void nglob_init() {
 	init_up2_tab();
 
 	init_lprime();
+	init_gmpq();
 }
 
 extern double GC_get_gctime();

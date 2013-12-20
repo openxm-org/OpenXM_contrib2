@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.29 2013/09/26 00:38:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.30 2013/11/05 11:36:58 ohara Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -47,6 +47,7 @@ typedef struct oNDV {
 typedef union oNDC {
 	int m;
 	Q z;
+	GZ gz;
 	P p;
 	R r;
 	DAlg a;
@@ -142,10 +143,12 @@ extern int *current_module_weight_vector;
 #define HCU(d) ((d)->body->c)
 #define HCM(d) ((d)->body->c.m)
 #define HCQ(d) ((d)->body->c.z)
+#define HCZ(d) ((d)->body->c.gz)
 #define HCP(d) ((d)->body->c.p)
 #define HCA(d) ((d)->body->c.a)
 #define CM(x) ((x)->c.m)
 #define CQ(x) ((x)->c.z)
+#define CZ(x) ((x)->c.gz)
 #define CP(x) ((x)->c.p)
 #define CA(x) ((x)->c.a)
 #define DL(x) ((x)->dl)
@@ -253,7 +256,7 @@ ND_pairs crit_B( ND_pairs d, int s );
 ND_pairs crit_M( ND_pairs d1 );
 ND_pairs crit_F( ND_pairs d1 );
 int crit_2( int dp1, int dp2 );
-int ndv_newps(int m,NDV a,NDV aq);
+int ndv_newps(int m,NDV a,NDV aq,int f4);
 
 /* top level functions */
 void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
@@ -316,6 +319,7 @@ EPOS nd_create_epos(struct order_spec *ord);
 int nd_get_exporigin(struct order_spec *ord);
 void ndv_mod(int mod,NDV p);
 NDV ndv_dup(int mod,NDV p);
+NDV ndv_symbolic(int mod,NDV p);
 ND nd_dup(ND p);
 
 /* ND functions */
@@ -341,6 +345,8 @@ NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0, ND_pairs *
 NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
 	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
+	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
+NODE nd_f4_red_gz_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
 	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 
 /* NDV functions */

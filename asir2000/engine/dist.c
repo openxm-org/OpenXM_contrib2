@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.45 2012/12/17 07:20:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.46 2013/11/05 02:55:03 noro Exp $ 
 */
 #include "ca.h"
 
@@ -82,6 +82,8 @@ void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr);
 void comm_quod(VL vl,DP p1,DP p2,DP *pr);
 void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr);
 void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr);
+int create_order_spec(VL vl,Obj obj,struct order_spec **specp);
+void create_modorder_spec(int id,LIST shift,struct modorder_spec **s);
 
 void order_init()
 {
@@ -91,6 +93,8 @@ void order_init()
 	initd(spec);
 	create_modorder_spec(0,0,&dp_current_modspec);
 }
+
+int has_sfcoef_p(P f);
 
 int has_sfcoef(DP f)
 {
@@ -185,7 +189,6 @@ void initd(struct order_spec *spec)
 
 void ptod(VL vl,VL dvl,P p,DP *pr)
 {
-	int isconst = 0;
 	int n,i,j,k;
 	VL tvl;
 	V v;
@@ -313,7 +316,7 @@ int sugard(MP m)
 void addd(VL vl,DP p1,DP p2,DP *pr)
 {
 	int n;
-	MP m1,m2,mr,mr0;
+	MP m1,m2,mr=0,mr0;
 	P t;
 	DL d;
 
@@ -373,7 +376,7 @@ void addd(VL vl,DP p1,DP p2,DP *pr)
 void symb_addd(DP p1,DP p2,DP *pr)
 {
 	int n;
-	MP m1,m2,mr,mr0;
+	MP m1,m2,mr=0,mr0;
 
 	if ( !p1 )
 		*pr = p2;
@@ -424,8 +427,7 @@ void symb_addd(DP p1,DP p2,DP *pr)
 
 NODE symb_merge(NODE m1,NODE m2,int n)
 {
-	NODE top,prev,cur,m,t;
-	int c,i;
+	NODE top=0,prev,cur,m=0,t;
 	DL d1,d2;
 
 	if ( !m1 )
@@ -610,7 +612,7 @@ void subd(VL vl,DP p1,DP p2,DP *pr)
 
 void chsgnd(DP p,DP *pr)
 {
-	MP m,mr,mr0;
+	MP m,mr=0,mr0;
 	Obj r;
 
 	if ( !p )
@@ -711,7 +713,7 @@ void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr)
 
 void comm_quod(VL vl,DP p1,DP p2,DP *pr)
 {
-	MP m,m0;
+	MP m=0,m0;
 	DP s,t;
 	int i,n,sugar;
 	DL d1,d2,d;
@@ -752,7 +754,7 @@ void comm_quod(VL vl,DP p1,DP p2,DP *pr)
 
 void muldm(VL vl,DP p,MP m0,DP *pr)
 {
-	MP m,mr,mr0;
+	MP m,mr=0,mr0;
 	P c;
 	DL d;
 	int n;
@@ -777,7 +779,7 @@ void muldm(VL vl,DP p,MP m0,DP *pr)
 
 void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr)
 {
-	MP m,mr,mr0;
+	MP m,mr=0,mr0;
 	P c;
 	DL d,tdl;
 	int n,i;
@@ -1029,7 +1031,7 @@ void comm_muld_tab(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1,struct
 
 void muldc(VL vl,DP p,P c,DP *pr)
 {
-	MP m,mr,mr0;
+	MP m,mr=0,mr0;
 
 	if ( !p || !c )
 		*pr = 0;
@@ -1054,7 +1056,7 @@ void muldc(VL vl,DP p,P c,DP *pr)
 
 void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr)
 {
-	MP m,mr,mr0;
+	MP m,mr=0,mr0;
 	DL mdl;
 	int i,n;
 
@@ -1083,7 +1085,7 @@ void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr)
 
 void divsdc(VL vl,DP p,P c,DP *pr)
 {
-	MP m,mr,mr0;
+	MP m,mr=0,mr0;
 
 	if ( !c )
 		error("disvsdc : division by 0");
@@ -1130,9 +1132,10 @@ int compd(VL vl,DP p1,DP p2)
 		return p2 ? -1 : 0;
 	else if ( !p2 )
 		return 1;
-	else if ( NV(p1) != NV(p2) )
+	else if ( NV(p1) != NV(p2) ) {
 		error("compd : size mismatch");
-	else {
+		return 0; /* XXX */
+	} else {
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2);
 			m1 && m2; m1 = NEXT(m1), m2 = NEXT(m2) )
 			if ( (t = (*cmpdl)(n,m1->dl,m2->dl)) ||
@@ -1253,7 +1256,7 @@ int cmpdl_blex(int n,DL d1,DL d2)
 {
 	int c;
 
-	if ( c = cmpdl_lex(n-1,d1,d2) )
+	if ( (c = cmpdl_lex(n-1,d1,d2)) )
 		return c;
 	else {
 		c = d1->d[n-1] - d2->d[n-1];
@@ -1458,8 +1461,8 @@ int cmpdl_drl_zigzag(int n,DL d1,DL d2)
 	else {
 		m = n>>1;
 		for ( i= m - 1, p1 = d1->d, p2 = d2->d; i >= 0; i-- ) {
-			if ( t = p1[m+i] - p2[m+i] ) return t > 0 ? -1 : 1;
-			if ( t = p1[i] - p2[i] ) return t > 0 ? -1 : 1;
+			if ( (t = p1[m+i] - p2[m+i]) ) return t > 0 ? -1 : 1;
+			if ( (t = p1[i] - p2[i]) ) return t > 0 ? -1 : 1;
 		}
 		return 0;
 	}
@@ -1493,8 +1496,8 @@ int cmpdl_homo_ww_drl_zigzag(int n,DL d1,DL d2)
 		return -1;
 
 	for ( i= m - 1, p1 = d1->d, p2 = d2->d; i >= 0; i-- ) {
-		if ( t = p1[m+i] - p2[m+i] ) return t > 0 ? -1 : 1;
-		if ( t = p1[i] - p2[i] ) return t > 0 ? -1 : 1;
+		if ( (t = p1[m+i] - p2[m+i]) ) return t > 0 ? -1 : 1;
+		if ( (t = p1[i] - p2[i]) ) return t > 0 ? -1 : 1;
 	}
 	return 0;
 }
@@ -1702,6 +1705,8 @@ GeoBucket create_bucket()
 	return g;
 }
 
+int length(NODE d);
+
 void add_bucket(GeoBucket g,NODE d,int nv)
 {
 	int l,k,m;
@@ -1825,12 +1830,13 @@ int compdv(VL vl,DPV p1,DPV p2)
 {
 	int i,t,len;
 
-	if ( p1->len != p2->len )
+	if ( p1->len != p2->len ) {
 		error("compdv : size mismatch");
-	else {
+		return 0; /* XXX */
+	} else {
 		len = p1->len;
 		for ( i = 0; i < len; i++ )
-			if ( t = compd(vl,p1->body[i],p2->body[i]) )
+			if ( (t = compd(vl,p1->body[i],p2->body[i])) )
 				return t;
 		return 0;
 	}
@@ -1856,7 +1862,7 @@ int ni_next(int *a,int n)
 
 int comp_nbm(NBM a,NBM b)
 {
-	int d,i,w,ai,bi;
+	int d,i,ai,bi;
 	int *ab,*bb;
 
 	if ( a->d > b->d ) return 1;
@@ -1885,8 +1891,6 @@ NBM mul_nbm(NBM a,NBM b)
 	int ad,bd,d,i,j;
 	int *ab,*bb,*mb;
 	NBM m;
-	NODE r;
-	NBP u;
 
 	ad = a->d; bd = b->d; ab = a->b; bb = b->b;
 	d = ad + bd;
@@ -2079,7 +2083,7 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 
 void addnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 {
-	NODE b1,b2,br,br0;
+	NODE b1,b2,br=0,br0;
 	NBM m1,m2,m;
 	P c;
 
@@ -2136,7 +2140,7 @@ void subnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 
 void chsgnnbp(NBP p,NBP *rp)
 {
-	NODE r0,r,b;
+	NODE r0,r=0,b;
 	NBM m,m1;
 
 	for ( r0 = 0, b = BDY(p); b; b = NEXT(b) ) {
@@ -2187,7 +2191,7 @@ void mulnbp(VL vl,NBP p1,NBP p2, NBP *rp)
 
 void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp)
 {
-	NODE b,r0,r;
+	NODE b,r0,r=0;
 
 	if ( !p ) *rp = 0;
 	else {
@@ -2202,7 +2206,7 @@ void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp)
 
 void mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp)
 {
-	NODE b,r0,r;
+	NODE b,r0,r=0;
 
 	if ( !p ) *rp = 0;
 	else {
