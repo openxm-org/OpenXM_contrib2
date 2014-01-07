@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.9 2005/02/08 16:42:40 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.10 2006/02/05 06:47:03 noro Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -101,30 +101,6 @@ static char	*Interval_dummy;
 
 #define	MID_PRINTF_G	2
 #define	MID_PRINTF_E	3
-
-#undef  N_C
-#undef  N_M
-#undef  N_LM
-#undef  N_GF2N
-#undef  N_GFPN
-#undef  N_GFS
-#undef  N_GFSN
-#undef  N_DA
-#define	N_NEXT_B		(N_B+1)
-#define N_Quad			(N_NEXT_B)
-#define N_IP			(N_NEXT_B+1)
-#define N_IntervalDouble	(N_NEXT_B+2)
-#define N_IntervalQuad		(N_NEXT_B+3)
-#define N_IntervalBigFloat	(N_NEXT_B+4)
-#define N_PRE_C	N_IntervalBigFloat
-#define N_C	(N_NEXT_B+5)
-#define N_M	(N_NEXT_B+6)
-#define N_LM	(N_NEXT_B+7)
-#define N_GF2N	(N_NEXT_B+8)
-#define N_GFPN	(N_NEXT_B+9)
-#define N_GFS	(N_NEXT_B+10)
-#define N_GFSN	(N_NEXT_B+11)
-#define N_DA	(N_NEXT_B+12)
 
 /* data structures */
 struct oItv {

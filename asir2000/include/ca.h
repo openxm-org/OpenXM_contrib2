@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.84 2013/07/31 00:38:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.85 2013/12/20 02:02:24 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,16 +138,28 @@ typedef void * pointer;
 #define N_R 1
 #define N_A 2
 #define N_B 3
-#define N_C 4
-#define N_M 5
-#define N_LM 6
-#define N_GF2N 7
-#define N_GFPN 8
-#define N_GFS 9
-#define N_GFSN 10
-#define N_DA 11
-#define N_GZ 12
-#define N_GQ 13
+#define N_NEXT_B    (N_B)
+#if defined(INTERVAL)
+#define N_Quad	(N_NEXT_B+1)
+#define	N_IP	(N_NEXT_B+2)
+#define N_IntervalDouble	(N_NEXT_B+3)
+#define N_IntervalQuad	(N_NEXT_B+4)
+#define N_IntervalBigFloat	(N_NEXT_B+5)
+#define N_PRE_C	N_IntervalBigFloat
+#define N_BASE (N_NEXT_B+5)
+#else
+#define N_BASE N_NEXT_B
+#endif
+#define N_C (N_BASE+1)
+#define N_M (N_BASE+2)
+#define N_LM (N_BASE+3)
+#define N_GF2N (N_BASE+4)
+#define N_GFPN (N_BASE+5)
+#define N_GFS (N_BASE+6)
+#define N_GFSN (N_BASE+7)
+#define N_DA (N_BASE+8)
+#define N_GZ (N_BASE+9)
+#define N_GQ (N_BASE+10)
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1

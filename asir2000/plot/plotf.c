@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.23 2012/10/04 04:56:39 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.24 2013/12/19 05:48:25 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -854,7 +854,7 @@ void ifplot_mainNG(NODE arg,int fn,Obj *rp){
 			}
 			switch(len){
 			case 2:
-				if(!zrange){
+				if(fn==MODE_CONPLOT){
 					if(thr==0)thr=(Obj)mxgc;
 					MKNODE(n,thr,0);MKNODE(n1,sec,n);MKNODE(n2,frst,n1);MKLIST(zrange,n2);
 				} else geom=list[i];
