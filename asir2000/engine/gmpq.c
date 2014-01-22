@@ -11,17 +11,17 @@ void bshiftgz(GZ a,int n,GZ *r);
 
 void *gc_realloc(void *p,size_t osize,size_t nsize)
 {
-	return (void *)GC_realloc(p,nsize);	
+	return (void *)Risa_GC_realloc(p,nsize);	
 }
 
 void gc_free(void *p,size_t size)
 {
-	GC_free(p);
+	Risa_GC_free(p);
 }
 
 void init_gmpq()
 {
-	mp_set_memory_functions(GC_malloc_atomic,gc_realloc,gc_free);
+	mp_set_memory_functions(Risa_GC_malloc_atomic,gc_realloc,gc_free);
 
 	mpz_init(ONEMPZ); mpz_set_ui(ONEMPZ,1); MPZTOGZ(ONEMPZ,ONEGZ);
 }
