@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.215 2013/12/20 02:02:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.216 2013/12/20 04:35:34 noro Exp $ */
 
 #include "nd.h"
 
@@ -2703,7 +2703,7 @@ int ndv_newps(int m,NDV a,NDV aq,int f4)
     nd_ps[nd_psn] = a;
     if ( aq ) {
         nd_ps_trace[nd_psn] = aq;
-		nd_ps_gz[nd_psn] = ndvtondvgz(aq);
+		if ( !nd_vc ) nd_ps_gz[nd_psn] = ndvtondvgz(aq);
         register_hcf(aq);
         nd_bound[nd_psn] = ndv_compute_bound(aq);
         SG(r) = SG(aq); ndl_copy(HDL(aq),DL(r));
@@ -2711,7 +2711,7 @@ int ndv_newps(int m,NDV a,NDV aq,int f4)
         if ( !m ) register_hcf(a);
         nd_bound[nd_psn] = ndv_compute_bound(a);
         SG(r) = SG(a); ndl_copy(HDL(a),DL(r));
-		if ( !m ) nd_ps_gz[nd_psn] = ndvtondvgz(a);
+		if ( !m && !nd_vc ) nd_ps_gz[nd_psn] = ndvtondvgz(a);
     }
     if ( nd_demand ) {
         if ( aq ) {
@@ -2789,7 +2789,7 @@ int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
         hc = HCU(w[i].p);
         if ( trace ) {
             a = nd_ps_trace[i] = ndv_dup(0,w[i].p);
-			nd_ps_gz[i] = ndvtondvgz(a);
+			if ( !nd_vc ) nd_ps_gz[i] = ndvtondvgz(a);
             if ( !dont_removecont) ndv_removecont(0,a);
             register_hcf(a);
             am = nd_ps[i] = ndv_dup(mod,a);
@@ -2799,7 +2799,7 @@ int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont)
             ndv_removecont(mod,am);
         } else {
             a = nd_ps[i] = ndv_dup(mod,w[i].p);
-			if ( !mod ) nd_ps_gz[i] = ndvtondvgz(a);
+			if ( !mod && !nd_vc ) nd_ps_gz[i] = ndvtondvgz(a);
             if ( mod || !dont_removecont ) ndv_removecont(mod,a);
             if ( !mod ) register_hcf(a);
         }
