@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.216 2013/12/20 04:35:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.217 2014/02/03 02:43:05 noro Exp $ */
 
 #include "nd.h"
 
@@ -6068,21 +6068,22 @@ NODE nd_f4(int m,int **indp)
                 node = BDY((LIST)BDY(tn));
 			    if ( QTOS((Q)ARG0(node)) == sugar ) break;
             }
-            if ( !tn ) error("nd_f4 : inconsistent non-zero list");
-			for ( t = l, ll0 = 0; t; t = NEXT(t) ) {
-                for ( tn = BDY((LIST)ARG1(node)); tn; tn = NEXT(tn) ) {
-				  i1s = QTOS((Q)ARG0(BDY((LIST)BDY(tn))));
-				  i2s = QTOS((Q)ARG1(BDY((LIST)BDY(tn))));
-				  if ( t->i1 == i1s && t->i2 == i2s ) break;
-				}
-			    if ( tn ) {
-				    if ( !ll0 ) ll0 = t;
-					else NEXT(ll) = t;
-					ll = t;
-				}
-            }
-			if ( ll0 ) NEXT(ll) = 0;
-		    l = ll0;
+			if ( tn ) {
+				for ( t = l, ll0 = 0; t; t = NEXT(t) ) {
+                	for ( tn = BDY((LIST)ARG1(node)); tn; tn = NEXT(tn) ) {
+				  	i1s = QTOS((Q)ARG0(BDY((LIST)BDY(tn))));
+				  	i2s = QTOS((Q)ARG1(BDY((LIST)BDY(tn))));
+				  	if ( t->i1 == i1s && t->i2 == i2s ) break;
+					}
+			    	if ( tn ) {
+				    	if ( !ll0 ) ll0 = t;
+						else NEXT(ll) = t;
+						ll = t;
+					}
+            	}
+				if ( ll0 ) NEXT(ll) = 0;
+		    	l = ll0;
+			} else l = 0;
         }
         bucket = create_pbucket();
         stat = nd_sp_f4(m,0,l,bucket);
@@ -7947,6 +7948,7 @@ MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
 	pi0 = QTOS((Q)ARG0(pi)); pi1 = QTOS((Q)ARG1(pi));
 	p[pi0] = c = (ND *)MALLOC(nb*sizeof(ND));
 	ptomp(mod,(P)ARG2(pi),&inv);
+	((MQ)inv)->cont = invm(((MQ)inv)->cont,mod);
 	u = ptond(CO,vv,(P)ONE);
 	HCM(u) = ((MQ)inv)->cont;
 	c[pi1] = u;
@@ -8018,7 +8020,8 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
     pi = BDY((LIST)BDY(t)); 
 	pi0 = QTOS((Q)ARG0(pi)); pi1 = QTOS((Q)ARG1(pi));
 	if ( pi1 == pos ) {
-	  ptomp(mod,(P)ARG2(pi),&inv);
+	  ptomp(mod,(P)ARG2(pi),&inv); 
+	  ((MQ)inv)->cont = invm(((MQ)inv)->cont,mod);
 	  u = ptond(CO,vv,(P)ONE);
 	  HCM(u) = ((MQ)inv)->cont;
 	  p[pi0] = u;
