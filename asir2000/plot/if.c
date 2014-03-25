@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.24 2013/12/19 05:48:24 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.25 2013/12/20 02:27:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -296,7 +296,7 @@ int plotover(NODE arg){
 #if !defined(VISUAL)
 	set_drawcolor(can->color);
 #endif
-	return index;
+	return id;
 }
 
 int drawcircle(NODE arg){
