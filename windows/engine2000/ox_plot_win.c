@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.5 2002/10/02 09:33:32 noro Exp $
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/ox_plot_win.c,v 1.6 2002/10/03 03:05:44 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -206,4 +206,9 @@ void draw_frame0(DRAWABLE d,POINT spos,POINT epos)
 	rect.left = spos.x; rect.top = spos.y;
 	rect.right = epos.x; rect.bottom = epos.y;
 	FrameRect(d,&rect,DrawBrush);
+}
+
+/* dummy function */
+void set_drawcolor(unsigned int c)
+{
 }

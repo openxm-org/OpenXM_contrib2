@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.14 2011/08/10 04:51:58 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.15 2013/12/19 05:48:24 saito Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -252,6 +252,9 @@ struct xcolorForPS {
 void calc(double **,struct canvas *,int);
 double usubstrp(P,double);
 void qcalc(char **,struct canvas *);
+void calcb(double **,struct canvas *,int);
+void calcq(double **,struct canvas *,int);
+void polarplotcalc(struct canvas *);
 void sturmseq(VL,P,VECT *);
 void seproot(VECT,int,int,int *);
 int numch(VECT,Q,Q);
@@ -268,6 +271,7 @@ int plotoverD(NODE);
 int drawcircle(NODE);
 int draw_obj(NODE);
 int clear_canvas(NODE);
+void popup_canvas(int);
 int arrayplot(NODE);
 int ineqnover(NODE);
 int ineqnand(NODE);
@@ -302,6 +306,8 @@ void con_print(DISPLAY *,double **,struct canvas *);
 void memory_con_print(double **,struct canvas *,BYTEARRAY *);
 void qif_print(DISPLAY *,char **,struct canvas *);
 void plot_print(DISPLAY *,struct canvas *);
+void set_drawcolor(unsigned int);
+void draw_character_string(DISPLAY *,struct canvas *,int,int,char *,int);
 void draw_point(DISPLAY *,struct canvas *,int,int,int);
 void draw_line(DISPLAY *,struct canvas *,int,int,int,int,int);
 void pline(DISPLAY *,struct canvas *,DRAWABLE);
