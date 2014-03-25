@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.13 2012/05/30 02:24:33 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.14 2013/11/10 16:18:36 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 SRCDIR=..\..\asir2000
@@ -12,7 +12,15 @@ PARILIB=$(PARIDIR)\libpari.lib
 GCDIR= ..\gc-7.2
 GCLIB= $(GCDIR)\gc.lib
 
-INCLUDES= -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot $(PARIINC)
+GMPDIR= ..\mpir
+GMPINC= -I $(GMPDIR)
+!if "$(ARCH)" == "AMD64"
+GMPLIB= $(GMPDIR)\x64\mpir.lib
+!else
+GMPLIB= $(GMPDIR)\win32\mpir.lib
+!endif
+
+INCLUDES= $(PARIINC) $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
 DEFS= -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS $(PARIDEF)
 CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
@@ -21,7 +29,7 @@ RC=rc
 RFLAGS=-l 0x411 -d NDEBUG
 
 LD=link
-LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -incremental:no -nodefaultlib:libcmt.lib $(ASIRLIB) $(PARILIB) $(GCLIB) ws2_32.lib user32.lib
+LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -incremental:no -nodefaultlib:libcmt.lib $(ASIRLIB) $(PARILIB) $(GCLIB) $(GMPLIB) ws2_32.lib user32.lib
 
 OBJS= engine2000.res ChildView.obj MainFrm.obj StdAfx.obj calc.obj \
   if.obj io.obj ox_asir.obj ox_launch.obj ox_plot.obj ox_plot_win.obj \
