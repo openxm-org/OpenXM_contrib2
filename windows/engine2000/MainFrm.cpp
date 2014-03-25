@@ -6,6 +6,7 @@
 
 #include "MainFrm.h"
 
+#include "gmpxx.h"
 extern "C" {
 #include "ca.h"
 #include "ifplot.h"
