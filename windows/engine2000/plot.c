@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.6 2002/08/02 09:30:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.7 2006/02/08 05:31:37 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,7 +69,7 @@ extern jmp_buf ox_env;
 extern MATHCAP my_mathcap;
 extern char LastError[];
 
-void create_error(ERR *,unsigned int ,char *);
+void create_error(ERR *,unsigned int ,char *,LIST);
 
 void ox_io_init();
 void ox_asir_init(int,char **,char *);
@@ -208,7 +208,7 @@ static void process_ox(int id, Obj obj, unsigned int serial)
 				fprintf(stderr," %s\n",name_of_cmd(cmd));
 			if ( ret = setjmp(main_env) ) {
 				if ( ret == 1 ) {
-					create_error(&err,serial,LastError);
+					create_error(&err,serial,LastError,0);
 					asir_push_one((Obj)err);
 				}
 				break;
@@ -321,7 +321,7 @@ static void asir_executeFunction(int serial)
 		NEXT(n1) = 0;
 	id = -1;
 	if ( !strcmp(func,"plot") ) {
-		id = plot(n);
+		id = plot(n,MODE_PLOT);
 		STOQ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
@@ -335,12 +335,12 @@ static void asir_executeFunction(int serial)
 		drawcircle(n);
 	} else if ( !strcmp(func,"draw_obj") ) {
 		if ( draw_obj(n) < 0 ) {
-			create_error(&err,serial,LastError);
+			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}	
 	} else if ( !strcmp(func,"draw_string") ) {
 		if ( draw_string(n) < 0 ) {
-			create_error(&err,serial,LastError);
+			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}	
 	} else if ( !strcmp(func,"clear_canvas") ) {
