@@ -1,4 +1,4 @@
-// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.7 2013/11/28 03:02:19 takayama Exp $
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.8 2013/12/19 04:24:39 takayama Exp $
 // Keep shift-jis code! 
 //   run "cmd /c "+$asirpath+"cmdasir %f" + " >con"; output debugmsg
 call Main;
@@ -14,6 +14,7 @@ if (result==0) endmacro;
 else if (result == 1) {
   run $asirpath+"asirgui";
 } else if (result == 2) {
+  save ; 
   run "cmd /c \""+$asirpath+"cmdasir\" %f";
 } else if (result == 3) {
   call ExecuteSelectedArea;
