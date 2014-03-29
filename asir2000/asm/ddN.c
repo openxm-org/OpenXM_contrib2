@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.10 2009/03/02 19:01:43 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/ddN.c,v 1.11 2013/11/05 02:55:02 noro Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -54,6 +54,11 @@
 #include "ca.h"
 #include "base.h"
 #include "inline.h"
+
+#if defined(__GNUC__)
+unsigned int divn_1(unsigned int *p,int s,unsigned int d,unsigned int *r)  __attribute__ ((noinline));
+void muln_1(unsigned int *p,int s,unsigned int d,unsigned int *r)  __attribute__ ((noinline));
+#endif
 
 void divn(N n1,N n2,N *nq,N *nr)
 {
