@@ -1,4 +1,4 @@
-// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.9 2014/03/28 04:28:02 takayama Exp $
+// $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asirgui.mac,v 1.10 2014/03/30 01:22:14 takayama Exp $
 // Keep shift-jis code! 
 //   run "cmd /c "+$asirpath+"cmdasir %f" + " >con"; output debugmsg
 call Main;
@@ -35,7 +35,7 @@ ExecuteSelectedArea:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c \""+$asirpath+"cmdasir\" "+$tmp_fname;
+    run "\""+$asirpath+"cmdasir\" "+$tmp_fname+" >nul";
   } else { 
   message "”ÍˆÍ‘I‘ð‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ";
   }
@@ -79,7 +79,7 @@ ExecuteSelectedAreaByPaste:
     $tmp_fname = getenv("TEMP")+"\\cmdasir-tmp-hidemaru.rr";
     run "cmd /c del "+$tmp_fname ;
     call MakeFile $tmp_fname,$s;
-    run "cmd /c \""+$asirpath+"cmdasir\" --paste-contents "+$tmp_fname;
+    run "cmd /c \""+$asirpath+"cmdasir\" --paste-contents "+$tmp_fname + " ";
   } else { 
   message "”ÍˆÍ‘I‘ð‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ";
   }
