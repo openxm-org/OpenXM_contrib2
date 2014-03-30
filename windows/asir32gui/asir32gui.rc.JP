@@ -107,7 +107,7 @@ BEGIN
         MENUITEM "開く(&O)...\tCtrl+O",         ID_FILE_OPEN
         MENUITEM "ログ(&L)",                     ID_FILE_LOG
         MENUITEM SEPARATOR
-        MENUITEM "アプリケーションの終了(&X)",         ID_APP_EXIT
+        MENUITEM "終了(&X)",         ID_APP_EXIT
     END
     POPUP "編集(&E)"
     BEGIN
