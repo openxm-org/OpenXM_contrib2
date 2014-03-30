@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.22 2012/12/17 07:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.23 2013/06/13 18:42:11 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -102,6 +102,7 @@ char *search_executable(char *name);
 
 extern char *asir_libdir;
 extern char *asir_contrib_dir;
+extern char *asir_private_dir;
 extern char *asir_pager;
 extern int main_parser;
 extern JMP_BUF exec_env;
@@ -176,6 +177,14 @@ void env_init() {
 		}
 	}
 
+    asir_private_dir = NULL;
+#if defined(VISUAL)
+    if ( e = getenv("APPDATA") ) {
+        asir_private_dir = (char *)malloc(strlen(e)+strlen("/asir/lib-asir-contrib")+1);
+        sprintf(asir_private_dir,"%s/asir/lib-asir-contrib",e);
+    }
+#endif  
+
 	if ( !(asir_pager = getenv("PAGER")) ) {
 		japanese = 0;
 		if ( (e = getenv("LANGUAGE")) && 
@@ -219,6 +228,7 @@ void env_init() {
 	}
 
 	for ( i = 0; ASIRLOADPATH[i]; i++ );
+	if (asir_private_dir) ASIRLOADPATH[i++] = asir_private_dir;
 	if (asir_contrib_dir) ASIRLOADPATH[i++] = asir_contrib_dir;
 	if (asir_libdir) ASIRLOADPATH[i++] = asir_libdir;
 	ASIRLOADPATH[i] = NULL;

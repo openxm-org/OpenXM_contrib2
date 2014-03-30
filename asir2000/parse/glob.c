@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.83 2012/12/17 07:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.84 2013/11/29 08:21:29 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -84,6 +84,7 @@ JMP_BUF main_env,debug_env,timer_env,exec_env;
 int little_endian,debug_mode,no_debug_on_error;
 char *asir_libdir;
 char *asir_contrib_dir;
+char *asir_private_dir;
 char *asir_pager;
 
 NODE usrf,sysf,noargsysf,ubinf,parif;
