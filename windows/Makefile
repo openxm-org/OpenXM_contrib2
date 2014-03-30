@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.2 2013/12/02 14:44:23 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.3 2013/12/17 19:22:43 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -17,7 +17,7 @@ PRODUCTID=FC1DC24C-9B40-416D-8C8D-B087B8CE5375
 !endif
 
 UPGRADEID=B7A582F5-0484-4030-9D38-BFAE00707F0D
-PRODUCTVER=1.0.2
+PRODUCTVER=1.0.3
 
 TARGET= asir$(OS).msi
 SRCS= asir.wxs _lib.wxs _contrib.wxs _help.wxs _share.wxs

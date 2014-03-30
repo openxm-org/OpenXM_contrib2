@@ -15,7 +15,7 @@
                             </File>
                             <RemoveFile Id="asirgui.hnd" Name="asirgui.hnd" On="uninstall" />
                             <RemoveFile Id="history" Name="history" On="uninstall" />
-                            <Environment Id="ASIR_ROOTDIR" Name="ASIR_ROOTDIR" Value="[ASIR]" Permanent="no" System="no" Action="set" />
+                            <Environment Id="ASIR_ROOTDIR" Name="ASIR_ROOTDIR" Value="[ASIR]" Permanent="no" System="yes" Action="set" />
                         </Component>
                         <Component Id="engine.exe" Guid="1B6281B2-4D9D-47D0-88AE-6977EFEDB6E7">
                             <File Id="ENGINE.EXE" Name="engine.exe" Source="asir\bin\engine.exe" />
@@ -31,6 +31,15 @@
                         </Component>
                         <Component Id="ja.dll" Guid="AC9CAD69-E31C-47A3-AE8B-F11F5F18C327">
                             <File Id="JA.DLL" Name="ja.dll" Source="asir\bin\ja.dll" />
+                        </Component>
+                        <Component Id="mpir.dll" Guid="69B254E7-E98A-465A-8D8A-22593C4820B8">
+                            <File Id="MPIR.DLL" Name="mpir.dll" Source="asir\bin\mpir.dll" />
+                        </Component>
+                        <Component Id="curl.exe" Guid="CC7085F4-0142-4CFD-90A5-AACB606BE2B1">
+                            <File Id="CURL.EXE" Name="curl.exe" Source="asir\bin\curl.exe" />
+                        </Component>
+                        <Component Id="unzip.exe" Guid="B08F4E49-9395-424D-B4C2-109538229540">
+                            <File Id="UNZIP.EXE" Name="unzip.exe" Source="asir\bin\unzip.exe" />
                         </Component>
                     </Directory>
                     <Directory Name="help" Id="HELP">
@@ -67,12 +76,16 @@
             <ComponentRef Id="cpp.exe" />
             <ComponentRef Id="cmdasir.exe" />
             <ComponentRef Id="ja.dll" />
+            <ComponentRef Id="mpir.dll" />
+            <ComponentRef Id="curl.exe" />
+            <ComponentRef Id="unzip.exe" />
             <ComponentRef Id="LICENSE" />
             <ComponentRef Id="ProgramMenuDir" />
         </Feature>
         <UI />
         <UIRef Id="WixUI_InstallDir" />
         <Property Id="WIXUI_INSTALLDIR" Value="ASIR" />
+        <Property Id="ALLUSERS" Value="1" />
         <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
         <Icon Id="asirgui.exe" SourceFile="asir\bin\asirgui.exe" />
         <Upgrade Id="$(var.upgradeID)">

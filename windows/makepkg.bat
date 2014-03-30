@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.2 2013/11/11 04:23:51 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.3 2013/11/16 16:25:48 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -11,8 +11,14 @@ if /i "%Platform%" == "X64" (
 
 mkdir asir\bin asir\help\ja asir\lib asir\lib-asir-contrib asir\share\editor 
 
-for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2000\asir.exe ) do (
+for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2000\asir.exe curl.exe unzip.exe ) do (
   copy /b %%i asir\bin
+)
+
+if /i "%Platform%" == "X64" (
+  copy /b mpir\x64\mpir.dll asir\bin
+) else (
+  copy /b mpir\win32\mpir.dll asir\bin
 )
 
 pushd help
