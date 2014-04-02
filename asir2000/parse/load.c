@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.23 2013/06/13 18:42:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.24 2014/03/30 10:48:16 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -144,44 +144,43 @@ void env_init() {
 	char *getenv();
 	char *oxhome;
 	char rootname[BUFSIZ];
+    size_t len;
+
+	if ( oxhome = getenv("OpenXM_HOME") ) {
+		len = strlen(oxhome);
+	}else {
+#if defined(VISUAL)
+		get_rootdir(rootname,sizeof(rootname));
+		len = strlen(rootname);
+		oxhome = rootname;
+#endif
+	}
 
 	if ( !(asir_libdir = getenv("ASIR_LIBDIR")) ) {
-		if ( oxhome = getenv("OpenXM_HOME") ) {
-			asir_libdir = (char *)malloc(strlen(oxhome)+strlen("/lib/asir")+1);
+		if ( oxhome ) {
+			asir_libdir = (char *)malloc(len+strlen("/lib/asir")+1);
 			sprintf(asir_libdir,"%s/lib/asir",oxhome);
 		} else {
-#if defined(VISUAL)
-			get_rootdir(rootname,sizeof(rootname));
-			asir_libdir = (char *)malloc(strlen(rootname)+strlen("/lib")+1);
-			sprintf(asir_libdir,"%s/lib",rootname);
-#else
 			asir_libdir = (char *)malloc(strlen(ASIR_LIBDIR)+1);
 			strcpy(asir_libdir,ASIR_LIBDIR);
-#endif
 		}
 	}
 
 	if ( !(asir_contrib_dir = getenv("ASIR_CONTRIB_DIR")) ) {
-		if ( oxhome = getenv("OpenXM_HOME") ) {
-			asir_contrib_dir = (char *)malloc(strlen(oxhome)+strlen("/lib/asir-contrib")+1);
+		if ( oxhome ) {
+			asir_contrib_dir = (char *)malloc(len+strlen("/lib/asir-contrib")+1);
 			sprintf(asir_contrib_dir,"%s/lib/asir-contrib",oxhome);
 		} else {
-#if defined(VISUAL)
-			get_rootdir(rootname,sizeof(rootname));
-			asir_contrib_dir = (char *)malloc(strlen(rootname)+strlen("/lib-asir-contrib")+1);
-			sprintf(asir_contrib_dir,"%s/lib-asir-contrib",rootname);
-#else
 			asir_contrib_dir = (char *)malloc(strlen(ASIR_CONTRIB_DIR)+1);
 			strcpy(asir_contrib_dir,ASIR_CONTRIB_DIR);
-#endif
 		}
 	}
 
     asir_private_dir = NULL;
 #if defined(VISUAL)
     if ( e = getenv("APPDATA") ) {
-        asir_private_dir = (char *)malloc(strlen(e)+strlen("/asir/lib-asir-contrib")+1);
-        sprintf(asir_private_dir,"%s/asir/lib-asir-contrib",e);
+        asir_private_dir = (char *)malloc(strlen(e)+strlen("/asir/lib/asir-contrib")+1);
+        sprintf(asir_private_dir,"%s/asir/lib/asir-contrib",e);
     }
 #endif  
 
