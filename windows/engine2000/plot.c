@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.7 2006/02/08 05:31:37 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.8 2014/03/25 19:30:18 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -322,6 +322,9 @@ static void asir_executeFunction(int serial)
 	id = -1;
 	if ( !strcmp(func,"plot") ) {
 		id = plot(n,MODE_PLOT);
+		STOQ(id,ret); asir_push_one((Obj)ret);
+	}else if ( !strcmp(func,"ifplot") ) {
+		id = plot(n,MODE_IFPLOT);
 		STOQ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
