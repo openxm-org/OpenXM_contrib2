@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.24 2014/03/30 10:48:16 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.25 2014/04/02 22:08:29 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -179,8 +179,8 @@ void env_init() {
     asir_private_dir = NULL;
 #if defined(VISUAL)
     if ( e = getenv("APPDATA") ) {
-        asir_private_dir = (char *)malloc(strlen(e)+strlen("/asir/lib/asir-contrib")+1);
-        sprintf(asir_private_dir,"%s/asir/lib/asir-contrib",e);
+        asir_private_dir = (char *)malloc(strlen(e)+strlen("/OpenXM/lib/asir-contrib")+1);
+        sprintf(asir_private_dir,"%s/OpenXM/lib/asir-contrib",e);
     }
 #endif  
 
@@ -230,6 +230,7 @@ void env_init() {
 	if (asir_private_dir) ASIRLOADPATH[i++] = asir_private_dir;
 	if (asir_contrib_dir) ASIRLOADPATH[i++] = asir_contrib_dir;
 	if (asir_libdir) ASIRLOADPATH[i++] = asir_libdir;
+	ASIRLOADPATH[i++] = ".";
 	ASIRLOADPATH[i] = NULL;
 }
 

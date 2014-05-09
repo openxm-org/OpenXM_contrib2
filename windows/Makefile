@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.4 2014/03/30 22:29:46 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.5 2014/03/30 22:33:43 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -27,7 +27,7 @@ OBJS= $(SRCS:.wxs=.wixobj)
 CANDLE = candle -nologo
 CANDLE_FLAGS = $(CANDLE_ARCH) -dprogramfilesDir=$(PGDIR) \
   -dupgradeID=$(UPGRADEID) -dproductID=$(PRODUCTID) -dproductVer=$(PRODUCTVER) \
-  -dlibDir=asir\lib -dcontribDir=asir\lib-asir-contrib \
+  -dlibDir=asir\lib\asir -dcontribDir=asir\lib\asir-contrib \
   -dhelpDir=asir\help -dshareDir=asir\share 
 LIGHT = light -nologo
 LTFLAGS = -ext WixUIExtension -ext WixUtilExtension

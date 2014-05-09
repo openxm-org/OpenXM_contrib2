@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
-        <DirectoryRef Id="LIB">
+        <DirectoryRef Id="LIB_ASIR">
             <Component Id="cmpD66E79040F28846BD3B5B662C9BB2F1B" Guid="DE32A8FF-FA77-4A8B-A517-733942F196A7">
                 <File Id="fil98C1B811E3C641C79AE19293A6072D90" KeyPath="yes" Source="$(var.libDir)\alpi" />
             </Component>

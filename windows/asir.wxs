@@ -45,10 +45,16 @@
                     <Directory Name="help" Id="HELP">
                         <Directory Id="HELP_JA" Name="ja" />
                     </Directory>
-                    <Directory Name="lib" Id="LIB" />
-                    <Directory Name="lib-asir-contrib" Id="LIB_ASIR_CONTRIB" />
+                    <Directory Name="lib" Id="LIB">
+                        <Directory Id="LIB_ASIR" Name="asir" />
+                        <Directory Id="LIB_ASIR_CONTRIB" Name="asir-contrib" />
+                    </Directory>
                     <Directory Name="share" Id="SHARE">
                         <Directory Id="EDITOR" Name="editor" />
+                    </Directory>
+                    <Directory Id="DOC" Name="doc">
+                        <Directory Id="DOC_ASIR2000" Name="asir2000" />
+                        <Directory Id="DOC_ASIR_CONTRIB" Name="asir-contrib" />
                     </Directory>
                     <Component Id="LICENSE" Guid="02A83B99-8E61-499B-BCDB-C25B931EEC36">
                         <File Id="LICENSE" Name="LICENSE" Source="asir\LICENSE" />
