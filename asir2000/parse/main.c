@@ -45,10 +45,19 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.33 2006/09/28 07:43:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.34 2013/12/19 05:48:24 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
+
+#include <stdlib.h>
+#if defined(VISUAL)
+#include <io.h>
+#define R_OK 4
+#else
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 #if defined(PARI)
 #include "genpari.h"
@@ -73,6 +82,50 @@ void set_stacksize();
 
 extern int mpi_nprocs,mpi_myid;
 
+char *find_asirrc()
+{
+	static char name[BUFSIZ];
+	char dir[BUFSIZ];
+	char *env,*env2;
+
+/* if ASIR_CONFIG is set, execute it; else execute .asirrc */
+	env = getenv("ASIR_CONFIG");
+	if( env && !access(env, R_OK) ) {
+		strcpy(name,env);
+		return name;
+	}
+	env = getenv("HOME");
+	if ( env ) {
+		sprintf(name, "%s/.asirrc", env);
+		if (!access(name, R_OK)) {
+			return name;
+		}
+	}
+#if defined(VISUAL)
+	env  = getenv("HOMEDRIVE");
+	env2 = getenv("HOMEPATH");
+	if ( env && env2 ) {
+		sprintf(name, "%s%s/.asirrc", env, env2);
+		if (!access(name, R_OK)) {
+			return name;
+		}
+	}
+	env  = getenv("APPDATA");
+	if ( env ) {
+		sprintf(name, "%s/OpenXM/.asirrc", env);
+		if (!access(name, R_OK)) {
+			return name;
+		}
+	}
+	get_rootdir(dir, BUFSIZ);
+	sprintf(name, "%s/.asirrc", dir);
+	if (!access(name, R_OK)) {
+		return name;
+	}
+#endif
+	return NULL;
+}
+
 #if defined(VISUAL_LIB)
 void Main(int argc,char *argv[])
 #else
@@ -83,8 +136,7 @@ main(int argc,char *argv[])
 #endif
 {
 	int tmp;
-	FILE *ifp;
-	char ifname[BUFSIZ];
+	char *ifname;
 	extern int GC_dont_gc;
 	extern int do_asirrc;
 	extern int do_file;
@@ -92,9 +144,6 @@ main(int argc,char *argv[])
 	extern int asir_setenv;
 	extern FILE *in_fp;
 	extern int *StackBottom;
-	char *getenv();
-	char *homedir;
-	char *ptr;
 #if !defined(VISUAL)
 	char *slash,*bslash,*binname,*p;
 #endif
@@ -176,20 +225,6 @@ main(int argc,char *argv[])
 	reg_sysf();
 #endif
 
-/* if ASIR_CONFIG is set, execute it; else execute .asirrc */
-	if ( ptr = getenv("ASIR_CONFIG") )
-		strcpy(ifname,ptr);
-	else {
-		homedir = getenv("HOME");
-		if ( !homedir ) {
-			char rootname[BUFSIZ];
-
-			get_rootdir(rootname,sizeof(rootname));
-			homedir = rootname;
-		}
-		sprintf(ifname,"%s/." ASIRRCNAME,homedir);
-	}
-
 	if ( do_file ) {
 		asir_infile=NULL;
 		loadasirfile(do_filename);
@@ -198,8 +233,7 @@ main(int argc,char *argv[])
 		input_init(stdin,"stdin");
 	}
 
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		fclose(ifp);
+	if ( do_asirrc && (ifname = find_asirrc()) ) {
 		if ( !SETJMP(main_env) )
 			execasirfile(ifname);
 	}

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.70 2011/01/13 08:00:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.71 2013/06/13 18:42:11 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,6 +55,7 @@
 #include "genpari.h"
 #endif
 
+char *find_asirrc();
 void ox_usr1_handler();
 int asir_ox_init();
 
@@ -939,16 +940,12 @@ Obj asir_peek_one() {
 
 void ox_asir_init(int argc,char **argv,char *servername)
 {
-	char ifname[BUFSIZ];
+	char *ifname;
 	extern int GC_dont_gc;
 	extern int do_asirrc;
 	extern int do_server_in_X11;
 	extern char displayname[];
-	char *getenv();
 	static ox_asir_initialized = 0;
-	FILE *ifp;
-	char *homedir;
-	char *ptr;
 	int do_server_sav;
 #if !defined(VISUAL)
 	int tmp;
@@ -990,25 +987,10 @@ void ox_asir_init(int argc,char **argv,char *servername)
 #if defined(UINIT)
 	reg_sysf();
 #endif
-/* if ASIR_CONFIG is set, execute it; else execute .asirrc */
-	if ( ptr = getenv("ASIR_CONFIG") )
-		strcpy(ifname,ptr);
-	else {
-		homedir = getenv("HOME");
-		if ( !homedir ) {
-			char rootname[BUFSIZ];
-
-			get_rootdir(rootname,sizeof(rootname));
-			homedir = rootname;
-		}
-		sprintf(ifname,"%s/.asirrc",homedir);
-	}
-
 	/* the bottom of the input stack */
 	input_init(0,"string");
 
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		fclose(ifp);
+	if ( do_asirrc && (ifname = find_asirrc()) ) {
 		do_server_sav = do_server_in_X11;
 		do_server_in_X11 = 0;
 		if ( !SETJMP(main_env) )
@@ -1238,13 +1220,11 @@ int asir_ox_peek_cmo_string_length()
 int asir_ox_init(int byteorder)
 {
 	int tmp;
-	char ifname[BUFSIZ];
+	char *ifname;
 	extern int GC_dont_gc;
 	extern int do_asirrc;
 	extern int do_server_in_X11;
-	char *getenv();
 	static ox_asir_initialized = 0;
-	FILE *ifp;
 
 	GC_init();
 #if !defined(VISUAL) && !defined(MPI)
@@ -1277,9 +1257,7 @@ int asir_ox_init(int byteorder)
 	reg_sysf();
 #endif
 	input_init(0,"string");
-	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		fclose(ifp);
+	if ( do_asirrc && (ifname = find_asirrc()) ) {
 		if ( !SETJMP(main_env) )
 			execasirfile(ifname);
 	}
