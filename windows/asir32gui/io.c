@@ -11,7 +11,7 @@
 #define ASIR_KEYNAME "SoftWare\\Fujitsu\\Asir\\1999.03.31"
 
 #define MAXHIST 256
-#define HISTORY "history"
+#define HISTORY "asirgui_history"
 
 static int use_current_dir;
 
@@ -302,8 +302,13 @@ static char history_errmsg[BUFSIZ];
 void init_input_history()
 {
 	char rootdir[BUFSIZ];
-	get_rootdir(rootdir,sizeof(rootdir),history_errmsg);
-	sprintf(history_path,"%s\\bin\\%s",rootdir,HISTORY);
+	char *env = getenv("TEMP");
+	if( env ) {
+		sprintf(history_path,"%s\\%s",env,HISTORY);
+	}else {
+		get_rootdir(rootdir,sizeof(rootdir),history_errmsg);
+		sprintf(history_path,"%s\\bin\\%s",rootdir,HISTORY);
+	}
 	init_hist(MAXHIST);
 }
 

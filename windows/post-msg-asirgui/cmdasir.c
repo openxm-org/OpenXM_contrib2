@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.7 2013/11/27 15:47:18 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.8 2013/11/28 18:53:32 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -178,13 +178,13 @@ FILE *findAsirHandler() {
   char path1[1024];
   char path0[1024];
   char *path[] = { NULL, NULL, "c:/Program files/asir/bin/asirgui.hnd", "c:/Program files (x86)/asir/bin/asirgui.hnd", "c:/asir/bin/asirgui.hnd" }; 
-  sprintf(path0,"%s/asirgui.hnd",(char *)getenv("TEMP"));
+  sprintf(path0,"%s/asirgui.hnd",getenv("TEMP"));
   path[0]=winname2uxname(path0);
   if (getenv("ASIR_ROOTDIR") != NULL) {
-    sprintf(path1,"%s/bin/asirgui.hnd",(char *)getenv("ASIR_ROOTDIR"));
+    sprintf(path1,"%s/bin/asirgui.hnd",getenv("ASIR_ROOTDIR"));
     path[1]=winname2uxname(path1);
   }else{
-    sprintf(path1,"%s/Desktop/asir/bin/asirgui.hnd",(char *)getenv("HOMEPATH"));
+    sprintf(path1,"%s%s/Desktop/asir/bin/asirgui.hnd",getenv("HOMEDRIVE"),getenv("HOMEPATH"));
     path[1]=winname2uxname(path1);
   }
   for(i=0; i<sizeof(path); i++) {

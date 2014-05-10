@@ -734,17 +734,9 @@ BOOL CAsir32guiView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD
 	BOOL ret = CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 	FILE *fp = NULL;
 	char *temp;
-	char rootdir[BUFSIZ], errmsg[BUFSIZ], hndname[_MAX_PATH];
+	char hndname[_MAX_PATH];
 
 	if ( asirgui_kind == ASIRGUI_MAIN ) {
-		if (get_rootdir(rootdir, BUFSIZ, errmsg)) {
-			sprintf(hndname, "%s\\bin\\asirgui.hnd", rootdir);
-			fp = fopen(hndname,"w");
-			if ( fp ) {
-				fprintf(fp,"%d",(unsigned int)theView->m_hWnd);
-				fclose(fp);
-			}
-		}
 		if ( temp = getenv("TEMP") ) {
 			sprintf(hndname,"%s\\asirgui.hnd", temp);
 			fp = fopen(hndname,"w");
