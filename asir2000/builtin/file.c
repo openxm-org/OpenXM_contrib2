@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.29 2013/08/20 14:22:33 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.30 2014/04/02 22:08:29 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,7 +69,6 @@
 #endif
 
 void Pget_rootdir();
-void Pget_asirloadpath();
 void Paccess(),Premove_file();
 void Pbsave_enc(), Pbload_enc();
 
@@ -86,7 +85,6 @@ void Pgetpid();
 
 extern int des_encryption;
 extern char *asir_libdir;
-extern char **ASIRLOADPATH;
 
 struct ftab file_tab[] = {
 	{"fprintf",Pfprintf,-99999999},
@@ -108,7 +106,6 @@ struct ftab file_tab[] = {
 	{"bsave",Pbsave,2},
 	{"bload",Pbload,1},
 	{"get_rootdir",Pget_rootdir,0},
-	{"get_asirloadpath",Pget_asirloadpath,0},
 #if defined(DES_ENC)
 	{"bsave_enc",Pbsave_enc,2},
 	{"bload_enc",Pbload_enc,1},
@@ -586,25 +583,6 @@ void Pget_rootdir(STRING *rp)
 		rootdir.body = DirName;
 	}
 	*rp = &rootdir;
-}
-
-void Pget_asirloadpath(LIST *rp)
-{
-    STRING s;
-    int i;
-    NODE t,prev;
-    if( ASIRLOADPATH[0] == NULL ) {
-        *rp = NULL;
-        return;
-    }
-    for(i=0; ASIRLOADPATH[i]; i++) {
-    }
-    for(t=0,i--; i>=0; i--) {
-        prev=t;
-        MKSTR(s,ASIRLOADPATH[i]);
-        MKNODE(t,s,prev);
-    }
-    MKLIST(*rp,t);
 }
 
 void Pgetpid(Q *rp)
