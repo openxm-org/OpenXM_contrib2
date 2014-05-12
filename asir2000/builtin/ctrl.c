@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.39 2009/02/05 08:37:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.40 2013/01/30 08:03:18 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -85,6 +85,8 @@ extern int show_orderspec;
 extern int no_debug_on_error;
 extern int diag_period;
 extern int weight_check;
+extern char **ASIRLOADPATH;
+extern int ASIRLOADPATH_LEN;
 
 static struct {
 	char *key;
@@ -143,6 +145,9 @@ Q *rp;
 	char *key;
 	char buf[BUFSIZ];
 	char *str;
+	STRING s;
+	NODE node,p;
+	LIST list;
 
 	if ( !arg ) {
 		*rp = 0;
@@ -193,6 +198,41 @@ Q *rp;
 				do_quiet = 0;
 			} else {
 				error("ctrl : prompt : invalid argument");	
+			}
+		}
+		return;
+	} else if ( !strcmp(key,"loadpath") ) {
+		*rp = 0;
+		if ( argc(arg) == 1 ) {
+			if( ASIRLOADPATH[0] ) {
+				for(i=0; ASIRLOADPATH[i]; i++) {
+				}
+				for(i--,p=NULL; i>=0; i--,p=node) {
+					MKSTR(s,ASIRLOADPATH[i]);
+					MKNODE(node,s,p);
+				}
+				MKLIST(list,node);
+				*rp = list;
+			}
+		} else {
+			list = (LIST)ARG1(arg);
+			if ( OID(list) == O_LIST ) {
+				for(i=0,p=BDY(list); p; i++,p=NEXT(p)) {
+					s=(STRING)BDY(p);
+					if(!s || OID(s)!=O_STR) {
+						error("ctrl : loadpath : invalid argument");
+					}
+				}
+				if(i >= ASIRLOADPATH_LEN) {
+					ASIRLOADPATH_LEN = i+1;
+					ASIRLOADPATH = (char **)MALLOC(sizeof(char *)*ASIRLOADPATH_LEN);
+				}
+				for(i=0,p=BDY(list); p; i++,p=NEXT(p)) {
+					ASIRLOADPATH[i] = (char *)BDY((STRING)BDY(p));
+				}
+				ASIRLOADPATH[i] = NULL;
+			}else {
+				error("ctrl : loadpath : invalid argument");
 			}
 		}
 		return;

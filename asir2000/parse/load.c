@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.25 2014/04/02 22:08:29 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.26 2014/05/09 18:32:13 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -80,6 +80,7 @@
 #endif
 
 char **ASIRLOADPATH;
+int ASIRLOADPATH_LEN;
 
 #if defined(VISUAL)
 #define ENVDELIM ';'
@@ -208,7 +209,8 @@ void env_init() {
 			if ( !p )
 				break;
 		}
-		i += 4;
+		i += 5;
+		ASIRLOADPATH_LEN=i;
         ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
 		for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
 		e = getenv("ASIRLOADPATH");
