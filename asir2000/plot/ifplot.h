@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.15 2013/12/19 05:48:24 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.16 2014/03/25 19:24:43 ohara Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -92,34 +92,89 @@
 #define DEFAULTWIDTH 400
 #define DEFAULTHEIGHT 400
 
-#define MODE_IFPLOT 0
-#define MODE_CONPLOT 1
-#define MODE_PLOT 2
-#define MODE_INTERACTIVE 3
-#define MODE_POLARPLOT 4
-#define MODE_PLOTOVER 5
-#define MODE_IFPLOTD 6
-#define MODE_IFPLOTQ 7
-#define MODE_IFPLOTB 8
-#define MODE_INEQND 9
-#define MODE_INEQNQ 10
-#define MODE_INEQNB 11
-#define MODE_INEQNANDD 12
-#define MODE_INEQNANDQ 13
-#define MODE_INEQNANDB 14
-#define MODE_INEQNORD 15
-#define MODE_INEQNORQ 16
-#define MODE_INEQNORB 17
-#define MODE_INEQNXORD 18
-#define MODE_INEQNXORQ 19
-#define MODE_INEQNXORB 20
-#define MODE_CONPLOTD 21
-#define MODE_CONPLOTQ 22
-#define MODE_CONPLOTB 23
-#define MODE_ITVIFPLOT 24
-#define MODE_PLOTOVERD 25
-#define MODE_PLOTOVERQ 26
-#define MODE_PLOTOVERB 27
+#define IFPLOT "ifplot"
+#define CONPLOT "conplot"
+#define PLOT "plot"
+#define INTERACTIVE "interactive"
+#define POLARPLOT "polarplot"
+#define PLOTOVER "plotover"
+#define IFPLOTD "ifplotD"
+#define IFPLOTQ "ifplotQ"
+#define IFPLOTB "ifplotB"
+#define INEQN "ineqn"
+#define INEQND "ineqnD"
+#define INEQNQ "ineqnQ"
+#define INEQNB "ineqnB"
+#define INEQNAND "ineqnand"
+#define INEQNDAND "ineqnDand"
+#define INEQNQAND "ineqnQand"
+#define INEQNBAND "ineqnBand"
+#define INEQNOR "ineqnor"
+#define INEQNDOR "ineqnDor"
+#define INEQNQOR "ineqnQor"
+#define INEQNBOR "ineqnBor"
+#define INEQNXOR "ineqnxor"
+#define INEQNDXOR "ineqnDxor"
+#define INEQNQXOR "ineqnQxor"
+#define INEQNBXOR "ineqnBxor"
+#define CONPLOTD "conplotD"
+#define CONPLOTQ "conplotQ"
+#define CONPLOTB "conplotB"
+#define ITVIFPLOT "itvifplot"
+#define PLOTOVERD "plotoverD"
+#define PLOTOVERQ "plotoverQ"
+#define PLOTOVERB "plotoverB"
+#define MEMORY_IFPLOT "memory_ifplot"
+#define MEMORY_CONPLOT "memory_conplot"
+#define MEMORY_PLOT "memory_plot"
+#define ARRAYPLOT "arrayplot"
+#define OPEN_CANVAS "open_canvas"
+#define DRAWCIRCLE "drawcircle"
+#define DRAW_OBJ "draw_objc"
+#define DRAW_STRING "draw_string"
+#define OBJ_CP "obj_cp"
+#define CLEAR_CANVAS "clear_canvas"
+
+/*
+#define IFPLOT 0
+#define CONPLOT 1
+#define PLOT 2
+#define INTERACTIVE 3
+#define POLARPLOT 4
+#define PLOTOVER 5
+#define IFPLOTD 6
+#define IFPLOTQ 7
+#define IFPLOTB 8
+#define INEQND 9
+#define INEQNQ 10
+#define INEQNB 11
+#define INEQNANDD 12
+#define INEQNANDQ 13
+#define INEQNANDB 14
+#define INEQNORD 15
+#define INEQNORQ 16
+#define INEQNORB 17
+#define INEQNXORD 18
+#define INEQNXORQ 19
+#define INEQNXORB 20
+#define CONPLOTD 21
+#define CONPLOTQ 22
+#define CONPLOTB 23
+#define ITVIFPLOT 24
+#define PLOTOVERD 25
+#define PLOTOVERQ 26
+#define PLOTOVERB 27
+#define MEMORY_IFPLOT 28
+#define MEMORY_CONPLOT 29
+#define MEMORY_PLOT 30
+#define ARRAYPLOT 31
+#define OPEN_CANVAS 32
+#define DRAWCIRCLE 33
+#define DRAW_OBJ 34
+#define DRAW_STRING 35
+#define OBJ_CP 36
+#define CLEAR_CANVAS 37
+*/
 
 #define DIR_X 0
 #define DIR_Y 1
@@ -222,6 +277,8 @@ struct canvas {
 extern struct canvas *canvas[];
 extern struct canvas *closed_canvas[];
 extern struct canvas *current_can;
+extern char* pfn[];
+
 #if defined(INTERVAL)
 extern Pixel BackPixel;
 extern int Itvplot;
@@ -249,19 +306,20 @@ struct xcolorForPS {
 };
 
 /* prototypes */
+int modeNO(char *);
 void calc(double **,struct canvas *,int);
 double usubstrp(P,double);
 void qcalc(char **,struct canvas *);
 void calcb(double **,struct canvas *,int);
 void calcq(double **,struct canvas *,int);
-void polarplotcalc(struct canvas *);
+void polarcalc(struct canvas *);
 void sturmseq(VL,P,VECT *);
 void seproot(VECT,int,int,int *);
 int numch(VECT,Q,Q);
 void usubstqp(P,Q,Q *);
 void plotcalc(struct canvas *);
 int open_canvas(NODE);
-int plot(NODE,int);
+int plot(NODE,char *);
 int ifplotold(NODE);
 int polarplot(NODE);
 int conplotD(NODE);
@@ -270,6 +328,7 @@ int plotover(NODE);
 int plotoverD(NODE);
 int drawcircle(NODE);
 int draw_obj(NODE);
+int draw_string(NODE);
 int clear_canvas(NODE);
 void popup_canvas(int);
 int arrayplot(NODE);
@@ -277,10 +336,20 @@ int ineqnover(NODE);
 int ineqnand(NODE);
 int ineqnor(NODE);
 int ineqnxor(NODE);
+int ifplotOP(NODE,int);
+int ifplotNG(NODE,int);
+int polarplotNG(NODE);
 void ineqnmain(struct canvas *, int, int);
 void conplotmainD(struct canvas *);
 void obj_op(struct canvas *, struct canvas *, int);
 void area_print(DISPLAY *,double **, struct canvas *, int);
+void memory_print(struct canvas *,BYTEARRAY *);
+void over_print(DISPLAY *,double **,struct canvas *,int);
+void polar_print(DISPLAY *,struct canvas *);
+unsigned long GetColor(Display *,char *);
+void Pox_pop_local(NODE,Obj *);
+void Pox_pop_cmo(NODE,Obj *);
+
 #if defined(INTERVAL)
 int itvifplot(NODE);
 //int itvplot1(NODE);
@@ -289,6 +358,7 @@ int itvifplot(NODE);
 //int itvplot4(NODE);
 int objcp(NODE);
 int ineqn(NODE);
+void obj_cp(struct canvas *,struct canvas *,int);
 void itvcalc(double **, struct canvas *, int);
 void itvplotmain(struct canvas *, int);
 void itvplotmain1(struct canvas *);
@@ -317,23 +387,25 @@ void marker(struct canvas *,int,int);
 void define_cursor(WINDOW,CURSOR);
 void count_and_flush();
 void flush();
-
-#if defined(VISUAL)
 int search_canvas();
-int search_active_canvas();
 void create_canvas(struct canvas *can);
-void destroy_canvas(struct canvas *can);
-void clear_pixmap(struct canvas *can);
-void alloc_pixmap(struct canvas *can);
 void copy_to_canvas(struct canvas *can);
-void copy_subimage(struct canvas *subcan,struct canvas *can,POINT pos);
-void draw_wideframe(struct canvas *can,DRAWABLE d);
-void create_brushes();
-void draw_frame0(DRAWABLE d,POINT spos,POINT epos);
-
-void reset_current_computation();
 void set_selection();
 void reset_selection();
 void set_busy();
 void reset_busy();
+void clear_pixmap(struct canvas *can);
+void alloc_pixmap(struct canvas *can);
+void copy_subimage(struct canvas *subcan,struct canvas *can,POINT pos);
+int init_plot_display(int,char **);
+void reset_current_computation();
+void process_xevent();
+
+#if defined(VISUAL)
+int search_active_canvas();
+void destroy_canvas(struct canvas *can);
+void draw_wideframe(struct canvas *can,DRAWABLE d);
+void create_brushes();
+void draw_frame0(DRAWABLE d,POINT spos,POINT epos);
+
 #endif

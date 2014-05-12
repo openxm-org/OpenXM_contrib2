@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.5 2005/07/14 22:46:03 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.6 2011/08/10 04:51:57 saito Exp $
  */
 
 #include "ca.h"
@@ -23,6 +23,11 @@ static void Pcap(NODE, Obj *);
 static void Pwidth(NODE, Obj *);
 static void Pdistance(NODE, Obj *);
 static void Pitvversion(Q *);
+void miditvp(Itv,Num *);
+void absitvp(Itv,Num *);
+int initvd(Num,IntervalDouble);
+int initvp(Num,Itv);
+int itvinitvp(Itv,Itv);
 #endif
 static void Pprintmode(NODE, Obj *);
 
@@ -96,12 +101,15 @@ Pifcheck(NODE arg, Obj *rp)
 		case O_P:
 			poly = (P)BDY(arg);
 			get_vars_recursive((Obj)poly,&vl);
-			for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-				if ( vl0->v->attr == (pointer)V_IND )
-					if ( i >= 2 )
+			for(vl0=vl,i=0;vl0;vl0=NEXT(vl0)){
+				if(vl0->v->attr==(pointer)V_IND){
+					if(i>=2){
 						error("ifplot : invalid argument");
-					else
-						v[i++] = vl0->v;
+					} else {
+						v[i++]=vl0->v;
+					}
+				}
+			}
 			break;
 		case O_LIST:
 			list = (LIST)BDY(arg);
@@ -630,8 +638,8 @@ Pprintmode(NODE arg, Obj *rp)
 	Q	a, r;
 
 	a = (Q)ARG0(arg);
-	if ( !a || NUM(a) && INT(a) ) {
-		l = QTOS(a);
+	if(!a||(NUM(a)&&INT(a))){
+		l=QTOS(a);
 		if ( l < 0 ) l = 0;
 #if defined(INTERVAL)
 		else if ( l > MID_PRINTF_E ) l = 0;

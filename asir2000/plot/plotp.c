@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.15 2011/08/11 06:25:06 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.16 2013/12/19 05:48:25 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -164,11 +164,11 @@ void if_print(DISPLAY *display,double **tab,struct canvas *can,int cond){
 	DRAWABLE pix;
 	width=can->width; height=can->height; pix=can->pix;
 	if(cond==0){
-		//MODE_IFPLOTB
+		//IFPLOTB
 		for(iy=0;iy<height-1;iy++)for(ix=0;ix<width-1;ix++)
 			if(tab[ix][iy]==0.0) DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
-	} else {
-		//MODE_IFPLOT,MODE_IFPLOTD,MODE_IFPLOTQ
+	} else if(cond==1) {
+		//IFPLOT,IFPLOTD,IFPLOTQ
 		for(iy=0;iy<height-1;iy++)for(ix=0;ix<width-1;ix++){
 			if(tab[ix][iy]==0.0) DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
 			else if(tab[ix][iy]>0){
@@ -182,6 +182,48 @@ void if_print(DISPLAY *display,double **tab,struct canvas *can,int cond){
 	flush();
 }
 
+void polar_print(DISPLAY *display,struct canvas *can){
+	int len,color,i,j,x,y;
+	POINT *pa;
+
+	len=can->pa[0].length;
+	color=can->color;
+	pa=can->pa[0].pos;
+#if defined(VISUAL)
+	HDC dc;
+	HPEN pen,oldpen;
+	for(i=1;i<len;i++){
+		j=i-1;
+		if(color){
+			pen=CreatePen(PS_SOLID,1,color);
+			oldpen=SelectObject(can->pix,pen);
+			DRAWLINE(display,can->pix,drawGC,XC(pa[j]),YC(pa[j]),XC(pa[i]),YC(pa[i]));
+			SelectObject(can->pix,oldpen);
+
+			dc = GetDC(can->hwnd);
+			oldpen = SelectObject(dc,pen);
+			DRAWLINE(display,dc,drawGC,XC(pa[j]),YC(pa[j]),XC(pa[i]),YC(pa[i]));
+			SelectObject(dc,oldpen);
+			ReleaseDC(can->hwnd,dc);
+
+			DeleteObject(pen);
+		} else {
+			DRAWLINE(display,can->pix,drawGC,XC(pa[j]),YC(pa[j]),XC(pa[i]),YC(pa[i]));
+			dc = GetDC(can->hwnd);
+			DRAWLINE(display,dc,drawGC,XC(pa[j]),YC(pa[j]),XC(pa[i]),YC(pa[i]));
+			ReleaseDC(can->hwnd,dc);
+		}
+	}
+#else
+	for(i=1;i<len;i++){
+		j=i-1;
+		DRAWLINE(display,can->pix,cdrawGC,XC(pa[j]),YC(pa[j]),XC(pa[i]),YC(pa[i]));
+	}
+	XFlush(display);
+#endif
+}
+
+
 void if_printOld(DISPLAY *display,double **tab,struct canvas *can){
 	int i,ix,iy,width,height;
 	double *px,*px1,*px2;
@@ -190,7 +232,7 @@ void if_printOld(DISPLAY *display,double **tab,struct canvas *can){
 	POINT *pa,*pa1;
 	struct pa *parray;
 
-	if(can->mode==MODE_CONPLOT){
+	if(can->mode==modeNO(CONPLOT)){
 		width=can->width;height=can->height;pix=can->pix;
 		//con_print(display,tab,can);
 	  // calc all cell max,min value
@@ -245,7 +287,7 @@ void memory_if_print(double **tab,struct canvas *can,BYTEARRAY *bytes){
 	double *px,*px1,*px2;
 	unsigned char *array;
 	int scan_len;
-	if ( can->mode == MODE_CONPLOT ){
+	if ( can->mode==modeNO(CONPLOT)){
 		memory_con_print(tab,can,bytes);
 		return;
 	}
@@ -358,7 +400,7 @@ void memory_print(struct canvas *can,BYTEARRAY *bytes){
 	/* scan_len = byte length of the scan line */
 	scan_len = (can->width+7)/8;
 	MKBYTEARRAY(*bytes,scan_len*can->height);
-	array = BDY(*bytes);
+	array = (char*)BDY(*bytes);
 
 	len = can->pa[0].length;
 	pa = can->pa[0].pos;
@@ -490,9 +532,9 @@ void pline(DISPLAY *display,struct canvas *can,DRAWABLE d){
 	double adjust_scale();
 
 	/* XXX : should be cleaned up */
-	if ( can->noaxis || (can->mode == MODE_PLOT && !can->pa) )
+	if ( can->noaxis || (can->mode==modeNO(PLOT)&& !can->pa) )
 		return;
-	if ( can->mode == MODE_INTERACTIVE )
+	if ( can->mode==modeNO(INTERACTIVE))
 		return;
 
 	xadj = yadj = 0;

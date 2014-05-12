@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.23 2013/12/19 05:48:24 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.24 2013/12/20 02:27:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -151,7 +151,8 @@ static void process_ox(){
 			cmd=((USINT)obj)->body;
 			if(ox_flushing) break;
 			if(do_message) fprintf(stderr," %s\n",name_of_cmd(cmd));
-			if(ret=SETJMP(main_env)){
+			ret=SETJMP(main_env);
+			if(ret){
 				if(ret==1){
 					create_error(&err,serial,LastError,0);
 					asir_push_one((Obj)err);
@@ -233,7 +234,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial){
 
 static void asir_executeFunction(int serial){ 
 	char *fn;
-	int argc,id;
+	int argc,id,fno;
 	FUNC f;
 	Q ret;
 	VL vl;
@@ -249,74 +250,99 @@ static void asir_executeFunction(int serial){
 	}
 	if(n)NEXT(n1)=0;
 	id=-1;
-	if(!strcmp(fn,"plot")){
-		id=plot(n,MODE_PLOT);
+	fno=modeNO(fn);
+	switch (fno){
+	case 0://IFPLOTD
+		id=plot(n,IFPLOT);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"ifplot")){
-		id=plot(n,MODE_IFPLOT);
+		break;
+	case 1://CONPLOT
+		id=plot(n,CONPLOT);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"conplot")){
-		id=plot(n,MODE_CONPLOT);
+	case 2://PLOT
+		id=plot(n,PLOT);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"polarplot")){
-		id=plot(n,MODE_POLARPLOT);
+		break;
+	case 4://POLARPLOT
+		id=polarplotNG(n);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"memory_plot")){
+		break;
+	case 30://MEMORY_PLOT
 		memory_plot(n,&bytes);
 		asir_push_one((Obj)bytes);
-	} else if(!strcmp(fn,"arrayplot")){
+		break;
+	case 31://ARRAYPLOT
 		id=arrayplot(n);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"open_canvas")){
+		break;
+	case 32://OPEN_CANVAS
 		id=open_canvas(n);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"plotover")){
+		break;
+	case 5://PLOTOVER
 		plotover(n);
-	} else if(!strcmp(fn,"drawcircle")){
+		break;
+	case 33://DRAWCIRCLE
 		drawcircle(n);
-	} else if(!strcmp(fn,"draw_obj")){
+		break;
+	case 34://DRAW_OBJ
 		if(draw_obj(n) < 0 ){
 			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}	
-	} else if(!strcmp(fn,"draw_string")){
-		if(draw_string(n) < 0 ){
+		break;
+	case 35://DRAW_STRING
+		if(draw_string(n)<0){
 			create_error(&err,serial,LastError,0);
 			asir_push_one((Obj)err);
 		}
-	} else if(!strcmp(fn,"clear_canvas")){
+		break;
+	case 37://CLEAR_CANVAS
 		clear_canvas(n);
+		break;
 #if defined(INTERVAL)
 // ifplotNG
-	} else if(!strcmp(fn,"objcp")){
+	case 36://OBJ_CP
 		id=objcp(n);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!(
-		strcmp(fn,"ifplotD")&strcmp(fn,"ifplotQ")&strcmp(fn,"ifplotB")&
-		strcmp(fn,"ineqnD")&strcmp(fn,"ineqnQ")&strcmp(fn,"ineqnB")&
-		strcmp(fn,"conplotD")&strcmp(fn,"conplotQ")&strcmp(fn,"conplotB"))){
-		id=ifplotNG(n,fn);
+		break;
+	case 6://IFPLOTD
+	case 7://IFPLOTQ
+	case 8://IFPLOTB
+	case 9://INEQND
+	case 10://INEQNQ
+	case 11://INEQNB
+	case 21://CONPLOTD
+	case 22://CONPLOTQ
+	case 23://CONPLOTB
+	case 24://ITVIFPLOT
+		id=ifplotNG(n,modeNO(fn));
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!(
-		strcmp(fn,"ineqnandD")&strcmp(fn,"ineqnandQ")&strcmp(fn,"ineqnandB")&
-		strcmp(fn,"ineqnorD")&strcmp(fn,"ineqnorQ")&strcmp(fn,"ineqnorB")&
-		strcmp(fn,"ineqnxorD")&strcmp(fn,"ineqnxorQ")&strcmp(fn,"ineqnxorB")&
-		strcmp(fn,"plotoverD")&strcmp(fn,"plotoverQ")&strcmp(fn,"plotoverB"))){
-		id=ifplotOP(n,fn);
+		break;
+	case 12://INEQNDAND
+	case 13://INEQNQAND
+	case 14://INEQNBAND
+	case 15://INEQNDOR
+	case 16://INEQNQOR
+	case 17://INEQNBOR
+	case 18://INEQNDXOR
+	case 19://INEQNQXOR
+	case 20://INEQNBXOR
+	case 25://PLOTOVERD
+	case 26://PLOTOVERQ
+	case 27://PLOTOVERB
+		id=ifplotOP(n,modeNO(fn));
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
-	} else if(!strcmp(fn,"itvifplot")){
-		id=ifplotNG(n,fn);
-		STOQ(id,ret);
-		asir_push_one((Obj)ret);
+		break;
 #endif
 	}
 }

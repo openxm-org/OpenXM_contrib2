@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.25 2013/12/20 02:27:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.26 2014/03/25 19:22:15 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -102,8 +102,9 @@ int open_canvas(NODE arg){
 
 	wsize=(LIST)ARG0(arg);
 	wname=(STRING)ARG1(arg);
-	can=canvas[id=search_canvas()];
-	can->mode=MODE_INTERACTIVE;
+	id=search_canvas();
+	can=canvas[id];
+	can->mode=modeNO(INTERACTIVE);
 	if(!wsize){
 		can->width=DEFAULTWIDTH;
 		can->height=DEFAULTHEIGHT;
@@ -117,8 +118,7 @@ int open_canvas(NODE arg){
 	return id;
 }
 
-
-int plot(NODE arg,int fn){
+int plot(NODE arg,char *fn){
 	int id;
 	NODE n;
 	struct canvas *can;
@@ -144,12 +144,12 @@ int plot(NODE arg,int fn){
 		can->qymin=(Q)BDY(n);n=NEXT(n);can->qymax=(Q)BDY(n);
 		can->ymin=ToReal(can->qymin);can->ymax=ToReal(can->qymax); 
 	}
-	can->mode=fn;
+	can->mode=modeNO(fn);
 	if(zrange){
 		n=BDY(zrange); can->zmin=ToReal(BDY(n)); 
 		n=NEXT(n);can->zmax=ToReal(BDY(n));
 		n=NEXT(n);
-		if(can->mode==MODE_CONPLOT)can->nzstep=QTOS((Q)BDY(n));
+		if(can->mode==modeNO(CONPLOT))can->nzstep=QTOS((Q)BDY(n));
 		else {
 			can->vx=VR((P)BDY(BDY(zrange)));
 			can->nzstep=QTOS((Q)BDY(n));
@@ -165,14 +165,9 @@ int plot(NODE arg,int fn){
 	if(wname) can->wname = BDY(wname);
 	else can->wname="";
 	can->formula=formula; 
-	if(can->mode==MODE_PLOT){
+	if(can->mode==modeNO(PLOT)){
 		//plot
 		plotcalc(can);
-		create_canvas(can);
-		plot_print(display,can);
-	} else if(can->mode==MODE_POLARPLOT){
-		//polarplot
-		polarplotcalc(can);
 		create_canvas(can);
 		plot_print(display,can);
 	} else {
@@ -229,13 +224,14 @@ int memory_plot(NODE arg,LIST *bytes){
 		if( zrange ){
 			n=NEXT(BDY(zrange));
 			can->zmin=ToReal(BDY(n)); n=NEXT(n); can->zmax=ToReal(BDY(n));
-			if(n=NEXT(n)) can->nzstep=QTOS((Q)BDY(n));
+			n=NEXT(n);
+			if(n) can->nzstep=QTOS((Q)BDY(n));
 			else can->nzstep=MAXGC;
-			can->mode=MODE_CONPLOT;
+			can->mode=modeNO(CONPLOT);
 		} else
-			can->mode=MODE_IFPLOT;
+			can->mode=modeNO(IFPLOT);
 	} else
-		can->mode=MODE_PLOT;
+		can->mode=modeNO(PLOT);
 	if( !wsize ){
 		can->width=DEFAULTWIDTH; can->height=DEFAULTHEIGHT;
 	} else {
@@ -244,7 +240,7 @@ int memory_plot(NODE arg,LIST *bytes){
 	}
 	can->wname="";
 	can->formula=formula; 
-	if( can->mode == MODE_PLOT ){
+	if( can->mode==modeNO(PLOT)){
 		plotcalc(can);
 		memory_print(can,&barray);
 		STOQ(can->width,qw); STOQ(can->height,qh);
@@ -261,6 +257,7 @@ int memory_plot(NODE arg,LIST *bytes){
 		n=mknode(3,qw,qh,barray);
 		MKLIST(*bytes,n);
 	}
+	return 0;
 }
 
 int plotover(NODE arg){
@@ -271,11 +268,10 @@ int plotover(NODE arg){
 
 	id=QTOS((Q)ARG0(arg));
 	formula=(P)ARG1(arg);
-	color=QTOS((Q)ARG2(arg));
-
 	can=canvas[id];
 	orgcolor=can->color;
-	can->color=color;
+	if(argc(arg)==3) can->color=QTOS((Q)ARG2(arg));
+	else can->color=0;
 	get_vars_recursive((Obj)formula,&vl);
 	for(vl0=vl;vl0;vl0=NEXT(vl0))
 		if(vl0->v->attr==(pointer)V_IND)
@@ -287,7 +283,7 @@ int plotover(NODE arg){
 #endif
 	current_can=can;
 	can->formula=formula;
-	if(can->mode==MODE_PLOT){
+	if(can->mode==modeNO(PLOT)){
 		plotcalc(can);
 		plot_print(display,can);
 	} else ifplotmainOld(can);
@@ -423,6 +419,7 @@ int clear_canvas(NODE arg){
 	copy_to_canvas(can);
 	// clear the history
 	can->history=0;
+	return 0;
 }
 
 #define RealtoDbl(r) ((r)?BDY(r):0.0)
@@ -451,7 +448,7 @@ int arrayplot(NODE arg){
 		can->width=QTOS((Q)BDY(BDY(wsize)));
 		can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
 	}
-	can->wname=wname; can->formula=0; can->mode=MODE_PLOT;
+	can->wname=wname; can->formula=0; can->mode=modeNO(PLOT);
 	create_canvas(can);
 	w=array->len;
 	h=can->height;
@@ -651,7 +648,7 @@ void qifplotmain(struct canvas *can)
 }
 
 //*******************ifplotNG
-int ifplotNG(NODE arg,char *func){
+int ifplotNG(NODE arg,int func){
 	int id,orgcolor,color,op_code;
 	NODE n;
 	struct canvas *can;
@@ -698,21 +695,7 @@ int ifplotNG(NODE arg,char *func){
 	else can->wname="";
 	can->formula=formula; 
 	set_drawcolor(color);
-	if(!strcmp(func,"ifplot"))can->mode=MODE_IFPLOT;
-	else if(!strcmp(func,"ifplotD"))can->mode=MODE_IFPLOTD;
-	else if(!strcmp(func,"ifplotQ"))can->mode=MODE_IFPLOTQ;
-	else if(!strcmp(func,"ifplotB"))can->mode=MODE_IFPLOTB;
-	else if(!strcmp(func,"ineqnD"))can->mode=MODE_INEQND;
-	else if(!strcmp(func,"ineqnQ"))can->mode=MODE_INEQNQ;
-	else if(!strcmp(func,"ineqnB"))can->mode=MODE_INEQNB;
-	else if(!strcmp(func,"conplotD"))can->mode=MODE_CONPLOTD;
-	else if(!strcmp(func,"conplotQ"))can->mode=MODE_CONPLOTQ;
-	else if(!strcmp(func,"conplotB"))can->mode=MODE_CONPLOTB;
-	else if(!strcmp(func,"itvifplot")){
-		can->mode=MODE_ITVIFPLOT;
-		can->division=QTOS((Q)ARG7(arg));
-	}
-	else can->mode=MODE_IFPLOTD;
+	can->mode=func;
 	create_canvas(can);
 	ifplotmain(can);
 	set_drawcolor(orgcolor);
@@ -721,39 +704,39 @@ int ifplotNG(NODE arg,char *func){
 	return id;
 }
 
-int ifplotOP(NODE arg,char *func){
-	//ineqnor[D,Q,B],ineqnand[D,Q,B],ineqnxor[D,Q,b]
+int ifplotOP(NODE arg,int func){
+	//ineqnor[D,Q,B],ineqnand[D,Q,B],ineqnxor[D,Q,b],plotover[D,Q,B]
 	int index,orgcolor,color,op_code;
-	NODE n;
-	struct canvas *can;
 	P formula;
-	//s_id,fname,w_id,poly,color
+	struct canvas *can;
+	VL vl,vl0;
+	NODE n;
+
 	index=QTOS((Q)ARG0(arg));
 	formula=(P)ARG1(arg);
 	color=QTOS((Q)ARG2(arg));
+	// set canvas data
 	can=canvas[index];
 	orgcolor=can->color;
 	can->color=color;
-	// set canvas data
 	can->formula=formula; 
-	if(!strcmp(func,"ineqnandD"))can->mode=MODE_INEQNANDD;
-	else if(!strcmp(func,"ineqnandQ"))can->mode=MODE_INEQNANDQ;
-	else if(!strcmp(func,"ineqnandB"))can->mode=MODE_INEQNANDB;
-	else if(!strcmp(func,"ineqnorD"))can->mode=MODE_INEQNORD;
-	else if(!strcmp(func,"ineqnorQ"))can->mode=MODE_INEQNORQ;
-	else if(!strcmp(func,"ineqnorB"))can->mode=MODE_INEQNORB;
-	else if(!strcmp(func,"ineqnxorD"))can->mode=MODE_INEQNXORD;
-	else if(!strcmp(func,"ineqnxorQ"))can->mode=MODE_INEQNXORQ;
-	else if(!strcmp(func,"ineqnxorB"))can->mode=MODE_INEQNXORB;
-	else if(!strcmp(func,"plotoverD"))can->mode=MODE_PLOTOVERD;
-	else if(!strcmp(func,"plotoverQ"))can->mode=MODE_PLOTOVERQ;
-	else if(!strcmp(func,"plotoverB"))can->mode=MODE_PLOTOVERB;
-	else can->mode=MODE_IFPLOTD;
+	current_can=can;
+	get_vars_recursive((Obj)formula,&vl);
+	for(vl0=vl;vl0;vl0=NEXT(vl0))
+		if(vl0->v->attr==(pointer)V_IND)
+			if(vl->v!=can->vx && vl->v!=can->vy)return -1;
+#if !defined(VISUAL)
+	set_drawcolor(can->color);
+#endif
+	can->mode=func;
 	set_drawcolor(color);
 	ifplotmain(can);
 	set_drawcolor(orgcolor);
 	copy_to_canvas(can);
 	can->color=orgcolor;
+#if !defined(VISUAL)
+	set_drawcolor(can->color);
+#endif
 	return index;
 }
 
@@ -768,94 +751,94 @@ void ifplotmain(struct canvas *can){
 	set_busy(can); set_selection();
 	set_drawcolor(can->color);
 	switch(can->mode){
-	case MODE_IFPLOTD:
+	case 6://IFPLOTD
 		calc(tabe,can,0);
 		if_print(display,tabe,can,1);
 		break;	
-	case MODE_IFPLOTQ:
+	case 7://IFPLOTQ
 		calcq(tabe,can,0);
 		if_print(display,tabe,can,1);
 		break;	
-	case MODE_IFPLOTB:
+	case 8://IFPLOTB
 		calcb(tabe,can,0);
 		if_print(display,tabe,can,0);
 		break;	
 #if defined(INTERVAL)
-	case MODE_INEQND:
+	case 9://INEQND
 		calc(tabe,can,0);
 		area_print(display,tabe,can,0);
 		break;	
-	case MODE_INEQNQ:
+	case 10://INEQNQ
 		calcq(tabe,can,0);
 		area_print(display,tabe,can,0);
 		break;	
-	case MODE_INEQNB:
+	case 11://INEQNB
 		calcb(tabe,can,0);
 		area_print(display,tabe,can,0);
 		break;	
-	case MODE_INEQNANDD:
+	case 12://INEQNFAND
 		calc(tabe,can,0);
-		area_print(display,tabe,can,0);
+		area_print(display,tabe,can,2);
 		break;	
-	case MODE_INEQNANDQ:
+	case 13://INEQNQAND
 		calcq(tabe,can,0);
 		area_print(display,tabe,can,2);
 		break;	
-	case MODE_INEQNANDB:
+	case 14://INEQNBAND
 		calcb(tabe,can,0);
 		area_print(display,tabe,can,2);
 		break;	
-	case MODE_INEQNORD:
+	case 15://INEQNDOR
 		calc(tabe,can,0);
 		area_print(display,tabe,can,3);
 		break;	
-	case MODE_INEQNORQ:
+	case 16://INEQNQOR
 		calcq(tabe,can,0);
 		area_print(display,tabe,can,3);
 		break;	
-	case MODE_INEQNORB:
+	case 17://INEQNBOR
 		calcb(tabe,can,0);
 		area_print(display,tabe,can,3);
 		break;	
-	case MODE_INEQNXORD:
+	case 18://INEQNDXOR
 		calc(tabe,can,0);
 		area_print(display,tabe,can,4);
 		break;	
-	case MODE_INEQNXORQ:
+	case 19://INEQNQXOR
 		calcq(tabe,can,0);
 		area_print(display,tabe,can,4);
 		break;	
-	case MODE_INEQNXORB:
+	case 20://INEQNBXOR
 		calcb(tabe,can,0);
 		area_print(display,tabe,can,4);
 		break;	
-	case MODE_CONPLOTD:
+	case 21://CONPLOTD
 		calc(tabe,can,0);
 		con_print(display,tabe,can);
 		break;
-	case MODE_CONPLOTB:
-		calcb(tabe,can,0);
-		con_print(display,tabe,can);
-		break;
-	case MODE_CONPLOTQ:
+	case 22://CONPLOTQ
 		calcq(tabe,can,0);
 		con_print(display,tabe,can);
 		break;
-	case MODE_PLOTOVERD:
-		calc(tabe,can,0);
-		over_print(display,tabe,can,0);
-		break;
-	case MODE_PLOTOVERQ:
-		calcq(tabe,can,0);
-		over_print(display,tabe,can,0);
-		break;
-	case MODE_PLOTOVERB:
+	case 23://CONPLOTB
 		calcb(tabe,can,0);
-		over_print(display,tabe,can,0);
+		con_print(display,tabe,can);
 		break;
-	case MODE_ITVIFPLOT:
+	case 24://ITVIFPLOT:
 		itvcalc(tabe,can,1);
 		if_print(display,tabe,can,1);
+		break;
+	case 25://PLOTOVERD
+		calc(tabe,can,0);
+		over_print(display,tabe,can,0);
+		break;
+	case 26://PLOTOVERQ:
+		calcq(tabe,can,0);
+		over_print(display,tabe,can,0);
+		break;
+	case 27://PLOTOVERB:
+		calcb(tabe,can,0);
+		over_print(display,tabe,can,0);
 		break;
 #endif
 	}
@@ -962,142 +945,49 @@ void obj_op(struct canvas *cansrc, struct canvas *cantrg, int op){
 	count_and_flush();
 	flush();
 }
-
-//ifplotNG
-/*
-int ineqnover(NODE arg)
-{
-  int id;
-  struct canvas *can;
-  int orgcolor, op_code;
-
-  id = QTOS((Q)ARG0(arg));
-  can = canvas[id];
-  orgcolor = can->color;
-  can->formula = (P)ARG1(arg);
-  can->color   = QTOS((Q)ARG2(arg));
-  op_code      = QTOS((Q)ARG3(arg));
-  can->mode    = MODE_INEQNP;
-  ineqnmain(can, orgcolor, op_code);
-  return id;
-}
-void ineqnmain(struct canvas *can, int orgcolor, int op_code)
-{
-  int **mask;
-  double **tbl;
-  int i,j;
-
-  current_can = can;
-  tbl = (double **)ALLOCA((can->height+1)*sizeof(double *));
-  for ( i = 0; i <= can->height; i++ )
-    tbl[i] = (double *)ALLOCA((can->width+1)*sizeof(double));
-  mask = (int **)ALLOCA(can->height*sizeof(int *));
-  for ( i = 0; i < can->height; i++)
-    mask[i] = (int *)ALLOCA(can->width*sizeof(int));
-
-  define_cursor(can->window,runningcur);
-  set_busy(can); set_selection();
-//  ineqncalc(tbl, can, 1);
-  calc(tab,can,1);
-  for (j = 0; j < can->height; j++){
-    for (i = 0; i < can->width; i++){
-      if ( tbl[j][i] >= 0 ){
-        if ( (tbl[j+1][i] <= 0 ) ||
-          (tbl[j][i+1] <= 0) ||
-          (tbl[j+1][i+1] <= 0) ) mask[j][i] = 0;
-        else mask[j][i] = 1;
-      } else {
-        if( (tbl[j+1][i] >= 0) ||
-          (tbl[j][i+1] >= 0) ||
-          (tbl[j+1][i+1] >= 0) ) mask[j][i] = 0;
-        else mask[j][i] = -1;
-      }
-    }
-  }
-  area_print(display, mask, can, op_code);
-  reset_selection();
-  reset_busy(can);
-  define_cursor(can->window,normalcur);
-#if !defined(VISUAL)
-  set_drawcolor(orgcolor);
-  can->color = orgcolor;
-#endif
-  copy_to_canvas(can);
-}
-*/
 int polarplotNG(NODE arg){
-	int id,color,orgcolor;
+	int i,id,color,orgcolor,width,height;
 	NODE n;
 	struct canvas *can;
 	P formula;
-	LIST xrange,wsize;
+	LIST range,geom;
 	STRING wname;
 	V v;
 
 	formula=(P)ARG0(arg);
-	xrange=(LIST)ARG1(arg);
-	color=QTOS((Q)ARG2(arg));
-	wsize=(LIST)ARG3(arg);
+	color=QTOS((Q)ARG1(arg));
+	range=(LIST)ARG2(arg);
+	geom=(LIST)ARG3(arg);
 	wname=(STRING)ARG4(arg);
 
-	can=canvas[id=search_canvas()];
-	if(xrange){
-		n=BDY(xrange); can->vx=VR((P)BDY(n)); n=NEXT(n);
-		can->qxmin=(Q)BDY(n); n=NEXT(n); can->qxmax=(Q)BDY(n);
-		can->xmin=ToReal(can->qxmin); can->xmax=ToReal(can->qxmax); 
+	id=search_canvas();
+	can=canvas[id];
+	can->mode=modeNO(POLARPLOT);
+	if(range){
+		n=NEXT(BDY(range));
+		can->zmin=ToReal(BDY(n));
+		n=NEXT(n);can->zmax=ToReal(BDY(n));
+		n=NEXT(n);
+		can->vx=VR((P)BDY(BDY(range)));
+		can->nzstep=n?QTOS((Q)BDY(n)):DEFAULTPOLARSTEP;
 	}
-	can->mode=MODE_POLARPLOT;
-	if(!wsize){
-		can->width=DEFAULTWIDTH;
-		can->height=DEFAULTHEIGHT;
-	} else {
-		can->width=QTOS((Q)BDY(BDY(wsize)));
-		can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
+	if(geom){
+		can->width=width=QTOS((Q)BDY(BDY(geom)));
+		can->height=height=QTOS((Q)BDY(NEXT(BDY(geom))));
 	}
 	if(wname)can->wname=BDY(wname);
 	else can->wname="";
 	can->formula=formula; 
 	orgcolor=can->color;
 	can->color=color;
-	polarplotcalc(can);
+	polarcalc(can);
 	create_canvas(can);
-	plot_print(display,can);
+	set_drawcolor(color);
+	polar_print(display,can);
 	can->color=orgcolor;
-	copy_to_canvas(can);
+	set_drawcolor(orgcolor);
+	reset_selection(); reset_busy(can);
+	define_cursor(can->window,normalcur);
 	return id;
-}
-
-int plotoverD(NODE arg){
-	int index, color;
-	P formula;
-	struct canvas *can;
-	VL vl,vl0;
-
-	index=QTOS((Q)ARG0(arg));
-	formula=(P)ARG1(arg);
-	can=canvas[index];
-	color=can->color;
-	if(!can->window)return -1;
-	get_vars_recursive((Obj)formula,&vl);
-	for(vl0=vl;vl0;vl0=NEXT(vl0))
-		if(vl0->v->attr==(pointer)V_IND)
-			if(vl->v!=can->vx && vl->v!=can->vy) return -1;
-	if(argc(arg)== 3)can->color=QTOS((Q)ARG2(arg));
-	else can->color=0;
-#if !defined(VISUAL)
-	set_drawcolor(can->color);
-#endif
-	current_can=can;
-	can->formula=formula;
-	if(can->mode==MODE_PLOT){
-		calcq(can);
-		plot_print(display,can);
-	} else ifplotmain(can);
-	copy_to_canvas(can);
-	can->color=color;
-#if !defined(VISUAL)
-	set_drawcolor(can->color);
-#endif
-	return index;
 }
 #endif

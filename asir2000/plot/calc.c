@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.8 2011/08/10 04:51:58 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.9 2013/12/19 06:04:09 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,8 +60,8 @@
 #endif
 
 void calc(double **tab,struct canvas *can,int nox){
-	//memory_plot,MODE_IFPLOTD,MODE_INEQND,MODE_INEQNANDD,MODE_INEQNORD
-	//MODE_INEQNXORD,conplotmainD
+	//memory_plot,IFPLOTD,INEQND,INEQNANDD,INEQNORD
+	//INEQNXORD,conplotmainD
 	double x,y,xstep,ystep;
 	int ix,iy;
 	Real r,rx,ry;
@@ -93,7 +93,7 @@ void calc(double **tab,struct canvas *can,int nox){
 }
 
 void calcq(double **tab,struct canvas *can,int nox){
-	//MODE_IFPLOTQ,MODE_INEQNQ,MODE_INEQNANDQ,MODE_INEQNORQ,MODE_INEQNXORQ
+	//IFPLOTQ,INEQNQ,INEQNANDQ,INEQNORQ,INEQNXORQ
 	//plotoverD
 	Q dx,dy,xstep,ystep,q1,w,h,c;
 	P g,g1,f1,f2,x,y;
@@ -131,7 +131,7 @@ void calcq(double **tab,struct canvas *can,int nox){
 }
 
 void calcb(double **tab,struct canvas *can,int nox){
-	//MODE_IFPLOTB,MODE_INEQNB,MODE_INEQNANDB,MODE_INEQNORB,MODE_INEQNXORB
+	//IFPLOTB,INEQNB,INEQNANDB,INEQNORB,INEQNXORB
 	Q dx,dy,xstep,ystep,q1,w,h,c;
 	P g,g1,f1,f2,x,y,t,s;
 	int ix,iy,*a,*pa;
@@ -418,11 +418,11 @@ void plotcalc(struct canvas *can){
 	}
 }
 
-void polarplotcalc(struct canvas *can){
+void polarcalc(struct canvas *can){
 	//polarplotNG
 	double xmax,xmin,ymax,ymin,dx,dy,pmin,pstep,tr,p, *tabx,*taby;
 	double usubstrp();
-	int i,nstep,w,h;
+	int i,ix,iy,nstep,w,h;
 	POINT *pa;
 	Real r;
 	Obj fr,t,s;
@@ -433,24 +433,26 @@ void polarplotcalc(struct canvas *can){
 	tabx=(double *)ALLOCA(nstep*sizeof(double));
 	taby=(double *)ALLOCA(nstep*sizeof(double));
 	MKReal(1,r); // dummy real number
+
 	for(i=0,p=pmin;i<nstep;i++,p+= pstep){
 		// full substitution
 		BDY(r)=p;
 		substr(CO,0,fr,can->vx,p?(Obj)r:0,&s);
 		devalr(CO,(Obj)s,&t);
 		if(t&&(OID(t)!=O_N||NID((Num)t)!=N_R))
-			error("polarplotcalc : invalid evaluation");
+			error("polarcalc : invalid evaluation");
 		tr=ToReal((Num)t);	
 		tabx[i]=tr*cos(p);
 		taby[i]=tr*sin(p);
-	}
-	xmax=xmin=tabx[0];
-	ymax=ymin=taby[0];
-	for(i=1;i<nstep;i++){
-		if(tabx[i]>xmax)xmax=tabx[i];
-		if(tabx[i]<xmin)xmin=tabx[i];
-		if(taby[i]>ymax)ymax=taby[i];
-		if(taby[i]<ymin)ymin=taby[i];
+		if(i==0){
+			xmax=xmin=tabx[0];
+			ymax=ymin=taby[0];
+		} else {
+			if(tabx[i]>xmax)xmax=tabx[i];
+			if(tabx[i]<xmin)xmin=tabx[i];
+			if(taby[i]>ymax)ymax=taby[i];
+			if(taby[i]<ymin)ymin=taby[i];
+		}
 	}
 	can->xmax=xmax;can->xmin=xmin;
 	can->ymax=ymax;can->ymin=ymin;
@@ -497,7 +499,7 @@ void ineqncalc(double **tab,struct canvas *can,int nox){
 
 #if defined(INTERVAL)
 void itvcalc(double **mask, struct canvas *can, int nox){
-	//MODE_ITVIFPLOT
+	//ITVIFPLOT
 	double x,y,xstep,ystep,dx,dy,wx,wy;
 	int idv,ix,iy,idx,idy;
 	Itv ity,itx,ddx,ddy;

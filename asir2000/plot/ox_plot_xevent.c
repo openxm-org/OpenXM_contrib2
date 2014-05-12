@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.29 2007/01/30 03:25:52 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.30 2013/11/05 02:55:03 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -204,9 +204,9 @@ void release(Widget w,struct canvas *can,XButtonEvent *ev)
 			e.x = ev->x; e.y = ev->y;
 			draw_frame0(can->window,spos,e);
 			if ( !busy 
-			&& can->mode != MODE_INTERACTIVE 
-			&& can->mode != MODE_POLARPLOT) {
-				if ( can->mode == MODE_PLOT )
+			&& can->mode != modeNO(INTERACTIVE) 
+			&& can->mode != modeNO(POLARPLOT)) {
+				if ( can->mode == modeNO(PLOT) )
 					plot_resize(can,spos,e);
 				else
 					ifplot_resize(can,spos,e);
@@ -589,7 +589,7 @@ void create_canvas(struct canvas *can)
 	XtAddEventHandler(canvas,StructureNotifyMask,False,(XtEventHandler)structure,can);
 	XtAddEventHandler(canvas,ExposureMask,False,(XtEventHandler)structure,can);
 
-	if ( can->mode == MODE_CONPLOT ) {
+	if ( can->mode == modeNO(CONPLOT) ) {
 		XtSetArg(arg[0],XtNwidth,LABELWIDTH);
 		can->level = XtCreateManagedWidget("level",labelWidgetClass,
 			commands,arg,1);
@@ -604,7 +604,7 @@ void create_canvas(struct canvas *can)
 			XtAddEventHandler(can->ydone,ButtonReleaseMask,False,(XtEventHandler)lrelease_m,can);
 		}
 	}
-	if ( can->mode != MODE_IFPLOT || !qpcheck((Obj)can->formula) )
+	if ( can->mode != modeNO(IFPLOT) || !qpcheck((Obj)can->formula) )
 		XtSetSensitive(precise,False);
 	XtPopup(can->shell,XtGrabNone);
 	SetWM_Proto(can->shell);
@@ -844,7 +844,7 @@ void reset_busy(struct canvas *can)
 	if ( can->window ) {
 		XtSetSensitive(can->wideb,True);
 		XtSetSensitive(can->noaxisb,True);
-		if ( can->mode == MODE_IFPLOT && qpcheck((Obj)can->formula) )
+		if ( can->mode == modeNO(IFPLOT) && qpcheck((Obj)can->formula) )
 			XtSetSensitive(can->preciseb,True);
 		XFlush(display);
 	}
