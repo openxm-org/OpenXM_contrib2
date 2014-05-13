@@ -162,14 +162,12 @@ void CMainFrame::OnUpdateProgress(CCmdUI *pCmdUI)
 
 	if ( !m_wndView.can )
 		return;
-	switch ( mode = m_wndView.can->mode ) {
-		case MODE_IFPLOT: case MODE_CONPLOT:
+
+	mode = m_wndView.can->mode;
+	if (mode == modeNO(IFPLOT) || mode == modeNO(CONPLOT)) {
 			pCmdUI->Enable();
 			strProgress.Format("%s%d%%",m_wndView.can->prefix,m_wndView.can->percentage);
 			pCmdUI->SetText(strProgress);
-			break;
-		default:
-			break;
 	}
 }
 

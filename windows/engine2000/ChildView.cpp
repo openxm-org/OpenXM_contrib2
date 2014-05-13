@@ -81,7 +81,7 @@ void CChildView::OnPaint()
 	// TODO: メッセージ ハンドラのコードをここに追加してください。
 	
 	// 描画のために CWnd::OnPaint を呼び出してはいけません。
-	if ( can->mode == MODE_INTERACTIVE ) {
+	if ( can->mode == modeNO(INTERACTIVE) ) {
 		::BitBlt(dc.m_hDC,0,0,can->width,can->height,can->pix,0,0,SRCCOPY);
 	} else {
 		if ( !can->wide ) {
@@ -123,7 +123,7 @@ void CChildView::OnPrint(CDC &dc)
 	dc.StartDoc(&docinfo);
 	dc.StartPage();
 
-	if ( can->mode == MODE_INTERACTIVE ) {
+	if ( can->mode == modeNO(INTERACTIVE) ) {
 
 		// We want to associate a rectangle of a fixed size to
 		// one bitmap pixel
@@ -164,7 +164,7 @@ void CChildView::OnPrint(CDC &dc)
 		dc.SetViewportOrg(width/18,height/18);
 		dc.SetViewportExt(width,height);
 
-		if ( can->mode == MODE_PLOT )
+		if ( can->mode == modeNO(PLOT) )
 			dc.Polyline(can->pa[0].pos,can->pa[0].length);
 		else
 		::StretchBlt(dc.m_hDC,0,0,can->width,can->height,can->pix,
@@ -184,9 +184,9 @@ void CChildView::PrintAxis(CDC &dc)
 	char buf[BUFSIZ];
 
 	/* XXX : should be cleaned up */
-	if ( can->noaxis || (can->mode == MODE_PLOT && !can->pa) )
+	if ( can->noaxis || (can->mode == modeNO(PLOT) && !can->pa) )
 		return;
-	if ( can->mode == MODE_INTERACTIVE )
+	if ( can->mode == modeNO(INTERACTIVE) )
 		return;
 
 	xadj = yadj = 0;
