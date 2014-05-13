@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.4 2014/03/30 22:29:46 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.5 2014/05/09 18:32:13 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -44,6 +44,14 @@ for %%i in ( de.rr gw.rr module_syz.rr mwl.rr pd.rr rewrite.rr ) do (
 )
 del /q asir\lib\asir-contrib\Makefile.in
 del /q asir\lib\asir-contrib\y_prime\.keepme
+
+
+curl -O http://www.math.kobe-u.ac.jp/OpenXM/Current/archive-01/doc-{asir2000,asir-contrib,other-docs}.zip
+pushd asir
+for %%i in ( doc-asir2000.zip doc-asir-contrib.zip doc-other-docs.zip ) do (
+  ..\unzip ..\%%i
+)
+popd
 
 if /i "%Platform%" == "X64" (
   zip -r asir_win64_%DATE:/=.%.zip asir
