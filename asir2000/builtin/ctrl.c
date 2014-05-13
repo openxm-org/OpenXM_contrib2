@@ -45,16 +45,37 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.40 2013/01/30 08:03:18 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.41 2014/05/12 02:35:35 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
+#include <string.h>
+#if defined(VISUAL)
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#endif
+
+static struct {
+	char *type;
+	char *kernel;
+	char *name;
+	char *arch;
+	char *release;
+	char *full;
+} sysinfo;
 
 void Pctrl();
+void Psysinfo(LIST *rp);
+static void get_sysinfo();
 
 struct ftab ctrl_tab[] = {
 	{"ctrl",Pctrl,-2},
 	{"asir_env",Pctrl,-2},
+	{"sysinfo", Psysinfo, 0},
 	{0,0,0},
 };
 
@@ -251,3 +272,151 @@ Q *rp;
 		error(buf);
 	}
 }
+
+void Psysinfo(LIST *rp)
+{
+    int i;
+    NODE n,p;
+    STRING s[6];
+
+    get_sysinfo();
+    MKSTR(s[0],sysinfo.type);  MKSTR(s[1],sysinfo.kernel);   MKSTR(s[2],sysinfo.name);
+    MKSTR(s[3],sysinfo.arch);  MKSTR(s[4],sysinfo.release);  MKSTR(s[5],sysinfo.full);
+    for(i=5,p=NULL; i>=0; i--,p=n) {
+        MKNODE(n,s[i],p);
+    }
+    MKLIST(*rp,n);
+}
+
+#if !defined(VISUAL)
+static char *uname(char *option)
+{
+    char buf[BUFSIZ];
+    char *s;
+    int fd[2], status;
+    *buf = 0;
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
+        *buf = 0; return "";
+    }
+    if (fork() == 0) {
+        dup2(fd[1], 1);
+        execlp("uname", "uname", option, NULL);
+    }
+    s = buf;
+    if( !read(fd[0], s, BUFSIZ-1) || (s = strchr(s, '\n')) ) {
+        *s = 0;
+    }
+    wait(&status);
+    close(fd[0]);
+    close(fd[1]);
+    s = (char *)MALLOC(strlen(buf)+1);
+    strcpy(s, buf);
+    return s;
+}
+
+static void get_sysinfo()
+{
+    static int initialized = 0;
+    if (initialized) {
+        return;
+    }
+    initialized = 1;
+    sysinfo.kernel = uname(NULL);
+#if defined(__DARWIN__)
+    sysinfo.type   = "macosx";
+    sysinfo.name   = sysinfo.kernel;
+#else
+    sysinfo.type   = "unix";
+    sysinfo.name   = uname("-o"); // not work on Darwin
+#endif
+    sysinfo.arch   = uname("-m");
+    sysinfo.release= uname("-r");
+    sysinfo.full   = uname("-a");
+}
+
+#else
+
+/* http://msdn.microsoft.com/ja-jp/library/windows/desktop/ms724834%28v=vs.85%29.aspx */
+static char *osnameNT(int major, int minor)
+{
+    if ((major == 3 && minor == 51) || (major == 4 && minor == 0)) {
+        return "WindowsNT";
+    }else if (major == 5 && minor == 0) {
+        return "Windows2000";
+    }else if (major == 5 && minor == 1) {
+        return "WindowsXP";
+    }else if (major == 5 && minor == 2) {
+        return "Windows2003 Server";
+    }else if (major == 6 && minor == 0) {
+        return "WindowsVista";
+    }else if (major == 6 && minor == 1) {
+        return "Windows7";
+    }else if (major == 6 && minor == 2) {
+        return "Windows8";
+    }else if (major == 6 && minor == 3) {
+        return "Windows8.1";
+    }
+    return "unknown";
+}
+
+static char *osname95(int major, int minor)
+{
+    if (major == 4 && minor == 0) {
+        return "Windows95";
+    }else if (major == 4 && minor == 10) {
+        return "Windows98";
+    }else if (major == 4 && minor == 90) {
+        return "WindowsMe";
+    }
+    return "unknown";
+}
+
+static void get_sysinfo()
+{
+    int arch64 = 0;
+    char buf[BUFSIZ];
+    OSVERSIONINFO v;
+    char *s;
+    static int initialized = 0;
+
+    if (initialized) {
+        return;
+    }
+    initialized = 1;
+
+    v.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+    GetVersionEx(&v);
+
+    sysinfo.type = "windows";
+    sysinfo.arch = "x86";
+    sprintf(buf, "%d.%d.%d", v.dwMajorVersion, v.dwMinorVersion, v.dwBuildNumber);
+    s = (char *)MALLOC(strlen(buf)+1);
+    strcpy(s, buf);
+    sysinfo.release = s;
+
+    if (v.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        sysinfo.kernel = "WindowsNT";
+        sysinfo.name = osnameNT(v.dwMajorVersion, v.dwMinorVersion);
+
+#if defined(_WIN64)
+        sysinfo.arch = "x86_64";
+#else
+        // IsWow64Process exists on WindowsXP SP2 or later
+        if(GetProcAddress(GetModuleHandle("kernel32.dll"), "IsWow64Process")) {
+            IsWow64Process(GetCurrentProcess(),&arch64);
+            if(arch64) {
+                sysinfo.arch = "x86_64";
+            }
+        }
+#endif
+    }else { /* v.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS */
+        sysinfo.kernel = "Windows95";
+        sysinfo.name = osname95(v.dwMajorVersion, v.dwMinorVersion);
+    }
+    sprintf(buf, "%s %s %s %s %s", sysinfo.kernel, sysinfo.release, sysinfo.name, v.szCSDVersion, sysinfo.arch);
+    s = (char *)MALLOC(strlen(buf)+1);
+    strcpy(s, buf);
+    sysinfo.full = s;
+}
+
+#endif
