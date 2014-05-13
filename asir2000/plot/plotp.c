@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.16 2013/12/19 05:48:25 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.17 2014/05/12 16:54:41 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -186,12 +186,12 @@ void polar_print(DISPLAY *display,struct canvas *can){
 	int len,color,i,j,x,y;
 	POINT *pa;
 
-	len=can->pa[0].length;
-	color=can->color;
-	pa=can->pa[0].pos;
 #if defined(VISUAL)
 	HDC dc;
 	HPEN pen,oldpen;
+	len=can->pa[0].length;
+	color=can->color;
+	pa=can->pa[0].pos;
 	for(i=1;i<len;i++){
 		j=i-1;
 		if(color){
@@ -215,6 +215,9 @@ void polar_print(DISPLAY *display,struct canvas *can){
 		}
 	}
 #else
+	len=can->pa[0].length;
+	color=can->color;
+	pa=can->pa[0].pos;
 	for(i=1;i<len;i++){
 		j=i-1;
 		DRAWLINE(display,can->pix,cdrawGC,XC(pa[j]),YC(pa[j]),XC(pa[i]),YC(pa[i]));

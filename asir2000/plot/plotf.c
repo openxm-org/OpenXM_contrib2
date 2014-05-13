@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.25 2014/01/07 06:22:08 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.26 2014/05/12 16:54:41 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -571,7 +571,7 @@ void Ppolarplot(NODE arg,Obj *rp){
 	P poly,var;
 	STRING fname,wname;
 	Real pi2;
-	Obj t,frst,sec,thr;;
+	Obj t,frst,sec,thr;
 	char ebuf[BUFSIZ];
 
 	iNo=lNo=sNo=findG=0;pfine=TRUE;

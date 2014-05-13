@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.16 2014/03/25 19:24:43 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.17 2014/05/12 16:54:41 saito Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -346,7 +346,7 @@ void area_print(DISPLAY *,double **, struct canvas *, int);
 void memory_print(struct canvas *,BYTEARRAY *);
 void over_print(DISPLAY *,double **,struct canvas *,int);
 void polar_print(DISPLAY *,struct canvas *);
-unsigned long GetColor(Display *,char *);
+unsigned long GetColor(DISPLAY *,char *);
 void Pox_pop_local(NODE,Obj *);
 void Pox_pop_cmo(NODE,Obj *);
 
