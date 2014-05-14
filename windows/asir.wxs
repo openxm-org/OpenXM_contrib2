@@ -55,6 +55,7 @@
                     <Directory Id="DOC" Name="doc">
                         <Directory Id="DOC_ASIR2000" Name="asir2000" />
                         <Directory Id="DOC_ASIR_CONTRIB" Name="asir-contrib" />
+                        <Directory Id="DOC_OTHER_DOCS" Name="other-docs" />
                     </Directory>
                     <Component Id="LICENSE" Guid="02A83B99-8E61-499B-BCDB-C25B931EEC36">
                         <File Id="LICENSE" Name="LICENSE" Source="asir\LICENSE" />
@@ -76,6 +77,7 @@
             <ComponentGroupRef Id="HelpGrp" />
             <ComponentGroupRef Id="ContribGrp" />
             <ComponentGroupRef Id="ShareGrp" />
+            <ComponentGroupRef Id="DocGrp" />
             <ComponentRef Id="asirgui.exe" />
             <ComponentRef Id="engine.exe" />
             <ComponentRef Id="asir.exe" />

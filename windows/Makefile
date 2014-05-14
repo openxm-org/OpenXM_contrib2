@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.5 2014/03/30 22:33:43 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.6 2014/05/09 18:32:13 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -20,7 +20,7 @@ UPGRADEID=B7A582F5-0484-4030-9D38-BFAE00707F0D
 PRODUCTVER=1.0.3
 
 TARGET= asir$(OS).msi
-SRCS= asir.wxs _lib.wxs _contrib.wxs _help.wxs _share.wxs
+SRCS= asir.wxs _lib.wxs _contrib.wxs _help.wxs _share.wxs _doc.wxs
 # OBJS= asir.wixobj _lib.wixobj _contrib.wixobj _help.wixobj _share.wixobj
 OBJS= $(SRCS:.wxs=.wixobj)
 
@@ -28,7 +28,7 @@ CANDLE = candle -nologo
 CANDLE_FLAGS = $(CANDLE_ARCH) -dprogramfilesDir=$(PGDIR) \
   -dupgradeID=$(UPGRADEID) -dproductID=$(PRODUCTID) -dproductVer=$(PRODUCTVER) \
   -dlibDir=asir\lib\asir -dcontribDir=asir\lib\asir-contrib \
-  -dhelpDir=asir\help -dshareDir=asir\share 
+  -dhelpDir=asir\help -dshareDir=asir\share -ddocDir=asir\doc
 LIGHT = light -nologo
 LTFLAGS = -ext WixUIExtension -ext WixUtilExtension
 HEAT = heat
@@ -55,9 +55,9 @@ $(TARGET): $(OBJS) LICENSE.rtf zip
 ## generating wxs files by heat if the directory asir exists
 
 # _lib.wxs:
-# 	cd asir
-# 	$(HEAT) dir lib $(HEATFLAGS) -dr LIB -cg LibGrp -var "var.libDir" -out ..\_lib.wxs
-# 	cd ..
+# 	cd asir\lib
+# 	$(HEAT) dir asir $(HEATFLAGS) -dr LIB_ASIR -cg LibGrp -var "var.libDir" -out ..\..\_lib.wxs
+# 	cd ..\..
 #
 # _help.wxs:
 # 	cd asir
@@ -70,8 +70,13 @@ $(TARGET): $(OBJS) LICENSE.rtf zip
 # 	cd ..
 #
 # _contrib.wxs:
+# 	cd asir\lib
+# 	$(HEAT) dir asir-contrib $(HEATFLAGS) -dr LIB_ASIR_CONTRIB -cg ContribGrp -var "var.contribDir" -out ..\..\_contrib.wxs
+# 	cd ..\..
+#
+# _doc.wxs:
 # 	cd asir
-# 	$(HEAT) dir lib-asir-contrib $(HEATFLAGS) -dr LIB_ASIR_CONTRIB -cg ContribGrp -var "var.contribDir" -out ..\_contrib.wxs
+# 	$(HEAT) dir doc $(HEATFLAGS) -dr DOC -cg DocGrp -var "var.docDir" -out ..\_doc.wxs
 # 	cd ..
 #
 # wxsclean:
