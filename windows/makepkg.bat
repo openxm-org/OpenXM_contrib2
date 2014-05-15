@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.5 2014/05/09 18:32:13 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.6 2014/05/13 20:13:48 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -9,7 +9,7 @@ if /i "%Platform%" == "X64" (
   if not exist asir32gui\asirgui.exe ( call makebin32.bat )
 )
 
-mkdir asir\bin asir\help\ja asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\doc\asir2000 asir\doc\asir-contrib
+mkdir asir\bin asir\help\ja asir\lib\asir asir\lib\asir-contrib asir\share\editor
 
 for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2000\asir.exe curl.exe unzip.exe ) do (
   copy /b %%i asir\bin
@@ -45,13 +45,12 @@ for %%i in ( de.rr gw.rr module_syz.rr mwl.rr pd.rr rewrite.rr ) do (
 del /q asir\lib\asir-contrib\Makefile.in
 del /q asir\lib\asir-contrib\y_prime\.keepme
 
-
-curl -O http://www.math.kobe-u.ac.jp/OpenXM/Current/archive-01/doc-{asir2000,asir-contrib,other-docs}.zip
-pushd asir
 for %%i in ( doc-asir2000.zip doc-asir-contrib.zip doc-other-docs.zip ) do (
-  ..\unzip ..\%%i
+  if not exist ..\..\OpenXM_dist\%%i (
+    curl http://www.math.kobe-u.ac.jp/OpenXM/Current/archive-01/%%i -o ..\..\OpenXM_dist\%%i
+  )
+  unzip ..\..\OpenXM_dist\%%i -d asir
 )
-popd
 
 if /i "%Platform%" == "X64" (
   zip -r asir_win64_%DATE:/=.%.zip asir
