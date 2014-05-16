@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.17 2014/05/12 16:54:41 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.18 2014/05/13 20:02:40 ohara Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -130,7 +130,7 @@
 #define ARRAYPLOT "arrayplot"
 #define OPEN_CANVAS "open_canvas"
 #define DRAWCIRCLE "drawcircle"
-#define DRAW_OBJ "draw_objc"
+#define DRAW_OBJ "draw_obj"
 #define DRAW_STRING "draw_string"
 #define OBJ_CP "obj_cp"
 #define CLEAR_CANVAS "clear_canvas"

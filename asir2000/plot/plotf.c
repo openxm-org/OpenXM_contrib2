@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.26 2014/05/12 16:54:41 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.27 2014/05/13 20:02:40 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -118,14 +118,14 @@ struct ftab plot_tab[]={
 	{PLOTOVERD,PplotoverD,-4},
 	{PLOTOVERQ,PplotoverQ,-4},
 	{PLOTOVERB,PplotoverB,-4},
-	{MEMORY_IFPLOT,Pmemory_ifplot,-7},
+	{MEMORY_IFPLOT,Pmemory_ifplot,-6},
 	{MEMORY_CONPLOT,Pmemory_conplot,-7},
-	{MEMORY_PLOT,Pmemory_plot,-7},
-	{DRAWCIRCLE,Pdrawcircle,4},
+	{MEMORY_PLOT,Pmemory_plot,-5},
+	{DRAWCIRCLE,Pdrawcircle,6},
 	{OPEN_CANVAS,Popen_canvas,-3},
 	{CLEAR_CANVAS,Pclear_canvas,2},
-	{DRAW_OBJ,Pdraw_obj,-3},
-	{DRAW_STRING,Pdraw_string,-4},
+	{DRAW_OBJ,Pdraw_obj,-4},
+	{DRAW_STRING,Pdraw_string,-5},
 	{0,0,0},
 };
 char *pfn[]={
