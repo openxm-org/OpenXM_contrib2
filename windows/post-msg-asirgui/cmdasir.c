@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.8 2013/11/28 18:53:32 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.9 2014/05/10 08:23:33 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   int paste_contents=0;
   int abort=0;
 
-  /* MessageBox(NULL,TEXT("test"),TEXT("Error in cmdasir.c"),MB_OK); */
+  /* MessageBox(NULL,TEXT("test"),TEXT("ERROR in cmdasir.c"),MB_OK); */
   sprintf(snameWin,"%s\\cmdasir-%d.txt",getenv("TEMP"),_getpid());
   snameUx = winname2uxname(snameWin);
   if ((argc > 1) && (strcmp(argv[1],"--delete-tmp")==0)) {
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
       fp2 = fopen(snameUx,"w");
       if (fp2 == NULL) {
         sprintf(msg,"File %s to load is not found.",argv[ii]);
-        MessageBox(NULL,TEXT(msg),TEXT("Error in cmdasir.c"), MB_OK);
+        MessageBox(NULL,TEXT(msg),TEXT("ERROR in cmdasir.c"), MB_OK);
         return(-1);
       }
       while ((c=fgetc(fp)) >= 0) fputc(c,fp2);
