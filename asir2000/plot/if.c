@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.27 2014/05/12 16:54:41 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.28 2014/05/13 16:28:08 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -567,7 +567,7 @@ void ifplot_resize(struct canvas *can,POINT spos,POINT epos){
 		} else {
 			create_canvas(ncan);
 			if( can->precise ) qifplotmain(ncan);
-			else ifplotmain(ncan);
+			else ifplotmainOld(ncan);
 			copy_to_canvas(ncan);
 		}
 	}
