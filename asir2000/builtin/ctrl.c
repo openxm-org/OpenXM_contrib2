@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.41 2014/05/12 02:35:35 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.42 2014/05/13 15:02:28 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,6 +57,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/utsname.h>
 #endif
 
 static struct {
@@ -289,24 +290,31 @@ void Psysinfo(LIST *rp)
 }
 
 #if !defined(VISUAL)
-static char *uname(char *option)
+static char *myuname(char *option)
 {
     char buf[BUFSIZ];
     char *s;
-    int fd[2], status;
+    int fd[2], status, pid;
     *buf = 0;
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
-        *buf = 0; return "";
+        *buf = 0; return NULL;
     }
-    if (fork() == 0) {
+    pid = fork();
+    if (pid < 0) {
+        return NULL;
+    }else if (pid == 0) {
         dup2(fd[1], 1);
+        close(2);
         execlp("uname", "uname", option, NULL);
+    }
+    waitpid(pid, &status, 0);
+    if (status) { /* error */
+        return NULL;
     }
     s = buf;
     if( !read(fd[0], s, BUFSIZ-1) || (s = strchr(s, '\n')) ) {
         *s = 0;
     }
-    wait(&status);
     close(fd[0]);
     close(fd[1]);
     s = (char *)MALLOC(strlen(buf)+1);
@@ -316,22 +324,27 @@ static char *uname(char *option)
 
 static void get_sysinfo()
 {
+    static struct utsname u;
     static int initialized = 0;
     if (initialized) {
         return;
     }
     initialized = 1;
-    sysinfo.kernel = uname(NULL);
+    uname(&u);
+    sysinfo.kernel = u.sysname;
 #if defined(__DARWIN__)
     sysinfo.type   = "macosx";
     sysinfo.name   = sysinfo.kernel;
 #else
     sysinfo.type   = "unix";
-    sysinfo.name   = uname("-o"); // not work on Darwin
+    sysinfo.name   = myuname("-o"); // not work on Darwin
+    if (!sysinfo.name) {
+        sysinfo.name = sysinfo.kernel;
+    }
 #endif
-    sysinfo.arch   = uname("-m");
-    sysinfo.release= uname("-r");
-    sysinfo.full   = uname("-a");
+    sysinfo.arch   = u.machine;
+    sysinfo.release= u.release;
+    sysinfo.full   = myuname("-a");
 }
 
 #else
