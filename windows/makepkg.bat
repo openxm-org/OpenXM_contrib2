@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.6 2014/05/13 20:13:48 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.7 2014/05/15 12:00:25 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -51,6 +51,9 @@ for %%i in ( doc-asir2000.zip doc-asir-contrib.zip doc-other-docs.zip ) do (
   )
   unzip ..\..\OpenXM_dist\%%i -d asir
 )
+
+echo import("names.rr")$ > asir\share\.asirrc
+echo end$ >> asir\share\.asirrc
 
 if /i "%Platform%" == "X64" (
   zip -r asir_win64_%DATE:/=.%.zip asir
