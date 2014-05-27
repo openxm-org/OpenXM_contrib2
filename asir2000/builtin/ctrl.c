@@ -45,14 +45,16 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.42 2014/05/13 15:02:28 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.43 2014/05/26 09:34:06 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include <string.h>
 #if defined(VISUAL)
 #include <windows.h>
+#include <winnls.h>
 #else
+#include <locale.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -67,6 +69,7 @@ static struct {
 	char *arch;
 	char *release;
 	char *full;
+	char *lang;
 } sysinfo;
 
 void Pctrl();
@@ -278,18 +281,31 @@ void Psysinfo(LIST *rp)
 {
     int i;
     NODE n,p;
-    STRING s[6];
+    STRING s[7];
 
     get_sysinfo();
     MKSTR(s[0],sysinfo.type);  MKSTR(s[1],sysinfo.kernel);   MKSTR(s[2],sysinfo.name);
     MKSTR(s[3],sysinfo.arch);  MKSTR(s[4],sysinfo.release);  MKSTR(s[5],sysinfo.full);
-    for(i=5,p=NULL; i>=0; i--,p=n) {
+    MKSTR(s[6],sysinfo.lang);
+    for(i=6,p=NULL; i>=0; i--,p=n) {
         MKNODE(n,s[i],p);
     }
     MKLIST(*rp,n);
 }
 
 #if !defined(VISUAL)
+
+static char *get_lang()
+{
+    char *c, *p, *q;
+    c = setlocale(LC_ALL, NULL); /* saving current locale */
+    p = setlocale(LC_ALL, "");
+    q = (char *)MALLOC(strlen(p)+1);
+    strcpy(q,p);
+    setlocale(LC_ALL, c);        /* restoring current locale */
+    return q;
+}
+
 static char *myuname(char *option)
 {
     char buf[BUFSIZ];
@@ -345,6 +361,7 @@ static void get_sysinfo()
     sysinfo.arch   = u.machine;
     sysinfo.release= u.release;
     sysinfo.full   = myuname("-a");
+    sysinfo.lang   = get_lang();
 }
 
 #else
@@ -382,6 +399,18 @@ static char *osname95(int major, int minor)
         return "WindowsMe";
     }
     return "unknown";
+}
+
+static char *get_lang()
+{
+    char lang[BUFSIZ];
+    char *s;
+    if(GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SISO639LANGNAME, lang, BUFSIZ)) {
+        s = (char *)MALLOC(strlen(lang)+1);
+        strcpy(s,lang);
+        return s;
+    }
+    return "en"; // English
 }
 
 static void get_sysinfo()
@@ -430,6 +459,7 @@ static void get_sysinfo()
     s = (char *)MALLOC(strlen(buf)+1);
     strcpy(s, buf);
     sysinfo.full = s;
+    sysinfo.lang = get_lang();
 }
 
 #endif
