@@ -2,6 +2,9 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="DOC">
+            <Component Id="cmp82782F16E2BFF2E6C95DCCB6F6DD855F" Guid="188C92C4-35BB-4A2A-A825-7466A4664FF5">
+                <File Id="fil531A1707CD96F62AF77EAE7B37B75B52" KeyPath="yes" Source="$(var.docDir)\asir-doc-top.html" />
+            </Component>
             <Directory Id="dirCC6F4D3DFCA40ED2F553DBBCEF02C13D" Name="asir-contrib">
                 <Component Id="cmpAAAE289E7D4AEA7A0910049B2424F3F2" Guid="01380801-B10F-4EFC-8DF1-3BA5D39E8DB3">
                     <File Id="fil511D9642994BEEE649A3A6D48283D10F" KeyPath="yes" Source="$(var.docDir)\asir-contrib\cman-en.pdf" />
@@ -5077,6 +5080,7 @@
     </Fragment>
     <Fragment>
         <ComponentGroup Id="DocGrp">
+            <ComponentRef Id="cmp82782F16E2BFF2E6C95DCCB6F6DD855F" />
             <ComponentRef Id="cmpAAAE289E7D4AEA7A0910049B2424F3F2" />
             <ComponentRef Id="cmp1345A5CB79F0B64CA2058C707EEAAC08" />
             <ComponentRef Id="cmp0D9A8F6BBE5E1CE6749C46515D2B61D4" />
