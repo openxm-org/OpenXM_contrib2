@@ -42,7 +42,10 @@
                         </Component>
                     </Directory>
                     <Directory Id="HELP" Name="help" />
-                    <Directory Id="LIB" Name="lib" />
+                    <Directory Name="lib" Id="LIB">
+                        <Directory Id="LIB_ASIR" Name="asir" />
+                        <Directory Id="LIB_ASIR_CONTRIB" Name="asir-contrib" />
+                    </Directory>
                     <Directory Id="SHARE" Name="share" />
                     <Directory Id="DOC" Name="doc" />
                     <Component Id="LICENSE" Guid="02A83B99-8E61-499B-BCDB-C25B931EEC36">
