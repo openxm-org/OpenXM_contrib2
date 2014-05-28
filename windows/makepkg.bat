@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.7 2014/05/15 12:00:25 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.8 2014/05/27 21:17:06 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -9,7 +9,7 @@ if /i "%Platform%" == "X64" (
   if not exist asir32gui\asirgui.exe ( call makebin32.bat )
 )
 
-mkdir asir\bin asir\help\ja asir\lib\asir asir\lib\asir-contrib asir\share\editor
+mkdir asir\bin asir\help\ja asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\share\skel
 
 for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2000\asir.exe curl.exe unzip.exe ) do (
   copy /b %%i asir\bin
@@ -28,6 +28,9 @@ popd
 
 copy /b help\ja\*.chm asir\help\ja
 copy /b help\en\*.chm asir\help
+
+echo import("names.rr")$ > asir\share\skel\.asirrc
+echo end$ >> asir\share\skel\.asirrc
 
 for %%i in ( asirgui.mac  asir-mode.el install-ja-sjis.txt ) do ( 
   copy /b post-msg-asirgui\%%i asir\share\editor
@@ -51,9 +54,6 @@ for %%i in ( doc-asir2000.zip doc-asir-contrib.zip doc-other-docs.zip ) do (
   )
   unzip ..\..\OpenXM_dist\%%i -d asir
 )
-
-echo import("names.rr")$ > asir\share\.asirrc
-echo end$ >> asir\share\.asirrc
 
 if /i "%Platform%" == "X64" (
   zip -r asir_win64_%DATE:/=.%.zip asir

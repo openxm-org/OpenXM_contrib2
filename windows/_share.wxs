@@ -2,9 +2,6 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="SHARE">
-            <Component Id="cmpD6B4979BBE14FC8B875C021D34B85A9E" Guid="18D60904-25A2-4EF0-8CE1-765C7AA67AD9">
-                <File Id="filF4D6C5A73D517DE753C8ABD4EF424D23" KeyPath="yes" Source="$(var.shareDir)\.asirrc" />
-            </Component>
             <Directory Id="dirA1FF46CE821C4C46DD22473D0C14B3C3" Name="editor">
                 <Component Id="cmpB935FB433F94DF4A43975DF5F86610D1" Guid="817DC4B3-3410-4EEB-B3B6-11C179A90C8E">
                     <File Id="fil3B41818B515197505B9FD9BAFF77F794" KeyPath="yes" Source="$(var.shareDir)\editor\asir-mode.el" />
@@ -14,6 +11,11 @@
                 </Component>
                 <Component Id="cmp41BF5374DD763399B8D4DC4A95664132" Guid="CC35ABDF-9683-462D-B2AF-66765030721A">
                     <File Id="filBB16005BB1D14239C2A81BE18AA1AD39" KeyPath="yes" Source="$(var.shareDir)\editor\install-ja-sjis.txt" />
+                </Component>
+            </Directory>
+            <Directory Id="SHARE_skel" Name="skel">
+                <Component Id="cmpD6B4979BBE14FC8B875C021D34B85A9E" Guid="18D60904-25A2-4EF0-8CE1-765C7AA67AD9">
+                    <File Id="filF4D6C5A73D517DE753C8ABD4EF424D23" KeyPath="yes" Source="$(var.shareDir)\skel\.asirrc" />
                 </Component>
             </Directory>
         </DirectoryRef>
