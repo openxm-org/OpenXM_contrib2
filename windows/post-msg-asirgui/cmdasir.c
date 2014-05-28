@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.9 2014/05/10 08:23:33 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/cmdasir.c,v 1.10 2014/05/25 21:01:04 ohara Exp $ */
 // cl test.c user32.lib
 
 #include <windows.h>
@@ -8,6 +8,7 @@
 #include <io.h>
 #include <process.h>
 #include <fcntl.h>
+#include <winnls.h>
 
 char *winname2uxname(char winname[]);
 FILE *findAsirHandler();
@@ -19,6 +20,8 @@ int pasteFile(HWND hnd, char *uname);
 int containEnd(char s[]);
 int abortAsir(HWND hnd);
 int main(int argc, char *argv[]);
+int damemsg(unsigned char s[]);
+int damemoji(unsigned char s[]);
 
 FILE *open_stdio(DWORD type) {
     HANDLE hnd;
@@ -147,6 +150,7 @@ int terminateAsir(HWND hnd) {
 char *winname2uxname(char wname[]) {
   int i;
   char *uname;
+  damemsg(wname);
   uname = (char *) malloc(strlen(wname)+1);
   for (i=0; i<strlen(wname); i++) {
     if (wname[i] == '\\') uname[i] = '/';
@@ -287,4 +291,39 @@ int abortAsir(HWND hnd) {
   c='y'; PostMessage(hnd,WM_CHAR,c,1);
   c=0xd; PostMessage(hnd,WM_CHAR,c,1);
   return(0);
+}
+
+int damemsg(unsigned char s[]) {
+  int dame;
+  char msg[1024];
+  char s2[3];
+  dame = damemoji(s);
+  if (dame) {
+    s2[0]=s[dame-1]; s2[1]=s[dame]; s2[2]=0;
+    sprintf(msg,"The path name %s contains dame-moji %s (ShiftJIS code).",s,s2);
+    MessageBox(NULL,TEXT(msg),TEXT("ERROR in cmdasir.c"), MB_OK);
+  }
+
+}
+int damemoji(unsigned char s[]) {
+  char lang[BUFSIZ];
+  int n,i,dame;
+  int c;
+  lang[0]=0;
+  if(GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SISO639LANGNAME, lang, BUFSIZ)){
+    // printf("lang=%s\n",lang);
+  }
+  dame=0;
+  if (strcmp(lang,"ja")==0) {
+    n = strlen(s);
+    for (i=1; i<n; i++) {
+      if (s[i] == '\\') {
+        c=s[i-1];
+        if (((c>=0x81) && (c<=0x9f)) || ((c>=0xe0) && (c<=0xee)) || ((c>=0xfa) && (c<=0xfc))) { 
+          dame=i; break;
+        }
+      } 
+    }
+  }
+  return(dame);
 }
