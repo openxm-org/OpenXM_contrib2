@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.27 2014/05/13 20:02:40 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.28 2014/05/16 08:49:53 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,6 +78,7 @@ void PineqnandD(NODE,Obj *), PineqnandQ(NODE,Obj *), PineqnandB(NODE,Obj *);
 void PineqnorD(NODE,Obj *), PineqnorQ(NODE,Obj *), PineqnorB(NODE,Obj *);
 void PineqnxorD(NODE,Obj *), PineqnxorQ(NODE,Obj *), PineqnxorB(NODE,Obj *);
 void PconplotD(NODE,Obj *),PconplotQ(NODE,Obj *),PconplotB(NODE,Obj *);
+void PpolarplotD(NODE,Obj *);
 void PplotoverD(NODE,Obj *),PplotoverQ(NODE,Obj *),PplotoverB(NODE,Obj *);
 void ifplot_mainNG(NODE,char *,Obj *);
 void conplot_mainNG(NODE,char *,Obj *);
@@ -88,8 +89,9 @@ struct ftab plot_tab[]={
 #if defined(INTERVAL)
 	{ITVIFPLOT,Pitvifplot,-8},
 #endif
-	{POLARPLOT,Ppolarplot,-6},
 	{OBJ_CP,Pobj_cp,4},
+	{POLARPLOT,Ppolarplot,-6},
+	{POLARPLOTD,PpolarplotD,-7},
 	{IFPLOT,Pifplot,-7},
 	{IFPLOTD,PifplotD,-8},
 	{IFPLOTQ,PifplotQ,-8},
@@ -118,9 +120,9 @@ struct ftab plot_tab[]={
 	{PLOTOVERD,PplotoverD,-4},
 	{PLOTOVERQ,PplotoverQ,-4},
 	{PLOTOVERB,PplotoverB,-4},
-	{MEMORY_IFPLOT,Pmemory_ifplot,-6},
+	{MEMORY_IFPLOT,Pmemory_ifplot,-7},
 	{MEMORY_CONPLOT,Pmemory_conplot,-7},
-	{MEMORY_PLOT,Pmemory_plot,-5},
+	{MEMORY_PLOT,Pmemory_plot,-7},
 	{DRAWCIRCLE,Pdrawcircle,6},
 	{OPEN_CANVAS,Popen_canvas,-3},
 	{CLEAR_CANVAS,Pclear_canvas,2},
@@ -137,7 +139,7 @@ char *pfn[]={
 	CONPLOTD,CONPLOTQ,CONPLOTB,ITVIFPLOT,
 	PLOTOVERD,PLOTOVERQ,PLOTOVERB,
 	MEMORY_IFPLOT,MEMORY_CONPLOT,MEMORY_PLOT,ARRAYPLOT,OPEN_CANVAS,
-	DRAWCIRCLE,DRAW_OBJ,DRAW_STRING,OBJ_CP,CLEAR_CANVAS};
+	DRAWCIRCLE,DRAW_OBJ,DRAW_STRING,OBJ_CP,CLEAR_CANVAS,POLARPLOTD};
 /*
 	IFPLOT:0,CONPLOT:1,PLOT:2,INTERACTIVE:3,POLARPLOT:4,PLOTOVER:5,
 	IFPLOTD:6,IFPLOTQ:7,IFPLOTB:8,INEQND:9,INEQNQ:10,INEQNB:11,
@@ -148,7 +150,7 @@ char *pfn[]={
 	PLOTOVERD:25,PLOTOVERQ:26,PLOTOVERB:27,
 	MEMORY_IFPLOT:28,MEMORY_CONPLOT:29,MEMORY_PLOT:30,ARRAYPLOT:31,
 	OPEN_CANVAS:32,DRAWCIRCLE:33,DRAW_OBJ:34,DRAW_STRING:35,OBJ_CP:36,
-	CLEAR_CANVAS:37
+	CLEAR_CANVAS:37,POLARPLOTD:38
 */
 int modeNO(char *fn){
 	int i;
@@ -292,175 +294,136 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 		Pox_pop_cmo(arg,rp);
 	} else {
 		MKSTR(fname,fn);
-/*
-printf("%s\n",fn);
-ListCheck("xrange",xrange);
-ListCheck("yrange",yrange);
-ListCheck("geom",geom);
-*/
 		arg=mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
 		Pox_rpc(arg,&t);
 		*rp=(Obj)s_id;
 	}
-}
-
-void Pobj_cp(NODE arg,Obj *rp){
-	//copy canvas
-	//1:and,3:copy,6:xor,7:or
-	Q sysid,index_A,index_B,op_code;
-	STRING fname;
-	Obj t;
-	sysid=(Q)ARG0(arg);
-	index_A=(Q)ARG1(arg);
-	index_B=(Q)ARG2(arg);
-	op_code=(Q)ARG3(arg);
-	MKSTR(fname,OBJ_CP);
-	arg=mknode(5,sysid,fname,index_A,index_B,op_code);
-	Pox_rpc(arg,&t);
-	*rp=(Obj)sysid;
 }
 
 void Pconplot(NODE arg,Obj *rp){conplot_main(arg, 0, rp);}
 void Pmemory_conplot(NODE arg,Obj *rp){conplot_main(arg,1,rp);}
 
 void conplot_main(NODE arg,int is_memory,Obj *rp){
-	int stream,ri,i;
-	Q m2,p2,w300,s_id,mxgc;
-	NODE defrange,n,n0,n1,n2,n3;
+	Q m2,p2,w300,s_id;
+	NODE defrange;
 	LIST xrange,yrange,zrange,range[3],list,geom;
 	VL vl,vl0;
 	V v[2],av[2];
-	P poly,var;
+	int stream,ri,i;
+	P poly;
+	P var;
+	NODE n,n0;
 	STRING fname,wname;
 	Obj t;
 
-	STOQ(-2,m2);STOQ(2,p2);MKNODE(n,p2,0);MKNODE(defrange,m2,n);
-	poly=0;vl=0;geom=0;wname=0;stream=-1;ri=0;v[0]=v[1]=0;
-	for(;arg;arg=NEXT(arg))
-		if(!BDY(arg)) stream=0;
-		else switch (OID(BDY(arg))){
+	STOQ(-2,m2); STOQ(2,p2);
+	MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
+	poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
+	v[0] = v[1] = 0;
+	for ( ; arg; arg = NEXT(arg) )
+		if ( !BDY(arg) )
+			stream = 0;
+		else
+		switch ( OID(BDY(arg)) ) {
 			case O_P:
-				poly=(P)BDY(arg);
+				poly = (P)BDY(arg);
 				get_vars_recursive((Obj)poly,&vl);
-				for(vl0=vl,i=0;vl0;vl0=NEXT(vl0)){
-					if(vl0->v->attr==(pointer)V_IND){
-						if(i>=2){
-							error("conplot : invalid argument");
-						} else v[i++]=vl0->v;
-					}
-				}
+				for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
+					if ( vl0->v->attr == (pointer)V_IND )
+						if ( i >= 2 )
+							error("ifplot : invalid argument");
+						else
+							v[i++] = vl0->v;
 				break;
 			case O_LIST:
-				list=(LIST)BDY(arg);
-				if(OID(BDY(BDY(list)))==O_P)
-					if(ri>2) error("conplot : invalid argument");
-					else range[ri++]=list;
-				else geom=list;
+				list = (LIST)BDY(arg);
+				if ( OID(BDY(BDY(list))) == O_P )
+					if ( ri > 2 )
+						error("ifplot : invalid argument");
+					else
+						range[ri++] = list;
+				else
+					geom = list;
 				break;
 			case O_N:
-				stream=QTOS((Q)BDY(arg));
-				break;
+				stream = QTOS((Q)BDY(arg)); break;
 			case O_STR:
-				wname=(STRING)BDY(arg);
-				break;
+				wname = (STRING)BDY(arg); break;
 			default:
-				error("conplot : invalid argument");
-				break;
+				error("ifplot : invalid argument"); break;
 		}
-	if(!poly) error("conplot : invalid argument");
-	// list format var,num,num[,num]
-	switch (ri){
+	if ( !poly )
+		error("ifplot : invalid argument");
+	switch ( ri ) {
 		case 0:
-			if(!v[1]) error("conplot : please specify all variables");
-			MKV(v[0],var);MKNODE(n,var,defrange);MKLIST(xrange,n);
-			MKV(v[1],var);MKNODE(n,var,defrange);MKLIST(yrange,n);
-			STOQ(MAXGC,mxgc);MKNODE(n1,mxgc,0);MKNODE(n2,p2,n1);MKNODE(n3,p2,n2);
-			MKLIST(zrange,n3);
+			if ( !v[1] )
+				error("ifplot : please specify all variables");
+			MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+			MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+			MKNODE(n,0,defrange); MKLIST(zrange,n);
 			break;
 		case 1:
-			if(!v[1]) error("conplot : please specify all variables");
-			av[0]=VR((P)BDY(BDY(range[0])));
-			if(v[0]==av[0]){
-				xrange=range[0];
-				MKV(v[1],var);MKNODE(n,var,defrange);MKLIST(yrange,n);
-				STOQ(MAXGC,mxgc);MKNODE(n1,mxgc,0);MKNODE(n2,p2,n1);MKNODE(n3,p2,n2);
-				MKLIST(zrange,n3);
-			} else if(v[1]==av[0]){
-				MKV(v[0],var);MKNODE(n,var,defrange);MKLIST(xrange,n);
-				yrange=range[0];
-				STOQ(MAXGC,mxgc);MKNODE(n1,mxgc,0);MKNODE(n2,p2,n1);MKNODE(n3,p2,n2);
-				MKLIST(zrange,n3);
+			if ( !v[1] )
+				error("ifplot : please specify all variables");
+			av[0] = VR((P)BDY(BDY(range[0])));
+			if ( v[0] == av[0] ) {
+				xrange = range[0];
+				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+				MKNODE(n,0,defrange); MKLIST(zrange,n);
+			} else if ( v[1] == av[0] ) {
+				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+				yrange = range[0];
+				MKNODE(n,0,defrange); MKLIST(zrange,n);
 			} else {
-				MKV(v[0],var);MKNODE(n,var,defrange);MKLIST(xrange,n);
-				MKV(v[1],var);MKNODE(n,var,defrange);MKLIST(yrange,n);
-				n=NEXT((NODE)BDY(range[0]));
-				for(i=0,n1=n;n1;n1=NEXT(n1),i++);
-				if(i==3)MKLIST(zrange,n);
-				else if(i==2){
-					n1=(NODE)BDY(n);
-					n2=(NODE)(BDY(NEXT(n)));
-					STOQ(MAXGC,mxgc);MKNODE(n,mxgc,0);
-					MKNODE(n3,n1,n);
-					MKNODE(n1,n2,n3);
-					MKLIST(zrange,n1);
-				} else error("conplot : zrange error");
+				MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(xrange,n);
+				MKV(v[1],var); MKNODE(n,var,defrange); MKLIST(yrange,n);
+				zrange = range[0];
 			}
 			break;
-		case 2:
-		case 3:
-			av[0]=VR((P)BDY(BDY(range[0])));
-			av[1]=VR((P)BDY(BDY(range[1])));
-			if(((v[0]==av[0])&&(!v[1]||v[1]==av[1]))||
-				((v[0]==av[1])&&(!v[1]||v[1]==av[0]))){
-				xrange=range[0];
-				yrange=range[1];
-				if(ri==3) MKLIST(zrange,NEXT(BDY(range[2])));
+		case 2: case 3:
+			av[0] = VR((P)BDY(BDY(range[0])));
+			av[1] = VR((P)BDY(BDY(range[1])));
+			if ( ((v[0] == av[0]) && (!v[1] || v[1] == av[1])) ||
+				 ((v[0] == av[1]) && (!v[1] || v[1] == av[0])) ) {
+				xrange = range[0]; yrange = range[1];
+				if ( ri == 3 )
+					zrange = range[2];
 				else {
-					for(i=0,n=(NODE)BDY(range[0]);n;n=NEXT(n),i++);
-					MKNODE(n,0,defrange);
-					MKLIST(zrange,n);
+					MKNODE(n,0,defrange); MKLIST(zrange,n);
 				}
-			} else error("conplot : invalid argument");
+			} else
+				error("ifplot : invalid argument");
 			break;
 		default:
-			error("conplot : cannot happen");
-			break;
+			error("ifplot : cannot happen"); break;
 	}
 	/* conplot in ox_plot requires 
 	   [s_id (Q),
 	   	formula (Obj),
 	   	xrange=[x,xmin,xmax] (LIST),
 	   	yrange=[y,ymin,ymax] (LIST),
-	   	zrange=[z,zmin,zmax,nstep] (LIST),z:dummy var
+	   	zrange=[z,zmin,zmax] (LIST),
 	   	geom=[xsize,ysize] (LIST),
 	   	wname=name (STRING)]
 	*/
-	stream=validate_ox_plot_stream(stream);
+
+	stream = validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
-	if(!geom){
+	if ( !geom ) {
 		STOQ(300,w300);
-		MKNODE(n0,w300,0);
-		MKNODE(n,w300,n0);
-		MKLIST(geom,n);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
 	}
-	if(is_memory){
-		MKSTR(fname,MEMORY_PLOT);
-		arg=mknode(7,s_id,fname,poly,xrange,yrange,zrange,geom);
+	if ( is_memory ) {
+		MKSTR(fname,"memory_plot");
+		arg = mknode(7,s_id,fname,poly,xrange,yrange,zrange,geom);
 		Pox_rpc(arg,&t);
-		arg=mknode(1,s_id);
+		arg = mknode(1,s_id);
 		Pox_pop_cmo(arg,rp);
 	} else {
-		//list check
-		for(i=0,n=(NODE)BDY(xrange);n;i++,n=NEXT(n));
-		if(i!=3)error("conplot : xrange error");
-		for(i=0,n=(NODE)BDY(yrange);n;i++,n=NEXT(n));
-		if(i!=3)error("conplot : yrange error");
-		for(i=0,n=(NODE)BDY(zrange);n;i++,n=NEXT(n));
-		if(i!=3)error("conplot : xrange error");
 		MKSTR(fname,CONPLOT);
-		arg=mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
+		arg = mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
 		Pox_rpc(arg,&t);
-		*rp=(Obj)s_id;
+		*rp = (Obj)s_id;
 	}
 }
 
@@ -562,126 +525,74 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 #define Pi 3.14159265358979323846264
 
 void Ppolarplot(NODE arg,Obj *rp){
-	Q m2,p2,w300,defstep,s_id,color;
-	NODE defrange,n,n0,n1,n2;
-	LIST range,geom,list[2];
+	Q m2,p2,w300,s_id;
+	NODE defrange,n,n0;
+	LIST zrange,range[1],geom,list;
 	VL vl,vl0;
-	V v[1],av;
-	int stream,ri,i,len,iNo,lNo,vNo,sNo,pfine,findG;
+	V v[1],av[1];
+	int stream,ri,i;
 	P poly,var;
 	STRING fname,wname;
 	Real pi2;
-	Obj t,frst,sec,thr;
-	char ebuf[BUFSIZ];
+	Obj t;
 
-	iNo=lNo=sNo=findG=0;pfine=TRUE;
-	poly=0;vl=0;geom=0;wname=0;color=0;stream=-1;ri=0;v[0]=0;
+	MKReal(2*Pi,pi2);MKNODE(n,pi2,0); MKNODE(defrange,0,n);
+	poly=0;vl=0;geom=0;wname=0;stream=-1;ri=0;v[0]=0;
 	for(;arg;arg=NEXT(arg)){
-		if(!BDY(arg)) iNo++;
+		if(!BDY(arg)) stream=0;
 		else switch(OID(BDY(arg))){
 		case O_P: case O_R://formular
 			poly=(P)BDY(arg);
 			get_vars_recursive((Obj)poly,&vl);
-			for(vl0=vl,vNo=0;vl0;vl0=NEXT(vl0)){
-				if(vl0->v->attr==(pointer)V_IND){
-					if(vNo>=1){
-						sprintf(ebuf,"%s : invalaid argument",POLARPLOT);
-						error(ebuf);
-					} else v[vNo++]=vl0->v;
-				}
-			}
-			if(vNo!=1){
-				sprintf(ebuf,"%s : only uni-variate formular",POLARPLOT);
-				error(ebuf);
-			}
-			break;
-		case O_N://color,id,idx,division
-			switch (iNo){
-			case 0://color arg
-				color=(Q)BDY(arg);
-				iNo++;
-				break;
-			case 1://stream arg
-				stream=QTOS((Q)BDY(arg));
-				iNo++;
-				break;
-			default://error
-				sprintf(ebuf,"%s : invalid number arguments",POLARPLOT);
-				error(ebuf);
-				break;
-			}
+			for(vl0=vl,i=0;vl0;vl0=NEXT(vl0))
+				if(vl0->v->attr==(pointer)V_IND)
+					if(i>=1)error("polarplot : invalid argument");
+				else v[i++]=vl0->v;
+			if(i!=1)error("polarplot : invalid argument");
 			break;
 		case O_LIST://range,geomerty
-			if(lNo<2)list[lNo++]=(LIST)BDY(arg);
-			else {
-				sprintf(ebuf,"%s : invalid list argument",POLARPLOT);
-				error(ebuf);
-			}
+			list=(LIST)BDY(arg);
+			if(OID(BDY(BDY(list)))==O_P)
+				if(ri>0)error("polarplot : invalid argument");
+				else range[ri++]=list;
+			else geom=list;
+			break;
+		case O_N:
+			stream=QTOS((Q)BDY(arg));
 			break;
 		case O_STR://wname
 			wname=(STRING)BDY(arg);
-			sNo++;
 			break;
 		default:
+			error("polarplot : invalid argument");
 			break;
 		}
 	}
 	//formular check
-	if(!poly){
-		sprintf(ebuf,"%s : invalid ploy argument",POLARPLOT);
-		error(ebuf);
-	}
-	//vars check
-	get_vars_recursive((Obj)poly,&vl);
-	for(vl0=vl,vNo=0;vl0;vNo++,vl0=NEXT(vl0)){
-		if(vl0->v->attr==(pointer)V_IND){
-			if(vNo>=2){
-				sprintf(ebuf,"%s : invalid ploy argument",POLARPLOT);
-				error(ebuf);
-			} else v[vNo]=vl0->v;
-		}
-	}
-	//list check
-	for(i=0;i<lNo;i++){
-		if(OID(BDY(BDY(list[i])))!=O_P){
-			// list first value is number (geometry)
-			for(len=0,n=(NODE)BDY(list[i]);n;len++,n=NEXT(n)){
-				if(len==0) frst=BDY(n);
-				else if(len==1) sec=BDY(n);
-				else {
-					sprintf(ebuf,"%s : geometry list too long",POLARPLOT);
-					error(ebuf);
-				}
-			}
-			if(len!=2){
-				sprintf(ebuf,"%s : geometry requierd 2 numbers", POLARPLOT);
-				error(ebuf);
-			} else geom=list[i];
-		} else {
-			//list first value is var (range)
-			av=VR((P)BDY(BDY(list[i])));
-			if(v[0]==av)range=list[i];
-			else {
-				sprintf(ebuf,"%s : invalid list length",POLARPLOT);
-				error(ebuf);
-			}
-		}
-	}
-	// set default
-	if(!range){
-		STOQ(DEFAULTPOLARSTEP,defstep);MKReal(2*Pi,pi2);MKV(v[0],var);
-		MKNODE(n,defstep,0);MKNODE(n1,pi2,n);MKNODE(n2,0,n1);
-		MKNODE(defrange,var,n2);MKLIST(range,defrange);
-	}
-	if(!geom){
-		STOQ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
+	if(!poly)error("polarplot : invalid argument");
+	switch (ri){
+	case 0:
+		MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(zrange,n);
+		break;
+	case 1:
+		av[0]=VR((P)BDY(BDY(range[0])));
+		if(v[0]==av[0]) zrange = range[0];
+		else error("polarplot : invalid argument");
+		break;
+	default:
+		error("polarplot : cannot happen");
+		break;
 	}
 	stream=validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
+	if(!geom){
+		STOQ(300,w300);
+		MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+	}
 	MKSTR(fname,POLARPLOT);
-	arg=mknode(7,s_id,fname,poly,color,range,geom,wname);
+	arg=mknode(8,s_id,fname,poly,NULLP,NULLP,zrange,geom,wname);
 	Pox_rpc(arg,&t);
-	*rp=(Obj)s_id;
+	*rp=s_id;
 }
 
 void Pplotover(NODE arg,Obj *rp){
@@ -826,6 +737,145 @@ void PplotoverD(NODE arg,Obj *rp){plotover_mainNG(arg,PLOTOVERD,rp);}
 void PplotoverQ(NODE arg,Obj *rp){plotover_mainNG(arg,PLOTOVERQ,rp);}
 void PplotoverB(NODE arg,Obj *rp){plotover_mainNG(arg,PLOTOVERB,rp);}
 
+void Pobj_cp(NODE arg,Obj *rp){
+	//copy canvas
+	//1:and,3:copy,6:xor,7:or
+	Q sysid,index_A,index_B,op_code;
+	STRING fname;
+	Obj t;
+	sysid=(Q)ARG0(arg);
+	index_A=(Q)ARG1(arg);
+	index_B=(Q)ARG2(arg);
+	op_code=(Q)ARG3(arg);
+	MKSTR(fname,OBJ_CP);
+	arg=mknode(5,sysid,fname,index_A,index_B,op_code);
+	Pox_rpc(arg,&t);
+	*rp=(Obj)sysid;
+}
+
+void PpolarplotD(NODE arg,Obj *rp){
+	Q m2,p2,w300,defstep,s_id,color;
+	NODE defrange,n,n0,n1,n2;
+	LIST range,geom,list[2];
+	VL vl,vl0;
+	V v[1],av;
+	int stream,ri,i,len,iNo,lNo,vNo,sNo,pfine,findG;
+	P poly,var;
+	STRING fname,wname;
+	Real pi2;
+	Obj t,frst,sec,thr;
+	char ebuf[BUFSIZ];
+
+	iNo=lNo=sNo=findG=0;pfine=TRUE;
+	poly=0;vl=0;geom=0;wname=0;color=0;stream=-1;ri=0;v[0]=0;
+	for(;arg;arg=NEXT(arg)){
+		if(!BDY(arg)) iNo++;
+		else switch(OID(BDY(arg))){
+		case O_P: case O_R://formular
+			poly=(P)BDY(arg);
+			get_vars_recursive((Obj)poly,&vl);
+			for(vl0=vl,vNo=0;vl0;vl0=NEXT(vl0)){
+				if(vl0->v->attr==(pointer)V_IND){
+					if(vNo>=1){
+						sprintf(ebuf,"%s : invalaid argument",POLARPLOT);
+						error(ebuf);
+					} else v[vNo++]=vl0->v;
+				}
+			}
+			if(vNo!=1){
+				sprintf(ebuf,"%s : only uni-variate formular",POLARPLOT);
+				error(ebuf);
+			}
+			break;
+		case O_N://color,id,idx,division
+			switch (iNo){
+			case 0://color arg
+				color=(Q)BDY(arg);
+				iNo++;
+				break;
+			case 1://stream arg
+				stream=QTOS((Q)BDY(arg));
+				iNo++;
+				break;
+			default://error
+				sprintf(ebuf,"%s : invalid number arguments",POLARPLOT);
+				error(ebuf);
+				break;
+			}
+			break;
+		case O_LIST://range,geomerty
+			if(lNo<2)list[lNo++]=(LIST)BDY(arg);
+			else {
+				sprintf(ebuf,"%s : invalid list argument",POLARPLOT);
+				error(ebuf);
+			}
+			break;
+		case O_STR://wname
+			wname=(STRING)BDY(arg);
+			sNo++;
+			break;
+		default:
+			break;
+		}
+	}
+	//formular check
+	if(!poly){
+		sprintf(ebuf,"%s : invalid ploy argument",POLARPLOT);
+		error(ebuf);
+	}
+	//vars check
+	get_vars_recursive((Obj)poly,&vl);
+	for(vl0=vl,vNo=0;vl0;vNo++,vl0=NEXT(vl0)){
+		if(vl0->v->attr==(pointer)V_IND){
+			if(vNo>=2){
+				sprintf(ebuf,"%s : invalid ploy argument",POLARPLOT);
+				error(ebuf);
+			} else v[vNo]=vl0->v;
+		}
+	}
+	//list check
+	for(i=0;i<lNo;i++){
+		if(OID(BDY(BDY(list[i])))!=O_P){
+			// list first value is number (geometry)
+			for(len=0,n=(NODE)BDY(list[i]);n;len++,n=NEXT(n)){
+				if(len==0) frst=BDY(n);
+				else if(len==1) sec=BDY(n);
+				else {
+					sprintf(ebuf,"%s : geometry list too long",POLARPLOT);
+					error(ebuf);
+				}
+			}
+			if(len!=2){
+				sprintf(ebuf,"%s : geometry requierd 2 numbers", POLARPLOT);
+				error(ebuf);
+			} else geom=list[i];
+		} else {
+			//list first value is var (range)
+			av=VR((P)BDY(BDY(list[i])));
+			if(v[0]==av)range=list[i];
+			else {
+				sprintf(ebuf,"%s : invalid list length",POLARPLOT);
+				error(ebuf);
+			}
+		}
+	}
+	// set default
+	if(!range){
+		STOQ(DEFAULTPOLARSTEP,defstep);MKReal(2*Pi,pi2);MKV(v[0],var);
+		MKNODE(n,defstep,0);MKNODE(n1,pi2,n);MKNODE(n2,0,n1);
+		MKNODE(defrange,var,n2);MKLIST(range,defrange);
+	}
+	if(!geom){
+		STOQ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
+	}
+	stream=validate_ox_plot_stream(stream);
+	STOQ(stream,s_id);
+	MKSTR(fname,POLARPLOTD);
+	arg=mknode(7,s_id,fname,poly,color,range,geom,wname);
+	Pox_rpc(arg,&t);
+	*rp=(Obj)s_id;
+}
+
 void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
 	Q m2,p2,w300,mxgc,s_id,color;
 	NODE defrange,n,n0,n1,n2;
@@ -968,21 +1018,12 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
 	stream=validate_ox_plot_stream(stream);
 	STOQ(stream,s_id);
 	MKSTR(fname,fn);
-/*
-printf("%s\n",fn);
-ListCheck("xrange",xrange);
-ListCheck("yrange",yrange);
-ListCheck("zrange",zrange);
-ListCheck("geom",geom);
-printf("idv %d\n",idv);
-*/
 	arg=mknode(9,s_id,fname,poly,color,xrange,yrange,zrange,geom,wname);
 	Pox_rpc(arg,&t);
 	*rp=(Obj)s_id;
 }
 
 void plotover_mainNG(NODE arg,char *fn,Obj *rp){
-	//[s_id (Q), w_id (Q), formula (Obj), color (Q)]
 	Q s_id,w_id,color;
 	P poly;
 	STRING fname;
@@ -1030,8 +1071,8 @@ void plotover_mainNG(NODE arg,char *fn,Obj *rp){
 		}
 	}
 	MKSTR(fname,fn);
+	//[s_id (Q), w_id (Q), formula (Obj), color (Q)]
 	arg=mknode(5,s_id,fname,w_id,poly,color);
-//printf("fn:%s s_id:%d w_id:%d color:%d\n",BDY(fname),QTOS(s_id),QTOS(w_id),QTOS(color));
 	Pox_rpc(arg,&t);
 	*rp=(Obj)s_id;
 }

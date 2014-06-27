@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.30 2013/11/05 02:55:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.31 2014/05/12 16:54:41 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -198,19 +198,13 @@ void motion(Widget w,struct canvas *can,XMotionEvent *ev)
 void release(Widget w,struct canvas *can,XButtonEvent *ev)
 {
 	POINT e;
-
 	switch ( ev->button ) {
 		case Button1:
 			e.x = ev->x; e.y = ev->y;
 			draw_frame0(can->window,spos,e);
-			if ( !busy 
-			&& can->mode != modeNO(INTERACTIVE) 
-			&& can->mode != modeNO(POLARPLOT)) {
-				if ( can->mode == modeNO(PLOT) )
-					plot_resize(can,spos,e);
-				else
-					ifplot_resize(can,spos,e);
-			}
+			if(!busy 
+			&& can->mode != modeNO(INTERACTIVE)
+			&& can->mode != modeNO(POLARPLOT)) plot_resize(can,spos,e);
 			break;
 		default:
 			break;

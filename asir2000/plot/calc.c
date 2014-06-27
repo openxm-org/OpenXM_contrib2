@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.9 2013/12/19 06:04:09 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.10 2014/05/12 16:54:40 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -419,6 +419,53 @@ void plotcalc(struct canvas *can){
 }
 
 void polarcalc(struct canvas *can){
+	double xmax,xmin,ymax,ymin,dx,dy,pmin,pstep,tr,p,*tabx,*taby;
+	double usubstrp();
+	int i,nstep,w,h;
+	POINT *pa;
+	Real r;
+	Obj fr,t,s;
+
+	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr); 
+	w=can->width; h=can->height; nstep=can->nzstep;
+	pmin=can->zmin; pstep=(can->zmax-can->zmin)/nstep;
+	tabx=(double *)ALLOCA(nstep*sizeof(double));
+	taby=(double *)ALLOCA(nstep*sizeof(double));
+	MKReal(1,r); // dummy real number
+
+	for(i=0,p=pmin;i<nstep;i++,p+= pstep){
+		// full substitution
+		BDY(r)=p;
+		substr(CO,0,fr,can->vx,p?(Obj)r:0,&s);
+		devalr(CO,(Obj)s,&t);
+		if(t&&(OID(t)!=O_N||NID((Num)t)!=N_R))
+			error("polarcalc : invalid evaluation");
+		tr=ToReal((Num)t);	
+		tabx[i]=tr*cos(p);
+		taby[i]=tr*sin(p);
+	}
+	xmax=xmin=tabx[0];
+	ymax=ymin=taby[0];
+	for(i=1;i<nstep;i++){
+		if(tabx[i]>xmax)xmax=tabx[i];
+		if(tabx[i]<xmin)xmin=tabx[i];
+		if(taby[i]>ymax)ymax=taby[i];
+		if(taby[i]<ymin)ymin=taby[i];
+	}
+	can->xmax=xmax;can->xmin=xmin;
+	can->ymax=ymax;can->ymin=ymin;
+	dx=xmax-xmin;
+	dy=ymax-ymin;
+	can->pa=(struct pa *)MALLOC(sizeof(struct pa));
+	can->pa[0].length=nstep;
+	can->pa[0].pos=pa=(POINT *)MALLOC(w*sizeof(POINT));
+	for(i=0;i<nstep;i++){
+		XC(pa[i])=(w-1)*(tabx[i]-xmin)/dx; 
+		YC(pa[i])=(h-1)*(ymax-taby[i])/dy; 
+	}
+}
+
+void polarcalcNG(struct canvas *can){
 	//polarplotNG
 	double xmax,xmin,ymax,ymin,dx,dy,pmin,pstep,tr,p, *tabx,*taby;
 	double usubstrp();

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.24 2013/12/20 02:27:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.25 2014/05/12 16:54:41 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -232,7 +232,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial){
 	}
 }
 
-static void asir_executeFunction(int serial){ 
+static void asir_executeFunction(int serial){
 	char *fn;
 	int argc,id,fno;
 	FUNC f;
@@ -252,22 +252,23 @@ static void asir_executeFunction(int serial){
 	id=-1;
 	fno=modeNO(fn);
 	switch (fno){
-	case 0://IFPLOTD
-		id=plot(n,IFPLOT);
+	case 0://IFPLOT
+		id=plot(n,fno);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
 		break;
 	case 1://CONPLOT
-		id=plot(n,CONPLOT);
+		id=plot(n,fno);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
+		break;
 	case 2://PLOT
-		id=plot(n,PLOT);
+		id=plot(n,fno);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
 		break;
 	case 4://POLARPLOT
-		id=polarplotNG(n);
+		id=plot(n,fno);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
 		break;
@@ -306,7 +307,6 @@ static void asir_executeFunction(int serial){
 	case 37://CLEAR_CANVAS
 		clear_canvas(n);
 		break;
-#if defined(INTERVAL)
 // ifplotNG
 	case 36://OBJ_CP
 		id=objcp(n);
@@ -322,8 +322,10 @@ static void asir_executeFunction(int serial){
 	case 21://CONPLOTD
 	case 22://CONPLOTQ
 	case 23://CONPLOTB
+#if defined(INTERVAL)
 	case 24://ITVIFPLOT
-		id=ifplotNG(n,modeNO(fn));
+#endif
+		id=ifplotNG(n,fno);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
 		break;
@@ -339,10 +341,14 @@ static void asir_executeFunction(int serial){
 	case 25://PLOTOVERD
 	case 26://PLOTOVERQ
 	case 27://PLOTOVERB
-		id=ifplotOP(n,modeNO(fn));
+		id=ifplotOP(n,fno);
 		STOQ(id,ret);
 		asir_push_one((Obj)ret);
 		break;
-#endif
+	case 38://POLARPLOTD
+		id=polarplotNG(n);
+		STOQ(id,ret);
+		asir_push_one((Obj)ret);
+		break;
 	}
 }

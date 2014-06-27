@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.18 2014/05/13 20:02:40 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.19 2014/05/16 08:49:52 ohara Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -97,6 +97,7 @@
 #define PLOT "plot"
 #define INTERACTIVE "interactive"
 #define POLARPLOT "polarplot"
+#define POLARPLOTD "polarplotD"
 #define PLOTOVER "plotover"
 #define IFPLOTD "ifplotD"
 #define IFPLOTQ "ifplotQ"
@@ -174,6 +175,7 @@
 #define DRAW_STRING 35
 #define OBJ_CP 36
 #define CLEAR_CANVAS 37
+#define POLARPLOTD 38
 */
 
 #define DIR_X 0
@@ -253,7 +255,7 @@ struct canvas {
 	Pixmap pix;
 #endif
 	char *wname;
-	char mode;
+	int mode;
 	char wide;
 	char precise;
 	char noaxis;
@@ -270,7 +272,7 @@ struct canvas {
 	struct pa *pa;
 	/* to register the history in the interactive mode */
 	NODE history;
-	int color;
+	unsigned int color;
 	int division;
 };
 
@@ -313,13 +315,14 @@ void qcalc(char **,struct canvas *);
 void calcb(double **,struct canvas *,int);
 void calcq(double **,struct canvas *,int);
 void polarcalc(struct canvas *);
+void polarcalcNG(struct canvas *);
 void sturmseq(VL,P,VECT *);
 void seproot(VECT,int,int,int *);
 int numch(VECT,Q,Q);
 void usubstqp(P,Q,Q *);
 void plotcalc(struct canvas *);
 int open_canvas(NODE);
-int plot(NODE,char *);
+int plot(NODE,int);
 int ifplotold(NODE);
 int polarplot(NODE);
 int conplotD(NODE);
@@ -365,21 +368,20 @@ void itvplotmain1(struct canvas *);
 #endif
 void ifplot_resize(struct canvas *,POINT,POINT);
 void plot_resize(struct canvas *,POINT,POINT);
-void ifplotmainOld(struct canvas *);
 void ifplotmain(struct canvas *);
-void ifplotmains(struct canvas *);
+void ifplotmainNG(struct canvas *);
 void qifplotmain(struct canvas *);
-void if_print(DISPLAY *,double **,struct canvas *,int);
-void if_printOld(DISPLAY *,double **,struct canvas *);
+void if_printNG(DISPLAY *,double **,struct canvas *,int);
+void if_print(DISPLAY *,double **,struct canvas *);
 void memory_if_print(double **,struct canvas *,BYTEARRAY *);
 void con_print(DISPLAY *,double **,struct canvas *);
 void memory_con_print(double **,struct canvas *,BYTEARRAY *);
 void qif_print(DISPLAY *,char **,struct canvas *);
 void plot_print(DISPLAY *,struct canvas *);
 void set_drawcolor(unsigned int);
-void draw_character_string(DISPLAY *,struct canvas *,int,int,char *,int);
-void draw_point(DISPLAY *,struct canvas *,int,int,int);
-void draw_line(DISPLAY *,struct canvas *,int,int,int,int,int);
+void draw_character_string(DISPLAY *,struct canvas *,int,int,char *,unsigned int);
+void draw_point(DISPLAY *,struct canvas *,int,int,unsigned int);
+void draw_line(DISPLAY *,struct canvas *,int,int,int,int,unsigned int);
 void pline(DISPLAY *,struct canvas *,DRAWABLE);
 double adjust_scale(double,double);
 void initmarker(struct canvas *,char *);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.17 2014/05/12 16:54:41 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.18 2014/05/13 20:02:40 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -80,7 +80,8 @@ void area_print(DISPLAY *display,double **tab,struct canvas *can,int GXcode){
 	int ix,iy,width,height,wc,**mask;
 	XImage *image;
 	DRAWABLE pix;
-	unsigned long color,black,white,c2;
+	unsigned int color,black,white,c2;
+	//unsigned long color,black,white,c2;
 	double *px,*px1,*px2;
 	//GXcode 0:new 1:cp 2:and 3:or 4:xor
 	width=can->width;
@@ -158,7 +159,7 @@ void over_print(DISPLAY *display,double **tab,struct canvas *can,int GXcode){
 }
 #endif
 
-void if_print(DISPLAY *display,double **tab,struct canvas *can,int cond){
+void if_printNG(DISPLAY *display,double **tab,struct canvas *can,int cond){
 	int ix,iy,width,height;
 	double zst,zed,zsp;
 	DRAWABLE pix;
@@ -183,7 +184,8 @@ void if_print(DISPLAY *display,double **tab,struct canvas *can,int cond){
 }
 
 void polar_print(DISPLAY *display,struct canvas *can){
-	int len,color,i,j,x,y;
+	int len,i,j,x,y;
+	unsigned int color;
 	POINT *pa;
 
 #if defined(VISUAL)
@@ -227,7 +229,26 @@ void polar_print(DISPLAY *display,struct canvas *can){
 }
 
 
-void if_printOld(DISPLAY *display,double **tab,struct canvas *can){
+void if_print(DISPLAY *display,double **tab,struct canvas *can){
+	int ix,iy,width,height;
+	double *px,*px1,*px2;
+	DRAWABLE pix;
+
+	if ( can->mode == modeNO(CONPLOT) ) {
+		con_print(display,tab,can); return;
+	}
+	flush();
+	width = can->width; height = can->height; pix = can->pix;
+	for( ix=0; ix<width-1; ix++ )
+		for(iy=0, px=tab[ix], px1 = tab[ix+1], px2 = px+1;
+			iy<height-1 ;iy++, px++, px1++, px2++ )
+			if ( ((*px >= 0) && ((*px1 <= 0) || (*px2 <= 0))) ||
+				((*px <= 0) && ((*px1 >= 0) || (*px2 >= 0))) ) {
+		DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+		count_and_flush();
+	}
+	flush();
+/*
 	int i,ix,iy,width,height;
 	double *px,*px1,*px2;
 	double **vmax,**vmin,*zst,zstep,zv,u,l;
@@ -281,6 +302,7 @@ void if_printOld(DISPLAY *display,double **tab,struct canvas *can){
 			}
 	}
 	flush();
+*/
 }
 
 #define MEMORY_DRAWPOINT(a,len,x,y) (((a)[(len)*(y)+((x)>>3)]) |= (1<<((x)&7)))
@@ -447,7 +469,8 @@ void plot_print(DISPLAY *display,struct canvas *can){
 #endif
 }
 
-void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color){
+void draw_point(DISPLAY *display,struct canvas *can,int x,int y,unsigned int color){
+//void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color){
 #if defined(VISUAL)
 	HDC dc;
 
@@ -464,7 +487,8 @@ void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color){
 }
 
 void draw_line(
-	DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color){
+	DISPLAY *display,struct canvas *can,int x,int y,int u,int v,unsigned int color){
+	//DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color){
 #if defined(VISUAL)
 	HDC dc;
 	HPEN pen,oldpen;
@@ -497,7 +521,8 @@ void draw_line(
 }
 
 void draw_character_string(
-	DISPLAY *display,struct canvas *can,int x,int y,char *str,int color){
+	DISPLAY *display,struct canvas *can,int x,int y,char *str,unsigned int color){
+	//DISPLAY *display,struct canvas *can,int x,int y,char *str,int color){
 #if defined(VISUAL)
 	HDC dc;
 	COLORREF oldcolor;
