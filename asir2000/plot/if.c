@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.29 2014/05/25 03:07:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.30 2014/06/27 07:58:29 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -908,7 +908,6 @@ void ifplotmainNG(struct canvas *can){
 	define_cursor(can->window,normalcur);
 }
 
-#if defined(INTERVAL)
 int objcp(NODE arg){
 	int idsrc, idtrg, op_code;
 	struct canvas *cansrc, *cantrg;
@@ -1006,7 +1005,6 @@ void obj_op(struct canvas *cansrc, struct canvas *cantrg, int op){
 	count_and_flush();
 	flush();
 }
-#endif
 
 int polarplotNG(NODE arg){
 	int i,id,width,height;

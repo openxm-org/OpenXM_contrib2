@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.19 2014/05/16 08:49:52 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.20 2014/06/27 07:58:29 saito Exp $ 
 */
 #if defined(VISUAL)
 /* for Visual C++ */
@@ -281,8 +281,8 @@ extern struct canvas *closed_canvas[];
 extern struct canvas *current_can;
 extern char* pfn[];
 
-#if defined(INTERVAL)
 extern Pixel BackPixel;
+#if defined(INTERVAL)
 extern int Itvplot;
 #endif
 
