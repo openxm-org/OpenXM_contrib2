@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.28 2014/05/16 08:49:53 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.29 2014/06/27 07:58:29 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -820,7 +820,7 @@ void PpolarplotD(NODE arg,Obj *rp){
 	}
 	//formular check
 	if(!poly){
-		sprintf(ebuf,"%s : invalid ploy argument",POLARPLOT);
+		sprintf(ebuf,"%s : invalid plot argument",POLARPLOT);
 		error(ebuf);
 	}
 	//vars check
@@ -828,7 +828,7 @@ void PpolarplotD(NODE arg,Obj *rp){
 	for(vl0=vl,vNo=0;vl0;vNo++,vl0=NEXT(vl0)){
 		if(vl0->v->attr==(pointer)V_IND){
 			if(vNo>=2){
-				sprintf(ebuf,"%s : invalid ploy argument",POLARPLOT);
+				sprintf(ebuf,"%s : invalid plot argument",POLARPLOT);
 				error(ebuf);
 			} else v[vNo]=vl0->v;
 		}
@@ -900,7 +900,7 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
 				poly=(P)BDY(arg);
 				pfine=FALSE;
 			} else {
-				sprintf(ebuf,"%s : to many ploy arguments",fn);
+				sprintf(ebuf,"%s : to many plot arguments",fn);
 				error(ebuf);
 			}
 			break;
@@ -937,7 +937,7 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
 	}
 	// formular check
 	if(!poly){
-		sprintf(ebuf,"%s : invalid ploy argument",fn);
+		sprintf(ebuf,"%s : invalid plot argument",fn);
 		error(ebuf);
 	}
 	// vars check
@@ -945,7 +945,7 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
 	for(vl0=vl,vNo=0;vl0;vl0=NEXT(vl0)){
 		if(vl0->v->attr==(pointer)V_IND){
 			if(vNo>=2){
-				sprintf(ebuf,"%s : invalid ploy argument",fn);
+				sprintf(ebuf,"%s : invalid plot argument",fn);
 				error(ebuf);
 			} else v[vNo++]=vl0->v;
 		}
@@ -1041,7 +1041,7 @@ void plotover_mainNG(NODE arg,char *fn,Obj *rp){
 				poly=(P)BDY(arg);
 				pfine=FALSE;
 			} else {
-				sprintf(ebuf,"%s : to many ploy arguments",fn);
+				sprintf(ebuf,"%s : to many plot arguments",fn);
 				error(ebuf);
 			}
 			break;
