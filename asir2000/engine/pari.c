@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.10 2009/09/10 01:51:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/pari.c,v 1.11 2011/12/21 19:38:19 ohara Exp $ 
 */
 #include "ca.h"
 
@@ -203,20 +203,26 @@ Obj *rp;
 	N n,nm,dn;
 	DCP dc0,dc;
 	P t;
-	int s,i,j,l,row,col;
+	int s,i,j,l,row,col,ty;
 	GEN b;
 	VL vl;
 
 	if ( gcmp0(a) )
 		*rp = 0;
 	else { 
-		switch ( typ(a) ) {
+		switch ( ty = typ(a) ) {
 			case 1: /* integer */
 				patori_i(a,&n); NTOQ(n,(char)signe(a),q); *rp = (Obj)q;
 				break;
 			case 2: /* real */
 				NEWBF(r,lg(a)); bcopy((char *)a,(char *)BDY(r),lg(a)*sizeof(long));
 				*rp = (Obj)r;
+				break;
+			case 3: /* integermod */
+				MKVECT(v,2);
+				patori((GEN)a[1],(Obj *)&BDY(v)[0]);
+				patori((GEN)a[2],(Obj *)&BDY(v)[1]);
+				*rp = (Obj)v;
 				break;
 			case 4: /* rational; reduced */
 				patori_i((GEN)a[1],&nm); patori_i((GEN)a[2],&dn);
