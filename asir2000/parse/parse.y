@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.34 2011/06/16 08:17:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.35 2012/12/17 07:20:45 noro Exp $ 
 */
 %{
 #define malloc(x) Risa_GC_malloc(x)
@@ -271,7 +271,7 @@ pexpr	: STR
 					if ( f )
 						$$ = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,NULLP));
 					else {
-						gen_searchf_searchonly($1,(FUNC *)&f);
+						gen_searchf_searchonly($1,(FUNC *)&f,1);
 						if ( f )
 							makesrvar(f,(P *)&val);
 						else

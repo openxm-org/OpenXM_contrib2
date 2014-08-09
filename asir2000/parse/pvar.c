@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.17 2006/03/11 23:14:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.18 2006/06/21 09:46:06 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,6 +68,7 @@ void mkpvs(char *fname)
 			buf = ALLOCA(strlen("undeclared function "+strlen(fname)+10));
 			sprintf(buf,"undeclared function `%s'",fname);
 			yyerror(buf);
+			error("cannot continue to read inputs");
 		}
 	}
 	pvs = (VS)MALLOC(sizeof(struct oVS));

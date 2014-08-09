@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.68 2011/02/18 02:54:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.69 2013/11/21 06:48:04 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -70,7 +70,7 @@ int evalstatline;
 int recv_intr;
 int show_crossref;
 int at_root;
-void gen_searchf_searchonly(char *name,FUNC *r);
+void gen_searchf_searchonly(char *name,FUNC *r,int global);
 LIST eval_arg(FNODE a,unsigned int quote);
 
 pointer eval(FNODE f)
@@ -882,7 +882,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 	FUNC f1;
 
 	if ( f->id == A_UNDEF ) {
-		gen_searchf_searchonly(f->fullname,&f1);
+		gen_searchf_searchonly(f->fullname,&f1,0);
 		if ( f1->id == A_UNDEF ) {
 			sprintf(errbuf,"evalf : %s undefined",NAME(f));
 			error(errbuf);
@@ -1435,10 +1435,9 @@ void gen_searchf(char *name,FUNC *r)
 	*r = val;
 }
 
-void gen_searchf_searchonly(char *name,FUNC *r)
+void gen_searchf_searchonly(char *name,FUNC *r,int global)
 {
 	FUNC val = 0;
-	int global = 0;
 	if ( *name == ':' ) {
 		global = 1;
 		name += 2;
