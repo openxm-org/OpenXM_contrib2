@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.85 2013/12/20 02:02:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.86 2014/01/07 06:22:08 saito Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2712,6 +2712,7 @@ P gptop(P a);
 void addgz(GZ n1,GZ n2,GZ *nr);
 void subgz(GZ n1,GZ n2,GZ *nr);
 void mulgz(GZ n1,GZ n2,GZ *nr);
+void mul1gz(GZ n1,int n2,GZ *nr);
 void divgz(GZ n1,GZ n2,GZ *nq);
 void chsgngz(GZ n,GZ *nr);
 void pwrgz(GZ n1,Q n,GZ *nr);

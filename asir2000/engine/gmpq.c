@@ -220,6 +220,16 @@ void mulgz(GZ n1,GZ n2,GZ *nr)
 	}
 }
 
+void mul1gz(GZ n1,int n2,GZ *nr)
+{
+	mpz_t t;
+
+	if ( !n1 || !n2 ) *nr = 0;
+	else {
+		mpz_init(t); mpz_mul_ui(t,BDY(n1),(long)n2); MPZTOGZ(t,*nr);
+	}
+}
+
 void divgz(GZ n1,GZ n2,GZ *nq)
 {
 	mpz_t t;

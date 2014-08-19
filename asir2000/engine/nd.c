@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.217 2014/02/03 02:43:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.218 2014/02/24 01:45:28 noro Exp $ */
 
 #include "nd.h"
 
@@ -12,6 +12,8 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 NODE nd_hcf;
+
+Obj nd_top_weight;
 
 static NODE nd_subst;
 static VL nd_vc;
@@ -497,11 +499,37 @@ int ndl_block_compare(UINT *d1,UINT *d2)
 
 int ndl_matrix_compare(UINT *d1,UINT *d2)
 {
-    int i,j,s;
+    int i,j,s,row;
     int *v;
+	Q **mat;
+    Q *w;
+    Q t,t1,t2;
 
     for ( j = 0; j < nd_nvar; j++ )
         nd_work_vector[j] = GET_EXP(d1,j)-GET_EXP(d2,j);
+	if ( nd_top_weight ) {
+		if ( OID(nd_top_weight) == O_VECT ) {
+		    mat = (Q **)&BDY((VECT)nd_top_weight);
+		    row = 1;
+		} else {
+			mat = (Q **)BDY((MAT)nd_top_weight);
+		    row = ((MAT)nd_top_weight)->row;
+		}
+		for ( i = 0; i < row; i++ ) {
+		    w = (Q *)mat[i];
+			for ( j = 0, t = 0; j < nd_nvar; j++ ) {
+				STOQ(nd_work_vector[j],t1);
+			    mulq(w[j],t1,&t2);
+				addq(t,t2,&t1);
+				t = t1;
+			}
+		    if ( t ) {
+		    	s = SGN(t); 
+		        if ( s > 0 ) return 1;
+		        else if ( s < 0 ) return -1;
+		    }
+		}
+	}
     for ( i = 0; i < nd_matrix_len; i++ ) {
         v = nd_matrix[i];
         for ( j = 0, s = 0; j < nd_nvar; j++ )
@@ -509,6 +537,8 @@ int ndl_matrix_compare(UINT *d1,UINT *d2)
         if ( s > 0 ) return 1;
         else if ( s < 0 ) return -1;
     }
+	if ( !ndl_equal(d1,d2) )
+		error("afo");
     return 0;
 }
 

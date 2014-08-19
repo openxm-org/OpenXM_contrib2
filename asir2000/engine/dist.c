@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.46 2013/11/05 02:55:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.47 2013/12/20 02:02:24 noro Exp $ 
 */
 #include "ca.h"
 
@@ -124,12 +124,13 @@ int has_sfcoef_p(P f)
 	}
 }
 
-extern N *current_top_weight_vector;
-static int current_top_weight_len;
+extern Obj current_top_weight;
+int current_top_weight_len;
 
 void initd(struct order_spec *spec)
 {
-	int len,i;
+	int len,i,k,row;
+    Q **mat;
 
 	switch ( spec->id ) {
 		case 3:
@@ -176,12 +177,20 @@ void initd(struct order_spec *spec)
 			}
 			break;
 	}
-	if ( current_top_weight_vector ) {
+	if ( current_top_weight ) {
 		cmpdl_tie_breaker = cmpdl;
 		cmpdl = cmpdl_top_weight;
-		for ( len = 0, i = 0; i < spec->nv; i++ )
-			if ( current_top_weight_vector[i] )
-				len = MAX(PL(current_top_weight_vector[i]),len);
+		if ( OID(current_top_weight) == O_VECT ) {
+		   mat = (Q **)&BDY((MAT)current_top_weight);
+		   row = 1;
+		} else {
+		   mat = (Q **)BDY((MAT)current_top_weight);
+		   row = ((MAT)current_top_weight)->row;
+		}
+        for ( k = 0, len = 0; k < row; k++ )
+		    for ( i = 0; i < spec->nv; i++ )
+			    if ( mat[k][i] )
+				    len = MAX(PL(NM(mat[k][i])),len);
 		current_top_weight_len = len;
 	}
 	dp_current_spec = spec;
@@ -1656,9 +1665,10 @@ int cmpdl_top_weight(int n,DL d1,DL d2)
 {
 	int *w;
 	N sum,wm,wma,t;
-	N *a;
+	Q **mat;
+	Q *a;
 	struct oN tn;
-	int len,i,sgn,tsgn;
+	int len,i,sgn,tsgn,row,k;
 	int *t1,*t2;
 
 	w = (int *)ALLOCA(n*sizeof(int));
@@ -1668,32 +1678,41 @@ int cmpdl_top_weight(int n,DL d1,DL d2)
 	sum = (N)W_ALLOC(len); sgn = 0;
 	wm = (N)W_ALLOC(len);
 	wma = (N)W_ALLOC(len);
-	a = current_top_weight_vector;
-	for ( i = 0; i < n; i++ ) {
-		if ( !a[i] || !w[i] ) continue;
-		tn.p = 1;
-		if ( w[i] > 0 ) {
-			tn.b[0] = w[i]; tsgn = 1;
-		} else {
-			tn.b[0] = -w[i]; tsgn = -1;
-		}
-		_muln(a[i],&tn,wm);
-		if ( !sgn ) {
-			sgn = tsgn;
-			t = wm; wm = sum; sum = t;
-		} else if ( sgn == tsgn ) {
-			_addn(sum,wm,wma);
-			if ( !PL(wma) )
-				sgn = 0;
-			t = wma; wma = sum; sum = t;
-		} else {
-			sgn *= _subn(sum,wm,wma);
-			t = wma; wma = sum; sum = t;
-		}
+	if ( OID(current_top_weight) == O_VECT ) {
+	    mat = (Q **)&BDY((VECT)current_top_weight);
+		row = 1;
+	} else {
+	    mat = (Q **)BDY((MAT)current_top_weight);
+		row = ((MAT)current_top_weight)->row;
 	}
-	if ( sgn > 0 ) return 1;
-	else if ( sgn < 0 ) return -1;
-	else return (*cmpdl_tie_breaker)(n,d1,d2);
+	for ( k = 0; k < row; k++ ) {
+		a = mat[k];
+	    for ( i = 0; i < n; i++ ) {
+		    if ( !a[i] || !w[i] ) continue;
+		    tn.p = 1;
+		    if ( w[i] > 0 ) {
+			    tn.b[0] = w[i]; tsgn = 1;
+		    } else {
+			    tn.b[0] = -w[i]; tsgn = -1;
+		    }
+		    _muln(NM(a[i]),&tn,wm);
+		    if ( !sgn ) {
+			    sgn = tsgn;
+			    t = wm; wm = sum; sum = t;
+		    } else if ( sgn == tsgn ) {
+			    _addn(sum,wm,wma);
+			    if ( !PL(wma) )
+				    sgn = 0;
+			    t = wma; wma = sum; sum = t;
+		    } else {
+			    sgn *= _subn(sum,wm,wma);
+			    t = wma; wma = sum; sum = t;
+		    }
+	    }
+	    if ( sgn > 0 ) return 1;
+	    else if ( sgn < 0 ) return -1;
+	}
+    return (*cmpdl_tie_breaker)(n,d1,d2);
 }
 
 GeoBucket create_bucket()

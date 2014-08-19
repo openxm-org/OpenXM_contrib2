@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.90 2013/09/09 09:47:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.91 2013/09/12 06:46:16 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2636,44 +2636,52 @@ VECT *rp;
 	}
 }
 
-VECT current_top_weight_vector_obj;
-N *current_top_weight_vector;
+Obj current_top_weight;
+extern Obj nd_top_weight;
 
-void Pdp_set_top_weight(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_set_top_weight(NODE arg,Obj *rp)
 {
 	VECT v;
-	int i,n;
+	MAT m;
+	Obj obj;
+	int i,j,n,id,row,col;
+	Q *mi;
 	NODE node;
 
 	if ( !arg )
-		*rp = current_top_weight_vector_obj;
+		*rp = current_top_weight;
 	else if ( !ARG0(arg) ) {
-		current_top_weight_vector = 0;
-		current_top_weight_vector_obj = 0;
+		nd_top_weight = 0;
+		current_top_weight = 0;
 		*rp = 0;
 	} else {
-		if ( OID(ARG0(arg)) != O_VECT && OID(ARG0(arg)) != O_LIST )
+		id = OID(ARG0(arg));
+		if ( id != O_VECT && id != O_MAT && id != O_LIST )
 			error("dp_set_top_weight : invalid argument");
-		if ( OID(ARG0(arg)) == O_VECT )
-			v = (VECT)ARG0(arg);
-		else {
+		if ( id == O_LIST ) {
 			node = (NODE)BDY((LIST)ARG0(arg));
 			n = length(node);
 			MKVECT(v,n);
 			for ( i = 0; i < n; i++, node = NEXT(node) )
 				BDY(v)[i] = BDY(node);
+		    obj = v;
+		} else
+		    obj = ARG0(arg);
+		if ( OID(obj) == O_VECT ) {
+			v = (VECT)obj;
+		    for ( i = 0; i < v->len; i++ )
+			    if ( !INT(BDY(v)[i]) || (BDY(v)[i] && SGN((Q)BDY(v)[i]) < 0) )
+				    error("dp_set_top_weight : each element must be a non-negative integer");
+		} else {
+			m = (MAT)obj; row = m->row; col = m->col;
+		    for ( i = 0; i < row; i++ )
+				for ( j = 0, mi = (Q *)BDY(m)[i]; j < col; j++ )
+			        if ( !INT(mi[j]) || (mi[j] && SGN((Q)mi[j]) < 0) )
+				        error("dp_set_top_weight : each element must be a non-negative integer");
 		}
-		for ( i = 0; i < v->len; i++ )
-			if ( !INT(BDY(v)[i]) || (BDY(v)[i] && SGN((Q)BDY(v)[i]) < 0) )
-				error("dp_set_top_weight : each element must be a non-negative integer");
-		current_top_weight_vector_obj = v;
-		current_top_weight_vector = (N *)MALLOC(v->len*sizeof(N));
-		for ( i = 0; i < v->len; i++ ) {
-			current_top_weight_vector[i] = !BDY(v)[i]?0:NM((Q)BDY(v)[i]);
-		}
-		*rp = current_top_weight_vector_obj;
+        current_top_weight = obj;
+		nd_top_weight = obj;
+		*rp = current_top_weight;
 	}
 }
 
@@ -2968,4 +2976,3 @@ int get_opt(char *key0,Obj *r) {
    }
    return 0;
 }
-
