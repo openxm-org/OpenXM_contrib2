@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.9 2014/05/09 17:45:49 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.10 2014/05/13 20:07:23 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -238,10 +238,14 @@ static void process_resize(struct canvas *can,POINT startp,POINT endp)
 	if ( can->mode == modeNO(INTERACTIVE) || can->mode == modeNO(POLARPLOT) )
 		return;
 
+#if 0
 	if ( can->mode == modeNO(PLOT) )
 		plot_resize(can,startp,endp);
 	else
 		ifplot_resize(can,startp,endp);
+#else
+	plot_resize(can,startp,endp);
+#endif
 }
 
 static void asir_do_cmd(unsigned int cmd,unsigned int serial)
@@ -321,10 +325,10 @@ static void asir_executeFunction(int serial)
 		NEXT(n1) = 0;
 	id = -1;
 	if ( !strcmp(func,"plot") ) {
-		id = plot(n,PLOT);
+		id = plot(n,modeNO(PLOT));
 		STOQ(id,ret); asir_push_one((Obj)ret);
 	}else if ( !strcmp(func,"ifplot") ) {
-		id = plot(n,IFPLOT);
+		id = plot(n,modeNO(IFPLOT));
 		STOQ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
