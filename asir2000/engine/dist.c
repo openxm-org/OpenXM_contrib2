@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.47 2013/12/20 02:02:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.48 2014/08/19 06:35:01 noro Exp $ 
 */
 #include "ca.h"
 
@@ -181,7 +181,7 @@ void initd(struct order_spec *spec)
 		cmpdl_tie_breaker = cmpdl;
 		cmpdl = cmpdl_top_weight;
 		if ( OID(current_top_weight) == O_VECT ) {
-		   mat = (Q **)&BDY((MAT)current_top_weight);
+		   mat = (Q **)&BDY((VECT)current_top_weight);
 		   row = 1;
 		} else {
 		   mat = (Q **)BDY((MAT)current_top_weight);
