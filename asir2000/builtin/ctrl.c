@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.43 2014/05/26 09:34:06 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.44 2014/05/27 09:53:46 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -84,7 +84,7 @@ struct ftab ctrl_tab[] = {
 };
 
 extern int error_in_timer;
-extern int prtime,nez,echoback,bigfloat;
+extern int prtime,nez,echoback,bigfloat,evalef;
 extern int debug_up;
 extern int GC_max_heap_size,Verbose,hideargs,hex_output,do_server_in_X11;
 extern int do_message,do_terse;
@@ -124,6 +124,7 @@ static struct {
 #if defined(PARI)
 	{"bigfloat",&bigfloat},
 #endif
+	{"evalef",&evalef},
 	{"verbose",&Verbose},
 	{"quiet_mode",&do_quiet},
 	{"hideargs",&hideargs},

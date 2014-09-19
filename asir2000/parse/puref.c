@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.8 2005/10/05 08:57:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.9 2013/02/15 07:05:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -650,6 +650,20 @@ void devalins(PFINS ins,Obj *rp)
 		}
 		MKReal(d,r); *rp = (Obj)r;
 	}
+}
+
+extern int evalef;
+
+void simplify_elemfunc_ins(PFINS ins,Obj *rp)
+{
+	V v;
+	P t;
+
+  if ( evalef )
+    evalins(ins,0,rp); 
+  else {
+	  instov(ins,&v); MKV(v,t); *rp = (Obj)t;
+  }
 }
 
 void simplify_ins(PFINS ins,Obj *rp)

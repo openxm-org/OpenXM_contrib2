@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.30 2013/06/13 18:40:31 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.31 2013/12/20 02:02:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -82,6 +82,7 @@ C IU = &oIU;
 USINT VOIDobj = &oVOID;
 
 int bigfloat;
+int evalef = 0;
 int nez = 1;
 int current_mod = 0;
 int StrassenSize = 0;
