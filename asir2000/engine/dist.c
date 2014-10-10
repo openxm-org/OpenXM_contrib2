@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.48 2014/08/19 06:35:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.49 2014/09/12 06:28:46 noro Exp $ 
 */
 #include "ca.h"
 
@@ -70,6 +70,9 @@ int cmpdl_top_weight();
 int (*cmpdl)()=cmpdl_revgradlex;
 int (*cmpdl_tie_breaker)();
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
+
+Obj current_top_weight;
+int current_top_weight_len;
 
 int do_weyl;
 
@@ -124,8 +127,16 @@ int has_sfcoef_p(P f)
 	}
 }
 
-extern Obj current_top_weight;
-int current_top_weight_len;
+extern Obj nd_top_weight;
+
+void reset_top_weight()
+{
+	cmpdl = cmpdl_tie_breaker;
+	cmpdl_tie_breaker = 0;
+	nd_top_weight = 0;
+	current_top_weight = 0;
+	current_top_weight_len = 0;
+}
 
 void initd(struct order_spec *spec)
 {

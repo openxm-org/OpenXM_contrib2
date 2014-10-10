@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.91 2013/09/12 06:46:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.92 2014/08/19 06:35:01 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2636,7 +2636,7 @@ VECT *rp;
 	}
 }
 
-Obj current_top_weight;
+extern Obj current_top_weight;
 extern Obj nd_top_weight;
 
 void Pdp_set_top_weight(NODE arg,Obj *rp)
@@ -2651,8 +2651,7 @@ void Pdp_set_top_weight(NODE arg,Obj *rp)
 	if ( !arg )
 		*rp = current_top_weight;
 	else if ( !ARG0(arg) ) {
-		nd_top_weight = 0;
-		current_top_weight = 0;
+		reset_top_weight();
 		*rp = 0;
 	} else {
 		id = OID(ARG0(arg));
