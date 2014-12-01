@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.12 2013/11/27 13:39:08 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.13 2013/11/27 17:18:07 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 ;; C-c p     Selected region is pasted to Asir.
 
 (require 'shell)
+(require 'cl)
 
 ;;;; AsirGUI for Windows
 (defvar asir-exec-path '("~/Desktop/asir/bin" "c:/Program Files/asir/bin" "c:/Program Files (x64)/asir/bin" "c:/asir/bin")
