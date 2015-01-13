@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.92 2014/08/19 06:35:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.93 2014/10/10 09:02:24 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -56,6 +56,7 @@ extern int dp_order_pair_length;
 extern struct order_pair *dp_order_pair;
 extern struct order_spec *dp_current_spec;
 extern struct modorder_spec *dp_current_modspec;
+extern int nd_rref2;
 
 int do_weyl;
 
@@ -109,6 +110,7 @@ void Pdp_get_denomlist();
 void Pdp_symb_add();
 void Pdp_mono_raddec();
 void Pdp_mono_reduce();
+void Pdp_rref2();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -274,6 +276,8 @@ struct ftab dp_supp_tab[] = {
 	{"dp_compute_essential_df",Pdp_compute_essential_df,2},
 	{"dp_mono_raddec",Pdp_mono_raddec,2},
 	{"dp_mono_reduce",Pdp_mono_reduce,2},
+
+	{"dp_rref2",Pdp_rref2,2},
 
 	{0,0,0}
 };
@@ -1282,6 +1286,8 @@ DP *rp;
 	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
 	asir_assert(p1,O_DP,"dp_symb_add");
 	asir_assert(p2,O_DP,"dp_symb_add");
+	if ( !p1 ) { *rp = p2; return; }
+	else if ( !p2 ) { *rp = p1; return; }
 	if ( p1->nv != p2->nv )
 		error("dp_sumb_add : invalid input");
 	nv = p1->nv;
@@ -2144,6 +2150,7 @@ LIST *rp;
 	struct order_spec *ord;
 
 	do_weyl = 0;
+	nd_rref2 = 0;
 	asir_assert(ARG0(arg),O_LIST,"nd_f4");
 	asir_assert(ARG1(arg),O_LIST,"nd_f4");
 	asir_assert(ARG2(arg),O_N,"nd_f4");
@@ -2157,6 +2164,7 @@ LIST *rp;
 	homo = retdp = 0;
 	if ( get_opt("homo",&val) && val ) homo = 1;
 	if ( get_opt("dp",&val) && val ) retdp = 1;
+	if ( get_opt("rref2",&val) && val ) nd_rref2 = 1;
 	nd_gr(f,v,m,homo,retdp,1,ord,rp);
 }
 
@@ -2791,6 +2799,112 @@ void Pdp_mono_reduce(NODE arg,LIST *rp)
 		if ( a[i] ) { NEXTNODE(r0,r); BDY(r) = a[i]; }
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
+}
+
+#define BLEN (8*sizeof(unsigned long))
+
+void showmat2(unsigned long **a,int row,int col)
+{
+  int i,j;
+
+  for ( i = 0; i < row; i++, putchar('\n') )
+    for ( j = 0; j < col; j++ )
+	    if ( a[i][j/BLEN] & (1L<<(j%BLEN)) ) putchar('1');
+      else putchar('0');
+}
+
+int rref2(unsigned long **a,int row,int col)
+{
+  int i,j,k,l,s,wcol,wj;
+  unsigned long bj;
+  unsigned long *ai,*ak,*as,*t;
+  int *pivot;
+
+  wcol = (col+BLEN-1)/BLEN; 
+  pivot = (int *)MALLOC_ATOMIC(row*sizeof(int));
+  i = 0;
+  for ( j = 0; j < col; j++ ) {
+	  wj = j/BLEN; bj = 1L<<(j%BLEN);
+    for ( k = i; k < row; k++ )
+  	  if ( a[k][wj] & bj ) break;
+    if ( k == row ) continue;
+    pivot[i] = j;
+    if ( k != i ) {
+     t = a[i]; a[i] = a[k]; a[k] = t;
+	  }
+	  ai = a[i];
+    for ( k = i+1; k < row; k++ ) {
+	    ak = a[k];
+	    if ( ak[wj] & bj ) {
+	      for ( l = wj; l < wcol; l++ )
+		      ak[l] ^= ai[l];
+	    }
+	  }
+  	i++;
+  }
+  for ( k = i-1; k >= 0; k-- ) {
+    j = pivot[k]; wj = j/BLEN; bj = 1L<<(j%BLEN);
+	  ak = a[k];
+    for ( s = 0; s < k; s++ ) {
+	    as = a[s];
+      if ( as[wj] & bj ) {
+        for ( l = wj; l < wcol; l++ )
+		      as[l] ^= ak[l];
+	    }
+	  }
+  }
+  return i;
+}
+
+void Pdp_rref2(NODE arg,VECT *rp)
+{
+  VECT f,term,ret;
+  int row,col,wcol,size,nv,i,j,rank,td;
+  unsigned long **mat;
+  unsigned long *v;
+  DL d;
+  DL *t;
+  DP dp;
+  MP m,m0;
+
+  f = (VECT)ARG0(arg);
+  row = f->len;
+  term = (VECT)ARG1(arg);
+  col = term->len; 
+  mat = (unsigned long **)MALLOC(row*sizeof(unsigned long *));
+  size = sizeof(unsigned long)*((col+BLEN-1)/BLEN);
+  nv = ((DP)term->body[0])->nv;
+  t = (DL *)MALLOC(col*sizeof(DL));
+  for ( i = 0; i < col; i++ ) t[i] = BDY((DP)BDY(term)[i])->dl;
+  for ( i = 0; i < row; i++ ) {
+    v = mat[i] = (unsigned long *)MALLOC_ATOMIC_IGNORE_OFF_PAGE(size);
+	bzero(v,size);
+	for ( j = 0, m = BDY((DP)BDY(f)[i]); m; m = NEXT(m) ) {
+	  d = m->dl;
+	  for ( ; !dl_equal(nv,d,t[j]); j++ );
+	  v[j/BLEN] |= 1L <<(j%BLEN);
+	}
+  }
+  rank = rref2(mat,row,col);
+  MKVECT(ret,rank);
+  *rp = ret;
+  for ( i = 0; i < rank; i++ ) {
+    v = mat[i];
+	m0 = 0;
+	td = 0;
+    for ( j = 0; j < col; j++ ) {
+	  if ( v[j/BLEN] & (1L<<(j%BLEN)) ) {
+	    NEXTMP(m0,m);
+		m->dl = t[j];
+		m->c = (P)ONE;
+	    td = MAX(td,m->dl->td);
+	  }
+	}
+	NEXT(m) = 0;
+	MKDP(nv,m0,dp);
+	dp->sugar = td;
+    BDY(ret)[i] = (pointer)dp;
+  }
 }
 
 LIST remove_zero_from_list(LIST l)

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.218 2014/02/24 01:45:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.219 2014/08/19 06:35:01 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,6 +8,7 @@ int diag_period = 6;
 int weight_check = 1;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
 int nd_dcomp;
+int nd_rref2;
 NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
@@ -89,6 +90,14 @@ ND ndgztond(ND p);
 
 extern int Denominator,DP_Multiple;
 
+#define BLEN (8*sizeof(unsigned long))
+
+typedef struct matrix {
+  int row,col;
+  unsigned long **a;
+} *matrix;
+
+
 void nd_free_private_storage()
 {
     _nm_free_list = 0;
@@ -108,6 +117,20 @@ void _NM_alloc()
         p->next = _nm_free_list; _nm_free_list = p;
     }
 }
+
+matrix alloc_matrix(int row,int col)
+{
+  unsigned long **a;
+  int i,len,blen;
+  matrix mat;
+
+  mat = (matrix)MALLOC(sizeof(struct matrix));
+  mat->row = row;
+  mat->col = col;
+  mat->a = a = (unsigned long **)MALLOC(row*sizeof(unsigned long *));
+  return mat;
+}
+
 
 void _ND_alloc()
 {
@@ -5506,6 +5529,44 @@ int nd_to_vect_q(UINT *s0,int n,ND d,Q *r)
     return i;
 }
 
+unsigned long *nd_to_vect_2(UINT *s0,int n,int *s0hash,ND p)
+{
+    NM m;
+    unsigned long *v;
+    int i,j,h,size;
+	UINT *s,*t;
+
+	size = sizeof(unsigned long)*(n+BLEN-1)/BLEN;
+    v = (unsigned long *)MALLOC_ATOMIC_IGNORE_OFF_PAGE(size);
+    bzero(v,size);
+    for ( i = j = 0, s = s0, m = BDY(p); m; j++, m = NEXT(m) ) {
+		t = DL(m);
+		h = ndl_hash_value(t);
+        for ( ; h != s0hash[i] || !ndl_equal(t,s); s += nd_wpd, i++ );
+	    v[i/BLEN] |= 1L <<(i%BLEN);
+    }
+    return v;
+}
+
+int nd_nm_to_vect_2(UINT *s0,int n,int *s0hash,NDV p,NM m,unsigned long *v)
+{
+    NMV mr;
+    UINT *d,*t,*s;
+    int i,j,len,h,head;
+
+    d = DL(m);
+    len = LEN(p);
+    t = (UINT *)ALLOCA(nd_wpd*sizeof(UINT));
+    for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
+        ndl_add(d,DL(mr),t);    
+		h = ndl_hash_value(t);
+        for ( ; h != s0hash[i] || !ndl_equal(t,s); s += nd_wpd, i++ );
+		if ( j == 0 ) head = i;
+	    v[i/BLEN] |= 1L <<(i%BLEN);
+    }
+    return head;
+}
+
 Q *nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair)
 {
     NM m;
@@ -5900,6 +5961,28 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
                     ndl_copy(p,DL(mr)); CM(mr) = c; NMV_ADV(mr);
                 }
             }
+        MKNDV(nd_nvar,mr0,len,r);
+        return r;
+    }
+}
+
+NDV vect_to_ndv_2(unsigned long *vect,int col,UINT *s0vect)
+{
+    int j,k,len;
+    UINT *p;
+    NDV r;
+    NMV mr0,mr;
+
+    for ( j = 0, len = 0; j < col; j++ ) if ( vect[j/BLEN] & (1L<<(j%BLEN)) ) len++;
+    if ( !len ) return 0;
+    else {
+        mr0 = (NMV)MALLOC_ATOMIC_IGNORE_OFF_PAGE(nmv_adv*len);
+        mr = mr0; 
+        p = s0vect;
+        for ( j = 0; j < col; j++, p += nd_wpd )
+		  if ( vect[j/BLEN] & (1L<<(j%BLEN)) ) {
+            ndl_copy(p,DL(mr)); CM(mr) = 1; NMV_ADV(mr);
+          }
         MKNDV(nd_nvar,mr0,len,r);
         return r;
     }
@@ -6378,6 +6461,174 @@ NODE nd_f4_pseudo_trace(int m,int **indp)
     return g;
 }
 
+int rref(matrix mat,int *sugar)
+{
+  int row,col,i,j,k,l,s,wcol,wj;
+  unsigned long bj;
+  unsigned long **a;
+  unsigned long *ai,*ak,*as,*t;
+  int *pivot;
+
+  row = mat->row;
+  col = mat->col;
+  a = mat->a;
+  wcol = (col+BLEN-1)/BLEN; 
+  pivot = (int *)MALLOC_ATOMIC(row*sizeof(int));
+  i = 0;
+  for ( j = 0; j < col; j++ ) {
+	wj = j/BLEN; bj = 1L<<(j%BLEN);
+    for ( k = i; k < row; k++ )
+	  if ( a[k][wj] & bj ) break;
+    if ( k == row ) continue;
+	pivot[i] = j;
+    if ( k != i ) {
+	 t = a[i]; a[i] = a[k]; a[k] = t;
+	 s = sugar[i]; sugar[i] = sugar[k]; sugar[k] = s;
+	}
+	ai = a[i];
+    for ( k = i+1; k < row; k++ ) {
+	  ak = a[k];
+	  if ( ak[wj] & bj ) {
+	    for ( l = wj; l < wcol; l++ )
+		  ak[l] ^= ai[l];
+	    sugar[k] = MAX(sugar[k],sugar[i]);
+	  }
+	}
+	i++;
+  }
+  for ( k = i-1; k >= 0; k-- ) {
+    j = pivot[k]; wj = j/BLEN; bj = 1L<<(j%BLEN);
+	ak = a[k];
+    for ( s = 0; s < k; s++ ) {
+	  as = a[s];
+      if ( as[wj] & bj ) {
+        for ( l = wj; l < wcol; l++ )
+		  as[l] ^= ak[l];
+	    sugar[s] = MAX(sugar[s],sugar[k]);
+	  }
+	}
+  }
+  return i;
+}
+
+void print_matrix(matrix mat)
+{
+  int row,col,i,j;
+  unsigned long *ai;
+
+  row = mat->row;
+  col = mat->col;
+  printf("%d x %d\n",row,col);
+  for ( i = 0; i < row; i++ ) {
+	ai = mat->a[i];
+    for ( j = 0; j < col; j++ ) {
+	  if ( ai[j/BLEN] & (1L<<(j%BLEN)) ) putchar('1');
+	  else putchar('0');
+	}
+	putchar('\n');
+  }
+}
+
+NDV vect_to_ndv_2(unsigned long *vect,int col,UINT *s0vect);
+
+void red_by_vect_2(matrix mat,int *sugar,unsigned long *v,int rhead,int rsugar)
+{
+  int row,col,wcol,wj,i,j;
+  unsigned long bj;
+  unsigned long *ai;
+  unsigned long **a;
+  int len;
+  int *pos;
+
+  row = mat->row;
+  col = mat->col;
+  wcol = (col+BLEN-1)/BLEN; 
+  pos = (int *)ALLOCA(wcol*sizeof(int));
+  bzero(pos,wcol*sizeof(int));
+  for ( i = j = 0; i < wcol; i++ )
+    if ( v[i] ) pos[j++] = i;;
+  len = j;
+  wj = rhead/BLEN;
+  bj = 1L<<rhead%BLEN;
+  a = mat->a;
+  for ( i = 0; i < row; i++ ) {
+	ai = a[i];
+    if ( ai[wj]&bj ) {
+	  for ( j = 0; j < len; j++ )
+	    ai[pos[j]] ^= v[pos[j]];
+	  sugar[i] = MAX(sugar[i],rsugar); 
+	}
+  }
+}
+
+NODE nd_f4_red_2(ND_pairs sp0,UINT *s0vect,int col,NODE rp0,ND_pairs *nz)
+{
+    int nsp,nred,i,i0,k,rank,row;
+    NODE r0,rp;
+    ND_pairs sp;
+	ND spol;
+	NM_ind_pair rt;
+    int *s0hash;
+	UINT *s;
+	int *pivot,*sugar,*head;
+	matrix mat;
+    NM m;
+    NODE r;
+	struct oEGT eg0,eg1,eg2,eg_elim1,eg_elim2;
+	int rhead,rsugar,size;
+    unsigned long *v;
+
+    get_eg(&eg0);
+init_eg(&eg_search);
+    for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
+    nred = length(rp0);
+    mat = alloc_matrix(nsp,col);
+    s0hash = (int *)ALLOCA(col*sizeof(int));
+    for ( i = 0, s = s0vect; i < col; i++, s += nd_wpd )
+        s0hash[i] = ndl_hash_value(s);
+
+	sugar = (int *)ALLOCA(nsp*sizeof(int));
+	for ( i = 0, sp = sp0; sp; sp = NEXT(sp) ) {
+		nd_sp(2,0,sp,&spol);
+		if ( spol ) {
+	      mat->a[i] = nd_to_vect_2(s0vect,col,s0hash,spol);
+		  sugar[i] = SG(spol);
+		  i++;
+		}
+	}
+	mat->row = i;
+    fprintf(asir_out,"%dx%d,",mat->row,mat->col); fflush(asir_out);
+	size = ((col+BLEN-1)/BLEN)*sizeof(unsigned long);
+	v = CALLOC((col+BLEN-1)/BLEN,sizeof(unsigned long));
+    for ( rp = rp0, i = 0; rp; rp = NEXT(rp), i++ ) {
+		rt = (NM_ind_pair)BDY(rp);
+		bzero(v,size);
+        rhead = nd_nm_to_vect_2(s0vect,col,s0hash,nd_ps[rt->index],rt->mul,v);
+		rsugar = SG(nd_ps[rt->index])+TD(DL(rt->mul));
+	    red_by_vect_2(mat,sugar,v,rhead,rsugar);
+	}
+
+    get_eg(&eg1);
+    init_eg(&eg_elim1); add_eg(&eg_elim1,&eg0,&eg1);
+	rank = rref(mat,sugar);
+
+    for ( i = 0, r0 = 0; i < rank; i++ ) {
+      NEXTNODE(r0,r); 
+	  BDY(r) = (pointer)vect_to_ndv_2(mat->a[i],col,s0vect);
+      SG((NDV)BDY(r)) = sugar[i];
+    }
+    if ( r0 ) NEXT(r) = 0;
+    get_eg(&eg2);
+    init_eg(&eg_elim2); add_eg(&eg_elim2,&eg1,&eg2);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim1=%fsec,elim2=%fsec\n",
+		  eg_elim1.exectime+eg_elim1.gctime,eg_elim2.exectime+eg_elim2.gctime);
+        fflush(asir_out);
+	}
+    return r0;
+}
+
+
 NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz)
 {
     IndArray *imat;
@@ -6388,6 +6639,9 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
     NM_ind_pair *rvect;
     UINT *s;
     int *s0hash;
+
+    if ( m == 2 && nd_rref2 )
+	   return nd_f4_red_2(sp0,s0vect,col,rp0,nz);
 
 init_eg(&eg_search);
     for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
