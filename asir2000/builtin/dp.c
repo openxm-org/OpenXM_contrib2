@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.93 2014/10/10 09:02:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.94 2015/01/13 00:54:54 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -110,7 +110,7 @@ void Pdp_get_denomlist();
 void Pdp_symb_add();
 void Pdp_mono_raddec();
 void Pdp_mono_reduce();
-void Pdp_rref2();
+void Pdp_rref2(),Psumi_updatepairs(),Psumi_symbolic();
 
 LIST dp_initial_term();
 LIST dp_order();
@@ -278,6 +278,8 @@ struct ftab dp_supp_tab[] = {
 	{"dp_mono_reduce",Pdp_mono_reduce,2},
 
 	{"dp_rref2",Pdp_rref2,2},
+	{"sumi_updatepairs",Psumi_updatepairs,3},
+	{"sumi_symbolic",Psumi_symbolic,5},
 
 	{0,0,0}
 };
@@ -2905,6 +2907,249 @@ void Pdp_rref2(NODE arg,VECT *rp)
 	dp->sugar = td;
     BDY(ret)[i] = (pointer)dp;
   }
+}
+
+#define HDL(f) (BDY(f)->dl)
+
+NODE sumi_criB(int nv,NODE d,DP *f,int m)
+{
+ LIST p;
+ NODE r0,r;
+ int p0,p1;
+ DL p2,lcm;
+
+ NEWDL(lcm,nv);
+ r0 = 0;
+ for ( ; d; d = NEXT(d) ) {
+	p = (LIST)BDY(d);
+	p0 = QTOS((Q)ARG0(BDY(p)));
+	p1 = QTOS((Q)ARG1(BDY(p)));
+	p2 = HDL((DP)ARG2(BDY(p)));
+    if(!_dl_redble(HDL((DP)f[m]),p2,nv) ||
+     dl_equal(nv,lcm_of_DL(nv,HDL(f[p0]),HDL(f[m]),lcm),p2) ||
+     dl_equal(nv,lcm_of_DL(nv,HDL(f[p1]),HDL(f[m]),lcm),p2) ) {
+	  NEXTNODE(r0,r);
+	  BDY(r) = p;
+	}
+ }
+ if ( r0 ) NEXT(r) = 0;
+ return r0;
+}
+
+NODE sumi_criFMD(int nv,DP *f,int m)
+{
+  DL *a;
+  DL l1,dl1,dl2;
+  int i,j,k,k2;
+  NODE r,r1,nd;
+  MP mp;
+  DP u;
+  Q iq,mq;
+  LIST list;
+
+  /* a[i] = lcm(LT(f[i]),LT(f[m])) */
+  a = (DL *)ALLOCA(m*sizeof(DL));
+  for ( i = 0; i < m; i++ ) {
+   a[i] = lcm_of_DL(nv,HDL(f[i]),HDL(f[m]),0);
+  }
+  r = 0;
+  for( i = 0; i < m; i++) {
+   l1 = a[i];
+   if ( !l1 ) continue;
+   /* Tkm = Tim (k<i) */
+   for( k = 0; k < i; k++)
+     if( dl_equal(nv,l1,a[k]) ) break;
+   if( k == i ){
+     /* Tk|Tim && Tkm != Tim (k<m) */
+	 for ( k2 = 0; k2 < m; k2++ )
+	   if ( _dl_redble(HDL(f[k2]),l1,nv) &&
+	     !dl_equal(nv,l1,a[k2]) ) break;
+	 if ( k2 == m ) {
+       dl1 = HDL(f[i]); dl2 = HDL(f[m]);
+       for ( k2 = 0; k2 < nv; k2++ )
+         if ( dl1->d[k2] && dl2->d[k2] ) break;
+       if ( k2 < nv ) {
+         NEWMP(mp); mp->dl = l1; C(mp) = (P)ONE;
+         NEXT(mp) = 0; MKDP(nv,mp,u); u->sugar = l1->td;
+	     STOQ(i,iq); STOQ(m,mq);
+	     nd = mknode(3,iq,mq,u);
+	     MKLIST(list,nd);
+	     MKNODE(r1,list,r);
+	     r = r1;
+	  }
+	}
+   }
+ } 
+ return r;
+}
+
+LIST sumi_updatepairs(LIST d,DP *f,int m)
+{
+  NODE old,new,t;
+  LIST l;
+  int nv;
+
+  nv = f[0]->nv;
+  old = sumi_criB(nv,BDY(d),f,m);
+  new = sumi_criFMD(nv,f,m);
+  if ( !new ) new = old;
+  else {
+    for ( t = new ; NEXT(t); t = NEXT(t) );
+	NEXT(t) = old;
+  }
+  MKLIST(l,new);
+  return l;
+}
+
+VECT ltov(LIST l)
+{
+  NODE n;
+  int i,len;
+  VECT v;
+
+  n = BDY(l);
+  len = length(n);
+  MKVECT(v,len);
+  for ( i = 0; i < len; i++, n = NEXT(n) )
+    BDY(v)[i] = BDY(n);
+  return v;
+}
+
+DL subdl(int nv,DL d1,DL d2)
+{
+  int i;
+  DL d;
+
+  NEWDL(d,nv);
+  d->td = d1->td-d2->td;
+  for ( i = 0; i < nv; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  return d;
+}
+
+DP dltodp(int nv,DL d)
+{
+  MP mp;
+  DP dp;
+
+  NEWMP(mp); mp->dl = d; C(mp) = (P)ONE;
+  NEXT(mp) = 0; MKDP(nv,mp,dp); dp->sugar = d->td;
+  return dp;
+}
+
+LIST sumi_simplify(int nv,DL t,DP p,NODE f2,int simp)
+{
+  DL d,h,hw;
+  DP u,w,dp;
+  int n,i,last;
+  LIST *v;
+  LIST list;
+  NODE s,r;
+
+  d = t; u = p;
+  /* only the last history is used */
+  if ( f2 && simp && t->td != 0 ) {
+    adddl(nv,t,HDL(p),&h);
+    n = length(f2);
+    last = 1;
+    if ( simp > 1 ) last = n;
+    v = (LIST *)ALLOCA(n*sizeof(LIST));
+    for ( r = f2, i = 0; r; r = NEXT(r), i++ ) v[n-i-1] = BDY(r);
+    for ( i = 0; i < last; i++ ) {
+      for ( s = BDY((LIST)v[i]); s; s = NEXT(s) ) {
+	    w = (DP)BDY(s); hw = HDL(w);
+        if ( _dl_redble(hw,h,nv) ) {
+		  u = w;
+		  d = subdl(nv,h,hw);
+		  goto fin;
+	    }
+      }
+    }
+  }
+fin:
+  dp = dltodp(nv,d);
+  r = mknode(2,dp,u);
+  MKLIST(list,r);
+  return list;
+}
+
+LIST sumi_symbolic(NODE l,int q,NODE f2,DP *g,int simp)
+{
+   int nv;
+   NODE t,r;
+   NODE f0,f,fd0,fd,done0,done,red0,red;
+   DL h,d;
+   DP mul;
+   int m;
+   LIST tp,l0,l1,l2,l3,list;
+   VECT v0,v1,v2,v3;
+
+   nv = ((DP)BDY(l))->nv;
+   t = 0;
+
+   f0 = 0; fd0 = 0; done0 = 0; red0 = 0;
+
+   for ( ; l; l = NEXT(l) ) {
+     t = symb_merge(t,dp_dllist((DP)BDY(l)),nv);
+     NEXTNODE(fd0,fd); BDY(fd) = BDY(l);
+   }
+
+   while ( t ) {
+	 h = (DL)BDY(t);
+	 NEXTNODE(done0,done); BDY(done) = dltodp(nv,h);
+	 t = NEXT(t);
+     for(m = 0; m < q; m++)
+	   if ( _dl_redble(HDL(g[m]),h,nv) ) break;
+     if ( m == q ) { 
+     } else {
+	   d = subdl(nv,h,HDL(g[m]));
+       tp = sumi_simplify(nv,d,g[m],f2,simp);
+
+	   muldm(CO,ARG1(BDY(tp)),BDY((DP)ARG0(BDY(tp))),&mul);
+       t = symb_merge(t,NEXT(dp_dllist(mul)),nv);
+
+	   NEXTNODE(f0,f); BDY(f) = tp;
+	   NEXTNODE(fd0,fd); BDY(fd) = mul;
+	   NEXTNODE(red0,red); BDY(red) = mul;
+     }
+   }
+   if ( fd0 ) NEXT(fd) = 0; MKLIST(l0,fd0);
+   v0 = ltov(l0);
+   if ( done0 ) NEXT(done) = 0; MKLIST(l1,done0);
+   v1 = ltov(l1);
+   if ( f0 ) NEXT(f) = 0; MKLIST(l2,f0);
+   v2 = ltov(l2);
+   if ( red0 ) NEXT(red) = 0; MKLIST(l3,red0);
+   v3 = ltov(l3);
+   r = mknode(4,v0,v1,v2,v3);
+   MKLIST(list,r);
+   return list;
+}
+
+void Psumi_symbolic(NODE arg,LIST *rp)
+{
+  NODE l,f2;
+  DP *g;
+  int q,simp;
+
+  l = BDY((LIST)ARG0(arg));
+  q = QTOS((Q)ARG1(arg));
+  f2 = BDY((LIST)ARG2(arg));
+  g = (DP *)BDY((VECT)ARG3(arg));
+  simp = QTOS((Q)ARG4(arg));
+  *rp = sumi_symbolic(l,q,f2,g,simp);
+}
+
+void Psumi_updatepairs(NODE arg,LIST *rp)
+{
+   LIST d,l;
+   DP *f;
+   int m;
+
+   d = (LIST)ARG0(arg); 
+   f = (DP *)BDY((VECT)ARG1(arg)); 
+   m = QTOS((Q)ARG2(arg)); 
+   *rp = sumi_updatepairs(d,f,m);
 }
 
 LIST remove_zero_from_list(LIST l)
