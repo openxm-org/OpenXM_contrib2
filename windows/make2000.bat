@@ -1,7 +1,7 @@
 @echo off
 
 cd pari20
-wget ftp://ftp.math.kobe-u.ac.jp/pub/OpenXM/misc/pari-2.0.17.beta.tgz
+wget http://www.math.kobe-u.ac.jp/pub/OpenXM/misc/pari-2.0.17.beta.tgz
 tar xzvf pari-2.0.17.beta.tgz
 cd ..
 
