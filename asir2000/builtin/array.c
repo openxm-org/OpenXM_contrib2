@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.64 2013/11/05 02:55:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.65 2013/12/20 02:02:23 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -895,6 +895,10 @@ void Pvtol(NODE arg,LIST *rp)
 	pointer *a;
 	int len,i;
 
+	if ( OID(ARG0(arg)) == O_LIST ) {
+		*rp = ARG0(arg);
+		return;
+	}
 	asir_assert(ARG0(arg),O_VECT,"vtol");
 	v = (VECT)ARG0(arg); len = v->len; a = BDY(v);
 	for ( i = len - 1, n = 0; i >= 0; i-- ) {
@@ -906,9 +910,18 @@ void Pvtol(NODE arg,LIST *rp)
 void Pltov(NODE arg,VECT *rp)
 {
 	NODE n;
-	VECT v;
+	VECT v,v0;
 	int len,i;
 
+	if ( OID(ARG0(arg)) == O_VECT ) {
+		v0 = (VECT)ARG0(arg); len = v0->len;
+		MKVECT(v,len);
+		for ( i = 0; i < len; i++ ) {
+			BDY(v)[i] = BDY(v0)[i];
+		}
+		*rp = v;
+		return;
+	}
 	asir_assert(ARG0(arg),O_LIST,"ltov");
 	n = (NODE)BDY((LIST)ARG0(arg));
 	len = length(n);
