@@ -66,6 +66,15 @@
                 <Component Id="cmp7BE23D426C3BFE14B8647F3D54F63962" Guid="9EF09FE8-201B-43F1-B0C7-4F932B28D363">
                     <File Id="fil9DCCCE9C6FFA6A0A30E6E4C14FDC0719" KeyPath="yes" Source="$(var.helpDir)\ja\nn_ndbfhelp.chm" />
                 </Component>
+                <Component Id="cmp8D50EF3B5DB8DA35AA32389D846D0686" Guid="ED19CD9D-548E-4EAC-85F7-29F57DC2BFE4">
+                    <File Id="filBB3A3401F3B38A93B1CEB3E47A704ED7" KeyPath="yes" Source="$(var.helpDir)\ja\noro_matrixhelp.chm" />
+                </Component>
+                <Component Id="cmp64EDCD1F43B2465AF003119F2330B651" Guid="DDFDE5CF-89E6-4DB2-827F-7E679A262356">
+                    <File Id="fil43135A5721A8C496C7EDAEF99B45A52C" KeyPath="yes" Source="$(var.helpDir)\ja\noro_mwlhelp.chm" />
+                </Component>
+                <Component Id="cmpA1888BD6F4D13C47927E79C79265527A" Guid="CFDB8592-21BA-41F3-9A66-AA407C7C2B2F">
+                    <File Id="filD18A3A4FE98607D858F74943676FFD18" KeyPath="yes" Source="$(var.helpDir)\ja\noro_pdhelp.chm" />
+                </Component>
                 <Component Id="cmpB90B97AFB0086C492C07ED4F73F93A5C" Guid="759E72A9-5A8A-4B73-9B37-E5A40E656C98">
                     <File Id="filBFE2A708CF9FC7B6D1588C79665F348E" KeyPath="yes" Source="$(var.helpDir)\ja\ns_twistedloghelp.chm" />
                 </Component>
@@ -93,6 +102,9 @@
                 <Component Id="cmp85862E7DA8EEA1B8C9992630C4B8C44C" Guid="4952B437-D793-466C-B1A8-10F2732AD843">
                     <File Id="fil7FFD40E452E88869B644137294C44A5C" KeyPath="yes" Source="$(var.helpDir)\ja\tigershelp.chm" />
                 </Component>
+                <Component Id="cmpEA797A136C14A5C308BB1128C8F920F0" Guid="8B5F3654-1208-44D6-BCC1-03AE90A8BED1">
+                    <File Id="filB38ACE41E48DBAC1B1F65785EF7B7D56" KeyPath="yes" Source="$(var.helpDir)\ja\todo_parametrizehelp.chm" />
+                </Component>
             </Directory>
         </DirectoryRef>
     </Fragment>
@@ -119,6 +131,9 @@
             <ComponentRef Id="cmpB5EE062F96FF420914F85611B1869C98" />
             <ComponentRef Id="cmp77A4D38A2C1A02E1EF7856E063134C67" />
             <ComponentRef Id="cmp7BE23D426C3BFE14B8647F3D54F63962" />
+            <ComponentRef Id="cmp8D50EF3B5DB8DA35AA32389D846D0686" />
+            <ComponentRef Id="cmp64EDCD1F43B2465AF003119F2330B651" />
+            <ComponentRef Id="cmpA1888BD6F4D13C47927E79C79265527A" />
             <ComponentRef Id="cmpB90B97AFB0086C492C07ED4F73F93A5C" />
             <ComponentRef Id="cmpD2218810279D512291FF206DCB3D5D5F" />
             <ComponentRef Id="cmpD7640B9518D1CBB28A10201207AB7F0F" />
@@ -128,6 +143,7 @@
             <ComponentRef Id="cmpE6828B72415367486801027FAECC263A" />
             <ComponentRef Id="cmpF8A74083D3D12A1B9DD539539519252A" />
             <ComponentRef Id="cmp85862E7DA8EEA1B8C9992630C4B8C44C" />
+            <ComponentRef Id="cmpEA797A136C14A5C308BB1128C8F920F0" />
         </ComponentGroup>
     </Fragment>
 </Wix>
