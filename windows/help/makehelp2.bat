@@ -1,4 +1,4 @@
-@rem $OpenXM$
+@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.2 2013/09/03 12:13:44 ohara Exp $
 @echo off
 
 setlocal
@@ -7,10 +7,14 @@ set PATH=..;..\..;%PATH%
 set lang=%~1
 set PERL=c:\cygwin\bin\perl
 
-set srcdir1=..\..\..\..\..\OpenXM\src\asir-doc
-set srcdir2=..\..\..\..\..\OpenXM\src\asir-contrib\packages\doc
-set srcdir3=..\..\..\..\..\OpenXM\src\asir-contrib\packages\src
-set srcdir4=..\..\..\..\asir2000\lib
+REM 相対パスを絶対パスに変換する
+REM 重要!! %%~fi と ) の間に空白を入れてはならない!!
+for %%i in ( ..\..\..\OpenXM\src ) do (set oxsrc=%%~fi)
+for %%i in ( ..\..\asir2000\lib )  do (set srcdir4=%%~fi)
+
+set srcdir1=%oxsrc%\asir-doc
+set srcdir2=%oxsrc%\asir-contrib\packages\doc
+set srcdir3=%oxsrc%\asir-contrib\packages\src
 
 mkdir %lang%
 pushd %lang%
