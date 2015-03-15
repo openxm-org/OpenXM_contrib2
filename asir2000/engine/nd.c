@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.219 2014/08/19 06:35:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.220 2015/01/13 00:54:54 noro Exp $ */
 
 #include "nd.h"
 
@@ -87,6 +87,9 @@ NDV ndvtondvgz(NDV p);
 NDV ndvgztondv(NDV p);
 ND ndtondgz(ND p);
 ND ndgztond(ND p);
+
+void Pdp_set_weight(NODE,VECT *);
+void Pox_cmo_rpc(NODE,Obj *);
 
 extern int Denominator,DP_Multiple;
 

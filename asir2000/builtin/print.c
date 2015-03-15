@@ -45,10 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.24 2007/11/22 05:14:48 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/print.c,v 1.25 2011/06/16 08:17:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
+
+void Psprintf(NODE,STRING *);
 
 void Pprintf();
 void Pprint();

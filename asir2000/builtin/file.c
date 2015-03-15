@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.30 2014/04/02 22:08:29 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.31 2014/05/12 02:27:49 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -67,6 +67,8 @@
 #define ASIR_KEYNAME "SoftWare\\Fujitsu\\Asir\\1999.03.31"
 #define R_OK 0x04
 #endif
+
+void Psprintf(NODE,STRING *);
 
 void Pget_rootdir();
 void Paccess(),Premove_file();
