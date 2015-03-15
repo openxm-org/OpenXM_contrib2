@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.2 2013/09/03 12:13:44 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.3 2015/03/12 17:25:50 ohara Exp $
 @echo off
 
 setlocal
