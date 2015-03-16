@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.31 2013/06/13 18:42:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.32 2013/11/05 02:55:03 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -448,7 +448,7 @@ Q *rp;
 		s = "";
 	else
 		s = BDY((STRING)ARG0(arg));
-	toplevel(s);
+	goto_toplevel(s);
 	*rp = 0;
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.84 2013/11/29 08:21:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.85 2014/03/30 10:48:16 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -742,7 +742,7 @@ void error(char *s)
 	resetenv("return to toplevel");
 }
 
-void toplevel(char *s)
+void goto_toplevel(char *s)
 {
 	SNODE *snp=0;
 

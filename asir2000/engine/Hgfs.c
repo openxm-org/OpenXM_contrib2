@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.29 2002/11/22 08:44:57 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.30 2003/01/15 10:21:17 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -1005,7 +1005,7 @@ void sfsqfr(P f,DCP *dcp)
 	} else if ( !NEXT(vl) )
 		sfusqfr(f,dcp);
 	else
-		sqfrsf(f,dcp);
+		sqfrsf(vl,f,dcp);
 }
 
 void sfusqfr(P f,DCP *dcp)
