@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.18 2013/06/14 04:47:17 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.19 2014/09/19 01:25:59 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -90,17 +90,11 @@ struct ftab puref_tab[] = {
 	{0,0,0},
 };
 
-#if defined(PARI)
-int p_pi(),p_e();
-int p_log(),p_exp(),p_pow();
-int p_sin(),p_cos(),p_tan(),p_asin(),p_acos(),p_atan();
-int p_sinh(),p_cosh(),p_tanh(),p_asinh(),p_acosh(),p_atanh();
-#else
-int p_pi,p_e;
-int p_log,p_exp,p_pow;
-int p_sin,p_cos,p_tan,p_asin,p_acos,p_atan;
-int p_sinh,p_cosh,p_tanh,p_asinh,p_acosh,p_atanh;
-#endif
+int mp_pi(),mp_e();
+int mp_exp(), mp_log(), mp_pow();
+int mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
+int mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
+
 
 static V *uarg,*darg;
 static P x,y;
@@ -126,27 +120,27 @@ void pf_init() {
 	darg[0] = &oVAR[26];
 	darg[1] = &oVAR[27]; MKV(darg[1],y);
 
-	mkpf("@pi",0,0,0,(int (*)())p_pi,const_pi,0,&pidef);
-	mkpf("@e",0,0,0,(int (*)())p_e,const_e,0,&edef);
+	mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,0,&pidef);
+	mkpf("@e",0,0,0,(int (*)())mp_e,const_e,0,&edef);
 
-	mkpf("log",0,1,uarg,(int (*)())p_log,log,simplify_elemfunc_ins,&logdef);
-	mkpf("exp",0,1,uarg,(int (*)())p_exp,exp,simplify_elemfunc_ins,&expdef);
-	mkpf("pow",0,2,darg,(int (*)())p_pow,pow,(int (*)())simplify_pow,&powdef);
+	mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,&logdef);
+	mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,&expdef);
+	mkpf("pow",0,2,darg,(int (*)())mp_pow,pow,(int (*)())simplify_pow,&powdef);
 
-	mkpf("sin",0,1,uarg,(int (*)())p_sin,sin,simplify_elemfunc_ins,&sindef);
-	mkpf("cos",0,1,uarg,(int (*)())p_cos,cos,simplify_elemfunc_ins,&cosdef);
-	mkpf("tan",0,1,uarg,(int (*)())p_tan,tan,simplify_elemfunc_ins,&tandef);
-	mkpf("asin",0,1,uarg,(int (*)())p_asin,asin,simplify_elemfunc_ins,&asindef);
-	mkpf("acos",0,1,uarg,(int (*)())p_acos,acos,simplify_elemfunc_ins,&acosdef);
-	mkpf("atan",0,1,uarg,(int (*)())p_atan,atan,simplify_elemfunc_ins,&atandef);
+	mkpf("sin",0,1,uarg,(int (*)())mp_sin,sin,simplify_elemfunc_ins,&sindef);
+	mkpf("cos",0,1,uarg,(int (*)())mp_cos,cos,simplify_elemfunc_ins,&cosdef);
+	mkpf("tan",0,1,uarg,(int (*)())mp_tan,tan,simplify_elemfunc_ins,&tandef);
+	mkpf("asin",0,1,uarg,(int (*)())mp_asin,asin,simplify_elemfunc_ins,&asindef);
+	mkpf("acos",0,1,uarg,(int (*)())mp_acos,acos,simplify_elemfunc_ins,&acosdef);
+	mkpf("atan",0,1,uarg,(int (*)())mp_atan,atan,simplify_elemfunc_ins,&atandef);
 
-	mkpf("sinh",0,1,uarg,(int (*)())p_sinh,sinh,simplify_elemfunc_ins,&sinhdef);
-	mkpf("cosh",0,1,uarg,(int (*)())p_cosh,cosh,simplify_elemfunc_ins,&coshdef);
-	mkpf("tanh",0,1,uarg,(int (*)())p_tanh,tanh,simplify_elemfunc_ins,&tanhdef);
+	mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,sinh,simplify_elemfunc_ins,&sinhdef);
+	mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,cosh,simplify_elemfunc_ins,&coshdef);
+	mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,tanh,simplify_elemfunc_ins,&tanhdef);
 #if !defined(VISUAL)
-	mkpf("asinh",0,1,uarg,(int (*)())p_asinh,asinh,simplify_elemfunc_ins,&asinhdef);
-	mkpf("acosh",0,1,uarg,(int (*)())p_acosh,acosh,simplify_elemfunc_ins,&acoshdef);
-	mkpf("atanh",0,1,uarg,(int (*)())p_atanh,atanh,simplify_elemfunc_ins,&atanhdef);
+	mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,asinh,simplify_elemfunc_ins,&asinhdef);
+	mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,acosh,simplify_elemfunc_ins,&acoshdef);
+	mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,atanh,simplify_elemfunc_ins,&atanhdef);
 #endif
 	make_exp();
 	make_tri();

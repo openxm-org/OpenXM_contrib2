@@ -45,15 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.85 2014/03/30 10:48:16 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.86 2015/03/16 00:08:32 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
 #include "ox.h"
-#if defined(PARI)
-#include "genpari.h"
-#endif
 #if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX) && !defined(__FreeBSD__)
 #include <sgtty.h>
 #endif
@@ -400,12 +397,6 @@ void process_args(int ac,char **av)
 		} else if ( !strcmp(*av,"-fep") ) {
 			do_fep = 1; av++; ac--;
 #endif
-#if defined(PARI)
-		} else if ( !strcmp(*av,"-paristack") ) {
-			extern int paristack;
-
-			paristack = atoi(*(av+1)); av += 2; ac -= 2;
-#endif
 		} else {
 			fprintf(stderr,"%s : unknown option.\n",*av);
 			asir_terminate(1);
@@ -486,9 +477,6 @@ void resetenv(char *s)
 	w_noflush_stderr(0);
 #endif
 	asir_out = stdout;
-#if defined(PARI)
-	pari_outfile = stdout;
-#endif
 	/* restore states */
 	reset_engine();
 	reset_io();
@@ -801,13 +789,6 @@ char *get_gcversion()
 
 char *get_pariversion() 
 {
-#if PARI
-#if 0
-	return PARIVERSION", Copyright (C) 2000-2005 The PARI Group.\n";
-#else
-	return "PARI 2.0.17, copyright 1989-1999, C. Batut, K. Belabas, D. Bernardi,\n   H. Cohen and M. Olivier.\n";
-#endif
-#endif
 	return "";
 }
 

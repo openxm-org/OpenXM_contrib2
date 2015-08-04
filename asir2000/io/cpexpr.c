@@ -44,15 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.25 2005/11/16 23:42:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.26 2006/08/27 22:17:28 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "al.h"
 #include "base.h"
-#if PARI
-#include "genpari.h"
-#endif
 
 #ifndef CPRINT
 #define CPRINT
@@ -117,22 +114,18 @@ int estimate_length(VL vl,pointer p)
 	return total_length;
 }
 
-#if defined(PARI)
 void PRINTBF(BF a)
 {
 	char *str;
-	char *GENtostr0();
-	void myoutbrute();
+	int dprec;
+	char fbuf[BUFSIZ];
 
-	if ( double_output ) {
-		str = GENtostr0(a->body,myoutbrute);
-	} else {
-		str = GENtostr(a->body);
-	}
+	dprec = a->body->_mpfr_prec*0.30103;
+	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
+	mpfr_asprintf(&str,fbuf,a->body);
 	total_length += strlen(str);
-	free(str);
+	mpfr_free_str(str);
 }
-#endif
 
 void PRINTNUM(Num q)
 {
@@ -162,10 +155,8 @@ void PRINTNUM(Num q)
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
 			break;
-#if defined(PARI)
 		case N_B:
 			PRINTBF((BF)q); break;
-#endif
 		case N_C:
 			PRINTCPLX((C)q); break;
 		case N_M:

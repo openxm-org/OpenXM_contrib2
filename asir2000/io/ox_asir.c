@@ -44,25 +44,24 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.71 2013/06/13 18:42:11 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.72 2014/05/09 19:35:51 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "signal.h"
 #include "ox.h"
 #include "version.h"
-#if defined(PARI)
-#include "genpari.h"
-#endif
 
 char *find_asirrc();
 void ox_usr1_handler();
 int asir_ox_init();
 
 /* environement is defined in libpari.a */
+#if 0
 # if !( PARI_VERSION_CODE > 131588)
 extern jmp_buf environnement;
 # endif
+#endif
 extern int myrank_102,nserver_102;
 
 extern int do_message;
@@ -706,6 +705,7 @@ int asir_executeString()
 	SNODE snode;
 	pointer val;
 	char *cmd;
+#if 0
 #if defined(PARI)
 	recover(0);
 	/* environement is defined in libpari.a */
@@ -715,6 +715,7 @@ int asir_executeString()
 		resetenv("");
 	}
 # endif
+#endif
 #endif
 	cmd = ((STRING)asir_pop_one())->body;
 /* XXX : probably this is useless */
@@ -956,8 +957,10 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	do_server_in_X11 = 1; /* XXX */
 #endif
 	asir_save_handler();
+#if 0
 #if defined(PARI)
 	risa_pari_init();
+#endif
 #endif
 	srandom((int)get_current_time());
 
@@ -1231,8 +1234,10 @@ int asir_ox_init(int byteorder)
 	do_server_in_X11 = 0; /* XXX */
 #endif
 	asir_save_handler();
+#if 0
 #if defined(PARI)
 	risa_pari_init();
+#endif
 #endif
 	srandom((int)get_current_time());
 

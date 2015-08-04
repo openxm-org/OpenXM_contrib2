@@ -44,15 +44,11 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.15 2006/08/09 02:40:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.16 2009/03/16 16:43:03 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
-#if defined(PARI)
-#include "genpari.h"
-int get_lg(GEN);
-#endif
 
 extern VL file_vl;
 
@@ -124,46 +120,27 @@ void loadreal(FILE *s,Real *p)
 
 void loadbf(FILE *s,BF *p)
 {
-#if defined(PARI)
-	GEN z;
-	unsigned int uexpo,lexpo;
-	char dmy;
-	int sign;
-	unsigned int len;
-	unsigned long expo;
-	BF q;
+	BF r;
+  char dmy;
+	int sgn,prec;
+  UL exp;
 
+	int len;
 	read_char(s,&dmy);
-	read_int(s,&sign);
-	read_int(s,&uexpo);
-	read_int(s,&lexpo);
-
+	NEWBF(r);
+	read_int(s,&sgn);
+	read_int(s,&prec);
+	read_int64(s,&exp);
+	read_int(s,&len);
+  mpfr_init2(r->body,prec);
+  MPFR_SIGN(r->body) = sgn;
+	MPFR_EXP(r->body) = (int)exp;
 #if SIZEOF_LONG == 4
-	if ( uexpo )
-		error("loadbf : exponent too large");
-	read_int(s,&len);
-	NEWBF(q,len+2);
-	z = (GEN)BDY(q);
-	settyp(z,t_REAL);
-	setlg(z,len+2);
-	setsigne(z,(long)sign);
-	setexpo(z,(long)lexpo);
-	read_intarray(s,(int *)(z+2),len);
-#elif SIZEOF_LONG == 8
-	expo = (((UL)uexpo)<<32)|((UL)lexpo);
-	read_int(s,&len);
-	NEWBF(q,(len+5)/2); /* 2+(len+1)/2 */
-	z = (GEN)BDY(q);
-	settyp(z,t_REAL);
-	setlg(z,(len+5)/2);
-	setsigne(z,(long)sign);
-	setexpo(z,(long)expo);
-	read_longarray(s,z+2,len);
+	read_intarray(s,(int *)r->body->_mpfr_d,len);
+#else /* SIZEOF_LONG == 8 */
+	read_longarray(s,(long *)r->body->_mpfr_d,len);
 #endif
-	*p = q;
-#else
-	error("loadbf : PARI is not combined");
-#endif
+	*p = r;
 }
 
 #if defined(INTERVAL)

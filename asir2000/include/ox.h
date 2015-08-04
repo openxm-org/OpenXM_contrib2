@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.23 2010/04/23 04:44:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.24 2010/12/12 07:38:00 ohara Exp $ 
 */
 #include "com.h"
 
@@ -201,6 +201,7 @@ void read_cmo_dp(FILE *s,DP *rp);
 void read_cmo_list(FILE *s,Obj *rp);
 void read_cmo_zz(FILE *s,int *sgn,N *rp);
 void read_cmo_uint(FILE *s,USINT *rp);
+void read_cmo_bf(FILE *s,BF *q);
 void read_cmo(FILE *s,Obj *rp);
 void write_cmo_tree(FILE *s,LIST l);
 void write_cmo_error(FILE *s,ERR e);
@@ -215,6 +216,7 @@ void write_cmo_p(FILE *s,P p);
 void write_cmo_zz(FILE *s,int sgn,N n);
 void write_cmo_real(FILE *s,Real real);
 void write_cmo_q(FILE *s,Q q);
+void write_cmo_bf(FILE *s,BF q);
 void write_cmo_uint(FILE *s,USINT ui);
 void write_cmo_mathcap(FILE *s,MATHCAP mc);
 int cmo_tag(Obj obj,int *tag);
@@ -276,6 +278,7 @@ int gen_fwrite (char *ptr,int size,int nitems,FILE *stream);
 void write_char(FILE *f,unsigned char *p);
 void write_short(FILE *f,unsigned short *p);
 void write_int(FILE *f,unsigned int *p);
+void write_int64(FILE *f,UL *p);
 void init_deskey();
 void write_intarray(FILE *f,unsigned int *p,int l);
 void write_longarray(FILE *f,unsigned long *p,int l);
@@ -284,6 +287,7 @@ void write_string(FILE *f,unsigned char *p,int l);
 void read_char(FILE *f,unsigned char *p);
 void read_short(FILE *f,unsigned short *p);
 void read_int(FILE *f,unsigned int *p);
+void read_int64(FILE *f,UL *p);
 void read_intarray(FILE *f,unsigned int *p,int l);
 void read_longarray(FILE *f,unsigned long *p,int l);
 void read_string(FILE *f,unsigned char *p,int l);

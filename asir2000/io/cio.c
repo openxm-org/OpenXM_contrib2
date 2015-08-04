@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.11 2001/10/09 01:36:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.12 2003/04/08 22:29:00 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,6 +58,7 @@
 int valid_as_cmo(Obj obj)
 {
 	NODE m;
+  int nid;
 
 	if ( !obj )
 		return 1;
@@ -66,7 +67,8 @@ int valid_as_cmo(Obj obj)
 		case O_ERR: case O_USINT: case O_BYTEARRAY: case O_VOID:
 			return 1;
 		case O_N:
-			if ( NID((Num)obj) == N_Q || NID((Num)obj) == N_R )
+      nid = NID((Num)obj);
+			if ( nid == N_Q || nid == N_R || nid == N_B )
 				return 1;
 			else
 				return 0;
@@ -100,6 +102,9 @@ void write_cmo(FILE *s,Obj obj)
 					break;
 				case N_R:
 					write_cmo_real(s,(Real)obj);
+					break;
+        case N_B:
+					write_cmo_bf(s,(BF)obj);
 					break;
 				default:
 					sprintf(errmsg, "write_cmo : number id=%d not implemented.",
@@ -164,6 +169,8 @@ int cmo_tag(Obj obj,int *tag)
 					*tag = DN((Q)obj) ? CMO_QQ : CMO_ZZ; break;
 				case N_R:
 					*tag = CMO_IEEE_DOUBLE_FLOAT; break;
+        case N_B:
+					*tag = CMO_BIGFLOAT; break;
 				default:
 					return 0;
 			}
@@ -229,6 +236,28 @@ void write_cmo_real(FILE *s,Real real)
 
 	r = CMO_IEEE_DOUBLE_FLOAT; write_int(s,&r);
 	dbl = real->body; write_double(s,&dbl);
+}
+
+void write_cmo_bf(FILE *s,BF bf)
+{
+	unsigned int r;
+  int len,t;
+  L exp;	
+
+	r = CMO_BIGFLOAT; write_int(s,&r);
+  write_int(s,&MPFR_SIGN(bf->body));
+  write_int(s,&MPFR_PREC(bf->body));
+  exp = MPFR_EXP(bf->body);
+  write_int64(s,&exp);
+	len = MPFR_LIMB_SIZE(bf->body);
+  write_int(s,&len);
+#if SIZEOF_LONG == 4
+	write_intarray(s,MPFR_MANT(bf->body),len);
+#else /* SIZEOF_LONG == 8 */
+	t = 2*len;
+	write_int(s,&t);
+	write_longarray(s,MPFR_MANT(bf->body),len);
+#endif
 }
 
 void write_cmo_zz(FILE *s,int sgn,N n)
@@ -438,6 +467,7 @@ void read_cmo(FILE *s,Obj *rp)
 	DP dp;
 	Obj obj;
 	ERR e;
+  BF bf;
 	MATHCAP mc;
 	BYTEARRAY array;
 	LIST list;
@@ -485,6 +515,9 @@ void read_cmo(FILE *s,Obj *rp)
 			break;
 		case CMO_IEEE_DOUBLE_FLOAT:
 			read_double(s,&dbl); MKReal(dbl,real); *rp = (Obj)real;
+			break;
+		case CMO_BIGFLOAT:
+			read_cmo_bf(s,&bf); *rp = (Obj)bf;
 			break;
 		case CMO_DISTRIBUTED_POLYNOMIAL:
 			read_cmo_dp(s,&dp); *rp = (Obj)dp;
@@ -579,6 +612,28 @@ void read_cmo_zz(FILE *s,int *sgn,N *rp)
 		b[i] = h;
 	}
 #endif
+}
+
+void read_cmo_bf(FILE *s,BF *bf)
+{
+	BF r;
+  int sgn,prec,len;
+  L exp;	
+
+  NEWBF(r);
+  read_int(s,&sgn);
+  read_int(s,&prec);
+  read_int64(s,&exp);
+  read_int(s,&len);
+  mpfr_init2(r->body,prec);
+  MPFR_SIGN(r->body) = sgn;
+  MPFR_EXP(r->body) = exp;
+#if SIZEOF_LONG == 4
+	read_intarray(s,MPFR_MANT(r->body),len);
+#else /* SIZEOF_LONG == 8 */
+	read_longarray(s,MPFR_MANT(r->body),len>>1);
+#endif
+  *bf = r;
 }
 
 void read_cmo_list(FILE *s,Obj *rp)

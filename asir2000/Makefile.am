@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.41 2013/12/20 03:58:45 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.42 2015/02/21 06:20:54 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -33,7 +33,7 @@ ELIB  = engine/libca.a
 FLIB  = fft/libdft.a
 IOLIB = io/libio.a
 PLIB  = parse/libparse.a
-GMPLIB = ${libdir}/libgmp.a
+GMPLIB = ${libdir}/libmpfr.a ${libdir}/libgmp.a
 
 ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
 LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} ${GMPLIB} -lm ${EXTRALIBS}

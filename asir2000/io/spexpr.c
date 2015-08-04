@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.35 2004/12/18 16:50:10 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.36 2005/11/16 23:42:54 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -54,10 +54,6 @@
 
 #ifndef SPRINT
 #define SPRINT
-#endif
-
-#if defined(PARI)
-#include "genpari.h"
 #endif
 
 extern int outputstyle;
@@ -128,29 +124,11 @@ char *s;
 	s[0] = 0; buf = s;
 }
 
-#if defined(PARI)
-void myoutbrute(g)
-GEN g;
-{
-# if PARI_VERSION_CODE > 131588
-	brute(g, 'f', -1);
-# else
-	bruteall(g,'f',-1,1);
-# endif
-}
-
 void sprintbf(BF a)
 {
-	char *str;
-	char *GENtostr0();
-
-	if ( double_output ) {
-		str = GENtostr0(a->body,myoutbrute);
-	} else {
-		str = GENtostr(a->body);
-	}
-	TAIL PRINTF(OUT,"%s",str);
-	free(str);
+	int dprec;
+	char fbuf[BUFSIZ];
+	dprec = a->body->_mpfr_prec*0.30103;
+	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
+	mpfr_sprintf(OUT,fbuf,a->body);
 }
-#endif
-

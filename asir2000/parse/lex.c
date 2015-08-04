@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.45 2010/04/16 07:13:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.46 2010/08/03 04:34:44 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -301,16 +301,11 @@ int yylex()
 		}
 		if ( floatingpoint ) {
 			Ungetc(c); REALLOC_NBUF nbuf[i] = 0;
-#if defined(PARI)
 			if ( !bigfloat ) {
 				dbl = (double)atof(nbuf+DLENGTH);
 				MKReal(dbl,real); r = (Obj)real;
 			} else
 				strtobf(nbuf,(BF *)&r);
-#else
-			dbl = (double)atof(nbuf+DLENGTH);
-			MKReal(dbl,real); r = (Obj)real;
-#endif
 		} else {
 			Ungetc(c);
 			i -= DLENGTH; d = (i%DLENGTH?i/DLENGTH+1:i/DLENGTH);

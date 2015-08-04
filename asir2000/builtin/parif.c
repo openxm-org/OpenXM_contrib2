@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.16 2009/03/27 14:42:29 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.17 2011/08/10 04:51:57 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -73,6 +73,7 @@ void asir_cgiv(GEN);
 void Psetprecword();
 #endif
 
+#if 0
 struct ftab pari_tab[] = {
 	{"eval",Peval,-2},
 	{"setprec",Psetprec,-1},
@@ -82,6 +83,7 @@ struct ftab pari_tab[] = {
 #endif
 	{0,0,0},
 };
+#endif
 
 #define MKPREC(a,i,b) (argc(a)==(i)?mkprec(QTOS((Q)(b))):get_pariprec())
 

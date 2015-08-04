@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.13 2009/03/13 04:45:16 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.14 2009/03/16 16:43:03 ohara Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -210,6 +210,19 @@ void write_int(FILE *f,unsigned int *p)
 		gen_fwrite((char *)p,sizeof(unsigned int),1,f);
 }
 
+void write_int64(FILE *f,UL *p)
+{
+  unsigned int t;
+
+	if ( little_endian && (ox_file_io || ox_need_conv) ) {
+		t = htonl(((unsigned int *)p)[1]);
+		gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
+		t = htonl(((unsigned int *)p)[0]);
+		gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
+	} else
+		gen_fwrite((char *)p,sizeof(UL),1,f);
+}
+
 #if defined(DES_ENC)
 int des_encryption;
 static unsigned char asir_deskey[8] = {0xc7,0xe0,0xfc,0xb5,0xc3,0xad,0x8e,0x3a};
@@ -264,6 +277,7 @@ void write_intarray(FILE *f,unsigned int *p,int l)
 }
 
 #if SIZEOF_LONG == 8
+/* write l longword (1longword=8bytes) */
 void write_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;
@@ -319,6 +333,19 @@ void read_int(FILE *f,unsigned int *p)
 		*p = ntohl(*p);
 }
 
+void read_int64(FILE *f,UL *p)
+{
+	unsigned int t;
+
+	if ( little_endian && (ox_file_io || ox_need_conv) ) {
+		gen_fread((char *)&t,sizeof(unsigned int),1,f);
+		((unsigned int *)p)[1] = ntohl(t);
+		gen_fread((char *)&t,sizeof(unsigned int),1,f);
+		((unsigned int *)p)[0] = ntohl(t);
+	} else
+		gen_fread((char *)p,sizeof(UL),1,f);
+}
+
 void read_intarray(FILE *f,unsigned int *p,int l)
 {
 	int i;
@@ -354,6 +381,7 @@ void read_intarray(FILE *f,unsigned int *p,int l)
 }
 
 #if SIZEOF_LONG == 8
+/* read l word (1word=4bytes) */
 void read_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;

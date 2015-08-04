@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.31 2013/12/20 02:02:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.32 2014/09/19 01:26:00 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,8 +92,6 @@ int Itvplot = 33;
 static int *lprime;
 static int lprime_size;
 
-#if defined(PARI)
-int paristack = 1<<16;
 #define ADDBF addbf
 #define SUBBF subbf
 #define MULBF mulbf
@@ -101,15 +99,6 @@ int paristack = 1<<16;
 #define PWRBF pwrbf
 #define CHSGNBF chsgnbf
 #define CMPBF cmpbf
-# else
-#define ADDBF 0
-#define SUBBF 0
-#define MULBF 0
-#define DIVBF 0
-#define PWRBF 0
-#define CHSGNBF 0
-#define CMPBF 0
-#endif
 
 #if defined(INTERVAL)
 int zerorewrite = 0;

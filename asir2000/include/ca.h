@@ -45,11 +45,19 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.87 2014/08/19 06:35:01 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.88 2015/03/15 19:30:46 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <gmp.h>
+#include <mpfr.h>
+
+/* from mpfr-impl.h */
+#define MPFR_PREC(x)      ((x)->_mpfr_prec)
+#define MPFR_EXP(x)       ((x)->_mpfr_exp)
+#define MPFR_MANT(x)      ((x)->_mpfr_d)
+#define MPFR_LAST_LIMB(x) ((MPFR_PREC (x) - 1) / GMP_NUMB_BITS)
+#define MPFR_LIMB_SIZE(x) (MPFR_LAST_LIMB (x) + 1)
 
 #if defined(hpux)
 #include <netinet/in.h>
@@ -160,6 +168,7 @@ typedef void * pointer;
 #define N_DA (N_BASE+8)
 #define N_GZ (N_BASE+9)
 #define N_GQ (N_BASE+10)
+#define N_PARIB (N_BASE+11)
 
 #define ORD_REVGRADLEX 0
 #define ORD_GRADLEX 1
@@ -241,7 +250,7 @@ typedef struct oBF {
 	short id;
 	char nid;
 	char pad;
-	long body[1];
+	mpfr_t body;
 } *BF;
 
 typedef struct oC {
@@ -875,7 +884,8 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWReal(q) ((q)=(Real)MALLOC_ATOMIC(sizeof(struct oReal)),OID(q)=O_N,NID(q)=N_R)
 #define NEWAlg(r) ((r)=(Alg)MALLOC(sizeof(struct oAlg)),OID(r)=O_N,NID(r)=N_A)
 #define NEWDAlg(r) ((r)=(DAlg)MALLOC(sizeof(struct oDAlg)),OID(r)=O_N,NID(r)=N_DA)
-#define NEWBF(q,l) ((q)=(BF)MALLOC_ATOMIC(TRUESIZE(oBF,(l)-1,long)),OID(q)=O_N,NID(q)=N_B)
+#define NEWBF(q) ((q)=(BF)MALLOC(sizeof(struct oBF)),OID(q)=O_N,NID(q)=N_B)
+#define NEWPARIBF(q,l) ((q)=(BF)MALLOC_ATOMIC(TRUESIZE(oBF,(l)-1,long)),OID(q)=O_N,NID(q)=N_PARIB)
 #define NEWC(r) ((r)=(C)MALLOC(sizeof(struct oC)),OID(r)=O_N,NID(r)=N_C)
 #define NEWLM(r) ((r)=(LM)MALLOC(sizeof(struct oLM)),OID(r)=O_N,NID(r)=N_LM)
 #define NEWGF2N(r) ((r)=(GF2N)MALLOC(sizeof(struct oGF2N)),OID(r)=O_N,NID(r)=N_GF2N)
@@ -975,11 +985,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define SL(n) ((n)->p)
 #define ZALLOC(d) ((Z)MALLOC_ATOMIC(TRUESIZE(oZ,(d)-1,int)))
 
-#if defined(PARI)
-#define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):BIGFLOAT(a)?rtodbl(BDY((BF)a)):0)
-#else
-#define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):0.0)
-#endif
+#define ToReal(a) (!(a)?(double)0.0:REAL(a)?BDY((Real)a):RATN(a)?RatnToReal((Q)a):BIGFLOAT(a)?mpfrtodbl(BDY((BF)a)):0)
 
 /* predicates */
 #define NUM(p) (OID(p)==O_N)
@@ -2695,6 +2701,9 @@ int compnbp(VL vl,NBP p1,NBP p2);
 
 #define MPZTOMPQ(z,q) \
 (mpq_init(q),mpq_numref(q)[0] = (z)[0],mpz_set_ui(mpq_denref(q),1))
+
+#define MPFRTOBF(g,q) \
+(NEWBF(q),BDY(q)[0]=(g)[0],(q))
 
 extern mpz_t ONEMPZ;
 extern GZ ONEGZ;

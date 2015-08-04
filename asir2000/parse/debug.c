@@ -45,14 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.19 2006/12/05 01:47:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.20 2011/06/16 08:17:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include <ctype.h>
-#if defined(PARI)
-#include "genpari.h"
-#endif
 
 extern do_server_in_X11,do_file;
 
@@ -768,13 +765,6 @@ void printvars(char *s,VS vs)
 			val = eval(expr); 
 		CPVS = cpvs;
 		if ( !err ) {
-#if defined(PARI)
-#if defined(PARI1)
-			outfile = stderr;
-#else
-			pari_outfile = stderr;
-#endif
-#endif
 			asir_out = stderr;
 			for ( p = s; isspace(*p); p++ );
 			fprintf(asir_out,"%s = ",p); 
@@ -786,13 +776,6 @@ void printvars(char *s,VS vs)
 			printexpr(CO,val); putc('\n',asir_out); fflush(asir_out);
 #if defined(VISUAL_LIB)
 			w_noflush_stderr(0);
-#endif
-#if defined(PARI)
-#if defined(PARI1)
-			outfile = stdout;
-#else
-			pari_outfile = stdout;
-#endif
 #endif
 			asir_out = stdout;
 		}

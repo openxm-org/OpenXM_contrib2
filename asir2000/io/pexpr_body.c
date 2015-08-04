@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.13 2006/08/27 22:17:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.14 2013/12/20 02:02:24 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -765,10 +765,8 @@ Num q;
 		case N_A:
 			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
 			break;
-#if defined(PARI)
 		case N_B:
 			PRINTBF((BF)q); break;
-#endif
 #if defined(INTERVAL)
 		case N_IP:
 		case N_IntervalBigFloat:

@@ -44,18 +44,13 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.15 2006/08/09 02:40:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.16 2009/03/16 16:43:03 ohara Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
-
-#if defined(PARI)
-#include "genpari.h"
-int get_lg(GEN);
-#endif
 
 void savenbp(FILE *s,NBP p);
 
@@ -115,32 +110,26 @@ void savereal(FILE *s,Real p)
 
 void savebf(FILE *s,BF p)
 {
-#if defined(PARI)
-	GEN z;
-	int sign;
-	unsigned long expo;
-	unsigned int len,t;
+  unsigned int zero = 0;
+  unsigned int prec;
+	L exp;
+  int sgn,len,t;
 
-	z = (GEN)BDY(p);
-	sign = signe(z);
-	len = lg(z)-2;
-	expo = expo(z);
+  prec = MPFR_PREC(p->body);
+  exp = MPFR_EXP(p->body);
+  sgn = MPFR_SIGN(p->body);
+	len = MPFR_LIMB_SIZE(p->body);
 
-	write_int(s,&sign);
-
+	write_int(s,&sgn);
+	write_int(s,(int *)&prec);
+	write_int64(s,(UL *)&exp);
 #if SIZEOF_LONG == 4
-	write_int(s,(int *)&zeroval); /* expo>>32 is always 0 */
-	write_int(s,(int *)&expo); 
 	write_int(s,&len);
-	write_intarray(s,(int *)&z[2],len);
-#elif SIZEOF_LONG == 8
-	t = expo>>32; write_int(s,(int *)&t);
-	t = expo&0xffffffff; write_int(s,&t);
-	t = 2*len; write_int(s,&t);
-	write_longarray(s,&z[2],len);
-#endif
-#else
-	error("savebf : PARI is not combined");
+	write_intarray(s,p->body->_mpfr_d,len);
+#else /* SIZEOF_LONG == 8 */
+	t = 2*len;
+	write_int(s,&t);
+	write_longarray(s,p->body->_mpfr_d,len);
 #endif
 }
 

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.38 2004/12/17 03:09:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.39 2005/11/16 23:42:54 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -54,10 +54,6 @@
 
 #ifndef FPRINT
 #define FPRINT
-#endif
-
-#if defined(PARI)
-#include "genpari.h"
 #endif
 
 extern int outputstyle;
@@ -153,11 +149,13 @@ P p;
 		return (mmono(COEF(DC(p))));
 }
 
-#if defined(PARI)
-void printbf(a)
-BF a;
+void printbf(BF a)
 {
-	sor(a->body,double_output ? 'f' : 'g',-1,0);
+	int dprec;
+	char fbuf[BUFSIZ];
+	dprec = (a->body->_mpfr_prec)*0.30103;
+  if ( !dprec ) dprec = 1;
+	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
+	mpfr_fprintf(OUT,fbuf,a->body);
 }
-#endif
 
