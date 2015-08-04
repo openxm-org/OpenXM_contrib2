@@ -1,10 +1,10 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.41 2012/12/17 07:20:44 noro Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.42 2013/02/12 09:40:41 ohara Exp $
 
-AC_INIT
+AC_INIT(asir,1.15)
 AC_CONFIG_SRCDIR([LICENSE])
-AC_PREREQ(2.61)
+AC_PREREQ(2.69)
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(asir, 20030307)
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
 dnl AM_PROG_AS
@@ -180,7 +180,7 @@ case "${host}" in
     asm_obj="${i386_elf_obj}"
     AC_DEFINE([_BSD_SOURCE])
     ;;
-*-*-cygwin*)
+[i[3-6]86-*-cygwin*]|x86-*-cygwin*)
     asm_obj="${i386_aout_obj}"
     ;;
 [i[3-6]86-*-interix*])

@@ -1,8 +1,8 @@
-## $OpenXM: OpenXM_contrib2/asir2000/builtin/Makefile.am,v 1.10 2013/12/20 03:46:13 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/builtin/Makefile.am,v 1.11 2015/08/04 06:20:44 noro Exp $
 
 asirdir  = ${prefix}/lib/asir
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
-INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
+AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${top_srcdir}/gc/include \
            -I${prefix}/include @PARIINC@ @X_CFLAGS@
 noinst_LIBRARIES  = libfunc.a

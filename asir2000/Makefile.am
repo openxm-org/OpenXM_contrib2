@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.42 2015/02/21 06:20:54 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.43 2015/08/04 06:20:44 noro Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -15,15 +15,17 @@ asir_SOURCES  = parse/main.c
 asir_LDADD    = libasir.a @ASIR_GCLIB@
 CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
-GC_TAR_GZ     = gc-7.2b.tar.gz
+GC_TAR_GZ     = gc-7.4.2.tar.gz
 GC_PATCH      = gc-7.diff gc-7.0-risa.diff
+LIB_ATOMIC     = libatomic_ops-7.4.0
+LIB_ATOMIC_TAR_GZ     = ${LIB_ATOMIC}.tar.gz
 #GC_TAR_GZ     = ${GC}.tar.gz
 #GC_PATCH      = gc6.diff gc6-risa.diff
 GC_MASTER_SITE=http://www.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH      = ${bindir}/oxfetch.sh
 
 DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
-INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
+AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
            -I${prefix}/include @GCINC@ @PARIINC@ @X_CFLAGS@
 
 GLIB  = @ASIR_GCLIB@
@@ -48,11 +50,13 @@ libasir-gc.a: ${GC_PATCH}
 	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
 		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
 			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
+			${OX_FETCH} ${GC_MASTER_SITE}${LIB_ATOMIC_TAR_GZ} ${GC_DISTDIR}; \
 		fi ; \
 		touch ${top_srcdir}/.gc_fetch_done ; \
 	fi
 	-if [ ! -f ${top_srcdir}/.gc_risa_done ]; then \
 	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}) ; \
+	    (cd ${top_srcdir}/${GC}; tar xzvf ${GC_DISTDIR}/${LIB_ATOMIC_TAR_GZ}; mv ${LIB_ATOMIC} libatomic_ops) ; \
 		for i in ${GC_PATCH} ; do \
 	    (cd ${top_srcdir}/${GC}; patch -p1 < ../$$i) ; \
 		done ; \
