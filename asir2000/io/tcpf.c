@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.65 2013/11/21 23:15:37 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.66 2013/11/22 00:43:41 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -686,7 +686,7 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 	STOQ(ind,*rp);
 }
 
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN32__)
 static void bslash2slash(char *buf)
 {
 	char *p;
@@ -830,7 +830,7 @@ void spawn_server(char *host,char *launcher,char *server,
 //	printf("ox_launch 127.0.0.1 %s %s %s %s 0\n",conn_str,control_port_str,server_port_str,server);
 #else
 	if ( use_unix || !host ) {
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN32__)
 		get_launcher_path(win_launcher);
 		if ( dname && strchr(dname,':') ) {
 			if ( !fork() ) {
