@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.6 2009/07/15 02:19:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.7 2015/08/04 06:20:45 noro Exp $ 
  */
 #include "ca.h"
 #include "base.h"
@@ -33,7 +33,7 @@ Num tobf(Num a,int prec)
   int sgn;
 
   if ( !a ) {
-	prec ? mpfr_init2(r,prec) : mpfr_init(r);
+    prec ? mpfr_init2(r,prec) : mpfr_init(r);
     mpfr_set_zero(r,1);
     MPFRTOBF(r,d);
     return (Num)d;
@@ -42,12 +42,12 @@ Num tobf(Num a,int prec)
     case N_B:
       return a;
       break;
-	case N_R:
-	  prec ? mpfr_init2(r,prec) : mpfr_init(r);
-	  mpfr_init_set_d(r,((Real)a)->body,MPFR_RNDN);
+    case N_R:
+      prec ? mpfr_init2(r,prec) : mpfr_init(r);
+      mpfr_init_set_d(r,((Real)a)->body,MPFR_RNDN);
       MPFRTOBF(r,d);
       return (Num)d;
-	  break;
+      break;
     case N_Q:
       nm = NM((Q)a); dn = DN((Q)a); sgn = SGN((Q)a);
       if ( INT((Q)a) ) {
@@ -67,7 +67,7 @@ Num tobf(Num a,int prec)
       break;
     default:
       error("tobf : invalid argument");
-	  break;
+      break;
     }
   }
 }
@@ -76,6 +76,8 @@ void addbf(Num a,Num b,Num *c)
 {
   mpfr_t r;
   BF d;
+  GZ z;
+  GQ q;
 
   if ( !a )
     *c = b;
@@ -84,10 +86,47 @@ void addbf(Num a,Num b,Num *c)
   else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
     (*addnumt[MIN(NID(a),NID(b))])(a,b,c);
   else {
-    if ( NID(a) != N_B ) a = tobf(a,0);
-    if ( NID(b) != N_B ) b = tobf(b,0);
-    mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-    mpfr_add(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+    if ( NID(a) == N_B ) {
+      switch ( NID(b) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(a));
+        if ( INT((Q)b) ) {
+          z = ztogz((Q)b);
+          mpfr_add_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)b);
+          mpfr_add_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(a),53));
+        mpfr_add_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+        break;
+      case N_B:
+        mpfr_init2(r,MIN(BFPREC(a),BFPREC(b)));
+        mpfr_add(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    } else { /* NID(b)==N_B */
+      switch ( NID(a) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(b));
+        if ( INT((Q)a) ) {
+          z = ztogz((Q)a);
+          mpfr_add_z(r,((BF)b)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)a);
+          mpfr_add_q(r,((BF)b)->body,q->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(b),53));
+        mpfr_add_d(r,((BF)b)->body,((Real)a)->body,MPFR_RNDN);
+        break;
+      }
+    }
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
@@ -95,7 +134,9 @@ void addbf(Num a,Num b,Num *c)
 
 void subbf(Num a,Num b,Num *c)
 {
-  mpfr_t r;
+  mpfr_t r,s;
+  GZ z;
+  GQ q;
   BF d;
 
   if ( !a )
@@ -105,10 +146,49 @@ void subbf(Num a,Num b,Num *c)
   else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
     (*subnumt[MIN(NID(a),NID(b))])(a,b,c);
   else {
-    if ( NID(a) != N_B ) a = tobf(a,0);
-    if ( NID(b) != N_B ) b = tobf(b,0);
-    mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-    mpfr_sub(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+    if ( NID(a) == N_B ) {
+      switch ( NID(b) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(a));
+        if ( INT((Q)b) ) {
+          z = ztogz((Q)b);
+          mpfr_sub_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)b);
+          mpfr_sub_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(a),53));
+        mpfr_sub_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+        break;
+      case N_B:
+        mpfr_init2(r,MIN(BFPREC(a),BFPREC(b)));
+        mpfr_sub(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    } else { /* NID(b)==N_B */
+      switch ( NID(a) ) {
+      case N_Q:
+        mpfr_init2(s,BFPREC(b));
+        mpfr_init2(r,BFPREC(b));
+        if ( INT((Q)a) ) {
+          z = ztogz((Q)a);
+          mpfr_sub_z(s,((BF)b)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)a);
+          mpfr_sub_q(s,((BF)b)->body,q->body,MPFR_RNDN);
+        }
+        mpfr_neg(r,s,MPFR_RNDN);
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(b),53));
+        mpfr_d_sub(r,((Real)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    }
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
@@ -117,6 +197,8 @@ void subbf(Num a,Num b,Num *c)
 void mulbf(Num a,Num b,Num *c)
 {
   mpfr_t r;
+  GZ z;
+  GQ q;
   BF d;
   int prec;
 
@@ -125,10 +207,47 @@ void mulbf(Num a,Num b,Num *c)
   else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
     (*mulnumt[MIN(NID(a),NID(b))])(a,b,c);
   else {
-    if ( NID(a) != N_B ) a = tobf(a,0);
-    if ( NID(b) != N_B ) b = tobf(b,0);
-    mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-    mpfr_mul(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+    if ( NID(a) == N_B ) {
+      switch ( NID(b) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(a));
+        if ( INT((Q)b) ) {
+          z = ztogz((Q)b);
+          mpfr_mul_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)b);
+          mpfr_mul_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(a),53));
+        mpfr_mul_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+        break;
+      case N_B:
+        mpfr_init2(r,MIN(BFPREC(a),BFPREC(b)));
+        mpfr_mul(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    } else { /* NID(b)==N_B */
+      switch ( NID(a) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(b));
+        if ( INT((Q)a) ) {
+          z = ztogz((Q)a);
+          mpfr_mul_z(r,((BF)b)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)a);
+          mpfr_mul_q(r,((BF)b)->body,q->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(b),53));
+        mpfr_mul_d(r,((BF)b)->body,((Real)a)->body,MPFR_RNDN);
+        break;
+      }
+    }
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
@@ -136,7 +255,9 @@ void mulbf(Num a,Num b,Num *c)
 
 void divbf(Num a,Num b,Num *c)
 {
-  mpfr_t r;
+  mpfr_t s,r;
+  GZ z;
+  GQ q;
   BF d;
 
   if ( !b )
@@ -146,10 +267,43 @@ void divbf(Num a,Num b,Num *c)
   else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
     (*divnumt[MIN(NID(a),NID(b))])(a,b,c);
   else {
-    if ( NID(a) != N_B ) a = tobf(a,0);
-    if ( NID(b) != N_B ) b = tobf(b,0);
-    mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-    mpfr_div(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+    if ( NID(a) == N_B ) {
+      switch ( NID(b) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(a));
+        if ( INT((Q)b) ) {
+          z = ztogz((Q)b);
+          mpfr_div_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        } else {
+          q = qtogq((Q)b);
+          mpfr_div_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(a),53));
+        mpfr_div_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+        break;
+      case N_B:
+        mpfr_init2(r,MIN(BFPREC(a),BFPREC(b)));
+        mpfr_div(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    } else { /* NID(b)==N_B */
+      switch ( NID(a) ) {
+      case N_Q:
+        /* XXX : mpfr_z_div and mpfr_q_div are not implemented */
+        a = tobf(a,BFPREC(b));
+        mpfr_init2(r,BFPREC(b));
+        mpfr_div(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      case N_R:
+        /* double precision = 53 */
+        mpfr_init2(r,MIN(BFPREC(b),53));
+        mpfr_d_div(r,((Real)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    }
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
@@ -157,7 +311,9 @@ void divbf(Num a,Num b,Num *c)
 
 void pwrbf(Num a,Num b,Num *c)
 {
+  int prec;
   mpfr_t r;
+  GZ z;
   BF d;
 
   if ( !b )
@@ -167,10 +323,46 @@ void pwrbf(Num a,Num b,Num *c)
   else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
     (*pwrnumt[MIN(NID(a),NID(b))])(a,b,c);
   else {
-    if ( NID(a) != N_B ) a = tobf(a,0);
-    if ( NID(b) != N_B ) b = tobf(b,0);
-    mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-    mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+    if ( NID(a) == N_B ) {
+      switch ( NID(b) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(a));
+        if ( INT((Q)b) ) {
+          z = ztogz((Q)b);
+          mpfr_pow_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        } else {
+          b = tobf(b,BFPREC(a));
+          mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        }
+        break;
+      case N_R:
+        /* double precision = 53 */
+        prec = MIN(BFPREC(a),53);
+        mpfr_init2(r,prec);
+        b = tobf(b,prec);
+        mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      case N_B:
+        mpfr_init2(r,MIN(BFPREC(a),BFPREC(b)));
+        mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    } else { /* NID(b)==N_B */
+      switch ( NID(a) ) {
+      case N_Q:
+        mpfr_init2(r,BFPREC(b));
+        a = tobf(a,BFPREC(b));
+        mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      case N_R:
+        /* double precision = 53 */
+        prec = MIN(BFPREC(a),53);
+        mpfr_init2(r,prec);
+        a = tobf(a,prec);
+        mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        break;
+      }
+    }
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
