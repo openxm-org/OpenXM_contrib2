@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.1 2015/08/04 06:55:02 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -55,7 +55,7 @@ Obj *rp;
     else if ( prec > MPFR_PREC_MAX ) prec = MPFR_PREC_MAX;
   } else
     prec = 0;
-	evalr(CO,(Obj)ARG0(arg),0,rp);
+	evalr(CO,(Obj)ARG0(arg),prec,rp);
 }
 
 /* bit precision */
