@@ -1,12 +1,13 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.1 2015/08/04 06:55:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.2 2015/08/05 01:10:38 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
-void Peval(), Psetprec(), Ptodouble();
+void Peval(), Psetprec(), Psetbprec(), Ptodouble();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
 	{"setprec",Psetprec,-1},
+	{"setbprec",Psetbprec,-1},
 	{"todouble",Ptodouble,1},
 	{0,0,0},
 };
@@ -50,7 +51,7 @@ Obj *rp;
 
 	asir_assert(ARG0(arg),O_R,"eval");
   if ( argc(arg) == 2 ) {
-	  prec = QTOS((Q)ARG1(arg));
+	  prec = QTOS((Q)ARG1(arg))*3.32193;
     if ( prec < MPFR_PREC_MIN ) prec = MPFR_PREC_MIN;
     else if ( prec > MPFR_PREC_MAX ) prec = MPFR_PREC_MAX;
   } else
@@ -58,19 +59,42 @@ Obj *rp;
 	evalr(CO,(Obj)ARG0(arg),prec,rp);
 }
 
-/* bit precision */
+/* set/get decimal precision */
 
 void Psetprec(NODE arg,Obj *rp)
 {
 	int p;
 	Q q;
-
-	long prec = mpfr_get_default_prec();
-
-    STOQ(prec,q); *rp = (Obj)q;
+	int prec,dprec;
+  
+  prec = mpfr_get_default_prec();
+  /* decimal precision */
+  dprec = prec*0.30103;
+  STOQ(dprec,q); *rp = (Obj)q;
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"setprec");
-		p = QTOS((Q)ARG0(arg));
+		prec = QTOS((Q)ARG0(arg))*3.32193;
+		if ( p > 0 )
+			prec = p;
+	}
+  if ( prec < MPFR_PREC_MIN ) prec = MPFR_PREC_MIN;
+  else if ( prec > MPFR_PREC_MAX ) prec = MPFR_PREC_MAX;
+	mpfr_set_default_prec(prec);
+}
+
+/* set/get bit precision */
+
+void Psetbprec(NODE arg,Obj *rp)
+{
+	int p;
+	Q q;
+	int prec;
+  
+  prec = mpfr_get_default_prec();
+  STOQ(prec,q); *rp = (Obj)q;
+	if ( arg ) {
+		asir_assert(ARG0(arg),O_N,"setbprec");
+		prec = QTOS((Q)ARG0(arg));
 		if ( p > 0 )
 			prec = p;
 	}
