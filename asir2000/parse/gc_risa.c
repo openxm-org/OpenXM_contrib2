@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.13 2013/06/13 18:40:31 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.14 2015/08/06 10:01:53 fujimoto Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include "private/gcconfig.h"
@@ -277,7 +277,7 @@ void process_events() {
 }
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) && !defined(MSWIN32)
+#if (defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)) && !defined(MSWIN32)
 int sigsetmask(mask) int mask; { return 0; }
 
 void process_events() {
