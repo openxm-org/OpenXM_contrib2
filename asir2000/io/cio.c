@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.13 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.14 2015/08/04 10:19:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -146,6 +146,9 @@ void write_cmo(FILE *s,Obj obj)
     case O_QUOTE:
       fnodetotree(BDY((QUOTE)obj),&l);
       write_cmo_tree(s,l);
+      break;
+    case O_MAT:
+      write_cmo_matrix_as_list(s,(MAT)obj);
       break;
     default:
       sprintf(errmsg, "write_cmo : id=%d not implemented.",OID(obj));
@@ -457,6 +460,23 @@ void write_cmo_tree(FILE *s,LIST l)
       write_cmo_tree(s,BDY(n));
       n = NEXT(n);
     }
+  }
+}
+
+void write_cmo_matrix_as_list(FILE *s,MAT a)
+{
+  int i,j,r,row,col;
+
+  /* CMO_LIST row (CMO_LIST col a[0][0] ... a[0][col-1]) ... (CMO_LIST col a[row-1][0] ... a[row-1][col-1] */
+  row = a->row; col = a->col;
+  r = CMO_LIST;
+  write_int(s,&r);
+  write_int(s,&row);
+  for ( i = 0; i < row; i++ ) {
+    write_int(s,&r);
+    write_int(s,&col);
+    for ( j = 0; j < col; j++ )
+      write_cmo(s,a->body[i][j]);
   }
 }
 

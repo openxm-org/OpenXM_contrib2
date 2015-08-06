@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.30 2013/06/13 18:40:31 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.31 2015/08/04 06:20:45 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -886,6 +886,8 @@ int ox_check_cmo(int s, Obj obj)
 					return 0;
 			return 1;
 		case O_QUOTE: /* XXX */
+			return 1;
+    case O_MAT: /* MAT is sent as a list */
 			return 1;
 		default:
 			return 0;

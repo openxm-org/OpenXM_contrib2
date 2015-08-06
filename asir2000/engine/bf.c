@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.8 2015/08/05 03:46:35 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.9 2015/08/06 00:43:20 noro Exp $ 
  */
 #include "ca.h"
 #include "base.h"
@@ -172,16 +172,15 @@ void subbf(Num a,Num b,Num *c)
   } else { /* NID(b)==N_B */
     switch ( NID(a) ) {
     case N_Q:
-      mpfr_init2(s,BFPREC(b));
       mpfr_init2(r,BFPREC(b));
       if ( INT((Q)a) ) {
         z = ztogz((Q)a);
-        mpfr_sub_z(s,((BF)b)->body,z->body,MPFR_RNDN);
+        mpfr_sub_z(r,((BF)b)->body,z->body,MPFR_RNDN);
       } else {
         q = qtogq((Q)a);
-        mpfr_sub_q(s,((BF)b)->body,q->body,MPFR_RNDN);
+        mpfr_sub_q(r,((BF)b)->body,q->body,MPFR_RNDN);
       }
-      mpfr_neg(r,s,MPFR_RNDN);
+      mpfr_neg(r,r,MPFR_RNDN);
       break;
     case N_R:
       /* double precision = 53 */
