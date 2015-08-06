@@ -5667,7 +5667,7 @@ arm*-*-linux*)
         CFLAGS="${CFLAGS} -fsigned-char"
     fi
     ;;
-*-*-mingw32)
+*-*-mingw*)
 	WSLIB="-lws2_32"
     asm_obj="${generic_obj}"
     ;;
