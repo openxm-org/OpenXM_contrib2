@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.90 2015/08/06 00:43:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.91 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -779,7 +779,7 @@ typedef unsigned int ModNum;
 #endif
 
 /* for setjmp/longjmp compatibility */
-#if defined(__CYGWIN__) || defined(__x86_64)
+#if defined(__CYGWIN__) || (defined(__x86_64) && !defined(__MINGW64__))
 #define JMP_BUF sigjmp_buf
 #define SETJMP(x) sigsetjmp(x,~0)
 #define LONGJMP(x,y) siglongjmp(x,y)
