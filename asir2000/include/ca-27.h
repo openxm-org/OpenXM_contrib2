@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.5 2009/03/16 16:43:03 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.6 2009/03/16 16:56:35 ohara Exp $ 
 */
 #if SIZEOF_LONG == 8
 typedef long L;
@@ -70,7 +70,7 @@ struct oN {
 
 typedef struct oN *N;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <string.h>
 #define index(s,c) strchr(s,c)
 #define bzero(s,len) memset(s,0,len)

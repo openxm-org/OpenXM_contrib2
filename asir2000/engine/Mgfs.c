@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.16 2004/07/30 07:34:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Mgfs.c,v 1.17 2013/11/05 11:36:58 ohara Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -9,7 +9,7 @@ extern int *current_gfs_plus1;
 
 #if defined(__GNUC__)
 #define INLINE static inline
-#elif defined(VISUAL)
+#elif defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #define INLINE __inline
 #else
 #define INLINE

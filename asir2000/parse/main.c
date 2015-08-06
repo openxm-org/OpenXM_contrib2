@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.35 2014/05/09 19:35:52 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.36 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 #include <stdlib.h>
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <io.h>
 #define R_OK 4
 #else
@@ -92,7 +92,7 @@ char *find_asirrc()
 			return name;
 		}
 	}
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	env  = getenv("HOMEDRIVE");
 	env2 = getenv("HOMEPATH");
 	if ( env && env2 ) {
@@ -120,7 +120,7 @@ char *find_asirrc()
 #if defined(VISUAL_LIB)
 void Main(int argc,char *argv[])
 #else
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 void
 #endif
 main(int argc,char *argv[])
@@ -135,7 +135,7 @@ main(int argc,char *argv[])
 	extern int asir_setenv;
 	extern FILE *in_fp;
 	extern int *StackBottom;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	char *slash,*bslash,*binname,*p;
 #endif
 
@@ -155,7 +155,7 @@ main(int argc,char *argv[])
 		exit(0);
 	} else
 		ox_mpi_master_init();
-#elif !defined(VISUAL)
+#elif !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	slash = (char *)rindex(argv[0],'/');
 	bslash = (char *)rindex(argv[0],'\\');
 	if ( slash )
@@ -206,7 +206,7 @@ main(int argc,char *argv[])
 	parif_init();
 	order_init();
 	/* XXX set the default ordering */
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	init_socket();
 #endif
 #if defined(UINIT)
@@ -250,7 +250,7 @@ void set_error(int code,char *reason,char *action)
 
 void set_stacksize()
 {
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	struct rlimit rlim;
 	int c,m;
 

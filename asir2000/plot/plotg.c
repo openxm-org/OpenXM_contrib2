@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.6 2002/01/30 08:31:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotg.c,v 1.7 2002/07/29 03:08:16 noro Exp $ 
 */
 
 /* XXX : declared in ox_plot_xevent.c on darwin */
@@ -60,7 +60,7 @@ int stream;
 DISPLAY *display;
 CURSOR normalcur,runningcur,errorcur;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 POINT start_point, end_point;
 SIZE cansize;
 #else

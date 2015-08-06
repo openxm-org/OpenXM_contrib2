@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.18 2006/06/21 09:46:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.19 2014/08/09 06:08:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -306,7 +306,7 @@ int getpvar(VS pvs,char *str,int searchonly)
 	return i;
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #define PCLOSE _pclose
 #else
 #define PCLOSE pclose
@@ -317,7 +317,7 @@ void closecurrentinput()
 	if ( asir_infile && !asir_infile->fp )
 		return;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	fclose(asir_infile->fp); 
 	unlink(asir_infile->tname);
 #else

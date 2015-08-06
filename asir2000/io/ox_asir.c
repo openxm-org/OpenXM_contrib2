@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.72 2014/05/09 19:35:51 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.73 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -166,7 +166,7 @@ void ox_main(int argc,char **argv) {
 		extern int recv_intr;
 
 		serial = ox_recv(0,&id,&obj);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		if ( recv_intr ) {
 			if ( recv_intr == 1 ) {
 				recv_intr = 0;
@@ -948,12 +948,12 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	extern char displayname[];
 	static ox_asir_initialized = 0;
 	int do_server_sav;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	int tmp;
 #endif
 
 	GC_init();
-#if !defined(VISUAL) && !defined(MPI)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(MPI)
 	do_server_in_X11 = 1; /* XXX */
 #endif
 	asir_save_handler();
@@ -984,7 +984,7 @@ void ox_asir_init(int argc,char **argv,char *servername)
 	sysf_init();
 	parif_init();
 	order_init();
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	init_socket();
 #endif
 #if defined(UINIT)
@@ -1031,7 +1031,7 @@ void ox_io_init() {
 
 	I_am_server = 1;
 	endian_init();
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	if ( !ox_sock_id )
 		exit(0);
 	iofp[0].in = WSIO_open(ox_sock_id,"r");
@@ -1061,7 +1061,7 @@ void ox_io_init() {
 	register_server(0,0,0,-1);
 }
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 /*
  * Library mode functions
  */
@@ -1230,7 +1230,7 @@ int asir_ox_init(int byteorder)
 	static ox_asir_initialized = 0;
 
 	GC_init();
-#if !defined(VISUAL) && !defined(MPI)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(MPI)
 	do_server_in_X11 = 0; /* XXX */
 #endif
 	asir_save_handler();
@@ -1255,7 +1255,7 @@ int asir_ox_init(int byteorder)
 	pf_init();
 	sysf_init();
 	parif_init();
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	init_socket();
 #endif
 #if defined(UINIT)

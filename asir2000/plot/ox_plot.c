@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.25 2014/05/12 16:54:41 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.26 2014/06/27 07:58:29 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,7 +96,7 @@ static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
 static void asir_executeFunction();
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 void ox_plot_main()
 #else
 void ox_plot_main(int argc,char **argv)
@@ -107,7 +107,7 @@ void ox_plot_main(int argc,char **argv)
 	int n;
 	int use_x;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	ox_asir_init(argc,argv,"ox_plot");
 	use_x=init_plot_display(argc,argv);
 	if(use_x) ds=ConnectionNumber(display);
@@ -121,7 +121,7 @@ void ox_plot_main(int argc,char **argv)
 		ox_send_sync(0);
 	}
 	while (1){
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		process_ox();
 #else
 		if(ox_data_is_available(0)) process_ox();

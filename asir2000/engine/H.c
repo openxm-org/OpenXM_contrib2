@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.7 2002/03/15 02:52:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.8 2013/11/29 08:21:29 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -361,7 +361,7 @@ void henmain2(LUM f,UM g0,UM h0,UM a0,UM b0,int m,int bound,LUM *gp)
 		fprintf(stderr,".");
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		check_intr();
 #endif
 		/* at this point, f = gk*hk mod y^k */
@@ -784,7 +784,7 @@ void henmain(LUM f,ML bqlist,ML cqlist,ML *listp)
 #if 0
 		fprintf(stderr,".");
 #endif
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		check_intr();
 #endif
 		mullum(mod,i+1,l[0],l[1],wb0);

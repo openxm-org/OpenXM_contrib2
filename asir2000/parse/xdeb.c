@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.12 2004/02/29 08:30:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.13 2004/03/01 05:48:24 noro Exp $ 
 */
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #if defined(VISUAL_LIB)
 #include <stdio.h>
 #include <stdlib.h>

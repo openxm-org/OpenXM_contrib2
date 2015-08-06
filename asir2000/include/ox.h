@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.24 2010/12/12 07:38:00 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.25 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "com.h"
 
@@ -161,7 +161,7 @@ typedef FILE *ox_stream;
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->_r)
 #elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips) || defined(_IBMR2)
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->_cnt)
-#elif defined(VISUAL)
+#elif defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->p < (fp)->buf_size)
 #elif defined(hpux)
 #define FP_DATA_IS_AVAILABLE(fp) ((fp)->__cnt)

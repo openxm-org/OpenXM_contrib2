@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.23 2010/09/01 08:01:09 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.24 2011/02/06 07:07:39 ohara Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -52,7 +52,7 @@
 #include "ca.h"
 #include "com.h"
 #include "ox.h"
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <stdlib.h>
 #include <windows.h>
 #include <io.h>
@@ -69,8 +69,9 @@
 #include <unistd.h>
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 HANDLE hIntr,hReset,hKill;
+extern int _fileinfo;
 #endif
 
 static void put_log(char *);
@@ -117,7 +118,7 @@ void launch_main(argc,argv)
 int argc;
 char **argv;
 {
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	Obj p;
 	char *name;
 	char buf[BUFSIZ];
@@ -142,7 +143,7 @@ char **argv;
 	dname = argv[6];
 	nolog = argc > 7 ? argv[7]: 0;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		init_socket();
 #endif
 
@@ -198,7 +199,7 @@ char **argv;
 	}
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 static void do_cmd(cmd)
 int cmd;
 {
@@ -262,7 +263,7 @@ int bs;
 char *dname;
 char *nolog;
 {
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	char *av[BUFSIZ];
 	char sock_id[BUFSIZ],ox_intr[BUFSIZ],ox_reset[BUFSIZ],ox_kill[BUFSIZ];
 	char AsirExe[BUFSIZ];

@@ -44,12 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.14 2015/08/04 10:19:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.15 2015/08/06 09:12:29 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #include <ctype.h>
 #endif
 

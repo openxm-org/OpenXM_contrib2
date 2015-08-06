@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.70 2014/08/09 06:08:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.71 2015/08/04 06:20:45 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -92,7 +92,7 @@ pointer eval(FNODE f)
 	RANGE range;
 	QUOTE expr,pattern;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	if ( recv_intr ) {
 #include <signal.h>
 		if ( recv_intr == 1 ) {
@@ -193,7 +193,7 @@ pointer eval(FNODE f)
 			val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
 		case I_IFUNC:
 			val = evalif((FNODE)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 		case I_TIMER:
 			{
 				int interval;
@@ -927,7 +927,7 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
 			break;
 		case A_USR:
 			/* stack check */
-#if !defined(VISUAL) && !defined(__CYGWIN__)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(__CYGWIN__)
 			if ( !stack_size ) {
 				struct rlimit rl;
 				getrlimit(RLIMIT_STACK,&rl);

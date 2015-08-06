@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.20 2014/07/05 03:55:42 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.21 2014/08/20 16:51:34 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -59,11 +59,11 @@
 #define EXP10(a) pow(10.0,a)
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 static POINT oldpos;
 #endif
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 extern Pixel BackPixel;
 unsigned long GetColor(Display *, char *);
 
@@ -193,7 +193,7 @@ void polar_print(DISPLAY *display,struct canvas *can){
 	unsigned int color;
 	POINT *pa;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	HDC dc;
 	HPEN pen,oldpen;
 	len=can->pa[0].length;
@@ -459,7 +459,7 @@ void plot_print(DISPLAY *display,struct canvas *can){
 	int len;
 	POINT *pa;
 
-#if defined(VISUAL)	
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)	
 	len = can->pa[0].length;
 	pa = can->pa[0].pos;
 
@@ -476,7 +476,7 @@ void plot_print(DISPLAY *display,struct canvas *can){
 
 void draw_point(DISPLAY *display,struct canvas *can,int x,int y,unsigned int color){
 //void draw_point(DISPLAY *display,struct canvas *can,int x,int y,int color){
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	HDC dc;
 
 	SetPixel(can->pix,x,y,(COLORREF)color);
@@ -494,7 +494,7 @@ void draw_point(DISPLAY *display,struct canvas *can,int x,int y,unsigned int col
 void draw_line(
 	DISPLAY *display,struct canvas *can,int x,int y,int u,int v,unsigned int color){
 	//DISPLAY *display,struct canvas *can,int x,int y,int u,int v,int color){
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	HDC dc;
 	HPEN pen,oldpen;
 
@@ -528,7 +528,7 @@ void draw_line(
 void draw_character_string(
 	DISPLAY *display,struct canvas *can,int x,int y,char *str,unsigned int color){
 	//DISPLAY *display,struct canvas *can,int x,int y,char *str,int color){
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	HDC dc;
 	COLORREF oldcolor;
 
@@ -606,7 +606,7 @@ void pline(DISPLAY *display,struct canvas *can,DRAWABLE d){
 		DRAWLINE(display,d,drawGC,x0,y,x0+D,y);
 		sprintf(buf,"%g",n*e);
 		if ( can->xmax <= 0 ) {
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 			xadj = TEXTWIDTH(sffs,buf,strlen(buf));
 #else
 			SIZE size;
@@ -634,7 +634,7 @@ double adjust_scale(double e,double w){
 }
 
 void initmarker(struct canvas *can,char *message){
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	can->real_can->percentage = 0;
 	can->real_can->prefix = message;
 #else
@@ -645,7 +645,7 @@ void initmarker(struct canvas *can,char *message){
 }
 
 void marker(struct canvas *can,int dir,int p){
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	if ( dir == DIR_X )
 		can->real_can->percentage = (int)ceil((float)p/(float)can->real_can->width*100);
 	else if ( dir == DIR_Y )
@@ -667,7 +667,7 @@ void marker(struct canvas *can,int dir,int p){
 }
 
 void define_cursor(WINDOW w,CURSOR cur){
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	XDefineCursor(display,w,cur); flush();
 #endif
 }
@@ -680,14 +680,14 @@ static int flush_count;
 #endif
 
 void count_and_flush(){
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( ++flush_count == MAX_COUNT )
 		flush();
 #endif
 }
 
 void flush(){
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	flush_count = 0;
 	XFlush(display);
 #endif

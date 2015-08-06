@@ -44,9 +44,9 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.8 2009/02/07 22:52:30 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.9 2009/02/13 11:25:48 ohara Exp $ 
 */
-#if defined(VISUAL) || defined(MPI)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(MPI)
 #include<stdio.h>
 #include"wsio.h"
 
@@ -204,7 +204,7 @@ STREAM* s;
 	if (!s)
 		return 0;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	size = recv(s->fildes,data,count,0);
 #elif defined(MPI)
 	{
@@ -229,7 +229,7 @@ STREAM* s;
 	if (!s || !count)
 		return 0;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	size = send(s->fildes,data,count,0);
 	return size;
 #elif defined(MPI)

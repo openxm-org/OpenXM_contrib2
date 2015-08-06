@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.20 2011/06/16 08:17:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.21 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -147,7 +147,7 @@ void debug_init() {
 		fclose(fp);
 	}
 #if 0
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( do_server_in_X11 )
 		init_cmdwin();
 #endif
@@ -206,25 +206,25 @@ void debug(SNODE f)
 	char buf[BUFSIZ];
 	char prompt[BUFSIZ];
 	char *p,*pe;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	char *line;
 #endif
 	NODE tn;
 	extern int do_fep;
 	NODE pvss;
 
-#if !defined(MPI) && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( !isatty(fileno(stdin)) && !do_server_in_X11 )
 		if ( do_file )
 			ExitAsir();
 		else
 			return;
 #endif
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	suspend_timer();
 #endif
 	pvss = PVSS; debug_mode = 1;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(1);
@@ -247,7 +247,7 @@ void debug(SNODE f)
 			{
 				int len;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 				if ( do_server_in_X11 )
 					get_line(buf);
 				else 
@@ -340,7 +340,7 @@ void debug(SNODE f)
 	}
 LAST:
 	debug_mode = 0;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(0);
@@ -692,7 +692,7 @@ void bp(SNODE f)
 		default:
 			ln = f->ln; break;
 	}
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(1);
@@ -700,7 +700,7 @@ void bp(SNODE f)
 		CPVS->usrf->name,ln,CPVS->usrf->f.usrf->fname);
 	targetf = CPVS->usrf; curline = ln;
 	println(0,0,1);
-#if !defined(MPI) && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( do_server_in_X11 || isatty(0) )
 #endif
 		debug(f);

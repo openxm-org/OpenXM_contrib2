@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.14 2013/12/20 02:02:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.15 2015/08/04 06:20:45 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -689,7 +689,7 @@ Num q;
 						int i,expo;
 
 						m = (unsigned int *)&BDY((Real)q);
-#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__x86_64)
+#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__x86_64)
 						u = m[1]; l = m[0];
 #else
 						u = m[0]; l = m[1];

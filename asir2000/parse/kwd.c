@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.13 2005/09/13 06:40:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.14 2005/09/13 06:54:22 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include "ytab.h"
 #else
 #include "y.tab.h"

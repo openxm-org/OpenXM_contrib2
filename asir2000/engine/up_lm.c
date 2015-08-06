@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.7 2003/12/24 08:00:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.8 2012/12/17 07:20:44 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -257,7 +257,7 @@ void crup_lm(ModNum **f,int d,int *mod,int index,N m,N lm_mod,UP *r)
 	for ( j = 0; j <= d; j++ ) {
 #if 1
 		a = (UL)floor(k[j]);
-#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__x86_64)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__x86_64)
 		au = ((unsigned int *)&a)[1];
 		al = ((unsigned int *)&a)[0];
 #else

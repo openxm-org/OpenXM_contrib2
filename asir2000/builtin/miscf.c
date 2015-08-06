@@ -45,17 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.32 2013/11/05 02:55:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.33 2015/03/16 00:08:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include <string.h>
-#if !defined(VISUAL) && defined(DO_PLOT)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && defined(DO_PLOT)
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <direct.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -118,7 +118,7 @@ struct ftab misc_tab[] = {
 	{"hex_dump",Phex_dump,2},
 	{"peek",Ppeek,1},
 	{"poke",Ppoke,2},
-#if !defined(VISUAL) && defined(DO_PLOT)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && defined(DO_PLOT)
 	{"xpause",Pxpause,0},
 #endif
 #if 0
@@ -130,7 +130,7 @@ struct ftab misc_tab[] = {
 void Pgetcwd(STRING *rp)
 {
 	char *r;
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	char buf[_MAX_PATH];
 	_getcwd(buf, _MAX_PATH);
 #else
@@ -145,7 +145,7 @@ void Pgetcwd(STRING *rp)
 void Pchdir(NODE arg, Q *rp)
 {
 	char *dir = BDY((STRING)ARG0(arg));
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	int status = _chdir(dir);
 #else
 	int status = chdir(dir);
@@ -209,7 +209,7 @@ Q *rp;
 	int ms;
 
 	ms = QTOS((Q)ARG0(arg));
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	Sleep(ms);
 #else
 	usleep(ms*1000);
@@ -465,7 +465,7 @@ Q *rp;
 	code = QTOS((Q)ARG0(arg));
 	reason = BDY((STRING)ARG1(arg));
 	action = BDY((STRING)ARG2(arg));
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	set_error(code,reason,action);
 #endif
 	error("");
@@ -574,7 +574,7 @@ Q *rp;
 	STOQ(ret,*rp);	
 }
 
-#if !defined(VISUAL) && defined(DO_PLOT)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && defined(DO_PLOT)
 void Pxpause(rp)
 Q *rp;
 {
@@ -631,7 +631,7 @@ void grab_pointer()
 
 void Psend_progress(NODE arg,Q *rp)
 {
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	short per;
 	char *msg;
 

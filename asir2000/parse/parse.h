@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.52 2013/06/18 18:19:44 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.53 2013/11/05 11:36:58 ohara Exp $ 
 */
-# if defined(VISUAL)
+# if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <time.h>
 #else
 #include <sys/time.h>
@@ -341,7 +341,7 @@ extern NODE current_option;
 #define fflush w_fflush
 #endif
 
-#if defined(__GNUC__) || defined(VISUAL) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
+#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 NODE mknode(int,...);
 FNODE mkfnode(int,fid,...);
 SNODE mksnode(int,sid,...);

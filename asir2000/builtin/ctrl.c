@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.45 2014/09/19 01:25:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.46 2015/08/04 06:20:44 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include <string.h>
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 #include <winnls.h>
 #else
@@ -292,7 +292,7 @@ void Psysinfo(LIST *rp)
     MKLIST(*rp,n);
 }
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 
 static char *get_lang()
 {

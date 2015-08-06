@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.8 2004/06/15 00:56:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.9 2006/02/08 02:11:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -93,7 +93,7 @@ void Init_Asir(int argc,char **argv)
 	rtime_init();
 	env_init();
 	endian_init();
-#if !defined(VISUAL) && !defined(THINK_C)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(THINK_C)
 /*	check_key(); */
 #endif
 	process_args(--argc,++argv);

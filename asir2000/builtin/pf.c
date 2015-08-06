@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.19 2014/09/19 01:25:59 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.20 2015/08/04 06:20:44 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -137,7 +137,7 @@ void pf_init() {
 	mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,sinh,simplify_elemfunc_ins,&sinhdef);
 	mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,cosh,simplify_elemfunc_ins,&coshdef);
 	mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,tanh,simplify_elemfunc_ins,&tanhdef);
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,asinh,simplify_elemfunc_ins,&asinhdef);
 	mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,acosh,simplify_elemfunc_ins,&acoshdef);
 	mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,atanh,simplify_elemfunc_ins,&atanhdef);
@@ -146,7 +146,7 @@ void pf_init() {
 	make_tri();
 	make_itri();
 	make_hyp();
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	make_ihyp();
 #endif
 }

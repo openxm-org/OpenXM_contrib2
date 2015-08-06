@@ -44,12 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.24 2011/02/06 07:07:39 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.25 2012/12/17 07:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
 #include "ox.h"
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <winsock2.h>
 #include <io.h>
 #else
@@ -76,7 +76,7 @@ struct IOFP iofp[MAXIOFP];
 
 void init_socket(void);
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #define closesocket(s)   (close((s)))
 #endif
 
@@ -107,7 +107,7 @@ void generate_port(int use_unix,char *port_str)
 	unsigned int port;
 	static int count=0;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( use_unix ) {
 		sprintf(port_str,"/tmp/ox%02x.XXXXXX",count);
 		count++;
@@ -127,7 +127,7 @@ int try_bind_listen(int use_unix,char *port_str)
 	struct sockaddr *saddr;
 	int len;
 	int service;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	struct sockaddr_un s_un;
 
 	if ( use_unix ) {
@@ -195,7 +195,7 @@ int try_accept(int af_unix,int s)
 	int len,c,i;
 	struct sockaddr_in sin;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	struct sockaddr_un s_un;
 	if ( af_unix ) {
 		len = sizeof(s_un);
@@ -221,12 +221,12 @@ int try_connect(int use_unix,char *host,char *port_str)
 	struct sockaddr *saddr;
 	struct hostent *hp;
 	int len,s,i;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	struct sockaddr_un s_un;
 #endif
 
 	for ( i = 0; i < 10; i++ ) {
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 		if ( use_unix ) {
 			if ( (s = socket(AF_UNIX,SOCK_STREAM,0)) < 0 ) {
 				perror("socket");
@@ -268,7 +268,7 @@ int try_connect(int use_unix,char *host,char *port_str)
 			break;
 		else {
 			closesocket(s);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 			Sleep(100);
 #else
 			usleep(100000);
@@ -317,7 +317,7 @@ void free_iofp(int s)
 	struct IOFP *r;
 
 	r = &iofp[s];
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	if ( r->s ) closesocket(r->s);
 #elif !defined(MPI)
 	if ( r->in ) fclose(r->in);
@@ -352,7 +352,7 @@ int get_iofp(int s1,char *af_sock,int is_server)
 		if ( !iofp[i].in )
 			break;
 	iofp[i].s = s1;
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	iofp[i].in = WSIO_open(s1,"r");
 	iofp[i].out = WSIO_open(s1,"w");
 #else
@@ -389,7 +389,7 @@ int get_iofp(int s1,char *af_sock,int is_server)
 #endif
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 void init_socket()
 {
 	static int socket_is_initialized;

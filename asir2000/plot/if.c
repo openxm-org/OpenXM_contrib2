@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.31 2014/07/05 03:55:42 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.32 2014/08/20 16:51:34 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -283,7 +283,7 @@ int plotover(NODE arg){
 	for(vl0=vl;vl0;vl0=NEXT(vl0))
 		if(vl0->v->attr==(pointer)V_IND)
 			if(vl->v!=can->vx && vl->v!=can->vy)return -1;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	set_drawcolor(can->color);
 #endif
 	current_can=can;
@@ -294,14 +294,14 @@ int plotover(NODE arg){
 	} else ifplotmain(can);
 	copy_to_canvas(can);
 	can->color=orgcolor;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	set_drawcolor(can->color);
 #endif
 	return id;
 }
 
 int drawcircle(NODE arg){
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	int id,index,wx,wy,wr;
 	unsigned int c;
 	pointer ptr;
@@ -377,7 +377,7 @@ int draw_obj(NODE arg){
 			set_lasterror("draw_obj : invalid request");
 			return -1;
 	}
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	set_drawcolor(can->color);
 #endif
 	return 0;
@@ -410,7 +410,7 @@ int draw_string(NODE arg){
 	x=(int)ToReal((Q)ARG0(pos));
 	y=(int)ToReal((Q)ARG1(pos));
 	draw_character_string(display,can,x,y,str,color);
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	set_drawcolor(can->color);
 #endif
 	return 0;
@@ -565,7 +565,7 @@ void ifplot_resize(struct canvas *can,POINT spos,POINT epos){
 		if(can->precise && !can->wide){
 			current_can=can;
 			alloc_pixmap(ncan);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 			ncan->real_can=can;
 #endif
 			qifplotmain(ncan);
@@ -786,7 +786,7 @@ int ifplotOP(NODE arg,int func){
 	for(vl0=vl;vl0;vl0=NEXT(vl0))
 		if(vl0->v->attr==(pointer)V_IND)
 			if(vl->v!=can->vx && vl->v!=can->vy)return -1;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	set_drawcolor(can->color);
 #endif
 	can->mode=func;
@@ -795,7 +795,7 @@ int ifplotOP(NODE arg,int func){
 	set_drawcolor(orgcolor);
 	copy_to_canvas(can);
 	can->color=orgcolor;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	set_drawcolor(can->color);
 #endif
 	return index;
@@ -908,7 +908,7 @@ void ifplotmainNG(struct canvas *can){
 	define_cursor(can->window,normalcur);
 }
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 int objcp(NODE arg){
 	int idsrc, idtrg, op_code;
 	struct canvas *cansrc, *cantrg;

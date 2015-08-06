@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.10 2006/02/05 06:47:03 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.11 2014/01/07 06:22:08 saito Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -76,7 +76,7 @@ static char	*Interval_dummy;
 #define	FPTOZERO	fpsetround(FP_RZ);
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <float.h>
 #define FPNEAREST _controlfp(_RC_NEAR,_MCW_RC);
 #define FPPLUSINF _controlfp(_RC_UP,_MCW_RC);

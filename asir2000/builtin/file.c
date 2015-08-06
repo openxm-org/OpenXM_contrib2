@@ -45,20 +45,20 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.31 2014/05/12 02:27:49 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.32 2015/03/15 19:31:30 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "base.h"
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #include "unistd.h"
 #endif
 #if defined(PARI)
 #include "genpari.h"
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 #include <process.h>
 #include <io.h>
@@ -508,7 +508,7 @@ void Pbload_cmo(NODE arg,Obj *rp)
 
 static struct oSTRING rootdir;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 void get_rootdir(char *name,int len)
 {
 	LONG	ret;
@@ -591,7 +591,7 @@ void Pgetpid(Q *rp)
 {
 	int id;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	id = GetCurrentProcessId();
 #else
 	id = getpid();
@@ -701,7 +701,7 @@ void Paccess(NODE arg,Q *rp)
 		*rp = 0;
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 int process_id()
 {
 	return GetCurrentProcessId();

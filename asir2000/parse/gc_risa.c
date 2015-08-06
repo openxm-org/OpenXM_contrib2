@@ -1,6 +1,6 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.12 2013/06/13 07:45:28 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.13 2013/06/13 18:40:31 ohara Exp $ */
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include "private/gcconfig.h"
 #endif
 #include "gc.h"
@@ -108,7 +108,7 @@ double get_rtime()
 	return get_current_time() - asir_start_time;
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 
 extern int recv_intr,doing_batch;
@@ -244,7 +244,7 @@ double GC_get_gctime() {
 }
 #endif
 
-#if defined(MSWIN32) && !defined(VISUAL)
+#if defined(MSWIN32) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #include <signal.h>
 void process_events() {
 	if ( check_break() )
@@ -277,7 +277,7 @@ void process_events() {
 }
 #endif
 
-#if defined(VISUAL) && !defined(MSWIN32)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) && !defined(MSWIN32)
 int sigsetmask(mask) int mask; { return 0; }
 
 void process_events() {

@@ -140,7 +140,7 @@ long GC_large_alloc_warn_suppressed = 0;
 
 #include <time.h>
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 
 static double get_clock()

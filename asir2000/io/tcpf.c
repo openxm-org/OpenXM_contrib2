@@ -44,14 +44,14 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.66 2013/11/22 00:43:41 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.67 2015/08/05 16:01:20 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
 #include <signal.h>
 #include <string.h>
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -59,7 +59,7 @@
 #include "ox.h"
 
 #include <stdlib.h>
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <winsock2.h>
 #include <process.h>
 #endif
@@ -482,7 +482,7 @@ void Pregister_server(NODE arg,Q *rp)
 	STOQ(ind,*rp);
 }
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -566,7 +566,7 @@ void ox_launcher_101_generic(char *host,char *launcher,
 	char control_port_str[BUFSIZ];
 	Obj obj;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( use_unix && !find_executable("xterm") ) use_x = 0;
 #endif
 	control_port_str[0] = 0;
@@ -625,7 +625,7 @@ void ox_launch_generic(char *host,char *launcher,char *server,
         STOQ(-1,*rp);
         return;
     }
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( use_unix && !find_executable("xterm") ) use_x = 0;
 #endif
 	control_port_str[0] = 0;
@@ -781,7 +781,7 @@ void spawn_server(char *host,char *launcher,char *server,
 	STRING rootdir;
 	char prog[BUFSIZ];
 	char *av[BUFSIZ];
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	char cmd[BUFSIZ];
 #endif
 #if defined(__CYGWIN__)
@@ -809,7 +809,7 @@ void spawn_server(char *host,char *launcher,char *server,
 		strcpy(localhost,asirhost);
 	else
 		gethostname(localhost,BUFSIZ);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	if ( !use_unix )
 		error("spawn_server : not implemented on Windows");
 	Pget_rootdir(&rootdir);
@@ -1097,7 +1097,7 @@ void Pox_select(NODE arg,LIST *rp)
 	}
 
 	n = select(FD_SETSIZE,&r,&w,&e,tvp);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	for ( i = minfd, t = 0; n && i <= maxfd; i++ )
 #else
 	for ( i = 0, t = 0; n && i < FD_SETSIZE; i++ )
@@ -1467,7 +1467,7 @@ void Pox_reset(NODE arg,Q *rp)
 			ox_recv(m,&id,&obj); t = (USINT)obj;
 		}
 		*rp = ONE;
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		Sleep(100);
 		ox_send_cmd(c,SM_nop);
 		ox_flush_stream_force(c);
@@ -1514,7 +1514,7 @@ void Pox_shutdown(NODE arg,Q *rp)
 {
 	int s;
 	int index = QTOS((Q)ARG0(arg));
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	int status;
 #endif
 
@@ -1524,7 +1524,7 @@ void Pox_shutdown(NODE arg,Q *rp)
 	free_iofp(s);
 	s = m_c_tab[index].c;
 	free_iofp(s);
-#if !defined(MPI) && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( m_c_tab[index].af_unix )
 		wait(&status);
 #endif
@@ -1547,7 +1547,7 @@ void Pox_push_cmd(NODE arg,Q *rp)
 void shutdown_all() {
 	int s;
 	int i,index;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	int status;
 #endif
 
@@ -1558,13 +1558,13 @@ void shutdown_all() {
 			continue;
 		s = m_c_tab[index].m;
 		ox_send_cmd(s,SM_shutdown);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	Sleep(1000);
 #endif
 		free_iofp(s);
 		s = m_c_tab[index].c;
 		free_iofp(s);
-#if !defined(MPI) && !defined(VISUAL)
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 		if ( m_c_tab[index].af_unix )
 			wait(&status);
 #endif
@@ -1605,7 +1605,7 @@ int validate_ox_plot_stream(int index)
 	arg = mknode(2,NULL,name);
 	Pox_launch_nox(arg,&r);
 	i = QTOS((Q)r);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	Sleep(100);
 	ox_send_cmd(m_c_tab[i].c,SM_nop);
 	ox_flush_stream_force(m_c_tab[i].c);
@@ -1625,7 +1625,7 @@ int register_102(int s1,int rank,int is_master)
 
 	if ( rank >= MAXIOFP ) return -1;
 	iofp_102[rank].s = s1;
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	iofp_102[rank].in = WSIO_open(s1,"r");
 	iofp_102[rank].out = WSIO_open(s1,"w");
 #else

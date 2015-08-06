@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.46 2010/08/03 04:34:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.47 2015/08/04 06:20:45 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -54,7 +54,7 @@
 #include "parse.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include "ytab.h"
 #else
 #include "y.tab.h"
@@ -473,7 +473,7 @@ void purge_stdin()
 	void w_purge_stdin();
 
 	w_purge_stdin();
-#elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips) || defined(VISUAL) || defined(_IBMR2)
+#elif defined(sparc) || defined(__alpha) || defined(__SVR4) || defined(mips) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(_IBMR2)
 	stdin->_ptr = stdin->_base; stdin->_cnt = 0;
 #elif (defined(__MACH__) && defined(__ppc__)) || defined(__CYGWIN__) || defined(__FreeBSD__) || defined(__INTERIX)
 	stdin->_r = 0; stdin->_p = stdin->_bf._base;
@@ -624,7 +624,7 @@ int Egetc(FILE *fp)
 		else
 #endif
 			c = getc(fp);
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 		if ( recv_intr ) {
 #include <signal.h>
 			if ( recv_intr == 1 ) {

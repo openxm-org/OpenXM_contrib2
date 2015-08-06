@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.21 2014/07/05 03:55:42 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.22 2014/08/20 16:51:34 ohara Exp $ 
 */
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 /* for Visual C++ */
 #include <windows.h>
 #else
@@ -182,7 +182,7 @@
 #define DIR_Y 1
 #define DIR_Z 2
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 /* for Visual C++ */
 #define XC(a) ((a).x)
 #define YC(a) ((a).y)
@@ -241,7 +241,7 @@ typedef struct RealVect {
 
 struct canvas {
 	int index;
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 /* for Visual C++ */
 	void *window; /* pointer to CMainFrame */
 	HWND hwnd; /* handle to the canvas window */
@@ -291,7 +291,7 @@ extern int stream;
 extern DISPLAY *display;
 extern CURSOR normalcur,runningcur,errorcur;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 extern POINT start_point,end_point;
 extern SIZE cansize;
 #else
@@ -402,7 +402,7 @@ int init_plot_display(int,char **);
 void reset_current_computation();
 void process_xevent();
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 int search_active_canvas();
 void destroy_canvas(struct canvas *can);
 void draw_wideframe(struct canvas *can,DRAWABLE d);

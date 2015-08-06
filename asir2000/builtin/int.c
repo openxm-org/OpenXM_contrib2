@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.10 2001/10/09 01:36:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/int.c,v 1.11 2013/09/26 08:55:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -828,7 +828,7 @@ void Prandom(NODE arg,Q *rp)
 	UTOQ(r,*rp);
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 void srandom(unsigned int);
 
 static unsigned int R_Next;

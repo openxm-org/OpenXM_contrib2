@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/upo.c,v 1.2 2000/08/21 08:31:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/upo.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -54,7 +54,7 @@ void find_root_up2();
 
 #define INLINE
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #undef INLINE
 #define INLINE __inline
 #endif

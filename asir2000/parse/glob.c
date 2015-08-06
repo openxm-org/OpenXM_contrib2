@@ -45,17 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.86 2015/03/16 00:08:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.87 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
 #include "ox.h"
-#if !defined(VISUAL) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX) && !defined(__FreeBSD__)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX) && !defined(__FreeBSD__)
 #include <sgtty.h>
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <io.h>
 #include <direct.h>
 #else
@@ -68,7 +68,7 @@
 #include <sys/ttold.h>
 #endif
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 #define HISTORY asir_history
 #endif
 
@@ -143,7 +143,7 @@ struct oF oF_TRUE,oF_FALSE;
 F F_TRUE = &oF_TRUE;  
 F F_FALSE = &oF_FALSE;
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 char cppname[BUFSIZ] = "c:\\asir\\stdlib\\cpp ";
 #else
 char cppname[BUFSIZ] = "/lib/cpp ";
@@ -282,7 +282,7 @@ void sprompt(char *ptr)
 	sprintf(ptr,"[%d] ",APVS->n);
 }
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 static int which(char *prog, char *path, char *buf, size_t size)
 {
     char *tok;
@@ -315,7 +315,7 @@ static int which(char *prog, char *path, char *buf, size_t size)
 
 void cppname_init()
 {
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	char *oxhome;
 	char oxcpp[BUFSIZ];
 #define OXCPP "/bin/ox_cpp"
@@ -389,7 +389,7 @@ void process_args(int ac,char **av)
 			void GC_set_max_heap_size(int);
 
 			GC_set_max_heap_size(atoi(*(av+1))); av += 2; ac -= 2;
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 		} else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
 			strcpy(displayname,*(av+1)); av += 2; ac -= 2;
 #endif
@@ -418,7 +418,7 @@ void process_args(int ac,char **av)
 #include <signal.h>
 
 void sig_init() {
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	signal(SIGINT,int_handler);
 #else
 	void register_ctrlc_handler();
@@ -439,7 +439,7 @@ void sig_init() {
 	signal(SIGILL,ill_handler);
 #endif
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	signal(SIGBUS,bus_handler);
 #endif
 }
@@ -469,7 +469,7 @@ void resetenv(char *s)
 	while ( NEXT(asir_infile) )
 		closecurrentinput();
 	resetpvs();
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(0);
@@ -480,7 +480,7 @@ void resetenv(char *s)
 	/* restore states */
 	reset_engine();
 	reset_io();
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	reset_timer();
 #endif
 	LONGJMP(main_env,1);
@@ -511,11 +511,11 @@ void int_handler(int sig)
 		caught_intr = 1;
 		return;
 	}
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	suspend_timer();
 #endif
 	signal(SIGINT,SIG_IGN);
-#if !defined(VISUAL) 
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) 
     if ( do_server_in_X11 ) {
 		debug(PVSS?((VS)BDY(PVSS))->usrf->f.usrf->body:0);
  		restore_handler();
@@ -609,7 +609,7 @@ void int_handler(int sig)
 }
 
 void restore_handler() {
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 	resume_timer();
 #endif
 #if defined(SIGINT)
@@ -697,7 +697,7 @@ void error(char *s)
 {
 	SNODE *snp=0;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( !error_in_timer && timer_is_set )
 		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
@@ -734,7 +734,7 @@ void goto_toplevel(char *s)
 {
 	SNODE *snp=0;
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 	if ( timer_is_set )
 		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
@@ -749,7 +749,7 @@ void goto_toplevel(char *s)
 	resetenv("return to toplevel");
 }
 
-#if !defined(VISUAL)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
 #include <sys/time.h>
 
 void set_timer(int interval)
@@ -826,7 +826,7 @@ char *scopyright()
 	return notice;
 }
 
-#if defined(VISUAL)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
 void check_intr()
 {
 	extern int recv_intr;
