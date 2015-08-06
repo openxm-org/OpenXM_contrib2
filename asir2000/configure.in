@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.43 2015/08/04 06:46:29 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.44 2015/08/04 06:57:51 ohara Exp $
 
 AC_INIT(asir,1.15)
 AC_CONFIG_SRCDIR([LICENSE])
@@ -213,12 +213,17 @@ arm*-*-linux*)
         CFLAGS="${CFLAGS} -fsigned-char"
     fi
     ;;
+*-*-mingw32)
+	WSLIB="-lws2_32"
+    asm_obj="${generic_obj}"
+    ;;
 *)
     asm_obj="${generic_obj}"
     ;;
 esac
 
 AC_SUBST([asm_obj])
+AC_SUBST([WSLIB])
 
 dnl for Solaris 2.x
 AC_CHECK_FUNC(socket, , [AC_CHECK_LIB(socket,socket)])

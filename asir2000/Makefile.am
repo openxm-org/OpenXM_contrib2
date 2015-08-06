@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.43 2015/08/04 06:20:44 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.44 2015/08/04 06:46:29 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -38,7 +38,7 @@ PLIB  = parse/libparse.a
 GMPLIB = ${libdir}/libmpfr.a ${libdir}/libgmp.a
 
 ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
-LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} ${GMPLIB} -lm ${EXTRALIBS}
+LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} ${GMPLIB} -lm @WSLIB@ ${EXTRALIBS}
 # EXTRALIBS = @EXTRALIBS@
 
 all-recursive: ${GLIB}

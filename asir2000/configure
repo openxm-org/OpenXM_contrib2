@@ -623,6 +623,7 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+WSLIB
 asm_obj
 USE_GC_SPARC64
 libasir_postfix
@@ -5666,10 +5667,15 @@ arm*-*-linux*)
         CFLAGS="${CFLAGS} -fsigned-char"
     fi
     ;;
+*-*-mingw32)
+	WSLIB="-lws2_32"
+    asm_obj="${generic_obj}"
+    ;;
 *)
     asm_obj="${generic_obj}"
     ;;
 esac
+
 
 
 
