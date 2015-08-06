@@ -1,9 +1,11 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.9 2015/08/06 00:43:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.10 2015/08/06 09:12:29 noro Exp $ 
  */
 #include "ca.h"
 #include "base.h"
 #include <math.h>
+
+extern int mpfr_roundmode;
 
 Num tobf(Num,int);
 
@@ -14,13 +16,13 @@ void strtobf(char *s,BF *p)
   BF r;
   NEWBF(r);
   mpfr_init(r->body);
-  mpfr_set_str(r->body,s,10,MPFR_RNDN);
+  mpfr_set_str(r->body,s,10,mpfr_roundmode);
   *p = r;
 }
 
 double mpfrtodbl(mpfr_t a)
 {
-  return mpfr_get_d(a,MPFR_RNDN);
+  return mpfr_get_d(a,mpfr_roundmode);
 }
 
 Num tobf(Num a,int prec)
@@ -44,7 +46,7 @@ Num tobf(Num a,int prec)
       break;
     case N_R:
       prec ? mpfr_init2(r,prec) : mpfr_init(r);
-      mpfr_init_set_d(r,((Real)a)->body,MPFR_RNDN);
+      mpfr_init_set_d(r,((Real)a)->body,mpfr_roundmode);
       MPFRTOBF(r,d);
       return (Num)d;
       break;
@@ -54,13 +56,13 @@ Num tobf(Num a,int prec)
         mpz_init(z);
         mpz_import(z,PL(nm),-1,sizeof(BD(nm)[0]),0,0,BD(nm));
         if ( sgn < 0 ) mpz_neg(z,z);
-        mpfr_init_set_z(r,z,MPFR_RNDN);
+        mpfr_init_set_z(r,z,mpfr_roundmode);
       } else {
         mpq_init(q);
         mpz_import(mpq_numref(q),PL(nm),-1,sizeof(BD(nm)[0]),0,0,BD(nm));
         mpz_import(mpq_denref(q),PL(dn),-1,sizeof(BD(dn)[0]),0,0,BD(dn));
         if ( sgn < 0 ) mpq_neg(q,q);
-        mpfr_init_set_q(r,q,MPFR_RNDN);
+        mpfr_init_set_q(r,q,mpfr_roundmode);
       }
       MPFRTOBF(r,d);
       return (Num)d;
@@ -91,20 +93,20 @@ void addbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(a));
       if ( INT((Q)b) ) {
         z = ztogz((Q)b);
-        mpfr_add_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        mpfr_add_z(r,((BF)a)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)b);
-        mpfr_add_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        mpfr_add_q(r,((BF)a)->body,q->body,mpfr_roundmode);
       }
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(a),53));
-      mpfr_add_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+      mpfr_add_d(r,((BF)a)->body,((Real)b)->body,mpfr_roundmode);
       break;
     case N_B:
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-      mpfr_add(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_add(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -115,16 +117,16 @@ void addbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(b));
       if ( INT((Q)a) ) {
         z = ztogz((Q)a);
-        mpfr_add_z(r,((BF)b)->body,z->body,MPFR_RNDN);
+        mpfr_add_z(r,((BF)b)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)a);
-        mpfr_add_q(r,((BF)b)->body,q->body,MPFR_RNDN);
+        mpfr_add_q(r,((BF)b)->body,q->body,mpfr_roundmode);
       }
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(b),53));
-      mpfr_add_d(r,((BF)b)->body,((Real)a)->body,MPFR_RNDN);
+      mpfr_add_d(r,((BF)b)->body,((Real)a)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -151,20 +153,20 @@ void subbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(a));
       if ( INT((Q)b) ) {
         z = ztogz((Q)b);
-        mpfr_sub_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        mpfr_sub_z(r,((BF)a)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)b);
-        mpfr_sub_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        mpfr_sub_q(r,((BF)a)->body,q->body,mpfr_roundmode);
       }
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(a),53));
-      mpfr_sub_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+      mpfr_sub_d(r,((BF)a)->body,((Real)b)->body,mpfr_roundmode);
       break;
     case N_B:
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-      mpfr_sub(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_sub(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -175,17 +177,17 @@ void subbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(b));
       if ( INT((Q)a) ) {
         z = ztogz((Q)a);
-        mpfr_sub_z(r,((BF)b)->body,z->body,MPFR_RNDN);
+        mpfr_sub_z(r,((BF)b)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)a);
-        mpfr_sub_q(r,((BF)b)->body,q->body,MPFR_RNDN);
+        mpfr_sub_q(r,((BF)b)->body,q->body,mpfr_roundmode);
       }
-      mpfr_neg(r,r,MPFR_RNDN);
+      mpfr_neg(r,r,mpfr_roundmode);
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(b),53));
-      mpfr_d_sub(r,((Real)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_d_sub(r,((Real)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -211,20 +213,20 @@ void mulbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(a));
       if ( INT((Q)b) ) {
         z = ztogz((Q)b);
-        mpfr_mul_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        mpfr_mul_z(r,((BF)a)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)b);
-        mpfr_mul_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        mpfr_mul_q(r,((BF)a)->body,q->body,mpfr_roundmode);
       }
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(a),53));
-      mpfr_mul_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+      mpfr_mul_d(r,((BF)a)->body,((Real)b)->body,mpfr_roundmode);
       break;
     case N_B:
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-      mpfr_mul(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_mul(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -235,16 +237,16 @@ void mulbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(b));
       if ( INT((Q)a) ) {
         z = ztogz((Q)a);
-        mpfr_mul_z(r,((BF)b)->body,z->body,MPFR_RNDN);
+        mpfr_mul_z(r,((BF)b)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)a);
-        mpfr_mul_q(r,((BF)b)->body,q->body,MPFR_RNDN);
+        mpfr_mul_q(r,((BF)b)->body,q->body,mpfr_roundmode);
       }
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(b),53));
-      mpfr_mul_d(r,((BF)b)->body,((Real)a)->body,MPFR_RNDN);
+      mpfr_mul_d(r,((BF)b)->body,((Real)a)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -271,20 +273,20 @@ void divbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(a));
       if ( INT((Q)b) ) {
         z = ztogz((Q)b);
-        mpfr_div_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        mpfr_div_z(r,((BF)a)->body,z->body,mpfr_roundmode);
       } else {
         q = qtogq((Q)b);
-        mpfr_div_q(r,((BF)a)->body,q->body,MPFR_RNDN);
+        mpfr_div_q(r,((BF)a)->body,q->body,mpfr_roundmode);
       }
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(a),53));
-      mpfr_div_d(r,((BF)a)->body,((Real)b)->body,MPFR_RNDN);
+      mpfr_div_d(r,((BF)a)->body,((Real)b)->body,mpfr_roundmode);
       break;
     case N_B:
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-      mpfr_div(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_div(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -295,12 +297,12 @@ void divbf(Num a,Num b,Num *c)
       /* XXX : mpfr_z_div and mpfr_q_div are not implemented */
       a = tobf(a,BFPREC(b));
       mpfr_init2(r,BFPREC(b));
-      mpfr_div(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_div(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     case N_R:
       /* double precision = 53 */
       mpfr_init2(r,MAX(BFPREC(b),53));
-      mpfr_d_div(r,((Real)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_d_div(r,((Real)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -327,10 +329,10 @@ void pwrbf(Num a,Num b,Num *c)
       mpfr_init2(r,BFPREC(a));
       if ( INT((Q)b) ) {
         z = ztogz((Q)b);
-        mpfr_pow_z(r,((BF)a)->body,z->body,MPFR_RNDN);
+        mpfr_pow_z(r,((BF)a)->body,z->body,mpfr_roundmode);
       } else {
         b = tobf(b,BFPREC(a));
-        mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+        mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       }
       break;
     case N_R:
@@ -338,11 +340,11 @@ void pwrbf(Num a,Num b,Num *c)
       prec = MAX(BFPREC(a),53);
       mpfr_init2(r,prec);
       b = tobf(b,prec);
-      mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     case N_B:
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
-      mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -352,14 +354,14 @@ void pwrbf(Num a,Num b,Num *c)
     case N_Q:
       mpfr_init2(r,BFPREC(b));
       a = tobf(a,BFPREC(b));
-      mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     case N_R:
       /* double precision = 53 */
       prec = MAX(BFPREC(a),53);
       mpfr_init2(r,prec);
       a = tobf(a,prec);
-      mpfr_pow(r,((BF)a)->body,((BF)b)->body,MPFR_RNDN);
+      mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
     }
     MPFRTOBF(r,d);
@@ -378,7 +380,7 @@ void chsgnbf(Num a,Num *c)
     (*chsgnnumt[NID(a)])(a,c);
   else {
     mpfr_init2(r,BFPREC(a));
-    mpfr_neg(r,((BF)a)->body,MPFR_RNDN);
+    mpfr_neg(r,((BF)a)->body,mpfr_roundmode);
     MPFRTOBF(r,d);
     *c = (Num)d;
   }

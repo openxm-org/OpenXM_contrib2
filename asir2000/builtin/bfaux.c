@@ -1,16 +1,19 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.2 2015/08/05 01:10:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.3 2015/08/05 01:23:02 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
-void Peval(), Psetprec(), Psetbprec(), Ptodouble();
+void Peval(), Psetprec(), Psetbprec(), Ptodouble(), Psetround();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
 	{"setprec",Psetprec,-1},
 	{"setbprec",Psetbprec,-1},
+	{"setround",Psetround,-1},
 	{"todouble",Ptodouble,1},
 	{0,0,0},
 };
+
+int mpfr_roundmode = MPFR_RNDN;
 
 void Ptodouble(NODE arg,Num *rp)
 {
@@ -43,9 +46,7 @@ void Ptodouble(NODE arg,Num *rp)
 	}
 }
 
-void Peval(arg,rp)
-NODE arg;
-Obj *rp;
+void Peval(NODE arg,Obj *rp)
 {
   int prec;
 
@@ -103,6 +104,43 @@ void Psetbprec(NODE arg,Obj *rp)
 	mpfr_set_default_prec(prec);
 }
 
+void Psetround(NODE arg,Q *rp)
+{
+  int round;
+
+  STOQ(mpfr_roundmode,*rp);
+  if ( arg ) {
+		asir_assert(ARG0(arg),O_N,"setround");
+    round = QTOS((Q)ARG0(arg)); 
+    switch ( round ) {
+    case 0:
+      mpfr_roundmode = MPFR_RNDN;
+      break;
+    case 1:
+      mpfr_roundmode = MPFR_RNDZ;
+      break;
+    case 2:
+      mpfr_roundmode = MPFR_RNDU;
+      break;
+    case 3:
+      mpfr_roundmode = MPFR_RNDD;
+      break;
+    case 4:
+      mpfr_roundmode = MPFR_RNDA;
+      break;
+    case 5:
+      mpfr_roundmode = MPFR_RNDF;
+      break;
+    case 6:
+      mpfr_roundmode = MPFR_RNDNA;
+      break;
+    default:
+      error("setround : invalid rounding mode");
+      break;
+    }
+  }
+}
+
 Num tobf(Num a,int prec);
 
 void mp_pi(NODE arg,BF *rp)
@@ -113,7 +151,7 @@ void mp_pi(NODE arg,BF *rp)
 	prec = arg ? QTOS((Q)ARG0(arg)) : 0;
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_const_pi(r->body,MPFR_RNDN);
+	mpfr_const_pi(r->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -127,8 +165,8 @@ void mp_e(NODE arg,BF *rp)
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
 	mpfr_init(one);
-	mpfr_set_ui(one,1,MPFR_RNDN);
-	mpfr_exp(r->body,one,MPFR_RNDN);
+	mpfr_set_ui(one,1,mpfr_roundmode);
+	mpfr_exp(r->body,one,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -142,7 +180,7 @@ void mp_sin(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_sin(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_sin(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -156,7 +194,7 @@ void mp_cos(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_cos(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_cos(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -170,7 +208,7 @@ void mp_tan(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_tan(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_tan(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -184,7 +222,7 @@ void mp_asin(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_asin(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_asin(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 void mp_acos(NODE arg,BF *rp)
@@ -197,7 +235,7 @@ void mp_acos(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_acos(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_acos(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 void mp_atan(NODE arg,BF *rp)
@@ -210,7 +248,7 @@ void mp_atan(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_atan(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_atan(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -224,7 +262,7 @@ void mp_sinh(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_sinh(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_sinh(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -238,7 +276,7 @@ void mp_cosh(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_cosh(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_cosh(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -252,7 +290,7 @@ void mp_tanh(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_tanh(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_tanh(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -266,7 +304,7 @@ void mp_asinh(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_asinh(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_asinh(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 void mp_acosh(NODE arg,BF *rp)
@@ -279,7 +317,7 @@ void mp_acosh(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_acosh(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_acosh(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 void mp_atanh(NODE arg,BF *rp)
@@ -292,7 +330,7 @@ void mp_atanh(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_atanh(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_atanh(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -306,7 +344,7 @@ void mp_exp(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_exp(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_exp(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -320,7 +358,7 @@ void mp_log(NODE arg,BF *rp)
 	a = tobf(ARG0(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_log(r->body,((BF)a)->body,MPFR_RNDN);
+	mpfr_log(r->body,((BF)a)->body,mpfr_roundmode);
     *rp = r; 
 }
 
@@ -335,6 +373,6 @@ void mp_pow(NODE arg,BF *rp)
 	e = tobf(ARG1(arg),prec);
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_pow(r->body,((BF)a)->body,((BF)e)->body,MPFR_RNDN);
+	mpfr_pow(r->body,((BF)a)->body,((BF)e)->body,mpfr_roundmode);
     *rp = r; 
 }
