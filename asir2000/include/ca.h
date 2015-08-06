@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.88 2015/03/15 19:30:46 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.89 2015/08/04 06:20:45 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1473,6 +1473,7 @@ double NatToReal(N,int *);
 double RatnToReal(Q);
 double pwrreal0(double,int);
 double rtodbl(); /* XXX */
+double mpfrtodbl(mpfr_t a);
 int **almat(int,int);
 pointer **almat_pointer(int,int);
 int berlecnt(register int,UM);
