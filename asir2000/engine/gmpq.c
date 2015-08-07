@@ -21,7 +21,7 @@ void gc_free(void *p,size_t size)
 
 void init_gmpq()
 {
-	mp_set_memory_functions(Risa_GC_malloc_atomic,gc_realloc,gc_free);
+	mp_set_memory_functions(Risa_GC_malloc,gc_realloc,gc_free);
 
 	mpz_init(ONEMPZ); mpz_set_ui(ONEMPZ,1); MPZTOGZ(ONEMPZ,ONEGZ);
 }
