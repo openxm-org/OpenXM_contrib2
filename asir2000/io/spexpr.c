@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.36 2005/11/16 23:42:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.37 2015/08/04 06:20:45 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -130,5 +130,5 @@ void sprintbf(BF a)
 	char fbuf[BUFSIZ];
 	dprec = a->body->_mpfr_prec*0.30103;
 	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
-	mpfr_sprintf(OUT,fbuf,a->body);
+	TAIL mpfr_sprintf(OUT,fbuf,a->body);
 }
