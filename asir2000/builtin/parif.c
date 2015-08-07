@@ -17,6 +17,9 @@ pointer evalparif(FUNC f,NODE arg)
   if (strcmp(f->name,"gamma")==0) {
     Pmpfr_gamma(arg,&ret);
     return((pointer) ret);
+  }else if (strcmp(f->name,"floor")==0) {
+    Pmpfr_floor(arg,&ret);
+    return((pointer) ret);
   }
   if ( !ox_pari_stream_initialized ) {
 	  MKSTR(name,"ox_pari");

@@ -1,9 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.4 2015/08/06 23:41:52 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.5 2015/08/07 05:30:35 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
 void Peval(), Psetprec(), Psetbprec(), Ptodouble(), Psetround();
-void Pmpfr_gamma();
+void Pmpfr_gamma(), Pmpfr_floor();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
@@ -12,6 +12,7 @@ struct ftab bf_tab[] = {
 	{"setround",Psetround,-1},
 	{"todouble",Ptodouble,1},
 	{"mpfr_gamma",Pmpfr_gamma,-2},
+	{"mpfr_floor",Pmpfr_floor,-1},
 	{0,0,0},
 };
 
@@ -391,5 +392,20 @@ void Pmpfr_gamma(NODE arg,BF *rp)
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
 	mpfr_gamma(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_floor(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
+  prec *= 3.32193;
+	a = tobf(ARG0(arg),prec);
+	NEWBF(r);
+	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
+	mpfr_floor(r->body,((BF)a)->body);
   *rp = r; 
 }
