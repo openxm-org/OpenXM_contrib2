@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.22 2015/08/07 06:16:12 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -20,6 +20,9 @@ pointer evalparif(FUNC f,NODE arg)
     return((pointer) ret);
   }else if (strcmp(f->name,"floor")==0) {
     Pmpfr_floor(arg,&ret);
+    return((pointer) ret);
+  }else if (strcmp(f->name,"round")==0) {
+    Pmpfr_round(arg,&ret);
     return((pointer) ret);
   }
   if ( !ox_pari_stream_initialized ) {

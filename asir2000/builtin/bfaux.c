@@ -1,9 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.5 2015/08/07 05:30:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.6 2015/08/07 06:15:00 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 
 void Peval(), Psetprec(), Psetbprec(), Ptodouble(), Psetround();
-void Pmpfr_gamma(), Pmpfr_floor();
+void Pmpfr_gamma(), Pmpfr_floor(), Pmpfr_round();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
@@ -13,6 +13,7 @@ struct ftab bf_tab[] = {
 	{"todouble",Ptodouble,1},
 	{"mpfr_gamma",Pmpfr_gamma,-2},
 	{"mpfr_floor",Pmpfr_floor,-1},
+	{"mpfr_round",Pmpfr_round,-1},
 	{0,0,0},
 };
 
@@ -395,11 +396,13 @@ void Pmpfr_gamma(NODE arg,BF *rp)
   *rp = r; 
 }
 
-void Pmpfr_floor(NODE arg,BF *rp)
+void Pmpfr_floor(NODE arg,Q *rp)
 {
 	Num a;
   int prec;
 	BF r;
+	mpz_t t;
+	GZ rz;
 
 	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
   prec *= 3.32193;
@@ -407,5 +410,28 @@ void Pmpfr_floor(NODE arg,BF *rp)
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
 	mpfr_floor(r->body,((BF)a)->body);
-  *rp = r; 
+	mpz_init(t);
+	mpfr_get_z(t,r->body,mpfr_roundmode);
+	MPZTOGZ(t,rz);
+	*rp = gztoz(rz); 
+}
+
+void Pmpfr_round(NODE arg,Q *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+	mpz_t t;
+	GZ rz;
+
+	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
+  prec *= 3.32193;
+	a = tobf(ARG0(arg),prec);
+	NEWBF(r);
+	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
+	mpfr_round(r->body,((BF)a)->body);
+	mpz_init(t);
+	mpfr_get_z(t,r->body,mpfr_roundmode);
+	MPZTOGZ(t,rz);
+	*rp = gztoz(rz); 
 }
