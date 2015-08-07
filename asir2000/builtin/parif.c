@@ -14,6 +14,10 @@ pointer evalparif(FUNC f,NODE arg)
   USINT ui;
   Obj ret,dmy;
 
+  if (strcmp(f->name,"gamma")==0) {
+    Pmpfr_gamma(arg,&ret);
+    return((pointer) ret);
+  }
   if ( !ox_pari_stream_initialized ) {
 	  MKSTR(name,"ox_pari");
 	  nd = mknode(2,NULL,name);
