@@ -1,4 +1,4 @@
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL)
 #include <stdio.h>
 #include <stdarg.h>
 int w_printf(char *format, ...)
