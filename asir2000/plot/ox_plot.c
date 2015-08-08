@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.26 2014/06/27 07:58:29 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.27 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -114,7 +114,9 @@ void ox_plot_main(int argc,char **argv)
 	else fprintf(stderr,"Entering no X mode\n");
 #endif
 	if(do_message)fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
-
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	if(SETJMP(ox_env)){
 		while(NEXT(asir_infile))closecurrentinput();
 		reset_current_computation();
@@ -174,6 +176,9 @@ static void process_ox(){
 			break;
 	}
 	if(do_message)fprintf(stderr,"\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 static void asir_do_cmd(unsigned int cmd,unsigned int serial){

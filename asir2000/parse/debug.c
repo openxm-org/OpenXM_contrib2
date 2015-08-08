@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.21 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.22 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -192,6 +192,9 @@ void show_alias(char *alias)
 				if ( !strcmp(alias,BDY(tn)) ) {
 					fprintf(stderr,"%s->%s\n",alias,debcom[i]); return;
 				}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 void debug(SNODE f)
@@ -454,6 +457,9 @@ void setbp(char *p)
 			showbp(bpi);
 		}
 	}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 void settp(char *p)
@@ -539,6 +545,9 @@ void settp(char *p)
 			showbp(bpi);
 		}
 	}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 void clearbp(FUNC f)
@@ -620,6 +629,9 @@ void showbp(int n)
 				else
 					fprintf(stderr,"(%d) stop in %s\n",n,bpt[n].f->name);
 			}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 void searchsn(SNODE *fp,int n,SNODE **fpp)
@@ -698,6 +710,9 @@ void bp(SNODE f)
 		show_debug_window(1);
 	fprintf(stderr,"stopped in %s at line %d in file \"%s\"\n",
 		CPVS->usrf->name,ln,CPVS->usrf->f.usrf->fname);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	targetf = CPVS->usrf; curline = ln;
 	println(0,0,1);
 #if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
@@ -745,6 +760,9 @@ void println(int ac,char **av,int l)
 	}
 	curline = ln + i;
 	fclose(fp);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 void printvars(char *s,VS vs)
@@ -798,6 +816,9 @@ void showpos()
 			fprintf(stderr,"#%d %s(), line %d in \"%s\"\n",
 				level-vs->level,vs->usrf->name,vs->at,vs->usrf->f.usrf->fname);
 		}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+		fflush(stderr);
+#endif
 	}
 }
 
@@ -890,4 +911,7 @@ void show_stack(VS vs)
 {
 	fprintf(stderr,"#%d %s(), line %d in \"%s\"\n",
 		((VS)BDY(PVSS))->level-vs->level,vs->usrf->name,vs->at,vs->usrf->f.usrf->fname);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }

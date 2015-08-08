@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.8 2012/12/17 07:20:44 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_lm.c,v 1.9 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -500,10 +500,14 @@ void hybrid_powertabup(UP f,UP xp,UP *tab)
 	invmodup(t,f->d,&invf);
 
 	for ( i = 2; i < d; i++ ) {
-		if ( debug_up )
-			fprintf(stderr,".");
-		hybrid_mulup(FF_GFP,tab[i-1],xp,&t);
-		hybrid_rembymulup_special(FF_GFP,t,f,invf,&tab[i]);
+	  if ( debug_up ){
+	    fprintf(stderr,".");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	    fflush(stderr);
+#endif
+	  }
+	  hybrid_mulup(FF_GFP,tab[i-1],xp,&t);
+	  hybrid_rembymulup_special(FF_GFP,t,f,invf,&tab[i]);
 	}
 }
 
@@ -523,9 +527,13 @@ void powertabup(UP f,UP xp,UP *tab)
 	invmodup(t,f->d,&invf);
 
 	for ( i = 2; i < d; i++ ) {
-		if ( debug_up )
-			fprintf(stderr,".");
-		kmulup(tab[i-1],xp,&t);
-		rembymulup_special(t,f,invf,&tab[i]);
+	  if ( debug_up ){
+	    fprintf(stderr,".");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	    fflush(stderr);
+#endif
+	  }
+	  kmulup(tab[i-1],xp,&t);
+	  rembymulup_special(t,f,invf,&tab[i]);
 	}
 }

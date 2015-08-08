@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.15 2015/08/04 06:20:45 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.16 2015/08/06 10:01:52 fujimoto Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -125,6 +125,9 @@ void printbin(double z)
 		}
 	}
 	fprintf(stderr,"\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 #endif
 #endif

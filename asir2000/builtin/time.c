@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.7 2009/03/16 16:43:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.8 2011/05/11 06:03:53 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -151,4 +151,7 @@ double r;
 		fprintf(stderr,"%.4gsec + gc : %.4gsec(%.4gsec)\n",e,g,r);
 	else
 		fprintf(stderr,"%.4gsec(%.4gsec)\n",e,r);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }

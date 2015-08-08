@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.3 2000/08/22 05:04:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.4 2001/10/09 01:36:14 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -260,11 +260,15 @@ void powertabup_gf2n(UP f,UP xp,UP *tab)
 	invmodup(t,f->d,&invf);
 
 	for ( i = 2; i < d; i++ ) {
-		if ( debug_up )
-			fprintf(stderr,".");
-		if ( !(i%2) )
+	  if ( debug_up ){
+	    fprintf(stderr,".");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	    fflush(stderr);
+#endif
+	  }
+	  if ( !(i%2) )
 			squareup_gf2n(tab[i/2],&t);
-		else
+	  else
 			kmulup(tab[i-1],xp,&t);
 		rembymulup_special(t,f,invf,&tab[i]);
 /*		remup(t,f,&tab[i]); */

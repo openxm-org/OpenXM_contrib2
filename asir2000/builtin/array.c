@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.65 2013/12/20 02:02:23 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.66 2015/03/04 08:44:26 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -231,6 +231,9 @@ int lu_gauss(int *ul,ent **u,int *ll,ent **l,int n,int mod)
 	for ( i = 0; i < n; i++ ) ll2[i] = 0;
 	for ( i = 0; i < n; i++ ) {
 		fprintf(stderr,"i=%d\n",i);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+		fflush(stderr);
+#endif
 		inv = invm(u[i][0].e,mod);
 		for ( k = i+1; k < n; k++ )
 			if ( u[k][0].j == n-i ) {
@@ -1775,6 +1778,9 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Q *dn,int **rindp,int **cindp)
 				}
 			}
 	}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Q *dn,int **rindp,int **cindp)
@@ -1960,6 +1966,9 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Q *dn,int **rindp,i
 				}
 			}
 	}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 int f4_nocheck;

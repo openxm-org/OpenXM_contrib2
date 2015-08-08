@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.47 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.48 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -604,6 +604,9 @@ void yyerror(char *s)
 		}
 	} else
 		fprintf(stderr,"exprparse : %s\n",s);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 int echoback;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.8 2013/11/29 08:21:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/H.c,v 1.9 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -440,6 +440,9 @@ void henmain2(LUM f,UM g0,UM h0,UM a0,UM b0,int m,int bound,LUM *gp)
 	}
 #if 1
 	fprintf(stderr,"\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 #endif
 	*gp = gk;
 	clearlum(n,bound,f);

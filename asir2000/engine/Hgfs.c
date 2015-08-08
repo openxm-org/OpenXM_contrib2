@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.30 2003/01/15 10:21:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.31 2015/03/16 00:08:32 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -835,6 +835,9 @@ void sfhenmain2(BM f,UM g0,UM h0,int dy,BM *gp)
 	DEG(f) = dy;
 	for ( i = 0; i <= dy; i++ )
 		cpyum(COEF(hk)[i],COEF(f)[i]);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 /* a0*g+b0*h = 1 mod y -> a*g+b*h = 1 mod y^(dy+1) */
@@ -925,6 +928,9 @@ void sfexgcd_by_hensel(BM g,BM h,int dy,BM *ap,BM *bp)
 	DEG(b) = dy;
 	*ap = a;
 	*bp = b;
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 /* fl->c[i] = coef_y(f,i) */
@@ -1291,6 +1297,9 @@ void sfdtest(P f,ML list,V x,V y,DCP *dcp)
 		fprintf(stderr,"total %d, omitted by degtest %d\n",z,z-dtok);
 	NEXTDC(dcf0,dcf); COEF(dcf) = g;
 	DEG(dcf) = ONE; NEXT(dcf) = 0; *dcp = dcf0;
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 void extractcoefbm(BM f,int dx,UM r)

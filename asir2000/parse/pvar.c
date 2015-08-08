@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.19 2014/08/09 06:08:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.20 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -177,6 +177,9 @@ unsigned int makepvar(char *str)
 				fprintf(stderr,"         `%s' is bound to the global variable\n",str);
 				CPVS->va[c].attr = IS_GLOBAL;
 				c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+				fflush(stderr);
+#endif
 			}
 		} else {
 			if ( CUR_MODULE ) {
@@ -222,6 +225,9 @@ unsigned int makepvar(char *str)
 					fprintf(stderr,
 						"Warning: \"%s\", near line %d: undeclared local variable `%s'\n",
 						asir_infile->name,asir_infile->ln,str);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+					fflush(stderr);
+#endif
 				}
 				break;
 		}

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.67 2015/08/05 16:01:20 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.68 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -875,6 +875,9 @@ void spawn_server(char *host,char *launcher,char *server,
 				rsh,host,launcher,server,localhost,
 				control_port_str,server_port_str,server);
 		fprintf(stderr,"%s\n",cmd);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+		fflush(stderr);
+#endif
 		sleep(20);
 /*		system(cmd); */
 	} else {

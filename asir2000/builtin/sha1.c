@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/sha1.c,v 1.3 2000/08/22 05:04:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/sha1.c,v 1.4 2001/10/09 01:36:07 noro Exp $ 
 */
 /* Implementation of NIST's Secure Hash Algorithm (FIPS 180)
 * Lightly bummed for execution efficiency.
@@ -163,6 +163,9 @@ int main(int argc, char **argv)
                 break;
               default:
                 fprintf(stderr, "Unrecognized flag: %c\n", *s);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+		fflush(stderr);
+#endif
                 return FALSE;
             }
       else              /* Process a file */

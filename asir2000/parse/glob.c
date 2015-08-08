@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.87 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.88 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -231,6 +231,9 @@ void asir_terminate(int status)
 				bevalf((FUNC)BDY(n),0);
 			if ( !do_terse )
 				fprintf(stderr, "done.\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+			fflush(stderr);
+#endif
 		}
 		tty_reset();
 #if defined(MPI)
@@ -370,6 +373,9 @@ void process_args(int ac,char **av)
 			in_fp = fopen(*(av+1),"r");
 			if ( !in_fp ) {
 				fprintf(stderr,"%s does not exist!\n",*(av+1));
+#if defined(__MINGW32__) || defined(__MINGW64__)
+				fflush(stderr);
+#endif
 				asir_terminate(1);
 			}
 			do_file = 1;
@@ -399,6 +405,9 @@ void process_args(int ac,char **av)
 #endif
 		} else {
 			fprintf(stderr,"%s : unknown option.\n",*av);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+			fflush(stderr);
+#endif
 			asir_terminate(1);
 		}
 	}
@@ -466,6 +475,9 @@ void resetenv(char *s)
 	extern FILE *outfile;
 
 	fprintf(stderr,"%s\n",s);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	while ( NEXT(asir_infile) )
 		closecurrentinput();
 	resetpvs();
@@ -582,6 +594,9 @@ void int_handler(int sig)
 							bevalf((FUNC)BDY(t),0);
 						if ( !do_terse )
 							fprintf(stderr, "done.\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+						fflush(stderr);
+#endif
 					}
 				}
 				resetenv("return to toplevel");
@@ -601,6 +616,9 @@ void int_handler(int sig)
 				break;
 			case '?': 
 				fprintf(stderr, "q:quit t:toplevel c:continue d:debug u:call registered handler w:where\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 				break;
 			default:
 				break;
@@ -644,6 +662,9 @@ void ill_handler(int sig)
 void alrm_handler(int sig)
 {
 	fprintf(stderr,"interval timer expired (VTALRM)\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	LONGJMP(timer_env,1);
 }
 
@@ -702,6 +723,9 @@ void error(char *s)
 		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
 	fprintf(stderr,"%s\n",s);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	set_lasterror(s);
 	if ( CPVS != GPVS ) {
 		if ( CPVS && CPVS->usrf && CPVS->usrf->f.usrf )
@@ -739,6 +763,9 @@ void goto_toplevel(char *s)
 		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
 	fprintf(stderr,"%s\n",s);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	if ( do_file ) {
 		char errbuf[BUFSIZ*5]; /* sufficient to store stack information ? */
 

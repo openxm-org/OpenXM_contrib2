@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.220 2015/01/13 00:54:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.221 2015/03/15 19:31:30 ohara Exp $ */
 
 #include "nd.h"
 
@@ -6655,6 +6655,9 @@ init_eg(&eg_search);
 
     /* construction of index arrays */
 	fprintf(stderr,"%dx%d,",nsp+nred,col);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
     rvect = (NM_ind_pair *)ALLOCA(nred*sizeof(NM_ind_pair));
     s0hash = (int *)ALLOCA(col*sizeof(int));
     for ( i = 0, s = s0vect; i < col; i++, s += nd_wpd )
@@ -7641,7 +7644,12 @@ void nd_det(int mod,MAT f,P *rp)
     if ( mod ) ndv_mod(mod,d);
     chsgnq(ONE,&mone);
     for ( j = 0, sgn = 1; j < n; j++ ) {
-        if ( DP_Print ) fprintf(stderr,".",j);
+        if ( DP_Print ) {
+	  fprintf(stderr,".",j);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	  fflush(stderr);
+#endif
+	}
         for ( i = j; i < n && !dm[i][j]; i++ );
         if ( i == n ) {
             *rp = 0;
@@ -7700,7 +7708,12 @@ void nd_det(int mod,MAT f,P *rp)
         }
         d = mjj;
     }
-    if ( DP_Print ) fprintf(stderr,"\n",k);
+    if ( DP_Print ) {
+      fprintf(stderr,"\n",k);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+      fflush(stderr);
+#endif
+    }
     if ( sgn < 0 )
         if ( mod )
             ndv_mul_c(mod,d,mod-1);

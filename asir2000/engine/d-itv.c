@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.3 2003/02/14 22:29:08 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.4 2009/03/27 14:42:29 ohara Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -28,6 +28,9 @@ void printbinint(int d)
 		}
 	}
 	fprintf(stderr,"\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 #endif
 
@@ -48,6 +51,9 @@ double NatToRealUp(N a, int *expo)
 
 #if defined(ITVDEBUG)
 	fprintf(stderr," %d : tail = %d\n", j, tail);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 	printbinint(p[j]);
 #endif
 		kk = (1<< (BSH - tail)) - 1;

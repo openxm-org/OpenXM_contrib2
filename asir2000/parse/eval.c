@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.71 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.72 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -1592,6 +1592,9 @@ void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *
 	CPVS = GPVS;
 	CUR_FUNC = 0;
 	clearbp(f);
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	fflush(stderr);
+#endif
 }
 
 /*
