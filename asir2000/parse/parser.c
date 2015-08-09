@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.8 2004/12/17 03:09:08 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.9 2008/09/04 01:42:26 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -164,18 +164,26 @@ void read_eval_loop() {
 			if ( prresult ) {
 				if ( user_print_function ) {
 					bevalf(user_print_function,mknode(1,LastVal));
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 					fflush(asir_out);
+#endif
 				} else
 					printexpr(CO,LastVal);
 				if ( outputstyle == 1 ) {
 					putc(';',asir_out);
 				}
 				putc('\n',asir_out);
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 				fflush(asir_out);
+#endif
 			}
 			if ( prtime ) {
 				printtime(&egt0,&egt1,r1-r0);
 			}
+#if defined(__MINGW32__) || defined(__MINGW64__)
+			fflush(asir_out);
+			fflush(stderr);
+#endif
 			prompt();
 		}
 	}
