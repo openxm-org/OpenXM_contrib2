@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.15 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.16 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -278,21 +278,19 @@ void write_intarray(FILE *f,unsigned int *p,int l)
 
 #if SIZEOF_LONG == 8
 /* write l longword (1longword=8bytes) */
+/* low 32of p[0] | high32 of p[0] | ... */
 void write_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;
 	unsigned long w;
 	unsigned int hi,lo;
 
-	if ( little_endian && (ox_file_io || ox_need_conv) )
-		for ( i = 0; i < l; i++, p++) {
-			w = *p; hi = w>>32; lo = w&0xffffffff;
-			hi = htonl(hi); lo = htonl(lo);
-			gen_fwrite(&hi,sizeof(unsigned int),1,f);
-			gen_fwrite(&lo,sizeof(unsigned int),1,f);
-		}
-	else
-		gen_fwrite(p,sizeof(unsigned long),l,f);
+	for ( i = 0; i < l; i++, p++) {
+		w = *p; hi = w>>32; lo = w&0xffffffff;
+		hi = htonl(hi); lo = htonl(lo);
+		gen_fwrite((char *)&lo,sizeof(unsigned int),1,f);
+		gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
+	}
 }
 #endif
 
@@ -382,24 +380,27 @@ void read_intarray(FILE *f,unsigned int *p,int l)
 
 #if SIZEOF_LONG == 8
 /* read l word (1word=4bytes) */
+/* pad 0 at low 32 of p[0] if l is odd */
+/* low 32 of p[0] | high32 of p[0] | ... */
 void read_longarray(FILE *f,unsigned long *p,int l)
 {
 	int i;
 	unsigned int hi,lo;
+    unsigned int *q;
 
-	if ( little_endian && (ox_file_io || ox_need_conv) ) {
-		for ( i = l; i > 1; i -= 2, p++ ) {
-			gen_fread(&hi,sizeof(unsigned int),1,f);
-			gen_fread(&lo,sizeof(unsigned int),1,f);
-			hi = ntohl(hi); lo = ntohl(lo);
-			*p = (((unsigned long)hi)<<32)|((unsigned long)lo);
-		}
-		if ( i == 1 ) {
-			gen_fread(&hi,sizeof(unsigned int),1,f);
-			hi = ntohl(hi); *p = (((unsigned long)hi)<<32);
-		}
-	} else
-		gen_fread(p,sizeof(unsigned int),l,f);
+	q = (unsigned int *)p;
+	if ( l%2 ) {
+	  gen_fread((char *)&hi,sizeof(unsigned int),1,f);
+	  hi = ntohl(hi);
+	  *p = (((unsigned long)hi)<<32);
+	  p++; l--;
+	}
+	for ( i = 0; i < l; i += 2, p++ ) {
+		gen_fread((char *)&lo,sizeof(unsigned int),1,f);
+		gen_fread((char *)&hi,sizeof(unsigned int),1,f);
+		hi = ntohl(hi); lo = ntohl(lo);
+		*p = (((unsigned long)hi)<<32)|((unsigned long)lo);
+	}
 }
 #endif
 
