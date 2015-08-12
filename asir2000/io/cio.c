@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.15 2015/08/06 09:12:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.16 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -250,7 +250,7 @@ void write_cmo_bf(FILE *s,BF bf)
 
   r = CMO_BIGFLOAT; write_int(s,&r);
   write_int(s,&MPFR_SIGN(bf->body));
-  write_int(s,&MPFR_PREC(bf->body));
+  write_int(s,(unsigned int *)&MPFR_PREC(bf->body));
   exp = MPFR_EXP(bf->body);
   write_int64(s,&exp);
   len = MPFR_LIMB_SIZE(bf->body);
@@ -260,13 +260,7 @@ void write_cmo_bf(FILE *s,BF bf)
 #else /* SIZEOF_LONG == 8 */
   t = 2*len;
   write_int(s,&t);
-  ptr = (UL *)MPFR_MANT(bf->body);
-  for ( i = 0; i < len; i++ ) {
-	u = ptr[i]>>32;
-	l = ptr[i]&0xffffffff;
-    write_int(s,&u);
-    write_int(s,&l);
-  }
+  write_longarray(s,MPFR_MANT(bf->body),len);
 #endif
 }
 
@@ -660,13 +654,7 @@ void read_cmo_bf(FILE *s,BF *bf)
 #if SIZEOF_LONG == 4
   read_intarray(s,MPFR_MANT(r->body),len);
 #else /* SIZEOF_LONG == 8 */
-  len >>= 1;
-  ptr = (UL *)MPFR_MANT(r->body);
-  for ( i = 0; i < len; i++ ) {
-    read_int(s,&u);
-    read_int(s,&l);
-    ptr[i] = ((UL)u)<<32|((UL)l)&0xffffffff;
-  }
+  read_longarray(s,MPFR_MANT(r->body),len);
 #endif
   *bf = r;
 }

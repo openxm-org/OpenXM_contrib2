@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.25 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.26 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "com.h"
 
@@ -218,6 +218,7 @@ void write_cmo_real(FILE *s,Real real);
 void write_cmo_q(FILE *s,Q q);
 void write_cmo_bf(FILE *s,BF q);
 void write_cmo_uint(FILE *s,USINT ui);
+void write_cmo_matrix_as_list(FILE *s,MAT m);
 void write_cmo_mathcap(FILE *s,MATHCAP mc);
 int cmo_tag(Obj obj,int *tag);
 void write_cmo(FILE *s,Obj obj);
