@@ -1,27 +1,22 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.15 2014/03/25 20:14:07 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.16 2015/03/07 03:56:02 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 SRCDIR=..\..\asir2000
 ASIRLIB=..\asir2000lib\asir2000lib.lib
 
-PARIDEF= -D PARI
-PARIDIR=..\pari20
-PARIINC= -I $(PARIDIR)\win32
-PARILIB=$(PARIDIR)\libpari.lib
-
-GCDIR= ..\gc-7.2
+GCDIR= ..\gc
 GCLIB= $(GCDIR)\gc.lib
 
 GMPDIR= ..\mpir
 GMPINC= -I $(GMPDIR)
 !if "$(ARCH)" == "AMD64"
-GMPLIB= $(GMPDIR)\x64\mpir.lib
+GMPLIB= $(GMPDIR)\x64\mpir.lib $(GMPDIR)\x64\mpfr.lib
 !else
-GMPLIB= $(GMPDIR)\win32\mpir.lib
+GMPLIB= $(GMPDIR)\win32\mpir.lib  $(GMPDIR)\win32\mpfr.lib
 !endif
 
-INCLUDES= $(PARIINC) $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
-DEFS= -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS $(PARIDEF)
+INCLUDES= $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
+DEFS= -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS
 CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
 
@@ -29,7 +24,7 @@ RC=rc
 RFLAGS=-l 0x411 -d NDEBUG
 
 LD=link
-LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -dynamicbase:no -incremental:no -nodefaultlib:libcmt.lib $(ASIRLIB) $(PARILIB) $(GCLIB) $(GMPLIB) ws2_32.lib user32.lib
+LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -dynamicbase:no -incremental:no -nodefaultlib:libcmt.lib $(ASIRLIB) $(GCLIB) $(GMPLIB) ws2_32.lib user32.lib
 
 OBJS= engine2000.res ChildView.obj MainFrm.obj StdAfx.obj calc.obj \
   if.obj io.obj ox_asir.obj ox_launch.obj ox_plot.obj ox_plot_win.obj \

@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.14 2014/03/25 20:14:06 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.15 2015/03/07 03:56:02 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -11,32 +11,27 @@ CPU_OBJ= asmalpha.obj
 CPU_OBJ= asmiw.obj gf2m_mul_w.obj 
 !endif
 
-PARIDEF= -D PARI -D LONG_IS_32BIT
-PARIDIR= ..\windows\pari20
-PARIINC= -I $(PARIDIR)\win32
-PARILIB= $(PARIDIR)\libpari.lib
-
-GCDIR= ..\windows\gc-7.2
+GCDIR= ..\windows\gc
 GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
 GMPDIR= ..\windows\mpir
 GMPINC= -I $(GMPDIR)
 !if "$(ARCH)" == "AMD64"
-GMPLIB= $(GMPDIR)\x64\mpir.lib
+GMPLIB= $(GMPDIR)\x64\mpir.lib $(GMPDIR)\x64\mpfr.lib
 !else
-GMPLIB= $(GMPDIR)\win32\mpir.lib
+GMPLIB= $(GMPDIR)\win32\mpir.lib $(GMPDIR)\win32\mpfr.lib
 !endif
 
-DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D WIN32 -D INET -D GC7 -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\"
-INCLUDES= $(PARIINC) $(GCINC) $(GMPINC) -I include -I parse
+DEFS = -D NDEBUG -D VISUAL -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D WIN32 -D INET -D GC7 -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\"
+INCLUDES= $(GCINC) $(GMPINC) -I include -I parse
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
-LDFLAGS= -nologo -stack:0x10000000 -subsystem:console -dynamicbase:no -incremental:no -nodefaultlib:libcmt.lib $(PARILIB) $(GCLIB) $(GMPLIB) ws2_32.lib advapi32.lib user32.lib 
+LDFLAGS= -nologo -stack:0x10000000 -subsystem:console -dynamicbase:no -incremental:no -nodefaultlib:libcmt.lib $(GCLIB) $(GMPLIB) ws2_32.lib advapi32.lib user32.lib 
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
-  asir2000_dummy.obj batch.obj bf.obj biovar.obj bload.obj \
+  asir2000_dummy.obj batch.obj bf.obj bfaux.obj biovar.obj bload.obj \
   bsave.obj C.obj cio.obj comp.obj compobj.obj cpexpr.obj cplx.obj \
   cplxnum.obj cpp.obj ctrl.obj D.obj dalg.obj ddM.obj ddN.obj debug.obj \
   des.obj dft.obj dist.obj distm.obj dp-supp.obj dp.obj E.obj Ebug.obj \
@@ -92,6 +87,9 @@ array.obj: {$(VPATH)}array.c
 	$(CC) -c $(CFLAGS) $**
 
 batch.obj: {$(VPATH)}batch.c
+	$(CC) -c $(CFLAGS) $**
+
+bfaux.obj: {$(VPATH)}bfaux.c
 	$(CC) -c $(CFLAGS) $**
 
 compobj.obj: {$(VPATH)}compobj.c

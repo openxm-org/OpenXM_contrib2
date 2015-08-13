@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.13 2013/11/10 16:18:36 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.14 2014/03/25 20:14:07 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -13,25 +13,21 @@ CPU_OBJ= asmiw.obj gf2m_mul_w.obj
 
 SRCDIR=..\..\asir2000
 
-PARIDEF= -D PARI -D LONG_IS_32BIT
-PARIDIR= ..\pari20
-PARIINC= -I $(PARIDIR)\win32
-
-GCDIR= ..\gc-7.2
+GCDIR= ..\gc
 GCINC = -I $(GCDIR)\include
 
 GMPDIR= ..\mpir
 GMPINC= -I $(GMPDIR)
 
-DEFS = $(PARIDEF) -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D INET -D GC7 -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
-INCLUDES = $(PARIINC) $(GCINC) $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot 
+DEFS = -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D INET -D GC7 -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\" -D DO_PLOT -D VISUAL_LIB -D KAN=0 -D READLINE=0 -D REMOTE=0
+INCLUDES = $(GCINC) $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot 
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
 LDFLAGS=-nologo
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
-  asir_lib.obj batch.obj bf.obj biovar.obj bload.obj \
+  asir_lib.obj batch.obj bf.obj bfaux.obj biovar.obj bload.obj \
   bsave.obj C.obj cio.obj comp.obj compobj.obj cpexpr.obj cplx.obj \
   cplxnum.obj cpp.obj ctrl.obj D.obj dalg.obj ddM.obj ddN.obj debug.obj \
   des.obj dft.obj dist.obj distm.obj dp-supp.obj dp.obj E.obj Ebug.obj \
@@ -87,6 +83,9 @@ array.obj: {$(VPATH)}array.c
 	$(CC) -c $(CFLAGS) $**
 
 batch.obj: {$(VPATH)}batch.c
+	$(CC) -c $(CFLAGS) $**
+
+bfaux.obj: {$(VPATH)}bfaux.c
 	$(CC) -c $(CFLAGS) $**
 
 compobj.obj: {$(VPATH)}compobj.c
