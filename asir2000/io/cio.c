@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.16 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.17 2015/08/12 10:45:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -258,9 +258,9 @@ void write_cmo_bf(FILE *s,BF bf)
   write_int(s,&len);
   write_intarray(s,MPFR_MANT(bf->body),len);
 #else /* SIZEOF_LONG == 8 */
-  t = 2*len;
+  t = (MPFR_PREC(bf->body)+31)/32;
   write_int(s,&t);
-  write_longarray(s,MPFR_MANT(bf->body),len);
+  write_longarray(s,MPFR_MANT(bf->body),t);
 #endif
 }
 

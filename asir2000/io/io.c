@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.16 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.17 2015/08/12 10:37:24 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -277,20 +277,29 @@ void write_intarray(FILE *f,unsigned int *p,int l)
 }
 
 #if SIZEOF_LONG == 8
-/* write l longword (1longword=8bytes) */
-/* low 32of p[0] | high32 of p[0] | ... */
+/* write l word (1word=4bytes) */
+/* l even : low 32of p[0] | high32 of p[0] | ... */
+/* l odd :  high32 of p[0] | ... */
 void write_longarray(FILE *f,unsigned long *p,int l)
 {
-	int i;
-	unsigned long w;
-	unsigned int hi,lo;
+  int i;
+  unsigned long w;
+  unsigned int hi,lo;
 
-	for ( i = 0; i < l; i++, p++) {
-		w = *p; hi = w>>32; lo = w&0xffffffff;
-		hi = htonl(hi); lo = htonl(lo);
-		gen_fwrite((char *)&lo,sizeof(unsigned int),1,f);
-		gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
-	}
+  if ( l%2 ) {
+    w = p[0]; hi = w>>32;
+    hi = htonl(hi);
+    gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
+    i = 1;
+  } else
+    i = 0;
+  l = (l+1)/2;
+  for ( ; i < l; i++ ) {
+    w = p[i]; hi = w>>32; lo = w&0xffffffff;
+    hi = htonl(hi); lo = htonl(lo);
+    gen_fwrite((char *)&lo,sizeof(unsigned int),1,f);
+    gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
+  }
 }
 #endif
 

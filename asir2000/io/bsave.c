@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.16 2009/03/16 16:43:03 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.17 2015/08/04 06:20:45 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -127,9 +127,9 @@ void savebf(FILE *s,BF p)
 	write_int(s,&len);
 	write_intarray(s,p->body->_mpfr_d,len);
 #else /* SIZEOF_LONG == 8 */
-	t = 2*len;
+	t = (prec+31)/32; 
 	write_int(s,&t);
-	write_longarray(s,p->body->_mpfr_d,len);
+	write_longarray(s,p->body->_mpfr_d,t);
 #endif
 }
 
