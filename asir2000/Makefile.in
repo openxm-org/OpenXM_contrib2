@@ -377,7 +377,7 @@ ELIB = engine/libca.a
 FLIB = fft/libdft.a
 IOLIB = io/libio.a
 PLIB = parse/libparse.a
-GMPLIB = ${libdir}/libmpfr.a ${libdir}/libgmp.a
+GMPLIB = -L ${libdir} -lmpfr -lgmp
 ASIRLIB = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
 all: all-recursive
 
