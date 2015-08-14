@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/old/io.ox.c,v 1.4 2003/03/07 06:39:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/old/io.ox.c,v 1.5 2015/08/06 10:01:53 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -91,7 +91,7 @@ static int remote_mc_len;
 
 void mclist_to_mc(LIST mclist,struct mathcap *mc);
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 /* XXX : mainly used in engine2000/io.c, but declared here */
 HANDLE hStreamNotify,hStreamNotify_Ack;
 
@@ -106,7 +106,7 @@ void cleanup_events()
 
 void ox_resetenv(char *s)
 {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	cleanup_events();
 #endif
 	fprintf(stderr,"%s\n",s);
@@ -356,7 +356,7 @@ void end_critical() {
 	critical_when_signal = 0;
 	if ( ox_usr1_sent ) {
 		ox_usr1_sent = 0;
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	ox_usr1_handler(SIGUSR1);
 #else
 	ox_usr1_handler(0);
@@ -369,7 +369,7 @@ void end_critical() {
 
 void ox_usr1_handler(int sig)
 {
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	signal(SIGUSR1,ox_usr1_handler);
 #endif
 	if ( critical_when_signal ) {
@@ -426,7 +426,7 @@ void wait_for_data(int s)
 	int sock;
 
 	if ( !FP_DATA_IS_AVAILABLE(iofp[s].in) ) {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		sock = iofp[s].in->fildes;
 		FD_ZERO(&r);
 		FD_SET((unsigned int)sock,&r);
@@ -683,7 +683,7 @@ void ox_flush_stream(int s)
 {
 	if ( ox_batch )
 		return;
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else
@@ -697,7 +697,7 @@ void ox_flush_stream(int s)
 
 void ox_flush_stream_force(int s)
 {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else

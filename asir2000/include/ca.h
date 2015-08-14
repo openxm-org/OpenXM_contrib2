@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.91 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.92 2015/08/06 10:39:13 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +64,7 @@
 # define setbuffer(FP,buf,siz) setvbuf(FP,buf,_IOFBF,siz)
 #endif
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 #include <unistd.h>
 #include <sys/param.h>
 #endif
@@ -77,7 +77,7 @@
 #define alloca(x) __builtin_alloca(x)
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <limits.h>
 #include <malloc.h>
 #endif
@@ -94,7 +94,7 @@ typedef void * pointer;
 #include <strings.h>
 #else
 #include <string.h>
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #define index(s,c) strchr(s,c)
 #define bzero(s,len) memset(s,0,len)
 #define bcopy(x,y,len) memcpy(y,x,len)
@@ -772,14 +772,14 @@ typedef unsigned int ModNum;
 #define GCFREE(p) Risa_GC_free(p)
 #define CALLOC(d,e) MALLOC((d)*(e))
 
-#if !defined(__CYGWIN__) && (defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__))
+#if !defined(__CYGWIN__) && (defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL) || defined(__MINGW32__))
 #define ALLOCA(d) alloca(d)
 #else
 #define ALLOCA(d) MALLOC(d)
 #endif
 
 /* for setjmp/longjmp compatibility */
-#if defined(__CYGWIN__) || (defined(__x86_64) && !defined(__MINGW64__))
+#if defined(__CYGWIN__) || (defined(__x86_64) && !defined(__MINGW32__))
 #define JMP_BUF sigjmp_buf
 #define SETJMP(x) sigsetjmp(x,~0)
 #define LONGJMP(x,y) siglongjmp(x,y)
@@ -1257,7 +1257,7 @@ void rtime_init(void);
 void setmod_gf2n(P);
 void mt_sgenrand(unsigned long);
 unsigned long mt_genrand(void);
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 void srandom(unsigned int);
 unsigned int random(void);
 #endif
@@ -2668,7 +2668,7 @@ void mkwcz(int k,int l,Z *t);
 int remzi(Z n,int m);
 
 
-#if 0 && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if 0 && !defined(VISUAL) && !defined(__MINGW32__)
 void bzero(const void *,int);
 void bcopy(const void *,void *,int);
 char *index(char *,int);

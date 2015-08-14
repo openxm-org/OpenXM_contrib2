@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.32 2014/06/27 07:58:29 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot_xevent.c,v 1.33 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -101,7 +101,7 @@ int stream;
 DISPLAY *display;
 CURSOR normalcur,runningcur,errorcur;
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 POINT start_point, end_point;
 SIZE cansize;
 #else

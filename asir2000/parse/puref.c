@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.10 2014/09/19 01:26:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.11 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -104,9 +104,6 @@ void mkpf(char *name,Obj body,int argc,V *args,
 /*		fprintf(stderr,"%s() defined.\n",name); */
 	} else
 		fprintf(stderr,"%s() redefined.\n",name);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 	BDY(node) = (pointer)pf; *pfp = pf;
 }
 

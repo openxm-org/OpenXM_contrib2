@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.27 2014/05/12 02:35:36 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.28 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -70,7 +70,7 @@
 #include <unistd.h>
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <io.h>
 #endif
 
@@ -82,7 +82,7 @@
 char **ASIRLOADPATH;
 int ASIRLOADPATH_LEN;
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #define ENVDELIM ';'
 #define MORE "more < "
 #else
@@ -126,7 +126,7 @@ char *search_executable(char *name)
 		if ( len+nlen+1 >= BUFSIZ ) continue;
 		sprintf(path,"%s/%s",dir,name);
 		if ( !stat(path,&buf) && !(buf.st_mode & S_IFDIR) 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 			&& !access(path,X_OK)
 #endif
                 ) {
@@ -150,7 +150,7 @@ void env_init() {
 	if ( oxhome = getenv("OpenXM_HOME") ) {
 		len = strlen(oxhome);
 	}else {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		get_rootdir(rootname,sizeof(rootname));
 		len = strlen(rootname);
 		oxhome = rootname;
@@ -178,7 +178,7 @@ void env_init() {
 	}
 
     asir_private_dir = NULL;
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
     if ( e = getenv("APPDATA") ) {
         asir_private_dir = (char *)malloc(strlen(e)+strlen("/OpenXM/lib/asir-contrib")+1);
         sprintf(asir_private_dir,"%s/OpenXM/lib/asir-contrib",e);
@@ -236,7 +236,7 @@ void env_init() {
 	ASIRLOADPATH[i] = NULL;
 }
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #define R_OK 4
 #endif
 
@@ -281,7 +281,7 @@ void loadasirfile(char *name0)
 	FILE *in;
 	INFILE t;
 	extern char cppname[];
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	char ibuf1[BUFSIZ],ibuf2[BUFSIZ];
 	int ac;
 	char *av[BUFSIZ];

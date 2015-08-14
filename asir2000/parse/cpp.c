@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.c,v 1.5 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.c,v 1.6 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include <ctype.h>
@@ -207,9 +207,6 @@ void do_at(void)
   { if (! in_false_if())
      { err_head();
        fprintf(stderr,"unknown control `%s'\n",w);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
      }
   }
  free(w);
@@ -359,9 +356,6 @@ void read_formals(void)
 	   }
 	}
      }
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
   }
 }
 
@@ -407,9 +401,6 @@ void do_define(int sharp, int redef)
  if (! mac)
   { err_head();
     fprintf(stderr,"missing/illegal macro name\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
     flush_sharp_line();
     return;
   }
@@ -420,9 +411,6 @@ void do_define(int sharp, int redef)
     if (nargs > 128)
      { err_head();
        fprintf(stderr,"too many macro formals, more than 128 ignored\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
        nargs = 128;
      }
   }
@@ -616,9 +604,6 @@ void do_dump(void)
   { fprintf(stderr,"\t\t%s\n",incldir[i]);
   }
  fprintf(stderr,"\t\t%s\n",cur_incldir);
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
 }
 
 void dump_single(DEF *d)
@@ -645,26 +630,17 @@ void dump_single(DEF *d)
      { putc(*cp,stderr);
      }
   }
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
 }
 
 void err_head(void)
 {
  fprintf(stderr,"\"%s\", line %d: ",curfile(),curline());
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
 }
 
 void Check_malloc(char *ptr)
 {
  if (ptr == 0)
   { fprintf(stderr,"out of memory!\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
     abort();
   }
 }
@@ -687,9 +663,6 @@ void do_eval(void)
     for (i=strlen(temp)-1;i>=0;i--)
      { Push(temp[i]);
      }
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
   }
 }
 
@@ -824,9 +797,6 @@ void read_actuals(DEF *d)
        actlens[i] = 0;
      }
   }
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
 }
 
 void expand_def(DEF *d)
@@ -1120,9 +1090,6 @@ int get_quote_char(void)
  if (c == '\n')
   { err_head();
     fprintf(stderr,"newline in character constant\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		      fflush(stderr);
-#endif
     return(-1);
   }
  if (c != '\\')
@@ -1199,9 +1166,6 @@ NODE *read_expr_11(void)
        if (c != ')')
 	{ err_head();
 	  fprintf(stderr,"expression syntax error -- missing ) supplied\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	  fflush(stderr);
-#endif
 	  Push(c);
 	}
 #ifdef DEBUG_EXPR
@@ -1249,9 +1213,6 @@ NODE *read_expr_11(void)
 	   { err_head();
 	     fprintf(stderr,"warning: illegal %sdigit `%c'\n",
 			(base==16)?"hex ":(base==8)?"octal ":"",c);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	     fflush(stderr);
-#endif
 	   }
 	  v = (v * base) + values[d-digits];
 	  c = Get();
@@ -1274,9 +1235,6 @@ NODE *read_expr_11(void)
        if (n > 4)
 	{ err_head();
 	  fprintf(stderr,"warning: too many characters in character constant\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	  fflush(stderr);
-#endif
 	}
        return(newleaf(i));
      }
@@ -1288,9 +1246,6 @@ NODE *read_expr_11(void)
        if (complain)
 	{ err_head();
 	  fprintf(stderr,"expression syntax error -- number expected\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	  fflush(stderr);
-#endif
 	}
        if (isbsymchar(c))
 	{ Push(c);
@@ -1873,9 +1828,6 @@ NODE *read_expr_(void)
        default:
 	  err_head();
 	  fprintf(stderr,"expression syntax error -- bad operator `%c'\n",c);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	  fflush(stderr);
-#endif
 	  return(l);
 	  break;
      }
@@ -1899,9 +1851,6 @@ NODE *read_expr_p(void)
  if (c != ')')
   { err_head();
     fprintf(stderr,"junk after expression\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
   }
  return(rv);
 }
@@ -1927,9 +1876,6 @@ int eval_expr(int Sharp, int Complain)
   { if (complain)
      { err_head();
        fprintf(stderr,"expression syntax error -- junk after expression\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
      }
     while (Get() != d) ;
   }
@@ -2035,9 +1981,6 @@ void do_if(int expr_sharp)
     if (c != '(')
      { err_head();
        fprintf(stderr,"@if must have ()s\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
        Push(c);
        iffalse();
 #ifdef DEBUG_IF
@@ -2234,9 +2177,6 @@ void do_else(int expr_sharp)
 #endif
        err_head();
        fprintf(stderr,"if-less else\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
      }
   }
  else
@@ -2292,9 +2232,6 @@ void do_elif(int expr_sharp)
  if (ifstack == 0)
   { err_head();
     fprintf(stderr,"if-less elif converted to normal if\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
     iffalse();
   }
  if (n_skipped_ifs > 0)
@@ -2319,9 +2256,6 @@ void do_elif(int expr_sharp)
     if (c != '(')
      { err_head();
        fprintf(stderr,"@elif must have ()s\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
        Push(c);
        ifstack->condstate = IFSTATE_STAYFALSE;
 #ifdef DEBUG_IF
@@ -2404,9 +2338,6 @@ void do_endif(int expr_sharp)
  else
   { err_head();
     fprintf(stderr,"if-less endif\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
 #ifdef DEBUG_IF
     if (debugging)
      { outputc('>');
@@ -2539,9 +2470,6 @@ void do_include(int expr_sharp)
 	  err_head();
 	  fprintf(stderr,"warning: unterminated %cinclude filename\n",
 							sharp?'#':'@');
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	  fflush(stderr);
-#endif
 	}
        if (c == '"')
 	{ break;
@@ -2562,9 +2490,6 @@ void do_include(int expr_sharp)
 	  err_head();
 	  fprintf(stderr,"warning: unterminated %cinclude filename\n",
 							sharp?'#':'@');
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	  fflush(stderr);
-#endif
 	}
        if (c == '>')
 	{ break;
@@ -2580,9 +2505,6 @@ void do_include(int expr_sharp)
   { free(accum_result(acc));
     err_head();
     fprintf(stderr,"illegal %cinclude filename delimiter\n",sharp?'#':'@');
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
   }
 }
 
@@ -2594,7 +2516,7 @@ void do_include(int expr_sharp)
 #define DELIM '/'
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #if defined(DELIM)
 #undef DELIM
 #endif
@@ -2641,9 +2563,6 @@ void read_include_file(char *name, int dohere, int expr_sharp)
  if (f == NULL)
   { err_head();
     fprintf(stderr,"can't find include file %s\n",name);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
     free(name);
     return;
   }
@@ -2860,9 +2779,6 @@ void Push(char c)
 {
  if (cur_npushed > MAX_PUSHBACK)
   { fprintf(stderr,"too much pushback\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
     cur_npushed = 0;
   }
  PUSH() = c;
@@ -3241,9 +3157,6 @@ void mark_file_ending(void)
      }
     else if (m->nincs <= 0)
      { fprintf(stderr,"INTERNAL BUG: nincs<0 in mark_file_ending\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
        abort();
      }
     else
@@ -3706,9 +3619,6 @@ void cpp_main(int ac, char **av)
 	}
      }
   }
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
 }
 
 void do_pragma(void)
@@ -3768,9 +3678,6 @@ void do_set(void)
     check_malloc(cp);
     define(mac,-1,(unsigned char *)cp,DEF_DEFINE);
   }
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
  free(mac);
 }
 
@@ -3834,9 +3741,6 @@ void do_sharp(void)
        flush_sharp_line();
      }
   }
-#if defined(__MINGW32__) || defined(__MINGW64__)
- fflush(stderr);
-#endif
  maybe_print('\n');
  free(w);
 }
@@ -4005,9 +3909,6 @@ void define(char *name, int nargs, unsigned char *repl, int how)
   { if ( (nargs != d->nargs) || strcmp((char *)repl,(char *)d->repl) )
      { err_head();
        fprintf(stderr,"%s redefined\n",n);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
      }
     free((char *)d->repl);
     free(d->name);
@@ -4638,9 +4539,6 @@ void do_undef(int expr_sharp)
     if (! mac)
      { err_head();
        fprintf(stderr,"missing/illegal macro name\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-       fflush(stderr);
-#endif
      }
     else
      { if (undef(mac))

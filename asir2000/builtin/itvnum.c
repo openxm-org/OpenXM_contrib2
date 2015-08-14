@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.7 2014/05/12 16:54:40 saito Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.8 2015/08/08 14:19:41 fujimoto Exp $
  */
 
 #include "ca.h"
@@ -629,9 +629,6 @@ static void	pprintmode( void )
 			fprintf(stderr,"Printf's double printing mode is \"%%g\".\n");
 			break;
 	}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 static void

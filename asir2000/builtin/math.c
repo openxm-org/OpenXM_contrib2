@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.10 2011/12/15 16:53:26 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.11 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 #include "parse.h"
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <float.h>
 #endif
 
@@ -258,7 +258,7 @@ Q *rp;
 		a = -a;
 	} else
 		sgn = 1;
-#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__x86_64)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__x86_64)
 	au = ((unsigned int *)&a)[1];
 	al = ((unsigned int *)&a)[0];
 #else
@@ -301,7 +301,7 @@ Q *rp;
 		a = -a;
 	} else
 		sgn = 1;
-#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__x86_64)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__x86_64)
 	au = ((unsigned int *)&a)[1];
 	al = ((unsigned int *)&a)[0];
 #else
@@ -331,7 +331,7 @@ Q *rp;
 		*rp = 0;
 		return;
 	}
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	d = ToReal(ARG0(arg));
 	if ( d > 0 )
 		d = floor(d+0.5);
@@ -348,7 +348,7 @@ Q *rp;
 		a = -a;
 	} else
 		sgn = 1;
-#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__x86_64)
+#if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__x86_64)
 	au = ((unsigned int *)&a)[1];
 	al = ((unsigned int *)&a)[0];
 #else
@@ -369,7 +369,7 @@ void Pdisnan(NODE arg,Q *rp)
 {
 	Real r;
 	double d;
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
     int c;
 #endif
 
@@ -379,7 +379,7 @@ void Pdisnan(NODE arg,Q *rp)
 		return;
 	}
 	d = ToReal(r);
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	c = _fpclass(d);
 	if ( c == _FPCLASS_SNAN || c == _FPCLASS_QNAN ) *rp = ONE;
 	else if ( c == _FPCLASS_PINF || c == _FPCLASS_NINF ) STOQ(2,*rp);

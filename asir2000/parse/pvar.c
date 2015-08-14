@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.20 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.21 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -177,9 +177,6 @@ unsigned int makepvar(char *str)
 				fprintf(stderr,"         `%s' is bound to the global variable\n",str);
 				CPVS->va[c].attr = IS_GLOBAL;
 				c1 = getpvar(GPVS,str,1); c = PVGLOBAL((unsigned int)c1);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-				fflush(stderr);
-#endif
 			}
 		} else {
 			if ( CUR_MODULE ) {
@@ -225,9 +222,6 @@ unsigned int makepvar(char *str)
 					fprintf(stderr,
 						"Warning: \"%s\", near line %d: undeclared local variable `%s'\n",
 						asir_infile->name,asir_infile->ln,str);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-					fflush(stderr);
-#endif
 				}
 				break;
 		}
@@ -312,7 +306,7 @@ int getpvar(VS pvs,char *str,int searchonly)
 	return i;
 }
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #define PCLOSE _pclose
 #else
 #define PCLOSE pclose
@@ -323,7 +317,7 @@ void closecurrentinput()
 	if ( asir_infile && !asir_infile->fp )
 		return;
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	fclose(asir_infile->fp); 
 	unlink(asir_infile->tname);
 #else

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.59 2013/11/05 02:55:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.60 2015/08/08 14:19:41 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -399,9 +399,6 @@ void dp_ptozp_d(DP p,DP *rp)
 		if ( 0 )
 			fprintf(stderr,"(%d,%d)",p_mag((P)d0)-blen,blen);
 	}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void dp_ptozp2_d(DP p0,DP p1,DP *hp,DP *rp)
@@ -2554,9 +2551,6 @@ void _print_mp(int nv,MP m)
 		fprintf(stderr,">",C(m));
 	}
 	fprintf(stderr,"\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 static int cmp_mp_nvar;

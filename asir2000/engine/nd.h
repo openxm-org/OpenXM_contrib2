@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.31 2013/12/20 02:02:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.32 2015/08/06 10:01:52 fujimoto Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -8,7 +8,7 @@
 
 #if defined(__GNUC__)
 #define INLINE static inline
-#elif defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#elif defined(VISUAL) || defined(__MINGW32__)
 #define INLINE __inline
 #else
 #define INLINE

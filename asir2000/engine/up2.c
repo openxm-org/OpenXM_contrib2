@@ -45,14 +45,14 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up2.c,v 1.4 2001/10/09 01:36:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up2.c,v 1.5 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 
 #define INLINE
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #undef INLINE
 #define INLINE __inline
 #endif

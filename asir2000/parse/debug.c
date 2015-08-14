@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.22 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.23 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -147,7 +147,7 @@ void debug_init() {
 		fclose(fp);
 	}
 #if 0
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( do_server_in_X11 )
 		init_cmdwin();
 #endif
@@ -192,9 +192,6 @@ void show_alias(char *alias)
 				if ( !strcmp(alias,BDY(tn)) ) {
 					fprintf(stderr,"%s->%s\n",alias,debcom[i]); return;
 				}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void debug(SNODE f)
@@ -209,25 +206,25 @@ void debug(SNODE f)
 	char buf[BUFSIZ];
 	char prompt[BUFSIZ];
 	char *p,*pe;
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	char *line;
 #endif
 	NODE tn;
 	extern int do_fep;
 	NODE pvss;
 
-#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__)
 	if ( !isatty(fileno(stdin)) && !do_server_in_X11 )
 		if ( do_file )
 			ExitAsir();
 		else
 			return;
 #endif
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	suspend_timer();
 #endif
 	pvss = PVSS; debug_mode = 1;
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(1);
@@ -250,7 +247,7 @@ void debug(SNODE f)
 			{
 				int len;
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 				if ( do_server_in_X11 )
 					get_line(buf);
 				else 
@@ -343,7 +340,7 @@ void debug(SNODE f)
 	}
 LAST:
 	debug_mode = 0;
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(0);
@@ -457,9 +454,6 @@ void setbp(char *p)
 			showbp(bpi);
 		}
 	}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void settp(char *p)
@@ -545,9 +539,6 @@ void settp(char *p)
 			showbp(bpi);
 		}
 	}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void clearbp(FUNC f)
@@ -629,9 +620,6 @@ void showbp(int n)
 				else
 					fprintf(stderr,"(%d) stop in %s\n",n,bpt[n].f->name);
 			}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void searchsn(SNODE *fp,int n,SNODE **fpp)
@@ -704,18 +692,15 @@ void bp(SNODE f)
 		default:
 			ln = f->ln; break;
 	}
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(1);
 	fprintf(stderr,"stopped in %s at line %d in file \"%s\"\n",
 		CPVS->usrf->name,ln,CPVS->usrf->f.usrf->fname);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 	targetf = CPVS->usrf; curline = ln;
 	println(0,0,1);
-#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__)
 	if ( do_server_in_X11 || isatty(0) )
 #endif
 		debug(f);
@@ -760,9 +745,6 @@ void println(int ac,char **av,int l)
 	}
 	curline = ln + i;
 	fclose(fp);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void printvars(char *s,VS vs)
@@ -816,9 +798,6 @@ void showpos()
 			fprintf(stderr,"#%d %s(), line %d in \"%s\"\n",
 				level-vs->level,vs->usrf->name,vs->at,vs->usrf->f.usrf->fname);
 		}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 	}
 }
 
@@ -911,7 +890,4 @@ void show_stack(VS vs)
 {
 	fprintf(stderr,"#%d %s(), line %d in \"%s\"\n",
 		((VS)BDY(PVSS))->level-vs->level,vs->usrf->name,vs->at,vs->usrf->f.usrf->fname);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }

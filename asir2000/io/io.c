@@ -44,12 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.17 2015/08/12 10:37:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.18 2015/08/13 00:13:03 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
 #include "parse.h"
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(MPI)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
 #include "wsio.h"
 #endif
 
@@ -102,7 +102,7 @@ void ox_copy_init(char *s)
 	ox_copy_bptr = s;
 }
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 /*
  * library mode functions
  * byte order is controlled by lib_ox_need_conv.
@@ -137,7 +137,7 @@ int gen_fread (char *ptr,int size,int nitems,FILE *stream)
 		/* dummy return */
 		return 0;
 	} else {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		if ( _fileno(stream) < 0 )
 			n = cread(ptr,size,nitems,(STREAM *)stream);
 		else
@@ -171,7 +171,7 @@ int gen_fwrite (char *ptr,int size,int nitems,FILE *stream)
 		/* dummy return  */
 		return 0;
 	} else
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	if ( _fileno(stream) < 0 )
 		return cwrite(ptr,size,nitems,(STREAM *)stream);
 	else

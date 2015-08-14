@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.33 2015/08/06 10:01:52 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.34 2015/08/08 14:19:42 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -94,7 +94,7 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc);
 Obj asir_pop_one();
 void asir_push_one(Obj);
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 /* XXX : mainly used in engine2000/io.c, but declared here */
 typedef void *HANDLE;
 HANDLE hStreamNotify,hStreamNotify_Ack;
@@ -110,13 +110,10 @@ void cleanup_events()
 
 void ox_resetenv(char *s)
 {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	cleanup_events();
 #endif
 	fprintf(stderr,"%s\n",s);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 	LONGJMP(ox_env,1);
 }
 
@@ -399,7 +396,7 @@ void end_critical() {
 	critical_when_signal = 0;
 	if ( ox_usr1_sent ) {
 		ox_usr1_sent = 0;
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	ox_usr1_handler(SIGUSR1);
 #else
 	ox_usr1_handler(0);
@@ -416,7 +413,7 @@ void ox_usr1_handler(int sig)
 {
 	NODE t;
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	signal(SIGUSR1,ox_usr1_handler);
 #endif
 	if ( critical_when_signal ) {
@@ -433,9 +430,6 @@ void ox_usr1_handler(int sig)
 		}
 		ox_resetenv("usr1 : return to toplevel by SIGUSR1");
 	}
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 void clear_readbuffer()
@@ -488,7 +482,7 @@ void wait_for_data(int s)
 	int sock;
 
 	if ( !FP_DATA_IS_AVAILABLE(iofp[s].in) ) {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		sock = iofp[s].in->fildes;
 		FD_ZERO(&r);
 		FD_SET((unsigned int)sock,&r);
@@ -508,7 +502,7 @@ void wait_for_data_102(int rank)
 	int sock;
 
 	if ( !FP_DATA_IS_AVAILABLE(iofp_102[rank].in) ) {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		sock = iofp_102[rank].in->fildes;
 		FD_ZERO(&r);
 		FD_SET((unsigned int)sock,&r);
@@ -944,7 +938,7 @@ void ox_flush_stream(int s)
 {
 	if ( ox_batch )
 		return;
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else
@@ -958,7 +952,7 @@ void ox_flush_stream(int s)
 
 void ox_flush_stream_force(int s)
 {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	if ( _fileno(&iofp[s].out->fp) < 0 )
 		cflush(iofp[s].out);
 	else
@@ -979,7 +973,7 @@ void ox_flush_stream_102(int rank)
 void ox_flush_stream_force_102(int rank)
 {
 	if ( iofp_102[rank].out )
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		cflush(iofp_102[rank].out);
 #elif MPI
 		cflush(iofp_102[rank].out);

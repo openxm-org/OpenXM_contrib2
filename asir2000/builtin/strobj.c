@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.122 2011/06/16 08:17:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.123 2015/08/06 10:01:52 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,7 +60,7 @@ extern jmp_buf environnement;
 
 #if defined(__GNUC__)
 #define INLINE inline
-#elif defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#elif defined(VISUAL) || defined(__MINGW32__)
 #define INLINE __inline
 #else
 #define INLINE

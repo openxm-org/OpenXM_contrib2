@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.5 2003/05/14 06:20:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.6 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -166,9 +166,6 @@ FNODE f;
 			break;
 		default:
 			fprintf(stderr,"compile: unknown id");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			error("");
 			break;
 	}
@@ -276,9 +273,6 @@ SNODE f;
 			f_break = 0; break;
 		default:
 			fprintf(stderr,"compilestat: unknown id");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			error("");
 			break;
 	}
@@ -312,18 +306,12 @@ FNODE a;
 
 	if ( f->id == A_UNDEF ) {
 		fprintf(stderr,"%s undefined",NAME(f));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 		error("");
 	}
 	if ( f->id != A_PARI ) {
 		for ( i = 0, tn = a?(NODE)FA0(a):0; tn; i++, tn = NEXT(tn) );
 		if ( ((n = f->argc)>= 0 && i != n) || (n < 0 && i > -n) ) {
 			fprintf(stderr,"argument mismatch in %s()",NAME(f));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			error("");
 		}
 	}
@@ -374,9 +362,6 @@ FNODE a;
 			val = compilepf(f->f.puref,a); break;
 		default:
 			fprintf(stderr,"%s undefined",NAME(f));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			error("");
 			break;
 	}
@@ -443,18 +428,12 @@ NODE a;
 
 	if ( f->id == A_UNDEF ) {
 		fprintf(stderr,"%s undefined",NAME(f));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 		error("");
 	}
 	if ( f->id != A_PARI ) {
 		for ( i = 0, tn = a; tn; i++, tn = NEXT(tn) );
 		if ( ((n = f->argc)>= 0 && i != n) || (n < 0 && i > -n) ) {
 			fprintf(stderr,"argument mismatch in %s()",NAME(f));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			error("");
 		}
 	}
@@ -496,9 +475,6 @@ NODE a;
 			break;
 		default:
 			fprintf(stderr,"%s undefined",NAME(f));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			error("");
 			break;
 	}
@@ -515,9 +491,6 @@ FNODE f,a;
 		return compilef((FUNC)VR((P)g)->priv,a);
 	else {
 		fprintf(stderr,"invalid function pointer");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 		error("");
 	}
 }
@@ -537,9 +510,6 @@ FNODE a;
 	for ( i = 0, node = a?(NODE)FA0(a):0; node; i++, node = NEXT(node) );
 	if ( pf->argc != i ) {
 		fprintf(stderr,"argument mismatch in %s()",NAME(pf));
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 		error("");
 	}
 	args = (LIST)compile(a);
@@ -637,18 +607,12 @@ MODULE module;
 	searchf(sysf,name,&f);
 	if ( f ) {
 		fprintf(stderr,"def : builtin function %s() cannot be redefined.\n",name);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 		CPVS = GPVS; return;
 	}
 	for ( argc = 0, sn = args; sn; argc++, sn = NEXT(sn) ) {
 		fn = (FNODE)BDY(sn);
 		if ( !fn || ID(fn) != I_PVAR ) {
 			fprintf(stderr,"illegal	argument in %s()\n",name);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
-#endif
 			CPVS = GPVS; return;
 		}
 	}
@@ -662,9 +626,6 @@ MODULE module;
 	}
 	if ( Verbose && f->id != A_UNDEF )
 		fprintf(stderr,"Warning : %s() redefined.\n",name);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 /*	else
 		fprintf(stderr,"%s() defined.\n",name); */
 	t=(USRF)MALLOC(sizeof(struct oUSRF));

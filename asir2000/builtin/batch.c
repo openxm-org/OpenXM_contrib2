@@ -45,9 +45,9 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/batch.c,v 1.4 2001/10/09 01:36:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/batch.c,v 1.5 2015/08/06 10:01:51 fujimoto Exp $ 
 */
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 
 #include <stdio.h>
 #include <stdlib.h>

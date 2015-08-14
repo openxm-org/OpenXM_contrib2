@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.34 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.35 2015/08/07 01:25:39 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,7 +55,7 @@
 #include <X11/cursorfont.h>
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <direct.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -130,7 +130,7 @@ struct ftab misc_tab[] = {
 void Pgetcwd(STRING *rp)
 {
 	char *r;
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	char buf[_MAX_PATH];
 	_getcwd(buf, _MAX_PATH);
 #else
@@ -145,7 +145,7 @@ void Pgetcwd(STRING *rp)
 void Pchdir(NODE arg, Q *rp)
 {
 	char *dir = BDY((STRING)ARG0(arg));
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	int status = _chdir(dir);
 #else
 	int status = chdir(dir);
@@ -209,7 +209,7 @@ Q *rp;
 	int ms;
 
 	ms = QTOS((Q)ARG0(arg));
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	Sleep(ms);
 #else
 	usleep(ms*1000);
@@ -465,7 +465,7 @@ Q *rp;
 	code = QTOS((Q)ARG0(arg));
 	reason = BDY((STRING)ARG1(arg));
 	action = BDY((STRING)ARG2(arg));
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	set_error(code,reason,action);
 #endif
 	error("");

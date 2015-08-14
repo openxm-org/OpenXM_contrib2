@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.16 2005/10/24 08:26:42 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.17 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "base.h"
 #include "parse.h"
-#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
+#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -291,7 +291,7 @@ int zp(P p)
 	return ( r );
 }
 
-#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
+#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 NODE mknode(int ac,...)
 {
 	va_list ap;

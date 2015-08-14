@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.27 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.28 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -96,7 +96,7 @@ static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
 static void asir_executeFunction();
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 void ox_plot_main()
 #else
 void ox_plot_main(int argc,char **argv)
@@ -107,23 +107,20 @@ void ox_plot_main(int argc,char **argv)
 	int n;
 	int use_x;
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	ox_asir_init(argc,argv,"ox_plot");
 	use_x=init_plot_display(argc,argv);
 	if(use_x) ds=ConnectionNumber(display);
 	else fprintf(stderr,"Entering no X mode\n");
 #endif
 	if(do_message)fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 	if(SETJMP(ox_env)){
 		while(NEXT(asir_infile))closecurrentinput();
 		reset_current_computation();
 		ox_send_sync(0);
 	}
 	while (1){
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 		process_ox();
 #else
 		if(ox_data_is_available(0)) process_ox();
@@ -176,9 +173,6 @@ static void process_ox(){
 			break;
 	}
 	if(do_message)fprintf(stderr,"\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }
 
 static void asir_do_cmd(unsigned int cmd,unsigned int serial){

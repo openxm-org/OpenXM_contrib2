@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.4 2001/10/09 01:36:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.5 2015/08/08 14:19:41 fujimoto Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -262,9 +262,6 @@ void powertabup_gf2n(UP f,UP xp,UP *tab)
 	for ( i = 2; i < d; i++ ) {
 	  if ( debug_up ){
 	    fprintf(stderr,".");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	    fflush(stderr);
-#endif
 	  }
 	  if ( !(i%2) )
 			squareup_gf2n(tab[i/2],&t);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/polmul.c,v 1.3 2000/08/22 05:04:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/polmul.c,v 1.4 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include "dft.h"
 extern struct PrimesS Primes[];
@@ -350,9 +350,6 @@ fprintf( stderr, "mul by classical alg. done ( %d times )\n", RETI );
     fprintf( stderr, "\nClassical mult:   " );  Pr_timing( 10 );
     fprintf( stderr, "\n" );
 #endif /* TIMING */
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    fflush(stderr);
-#endif
   }
 }
 

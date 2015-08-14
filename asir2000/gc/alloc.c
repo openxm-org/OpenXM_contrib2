@@ -949,7 +949,7 @@ word n;
     GC_prev_heap_addr = GC_last_heap_addr;
     GC_last_heap_addr = (ptr_t)space;
     GC_add_to_heap(space, bytes);
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	SendHeapSize();
 #endif
     return(TRUE);
@@ -1045,7 +1045,7 @@ int kind;
     
     if (sz == 0) return(0);
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	{
 #include <signal.h>
 		extern int recv_intr;

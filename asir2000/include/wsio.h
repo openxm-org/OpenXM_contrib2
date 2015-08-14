@@ -45,11 +45,11 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/wsio.h,v 1.7 2003/03/07 06:39:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/wsio.h,v 1.8 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #ifndef WSIO_H
 #define WSIO_H
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <winsock2.h>
 #elif defined(MPI)
 #include <sys/types.h>

@@ -45,17 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.11 2003/03/07 06:39:56 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/com.h,v 1.12 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #ifndef _COM_H_
 #define _COM_H_
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(MPI)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
 #include "wsio.h"
 #endif
 
 #include <stdio.h>
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 #include <netdb.h>
 #if defined(__CYGWIN__)
 #include <cygwin/types.h>
@@ -87,7 +87,7 @@
 #define C_PRIV C_ENDARG+1
 #define C_SHUTDOWN 6
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(MPI)
+#if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
 struct IOFP {
 	STREAM *in,*out;
 	char *inbuf,*outbuf;

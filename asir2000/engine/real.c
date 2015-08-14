@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.8 2003/12/24 08:00:38 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/real.c,v 1.9 2015/08/06 10:01:52 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -111,7 +111,7 @@ int *expo;
 #ifdef vax
 	t = m[0]; m[0] = m[1]; m[1] = t; itod(m);
 #endif
-#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__x86_64)
+#if defined(__i386__) || defined(MIPSEL) || defined(VISUAL) || defined(__MINGW32__) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__x86_64)
 	t = m[0]; m[0] = m[1]; m[1] = t;
 #endif
 	return *((double *)m);

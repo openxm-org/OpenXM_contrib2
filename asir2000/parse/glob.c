@@ -45,17 +45,17 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.88 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.89 2015/08/08 14:19:42 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
 #include "ox.h"
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX) && !defined(__FreeBSD__)
+#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX) && !defined(__FreeBSD__)
 #include <sgtty.h>
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #include <io.h>
 #include <direct.h>
 #else
@@ -68,7 +68,7 @@
 #include <sys/ttold.h>
 #endif
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 #define HISTORY asir_history
 #endif
 
@@ -143,7 +143,7 @@ struct oF oF_TRUE,oF_FALSE;
 F F_TRUE = &oF_TRUE;  
 F F_FALSE = &oF_FALSE;
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 char cppname[BUFSIZ] = "c:\\asir\\stdlib\\cpp ";
 #else
 char cppname[BUFSIZ] = "/lib/cpp ";
@@ -225,15 +225,20 @@ void asir_terminate(int status)
 		LONGJMP(asir_infile->jmpbuf,status);
 	else {
 		if ( user_quit_handler ) {
-			if ( !do_terse )
+			if ( !do_terse ) {
 				fprintf(stderr,"Calling the registered quit callbacks...");
+#if defined(__MINGW32__)
+				fflush(stderr);
+#endif
+			}
 			for ( n = user_quit_handler; n; n = NEXT(n) )
 				bevalf((FUNC)BDY(n),0);
-			if ( !do_terse )
+			if ( !do_terse ) {
 				fprintf(stderr, "done.\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-			fflush(stderr);
+#if defined(__MINGW32__)
+				fflush(stderr);
 #endif
+			}
 		}
 		tty_reset();
 #if defined(MPI)
@@ -285,7 +290,7 @@ void sprompt(char *ptr)
 	sprintf(ptr,"[%d] ",APVS->n);
 }
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 static int which(char *prog, char *path, char *buf, size_t size)
 {
     char *tok;
@@ -318,7 +323,7 @@ static int which(char *prog, char *path, char *buf, size_t size)
 
 void cppname_init()
 {
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	char *oxhome;
 	char oxcpp[BUFSIZ];
 #define OXCPP "/bin/ox_cpp"
@@ -373,7 +378,7 @@ void process_args(int ac,char **av)
 			in_fp = fopen(*(av+1),"r");
 			if ( !in_fp ) {
 				fprintf(stderr,"%s does not exist!\n",*(av+1));
-#if defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(__MINGW32__)
 				fflush(stderr);
 #endif
 				asir_terminate(1);
@@ -395,7 +400,7 @@ void process_args(int ac,char **av)
 			void GC_set_max_heap_size(int);
 
 			GC_set_max_heap_size(atoi(*(av+1))); av += 2; ac -= 2;
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 		} else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
 			strcpy(displayname,*(av+1)); av += 2; ac -= 2;
 #endif
@@ -405,7 +410,7 @@ void process_args(int ac,char **av)
 #endif
 		} else {
 			fprintf(stderr,"%s : unknown option.\n",*av);
-#if defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(__MINGW32__)
 			fflush(stderr);
 #endif
 			asir_terminate(1);
@@ -427,7 +432,7 @@ void process_args(int ac,char **av)
 #include <signal.h>
 
 void sig_init() {
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	signal(SIGINT,int_handler);
 #else
 	void register_ctrlc_handler();
@@ -448,7 +453,7 @@ void sig_init() {
 	signal(SIGILL,ill_handler);
 #endif
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	signal(SIGBUS,bus_handler);
 #endif
 }
@@ -475,24 +480,24 @@ void resetenv(char *s)
 	extern FILE *outfile;
 
 	fprintf(stderr,"%s\n",s);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 	while ( NEXT(asir_infile) )
 		closecurrentinput();
 	resetpvs();
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( do_server_in_X11 )
 #endif
 		show_debug_window(0);
 #if defined(VISUAL_LIB)
 	w_noflush_stderr(0);
 #endif
+#if defined(__MINGW32__)
+	fflush(stderr);
+#endif
 	asir_out = stdout;
 	/* restore states */
 	reset_engine();
 	reset_io();
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	reset_timer();
 #endif
 	LONGJMP(main_env,1);
@@ -523,11 +528,11 @@ void int_handler(int sig)
 		caught_intr = 1;
 		return;
 	}
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	suspend_timer();
 #endif
 	signal(SIGINT,SIG_IGN);
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__) 
+#if !defined(VISUAL) && !defined(__MINGW32__) 
     if ( do_server_in_X11 ) {
 		debug(PVSS?((VS)BDY(PVSS))->usrf->f.usrf->body:0);
  		restore_handler();
@@ -561,6 +566,9 @@ void int_handler(int sig)
 					fgets(buf,BUFSIZ,stdin);
 					if ( !strncmp(buf,"y",1) ) {
 						fprintf(stderr,"Bye\n");
+#if defined(__MINGW32__)
+						fflush(stderr);
+#endif
 						/* for terminating myself */
 						asir_infile = 0;
 						asir_terminate(1);
@@ -587,16 +595,21 @@ void int_handler(int sig)
 				restore_handler();
 				if ( c == 'u' ) {
 					if ( user_int_handler ) {
-						if ( !do_terse )
+						if ( !do_terse ) {
 							fprintf(stderr,
 								"Calling the registered exception callbacks...");
+#if defined(__MINGW32__)
+							fflush(stderr);
+#endif
+						}
 						for ( t = user_int_handler; t; t = NEXT(t) )
 							bevalf((FUNC)BDY(t),0);
-						if ( !do_terse )
+						if ( !do_terse ) {
 							fprintf(stderr, "done.\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-						fflush(stderr);
+#if defined(__MINGW32__)
+							fflush(stderr);
 #endif
+						}
 					}
 				}
 				resetenv("return to toplevel");
@@ -616,8 +629,8 @@ void int_handler(int sig)
 				break;
 			case '?': 
 				fprintf(stderr, "q:quit t:toplevel c:continue d:debug u:call registered handler w:where\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
+#if defined(__MINGW32__)
+				fflush(stderr);
 #endif
 				break;
 			default:
@@ -627,7 +640,7 @@ void int_handler(int sig)
 }
 
 void restore_handler() {
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 	resume_timer();
 #endif
 #if defined(SIGINT)
@@ -662,7 +675,7 @@ void ill_handler(int sig)
 void alrm_handler(int sig)
 {
 	fprintf(stderr,"interval timer expired (VTALRM)\n");
-#if defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(__MINGW32__)
 	fflush(stderr);
 #endif
 	LONGJMP(timer_env,1);
@@ -718,12 +731,12 @@ void error(char *s)
 {
 	SNODE *snp=0;
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( !error_in_timer && timer_is_set )
 		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
 	fprintf(stderr,"%s\n",s);
-#if defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(__MINGW32__)
 	fflush(stderr);
 #endif
 	set_lasterror(s);
@@ -758,12 +771,12 @@ void goto_toplevel(char *s)
 {
 	SNODE *snp=0;
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 	if ( timer_is_set )
 		alrm_handler(SIGNAL_FOR_TIMER);
 #endif
 	fprintf(stderr,"%s\n",s);
-#if defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(__MINGW32__)
 	fflush(stderr);
 #endif
 	if ( do_file ) {
@@ -776,7 +789,7 @@ void goto_toplevel(char *s)
 	resetenv("return to toplevel");
 }
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 #include <sys/time.h>
 
 void set_timer(int interval)
@@ -853,7 +866,7 @@ char *scopyright()
 	return notice;
 }
 
-#if defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(VISUAL) || defined(__MINGW32__)
 void check_intr()
 {
 	extern int recv_intr;

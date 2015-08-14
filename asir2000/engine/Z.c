@@ -4,7 +4,7 @@
 
 #if defined(__GNUC__)
 #define INLINE static inline
-#elif defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__)
+#elif defined(VISUAL) || defined(__MINGW32__)
 #define INLINE __inline
 #else
 #define INLINE

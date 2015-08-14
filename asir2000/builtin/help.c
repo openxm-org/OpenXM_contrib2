@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.9 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.10 2015/08/08 14:19:41 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -110,7 +110,7 @@ char *s;
 	if ( !s )
 		ghelp();
 	else {
-#if !defined(VISUAL) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !defined(VISUAL) && !defined(__MINGW32__)
 		int i;
 		FUNC f;
 		char name[BUFSIZ],com[BUFSIZ];
@@ -136,9 +136,6 @@ char *s;
 			fprintf(stderr,"%s\n",f->f.usrf->desc);
 
 #endif
-#if defined(__MINGW32__) || defined(__MINGW64__)
-		fflush(stderr);
-#endif
 	}
 }
 
@@ -147,7 +144,4 @@ void ghelp() {
 
 	for ( i = 0; ghelpstr[i]; i++ )
 		fprintf(stderr,"%s\n",ghelpstr[i]);
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	fflush(stderr);
-#endif
 }

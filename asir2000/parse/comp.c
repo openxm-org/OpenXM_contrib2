@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.c,v 1.8 2003/08/23 01:42:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.c,v 1.9 2015/08/06 10:01:53 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "comp.h"
-#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
+#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -58,7 +58,7 @@
 
 extern f_return;
 
-#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || defined(__MINGW64__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
+#if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 void call_usrf(FUNC f,...)
 {
 	va_list ap;
