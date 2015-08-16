@@ -1,9 +1,15 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.6 2015/08/07 06:15:00 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.7 2015/08/07 08:00:30 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 
 void Peval(), Psetprec(), Psetbprec(), Ptodouble(), Psetround();
-void Pmpfr_gamma(), Pmpfr_floor(), Pmpfr_round();
+void Pmpfr_ai();
+void Pmpfr_eint(), Pmpfr_erf(),Pmpfr_li2();
+void Pmpfr_zeta();
+void Pmpfr_j0(), Pmpfr_j1();
+void Pmpfr_y0(), Pmpfr_y1();
+void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
+void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
@@ -11,9 +17,21 @@ struct ftab bf_tab[] = {
 	{"setbprec",Psetbprec,-1},
 	{"setround",Psetround,-1},
 	{"todouble",Ptodouble,1},
+	{"mpfr_ai",Pmpfr_ai,-2},
+	{"mpfr_zeta",Pmpfr_zeta,-2},
+	{"mpfr_j0",Pmpfr_j0,-2},
+	{"mpfr_j1",Pmpfr_j1,-2},
+	{"mpfr_y0",Pmpfr_y0,-2},
+	{"mpfr_y1",Pmpfr_y1,-2},
+	{"mpfr_eint",Pmpfr_eint,-2},
+	{"mpfr_erf",Pmpfr_erf,-2},
+	{"mpfr_li2",Pmpfr_li2,-2},
 	{"mpfr_gamma",Pmpfr_gamma,-2},
-	{"mpfr_floor",Pmpfr_floor,-1},
-	{"mpfr_round",Pmpfr_round,-1},
+	{"mpfr_lngamma",Pmpfr_gamma,-2},
+	{"mpfr_digamma",Pmpfr_gamma,-2},
+	{"mpfr_floor",Pmpfr_floor,-2},
+	{"mpfr_ceil",Pmpfr_ceil,-2},
+	{"mpfr_round",Pmpfr_round,-2},
 	{0,0,0},
 };
 
@@ -381,18 +399,143 @@ void mp_pow(NODE arg,BF *rp)
     *rp = r; 
 }
 
+#define SETPREC \
+ (prec)=NEXT(arg)?QTOS((Q)ARG1(arg)):0;\
+ (prec)*=3.32193;\
+ (a)=tobf(ARG0(arg),prec);\
+ NEWBF(r);\
+ prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
+
+
 void Pmpfr_gamma(NODE arg,BF *rp)
 {
 	Num a;
   int prec;
 	BF r;
 
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-  prec *= 3.32193;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
+  SETPREC
 	mpfr_gamma(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_lngamma(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_lngamma(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_digamma(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_digamma(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_zeta(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_zeta(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_eint(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_eint(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_erf(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_erf(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_j0(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_j0(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_j1(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_j1(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_y0(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_y0(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_y1(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_y1(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_li2(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_li2(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_ai(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_ai(r->body,((BF)a)->body,mpfr_roundmode);
   *rp = r; 
 }
 
@@ -404,12 +547,24 @@ void Pmpfr_floor(NODE arg,Q *rp)
 	mpz_t t;
 	GZ rz;
 
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-  prec *= 3.32193;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
+  SETPREC
 	mpfr_floor(r->body,((BF)a)->body);
+	mpz_init(t);
+	mpfr_get_z(t,r->body,mpfr_roundmode);
+	MPZTOGZ(t,rz);
+	*rp = gztoz(rz); 
+}
+
+void Pmpfr_ceil(NODE arg,Q *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+	mpz_t t;
+	GZ rz;
+
+  SETPREC
+	mpfr_ceil(r->body,((BF)a)->body);
 	mpz_init(t);
 	mpfr_get_z(t,r->body,mpfr_roundmode);
 	MPZTOGZ(t,rz);
@@ -424,11 +579,7 @@ void Pmpfr_round(NODE arg,Q *rp)
 	mpz_t t;
 	GZ rz;
 
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-  prec *= 3.32193;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
+  SETPREC
 	mpfr_round(r->body,((BF)a)->body);
 	mpz_init(t);
 	mpfr_get_z(t,r->body,mpfr_roundmode);

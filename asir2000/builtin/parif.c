@@ -1,10 +1,52 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.22 2015/08/07 06:16:12 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.23 2015/08/07 08:00:30 takayama Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 
 Q ox_pari_stream;
 int ox_pari_stream_initialized = 0;
+
+typedef void (*mpfr_func)(NODE,Obj *);
+
+void Pmpfr_ai();
+void Pmpfr_eint(), Pmpfr_erf(),Pmpfr_li2();
+void Pmpfr_zeta();
+void Pmpfr_j0(), Pmpfr_j1();
+void Pmpfr_y0(), Pmpfr_y1();
+void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
+void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
+
+struct mpfr_tab_rec {
+  char *name;
+  mpfr_func func;
+} mpfr_tab[] = {
+	{"ai",Pmpfr_ai},
+	{"zeta",Pmpfr_zeta},
+	{"j0",Pmpfr_j0},
+	{"j1",Pmpfr_j1},
+	{"y0",Pmpfr_y0},
+	{"y1",Pmpfr_y1},
+	{"eint",Pmpfr_eint},
+	{"erf",Pmpfr_erf},
+	{"li2",Pmpfr_li2},
+	{"gamma",Pmpfr_gamma},
+	{"lngamma",Pmpfr_gamma},
+	{"digamma",Pmpfr_gamma},
+	{"floor",Pmpfr_floor},
+	{"ceil",Pmpfr_ceil},
+	{"round",Pmpfr_round},
+};
+
+mpfr_func mpfr_search(char *name)
+{
+  int i,n;
+
+  n = sizeof(mpfr_tab)/sizeof(struct mpfr_tab_rec);
+  for ( i = 0; i < n; i++ )
+    if ( !strcmp(name,mpfr_tab[i].name) )
+      return mpfr_tab[i].func;
+  return 0;
+}
 
 pointer evalparif(FUNC f,NODE arg)
 {
@@ -14,17 +56,13 @@ pointer evalparif(FUNC f,NODE arg)
   STRING name;
   USINT ui;
   Obj ret,dmy;
+  mpfr_func mpfr_function;
 
-  if (strcmp(f->name,"gamma")==0) {
-    Pmpfr_gamma(arg,&ret);
-    return((pointer) ret);
-  }else if (strcmp(f->name,"floor")==0) {
-    Pmpfr_floor(arg,&ret);
-    return((pointer) ret);
-  }else if (strcmp(f->name,"round")==0) {
-    Pmpfr_round(arg,&ret);
-    return((pointer) ret);
+  if ( mpfr_function = mpfr_search(f->name) ) {
+     (*mpfr_function)(arg,&ret);
+     return (pointer) ret;
   }
+
   if ( !ox_pari_stream_initialized ) {
 	  MKSTR(name,"ox_pari");
 	  nd = mknode(2,NULL,name);
