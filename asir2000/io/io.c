@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.18 2015/08/13 00:13:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.19 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -288,7 +288,8 @@ void write_longarray(FILE *f,unsigned long *p,int l)
 
   if ( l%2 ) {
     w = p[0]; hi = w>>32;
-    hi = htonl(hi);
+	if ( little_endian && (ox_file_io || ox_need_conv) )
+      hi = htonl(hi);
     gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
     i = 1;
   } else
@@ -296,7 +297,9 @@ void write_longarray(FILE *f,unsigned long *p,int l)
   l = (l+1)/2;
   for ( ; i < l; i++ ) {
     w = p[i]; hi = w>>32; lo = w&0xffffffff;
-    hi = htonl(hi); lo = htonl(lo);
+	if ( little_endian && (ox_file_io || ox_need_conv) ) {
+      hi = htonl(hi); lo = htonl(lo);
+	}
     gen_fwrite((char *)&lo,sizeof(unsigned int),1,f);
     gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
   }
@@ -400,14 +403,17 @@ void read_longarray(FILE *f,unsigned long *p,int l)
 	q = (unsigned int *)p;
 	if ( l%2 ) {
 	  gen_fread((char *)&hi,sizeof(unsigned int),1,f);
-	  hi = ntohl(hi);
+	  if ( little_endian && (ox_file_io || ox_need_conv) ) 
+	    hi = ntohl(hi);
 	  *p = (((unsigned long)hi)<<32);
 	  p++; l--;
 	}
 	for ( i = 0; i < l; i += 2, p++ ) {
 		gen_fread((char *)&lo,sizeof(unsigned int),1,f);
 		gen_fread((char *)&hi,sizeof(unsigned int),1,f);
-		hi = ntohl(hi); lo = ntohl(lo);
+	    if ( little_endian && (ox_file_io || ox_need_conv) ) {
+	      hi = ntohl(hi); lo = ntohl(lo);
+		}
 		*p = (((unsigned long)hi)<<32)|((unsigned long)lo);
 	}
 }
