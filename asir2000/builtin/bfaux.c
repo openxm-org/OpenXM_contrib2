@@ -1,10 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.7 2015/08/07 08:00:30 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.8 2015/08/16 03:12:09 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
 void Peval(), Psetprec(), Psetbprec(), Ptodouble(), Psetround();
 void Pmpfr_ai();
-void Pmpfr_eint(), Pmpfr_erf(),Pmpfr_li2();
+void Pmpfr_eint(), Pmpfr_erf(), Pmpfr_erfc(), Pmpfr_li2();
 void Pmpfr_zeta();
 void Pmpfr_j0(), Pmpfr_j1();
 void Pmpfr_y0(), Pmpfr_y1();
@@ -25,6 +25,7 @@ struct ftab bf_tab[] = {
 	{"mpfr_y1",Pmpfr_y1,-2},
 	{"mpfr_eint",Pmpfr_eint,-2},
 	{"mpfr_erf",Pmpfr_erf,-2},
+	{"mpfr_erfc",Pmpfr_erfc,-2},
 	{"mpfr_li2",Pmpfr_li2,-2},
 	{"mpfr_gamma",Pmpfr_gamma,-2},
 	{"mpfr_lngamma",Pmpfr_gamma,-2},
@@ -470,6 +471,17 @@ void Pmpfr_erf(NODE arg,BF *rp)
 
   SETPREC
 	mpfr_erf(r->body,((BF)a)->body,mpfr_roundmode);
+  *rp = r; 
+}
+
+void Pmpfr_erfc(NODE arg,BF *rp)
+{
+	Num a;
+  int prec;
+	BF r;
+
+  SETPREC
+	mpfr_erfc(r->body,((BF)a)->body,mpfr_roundmode);
   *rp = r; 
 }
 

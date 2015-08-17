@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.23 2015/08/07 08:00:30 takayama Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.24 2015/08/16 03:12:09 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -52,7 +52,7 @@ pointer evalparif(FUNC f,NODE arg)
 {
   int ac,intarg,opt,prec;
   Q q,r,narg;
-  NODE nd,oxarg;
+  NODE nd,oxarg,t,t1,n;
   STRING name;
   USINT ui;
   Obj ret,dmy;
@@ -66,75 +66,28 @@ pointer evalparif(FUNC f,NODE arg)
   if ( !ox_pari_stream_initialized ) {
 	  MKSTR(name,"ox_pari");
 	  nd = mknode(2,NULL,name);
-	  Pox_launch(nd,&r);
+	  Pox_launch_nox(nd,&r);
 	  ox_pari_stream = r;
     ox_pari_stream_initialized = 1;
   }
-	switch ( f->type ) {
-		case 0: /* in/out : integer */
-			ac = argc(arg);
-			if ( ac > 1 ) {
-				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
-				error("");
-				/* NOTREACHED */
-				return 0;
-			}
-      intarg = ac == 0 ? 0 : QTOS((Q)ARG0(arg));
-      MKUSINT(ui,intarg);
-      oxarg = mknode(2,ox_pari_stream,ui);
-      Pox_push_cmo(oxarg,&dmy);
-      MKSTR(name,f->name);
-      oxarg = mknode(3,ox_pari_stream,name,ONE);
-      Pox_execute_function(oxarg,&dmy);
-      oxarg = mknode(1,ox_pari_stream);
-      Pox_pop_cmo(oxarg,&r);
-      return r;
 
-		case 1:
-			ac = argc(arg);
-			if ( !ac || ( ac > 2 ) ) {
-				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
-				error("");
-				/* NOTREACHED */
-				return 0;
-			}
-      /* arg1 : prec */
-      prec = ac == 1 ? 0 : QTOS((Q)ARG1(arg));
-      MKUSINT(ui,prec);
-      oxarg = mknode(2,ox_pari_stream,ui);
-      Pox_push_cmo(oxarg,&dmy);
-
-      /* arg0 : arg */
-      oxarg = mknode(2,ox_pari_stream,ARG0(arg));
-      Pox_push_cmo(oxarg,&dmy);
-
-      MKSTR(name,f->name);
-      STOQ(2,narg);
-      oxarg = mknode(3,ox_pari_stream,name,narg);
-      Pox_execute_function(oxarg,&dmy);
-      oxarg = mknode(1,ox_pari_stream);
-      Pox_pop_cmo(oxarg,&r);
-      return r;
-
-		case 2:
-			ac = argc(arg);
-			if ( !ac || ( ac > 2 ) ) {
-				fprintf(stderr,"argument mismatch in %s()\n",NAME(f));
-				error("");
-				/* NOTREACHED */
-				return 0;
-			}
-			if ( ac == 1 )
-				opt = 0;
-			else
-				opt = QTOS((Q)ARG1(arg));
-			return r;
-
-		default:
-			error("evalparif : not implemented yet.");
-			/* NOTREACHED */
-			return 0;
-	}
+	ac = argc(arg);
+  /* reverse the arg list */
+  for ( n = arg, t = 0; n; n = NEXT(n) ) {
+    MKNODE(t1,BDY(n),t); t = t1;
+  }
+  /* push the reversed arg list */
+  for ( ; t; t = NEXT(t) ) {
+    oxarg = mknode(2,ox_pari_stream,BDY(t));
+    Pox_push_cmo(oxarg,&dmy);
+  }
+  MKSTR(name,f->name);
+  STOQ(ac,narg);
+  oxarg = mknode(3,ox_pari_stream,name,narg);
+  Pox_execute_function(oxarg,&dmy);
+  oxarg = mknode(1,ox_pari_stream);
+  Pox_pop_cmo(oxarg,&r);
+  return r;
 }
 
 struct pariftab {
