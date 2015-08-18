@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.25 2015/08/17 05:18:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.26 2015/08/18 02:26:05 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -66,7 +66,7 @@ pointer evalparif(FUNC f,NODE arg)
   if ( !ox_pari_stream_initialized ) {
 	  MKSTR(name,"ox_pari");
 	  nd = mknode(2,NULL,name);
-	  Pox_launch(nd,&r);
+	  Pox_launch_nox(nd,&r);
 	  ox_pari_stream = r;
     ox_pari_stream_initialized = 1;
   }
