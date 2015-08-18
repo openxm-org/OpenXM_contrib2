@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.26 2015/08/18 02:26:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.27 2015/08/18 02:31:32 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -48,6 +48,20 @@ mpfr_func mpfr_search(char *name)
   return 0;
 }
 
+Obj list_to_vect(Obj a)
+{
+  int len,i;
+  VECT v;
+  NODE nd;
+
+  if ( !a || OID(a) != O_LIST ) return a;
+  len = length(BDY((LIST)a));
+  MKVECT(v,len);
+  for ( i = 0, nd = BDY((LIST)a); nd; nd = NEXT(nd), i++ )
+     v->body[i] = (pointer)list_to_vect((Obj)BDY(nd));
+  return (Obj)v;
+}
+
 pointer evalparif(FUNC f,NODE arg)
 {
   int ac,intarg,opt,prec;
@@ -86,8 +100,10 @@ pointer evalparif(FUNC f,NODE arg)
   oxarg = mknode(3,ox_pari_stream,name,narg);
   Pox_execute_function(oxarg,&dmy);
   oxarg = mknode(1,ox_pari_stream);
-  Pox_pop_cmo(oxarg,&r);
-  return r;
+  Pox_pop_cmo(oxarg,&ret);
+  if ( ret && OID(ret) == O_LIST )
+    ret = list_to_vect(ret);
+  return ret;
 }
 
 struct pariftab {
