@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.34 2015/08/08 14:19:42 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.35 2015/08/14 13:51:55 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -126,7 +126,7 @@ static int available_cmo[] = {
     CMO_RATIONAL,
 	CMO_RECURSIVE_POLYNOMIAL, CMO_UNIVARIATE_POLYNOMIAL,
 	CMO_INDETERMINATE,
-	CMO_TREE, CMO_BIGFLOAT,
+	CMO_TREE, CMO_BIGFLOAT, CMO_COMPLEX,
 	0
 };
 
@@ -875,7 +875,7 @@ int ox_check_cmo(int s, Obj obj)
 						return check_by_mc(s,OX_DATA,CMO_ZZ);
 					else
 						return check_by_mc(s,OX_DATA,CMO_QQ);
-				case N_R: case N_B:
+				case N_R: case N_B: case N_C:
 					return 1;
 				default:
 					return 0;

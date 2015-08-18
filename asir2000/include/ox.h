@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.27 2015/08/12 10:45:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.28 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "com.h"
 
@@ -96,6 +96,7 @@
 #define CMO_DISTRIBUTED_POLYNOMIAL		31
 #define CMO_UNIVARIATE_POLYNOMIAL		33
 #define CMO_RATIONAL		34
+#define CMO_COMPLEX		35
 
 #define CMO_64BIT_MACHINE_DOUBLE   40
 #define CMO_ARRAY_OF_64BIT_MACHINE_DOUBLE  41
@@ -202,6 +203,7 @@ void read_cmo_list(FILE *s,Obj *rp);
 void read_cmo_zz(FILE *s,int *sgn,N *rp);
 void read_cmo_uint(FILE *s,USINT *rp);
 void read_cmo_bf(FILE *s,BF *q);
+void read_cmo_complex(FILE *s,C *q);
 void read_cmo(FILE *s,Obj *rp);
 void write_cmo_tree(FILE *s,LIST l);
 void write_cmo_error(FILE *s,ERR e);
@@ -217,6 +219,7 @@ void write_cmo_zz(FILE *s,int sgn,N n);
 void write_cmo_real(FILE *s,Real real);
 void write_cmo_q(FILE *s,Q q);
 void write_cmo_bf(FILE *s,BF q);
+void write_cmo_complex(FILE *s,C q);
 void write_cmo_uint(FILE *s,USINT ui);
 void write_cmo_matrix_as_list(FILE *s,MAT m);
 void write_cmo_mathcap(FILE *s,MATHCAP mc);

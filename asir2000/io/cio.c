@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.18 2015/08/13 00:13:03 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.19 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,7 +68,7 @@ int valid_as_cmo(Obj obj)
       return 1;
     case O_N:
       nid = NID((Num)obj);
-      if ( nid == N_Q || nid == N_R || nid == N_B )
+      if ( nid == N_Q || nid == N_R || nid == N_B || nid == N_C )
         return 1;
       else
         return 0;
@@ -105,6 +105,9 @@ void write_cmo(FILE *s,Obj obj)
           break;
         case N_B:
           write_cmo_bf(s,(BF)obj);
+          break;
+        case N_C:
+          write_cmo_complex(s,(C)obj);
           break;
         default:
           sprintf(errmsg, "write_cmo : number id=%d not implemented.",
@@ -174,6 +177,8 @@ int cmo_tag(Obj obj,int *tag)
           *tag = CMO_IEEE_DOUBLE_FLOAT; break;
         case N_B:
           *tag = CMO_BIGFLOAT; break;
+        case N_C:
+          *tag = CMO_COMPLEX; break;
         default:
           return 0;
       }
@@ -256,7 +261,7 @@ void write_cmo_bf(FILE *s,BF bf)
   len = MPFR_LIMB_SIZE(bf->body);
 #if SIZEOF_LONG == 4
   write_int(s,&len);
-  write_intarray(s,MPFR_MANT(bf->body),len);
+  write_intarray(s,(int *)MPFR_MANT(bf->body),len);
 #else /* SIZEOF_LONG == 8 */
   t = (MPFR_PREC(bf->body)+31)/32;
   write_int(s,&t);
@@ -345,6 +350,15 @@ void write_cmo_r(FILE *s,R f)
   r = CMO_RATIONAL; write_int(s,&r);
   write_cmo(s,(Obj)NM(f));
   write_cmo(s,(Obj)DN(f));
+}
+
+void write_cmo_complex(FILE *s,C f)
+{
+  int r;
+
+  r = CMO_COMPLEX; write_int(s,&r);
+  write_cmo(s,(Obj)f->r);
+  write_cmo(s,(Obj)f->i);
 }
 
 void write_cmo_dp(FILE *s,DP dp)
@@ -482,6 +496,7 @@ void read_cmo(FILE *s,Obj *rp)
   N nm,dn;
   P p,pnm,pdn;
   Real real;
+  C c;
   double dbl;
   STRING str;
   USINT t;
@@ -539,6 +554,12 @@ void read_cmo(FILE *s,Obj *rp)
       break;
     case CMO_BIGFLOAT:
       read_cmo_bf(s,&bf); *rp = (Obj)bf;
+      break;
+    case CMO_COMPLEX:
+      NEWC(c);
+      read_cmo(s,(Obj *)&c->r);
+      read_cmo(s,(Obj *)&c->i);
+      *rp = (Obj)c;
       break;
     case CMO_DISTRIBUTED_POLYNOMIAL:
       read_cmo_dp(s,&dp); *rp = (Obj)dp;
@@ -652,7 +673,7 @@ void read_cmo_bf(FILE *s,BF *bf)
   MPFR_SIGN(r->body) = sgn;
   MPFR_EXP(r->body) = exp;
 #if SIZEOF_LONG == 4
-  read_intarray(s,MPFR_MANT(r->body),len);
+  read_intarray(s,(int *)MPFR_MANT(r->body),len);
 #else /* SIZEOF_LONG == 8 */
   read_longarray(s,MPFR_MANT(r->body),len);
 #endif
