@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.28 2015/08/18 05:35:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.29 2015/08/19 05:29:23 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -63,6 +63,30 @@ Obj list_to_vect(Obj a)
   return (Obj)v;
 }
 
+Obj vect_to_mat(VECT v)
+{
+  MAT m;
+  int len,col,i,j;
+
+  len = v->len;
+  if ( v->body[0] && OID((Obj)v->body[0]) == O_VECT ) {
+    col = ((VECT)v->body[0])->len;
+	for ( i = 1; i < len; i++ ) 
+	  if ( !v->body[i] || OID((Obj)v->body[i]) != O_VECT
+	   || ((VECT)v->body[i])->len != col )
+	  break;
+    if ( i == len ) {
+	  /* convert to a matrix */
+	  MKMAT(m,len,col);
+	  for ( i = 0; i < len; i++ )
+	    for ( j = 0; j < col; j++ )
+		  m->body[i][j] = ((VECT)v->body[i])->body[j];
+	  return (Obj)m;
+	}
+  }
+  return (Obj)v;
+}
+
 void reset_ox_pari()
 {
   NODE nd;
@@ -117,8 +141,10 @@ pointer evalparif(FUNC f,NODE arg)
   ox_get_pari_result = 1;
   Pox_pop_cmo(oxarg,&ret);
   ox_get_pari_result = 0;
-  if ( ret && OID(ret) == O_LIST )
+  if ( ret && OID(ret) == O_LIST ) {
     ret = list_to_vect(ret);
+	ret = vect_to_mat((VECT)ret);
+  }
   return ret;
 }
 
