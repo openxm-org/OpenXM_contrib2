@@ -1,10 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.27 2015/08/18 02:31:32 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.28 2015/08/18 05:35:17 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 
 Q ox_pari_stream;
 int ox_pari_stream_initialized = 0;
+int ox_get_pari_result = 0;
 
 typedef void (*mpfr_func)(NODE,Obj *);
 
@@ -62,6 +63,19 @@ Obj list_to_vect(Obj a)
   return (Obj)v;
 }
 
+void reset_ox_pari()
+{
+  NODE nd;
+  Obj r;
+
+  if ( ox_get_pari_result ) {
+	nd = mknode(1,ox_pari_stream);
+	Pox_shutdown(nd,&r);
+    ox_get_pari_result = 0;
+	ox_pari_stream_initialized = 0;
+  }
+}
+
 pointer evalparif(FUNC f,NODE arg)
 {
   int ac,intarg,opt,prec;
@@ -78,10 +92,10 @@ pointer evalparif(FUNC f,NODE arg)
   }
 
   if ( !ox_pari_stream_initialized ) {
-	  MKSTR(name,"ox_pari");
-	  nd = mknode(2,NULL,name);
-	  Pox_launch_nox(nd,&r);
-	  ox_pari_stream = r;
+	MKSTR(name,"ox_pari");
+	nd = mknode(2,NULL,name);
+	Pox_launch_nox(nd,&r);
+	ox_pari_stream = r;
     ox_pari_stream_initialized = 1;
   }
 
@@ -100,7 +114,9 @@ pointer evalparif(FUNC f,NODE arg)
   oxarg = mknode(3,ox_pari_stream,name,narg);
   Pox_execute_function(oxarg,&dmy);
   oxarg = mknode(1,ox_pari_stream);
+  ox_get_pari_result = 1;
   Pox_pop_cmo(oxarg,&ret);
+  ox_get_pari_result = 0;
   if ( ret && OID(ret) == O_LIST )
     ret = list_to_vect(ret);
   return ret;

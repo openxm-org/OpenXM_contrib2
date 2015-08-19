@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.19 2015/08/14 13:51:55 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.20 2015/08/17 05:42:20 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -56,6 +56,7 @@
 extern int little_endian,lib_ox_need_conv;
 extern int ox_do_copy, ox_do_count, ox_count_length, ox_file_io, ox_need_conv;
 extern char *ox_copy_bptr;
+extern int ox_get_pari_result;
 
 /* XXX */
 void write_cmo(pointer,Obj);
@@ -63,6 +64,7 @@ void write_cmo(pointer,Obj);
 void reset_io()
 {
 	ox_file_io = 0;
+	if ( ox_get_pari_result ) reset_ox_pari();
 }
 
 void endian_init()
