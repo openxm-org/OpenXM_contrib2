@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.29 2015/08/19 05:29:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.30 2015/08/19 05:53:13 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -141,6 +141,12 @@ pointer evalparif(FUNC f,NODE arg)
   ox_get_pari_result = 1;
   Pox_pop_cmo(oxarg,&ret);
   ox_get_pari_result = 0;
+  if ( ret && OID(ret) == O_ERR ) {
+    char buf[BUFSIZ];
+    soutput_init(buf); 
+    sprintexpr(CO,((ERR)ret)->body);
+    error(buf);
+  }
   if ( ret && OID(ret) == O_LIST ) {
     ret = list_to_vect(ret);
 	ret = vect_to_mat((VECT)ret);

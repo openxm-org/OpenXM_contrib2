@@ -45,13 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.5 2003/02/14 22:29:08 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.6 2009/03/27 14:42:29 ohara Exp $ 
 */
 #include "ca.h"
 #include "base.h"
-#if defined(PARI)
-#include "genpari.h"
-#endif
 
 void toreim(a,rp,ip)
 Num a;
@@ -189,13 +186,9 @@ Num *c;
 		*c = (Num)ONE;
 	else if ( !a )
 		*c = 0;
-	else if ( !INT(e) ) {
-#if defined(PARI)
-		gpui_ri((Obj)a,(Obj)c,(Obj *)c);
-#else
-		error("pwrcplx : can't calculate a fractional power");
-#endif
-	} else {
+	else if ( !INT(e) )
+		error("pwrcplx : not implemented (use eval()).");
+	else {
 		ei = SGN((Q)e)*QTOS((Q)e);
 		pwrcplx0(a,ei,&t);
 		if ( SGN((Q)e) < 0 )

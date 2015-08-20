@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.8 2015/08/16 03:12:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.9 2015/08/17 05:18:36 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -168,19 +168,20 @@ Num tobf(Num a,int prec);
 
 void mp_pi(NODE arg,BF *rp)
 {
-    int prec;
+  int prec;
 	BF r;
 
 	prec = arg ? QTOS((Q)ARG0(arg)) : 0;
 	NEWBF(r);
 	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
 	mpfr_const_pi(r->body,mpfr_roundmode);
-    *rp = r; 
+  if ( !cmpbf((Num)r,0) ) r = 0;
+  *rp = r; 
 }
 
 void mp_e(NODE arg,BF *rp)
 {
-    int prec;
+  int prec;
 	mpfr_t one;
 	BF r;
 
@@ -190,214 +191,158 @@ void mp_e(NODE arg,BF *rp)
 	mpfr_init(one);
 	mpfr_set_ui(one,1,mpfr_roundmode);
 	mpfr_exp(r->body,one,mpfr_roundmode);
-    *rp = r; 
+  if ( !cmpbf((Num)r,0) ) r = 0;
+  *rp = r; 
 }
 
-void mp_sin(NODE arg,BF *rp)
+void mpfr_or_mpc(NODE arg,int (*mpfr_f)(),int (*mpc_f)(),Num *rp)
 {
 	Num a;
-    int prec;
-	BF r;
+  int prec;
+	BF r,re,im;
+  C c;
+  mpc_t mpc,a1;
 
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
+	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : mpfr_get_default_prec();
 	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_sin(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  if ( a && NID(a)==N_C ) {
+    mpc_init2(mpc,prec); mpc_init2(a1,prec);
+    re = (BF)((C)a)->r; im = (BF)((C)a)->i;
+    mpc_set_fr_fr(a1,re->body,im->body,mpfr_roundmode);
+    (*mpc_f)(mpc,a1,mpfr_roundmode);
+    MPFRTOBF(mpc_realref(mpc),re);
+    MPFRTOBF(mpc_imagref(mpc),im);
+    if ( !cmpbf((Num)re,0) ) re = 0;
+    if ( !cmpbf((Num)im,0) ) im = 0;
+    if ( !im )
+      *rp = (Num)re;
+    else {
+      NEWC(c); c->r = (Num)re; c->i = (Num)im;
+      *rp = (Num)c; 
+    }
+  } else {
+	  NEWBF(r);
+	  mpfr_init2(r->body,prec);
+	  (*mpfr_f)(r->body,((BF)a)->body,mpfr_roundmode);
+    if ( !cmpbf((Num)r,0) ) r = 0;
+    *rp = (Num)r; 
+  }
 }
 
-void mp_cos(NODE arg,BF *rp)
+void mp_sin(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_cos(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_sin,mpc_sin,rp);
 }
 
-void mp_tan(NODE arg,BF *rp)
+void mp_cos(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_tan(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_cos,mpc_cos,rp);
 }
 
-void mp_asin(NODE arg,BF *rp)
+void mp_tan(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_asin(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_tan,mpc_tan,rp);
 }
-void mp_acos(NODE arg,BF *rp)
+
+void mp_asin(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_acos(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_asin,mpc_asin,rp);
 }
-void mp_atan(NODE arg,BF *rp)
+
+void mp_acos(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_atan(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_acos,mpc_acos,rp);
 }
 
-void mp_sinh(NODE arg,BF *rp)
+void mp_atan(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_sinh(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_atan,mpc_atan,rp);
 }
 
-void mp_cosh(NODE arg,BF *rp)
+void mp_sinh(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_cosh(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_sinh,mpc_sinh,rp);
 }
 
-void mp_tanh(NODE arg,BF *rp)
+void mp_cosh(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_tanh(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_cosh,mpc_cosh,rp);
 }
 
-void mp_asinh(NODE arg,BF *rp)
+void mp_tanh(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_asinh(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_tanh,mpc_tanh,rp);
 }
-void mp_acosh(NODE arg,BF *rp)
+
+void mp_asinh(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_acosh(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_asinh,mpc_asinh,rp);
 }
-void mp_atanh(NODE arg,BF *rp)
+
+void mp_acosh(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_atanh(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_acosh,mpc_acosh,rp);
 }
 
-void mp_exp(NODE arg,BF *rp)
+void mp_atanh(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_exp(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_atanh,mpc_atanh,rp);
 }
 
-void mp_log(NODE arg,BF *rp)
+void mp_exp(NODE arg,Num *rp)
 {
-	Num a;
-    int prec;
-	BF r;
-
-	prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : 0;
-	a = tobf(ARG0(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_log(r->body,((BF)a)->body,mpfr_roundmode);
-    *rp = r; 
+  mpfr_or_mpc(arg,mpfr_exp,mpc_exp,rp);
 }
 
-void mp_pow(NODE arg,BF *rp)
+void mp_log(NODE arg,Num *rp)
+{
+  mpfr_or_mpc(arg,mpfr_log,mpc_log,rp);
+}
+
+void mp_pow(NODE arg,Num *rp)
 {
 	Num a,e;
-    int prec;
-	BF r;
+  int prec;
+	BF r,re,im;
+  C c;
+  mpc_t mpc,a1,e1;
 
-	prec = NEXT(NEXT(arg)) ? QTOS((Q)ARG2(arg)) : 0;
+	prec = NEXT(NEXT(arg)) ? QTOS((Q)ARG2(arg)) : mpfr_get_default_prec();
 	a = tobf(ARG0(arg),prec);
 	e = tobf(ARG1(arg),prec);
-	NEWBF(r);
-	prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
-	mpfr_pow(r->body,((BF)a)->body,((BF)e)->body,mpfr_roundmode);
-    *rp = r; 
+  if ( NID(a) == N_C || NID(e) == N_C || MPFR_SIGN(((BF)a)->body) < 0 ) {
+    mpc_init2(mpc,prec); mpc_init2(a1,prec); mpc_init2(e1,prec);
+    if ( NID(a) == N_C ) {
+      re = (BF)((C)a)->r; im = (BF)((C)a)->i;
+      mpc_set_fr_fr(a1,re->body,im->body,mpfr_roundmode);
+    } else {
+      re = (BF)a;
+      mpc_set_fr(a1,re->body,mpfr_roundmode);
+    }
+    if ( NID(e) == N_C ) {
+      re = (BF)((C)e)->r; im = (BF)((C)e)->i;
+      mpc_set_fr_fr(e1,re->body,im->body,mpfr_roundmode);
+    } else {
+      re = (BF)e;
+      mpc_set_fr(e1,re->body,mpfr_roundmode);
+    }
+    mpc_pow(mpc,a1,e1,mpfr_roundmode);
+    MPFRTOBF(mpc_realref(mpc),re);
+    MPFRTOBF(mpc_imagref(mpc),im);
+    if ( !cmpbf((Num)re,0) ) re = 0;
+    if ( !cmpbf((Num)im,0) ) im = 0;
+    if ( !im )
+      *rp = (Num)re;
+    else {
+      NEWC(c); c->r = (Num)re; c->i = (Num)im;
+      *rp = (Num)c; 
+    }
+  } else {
+	  NEWBF(r);
+	  mpfr_init2(r->body,prec);
+	  mpfr_pow(r->body,((BF)a)->body,((BF)e)->body,mpfr_roundmode);
+    *rp = (Num)r; 
+  }
 }
 
 #define SETPREC \

@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.92 2015/08/06 10:39:13 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.93 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <gmp.h>
-#include <mpfr.h>
+#include <mpc.h>
 
 /* from mpfr-impl.h */
 #define MPFR_PREC(x)      ((x)->_mpfr_prec)

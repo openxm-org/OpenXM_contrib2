@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.10 2015/08/06 09:12:29 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.11 2015/08/06 23:41:52 noro Exp $ 
  */
 #include "ca.h"
 #include "base.h"
@@ -32,6 +32,8 @@ Num tobf(Num a,int prec)
   mpq_t q;
   BF d;
   N nm,dn;
+  C c;
+  Num re,im;
   int sgn;
 
   if ( !a ) {
@@ -66,6 +68,11 @@ Num tobf(Num a,int prec)
       }
       MPFRTOBF(r,d);
       return (Num)d;
+      break;
+    case N_C:
+      re = tobf(((C)a)->r,prec); im = tobf(((C)a)->i,prec);
+      NEWC(c); c->r = re; c->i = im;
+      return (Num)c;
       break;
     default:
       error("tobf : invalid argument");
@@ -132,6 +139,7 @@ void addbf(Num a,Num b,Num *c)
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
+  if ( !cmpbf(*c,0) ) *c = 0;
 }
 
 void subbf(Num a,Num b,Num *c)
@@ -193,6 +201,7 @@ void subbf(Num a,Num b,Num *c)
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
+  if ( !cmpbf(*c,0) ) *c = 0;
 }
 
 void mulbf(Num a,Num b,Num *c)
@@ -252,6 +261,7 @@ void mulbf(Num a,Num b,Num *c)
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
+  if ( !cmpbf(*c,0) ) *c = 0;
 }
 
 void divbf(Num a,Num b,Num *c)
@@ -308,6 +318,7 @@ void divbf(Num a,Num b,Num *c)
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
+  if ( !cmpbf(*c,0) ) *c = 0;
 }
 
 void pwrbf(Num a,Num b,Num *c)
@@ -367,6 +378,7 @@ void pwrbf(Num a,Num b,Num *c)
     MPFRTOBF(r,d);
     *c = (Num)d;
   }
+  if ( !cmpbf(*c,0) ) *c = 0;
 }
 
 void chsgnbf(Num a,Num *c)
@@ -393,7 +405,8 @@ int cmpbf(Num a,Num b)
   GQ q;
 
   if ( !a ) {
-    if ( !b || (NID(b)<=N_A) )
+    if ( !b ) return 0;
+    else if ((NID(b)<=N_A) )
       return (*cmpnumt[NID(b)])(a,b);
     else
       return -mpfr_sgn(((BF)a)->body);
