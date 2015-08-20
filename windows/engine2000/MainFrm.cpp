@@ -3,14 +3,12 @@
 
 #include "stdafx.h"
 #include "ox_plot.h"
-
 #include "MainFrm.h"
 
-#include "gmpxx.h"
 extern "C" {
-#include "ca.h"
-#include "ifplot.h"
+#include "if_canvas.h"   
 }
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -163,10 +161,9 @@ void CMainFrame::OnUpdateProgress(CCmdUI *pCmdUI)
 	if ( !m_wndView.can )
 		return;
 
-	mode = m_wndView.can->mode;
-	if (mode == modeNO(IFPLOT) || mode == modeNO(CONPLOT)) {
+	if ( canvas_is_ifplot(m_wndView.can) ) {
 			pCmdUI->Enable();
-			strProgress.Format("%s%d%%",m_wndView.can->prefix,m_wndView.can->percentage);
+			strProgress.Format("%s%d%%",canvas_prefix(m_wndView.can),canvas_percentage(m_wndView.can));
 			pCmdUI->SetText(strProgress);
 	}
 }

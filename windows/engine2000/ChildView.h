@@ -12,6 +12,12 @@
 /////////////////////////////////////////////////////////////////////////////
 // CChildView ウィンドウ
 
+extern "C" {
+	struct canvas {
+		int dummy;
+	};
+}
+
 class CChildView : public CWnd
 {
 // コンストラクタ

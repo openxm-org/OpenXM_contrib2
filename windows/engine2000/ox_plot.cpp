@@ -12,11 +12,14 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#include "gmpxx.h"
-extern "C" {
-#include "ca.h"
-#include "ifplot.h"
+#if defined(MAX)
+#undef MAX
+#endif
+#define MAX(a,b) ((a) > (b) ? (a) : (b) )
 
+extern "C" {
+#include "if_canvas.h"
+extern struct canvas *canvas[];
 	extern HANDLE hCanvasCreated;
 	extern HANDLE hMainThreadReady;
 	extern HANDLE hStreamNotify;
@@ -169,26 +172,27 @@ BOOL COx_plotApp::PreTranslateMessage(MSG* pMsg)
 		struct canvas *can;
 
 		can = canvas[pMsg->wParam];
-		if ( !can->window ) {
+		if ( !canvas_window(can) ) {
+			char *s = canvas_wname(can);
+
 			pFrame = new CMainFrame;
 			/* XXX */
-			pFrame->m_pWindowName = (char *)malloc(MAX(strlen(can->wname),strlen("ox_plot"))+10);
-			sprintf(pFrame->m_pWindowName,"%s : %d",
-				strlen(can->wname)?can->wname:"ox_plot",can->index);
+			pFrame->m_pWindowName = (char *)malloc(MAX(strlen(s),strlen("ox_plot"))+10);
+			sprintf(pFrame->m_pWindowName,"%s : %d",strlen(s)?s:"ox_plot",canvas_index(can));
 
-			pFrame->m_cansize.cx = can->width;
-			pFrame->m_cansize.cy = can->height;
+			pFrame->m_cansize.cx = canvas_width(can);
+			pFrame->m_cansize.cy = canvas_height(can);
 			pFrame->LoadFrame(IDR_MAINFRAME,
 				WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, NULL, 
 				NULL);
-			can->window = (void *)pFrame;
+			canvas_set_window(can,(void *)pFrame);
 			pFrame->m_wndView.can = can;
 			pFrame->ShowWindow(SW_SHOW);
 			pFrame->UpdateWindow();
 			pFrame->BringWindowToTop();
-			can->hwnd = pFrame->m_wndView.m_hWnd;
+			canvas_set_handle(can,pFrame->m_wndView.m_hWnd);
 		} else
-			pFrame = (CMainFrame *)can->window;
+			pFrame = (CMainFrame *)canvas_window(can);
 		pFrame->RedrawWindow();
 		SetEvent(hCanvasCreated);
 	} 

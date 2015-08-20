@@ -13,16 +13,23 @@ static char THIS_FILE[] = __FILE__;
 
 #include <math.h>
 
-#include "gmpxx.h"
 extern "C" {
-#include "ca.h"
-#include "ifplot.h"
+#include "if_canvas.h"
 
-#if defined(sun) && !defined(__svr4__)
-#define EXP10(a) exp10(a)
-#else
+struct pa {
+	int length;
+	POINT *pos;
+};
+
+typedef struct RealVect {
+	int len;
+	int body[1];
+} RealVect;
+
 #define EXP10(a) pow(10.0,a)
-#endif
+
+extern struct canvas *current_can;
+extern POINT start_point,end_point;
 
 	HANDLE hResizeNotify,hResizeNotify_Ack;
 	void destroy_canvas(struct canvas *);
@@ -81,11 +88,11 @@ void CChildView::OnPaint()
 	// TODO: メッセージ ハンドラのコードをここに追加してください。
 	
 	// 描画のために CWnd::OnPaint を呼び出してはいけません。
-	if ( can->mode == modeNO(INTERACTIVE) ) {
-		::BitBlt(dc.m_hDC,0,0,can->width,can->height,can->pix,0,0,SRCCOPY);
+	if ( canvas_is_interactive(can) ) {
+		canvas_bitblt(can,dc.m_hDC,0,0);
 	} else {
-		if ( !can->wide ) {
-			::BitBlt(dc.m_hDC,0,0,can->width,can->height,can->pix,0,0,SRCCOPY);
+		if ( !canvas_wide(can) ) {
+			canvas_bitblt(can,dc.m_hDC,0,0);
 			pline(0,can,dc.m_hDC);
 		} else
 			draw_wideframe(can,dc.m_hDC);
@@ -96,8 +103,9 @@ void CChildView::OnPaint()
 void CChildView::OnPrint(CDC &dc) 
 {
 	DOCINFO docinfo;
-	NODE n;
+//	NODE n;
 	int width,height,ratio,x,y,step;
+	int ch,cw,len,i;
 
 	memset(&docinfo,0,sizeof(DOCINFO));
 	docinfo.cbSize = sizeof(DOCINFO);
@@ -123,27 +131,31 @@ void CChildView::OnPrint(CDC &dc)
 	dc.StartDoc(&docinfo);
 	dc.StartPage();
 
-	if ( can->mode == modeNO(INTERACTIVE) ) {
+	cw = canvas_width(can);
+	ch = canvas_height(can);
+
+	if ( canvas_is_interactive(can) ) {
 
 		// We want to associate a rectangle of a fixed size to
 		// one bitmap pixel
-		// if can->width/can->height > width/height
+		// if cw/ch > width/height
 		// then match the widths, else match the height
-		if ( can->width*height > can->height*width )
-			ratio = width/can->width;
+		if ( cw*height > ch*width )
+			ratio = width/cw;
 		else
-			ratio = height/can->height;
+			ratio = height/ch;
 
 		// set the logical src bitmap size 
-		dc.SetWindowExt(can->width*ratio,can->height*ratio);
+		dc.SetWindowExt(cw*ratio,ch*ratio);
 
 		// set the viewport size and the origine in printer pixel
 		dc.SetViewportOrg(width/18,height/18);
 		dc.SetViewportExt(width,height);
 
 		step = (ratio+4)/5;
-		for ( n = can->history; n; n = NEXT(n) ) {
-			RealVect *rv = (RealVect *)n->body;
+		RealVect **p = (RealVect **)canvas_history(can, &len);
+		for(i=0; i<len; i++) {
+			RealVect *rv = p[i];
 			if ( rv->len == 2 ) {
 //				dc.SetPixel(rv->body[0],rv->body[1],0);
 				x = rv->body[0]*ratio;
@@ -158,17 +170,16 @@ void CChildView::OnPrint(CDC &dc)
 		}
 	} else {
 		// set the logical src bitmap size 
-		dc.SetWindowExt(can->width,can->height);
+		dc.SetWindowExt(cw,ch);
 
 		// set the viewport size and the origine in printer pixel
 		dc.SetViewportOrg(width/18,height/18);
 		dc.SetViewportExt(width,height);
 
-		if ( can->mode == modeNO(PLOT) )
-			dc.Polyline(can->pa[0].pos,can->pa[0].length);
+		if ( canvas_is_plot(can) )
+			dc.Polyline(canvas_pa(can)->pos,canvas_pa(can)->length);
 		else
-		::StretchBlt(dc.m_hDC,0,0,can->width,can->height,can->pix,
-			0,0,can->width,can->height,SRCCOPY);
+			::StretchBlt(dc.m_hDC,0,0,cw,ch,canvas_pix(can),0,0,cw,ch,SRCCOPY);
 		PrintAxis(dc);
 	}
 	dc.EndPage();
@@ -178,49 +189,59 @@ void CChildView::OnPrint(CDC &dc)
 void CChildView::PrintAxis(CDC &dc)
 {
 #define D 5
+#define DEFAULTWIDTH 400
+#define DEFAULTHEIGHT 400
 
 	double w,w1,e,n;
 	int x0,y0,x,y,xadj,yadj;
 	char buf[BUFSIZ];
+	double cxmin,cxmax,cymin,cymax;
+	int cw,ch;
+
+	cxmin = canvas_xmin(can);
+	cxmax = canvas_xmax(can);
+	cymin = canvas_ymin(can);
+	cymax = canvas_ymax(can);
+	cw = canvas_width(can);
+	ch = canvas_height(can);
 
 	/* XXX : should be cleaned up */
-	if ( can->noaxis || (can->mode == modeNO(PLOT) && !can->pa) )
-		return;
-	if ( can->mode == modeNO(INTERACTIVE) )
+	if ( canvas_noaxis(can) || (canvas_is_plot(can) && !canvas_pa(can)) 
+		 || canvas_is_interactive(can) )
 		return;
 
 	xadj = yadj = 0;
-	if ( (can->xmin < 0) && (can->xmax > 0) ) {
-		x0 = (int)((can->width)*(-can->xmin/(can->xmax-can->xmin)));
-		dc.MoveTo(x0,0); dc.LineTo(x0,can->height);
-	} else if ( can->xmin >= 0 )
+	if ( (cxmin < 0) && (cxmax > 0) ) {
+		x0 = (int)((cw)*(-cxmin/(cxmax-cxmin)));
+		dc.MoveTo(x0,0); dc.LineTo(x0,ch);
+	} else if ( cxmin >= 0 )
 		x0 = 0;
 	else
-		x0 = can->width-D;
-	if ( (can->ymin < 0) && (can->ymax > 0) ) {
-		y0 = (int)((can->height)*(can->ymax/(can->ymax-can->ymin)));
-		dc.MoveTo(0,y0); dc.LineTo(can->width,y0);
-	} else if ( can->ymin >= 0 )
-		y0 = can->height;
+		x0 = cw-D;
+	if ( (cymin < 0) && (cymax > 0) ) {
+		y0 = (int)((ch)*(cymax/(cymax-cymin)));
+		dc.MoveTo(0,y0); dc.LineTo(cw,y0);
+	} else if ( cymin >= 0 )
+		y0 = ch;
 	else
 		y0 = D;
-	w = can->xmax-can->xmin; 
-	w1 = w * DEFAULTWIDTH/can->width;
+	w = cxmax-cxmin; 
+	w1 = w * DEFAULTWIDTH/cw;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
-	for ( n = ceil(can->xmin/e); n*e<= can->xmax; n++ ) {
-		x = (int)(can->width*(n*e-can->xmin)/w);
+	for ( n = ceil(cxmin/e); n*e<= cxmax; n++ ) {
+		x = (int)(cw*(n*e-cxmin)/w);
 		dc.MoveTo(x,y0); dc.LineTo(x,y0-D);
 		sprintf(buf,"%g",n*e);
 		dc.TextOut(x+2,y0+2,buf,strlen(buf));
 	}
-	w = can->ymax-can->ymin;
-	w1 = w * DEFAULTHEIGHT/can->height;
+	w = cymax-cymin;
+	w1 = w * DEFAULTHEIGHT/ch;
 	e = adjust_scale(EXP10(floor(log10(w1))),w1);
-	for ( n = ceil(can->ymin/e); n*e<= can->ymax; n++ ) {
-		y = (int)(can->height*(1-(n*e-can->ymin)/w));
+	for ( n = ceil(cymin/e); n*e<= cymax; n++ ) {
+		y = (int)(ch*(1-(n*e-cymin)/w));
 		dc.MoveTo(x0,y); dc.LineTo(x0+D,y);
 		sprintf(buf,"%g",n*e);
-		if ( can->xmax <= 0 ) {
+		if ( cxmax <= 0 ) {
 			xadj = dc.GetOutputTextExtent(buf,strlen(buf)).cx;
 		}
 		dc.TextOut(x0+2-xadj,y+2,buf,strlen(buf));
@@ -272,37 +293,37 @@ void CChildView::DestroyCanvas() {
 void CChildView::OnOptNoaxis() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	can->noaxis = !can->noaxis;	
+	canvas_toggle_noaxis(can);
 	RedrawWindow();
 }
 
 void CChildView::OnUpdateOptNoaxis(CCmdUI* pCmdUI) 
 {
 	// TODO: この位置に command update UI ハンドラ用のコードを追加してください
-	pCmdUI->SetCheck(can->noaxis);	
+	pCmdUI->SetCheck(canvas_noaxis(can));	
 }
 
 void CChildView::OnOptPrecise() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	can->precise = !can->precise;	
+	canvas_toggle_precise(can);
 }
 
 void CChildView::OnUpdateOptPrecise(CCmdUI* pCmdUI) 
 {
 	// TODO: この位置に command update UI ハンドラ用のコードを追加してください
-	pCmdUI->SetCheck(can->precise);	
+	pCmdUI->SetCheck(canvas_precise(can));	
 }
 
 void CChildView::OnOptWide() 
 {
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	can->wide = !can->wide;	
+	canvas_toggle_wide(can);
 	RedrawWindow();
 }
 
 void CChildView::OnUpdateOptWide(CCmdUI* pCmdUI) 
 {
 	// TODO: この位置に command update UI ハンドラ用のコードを追加してください
-	pCmdUI->SetCheck(can->wide);	
+	pCmdUI->SetCheck(canvas_wide(can));	
 }
