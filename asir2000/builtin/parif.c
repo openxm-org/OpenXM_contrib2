@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.30 2015/08/19 05:53:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.31 2015/08/20 08:42:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -110,9 +110,10 @@ pointer evalparif(FUNC f,NODE arg)
   Obj ret,dmy;
   mpfr_func mpfr_function;
 
-  if ( mpfr_function = mpfr_search(f->name) ) {
-     (*mpfr_function)(arg,&ret);
-     return (pointer) ret;
+  if ( arg && ARG0(arg) && NID((Num)ARG0(arg)) != N_C 
+    && (mpfr_function = mpfr_search(f->name)) ) {
+    (*mpfr_function)(arg,&ret);
+    return (pointer) ret;
   }
 
   if ( !ox_pari_stream_initialized ) {
