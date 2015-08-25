@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.17 2015/08/13 13:45:26 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.18 2015/08/20 17:44:35 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 SRCDIR=..\..\asir2000
@@ -8,12 +8,12 @@ GCDIR= ..\gc
 GCLIB= $(GCDIR)\gc.lib
 
 !if "$(ARCH)" == "AMD64"
-GMPDIR= ..\gmp\x64
+GMPDIR= ..\mpir\x64
 !else
-GMPDIR= ..\gmp\win32
+GMPDIR= ..\mpir\win32
 !endif
 GMPINC= -I $(GMPDIR)
-GMPLIB= $(GMPDIR)\libmpc-3.lib $(GMPDIR)\libmpfr-4.lib $(GMPDIR)\libgmp-10.lib
+GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\mpir.lib
 
 INCLUDES= $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
 DEFS= -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS

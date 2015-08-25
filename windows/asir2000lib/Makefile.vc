@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.15 2015/08/13 13:45:26 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.16 2015/08/20 17:44:35 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -7,10 +7,10 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 
 !if "$(ARCH)" == "AMD64"
 CPU_OBJ= asmalpha.obj
-GMPINC= -I ..\gmp\x64
+GMPINC= -I ..\mpir\x64
 !else
 CPU_OBJ= asmiw.obj gf2m_mul_w.obj 
-GMPINC= -I ..\gmp\win32
+GMPINC= -I ..\mpir\win32
 !endif
 
 SRCDIR=..\..\asir2000
@@ -36,7 +36,7 @@ OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
   iarray.obj init.obj int.obj io.obj kwd.obj lex.obj list.obj lmi.obj \
   load.obj M.obj main.obj mat.obj math.obj mattran.obj Mgfs.obj mi.obj \
   miscf.obj mt19937.obj N.obj nd.obj NEZ.obj num.obj numerical.obj ox.obj \
-  P.obj pari.obj parif.obj parser.obj PD.obj pdiv.obj PDM.obj \
+  P.obj parif.obj parser.obj PD.obj pdiv.obj PDM.obj \
   pexpr.obj pf.obj PM.obj polmul.obj poly.obj print.obj PU.obj PUM.obj \
   puref.obj pvar.obj Q.obj QM.obj quote.obj R.obj rat.obj real.obj \
   reduct.obj result.obj round.obj RU.obj sha1.obj sio.obj spexpr.obj \
