@@ -1,6 +1,6 @@
 diff -urN gc-7.4.2.orig/alloc.c gc-7.4.2/alloc.c
 --- gc-7.4.2.orig/alloc.c	2014-06-03 15:08:01.000000000 +0900
-+++ gc-7.4.2/alloc.c	2015-08-04 14:17:41.000000000 +0900
++++ gc-7.4.2/alloc.c	2015-08-25 16:00:00.000000000 +0900
 @@ -121,6 +121,7 @@
  #endif
  
@@ -9,11 +9,13 @@ diff -urN gc-7.4.2.orig/alloc.c gc-7.4.2/alloc.c
  
  GC_INNER int GC_CALLBACK GC_never_stop_func(void)
  {
-@@ -228,7 +229,7 @@
+@@ -227,8 +228,8 @@
+     total_root_size = 2 * stack_size + GC_root_size;
      scan_size = 2 * GC_composite_in_use + GC_atomic_in_use / 4
                  + total_root_size;
-     result = scan_size / GC_free_space_divisor;
+-    result = scan_size / GC_free_space_divisor;
 -    if (GC_incremental) {
++    result = scan_size * GC_free_space_numerator / GC_free_space_divisor;
 +    if (1 || GC_incremental) {
        result /= 2;
      }
@@ -68,6 +70,15 @@ diff -urN gc-7.4.2.orig/alloc.c gc-7.4.2/alloc.c
      return(TRUE);
  }
  
+@@ -1276,7 +1285,7 @@
+       }
+     }
+ 
+-    blocks_to_get = GC_heapsize/(HBLKSIZE*GC_free_space_divisor)
++    blocks_to_get = GC_heapsize * GC_free_space_numerator /(HBLKSIZE*GC_free_space_divisor)
+                         + needed_blocks;
+     if (blocks_to_get > MAXHINCR) {
+       word slop;
 @@ -1334,6 +1343,21 @@
      GC_bool retry = FALSE;
  
