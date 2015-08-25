@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.9 2015/08/17 05:18:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.10 2015/08/20 08:42:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -97,7 +97,7 @@ void Psetprec(NODE arg,Obj *rp)
   STOQ(dprec,q); *rp = (Obj)q;
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"setprec");
-		prec = QTOS((Q)ARG0(arg))*3.32193;
+		p = QTOS((Q)ARG0(arg))*3.32193;
 		if ( p > 0 )
 			prec = p;
 	}
@@ -118,7 +118,7 @@ void Psetbprec(NODE arg,Obj *rp)
   STOQ(prec,q); *rp = (Obj)q;
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"setbprec");
-		prec = QTOS((Q)ARG0(arg));
+		p = QTOS((Q)ARG0(arg));
 		if ( p > 0 )
 			prec = p;
 	}
