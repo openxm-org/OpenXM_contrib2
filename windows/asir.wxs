@@ -31,6 +31,12 @@
                         <Component Id="ja.dll" Guid="AC9CAD69-E31C-47A3-AE8B-F11F5F18C327">
                             <File Id="JA.DLL" Name="ja.dll" Source="asir\bin\ja.dll" />
                         </Component>
+                        <Component Id="mpc.dll" Guid="141B4A38-9ED9-4E2C-94F6-D13D30BF6F47">
+                            <File Id="MPC.DLL" Name="mpc.dll" Source="asir\bin\mpc.dll" />
+                        </Component>
+                        <Component Id="mpfr.dll" Guid="6675DB09-D36B-4ED7-8ACC-BDF02D3055E3">
+                            <File Id="MPFR.DLL" Name="mpfr.dll" Source="asir\bin\mpfr.dll" />
+                        </Component>
                         <Component Id="mpir.dll" Guid="69B254E7-E98A-465A-8D8A-22593C4820B8">
                             <File Id="MPIR.DLL" Name="mpir.dll" Source="asir\bin\mpir.dll" />
                         </Component>
@@ -50,6 +56,9 @@
                     <Directory Id="DOC" Name="doc" />
                     <Component Id="LICENSE" Guid="02A83B99-8E61-499B-BCDB-C25B931EEC36">
                         <File Id="LICENSE" Name="LICENSE" Source="asir\LICENSE" />
+                    </Component>
+                    <Component Id="COPYING.LIB" Guid="8C807242-9E31-4E4E-A6C8-45F01B4EEADA">
+                        <File Id="COPYING.LIB" Name="COPYING.LIB" Source="asir\COPYING.LIB" />
                     </Component>
                 </Directory>
             </Directory>
@@ -75,10 +84,13 @@
             <ComponentRef Id="cpp.exe" />
             <ComponentRef Id="cmdasir.exe" />
             <ComponentRef Id="ja.dll" />
+            <ComponentRef Id="mpc.dll" />
+            <ComponentRef Id="mpfr.dll" />
             <ComponentRef Id="mpir.dll" />
             <ComponentRef Id="curl.exe" />
             <ComponentRef Id="unzip.exe" />
             <ComponentRef Id="LICENSE" />
+            <ComponentRef Id="COPYING.LIB" />
             <ComponentRef Id="ProgramMenuDir" />
         </Feature>
         <UI />
