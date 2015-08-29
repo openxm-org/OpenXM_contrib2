@@ -4,7 +4,7 @@
 
 #if defined(__GNUC__)
 #define INLINE static inline
-#elif defined(VISUAL) || defined(__MINGW32__)
+#elif defined(VISUAL)
 #define INLINE __inline
 #else
 #define INLINE
@@ -677,7 +677,7 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 		t = m1; m1 = m2; m2 = t;
 		d = d1; d1 = d2; d2 = d;
 	}
-#if defined(_M_IX86)
+#if defined(_M_IX86) && !defined(__MINGW32__)
 	__asm {
 	push	esi
 	push	edi
@@ -702,7 +702,7 @@ int _addz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	adc eax,eax
 	mov c,eax
 	}
-#elif defined(i386)
+#elif defined(i386) && !defined(__MINGW32__)
 	asm volatile("\
 	pushl	%%ebx;\
 	movl	%1,%%esi;\
@@ -769,7 +769,7 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 		m = m1; m1 = m2; m2 = m;
 		d = d1; d1 = d2; d2 = d;
 	}
-#if defined(_M_IX86)
+#if defined(_M_IX86) && !defined(__MINGW32__)
 	__asm {
 	push	esi
 	push	edi
@@ -794,7 +794,7 @@ int _subz_main(unsigned int *m1,int d1,unsigned int *m2,int d2,unsigned int *mr)
 	adc eax,eax
 	mov br,eax
 	}
-#elif defined(i386)
+#elif defined(i386) && !defined(__MINGW32__)
 	asm volatile("\
 	pushl	%%ebx;\
 	movl	%1,%%esi;\

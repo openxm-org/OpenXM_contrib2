@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.15 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/inline.h,v 1.16 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #define DMB(base,a1,a2,u,l) (l)=dmb(base,a1,a2,&(u));
 #define DMAB(base,a1,a2,a3,u,l) (l)=dmab(base,a1,a2,a3,&(u));
@@ -103,7 +103,7 @@ asm volatile("udiv %1,%2,%0"    :"=r"(_t): "r"(a2),"r"(base) );\
 #define DSAB27(base,a1,a2,u,l) (l)=dsab_27(base,a1,a2,&(u));
 #endif
 
-#if defined(_M_IX86)
+#if defined(_M_IX86) && !defined(__MINGW32__)
 
 #undef DM
 #undef DMA
@@ -287,7 +287,7 @@ asm volatile("udiv %1,%2,%0"    :"=r"(_t): "r"(a2),"r"(base) );\
 }
 #endif
 
-#if !defined(VISUAL) && !defined(__MINGW32__) && defined(i386) && (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__CYGWIN__) || defined(__DARWIN__))
+#if !defined(VISUAL) && defined(i386) && (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__CYGWIN__) || defined(__DARWIN__))
 
 #if 0
 #undef DMA
