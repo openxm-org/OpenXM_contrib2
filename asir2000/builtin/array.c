@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.67 2015/08/08 14:19:41 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.68 2015/08/14 13:51:54 fujimoto Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -74,6 +74,8 @@ void Pnewbytearray(),Pmemoryplot_to_coord();
 
 void Pgeneric_gauss_elim();
 void Pgeneric_gauss_elim_mod();
+
+void Pindep_rows_mod();
 
 void Pmat_to_gfmmat(),Plu_gfmmat(),Psolve_by_lu_gfmmat();
 void Pgeninvm_swap(), Premainder(), Psremainder(), Pvtol(), Pltov();
@@ -108,6 +110,7 @@ struct ftab array_tab[] = {
 	{"mat_to_gfmmat",Pmat_to_gfmmat,2},
 	{"generic_gauss_elim",Pgeneric_gauss_elim,1},
 	{"generic_gauss_elim_mod",Pgeneric_gauss_elim_mod,2},
+	{"indep_rows_mod",Pindep_rows_mod,2},
 	{"newvect",Pnewvect,-2},
 	{"vect",Pvect,-99999999},
 	{"vector",Pnewvect,-2},
@@ -1170,6 +1173,46 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
 	}
 	n0 = mknode(4,nm,dn,rind,cind);
 	MKLIST(*rp,n0);
+}
+
+void Pindep_rows_mod(NODE arg,VECT *rp)
+{
+	MAT m,mat;
+	VECT rind;
+	Q **tmat;
+	int **wmat,**row0;
+	Q *rib;
+	int *rowstat,*p;
+	Q q;
+	int md,i,j,k,l,row,col,t,rank;
+
+	asir_assert(ARG0(arg),O_MAT,"indep_rows_mod");
+	asir_assert(ARG1(arg),O_N,"indep_rows_mod");
+	m = (MAT)ARG0(arg); md = QTOS((Q)ARG1(arg));
+	row = m->row; col = m->col; tmat = (Q **)m->body;
+	wmat = (int **)almat(row,col);
+
+	row0 = (int **)ALLOCA(row*sizeof(int *));
+	for ( i = 0; i < row; i++ ) row0[i] = wmat[i];
+
+	rowstat = (int *)MALLOC_ATOMIC(row*sizeof(int));
+	for ( i = 0; i < row; i++ )
+		for ( j = 0; j < col; j++ )
+			if ( q = (Q)tmat[i][j] ) {
+				t = rem(NM(q),md);
+				if ( t && SGN(q) < 0 )
+					t = (md - t) % md;
+				wmat[i][j] = t;
+			} else
+				wmat[i][j] = 0;
+	rank = indep_rows_mod(wmat,row,col,md,rowstat);
+
+	MKVECT(rind,rank);
+	rib = (Q *)rind->body;
+	for ( j = 0; j < rank; j++ ) {
+		STOQ(rowstat[j],rib[j]);
+	}
+    *rp = rind;
 }
 
 /*
@@ -2461,6 +2504,43 @@ int generic_gauss_elim_mod2(int **mat0,int row,int col,int md,int *colstat,int *
 					t[k] %= md;
 			l++;
 		}
+	return rank;
+}
+
+int indep_rows_mod(int **mat0,int row,int col,int md,int *rowstat)
+{
+	int i,j,k,l,inv,a,rank;
+	unsigned int *t,*pivot,*pk;
+	unsigned int **mat;
+
+	for ( i = 0; i < row; i++ ) rowstat[i] = i;
+	mat = (unsigned int **)mat0;
+	for ( rank = 0, j = 0; j < col; j++ ) {
+		for ( i = rank; i < row; i++ )
+			mat[i][j] %= md;
+		for ( i = rank; i < row; i++ )
+			if ( mat[i][j] )
+				break;
+		if ( i == row ) continue;
+		if ( i != rank ) {
+			t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+			k = rowstat[i]; rowstat[i] = rowstat[rank]; rowstat[rank] = k;
+		}
+		pivot = mat[rank];
+		inv = invm(pivot[j],md);
+		for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+			if ( *pk ) {
+				if ( *pk >= (unsigned int)md )
+					*pk %= md;
+				DMAR(*pk,inv,0,md,*pk)
+			}
+		for ( i = rank+1; i < row; i++ ) {
+			t = mat[i];
+			if ( a = t[j] )
+				red_by_vect(md,t+j,pivot+j,md-a,col-j);
+		}
+		rank++;
+	}
 	return rank;
 }
 

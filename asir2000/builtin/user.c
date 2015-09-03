@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.2 2004/09/29 08:50:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.3 2004/10/06 11:58:51 noro Exp $ */
 
 /* a sample file for adding builtin functions */
 
@@ -8,6 +8,7 @@
 void Ppartial_derivative();
 void partial_derivative(VL vl,P p,V v,P *r);
 void Pzadd(),Pzsub(),Pzmul();
+void Pcomp_f();
 
 struct ftab user_tab[] = {
 /*
@@ -16,8 +17,32 @@ struct ftab user_tab[] = {
   {"zadd",Pzadd,2},
   {"zsub",Pzsub,2},
   {"zmul",Pzmul,2},
+  {"comp_f",Pcomp_f,2},
   {0,0,0},
 };
+
+/* compare two [[F,M],...] */
+
+void Pcomp_f(NODE arg,Q *rp)
+{
+  NODE l1,l2,e1,e2;
+  int m1,m2,r;
+
+  l1 = BDY((LIST)ARG0(arg));  
+  l2 = BDY((LIST)ARG1(arg));  
+  for ( ; l1 && l2; l1 = NEXT(l1), l2 = NEXT(l2) ) {
+    e1 = BDY((LIST)BDY(l1));
+    e2 = BDY((LIST)BDY(l2));
+    r = compp(CO,(P)ARG0(e1),(P)ARG0(e2));
+    if ( r ) { STOQ(r,*rp); return; }
+    m1 = QTOS((Q)ARG1(e1));
+    m2 = QTOS((Q)ARG1(e2));
+	r = m1>m2?1:(m1<m2?-1:0);
+	if ( r ) { STOQ(r,*rp); return; }
+  }
+  r = l1?1:(l2?-1:0);
+  STOQ(r,*rp);
+}
 
 void Pzadd(NODE arg,Q *rp)
 {
