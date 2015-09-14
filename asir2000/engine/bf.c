@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.11 2015/08/06 23:41:52 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.12 2015/08/20 08:42:07 noro Exp $ 
  */
 #include "ca.h"
 #include "base.h"
@@ -409,7 +409,7 @@ int cmpbf(Num a,Num b)
     else if ((NID(b)<=N_A) )
       return (*cmpnumt[NID(b)])(a,b);
     else
-      return -mpfr_sgn(((BF)a)->body);
+      return -mpfr_sgn(((BF)b)->body);
   } else if ( !b ) {
     if ( !a || (NID(a)<=N_A) )
       return (*cmpnumt[NID(a)])(a,b);
