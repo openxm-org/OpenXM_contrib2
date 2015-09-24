@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.8 2010/01/28 08:56:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.9 2010/01/31 03:25:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,7 +55,7 @@ void Psubstr2np();
 
 struct ftab subst_tab[] = {
 	{"subst",Psubst,-99999999},
-	{"substr2np",Psubstr2np,2},
+	{"substr2np",Psubstr2np,-3},
 	{"subst_quote",Psubst_quote,-99999999},
 	{"psubst",Ppsubst,-99999999},
 	{"substf",Psubstf,-99999999},
@@ -64,14 +64,16 @@ struct ftab subst_tab[] = {
 
 extern Obj VOIDobj;
 
+/* substr2np(P,[[v,a],...]) or substr2np(P,[v1,...],[a1,...]) */
+
 void Psubstr2np(NODE arg,Obj *rp)
 {
 	Obj a;
 	P nm,dn,p;
 	R r;
 	VL vl,tvl;
-	int nv,i;
-	NODE slist,t,ps;
+	int nv,i,ac;
+	NODE slist,t,ps,u,vlist;
 	P s;
 	P *svect;
 	V v;
@@ -90,15 +92,29 @@ void Psubstr2np(NODE arg,Obj *rp)
 	vvect = (V *)MALLOC(nv*sizeof(V));
 	for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ ) vvect[i] = tvl->v;
 	svect = (P *)MALLOC(nv*sizeof(P));
-	slist = BDY((LIST)ARG1(arg));
-	for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
-	for ( t = slist; t; t = NEXT(t) ) {
-		ps = BDY((LIST)BDY(t)); p = (P)BDY(ps); s = (P)BDY(NEXT(ps));	
-		asir_assert(p,O_P,"substr2np"); asir_assert(s,O_N,"substr2np");
-		v = VR(p);
-		for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
-		svect[i] = s;
-	}
+    ac = argc(arg);
+    if ( ac == 2 ) {
+	  slist = BDY((LIST)ARG1(arg));
+	  for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
+	  for ( t = slist; t; t = NEXT(t) ) {
+		  ps = BDY((LIST)BDY(t)); p = (P)BDY(ps); s = (P)BDY(NEXT(ps));	
+		  asir_assert(p,O_P,"substr2np"); asir_assert(s,O_N,"substr2np");
+		  v = VR(p);
+		  for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
+		  svect[i] = s;
+	  }
+    } else if ( ac == 3 ) {
+	  asir_assert(ARG2(arg),O_LIST,"substr2np");
+      vlist = BDY((LIST)ARG1(arg));
+      slist = BDY((LIST)ARG2(arg));
+	  for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
+      for ( u = vlist, t = slist; u && t; u = NEXT(u), t = NEXT(t) ) {
+        v = VR((P)BDY(u));
+        for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
+        svect[i] = (P)BDY(t);
+      }
+    } else
+      error("substr2np : argument mismatch");
 	
 	switch ( OID(a) ) {
 		case O_P:

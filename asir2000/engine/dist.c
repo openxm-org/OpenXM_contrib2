@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.49 2014/09/12 06:28:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.50 2014/10/10 09:02:25 noro Exp $ 
 */
 #include "ca.h"
 
@@ -863,6 +863,54 @@ void weyl_muld(VL vl,DP p1,DP p2,DP *pr)
 		bzero(w,l*sizeof(MP));
 		*pr = s;
 	}
+}
+
+void actm(VL vl,int nv,MP m1,MP m2,DP *pr)
+{
+  DL d1,d2,d;
+  int n2,i,j,k;
+  Q jq,c,c1;
+  MP m;
+  P t;
+
+  d1 = m1->dl;
+  d2 = m2->dl;
+  for ( i = 0; i < nv; i++ )
+    if ( d1->d[i] > d2->d[i] ) {
+      *pr = 0; return;
+    }
+  NEWDL(d,nv);
+  c = ONE;
+  for ( i = 0; i < nv; i++ ) {
+    for ( j = d2->d[i], k = d1->d[i]; k > 0; k--, j-- ) {
+      STOQ(j,jq); mulq(c,jq,&c1); c = c1;
+    }
+    d->d[i] = d2->d[i]-d1->d[i];
+  }
+  mulp(vl,C(m1),C(m2),&t);
+  NEWMP(m);
+  mulp(vl,(P)c,t,&C(m));
+  m->dl = d;
+  MKDP(nv,m,*pr);
+}
+
+void weyl_actd(VL vl,DP p1,DP p2,DP *pr)
+{
+  int n;
+  MP m1,m2;
+  DP d,r,s;
+
+  if ( !p1 || !p2 ) *pr = 0;
+  else {
+    n = NV(p1);
+    r = 0;
+    for ( m1 = BDY(p1); m1; m1 = NEXT(m1) )
+      for ( m2 = BDY(p2); m2; m2 = NEXT(m2) ) {
+        actm(vl,n,m1,m2,&d);
+        addd(vl,r,d,&s); r = s;
+      }
+    *pr = r;
+  }
 }
 
 /* monomial * polynomial */

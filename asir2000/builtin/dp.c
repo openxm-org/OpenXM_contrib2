@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.94 2015/01/13 00:54:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.95 2015/01/26 13:48:31 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -90,7 +90,7 @@ void Pdp_weyl_sp();
 void Pdp_weyl_nf(),Pdp_weyl_nf_mod();
 void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main(),Pdp_weyl_gr_f_main();
 void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main(),Pdp_weyl_f4_f_main();
-void Pdp_weyl_mul(),Pdp_weyl_mul_mod();
+void Pdp_weyl_mul(),Pdp_weyl_mul_mod(),Pdp_weyl_act();
 void Pdp_weyl_set_weight();
 void Pdp_set_weight(),Pdp_set_top_weight(),Pdp_set_module_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
@@ -183,6 +183,7 @@ struct ftab dp_tab[] = {
 	/* multiplication */
 	{"dp_weyl_mul",Pdp_weyl_mul,2},
 	{"dp_weyl_mul_mod",Pdp_weyl_mul_mod,3},
+	{"dp_weyl_act",Pdp_weyl_act,2},
 
 	/* s-poly */
 	{"dp_weyl_sp",Pdp_weyl_sp,2},
@@ -1339,6 +1340,18 @@ DP *rp;
 	muld(CO,p1,p2,rp);
 	do_weyl = 0;
 }
+
+void Pdp_weyl_act(arg,rp)
+NODE arg;
+DP *rp;
+{
+	DP p1,p2;
+
+	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
+	asir_assert(p1,O_DP,"dp_weyl_act"); asir_assert(p2,O_DP,"dp_weyl_act");
+	weyl_actd(CO,p1,p2,rp);
+}
+
 
 void Pdp_weyl_mul_mod(arg,rp)
 NODE arg;
