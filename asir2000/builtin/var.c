@@ -45,18 +45,20 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.6 2006/08/09 10:08:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.7 2012/02/03 06:42:34 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 
 void Pvar(), Pvars(), Puc(), Pvars_recursive(),Psimple_is_eq();
+void Pdelete_uc();
 
 struct ftab var_tab[] = {
 	{"var",Pvar,1},
 	{"vars",Pvars,1},
 	{"vars_recursive",Pvars_recursive,1},
 	{"uc",Puc,0},
+	{"delete_uc",Pdelete_uc,-1},
 	{"simple_is_eq",Psimple_is_eq,2},
 	{0,0,0},
 };
@@ -252,4 +254,27 @@ void Puc(Obj *p)
 			break;
 		}
 	MKV(v,t); *p = (Obj)t;
+}
+
+void Pdelete_uc(NODE arg,Obj *p)
+{
+  VL vl,prev;
+  V v;
+
+  if ( argc(arg) == 1 ) {
+    asir_assert(ARG0(arg),O_P,"delete_uc");
+    v = VR((P)ARG0(arg));
+  } else
+    v = 0;
+
+  for ( prev = 0, vl = CO; vl; vl = NEXT(vl) ) {
+    if ( (!v || v == vl->v) && vl->v->attr == (pointer)V_UC ) {
+      if ( prev == 0 )
+        CO = NEXT(vl); 
+      else 
+        NEXT(prev) = NEXT(vl);
+    } else
+      prev = vl;
+  }
+  *p = 0;
 }
