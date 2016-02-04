@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.15 2006/06/23 08:57:47 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.16 2010/07/14 04:48:14 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
@@ -211,6 +211,10 @@ def flatmf(L) {
 def af(P,AL)
 {
 	RESTIME=UFTIME=GCDTIME=SQTIME=0;
+    V = var(P);
+    LC = coef(P,deg(P,V),V);
+    if ( ntype(LC) != 1 )
+      P = simpalg(1/LC*P);
 	S = reverse(asq(P));
 	for ( L = []; S != []; S = cdr(S) ) {
 		FM = car(S); F = FM[0]; M = FM[1];
@@ -227,6 +231,10 @@ def af_sp(P,AL,HINT)
 {
 	if ( !P || type(P) == NUM )
 		return [P];
+    V = var(P);
+    LC = coef(P,deg(P,V),V);
+    if ( ntype(LC) != 1 )
+      P = simpalg(1/LC*P);
 	P1 = simpcoef(simpalg(P));
 	return af_spmain(P1,AL,1,HINT,P1,[]);
 }
