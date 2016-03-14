@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.10 2015/08/20 08:42:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.11 2015/08/25 18:41:03 ohara Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -10,6 +10,7 @@ void Pmpfr_j0(), Pmpfr_j1();
 void Pmpfr_y0(), Pmpfr_y1();
 void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
 void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
+void Prk_ratmat();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
@@ -33,6 +34,7 @@ struct ftab bf_tab[] = {
 	{"mpfr_floor",Pmpfr_floor,-2},
 	{"mpfr_ceil",Pmpfr_ceil,-2},
 	{"mpfr_round",Pmpfr_round,-2},
+	{"rk_ratmat",Prk_ratmat,7},
 	{0,0,0},
 };
 
@@ -542,4 +544,177 @@ void Pmpfr_round(NODE arg,Q *rp)
 	mpfr_get_z(t,r->body,mpfr_roundmode);
 	MPZTOGZ(t,rz);
 	*rp = gztoz(rz); 
+}
+
+double **almat_double(int n)
+{
+  int i;
+  double **a;
+
+  a = (double **)MALLOC(n*sizeof(double *));
+  for ( i = 0; i < n; i++ )
+    a[i] = (double *)MALLOC(n*sizeof(double));
+  return a;
+}
+
+/*
+ *  k <- (A(xi)-(sbeta-mn2/xi))f
+ *  A(t) = (num[0]+num[1]t+...+num[d-1]*t^(d-1))/den(t)
+ */
+
+struct jv {
+  int j;
+  double v;
+};
+
+struct smat {
+  int *rlen;
+  struct jv **row;
+};
+
+void eval_pfaffian2(double *k,int n,int d,struct smat *num,P den,double xi,double *f)
+{
+  struct smat ma;
+  struct jv *maj;
+  int i,j,l,s;
+  double t,dn;
+  P r;
+  Real u;
+
+  memset(k,0,n*sizeof(double));
+  for ( i = d-1; i >= 0; i-- ) {
+    ma = num[i];
+    for ( j = 0; j < n; j++ ) {
+      maj = ma.row[j];
+      l = ma.rlen[j];
+      for ( t = 0, s = 0; s < l; s++, maj++ ) t += maj->v*f[maj->j];
+      k[j] = k[j]*xi+t;
+    }
+  }
+  MKReal(xi,u);
+  substp(CO,den,den->v,(P)u,&r); dn = ToReal(r);
+  for ( j = 0; j < n; j++ )
+    k[j] /= dn;
+}
+
+void Prk_ratmat(NODE arg,LIST *rp)
+{
+  VECT mat;
+  P den;
+  int ord;
+  double sbeta,x0,x1,xi,h,mn2,hd;
+  double a2,a3,a4,a5,a6;
+  double b21,b31,b32,b41,b42,b43,b51,b52,b53,b54,b61,b62,b63,b64,b65;
+  double c1,c2,c3,c4,c5,c6,c7;
+  VECT fv;
+  int step,j,i,k,n,d,len,s;
+  struct smat *num;
+  Obj **b;
+  MAT mati;
+  double *f,*w,*k1,*k2,*k3,*k4,*k5,*k6;
+  NODE nd,nd1;
+  Real x,t;
+  LIST l;
+
+  ord = QTOS((Q)ARG0(arg));
+  mat = (VECT)ARG1(arg); den = (P)ARG2(arg);
+  x0 = ToReal((Num)ARG3(arg)); x1 = ToReal((Num)ARG4(arg));
+  step = QTOS((Q)ARG5(arg)); fv = (VECT)ARG6(arg);
+  h = (x1-x0)/step;
+
+  n = fv->len;
+  d = mat->len;
+  num = (struct smat *)MALLOC(n*sizeof(struct smat)); 
+  for ( i = 0; i < d; i++ ) {
+    num[i].rlen = (int *)MALLOC(n*sizeof(int));
+    num[i].row = (struct jv **)MALLOC(n*sizeof(struct jv *));
+    mati = (MAT)mat->body[i];
+    b = (Obj **)mati->body;
+    for ( j = 0; j < n; j++ ) {
+      for ( len = k = 0; k < n; k++ )
+        if ( b[j][k] ) len++;
+      num[i].rlen[j] = len;
+      num[i].row[j] = (struct jv *)MALLOC(len*sizeof(struct jv));
+      for ( s = k = 0; k < n; k++ )
+        if ( b[j][k] ) {
+           num[i].row[j][s].j = k;
+           num[i].row[j][s].v = ToReal((Num)b[j][k]);
+           s++;
+        }
+    }
+  }
+  f = (double *)MALLOC(n*sizeof(double));
+  for ( j = 0; j < n; j++ )
+    f[j] = ToReal((Num)fv->body[j]);
+  w = (double *)MALLOC(n*sizeof(double));
+  k1 = (double *)MALLOC(n*sizeof(double));
+  k2 = (double *)MALLOC(n*sizeof(double));
+  k3 = (double *)MALLOC(n*sizeof(double));
+  k4 = (double *)MALLOC(n*sizeof(double));
+  k5 = (double *)MALLOC(n*sizeof(double));
+  k6 = (double *)MALLOC(n*sizeof(double));
+  nd = 0;
+  switch ( ord ) {
+  case 4:
+    a2 = 1/2.0*h; b21 = 1/2.0*h;
+    a3 = 1/2.0*h; b31 = 0.0;   b32 = 1/2.0*h;
+    a4 = 1.0*h;   b41 = 0.0;   b42 = 0.0;    b43 = 1.0*h;
+    c1 = 1/6.0*h; c2 = 1/3.0*h;     c3 =  1/3.0*h; c4 = 1/6.0*h;
+    for ( i = 0; i < step; i++ ) {
+      if ( !(i%100000) ) fprintf(stderr,"[%d]",i);
+      xi = x0+i*h;
+      eval_pfaffian2(k1,n,d,num,den,xi,f);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b21*k1[j];
+      eval_pfaffian2(k2,n,d,num,den,xi+a2,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b31*k1[j]+b32*k2[j];
+      eval_pfaffian2(k3,n,d,num,den,xi+a3,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b41*k1[j]+b42*k2[j]+b43*k3[j];
+      eval_pfaffian2(k4,n,d,num,den,xi+a4,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += c1*k1[j]+c2*k2[j]+c3*k3[j]+c4*k4[j];
+      memcpy(f,w,n*sizeof(double));
+      MKReal(f[0],t);
+      MKReal(xi+h,x);
+      nd1 = mknode(2,x,t);
+      MKLIST(l,nd1);
+      MKNODE(nd1,l,nd);
+      nd = nd1;
+      for ( hd = f[0], j = 0; j < n; j++ ) f[j] /= hd;
+    }
+    MKLIST(*rp,nd);
+    break;
+  case 5:
+  default:
+    a2 = 1/4.0*h; b21 = 1/4.0*h;
+    a3 = 1/4.0*h; b31 = 1/8.0*h; b32 = 1/8.0*h;
+    a4 = 1/2.0*h; b41 = 0.0;   b42 = 0.0;    b43 = 1/2.0*h;
+    a5 = 3/4.0*h; b51 = 3/16.0*h;b52 = -3/8.0*h; b53 = 3/8.0*h;   b54 = 9/16.0*h;
+    a6 = 1.0*h;   b61 = -3/7.0*h;b62 = 8/7.0*h;  b63 = 6/7.0*h;   b64 = -12/7.0*h; b65 = 8/7.0*h;
+    c1 = 7/90.0*h; c2 = 0.0;     c3 =  16/45.0*h; c4 = 2/15.0*h;   c5 = 16/45.0*h; c6 = 7/90.0*h;
+    for ( i = 0; i < step; i++ ) {
+      if ( !(i%100000) ) fprintf(stderr,"[%d]",i);
+      xi = x0+i*h;
+      eval_pfaffian2(k1,n,d,num,den,xi,f);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b21*k1[j];
+      eval_pfaffian2(k2,n,d,num,den,xi+a2,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b31*k1[j]+b32*k2[j];
+      eval_pfaffian2(k3,n,d,num,den,xi+a3,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b41*k1[j]+b42*k2[j]+b43*k3[j];
+      eval_pfaffian2(k4,n,d,num,den,xi+a4,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b51*k1[j]+b52*k2[j]+b53*k3[j]+b54*k4[j];
+      eval_pfaffian2(k5,n,d,num,den,xi+a5,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += b61*k1[j]+b62*k2[j]+b63*k3[j]+b64*k4[j]+b65*k5[j];
+      eval_pfaffian2(k6,n,d,num,den,xi+a6,w);
+      memcpy(w,f,n*sizeof(double)); for ( j = 0; j < n; j++ ) w[j] += c1*k1[j]+c2*k2[j]+c3*k3[j]+c4*k4[j]+c5*k5[j]+c6*k6[j];
+      memcpy(f,w,n*sizeof(double));
+      MKReal(f[0],t);
+      MKReal(xi+h,x);
+      nd1 = mknode(2,x,t);
+      MKLIST(l,nd1);
+      MKNODE(nd1,l,nd);
+      nd = nd1;
+      for ( hd = f[0], j = 0; j < n; j++ ) f[j] /= hd;
+    }
+    MKLIST(*rp,nd);
+    break;
+  }
 }
