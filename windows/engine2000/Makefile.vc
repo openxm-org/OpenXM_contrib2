@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.18 2015/08/20 17:44:35 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.19 2015/08/25 22:23:56 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 SRCDIR=..\..\asir2000
@@ -16,7 +16,7 @@ GMPINC= -I $(GMPDIR)
 GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\mpir.lib
 
 INCLUDES= $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
-DEFS= -D NDEBUG -D VISUAL -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS
+DEFS= -D NDEBUG -D VISUAL -D VISUAL_LIB -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS
 CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
 
