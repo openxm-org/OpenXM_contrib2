@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.47 2015/08/06 10:01:51 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.48 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -172,6 +172,8 @@ Q *rp;
 	STRING s;
 	NODE node,p;
 	LIST list;
+	extern Q ox_pari_stream;
+	extern int ox_pari_stream_initialized;
 
 	if ( !arg ) {
 		*rp = 0;
@@ -257,6 +259,27 @@ Q *rp;
 				ASIRLOADPATH[i] = NULL;
 			}else {
 				error("ctrl : loadpath : invalid argument");
+			}
+		}
+		return;
+	} else if ( !strcmp(key,"oxpari_id") ) {
+        *rp = 0;
+        if ( argc(arg) == 1 ) {
+            if(!ox_pari_stream_initialized) {
+                t=-1;
+                STOQ(t,*rp);
+            }else {
+                *rp = ox_pari_stream;
+            }
+        }else {
+			c = (Q)ARG1(arg);
+			if ( !c || ( NUM(c) && INT(c) && SGN(c)>0 ) ) {
+				ox_pari_stream_initialized = 1;
+				ox_pari_stream = c;
+				*rp = c;
+			}else {
+                t=-1;
+                STOQ(t,*rp);
 			}
 		}
 		return;
