@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.223 2015/08/14 13:51:54 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.224 2016/03/31 01:40:10 noro Exp $ */
 
 #include "nd.h"
 
@@ -668,10 +668,6 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( !MPOS(d1) || !MPOS(d2) ) {
-       printf("afo\n");
-    }
-      
     if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
 		if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
