@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.62 2016/03/31 01:40:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.63 2016/03/31 07:33:32 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1063,61 +1063,6 @@ void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
 	if ( d )
 		d->sugar = sugar;
 	*rp = d; *dnp = dn;
-}
-
-DP *dp_true_nf_and_quotient(NODE b,DP g,DP *ps,DP *rp,P *dnp)
-{
-	DP u,p,d,s,t,dmy,hp,mult;
-	DP *q;
-	NODE l;
-	MP m,mr;
-	int i,n,j;
-	int *wb;
-	int sugar,psugar,multiple;
-	P nm,tnm1,dn,tdn,tdn1;
-	Q cont;
-
-	dn = (P)ONE;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return 0;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	q = (DP *)MALLOC(n*sizeof(DP));
-	for ( i = 0; i < n; i++ ) q[i] = 0;
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,ps[wb[i]]) ) {
-				p = ps[wb[i]];
-				dp_red(d,g,p,&t,&u,&tdn,&mult);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				for ( j = 0; j < n; j++ ) {
-					muldc(CO,q[j],(P)tdn,&dmy); q[j] = dmy;
-				}
-				addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
-				mulp(CO,dn,tdn,&tdn1); dn = tdn1;
-				d = t;
-				if ( !u ) goto last;
-				break;
-			}
-		}
-		if ( u ) {
-			g = u;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-last:
-	if ( d ) d->sugar = sugar;
-	*rp = d; *dnp = dn;
-	return q;
 }
 
 void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Q *contp)

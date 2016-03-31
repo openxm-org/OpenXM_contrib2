@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.96 2015/09/24 04:43:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.97 2016/03/31 07:33:32 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -69,8 +69,10 @@ void Pdp_set_sugar();
 void Pdp_cri1(),Pdp_cri2(),Pdp_subd(),Pdp_mod(),Pdp_red_mod(),Pdp_tdiv();
 void Pdp_prim(),Pdp_red_coef(),Pdp_mag(),Pdp_set_kara(),Pdp_rat();
 void Pdp_nf(),Pdp_true_nf(),Pdp_true_nf_marked(),Pdp_true_nf_marked_mod();
-void Pdp_true_nf_and_quotient();
+
+void Pdp_true_nf_and_quotient(),Pdp_true_nf_and_quotient_mod();
 void Pdp_true_nf_and_quotient_marked(),Pdp_true_nf_and_quotient_marked_mod();
+
 void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
 void Pdp_minp(),Pdp_sp_mod();
@@ -88,7 +90,11 @@ void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
+
 void Pdp_weyl_nf(),Pdp_weyl_nf_mod();
+void Pdp_weyl_true_nf_and_quotient(),Pdp_weyl_true_nf_and_quotient_mod();
+void Pdp_weyl_true_nf_and_quotient_marked(),Pdp_weyl_true_nf_and_quotient_marked_mod();
+
 void Pdp_weyl_gr_main(),Pdp_weyl_gr_mod_main(),Pdp_weyl_gr_f_main();
 void Pdp_weyl_f4_main(),Pdp_weyl_f4_mod_main(),Pdp_weyl_f4_f_main();
 void Pdp_weyl_mul(),Pdp_weyl_mul_mod(),Pdp_weyl_act();
@@ -144,15 +150,19 @@ struct ftab dp_tab[] = {
 
 	/* normal form */
 	{"dp_nf",Pdp_nf,4},
+	{"dp_nf_mod",Pdp_nf_mod,5},
 	{"dp_nf_f",Pdp_nf_f,4},
+
 	{"dp_true_nf",Pdp_true_nf,4},
-	{"dp_true_nf_and_quotient",Pdp_true_nf_and_quotient,4},
+	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
 	{"dp_true_nf_marked",Pdp_true_nf_marked,4},
+	{"dp_true_nf_marked_mod",Pdp_true_nf_marked_mod,5},
+
+	{"dp_true_nf_and_quotient",Pdp_true_nf_and_quotient,3},
+	{"dp_true_nf_and_quotient_mod",Pdp_true_nf_and_quotient_mod,4},
 	{"dp_true_nf_and_quotient_marked",Pdp_true_nf_and_quotient_marked,4},
 	{"dp_true_nf_and_quotient_marked_mod",Pdp_true_nf_and_quotient_marked_mod,5},
-	{"dp_true_nf_marked_mod",Pdp_true_nf_marked_mod,5},
-	{"dp_nf_mod",Pdp_nf_mod,5},
-	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
+
 	{"dp_lnf_mod",Pdp_lnf_mod,3},
 	{"dp_nf_tab_f",Pdp_nf_tab_f,2},
 	{"dp_nf_tab_mod",Pdp_nf_tab_mod,3},
@@ -197,6 +207,12 @@ struct ftab dp_tab[] = {
 	{"dp_weyl_nf",Pdp_weyl_nf,4},
 	{"dp_weyl_nf_mod",Pdp_weyl_nf_mod,5},
 	{"dp_weyl_nf_f",Pdp_weyl_nf_f,4},
+
+	{"dp_weyl_true_nf_and_quotient",Pdp_weyl_true_nf_and_quotient,3},
+	{"dp_weyl_true_nf_and_quotient_mod",Pdp_weyl_true_nf_and_quotient_mod,4},
+	{"dp_weyl_true_nf_and_quotient_marked",Pdp_weyl_true_nf_and_quotient_marked,4},
+	{"dp_weyl_true_nf_and_quotient_marked_mod",Pdp_weyl_true_nf_and_quotient_marked_mod,5},
+
 
 	/* Buchberger algorithm */
 	{"dp_weyl_gr_main",Pdp_weyl_gr_main,-5},
@@ -932,35 +948,7 @@ void Pdp_true_nf(NODE arg,LIST *rp)
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-DP *dp_true_nf_and_quotient(NODE b,DP g,DP *ps,DP *rp,P *dnp);
-
-void Pdp_true_nf_and_quotient(NODE arg,LIST *rp)
-{
-	NODE b,n;
-	DP *ps;
-	DP g;
-	DP nm;
-	VECT quo;
-	P dn;
-	int full;
-
-	do_weyl = 0; dp_fcoeffs = 0;
-	asir_assert(ARG0(arg),O_LIST,"dp_true_nf_and_quotient");
-	asir_assert(ARG1(arg),O_DP,"dp_true_nf_and_quotient");
-	asir_assert(ARG2(arg),O_VECT,"dp_true_nf_and_quotient");
-	if ( !(g = (DP)ARG1(arg)) ) {
-		nm = 0; dn = (P)ONE;
-	} else {
-		b = BDY((LIST)ARG0(arg)); 
-		ps = (DP *)BDY((VECT)ARG2(arg));
-		NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
-		quo->body = (pointer *)dp_true_nf_and_quotient(b,g,ps,&nm,&dn);
-	}
-	n = mknode(3,nm,dn,quo);
-	MKLIST(*rp,n);
-}
-
-DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp);
+DP *dp_true_nf_and_quotient_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp);
 
 void Pdp_true_nf_and_quotient_marked(NODE arg,LIST *rp)
 {
@@ -989,6 +977,13 @@ void Pdp_true_nf_and_quotient_marked(NODE arg,LIST *rp)
 	n = mknode(3,nm,dn,quo);
 	MKLIST(*rp,n);
 }
+
+void Pdp_true_nf_and_quotient(NODE arg,LIST *rp)
+{
+  NODE narg = mknode(4,ARG0(arg),ARG1(arg),ARG2(arg),ARG2(arg));
+  Pdp_true_nf_and_quotient_marked(narg,rp);
+}
+
 
 DP *dp_true_nf_and_quotient_marked_mod (NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp);
 
@@ -1020,6 +1015,12 @@ void Pdp_true_nf_and_quotient_marked_mod(NODE arg,LIST *rp)
 	}
 	n = mknode(3,nm,dn,quo);
 	MKLIST(*rp,n);
+}
+
+void Pdp_true_nf_and_quotient_mod(NODE arg,LIST *rp)
+{
+  NODE narg = mknode(5,ARG0(arg),ARG1(arg),ARG2(arg),ARG2(arg),ARG3(arg));
+  Pdp_true_nf_and_quotient_marked_mod(narg,rp);
 }
 
 void Pdp_true_nf_marked(NODE arg,LIST *rp)
@@ -1133,6 +1134,78 @@ void Pdp_true_nf_mod(NODE arg,LIST *rp)
 	NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)dn;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
+
+void Pdp_weyl_true_nf_and_quotient_marked(NODE arg,LIST *rp)
+{
+	NODE b,n;
+	DP *ps,*hps;
+	DP g;
+	DP nm;
+	VECT quo;
+	P dn;
+	int full;
+
+	do_weyl = 1; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_true_nf_and_quotient_marked");
+	asir_assert(ARG1(arg),O_DP,"dp_weyl_true_nf_and_quotient_marked");
+	asir_assert(ARG2(arg),O_VECT,"dp_weyl_true_nf_and_quotient_marked");
+	asir_assert(ARG3(arg),O_VECT,"dp_weyl_true_nf_and_quotient_marked");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		nm = 0; dn = (P)ONE;
+	} else {
+		b = BDY((LIST)ARG0(arg)); 
+		ps = (DP *)BDY((VECT)ARG2(arg));
+		hps = (DP *)BDY((VECT)ARG3(arg));
+		NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
+		quo->body = (pointer *)dp_true_nf_and_quotient_marked(b,g,ps,hps,&nm,&dn);
+	}
+	n = mknode(3,nm,dn,quo);
+	MKLIST(*rp,n);
+}
+
+void Pdp_weyl_true_nf_and_quotient(NODE arg,LIST *rp)
+{
+  NODE narg = mknode(4,ARG0(arg),ARG1(arg),ARG2(arg),ARG2(arg));
+  Pdp_weyl_true_nf_and_quotient_marked(narg,rp);
+}
+
+
+void Pdp_weyl_true_nf_and_quotient_marked_mod(NODE arg,LIST *rp)
+{
+	NODE b,n;
+	DP *ps,*hps;
+	DP g;
+	DP nm;
+	VECT quo;
+	P dn;
+	int full,mod;
+
+	do_weyl = 1; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_weyl_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG1(arg),O_DP,"dp_weyl_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG2(arg),O_VECT,"dp_weyl_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG3(arg),O_VECT,"dp_weyl_true_nf_and_quotient_marked_mod");
+	asir_assert(ARG4(arg),O_N,"dp_weyl_true_nf_and_quotient_marked_mod");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		nm = 0; dn = (P)ONE;
+	} else {
+		b = BDY((LIST)ARG0(arg)); 
+		ps = (DP *)BDY((VECT)ARG2(arg));
+		hps = (DP *)BDY((VECT)ARG3(arg));
+		mod = QTOS((Q)ARG4(arg));
+		NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
+		quo->body = (pointer *)dp_true_nf_and_quotient_marked_mod(b,g,ps,hps,mod,&nm,&dn);
+	}
+	n = mknode(3,nm,dn,quo);
+	MKLIST(*rp,n);
+}
+
+void Pdp_weyl_true_nf_and_quotient_mod(NODE arg,LIST *rp)
+{
+  NODE narg = mknode(5,ARG0(arg),ARG1(arg),ARG2(arg),ARG2(arg),ARG3(arg));
+  Pdp_weyl_true_nf_and_quotient_marked_mod(narg,rp);
+}
+
 
 void Pdp_tdiv(NODE arg,DP *rp)
 {
