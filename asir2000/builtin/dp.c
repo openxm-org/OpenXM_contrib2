@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.95 2015/01/26 13:48:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.96 2015/09/24 04:43:12 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -69,6 +69,7 @@ void Pdp_set_sugar();
 void Pdp_cri1(),Pdp_cri2(),Pdp_subd(),Pdp_mod(),Pdp_red_mod(),Pdp_tdiv();
 void Pdp_prim(),Pdp_red_coef(),Pdp_mag(),Pdp_set_kara(),Pdp_rat();
 void Pdp_nf(),Pdp_true_nf(),Pdp_true_nf_marked(),Pdp_true_nf_marked_mod();
+void Pdp_true_nf_and_quotient();
 void Pdp_true_nf_and_quotient_marked(),Pdp_true_nf_and_quotient_marked_mod();
 void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
@@ -145,6 +146,7 @@ struct ftab dp_tab[] = {
 	{"dp_nf",Pdp_nf,4},
 	{"dp_nf_f",Pdp_nf_f,4},
 	{"dp_true_nf",Pdp_true_nf,4},
+	{"dp_true_nf_and_quotient",Pdp_true_nf_and_quotient,4},
 	{"dp_true_nf_marked",Pdp_true_nf_marked,4},
 	{"dp_true_nf_and_quotient_marked",Pdp_true_nf_and_quotient_marked,4},
 	{"dp_true_nf_and_quotient_marked_mod",Pdp_true_nf_and_quotient_marked_mod,5},
@@ -361,9 +363,7 @@ void Pdp_compute_essential_df(NODE arg,LIST *rp)
 	MKLIST(*rp,r);
 }
 
-void Pdp_inv_or_split(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdp_inv_or_split(NODE arg,Obj *rp)
 {
 	NODE gb,newgb;
 	DP f,inv;
@@ -387,16 +387,12 @@ Obj *rp;
 	}
 }
 
-void Pdp_sort(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_sort(NODE arg,DP *rp)
 {
 	dp_sort((DP)ARG0(arg),rp);
 }
 
-void Pdp_mdtod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_mdtod(NODE arg,DP *rp)
 {
 	MP m,mr,mr0;
 	DP p;
@@ -413,9 +409,7 @@ DP *rp;
 	}
 }
 
-void Pdp_sep(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_sep(NODE arg,VECT *rp)
 {
 	DP p,r;
 	MP m,t;
@@ -442,30 +436,22 @@ VECT *rp;
 	}
 }
 
-void Pdp_idiv(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_idiv(NODE arg,DP *rp)
 {
 	dp_idiv((DP)ARG0(arg),(Q)ARG1(arg),rp);
 }
 
-void Pdp_cont(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_cont(NODE arg,Q *rp)
 {
 	dp_cont((DP)ARG0(arg),rp);
 }
 
-void Pdp_dtov(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_dtov(NODE arg,VECT *rp)
 {
 	dp_dtov((DP)ARG0(arg),rp);
 }
 
-void Pdp_mbase(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_mbase(NODE arg,LIST *rp)
 {
 	NODE mb;
 
@@ -474,9 +460,7 @@ LIST *rp;
 	MKLIST(*rp,mb);
 }
 
-void Pdp_etov(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_etov(NODE arg,VECT *rp)
 {
 	DP dp;
 	int n,i;
@@ -494,9 +478,7 @@ VECT *rp;
 	*rp = v;
 }
 
-void Pdp_vtoe(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_vtoe(NODE arg,DP *rp)
 {
 	DP dp;
 	DL dl;
@@ -518,9 +500,7 @@ DP *rp;
 	*rp = dp;
 }
 
-void Pdp_lnf_mod(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_lnf_mod(NODE arg,LIST *rp)
 {
 	DP r1,r2;
 	NODE b,g,n;
@@ -537,9 +517,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_lnf_f(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_lnf_f(NODE arg,LIST *rp)
 {
 	DP r1,r2;
 	NODE b,g,n;
@@ -553,9 +531,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_nf_tab_mod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_nf_tab_mod(NODE arg,DP *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_nf_tab_mod");
 	asir_assert(ARG1(arg),O_VECT,"dp_nf_tab_mod");
@@ -564,18 +540,14 @@ DP *rp;
 		QTOS((Q)ARG2(arg)),rp);
 }
 
-void Pdp_nf_tab_f(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_nf_tab_f(NODE arg,DP *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_nf_tab_f");
 	asir_assert(ARG1(arg),O_VECT,"dp_nf_tab_f");
 	dp_nf_tab_f((DP)ARG0(arg),(LIST *)BDY((VECT)ARG1(arg)),rp);
 }
 
-void Pdp_ord(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdp_ord(NODE arg,Obj *rp)
 {
 	struct order_spec *spec;
 	LIST v;
@@ -595,9 +567,7 @@ Obj *rp;
 	}
 }
 
-void Pdp_ptod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_ptod(NODE arg,DP *rp)
 {
 	P p;
 	NODE n;
@@ -636,9 +606,7 @@ DP *rp;
 	ptod(CO,vl,p,rp);
 }
 
-void Phomogenize(arg,rp)
-NODE arg;
-P *rp;
+void Phomogenize(NODE arg,P *rp)
 {
 	P p;
 	DP d,h;
@@ -673,9 +641,7 @@ P *rp;
 	dtop(CO,vl,h,rp);
 }
 
-void Pdp_ltod(arg,rp)
-NODE arg;
-DPV *rp;
+void Pdp_ltod(NODE arg,DPV *rp)
 {
 	NODE n;
 	VL vl,tvl;
@@ -722,9 +688,7 @@ DPV *rp;
 	MKDPV(len,e,*rp);
 }
 
-void Pdp_dtop(arg,rp)
-NODE arg;
-P *rp;
+void Pdp_dtop(NODE arg,P *rp)
 {
 	NODE n;
 	VL vl,tvl;
@@ -746,9 +710,7 @@ P *rp;
 
 extern LIST Dist;
 
-void Pdp_ptozp(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdp_ptozp(NODE arg,Obj *rp)
 {
 	Q t;
     NODE tt,p;
@@ -786,9 +748,7 @@ Obj *rp;
       *rp = (Obj)pp;
 }
 	
-void Pdp_ptozp2(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_ptozp2(NODE arg,LIST *rp)
 {
 	DP p0,p1,h,r;
 	NODE n0;
@@ -803,9 +763,7 @@ LIST *rp;
 	MKLIST(*rp,n0);
 }
 
-void Pdp_prim(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_prim(NODE arg,DP *rp)
 {
 	DP t;
 
@@ -813,9 +771,7 @@ DP *rp;
 	dp_prim((DP)ARG0(arg),&t); dp_ptozp(t,rp);
 }
 	
-void Pdp_mod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_mod(NODE arg,DP *rp)
 {
 	DP p;
 	int mod;
@@ -829,9 +785,7 @@ DP *rp;
 	dp_mod(p,mod,subst,rp);
 }
 
-void Pdp_rat(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_rat(NODE arg,DP *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_rat");
 	dp_rat((DP)ARG0(arg),rp);
@@ -839,9 +793,7 @@ DP *rp;
 
 extern int DP_Multiple;
 
-void Pdp_nf(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_nf(NODE arg,DP *rp)
 {
 	NODE b;
 	DP *ps;
@@ -861,9 +813,7 @@ DP *rp;
 	dp_nf_z(b,g,ps,full,DP_Multiple,rp);
 }
 
-void Pdp_weyl_nf(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_nf(NODE arg,DP *rp)
 {
 	NODE b;
 	DP *ps;
@@ -886,9 +836,7 @@ DP *rp;
 
 /* nf computation using field operations */
 
-void Pdp_nf_f(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_nf_f(NODE arg,DP *rp)
 {
 	NODE b;
 	DP *ps;
@@ -908,9 +856,7 @@ DP *rp;
 	dp_nf_f(b,g,ps,full,rp);
 }
 
-void Pdp_weyl_nf_f(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_nf_f(NODE arg,DP *rp)
 {
 	NODE b;
 	DP *ps;
@@ -931,9 +877,7 @@ DP *rp;
 	do_weyl = 0;
 }
 
-void Pdp_nf_mod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_nf_mod(NODE arg,DP *rp)
 {
 	NODE b;
 	DP g;
@@ -962,9 +906,7 @@ DP *rp;
 	dp_nf_mod(n0,g,ps,mod,full,rp);
 }
 
-void Pdp_true_nf(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_true_nf(NODE arg,LIST *rp)
 {
 	NODE b,n;
 	DP *ps;
@@ -990,40 +932,37 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_true_nf_marked(arg,rp)
-NODE arg;
-LIST *rp;
+DP *dp_true_nf_and_quotient(NODE b,DP g,DP *ps,DP *rp,P *dnp);
+
+void Pdp_true_nf_and_quotient(NODE arg,LIST *rp)
 {
 	NODE b,n;
-	DP *ps,*hps;
+	DP *ps;
 	DP g;
 	DP nm;
-	Q cont;
+	VECT quo;
 	P dn;
 	int full;
 
 	do_weyl = 0; dp_fcoeffs = 0;
-	asir_assert(ARG0(arg),O_LIST,"dp_true_nf_marked");
-	asir_assert(ARG1(arg),O_DP,"dp_true_nf_marked");
-	asir_assert(ARG2(arg),O_VECT,"dp_true_nf_marked");
-	asir_assert(ARG3(arg),O_VECT,"dp_true_nf_marked");
+	asir_assert(ARG0(arg),O_LIST,"dp_true_nf_and_quotient");
+	asir_assert(ARG1(arg),O_DP,"dp_true_nf_and_quotient");
+	asir_assert(ARG2(arg),O_VECT,"dp_true_nf_and_quotient");
 	if ( !(g = (DP)ARG1(arg)) ) {
 		nm = 0; dn = (P)ONE;
 	} else {
 		b = BDY((LIST)ARG0(arg)); 
 		ps = (DP *)BDY((VECT)ARG2(arg));
-		hps = (DP *)BDY((VECT)ARG3(arg));
-		dp_true_nf_marked(b,g,ps,hps,&nm,&cont,&dn);
+		NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
+		quo->body = (pointer *)dp_true_nf_and_quotient(b,g,ps,&nm,&dn);
 	}
-	n = mknode(3,nm,cont,dn);
+	n = mknode(3,nm,dn,quo);
 	MKLIST(*rp,n);
 }
 
 DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp);
 
-void Pdp_true_nf_and_quotient_marked(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_true_nf_and_quotient_marked(NODE arg,LIST *rp)
 {
 	NODE b,n;
 	DP *ps,*hps;
@@ -1053,9 +992,7 @@ LIST *rp;
 
 DP *dp_true_nf_and_quotient_marked_mod (NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp);
 
-void Pdp_true_nf_and_quotient_marked_mod(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_true_nf_and_quotient_marked_mod(NODE arg,LIST *rp)
 {
 	NODE b,n;
 	DP *ps,*hps;
@@ -1085,9 +1022,34 @@ LIST *rp;
 	MKLIST(*rp,n);
 }
 
-void Pdp_true_nf_marked_mod(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_true_nf_marked(NODE arg,LIST *rp)
+{
+	NODE b,n;
+	DP *ps,*hps;
+	DP g;
+	DP nm;
+	Q cont;
+	P dn;
+	int full;
+
+	do_weyl = 0; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dp_true_nf_marked");
+	asir_assert(ARG1(arg),O_DP,"dp_true_nf_marked");
+	asir_assert(ARG2(arg),O_VECT,"dp_true_nf_marked");
+	asir_assert(ARG3(arg),O_VECT,"dp_true_nf_marked");
+	if ( !(g = (DP)ARG1(arg)) ) {
+		nm = 0; dn = (P)ONE;
+	} else {
+		b = BDY((LIST)ARG0(arg)); 
+		ps = (DP *)BDY((VECT)ARG2(arg));
+		hps = (DP *)BDY((VECT)ARG3(arg));
+		dp_true_nf_marked(b,g,ps,hps,&nm,&cont,&dn);
+	}
+	n = mknode(3,nm,cont,dn);
+	MKLIST(*rp,n);
+}
+
+void Pdp_true_nf_marked_mod(NODE arg,LIST *rp)
 {
 	NODE b,n;
 	DP *ps,*hps;
@@ -1115,9 +1077,7 @@ LIST *rp;
 	MKLIST(*rp,n);
 }
 
-void Pdp_weyl_nf_mod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_nf_mod(NODE arg,DP *rp)
 {
 	NODE b;
 	DP g;
@@ -1147,9 +1107,7 @@ DP *rp;
 	do_weyl = 0;
 }
 
-void Pdp_true_nf_mod(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_true_nf_mod(NODE arg,LIST *rp)
 {
 	NODE b;
 	DP g,nm;
@@ -1176,9 +1134,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_tdiv(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_tdiv(NODE arg,DP *rp)
 {
 	MP m,mr,mr0;
 	DP p;
@@ -1205,9 +1161,7 @@ DP *rp;
 	}
 }
 
-void Pdp_red_coef(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_red_coef(NODE arg,DP *rp)
 {
 	MP m,mr,mr0;
 	P q,r;
@@ -1233,9 +1187,7 @@ DP *rp;
 	}
 }
 
-void Pdp_redble(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_redble(NODE arg,Q *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_redble");
 	asir_assert(ARG1(arg),O_DP,"dp_redble");
@@ -1245,9 +1197,7 @@ Q *rp;
 		*rp = 0;
 }
 
-void Pdp_red_mod(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_red_mod(NODE arg,LIST *rp)
 {
 	DP h,r;
 	P dmy;
@@ -1265,9 +1215,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_subd(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_subd(NODE arg,DP *rp)
 {
 	DP p1,p2;
 
@@ -1277,9 +1225,7 @@ DP *rp;
 	dp_subd(p1,p2,rp);
 }
 
-void Pdp_symb_add(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_symb_add(NODE arg,DP *rp)
 {
 	DP p1,p2,r;
 	NODE s0;
@@ -1303,9 +1249,7 @@ DP *rp;
 	*rp = r;
 }
 
-void Pdp_mul_trunc(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_mul_trunc(NODE arg,DP *rp)
 {
 	DP p1,p2,p;
 
@@ -1316,9 +1260,7 @@ DP *rp;
 	comm_muld_trunc(CO,p1,p2,BDY(p)->dl,rp);
 }
 
-void Pdp_quo(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_quo(NODE arg,DP *rp)
 {
 	DP p1,p2;
 
@@ -1328,9 +1270,7 @@ DP *rp;
 	comm_quod(CO,p1,p2,rp);
 }
 
-void Pdp_weyl_mul(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_mul(NODE arg,DP *rp)
 {
 	DP p1,p2;
 
@@ -1341,9 +1281,7 @@ DP *rp;
 	do_weyl = 0;
 }
 
-void Pdp_weyl_act(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_act(NODE arg,DP *rp)
 {
 	DP p1,p2;
 
@@ -1353,9 +1291,7 @@ DP *rp;
 }
 
 
-void Pdp_weyl_mul_mod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_mul_mod(NODE arg,DP *rp)
 {
 	DP p1,p2;
 	Q m;
@@ -1369,9 +1305,7 @@ DP *rp;
 	do_weyl = 0;
 }
 
-void Pdp_red(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_red(NODE arg,LIST *rp)
 {
 	NODE n;
 	DP head,rest,dmy1;
@@ -1387,9 +1321,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_weyl_red(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_weyl_red(NODE arg,LIST *rp)
 {
 	NODE n;
 	DP head,rest,dmy1;
@@ -1406,9 +1338,7 @@ LIST *rp;
 	NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
 }
 
-void Pdp_sp(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_sp(NODE arg,DP *rp)
 {
 	DP p1,p2;
 
@@ -1418,9 +1348,7 @@ DP *rp;
 	dp_sp(p1,p2,rp);
 }
 
-void Pdp_weyl_sp(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_weyl_sp(NODE arg,DP *rp)
 {
 	DP p1,p2;
 
@@ -1431,9 +1359,7 @@ DP *rp;
 	do_weyl = 0;
 }
 
-void Pdp_sp_mod(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_sp_mod(NODE arg,DP *rp)
 {
 	DP p1,p2;
 	int mod;
@@ -1446,9 +1372,7 @@ DP *rp;
 	dp_sp_mod(p1,p2,mod,rp);
 }
 
-void Pdp_lcm(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_lcm(NODE arg,DP *rp)
 {
 	int i,n,td;
 	DL d1,d2,d;
@@ -1467,9 +1391,7 @@ DP *rp;
 	MKDP(n,m,*rp); (*rp)->sugar = td;	/* XXX */
 }
 
-void Pdp_hm(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_hm(NODE arg,DP *rp)
 {
 	DP p;
 
@@ -1477,9 +1399,7 @@ DP *rp;
 	dp_hm(p,rp);
 }
 
-void Pdp_ht(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_ht(NODE arg,DP *rp)
 {
 	DP p;
 	MP m,mr;
@@ -1488,9 +1408,7 @@ DP *rp;
 	dp_ht(p,rp);
 }
 
-void Pdp_hc(arg,rp)
-NODE arg;
-P *rp;
+void Pdp_hc(NODE arg,P *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_hc");
 	if ( !ARG0(arg) )
@@ -1499,9 +1417,7 @@ P *rp;
 		*rp = BDY((DP)ARG0(arg))->c;
 }
 
-void Pdp_rest(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_rest(NODE arg,DP *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_rest");
 	if ( !ARG0(arg) )
@@ -1510,9 +1426,7 @@ DP *rp;
 		dp_rest((DP)ARG0(arg),rp);
 }
 
-void Pdp_td(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_td(NODE arg,Q *rp)
 {
 	DP p;
 
@@ -1523,9 +1437,7 @@ Q *rp;
 		STOQ(BDY(p)->dl->td,*rp);
 }
 
-void Pdp_sugar(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_sugar(NODE arg,Q *rp)
 {
 	DP p;
 
@@ -1536,9 +1448,7 @@ Q *rp;
 		STOQ(p->sugar,*rp);
 }
 
-void Pdp_initial_term(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdp_initial_term(NODE arg,Obj *rp)
 {
 	struct order_spec *ord;
 	Num homo;
@@ -1565,9 +1475,7 @@ Obj *rp;
 		*rp = (Obj)initiallist;
 }
 
-void Pdp_order(arg,rp)
-NODE arg;
-Obj *rp;
+void Pdp_order(NODE arg,Obj *rp)
 {
 	struct order_spec *ord;
 	Num homo;
@@ -1594,9 +1502,7 @@ Obj *rp;
 		*rp = (Obj)ordlist;
 }
 
-void Pdp_set_sugar(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_set_sugar(NODE arg,Q *rp)
 {
 	DP p;
 	Q q;
@@ -1615,9 +1521,7 @@ Q *rp;
 	*rp = 0;
 }
 
-void Pdp_cri1(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_cri1(NODE arg,Q *rp)
 {
 	DP p1,p2;
 	int *d1,*d2;
@@ -1632,9 +1536,7 @@ Q *rp;
 	*rp = i == n ? ONE : 0;
 }
 
-void Pdp_cri2(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_cri2(NODE arg,Q *rp)
 {
 	DP p1,p2;
 	int *d1,*d2;
@@ -1649,9 +1551,7 @@ Q *rp;
 	*rp = i == n ? ONE : 0;
 }
 
-void Pdp_minp(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_minp(NODE arg,LIST *rp)
 {
 	NODE tn,tn1,d,dd,dd0,p,tp;
 	LIST l,minp;
@@ -1696,9 +1596,7 @@ LIST *rp;
 	MKLIST(l,dd0); MKNODE(tn,l,0); MKNODE(tn1,minp,tn); MKLIST(*rp,tn1);
 }
 
-void Pdp_criB(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_criB(NODE arg,LIST *rp)
 {
 	NODE d,ij,dd,ddd;
 	int i,j,s,n;
@@ -1734,9 +1632,7 @@ LIST *rp;
 	}
 }
 
-void Pdp_nelim(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_nelim(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"dp_nelim");
@@ -1745,9 +1641,7 @@ Q *rp;
 	STOQ(dp_nelim,*rp);
 }
 
-void Pdp_mag(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_mag(NODE arg,Q *rp)
 {
 	DP p;
 	int s;
@@ -1766,9 +1660,7 @@ Q *rp;
 
 extern int kara_mag;
 
-void Pdp_set_kara(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_set_kara(NODE arg,Q *rp)
 {
 	if ( arg ) {
 		asir_assert(ARG0(arg),O_N,"dp_set_kara");
@@ -1777,25 +1669,19 @@ Q *rp;
 	STOQ(kara_mag,*rp);
 }
 
-void Pdp_homo(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_homo(NODE arg,DP *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_homo");
 	dp_homo((DP)ARG0(arg),rp);
 }
 
-void Pdp_dehomo(arg,rp)
-NODE arg;
-DP *rp;
+void Pdp_dehomo(NODE arg,DP *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_dehomo");
 	dp_dehomo((DP)ARG0(arg),rp);
 }
 
-void Pdp_gr_flags(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_gr_flags(NODE arg,LIST *rp)
 {
 	Obj name,value;
 	NODE n;
@@ -1818,9 +1704,7 @@ LIST *rp;
 
 extern int DP_Print, DP_PrintShort;
 
-void Pdp_gr_print(arg,rp)
-NODE arg;
-Q *rp;
+void Pdp_gr_print(NODE arg,Q *rp)
 {
 	Q q;
 	int s;
@@ -1957,9 +1841,7 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
 	if ( !homo_is_set ) *homo = 0;
 }
 
-void Pdp_gr_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_gr_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	VL vl;
@@ -1998,9 +1880,7 @@ LIST *rp;
 	dp_gr_main(f,v,homo,modular,0,ord,rp);
 }
 
-void Pdp_interreduce(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_interreduce(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	VL vl;
@@ -2022,9 +1902,7 @@ LIST *rp;
 	dp_interreduce(f,v,0,ord,rp);
 }
 
-void Pdp_gr_f_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_gr_f_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	Num homo;
@@ -2067,9 +1945,7 @@ LIST *rp;
 	dp_gr_main(f,v,homo,m?1:0,field,ord,rp);
 }
 
-void Pdp_f4_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_f4_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	struct order_spec *ord;
@@ -2088,9 +1964,7 @@ LIST *rp;
 
 /* dp_gr_checklist(list of dp) */
 
-void Pdp_gr_checklist(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_gr_checklist(NODE arg,LIST *rp)
 {
 	VECT g;
 	LIST dp;
@@ -2106,9 +1980,7 @@ LIST *rp;
 	MKLIST(*rp,r);
 }
 
-void Pdp_f4_mod_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_f4_mod_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m;
@@ -2129,9 +2001,7 @@ LIST *rp;
 	dp_f4_mod_main(f,v,m,ord,rp);
 }
 
-void Pdp_gr_mod_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_gr_mod_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	Num homo;
@@ -2155,9 +2025,7 @@ LIST *rp;
 	dp_gr_mod_main(f,v,homo,m,ord,rp);
 }
 
-void Pnd_f4(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_f4(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,homo,retdp;
@@ -2183,9 +2051,7 @@ LIST *rp;
 	nd_gr(f,v,m,homo,retdp,1,ord,rp);
 }
 
-void Pnd_gr(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_gr(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,homo,retdp;
@@ -2209,9 +2075,7 @@ LIST *rp;
 	nd_gr(f,v,m,homo,retdp,0,ord,rp);
 }
 
-void Pnd_gr_postproc(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_gr_postproc(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,do_check;
@@ -2232,9 +2096,7 @@ LIST *rp;
 	nd_gr_postproc(f,v,m,ord,do_check,rp);
 }
 
-void Pnd_gr_recompute_trace(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_gr_recompute_trace(NODE arg,LIST *rp)
 {
 	LIST f,v,tlist;
 	int m;
@@ -2254,9 +2116,7 @@ LIST *rp;
 Obj nd_btog_one(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,int pos);
 Obj nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist);
 
-void Pnd_btog(arg,rp)
-NODE arg;
-Obj *rp;
+void Pnd_btog(NODE arg,Obj *rp)
 {
 	LIST f,v,tlist;
 	int m,ac,pos;
@@ -2280,9 +2140,7 @@ Obj *rp;
 		error("nd_btog : argument mismatch");
 }
 
-void Pnd_weyl_gr_postproc(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_weyl_gr_postproc(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,do_check;
@@ -2304,9 +2162,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-void Pnd_gr_trace(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_gr_trace(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,homo;
@@ -2328,9 +2184,7 @@ LIST *rp;
 	nd_gr_trace(f,v,m,homo,0,ord,rp);
 }
 
-void Pnd_f4_trace(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_f4_trace(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,homo;
@@ -2352,9 +2206,7 @@ LIST *rp;
 	nd_gr_trace(f,v,m,homo,1,ord,rp);
 }
 
-void Pnd_weyl_gr(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_weyl_gr(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,homo,retdp;
@@ -2379,9 +2231,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-void Pnd_weyl_gr_trace(arg,rp)
-NODE arg;
-LIST *rp;
+void Pnd_weyl_gr_trace(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m,homo;
@@ -2446,9 +2296,7 @@ void Pnd_weyl_nf(NODE arg,Obj *rp)
 
 /* for Weyl algebra */
 
-void Pdp_weyl_gr_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_weyl_gr_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	Num homo;
@@ -2488,9 +2336,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-void Pdp_weyl_gr_f_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_weyl_gr_f_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	Num homo;
@@ -2512,9 +2358,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-void Pdp_weyl_f4_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_weyl_f4_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	struct order_spec *ord;
@@ -2532,9 +2376,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-void Pdp_weyl_f4_mod_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_weyl_f4_mod_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	int m;
@@ -2556,9 +2398,7 @@ LIST *rp;
 	do_weyl = 0;
 }
 
-void Pdp_weyl_gr_mod_main(arg,rp)
-NODE arg;
-LIST *rp;
+void Pdp_weyl_gr_mod_main(NODE arg,LIST *rp)
 {
 	LIST f,v;
 	Num homo;
@@ -2586,9 +2426,7 @@ LIST *rp;
 VECT current_dl_weight_vector_obj;
 int *current_dl_weight_vector;
 
-void Pdp_set_weight(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_set_weight(NODE arg,VECT *rp)
 {
 	VECT v;
 	int i,n;
@@ -2624,9 +2462,7 @@ VECT *rp;
 VECT current_module_weight_vector_obj;
 int *current_module_weight_vector;
 
-void Pdp_set_module_weight(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_set_module_weight(NODE arg,VECT *rp)
 {
 	VECT v;
 	int i,n;
@@ -2686,7 +2522,7 @@ void Pdp_set_top_weight(NODE arg,Obj *rp)
 			MKVECT(v,n);
 			for ( i = 0; i < n; i++, node = NEXT(node) )
 				BDY(v)[i] = BDY(node);
-		    obj = v;
+		    obj = (Obj)v;
 		} else
 		    obj = ARG0(arg);
 		if ( OID(obj) == O_VECT ) {
@@ -2717,9 +2553,7 @@ void Pdp_get_denomlist(LIST *rp)
 static VECT current_weyl_weight_vector_obj;
 int *current_weyl_weight_vector;
 
-void Pdp_weyl_set_weight(arg,rp)
-NODE arg;
-VECT *rp;
+void Pdp_weyl_set_weight(NODE arg,VECT *rp)
 {
 	VECT v;
 	NODE node;
@@ -2769,7 +2603,7 @@ void Pdp_mono_raddec(NODE arg,LIST *rp)
 	else {
 		t = BDY((LIST)ARG1(arg));
 		nv = length(t);
-		v = (P)MALLOC(nv*sizeof(P));
+		v = (P *)MALLOC(nv*sizeof(P));
 		for ( vl0 = 0, i = 0; t; t = NEXT(t), i++ ) {
 			NEXTVL(vl0,vl); VR(vl) = VR((P)BDY(t));
 			MKV(VR(vl),v[i]);

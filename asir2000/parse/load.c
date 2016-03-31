@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.28 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.29 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -366,7 +366,7 @@ void loadasirfile(char *name0)
 #else
 	char com[BUFSIZ];
 
-	sprintf(com,"%s -I%s %s",cppname,asir_libdir,name0); in = popen(com,"r");
+	sprintf(com,"%s -I%s -D__FILE__=%s %s",cppname,asir_libdir,name0,name0); in = popen(com,"r");
 	if ( !in ) {
 		perror("popen");
 		error("load : failed");
