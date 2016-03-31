@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.60 2015/08/08 14:19:41 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.61 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1735,10 +1735,11 @@ void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
 
 int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 {
-	int i,j,n,s,row,col,ret;
+	int i,j,n,s,row,col,ret,wlen;
 	struct order_spec *spec;
 	struct order_pair *l;
-	NODE node,t,tn;
+  Obj wp,wm;
+	NODE node,t,tn,wpair;
 	MAT m;
 	VECT v;
 	pointer **b,*bv;
@@ -1757,35 +1758,71 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 		spec->ord.simple = QTOS((Q)obj);
 		return 1;
 	} else if ( OID(obj) == O_LIST ) {
+    /* module order; obj = [0|1,w,ord] or [0|1,ord] */
 		node = BDY((LIST)obj); 
 		if ( !BDY(node) || NUM(BDY(node)) ) {
-			if ( length(node) < 2 ) 
-				error("create_order_spec : invalid argument");
-			create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
-			spec->id += 256; spec->obj = obj;
-			spec->ispot = (BDY(node)!=0);
-			if ( spec->ispot ) {
-				n = QTOS((Q)BDY(node));
-				if ( n < 0 )
-					spec->pot_nelim = -n;
-				else
-					spec->pot_nelim = 0;
-			}
+      switch ( length(node) ) {
+      case 2:
+			  create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
+			  spec->id += 256; spec->obj = obj;
+        spec->top_weight = 0;
+        spec->module_rank = 0;
+        spec->module_top_weight = 0;
+			  spec->ispot = (BDY(node)!=0);
+			  if ( spec->ispot ) {
+			  	n = QTOS((Q)BDY(node));
+			  	if ( n < 0 )
+			  		spec->pot_nelim = -n;
+			  	else
+			  		spec->pot_nelim = 0;
+			  }
+        break;
+
+      case 3:
+			  create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
+			  spec->id += 256; spec->obj = obj;
+			  spec->ispot = (BDY(node)!=0);
+        node = NEXT(node);
+        if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
+				  error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+        wpair = BDY((LIST)BDY(node));
+        if ( length(wpair) != 2 )
+				  error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+
+        wp = BDY(wpair);
+        wm = BDY(NEXT(wpair));
+        if ( !wp || OID(wp) != O_LIST || !wm || OID(wm) != O_LIST )
+				  error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+        spec->nv = length(BDY((LIST)wp)); 
+        spec->top_weight = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));
+		    for ( i = 0, t = BDY((LIST)wp); i < spec->nv; t = NEXT(t), i++ )
+          spec->top_weight[i] = QTOS((Q)BDY(t));
+
+        spec->module_rank = length(BDY((LIST)wm));
+        spec->module_top_weight = (int *)MALLOC_ATOMIC(spec->module_rank*sizeof(int));
+		    for ( i = 0, t = BDY((LIST)wm); i < spec->module_rank; t = NEXT(t), i++ )
+          spec->module_top_weight[i] = QTOS((Q)BDY(t));
+        break;
+      default:
+				error("create_order_spec : invalid arguments for module order");
+      }
+
 			*specp = spec;
 			return 1;
-		}
-
-		for ( n = 0, t = node; t; t = NEXT(t), n++ );
-		l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
-		for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
-			tn = BDY((LIST)BDY(t)); l[i].order = QTOS((Q)BDY(tn));
-			tn = NEXT(tn); l[i].length = QTOS((Q)BDY(tn));
-			s += l[i].length;
-		}
-		spec->id = 1; spec->obj = obj;
-		spec->ord.block.order_pair = l;
-		spec->ord.block.length = n; spec->nv = s;
-		return 1;
+		} else {
+      /* block order in polynomial ring */
+		  for ( n = 0, t = node; t; t = NEXT(t), n++ );
+		  l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
+		  for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
+			  tn = BDY((LIST)BDY(t)); l[i].order = QTOS((Q)BDY(tn));
+			  tn = NEXT(tn); l[i].length = QTOS((Q)BDY(tn));
+			  s += l[i].length;
+		  }
+		  spec->id = 1; spec->obj = obj;
+		  spec->ord.block.order_pair = l;
+		  spec->ord.block.length = n; spec->nv = s;
+		  return 1;
+    }
 	} else if ( OID(obj) == O_MAT ) {
 		m = (MAT)obj; row = m->row; col = m->col; b = BDY(m);
 		w = almat(row,col);

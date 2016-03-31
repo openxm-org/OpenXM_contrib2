@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.222 2015/08/08 14:19:41 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.223 2015/08/14 13:51:54 fujimoto Exp $ */
 
 #include "nd.h"
 
@@ -56,6 +56,8 @@ static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
 static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
+static int nd_module_rank,nd_poly_weight_len;
+static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect;
@@ -647,10 +649,30 @@ int ndl_ww_lex_compare(UINT *d1,UINT *d2)
     return ndl_lex_compare(d1,d2);
 }
 
+int ndl_module_weight_compare(UINT *d1,UINT *d2)
+{
+  int s,j;
+
+  if ( nd_nvar != nd_poly_weight_len )
+    error("invalid module weight : the length of polynomial weight != the number of variables");
+  s = 0;
+  for ( j = 0; j < nd_nvar; j++ )
+     s += (GET_EXP(d1,j)-GET_EXP(d2,j))*nd_poly_weight[j];
+  s += nd_module_weight[MPOS(d1)-1]-nd_module_weight[MPOS(d2)-1];
+  if ( s > 0 ) return 1;
+  else if ( s < 0 ) return -1;
+  else return 0;
+}
+
 int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
+    if ( !MPOS(d1) || !MPOS(d2) ) {
+       printf("afo\n");
+    }
+      
+    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
 		if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
             if ( TD(d1) > TD(d2) ) return 1;
@@ -677,6 +699,7 @@ int ndl_module_glex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
+    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -695,6 +718,7 @@ int ndl_module_lex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
+    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -711,6 +735,7 @@ int ndl_module_block_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
+    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -727,6 +752,7 @@ int ndl_module_matrix_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
+    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -743,6 +769,7 @@ int ndl_module_composite_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
+    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) > MPOS(d2) ) return 1;
         else if ( MPOS(d1) < MPOS(d2) ) return -1;
@@ -5249,7 +5276,16 @@ NODE ndv_reducebase(NODE x,int *perm)
 
 void nd_init_ord(struct order_spec *ord)
 {
-    nd_module = (ord->id >= 256);
+  nd_module = (ord->id >= 256);
+  if ( nd_module ) {
+    nd_dcomp = -1;
+    nd_ispot = ord->ispot;
+    nd_pot_nelim = ord->pot_nelim;
+    nd_poly_weight_len = ord->nv;
+    nd_poly_weight = ord->top_weight;
+    nd_module_rank = ord->module_rank;
+    nd_module_weight = ord->module_top_weight;
+  }
 	nd_matrix = 0;
 	nd_matrix_len = 0;
     switch ( ord->id ) {
@@ -5305,9 +5341,6 @@ void nd_init_ord(struct order_spec *ord)
 
         /* module order */
         case 256:
-            nd_ispot = ord->ispot;
-            nd_pot_nelim = ord->pot_nelim;
-            nd_dcomp = -1;
             switch ( ord->ord.simple ) {
                 case 0:
                     nd_isrlex = 1;
@@ -5327,17 +5360,11 @@ void nd_init_ord(struct order_spec *ord)
             break;
         case 257:
             /* block order */
-            nd_ispot = ord->ispot;
-            nd_pot_nelim = ord->pot_nelim;
-            nd_dcomp = -1;
             nd_isrlex = 0;
             ndl_compare_function = ndl_module_block_compare;
             break;
         case 258:
             /* matrix order */
-            nd_ispot = ord->ispot;
-            nd_pot_nelim = ord->pot_nelim;
-            nd_dcomp = -1;
             nd_isrlex = 0;
             nd_matrix_len = ord->ord.matrix.row;
             nd_matrix = ord->ord.matrix.matrix;
@@ -5345,9 +5372,6 @@ void nd_init_ord(struct order_spec *ord)
             break;
         case 259:
             /* composite order */
-            nd_ispot = ord->ispot;
-            nd_pot_nelim = ord->pot_nelim;
-            nd_dcomp = -1;
             nd_isrlex = 0;
             nd_worb_len = ord->ord.composite.length;
             nd_worb = ord->ord.composite.w_or_b;
