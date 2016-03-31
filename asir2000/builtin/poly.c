@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.23 2011/07/20 03:19:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.24 2011/07/21 04:43:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -125,6 +125,7 @@ struct ftab poly_tab[] = {
 	{"maxblen",Pmaxblen,1},
 	{"ord",Pord,-1},
 	{"remove_vars",Premove_vars,1},
+	{"delete_vars",Premove_vars,1},
 	{"coef0",Pcoef0,-3},
 	{"coef",Pcoef,-3},
 	{"coef_gf2n",Pcoef_gf2n,2},

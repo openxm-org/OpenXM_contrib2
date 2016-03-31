@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/biovar.c,v 1.3 2000/08/22 05:04:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/biovar.c,v 1.4 2001/10/09 01:36:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -127,7 +127,13 @@ V *vp;
 
 	loadstr(s,&name); 
 	if ( name ) {
-		makevar(name,&p);
+    FUNC f;
+
+    gen_searchf_searchonly(name,&f,1);
+    if ( f )
+		  makesrvar(f,&p);
+    else
+		  makevar(name,&p);
 		*vp = VR(p);
 	} else
 		*vp = 0;

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.19 2015/08/14 13:51:55 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.20 2015/08/18 02:26:05 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -758,6 +758,7 @@ void read_cmo_p(FILE *s,P *rp)
   P v,p;
   VL tvl,rvl;
   char *name;
+  FUNC f;
 
   read_cmo(s,&obj); vlist = (LIST)obj;
   nv = length(BDY(vlist));
@@ -765,7 +766,12 @@ void read_cmo_p(FILE *s,P *rp)
   for ( i = 0, t = BDY(vlist); i < nv; t = NEXT(t), i++ ) {
 /*    cmoname_to_localname(BDY((STRING)BDY(t)),&name); */
     name = BDY((STRING)BDY(t));
-    makevar(name,&v); vtab[i] = VR(v);
+    gen_searchf_searchonly(name,&f,1);
+    if ( f )
+      makesrvar(f,&v);
+    else
+      makevar(name,&v);
+    vtab[i] = VR(v);
   }
   remote_vtab = vtab;
   read_cmo(s,&obj); p = (P)obj;
