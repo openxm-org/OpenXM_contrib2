@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.31 2015/08/20 08:42:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.32 2015/08/21 06:00:29 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -6,6 +6,7 @@
 Q ox_pari_stream;
 int ox_pari_stream_initialized = 0;
 int ox_get_pari_result = 0;
+P ox_pari_starting_function = 0;
 
 typedef void (*mpfr_func)(NODE,Obj *);
 
@@ -109,6 +110,7 @@ pointer evalparif(FUNC f,NODE arg)
   USINT ui;
   Obj ret,dmy;
   mpfr_func mpfr_function;
+  V v;
 
   if ( arg && ARG0(arg) && NID((Num)ARG0(arg)) != N_C 
     && (mpfr_function = mpfr_search(f->name)) ) {
@@ -117,9 +119,18 @@ pointer evalparif(FUNC f,NODE arg)
   }
 
   if ( !ox_pari_stream_initialized ) {
+	if ( ox_pari_starting_function && OID(ox_pari_starting_function) == O_P ) {
+		v = VR(ox_pari_starting_function);
+		if ( (int)v->attr != V_SR ) {
+			error("pari : no handler.");
+		}
+		MKNODE(nd,0,0);
+		r = (Q)bevalf((FUNC)v->priv,0);
+	}else {
 	MKSTR(name,"ox_pari");
 	nd = mknode(2,NULL,name);
 	Pox_launch_nox(nd,&r);
+	}
 	ox_pari_stream = r;
     ox_pari_stream_initialized = 1;
   }

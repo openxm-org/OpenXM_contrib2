@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.48 2015/08/14 13:51:54 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.49 2016/03/31 06:41:20 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -172,8 +172,10 @@ Q *rp;
 	STRING s;
 	NODE node,p;
 	LIST list;
+	P f;
 	extern Q ox_pari_stream;
 	extern int ox_pari_stream_initialized;
+	extern P ox_pari_starting_function;
 
 	if ( !arg ) {
 		*rp = 0;
@@ -263,7 +265,6 @@ Q *rp;
 		}
 		return;
 	} else if ( !strcmp(key,"oxpari_id") ) {
-        *rp = 0;
         if ( argc(arg) == 1 ) {
             if(!ox_pari_stream_initialized) {
                 t=-1;
@@ -280,6 +281,19 @@ Q *rp;
 			}else {
                 t=-1;
                 STOQ(t,*rp);
+			}
+		}
+		return;
+	} else if ( !strcmp(key,"oxpari_start") ) {
+        if ( argc(arg) == 1 ) {
+			*rp = ox_pari_starting_function;
+		} else {
+			f = (Obj)ARG1(arg);
+			if ( !f || OID(f) == O_P) {
+				ox_pari_starting_function = f;
+				*rp = f;
+			}else {
+				*rp = 0;
 			}
 		}
 		return;
