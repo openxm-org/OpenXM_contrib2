@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.224 2016/03/31 01:40:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.225 2016/03/31 02:42:43 noro Exp $ */
 
 #include "nd.h"
 
@@ -658,7 +658,9 @@ int ndl_module_weight_compare(UINT *d1,UINT *d2)
   s = 0;
   for ( j = 0; j < nd_nvar; j++ )
      s += (GET_EXP(d1,j)-GET_EXP(d2,j))*nd_poly_weight[j];
-  s += nd_module_weight[MPOS(d1)-1]-nd_module_weight[MPOS(d2)-1];
+  if ( MPOS(d1) >= 1 && MPOS(d2) >= 1 ) {
+    s += nd_module_weight[MPOS(d1)-1]-nd_module_weight[MPOS(d2)-1];
+  }
   if ( s > 0 ) return 1;
   else if ( s < 0 ) return -1;
   else return 0;
