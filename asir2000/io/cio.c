@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.20 2015/08/18 02:26:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.21 2016/03/31 05:30:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -248,25 +248,19 @@ void write_cmo_real(FILE *s,Real real)
 
 void write_cmo_bf(FILE *s,BF bf)
 {
-  unsigned int r,u,l;
-  int len,t,i;
-  L exp;  
-  UL *ptr;
+  unsigned int r;
+  int len_r,len;
+  unsigned int *ptr;
 
   r = CMO_BIGFLOAT; write_int(s,&r);
-  write_int(s,&MPFR_SIGN(bf->body));
-  write_int(s,(unsigned int *)&MPFR_PREC(bf->body));
-  exp = MPFR_EXP(bf->body);
-  write_int64(s,&exp);
-  len = MPFR_LIMB_SIZE(bf->body);
-#if SIZEOF_LONG == 4
+  r = MPFR_PREC(bf->body); write_int(s,&r);
+  r = MPFR_SIGN(bf->body); write_int(s,&r);
+  r = MPFR_EXP(bf->body);  write_int(s,&r);
+  len_r = MPFR_LIMB_SIZE_REAL(bf->body);
+  len   = MPFR_LIMB_SIZE_BODY(bf->body);
   write_int(s,&len);
-  write_intarray(s,(int *)MPFR_MANT(bf->body),len);
-#else /* SIZEOF_LONG == 8 */
-  t = (MPFR_PREC(bf->body)+31)/32;
-  write_int(s,&t);
-  write_longarray(s,MPFR_MANT(bf->body),t);
-#endif
+  ptr = (unsigned int *)MPFR_MANT(bf->body);
+  write_intarray(s,ptr+(len_r-len),len);
 }
 
 void write_cmo_zz(FILE *s,int sgn,N n)
@@ -659,24 +653,21 @@ void read_cmo_zz(FILE *s,int *sgn,N *rp)
 void read_cmo_bf(FILE *s,BF *bf)
 {
   BF r;
-  int sgn,prec,len,i;
-  unsigned int u,l;
-  UL *ptr;
-  L exp;  
+  int sgn,prec,exp,len,len_r;
+  unsigned int *ptr;
 
   NEWBF(r);
-  read_int(s,&sgn);
   read_int(s,&prec);
-  read_int64(s,&exp);
+  read_int(s,&sgn);
+  read_int(s,&exp);
   read_int(s,&len);
   mpfr_init2(r->body,prec);
   MPFR_SIGN(r->body) = sgn;
   MPFR_EXP(r->body) = exp;
-#if SIZEOF_LONG == 4
-  read_intarray(s,(int *)MPFR_MANT(r->body),len);
-#else /* SIZEOF_LONG == 8 */
-  read_longarray(s,MPFR_MANT(r->body),len);
-#endif
+  *(MPFR_MANT(r->body)) = 0;
+  ptr = (unsigned int *)MPFR_MANT(r->body);
+  len_r = MPFR_LIMB_SIZE_REAL(r->body);
+  read_intarray(s,ptr+(len_r-len),len);
   *bf = r;
 }
 

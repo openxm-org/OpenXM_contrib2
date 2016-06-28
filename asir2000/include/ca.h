@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.94 2015/08/20 08:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.95 2016/03/31 01:40:11 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <gmp.h>
 #include <mpc.h>
+#include <limits.h>
 
 /* from mpfr-impl.h */
 #define MPFR_PREC(x)      ((x)->_mpfr_prec)
@@ -58,6 +59,10 @@
 #define MPFR_MANT(x)      ((x)->_mpfr_d)
 #define MPFR_LAST_LIMB(x) ((MPFR_PREC (x) - 1) / GMP_NUMB_BITS)
 #define MPFR_LIMB_SIZE(x) (MPFR_LAST_LIMB (x) + 1)
+
+#define RAT_CEIL(nm,dn) (((nm)+(dn)-1)/((dn)))
+#define MPFR_LIMB_SIZE_REAL(x) (RAT_CEIL(MPFR_PREC((x)),sizeof(mp_limb_t)*CHAR_BIT) * (sizeof(mp_limb_t)/sizeof(int)) )
+#define MPFR_LIMB_SIZE_BODY(x) (RAT_CEIL(MPFR_PREC((x)),sizeof(unsigned int)*CHAR_BIT))
 
 #if defined(hpux)
 #include <netinet/in.h>
