@@ -1,11 +1,11 @@
-@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.3 2015/03/12 17:25:50 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.4 2015/03/15 19:27:14 ohara Exp $
 @echo off
 
 setlocal
 
-set PATH=..;..\..;%PATH%
+set PATH=..;..\..;%PATH%;c:\cygwin\bin;c:\cygwin64\bin
 set lang=%~1
-set PERL=c:\cygwin\bin\perl
+set PERL=perl
 
 REM 相対パスを絶対パスに変換する
 REM 重要!! %%~fi と ) の間に空白を入れてはならない!!
