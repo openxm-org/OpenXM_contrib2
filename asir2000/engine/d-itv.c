@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.5 2015/08/08 14:19:41 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.6 2015/08/14 13:51:54 fujimoto Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -94,7 +94,7 @@ double NatToRealUp(N a, int *expo)
 #ifdef vax
 	t = m[0]; m[0] = m[1]; m[1] = t; itod(m);
 #endif
-#if defined(MIPSEL) || defined(TOWNS) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(MIPSEL) || defined(TOWNS) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(ANDROID)
 	t = m[0]; m[0] = m[1]; m[1] = t;
 #endif
 	return *((double *)m);
@@ -124,7 +124,7 @@ static double	Q2doubleDown(Q a)
 #ifdef vax
 			s = p[0]; p[0] = p[1]; p[1] = s; itod(p);
 #endif
-#if defined(MIPSEL) || defined(TOWNS) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(MIPSEL) || defined(TOWNS) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) | defined(ANDROID)
 			s = p[0]; p[0] = p[1]; p[1] = s;
 #endif
 			FPMINUSINF
@@ -161,7 +161,7 @@ static double	Q2doubleUp(Q a)
 #ifdef vax
 			s = p[0]; p[0] = p[1]; p[1] = s; itod(p);
 #endif
-#if defined(MIPSEL) || defined(TOWNS) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(MIPSEL) || defined(TOWNS) || defined(linux) || defined(__alpha) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(ANDROID)
 			s = p[0]; p[0] = p[1]; p[1] = s;
 #endif
 #if 0

@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.12 2015/08/06 10:01:52 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.13 2015/08/14 13:51:55 fujimoto Exp $
 */
 #ifndef	_INTERVAL_H
 #define	_INTERVAL_H
@@ -33,6 +33,22 @@ static char	*Interval_dummy;
 #ifdef	linux
 #include	<fpu_control.h>
 #if 1
+
+#if defined(__ARM_ARCH) || defined(ANDROID)
+#ifndef _FPU_RC_NEAREST
+#define _FPU_RC_NEAREST 0x0
+#endif
+#ifndef _FPU_RC_DOWN
+#define _FPU_RC_DOWN    0x400
+#endif
+#ifndef _FPU_RC_UP
+#define _FPU_RC_UP      0x800
+#endif
+#ifndef _FPU_RC_ZERO
+#define _FPU_RC_ZERO    0xC00
+#endif
+#endif /* __ARM_ARCH */
+
 #define	LINUX_FPU_RC_MASK				0xf3ff
 #define	LINUX_FPU_SETCW(c)			\
 {fpu_control_t __tmp__; _FPU_GETCW(__fpu_control);\

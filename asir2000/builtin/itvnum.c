@@ -1,11 +1,13 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.8 2015/08/08 14:19:41 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/itvnum.c,v 1.9 2015/08/14 13:51:54 fujimoto Exp $
  */
 
 #include "ca.h"
 #include "parse.h"
 #include "version.h"
+#if !defined(ANDROID)
 #include "../plot/ifplot.h"
+#endif
 
 #if defined(INTERVAL)
 
