@@ -44,6 +44,9 @@
             <Component Id="cmp8CDFDD4D149A75F128EC229F16398FFC" Guid="85A69574-244C-40A2-BB4E-E6218E40EA11">
                 <File Id="fil69A3775719D2FA4866FF3EE8F86DEF18" KeyPath="yes" Source="$(var.contribDir)\gnuplotf.rr" />
             </Component>
+            <Component Id="cmp151795882726CE28AA1DF4CA49F04858" Guid="1FC1BCB1-BC55-4380-8B61-3353140B0455">
+                <File Id="fil8AD22D8872AC0AD411830A95EEBBAD89" KeyPath="yes" Source="$(var.contribDir)\gtt_ekn.rr" />
+            </Component>
             <Component Id="cmp2EBC516B2C2DCB78D20204511C5C10B9" Guid="8BCD5643-A7BE-4ECA-AC73-6F4C56446DC2">
                 <File Id="fil769A417E9FC2EB12F1D361F954883235" KeyPath="yes" Source="$(var.contribDir)\hermit.rr" />
             </Component>
@@ -103,6 +106,9 @@
             </Component>
             <Component Id="cmpF70FBA9207EF39BCE28811F8B18D3C40" Guid="D12DCECA-0B18-4643-9187-E9B99B5D5C02">
                 <File Id="fil11FCF3BBDCA0F214123B5A3815856CA4" KeyPath="yes" Source="$(var.contribDir)\noro_de.rr" />
+            </Component>
+            <Component Id="cmp41E15856624364326C1C81C08B9CF95F" Guid="521D0615-7059-470C-974D-3B137DD5824A">
+                <File Id="filCA98CEB866EACD4C284A13BAB24A2994" KeyPath="yes" Source="$(var.contribDir)\noro_grcrt.rr" />
             </Component>
             <Component Id="cmp7DECBFF38704400E06C98A02C3F82A95" Guid="27D4C958-72F5-4DFA-B083-1009F8C70E3E">
                 <File Id="filB29097F3C40FC3D46B6FE0BCA8132370" KeyPath="yes" Source="$(var.contribDir)\noro_gw.rr" />
@@ -164,8 +170,17 @@
             <Component Id="cmpF6854F57B9B062796479DB9006FE6363" Guid="20481759-1ED5-4789-B2AE-9ED3DD26BEF5">
                 <File Id="fil1810C16EE465452866A798C674988812" KeyPath="yes" Source="$(var.contribDir)\om.rr" />
             </Component>
+            <Component Id="cmp98B5394117FE1F96DA12059C74D73A12" Guid="5AA19B8E-8A7A-417C-9B69-EDC4134CA2B5">
+                <File Id="filBF809F57DAD2CA16B4D9FDD60FA41915" KeyPath="yes" Source="$(var.contribDir)\os_muldif.rr" />
+            </Component>
+            <Component Id="cmpA5CB04D04E9C83B77048CD0AB7C296D2" Guid="98ED2D78-EE26-4D8C-8608-E4A647B635E2">
+                <File Id="fil19D246B0EACE41B754811939C9811A78" KeyPath="yes" Source="$(var.contribDir)\ot_hessian_ahg.rr" />
+            </Component>
             <Component Id="cmp2277A7B5C951A4DAB5A154455CAFEE00" Guid="FDCE894C-8CB4-4453-AD8B-CE05C9DB652E">
                 <File Id="fil977150AC0730D3BFC6B511301C0A5CBA" KeyPath="yes" Source="$(var.contribDir)\ot_hgm_ahg.rr" />
+            </Component>
+            <Component Id="cmpDA0671D816E881B0C50057122CA28C1F" Guid="A793D167-3680-4464-8376-69D1E23F54AF">
+                <File Id="fil43D5D4A98C6A05AED6A6A65463063C57" KeyPath="yes" Source="$(var.contribDir)\oxpari-win.rr" />
             </Component>
             <Component Id="cmp82337225B19707D20DBC0A0337AB135B" Guid="AEC242E6-4FCC-4730-8C67-555099F080A6">
                 <File Id="filEF7879E0BB83A0C09746C2FE24349CA4" KeyPath="yes" Source="$(var.contribDir)\oxrfc100.rr" />
@@ -263,6 +278,9 @@
             <Component Id="cmp9E860A6C6942229078E5DE3F2E05BD1F" Guid="DD229CDB-039E-4756-9F90-464FF5DC3268">
                 <File Id="filC90989DC096D480BF631ABB999C72A7A" KeyPath="yes" Source="$(var.contribDir)\taka_weyl.rr" />
             </Component>
+            <Component Id="cmp9252724B140CF644F8B1E46FBD8BC280" Guid="B815B7A9-49D8-4034-80C6-4E82C51CAC0E">
+                <File Id="filBAE92D06C86A873C8E0DDE9AA974E7BA" KeyPath="yes" Source="$(var.contribDir)\test_hook.rr" />
+            </Component>
             <Component Id="cmp9B4AD281876C6032FAD7AE71DE7D4B7F" Guid="EEADF5AB-01A9-4AD0-8259-D56EC24BB6E0">
                 <File Id="fil2CFDB6B637D736CCDB657BBDE6FF5009" KeyPath="yes" Source="$(var.contribDir)\tex_symbols.rr" />
             </Component>
@@ -283,6 +301,9 @@
             </Component>
             <Component Id="cmpB28D62C7C0E433C1BAF291E2C7B2C555" Guid="DDBEA92E-7E8C-4CF2-A7F3-B12688E95911">
                 <File Id="fil2FCECDE29B2293CCC4BBC0F2C56FC952" KeyPath="yes" Source="$(var.contribDir)\tk_fd.rr" />
+            </Component>
+            <Component Id="cmpD98AF800A84635E993DA53C22551F323" Guid="DAA760D9-95F3-4C47-B935-C8A3AFE5EF0E">
+                <File Id="fil50887C8CAC485C79DB81AA95A4DE9726" KeyPath="yes" Source="$(var.contribDir)\tk_hgpoly.rr" />
             </Component>
             <Component Id="cmp301DA0BF07FDC694224C862E092D05CA" Guid="2BA54D3E-8B68-45A8-A2AE-46E5A97CEC34">
                 <File Id="fil9B6A3B901BCFC0980FDDFB932A0BEC53" KeyPath="yes" Source="$(var.contribDir)\tk_intde-1.rr" />
@@ -345,6 +366,23 @@
                     <File Id="filCE65A22DDA02F8AE5BCF28AC52EACFD7" KeyPath="yes" Source="$(var.contribDir)\f_res\tools.rr" />
                 </Component>
             </Directory>
+             <Directory Id="dir7E151A1F00ABC885CA5B521CDCF178B3" Name="gtt_ekn">
+                 <Component Id="cmpC991C9BD192492AE06CED6C20AFBA3A6" Guid="452600DD-C464-4712-ADE1-1A28DA1F15FB">
+                     <File Id="filCE241B5776F9E09944939FD12B287ED3" KeyPath="yes" Source="$(var.contribDir)\gtt_ekn\childprocess.rr" />
+                 </Component>
+                 <Component Id="cmp637F03462E60265A18AE8AFDB8B0958F" Guid="2911CA59-25A7-4F98-83BC-FE44272B69AB">
+                     <File Id="fil3E6A1E80ACBCFE916AA9910953B504F7" KeyPath="yes" Source="$(var.contribDir)\gtt_ekn\ekn_eval.rr" />
+                 </Component>
+                 <Component Id="cmpAE9568D61D82CE79B6C125DA3694CC36" Guid="F93DDA25-0733-4D45-81B3-ABA5ADA6754B">
+                     <File Id="fil01A28A5F3A8DBE84FA370965E96925EC" KeyPath="yes" Source="$(var.contribDir)\gtt_ekn\ekn_pfaffian_8.rr" />
+                 </Component>
+                 <Component Id="cmpE304922E7E13BD7FB91D695DDF8F1B7F" Guid="4037AEF5-283C-4E5D-B924-7F3677855CE8">
+                     <File Id="fil03672136BD94745F595FAABD287A0958" KeyPath="yes" Source="$(var.contribDir)\gtt_ekn\g_mat_fac.rr" />
+                 </Component>
+                 <Component Id="cmp7D9E83CAB14FEE1D6E0D161DE7DA3758" Guid="A135AB40-2166-421B-B92E-BC42940CE0AB">
+                     <File Id="filE5114F2D97C64DECC2FA5A672953415F" KeyPath="yes" Source="$(var.contribDir)\gtt_ekn\test-tb1.rr" />
+                 </Component>
+             </Directory>
             <Directory Id="dirB98DA44485958D0A5A0102F933B8BA30" Name="nk_gfan_4ti2">
                 <Component Id="cmpA431B34D5A19FAA5F137432B9477B38B" Guid="2B39E44A-3187-4AE7-A8A1-2131665FF8E7">
                     <File Id="fil527734511A7CD7BA9BECF24EBF3E85EB" KeyPath="yes" Source="$(var.contribDir)\nk_gfan_4ti2\4ti2_rr.rb" />
@@ -437,6 +475,7 @@
             <ComponentRef Id="cmp98FA59BDC9476BB84C9F44DCC912D893" />
             <ComponentRef Id="cmpD94BAFF16E666E49D42DD37BB0DEEBDE" />
             <ComponentRef Id="cmp8CDFDD4D149A75F128EC229F16398FFC" />
+            <ComponentRef Id="cmp151795882726CE28AA1DF4CA49F04858" />
             <ComponentRef Id="cmp2EBC516B2C2DCB78D20204511C5C10B9" />
             <ComponentRef Id="cmpD094D2D8AFC1CCFB545DACDD89D49705" />
             <ComponentRef Id="cmpB259F4D4488F025ECC3ABAAD34A05494" />
@@ -457,6 +496,7 @@
             <ComponentRef Id="cmp683AE228E98077755EAB5E5305166180" />
             <ComponentRef Id="cmpC251678517D46321743D6C19C4047A72" />
             <ComponentRef Id="cmpF70FBA9207EF39BCE28811F8B18D3C40" />
+            <ComponentRef Id="cmp41E15856624364326C1C81C08B9CF95F" />
             <ComponentRef Id="cmp7DECBFF38704400E06C98A02C3F82A95" />
             <ComponentRef Id="cmp9F63BF783837E82C54BBA8CD4EAD3083" />
             <ComponentRef Id="cmpC7D1881810843269B2D07A7E24BCC87C" />
@@ -477,7 +517,10 @@
             <ComponentRef Id="cmp8C9D29AD8A5E7BD3E60291C9FEDE35EF" />
             <ComponentRef Id="cmp0117FC7A9F5040725826035228FC2AD3" />
             <ComponentRef Id="cmpF6854F57B9B062796479DB9006FE6363" />
+            <ComponentRef Id="cmp98B5394117FE1F96DA12059C74D73A12" />
+            <ComponentRef Id="cmpA5CB04D04E9C83B77048CD0AB7C296D2" />
             <ComponentRef Id="cmp2277A7B5C951A4DAB5A154455CAFEE00" />
+            <ComponentRef Id="cmpDA0671D816E881B0C50057122CA28C1F" />
             <ComponentRef Id="cmp82337225B19707D20DBC0A0337AB135B" />
             <ComponentRef Id="cmp27F3D0188A11974BE75367286064B580" />
             <ComponentRef Id="cmp2C80985970F202136088982CD2957720" />
@@ -510,6 +553,7 @@
             <ComponentRef Id="cmpCEBEEEDD118A63E85EE917455D003981" />
             <ComponentRef Id="cmp5979478AFE1EEDB79D2288174DE2873E" />
             <ComponentRef Id="cmp9E860A6C6942229078E5DE3F2E05BD1F" />
+            <ComponentRef Id="cmp9252724B140CF644F8B1E46FBD8BC280" />
             <ComponentRef Id="cmp9B4AD281876C6032FAD7AE71DE7D4B7F" />
             <ComponentRef Id="cmp7C1DEBBAE5F3D4D5641D6AFF0AEE9584" />
             <ComponentRef Id="cmpB99B702A3700F9A5C01B8167796339B0" />
@@ -517,6 +561,7 @@
             <ComponentRef Id="cmpDB8606CB40EF944185838AD28276B279" />
             <ComponentRef Id="cmpF61E7DDCA2B0497A1297AD1D991BD57A" />
             <ComponentRef Id="cmpB28D62C7C0E433C1BAF291E2C7B2C555" />
+            <ComponentRef Id="cmpD98AF800A84635E993DA53C22551F323" />
             <ComponentRef Id="cmp301DA0BF07FDC694224C862E092D05CA" />
             <ComponentRef Id="cmp73DAB3216C9E9CC2129561F8359EBA26" />
             <ComponentRef Id="cmp899FA28684D99E515D872932130926B8" />
@@ -536,6 +581,11 @@
             <ComponentRef Id="cmpC568240CFC2061863D48515C9C7F42A9" />
             <ComponentRef Id="cmpAC361EA4C98AE50F4242EDA9AEE9C77B" />
             <ComponentRef Id="cmp7F7D6F3BF4EAB254E0B959C9E6DD226C" />
+            <ComponentRef Id="cmpC991C9BD192492AE06CED6C20AFBA3A6" />
+            <ComponentRef Id="cmp637F03462E60265A18AE8AFDB8B0958F" />
+            <ComponentRef Id="cmpAE9568D61D82CE79B6C125DA3694CC36" />
+            <ComponentRef Id="cmpE304922E7E13BD7FB91D695DDF8F1B7F" />
+            <ComponentRef Id="cmp7D9E83CAB14FEE1D6E0D161DE7DA3758" />
             <ComponentRef Id="cmpA431B34D5A19FAA5F137432B9477B38B" />
             <ComponentRef Id="cmp2483EEE62F64C994464C6D48475A33B6" />
             <ComponentRef Id="cmp2BF7A9F54ECCC9FF35A60039F1559583" />
