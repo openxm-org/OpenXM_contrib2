@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.28 2015/08/14 13:51:55 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.29 2015/08/18 02:26:05 noro Exp $ 
 */
 #include "com.h"
 
@@ -105,6 +105,7 @@
 
 #define CMO_BIGFLOAT				50
 #define CMO_IEEE_DOUBLE_FLOAT		51
+#define CMO_BIGFLOAT32				52
 
 #define CMO_INDETERMINATE		60
 #define CMO_TREE				61

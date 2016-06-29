@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.21 2016/03/31 05:30:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cio.c,v 1.22 2016/06/28 11:59:30 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -176,7 +176,7 @@ int cmo_tag(Obj obj,int *tag)
         case N_R:
           *tag = CMO_IEEE_DOUBLE_FLOAT; break;
         case N_B:
-          *tag = CMO_BIGFLOAT; break;
+          *tag = CMO_BIGFLOAT32; break;
         case N_C:
           *tag = CMO_COMPLEX; break;
         default:
@@ -252,7 +252,7 @@ void write_cmo_bf(FILE *s,BF bf)
   int len_r,len;
   unsigned int *ptr;
 
-  r = CMO_BIGFLOAT; write_int(s,&r);
+  r = CMO_BIGFLOAT32; write_int(s,&r);
   r = MPFR_PREC(bf->body); write_int(s,&r);
   r = MPFR_SIGN(bf->body); write_int(s,&r);
   r = MPFR_EXP(bf->body);  write_int(s,&r);
@@ -546,7 +546,7 @@ void read_cmo(FILE *s,Obj *rp)
     case CMO_IEEE_DOUBLE_FLOAT:
       read_double(s,&dbl); MKReal(dbl,real); *rp = (Obj)real;
       break;
-    case CMO_BIGFLOAT:
+    case CMO_BIGFLOAT32:
       read_cmo_bf(s,&bf); *rp = (Obj)bf;
       break;
     case CMO_COMPLEX:
