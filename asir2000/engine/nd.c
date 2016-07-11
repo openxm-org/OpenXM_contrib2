@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.225 2016/03/31 02:42:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.226 2016/04/05 04:21:18 noro Exp $ */
 
 #include "nd.h"
 
@@ -2360,9 +2360,11 @@ again:
         FREENDP(l);
     }
     if ( nd_nalg ) {
-        print_eg("monic",&eg_monic);
-        print_eg("invdalg",&eg_invdalg);
-        print_eg("le",&eg_le);
+        if ( DP_Print ) {
+          print_eg("monic",&eg_monic);
+          print_eg("invdalg",&eg_invdalg);
+          print_eg("le",&eg_le);
+        }
     }
 	conv_ilist(nd_demand,1,g,indp);
     if ( DP_Print ) { printf("nd_gb_trace done.\n"); fflush(stdout); }
@@ -6622,7 +6624,9 @@ init_eg(&eg_search);
 		}
 	}
 	mat->row = i;
-    fprintf(asir_out,"%dx%d,",mat->row,mat->col); fflush(asir_out);
+    if ( DP_Print ) {
+      fprintf(asir_out,"%dx%d,",mat->row,mat->col); fflush(asir_out);
+    }
 	size = ((col+BLEN-1)/BLEN)*sizeof(unsigned long);
 	v = CALLOC((col+BLEN-1)/BLEN,sizeof(unsigned long));
     for ( rp = rp0, i = 0; rp; rp = NEXT(rp), i++ ) {
@@ -6676,7 +6680,9 @@ init_eg(&eg_search);
     for ( i = 0; i < col; i++ ) rhead[i] = 0;
 
     /* construction of index arrays */
-	fprintf(stderr,"%dx%d,",nsp+nred,col);
+    if ( DP_Print ) {
+	  fprintf(stderr,"%dx%d,",nsp+nred,col);
+    }
     rvect = (NM_ind_pair *)ALLOCA(nred*sizeof(NM_ind_pair));
     s0hash = (int *)ALLOCA(col*sizeof(int));
     for ( i = 0, s = s0vect; i < col; i++, s += nd_wpd )
@@ -6690,7 +6696,7 @@ init_eg(&eg_search);
         r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
     else
         r0 = nd_f4_red_gz_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
-print_eg("search",&eg_search);
+    if ( DP_Print ) print_eg("search",&eg_search);
     return r0;
 }
 
