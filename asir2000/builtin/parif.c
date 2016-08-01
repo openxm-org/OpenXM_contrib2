@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.32 2015/08/21 06:00:29 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.33 2016/04/01 03:04:35 ohara Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -174,7 +174,7 @@ struct pariftab {
 
 /*
  * type = 1 => argc = 1, second arg = precision
- * type = 2 => argc = 1, second arg = optional (long int)
+ * type = 2 => argc = 1, second arg = (long int)0
  *
  */
 /*
