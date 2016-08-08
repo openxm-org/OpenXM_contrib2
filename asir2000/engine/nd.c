@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.226 2016/04/05 04:21:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.227 2016/07/11 08:00:30 noro Exp $ */
 
 #include "nd.h"
 
@@ -93,7 +93,7 @@ ND ndgztond(ND p);
 void Pdp_set_weight(NODE,VECT *);
 void Pox_cmo_rpc(NODE,Obj *);
 
-extern int Denominator,DP_Multiple;
+extern int Denominator,DP_Multiple,MaxDeg;
 
 #define BLEN (8*sizeof(unsigned long))
 
@@ -2005,6 +2005,7 @@ NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
     while ( d ) {
 again:
         l = nd_minp(d,&d);
+        if ( MaxDeg > 0 && SG(l) > MaxDeg ) break;
         if ( SG(l) != sugar ) {
             if ( ishomo ) {
                 diag_count = 0;
@@ -2263,6 +2264,7 @@ NODE nd_gb_trace(int m,int ishomo,int **indp)
     while ( d ) {
 again:
         l = nd_minp(d,&d);
+        if ( MaxDeg > 0 && SG(l) > MaxDeg ) break;
         if ( SG(l) != sugar ) {
 #if 1
             if ( ishomo ) {
@@ -3564,6 +3566,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         for ( t = fd0; t; t = NEXT(t) )
             ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
+    if ( MaxDeg > 0 ) nocheck = 1;
     while ( 1 ) {
 		tl1 = tl2 = tl3 = tl4 = 0;
         if ( Demand )
@@ -6203,6 +6206,7 @@ NODE nd_f4(int m,int **indp)
         get_eg(&eg0);
         l = nd_minsugarp(d,&d);
         sugar = SG(l);
+        if ( MaxDeg > 0 && sugar > MaxDeg ) break;
         if ( nd_nzlist ) {
             for ( tn = nd_nzlist; tn; tn = NEXT(tn) ) {
                 node = BDY((LIST)BDY(tn));
@@ -6315,6 +6319,7 @@ NODE nd_f4_trace(int m,int **indp)
         get_eg(&eg0);
         l = nd_minsugarp(d,&d);
         sugar = SG(l);
+        if ( MaxDeg > 0 && sugar > MaxDeg ) break;
         bucket = create_pbucket();
         stat = nd_sp_f4(m,0,l,bucket);
         if ( !stat ) {

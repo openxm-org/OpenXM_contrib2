@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.70 2015/08/06 10:01:51 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.71 2015/08/14 13:51:54 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -98,6 +98,7 @@ int GenTrace = 0;
 int GenSyz = 0;
 int OXCheck = -1;
 int OneZeroHomo = 0;
+int MaxDeg = 0;
 
 int NoSugar = 0;
 static int NoCriB = 0;
@@ -2326,6 +2327,8 @@ void dp_set_flag(Obj name,Obj value)
 		GenSyz = v;
 	else if ( !strcmp(n,"OneZeroHomo") )
 		OneZeroHomo = v;
+	else if ( !strcmp(n,"MaxDeg") )
+		MaxDeg = v;
 }
 
 void dp_make_flaglist(LIST *list)
@@ -2353,6 +2356,8 @@ void dp_make_flaglist(LIST *list)
 	STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
 	STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
 	STOQ(GenSyz,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenSyz"); MKNODE(n1,name,n); n = n1;
+	STOQ(MaxDeg,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"MaxDeg"); MKNODE(n1,name,n); n = n1;
+	STOQ(OneZeroHomo,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OneZeroHomo"); MKNODE(n1,name,n); n = n1;
 	STOQ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
 	STOQ(ShowMag,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"ShowMag"); MKNODE(n1,name,n); n = n1;
 	STOQ(Top,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Top"); MKNODE(n1,name,n); n = n1;
