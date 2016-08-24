@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.49 2016/03/31 06:41:20 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.50 2016/04/01 03:04:35 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -112,6 +112,7 @@ extern int diag_period;
 extern int weight_check;
 extern char **ASIRLOADPATH;
 extern int ASIRLOADPATH_LEN;
+extern int No_ox_reset;
 
 static struct {
 	char *key;
@@ -151,6 +152,7 @@ static struct {
 	{"no_debug_on_error",&no_debug_on_error},
 	{"diag_period",&diag_period},
 	{"weight_check",&weight_check},
+	{"no_ox_reset",&No_ox_reset},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
 	{"itvplotsize",&Itvplot},
