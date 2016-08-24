@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.49 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.50 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -74,7 +74,6 @@ extern Obj VOIDobj;
 
 extern int main_parser;
 extern char *parse_strp;
-extern int recv_intr;
 
 #define NBUFSIZ (BUFSIZ*10)
 #define TBUFSIZ (BUFSIZ)
@@ -625,16 +624,7 @@ int Egetc(FILE *fp)
 #endif
 			c = getc(fp);
 #if defined(VISUAL) || defined(__MINGW32__)
-		if ( recv_intr ) {
-#include <signal.h>
-			if ( recv_intr == 1 ) {
-				recv_intr = 0;
-				int_handler(SIGINT);
-			} else {
-				recv_intr = 0;
-				ox_usr1_handler(0);
-			}
-		}
+		check_intr();
 #endif
 		if ( c == EOF )
 			return c;

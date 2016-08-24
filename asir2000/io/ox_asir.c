@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.76 2015/08/14 13:51:55 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.77 2016/08/24 05:33:58 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -163,19 +163,9 @@ void ox_main(int argc,char **argv) {
 		ox_send_sync(0);
 	}
 	while ( 1 ) {
-		extern int recv_intr;
-
 		serial = ox_recv(0,&id,&obj);
 #if defined(VISUAL) || defined(__MINGW32__)
-		if ( recv_intr ) {
-			if ( recv_intr == 1 ) {
-				recv_intr = 0;
-				int_handler(SIGINT);
-			} else {
-				recv_intr = 0;
-				ox_usr1_handler(0);
-			}
-		}
+		check_intr();
 #endif
 		if ( do_message )
 			fprintf(stderr,"#%d Got %s",serial,name_of_id(id));

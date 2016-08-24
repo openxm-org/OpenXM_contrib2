@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.91 2015/08/19 05:29:23 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.92 2016/08/24 05:33:58 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -890,7 +890,7 @@ void check_intr()
 	if ( recv_intr ) {
 		if ( recv_intr == 1 ) {
 			recv_intr = 0;
-			int_handler(0);
+			int_handler(SIGINT);
 		} else {
 			recv_intr = 0;
 			ox_usr1_handler(0);

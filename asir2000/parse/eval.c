@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.73 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.74 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -64,7 +64,6 @@ extern NODE PVSS;
 
 int f_break,f_return,f_continue;
 int evalstatline;
-int recv_intr;
 int show_crossref;
 int at_root;
 void gen_searchf_searchonly(char *name,FUNC *r,int global);
@@ -93,16 +92,7 @@ pointer eval(FNODE f)
 	QUOTE expr,pattern;
 
 #if defined(VISUAL) || defined(__MINGW32__)
-	if ( recv_intr ) {
-#include <signal.h>
-		if ( recv_intr == 1 ) {
-			recv_intr = 0;
-			int_handler(SIGINT);
-		} else {
-			recv_intr = 0;
-			ox_usr1_handler(0);
-		}
-	}
+	check_intr();
 #endif
 	if ( !f )
 		return ( 0 );
