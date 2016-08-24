@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.36 2015/08/18 02:26:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.37 2016/06/29 05:10:14 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -82,6 +82,7 @@ struct mathcap {
 	unsigned int *smcap;
 	int noxcap;
 	struct oxcap *oxcap;
+  int no_ox_reset;
 };
 
 struct oxcap *my_oxcap;
@@ -107,6 +108,15 @@ void cleanup_events()
 	SetEvent(hStreamNotify_Ack);
 }
 #endif
+
+/* 1 if no_ox_reset, 0 if ox_reset OK, -1 if invalid */
+int no_ox_reset(int s)
+{
+  if ( remote_mc && s >= 0 && s < remote_mc_len )
+    return remote_mc[s].no_ox_reset;
+  else
+    return -1;
+}
 
 void ox_resetenv(char *s)
 {
@@ -300,6 +310,7 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc)
 				[o2,[n21,n22,...]],
 				...
 			]
+      (optional)[s1,s2,...] (no_ox_reset)
 	   	]
 	*/
 	n = BDY(mclist);
@@ -332,6 +343,15 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc)
 		for ( t = cap, ptr = mc->oxcap[j].cap, i = 0; i < l; t = NEXT(t), i++ )
 			ptr[i] = BDY((USINT)BDY(t));
 	}
+  /* check of no_ox_reset */
+  mc->no_ox_reset = 0;
+	n = BDY(mclist);
+  if ( length(n) >= 4 ) {
+	  t = BDY((LIST)ARG3(n));
+    for ( ; t; t = NEXT(t) )
+      if ( !strcmp(BDY((STRING)BDY(t)),"no_ox_reset") )
+        mc->no_ox_reset = 1;
+  }
 }
 
 int check_sm_by_mc(int s,unsigned int smtag)

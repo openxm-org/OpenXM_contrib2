@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.69 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.70 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1461,6 +1461,8 @@ void Pox_reset(NODE arg,Q *rp)
 	m = m_c_tab[index].m;
 	c = m_c_tab[index].c;
 	if ( m >= 0 ) {
+    if ( no_ox_reset(c) == 1 )
+      error("The server does not implement ox_reset");
 		if ( argc(arg) == 1 ) {
 			ox_send_cmd(m,SM_control_reset_connection);
 			ox_flush_stream_force(m);
