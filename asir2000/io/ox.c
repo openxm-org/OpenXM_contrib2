@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.37 2016/06/29 05:10:14 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.38 2016/08/24 00:52:50 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -434,7 +434,7 @@ void ox_usr1_handler(int sig)
 	NODE t;
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	signal(SIGUSR1,ox_usr1_handler);
+	set_signal_for_restart(SIGUSR1,ox_usr1_handler);
 #endif
 	if ( critical_when_signal ) {
 		fprintf(stderr,"usr1 : critical\n");

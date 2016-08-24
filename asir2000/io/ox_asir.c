@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.75 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.76 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1044,7 +1044,7 @@ void ox_io_init() {
 	setbuffer(iofp[0].in,(char *)malloc(LBUFSIZ),LBUFSIZ);
 	setbuffer(iofp[0].out,(char *)malloc(LBUFSIZ),LBUFSIZ);
 #endif
-	signal(SIGUSR1,ox_usr1_handler);
+	set_signal(SIGUSR1,ox_usr1_handler);
 #endif
 	asir_OperandStackSize = BUFSIZ;
 	asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));

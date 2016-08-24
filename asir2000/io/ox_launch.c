@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.25 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.26 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -147,15 +147,15 @@ char **argv;
 		init_socket();
 #endif
 
-	signal(SIGINT,SIG_IGN);
+	set_signal(SIGINT,SIG_IGN);
 #if defined(SIGHUP)
-	signal(SIGHUP,SIG_IGN);
+	set_signal(SIGHUP,SIG_IGN);
 #endif
 #if defined(SIGUSR1)
-	signal(SIGUSR1,SIG_IGN);
+	set_signal(SIGUSR1,SIG_IGN);
 #endif
 #if defined(SIGTERM)
-	signal(SIGTERM,terminate_server);
+	set_signal(SIGTERM,terminate_server);
 #endif
 
 	/* XXX a dirty hack */

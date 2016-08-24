@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.95 2016/03/31 01:40:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.96 2016/06/28 11:59:30 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -786,8 +786,17 @@ typedef unsigned int ModNum;
 #define ALLOCA(d) MALLOC(d)
 #endif
 
+/* for handling signals */
+#if defined(HAVE_SIGACTION)  /* POSIX */
+void (*set_signal(int sig, void (*handler)(int)))(int);
+#define set_signal_for_restart(x,y) (0)
+#else
+#define set_signal(x,y)             (signal(x,y))
+#define set_signal_for_restart(x,y) (signal(x,y))
+#endif
+
 /* for setjmp/longjmp compatibility */
-#if defined(__CYGWIN__) || (defined(__x86_64) && !defined(__MINGW32__))
+#if defined(__CYGWIN__) || defined(HAVE_SIGACTION) || (defined(__x86_64) && !defined(__MINGW32__))
 #define JMP_BUF sigjmp_buf
 #define SETJMP(x) sigsetjmp(x,~0)
 #define LONGJMP(x,y) siglongjmp(x,y)

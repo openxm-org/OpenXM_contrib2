@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.90 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.91 2015/08/19 05:29:23 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
 #include "parse.h"
 #include "ox.h"
+#include <signal.h>
 #if !defined(VISUAL) && !defined(__MINGW32__) && !defined(_PA_RISC1_1) && !defined(linux) && !defined(SYSV) && !defined(__CYGWIN__) && !defined(__INTERIX) && !defined(__FreeBSD__)
 #include <sgtty.h>
 #endif
@@ -247,7 +248,7 @@ void asir_terminate(int status)
 		mpi_finalize();
 #else
 #if defined(SIGPIPE)
-		signal(SIGPIPE,SIG_IGN);
+		set_signal(SIGPIPE,SIG_IGN);
 #endif
 		close_allconnections();
 #endif
@@ -429,48 +430,63 @@ void process_args(int ac,char **av)
 #endif
 }
 
-#include <signal.h>
+#if defined(HAVE_SIGACTION)
+void (*set_signal(int sig, void (*handler)(int)))(int)
+{
+	struct sigaction act;
+	struct sigaction oldact;
+	if (handler == SIG_IGN || handler == SIG_DFL) {
+		return signal(sig,handler);
+	}
+	act.sa_handler=handler;
+	act.sa_flags=0;
+	act.sa_flags |= SA_RESTART;
+	sigemptyset(&act.sa_mask);
+	sigaction(sig,&act,&oldact);
+	return oldact.sa_handler;
+}
+#endif
 
 void sig_init() {
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	signal(SIGINT,int_handler);
+	set_signal(SIGINT,int_handler);
 #else
 	void register_ctrlc_handler();
 
 	register_ctrlc_handler();
 #endif
-	signal(SIGSEGV,segv_handler);
+	set_signal(SIGSEGV,segv_handler);
 
 #if defined(SIGFPE)
-	signal(SIGFPE,fpe_handler);
+	set_signal(SIGFPE,fpe_handler);
 #endif
 
 #if defined(SIGPIPE)
-	signal(SIGPIPE,pipe_handler);
+	set_signal(SIGPIPE,pipe_handler);
 #endif
 
 #if defined(SIGILL)
-	signal(SIGILL,ill_handler);
+	set_signal(SIGILL,ill_handler);
 #endif
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	signal(SIGBUS,bus_handler);
+	set_signal(SIGBUS,bus_handler);
 #endif
 }
 
 static void (*old_int)(int);
 
 void asir_save_handler() {
-	old_int = signal(SIGINT,SIG_IGN);
-	signal(SIGINT,old_int);
+	old_int = set_signal(SIGINT,SIG_IGN);
+	set_signal(SIGINT,old_int);
 }
 
 void asir_set_handler() {
-	signal(SIGINT,int_handler);
+	set_signal(SIGINT,int_handler);
 }
 
 void asir_reset_handler() {
-	signal(SIGINT,old_int);
+	set_signal(SIGINT,old_int);
 }
 
 extern int I_am_server;
@@ -532,7 +548,7 @@ void int_handler(int sig)
 #if defined(VISUAL) || defined(__MINGW32__)
 	suspend_timer();
 #endif
-	signal(SIGINT,SIG_IGN);
+	set_signal(SIGINT,SIG_IGN);
 #if !defined(VISUAL) && !defined(__MINGW32__) 
     if ( do_server_in_X11 ) {
 		debug(PVSS?((VS)BDY(PVSS))->usrf->f.usrf->body:0);
@@ -645,14 +661,14 @@ void restore_handler() {
 	resume_timer();
 #endif
 #if defined(SIGINT)
-	signal(SIGINT,int_handler);
+	set_signal(SIGINT,int_handler);
 #endif
 }
 
 void segv_handler(int sig)
 {
 #if defined(SIGSEGV)
-	signal(SIGSEGV,segv_handler);
+	set_signal_for_restart(SIGSEGV,segv_handler);
 	error("internal error (SEGV)");
 #endif
 }
@@ -660,7 +676,7 @@ void segv_handler(int sig)
 void ill_handler(int sig)
 {
 #if defined(SIGILL)
-	signal(SIGILL,ill_handler);
+	set_signal_for_restart(SIGILL,ill_handler);
 	error("illegal instruction (ILL)");
 #endif
 }
@@ -685,7 +701,7 @@ void alrm_handler(int sig)
 void bus_handler(int sig)
 {
 #if defined(SIGBUS)
-	signal(SIGBUS,bus_handler);
+	set_signal_for_restart(SIGBUS,bus_handler);
 	error("internal error (BUS ERROR)");
 #endif
 }
@@ -693,7 +709,7 @@ void bus_handler(int sig)
 void fpe_handler(int sig)
 {
 #if defined(SIGFPE)
-	signal(SIGFPE,fpe_handler);
+	set_signal_for_restart(SIGFPE,fpe_handler);
 	error("internal error (FPE)");
 #endif
 }
@@ -701,7 +717,7 @@ void fpe_handler(int sig)
 void pipe_handler(int sig)
 {
 #if defined(SIGPIPE)
-	signal(SIGPIPE,pipe_handler);
+	set_signal_for_restart(SIGPIPE,pipe_handler);
 	end_critical();
 	error("internal error (BROKEN PIPE)");
 #endif
@@ -802,7 +818,7 @@ void set_timer(int interval)
 	it.it_value.tv_sec = interval;
 	it.it_value.tv_usec = 0;
 	setitimer(ITIMER_TYPE,&it,0);
-	signal(SIGNAL_FOR_TIMER,alrm_handler);
+	set_signal(SIGNAL_FOR_TIMER,alrm_handler);
 	timer_is_set = 1;
 }
 
@@ -815,7 +831,7 @@ void reset_timer()
 	it.it_value.tv_sec = 0;
 	it.it_value.tv_usec = 0;
 	setitimer(ITIMER_TYPE,&it,0);
-	signal(SIGNAL_FOR_TIMER,SIG_IGN);
+	set_signal(SIGNAL_FOR_TIMER,SIG_IGN);
 	timer_is_set = 0;
 }
 #endif
