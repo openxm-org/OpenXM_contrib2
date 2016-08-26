@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.92 2016/08/24 05:33:58 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.93 2016/08/24 08:21:03 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -884,6 +884,7 @@ char *scopyright()
 }
 
 #if defined(VISUAL) || defined(__MINGW32__)
+int recv_intr;
 void check_intr()
 {
 	extern int recv_intr;
