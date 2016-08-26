@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.50 2016/04/01 03:04:35 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.51 2016/08/24 01:33:53 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -153,6 +153,7 @@ static struct {
 	{"diag_period",&diag_period},
 	{"weight_check",&weight_check},
 	{"no_ox_reset",&No_ox_reset},
+	{"fake_ox_reset",&No_ox_reset},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
 	{"itvplotsize",&Itvplot},
