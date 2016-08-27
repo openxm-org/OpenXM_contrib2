@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.71 2016/08/24 00:52:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.72 2016/08/24 01:33:53 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1491,7 +1491,10 @@ void Pox_reset(NODE arg,Q *rp)
     if ( argc(arg) == 1 ) {
 			ox_send_cmd(m,SM_control_reset_connection);
 			ox_flush_stream_force(m);
+#if 0
+      /* XXX obsolete */
 			ox_recv(m,&id,&obj); t = (USINT)obj;
+#endif
 		}
 		*rp = ONE;
 #if defined(VISUAL) || defined(__MINGW32__)

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.26 2015/08/14 13:51:55 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_launch.c,v 1.27 2016/08/24 05:33:58 ohara Exp $ 
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -217,8 +217,11 @@ int cmd;
 			SetEvent(hKill);
 			break;
 		case SM_control_reset_connection:
+#if 0
+      /* XXX obsolete */
 			MKUSINT(t,0);
 			ox_send_data(sindex,t);
+#endif
 			SetEvent(hReset);
 			break;
 		default:
@@ -247,8 +250,11 @@ int cmd;
 			kill(cpid,SIGKILL);
 			break;
 		case SM_control_reset_connection:
+#if 0
+      /* XXX obsolete */
 			MKUSINT(t,0);
 			ox_send_data(sindex,t);
+#endif
 			kill(cpid,SIGUSR1);
 			break;
 		default:
