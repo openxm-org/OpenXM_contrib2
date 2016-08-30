@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.29 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.30 2016/03/31 07:33:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -186,6 +186,7 @@ void env_init() {
 #endif  
 
 	if ( !(asir_pager = getenv("PAGER")) ) {
+#if 0
 		japanese = 0;
 		if ( (e = getenv("LANGUAGE")) && 
 			(!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
@@ -197,6 +198,8 @@ void env_init() {
 			(!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
 		if ( japanese )
 			asir_pager = search_executable("jless");
+#endif
+		asir_pager = search_executable("less");
 		if ( !asir_pager ) {
 			/* default: more */
 			asir_pager = (char *)malloc(strlen(MORE)+1);
