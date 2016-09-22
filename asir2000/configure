@@ -629,6 +629,7 @@ USE_GC_SPARC64
 libasir_postfix
 LAPACKLIB
 FEPLIB
+GMPLIB
 USE_PLOT_FALSE
 USE_PLOT_TRUE
 XPMLIB
@@ -761,6 +762,7 @@ with_asir_gc
 with_distdir
 with_pari
 enable_plot
+enable_static_gmp
 enable_interval
 enable_fft_float
 with_mpi
@@ -1411,6 +1413,7 @@ Optional Features:
                           speeds up one-time build
   --enable-shared         enable linking shared libraries.  [no]
   --enable-plot           enable plot feature. [no]
+  --enable-static-gmp     force to link statically with gmp. [no]
   --enable-interval       enable interval feature. [no]
   --enable-fft-float      enable FFT-FLOAT feature. [no]
 
@@ -5549,6 +5552,19 @@ fi
 else
   USE_PLOT_TRUE='#'
   USE_PLOT_FALSE=
+fi
+
+
+GMPLIB="-lmpc -lmpfr -lgmp"
+# Check whether --enable-static_gmp was given.
+if test "${enable_static_gmp+set}" = set; then :
+  enableval=$enable_static_gmp; enable_static_gmp=yes
+else
+  enable_static_gmp=no
+fi
+
+if test ${enable_static_gmp:=no} != no ; then
+    GMPLIB="libmpc.a libmpfr.a libgmp.a"
 fi
 
 

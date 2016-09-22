@@ -253,6 +253,7 @@ GCINC = @GCINC@
 GCLIB = @GCLIB@
 GC_CONFIGURE_ARGS = @GC_CONFIGURE_ARGS@
 GC_DISTDIR = @GC_DISTDIR@
+GMPLIB = -L ${libdir} @GMPLIB@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -377,7 +378,6 @@ ELIB = engine/libca.a
 FLIB = fft/libdft.a
 IOLIB = io/libio.a
 PLIB = parse/libparse.a
-GMPLIB = -L ${libdir} -lmpc -lmpfr -lgmp
 ASIRLIB = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
 all: all-recursive
 
