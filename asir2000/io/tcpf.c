@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.72 2016/08/24 01:33:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.73 2016/08/27 03:09:03 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -1451,7 +1451,8 @@ void Pox_cmo_rpc(NODE arg,Obj *rp)
 }
 
 int No_ox_reset;
-extern int ox_pari_stream, ox_pari_stream_initialized;
+extern Q ox_pari_stream;
+extern int ox_pari_stream_initialized;
 
 void Pox_reset(NODE arg,Q *rp)
 {
@@ -1474,11 +1475,11 @@ void Pox_reset(NODE arg,Q *rp)
          fprintf(stderr,"The server does not implenent OX reset protocol.\n");
          fprintf(stderr,"The server is terminated.\n");
          Pox_shutdown(nd,rp);
-         if ( index == ox_pari_stream ) ox_pari_stream_initialized = 0;
+         if ( index == QTOS(ox_pari_stream) ) ox_pari_stream_initialized = 0;
          break;
       case 2:
          Pox_shutdown(nd,rp);
-         if ( index == ox_pari_stream ) ox_pari_stream_initialized = 0;
+         if ( index == QTOS(ox_pari_stream) ) ox_pari_stream_initialized = 0;
          break;
       default:
          error("The server does not implement OX reset protocol.");
