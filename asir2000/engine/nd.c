@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.227 2016/07/11 08:00:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.228 2016/08/08 07:18:10 noro Exp $ */
 
 #include "nd.h"
 
@@ -3052,6 +3052,8 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     ndv_alloc = 0;
 #endif
     get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    if ( m && nd_vc )
+       error("nd_{gr,f4} : computation over Fp(X) is unsupported. Use dp_gr_mod_main().");
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
     switch ( ord->id ) {
         case 1:
