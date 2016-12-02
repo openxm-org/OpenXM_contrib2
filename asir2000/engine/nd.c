@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.228 2016/08/08 07:18:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.229 2016/11/17 05:33:20 noro Exp $ */
 
 #include "nd.h"
 
@@ -173,6 +173,8 @@ INLINE int nd_length(ND p)
     }
 }
 
+extern int dp_negative_weight;
+
 INLINE int ndl_reducible(UINT *d1,UINT *d2)
 {
     UINT u1,u2;
@@ -180,7 +182,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
 
     if ( nd_module && (MPOS(d1) != MPOS(d2)) ) return 0;
 
-    if ( TD(d1) < TD(d2) ) return 0;
+    if ( !dp_negative_weight && TD(d1) < TD(d2) ) return 0;
 #if USE_UNROLL
     switch ( nd_bpe ) {
         case 3:
@@ -6215,6 +6217,7 @@ NODE nd_f4(int m,int **indp)
 			    if ( QTOS((Q)ARG0(node)) == sugar ) break;
             }
 			if ( tn ) {
+                nd_nzlist = NEXT(nd_nzlist);
 				for ( t = l, ll0 = 0; t; t = NEXT(t) ) {
                 	for ( tn = BDY((LIST)ARG1(node)); tn; tn = NEXT(tn) ) {
 				  	i1s = QTOS((Q)ARG0(BDY((LIST)BDY(tn))));

@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.97 2016/03/31 07:33:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.98 2016/03/31 08:43:25 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2498,6 +2498,7 @@ void Pdp_weyl_gr_mod_main(NODE arg,LIST *rp)
 
 VECT current_dl_weight_vector_obj;
 int *current_dl_weight_vector;
+int dp_negative_weight;
 
 void Pdp_set_weight(NODE arg,VECT *rp)
 {
@@ -2510,6 +2511,7 @@ void Pdp_set_weight(NODE arg,VECT *rp)
 	else if ( !ARG0(arg) ) {
 		current_dl_weight_vector_obj = 0;
 		current_dl_weight_vector = 0;
+        dp_negative_weight = 0;
 		*rp = 0;
 	} else {
 		if ( OID(ARG0(arg)) != O_VECT && OID(ARG0(arg)) != O_LIST )
@@ -2528,6 +2530,12 @@ void Pdp_set_weight(NODE arg,VECT *rp)
 		current_dl_weight_vector = (int *)CALLOC(n,sizeof(int));
 		for ( i = 0; i < n; i++ )
 			current_dl_weight_vector[i] = QTOS((Q)v->body[i]);
+        for ( i = 0; i < n; i++ )
+            if ( current_dl_weight_vector[i] < 0 ) break;
+        if ( i < n )
+            dp_negative_weight = 1;
+        else
+            dp_negative_weight = 0;
 		*rp = v;
 	}
 }
