@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.229 2016/11/17 05:33:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.230 2016/12/02 02:12:00 noro Exp $ */
 
 #include "nd.h"
 
@@ -64,6 +64,7 @@ static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
+static int *nd_sugarweight;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -456,6 +457,22 @@ int ndl_weight(UINT *d)
             for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
                 t += (u&nd_mask0); 
         }
+    if ( nd_module && current_module_weight_vector && MPOS(d) )
+        t += current_module_weight_vector[MPOS(d)];
+    return t;
+}
+
+/* for sugarweight */
+
+int ndl_weight2(UINT *d)
+{
+    int t,u;
+    int i,j;
+
+    for ( i = 0, t = 0; i < nd_nvar; i++ ) {
+        u = GET_EXP(d,i);
+        t += nd_sugarweight[i]*u;
+    }
     if ( nd_module && current_module_weight_vector && MPOS(d) )
         t += current_module_weight_vector[MPOS(d)];
     return t;
@@ -2534,9 +2551,36 @@ ND_pairs nd_newpairs( NODE g, int t )
         ndl_lcm(DL(nd_psh[r->i1]),dl,r->lcm);
         s = SG(nd_psh[r->i1])-TD(DL(nd_psh[r->i1]));
         SG(r) = MAX(s,ts) + TD(LCM(r));
+        /* experimental */
+        if ( nd_sugarweight )
+            r->sugar2 = ndl_weight2(r->lcm); 
     }
     if ( r0 ) NEXT(r) = 0;
     return r0;
+}
+
+/* ipair = [i1,i2],[i1,i2],... */
+ND_pairs nd_ipairtospair(NODE ipair)
+{
+  int s1,s2;
+  NODE tn,t;
+  ND_pairs r,r0;
+
+  for ( r0 = 0, t = ipair; t; t = NEXT(t) ) {
+    NEXTND_pairs(r0,r);
+    tn = BDY((LIST)BDY(t));
+    r->i1 = QTOS((Q)ARG0(tn));
+    r->i2 = QTOS((Q)ARG1(tn));
+    ndl_lcm(DL(nd_psh[r->i1]),DL(nd_psh[r->i2]),r->lcm);
+    s1 = SG(nd_psh[r->i1])-TD(DL(nd_psh[r->i1]));
+    s2 = SG(nd_psh[r->i2])-TD(DL(nd_psh[r->i2]));
+    SG(r) = MAX(s1,s2) + TD(LCM(r));
+    /* experimental */
+    if ( nd_sugarweight )
+        r->sugar2 = ndl_weight2(r->lcm); 
+  }
+  if ( r0 ) NEXT(r) = 0;
+  return r0;
 }
 
 /* kokokara */
@@ -2719,13 +2763,22 @@ ND_pairs nd_minp( ND_pairs d, ND_pairs *prest )
         NEXT(m) = 0;
         return m;
     }
-    s = SG(m);
     if ( !NoSugar ) {
-        for ( ml = 0, l = m; p; p = NEXT(l = p) )
-            if ( (SG(p) < s) 
-                || ((SG(p) == s) && (DL_COMPARE(LCM(p),LCM(m)) < 0)) ) {
-                ml = l; m = p; s = SG(m);
-            }
+        if ( nd_sugarweight ) {
+            s = m->sugar2;
+            for ( ml = 0, l = m; p; p = NEXT(l = p) )
+                if ( (p->sugar2 < s) 
+                    || ((p->sugar2 == s) && (DL_COMPARE(LCM(p),LCM(m)) < 0)) ) {
+                    ml = l; m = p; s = m->sugar2;
+                }
+        } else {
+            s = SG(m);
+            for ( ml = 0, l = m; p; p = NEXT(l = p) )
+                if ( (SG(p) < s) 
+                    || ((SG(p) == s) && (DL_COMPARE(LCM(p),LCM(m)) < 0)) ) {
+                    ml = l; m = p; s = SG(m);
+                }
+        }
     } else {
         for ( ml = 0, l = m; p; p = NEXT(l = p) )
             if ( DL_COMPARE(LCM(p),LCM(m)) < 0 ) {
@@ -2746,20 +2799,37 @@ ND_pairs nd_minsugarp( ND_pairs d, ND_pairs *prest )
     int msugar,i;
     ND_pairs t,dm0,dm,dr0,dr;
 
-    for ( msugar = SG(d), t = NEXT(d); t; t = NEXT(t) )
-        if ( SG(t) < msugar ) msugar = SG(t);
-    dm0 = 0; dr0 = 0;
-    for ( i = 0, t = d; t; t = NEXT(t) )
-        if ( i < nd_f4_nsp && SG(t) == msugar ) {
-            if ( dm0 ) NEXT(dm) = t;
-            else dm0 = t;
-            dm = t;
-            i++;
-        } else {
-            if ( dr0 ) NEXT(dr) = t;
-            else dr0 = t;
-            dr = t;
-        }
+    if ( nd_sugarweight ) {
+        for ( msugar = d->sugar2, t = NEXT(d); t; t = NEXT(t) )
+            if ( t->sugar2 < msugar ) msugar = t->sugar2;
+        dm0 = 0; dr0 = 0;
+        for ( i = 0, t = d; t; t = NEXT(t) )
+            if ( i < nd_f4_nsp && t->sugar2 == msugar ) {
+                if ( dm0 ) NEXT(dm) = t;
+                else dm0 = t;
+                dm = t;
+                i++;
+            } else {
+                if ( dr0 ) NEXT(dr) = t;
+                else dr0 = t;
+                dr = t;
+            }
+    } else {
+        for ( msugar = SG(d), t = NEXT(d); t; t = NEXT(t) )
+            if ( SG(t) < msugar ) msugar = SG(t);
+        dm0 = 0; dr0 = 0;
+        for ( i = 0, t = d; t; t = NEXT(t) )
+            if ( i < nd_f4_nsp && SG(t) == msugar ) {
+                if ( dm0 ) NEXT(dm) = t;
+                else dm0 = t;
+                dm = t;
+                i++;
+            } else {
+                if ( dr0 ) NEXT(dr) = t;
+                else dr0 = t;
+                dr = t;
+            }
+    }
     NEXT(dm) = 0;
     if ( dr0 ) NEXT(dr) = 0;
     *prest = dr0;
@@ -6184,7 +6254,7 @@ NODE nd_f4(int m,int **indp)
     ND spol,red;
     NDV nf,redv;
     NM s0,s;
-    NODE rp0,srp0,nflist,nzlist;
+    NODE rp0,srp0,nflist,nzlist,nzlist_t;
     int nsp,nred,col,rank,len,k,j,a,i1s,i2s;
     UINT c;
     UINT **spmat;
@@ -6202,44 +6272,36 @@ NODE nd_f4(int m,int **indp)
 #endif
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
-        d = update_pairs(d,g,i,0);
+        if ( !nd_nzlist ) d = update_pairs(d,g,i,0);
         g = update_base(g,i);
     }
 	nzlist = 0;
-    while ( d ) {
+    nzlist_t = nd_nzlist;
+    while ( d || nzlist_t ) {
         get_eg(&eg0);
-        l = nd_minsugarp(d,&d);
-        sugar = SG(l);
-        if ( MaxDeg > 0 && sugar > MaxDeg ) break;
         if ( nd_nzlist ) {
-            for ( tn = nd_nzlist; tn; tn = NEXT(tn) ) {
-                node = BDY((LIST)BDY(tn));
-			    if ( QTOS((Q)ARG0(node)) == sugar ) break;
+            node = BDY((LIST)BDY(nzlist_t));
+            sugar = ARG0(node);
+            tn = BDY((LIST)ARG1(node));
+            if ( !tn ) {
+              nzlist_t = NEXT(nzlist_t);
+              continue;
             }
-			if ( tn ) {
-                nd_nzlist = NEXT(nd_nzlist);
-				for ( t = l, ll0 = 0; t; t = NEXT(t) ) {
-                	for ( tn = BDY((LIST)ARG1(node)); tn; tn = NEXT(tn) ) {
-				  	i1s = QTOS((Q)ARG0(BDY((LIST)BDY(tn))));
-				  	i2s = QTOS((Q)ARG1(BDY((LIST)BDY(tn))));
-				  	if ( t->i1 == i1s && t->i2 == i2s ) break;
-					}
-			    	if ( tn ) {
-				    	if ( !ll0 ) ll0 = t;
-						else NEXT(ll) = t;
-						ll = t;
-					}
-            	}
-				if ( ll0 ) NEXT(ll) = 0;
-		    	l = ll0;
-			} else l = 0;
+            /* tn = [[i1,i2],...] */
+            l = nd_ipairtospair(tn);
+        } else {
+            l = nd_minsugarp(d,&d);
+            sugar = nd_sugarweight?l->sugar2:SG(l);
+            if ( MaxDeg > 0 && sugar > MaxDeg ) break;
         }
         bucket = create_pbucket();
         stat = nd_sp_f4(m,0,l,bucket);
         if ( !stat ) {
-            for ( t = l; NEXT(t); t = NEXT(t) );
-            NEXT(t) = d; d = l;
-            d = nd_reconstruct(0,d);
+            if ( !nd_nzlist ) {
+                for ( t = l; NEXT(t); t = NEXT(t) );
+                NEXT(t) = d; d = l;
+                d = nd_reconstruct(0,d);
+            }
             continue;
         }
         if ( bucket->m < 0 ) continue;
@@ -6268,7 +6330,7 @@ NODE nd_f4(int m,int **indp)
                 nf = ndtondv(m,nf1);
             }
             nh = ndv_newps(m,nf,0,1);
-            d = update_pairs(d,g,nh,0);
+            if ( !nd_nzlist ) d = update_pairs(d,g,nh,0);
             g = update_base(g,nh);
         }
         if ( nd_gentrace ) {
@@ -6282,6 +6344,7 @@ NODE nd_f4(int m,int **indp)
             STOQ(sugar,sugarq); node = mknode(2,sugarq,l0); MKLIST(l1,node);
             MKNODE(node,l1,nzlist); nzlist = node;
         }
+        if ( nd_nzlist ) nzlist_t = NEXT(nzlist_t);
     }
     if ( nd_gentrace ) {
 		MKLIST(l0,reverse_node(nzlist));
@@ -8063,13 +8126,15 @@ void conv_ilist(int demand,int trace,NODE g,int **indp)
 void parse_nd_option(NODE opt)
 {
     NODE t,p,u;
-	int i,s;
+	int i,s,n;
     char *key;
     Obj value;
 
     nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
 	nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
 	nd_splist = 0; nd_check_splist = 0;
+    nd_sugarweight = 0;
+
     for ( t = opt; t; t = NEXT(t) ) {
         p = BDY((LIST)BDY(t));
         key = BDY((STRING)BDY(p));
@@ -8103,6 +8168,13 @@ void parse_nd_option(NODE opt)
             nd_splist = value?1:0;
 		else if ( !strcmp(key,"check_splist") ) {
 			nd_check_splist = BDY((LIST)value);
+		} else if ( !strcmp(key,"sugarweight") ) {
+			nd_sugarweight = BDY((LIST)value);
+			u = BDY((LIST)value);
+            n = length(u);
+            nd_sugarweight = MALLOC(n*sizeof(int));
+			for ( i = 0; i < n; i++, u = NEXT(u) ) 
+                nd_sugarweight[i] = QTOS((Q)BDY(u));
 		}
     }
 }

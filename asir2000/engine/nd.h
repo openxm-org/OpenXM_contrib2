@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.32 2015/08/06 10:01:52 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.33 2015/08/14 13:51:54 fujimoto Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -79,6 +79,7 @@ typedef struct oND_pairs {
 	struct oND_pairs *next;
 	int i1,i2;
 	int sugar;
+	int sugar2;
 	UINT lcm[1];
 } *ND_pairs;
 
