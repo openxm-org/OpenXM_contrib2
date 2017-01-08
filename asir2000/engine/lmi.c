@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/lmi.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/lmi.c,v 1.4 2001/10/09 01:36:13 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -101,6 +101,7 @@ void ntosparsen(N p,N *bits)
 void setmod_lm(N p)
 {
 	int i;
+    Q q;
 
 	if ( !current_mod_lm )
 		current_mod_lm = (GEN_LM)MALLOC(sizeof(struct oGEN_LM));
@@ -118,6 +119,7 @@ void setmod_lm(N p)
 			current_mod_lm->id = UP2_SPARSE; /* XXX */
 		}
 	}
+    setmod_lf(p);
 }
 
 void getmod_lm(N *p)
@@ -141,6 +143,21 @@ void simplm(LM n,LM *r)
 		MKLM(rem,*r);
 	}
 }
+
+void simplm_force(LM n,LM *r)
+{
+	N rem;
+
+	if ( !n )
+		*r = 0;
+	else if ( NID(n) != N_LM )
+		*r = n;
+	else {
+		gen_simpn_force(n->body,&rem);
+		MKLM(rem,*r);
+	}
+}
+
 
 void qtolm(Q q,LM *l)
 {

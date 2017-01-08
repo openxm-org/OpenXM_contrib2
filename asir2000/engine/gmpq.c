@@ -5,6 +5,8 @@
 
 mpz_t ONEMPZ;
 GZ ONEGZ;
+int lf_lazy;
+GZ current_mod_lf;
 
 void isqrtgz(GZ a,GZ *r);
 void bshiftgz(GZ a,int n,GZ *r);
@@ -85,6 +87,16 @@ Q gztoz(GZ a)
 	PL(nm) = len;
 	sgn = mpz_sgn(BDY((GZ)a)); NTOQ(nm,sgn,q);
 	return q;
+}
+
+void dupgz(GZ a,GZ *b)
+{
+  mpz_t t;
+
+  if ( !a ) *b = a;
+  else {
+    mpz_init(t); mpz_set(t,BDY(a)); MPZTOGZ(t,*b);
+  }
 }
 
 int n_bits_gz(GZ a)
@@ -211,13 +223,29 @@ void mulgz(GZ n1,GZ n2,GZ *nr)
 	mpz_t t;
 
 	if ( !n1 || !n2 ) *nr = 0;
+#if 1
 	else if ( UNIGZ(n1) ) *nr = n2;
 	else if ( UNIGZ(n2) ) *nr = n1;
 	else if ( MUNIGZ(n1) ) chsgngz(n2,nr);
 	else if ( MUNIGZ(n2) ) chsgngz(n1,nr);
+#endif
 	else {
 		mpz_init(t); mpz_mul(t,BDY(n1),BDY(n2)); MPZTOGZ(t,*nr);
 	}
+}
+
+/* nr += n1*n2 */
+
+void muladdtogz(GZ n1,GZ n2,GZ *nr)
+{
+    GZ t;
+
+	if ( n1 && n2 ) {
+        if ( !(*nr) ) {
+          NEWGZ(t); mpz_init(BDY(t)); *nr = t;
+        }
+        mpz_addmul(BDY(*nr),BDY(n1),BDY(n2));
+    }
 }
 
 void mul1gz(GZ n1,int n2,GZ *nr)
@@ -245,6 +273,23 @@ void divgz(GZ n1,GZ n2,GZ *nq)
 	} else {
 		MPZTOMPQ(BDY(n1),a); MPZTOMPQ(BDY(n2),b);
 		mpq_init(q); mpq_div(q,a,b); *nq = (GZ)mpqtogzq(q);
+	}
+}
+
+void remgz(GZ n1,GZ n2,GZ *nr)
+{
+	mpz_t r;
+
+	if ( !n2 ) {
+		error("division by 0");
+		*nr = 0;
+	} else if ( !n1 || n1 == n2 )
+		*nr = 0;
+	else {
+		mpz_init(r);
+		mpz_mod(r,BDY(n1),BDY(n2));
+		if ( !mpz_sgn(r) ) *nr = 0;
+		else MPZTOGZ(r,*nr);
 	}
 }
 
@@ -349,6 +394,14 @@ void gcdgz(GZ n1,GZ n2,GZ *nq)
 		mpz_init(t); mpz_gcd(t,BDY(n1),BDY(n2));
 		MPZTOGZ(t,*nq);
 	}
+}
+
+void invgz(GZ n1,GZ *nq)
+{
+	mpz_t t;
+
+	mpz_init(t); mpz_invert(t,BDY(n1),BDY(current_mod_lf));
+	MPZTOGZ(t,*nq);
 }
 
 void lcmgz(GZ n1,GZ n2,GZ *nq)
@@ -1215,3 +1268,74 @@ void bshiftgz(GZ a,int n,GZ *r)
 	}
 }
 
+void addlf(GZ a,GZ b,GZ *c)
+{
+  GZ t;
+
+  addgz(a,b,c);
+  if ( !lf_lazy ) {
+    remgz(*c,current_mod_lf,&t); *c = t;
+  }
+}
+
+void sublf(GZ a,GZ b,GZ *c)
+{
+  GZ t;
+
+  subgz(a,b,c);
+  if ( !lf_lazy ) {
+    remgz(*c,current_mod_lf,&t); *c = t;
+  }
+}
+
+void mullf(GZ a,GZ b,GZ *c)
+{
+  GZ t;
+
+  mulgz(a,b,c);
+  if ( !lf_lazy ) {
+    remgz(*c,current_mod_lf,&t); *c = t;
+  }
+}
+
+void divlf(GZ a,GZ b,GZ *c)
+{
+  GZ t,inv;
+
+  invgz(b,&inv);
+  mulgz(a,inv,c);
+  if ( !lf_lazy ) {
+    remgz(*c,current_mod_lf,&t); *c = t;
+  }
+}
+
+void chsgnlf(GZ a,GZ *c)
+{
+  GZ t;
+
+  chsgngz(a,c);
+  if ( !lf_lazy ) {
+    remgz(*c,current_mod_lf,&t); *c = t;
+  }
+}
+
+void lmtolf(LM a,GZ *b)
+{
+  Q q;
+
+  NTOQ(BDY(a),1,q); *b = ztogz(q);
+}
+
+void setmod_lf(N p)
+{
+    Q q;
+
+    NTOQ(p,1,q); current_mod_lf = ztogz(q);
+}
+
+void simplf_force(GZ a,GZ *b)
+{
+    GZ t;
+
+    remgz(a,current_mod_lf,&t); *b = t;
+}

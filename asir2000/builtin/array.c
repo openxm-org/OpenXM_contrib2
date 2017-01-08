@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.68 2015/08/14 13:51:54 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.69 2015/09/03 23:05:35 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -2358,6 +2358,14 @@ void red_by_vect_sf(int m,unsigned int *p,unsigned int *r,unsigned int hc,int le
 		if ( *r )
 			*p = _addsf(_mulsf(*r,hc),*p);
 }
+
+void red_by_vect_lf(mpz_t *p,mpz_t *r,mpz_t hc,int len)
+{
+	mpz_set_ui(*p++,0); r++; len--;
+	for ( ; len; len--, r++, p++ )
+       mpz_addmul(*p,*r,hc);
+}
+
 
 extern unsigned int **psca;
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.96 2016/06/28 11:59:30 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.97 2016/08/24 05:33:58 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1017,6 +1017,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define UNIMQ(q) ((q)&&NUM(q)&&SFF(q)&&(CONT((MQ)q)==1))
 #define MUNIQ(q) ((q)&&NUM(q)&&RATN(q)&&(SGN((Q)q)==-1)&&UNIN(NM((Q)q))&&(!DN((Q)q)))
 #define MUNIMQ(q) ((q)&&NUM(q)&&SFF(q)&&(CONT((MQ)q)==-1))
+#define UNILM(n) ((n)&&UNIN(BDY(n)))
 #define UNIN(n) ((n)&&(PL(n)==1)&&(BD(n)[0]==1))
 #define EVENN(n) ((!(n))||(!(BD(n)[0]%2)))
 

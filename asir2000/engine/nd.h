@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.33 2015/08/14 13:51:54 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.34 2016/12/05 10:29:15 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -47,6 +47,7 @@ typedef struct oNDV {
 typedef union oNDC {
 	int m;
 	Q z;
+	LM lm;
 	GZ gz;
 	P p;
 	R r;
@@ -143,11 +144,13 @@ extern int *current_module_weight_vector;
 #define HTD(d) (TD(HDL(d)))
 #define HCU(d) ((d)->body->c)
 #define HCM(d) ((d)->body->c.m)
+#define HCLM(d) ((d)->body->c.lm)
 #define HCQ(d) ((d)->body->c.z)
 #define HCZ(d) ((d)->body->c.gz)
 #define HCP(d) ((d)->body->c.p)
 #define HCA(d) ((d)->body->c.a)
 #define CM(x) ((x)->c.m)
+#define CLM(x) ((x)->c.lm)
 #define CQ(x) ((x)->c.z)
 #define CZ(x) ((x)->c.gz)
 #define CP(x) ((x)->c.p)
