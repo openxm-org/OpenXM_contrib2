@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.21 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/pvar.c,v 1.22 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -298,7 +298,7 @@ int getpvar(VS pvs,char *str,int searchonly)
 	if ( searchonly )
 		return -1;
 	if ( pvs->asize == pvs->n )
-		reallocarray((char **)&pvs->va,(int *)&pvs->asize,(int *)&pvs->n,(int)sizeof(struct oPV));
+		asir_reallocarray((char **)&pvs->va,(int *)&pvs->asize,(int *)&pvs->n,(int)sizeof(struct oPV));
 	v = &pvs->va[pvs->n]; 
 	NAME(v) = (char *)CALLOC(strlen(str)+1,sizeof(char));
 	strcpy(NAME(v),str); v->priv = 0;
@@ -361,6 +361,6 @@ void restorepvs()
 void storeans(pointer p)
 {
 	if ( APVS->asize == APVS->n )
-		reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
+		asir_reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
 	APVS->va[APVS->n++].priv = p; 
 }

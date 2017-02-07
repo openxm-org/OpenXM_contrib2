@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.74 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.75 2016/08/24 08:21:03 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -1632,7 +1632,7 @@ MODULE mkmodule(char *name)
 		mod->name = (char *)MALLOC_ATOMIC(len+1);
 		strcpy(mod->name,name);
 		mod->pvs = mpvs = (VS)MALLOC(sizeof(struct oVS));
-		reallocarray((char **)&mpvs->va,(int *)&mpvs->asize,
+		asir_reallocarray((char **)&mpvs->va,(int *)&mpvs->asize,
 			(int *)&mpvs->n,(int)sizeof(struct oPV));
 		mod->usrf_list = 0;
 		MKNODE(m,mod,MODULE_LIST);

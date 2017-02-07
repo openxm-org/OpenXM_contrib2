@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.93 2016/08/24 08:21:03 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.94 2016/08/26 04:51:34 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -162,9 +162,9 @@ void glob_init() {
 		VR(&oVLIST[i]) = &oVAR[i]; NEXT(&oVLIST[i]) = &oVLIST[i+1];
 	}
 	VR(&oVLIST[i]) = &oVAR[i]; NEXT(&oVLIST[i]) = 0;
-	reallocarray((char **)&GPVS->va,(int *)&GPVS->asize,(int *)&GPVS->n,(int)sizeof(struct oPV));
-	reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
-	reallocarray((char **)&PPVS->va,(int *)&PPVS->asize,(int *)&PPVS->n,(int)sizeof(struct oPV));
+	asir_reallocarray((char **)&GPVS->va,(int *)&GPVS->asize,(int *)&GPVS->n,(int)sizeof(struct oPV));
+	asir_reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
+	asir_reallocarray((char **)&PPVS->va,(int *)&PPVS->asize,(int *)&PPVS->n,(int)sizeof(struct oPV));
 	CPVS = GPVS;
 	MKNODE(ONENODE,mkfnode(1,I_FORMULA,ONE),NULLP);
 	OID(F_TRUE)=O_F; FOP(F_TRUE)=AL_TRUE; F_TRUE->arg.dummy = 0;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.30 2016/03/31 07:33:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.31 2016/08/30 02:29:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -381,7 +381,7 @@ void loadasirfile(char *name0)
 	main_parser = 1; /* XXX */
 	Eungetc(afternl(),asir_infile->fp);
 	if ( !EPVS->va )
-		reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
+		asir_reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
 }
 
 void execasirfile(char *name)

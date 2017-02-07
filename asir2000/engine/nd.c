@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.231 2016/12/05 10:29:14 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.232 2017/01/08 03:05:39 noro Exp $ */
 
 #include "nd.h"
 
@@ -8587,16 +8587,17 @@ void parse_nd_option(NODE opt)
         else if ( !strcmp(key,"nora") )
             nd_nora = value?1:0;
         else if ( !strcmp(key,"gbblock") ) {
-			if ( !value || OID(value) != O_LIST )
-				error("nd_* : invalid value for gbblock option");
-			u = BDY((LIST)value);
-            nd_gbblock = MALLOC((2*length(u)+1)*sizeof(int));
-			for ( i = 0; u; u = NEXT(u) ) {
-				p = BDY((LIST)BDY(u));
-				s = nd_gbblock[i++] = QTOS((Q)BDY(p));
-				nd_gbblock[i++] = s+QTOS((Q)BDY(NEXT(p)))-1;
-			}
-			nd_gbblock[i] = -1;
+            if ( value && OID(value) == O_LIST ) {
+			  u = BDY((LIST)value);
+              nd_gbblock = MALLOC((2*length(u)+1)*sizeof(int));
+			  for ( i = 0; u; u = NEXT(u) ) {
+				  p = BDY((LIST)BDY(u));
+				  s = nd_gbblock[i++] = QTOS((Q)BDY(p));
+				  nd_gbblock[i++] = s+QTOS((Q)BDY(NEXT(p)))-1;
+			  }
+			  nd_gbblock[i] = -1;
+            } else
+              nd_gbblock = 0;
 		} else if ( !strcmp(key,"newelim") )
             nd_newelim = value?1:0;
 		else if ( !strcmp(key,"intersect") )

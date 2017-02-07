@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.97 2016/08/24 05:33:58 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.98 2017/01/08 03:05:40 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1831,7 +1831,7 @@ void pwrreal(Num,Num,Real *);
 void pwrmi(MQ,Q,MQ *);
 void pwrlm(LM,Q,LM *);
 void pwrum(int,UM,int,UM);
-void reallocarray(char **,int *,int *,int);
+void asir_reallocarray(char **,int *,int *,int);
 void reductr(VL,Obj,Obj *);
 void reimtocplx(Num,Num,Num *);
 void rem2q(Q,Q,Q,Q *);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.6 2003/05/14 06:20:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.7 2004/03/17 08:16:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -67,7 +67,7 @@ int structdef(char *name,NODE member)
 			fprintf(stderr,"redeclaration of %s\n",name); break;
 		}
 	if ( !LSS->sa || ((i == LSS->n)&&(LSS->n==LSS->asize)) )
-		reallocarray((char **)&LSS->sa,(int *)&LSS->asize,(int *)&LSS->n,(int)sizeof(struct oSDEF));
+		asir_reallocarray((char **)&LSS->sa,(int *)&LSS->asize,(int *)&LSS->n,(int)sizeof(struct oSDEF));
 	/* sdef = room for new structure definition */
 	sdef = &LSS->sa[i];
 	if ( i == LSS->n )

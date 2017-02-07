@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.17 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.18 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -479,7 +479,7 @@ void appendvar(VL vl,V v)
 			vl = NEXT(vl);
 }
 
-void reallocarray(char **arrayp,int *sizep,int *indexp,int esize)
+void asir_reallocarray(char **arrayp,int *sizep,int *indexp,int esize)
 {
 	char *new;
 
