@@ -7,6 +7,7 @@ mpz_t ONEMPZ;
 GZ ONEGZ;
 int lf_lazy;
 GZ current_mod_lf;
+int current_mod_lf_size;
 
 void isqrtgz(GZ a,GZ *r);
 void bshiftgz(GZ a,int n,GZ *r);
@@ -1331,6 +1332,7 @@ void setmod_lf(N p)
     Q q;
 
     NTOQ(p,1,q); current_mod_lf = ztogz(q);
+    current_mod_lf_size = mpz_size(BDY(current_mod_lf))+1;
 }
 
 void simplf_force(GZ a,GZ *b)

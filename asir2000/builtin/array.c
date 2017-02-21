@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.69 2015/09/03 23:05:35 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.70 2017/01/08 03:05:39 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -68,7 +68,7 @@
 extern int DP_Print; /* XXX */
 
 
-void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm();
+void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm(), Ptriangleq();
 void Pinvmat();
 void Pnewbytearray(),Pmemoryplot_to_coord();
 
@@ -151,6 +151,7 @@ struct ftab array_tab[] = {
 	{"mat_col",Pmat_col,2},
 	{"lusolve_prep",Plusolve_prep,1},
 	{"lusolve_main",Plusolve_main,1},
+	{"triangleq",Ptriangleq,1},
 	{0,0,0},
 };
 
@@ -2359,11 +2360,19 @@ void red_by_vect_sf(int m,unsigned int *p,unsigned int *r,unsigned int hc,int le
 			*p = _addsf(_mulsf(*r,hc),*p);
 }
 
+extern GZ current_mod_lf;
+extern int current_mod_lf_size;
+
 void red_by_vect_lf(mpz_t *p,mpz_t *r,mpz_t hc,int len)
 {
 	mpz_set_ui(*p++,0); r++; len--;
-	for ( ; len; len--, r++, p++ )
+	for ( ; len; len--, r++, p++ ) {
        mpz_addmul(*p,*r,hc);
+#if 0
+       if ( mpz_size(*p) > current_mod_lf_size )
+         mpz_mod(*p,*p,BDY(current_mod_lf));
+#endif
+    }
 }
 
 
@@ -3838,4 +3847,45 @@ void Pmat_col(NODE arg,VECT *rp)
 		BDY(vect)[i] = BDY(mat)[i][j];
 	}
 	*rp = vect;
+}
+
+NODE triangleq(NODE e)
+{
+  int n,i,k;
+  V v;
+  VL vl;
+  P *p;
+  NODE r,r1;
+
+  n = length(e);
+  p = (P *)MALLOC(n*sizeof(P));
+  for ( i = 0; i < n; i++, e = NEXT(e) ) p[i] = (P)BDY(e);
+  i = 0;
+  while ( 1 ) {
+    for ( ; i < n && !p[i]; i++ );
+    if ( i == n ) break;
+    if ( OID(p[i]) == O_N ) return 0;
+    v = p[i]->v;
+    for ( k = i+1; k < n; k++ )
+      if ( p[k] ) {
+        if ( OID(p[k]) == O_N ) return 0;
+        if ( p[k]->v == v ) p[k] = 0;
+      }
+    i++;
+  }
+  for ( r = 0, i = 0; i < n; i++ ) {
+    if ( p[i] ) {
+      MKNODE(r1,p[i],r); r = r1;
+    }
+  }
+  return r;
+}
+
+void Ptriangleq(NODE arg,LIST *rp)
+{
+  NODE ret;
+
+  asir_assert(ARG0(arg),O_LIST,"sparseleq");
+  ret = triangleq(BDY((LIST)ARG0(arg)));
+  MKLIST(*rp,ret);
 }
