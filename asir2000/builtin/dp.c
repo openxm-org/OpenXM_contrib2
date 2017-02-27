@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.98 2016/03/31 08:43:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.99 2016/12/02 02:12:00 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2103,6 +2103,8 @@ void Pnd_f4(NODE arg,LIST *rp)
 	LIST f,v;
 	int m,homo,retdp;
 	Obj val;
+    Q mq;
+    NODE node;
 	struct order_spec *ord;
 
 	do_weyl = 0;
@@ -2115,7 +2117,12 @@ void Pnd_f4(NODE arg,LIST *rp)
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	m = QTOS((Q)ARG2(arg));
+    mq = (Q)ARG2(arg);
+    if ( PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30) ) {
+      node = mknode(1,mq);
+      Psetmod_ff(node,&val);
+      m = -2;
+    }
 	create_order_spec(0,ARG3(arg),&ord);
 	homo = retdp = 0;
 	if ( get_opt("homo",&val) && val ) homo = 1;
@@ -2129,6 +2136,8 @@ void Pnd_gr(NODE arg,LIST *rp)
 	LIST f,v;
 	int m,homo,retdp;
 	Obj val;
+    Q mq;
+    NODE node;
 	struct order_spec *ord;
 
 	do_weyl = 0;
@@ -2140,7 +2149,12 @@ void Pnd_gr(NODE arg,LIST *rp)
 	if ( !BDY(f) ) {
 		*rp = f; return;
 	}
-	m = QTOS((Q)ARG2(arg));
+    mq = (Q)ARG2(arg);
+    if ( PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30) ) {
+      node = mknode(1,mq);
+      Psetmod_ff(node,&val);
+      m = -2;
+    }
 	create_order_spec(0,ARG3(arg),&ord);
 	homo = retdp = 0;
 	if ( get_opt("homo",&val) && val ) homo = 1;

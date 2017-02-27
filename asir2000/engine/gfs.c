@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.16 2003/01/16 00:33:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.17 2003/05/07 06:26:49 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -511,6 +511,7 @@ void setmod_sf(int p,int n)
 
 	for ( i = 0, q = 1; i < n; i++ )
 		q *= p;
+    if ( p == current_gfs_p && q == current_gfs_q ) return;
 	dp = UMALLOC(n);
 	r = search_defpoly_and_primitive_root(p,n,dp);
 	if ( !r ) {
