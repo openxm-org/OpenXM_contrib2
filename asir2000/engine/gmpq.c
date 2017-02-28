@@ -1324,7 +1324,10 @@ void lmtolf(LM a,GZ *b)
 {
   Q q;
 
-  NTOQ(BDY(a),1,q); *b = ztogz(q);
+  if ( !a ) *b = 0;
+  else {
+    NTOQ(BDY(a),1,q); *b = ztogz(q);
+  }
 }
 
 void setmod_lf(N p)

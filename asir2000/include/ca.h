@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.98 2017/01/08 03:05:40 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.99 2017/02/07 08:30:31 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -780,11 +780,15 @@ typedef unsigned int ModNum;
 #define GCFREE(p) Risa_GC_free(p)
 #define CALLOC(d,e) MALLOC((d)*(e))
 
+#if 0
 #if !defined(__CYGWIN__) && (defined(__GNUC__) || defined(vax) || defined(apollo) || defined(alloca) || defined(VISUAL) || defined(__MINGW32__))
 #define ALLOCA(d) alloca(d)
 #else
 #define ALLOCA(d) MALLOC(d)
 #endif
+#endif
+
+#define ALLOCA(d) MALLOC(d)
 
 /* for handling signals */
 #if defined(HAVE_SIGACTION)  /* POSIX */

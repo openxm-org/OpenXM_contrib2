@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.24 2011/07/21 04:43:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.25 2016/03/31 05:30:32 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -826,8 +826,9 @@ void Psetmod_ff(NODE arg,Obj *rp)
 	if ( ac == 1 ) {
 		mod = (Obj)ARG0(arg);
 		if ( !mod )
-			error("setmod_ff : invalid argument");
-		switch ( OID(mod) ) {
+            current_ff = FF_NOT_SET;
+        else {
+		  switch ( OID(mod) ) {
 			case O_N:
 				current_ff = FF_GFP;
 				setmod_lm(NM((Q)mod));
@@ -837,7 +838,8 @@ void Psetmod_ff(NODE arg,Obj *rp)
 				setmod_gf2n((P)mod); break;
 			default:
 				error("setmod_ff : invalid argument");
-		}
+		  }
+      }
 	} else if ( ac == 2 ) {
 		if ( OID(ARG0(arg)) == O_N ) {
 			/* small finite field; primitive root representation */
