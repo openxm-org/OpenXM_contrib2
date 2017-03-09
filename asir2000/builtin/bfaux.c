@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.11 2015/08/25 18:41:03 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.12 2016/03/14 04:15:05 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -624,9 +624,9 @@ void Prk_ratmat(NODE arg,LIST *rp)
 
   n = fv->len;
   d = mat->len;
-  num = (struct smat *)MALLOC(n*sizeof(struct smat)); 
+  num = (struct smat *)MALLOC(d*sizeof(struct smat)); 
   for ( i = 0; i < d; i++ ) {
-    num[i].rlen = (int *)MALLOC(n*sizeof(int));
+    num[i].rlen = (int *)MALLOC_ATOMIC(n*sizeof(int));
     num[i].row = (struct jv **)MALLOC(n*sizeof(struct jv *));
     mati = (MAT)mat->body[i];
     b = (Obj **)mati->body;
@@ -634,24 +634,28 @@ void Prk_ratmat(NODE arg,LIST *rp)
       for ( len = k = 0; k < n; k++ )
         if ( b[j][k] ) len++;
       num[i].rlen[j] = len;
-      num[i].row[j] = (struct jv *)MALLOC(len*sizeof(struct jv));
-      for ( s = k = 0; k < n; k++ )
-        if ( b[j][k] ) {
-           num[i].row[j][s].j = k;
-           num[i].row[j][s].v = ToReal((Num)b[j][k]);
-           s++;
-        }
+      if ( !len )
+        num[i].row[j] = 0;
+      else {
+        num[i].row[j] = (struct jv *)MALLOC_ATOMIC((len)*sizeof(struct jv));
+        for ( s = k = 0; k < n; k++ )
+          if ( b[j][k] ) {
+             num[i].row[j][s].j = k;
+             num[i].row[j][s].v = ToReal((Num)b[j][k]);
+             s++;
+          }
+      }
     }
   }
-  f = (double *)MALLOC(n*sizeof(double));
+  f = (double *)MALLOC_ATOMIC(n*sizeof(double));
   for ( j = 0; j < n; j++ )
     f[j] = ToReal((Num)fv->body[j]);
-  w = (double *)MALLOC(n*sizeof(double));
-  k1 = (double *)MALLOC(n*sizeof(double));
-  k2 = (double *)MALLOC(n*sizeof(double));
-  k3 = (double *)MALLOC(n*sizeof(double));
-  k4 = (double *)MALLOC(n*sizeof(double));
-  k5 = (double *)MALLOC(n*sizeof(double));
+  w = (double *)MALLOC_ATOMIC(n*sizeof(double));
+  k1 = (double *)MALLOC_ATOMIC(n*sizeof(double));
+  k2 = (double *)MALLOC_ATOMIC(n*sizeof(double));
+  k3 = (double *)MALLOC_ATOMIC(n*sizeof(double));
+  k4 = (double *)MALLOC_ATOMIC(n*sizeof(double));
+  k5 = (double *)MALLOC_ATOMIC(n*sizeof(double));
   k6 = (double *)MALLOC(n*sizeof(double));
   nd = 0;
   switch ( ord ) {
