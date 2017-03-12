@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.48 2016/09/22 07:15:33 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.49 2016/09/23 03:03:39 ohara Exp $
 
 AC_INIT(asir,1.15)
 AC_CONFIG_SRCDIR([LICENSE])
@@ -109,7 +109,7 @@ if test ${enable_plot:=no} != no ; then
 fi
 AM_CONDITIONAL([USE_PLOT],[test "$enable_plot" = yes])
 
-GMPLIB="-L ${libdir} -lmpc -lmpfr -lgmp"
+GMPLIB="-L${libdir} -lmpc -lmpfr -lgmp"
 AC_ARG_ENABLE([static_gmp],
 [  --enable-static-gmp     force to link statically with gmp. [[no]]],
 [enable_static_gmp=yes],[enable_static_gmp=no])
