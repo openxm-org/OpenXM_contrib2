@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.101 2017/02/27 05:21:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.102 2017/02/28 07:06:28 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -174,16 +174,16 @@ struct ftab dp_tab[] = {
 	{"dp_gr_mod_main",Pdp_gr_mod_main,5},
 	{"dp_gr_f_main",Pdp_gr_f_main,4},
 	{"dp_gr_checklist",Pdp_gr_checklist,2},
-	{"nd_f4",Pnd_f4,4},
-	{"nd_gr",Pnd_gr,4},
-	{"nd_gr_trace",Pnd_gr_trace,5},
-	{"nd_f4_trace",Pnd_f4_trace,5},
+	{"nd_f4",Pnd_f4,-4},
+	{"nd_gr",Pnd_gr,-4},
+	{"nd_gr_trace",Pnd_gr_trace,-5},
+	{"nd_f4_trace",Pnd_f4_trace,-5},
 	{"nd_gr_postproc",Pnd_gr_postproc,5},
 	{"nd_gr_recompute_trace",Pnd_gr_recompute_trace,5},
 	{"nd_btog",Pnd_btog,-6},
 	{"nd_weyl_gr_postproc",Pnd_weyl_gr_postproc,5},
-	{"nd_weyl_gr",Pnd_weyl_gr,4},
-	{"nd_weyl_gr_trace",Pnd_weyl_gr_trace,5},
+	{"nd_weyl_gr",Pnd_weyl_gr,-4},
+	{"nd_weyl_gr_trace",Pnd_weyl_gr_trace,-5},
 	{"nd_nf",Pnd_nf,5},
 	{"nd_weyl_nf",Pnd_weyl_nf,5},
 
@@ -2101,66 +2101,87 @@ void Pdp_gr_mod_main(NODE arg,LIST *rp)
 void Pnd_f4(NODE arg,LIST *rp)
 {
 	LIST f,v;
-	int m,homo,retdp;
+	int m,homo,retdp,ac;
 	Obj val;
-    Q mq;
-    NODE node;
+  Q mq;
+  Num nhomo;
+  NODE node;
 	struct order_spec *ord;
 
 	do_weyl = 0;
 	nd_rref2 = 0;
-	asir_assert(ARG0(arg),O_LIST,"nd_f4");
-	asir_assert(ARG1(arg),O_LIST,"nd_f4");
-	asir_assert(ARG2(arg),O_N,"nd_f4");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	f = remove_zero_from_list(f);
-	if ( !BDY(f) ) {
-		*rp = f; return;
-	}
-    mq = (Q)ARG2(arg);
-    if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30)) ) {
-      node = mknode(1,mq);
-      Psetmod_ff(node,&val);
-      m = -2;
+  retdp = 0;
+  if ( (ac = argc(arg)) == 4 ) {
+	  asir_assert(ARG0(arg),O_LIST,"nd_f4");
+	  asir_assert(ARG1(arg),O_LIST,"nd_f4");
+	  asir_assert(ARG2(arg),O_N,"nd_f4");
+	  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	  f = remove_zero_from_list(f);
+	  if ( !BDY(f) ) {
+		  *rp = f; return;
+	  }
+      mq = (Q)ARG2(arg);
+      if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30)) ) {
+        node = mknode(1,mq);
+        Psetmod_ff(node,&val);
+        m = -2;
     } else
       m = QTOS(mq);
-	create_order_spec(0,ARG3(arg),&ord);
-	homo = retdp = 0;
-	if ( get_opt("homo",&val) && val ) homo = 1;
-	if ( get_opt("dp",&val) && val ) retdp = 1;
-	if ( get_opt("rref2",&val) && val ) nd_rref2 = 1;
+	  create_order_spec(0,ARG3(arg),&ord);
+	  homo = 0;
+	  if ( get_opt("homo",&val) && val ) homo = 1;
+	  if ( get_opt("dp",&val) && val ) retdp = 1;
+	  if ( get_opt("rref2",&val) && val ) nd_rref2 = 1;
+  } else if ( ac == 1 ) {
+	  f = (LIST)ARG0(arg);
+		parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = QTOS((Q)nhomo);
+	  if ( get_opt("dp",&val) && val ) retdp = 1;
+	  if ( get_opt("rref2",&val) && val ) nd_rref2 = 1;
+  } else
+    error("nd_f4 : invalid argument");
 	nd_gr(f,v,m,homo,retdp,1,ord,rp);
 }
 
 void Pnd_gr(NODE arg,LIST *rp)
 {
 	LIST f,v;
-	int m,homo,retdp;
+	int m,homo,retdp,ac;
 	Obj val;
-    Q mq;
-    NODE node;
+  Q mq;
+  Num nhomo;
+  NODE node;
 	struct order_spec *ord;
 
 	do_weyl = 0;
-	asir_assert(ARG0(arg),O_LIST,"nd_gr");
-	asir_assert(ARG1(arg),O_LIST,"nd_gr");
-	asir_assert(ARG2(arg),O_N,"nd_gr");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	f = remove_zero_from_list(f);
-	if ( !BDY(f) ) {
-		*rp = f; return;
-	}
-    mq = (Q)ARG2(arg);
-    if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30)) ) {
-      node = mknode(1,mq);
-      Psetmod_ff(node,&val);
-      m = -2;
-    } else
-      m = QTOS(mq);
-	create_order_spec(0,ARG3(arg),&ord);
-	homo = retdp = 0;
-	if ( get_opt("homo",&val) && val ) homo = 1;
-	if ( get_opt("dp",&val) && val ) retdp = 1;
+  retdp = 0;
+  if ( (ac=argc(arg)) == 4 ) {
+	  asir_assert(ARG0(arg),O_LIST,"nd_gr");
+	  asir_assert(ARG1(arg),O_LIST,"nd_gr");
+	  asir_assert(ARG2(arg),O_N,"nd_gr");
+	  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	  f = remove_zero_from_list(f);
+	  if ( !BDY(f) ) {
+		  *rp = f; return;
+	  }
+      mq = (Q)ARG2(arg);
+      if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30)) ) {
+        node = mknode(1,mq);
+        Psetmod_ff(node,&val);
+        m = -2;
+      } else
+        m = QTOS(mq);
+	  create_order_spec(0,ARG3(arg),&ord);
+	  homo = 0;
+	  if ( get_opt("homo",&val) && val ) homo = 1;
+	  if ( get_opt("dp",&val) && val ) retdp = 1;
+	} else if ( ac == 1 ) {
+	  f = (LIST)ARG0(arg);
+		parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = QTOS((Q)nhomo);
+	  if ( get_opt("dp",&val) && val ) retdp = 1;
+  } else
+    error("nd_gr : invalid argument");
 	nd_gr(f,v,m,homo,retdp,0,ord,rp);
 }
 
@@ -2263,68 +2284,94 @@ void Pnd_weyl_gr_postproc(NODE arg,LIST *rp)
 void Pnd_gr_trace(NODE arg,LIST *rp)
 {
 	LIST f,v;
-	int m,homo;
+	int m,homo,ac;
+  Num nhomo;
 	struct order_spec *ord;
 
 	do_weyl = 0;
-	asir_assert(ARG0(arg),O_LIST,"nd_gr_trace");
-	asir_assert(ARG1(arg),O_LIST,"nd_gr_trace");
-	asir_assert(ARG2(arg),O_N,"nd_gr_trace");
-	asir_assert(ARG3(arg),O_N,"nd_gr_trace");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	f = remove_zero_from_list(f);
-	if ( !BDY(f) ) {
-		*rp = f; return;
-	}
-	homo = QTOS((Q)ARG2(arg));
-	m = QTOS((Q)ARG3(arg));
-	create_order_spec(0,ARG4(arg),&ord);
+  if ( (ac = argc(arg)) == 5 ) {
+	  asir_assert(ARG0(arg),O_LIST,"nd_gr_trace");
+	  asir_assert(ARG1(arg),O_LIST,"nd_gr_trace");
+	  asir_assert(ARG2(arg),O_N,"nd_gr_trace");
+	  asir_assert(ARG3(arg),O_N,"nd_gr_trace");
+	  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	  f = remove_zero_from_list(f);
+	  if ( !BDY(f) ) {
+		  *rp = f; return;
+	  }
+	  homo = QTOS((Q)ARG2(arg));
+	  m = QTOS((Q)ARG3(arg));
+	  create_order_spec(0,ARG4(arg),&ord);
+  } else if ( ac == 1 ) {
+	  f = (LIST)ARG0(arg);
+		parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = QTOS((Q)nhomo);
+  } else
+    error("nd_gr_trace : invalid argument");
 	nd_gr_trace(f,v,m,homo,0,ord,rp);
 }
 
 void Pnd_f4_trace(NODE arg,LIST *rp)
 {
 	LIST f,v;
-	int m,homo;
+	int m,homo,ac;
+  Num nhomo;
 	struct order_spec *ord;
 
 	do_weyl = 0;
-	asir_assert(ARG0(arg),O_LIST,"nd_gr_trace");
-	asir_assert(ARG1(arg),O_LIST,"nd_gr_trace");
-	asir_assert(ARG2(arg),O_N,"nd_gr_trace");
-	asir_assert(ARG3(arg),O_N,"nd_gr_trace");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	f = remove_zero_from_list(f);
-	if ( !BDY(f) ) {
-		*rp = f; return;
-	}
-	homo = QTOS((Q)ARG2(arg));
-	m = QTOS((Q)ARG3(arg));
-	create_order_spec(0,ARG4(arg),&ord);
+  if ( (ac = argc(arg))==5 ) {
+	  asir_assert(ARG0(arg),O_LIST,"nd_f4_trace");
+	  asir_assert(ARG1(arg),O_LIST,"nd_f4_trace");
+	  asir_assert(ARG2(arg),O_N,"nd_f4_trace");
+	  asir_assert(ARG3(arg),O_N,"nd_f4_trace");
+	  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	  f = remove_zero_from_list(f);
+	  if ( !BDY(f) ) {
+		  *rp = f; return;
+	  }
+	  homo = QTOS((Q)ARG2(arg));
+	  m = QTOS((Q)ARG3(arg));
+	  create_order_spec(0,ARG4(arg),&ord);
+  } else if ( ac == 1 ) {
+	  f = (LIST)ARG0(arg);
+		parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = QTOS((Q)nhomo);
+  } else
+    error("nd_gr_trace : invalid argument");
 	nd_gr_trace(f,v,m,homo,1,ord,rp);
 }
 
 void Pnd_weyl_gr(NODE arg,LIST *rp)
 {
 	LIST f,v;
-	int m,homo,retdp;
+	int m,homo,retdp,ac;
 	Obj val;
+  Num nhomo;
 	struct order_spec *ord;
 
 	do_weyl = 1;
-	asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr");
-	asir_assert(ARG1(arg),O_LIST,"nd_weyl_gr");
-	asir_assert(ARG2(arg),O_N,"nd_weyl_gr");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	f = remove_zero_from_list(f);
-	if ( !BDY(f) ) {
-		*rp = f; do_weyl = 0; return;
-	}
-	m = QTOS((Q)ARG2(arg));
-	create_order_spec(0,ARG3(arg),&ord);
-	homo = retdp = 0;
-	if ( get_opt("homo",&val) && val ) homo = 1;
-	if ( get_opt("dp",&val) && val ) retdp = 1;
+  retdp = 0;
+  if ( (ac = argc(arg)) == 4 ) {
+	  asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr");
+	  asir_assert(ARG1(arg),O_LIST,"nd_weyl_gr");
+	  asir_assert(ARG2(arg),O_N,"nd_weyl_gr");
+	  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	  f = remove_zero_from_list(f);
+	  if ( !BDY(f) ) {
+		  *rp = f; do_weyl = 0; return;
+	  }
+	  m = QTOS((Q)ARG2(arg));
+	  create_order_spec(0,ARG3(arg),&ord);
+	  homo = 0;
+	  if ( get_opt("homo",&val) && val ) homo = 1;
+	  if ( get_opt("dp",&val) && val ) retdp = 1;
+  } else if ( ac == 1 ) {
+	  f = (LIST)ARG0(arg);
+		parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = QTOS((Q)nhomo);
+	  if ( get_opt("dp",&val) && val ) retdp = 1;
+  } else
+    error("nd_weyl_gr : invalid argument");
 	nd_gr(f,v,m,homo,retdp,0,ord,rp);
 	do_weyl = 0;
 }
@@ -2332,22 +2379,30 @@ void Pnd_weyl_gr(NODE arg,LIST *rp)
 void Pnd_weyl_gr_trace(NODE arg,LIST *rp)
 {
 	LIST f,v;
-	int m,homo;
+	int m,homo,ac;
+  Num nhomo;
 	struct order_spec *ord;
 
 	do_weyl = 1;
-	asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr_trace");
-	asir_assert(ARG1(arg),O_LIST,"nd_weyl_gr_trace");
-	asir_assert(ARG2(arg),O_N,"nd_weyl_gr_trace");
-	asir_assert(ARG3(arg),O_N,"nd_weyl_gr_trace");
-	f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-	f = remove_zero_from_list(f);
-	if ( !BDY(f) ) {
-		*rp = f; do_weyl = 0; return;
-	}
-	homo = QTOS((Q)ARG2(arg));
-	m = QTOS((Q)ARG3(arg));
-	create_order_spec(0,ARG4(arg),&ord);
+  if ( (ac = argc(arg)) == 5 ) {
+	  asir_assert(ARG0(arg),O_LIST,"nd_weyl_gr_trace");
+	  asir_assert(ARG1(arg),O_LIST,"nd_weyl_gr_trace");
+	  asir_assert(ARG2(arg),O_N,"nd_weyl_gr_trace");
+	  asir_assert(ARG3(arg),O_N,"nd_weyl_gr_trace");
+	  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+	  f = remove_zero_from_list(f);
+	  if ( !BDY(f) ) {
+		  *rp = f; do_weyl = 0; return;
+	  }
+	  homo = QTOS((Q)ARG2(arg));
+	  m = QTOS((Q)ARG3(arg));
+	  create_order_spec(0,ARG4(arg),&ord);
+  } else if ( ac == 1 ) {
+	  f = (LIST)ARG0(arg);
+		parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = QTOS((Q)nhomo);
+  } else
+    error("nd_weyl_gr_trace : invalid argument");
 	nd_gr_trace(f,v,m,homo,0,ord,rp);
 	do_weyl = 0;
 }

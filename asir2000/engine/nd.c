@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.234 2017/02/21 09:20:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.235 2017/02/28 07:06:28 noro Exp $ */
 
 #include "nd.h"
 
@@ -652,6 +652,7 @@ int ndl_composite_compare(UINT *d1,UINT *d2)
                             else if ( nd_work_vector[j] < 0 ) return -1;
                         break;
                     case 2:
+                        end = start+len;
                         for ( j = start; j < end; j++ )
                             if ( nd_work_vector[j] > 0 ) return 1;
                             else if ( nd_work_vector[j] < 0 ) return -1;
@@ -3927,7 +3928,7 @@ void ndl_print(UINT *dl)
         for ( i = 0; i < n; i++ ) printf(i==n-1?"%d":"%d,",GET_EXP(dl,i));
     }
     printf(">>");
-    if ( MPOS(dl) )
+    if ( nd_module && MPOS(dl) )
         printf("*e%d",MPOS(dl));
 }
 
@@ -4368,7 +4369,11 @@ int nd_get_exporigin(struct order_spec *ord)
             /* module d[0]:weight d[1]:w0,...,d[nd_exporigin-2]:w(n-1) */
             return ord->ord.block.length+1+nd_module;
         case 3: case 259:
+#if 0
             error("nd_get_exporigin : composite order is not supported yet.");
+#else
+            return 1+nd_module;
+#endif
     }
 }
 

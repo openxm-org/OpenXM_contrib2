@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.63 2016/03/31 07:33:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.64 2016/03/31 08:43:25 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -206,13 +206,29 @@ void dp_mbase(NODE hlist,NODE *mbase)
 {
 	DL *dl;
 	DL d;
-	int i,j,n,nvar,td;
+  int *t;
+	int i,j,k,n,nvar,td;
 
 	n = length(hlist); nvar = ((DP)BDY(hlist))->nv;
 	dl = (DL *)MALLOC(n*sizeof(DL));
-	for ( i = 0; i < n; i++, hlist = NEXT(hlist) )
-		dl[i] = BDY((DP)BDY(hlist))->dl;
 	NEWDL(d,nvar); *mbase = 0;
+	for ( i = 0; i < n; i++, hlist = NEXT(hlist) ) {
+		dl[i] = BDY((DP)BDY(hlist))->dl;
+    /* trivial ideal check */
+		if ( (*cmpdl)(nvar,d,dl[i]) == 0 ) {
+      return;
+    }
+  }
+  /* zero-dim. ideal check */
+  for ( i = 0; i < nvar; i++ ) {
+    for ( j = 0; j < n; j++ ) {
+      for ( k = 0, t = dl[j]->d; k < nvar; k++ )
+        if ( k != i && t[k] != 0 ) break;
+      if ( k == nvar ) break;
+    }
+    if ( j == n )
+      error("dp_mbase : input ideal is not zero-dimensional");
+  }
 	while ( 1 ) {
 		insert_to_node(d,mbase,nvar);
 		for ( i = nvar-1; i >= 0; ) {
