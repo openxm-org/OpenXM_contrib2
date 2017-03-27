@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.102 2017/02/28 07:06:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.103 2017/03/27 09:05:46 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -1906,6 +1906,8 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
 			else
 				*modular = QTOS(m);
 			modular_is_set = 1;
+		} else if ( !strcmp(key,"dp") ) {
+      /* XXX : ignore */
 		} else
 			error("parse_gr_option : not implemented");
 	}
