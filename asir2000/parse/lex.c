@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.50 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/lex.c,v 1.51 2016/08/24 08:21:03 ohara Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -187,6 +187,7 @@ int yylex()
 			i = 0;
 			do {
 				c = Getc();
+                if ( c == '\n' ) asir_infile->ln++;
 				if ( c == '\\' ) {
 					c1 = Getc();
 					if ( c1 == 'n' ) {
