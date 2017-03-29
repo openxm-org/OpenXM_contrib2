@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.12 2016/03/14 04:15:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.13 2017/03/09 00:46:44 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -11,6 +11,9 @@ void Pmpfr_y0(), Pmpfr_y1();
 void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
 void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
 void Prk_ratmat();
+void mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
+void mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
+void mp_exp(),mp_log(),mp_pow();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
@@ -18,6 +21,21 @@ struct ftab bf_tab[] = {
 	{"setbprec",Psetbprec,-1},
 	{"setround",Psetround,-1},
 	{"todouble",Ptodouble,1},
+	{"mpfr_sin",mp_sin,-2},
+	{"mpfr_cos",mp_cos,-2},
+	{"mpfr_tan",mp_tan,-2},
+	{"mpfr_asin",mp_asin,-2},
+	{"mpfr_acos",mp_acos,-2},
+	{"mpfr_atan",mp_atan,-2},
+	{"mpfr_sinh",mp_sinh,-2},
+	{"mpfr_cosh",mp_cosh,-2},
+	{"mpfr_tanh",mp_tanh,-2},
+	{"mpfr_asinh",mp_asinh,-2},
+	{"mpfr_acosh",mp_acosh,-2},
+	{"mpfr_atanh",mp_atanh,-2},
+	{"mpfr_exp",mp_exp,-2},
+	{"mpfr_log",mp_log,-2},
+	{"mpfr_pow",mp_pow,-3},
 	{"mpfr_ai",Pmpfr_ai,-2},
 	{"mpfr_zeta",Pmpfr_zeta,-2},
 	{"mpfr_j0",Pmpfr_j0,-2},
