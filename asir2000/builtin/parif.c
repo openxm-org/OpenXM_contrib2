@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.33 2016/04/01 03:04:35 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.34 2016/08/01 01:35:01 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -127,12 +127,16 @@ pointer evalparif(FUNC f,NODE arg)
 		MKNODE(nd,0,0);
 		r = (Q)bevalf((FUNC)v->priv,0);
 	}else {
+#if !defined(VISUAL)		
 	MKSTR(name,"ox_pari");
 	nd = mknode(2,NULL,name);
 	Pox_launch_nox(nd,&r);
 	}
 	ox_pari_stream = r;
     ox_pari_stream_initialized = 1;
+#else
+	error("Please load names.rr from latest asir-contrib library before using pari functions.");
+#endif
   }
 
 	ac = argc(arg);
