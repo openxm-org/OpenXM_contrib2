@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.235 2017/02/28 07:06:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.236 2017/03/27 09:05:46 noro Exp $ */
 
 #include "nd.h"
 
@@ -7084,7 +7084,11 @@ init_eg(&eg_search);
     else if ( m == -2 )
         r0 = nd_f4_red_lf_main(m,sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
     else
+#if defined(VISUAL)
+        r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
+#else
         r0 = nd_f4_red_gz_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
+#endif
     if ( DP_Print ) print_eg("search",&eg_search);
     return r0;
 }
