@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.33 2015/08/06 10:01:51 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.34 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -171,7 +171,7 @@ void Popen_file(NODE arg,Q *rp)
 		asir_assert(ARG1(arg),O_STR,"open_file");
 		fp = fopen(name,BDY((STRING)ARG1(arg)));
 	  } else
-		fp = fopen(name,"r");
+		fp = fopen(name,"rb");
     }
 	if ( !fp ) {
 		sprintf(errbuf,"open_file : cannot open \"%s\"",name);
