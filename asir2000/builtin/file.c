@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.34 2015/08/14 13:51:54 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.35 2017/06/10 05:32:24 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -241,6 +241,12 @@ void Pget_line(NODE arg,STRING *rp)
 		fsetpos(fp,&head);
 		str = (char *)MALLOC_ATOMIC(j+1);	
 		fgets(str,j+1,fp);	
+                for ( i = 0; i < j; i++ )
+                  if ( str[i] == '\r' ) {
+                     str[i] = '\n';
+                     str[i+1] = 0;
+                     break;
+                  }
 		MKSTR(*rp,str);
 	} else
 		error("get_line : invalid argument");
