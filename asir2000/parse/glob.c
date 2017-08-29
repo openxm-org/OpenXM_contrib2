@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.94 2016/08/26 04:51:34 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.95 2017/02/07 08:30:31 noro Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -190,6 +190,7 @@ void notdef(VL vl,Obj a,Obj b,Obj *c)
 	error("undefined arithmetic operation.");
 }
 
+int disable_debugger;
 int do_asirrc;
 int do_file;
 char *do_filename;
@@ -354,6 +355,9 @@ void process_args(int ac,char **av)
 #if !defined(MPI)
 	do_message = 1;
 #endif
+#if defined(VISUAL) && defined(VISUAL_CONSOLE)
+	disable_debugger=1;
+#endif
 	do_quiet = 0;
 	while ( ac > 0 ) {
 		if ( !strcmp(*av,"-heap") && (ac >= 2) ) {
@@ -374,6 +378,11 @@ void process_args(int ac,char **av)
 			av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-cpp") && (ac >= 2) ) {
 			strcpy(cppname,*(av+1)); av += 2; ac -= 2;
+		} else if ( !strcmp(*av,"-d") && (ac >= 2) ) {
+#if defined(VISUAL) && defined(VISUAL_CONSOLE)
+			disable_debugger=0;
+#endif
+			av += 2; ac -= 2;
 		} else if ( !strcmp(*av,"-f") && (ac >= 2) ) {
 			do_quiet = 1;
 			in_fp = fopen(*(av+1),"r");
@@ -534,7 +543,7 @@ void int_handler(int sig)
 	NODE t;
 
 
-	if ( do_file ) {
+	if ( do_file || disable_debugger ) {
 		ExitAsir();
 	}
 	if ( !ox_get_pari_result && critical_when_signal ) {
