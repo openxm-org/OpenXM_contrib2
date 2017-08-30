@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.10 2014/05/13 20:07:23 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.11 2014/08/20 16:51:34 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -184,19 +184,8 @@ static void process_ox(int id, Obj obj, unsigned int serial)
 	ERR err;
 	int ret;
 	extern char LastError[];
-	extern int recv_intr;
 
-#if defined(VISUAL)
-	if ( recv_intr ) {
-		if ( recv_intr == 1 ) {
-			recv_intr = 0;
-			int_handler(SIGINT);
-		} else {
-			recv_intr = 0;
-			ox_usr1_handler(0);
-		}
-	}
-#endif
+	check_intr();
 	if ( do_message )
 		fprintf(stderr,"#%d Got %s",serial,name_of_id(id));
 	switch ( id ) {

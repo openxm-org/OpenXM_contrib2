@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.77 2016/08/24 05:33:58 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.78 2016/08/24 08:21:03 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,7 +53,6 @@
 #include "version.h"
 
 char *find_asirrc();
-void ox_usr1_handler();
 int asir_ox_init();
 
 /* environement is defined in libpari.a */

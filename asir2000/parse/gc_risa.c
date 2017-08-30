@@ -1,16 +1,25 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.15 2015/08/06 10:55:52 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.16 2015/08/14 13:51:56 fujimoto Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
 #endif
 #include "gc.h"
 #include <time.h>
+#include <signal.h>
 
 void error(char *);
 void int_handler();
 
 int *StackBottom;
 int in_gc, caught_intr;
+
+void check_caught_intr()
+{
+	if ( caught_intr ) {
+		caught_intr = 0;
+		int_handler(SIGINT);
+	}
+}
 
 void *Risa_GC_malloc(size_t d)
 {
@@ -19,7 +28,7 @@ void *Risa_GC_malloc(size_t d)
 	in_gc = 1;
 	ret = (void *)GC_malloc(d);
 	in_gc = 0;
-	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+	check_caught_intr();
 	if ( !ret )
 		error("GC_malloc : failed to allocate memory");
 	return ret;
@@ -32,7 +41,7 @@ void *Risa_GC_malloc_atomic(size_t d)
 	in_gc = 1;
 	ret = (void *)GC_malloc_atomic(d);
 	in_gc = 0;
-	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+	check_caught_intr();
 	if ( !ret )
 		error("GC_malloc_atomic : failed to allocate memory");
 	return ret;
@@ -45,7 +54,7 @@ void *Risa_GC_malloc_atomic_ignore_off_page(size_t d)
 	in_gc = 1;
 	ret = (void *)GC_malloc_atomic_ignore_off_page(d);
 	in_gc = 0;
-	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+	check_caught_intr();
 	if ( !ret )
 		error("GC_malloc_atomic_ignore_off_page : failed to allocate memory");
 	return ret;
@@ -58,7 +67,7 @@ void *Risa_GC_realloc(void *p,size_t d)
 	in_gc = 1;
 	ret = (void *)GC_realloc(p,d);
 	in_gc = 0;
-	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+	check_caught_intr();
 	if ( !ret )
 		error("GC_realloc : failed to reallocate memory");
 	return ret;
@@ -69,7 +78,7 @@ void Risa_GC_free(void *p)
 	in_gc = 1;
 	GC_free(p);
 	in_gc = 0;
-	if ( caught_intr ) { caught_intr = 0; int_handler(); }
+	check_caught_intr();
 }
 
 size_t get_heapsize()
@@ -116,10 +125,13 @@ void send_intr();
 
 BOOL set_ctrlc_flag(DWORD type)
 {
-	if ( doing_batch )
+	enter_signal_cs();
+	if ( doing_batch ) {
 		send_intr();
-	else
+	}else {
 		recv_intr = 1;
+	}
+	leave_signal_cs();
 	return TRUE;
 }
 
@@ -289,6 +301,6 @@ int c;
 #else
 		if ( c == ('c' & 037 ) )
 #endif
-			int_handler();
+			int_handler(SIGINT);
 }
 #endif

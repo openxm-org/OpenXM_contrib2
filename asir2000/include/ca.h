@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.99 2017/02/07 08:30:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.100 2017/02/28 07:06:28 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2871,3 +2871,13 @@ int poly_is_dependent(P p,V v);
 int setsecureflag(char *name,int value);
 int sfdegtest(int dy,int bound,UM *d1c,int k,int *in);
 int sgnz(Z n);
+
+#if defined(VISUAL) || defined(__MINGW32__)
+void check_intr();
+void enter_signal_cs();
+void leave_signal_cs();
+void leave_signal_cs_all();
+#define LEAVE_SIGNAL_CS_ALL  leave_signal_cs_all()
+#else
+#define LEAVE_SIGNAL_CS_ALL
+#endif

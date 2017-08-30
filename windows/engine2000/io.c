@@ -124,7 +124,9 @@ void watch_intr() {
 				if ( doing_batch )
 					send_intr();
 				/* for Asir; recv_intr is reset to 0 in Asir */
+				enter_signal_cs();
 				recv_intr = 1;
+				leave_signal_cs();
 				PulseEvent(hIntr_Ack);
 				break;
 			case WAIT_OBJECT_0+1: /* hKill */
@@ -151,13 +153,17 @@ void ox_watch_intr() {
 				ResetEvent(hOxIntr);
 				if ( doing_batch )
 					send_intr();
+				enter_signal_cs();
 				recv_intr = 1;
+				leave_signal_cs();
 				break;
 			case WAIT_OBJECT_0+1: /* hOxReset */
 				ResetEvent(hOxReset);
 				if ( doing_batch )
 					send_intr();
+				enter_signal_cs();
 				recv_intr = 2;
+				leave_signal_cs();
 				break;
 			case WAIT_OBJECT_0+2: /* hOxKill */
 				ResetEvent(hOxKill);

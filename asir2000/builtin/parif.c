@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.35 2017/03/31 04:15:34 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.36 2017/03/31 06:10:13 ohara Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -104,10 +104,12 @@ void reset_ox_pari()
 pointer evalparif(FUNC f,NODE arg)
 {
   int ac,intarg,opt,prec;
-  Q q,r,narg;
+  Q q,r,narg,cmd;
+  Real sec;
   NODE nd,oxarg,t,t1,n;
   STRING name;
   USINT ui;
+  LIST list;
   Obj ret,dmy;
   mpfr_func mpfr_function;
   V v;
@@ -153,9 +155,29 @@ pointer evalparif(FUNC f,NODE arg)
   STOQ(ac,narg);
   oxarg = mknode(3,ox_pari_stream,name,narg);
   Pox_execute_function(oxarg,&dmy);
-  oxarg = mknode(1,ox_pari_stream);
   ox_get_pari_result = 1;
+#if defined(VISUAL) || defined(__MINGW32__)
+#define SM_popCMO 262
+  STOQ(SM_popCMO,cmd);
+  oxarg = mknode(2,ox_pari_stream,cmd);
+  Pox_push_cmd(oxarg,&dmy);
+  nd = mknode(1,ox_pari_stream);
+  MKLIST(list,nd);
+  MKReal(1.0/8,sec);
+  oxarg = mknode(2,list,sec);
+  ret=0;
+  do {
+	  check_intr();
+	  Pox_select(oxarg,&list);
+	  oxarg = mknode(1,list);
+	  Plength(oxarg,&ret);
+  }while (!ret);
+  oxarg = mknode(1,ox_pari_stream);
+  Pox_get(oxarg,&ret);
+#else
+  oxarg = mknode(1,ox_pari_stream);
   Pox_pop_cmo(oxarg,&ret);
+#endif
   ox_get_pari_result = 0;
   if ( ret && OID(ret) == O_ERR ) {
     char buf[BUFSIZ];

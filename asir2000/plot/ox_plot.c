@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.28 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ox_plot.c,v 1.29 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,8 +56,6 @@
 #if defined(PARI)
 #include "genpari.h"
 #endif
-
-void ox_usr1_handler();
 
 extern int asir_OperandStackSize;
 extern Obj *asir_OperandStack;

@@ -79,28 +79,6 @@ diff -urN gc-7.4.2.orig/alloc.c gc-7.4.2/alloc.c
                          + needed_blocks;
      if (blocks_to_get > MAXHINCR) {
        word slop;
-@@ -1334,6 +1343,21 @@
-     GC_bool retry = FALSE;
- 
-     if (gran == 0) return(0);
-+#if defined(_MSC_VER)
-+    {
-+#include <signal.h>
-+        extern int recv_intr;
-+        if ( recv_intr ) {
-+            if ( recv_intr == 1 ) {
-+                recv_intr = 0;
-+                int_handler();
-+            } else {
-+                recv_intr = 0;
-+                ox_usr1_handler(0);
-+            }
-+        }
-+    }
-+#endif
- 
-     while (*flh == 0) {
-       ENTER_GC();
 diff -urN gc-7.4.2.orig/misc.c gc-7.4.2/misc.c
 --- gc-7.4.2.orig/misc.c	2014-06-03 15:08:02.000000000 +0900
 +++ gc-7.4.2/misc.c	2015-08-04 14:21:02.000000000 +0900

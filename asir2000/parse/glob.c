@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.95 2017/02/07 08:30:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.96 2017/08/29 07:18:30 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -542,8 +542,8 @@ void int_handler(int sig)
 	extern NODE PVSS;
 	NODE t;
 
-
 	if ( do_file || disable_debugger ) {
+		LEAVE_SIGNAL_CS_ALL;
 		ExitAsir();
 	}
 	if ( !ox_get_pari_result && critical_when_signal ) {
@@ -638,6 +638,7 @@ void int_handler(int sig)
 						}
 					}
 				}
+				LEAVE_SIGNAL_CS_ALL;
 				resetenv("return to toplevel");
 				break;
 			case 'd':
@@ -894,9 +895,59 @@ char *scopyright()
 
 #if defined(VISUAL) || defined(__MINGW32__)
 int recv_intr;
+
+static CRITICAL_SECTION signal_cs;
+static int initialized_signal_cs;
+static int signal_cs_count;
+
+static void init_signal_cs()
+{
+    if (!initialized_signal_cs) {
+        InitializeCriticalSection(&signal_cs);
+		initialized_signal_cs=1;
+        signal_cs_count=0;
+    }
+}
+
+void try_enter_signal_cs()
+{
+	init_signal_cs();
+    if(TryEnterCriticalSection(&signal_cs)) {
+        signal_cs_count++;
+    }
+}
+
+void enter_signal_cs()
+{
+    init_signal_cs();
+    EnterCriticalSection(&signal_cs);
+    signal_cs_count++;
+}
+
+void leave_signal_cs()
+{
+	init_signal_cs();
+    if(signal_cs_count>0) {
+        LeaveCriticalSection(&signal_cs);
+        signal_cs_count--;
+    }
+}
+
+void leave_signal_cs_all()
+{
+    if (!initialized_signal_cs) {
+        init_signal_cs();
+    }
+    while(signal_cs_count>0) {
+        LeaveCriticalSection(&signal_cs);
+        signal_cs_count--;
+    }
+}
+
 void check_intr()
 {
 	extern int recv_intr;
+	enter_signal_cs();
 	if ( recv_intr ) {
 		if ( recv_intr == 1 ) {
 			recv_intr = 0;
@@ -906,5 +957,6 @@ void check_intr()
 			ox_usr1_handler(0);
 		}
 	}
+	leave_signal_cs_all();
 }
 #endif

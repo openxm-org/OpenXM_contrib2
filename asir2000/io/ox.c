@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.38 2016/08/24 00:52:50 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.39 2016/08/24 05:33:58 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -448,6 +448,7 @@ void ox_usr1_handler(int sig)
 				bevalf((FUNC)BDY(t),0);
 			fprintf(stderr, "done.\n");
 		}
+		LEAVE_SIGNAL_CS_ALL;
 		ox_resetenv("usr1 : return to toplevel by SIGUSR1");
 	}
 }
