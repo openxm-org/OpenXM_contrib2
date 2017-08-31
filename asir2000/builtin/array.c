@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.70 2017/01/08 03:05:39 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.71 2017/02/21 09:20:23 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -159,7 +159,11 @@ typedef struct _ent { int j; unsigned int e; } ent;
 
 ent *get_row(FILE *,int *l);
 void put_row(FILE *out,int l,ent *a);
-int lu_elim(int *l,ent **a,int k,int i,int mul,int mod);
+void lu_elim(int *l,ent **a,int k,int i,int mul,int mod);
+void lu_append(int *,ent **,int *,int,int,int);
+void solve_l(int *,ent **,int,int *,int);
+void solve_u(int *,ent **,int,int *,int);
+
 
 static int *ul,*ll;
 static ent **u,**l;
@@ -225,7 +229,7 @@ ent *get_row(FILE *in,int *l)
 	return a;
 }
 
-int lu_gauss(int *ul,ent **u,int *ll,ent **l,int n,int mod)
+void lu_gauss(int *ul,ent **u,int *ll,ent **l,int n,int mod)
 {
 	int i,j,k,s,mul;
 	unsigned int inv;
@@ -248,7 +252,7 @@ int lu_gauss(int *ul,ent **u,int *ll,ent **l,int n,int mod)
 
 #define INITLEN 10
 
-lu_append(int *l,ent **a,int *l2,int k,int i,int mul)
+void lu_append(int *l,ent **a,int *l2,int k,int i,int mul)
 {
 	int len;
 	ent *p;
@@ -271,7 +275,7 @@ lu_append(int *l,ent **a,int *l2,int k,int i,int mul)
 
 /* a[k] = a[k]-mul*a[i] */ 
 
-int lu_elim(int *l,ent **a,int k,int i,int mul,int mod)
+void lu_elim(int *l,ent **a,int k,int i,int mul,int mod)
 {
 	ent *ak,*ai,*w;
 	int lk,li,j,m,p,q,r,s,t,j0;
@@ -319,7 +323,7 @@ int lu_elim(int *l,ent **a,int k,int i,int mul,int mod)
 	l[k] = j;
 }
 
-int solve_l(int *ll,ent **l,int n,int *rhs,int mod)
+void solve_l(int *ll,ent **l,int n,int *rhs,int mod)
 {
 	int j,k,s,len;
 	ent *p;
@@ -333,7 +337,7 @@ int solve_l(int *ll,ent **l,int n,int *rhs,int mod)
 	}
 }
 
-int solve_u(int *ul,ent **u,int n,int *rhs,int mod)
+void solve_u(int *ul,ent **u,int n,int *rhs,int mod)
 {
 	int j,k,s,len,inv;
 	ent *p;
@@ -3087,9 +3091,7 @@ void mat_to_gfmmat(MAT m,unsigned int md,GFMMAT *rp)
 	TOGFMMAT(row,col,wmat,*rp);
 }
 
-void Pgeninvm_swap(arg,rp)
-NODE arg;
-LIST *rp;
+void Pgeninvm_swap(NODE arg,LIST *rp)
 {
 	MAT m;
 	pointer **mat;
@@ -3135,12 +3137,8 @@ LIST *rp;
 	}
 }
 
-gauss_elim_geninv_mod_swap(mat,row,col,md,invmatp,indexp)
-unsigned int **mat;
-int row,col;
-unsigned int md;
-unsigned int ***invmatp;
-int **indexp;
+int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,unsigned int md,
+    unsigned int ***invmatp,int **indexp)
 {
 	int i,j,k,inv,a,n,m;
 	unsigned int *t,*pivot,*s;
