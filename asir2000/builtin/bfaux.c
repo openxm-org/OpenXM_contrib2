@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.13 2017/03/09 00:46:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.14 2017/03/29 01:15:14 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -58,35 +58,147 @@ struct ftab bf_tab[] = {
 
 int mpfr_roundmode = MPFR_RNDN;
 
-void Ptodouble(NODE arg,Num *rp)
+void todoublen(Num a,Num *rp)
 {
 	double r,i;
 	Real real,imag;
-	Num num;
 
-	asir_assert(ARG0(arg),O_N,"todouble");
-	num = (Num)ARG0(arg);
-	if ( !num ) {
+	if ( !a ) {
 		*rp = 0;
 		return;
 	}
-	switch ( NID(num) ) {
+	switch ( NID(a) ) {
 		case N_R: case N_Q: case N_B:
-			r = ToReal(num);
+			r = ToReal(a);
 			MKReal(r,real);
 			*rp = (Num)real;
 			break;
 		case N_C:
-			r = ToReal(((C)num)->r);
-			i = ToReal(((C)num)->i);
+			r = ToReal(((C)a)->r);
+			i = ToReal(((C)a)->i);
 			MKReal(r,real);
 			MKReal(i,imag);
 			reimtocplx((Num)real,(Num)imag,rp);
 			break;
 		default:
-			*rp = num;
+			*rp = a;
 			break;
 	}
+}
+
+void todoublep(P a,P *rp)
+{
+  DCP dc,dcr,dcr0;
+
+  if ( !a ) *rp = 0;
+  else if ( OID(a) == O_N ) todoublen((Num)a,(Num *)rp);
+  else {
+    for ( dcr0 = 0, dc = DC(a); dc; dc = NEXT(dc) ) {
+      NEXTDC(dcr0,dcr);
+      DEG(dcr) = DEG(dc);
+      todoublep(COEF(dc),&COEF(dcr));
+    }
+    NEXT(dcr) = 0;
+    MKP(VR(a),dcr0,*rp);
+  }
+}
+
+void todoubler(R a,R *rp)
+{
+  R b;
+
+  if ( !a ) *rp = 0;
+  else if ( OID(a) <= O_P ) todoublep((P)a,(P *)rp);
+  else {
+    NEWR(b);
+    todoublep(a->nm,&b->nm);
+    todoublep(a->dn,&b->dn);
+    *rp = b;
+  }
+}
+
+void todouble(Obj a,Obj *b)
+{
+	Obj t;
+	LIST l;
+	V v;
+	int row,col,len;
+	VECT vect;
+	MAT mat;
+	int i,j;
+	NODE n0,n,nd;
+	MP m,mp,mp0;
+	DP d;
+
+	if ( !a ) {
+		*b = 0;
+		return;
+	}
+	switch ( OID(a) ) {
+		case O_N:
+      todoublen((Num)a,(Num *)b);
+      break;
+    case O_P:
+      todoublep((P)a,(P *)b);
+      break;
+    case O_R:
+			todoubler((R)a,(R *)b);
+			break;
+		case O_LIST:
+			n0 = 0;
+			for ( nd = BDY((LIST)a); nd; nd = NEXT(nd) ) {
+				NEXTNODE(n0,n);
+				todouble((Obj)BDY(nd),(Obj *)&BDY(n));
+			}
+			if ( n0 )
+				NEXT(n) = 0;
+			MKLIST(l,n0);
+			*b = (Obj)l;
+			break;
+		case O_VECT:
+			len = ((VECT)a)->len;
+			MKVECT(vect,len);
+			for ( i = 0; i < len; i++ ) {
+				todouble((Obj)BDY((VECT)a)[i],(Obj *)&BDY(vect)[i]);
+			}
+			*b = (Obj)vect;
+			break;
+		case O_MAT:
+			row = ((MAT)a)->row;
+			col = ((MAT)a)->col;
+			MKMAT(mat,row,col);
+			for ( i = 0; i < row; i++ )
+				for ( j = 0; j < col; j++ ) {
+				  todouble((Obj)BDY((MAT)a)[i][j],(Obj *)&BDY(mat)[i][j]);
+				}
+			*b = (Obj)mat;
+			break;
+		case O_DP:
+			mp0 = 0;
+			for ( m = BDY((DP)a); m; m = NEXT(m) ) {
+				todouble(C(m),&t);
+				if ( t ) {
+					NEXTMP(mp0,mp);
+					C(mp) = t;
+					mp->dl = m->dl;
+				}
+			}
+			if ( mp0 ) {
+				MKDP(NV((DP)a),mp0,d);
+				d->sugar = ((DP)a)->sugar;
+				*b = (Obj)d;
+			} else
+				*b = 0;
+
+			break;
+		default:
+			error("todouble : invalid argument");
+	}
+}
+
+void Ptodouble(NODE arg,Obj *rp)
+{
+  todouble((Obj)ARG0(arg),rp);
 }
 
 void Peval(NODE arg,Obj *rp)

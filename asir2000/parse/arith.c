@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.26 2005/12/10 14:14:15 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.27 2017/08/31 02:36:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -175,7 +175,7 @@ void arf_mul(VL vl,Obj a,Obj b,Obj *r)
 				break;
 			case O_R:
 				/* rat * something; bid > O_R */
-				if ( bid == O_VECT || bid == O_MAT || bid == O_DP )
+				if ( bid == O_VECT || bid == O_MAT || bid == O_DP || bid == O_DPM )
 					(*afunc[mid].mul)(vl,a,b,r);
 				else 
 					notdef(vl,a,b,r);

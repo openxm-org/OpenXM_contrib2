@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.10 2014/05/12 16:54:40 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.11 2014/06/27 07:58:29 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,7 +68,7 @@ void calc(double **tab,struct canvas *can,int nox){
 	Obj fr,g,t,s;
 
 	if(!nox)initmarker(can,"Evaluating...");
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+  todouble((Obj)can->formula,&fr);
 	xstep=(can->xmax-can->xmin)/can->width;
 	ystep=(can->ymax-can->ymin)/can->height;
 	MKReal(1.0,rx); MKReal(1.0,ry); // dummy real
@@ -101,7 +101,7 @@ void calcq(double **tab,struct canvas *can,int nox){
 	Obj fr,gm,t,s;
 	Real r,rx,ry;
 
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+  todouble((Obj)can->formula,&fr);
 	MKReal(1.0,rx); MKReal(1.0,ry); // dummy real
 	BDY(rx)=can->xmin;
 	substr(CO,0,fr,can->vx,can->xmin?(Obj)rx:0,&t); devalr(CO,t,&gm);
@@ -139,7 +139,7 @@ void calcb(double **tab,struct canvas *can,int nox){
 	Obj fr,gm,tm,sm;
 	Real r,rx,ry;
 
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+  todouble((Obj)can->formula,&fr);
 	MKReal(1.0,rx); MKReal(1.0,ry); // dummy real
 	BDY(rx)=can->xmin;
 	substr(CO,0,fr,can->vx,can->xmin?(Obj)rx:0,&tm); devalr(CO,tm,&gm);
@@ -381,7 +381,7 @@ void plotcalc(struct canvas *can){
 	Obj fr,t,s;
 	POINT *pa;
 
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr); 
+  todouble((Obj)can->formula,&fr);
 	w=can->width;h=can->height;
 	xmin=can->xmin;xstep=(can->xmax-can->xmin)/w;
 	tab=(double *)ALLOCA(w*sizeof(double));
@@ -426,7 +426,7 @@ void polarcalc(struct canvas *can){
 	Real r;
 	Obj fr,t,s;
 
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr); 
+  todouble((Obj)can->formula,&fr);
 	w=can->width; h=can->height; nstep=can->nzstep;
 	pmin=can->zmin; pstep=(can->zmax-can->zmin)/nstep;
 	tabx=(double *)ALLOCA(nstep*sizeof(double));
@@ -474,7 +474,7 @@ void polarcalcNG(struct canvas *can){
 	Real r;
 	Obj fr,t,s;
 
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr); 
+  todouble((Obj)can->formula,&fr);
 	w=can->width; h=can->height; nstep=can->nzstep;
 	pmin=can->zmin; pstep=(can->zmax-can->zmin)/nstep;
 	tabx=(double *)ALLOCA(nstep*sizeof(double));
@@ -523,7 +523,7 @@ void ineqncalc(double **tab,struct canvas *can,int nox){
 	V vx,vy;
 
 	if(!nox) initmarker(can,"Evaluating...");
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+  todouble((Obj)can->formula,&fr);
 	vx=can->vx;vy=can->vy;
 	w=can->width;h=can->height; 
 	xmin=can->xmin;xstep=(can->xmax-can->xmin)/w;
@@ -555,7 +555,7 @@ void itvcalc(double **mask, struct canvas *can, int nox){
 	Obj fr,g,t,s;
 
 	idv=can->division;
-	MKReal(1.0,r); mulr(CO,(Obj)can->formula,(Obj)r,&fr);
+  todouble((Obj)can->formula,&fr);
 	vx=can->vx; vy=can->vy;
 	xstep=(can->xmax-can->xmin)/can->width;
 	ystep=(can->ymax-can->ymin)/can->height;
