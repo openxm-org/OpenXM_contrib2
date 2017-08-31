@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.22 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotp.c,v 1.23 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -157,7 +157,7 @@ void over_print(DISPLAY *display,double **tab,struct canvas *can,int GXcode){
 			MAX(MAX(tab[ix][iy],tab[ix][iy+1]),MAX(tab[ix+1][iy],tab[ix+1][iy+1]));
 			vmin=
 			MIN(MIN(tab[ix][iy],tab[ix][iy+1]),MIN(tab[ix+1][iy],tab[ix+1][iy+1]));
-			if(vmin<=0.0&vmax>=0.0)DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
+			if(vmin<=0.0 && vmax>=0.0) DRAWPOINT(display,pix,cdrawGC,ix,height-iy-1);
 		}
 		count_and_flush();
 	}
