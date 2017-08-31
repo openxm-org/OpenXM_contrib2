@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.75 2016/08/24 08:21:03 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.76 2017/02/07 08:30:31 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -79,7 +79,7 @@ pointer eval(FNODE f)
 	R u;
 	DP dp;
 	unsigned int pv;
-	int c,ret;
+	int c,ret,pos;
 	FNODE f1;
 	UP2 up2;
 	UP up;
@@ -167,6 +167,9 @@ pointer eval(FNODE f)
 			break;
 		case I_EV:
 			evalnodebody((NODE)FA0(f),&tn); nodetod(tn,&dp); val = (pointer)dp;
+			break;
+		case I_EVM:
+			evalnodebody((NODE)FA0(f),&tn); pos = eval((FNODE)FA1(f)); nodetodpm(tn,pos,&dp); val = (pointer)dp;
 			break;
 		case I_FUNC:
 			val = evalf((FUNC)FA0(f),(FNODE)FA1(f),0); break;

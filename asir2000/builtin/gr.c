@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.71 2015/08/14 13:51:54 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/gr.c,v 1.72 2016/08/08 07:18:10 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -60,7 +60,7 @@
 #define INLINE
 #endif
 
-#define HMAG(p) (p_mag(BDY(p)->c))
+#define HMAG(p) (p_mag((P)BDY(p)->c))
 
 #define NEWDP_pairs ((DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 
@@ -386,7 +386,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
 		if ( input_is_dp )
 			BDY(r) = (pointer)ps[(int)BDY(x)];
 		else
-			dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+			dtop(CO,vv,ps[(int)BDY(x)],(Obj *)&BDY(r));
 		NEXTNODE(ind0,ind);
 		STOQ((int)BDY(x),q); BDY(ind) = q;
 	}
@@ -446,7 +446,7 @@ void dp_interreduce(LIST f,LIST v,int field,struct order_spec *ord,LIST *rp)
 		if ( input_is_dp )
 			BDY(r) = (pointer)ps[(int)BDY(x)];
 		else
-			dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+			dtop(CO,vv,ps[(int)BDY(x)],(Obj *)&BDY(r));
 		NEXTNODE(ind0,ind);
 		STOQ((int)BDY(x),q); BDY(ind) = q;
 	}
@@ -571,7 +571,7 @@ void dp_f4_main(LIST f,LIST v,struct order_spec *ord,LIST *rp)
 		if ( input_is_dp )
 			BDY(r) = (pointer)ps[(int)BDY(x)];
 		else
-			dtop(CO,vv,ps[(int)BDY(x)],(P *)&BDY(r));
+			dtop(CO,vv,ps[(int)BDY(x)],(Obj *)&BDY(r));
 	}
 	if ( r0 ) NEXT(r) = 0;
 	MKLIST(*rp,r0);
@@ -719,11 +719,11 @@ NODE gb_f4(NODE f)
 			if ( k == nred ) {
 				/* this is a new base */
 				mp0 = 0;
-				NEXTMP(mp0,mp); mp->dl = at[rind[i]]; mp->c = (P)dn;
+				NEXTMP(mp0,mp); mp->dl = at[rind[i]]; mp->c = (Obj)dn;
 				for ( k = 0; k < col-rank; k++ )
 					if ( nm->body[i][k] ) {
 						NEXTMP(mp0,mp); mp->dl = at[cind[k]];
-						mp->c = (P)nm->body[i][k];
+						mp->c = (Obj)nm->body[i][k];
 					}
 				NEXT(mp) = 0;
 				MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
@@ -953,11 +953,11 @@ NODE gb_f4_mod(NODE f,int m)
 		for ( j = 0, i = 0; j < spcol; j++ )
 			if ( colstat[j] ) {
 				mp0 = 0;
-				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = STOI(1);
+				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = (Obj)STOI(1);
 				for ( k = j+1; k < spcol; k++ )
 					if ( !colstat[k] && spmat[i][k] ) {
 						NEXTMP(mp0,mp); mp->dl = st[k];
-						mp->c = STOI(spmat[i][k]);
+						mp->c = (Obj)STOI(spmat[i][k]);
 				}
 				NEXT(mp) = 0;
 				MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
@@ -1133,11 +1133,11 @@ NODE gb_f4_mod_old(NODE f,int m)
 		for ( j = 0, i = 0; j < spcol; j++ )
 			if ( colstat[j] ) {
 				mp0 = 0;
-				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = STOI(1);
+				NEXTMP(mp0,mp); mp->dl = st[j]; mp->c = (Obj)STOI(1);
 				for ( k = j+1; k < spcol; k++ )
 					if ( !colstat[k] && spmat[i][k] ) {
 						NEXTMP(mp0,mp); mp->dl = st[k];
-						mp->c = STOI(spmat[i][k]);
+						mp->c = (Obj)STOI(spmat[i][k]);
 				}
 				NEXT(mp) = 0;
 				MKDP(nv,mp0,nf); nf->sugar = dm->sugar;
@@ -1301,7 +1301,7 @@ void setup_arrays(NODE f,int m,NODE *r)
 			dp_save(i,(Obj)ps[i],0);
 		psh[i] = BDY(ps[i])->dl;
 		pss[i] = ps[i]->sugar;
-		psc[i] = BDY(ps[i])->c;
+		psc[i] = (P)BDY(ps[i])->c;
 	}
 	if ( GenTrace ) {
 		Q q;
@@ -1350,7 +1350,7 @@ void prim_part(DP f,int m,DP *r)
 		if ( GenTrace && TraceList ) {
 			/* adust the denominator according to the final 
 			   content reduction */
-			divsp(CO,BDY(f)->c,BDY(*r)->c,&d);
+			divsp(CO,(P)BDY(f)->c,(P)BDY(*r)->c,&d);
 			mulp(CO,(P)ARG3(BDY((LIST)BDY(TraceList))),d,&t);
 			ARG3(BDY((LIST)BDY(TraceList))) = t;
 		}
@@ -1527,7 +1527,7 @@ void reduceall_mod(NODE in,int m,NODE *h)
 
 int newps(DP a,int m,NODE subst)
 {
-	if ( m && !validhc(!a?0:BDY(a)->c,m,subst) )
+	if ( m && !validhc(!a?0:(P)BDY(a)->c,m,subst) )
 		return -1;
 	if ( psn == pslen ) {
 		pslen *= 2;
@@ -1548,7 +1548,7 @@ int newps(DP a,int m,NODE subst)
 		ps[psn] = a;
 	psh[psn] = BDY(a)->dl;
 	pss[psn] = a->sugar;
-	psc[psn] = BDY(a)->c;
+	psc[psn] = (P)BDY(a)->c;
 	if ( m )
 		_dp_mod(a,m,subst,&psm[psn]);
 	if ( GenTrace ) {
@@ -1586,7 +1586,7 @@ int newps(DP a,int m,NODE subst)
 
 int newps_nosave(DP a,int m,NODE subst)
 {
-	if ( m && !validhc(!a?0:BDY(a)->c,m,subst) )
+	if ( m && !validhc(!a?0:(P)BDY(a)->c,m,subst) )
 		return -1;
 	if ( psn == pslen ) {
 		pslen *= 2;
@@ -1600,7 +1600,7 @@ int newps_nosave(DP a,int m,NODE subst)
 	ps[psn] = 0;
 	psh[psn] = BDY(a)->dl;
 	pss[psn] = a->sugar;
-	psc[psn] = BDY(a)->c;
+	psc[psn] = (P)BDY(a)->c;
 	if ( m )
 		_dp_mod(a,m,subst,&psm[psn]);
 	return psn++;
@@ -1810,7 +1810,7 @@ skip_nf:
 			get_eg(&tpz0);
 			prim_part(nf,0,&h);
 			get_eg(&tpz1); add_eg(&eg_pz,&tpz0,&tpz1);
-			add_denomlist(BDY(h)->c);
+			add_denomlist((P)BDY(h)->c);
 			get_eg(&tnp0);
 			if ( Demand && skip_nf_flag )
 				nh = newps_nosave(h,m,subst);
@@ -2463,7 +2463,7 @@ void dp_mulc_d(DP p,P c,DP *r)
 		dp_imul_d(p,(Q)c,r);
 	} else {
 		if ( DP_NFStat ) fprintf(asir_out,"_");
-		muldc(CO,p,c,r);
+		muldc(CO,p,(Obj)c,r);
 	}
 }
 
@@ -2578,7 +2578,7 @@ void _dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *r)
 					node = mknode(4,cr,cq,NULLP,NULLP);
 					mulq(cred,rc,&rcred);
 					chsgnnum((Num)rcred,(Num *)&mrcred);
-					muldc(CO,shift,(P)mrcred,(DP *)&ARG2(node));
+					muldc(CO,shift,(Obj)mrcred,(DP *)&ARG2(node));
 					MKLIST(hist,node);
 				}
 
@@ -2636,8 +2636,8 @@ void _dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *r)
 			t_0 = get_rtime();
 			mulq((Q)BDY(rp)->c,rc,&c);
 			igcd_cofactor(dc,c,&dc,&dcq,&cq);
-			muldc(CO,dp,(P)dcq,&t);
-			dp_hm(rp,&t1); BDY(t1)->c = (P)cq;  addd(CO,t,t1,&dp);
+			muldc(CO,dp,(Obj)dcq,&t);
+			dp_hm(rp,&t1); BDY(t1)->c = (Obj)cq;  addd(CO,t,t1,&dp);
 			dp_rest(rp,&rp);
 			t_a += get_rtime()-t_0;
 		}
@@ -2681,7 +2681,7 @@ void dp_imul_d(DP p,Q q,DP *rp)
 	nsep = ndist + 1;
 	for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
 	if ( n <= nsep ) {
-		muldc(CO,p,(P)q,rp); return;
+		muldc(CO,p,(Obj)q,rp); return;
 	}
 	MKSTR(imul,"imulv");
 	t0 = get_rtime();

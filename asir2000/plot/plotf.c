@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.29 2014/06/27 07:58:29 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.30 2014/07/31 15:52:13 saito Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -436,7 +436,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	LIST xrange,range[1],list,geom;
 	VL vl,vl0;
 	V v[1],av[1];
-	int stream,ri,i;
+	int stream,ri,i,found_f;
 	P poly;
 	P var;
 	NODE n,n0;
@@ -447,6 +447,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	MKNODE(n,p2,0);MKNODE(defrange,m2,n);
 	poly=0;vl=0;geom=0;wname=0;stream=-1;ri=0;
 	v[0]=0;
+  found_f = 0;
 	for(;arg;arg=NEXT(arg) )
 		if(!BDY(arg) )
 			stream=0;
@@ -462,6 +463,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 					}
 				}
 				if(i != 1 ) error("ifplot : invalid argument");
+        found_f = 1;
 				break;
 			case O_LIST:
 				list=(LIST)BDY(arg);
@@ -471,7 +473,13 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 				} else geom=list;
 				break;
 			case O_N:
-				stream=QTOS((Q)BDY(arg));break;
+        if ( !found_f ) {
+          poly = (P)BDY(arg);
+          makevar("x",&var);
+          v[0] = VR(var);
+        } else
+				  stream=QTOS((Q)BDY(arg));
+        break;
 			case O_STR:
 				wname=(STRING)BDY(arg);break;
 			default:
@@ -485,7 +493,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 			break;
 		case 1:
 			av[0]=VR((P)BDY(BDY(range[0])));
-			if(v[0]==av[0] )
+			if(NUM(poly) || v[0]==av[0] )
 				xrange=range[0];
 			else
 				error("plot : invalid argument");

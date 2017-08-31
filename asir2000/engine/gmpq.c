@@ -84,6 +84,7 @@ Q gztoz(GZ a)
 
 	if ( !a ) return 0;
 	len = WORDSIZE_IN_N(BDY((GZ)a)); nm = NALLOC(len);
+  fprintf(stderr,"%d ",len);
 	mpz_export(BD(nm),&len,-1,sizeof(int),0,0,BDY((GZ)a));
 	PL(nm) = len;
 	sgn = mpz_sgn(BDY((GZ)a)); NTOQ(nm,sgn,q);

@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.15 2007/02/13 07:12:54 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dalg.c,v 1.16 2013/11/05 02:55:03 noro Exp $
 */
 
 #include "ca.h"
@@ -36,7 +36,7 @@ void setfield_dalg(NODE alist)
 	current_numberfield = nf;
 	vl = 0;
 	for ( t = alist; t; t = NEXT(t) ) {
-		clctalg(BDY((Alg)BDY(t)),&vl1);
+		clctalg((P)BDY((Alg)BDY(t)),&vl1);
 		mergev(ALG,vl,vl1,&vl2); vl = vl2;
 	}
 	for ( n = 0, vl1 = vl; vl1; vl1 = NEXT(vl1), n++ ); 
@@ -121,11 +121,11 @@ void qtodalg(Q q,DAlg *r)
 		*r = (DAlg)q;
 	else if ( NID(q) == N_Q ) {
 		if ( INT(q) ) {
-			muldc(CO,nf->one->nm,(P)q,&nm);
+			muldc(CO,nf->one->nm,(Obj)q,&nm);
 			MKDAlg(nm,ONE,*r);
 		} else {
 			NTOQ(NM(q),SGN(q),t);
-			muldc(CO,nf->one->nm,(P)t,&nm);
+			muldc(CO,nf->one->nm,(Obj)t,&nm);
 			NTOQ(DN(q),1,t);
 			MKDAlg(nm,t,*r);
 		}
@@ -330,12 +330,12 @@ void algtodalg(Alg a,DAlg *r)
 		case N_Q:
 			c = (Q)a;
 			if ( INT(c) ) {
-				muldc(CO,nf->one->nm,(P)c,&dp);
+				muldc(CO,nf->one->nm,(Obj)c,&dp);
 				MKDAlg(dp,ONE,*r);
 			} else {
 				NTOQ(NM(c),SGN(c),c1);
 				NTOQ(DN(c),1,d1);
-				muldc(CO,nf->one->nm,(P)c1,&dp);
+				muldc(CO,nf->one->nm,(Obj)c1,&dp);
 				MKDAlg(dp,d1,*r);
 			}
 			break;
@@ -351,7 +351,7 @@ void algtodalg(Alg a,DAlg *r)
 				mulpq(p,(P)nm,&p1); p = p1;
 			}
 			current_spec = dp_current_spec; initd(nf->spec);
-			get_vars(p,&vl);
+			get_vars((Obj)p,&vl);
 			for ( tvl = vl; tvl; tvl = NEXT(tvl) ) {
 				v = tvl->v;
 				for ( svl = nf->vl; svl; svl = NEXT(svl) )
@@ -380,7 +380,7 @@ void dalgtoalg(DAlg da,Alg *r)
 		error("dalgtoalg : current_numberfield is not set");
 	if ( !da ) *r = 0;
 	else {
-		dtop(ALG,nf->vl,da->nm,&p);
+		dtop(ALG,nf->vl,da->nm,(Obj *)&p);
 		invq(da->dn,&inv);
 		mulpq(p,(P)inv,&p1);
 		MKAlg(p1,*r);
@@ -402,7 +402,7 @@ void simpdalg(DAlg da,DAlg *r)
 		return;
 	}
 	current_spec = dp_current_spec; initd(nf->spec);
-	dp_true_nf(nf->ind,da->nm,nf->ps,1,&nm,&dn);
+	dp_true_nf(nf->ind,da->nm,nf->ps,1,&nm,(P *)&dn);
 	if ( !nm ) *r = 0;
 	else {
 		initd(current_spec);
@@ -435,7 +435,7 @@ void adddalg(DAlg a,DAlg b,DAlg *c)
 		divsn(NM(dna),gn,&an); divsn(NM(dnb),gn,&bn);
 		NTOQ(an,SGN(dna),a1); NTOQ(bn,SGN(dnb),b1);
 		/* nma/dna+nmb/dnb = (nma*b1+nmb*a1)/(dna*b1) */
-		muldc(CO,a->nm,(P)b1,&ta); muldc(CO,b->nm,(P)a1,&tb);
+		muldc(CO,a->nm,(Obj)b1,&ta); muldc(CO,b->nm,(Obj)a1,&tb);
 		current_spec = dp_current_spec; initd(nf->spec);
 		addd(CO,ta,tb,&nm);
 		initd(current_spec);
@@ -471,7 +471,7 @@ void subdalg(DAlg a,DAlg b,DAlg *c)
 		divsn(NM(dna),gn,&an); divsn(NM(dnb),gn,&bn);
 		NTOQ(an,SGN(dna),a1); NTOQ(bn,SGN(dnb),b1);
 		/* nma/dna-nmb/dnb = (nma*b1-nmb*a1)/(dna*b1) */
-		muldc(CO,a->nm,(P)b1,&ta); muldc(CO,b->nm,(P)a1,&tb);
+		muldc(CO,a->nm,(Obj)b1,&ta); muldc(CO,b->nm,(Obj)a1,&tb);
 		current_spec = dp_current_spec; initd(nf->spec);
 		subd(CO,ta,tb,&nm);
 		initd(current_spec);
@@ -543,7 +543,7 @@ void rmcontdalg(DAlg a, DAlg *r)
 		gcdn(NM(cont),NM(a->dn),&gn);
 		divsn(NM(cont),gn,&cn); NTOQ(cn,SGN(cont),c);
 		divsn(NM(a->dn),gn,&dn); NTOQ(dn,SGN(a->dn),d);
-		muldc(CO,u,(P)c,&u1);
+		muldc(CO,u,(Obj)c,&u1);
 		MKDAlg(u1,d,*r);
 	}
 }
@@ -623,7 +623,7 @@ int invdalg(DAlg a,DAlg *c)
 		for ( i = dim-1, mp0 = 0; i >= 0; i-- )
 			if ( solmat[i][0] ) {
 				NEXTMP(mp0,mp);
-				mp->c = (P)solmat[i][0];
+				mp->c = (Obj)solmat[i][0];
 				mp->dl = BDY(mb[i])->dl;
 			}
 		NEXT(mp) = 0; MKDP(n,mp0,u);
@@ -662,7 +662,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 		error("invdalg : division by 0");
 	else if ( NID(a) == N_Q ) {
 		invq((Q)a,&dn); *c = (DAlg)dn;
-		return 1;
+		return 0;
 	}
 	dim = nf->dim;
 	mb = nf->mb;
@@ -719,7 +719,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 		for ( i = dim-1, mp0 = 0; i >= 0; i-- )
 			if ( solmat[i][0] ) {
 				NEXTMP(mp0,mp);
-				mp->c = (P)solmat[i][0];
+				mp->c = (Obj)solmat[i][0];
 				mp->dl = BDY(mb[i])->dl;
 			}
 		NEXT(mp) = 0; MKDP(n,mp0,u);
@@ -737,13 +737,13 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
 			m = mb[cinfo[k]];
 			mp0 = 0;
 			NEXTMP(mp0,mp);
-			chsgnq(dnsol,&dn1); mp->c = (P)dn1;
+			chsgnq(dnsol,&dn1); mp->c = (Obj)dn1;
 			mp->dl = BDY(m)->dl;
 			/* skip the last parameter */
 			for ( l = rank-2; l >= 0; l-- ) {
 				if ( solmat[l][k] ) {
 					NEXTMP(mp0,mp);
-					mp->c = (P)solmat[l][k];
+					mp->c = (Obj)solmat[l][k];
 					mp->dl = BDY(mb[rinfo[l]])->dl;
 				}
 			}
@@ -786,7 +786,7 @@ NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
 		STOQ(i,iq); BDY(indt) = iq;
 	}
 	if ( ind ) NEXT(indt) = 0;
-	dp_true_nf(ind,f,ps,1,&nm,&dn);
+	dp_true_nf(ind,f,ps,1,&nm,(P *)&dn);
 	if ( !nm ) error("dp_inv_or_split : input is 0");
 	f = nm;
 
@@ -808,13 +808,13 @@ NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
 			dp_subd(m,mb[j],&d);
 			if ( simp[j] ) {
 				muld(CO,d,simp[j]->nm,&u);
-				dp_true_nf(ind,u,ps,1,&nm,&dn);
+				dp_true_nf(ind,u,ps,1,&nm,(P *)&dn);
 				mulq(simp[j]->dn,dn,&dn1);
 				MKDAlg(nm,dn1,simp[i]);
 			} else
 				simp[i] = 0;
 		} else {
-			dp_true_nf(ind,f,ps,1,&nm,&dn);
+			dp_true_nf(ind,f,ps,1,&nm,(P *)&dn);
 			MKDAlg(nm,dn,simp[i]);
 		}
 		if ( simp[i] ) {
@@ -845,7 +845,7 @@ NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
 		for ( i = dim-1, mp0 = 0; i >= 0; i-- )
 			if ( solmat[i][0] ) {
 				NEXTMP(mp0,mp);
-				mp->c = (P)solmat[i][0];
+				mp->c = (Obj)solmat[i][0];
 				mp->dl = BDY(mb[i])->dl;
 			}
 		NEXT(mp) = 0; MKDP(nv,mp0,*inv);
@@ -860,13 +860,13 @@ NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
 			m = mb[cinfo[k]];
 			mp0 = 0;
 			NEXTMP(mp0,mp);
-			chsgnq(dnsol,&dn1); mp->c = (P)dn1;
+			chsgnq(dnsol,&dn1); mp->c = (Obj)dn1;
 			mp->dl = BDY(m)->dl;
 			/* skip the last parameter */
 			for ( l = rank-2; l >= 0; l-- ) {
 				if ( solmat[l][k] ) {
 					NEXTMP(mp0,mp);
-					mp->c = (P)solmat[l][k];
+					mp->c = (Obj)solmat[l][k];
 					mp->dl = BDY(mb[rinfo[l]])->dl;
 				}
 			}

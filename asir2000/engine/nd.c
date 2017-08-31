@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.236 2017/03/27 09:05:46 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.237 2017/04/09 02:23:12 noro Exp $ */
 
 #include "nd.h"
 
@@ -3120,10 +3120,10 @@ void preprocess_algcoef(VL vv,VL av,struct order_spec *ord,LIST f,
         if ( NID(hc) == N_DA ) {
             invdalg(hc,&inv);
             for ( m = BDY(d); m; m = NEXT(m) ) {
-                muldalg(inv,(DAlg)m->c,&da); m->c = (P)da;
+                muldalg(inv,(DAlg)m->c,&da); m->c = (Obj)da;
             }
         }
-        initd(ord); dtop(vv,vv,d,&poly); BDY(f) = (pointer)poly;
+        initd(ord); dtop(vv,vv,d,(Obj *)&poly); BDY(f) = (pointer)poly;
     }
     obj_dalgtoalg((Obj)f1,(Obj *)&f);
 
@@ -3903,7 +3903,7 @@ void nmtodp(int mod,NM m,DP *r)
 
     NEWMP(mr); 
     mr->dl = ndltodl(nd_nvar,DL(m));
-    mr->c = ndctop(mod,m->c);
+    mr->c = (Obj)ndctop(mod,m->c);
     NEXT(mr) = 0; MKDP(nd_nvar,mr,dp); dp->sugar = mr->dl->td;
     *r = dp;
 }
@@ -5317,7 +5317,7 @@ P ndvtop(int mod,VL vl,VL dvl,NDV p)
             if ( mod == -1 ) {
                e = IFTOF(CM(m)); MKGFS(e,gfs); c = (P)gfs;
             } else if ( mod == -2 ) {
-               c = gztoz(CZ(m));
+               c = (P)gztoz(CZ(m));
             } else if ( mod > 0 ) {
                 STOQ(CM(m),q); c = (P)q;
             } else
@@ -5436,7 +5436,7 @@ DP ndvtodp(int mod,NDV p)
     for ( t = BDY(p), i = 0; i < len; NMV_ADV(t), i++ ) {
         NEXTMP(m0,m);
     	m->dl = ndltodl(nd_nvar,DL(t));
-    	m->c = ndctop(mod,t->c);
+    	m->c = (Obj)ndctop(mod,t->c);
     }
     NEXT(m) = 0;
 	MKDP(nd_nvar,m0,d);
@@ -5457,7 +5457,7 @@ DP ndtodp(int mod,ND p)
     for ( t = BDY(p); t; t = NEXT(t) ) {
         NEXTMP(m0,m);
     	m->dl = ndltodl(nd_nvar,DL(t));
-    	m->c = ndctop(mod,t->c);
+    	m->c = (Obj)ndctop(mod,t->c);
     }
     NEXT(m) = 0;
 	MKDP(nd_nvar,m0,d);
@@ -8200,14 +8200,14 @@ int nd_monic(int mod,ND *p)
     is_lc = 1;
     while ( 1 ) {
         NEWMP(mp0); mp = mp0;
-        mp->c = (P)CQ(m);
+        mp->c = (Obj)CQ(m);
         mp->dl = nd_separate_d(DL(m),DL(ma));
         NEWNM(mb);
         for ( m = NEXT(m); m; m = NEXT(m) ) {
             alg = nd_separate_d(DL(m),DL(mb));
             if ( !ndl_equal(DL(ma),DL(mb)) )
                 break;
-            NEXTMP(mp0,mp); mp->c = (P)CQ(m); mp->dl = alg;
+            NEXTMP(mp0,mp); mp->c = (Obj)CQ(m); mp->dl = alg;
         }
         NEXT(mp) = 0;
         MKDP(nd_nalg,mp0,nm);

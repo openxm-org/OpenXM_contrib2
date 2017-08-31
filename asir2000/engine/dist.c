@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.50 2014/10/10 09:02:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.51 2015/09/24 04:43:13 noro Exp $ 
 */
 #include "ca.h"
 
@@ -84,7 +84,7 @@ int *dp_dl_work;
 void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr);
 void comm_quod(VL vl,DP p1,DP p2,DP *pr);
 void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr);
-void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr);
+void muldc_trunc(VL vl,DP p,Obj c,DL dl,DP *pr);
 int create_order_spec(VL vl,Obj obj,struct order_spec **specp);
 void create_modorder_spec(int id,LIST shift,struct modorder_spec **s);
 
@@ -97,7 +97,7 @@ void order_init()
 	create_modorder_spec(0,0,&dp_current_modspec);
 }
 
-int has_sfcoef_p(P f);
+int has_sfcoef_p(Obj f);
 
 int has_sfcoef(DP f)
 {
@@ -111,7 +111,7 @@ int has_sfcoef(DP f)
 	return t ? 1 : 0;
 }
 
-int has_sfcoef_p(P f)
+int has_sfcoef_p(Obj f)
 {
 	DCP dc;
 
@@ -119,12 +119,13 @@ int has_sfcoef_p(P f)
 		return 0;
 	else if ( NUM(f) )
 		return (NID((Num)f) == N_GFS) ? 1 : 0;
-	else {
-		for ( dc = DC(f); dc; dc = NEXT(dc) )
-			if ( has_sfcoef_p(COEF(dc)) )
+	else if ( POLY(f) ) {
+		for ( dc = DC((P)f); dc; dc = NEXT(dc) )
+			if ( has_sfcoef_p((Obj)COEF(dc)) )
 				return 1;
 		return 0;
-	}
+	} else
+    return 0;
 }
 
 extern Obj nd_top_weight;
@@ -207,6 +208,18 @@ void initd(struct order_spec *spec)
 	dp_current_spec = spec;
 }
 
+int dpm_ispot;
+
+/* type=0 => TOP, type=1 => POT */
+void initdpm(struct order_spec *spec,int type)
+{
+	int len,i,k,row;
+    Q **mat;
+
+  initd(spec);
+  dpm_ispot = type;
+}
+
 void ptod(VL vl,VL dvl,P p,DP *pr)
 {
 	int n,i,j,k;
@@ -221,11 +234,13 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 
 	if ( !p )
 		*pr = 0;
+  else if ( OID(p) > O_P )
+    error("ptod : only polynomials can be converted.");
 	else {
 		for ( n = 0, tvl = dvl; tvl; tvl = NEXT(tvl), n++ );
 		if ( NUM(p) ) {
 			NEWDL(d,n);
-			NEWMP(m); m->dl = d; C(m) = p; NEXT(m) = 0; MKDP(n,m,*pr); (*pr)->sugar = 0;
+			NEWMP(m); m->dl = d; C(m) = (Obj)p; NEXT(m) = 0; MKDP(n,m,*pr); (*pr)->sugar = 0;
 		} else {
 			for ( i = 0, tvl = dvl, v = VR(p);
 				tvl && tvl->v != v; tvl = NEXT(tvl), i++ );
@@ -237,7 +252,7 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 
 				for ( j = k-1, s = 0, MKV(v,x); j >= 0; j-- ) {
 					ptod(vl,dvl,COEF(w[j]),&t); pwrp(vl,x,DEG(w[j]),&c);
-					muldc(vl,t,c,&r); addd(vl,r,s,&t); s = t;
+					muldc(vl,t,(Obj)c,&r); addd(vl,r,s,&t); s = t;
 				}
 				*pr = s;
 			} else {
@@ -250,7 +265,7 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 					ptod(vl,dvl,COEF(w[j]),&t);
 					NEWDL(d,n); d->d[i] = QTOS(DEG(w[j]));
 					d->td = MUL_WEIGHT(d->d[i],i);
-					NEWMP(m); m->dl = d; C(m) = (P)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
+					NEWMP(m); m->dl = d; C(m) = (Obj)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
 					comm_muld(vl,t,u,&r); addd(vl,r,s,&t); s = t;
 				}
 				*pr = s;
@@ -263,13 +278,14 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 #endif
 }
 
-void dtop(VL vl,VL dvl,DP p,P *pr)
+void dtop(VL vl,VL dvl,DP p,Obj *pr)
 {
 	int n,i,j,k;
 	DL d;
 	MP m;
 	MP *a;
-	P r,s,t,u,w;
+	P r;
+  Obj t,w,s,u;
 	Q q;
 	VL tvl;
 
@@ -285,14 +301,14 @@ void dtop(VL vl,VL dvl,DP p,P *pr)
 			m = a[j];
 			t = C(m);
 			if ( NUM(t) && NID((Num)t) == N_M ) {
-				mptop(t,&u); t = u;
+				mptop((P)t,(P *)&u); t = u;
 			}
 			for ( i = 0, d = m->dl, tvl = dvl;
 				i < n; tvl = NEXT(tvl), i++ ) {
-				MKV(tvl->v,r); STOQ(d->d[i],q); pwrp(vl,r,q,&u);
-				mulp(vl,t,u,&w); t = w;
+				MKV(tvl->v,r); STOQ(d->d[i],q); pwrp(vl,r,q,(P *)&u);
+				arf_mul(vl,t,(Obj)u,&w); t = w;
 			}
-			addp(vl,s,t,&u); s = u;
+			arf_add(vl,s,t,&u); s = u;
 		}
 		*pr = s;
 	}
@@ -320,8 +336,51 @@ void nodetod(NODE node,DP *dp)
 		}
 	}
 	d->td = td;
-	NEWMP(m); m->dl = d; C(m) = (P)ONE; NEXT(m) = 0;
+	NEWMP(m); m->dl = d; C(m) = (Obj)ONE; NEXT(m) = 0;
 	MKDP(len,m,u); u->sugar = td; *dp = u;
+}
+
+void nodetodpm(NODE node,Obj pos,DPM *dp)
+{
+	NODE t;
+	int len,i,td;
+	Q e;
+	DL d;
+	DMM m;
+	DPM u;
+
+	for ( t = node, len = 0; t; t = NEXT(t), len++ );
+	NEWDL(d,len);
+	for ( t = node, i = 0, td = 0; i < len; t = NEXT(t), i++ ) {
+		e = (Q)BDY(t);
+		if ( !e )
+			d->d[i] = 0;
+		else if ( !NUM(e) || !RATN(e) || !INT(e) )
+			error("nodetodpm : invalid input");
+		else {
+			d->d[i] = QTOS((Q)e); td += MUL_WEIGHT(d->d[i],i);
+		}
+	}
+	d->td = td;
+	NEWDMM(m); m->dl = d; m->pos = QTOS((Q)pos); C(m) = (Obj)ONE; NEXT(m) = 0;
+	MKDPM(len,m,u); u->sugar = td; *dp = u;
+}
+
+void dtodpm(DP d,int pos,DPM *dp)
+{
+  DMM mr0,mr;
+  MP m;
+
+  if ( !d ) *dp = 0;
+  else {
+    for ( m = BDY(d), mr0 = 0; m; m = NEXT(m) ) {
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl;
+      mr->pos = pos;
+      C(mr) = C(m);
+    }
+    MKDPM(d->nv,mr0,*dp); (*dp)->sugar = d->sugar;
+  }
 }
 
 int sugard(MP m)
@@ -337,7 +396,7 @@ void addd(VL vl,DP p1,DP p2,DP *pr)
 {
 	int n;
 	MP m1,m2,mr=0,mr0;
-	P t;
+	Obj t;
 	DL d;
 
 	if ( !p1 )
@@ -347,18 +406,18 @@ void addd(VL vl,DP p1,DP p2,DP *pr)
 	else {
 		if ( OID(p1) <= O_R ) {
 			n = NV(p2);	NEWDL(d,n);
-			NEWMP(m1); m1->dl = d; C(m1) = (P)p1; NEXT(m1) = 0;
+			NEWMP(m1); m1->dl = d; C(m1) = (Obj)p1; NEXT(m1) = 0;
 			MKDP(n,m1,p1); (p1)->sugar = 0;
 		}
 		if ( OID(p2) <= O_R ) {
 			n = NV(p1);	NEWDL(d,n);
-			NEWMP(m2); m2->dl = d; C(m2) = (P)p2; NEXT(m2) = 0;
+			NEWMP(m2); m2->dl = d; C(m2) = (Obj)p2; NEXT(m2) = 0;
 			MKDP(n,m2,p2); (p2)->sugar = 0;
 		}
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; )
 			switch ( (*cmpdl)(n,m1->dl,m2->dl) ) {
 				case 0:
-					addp(vl,C(m1),C(m2),&t);
+					arf_add(vl,C(m1),C(m2),&t);
 					if ( t ) {
 						NEXTMP(mr0,mr); mr->dl = m1->dl; C(mr) = t;
 					}
@@ -404,7 +463,7 @@ void symb_addd(DP p1,DP p2,DP *pr)
 		*pr = p1;
 	else {
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; ) {
-			NEXTMP(mr0,mr); C(mr) = (P)ONE;
+			NEXTMP(mr0,mr); C(mr) = (Obj)ONE;
 			switch ( (*cmpdl)(n,m1->dl,m2->dl) ) {
 				case 0:
 					mr->dl = m1->dl;
@@ -638,10 +697,10 @@ void chsgnd(DP p,DP *pr)
 	if ( !p )
 		*pr = 0;
 	else if ( OID(p) <= O_R ) {
-		chsgnr((Obj)p,&r); *pr = (DP)r;
+		arf_chsgn((Obj)p,&r); *pr = (DP)r;
 	} else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); chsgnp(C(m),&C(mr)); mr->dl = m->dl;
+			NEXTMP(mr0,mr); arf_chsgn(C(m),&C(mr)); mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
@@ -667,10 +726,10 @@ void comm_muld(VL vl,DP p1,DP p2,DP *pr)
 
 	if ( !p1 || !p2 )
 		*pr = 0;
-	else if ( OID(p1) <= O_P )
-		muldc(vl,p2,(P)p1,pr);
-	else if ( OID(p2) <= O_P )
-		muldc(vl,p1,(P)p2,pr);
+	else if ( OID(p1) != O_DP )
+		muldc(vl,p2,(Obj)p1,pr);
+	else if ( OID(p2) != O_DP )
+		muldc(vl,p1,(Obj)p2,pr);
 	else {
 		for ( m = BDY(p1), l1 = 0; m; m = NEXT(m), l1++ );
 		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
@@ -705,10 +764,10 @@ void comm_muld_trunc(VL vl,DP p1,DP p2,DL dl,DP *pr)
 
 	if ( !p1 || !p2 )
 		*pr = 0;
-	else if ( OID(p1) <= O_P )
-		muldc_trunc(vl,p2,(P)p1,dl,pr);
-	else if ( OID(p2) <= O_P )
-		muldc_trunc(vl,p1,(P)p2,dl,pr);
+	else if ( OID(p1) != O_DP )
+		muldc_trunc(vl,p2,(Obj)p1,dl,pr);
+	else if ( OID(p2) != O_DP )
+		muldc_trunc(vl,p1,(Obj)p2,dl,pr);
 	else {
 		for ( m = BDY(p1), l1 = 0; m; m = NEXT(m), l1++ );
 		for ( m = BDY(p2), l = 0; m; m = NEXT(m), l++ );
@@ -757,10 +816,10 @@ void comm_quod(VL vl,DP p1,DP p2,DP *pr)
 			NEXTMP(m0,m);
 			m->dl = d;
 			divq((Q)BDY(p1)->c,(Q)BDY(p2)->c,&a); chsgnq(a,&b);
-			C(m) = (P)b;
+			C(m) = (Obj)b;
 			muldm_trunc(vl,p2,m,d2,&t);
 			addd(vl,p1,t,&s); p1 = s;
-			C(m) = (P)a;
+			C(m) = (Obj)a;
 		}
 		if ( m0 ) {
 			NEXT(m) = 0; MKDP(n,m0,*pr);
@@ -775,7 +834,7 @@ void comm_quod(VL vl,DP p1,DP p2,DP *pr)
 void muldm(VL vl,DP p,MP m0,DP *pr)
 {
 	MP m,mr=0,mr0;
-	P c;
+	Obj c;
 	DL d;
 	int n;
 
@@ -788,7 +847,7 @@ void muldm(VL vl,DP p,MP m0,DP *pr)
 			if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) )
 				mulq((Q)C(m),(Q)c,(Q *)&C(mr));
 			else
-				mulp(vl,C(m),c,&C(mr));
+				arf_mul(vl,C(m),c,&C(mr));
 			adddl(n,m->dl,d,&mr->dl);
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
@@ -800,7 +859,7 @@ void muldm(VL vl,DP p,MP m0,DP *pr)
 void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr)
 {
 	MP m,mr=0,mr0;
-	P c;
+	Obj c;
 	DL d,tdl;
 	int n,i;
 
@@ -823,7 +882,7 @@ void muldm_trunc(VL vl,DP p,MP m0,DL dl,DP *pr)
 			if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) )
 				mulq((Q)C(m),(Q)c,(Q *)&C(mr));
 			else
-				mulp(vl,C(m),c,&C(mr));
+				arf_mul(vl,C(m),(Obj)c,&C(mr));
 		}
 		if ( mr0 ) {
 			NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
@@ -844,10 +903,10 @@ void weyl_muld(VL vl,DP p1,DP p2,DP *pr)
 
 	if ( !p1 || !p2 )
 		*pr = 0;
-	else if ( OID(p1) <= O_P )
-		muldc(vl,p2,(P)p1,pr);
-	else if ( OID(p2) <= O_P )
-		muldc(vl,p1,(P)p2,pr);
+	else if ( OID(p1) != O_DP )
+		muldc(vl,p2,(Obj)p1,pr);
+	else if ( OID(p2) != O_DP )
+		muldc(vl,p1,(Obj)p2,pr);
 	else {
 		for ( m = BDY(p1), l = 0; m; m = NEXT(m), l++ );
 		if ( l > wlen ) {
@@ -871,7 +930,7 @@ void actm(VL vl,int nv,MP m1,MP m2,DP *pr)
   int n2,i,j,k;
   Q jq,c,c1;
   MP m;
-  P t;
+  Obj t;
 
   d1 = m1->dl;
   d2 = m2->dl;
@@ -887,9 +946,9 @@ void actm(VL vl,int nv,MP m1,MP m2,DP *pr)
     }
     d->d[i] = d2->d[i]-d1->d[i];
   }
-  mulp(vl,C(m1),C(m2),&t);
+  arf_mul(vl,C(m1),C(m2),&t);
   NEWMP(m);
-  mulp(vl,(P)c,t,&C(m));
+  arf_mul(vl,(Obj)c,t,&C(m));
   m->dl = d;
   MKDP(nv,m,*pr);
 }
@@ -955,7 +1014,7 @@ void weyl_muldm(VL vl,MP m0,DP p,DP *pr)
 			weyl_mulmm(vl,m0,w[i],n,tab,tlen);
 			for ( j = 0; j < tlen; j++ ) {
 				if ( tab[j].c ) {
-					NEWMP(m); m->dl = tab[j].d; C(m) = tab[j].c; NEXT(m) = psum[j];
+					NEWMP(m); m->dl = tab[j].d; C(m) = (Obj)tab[j].c; NEXT(m) = psum[j];
 					psum[j] = m;
 				}
 			}
@@ -975,7 +1034,7 @@ void weyl_muldm(VL vl,MP m0,DP p,DP *pr)
 
 void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 {
-	P c,c0,c1;
+  Obj c,c0,c1;
 	DL d,d0,d1,dt;
 	int i,j,a,b,k,l,n2,s,min,curlen;
 	struct cdl *p;
@@ -992,7 +1051,7 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 		return;
 	}
 	c0 = C(m0); c1 = C(m1);
-	mulp(vl,c0,c1,&c);
+	arf_mul(vl,c0,c1,&c);
 	d0 = m0->dl; d1 = m1->dl;
 	n2 = n>>1;
 	curlen = 1;
@@ -1049,7 +1108,7 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 				d->td = s;
 				d->d[n-1] = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
 				tab[j].d = d;
-				tab[j].c = (P)ctab[j];
+				tab[j].c = (Obj)ctab[j];
 			}
 		else
 			for ( j = 0; j <= min; j++ ) {
@@ -1057,7 +1116,7 @@ void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 				d->d[i] = a-j; d->d[n2+i] = b-j;
 				d->td = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i); /* XXX */
 				tab[j].d = d;
-				tab[j].c = (P)ctab[j];
+				tab[j].c = (Obj)ctab[j];
 			}
 		bzero(ctab,(min+1)*sizeof(Q));
 		comm_muld_tab(vl,n,rtab,curlen,tab,k+1,tmptab);
@@ -1079,25 +1138,25 @@ void comm_muld_tab(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1,struct
 {
 	int i,j;
 	struct cdl *p;
-	P c;
+	Obj c;
 	DL d;
 
 	bzero(rt,n*n1*sizeof(struct cdl));
 	for ( j = 0, p = rt; j < n1; j++ ) {
-		c = t1[j].c;
+		c = (Obj)t1[j].c;
 		d = t1[j].d;
 		if ( !c )
 			break;
 		for ( i = 0; i < n; i++, p++ ) {
 			if ( t[i].c ) {
-				mulp(vl,t[i].c,c,&p->c);
+				arf_mul(vl,(Obj)t[i].c,c,(Obj *)&p->c);
 				adddl(nv,t[i].d,d,&p->d);
 			}
 		}
 	}
 }
 
-void muldc(VL vl,DP p,P c,DP *pr)
+void muldc(VL vl,DP p,Obj c,DP *pr)
 {
 	MP m,mr=0,mr0;
 
@@ -1113,7 +1172,7 @@ void muldc(VL vl,DP p,P c,DP *pr)
 			if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) )
 				mulq((Q)C(m),(Q)c,(Q *)&C(mr));
 			else
-				mulp(vl,C(m),c,&C(mr));
+				arf_mul(vl,C(m),c,&C(mr));
 			mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
@@ -1122,7 +1181,15 @@ void muldc(VL vl,DP p,P c,DP *pr)
 	}
 }
 
-void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr)
+void divdc(VL vl,DP p,Obj c,DP *pr)
+{
+  Obj inv;
+
+  arf_div(vl,(Obj)ONE,c,&inv);
+  muld(vl,p,(DP)inv,pr);
+}
+
+void muldc_trunc(VL vl,DP p,Obj c,DL dl,DP *pr)
 {
 	MP m,mr=0,mr0;
 	DL mdl;
@@ -1143,7 +1210,7 @@ void muldc_trunc(VL vl,DP p,P c,DL dl,DP *pr)
 		if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) )
 			mulq((Q)C(m),(Q)c,(Q *)&C(mr));
 		else
-			mulp(vl,C(m),c,&C(mr));
+			arf_mul(vl,C(m),c,&C(mr));
 		mr->dl = m->dl;
 	}
 	NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
@@ -1159,9 +1226,11 @@ void divsdc(VL vl,DP p,P c,DP *pr)
 		error("disvsdc : division by 0");
 	else if ( !p )
 		*pr = 0;
+  else if ( OID(p) > O_P )
+		error("divsdc : invalid argument");
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); divsp(vl,C(m),c,&C(mr)); mr->dl = m->dl;
+			NEXTMP(mr0,mr); divsp(vl,(P)C(m),c,(P *)&C(mr)); mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
@@ -1207,7 +1276,7 @@ int compd(VL vl,DP p1,DP p2)
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2);
 			m1 && m2; m1 = NEXT(m1), m2 = NEXT(m2) )
 			if ( (t = (*cmpdl)(n,m1->dl,m2->dl)) ||
-				(t = compp(vl,C(m1),C(m2)) ) )
+				(t = arf_comp(vl,C(m1),C(m2)) ) )
 				return t;
 		if ( m1 )
 			return 1;
@@ -2562,3 +2631,253 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 	return u;
 }
 #endif
+
+/* DPM functions */
+
+int compdmm(int n,DMM m1,DMM m2)
+{
+  int t;
+
+  if ( dpm_ispot ) {
+    if ( m1->pos < m2->pos ) return 1;
+    else if ( m1->pos > m2->pos ) return -1;
+    else return (*cmpdl)(n,m1->dl,m2->dl);
+  } else {
+    t = (*cmpdl)(n,m1->dl,m2->dl);
+    if ( t ) return t;
+    else if ( m1->pos < m2->pos ) return 1;
+    else if ( m1->pos > m2->pos ) return -1;
+    else return 0;
+  }
+}
+
+void adddpm(VL vl,DPM p1,DPM p2,DPM *pr)
+{
+	int n;
+	DMM m1,m2,mr=0,mr0;
+	Obj t;
+	DL d;
+
+	if ( !p1 )
+		*pr = p2;
+	else if ( !p2 )
+		*pr = p1;
+	else {
+		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; )
+			switch ( compdmm(n,m1,m2) ) {
+				case 0:
+					arf_add(vl,C(m1),C(m2),&t);
+					if ( t ) {
+						NEXTDMM(mr0,mr); mr->pos = m1->pos; mr->dl = m1->dl; C(mr) = t;
+					}
+					m1 = NEXT(m1); m2 = NEXT(m2); break;
+				case 1:
+					NEXTDMM(mr0,mr); mr->pos = m1->pos; mr->dl = m1->dl; C(mr) = C(m1);
+					m1 = NEXT(m1); break;
+				case -1:
+					NEXTDMM(mr0,mr); mr->pos = m2->pos; mr->dl = m2->dl; C(mr) = C(m2);
+					m2 = NEXT(m2); break;
+			}
+		if ( !mr0 )
+			if ( m1 )
+				mr0 = m1;
+			else if ( m2 )
+				mr0 = m2;
+			else {
+				*pr = 0;
+				return;
+			}
+		else if ( m1 )
+			NEXT(mr) = m1;
+		else if ( m2 )
+			NEXT(mr) = m2;
+		else
+			NEXT(mr) = 0;
+		MKDPM(NV(p1),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = MAX(p1->sugar,p2->sugar);
+	}
+}
+
+void subdpm(VL vl,DPM p1,DPM p2,DPM *pr)
+{
+	DPM t;
+
+	if ( !p2 )
+		*pr = p1;
+	else {
+		chsgndpm(p2,&t); adddpm(vl,p1,t,pr);
+	}
+}
+
+void chsgndpm(DPM p,DPM *pr)
+{
+	DMM m,mr=0,mr0;
+	Obj r;
+
+	if ( !p )
+		*pr = 0;
+  else {
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			NEXTDMM(mr0,mr); arf_chsgn(C(m),&C(mr)); mr->pos = m->pos; mr->dl = m->dl;
+		}
+		NEXT(mr) = 0; MKDPM(NV(p),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = p->sugar;
+	}
+}
+
+void mulcdpm(VL vl,Obj c,DPM p,DPM *pr)
+{
+	DMM m,mr=0,mr0;
+
+	if ( !p || !c )
+		*pr = 0;
+	else if ( NUM(c) && UNIQ((Q)c) )
+		*pr = p;
+	else if ( NUM(c) && MUNIQ((Q)c) )
+		chsgndpm(p,pr);
+	else {
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			NEXTDMM(mr0,mr);
+		  arf_mul(vl,C(m),c,&C(mr));
+      mr->pos = m->pos;
+			mr->dl = m->dl;
+		}
+		NEXT(mr) = 0; MKDPM(NV(p),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = p->sugar;
+	}
+}
+
+void comm_mulmpdpm(VL vl,MP m0,DPM p,DPM *pr)
+{
+	DMM m,mr=0,mr0;
+  DL d;
+  Obj c;
+  int n;
+
+	if ( !p )
+		*pr = 0;
+	else {
+    n = NV(p);
+    d = m0->dl;
+    c = C(m0);
+		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+			NEXTDMM(mr0,mr);
+		  arf_mul(vl,C(m),c,&C(mr));
+      mr->pos = m->pos;
+			adddl(n,m->dl,d,&mr->dl);
+		}
+		NEXT(mr) = 0; MKDPM(NV(p),mr0,*pr);
+		if ( *pr )
+			(*pr)->sugar = p->sugar;
+	}
+}
+
+void weyl_mulmpdpm(VL vl,MP m0,DPM p,DPM *pr)
+{
+	DPM r,t,t1;
+	DMM m;
+	DL d0;
+	int n,n2,l,i,j,tlen;
+  struct oMP mp;
+	static DMM *w,*psum;
+	static struct cdl *tab;
+	static int wlen;
+	static int rtlen;
+
+	if ( !p )
+		*pr = 0;
+	else {
+		for ( m = BDY(p), l = 0; m; m = NEXT(m), l++ );
+		if ( l > wlen ) {
+			if ( w ) GCFREE(w);
+			w = (DMM *)MALLOC(l*sizeof(DMM));
+			wlen = l;
+		}
+		for ( m = BDY(p), i = 0; i < l; m = NEXT(m), i++ )
+			w[i] = m;
+
+		n = NV(p); n2 = n>>1;
+		d0 = m0->dl;
+		for ( i = 0, tlen = 1; i < n2; i++ )
+			tlen *= d0->d[n2+i]+1;
+		if ( tlen > rtlen ) {
+			if ( tab ) GCFREE(tab);
+			if ( psum ) GCFREE(psum);
+			rtlen = tlen;
+			tab = (struct cdl *)MALLOC(rtlen*sizeof(struct cdl));
+			psum = (DMM *)MALLOC(rtlen*sizeof(DMM));
+		}
+		bzero(psum,tlen*sizeof(DMM));
+		for ( i = l-1; i >= 0; i-- ) {
+			bzero(tab,tlen*sizeof(struct cdl));
+      mp.dl = w[i]->dl; mp.c = C(w[i]); mp.next = 0;
+			weyl_mulmm(vl,m0,&mp,n,tab,tlen);
+			for ( j = 0; j < tlen; j++ ) {
+				if ( tab[j].c ) {
+					NEWDMM(m); m->dl = tab[j].d; m->pos = w[i]->pos; C(m) = (Obj)tab[j].c; NEXT(m) = psum[j];
+					psum[j] = m;
+				}
+			}
+		}
+		for ( j = tlen-1, r = 0; j >= 0; j-- ) 
+			if ( psum[j] ) {
+				MKDPM(n,psum[j],t); adddpm(vl,r,t,&t1); r = t1;
+			}
+		if ( r )
+			r->sugar = p->sugar + m0->dl->td;
+		*pr = r;
+	}
+}
+
+void mulobjdpm(VL vl,Obj p1,DPM p2,DPM *pr)
+{
+	MP m;
+	DPM s,t,u;
+
+	if ( !p1 || !p2 )
+		*pr = 0;
+	else if ( OID(p1) != O_DP )
+		mulcdpm(vl,p1,p2,pr);
+	else {
+    s = 0;
+    for ( m = BDY((DP)p1); m; m = NEXT(m) ) {
+      if ( do_weyl )
+			  weyl_mulmpdpm(vl,m,p2,&t);
+      else
+			  comm_mulmpdpm(vl,m,p2,&t);
+      adddpm(vl,s,t,&u); s = u;
+		}
+		*pr = s;
+	}
+}
+
+int compdpm(VL vl,DPM p1,DPM p2)
+{
+	int n,t;
+	DMM m1,m2;
+
+	if ( !p1 )
+		return p2 ? -1 : 0;
+	else if ( !p2 )
+		return 1;
+	else if ( NV(p1) != NV(p2) ) {
+		error("compdpm : size mismatch");
+		return 0; /* XXX */
+	} else {
+		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2);
+			m1 && m2; m1 = NEXT(m1), m2 = NEXT(m2) )
+			if ( (t = compdmm(n,m1,m2)) ||
+				(t = arf_comp(vl,C(m1),C(m2)) ) )
+				return t;
+		if ( m1 )
+			return 1;
+		else if ( m2 )
+			return -1;
+		else
+			return 0;
+	}
+}
+

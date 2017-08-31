@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.14 2009/03/16 16:43:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/_distm.c,v 1.15 2012/12/17 07:20:44 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -134,7 +134,7 @@ void _addmd_destructive(int mod,DP p1,DP p2,DP *pr)
 						t += mod;
 					s = m1; m1 = NEXT(m1);
 					if ( t ) {
-						_NEXTMP2(mr0,mr,s); C(mr) = STOI(t);
+						_NEXTMP2(mr0,mr,s); C(mr) = (Obj)STOI(t);
 					} else {
 						_FREEDL(s->dl); _FREEMP(s);
 					}
@@ -251,7 +251,7 @@ void _mulmdm_dup(int mod,DP p,MP m0,DP *pr)
 			_NEXTMP(mr0,mr);
 			c1 = ITOS(C(m));
 			DMAR(c1,c,0,mod,c2);
-			C(mr) = (P)STOI(c2);
+			C(mr) = (Obj)STOI(c2);
 			_NEWDL_NOINIT(dt,n); mr->dl = dt;
 			dm = m->dl;
 			dt->td = d->td + dm->td;
@@ -305,7 +305,7 @@ void _weyl_mulmdm_dup(int mod,MP m0,DP p,DP *pr)
 			for ( j = 0; j < tlen; j++ ) {
 				if ( tab[j].c ) {
 					_NEWMP(m); m->dl = tab[j].d;
-					C(m) = STOI(tab[j].c); NEXT(m) = psum[j];
+					C(m) = (Obj)STOI(tab[j].c); NEXT(m) = psum[j];
 					psum[j] = m;
 				}
 			}
@@ -650,10 +650,10 @@ void _addd_destructive(VL vl,DP p1,DP p2,DP *pr)
 		for ( n = NV(p1), m1 = BDY(p1), m2 = BDY(p2), mr0 = 0; m1 && m2; )
 			switch ( (*cmpdl)(n,m1->dl,m2->dl) ) {
 				case 0:
-					addp(vl,C(m1),C(m2),&t);
+					addp(vl,(P)C(m1),(P)C(m2),&t);
 					s = m1; m1 = NEXT(m1);
 					if ( t ) {
-						_NEXTMP2(mr0,mr,s); C(mr) = t;
+						_NEXTMP2(mr0,mr,s); C(mr) = (Obj)t;
 					} else {
 						_FREEDL(s->dl); _FREEMP(s);
 					}
@@ -766,10 +766,10 @@ void _muldm_dup(VL vl,DP p,MP m0,DP *pr)
 	if ( !p )
 		*pr = 0;
 	else {
-		for ( mr0 = 0, m = BDY(p), c = C(m0), d = m0->dl, n = NV(p); 
+		for ( mr0 = 0, m = BDY(p), c = (P)C(m0), d = m0->dl, n = NV(p); 
 			m; m = NEXT(m) ) {
 			_NEXTMP(mr0,mr);
-			mulp(vl,C(m),c,&C(mr));
+			mulp(vl,(P)C(m),c,(P *)&C(mr));
 			_NEWDL_NOINIT(dt,n); mr->dl = dt;
 			dm = m->dl;
 			dt->td = d->td + dm->td;
@@ -857,7 +857,7 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 		rtab[0].d = 0;
 		return;
 	}
-	mulp(vl,C(m0),C(m1),&c);
+	mulp(vl,(P)C(m0),(P)C(m1),&c);
 	d0 = m0->dl; d1 = m1->dl;
 	n2 = n>>1;
 	curlen = 1;
@@ -868,7 +868,7 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 		d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
 	else
 		d->td = 0;
-	rtab[0].c = c;
+	rtab[0].c = (Obj)c;
 	rtab[0].d = d;
 
 	if ( rtablen > tmptablen ) {
@@ -917,7 +917,7 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 				d->td = s;
 				d->d[n-1] = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
 				tab[j].d = d;
-				tab[j].c = (P)ctab[j];
+				tab[j].c = (Obj)ctab[j];
 			}
 		else
 			for ( j = 0; j <= min; j++ ) {
@@ -925,7 +925,7 @@ void _weyl_mulmm_dup(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen)
 				d->d[i] = a-j; d->d[n2+i] = b-j;
 				d->td = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i); /* XXX */
 				tab[j].d = d;
-				tab[j].c = (P)ctab[j];
+				tab[j].c = (Obj)ctab[j];
 			}
 #if 0
 		_comm_muld_tab(vl,n,rtab,curlen,tab,k+1,tmptab);
@@ -962,13 +962,13 @@ void _comm_muld_tab(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1,struc
 
 	bzero(rt,n*n1*sizeof(struct cdl));
 	for ( j = 0, p = rt; j < n1; j++ ) {
-		c = t1[j].c;
+		c = (P)t1[j].c;
 		d = t1[j].d;
 		if ( !c )
 			break;
 		for ( i = 0; i < n; i++, p++ ) {
 			if ( t[i].c ) {
-				mulp(vl,t[i].c,c,&p->c);
+				mulp(vl,(P)t[i].c,c,(P *)&p->c);
 				_adddl_dup(nv,t[i].d,d,&p->d);
 			}
 		}
@@ -983,22 +983,22 @@ void _comm_muld_tab_destructive(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,
 	DL d;
 
 	for ( j = 1, p = t+n; j < n1; j++ ) {
-		c = t1[j].c;
+		c = (P)t1[j].c;
 		d = t1[j].d;
 		if ( !c )
 			break;
 		for ( i = 0; i < n; i++, p++ ) {
 			if ( t[i].c ) {
-				mulp(vl,t[i].c,c,&p->c);
+				mulp(vl,(P)t[i].c,c,(P *)&p->c);
 				_adddl_dup(nv,t[i].d,d,&p->d);
 			}
 		}
 	}
-	c = t1[0].c;
+	c = (P)t1[0].c;
 	d = t1[0].d;
 	for ( i = 0, p = t; i < n; i++, p++ )
 		if ( t[i].c ) {
-			mulp(vl,t[i].c,c,&p->c);
+			mulp(vl,(P)t[i].c,c,(P *)&p->c);
 			/* t[i].d += d */
 			adddl_destructive(nv,t[i].d,d);
 		}

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.54 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.55 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -69,7 +69,7 @@ typedef enum {
 	I_FORMULA, I_LIST, I_STR, I_NEWCOMP, I_CAR, I_CDR, I_CAST,
 	I_INDEX, I_EV, I_TIMER, I_GF2NGEN, I_GFPNGEN, I_GFSNGEN,
 	I_LOP, I_OPT, I_GETOPT, I_POINT, I_PAREN, I_MINUS,
-	I_NARYOP, I_CONS, I_FUNC_QARG, I_FUNC_HEAD,
+	I_NARYOP, I_CONS, I_FUNC_QARG, I_FUNC_HEAD, I_EVM
 } fid;
 
 /* identifiers for statements */
@@ -401,33 +401,6 @@ int create_order_spec(VL,Obj,struct order_spec **);
 
 int dl_equal(int,DL,DL);
 void qltozl(Q *,int,Q *);
-int cmpdl_matrix(int,DL,DL);
-int cmpdl_order_pair(int,DL,DL);
-int cmpdl_elim(int,DL,DL);
-int cmpdl_blexrev(int,DL,DL);
-int cmpdl_bgradrev(int,DL,DL);
-int cmpdl_brevrev(int,DL,DL);
-int cmpdl_brevgradlex(int,DL,DL);
-int cmpdl_bgradlex(int,DL,DL);
-int cmpdl_blex(int,DL,DL);
-int cmpdl_revgradlex(int,DL,DL);
-int cmpdl_gradlex(int,DL,DL);
-int cmpdl_revlex(int,DL,DL);
-int cmpdl_lex(int,DL,DL);
-int compd(VL,DP,DP);
-void adddl(int,DL,DL,DL *);
-void divsdc(VL,DP,P,DP *);
-void muldc(VL,DP,P,DP *);
-void muldm(VL,DP,MP,DP *);
-void muld(VL,DP,DP,DP *);
-void chsgnd(DP,DP *);
-void subd(VL,DP,DP,DP *);
-void addd(VL,DP,DP,DP *);
-int sugard(MP);
-void nodetod(NODE,DP *);
-void dtop(VL,VL,DP,P *);
-void ptod(VL,VL,P,DP *);
-void initd(struct order_spec *);
 
 int mainparse(SNODE *);
 int exprparse(FUNC,char *,FNODE *);

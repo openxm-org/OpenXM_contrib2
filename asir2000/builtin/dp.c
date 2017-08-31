@@ -44,7 +44,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.103 2017/03/27 09:05:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.104 2017/03/27 09:35:13 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -87,6 +87,8 @@ void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
+void Pdpm_ltod(),Pdpm_dtol(),Pdpm_ord(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp();
+void Pdpm_hm(),Pdpm_ht(),Pdpm_hc();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -101,6 +103,7 @@ void Pdp_weyl_mul(),Pdp_weyl_mul_mod(),Pdp_weyl_act();
 void Pdp_weyl_set_weight();
 void Pdp_set_weight(),Pdp_set_top_weight(),Pdp_set_module_weight();
 void Pdp_nf_f(),Pdp_weyl_nf_f();
+void Pdpm_nf_f(),Pdpm_weyl_nf_f();
 void Pdp_lnf_f();
 void Pnd_gr(),Pnd_gr_trace(),Pnd_f4(),Pnd_f4_trace();
 void Pnd_gr_postproc(), Pnd_weyl_gr_postproc();
@@ -152,6 +155,11 @@ struct ftab dp_tab[] = {
 	{"dp_nf",Pdp_nf,4},
 	{"dp_nf_mod",Pdp_nf_mod,5},
 	{"dp_nf_f",Pdp_nf_f,4},
+	{"dpm_nf_f",Pdpm_nf_f,4},
+	{"dpm_weyl_nf_f",Pdpm_weyl_nf_f,4},
+	{"dpm_nf",Pdpm_nf,4},
+	{"dpm_sp",Pdpm_sp,2},
+	{"dpm_weyl_sp",Pdpm_weyl_sp,2},
 
 	{"dp_true_nf",Pdp_true_nf,4},
 	{"dp_true_nf_mod",Pdp_true_nf_mod,5},
@@ -205,6 +213,7 @@ struct ftab dp_tab[] = {
 
 	/* normal form */
 	{"dp_weyl_nf",Pdp_weyl_nf,4},
+	{"dpm_weyl_nf",Pdpm_weyl_nf,4},
 	{"dp_weyl_nf_mod",Pdp_weyl_nf_mod,5},
 	{"dp_weyl_nf_f",Pdp_weyl_nf_f,4},
 
@@ -238,6 +247,7 @@ struct ftab dp_supp_tab[] = {
 	/* setting flags */
 	{"dp_sort",Pdp_sort,1},
 	{"dp_ord",Pdp_ord,-1},
+	{"dpm_ord",Pdpm_ord,-1},
 	{"dpv_ord",Pdpv_ord,-2},
 	{"dp_set_kara",Pdp_set_kara,-1},
 	{"dp_nelim",Pdp_nelim,-1},
@@ -258,6 +268,9 @@ struct ftab dp_supp_tab[] = {
 	{"dp_rat",Pdp_rat,1},
 	{"dp_ltod",Pdp_ltod,-2},
 
+	{"dpm_ltod",Pdpm_ltod,2},
+	{"dpm_dtol",Pdpm_dtol,3},
+
 	/* criteria */
 	{"dp_cri1",Pdp_cri1,2},
 	{"dp_cri2",Pdp_cri2,2},
@@ -272,6 +285,9 @@ struct ftab dp_supp_tab[] = {
 	{"dpv_hm",Pdpv_hm,1},
 	{"dpv_ht",Pdpv_ht,1},
 	{"dpv_hc",Pdpv_hc,1},
+	{"dpm_hm",Pdpm_hm,1},
+	{"dpm_ht",Pdpm_ht,1},
+	{"dpm_hc",Pdpm_hc,1},
 	{"dp_rest",Pdp_rest,1},
 	{"dp_initial_term",Pdp_initial_term,1},
 	{"dp_order",Pdp_order,1},
@@ -419,7 +435,7 @@ void Pdp_mdtod(NODE arg,DP *rp)
 		*rp = 0;
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			mptop(m->c,&t); NEXTMP(mr0,mr); mr->c = t; mr->dl = m->dl;
+			mptop((P)m->c,&t); NEXTMP(mr0,mr); mr->c = (Obj)t; mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
 	}
@@ -511,7 +527,7 @@ void Pdp_vtoe(NODE arg,DP *rp)
 		d[i] = QTOS((Q)(v->body[i])); td += MUL_WEIGHT(d[i],i);
 	}
 	dl->td = td;
-	NEWMP(m); m->dl = dl; m->c = (P)ONE; NEXT(m) = 0;
+	NEWMP(m); m->dl = dl; m->c = (Obj)ONE; NEXT(m) = 0;
 	MKDP(n,m,dp); dp->sugar = td;
 	*rp = dp;
 }
@@ -622,7 +638,7 @@ void Pdp_ptod(NODE arg,DP *rp)
 	ptod(CO,vl,p,rp);
 }
 
-void Phomogenize(NODE arg,P *rp)
+void Phomogenize(NODE arg,Obj *rp)
 {
 	P p;
 	DP d,h;
@@ -704,7 +720,85 @@ void Pdp_ltod(NODE arg,DPV *rp)
 	MKDPV(len,e,*rp);
 }
 
-void Pdp_dtop(NODE arg,P *rp)
+void Pdpm_ltod(NODE arg,DPM *rp)
+{
+	NODE n;
+	VL vl,tvl;
+	LIST f,v;
+	int i,len;
+	NODE nd;
+  NODE t;
+  DP d;
+  DPM s,u,w;
+
+  f = (LIST)ARG0(arg);
+  v = (LIST)ARG1(arg);
+	for ( vl = 0, n = BDY(v); n; n = NEXT(n) ) {
+		if ( !vl ) {
+			NEWVL(vl); tvl = vl;
+		} else {
+			NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+		}
+		VR(tvl) = VR((P)BDY(n));
+	}
+	if ( vl )
+		NEXT(tvl) = 0;
+
+	nd = BDY(f);
+	len = length(nd);
+	for ( i = 0, t = nd, s = 0; i < len; i++, t = NEXT(t) ) {
+		ptod(CO,vl,(P)BDY(t),&d);
+    dtodpm(d,i,&u);
+    adddpm(CO,s,u,&w); s = w;
+	}
+  *rp = s;
+}
+
+void Pdpm_dtol(NODE arg,LIST *rp)
+{
+  DPM a;
+  NODE nd,nd1;
+  VL vl,tvl;
+  int n,len,i,pos,nv;
+  MP *w;
+  DMM t;
+  DMM *wa;
+  MP m;
+  DP u;
+  Obj s;
+
+  a = (DPM)ARG0(arg);
+  for ( vl = 0, nd = BDY((LIST)ARG1(arg)), nv = 0; nd; nd = NEXT(nd), nv++ ) {
+    if ( !vl ) {
+      NEWVL(vl); tvl = vl;
+    } else {
+      NEWVL(NEXT(tvl)); tvl = NEXT(tvl);
+    }
+    VR(tvl) = VR((P)BDY(nd));
+  }
+	if ( vl )
+		NEXT(tvl) = 0;
+   n = QTOS((Q)ARG2(arg));
+   w = (MP *)CALLOC(n,sizeof(MP));
+   for ( t = BDY(a), len = 0; t; t = NEXT(t) ) len++;
+   wa = (DMM *)MALLOC(len*sizeof(DMM));
+   for ( t = BDY(a), i = 0; t; t = NEXT(t), i++ ) wa[i] = t;
+   for ( i = len-1; i >= 0; i-- ) {
+     NEWMP(m); m->dl = wa[i]->dl; C(m) = C(wa[i]);
+     pos = wa[i]->pos;
+     NEXT(m) = w[pos];
+     w[pos] = m;
+   }
+  nd = 0;
+  for ( i = n-1; i >= 0; i-- ) {
+		MKDP(nv,w[i],u); u->sugar = a->sugar; /* XXX */
+	  dtop(CO,vl,u,&s);
+	  MKNODE(nd1,s,nd); nd = nd1;
+  }
+  MKLIST(*rp,nd);
+}
+
+void Pdp_dtop(NODE arg,Obj *rp)
 {
 	NODE n;
 	VL vl,tvl;
@@ -850,6 +944,47 @@ void Pdp_weyl_nf(NODE arg,DP *rp)
 	do_weyl = 0;
 }
 
+void Pdpm_nf(NODE arg,DP *rp)
+{
+	NODE b;
+	DPM *ps;
+	DPM g;
+	int full;
+
+	if ( !(g = (DPM)ARG1(arg)) ) {
+		*rp = 0; return;
+	}
+	do_weyl = 0; dp_fcoeffs = 0;
+	asir_assert(ARG0(arg),O_LIST,"dpm_nf");
+	asir_assert(ARG1(arg),O_DPM,"dpm_nf");
+	asir_assert(ARG2(arg),O_VECT,"dpm_nf");
+	asir_assert(ARG3(arg),O_N,"dpm_nf");
+	b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
+	full = (Q)ARG3(arg) ? 1 : 0;
+	dpm_nf_z(b,g,ps,full,DP_Multiple,rp);
+}
+
+void Pdpm_weyl_nf(NODE arg,DPM *rp)
+{
+	NODE b;
+	DPM *ps;
+	DPM g;
+	int full;
+
+	if ( !(g = (DPM)ARG1(arg)) ) {
+		*rp = 0; return;
+	}
+	asir_assert(ARG0(arg),O_LIST,"dpm_weyl_nf");
+	asir_assert(ARG1(arg),O_DPM,"dpm_weyl_nf");
+	asir_assert(ARG2(arg),O_VECT,"dpm_weyl_nf");
+	asir_assert(ARG3(arg),O_N,"dpm_weyl_nf");
+	b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
+	full = (Q)ARG3(arg) ? 1 : 0;
+	do_weyl = 1;
+	dpm_nf_z(b,g,ps,full,DP_Multiple,rp);
+	do_weyl = 0;
+}
+
 /* nf computation using field operations */
 
 void Pdp_nf_f(NODE arg,DP *rp)
@@ -892,6 +1027,47 @@ void Pdp_weyl_nf_f(NODE arg,DP *rp)
 	dp_nf_f(b,g,ps,full,rp);
 	do_weyl = 0;
 }
+
+void Pdpm_nf_f(NODE arg,DPM *rp)
+{
+	NODE b;
+	DPM *ps;
+	DPM g;
+	int full;
+
+	if ( !(g = (DPM)ARG1(arg)) ) {
+		*rp = 0; return;
+	}
+	asir_assert(ARG0(arg),O_LIST,"dpm_nf_f");
+	asir_assert(ARG1(arg),O_DPM,"dpm_nf_f");
+	asir_assert(ARG2(arg),O_VECT,"dpm_nf_f");
+	asir_assert(ARG3(arg),O_N,"dpm_nf_f");
+	b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
+	full = (Q)ARG3(arg) ? 1 : 0;
+	dpm_nf_f(b,g,ps,full,rp);
+}
+
+void Pdpm_weyl_nf_f(NODE arg,DPM *rp)
+{
+	NODE b;
+	DPM *ps;
+	DPM g;
+	int full;
+
+	if ( !(g = (DPM)ARG1(arg)) ) {
+		*rp = 0; return;
+	}
+	asir_assert(ARG0(arg),O_LIST,"dpm_weyl_nf_f");
+	asir_assert(ARG1(arg),O_DP,"dpm_weyl_nf_f");
+	asir_assert(ARG2(arg),O_VECT,"dpm_weyl_nf_f");
+	asir_assert(ARG3(arg),O_N,"dpm_weyl_nf_f");
+	b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
+	full = (Q)ARG3(arg) ? 1 : 0;
+	do_weyl = 1;
+	dpm_nf_f(b,g,ps,full,rp);
+	do_weyl = 0;
+}
+
 
 void Pdp_nf_mod(NODE arg,DP *rp)
 {
@@ -1044,7 +1220,7 @@ void Pdp_true_nf_marked(NODE arg,LIST *rp)
 		b = BDY((LIST)ARG0(arg)); 
 		ps = (DP *)BDY((VECT)ARG2(arg));
 		hps = (DP *)BDY((VECT)ARG3(arg));
-		dp_true_nf_marked(b,g,ps,hps,&nm,&cont,&dn);
+		dp_true_nf_marked(b,g,ps,hps,&nm,(P *)&cont,(P *)&dn);
 	}
 	n = mknode(3,nm,cont,dn);
 	MKLIST(*rp,n);
@@ -1227,7 +1403,7 @@ void Pdp_tdiv(NODE arg,DP *rp)
 				*rp = 0; return;
 			} else {
 				NEXTMP(mr0,mr); NTOQ(q,SGN((Q)m->c)*sgn,c);
-				mr->c = (P)c; mr->dl = m->dl;
+				mr->c = (Obj)c; mr->dl = m->dl;
 			}
 		}
 		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
@@ -1248,9 +1424,9 @@ void Pdp_red_coef(NODE arg,DP *rp)
 		*rp = 0;
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			divsrp(CO,m->c,mod,&q,&r);
+			divsrp(CO,(P)m->c,mod,&q,&r);
 			if ( r ) {
-				NEXTMP(mr0,mr); mr->c = r; mr->dl = m->dl;
+				NEXTMP(mr0,mr); mr->c = (Obj)r; mr->dl = m->dl;
 			}
 		}
 		if ( mr0 ) {
@@ -1315,7 +1491,7 @@ void Pdp_symb_add(NODE arg,DP *rp)
 	nv = p1->nv;
 	s0 = symb_merge(dp_dllist(p1),dp_dllist(p2),nv);
 	for ( mp0 = 0; s0; s0 = NEXT(s0) ) {
-		NEXTMP(mp0,mp); mp->dl = (DL)BDY(s0); mp->c = (P)ONE;
+		NEXTMP(mp0,mp); mp->dl = (DL)BDY(s0); mp->c = (Obj)ONE;
 	}
 	NEXT(mp) = 0;
 	MKDP(nv,mp0,r); r->sugar = MAX(p1->sugar,p2->sugar);
@@ -1426,9 +1602,30 @@ void Pdp_weyl_sp(NODE arg,DP *rp)
 	DP p1,p2;
 
 	p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
-	asir_assert(p1,O_DP,"dp_weyl_sp"); asir_assert(p2,O_DP,"dp_sp");
+	asir_assert(p1,O_DP,"dp_weyl_sp"); asir_assert(p2,O_DP,"dp_weyl_sp");
 	do_weyl = 1;
 	dp_sp(p1,p2,rp);
+	do_weyl = 0;
+}
+
+void Pdpm_sp(NODE arg,DPM *rp)
+{
+	DPM  p1,p2;
+
+	do_weyl = 0;
+	p1 = (DPM)ARG0(arg); p2 = (DPM)ARG1(arg);
+	asir_assert(p1,O_DPM,"dpm_sp"); asir_assert(p2,O_DPM,"dpm_sp");
+	dpm_sp(p1,p2,rp);
+}
+
+void Pdpm_weyl_sp(NODE arg,DPM *rp)
+{
+	DPM p1,p2;
+
+	p1 = (DPM)ARG0(arg); p2 = (DPM)ARG1(arg);
+	asir_assert(p1,O_DPM,"dpm_weyl_sp"); asir_assert(p2,O_DPM,"dpm_weyl_sp");
+	do_weyl = 1;
+	dpm_sp(p1,p2,rp);
 	do_weyl = 0;
 }
 
@@ -1460,7 +1657,7 @@ void Pdp_lcm(NODE arg,DP *rp)
 		d->d[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(d->d[i],i);
 	}
 	d->td = td;
-	NEWMP(m); m->dl = d; m->c = (P)ONE; NEXT(m) = 0;
+	NEWMP(m); m->dl = d; m->c = (Obj)ONE; NEXT(m) = 0;
 	MKDP(n,m,*rp); (*rp)->sugar = td;	/* XXX */
 }
 
@@ -1481,7 +1678,7 @@ void Pdp_ht(NODE arg,DP *rp)
 	dp_ht(p,rp);
 }
 
-void Pdp_hc(NODE arg,P *rp)
+void Pdp_hc(NODE arg,Obj *rp)
 {
 	asir_assert(ARG0(arg),O_DP,"dp_hc");
 	if ( !ARG0(arg) )
@@ -1726,7 +1923,7 @@ void Pdp_mag(NODE arg,Q *rp)
 		*rp = 0;
 	else {
 		for ( s = 0, m = BDY(p); m; m = NEXT(m) )
-			s += p_mag(m->c);
+			s += p_mag((P)m->c);
 		STOQ(s,*rp);
 	}
 }
@@ -2908,7 +3105,7 @@ void Pdp_rref2(NODE arg,VECT *rp)
 	  if ( v[j/BLEN] & (1L<<(j%BLEN)) ) {
 	    NEXTMP(m0,m);
 		m->dl = t[j];
-		m->c = (P)ONE;
+		m->c = (Obj)ONE;
 	    td = MAX(td,m->dl->td);
 	  }
 	}
@@ -2979,7 +3176,7 @@ NODE sumi_criFMD(int nv,DP *f,int m)
        for ( k2 = 0; k2 < nv; k2++ )
          if ( dl1->d[k2] && dl2->d[k2] ) break;
        if ( k2 < nv ) {
-         NEWMP(mp); mp->dl = l1; C(mp) = (P)ONE;
+         NEWMP(mp); mp->dl = l1; C(mp) = (Obj)ONE;
          NEXT(mp) = 0; MKDP(nv,mp,u); u->sugar = l1->td;
 	     STOQ(i,iq); STOQ(m,mq);
 	     nd = mknode(3,iq,mq,u);
@@ -3042,7 +3239,7 @@ DP dltodp(int nv,DL d)
   MP mp;
   DP dp;
 
-  NEWMP(mp); mp->dl = d; C(mp) = (P)ONE;
+  NEWMP(mp); mp->dl = d; C(mp) = (Obj)ONE;
   NEXT(mp) = 0; MKDP(nv,mp,dp); dp->sugar = d->td;
   return dp;
 }
@@ -3223,6 +3420,51 @@ void Pdpv_ord(NODE arg,Obj *rp)
 	*rp = dp_current_modspec->obj;
 }
 
+extern int dpm_ispot;
+
+void Pdpm_ord(NODE arg,LIST *rp)
+{
+  Q q;
+  NODE nd;
+	struct order_spec *spec;
+	
+	if ( arg ) {
+    nd = BDY((LIST)ARG0(arg));
+		if ( !create_order_spec(0,(Obj)ARG1(nd),&spec) )
+			error("dpm_ord : invalid order specification");
+		initdpm(spec,QTOS((Q)ARG0(nd)));
+	}
+  STOQ(dpm_ispot,q);
+  nd = mknode(2,q,dp_current_spec->obj);
+  MKLIST(*rp,nd);
+}
+
+void Pdpm_hm(NODE arg,DPM *rp)
+{
+	DPM p;
+
+	p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_hm");
+	dpm_hm(p,rp);
+}
+
+void Pdpm_ht(NODE arg,DPM *rp)
+{
+	DPM p;
+
+	p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dp_ht");
+	dpm_ht(p,rp);
+}
+
+void Pdpm_hc(NODE arg,Obj *rp)
+{
+	asir_assert(ARG0(arg),O_DPM,"dpm_hc");
+	if ( !ARG0(arg) )
+		*rp = 0;
+	else
+		*rp = BDY((DPM)ARG0(arg))->c;
+}
+
+
 void Pdpv_ht(NODE arg,LIST *rp)
 {
 	NODE n;
@@ -3277,7 +3519,7 @@ void Pdpv_hc(NODE arg,LIST *rp)
 	if ( pos < 0 )
 		hc = 0;
 	else
-		hc = BDY(BDY(p)[pos])->c;
+		hc = (P)BDY(BDY(p)[pos])->c;
 	STOQ(pos,q);
 	n = mknode(2,q,hc);
 	MKLIST(*rp,n);

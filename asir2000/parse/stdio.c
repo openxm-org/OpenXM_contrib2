@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.6 2001/10/09 01:36:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/stdio.c,v 1.7 2005/10/19 04:51:15 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,9 +219,17 @@ int w_printf(char *format, ...)
 {
   va_list ap;
   int status;
-  char buf[BUFSIZ];
+  static char *buf;
+  static int bufsiz=0;
 
+  if ( !bufsiz ) {
+    bufsiz = BUFSIZ*10; buf = (char *)malloc(bufsiz);
+  }
   va_start(ap,format);
+  status = vsnprintf(buf,0,format,ap);
+  if ( status > bufsiz ) {
+    bufsiz = 2*status; free(buf); buf = (char *)malloc(bufsiz);
+  }
   status = vsprintf(buf,format,ap);
   win_put_string(buf,stdout);
   return status;
@@ -231,10 +239,18 @@ int w_fprintf(FILE *file, char *format, ...)
 {
   va_list ap;
   int status;
-  char buf[BUFSIZ];
+  static char *buf;
+  static int bufsiz=0;
 
+  if ( !bufsiz ) {
+    bufsiz = BUFSIZ*10; buf = (char *)malloc(bufsiz);
+  }
   va_start(ap,format);
   if ( file == stdout || file == stderr ) {
+    status = vsnprintf(buf,0,format,ap);
+    if ( status > bufsiz ) {
+      bufsiz = 2*status; free(buf); buf = (char *)malloc(bufsiz);
+    }
     status = vsprintf(buf,format,ap);
     win_put_string(buf,file);
   } else {

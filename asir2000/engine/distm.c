@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.18 2003/12/26 02:38:10 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/distm.c,v 1.19 2012/12/17 07:20:44 noro Exp $ 
 */
 #include "ca.h"
 #include "inline.h"
@@ -78,7 +78,7 @@ void mptomd(VL vl,int mod,VL dvl,P p,DP *pr)
 		for ( n = 0, tvl = dvl; tvl; tvl = NEXT(tvl), n++ );
 		if ( NUM(p) ) {
 			NEWDL(d,n);
-			NEWMP(m); m->dl = d; C(m) = p; NEXT(m) = 0; MKDP(n,m,*pr);
+			NEWMP(m); m->dl = d; C(m) = (Obj)p; NEXT(m) = 0; MKDP(n,m,*pr);
 		} else {
 			for ( i = 0, tvl = dvl, v = VR(p);
 				tvl && tvl->v != v; tvl = NEXT(tvl), i++ );
@@ -93,7 +93,7 @@ void mptomd(VL vl,int mod,VL dvl,P p,DP *pr)
 					mptomd(vl,mod,dvl,COEF(dc),&t);
 					NEWDL(d,n); d->d[i] = QTOS(DEG(dc));
 					d->td = MUL_WEIGHT(d->d[i],i);
-					NEWMP(m); m->dl = d; C(m) = (P)ONEM; NEXT(m) = 0; MKDP(n,m,u);
+					NEWMP(m); m->dl = d; C(m) = (Obj)ONEM; NEXT(m) = 0; MKDP(n,m,u);
 					comm_mulmd(vl,mod,t,u,&r); addmd(vl,mod,r,s,&t); s = t;
 				}
 				*pr = s;
@@ -111,7 +111,7 @@ void mdtodp(DP p,DP *pr)
 	else {
 		for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr); mr->dl = m->dl;
-			mptop(C(m),&C(mr));
+			mptop((P)C(m),(P *)&C(mr));
 		}
 		NEXT(mr) = 0;
 		MKDP(NV(p),mr0,*pr);
@@ -130,7 +130,7 @@ void _mdtodp(DP p,DP *pr)
 	else {
 		for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr); mr->dl = m->dl;
-			i = ITOS(m->c); STOQ(i,q); C(mr) = (P)q;
+			i = ITOS(m->c); STOQ(i,q); C(mr) = (Obj)q;
 		}
 		NEXT(mr) = 0;
 		MKDP(NV(p),mr0,*pr);
@@ -151,7 +151,7 @@ void mdtop(VL vl,int mod,VL dvl,DP p,P *pr)
 		*pr = 0;
 	else {
 		for ( n = p->nv, m = BDY(p), s = 0; m; m = NEXT(m) ) {
-			for ( i = 0, t = C(m), d = m->dl, tvl = dvl;
+			for ( i = 0, t = (P)C(m), d = m->dl, tvl = dvl;
 				i < n; tvl = NEXT(tvl), i++ ) {
 				MKMV(tvl->v,r); STOQ(d->d[i],q); pwrmp(vl,mod,r,q,&u);
 				mulmp(vl,mod,t,u,&w); t = w;
@@ -187,9 +187,9 @@ void addmd(VL vl,int mod,DP p1,DP p2,DP *pr)
 						} else
 							t = 0;
 					} else
-						addmp(vl,mod,C(m1),C(m2),&t);
+						addmp(vl,mod,(P)C(m1),(P)C(m2),&t);
 					if ( t ) {
-						NEXTMP(mr0,mr); mr->dl = m1->dl; C(mr) = t;
+						NEXTMP(mr0,mr); mr->dl = m1->dl; C(mr) = (Obj)t;
 					}
 					m1 = NEXT(m1); m2 = NEXT(m2); break;
 				case 1:
@@ -239,7 +239,7 @@ void chsgnmd(int mod,DP p,DP *pr)
 		*pr = 0;
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); chsgnmp(mod,C(m),&C(mr)); mr->dl = m->dl;
+			NEXTMP(mr0,mr); chsgnmp(mod,(P)C(m),(P *)&C(mr)); mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
@@ -333,14 +333,14 @@ void mulmdm(VL vl,int mod,DP p,MP m0,DP *pr)
 	if ( !p )
 		*pr = 0;
 	else {
-		for ( mr0 = 0, m = BDY(p), c = C(m0), d = m0->dl, n = NV(p); 
+		for ( mr0 = 0, m = BDY(p), c = (P)C(m0), d = m0->dl, n = NV(p); 
 			m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr);
 			if ( NUM(C(m)) && NUM(c) ) {
 				t = dmar(((MQ)(C(m)))->cont,((MQ)c)->cont,0,mod);
-				STOMQ(t,q); C(mr) = (P)q;
+				STOMQ(t,q); C(mr) = (Obj)q;
 			} else
-				mulmp(vl,mod,C(m),c,&C(mr));
+				mulmp(vl,mod,(P)C(m),c,(P *)&C(mr));
 			adddl(n,m->dl,d,&mr->dl);
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
@@ -395,7 +395,7 @@ void weyl_mulmmm(VL vl,int mod,MP m0,MP m1,int n,DP *pr)
 	if ( !m0 || !m1 )
 		*pr = 0;
 	else {
-		c0 = C(m0); c1 = C(m1);
+		c0 = (P)C(m0); c1 = (P)C(m1);
 		mulmp(vl,mod,c0,c1,&c);
 		d0 = m0->dl; d1 = m1->dl;
 		n2 = n>>1;
@@ -404,7 +404,7 @@ void weyl_mulmmm(VL vl,int mod,MP m0,MP m1,int n,DP *pr)
 			/* offset of h-degree */
 			NEWDL(d,n);
 			d->td = d->d[n-1] = d0->d[n-1]+d1->d[n-1];
-			NEWMP(mr); mr->c = (P)ONEM; mr->dl = d; NEXT(mr) = 0;
+			NEWMP(mr); mr->c = (Obj)ONEM; mr->dl = d; NEXT(mr) = 0;
 			MKDP(n,mr,r); r->sugar = d->td;
 		} else
 			r = (DP)ONEM;
@@ -432,7 +432,7 @@ void weyl_mulmmm(VL vl,int mod,MP m0,MP m1,int n,DP *pr)
 					d->d[i] = a-j; d->d[n2+i] = b-j;
 					d->td = s;
 					d->d[n-1] = s-(MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i));
-					STOMQ(tab[j],mq); mr->c = (P)mq; mr->dl = d;
+					STOMQ(tab[j],mq); mr->c = (Obj)mq; mr->dl = d;
 				}
 			else
 				for ( mr0 = 0, s = 0, j = 0; j <= min; j++ ) {
@@ -440,7 +440,7 @@ void weyl_mulmmm(VL vl,int mod,MP m0,MP m1,int n,DP *pr)
 					d->d[i] = a-j; d->d[n2+i] = b-j;
 					d->td = MUL_WEIGHT(a-j,i)+MUL_WEIGHT(b-j,n2+i); /* XXX */
 					s = MAX(s,d->td); /* XXX */
-					STOMQ(tab[j],mq); mr->c = (P)mq; mr->dl = d;
+					STOMQ(tab[j],mq); mr->c = (Obj)mq; mr->dl = d;
 				}
 			bzero(tab,(min+1)*sizeof(int));
 			if ( mr0 )
@@ -467,9 +467,9 @@ void mulmdc(VL vl,int mod,DP p,P c,DP *pr)
 			NEXTMP(mr0,mr);
 			if ( NUM(C(m)) && NUM(c) ) {
 				t = dmar(((MQ)(C(m)))->cont,((MQ)c)->cont,0,mod);
-				STOMQ(t,q); C(mr) = (P)q;
+				STOMQ(t,q); C(mr) = (Obj)q;
 			} else
-				mulmp(vl,mod,C(m),c,&C(mr));
+				mulmp(vl,mod,(P)C(m),c,(P *)&C(mr));
 			mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
@@ -488,7 +488,7 @@ void divsmdc(VL vl,int mod,DP p,P c,DP *pr)
 		*pr = 0;
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); divsmp(vl,mod,C(m),c,&C(mr)); mr->dl = m->dl;
+			NEXTMP(mr0,mr); divsmp(vl,mod,(P)C(m),c,(P *)&C(mr)); mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
 		if ( *pr )
@@ -531,13 +531,13 @@ void _dp_mod(DP p,int mod,NODE subst,DP *rp)
 		*rp = 0;
 	else {
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			for ( tn = subst, s = m->c; tn; tn = NEXT(NEXT(tn)) ) {
+			for ( tn = subst, s = (P)m->c; tn; tn = NEXT(NEXT(tn)) ) {
 				substp(CO,s,BDY(tn),BDY(NEXT(tn)),&t);
 				s = t;
 			}
 			ptomp(mod,s,&t);
 			if ( t ) {
-				NEXTMP(mr0,mr); mr->c = STOI(CONT((MQ)t)); mr->dl = m->dl;
+				NEXTMP(mr0,mr); mr->c = (Obj)STOI(CONT((MQ)t)); mr->dl = m->dl;
 			}
 		}
 		if ( mr0 ) {
@@ -558,7 +558,7 @@ void _dp_monic(DP p,int mod,DP *rp)
 		c = invm(ITOS(BDY(p)->c),mod);
 		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
 			c1 = dmar(ITOS(m->c),c,0,mod);
-			NEXTMP(mr0,mr); mr->c = STOI(c1); mr->dl = m->dl;
+			NEXTMP(mr0,mr); mr->c = (Obj)STOI(c1); mr->dl = m->dl;
 		}
 		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
 	}
@@ -605,7 +605,7 @@ void addmd_destructive(int mod,DP p1,DP p2,DP *pr)
 						t += mod;
 					s = m1; m1 = NEXT(m1);
 					if ( t ) {
-						NEXTMP2(mr0,mr,s); C(mr) = STOI(t);
+						NEXTMP2(mr0,mr,s); C(mr) = (Obj)STOI(t);
 					}
 					s = m2; m2 = NEXT(m2);
 					break;
@@ -717,7 +717,7 @@ void mulmdm_dup(int mod,DP p,MP m0,DP *pr)
 		for ( mr0 = 0, m = BDY(p), c = ITOS(C(m0)), d = m0->dl, n = NV(p); 
 			m; m = NEXT(m) ) {
 			NEXTMP(mr0,mr);
-			C(mr) = STOI(dmar(ITOS(C(m)),c,0,mod));
+			C(mr) = (Obj)STOI(dmar(ITOS(C(m)),c,0,mod));
 			NEWDL_NOINIT(dt,n); mr->dl = dt;
 			dm = m->dl;
 			dt->td = d->td + dm->td;
@@ -771,7 +771,7 @@ void weyl_mulmdm_dup(int mod,MP m0,DP p,DP *pr)
 			for ( j = 0; j < tlen; j++ ) {
 				if ( tab[j].c ) {
 					NEWMP(m); m->dl = tab[j].d;
-					C(m) = STOI(tab[j].c); NEXT(m) = psum[j];
+					C(m) = (Obj)STOI(tab[j].c); NEXT(m) = psum[j];
 					psum[j] = m;
 				}
 			}

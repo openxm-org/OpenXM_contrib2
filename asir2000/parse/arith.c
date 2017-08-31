@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.25 2005/11/27 00:07:06 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/arith.c,v 1.26 2005/12/10 14:14:15 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -79,7 +79,7 @@ struct oAFUNC afunc0[] = {
 /* O_MAT=6 */	{addmat,submat,mulmat,divmat,pwrmat,chsgnmat,compmat},
 /* O_STR=7 */	{addstr,notdef,notdef,notdef,notdef,notdef,compstr},
 /* O_COMP=8 */	{addcomp,subcomp,mulcomp,divcomp,pwrcomp,chsgncomp,compcomp},
-/* O_DP=9 */   {addd,subd,muld,divsdc,notdef,chsgnd,compd},
+/* O_DP=9 */   {addd,subd,muld,divdc,notdef,chsgnd,compd},
 /* O_USINT=10 */	{notdef,notdef,notdef,notdef,notdef,notdef,compui},
 /* O_ERR=11 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
 /* O_GF2MAT=12 */	{notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
@@ -96,6 +96,7 @@ struct oAFUNC afunc0[] = {
 /* O_QUOTEARG=23 */	{notdef,notdef,notdef,notdef,notdef,notdef,compqa},
 /* O_MAT=24 */	{AddMatI,SubMatI,MulMatG,notdef,notdef,ChsgnI,(int(*)())notdef},
 /* O_NBP=25 */	{addnbp,subnbp,mulnbp,notdef,pwrnbp,chsgnnbp,compnbp},
+/* O_DPM=26 */	{adddpm,subdpm,mulobjdpm,notdef,notdef,chsgndpm,compdpm},
 };
 
 struct oAFUNC *afunc = &afunc0[1];
@@ -174,7 +175,7 @@ void arf_mul(VL vl,Obj a,Obj b,Obj *r)
 				break;
 			case O_R:
 				/* rat * something; bid > O_R */
-				if ( bid == O_VECT || bid == O_MAT )
+				if ( bid == O_VECT || bid == O_MAT || bid == O_DP )
 					(*afunc[mid].mul)(vl,a,b,r);
 				else 
 					notdef(vl,a,b,r);
@@ -194,9 +195,9 @@ void arf_mul(VL vl,Obj a,Obj b,Obj *r)
 					notdef(vl,a,b,r);
 				break;
 			case O_DP:
-				if ( bid <= O_P )
+				if ( bid <= O_R )
 					(*afunc[O_DP].mul)(vl,a,b,r);
-				else if ( bid == O_MAT || bid == O_VECT || bid == O_DPV )
+				else if ( bid == O_MAT || bid == O_VECT || bid == O_DPV || bid == O_DPM )
 					(*afunc[bid].mul)(vl,a,b,r);
 				else
 					notdef(vl,a,b,r);

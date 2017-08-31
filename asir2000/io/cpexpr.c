@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.26 2006/08/27 22:17:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.27 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -77,6 +77,7 @@ static int total_length;
 #define PRINTSTR length_str
 #define PRINTCOMP length_comp
 #define PRINTDP length_dp
+#define PRINTDPM length_dpm
 #define PRINTUI length_ui
 #define PRINTGF2MAT length_gf2mat
 #define PRINTGFMMAT length_gfmmat
@@ -294,6 +295,26 @@ void PRINTDP(VL vl,DP d)
 			PUTS("+");
 	}
 }
+
+void PRINTDPM(VL vl,DPM d)
+{
+	int n,i;
+	DMM m;
+	DL dl;
+
+	for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
+		PUTS("("); PRINTEXPR(vl,(pointer)m->c); PUTS(")*<<");
+		for ( i = 0, dl = m->dl; i < n-1; i++ ) {
+			total_length += 11;
+		}
+		total_length += 10;
+		total_length += 11; /* for ':pos' */
+		PUTS(">>");
+		if ( NEXT(m) )
+			PUTS("+");
+	}
+}
+
 
 void PRINTUI(VL vl,USINT u)
 {

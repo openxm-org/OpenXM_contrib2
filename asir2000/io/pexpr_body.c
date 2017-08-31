@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.18 2015/08/14 13:51:55 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.19 2016/06/29 08:16:11 ohara Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -15,6 +15,7 @@ void PRINTIMAT(); /* IMAT */
 void PRINTSTR();
 void PRINTCOMP();
 void PRINTDP();
+void PRINTDPM();
 void PRINTUI();
 void PRINTGF2MAT();
 void PRINTGFMMAT();
@@ -72,6 +73,8 @@ Obj p;
 				PRINTCOMP(vl,(COMP)p); break;
 			case O_DP:
 				PRINTDP(vl,(DP)p); break;
+			case O_DPM:
+				PRINTDPM(vl,(DPM)p); break;
 			case O_USINT:
 				PRINTUI(vl,(USINT)p); break;
 			case O_GF2MAT:
@@ -1009,6 +1012,26 @@ DP d;
 			TAIL PRINTF(OUT,"%d,",dl->d[i]);
 		}
 		TAIL PRINTF(OUT,"%d",dl->d[i]);
+		PUTS(">>");
+		if ( NEXT(m) )
+			PUTS("+");
+	}
+}
+
+void PRINTDPM(vl,d)
+VL vl;
+DPM d;
+{
+	int n,i;
+	DMM m;
+	DL dl;
+
+	for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
+		PUTS("("); PRINTEXPR(vl,(pointer)m->c); PUTS(")*<<");
+		for ( i = 0, dl = m->dl; i < n-1; i++ ) {
+			TAIL PRINTF(OUT,"%d,",dl->d[i]);
+		}
+		TAIL PRINTF(OUT,"%d:%d",dl->d[i],m->pos);
 		PUTS(">>");
 		if ( NEXT(m) )
 			PUTS("+");

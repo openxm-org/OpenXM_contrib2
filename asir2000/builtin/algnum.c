@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.13 2007/02/15 02:06:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/algnum.c,v 1.14 2013/11/17 17:34:59 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -162,7 +162,7 @@ void Pdptodalg(NODE arg,DAlg *r)
 			dp_ptozp(d,&nm);
 			divq((Q)BDY(d)->c,(Q)BDY(nm)->c,&c);
 			NTOQ(NM(c),SGN(c),a);
-			muldc(CO,nm,(P)a,&nm1);
+			muldc(CO,nm,(Obj)a,&nm1);
 			NTOQ(DN(c),1,a);
 			MKDAlg(nm1,a,t);
 		}
@@ -209,7 +209,7 @@ void Pget_field_generator(NODE arg,DAlg *r)
 	NEWDL(dl,n);
 	for ( i = 0; i < n; i++ ) dl->d[i] = 0;
 	dl->d[index] = 1; dl->td = 1;
-	NEWMP(m); m->dl = dl; m->c = (P)ONE; NEXT(m) = 0;
+	NEWMP(m); m->dl = dl; m->c = (Obj)ONE; NEXT(m) = 0;
 	MKDP(n,m,d);
 	MKDAlg(d,ONE,*r);
 }
@@ -742,13 +742,13 @@ void invalg_le(Alg a,LIST *r)
 	for ( i = 0, t = rev0, mp0 = 0; i < len; i++, t = NEXT(t) )
 		if ( solmat[i][0] ) {
 			NEXTMP(mp0,mp);
-			mp->c = (P)solmat[i][0];
+			mp->c = (Obj)solmat[i][0];
 			mp->dl = BDY((DP)BDY(t))->dl;
 		}
 	NEXT(mp) = 0; MKDP(n,mp0,u);
 	dp_ptozp(u,&u1);
 	divq((Q)BDY(u)->c,(Q)BDY(u1)->c,&cont);
-	dtop(ALG,vl,u1,&ap);
+	dtop(ALG,vl,u1,(Obj *)&ap);
 	MKAlg(ap,inv);
 	mulq(dnsol,(Q)dn,&c1);
 	mulq(c1,c,&c2);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.100 2017/02/28 07:06:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.101 2017/08/30 09:40:30 ohara Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -146,6 +146,7 @@ typedef void * pointer;
 #define O_IMAT 24
 /* IMAT */
 #define O_NBP 25
+#define O_DPM 26
 
 #define N_Q 0
 #define N_R 1
@@ -424,6 +425,7 @@ typedef struct oDPV {
 	struct oDP **body;
 } *DPV;
 
+
 typedef struct oUSINT {
 	short id;
 	short pad;
@@ -525,9 +527,23 @@ typedef struct oDCP {
 
 typedef struct oMP {
 	struct oDL *dl;
-	P c;
+	Obj c;
 	struct oMP *next;
 } *MP;
+
+typedef struct oDPM {
+	short id;
+	short nv;
+	int sugar;
+	struct oDMM *body;
+} *DPM;
+
+typedef struct oDMM {
+  int pos;
+	struct oDL *dl;
+	Obj c;
+	struct oDMM *next;
+} *DMM;
 
 typedef struct oDL {
 	int td;
@@ -876,6 +892,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWCOMP(c,n) ((c)=(COMP)MALLOC(sizeof(struct oCOMP)+((n)-1)*sizeof(Obj)),OID(c)=O_COMP)
 #define NEWDP(d) ((d)=(DP)MALLOC(sizeof(struct oDP)),OID(d)=O_DP)
 #define NEWDPV(d) ((d)=(DPV)MALLOC(sizeof(struct oDPV)),OID(d)=O_DPV)
+#define NEWDPM(d) ((d)=(DPM)MALLOC(sizeof(struct oDPM)),OID(d)=O_DPM)
 #define NEWUSINT(u) ((u)=(USINT)MALLOC_ATOMIC(sizeof(struct oUSINT)),OID(u)=O_USINT)
 #define NEWERR(e) ((e)=(ERR)MALLOC(sizeof(struct oERR)),OID(e)=O_ERR)
 #define NEWMATHCAP(e) ((e)=(MATHCAP)MALLOC(sizeof(struct oMATHCAP)),OID(e)=O_MATHCAP)
@@ -892,6 +909,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWV(v) ((v)=(V)MALLOC(sizeof(struct oV)))
 #define NEWVL(vl) ((vl)=(VL)MALLOC(sizeof(struct oVL)))
 #define NEWMP(m) ((m)=(MP)MALLOC(sizeof(struct oMP)))
+#define NEWDMM(m) ((m)=(DMM)MALLOC(sizeof(struct oDMM)))
 #define NEWDLBUCKET(a) ((a)=(DLBUCKET)MALLOC(sizeof(struct oDLBUCKET)))
 #define NEWDPP(a) ((a)=(DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 
@@ -938,6 +956,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKSTR(a,b) (NEWSTR(a),(a)->body=(char *)(b))
 #define MKDP(n,m,d) (NEWDP(d),(d)->nv=(n),BDY(d)=(m))
 #define MKDPV(len,m,d) (NEWDPV(d),(d)->len=(len),BDY(d)=(m))
+#define MKDPM(n,m,d) (NEWDPM(d),(d)->nv=(n),BDY(d)=(m))
 #define MKLM(b,l) (!(b)?(l)=0:(NEWLM(l),(l)->body=(b),(l)))
 #define MKGF2N(b,l) (!(b)?(l)=0:(NEWGF2N(l),(l)->body=(b),(l)))
 #define MKGFPN(b,l) (!(b)?(l)=0:(NEWGFPN(l),(l)->body=(b),(l)))
@@ -963,6 +982,8 @@ if(!(r)){NEWDLBUCKET(r);(c)=(r);}else{NEWDLBUCKET(NEXT(c));(c)=NEXT(c);}
 if(!(r)){NEWVL(r);(c)=(r);}else{NEWVL(NEXT(c));(c)=NEXT(c);}
 #define NEXTDPP(r,c) \
 if(!(r)){NEWDPP(r);(c)=(r);}else{NEWDPP(NEXT(c));(c)=NEXT(c);}
+#define NEXTDMM(r,c) \
+if(!(r)){NEWDMM(r);(c)=(r);}else{NEWDMM(NEXT(c));(c)=NEXT(c);}
 
 /* convertors */
 #define NTOQ(n,s,q) \
@@ -1043,7 +1064,7 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define FTOIF(i) ((int)(((unsigned int)(i)|0x80000000)))
 
 struct cdl {
-	P c;
+	Obj c;
 	DL d;
 };
 
@@ -1151,71 +1172,6 @@ void hybrid_mulup(int,UP,UP,UP *);
 
 void getmod_lm(N *);
 
-int maxblenup(UP);
-void monicup(UP,UP *);
-void simpup(UP,UP *);
-void simpnum(Num,Num *);
-void decompp(P,Q,P *,P *);
-void truncp(P,Q,P *);
-void uremp(P,P,P *);
-void ugcdp(P,P,P *);
-void reversep(P,Q,P *);
-void invmodp(P,Q,P *);
-void addup(UP,UP,UP *);
-void subup(UP,UP,UP *);
-void chsgnup(UP,UP *);
-void mulup(UP,UP,UP *);
-void tmulup(UP,UP,int,UP *);
-void squareup(UP,UP *);
-void remup(UP,UP,UP *);
-void remup_destructive(UP,UP);
-void qrup(UP,UP,UP *,UP *);
-void qrup_destructive(UP,UP);
-void gcdup(UP,UP,UP *);
-void reverseup(UP,int,UP *);
-void invmodup(UP,int,UP *);
-void pwrup(UP,Q,UP *);
-void squarep_gf2n(VL,P,P *);
-void kmulp(VL,P,P,P *);
-void ksquarep(VL,P,P *);
-void kmulup(UP,UP,UP *);
-void ksquareup(UP,UP *);
-void extractup(UP,int,int,UP *);
-void copyup(UP,UP);
-void c_copyup(UP,int,pointer *);
-void kmulupmain(UP,UP,UP *);
-void ksquareupmain(UP,UP *);
-void rembymulup(UP,UP,UP *);
-void rembymulup_special(UP,UP,UP,UP *);
-void tkmulup(UP,UP,int,UP *);
-void shiftup(UP,int,UP *);
-void set_degreeup(UP,int);
-void decompup(UP,int,UP *,UP *);
-void truncup(UP,int,UP *);
-void uptofmarray(int,UP,ModNum *);
-void fmarraytoup(ModNum *,int,UP *);
-void uiarraytoup(unsigned int **,int,int,UP *);
-void adj_coefup(UP,N,N,UP *);
-void uptolmup(UP,UP *);
-void remcup(UP,N,UP *);
-void fft_mulup(UP,UP,UP *);
-void fft_squareup(UP,UP *);
-void trunc_fft_mulup(UP,UP,int,UP *);
-void shoup_fft_mulup(UP,UP,UP *);
-void shoup_fft_squareup(UP,UP *);
-void shoup_trunc_fft_mulup(UP,UP,int,UP *);
-void crup(ModNum **,int,int *,int,N,UP *);
-void shoup_crup(ModNum **,int,int *,int,N,N,UP *);
-void squareup_gf2n(UP,UP *);
-void powermodup_gf2n(UP,UP *);
-void generic_powermodup_gf2n(UP,UP,Q,UP *);
-void tracemodup_gf2n(UP,UP,Q,UP *);
-void tracemodup_gf2n_slow(UP,UP,Q,UP *);
-void tracemodup_gf2n_tab(UP,UP,Q,UP *);
-void square_rem_tab_up_gf2n(UP,UP *,UP *);
-void powertabup_gf2n(UP,UP,UP *);
-void find_root_gf2n(UP,GF2N *);
-
 int cmpdl_composite(int,DL,DL);
 int cmpdl_matrix(int,DL,DL);
 int cmpdl_order_pair(int,DL,DL);
@@ -1230,26 +1186,18 @@ int cmpdl_revgradlex(int,DL,DL);
 int cmpdl_gradlex(int,DL,DL);
 int cmpdl_revlex(int,DL,DL);
 int cmpdl_lex(int,DL,DL);
-int compd(VL,DP,DP);
-void adddl(int,DL,DL,DL *);
-void divsdc(VL,DP,P,DP *);
-void muldc(VL,DP,P,DP *);
-void muldm(VL,DP,MP,DP *);
-void muld(VL,DP,DP,DP *);
-void chsgnd(DP,DP *);
-void subd(VL,DP,DP,DP *);
-void addd(VL,DP,DP,DP *);
-int sugard(MP);
-void nodetod(NODE,DP *);
-void dtop(VL,VL,DP,P *);
-void ptod(VL,VL,P,DP *);
-void initd(struct order_spec *);
 
 void adddv(VL,DPV,DPV,DPV *);
 void subdv(VL,DPV,DPV,DPV *);
 void muldv(VL,DP,DPV,DPV *);
 void chsgndv(DPV,DPV *);
 int compdv(VL,DPV,DPV);
+
+void adddpm(VL,DPM,DPM,DPM *);
+void subdpm(VL,DPM,DPM,DPM *);
+void mulobjdpm(VL,Obj,DPM,DPM *);
+void chsgndpm(DPM,DPM *);
+int compdpm(VL,DPM,DPM);
 
 void _printdp(DP);
 void _dp_sp_mod(DP,DP,int,DP *);
@@ -2193,7 +2141,7 @@ int has_fcoef(DP f);
 int has_fcoef_p(P f);
 void initd(struct order_spec *spec);
 void ptod(VL vl,VL dvl,P p,DP *pr);
-void dtop(VL vl,VL dvl,DP p,P *pr);
+void dtop(VL vl,VL dvl,DP p,Obj *pr);
 void nodetod(NODE node,DP *dp);
 int sugard(MP m);
 void addd(VL vl,DP p1,DP p2,DP *pr);
@@ -2209,8 +2157,9 @@ void weyl_muld(VL vl,DP p1,DP p2,DP *pr);
 void weyl_muldm(VL vl,MP m0,DP p,DP *pr);
 void weyl_mulmm(VL vl,MP m0,MP m1,int n,struct cdl *rtab,int rtablen);
 void comm_muld_tab(VL vl,int nv,struct cdl *t,int n,struct cdl *t1,int n1,struct cdl *rt);
-void muldc(VL vl,DP p,P c,DP *pr);
+void muldc(VL vl,DP p,Obj c,DP *pr);
 void divsdc(VL vl,DP p,P c,DP *pr);
+void divdc(VL vl,DP p,Obj c,DP *pr);
 void adddl(int n,DL d1,DL d2,DL *dr);
 void adddl_destructive(int n,DL d1,DL d2);
 int compd(VL vl,DP p1,DP p2);
