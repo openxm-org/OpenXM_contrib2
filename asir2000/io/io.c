@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.20 2015/08/17 05:42:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.21 2015/08/19 05:29:23 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -308,6 +308,36 @@ void write_longarray(FILE *f,unsigned long *p,int l)
 }
 #endif
 
+#if defined(_WIN64)
+/* write l word (1word=4bytes) */
+/* l even : low 32of p[0] | high32 of p[0] | ... */
+/* l odd :  high32 of p[0] | ... */
+void write_longarray(FILE *f,unsigned long long *p,int l)
+{
+  int i;
+  unsigned long long w;
+  unsigned int hi,lo;
+
+  if ( l%2 ) {
+    w = p[0]; hi = w>>32;
+	if ( little_endian && (ox_file_io || ox_need_conv) )
+      hi = htonl(hi);
+    gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
+    i = 1;
+  } else
+    i = 0;
+  l = (l+1)/2;
+  for ( ; i < l; i++ ) {
+    w = p[i]; hi = w>>32; lo = w&0xffffffff;
+	if ( little_endian && (ox_file_io || ox_need_conv) ) {
+      hi = htonl(hi); lo = htonl(lo);
+	}
+    gen_fwrite((char *)&lo,sizeof(unsigned int),1,f);
+    gen_fwrite((char *)&hi,sizeof(unsigned int),1,f);
+  }
+}
+#endif
+
 void write_double(FILE *f,double *p)
 {
 	unsigned int t;
@@ -417,6 +447,35 @@ void read_longarray(FILE *f,unsigned long *p,int l)
 	      hi = ntohl(hi); lo = ntohl(lo);
 		}
 		*p = (((unsigned long)hi)<<32)|((unsigned long)lo);
+	}
+}
+#endif
+
+#if defined(_WIN64)
+/* read l word (1word=4bytes) */
+/* pad 0 at low 32 of p[0] if l is odd */
+/* low 32 of p[0] | high32 of p[0] | ... */
+void read_longarray(FILE *f,unsigned long long *p,int l)
+{
+	int i;
+	unsigned int hi,lo;
+    unsigned int *q;
+
+	q = (unsigned int *)p;
+	if ( l%2 ) {
+	  gen_fread((char *)&hi,sizeof(unsigned int),1,f);
+	  if ( little_endian && (ox_file_io || ox_need_conv) ) 
+	    hi = ntohl(hi);
+	  *p = (((unsigned long long)hi)<<32);
+	  p++; l--;
+	}
+	for ( i = 0; i < l; i += 2, p++ ) {
+		gen_fread((char *)&lo,sizeof(unsigned int),1,f);
+		gen_fread((char *)&hi,sizeof(unsigned int),1,f);
+	    if ( little_endian && (ox_file_io || ox_need_conv) ) {
+	      hi = ntohl(hi); lo = ntohl(lo);
+		}
+		*p = (((unsigned long long)hi)<<32)|((unsigned long long)lo);
 	}
 }
 #endif

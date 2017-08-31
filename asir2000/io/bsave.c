@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.17 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bsave.c,v 1.18 2015/08/13 00:13:03 noro Exp $ 
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -112,17 +112,27 @@ void savebf(FILE *s,BF p)
 {
   unsigned int zero = 0;
   unsigned int prec;
-	L exp;
+  L exp;
   int sgn,len,t;
 
   prec = MPFR_PREC(p->body);
   exp = MPFR_EXP(p->body);
   sgn = MPFR_SIGN(p->body);
-	len = MPFR_LIMB_SIZE(p->body);
+  len = MPFR_LIMB_SIZE(p->body);
 
-	write_int(s,&sgn);
-	write_int(s,(int *)&prec);
-	write_int64(s,(UL *)&exp);
+  write_int(s,&sgn);
+  write_int(s,(int *)&prec);
+  write_int64(s,(UL *)&exp);
+#if defined(VISUAL)
+#if !defined(_WIN64)
+	write_int(s,&len);
+	write_intarray(s,p->body->_mpfr_d,len);
+#else
+	t = (prec+31)/32; 
+	write_int(s,&t);
+	write_longarray(s,(long long *)p->body->_mpfr_d,t);
+#endif
+#else
 #if SIZEOF_LONG == 4
 	write_int(s,&len);
 	write_intarray(s,p->body->_mpfr_d,len);
@@ -130,6 +140,7 @@ void savebf(FILE *s,BF p)
 	t = (prec+31)/32; 
 	write_int(s,&t);
 	write_longarray(s,p->body->_mpfr_d,t);
+#endif
 #endif
 }
 

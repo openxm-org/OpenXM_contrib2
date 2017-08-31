@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.16 2009/03/16 16:43:03 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/bload.c,v 1.17 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -135,10 +135,18 @@ void loadbf(FILE *s,BF *p)
   mpfr_init2(r->body,prec);
   MPFR_SIGN(r->body) = sgn;
 	MPFR_EXP(r->body) = (int)exp;
+#if defined(VISUAL)
+#if !defined(_WIN64)
+	read_intarray(s,(int *)r->body->_mpfr_d,len);
+#else
+	read_longarray(s,(long long*)r->body->_mpfr_d,len);
+#endif
+#else
 #if SIZEOF_LONG == 4
 	read_intarray(s,(int *)r->body->_mpfr_d,len);
 #else /* SIZEOF_LONG == 8 */
 	read_longarray(s,(long *)r->body->_mpfr_d,len);
+#endif
 #endif
 	*p = r;
 }
