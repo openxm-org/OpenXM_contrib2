@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.33 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.34 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -128,6 +128,8 @@ int plot(NODE arg,int fn){
 	LIST xrange,yrange,zrange,wsize;
 	STRING wname;
 	V v;
+  Real r;
+  double rr;
 
 	formula=(P)ARG0(arg);
 	xrange=(LIST)ARG1(arg);
@@ -145,7 +147,10 @@ int plot(NODE arg,int fn){
 		n=BDY(yrange);can->vy=VR((P)BDY(n));n=NEXT(n);
 		can->qymin=(Q)BDY(n);n=NEXT(n);can->qymax=(Q)BDY(n);
 		can->ymin=ToReal(can->qymin);can->ymax=ToReal(can->qymax); 
-	}
+	} else if ( !formula || NUM(formula) ) {
+    devalr(CO,(Obj)formula,(Obj *)&r); rr = ToReal(r);
+		can->ymin=rr-1; can->ymax=rr+1;
+  }
 	can->mode=fn;
 	if(zrange){
 		n=NEXT(BDY(zrange));

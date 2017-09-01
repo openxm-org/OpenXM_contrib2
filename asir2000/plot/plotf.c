@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.30 2014/07/31 15:52:13 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.31 2017/08/31 02:36:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -207,20 +207,27 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	VL vl,vl0;
 	V v[2],av[2];
 	int stream,ri,i,sign;
-	P poly,var;
+  Obj poly;
+	P var;
 	NODE n,n0;
 	STRING fname,wname;
 	Obj t;
+  int found_f;
 
 	STOQ(-2,m2);STOQ(2,p2);MKNODE(n,p2,0);MKNODE(defrange,m2,n);
 	poly=0;vl=0;geom=0;wname=0;stream=-1;ri=0;xrange=0;yrange=0;zrange=0;
 	v[0]=v[1]=0;
+  found_f = 0;
 	for(;arg;arg=NEXT(arg))
-		if(!BDY(arg))stream=0;
-		else
+		if(!BDY(arg)){
+      if ( !found_f ) {
+        poly = 0;
+        found_f = 1;
+      } else stream=0;
+		} else
 		switch(OID(BDY(arg))){
 		case O_P:
-			poly=(P)BDY(arg);
+			poly=(Obj)BDY(arg);
 			get_vars_recursive((Obj)poly,&vl);
 			for(vl0=vl,i=0;vl0;vl0=NEXT(vl0)){
 				if(vl0->v->attr==(pointer)V_IND){
@@ -228,6 +235,7 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 					else v[i++]=vl0->v;
 				}
 			}
+      found_f = 1;
 			break;
 		case O_LIST:
 			list=(LIST)BDY(arg);
@@ -237,13 +245,17 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 			else geom=list;
 			break;
 		case O_N:
-			stream=QTOS((Q)BDY(arg));break;
+      if ( !found_f ) {
+        poly = (Obj)BDY(arg);
+        found_f = 1;
+      } else stream=QTOS((Q)BDY(arg));
+      break;
 		case O_STR:
 			wname=(STRING)BDY(arg);break;
 		default:
 			error("ifplot : invalid argument");break;
 		}
-	if(!poly) error("ifplot : invalid argument");
+	if(!found_f) error("ifplot : invalid argument");
 	switch(ri){
 	case 0:
 		if(!v[1]) error("ifplot : please specify all variables");
@@ -253,7 +265,7 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	case 1:
 		if(!v[1]) error("ifplot : please specify all variables");
 		av[0]=VR((P)BDY(BDY(range[0])));
-		if(v[0]==av[0]){
+		if(!poly || NUM(poly) || v[0]==av[0]){
 			xrange=range[0];
 			MKV(v[1],var);MKNODE(n,var,defrange);MKLIST(yrange,n);
 		} else if(v[1]==av[0]){
@@ -264,8 +276,8 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	case 2:
 		av[0]=VR((P)BDY(BDY(range[0])));
 		av[1]=VR((P)BDY(BDY(range[1])));
-		if(((v[0]==av[0])&&(!v[1]||v[1]==av[1]))||
-			((v[0]==av[1])&&(!v[1]||v[1]==av[0]))){
+		if(!poly || NUM(poly) || (((v[0]==av[0])&&(!v[1]||v[1]==av[1]))||
+			((v[0]==av[1])&&(!v[1]||v[1]==av[0])))){
 			xrange=range[0];yrange=range[1];
 		} else error("ifplot : invalid argument");
 		break;
@@ -437,7 +449,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	VL vl,vl0;
 	V v[1],av[1];
 	int stream,ri,i,found_f;
-	P poly;
+	Obj func;
 	P var;
 	NODE n,n0;
 	STRING fname,wname;
@@ -445,38 +457,43 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 
 	STOQ(-2,m2);STOQ(2,p2);
 	MKNODE(n,p2,0);MKNODE(defrange,m2,n);
-	poly=0;vl=0;geom=0;wname=0;stream=-1;ri=0;
+	func=0;vl=0;geom=0;wname=0;stream=-1;ri=0;
 	v[0]=0;
   found_f = 0;
-	for(;arg;arg=NEXT(arg) )
+	for(;arg;arg=NEXT(arg) ) {
 		if(!BDY(arg) )
-			stream=0;
+      if ( !found_f ) {
+        makevar("x",&var);
+        v[0] = VR(var);
+        found_f = 1;
+      } else
+			  stream=0;
 		else
 		switch ( OID(BDY(arg)) ){
 			case O_P: case O_R:
-				poly=(P)BDY(arg);
-				get_vars_recursive((Obj)poly,&vl);
+        func = (Obj)BDY(arg);
+				get_vars_recursive(func,&vl);
 				for(vl0=vl, i=0;vl0;vl0=NEXT(vl0) ){
 					if(vl0->v->attr==(pointer)V_IND ){
-						if(i >= 1 ) error("ifplot : invalid argument");
+						if(i >= 1 ) error("plot : function must be univariate");
 						else v[i++]=vl0->v;
 					}
 				}
-				if(i != 1 ) error("ifplot : invalid argument");
         found_f = 1;
 				break;
 			case O_LIST:
 				list=(LIST)BDY(arg);
 				if(OID(BDY(BDY(list)))==O_P ){
-					if(ri > 0 ) error("plot : invalid argument");
+					if(ri > 0 ) error("plot : too many intervals");
 					else range[ri++]=list;
 				} else geom=list;
 				break;
 			case O_N:
         if ( !found_f ) {
-          poly = (P)BDY(arg);
+          func = (Obj)BDY(arg);
           makevar("x",&var);
           v[0] = VR(var);
+          found_f = 1;
         } else
 				  stream=QTOS((Q)BDY(arg));
         break;
@@ -485,7 +502,8 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 			default:
 				error("plot : invalid argument");break;
 		}
-	if(!poly )
+  }
+	if(!found_f )
 		error("plot : invalid argument");
 	switch ( ri ){
 		case 0:
@@ -493,7 +511,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 			break;
 		case 1:
 			av[0]=VR((P)BDY(BDY(range[0])));
-			if(NUM(poly) || v[0]==av[0] )
+			if(!func || NUM(func) || v[0]==av[0] )
 				xrange=range[0];
 			else
 				error("plot : invalid argument");
@@ -518,13 +536,13 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	}
 	if(is_memory ){
 		MKSTR(fname,MEMORY_PLOT);
-		arg=mknode(7,s_id,fname,poly,xrange,NULLP,NULLP,geom);
+		arg=mknode(7,s_id,fname,func,xrange,NULLP,NULLP,geom);
 		Pox_rpc(arg,&t);
 		arg=mknode(1,s_id);
 		Pox_pop_cmo(arg,rp);
 	} else {
 		MKSTR(fname,fn);
-		arg=mknode(8,s_id,fname,poly,xrange,NULLP,NULLP,geom,wname);
+		arg=mknode(8,s_id,fname,func,xrange,NULLP,NULLP,geom,wname);
 		Pox_rpc(arg,&t);
 		*rp=(Obj)s_id;
 	}
@@ -549,7 +567,7 @@ void Ppolarplot(NODE arg,Obj *rp){
 	for(;arg;arg=NEXT(arg)){
 		if(!BDY(arg)) stream=0;
 		else switch(OID(BDY(arg))){
-		case O_P: case O_R://formular
+		case O_P: case O_R://formula
 			poly=(P)BDY(arg);
 			get_vars_recursive((Obj)poly,&vl);
 			for(vl0=vl,i=0;vl0;vl0=NEXT(vl0))
