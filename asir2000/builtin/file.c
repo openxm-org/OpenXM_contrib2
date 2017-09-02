@@ -45,12 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.35 2017/06/10 05:32:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.36 2017/06/12 06:22:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
 #include "base.h"
+#include <stdlib.h>
 #if !defined(VISUAL) && !defined(__MINGW32__)
 #include "unistd.h"
 #endif
@@ -515,23 +516,33 @@ void Pbload_cmo(NODE arg,Obj *rp)
 static struct oSTRING rootdir;
 
 #if defined(VISUAL) || defined(__MINGW32__)
+static void chop_delim(char *s)
+{
+    int n=strlen(s);
+    if(n>1 && s[n-1]=='\\') {
+        s[n-1]=0;
+    }
+}
+
 void get_rootdir(char *name,int len)
 {
 	LONG	ret;
 	HKEY	hOpenKey;
 	DWORD	Type;
-	char	*slash;
+	char    drive[_MAX_DRIVE], dir0[_MAX_DIR], dir[_MAX_DIR];
+	char    fullname[_MAX_PATH];
 
 	if ( rootdir.body ) {
-		strcpy(name,rootdir.body);
+		strcpy_s(name,len,rootdir.body);
 		return;
 	}
-	if ( GetModuleFileName(NULL,name,BUFSIZ) ) {
-		slash = strrchr(name,'\\');
-		*slash = 0;
-		slash = strrchr(name,'\\');
-		if ( slash ) 
-			*slash = 0;
+	if ( GetModuleFileName(NULL,fullname,_MAX_PATH) ) {
+        _splitpath(fullname,drive,dir0,NULL,NULL);
+        chop_delim(dir0);
+        _splitpath(dir0,NULL,dir,NULL,NULL);
+        chop_delim(dir);
+        strcpy_s(name,len,drive);
+        strcat_s(name,len,dir);
 		return;
 	}
 	name[0] = 0;
@@ -544,10 +555,11 @@ void get_rootdir(char *name,int len)
 		RegQueryValueEx(hOpenKey, "Directory", NULL, &Type, name, &len);
 		RegCloseKey(hOpenKey);
 	} else {
-		GetCurrentDirectory(len,name);
-		slash = strrchr(name,'\\');
-		if ( slash )
-			*slash = 0;
+        GetCurrentDirectory(_MAX_PATH,fullname);
+        _splitpath(fullname,drive,dir,NULL,NULL);
+        chop_delim(dir);
+        strcpy_s(name,len,drive);
+        strcat_s(name,len,dir);
 	}
 }
 
