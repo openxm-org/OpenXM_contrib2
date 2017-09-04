@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.34 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/if.c,v 1.35 2017/09/01 01:48:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -175,6 +175,7 @@ int plot(NODE arg,int fn){
 	can->formula=formula; 
 	if(can->mode==modeNO(PLOT)){
 		//plot
+	  can->prec=argc(arg)==7 ? QTOS((Q)ARG6(arg)) : 0;
 		plotcalc(can);
 		create_canvas(can);
 		plot_print(display,can);
@@ -215,7 +216,7 @@ int memory_plot(NODE arg,LIST *bytes){
 	double **tabe;
 	int i;
 	BYTEARRAY barray;
-	Q qw,qh;
+	Q qw,qh,prec;
 
 	formula=(P)ARG0(arg);
 	xrange=(LIST)ARG1(arg);
@@ -252,6 +253,7 @@ int memory_plot(NODE arg,LIST *bytes){
 	can->wname="";
 	can->formula=formula; 
 	if( can->mode==modeNO(PLOT)){
+    can->prec = argc(arg)==6 ? QTOS((Q)ARG5(arg)) : 0;
 		plotcalc(can);
 		memory_print(can,&barray);
 		STOQ(can->width,qw); STOQ(can->height,qh);
@@ -294,6 +296,7 @@ int plotover(NODE arg){
 	current_can=can;
 	can->formula=formula;
 	if(can->mode==modeNO(PLOT)){
+    can->prec = argc(arg)==3 ? QTOS((Q)ARG2(arg)) : 0;
 		plotcalc(can);
 		plot_print(display,can);
 	} else ifplotmain(can);
@@ -633,6 +636,7 @@ void plot_resize(struct canvas *can,POINT spos,POINT epos){
 		ncan->xmin=ToReal(ncan->qxmin); ncan->xmax=ToReal(ncan->qxmax);
 		ncan->ymin=ymax-YC(epos)*dy/can->height;
 		ncan->ymax=ymax-YC(spos)*dy/can->height;
+    ncan->prec = can->prec;
 		create_canvas(ncan); 
 
 		switch (ncan->mode){

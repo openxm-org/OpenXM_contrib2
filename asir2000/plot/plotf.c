@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.31 2017/08/31 02:36:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.32 2017/09/01 01:48:40 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -442,6 +442,8 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
 void Pplot(NODE arg,Obj *rp){plot_main(arg,0,PLOT,rp);}
 void Pmemory_plot(NODE arg,Obj *rp){plot_main(arg,1,PLOT,rp);}
 
+int plot_by_bigfloat;
+
 void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	Q m2,p2,w300,s_id;
 	NODE defrange;
@@ -454,6 +456,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 	NODE n,n0;
 	STRING fname,wname;
 	Obj t;
+  Q prec;
 
 	STOQ(-2,m2);STOQ(2,p2);
 	MKNODE(n,p2,0);MKNODE(defrange,m2,n);
@@ -534,15 +537,19 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
 		STOQ(300,w300);
 		MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
 	}
+  if(plot_by_bigfloat)
+    STOQ(plot_by_bigfloat,prec);
+  else
+    prec = 0;
 	if(is_memory ){
 		MKSTR(fname,MEMORY_PLOT);
-		arg=mknode(7,s_id,fname,func,xrange,NULLP,NULLP,geom);
+		arg=mknode(8,s_id,fname,func,xrange,NULLP,NULLP,geom,prec);
 		Pox_rpc(arg,&t);
 		arg=mknode(1,s_id);
 		Pox_pop_cmo(arg,rp);
 	} else {
 		MKSTR(fname,fn);
-		arg=mknode(8,s_id,fname,func,xrange,NULLP,NULLP,geom,wname);
+		arg=mknode(9,s_id,fname,func,xrange,NULLP,NULLP,geom,wname,prec);
 		Pox_rpc(arg,&t);
 		*rp=(Obj)s_id;
 	}

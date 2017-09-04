@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.52 2016/08/26 04:56:07 takayama Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.53 2017/08/31 02:36:20 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -113,6 +113,8 @@ extern int weight_check;
 extern char **ASIRLOADPATH;
 extern int ASIRLOADPATH_LEN;
 extern int No_ox_reset;
+extern int plot_by_bigfloat;
+extern int debug_plot;
 
 static struct {
 	char *key;
@@ -154,6 +156,8 @@ static struct {
 	{"weight_check",&weight_check},
 	{"no_ox_reset",&No_ox_reset},
 	{"fake_ox_reset",&No_ox_reset},
+	{"plot_by_bigfloat",&plot_by_bigfloat},
+	{"debug_plot",&debug_plot},
 #if defined(INTERVAL)
 	{"zerorewrite",&zerorewrite},
 	{"itvplotsize",&Itvplot},

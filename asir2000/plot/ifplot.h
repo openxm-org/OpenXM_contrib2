@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.23 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.24 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #if defined(VISUAL) || defined(__MINGW32__)
 /* for Visual C++ */
@@ -274,6 +274,7 @@ struct canvas {
 	NODE history;
 	unsigned int color;
 	int division;
+  int prec;
 };
 
 extern struct canvas *canvas[];

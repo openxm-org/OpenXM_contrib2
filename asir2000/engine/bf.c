@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.12 2015/08/20 08:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/bf.c,v 1.13 2015/09/14 05:47:09 noro Exp $ 
  */
 #include "ca.h"
 #include "base.h"
@@ -92,8 +92,8 @@ void addbf(Num a,Num b,Num *c)
     *c = b;
   else if ( !b )
     *c = a;
-  else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
-    (*addnumt[MIN(NID(a),NID(b))])(a,b,c);
+  else if ( (NID(a) <= N_R) && (NID(b) <= N_R ) )
+    (*addnumt[MAX(NID(a),NID(b))])(a,b,c);
   else if ( NID(a) == N_B ) {
     switch ( NID(b) ) {
     case N_Q:
@@ -115,10 +115,13 @@ void addbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
       mpfr_add(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
+      break;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  } else { /* NID(b)==N_B */
+  } else if ( NID(b) == N_B ) {
     switch ( NID(a) ) {
     case N_Q:
       mpfr_init2(r,BFPREC(b));
@@ -135,11 +138,18 @@ void addbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(b),53));
       mpfr_add_d(r,((BF)b)->body,((Real)a)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
+      break;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  }
+  } else
+    goto err;
   if ( !cmpbf(*c,0) ) *c = 0;
+  return;
+
+err: error("addbf : invalid argument");
 }
 
 void subbf(Num a,Num b,Num *c)
@@ -153,8 +163,8 @@ void subbf(Num a,Num b,Num *c)
     (*chsgnnumt[NID(b)])(b,c);
   else if ( !b )
     *c = a;
-  else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
-    (*subnumt[MIN(NID(a),NID(b))])(a,b,c);
+  else if ( (NID(a) <= N_R) && (NID(b) <= N_R ) )
+    (*subnumt[MAX(NID(a),NID(b))])(a,b,c);
   else if ( NID(a) == N_B ) {
     switch ( NID(b) ) {
     case N_Q:
@@ -176,10 +186,12 @@ void subbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
       mpfr_sub(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  } else { /* NID(b)==N_B */
+  } else if ( NID(b)==N_B ) {
     switch ( NID(a) ) {
     case N_Q:
       mpfr_init2(r,BFPREC(b));
@@ -197,11 +209,18 @@ void subbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(b),53));
       mpfr_d_sub(r,((Real)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
+
     MPFRTOBF(r,d);
     *c = (Num)d;
-  }
+  } else
+    goto err;
   if ( !cmpbf(*c,0) ) *c = 0;
+  return;
+
+err: error("subbf : invalid argument");
 }
 
 void mulbf(Num a,Num b,Num *c)
@@ -214,8 +233,8 @@ void mulbf(Num a,Num b,Num *c)
 
   if ( !a || !b )
     *c = 0;
-  else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
-    (*mulnumt[MIN(NID(a),NID(b))])(a,b,c);
+  else if ( (NID(a) <= N_R) && (NID(b) <= N_R ) )
+    (*mulnumt[MAX(NID(a),NID(b))])(a,b,c);
   else if ( NID(a) == N_B ) {
     switch ( NID(b) ) {
     case N_Q:
@@ -237,10 +256,12 @@ void mulbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
       mpfr_mul(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  } else { /* NID(b)==N_B */
+  } else if ( NID(b) == N_B ) {
     switch ( NID(a) ) {
     case N_Q:
       mpfr_init2(r,BFPREC(b));
@@ -257,11 +278,18 @@ void mulbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(b),53));
       mpfr_mul_d(r,((BF)b)->body,((Real)a)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  }
+  } else
+    goto err;
+
   if ( !cmpbf(*c,0) ) *c = 0;
+  return;
+
+err: error("mulbf : invalid argument");
 }
 
 void divbf(Num a,Num b,Num *c)
@@ -275,8 +303,8 @@ void divbf(Num a,Num b,Num *c)
     error("divbf : division by 0");
   else if ( !a )
     *c = 0;
-  else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
-    (*divnumt[MIN(NID(a),NID(b))])(a,b,c);
+  else if ( (NID(a) <= N_R) && (NID(b) <= N_R ) )
+    (*divnumt[MAX(NID(a),NID(b))])(a,b,c);
   else if ( NID(a) == N_B ) {
     switch ( NID(b) ) {
     case N_Q:
@@ -298,10 +326,12 @@ void divbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
       mpfr_div(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  } else { /* NID(b)==N_B */
+  } else if ( NID(b)==N_B ) {
     switch ( NID(a) ) {
     case N_Q:
       /* XXX : mpfr_z_div and mpfr_q_div are not implemented */
@@ -314,11 +344,18 @@ void divbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(b),53));
       mpfr_d_div(r,((Real)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  }
+  } else
+    goto err;
+
   if ( !cmpbf(*c,0) ) *c = 0;
+  return;
+
+err: error("mulbf : invalid argument");
 }
 
 void pwrbf(Num a,Num b,Num *c)
@@ -332,8 +369,8 @@ void pwrbf(Num a,Num b,Num *c)
     *c = (Num)ONE;
   else if ( !a )
     *c = 0;
-  else if ( (NID(a) <= N_A) && (NID(b) <= N_A ) )
-    (*pwrnumt[MIN(NID(a),NID(b))])(a,b,c);
+  else if ( (NID(a) <= N_R) && (NID(b) <= N_R ) )
+    (*pwrnumt[MAX(NID(a),NID(b))])(a,b,c);
   else if ( NID(a) == N_B ) {
     switch ( NID(b) ) {
     case N_Q:
@@ -357,10 +394,12 @@ void pwrbf(Num a,Num b,Num *c)
       mpfr_init2(r,MAX(BFPREC(a),BFPREC(b)));
       mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  } else { /* NID(b)==N_B */
+  } else if ( NID(b)==N_B ) {
     switch ( NID(a) ) {
     case N_Q:
       mpfr_init2(r,BFPREC(b));
@@ -374,11 +413,18 @@ void pwrbf(Num a,Num b,Num *c)
       a = tobf(a,prec);
       mpfr_pow(r,((BF)a)->body,((BF)b)->body,mpfr_roundmode);
       break;
+    default:
+      goto err;
     }
     MPFRTOBF(r,d);
     *c = (Num)d;
-  }
+  } else
+    goto err;
+
   if ( !cmpbf(*c,0) ) *c = 0;
+  return;
+
+err: error("pwrbf : invalid argument");
 }
 
 void chsgnbf(Num a,Num *c)
@@ -388,14 +434,15 @@ void chsgnbf(Num a,Num *c)
 
   if ( !a )
     *c = 0;
-  else if ( NID(a) <= N_A )
+  else if ( NID(a) <= N_R )
     (*chsgnnumt[NID(a)])(a,c);
-  else {
+  else if ( NID(a) == N_B ) {
     mpfr_init2(r,BFPREC(a));
     mpfr_neg(r,((BF)a)->body,mpfr_roundmode);
     MPFRTOBF(r,d);
     *c = (Num)d;
-  }
+  } else
+    error("chsgnbf : invalid argument");
 }
 
 int cmpbf(Num a,Num b)
@@ -406,16 +453,22 @@ int cmpbf(Num a,Num b)
 
   if ( !a ) {
     if ( !b ) return 0;
-    else if ((NID(b)<=N_A) )
+    else if ( NID(b)<=N_R )
       return (*cmpnumt[NID(b)])(a,b);
-    else
+    else if ( NID(b)==N_B )
       return -mpfr_sgn(((BF)b)->body);
-  } else if ( !b ) {
-    if ( !a || (NID(a)<=N_A) )
-      return (*cmpnumt[NID(a)])(a,b);
     else
+      goto err;
+  } else if ( !b ) {
+    if ( NID(a)<=N_R )
+      return (*cmpnumt[NID(a)])(a,b);
+    else if ( NID(a)==N_B )
       return mpfr_sgn(((BF)a)->body);
-  } else if ( NID(a) == N_B ) {
+    else
+      goto err;
+  } else if ( NID(a) <= N_R && NID(b) <= N_R )
+    return (*cmpnumt[MAX(NID(a),NID(b))])(a,b);
+  else if ( NID(a) == N_B ) {
     switch ( NID(b) ) {
     case N_Q:
       if ( INT((Q)b) ) {
@@ -433,9 +486,11 @@ int cmpbf(Num a,Num b)
     case N_B:
       ret = mpfr_cmp(((BF)a)->body,((BF)b)->body);
       break;
+    default:
+      goto err;
     }
     return ret;
-  } else { /* NID(b)==N_B */
+  } else if ( NID(b)==N_B ) {
     switch ( NID(a) ) {
     case N_Q:
       if ( INT((Q)a) ) {
@@ -450,7 +505,10 @@ int cmpbf(Num a,Num b)
       /* double precision = 53 */
       ret = mpfr_cmp_d(((BF)b)->body,((Real)a)->body);
       break;
+    default:
+      goto err;
     }
     return -ret;
   }
+err: error("cmpbf : cannot compare");
 }

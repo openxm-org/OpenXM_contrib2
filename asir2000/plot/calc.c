@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.11 2014/06/27 07:58:29 saito Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.12 2017/08/31 04:21:48 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -373,6 +373,60 @@ void usubstqp(P p,Q r,Q *v){
 	}
 }
 
+Num tobf(Num,int);
+
+void plotcalcbf(struct canvas *can){
+  Obj fr,s,t;
+  Num xmin,xmax,ymin,ymax,xstep;
+  Num u,v,ha,dx,dy,x;
+  Num *tab;
+  Real r;
+  Q w,h1;
+  int ix;
+  POINT *pa;
+  double rr;
+  Q prec;
+  NODE arg;
+
+  STOQ(can->prec,prec); arg = mknode(1,prec); Psetprec(arg,&t);
+  evalr(CO,(Obj)can->formula,can->prec,&fr);
+  MKReal(can->xmin,r); xmin = tobf((Num)r,can->prec);
+  MKReal(can->xmax,r); xmax = tobf((Num)r,can->prec);
+  MKReal(can->ymin,r); ymin = tobf((Num)r,can->prec);
+  MKReal(can->ymax,r); ymax = tobf((Num)r,can->prec);
+  STOQ(can->width,w);
+  subbf(xmax,xmin,&dx); divbf(dx,(Num)w,&xstep);
+	tab=(Num *)MALLOC(can->width*sizeof(Num));
+	for(ix=0,x=xmin;ix<can->width;ix++){
+		substr(CO,0,fr,can->vx,(Obj)x,(Obj *)&s);
+		evalr(CO,(Obj)s,can->prec,&t);
+		if(t&&(OID(t)!=O_N))
+			error("plotcalcbf : invalid evaluation");
+		tab[ix]=(Num)t;
+    addbf(x,xstep,&u); x = u;
+	}
+	if(!cmpbf(ymax,ymin)){
+		for(ymax=ymin=tab[0],ix=1;ix<can->width;ix++){
+			if(cmpbf(tab[ix],ymax)>0)ymax=tab[ix];
+			if(cmpbf(tab[ix],ymin)<0)ymin=tab[ix];
+		}
+		can->ymax=ToReal(ymax);can->ymin=ToReal(ymin);
+	}
+  subbf(ymax,ymin,&dy);
+	can->pa=(struct pa *)MALLOC(sizeof(struct pa));
+	can->pa[0].length=can->width;
+	can->pa[0].pos=pa=(POINT *)MALLOC(can->width*sizeof(POINT));
+  STOQ(can->height-1,h1);
+	for(ix=0;ix<can->width;ix++){
+		XC(pa[ix])=ix; 
+    subbf(ymax,tab[ix],&u); divbf(u,dy,&v); mulbf(v,(Num)h1,&u);
+    rr = ToReal(u);
+		if(rr>MAXSHORT)YC(pa[ix])=MAXSHORT;
+		else if(rr<-MAXSHORT)YC(pa[ix])=-MAXSHORT;
+		else YC(pa[ix])=(long)rr;
+	}
+}
+
 void plotcalc(struct canvas *can){
 	//plot,memory_plot,plotover,plot_resize
 	double x,xmin,xstep,ymax,ymin,dy,*tab,usubstrp();
@@ -381,6 +435,10 @@ void plotcalc(struct canvas *can){
 	Obj fr,t,s;
 	POINT *pa;
 
+  if ( can->prec ) {
+    plotcalcbf(can);
+    return;
+  }
   todouble((Obj)can->formula,&fr);
 	w=can->width;h=can->height;
 	xmin=can->xmin;xstep=(can->xmax-can->xmin)/w;
