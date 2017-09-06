@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.9 2010/01/31 03:25:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.10 2015/09/24 04:43:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,46 +68,46 @@ extern Obj VOIDobj;
 
 void Psubstr2np(NODE arg,Obj *rp)
 {
-	Obj a;
-	P nm,dn,p;
-	R r;
-	VL vl,tvl;
-	int nv,i,ac;
-	NODE slist,t,ps,u,vlist;
-	P s;
-	P *svect;
-	V v;
-	V *vvect;
+  Obj a,b;
+  P nm,dn,p,q;
+  R r;
+  VL vl,tvl;
+  int nv,i,ac,j;
+  NODE slist,t,ps,u,vlist;
+  P s;
+  P *svect;
+  V v;
+  V *vvect;
 
-	a = (Obj)ARG0(arg);
-	if ( !a || NUM(a) ) {
-		*rp = a;
-		return;
-	}
-	asir_assert(ARG0(arg),O_R,"substr2np");
-	asir_assert(ARG1(arg),O_LIST,"substr2np");
-	get_vars(a,&vl);
-	for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ );
-	nv = i;
-	vvect = (V *)MALLOC(nv*sizeof(V));
-	for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ ) vvect[i] = tvl->v;
-	svect = (P *)MALLOC(nv*sizeof(P));
-    ac = argc(arg);
-    if ( ac == 2 ) {
-	  slist = BDY((LIST)ARG1(arg));
-	  for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
-	  for ( t = slist; t; t = NEXT(t) ) {
-		  ps = BDY((LIST)BDY(t)); p = (P)BDY(ps); s = (P)BDY(NEXT(ps));	
-		  asir_assert(p,O_P,"substr2np"); asir_assert(s,O_N,"substr2np");
-		  v = VR(p);
-		  for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
-		  svect[i] = s;
-	  }
-    } else if ( ac == 3 ) {
-	  asir_assert(ARG2(arg),O_LIST,"substr2np");
-      vlist = BDY((LIST)ARG1(arg));
-      slist = BDY((LIST)ARG2(arg));
-	  for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
+  a = (Obj)ARG0(arg);
+  if ( !a || NUM(a) ) {
+    *rp = a;
+    return;
+  }
+  asir_assert(ARG0(arg),O_R,"substr2np");
+  asir_assert(ARG1(arg),O_LIST,"substr2np");
+  get_vars(a,&vl);
+  for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ );
+  nv = i;
+  vvect = (V *)MALLOC((nv)*sizeof(V));
+  for ( i = 0, tvl = vl; tvl; tvl = NEXT(tvl), i++ ) vvect[i] = tvl->v;
+  svect = (P *)MALLOC((nv)*sizeof(P));
+  ac = argc(arg);
+  if ( ac == 2 ) {
+    slist = BDY((LIST)ARG1(arg));
+    for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
+    for ( t = slist; t; t = NEXT(t) ) {
+      ps = BDY((LIST)BDY(t)); p = (P)BDY(ps); s = (P)BDY(NEXT(ps));  
+      asir_assert(p,O_P,"substr2np"); asir_assert(s,O_P,"substr2np");
+      v = VR(p);
+      for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
+      svect[i] = s;
+    }
+  } else if ( ac == 3 ) {
+    asir_assert(ARG2(arg),O_LIST,"substr2np");
+    vlist = BDY((LIST)ARG1(arg));
+    slist = BDY((LIST)ARG2(arg));
+    for ( i = 0; i < nv; i++ ) svect[i] = (P)VOIDobj;
       for ( u = vlist, t = slist; u && t; u = NEXT(u), t = NEXT(t) ) {
         v = VR((P)BDY(u));
         for ( i = 0; i < nv; i++ ) if ( vvect[i] == v ) break;
@@ -115,29 +115,40 @@ void Psubstr2np(NODE arg,Obj *rp)
       }
     } else
       error("substr2np : argument mismatch");
-	
-	switch ( OID(a) ) {
-		case O_P:
-			substpp(vl,(P)a,vvect,svect,nv,&nm); *rp = (Obj)nm;
-			return;
-		case O_R:
-			substpp(vl,(P)NM((R)a),vvect,svect,nv,&nm);
-			substpp(vl,(P)DN((R)a),vvect,svect,nv,&dn);
-			if ( !dn )
-				error("substr2np: division by 0");
-			else if ( !nm )
-				*rp = 0;
-			else if ( NUM(dn) ) {
-				divsp(vl,nm,dn,&p);
-				*rp = (Obj)p;
-			} else {
-				MKRAT(nm,dn,0,r);
-				*rp = (Obj)r;
-			}
-			return;
-		default:
-			error("substr2np: invalid argument");
-	}
+  for ( i = 0; i < nv; i++ ) {
+    if ( (int)(vvect[i]->attr) == V_PF ) {
+      MKV(vvect[i],p);
+      for ( j = 0; j < nv; j++ )
+        if ( j != i ) {
+          substr(CO,0,(Obj)p,vvect[j],(Obj)svect[j],&b); p = (P)b;
+        }
+      if ( OID(svect[i]) == O_VOID ) svect[i] = p;
+      else if ( arf_comp(CO,(Obj)p,(Obj)svect[i]) )
+        error("substr2np : inconsistent values for substitution");
+    }
+  }
+  switch ( OID(a) ) {
+    case O_P:
+      substpp(CO,(P)a,vvect,svect,nv,&nm); *rp = (Obj)nm;
+      return;
+    case O_R:
+      substpp(CO,(P)NM((R)a),vvect,svect,nv,&nm);
+      substpp(CO,(P)DN((R)a),vvect,svect,nv,&dn);
+      if ( !dn )
+        error("substr2np: division by 0");
+      else if ( !nm )
+        *rp = 0;
+      else if ( NUM(dn) ) {
+        divsp(CO,nm,dn,&p);
+        *rp = (Obj)p;
+      } else {
+        MKRAT(nm,dn,0,r);
+        *rp = (Obj)r;
+      }
+      return;
+    default:
+      error("substr2np: invalid argument");
+  }
 }
 
 void Psubst(arg,rp)

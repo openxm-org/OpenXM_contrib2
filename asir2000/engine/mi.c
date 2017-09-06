@@ -45,100 +45,76 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/mi.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/mi.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 
 extern int current_mod;
 
-void addmi(a,b,c)
-MQ a,b;
-MQ *c;
+void addmi(MQ a,MQ b,MQ *c)
 {
-	if ( !current_mod )
-		error("addmi : invalid modulus");
-	if ( (a && NID(a) != N_M) || (b && NID(b) != N_M) )
-		error("addmi : invalid argument");
-	addmq(current_mod,a,b,c);
+  if ( !current_mod ) error("addmi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( b && RATN(b) ) ptomp(current_mod,b,&b);
+  if ( (a && !SFF(a)) || b && !SFF(b) ) error("addmi : invalid argument");
+  addmq(current_mod,a,b,c);
 }
 
-void submi(a,b,c)
-MQ a,b;
-MQ *c;
+void submi(MQ a,MQ b,MQ *c)
 {
-	if ( !current_mod )
-		error("submi : invalid modulus");
-	if ( (a && NID(a) != N_M) || (b && NID(b) != N_M) )
-		error("submi : invalid argument");
-	submq(current_mod,a,b,c);
+  if ( !current_mod ) error("submi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( b && RATN(b) ) ptomp(current_mod,b,&b);
+  if ( (a && !SFF(a)) || b && !SFF(b) ) error("submi : invalid argument");
+  submq(current_mod,a,b,c);
 }
 
-void mulmi(a,b,c)
-MQ a,b;
-MQ *c;
+void mulmi(MQ a,MQ b,MQ *c)
 {
-	if ( !current_mod )
-		error("mulmi : invalid modulus");
-	if ( (a && NID(a) != N_M) || (b && NID(b) != N_M) )
-		error("mulmi : invalid argument");
-	mulmq(current_mod,a,b,c);
+  if ( !current_mod ) error("mulmi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( b && RATN(b) ) ptomp(current_mod,b,&b);
+  if ( (a && !SFF(a)) || b && !SFF(b) ) error("mulmi : invalid argument");
+  mulmq(current_mod,a,b,c);
 }
 
-void divmi(a,b,c)
-MQ a,b;
-MQ *c;
+void divmi(MQ a,MQ b,MQ *c)
 {
-	if ( !current_mod )
-		error("divmi : invalid modulus");
-	if ( (a && NID(a) != N_M) || (b && NID(b) != N_M) )
-		error("divmi : invalid argument");
-	divmq(current_mod,a,b,c);
+  if ( !current_mod ) error("divmi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( b && RATN(b) ) ptomp(current_mod,b,&b);
+  if ( (a && !SFF(a)) || b && !SFF(b) ) error("divmi : invalid argument");
+  divmq(current_mod,a,b,c);
 }
 
-void chsgnmi(a,c)
-MQ a,*c;
+void chsgnmi(MQ a,MQ *c)
 {
-	if ( !current_mod )
-		error("chsgnmi : invalid modulus");
-	if ( a && NID(a) != N_M )
-		error("chsgnmi : invalid argument");
-	submq(current_mod,0,a,c);
+  if ( !current_mod ) error("chsgnmi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( a && !SFF(a) ) error("chsgnmi : invalid argument");
+  submq(current_mod,0,a,c);
 }
 
-void pwrmi(a,b,c)
-MQ a;
-Q b;
-MQ *c;
+void pwrmi(MQ a,Q b,MQ *c)
 {
-	if ( !current_mod )
-		error("pwrmi : invalid modulus");
-	if ( a && NID(a) != N_M )
-		error("pwrmi : invalid argument");
-	pwrmq(current_mod,a,b,c);
+  if ( !current_mod ) error("pwrnmi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( a && !SFF(a) ) error("pwrmi : invalid argument");
+  pwrmq(current_mod,a,b,c);
 }
 
-int cmpmi(a,b)
-MQ a,b;
+int cmpmi(MQ a,MQ b)
 {
-	int c;
+  int c;
 
-	if ( !current_mod )
-		error("cmpmi : invalid modulus");
-	if ( (a && NID(a) != N_M) || (b && NID(b) != N_M) )
-		error("cmpmi : invalid argument");
-	if ( !a )
-		if ( !b )
-			return 0;
-		else
-			return CONT(b) < 0;
-	else
-		if ( !b )
-			return CONT(a) > 0;
-		else {
-			c = CONT(a)-CONT(b);
-			if ( c % current_mod )
-				return c > 0;
-			else
-				return 0;
-		}
+  if ( !current_mod ) error("cmpmi : current_mod is not set");
+  if ( a && RATN(a) ) ptomp(current_mod,a,&a);
+  if ( b && RATN(b) ) ptomp(current_mod,b,&b);
+  if ( (a && !SFF(a)) || b && !SFF(b) ) error("cmpmi : invalid argument");
+  if ( !a ) return !b ? 0 : -1;
+  else if ( !b ) return 1;
+  else {
+    c = CONT(a)-CONT(b);
+    return c==0 ? 0 : c>0;
+  }
 }

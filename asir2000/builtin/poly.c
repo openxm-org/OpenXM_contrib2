@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.25 2016/03/31 05:30:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.26 2017/02/28 07:06:28 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -148,7 +148,7 @@ struct ftab poly_tab[] = {
 	{"ch_mv",Pch_mv,2},
 	{"re_mv",Pre_mv,2},
 
-	{"ptomp",Pptomp,2},
+	{"ptomp",Pptomp,-2},
 	{"mptop",Pmptop,1},
 
 	{"ptolmp",Pptolmp,1},
@@ -1139,7 +1139,16 @@ void mergedeglist(NODE d0,NODE d1,NODE *dr)
 
 void Pptomp(NODE arg,P *rp)
 {
-	ptomp(QTOS((Q)ARG1(arg)),(P)ARG0(arg),rp);
+  int mod;
+
+  if ( argc(arg) == 1 ) {
+    if ( !current_mod )
+      error("ptomp : current_mod is not set");
+    else
+      mod = current_mod;
+  } else
+    mod = QTOS((Q)ARG1(arg));
+	ptomp(mod,(P)ARG0(arg),rp);
 }
 
 void Pmptop(NODE arg,P *rp)

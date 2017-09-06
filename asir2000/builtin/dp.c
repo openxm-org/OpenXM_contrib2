@@ -6,7 +6,8 @@
  * non-exclusive and royalty-free license to use, copy, modify and
  * redistribute, solely for non-commercial and non-profit purposes, the
  * computer program, "Risa/Asir" ("SOFTWARE"), subject to the terms and
- * conditions of this Agreement. For the avoidance of doubt, you acquire * only a limited right to use the SOFTWARE hereunder, and FLL or any
+ * conditions of this Agreement. For the avoidance of doubt, you acquire 
+ * only a limited right to use the SOFTWARE hereunder, and FLL or any
  * third party developer retains all rights, including but not limited to
  * copyrights, in and to the SOFTWARE.
  * 
@@ -44,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.104 2017/03/27 09:35:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.105 2017/08/31 02:36:20 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
