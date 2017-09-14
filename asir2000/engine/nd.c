@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.237 2017/04/09 02:23:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.238 2017/08/31 02:36:21 noro Exp $ */
 
 #include "nd.h"
 
@@ -98,6 +98,10 @@ void Pox_cmo_rpc(NODE,Obj *);
 ND nd_add_lf(ND p1,ND p2);
 void nd_mul_c_lf(ND p,GZ mul);
 void ndv_mul_c_lf(NDV p,GZ mul);
+NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+NODE nd_f4_red_mod128_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_lf_main(int m,ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
         NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 int nd_gauss_elim_lf(mpz_t **mat0,int *sugar,int row,int col,int *colstat);
@@ -2909,6 +2913,18 @@ ND_pairs nd_minsugarp( ND_pairs d, ND_pairs *prest )
     return dm0;
 }
 
+int nd_tdeg(NDV c)
+{
+  int wmax = 0;
+  int i,len;
+  NMV a;
+
+  len = LEN(c);
+  for ( a = BDY(c), i = 0; i < len; i++, NMV_ADV(a) )
+    wmax = MAX(TD(DL(a)),wmax);
+  return wmax;
+}
+
 int ndv_newps(int m,NDV a,NDV aq,int f4)
 {
     int len;
@@ -2941,11 +2957,21 @@ int ndv_newps(int m,NDV a,NDV aq,int f4)
         } else
           error("ndv_newps : invalud modulus");
         nd_bound[nd_psn] = ndv_compute_bound(aq);
-        SG(r) = SG(aq); ndl_copy(HDL(aq),DL(r));
+#if 1
+        SG(r) = SG(aq);
+#else
+        SG(r) = nd_tdeg(aq);
+#endif
+        ndl_copy(HDL(aq),DL(r));
     } else {
         if ( !m ) register_hcf(a);
         nd_bound[nd_psn] = ndv_compute_bound(a);
-        SG(r) = SG(a); ndl_copy(HDL(a),DL(r));
+#if 1
+        SG(r) = SG(a);
+#else
+        SG(r) = nd_tdeg(a);
+#endif
+        ndl_copy(HDL(a),DL(r));
 		if ( !m && !nd_vc ) nd_ps_gz[nd_psn] = ndvtondvgz(a);
     }
     if ( nd_demand ) {
@@ -5796,6 +5822,24 @@ int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r)
     return i;
 }
 
+#if defined(__GNUC__)
+int nd_to_vect128(int mod,UINT *s0,int n,ND d,U128 *r)
+{
+    NM m;
+    UINT *t,*s;
+    int i;
+
+    for ( i = 0; i < n; i++ ) r[i] = 0;
+    for ( i = 0, s = s0, m = BDY(d); m; m = NEXT(m) ) {
+        t = DL(m);
+        for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
+        r[i] = (U128)CM(m);
+    }
+    for ( i = 0; !r[i]; i++ );
+    return i;
+}
+#endif
+
 int nd_to_vect_q(UINT *s0,int n,ND d,Q *r)
 {
     NM m;
@@ -6121,7 +6165,6 @@ int ndv_reduce_vect_gz(GZ *gvect,int trace,int col,IndArray *imat,NM_ind_pair *r
     return maxrs;
 }
 
-
 int ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
     int i,j,k,len,pos,prev;
@@ -6190,6 +6233,60 @@ int ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,in
         if ( svect[i] >= (UINT)m ) svect[i] %= m;
     return maxrs;
 }
+
+#if defined(__GNUC__)
+int ndv_reduce_vect128(int m,U128 *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+{
+    int i,j,k,len,pos,prev;
+    U64 c,c1;
+    U128 a;
+    IndArray ivect;
+    unsigned char *ivc;
+    unsigned short *ivs;
+    unsigned int *ivi;
+    NDV redv;
+    NMV mr;
+    NODE rp;
+    int maxrs;
+
+    maxrs = 0;
+    for ( i = 0; i < nred; i++ ) {
+        ivect = imat[i];
+        k = ivect->head; svect[k] %= m;
+        if ( c = svect[k] ) {
+            maxrs = MAX(maxrs,rp0[i]->sugar);
+            c = m-c; redv = nd_ps[rp0[i]->index];
+            len = LEN(redv); mr = BDY(redv);
+            svect[k] = 0; prev = k;
+            switch ( ivect->width ) {
+                case 1:
+                    ivc = ivect->index.c;
+                    for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+                        pos = prev+ivc[j]; c1 = CM(mr); prev = pos;
+						if ( c1 ) svect[pos] += c1*c;
+                    }
+                    break;
+                case 2:
+                    ivs = ivect->index.s; 
+                    for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+                        pos = prev+ivs[j]; c1 = CM(mr); prev = pos;
+						if ( c1 ) svect[pos] += c1*c;
+                    }
+                    break;
+                case 4:
+                    ivi = ivect->index.i;
+                    for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+                        pos = prev+ivi[j]; c1 = CM(mr); prev = pos;
+						if ( c1 ) svect[pos] += c1*c;
+                    }
+                    break;
+            }
+        }
+    }
+    for ( i = 0; i < col; i++ ) svect[i] %= m;
+    return maxrs;
+}
+#endif
 
 int ndv_reduce_vect_sf(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
@@ -6447,6 +6544,36 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
         return r;
     }
 }
+
+#if defined(__GNUC__)
+NDV vect128o_ndv(U128 *vect,int spcol,int col,int *rhead,UINT *s0vect)
+{
+    int j,k,len;
+    UINT *p;
+    UINT c;
+    NDV r;
+    NMV mr0,mr;
+
+    for ( j = 0, len = 0; j < spcol; j++ ) if ( vect[j] ) len++;
+    if ( !len ) return 0;
+    else {
+        mr0 = (NMV)MALLOC_ATOMIC_IGNORE_OFF_PAGE(nmv_adv*len);
+#if 0
+        ndv_alloc += nmv_adv*len;
+#endif
+        mr = mr0; 
+        p = s0vect;
+        for ( j = k = 0; j < col; j++, p += nd_wpd )
+            if ( !rhead[j] ) {
+                if ( c = (UINT)vect[k++] ) {
+                    ndl_copy(p,DL(mr)); CM(mr) = c; NMV_ADV(mr);
+                }
+            }
+        MKNDV(nd_nvar,mr0,len,r);
+        return r;
+    }
+}
+#endif
 
 NDV vect_to_ndv_2(unsigned long *vect,int col,UINT *s0vect)
 {
@@ -7079,8 +7206,15 @@ init_eg(&eg_search);
         imat[i] = nm_ind_pair_to_vect_compress(trace,s0vect,col,s0hash,rvect[i]);
         rhead[imat[i]->head] = 1;
     }
-    if ( m > 0 || m == -1 )
+#if defined(__GNUC__)
+    if ( m >= (1<<15) )
+        r0 = nd_f4_red_mod128_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
+    else 
+#endif
+    if ( m > 0 )
         r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
+    else if ( m == -1 )
+        r0 = nd_f4_red_sf_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
     else if ( m == -2 )
         r0 = nd_f4_red_lf_main(m,sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
     else
@@ -7093,7 +7227,8 @@ init_eg(&eg_search);
     return r0;
 }
 
-/* for small finite fields  */
+/* for Fp, 2<=p<2^16 */
+
 NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz)
 {
@@ -7151,6 +7286,173 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         rank = nd_gauss_elim_sf(spmat,spsugar,sprow,spcol,m,colstat);
     else
         rank = nd_gauss_elim_mod(spmat,spsugar,spactive,sprow,spcol,m,colstat);
+    r0 = 0;
+    for ( i = 0; i < rank; i++ ) {
+        NEXTNODE(r0,r); BDY(r) = 
+            (pointer)vect_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+        SG((NDV)BDY(r)) = spsugar[i];
+        GCFREE(spmat[i]);
+    }
+    if ( r0 ) NEXT(r) = 0;
+
+    for ( ; i < sprow; i++ ) GCFREE(spmat[i]);
+    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
+    init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim2=%fsec\n",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
+            nsp,nred,sprow,spcol,rank);
+        fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
+    }
+    if ( nz ) {
+        for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];
+        if ( rank > 0 ) {
+            NEXT(spactive[rank-1]) = 0;
+            *nz = spactive[0];
+        } else
+            *nz = 0;
+    }
+    return r0;
+}
+
+#if defined(__GNUC__)
+/* for Fp, 2^15=<p<2^29 */
+
+NODE nd_f4_red_mod128_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz)
+{
+    int spcol,sprow,a;
+    int i,j,k,l,rank;
+    NODE r0,r;
+    ND_pairs sp;
+    ND spol;
+    U128 **spmat;
+    U128 *svect,*v;
+    int *colstat;
+    struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
+    int maxrs;
+    int *spsugar;
+    ND_pairs *spactive;
+    int **spmat32;
+
+    spcol = col-nred;
+    get_eg(&eg0);
+    /* elimination (1st step) */
+    spmat = (U128 **)MALLOC(nsp*sizeof(U128 *));
+    svect = (U128 *)MALLOC(col*sizeof(U128));
+    spsugar = (int *)MALLOC(nsp*sizeof(int));
+    spactive = !nz?0:(ND_pairs *)MALLOC(nsp*sizeof(ND_pairs));
+    for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
+        nd_sp(m,0,sp,&spol);
+        if ( !spol ) continue;
+        nd_to_vect128(m,s0vect,col,spol,svect);
+        maxrs = ndv_reduce_vect128(m,svect,col,imat,rvect,nred);
+        for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+        if ( i < col ) {
+            spmat[sprow] = v = (U128 *)MALLOC_ATOMIC(spcol*sizeof(U128));
+            for ( j = k = 0; j < col; j++ )
+                if ( !rhead[j] ) v[k++] = (UINT)svect[j];
+            spsugar[sprow] = MAX(maxrs,SG(spol));
+            if ( nz )
+            spactive[sprow] = sp;
+            sprow++;
+        }
+        nd_free(spol);
+    }
+    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim1=%fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fflush(asir_out);
+    }
+    /* free index arrays */
+    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c);
+
+    /* elimination (2nd step) */
+    colstat = (int *)MALLOC(spcol*sizeof(int));
+    rank = nd_gauss_elim_mod128(spmat,spsugar,spactive,sprow,spcol,m,colstat);
+    r0 = 0;
+    for ( i = 0; i < rank; i++ ) {
+        NEXTNODE(r0,r); BDY(r) = 
+          (pointer)vect128o_ndv(spmat[i],spcol,col,rhead,s0vect);
+        SG((NDV)BDY(r)) = spsugar[i];
+        GCFREE(spmat[i]);
+    }
+    if ( r0 ) NEXT(r) = 0;
+
+    for ( ; i < sprow; i++ ) GCFREE(spmat[i]);
+    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
+    init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim2=%fsec\n",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d  ",
+            nsp,nred,sprow,spcol,rank);
+        fprintf(asir_out,"%fsec\n",eg_f4.exectime+eg_f4.gctime);
+    }
+    if ( nz ) {
+        for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];
+        if ( rank > 0 ) {
+            NEXT(spactive[rank-1]) = 0;
+            *nz = spactive[0];
+        } else
+            *nz = 0;
+    }
+    return r0;
+}
+#endif
+
+/* for small finite fields */
+
+NODE nd_f4_red_sf_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz)
+{
+    int spcol,sprow,a;
+    int i,j,k,l,rank;
+    NODE r0,r;
+    ND_pairs sp;
+    ND spol;
+    int **spmat;
+    UINT *svect,*v;
+    int *colstat;
+    struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
+    int maxrs;
+    int *spsugar;
+    ND_pairs *spactive;
+
+    spcol = col-nred;
+    get_eg(&eg0);
+    /* elimination (1st step) */
+    spmat = (int **)MALLOC(nsp*sizeof(UINT *));
+    svect = (UINT *)MALLOC(col*sizeof(UINT));
+    spsugar = (int *)MALLOC(nsp*sizeof(int));
+    spactive = !nz?0:(ND_pairs *)MALLOC(nsp*sizeof(ND_pairs));
+    for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
+        nd_sp(m,0,sp,&spol);
+        if ( !spol ) continue;
+        nd_to_vect(m,s0vect,col,spol,svect);
+        maxrs = ndv_reduce_vect_sf(m,svect,col,imat,rvect,nred);
+        for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+        if ( i < col ) {
+            spmat[sprow] = v = (UINT *)MALLOC_ATOMIC(spcol*sizeof(UINT));
+            for ( j = k = 0; j < col; j++ )
+                if ( !rhead[j] ) v[k++] = svect[j];
+            spsugar[sprow] = MAX(maxrs,SG(spol));
+            if ( nz )
+            spactive[sprow] = sp;
+            sprow++;
+        }
+        nd_free(spol);
+    }
+    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim1=%fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fflush(asir_out);
+    }
+    /* free index arrays */
+    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c);
+
+    /* elimination (2nd step) */
+    colstat = (int *)MALLOC(spcol*sizeof(int));
+    rank = nd_gauss_elim_sf(spmat,spsugar,sprow,spcol,m,colstat);
     r0 = 0;
     for ( i = 0; i < rank; i++ ) {
         NEXTNODE(r0,r); BDY(r) = 
@@ -7673,6 +7975,71 @@ int nd_gauss_elim_mod(int **mat0,int *sugar,ND_pairs *spactive,int row,int col,i
         }
     return rank;
 }
+
+#if defined(__GNUC__)
+int nd_gauss_elim_mod128(U128 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat)
+{
+    int i,j,k,l,rank,s;
+    U64 inv;
+    U128 a;
+    U128 *t,*pivot,*pk;
+    ND_pairs pair;
+
+    for ( rank = 0, j = 0; j < col; j++ ) {
+        for ( i = rank; i < row; i++ )
+            mat[i][j] %= md;
+        for ( i = rank; i < row; i++ )
+            if ( mat[i][j] )
+                break;
+        if ( i == row ) {
+            colstat[j] = 0;
+            continue;
+        } else
+            colstat[j] = 1;
+        if ( i != rank ) {
+            t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+            s = sugar[i]; sugar[i] = sugar[rank]; sugar[rank] = s;
+            if ( spactive ) {
+                pair = spactive[i]; spactive[i] = spactive[rank]; 
+                spactive[rank] = pair;
+            }
+        }
+        pivot = mat[rank];
+        s = sugar[rank];
+        inv = invm((UINT)pivot[j],md);
+        for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+            if ( a = *pk ) {
+                if ( a >= md ) a %= md;
+                *pk = ((U64)a*inv)%md;
+            }
+        for ( i = rank+1; i < row; i++ ) {
+            t = mat[i];
+            if ( a = (t[j]%md) ) {
+                sugar[i] = MAX(sugar[i],s);
+                red_by_vect128(md,t+j,pivot+j,(int)(md-a),col-j);
+            }
+        }
+        rank++;
+    }
+    for ( j = col-1, l = rank-1; j >= 0; j-- )
+        if ( colstat[j] ) {
+            pivot = mat[l];
+            for ( k = j; k < col; k++ )
+              if ( pivot[k] >= md ) pivot[k] %= md;
+            s = sugar[l];
+            for ( i = 0; i < l; i++ ) {
+                t = mat[i];
+                t[j] %= md;
+                if ( a = (t[j]%md) ) {
+                    sugar[i] = MAX(sugar[i],s);
+                    red_by_vect128(md,t+j,pivot+j,(int)(md-a),col-j);
+                }
+            }
+            l--;
+        }
+    return rank;
+}
+#endif
 
 int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat)
 {

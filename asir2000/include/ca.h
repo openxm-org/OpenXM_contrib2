@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.101 2017/08/30 09:40:30 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.102 2017/08/31 02:36:21 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -193,6 +193,13 @@ typedef unsigned long long UL;
 #elif defined(_MSC_VER)
 typedef _int64 L;
 typedef unsigned _int64 UL;
+#endif
+
+#if defined(__GNUC__)
+typedef __uint64_t U64;
+typedef __uint128_t U128;
+typedef __int64_t L64;
+typedef __int128_t L128;
 #endif
 
 typedef struct oN {

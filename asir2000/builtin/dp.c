@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.105 2017/08/31 02:36:20 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.106 2017/09/06 06:25:26 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2321,7 +2321,7 @@ void Pnd_f4(NODE arg,LIST *rp)
 		  *rp = f; return;
 	  }
       mq = (Q)ARG2(arg);
-      if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<30)) ) {
+      if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<31)) ) {
         node = mknode(1,mq);
         Psetmod_ff(node,&val);
         m = -2;
