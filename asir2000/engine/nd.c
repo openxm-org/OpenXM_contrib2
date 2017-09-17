@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.240 2017/09/15 01:52:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.241 2017/09/16 08:02:35 noro Exp $ */
 
 #include "nd.h"
 
@@ -5824,7 +5824,7 @@ int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r)
     return i;
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
 
 #define MOD128(a,c,m) ((a)=(((c)!=0||((a)>=(m)))?(((((U128)(c))<<64)+(a))%(m)):(a)))
 
@@ -6239,7 +6239,7 @@ int ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,in
     return maxrs;
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
 
 int ndv_reduce_vect64(int m,U64 *svect,U64 *cvect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
@@ -6568,7 +6568,7 @@ NDV vect_to_ndv(UINT *vect,int spcol,int col,int *rhead,UINT *s0vect)
     }
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
 NDV vect64_to_ndv(U64 *vect,int spcol,int col,int *rhead,UINT *s0vect)
 {
     int j,k,len;
@@ -7232,7 +7232,7 @@ init_eg(&eg_search);
         rhead[imat[i]->head] = 1;
     }
     if ( m > 0 )
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
         r0 = nd_f4_red_mod64_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
 #else
         r0 = nd_f4_red_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
@@ -7341,7 +7341,7 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     return r0;
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
 /* for Fp, 2^15=<p<2^29 */
 
 NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
@@ -8003,7 +8003,7 @@ int nd_gauss_elim_mod(int **mat0,int *sugar,ND_pairs *spactive,int row,int col,i
     return rank;
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
 
 int nd_gauss_elim_mod64(U64 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat)
 {

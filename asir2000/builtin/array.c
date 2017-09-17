@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.73 2017/09/14 01:34:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.74 2017/09/15 01:52:51 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -2356,7 +2356,7 @@ void red_by_vect(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)
 		}
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG==8
 /* 64bit vector += UNIT vector(normalized) */
 
 void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len)

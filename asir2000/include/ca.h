@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.102 2017/08/31 02:36:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.103 2017/09/14 01:34:54 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -195,7 +195,7 @@ typedef _int64 L;
 typedef unsigned _int64 UL;
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && SIZEOF_LONG == 8
 typedef __uint64_t U64;
 typedef __uint128_t U128;
 typedef __int64_t L64;
