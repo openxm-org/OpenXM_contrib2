@@ -868,7 +868,7 @@ get_pty_master()
 	master = 1;
 	return;
     }
-#if defined(__CYGWIN32__) || defined(__linux__)
+#if defined(__CYGWIN32__) || defined(__linux__) || defined(__APPLE__)
     sprintf (master_tty, "/dev/ptmx");
     master = open (master_tty, O_RDWR);
     if (master >= 0) {
@@ -877,6 +877,14 @@ get_pty_master()
 	grantpt(master);
 	unlockpt(master);
 	if ( !ptsname_r(master,name,sizeof(name)) ) {
+	    strcpy(slave_tty, name);
+	    goto FOUND;
+	}
+#elif defined(__APPLE__)
+        char *name;
+	grantpt(master);
+	unlockpt(master);
+	if ( name = (char *)ptsname(master) ) {
 	    strcpy(slave_tty, name);
 	    goto FOUND;
 	}
