@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.13 2010/01/28 08:56:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PU.c,v 1.14 2010/01/31 03:25:54 noro Exp $ 
 */
 #include "ca.h"
 
@@ -729,6 +729,10 @@ void premp(VL vl,P p1,P p2,P *pr)
 		*pr = 0;
 	else if ( ( v1 = VR(p1) ) == ( v2 = VR(p2) ) ) {
 		n1 = deg(v1,p1); n2 = deg(v1,p2);
+    if ( n1 < n2 ) {
+      *pr = p1;
+      return;
+    }
 		pw = (P *)ALLOCA((n1+1)*sizeof(P));
 		bzero((char *)pw,(int)((n1+1)*sizeof(P)));
 
