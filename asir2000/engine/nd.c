@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.242 2017/09/17 02:34:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.243 2018/03/05 01:56:17 noro Exp $ */
 
 #include "nd.h"
 
@@ -6804,11 +6804,20 @@ int nd_symbolic_preproc(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
     return col;
 }
 
+void print_ndp(ND_pairs l)
+{
+  ND_pairs t;
+
+  for ( t = l; t; t = NEXT(t) )
+    printf("[%d,%d] ",t->i1,t->i2);
+  printf("\n");
+}
+
 NODE nd_f4(int m,int checkonly,int **indp)
 {
     int i,nh,stat,index,f4red;
     NODE r,g,tn0,tn,node;
-    ND_pairs d,l,t,ll0,ll;
+    ND_pairs d,l,t,ll0,ll,lh;
 	LIST l0,l1;
     ND spol,red;
     NDV nf,redv;
@@ -6822,7 +6831,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
     IndArray *imat;
     int *rhead;
     int spcol,sprow;
-    int sugar;
+    int sugar,sugarh;
     PGeoBucket bucket;
     struct oEGT eg0,eg1,eg_f4;
     Q i1,i2,sugarq;
@@ -6831,38 +6840,35 @@ NODE nd_f4(int m,int checkonly,int **indp)
 #endif
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
-        if ( !nd_nzlist ) d = update_pairs(d,g,i,0);
+        d = update_pairs(d,g,i,0);
         g = update_base(g,i);
     }
 	nzlist = 0;
     nzlist_t = nd_nzlist;
     f4red = 1;
     nd_last_nonzero = 0;
-    while ( d || nzlist_t ) {
+    while ( d ) {
         get_eg(&eg0);
-        if ( nd_nzlist ) {
+        l = nd_minsugarp(d,&d);
+        sugar = nd_sugarweight?l->sugar2:SG(l);
+        if ( MaxDeg > 0 && sugar > MaxDeg ) break;
+        if ( nzlist_t ) {
             node = BDY((LIST)BDY(nzlist_t));
-            sugar = QTOS((Q)ARG0(node));
+            sugarh = QTOS((Q)ARG0(node));
             tn = BDY((LIST)ARG1(node));
             if ( !tn ) {
               nzlist_t = NEXT(nzlist_t);
               continue;
             }
             /* tn = [[i1,i2],...] */
-            l = nd_ipairtospair(tn);
-        } else {
-            l = nd_minsugarp(d,&d);
-            sugar = nd_sugarweight?l->sugar2:SG(l);
-            if ( MaxDeg > 0 && sugar > MaxDeg ) break;
+            lh = nd_ipairtospair(tn);
         }
         bucket = create_pbucket();
         stat = nd_sp_f4(m,0,l,bucket);
         if ( !stat ) {
-            if ( !nd_nzlist ) {
-                for ( t = l; NEXT(t); t = NEXT(t) );
-                NEXT(t) = d; d = l;
-                d = nd_reconstruct(0,d);
-            }
+            for ( t = l; NEXT(t); t = NEXT(t) );
+            NEXT(t) = d; d = l;
+            d = nd_reconstruct(0,d);
             continue;
         }
         if ( bucket->m < 0 ) continue;
@@ -6877,7 +6883,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
         if ( DP_Print )
             fprintf(asir_out,"sugar=%d,symb=%.3fsec,",
                 sugar,eg_f4.exectime+eg_f4.gctime);
-        nflist = nd_f4_red(m,l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
+        nflist = nd_f4_red(m,nd_nzlist?lh:l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
         if ( checkonly && nflist ) return 0;
         /* adding new bases */
         if ( nflist ) nd_last_nonzero = f4red;
@@ -6893,7 +6899,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
                 nf = ndtondv(m,nf1);
             }
             nh = ndv_newps(m,nf,0,1);
-            if ( !nd_nzlist ) d = update_pairs(d,g,nh,0);
+            d = update_pairs(d,g,nh,0);
             g = update_base(g,nh);
         }
         if ( DP_Print ) { 
@@ -8794,9 +8800,11 @@ void parse_nd_option(NODE opt)
 		else if ( !strcmp(key,"lf") )
             nd_lf = value?1:0;
 		else if ( !strcmp(key,"trace") ) {
-           u = BDY((LIST)value);
-		   nd_nzlist = BDY((LIST)ARG2(u));
-		   nd_bpe = QTOS((Q)ARG3(u));
+           if ( value ) {
+               u = BDY((LIST)value);
+		       nd_nzlist = BDY((LIST)ARG2(u));
+		       nd_bpe = QTOS((Q)ARG3(u));
+           }
 		} else if ( !strcmp(key,"f4red") ) {
 		   nd_f4red = QTOS((Q)value);
 		} else if ( !strcmp(key,"rank0") ) {
