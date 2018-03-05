@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.241 2017/09/16 08:02:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.242 2017/09/17 02:34:02 noro Exp $ */
 
 #include "nd.h"
 
@@ -3315,7 +3315,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
         }
         homogenize_order(ord,nvar,&ord1);
         nd_init_ord(ord1);
-        nd_setup_parameters(nvar+1,wmax);
+        nd_setup_parameters(nvar+1,nd_nzlist?0:wmax);
         for ( t = fd0; t; t = NEXT(t) )
             ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
     }
