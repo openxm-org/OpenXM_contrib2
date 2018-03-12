@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.16 2015/08/14 13:51:56 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.17 2017/08/30 09:40:30 ohara Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
@@ -15,10 +15,13 @@ int in_gc, caught_intr;
 
 void check_caught_intr()
 {
-	if ( caught_intr ) {
+	if ( caught_intr == 1 ) {
 		caught_intr = 0;
 		int_handler(SIGINT);
-	}
+	} else if ( caught_intr == 2 ) {
+		caught_intr = 0;
+		ox_usr1_handler(SIGUSR1);
+    }
 }
 
 void *Risa_GC_malloc(size_t d)

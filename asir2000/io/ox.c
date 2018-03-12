@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.39 2016/08/24 05:33:58 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.40 2017/08/30 09:40:30 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -428,6 +428,7 @@ void end_critical() {
 }
 
 extern NODE user_int_handler;
+extern int caught_intr,in_gc;
 
 void ox_usr1_handler(int sig)
 {
@@ -439,6 +440,9 @@ void ox_usr1_handler(int sig)
 	if ( critical_when_signal ) {
 		fprintf(stderr,"usr1 : critical\n");
 		ox_usr1_sent = 1;
+    } else if ( in_gc ) {
+		fprintf(stderr,"usr1 : in_gc\n");
+		caught_intr = 2;
 	} else {
 		ox_flushing = 1;
 		if ( user_int_handler ) {
@@ -541,7 +545,9 @@ void wait_for_data_102(int rank)
 void ox_send_data(int s,pointer p)
 {
 	ERR err;
+    Obj p0;
 
+    p0 = (Obj)p;
 	if ( ox_check && !ox_check_cmo(s,(Obj)p) ) {
 		create_error(&err,ox_serial,"ox_send_data : Mathcap violation",0);
 		p = (pointer)err;
