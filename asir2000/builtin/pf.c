@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.21 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.22 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -120,8 +120,8 @@ void pf_init() {
 	darg[0] = &oVAR[26];
 	darg[1] = &oVAR[27]; MKV(darg[1],y);
 
-	mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,0,&pidef);
-	mkpf("@e",0,0,0,(int (*)())mp_e,const_e,0,&edef);
+	mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,simplify_elemfunc_ins,&pidef);
+	mkpf("@e",0,0,0,(int (*)())mp_e,const_e,simplify_elemfunc_ins,&edef);
 
 	mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,&logdef);
 	mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,&expdef);
@@ -276,6 +276,8 @@ Obj *r;
 	simplify_ins(ins,r);
 }
 
+extern int evalef;
+
 void simplify_pow(ins,rp)
 PFINS ins;
 Obj *rp;
@@ -286,6 +288,10 @@ Obj *rp;
 	V v;
 	P t;
 
+	if ( evalef ) {
+		simplify_elemfunc_ins(ins,rp);
+		return;
+	}
 	pf = ins->pf; ad = ins->ad; a0 = ad[0].arg; a1 = ad[1].arg;	
 	if ( !a1 )
 		*rp = (Obj)ONE;
@@ -295,12 +301,12 @@ Obj *rp;
 		else if ( RATN(a1) && SGN((Q)a1) < 0 )
 			error("simplify_pow : division by 0");
 		else {
-			instov(ins,&v); MKV(v,t); *rp = (Obj)t;
+			instoobj(ins,rp);
 		}
 	} else if ( NUM(a1) && INT(a1) )
 		arf_pwr(CO,a0,a1,rp);
 	else {
-		instov(ins,&v); MKV(v,t); *rp = (Obj)t;
+		instoobj(ins,rp);
 	}
 }
 

@@ -45,10 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.11 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.12 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
+
+void instoobj(PFINS ins,Obj *rp);
 
 NODE pflist;
 
@@ -497,7 +499,8 @@ void evalv(VL vl,V v,int prec,Obj *rp)
 void evalins(PFINS ins,int prec,Obj *rp)
 {
 	PF pf;
-	PFAD ad;
+	PFINS tins;
+	PFAD ad,tad;
 	int i;
 	Q q;
 	V v;
@@ -505,14 +508,18 @@ void evalins(PFINS ins,int prec,Obj *rp)
 	NODE n0,n;
 
 	pf = ins->pf; ad = ins->ad;
+	tins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
+	tins->pf = pf; tad = tins->ad;
+	for ( i = 0; i < pf->argc; i++ ) {
+		tad[i].d = ad[i].d; evalr(CO,ad[i].arg,prec,&tad[i].arg);
+ 	}
 	for ( i = 0; i < pf->argc; i++ )
-		if ( ad[i].d || (ad[i].arg && !NUM(ad[i].arg)) )
-			break;
+		if ( tad[i].d || (tad[i].arg && !NUM(tad[i].arg)) ) break;
 	if ( (i != pf->argc) || !pf->pari ) {
-		instov(ins,&v); MKV(v,x); *rp = (Obj)x;
+		instoobj(tins,rp);
 	} else {
 		for ( n0 = 0, i = 0; i < pf->argc; i++ ) {
-			NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
+			NEXTNODE(n0,n); BDY(n) = (pointer)tad[i].arg;
 		}
 		if ( prec ) {
 			NEXTNODE(n0,n); STOQ(prec,q); BDY(n) = (pointer)q;
@@ -527,16 +534,27 @@ void devalr(VL vl,Obj a,Obj *c)
 {
 	Obj nm,dn;
 	double d;
-	Real r;
+	Real r,re,im;
+	C z;
+	int nid;
 
 	if ( !a )
 		*c = 0;
 	else {
 		switch ( OID(a) ) {
 			case O_N:
-				d = ToReal(a);
-				MKReal(d,r);
-				*c = (Obj)r;
+				nid = NID((Num)a);
+				if ( nid == N_C ) {
+				  d = ToReal(((C)a)->r); MKReal(d,re);
+				  d = ToReal(((C)a)->i); MKReal(d,im);
+				  reimtocplx(re,im,&z);
+				  *c = (Obj)z;
+				} else if ( nid == N_Q || nid == N_R || nid == N_B ) {
+				  d = ToReal(a);
+				  MKReal(d,r);
+				  *c = (Obj)r;
+				} else
+				  error("devalr : unsupported");
 				break;
 			case O_P:
 				devalp(vl,(P)a,(P *)c); break;
@@ -617,8 +635,9 @@ void devalv(VL vl,V v,Obj *rp)
 
 void devalins(PFINS ins,Obj *rp)
 {
+	PFINS tins;
 	PF pf;
-	PFAD ad;
+	PFAD ad,tad;
 	int i;
 	Real r;
 	double d;
@@ -626,44 +645,47 @@ void devalins(PFINS ins,Obj *rp)
 	P x;
 
 	pf = ins->pf; ad = ins->ad;
+	tins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
+	tins->pf = pf; tad = tins->ad;
+	for ( i = 0; i < pf->argc; i++ ) {
+		tad[i].d = ad[i].d; devalr(CO,ad[i].arg,&tad[i].arg);
+ 	}
 	for ( i = 0; i < pf->argc; i++ )
-		if ( ad[i].d || (ad[i].arg && !NUM(ad[i].arg)) )
-			break;
+		if ( tad[i].d || (tad[i].arg && !NUM(tad[i].arg)) ) break;
 	if ( (i != pf->argc) || !pf->libm ) {
-		instov(ins,&v); MKV(v,x); *rp = (Obj)x;
+		instoobj(tins,rp);
 	} else {
+		for ( i = 0; i < pf->argc; i++ )
+			if ( tad[i].arg && NID((Num)tad[i].arg) == N_C )
+				error("devalins : not supported");
 		switch ( pf->argc ) {
 			case 0:
 				d = (*pf->libm)(); break;
 			case 1:
-				d = (*pf->libm)(ToReal(ad[0].arg)); break;
+				d = (*pf->libm)(ToReal(tad[0].arg)); break;
 			case 2:
-				d = (*pf->libm)(ToReal(ad[0].arg),ToReal(ad[1].arg)); break;
+				d = (*pf->libm)(ToReal(tad[0].arg),ToReal(tad[1].arg)); break;
 			case 3:
-				d = (*pf->libm)(ToReal(ad[0].arg),ToReal(ad[1].arg),
-					ToReal(ad[2].arg)); break;
+				d = (*pf->libm)(ToReal(tad[0].arg),ToReal(tad[1].arg),
+					ToReal(tad[2].arg)); break;
 			case 4:
-				d = (*pf->libm)(ToReal(ad[0].arg),ToReal(ad[1].arg),
-					ToReal(ad[2].arg),ToReal(ad[3].arg)); break;
+				d = (*pf->libm)(ToReal(tad[0].arg),ToReal(tad[1].arg),
+					ToReal(tad[2].arg),ToReal(tad[3].arg)); break;
 			default:
-				error("devalv : not supported");
+				error("devalins : not supported");
 		}
 		MKReal(d,r); *rp = (Obj)r;
 	}
 }
 
-extern int evalef;
+extern int evalef,bigfloat;
 
 void simplify_elemfunc_ins(PFINS ins,Obj *rp)
 {
-	V v;
-	P t;
-
-  if ( evalef )
-    evalins(ins,0,rp); 
-  else {
-	  instov(ins,&v); MKV(v,t); *rp = (Obj)t;
-  }
+  if ( evalef ) {
+    if ( bigfloat ) evalins(ins,0,rp); 
+    else devalins(ins,rp);
+  } else instoobj(ins,rp);
 }
 
 void simplify_ins(PFINS ins,Obj *rp)
@@ -674,17 +696,20 @@ void simplify_ins(PFINS ins,Obj *rp)
 	if ( ins->pf->simplify )
 		(*ins->pf->simplify)(ins,rp);
 	else {
-		instov(ins,&v); MKV(v,t); *rp = (Obj)t;
+		instoobj(ins,rp);
 	}
 }
 
-void instov(PFINS ins,V *vp)
+void instoobj(PFINS ins,Obj *rp)
 {
-	V v;
+	V v,newv;
+	P t;
 
 	NEWV(v); NAME(v) = 0; 
 	v->attr = (pointer)V_PF; v->priv = (pointer)ins;
-	appendpfins(v,vp);
+	appendpfins(v,&newv);
+	MKV(newv,t);
+	*rp = (Obj)t;
 }
 
 void substfr(VL vl,Obj a,PF u,PF f,Obj *c)
@@ -783,6 +808,6 @@ void substfv(VL vl,V v,PF u,PF f,Obj *c)
 		for ( i = 0; i < f->argc; i++ ) {
 			tad[i].d = ad[i].d; substfr(vl,ad[i].arg,u,f,&tad[i].arg);
 		}
-		instov(tins,&v); MKV(v,t); *c = (Obj)t;
+		instoobj(tins,c);
 	}
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.10 2015/09/24 04:43:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.11 2017/09/06 06:25:26 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -166,6 +166,7 @@ Obj *rp;
 	struct oNODE arg0;
 	MP m,mp,mp0;
 	DP d;
+	VL lastvl,vl,tvl,prev,cur;
 
 	if ( !arg ) {
 		*rp = 0; return;
@@ -175,6 +176,7 @@ Obj *rp;
 		*rp = 0;
 		return;
 	}
+	lastvl = LASTCO;
 	switch ( OID(a) ) {
 		case O_N: case O_P: case O_R:
 			reductr(CO,(Obj)ARG0(arg),&a);
@@ -254,6 +256,18 @@ Obj *rp;
 			break;
 		default:
 			error("subst : invalid argument");
+	}
+	if ( lastvl != LASTCO ) {
+		get_vars_recursive(*rp,&vl);
+		prev = lastvl; cur = NEXT(prev);
+		while ( cur ) {
+			v = cur->v;
+			for ( tvl = vl; tvl && tvl->v != v; tvl = NEXT(tvl) );
+			if ( !tvl ) NEXT(prev) = NEXT(cur);
+			else prev = cur;
+			cur = NEXT(cur);
+		}
+		update_LASTCO();
 	}
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.96 2017/08/29 07:18:30 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/glob.c,v 1.97 2017/08/30 09:40:30 ohara Exp $ 
 */
 #include "ca.h"
 #include "al.h"
@@ -123,6 +123,7 @@ struct oVL oVLIST[52];
 
 VL CO = oVLIST;
 VL ALG;
+VL LASTCO;
 
 struct oVS oGPVS,oAPVS,oEPVS,oPPVS;
 VS GPVS = &oGPVS;
@@ -162,6 +163,7 @@ void glob_init() {
 		VR(&oVLIST[i]) = &oVAR[i]; NEXT(&oVLIST[i]) = &oVLIST[i+1];
 	}
 	VR(&oVLIST[i]) = &oVAR[i]; NEXT(&oVLIST[i]) = 0;
+	LASTCO = &oVLIST[i];
 	asir_reallocarray((char **)&GPVS->va,(int *)&GPVS->asize,(int *)&GPVS->n,(int)sizeof(struct oPV));
 	asir_reallocarray((char **)&APVS->va,(int *)&APVS->asize,(int *)&APVS->n,(int)sizeof(struct oPV));
 	asir_reallocarray((char **)&PPVS->va,(int *)&PPVS->asize,(int *)&PPVS->n,(int)sizeof(struct oPV));

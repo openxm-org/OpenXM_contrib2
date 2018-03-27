@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.76 2017/02/07 08:30:31 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.77 2017/08/31 02:36:21 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -61,6 +61,7 @@
 extern JMP_BUF timer_env;
 extern FUNC cur_binf;
 extern NODE PVSS;
+extern int evalef;
 
 int f_break,f_return,f_continue;
 int evalstatline;
@@ -297,7 +298,8 @@ pointer eval(FNODE f)
 		case I_STR:
 			MKSTR(str,FA0(f)); val = (pointer)str; break;
 		case I_FORMULA:
-			 val = FA0(f); break;
+			val = FA0(f); 
+			break;
 		case I_LIST:
 			evalnodebody((NODE)FA0(f),&tn); MKLIST(t,tn); val = (pointer)t; break;
 		case I_CONS:

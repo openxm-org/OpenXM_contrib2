@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.103 2017/09/14 01:34:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.104 2017/09/17 02:34:02 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1117,7 +1117,7 @@ extern struct oV oVAR[];
 extern struct oV oPVAR[];
 extern struct oVL oVLIST[];
 extern struct oVL oPVLIST[];
-extern VL CO,ALG;
+extern VL CO,ALG,LASTCO;
 extern VL PVL;
 extern R ONER;
 extern Q ONE;

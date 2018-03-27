@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.18 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/util.c,v 1.19 2017/02/07 08:30:31 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -399,6 +399,14 @@ V searchvar(char *str)
 	return 0;
 }
 
+void update_LASTCO()
+{
+  VL vl;
+
+  for ( vl = CO; NEXT(vl); vl = NEXT(vl) );
+  LASTCO = vl;
+}
+
 void makevar(char *str,P *p)
 {
 	VL vl;
@@ -415,6 +423,7 @@ void makevar(char *str,P *p)
 			strcpy(NAME(v),str);
 			NEWVL(NEXT(vl)); VR(NEXT(vl)) = v; NEXT(NEXT(vl)) = 0;
 			MKV(v,t); *p = t;
+			LASTCO = NEXT(vl);
 			return;
 		} else 
 			vl = NEXT(vl);
@@ -437,6 +446,7 @@ void makesrvar(FUNC f,P *p)
 			NAME(v) = (char *)CALLOC(strlen(str)+1,sizeof(char));
 			strcpy(NAME(v),str);
 			NEWVL(NEXT(vl)); VR(NEXT(vl)) = v; NEXT(NEXT(vl)) = 0;
+			LASTCO = NEXT(vl);
 			MKV(v,t); *p = t;
 			return;
 		} else
@@ -474,6 +484,7 @@ void appendvar(VL vl,V v)
 			return;
 		else if ( !NEXT(vl) ) {
 			NEWVL(NEXT(vl)); VR(NEXT(vl)) = v; NEXT(NEXT(vl)) = 0;
+			LASTCO = NEXT(vl);
 			return;
 		} else
 			vl = NEXT(vl);

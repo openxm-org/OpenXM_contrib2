@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.7 2012/02/03 06:42:34 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/var.c,v 1.8 2015/12/02 13:12:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -251,6 +251,7 @@ void Puc(Obj *p)
 		if ( (n=NAME(VR(vl))) && !strcmp(n,nv) ) break;
 		else if ( !NEXT(vl) ) {
 			NEWVL(NEXT(vl)); VR(NEXT(vl)) = v; NEXT(NEXT(vl)) = 0;
+			LASTCO = NEXT(vl);
 			break;
 		}
 	MKV(v,t); *p = (Obj)t;
@@ -276,5 +277,6 @@ void Pdelete_uc(NODE arg,Obj *p)
     } else
       prev = vl;
   }
+  update_LASTCO();
   *p = 0;
 }
