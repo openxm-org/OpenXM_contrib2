@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.56 2018/03/28 07:44:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.57 2018/03/28 07:58:17 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -168,28 +168,82 @@ static struct keyval {
 	{0,0},
 };
 
+LIST create_control_value(char *keystr,Obj value,char *descstr,int withdesc)
+{
+  STRING key,desc;
+  NODE nd;
+  LIST list;
+
+  MKSTR(key,keystr); 
+  if ( withdesc ) {
+    MKSTR(desc,descstr);
+    nd = mknode(3,key,value,desc);
+  } else nd = mknode(2,key,value);
+  MKLIST(list,nd); 
+  return list;
+}
+
+extern Q ox_pari_stream;
+extern int ox_pari_stream_initialized;
+extern P ox_pari_starting_function;
+
 LIST create_control_values(int withdesc)
 {
   int n,i;
-  NODE top,top1,nd;
-  LIST list;
-  STRING key,desc;
-  Q val;
+  NODE top,top1,nd,node,p;
+  LIST list,l;
+  STRING s;
+  char *descstr;
+  Q val,adj;
+  int nm,dv;
+  N num,den;
 
   n = sizeof(ctrls)/sizeof(struct keyval)-1;
   top = 0;
   for ( i = n-1; i >= 0; i-- ) {
-    MKSTR(key,ctrls[i].key); 
-    MKSTR(desc,ctrls[i].desc); 
     STOQ(*(ctrls[i].val),val);
-    if ( withdesc )
-      nd = mknode(3,key,val,desc);
-    else
-      nd = mknode(2,key,val);
-    MKLIST(list,nd);
-    MKNODE(top1,list,top);
-   top = top1;
+    list = create_control_value(ctrls[i].key,val,ctrls[i].desc,withdesc);
+    MKNODE(top1,list,top); top = top1;
   }
+/* adj */
+  Risa_GC_get_adj(&nm,&dv); UTON(nm,num); UTON(dv,den); NDTOQ(num,den,1,adj);
+  descstr = "Determines the parameter for Boehm's GC.";
+  list = create_control_value("adj",adj,descstr,withdesc);
+  MKNODE(top1,list,top); top = top1;
+
+/* prompt */
+  descstr = "Determines the user-defined prompt.";
+  list = create_control_value("prompt",user_defined_prompt,descstr,withdesc);
+  MKNODE(top1,list,top); top = top1;
+
+/* loadpath */
+  node = 0;
+  if( ASIRLOADPATH[0] ) {
+    for(i=0; ASIRLOADPATH[i]; i++);
+    for(i--,p=NULL; i>=0; i--,p=node) {
+      MKSTR(s,ASIRLOADPATH[i]);
+      MKNODE(node,s,p);
+    }
+  }
+  MKLIST(l,node);
+  descstr = "List of paths in ASIRLOADPATHt.";
+  list = create_control_value("loadpath",l,descstr,withdesc);
+  MKNODE(top1,list,top); top = top1;
+
+/* oxpari_id */
+  if(!ox_pari_stream_initialized) {
+    STOQ(-1,val);
+  } else val = ox_pari_stream;
+  descstr = "Id of ox_pari.";
+  list = create_control_value("oxpari_id",val,descstr,withdesc);
+  MKNODE(top1,list,top); top = top1;
+
+/* oxpari_start */
+  val = (Q)ox_pari_starting_function;
+  descstr = "oxpari starting function.";
+  list = create_control_value("oxpari_start",val,descstr,withdesc);
+  MKNODE(top1,list,top); top = top1;
+
   MKLIST(list,top);
   return list;
 }
@@ -208,9 +262,6 @@ void Pctrl(NODE arg,Q *rp)
 	LIST list;
 	P f;
 	Obj value;
-	extern Q ox_pari_stream;
-	extern int ox_pari_stream_initialized;
-	extern P ox_pari_starting_function;
 
 	if ( !arg ) {
 		if ( current_option ) {
