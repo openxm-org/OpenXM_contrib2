@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.22 2015/08/14 13:51:54 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.23 2018/03/27 06:29:19 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -54,7 +54,7 @@
 #include <alloca.h>
 #endif
 
-double const_pi(),const_e();
+double const_pi(),const_e(), double_factorial();
 
 void make_ihyp(void);
 void make_hyp(void);
@@ -94,7 +94,7 @@ int mp_pi(),mp_e();
 int mp_exp(), mp_log(), mp_pow();
 int mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
 int mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
-
+int mp_factorial(),mp_abs();
 
 static V *uarg,*darg;
 static P x,y;
@@ -104,13 +104,21 @@ static PF sindef,cosdef,tandef;
 static PF asindef,acosdef,atandef;
 static PF sinhdef,coshdef,tanhdef;
 static PF asinhdef,acoshdef,atanhdef;
+static PF factorialdef,absdef;
 
 #define OALLOC(p,n) ((p)=(Obj *)CALLOC((n),sizeof(Obj)))
 
 double const_pi() { return 3.14159265358979323846264338327950288; }
 double const_e() { return 2.718281828459045235360287471352662497; }
 
+double double_factorial(double x)
+{
+  return tgamma(x+1);
+}
+
 int simplify_elemfunc_ins();
+int simplify_factorial_ins();
+int simplify_abs_ins();
 
 void pf_init() {
 	uarg = (V *)CALLOC(1,sizeof(V));
@@ -122,6 +130,9 @@ void pf_init() {
 
 	mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,simplify_elemfunc_ins,&pidef);
 	mkpf("@e",0,0,0,(int (*)())mp_e,const_e,simplify_elemfunc_ins,&edef);
+
+	mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,double_factorial,simplify_factorial_ins,&factorialdef);
+	mkpf("abs",0,1,uarg,(int (*)())mp_abs,fabs,simplify_abs_ins,&absdef);
 
 	mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,&logdef);
 	mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,&expdef);

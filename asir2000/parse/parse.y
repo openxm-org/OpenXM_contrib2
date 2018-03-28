@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.36 2014/08/09 06:08:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.y,v 1.37 2017/08/31 02:36:21 noro Exp $ 
 */
 %{
 #define malloc(x) Risa_GC_malloc(x)
@@ -286,7 +286,6 @@ pexpr	: STR
 				print_crossref(val);
 				$$ = mkfnode(2,I_FUNC,val,mkfnode(1,I_LIST,$3));
 			}
-
 		| LCASE '(' node '|' optlist ')' 
 			{
 				gen_searchf($1,(FUNC *)&val);
@@ -426,6 +425,13 @@ expr 	: pexpr
 			{ $$ = mkfnode(3,I_COP,$2,$1,$3); }
 	 	| '!' expr 	
 			{ $$ = mkfnode(1,I_NOT,$2); }
+	 	| expr '!'
+			{ 
+				gen_searchf("factorial",(FUNC *)&val);
+				print_crossref(val);
+				MKNODE(a,$1,0);
+				$$ = mkfnode(2,I_FUNC,val,mkfnode(1,I_LIST,a));
+			}
 	 	| expr OR expr
 			{ $$ = mkfnode(2,I_OR,$1,$3); }
 	 	| expr AND expr

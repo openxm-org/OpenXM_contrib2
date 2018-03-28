@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.14 2017/03/29 01:15:14 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.15 2017/08/31 04:21:48 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -14,6 +14,7 @@ void Prk_ratmat();
 void mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
 void mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
 void mp_exp(),mp_log(),mp_pow();
+void mp_factorial(),mp_abs();
 
 struct ftab bf_tab[] = {
 	{"eval",Peval,-2},
@@ -429,6 +430,27 @@ void mp_exp(NODE arg,Num *rp)
 void mp_log(NODE arg,Num *rp)
 {
   mpfr_or_mpc(arg,mpfr_log,mpc_log,rp);
+}
+
+void mp_abs(NODE arg,Num *rp)
+{
+  mpfr_or_mpc(arg,mpfr_abs,mpc_abs,rp);
+}
+
+void mp_factorial(NODE arg,Num *rp)
+{
+  struct oNODE arg0;
+  Num a,a1;
+
+  a = (Num)ARG0(arg);
+  if ( !a ) *rp = (Num)ONE;
+  else if ( INT(a) ) Pfac(arg,rp);
+  else {
+    addnum(0,a,(Num)ONE,&a1);
+    arg0.body = (pointer)a1;
+    arg0.next = arg->next;
+    Pmpfr_gamma(&arg0,rp);
+  }
 }
 
 void mp_pow(NODE arg,Num *rp)

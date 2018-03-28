@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.77 2017/08/31 02:36:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.78 2018/03/27 06:29:19 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -91,6 +91,7 @@ pointer eval(FNODE f)
 	GFSN gfsn;
 	RANGE range;
 	QUOTE expr,pattern;
+	Q q;
 
 #if defined(VISUAL) || defined(__MINGW32__)
 	check_intr();
@@ -762,15 +763,15 @@ pointer evalstat(SNODE f)
 			}
 			break;
 		case S_BREAK:
-			if ( GPVS != CPVS )
+			if ( 1 || GPVS != CPVS )
 				f_break = 1; 
 			break;
 		case S_CONTINUE:
-			if ( GPVS != CPVS )
+			if ( 1 || GPVS != CPVS )
 				f_continue = 1; 
 			break;
 		case S_RETURN:
-			if ( GPVS != CPVS ) {
+			if ( 1 || GPVS != CPVS ) {
 				val = eval((FNODE)FA0(f)); f_return = 1;
 			}
 			break;

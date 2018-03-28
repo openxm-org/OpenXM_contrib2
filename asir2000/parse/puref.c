@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.12 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.13 2018/03/27 06:29:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -686,6 +686,45 @@ void simplify_elemfunc_ins(PFINS ins,Obj *rp)
     if ( bigfloat ) evalins(ins,0,rp); 
     else devalins(ins,rp);
   } else instoobj(ins,rp);
+}
+
+void simplify_factorial_ins(PFINS ins,Obj *rp)
+{
+  PFAD ad;
+  Obj a;
+  Q q;
+
+  ad = ins->ad;
+  a = ad[0].arg;
+  if ( !ad[0].d && INT(a) && ( !a || (PL(NM((Q)a)) == 1 && SGN((Q)a) > 0) ) ) {
+    factorial(QTOS((Q)a),&q);
+    *rp = (Obj)q;
+  } else simplify_elemfunc_ins(ins,rp);
+}
+
+void simplify_abs_ins(PFINS ins,Obj *rp)
+{
+  PFAD ad;
+  Obj a;
+  Q q;
+  double t;
+  Real r;
+  struct oNODE arg0;
+
+  ad = ins->ad;
+  a = ad[0].arg;
+  if ( !ad[0].d && NUM(a) && (!a || RATN(a)) ) {
+    if ( !a || SGN((Q)a) > 0 ) *rp = (Obj)a;
+    else {
+      chsgnq((Q)a,&q); *rp = (Obj)q;
+    }
+  } else if ( !ad[0].d && REAL(a) ) {
+    t = fabs(((Real)a)->body);
+    MKReal(t,r); *rp = (Obj)r;
+  } else if ( !ad[0].d && BIGFLOAT(a) ) {
+    arg0.body = (pointer)a; arg0.next = 0;
+    mp_abs(&arg0,rp);
+  } else simplify_elemfunc_ins(ins,rp);
 }
 
 void simplify_ins(PFINS ins,Obj *rp)

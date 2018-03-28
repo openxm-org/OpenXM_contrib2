@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.10 2015/08/09 11:46:43 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.11 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -141,6 +141,7 @@ int exprparse_create_var(FUNC f,char *str,SNODE *statp)
 }
 
 extern FUNC user_print_function;
+extern f_break,f_continue,f_return;
 
 void read_eval_loop() {
 	struct oEGT egt0,egt1;
@@ -157,6 +158,7 @@ void read_eval_loop() {
 		get_eg(&egt0);
 		r0 = get_rtime();
 		LastVal = evalstat(snode); 
+		f_break = f_continue = f_return = 0;
 		storeans(LastVal);
 		get_eg(&egt1);
 		r1 = get_rtime();

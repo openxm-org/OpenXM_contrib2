@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.27 2017/09/06 06:25:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.28 2018/03/27 06:29:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -457,7 +457,9 @@ void Pord(NODE arg,LIST *listp)
 	V *va;
 	V v;
 
+#if 0
 printf("LASTCO="); printv(CO,LASTCO->v); printf("\n");
+#endif
 	if ( current_option ) {
 		for ( opt = current_option; opt; opt = NEXT(opt) ) {
 			p = BDY((LIST)BDY(opt));
