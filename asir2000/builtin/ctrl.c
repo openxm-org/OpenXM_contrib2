@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.54 2017/09/04 01:57:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.55 2017/09/04 02:10:33 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -116,56 +116,80 @@ extern int No_ox_reset;
 extern int plot_by_bigfloat;
 extern int debug_plot;
 
-static struct {
+static struct keyval {
 	char *key;
 	int *val;
+	char *desc;
 } ctrls[] = {
-	{"error_in_timer",&error_in_timer},
-	{"cputime",&prtime},
-	{"nez",&nez},
-	{"echo",&echoback},
-	{"bigfloat",&bigfloat},
-	{"evalef",&evalef},
-	{"verbose",&Verbose},
-	{"quiet_mode",&do_quiet},
-	{"hideargs",&hideargs},
-	{"hex",&hex_output},
-	{"debug_window",&do_server_in_X11},
-	{"message",&do_message},
-	{"terse",&do_terse},
-	{"debug_up",&debug_up},
-	{"no_prompt",&do_quiet},
-	{"asir_setenv",&asir_setenv},
-	{"ox_batch",&ox_batch},
-	{"ox_check",&ox_check},
-	{"ox_exchange_mathcap",&ox_exchange_mathcap},
-	{"f4_nocheck",&f4_nocheck},
-	{"StrassenSize",&StrassenSize},
-	{"outputstyle",&outputstyle},
-	{"double_output",&double_output},
-	{"real_digit",&real_digit},
-	{"real_binary",&real_binary},
-	{"fortran_output",&fortran_output},
-	{"new_hensel",&use_new_hensel},
-	{"print_quote",&print_quote},
-	{"show_crossref",&show_crossref},
-	{"allow_laurent",&allow_laurent},
-	{"show_orderspec",&show_orderspec},
-	{"no_debug_on_error",&no_debug_on_error},
-	{"diag_period",&diag_period},
-	{"weight_check",&weight_check},
-	{"no_ox_reset",&No_ox_reset},
-	{"fake_ox_reset",&No_ox_reset},
+	{"error_in_timer",&error_in_timer,"If set to 1, the usual error handler is executed when the timer is expired."},
+	{"cputime",&prtime,"If set to 1, the CPU time at the toplevel is shown." },
+	{"nez",&nez,"If set to 1, a new version of EZGCD implementation is used."  },
+	{"echo",&echoback,"If set to 1, characters read by the input function are printed."  },
+	{"bigfloat",&bigfloat,"If set to 1, MPFR bigfloat functions are used for floating point evaluation." },
+	{"evalef",&evalef,"If set to 1, elementary functions are evaluated immediately."},
+	{"verbose",&Verbose,"If set to 1, a warning is printed if a function is redefined."},
+	{"quiet_mode",&do_quiet,"If set to 1, the copyright notices are not printed at the beginning of the session."},
+	{"hideargs",&hideargs,"If set to 1, the arguments of a function call are not printed."},
+	{"hex",&hex_output,"If set to 1, integers are printed by the hexadecimal notation."},
+	{"debug_window",&do_server_in_X11,"If set to 1, an input window for debugging remote server are shown."},
+	{"message",&do_message,"If set to 1, an opening message is printed in ox_asir and ox_plot."},
+	{"terse",&do_terse,"If set to 1, messages are not printed when user-defined callbacks are executed."},
+	{"debug_up",&debug_up,"If set to 1, some debug messages are printed in special functions for univariate polynomials."},
+	{"no_prompt",&do_quiet,"If set to 1, prompts are not shown."},
+	{"asir_setenv",&asir_setenv,"Not used."},
+	{"ox_batch",&ox_batch,"If set to 1, the OX stream are not flushed at each sending of an OX data."},
+	{"ox_check",&ox_check,"If set to 1, mathcap check is done for OpenXM date communication."},
+	{"ox_exchange_mathcap",&ox_exchange_mathcap,"If set to 1, mathcaps are exchanged."},
+	{"f4_nocheck",&f4_nocheck,"If set to 1, correctness check of the result of modular computation are omitted in nd_f4()."},
+	{"StrassenSize",&StrassenSize,"Determines the parameter in Strassen-Winograd matrix multiplication algorithm."},
+	{"outputstyle",&outputstyle,"If set to 1, structured data such as matrices and vectors are printed in the style mat(...), vect(...)."},
+	{"double_output",&double_output,"If set to 1, floating point numbers are printed in the style ddd.ddd."},
+	{"real_digit",&real_digit,"Determines the number of digits to appear after the decimal point."},
+	{"real_binary",&real_binary,"If set to 1, a floating point number is printed by the binary notation."},
+	{"fortran_output",&fortran_output,"If set to 1, ** is used instead of ^ for representing the power."},
+	{"new_hensel",&use_new_hensel,"If set to 1, a function hensel2() is used in the univariate factorizer over Q."},
+	{"print_quote",&print_quote,"Determines the behavior of the printed form of a quote."},
+	{"show_crossref",&show_crossref,"If set to 1, cross-references are shown when a program file is loaded."},
+	{"allow_laurent",&allow_laurent,"If set to 1, negative exponents are allowed in monomials."},
+	{"show_orderspec",&show_orderspec,"If set to 1, the specification of a composite term order is printed upon its creation."},
+	{"no_debug_on_error",&no_debug_on_error,"If set to 1, the debug mode is not used."},
+	{"diag_period",&diag_period,"Determines the frequency of the intermediate inter-reduction in nd_gr()."},
+	{"weight_check",&weight_check,"If set to 1, an overflow check for the given weight vector is done before starting the Groebner basis computation."},
+	{"no_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
+	{"fake_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
 #if defined(DO_PLOT)
-	{"plot_by_bigfloat",&plot_by_bigfloat},
-	{"debug_plot",&debug_plot},
+	{"plot_by_bigfloat",&plot_by_bigfloat,"If set to 1, computation is done by using MPFR bigfloat functions in ox_plot."},
+	{"debug_plot",&debug_plot,"If set to 1, ox_plot is executed with the message window."},
 #endif
 #if defined(INTERVAL)
-	{"zerorewrite",&zerorewrite},
-	{"itvplotsize",&Itvplot},
+	{"zerorewrite",&zerorewrite,""},
+	{"itvplotsize",&Itvplot,""},
 #endif
 	{0,0},
 };
+
+LIST create_control_values()
+{
+  int n,i;
+  NODE top,top1,nd;
+  LIST list;
+  STRING key,desc;
+  Q val;
+
+  n = sizeof(ctrls)/sizeof(struct keyval)-1;
+  top = 0;
+  for ( i = n-1; i >= 0; i-- ) {
+    MKSTR(key,ctrls[i].key); 
+    MKSTR(desc,ctrls[i].desc); 
+    STOQ(*(ctrls[i].val),val);
+    nd = mknode(3,key,val,desc);
+    MKLIST(list,nd);
+    MKNODE(top1,list,top);
+   top = top1;
+  }
+  MKLIST(list,top);
+  return list;
+}
 
 void Pctrl(NODE arg,Q *rp)
 {
@@ -185,7 +209,7 @@ void Pctrl(NODE arg,Q *rp)
 	extern P ox_pari_starting_function;
 
 	if ( !arg ) {
-		*rp = 0;
+		*rp = create_control_values();
 		return;
 	}
 	key = BDY((STRING)ARG0(arg));
