@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.20 2017/08/31 02:36:21 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.21 2018/03/29 01:32:53 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -756,11 +756,11 @@ Num q;
               }
             }
           } else if ( real_digit ) {
-            sprintf(real_format,
-              double_output?"%%.%df":"%%.%dg",real_digit);
+            sprintf(real_format,"%%.%d%c",
+              real_digit,(double_output==1)?'f':(double_output==2)?'e':'g');
             TAIL PRINTF(OUT,real_format,BDY((Real)q));
           } else {
-            TAIL PRINTF(OUT,double_output?"%f":"%g",BDY((Real)q));
+            TAIL PRINTF(OUT,(double_output==1)?"%f":(double_output==2)?"%e":"%g",BDY((Real)q));
           }
           break;
       }
