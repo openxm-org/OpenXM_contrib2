@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.55 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.56 2017/08/31 02:36:21 noro Exp $ 
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -62,24 +62,24 @@
 /* identifiers for expressions */
 
 typedef enum {
-	I_BOP, I_COP, I_AND, I_OR, I_NOT, I_CE,
-	I_PRESELF, I_POSTSELF,
-	I_FUNC, I_FUNC_OPT, I_IFUNC, I_MAP, I_RECMAP, I_PFDERIV,
-	I_ANS, I_PVAR, I_ASSPVAR, 
-	I_FORMULA, I_LIST, I_STR, I_NEWCOMP, I_CAR, I_CDR, I_CAST,
-	I_INDEX, I_EV, I_TIMER, I_GF2NGEN, I_GFPNGEN, I_GFSNGEN,
-	I_LOP, I_OPT, I_GETOPT, I_POINT, I_PAREN, I_MINUS,
-	I_NARYOP, I_CONS, I_FUNC_QARG, I_FUNC_HEAD, I_EVM
+  I_BOP, I_COP, I_AND, I_OR, I_NOT, I_CE,
+  I_PRESELF, I_POSTSELF,
+  I_FUNC, I_FUNC_OPT, I_IFUNC, I_MAP, I_RECMAP, I_PFDERIV,
+  I_ANS, I_PVAR, I_ASSPVAR, 
+  I_FORMULA, I_LIST, I_STR, I_NEWCOMP, I_CAR, I_CDR, I_CAST,
+  I_INDEX, I_EV, I_TIMER, I_GF2NGEN, I_GFPNGEN, I_GFSNGEN,
+  I_LOP, I_OPT, I_GETOPT, I_POINT, I_PAREN, I_MINUS,
+  I_NARYOP, I_CONS, I_FUNC_QARG, I_FUNC_HEAD, I_EVM
 } fid;
 
 /* identifiers for statements */
 
 typedef enum {
-	S_BP, S_PFDEF,
-	S_SINGLE, S_CPLX, 
-	S_IFELSE, S_FOR, S_DO,
-	S_BREAK, S_RETURN, S_CONTINUE,
-	S_MODULE
+  S_BP, S_PFDEF,
+  S_SINGLE, S_CPLX, 
+  S_IFELSE, S_FOR, S_DO,
+  S_BREAK, S_RETURN, S_CONTINUE,
+  S_MODULE
 } sid;
 
 /* identifiers for comparison operators */
@@ -99,137 +99,137 @@ typedef enum { A_UNDEF, A_BIN, A_USR, A_PURE, A_PARI } aid;
 typedef enum { V_IND, V_UC, V_PF, V_SR } vid;
 
 typedef struct oVS {
-	unsigned int n;
-	unsigned int asize;
-	unsigned int at;
-	unsigned int level;
-	struct oFUNC *usrf;
-	struct oPV *va;
-	NODE opt;
+  unsigned int n;
+  unsigned int asize;
+  unsigned int at;
+  unsigned int level;
+  struct oFUNC *usrf;
+  struct oPV *va;
+  NODE opt;
 } *VS;
 
 typedef struct oMODULE {
-	char *name;
-	VS pvs;
-	NODE usrf_list;
+  char *name;
+  VS pvs;
+  NODE usrf_list;
 } *MODULE;
 
 typedef struct oPV {
-	char *name;
-	short attr,type;
-	pointer priv;
+  char *name;
+  short attr,type;
+  pointer priv;
 } *PV;
 
 typedef struct oINFILE {
-	char *name;
-	FILE *fp;
-	JMP_BUF jmpbuf;
-	int ready_for_longjmp;
-	int ln;
-	struct oINFILE *next;
-	char *tname;
-	int encoded;
-	short vol;
+  char *name;
+  FILE *fp;
+  JMP_BUF jmpbuf;
+  int ready_for_longjmp;
+  int ln;
+  struct oINFILE *next;
+  char *tname;
+  int encoded;
+  short vol;
 } *INFILE;
 
 struct oTKWD {
-	char *name;
-	int token;
+  char *name;
+  int token;
 };
 
 typedef struct fid_spec {
-	fid id;
-	farg_type type[10];
+  fid id;
+  farg_type type[10];
 } *fid_spec_p;
 
 typedef struct oARF {
-	char *name;
-	void (*fp)();
+  char *name;
+  void (*fp)();
 } *ARF;
 
 typedef struct oFUNC {
-	char *name,*fullname;
-	int argc;
-	int type;
-	int secure;
-	aid id;
-	unsigned int quote;
-	union {
-		void (*binf)();
-		struct oUSRF *usrf;
-		struct oPF *puref;
-	} f;
+  char *name,*fullname;
+  int argc;
+  int type;
+  int secure;
+  aid id;
+  unsigned int quote;
+  union {
+    void (*binf)();
+    struct oUSRF *usrf;
+    struct oPF *puref;
+  } f;
 } *FUNC;
 
 typedef struct oUSRF {
-	char *fname;
-	MODULE module;
-	int startl,endl;
-	NODE args;
-	VS pvs;
-	char *desc;
-	struct oSNODE *body;
+  char *fname;
+  MODULE module;
+  int startl,endl;
+  NODE args;
+  VS pvs;
+  char *desc;
+  struct oSNODE *body;
 } *USRF;
 
 typedef struct oPF {
-	char *name;
-	int argc;
-	Obj body;
-	V *args;
-	Obj *deriv;
-	NODE ins;
-	int (*pari)();
-	double (*libm)();
-	int (*simplify)();
+  char *name;
+  int argc;
+  Obj body;
+  V *args;
+  Obj *deriv;
+  NODE ins;
+  int (*pari)();
+  double (*libm)();
+  int (*simplify)();
 } *PF;
 
 typedef struct oPFAD {
-	Obj arg;
-	int d;
+  Obj arg;
+  int d;
 } *PFAD;
 
 typedef struct oPFINS {
-	struct oPF *pf;	
-	struct oPFAD ad[1];
+  struct oPF *pf;  
+  struct oPFAD ad[1];
 } *PFINS;
 
 #define NEWPF(p) ((p)=(PF)MALLOC(sizeof(struct oPF)))
 
 typedef struct oFNODE {
-	short id;
-	unsigned normalized:1;
-	unsigned expanded:2;
-	unsigned coef:1;
-	pointer arg[1];
+  short id;
+  unsigned normalized:1;
+  unsigned expanded:2;
+  unsigned coef:1;
+  pointer arg[1];
 } *FNODE;
 
 #define NEWFNODE(a,b) \
 ((a)=(FNODE)MALLOC(sizeof(struct oFNODE)+sizeof(pointer)*(b-1)))
 
 typedef struct oSNODE {
-	sid id;
-	int ln;
-	pointer arg[1];
+  sid id;
+  int ln;
+  pointer arg[1];
 } *SNODE;
 
 #define NEWSNODE(a,b) \
 ((a)=(SNODE)MALLOC(sizeof(struct oSNODE)+sizeof(pointer)*(b-1)),(a)->ln=asir_infile->ln)
 
 typedef struct oPVI {
-	int pv;
-	NODE index;
+  int pv;
+  NODE index;
 } *PVI;
 
 typedef struct oNODE2 {
-	pointer body1,body2;
-	struct oNODE2 *next;
+  pointer body1,body2;
+  struct oNODE2 *next;
 } *NODE2;
 
 struct ftab {
-	char *name;
-	void (*f)();
-	int argc;
-	unsigned int quote;
+  char *name;
+  void (*f)();
+  int argc;
+  unsigned int quote;
 };
 
 #define MKPVI(a,b,c)\
@@ -257,24 +257,24 @@ struct ftab {
 
 #define asir_assert(ptr,id,message)\
 switch ( id ) {\
-	case O_N: case O_P: case O_R:\
-		if( (ptr) && (OID(ptr) > (id)) ) {\
-			fprintf(stderr,message);\
-			error(" : invalid argument");\
-		}\
-		break;\
-	case O_DP:\
-		if( (ptr) && (OID(ptr) != (id)) ) {\
-			fprintf(stderr,message);\
-			error(" : invalid argument");\
-		}\
-		break;\
-	default:\
-		if( !(ptr) || (OID(ptr) != (id)) ) {\
-			fprintf(stderr,message);\
-			error(" : invalid argument");\
-		}\
-		break;\
+  case O_N: case O_P: case O_R:\
+    if( (ptr) && (OID(ptr) > (id)) ) {\
+      fprintf(stderr,message);\
+      error(" : invalid argument");\
+    }\
+    break;\
+  case O_DP:\
+    if( (ptr) && (OID(ptr) != (id)) ) {\
+      fprintf(stderr,message);\
+      error(" : invalid argument");\
+    }\
+    break;\
+  default:\
+    if( !(ptr) || (OID(ptr) != (id)) ) {\
+      fprintf(stderr,message);\
+      error(" : invalid argument");\
+    }\
+    break;\
 }
 
 #define DEFSIZE 32
@@ -724,21 +724,21 @@ void reduce_reducers_mod(int **mat,int row,int col,int md);
 void pre_reduce_mod(int **mat,int row,int col,int nred,int md);
 void reduce_sp_by_red_mod(int *sp,int **redmat,int *ind,int nred,int col,int md);
 void red_by_compress(int m,unsigned int *p,unsigned int *r,
-	unsigned int *ri,unsigned int hc,int len);
+  unsigned int *ri,unsigned int hc,int len);
 void red_by_vect(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len);
 void reduce_sp_by_red_mod_compress (int *sp,CDP *redmat,int *ind,
-	int nred,int col,int md);
+  int nred,int col,int md);
 int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat);
 int lu_gfmmat(GFMMAT mat,unsigned int md,int *perm);
 int find_lhs_and_lu_mod(unsigned int **a,int row,int col,
-	unsigned int md,int **rinfo,int **cinfo);
+  unsigned int md,int **rinfo,int **cinfo);
 void solve_by_lu_mod(int **a,int n,int md,int **b,int l,int normalize);
 int gauss_elim_mod1(int **mat,int row,int col,int md);
 int gauss_elim_geninv_mod(unsigned int **mat,int row,int col,int md);
 void solve_by_lu_gfmmat(GFMMAT lu,unsigned int md,unsigned int *b,unsigned int *x);
 void mat_to_gfmmat(MAT m,unsigned int md,GFMMAT *rp);
 int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,
-	unsigned int md,unsigned int ***invmatp,int **indexp);
+  unsigned int md,unsigned int ***invmatp,int **indexp);
 void inner_product_int(Q *a,Q *b,int n,Q *r);
 void inner_product_mat_int_mod(Q **a,int **b,int n,int k,int l,Q *r);
 int generate_ONB_polynomial(UP2 *rp,int m,int type);
@@ -821,7 +821,7 @@ void init_cmdwin();
 void searchpf(char *name,FUNC *fp);
 void searchc(char *name,FUNC *fp);
 void mkpf(char *name,Obj body,int argc,V *args,
-	int (*parif)(),double (*libmf)(), int (*simp)(),PF *pfp);
+  int (*parif)(),double (*libmf)(), int (*simp)(),PF *pfp);
 void mkpfins(PF pf,V *args,V *vp);
 void _mkpfins(PF pf,Obj *args,V *vp);
 void _mkpfins_with_darray(PF pf,Obj *args,int *darray,V *vp);
@@ -873,11 +873,11 @@ void appenduf(char *name,FUNC *r);
 void mkparif(char *name,FUNC *r);
 void mkuf(char *name,char *fname,NODE args,SNODE body,int startl,int endl,char *desc,MODULE module);
 Obj getopt_from_cpvs(char *key);
-void	des_enc(unsigned long *, unsigned char *, unsigned long *);
-unsigned long	round_func(unsigned long , unsigned char *);
-unsigned long	s_box_func(unsigned char *);
-void	des_dec(unsigned long *, unsigned char *, unsigned long *);
-void	key_schedule(unsigned char *,unsigned char *);
+void  des_enc(unsigned long *, unsigned char *, unsigned long *);
+unsigned long  round_func(unsigned long , unsigned char *);
+unsigned long  s_box_func(unsigned char *);
+void  des_dec(unsigned long *, unsigned char *, unsigned long *);
+void  key_schedule(unsigned char *,unsigned char *);
 void debug_init();
 void add_alias(char *com,char *alias);
 void show_alias(char *alias);

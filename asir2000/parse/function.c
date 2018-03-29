@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.8 2005/09/21 23:39:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/function.c,v 1.9 2014/08/09 06:08:11 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,29 +54,29 @@ static int secure_mode;
 
 void setsecuremode(int value)
 {
-	secure_mode = value;
+  secure_mode = value;
 }
 
 int getsecuremode()
 {
-	return secure_mode;
+  return secure_mode;
 }
 
 int setsecureflag(char *name,int value)
 {
-	FUNC f;
+  FUNC f;
 
-	searchf(noargsysf,name,&f);
-	if ( f ) {
-		f->secure = value;
-		return 0;
-	}
-	gen_searchf_searchonly(name,&f,0);
-	if ( f ) {
-		f->secure = value;
-		return 0;
-	}
-	return -1;
+  searchf(noargsysf,name,&f);
+  if ( f ) {
+    f->secure = value;
+    return 0;
+  }
+  gen_searchf_searchonly(name,&f,0);
+  if ( f ) {
+    f->secure = value;
+    return 0;
+  }
+  return -1;
 }
 
 void appendbinf(flistp,name,func,argc,quote)
@@ -86,13 +86,13 @@ void (*func)();
 int argc;
 unsigned int quote;
 {
-	FUNC t;
-	NODE n;
+  FUNC t;
+  NODE n;
 
-	t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
-	t->name = name; t->id = A_BIN; t->argc = argc; t->f.binf = func;
-	t->fullname = name; t->quote = quote;
-	MKNODE(n,t,*flistp); *flistp = n;
+  t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
+  t->name = name; t->id = A_BIN; t->argc = argc; t->f.binf = func;
+  t->fullname = name; t->quote = quote;
+  MKNODE(n,t,*flistp); *flistp = n;
 }
 
 void appendparif(flistp,name,func,type)
@@ -101,13 +101,13 @@ char *name;
 int (*func)();
 int type;
 {
-	FUNC t;
-	NODE n;
+  FUNC t;
+  NODE n;
 
-	t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
-	t->name = name; t->id = A_PARI; t->type = type; t->f.binf = (void (*)())func;
-	t->fullname = name;
-	MKNODE(n,t,*flistp); *flistp = n;
+  t = (FUNC)MALLOC(sizeof(struct oFUNC)); 
+  t->name = name; t->id = A_PARI; t->type = type; t->f.binf = (void (*)())func;
+  t->fullname = name;
+  MKNODE(n,t,*flistp); *flistp = n;
 }
 
 void appendsysf(name,func,argc,quote)
@@ -116,7 +116,7 @@ void (*func)();
 int argc;
 unsigned int quote;
 {
-	appendbinf(&sysf,name,func,argc,quote);
+  appendbinf(&sysf,name,func,argc,quote);
 }
 
 void appendubinf(name,func,argc,quote)
@@ -125,37 +125,37 @@ void (*func)();
 int argc;
 unsigned int quote;
 {
-	appendbinf(&ubinf,name,func,argc,quote);
+  appendbinf(&ubinf,name,func,argc,quote);
 }
 
 int comp_dcp(DCP *a,DCP *b)
 {
-	int c;
+  int c;
 
-	c = arf_comp(CO,(Obj)(*a)->c,(Obj)(*b)->c);
-	if ( c > 0 ) return 1;
-	else if ( c < 0 ) return -1;
-	else return 0;
+  c = arf_comp(CO,(Obj)(*a)->c,(Obj)(*b)->c);
+  if ( c > 0 ) return 1;
+  else if ( c < 0 ) return -1;
+  else return 0;
 }
 
 void dcptolist(dc,listp)
 DCP dc;
 LIST *listp;
 {
-	NODE node,tnode,ln0,ln1;
-	LIST l;
-	DCP *w,t;
-	int i,n;
+  NODE node,tnode,ln0,ln1;
+  LIST l;
+  DCP *w,t;
+  int i,n;
 
-	for ( n = 0, t = dc; t; t = NEXT(t), n++ );
-	w = (DCP *)ALLOCA(n*sizeof(DCP));
-	for ( i = 0, t = dc; i < n; t = NEXT(t), i++ )
-		w[i] = t;
-	qsort(w,n,sizeof(DCP),(int (*)(const void *,const void *))comp_dcp);
-	for ( node = 0, i = 0; i < n; i++ ) {
-		NEXTNODE(node,tnode);
-		MKNODE(ln1,DEG(w[i]),0); MKNODE(ln0,COEF(w[i]),ln1);
-		MKLIST(l,ln0); BDY(tnode) = (pointer)l;
-	}
-	NEXT(tnode) = 0; MKLIST(l,node); *listp = l;
+  for ( n = 0, t = dc; t; t = NEXT(t), n++ );
+  w = (DCP *)ALLOCA(n*sizeof(DCP));
+  for ( i = 0, t = dc; i < n; t = NEXT(t), i++ )
+    w[i] = t;
+  qsort(w,n,sizeof(DCP),(int (*)(const void *,const void *))comp_dcp);
+  for ( node = 0, i = 0; i < n; i++ ) {
+    NEXTNODE(node,tnode);
+    MKNODE(ln1,DEG(w[i]),0); MKNODE(ln0,COEF(w[i]),ln1);
+    MKLIST(l,ln0); BDY(tnode) = (pointer)l;
+  }
+  NEXT(tnode) = 0; MKLIST(l,node); *listp = l;
 }

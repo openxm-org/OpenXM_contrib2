@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.57 2018/03/28 07:58:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ctrl.c,v 1.58 2018/03/28 09:07:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,13 +63,13 @@
 #endif
 
 static struct {
-	char *type;
-	char *kernel;
-	char *name;
-	char *arch;
-	char *release;
-	char *full;
-	char *lang;
+  char *type;
+  char *kernel;
+  char *name;
+  char *arch;
+  char *release;
+  char *full;
+  char *lang;
 } sysinfo;
 
 void Pctrl();
@@ -77,10 +77,10 @@ void Psysinfo(LIST *rp);
 static void get_sysinfo();
 
 struct ftab ctrl_tab[] = {
-	{"ctrl",Pctrl,-2},
-	{"asir_env",Pctrl,-2},
-	{"sysinfo", Psysinfo, 0},
-	{0,0,0},
+  {"ctrl",Pctrl,-2},
+  {"asir_env",Pctrl,-2},
+  {"sysinfo", Psysinfo, 0},
+  {0,0,0},
 };
 
 extern int error_in_timer;
@@ -117,55 +117,55 @@ extern int plot_by_bigfloat;
 extern int debug_plot;
 
 static struct keyval {
-	char *key;
-	int *val;
-	char *desc;
+  char *key;
+  int *val;
+  char *desc;
 } ctrls[] = {
-	{"StrassenSize",&StrassenSize,"Determines the parameter in Strassen-Winograd matrix multiplication algorithm."},
-	{"allow_laurent",&allow_laurent,"If set to 1, negative exponents are allowed in monomials."},
-	{"asir_setenv",&asir_setenv,"Not used."},
-	{"bigfloat",&bigfloat,"If set to 1, MPFR bigfloat functions are used for floating point evaluation." },
-	{"cputime",&prtime,"If set to 1, the CPU time at the toplevel is shown." },
-	{"debug_up",&debug_up,"If set to 1, some debug messages are printed in special functions for univariate polynomials."},
-	{"debug_window",&do_server_in_X11,"If set to 1, an input window for debugging remote server are shown."},
-	{"diag_period",&diag_period,"Determines the frequency of the intermediate inter-reduction in nd_gr()."},
-	{"double_output",&double_output,"If set to 1, floating point numbers are printed in the style ddd.ddd."},
-	{"echo",&echoback,"If set to 1, characters read by the input function are printed."  },
-	{"error_in_timer",&error_in_timer,"If set to 1, the usual error handler is executed when the timer is expired."},
-	{"evalef",&evalef,"If set to 1, elementary functions are evaluated immediately."},
-	{"f4_nocheck",&f4_nocheck,"If set to 1, correctness check of the result of modular computation are omitted in nd_f4()."},
-	{"fake_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
-	{"fortran_output",&fortran_output,"If set to 1, ** is used instead of ^ for representing the power."},
-	{"hex",&hex_output,"If set to 1, integers are printed by the hexadecimal notation."},
-	{"hideargs",&hideargs,"If set to 1, the arguments of a function call are not printed."},
-	{"message",&do_message,"If set to 1, an opening message is printed in ox_asir and ox_plot."},
-	{"new_hensel",&use_new_hensel,"If set to 1, a function hensel2() is used in the univariate factorizer over Q."},
-	{"nez",&nez,"If set to 1, a new version of EZGCD implementation is used."  },
-	{"no_debug_on_error",&no_debug_on_error,"If set to 1, the debug mode is not used."},
-	{"no_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
-	{"no_prompt",&do_quiet,"If set to 1, prompts are not shown."},
-	{"outputstyle",&outputstyle,"If set to 1, structured data such as matrices and vectors are printed in the style mat(...), vect(...)."},
-	{"ox_batch",&ox_batch,"If set to 1, the OX stream are not flushed at each sending of an OX data."},
-	{"ox_check",&ox_check,"If set to 1, mathcap check is done for OpenXM date communication."},
-	{"ox_exchange_mathcap",&ox_exchange_mathcap,"If set to 1, mathcaps are exchanged."},
-	{"print_quote",&print_quote,"Determines the behavior of the printed form of a quote."},
-	{"quiet_mode",&do_quiet,"If set to 1, the copyright notices are not printed at the beginning of the session."},
-	{"real_binary",&real_binary,"If set to 1, a floating point number is printed by the binary notation."},
-	{"real_digit",&real_digit,"Determines the number of digits to appear after the decimal point."},
-	{"show_crossref",&show_crossref,"If set to 1, cross-references are shown when a program file is loaded."},
-	{"show_orderspec",&show_orderspec,"If set to 1, the specification of a composite term order is printed upon its creation."},
-	{"terse",&do_terse,"If set to 1, messages are not printed when user-defined callbacks are executed."},
-	{"verbose",&Verbose,"If set to 1, a warning is printed if a function is redefined."},
-	{"weight_check",&weight_check,"If set to 1, an overflow check for the given weight vector is done before starting the Groebner basis computation."},
+  {"StrassenSize",&StrassenSize,"Determines the parameter in Strassen-Winograd matrix multiplication algorithm."},
+  {"allow_laurent",&allow_laurent,"If set to 1, negative exponents are allowed in monomials."},
+  {"asir_setenv",&asir_setenv,"Not used."},
+  {"bigfloat",&bigfloat,"If set to 1, MPFR bigfloat functions are used for floating point evaluation." },
+  {"cputime",&prtime,"If set to 1, the CPU time at the toplevel is shown." },
+  {"debug_up",&debug_up,"If set to 1, some debug messages are printed in special functions for univariate polynomials."},
+  {"debug_window",&do_server_in_X11,"If set to 1, an input window for debugging remote server are shown."},
+  {"diag_period",&diag_period,"Determines the frequency of the intermediate inter-reduction in nd_gr()."},
+  {"double_output",&double_output,"If set to 1, floating point numbers are printed in the style ddd.ddd."},
+  {"echo",&echoback,"If set to 1, characters read by the input function are printed."  },
+  {"error_in_timer",&error_in_timer,"If set to 1, the usual error handler is executed when the timer is expired."},
+  {"evalef",&evalef,"If set to 1, elementary functions are evaluated immediately."},
+  {"f4_nocheck",&f4_nocheck,"If set to 1, correctness check of the result of modular computation are omitted in nd_f4()."},
+  {"fake_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
+  {"fortran_output",&fortran_output,"If set to 1, ** is used instead of ^ for representing the power."},
+  {"hex",&hex_output,"If set to 1, integers are printed by the hexadecimal notation."},
+  {"hideargs",&hideargs,"If set to 1, the arguments of a function call are not printed."},
+  {"message",&do_message,"If set to 1, an opening message is printed in ox_asir and ox_plot."},
+  {"new_hensel",&use_new_hensel,"If set to 1, a function hensel2() is used in the univariate factorizer over Q."},
+  {"nez",&nez,"If set to 1, a new version of EZGCD implementation is used."  },
+  {"no_debug_on_error",&no_debug_on_error,"If set to 1, the debug mode is not used."},
+  {"no_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
+  {"no_prompt",&do_quiet,"If set to 1, prompts are not shown."},
+  {"outputstyle",&outputstyle,"If set to 1, structured data such as matrices and vectors are printed in the style mat(...), vect(...)."},
+  {"ox_batch",&ox_batch,"If set to 1, the OX stream are not flushed at each sending of an OX data."},
+  {"ox_check",&ox_check,"If set to 1, mathcap check is done for OpenXM date communication."},
+  {"ox_exchange_mathcap",&ox_exchange_mathcap,"If set to 1, mathcaps are exchanged."},
+  {"print_quote",&print_quote,"Determines the behavior of the printed form of a quote."},
+  {"quiet_mode",&do_quiet,"If set to 1, the copyright notices are not printed at the beginning of the session."},
+  {"real_binary",&real_binary,"If set to 1, a floating point number is printed by the binary notation."},
+  {"real_digit",&real_digit,"Determines the number of digits to appear after the decimal point."},
+  {"show_crossref",&show_crossref,"If set to 1, cross-references are shown when a program file is loaded."},
+  {"show_orderspec",&show_orderspec,"If set to 1, the specification of a composite term order is printed upon its creation."},
+  {"terse",&do_terse,"If set to 1, messages are not printed when user-defined callbacks are executed."},
+  {"verbose",&Verbose,"If set to 1, a warning is printed if a function is redefined."},
+  {"weight_check",&weight_check,"If set to 1, an overflow check for the given weight vector is done before starting the Groebner basis computation."},
 #if defined(DO_PLOT)
-	{"plot_by_bigfloat",&plot_by_bigfloat,"If set to 1, computation is done by using MPFR bigfloat functions in ox_plot."},
-	{"debug_plot",&debug_plot,"If set to 1, ox_plot is executed with the message window."},
+  {"plot_by_bigfloat",&plot_by_bigfloat,"If set to 1, computation is done by using MPFR bigfloat functions in ox_plot."},
+  {"debug_plot",&debug_plot,"If set to 1, ox_plot is executed with the message window."},
 #endif
 #if defined(INTERVAL)
-	{"zerorewrite",&zerorewrite,""},
-	{"itvplotsize",&Itvplot,""},
+  {"zerorewrite",&zerorewrite,""},
+  {"itvplotsize",&Itvplot,""},
 #endif
-	{0,0},
+  {0,0},
 };
 
 LIST create_control_value(char *keystr,Obj value,char *descstr,int withdesc)
@@ -250,118 +250,118 @@ LIST create_control_values(int withdesc)
 
 void Pctrl(NODE arg,Q *rp)
 {
-	int t,i,n,desc=0;
-	int nm,dv;
-	N num,den;
-	Q c;
-	char *key;
-	char buf[BUFSIZ];
-	char *str;
-	STRING s;
-	NODE node,p,opt;
-	LIST list;
-	P f;
-	Obj value;
+  int t,i,n,desc=0;
+  int nm,dv;
+  N num,den;
+  Q c;
+  char *key;
+  char buf[BUFSIZ];
+  char *str;
+  STRING s;
+  NODE node,p,opt;
+  LIST list;
+  P f;
+  Obj value;
 
-	if ( !arg ) {
-		if ( current_option ) {
-			for ( opt = current_option; opt; opt = NEXT(opt) ) {
-				p = BDY((LIST)BDY(opt));
-				key = BDY((STRING)BDY(p));
-				value = (Obj)BDY(NEXT(p));
-				if ( !strcmp(key,"desc") && value ) {
-					desc = value ? 1 : 0;
-					break;
-				}
-			}
-		}
-		*rp = create_control_values(desc);
-		return;
-	}
-	key = BDY((STRING)ARG0(arg));
-	if ( !strcmp(key,"adj") ) {
-		/* special treatment is necessary for "adj" */
-		if ( argc(arg) == 1 ) {
-			Risa_GC_get_adj(&nm,&dv);
-			UTON(dv,num);
-			UTON(nm,den);
-		} else {
-			c = (Q)ARG1(arg);
-			if ( !c )
-				error("ctrl : adj : invalid argument");
-			num = NM(c);
-			den = !DN(c)?ONEN:DN(c);
-			dv = BD(num)[0];
-			nm = BD(den)[0];
-			Risa_GC_set_adj(nm,dv);
-		}
-		NDTOQ(num,den,1,*rp);
-		return;
-	} else if ( !strcmp(key,"prompt") ) {
-		/* special treatment is necessary for "prompt" */
-		if ( argc(arg) == 1 ) {
-		  if ((!do_quiet) && (user_defined_prompt == (Obj)0)) *rp=ONE;
+  if ( !arg ) {
+    if ( current_option ) {
+      for ( opt = current_option; opt; opt = NEXT(opt) ) {
+        p = BDY((LIST)BDY(opt));
+        key = BDY((STRING)BDY(p));
+        value = (Obj)BDY(NEXT(p));
+        if ( !strcmp(key,"desc") && value ) {
+          desc = value ? 1 : 0;
+          break;
+        }
+      }
+    }
+    *rp = create_control_values(desc);
+    return;
+  }
+  key = BDY((STRING)ARG0(arg));
+  if ( !strcmp(key,"adj") ) {
+    /* special treatment is necessary for "adj" */
+    if ( argc(arg) == 1 ) {
+      Risa_GC_get_adj(&nm,&dv);
+      UTON(dv,num);
+      UTON(nm,den);
+    } else {
+      c = (Q)ARG1(arg);
+      if ( !c )
+        error("ctrl : adj : invalid argument");
+      num = NM(c);
+      den = !DN(c)?ONEN:DN(c);
+      dv = BD(num)[0];
+      nm = BD(den)[0];
+      Risa_GC_set_adj(nm,dv);
+    }
+    NDTOQ(num,den,1,*rp);
+    return;
+  } else if ( !strcmp(key,"prompt") ) {
+    /* special treatment is necessary for "prompt" */
+    if ( argc(arg) == 1 ) {
+      if ((!do_quiet) && (user_defined_prompt == (Obj)0)) *rp=ONE;
           else *rp = (Q)user_defined_prompt;
-		} else {
-			c = (Q)ARG1(arg);
-			if ( !c ) {
-				do_quiet = 1;
-				user_defined_prompt = 0;
-				*rp = 0;
-			} else if ( OID(c) == O_STR ) {
-				str = BDY((STRING)c);
-			 	for ( i = 0, n = 0; str[i]; i++ )
-					if ( str[i] == '%' )
-						n++;
-				if ( n >= 2 )
-					error("ctrl : prompt : invalid prompt specification");	
-				do_quiet = 1;
-				user_defined_prompt = (Obj)c;
-				*rp = c;
-			} else if ( NUM(c) && RATN(c) && UNIQ(c) ) {
-				user_defined_prompt = 0;
-				do_quiet = 0;
-			} else {
-				error("ctrl : prompt : invalid argument");	
-			}
-		}
-		return;
-	} else if ( !strcmp(key,"loadpath") ) {
-		*rp = 0;
-		if ( argc(arg) == 1 ) {
-			if( ASIRLOADPATH[0] ) {
-				for(i=0; ASIRLOADPATH[i]; i++) {
-				}
-				for(i--,p=NULL; i>=0; i--,p=node) {
-					MKSTR(s,ASIRLOADPATH[i]);
-					MKNODE(node,s,p);
-				}
-				MKLIST(list,node);
-				*rp = (Q)list;
-			}
-		} else {
-			list = (LIST)ARG1(arg);
-			if ( OID(list) == O_LIST ) {
-				for(i=0,p=BDY(list); p; i++,p=NEXT(p)) {
-					s=(STRING)BDY(p);
-					if(!s || OID(s)!=O_STR) {
-						error("ctrl : loadpath : invalid argument");
-					}
-				}
-				if(i >= ASIRLOADPATH_LEN) {
-					ASIRLOADPATH_LEN = i+1;
-					ASIRLOADPATH = (char **)MALLOC(sizeof(char *)*ASIRLOADPATH_LEN);
-				}
-				for(i=0,p=BDY(list); p; i++,p=NEXT(p)) {
-					ASIRLOADPATH[i] = (char *)BDY((STRING)BDY(p));
-				}
-				ASIRLOADPATH[i] = NULL;
-			}else {
-				error("ctrl : loadpath : invalid argument");
-			}
-		}
-		return;
-	} else if ( !strcmp(key,"oxpari_id") ) {
+    } else {
+      c = (Q)ARG1(arg);
+      if ( !c ) {
+        do_quiet = 1;
+        user_defined_prompt = 0;
+        *rp = 0;
+      } else if ( OID(c) == O_STR ) {
+        str = BDY((STRING)c);
+         for ( i = 0, n = 0; str[i]; i++ )
+          if ( str[i] == '%' )
+            n++;
+        if ( n >= 2 )
+          error("ctrl : prompt : invalid prompt specification");  
+        do_quiet = 1;
+        user_defined_prompt = (Obj)c;
+        *rp = c;
+      } else if ( NUM(c) && RATN(c) && UNIQ(c) ) {
+        user_defined_prompt = 0;
+        do_quiet = 0;
+      } else {
+        error("ctrl : prompt : invalid argument");  
+      }
+    }
+    return;
+  } else if ( !strcmp(key,"loadpath") ) {
+    *rp = 0;
+    if ( argc(arg) == 1 ) {
+      if( ASIRLOADPATH[0] ) {
+        for(i=0; ASIRLOADPATH[i]; i++) {
+        }
+        for(i--,p=NULL; i>=0; i--,p=node) {
+          MKSTR(s,ASIRLOADPATH[i]);
+          MKNODE(node,s,p);
+        }
+        MKLIST(list,node);
+        *rp = (Q)list;
+      }
+    } else {
+      list = (LIST)ARG1(arg);
+      if ( OID(list) == O_LIST ) {
+        for(i=0,p=BDY(list); p; i++,p=NEXT(p)) {
+          s=(STRING)BDY(p);
+          if(!s || OID(s)!=O_STR) {
+            error("ctrl : loadpath : invalid argument");
+          }
+        }
+        if(i >= ASIRLOADPATH_LEN) {
+          ASIRLOADPATH_LEN = i+1;
+          ASIRLOADPATH = (char **)MALLOC(sizeof(char *)*ASIRLOADPATH_LEN);
+        }
+        for(i=0,p=BDY(list); p; i++,p=NEXT(p)) {
+          ASIRLOADPATH[i] = (char *)BDY((STRING)BDY(p));
+        }
+        ASIRLOADPATH[i] = NULL;
+      }else {
+        error("ctrl : loadpath : invalid argument");
+      }
+    }
+    return;
+  } else if ( !strcmp(key,"oxpari_id") ) {
         if ( argc(arg) == 1 ) {
             if(!ox_pari_stream_initialized) {
                 t=-1;
@@ -370,44 +370,44 @@ void Pctrl(NODE arg,Q *rp)
                 *rp = ox_pari_stream;
             }
         }else {
-			c = (Q)ARG1(arg);
-			if ( !c || ( NUM(c) && INT(c) && SGN(c)>0 ) ) {
-				ox_pari_stream_initialized = 1;
-				ox_pari_stream = c;
-				*rp = c;
-			}else {
+      c = (Q)ARG1(arg);
+      if ( !c || ( NUM(c) && INT(c) && SGN(c)>0 ) ) {
+        ox_pari_stream_initialized = 1;
+        ox_pari_stream = c;
+        *rp = c;
+      }else {
                 t=-1;
                 STOQ(t,*rp);
-			}
-		}
-		return;
-	} else if ( !strcmp(key,"oxpari_start") ) {
+      }
+    }
+    return;
+  } else if ( !strcmp(key,"oxpari_start") ) {
         if ( argc(arg) == 1 ) {
-			*rp = (Q)ox_pari_starting_function;
-		} else {
-			f = (P)ARG1(arg);
-			if ( !f || OID(f) == O_P) {
-				ox_pari_starting_function = f;
-				*rp = (Q)f;
-			}else {
-				*rp = 0;
-			}
-		}
-		return;
-	}
-	for ( i = 0; ctrls[i].key; i++ )
-		if ( !strcmp(key,ctrls[i].key) )
-			break;
-	if ( ctrls[i].key ) {
-		if ( argc(arg) == 1 )
-			t = *ctrls[i].val;
-		else
-			*ctrls[i].val = t = QTOS((Q)ARG1(arg));
-		STOQ(t,*rp);
-	} else {
-		sprintf(buf,"ctrl : %s : no such key",key);
-		error(buf);
-	}
+      *rp = (Q)ox_pari_starting_function;
+    } else {
+      f = (P)ARG1(arg);
+      if ( !f || OID(f) == O_P) {
+        ox_pari_starting_function = f;
+        *rp = (Q)f;
+      }else {
+        *rp = 0;
+      }
+    }
+    return;
+  }
+  for ( i = 0; ctrls[i].key; i++ )
+    if ( !strcmp(key,ctrls[i].key) )
+      break;
+  if ( ctrls[i].key ) {
+    if ( argc(arg) == 1 )
+      t = *ctrls[i].val;
+    else
+      *ctrls[i].val = t = QTOS((Q)ARG1(arg));
+    STOQ(t,*rp);
+  } else {
+    sprintf(buf,"ctrl : %s : no such key",key);
+    error(buf);
+  }
 }
 
 void Psysinfo(LIST *rp)

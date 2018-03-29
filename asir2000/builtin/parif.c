@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.36 2017/03/31 06:10:13 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.37 2017/08/30 09:40:30 ohara Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -22,21 +22,21 @@ struct mpfr_tab_rec {
   char *name;
   mpfr_func func;
 } mpfr_tab[] = {
-	{"ai",Pmpfr_ai},
-	{"zeta",Pmpfr_zeta},
-	{"j0",Pmpfr_j0},
-	{"j1",Pmpfr_j1},
-	{"y0",Pmpfr_y0},
-	{"y1",Pmpfr_y1},
-	{"eint",Pmpfr_eint},
-	{"erf",Pmpfr_erf},
-	{"li2",Pmpfr_li2},
-	{"gamma",Pmpfr_gamma},
-	{"lngamma",Pmpfr_gamma},
-	{"digamma",Pmpfr_gamma},
-	{"floor",Pmpfr_floor},
-	{"ceil",Pmpfr_ceil},
-	{"round",Pmpfr_round},
+  {"ai",Pmpfr_ai},
+  {"zeta",Pmpfr_zeta},
+  {"j0",Pmpfr_j0},
+  {"j1",Pmpfr_j1},
+  {"y0",Pmpfr_y0},
+  {"y1",Pmpfr_y1},
+  {"eint",Pmpfr_eint},
+  {"erf",Pmpfr_erf},
+  {"li2",Pmpfr_li2},
+  {"gamma",Pmpfr_gamma},
+  {"lngamma",Pmpfr_gamma},
+  {"digamma",Pmpfr_gamma},
+  {"floor",Pmpfr_floor},
+  {"ceil",Pmpfr_ceil},
+  {"round",Pmpfr_round},
 };
 
 mpfr_func mpfr_search(char *name)
@@ -72,18 +72,18 @@ Obj vect_to_mat(VECT v)
   len = v->len;
   if ( v->body[0] && OID((Obj)v->body[0]) == O_VECT ) {
     col = ((VECT)v->body[0])->len;
-	for ( i = 1; i < len; i++ ) 
-	  if ( !v->body[i] || OID((Obj)v->body[i]) != O_VECT
-	   || ((VECT)v->body[i])->len != col )
-	  break;
+  for ( i = 1; i < len; i++ ) 
+    if ( !v->body[i] || OID((Obj)v->body[i]) != O_VECT
+     || ((VECT)v->body[i])->len != col )
+    break;
     if ( i == len ) {
-	  /* convert to a matrix */
-	  MKMAT(m,len,col);
-	  for ( i = 0; i < len; i++ )
-	    for ( j = 0; j < col; j++ )
-		  m->body[i][j] = ((VECT)v->body[i])->body[j];
-	  return (Obj)m;
-	}
+    /* convert to a matrix */
+    MKMAT(m,len,col);
+    for ( i = 0; i < len; i++ )
+      for ( j = 0; j < col; j++ )
+      m->body[i][j] = ((VECT)v->body[i])->body[j];
+    return (Obj)m;
+  }
   }
   return (Obj)v;
 }
@@ -94,10 +94,10 @@ void reset_ox_pari()
   Obj r;
 
   if ( ox_get_pari_result ) {
-	nd = mknode(1,ox_pari_stream);
-	Pox_shutdown(nd,&r);
+  nd = mknode(1,ox_pari_stream);
+  Pox_shutdown(nd,&r);
     ox_get_pari_result = 0;
-	ox_pari_stream_initialized = 0;
+  ox_pari_stream_initialized = 0;
   }
 }
 
@@ -121,27 +121,27 @@ pointer evalparif(FUNC f,NODE arg)
   }
 
   if ( !ox_pari_stream_initialized ) {
-	if ( ox_pari_starting_function && OID(ox_pari_starting_function) == O_P ) {
-		v = VR(ox_pari_starting_function);
-		if ( (int)v->attr != V_SR ) {
-			error("pari : no handler.");
-		}
-		MKNODE(nd,0,0);
-		r = (Q)bevalf((FUNC)v->priv,0);
-	}else {
-#if !defined(VISUAL)		
-	MKSTR(name,"ox_pari");
-	nd = mknode(2,NULL,name);
-	Pox_launch_nox(nd,&r);
+  if ( ox_pari_starting_function && OID(ox_pari_starting_function) == O_P ) {
+    v = VR(ox_pari_starting_function);
+    if ( (int)v->attr != V_SR ) {
+      error("pari : no handler.");
+    }
+    MKNODE(nd,0,0);
+    r = (Q)bevalf((FUNC)v->priv,0);
+  }else {
+#if !defined(VISUAL)    
+  MKSTR(name,"ox_pari");
+  nd = mknode(2,NULL,name);
+  Pox_launch_nox(nd,&r);
 #else
-	error("Please load names.rr from latest asir-contrib library before using pari functions.");
+  error("Please load names.rr from latest asir-contrib library before using pari functions.");
 #endif
-	}
-	ox_pari_stream = r;
+  }
+  ox_pari_stream = r;
     ox_pari_stream_initialized = 1;
   }
 
-	ac = argc(arg);
+  ac = argc(arg);
   /* reverse the arg list */
   for ( n = arg, t = 0; n; n = NEXT(n) ) {
     MKNODE(t1,BDY(n),t); t = t1;
@@ -167,10 +167,10 @@ pointer evalparif(FUNC f,NODE arg)
   oxarg = mknode(2,list,sec);
   ret=0;
   do {
-	  check_intr();
-	  Pox_select(oxarg,&list);
-	  oxarg = mknode(1,list);
-	  Plength(oxarg,&ret);
+    check_intr();
+    Pox_select(oxarg,&list);
+    oxarg = mknode(1,list);
+    Plength(oxarg,&ret);
   }while (!ret);
   oxarg = mknode(1,ox_pari_stream);
   Pox_get(oxarg,&ret);
@@ -187,15 +187,15 @@ pointer evalparif(FUNC f,NODE arg)
   }
   if ( ret && OID(ret) == O_LIST ) {
     ret = list_to_vect(ret);
-	ret = vect_to_mat((VECT)ret);
+  ret = vect_to_mat((VECT)ret);
   }
   return ret;
 }
 
 struct pariftab {
-	char *name;
+  char *name;
   int dmy;
-	int type;
+  int type;
 };
 
 /*
@@ -335,8 +335,8 @@ struct pariftab pariftab[] = {
 };
 
 void parif_init() {
-	int i;
+  int i;
 
-	for ( i = 0, parif = 0; pariftab[i].name; i++ )
-		 appendparif(&parif,pariftab[i].name, 0,pariftab[i].type);
+  for ( i = 0, parif = 0; pariftab[i].name; i++ )
+     appendparif(&parif,pariftab[i].name, 0,pariftab[i].type);
 }

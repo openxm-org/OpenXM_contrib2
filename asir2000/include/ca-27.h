@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.7 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca-27.h,v 1.8 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #if SIZEOF_LONG == 8
 typedef long L;
@@ -64,8 +64,8 @@ typedef unsigned _int64 UL;
 #define N_Q 0
 
 struct oN {
-	int p;
-	int b[1];
+  int p;
+  int b[1];
 };
 
 typedef struct oN *N;

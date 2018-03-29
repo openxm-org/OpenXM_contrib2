@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.10 2015/08/08 14:19:41 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/help.c,v 1.11 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,28 +54,28 @@ void Phelp();
 void ghelp(void);
 
 struct ftab help_tab[] = {
-	{"help",Phelp,-1},
-	{0,0,0},
+  {"help",Phelp,-1},
+  {0,0,0},
 };
 
 void Phelp(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	if ( !arg || !ARG0(arg) )
-		 help(0);
-	else
-		switch (OID(ARG0(arg))) {
-			case O_P:
-				help(NAME(VR((P)ARG0(arg))));
-				break;
-			case O_STR:
-				help(BDY((STRING)ARG0(arg)));
-				break;
-			default:
-				break;
-		}
-	*rp = 0;
+  if ( !arg || !ARG0(arg) )
+     help(0);
+  else
+    switch (OID(ARG0(arg))) {
+      case O_P:
+        help(NAME(VR((P)ARG0(arg))));
+        break;
+      case O_STR:
+        help(BDY((STRING)ARG0(arg)));
+        break;
+      default:
+        break;
+    }
+  *rp = 0;
 }
 
 static char *ghelpstr[] = {
@@ -89,59 +89,59 @@ static char *ghelpstr[] = {
 void help(s)
 char *s;
 {
-	extern char *asir_libdir;
-	extern char *asir_pager;
-	char *e;
-	static char helpdir[16];
-	static int  ja_JP_UTF_8 = 0;
+  extern char *asir_libdir;
+  extern char *asir_pager;
+  char *e;
+  static char helpdir[16];
+  static int  ja_JP_UTF_8 = 0;
 
-	if ( !helpdir[0] ) {
-		e = (char *)getenv("LANG");
-		if ( !e )
-			strcpy(helpdir,"help");
-		else if ( !strncmp(e,"japan",strlen("japan"))
-				  || !strncmp(e,"ja_JP",strlen("ja_JP")) ) {
-			strcpy(helpdir,"help-ja");
-			if (strcmp(e,"ja_JP.UTF-8")==0) ja_JP_UTF_8 = 1;
-		}else
-			strcpy(helpdir,"help-en");
-	}
+  if ( !helpdir[0] ) {
+    e = (char *)getenv("LANG");
+    if ( !e )
+      strcpy(helpdir,"help");
+    else if ( !strncmp(e,"japan",strlen("japan"))
+          || !strncmp(e,"ja_JP",strlen("ja_JP")) ) {
+      strcpy(helpdir,"help-ja");
+      if (strcmp(e,"ja_JP.UTF-8")==0) ja_JP_UTF_8 = 1;
+    }else
+      strcpy(helpdir,"help-en");
+  }
 
-	if ( !s )
-		ghelp();
-	else {
+  if ( !s )
+    ghelp();
+  else {
 #if !defined(VISUAL) && !defined(__MINGW32__)
-		int i;
-		FUNC f;
-		char name[BUFSIZ],com[BUFSIZ];
-		FILE *fp;
+    int i;
+    FUNC f;
+    char name[BUFSIZ],com[BUFSIZ];
+    FILE *fp;
 
-		sprintf(name,"%s/%s/%s",asir_libdir,helpdir,s);
-		if ( fp = fopen(name,"r") ) {
-			fclose(fp);
-			if (!ja_JP_UTF_8)
-			  sprintf(com,"%s %s",asir_pager,name);
-			else
-			  sprintf(com,"nkf -w %s | %s ",name,asir_pager);
-			system(com);
-		} else {
-			gen_searchf_searchonly(s,&f);
-			if ( f && f->id == A_USR && f->f.usrf->desc )
-				fprintf(stderr,"%s\n",f->f.usrf->desc);
-		}
+    sprintf(name,"%s/%s/%s",asir_libdir,helpdir,s);
+    if ( fp = fopen(name,"r") ) {
+      fclose(fp);
+      if (!ja_JP_UTF_8)
+        sprintf(com,"%s %s",asir_pager,name);
+      else
+        sprintf(com,"nkf -w %s | %s ",name,asir_pager);
+      system(com);
+    } else {
+      gen_searchf_searchonly(s,&f);
+      if ( f && f->id == A_USR && f->f.usrf->desc )
+        fprintf(stderr,"%s\n",f->f.usrf->desc);
+    }
 #else
-		FUNC f;
-		gen_searchf_searchonly(s,&f);
-		if ( f && f->id == A_USR && f->f.usrf->desc )
-			fprintf(stderr,"%s\n",f->f.usrf->desc);
+    FUNC f;
+    gen_searchf_searchonly(s,&f);
+    if ( f && f->id == A_USR && f->f.usrf->desc )
+      fprintf(stderr,"%s\n",f->f.usrf->desc);
 
 #endif
-	}
+  }
 }
 
 void ghelp() {
-	int i;
+  int i;
 
-	for ( i = 0; ghelpstr[i]; i++ )
-		fprintf(stderr,"%s\n",ghelpstr[i]);
+  for ( i = 0; ghelpstr[i]; i++ )
+    fprintf(stderr,"%s\n",ghelpstr[i]);
 }

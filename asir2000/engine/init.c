@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.32 2014/09/19 01:26:00 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/init.c,v 1.33 2015/08/04 06:20:45 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -123,63 +123,63 @@ double get_current_time();
 void init_lprime();
 
 void nglob_init() {
-	PL(&oUNIN) = 1; BD(&oUNIN)[0] = 1;
-	PL(&oTWON) = 1; BD(&oTWON)[0] = 2;
-	PL(&oTHREEN) = 1; BD(&oTHREEN)[0] = 3;
-	PL(&oFOURN) = 1; BD(&oFOURN)[0] = 4;
-	PL(&oFIVEN) = 1; BD(&oFIVEN)[0] = 5;
-	PL(&oSIXN) = 1; BD(&oSIXN)[0] = 6;
-	PL(&oSEVENN) = 1; BD(&oSEVENN)[0] = 7;
-	PL(&oEIGHTN) = 1; BD(&oEIGHTN)[0] = 8;
+  PL(&oUNIN) = 1; BD(&oUNIN)[0] = 1;
+  PL(&oTWON) = 1; BD(&oTWON)[0] = 2;
+  PL(&oTHREEN) = 1; BD(&oTHREEN)[0] = 3;
+  PL(&oFOURN) = 1; BD(&oFOURN)[0] = 4;
+  PL(&oFIVEN) = 1; BD(&oFIVEN)[0] = 5;
+  PL(&oSIXN) = 1; BD(&oSIXN)[0] = 6;
+  PL(&oSEVENN) = 1; BD(&oSEVENN)[0] = 7;
+  PL(&oEIGHTN) = 1; BD(&oEIGHTN)[0] = 8;
 
-	oONEUP2.w = 1; oONEUP2.b[0] = 1;
+  oONEUP2.w = 1; oONEUP2.b[0] = 1;
 
-	OID(&oUNIQ) = O_N; NID(&oUNIQ) = N_Q;
-	SGN(&oUNIQ) = 1; NM(&oUNIQ) = &oUNIN; DN(&oUNIQ) = 0;
+  OID(&oUNIQ) = O_N; NID(&oUNIQ) = N_Q;
+  SGN(&oUNIQ) = 1; NM(&oUNIQ) = &oUNIN; DN(&oUNIQ) = 0;
 
-	OID(&oTWOQ) = O_N; NID(&oTWOQ) = N_Q;
-	SGN(&oTWOQ) = 1; NM(&oTWOQ) = &oTWON; DN(&oTWOQ) = 0;
+  OID(&oTWOQ) = O_N; NID(&oTWOQ) = N_Q;
+  SGN(&oTWOQ) = 1; NM(&oTWOQ) = &oTWON; DN(&oTWOQ) = 0;
 
-	OID(&oTHREEQ) = O_N; NID(&oTHREEQ) = N_Q;
-	SGN(&oTHREEQ) = 1; NM(&oTHREEQ) = &oTHREEN; DN(&oTHREEQ) = 0;
+  OID(&oTHREEQ) = O_N; NID(&oTHREEQ) = N_Q;
+  SGN(&oTHREEQ) = 1; NM(&oTHREEQ) = &oTHREEN; DN(&oTHREEQ) = 0;
 
-	OID(&oFOURQ) = O_N; NID(&oFOURQ) = N_Q;
-	SGN(&oFOURQ) = 1; NM(&oFOURQ) = &oFOURN; DN(&oFOURQ) = 0;
+  OID(&oFOURQ) = O_N; NID(&oFOURQ) = N_Q;
+  SGN(&oFOURQ) = 1; NM(&oFOURQ) = &oFOURN; DN(&oFOURQ) = 0;
 
-	OID(&oFIVEQ) = O_N; NID(&oFIVEQ) = N_Q;
-	SGN(&oFIVEQ) = 1; NM(&oFIVEQ) = &oFIVEN; DN(&oFIVEQ) = 0;
+  OID(&oFIVEQ) = O_N; NID(&oFIVEQ) = N_Q;
+  SGN(&oFIVEQ) = 1; NM(&oFIVEQ) = &oFIVEN; DN(&oFIVEQ) = 0;
 
-	OID(&oSIXQ) = O_N; NID(&oSIXQ) = N_Q;
-	SGN(&oSIXQ) = 1; NM(&oSIXQ) = &oSIXN; DN(&oSIXQ) = 0;
+  OID(&oSIXQ) = O_N; NID(&oSIXQ) = N_Q;
+  SGN(&oSIXQ) = 1; NM(&oSIXQ) = &oSIXN; DN(&oSIXQ) = 0;
 
-	OID(&oSEVENQ) = O_N; NID(&oSEVENQ) = N_Q;
-	SGN(&oSEVENQ) = 1; NM(&oSEVENQ) = &oSEVENN; DN(&oSEVENQ) = 0;
+  OID(&oSEVENQ) = O_N; NID(&oSEVENQ) = N_Q;
+  SGN(&oSEVENQ) = 1; NM(&oSEVENQ) = &oSEVENN; DN(&oSEVENQ) = 0;
 
-	OID(&oEIGHTQ) = O_N; NID(&oEIGHTQ) = N_Q;
-	SGN(&oEIGHTQ) = 1; NM(&oEIGHTQ) = &oEIGHTN; DN(&oEIGHTQ) = 0;
+  OID(&oEIGHTQ) = O_N; NID(&oEIGHTQ) = N_Q;
+  SGN(&oEIGHTQ) = 1; NM(&oEIGHTQ) = &oEIGHTN; DN(&oEIGHTQ) = 0;
 
-	OID(&oUNIR) = O_R; NM(&oUNIR) = (P)&oUNIQ; DN(&oUNIR) = (P)&oUNIQ; oUNIR.reduced = 1;
-	OID(&oUNIMQ) = O_N; NID(&oUNIMQ) = N_M; CONT(&oUNIMQ) = 1;
-	OID(&oUNILM) = O_N; NID(&oUNILM) = N_LM; BDY(&oUNILM) = ONEN;
-	OID(&oIU) = O_N; NID(&oIU) = N_C; oIU.r = 0; oIU.i = (Num)ONE;
+  OID(&oUNIR) = O_R; NM(&oUNIR) = (P)&oUNIQ; DN(&oUNIR) = (P)&oUNIQ; oUNIR.reduced = 1;
+  OID(&oUNIMQ) = O_N; NID(&oUNIMQ) = N_M; CONT(&oUNIMQ) = 1;
+  OID(&oUNILM) = O_N; NID(&oUNILM) = N_LM; BDY(&oUNILM) = ONEN;
+  OID(&oIU) = O_N; NID(&oIU) = N_C; oIU.r = 0; oIU.i = (Num)ONE;
 
-	MKLM(&oTHREEN,THREE_LM);
-	MKLM(&oFOURN,FOUR_LM);
-	MKLM(&oEIGHTN,EIGHT_LM);
+  MKLM(&oTHREEN,THREE_LM);
+  MKLM(&oFOURN,FOUR_LM);
+  MKLM(&oEIGHTN,EIGHT_LM);
 
-	OID(&oVOID) = O_VOID;
+  OID(&oVOID) = O_VOID;
 
 /* moved to parse/main.c */
 #if 0
 #if defined(PARI)
-	risa_pari_init();
+  risa_pari_init();
 #endif
-	srandom((int)get_current_time());
+  srandom((int)get_current_time());
 #endif
-	init_up2_tab();
+  init_up2_tab();
 
-	init_lprime();
-	init_gmpq();
+  init_lprime();
+  init_gmpq();
 }
 
 extern double GC_get_gctime();
@@ -188,48 +188,48 @@ double suspended_time=0;
 
 void get_eg(struct oEGT *p)
 {
-	double gctime = GC_get_gctime();
-	p->exectime = get_clock() - gctime - suspended_time; p->gctime = gctime;
+  double gctime = GC_get_gctime();
+  p->exectime = get_clock() - gctime - suspended_time; p->gctime = gctime;
 }
 
 void init_eg(struct oEGT *eg)
 {
-	bzero((char *)eg,sizeof(struct oEGT));
+  bzero((char *)eg,sizeof(struct oEGT));
 }
 
 void add_eg(struct oEGT *base,struct oEGT *start,struct oEGT *end)
 {
-	base->exectime += end->exectime - start->exectime;
-	base->gctime += end->gctime - start->gctime;
+  base->exectime += end->exectime - start->exectime;
+  base->gctime += end->gctime - start->gctime;
 }
 
 void print_eg(char *item,struct oEGT *eg)
 {
-	printf("%s=(%.4g,%.4g)",item,eg->exectime,eg->gctime);
+  printf("%s=(%.4g,%.4g)",item,eg->exectime,eg->gctime);
 }
 
 void print_split_eg(struct oEGT *start,struct oEGT *end)
 {
-	struct oEGT base;
+  struct oEGT base;
 
-	init_eg(&base); add_eg(&base,start,end);
-	printf("(%.4g,%.4g)",base.exectime,base.gctime);
+  init_eg(&base); add_eg(&base,start,end);
+  printf("(%.4g,%.4g)",base.exectime,base.gctime);
 }
 
 void print_split_e(struct oEGT *start,struct oEGT *end)
 {
-	struct oEGT base;
+  struct oEGT base;
 
-	init_eg(&base); add_eg(&base,start,end);
-	printf("(%.4g)",base.exectime);
+  init_eg(&base); add_eg(&base,start,end);
+  printf("(%.4g)",base.exectime);
 }
 
 void suspend_timer() {
-	suspend_start = get_clock();
+  suspend_start = get_clock();
 }
 
 void resume_timer() {
-	suspended_time += get_clock()-suspend_start;
+  suspended_time += get_clock()-suspend_start;
 }
 
 extern int lm_lazy, up_lazy;
@@ -238,84 +238,84 @@ extern int do_weyl;
 extern int dp_fcoeffs;
 
 void reset_engine() {
-	lm_lazy = 0;
-	up_lazy = 0;
-	do_weyl = 0;
-	dp_fcoeffs = 0;
-	GC_dont_gc = 0;
+  lm_lazy = 0;
+  up_lazy = 0;
+  do_weyl = 0;
+  dp_fcoeffs = 0;
+  GC_dont_gc = 0;
 }
 
 unsigned int get_asir_version() {
-	return ASIR_VERSION;
+  return ASIR_VERSION;
 }
 
 char *get_asir_distribution() {
-	return ASIR_DISTRIBUTION;
+  return ASIR_DISTRIBUTION;
 }
 
 
 void create_error(ERR *err,unsigned int serial,char *msg,LIST trace)
 {
-	int len;
-	USINT ui,notsupp;
-	NODE n,n1;
-	LIST list;
-	char *msg1;
-	STRING errmsg;
+  int len;
+  USINT ui,notsupp;
+  NODE n,n1;
+  LIST list;
+  char *msg1;
+  STRING errmsg;
 
-	MKUSINT(ui,serial);
-	MKUSINT(notsupp,-1);
-	len = strlen(msg);
-	msg1 = (char *)MALLOC(len+1);
-	strcpy(msg1,msg);
-	MKSTR(errmsg,msg1);
-	if ( !trace )
-		MKLIST(trace,0);
-	n = mknode(4,ui,notsupp,errmsg,trace); MKLIST(list,n);
-	MKERR(*err,list);
+  MKUSINT(ui,serial);
+  MKUSINT(notsupp,-1);
+  len = strlen(msg);
+  msg1 = (char *)MALLOC(len+1);
+  strcpy(msg1,msg);
+  MKSTR(errmsg,msg1);
+  if ( !trace )
+    MKLIST(trace,0);
+  n = mknode(4,ui,notsupp,errmsg,trace); MKLIST(list,n);
+  MKERR(*err,list);
 }
 
 void init_lprime()
 {
-	int s,i;
+  int s,i;
 
-	s = sizeof(lprime_init);
-	lprime = (int *)MALLOC_ATOMIC(s);
-	lprime_size = s/sizeof(int);	
-	for ( i = 0; i < lprime_size; i++ )
-		lprime[i] = lprime_init[lprime_size-i-1];
+  s = sizeof(lprime_init);
+  lprime = (int *)MALLOC_ATOMIC(s);
+  lprime_size = s/sizeof(int);  
+  for ( i = 0; i < lprime_size; i++ )
+    lprime[i] = lprime_init[lprime_size-i-1];
 }
 
 void create_new_lprimes(int);
 
 int get_lprime(index)
 {
-	if ( index >= lprime_size )
-		create_new_lprimes(index);
-	return lprime[index];
+  if ( index >= lprime_size )
+    create_new_lprimes(index);
+  return lprime[index];
 }
 
 void create_new_lprimes(int index)
 {
-	int count,p,i,j,d;
+  int count,p,i,j,d;
 
-	if ( index < lprime_size )
-		return;
-	count = index-lprime_size+1;
-	if ( count < 256 )
-		count = 256;
-	lprime = (int *)GC_realloc(lprime,(lprime_size+count)*sizeof(int));
-	p = lprime[lprime_size-1]+2;
-	for ( i = 0; i < count; p += 2 ) {
-		for ( j = 0; d = sprime[j]; j++ ) {
-			if ( d*d > p ) {
-				lprime[i+lprime_size] = p;
-				i++;
-				break;
-			}
-			if ( !(p%d) )
-				break;
-		}
-	}
-	lprime_size += count;
+  if ( index < lprime_size )
+    return;
+  count = index-lprime_size+1;
+  if ( count < 256 )
+    count = 256;
+  lprime = (int *)GC_realloc(lprime,(lprime_size+count)*sizeof(int));
+  p = lprime[lprime_size-1]+2;
+  for ( i = 0; i < count; p += 2 ) {
+    for ( j = 0; d = sprime[j]; j++ ) {
+      if ( d*d > p ) {
+        lprime[i+lprime_size] = p;
+        i++;
+        break;
+      }
+      if ( !(p%d) )
+        break;
+    }
+  }
+  lprime_size += count;
 }

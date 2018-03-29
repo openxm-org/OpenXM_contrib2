@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.65 2017/03/27 09:05:46 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp-supp.c,v 1.66 2017/08/31 02:36:20 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -76,199 +76,199 @@ static NODE RatDenomList;
 
 void init_denomlist()
 {
-	RatDenomList = 0;
+  RatDenomList = 0;
 }
 
 void add_denomlist(P f)
 {
-	NODE n;
+  NODE n;
 
-	if ( OID(f)==O_P ) {
-		MKNODE(n,f,RatDenomList); RatDenomList = n;
-	}
+  if ( OID(f)==O_P ) {
+    MKNODE(n,f,RatDenomList); RatDenomList = n;
+  }
 }
 
 LIST get_denomlist()
 {
-	LIST l;
+  LIST l;
 
-	MKLIST(l,RatDenomList); RatDenomList = 0;
-	return l;
+  MKLIST(l,RatDenomList); RatDenomList = 0;
+  return l;
 }
 
 void dp_ptozp(DP p,DP *rp)
 {
-	MP m,mr,mr0;
-	int i,n;
-	Q *w;
-	Q dvr;
-	P t;
+  MP m,mr,mr0;
+  int i,n;
+  Q *w;
+  Q dvr;
+  P t;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
-		w = (Q *)ALLOCA(n*sizeof(Q));
-		for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
-			if ( NUM(m->c) )
-				w[i] = (Q)m->c;
-			else
-				ptozp((P)m->c,1,&w[i],&t);
-		sortbynm(w,n);	
-		qltozl(w,n,&dvr);
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); divsp(CO,(P)m->c,(P)dvr,(P *)&mr->c); mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
+    w = (Q *)ALLOCA(n*sizeof(Q));
+    for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      if ( NUM(m->c) )
+        w[i] = (Q)m->c;
+      else
+        ptozp((P)m->c,1,&w[i],&t);
+    sortbynm(w,n);  
+    qltozl(w,n,&dvr);
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr); divsp(CO,(P)m->c,(P)dvr,(P *)&mr->c); mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void dp_ptozp2(DP p0,DP p1,DP *hp,DP *rp)
 {
-	DP t,s,h,r;
-	MP m,mr,mr0,m0;
+  DP t,s,h,r;
+  MP m,mr,mr0,m0;
 
-	addd(CO,p0,p1,&t); dp_ptozp(t,&s);
-	if ( !p0 ) {
-		h = 0; r = s;
-	} else if ( !p1 ) {
-		h = s; r = 0;
-	} else {
-		for ( mr0 = 0, m = BDY(s), m0 = BDY(p0); m0;
-			m = NEXT(m), m0 = NEXT(m0) ) {
-			NEXTMP(mr0,mr); mr->c = m->c; mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p0->nv,mr0,h); MKDP(p0->nv,m,r);
-	}
-	if ( h )
-		h->sugar = p0->sugar;
-	if ( r )
-		r->sugar = p1->sugar;
-	*hp = h; *rp = r;
+  addd(CO,p0,p1,&t); dp_ptozp(t,&s);
+  if ( !p0 ) {
+    h = 0; r = s;
+  } else if ( !p1 ) {
+    h = s; r = 0;
+  } else {
+    for ( mr0 = 0, m = BDY(s), m0 = BDY(p0); m0;
+      m = NEXT(m), m0 = NEXT(m0) ) {
+      NEXTMP(mr0,mr); mr->c = m->c; mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p0->nv,mr0,h); MKDP(p0->nv,m,r);
+  }
+  if ( h )
+    h->sugar = p0->sugar;
+  if ( r )
+    r->sugar = p1->sugar;
+  *hp = h; *rp = r;
 }
 
 void dpm_ptozp(DPM p,DPM *rp)
 {
-	DMM m,mr,mr0;
-	int i,n;
-	Q *w;
-	Q dvr;
-	P t;
+  DMM m,mr,mr0;
+  int i,n;
+  Q *w;
+  Q dvr;
+  P t;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
-		w = (Q *)ALLOCA(n*sizeof(Q));
-		for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
-			if ( NUM(m->c) )
-				w[i] = (Q)m->c;
-			else
-				ptozp((P)m->c,1,&w[i],&t);
-		sortbynm(w,n);	
-		qltozl(w,n,&dvr);
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTDMM(mr0,mr); divsp(CO,(P)m->c,(P)dvr,(P *)&mr->c); mr->dl = m->dl; mr->pos = m->pos;
-		}
-		NEXT(mr) = 0; MKDPM(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
+    w = (Q *)ALLOCA(n*sizeof(Q));
+    for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      if ( NUM(m->c) )
+        w[i] = (Q)m->c;
+      else
+        ptozp((P)m->c,1,&w[i],&t);
+    sortbynm(w,n);  
+    qltozl(w,n,&dvr);
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTDMM(mr0,mr); divsp(CO,(P)m->c,(P)dvr,(P *)&mr->c); mr->dl = m->dl; mr->pos = m->pos;
+    }
+    NEXT(mr) = 0; MKDPM(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void dpm_ptozp2(DPM p0,DPM p1,DPM *hp,DPM *rp)
 {
-	DPM t,s,h,r;
-	DMM m,mr,mr0,m0;
+  DPM t,s,h,r;
+  DMM m,mr,mr0,m0;
 
-	adddpm(CO,p0,p1,&t); dpm_ptozp(t,&s);
-	if ( !p0 ) {
-		h = 0; r = s;
-	} else if ( !p1 ) {
-		h = s; r = 0;
-	} else {
-		for ( mr0 = 0, m = BDY(s), m0 = BDY(p0); m0;
-			m = NEXT(m), m0 = NEXT(m0) ) {
-			NEXTDMM(mr0,mr); mr->c = m->c; mr->dl = m->dl; mr->pos = m->pos;
-		}
-		NEXT(mr) = 0; MKDPM(p0->nv,mr0,h); MKDPM(p0->nv,m,r);
-	}
-	if ( h )
-		h->sugar = p0->sugar;
-	if ( r )
-		r->sugar = p1->sugar;
-	*hp = h; *rp = r;
+  adddpm(CO,p0,p1,&t); dpm_ptozp(t,&s);
+  if ( !p0 ) {
+    h = 0; r = s;
+  } else if ( !p1 ) {
+    h = s; r = 0;
+  } else {
+    for ( mr0 = 0, m = BDY(s), m0 = BDY(p0); m0;
+      m = NEXT(m), m0 = NEXT(m0) ) {
+      NEXTDMM(mr0,mr); mr->c = m->c; mr->dl = m->dl; mr->pos = m->pos;
+    }
+    NEXT(mr) = 0; MKDPM(p0->nv,mr0,h); MKDPM(p0->nv,m,r);
+  }
+  if ( h )
+    h->sugar = p0->sugar;
+  if ( r )
+    r->sugar = p1->sugar;
+  *hp = h; *rp = r;
 }
 
 
 void dp_ptozp3(DP p,Q *dvr,DP *rp)
 {
-	MP m,mr,mr0;
-	int i,n;
-	Q *w;
-	P t;
+  MP m,mr,mr0;
+  int i,n;
+  Q *w;
+  P t;
 
-	if ( !p ) {
-		*rp = 0; *dvr = 0;
-	}else {
-		for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
-		w = (Q *)ALLOCA(n*sizeof(Q));
-		for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
-			if ( NUM(m->c) )
-				w[i] = (Q)m->c;
-			else
-				ptozp((P)m->c,1,&w[i],&t);
-		sortbynm(w,n);	
-		qltozl(w,n,dvr);
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); divsp(CO,(P)m->c,(P)(*dvr),(P *)&mr->c); mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
+  if ( !p ) {
+    *rp = 0; *dvr = 0;
+  }else {
+    for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
+    w = (Q *)ALLOCA(n*sizeof(Q));
+    for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      if ( NUM(m->c) )
+        w[i] = (Q)m->c;
+      else
+        ptozp((P)m->c,1,&w[i],&t);
+    sortbynm(w,n);  
+    qltozl(w,n,dvr);
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr); divsp(CO,(P)m->c,(P)(*dvr),(P *)&mr->c); mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void dp_idiv(DP p,Q c,DP *rp)
 {
-	Q t;
-	N nm,q;
-	int sgn,s;
-	MP mr0,m,mr;
+  Q t;
+  N nm,q;
+  int sgn,s;
+  MP mr0,m,mr;
 
-	if ( !p )
-		*rp = 0;
-	else if ( MUNIQ((Q)c) )
-		*rp = p;
-	else if ( MUNIQ((Q)c) )
-		chsgnd(p,rp);
-	else {
-		nm = NM(c); sgn = SGN(c);
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr);
+  if ( !p )
+    *rp = 0;
+  else if ( MUNIQ((Q)c) )
+    *rp = p;
+  else if ( MUNIQ((Q)c) )
+    chsgnd(p,rp);
+  else {
+    nm = NM(c); sgn = SGN(c);
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr);
 
-			divsn(NM((Q)(m->c)),nm,&q);
-			s = sgn*SGN((Q)(m->c));
-			NTOQ(q,s,t);
-			mr->c = (Obj)t;
-			mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp);
-		if ( *rp )
-			(*rp)->sugar = p->sugar;
-	}
+      divsn(NM((Q)(m->c)),nm,&q);
+      s = sgn*SGN((Q)(m->c));
+      NTOQ(q,s,t);
+      mr->c = (Obj)t;
+      mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p->nv,mr0,*rp);
+    if ( *rp )
+      (*rp)->sugar = p->sugar;
+  }
 }
 
 void dp_mbase(NODE hlist,NODE *mbase)
 {
-	DL *dl;
-	DL d;
+  DL *dl;
+  DL d;
   int *t;
-	int i,j,k,n,nvar,td;
+  int i,j,k,n,nvar,td;
 
-	n = length(hlist); nvar = ((DP)BDY(hlist))->nv;
-	dl = (DL *)MALLOC(n*sizeof(DL));
-	NEWDL(d,nvar); *mbase = 0;
-	for ( i = 0; i < n; i++, hlist = NEXT(hlist) ) {
-		dl[i] = BDY((DP)BDY(hlist))->dl;
+  n = length(hlist); nvar = ((DP)BDY(hlist))->nv;
+  dl = (DL *)MALLOC(n*sizeof(DL));
+  NEWDL(d,nvar); *mbase = 0;
+  for ( i = 0; i < n; i++, hlist = NEXT(hlist) ) {
+    dl[i] = BDY((DP)BDY(hlist))->dl;
     /* trivial ideal check */
-		if ( (*cmpdl)(nvar,d,dl[i]) == 0 ) {
+    if ( (*cmpdl)(nvar,d,dl[i]) == 0 ) {
       return;
     }
   }
@@ -282,88 +282,88 @@ void dp_mbase(NODE hlist,NODE *mbase)
     if ( j == n )
       error("dp_mbase : input ideal is not zero-dimensional");
   }
-	while ( 1 ) {
-		insert_to_node(d,mbase,nvar);
-		for ( i = nvar-1; i >= 0; ) {
-			d->d[i]++;
-			d->td += MUL_WEIGHT(1,i);
-			for ( j = 0; j < n; j++ ) {
-				if ( _dl_redble(dl[j],d,nvar) )
-					break;
-			}
-			if ( j < n ) {
-				for ( j = nvar-1; j >= i; j-- )
-					d->d[j] = 0;
-				for ( j = 0, td = 0; j < i; j++ )
-					td += MUL_WEIGHT(d->d[j],j);
-				d->td = td;
-				i--;
-			} else
-				break;
-		}
-		if ( i < 0 )
-			break;
-	}
+  while ( 1 ) {
+    insert_to_node(d,mbase,nvar);
+    for ( i = nvar-1; i >= 0; ) {
+      d->d[i]++;
+      d->td += MUL_WEIGHT(1,i);
+      for ( j = 0; j < n; j++ ) {
+        if ( _dl_redble(dl[j],d,nvar) )
+          break;
+      }
+      if ( j < n ) {
+        for ( j = nvar-1; j >= i; j-- )
+          d->d[j] = 0;
+        for ( j = 0, td = 0; j < i; j++ )
+          td += MUL_WEIGHT(d->d[j],j);
+        d->td = td;
+        i--;
+      } else
+        break;
+    }
+    if ( i < 0 )
+      break;
+  }
 }
 
 int _dl_redble(DL d1,DL d2,int nvar)
 {
-	int i;
+  int i;
 
-	if ( d1->td > d2->td )
-		return 0;
-	for ( i = 0; i < nvar; i++ )
-		if ( d1->d[i] > d2->d[i] )
-			break;
-	if ( i < nvar )
-		return 0;
-	else
-		return 1;
+  if ( d1->td > d2->td )
+    return 0;
+  for ( i = 0; i < nvar; i++ )
+    if ( d1->d[i] > d2->d[i] )
+      break;
+  if ( i < nvar )
+    return 0;
+  else
+    return 1;
 }
 
 void insert_to_node(DL d,NODE *n,int nvar)
 {
-	DL d1;
-	MP m;
-	DP dp;
-	NODE n0,n1,n2;
+  DL d1;
+  MP m;
+  DP dp;
+  NODE n0,n1,n2;
 
-	NEWDL(d1,nvar); d1->td = d->td;
-	bcopy((char *)d->d,(char *)d1->d,nvar*sizeof(int));
-	NEWMP(m); m->dl = d1; m->c = (Obj)ONE; NEXT(m) = 0;
-	MKDP(nvar,m,dp); dp->sugar = d->td;
-	if ( !(*n) ) {
-		MKNODE(n1,dp,0); *n = n1;
-	} else {
-		for ( n1 = *n, n0 = 0; n1; n0 = n1, n1 = NEXT(n1) )
-			if ( (*cmpdl)(nvar,d,BDY((DP)BDY(n1))->dl) > 0 ) {
-				MKNODE(n2,dp,n1);
-				if ( !n0 )
-					*n = n2;
-				else
-					NEXT(n0) = n2;
-				break;
-			}
-		if ( !n1 ) {
-			MKNODE(n2,dp,0); NEXT(n0) = n2;
-		}
-	}
+  NEWDL(d1,nvar); d1->td = d->td;
+  bcopy((char *)d->d,(char *)d1->d,nvar*sizeof(int));
+  NEWMP(m); m->dl = d1; m->c = (Obj)ONE; NEXT(m) = 0;
+  MKDP(nvar,m,dp); dp->sugar = d->td;
+  if ( !(*n) ) {
+    MKNODE(n1,dp,0); *n = n1;
+  } else {
+    for ( n1 = *n, n0 = 0; n1; n0 = n1, n1 = NEXT(n1) )
+      if ( (*cmpdl)(nvar,d,BDY((DP)BDY(n1))->dl) > 0 ) {
+        MKNODE(n2,dp,n1);
+        if ( !n0 )
+          *n = n2;
+        else
+          NEXT(n0) = n2;
+        break;
+      }
+    if ( !n1 ) {
+      MKNODE(n2,dp,0); NEXT(n0) = n2;
+    }
+  }
 }
 
 void dp_vtod(Q *c,DP p,DP *rp)
 {
-	MP mr0,m,mr;
-	int i;
+  MP mr0,m,mr;
+  int i;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( mr0 = 0, m = BDY(p), i = 0; m; m = NEXT(m), i++ ) {
-			NEXTMP(mr0,mr); mr->c = (Obj)c[i]; mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp);
-		(*rp)->sugar = p->sugar;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    for ( mr0 = 0, m = BDY(p), i = 0; m; m = NEXT(m), i++ ) {
+      NEXTMP(mr0,mr); mr->c = (Obj)c[i]; mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p->nv,mr0,*rp);
+    (*rp)->sugar = p->sugar;
+  }
 }
 
 extern int mpi_mag;
@@ -371,306 +371,306 @@ extern int PCoeffs;
 
 void dp_ptozp_d(DP p,DP *rp)
 {
-	int i,j,k,l,n,nsep;
-	MP m;
-	NODE tn,n0,n1,n2,n3;
-	struct oVECT v;
-	VECT c,cs;
-	VECT qi,ri;
-	LIST *qr;
-	Obj dmy;
-	Q d0,d1,gcd,a,u,u1;
-	Q *q,*r;
-	STRING iqr_v;
-	pointer *b;
-	N qn,gn;
-	double get_rtime();
-	int blen;
-	NODE dist;
-	int ndist;
-	double t0;
-	double t_e,t_d,t_d1,t_c;
-	extern int DP_NFStat;
-	extern LIST Dist;
-	void Pox_rpc();
-	void Pox_pop_local();
+  int i,j,k,l,n,nsep;
+  MP m;
+  NODE tn,n0,n1,n2,n3;
+  struct oVECT v;
+  VECT c,cs;
+  VECT qi,ri;
+  LIST *qr;
+  Obj dmy;
+  Q d0,d1,gcd,a,u,u1;
+  Q *q,*r;
+  STRING iqr_v;
+  pointer *b;
+  N qn,gn;
+  double get_rtime();
+  int blen;
+  NODE dist;
+  int ndist;
+  double t0;
+  double t_e,t_d,t_d1,t_c;
+  extern int DP_NFStat;
+  extern LIST Dist;
+  void Pox_rpc();
+  void Pox_pop_local();
 
-	if ( !p )
-		*rp = 0;
-	else {
-		if ( PCoeffs ) {
-			dp_ptozp(p,rp); return;
-		}	
-		if ( !Dist || p_mag((P)BDY(p)->c) <= mpi_mag ) {
-			dist = 0; ndist = 0;
-			if ( DP_NFStat ) fprintf(asir_out,"L");
-		} else {
-			dist = BDY(Dist); ndist = length(dist);
-			if ( DP_NFStat ) fprintf(asir_out,"D");
-		}
-		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
-		nsep = ndist + 1;
-		if ( n <= nsep ) {
-			dp_ptozp(p,rp); return;
-		}
-		t0 = get_rtime();
-		dp_dtov(p,&c);
-		igcdv_estimate(c,&d0);
-		t_e = get_rtime()-t0;
-		t0 = get_rtime();
-		dp_dtov(p,&c);
-		sepvect(c,nsep,&cs);
-		MKSTR(iqr_v,"iqr");
-		qr = (LIST *)CALLOC(nsep,sizeof(LIST));
-		q = (Q *)CALLOC(n,sizeof(Q));
-		r = (Q *)CALLOC(n,sizeof(Q));
-		for ( i = 0, tn = dist, b = BDY(cs); i < ndist; i++, tn = NEXT(tn) ) {
-			MKNODE(n3,d0,0); MKNODE(n2,b[i],n3);
-			MKNODE(n1,iqr_v,n2); MKNODE(n0,BDY(tn),n1);
-			Pox_rpc(n0,&dmy);
-		}
-		iqrv(b[i],d0,&qr[i]);
-		dp_dtov(p,&c);
-		for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
-			Pox_pop_local(tn,&qr[i]);
-			if ( OID(qr[i]) == O_ERR ) {
-				printexpr(CO,(Obj)qr[i]);
-				error("dp_ptozp_d : aborted");
-			}
-		}
-		t_d = get_rtime()-t0;
-		t_d1 = t_d/n;
-		t0 = get_rtime();
-		for ( i = j = 0; i < nsep; i++ ) {
-			tn = BDY(qr[i]); qi = (VECT)BDY(tn); ri = (VECT)BDY(NEXT(tn));
-			for ( k = 0, l = qi->len; k < l; k++, j++ ) {
-				q[j] = (Q)BDY(qi)[k]; r[j] = (Q)BDY(ri)[k];
-			}
-		}
-		v.id = O_VECT; v.len = n; v.body = (pointer *)r; igcdv(&v,&d1);
-		if ( d1 ) {
-			gcdn(NM(d0),NM(d1),&gn); NTOQ(gn,1,gcd);
-			divsn(NM(d0),gn,&qn); NTOQ(qn,1,a);
-			for ( i = 0; i < n; i++ ) {
-				mulq(a,q[i],&u);
-				if ( r[i] ) {
-					divsn(NM(r[i]),gn,&qn); NTOQ(qn,SGN(r[i]),u1);
-					addq(u,u1,&q[i]);
-				} else
-					q[i] = u;
-			}
-		} else
-			gcd = d0;
-		dp_vtod(q,p,rp);
-		t_c = get_rtime()-t0;
-		blen=p_mag((P)gcd);
-		pz_t_e += t_e; pz_t_d += t_d; pz_t_d1 += t_d1; pz_t_c += t_c;
-		if ( 0 )
-			fprintf(stderr,"(%d,%d)",p_mag((P)d0)-blen,blen);
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    if ( PCoeffs ) {
+      dp_ptozp(p,rp); return;
+    }  
+    if ( !Dist || p_mag((P)BDY(p)->c) <= mpi_mag ) {
+      dist = 0; ndist = 0;
+      if ( DP_NFStat ) fprintf(asir_out,"L");
+    } else {
+      dist = BDY(Dist); ndist = length(dist);
+      if ( DP_NFStat ) fprintf(asir_out,"D");
+    }
+    for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+    nsep = ndist + 1;
+    if ( n <= nsep ) {
+      dp_ptozp(p,rp); return;
+    }
+    t0 = get_rtime();
+    dp_dtov(p,&c);
+    igcdv_estimate(c,&d0);
+    t_e = get_rtime()-t0;
+    t0 = get_rtime();
+    dp_dtov(p,&c);
+    sepvect(c,nsep,&cs);
+    MKSTR(iqr_v,"iqr");
+    qr = (LIST *)CALLOC(nsep,sizeof(LIST));
+    q = (Q *)CALLOC(n,sizeof(Q));
+    r = (Q *)CALLOC(n,sizeof(Q));
+    for ( i = 0, tn = dist, b = BDY(cs); i < ndist; i++, tn = NEXT(tn) ) {
+      MKNODE(n3,d0,0); MKNODE(n2,b[i],n3);
+      MKNODE(n1,iqr_v,n2); MKNODE(n0,BDY(tn),n1);
+      Pox_rpc(n0,&dmy);
+    }
+    iqrv(b[i],d0,&qr[i]);
+    dp_dtov(p,&c);
+    for ( i = 0, tn = dist; i < ndist; i++, tn = NEXT(tn) ) {
+      Pox_pop_local(tn,&qr[i]);
+      if ( OID(qr[i]) == O_ERR ) {
+        printexpr(CO,(Obj)qr[i]);
+        error("dp_ptozp_d : aborted");
+      }
+    }
+    t_d = get_rtime()-t0;
+    t_d1 = t_d/n;
+    t0 = get_rtime();
+    for ( i = j = 0; i < nsep; i++ ) {
+      tn = BDY(qr[i]); qi = (VECT)BDY(tn); ri = (VECT)BDY(NEXT(tn));
+      for ( k = 0, l = qi->len; k < l; k++, j++ ) {
+        q[j] = (Q)BDY(qi)[k]; r[j] = (Q)BDY(ri)[k];
+      }
+    }
+    v.id = O_VECT; v.len = n; v.body = (pointer *)r; igcdv(&v,&d1);
+    if ( d1 ) {
+      gcdn(NM(d0),NM(d1),&gn); NTOQ(gn,1,gcd);
+      divsn(NM(d0),gn,&qn); NTOQ(qn,1,a);
+      for ( i = 0; i < n; i++ ) {
+        mulq(a,q[i],&u);
+        if ( r[i] ) {
+          divsn(NM(r[i]),gn,&qn); NTOQ(qn,SGN(r[i]),u1);
+          addq(u,u1,&q[i]);
+        } else
+          q[i] = u;
+      }
+    } else
+      gcd = d0;
+    dp_vtod(q,p,rp);
+    t_c = get_rtime()-t0;
+    blen=p_mag((P)gcd);
+    pz_t_e += t_e; pz_t_d += t_d; pz_t_d1 += t_d1; pz_t_c += t_c;
+    if ( 0 )
+      fprintf(stderr,"(%d,%d)",p_mag((P)d0)-blen,blen);
+  }
 }
 
 void dp_ptozp2_d(DP p0,DP p1,DP *hp,DP *rp)
 {
-	DP t,s,h,r;
-	MP m,mr,mr0,m0;
+  DP t,s,h,r;
+  MP m,mr,mr0,m0;
 
-	addd(CO,p0,p1,&t); dp_ptozp_d(t,&s);
-	if ( !p0 ) {
-		h = 0; r = s;
-	} else if ( !p1 ) {
-		h = s; r = 0;
-	} else {
-		for ( mr0 = 0, m = BDY(s), m0 = BDY(p0); m0;
-			m = NEXT(m), m0 = NEXT(m0) ) {
-			NEXTMP(mr0,mr); mr->c = m->c; mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p0->nv,mr0,h); MKDP(p0->nv,m,r);
-	}
-	if ( h )
-		h->sugar = p0->sugar;
-	if ( r )
-		r->sugar = p1->sugar;
-	*hp = h; *rp = r;
+  addd(CO,p0,p1,&t); dp_ptozp_d(t,&s);
+  if ( !p0 ) {
+    h = 0; r = s;
+  } else if ( !p1 ) {
+    h = s; r = 0;
+  } else {
+    for ( mr0 = 0, m = BDY(s), m0 = BDY(p0); m0;
+      m = NEXT(m), m0 = NEXT(m0) ) {
+      NEXTMP(mr0,mr); mr->c = m->c; mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p0->nv,mr0,h); MKDP(p0->nv,m,r);
+  }
+  if ( h )
+    h->sugar = p0->sugar;
+  if ( r )
+    r->sugar = p1->sugar;
+  *hp = h; *rp = r;
 }
 
 int have_sf_coef(P p)
 {
-	DCP dc;
+  DCP dc;
 
-	if ( !p )
-		return 0;
-	else if ( NUM(p) )
-		return NID((Num)p) == N_GFS ? 1 : 0;
-	else {
-		for ( dc = DC(p); dc; dc = NEXT(dc) )
-			if ( have_sf_coef(COEF(dc)) )
-				return 1;
-		return 0;
-	}
+  if ( !p )
+    return 0;
+  else if ( NUM(p) )
+    return NID((Num)p) == N_GFS ? 1 : 0;
+  else {
+    for ( dc = DC(p); dc; dc = NEXT(dc) )
+      if ( have_sf_coef(COEF(dc)) )
+        return 1;
+    return 0;
+  }
 }
 
 void head_coef(P p,Num *c)
 {
-	if ( !p )
-		*c = 0;
-	else if ( NUM(p) )
-		*c = (Num)p;
-	else
-		head_coef(COEF(DC(p)),c);
+  if ( !p )
+    *c = 0;
+  else if ( NUM(p) )
+    *c = (Num)p;
+  else
+    head_coef(COEF(DC(p)),c);
 }
 
 void dp_monic_sf(DP p,DP *rp)
 {
-	Num c;
+  Num c;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		head_coef((P)BDY(p)->c,&c);
-		divsdc(CO,p,(P)c,rp);
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    head_coef((P)BDY(p)->c,&c);
+    divsdc(CO,p,(P)c,rp);
+  }
 }
 
 void dp_prim(DP p,DP *rp)
 {
-	P t,g;
-	DP p1;
-	MP m,mr,mr0;
-	int i,n;
-	P *w;
-	Q *c;
-	Q dvr;
-	NODE tn;
+  P t,g;
+  DP p1;
+  MP m,mr,mr0;
+  int i,n;
+  P *w;
+  Q *c;
+  Q dvr;
+  NODE tn;
 
-	if ( !p )
-		*rp = 0;
-	else if ( dp_fcoeffs == N_GFS ) {
-		for ( m = BDY(p); m; m = NEXT(m) )
-			if ( OID(m->c) == O_N ) {
-				/* GCD of coeffs = 1 */
-				dp_monic_sf(p,rp);
-				return;
-			} else break;
-		/* compute GCD over the finite fieid */
-		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
-		w = (P *)ALLOCA(n*sizeof(P));
-		for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
-			w[i] = (P)m->c;
-		gcdsf(CO,w,n,&g);
-		if ( NUM(g) )
-			dp_monic_sf(p,rp);
-		else {
-			for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-				NEXTMP(mr0,mr); divsp(CO,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl;
-			}
-			NEXT(mr) = 0; MKDP(p->nv,mr0,p1); p1->sugar = p->sugar;
-			dp_monic_sf(p1,rp);
-		}
-		return;
-	} else if ( dp_fcoeffs )
-		*rp = p;
-	else if ( NoGCD )
-		dp_ptozp(p,rp);
-	else {
-		dp_ptozp(p,&p1); p = p1;
-		for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
-		if ( n == 1 ) {
-			m = BDY(p);
-			NEWMP(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
-			MKDP(p->nv,mr,*rp); (*rp)->sugar = p->sugar;
-			return;
-		}
-		w = (P *)ALLOCA(n*sizeof(P));
-		c = (Q *)ALLOCA(n*sizeof(Q));
-		for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
-			if ( NUM(m->c) ) {
-				c[i] = (Q)m->c; w[i] = (P)ONE;
-			} else
-				ptozp((P)m->c,1,&c[i],&w[i]);
-		qltozl(c,n,&dvr); heu_nezgcdnpz(CO,w,n,&t); mulp(CO,t,(P)dvr,&g);
-		if ( NUM(g) )
-			*rp = p;
-		else {
-			for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-				NEXTMP(mr0,mr); divsp(CO,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl;
-			}
-			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-			add_denomlist(g);
-		}
-	}
+  if ( !p )
+    *rp = 0;
+  else if ( dp_fcoeffs == N_GFS ) {
+    for ( m = BDY(p); m; m = NEXT(m) )
+      if ( OID(m->c) == O_N ) {
+        /* GCD of coeffs = 1 */
+        dp_monic_sf(p,rp);
+        return;
+      } else break;
+    /* compute GCD over the finite fieid */
+    for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+    w = (P *)ALLOCA(n*sizeof(P));
+    for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      w[i] = (P)m->c;
+    gcdsf(CO,w,n,&g);
+    if ( NUM(g) )
+      dp_monic_sf(p,rp);
+    else {
+      for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+        NEXTMP(mr0,mr); divsp(CO,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl;
+      }
+      NEXT(mr) = 0; MKDP(p->nv,mr0,p1); p1->sugar = p->sugar;
+      dp_monic_sf(p1,rp);
+    }
+    return;
+  } else if ( dp_fcoeffs )
+    *rp = p;
+  else if ( NoGCD )
+    dp_ptozp(p,rp);
+  else {
+    dp_ptozp(p,&p1); p = p1;
+    for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+    if ( n == 1 ) {
+      m = BDY(p);
+      NEWMP(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
+      MKDP(p->nv,mr,*rp); (*rp)->sugar = p->sugar;
+      return;
+    }
+    w = (P *)ALLOCA(n*sizeof(P));
+    c = (Q *)ALLOCA(n*sizeof(Q));
+    for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      if ( NUM(m->c) ) {
+        c[i] = (Q)m->c; w[i] = (P)ONE;
+      } else
+        ptozp((P)m->c,1,&c[i],&w[i]);
+    qltozl(c,n,&dvr); heu_nezgcdnpz(CO,w,n,&t); mulp(CO,t,(P)dvr,&g);
+    if ( NUM(g) )
+      *rp = p;
+    else {
+      for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+        NEXTMP(mr0,mr); divsp(CO,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl;
+      }
+      NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+      add_denomlist(g);
+    }
+  }
 }
 
 void heu_nezgcdnpz(VL vl,P *pl,int m,P *pr)
 {
-	int i,r;
-	P gcd,t,s1,s2,u;
-	Q rq;
-	DCP dc;
-	extern int DP_Print;
+  int i,r;
+  P gcd,t,s1,s2,u;
+  Q rq;
+  DCP dc;
+  extern int DP_Print;
 
-	while ( 1 ) {
-		for ( i = 0, s1 = 0; i < m; i++ ) {
-			r = random(); UTOQ(r,rq);
-			mulp(vl,pl[i],(P)rq,&t); addp(vl,s1,t,&u); s1 = u;
-		}
-		for ( i = 0, s2 = 0; i < m; i++ ) {
-			r = random(); UTOQ(r,rq);
-			mulp(vl,pl[i],(P)rq,&t); addp(vl,s2,t,&u); s2 = u;
-		}
-		ezgcdp(vl,s1,s2,&gcd);
-		if ( DP_Print > 2 ) 
-			{ fprintf(asir_out,"(%d)",nmonop(gcd)); fflush(asir_out); }
-		for ( i = 0; i < m; i++ ) {
-			if ( !divtpz(vl,pl[i],gcd,&t) )
-				break;
-		}
-		if ( i == m )
-			break;
-	}
-	*pr = gcd;
+  while ( 1 ) {
+    for ( i = 0, s1 = 0; i < m; i++ ) {
+      r = random(); UTOQ(r,rq);
+      mulp(vl,pl[i],(P)rq,&t); addp(vl,s1,t,&u); s1 = u;
+    }
+    for ( i = 0, s2 = 0; i < m; i++ ) {
+      r = random(); UTOQ(r,rq);
+      mulp(vl,pl[i],(P)rq,&t); addp(vl,s2,t,&u); s2 = u;
+    }
+    ezgcdp(vl,s1,s2,&gcd);
+    if ( DP_Print > 2 ) 
+      { fprintf(asir_out,"(%d)",nmonop(gcd)); fflush(asir_out); }
+    for ( i = 0; i < m; i++ ) {
+      if ( !divtpz(vl,pl[i],gcd,&t) )
+        break;
+    }
+    if ( i == m )
+      break;
+  }
+  *pr = gcd;
 }
 
 void dp_prim_mod(DP p,int mod,DP *rp)
 {
-	P t,g;
-	MP m,mr,mr0;
+  P t,g;
+  MP m,mr,mr0;
 
-	if ( !p )
-		*rp = 0;
-	else if ( NoGCD )
-		*rp = p;
-	else {
-		for ( m = BDY(p), g = (P)m->c, m = NEXT(m); m; m = NEXT(m) ) {
-			gcdprsmp(CO,mod,g,(P)m->c,&t); g = t;
-		}
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); divsmp(CO,mod,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl;
-		}
-		NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
+  if ( !p )
+    *rp = 0;
+  else if ( NoGCD )
+    *rp = p;
+  else {
+    for ( m = BDY(p), g = (P)m->c, m = NEXT(m); m; m = NEXT(m) ) {
+      gcdprsmp(CO,mod,g,(P)m->c,&t); g = t;
+    }
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr); divsmp(CO,mod,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl;
+    }
+    NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void dp_cont(DP p,Q *rp)
 {
-	VECT v;
+  VECT v;
 
-	dp_dtov(p,&v); igcdv(v,rp);
+  dp_dtov(p,&v); igcdv(v,rp);
 }
 
 void dp_dtov(DP dp,VECT *rp)
 {
-	MP m,t;
-	int i,n;
-	VECT v;
-	pointer *p;
+  MP m,t;
+  int i,n;
+  VECT v;
+  pointer *p;
 
-	m = BDY(dp);
-	for ( t = m, n = 0; t; t = NEXT(t), n++ );
-	MKVECT(v,n);
-	for ( i = 0, p = BDY(v), t = m; i < n; t = NEXT(t), i++ )
-		p[i] = (pointer)(t->c);
-	*rp = v;
+  m = BDY(dp);
+  for ( t = m, n = 0; t; t = NEXT(t), n++ );
+  MKVECT(v,n);
+  for ( i = 0, p = BDY(v), t = m; i < n; t = NEXT(t), i++ )
+    p[i] = (pointer)(t->c);
+  *rp = v;
 }
 
 /*
@@ -680,244 +680,244 @@ void dp_dtov(DP dp,VECT *rp)
 
 void dp_sp(DP p1,DP p2,DP *rp)
 {
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP t,s1,s2,u;
-	Q c,c1,c2;
-	N gn,tn;
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP t,s1,s2,u;
+  Q c,c1,c2;
+  N gn,tn;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
-	}
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
 
-	NEWDL(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
-	if ( INT(c1) && INT(c2) ) {
-		gcdn(NM(c1),NM(c2),&gn);
-		if ( !UNIN(gn) ) {
-			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
-			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
-		}
-	}
+  NEWDL(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+  c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+  if ( INT(c1) && INT(c2) ) {
+    gcdn(NM(c1),NM(c2),&gn);
+    if ( !UNIN(gn) ) {
+      divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+      divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+    }
+  }
 
-	NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
-	MKDP(n,m,s1); s1->sugar = d->td; muld(CO,s1,p1,&t);
+  NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
+  MKDP(n,m,s1); s1->sugar = d->td; muld(CO,s1,p1,&t);
 
-	NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
-	MKDP(n,m,s2); s2->sugar = d->td; muld(CO,s2,p2,&u);
+  NEWDL(d,n); d->td = td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d2->d[i];
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
+  MKDP(n,m,s2); s2->sugar = d->td; muld(CO,s2,p2,&u);
 
-	subd(CO,t,u,rp);
-	if ( GenTrace ) {
-		LIST hist;
-		NODE node;
+  subd(CO,t,u,rp);
+  if ( GenTrace ) {
+    LIST hist;
+    NODE node;
 
-		node = mknode(4,ONE,NULLP,s1,ONE);
-		MKLIST(hist,node);
-		MKNODE(TraceList,hist,0);
+    node = mknode(4,ONE,NULLP,s1,ONE);
+    MKLIST(hist,node);
+    MKNODE(TraceList,hist,0);
 
-		node = mknode(4,ONE,NULLP,NULLP,ONE);
-		chsgnd(s2,(DP *)&ARG2(node));
-		MKLIST(hist,node);
-		MKNODE(node,hist,TraceList); TraceList = node;
-	}
+    node = mknode(4,ONE,NULLP,NULLP,ONE);
+    chsgnd(s2,(DP *)&ARG2(node));
+    MKLIST(hist,node);
+    MKNODE(node,hist,TraceList); TraceList = node;
+  }
 }
 
 void dpm_sp(DPM p1,DPM p2,DPM *rp)
 {
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP s1,s2;
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP s1,s2;
   DPM t,u;
-	Q c,c1,c2;
-	N gn,tn;
+  Q c,c1,c2;
+  N gn,tn;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
   if ( BDY(p1)->pos != BDY(p2)->pos ) {
     *rp = 0;
     return;
   }
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
-	}
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
 
-	NEWDL(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
-	if ( INT(c1) && INT(c2) ) {
-		gcdn(NM(c1),NM(c2),&gn);
-		if ( !UNIN(gn) ) {
-			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
-			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
-		}
-	}
+  NEWDL(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+  c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+  if ( INT(c1) && INT(c2) ) {
+    gcdn(NM(c1),NM(c2),&gn);
+    if ( !UNIN(gn) ) {
+      divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+      divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+    }
+  }
 
-	NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
-	MKDP(n,m,s1); s1->sugar = d->td; mulobjdpm(CO,(Obj)s1,p1,&t);
+  NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
+  MKDP(n,m,s1); s1->sugar = d->td; mulobjdpm(CO,(Obj)s1,p1,&t);
 
-	NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
-	MKDP(n,m,s2); s2->sugar = d->td; mulobjdpm(CO,(Obj)s2,p2,&u);
+  NEWDL(d,n); d->td = td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d2->d[i];
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
+  MKDP(n,m,s2); s2->sugar = d->td; mulobjdpm(CO,(Obj)s2,p2,&u);
 
-	subdpm(CO,t,u,rp);
-	if ( GenTrace ) {
-		LIST hist;
-		NODE node;
+  subdpm(CO,t,u,rp);
+  if ( GenTrace ) {
+    LIST hist;
+    NODE node;
 
-		node = mknode(4,ONE,NULLP,s1,ONE);
-		MKLIST(hist,node);
-		MKNODE(TraceList,hist,0);
+    node = mknode(4,ONE,NULLP,s1,ONE);
+    MKLIST(hist,node);
+    MKNODE(TraceList,hist,0);
 
-		node = mknode(4,ONE,NULLP,NULLP,ONE);
-		chsgnd(s2,(DP *)&ARG2(node));
-		MKLIST(hist,node);
-		MKNODE(node,hist,TraceList); TraceList = node;
-	}
+    node = mknode(4,ONE,NULLP,NULLP,ONE);
+    chsgnd(s2,(DP *)&ARG2(node));
+    MKLIST(hist,node);
+    MKNODE(node,hist,TraceList); TraceList = node;
+  }
 }
 
 void _dp_sp_dup(DP p1,DP p2,DP *rp)
 {
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP t,s1,s2,u;
-	Q c,c1,c2;
-	N gn,tn;
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP t,s1,s2,u;
+  Q c,c1,c2;
+  N gn,tn;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
-	}
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
 
-	_NEWDL(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
-	if ( INT(c1) && INT(c2) ) {
-		gcdn(NM(c1),NM(c2),&gn);
-		if ( !UNIN(gn) ) {
-			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
-			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
-		}
-	}
+  _NEWDL(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+  c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+  if ( INT(c1) && INT(c2) ) {
+    gcdn(NM(c1),NM(c2),&gn);
+    if ( !UNIN(gn) ) {
+      divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+      divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+    }
+  }
 
-	_NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
-	_MKDP(n,m,s1); s1->sugar = d->td; _muld_dup(CO,s1,p1,&t); _free_dp(s1);
+  _NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
+  _MKDP(n,m,s1); s1->sugar = d->td; _muld_dup(CO,s1,p1,&t); _free_dp(s1);
 
-	_NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	_NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0;
-	_MKDP(n,m,s2); s2->sugar = d->td; _muld_dup(CO,s2,p2,&u); _free_dp(s2);
+  _NEWDL(d,n); d->td = td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d2->d[i];
+  _NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0;
+  _MKDP(n,m,s2); s2->sugar = d->td; _muld_dup(CO,s2,p2,&u); _free_dp(s2);
 
-	_addd_destructive(CO,t,u,rp);
-	if ( GenTrace ) {
-		LIST hist;
-		NODE node;
+  _addd_destructive(CO,t,u,rp);
+  if ( GenTrace ) {
+    LIST hist;
+    NODE node;
 
-		node = mknode(4,ONE,NULLP,s1,ONE);
-		MKLIST(hist,node);
-		MKNODE(TraceList,hist,0);
+    node = mknode(4,ONE,NULLP,s1,ONE);
+    MKLIST(hist,node);
+    MKNODE(TraceList,hist,0);
 
-		node = mknode(4,ONE,NULLP,NULLP,ONE);
-		chsgnd(s2,(DP *)&ARG2(node));
-		MKLIST(hist,node);
-		MKNODE(node,hist,TraceList); TraceList = node;
-	}
+    node = mknode(4,ONE,NULLP,NULLP,ONE);
+    chsgnd(s2,(DP *)&ARG2(node));
+    MKLIST(hist,node);
+    MKNODE(node,hist,TraceList); TraceList = node;
+  }
 }
 
 void dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 {
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,u;
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,u;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
-	}
-	NEWDL_NOINIT(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	NEWMP(m); m->dl = d; m->c = (Obj)BDY(p2)->c; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p1,s,&t);
-	NEWDL_NOINIT(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	NEWMP(m); m->dl = d; m->c = (Obj)BDY(p1)->c; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p2,s,&u);
-	submd(CO,mod,t,u,rp);
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
+  NEWDL_NOINIT(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+  NEWMP(m); m->dl = d; m->c = (Obj)BDY(p2)->c; NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p1,s,&t);
+  NEWDL_NOINIT(d,n); d->td = td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d2->d[i];
+  NEWMP(m); m->dl = d; m->c = (Obj)BDY(p1)->c; NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,p2,s,&u);
+  submd(CO,mod,t,u,rp);
 }
 
 void _dp_sp_mod_dup(DP p1,DP p2,int mod,DP *rp)
 {
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,u;
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,u;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
-	}
-	_NEWDL(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	_NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
-	_MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p1,&t); _free_dp(s);
-	_NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	_NEWMP(m); m->dl = d; m->c = (Obj)STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
-	_MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p2,&u); _free_dp(s);
-	_addmd_destructive(mod,t,u,rp);
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
+  _NEWDL(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+  _NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
+  _MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p1,&t); _free_dp(s);
+  _NEWDL(d,n); d->td = td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d2->d[i];
+  _NEWMP(m); m->dl = d; m->c = (Obj)STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
+  _MKDP(n,m,s); s->sugar = d->td; _mulmd_dup(mod,s,p2,&u); _free_dp(s);
+  _addmd_destructive(mod,t,u,rp);
 }
 
 void _dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 {
-	int i,n,td;
-	int *w;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,u;
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,u;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	w = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, td = 0; i < n; i++ ) {
-		w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
-	}
-	NEWDL(d,n); d->td = td - d1->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d1->d[i];
-	NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd_dup(mod,s,p1,&t);
-	NEWDL(d,n); d->td = td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = w[i] - d2->d[i];
-	NEWMP(m); m->dl = d; m->c = (Obj)STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd_dup(mod,s,p2,&u);
-	addmd_destructive(mod,t,u,rp);
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
+  NEWDL(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+  NEWMP(m); m->dl = d; m->c = BDY(p2)->c; NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td; mulmd_dup(mod,s,p1,&t);
+  NEWDL(d,n); d->td = td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d2->d[i];
+  NEWMP(m); m->dl = d; m->c = (Obj)STOI(mod - ITOS(BDY(p1)->c)); NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td; mulmd_dup(mod,s,p2,&u);
+  addmd_destructive(mod,t,u,rp);
 }
 
 /*
@@ -929,85 +929,85 @@ void _dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
 
 void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,r,h;
-	Q c,c1,c2;
-	N gn,tn;
-	P g,a;
-	P p[2];
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  Q c,c1,c2;
+  N gn,tn;
+  P g,a;
+  P p[2];
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
-	if ( dp_fcoeffs == N_GFS ) {
-		p[0] = (P)c1; p[1] = (P)c2;
-		gcdsf(CO,p,2,&g);
-		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
-	} else if ( dp_fcoeffs ) {
-		/* do nothing */
-	} else if ( INT(c1) && INT(c2) ) {
-		gcdn(NM(c1),NM(c2),&gn);
-		if ( !UNIN(gn) ) {
-			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
-			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
-		}
-	} else {
-		ezgcdpz(CO,(P)c1,(P)c2,&g);
-		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
-		add_denomlist(g);
-	}
-	NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
-	*multp = s;
-	muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); addd(CO,s,t,&r);
-	muldc(CO,p0,(Obj)c2,&h);
-	*head = h; *rest = r; *dnp = (P)c2;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+  if ( dp_fcoeffs == N_GFS ) {
+    p[0] = (P)c1; p[1] = (P)c2;
+    gcdsf(CO,p,2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+  } else if ( dp_fcoeffs ) {
+    /* do nothing */
+  } else if ( INT(c1) && INT(c2) ) {
+    gcdn(NM(c1),NM(c2),&gn);
+    if ( !UNIN(gn) ) {
+      divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+      divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+    }
+  } else {
+    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+    add_denomlist(g);
+  }
+  NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); addd(CO,s,t,&r);
+  muldc(CO,p0,(Obj)c2,&h);
+  *head = h; *rest = r; *dnp = (P)c2;
 }
 
 void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
 {
-	int i,n,pos;
-	DL d1,d2,d;
-	MP m;
+  int i,n,pos;
+  DL d1,d2,d;
+  MP m;
   DP s;
-	DPM t,r,h,u,w;
-	Q c,c1,c2;
-	N gn,tn;
-	P g,a;
-	P p[2];
+  DPM t,r,h,u,w;
+  Q c,c1,c2;
+  N gn,tn;
+  P g,a;
+  P p[2];
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl; pos = BDY(p1)->pos;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl; pos = BDY(p1)->pos;
   if ( pos != BDY(p2)->pos )
     error("dpm_red : cannot happen");
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
-	if ( dp_fcoeffs == N_GFS ) {
-		p[0] = (P)c1; p[1] = (P)c2;
-		gcdsf(CO,p,2,&g);
-		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
-	} else if ( dp_fcoeffs ) {
-		/* do nothing */
-	} else if ( INT(c1) && INT(c2) ) {
-		gcdn(NM(c1),NM(c2),&gn);
-		if ( !UNIN(gn) ) {
-			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
-			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
-		}
-	} else {
-		ezgcdpz(CO,(P)c1,(P)c2,&g);
-		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
-		add_denomlist(g);
-	}
-	NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
-	*multp = s;
-	mulobjdpm(CO,(Obj)s,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); adddpm(CO,u,w,&r);
-	mulobjdpm(CO,(Obj)c2,p0,&h);
-	*head = h; *rest = r; *dnp = (P)c2;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(p2)->c;
+  if ( dp_fcoeffs == N_GFS ) {
+    p[0] = (P)c1; p[1] = (P)c2;
+    gcdsf(CO,p,2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+  } else if ( dp_fcoeffs ) {
+    /* do nothing */
+  } else if ( INT(c1) && INT(c2) ) {
+    gcdn(NM(c1),NM(c2),&gn);
+    if ( !UNIN(gn) ) {
+      divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+      divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+    }
+  } else {
+    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+    add_denomlist(g);
+  }
+  NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  mulobjdpm(CO,(Obj)s,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); adddpm(CO,u,w,&r);
+  mulobjdpm(CO,(Obj)c2,p0,&h);
+  *head = h; *rest = r; *dnp = (P)c2;
 }
 
 
@@ -1021,183 +1021,183 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
 
 void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,r,h;
-	Q c,c1,c2;
-	N gn,tn;
-	P g,a;
-	P p[2];
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  Q c,c1,c2;
+  N gn,tn;
+  P g,a;
+  P p[2];
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(hp2)->c;
-	if ( dp_fcoeffs == N_GFS ) {
-		p[0] = (P)c1; p[1] = (P)c2;
-		gcdsf(CO,p,2,&g);
-		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
-	} else if ( dp_fcoeffs ) {
-		/* do nothing */
-	} else if ( INT(c1) && INT(c2) ) {
-		gcdn(NM(c1),NM(c2),&gn);
-		if ( !UNIN(gn) ) {
-			divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
-			divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
-		}
-	} else {
-		ezgcdpz(CO,(P)c1,(P)c2,&g);
-		divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
-	}
-	NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
-	*multp = s;
-	muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); subd(CO,s,t,&r);
-	muldc(CO,p0,(Obj)c2,&h);
-	*head = h; *rest = r; *dnp = (P)c2;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (Q)BDY(p1)->c; c2 = (Q)BDY(hp2)->c;
+  if ( dp_fcoeffs == N_GFS ) {
+    p[0] = (P)c1; p[1] = (P)c2;
+    gcdsf(CO,p,2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+  } else if ( dp_fcoeffs ) {
+    /* do nothing */
+  } else if ( INT(c1) && INT(c2) ) {
+    gcdn(NM(c1),NM(c2),&gn);
+    if ( !UNIN(gn) ) {
+      divsn(NM(c1),gn,&tn); NTOQ(tn,SGN(c1),c); c1 = c;
+      divsn(NM(c2),gn,&tn); NTOQ(tn,SGN(c2),c); c2 = c;
+    }
+  } else {
+    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Q)a; divsp(CO,(P)c2,g,&a); c2 = (Q)a;
+  }
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); subd(CO,s,t,&r);
+  muldc(CO,p0,(Obj)c2,&h);
+  *head = h; *rest = r; *dnp = (P)c2;
 }
 
 void dp_red_marked_mod(DP p0,DP p1,DP p2,DP hp2,int mod,DP *head,DP *rest,P *dnp,DP *multp)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,r,h;
-	P c1,c2,g,u;
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  P c1,c2,g,u;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c1 = (P)BDY(p1)->c; c2 = (P)BDY(hp2)->c;
-	gcdprsmp(CO,mod,c1,c2,&g);
-	divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
-	if ( NUM(c2) ) {
-		divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
-	}
-	NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td;
-	*multp = s;
-	mulmd(CO,mod,s,p2,&t);
-	if ( NUM(c2) ) {
-		submd(CO,mod,p1,t,&r); h = p0;
-	} else {
-		mulmdc(CO,mod,p1,c2,&s); submd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
-	}
-	*head = h; *rest = r; *dnp = c2;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (P)BDY(p1)->c; c2 = (P)BDY(hp2)->c;
+  gcdprsmp(CO,mod,c1,c2,&g);
+  divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
+  if ( NUM(c2) ) {
+    divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
+  }
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  mulmd(CO,mod,s,p2,&t);
+  if ( NUM(c2) ) {
+    submd(CO,mod,p1,t,&r); h = p0;
+  } else {
+    mulmdc(CO,mod,p1,c2,&s); submd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
+  }
+  *head = h; *rest = r; *dnp = c2;
 }
 
 /* m-reduction over a field */
 
 void dp_red_f(DP p1,DP p2,DP *rest)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s;
-	Obj a,b;
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s;
+  Obj a,b;
 
-	n = p1->nv;
-	d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  n = p1->nv;
+  d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
 
-	NEWMP(m); m->dl = d;
-	divr(CO,(Obj)BDY(p1)->c,(Obj)BDY(p2)->c,&a); chsgnr(a,&b);
-	C(m) = (Obj)b;
-	NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  NEWMP(m); m->dl = d;
+  divr(CO,(Obj)BDY(p1)->c,(Obj)BDY(p2)->c,&a); chsgnr(a,&b);
+  C(m) = (Obj)b;
+  NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
 
-	muld(CO,s,p2,&t); addd(CO,p1,t,rest);
+  muld(CO,s,p2,&t); addd(CO,p1,t,rest);
 }
 
 void dpm_red_f(DPM p1,DPM p2,DPM *rest)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DPM t;
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DPM t;
   DP s;
-	Obj a,b;
+  Obj a,b;
 
-	n = p1->nv;
-	d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  n = p1->nv;
+  d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
 
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
 
-	NEWMP(m); m->dl = d;
-	arf_div(CO,(Obj)BDY(p1)->c,(Obj)BDY(p2)->c,&a); arf_chsgn(a,&b);
-	C(m) = b;
-	NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  NEWMP(m); m->dl = d;
+  arf_div(CO,(Obj)BDY(p1)->c,(Obj)BDY(p2)->c,&a); arf_chsgn(a,&b);
+  C(m) = b;
+  NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
 
-	mulobjdpm(CO,(Obj)s,p2,&t); adddpm(CO,p1,t,rest);
+  mulobjdpm(CO,(Obj)s,p2,&t); adddpm(CO,p1,t,rest);
 }
 
 
 void dp_red_mod(DP p0,DP p1,DP p2,int mod,DP *head,DP *rest,P *dnp)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s,r,h;
-	P c1,c2,g,u;
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  P c1,c2,g,u;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c1 = (P)BDY(p1)->c; c2 = (P)BDY(p2)->c;
-	gcdprsmp(CO,mod,c1,c2,&g);
-	divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
-	if ( NUM(c2) ) {
-		divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
-	}
-	NEWMP(m); m->dl = d; chsgnmp(mod,(P)c1,(P *)&m->c); NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,s,p2,&t);
-	if ( NUM(c2) ) {
-		addmd(CO,mod,p1,t,&r); h = p0;
-	} else {
-		mulmdc(CO,mod,p1,c2,&s); addmd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
-	}
-	*head = h; *rest = r; *dnp = c2;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (P)BDY(p1)->c; c2 = (P)BDY(p2)->c;
+  gcdprsmp(CO,mod,c1,c2,&g);
+  divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
+  if ( NUM(c2) ) {
+    divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
+  }
+  NEWMP(m); m->dl = d; chsgnmp(mod,(P)c1,(P *)&m->c); NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td; mulmd(CO,mod,s,p2,&t);
+  if ( NUM(c2) ) {
+    addmd(CO,mod,p1,t,&r); h = p0;
+  } else {
+    mulmdc(CO,mod,p1,c2,&s); addmd(CO,mod,s,t,&r); mulmdc(CO,mod,p0,c2,&h);
+  }
+  *head = h; *rest = r; *dnp = c2;
 }
 
 struct oEGT eg_red_mod;
 
 void _dp_red_mod_destructive(DP p1,DP p2,int mod,DP *rp)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP t,s;
-	int c,c1,c2;
-	extern int do_weyl;
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s;
+  int c,c1,c2;
+  extern int do_weyl;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	_NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	c = invm(ITOS(BDY(p2)->c),mod); 
-	c2 = ITOS(BDY(p1)->c);
-	DMAR(c,c2,0,mod,c1);
-	_NEWMP(m); m->dl = d; m->c = (Obj)STOI(mod-c1); NEXT(m) = 0;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  _NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c = invm(ITOS(BDY(p2)->c),mod); 
+  c2 = ITOS(BDY(p1)->c);
+  DMAR(c,c2,0,mod,c1);
+  _NEWMP(m); m->dl = d; m->c = (Obj)STOI(mod-c1); NEXT(m) = 0;
 #if 0
-	_MKDP(n,m,s); s->sugar = d->td;
-	_mulmd_dup(mod,s,p2,&t); _free_dp(s);
+  _MKDP(n,m,s); s->sugar = d->td;
+  _mulmd_dup(mod,s,p2,&t); _free_dp(s);
 #else
-	if ( do_weyl ) {
-		_MKDP(n,m,s); s->sugar = d->td;
-		_mulmd_dup(mod,s,p2,&t); _free_dp(s);
-	} else {
-		_mulmdm_dup(mod,p2,m,&t); _FREEMP(m);
-	}
+  if ( do_weyl ) {
+    _MKDP(n,m,s); s->sugar = d->td;
+    _mulmd_dup(mod,s,p2,&t); _free_dp(s);
+  } else {
+    _mulmdm_dup(mod,p2,m,&t); _FREEMP(m);
+  }
 #endif
 /* get_eg(&t0); */
-	_addmd_destructive(mod,p1,t,rp);
+  _addmd_destructive(mod,p1,t,rp);
 /* get_eg(&t1); add_eg(&eg_red_mod,&t0,&t1); */
 }
 
@@ -1208,839 +1208,839 @@ void _dp_red_mod_destructive(DP p1,DP p2,int mod,DP *rp)
 
 void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
 {
-	DP u,p,d,s,t,dmy;
-	NODE l;
-	MP m,mr;
-	int i,n;
-	int *wb;
-	int sugar,psugar;
-	P dn,tdn,tdn1;
+  DP u,p,d,s,t,dmy;
+  NODE l;
+  MP m,mr;
+  int i,n;
+  int *wb;
+  int sugar,psugar;
+  P dn,tdn,tdn1;
 
-	dn = (P)ONE;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red(d,g,p,&t,&u,&tdn,&dmy);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; *dnp = dn; return;
-				} else {
-					d = t;
-					mulp(CO,dn,tdn,&tdn1); dn = tdn1;
-				}
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; *dnp = dn; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d; *dnp = dn;
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,p = ps[wb[i]]) ) {
+        dp_red(d,g,p,&t,&u,&tdn,&dmy);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; *dnp = dn; return;
+        } else {
+          d = t;
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else if ( !full ) {
+      if ( g ) {
+        MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; *dnp = dn; return;
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addd(CO,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
 }
 
 void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Q *contp)
 {
-	struct oVECT v;
-	int i,n1,n2,n;
-	MP m,m0,t;
-	Q *w;
-	Q h;
+  struct oVECT v;
+  int i,n1,n2,n;
+  MP m,m0,t;
+  Q *w;
+  Q h;
 
-	if ( p1 ) {
-		for ( i = 0, m = BDY(p1); m; m = NEXT(m), i++ );
-		n1 = i;
-	} else
-		n1 = 0;
-	if ( p2 ) {
-		for ( i = 0, m = BDY(p2); m; m = NEXT(m), i++ );
-		n2 = i;
-	} else
-		n2 = 0;
-	n = n1+n2;
-	if ( !n ) {
-		*r1p = 0; *r2p = 0; *contp = ONE; return;
-	}
-	w = (Q *)ALLOCA(n*sizeof(Q));
-	v.len = n;
-	v.body = (pointer *)w;
-	i = 0;
-	if ( p1 )
-		for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) w[i] = (Q)m->c;
-	if ( p2 )
-		for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = (Q)m->c;
-	h = w[0]; removecont_array((P *)w,n,1); divq(h,w[0],contp);
-	i = 0;
-	if ( p1 ) {
-		for ( m0 = 0, t = BDY(p1); i < n1; i++, t = NEXT(t) ) {
-			NEXTMP(m0,m); m->c = (Obj)w[i]; m->dl = t->dl;
-		}
-		NEXT(m) = 0;
-		MKDP(p1->nv,m0,*r1p); (*r1p)->sugar = p1->sugar;
-	} else
-		*r1p = 0;
-	if ( p2 ) {
-		for ( m0 = 0, t = BDY(p2); i < n; i++, t = NEXT(t) ) {
-			NEXTMP(m0,m); m->c = (Obj)w[i]; m->dl = t->dl;
-		}
-		NEXT(m) = 0;
-		MKDP(p2->nv,m0,*r2p); (*r2p)->sugar = p2->sugar;
-	} else
-		*r2p = 0;
+  if ( p1 ) {
+    for ( i = 0, m = BDY(p1); m; m = NEXT(m), i++ );
+    n1 = i;
+  } else
+    n1 = 0;
+  if ( p2 ) {
+    for ( i = 0, m = BDY(p2); m; m = NEXT(m), i++ );
+    n2 = i;
+  } else
+    n2 = 0;
+  n = n1+n2;
+  if ( !n ) {
+    *r1p = 0; *r2p = 0; *contp = ONE; return;
+  }
+  w = (Q *)ALLOCA(n*sizeof(Q));
+  v.len = n;
+  v.body = (pointer *)w;
+  i = 0;
+  if ( p1 )
+    for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) w[i] = (Q)m->c;
+  if ( p2 )
+    for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = (Q)m->c;
+  h = w[0]; removecont_array((P *)w,n,1); divq(h,w[0],contp);
+  i = 0;
+  if ( p1 ) {
+    for ( m0 = 0, t = BDY(p1); i < n1; i++, t = NEXT(t) ) {
+      NEXTMP(m0,m); m->c = (Obj)w[i]; m->dl = t->dl;
+    }
+    NEXT(m) = 0;
+    MKDP(p1->nv,m0,*r1p); (*r1p)->sugar = p1->sugar;
+  } else
+    *r1p = 0;
+  if ( p2 ) {
+    for ( m0 = 0, t = BDY(p2); i < n; i++, t = NEXT(t) ) {
+      NEXTMP(m0,m); m->c = (Obj)w[i]; m->dl = t->dl;
+    }
+    NEXT(m) = 0;
+    MKDP(p2->nv,m0,*r2p); (*r2p)->sugar = p2->sugar;
+  } else
+    *r2p = 0;
 }
 
 /* true nf by a marked GB */
 
 void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
 {
-	DP u,p,d,s,t,dmy,hp;
-	NODE l;
-	MP m,mr;
-	int i,n,hmag;
-	int *wb;
-	int sugar,psugar,multiple;
-	P nm,tnm1,dn,tdn,tdn1;
-	Q cont;
+  DP u,p,d,s,t,dmy,hp;
+  NODE l;
+  MP m,mr;
+  int i,n,hmag;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1;
+  Q cont;
 
-	multiple = 0;
-	hmag = multiple*HMAG(g);
-	nm = (P)ONE;
-	dn = (P)ONE;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,hp = hps[wb[i]]) ) {
-				p = ps[wb[i]];
-				dp_red_marked(d,g,p,hp,&t,&u,&tdn,&dmy);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					goto last;
-				} else {
-					d = t;
-					mulp(CO,dn,tdn,&tdn1); dn = tdn1;
-				}
-				break;
-			}
-		}
-		if ( u ) {
-			g = u;
-			if ( multiple && ((d && HMAG(d)>hmag) || (HMAG(g)>hmag)) ) {
-				dp_removecont2(d,g,&t,&u,&cont); d = t; g = u;
-				mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
-				if ( d )
-					hmag = multiple*HMAG(d);
-				else
-					hmag = multiple*HMAG(g);
-			}
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
+  multiple = 0;
+  hmag = multiple*HMAG(g);
+  nm = (P)ONE;
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,hp = hps[wb[i]]) ) {
+        p = ps[wb[i]];
+        dp_red_marked(d,g,p,hp,&t,&u,&tdn,&dmy);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          goto last;
+        } else {
+          d = t;
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+      if ( multiple && ((d && HMAG(d)>hmag) || (HMAG(g)>hmag)) ) {
+        dp_removecont2(d,g,&t,&u,&cont); d = t; g = u;
+        mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
+        if ( d )
+          hmag = multiple*HMAG(d);
+        else
+          hmag = multiple*HMAG(g);
+      }
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addd(CO,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
 last:
-	if ( d ) {
-		dp_removecont2(d,0,&t,&u,&cont); d = t;
-		mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
-		d->sugar = sugar;
-	}
-	*rp = d; *nmp = nm; *dnp = dn;
+  if ( d ) {
+    dp_removecont2(d,0,&t,&u,&cont); d = t;
+    mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
+    d->sugar = sugar;
+  }
+  *rp = d; *nmp = nm; *dnp = dn;
 }
 
 void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
 {
-	DP hp,u,p,d,s,t,dmy;
-	NODE l;
-	MP m,mr;
-	int i,n;
-	int *wb;
-	int sugar,psugar;
-	P dn,tdn,tdn1;
+  DP hp,u,p,d,s,t,dmy;
+  NODE l;
+  MP m,mr;
+  int i,n;
+  int *wb;
+  int sugar,psugar;
+  P dn,tdn,tdn1;
 
-	dn = (P)ONEM;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-		wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,hp = hps[wb[i]]) ) {
-				p = ps[wb[i]];
-				dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&dmy);	
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; *dnp = dn; return;
-				} else {
-					d = t;
-					mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
-				}
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addmd(CO,mod,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d; *dnp = dn;
+  dn = (P)ONEM;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+    wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,hp = hps[wb[i]]) ) {
+        p = ps[wb[i]];
+        dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&dmy);  
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; *dnp = dn; return;
+        } else {
+          d = t;
+          mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addmd(CO,mod,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
 }
 
 /* true nf by a marked GB and collect quotients */
 
 DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
 {
-	DP u,p,d,s,t,dmy,hp,mult;
-	DP *q;
-	NODE l;
-	MP m,mr;
-	int i,n,j;
-	int *wb;
-	int sugar,psugar,multiple;
-	P nm,tnm1,dn,tdn,tdn1;
-	Q cont;
+  DP u,p,d,s,t,dmy,hp,mult;
+  DP *q;
+  NODE l;
+  MP m,mr;
+  int i,n,j;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1;
+  Q cont;
 
-	dn = (P)ONE;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return 0;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	q = (DP *)MALLOC(n*sizeof(DP));
-	for ( i = 0; i < n; i++ ) q[i] = 0;
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,hp = hps[wb[i]]) ) {
-				p = ps[wb[i]];
-				dp_red_marked(d,g,p,hp,&t,&u,&tdn,&mult);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				for ( j = 0; j < n; j++ ) {
-					muldc(CO,q[j],(Obj)tdn,&dmy); q[j] = dmy;
-				}
-				addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
-				mulp(CO,dn,tdn,&tdn1); dn = tdn1;
-				d = t;
-				if ( !u ) goto last;
-				break;
-			}
-		}
-		if ( u ) {
-			g = u;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return 0;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
+  q = (DP *)MALLOC(n*sizeof(DP));
+  for ( i = 0; i < n; i++ ) q[i] = 0;
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,hp = hps[wb[i]]) ) {
+        p = ps[wb[i]];
+        dp_red_marked(d,g,p,hp,&t,&u,&tdn,&mult);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        for ( j = 0; j < n; j++ ) {
+          muldc(CO,q[j],(Obj)tdn,&dmy); q[j] = dmy;
+        }
+        addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
+        mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        d = t;
+        if ( !u ) goto last;
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addd(CO,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
 last:
-	if ( d ) d->sugar = sugar;
-	*rp = d; *dnp = dn;
-	return q;
+  if ( d ) d->sugar = sugar;
+  *rp = d; *dnp = dn;
+  return q;
 }
 
 DP *dp_true_nf_and_quotient_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
 {
-	DP u,p,d,s,t,dmy,hp,mult;
-	DP *q;
-	NODE l;
-	MP m,mr;
-	int i,n,j;
-	int *wb;
-	int sugar,psugar;
-	P dn,tdn,tdn1;
+  DP u,p,d,s,t,dmy,hp,mult;
+  DP *q;
+  NODE l;
+  MP m,mr;
+  int i,n,j;
+  int *wb;
+  int sugar,psugar;
+  P dn,tdn,tdn1;
 
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	q = (DP *)MALLOC(n*sizeof(DP));
-	for ( i = 0; i < n; i++ ) q[i] = 0;
-	dn = (P)ONEM;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return 0;
-	}
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,hp = hps[wb[i]]) ) {
-				p = ps[wb[i]];
-				dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&mult);	
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				for ( j = 0; j < n; j++ ) {
-					mulmdc(CO,mod,q[j],(P)tdn,&dmy); q[j] = dmy;
-				}
-				addmd(CO,mod,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
-				mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
-				d = t;
-				if ( !u ) goto last;
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addmd(CO,mod,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  q = (DP *)MALLOC(n*sizeof(DP));
+  for ( i = 0; i < n; i++ ) q[i] = 0;
+  dn = (P)ONEM;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return 0;
+  }
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,hp = hps[wb[i]]) ) {
+        p = ps[wb[i]];
+        dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&mult);  
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        for ( j = 0; j < n; j++ ) {
+          mulmdc(CO,mod,q[j],(P)tdn,&dmy); q[j] = dmy;
+        }
+        addmd(CO,mod,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
+        mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+        d = t;
+        if ( !u ) goto last;
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addmd(CO,mod,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
 last:
-	if ( d )
-		d->sugar = sugar;
-	*rp = d; *dnp = dn;
-	return q;
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
+  return q;
 }
 
 /* nf computation over Z */
 
 void dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *rp)
 {
-	DP u,p,d,s,t,dmy1;
-	P dmy;
-	NODE l;
-	MP m,mr;
-	int i,n;
-	int *wb;
-	int hmag;
-	int sugar,psugar;
+  DP u,p,d,s,t,dmy1;
+  P dmy;
+  NODE l;
+  MP m,mr;
+  int i,n;
+  int *wb;
+  int hmag;
+  int sugar,psugar;
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
 
-	hmag = multiple*HMAG(g);
-	sugar = g->sugar;
+  hmag = multiple*HMAG(g);
+  sugar = g->sugar;
 
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red(d,g,p,&t,&u,&dmy,&dmy1);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				d = t;
-				break;
-			}
-		}
-		if ( u ) {
-			g = u;
-			if ( d ) {
-				if ( multiple && HMAG(d) > hmag ) {
-					dp_ptozp2(d,g,&t,&u); d = t; g = u;
-					hmag = multiple*HMAG(d);
-				}
-			} else {
-				if ( multiple && HMAG(g) > hmag ) {
-					dp_ptozp(g,&t); g = t;
-					hmag = multiple*HMAG(g);
-				}
-			}
-		}
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-				
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,p = ps[wb[i]]) ) {
+        dp_red(d,g,p,&t,&u,&dmy,&dmy1);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; return;
+        }
+        d = t;
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+      if ( d ) {
+        if ( multiple && HMAG(d) > hmag ) {
+          dp_ptozp2(d,g,&t,&u); d = t; g = u;
+          hmag = multiple*HMAG(d);
+        }
+      } else {
+        if ( multiple && HMAG(g) > hmag ) {
+          dp_ptozp(g,&t); g = t;
+          hmag = multiple*HMAG(g);
+        }
+      }
+    }
+    else if ( !full ) {
+      if ( g ) {
+        MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; return;
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addd(CO,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+        
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d;
 }
 
 void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
 {
-	DPM u,p,d,s,t;
+  DPM u,p,d,s,t;
   DP dmy1;
-	P dmy;
-	NODE l;
-	DMM m,mr;
-	int i,n;
-	int *wb;
-	int hmag;
-	int sugar,psugar;
+  P dmy;
+  NODE l;
+  DMM m,mr;
+  int i,n;
+  int *wb;
+  int hmag;
+  int sugar,psugar;
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
 
-	hmag = multiple*HMAG(g);
-	sugar = g->sugar;
+  hmag = multiple*HMAG(g);
+  sugar = g->sugar;
 
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dpm_redble(g,p = ps[wb[i]]) ) {
-				dpm_red(d,g,p,&t,&u,&dmy,&dmy1);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				d = t;
-				break;
-			}
-		}
-		if ( u ) {
-			g = u;
-			if ( d ) {
-				if ( multiple && HMAG(d) > hmag ) {
-					dpm_ptozp2(d,g,&t,&u); d = t; g = u;
-					hmag = multiple*HMAG(d);
-				}
-			} else {
-				if ( multiple && HMAG(g) > hmag ) {
-					dpm_ptozp(g,&t); g = t;
-					hmag = multiple*HMAG(g);
-				}
-			}
-		}
-		else if ( !full ) {
-			if ( g ) {
-				MKDPM(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
-			NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
-			adddpm(CO,d,t,&s); d = s;
-			dpm_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dpm_redble(g,p = ps[wb[i]]) ) {
+        dpm_red(d,g,p,&t,&u,&dmy,&dmy1);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; return;
+        }
+        d = t;
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+      if ( d ) {
+        if ( multiple && HMAG(d) > hmag ) {
+          dpm_ptozp2(d,g,&t,&u); d = t; g = u;
+          hmag = multiple*HMAG(d);
+        }
+      } else {
+        if ( multiple && HMAG(g) > hmag ) {
+          dpm_ptozp(g,&t); g = t;
+          hmag = multiple*HMAG(g);
+        }
+      }
+    }
+    else if ( !full ) {
+      if ( g ) {
+        MKDPM(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; return;
+    } else {
+      m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
+      adddpm(CO,d,t,&s); d = s;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d;
 }
 
 /* nf computation over a field */
 
 void dp_nf_f(NODE b,DP g,DP *ps,int full,DP *rp)
 {
-	DP u,p,d,s,t;
-	NODE l;
-	MP m,mr;
-	int i,n;
-	int *wb;
-	int sugar,psugar;
+  DP u,p,d,s,t;
+  NODE l;
+  MP m,mr;
+  int i,n;
+  int *wb;
+  int sugar,psugar;
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
 
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red_f(g,p,&u);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addd(CO,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,p = ps[wb[i]]) ) {
+        dp_red_f(g,p,&u);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; return;
+        }
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else if ( !full ) {
+      if ( g ) {
+        MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; return;
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addd(CO,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d;
 }
 
 void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp)
 {
-	DPM u,p,d,s,t;
-	NODE l;
-	DMM m,mr;
-	int i,n;
-	int *wb;
-	int sugar,psugar;
+  DPM u,p,d,s,t;
+  NODE l;
+  DMM m,mr;
+  int i,n;
+  int *wb;
+  int sugar,psugar;
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-	wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
 
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dpm_redble(g,p = ps[wb[i]]) ) {
-				dpm_red_f(g,p,&u);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDPM(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
-			NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
-			adddpm(CO,d,t,&s); d = s;
-			dpm_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dpm_redble(g,p = ps[wb[i]]) ) {
+        dpm_red_f(g,p,&u);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; return;
+        }
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else if ( !full ) {
+      if ( g ) {
+        MKDPM(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; return;
+    } else {
+      m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
+      adddpm(CO,d,t,&s); d = s;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d;
 }
 
 /* nf computation over GF(mod) (only for internal use) */
 
 void dp_nf_mod(NODE b,DP g,DP *ps,int mod,int full,DP *rp)
 {
-	DP u,p,d,s,t;
-	P dmy;
-	NODE l;
-	MP m,mr;
-	int sugar,psugar;
+  DP u,p,d,s,t;
+  P dmy;
+  NODE l;
+  MP m,mr;
+  int sugar,psugar;
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, l = b; l; l = NEXT(l) ) {
-			if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
-				dp_red_mod(d,g,p,mod,&t,&u,&dmy);
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; return;
-				}
-				d = t;
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addmd(CO,mod,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d;
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, l = b; l; l = NEXT(l) ) {
+      if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
+        dp_red_mod(d,g,p,mod,&t,&u,&dmy);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; return;
+        }
+        d = t;
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else if ( !full ) {
+      if ( g ) {
+        MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; return;
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addmd(CO,mod,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d;
 }
 
 void dp_true_nf_mod(NODE b,DP g,DP *ps,int mod,int full,DP *rp,P *dnp)
 {
-	DP u,p,d,s,t;
-	NODE l;
-	MP m,mr;
-	int i,n;
-	int *wb;
-	int sugar,psugar;
-	P dn,tdn,tdn1;
+  DP u,p,d,s,t;
+  NODE l;
+  MP m,mr;
+  int i,n;
+  int *wb;
+  int sugar,psugar;
+  P dn,tdn,tdn1;
 
-	dn = (P)ONEM;
-	if ( !g ) {
-		*rp = 0; *dnp = dn; return;
-	}
-	for ( n = 0, l = b; l; l = NEXT(l), n++ );
-		wb = (int *)ALLOCA(n*sizeof(int));
-	for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-		wb[i] = QTOS((Q)BDY(l));
-	sugar = g->sugar;
-	for ( d = 0; g; ) {
-		for ( u = 0, i = 0; i < n; i++ ) {
-			if ( dp_redble(g,p = ps[wb[i]]) ) {
-				dp_red_mod(d,g,p,mod,&t,&u,&tdn);	
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				sugar = MAX(sugar,psugar);
-				if ( !u ) {
-					if ( d )
-						d->sugar = sugar;
-					*rp = d; *dnp = dn; return;
-				} else {
-					d = t;
-					mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
-				}
-				break;
-			}
-		}
-		if ( u )
-			g = u;
-		else if ( !full ) {
-			if ( g ) {
-				MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
-			}
-			*rp = g; *dnp = dn; return;
-		} else {
-			m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-			NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-			addmd(CO,mod,d,t,&s); d = s;
-			dp_rest(g,&t); g = t;
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	*rp = d; *dnp = dn;
+  dn = (P)ONEM;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+    wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = QTOS((Q)BDY(l));
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,p = ps[wb[i]]) ) {
+        dp_red_mod(d,g,p,mod,&t,&u,&tdn);  
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; *dnp = dn; return;
+        } else {
+          d = t;
+          mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u )
+      g = u;
+    else if ( !full ) {
+      if ( g ) {
+        MKDP(g->nv,BDY(g),t); t->sugar = sugar; g = t;
+      }
+      *rp = g; *dnp = dn; return;
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addmd(CO,mod,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
 }
 
 void _dp_nf_mod_destructive(NODE b,DP g,DP *ps,int mod,int full,DP *rp)
 {
-	DP u,p,d;
-	NODE l;
-	MP m,mrd;
-	int sugar,psugar,n,h_reducible;
+  DP u,p,d;
+  NODE l;
+  MP m,mrd;
+  int sugar,psugar,n,h_reducible;
 
-	if ( !g ) {
-		*rp = 0; return;
-	}
-	sugar = g->sugar;
-	n = g->nv;
-	for ( d = 0; g; ) {
-		for ( h_reducible = 0, l = b; l; l = NEXT(l) ) {
-			if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
-				h_reducible = 1;
-				psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
-				_dp_red_mod_destructive(g,p,mod,&u); g = u;
-				sugar = MAX(sugar,psugar);
-				if ( !g ) {
-					if ( d )
-						d->sugar = sugar;
-					_dptodp(d,rp); _free_dp(d); return;
-				}
-				break;
-			}
-		}
-		if ( !h_reducible ) {
-			/* head term is not reducible */
-			if ( !full ) {
-				if ( g )
-					g->sugar = sugar;
-				_dptodp(g,rp); _free_dp(g); return;
-			} else {
-				m = BDY(g); 
-				if ( NEXT(m) ) {
-					BDY(g) = NEXT(m); NEXT(m) = 0;
-				} else {
-					_FREEDP(g); g = 0;
-				}
-				if ( d ) {
-					for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
-					NEXT(mrd) = m;
-				} else {
-					_MKDP(n,m,d);
-				}
-			}
-		}
-	}
-	if ( d )
-		d->sugar = sugar;
-	_dptodp(d,rp); _free_dp(d);
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  sugar = g->sugar;
+  n = g->nv;
+  for ( d = 0; g; ) {
+    for ( h_reducible = 0, l = b; l; l = NEXT(l) ) {
+      if ( dp_redble(g,p = ps[(int)BDY(l)]) ) {
+        h_reducible = 1;
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        _dp_red_mod_destructive(g,p,mod,&u); g = u;
+        sugar = MAX(sugar,psugar);
+        if ( !g ) {
+          if ( d )
+            d->sugar = sugar;
+          _dptodp(d,rp); _free_dp(d); return;
+        }
+        break;
+      }
+    }
+    if ( !h_reducible ) {
+      /* head term is not reducible */
+      if ( !full ) {
+        if ( g )
+          g->sugar = sugar;
+        _dptodp(g,rp); _free_dp(g); return;
+      } else {
+        m = BDY(g); 
+        if ( NEXT(m) ) {
+          BDY(g) = NEXT(m); NEXT(m) = 0;
+        } else {
+          _FREEDP(g); g = 0;
+        }
+        if ( d ) {
+          for ( mrd = BDY(d); NEXT(mrd); mrd = NEXT(mrd) );
+          NEXT(mrd) = m;
+        } else {
+          _MKDP(n,m,d);
+        }
+      }
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  _dptodp(d,rp); _free_dp(d);
 }
 
 /* reduction by linear base over a field */
 
 void dp_lnf_f(DP p1,DP p2,NODE g,DP *r1p,DP *r2p)
 {
-	DP r1,r2,b1,b2,t,s;
-	Obj c,c1,c2;
-	NODE l,b;
-	int n;
+  DP r1,r2,b1,b2,t,s;
+  Obj c,c1,c2;
+  NODE l,b;
+  int n;
 
-	if ( !p1 ) {
-		*r1p = p1; *r2p = p2; return;
-	}
-	n = p1->nv;
-	for ( l = g, r1 = p1, r2 = p2; l; l = NEXT(l) ) {
-			if ( !r1 ) {
-				*r1p = r1; *r2p = r2; return;
-			}
-			b = BDY((LIST)BDY(l)); b1 = (DP)BDY(b);
-			if ( dl_equal(n,BDY(r1)->dl,BDY(b1)->dl) ) {
-				b2 = (DP)BDY(NEXT(b));
-				divr(CO,(Obj)ONE,(Obj)BDY(b1)->c,&c1);
-				mulr(CO,c1,(Obj)BDY(r1)->c,&c2); chsgnr(c2,&c);
-				muldc(CO,b1,(Obj)c,&t); addd(CO,r1,t,&s); r1 = s;
-				muldc(CO,b2,(Obj)c,&t); addd(CO,r2,t,&s); r2 = s;
-			}
-	}
-	*r1p = r1; *r2p = r2;
+  if ( !p1 ) {
+    *r1p = p1; *r2p = p2; return;
+  }
+  n = p1->nv;
+  for ( l = g, r1 = p1, r2 = p2; l; l = NEXT(l) ) {
+      if ( !r1 ) {
+        *r1p = r1; *r2p = r2; return;
+      }
+      b = BDY((LIST)BDY(l)); b1 = (DP)BDY(b);
+      if ( dl_equal(n,BDY(r1)->dl,BDY(b1)->dl) ) {
+        b2 = (DP)BDY(NEXT(b));
+        divr(CO,(Obj)ONE,(Obj)BDY(b1)->c,&c1);
+        mulr(CO,c1,(Obj)BDY(r1)->c,&c2); chsgnr(c2,&c);
+        muldc(CO,b1,(Obj)c,&t); addd(CO,r1,t,&s); r1 = s;
+        muldc(CO,b2,(Obj)c,&t); addd(CO,r2,t,&s); r2 = s;
+      }
+  }
+  *r1p = r1; *r2p = r2;
 }
 
 /* reduction by linear base over GF(mod) */
 
 void dp_lnf_mod(DP p1,DP p2,NODE g,int mod,DP *r1p,DP *r2p)
 {
-	DP r1,r2,b1,b2,t,s;
-	P c;
-	MQ c1,c2;
-	NODE l,b;
-	int n;
+  DP r1,r2,b1,b2,t,s;
+  P c;
+  MQ c1,c2;
+  NODE l,b;
+  int n;
 
-	if ( !p1 ) {
-		*r1p = p1; *r2p = p2; return;
-	}
-	n = p1->nv;
-	for ( l = g, r1 = p1, r2 = p2; l; l = NEXT(l) ) {
-			if ( !r1 ) {
-				*r1p = r1; *r2p = r2; return;
-			}
-			b = BDY((LIST)BDY(l)); b1 = (DP)BDY(b);
-			if ( dl_equal(n,BDY(r1)->dl,BDY(b1)->dl) ) {
-				b2 = (DP)BDY(NEXT(b));
-				invmq(mod,(MQ)BDY(b1)->c,&c1);
-				mulmq(mod,c1,(MQ)BDY(r1)->c,&c2); chsgnmp(mod,(P)c2,&c);
-				mulmdc(CO,mod,b1,c,&t); addmd(CO,mod,r1,t,&s); r1 = s;
-				mulmdc(CO,mod,b2,c,&t); addmd(CO,mod,r2,t,&s); r2 = s;
-			}
-	}
-	*r1p = r1; *r2p = r2;
+  if ( !p1 ) {
+    *r1p = p1; *r2p = p2; return;
+  }
+  n = p1->nv;
+  for ( l = g, r1 = p1, r2 = p2; l; l = NEXT(l) ) {
+      if ( !r1 ) {
+        *r1p = r1; *r2p = r2; return;
+      }
+      b = BDY((LIST)BDY(l)); b1 = (DP)BDY(b);
+      if ( dl_equal(n,BDY(r1)->dl,BDY(b1)->dl) ) {
+        b2 = (DP)BDY(NEXT(b));
+        invmq(mod,(MQ)BDY(b1)->c,&c1);
+        mulmq(mod,c1,(MQ)BDY(r1)->c,&c2); chsgnmp(mod,(P)c2,&c);
+        mulmdc(CO,mod,b1,c,&t); addmd(CO,mod,r1,t,&s); r1 = s;
+        mulmdc(CO,mod,b2,c,&t); addmd(CO,mod,r2,t,&s); r2 = s;
+      }
+  }
+  *r1p = r1; *r2p = r2;
 }
 
 void dp_nf_tab_mod(DP p,LIST *tab,int mod,DP *rp)
 {
-	DP s,t,u;
-	MP m;
-	DL h;
-	int i,n;
+  DP s,t,u;
+  MP m;
+  DL h;
+  int i,n;
 
-	if ( !p ) {
-		*rp = p; return;
-	}
-	n = p->nv;
-	for ( s = 0, i = 0, m = BDY(p); m; m = NEXT(m) ) {
-		h = m->dl;
-		while ( !dl_equal(n,h,BDY((DP)BDY(BDY(tab[i])))->dl ) )
-			i++;
-		mulmdc(CO,mod,(DP)BDY(NEXT(BDY(tab[i]))),(P)m->c,&t);
-		addmd(CO,mod,s,t,&u); s = u;
-	}
-	*rp = s;
+  if ( !p ) {
+    *rp = p; return;
+  }
+  n = p->nv;
+  for ( s = 0, i = 0, m = BDY(p); m; m = NEXT(m) ) {
+    h = m->dl;
+    while ( !dl_equal(n,h,BDY((DP)BDY(BDY(tab[i])))->dl ) )
+      i++;
+    mulmdc(CO,mod,(DP)BDY(NEXT(BDY(tab[i]))),(P)m->c,&t);
+    addmd(CO,mod,s,t,&u); s = u;
+  }
+  *rp = s;
 }
 
 void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
 {
-	DP s,t,u;
-	MP m;
-	DL h;
-	int i,n;
+  DP s,t,u;
+  MP m;
+  DL h;
+  int i,n;
 
-	if ( !p ) {
-		*rp = p; return;
-	}
-	n = p->nv;
-	for ( s = 0, i = 0, m = BDY(p); m; m = NEXT(m) ) {
-		h = m->dl;
-		while ( !dl_equal(n,h,BDY((DP)BDY(BDY(tab[i])))->dl ) )
-			i++;
-		muldc(CO,(DP)BDY(NEXT(BDY(tab[i]))),m->c,&t);
-		addd(CO,s,t,&u); s = u;
-	}
-	*rp = s;
+  if ( !p ) {
+    *rp = p; return;
+  }
+  n = p->nv;
+  for ( s = 0, i = 0, m = BDY(p); m; m = NEXT(m) ) {
+    h = m->dl;
+    while ( !dl_equal(n,h,BDY((DP)BDY(BDY(tab[i])))->dl ) )
+      i++;
+    muldc(CO,(DP)BDY(NEXT(BDY(tab[i]))),m->c,&t);
+    addd(CO,s,t,&u); s = u;
+  }
+  *rp = s;
 }
 
 /*
@@ -2051,241 +2051,241 @@ void dp_nf_tab_f(DP p,LIST *tab,DP *rp)
 
 int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
 {
-	int i,j,n,s,row,col,ret,wlen;
-	struct order_spec *spec;
-	struct order_pair *l;
+  int i,j,n,s,row,col,ret,wlen;
+  struct order_spec *spec;
+  struct order_pair *l;
   Obj wp,wm;
-	NODE node,t,tn,wpair;
-	MAT m;
-	VECT v;
-	pointer **b,*bv;
-	int **w;
+  NODE node,t,tn,wpair;
+  MAT m;
+  VECT v;
+  pointer **b,*bv;
+  int **w;
 
-	if ( vl && obj && OID(obj) == O_LIST ) {
-		ret = create_composite_order_spec(vl,(LIST)obj,specp);
-		if ( show_orderspec )
-			print_composite_order_spec(*specp);
-		return ret;
-	}
+  if ( vl && obj && OID(obj) == O_LIST ) {
+    ret = create_composite_order_spec(vl,(LIST)obj,specp);
+    if ( show_orderspec )
+      print_composite_order_spec(*specp);
+    return ret;
+  }
 
-	*specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
-	if ( !obj || NUM(obj) ) {
-		spec->id = 0; spec->obj = obj;
-		spec->ord.simple = QTOS((Q)obj);
-		return 1;
-	} else if ( OID(obj) == O_LIST ) {
+  *specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+  if ( !obj || NUM(obj) ) {
+    spec->id = 0; spec->obj = obj;
+    spec->ord.simple = QTOS((Q)obj);
+    return 1;
+  } else if ( OID(obj) == O_LIST ) {
     /* module order; obj = [0|1,w,ord] or [0|1,ord] */
-		node = BDY((LIST)obj); 
-		if ( !BDY(node) || NUM(BDY(node)) ) {
+    node = BDY((LIST)obj); 
+    if ( !BDY(node) || NUM(BDY(node)) ) {
       switch ( length(node) ) {
       case 2:
-			  create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
-			  spec->id += 256; spec->obj = obj;
+        create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
+        spec->id += 256; spec->obj = obj;
         spec->top_weight = 0;
         spec->module_rank = 0;
         spec->module_top_weight = 0;
-			  spec->ispot = (BDY(node)!=0);
-			  if ( spec->ispot ) {
-			  	n = QTOS((Q)BDY(node));
-			  	if ( n < 0 )
-			  		spec->pot_nelim = -n;
-			  	else
-			  		spec->pot_nelim = 0;
-			  }
+        spec->ispot = (BDY(node)!=0);
+        if ( spec->ispot ) {
+          n = QTOS((Q)BDY(node));
+          if ( n < 0 )
+            spec->pot_nelim = -n;
+          else
+            spec->pot_nelim = 0;
+        }
         break;
 
       case 3:
-			  create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
-			  spec->id += 256; spec->obj = obj;
-			  spec->ispot = (BDY(node)!=0);
+        create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
+        spec->id += 256; spec->obj = obj;
+        spec->ispot = (BDY(node)!=0);
         node = NEXT(node);
         if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
-				  error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+          error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
         wpair = BDY((LIST)BDY(node));
         if ( length(wpair) != 2 )
-				  error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+          error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
 
         wp = BDY(wpair);
         wm = BDY(NEXT(wpair));
         if ( !wp || OID(wp) != O_LIST || !wm || OID(wm) != O_LIST )
-				  error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+          error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
         spec->nv = length(BDY((LIST)wp)); 
         spec->top_weight = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));
-		    for ( i = 0, t = BDY((LIST)wp); i < spec->nv; t = NEXT(t), i++ )
+        for ( i = 0, t = BDY((LIST)wp); i < spec->nv; t = NEXT(t), i++ )
           spec->top_weight[i] = QTOS((Q)BDY(t));
 
         spec->module_rank = length(BDY((LIST)wm));
         spec->module_top_weight = (int *)MALLOC_ATOMIC(spec->module_rank*sizeof(int));
-		    for ( i = 0, t = BDY((LIST)wm); i < spec->module_rank; t = NEXT(t), i++ )
+        for ( i = 0, t = BDY((LIST)wm); i < spec->module_rank; t = NEXT(t), i++ )
           spec->module_top_weight[i] = QTOS((Q)BDY(t));
         break;
       default:
-				error("create_order_spec : invalid arguments for module order");
+        error("create_order_spec : invalid arguments for module order");
       }
 
-			*specp = spec;
-			return 1;
-		} else {
+      *specp = spec;
+      return 1;
+    } else {
       /* block order in polynomial ring */
-		  for ( n = 0, t = node; t; t = NEXT(t), n++ );
-		  l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
-		  for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
-			  tn = BDY((LIST)BDY(t)); l[i].order = QTOS((Q)BDY(tn));
-			  tn = NEXT(tn); l[i].length = QTOS((Q)BDY(tn));
-			  s += l[i].length;
-		  }
-		  spec->id = 1; spec->obj = obj;
-		  spec->ord.block.order_pair = l;
-		  spec->ord.block.length = n; spec->nv = s;
-		  return 1;
+      for ( n = 0, t = node; t; t = NEXT(t), n++ );
+      l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
+      for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
+        tn = BDY((LIST)BDY(t)); l[i].order = QTOS((Q)BDY(tn));
+        tn = NEXT(tn); l[i].length = QTOS((Q)BDY(tn));
+        s += l[i].length;
+      }
+      spec->id = 1; spec->obj = obj;
+      spec->ord.block.order_pair = l;
+      spec->ord.block.length = n; spec->nv = s;
+      return 1;
     }
-	} else if ( OID(obj) == O_MAT ) {
-		m = (MAT)obj; row = m->row; col = m->col; b = BDY(m);
-		w = almat(row,col);
-		for ( i = 0; i < row; i++ )
-			for ( j = 0; j < col; j++ )
-				w[i][j] = QTOS((Q)b[i][j]);
-		spec->id = 2; spec->obj = obj;
-		spec->nv = col; spec->ord.matrix.row = row;
-		spec->ord.matrix.matrix = w;
-		return 1;
-	} else
-		return 0;
+  } else if ( OID(obj) == O_MAT ) {
+    m = (MAT)obj; row = m->row; col = m->col; b = BDY(m);
+    w = almat(row,col);
+    for ( i = 0; i < row; i++ )
+      for ( j = 0; j < col; j++ )
+        w[i][j] = QTOS((Q)b[i][j]);
+    spec->id = 2; spec->obj = obj;
+    spec->nv = col; spec->ord.matrix.row = row;
+    spec->ord.matrix.matrix = w;
+    return 1;
+  } else
+    return 0;
 }
 
 void print_composite_order_spec(struct order_spec *spec)
 {
-	int nv,n,len,i,j,k,start;
-	struct weight_or_block *worb;
+  int nv,n,len,i,j,k,start;
+  struct weight_or_block *worb;
 
-	nv = spec->nv;
-	n = spec->ord.composite.length;
-	worb = spec->ord.composite.w_or_b;
-	for ( i = 0; i < n; i++, worb++ ) {
-		len = worb->length;
-		printf("[ ");
-		switch ( worb->type ) {
-			case IS_DENSE_WEIGHT:
-				for ( j = 0; j < len; j++ )
-					printf("%d ",worb->body.dense_weight[j]);
-				for ( ; j < nv; j++ )
-					printf("0 ");
-				break;
-			case IS_SPARSE_WEIGHT:
-				for ( j = 0, k = 0; j < nv; j++ )
-					if ( j == worb->body.sparse_weight[k].pos )
-						printf("%d ",worb->body.sparse_weight[k++].value);
-					else
-						printf("0 ");
-				break;
-			case IS_BLOCK:
-				start = worb->body.block.start;
-				for ( j = 0; j < start; j++ ) printf("0 ");
-				switch ( worb->body.block.order ) {
-					case 0:
-						for ( k = 0; k < len; k++, j++ ) printf("R ");
-						break;
-					case 1:
-						for ( k = 0; k < len; k++, j++ ) printf("G ");
-						break;
-					case 2:
-						for ( k = 0; k < len; k++, j++ ) printf("L ");
-						break;
-				}
-				for ( ; j < nv; j++ ) printf("0 ");
-				break;
-		}
-		printf("]\n");
-	}
+  nv = spec->nv;
+  n = spec->ord.composite.length;
+  worb = spec->ord.composite.w_or_b;
+  for ( i = 0; i < n; i++, worb++ ) {
+    len = worb->length;
+    printf("[ ");
+    switch ( worb->type ) {
+      case IS_DENSE_WEIGHT:
+        for ( j = 0; j < len; j++ )
+          printf("%d ",worb->body.dense_weight[j]);
+        for ( ; j < nv; j++ )
+          printf("0 ");
+        break;
+      case IS_SPARSE_WEIGHT:
+        for ( j = 0, k = 0; j < nv; j++ )
+          if ( j == worb->body.sparse_weight[k].pos )
+            printf("%d ",worb->body.sparse_weight[k++].value);
+          else
+            printf("0 ");
+        break;
+      case IS_BLOCK:
+        start = worb->body.block.start;
+        for ( j = 0; j < start; j++ ) printf("0 ");
+        switch ( worb->body.block.order ) {
+          case 0:
+            for ( k = 0; k < len; k++, j++ ) printf("R ");
+            break;
+          case 1:
+            for ( k = 0; k < len; k++, j++ ) printf("G ");
+            break;
+          case 2:
+            for ( k = 0; k < len; k++, j++ ) printf("L ");
+            break;
+        }
+        for ( ; j < nv; j++ ) printf("0 ");
+        break;
+    }
+    printf("]\n");
+  }
 }
 
 struct order_spec *append_block(struct order_spec *spec,
-	int nv,int nalg,int ord)
+  int nv,int nalg,int ord)
 {
-	MAT m,mat;
-	int i,j,row,col,n;
-	Q **b,**wp;
-	int **w;
-	NODE t,s,s0;
-	struct order_pair *l,*l0;
-	int n0,nv0;
-	LIST list0,list1,list;
-	Q oq,nq;
-	struct order_spec *r;
+  MAT m,mat;
+  int i,j,row,col,n;
+  Q **b,**wp;
+  int **w;
+  NODE t,s,s0;
+  struct order_pair *l,*l0;
+  int n0,nv0;
+  LIST list0,list1,list;
+  Q oq,nq;
+  struct order_spec *r;
 
-	r = (struct order_spec *)MALLOC(sizeof(struct order_spec));
-	switch ( spec->id ) {
-		case 0:
-			STOQ(spec->ord.simple,oq); STOQ(nv,nq);
-			t = mknode(2,oq,nq); MKLIST(list0,t);
-			STOQ(ord,oq); STOQ(nalg,nq);
-			t = mknode(2,oq,nq); MKLIST(list1,t);
-			t = mknode(2,list0,list1); MKLIST(list,t);
-			l = (struct order_pair *)MALLOC_ATOMIC(2*sizeof(struct order_pair));
-			l[0].order = spec->ord.simple; l[0].length = nv;
-			l[1].order = ord; l[1].length = nalg;
-			r->id = 1;  r->obj = (Obj)list;
-			r->ord.block.order_pair = l;
-			r->ord.block.length = 2;
-			r->nv = nv+nalg;
-			break;
-		case 1:
-			if ( spec->nv != nv )
-				error("append_block : number of variables mismatch");
-			l0 = spec->ord.block.order_pair;
-			n0 = spec->ord.block.length;
-			nv0 = spec->nv;
-			list0 = (LIST)spec->obj;
-			n = n0+1;
-			l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
-			for ( i = 0; i < n0; i++ )
-				l[i] = l0[i];
-			l[i].order = ord; l[i].length = nalg;
-			 for ( t = BDY(list0), s0 = 0; t; t = NEXT(t) ) {
-				NEXTNODE(s0,s); BDY(s) = BDY(t);
-			}
-			STOQ(ord,oq); STOQ(nalg,nq);
-			t = mknode(2,oq,nq); MKLIST(list,t);
-			NEXTNODE(s0,s); BDY(s) = (pointer)list; NEXT(s) = 0;
-			MKLIST(list,s0);
-			r->id = 1;  r->obj = (Obj)list;
-			r->ord.block.order_pair = l;
-			r->ord.block.length = n;
-			r->nv = nv+nalg;
-			break;
-		case 2:
-			if ( spec->nv != nv )
-				error("append_block : number of variables mismatch");
-			m = (MAT)spec->obj;
-			row = m->row; col = m->col; b = (Q **)BDY(m);
-			w = almat(row+nalg,col+nalg);
-			MKMAT(mat,row+nalg,col+nalg); wp = (Q **)BDY(mat);
-			for ( i = 0; i < row; i++ )
-				for ( j = 0; j < col; j++ ) {
-					w[i][j] = QTOS(b[i][j]);
-					wp[i][j] = b[i][j];
-				}
-			for ( i = 0; i < nalg; i++ ) {
-				w[i+row][i+col] = 1;
-				wp[i+row][i+col] = ONE;
-			}
-			r->id = 2; r->obj = (Obj)mat;
-			r->nv = col+nalg; r->ord.matrix.row = row+nalg;
-			r->ord.matrix.matrix = w;
-			break;
-		case 3:
-		default:
-			/* XXX */
-			error("append_block : not implemented yet");
-	}
-	return r;
+  r = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+  switch ( spec->id ) {
+    case 0:
+      STOQ(spec->ord.simple,oq); STOQ(nv,nq);
+      t = mknode(2,oq,nq); MKLIST(list0,t);
+      STOQ(ord,oq); STOQ(nalg,nq);
+      t = mknode(2,oq,nq); MKLIST(list1,t);
+      t = mknode(2,list0,list1); MKLIST(list,t);
+      l = (struct order_pair *)MALLOC_ATOMIC(2*sizeof(struct order_pair));
+      l[0].order = spec->ord.simple; l[0].length = nv;
+      l[1].order = ord; l[1].length = nalg;
+      r->id = 1;  r->obj = (Obj)list;
+      r->ord.block.order_pair = l;
+      r->ord.block.length = 2;
+      r->nv = nv+nalg;
+      break;
+    case 1:
+      if ( spec->nv != nv )
+        error("append_block : number of variables mismatch");
+      l0 = spec->ord.block.order_pair;
+      n0 = spec->ord.block.length;
+      nv0 = spec->nv;
+      list0 = (LIST)spec->obj;
+      n = n0+1;
+      l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
+      for ( i = 0; i < n0; i++ )
+        l[i] = l0[i];
+      l[i].order = ord; l[i].length = nalg;
+       for ( t = BDY(list0), s0 = 0; t; t = NEXT(t) ) {
+        NEXTNODE(s0,s); BDY(s) = BDY(t);
+      }
+      STOQ(ord,oq); STOQ(nalg,nq);
+      t = mknode(2,oq,nq); MKLIST(list,t);
+      NEXTNODE(s0,s); BDY(s) = (pointer)list; NEXT(s) = 0;
+      MKLIST(list,s0);
+      r->id = 1;  r->obj = (Obj)list;
+      r->ord.block.order_pair = l;
+      r->ord.block.length = n;
+      r->nv = nv+nalg;
+      break;
+    case 2:
+      if ( spec->nv != nv )
+        error("append_block : number of variables mismatch");
+      m = (MAT)spec->obj;
+      row = m->row; col = m->col; b = (Q **)BDY(m);
+      w = almat(row+nalg,col+nalg);
+      MKMAT(mat,row+nalg,col+nalg); wp = (Q **)BDY(mat);
+      for ( i = 0; i < row; i++ )
+        for ( j = 0; j < col; j++ ) {
+          w[i][j] = QTOS(b[i][j]);
+          wp[i][j] = b[i][j];
+        }
+      for ( i = 0; i < nalg; i++ ) {
+        w[i+row][i+col] = 1;
+        wp[i+row][i+col] = ONE;
+      }
+      r->id = 2; r->obj = (Obj)mat;
+      r->nv = col+nalg; r->ord.matrix.row = row+nalg;
+      r->ord.matrix.matrix = w;
+      break;
+    case 3:
+    default:
+      /* XXX */
+      error("append_block : not implemented yet");
+  }
+  return r;
 }
 
 int comp_sw(struct sparse_weight *a, struct sparse_weight *b)
 {
-	if ( a->pos > b->pos ) return 1;
-	else if ( a->pos < b->pos ) return -1;
-	else return 0;
+  if ( a->pos > b->pos ) return 1;
+  else if ( a->pos < b->pos ) return -1;
+  else return 0;
 }
 
 /* order = [w_or_b, w_or_b, ... ] */
@@ -2295,189 +2295,189 @@ int comp_sw(struct sparse_weight *a, struct sparse_weight *b)
 
 int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
 {
-	NODE wb,t,p;
-	struct order_spec *spec;
-	VL tvl;
-	int n,i,j,k,l,start,end,len,w;
-	int *dw;
-	struct sparse_weight *sw;
-	struct weight_or_block *w_or_b;
-	Obj a0;
-	NODE a;
-	V v,sv,ev;
-	SYMBOL sym;
-	int *top;
+  NODE wb,t,p;
+  struct order_spec *spec;
+  VL tvl;
+  int n,i,j,k,l,start,end,len,w;
+  int *dw;
+  struct sparse_weight *sw;
+  struct weight_or_block *w_or_b;
+  Obj a0;
+  NODE a;
+  V v,sv,ev;
+  SYMBOL sym;
+  int *top;
 
-	/* l = number of vars in vl */
-	for ( l = 0, tvl = vl; tvl; tvl = NEXT(tvl), l++ );
-	/* n = number of primitives in order */
-	wb = BDY(order);
-	n = length(wb);
-	*specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
-	spec->id = 3;
-	spec->obj = (Obj)order;
-	spec->nv = l;
-	spec->ord.composite.length = n;
-	w_or_b = spec->ord.composite.w_or_b = (struct weight_or_block *)
-		MALLOC(sizeof(struct weight_or_block)*(n+1));
+  /* l = number of vars in vl */
+  for ( l = 0, tvl = vl; tvl; tvl = NEXT(tvl), l++ );
+  /* n = number of primitives in order */
+  wb = BDY(order);
+  n = length(wb);
+  *specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+  spec->id = 3;
+  spec->obj = (Obj)order;
+  spec->nv = l;
+  spec->ord.composite.length = n;
+  w_or_b = spec->ord.composite.w_or_b = (struct weight_or_block *)
+    MALLOC(sizeof(struct weight_or_block)*(n+1));
 
-	/* top : register the top variable in each w_or_b specification */
-	top = (int *)ALLOCA(l*sizeof(int));
-	for ( i = 0; i < l; i++ ) top[i] = 0;
+  /* top : register the top variable in each w_or_b specification */
+  top = (int *)ALLOCA(l*sizeof(int));
+  for ( i = 0; i < l; i++ ) top[i] = 0;
 
-	for ( t = wb, i = 0; t; t = NEXT(t), i++ ) {
-		if ( !BDY(t) || OID((Obj)BDY(t)) != O_LIST )
-			error("a list of lists must be specified for the key \"order\"");
-		a = BDY((LIST)BDY(t));
-		len = length(a);
-		a0 = (Obj)BDY(a);
-		if ( !a0 || OID(a0) == O_N ) {
-			/* a is a dense weight vector */
-			dw = (int *)MALLOC(sizeof(int)*len);
-			for ( j = 0, p = a; j < len; p = NEXT(p), j++ ) {
-				if ( !INT((Q)BDY(p)) )	
-					error("a dense weight vector must be specified as a list of integers");
-				dw[j] = QTOS((Q)BDY(p));
-			}
-			w_or_b[i].type = IS_DENSE_WEIGHT;
-			w_or_b[i].length = len;
-			w_or_b[i].body.dense_weight = dw;
+  for ( t = wb, i = 0; t; t = NEXT(t), i++ ) {
+    if ( !BDY(t) || OID((Obj)BDY(t)) != O_LIST )
+      error("a list of lists must be specified for the key \"order\"");
+    a = BDY((LIST)BDY(t));
+    len = length(a);
+    a0 = (Obj)BDY(a);
+    if ( !a0 || OID(a0) == O_N ) {
+      /* a is a dense weight vector */
+      dw = (int *)MALLOC(sizeof(int)*len);
+      for ( j = 0, p = a; j < len; p = NEXT(p), j++ ) {
+        if ( !INT((Q)BDY(p)) )  
+          error("a dense weight vector must be specified as a list of integers");
+        dw[j] = QTOS((Q)BDY(p));
+      }
+      w_or_b[i].type = IS_DENSE_WEIGHT;
+      w_or_b[i].length = len;
+      w_or_b[i].body.dense_weight = dw;
 
-			/* find the top */
-			for ( k = 0; k < len && !dw[k]; k++ );
-			if ( k < len ) top[k] = 1;
+      /* find the top */
+      for ( k = 0; k < len && !dw[k]; k++ );
+      if ( k < len ) top[k] = 1;
 
-		} else if ( OID(a0) == O_P ) {
-			/* a is a sparse weight vector */
-			len >>= 1;
-			sw = (struct sparse_weight *)
-				MALLOC(sizeof(struct sparse_weight)*len);
-			for ( j = 0, p = a; j < len; j++ ) {
-				if ( !BDY(p) || OID((P)BDY(p)) != O_P )
-					error("a sparse weight vector must be specified as [var1,weight1,...]");
-				v = VR((P)BDY(p)); p = NEXT(p);
-				for ( tvl = vl, k = 0; tvl && tvl->v != v;
-					k++, tvl = NEXT(tvl) );
-				if ( !tvl )
-					error("invalid variable name in a sparse weight vector");
-				sw[j].pos = k;
-				if ( !INT((Q)BDY(p)) )
-					error("a sparse weight vector must be specified as [var1,weight1,...]");
-				sw[j].value = QTOS((Q)BDY(p)); p = NEXT(p);
-			}
-			qsort(sw,len,sizeof(struct sparse_weight),
-				(int (*)(const void *,const void *))comp_sw);
-			w_or_b[i].type = IS_SPARSE_WEIGHT;
-			w_or_b[i].length = len;
-			w_or_b[i].body.sparse_weight = sw;
+    } else if ( OID(a0) == O_P ) {
+      /* a is a sparse weight vector */
+      len >>= 1;
+      sw = (struct sparse_weight *)
+        MALLOC(sizeof(struct sparse_weight)*len);
+      for ( j = 0, p = a; j < len; j++ ) {
+        if ( !BDY(p) || OID((P)BDY(p)) != O_P )
+          error("a sparse weight vector must be specified as [var1,weight1,...]");
+        v = VR((P)BDY(p)); p = NEXT(p);
+        for ( tvl = vl, k = 0; tvl && tvl->v != v;
+          k++, tvl = NEXT(tvl) );
+        if ( !tvl )
+          error("invalid variable name in a sparse weight vector");
+        sw[j].pos = k;
+        if ( !INT((Q)BDY(p)) )
+          error("a sparse weight vector must be specified as [var1,weight1,...]");
+        sw[j].value = QTOS((Q)BDY(p)); p = NEXT(p);
+      }
+      qsort(sw,len,sizeof(struct sparse_weight),
+        (int (*)(const void *,const void *))comp_sw);
+      w_or_b[i].type = IS_SPARSE_WEIGHT;
+      w_or_b[i].length = len;
+      w_or_b[i].body.sparse_weight = sw;
 
-			/* find the top */
-			for ( k = 0; k < len && !sw[k].value; k++ );
-			if ( k < len ) top[sw[k].pos] = 1;
-		} else if ( OID(a0) == O_RANGE ) {
-			/* [range(v1,v2),w] */
-			sv = VR((P)(((RANGE)a0)->start));
-			ev = VR((P)(((RANGE)a0)->end));
-			for ( tvl = vl, start = 0; tvl && tvl->v != sv; start++, tvl = NEXT(tvl) );
-			if ( !tvl )
-				error("invalid range");
-			for ( end = start; tvl && tvl->v != ev; end++, tvl = NEXT(tvl) );
-			if ( !tvl )
-				error("invalid range");
-			len = end-start+1;
-			sw = (struct sparse_weight *)
-				MALLOC(sizeof(struct sparse_weight)*len);
-			w = QTOS((Q)BDY(NEXT(a)));
-			for ( tvl = vl, k = 0; k < start; k++, tvl = NEXT(tvl) );
-			for ( j = 0 ; k <= end; k++, tvl = NEXT(tvl), j++ ) {
-				sw[j].pos = k;
-				sw[j].value = w;
-			}
-			w_or_b[i].type = IS_SPARSE_WEIGHT;
-			w_or_b[i].length = len;
-			w_or_b[i].body.sparse_weight = sw;
+      /* find the top */
+      for ( k = 0; k < len && !sw[k].value; k++ );
+      if ( k < len ) top[sw[k].pos] = 1;
+    } else if ( OID(a0) == O_RANGE ) {
+      /* [range(v1,v2),w] */
+      sv = VR((P)(((RANGE)a0)->start));
+      ev = VR((P)(((RANGE)a0)->end));
+      for ( tvl = vl, start = 0; tvl && tvl->v != sv; start++, tvl = NEXT(tvl) );
+      if ( !tvl )
+        error("invalid range");
+      for ( end = start; tvl && tvl->v != ev; end++, tvl = NEXT(tvl) );
+      if ( !tvl )
+        error("invalid range");
+      len = end-start+1;
+      sw = (struct sparse_weight *)
+        MALLOC(sizeof(struct sparse_weight)*len);
+      w = QTOS((Q)BDY(NEXT(a)));
+      for ( tvl = vl, k = 0; k < start; k++, tvl = NEXT(tvl) );
+      for ( j = 0 ; k <= end; k++, tvl = NEXT(tvl), j++ ) {
+        sw[j].pos = k;
+        sw[j].value = w;
+      }
+      w_or_b[i].type = IS_SPARSE_WEIGHT;
+      w_or_b[i].length = len;
+      w_or_b[i].body.sparse_weight = sw;
 
-			/* register the top */
-			if ( w ) top[start] = 1;
-		} else if ( OID(a0) == O_SYMBOL ) {
-			/* a is a block */
-			sym = (SYMBOL)a0; a = NEXT(a); len--;
-			if ( OID((Obj)BDY(a)) == O_RANGE ) {
-				sv = VR((P)(((RANGE)BDY(a))->start));
-				ev = VR((P)(((RANGE)BDY(a))->end));
-				for ( tvl = vl, start = 0; tvl && tvl->v != sv; start++, tvl = NEXT(tvl) );
-				if ( !tvl )
-					error("invalid range");
-				for ( end = start; tvl && tvl->v != ev; end++, tvl = NEXT(tvl) );
-				if ( !tvl )
-					error("invalid range");
-				len = end-start+1;
-			} else {
-				for ( start = 0, tvl = vl; tvl->v != VR((P)BDY(a));
-				tvl = NEXT(tvl), start++ );
-				for ( p = NEXT(a), tvl = NEXT(tvl); p;
-					p = NEXT(p), tvl = NEXT(tvl) ) {
-					if ( !BDY(p) || OID((P)BDY(p)) != O_P )
-						error("a block must be specified as [ordsymbol,var1,var2,...]");
-					if ( tvl->v != VR((P)BDY(p)) ) break;
-				}
-				if ( p )
-					error("a block must be contiguous in the variable list");
-			}
-			w_or_b[i].type = IS_BLOCK;
-			w_or_b[i].length = len;
-			w_or_b[i].body.block.start = start;
-			if ( !strcmp(sym->name,"@grlex") )
-				w_or_b[i].body.block.order = 0;
-			else if ( !strcmp(sym->name,"@glex") )
-				w_or_b[i].body.block.order = 1;
-			else if ( !strcmp(sym->name,"@lex") )
-				w_or_b[i].body.block.order = 2;
-			else
-				error("invalid ordername");
-			/* register the tops */
-			for ( j = 0, k = start; j < len; j++, k++ )
-				top[k] = 1;
-		}
-	}
-	for ( k = 0; k < l && top[k]; k++ );
-	if ( k < l ) {
-		/* incomplete order specification; add @grlex */
-		w_or_b[n].type = IS_BLOCK;
-		w_or_b[n].length = l;
-		w_or_b[n].body.block.start = 0;
-		w_or_b[n].body.block.order = 0;
-		spec->ord.composite.length = n+1;
-	}
+      /* register the top */
+      if ( w ) top[start] = 1;
+    } else if ( OID(a0) == O_SYMBOL ) {
+      /* a is a block */
+      sym = (SYMBOL)a0; a = NEXT(a); len--;
+      if ( OID((Obj)BDY(a)) == O_RANGE ) {
+        sv = VR((P)(((RANGE)BDY(a))->start));
+        ev = VR((P)(((RANGE)BDY(a))->end));
+        for ( tvl = vl, start = 0; tvl && tvl->v != sv; start++, tvl = NEXT(tvl) );
+        if ( !tvl )
+          error("invalid range");
+        for ( end = start; tvl && tvl->v != ev; end++, tvl = NEXT(tvl) );
+        if ( !tvl )
+          error("invalid range");
+        len = end-start+1;
+      } else {
+        for ( start = 0, tvl = vl; tvl->v != VR((P)BDY(a));
+        tvl = NEXT(tvl), start++ );
+        for ( p = NEXT(a), tvl = NEXT(tvl); p;
+          p = NEXT(p), tvl = NEXT(tvl) ) {
+          if ( !BDY(p) || OID((P)BDY(p)) != O_P )
+            error("a block must be specified as [ordsymbol,var1,var2,...]");
+          if ( tvl->v != VR((P)BDY(p)) ) break;
+        }
+        if ( p )
+          error("a block must be contiguous in the variable list");
+      }
+      w_or_b[i].type = IS_BLOCK;
+      w_or_b[i].length = len;
+      w_or_b[i].body.block.start = start;
+      if ( !strcmp(sym->name,"@grlex") )
+        w_or_b[i].body.block.order = 0;
+      else if ( !strcmp(sym->name,"@glex") )
+        w_or_b[i].body.block.order = 1;
+      else if ( !strcmp(sym->name,"@lex") )
+        w_or_b[i].body.block.order = 2;
+      else
+        error("invalid ordername");
+      /* register the tops */
+      for ( j = 0, k = start; j < len; j++, k++ )
+        top[k] = 1;
+    }
+  }
+  for ( k = 0; k < l && top[k]; k++ );
+  if ( k < l ) {
+    /* incomplete order specification; add @grlex */
+    w_or_b[n].type = IS_BLOCK;
+    w_or_b[n].length = l;
+    w_or_b[n].body.block.start = 0;
+    w_or_b[n].body.block.order = 0;
+    spec->ord.composite.length = n+1;
+  }
 }
 
 /* module order spec */
 
 void create_modorder_spec(int id,LIST shift,struct modorder_spec **s)
 {
-	struct modorder_spec *spec;
-	NODE n,t;
-	LIST list;
-	int *ds;
-	int i,l;
-	Q q;
+  struct modorder_spec *spec;
+  NODE n,t;
+  LIST list;
+  int *ds;
+  int i,l;
+  Q q;
 
-	*s = spec = (struct modorder_spec *)MALLOC(sizeof(struct modorder_spec));
-	spec->id = id;
-	if ( shift ) {
-		n = BDY(shift);
-		spec->len = l = length(n);
-		spec->degree_shift = ds = (int *)MALLOC_ATOMIC(l*sizeof(int));
-		for ( t = n, i = 0; t; t = NEXT(t), i++ )
-			ds[i] = QTOS((Q)BDY(t));
-	} else {
-		spec->len = 0;
-		spec->degree_shift = 0;
-	}
-	STOQ(id,q);
-	n = mknode(2,q,shift);
-	MKLIST(list,n);
-	spec->obj = (Obj)list;
+  *s = spec = (struct modorder_spec *)MALLOC(sizeof(struct modorder_spec));
+  spec->id = id;
+  if ( shift ) {
+    n = BDY(shift);
+    spec->len = l = length(n);
+    spec->degree_shift = ds = (int *)MALLOC_ATOMIC(l*sizeof(int));
+    for ( t = n, i = 0; t; t = NEXT(t), i++ )
+      ds[i] = QTOS((Q)BDY(t));
+  } else {
+    spec->len = 0;
+    spec->degree_shift = 0;
+  }
+  STOQ(id,q);
+  n = mknode(2,q,shift);
+  MKLIST(list,n);
+  spec->obj = (Obj)list;
 }
 
 /*
@@ -2487,261 +2487,261 @@ void create_modorder_spec(int id,LIST shift,struct modorder_spec **s)
 
 void dp_homo(DP p,DP *rp)
 {
-	MP m,mr,mr0;
-	int i,n,nv,td;
-	DL dl,dlh;
+  MP m,mr,mr0;
+  int i,n,nv,td;
+  DL dl,dlh;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		n = p->nv; nv = n + 1;
-		m = BDY(p); td = sugard(m);
-		for ( mr0 = 0; m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); mr->c = m->c;
-			dl = m->dl;
-			mr->dl = dlh = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
-			dlh->td = td;
-			for ( i = 0; i < n; i++ )
-				dlh->d[i] = dl->d[i];
-			dlh->d[n] = td - dl->td;
-		}
-		NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    n = p->nv; nv = n + 1;
+    m = BDY(p); td = sugard(m);
+    for ( mr0 = 0; m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr); mr->c = m->c;
+      dl = m->dl;
+      mr->dl = dlh = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
+      dlh->td = td;
+      for ( i = 0; i < n; i++ )
+        dlh->d[i] = dl->d[i];
+      dlh->d[n] = td - dl->td;
+    }
+    NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void dp_dehomo(DP p,DP *rp)
 {
-	MP m,mr,mr0;
-	int i,n,nv;
-	DL dl,dlh;
+  MP m,mr,mr0;
+  int i,n,nv;
+  DL dl,dlh;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		n = p->nv; nv = n - 1;
-		m = BDY(p);
-		for ( mr0 = 0; m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); mr->c = m->c;
-			dlh = m->dl;
-			mr->dl = dl = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
-			dl->td = dlh->td - dlh->d[nv];
-			for ( i = 0; i < nv; i++ )
-				dl->d[i] = dlh->d[i];
-		}
-		NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    n = p->nv; nv = n - 1;
+    m = BDY(p);
+    for ( mr0 = 0; m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr); mr->c = m->c;
+      dlh = m->dl;
+      mr->dl = dl = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
+      dl->td = dlh->td - dlh->d[nv];
+      for ( i = 0; i < nv; i++ )
+        dl->d[i] = dlh->d[i];
+    }
+    NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void dp_mod(DP p,int mod,NODE subst,DP *rp)
 {
-	MP m,mr,mr0;
-	P t,s,s1;
-	V v;
-	NODE tn;
+  MP m,mr,mr0;
+  P t,s,s1;
+  V v;
+  NODE tn;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			for ( tn = subst, s = (P)m->c; tn; tn = NEXT(tn) ) {
-				v = VR((P)BDY(tn)); tn = NEXT(tn);
-				substp(CO,s,v,(P)BDY(tn),&s1); s = s1;
-			}
-			ptomp(mod,s,&t);
-			if ( t ) {
-				NEXTMP(mr0,mr); mr->c = (Obj)t; mr->dl = m->dl;
-			}
-		}
-		if ( mr0 ) {
-			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-		} else
-			*rp = 0;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      for ( tn = subst, s = (P)m->c; tn; tn = NEXT(tn) ) {
+        v = VR((P)BDY(tn)); tn = NEXT(tn);
+        substp(CO,s,v,(P)BDY(tn),&s1); s = s1;
+      }
+      ptomp(mod,s,&t);
+      if ( t ) {
+        NEXTMP(mr0,mr); mr->c = (Obj)t; mr->dl = m->dl;
+      }
+    }
+    if ( mr0 ) {
+      NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+    } else
+      *rp = 0;
+  }
 }
 
 void dp_rat(DP p,DP *rp)
 {
-	MP m,mr,mr0;
+  MP m,mr,mr0;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
-			NEXTMP(mr0,mr); mptop((P)m->c,(P *)&mr->c); mr->dl = m->dl;
-		}
-		if ( mr0 ) {
-			NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
-		} else
-			*rp = 0;
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTMP(mr0,mr); mptop((P)m->c,(P *)&mr->c); mr->dl = m->dl;
+    }
+    if ( mr0 ) {
+      NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+    } else
+      *rp = 0;
+  }
 }
 
 
 void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
 {
-	struct order_pair *l;
-	int length,nv,row,i,j;
-	int **newm,**oldm;
-	struct order_spec *new;
-	int onv,nnv,nlen,olen,owlen;
-	struct weight_or_block *owb,*nwb;
+  struct order_pair *l;
+  int length,nv,row,i,j;
+  int **newm,**oldm;
+  struct order_spec *new;
+  int onv,nnv,nlen,olen,owlen;
+  struct weight_or_block *owb,*nwb;
 
-	*newp = new = (struct order_spec *)MALLOC(sizeof(struct order_spec));
-	switch ( old->id ) {
-		case 0:
-			switch ( old->ord.simple ) {
-				case 0:
-					new->id = 0; new->ord.simple = 0; break;
-				case 1:
-					l = (struct order_pair *)
-						MALLOC_ATOMIC(2*sizeof(struct order_pair));
-					l[0].length = n; l[0].order = 1;
-					l[1].length = 1; l[1].order = 2;
-					new->id = 1;
-					new->ord.block.order_pair = l;
-					new->ord.block.length = 2; new->nv = n+1;
-					break;
-				case 2:
-					new->id = 0; new->ord.simple = 1; break;
-				case 3: case 4: case 5:
-					new->id = 0; new->ord.simple = old->ord.simple+3;
-					dp_nelim = n-1; break;
-				case 6: case 7: case 8: case 9:
-					new->id = 0; new->ord.simple = old->ord.simple; break;
-				default:
-					error("homogenize_order : invalid input");
-			}
-			break;
-		case 1: case 257:
-			length = old->ord.block.length;
-			l = (struct order_pair *)
-				MALLOC_ATOMIC((length+1)*sizeof(struct order_pair));
-			bcopy((char *)old->ord.block.order_pair,(char *)l,length*sizeof(struct order_pair));
-			l[length].order = 2; l[length].length = 1;
-			new->id = old->id; new->nv = n+1;
-			new->ord.block.order_pair = l;
-			new->ord.block.length = length+1;
-			new->ispot = old->ispot;
-			break;
-		case 2: case 258:
-			nv = old->nv; row = old->ord.matrix.row;
-			oldm = old->ord.matrix.matrix; newm = almat(row+1,nv+1);
-			for ( i = 0; i <= nv; i++ )
-				newm[0][i] = 1;
-			for ( i = 0; i < row; i++ ) {
-				for ( j = 0; j < nv; j++ )
-					newm[i+1][j] = oldm[i][j];
-				newm[i+1][j] = 0;
-			}
-			new->id = old->id; new->nv = nv+1;
-			new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
-			new->ispot = old->ispot;
-			break;
-		case 3: case 259:
-			onv = old->nv;
-			nnv = onv+1;
-			olen = old->ord.composite.length;
-			nlen = olen+1;
-			owb = old->ord.composite.w_or_b;
-			nwb = (struct weight_or_block *)
-				MALLOC(nlen*sizeof(struct weight_or_block));
-			for ( i = 0; i < olen; i++ ) {
-				nwb[i].type = owb[i].type;
-				switch ( owb[i].type ) {
-					case IS_DENSE_WEIGHT:
-						owlen = owb[i].length;
-						nwb[i].length = owlen+1;
-						nwb[i].body.dense_weight = (int *)MALLOC((owlen+1)*sizeof(int));
-						for ( j = 0; j < owlen; j++ )
-							nwb[i].body.dense_weight[j] = owb[i].body.dense_weight[j];
-						nwb[i].body.dense_weight[owlen] = 0;
-						break;
-					case IS_SPARSE_WEIGHT:
-						nwb[i].length = owb[i].length;
-						nwb[i].body.sparse_weight = owb[i].body.sparse_weight;
-						break;
-					case IS_BLOCK:
-						nwb[i].length = owb[i].length;
-						nwb[i].body.block = owb[i].body.block;
-						break;
-				}
-			}
-			nwb[i].type = IS_SPARSE_WEIGHT;
-			nwb[i].body.sparse_weight = 
-				(struct sparse_weight *)MALLOC(sizeof(struct sparse_weight));
-			nwb[i].body.sparse_weight[0].pos = onv;
-			nwb[i].body.sparse_weight[0].value = 1;
-			new->id = old->id;
-			new->nv = nnv;
-			new->ord.composite.length = nlen;
-			new->ord.composite.w_or_b = nwb;
-			new->ispot = old->ispot;
-			print_composite_order_spec(new);
-			break;
-		case 256: /* simple module order */
-			switch ( old->ord.simple ) {
-				case 0:
-					new->id = 256; new->ord.simple = 0; break;
-				case 1:
-					l = (struct order_pair *)
-						MALLOC_ATOMIC(2*sizeof(struct order_pair));
-					l[0].length = n; l[0].order = old->ord.simple;
-					l[1].length = 1; l[1].order = 2;
-					new->id = 257;
-					new->ord.block.order_pair = l;
-					new->ord.block.length = 2; new->nv = n+1;
-					break;
-				case 2:
-					new->id = 256; new->ord.simple = 1; break;
-				default:
-					error("homogenize_order : invalid input");
-			}
-			new->ispot = old->ispot;
-			break;
-		default:
-			error("homogenize_order : invalid input");
-	}
+  *newp = new = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+  switch ( old->id ) {
+    case 0:
+      switch ( old->ord.simple ) {
+        case 0:
+          new->id = 0; new->ord.simple = 0; break;
+        case 1:
+          l = (struct order_pair *)
+            MALLOC_ATOMIC(2*sizeof(struct order_pair));
+          l[0].length = n; l[0].order = 1;
+          l[1].length = 1; l[1].order = 2;
+          new->id = 1;
+          new->ord.block.order_pair = l;
+          new->ord.block.length = 2; new->nv = n+1;
+          break;
+        case 2:
+          new->id = 0; new->ord.simple = 1; break;
+        case 3: case 4: case 5:
+          new->id = 0; new->ord.simple = old->ord.simple+3;
+          dp_nelim = n-1; break;
+        case 6: case 7: case 8: case 9:
+          new->id = 0; new->ord.simple = old->ord.simple; break;
+        default:
+          error("homogenize_order : invalid input");
+      }
+      break;
+    case 1: case 257:
+      length = old->ord.block.length;
+      l = (struct order_pair *)
+        MALLOC_ATOMIC((length+1)*sizeof(struct order_pair));
+      bcopy((char *)old->ord.block.order_pair,(char *)l,length*sizeof(struct order_pair));
+      l[length].order = 2; l[length].length = 1;
+      new->id = old->id; new->nv = n+1;
+      new->ord.block.order_pair = l;
+      new->ord.block.length = length+1;
+      new->ispot = old->ispot;
+      break;
+    case 2: case 258:
+      nv = old->nv; row = old->ord.matrix.row;
+      oldm = old->ord.matrix.matrix; newm = almat(row+1,nv+1);
+      for ( i = 0; i <= nv; i++ )
+        newm[0][i] = 1;
+      for ( i = 0; i < row; i++ ) {
+        for ( j = 0; j < nv; j++ )
+          newm[i+1][j] = oldm[i][j];
+        newm[i+1][j] = 0;
+      }
+      new->id = old->id; new->nv = nv+1;
+      new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
+      new->ispot = old->ispot;
+      break;
+    case 3: case 259:
+      onv = old->nv;
+      nnv = onv+1;
+      olen = old->ord.composite.length;
+      nlen = olen+1;
+      owb = old->ord.composite.w_or_b;
+      nwb = (struct weight_or_block *)
+        MALLOC(nlen*sizeof(struct weight_or_block));
+      for ( i = 0; i < olen; i++ ) {
+        nwb[i].type = owb[i].type;
+        switch ( owb[i].type ) {
+          case IS_DENSE_WEIGHT:
+            owlen = owb[i].length;
+            nwb[i].length = owlen+1;
+            nwb[i].body.dense_weight = (int *)MALLOC((owlen+1)*sizeof(int));
+            for ( j = 0; j < owlen; j++ )
+              nwb[i].body.dense_weight[j] = owb[i].body.dense_weight[j];
+            nwb[i].body.dense_weight[owlen] = 0;
+            break;
+          case IS_SPARSE_WEIGHT:
+            nwb[i].length = owb[i].length;
+            nwb[i].body.sparse_weight = owb[i].body.sparse_weight;
+            break;
+          case IS_BLOCK:
+            nwb[i].length = owb[i].length;
+            nwb[i].body.block = owb[i].body.block;
+            break;
+        }
+      }
+      nwb[i].type = IS_SPARSE_WEIGHT;
+      nwb[i].body.sparse_weight = 
+        (struct sparse_weight *)MALLOC(sizeof(struct sparse_weight));
+      nwb[i].body.sparse_weight[0].pos = onv;
+      nwb[i].body.sparse_weight[0].value = 1;
+      new->id = old->id;
+      new->nv = nnv;
+      new->ord.composite.length = nlen;
+      new->ord.composite.w_or_b = nwb;
+      new->ispot = old->ispot;
+      print_composite_order_spec(new);
+      break;
+    case 256: /* simple module order */
+      switch ( old->ord.simple ) {
+        case 0:
+          new->id = 256; new->ord.simple = 0; break;
+        case 1:
+          l = (struct order_pair *)
+            MALLOC_ATOMIC(2*sizeof(struct order_pair));
+          l[0].length = n; l[0].order = old->ord.simple;
+          l[1].length = 1; l[1].order = 2;
+          new->id = 257;
+          new->ord.block.order_pair = l;
+          new->ord.block.length = 2; new->nv = n+1;
+          break;
+        case 2:
+          new->id = 256; new->ord.simple = 1; break;
+        default:
+          error("homogenize_order : invalid input");
+      }
+      new->ispot = old->ispot;
+      break;
+    default:
+      error("homogenize_order : invalid input");
+  }
 }
 
 void qltozl(Q *w,int n,Q *dvr)
 {
-	N nm,dn;
-	N g,l1,l2,l3;
-	Q c,d;
-	int i;
-	struct oVECT v;
+  N nm,dn;
+  N g,l1,l2,l3;
+  Q c,d;
+  int i;
+  struct oVECT v;
 
-	for ( i = 0; i < n; i++ )
-		if ( w[i] && !INT(w[i]) )
-			break;
-	if ( i == n ) {
-		v.id = O_VECT; v.len = n; v.body = (pointer *)w;
-		igcdv(&v,dvr); return;
-	}
-	for ( i = 0; !w[i]; i++ );
-	c = w[i]; nm = NM(c); dn = INT(c) ? ONEN : DN(c);
-	for ( i++; i < n; i++ ) {
-		c = w[i]; 
-		if ( !c ) continue;
-		l1 = INT(c) ? ONEN : DN(c);
-		gcdn(nm,NM(c),&g); nm = g;
-		gcdn(dn,l1,&l2); muln(dn,l1,&l3); divsn(l3,l2,&dn);
-	}
-	if ( UNIN(dn) )
-		NTOQ(nm,1,d);
-	else 
-		NDTOQ(nm,dn,1,d);
-	*dvr = d;
+  for ( i = 0; i < n; i++ )
+    if ( w[i] && !INT(w[i]) )
+      break;
+  if ( i == n ) {
+    v.id = O_VECT; v.len = n; v.body = (pointer *)w;
+    igcdv(&v,dvr); return;
+  }
+  for ( i = 0; !w[i]; i++ );
+  c = w[i]; nm = NM(c); dn = INT(c) ? ONEN : DN(c);
+  for ( i++; i < n; i++ ) {
+    c = w[i]; 
+    if ( !c ) continue;
+    l1 = INT(c) ? ONEN : DN(c);
+    gcdn(nm,NM(c),&g); nm = g;
+    gcdn(dn,l1,&l2); muln(dn,l1,&l3); divsn(l3,l2,&dn);
+  }
+  if ( UNIN(dn) )
+    NTOQ(nm,1,d);
+  else 
+    NDTOQ(nm,dn,1,d);
+  *dvr = d;
 }
 
 int comp_nm(Q *a,Q *b)
 {
-	return cmpn((*a)?NM(*a):0,(*b)?NM(*b):0);
+  return cmpn((*a)?NM(*a):0,(*b)?NM(*b):0);
 }
 
 void sortbynm(Q *w,int n)
 {
-	qsort(w,n,sizeof(Q),(int (*)(const void *,const void *))comp_nm);
+  qsort(w,n,sizeof(Q),(int (*)(const void *,const void *))comp_nm);
 }
 
 
@@ -2752,157 +2752,157 @@ void sortbynm(Q *w,int n)
 
 int dp_redble(DP p1,DP p2)
 {
-	int i,n;
-	DL d1,d2;
+  int i,n;
+  DL d1,d2;
 
-	d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	if ( d1->td < d2->td )
-		return 0;
-	else {
-		for ( i = 0, n = p1->nv; i < n; i++ )
-			if ( d1->d[i] < d2->d[i] )
-				return 0;
-		return 1;
-	}
+  d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  if ( d1->td < d2->td )
+    return 0;
+  else {
+    for ( i = 0, n = p1->nv; i < n; i++ )
+      if ( d1->d[i] < d2->d[i] )
+        return 0;
+    return 1;
+  }
 }
 
 int dpm_redble(DPM p1,DPM p2)
 {
-	int i,n;
-	DL d1,d2;
+  int i,n;
+  DL d1,d2;
 
   if ( BDY(p1)->pos != BDY(p2)->pos ) return 0;
-	d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	if ( d1->td < d2->td )
-		return 0;
-	else {
-		for ( i = 0, n = p1->nv; i < n; i++ )
-			if ( d1->d[i] < d2->d[i] )
-				return 0;
-		return 1;
-	}
+  d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  if ( d1->td < d2->td )
+    return 0;
+  else {
+    for ( i = 0, n = p1->nv; i < n; i++ )
+      if ( d1->d[i] < d2->d[i] )
+        return 0;
+    return 1;
+  }
 }
 
 
 void dp_subd(DP p1,DP p2,DP *rp)
 {
-	int i,n;
-	DL d1,d2,d;
-	MP m;
-	DP s;
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP s;
 
-	n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
-	NEWDL(d,n); d->td = d1->td - d2->td;
-	for ( i = 0; i < n; i++ )
-		d->d[i] = d1->d[i]-d2->d[i];
-	NEWMP(m); m->dl = d; m->c = (Obj)ONE; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td;
-	*rp = s;
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  NEWMP(m); m->dl = d; m->c = (Obj)ONE; NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td;
+  *rp = s;
 }
 
 void dltod(DL d,int n,DP *rp)
 {
-	MP m;
-	DP s;
+  MP m;
+  DP s;
 
-	NEWMP(m); m->dl = d; m->c = (Obj)ONE; NEXT(m) = 0;
-	MKDP(n,m,s); s->sugar = d->td;
-	*rp = s;
+  NEWMP(m); m->dl = d; m->c = (Obj)ONE; NEXT(m) = 0;
+  MKDP(n,m,s); s->sugar = d->td;
+  *rp = s;
 }
 
 void dp_hm(DP p,DP *rp)
 {
-	MP m,mr;
+  MP m,mr;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		m = BDY(p);
-		NEWMP(mr); mr->dl = m->dl; mr->c = m->c; NEXT(mr) = 0;
-		MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td; 	/* XXX */
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    m = BDY(p);
+    NEWMP(mr); mr->dl = m->dl; mr->c = m->c; NEXT(mr) = 0;
+    MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td;   /* XXX */
+  }
 }
 
 void dp_ht(DP p,DP *rp)
 {
-	MP m,mr;
+  MP m,mr;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		m = BDY(p);
-		NEWMP(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
-		MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td; 	/* XXX */
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    m = BDY(p);
+    NEWMP(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
+    MKDP(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td;   /* XXX */
+  }
 }
 
 void dpm_hm(DPM p,DPM *rp)
 {
-	DMM m,mr;
+  DMM m,mr;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		m = BDY(p);
-		NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos; NEXT(mr) = 0;
-		MKDPM(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td; 	/* XXX */
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    m = BDY(p);
+    NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos; NEXT(mr) = 0;
+    MKDPM(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td;   /* XXX */
+  }
 }
 
 void dpm_ht(DPM p,DPM *rp)
 {
-	DMM m,mr;
+  DMM m,mr;
 
-	if ( !p )
-		*rp = 0;
-	else {
-		m = BDY(p);
-		NEWDMM(mr); mr->dl = m->dl; mr->pos = m->pos; mr->c = (Obj)ONE; NEXT(mr) = 0;
-		MKDPM(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td; 	/* XXX */
-	}
+  if ( !p )
+    *rp = 0;
+  else {
+    m = BDY(p);
+    NEWDMM(mr); mr->dl = m->dl; mr->pos = m->pos; mr->c = (Obj)ONE; NEXT(mr) = 0;
+    MKDPM(p->nv,mr,*rp); (*rp)->sugar = mr->dl->td;   /* XXX */
+  }
 }
 
 
 void dp_rest(DP p,DP *rp)
 {
-	MP m;
+  MP m;
 
-	m = BDY(p);
-	if ( !NEXT(m) )
-		*rp = 0;
-	else {
-		MKDP(p->nv,NEXT(m),*rp);
-		if ( *rp )
-			(*rp)->sugar = p->sugar;
-	}
+  m = BDY(p);
+  if ( !NEXT(m) )
+    *rp = 0;
+  else {
+    MKDP(p->nv,NEXT(m),*rp);
+    if ( *rp )
+      (*rp)->sugar = p->sugar;
+  }
 }
 
 void dpm_rest(DPM p,DPM *rp)
 {
-	DMM m;
+  DMM m;
 
-	m = BDY(p);
-	if ( !NEXT(m) )
-		*rp = 0;
-	else {
-		MKDPM(p->nv,NEXT(m),*rp);
-		if ( *rp )
-			(*rp)->sugar = p->sugar;
-	}
+  m = BDY(p);
+  if ( !NEXT(m) )
+    *rp = 0;
+  else {
+    MKDPM(p->nv,NEXT(m),*rp);
+    if ( *rp )
+      (*rp)->sugar = p->sugar;
+  }
 }
 
 DL lcm_of_DL(int nv,DL dl1,DL dl2,DL dl)
 {
-	register int i, *d1, *d2, *d, td;
+  register int i, *d1, *d2, *d, td;
 
-	if ( !dl ) NEWDL(dl,nv);
-	d = dl->d,  d1 = dl1->d,  d2 = dl2->d;
-	for ( td = 0, i = 0; i < nv; d1++, d2++, d++, i++ ) {
-		*d = *d1 > *d2 ? *d1 : *d2;
-		td += MUL_WEIGHT(*d,i);
-	}
-	dl->td = td;
-	return dl;
+  if ( !dl ) NEWDL(dl,nv);
+  d = dl->d,  d1 = dl1->d,  d2 = dl2->d;
+  for ( td = 0, i = 0; i < nv; d1++, d2++, d++, i++ ) {
+    *d = *d1 > *d2 ? *d1 : *d2;
+    td += MUL_WEIGHT(*d,i);
+  }
+  dl->td = td;
+  return dl;
 }
 
 int dl_equal(int nv,DL dl1,DL dl2)
@@ -2917,86 +2917,86 @@ int dl_equal(int nv,DL dl1,DL dl2)
 
 int dp_nt(DP p)
 {
-	int i;
-	MP m;
+  int i;
+  MP m;
 
-	if ( !p )
-		return 0;
-	else {
-		for ( i = 0, m = BDY(p); m; m = NEXT(m), i++ );
-		return i;
-	}
+  if ( !p )
+    return 0;
+  else {
+    for ( i = 0, m = BDY(p); m; m = NEXT(m), i++ );
+    return i;
+  }
 }
 
 int dp_homogeneous(DP p)
 {
-	MP m;
-	int d;
+  MP m;
+  int d;
 
-	if ( !p )
-		return 1;
-	else {
-		m = BDY(p);
-		d = m->dl->td;
-		m = NEXT(m);
-		for ( ; m; m = NEXT(m) ) {
-			if ( m->dl->td != d )
-				return 0;
-		}
-		return 1;
-	}
+  if ( !p )
+    return 1;
+  else {
+    m = BDY(p);
+    d = m->dl->td;
+    m = NEXT(m);
+    for ( ; m; m = NEXT(m) ) {
+      if ( m->dl->td != d )
+        return 0;
+    }
+    return 1;
+  }
 }
 
 void _print_mp(int nv,MP m)
 {
-	int i;
+  int i;
 
-	if ( !m )
-		return;
-	for ( ; m; m = NEXT(m) ) {
-		fprintf(stderr,"%d<",ITOS(C(m)));
-		for ( i = 0; i < nv; i++ ) {
-			fprintf(stderr,"%d",m->dl->d[i]);
-			if ( i != nv-1 )
-				fprintf(stderr," ");
-		}
-		fprintf(stderr,">",C(m));
-	}
-	fprintf(stderr,"\n");
+  if ( !m )
+    return;
+  for ( ; m; m = NEXT(m) ) {
+    fprintf(stderr,"%d<",ITOS(C(m)));
+    for ( i = 0; i < nv; i++ ) {
+      fprintf(stderr,"%d",m->dl->d[i]);
+      if ( i != nv-1 )
+        fprintf(stderr," ");
+    }
+    fprintf(stderr,">",C(m));
+  }
+  fprintf(stderr,"\n");
 }
 
 static int cmp_mp_nvar;
 
 int comp_mp(MP *a,MP *b)
 {
-	return -(*cmpdl)(cmp_mp_nvar,(*a)->dl,(*b)->dl);
+  return -(*cmpdl)(cmp_mp_nvar,(*a)->dl,(*b)->dl);
 }
 
 void dp_sort(DP p,DP *rp)
 {
-	MP t,mp,mp0;
-	int i,n;
-	DP r;
-	MP *w;
+  MP t,mp,mp0;
+  int i,n;
+  DP r;
+  MP *w;
 
-	if ( !p ) {
-		*rp = 0;
-		return;
-	}
-	for ( t = BDY(p), n = 0; t; t = NEXT(t), n++ );
-	w = (MP *)ALLOCA(n*sizeof(MP));
-	for ( t = BDY(p), i = 0; i < n; t = NEXT(t), i++ )
-		w[i] = t;
-	cmp_mp_nvar = NV(p);
-	qsort(w,n,sizeof(MP),(int (*)(const void *,const void *))comp_mp);
-	mp0 = 0;
-	for ( i = n-1; i >= 0; i-- ) {
-		NEWMP(mp); mp->dl = w[i]->dl; C(mp) = C(w[i]);
-		NEXT(mp) = mp0; mp0 = mp;
-	}
-	MKDP(p->nv,mp0,r);
-	r->sugar = p->sugar;
-	*rp = r;
+  if ( !p ) {
+    *rp = 0;
+    return;
+  }
+  for ( t = BDY(p), n = 0; t; t = NEXT(t), n++ );
+  w = (MP *)ALLOCA(n*sizeof(MP));
+  for ( t = BDY(p), i = 0; i < n; t = NEXT(t), i++ )
+    w[i] = t;
+  cmp_mp_nvar = NV(p);
+  qsort(w,n,sizeof(MP),(int (*)(const void *,const void *))comp_mp);
+  mp0 = 0;
+  for ( i = n-1; i >= 0; i-- ) {
+    NEWMP(mp); mp->dl = w[i]->dl; C(mp) = C(w[i]);
+    NEXT(mp) = mp0; mp0 = mp;
+  }
+  MKDP(p->nv,mp0,r);
+  r->sugar = p->sugar;
+  *rp = r;
 }
 
 DP extract_initial_term_from_dp(DP p,int *weight,int n);
@@ -3004,83 +3004,83 @@ LIST extract_initial_term(LIST f,int *weight,int n);
 
 DP extract_initial_term_from_dp(DP p,int *weight,int n)
 {
-	int w,t,i,top;
-	MP m,r0,r;
-	DP dp;
+  int w,t,i,top;
+  MP m,r0,r;
+  DP dp;
 
-	if ( !p ) return 0;
-	top = 1;
-	for ( m = BDY(p); m; m = NEXT(m) ) {
-		for ( i = 0, t = 0; i < n; i++ )	
-			t += weight[i]*m->dl->d[i];
-		if ( top || t > w ) {
-			r0 = 0;
-			w = t;
-			top = 0;
-		}
-		if ( t == w ) {
-			NEXTMP(r0,r);
-			r->dl = m->dl;
-			r->c = m->c;
-		}
-	}
-	NEXT(r) = 0;
-	MKDP(p->nv,r0,dp);
-	return dp;
+  if ( !p ) return 0;
+  top = 1;
+  for ( m = BDY(p); m; m = NEXT(m) ) {
+    for ( i = 0, t = 0; i < n; i++ )  
+      t += weight[i]*m->dl->d[i];
+    if ( top || t > w ) {
+      r0 = 0;
+      w = t;
+      top = 0;
+    }
+    if ( t == w ) {
+      NEXTMP(r0,r);
+      r->dl = m->dl;
+      r->c = m->c;
+    }
+  }
+  NEXT(r) = 0;
+  MKDP(p->nv,r0,dp);
+  return dp;
 }
 
 LIST extract_initial_term(LIST f,int *weight,int n)
 {
-	NODE nd,r0,r;
-	Obj p;
-	LIST l;
+  NODE nd,r0,r;
+  Obj p;
+  LIST l;
 
-	nd = BDY(f);
-	for ( r0 = 0; nd; nd = NEXT(nd) ) {
-		NEXTNODE(r0,r);
-		p = (Obj)BDY(nd);
-		BDY(r) = (pointer)extract_initial_term_from_dp((DP)p,weight,n);
-	}
-	if ( r0 ) NEXT(r) = 0;
-	MKLIST(l,r0);
-	return l;
+  nd = BDY(f);
+  for ( r0 = 0; nd; nd = NEXT(nd) ) {
+    NEXTNODE(r0,r);
+    p = (Obj)BDY(nd);
+    BDY(r) = (pointer)extract_initial_term_from_dp((DP)p,weight,n);
+  }
+  if ( r0 ) NEXT(r) = 0;
+  MKLIST(l,r0);
+  return l;
 }
 
 LIST dp_initial_term(LIST f,struct order_spec *ord)
 {
-	int n,l,i;
-	struct weight_or_block *worb;
-	int *weight;
+  int n,l,i;
+  struct weight_or_block *worb;
+  int *weight;
 
-	switch ( ord->id ) {
-		case 2: /* matrix order */
-			/* extract the first row */
-			n = ord->nv;
-			weight = ord->ord.matrix.matrix[0];
-			return extract_initial_term(f,weight,n);
-		case 3: /* composite order */
-			/* the first w_or_b */
-			worb = ord->ord.composite.w_or_b;
-			switch ( worb->type ) {
-				case IS_DENSE_WEIGHT:
-					n = worb->length;
-					weight = worb->body.dense_weight;
-					return extract_initial_term(f,weight,n);
-				case IS_SPARSE_WEIGHT:
-					n = ord->nv;
-					weight = (int *)ALLOCA(n*sizeof(int));
-					for ( i = 0; i < n; i++ ) weight[i] = 0;
-					l = worb->length;
-					for ( i = 0; i < l; i++ )
-						weight[worb->body.sparse_weight[i].pos]
-							=  worb->body.sparse_weight[i].value;
-					return extract_initial_term(f,weight,n);
-				default:
-					error("dp_initial_term : unsupported order");
-			}
-		default:
-			error("dp_initial_term : unsupported order");
-	}
+  switch ( ord->id ) {
+    case 2: /* matrix order */
+      /* extract the first row */
+      n = ord->nv;
+      weight = ord->ord.matrix.matrix[0];
+      return extract_initial_term(f,weight,n);
+    case 3: /* composite order */
+      /* the first w_or_b */
+      worb = ord->ord.composite.w_or_b;
+      switch ( worb->type ) {
+        case IS_DENSE_WEIGHT:
+          n = worb->length;
+          weight = worb->body.dense_weight;
+          return extract_initial_term(f,weight,n);
+        case IS_SPARSE_WEIGHT:
+          n = ord->nv;
+          weight = (int *)ALLOCA(n*sizeof(int));
+          for ( i = 0; i < n; i++ ) weight[i] = 0;
+          l = worb->length;
+          for ( i = 0; i < l; i++ )
+            weight[worb->body.sparse_weight[i].pos]
+              =  worb->body.sparse_weight[i].value;
+          return extract_initial_term(f,weight,n);
+        default:
+          error("dp_initial_term : unsupported order");
+      }
+    default:
+      error("dp_initial_term : unsupported order");
+  }
 }
 
 int highest_order_dp(DP p,int *weight,int n);
@@ -3088,457 +3088,457 @@ LIST highest_order(LIST f,int *weight,int n);
 
 int highest_order_dp(DP p,int *weight,int n)
 {
-	int w,t,i,top;
-	MP m;
+  int w,t,i,top;
+  MP m;
 
-	if ( !p ) return -1;
-	top = 1;
-	for ( m = BDY(p); m; m = NEXT(m) ) {
-		for ( i = 0, t = 0; i < n; i++ )	
-			t += weight[i]*m->dl->d[i];
-		if ( top || t > w ) {
-			w = t;
-			top = 0;
-		}
-	}
-	return w;
+  if ( !p ) return -1;
+  top = 1;
+  for ( m = BDY(p); m; m = NEXT(m) ) {
+    for ( i = 0, t = 0; i < n; i++ )  
+      t += weight[i]*m->dl->d[i];
+    if ( top || t > w ) {
+      w = t;
+      top = 0;
+    }
+  }
+  return w;
 }
 
 LIST highest_order(LIST f,int *weight,int n)
 {
-	int h;
-	NODE nd,r0,r;
-	Obj p;
-	LIST l;
-	Q q;
+  int h;
+  NODE nd,r0,r;
+  Obj p;
+  LIST l;
+  Q q;
 
-	nd = BDY(f);
-	for ( r0 = 0; nd; nd = NEXT(nd) ) {
-		NEXTNODE(r0,r);
-		p = (Obj)BDY(nd);
-		h = highest_order_dp((DP)p,weight,n);
-		STOQ(h,q);
-		BDY(r) = (pointer)q;
-	}
-	if ( r0 ) NEXT(r) = 0;
-	MKLIST(l,r0);
-	return l;
+  nd = BDY(f);
+  for ( r0 = 0; nd; nd = NEXT(nd) ) {
+    NEXTNODE(r0,r);
+    p = (Obj)BDY(nd);
+    h = highest_order_dp((DP)p,weight,n);
+    STOQ(h,q);
+    BDY(r) = (pointer)q;
+  }
+  if ( r0 ) NEXT(r) = 0;
+  MKLIST(l,r0);
+  return l;
 }
 
 LIST dp_order(LIST f,struct order_spec *ord)
 {
-	int n,l,i;
-	struct weight_or_block *worb;
-	int *weight;
+  int n,l,i;
+  struct weight_or_block *worb;
+  int *weight;
 
-	switch ( ord->id ) {
-		case 2: /* matrix order */
-			/* extract the first row */
-			n = ord->nv;
-			weight = ord->ord.matrix.matrix[0];
-			return highest_order(f,weight,n);
-		case 3: /* composite order */
-			/* the first w_or_b */
-			worb = ord->ord.composite.w_or_b;
-			switch ( worb->type ) {
-				case IS_DENSE_WEIGHT:
-					n = worb->length;
-					weight = worb->body.dense_weight;
-					return highest_order(f,weight,n);
-				case IS_SPARSE_WEIGHT:
-					n = ord->nv;
-					weight = (int *)ALLOCA(n*sizeof(int));
-					for ( i = 0; i < n; i++ ) weight[i] = 0;
-					l = worb->length;
-					for ( i = 0; i < l; i++ )
-						weight[worb->body.sparse_weight[i].pos]
-							=  worb->body.sparse_weight[i].value;
-					return highest_order(f,weight,n);
-				default:
-					error("dp_initial_term : unsupported order");
-			}
-		default:
-			error("dp_initial_term : unsupported order");
-	}
+  switch ( ord->id ) {
+    case 2: /* matrix order */
+      /* extract the first row */
+      n = ord->nv;
+      weight = ord->ord.matrix.matrix[0];
+      return highest_order(f,weight,n);
+    case 3: /* composite order */
+      /* the first w_or_b */
+      worb = ord->ord.composite.w_or_b;
+      switch ( worb->type ) {
+        case IS_DENSE_WEIGHT:
+          n = worb->length;
+          weight = worb->body.dense_weight;
+          return highest_order(f,weight,n);
+        case IS_SPARSE_WEIGHT:
+          n = ord->nv;
+          weight = (int *)ALLOCA(n*sizeof(int));
+          for ( i = 0; i < n; i++ ) weight[i] = 0;
+          l = worb->length;
+          for ( i = 0; i < l; i++ )
+            weight[worb->body.sparse_weight[i].pos]
+              =  worb->body.sparse_weight[i].value;
+          return highest_order(f,weight,n);
+        default:
+          error("dp_initial_term : unsupported order");
+      }
+    default:
+      error("dp_initial_term : unsupported order");
+  }
 }
 
 int dpv_ht(DPV p,DP *h)
 {
-	int len,max,maxi,i,t;
-	DP *e;
-	MP m,mr;
+  int len,max,maxi,i,t;
+  DP *e;
+  MP m,mr;
 
-	len = p->len;
-	e = p->body;
-	max = -1;
-	maxi = -1;
-	for ( i = 0; i < len; i++ )
-		if ( e[i] && (t = BDY(e[i])->dl->td) > max ) {
-			max = t;
-			maxi = i;
-		}
-	if ( max < 0 ) {
-		*h = 0;
-		return -1;
-	} else {
-		m = BDY(e[maxi]);
-		NEWMP(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
-		MKDP(e[maxi]->nv,mr,*h); (*h)->sugar = mr->dl->td;  /* XXX */
-		return maxi;
-	}
+  len = p->len;
+  e = p->body;
+  max = -1;
+  maxi = -1;
+  for ( i = 0; i < len; i++ )
+    if ( e[i] && (t = BDY(e[i])->dl->td) > max ) {
+      max = t;
+      maxi = i;
+    }
+  if ( max < 0 ) {
+    *h = 0;
+    return -1;
+  } else {
+    m = BDY(e[maxi]);
+    NEWMP(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
+    MKDP(e[maxi]->nv,mr,*h); (*h)->sugar = mr->dl->td;  /* XXX */
+    return maxi;
+  }
 }
 
 /* return 1 if 0 <_w1 v && v <_w2 0 */
 
 int in_c12(int n,int *v,int row1,int **w1,int row2, int **w2)
 {
-	int t1,t2;
+  int t1,t2;
 
-	t1 = compare_zero(n,v,row1,w1);
-	t2 = compare_zero(n,v,row2,w2);
-	if ( t1 > 0 && t2 < 0 ) return 1;
-	else return 0;
+  t1 = compare_zero(n,v,row1,w1);
+  t2 = compare_zero(n,v,row2,w2);
+  if ( t1 > 0 && t2 < 0 ) return 1;
+  else return 0;
 }
 
 /* 0 < u => 1, 0 > u => -1 */
 
 int compare_zero(int n,int *u,int row,int **w)
 {
-	int i,j,t;
-	int *wi;
+  int i,j,t;
+  int *wi;
 
-	for ( i = 0; i < row; i++ ) {
-		wi = w[i];
-		for ( j = 0, t = 0; j < n; j++ ) t += u[j]*wi[j];
-		if ( t > 0 ) return 1;
-		else if ( t < 0 ) return -1;
-	}
-	return 0;
+  for ( i = 0; i < row; i++ ) {
+    wi = w[i];
+    for ( j = 0, t = 0; j < n; j++ ) t += u[j]*wi[j];
+    if ( t > 0 ) return 1;
+    else if ( t < 0 ) return -1;
+  }
+  return 0;
 }
 
 /* functions for generic groebner walk */
 /* u=0 means u=-infty */
 
 int compare_facet_preorder(int n,int *u,int *v,
-	int row1,int **w1,int row2,int **w2)
+  int row1,int **w1,int row2,int **w2)
 {
-	int i,j,s,t,tu,tv;
-	int *w2i,*uv;
+  int i,j,s,t,tu,tv;
+  int *w2i,*uv;
 
-	if ( !u ) return 1;
-	uv = W_ALLOC(n);
-	for ( i = 0; i < row2; i++ ) {
-		w2i = w2[i];
-		for ( j = 0, tu = tv = 0; j < n; j++ )
-			if ( s = w2i[j] ) {
-				tu += s*u[j]; tv += s*v[j];
-			}
-		for ( j = 0; j < n; j++ ) uv[j] = u[j]*tv-v[j]*tu;
-		t = compare_zero(n,uv,row1,w1);
-		if ( t > 0 ) return 1;
-		else if ( t < 0 ) return 0;
-	}
-	return 1;
+  if ( !u ) return 1;
+  uv = W_ALLOC(n);
+  for ( i = 0; i < row2; i++ ) {
+    w2i = w2[i];
+    for ( j = 0, tu = tv = 0; j < n; j++ )
+      if ( s = w2i[j] ) {
+        tu += s*u[j]; tv += s*v[j];
+      }
+    for ( j = 0; j < n; j++ ) uv[j] = u[j]*tv-v[j]*tu;
+    t = compare_zero(n,uv,row1,w1);
+    if ( t > 0 ) return 1;
+    else if ( t < 0 ) return 0;
+  }
+  return 1;
 }
 
 Q inner_product_with_small_vector(VECT w,int *v)
 {
-	int n,i;
-	Q q,s,t,u;
+  int n,i;
+  Q q,s,t,u;
 
-	n = w->len;
-	s = 0;
-	for ( i = 0; i < n; i++ ) {
-		STOQ(v[i],q); mulq((Q)w->body[i],q,&t); addq(t,s,&u); s = u;
-	}
-	return s;
+  n = w->len;
+  s = 0;
+  for ( i = 0; i < n; i++ ) {
+    STOQ(v[i],q); mulq((Q)w->body[i],q,&t); addq(t,s,&u); s = u;
+  }
+  return s;
 }
 
 Q compute_last_t(NODE g,NODE gh,Q t,VECT w1,VECT w2,NODE *homo,VECT *wp)
 {
-	int n,i;
-	int *wt;
-	Q last,d1,d2,dn,nm,s,t1;
-	VECT wd,wt1,wt2,w;
-	NODE tg,tgh;
-	MP f;
-	int *h;
-	NODE r0,r;
-	MP m0,m;
-	DP d;
+  int n,i;
+  int *wt;
+  Q last,d1,d2,dn,nm,s,t1;
+  VECT wd,wt1,wt2,w;
+  NODE tg,tgh;
+  MP f;
+  int *h;
+  NODE r0,r;
+  MP m0,m;
+  DP d;
 
-	n = w1->len;
-	wt = W_ALLOC(n);
-	last = ONE;
-	/* t1 = 1-t */
-	for ( tg = g, tgh = gh; tg; tg = NEXT(tg), tgh = NEXT(tgh ) ) {
-		f = BDY((DP)BDY(tg));
-		h = BDY((DP)BDY(tgh))->dl->d;
-		for ( ; f; f = NEXT(f) ) {
-			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
-			for ( i = 0; i < n && !wt[i]; i++ );
-			if ( i == n ) continue;
-			d1 = inner_product_with_small_vector(w1,wt);
-			d2 = inner_product_with_small_vector(w2,wt);
-			nm = d1; subq(d1,d2,&dn);
-			/* if d1=d2 then nothing happens */
-			if ( !dn ) continue;
-			/* s satisfies ds = 0*/
-			divq(nm,dn,&s);
+  n = w1->len;
+  wt = W_ALLOC(n);
+  last = ONE;
+  /* t1 = 1-t */
+  for ( tg = g, tgh = gh; tg; tg = NEXT(tg), tgh = NEXT(tgh ) ) {
+    f = BDY((DP)BDY(tg));
+    h = BDY((DP)BDY(tgh))->dl->d;
+    for ( ; f; f = NEXT(f) ) {
+      for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+      for ( i = 0; i < n && !wt[i]; i++ );
+      if ( i == n ) continue;
+      d1 = inner_product_with_small_vector(w1,wt);
+      d2 = inner_product_with_small_vector(w2,wt);
+      nm = d1; subq(d1,d2,&dn);
+      /* if d1=d2 then nothing happens */
+      if ( !dn ) continue;
+      /* s satisfies ds = 0*/
+      divq(nm,dn,&s);
 
-			if ( cmpq(s,t) > 0 && cmpq(s,last) < 0 ) 
-				last = s;
-			else if ( !cmpq(s,t) ) {
-				if ( cmpq(d2,0) < 0 ) {
-					last = t;
-					break;
-				}
-			}
-		}
-	}
-	if ( !last ) {
-		dn = ONE; nm = 0;
-	} else {
-		NTOQ(NM(last),1,nm);
-		if ( INT(last) ) dn = ONE;
-		else {
-			NTOQ(DN(last),1,dn);
-		}
-	}
-	/* (1-n/d)*w1+n/d*w2 -> w=(d-n)*w1+n*w2 */
-	subq(dn,nm,&t1); mulvect(CO,(Obj)w1,(Obj)t1,(Obj *)&wt1); 
-	mulvect(CO,(Obj)w2,(Obj)nm,(Obj *)&wt2); addvect(CO,wt1,wt2,&w);
+      if ( cmpq(s,t) > 0 && cmpq(s,last) < 0 ) 
+        last = s;
+      else if ( !cmpq(s,t) ) {
+        if ( cmpq(d2,0) < 0 ) {
+          last = t;
+          break;
+        }
+      }
+    }
+  }
+  if ( !last ) {
+    dn = ONE; nm = 0;
+  } else {
+    NTOQ(NM(last),1,nm);
+    if ( INT(last) ) dn = ONE;
+    else {
+      NTOQ(DN(last),1,dn);
+    }
+  }
+  /* (1-n/d)*w1+n/d*w2 -> w=(d-n)*w1+n*w2 */
+  subq(dn,nm,&t1); mulvect(CO,(Obj)w1,(Obj)t1,(Obj *)&wt1); 
+  mulvect(CO,(Obj)w2,(Obj)nm,(Obj *)&wt2); addvect(CO,wt1,wt2,&w);
 
-	r0 = 0;
-	for ( tg = g, tgh = gh; tg; tg = NEXT(tg), tgh = NEXT(tgh ) ) {
-		f = BDY((DP)BDY(tg));
-		h = BDY((DP)BDY(tgh))->dl->d;
-		for ( m0 = 0; f; f = NEXT(f) ) {
-			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
-			for ( i = 0; i < n && !wt[i]; i++ );
-			if ( !inner_product_with_small_vector(w,wt) ) {
-				NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
-			}
-		}
-		NEXT(m) = 0;
-		MKDP(((DP)BDY(tg))->nv,m0,d);  d->sugar = ((DP)BDY(tg))->sugar;
-		NEXTNODE(r0,r); BDY(r) = (pointer)d;
-	}
-	NEXT(r) = 0;
-	*homo = r0;
-	*wp = w;
-	return last;
+  r0 = 0;
+  for ( tg = g, tgh = gh; tg; tg = NEXT(tg), tgh = NEXT(tgh ) ) {
+    f = BDY((DP)BDY(tg));
+    h = BDY((DP)BDY(tgh))->dl->d;
+    for ( m0 = 0; f; f = NEXT(f) ) {
+      for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+      for ( i = 0; i < n && !wt[i]; i++ );
+      if ( !inner_product_with_small_vector(w,wt) ) {
+        NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
+      }
+    }
+    NEXT(m) = 0;
+    MKDP(((DP)BDY(tg))->nv,m0,d);  d->sugar = ((DP)BDY(tg))->sugar;
+    NEXTNODE(r0,r); BDY(r) = (pointer)d;
+  }
+  NEXT(r) = 0;
+  *homo = r0;
+  *wp = w;
+  return last;
 }
 
 /* return 0 if last_w = infty */
 
 NODE compute_last_w(NODE g,NODE gh,int n,int **w,
-	int row1,int **w1,int row2,int **w2)
+  int row1,int **w1,int row2,int **w2)
 {
-	DP d;
-	MP f,m0,m;
-	int *wt,*v,*h;
-	NODE t,s,n0,tn,n1,r0,r;
-	int i;
+  DP d;
+  MP f,m0,m;
+  int *wt,*v,*h;
+  NODE t,s,n0,tn,n1,r0,r;
+  int i;
 
-	wt = W_ALLOC(n);
-	n0 = 0;
-	for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
-		f = BDY((DP)BDY(t));
-		h = BDY((DP)BDY(s))->dl->d;
-		for ( ; f; f = NEXT(f) ) {
-			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
-			for ( i = 0; i < n && !wt[i]; i++ );
-			if ( i == n ) continue;
+  wt = W_ALLOC(n);
+  n0 = 0;
+  for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
+    f = BDY((DP)BDY(t));
+    h = BDY((DP)BDY(s))->dl->d;
+    for ( ; f; f = NEXT(f) ) {
+      for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+      for ( i = 0; i < n && !wt[i]; i++ );
+      if ( i == n ) continue;
 
-			if ( in_c12(n,wt,row1,w1,row2,w2) && 
-				compare_facet_preorder(n,*w,wt,row1,w1,row2,w2) ) {
-				v = (int *)MALLOC_ATOMIC(n*sizeof(int));
-				for ( i = 0; i < n; i++ ) v[i] = wt[i];
-				MKNODE(n1,v,n0); n0 = n1;
-			}
-		}
-	}
-	if ( !n0 ) return 0;
-	for ( t = n0; t; t = NEXT(t) ) {
-		v = (int *)BDY(t);
-		for ( s = n0; s; s = NEXT(s) )
-			if ( !compare_facet_preorder(n,v,(int *)BDY(s),row1,w1,row2,w2) )
-				break;
-		if ( !s ) {
-			*w = v;
-			break;
-		}
-	}
-	if ( !t )
-		error("compute_last_w : cannot happen");
-	r0 = 0;
-	for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
-		f = BDY((DP)BDY(t));
-		h = BDY((DP)BDY(s))->dl->d;
-		for ( m0 = 0; f; f = NEXT(f) ) {
-			for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
-			for ( i = 0; i < n && !wt[i]; i++ );
-			if ( i == n  ||
-				(compare_facet_preorder(n,wt,*w,row1,w1,row2,w2)
-				&& compare_facet_preorder(n,*w,wt,row1,w1,row2,w2)) ) {
-				NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
-			}
-		}
-		NEXT(m) = 0;
-		MKDP(((DP)BDY(t))->nv,m0,d);  d->sugar = ((DP)BDY(t))->sugar;
-		NEXTNODE(r0,r); BDY(r) = (pointer)d;
-	}
-	NEXT(r) = 0;
-	return r0;
+      if ( in_c12(n,wt,row1,w1,row2,w2) && 
+        compare_facet_preorder(n,*w,wt,row1,w1,row2,w2) ) {
+        v = (int *)MALLOC_ATOMIC(n*sizeof(int));
+        for ( i = 0; i < n; i++ ) v[i] = wt[i];
+        MKNODE(n1,v,n0); n0 = n1;
+      }
+    }
+  }
+  if ( !n0 ) return 0;
+  for ( t = n0; t; t = NEXT(t) ) {
+    v = (int *)BDY(t);
+    for ( s = n0; s; s = NEXT(s) )
+      if ( !compare_facet_preorder(n,v,(int *)BDY(s),row1,w1,row2,w2) )
+        break;
+    if ( !s ) {
+      *w = v;
+      break;
+    }
+  }
+  if ( !t )
+    error("compute_last_w : cannot happen");
+  r0 = 0;
+  for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
+    f = BDY((DP)BDY(t));
+    h = BDY((DP)BDY(s))->dl->d;
+    for ( m0 = 0; f; f = NEXT(f) ) {
+      for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+      for ( i = 0; i < n && !wt[i]; i++ );
+      if ( i == n  ||
+        (compare_facet_preorder(n,wt,*w,row1,w1,row2,w2)
+        && compare_facet_preorder(n,*w,wt,row1,w1,row2,w2)) ) {
+        NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
+      }
+    }
+    NEXT(m) = 0;
+    MKDP(((DP)BDY(t))->nv,m0,d);  d->sugar = ((DP)BDY(t))->sugar;
+    NEXTNODE(r0,r); BDY(r) = (pointer)d;
+  }
+  NEXT(r) = 0;
+  return r0;
 }
 
 /* compute a sufficient set of d(f)=u-v */
 
 NODE compute_essential_df(DP *g,DP *gh,int ng)
 {
-	int nv,i,j,k,t,lj;
-	NODE r,r1,ri,rt,r0;
-	MP m;
-	MP *mj;
-	DL di,hj,dl,dlt;
-	int *d,*dt;
-	LIST l;
-	Q q;
+  int nv,i,j,k,t,lj;
+  NODE r,r1,ri,rt,r0;
+  MP m;
+  MP *mj;
+  DL di,hj,dl,dlt;
+  int *d,*dt;
+  LIST l;
+  Q q;
 
-	nv = g[0]->nv;
-	r = 0;
-	for ( j = 0; j < ng; j++ ) {
-		for ( m = BDY(g[j]), lj = 0; m; m = NEXT(m), lj++ );
-		mj = (MP *)ALLOCA(lj*sizeof(MP));
-		for ( m = BDY(g[j]), k = 0; m; m = NEXT(m), k++ )
-			mj[k] = m;
-		for ( i = 0; i < lj; i++ ) {
-			for ( di = mj[i]->dl, k = i+1; k < lj; k++ )
-				if ( _dl_redble(di,mj[k]->dl,nv) ) break;
-			if ( k < lj ) mj[i] = 0;
-		}
-		hj = BDY(gh[j])->dl;
-		_NEWDL(dl,nv); d = dl->d;
-		r0 = r;
-		for ( i = 0; i < lj; i++ ) {
-			if ( mj[i] && !dl_equal(nv,di=mj[i]->dl,hj) ) {
-				for ( k = 0, t = 0; k < nv; k++ ) {
-					d[k] = hj->d[k]-di->d[k];
-					t += d[k];
-				}
-				dl->td = t;	
+  nv = g[0]->nv;
+  r = 0;
+  for ( j = 0; j < ng; j++ ) {
+    for ( m = BDY(g[j]), lj = 0; m; m = NEXT(m), lj++ );
+    mj = (MP *)ALLOCA(lj*sizeof(MP));
+    for ( m = BDY(g[j]), k = 0; m; m = NEXT(m), k++ )
+      mj[k] = m;
+    for ( i = 0; i < lj; i++ ) {
+      for ( di = mj[i]->dl, k = i+1; k < lj; k++ )
+        if ( _dl_redble(di,mj[k]->dl,nv) ) break;
+      if ( k < lj ) mj[i] = 0;
+    }
+    hj = BDY(gh[j])->dl;
+    _NEWDL(dl,nv); d = dl->d;
+    r0 = r;
+    for ( i = 0; i < lj; i++ ) {
+      if ( mj[i] && !dl_equal(nv,di=mj[i]->dl,hj) ) {
+        for ( k = 0, t = 0; k < nv; k++ ) {
+          d[k] = hj->d[k]-di->d[k];
+          t += d[k];
+        }
+        dl->td = t;  
 #if 1
-				for ( rt = r0; rt; rt = NEXT(rt) ) {
-					dlt = (DL)BDY(rt);
-					if ( dlt->td != dl->td ) continue;
-					for ( dt = dlt->d, k = 0; k < nv; k++ )
-						if ( d[k] != dt[k] ) break;
-					if ( k == nv ) break;
-				}
+        for ( rt = r0; rt; rt = NEXT(rt) ) {
+          dlt = (DL)BDY(rt);
+          if ( dlt->td != dl->td ) continue;
+          for ( dt = dlt->d, k = 0; k < nv; k++ )
+            if ( d[k] != dt[k] ) break;
+          if ( k == nv ) break;
+        }
 #else
-				rt = 0;
+        rt = 0;
 #endif
-				if ( !rt ) {
-					MKNODE(r1,dl,r); r = r1;
-					_NEWDL(dl,nv); d = dl->d;
-				}
-			}
-		}
-	}
-	for ( rt = r; rt; rt = NEXT(rt) ) {
-		dl = (DL)BDY(rt); d = dl->d;
-		ri = 0;
-		for ( k = nv-1; k >= 0; k-- ) {
-			STOQ(d[k],q);
-			MKNODE(r1,q,ri); ri = r1;
-		}
-		MKNODE(r1,0,ri); MKLIST(l,r1);
-		BDY(rt) = (pointer)l;
-	}
-	return r;
+        if ( !rt ) {
+          MKNODE(r1,dl,r); r = r1;
+          _NEWDL(dl,nv); d = dl->d;
+        }
+      }
+    }
+  }
+  for ( rt = r; rt; rt = NEXT(rt) ) {
+    dl = (DL)BDY(rt); d = dl->d;
+    ri = 0;
+    for ( k = nv-1; k >= 0; k-- ) {
+      STOQ(d[k],q);
+      MKNODE(r1,q,ri); ri = r1;
+    }
+    MKNODE(r1,0,ri); MKLIST(l,r1);
+    BDY(rt) = (pointer)l;
+  }
+  return r;
 }
 
 int comp_bits_divisible(int *a,int *b,int n)
 {
-	int bpi,i,wi,bi;
+  int bpi,i,wi,bi;
 
-	bpi = (sizeof(int)/sizeof(char))*8;
-	for ( i = 0; i < n; i++ ) {
-		wi = i/bpi; bi = i%bpi;
-		if ( !(a[wi]&(1<<bi)) && (b[wi]&(1<<bi)) ) return 0;
-	}
-	return 1;
+  bpi = (sizeof(int)/sizeof(char))*8;
+  for ( i = 0; i < n; i++ ) {
+    wi = i/bpi; bi = i%bpi;
+    if ( !(a[wi]&(1<<bi)) && (b[wi]&(1<<bi)) ) return 0;
+  }
+  return 1;
 }
 
 int comp_bits_lex(int *a,int *b,int n)
 {
-	int bpi,i,wi,ba,bb,bi;
+  int bpi,i,wi,ba,bb,bi;
 
-	bpi = (sizeof(int)/sizeof(char))*8;
-	for ( i = 0; i < n; i++ ) {
-		wi = i/bpi; bi = i%bpi;
-		ba = (a[wi]&(1<<bi))?1:0;
-		bb = (b[wi]&(1<<bi))?1:0;
-		if ( ba > bb ) return 1;
-		else if ( ba < bb ) return -1;
-	}
-	return 0;
+  bpi = (sizeof(int)/sizeof(char))*8;
+  for ( i = 0; i < n; i++ ) {
+    wi = i/bpi; bi = i%bpi;
+    ba = (a[wi]&(1<<bi))?1:0;
+    bb = (b[wi]&(1<<bi))?1:0;
+    if ( ba > bb ) return 1;
+    else if ( ba < bb ) return -1;
+  }
+  return 0;
 }
 
 NODE mono_raddec(NODE ideal)
 {
-	DP p;
-	int nv,w,i,bpi,di,c,len;
-	int *d,*s,*u,*new;
-	NODE t,t1,v,r,rem,prev;
+  DP p;
+  int nv,w,i,bpi,di,c,len;
+  int *d,*s,*u,*new;
+  NODE t,t1,v,r,rem,prev;
 
-	if( !ideal ) return 0;
-	p = (DP)BDY(ideal);
-	nv = NV(p);
-	bpi = (sizeof(int)/sizeof(char))*8;
-	w = (nv+(bpi-1))/bpi;
-	d = p->body->dl->d;
-	if ( !NEXT(ideal) )	{
-		for ( t = 0, i = nv-1; i >= 0; i-- ) {
-			if ( d[i] ) {
-				s = (int *)CALLOC(w,sizeof(int));
-				s[i/bpi] |= 1<<(i%bpi);
-				MKNODE(t1,s,t);
-				t = t1;
-			}
-		}
-		return t;
-	}
-	rem = mono_raddec(NEXT(ideal));
-	r = 0;
-	len = w*sizeof(int);
-	u = (int *)CALLOC(w,sizeof(int));
-	for ( i = nv-1; i >= 0; i-- ) {
-		if ( d[i] ) {
-			for ( t = rem; t; t = NEXT(t) ) {
-				bcopy((char *)BDY(t),(char *)u,len);
-				u[i/bpi] |= 1<<(i%bpi);
-				for ( v = r; v; v = NEXT(v) ) {
-					if ( comp_bits_divisible(u,(int *)BDY(v),nv) ) break;
-				}
-				if ( v ) continue;
-				for ( v = r, prev = 0; v; v = NEXT(v) ) {
-					if ( comp_bits_divisible((int *)BDY(v),u,nv) ) {
-						if ( prev ) NEXT(prev) = NEXT(v);
-						else r = NEXT(r); 
-					} else prev =v;
-				}
-				for ( v = r, prev = 0; v; prev = v, v = NEXT(v) ) {
-					if ( comp_bits_lex(u,(int *)BDY(v),nv) < 0 ) break;
-				}
-				new = (int *)CALLOC(w,sizeof(int));
-				bcopy((char *)u,(char *)new,len);
-				MKNODE(t1,new,v);
-				if ( prev ) NEXT(prev) = t1;
-				else r = t1;
-			}
-		}
-	}
-	return r;
+  if( !ideal ) return 0;
+  p = (DP)BDY(ideal);
+  nv = NV(p);
+  bpi = (sizeof(int)/sizeof(char))*8;
+  w = (nv+(bpi-1))/bpi;
+  d = p->body->dl->d;
+  if ( !NEXT(ideal) )  {
+    for ( t = 0, i = nv-1; i >= 0; i-- ) {
+      if ( d[i] ) {
+        s = (int *)CALLOC(w,sizeof(int));
+        s[i/bpi] |= 1<<(i%bpi);
+        MKNODE(t1,s,t);
+        t = t1;
+      }
+    }
+    return t;
+  }
+  rem = mono_raddec(NEXT(ideal));
+  r = 0;
+  len = w*sizeof(int);
+  u = (int *)CALLOC(w,sizeof(int));
+  for ( i = nv-1; i >= 0; i-- ) {
+    if ( d[i] ) {
+      for ( t = rem; t; t = NEXT(t) ) {
+        bcopy((char *)BDY(t),(char *)u,len);
+        u[i/bpi] |= 1<<(i%bpi);
+        for ( v = r; v; v = NEXT(v) ) {
+          if ( comp_bits_divisible(u,(int *)BDY(v),nv) ) break;
+        }
+        if ( v ) continue;
+        for ( v = r, prev = 0; v; v = NEXT(v) ) {
+          if ( comp_bits_divisible((int *)BDY(v),u,nv) ) {
+            if ( prev ) NEXT(prev) = NEXT(v);
+            else r = NEXT(r); 
+          } else prev =v;
+        }
+        for ( v = r, prev = 0; v; prev = v, v = NEXT(v) ) {
+          if ( comp_bits_lex(u,(int *)BDY(v),nv) < 0 ) break;
+        }
+        new = (int *)CALLOC(w,sizeof(int));
+        bcopy((char *)u,(char *)new,len);
+        MKNODE(t1,new,v);
+        if ( prev ) NEXT(prev) = t1;
+        else r = t1;
+      }
+    }
+  }
+  return r;
 }

@@ -1,37 +1,37 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.13 2015/08/14 13:51:55 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.14 2016/06/29 08:16:11 ohara Exp $
 */
-#ifndef	_INTERVAL_H
-#define	_INTERVAL_H
+#ifndef  _INTERVAL_H
+#define  _INTERVAL_H
 
-#define	PRINTF_G	0
-#define	PRINTF_E	1
+#define  PRINTF_G  0
+#define  PRINTF_E  1
 
 #if defined(INTERVAL)
 
 #include <math.h>
 
-#ifdef	sun
+#ifdef  sun
 #if OSMajorVersion < 4 || (OSMajorVersion == 4 && OSMinorVersion < 1)
 #include <sys/ieeefp.h>
 #endif
 #if defined(__svr4__)
-#include	<ieeefp.h>
-#define	FPNEAREST	fpsetround(FP_RN);
-#define	FPPLUSINF	fpsetround(FP_RP);
-#define	FPMINUSINF	fpsetround(FP_RM);
-#define	FPTOZERO	fpsetround(FP_RZ);
+#include  <ieeefp.h>
+#define  FPNEAREST  fpsetround(FP_RN);
+#define  FPPLUSINF  fpsetround(FP_RP);
+#define  FPMINUSINF  fpsetround(FP_RM);
+#define  FPTOZERO  fpsetround(FP_RZ);
 #else
-static char	*Interval_dummy;
-#define	FPNEAREST	ieee_flags("clear", "direction", Interval_dummy, &Interval_dummy);
-#define	FPPLUSINF	ieee_flags("set", "direction", "positive", &Interval_dummy);
-#define	FPMINUSINF	ieee_flags("set", "direction", "negative", &Interval_dummy);
-#define	FPTOZERO	ieee_flags("set", "direction", "tozero", &Interval_dummy);
+static char  *Interval_dummy;
+#define  FPNEAREST  ieee_flags("clear", "direction", Interval_dummy, &Interval_dummy);
+#define  FPPLUSINF  ieee_flags("set", "direction", "positive", &Interval_dummy);
+#define  FPMINUSINF  ieee_flags("set", "direction", "negative", &Interval_dummy);
+#define  FPTOZERO  ieee_flags("set", "direction", "tozero", &Interval_dummy);
 #endif
 #endif
 
-#ifdef	linux
-#include	<fpu_control.h>
+#ifdef  linux
+#include  <fpu_control.h>
 #if 1
 
 #if defined(__ARM_ARCH) || defined(ANDROID)
@@ -49,47 +49,47 @@ static char	*Interval_dummy;
 #endif
 #endif /* __ARM_ARCH */
 
-#define	LINUX_FPU_RC_MASK				0xf3ff
-#define	LINUX_FPU_SETCW(c)			\
+#define  LINUX_FPU_RC_MASK        0xf3ff
+#define  LINUX_FPU_SETCW(c)      \
 {fpu_control_t __tmp__; _FPU_GETCW(__fpu_control);\
  __tmp__ = (__fpu_control & LINUX_FPU_RC_MASK | c);\
  _FPU_SETCW(__tmp__);}
-#define	FPNEAREST	LINUX_FPU_SETCW(_FPU_RC_NEAREST);
-#define	FPPLUSINF	LINUX_FPU_SETCW(_FPU_RC_UP);
-#define	FPMINUSINF	LINUX_FPU_SETCW(_FPU_RC_DOWN);
-#define	FPTOZERO		LINUX_FPU_SETCW(_FPU_RC_ZERO);
+#define  FPNEAREST  LINUX_FPU_SETCW(_FPU_RC_NEAREST);
+#define  FPPLUSINF  LINUX_FPU_SETCW(_FPU_RC_UP);
+#define  FPMINUSINF  LINUX_FPU_SETCW(_FPU_RC_DOWN);
+#define  FPTOZERO    LINUX_FPU_SETCW(_FPU_RC_ZERO);
 #else
-#define	_FPU_DEFAULT_p_FPU_RC_UP	0x1b72
-#define	_FPU_DEFAULT_p_FPU_RC_DOWN	0x1772
-#define	_FPU_DEFAULT_p_FPU_RC_ZERO	0x1f72
-#define	FPNEAREST	__setfpucw(_FPU_DEFAULT);
-#define	FPPLUSINF	__setfpucw(_FPU_DEFAULT_p_FPU_RC_UP);
-#define	FPMINUSINF	__setfpucw(_FPU_DEFAULT_p_FPU_RC_DOWN);
-#define	FPTOZERO	__setfpucw(_FPU_DEFAULT_p_FPU_RC_ZERO);
+#define  _FPU_DEFAULT_p_FPU_RC_UP  0x1b72
+#define  _FPU_DEFAULT_p_FPU_RC_DOWN  0x1772
+#define  _FPU_DEFAULT_p_FPU_RC_ZERO  0x1f72
+#define  FPNEAREST  __setfpucw(_FPU_DEFAULT);
+#define  FPPLUSINF  __setfpucw(_FPU_DEFAULT_p_FPU_RC_UP);
+#define  FPMINUSINF  __setfpucw(_FPU_DEFAULT_p_FPU_RC_DOWN);
+#define  FPTOZERO  __setfpucw(_FPU_DEFAULT_p_FPU_RC_ZERO);
 #endif
 #endif
 
 #if defined(__osf__)
 #if 0
-#include	<float.h>
-#define	FPNEAREST	write_rnd(FP_RND_RN);
-#define	FPPLUSINF	write_rnd(FP_RND_RP);
-#define	FPMINUSINF	write_rnd(FP_RND_RM);
-#define	FPTOZERO	write_rnd(FP_RND_RZ);
+#include  <float.h>
+#define  FPNEAREST  write_rnd(FP_RND_RN);
+#define  FPPLUSINF  write_rnd(FP_RND_RP);
+#define  FPMINUSINF  write_rnd(FP_RND_RM);
+#define  FPTOZERO  write_rnd(FP_RND_RZ);
 #else
-#define	FPNEAREST	
-#define	FPPLUSINF	
-#define	FPMINUSINF	
-#define	FPTOZERO	
+#define  FPNEAREST  
+#define  FPPLUSINF  
+#define  FPMINUSINF  
+#define  FPTOZERO  
 #endif
 #endif
 
 #if defined(__FreeBSD__) && defined(__GNUC__)
-#include	<floatingpoint.h>
-#define	FPNEAREST	fpsetround(FP_RN);
-#define	FPPLUSINF	fpsetround(FP_RP);
-#define	FPMINUSINF	fpsetround(FP_RM);
-#define	FPTOZERO	fpsetround(FP_RZ);
+#include  <floatingpoint.h>
+#define  FPNEAREST  fpsetround(FP_RN);
+#define  FPPLUSINF  fpsetround(FP_RP);
+#define  FPMINUSINF  fpsetround(FP_RM);
+#define  FPTOZERO  fpsetround(FP_RZ);
 #endif
 
 #if defined(VISUAL) || defined(__MINGW32__)
@@ -102,68 +102,68 @@ static char	*Interval_dummy;
 
 /* no control function of floating point rounding */
 #ifndef FPNEAREST
-#define	FPNEAREST	fprintf(stderr, "Fpu control FPNEAREST is not supported in this machine yet.\n");
+#define  FPNEAREST  fprintf(stderr, "Fpu control FPNEAREST is not supported in this machine yet.\n");
 #endif
 #ifndef FPMINUSINF
-#define	FPMINUSINF	fprintf(stderr, "Fpu control FPMINUSINF is not supported in this machine yet.\n");
+#define  FPMINUSINF  fprintf(stderr, "Fpu control FPMINUSINF is not supported in this machine yet.\n");
 #endif
 #ifndef FPPLUSINF
-#define	FPPLUSINF	fprintf(stderr, "Fpu control FPPLUSINF is not supported in this machine yet.\n");
+#define  FPPLUSINF  fprintf(stderr, "Fpu control FPPLUSINF is not supported in this machine yet.\n");
 #endif
 #ifndef FPTOZERO
-#define	FPTOZERO	fprintf(stderr, "Fpu control FPZERO is not supported in this machine yet.\n");
+#define  FPTOZERO  fprintf(stderr, "Fpu control FPZERO is not supported in this machine yet.\n");
 #endif
-#define FPCLEAR		FPNEAREST
+#define FPCLEAR    FPNEAREST
 
-#define	MID_PRINTF_G	2
-#define	MID_PRINTF_E	3
+#define  MID_PRINTF_G  2
+#define  MID_PRINTF_E  3
 
 /* data structures */
 struct oItv {
-        short	id;
-        char	nid;
-        char	pad;
-        Num	inf;
-        Num	sup;
+        short  id;
+        char  nid;
+        char  pad;
+        Num  inf;
+        Num  sup;
 };
 
 typedef struct oItv *Itv;
 
 struct oIntervalDouble {
-        short	id;
-        char	nid;
-        char	pad;
-        double	inf;
-        double	sup;
+        short  id;
+        char  nid;
+        char  pad;
+        double  inf;
+        double  sup;
 };
 
 typedef struct oIntervalDouble *IntervalDouble;
 
 struct oforth {
-	short	sign;
-	short	exp;
-	double	u;
-	double	l;
+  short  sign;
+  short  exp;
+  double  u;
+  double  l;
 };
 
 typedef struct oforth *forth;
 
 struct oIntervalQuad {
-        short	id;
-        char	nid;
-        char	pad;
-        forth	inf;
-        forth	sup;
+        short  id;
+        char  nid;
+        char  pad;
+        forth  inf;
+        forth  sup;
 };
 
 typedef struct oIntervalQuad *IntervalQuad;
 
 struct oIntervalBigFloat {
-        short	id;
-        char	nid;
-        char	pad;
-        BF	inf;
-        BF	sup;
+        short  id;
+        char  nid;
+        char  pad;
+        BF  inf;
+        BF  sup;
 };
 
 typedef struct oIntervalBigFloat *IntervalBigFloat;
@@ -171,26 +171,26 @@ typedef struct oIntervalBigFloat *IntervalBigFloat;
 extern int zerorewrite;
 
 /* general macros */
-#define INF(p)	((p)->inf)
-#define SUP(p)	((p)->sup)
+#define INF(p)  ((p)->inf)
+#define SUP(p)  ((p)->sup)
 
-#define NEWItvP(q)	((q)=(Itv)MALLOC(sizeof(struct oItv)),\
-					OID(q)=O_N,NID(q)=N_IP)
-#define NEWIntervalDouble(q)	((q)=(IntervalDouble)MALLOC(sizeof(struct oIntervalDouble)),\
-					OID(q)=O_N,NID(q)=N_IntervalDouble)
-#define NEWIntervalQuad(q)	((q)=(IntervalDouble)MALLOC(sizeof(struct oIntervalQuad)),\
-					OID(q)=O_N,NID(q)=N_IntervalQuad)
-#define NEWIntervalBigFloat(q)	((q)=(IntervalBigFloat)MALLOC(sizeof(struct oIntervalBigFloat)),\
-					OID(q)=O_N,NID(q)=N_IntervalBigFloat)
-#define MKItvP(a,b,c)	(NEWItvP(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKIntervalDouble(a,b,c)	if((zerorewrite) && ((a)<=0.0) && ((b)>=0.0)) (c)=0;\
-			else (NEWIntervalDouble(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKIntervalQuad(a,b,c)	(NEWIntervalQuad(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKIntervalBigFloat(a,b,c)	(NEWIntervalBigFloat(c),(INF(c)=(a),SUP(c)=(b)))
+#define NEWItvP(q)  ((q)=(Itv)MALLOC(sizeof(struct oItv)),\
+          OID(q)=O_N,NID(q)=N_IP)
+#define NEWIntervalDouble(q)  ((q)=(IntervalDouble)MALLOC(sizeof(struct oIntervalDouble)),\
+          OID(q)=O_N,NID(q)=N_IntervalDouble)
+#define NEWIntervalQuad(q)  ((q)=(IntervalDouble)MALLOC(sizeof(struct oIntervalQuad)),\
+          OID(q)=O_N,NID(q)=N_IntervalQuad)
+#define NEWIntervalBigFloat(q)  ((q)=(IntervalBigFloat)MALLOC(sizeof(struct oIntervalBigFloat)),\
+          OID(q)=O_N,NID(q)=N_IntervalBigFloat)
+#define MKItvP(a,b,c)  (NEWItvP(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalDouble(a,b,c)  if((zerorewrite) && ((a)<=0.0) && ((b)>=0.0)) (c)=0;\
+      else (NEWIntervalDouble(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalQuad(a,b,c)  (NEWIntervalQuad(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalBigFloat(a,b,c)  (NEWIntervalBigFloat(c),(INF(c)=(a),SUP(c)=(b)))
 
-#define ToItvP(a,c)	(NEWItvP(c),INF(c)=(a),SUP(c)=(a))
-#define ToIntervalDouble(a,c)	(NEWIntervalDouble(c),INF(c)=(ToReal(a)),SUP(c)=(ToReal(a)))
-#define ToIntervalBigFloat(a,c)	(NEWIntervalBigFloat(c),INF(c)=(a),SUP(c)=(a))
+#define ToItvP(a,c)  (NEWItvP(c),INF(c)=(a),SUP(c)=(a))
+#define ToIntervalDouble(a,c)  (NEWIntervalDouble(c),INF(c)=(ToReal(a)),SUP(c)=(ToReal(a)))
+#define ToIntervalBigFloat(a,c)  (NEWIntervalBigFloat(c),INF(c)=(a),SUP(c)=(a))
 
 #define ITVP(a) (NID(a)==N_IP)
 #define ITVD(a) (NID(a)==N_IntervalDouble)
@@ -203,11 +203,11 @@ double  ToRealInf(Num);
 double  RatnToRealUp(Q);
 double  NatToRealUp(N, int *);
 
-void	double2bf(double, BF *);
-double	bf2double(BF);
+void  double2bf(double, BF *);
+double  bf2double(BF);
 
-void	itvtois(Itv, Num *, Num *);
-void	istoitv(Num, Num, Itv *);
+void  itvtois(Itv, Num *, Num *);
+void  istoitv(Num, Num, Itv *);
 
 #if 0
 void    additv(Num, Num, Num *);
@@ -241,11 +241,11 @@ void    capitvp(Itv, Itv, Itv *);
 void    widthitvp(Itv, Num *);
 void    distanceitvp(Itv, Itv, Num *);
 
-void	ToBf(Num, BF *);
-void	double2bf(double, BF *);
-double	bf2double(BF);
-void	addulp(IntervalBigFloat, IntervalBigFloat *);
-void	getulp(BF, BF *);
+void  ToBf(Num, BF *);
+void  double2bf(double, BF *);
+double  bf2double(BF);
+void  addulp(IntervalBigFloat, IntervalBigFloat *);
+void  getulp(BF, BF *);
 
 void    additvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
 void    subitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
@@ -257,9 +257,9 @@ void    pwritvf(Itv, Num, Itv *);
 void    pwritv0f(Itv, int, Itv *);
 
 /***    engine/d-itv.c    ***/
-double	ToRealDown(Num);
-double	ToRealUp(Num);
-void	Num2double(Num, double *, double *);
+double  ToRealDown(Num);
+double  ToRealUp(Num);
+void  Num2double(Num, double *, double *);
 
 void    additvd(Num, Num, IntervalDouble *);
 void    subitvd(Num, Num, IntervalDouble *);

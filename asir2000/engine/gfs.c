@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.17 2003/05/07 06:26:49 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfs.c,v 1.18 2017/02/27 05:14:54 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -61,10 +61,10 @@ int *current_gfs_ntoi;
 int *current_gfs_iton;
 
 struct prim_root_info {
-	int p;
-	int extdeg;
-	int defpoly;
-	int prim_root;
+  int p;
+  int extdeg;
+  int defpoly;
+  int prim_root;
 };
 
 /* if p >= SF_THRESHOLD, usual representation is used */
@@ -477,11 +477,11 @@ struct prim_root_info prim_root_info_tab[] = {
 
 void dec_um(int p,int a,UM u)
 {
-	int i;
+  int i;
 
-	for ( i = 0; a; i++, a /= p )
-		COEF(u)[i] = a%p;
-	DEG(u) = i-1;
+  for ( i = 0; a; i++, a /= p )
+    COEF(u)[i] = a%p;
+  DEG(u) = i-1;
 }
 
 /*
@@ -493,708 +493,708 @@ void dec_um(int p,int a,UM u)
 
 void setmod_sf(int p,int n)
 {
-	int r,i,q1,q,t,t1;
-	UM dp;
+  int r,i,q1,q,t,t1;
+  UM dp;
 
-	if ( p >= SF_THRESHOLD ) {
-		if ( n > 1 )
-			error("setmod_ff : p^n is too large");
-		current_gfs_p = p;
-		current_gfs_q = p;
-		current_gfs_q1 = p-1;
-		current_gfs_ext = 0;
-		current_gfs_ntoi = 0;
-		current_gfs_iton = 0;
-		current_gfs_plus1 = 0;
-		return;
-	}
+  if ( p >= SF_THRESHOLD ) {
+    if ( n > 1 )
+      error("setmod_ff : p^n is too large");
+    current_gfs_p = p;
+    current_gfs_q = p;
+    current_gfs_q1 = p-1;
+    current_gfs_ext = 0;
+    current_gfs_ntoi = 0;
+    current_gfs_iton = 0;
+    current_gfs_plus1 = 0;
+    return;
+  }
 
-	for ( i = 0, q = 1; i < n; i++ )
-		q *= p;
+  for ( i = 0, q = 1; i < n; i++ )
+    q *= p;
     if ( p == current_gfs_p && q == current_gfs_q ) return;
-	dp = UMALLOC(n);
-	r = search_defpoly_and_primitive_root(p,n,dp);
-	if ( !r ) {
-		generate_defpoly_um(p,n,dp);
-		r = generate_primitive_root_enc(p,n,dp);
-		if ( !r )
-			error("setmod_sf : primitive root not found");
-	}
-	current_gfs_p = p;
-	current_gfs_q = q;
-	current_gfs_q1 = q1 = q-1;
-	if ( n > 1 )
-		umtop(CO->v,dp,&current_gfs_ext);
-	else
-		current_gfs_ext = 0;
-	current_gfs_iton = (int *)MALLOC(q1*sizeof(int));
-	current_gfs_iton[0] = 1;
-	for ( i = 1; i < q1; i++ )
-		current_gfs_iton[i] = mulremum_enc(p,n,dp,current_gfs_iton[i-1],r);
+  dp = UMALLOC(n);
+  r = search_defpoly_and_primitive_root(p,n,dp);
+  if ( !r ) {
+    generate_defpoly_um(p,n,dp);
+    r = generate_primitive_root_enc(p,n,dp);
+    if ( !r )
+      error("setmod_sf : primitive root not found");
+  }
+  current_gfs_p = p;
+  current_gfs_q = q;
+  current_gfs_q1 = q1 = q-1;
+  if ( n > 1 )
+    umtop(CO->v,dp,&current_gfs_ext);
+  else
+    current_gfs_ext = 0;
+  current_gfs_iton = (int *)MALLOC(q1*sizeof(int));
+  current_gfs_iton[0] = 1;
+  for ( i = 1; i < q1; i++ )
+    current_gfs_iton[i] = mulremum_enc(p,n,dp,current_gfs_iton[i-1],r);
 
-	current_gfs_ntoi = (int *)MALLOC(q*sizeof(int));
-	current_gfs_ntoi[0] = -1;
-	for ( i = 0; i < q1; i++ )
-		current_gfs_ntoi[current_gfs_iton[i]] = i;
-		
-	current_gfs_plus1 = (int *)MALLOC(q*sizeof(int));
-	for ( i = 0; i < q1; i++ ) {
-		t = current_gfs_iton[i];
-		/* add 1 to the constant part */
-		t1 = (t/p)*p+((t+1)%p);
-		current_gfs_plus1[i] = current_gfs_ntoi[t1];
-	}
+  current_gfs_ntoi = (int *)MALLOC(q*sizeof(int));
+  current_gfs_ntoi[0] = -1;
+  for ( i = 0; i < q1; i++ )
+    current_gfs_ntoi[current_gfs_iton[i]] = i;
+    
+  current_gfs_plus1 = (int *)MALLOC(q*sizeof(int));
+  for ( i = 0; i < q1; i++ ) {
+    t = current_gfs_iton[i];
+    /* add 1 to the constant part */
+    t1 = (t/p)*p+((t+1)%p);
+    current_gfs_plus1[i] = current_gfs_ntoi[t1];
+  }
 }
 
 int search_defpoly_and_primitive_root(int p,int n,UM dp)
 {
-	int l,min,max,mid,p1,i,ind,t;
+  int l,min,max,mid,p1,i,ind,t;
 
-	l = sizeof(prim_root_info_tab)/sizeof(struct prim_root_info);
-	min = 0; max = l-1;
-	ind = -1;
-	while ( max - min > 1 ) {
-		mid = (max+min)/2;
-		p1 = prim_root_info_tab[mid].p;
-		if ( p1 == p ) {
-			ind = mid; break;
-		} else if ( p1 > p )
-			max = mid;
-		else
-			min = mid;
-	}
-	if ( ind < 0 ) {
-		if ( prim_root_info_tab[min].p == p )
-			ind = min;
-		else if ( prim_root_info_tab[max].p == p )
-			ind = max;
-		else
-			return 0; /* XXX */
-	}
-	/* now prim_root_info_tab[ind].p = p */
-	t = ind - (prim_root_info_tab[ind].extdeg-1);
-	/* now prim_root_info_tab[t].extdeg = 1 */
-	for ( i = t; prim_root_info_tab[i].p == p; i++ )
-		if ( prim_root_info_tab[i].extdeg == n )
-			break;
-	if ( prim_root_info_tab[i].p != p )
-		return 0;
-	dec_um(p,prim_root_info_tab[i].defpoly,dp);
-	return prim_root_info_tab[i].prim_root;
+  l = sizeof(prim_root_info_tab)/sizeof(struct prim_root_info);
+  min = 0; max = l-1;
+  ind = -1;
+  while ( max - min > 1 ) {
+    mid = (max+min)/2;
+    p1 = prim_root_info_tab[mid].p;
+    if ( p1 == p ) {
+      ind = mid; break;
+    } else if ( p1 > p )
+      max = mid;
+    else
+      min = mid;
+  }
+  if ( ind < 0 ) {
+    if ( prim_root_info_tab[min].p == p )
+      ind = min;
+    else if ( prim_root_info_tab[max].p == p )
+      ind = max;
+    else
+      return 0; /* XXX */
+  }
+  /* now prim_root_info_tab[ind].p = p */
+  t = ind - (prim_root_info_tab[ind].extdeg-1);
+  /* now prim_root_info_tab[t].extdeg = 1 */
+  for ( i = t; prim_root_info_tab[i].p == p; i++ )
+    if ( prim_root_info_tab[i].extdeg == n )
+      break;
+  if ( prim_root_info_tab[i].p != p )
+    return 0;
+  dec_um(p,prim_root_info_tab[i].defpoly,dp);
+  return prim_root_info_tab[i].prim_root;
 }
 
 void generate_defpoly_um(int p,int n,UM dp)
 {
-	int i,j,a,q;
-	UM wf,wdf,wgcd;
+  int i,j,a,q;
+  UM wf,wdf,wgcd;
 
-	wf = W_UMALLOC(n);
-	wdf = W_UMALLOC(n);
-	wgcd = W_UMALLOC(n);
-	COEF(dp)[n] = 1;
-	DEG(dp) = n;
-	for ( i = 0, q = 1; i < n; i++ )
-		q *= p;
-	for ( i = 0; i < q; i++ ) {
-		for ( j = 0, a = i; a; j++, a /= p )
-			COEF(dp)[j] = a%p;
-		for ( ; j < n; j++ )
-			COEF(dp)[j] = 0;
-		cpyum(dp,wf);
-		diffum(p,dp,wdf);
-		gcdum(p,wf,wdf,wgcd);
-		if ( DEG(wgcd) >= 1 )
-			continue;
-		mini(p,dp,wf);
-		if ( DEG(wf) <= 0 )
-			return;
-	}
+  wf = W_UMALLOC(n);
+  wdf = W_UMALLOC(n);
+  wgcd = W_UMALLOC(n);
+  COEF(dp)[n] = 1;
+  DEG(dp) = n;
+  for ( i = 0, q = 1; i < n; i++ )
+    q *= p;
+  for ( i = 0; i < q; i++ ) {
+    for ( j = 0, a = i; a; j++, a /= p )
+      COEF(dp)[j] = a%p;
+    for ( ; j < n; j++ )
+      COEF(dp)[j] = 0;
+    cpyum(dp,wf);
+    diffum(p,dp,wdf);
+    gcdum(p,wf,wdf,wgcd);
+    if ( DEG(wgcd) >= 1 )
+      continue;
+    mini(p,dp,wf);
+    if ( DEG(wf) <= 0 )
+      return;
+  }
 }
 
 int generate_primitive_root_enc(int p,int n,UM dp)
 {
-	int i,r,rj,j,q;
+  int i,r,rj,j,q;
 
-	if ( p == 2 && n == 1 )
-		return 1;
+  if ( p == 2 && n == 1 )
+    return 1;
 
-	for ( i = 0, q = 1; i < n; i++ )
-		 q *= p;
-	for ( r = n==1?2:p; r < q; r++ ) {
-		rj = r;
-		for ( j = 1; j < q-1 && rj != 1; j++ )
-			rj = mulremum_enc(p,n,dp,rj,r);
-		if ( j == q-1 )
-			return r;
-	}
-	/* not found */
-	return 0;
+  for ( i = 0, q = 1; i < n; i++ )
+     q *= p;
+  for ( r = n==1?2:p; r < q; r++ ) {
+    rj = r;
+    for ( j = 1; j < q-1 && rj != 1; j++ )
+      rj = mulremum_enc(p,n,dp,rj,r);
+    if ( j == q-1 )
+      return r;
+  }
+  /* not found */
+  return 0;
 }
 
 /* [a(p)]*[b(p)] in GF(p^n) -> [a(x)*b(x) mod dp(x)]_{x->p} */
 
 int mulremum_enc(int p,int n,UM dp,int a,int b)
 {
-	int i,dr,r;
-	UM wa,wb,wc,wq;
+  int i,dr,r;
+  UM wa,wb,wc,wq;
 
-	if ( n == 1 )
-		return (a*b)%p;
-	if ( !a || !b )
-		return 0;
+  if ( n == 1 )
+    return (a*b)%p;
+  if ( !a || !b )
+    return 0;
 
-	wa = W_UMALLOC(n);
-	dec_um(p,a,wa);
+  wa = W_UMALLOC(n);
+  dec_um(p,a,wa);
 
-	wb = W_UMALLOC(n);
-	dec_um(p,b,wb);
+  wb = W_UMALLOC(n);
+  dec_um(p,b,wb);
 
-	wc = W_UMALLOC(2*n);
-	wq = W_UMALLOC(2*n);
-	mulum(p,wa,wb,wc);
-	dr = divum(p,wc,dp,wq);
-	for ( i = dr, r = 0; i >= 0; i-- )
-		r = r*p+COEF(wc)[i];
-	return r;
+  wc = W_UMALLOC(2*n);
+  wq = W_UMALLOC(2*n);
+  mulum(p,wa,wb,wc);
+  dr = divum(p,wc,dp,wq);
+  for ( i = dr, r = 0; i >= 0; i-- )
+    r = r*p+COEF(wc)[i];
+  return r;
 }
 
 /* sigma : alpha -> alpha^q */
 
 void gfs_galois_action(GFS a,Q e,GFS *c)
 {
-	Q p;
-	int i,k;
-	GFS t,s;
+  Q p;
+  int i,k;
+  GFS t,s;
 
-	t = a;
-	k = QTOS(e);
-	STOQ(current_gfs_p,p);
-	for ( i = 0; i < k; i++ ) {
-		pwrgfs(t,p,&s); t = s;
-	}
-	*c = t;
+  t = a;
+  k = QTOS(e);
+  STOQ(current_gfs_p,p);
+  for ( i = 0; i < k; i++ ) {
+    pwrgfs(t,p,&s); t = s;
+  }
+  *c = t;
 }
 
 /* GF(pn)={0,1,a,a^2,...} -> GF(pm)={0,1,b,b^2,...}; a->b^k */
 
 void gfs_embed(GFS z,int k,int pm,GFS *c)
 {
-	int t;
+  int t;
 
-	if ( !z )
-		*c = 0;
-	else {
-		t = dmar(k,CONT(z),0,pm-1);
-		MKGFS(t,*c);
-	}
+  if ( !z )
+    *c = 0;
+  else {
+    t = dmar(k,CONT(z),0,pm-1);
+    MKGFS(t,*c);
+  }
 }
 
 /* 0 <= index <= q-1 */
 
 void indextogfs(int index, GFS *c)
 {
-	if ( index == 0 )
-		*c = 0;
-	else if ( index >= current_gfs_q )
-		error("indextogfs : exhausted");
-	else if ( !current_gfs_ntoi ) {
-		MKGFS(index,*c);
-	} else {
-		MKGFS(index-1,*c);
-	}
+  if ( index == 0 )
+    *c = 0;
+  else if ( index >= current_gfs_q )
+    error("indextogfs : exhausted");
+  else if ( !current_gfs_ntoi ) {
+    MKGFS(index,*c);
+  } else {
+    MKGFS(index-1,*c);
+  }
 }
 
 void itogfs(int n, GFS *c)
 {
-	n = _itosf(n);
-	if ( !n )
-		*c = 0;
-	else {
-		n = IFTOF(n);
-		MKGFS(n,*c);
-	}
+  n = _itosf(n);
+  if ( !n )
+    *c = 0;
+  else {
+    n = IFTOF(n);
+    MKGFS(n,*c);
+  }
 }
 
 void iftogfs(int n, GFS *c)
 {
-	if ( !n )
-		*c = 0;
-	else {
-		MKGFS(IFTOF(n),*c);
-	}
+  if ( !n )
+    *c = 0;
+  else {
+    MKGFS(IFTOF(n),*c);
+  }
 }
 
 void qtogfs(Q a,GFS *c)
 {
-	int s;
+  int s;
 
-	if ( a && (SGN(a) < 1) )
-		error("qtogfs : invalid argument");
-	s = QTOS(a)%current_gfs_q;
-	itogfs(s,c);
+  if ( a && (SGN(a) < 1) )
+    error("qtogfs : invalid argument");
+  s = QTOS(a)%current_gfs_q;
+  itogfs(s,c);
 }
 
 void mqtogfs(MQ a,GFS *c)
 {
-	if ( !a )
-		*c = 0;
-	else
-		itogfs(CONT(a),c);
+  if ( !a )
+    *c = 0;
+  else
+    itogfs(CONT(a),c);
 }
 
 void gfstomq(GFS a,MQ *c)
 {
-	if ( !a )
-		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		UTOMQ(CONT(a),*c);
-	} else {
-		UTOMQ(current_gfs_iton[CONT(a)],*c);
-	}
+  if ( !a )
+    *c = 0;
+  else if ( !current_gfs_ntoi ) {
+    UTOMQ(CONT(a),*c);
+  } else {
+    UTOMQ(current_gfs_iton[CONT(a)],*c);
+  }
 }
 
 void gfstopgfs(GFS a,V v,P *c)
 {
-	MQ t;
-	Q q;
+  MQ t;
+  Q q;
 
-	if ( !a )
-		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		UTOMQ(CONT(a),t);
-		STOQ(CONT(t),q);
-		*c = (P)q;
-	} else
-		enc_to_p(current_gfs_p,current_gfs_iton[CONT(a)],v,c);
+  if ( !a )
+    *c = 0;
+  else if ( !current_gfs_ntoi ) {
+    UTOMQ(CONT(a),t);
+    STOQ(CONT(t),q);
+    *c = (P)q;
+  } else
+    enc_to_p(current_gfs_p,current_gfs_iton[CONT(a)],v,c);
 }
 
 void ntogfs(Obj a,GFS *b)
 {
-	P t;
+  P t;
 
-	if ( !current_gfs_q1 )
-		error("addgfs : current_gfs_q is not set");
-	if ( !a || (OID(a)==O_N && NID(a) == N_GFS) )
-		*b = (GFS)a;
-	else if ( OID(a) == O_N && NID(a) == N_M )
-		mqtogfs((MQ)a,b);
-	else if ( OID(a) == O_N && NID(a) == N_Q ) {
-		ptomp(current_gfs_p,(P)a,&t); mqtogfs((MQ)t,b);
-	} else
-		error("ntogfs : invalid argument");
+  if ( !current_gfs_q1 )
+    error("addgfs : current_gfs_q is not set");
+  if ( !a || (OID(a)==O_N && NID(a) == N_GFS) )
+    *b = (GFS)a;
+  else if ( OID(a) == O_N && NID(a) == N_M )
+    mqtogfs((MQ)a,b);
+  else if ( OID(a) == O_N && NID(a) == N_Q ) {
+    ptomp(current_gfs_p,(P)a,&t); mqtogfs((MQ)t,b);
+  } else
+    error("ntogfs : invalid argument");
 }
 
 void addgfs(GFS a,GFS b,GFS *c)
 {
-	int ai,bi,ci;
-	GFS z;
+  int ai,bi,ci;
+  GFS z;
 
-	ntogfs((Obj)a,&z); a = z;
-	ntogfs((Obj)b,&z); b = z;
-	if ( !a )
-		*c = b;
-	else if ( !b )
-		*c = a;
-	else if ( !current_gfs_ntoi ) {
-		ai = CONT(a); bi = CONT(b);
-		ci = ai+bi-current_gfs_q;
-		if ( ci == 0 )
-			*c = 0;
-		else {
-			if ( ci < 0 )
-				ci += current_gfs_q;	
-			MKGFS(ci,*c);
-		}
-	} else {
-		ai = CONT(a); bi = CONT(b);
-		if ( ai > bi ) {
-			/* tab[ai]+tab[bi] = tab[bi](tab[ai-bi]+1) */
-			ci = current_gfs_plus1[ai-bi];
-			if ( ci < 0 )
-				*c = 0;
-			else {
-				ci += bi;
-				if ( ci >= current_gfs_q1 )
-					ci -= current_gfs_q1;
-				MKGFS(ci,*c);
-			}
-		} else {
-			/* tab[ai]+tab[bi] = tab[ai](tab[bi-ai]+1) */
-			ci = current_gfs_plus1[bi-ai];
-			if ( ci < 0 )
-				*c = 0;
-			else {
-				ci += ai;
-				if ( ci >= current_gfs_q1 )
-					ci -= current_gfs_q1;
-				MKGFS(ci,*c);
-			}
-		}
-	}
+  ntogfs((Obj)a,&z); a = z;
+  ntogfs((Obj)b,&z); b = z;
+  if ( !a )
+    *c = b;
+  else if ( !b )
+    *c = a;
+  else if ( !current_gfs_ntoi ) {
+    ai = CONT(a); bi = CONT(b);
+    ci = ai+bi-current_gfs_q;
+    if ( ci == 0 )
+      *c = 0;
+    else {
+      if ( ci < 0 )
+        ci += current_gfs_q;  
+      MKGFS(ci,*c);
+    }
+  } else {
+    ai = CONT(a); bi = CONT(b);
+    if ( ai > bi ) {
+      /* tab[ai]+tab[bi] = tab[bi](tab[ai-bi]+1) */
+      ci = current_gfs_plus1[ai-bi];
+      if ( ci < 0 )
+        *c = 0;
+      else {
+        ci += bi;
+        if ( ci >= current_gfs_q1 )
+          ci -= current_gfs_q1;
+        MKGFS(ci,*c);
+      }
+    } else {
+      /* tab[ai]+tab[bi] = tab[ai](tab[bi-ai]+1) */
+      ci = current_gfs_plus1[bi-ai];
+      if ( ci < 0 )
+        *c = 0;
+      else {
+        ci += ai;
+        if ( ci >= current_gfs_q1 )
+          ci -= current_gfs_q1;
+        MKGFS(ci,*c);
+      }
+    }
+  }
 }
 
 void subgfs(GFS a,GFS b,GFS *c)
 {
-	GFS t,z;
+  GFS t,z;
 
-	ntogfs((Obj)a,&z); a = z;
-	ntogfs((Obj)b,&z); b = z;
-	if ( !b )
-		*c = a;
-	else {
-		chsgngfs(b,&t);
-		addgfs(a,t,c);
-	}
+  ntogfs((Obj)a,&z); a = z;
+  ntogfs((Obj)b,&z); b = z;
+  if ( !b )
+    *c = a;
+  else {
+    chsgngfs(b,&t);
+    addgfs(a,t,c);
+  }
 }
 
 void mulgfs(GFS a,GFS b,GFS *c)
 {
-	int ai,bi,ci;
-	GFS z;
+  int ai,bi,ci;
+  GFS z;
 
-	ntogfs((Obj)a,&z); a = z;
-	ntogfs((Obj)b,&z); b = z;
-	if ( !a || !b )
-		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		ai = CONT(a); bi = CONT(b);
-		DMAR(ai,bi,0,current_gfs_q,ci);
-		MKGFS(ci,*c);
-	} else {
-		ai = CONT(a) + CONT(b);
-		if ( ai >= current_gfs_q1 )
-			ai -= current_gfs_q1;
-		MKGFS(ai,*c);
-	}
+  ntogfs((Obj)a,&z); a = z;
+  ntogfs((Obj)b,&z); b = z;
+  if ( !a || !b )
+    *c = 0;
+  else if ( !current_gfs_ntoi ) {
+    ai = CONT(a); bi = CONT(b);
+    DMAR(ai,bi,0,current_gfs_q,ci);
+    MKGFS(ci,*c);
+  } else {
+    ai = CONT(a) + CONT(b);
+    if ( ai >= current_gfs_q1 )
+      ai -= current_gfs_q1;
+    MKGFS(ai,*c);
+  }
 }
 
 void divgfs(GFS a,GFS b,GFS *c)
 {
-	int ai,bi,ci;
-	GFS z;
+  int ai,bi,ci;
+  GFS z;
 
-	ntogfs((Obj)a,&z); a = z;
-	ntogfs((Obj)b,&z); b = z;
-	if ( !b )
-		error("divgfs : division by 0");
-	else if ( !a )
-		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		ai = CONT(a); bi = invm(CONT(b),current_gfs_q);
-		DMAR(ai,bi,0,current_gfs_q,ci);
-		MKGFS(ci,*c);
-	} else {
-		ai = CONT(a) - CONT(b);
-		if ( ai < 0 )
-			ai += current_gfs_q1;
-		MKGFS(ai,*c);
-	}
+  ntogfs((Obj)a,&z); a = z;
+  ntogfs((Obj)b,&z); b = z;
+  if ( !b )
+    error("divgfs : division by 0");
+  else if ( !a )
+    *c = 0;
+  else if ( !current_gfs_ntoi ) {
+    ai = CONT(a); bi = invm(CONT(b),current_gfs_q);
+    DMAR(ai,bi,0,current_gfs_q,ci);
+    MKGFS(ci,*c);
+  } else {
+    ai = CONT(a) - CONT(b);
+    if ( ai < 0 )
+      ai += current_gfs_q1;
+    MKGFS(ai,*c);
+  }
 }
 
 void chsgngfs(GFS a,GFS *c)
 {
-	int ai;
-	GFS z;
+  int ai;
+  GFS z;
 
-	ntogfs((Obj)a,&z); a = z;
-	if ( !a )
-		*c = 0;
-	else if ( !current_gfs_ntoi ) {
-		ai = current_gfs_q - CONT(a);
-		MKGFS(ai,*c);
-	} else if ( current_gfs_q1&1 )
-		*c = a;
-	else {	
-		/* r^((q-1)/2) = -1 */
-		ai = CONT(a)+(current_gfs_q1>>1);
-		if ( ai >= current_gfs_q1 )
-			ai -= current_gfs_q1;
-		MKGFS(ai,*c);
-	}
+  ntogfs((Obj)a,&z); a = z;
+  if ( !a )
+    *c = 0;
+  else if ( !current_gfs_ntoi ) {
+    ai = current_gfs_q - CONT(a);
+    MKGFS(ai,*c);
+  } else if ( current_gfs_q1&1 )
+    *c = a;
+  else {  
+    /* r^((q-1)/2) = -1 */
+    ai = CONT(a)+(current_gfs_q1>>1);
+    if ( ai >= current_gfs_q1 )
+      ai -= current_gfs_q1;
+    MKGFS(ai,*c);
+  }
 }
 
 void pwrgfs(GFS a,Q b,GFS *c)
 {
-	N an,tn,rn;
-	GFS t,s,z;
-	int ai;
+  N an,tn,rn;
+  GFS t,s,z;
+  int ai;
 
-	ntogfs((Obj)a,&z); a = z;
-	if ( !b )
-		itogfs(1,c);
-	else if ( !a )
-		*c = 0;
-	else if ( !current_gfs_ntoi) {
-		ai = pwrm(current_gfs_q,CONT(a),QTOS(b));
-		MKGFS(ai,*c);
-	} else {
-		STON(CONT(a),an); muln(an,NM(b),&tn);
-		STON(current_gfs_q1,an); remn(tn,an,&rn);
-		if ( !rn )
-			itogfs(1,c);
-		else if ( SGN(b) > 0 )
-			MKGFS(BD(rn)[0],*c);
-		else {
-			itogfs(1,&t);
-			MKGFS(BD(rn)[0],s);
-			divgfs(t,s,c);
-		}
-	}
+  ntogfs((Obj)a,&z); a = z;
+  if ( !b )
+    itogfs(1,c);
+  else if ( !a )
+    *c = 0;
+  else if ( !current_gfs_ntoi) {
+    ai = pwrm(current_gfs_q,CONT(a),QTOS(b));
+    MKGFS(ai,*c);
+  } else {
+    STON(CONT(a),an); muln(an,NM(b),&tn);
+    STON(current_gfs_q1,an); remn(tn,an,&rn);
+    if ( !rn )
+      itogfs(1,c);
+    else if ( SGN(b) > 0 )
+      MKGFS(BD(rn)[0],*c);
+    else {
+      itogfs(1,&t);
+      MKGFS(BD(rn)[0],s);
+      divgfs(t,s,c);
+    }
+  }
 }
 
 int cmpgfs(GFS a,GFS b)
 {
-	GFS z;
+  GFS z;
 
-	ntogfs((Obj)a,&z); a = z;
-	if ( !a )
-		return !b ? 0 : -1;
-	else
-		if ( !b )
-			return 1;
-		else {
-			if ( CONT(a) > CONT(b) )
-				return 1;
-			else if ( CONT(a) < CONT(b) )
-				return -1;
-			else
-				return 0;
-		}
+  ntogfs((Obj)a,&z); a = z;
+  if ( !a )
+    return !b ? 0 : -1;
+  else
+    if ( !b )
+      return 1;
+    else {
+      if ( CONT(a) > CONT(b) )
+        return 1;
+      else if ( CONT(a) < CONT(b) )
+        return -1;
+      else
+        return 0;
+    }
 }
 
 void pthrootgfs(GFS a,GFS *b)
 {
-	Q p;
-	int e,i;
-	GFS t,s;
+  Q p;
+  int e,i;
+  GFS t,s;
 
-	STOQ(characteristic_sf(),p);
-	e = extdeg_sf()-1;
-	t = a;
-	for ( i = 0; i < e; i++ ) {
-		pwrgfs(t,p,&s); t = s;
-	}
-	*b = t;
+  STOQ(characteristic_sf(),p);
+  e = extdeg_sf()-1;
+  t = a;
+  for ( i = 0; i < e; i++ ) {
+    pwrgfs(t,p,&s); t = s;
+  }
+  *b = t;
 }
 
 void randomgfs(GFS *r)
 {
-	unsigned int t;
+  unsigned int t;
 
-	if ( !current_gfs_q1 )
-		error("addgfs : current_gfs_q is not set");
-	t = mt_genrand()%current_gfs_q;
-	indextogfs(t,r);
+  if ( !current_gfs_q1 )
+    error("addgfs : current_gfs_q is not set");
+  t = mt_genrand()%current_gfs_q;
+  indextogfs(t,r);
 }
 
 /* arithmetic operations for 'immediate values of GFS */
 
 int _addsf(int a,int b)
 {
-	if ( !a )
-		return b;
-	else if ( !b )
-		return a;
+  if ( !a )
+    return b;
+  else if ( !b )
+    return a;
 
-	a = IFTOF(a); b = IFTOF(b);
+  a = IFTOF(a); b = IFTOF(b);
 
-	if ( !current_gfs_ntoi ) {
-		a = a+b-current_gfs_q;
-		if ( a == 0 )
-			return 0;
-		else { 
-			if ( a < 0 )
-				a += current_gfs_q;	
-			return FTOIF(a);
-		}
-	}
+  if ( !current_gfs_ntoi ) {
+    a = a+b-current_gfs_q;
+    if ( a == 0 )
+      return 0;
+    else { 
+      if ( a < 0 )
+        a += current_gfs_q;  
+      return FTOIF(a);
+    }
+  }
 
-	if ( a > b ) {
-		/* tab[a]+tab[b] = tab[b](tab[a-b]+1) */
-		a = current_gfs_plus1[a-b];
-		if ( a < 0 )
-			return 0;
-		else {
-			a += b;
-			if ( a >= current_gfs_q1 )
-				a -= current_gfs_q1;
-			return FTOIF(a);
-		}
-	} else {
-		/* tab[a]+tab[b] = tab[a](tab[b-a]+1) */
-		b = current_gfs_plus1[b-a];
-		if ( b < 0 )
-			return 0;
-		else {
-			b += a;
-			if ( b >= current_gfs_q1 )
-				b -= current_gfs_q1;
-			return FTOIF(b);
-		}
-	}
+  if ( a > b ) {
+    /* tab[a]+tab[b] = tab[b](tab[a-b]+1) */
+    a = current_gfs_plus1[a-b];
+    if ( a < 0 )
+      return 0;
+    else {
+      a += b;
+      if ( a >= current_gfs_q1 )
+        a -= current_gfs_q1;
+      return FTOIF(a);
+    }
+  } else {
+    /* tab[a]+tab[b] = tab[a](tab[b-a]+1) */
+    b = current_gfs_plus1[b-a];
+    if ( b < 0 )
+      return 0;
+    else {
+      b += a;
+      if ( b >= current_gfs_q1 )
+        b -= current_gfs_q1;
+      return FTOIF(b);
+    }
+  }
 }
 
 int _chsgnsf(int a)
 {
-	if ( !a )
-		return 0;
-	else if ( !current_gfs_ntoi ) {
-		a = current_gfs_q-IFTOF(a);
-		return FTOIF(a);
-	} else if ( current_gfs_q1&1 )
-		return a;
-	else {	
-		/* r^((q-1)/2) = -1 */
-		a = IFTOF(a);
-		a += (current_gfs_q1>>1);
-		if ( a >= current_gfs_q1 )
-			a -= current_gfs_q1;
-		return FTOIF(a);
-	}
+  if ( !a )
+    return 0;
+  else if ( !current_gfs_ntoi ) {
+    a = current_gfs_q-IFTOF(a);
+    return FTOIF(a);
+  } else if ( current_gfs_q1&1 )
+    return a;
+  else {  
+    /* r^((q-1)/2) = -1 */
+    a = IFTOF(a);
+    a += (current_gfs_q1>>1);
+    if ( a >= current_gfs_q1 )
+      a -= current_gfs_q1;
+    return FTOIF(a);
+  }
 }
 
 int _subsf(int a,int b)
 {
-	if ( !a )
-		return _chsgnsf(b);
-	else if ( !b )
-		return a;
-	else
-		return _addsf(a,_chsgnsf(b));
+  if ( !a )
+    return _chsgnsf(b);
+  else if ( !b )
+    return a;
+  else
+    return _addsf(a,_chsgnsf(b));
 }
 
 int _mulsf(int a,int b)
 {
-	int c;
+  int c;
 
-	if ( !a || !b )
-		return 0;
-	else if ( !current_gfs_ntoi ) {
-		a = IFTOF(a); b = IFTOF(b);
-		DMAR(a,b,0,current_gfs_q,c);
-		return FTOIF(c);
-	} else {
-		a = IFTOF(a) + IFTOF(b);
-		if ( a >= current_gfs_q1 )
-			a -= current_gfs_q1;
-		return FTOIF(a);
-	}
+  if ( !a || !b )
+    return 0;
+  else if ( !current_gfs_ntoi ) {
+    a = IFTOF(a); b = IFTOF(b);
+    DMAR(a,b,0,current_gfs_q,c);
+    return FTOIF(c);
+  } else {
+    a = IFTOF(a) + IFTOF(b);
+    if ( a >= current_gfs_q1 )
+      a -= current_gfs_q1;
+    return FTOIF(a);
+  }
 }
 
 int _invsf(int a)
 {
-	if ( !a ) {
-		error("_invsf : division by 0");
-		/* NOTREACHED */
-		return -1;
-	} else if ( !current_gfs_ntoi ) {
-		a = invm(IFTOF(a),current_gfs_q);
-		return FTOIF(a);
-	} else {
-		a = current_gfs_q1 - IFTOF(a);
-		return FTOIF(a);
-	}
+  if ( !a ) {
+    error("_invsf : division by 0");
+    /* NOTREACHED */
+    return -1;
+  } else if ( !current_gfs_ntoi ) {
+    a = invm(IFTOF(a),current_gfs_q);
+    return FTOIF(a);
+  } else {
+    a = current_gfs_q1 - IFTOF(a);
+    return FTOIF(a);
+  }
 }
 
 int _divsf(int a,int b)
 {
-	int c;
+  int c;
 
-	if ( !b ) {
-		error("_divsf : division by 0");
-		/* NOTREACHED */
-		return -1;
-	} else if ( !current_gfs_ntoi ) {
-		b = invm(IFTOF(b),current_gfs_q);
-		a = IFTOF(a);
-		DMAR(a,b,0,current_gfs_q,c);
-		return FTOIF(c);
-	} else if ( !a )
-		return 0;
-	else {
-		a = IFTOF(a) - IFTOF(b);
-		if ( a < 0 )
-			a += current_gfs_q1;
-		return FTOIF(a);
-	}
+  if ( !b ) {
+    error("_divsf : division by 0");
+    /* NOTREACHED */
+    return -1;
+  } else if ( !current_gfs_ntoi ) {
+    b = invm(IFTOF(b),current_gfs_q);
+    a = IFTOF(a);
+    DMAR(a,b,0,current_gfs_q,c);
+    return FTOIF(c);
+  } else if ( !a )
+    return 0;
+  else {
+    a = IFTOF(a) - IFTOF(b);
+    if ( a < 0 )
+      a += current_gfs_q1;
+    return FTOIF(a);
+  }
 }
 
 int _pwrsf(int a,int b)
 {
-	GFS at,ct;
-	Q bt;
-	int c;
+  GFS at,ct;
+  Q bt;
+  int c;
 
-	if ( !b )
-		return _onesf();
-	else if ( !a )
-		return 0;
-	if ( !current_gfs_ntoi ) {
-		a = pwrm(current_gfs_q,IFTOF(a),b);
-		return FTOIF(a);
-	} else {
-		iftogfs(a,&at);
-		STOQ(b,bt);
-		pwrgfs(at,bt,&ct);
-		c = CONT(ct);
-		return FTOIF(c);
-	}
+  if ( !b )
+    return _onesf();
+  else if ( !a )
+    return 0;
+  if ( !current_gfs_ntoi ) {
+    a = pwrm(current_gfs_q,IFTOF(a),b);
+    return FTOIF(a);
+  } else {
+    iftogfs(a,&at);
+    STOQ(b,bt);
+    pwrgfs(at,bt,&ct);
+    c = CONT(ct);
+    return FTOIF(c);
+  }
 }
 
 int _onesf()
 {
-	return !current_gfs_ntoi ? FTOIF(1) : FTOIF(0);
+  return !current_gfs_ntoi ? FTOIF(1) : FTOIF(0);
 }
 
 int _itosf(int n)
 {
-	int i;
+  int i;
 
-	/* XXX */
+  /* XXX */
 #if 0
-	n %= current_gfs_p;
+  n %= current_gfs_p;
 #else
-	n %= current_gfs_q;
+  n %= current_gfs_q;
 #endif
-	if ( !n )
-		return 0;
-	i = !current_gfs_ntoi ? n : current_gfs_ntoi[n];
-	i = FTOIF(i);
-	if ( n < 0 )
-		i = _chsgnsf(i);
-	return i;
+  if ( !n )
+    return 0;
+  i = !current_gfs_ntoi ? n : current_gfs_ntoi[n];
+  i = FTOIF(i);
+  if ( n < 0 )
+    i = _chsgnsf(i);
+  return i;
 }
 
 int _isonesf(int a)
 {
-	return a == _onesf();
+  return a == _onesf();
 }
 
 int _randomsf()
 {
-	int t;
+  int t;
 
-	t = (int) (mt_genrand() % current_gfs_q);
-	if ( !current_gfs_ntoi )
-		return t ? FTOIF(t) : 0;
-	else
-		return t!=current_gfs_q1 ? FTOIF(t) : 0;
+  t = (int) (mt_genrand() % current_gfs_q);
+  if ( !current_gfs_ntoi )
+    return t ? FTOIF(t) : 0;
+  else
+    return t!=current_gfs_q1 ? FTOIF(t) : 0;
 }
 
 int field_order_sf()
 {
-	return current_gfs_q;
+  return current_gfs_q;
 }
 
 int characteristic_sf()
 {
-	return current_gfs_p;
+  return current_gfs_p;
 }
 
 int extdeg_sf()
 {
-	if ( !current_gfs_ext )
-		return 1;
-	else
-		return UDEG(current_gfs_ext);
+  if ( !current_gfs_ext )
+    return 1;
+  else
+    return UDEG(current_gfs_ext);
 }

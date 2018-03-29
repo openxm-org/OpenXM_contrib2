@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.11 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/math.c,v 1.12 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -58,334 +58,334 @@ void Pdsqrt(),Pdsin(),Pdcos(),Pdtan(),Pdasin(),Pdacos(),Pdatan(),Pdlog(),Pdexp()
 void Pabs(),Pdfloor(),Pdceil(),Pdrint(),Pdisnan();
 
 struct ftab math_tab[] = {
-	{"dsqrt",Pdsqrt,1},
-	{"dabs",Pabs,1},
-	{"dsin",Pdsin,1},
-	{"dcos",Pdcos,1},
-	{"dtan",Pdtan,1},
-	{"dlog",Pdlog,1},
-	{"dexp",Pdexp,1},
-	{"dasin",Pdasin,1},
-	{"dacos",Pdacos,1},
-	{"datan",Pdatan,1},
-	{"floor",Pdfloor,1},
-	{"dfloor",Pdfloor,1},
-	{"ceil",Pdceil,1},
-	{"dceil",Pdceil,1},
-	{"rint",Pdrint,1},
-	{"drint",Pdrint,1},
-	{"disnan",Pdisnan,1},
-	{0,0,0},
+  {"dsqrt",Pdsqrt,1},
+  {"dabs",Pabs,1},
+  {"dsin",Pdsin,1},
+  {"dcos",Pdcos,1},
+  {"dtan",Pdtan,1},
+  {"dlog",Pdlog,1},
+  {"dexp",Pdexp,1},
+  {"dasin",Pdasin,1},
+  {"dacos",Pdacos,1},
+  {"datan",Pdatan,1},
+  {"floor",Pdfloor,1},
+  {"dfloor",Pdfloor,1},
+  {"ceil",Pdceil,1},
+  {"dceil",Pdceil,1},
+  {"rint",Pdrint,1},
+  {"drint",Pdrint,1},
+  {"disnan",Pdisnan,1},
+  {0,0,0},
 };
 
 void get_ri(Num z,double *r,double *i)
 {
-	if ( !z ) {
-		*r = 0; *i = 0; return;
-	}
-	if ( OID(z) != O_N )
-		error("get_ri : invalid argument");
-	switch ( NID(z) ) {
-		case N_Q: case N_R: case N_B:
-			*r = ToReal(z); *i = 0;
-			break;
-		case N_C:
-			*r = ToReal(((C)z)->r);
-			*i = ToReal(((C)z)->i);
-			break;
-		default:
-			error("get_ri : invalid argument");
-			break;
-	}
+  if ( !z ) {
+    *r = 0; *i = 0; return;
+  }
+  if ( OID(z) != O_N )
+    error("get_ri : invalid argument");
+  switch ( NID(z) ) {
+    case N_Q: case N_R: case N_B:
+      *r = ToReal(z); *i = 0;
+      break;
+    case N_C:
+      *r = ToReal(((C)z)->r);
+      *i = ToReal(((C)z)->i);
+      break;
+    default:
+      error("get_ri : invalid argument");
+      break;
+  }
 }
 
 void Pabs(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s,r,i;
+  double s,r,i;
 
-	if ( !ARG0(arg) ) {
-		*rp = 0; return;
-	}
-	get_ri((Num)ARG0(arg),&r,&i);
-	if ( i == 0 )
-		s = fabs(r);
-	else if ( r == 0 )
-		s = fabs(i);
-	else
-		s = sqrt(r*r+i*i);
-	MKReal(s,*rp);
+  if ( !ARG0(arg) ) {
+    *rp = 0; return;
+  }
+  get_ri((Num)ARG0(arg),&r,&i);
+  if ( i == 0 )
+    s = fabs(r);
+  else if ( r == 0 )
+    s = fabs(i);
+  else
+    s = sqrt(r*r+i*i);
+  MKReal(s,*rp);
 }
 
 void Pdsqrt(arg,rp)
 NODE arg;
 Num *rp;
 {
-	double s,r,i,a;
-	C z;
-	Real real;
+  double s,r,i,a;
+  C z;
+  Real real;
 
-	if ( !ARG0(arg) ) {
-		*rp = 0; return;
-	}
-	get_ri((Num)ARG0(arg),&r,&i);
-	if ( i == 0 )
-		if ( r > 0 ) {
-			s = sqrt(r);
-			MKReal(s,real);
-			*rp = (Num)real;
-		} else {
-			NEWC(z);
-			z->r = 0;
-			s = sqrt(-r); MKReal(s,real); z->i = (Num)real;
-			*rp = (Num)z;
-		}
-	else {
-		a = sqrt(r*r+i*i);
-		NEWC(z);
-		s = sqrt((r+a)/2); MKReal(s,real); z->r = (Num)real;
-		s = i>0?sqrt((-r+a)/2):-sqrt((-r+a)/2);
-		MKReal(s,real); z->i = (Num)real;
-		*rp = (Num)z;
-	}
+  if ( !ARG0(arg) ) {
+    *rp = 0; return;
+  }
+  get_ri((Num)ARG0(arg),&r,&i);
+  if ( i == 0 )
+    if ( r > 0 ) {
+      s = sqrt(r);
+      MKReal(s,real);
+      *rp = (Num)real;
+    } else {
+      NEWC(z);
+      z->r = 0;
+      s = sqrt(-r); MKReal(s,real); z->i = (Num)real;
+      *rp = (Num)z;
+    }
+  else {
+    a = sqrt(r*r+i*i);
+    NEWC(z);
+    s = sqrt((r+a)/2); MKReal(s,real); z->r = (Num)real;
+    s = i>0?sqrt((-r+a)/2):-sqrt((-r+a)/2);
+    MKReal(s,real); z->i = (Num)real;
+    *rp = (Num)z;
+  }
 }
 
 void Pdsin(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = sin(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = sin(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdcos(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = cos(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = cos(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdtan(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = tan(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = tan(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdasin(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = asin(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = asin(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdacos(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = acos(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = acos(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdatan(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = atan(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = atan(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdlog(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = log(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = log(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdexp(arg,rp)
 NODE arg;
 Real *rp;
 {
-	double s;
+  double s;
 
-	s = exp(ToReal(ARG0(arg)));
-	MKReal(s,*rp);
+  s = exp(ToReal(ARG0(arg)));
+  MKReal(s,*rp);
 }
 
 void Pdfloor(arg,rp)
 NODE arg;
 Q *rp;
 {
-	L a;
-	unsigned int au,al;
-	int sgn;
-	Q q;
-	double d;
+  L a;
+  unsigned int au,al;
+  int sgn;
+  Q q;
+  double d;
 
-	if ( !ARG0(arg) ) {
-		*rp = 0;
-		return;
-	}
-	d = floor(ToReal(ARG0(arg)));
-	if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
-		error("dfloor : OverFlow");
-	if ( !d ) {
-		*rp = 0;
-		return;
-	}
-	a = (L)d;
-	if ( a < 0 ) {
-		sgn = -1;
-		a = -a;
-	} else
-		sgn = 1;
+  if ( !ARG0(arg) ) {
+    *rp = 0;
+    return;
+  }
+  d = floor(ToReal(ARG0(arg)));
+  if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
+    error("dfloor : OverFlow");
+  if ( !d ) {
+    *rp = 0;
+    return;
+  }
+  a = (L)d;
+  if ( a < 0 ) {
+    sgn = -1;
+    a = -a;
+  } else
+    sgn = 1;
 #if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__x86_64)
-	au = ((unsigned int *)&a)[1];
-	al = ((unsigned int *)&a)[0];
+  au = ((unsigned int *)&a)[1];
+  al = ((unsigned int *)&a)[0];
 #else
-	al = ((unsigned int *)&a)[1];
-	au = ((unsigned int *)&a)[0];
+  al = ((unsigned int *)&a)[1];
+  au = ((unsigned int *)&a)[0];
 #endif
-	if ( au ) {
-		NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
-		PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
-	} else {
-		UTOQ(al,q); SGN(q) = sgn;
-	}
-	*rp = q;
+  if ( au ) {
+    NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
+    PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
+  } else {
+    UTOQ(al,q); SGN(q) = sgn;
+  }
+  *rp = q;
 }
 
 void Pdceil(arg,rp)
 NODE arg;
 Q *rp;
 {
-	L a;
-	unsigned int au,al;
-	int sgn;
-	Q q;
-	double d;
+  L a;
+  unsigned int au,al;
+  int sgn;
+  Q q;
+  double d;
 
-	if ( !ARG0(arg) ) {
-		*rp = 0;
-		return;
-	}
-	d = ceil(ToReal(ARG0(arg)));
-	if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
-		error("dceil : OverFlow");
-	if ( !d ) {
-		*rp = 0;
-		return;
-	}
-	a = (L)d;
-	if ( a < 0 ) {
-		sgn = -1;
-		a = -a;
-	} else
-		sgn = 1;
+  if ( !ARG0(arg) ) {
+    *rp = 0;
+    return;
+  }
+  d = ceil(ToReal(ARG0(arg)));
+  if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
+    error("dceil : OverFlow");
+  if ( !d ) {
+    *rp = 0;
+    return;
+  }
+  a = (L)d;
+  if ( a < 0 ) {
+    sgn = -1;
+    a = -a;
+  } else
+    sgn = 1;
 #if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__x86_64)
-	au = ((unsigned int *)&a)[1];
-	al = ((unsigned int *)&a)[0];
+  au = ((unsigned int *)&a)[1];
+  al = ((unsigned int *)&a)[0];
 #else
-	al = ((unsigned int *)&a)[1];
-	au = ((unsigned int *)&a)[0];
+  al = ((unsigned int *)&a)[1];
+  au = ((unsigned int *)&a)[0];
 #endif
-	if ( au ) {
-		NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
-		PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
-	} else {
-		UTOQ(al,q); SGN(q) = sgn;
-	}
-	*rp = q;
+  if ( au ) {
+    NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
+    PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
+  } else {
+    UTOQ(al,q); SGN(q) = sgn;
+  }
+  *rp = q;
 }
 
 void Pdrint(arg,rp)
 NODE arg;
 Q *rp;
 {
-	L a;
-	unsigned int au,al;
-	int sgn;
-	Q q;
-	double d;
+  L a;
+  unsigned int au,al;
+  int sgn;
+  Q q;
+  double d;
 
-	if ( !ARG0(arg) ) {
-		*rp = 0;
-		return;
-	}
+  if ( !ARG0(arg) ) {
+    *rp = 0;
+    return;
+  }
 #if defined(VISUAL) || defined(__MINGW32__)
-	d = ToReal(ARG0(arg));
-	if ( d > 0 )
-		d = floor(d+0.5);
-	else
-		d = ceil(d-0.5);
+  d = ToReal(ARG0(arg));
+  if ( d > 0 )
+    d = floor(d+0.5);
+  else
+    d = ceil(d-0.5);
 #else
-	d = rint(ToReal(ARG0(arg)));
+  d = rint(ToReal(ARG0(arg)));
 #endif
-	if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
-		error("drint : OverFlow");
-	a = (L)d;
-	if ( a < 0 ) {
-		sgn = -1;
-		a = -a;
-	} else
-		sgn = 1;
+  if ( d < -9.223372036854775808e18 || d >= 9.223372036854775808e18 )
+    error("drint : OverFlow");
+  a = (L)d;
+  if ( a < 0 ) {
+    sgn = -1;
+    a = -a;
+  } else
+    sgn = 1;
 #if defined(i386) || defined(__alpha) || defined(VISUAL) || defined(__MINGW32__) || defined(__x86_64)
-	au = ((unsigned int *)&a)[1];
-	al = ((unsigned int *)&a)[0];
+  au = ((unsigned int *)&a)[1];
+  al = ((unsigned int *)&a)[0];
 #else
-	al = ((unsigned int *)&a)[1];
-	au = ((unsigned int *)&a)[0];
+  al = ((unsigned int *)&a)[1];
+  au = ((unsigned int *)&a)[0];
 #endif
-	if ( au ) {
-		NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
-		PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
-	} else if ( al ) {
-		UTOQ(al,q); SGN(q) = sgn;
-	} else
-		q = 0;
-	*rp = q;
+  if ( au ) {
+    NEWQ(q); SGN(q) = sgn; NM(q)=NALLOC(2); DN(q)=0;
+    PL(NM(q))=2; BD(NM(q))[0]=al; BD(NM(q))[1] = au;
+  } else if ( al ) {
+    UTOQ(al,q); SGN(q) = sgn;
+  } else
+    q = 0;
+  *rp = q;
 }
 
 void Pdisnan(NODE arg,Q *rp)
 {
-	Real r;
-	double d;
+  Real r;
+  double d;
 #if defined(VISUAL) || defined(__MINGW32__)
     int c;
 #endif
 
-	r = (Real)ARG0(arg);
-	if ( !r || !NUM(r) || !REAL(r) ) {
-		*rp = 0;
-		return;
-	}
-	d = ToReal(r);
+  r = (Real)ARG0(arg);
+  if ( !r || !NUM(r) || !REAL(r) ) {
+    *rp = 0;
+    return;
+  }
+  d = ToReal(r);
 #if defined(VISUAL) || defined(__MINGW32__)
-	c = _fpclass(d);
-	if ( c == _FPCLASS_SNAN || c == _FPCLASS_QNAN ) *rp = ONE;
-	else if ( c == _FPCLASS_PINF || c == _FPCLASS_NINF ) STOQ(2,*rp);
+  c = _fpclass(d);
+  if ( c == _FPCLASS_SNAN || c == _FPCLASS_QNAN ) *rp = ONE;
+  else if ( c == _FPCLASS_PINF || c == _FPCLASS_NINF ) STOQ(2,*rp);
 #else
-	if ( isnan(d) ) *rp = ONE;
-	else if ( isinf(d) ) STOQ(2,*rp);
+  if ( isnan(d) ) *rp = ONE;
+  else if ( isinf(d) ) STOQ(2,*rp);
 #endif
-	else *rp = 0;
+  else *rp = 0;
 }

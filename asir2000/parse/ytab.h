@@ -153,12 +153,12 @@ typedef union YYSTYPE
 /* Line 1676 of yacc.c  */
 #line 83 "parse.y"
 
-	FNODE f;
-	SNODE s;
-	NODE n;
-	NODE2 n2;
-	int i;
-	pointer p;
+  FNODE f;
+  SNODE s;
+  NODE n;
+  NODE2 n2;
+  int i;
+  pointer p;
 
 
 

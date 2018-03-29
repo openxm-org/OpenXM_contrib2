@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.10 2004/08/18 00:17:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/P.c,v 1.11 2004/08/18 01:10:59 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -62,40 +62,40 @@ int sgn;
 Q *c;
 P *pr;
 {
-	N nm,dn;
+  N nm,dn;
 
-	if ( !p ) {
-		*c = 0; *pr = 0;
-	} else {
-		lgp(p,&nm,&dn);
-		if ( UNIN(dn) )
-			NTOQ(nm,sgn,*c);
-		else 
-			NDTOQ(nm,dn,sgn,*c);
-		divcp(p,*c,pr);
-	}
+  if ( !p ) {
+    *c = 0; *pr = 0;
+  } else {
+    lgp(p,&nm,&dn);
+    if ( UNIN(dn) )
+      NTOQ(nm,sgn,*c);
+    else 
+      NDTOQ(nm,dn,sgn,*c);
+    divcp(p,*c,pr);
+  }
 }
 
 void lgp(p,g,l)
 P p;
 N *g,*l;
 {
-	N g1,g2,l1,l2,l3,l4,tmp;
-	DCP dc;
+  N g1,g2,l1,l2,l3,l4,tmp;
+  DCP dc;
 
-	if ( NUM(p) ) {
-		*g = NM((Q)p);
-		if ( INT((Q)p) ) 
-			*l = ONEN;
-		else 
-			*l = DN((Q)p);
-	} else {
-		dc = DC(p); lgp(COEF(dc),g,l);
-		for ( dc = NEXT(dc); dc; dc = NEXT(dc) ) {
-			lgp(COEF(dc),&g1,&l1); gcdn(*g,g1,&g2); *g = g2;
-			gcdn(*l,l1,&l2); kmuln(*l,l1,&l3); divn(l3,l2,&l4,&tmp); *l = l4;
-		}
-	} 
+  if ( NUM(p) ) {
+    *g = NM((Q)p);
+    if ( INT((Q)p) ) 
+      *l = ONEN;
+    else 
+      *l = DN((Q)p);
+  } else {
+    dc = DC(p); lgp(COEF(dc),g,l);
+    for ( dc = NEXT(dc); dc; dc = NEXT(dc) ) {
+      lgp(COEF(dc),&g1,&l1); gcdn(*g,g1,&g2); *g = g2;
+      gcdn(*l,l1,&l2); kmuln(*l,l1,&l3); divn(l3,l2,&l4,&tmp); *l = l4;
+    }
+  } 
 }
 
 void divcp(f,q,rp)
@@ -103,19 +103,19 @@ P f;
 Q q;
 P *rp;
 {
-	DCP dc,dcr,dcr0;
+  DCP dc,dcr,dcr0;
 
-	if ( !f ) 
-		*rp = 0;
-	else if ( NUM(f) )
-		DIVNUM(f,q,rp);
-	else {
-		for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
-			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc);
-			divcp(COEF(dc),q,&COEF(dcr));
-		}
-		NEXT(dcr) = 0; MKP(VR(f),dcr0,*rp);
-	}
+  if ( !f ) 
+    *rp = 0;
+  else if ( NUM(f) )
+    DIVNUM(f,q,rp);
+  else {
+    for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
+      NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc);
+      divcp(COEF(dc),q,&COEF(dcr));
+    }
+    NEXT(dcr) = 0; MKP(VR(f),dcr0,*rp);
+  }
 }
 
 void diffp(vl,p,v,r)
@@ -124,40 +124,40 @@ P p;
 V v;
 P *r;
 {
-	P t;
-	DCP dc,dcr,dcr0;
+  P t;
+  DCP dc,dcr,dcr0;
 
-	if ( !p || NUM(p) ) 
-		*r = 0;
-	else {
-		if ( v == VR(p) ) {
-			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
-				if ( !DEG(dc) ) continue;
-				MULPQ(COEF(dc),(P)DEG(dc),&t);
-				if ( t ) {
-					NEXTDC(dcr0,dcr); SUBQ(DEG(dc),ONE,&DEG(dcr));
-					COEF(dcr) = t;
-				}
-			}
-			if ( !dcr0 )
-				*r = 0;
-			else {
-				NEXT(dcr) = 0; MKP(v,dcr0,*r);
-			}
-		} else {
-			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
-				diffp(vl,COEF(dc),v,&t);
-				if ( t ) {
-					NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
-				}
-			}
-			if ( !dcr0 )
-				*r = 0;
-			else {
-				NEXT(dcr) = 0; MKP(VR(p),dcr0,*r);
-			}
-		}
-	}
+  if ( !p || NUM(p) ) 
+    *r = 0;
+  else {
+    if ( v == VR(p) ) {
+      for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+        if ( !DEG(dc) ) continue;
+        MULPQ(COEF(dc),(P)DEG(dc),&t);
+        if ( t ) {
+          NEXTDC(dcr0,dcr); SUBQ(DEG(dc),ONE,&DEG(dcr));
+          COEF(dcr) = t;
+        }
+      }
+      if ( !dcr0 )
+        *r = 0;
+      else {
+        NEXT(dcr) = 0; MKP(v,dcr0,*r);
+      }
+    } else {
+      for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+        diffp(vl,COEF(dc),v,&t);
+        if ( t ) {
+          NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+        }
+      }
+      if ( !dcr0 )
+        *r = 0;
+      else {
+        NEXT(dcr) = 0; MKP(VR(p),dcr0,*r);
+      }
+    }
+  }
 }
 
 /* Euler derivation */
@@ -167,41 +167,41 @@ P p;
 V v;
 P *r;
 {
-	P t;
-	DCP dc,dcr,dcr0;
+  P t;
+  DCP dc,dcr,dcr0;
 
-	if ( !p || NUM(p) ) 
-		*r = 0;
-	else {
-		if ( v == VR(p) ) {
-			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
-				if ( !DEG(dc) ) continue;
-				MULPQ(COEF(dc),(P)DEG(dc),&t);
-				if ( t ) {
-					NEXTDC(dcr0,dcr);
-					DEG(dcr) = DEG(dc);
-					COEF(dcr) = t;
-				}
-			}
-			if ( !dcr0 )
-				*r = 0;
-			else {
-				NEXT(dcr) = 0; MKP(v,dcr0,*r);
-			}
-		} else {
-			for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
-				ediffp(vl,COEF(dc),v,&t);
-				if ( t ) {
-					NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
-				}
-			}
-			if ( !dcr0 )
-				*r = 0;
-			else {
-				NEXT(dcr) = 0; MKP(VR(p),dcr0,*r);
-			}
-		}
-	}
+  if ( !p || NUM(p) ) 
+    *r = 0;
+  else {
+    if ( v == VR(p) ) {
+      for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+        if ( !DEG(dc) ) continue;
+        MULPQ(COEF(dc),(P)DEG(dc),&t);
+        if ( t ) {
+          NEXTDC(dcr0,dcr);
+          DEG(dcr) = DEG(dc);
+          COEF(dcr) = t;
+        }
+      }
+      if ( !dcr0 )
+        *r = 0;
+      else {
+        NEXT(dcr) = 0; MKP(v,dcr0,*r);
+      }
+    } else {
+      for ( dc = DC(p), dcr0 = 0; dc; dc = NEXT(dc) ) {
+        ediffp(vl,COEF(dc),v,&t);
+        if ( t ) {
+          NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+        }
+      }
+      if ( !dcr0 )
+        *r = 0;
+      else {
+        NEXT(dcr) = 0; MKP(VR(p),dcr0,*r);
+      }
+    }
+  }
 }
 
 void coefp(p,d,pr)
@@ -209,101 +209,101 @@ P p;
 int d;
 P *pr;
 {
-	DCP dc;
-	int sgn;
-	Q dq;
+  DCP dc;
+  int sgn;
+  Q dq;
 
-	if ( NUM(p) )
-		if ( d == 0 ) 
-			*pr = p;
-		else 
-			*pr = 0;
-	else {
-		for ( STOQ(d,dq), dc = DC(p); dc; dc = NEXT(dc) ) 
-			if ( (sgn = cmpq(DEG(dc),dq)) > 0 )
-				continue;
-			else if ( sgn == 0 ) {
-				*pr = COEF(dc);
-				return;
-			} else {
-				*pr = 0;
-				break;	
-			}
-		*pr = 0;
-	}
+  if ( NUM(p) )
+    if ( d == 0 ) 
+      *pr = p;
+    else 
+      *pr = 0;
+  else {
+    for ( STOQ(d,dq), dc = DC(p); dc; dc = NEXT(dc) ) 
+      if ( (sgn = cmpq(DEG(dc),dq)) > 0 )
+        continue;
+      else if ( sgn == 0 ) {
+        *pr = COEF(dc);
+        return;
+      } else {
+        *pr = 0;
+        break;  
+      }
+    *pr = 0;
+  }
 }
 
 int compp(vl,p1,p2)
 VL vl;
 P p1,p2;
 {
-	DCP dc1,dc2;
-	V v1,v2;
+  DCP dc1,dc2;
+  V v1,v2;
 
-	if ( !p1 )
-		return p2 ? -1 : 0;
-	else if ( !p2 )
-		return 1;
-	else if ( NUM(p1) )
-		return NUM(p2) ? (*cmpnumt[MAX(NID(p1),NID(p2))])(p1,p2) : -1;
-	else if ( NUM(p2) )
-		return 1;
-	if ( (v1 = VR(p1)) == (v2 = VR(p2)) ) {
-		for ( dc1 = DC(p1), dc2 = DC(p2); 
-			dc1 && dc2; dc1 = NEXT(dc1), dc2 = NEXT(dc2) )
-			switch ( cmpq(DEG(dc1),DEG(dc2)) ) {
-				case 1:
-					return 1; break;
-				case -1:
-					return -1; break;
-				default:
-					switch ( compp(vl,COEF(dc1),COEF(dc2)) ) {
-						case 1:
-							return 1; break;
-						case -1:
-							return -1; break;
-						default:
-							break;
-					}
-					break;
-			}
-		return dc1 ? 1 : (dc2 ? -1 : 0);
-	} else {
-		for ( ; v1 != VR(vl) && v2 != VR(vl); vl = NEXT(vl) );
-		return v1 == VR(vl) ? 1 : -1;
-	}
+  if ( !p1 )
+    return p2 ? -1 : 0;
+  else if ( !p2 )
+    return 1;
+  else if ( NUM(p1) )
+    return NUM(p2) ? (*cmpnumt[MAX(NID(p1),NID(p2))])(p1,p2) : -1;
+  else if ( NUM(p2) )
+    return 1;
+  if ( (v1 = VR(p1)) == (v2 = VR(p2)) ) {
+    for ( dc1 = DC(p1), dc2 = DC(p2); 
+      dc1 && dc2; dc1 = NEXT(dc1), dc2 = NEXT(dc2) )
+      switch ( cmpq(DEG(dc1),DEG(dc2)) ) {
+        case 1:
+          return 1; break;
+        case -1:
+          return -1; break;
+        default:
+          switch ( compp(vl,COEF(dc1),COEF(dc2)) ) {
+            case 1:
+              return 1; break;
+            case -1:
+              return -1; break;
+            default:
+              break;
+          }
+          break;
+      }
+    return dc1 ? 1 : (dc2 ? -1 : 0);
+  } else {
+    for ( ; v1 != VR(vl) && v2 != VR(vl); vl = NEXT(vl) );
+    return v1 == VR(vl) ? 1 : -1;
+  }
 }
 
 int equalp(vl,p1,p2)
 VL vl;
 P p1,p2;
 {
-	DCP dc1,dc2;
-	V v1,v2;
+  DCP dc1,dc2;
+  V v1,v2;
 
-	if ( !p1 ) {
-		if ( !p2 ) return 1;
-		else return 0;
-	}
-	/* p1 != 0 */
-	if ( !p2 ) return 0;
+  if ( !p1 ) {
+    if ( !p2 ) return 1;
+    else return 0;
+  }
+  /* p1 != 0 */
+  if ( !p2 ) return 0;
 
-	/* p1 != 0, p2 != 0 */
-	if ( NUM(p1) ) {
-		if ( !NUM(p2) ) return 0;
-		/* p1 and p2 are numbers */
-		if ( NID((Num)p1) != NID((Num)p2) ) return 0;
-		if ( !(*cmpnumt[NID(p1),NID(p1)])(p1,p2) ) return 1;
-		return 0;
-	}
-	if ( VR(p1) != VR(p2) ) return 0;
-	for ( dc1 = DC(p1), dc2 = DC(p2); 
-		dc1 && dc2; dc1 = NEXT(dc1), dc2 = NEXT(dc2) ) {
-		if ( cmpq(DEG(dc1),DEG(dc2)) ) return 0;
-		else if ( !equalp(vl,COEF(dc1),COEF(dc2)) ) return 0;
-	}
-	if ( dc1 || dc2 ) return 0;
-	else return 1;
+  /* p1 != 0, p2 != 0 */
+  if ( NUM(p1) ) {
+    if ( !NUM(p2) ) return 0;
+    /* p1 and p2 are numbers */
+    if ( NID((Num)p1) != NID((Num)p2) ) return 0;
+    if ( !(*cmpnumt[NID(p1),NID(p1)])(p1,p2) ) return 1;
+    return 0;
+  }
+  if ( VR(p1) != VR(p2) ) return 0;
+  for ( dc1 = DC(p1), dc2 = DC(p2); 
+    dc1 && dc2; dc1 = NEXT(dc1), dc2 = NEXT(dc2) ) {
+    if ( cmpq(DEG(dc1),DEG(dc2)) ) return 0;
+    else if ( !equalp(vl,COEF(dc1),COEF(dc2)) ) return 0;
+  }
+  if ( dc1 || dc2 ) return 0;
+  else return 1;
 }
 
 void csump(vl,p,c)
@@ -311,17 +311,17 @@ VL vl;
 P p;
 Q *c;
 {
-	DCP dc;
-	Q s,s1,s2;
+  DCP dc;
+  Q s,s1,s2;
 
-	if ( !p || NUM(p) )
-		*c = (Q)p;
-	else {
-		for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
-			csump(vl,COEF(dc),&s1); addq(s,s1,&s2); s = s2;
-		}
-		*c = s;
-	}
+  if ( !p || NUM(p) )
+    *c = (Q)p;
+  else {
+    for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
+      csump(vl,COEF(dc),&s1); addq(s,s1,&s2); s = s2;
+    }
+    *c = s;
+  }
 }
 
 void degp(v,p,d)
@@ -329,21 +329,21 @@ V v;
 P p;
 Q *d;
 {
-	DCP dc;
-	Q m,m1;
-	
-	if ( !p || NUM(p) ) 
-		*d = 0;
-	else if ( v == VR(p) ) 
-		*d = DEG(DC(p));
-	else {
-		for ( dc = DC(p), m = 0; dc; dc = NEXT(dc) ) {
-			degp(v,COEF(dc),&m1);
-			if ( cmpq(m,m1) < 0 )
-				m = m1;
-		}
-		*d = m;
-	}
+  DCP dc;
+  Q m,m1;
+  
+  if ( !p || NUM(p) ) 
+    *d = 0;
+  else if ( v == VR(p) ) 
+    *d = DEG(DC(p));
+  else {
+    for ( dc = DC(p), m = 0; dc; dc = NEXT(dc) ) {
+      degp(v,COEF(dc),&m1);
+      if ( cmpq(m,m1) < 0 )
+        m = m1;
+    }
+    *d = m;
+  }
 }
 
 void mulpc_trunc(VL vl,P p,P c,VN vn,P *pr);
@@ -352,167 +352,167 @@ void mulp_trunc(VL vl,P p1,P p2,VN vn,P *pr);
 
 void mulp_trunc(VL vl,P p1,P p2,VN vn,P *pr)
 {
-	register DCP dc,dct,dcr,dcr0;
-	V v1,v2;
-	P t,s,u;
-	int n1,n2,i,d,d1;
+  register DCP dc,dct,dcr,dcr0;
+  V v1,v2;
+  P t,s,u;
+  int n1,n2,i,d,d1;
 
-	if ( !p1 || !p2 ) *pr = 0;
-	else if ( NUM(p1) ) 
-		mulpq_trunc(p2,(Q)p1,vn,pr);
-	else if ( NUM(p2) )
-		mulpq_trunc(p1,(Q)p2,vn,pr);
-	else if ( ( v1 = VR(p1) ) ==  ( v2 = VR(p2) ) ) {
-		for ( ; vn->v && vn->v != v1; vn++ )
-			if ( vn->n ) {
-				/* p1,p2 do not contain vn->v */
-				*pr = 0;
-				return;
-			}
-		if ( !vn->v )
-			error("mulp_trunc : invalid vn");
-		d = vn->n;
-		for ( dc = DC(p2), s = 0; dc; dc = NEXT(dc) ) {
-			for ( dcr0 = 0, dct = DC(p1); dct; dct = NEXT(dct) ) {
-				d1 = QTOS(DEG(dct))+QTOS(DEG(dc));
-				if ( d1 >= d ) {
-					mulp_trunc(vl,COEF(dct),COEF(dc),vn+1,&t);
-					if ( t ) {
-						NEXTDC(dcr0,dcr);
-						STOQ(d1,DEG(dcr));
-						COEF(dcr) = t;
-					}
-				}
-			}
-			if ( dcr0 ) {
-				NEXT(dcr) = 0; MKP(v1,dcr0,t);
-				addp(vl,s,t,&u); s = u; t = u = 0;
-			}
-		}
-		*pr = s;
-	} else {
-		while ( v1 != VR(vl) && v2 != VR(vl) ) 
-			vl = NEXT(vl);
-		if ( v1 == VR(vl) ) 
-			mulpc_trunc(vl,p1,p2,vn,pr);
-		else 
-			mulpc_trunc(vl,p2,p1,vn,pr);
-	}
+  if ( !p1 || !p2 ) *pr = 0;
+  else if ( NUM(p1) ) 
+    mulpq_trunc(p2,(Q)p1,vn,pr);
+  else if ( NUM(p2) )
+    mulpq_trunc(p1,(Q)p2,vn,pr);
+  else if ( ( v1 = VR(p1) ) ==  ( v2 = VR(p2) ) ) {
+    for ( ; vn->v && vn->v != v1; vn++ )
+      if ( vn->n ) {
+        /* p1,p2 do not contain vn->v */
+        *pr = 0;
+        return;
+      }
+    if ( !vn->v )
+      error("mulp_trunc : invalid vn");
+    d = vn->n;
+    for ( dc = DC(p2), s = 0; dc; dc = NEXT(dc) ) {
+      for ( dcr0 = 0, dct = DC(p1); dct; dct = NEXT(dct) ) {
+        d1 = QTOS(DEG(dct))+QTOS(DEG(dc));
+        if ( d1 >= d ) {
+          mulp_trunc(vl,COEF(dct),COEF(dc),vn+1,&t);
+          if ( t ) {
+            NEXTDC(dcr0,dcr);
+            STOQ(d1,DEG(dcr));
+            COEF(dcr) = t;
+          }
+        }
+      }
+      if ( dcr0 ) {
+        NEXT(dcr) = 0; MKP(v1,dcr0,t);
+        addp(vl,s,t,&u); s = u; t = u = 0;
+      }
+    }
+    *pr = s;
+  } else {
+    while ( v1 != VR(vl) && v2 != VR(vl) ) 
+      vl = NEXT(vl);
+    if ( v1 == VR(vl) ) 
+      mulpc_trunc(vl,p1,p2,vn,pr);
+    else 
+      mulpc_trunc(vl,p2,p1,vn,pr);
+  }
 }
 
 void mulpq_trunc(P p,Q q,VN vn,P *pr)
 {
-	DCP dc,dcr,dcr0;
-	P t;
-	int i,d;
-	V v;
+  DCP dc,dcr,dcr0;
+  P t;
+  int i,d;
+  V v;
 
-	if (!p || !q)
-		*pr = 0;
-	else if ( NUM(p) ) {
-		for ( ; vn->v; vn++ )
-			if ( vn->n ) {
-				*pr = 0;
-				return;
-			}
-		MULNUM(p,q,pr);
-	} else {
-		v = VR(p);
-		for ( ; vn->v && vn->v != v; vn++ ) {
-			if ( vn->n ) {
-				/* p does not contain vn->v */
-				*pr = 0;
-				return;
-			}
-		}
-		if ( !vn->v )
-			error("mulpq_trunc : invalid vn");
-		d = vn->n;
-		for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
-			mulpq_trunc(COEF(dc),q,vn+1,&t);
-			if ( t ) {
-				NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
-			}
-		}
-		if ( dcr0 ) {
-			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
-		} else
-			*pr = 0;
-	}
+  if (!p || !q)
+    *pr = 0;
+  else if ( NUM(p) ) {
+    for ( ; vn->v; vn++ )
+      if ( vn->n ) {
+        *pr = 0;
+        return;
+      }
+    MULNUM(p,q,pr);
+  } else {
+    v = VR(p);
+    for ( ; vn->v && vn->v != v; vn++ ) {
+      if ( vn->n ) {
+        /* p does not contain vn->v */
+        *pr = 0;
+        return;
+      }
+    }
+    if ( !vn->v )
+      error("mulpq_trunc : invalid vn");
+    d = vn->n;
+    for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
+      mulpq_trunc(COEF(dc),q,vn+1,&t);
+      if ( t ) {
+        NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
+      }
+    }
+    if ( dcr0 ) {
+      NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+    } else
+      *pr = 0;
+  }
 }
 
 void mulpc_trunc(VL vl,P p,P c,VN vn,P *pr)
 {
-	DCP dc,dcr,dcr0;
-	P t;
-	V v;
-	int i,d;
+  DCP dc,dcr,dcr0;
+  P t;
+  V v;
+  int i,d;
 
-	if ( NUM(c) ) 
-		mulpq_trunc(p,(Q)c,vn,pr);
-	else {
-		v = VR(p);
-		for ( ; vn->v && vn->v != v; vn++ )
-			if ( vn->n ) {
-				/* p,c do not contain vn->v */
-				*pr = 0;
-				return;
-			}
-		if ( !vn->v )
-			error("mulpc_trunc : invalid vn");
-		d = vn->n;
-		for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
-			mulp_trunc(vl,COEF(dc),c,vn+1,&t);
-			if ( t ) {
-				NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
-			}
-		}
-		if ( dcr0 ) {
-			NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
-		} else
-			*pr = 0;
-	}
+  if ( NUM(c) ) 
+    mulpq_trunc(p,(Q)c,vn,pr);
+  else {
+    v = VR(p);
+    for ( ; vn->v && vn->v != v; vn++ )
+      if ( vn->n ) {
+        /* p,c do not contain vn->v */
+        *pr = 0;
+        return;
+      }
+    if ( !vn->v )
+      error("mulpc_trunc : invalid vn");
+    d = vn->n;
+    for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
+      mulp_trunc(vl,COEF(dc),c,vn+1,&t);
+      if ( t ) {
+        NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
+      }
+    }
+    if ( dcr0 ) {
+      NEXT(dcr) = 0; MKP(VR(p),dcr0,*pr);
+    } else
+      *pr = 0;
+  }
 }
 
 void quop_trunc(VL vl,P p1,P p2,VN vn,P *pr)
 {
-	DCP dc,dcq0,dcq;
-	P t,s,m,lc2,qt;
-	V v1,v2;
-	Q d2;
-	VN vn1;
+  DCP dc,dcq0,dcq;
+  P t,s,m,lc2,qt;
+  V v1,v2;
+  Q d2;
+  VN vn1;
 
-	if ( !p1 )
-		*pr = 0;
-	else if ( NUM(p2) )
-		divsp(vl,p1,p2,pr);
-	else if ( (v1 = VR(p1)) != (v2 = VR(p2)) ) {
-		for ( dcq0 = 0, dc = DC(p1); dc; dc = NEXT(dc) ) {
-			NEXTDC(dcq0,dcq);
-			DEG(dcq) = DEG(dc);
-			quop_trunc(vl,COEF(dc),p2,vn,&COEF(dcq));
-		}
-		NEXT(dcq) = 0;
-		MKP(v1,dcq0,*pr);
-	} else {
-		d2 = DEG(DC(p2));
-		lc2 = COEF(DC(p2));
-		t = p1;
-		dcq0 = 0;
-		/* vn1 = degree list of LC(p2) */
-		for ( vn1 = vn; vn1->v != v1; vn1++ );
-		vn1++;
-		while ( t ) {
-			dc = DC(t);
-			NEXTDC(dcq0,dcq);
-			subq(DEG(dc),d2,&DEG(dcq));
-			quop_trunc(vl,COEF(dc),lc2,vn1,&COEF(dcq));
-			NEXT(dcq) = 0;
-			MKP(v1,dcq,qt);
-			mulp_trunc(vl,p2,qt,vn,&m);
-			subp(vl,t,m,&s); t = s;
-		}
-		NEXT(dcq) = 0;
-		MKP(v1,dcq0,*pr);
-	}
+  if ( !p1 )
+    *pr = 0;
+  else if ( NUM(p2) )
+    divsp(vl,p1,p2,pr);
+  else if ( (v1 = VR(p1)) != (v2 = VR(p2)) ) {
+    for ( dcq0 = 0, dc = DC(p1); dc; dc = NEXT(dc) ) {
+      NEXTDC(dcq0,dcq);
+      DEG(dcq) = DEG(dc);
+      quop_trunc(vl,COEF(dc),p2,vn,&COEF(dcq));
+    }
+    NEXT(dcq) = 0;
+    MKP(v1,dcq0,*pr);
+  } else {
+    d2 = DEG(DC(p2));
+    lc2 = COEF(DC(p2));
+    t = p1;
+    dcq0 = 0;
+    /* vn1 = degree list of LC(p2) */
+    for ( vn1 = vn; vn1->v != v1; vn1++ );
+    vn1++;
+    while ( t ) {
+      dc = DC(t);
+      NEXTDC(dcq0,dcq);
+      subq(DEG(dc),d2,&DEG(dcq));
+      quop_trunc(vl,COEF(dc),lc2,vn1,&COEF(dcq));
+      NEXT(dcq) = 0;
+      MKP(v1,dcq,qt);
+      mulp_trunc(vl,p2,qt,vn,&m);
+      subp(vl,t,m,&s); t = s;
+    }
+    NEXT(dcq) = 0;
+    MKP(v1,dcq0,*pr);
+  }
 }

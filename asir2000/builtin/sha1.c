@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/sha1.c,v 1.5 2015/08/08 14:19:41 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/sha1.c,v 1.6 2015/08/14 13:51:54 fujimoto Exp $ 
 */
 /* Implementation of NIST's Secure Hash Algorithm (FIPS 180)
 * Lightly bummed for execution efficiency.
@@ -209,7 +209,7 @@ static void byteReverse( unsigned int *buffer, int byteCount )
   extern int little_endian;
 
   if ( !little_endian )
-	return;
+  return;
 
   byteCount /= sizeof( unsigned int );
   for( count = 0; count < byteCount; count++ )

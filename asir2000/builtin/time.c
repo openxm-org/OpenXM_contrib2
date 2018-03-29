@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.9 2015/08/08 14:19:41 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/time.c,v 1.10 2015/08/09 11:46:43 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -55,13 +55,13 @@ void Ptime(), Pcputime(), Pcurrenttime(), Ptstart(), Ptstop();
 void Pdcurrenttime();
 
 struct ftab time_tab[] = {
-	{"time",Ptime,0},
-	{"cputime",Pcputime,1},
-	{"currenttime",Pcurrenttime,0},
-	{"dcurrenttime",Pdcurrenttime,0},
-	{"tstart",Ptstart,0},
-	{"tstop",Ptstop,0},
-	{0,0,0},
+  {"time",Ptime,0},
+  {"cputime",Pcputime,1},
+  {"currenttime",Pcurrenttime,0},
+  {"dcurrenttime",Pdcurrenttime,0},
+  {"tstart",Ptstart,0},
+  {"tstop",Ptstop,0},
+  {0,0,0},
 };
 
 static struct oEGT egt0;
@@ -71,31 +71,31 @@ double get_rtime(), get_current_time();
 void Pcurrenttime(rp)
 Q *rp;
 {
-	int t;
+  int t;
 
-	t = (int)get_current_time(); STOQ(t,*rp);
+  t = (int)get_current_time(); STOQ(t,*rp);
 }
 
 void Pdcurrenttime(rp)
 Real *rp;
 {
-	double t;
+  double t;
 
-	t = get_current_time(); MKReal(t,*rp);
+  t = get_current_time(); MKReal(t,*rp);
 }
 
 void Ptstart(rp)
 pointer *rp;
 {
-	get_eg(&egt0); r0 = get_rtime(); *rp = 0;
+  get_eg(&egt0); r0 = get_rtime(); *rp = 0;
 }
 
 void Ptstop(rp)
 pointer *rp;
 {
-	struct oEGT egt1;
+  struct oEGT egt1;
 
-	get_eg(&egt1); printtime(&egt0,&egt1,get_rtime()-r0); *rp = 0;
+  get_eg(&egt1); printtime(&egt0,&egt1,get_rtime()-r0); *rp = 0;
 }
 
 int prtime;
@@ -104,51 +104,51 @@ void Pcputime(arg,rp)
 NODE arg;
 pointer *rp;
 {
-	prtime = ARG0(arg) ? 1 : 0; *rp = 0;
+  prtime = ARG0(arg) ? 1 : 0; *rp = 0;
 }
 
 void Ptime(listp)
 LIST *listp;
 {
-	struct oEGT eg;
-	Real re,rg,rr;
-	NODE a,b,w,r;
-	Q words;
-	size_t t;
-	unsigned int u,l;
-	N n;
-	double rtime;
-	double get_rtime();
+  struct oEGT eg;
+  Real re,rg,rr;
+  NODE a,b,w,r;
+  Q words;
+  size_t t;
+  unsigned int u,l;
+  N n;
+  double rtime;
+  double get_rtime();
 
-	rtime = get_rtime(); MKReal(rtime,rr);
-	t = get_allocwords();
-	if(sizeof(size_t)>sizeof(int)) {
-		u = t>>(sizeof(int)*CHAR_BIT); l = t&(~0);
-		if ( !u ) STOQ(l,words);
-		else {
-			n = NALLOC(2); PL(n)=2; BD(n)[0] = l; BD(n)[1] = u;
-			NTOQ(n,1,words);
-		}
-	}else {
-		STOQ(t,words);
-	}
-	get_eg(&eg); MKReal(eg.exectime,re); MKReal(eg.gctime,rg);
-	MKNODE(r,rr,0); MKNODE(w,words,r); MKNODE(a,rg,w); MKNODE(b,re,a);
-	MKLIST(*listp,b);
+  rtime = get_rtime(); MKReal(rtime,rr);
+  t = get_allocwords();
+  if(sizeof(size_t)>sizeof(int)) {
+    u = t>>(sizeof(int)*CHAR_BIT); l = t&(~0);
+    if ( !u ) STOQ(l,words);
+    else {
+      n = NALLOC(2); PL(n)=2; BD(n)[0] = l; BD(n)[1] = u;
+      NTOQ(n,1,words);
+    }
+  }else {
+    STOQ(t,words);
+  }
+  get_eg(&eg); MKReal(eg.exectime,re); MKReal(eg.gctime,rg);
+  MKNODE(r,rr,0); MKNODE(w,words,r); MKNODE(a,rg,w); MKNODE(b,re,a);
+  MKLIST(*listp,b);
 }
 
 void printtime(egt0,egt1,r)
 struct oEGT *egt0,*egt1;
 double r;
 {
-	double e,g;
+  double e,g;
 
-	e = egt1->exectime - egt0->exectime;
-	if ( e < 0 ) e = 0;
-	g = egt1->gctime - egt0->gctime;
-	if ( g < 0 ) g = 0;
-	if ( g )
-		fprintf(stderr,"%.4gsec + gc : %.4gsec(%.4gsec)\n",e,g,r);
-	else
-		fprintf(stderr,"%.4gsec(%.4gsec)\n",e,r);
+  e = egt1->exectime - egt0->exectime;
+  if ( e < 0 ) e = 0;
+  g = egt1->gctime - egt0->gctime;
+  if ( g < 0 ) g = 0;
+  if ( g )
+    fprintf(stderr,"%.4gsec + gc : %.4gsec(%.4gsec)\n",e,g,r);
+  else
+    fprintf(stderr,"%.4gsec(%.4gsec)\n",e,r);
 }

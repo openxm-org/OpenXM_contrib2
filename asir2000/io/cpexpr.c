@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.27 2015/08/04 06:20:45 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/cpexpr.c,v 1.28 2017/08/31 02:36:21 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -110,419 +110,419 @@ static int total_length;
 
 int estimate_length(VL vl,pointer p)
 {
-	total_length = 0;
-	PRINTEXPR(vl,p);
-	return total_length;
+  total_length = 0;
+  PRINTEXPR(vl,p);
+  return total_length;
 }
 
 void PRINTBF(BF a)
 {
-	char *str;
-	int dprec;
-	char fbuf[BUFSIZ];
+  char *str;
+  int dprec;
+  char fbuf[BUFSIZ];
 
-	dprec = a->body->_mpfr_prec*0.30103;
-	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
-	mpfr_asprintf(&str,fbuf,a->body);
-	total_length += strlen(str);
-	mpfr_free_str(str);
+  dprec = a->body->_mpfr_prec*0.30103;
+  sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
+  mpfr_asprintf(&str,fbuf,a->body);
+  total_length += strlen(str);
+  mpfr_free_str(str);
 }
 
 void PRINTNUM(Num q)
 {
-	DAlg d;
-	DP nm;
-	Q dn;
+  DAlg d;
+  DP nm;
+  Q dn;
 
-	if ( !q ) {
-		PUTS("0");
-		return;
-	}
-	switch ( NID(q) ) {
-		case N_Q:
-			if ( SGN((Q)q) == -1 ) 
-				PUTS("-");
-			PRINTN(NM((Q)q));
-			if ( !INT((Q)q) ) {
-				PUTS("/"); PRINTN(DN((Q)q));
-			}
-			break;
-		case N_R:
-			if ( double_output )
-				total_length += 400+real_digit; /* XXX */
-			else
-				total_length += 20+real_digit; /* XXX */
-			break;
-		case N_A:
-			PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
-			break;
-		case N_B:
-			PRINTBF((BF)q); break;
-		case N_C:
-			PRINTCPLX((C)q); break;
-		case N_M:
-			total_length += 11; /* XXX */
-			break;
-		case N_LM:
-			PRINTN(((LM)q)->body); break;
-		case N_GF2N:
-			if ( hex_output )
-				PRINTN((N)(((GF2N)q)->body));
-			else
-				PRINTUP2(((GF2N)q)->body);
-			break;
-		case N_GFPN:
-			PRINTUP((UP)(((GFPN)q)->body));
-			break;
-		case N_GFS:
-			total_length += 13; /* XXX */
-			break;
-		case N_GFSN:
-			PRINTUM(BDY((GFSN)q));
-			break;
-		case N_DA:
-			d = (DAlg)q;
-			nm = d->nm;
-			dn = d->dn;
-			if ( SGN((Q)dn) == -1 ) PUTS("-");
-			PUTS("(");
-			PRINTDP(CO,((DAlg)q)->nm);
-			PUTS(")");
-			if ( !UNIN(NM(dn)) ) {
-				PUTS("/");
-				PRINTN(NM(dn));
-			}
-			break;
-		default:
-			break;
-	}
+  if ( !q ) {
+    PUTS("0");
+    return;
+  }
+  switch ( NID(q) ) {
+    case N_Q:
+      if ( SGN((Q)q) == -1 ) 
+        PUTS("-");
+      PRINTN(NM((Q)q));
+      if ( !INT((Q)q) ) {
+        PUTS("/"); PRINTN(DN((Q)q));
+      }
+      break;
+    case N_R:
+      if ( double_output )
+        total_length += 400+real_digit; /* XXX */
+      else
+        total_length += 20+real_digit; /* XXX */
+      break;
+    case N_A:
+      PUTS("("); PRINTR(ALG,(R)BDY((Alg)q)); PUTS(")");
+      break;
+    case N_B:
+      PRINTBF((BF)q); break;
+    case N_C:
+      PRINTCPLX((C)q); break;
+    case N_M:
+      total_length += 11; /* XXX */
+      break;
+    case N_LM:
+      PRINTN(((LM)q)->body); break;
+    case N_GF2N:
+      if ( hex_output )
+        PRINTN((N)(((GF2N)q)->body));
+      else
+        PRINTUP2(((GF2N)q)->body);
+      break;
+    case N_GFPN:
+      PRINTUP((UP)(((GFPN)q)->body));
+      break;
+    case N_GFS:
+      total_length += 13; /* XXX */
+      break;
+    case N_GFSN:
+      PRINTUM(BDY((GFSN)q));
+      break;
+    case N_DA:
+      d = (DAlg)q;
+      nm = d->nm;
+      dn = d->dn;
+      if ( SGN((Q)dn) == -1 ) PUTS("-");
+      PUTS("(");
+      PRINTDP(CO,((DAlg)q)->nm);
+      PUTS(")");
+      if ( !UNIN(NM(dn)) ) {
+        PUTS("/");
+        PRINTN(NM(dn));
+      }
+      break;
+    default:
+      break;
+  }
 }
 
 void PRINTV(VL vl,V v)
 {
-	PF pf;
-	PFAD ad;
-	int i;
+  PF pf;
+  PFAD ad;
+  int i;
 
-	if ( NAME(v) )
-		PUTS(NAME(v));
-	else if ( (vid)v->attr == V_PF ) {
-		pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
-		if ( !strcmp(NAME(pf),"pow") ) {
-			PUTS("(("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
-			PRINTR(vl,(R)ad[1].arg); PUTS("))");
-		} else if ( !pf->argc )
-			PUTS(NAME(pf));
-		else {
-			if ( hideargs ) {
-				for ( i = 0; i < pf->argc; i++ )
-					if ( ad[i].d )
-						break;
-				if ( i < pf->argc ) {
-					PUTS(NAME(pf));	
-					total_length += 11; /* XXX */
-					for ( i = 1; i < pf->argc; i++ ) {
-						total_length += 11; /* XXX */
-					}
-					PUTS("}");
-				} else {
-					PUTS(NAME(pf));
-					total_length += 1; /* XXX */
-				}
-			} else {
-				for ( i = 0; i < pf->argc; i++ )
-					if ( ad[i].d )
-						break;
-				if ( i < pf->argc ) {
-					PUTS(NAME(pf));
-					total_length += 11; /* XXX */
-					for ( i = 1; i < pf->argc; i++ ) {
-						total_length += 11; /* XXX */
-					}
-					PUTS(")(");
-				} else {
-					PUTS(NAME(pf));
-					total_length += 1; /* XXX */
-				}
-				PRINTR(vl,(R)ad[0].arg);
-				for ( i = 1; i < pf->argc; i++ ) {
-					PUTS(","); PRINTR(vl,(R)ad[i].arg);
-				}
-				PUTS(")");
-			}
-		}
-	}
+  if ( NAME(v) )
+    PUTS(NAME(v));
+  else if ( (vid)v->attr == V_PF ) {
+    pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
+    if ( !strcmp(NAME(pf),"pow") ) {
+      PUTS("(("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
+      PRINTR(vl,(R)ad[1].arg); PUTS("))");
+    } else if ( !pf->argc )
+      PUTS(NAME(pf));
+    else {
+      if ( hideargs ) {
+        for ( i = 0; i < pf->argc; i++ )
+          if ( ad[i].d )
+            break;
+        if ( i < pf->argc ) {
+          PUTS(NAME(pf));  
+          total_length += 11; /* XXX */
+          for ( i = 1; i < pf->argc; i++ ) {
+            total_length += 11; /* XXX */
+          }
+          PUTS("}");
+        } else {
+          PUTS(NAME(pf));
+          total_length += 1; /* XXX */
+        }
+      } else {
+        for ( i = 0; i < pf->argc; i++ )
+          if ( ad[i].d )
+            break;
+        if ( i < pf->argc ) {
+          PUTS(NAME(pf));
+          total_length += 11; /* XXX */
+          for ( i = 1; i < pf->argc; i++ ) {
+            total_length += 11; /* XXX */
+          }
+          PUTS(")(");
+        } else {
+          PUTS(NAME(pf));
+          total_length += 1; /* XXX */
+        }
+        PRINTR(vl,(R)ad[0].arg);
+        for ( i = 1; i < pf->argc; i++ ) {
+          PUTS(","); PRINTR(vl,(R)ad[i].arg);
+        }
+        PUTS(")");
+      }
+    }
+  }
 }
 
 void PRINTN(N n)
 {
-	double ceil();
+  double ceil();
 
-	if ( !n )
-		PUTS("0");
-	else if ( hex_output )
-		total_length += 2+(int)(PL(n)*8);
-	else
-		total_length += (int)(ceil(0.31*((double)(BSH*PL(n))))+1);
+  if ( !n )
+    PUTS("0");
+  else if ( hex_output )
+    total_length += 2+(int)(PL(n)*8);
+  else
+    total_length += (int)(ceil(0.31*((double)(BSH*PL(n))))+1);
 }
 
 void PRINTSTR(STRING str)
 {
-	char *p;
+  char *p;
 
-	for ( p = BDY(str); *p; p++ )
-		if ( *p == '"' )
-			PUTS("\"");
-		else {
-			total_length += 1;
-		}
+  for ( p = BDY(str); *p; p++ )
+    if ( *p == '"' )
+      PUTS("\"");
+    else {
+      total_length += 1;
+    }
 }
 
 void PRINTDP(VL vl,DP d)
 {
-	int n,i;
-	MP m;
-	DL dl;
+  int n,i;
+  MP m;
+  DL dl;
 
-	for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
-		PUTS("("); PRINTEXPR(vl,(pointer)m->c); PUTS(")*<<");
-		for ( i = 0, dl = m->dl; i < n-1; i++ ) {
-			total_length += 11;
-		}
-		total_length += 10;
-		PUTS(">>");
-		if ( NEXT(m) )
-			PUTS("+");
-	}
+  for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
+    PUTS("("); PRINTEXPR(vl,(pointer)m->c); PUTS(")*<<");
+    for ( i = 0, dl = m->dl; i < n-1; i++ ) {
+      total_length += 11;
+    }
+    total_length += 10;
+    PUTS(">>");
+    if ( NEXT(m) )
+      PUTS("+");
+  }
 }
 
 void PRINTDPM(VL vl,DPM d)
 {
-	int n,i;
-	DMM m;
-	DL dl;
+  int n,i;
+  DMM m;
+  DL dl;
 
-	for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
-		PUTS("("); PRINTEXPR(vl,(pointer)m->c); PUTS(")*<<");
-		for ( i = 0, dl = m->dl; i < n-1; i++ ) {
-			total_length += 11;
-		}
-		total_length += 10;
-		total_length += 11; /* for ':pos' */
-		PUTS(">>");
-		if ( NEXT(m) )
-			PUTS("+");
-	}
+  for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
+    PUTS("("); PRINTEXPR(vl,(pointer)m->c); PUTS(")*<<");
+    for ( i = 0, dl = m->dl; i < n-1; i++ ) {
+      total_length += 11;
+    }
+    total_length += 10;
+    total_length += 11; /* for ':pos' */
+    PUTS(">>");
+    if ( NEXT(m) )
+      PUTS("+");
+  }
 }
 
 
 void PRINTUI(VL vl,USINT u)
 {
-	total_length += 10;
+  total_length += 10;
 }
 
 void PRINTGFMMAT(VL vl,GFMMAT mat)
 {
-	int row,col,i,j;
-	unsigned int **b;
+  int row,col,i,j;
+  unsigned int **b;
 
-	row = mat->row;
-	col = mat->col;
-	b = mat->body;
-	for ( i = 0; i < row; i++ ) {
-		PUTS("[");
-		for ( j = 0; j < col; j++ ) {
-			total_length += 10; /* XXX */
-		}
-		PUTS("]\n");
-	}
+  row = mat->row;
+  col = mat->col;
+  b = mat->body;
+  for ( i = 0; i < row; i++ ) {
+    PUTS("[");
+    for ( j = 0; j < col; j++ ) {
+      total_length += 10; /* XXX */
+    }
+    PUTS("]\n");
+  }
 }
 
 void PRINTBYTEARRAY(VL vl,BYTEARRAY array)
 {
-	/* |xx xx ... xx| */
-	total_length += 1+3*array->len;
+  /* |xx xx ... xx| */
+  total_length += 1+3*array->len;
 }
 
 extern int print_quote;
 
 void PRINTQUOTE(VL vl,QUOTE quote)
 {
-	LIST list;
+  LIST list;
 
-	if ( print_quote == 2 ) {
-		PRINTFNODE(BDY(quote),0);
-	} else if ( print_quote == 1 ) {
-		/* XXX */
-		fnodetotree(BDY(quote),&list);
-		PRINTEXPR(vl,(Obj)list);
-	} else {
-		/* <...quoted...> */
-		total_length += 20;
-	}
+  if ( print_quote == 2 ) {
+    PRINTFNODE(BDY(quote),0);
+  } else if ( print_quote == 1 ) {
+    /* XXX */
+    fnodetotree(BDY(quote),&list);
+    PRINTEXPR(vl,(Obj)list);
+  } else {
+    /* <...quoted...> */
+    total_length += 20;
+  }
 }
 
 void PRINTQUOTEARG(VL vl,QUOTEARG quote)
 {
-	/* XXX */
-	/* <...quoted...> */
-	total_length += 20;
+  /* XXX */
+  /* <...quoted...> */
+  total_length += 20;
 }
 
 void PRINTSYMBOL(SYMBOL sym)
 {
-	total_length += strlen(sym->name);
+  total_length += strlen(sym->name);
 }
 
 void PRINTTB(VL vl,TB p)
 {
-	int i;
+  int i;
 
-	for ( i = 0; i < p->next; i++ ) {
-		total_length += strlen(p->body[i]);
-	}
+  for ( i = 0; i < p->next; i++ ) {
+    total_length += strlen(p->body[i]);
+  }
 }
 
 void PRINTUP2(UP2 p)
 {
-	int d,i;
+  int d,i;
 
-	if ( !p ) {
-		PUTS("0");
-	} else {
-		d = degup2(p);
-		PUTS("(");
-		if ( !d ) {
-			PUTS("1");
-		} else if ( d == 1 ) {
-			PUTS("@");
-		} else {
-			PRINTHAT;
-			total_length += 11;
-		}
-		for ( i = d-1; i >= 0; i-- ) {
-			if ( p->b[i/BSH] & (1<<(i%BSH)) )
-				if ( !i ) {
-					PUTS("+1");
-				} else if ( i == 1 ) {
-					PUTS("+@");
-				} else {
-					PRINTHAT;
-					total_length += 12;
-				}
-		}
-		PUTS(")");
-	}
+  if ( !p ) {
+    PUTS("0");
+  } else {
+    d = degup2(p);
+    PUTS("(");
+    if ( !d ) {
+      PUTS("1");
+    } else if ( d == 1 ) {
+      PUTS("@");
+    } else {
+      PRINTHAT;
+      total_length += 11;
+    }
+    for ( i = d-1; i >= 0; i-- ) {
+      if ( p->b[i/BSH] & (1<<(i%BSH)) )
+        if ( !i ) {
+          PUTS("+1");
+        } else if ( i == 1 ) {
+          PUTS("+@");
+        } else {
+          PRINTHAT;
+          total_length += 12;
+        }
+    }
+    PUTS(")");
+  }
 }
 
 void PRINTQOP(VL vl,F f)
 {
-	char *op;
+  char *op;
 
-	op = FOP(f)==AL_EX?"ex":"all";
-	PUTS(op); PUTS(NAME(FQVR(f)));
-	total_length += 2;
-	PRINTEXPR(vl,(Obj)FQMAT(f)); PUTS(")");
+  op = FOP(f)==AL_EX?"ex":"all";
+  PUTS(op); PUTS(NAME(FQVR(f)));
+  total_length += 2;
+  PRINTEXPR(vl,(Obj)FQMAT(f)); PUTS(")");
 }
 
 void PRINTUP(UP n)
 {
-	int i,d;
+  int i,d;
 
-	if ( !n )
-		PUTS("0");
-	else if ( !n->d )
-		PRINTNUM(n->c[0]);
-	else {
-		d = n->d;
-		PUTS("(");
-		if ( !d ) {
-			PRINTNUM(n->c[d]);
-		} else if ( d == 1 ) {
-			PRINTNUM(n->c[d]);
-			PUTS("*@p");
-		} else {
-			PRINTNUM(n->c[d]);
-			PRINTHAT;
-			total_length += 13;
-		}
-		for ( i = d-1; i >= 0; i-- ) {
-			if ( n->c[i] ) {
-				PUTS("+("); PRINTNUM(n->c[i]); PUTS(")");
-				if ( i >= 2 ) {
-					PRINTHAT;
-					total_length += 13;
-				} else if ( i == 1 )
-					PUTS("*@p");
-			}
-		}
-		PUTS(")");
-	}
+  if ( !n )
+    PUTS("0");
+  else if ( !n->d )
+    PRINTNUM(n->c[0]);
+  else {
+    d = n->d;
+    PUTS("(");
+    if ( !d ) {
+      PRINTNUM(n->c[d]);
+    } else if ( d == 1 ) {
+      PRINTNUM(n->c[d]);
+      PUTS("*@p");
+    } else {
+      PRINTNUM(n->c[d]);
+      PRINTHAT;
+      total_length += 13;
+    }
+    for ( i = d-1; i >= 0; i-- ) {
+      if ( n->c[i] ) {
+        PUTS("+("); PRINTNUM(n->c[i]); PUTS(")");
+        if ( i >= 2 ) {
+          PRINTHAT;
+          total_length += 13;
+        } else if ( i == 1 )
+          PUTS("*@p");
+      }
+    }
+    PUTS(")");
+  }
 }
 
 void PRINTUM(UM n)
 {
-	int i,d;
+  int i,d;
 
-	if ( !n )
-		PUTS("0");
-	else if ( !n->d )
-		PRINTSF(n->c[0]);
-	else {
-		d = n->d;
-		PUTS("(");
-		if ( !d ) {
-			PRINTSF(n->c[d]);
-		} else if ( d == 1 ) {
-			PRINTSF(n->c[d]);
-			PUTS("*@s");
-		} else {
-			PRINTSF(n->c[d]);
-			PUTS("*@s"); PRINTHAT; total_length += 13;
-		}
-		for ( i = d-1; i >= 0; i-- ) {
-			if ( n->c[i] ) {
-				PUTS("+("); PRINTSF(n->c[i]); PUTS(")");
-				if ( i >= 2 ) {
-					PUTS("*@s"); PRINTHAT; total_length += 13;
-				} else if ( i == 1 )
-					PUTS("*@s");
-			}
-		}
-		PUTS(")");
-	}
+  if ( !n )
+    PUTS("0");
+  else if ( !n->d )
+    PRINTSF(n->c[0]);
+  else {
+    d = n->d;
+    PUTS("(");
+    if ( !d ) {
+      PRINTSF(n->c[d]);
+    } else if ( d == 1 ) {
+      PRINTSF(n->c[d]);
+      PUTS("*@s");
+    } else {
+      PRINTSF(n->c[d]);
+      PUTS("*@s"); PRINTHAT; total_length += 13;
+    }
+    for ( i = d-1; i >= 0; i-- ) {
+      if ( n->c[i] ) {
+        PUTS("+("); PRINTSF(n->c[i]); PUTS(")");
+        if ( i >= 2 ) {
+          PUTS("*@s"); PRINTHAT; total_length += 13;
+        } else if ( i == 1 )
+          PUTS("*@s");
+      }
+    }
+    PUTS(")");
+  }
 }
 
 void PRINTNBP(VL vl,NBP p)
 {
-	NODE t;
-	NBM m;
-	int d,i;
-	unsigned int *b;
-	if ( !p ) PUTS("0");
-	else {
-		for ( t = BDY(p); t; t = NEXT(t) ) {
-			m = (NBM)BDY(t);
-			PRINTEXPR(vl,(Obj)m->c);
-			d = m->d;
-			b = m->b;
-			if ( d )
-				for ( i = 0; i < d; i++ ) {
-					if ( NBM_GET(b,i) ) PUTS("x");
-					else PUTS("y");
-				}
-			else PUTS("1");
-			if ( NEXT(t) ) PUTS("+");
-		}
-	}
+  NODE t;
+  NBM m;
+  int d,i;
+  unsigned int *b;
+  if ( !p ) PUTS("0");
+  else {
+    for ( t = BDY(p); t; t = NEXT(t) ) {
+      m = (NBM)BDY(t);
+      PRINTEXPR(vl,(Obj)m->c);
+      d = m->d;
+      b = m->b;
+      if ( d )
+        for ( i = 0; i < d; i++ ) {
+          if ( NBM_GET(b,i) ) PUTS("x");
+          else PUTS("y");
+        }
+      else PUTS("1");
+      if ( NEXT(t) ) PUTS("+");
+    }
+  }
 }
 
 void PRINTSF(unsigned int i)
 {
-	if ( !i ) {
-		PUTS("0");
-	} else
-		total_length += 15;
+  if ( !i ) {
+    PUTS("0");
+  } else
+    total_length += 15;
 
 #ifndef CPRINT
 #define CPRINT

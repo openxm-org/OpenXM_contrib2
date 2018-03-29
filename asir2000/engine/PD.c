@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/PD.c,v 1.5 2001/10/09 01:36:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/PD.c,v 1.6 2004/08/18 00:17:02 noro Exp $ 
 */
 #ifndef FBASE
 #define FBASE
@@ -58,385 +58,385 @@
 
 void plisttop(P *f,V v,int n,P *gp)
 {
-	int i;
-	DCP dc,dc0;
+  int i;
+  DCP dc,dc0;
 
-	for ( i = n; (i >= 0) && !f[i]; i-- );
-	if ( i < 0 ) 
-		*gp = 0;
-	else if ( i == 0 )
-		*gp = f[0];
-	else {
-		for ( dc0 = 0; i >= 0; i-- ) {
-			if ( !f[i] ) 
-				continue;
-			NEXTDC(dc0,dc);
-			if ( i ) 
-				STOQ(i,DEG(dc));
-			else 
-				DEG(dc) = 0;
-			COEF(dc) = f[i];
-		}
-		NEXT(dc) = 0; MKP(v,dc0,*gp);	
-	}
+  for ( i = n; (i >= 0) && !f[i]; i-- );
+  if ( i < 0 ) 
+    *gp = 0;
+  else if ( i == 0 )
+    *gp = f[0];
+  else {
+    for ( dc0 = 0; i >= 0; i-- ) {
+      if ( !f[i] ) 
+        continue;
+      NEXTDC(dc0,dc);
+      if ( i ) 
+        STOQ(i,DEG(dc));
+      else 
+        DEG(dc) = 0;
+      COEF(dc) = f[i];
+    }
+    NEXT(dc) = 0; MKP(v,dc0,*gp);  
+  }
 }
 
 /* for multivariate polynomials over fields */
 
 int divtp(VL vl,P p1,P p2,P *q)
 {
-	register int i,j;
-	register DCP dc1,dc2,dc;
-	P m,m1,s,dvr,t;
-	P *pq,*pr,*pd;
-	V v1,v2;
-	Q deg1,deg2;
-	int d1,d2,sgn;
+  register int i,j;
+  register DCP dc1,dc2,dc;
+  P m,m1,s,dvr,t;
+  P *pq,*pr,*pd;
+  V v1,v2;
+  Q deg1,deg2;
+  int d1,d2,sgn;
 
-	if ( !p1 ) {
-		*q = 0;
-		return 1;
-	} else if ( NUM(p2) ) {
-		divsp(vl,p1,p2,q);
-		return 1;
-	} else if ( NUM(p1) ) {
-		*q = 0;
-		return 0;
-	} else if ( ( v1 = VR(p1) ) == ( v2 = VR(p2) ) ) {
-		dc1 = DC(p1); dc2 = DC(p2);
-		deg1 = DEG(dc1); deg2 = DEG(dc2);
-		sgn = cmpq(deg1,deg2);
-		if ( sgn == 0 )
-			if ( !divtp(vl,COEF(dc1),COEF(dc2),&m) ) {
-				*q = 0;
-				return 0;
-			} else {
-				mulp(vl,p2,m,&m1); subp(vl,p1,m1,&s); 
-				if ( !s ) {
-					*q = m;
-					return 1;
-				} else {
-					*q = 0;
-					return 0;
-				}
-			}	
-		else if ( sgn < 0 ) {
-			*q = 0;
-			return 0;
-		} else {
-			if ( (PL(NM(deg1)) > 1) ) {
-				error("divtp : invalid input");
-				*q = 0;
-				return ( 0 );
-			}
-			d1 = QTOS(deg1); d2 = QTOS(deg2); 
-			W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
-			for ( dc = dc1; dc; dc = NEXT(dc) ) 
-				pr[QTOS(DEG(dc))] = COEF(dc);
-			for ( dc = dc2; dc; dc = NEXT(dc) ) 
-				pd[QTOS(DEG(dc))] = COEF(dc);
-			for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
-				if ( !pr[i+d2] ) 
-					continue;
-				else if ( !divtp(vl,pr[i+d2],dvr,&m) ) {
-					*q = 0;
-					return 0;
-				} else {
-					pq[i] = m;
-					for ( j = d2; j >= 0; j-- ) {
-						mulp(vl,pq[i],pd[j],&m);
-						subp(vl,pr[i + j],m,&s); pr[i + j] = s;
-					}
-				}
-			plisttop(pq,v1,d1 - d2,&m); plisttop(pr,v1,d1 - 1,&t);
-			if ( t ) {
-				*q = 0;
-				return 0;
-			} else {
-				*q = m;
-				return 1;
-			}
-		}
-	} else {
-		for ( ; (v1 != vl->v) && (v2 != vl->v); vl = NEXT(vl) );
-		if ( v2 == vl->v ) {
-			*q = 0;
-			return 0;
-		} else 
-			return divtdcp(vl,p1,p2,q);
-	}
+  if ( !p1 ) {
+    *q = 0;
+    return 1;
+  } else if ( NUM(p2) ) {
+    divsp(vl,p1,p2,q);
+    return 1;
+  } else if ( NUM(p1) ) {
+    *q = 0;
+    return 0;
+  } else if ( ( v1 = VR(p1) ) == ( v2 = VR(p2) ) ) {
+    dc1 = DC(p1); dc2 = DC(p2);
+    deg1 = DEG(dc1); deg2 = DEG(dc2);
+    sgn = cmpq(deg1,deg2);
+    if ( sgn == 0 )
+      if ( !divtp(vl,COEF(dc1),COEF(dc2),&m) ) {
+        *q = 0;
+        return 0;
+      } else {
+        mulp(vl,p2,m,&m1); subp(vl,p1,m1,&s); 
+        if ( !s ) {
+          *q = m;
+          return 1;
+        } else {
+          *q = 0;
+          return 0;
+        }
+      }  
+    else if ( sgn < 0 ) {
+      *q = 0;
+      return 0;
+    } else {
+      if ( (PL(NM(deg1)) > 1) ) {
+        error("divtp : invalid input");
+        *q = 0;
+        return ( 0 );
+      }
+      d1 = QTOS(deg1); d2 = QTOS(deg2); 
+      W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
+      for ( dc = dc1; dc; dc = NEXT(dc) ) 
+        pr[QTOS(DEG(dc))] = COEF(dc);
+      for ( dc = dc2; dc; dc = NEXT(dc) ) 
+        pd[QTOS(DEG(dc))] = COEF(dc);
+      for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
+        if ( !pr[i+d2] ) 
+          continue;
+        else if ( !divtp(vl,pr[i+d2],dvr,&m) ) {
+          *q = 0;
+          return 0;
+        } else {
+          pq[i] = m;
+          for ( j = d2; j >= 0; j-- ) {
+            mulp(vl,pq[i],pd[j],&m);
+            subp(vl,pr[i + j],m,&s); pr[i + j] = s;
+          }
+        }
+      plisttop(pq,v1,d1 - d2,&m); plisttop(pr,v1,d1 - 1,&t);
+      if ( t ) {
+        *q = 0;
+        return 0;
+      } else {
+        *q = m;
+        return 1;
+      }
+    }
+  } else {
+    for ( ; (v1 != vl->v) && (v2 != vl->v); vl = NEXT(vl) );
+    if ( v2 == vl->v ) {
+      *q = 0;
+      return 0;
+    } else 
+      return divtdcp(vl,p1,p2,q);
+  }
 }
 
 int divtdcp(VL vl,P p1,P p2,P *q)
 {
 
-	P m;
-	register DCP dc,dcr,dcr0;
+  P m;
+  register DCP dc,dcr,dcr0;
 
-	for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
-		if ( !divtp(vl,COEF(dc),p2,&m) ) {
-			*q = 0;
-			return 0;
-		} else {
-			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = m; NEXT(dcr) = 0;
-		}
-	MKP(VR(p1),dcr0,*q);
-	return 1;
+  for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
+    if ( !divtp(vl,COEF(dc),p2,&m) ) {
+      *q = 0;
+      return 0;
+    } else {
+      NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = m; NEXT(dcr) = 0;
+    }
+  MKP(VR(p1),dcr0,*q);
+  return 1;
 }
 
 int divtpz(VL vl,P p1,P p2,P *q)
 {
-	register int i,j;
-	register DCP dc1,dc2,dc;
-	P m,m1,s,dvr,t;
-	P *pq,*pr,*pd;
-	V v1,v2;
-	Q deg1,deg2;
-	int d1,d2,sgn;
+  register int i,j;
+  register DCP dc1,dc2,dc;
+  P m,m1,s,dvr,t;
+  P *pq,*pr,*pd;
+  V v1,v2;
+  Q deg1,deg2;
+  int d1,d2,sgn;
 
-	if ( !p1 ) {
-		*q = 0;
-		return ( 1 );
-	} else if ( NUM(p2) ) 
-		if ( NUM(p1) ) {
-			divq((Q)p1,(Q)p2,(Q *)&s);
-			if ( INT((Q)s) ) {
-				*q = s;
-				return ( 1 );
-			} else {
-				*q = 0;
-				return ( 0 );
-			}
-		} else 
-			return ( divtdcpz(vl,p1,p2,q) );
-	else if ( NUM(p1) ) {
-		*q = 0;
-		return ( 0 );
-	} else if ( ( v1 = VR(p1) ) == ( v2 = VR(p2) ) ) {
-		Q csum1,csum2;
+  if ( !p1 ) {
+    *q = 0;
+    return ( 1 );
+  } else if ( NUM(p2) ) 
+    if ( NUM(p1) ) {
+      divq((Q)p1,(Q)p2,(Q *)&s);
+      if ( INT((Q)s) ) {
+        *q = s;
+        return ( 1 );
+      } else {
+        *q = 0;
+        return ( 0 );
+      }
+    } else 
+      return ( divtdcpz(vl,p1,p2,q) );
+  else if ( NUM(p1) ) {
+    *q = 0;
+    return ( 0 );
+  } else if ( ( v1 = VR(p1) ) == ( v2 = VR(p2) ) ) {
+    Q csum1,csum2;
 
-		csump(vl,p1,&csum1); csump(vl,p2,&csum2);
-		if ( csum2 && !divtpz(vl,(P)csum1,(P)csum2,&t) ) {
-			*q = 0;
-			return 0;
-		}
-		dc1 = DC(p1); dc2 = DC(p2);
-		deg1 = DEG(dc1); deg2 = DEG(dc2);
-		sgn = cmpq(deg1,deg2);
-		if ( sgn == 0 )
-			if ( !divtpz(vl,COEF(dc1),COEF(dc2),&m) ) {
-				*q = 0;
-				return ( 0 );
-			} else {
-				mulp(vl,p2,m,&m1); subp(vl,p1,m1,&s); 
-				if ( !s ) {
-					*q = m;
-					return ( 1 );
-				} else {
-					*q = 0;
-					return ( 0 );
-				}
-			}	
-		else if ( sgn < 0 ) {
-			*q = 0;
-			return ( 0 );
-		} else {
-			if ( (PL(NM(deg1)) > 1) ) {
-				error("divtpz : invalid input");
-				*q = 0;
-				return ( 0 );
-			}
-			d1 = QTOS(deg1); d2 = QTOS(deg2); 
-			W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
-			for ( dc = dc1; dc; dc = NEXT(dc) ) 
-				pr[QTOS(DEG(dc))] = COEF(dc);
-			for ( dc = dc2; dc; dc = NEXT(dc) ) 
-				pd[QTOS(DEG(dc))] = COEF(dc);
-			for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
-				if ( !pr[i+d2] ) 
-					continue;
-				else if ( !divtpz(vl,pr[i+d2],dvr,&m) ) {
-					*q = 0;
-					return ( 0 );
-				} else {
-					pq[i] = m;
-					for ( j = d2; j >= 0; j-- ) {
-						mulp(vl,pq[i],pd[j],&m);
-						subp(vl,pr[i + j],m,&s); pr[i + j] = s;
-					}
-				}
-			plisttop(pq,v1,d1 - d2,&m); plisttop(pr,v1,d1 - 1,&t);
-			if ( t ) {
-				*q = 0;
-				return ( 0 );
-			} else {
-				*q = m;
-				return ( 1 );
-			}
-		}
-	} else {
-		for ( ; (v1 != vl->v) && (v2 != vl->v); vl = NEXT(vl) );
-		if ( v2 == vl->v ) {
-			*q = 0;
-			return ( 0 );
-		} else 
-			return ( divtdcpz(vl,p1,p2,q) ) ;
-	}
+    csump(vl,p1,&csum1); csump(vl,p2,&csum2);
+    if ( csum2 && !divtpz(vl,(P)csum1,(P)csum2,&t) ) {
+      *q = 0;
+      return 0;
+    }
+    dc1 = DC(p1); dc2 = DC(p2);
+    deg1 = DEG(dc1); deg2 = DEG(dc2);
+    sgn = cmpq(deg1,deg2);
+    if ( sgn == 0 )
+      if ( !divtpz(vl,COEF(dc1),COEF(dc2),&m) ) {
+        *q = 0;
+        return ( 0 );
+      } else {
+        mulp(vl,p2,m,&m1); subp(vl,p1,m1,&s); 
+        if ( !s ) {
+          *q = m;
+          return ( 1 );
+        } else {
+          *q = 0;
+          return ( 0 );
+        }
+      }  
+    else if ( sgn < 0 ) {
+      *q = 0;
+      return ( 0 );
+    } else {
+      if ( (PL(NM(deg1)) > 1) ) {
+        error("divtpz : invalid input");
+        *q = 0;
+        return ( 0 );
+      }
+      d1 = QTOS(deg1); d2 = QTOS(deg2); 
+      W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
+      for ( dc = dc1; dc; dc = NEXT(dc) ) 
+        pr[QTOS(DEG(dc))] = COEF(dc);
+      for ( dc = dc2; dc; dc = NEXT(dc) ) 
+        pd[QTOS(DEG(dc))] = COEF(dc);
+      for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
+        if ( !pr[i+d2] ) 
+          continue;
+        else if ( !divtpz(vl,pr[i+d2],dvr,&m) ) {
+          *q = 0;
+          return ( 0 );
+        } else {
+          pq[i] = m;
+          for ( j = d2; j >= 0; j-- ) {
+            mulp(vl,pq[i],pd[j],&m);
+            subp(vl,pr[i + j],m,&s); pr[i + j] = s;
+          }
+        }
+      plisttop(pq,v1,d1 - d2,&m); plisttop(pr,v1,d1 - 1,&t);
+      if ( t ) {
+        *q = 0;
+        return ( 0 );
+      } else {
+        *q = m;
+        return ( 1 );
+      }
+    }
+  } else {
+    for ( ; (v1 != vl->v) && (v2 != vl->v); vl = NEXT(vl) );
+    if ( v2 == vl->v ) {
+      *q = 0;
+      return ( 0 );
+    } else 
+      return ( divtdcpz(vl,p1,p2,q) ) ;
+  }
 }
 
 int divtdcpz(VL vl,P p1,P p2,P *q)
 {
 
-	P m;
-	register DCP dc,dcr,dcr0;
+  P m;
+  register DCP dc,dcr,dcr0;
 
-	for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
-		if ( !divtpz(vl,COEF(dc),p2,&m) ) {
-			*q = 0;
-			return ( 0 );
-		} else {
-			NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = m; NEXT(dcr) = 0;
-		}
-	MKP(VR(p1),dcr0,*q);
-	return ( 1 );
+  for ( dc = DC(p1), dcr0 = 0; dc; dc = NEXT(dc) ) 
+    if ( !divtpz(vl,COEF(dc),p2,&m) ) {
+      *q = 0;
+      return ( 0 );
+    } else {
+      NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = m; NEXT(dcr) = 0;
+    }
+  MKP(VR(p1),dcr0,*q);
+  return ( 1 );
 }
 
 void udivpz(P f1,P f2,P *fqp,P *frp)
 {
-	register int n1,n2,i,j;
-	Q *pq,*pr,*pd,d,m,s,q;
-	DCP dc;
-	N qn,rn;
+  register int n1,n2,i,j;
+  Q *pq,*pr,*pd,d,m,s,q;
+  DCP dc;
+  N qn,rn;
 
-	if ( !f2 )
-		error("udivpz: division by 0");
-	else if ( !f1 ) {
-		*fqp = *frp = 0;
-		return;
-	} else if ( NUM(f1) ) 
-		if ( NUM(f2) ) {
-			divn(NM((Q)f1),NM((Q)f2),&qn,&rn);
-			if ( rn ) {
-				*fqp = *frp = 0;
-			} else {
-				NTOQ(qn,SGN((Q)f1)*SGN((Q)f2),q),*fqp = (P)q; *frp = 0;
-			}
-			return;
-		} else {
-			*fqp = 0; *frp = f1;
-			return;
-		}
-	else if ( NUM(f2) ) {
-		n1 = UDEG(f1); W_CALLOC(n1,Q,pq);
-		for ( dc = DC(f1); dc; dc = NEXT(dc) ) {
-			divn(NM((Q)COEF(dc)),NM((Q)f2),&qn,&rn);
-			if ( rn ) {
-				*fqp = *frp = 0;
-				return;
-			} else {
-				NTOQ(qn,SGN((Q)COEF(dc))*SGN((Q)f2),s); pq[QTOS(DEG(dc))] = s;
-			}
-		}
-		plisttop((P *)pq,VR(f1),n1,fqp);
-		return;
-	}
-	n1  = UDEG(f1); n2  = UDEG(f2);
-	if ( n1 < n2 ) {
-		*fqp = NULL; *frp = f1;
-		return;
-	}
-	W_CALLOC(n1-n2,Q,pq); W_CALLOC(n1,Q,pr); W_CALLOC(n2,Q,pd);
-	for ( dc = DC(f1); dc; dc = NEXT(dc) )
-		pr[QTOS(DEG(dc))] = (Q)COEF(dc);
-	for ( dc = DC(f2); dc; dc = NEXT(dc) )
-		pd[QTOS(DEG(dc))] = (Q)COEF(dc);
-	for ( d = (Q)UCOEF(f2), i = n1 - n2; i >= 0; i-- ) {
-		if ( !pr[i+n2] ) 
-			continue;
-		divn(NM(pr[i+n2]),NM(d),&qn,&rn);
-		if ( rn ) {
-			*fqp = *frp = 0;
-			return;
-		}
-		NTOQ(qn,SGN(pr[i+n2])*SGN(d),pq[i]);
-		for ( j = n2; j >= 0; j-- ) {
-			mulq(pq[i],pd[j],&m); subq(pr[i+j],m,&s); pr[i+j] = s;
-		}
-	}
-	plisttop((P *)pq,VR(f1),n1-n2,fqp); plisttop((P *)pr,VR(f1),n2-1,frp);
+  if ( !f2 )
+    error("udivpz: division by 0");
+  else if ( !f1 ) {
+    *fqp = *frp = 0;
+    return;
+  } else if ( NUM(f1) ) 
+    if ( NUM(f2) ) {
+      divn(NM((Q)f1),NM((Q)f2),&qn,&rn);
+      if ( rn ) {
+        *fqp = *frp = 0;
+      } else {
+        NTOQ(qn,SGN((Q)f1)*SGN((Q)f2),q),*fqp = (P)q; *frp = 0;
+      }
+      return;
+    } else {
+      *fqp = 0; *frp = f1;
+      return;
+    }
+  else if ( NUM(f2) ) {
+    n1 = UDEG(f1); W_CALLOC(n1,Q,pq);
+    for ( dc = DC(f1); dc; dc = NEXT(dc) ) {
+      divn(NM((Q)COEF(dc)),NM((Q)f2),&qn,&rn);
+      if ( rn ) {
+        *fqp = *frp = 0;
+        return;
+      } else {
+        NTOQ(qn,SGN((Q)COEF(dc))*SGN((Q)f2),s); pq[QTOS(DEG(dc))] = s;
+      }
+    }
+    plisttop((P *)pq,VR(f1),n1,fqp);
+    return;
+  }
+  n1  = UDEG(f1); n2  = UDEG(f2);
+  if ( n1 < n2 ) {
+    *fqp = NULL; *frp = f1;
+    return;
+  }
+  W_CALLOC(n1-n2,Q,pq); W_CALLOC(n1,Q,pr); W_CALLOC(n2,Q,pd);
+  for ( dc = DC(f1); dc; dc = NEXT(dc) )
+    pr[QTOS(DEG(dc))] = (Q)COEF(dc);
+  for ( dc = DC(f2); dc; dc = NEXT(dc) )
+    pd[QTOS(DEG(dc))] = (Q)COEF(dc);
+  for ( d = (Q)UCOEF(f2), i = n1 - n2; i >= 0; i-- ) {
+    if ( !pr[i+n2] ) 
+      continue;
+    divn(NM(pr[i+n2]),NM(d),&qn,&rn);
+    if ( rn ) {
+      *fqp = *frp = 0;
+      return;
+    }
+    NTOQ(qn,SGN(pr[i+n2])*SGN(d),pq[i]);
+    for ( j = n2; j >= 0; j-- ) {
+      mulq(pq[i],pd[j],&m); subq(pr[i+j],m,&s); pr[i+j] = s;
+    }
+  }
+  plisttop((P *)pq,VR(f1),n1-n2,fqp); plisttop((P *)pr,VR(f1),n2-1,frp);
 }
 
 void udivpwm(Q mod,P p1,P p2,P *q,P *r)
 {
-	P s,t,u,tq,tr;
+  P s,t,u,tq,tr;
 
-	invl((Q)UCOEF(p2),mod,(Q *)&t); mulpq(p2,t,&s); cmp(mod,s,&u); 
-	udivpzwm(mod,p1,u,&tq,&tr); 
-	cmp(mod,tr,r); mulpq(tq,t,&s); cmp(mod,s,q); 
+  invl((Q)UCOEF(p2),mod,(Q *)&t); mulpq(p2,t,&s); cmp(mod,s,&u); 
+  udivpzwm(mod,p1,u,&tq,&tr); 
+  cmp(mod,tr,r); mulpq(tq,t,&s); cmp(mod,s,q); 
 }
 
 void udivpzwm(Q mod,P f1,P f2,P *fqp,P *frp)
 {
-	register int n1,n2,i,j;
-	Q *pq,*pr,*pd,d,m,s,q;
-	DCP dc;
-	N qn,rn;
+  register int n1,n2,i,j;
+  Q *pq,*pr,*pd,d,m,s,q;
+  DCP dc;
+  N qn,rn;
 
-	if ( !f2 )
-		error("udivpz: division by 0");
-	else if ( !f1 ) {
-		*fqp = *frp = 0;
-		return;
-	} else if ( NUM(f1) ) 
-		if ( NUM(f2) ) {
-			divn(NM((Q)f1),NM((Q)f2),&qn,&rn);
-			if ( rn ) {
-				*fqp = *frp = 0;
-			} else {
-				NTOQ(qn,SGN((Q)f1)*SGN((Q)f2),q),*fqp = (P)q; *frp = 0;
-			}
-			return;
-		} else {
-			*fqp = 0; *frp = f1;
-			return;
-		}
-	else if ( NUM(f2) ) {
-		n1 = UDEG(f1); W_CALLOC(n1,Q,pq);
-		for ( dc = DC(f1); dc; dc = NEXT(dc) ) {
-			divn(NM((Q)COEF(dc)),NM((Q)f2),&qn,&rn);
-			if ( rn ) {
-				*fqp = *frp = 0;
-				return;
-			} else {
-				NTOQ(qn,SGN((Q)COEF(dc))*SGN((Q)f2),s); pq[QTOS(DEG(dc))] = s;
-			}
-		}
-		plisttop((P *)pq,VR(f1),n1,fqp);
-		return;
-	}
-	n1  = UDEG(f1); n2  = UDEG(f2);
-	if ( n1 < n2 ) {
-		*fqp = NULL; *frp = f1;
-		return;
-	}
-	W_CALLOC(n1-n2,Q,pq); W_CALLOC(n1,Q,pr); W_CALLOC(n2,Q,pd);
-	for ( dc = DC(f1); dc; dc = NEXT(dc) )
-		pr[QTOS(DEG(dc))] = (Q)COEF(dc);
-	for ( dc = DC(f2); dc; dc = NEXT(dc) )
-		pd[QTOS(DEG(dc))] = (Q)COEF(dc);
-	for ( d = (Q)UCOEF(f2), i = n1 - n2; i >= 0; i-- ) {
-		if ( !pr[i+n2] ) 
-			continue;
-		divn(NM(pr[i+n2]),NM(d),&qn,&rn);
-		if ( rn ) {
-			*fqp = *frp = 0;
-			return;
-		}
-		NTOQ(qn,SGN(pr[i+n2])*SGN(d),pq[i]);
-		for ( j = n2; j >= 0; j-- ) {
-			mulq(pq[i],pd[j],&m); remq(m,mod,&s); 
-			subq(pr[i+j],s,&m); remq(m,mod,&s); pr[i+j] = s;
-		}
-	}
-	plisttop((P *)pq,VR(f1),n1-n2,fqp); plisttop((P *)pr,VR(f1),n2-1,frp);
+  if ( !f2 )
+    error("udivpz: division by 0");
+  else if ( !f1 ) {
+    *fqp = *frp = 0;
+    return;
+  } else if ( NUM(f1) ) 
+    if ( NUM(f2) ) {
+      divn(NM((Q)f1),NM((Q)f2),&qn,&rn);
+      if ( rn ) {
+        *fqp = *frp = 0;
+      } else {
+        NTOQ(qn,SGN((Q)f1)*SGN((Q)f2),q),*fqp = (P)q; *frp = 0;
+      }
+      return;
+    } else {
+      *fqp = 0; *frp = f1;
+      return;
+    }
+  else if ( NUM(f2) ) {
+    n1 = UDEG(f1); W_CALLOC(n1,Q,pq);
+    for ( dc = DC(f1); dc; dc = NEXT(dc) ) {
+      divn(NM((Q)COEF(dc)),NM((Q)f2),&qn,&rn);
+      if ( rn ) {
+        *fqp = *frp = 0;
+        return;
+      } else {
+        NTOQ(qn,SGN((Q)COEF(dc))*SGN((Q)f2),s); pq[QTOS(DEG(dc))] = s;
+      }
+    }
+    plisttop((P *)pq,VR(f1),n1,fqp);
+    return;
+  }
+  n1  = UDEG(f1); n2  = UDEG(f2);
+  if ( n1 < n2 ) {
+    *fqp = NULL; *frp = f1;
+    return;
+  }
+  W_CALLOC(n1-n2,Q,pq); W_CALLOC(n1,Q,pr); W_CALLOC(n2,Q,pd);
+  for ( dc = DC(f1); dc; dc = NEXT(dc) )
+    pr[QTOS(DEG(dc))] = (Q)COEF(dc);
+  for ( dc = DC(f2); dc; dc = NEXT(dc) )
+    pd[QTOS(DEG(dc))] = (Q)COEF(dc);
+  for ( d = (Q)UCOEF(f2), i = n1 - n2; i >= 0; i-- ) {
+    if ( !pr[i+n2] ) 
+      continue;
+    divn(NM(pr[i+n2]),NM(d),&qn,&rn);
+    if ( rn ) {
+      *fqp = *frp = 0;
+      return;
+    }
+    NTOQ(qn,SGN(pr[i+n2])*SGN(d),pq[i]);
+    for ( j = n2; j >= 0; j-- ) {
+      mulq(pq[i],pd[j],&m); remq(m,mod,&s); 
+      subq(pr[i+j],s,&m); remq(m,mod,&s); pr[i+j] = s;
+    }
+  }
+  plisttop((P *)pq,VR(f1),n1-n2,fqp); plisttop((P *)pr,VR(f1),n2-1,frp);
 }

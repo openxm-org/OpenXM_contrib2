@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.104 2017/09/17 02:34:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.105 2018/03/27 06:29:19 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,7 +108,7 @@ typedef void * pointer;
 
 #define NULLP ((void *)0)
 
-#define TODO		printf("%s: not implemented!\n", __func__)
+#define TODO    printf("%s: not implemented!\n", __func__)
 
 #define COPY(a,b) ((b)=(a))
 #define FREEN(p) 
@@ -154,12 +154,12 @@ typedef void * pointer;
 #define N_B 3
 #define N_NEXT_B    (N_B)
 #if defined(INTERVAL)
-#define N_Quad	(N_NEXT_B+1)
-#define	N_IP	(N_NEXT_B+2)
-#define N_IntervalDouble	(N_NEXT_B+3)
-#define N_IntervalQuad	(N_NEXT_B+4)
-#define N_IntervalBigFloat	(N_NEXT_B+5)
-#define N_PRE_C	N_IntervalBigFloat
+#define N_Quad  (N_NEXT_B+1)
+#define  N_IP  (N_NEXT_B+2)
+#define N_IntervalDouble  (N_NEXT_B+3)
+#define N_IntervalQuad  (N_NEXT_B+4)
+#define N_IntervalBigFloat  (N_NEXT_B+5)
+#define N_PRE_C  N_IntervalBigFloat
 #define N_BASE (N_NEXT_B+5)
 #else
 #define N_BASE N_NEXT_B
@@ -181,7 +181,7 @@ typedef void * pointer;
 #define ORD_LEX 2
 
 typedef enum {
-	A_end=0,A_fnode,A_arf,A_int,A_str,A_internal,A_node,A_notimpl,A_func
+  A_end=0,A_fnode,A_arf,A_int,A_str,A_internal,A_node,A_notimpl,A_func
 } farg_type;
 
 #if SIZEOF_LONG == 8
@@ -203,312 +203,312 @@ typedef __int128_t L128;
 #endif
 
 typedef struct oN {
-	int p;
-	unsigned int b[1];
+  int p;
+  unsigned int b[1];
 } *N;
 
 typedef struct oZ {
-	int p;
-	unsigned int b[1];
+  int p;
+  unsigned int b[1];
 } *Z;
 
 typedef struct oUP2 {
-	int w;
-	unsigned int b[1];
+  int w;
+  unsigned int b[1];
 } *UP2;
 
 typedef struct _oUP2 {
-	int w;
-	unsigned int *b;
+  int w;
+  unsigned int *b;
 } *_UP2;
 
 #define UP2_DENSE 0
 #define UP2_SPARSE 1
 
 typedef struct oGEN_UP2 {
-	int id;
-	UP2 dense;
-	UP2 sparse;
+  int id;
+  UP2 dense;
+  UP2 sparse;
 } *GEN_UP2;
 
 typedef struct oV {
-	char *name;
-	pointer attr;
-	pointer priv;
+  char *name;
+  pointer attr;
+  pointer priv;
 } *V;
 
 typedef struct oQ {
-	short id;
-	char nid;
-	char sgn;
-	N nm;
-	N dn;
+  short id;
+  char nid;
+  char sgn;
+  N nm;
+  N dn;
 } *Q;
 
 typedef struct oReal {
-	short id;
-	char nid;
-	char pad;
-	double body;
+  short id;
+  char nid;
+  char pad;
+  double body;
 } *Real;
 
 typedef struct oAlg {
-	short id;
-	char nid;
-	char pad;
-	struct oObj *body;
+  short id;
+  char nid;
+  char pad;
+  struct oObj *body;
 } *Alg;
 
 typedef struct oBF {
-	short id;
-	char nid;
-	char pad;
-	mpfr_t body;
+  short id;
+  char nid;
+  char pad;
+  mpfr_t body;
 } *BF;
 
 typedef struct oC {
-	short id;
-	char nid;
-	char pad;
-	struct oNum *r,*i;
+  short id;
+  char nid;
+  char pad;
+  struct oNum *r,*i;
 } *C;
 
 typedef struct oLM {
-	short id;
-	char nid;
-	char pad;
-	struct oN *body;
+  short id;
+  char nid;
+  char pad;
+  struct oN *body;
 } *LM;
 
 typedef struct oGF2N {
-	short id;
-	char nid;
-	char pad;
-	struct oUP2 *body;
+  short id;
+  char nid;
+  char pad;
+  struct oUP2 *body;
 } *GF2N;
 
 typedef struct oGFPN {
-	short id;
-	char nid;
-	char pad;
-	struct oUP *body;
+  short id;
+  char nid;
+  char pad;
+  struct oUP *body;
 } *GFPN;
 
 typedef struct oDAlg {
-	short id;
-	char nid;
-	char pad;
-	struct oDP *nm;
-	struct oQ *dn;
+  short id;
+  char nid;
+  char pad;
+  struct oDP *nm;
+  struct oQ *dn;
 } *DAlg;
 
 typedef struct oGZ {
-	short id;
-	char nid;
-	char pad;
-	mpz_t body;
+  short id;
+  char nid;
+  char pad;
+  mpz_t body;
 } *GZ;
 
 typedef struct oGQ {
-	short id;
-	char nid;
-	char pad;
-	mpq_t body;
+  short id;
+  char nid;
+  char pad;
+  mpq_t body;
 } *GQ;
 
 typedef struct oNum {
-	short id;
-	char nid;
-	char pad;
+  short id;
+  char nid;
+  char pad;
 } *Num;
 
 typedef struct oMQ {
-	short id;
-	char nid;
-	char pad;
-	int cont;
+  short id;
+  char nid;
+  char pad;
+  int cont;
 } *MQ;
 
 typedef struct oGFS {
-	short id;
-	char nid;
-	char pad;
-	int cont;
+  short id;
+  char nid;
+  char pad;
+  int cont;
 } *GFS;
 
 typedef struct oGFSN {
-	short id;
-	char nid;
-	char pad;
-	struct oUM *body;
+  short id;
+  char nid;
+  char pad;
+  struct oUM *body;
 } *GFSN;
 
 typedef struct oP {
-	short id;
-	short pad;
-	V v;
-	struct oDCP *dc;
+  short id;
+  short pad;
+  V v;
+  struct oDCP *dc;
 } *P;
 
 typedef struct oR {
-	short id;
-	short reduced;
-	P nm;
-	P dn;
+  short id;
+  short reduced;
+  P nm;
+  P dn;
 } *R;
 
 typedef struct oVECT {
-	short id;
-	short pad;
-	int len;
-	pointer *body;
+  short id;
+  short pad;
+  int len;
+  pointer *body;
 } *VECT;
 
 typedef struct oMAT {
-	short id;
-	short pad;
-	int row,col;
-	pointer **body;
+  short id;
+  short pad;
+  int row,col;
+  pointer **body;
 } *MAT;
 
 typedef struct oGF2MAT {
-	short id;
-	short pad;
-	int row,col;
-	unsigned int **body;
+  short id;
+  short pad;
+  int row,col;
+  unsigned int **body;
 } *GF2MAT, *GFMMAT;
 
 /* IMAT */
 #define IMATCH 64
 
 typedef struct oIENT {
-	int cr;
-	int row, col;
-	pointer *body;
+  int cr;
+  int row, col;
+  pointer *body;
 } IENT;
 
 typedef struct oIMATC {
-	pointer *fore;
-	pointer *next;
-	IENT ient[IMATCH];
+  pointer *fore;
+  pointer *next;
+  IENT ient[IMATCH];
 } *IMATC;
 
 typedef struct oIMAT {
-	short id;
-	int row, col, clen;
-	pointer *root;
-	pointer *toor;
+  short id;
+  int row, col, clen;
+  pointer *root;
+  pointer *toor;
 } *IMAT;
 /* IMAT */
 typedef struct oLIST {
-	short id;
-	short pad;
-	struct oNODE *body;
+  short id;
+  short pad;
+  struct oNODE *body;
 } *LIST;
 
 typedef struct oSTRING {
-	short id;
-	short pad;
-	char *body;
+  short id;
+  short pad;
+  char *body;
 } *STRING;
 
 typedef struct oCOMP {
-	short id;
-	short type;
-	struct oObj *member[1];
+  short id;
+  short type;
+  struct oObj *member[1];
 } *COMP;
 
 typedef struct oDP {
-	short id;
-	short nv;
-	int sugar;
-	struct oMP *body;
+  short id;
+  short nv;
+  int sugar;
+  struct oMP *body;
 } *DP;
 
 typedef struct oDPV {
-	short id;
-	int len;
-	int sugar;
-	struct oDP **body;
+  short id;
+  int len;
+  int sugar;
+  struct oDP **body;
 } *DPV;
 
 
 typedef struct oUSINT {
-	short id;
-	short pad;
-	unsigned body;
+  short id;
+  short pad;
+  unsigned body;
 } *USINT;
 
 typedef struct oERR {
-	short id;
-	short pad;
-	struct oObj *body;
+  short id;
+  short pad;
+  struct oObj *body;
 } *ERR;
 
 typedef struct oMATHCAP {
-	short id;
-	short pad;
-	struct oLIST *body;
+  short id;
+  short pad;
+  struct oLIST *body;
 } *MATHCAP;
 
 typedef struct oBYTEARRAY {
-	short id;
-	short pad;
-	int len;
-	unsigned char *body;
+  short id;
+  short pad;
+  int len;
+  unsigned char *body;
 } *BYTEARRAY;
 
 typedef struct oQUOTE {
-	short id;
-	short pad;
-	pointer body;
+  short id;
+  short pad;
+  pointer body;
 } *QUOTE;
 
 typedef struct oQUOTEARG {
-	short id;
-	short pad;
-	farg_type type;
-	pointer body;
+  short id;
+  short pad;
+  farg_type type;
+  pointer body;
 } *QUOTEARG;
 
 typedef struct oOPTLIST {
-	short id;
-	short pad;
-	struct oNODE *body;
+  short id;
+  short pad;
+  struct oNODE *body;
 } *OPTLIST;
 
 typedef struct oSYMBOL {
-	short id;
-	short pad;
-	char *name;
-	int value;
+  short id;
+  short pad;
+  char *name;
+  int value;
 } *SYMBOL;
 
 typedef struct oRANGE {
-	short id;
-	short pad;
-	struct oObj *start,*end;
+  short id;
+  short pad;
+  struct oObj *start,*end;
 } *RANGE;
 
 typedef struct oTB {
-	short id;
-	short pad;
-	int size,next;
-	char **body;
+  short id;
+  short pad;
+  int size,next;
+  char **body;
 } *TB;
 
 typedef struct oNBP {
-	short id;
-	short pad;
-	struct oNODE *body;
+  short id;
+  short pad;
+  struct oNODE *body;
 } *NBP;
 
 /* non-commutative bivariate monomial */
 
 typedef struct oNBM {
-	int d;
-	P c;
-	unsigned int *b;
+  int d;
+  P c;
+  unsigned int *b;
 } *NBM;
 
 #define NEWNBM(p) ((p)=(NBM)MALLOC(sizeof(struct oNBM)))
@@ -522,59 +522,59 @@ typedef struct oNBM {
 #define NBM_CLR(a,j) ((a)[(j)>>5]&=(~(1<<((j)&31))))
 
 typedef struct oObj {
-	short id;
-	short pad;
+  short id;
+  short pad;
 } *Obj;
 
 typedef struct oDCP {
-	Q d;
-	P c;
-	struct oDCP *next;	
+  Q d;
+  P c;
+  struct oDCP *next;  
 } *DCP;
 
 typedef struct oMP {
-	struct oDL *dl;
-	Obj c;
-	struct oMP *next;
+  struct oDL *dl;
+  Obj c;
+  struct oMP *next;
 } *MP;
 
 typedef struct oDPM {
-	short id;
-	short nv;
-	int sugar;
-	struct oDMM *body;
+  short id;
+  short nv;
+  int sugar;
+  struct oDMM *body;
 } *DPM;
 
 typedef struct oDMM {
   int pos;
-	struct oDL *dl;
-	Obj c;
-	struct oDMM *next;
+  struct oDL *dl;
+  Obj c;
+  struct oDMM *next;
 } *DMM;
 
 typedef struct oDL {
-	int td;
-	int d[1];
+  int td;
+  int d[1];
 } *DL;
 
 struct dp_pairs {
-	int dp1, dp2;
-	DL lcm;
-	int sugar;
-	struct dp_pairs *next;
+  int dp1, dp2;
+  DL lcm;
+  int sugar;
+  struct dp_pairs *next;
 };
 
 typedef struct dp_pairs *DP_pairs;
 
 struct p_pair {
-	struct oUM *p0;
-	struct oUM *p1;
-	struct p_pair *next;
+  struct oUM *p0;
+  struct oUM *p1;
+  struct p_pair *next;
 };
 
 struct oMF {
-	int m;
-	P f;
+  int m;
+  P f;
 };
 
 /* 
@@ -582,91 +582,91 @@ struct oMF {
  */
 
 typedef struct oCDP {
-	int len;
-	int psindex;
-	unsigned int *body;
+  int len;
+  int psindex;
+  unsigned int *body;
 } *CDP;
 
 typedef struct oCM {
-	int index;
-	int c;
+  int index;
+  int c;
 } *CM;
 
 /* bucket list for DL */
 
 typedef struct oDLBUCKET {
-	int td;
-	struct oNODE *body;
-	struct oDLBUCKET *next;
+  int td;
+  struct oNODE *body;
+  struct oDLBUCKET *next;
 } *DLBUCKET;
 
 typedef struct oGeoBucket {
-	int m;
-	struct oNODE *body[32];
+  int m;
+  struct oNODE *body[32];
 } *GeoBucket;
 
 typedef struct oVL {
-	V v;
-	struct oVL *next;
+  V v;
+  struct oVL *next;
 } *VL;
 
 typedef struct oNODE {
-	pointer body;
-	struct oNODE *next;
+  pointer body;
+  struct oNODE *next;
 } *NODE;
 
 /* univariate poly over small finite field; dense */
 typedef struct oUM {
-	int d;
-	int c[1];
+  int d;
+  int c[1];
 } *UM;
 
 /* univariate poly with padic coeff */
 typedef struct oLUM {
-	int d;
-	int *c[1];
+  int d;
+  int *c[1];
 } *LUM;
 
 /* bivariate poly over small finite field; dense */
 
 typedef struct oBM {
-	int d;
-	UM c[1];
+  int d;
+  UM c[1];
 } *BM;
 
 typedef struct oML {
-	int n;
-	int mod;
-	int bound;
-	pointer c[1];
+  int n;
+  int mod;
+  int bound;
+  pointer c[1];
 } *ML;
 
 typedef struct oUB {
-	int d;
-	N c[1];
+  int d;
+  N c[1];
 } *UB;
 
 typedef struct oVN {
-	V v;
-	int n;
+  V v;
+  int n;
 } *VN;
 
 typedef struct oUP {
-	int d;
-	Num c[1];
+  int d;
+  Num c[1];
 } *UP;
 
 typedef struct oDUM {
-	int n;
-	UM f;
+  int n;
+  UM f;
 } *DUM;
 
 struct order_pair {
-	int order, length;
+  int order, length;
 };
 
 struct sparse_weight {
-	int pos, value;
+  int pos, value;
 };
 
 #define IS_DENSE_WEIGHT 0
@@ -674,68 +674,68 @@ struct sparse_weight {
 #define IS_BLOCK 2
 
 struct weight_or_block {
-	int type;
-	int length;
-	union {
-		int *dense_weight;
-		struct sparse_weight *sparse_weight;
-		struct {
-			int order, start;
-		} block;
-	} body;
+  int type;
+  int length;
+  union {
+    int *dense_weight;
+    struct sparse_weight *sparse_weight;
+    struct {
+      int order, start;
+    } block;
+  } body;
 };
 
 struct order_spec {
-	int id;
-	Obj obj;
-	int nv;
-	int ispot; /* 1 means Position over Term (Pos then Term) */
-	int pot_nelim; /* size of positions for pot-elimination order */
+  int id;
+  Obj obj;
+  int nv;
+  int ispot; /* 1 means Position over Term (Pos then Term) */
+  int pot_nelim; /* size of positions for pot-elimination order */
   int *top_weight;
   int module_rank;
   int *module_top_weight;
-	union {
-		int simple;
-		struct {
-			int length;
-			struct order_pair *order_pair;
-		} block;
-		struct {
-			int row;
-			int **matrix;
-		} matrix;
-		struct {
-			int length;
-			struct weight_or_block *w_or_b;
-		} composite;
-	} ord;
+  union {
+    int simple;
+    struct {
+      int length;
+      struct order_pair *order_pair;
+    } block;
+    struct {
+      int row;
+      int **matrix;
+    } matrix;
+    struct {
+      int length;
+      struct weight_or_block *w_or_b;
+    } composite;
+  } ord;
 };
 
 struct modorder_spec {
-	/* id : ORD_REVGRADLEX, ORD_GRADLEX, ORD_LEX */
-	int id;
-	Obj obj;
-	int len;
-	int *degree_shift;
+  /* id : ORD_REVGRADLEX, ORD_GRADLEX, ORD_LEX */
+  int id;
+  Obj obj;
+  int len;
+  int *degree_shift;
 };
 
 typedef struct oNumberField {
-	int n;
-	int psn;
-	int dim;
-	VL vl;
-	P *defpoly;
-	DP *mb;
-	DP *ps;
-	struct oDAlg *one;
-	NODE ind;
-	struct order_spec *spec;
+  int n;
+  int psn;
+  int dim;
+  VL vl;
+  P *defpoly;
+  DP *mb;
+  DP *ps;
+  struct oDAlg *one;
+  NODE ind;
+  struct order_spec *spec;
 } *NumberField;
 
 /* structure for cputime */
 
 struct oEGT {
-	double exectime,gctime;
+  double exectime,gctime;
 };
 
 /* constant */
@@ -849,30 +849,30 @@ bzero((char *)(p),(int)(((n)+1)*sizeof(type))))
 #define W_MLALLOC(d) ((ML)ALLOCA(TRUESIZE(oML,d,pointer)))
 #define W_LUMALLOC(n,bound,p)\
 {\
-	LUM ___q___;\
-	int ___i___,**___c___;\
-	(___q___) = (LUM)ALLOCA(TRUESIZE(oLUM,(n),int *));\
-	DEG(___q___) = n;\
-	for ( ___i___ = 0, ___c___ = (int **)COEF(___q___); ___i___ <= n; ___i___++ ) {\
-		___c___[___i___] = (int *)ALLOCA(((bound)+1)*sizeof(int));\
-		bzero((char *)___c___[___i___],((bound)+1)*sizeof(int));\
-	}\
-	(p) = ___q___;\
+  LUM ___q___;\
+  int ___i___,**___c___;\
+  (___q___) = (LUM)ALLOCA(TRUESIZE(oLUM,(n),int *));\
+  DEG(___q___) = n;\
+  for ( ___i___ = 0, ___c___ = (int **)COEF(___q___); ___i___ <= n; ___i___++ ) {\
+    ___c___[___i___] = (int *)ALLOCA(((bound)+1)*sizeof(int));\
+    bzero((char *)___c___[___i___],((bound)+1)*sizeof(int));\
+  }\
+  (p) = ___q___;\
 }
 
 #define W_BMALLOC(dx,dy,p)\
 {\
-	BM ___q___;\
-	int ___i___;\
-	UM *___c___;\
-	(___q___) = (BM)ALLOCA(TRUESIZE(oBM,(dy),UM));\
-	DEG(___q___) = dy;\
-	___c___ = (UM *)COEF(___q___);\
-	for ( ___i___ = 0; ___i___ <= dy; ___i___++ ) {\
-		___c___[___i___] = W_UMALLOC(dx);\
-		clearum(___c___[___i___],dx);\
-	}\
-	(p) = ___q___;\
+  BM ___q___;\
+  int ___i___;\
+  UM *___c___;\
+  (___q___) = (BM)ALLOCA(TRUESIZE(oBM,(dy),UM));\
+  DEG(___q___) = dy;\
+  ___c___ = (UM *)COEF(___q___);\
+  for ( ___i___ = 0; ___i___ <= dy; ___i___++ ) {\
+    ___c___[___i___] = W_UMALLOC(dx);\
+    clearum(___c___[___i___],dx);\
+  }\
+  (p) = ___q___;\
 }
 
 #define NEWUP2(q,w)\
@@ -1071,13 +1071,13 @@ PL(NM(q))=1,BD(NM(q))[0]=(unsigned int)(n),DN(q)=0,(q)))
 #define FTOIF(i) ((int)(((unsigned int)(i)|0x80000000)))
 
 struct cdl {
-	Obj c;
-	DL d;
+  Obj c;
+  DL d;
 };
 
 struct cdlm {
-	int c;
-	DL d;
+  int c;
+  DL d;
 };
 
 extern MP _mp_free_list;
@@ -1246,9 +1246,9 @@ void gcdEuclidn(N,N,N *);
 void GC_free(void *);
 void FFT_primes(int,int *,int *,int *);
 int FFT_pol_product(unsigned int,unsigned int *, unsigned int,unsigned int *,
-	unsigned int *,int,unsigned int *);
+  unsigned int *,int,unsigned int *);
 int FFT_pol_square(unsigned int,unsigned int *,
-	unsigned int *,int,unsigned int *);
+  unsigned int *,int,unsigned int *);
 void dcptolist(DCP,LIST *);
 void gcdprsmp(VL,int,P,P,P *);
 void mult_mod_tab(UM,int,UM *,UM,int);
@@ -2103,7 +2103,7 @@ void sfbsqfr(P f,V x,V y,DCP *dcp);
 void sfbfctr(P f,V x,V y,int degbound,DCP *dcp);
 void sfdtest(P f,ML list,V x,V y,DCP *dcp);
 int sfdtestmain(VL vl,P lcg,UM lcg0,BM lcy,P csum,ML list,
-	int k,int *in,P *fp,P *cofp);
+  int k,int *in,P *fp,P *cofp);
 void const_term(P f,UM c);
 void const_term_sfbm(BM f,UM c);
 int sfctest(UM lcg0,BM lcy,ML list,int k,int *in);

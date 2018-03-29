@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.15 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/kwd.c,v 1.16 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,32 +56,32 @@
 #endif
 
 struct oTKWD kwd[] = {
-	{"for",FOR},
-	{"while",WHILE},
-	{"do",DO},
-	{"if",IF},
-	{"else",ELSE},
-	{"break",BREAK},
-	{"continue",CONTINUE},
-	{"return",RETURN},
-	{"def",FDEF},
-	{"function",PFDEF},
-	{"module",MODDEF},
-	{"endmodule",MODEND},
-	{"global",GLOBAL},
-	{"extern",GLOBAL},
-	{"static",MGLOBAL},
-	{"local",LOCAL},
-	{"localf",LOCALF},
-	{"struct",STRUCT},
-	{"newstruct",NEWSTRUCT},
-	{"car",CAR},
-	{"cdr",CDR},
-	{"pari",PARIF},
-	{"map",MAP},
-	{"recmap",RECMAP},
-	{"getopt",GETOPT},
-	{"timer",TIMER},
-	{"quote",QUOTED},
-	{0,0}
+  {"for",FOR},
+  {"while",WHILE},
+  {"do",DO},
+  {"if",IF},
+  {"else",ELSE},
+  {"break",BREAK},
+  {"continue",CONTINUE},
+  {"return",RETURN},
+  {"def",FDEF},
+  {"function",PFDEF},
+  {"module",MODDEF},
+  {"endmodule",MODEND},
+  {"global",GLOBAL},
+  {"extern",GLOBAL},
+  {"static",MGLOBAL},
+  {"local",LOCAL},
+  {"localf",LOCALF},
+  {"struct",STRUCT},
+  {"newstruct",NEWSTRUCT},
+  {"car",CAR},
+  {"cdr",CDR},
+  {"pari",PARIF},
+  {"map",MAP},
+  {"recmap",RECMAP},
+  {"getopt",GETOPT},
+  {"timer",TIMER},
+  {"quote",QUOTED},
+  {0,0}
 };

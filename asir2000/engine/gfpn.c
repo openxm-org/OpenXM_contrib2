@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/gfpn.c,v 1.3 2000/08/22 05:04:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/gfpn.c,v 1.4 2001/10/09 01:36:11 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -56,250 +56,250 @@ UP current_mod_gfpn;
 
 void setmod_gfpn(P p)
 {
-	UP t;
+  UP t;
 
-	ptoup(p,&t); uptolmup(t,&current_mod_gfpn);
+  ptoup(p,&t); uptolmup(t,&current_mod_gfpn);
 }
 
 void getmod_gfpn(UP *up)
 {
-	*up = current_mod_gfpn;
+  *up = current_mod_gfpn;
 }
 
 void ptogfpn(Obj q,GFPN *l)
 {
-	UP q1,q2;
+  UP q1,q2;
 
-	if ( !q || (OID(q)==O_N && NID(q)==N_GFPN) ) {
-		*l = (GFPN)q;
-	} else if ( (OID(q)==O_N && NID(q)==N_Q) || OID(q)==O_P ) {
-		ptoup((P)q,&q1); uptolmup(q1,&q2);
-		MKGFPN(q2,*l);
-	} else
-		error("ptogfpn : invalid argument");
+  if ( !q || (OID(q)==O_N && NID(q)==N_GFPN) ) {
+    *l = (GFPN)q;
+  } else if ( (OID(q)==O_N && NID(q)==N_Q) || OID(q)==O_P ) {
+    ptoup((P)q,&q1); uptolmup(q1,&q2);
+    MKGFPN(q2,*l);
+  } else
+    error("ptogfpn : invalid argument");
 }
 
 void gfpntop(GFPN q,P *l)
 {
-	if ( !q )
-		*l = 0;
-	else if ( NID(q) == N_GFPN )
-		uptop(q->body,l);
-	else
-		*l = (P)q;
+  if ( !q )
+    *l = 0;
+  else if ( NID(q) == N_GFPN )
+    uptop(q->body,l);
+  else
+    *l = (P)q;
 }
 
 void simpgfpn(GFPN n,GFPN *r)
 {
-	UP rem,t;
+  UP rem,t;
 
-	if ( !n )
-		*r = 0;
-	else if ( NID(n) != N_GFPN )
-		*r = n;
-	else {
-		simpup(n->body,&t);
-		remup(t,current_mod_gfpn,&rem);
-		MKGFPN(rem,*r);
-	}
+  if ( !n )
+    *r = 0;
+  else if ( NID(n) != N_GFPN )
+    *r = n;
+  else {
+    simpup(n->body,&t);
+    remup(t,current_mod_gfpn,&rem);
+    MKGFPN(rem,*r);
+  }
 }
 
 #define NZGFPN(a) ((a)&&(OID(a)==O_N)&&(NID(a)==N_GFPN))
 
 void ntogfpn(Obj a,GFPN *b)
 {
-	UP t;
-	LM lm;
+  UP t;
+  LM lm;
 
-	if ( !a || (OID(a)==O_N && NID(a) == N_GFPN) )
-		*b = (GFPN)a;
-	else if ( OID(a) == O_N && (NID(a) == N_LM || NID(a) == N_Q) ) {
-		qtolm((Q)a,&lm);
-		if ( !lm )
-			*b = 0;
-		else {
-			t = UPALLOC(0); t->d = 0; t->c[0] = (Num)lm;
-			MKGFPN(t,*b);
-		}
-	} else
-		error("ntogfpn : invalid argument");
+  if ( !a || (OID(a)==O_N && NID(a) == N_GFPN) )
+    *b = (GFPN)a;
+  else if ( OID(a) == O_N && (NID(a) == N_LM || NID(a) == N_Q) ) {
+    qtolm((Q)a,&lm);
+    if ( !lm )
+      *b = 0;
+    else {
+      t = UPALLOC(0); t->d = 0; t->c[0] = (Num)lm;
+      MKGFPN(t,*b);
+    }
+  } else
+    error("ntogfpn : invalid argument");
 }
 
 void addgfpn(GFPN a,GFPN b,GFPN *c)
 {
-	UP t,t1,t2;
-	GFPN z;
+  UP t,t1,t2;
+  GFPN z;
 
-	ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
-	if ( !a )
-		*c = b;
-	else if ( !b )
-		*c = a;
-	else {
-		addup(a->body,b->body,&t);
-		simpup(t,&t1);
-		remup(t1,current_mod_gfpn,&t2);
-		MKGFPN(t2,*c);
-	}
+  ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
+  if ( !a )
+    *c = b;
+  else if ( !b )
+    *c = a;
+  else {
+    addup(a->body,b->body,&t);
+    simpup(t,&t1);
+    remup(t1,current_mod_gfpn,&t2);
+    MKGFPN(t2,*c);
+  }
 }
 
 void subgfpn(GFPN a,GFPN b,GFPN *c)
 {
-	UP t,t1,t2;
-	GFPN z;
+  UP t,t1,t2;
+  GFPN z;
 
-	ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
-	if ( !a )
-		chsgngfpn(b,c);
-	else if ( !b )
-		*c = a;
-	else {
-		subup(a->body,b->body,&t);
-		simpup(t,&t1);
-		remup(t1,current_mod_gfpn,&t2);
-		MKGFPN(t2,*c);
-	}
+  ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
+  if ( !a )
+    chsgngfpn(b,c);
+  else if ( !b )
+    *c = a;
+  else {
+    subup(a->body,b->body,&t);
+    simpup(t,&t1);
+    remup(t1,current_mod_gfpn,&t2);
+    MKGFPN(t2,*c);
+  }
 }
 
 extern int up_lazy;
 
 void mulgfpn(GFPN a,GFPN b,GFPN *c)
 {
-	UP t,t1,t2;
-	GFPN z;
+  UP t,t1,t2;
+  GFPN z;
 
-	ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
-	if ( !a || !b )
-		*c = 0;
-	else {
-		up_lazy=1;
-		mulup(a->body,b->body,&t);
-		up_lazy=0;
-		simpup(t,&t1);
-		remup(t1,current_mod_gfpn,&t2);
-		MKGFPN(t2,*c);	
-	}
+  ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
+  if ( !a || !b )
+    *c = 0;
+  else {
+    up_lazy=1;
+    mulup(a->body,b->body,&t);
+    up_lazy=0;
+    simpup(t,&t1);
+    remup(t1,current_mod_gfpn,&t2);
+    MKGFPN(t2,*c);  
+  }
 }
 
 void squaregfpn(GFPN a,GFPN *c)
 {
-	UP t,t1,t2;
-	GFPN z;
+  UP t,t1,t2;
+  GFPN z;
 
-	ntogfpn((Obj)a,&z); a = z;
-	if ( !a )
-		*c = 0;
-	else {
-		squareup(a->body,&t);
-		simpup(t,&t1);
-		remup(t1,current_mod_gfpn,&t2);
-		MKGFPN(t2,*c);	
-	}
+  ntogfpn((Obj)a,&z); a = z;
+  if ( !a )
+    *c = 0;
+  else {
+    squareup(a->body,&t);
+    simpup(t,&t1);
+    remup(t1,current_mod_gfpn,&t2);
+    MKGFPN(t2,*c);  
+  }
 }
 
 void divgfpn(GFPN a,GFPN b,GFPN *c)
 {
-	UP t,t1,i,s;
-	GFPN z;
+  UP t,t1,i,s;
+  GFPN z;
 
-	ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
-	if ( !b )
-		error("divgfpn: division by 0");
-	else if ( !a )
-		*c = 0;
-	else {
-		extended_gcdup(b->body,current_mod_gfpn,&i);
-		mulup(a->body,i,&t);
-		simpup(t,&t1);
-		remup(t1,current_mod_gfpn,&s);
-		MKGFPN(s,*c);
-	}
+  ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
+  if ( !b )
+    error("divgfpn: division by 0");
+  else if ( !a )
+    *c = 0;
+  else {
+    extended_gcdup(b->body,current_mod_gfpn,&i);
+    mulup(a->body,i,&t);
+    simpup(t,&t1);
+    remup(t1,current_mod_gfpn,&s);
+    MKGFPN(s,*c);
+  }
 }
 
 void invgfpn(GFPN b,GFPN *c)
 {
-	UP i,t;
-	GFPN z;
+  UP i,t;
+  GFPN z;
 
-	ntogfpn((Obj)b,&z); b = z;
-	if ( !b )
-		error("divgfpn: division by 0");
-	else {
-		simpup(b->body,&t);
-		extended_gcdup(t,current_mod_gfpn,&i);
-		MKGFPN(i,*c);
-	}
+  ntogfpn((Obj)b,&z); b = z;
+  if ( !b )
+    error("divgfpn: division by 0");
+  else {
+    simpup(b->body,&t);
+    extended_gcdup(t,current_mod_gfpn,&i);
+    MKGFPN(i,*c);
+  }
 }
 
 void chsgngfpn(GFPN a,GFPN *c)
 {
-	GFPN z;
-	UP t,t1;
+  GFPN z;
+  UP t,t1;
 
-	ntogfpn((Obj)a,&z); a = z;
-	if ( !a )
-		*c = 0;
-	else {
-		simpup(a->body,&t);
-		chsgnup(t,&t1);
-		MKGFPN(t1,*c);
-	}
+  ntogfpn((Obj)a,&z); a = z;
+  if ( !a )
+    *c = 0;
+  else {
+    simpup(a->body,&t);
+    chsgnup(t,&t1);
+    MKGFPN(t1,*c);
+  }
 }
 
 void pwrgfpn(GFPN a,Q b,GFPN *c)
 {
-	UP t,s;
-	GFPN r;
-	Q b0;
+  UP t,s;
+  GFPN r;
+  Q b0;
 
-	if ( !b ) {
-		t = UPALLOC(0); t->d = 0; t->c[0] = (Num)ONELM; MKGFPN(t,*c);
-	} else if ( !a )
-		*c = 0;
-	else {
-		DUPQ(b,b0); SGN(b0)=1;
-		simpup(a->body,&s);
-		hybrid_generic_powermodup(s,current_mod_gfpn,b0,&t);
-		MKGFPN(t,r);
-		if ( SGN(b) < 0 )
-			invgfpn(r,c);
-		else
-			*c = r;
-	}
+  if ( !b ) {
+    t = UPALLOC(0); t->d = 0; t->c[0] = (Num)ONELM; MKGFPN(t,*c);
+  } else if ( !a )
+    *c = 0;
+  else {
+    DUPQ(b,b0); SGN(b0)=1;
+    simpup(a->body,&s);
+    hybrid_generic_powermodup(s,current_mod_gfpn,b0,&t);
+    MKGFPN(t,r);
+    if ( SGN(b) < 0 )
+      invgfpn(r,c);
+    else
+      *c = r;
+  }
 }
 
 int cmpgfpn(GFPN a,GFPN b)
 {
-	GFPN z;
+  GFPN z;
 
-	ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
-	if ( !a )
-		if ( !b )
-			return 0;
-		else
-			return -1;
-	else if ( !b )
-			return 1;
-	else
-		return compup(a->body,b->body);
+  ntogfpn((Obj)a,&z); a = z; ntogfpn((Obj)b,&z); b = z;
+  if ( !a )
+    if ( !b )
+      return 0;
+    else
+      return -1;
+  else if ( !b )
+      return 1;
+  else
+    return compup(a->body,b->body);
 }
 
 void randomgfpn(GFPN *r)
 {
-	int i,d;
-	LM *tb;
-	UP t;
+  int i,d;
+  LM *tb;
+  UP t;
 
-	if ( !current_mod_gfpn )
-		error("randomgfpn : current_mod_gfpn is not set");
-	d = current_mod_gfpn->d;
-	t = UPALLOC(d-1);
-	for ( i = 0, tb = (LM *)t->c; i < d; i++ )
-		random_lm(&tb[i]);
-	for ( i = d-1; i >= 0 && !tb[i]; i-- );
-	if ( i < 0 )
-		*r = 0;
-	else {
-		t->d = i; MKGFPN(t,*r);
-	}
+  if ( !current_mod_gfpn )
+    error("randomgfpn : current_mod_gfpn is not set");
+  d = current_mod_gfpn->d;
+  t = UPALLOC(d-1);
+  for ( i = 0, tb = (LM *)t->c; i < d; i++ )
+    random_lm(&tb[i]);
+  for ( i = d-1; i >= 0 && !tb[i]; i-- );
+  if ( i < 0 )
+    *r = 0;
+  else {
+    t->d = i; MKGFPN(t,*r);
+  }
 }

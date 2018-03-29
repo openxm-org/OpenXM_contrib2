@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.10 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/asir_lib.c,v 1.11 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,98 +69,98 @@ int Call_Asir(char *,pointer *);
 
 void Init_Asir(int argc,char **argv)
 {
-	FILE *ifp;
-	char ifname[BUFSIZ];
-	extern int GC_dont_gc;
-	extern int do_asirrc;
-	char *getenv();
-	static asirlib_initialized=0;
+  FILE *ifp;
+  char ifname[BUFSIZ];
+  extern int GC_dont_gc;
+  extern int do_asirrc;
+  char *getenv();
+  static asirlib_initialized=0;
 
-	if ( asirlib_initialized )
-		return;
-	GC_init();
-	asirlib_initialized = 1;
-	do_file = 1;
+  if ( asirlib_initialized )
+    return;
+  GC_init();
+  asirlib_initialized = 1;
+  do_file = 1;
 #if defined(PARI)
     risa_pari_init();
 #endif 
-	srandom((int)get_current_time());
-/*	mt_sgenrand((unsigned long)get_current_time()); */
+  srandom((int)get_current_time());
+/*  mt_sgenrand((unsigned long)get_current_time()); */
 
 #if defined(THINK_C)
-	param_init();
+  param_init();
 #endif
-	rtime_init();
-	env_init();
-	endian_init();
+  rtime_init();
+  env_init();
+  endian_init();
 #if !defined(VISUAL) && !defined(__MINGW32__) && !defined(THINK_C)
-/*	check_key(); */
+/*  check_key(); */
 #endif
-	process_args(--argc,++argv);
-	copyright();
-	output_init();
-	arf_init();
-	nglob_init();
-	glob_init();
-	sig_init();
-	tty_init();
-	debug_init();
-	pf_init();
-	sysf_init();
-	parif_init();
+  process_args(--argc,++argv);
+  copyright();
+  output_init();
+  arf_init();
+  nglob_init();
+  glob_init();
+  sig_init();
+  tty_init();
+  debug_init();
+  pf_init();
+  sysf_init();
+  parif_init();
 #if defined(UINIT)
-	reg_sysf();
+  reg_sysf();
 #endif
 #if defined(THINK_C)
-	sprintf(ifname,"asirrc");
+  sprintf(ifname,"asirrc");
 #else
-	sprintf(ifname,"%s/.asirrc",getenv("HOME"));
+  sprintf(ifname,"%s/.asirrc",getenv("HOME"));
 #endif
-	if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
-		input_init(ifp,ifname);
-		if ( !setjmp(asir_infile->jmpbuf) )
-			read_eval_loop();
-		fclose(ifp);
-	} else
-		error(".asirrc not found");
-	input_init(0,"string");
+  if ( do_asirrc && (ifp = fopen(ifname,"r")) ) {
+    input_init(ifp,ifname);
+    if ( !setjmp(asir_infile->jmpbuf) )
+      read_eval_loop();
+    fclose(ifp);
+  } else
+    error(".asirrc not found");
+  input_init(0,"string");
 }
 
 int Call_Asir(char *cmd,pointer *result)
 {
-	SNODE snode;
-	pointer val;
+  SNODE snode;
+  pointer val;
 #if defined(PARI)
-	void recover(int);
+  void recover(int);
 
-	recover(0);
+  recover(0);
 #  if !(PARI_VERSION_CODE > 131588)
-	if ( setjmp(environnement) ) {
-		avma = top; recover(1);
-		error("PARI error");
-	}
+  if ( setjmp(environnement) ) {
+    avma = top; recover(1);
+    error("PARI error");
+  }
 #  endif
 #endif
-	if ( setjmp(env) ) {
-		*result = 0;
-		return -1;
-	}
-	parse_strp = cmd;
-	if ( mainparse(&snode) ) {
-		*result = 0;
-		return -1;
-	}
-	val = evalstat(snode);
-	if ( NEXT(asir_infile) ) {
-		while ( NEXT(asir_infile) ) {
-			if ( mainparse(&snode) ) {
-				*result = val;
-				return -1;
-			}
-			nextbp = 0;
-			val = evalstat(snode);
-		}
-	}
-	*result = val;
-	return 0;
+  if ( setjmp(env) ) {
+    *result = 0;
+    return -1;
+  }
+  parse_strp = cmd;
+  if ( mainparse(&snode) ) {
+    *result = 0;
+    return -1;
+  }
+  val = evalstat(snode);
+  if ( NEXT(asir_infile) ) {
+    while ( NEXT(asir_infile) ) {
+      if ( mainparse(&snode) ) {
+        *result = val;
+        return -1;
+      }
+      nextbp = 0;
+      val = evalstat(snode);
+    }
+  }
+  *result = val;
+  return 0;
 }

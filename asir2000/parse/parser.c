@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.11 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parser.c,v 1.12 2018/03/28 05:27:22 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -59,43 +59,43 @@ extern int outputstyle;
 
 int mainparse(SNODE *snodep)
 {
-	int ret;
+  int ret;
 
-	main_parser = 1;
-	ret = yyparse();
-	*snodep = parse_snode;
-	return ret;
+  main_parser = 1;
+  ret = yyparse();
+  *snodep = parse_snode;
+  return ret;
 }
 
 int exprparse(FUNC f,char *str,FNODE *exprp)
 {
-	char buf0[BUFSIZ];
-	char *buf;
-	int i,n;
-	char c;
+  char buf0[BUFSIZ];
+  char *buf;
+  int i,n;
+  char c;
 
 
-	n = strlen(str);
-	if ( n >= BUFSIZ )
-		buf = (char *)ALLOCA(n+1);
-	else
-		buf = buf0;
-	for ( i = 0; ; i++, str++ ) {
-		c = *str;
-		if ( !c || c == '\n' ) {
-			buf[i] = ';'; buf[i+1] = 0; break;
-		} else
-			buf[i] = c;
-	}
-	parse_strp = buf;
-	parse_targetf = f;
-	main_parser = 0;
-	allow_create_var = 0;
-	if ( yyparse() || !parse_snode || parse_snode->id != S_SINGLE ) {
-		*exprp = 0; return 0;
-	} else {
-		*exprp = (FNODE)FA0(parse_snode); return 1;
-	}
+  n = strlen(str);
+  if ( n >= BUFSIZ )
+    buf = (char *)ALLOCA(n+1);
+  else
+    buf = buf0;
+  for ( i = 0; ; i++, str++ ) {
+    c = *str;
+    if ( !c || c == '\n' ) {
+      buf[i] = ';'; buf[i+1] = 0; break;
+    } else
+      buf[i] = c;
+  }
+  parse_strp = buf;
+  parse_targetf = f;
+  main_parser = 0;
+  allow_create_var = 0;
+  if ( yyparse() || !parse_snode || parse_snode->id != S_SINGLE ) {
+    *exprp = 0; return 0;
+  } else {
+    *exprp = (FNODE)FA0(parse_snode); return 1;
+  }
 }
 
 /* allows to create a new variable */
@@ -103,40 +103,40 @@ int exprparse(FUNC f,char *str,FNODE *exprp)
 
 int exprparse_create_var(FUNC f,char *str,SNODE *statp)
 {
-	char buf0[BUFSIZ];
-	char *buf;
-	int i,n;
-	char c;
+  char buf0[BUFSIZ];
+  char *buf;
+  int i,n;
+  char c;
 
 
-	n = strlen(str);
-	if ( n >= BUFSIZ )
-		buf = (char *)ALLOCA(n+1);
-	else
-		buf = buf0;
-	for ( i = 0; ; i++, str++ ) {
-		c = *str;
-		if ( !c || c == '\n' ) {
-			buf[i] = ';'; buf[i+1] = 0; break;
-		} else
-			buf[i] = c;
-	}
-	parse_strp = buf;
-	parse_targetf = f;
-	main_parser = 0;
-	allow_create_var = 1;
+  n = strlen(str);
+  if ( n >= BUFSIZ )
+    buf = (char *)ALLOCA(n+1);
+  else
+    buf = buf0;
+  for ( i = 0; ; i++, str++ ) {
+    c = *str;
+    if ( !c || c == '\n' ) {
+      buf[i] = ';'; buf[i+1] = 0; break;
+    } else
+      buf[i] = c;
+  }
+  parse_strp = buf;
+  parse_targetf = f;
+  main_parser = 0;
+  allow_create_var = 1;
 #if 0
-	if ( yyparse() || !parse_snode || parse_snode->id != S_SINGLE ) {
-		*exprp = 0; return 0;
-	} else {
-		*exprp = (FNODE)FA0(parse_snode); return 1;
-	}
+  if ( yyparse() || !parse_snode || parse_snode->id != S_SINGLE ) {
+    *exprp = 0; return 0;
+  } else {
+    *exprp = (FNODE)FA0(parse_snode); return 1;
+  }
 #else
-	if ( yyparse() || !parse_snode ) {
-		*statp = 0; return 0;
-	} else {
-		*statp = parse_snode; return 1;
-	}
+  if ( yyparse() || !parse_snode ) {
+    *statp = 0; return 0;
+  } else {
+    *statp = parse_snode; return 1;
+  }
 #endif
 }
 
@@ -144,49 +144,49 @@ extern FUNC user_print_function;
 extern f_break,f_continue,f_return;
 
 void read_eval_loop() {
-	struct oEGT egt0,egt1;
-	extern int prtime,prresult,ox_do_copy;
-	SNODE snode;
-	double r0,r1;
-	double get_rtime();
-	extern Obj LastVal;
+  struct oEGT egt0,egt1;
+  extern int prtime,prresult,ox_do_copy;
+  SNODE snode;
+  double r0,r1;
+  double get_rtime();
+  extern Obj LastVal;
 
-	LastVal = 0;
-	while ( 1 ) {
-		mainparse(&snode);
-		nextbp = 0;
-		get_eg(&egt0);
-		r0 = get_rtime();
-		LastVal = evalstat(snode); 
-		f_break = f_continue = f_return = 0;
-		storeans(LastVal);
-		get_eg(&egt1);
-		r1 = get_rtime();
-		if ( !ox_do_copy ) {
-			if ( prresult ) {
-				if ( user_print_function ) {
-					bevalf(user_print_function,mknode(1,LastVal));
+  LastVal = 0;
+  while ( 1 ) {
+    mainparse(&snode);
+    nextbp = 0;
+    get_eg(&egt0);
+    r0 = get_rtime();
+    LastVal = evalstat(snode); 
+    f_break = f_continue = f_return = 0;
+    storeans(LastVal);
+    get_eg(&egt1);
+    r1 = get_rtime();
+    if ( !ox_do_copy ) {
+      if ( prresult ) {
+        if ( user_print_function ) {
+          bevalf(user_print_function,mknode(1,LastVal));
 #if !defined(__MINGW32__)
-					fflush(asir_out);
+          fflush(asir_out);
 #endif
-				} else
-					printexpr(CO,LastVal);
-				if ( outputstyle == 1 ) {
-					putc(';',asir_out);
-				}
-				putc('\n',asir_out);
+        } else
+          printexpr(CO,LastVal);
+        if ( outputstyle == 1 ) {
+          putc(';',asir_out);
+        }
+        putc('\n',asir_out);
 #if !defined(__MINGW32__)
-				fflush(asir_out);
+        fflush(asir_out);
 #endif
-			}
-			if ( prtime ) {
-				printtime(&egt0,&egt1,r1-r0);
-			}
+      }
+      if ( prtime ) {
+        printtime(&egt0,&egt1,r1-r0);
+      }
 #if defined(__MINGW32__)
-			fflush(asir_out);
-			fflush(stderr);
+      fflush(asir_out);
+      fflush(stderr);
 #endif
-			prompt();
-		}
-	}
+      prompt();
+    }
+  }
 }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.14 2005/09/21 23:39:32 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/ftab.c,v 1.15 2015/08/04 06:20:44 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,12 +53,12 @@
 void Ptstart(), Ptstop(), Pquit(), Pdebug();
 
 struct ftab nasysftab[] = {
-	{"tstart",Ptstart,0},
-	{"tstop",Ptstop,0},
-	{"end",Pquit,0},
-	{"quit",Pquit,0},
-	{"debug",Pdebug,0},
-	{0,0,0},
+  {"tstart",Ptstart,0},
+  {"tstop",Ptstop,0},
+  {"end",Pquit,0},
+  {"quit",Pquit,0},
+  {"debug",Pdebug,0},
+  {0,0,0},
 };
 
 typedef struct ftab FTAB[];
@@ -69,39 +69,39 @@ help_tab, int_tab, list_tab, misc_tab, pdiv_tab, poly_tab,
 print_tab, puref_tab, rat_tab, reduct_tab, result_tab,
 str_tab, subst_tab, time_tab, type_tab, var_tab,
 #if defined(INTERVAL)
-	interval_tab, isolv_tab,
+  interval_tab, isolv_tab,
 #endif
 print2d_tab, tcp_tab, plot_tab, bf_tab, comp_tab, gf_tab, imat_tab, 
 math_tab, mat_tab, numerical_tab, ec_tab, al_tab, round_tab, user_tab;
 
 struct ftab *ftabs[] = {
-	bf_tab, alg_tab, array_tab, cplx_tab, ctrl_tab, dp_tab, dp_supp_tab, fctr_tab, file_tab,
-	help_tab, int_tab, list_tab, misc_tab, pdiv_tab, poly_tab,
-	print_tab, puref_tab, rat_tab, reduct_tab, result_tab,
-	str_tab, subst_tab, time_tab, type_tab, var_tab,
+  bf_tab, alg_tab, array_tab, cplx_tab, ctrl_tab, dp_tab, dp_supp_tab, fctr_tab, file_tab,
+  help_tab, int_tab, list_tab, misc_tab, pdiv_tab, poly_tab,
+  print_tab, puref_tab, rat_tab, reduct_tab, result_tab,
+  str_tab, subst_tab, time_tab, type_tab, var_tab,
 #if defined(INTERVAL)
-	interval_tab, isolv_tab,
+  interval_tab, isolv_tab,
 #endif
-	comp_tab, gf_tab, imat_tab, math_tab, mat_tab, tcp_tab,
+  comp_tab, gf_tab, imat_tab, math_tab, mat_tab, tcp_tab,
 #if defined(DO_PLOT)
-	plot_tab,
+  plot_tab,
 #endif
 #if defined(LAPACK)
-	numerical_tab,
+  numerical_tab,
 #endif
-	ec_tab, al_tab, round_tab,
-	user_tab,
-	0,
+  ec_tab, al_tab, round_tab,
+  user_tab,
+  0,
 };
 
 void sysf_init() {
-	int i,j;
-	struct ftab *tab;
+  int i,j;
+  struct ftab *tab;
 
-	for ( j = 0, sysf = 0; tab = ftabs[j]; j++ )
-		for ( i = 0; tab[i].name; i++ )
-			appendbinf(&sysf,tab[i].name,tab[i].f,tab[i].argc,tab[i].quote);
-	for ( i = 0, noargsysf = 0; nasysftab[i].name; i++ )
-		appendbinf(&noargsysf,nasysftab[i].name, nasysftab[i].f,nasysftab[i].argc,0);
-	parif_init();
+  for ( j = 0, sysf = 0; tab = ftabs[j]; j++ )
+    for ( i = 0; tab[i].name; i++ )
+      appendbinf(&sysf,tab[i].name,tab[i].f,tab[i].argc,tab[i].quote);
+  for ( i = 0, noargsysf = 0; nasysftab[i].name; i++ )
+    appendbinf(&noargsysf,nasysftab[i].name, nasysftab[i].f,nasysftab[i].argc,0);
+  parif_init();
 }

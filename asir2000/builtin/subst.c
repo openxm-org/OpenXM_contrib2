@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.11 2017/09/06 06:25:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/subst.c,v 1.12 2018/03/27 06:29:19 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -54,12 +54,12 @@ void Psubst(), Ppsubst(), Psubstf(), Psubst_quote();
 void Psubstr2np();
 
 struct ftab subst_tab[] = {
-	{"subst",Psubst,-99999999},
-	{"substr2np",Psubstr2np,-3},
-	{"subst_quote",Psubst_quote,-99999999},
-	{"psubst",Ppsubst,-99999999},
-	{"substf",Psubstf,-99999999},
-	{0,0,0},
+  {"subst",Psubst,-99999999},
+  {"substr2np",Psubstr2np,-3},
+  {"subst_quote",Psubst_quote,-99999999},
+  {"psubst",Ppsubst,-99999999},
+  {"substf",Psubstf,-99999999},
+  {0,0,0},
 };
 
 extern Obj VOIDobj;
@@ -155,120 +155,120 @@ void Psubst(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj a,b,t;
-	LIST l;
-	V v;
-	int row,col,len;
-	VECT vect;
-	MAT mat;
-	int i,j;
-	NODE n0,n,nd;
-	struct oNODE arg0;
-	MP m,mp,mp0;
-	DP d;
-	VL lastvl,vl,tvl,prev,cur;
+  Obj a,b,t;
+  LIST l;
+  V v;
+  int row,col,len;
+  VECT vect;
+  MAT mat;
+  int i,j;
+  NODE n0,n,nd;
+  struct oNODE arg0;
+  MP m,mp,mp0;
+  DP d;
+  VL lastvl,vl,tvl,prev,cur;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	a = (Obj)ARG0(arg);
-	if ( !a ) {
-		*rp = 0;
-		return;
-	}
-	lastvl = LASTCO;
-	switch ( OID(a) ) {
-		case O_N: case O_P: case O_R:
-			reductr(CO,(Obj)ARG0(arg),&a);
-			arg = NEXT(arg);
-			if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
-				arg = BDY(l);
-			while ( arg ) {
-				if ( !BDY(arg) || OID((Obj)BDY(arg)) != O_P )
-					error("subst : invalid argument");
-				v = VR((P)BDY(arg)); arg = NEXT(arg);
-				if ( !arg )
-					error("subst : invalid argument");
-				asir_assert(ARG0(arg),O_R,"subst");
-				reductr(CO,(Obj)BDY(arg),&b); arg = NEXT(arg);
-		/*		b = (Obj)BDY(arg); arg = NEXT(arg); */
-				substr(CO,0,a,v,b,&t); a = t;
-			}
-			*rp = a;
-			break;
-		case O_LIST:
-			n0 = 0;
-			for ( nd = BDY((LIST)a); nd; nd = NEXT(nd) ) {
-				NEXTNODE(n0,n);
-				arg0.body = (pointer)BDY(nd);
-				arg0.next = NEXT(arg);
-				Psubst(&arg0,&b);
-				BDY(n) = (pointer)b;
-			}
-			if ( n0 )
-				NEXT(n) = 0;
-			MKLIST(l,n0);
-			*rp = (Obj)l;
-			break;
-		case O_VECT:
-			len = ((VECT)a)->len;
-			MKVECT(vect,len);
-			for ( i = 0; i < len; i++ ) {
-				arg0.body = (pointer)BDY((VECT)a)[i];
-				arg0.next = NEXT(arg);
-				Psubst(&arg0,&b);
-				BDY(vect)[i] = (pointer)b;
-			}
-			*rp = (Obj)vect;
-			break;
-		case O_MAT:
-			row = ((MAT)a)->row;
-			col = ((MAT)a)->col;
-			MKMAT(mat,row,col);
-			for ( i = 0; i < row; i++ )
-				for ( j = 0; j < col; j++ ) {
-					arg0.body = (pointer)BDY((MAT)a)[i][j];
-					arg0.next = NEXT(arg);
-					Psubst(&arg0,&b);
-					BDY(mat)[i][j] = (pointer)b;
-				}
-			*rp = (Obj)mat;
-			break;
-		case O_DP:
-			mp0 = 0;
-			for ( m = BDY((DP)a); m; m = NEXT(m) ) {
-				arg0.body = (pointer)C(m);
-				arg0.next = NEXT(arg);
-				Psubst(&arg0,&b);
-				if ( b ) {
-					NEXTMP(mp0,mp);
-					C(mp) = (P)b;
-					mp->dl = m->dl;
-				}
-			}
-			if ( mp0 ) {
-				MKDP(NV((DP)a),mp0,d);
-				d->sugar = ((DP)a)->sugar;
-				*rp = (Obj)d;
-			} else
-				*rp = 0;
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  a = (Obj)ARG0(arg);
+  if ( !a ) {
+    *rp = 0;
+    return;
+  }
+  lastvl = LASTCO;
+  switch ( OID(a) ) {
+    case O_N: case O_P: case O_R:
+      reductr(CO,(Obj)ARG0(arg),&a);
+      arg = NEXT(arg);
+      if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
+        arg = BDY(l);
+      while ( arg ) {
+        if ( !BDY(arg) || OID((Obj)BDY(arg)) != O_P )
+          error("subst : invalid argument");
+        v = VR((P)BDY(arg)); arg = NEXT(arg);
+        if ( !arg )
+          error("subst : invalid argument");
+        asir_assert(ARG0(arg),O_R,"subst");
+        reductr(CO,(Obj)BDY(arg),&b); arg = NEXT(arg);
+    /*    b = (Obj)BDY(arg); arg = NEXT(arg); */
+        substr(CO,0,a,v,b,&t); a = t;
+      }
+      *rp = a;
+      break;
+    case O_LIST:
+      n0 = 0;
+      for ( nd = BDY((LIST)a); nd; nd = NEXT(nd) ) {
+        NEXTNODE(n0,n);
+        arg0.body = (pointer)BDY(nd);
+        arg0.next = NEXT(arg);
+        Psubst(&arg0,&b);
+        BDY(n) = (pointer)b;
+      }
+      if ( n0 )
+        NEXT(n) = 0;
+      MKLIST(l,n0);
+      *rp = (Obj)l;
+      break;
+    case O_VECT:
+      len = ((VECT)a)->len;
+      MKVECT(vect,len);
+      for ( i = 0; i < len; i++ ) {
+        arg0.body = (pointer)BDY((VECT)a)[i];
+        arg0.next = NEXT(arg);
+        Psubst(&arg0,&b);
+        BDY(vect)[i] = (pointer)b;
+      }
+      *rp = (Obj)vect;
+      break;
+    case O_MAT:
+      row = ((MAT)a)->row;
+      col = ((MAT)a)->col;
+      MKMAT(mat,row,col);
+      for ( i = 0; i < row; i++ )
+        for ( j = 0; j < col; j++ ) {
+          arg0.body = (pointer)BDY((MAT)a)[i][j];
+          arg0.next = NEXT(arg);
+          Psubst(&arg0,&b);
+          BDY(mat)[i][j] = (pointer)b;
+        }
+      *rp = (Obj)mat;
+      break;
+    case O_DP:
+      mp0 = 0;
+      for ( m = BDY((DP)a); m; m = NEXT(m) ) {
+        arg0.body = (pointer)C(m);
+        arg0.next = NEXT(arg);
+        Psubst(&arg0,&b);
+        if ( b ) {
+          NEXTMP(mp0,mp);
+          C(mp) = (P)b;
+          mp->dl = m->dl;
+        }
+      }
+      if ( mp0 ) {
+        MKDP(NV((DP)a),mp0,d);
+        d->sugar = ((DP)a)->sugar;
+        *rp = (Obj)d;
+      } else
+        *rp = 0;
 
-			break;
-		default:
-			error("subst : invalid argument");
-	}
-	if ( lastvl != LASTCO ) {
-		get_vars_recursive(*rp,&vl);
-		prev = lastvl; cur = NEXT(prev);
-		while ( cur ) {
-			v = cur->v;
-			for ( tvl = vl; tvl && tvl->v != v; tvl = NEXT(tvl) );
-			if ( !tvl ) NEXT(prev) = NEXT(cur);
-			else prev = cur;
-			cur = NEXT(cur);
-		}
-		update_LASTCO();
-	}
+      break;
+    default:
+      error("subst : invalid argument");
+  }
+  if ( lastvl != LASTCO ) {
+    get_vars_recursive(*rp,&vl);
+    prev = lastvl; cur = NEXT(prev);
+    while ( cur ) {
+      v = cur->v;
+      for ( tvl = vl; tvl && tvl->v != v; tvl = NEXT(tvl) );
+      if ( !tvl ) NEXT(prev) = NEXT(cur);
+      else prev = cur;
+      cur = NEXT(cur);
+    }
+    update_LASTCO();
+  }
 }
 
 FNODE subst_in_fnode();
@@ -277,91 +277,91 @@ void Psubst_quote(arg,rp)
 NODE arg;
 QUOTE *rp;
 {
-	QUOTE h;
-	FNODE fn;
-	Obj g;
-	LIST l;
-	V v;
+  QUOTE h;
+  FNODE fn;
+  Obj g;
+  LIST l;
+  V v;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	asir_assert(ARG0(arg),O_QUOTE,"subst_quote");
-	fn = BDY((QUOTE)ARG0(arg)); arg = NEXT(arg);
-	if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
-		arg = BDY(l);
-	while ( arg ) {
-		asir_assert(BDY(arg),O_P,"subst_quote");
-		v = VR((P)BDY(arg)); arg = NEXT(arg);
-		if ( !arg )
-			error("subst_quote : invalid argument");
-		g = (Obj)ARG0(arg); arg = NEXT(arg);
-		if ( !g || OID(g) != O_QUOTE )
-			objtoquote(g,&h);
-		else
-			h = (QUOTE)g;
-		fn = subst_in_fnode(fn,v,BDY(h));
-	}
-	MKQUOTE(*rp,fn);
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  asir_assert(ARG0(arg),O_QUOTE,"subst_quote");
+  fn = BDY((QUOTE)ARG0(arg)); arg = NEXT(arg);
+  if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
+    arg = BDY(l);
+  while ( arg ) {
+    asir_assert(BDY(arg),O_P,"subst_quote");
+    v = VR((P)BDY(arg)); arg = NEXT(arg);
+    if ( !arg )
+      error("subst_quote : invalid argument");
+    g = (Obj)ARG0(arg); arg = NEXT(arg);
+    if ( !g || OID(g) != O_QUOTE )
+      objtoquote(g,&h);
+    else
+      h = (QUOTE)g;
+    fn = subst_in_fnode(fn,v,BDY(h));
+  }
+  MKQUOTE(*rp,fn);
 }
 
 void Ppsubst(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj a,b,t;
-	LIST l;
-	V v;
+  Obj a,b,t;
+  LIST l;
+  V v;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	asir_assert(ARG0(arg),O_R,"psubst");
-	reductr(CO,(Obj)ARG0(arg),&a);
-/*	a = (Obj)ARG0(arg); */
-	arg = NEXT(arg);
-	if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
-		arg = BDY(l);
-	while ( arg ) {
-		asir_assert(BDY(arg),O_P,"psubst");
-		v = VR((P)BDY(arg)); arg = NEXT(arg);
-		if ( !arg )
-			error("psubst : invalid argument");
-		asir_assert(ARG0(arg),O_R,"psubst");
-		reductr(CO,(Obj)BDY(arg),&b); arg = NEXT(arg);
-/*		b = (Obj)BDY(arg); arg = NEXT(arg); */
-		substr(CO,1,a,v,b,&t); a = t;
-	}
-	*rp = a;
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  asir_assert(ARG0(arg),O_R,"psubst");
+  reductr(CO,(Obj)ARG0(arg),&a);
+/*  a = (Obj)ARG0(arg); */
+  arg = NEXT(arg);
+  if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
+    arg = BDY(l);
+  while ( arg ) {
+    asir_assert(BDY(arg),O_P,"psubst");
+    v = VR((P)BDY(arg)); arg = NEXT(arg);
+    if ( !arg )
+      error("psubst : invalid argument");
+    asir_assert(ARG0(arg),O_R,"psubst");
+    reductr(CO,(Obj)BDY(arg),&b); arg = NEXT(arg);
+/*    b = (Obj)BDY(arg); arg = NEXT(arg); */
+    substr(CO,1,a,v,b,&t); a = t;
+  }
+  *rp = a;
 }
 
 void Psubstf(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj a,t;
-	LIST l;
-	V v,f;
+  Obj a,t;
+  LIST l;
+  V v,f;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	asir_assert(ARG0(arg),O_R,"substf");
-	reductr(CO,(Obj)ARG0(arg),&a);
-/*	a = (Obj)ARG0(arg); */
-	arg = NEXT(arg);
-	if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
-		arg = BDY(l);
-	while ( arg ) {
-		asir_assert(BDY(arg),O_P,"substf");
-		v = VR((P)BDY(arg)); arg = NEXT(arg);
-		if ( !arg || (int)v->attr != V_SR )
-			error("substf : invalid argument");
-		f = VR((P)BDY(arg)); arg = NEXT(arg);
-		if ( (int)f->attr != V_SR )
-			error("substf : invalid argument\n");
-		substfr(CO,a,((FUNC)v->priv)->f.puref,((FUNC)f->priv)->f.puref,&t);
-		a = t;
-	}
-	*rp = a;
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  asir_assert(ARG0(arg),O_R,"substf");
+  reductr(CO,(Obj)ARG0(arg),&a);
+/*  a = (Obj)ARG0(arg); */
+  arg = NEXT(arg);
+  if ( arg && (l = (LIST)ARG0(arg)) && OID(l) == O_LIST )
+    arg = BDY(l);
+  while ( arg ) {
+    asir_assert(BDY(arg),O_P,"substf");
+    v = VR((P)BDY(arg)); arg = NEXT(arg);
+    if ( !arg || (int)v->attr != V_SR )
+      error("substf : invalid argument");
+    f = VR((P)BDY(arg)); arg = NEXT(arg);
+    if ( (int)f->attr != V_SR )
+      error("substf : invalid argument\n");
+    substfr(CO,a,((FUNC)v->priv)->f.puref,((FUNC)f->priv)->f.puref,&t);
+    a = t;
+  }
+  *rp = a;
 }

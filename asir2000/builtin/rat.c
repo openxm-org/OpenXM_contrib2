@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/rat.c,v 1.4 2003/12/23 10:39:57 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/rat.c,v 1.5 2013/02/15 07:05:49 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -53,99 +53,99 @@
 void Pnm(), Pdn(), Pderiv(), Pederiv(), Prderiv();
 
 struct ftab rat_tab[] = {
-	{"nm",Pnm,1},
-	{"dn",Pdn,1},
-	{"diff",Pderiv,-99999999},
-	{"ediff",Pederiv,-99999999},
-	{"rdiff",Prderiv,-99999999},
-	{0,0,0},
+  {"nm",Pnm,1},
+  {"dn",Pdn,1},
+  {"diff",Pderiv,-99999999},
+  {"ediff",Pederiv,-99999999},
+  {"rdiff",Prderiv,-99999999},
+  {0,0,0},
 };
 
 void Pnm(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj t;
-	Q q;
+  Obj t;
+  Q q;
 
-	asir_assert(ARG0(arg),O_R,"nm");
-	if ( !(t = (Obj)ARG0(arg)) )
-		*rp = 0;
-	else
-		switch ( OID(t) ) {
-			case O_N: 
-				switch ( NID(t) ) {
-					case N_Q:
-						NTOQ(NM((Q)t),SGN((Q)t),q); *rp = (Obj)q; break;
-					default:
-						*rp = t; break;
-				}
-				break;
-			case O_P:
-				*rp = t; break;
-			case O_R:
-				*rp = (Obj)NM((R)t); break;
-			default:
-				*rp = 0;
-		}
+  asir_assert(ARG0(arg),O_R,"nm");
+  if ( !(t = (Obj)ARG0(arg)) )
+    *rp = 0;
+  else
+    switch ( OID(t) ) {
+      case O_N: 
+        switch ( NID(t) ) {
+          case N_Q:
+            NTOQ(NM((Q)t),SGN((Q)t),q); *rp = (Obj)q; break;
+          default:
+            *rp = t; break;
+        }
+        break;
+      case O_P:
+        *rp = t; break;
+      case O_R:
+        *rp = (Obj)NM((R)t); break;
+      default:
+        *rp = 0;
+    }
 }
 
 void Pdn(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj t;
-	Q q;
+  Obj t;
+  Q q;
 
-	asir_assert(ARG0(arg),O_R,"dn");
-	if ( !(t = (Obj)ARG0(arg)) )
-		*rp = (Obj)ONE;
-	else
-		switch ( OID(t) ) {
-			case O_N: 
-				switch ( NID(t) ) {
-					case N_Q:
-						if ( DN((Q)t) )
-							NTOQ(DN((Q)t),1,q);
-						else
-							q = ONE;
-						*rp = (Obj)q; break;
-					default:
-						*rp = (Obj)ONE; break;
-				}
-				break;
-			case O_P:
-				*rp = (Obj)ONE; break;
-			case O_R:
-				*rp = (Obj)DN((R)t); break;
-			default:
-				*rp = 0;
-		}
+  asir_assert(ARG0(arg),O_R,"dn");
+  if ( !(t = (Obj)ARG0(arg)) )
+    *rp = (Obj)ONE;
+  else
+    switch ( OID(t) ) {
+      case O_N: 
+        switch ( NID(t) ) {
+          case N_Q:
+            if ( DN((Q)t) )
+              NTOQ(DN((Q)t),1,q);
+            else
+              q = ONE;
+            *rp = (Obj)q; break;
+          default:
+            *rp = (Obj)ONE; break;
+        }
+        break;
+      case O_P:
+        *rp = (Obj)ONE; break;
+      case O_R:
+        *rp = (Obj)DN((R)t); break;
+      default:
+        *rp = 0;
+    }
 }
 
 void Pderiv(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj a,t;
-	LIST l;
-	P v;
-	NODE n;
+  Obj a,t;
+  LIST l;
+  P v;
+  NODE n;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	asir_assert(ARG0(arg),O_R,"diff");
-	reductr(CO,(Obj)ARG0(arg),&a);
-	n = NEXT(arg);
-	if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
-		n = BDY(l);
-	for ( ; n; n = NEXT(n) ) {
-		if ( !(v = (P)BDY(n)) || OID(v) != O_P )
-			error("diff : invalid argument");
-		derivr(CO,a,VR(v),&t); a = t;
-	}
-	*rp = a;
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  asir_assert(ARG0(arg),O_R,"diff");
+  reductr(CO,(Obj)ARG0(arg),&a);
+  n = NEXT(arg);
+  if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
+    n = BDY(l);
+  for ( ; n; n = NEXT(n) ) {
+    if ( !(v = (P)BDY(n)) || OID(v) != O_P )
+      error("diff : invalid argument");
+    derivr(CO,a,VR(v),&t); a = t;
+  }
+  *rp = a;
 }
 
 /* simple derivation with reduction */
@@ -153,25 +153,25 @@ void Prderiv(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj a,t;
-	LIST l;
-	P v;
-	NODE n;
+  Obj a,t;
+  LIST l;
+  P v;
+  NODE n;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	asir_assert(ARG0(arg),O_R,"rdiff");
-	a = (Obj)ARG0(arg);
-	n = NEXT(arg);
-	if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
-		n = BDY(l);
-	for ( ; n; n = NEXT(n) ) {
-		if ( !(v = (P)BDY(n)) || OID(v) != O_P )
-			error("rdiff : invalid argument");
-		simple_derivr(CO,a,VR(v),&t); a = t;
-	}
-	*rp = a;
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  asir_assert(ARG0(arg),O_R,"rdiff");
+  a = (Obj)ARG0(arg);
+  n = NEXT(arg);
+  if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
+    n = BDY(l);
+  for ( ; n; n = NEXT(n) ) {
+    if ( !(v = (P)BDY(n)) || OID(v) != O_P )
+      error("rdiff : invalid argument");
+    simple_derivr(CO,a,VR(v),&t); a = t;
+  }
+  *rp = a;
 }
 
 /* Euler derivation */
@@ -179,23 +179,23 @@ void Pederiv(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	Obj a,t;
-	LIST l;
-	P v;
-	NODE n;
+  Obj a,t;
+  LIST l;
+  P v;
+  NODE n;
 
-	if ( !arg ) {
-		*rp = 0; return;
-	}
-	asir_assert(ARG0(arg),O_P,"ediff");
-	reductr(CO,(Obj)ARG0(arg),&a);
-	n = NEXT(arg);
-	if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
-		n = BDY(l);
-	for ( ; n; n = NEXT(n) ) {
-		if ( !(v = (P)BDY(n)) || OID(v) != O_P )
-			error("diff : invalid argument");
-		ediffp(CO,a,VR(v),&t); a = t;
-	}
-	*rp = a;
+  if ( !arg ) {
+    *rp = 0; return;
+  }
+  asir_assert(ARG0(arg),O_P,"ediff");
+  reductr(CO,(Obj)ARG0(arg),&a);
+  n = NEXT(arg);
+  if ( n && (l = (LIST)ARG0(n)) && OID(l) == O_LIST )
+    n = BDY(l);
+  for ( ; n; n = NEXT(n) ) {
+    if ( !(v = (P)BDY(n)) || OID(v) != O_P )
+      error("diff : invalid argument");
+    ediffp(CO,a,VR(v),&t); a = t;
+  }
+  *rp = a;
 }

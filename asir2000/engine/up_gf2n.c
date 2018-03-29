@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.5 2015/08/08 14:19:41 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up_gf2n.c,v 1.6 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "ca.h"
 #include <math.h>
@@ -56,248 +56,248 @@ extern GEN_UP2 current_mod_gf2n;
 
 void squarep_gf2n(VL vl,P n1,P *nr)
 {
-	UP b1,br;
+  UP b1,br;
 
-	if ( !n1 )
-		*nr = 0;
-	else if ( OID(n1) == O_N )
-		mulp(vl,n1,n1,nr);
-	else {
-		ptoup(n1,&b1);
-		squareup_gf2n(b1,&br);
-		uptop(br,nr);
-	}
+  if ( !n1 )
+    *nr = 0;
+  else if ( OID(n1) == O_N )
+    mulp(vl,n1,n1,nr);
+  else {
+    ptoup(n1,&b1);
+    squareup_gf2n(b1,&br);
+    uptop(br,nr);
+  }
 }
 
 void squareup_gf2n(UP n1,UP *nr)
 {
-	UP r;
-	GF2N *c1,*c;
-	int i,d1,d;
+  UP r;
+  GF2N *c1,*c;
+  int i,d1,d;
 
-	if ( !n1 )
-		*nr = 0;
-	else if ( !n1->d ) {
-		*nr = r = UPALLOC(0); r->d = 0;
-		squaregf2n((GF2N)n1->c[0],(GF2N *)(&r->c[0]));
-	} else {
-		d1 = n1->d;
-		d = 2*d1;
-		*nr = r = UPALLOC(d); r->d = d;
-		c1 = (GF2N *)n1->c; c = (GF2N *)r->c;
-		bzero((char *)c,(d+1)*sizeof(GF2N *));
-		for ( i = 0; i <= d1; i++ )
-			squaregf2n(c1[i],&c[2*i]);
-	}
+  if ( !n1 )
+    *nr = 0;
+  else if ( !n1->d ) {
+    *nr = r = UPALLOC(0); r->d = 0;
+    squaregf2n((GF2N)n1->c[0],(GF2N *)(&r->c[0]));
+  } else {
+    d1 = n1->d;
+    d = 2*d1;
+    *nr = r = UPALLOC(d); r->d = d;
+    c1 = (GF2N *)n1->c; c = (GF2N *)r->c;
+    bzero((char *)c,(d+1)*sizeof(GF2N *));
+    for ( i = 0; i <= d1; i++ )
+      squaregf2n(c1[i],&c[2*i]);
+  }
 }
 
 /* x^(2^n) mod f */
 
 void powermodup_gf2n(UP f,UP *xp)
 {
-	UP x,t,invf;
-	int k,n;
-	GF2N lm;
+  UP x,t,invf;
+  int k,n;
+  GF2N lm;
 
-	n = degup2(current_mod_gf2n->dense);
-	MKGF2N(ONEUP2,lm);
-	x = UPALLOC(1); x->d = 1; x->c[1] = (Num)lm;
+  n = degup2(current_mod_gf2n->dense);
+  MKGF2N(ONEUP2,lm);
+  x = UPALLOC(1); x->d = 1; x->c[1] = (Num)lm;
 
-	reverseup(f,f->d,&t);
-	invmodup(t,f->d,&invf);
-	for ( k = 0; k < n; k++ ) {
-		squareup_gf2n(x,&t);
-		rembymulup_special(t,f,invf,&x);
-/*		remup(t,f,&x); */
-	}
-	*xp = x;
+  reverseup(f,f->d,&t);
+  invmodup(t,f->d,&invf);
+  for ( k = 0; k < n; k++ ) {
+    squareup_gf2n(x,&t);
+    rembymulup_special(t,f,invf,&x);
+/*    remup(t,f,&x); */
+  }
+  *xp = x;
 }
 
 /* g^d mod f */
 
 void generic_powermodup_gf2n(UP g,UP f,Q d,UP *xp)
 {
-	N e;
-	UP x,y,t,invf,s;
-	int k;
-	GF2N lm;
+  N e;
+  UP x,y,t,invf,s;
+  int k;
+  GF2N lm;
 
-	e = NM(d);
-	MKGF2N(ONEUP2,lm);
-	y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
-	remup(g,f,&x);
-	if ( !x ) {
-		*xp = !d ? y : 0;
-		return;
-	} else if ( !x->d ) {
-		pwrup(x,d,xp);
-		return;
-	}
-	reverseup(f,f->d,&t);
-	invmodup(t,f->d,&invf);
-	for ( k = n_bits(e)-1; k >= 0; k-- ) {
-		squareup_gf2n(y,&t);
-		rembymulup_special(t,f,invf,&s);
-		y = s;
-		if ( e->b[k/32] & (1<<(k%32)) ) {
-			mulup(y,x,&t);
-			remup(t,f,&s);
-			y = s;
-		}
-	}
-	*xp = y;
+  e = NM(d);
+  MKGF2N(ONEUP2,lm);
+  y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
+  remup(g,f,&x);
+  if ( !x ) {
+    *xp = !d ? y : 0;
+    return;
+  } else if ( !x->d ) {
+    pwrup(x,d,xp);
+    return;
+  }
+  reverseup(f,f->d,&t);
+  invmodup(t,f->d,&invf);
+  for ( k = n_bits(e)-1; k >= 0; k-- ) {
+    squareup_gf2n(y,&t);
+    rembymulup_special(t,f,invf,&s);
+    y = s;
+    if ( e->b[k/32] & (1<<(k%32)) ) {
+      mulup(y,x,&t);
+      remup(t,f,&s);
+      y = s;
+    }
+  }
+  *xp = y;
 }
 
 /* g+g^2+...+g^(2^(nd-1)) mod f; where e = deg(mod) */
 
 void tracemodup_gf2n(UP g,UP f,Q d,UP *xp)
 {
-	UP x,t,s,u,invf;
-	int en,i;
+  UP x,t,s,u,invf;
+  int en,i;
 
-	en = QTOS(d)*degup2(current_mod_gf2n->dense);
-	remup(g,f,&x);
-	if ( !x ) {
-		*xp = 0;
-		return;
-	}
-	reverseup(f,f->d,&t);
-	invmodup(t,f->d,&invf);
-	for ( i = 1, t = s = x; i < en; i++ ) {
-		squareup_gf2n(t,&u);
-		rembymulup_special(u,f,invf,&t);
-		addup(s,t,&u); s = u;
-	}
-	*xp = s;
+  en = QTOS(d)*degup2(current_mod_gf2n->dense);
+  remup(g,f,&x);
+  if ( !x ) {
+    *xp = 0;
+    return;
+  }
+  reverseup(f,f->d,&t);
+  invmodup(t,f->d,&invf);
+  for ( i = 1, t = s = x; i < en; i++ ) {
+    squareup_gf2n(t,&u);
+    rembymulup_special(u,f,invf,&t);
+    addup(s,t,&u); s = u;
+  }
+  *xp = s;
 }
 
 void tracemodup_gf2n_slow(UP g,UP f,Q d,UP *xp)
 {
-	UP x,t,s,u;
-	int en,i;
+  UP x,t,s,u;
+  int en,i;
 
-	en = QTOS(d)*degup2(current_mod_gf2n->dense);
-	remup(g,f,&x);
-	if ( !x ) {
-		*xp = 0;
-		return;
-	}
-	for ( i = 1, t = s = x; i < en; i++ ) {
-		squareup_gf2n(t,&u);
-		remup(u,f,&t);
-		addup(s,t,&u); s = u;
-	}
-	*xp = s;
+  en = QTOS(d)*degup2(current_mod_gf2n->dense);
+  remup(g,f,&x);
+  if ( !x ) {
+    *xp = 0;
+    return;
+  }
+  for ( i = 1, t = s = x; i < en; i++ ) {
+    squareup_gf2n(t,&u);
+    remup(u,f,&t);
+    addup(s,t,&u); s = u;
+  }
+  *xp = s;
 }
 
 void tracemodup_gf2n_tab(UP g,UP f,Q d,UP *xp)
 {
-	UP x0,x2,t,s,u;
-	int en,i;
-	UP *tab;
-	GF2N one;
+  UP x0,x2,t,s,u;
+  int en,i;
+  UP *tab;
+  GF2N one;
 
-	en = QTOS(d)*degup2(current_mod_gf2n->dense);
-	remup(g,f,&t); g = t;
-	if ( !g ) {
-		*xp = 0;
-		return;
-	}
+  en = QTOS(d)*degup2(current_mod_gf2n->dense);
+  remup(g,f,&t); g = t;
+  if ( !g ) {
+    *xp = 0;
+    return;
+  }
 
-	MKGF2N(ONEUP2,one);
-	x0 = UPALLOC(0); x0->d = 0; x0->c[0] = (Num)one;
-	x2 = UPALLOC(2); x2->d = 2; x2->c[2] = (Num)one;
+  MKGF2N(ONEUP2,one);
+  x0 = UPALLOC(0); x0->d = 0; x0->c[0] = (Num)one;
+  x2 = UPALLOC(2); x2->d = 2; x2->c[2] = (Num)one;
 
-	tab = (UP *)ALLOCA(en*sizeof(UP));
-	tab[0] = x0;
-	remup(x2,f,&tab[1]);
+  tab = (UP *)ALLOCA(en*sizeof(UP));
+  tab[0] = x0;
+  remup(x2,f,&tab[1]);
 
-	for ( i = 2; i < en; i++ ) {
-		mulup(tab[i-1],tab[1],&t); remup(t,f,&tab[i]);
-	}
+  for ( i = 2; i < en; i++ ) {
+    mulup(tab[i-1],tab[1],&t); remup(t,f,&tab[i]);
+  }
 
-	for ( i = 1, t = s = g; i < en; i++ ) {
-		square_rem_tab_up_gf2n(t,tab,&u); t = u;
-		addup(s,t,&u); s = u;
-	}
-	*xp = s;
+  for ( i = 1, t = s = g; i < en; i++ ) {
+    square_rem_tab_up_gf2n(t,tab,&u); t = u;
+    addup(s,t,&u); s = u;
+  }
+  *xp = s;
 }
 
 void square_rem_tab_up_gf2n(UP f,UP *tab,UP *rp)
 {
-	UP s,t,u,n;
-	Num *c;
-	int i,d;
+  UP s,t,u,n;
+  Num *c;
+  int i,d;
 
-	n = UPALLOC(0); n->d = 0;
-	if ( !f )
-		*rp = 0;
-	else {
-		d = f->d; c = f->c;
-		up_lazy = 1;
-		for ( i = 0, s = 0; i <= d; i++ ) {
-			squaregf2n((GF2N)c[i],(GF2N *)(&n->c[0]));
-			mulup(tab[i],n,&t); addup(s,t,&u); s = u;
-		}
-		up_lazy = 0;
-		simpup(s,rp);
-	}
+  n = UPALLOC(0); n->d = 0;
+  if ( !f )
+    *rp = 0;
+  else {
+    d = f->d; c = f->c;
+    up_lazy = 1;
+    for ( i = 0, s = 0; i <= d; i++ ) {
+      squaregf2n((GF2N)c[i],(GF2N *)(&n->c[0]));
+      mulup(tab[i],n,&t); addup(s,t,&u); s = u;
+    }
+    up_lazy = 0;
+    simpup(s,rp);
+  }
 }
 
 void powertabup_gf2n(UP f,UP xp,UP *tab)
 {
-	UP y,t,invf;
-	int i,d;
-	GF2N lm;
+  UP y,t,invf;
+  int i,d;
+  GF2N lm;
 
-	d = f->d;
-	MKGF2N(ONEUP2,lm);
-	y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
-	tab[0] = y;
-	tab[1] = xp;
+  d = f->d;
+  MKGF2N(ONEUP2,lm);
+  y = UPALLOC(0); y->d = 0; y->c[0] = (Num)lm;
+  tab[0] = y;
+  tab[1] = xp;
 
-	reverseup(f,f->d,&t);
-	invmodup(t,f->d,&invf);
+  reverseup(f,f->d,&t);
+  invmodup(t,f->d,&invf);
 
-	for ( i = 2; i < d; i++ ) {
-	  if ( debug_up ){
-	    fprintf(stderr,".");
-	  }
-	  if ( !(i%2) )
-			squareup_gf2n(tab[i/2],&t);
-	  else
-			kmulup(tab[i-1],xp,&t);
-		rembymulup_special(t,f,invf,&tab[i]);
-/*		remup(t,f,&tab[i]); */
-	}
+  for ( i = 2; i < d; i++ ) {
+    if ( debug_up ){
+      fprintf(stderr,".");
+    }
+    if ( !(i%2) )
+      squareup_gf2n(tab[i/2],&t);
+    else
+      kmulup(tab[i-1],xp,&t);
+    rembymulup_special(t,f,invf,&tab[i]);
+/*    remup(t,f,&tab[i]); */
+  }
 }
 
 void find_root_gf2n(UP f,GF2N *r)
 {
-	UP g,ut,c,t,h,rem;
-	int n;
-	GF2N rn;
+  UP g,ut,c,t,h,rem;
+  int n;
+  GF2N rn;
 
-	n = degup2(current_mod_gf2n->dense);
-	g = f;
-	while ( g->d > 1 ) {
-		ut = UPALLOC(1); ut->c[0] = 0; 
-		randomgf2n(&rn);
-		if ( !rn )
-			continue;
-		ut->c[1] = (Num)rn; ut->d = 1;
-		tracemodup_gf2n_tab(ut,f,ONE,&c);
-		gcdup(c,g,&h);
-		if ( h->d && h->d < g->d ) {
-			if ( 2*h->d > g->d ) {
-				qrup(g,h,&t,&rem); g = t;
-				if ( rem )
-					error("find_root_gf2n : cannot happen");
-			} else
-				g = h;
-		}
-		monicup(g,&t); g = t;
-		printf("deg(g)=%d\n",g->d);
-	}
-	divgf2n((GF2N)g->c[0],(GF2N)g->c[1],r);
+  n = degup2(current_mod_gf2n->dense);
+  g = f;
+  while ( g->d > 1 ) {
+    ut = UPALLOC(1); ut->c[0] = 0; 
+    randomgf2n(&rn);
+    if ( !rn )
+      continue;
+    ut->c[1] = (Num)rn; ut->d = 1;
+    tracemodup_gf2n_tab(ut,f,ONE,&c);
+    gcdup(c,g,&h);
+    if ( h->d && h->d < g->d ) {
+      if ( 2*h->d > g->d ) {
+        qrup(g,h,&t,&rem); g = t;
+        if ( rem )
+          error("find_root_gf2n : cannot happen");
+      } else
+        g = h;
+    }
+    monicup(g,&t); g = t;
+    printf("deg(g)=%d\n",g->d);
+  }
+  divgf2n((GF2N)g->c[0],(GF2N)g->c[1],r);
 }

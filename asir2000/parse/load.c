@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.31 2016/08/30 02:29:11 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/load.c,v 1.32 2017/02/07 08:30:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -110,72 +110,72 @@ extern JMP_BUF exec_env;
 
 char *search_executable(char *name)
 {
-	char *c,*s,*ret;
-	int len,nlen;
-	char dir[BUFSIZ],path[BUFSIZ];
-	struct stat buf;
+  char *c,*s,*ret;
+  int len,nlen;
+  char dir[BUFSIZ],path[BUFSIZ];
+  struct stat buf;
 
-	nlen = strlen(name);
-	for ( s = (char *)getenv("PATH"); s; ) {
-		c = (char *)index(s,':');
-		len = c ? c-s : strlen(s);
-		if ( len >= BUFSIZ ) continue;
-		strncpy(dir,s,len); dir[len] = 0;
-		if ( c ) s = c+1;
-		else s = 0;
-		if ( len+nlen+1 >= BUFSIZ ) continue;
-		sprintf(path,"%s/%s",dir,name);
-		if ( !stat(path,&buf) && !(buf.st_mode & S_IFDIR) 
+  nlen = strlen(name);
+  for ( s = (char *)getenv("PATH"); s; ) {
+    c = (char *)index(s,':');
+    len = c ? c-s : strlen(s);
+    if ( len >= BUFSIZ ) continue;
+    strncpy(dir,s,len); dir[len] = 0;
+    if ( c ) s = c+1;
+    else s = 0;
+    if ( len+nlen+1 >= BUFSIZ ) continue;
+    sprintf(path,"%s/%s",dir,name);
+    if ( !stat(path,&buf) && !(buf.st_mode & S_IFDIR) 
 #if !defined(VISUAL) && !defined(__MINGW32__)
-			&& !access(path,X_OK)
+      && !access(path,X_OK)
 #endif
                 ) {
-			len = strlen(path)+1;
-			ret = (char *)MALLOC(len);
-			strcpy(ret,path);
-			return ret;
-		}
-	}
-	return 0;
+      len = strlen(path)+1;
+      ret = (char *)MALLOC(len);
+      strcpy(ret,path);
+      return ret;
+    }
+  }
+  return 0;
 }
 
 void env_init() {
-	char *e,*p,*q;
-	int i,l,japanese;
-	char *getenv();
-	char *oxhome;
-	char rootname[BUFSIZ];
+  char *e,*p,*q;
+  int i,l,japanese;
+  char *getenv();
+  char *oxhome;
+  char rootname[BUFSIZ];
     size_t len;
 
-	if ( oxhome = getenv("OpenXM_HOME") ) {
-		len = strlen(oxhome);
-	}else {
+  if ( oxhome = getenv("OpenXM_HOME") ) {
+    len = strlen(oxhome);
+  }else {
 #if defined(VISUAL) || defined(__MINGW32__)
-		get_rootdir(rootname,sizeof(rootname));
-		len = strlen(rootname);
-		oxhome = rootname;
+    get_rootdir(rootname,sizeof(rootname));
+    len = strlen(rootname);
+    oxhome = rootname;
 #endif
-	}
+  }
 
-	if ( !(asir_libdir = getenv("ASIR_LIBDIR")) ) {
-		if ( oxhome ) {
-			asir_libdir = (char *)malloc(len+strlen("/lib/asir")+1);
-			sprintf(asir_libdir,"%s/lib/asir",oxhome);
-		} else {
-			asir_libdir = (char *)malloc(strlen(ASIR_LIBDIR)+1);
-			strcpy(asir_libdir,ASIR_LIBDIR);
-		}
-	}
+  if ( !(asir_libdir = getenv("ASIR_LIBDIR")) ) {
+    if ( oxhome ) {
+      asir_libdir = (char *)malloc(len+strlen("/lib/asir")+1);
+      sprintf(asir_libdir,"%s/lib/asir",oxhome);
+    } else {
+      asir_libdir = (char *)malloc(strlen(ASIR_LIBDIR)+1);
+      strcpy(asir_libdir,ASIR_LIBDIR);
+    }
+  }
 
-	if ( !(asir_contrib_dir = getenv("ASIR_CONTRIB_DIR")) ) {
-		if ( oxhome ) {
-			asir_contrib_dir = (char *)malloc(len+strlen("/lib/asir-contrib")+1);
-			sprintf(asir_contrib_dir,"%s/lib/asir-contrib",oxhome);
-		} else {
-			asir_contrib_dir = (char *)malloc(strlen(ASIR_CONTRIB_DIR)+1);
-			strcpy(asir_contrib_dir,ASIR_CONTRIB_DIR);
-		}
-	}
+  if ( !(asir_contrib_dir = getenv("ASIR_CONTRIB_DIR")) ) {
+    if ( oxhome ) {
+      asir_contrib_dir = (char *)malloc(len+strlen("/lib/asir-contrib")+1);
+      sprintf(asir_contrib_dir,"%s/lib/asir-contrib",oxhome);
+    } else {
+      asir_contrib_dir = (char *)malloc(strlen(ASIR_CONTRIB_DIR)+1);
+      strcpy(asir_contrib_dir,ASIR_CONTRIB_DIR);
+    }
+  }
 
     asir_private_dir = NULL;
 #if defined(VISUAL) || defined(__MINGW32__)
@@ -185,58 +185,58 @@ void env_init() {
     }
 #endif  
 
-	if ( !(asir_pager = getenv("PAGER")) ) {
+  if ( !(asir_pager = getenv("PAGER")) ) {
 #if 0
-		japanese = 0;
-		if ( (e = getenv("LANGUAGE")) && 
-			(!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
-		else if ( (e = getenv("LC_ALL")) && 
-			(!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
-		else if ( (e = getenv("LC_CTYPE")) && 
-			(!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
-		else if ( (e = getenv("LANG")) && 
-			(!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
-		if ( japanese )
-			asir_pager = search_executable("jless");
+    japanese = 0;
+    if ( (e = getenv("LANGUAGE")) && 
+      (!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
+    else if ( (e = getenv("LC_ALL")) && 
+      (!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
+    else if ( (e = getenv("LC_CTYPE")) && 
+      (!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
+    else if ( (e = getenv("LANG")) && 
+      (!strncmp(e,"japan",5) || !strncmp(e,"ja_JP",5)) ) japanese = 1;
+    if ( japanese )
+      asir_pager = search_executable("jless");
 #endif
-		asir_pager = search_executable("less");
-		if ( !asir_pager ) {
-			/* default: more */
-			asir_pager = (char *)malloc(strlen(MORE)+1);
-			strcpy(asir_pager,MORE);
-		}
-	}
-	if ( e = getenv("ASIRLOADPATH" ) ) {
-		for ( i = 0; ; i++, e = p+1 ) {
-			p = (char *)index(e,ENVDELIM);
-			if ( !p )
-				break;
-		}
-		i += 5;
-		ASIRLOADPATH_LEN=i;
+    asir_pager = search_executable("less");
+    if ( !asir_pager ) {
+      /* default: more */
+      asir_pager = (char *)malloc(strlen(MORE)+1);
+      strcpy(asir_pager,MORE);
+    }
+  }
+  if ( e = getenv("ASIRLOADPATH" ) ) {
+    for ( i = 0; ; i++, e = p+1 ) {
+      p = (char *)index(e,ENVDELIM);
+      if ( !p )
+        break;
+    }
+    i += 5;
+    ASIRLOADPATH_LEN=i;
         ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
-		for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
-		e = getenv("ASIRLOADPATH");
-		for ( i = 0; ; i++, e = p+1 ) {
-			p = (char *)index(e,ENVDELIM);
-			l = p ? p-e : strlen(e); q = (char *)MALLOC(l+1);
-			if ( l ) {
-				strncpy(q,e,l); q[l] = 0; ASIRLOADPATH[i] = q;
-			}
-			if ( !p )
-				break;
-		}
+    for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
+    e = getenv("ASIRLOADPATH");
+    for ( i = 0; ; i++, e = p+1 ) {
+      p = (char *)index(e,ENVDELIM);
+      l = p ? p-e : strlen(e); q = (char *)MALLOC(l+1);
+      if ( l ) {
+        strncpy(q,e,l); q[l] = 0; ASIRLOADPATH[i] = q;
+      }
+      if ( !p )
+        break;
+    }
     }else{
-	  ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*3);
-	  ASIRLOADPATH[0] = NULL;
-	}
+    ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*3);
+    ASIRLOADPATH[0] = NULL;
+  }
 
-	for ( i = 0; ASIRLOADPATH[i]; i++ );
-	if (asir_private_dir) ASIRLOADPATH[i++] = asir_private_dir;
-	if (asir_contrib_dir) ASIRLOADPATH[i++] = asir_contrib_dir;
-	if (asir_libdir) ASIRLOADPATH[i++] = asir_libdir;
-	ASIRLOADPATH[i++] = ".";
-	ASIRLOADPATH[i] = NULL;
+  for ( i = 0; ASIRLOADPATH[i]; i++ );
+  if (asir_private_dir) ASIRLOADPATH[i++] = asir_private_dir;
+  if (asir_contrib_dir) ASIRLOADPATH[i++] = asir_contrib_dir;
+  if (asir_libdir) ASIRLOADPATH[i++] = asir_libdir;
+  ASIRLOADPATH[i++] = ".";
+  ASIRLOADPATH[i] = NULL;
 }
 
 #if defined(VISUAL) || defined(__MINGW32__)
@@ -245,167 +245,167 @@ void env_init() {
 
 void searchasirpath(char *name,char **pathp)
 {
-	char **p;
-	char *q;
-	size_t l;
-	int ret;
-	struct stat sbuf;
-	
-	if ( (name[0] == '/') || ( name[0] == '.') || strchr(name,':')
-		|| !ASIRLOADPATH[0] ) {
-		if ( access(name,R_OK) >= 0 ) {
-			ret = stat(name,&sbuf);
-			if ( ret == 0 && (sbuf.st_mode & S_IFMT) != S_IFDIR )
-				*pathp = name;
-			else
-				*pathp = 0;
-		} else
-			*pathp = 0;
-	} else {
-		for ( p = ASIRLOADPATH; *p; p++ ) {
-			l = strlen(*p)+strlen(name)+2;
-			q = (char *)ALLOCA(l); sprintf(q,"%s/%s",*p,name);
-			if ( access(q,R_OK) >= 0 ) {
-				ret = stat(q,&sbuf);
-				if ( ret == 0 && (sbuf.st_mode & S_IFMT) != S_IFDIR ) {
-					*pathp = (char *)MALLOC(l); strcpy(*pathp,q);
-					return;
-				}
-			}
-		}
-		*pathp = 0;
-	}
+  char **p;
+  char *q;
+  size_t l;
+  int ret;
+  struct stat sbuf;
+  
+  if ( (name[0] == '/') || ( name[0] == '.') || strchr(name,':')
+    || !ASIRLOADPATH[0] ) {
+    if ( access(name,R_OK) >= 0 ) {
+      ret = stat(name,&sbuf);
+      if ( ret == 0 && (sbuf.st_mode & S_IFMT) != S_IFDIR )
+        *pathp = name;
+      else
+        *pathp = 0;
+    } else
+      *pathp = 0;
+  } else {
+    for ( p = ASIRLOADPATH; *p; p++ ) {
+      l = strlen(*p)+strlen(name)+2;
+      q = (char *)ALLOCA(l); sprintf(q,"%s/%s",*p,name);
+      if ( access(q,R_OK) >= 0 ) {
+        ret = stat(q,&sbuf);
+        if ( ret == 0 && (sbuf.st_mode & S_IFMT) != S_IFDIR ) {
+          *pathp = (char *)MALLOC(l); strcpy(*pathp,q);
+          return;
+        }
+      }
+    }
+    *pathp = 0;
+  }
 }
 
 #define DELIM '/'
 
 void loadasirfile(char *name0)
 {
-	FILE *in;
-	INFILE t;
-	extern char cppname[];
+  FILE *in;
+  INFILE t;
+  extern char cppname[];
 #if defined(VISUAL) || defined(__MINGW32__)
-	char ibuf1[BUFSIZ],ibuf2[BUFSIZ];
-	int ac;
-	char *av[BUFSIZ];
-	char *p;
-	FILE *fp;
-	char dname[BUFSIZ],tname0[BUFSIZ];
-	char *name,*tname;
-	int encoded;
-	static char prefix[BUFSIZ];
-	int process_id();
-	char CppExe[BUFSIZ];
-	char nbuf[BUFSIZ],tnbuf[BUFSIZ];
-	STRING rootdir;
-	void call_exe(char *,char **);
+  char ibuf1[BUFSIZ],ibuf2[BUFSIZ];
+  int ac;
+  char *av[BUFSIZ];
+  char *p;
+  FILE *fp;
+  char dname[BUFSIZ],tname0[BUFSIZ];
+  char *name,*tname;
+  int encoded;
+  static char prefix[BUFSIZ];
+  int process_id();
+  char CppExe[BUFSIZ];
+  char nbuf[BUFSIZ],tnbuf[BUFSIZ];
+  STRING rootdir;
+  void call_exe(char *,char **);
 
-	/* create the unique prefix */
-	if ( !prefix[0] )
-		sprintf(prefix,"asir%d",process_id());
+  /* create the unique prefix */
+  if ( !prefix[0] )
+    sprintf(prefix,"asir%d",process_id());
 
-	fp = fopen(name0,"rb");
-	if ( getc(fp) == 0xff ) {
-		/* encoded file */
-		fclose(fp);
-		name = tempnam(NULL,prefix);
-		decrypt_file(name0,name);
-		/* the file 'name' created */
-		encoded = 1;
-	} else {
-		fclose(fp);
-		name = name0;
-		encoded = 0;
-	}
+  fp = fopen(name0,"rb");
+  if ( getc(fp) == 0xff ) {
+    /* encoded file */
+    fclose(fp);
+    name = tempnam(NULL,prefix);
+    decrypt_file(name0,name);
+    /* the file 'name' created */
+    encoded = 1;
+  } else {
+    fclose(fp);
+    name = name0;
+    encoded = 0;
+  }
 
-	strcpy(dname,name);
-	av[0] = "cpp";
-	sprintf(nbuf,"\"%s\"",name);
-	av[1] = nbuf; 
-	tname = tempnam(NULL,prefix);
-	sprintf(tnbuf,"\"%s\"",tname);
-	av[2] = tnbuf;
-	sprintf(ibuf1,"-I\"%s\"",asir_libdir);
-	av[3] = ibuf1;
-	av[4] = "-DWINDOWS";
+  strcpy(dname,name);
+  av[0] = "cpp";
+  sprintf(nbuf,"\"%s\"",name);
+  av[1] = nbuf; 
+  tname = tempnam(NULL,prefix);
+  sprintf(tnbuf,"\"%s\"",tname);
+  av[2] = tnbuf;
+  sprintf(ibuf1,"-I\"%s\"",asir_libdir);
+  av[3] = ibuf1;
+  av[4] = "-DWINDOWS";
 
-	/* set the include directory */
-	p = strrchr(dname,DELIM);
-	if ( !p ) {
-		av[5] = 0; ac = 5;
-	} else {
-		*p = 0;
-		sprintf(ibuf2,"-I\"%s\"",dname);
-		av[5] = ibuf2;
-		av[6] = 0; ac = 6;
-	}
-//	cpp_main(ac,av);
-	Pget_rootdir(&rootdir);
-	sprintf(CppExe,"%s\\bin\\cpp.exe",BDY(rootdir));
-	call_exe(CppExe,av);
-			
-	/* the file tname created */
-	if ( encoded ) {
-		unlink(name); free(name);
+  /* set the include directory */
+  p = strrchr(dname,DELIM);
+  if ( !p ) {
+    av[5] = 0; ac = 5;
+  } else {
+    *p = 0;
+    sprintf(ibuf2,"-I\"%s\"",dname);
+    av[5] = ibuf2;
+    av[6] = 0; ac = 6;
+  }
+//  cpp_main(ac,av);
+  Pget_rootdir(&rootdir);
+  sprintf(CppExe,"%s\\bin\\cpp.exe",BDY(rootdir));
+  call_exe(CppExe,av);
+      
+  /* the file tname created */
+  if ( encoded ) {
+    unlink(name); free(name);
 
-		strcpy(tname0,tname); free(tname);
-		tname = tempnam(NULL,prefix);
+    strcpy(tname0,tname); free(tname);
+    tname = tempnam(NULL,prefix);
 
-		encrypt_file(tname0,tname);
-		/* the file tname created */
-		unlink(tname0);
+    encrypt_file(tname0,tname);
+    /* the file tname created */
+    unlink(tname0);
 
-		in = fopen(tname,"rb");
-	} else
-		in = fopen(tname,"r");
-	if ( !in ) {
-		perror("fopen");
-		error("load : failed");
-	}
-	t = (INFILE)MALLOC(sizeof(struct oINFILE));
-	t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
-	t->tname = (char *)MALLOC(strlen(tname)+1); strcpy(t->tname,tname); free(tname);
-	t->encoded = encoded;
+    in = fopen(tname,"rb");
+  } else
+    in = fopen(tname,"r");
+  if ( !in ) {
+    perror("fopen");
+    error("load : failed");
+  }
+  t = (INFILE)MALLOC(sizeof(struct oINFILE));
+  t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
+  t->tname = (char *)MALLOC(strlen(tname)+1); strcpy(t->tname,tname); free(tname);
+  t->encoded = encoded;
 #else
-	char com[BUFSIZ];
+  char com[BUFSIZ];
 
-	sprintf(com,"%s -I%s -D__FILE__=%s %s",cppname,asir_libdir,name0,name0); in = popen(com,"r");
-	if ( !in ) {
-		perror("popen");
-		error("load : failed");
-	}
-	t = (INFILE)MALLOC(sizeof(struct oINFILE));
-	t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
+  sprintf(com,"%s -I%s -D__FILE__=%s %s",cppname,asir_libdir,name0,name0); in = popen(com,"r");
+  if ( !in ) {
+    perror("popen");
+    error("load : failed");
+  }
+  t = (INFILE)MALLOC(sizeof(struct oINFILE));
+  t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
 #endif
-	t->fp = in; t->ln = 1; t->next = asir_infile; asir_infile = t;
-	main_parser = 1; /* XXX */
-	Eungetc(afternl(),asir_infile->fp);
-	if ( !EPVS->va )
-		asir_reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
+  t->fp = in; t->ln = 1; t->next = asir_infile; asir_infile = t;
+  main_parser = 1; /* XXX */
+  Eungetc(afternl(),asir_infile->fp);
+  if ( !EPVS->va )
+    asir_reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
 }
 
 void execasirfile(char *name)
 {
-	loadasirfile(name);
-	if ( !SETJMP(asir_infile->jmpbuf) ) {
-		asir_infile->ready_for_longjmp = 1;
-		read_eval_loop();
-	}
-	closecurrentinput();
+  loadasirfile(name);
+  if ( !SETJMP(asir_infile->jmpbuf) ) {
+    asir_infile->ready_for_longjmp = 1;
+    read_eval_loop();
+  }
+  closecurrentinput();
 }
 
 static NODE objfile = 0;
 
 int loadfile(char *s)
 {
-	FILE *in;
+  FILE *in;
 
-	if ( in = fopen(s,"r") ) {
-		fclose(in);
-		loadasirfile(s);
-		return 1;
-	} else	
-		return 0;
+  if ( in = fopen(s,"r") ) {
+    fclose(in);
+    loadasirfile(s);
+    return 1;
+  } else  
+    return 0;
 }
 
 int loadfiles(NODE node) { return 0; }
@@ -450,44 +450,44 @@ static unsigned char decrypt_tab[] = {
 
 unsigned char encrypt_char(unsigned char c)
 {
-	return encrypt_tab[c][mt_genrand()&1];
+  return encrypt_tab[c][mt_genrand()&1];
 }
 
 unsigned char decrypt_char(unsigned char c)
 {
-	return decrypt_tab[c];
+  return decrypt_tab[c];
 }
 
 void encrypt_file(char *in,char *out)
 {
-	FILE *infp,*outfp;
-	int c;
+  FILE *infp,*outfp;
+  int c;
 
-	infp = fopen(in,"r");
-	outfp = fopen(out,"wb");
-	while ( 1 ) {
-		c = getc(infp);
-		if ( c == EOF )
-			break;
-		putc(encrypt_char((unsigned char)c),outfp);
-	}
-	fclose(infp); fclose(outfp);
+  infp = fopen(in,"r");
+  outfp = fopen(out,"wb");
+  while ( 1 ) {
+    c = getc(infp);
+    if ( c == EOF )
+      break;
+    putc(encrypt_char((unsigned char)c),outfp);
+  }
+  fclose(infp); fclose(outfp);
 }
 
 void decrypt_file(char *in,char *out)
 {
-	FILE *infp,*outfp;
-	int c;
+  FILE *infp,*outfp;
+  int c;
 
-	infp = fopen(in,"rb");
-	outfp = fopen(out,"w");
-	/* skip the magic number (=0xff) */
-	getc(infp); 
-	while ( 1 ) {
-		c = getc(infp);
-		if ( c == EOF )
-			break;
-		putc(decrypt_char((unsigned char)c),outfp);
-	}
-	fclose(infp); fclose(outfp);
+  infp = fopen(in,"rb");
+  outfp = fopen(out,"w");
+  /* skip the magic number (=0xff) */
+  getc(infp); 
+  while ( 1 ) {
+    c = getc(infp);
+    if ( c == EOF )
+      break;
+    putc(decrypt_char((unsigned char)c),outfp);
+  }
+  fclose(infp); fclose(outfp);
 }

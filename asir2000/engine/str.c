@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/str.c,v 1.4 2000/11/08 08:02:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/str.c,v 1.5 2004/02/26 07:06:32 noro Exp $ 
 */
 #include "ca.h"
 
@@ -54,18 +54,18 @@ VL vl;
 STRING a,b;
 STRING *c;
 {
-	char *buf;
+  char *buf;
 
-	buf = (char *)MALLOC_ATOMIC(strlen(BDY(a))+strlen(BDY(b))+1);
-	sprintf(buf,"%s%s",BDY(a),BDY(b));
-	MKSTR(*c,buf); 
+  buf = (char *)MALLOC_ATOMIC(strlen(BDY(a))+strlen(BDY(b))+1);
+  sprintf(buf,"%s%s",BDY(a),BDY(b));
+  MKSTR(*c,buf); 
 }
 
 int compstr(vl,a,b)
 VL vl;
 STRING a,b;
 {
-	return a ? (b?strcmp(BDY(a),BDY(b)):1) : (b?-1:0);
+  return a ? (b?strcmp(BDY(a),BDY(b)):1) : (b?-1:0);
 }
 
 /* primitive functions for BYTEARRAY */
@@ -74,25 +74,25 @@ int compbytearray(vl,a,b)
 VL vl;
 BYTEARRAY a,b;
 {
-	int i;
+  int i;
 
-	if ( !a )
-		if ( b )
-			return -1;
-		else
-			return 0;
-	else if ( !b )
-		return 1;
-	else if ( a->len > b->len )
-		return 1;
-	else if ( a->len < b->len )
-		return -1;
-	else {
-		for ( i = 0; i < a->len; i++ )
-			if ( a->body[i] > b->body[i] )
-				return 1;
-			else if ( a->body[i] < b->body[i] )
-				return -1;
-		return 0;
-	}
+  if ( !a )
+    if ( b )
+      return -1;
+    else
+      return 0;
+  else if ( !b )
+    return 1;
+  else if ( a->len > b->len )
+    return 1;
+  else if ( a->len < b->len )
+    return -1;
+  else {
+    for ( i = 0; i < a->len; i++ )
+      if ( a->body[i] > b->body[i] )
+        return 1;
+      else if ( a->body[i] < b->body[i] )
+        return -1;
+    return 0;
+  }
 }

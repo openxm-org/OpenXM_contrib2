@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.24 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/ifplot.h,v 1.25 2017/09/04 01:57:53 noro Exp $ 
 */
 #if defined(VISUAL) || defined(__MINGW32__)
 /* for Visual C++ */
@@ -213,13 +213,13 @@
 #endif
 
 struct pa {
-	int length;
-	POINT *pos;
+  int length;
+  POINT *pos;
 };
 
 typedef struct RealVect {
-	int len;
-	int body[1];
+  int len;
+  int body[1];
 } RealVect;
 
 #define MKRVECT2(v,x,y)\
@@ -240,40 +240,40 @@ typedef struct RealVect {
 #define RV_ARC 3
 
 struct canvas {
-	int index;
+  int index;
 #if defined(VISUAL) || defined(__MINGW32__)
 /* for Visual C++ */
-	void *window; /* pointer to CMainFrame */
-	HWND hwnd; /* handle to the canvas window */
-	HDC pix; /* shadow DC on memory */
-	char *prefix;
-	int percentage;
-	struct canvas *real_can;
+  void *window; /* pointer to CMainFrame */
+  HWND hwnd; /* handle to the canvas window */
+  HDC pix; /* shadow DC on memory */
+  char *prefix;
+  int percentage;
+  struct canvas *real_can;
 #else
-	Widget shell,xcoord,ycoord,xdone,ydone,level,wideb,preciseb,noaxisb;
-	Window window;
-	Pixmap pix;
+  Widget shell,xcoord,ycoord,xdone,ydone,level,wideb,preciseb,noaxisb;
+  Window window;
+  Pixmap pix;
 #endif
-	char *wname;
-	int mode;
-	char wide;
-	char precise;
-	char noaxis;
-	V vx,vy;
-	P formula;
-	int width,height;
-	double xmin,xmax;
-	double ymin,ymax;
-	double zmin,zmax;
-	double vmin,vmax;
-	int nzstep;
-	Q qxmin,qxmax;
-	Q qymin,qymax;
-	struct pa *pa;
-	/* to register the history in the interactive mode */
-	NODE history;
-	unsigned int color;
-	int division;
+  char *wname;
+  int mode;
+  char wide;
+  char precise;
+  char noaxis;
+  V vx,vy;
+  P formula;
+  int width,height;
+  double xmin,xmax;
+  double ymin,ymax;
+  double zmin,zmax;
+  double vmin,vmax;
+  int nzstep;
+  Q qxmin,qxmax;
+  Q qymin,qymax;
+  struct pa *pa;
+  /* to register the history in the interactive mode */
+  NODE history;
+  unsigned int color;
+  int division;
   int prec;
 };
 
@@ -302,9 +302,9 @@ extern XFontStruct *sffs;
 #endif
 
 struct xcolorForPS {
-	unsigned long pixel;
-	double r,g,b;
-	int print;
+  unsigned long pixel;
+  double r,g,b;
+  int print;
 };
 
 /* prototypes */

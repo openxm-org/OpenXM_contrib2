@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/ui.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/ui.c,v 1.3 2000/08/22 05:04:06 noro Exp $ 
 */
 #include "ca.h"
 
@@ -53,17 +53,17 @@ int compui(vl,a,b)
 VL vl;
 USINT a,b;
 {
-	if ( !a ) 
-		if ( !b ) 
-			return 0;
-		else 
-			return -1;
-	else if ( !b ) 
-		return 1;
-	else if ( BDY(a) > BDY(b) )
-		return 1;
-	else if ( BDY(a) < BDY(b) ) 
-		return -1;
-	else
-		return 0;
+  if ( !a ) 
+    if ( !b ) 
+      return 0;
+    else 
+      return -1;
+  else if ( !b ) 
+    return 1;
+  else if ( BDY(a) > BDY(b) )
+    return 1;
+  else if ( BDY(a) < BDY(b) ) 
+    return -1;
+  else
+    return 0;
 }

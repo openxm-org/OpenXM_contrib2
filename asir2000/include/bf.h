@@ -45,13 +45,13 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/bf.h,v 1.2 2000/08/21 08:31:36 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/bf.h,v 1.3 2000/08/22 05:04:14 noro Exp $ 
 */
 struct oBf {
-	short id;
-	char nid;
-	char sgn:4,esgn:4;
-	N e,m;
+  short id;
+  char nid;
+  char sgn:4,esgn:4;
+  N e,m;
 };
 
 typedef struct oBf *Bf;

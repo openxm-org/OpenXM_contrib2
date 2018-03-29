@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.7 2004/03/17 08:16:24 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/struct.c,v 1.8 2017/02/07 08:30:31 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -56,107 +56,107 @@ SS LSS = &oLSS;
 
 int structdef(char *name,NODE member)
 {
-	int i,j;
-	SDEF sdef,s;
-	NODE n;
-	char *mname;
+  int i,j;
+  SDEF sdef,s;
+  NODE n;
+  char *mname;
 
-	/* search the predefined structure */
-	for ( s = LSS->sa, i = 0; i < LSS->n; i++ )
-		if ( !strcmp(s[i].name,name) ) {
-			fprintf(stderr,"redeclaration of %s\n",name); break;
-		}
-	if ( !LSS->sa || ((i == LSS->n)&&(LSS->n==LSS->asize)) )
-		asir_reallocarray((char **)&LSS->sa,(int *)&LSS->asize,(int *)&LSS->n,(int)sizeof(struct oSDEF));
-	/* sdef = room for new structure definition */
-	sdef = &LSS->sa[i];
-	if ( i == LSS->n )
-		LSS->n++;
-	/* set the name of structure */
-	sdef->name = (char *)MALLOC(strlen(name)+1);
-	bcopy(name,sdef->name,strlen(name)+1);
-	/* count the total number of members */
-	for ( j = 0, n = member; n; n = NEXT(n), j++ );
-	sdef->n = j;
-	sdef->member = (char **)MALLOC(sdef->n*sizeof(char *));
-	/* set the names of members */
-	for ( j = 0, n = member; n; n = NEXT(n), j++ ) {
-		mname = (char *)MALLOC(strlen((char *)BDY(n))+1);	
-		bcopy((char *)BDY(n),mname,strlen((char *)BDY(n))+1);
-		sdef->member[j] = mname;
-	}
-	return i;
+  /* search the predefined structure */
+  for ( s = LSS->sa, i = 0; i < LSS->n; i++ )
+    if ( !strcmp(s[i].name,name) ) {
+      fprintf(stderr,"redeclaration of %s\n",name); break;
+    }
+  if ( !LSS->sa || ((i == LSS->n)&&(LSS->n==LSS->asize)) )
+    asir_reallocarray((char **)&LSS->sa,(int *)&LSS->asize,(int *)&LSS->n,(int)sizeof(struct oSDEF));
+  /* sdef = room for new structure definition */
+  sdef = &LSS->sa[i];
+  if ( i == LSS->n )
+    LSS->n++;
+  /* set the name of structure */
+  sdef->name = (char *)MALLOC(strlen(name)+1);
+  bcopy(name,sdef->name,strlen(name)+1);
+  /* count the total number of members */
+  for ( j = 0, n = member; n; n = NEXT(n), j++ );
+  sdef->n = j;
+  sdef->member = (char **)MALLOC(sdef->n*sizeof(char *));
+  /* set the names of members */
+  for ( j = 0, n = member; n; n = NEXT(n), j++ ) {
+    mname = (char *)MALLOC(strlen((char *)BDY(n))+1);  
+    bcopy((char *)BDY(n),mname,strlen((char *)BDY(n))+1);
+    sdef->member[j] = mname;
+  }
+  return i;
 }
 
 void newstruct(int type,COMP *rp)
 {
-	if ( type < 0 || type >= LSS->n ) error("");
-	NEWCOMP(*rp,LSS->sa[type].n); (*rp)->type = type;
+  if ( type < 0 || type >= LSS->n ) error("");
+  NEWCOMP(*rp,LSS->sa[type].n); (*rp)->type = type;
 }
 
 int structtoindex(char *name)
 {
-	SDEF s;
-	int i;
+  SDEF s;
+  int i;
 
-	for ( s = LSS->sa, i = 0; i < LSS->n; i++ )
-		if ( !strcmp(s[i].name,name) )
-			break;
-	if ( i == LSS->n ) {
-		fprintf(stderr,"%s: undefined structure\n",name); return -1; /* XXX */
-	} else
-		return i;
+  for ( s = LSS->sa, i = 0; i < LSS->n; i++ )
+    if ( !strcmp(s[i].name,name) )
+      break;
+  if ( i == LSS->n ) {
+    fprintf(stderr,"%s: undefined structure\n",name); return -1; /* XXX */
+  } else
+    return i;
 }
 
 int membertoindex(int type,char *name)
 {
-	SDEF s;
-	char **member;
-	int i;
+  SDEF s;
+  char **member;
+  int i;
 
-	s = &LSS->sa[type];
-	for ( member = s->member, i = 0; i < s->n; i++ )
-		if ( !strcmp(member[i],name) )
-			break;
-	if ( i == s->n )
-		return -1;
-	else
-		return i;
+  s = &LSS->sa[type];
+  for ( member = s->member, i = 0; i < s->n; i++ )
+    if ( !strcmp(member[i],name) )
+      break;
+  if ( i == s->n )
+    return -1;
+  else
+    return i;
 }
 
 int getcompsize(int type)
 {
-	return LSS->sa[type].n;
+  return LSS->sa[type].n;
 }
 
 Obj memberofstruct(COMP a,char *name)
 {
-	int type,ind;
-	char buf[BUFSIZ];
+  int type,ind;
+  char buf[BUFSIZ];
 
-	if ( !a || OID(a) != O_COMP )
-		error("object is not a structure");
-	type = a->type;
-	ind = membertoindex(type,name);
-	if ( ind < 0 ) {
-		sprintf(buf,"structure has no member named `%s'",name);
-		error(buf);
-	}
-	return (Obj)a->member[ind];
+  if ( !a || OID(a) != O_COMP )
+    error("object is not a structure");
+  type = a->type;
+  ind = membertoindex(type,name);
+  if ( ind < 0 ) {
+    sprintf(buf,"structure has no member named `%s'",name);
+    error(buf);
+  }
+  return (Obj)a->member[ind];
 }
 
 void assign_to_member(COMP a,char *name,Obj obj)
 {
-	int type,ind;
-	char buf[BUFSIZ];
+  int type,ind;
+  char buf[BUFSIZ];
 
-	if ( !a || OID(a) != O_COMP )
-		error("object is not a structure");
-	type = a->type;
-	ind = membertoindex(type,name);
-	if ( ind < 0 ) {
-		sprintf(buf,"structure has no member named `%s'",name);
-		error(buf);
-	}
-	a->member[ind] = obj;
+  if ( !a || OID(a) != O_COMP )
+    error("object is not a structure");
+  type = a->type;
+  ind = membertoindex(type,name);
+  if ( ind < 0 ) {
+    sprintf(buf,"structure has no member named `%s'",name);
+    error(buf);
+  }
+  a->member[ind] = obj;
 }

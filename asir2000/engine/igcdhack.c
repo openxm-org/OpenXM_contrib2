@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/igcdhack.c,v 1.4 2000/12/21 02:51:45 murao Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/igcdhack.c,v 1.5 2005/07/03 10:19:22 ohara Exp $ 
 */
 #if 0
 #include "base.h"
@@ -112,10 +112,10 @@ int *u, lu, *v, lv, *a;
  swap:
   SWAP( lu, lv, int );  SWAP( u, v, int * );
   sign = -1;
- U_V:	/* U > V, i.e., (lu > lv) || (lu == lv && u[lu-1] > v[lv-1]) */
+ U_V:  /* U > V, i.e., (lu > lv) || (lu == lv && u[lu-1] > v[lv-1]) */
   for ( i = 0; i < lv; i++ ) if ( u[i] != v[i] ) break;
   if ( i != 0 ) u += i, lu -= i,  v += i, lv -= i;
-  if ( lv == 0 ) {	/* no more pv[], and lu > 0 */
+  if ( lv == 0 ) {  /* no more pv[], and lu > 0 */
     i = trailingzeros_nbd( u, &rsh );
     i = rshift_nbd( u, lu, rsh, i, a );
     return SIGNED_VAL( i, sign );
@@ -152,42 +152,42 @@ int *u, lu, *v, lv, *a;
     if ( i >= lu ) /* lu == lv, and b==0 is implied */ goto chk_nz;
     /* we still have (lu-i) elms in U */
 #if BSH == BIT_WIDTH_OF_INT
-    if ( b != 0 ) {	/* non-zero borrow */
+    if ( b != 0 ) {  /* non-zero borrow */
       if ( (w = u[i++] -1) != 0 ) t |= (w << lsh);
-      if ( i >= lu ) {	/* lu == lv+1.  The M.S. word w may become 0 */
-	if ( w != 0 ) {
-	  *p++ = t;
-	  l = lv;
-	  t = w >> rsh;
-	} else lu--;
-	goto chk_nz;
+      if ( i >= lu ) {  /* lu == lv+1.  The M.S. word w may become 0 */
+  if ( w != 0 ) {
+    *p++ = t;
+    l = lv;
+    t = w >> rsh;
+  } else lu--;
+  goto chk_nz;
       }
       /**/
       *p++ = t;
       if ( w == BMask ) {
-	while ( (w = u[i++]) == 0 ) *p++ = BMask;
-	w -= 1;
-	*p++ = (BMask >> rsh) | (w << lsh);
+  while ( (w = u[i++]) == 0 ) *p++ = BMask;
+  w -= 1;
+  *p++ = (BMask >> rsh) | (w << lsh);
       }
       t = w >> rsh;
     }
     for ( ; i < lu; i++, t = w >> rsh ) *p++ = t | ((w = u[i]) << lsh);
 #else
-    if ( b != 0 ) {	/* non-zero borrow */
+    if ( b != 0 ) {  /* non-zero borrow */
       if ( (w = u[i++] -1) != 0 ) t |= ((w << lsh) & BMASK);
-      if ( i >= lu ) {	/* lu == lv+1.  The M.S. word w may become 0 */
-	if ( w != 0 ) {
-	  *p++ = t;
-	  l = lv;
-	  t = w >> rsh;
-	} else lu--;
-	goto chk_nz;
+      if ( i >= lu ) {  /* lu == lv+1.  The M.S. word w may become 0 */
+  if ( w != 0 ) {
+    *p++ = t;
+    l = lv;
+    t = w >> rsh;
+  } else lu--;
+  goto chk_nz;
       }
       *p++ = t;
       if ( w < 0 ) {
-	while ( (w = u[i++]) == 0 ) *p++ = BMASK;
-	w -= 1;
-	*p++ = (BMASK >> rsh) | ((w << lsh) & BMASK);
+  while ( (w = u[i++]) == 0 ) *p++ = BMASK;
+  w -= 1;
+  *p++ = (BMASK >> rsh) | ((w << lsh) & BMASK);
       }
       t = w >> rsh;
     }
@@ -214,7 +214,7 @@ int *u, lu, *v, lv, *a;
 #endif
   }
   if ( i >= lu ) /* lu == lv, and b==0 is implied */ goto ret_nz;
-  if ( b != 0 ) {	/* non-zero borrow */
+  if ( b != 0 ) {  /* non-zero borrow */
     t = u[i++] -1;
     if ( i >= lu ) /* lu == lv+1.  The M.S. word w may beome 0 */ goto chk_nz;
 #if BSH == BIT_WIDTH_OF_INT
@@ -222,10 +222,10 @@ int *u, lu, *v, lv, *a;
       do *p++ = BMask; while ( (t = u[i++]) == 0 );
       t -= 1;
       if ( i >= lu ) {
-	l = lu;
-	if ( t == 0 ) l--;
-	else *p = t;
-	goto ret_nz;
+  l = lu;
+  if ( t == 0 ) l--;
+  else *p = t;
+  goto ret_nz;
       }
     }
 #else
@@ -233,10 +233,10 @@ int *u, lu, *v, lv, *a;
       do *p++ = BMASK; while ( (t = u[i++]) == 0 );
       t -= 1;
       if ( i >= lu ) {
-	l = lu;
-	if ( t == 0 ) l--;
-	else *p = t;
-	goto ret_nz;
+  l = lu;
+  if ( t == 0 ) l--;
+  else *p = t;
+  goto ret_nz;
       }
     }
 #endif
@@ -285,26 +285,26 @@ int *u, lu, a, *v, lv, *ans;
       if ( w < t ) c++;
       t = w - t;
 #else
-      t = w - t;	    /* We shall compute U - a*V */
+      t = w - t;      /* We shall compute U - a*V */
       if ( t < 0 ) t += BASE, c++;
 #endif
     } else { /* a*V > U if lv>lu, and very likely even if lv==lu */
       b = 0;
       if ( t >= w ) t -= w;
       else {
-	t -= w;
+  t -= w;
 #if BSH != BIT_WIDTH_OF_INT
-	t += BASE;
+  t += BASE;
 #endif
-	if ( c != 0 ) c--;
-	else b = 1;
+  if ( c != 0 ) c--;
+  else b = 1;
       }
     }
     TRAILINGZEROS( t, rsh );
     return( lv < lu ? ( rsh == 0 ? abs_U_aV_c( t, u, lu, a, v, lv, c, ans ) :
-		        abs_U_aV_c_sh( t, u, lu, a, v, lv, c, rsh, ans ) ) :
-	    rsh == 0 ? abs_aVplusc_U( t, a, v, lv, c, b, u, lu, ans ) :
-	    abs_aVplusc_U_sh( t, a, v, lv, c, b, u, lu, rsh, ans ) );
+            abs_U_aV_c_sh( t, u, lu, a, v, lv, c, rsh, ans ) ) :
+      rsh == 0 ? abs_aVplusc_U( t, a, v, lv, c, b, u, lu, ans ) :
+      abs_aVplusc_U_sh( t, a, v, lv, c, b, u, lu, rsh, ans ) );
   }
   /**/
   if ( i < lv ) {  /* no more u[] elm.'s, and we still have non-zero v[] elm's */
@@ -323,27 +323,27 @@ int *u, lu, a, *v, lv, *ans;
     i = 0;
     if ( rsh == 0 ) {
       *p++ = t;
-      for ( ; i < lv; i++, c = hi, *p++ = t ) {	DMA( a, v[i], c, hi, t ); }
+      for ( ; i < lv; i++, c = hi, *p++ = t ) {  DMA( a, v[i], c, hi, t ); }
       if ( c == 0 ) return( i + 1 );
       *p = c;
       return( i + 2 );
     } else {
       for ( lsh = BSH - rsh; i < lv; i++, c = hi, t = w >> rsh ) {
-	DMA( a, v[i], c, hi, w );
+  DMA( a, v[i], c, hi, w );
 #if BSH == BIT_WIDTH_OF_INT
-	*p++ = t | (w << lsh);
+  *p++ = t | (w << lsh);
 #else
-	*p++ = t | ((w << lsh) & BMASK);
+  *p++ = t | ((w << lsh) & BMASK);
 #endif
       }
       if ( c != 0 ) {
 #if BSH == BIT_WIDTH_OF_INT
-	*p++ = t | (c << lsh);
+  *p++ = t | (c << lsh);
 #else
-	*p++ = t | ((c << lsh) & BMASK);
+  *p++ = t | ((c << lsh) & BMASK);
 #endif
-	i++;
-	t = c >> rsh;
+  i++;
+  t = c >> rsh;
       }
       if ( t == 0 ) return i;
       *p = t;
@@ -393,12 +393,12 @@ int *u, lu, a, *v, lv, *ans;
     if ( c != 0 ) {  /* there still exists u[] elms.'s because diff is known to be > 0 */
       if ( (w = u[i++]) == 0 ) {
 #if BSH == BIT_WIDTH_OF_INT
-	*p++ = t | (BMask << lsh);
+  *p++ = t | (BMask << lsh);
 #else
-	*p++ = t | ((BMASK << lsh) & BMASK);
+  *p++ = t | ((BMASK << lsh) & BMASK);
 #endif
-	for ( ; (w = u[i++]) == 0; *p++ = BMASK ) ;
-	t = BMASK >> rsh;
+  for ( ; (w = u[i++]) == 0; *p++ = BMASK ) ;
+  t = BMASK >> rsh;
       }
       w--;
 #if BSH == BIT_WIDTH_OF_INT
@@ -512,7 +512,7 @@ int t, a, *v, lv, c, b, *u, lu, *ans;
 #else
       if ( i == 0 ) { ans[i] = BASE - t; return 1; }
 #endif
-      l = negate_nbd( ans, i );		/* <================ */
+      l = negate_nbd( ans, i );    /* <================ */
 /*    if ( (t = BMASK ^ ans[i]) == 0 ) return l;*/
       if ( (t ^= BMASK) == 0 ) return l;
       ans[i] = t;
@@ -580,13 +580,13 @@ int t, a, *v, lv, c, b, *u, lu, rsh, *ans;
     if ( b != 0 ) {  /* diff turned out to be < 0 */
       if ( i == 0 ) {
 #if BSH == BIT_WIDTH_OF_INT
-	*p = (1 << lsh) - t;
+  *p = (1 << lsh) - t;
 #else
-	*p = (BASE >> rsh) - t;
+  *p = (BASE >> rsh) - t;
 #endif
-	return 1;
+  return 1;
       }
-      l = negate_nbd( ans, i );		/* <================ */
+      l = negate_nbd( ans, i );    /* <================ */
       if ( (t ^= (BMASK >> rsh)) == 0 ) return l;
       *p = t;
       return( i + 1 );
@@ -661,7 +661,7 @@ unsigned
 #endif
 int t, *u, lu, a, *v, lv, c, *ans;
     /*  compute | t + BASE*(U - a*V - c) | in ans[], where U = u[0:lu-1], V = v[0:lv-1],
-     *	c is <= BASE-1, and lu >= lv+1 && t != 0 assumed.
+     *  c is <= BASE-1, and lu >= lv+1 && t != 0 assumed.
      */
 {
 #if BSH == BIT_WIDTH_OF_INT
@@ -694,7 +694,7 @@ int t, *u, lu, a, *v, lv, c, *ans;
     t = u[i] - b;
     if ( t == c ) return l;
     else if ( t > c ) { *p = t - c; return( lu + 1 ); }
-    l = negate_nbd( ans, lu );		/* <================ */
+    l = negate_nbd( ans, lu );    /* <================ */
     if ( (c -= (t + 1)) == 0 ) return l;
     *p = c;
     return( lu + 1 );
@@ -705,10 +705,10 @@ int t, *u, lu, a, *v, lv, c, *ans;
        of the case when lu == lv+2 && u[lu-2:lu-1]=u[i:i+1] == BASE  */
     if ( /* c == BMASK && */ b != 0 ) {
       if ( i+2 == lu && u[i+1] == 1 ) {
-	/* m.s. word of the diff becomes 0 */
-	if ( (t = u[i]) == 0 ) return l;
-	*p = t;
-	return lu;
+  /* m.s. word of the diff becomes 0 */
+  if ( (t = u[i]) == 0 ) return l;
+  *p = t;
+  return lu;
       }
       *p++ = u[i++];
       c = 1;
@@ -784,7 +784,7 @@ int t, *u, lu, a, *v, lv, c, rsh, *ans;
     }
     /* diff turned out to be < 0 */
     w = c - x - 1;
-    if ( lv == 0 ) {	/* lu == 1 */
+    if ( lv == 0 ) {  /* lu == 1 */
 #if BSH == BIT_WIDTH_OF_INT
       t = (1 << lsh) - t;
 #else
@@ -794,7 +794,7 @@ int t, *u, lu, a, *v, lv, c, rsh, *ans;
       *p = t;
       return 1;
     }
-    l = negate_nbd( ans, lv );		/* <================ */
+    l = negate_nbd( ans, lv );    /* <================ */
     t ^= (BMASK >> rsh);
     if ( w != 0 ) goto l0;
     if ( t == 0 ) return l;
@@ -807,7 +807,7 @@ int t, *u, lu, a, *v, lv, c, rsh, *ans;
        of the case when lu == lv+2 && u[lu-2:lu-1]=u[i:i+1] == BASE  */
     if ( /* c == BMASK && */ b != 0 ) {
       if ( i+2 == lu && u[i+1] == 1 && t == 0 && u[i] == 0 )
-	return l; /* m.s. word of the diff has become 0 */
+  return l; /* m.s. word of the diff has become 0 */
       w = u[i++];
 #if BSH == BIT_WIDTH_OF_INT
       *p++ = t | (w << lsh);
@@ -834,9 +834,9 @@ int t, *u, lu, a, *v, lv, c, rsh, *ans;
     w >>= rsh;
     if ( i >= lu ) {
       if ( w != 0 ) {
-	*p++ = t;
-	*p = w;
-	return( lu + 1 );
+  *p++ = t;
+  *p = w;
+  return( lu + 1 );
       } else if ( t == 0 ) return( i - 1 );
       else { *p = t; return i; }
     }
@@ -966,12 +966,12 @@ int a, *u, lu, b, *v, lv, *ans;
       if ( t == s ) continue;
       else if ( t > s ) t -= s;
       else {
-	t -= s;
+  t -= s;
 #if BSH != BIT_WIDTH_OF_INT
-	t += BASE;
+  t += BASE;
 #endif
-	if ( c != 0 ) c--;
-	else d++;
+  if ( c != 0 ) c--;
+  else d++;
       }
       l = i;
     }
@@ -981,8 +981,8 @@ int a, *u, lu, b, *v, lv, *ans;
       if ( c == d ) return( l + 1 );
       else if ( c > d ) c -= d;
       else {
-	l = negate_nbd( ans, i + 1 );		/* <================ */
-	if ( (c = d-c - 1) == 0 ) return l;
+  l = negate_nbd( ans, i + 1 );    /* <================ */
+  if ( (c = d-c - 1) == 0 ) return l;
       }
       *p = c;
       return( i + 2 );
@@ -992,39 +992,39 @@ int a, *u, lu, b, *v, lv, *ans;
     else {
       DMA( a, u[i], c, hi, t );
       if ( i+1 >= lu ) {
-	if ( hi == 0 ) { c = t; goto final_c_d; }
-	c = hi;
-	if ( t >= d ) t -= d;
-	else {
-	  t -= d;
+  if ( hi == 0 ) { c = t; goto final_c_d; }
+  c = hi;
+  if ( t >= d ) t -= d;
+  else {
+    t -= d;
 #if BSH != BIT_WIDTH_OF_INT
-	  t += BASE;
+    t += BASE;
 #endif
-	  c--;
-	}
-	i++, *p++ = t;
-	goto final_c;
+    c--;
+  }
+  i++, *p++ = t;
+  goto final_c;
       }
       i++, c = hi;
       if ( t >= d ) *p++ = t - d;
       else {
-	t -= d;
+  t -= d;
 #if BSH != BIT_WIDTH_OF_INT
-	t += BASE;
+  t += BASE;
 #endif
-	*p++ = t;
-	if ( c != 0 ) c--;
-	else {
-	  for ( ; i < lu; *p++ = BMASK ) {
-	    DMA( a, u[i], c, hi, t );
-	    i++, c = hi;
-	    if ( t == 0 ) continue;
-	    *p++ = t - 1;
-	    goto aU;
-	  }
-	  c--;
-	  goto final_c;
-	}
+  *p++ = t;
+  if ( c != 0 ) c--;
+  else {
+    for ( ; i < lu; *p++ = BMASK ) {
+      DMA( a, u[i], c, hi, t );
+      i++, c = hi;
+      if ( t == 0 ) continue;
+      *p++ = t - 1;
+      goto aU;
+    }
+    c--;
+    goto final_c;
+  }
       }
     }
     /*** return( aV_plus_c( a, &u[i], lu - i, c, p ) + i + 1 ); ***/
@@ -1041,12 +1041,12 @@ int a, *u, lu, b, *v, lv, *ans;
       i++;
       if ( w >= s ) w -= s;
       else {
-	w -= s;
+  w -= s;
 #if BSH != BIT_WIDTH_OF_INT
-	w += BASE;
+  w += BASE;
 #endif
-	if ( c != 0 ) c--;
-	else d++;
+  if ( c != 0 ) c--;
+  else d++;
       }
 #if BSH == BIT_WIDTH_OF_INT
       if ( (*p++ = t | (w << lsh)) != 0 ) l = i;
@@ -1058,21 +1058,21 @@ int a, *u, lu, b, *v, lv, *ans;
     if ( i >= lu ) {
     final_c_d_sh:
       if ( c == d )
-	if ( t == 0 ) return l;
-	else { *p = t; return( i + 1 ); }
+  if ( t == 0 ) return l;
+  else { *p = t; return( i + 1 ); }
       else if ( c > d ) c -= d;
       else {
 #if BSH == BIT_WIDTH_OF_INT
-	if ( i == 0 ) t = (1 << lsh) - t;
+  if ( i == 0 ) t = (1 << lsh) - t;
 #else
-	if ( i == 0 ) t = (BASE >> rsh) - t;
+  if ( i == 0 ) t = (BASE >> rsh) - t;
 #endif
-	else {
-	  l = negate_nbd( ans, i );		/* <================ */
-/*	  t = (BASE >> rsh) - t;*/
-	  t ^= ((BMASK >> rsh));
-	}
-	c = d-c -1;
+  else {
+    l = negate_nbd( ans, i );    /* <================ */
+/*    t = (BASE >> rsh) - t;*/
+    t ^= ((BMASK >> rsh));
+  }
+  c = d-c -1;
       }
 #if BSH == BIT_WIDTH_OF_INT
       *p++ = t | (c << lsh);
@@ -1086,71 +1086,71 @@ int a, *u, lu, b, *v, lv, *ans;
     else {
       DMA( a, u[i], c, hi, w );
       if ( i+1 >= lu ) {
-	if ( hi == 0 ) { c = w; goto final_c_d_sh; }
-	c = hi;
-	if ( w >= d ) w -= d;
-	else {
-	  w -= d;
+  if ( hi == 0 ) { c = w; goto final_c_d_sh; }
+  c = hi;
+  if ( w >= d ) w -= d;
+  else {
+    w -= d;
 #if BSH != BIT_WIDTH_OF_INT
-	  w += BASE;
+    w += BASE;
 #endif
-	  c--;
-	}
+    c--;
+  }
 #if BSH == BIT_WIDTH_OF_INT
-	i++, *p++ = t | (w << lsh);
+  i++, *p++ = t | (w << lsh);
 #else
-	i++, *p++ = t | ((w << lsh) & BMASK);
+  i++, *p++ = t | ((w << lsh) & BMASK);
 #endif
-	t = w >> rsh;
-	goto final_c_sh;
+  t = w >> rsh;
+  goto final_c_sh;
       }
       i++, c = hi;
       if ( w >= d ) {
-	w -= d;
+  w -= d;
 #if BSH == BIT_WIDTH_OF_INT
-	*p++ = t | (w << lsh);
+  *p++ = t | (w << lsh);
 #else
-	*p++ = t | ((w << lsh) & BMASK);
+  *p++ = t | ((w << lsh) & BMASK);
 #endif
-	t = w >> rsh;
+  t = w >> rsh;
       } else {
-	w -= d;
+  w -= d;
 #if BSH == BIT_WIDTH_OF_INT
-	*p++ = t | (w << lsh);
+  *p++ = t | (w << lsh);
 #else
-	w += BASE;
-	*p++ = t | ((w << lsh) & BMASK);
+  w += BASE;
+  *p++ = t | ((w << lsh) & BMASK);
 #endif
-	t = w >> rsh;
-	if ( c != 0 ) c--;
-	else {
-	  while ( i < lu ) {
-	    DMA( a, u[i], c, hi, w );
-	    c = hi;
-	    i++;
-	    if ( w == 0 ) {
+  t = w >> rsh;
+  if ( c != 0 ) c--;
+  else {
+    while ( i < lu ) {
+      DMA( a, u[i], c, hi, w );
+      c = hi;
+      i++;
+      if ( w == 0 ) {
 #if BSH == BIT_WIDTH_OF_INT
-	      *p++ = t | (BMASK << lsh);
-	      t = BMASK >> rsh;
+        *p++ = t | (BMASK << lsh);
+        t = BMASK >> rsh;
 #else
-	      *p++ = t | ((BMASK << lsh) & BMASK);
-	      t = BMASK >> rsh;
+        *p++ = t | ((BMASK << lsh) & BMASK);
+        t = BMASK >> rsh;
 #endif
-	      continue;
-	    } else {
-	      w--;
+        continue;
+      } else {
+        w--;
 #if BSH == BIT_WIDTH_OF_INT
-	      *p++ = t | (w << lsh);
+        *p++ = t | (w << lsh);
 #else
-	      *p++ = t | ((w << lsh) & BMASK);
+        *p++ = t | ((w << lsh) & BMASK);
 #endif
-	      t = w >> rsh;
-	      goto aU_sh;
-	    }
-	  }
-	  c--;
-	  goto final_c_sh;
-	}
+        t = w >> rsh;
+        goto aU_sh;
+      }
+    }
+    c--;
+    goto final_c_sh;
+  }
       }
     }
     /*** return( aV_plus_c_sh( a, &u[i], lu - i, c, rsh, t ) + i ); ***/
@@ -1314,9 +1314,9 @@ u_rest:
 #if BSH == BIT_WIDTH_OF_INT
     if ( c < d ) {
       if ( i >= lu ) {
-	*p++ = t | (c << lsh);
-	*p = (c >> rsh) | (1 << lsh);
-	return( lu + 2 );
+  *p++ = t | (c << lsh);
+  *p = (c >> rsh) | (1 << lsh);
+  return( lu + 2 );
       }
       DMA( a, u[i], c, hi, w );
       c = hi + 1;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/asmalpha.c,v 1.7 2003/03/09 14:12:04 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/asmalpha.c,v 1.8 2009/03/16 16:43:02 ohara Exp $ 
 */
 #if defined(__alpha) || ( SIZEOF_LONG == 8 )
 typedef unsigned long UL;
@@ -58,75 +58,75 @@ typedef unsigned long long UL;
 unsigned int dm(a1,a2,u)
 unsigned int a1,a2,*u;
 {
-	UL t;
+  UL t;
 
-	t = (UL)a1*(UL)a2;
-	*u = t>>32;
-	return (unsigned int)(t&0xffffffff);
+  t = (UL)a1*(UL)a2;
+  *u = t>>32;
+  return (unsigned int)(t&0xffffffff);
 }
 
 unsigned int dma(a1,a2,a3,u)
 unsigned int a1,a2,a3,*u;
 {
-	UL t;
+  UL t;
 
-	t = ((UL)a1*(UL)a2)+(UL)a3;
-	*u = t>>32;
-	return (unsigned int)(t&0xffffffff);
+  t = ((UL)a1*(UL)a2)+(UL)a3;
+  *u = t>>32;
+  return (unsigned int)(t&0xffffffff);
 }
 
 unsigned int dma2(a1,a2,a3,a4,u)
 unsigned int a1,a2,a3,a4,*u;
 {
-	UL t;
+  UL t;
 
-	t = (UL)a1*(UL)a2+(UL)a3+(UL)a4;
-	*u = t>>32;
-	return (unsigned int)(t&0xffffffff);
+  t = (UL)a1*(UL)a2+(UL)a3+(UL)a4;
+  *u = t>>32;
+  return (unsigned int)(t&0xffffffff);
 }
 
 unsigned int dmb(base,a1,a2,u)
 unsigned int base,a1,a2,*u;
 {
-	UL t;
+  UL t;
 
-	t = (UL)a1*(UL)a2;
-	*u = t/(UL)base;
-	return (unsigned int)(t-(UL)base*(UL)(*u));
+  t = (UL)a1*(UL)a2;
+  *u = t/(UL)base;
+  return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dmab(base,a1,a2,a3,u)
 unsigned int base,a1,a2,a3,*u;
 {
-	UL t;
+  UL t;
 
-	t = (UL)a1*(UL)a2+(UL)a3;
-	*u = t/(UL)base;
-	return (unsigned int)(t-(UL)base*(UL)(*u));
+  t = (UL)a1*(UL)a2+(UL)a3;
+  *u = t/(UL)base;
+  return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dmar(a1,a2,a3,d)
 unsigned int a1,a2,a3,d;
 {
-	UL t;
+  UL t;
 
-	t = (UL)a1*(UL)a2+(UL)a3;
-	return (unsigned int)(t%(UL)d);
+  t = (UL)a1*(UL)a2+(UL)a3;
+  return (unsigned int)(t%(UL)d);
 }
 
 unsigned int dsab(base,a1,a2,u)
 unsigned int base,a1,a2,*u;
 {
-	UL t;
+  UL t;
 
-	t = (((UL)a1)<<32)+(UL)a2;
-	*u = t/(UL)base;
-	return (unsigned int)(t-(UL)base*(UL)(*u));
+  t = (((UL)a1)<<32)+(UL)a2;
+  *u = t/(UL)base;
+  return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
 unsigned int dqr(a,b,qp)
 unsigned int a,b,*qp;
 {
-	*qp = a/b;
-	return a - b * (*qp);
+  *qp = a/b;
+  return a - b * (*qp);
 }

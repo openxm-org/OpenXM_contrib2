@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.6 2009/03/16 16:43:02 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.7 2009/03/16 16:56:35 ohara Exp $ 
 */
 #if SIZEOF_LONG == 8
 typedef unsigned long UL;
@@ -56,8 +56,8 @@ typedef unsigned _int64 UL;
 #endif
 
 struct PrimesS {
-	int	prime, primroot;
-	int  bitwid, d;
+  int  prime, primroot;
+  int  bitwid, d;
 };
 
 #if defined(USE_FLOAT)
@@ -123,17 +123,17 @@ typedef unsigned int ModNum;
 
 void C_DFT_FORE(ModNum *,int,int,int,ModNum *,
 #ifdef POWA_STRIDE
-	int
+  int
 #else
-	ModNum *,int,ModNum,double,ModNum *
+  ModNum *,int,ModNum,double,ModNum *
 #endif
 );
 
 void C_DFT_BACK(ModNum *,int,int,int,ModNum *,
 #ifdef POWA_STRIDE
-		 int
+     int
 #else
-		 ModNum *,int,int,int,ModNum,ModNum,double,ModNum *
+     ModNum *,int,int,int,ModNum,ModNum,double,ModNum *
 #endif
 );
 

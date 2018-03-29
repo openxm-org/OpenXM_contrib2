@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.23 2018/03/27 06:29:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.24 2018/03/28 05:27:22 noro Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -73,21 +73,21 @@ void Plist_handler();
 void Pclear_handler();
 
 struct ftab puref_tab[] = {
-	{"mapat",Pmapat,-99999999},
-	{"map",Pmap,-99999999},
-	{"functor",Pfunctor,1},
-	{"args",Pargs,1},
-	{"funargs",Pfunargs,1},
-	{"funargs_ext",Pfunargs_ext,1},
-	{"register_handler",Pregister_handler,1},
-	{"add_handler",Padd_handler,2},
-	{"list_handler",Plist_handler,1},
-	{"clear_handler",Pclear_handler,1},
-	{"call",Pcall,2},
-	{"vtype",Pvtype,1},
-	{"deval",Pdeval,1},
-	{"eval_quote",Peval_quote,-2},
-	{0,0,0},
+  {"mapat",Pmapat,-99999999},
+  {"map",Pmap,-99999999},
+  {"functor",Pfunctor,1},
+  {"args",Pargs,1},
+  {"funargs",Pfunargs,1},
+  {"funargs_ext",Pfunargs_ext,1},
+  {"register_handler",Pregister_handler,1},
+  {"add_handler",Padd_handler,2},
+  {"list_handler",Plist_handler,1},
+  {"clear_handler",Pclear_handler,1},
+  {"call",Pcall,2},
+  {"vtype",Pvtype,1},
+  {"deval",Pdeval,1},
+  {"eval_quote",Peval_quote,-2},
+  {0,0,0},
 };
 
 int mp_pi(),mp_e();
@@ -121,155 +121,155 @@ int simplify_factorial_ins();
 int simplify_abs_ins();
 
 void pf_init() {
-	uarg = (V *)CALLOC(1,sizeof(V));
-	uarg[0] = &oVAR[26]; MKV(uarg[0],x);
+  uarg = (V *)CALLOC(1,sizeof(V));
+  uarg[0] = &oVAR[26]; MKV(uarg[0],x);
 
-	darg = (V *)CALLOC(2,sizeof(V));
-	darg[0] = &oVAR[26];
-	darg[1] = &oVAR[27]; MKV(darg[1],y);
+  darg = (V *)CALLOC(2,sizeof(V));
+  darg[0] = &oVAR[26];
+  darg[1] = &oVAR[27]; MKV(darg[1],y);
 
-	mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,simplify_elemfunc_ins,&pidef);
-	mkpf("@e",0,0,0,(int (*)())mp_e,const_e,simplify_elemfunc_ins,&edef);
+  mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,simplify_elemfunc_ins,&pidef);
+  mkpf("@e",0,0,0,(int (*)())mp_e,const_e,simplify_elemfunc_ins,&edef);
 
-	mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,double_factorial,simplify_factorial_ins,&factorialdef);
-	mkpf("abs",0,1,uarg,(int (*)())mp_abs,fabs,simplify_abs_ins,&absdef);
+  mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,double_factorial,simplify_factorial_ins,&factorialdef);
+  mkpf("abs",0,1,uarg,(int (*)())mp_abs,fabs,simplify_abs_ins,&absdef);
 
-	mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,&logdef);
-	mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,&expdef);
-	mkpf("pow",0,2,darg,(int (*)())mp_pow,pow,(int (*)())simplify_pow,&powdef);
+  mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,&logdef);
+  mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,&expdef);
+  mkpf("pow",0,2,darg,(int (*)())mp_pow,pow,(int (*)())simplify_pow,&powdef);
 
-	mkpf("sin",0,1,uarg,(int (*)())mp_sin,sin,simplify_elemfunc_ins,&sindef);
-	mkpf("cos",0,1,uarg,(int (*)())mp_cos,cos,simplify_elemfunc_ins,&cosdef);
-	mkpf("tan",0,1,uarg,(int (*)())mp_tan,tan,simplify_elemfunc_ins,&tandef);
-	mkpf("asin",0,1,uarg,(int (*)())mp_asin,asin,simplify_elemfunc_ins,&asindef);
-	mkpf("acos",0,1,uarg,(int (*)())mp_acos,acos,simplify_elemfunc_ins,&acosdef);
-	mkpf("atan",0,1,uarg,(int (*)())mp_atan,atan,simplify_elemfunc_ins,&atandef);
+  mkpf("sin",0,1,uarg,(int (*)())mp_sin,sin,simplify_elemfunc_ins,&sindef);
+  mkpf("cos",0,1,uarg,(int (*)())mp_cos,cos,simplify_elemfunc_ins,&cosdef);
+  mkpf("tan",0,1,uarg,(int (*)())mp_tan,tan,simplify_elemfunc_ins,&tandef);
+  mkpf("asin",0,1,uarg,(int (*)())mp_asin,asin,simplify_elemfunc_ins,&asindef);
+  mkpf("acos",0,1,uarg,(int (*)())mp_acos,acos,simplify_elemfunc_ins,&acosdef);
+  mkpf("atan",0,1,uarg,(int (*)())mp_atan,atan,simplify_elemfunc_ins,&atandef);
 
-	mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,sinh,simplify_elemfunc_ins,&sinhdef);
-	mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,cosh,simplify_elemfunc_ins,&coshdef);
-	mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,tanh,simplify_elemfunc_ins,&tanhdef);
+  mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,sinh,simplify_elemfunc_ins,&sinhdef);
+  mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,cosh,simplify_elemfunc_ins,&coshdef);
+  mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,tanh,simplify_elemfunc_ins,&tanhdef);
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,asinh,simplify_elemfunc_ins,&asinhdef);
-	mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,acosh,simplify_elemfunc_ins,&acoshdef);
-	mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,atanh,simplify_elemfunc_ins,&atanhdef);
+  mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,asinh,simplify_elemfunc_ins,&asinhdef);
+  mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,acosh,simplify_elemfunc_ins,&acoshdef);
+  mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,atanh,simplify_elemfunc_ins,&atanhdef);
 #endif
-	make_exp();
-	make_tri();
-	make_itri();
-	make_hyp();
+  make_exp();
+  make_tri();
+  make_itri();
+  make_hyp();
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	make_ihyp();
+  make_ihyp();
 #endif
 }
 
 void make_exp() {
-	V v;
-	P u,vexp,vlog,vpow;
-	Obj *args;
+  V v;
+  P u,vexp,vlog,vpow;
+  Obj *args;
 
-	mkpfins(expdef,uarg,&v); MKV(v,vexp);
-	mkpfins(powdef,darg,&v); MKV(v,vpow);
-	mkpfins(logdef,uarg,&v); MKV(v,vlog);
+  mkpfins(expdef,uarg,&v); MKV(v,vexp);
+  mkpfins(powdef,darg,&v); MKV(v,vpow);
+  mkpfins(logdef,uarg,&v); MKV(v,vlog);
 
-	/* d/dx(log(x)) = 1/x */
-	OALLOC(logdef->deriv,1); divr(CO,(Obj)ONE,(Obj)x,&logdef->deriv[0]);
+  /* d/dx(log(x)) = 1/x */
+  OALLOC(logdef->deriv,1); divr(CO,(Obj)ONE,(Obj)x,&logdef->deriv[0]);
 
-	/* d/dx(exp(x)) = exp(x) */
-	OALLOC(expdef->deriv,1); expdef->deriv[0] = (Obj)vexp;
+  /* d/dx(exp(x)) = exp(x) */
+  OALLOC(expdef->deriv,1); expdef->deriv[0] = (Obj)vexp;
 
-	/* d/dy(x^y) = log(x)*x^y */
-	OALLOC(powdef->deriv,2); mulp(CO,vpow,vlog,(P *)&powdef->deriv[1]);
+  /* d/dy(x^y) = log(x)*x^y */
+  OALLOC(powdef->deriv,2); mulp(CO,vpow,vlog,(P *)&powdef->deriv[1]);
 
-	/* d/dx(x^y) = y*x^(y-1) */
-	args = (Obj *)ALLOCA(2*sizeof(Obj));
-	args[0] = (Obj)x; subp(CO,y,(P)ONE,(P *)&args[1]);
-	_mkpfins(powdef,args,&v); MKV(v,u);
-	mulr(CO,(Obj)u,(Obj)y,&powdef->deriv[0]);
+  /* d/dx(x^y) = y*x^(y-1) */
+  args = (Obj *)ALLOCA(2*sizeof(Obj));
+  args[0] = (Obj)x; subp(CO,y,(P)ONE,(P *)&args[1]);
+  _mkpfins(powdef,args,&v); MKV(v,u);
+  mulr(CO,(Obj)u,(Obj)y,&powdef->deriv[0]);
 }
 
 void make_tri() {
-	V v;
-	P vcos,vsin,vtan,t;
+  V v;
+  P vcos,vsin,vtan,t;
 
-	mkpfins(cosdef,uarg,&v); MKV(v,vcos);
-	mkpfins(sindef,uarg,&v); MKV(v,vsin);
-	mkpfins(tandef,uarg,&v); MKV(v,vtan);
+  mkpfins(cosdef,uarg,&v); MKV(v,vcos);
+  mkpfins(sindef,uarg,&v); MKV(v,vsin);
+  mkpfins(tandef,uarg,&v); MKV(v,vtan);
 
-	/* d/dx(sin(x)) = cos(x) */
-	OALLOC(sindef->deriv,1); sindef->deriv[0] = (Obj)vcos;
+  /* d/dx(sin(x)) = cos(x) */
+  OALLOC(sindef->deriv,1); sindef->deriv[0] = (Obj)vcos;
 
-	/* d/dx(cos(x)) = -sin(x) */
-	OALLOC(cosdef->deriv,1); chsgnp(vsin,(P *)&cosdef->deriv[0]);
+  /* d/dx(cos(x)) = -sin(x) */
+  OALLOC(cosdef->deriv,1); chsgnp(vsin,(P *)&cosdef->deriv[0]);
 
-	/* d/dx(tan(x)) = 1+tan(x)^2 */
-	OALLOC(tandef->deriv,1);
-	mulr(CO,(Obj)vtan,(Obj)vtan,(Obj *)&t); addp(CO,(P)ONE,t,(P *)&tandef->deriv[0]);
+  /* d/dx(tan(x)) = 1+tan(x)^2 */
+  OALLOC(tandef->deriv,1);
+  mulr(CO,(Obj)vtan,(Obj)vtan,(Obj *)&t); addp(CO,(P)ONE,t,(P *)&tandef->deriv[0]);
 }
 
 void make_itri() {
-	P t,xx;
-	Q mtwo;
-	V v;
-	Obj *args;
+  P t,xx;
+  Q mtwo;
+  V v;
+  Obj *args;
 
-	/* d/dx(asin(x)) = (1-x^2)^(-1/2) */
-	OALLOC(asindef->deriv,1);
-	args = (Obj *)ALLOCA(2*sizeof(Obj));
-	mulp(CO,x,x,&xx); subp(CO,(P)ONE,xx,(P *)&args[0]);
-	STOQ(-2,mtwo); divq(ONE,mtwo,(Q *)&args[1]);
-	_mkpfins(powdef,args,&v); MKV(v,t);
-	asindef->deriv[0] = (Obj)t;
+  /* d/dx(asin(x)) = (1-x^2)^(-1/2) */
+  OALLOC(asindef->deriv,1);
+  args = (Obj *)ALLOCA(2*sizeof(Obj));
+  mulp(CO,x,x,&xx); subp(CO,(P)ONE,xx,(P *)&args[0]);
+  STOQ(-2,mtwo); divq(ONE,mtwo,(Q *)&args[1]);
+  _mkpfins(powdef,args,&v); MKV(v,t);
+  asindef->deriv[0] = (Obj)t;
 
-	/* d/dx(acos(x)) = -(1-x^2)^(-1/2) */
-	OALLOC(acosdef->deriv,1); chsgnp((P)asindef->deriv[0],(P *)&acosdef->deriv[0]);
+  /* d/dx(acos(x)) = -(1-x^2)^(-1/2) */
+  OALLOC(acosdef->deriv,1); chsgnp((P)asindef->deriv[0],(P *)&acosdef->deriv[0]);
 
-	/* d/dx(atan(x)) = 1/(x^2+1) */
-	OALLOC(atandef->deriv,1);
-	addp(CO,(P)ONE,xx,&t); divr(CO,(Obj)ONE,(Obj)t,&atandef->deriv[0]);
+  /* d/dx(atan(x)) = 1/(x^2+1) */
+  OALLOC(atandef->deriv,1);
+  addp(CO,(P)ONE,xx,&t); divr(CO,(Obj)ONE,(Obj)t,&atandef->deriv[0]);
 }
 
 void make_hyp() {
-	V v;
-	P vcosh,vsinh,vtanh,t;
+  V v;
+  P vcosh,vsinh,vtanh,t;
 
-	mkpfins(coshdef,uarg,&v); MKV(v,vcosh);
-	mkpfins(sinhdef,uarg,&v); MKV(v,vsinh);
-	mkpfins(tanhdef,uarg,&v); MKV(v,vtanh);
+  mkpfins(coshdef,uarg,&v); MKV(v,vcosh);
+  mkpfins(sinhdef,uarg,&v); MKV(v,vsinh);
+  mkpfins(tanhdef,uarg,&v); MKV(v,vtanh);
 
-	/* d/dx(sinh(x)) = cosh(x) */
-	OALLOC(sinhdef->deriv,1); sinhdef->deriv[0] = (Obj)vcosh;
+  /* d/dx(sinh(x)) = cosh(x) */
+  OALLOC(sinhdef->deriv,1); sinhdef->deriv[0] = (Obj)vcosh;
 
-	/* d/dx(cosh(x)) = sinh(x) */
-	OALLOC(coshdef->deriv,1); coshdef->deriv[0] = (Obj)vsinh;
+  /* d/dx(cosh(x)) = sinh(x) */
+  OALLOC(coshdef->deriv,1); coshdef->deriv[0] = (Obj)vsinh;
 
-	/* d/dx(tanh(x)) = 1-tanh(x)^2 */
-	OALLOC(tanhdef->deriv,1);
-	mulr(CO,(Obj)vtanh,(Obj)vtanh,(Obj *)&t); subp(CO,(P)ONE,t,(P *)&tanhdef->deriv[0]);
+  /* d/dx(tanh(x)) = 1-tanh(x)^2 */
+  OALLOC(tanhdef->deriv,1);
+  mulr(CO,(Obj)vtanh,(Obj)vtanh,(Obj *)&t); subp(CO,(P)ONE,t,(P *)&tanhdef->deriv[0]);
 }
 
 void make_ihyp() {
-	P t,xx;
-	Q mtwo;
-	V v;
-	Obj *args;
+  P t,xx;
+  Q mtwo;
+  V v;
+  Obj *args;
 
-	/* d/dx(asinh(x)) = (1+x^2)^(-1/2) */
-	OALLOC(asinhdef->deriv,1);
-	args = (Obj *)ALLOCA(2*sizeof(Obj));
-	mulp(CO,x,x,&xx); addp(CO,(P)ONE,xx,(P *)&args[0]);
-	STOQ(-2,mtwo); divq(ONE,mtwo,(Q *)&args[1]);
-	_mkpfins(powdef,args,&v); MKV(v,t);
-	asinhdef->deriv[0] = (Obj)t;
+  /* d/dx(asinh(x)) = (1+x^2)^(-1/2) */
+  OALLOC(asinhdef->deriv,1);
+  args = (Obj *)ALLOCA(2*sizeof(Obj));
+  mulp(CO,x,x,&xx); addp(CO,(P)ONE,xx,(P *)&args[0]);
+  STOQ(-2,mtwo); divq(ONE,mtwo,(Q *)&args[1]);
+  _mkpfins(powdef,args,&v); MKV(v,t);
+  asinhdef->deriv[0] = (Obj)t;
 
-	/* d/dx(acosh(x)) = (x^2-1)^(-1/2) */
-	OALLOC(acoshdef->deriv,1);
-	subp(CO,xx,(P)ONE,(P *)&args[0]);
-	_mkpfins(powdef,args,&v); MKV(v,t);
-	acoshdef->deriv[0] = (Obj)t;
+  /* d/dx(acosh(x)) = (x^2-1)^(-1/2) */
+  OALLOC(acoshdef->deriv,1);
+  subp(CO,xx,(P)ONE,(P *)&args[0]);
+  _mkpfins(powdef,args,&v); MKV(v,t);
+  acoshdef->deriv[0] = (Obj)t;
 
-	/* d/dx(atanh(x)) = 1/(1-x^2) */
-	OALLOC(atanhdef->deriv,1);
-	subp(CO,(P)ONE,xx,&t); divr(CO,(Obj)ONE,(Obj)t,&atanhdef->deriv[0]);
+  /* d/dx(atanh(x)) = 1/(1-x^2) */
+  OALLOC(atanhdef->deriv,1);
+  subp(CO,(P)ONE,xx,&t); divr(CO,(Obj)ONE,(Obj)t,&atanhdef->deriv[0]);
 }
 
 void mkpow(vl,a,e,r)
@@ -278,13 +278,13 @@ Obj a;
 Obj e;
 Obj *r;
 {
-	PFINS ins;
-	PFAD ad;
+  PFINS ins;
+  PFAD ad;
 
-	ins = (PFINS)CALLOC(1,sizeof(PF)+2*sizeof(struct oPFAD));
-	ins->pf = powdef; ad = ins->ad;
-	ad[0].d = 0; ad[0].arg = a; ad[1].d = 0; ad[1].arg = e;
-	simplify_ins(ins,r);
+  ins = (PFINS)CALLOC(1,sizeof(PF)+2*sizeof(struct oPFAD));
+  ins->pf = powdef; ad = ins->ad;
+  ad[0].d = 0; ad[0].arg = a; ad[1].d = 0; ad[1].arg = e;
+  simplify_ins(ins,r);
 }
 
 extern int evalef;
@@ -293,32 +293,32 @@ void simplify_pow(ins,rp)
 PFINS ins;
 Obj *rp;
 {
-	PF pf;
-	PFAD ad;
-	Obj a0,a1;
-	V v;
-	P t;
+  PF pf;
+  PFAD ad;
+  Obj a0,a1;
+  V v;
+  P t;
 
-	if ( evalef ) {
-		simplify_elemfunc_ins(ins,rp);
-		return;
-	}
-	pf = ins->pf; ad = ins->ad; a0 = ad[0].arg; a1 = ad[1].arg;	
-	if ( !a1 )
-		*rp = (Obj)ONE;
-	else if ( !a0 ) {
-		if ( RATN(a1) && SGN((Q)a1)>0 )
-			*rp = 0;
-		else if ( RATN(a1) && SGN((Q)a1) < 0 )
-			error("simplify_pow : division by 0");
-		else {
-			instoobj(ins,rp);
-		}
-	} else if ( NUM(a1) && INT(a1) )
-		arf_pwr(CO,a0,a1,rp);
-	else {
-		instoobj(ins,rp);
-	}
+  if ( evalef ) {
+    simplify_elemfunc_ins(ins,rp);
+    return;
+  }
+  pf = ins->pf; ad = ins->ad; a0 = ad[0].arg; a1 = ad[1].arg;  
+  if ( !a1 )
+    *rp = (Obj)ONE;
+  else if ( !a0 ) {
+    if ( RATN(a1) && SGN((Q)a1)>0 )
+      *rp = 0;
+    else if ( RATN(a1) && SGN((Q)a1) < 0 )
+      error("simplify_pow : division by 0");
+    else {
+      instoobj(ins,rp);
+    }
+  } else if ( NUM(a1) && INT(a1) )
+    arf_pwr(CO,a0,a1,rp);
+  else {
+    instoobj(ins,rp);
+  }
 }
 
 #define ISPFINS(p)\
@@ -329,127 +329,127 @@ void Pfunctor(arg,rp)
 NODE arg;
 P *rp;
 {
-	P p;
-	FUNC t;
-	PF pf;
-	PFINS ins;
+  P p;
+  FUNC t;
+  PF pf;
+  PFINS ins;
 
-	p = (P)ARG0(arg);
-	if ( !ISPFINS(p) )
-		*rp = 0;
-	else {
-		ins = (PFINS)VR(p)->priv; pf = ins->pf;
-		t = (FUNC)MALLOC(sizeof(struct oFUNC));
-		t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
-		t->f.puref = pf;
-		makesrvar(t,rp);
-	}
+  p = (P)ARG0(arg);
+  if ( !ISPFINS(p) )
+    *rp = 0;
+  else {
+    ins = (PFINS)VR(p)->priv; pf = ins->pf;
+    t = (FUNC)MALLOC(sizeof(struct oFUNC));
+    t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
+    t->f.puref = pf;
+    makesrvar(t,rp);
+  }
 }
 
 void Pargs(arg,rp)
 NODE arg;
 LIST *rp;
 {
-	P p;
-	PF pf;
-	PFAD ad;
-	PFINS ins;
-	NODE n,n0;
-	int i;
+  P p;
+  PF pf;
+  PFAD ad;
+  PFINS ins;
+  NODE n,n0;
+  int i;
 
-	p = (P)ARG0(arg);
-	if ( !ISPFINS(p) )
-		*rp = 0;
-	else {
-		ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
-		for ( i = 0, n0 = 0; i < pf->argc; i++ ) {
-			NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
-		}
-		if ( n0 )
-			NEXT(n) = 0;
-		MKLIST(*rp,n0);	
-	}
+  p = (P)ARG0(arg);
+  if ( !ISPFINS(p) )
+    *rp = 0;
+  else {
+    ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
+    for ( i = 0, n0 = 0; i < pf->argc; i++ ) {
+      NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
+    }
+    if ( n0 )
+      NEXT(n) = 0;
+    MKLIST(*rp,n0);  
+  }
 }
 
 void Pfunargs(arg,rp)
 NODE arg;
 LIST *rp;
 {
-	P p;
-	P f;
-	FUNC t;
-	PF pf;
-	PFINS ins;
-	PFAD ad;
-	NODE n,n0;
-	int i;
+  P p;
+  P f;
+  FUNC t;
+  PF pf;
+  PFINS ins;
+  PFAD ad;
+  NODE n,n0;
+  int i;
 
-	p = (P)ARG0(arg);
-	if ( !ISPFINS(p) )
-		*rp = 0;
-	else {
-		ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
-		t = (FUNC)MALLOC(sizeof(struct oFUNC));
-		t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
-		t->f.puref = pf;
-		makesrvar(t,&f);
-		n = n0 = 0; NEXTNODE(n0,n); BDY(n) = (pointer)f;
-		for ( i = 0; i < pf->argc; i++ ) {
-			NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
-		}
-		NEXT(n) = 0;
-		MKLIST(*rp,n0);	
-	}
+  p = (P)ARG0(arg);
+  if ( !ISPFINS(p) )
+    *rp = 0;
+  else {
+    ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
+    t = (FUNC)MALLOC(sizeof(struct oFUNC));
+    t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
+    t->f.puref = pf;
+    makesrvar(t,&f);
+    n = n0 = 0; NEXTNODE(n0,n); BDY(n) = (pointer)f;
+    for ( i = 0; i < pf->argc; i++ ) {
+      NEXTNODE(n0,n); BDY(n) = (pointer)ad[i].arg;
+    }
+    NEXT(n) = 0;
+    MKLIST(*rp,n0);  
+  }
 }
 
 void Pfunargs_ext(arg,rp)
 NODE arg;
 LIST *rp;
 {
-	P p;
-	P f;
-	FUNC t;
-	PF pf;
-	PFINS ins;
-	PFAD ad;
-	NODE n,n0,d,d0,a,a0;
-	LIST alist,dlist;
-	Q q;
-	int i;
+  P p;
+  P f;
+  FUNC t;
+  PF pf;
+  PFINS ins;
+  PFAD ad;
+  NODE n,n0,d,d0,a,a0;
+  LIST alist,dlist;
+  Q q;
+  int i;
 
-	p = (P)ARG0(arg);
-	if ( !ISPFINS(p) )
-		*rp = 0;
-	else {
-		ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
-		t = (FUNC)MALLOC(sizeof(struct oFUNC));
-		t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
-		t->f.puref = pf;
-		makesrvar(t,&f);
+  p = (P)ARG0(arg);
+  if ( !ISPFINS(p) )
+    *rp = 0;
+  else {
+    ins = (PFINS)VR(p)->priv; ad = ins->ad; pf = ins->pf;
+    t = (FUNC)MALLOC(sizeof(struct oFUNC));
+    t->name = t->fullname = pf->name; t->id = A_PURE; t->argc = pf->argc;
+    t->f.puref = pf;
+    makesrvar(t,&f);
 
-		d0 = a0 = 0;
-		for ( i = 0; i < pf->argc; i++ ) {
-			NEXTNODE(d0,d); STOQ(ad[i].d,q); BDY(d) = (pointer)q;
-			NEXTNODE(a0,a); BDY(a) = (pointer)ad[i].arg;
-		}
-		NEXT(d) = 0; NEXT(a) = 0; MKLIST(alist,a0); MKLIST(dlist,d0);
+    d0 = a0 = 0;
+    for ( i = 0; i < pf->argc; i++ ) {
+      NEXTNODE(d0,d); STOQ(ad[i].d,q); BDY(d) = (pointer)q;
+      NEXTNODE(a0,a); BDY(a) = (pointer)ad[i].arg;
+    }
+    NEXT(d) = 0; NEXT(a) = 0; MKLIST(alist,a0); MKLIST(dlist,d0);
 
-		n0 = mknode(3,f,dlist,alist);
-		MKLIST(*rp,n0);	
-	}
+    n0 = mknode(3,f,dlist,alist);
+    MKLIST(*rp,n0);  
+  }
 }
 
 void Pvtype(arg,rp)
 NODE arg;
 Q *rp;
 {
-	P p;
+  P p;
 
-	p = (P)ARG0(arg);
-	if ( !p || ID(p) != O_P )
-		*rp = 0;
-	else
-		STOQ((int)VR(p)->attr,*rp);
+  p = (P)ARG0(arg);
+  if ( !p || ID(p) != O_P )
+    *rp = 0;
+  else
+    STOQ((int)VR(p)->attr,*rp);
 }
 
 extern NODE user_int_handler,user_quit_handler;
@@ -458,139 +458,139 @@ void Pregister_handler(arg,rp)
 NODE arg;
 Q *rp;
 {
-	P p;
-	V v;
-	NODE n;
-	FUNC func;
+  P p;
+  V v;
+  NODE n;
+  FUNC func;
 
-	p = (P)ARG0(arg);
-	if ( !p ) {
-		user_int_handler = 0;
-		*rp = 0;
-		return;
-	} else if ( OID(p) != 2 )
-		error("register_hanlder : invalid argument");
-	v = VR(p);
-	if ( (int)v->attr != V_SR )	
-		error("register_hanlder : no such function");
-	else {
-		func = (FUNC)v->priv;
-		if ( func->argc )
-			error("register_hanlder : the function must be with no argument");
-		else {
-			MKNODE(n,(pointer)func,user_int_handler);
-			user_int_handler = n;
-			*rp = ONE;
-		}
-	}
+  p = (P)ARG0(arg);
+  if ( !p ) {
+    user_int_handler = 0;
+    *rp = 0;
+    return;
+  } else if ( OID(p) != 2 )
+    error("register_hanlder : invalid argument");
+  v = VR(p);
+  if ( (int)v->attr != V_SR )  
+    error("register_hanlder : no such function");
+  else {
+    func = (FUNC)v->priv;
+    if ( func->argc )
+      error("register_hanlder : the function must be with no argument");
+    else {
+      MKNODE(n,(pointer)func,user_int_handler);
+      user_int_handler = n;
+      *rp = ONE;
+    }
+  }
 }
 
 void Padd_handler(arg,rp)
 NODE arg;
 Q *rp;
 {
-	P p;
-	V v;
-	NODE n;
-	FUNC func;
-	char *name;
-	NODE *hlistp;
+  P p;
+  V v;
+  NODE n;
+  FUNC func;
+  char *name;
+  NODE *hlistp;
 
-	asir_assert(ARG0(arg),O_STR,"add_handler");
-	name = BDY((STRING)ARG0(arg));
-	p = (P)ARG1(arg);
-	if ( !strcmp(name,"intr") )
-		hlistp = &user_int_handler;
-	else if ( !strcmp(name,"quit") )
-		hlistp = &user_quit_handler;
-	else
-		error("add_handler : invalid keyword (must be \"intr\" or \"quit\")");
-	if ( !p ) {
-		*hlistp = 0; *rp = 0;
-		return;
-	}
-	if ( OID(p) == 2 ) {
-		v = VR(p);
-		if ( (int)v->attr != V_SR )	
-			error("add_hanlder : no such function");
-		func = (FUNC)v->priv;
-	} else if ( OID(p) == O_STR ) {
-		gen_searchf_searchonly(BDY((STRING)p),&func);
-		if ( !func )
-			error("add_hanlder : no such function");
-	}
-	if ( func->argc )
-		error("register_hanlder : the function must be with no argument");
-	else {
-		MKNODE(n,(pointer)func,*hlistp);
-		*hlistp = n;
-		*rp = ONE;
-	}
+  asir_assert(ARG0(arg),O_STR,"add_handler");
+  name = BDY((STRING)ARG0(arg));
+  p = (P)ARG1(arg);
+  if ( !strcmp(name,"intr") )
+    hlistp = &user_int_handler;
+  else if ( !strcmp(name,"quit") )
+    hlistp = &user_quit_handler;
+  else
+    error("add_handler : invalid keyword (must be \"intr\" or \"quit\")");
+  if ( !p ) {
+    *hlistp = 0; *rp = 0;
+    return;
+  }
+  if ( OID(p) == 2 ) {
+    v = VR(p);
+    if ( (int)v->attr != V_SR )  
+      error("add_hanlder : no such function");
+    func = (FUNC)v->priv;
+  } else if ( OID(p) == O_STR ) {
+    gen_searchf_searchonly(BDY((STRING)p),&func);
+    if ( !func )
+      error("add_hanlder : no such function");
+  }
+  if ( func->argc )
+    error("register_hanlder : the function must be with no argument");
+  else {
+    MKNODE(n,(pointer)func,*hlistp);
+    *hlistp = n;
+    *rp = ONE;
+  }
 }
 
 void Plist_handler(arg,rp)
 NODE arg;
 LIST *rp;
 {
-	NODE r0,r,t;
-	char *name;
-	NODE hlist;
-	STRING fname;
+  NODE r0,r,t;
+  char *name;
+  NODE hlist;
+  STRING fname;
 
-	asir_assert(ARG0(arg),O_STR,"list_handler");
-	name = BDY((STRING)ARG0(arg));
-	if ( !strcmp(name,"intr") )
-		hlist = user_int_handler;
-	else if ( !strcmp(name,"quit") )
-		hlist = user_quit_handler;
-	else
-		error("list_handler : invalid keyword (must be \"intr\" or \"quit\")");
-	for ( r0 = 0, t = hlist; t; t = NEXT(t) ) {
-		NEXTNODE(r0,r);
-		MKSTR(fname,((FUNC)BDY(t))->fullname);
-		BDY(r) = (pointer)fname;
-	}
-	if ( r0 ) NEXT(r) = 0;
-	MKLIST(*rp,r0);
+  asir_assert(ARG0(arg),O_STR,"list_handler");
+  name = BDY((STRING)ARG0(arg));
+  if ( !strcmp(name,"intr") )
+    hlist = user_int_handler;
+  else if ( !strcmp(name,"quit") )
+    hlist = user_quit_handler;
+  else
+    error("list_handler : invalid keyword (must be \"intr\" or \"quit\")");
+  for ( r0 = 0, t = hlist; t; t = NEXT(t) ) {
+    NEXTNODE(r0,r);
+    MKSTR(fname,((FUNC)BDY(t))->fullname);
+    BDY(r) = (pointer)fname;
+  }
+  if ( r0 ) NEXT(r) = 0;
+  MKLIST(*rp,r0);
 }
 
 void Pclear_handler(arg,rp)
 NODE arg;
 Q *rp;
 {
-	NODE r0,r,t;
-	char *name;
-	NODE hlist;
-	STRING fname;
+  NODE r0,r,t;
+  char *name;
+  NODE hlist;
+  STRING fname;
 
-	asir_assert(ARG0(arg),O_STR,"clear_handler");
-	name = BDY((STRING)ARG0(arg));
-	if ( !strcmp(name,"intr") )
-		user_int_handler = 0;
-	else if ( !strcmp(name,"quit") )
-		user_quit_handler = 0;
-	else
-		error("clear_handler : invalid keyword (must be \"intr\" or \"quit\")");
-	*rp = 0;
+  asir_assert(ARG0(arg),O_STR,"clear_handler");
+  name = BDY((STRING)ARG0(arg));
+  if ( !strcmp(name,"intr") )
+    user_int_handler = 0;
+  else if ( !strcmp(name,"quit") )
+    user_quit_handler = 0;
+  else
+    error("clear_handler : invalid keyword (must be \"intr\" or \"quit\")");
+  *rp = 0;
 }
 
 void Pcall(NODE arg,Obj *rp)
 {
-	P p;
-	V v;
+  P p;
+  V v;
     NODE n,n1;
     LIST list;
     VECT vect;
     pointer *a;
     int len,i;
 
-	p = (P)ARG0(arg);
-	if ( !p || OID(p) != 2 )
-		error("call : invalid argument");
-	v = VR(p);
-	if ( (int)v->attr != V_SR )	
-		error("call : no such function");
-	else {
+  p = (P)ARG0(arg);
+  if ( !p || OID(p) != 2 )
+    error("call : invalid argument");
+  v = VR(p);
+  if ( (int)v->attr != V_SR )  
+    error("call : no such function");
+  else {
         list = (LIST) ARG1(arg);
         if ( list ) {
             switch (OID(list)) {
@@ -609,189 +609,189 @@ void Pcall(NODE arg,Obj *rp)
             }
         }           
         error("call : invalid argument");
-	}
+  }
 }
 
 /* at=position of arg to be used for iteration */
 
 void Pmapat(NODE arg,Obj *rp)
 {
-	LIST args;
-	NODE node,rest,t0,t,n,r,r0;
-	P fpoly;
-	V fvar;
-	FUNC f;
-	VECT v,rv;
-	MAT m,rm;
-	LIST rl;
-	int len,row,col,i,j,pos;
-	Obj iter;
-	pointer val;
-	NODE option;
+  LIST args;
+  NODE node,rest,t0,t,n,r,r0;
+  P fpoly;
+  V fvar;
+  FUNC f;
+  VECT v,rv;
+  MAT m,rm;
+  LIST rl;
+  int len,row,col,i,j,pos;
+  Obj iter;
+  pointer val;
+  NODE option;
 
-	option = current_option;
+  option = current_option;
 
-	if ( argc(arg) < 3 )
-		error("mapat : too few arguments");
+  if ( argc(arg) < 3 )
+    error("mapat : too few arguments");
 
-	fpoly = (P)ARG0(arg);
-	if ( !fpoly || OID(fpoly) != O_P )
-		error("mapat : invalid function specification");
-	fvar = VR(fpoly);
-	if ( fvar->attr != (pointer)V_SR || !(f=(FUNC)fvar->priv) )
-		error("mapat : invalid function specification");
-	if ( !INT(ARG1(arg)) )
-		error("mapat : invalid position");
-	pos = QTOS((Q)ARG1(arg));
-	node = NEXT(NEXT(arg));
-	len = length(node);
-	if ( pos >= len )
-		error("evalmapatf : invalid position");
-	r0 = 0;
-	for ( i = 0, t = node; i < pos; i++, t = NEXT(t) ) {
-		NEXTNODE(r0,r);
-		BDY(r) = BDY(t);
-	}
-	NEXTNODE(r0,r);
-	iter = BDY(t); rest = NEXT(t);
-	if ( !iter ) {
-		*rp = bevalf_with_opts(f,node,option);
-		return;
-	}
-	switch ( OID(iter) ) {
-		case O_VECT:
-			v = (VECT)iter; len = v->len; MKVECT(rv,len);
-			for ( i = 0; i < len; i++ ) {
-				BDY(r) = BDY(v)[i]; NEXT(r) = rest;
-				BDY(rv)[i] = bevalf_with_opts(f,r0,option);
-			}
-			*rp = (Obj)rv;
-			break;
-		case O_MAT:
-			m = (MAT)iter; row = m->row; col = m->col; MKMAT(rm,row,col);
-			for ( i = 0; i < row; i++ )
-				for ( j = 0; j < col; j++ ) {
-					BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
-					BDY(rm)[i][j] = bevalf_with_opts(f,r0,option);
-				}
-			*rp = (Obj)rm;
-			break;
-		case O_LIST:
-			n = BDY((LIST)iter);
-			for ( t0 = t = 0; n; n = NEXT(n) ) {
-				BDY(r) = BDY(n); NEXT(r) = rest;
-				NEXTNODE(t0,t); BDY(t) = bevalf_with_opts(f,r0,option);
-			}
-			if ( t0 )
-				NEXT(t) = 0;
-			MKLIST(rl,t0);
-			*rp = (Obj)rl;
-			break;
-		default:
-			*rp = bevalf_with_opts(f,node,option);
-			break;
-	}
+  fpoly = (P)ARG0(arg);
+  if ( !fpoly || OID(fpoly) != O_P )
+    error("mapat : invalid function specification");
+  fvar = VR(fpoly);
+  if ( fvar->attr != (pointer)V_SR || !(f=(FUNC)fvar->priv) )
+    error("mapat : invalid function specification");
+  if ( !INT(ARG1(arg)) )
+    error("mapat : invalid position");
+  pos = QTOS((Q)ARG1(arg));
+  node = NEXT(NEXT(arg));
+  len = length(node);
+  if ( pos >= len )
+    error("evalmapatf : invalid position");
+  r0 = 0;
+  for ( i = 0, t = node; i < pos; i++, t = NEXT(t) ) {
+    NEXTNODE(r0,r);
+    BDY(r) = BDY(t);
+  }
+  NEXTNODE(r0,r);
+  iter = BDY(t); rest = NEXT(t);
+  if ( !iter ) {
+    *rp = bevalf_with_opts(f,node,option);
+    return;
+  }
+  switch ( OID(iter) ) {
+    case O_VECT:
+      v = (VECT)iter; len = v->len; MKVECT(rv,len);
+      for ( i = 0; i < len; i++ ) {
+        BDY(r) = BDY(v)[i]; NEXT(r) = rest;
+        BDY(rv)[i] = bevalf_with_opts(f,r0,option);
+      }
+      *rp = (Obj)rv;
+      break;
+    case O_MAT:
+      m = (MAT)iter; row = m->row; col = m->col; MKMAT(rm,row,col);
+      for ( i = 0; i < row; i++ )
+        for ( j = 0; j < col; j++ ) {
+          BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
+          BDY(rm)[i][j] = bevalf_with_opts(f,r0,option);
+        }
+      *rp = (Obj)rm;
+      break;
+    case O_LIST:
+      n = BDY((LIST)iter);
+      for ( t0 = t = 0; n; n = NEXT(n) ) {
+        BDY(r) = BDY(n); NEXT(r) = rest;
+        NEXTNODE(t0,t); BDY(t) = bevalf_with_opts(f,r0,option);
+      }
+      if ( t0 )
+        NEXT(t) = 0;
+      MKLIST(rl,t0);
+      *rp = (Obj)rl;
+      break;
+    default:
+      *rp = bevalf_with_opts(f,node,option);
+      break;
+  }
 }
 
 /* An implementation of 'map' as builtin function. */
 void Pmap(NODE arg,Obj *rp)
 {
-	LIST args;
-	NODE node,rest,t0,t,n,r,r0;
-	P fpoly;
-	V fvar;
-	FUNC f;
-	VECT v,rv;
-	MAT m,rm;
-	LIST rl;
-	int len,row,col,i,j;
-	Obj iter;
-	pointer val;
-	NODE option;
+  LIST args;
+  NODE node,rest,t0,t,n,r,r0;
+  P fpoly;
+  V fvar;
+  FUNC f;
+  VECT v,rv;
+  MAT m,rm;
+  LIST rl;
+  int len,row,col,i,j;
+  Obj iter;
+  pointer val;
+  NODE option;
 
-	option = current_option;
+  option = current_option;
 
-	if ( argc(arg) < 2 )
-		error("mapat : too few arguments");
+  if ( argc(arg) < 2 )
+    error("mapat : too few arguments");
 
-	fpoly = (P)ARG0(arg);
-	if ( !fpoly || OID(fpoly) != O_P )
-		error("map : invalid function specification");
-	fvar = VR(fpoly);
-	if ( fvar->attr != (pointer)V_SR || !(f=(FUNC)fvar->priv) )
-		error("map : invalid function specification");
+  fpoly = (P)ARG0(arg);
+  if ( !fpoly || OID(fpoly) != O_P )
+    error("map : invalid function specification");
+  fvar = VR(fpoly);
+  if ( fvar->attr != (pointer)V_SR || !(f=(FUNC)fvar->priv) )
+    error("map : invalid function specification");
 
-	node = NEXT(arg);
-	len = length(node);
-	if ( 0 >= len )
-		error("evalmapf : invalid position");
-	r0 = 0;
-	NEXTNODE(r0,r);
-	iter = BDY(node); rest = NEXT(node);
-	if ( !iter ) {
-		*rp = bevalf_with_opts(f,node,option);
-		return;
-	}
-	switch ( OID(iter) ) {
-		case O_VECT:
-			v = (VECT)iter; len = v->len; MKVECT(rv,len);
-			for ( i = 0; i < len; i++ ) {
-				BDY(r) = BDY(v)[i]; NEXT(r) = rest;
-				BDY(rv)[i] = bevalf_with_opts(f,r0,option);
-			}
-			*rp = (Obj)rv;
-			break;
-		case O_MAT:
-			m = (MAT)iter; row = m->row; col = m->col; MKMAT(rm,row,col);
-			for ( i = 0; i < row; i++ )
-				for ( j = 0; j < col; j++ ) {
-					BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
-					BDY(rm)[i][j] = bevalf_with_opts(f,r0,option);
-				}
-			*rp = (Obj)rm;
-			break;
-		case O_LIST:
-			n = BDY((LIST)iter);
-			for ( t0 = t = 0; n; n = NEXT(n) ) {
-				BDY(r) = BDY(n); NEXT(r) = rest;
-				NEXTNODE(t0,t); BDY(t) = bevalf_with_opts(f,r0,option);
-			}
-			if ( t0 )
-				NEXT(t) = 0;
-			MKLIST(rl,t0);
-			*rp = (Obj)rl;
-			break;
-		default:
-			*rp = bevalf_with_opts(f,node,option);
-			break;
-	}
+  node = NEXT(arg);
+  len = length(node);
+  if ( 0 >= len )
+    error("evalmapf : invalid position");
+  r0 = 0;
+  NEXTNODE(r0,r);
+  iter = BDY(node); rest = NEXT(node);
+  if ( !iter ) {
+    *rp = bevalf_with_opts(f,node,option);
+    return;
+  }
+  switch ( OID(iter) ) {
+    case O_VECT:
+      v = (VECT)iter; len = v->len; MKVECT(rv,len);
+      for ( i = 0; i < len; i++ ) {
+        BDY(r) = BDY(v)[i]; NEXT(r) = rest;
+        BDY(rv)[i] = bevalf_with_opts(f,r0,option);
+      }
+      *rp = (Obj)rv;
+      break;
+    case O_MAT:
+      m = (MAT)iter; row = m->row; col = m->col; MKMAT(rm,row,col);
+      for ( i = 0; i < row; i++ )
+        for ( j = 0; j < col; j++ ) {
+          BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
+          BDY(rm)[i][j] = bevalf_with_opts(f,r0,option);
+        }
+      *rp = (Obj)rm;
+      break;
+    case O_LIST:
+      n = BDY((LIST)iter);
+      for ( t0 = t = 0; n; n = NEXT(n) ) {
+        BDY(r) = BDY(n); NEXT(r) = rest;
+        NEXTNODE(t0,t); BDY(t) = bevalf_with_opts(f,r0,option);
+      }
+      if ( t0 )
+        NEXT(t) = 0;
+      MKLIST(rl,t0);
+      *rp = (Obj)rl;
+      break;
+    default:
+      *rp = bevalf_with_opts(f,node,option);
+      break;
+  }
 }
 
 void Pdeval(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	asir_assert(ARG0(arg),O_R,"deval");
-	devalr(CO,(Obj)ARG0(arg),rp);
+  asir_assert(ARG0(arg),O_R,"deval");
+  devalr(CO,(Obj)ARG0(arg),rp);
 }
 
 void Peval_quote(arg,rp)
 NODE arg;
 Obj *rp;
 {
-	FNODE a;
-	QUOTE q;
-	Obj f;
+  FNODE a;
+  QUOTE q;
+  Obj f;
 
-	f = (Obj)ARG0(arg);
-	if ( !f || OID(f) != O_QUOTE ) {
-		*rp = f;
-		return;
-	}
-	if ( argc(arg) == 2 && ARG1(arg) ) {
-		a = partial_eval((FNODE)BDY((QUOTE)ARG0(arg)));
-		MKQUOTE(q,a);
-		*rp = (Obj)q;
-	} else
-		*rp = eval((FNODE)BDY((QUOTE)ARG0(arg)));
+  f = (Obj)ARG0(arg);
+  if ( !f || OID(f) != O_QUOTE ) {
+    *rp = f;
+    return;
+  }
+  if ( argc(arg) == 2 && ARG1(arg) ) {
+    a = partial_eval((FNODE)BDY((QUOTE)ARG0(arg)));
+    MKQUOTE(q,a);
+    *rp = (Obj)q;
+  } else
+    *rp = eval((FNODE)BDY((QUOTE)ARG0(arg)));
 }

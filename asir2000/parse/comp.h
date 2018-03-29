@@ -45,25 +45,25 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.h,v 1.3 2000/08/22 05:04:25 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.h,v 1.4 2000/09/21 09:19:27 noro Exp $ 
 */
 struct comp_arf {
-	FUNC add,sub,mul,div,pwr,chsgn,comp;
+  FUNC add,sub,mul,div,pwr,chsgn,comp;
 };
 
 struct oSDEF {
-	char *name;
-	int n;
-	struct comp_arf arf;
-	char **member;
+  char *name;
+  int n;
+  struct comp_arf arf;
+  char **member;
 };
 
 typedef struct oSDEF *SDEF;
 
 struct oSS {
-	int n;
-	int asize;
-	struct oSDEF *sa;
+  int n;
+  int asize;
+  struct oSDEF *sa;
 };
 
 typedef struct oSS *SS;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.c,v 1.6 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.c,v 1.7 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include <stdio.h>
 #include <ctype.h>
@@ -328,33 +328,33 @@ void read_formals(void)
        nargs ++;
        c = getnonspace();
        if (c == ')')
-	{ return;
-	}
+  { return;
+  }
        else if (c != ',')
-	{ err_head();
-	  fprintf(stderr,"invalid macro parameter delimiter\n");
-	}
+  { err_head();
+    fprintf(stderr,"invalid macro parameter delimiter\n");
+  }
      }
     else
      { c = Get();
        if ((c == ')') && (nargs == 0))
-	{ return;
-	}
+  { return;
+  }
        else
-	{ Push(c);
-	}
+  { Push(c);
+  }
        err_head();
        fprintf(stderr,"missing/illegal macro parameter\n");
        while (1)
-	{ c = Get();
-	  if (c == ')')
-	   { return;
-	   }
-	  if (isbsymchar(c))
-	   { Push(c);
-	     break;
-	   }
-	}
+  { c = Get();
+    if (c == ')')
+     { return;
+     }
+    if (isbsymchar(c))
+     { Push(c);
+       break;
+     }
+  }
      }
   }
 }
@@ -376,23 +376,23 @@ void do_define(int sharp, int redef)
   { char e = '\0';
     if (sharp)
      { while (1)
-	{ c = e;
-	  e = Get();
-	  if (e == '\n')
-	   { if (c == '\\')
-	      { maybe_print('\n');
-	      }
-	     else
-	      { break;
-	      }
-	   }
-	}
+  { c = e;
+    e = Get();
+    if (e == '\n')
+     { if (c == '\\')
+        { maybe_print('\n');
+        }
+       else
+        { break;
+        }
+     }
+  }
      }
     else
      { do
-	{ c = e;
-	  e = Get();
-	} while ((c != '@') || (e == '@'));
+  { c = e;
+    e = Get();
+  } while ((c != '@') || (e == '@'));
        Push(e);
      }
     return;
@@ -429,99 +429,99 @@ void do_define(int sharp, int redef)
   { while (1)
      { c = Get();
        if (quoted && (c == '\n'))
-	{ quoted = 0;
-	  maybe_print('\n');
-	}
+  { quoted = 0;
+    maybe_print('\n');
+  }
        else if (quoted)
-	{ accum_char(acc,'\\');
-	  accum_char(acc,c);
-	  quoted = 0;
-	}
+  { accum_char(acc,'\\');
+    accum_char(acc,c);
+    quoted = 0;
+  }
        else if (c == '/')
-	{ char d = Get();
-	  accum_char(acc,'/');
-	  if (d == '*')
-	   { accum_char(acc,'*');
-	     incomment = 1;
-	   }
-	  else
-	   { Push(d);
-	   }
-	}
+  { char d = Get();
+    accum_char(acc,'/');
+    if (d == '*')
+     { accum_char(acc,'*');
+       incomment = 1;
+     }
+    else
+     { Push(d);
+     }
+  }
        else if (incomment)
-	{ accum_char(acc,c);
-	  if (c == '*')
-	   { char d = Get();
-	     if (d == '/')
-	      { accum_char(acc,'/');
-		incomment = 0;
-	      }
-	     else
-	      { Push(d);
-	      }
-	   }
-	  else if (c == '\n')
-	   { maybe_print('\n');
-	   }
-	}
-       else if (c == '\\')
-	{ quoted = 1;
-	}
-       else if (c == '\n')
-	{ break;
-	}
+  { accum_char(acc,c);
+    if (c == '*')
+     { char d = Get();
+       if (d == '/')
+        { accum_char(acc,'/');
+    incomment = 0;
+        }
        else
-	{ accum_char(acc,c);
-	}
+        { Push(d);
+        }
+     }
+    else if (c == '\n')
+     { maybe_print('\n');
+     }
+  }
+       else if (c == '\\')
+  { quoted = 1;
+  }
+       else if (c == '\n')
+  { break;
+  }
+       else
+  { accum_char(acc,c);
+  }
      }
   }
  else
   { while (1)
      { c = Get();
        if (quoted && (c == '@'))
-	{ accum_char(acc,'@');
-	  quoted = 0;
-	}
+  { accum_char(acc,'@');
+    quoted = 0;
+  }
        else if (quoted)
-	{ Push(c);
-	  break;
-	}
+  { Push(c);
+    break;
+  }
        else if (c == '/')
-	{ char d = Get();
-	  accum_char(acc,'/');
-	  if (d == '*')
-	   { accum_char(acc,'*');
-	     incomment = 1;
-	   }
-	  else
-	   { Push(d);
-	   }
-	}
+  { char d = Get();
+    accum_char(acc,'/');
+    if (d == '*')
+     { accum_char(acc,'*');
+       incomment = 1;
+     }
+    else
+     { Push(d);
+     }
+  }
        else if (incomment)
-	{ accum_char(acc,c);
-	  if (c == '*')
-	   { char d = Get();
-	     if (d == '/')
-	      { accum_char(acc,'/');
-		incomment = 0;
-	      }
-	     else
-	      { Push(d);
-	      }
-	   }
-	  else if (c == '\n')
-	   { maybe_print('\n');
-	   }
-	}
-       else if (c == '@')
-	{ quoted = 1;
-	}
+  { accum_char(acc,c);
+    if (c == '*')
+     { char d = Get();
+       if (d == '/')
+        { accum_char(acc,'/');
+    incomment = 0;
+        }
        else
-	{ if (c == '\n')
-	   { maybe_print('\n');
-	   }
-	  accum_char(acc,c);
-	}
+        { Push(d);
+        }
+     }
+    else if (c == '\n')
+     { maybe_print('\n');
+     }
+  }
+       else if (c == '@')
+  { quoted = 1;
+  }
+       else
+  { if (c == '\n')
+     { maybe_print('\n');
+     }
+    accum_char(acc,c);
+  }
      }
   }
  repl = (unsigned char *) accum_result(acc);
@@ -533,19 +533,19 @@ void do_define(int sharp, int redef)
        c = *g;
        *g = '\0';
        for (i=0;i<nargs;i++)
-	{ if (strcmp((char *)f,argnames[i]) == 0)
-	   { break;
-	   }
-	}
+  { if (strcmp((char *)f,argnames[i]) == 0)
+     { break;
+     }
+  }
        if (i < nargs)
-	{ *t++ = 0x80 | i;
-	  f = g;
-	}
+  { *t++ = 0x80 | i;
+    f = g;
+  }
        else
-	{ while (*t++ = *f++) ;
-	  f --;
-	  t --;
-	}
+  { while (*t++ = *f++) ;
+    f --;
+    t --;
+  }
        *g = c;
      }
     else if ((f[0] == '/') && (f[1] == '*'))
@@ -590,8 +590,8 @@ void do_dump(void)
  extern int fstackdepth;
 
  fprintf(stderr,
-	"\n\n\tDump of definition table (%d entries in %d buckets):\n\n",
-						n_in_table,symtbl_size);
+  "\n\n\tDump of definition table (%d entries in %d buckets):\n\n",
+            n_in_table,symtbl_size);
  for (i=0;i<symtbl_size;i++)
   { fprintf(stderr,"Bucket %d:\n",i);
     for (d=symtbl[i];d;d=d->link)
@@ -733,46 +733,46 @@ void read_actuals(DEF *d)
        c = Get();
        accum_char(acc,c);
        if (comment)
-	{ if ((last == '*') && (c == '/'))
-	   { comment = 0;
-	   }
-	}
+  { if ((last == '*') && (c == '/'))
+     { comment = 0;
+     }
+  }
        else
-	{ if (backslash)
-	   { backslash = 0;
-	   }
-	  else if (quote && (c == quote))
-	   { quote = 0;
-	   }
-	  else if (c == '\\')
-	   { backslash = 1;
-	   }
-	  else if (quote)
-	   {
-	   }
-	  else if ((last == '/') && (c == '*'))
-	   { comment = 1;
-	   }
-	  else if ((c == '\'') || (c == '"'))
-	   { quote = c;
-	   }
-	  else if (c == '(')
-	   { pc ++;
-	   }
-	  else if (c == ')')
-	   { if (pc > 0)
-	      { pc --;
-	      }
-	     else
-	      { accum_regret(acc);
-		break;
-	      }
-	   }
-	  else if ((c == ',') && (pc == 0))
-	   { accum_regret(acc);
-	     break;
-	   }
-	}
+  { if (backslash)
+     { backslash = 0;
+     }
+    else if (quote && (c == quote))
+     { quote = 0;
+     }
+    else if (c == '\\')
+     { backslash = 1;
+     }
+    else if (quote)
+     {
+     }
+    else if ((last == '/') && (c == '*'))
+     { comment = 1;
+     }
+    else if ((c == '\'') || (c == '"'))
+     { quote = c;
+     }
+    else if (c == '(')
+     { pc ++;
+     }
+    else if (c == ')')
+     { if (pc > 0)
+        { pc --;
+        }
+       else
+        { accum_regret(acc);
+    break;
+        }
+     }
+    else if ((c == ',') && (pc == 0))
+     { accum_regret(acc);
+       break;
+     }
+  }
      }
     if (i < n)
      { actuals[i] = accum_result(acc);
@@ -823,9 +823,9 @@ void expand_def(DEF *d)
     else if (d->nargs > 0)
      { int i;
        for (i=0;i<d->nargs;i++)
-	{ outputc((char)(i?',':'('));
-	  outputs(actuals[i]);
-	}
+  { outputc((char)(i?',':'('));
+    outputs(actuals[i]);
+  }
        outputc(')');
      }
     outputs("-->");
@@ -842,8 +842,8 @@ void expand_def(DEF *d)
        int i;
        i = *cp & ~0x80;
        for (dp=actuals[i];*dp;dp++)
-	{ accum_char(result,*dp);
-	}
+  { accum_char(result,*dp);
+  }
      }
     else
      { accum_char(result,*cp);
@@ -867,9 +867,9 @@ void expand_def(DEF *d)
   { if (!incomm && (last == '/') && (*ep == '*'))
      { incomm = 1;
        if (!keep_comments || (strncmp(ep,"**/",3) == 0))
-	{ accum_regret(result);
-	  ok = 0;
-	}
+  { accum_regret(result);
+    ok = 0;
+  }
      }
     if (ok)
      { accum_char(result,*ep);
@@ -914,24 +914,24 @@ void expand_def(DEF *d)
 #define AND TWOCHAR('&','&')
 #define OR  TWOCHAR('|','|')
 
-#define ALLBINS		\
-	BIN('*',*)	\
-	BIN('/',/)	\
-	BIN('%',%)	\
-	BIN('+',+)	\
-	BIN(LSH,<<)	\
-	BIN(RSH,>>)	\
-	BIN('<',<)	\
-	BIN('>',>)	\
-	BIN(LEQ,<=)	\
-	BIN(GEQ,>=)	\
-	BIN(EQL,==)	\
-	BIN(NEQ,!=)	\
-	BIN('&',&)	\
-	BIN('^',^)	\
-	BIN('|',|)	\
-	BIN(AND,&&)	\
-	BIN(OR ,||)
+#define ALLBINS    \
+  BIN('*',*)  \
+  BIN('/',/)  \
+  BIN('%',%)  \
+  BIN('+',+)  \
+  BIN(LSH,<<)  \
+  BIN(RSH,>>)  \
+  BIN('<',<)  \
+  BIN('>',>)  \
+  BIN(LEQ,<=)  \
+  BIN(GEQ,>=)  \
+  BIN(EQL,==)  \
+  BIN(NEQ,!=)  \
+  BIN('&',&)  \
+  BIN('^',^)  \
+  BIN('|',|)  \
+  BIN(AND,&&)  \
+  BIN(OR ,||)
 
 char *Index(char *s, int c);
 
@@ -951,8 +951,8 @@ void free_expr(NODE *n)
        break;
     case '-':
        if (n->left)
-	{ free_expr(n->left);
-	}
+  { free_expr(n->left);
+  }
        free_expr(n->right);
        break;
     case '!':
@@ -982,11 +982,11 @@ int exec_free(NODE *n)
        break;
     case '-':
        if (n->left)
-	{ rv = exec_free(n->left);
-	}
+  { rv = exec_free(n->left);
+  }
        else
-	{ rv = 0;
-	}
+  { rv = 0;
+  }
        rv -= exec_free(n->right);
        break;
     case '!':
@@ -1017,11 +1017,11 @@ int exec_nofree(NODE *n)
        break;
     case '-':
        if (n->left)
-	{ rv = exec_nofree(n->left);
-	}
+  { rv = exec_nofree(n->left);
+  }
        else
-	{ rv = 0;
-	}
+  { rv = 0;
+  }
        rv -= exec_nofree(n->right);
        break;
     case '!':
@@ -1103,11 +1103,11 @@ int get_quote_char(void)
      { d = (d << 3) + c - '0';
        c = Get();
        if ((c >= '0') && (c <= '7'))
-	{ d = (d << 3) + c - '0';
-	}
+  { d = (d << 3) + c - '0';
+  }
        else
-	{ Push(c);
-	}
+  { Push(c);
+  }
      }
     else
      { Push(c);
@@ -1158,20 +1158,20 @@ NODE *read_expr_11(void)
        NODE *read_expr_(void);
 #ifdef DEBUG_EXPR
        if (debugging)
-	{ outputs("()");
-	}
+  { outputs("()");
+  }
 #endif
        n = read_expr_();
        c = getnhsexpand();
        if (c != ')')
-	{ err_head();
-	  fprintf(stderr,"expression syntax error -- missing ) supplied\n");
-	  Push(c);
-	}
+  { err_head();
+    fprintf(stderr,"expression syntax error -- missing ) supplied\n");
+    Push(c);
+  }
 #ifdef DEBUG_EXPR
        if (debugging)
-	{ outputs("~");
-	}
+  { outputs("~");
+  }
 #endif
        return(n);
      }
@@ -1179,44 +1179,44 @@ NODE *read_expr_11(void)
      { int base;
        static char digits[] = "0123456789abcdefABCDEF";
        static char values[] =
-		"\0\1\2\3\4\5\6\7\10\11\12\13\14\15\16\17\12\13\14\15\16\17";
+    "\0\1\2\3\4\5\6\7\10\11\12\13\14\15\16\17\12\13\14\15\16\17";
        char *d;
        int v;
 #ifdef DEBUG_EXPR
        if (debugging)
-	{ outputs("N");
-	}
+  { outputs("N");
+  }
 #endif
        base = 10;
        if (c == '0')
-	{ base = 8;
-	  c = Get();
-	  if ((c == 'x') || (c == 'X'))
-	   { base = 16;
-	     c = Get();
-	   }
-	}
+  { base = 8;
+    c = Get();
+    if ((c == 'x') || (c == 'X'))
+     { base = 16;
+       c = Get();
+     }
+  }
        v = 0;
        while (1)
-	{ d = Index(digits,c);
-	  if (d == 0)
-	   { Push(c);
+  { d = Index(digits,c);
+    if (d == 0)
+     { Push(c);
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputd(v);
-		outputs("~");
-	      }
+       if (debugging)
+        { outputd(v);
+    outputs("~");
+        }
 #endif
-	     return(newleaf(v));
-	   }
-	  else if (values[d-digits] >= base)
-	   { err_head();
-	     fprintf(stderr,"warning: illegal %sdigit `%c'\n",
-			(base==16)?"hex ":(base==8)?"octal ":"",c);
-	   }
-	  v = (v * base) + values[d-digits];
-	  c = Get();
-	}
+       return(newleaf(v));
+     }
+    else if (values[d-digits] >= base)
+     { err_head();
+       fprintf(stderr,"warning: illegal %sdigit `%c'\n",
+      (base==16)?"hex ":(base==8)?"octal ":"",c);
+     }
+    v = (v * base) + values[d-digits];
+    c = Get();
+  }
      }
     else if (c == '\'')
      { int i;
@@ -1225,17 +1225,17 @@ NODE *read_expr_11(void)
        i = 0;
        n = 0;
        while (1)
-	{ j = get_quote_char();
-	  if (j < 0)
-	   { break;
-	   }
-	  i = (i << 8) | j;
-	  n ++;
-	}
+  { j = get_quote_char();
+    if (j < 0)
+     { break;
+     }
+    i = (i << 8) | j;
+    n ++;
+  }
        if (n > 4)
-	{ err_head();
-	  fprintf(stderr,"warning: too many characters in character constant\n");
-	}
+  { err_head();
+    fprintf(stderr,"warning: too many characters in character constant\n");
+  }
        return(newleaf(i));
      }
     else if ((c == '\n') && !sharp)
@@ -1244,28 +1244,28 @@ NODE *read_expr_11(void)
     else
      { char *id;
        if (complain)
-	{ err_head();
-	  fprintf(stderr,"expression syntax error -- number expected\n");
-	}
+  { err_head();
+    fprintf(stderr,"expression syntax error -- number expected\n");
+  }
        if (isbsymchar(c))
-	{ Push(c);
-	  id = read_ident();
-	}
+  { Push(c);
+    id = read_ident();
+  }
        else
-	{ id = 0;
-	}
+  { id = 0;
+  }
 #ifdef DEBUG_EXPR
        if (debugging)
-	{ outputs("0(");
-	  outputc(c);
-	  outputs(":");
-	  outputs(id?id:"(none)");
-	  outputs(")~");
-	}
+  { outputs("0(");
+    outputc(c);
+    outputs(":");
+    outputs(id?id:"(none)");
+    outputs(")~");
+  }
 #endif
        if (id)
-	{ free(id);
-	}
+  { free(id);
+  }
        return(newleaf(0));
      }
   }
@@ -1289,74 +1289,74 @@ NODE *read_expr_10(void)
        case '~':
        case '!':
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputc(c);
-	   }
+    if (debugging)
+     { outputc(c);
+     }
 #endif
-	  n = read_expr_10();
+    n = read_expr_10();
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  return(newnode(0,c,n));
-	  break;
+    return(newnode(0,c,n));
+    break;
        case 'd':
-	  Push(c);
-	  input_mark();
-	  w = read_ident();
-	  if (strcmp(w,"defined") == 0)
-	   { c = getnonspace();
-	     if (c == '(')
-	      { char *id;
-		id = read_ident();
-		if (id)
-		 { c = getnonspace();
-		   if (c == ')')
-		    { input_unmark();
+    Push(c);
+    input_mark();
+    w = read_ident();
+    if (strcmp(w,"defined") == 0)
+     { c = getnonspace();
+       if (c == '(')
+        { char *id;
+    id = read_ident();
+    if (id)
+     { c = getnonspace();
+       if (c == ')')
+        { input_unmark();
 #ifdef DEBUG_EXPR
-		      if (debugging)
-		       { outputs("ifdef");
-		       }
+          if (debugging)
+           { outputs("ifdef");
+           }
 #endif
-		      return(newname(id));
-		    }
-		 }
-	      }
-	     else if (isbsymchar(c))
-	      { char *id;
-		Push(c);
-		id = read_ident();
-		if (id)
-		 { input_unmark();
+          return(newname(id));
+        }
+     }
+        }
+       else if (isbsymchar(c))
+        { char *id;
+    Push(c);
+    id = read_ident();
+    if (id)
+     { input_unmark();
 #ifdef DEBUG_EXPR
-		   if (debugging)
-		    { outputs("ifdef");
-		    }
+       if (debugging)
+        { outputs("ifdef");
+        }
 #endif
-		   return(newname(id));
-		 }
-	      }
-	   }
-	  input_recover();
-	  n = read_expr_11();
+       return(newname(id));
+     }
+        }
+     }
+    input_recover();
+    n = read_expr_11();
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  return(n);
-	  break;
+    return(n);
+    break;
        default:
-	  Push(c);
-	  n = read_expr_11();
+    Push(c);
+    n = read_expr_11();
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  return(n);
-	  break;
+    return(n);
+    break;
      }
   }
 }
@@ -1380,22 +1380,22 @@ NODE *read_expr_9(void)
        case '/':
        case '%':
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputc(c);
-	   }
+    if (debugging)
+     { outputc(c);
+     }
 #endif
-	  r = read_expr_10();
-	  l = newnode(l,c,r);
-	  break;
+    r = read_expr_10();
+    l = newnode(l,c,r);
+    break;
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1418,22 +1418,22 @@ NODE *read_expr_8(void)
      { case '+':
        case '-':
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputc(c);
-	   }
+    if (debugging)
+     { outputc(c);
+     }
 #endif
-	  r = read_expr_9();
-	  l = newnode(l,c,r);
-	  break;
+    r = read_expr_9();
+    l = newnode(l,c,r);
+    break;
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1456,30 +1456,30 @@ NODE *read_expr_7(void)
     switch (c)
      { case '<':
        case '>':
-	  d = Get();
-	  if (d == c)
-	   {
+    d = Get();
+    if (d == c)
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-		outputc(d);
-	      }
+       if (debugging)
+        { outputc(c);
+    outputc(d);
+        }
 #endif
-	     r = read_expr_8();
-	     l = newnode(l,(c=='<')?LSH:RSH,r);
-	     break;
-	   }
-	  Push(d);
-	  /* fall through ... */
+       r = read_expr_8();
+       l = newnode(l,(c=='<')?LSH:RSH,r);
+       break;
+     }
+    Push(d);
+    /* fall through ... */
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1502,39 +1502,39 @@ NODE *read_expr_6(void)
     switch (c)
      { case '<':
        case '>':
-	  d = Get();
-	  if (d == '=')
-	   {
+    d = Get();
+    if (d == '=')
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-		outputc(d);
-	      }
+       if (debugging)
+        { outputc(c);
+    outputc(d);
+        }
 #endif
-	     r = read_expr_7();
-	     l = newnode(l,(c=='<')?LEQ:GEQ,r);
-	   }
-	  else
-	   {
+       r = read_expr_7();
+       l = newnode(l,(c=='<')?LEQ:GEQ,r);
+     }
+    else
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-	      }
+       if (debugging)
+        { outputc(c);
+        }
 #endif
-	     Push(d);
-	     r = read_expr_7();
-	     l = newnode(l,c,r);
-	   }
-	  break;
+       Push(d);
+       r = read_expr_7();
+       l = newnode(l,c,r);
+     }
+    break;
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1557,30 +1557,30 @@ NODE *read_expr_5(void)
     switch (c)
      { case '=':
        case '!':
-	  d = Get();
-	  if (d == '=')
-	   {
+    d = Get();
+    if (d == '=')
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-		outputc(d);
-	      }
+       if (debugging)
+        { outputc(c);
+    outputc(d);
+        }
 #endif
-	     r = read_expr_6();
-	     l = newnode(l,(c=='=')?EQL:NEQ,r);
-	     break;
-	   }
-	  Push(d);
-	  /* fall through ... */
+       r = read_expr_6();
+       l = newnode(l,(c=='=')?EQL:NEQ,r);
+       break;
+     }
+    Push(d);
+    /* fall through ... */
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1602,30 +1602,30 @@ NODE *read_expr_4(void)
   { c = getnhsexpand();
     switch (c)
      { case '&':
-	  d = Get();
-	  if (d != '&')
-	   {
+    d = Get();
+    if (d != '&')
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-		outputc(d);
-	      }
+       if (debugging)
+        { outputc(c);
+    outputc(d);
+        }
 #endif
-	     r = read_expr_5();
-	     l = newnode(l,c,r);
-	     break;
-	   }
-	  Push(d);
-	  /* fall through ... */
+       r = read_expr_5();
+       l = newnode(l,c,r);
+       break;
+     }
+    Push(d);
+    /* fall through ... */
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1647,22 +1647,22 @@ NODE *read_expr_3(void)
     switch (c)
      { case '^':
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputc(c);
-	   }
+    if (debugging)
+     { outputc(c);
+     }
 #endif
-	  r = read_expr_4();
-	  l = newnode(l,c,r);
-	  break;
+    r = read_expr_4();
+    l = newnode(l,c,r);
+    break;
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1684,29 +1684,29 @@ NODE *read_expr_2(void)
   { c = getnhsexpand();
     switch (c)
      { case '|':
-	  d = Get();
-	  if (d != '|')
-	   { Push(d);
+    d = Get();
+    if (d != '|')
+     { Push(d);
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-	      }
+       if (debugging)
+        { outputc(c);
+        }
 #endif
-	     r = read_expr_3();
-	     l = newnode(l,c,r);
-	     break;
-	   }
-	  Push(d);
-	  /* fall through ... */
+       r = read_expr_3();
+       l = newnode(l,c,r);
+       break;
+     }
+    Push(d);
+    /* fall through ... */
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1728,30 +1728,30 @@ NODE *read_expr_1(void)
   { c = getnhsexpand();
     switch (c)
      { case '&':
-	  d = Get();
-	  if (d == c)
-	   {
+    d = Get();
+    if (d == c)
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-		outputc(d);
-	      }
+       if (debugging)
+        { outputc(c);
+    outputc(d);
+        }
 #endif
-	     r = read_expr_2();
-	     l = newnode(l,AND,r);
-	     break;
-	   }
-	  Push(d);
-	  /* fall through ... */
+       r = read_expr_2();
+       l = newnode(l,AND,r);
+       break;
+     }
+    Push(d);
+    /* fall through ... */
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1773,30 +1773,30 @@ NODE *read_expr_0(void)
   { c = getnhsexpand();
     switch (c)
      { case '|':
-	  d = Get();
-	  if (d == c)
-	   {
+    d = Get();
+    if (d == c)
+     {
 #ifdef DEBUG_EXPR
-	     if (debugging)
-	      { outputc(c);
-		outputc(d);
-	      }
+       if (debugging)
+        { outputc(c);
+    outputc(d);
+        }
 #endif
-	     r = read_expr_1();
-	     l = newnode(l,OR,r);
-	     break;
-	   }
-	  Push(d);
-	  /* fall through ... */
+       r = read_expr_1();
+       l = newnode(l,OR,r);
+       break;
+     }
+    Push(d);
+    /* fall through ... */
        default:
 #ifdef DEBUG_EXPR
-	  if (debugging)
-	   { outputs("~");
-	   }
+    if (debugging)
+     { outputs("~");
+     }
 #endif
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
      }
   }
 }
@@ -1818,18 +1818,18 @@ NODE *read_expr_(void)
     switch (c)
      { case '\n':
        case ')':
-	  Push(c);
-	  return(l);
-	  break;
+    Push(c);
+    return(l);
+    break;
        case ',':
-	  r = read_expr_0();
-	  l = newnode(l,c,r);
-	  break;
+    r = read_expr_0();
+    l = newnode(l,c,r);
+    break;
        default:
-	  err_head();
-	  fprintf(stderr,"expression syntax error -- bad operator `%c'\n",c);
-	  return(l);
-	  break;
+    err_head();
+    fprintf(stderr,"expression syntax error -- bad operator `%c'\n",c);
+    return(l);
+    break;
      }
   }
 }
@@ -1906,8 +1906,8 @@ void dump_expr(NODE *n)
        break;
     case '-':
        if (n->left)
-	{ dump_expr(n->left);
-	}
+  { dump_expr(n->left);
+  }
        outputc('-');
        dump_expr(n->right);
        break;
@@ -1925,9 +1925,9 @@ void dump_expr(NODE *n)
        outputc(')');
        break;
 #define BIN(key,op) case key:dump_expr(n->left);\
-			 putx(key);\
-			 dump_expr(n->right);\
-		break;
+       putx(key);\
+       dump_expr(n->right);\
+    break;
     ALLBINS
 #undef BIN
   }
@@ -1970,9 +1970,9 @@ void do_if(int expr_sharp)
     if (sharp)
      { d = '\0';
        do
-	{ c = d;
-	  d = Get();
-	} while ((c == '\\') || (d != '\n'));
+  { c = d;
+    d = Get();
+  } while ((c == '\\') || (d != '\n'));
      }
     return;
   }
@@ -1985,9 +1985,9 @@ void do_if(int expr_sharp)
        iffalse();
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputc('>');
-	  fflush(outfile);
-	}
+  { outputc('>');
+    fflush(outfile);
+  }
 #endif
        return;
      }
@@ -2033,9 +2033,9 @@ void do_ifdef(int expr_sharp)
      {
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs("no ident ");
-	  fflush(outfile);
-	}
+  { outputs("no ident ");
+    fflush(outfile);
+  }
 #endif
        iffalse();
      }
@@ -2043,17 +2043,17 @@ void do_ifdef(int expr_sharp)
      {
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs(w);
-	  outputc(' ');
-	  fflush(outfile);
-	}
+  { outputs(w);
+    outputc(' ');
+    fflush(outfile);
+  }
 #endif
        if (find_def(w))
-	{ iftrue();
-	}
+  { iftrue();
+  }
        else
-	{ iffalse();
-	}
+  { iffalse();
+  }
        free(w);
      }
 #ifdef DEBUG_IF
@@ -2095,9 +2095,9 @@ void do_ifndef(int expr_sharp)
      {
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs("no ident ");
-	  fflush(outfile);
-	}
+  { outputs("no ident ");
+    fflush(outfile);
+  }
 #endif
        iftrue();
      }
@@ -2105,17 +2105,17 @@ void do_ifndef(int expr_sharp)
      {
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs(w);
-	  outputc(' ');
-	  fflush(outfile);
-	}
+  { outputs(w);
+    outputc(' ');
+    fflush(outfile);
+  }
 #endif
        if (find_def(w))
-	{ iffalse();
-	}
+  { iffalse();
+  }
        else
-	{ iftrue();
-	}
+  { iftrue();
+  }
        free(w);
      }
 #ifdef DEBUG_IF
@@ -2145,35 +2145,35 @@ void do_else(int expr_sharp)
      {
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs("top ");
-	  output_ifstate(ifstack->condstate);
-	  fflush(outfile);
-	}
+  { outputs("top ");
+    output_ifstate(ifstack->condstate);
+    fflush(outfile);
+  }
 #endif
        switch (ifstack->condstate)
-	{ case IFSTATE_TRUE:
-	     ifstack->condstate = IFSTATE_STAYFALSE;
-	     break;
-	  case IFSTATE_FALSE:
-	     ifstack->condstate = IFSTATE_TRUE;
-	     break;
-	}
+  { case IFSTATE_TRUE:
+       ifstack->condstate = IFSTATE_STAYFALSE;
+       break;
+    case IFSTATE_FALSE:
+       ifstack->condstate = IFSTATE_TRUE;
+       break;
+  }
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs(" now ");
-	  output_ifstate(ifstack->condstate);
-	  outputc('>');
-	  fflush(outfile);
-	}
+  { outputs(" now ");
+    output_ifstate(ifstack->condstate);
+    outputc('>');
+    fflush(outfile);
+  }
 #endif
      }
     else
      {
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs(" no if>");
-	  fflush(outfile);
-	}
+  { outputs(" no if>");
+    fflush(outfile);
+  }
 #endif
        err_head();
        fprintf(stderr,"if-less else\n");
@@ -2245,9 +2245,9 @@ void do_elif(int expr_sharp)
     if (sharp)
      { d = '\0';
        do
-	{ c = d;
-	  d = Get();
-	} while ((c == '\\') || (d != '\n'));
+  { c = d;
+    d = Get();
+  } while ((c == '\\') || (d != '\n'));
      }
     return;
   }
@@ -2260,9 +2260,9 @@ void do_elif(int expr_sharp)
        ifstack->condstate = IFSTATE_STAYFALSE;
 #ifdef DEBUG_IF
        if (debugging)
-	{ outputs("forcing STAYFALSE>");
-	  fflush(outfile);
-	}
+  { outputs("forcing STAYFALSE>");
+    fflush(outfile);
+  }
 #endif
        return;
      }
@@ -2289,8 +2289,8 @@ void do_elif(int expr_sharp)
        break;
     case IFSTATE_FALSE:
        if (e)
-	{ ifstack->condstate = IFSTATE_TRUE;
-	}
+  { ifstack->condstate = IFSTATE_TRUE;
+  }
        break;
   }
 #ifdef DEBUG_IF
@@ -2440,21 +2440,21 @@ void do_include(int expr_sharp)
        DEF *d;
        cp = init_accum();
        while (issymchar(c))
-	{ accum_char(cp,c);
-	  c = Get();
-	}
+  { accum_char(cp,c);
+    c = Get();
+  }
        Push(c);
        cp = accum_result(cp);
        d = find_def(cp);
        if (d)
-	{ expand_def(d);
-	  n_hits ++;
-	}
+  { expand_def(d);
+    n_hits ++;
+  }
        else
-	{ char *dp;
-	  for (dp=cp+strlen(cp);dp>cp;dp--) Push(*dp);
-	  n_misses ++;
-	}
+  { char *dp;
+    for (dp=cp+strlen(cp);dp>cp;dp--) Push(*dp);
+    n_misses ++;
+  }
      }
     else
      { break;
@@ -2465,15 +2465,15 @@ void do_include(int expr_sharp)
   { while (1)
      { c = Get();
        if (c == '\n')
-	{ Push('\n');
-	  c = '"';
-	  err_head();
-	  fprintf(stderr,"warning: unterminated %cinclude filename\n",
-							sharp?'#':'@');
-	}
+  { Push('\n');
+    c = '"';
+    err_head();
+    fprintf(stderr,"warning: unterminated %cinclude filename\n",
+              sharp?'#':'@');
+  }
        if (c == '"')
-	{ break;
-	}
+  { break;
+  }
        accum_char(acc,c);
      }
     if (sharp)
@@ -2485,15 +2485,15 @@ void do_include(int expr_sharp)
   { while (1)
      { c = Get();
        if (c == '\n')
-	{ Push('\n');
-	  c = '>';
-	  err_head();
-	  fprintf(stderr,"warning: unterminated %cinclude filename\n",
-							sharp?'#':'@');
-	}
+  { Push('\n');
+    c = '>';
+    err_head();
+    fprintf(stderr,"warning: unterminated %cinclude filename\n",
+              sharp?'#':'@');
+  }
        if (c == '>')
-	{ break;
-	}
+  { break;
+  }
        accum_char(acc,c);
      }
     if (sharp)
@@ -2552,12 +2552,12 @@ void read_include_file(char *name, int dohere, int expr_sharp)
      { int i;
        n = temp;
        for (i=0;i<nIfiles;i++)
-	{ sprintf(temp,"%s%c%s",Ifiles[i],DELIM,name);
-	  f = fopen(temp,"r");
-	  if (f != NULL)
-	   { break;
-	   }
-	}
+  { sprintf(temp,"%s%c%s",Ifiles[i],DELIM,name);
+    f = fopen(temp,"r");
+    if (f != NULL)
+     { break;
+     }
+  }
      }
   }
  if (f == NULL)
@@ -2617,12 +2617,12 @@ char *cur_incldir;
 int cur_lineno;
 
 typedef struct _mark {
-	  struct _mark *link;
-	  char *acc;
-	  int startdepth;
-	  int incs[MAXFILES];
-	  int nincs;
-	  int nignore; } MARK;
+    struct _mark *link;
+    char *acc;
+    int startdepth;
+    int incs[MAXFILES];
+    int nincs;
+    int nignore; } MARK;
 
 static MARK *marks;
 static int atline;
@@ -2689,62 +2689,62 @@ char Get(void)
  while (1)
   { if (cur_npushed > 0)
      { do
-	{ c = GET();
-	} while (c == NOEXPAND);
+  { c = GET();
+  } while (c == NOEXPAND);
        if (c == MARKLINE)
-	{ mark_get_line();
-	  continue;
-	}
+  { mark_get_line();
+    continue;
+  }
        mark_got_from_pushback(c);
 #ifdef DEBUG_IO
        if (debugging)
-	{ outputc('(');
-	  outputs(unctrl(c));
-	  outputc(')');
-	  fflush(outfile);
-	}
+  { outputc('(');
+    outputs(unctrl(c));
+    outputc(')');
+    fflush(outfile);
+  }
 #endif
        break;
      }
     else
      { c = getc(cur_fstack);
        if (feof(cur_fstack))
-	{ if (fstackdepth > 0)
-	   {
+  { if (fstackdepth > 0)
+     {
 #ifdef DEBUG_INCL
-	     if (debugging)
-	      { outputs("--eof:");
-		outputs(cur_fn);
-		outputs("--");
-	      }
+       if (debugging)
+        { outputs("--eof:");
+    outputs(cur_fn);
+    outputs("--");
+        }
 #endif
-	     fclose(cur_fstack);
-	     free(cur_fn);
-	     free(cur_incldir);
-	     change_fstackdepth(-1);
-	     mark_file_ending();
-	     out_at(cur_lineno,cur_fn);
-	     autodef_file(curfile());
-	     autodef_line(curline());
-	     continue;
-	   }
-	  else
-	   { flush_final_nl();
-	     save_stats();
+       fclose(cur_fstack);
+       free(cur_fn);
+       free(cur_incldir);
+       change_fstackdepth(-1);
+       mark_file_ending();
+       out_at(cur_lineno,cur_fn);
+       autodef_file(curfile());
+       autodef_line(curline());
+       continue;
+     }
+    else
+     { flush_final_nl();
+       save_stats();
 #if 0
-	     exit(0);
+       exit(0);
 #endif
-	     longjmp(cpp_env,1);
-	   }
-	}
+       longjmp(cpp_env,1);
+     }
+  }
        mark_got_from_file(c);
 #ifdef DEBUG_IO
        if (debugging)
-	{ outputc('<');
-	  outputs(unctrl(c));
-	  outputc('>');
-	  fflush(outfile);
-	}
+  { outputc('<');
+    outputs(unctrl(c));
+    outputc('>');
+    fflush(outfile);
+  }
 #endif
        break;
      }
@@ -2856,12 +2856,12 @@ char getnhsexpand(void)
     if (expr_sharp && (c == '\\'))
      { c = Get();
        if (c == '\n')
-	{ continue;
-	}
+  { continue;
+  }
        else
-	{ Push(c);
-	  c = '\\';
-	}
+  { Push(c);
+    c = '\\';
+  }
      }
     break;
   }
@@ -2880,23 +2880,23 @@ char getexpand(void)
      { char d;
        d = Get();
        if (d == '*')
-	{ d = '\0';
-	  do
-	   { c = d;
-	     d = Get();
-	   } while ((c != '*') || (d != '/'));
-	  continue;
-	}
+  { d = '\0';
+    do
+     { c = d;
+       d = Get();
+     } while ((c != '*') || (d != '/'));
+    continue;
+  }
        else
-	{ Push(d);
-	  return('/');
-	}
+  { Push(d);
+    return('/');
+  }
      }
     else if (c == NOEXPAND)
      { c = Get();
        if (issymchar(c))
-	{ Push(NOEXPAND);
-	}
+  { Push(NOEXPAND);
+  }
        return(c);
      }
     else if (! isbsymchar(c))
@@ -2916,8 +2916,8 @@ char getexpand(void)
     else
      { int i;
        for (i=strlen(str)-1;i>0;i--)
-	{ Push(str[i]);
-	}
+  { Push(str[i]);
+  }
        Push(NOEXPAND);
        c = str[0];
        free(str);
@@ -3001,11 +3001,11 @@ void outputc(char c)
      { atline += nnls;
        nnls = 0;
        if (no_line_lines)
-	{ fprintf(outfile,"\n");
-	}
+  { fprintf(outfile,"\n");
+  }
        else
-	{ fprintf(outfile,"\n# %d \"%s\"\n",atline,atfile);
-	}
+  { fprintf(outfile,"\n# %d \"%s\"\n",atline,atfile);
+  }
        done_line = 1;
      }
     for (;nnls;nnls--)
@@ -3107,13 +3107,13 @@ void input_recover(void)
     while (m->nincs > 0)
      { l = m->incs[--m->nincs];
        for (;i>=l;i--)
-	{ Push(txt[i]);
-	}
+  { Push(txt[i]);
+  }
        Push(MARKLEND);
        c = txt[i];
        for (i--;txt[i]!=c;i--)
-	{ Push(txt[i]);
-	}
+  { Push(txt[i]);
+  }
        Push('A');
        Push('@');
        Push('@');
@@ -3163,8 +3163,8 @@ void mark_file_ending(void)
      { to = m->incs[--m->nincs];
        acc = m->acc;
        for (i=accum_howfar(acc);i>to;i--)
-	{ accum_regret(acc);
-	}
+  { accum_regret(acc);
+  }
      }
   }
 }
@@ -3298,7 +3298,7 @@ int incldep;
 char *incldep_o;
 int do_at_ctrls;
 extern char *predefs[];
-	
+  
 #if defined(SYSV)
 void main(ac,av)
 #else
@@ -3315,19 +3315,19 @@ void cpp_main(int ac, char **av)
  int i;
  
  if ( setjmp(cpp_env) ) {
- 	if ( inf != stdin )
- 		fclose(inf);
- 	if ( outf == stdout )
- 		fflush(outf);
- 	else
- 		fclose(outf);
- 	return;
+   if ( inf != stdin )
+     fclose(inf);
+   if ( outf == stdout )
+     fflush(outf);
+   else
+     fclose(outf);
+   return;
  }
 
  init_symtbl();
 #define predef(str) ( (cp=copyofstr("1")), \
-		      check_malloc(cp), \
-		      define((str),-1,(unsigned char *)cp,DEF_PREDEF) )
+          check_malloc(cp), \
+          define((str),-1,(unsigned char *)cp,DEF_PREDEF) )
  for (i=0;predefs[i];i++)
   { predef(predefs[i]);
   }
@@ -3344,110 +3344,110 @@ void cpp_main(int ac, char **av)
   { if (**av == '-')
      { rest = 0;
        if (!strcmp(*av,"-undef"))
-	{ undef_predefs();
-	}
+  { undef_predefs();
+  }
        else
-	{ for (++*av;(**av)&&!rest;++*av)
-	   { switch (**av)
-	      { case 'C':
-		   keep_comments = 1;
-		   break;
-		case 'D':
-		   rest = 1;
-		   ++*av;
-		   if (strcmp(*av,"@") == 0)
-		    { do_at_ctrls = 1;
-		    }
-		   else
-		    { cp = Index(*av,'=');
-		      if (cp)
-		       { if (cp != *av)
-			  { char *dp;
-			    *cp++ = '\0';
-			    dp = copyofstr(cp);
-			    check_malloc(dp);
-			    define(*av,-1,(unsigned char *)dp,DEF_CMDLINE);
-			  }
-			 else
-			  { fprintf(stderr,"Must give a name for -D\n");
-			  }
-		       }
-		      else
-		       { char *dp;
-			 dp = copyofstr("1");
-			 check_malloc(dp);
-			 define(*av,-1,(unsigned char *)dp,DEF_CMDLINE);
-		       }
-		    }
-		   break;
-		case 'E':
-		   break;
-		case 'I':
-		   rest = 1;
-		   ++*av;
-		   if (**av)
-		    { Ifile(*av);
-		    }
-		   else
-		    { fprintf(stderr,"Must give a directory name for -I\n");
-		    }
-		   break;
-		case 'M':
-		   incldep = 1;
-		   break;
-		case 'P':
-		   no_line_lines = 1;
-		   break;
-		case 'R':
-		   break;
-		case 'U':
-		   rest = 1;
-		   ++*av;
-		   if (**av)
-		    { undef(*av);
-		    }
-		   else
-		    { fprintf(stderr,"Must give a name for -U\n");
-		    }
-		   break;
-		default:
-		   fprintf(stderr,"Unknown flag -%c\n",**av);
-		   break;
-	      }
-	   }
-	}
+  { for (++*av;(**av)&&!rest;++*av)
+     { switch (**av)
+        { case 'C':
+       keep_comments = 1;
+       break;
+    case 'D':
+       rest = 1;
+       ++*av;
+       if (strcmp(*av,"@") == 0)
+        { do_at_ctrls = 1;
+        }
+       else
+        { cp = Index(*av,'=');
+          if (cp)
+           { if (cp != *av)
+        { char *dp;
+          *cp++ = '\0';
+          dp = copyofstr(cp);
+          check_malloc(dp);
+          define(*av,-1,(unsigned char *)dp,DEF_CMDLINE);
+        }
+       else
+        { fprintf(stderr,"Must give a name for -D\n");
+        }
+           }
+          else
+           { char *dp;
+       dp = copyofstr("1");
+       check_malloc(dp);
+       define(*av,-1,(unsigned char *)dp,DEF_CMDLINE);
+           }
+        }
+       break;
+    case 'E':
+       break;
+    case 'I':
+       rest = 1;
+       ++*av;
+       if (**av)
+        { Ifile(*av);
+        }
+       else
+        { fprintf(stderr,"Must give a directory name for -I\n");
+        }
+       break;
+    case 'M':
+       incldep = 1;
+       break;
+    case 'P':
+       no_line_lines = 1;
+       break;
+    case 'R':
+       break;
+    case 'U':
+       rest = 1;
+       ++*av;
+       if (**av)
+        { undef(*av);
+        }
+       else
+        { fprintf(stderr,"Must give a name for -U\n");
+        }
+       break;
+    default:
+       fprintf(stderr,"Unknown flag -%c\n",**av);
+       break;
+        }
+     }
+  }
      }
     else
      { switch (argno++)
-	{ case 0:
-	     if (strcmp(*av,"-") != 0)
-	      { FILE *f;
-		f = fopen(*av,"r");
-		if (f == NULL)
-		 { fprintf(stderr,"Cannot open source file %s\n",*av);
-		 }
-		else
-		 { inf = f;
-		   inname = *av;
-		 }
-	      }
-	     break;
-	  case 1:
-	     if (strcmp(*av,"-") != 0)
-	      { FILE *f;
-		f = fopen(*av,"w");
-		if (f == NULL)
-		 { fprintf(stderr,"Can't create %s\n",*av);
-		 }
-		else
-		 { outf = f;
-		 }
-	      }
-	     break;
-	  default:
-	     fprintf(stderr,"Extra name %s ignored\n",*av);
-	     break;
-	}
+  { case 0:
+       if (strcmp(*av,"-") != 0)
+        { FILE *f;
+    f = fopen(*av,"r");
+    if (f == NULL)
+     { fprintf(stderr,"Cannot open source file %s\n",*av);
+     }
+    else
+     { inf = f;
+       inname = *av;
+     }
+        }
+       break;
+    case 1:
+       if (strcmp(*av,"-") != 0)
+        { FILE *f;
+    f = fopen(*av,"w");
+    if (f == NULL)
+     { fprintf(stderr,"Can't create %s\n",*av);
+     }
+    else
+     { outf = f;
+     }
+        }
+       break;
+    default:
+       fprintf(stderr,"Extra name %s ignored\n",*av);
+       break;
+  }
      }
   }
  if (incldep && !inname[0])
@@ -3455,7 +3455,7 @@ void cpp_main(int ac, char **av)
 #if 0
     exit(1);
 #endif
-	longjmp(cpp_env,1);
+  longjmp(cpp_env,1);
   }
  if (do_at_ctrls)
   { predef("at_sign_ctrls");
@@ -3516,36 +3516,36 @@ void cpp_main(int ac, char **av)
     if (!incldep && (isdigit(c) || (c == '.')))
      { haddigit = 0;
        while (isdigit(c) || (c == '.'))
-	{ haddigit |= isdigit(c);
-	  maybe_print(c);
-	  c = Get();
-	}
+  { haddigit |= isdigit(c);
+    maybe_print(c);
+    c = Get();
+  }
        if (haddigit && ((c == 'e') || (c == 'E')))
-	{ maybe_print(c);
-	  c = Get();
-	  while (isdigit(c))
-	   { maybe_print(c);
-	     c = Get();
-	   }
-	}
+  { maybe_print(c);
+    c = Get();
+    while (isdigit(c))
+     { maybe_print(c);
+       c = Get();
+     }
+  }
        Push(c);
        continue;
      }
     if (quote)
      { if (c == '\\')
-	{ maybe_print(c);
-	  backslash = 1;
-	  continue;
-	}
+  { maybe_print(c);
+    backslash = 1;
+    continue;
+  }
        else if ((c == quote) || (c == '\n'))
-	{ maybe_print(c);
-	  quote = 0;
-	  continue;
-	}
+  { maybe_print(c);
+    quote = 0;
+    continue;
+  }
        else
-	{ maybe_print(c);
-	  continue;
-	}
+  { maybe_print(c);
+    continue;
+  }
      }
     if (c == '\\') /* this weirdness is Reiser semantics.... */
      { backslash = 1;
@@ -3564,59 +3564,59 @@ void cpp_main(int ac, char **av)
      }
     else if (! incldep)
      { if (isbsymchar(c) && !in_false_if())
-	{ char *cp;
-	  DEF *d;
-	  cp = init_accum();
-	  while (issymchar(c))
-	   { accum_char(cp,c);
-	     c = Get();
-	   }
-	  Push(c);
-	  cp = accum_result(cp);
+  { char *cp;
+    DEF *d;
+    cp = init_accum();
+    while (issymchar(c))
+     { accum_char(cp,c);
+       c = Get();
+     }
+    Push(c);
+    cp = accum_result(cp);
 #ifdef DEBUG_MAIN
-	  if (debugging)
-	   { outputs("<word:");
-	     outputs(cp);
-	     outputs(">");
-	   }
+    if (debugging)
+     { outputs("<word:");
+       outputs(cp);
+       outputs(">");
+     }
 #endif
-	  d = find_def(cp);
-	  if (d)
-	   { expand_def(d);
-	     n_hits ++;
-	   }
-	  else
-	   { for (;*cp;cp++)
-	      { maybe_print(*cp);
-	      }
-	     n_misses ++;
-	   }
-	}
+    d = find_def(cp);
+    if (d)
+     { expand_def(d);
+       n_hits ++;
+     }
+    else
+     { for (;*cp;cp++)
+        { maybe_print(*cp);
+        }
+       n_misses ++;
+     }
+  }
        else if (c == '/')
-	{ char d;
-	  d = Get();
-	  if (d == '*')
-	   { d = '\0';
-	     if (keep_comments)
-	      { maybe_print('/');
-		maybe_print('*');
-	      }
-	     do
-	      { c = d;
-		d = Get();
-		if ((d == '\n') || keep_comments)
-		 { maybe_print(d);
-		 }
-	      } while ((c != '*') || (d != '/'));
-	   }
-	  else
-	   { Push(d);
-	     maybe_print(c);
-	   }
-	}
+  { char d;
+    d = Get();
+    if (d == '*')
+     { d = '\0';
+       if (keep_comments)
+        { maybe_print('/');
+    maybe_print('*');
+        }
+       do
+        { c = d;
+    d = Get();
+    if ((d == '\n') || keep_comments)
+     { maybe_print(d);
+     }
+        } while ((c != '*') || (d != '/'));
+     }
+    else
+     { Push(d);
+       maybe_print(c);
+     }
+  }
        else
-	{ maybe_print(c);
-	}
+  { maybe_print(c);
+  }
      }
   }
 }
@@ -3644,11 +3644,11 @@ void do_pragma(void)
 }
 
 char *predefs[] = {
-		    "mc68000",
-		    "unix",
-		    "NeXT",
-		    "__MACH__",
-		    0
+        "mc68000",
+        "unix",
+        "NeXT",
+        "__MACH__",
+        0
 };
 
 void do_set(void)
@@ -3729,11 +3729,11 @@ void do_sharp(void)
     if (strcmp(w,"") == 0)
      { c = Get();
        if (c != '\n')
-	{ Push(c);
-	}
+  { Push(c);
+  }
        else
-	{ isnull = 1;
-	}
+  { isnull = 1;
+  }
      }
     if (!isnull && !in_false_if())
      { err_head();
@@ -3766,39 +3766,39 @@ void flush_sharp_line(void)
      }
     if (comment)
      { if (c == '\\')
-	{ backslash = 1;
-	}
+  { backslash = 1;
+  }
        else if ((c == '/') && (lastc == '*'))
-	{ comment = 0;
-	}
+  { comment = 0;
+  }
        continue;
      }
     if (quote)
      { if (c == '\\')
-	{ backslash = 1;
-	}
+  { backslash = 1;
+  }
        else if (c == quote)
-	{ quote = 0;
-	}
+  { quote = 0;
+  }
      }
     switch (c)
      { case '\\':
-	  backslash = 1;
-	  continue;
-	  break;
+    backslash = 1;
+    continue;
+    break;
        case '"': case '\'':
-	  quote = c;
-	  continue;
-	  break;
+    quote = c;
+    continue;
+    break;
        case '*':
-	  comment = (lastc == '/');
-	  continue;
-	  break;
+    comment = (lastc == '/');
+    continue;
+    break;
        default:
-	  continue;
-	  break;
+    continue;
+    break;
        case '\n':
-	  break;
+    break;
      }
     break;
   }
@@ -3825,7 +3825,7 @@ void save_stats(void)
  f = fopen("/@larry/u1/mouse/Mouse-C/cpp.stats","a");
  if (f)
   { fprintf(f,"%d def, %d undef, %d hits, %d misses\n",
-			n_defines,n_undefines,n_hits,n_misses);
+      n_defines,n_undefines,n_hits,n_misses);
     fclose(f);
   }
 }
@@ -4003,532 +4003,532 @@ void undef_predefs(void)
     while (*D)
      { d = *D;
        if (d->how == DEF_PREDEF)
-	{ free(d->name);
-	  free((char *)d->repl);
-	  *D = d->link;
-	  OLD(d);
-	  n_in_table --;
-	}
+  { free(d->name);
+    free((char *)d->repl);
+    *D = d->link;
+    OLD(d);
+    n_in_table --;
+  }
        else
-	{ D = &d->link;
-	}
+  { D = &d->link;
+  }
      }
   }
 }
 
 char *_unctrl[0400] = { "^@",
-			"^A",
-			"^B",
-			"^C",
-			"^D",
-			"^E",
-			"^F",
-			"^G",
-			"^H",
-			"^I",
-			"^J",
-			"^K",
-			"^L",
-			"^M",
-			"^N",
-			"^O",
-			"^P",
-			"^Q",
-			"^R",
-			"^S",
-			"^T",
-			"^U",
-			"^V",
-			"^W",
-			"^X",
-			"^Y",
-			"^Z",
-			"^[",
-			"^\\",
-			"^]",
-			"^^",
-			"^_",
-			" ",
-			"!",
-			"\"",
-			"#",
-			"$",
-			"%",
-			"&",
-			"'",
-			"(",
-			")",
-			"*",
-			"+",
-			",",
-			"-",
-			".",
-			"/",
-			"0",
-			"1",
-			"2",
-			"3",
-			"4",
-			"5",
-			"6",
-			"7",
-			"8",
-			"9",
-			":",
-			";",
-			"<",
-			"=",
-			">",
-			"?",
-			"@",
-			"A",
-			"B",
-			"C",
-			"D",
-			"E",
-			"F",
-			"G",
-			"H",
-			"I",
-			"J",
-			"K",
-			"L",
-			"M",
-			"N",
-			"O",
-			"P",
-			"Q",
-			"R",
-			"S",
-			"T",
-			"U",
-			"V",
-			"W",
-			"X",
-			"Y",
-			"Z",
-			"[",
-			"\\",
-			"]",
-			"^",
-			"_",
-			"`",
-			"a",
-			"b",
-			"c",
-			"d",
-			"e",
-			"f",
-			"g",
-			"h",
-			"i",
-			"j",
-			"k",
-			"l",
-			"m",
-			"n",
-			"o",
-			"p",
-			"q",
-			"r",
-			"s",
-			"t",
-			"u",
-			"v",
-			"w",
-			"x",
-			"y",
-			"z",
-			"{"/*}*/,
-			"|",
-			/*{*/"}",
-			"~",
-			"^?",
-			"|^@",
-			"|^A",
-			"|^B",
-			"|^C",
-			"|^D",
-			"|^E",
-			"|^F",
-			"|^G",
-			"|^H",
-			"|^I",
-			"|^J",
-			"|^K",
-			"|^L",
-			"|^M",
-			"|^N",
-			"|^O",
-			"|^P",
-			"|^Q",
-			"|^R",
-			"|^S",
-			"|^T",
-			"|^U",
-			"|^V",
-			"|^W",
-			"|^X",
-			"|^Y",
-			"|^Z",
-			"|^[",
-			"|^\\",
-			"|^]",
-			"|^^",
-			"|^_",
-			"| ",
-			"|!",
-			"|\"",
-			"|#",
-			"|$",
-			"|%",
-			"|&",
-			"|'",
-			"|(",
-			"|)",
-			"|*",
-			"|+",
-			"|,",
-			"|-",
-			"|.",
-			"|/",
-			"|0",
-			"|1",
-			"|2",
-			"|3",
-			"|4",
-			"|5",
-			"|6",
-			"|7",
-			"|8",
-			"|9",
-			"|:",
-			"|;",
-			"|<",
-			"|=",
-			"|>",
-			"|?",
-			"|@",
-			"|A",
-			"|B",
-			"|C",
-			"|D",
-			"|E",
-			"|F",
-			"|G",
-			"|H",
-			"|I",
-			"|J",
-			"|K",
-			"|L",
-			"|M",
-			"|N",
-			"|O",
-			"|P",
-			"|Q",
-			"|R",
-			"|S",
-			"|T",
-			"|U",
-			"|V",
-			"|W",
-			"|X",
-			"|Y",
-			"|Z",
-			"|[",
-			"|\\",
-			"|]",
-			"|^",
-			"|_",
-			"|`",
-			"|a",
-			"|b",
-			"|c",
-			"|d",
-			"|e",
-			"|f",
-			"|g",
-			"|h",
-			"|i",
-			"|j",
-			"|k",
-			"|l",
-			"|m",
-			"|n",
-			"|o",
-			"|p",
-			"|q",
-			"|r",
-			"|s",
-			"|t",
-			"|u",
-			"|v",
-			"|w",
-			"|x",
-			"|y",
-			"|z",
-			"|{"/*}*/,
-			"||",
-			/*{*/"|}",
-			"|~",
-			"|^?" };
+      "^A",
+      "^B",
+      "^C",
+      "^D",
+      "^E",
+      "^F",
+      "^G",
+      "^H",
+      "^I",
+      "^J",
+      "^K",
+      "^L",
+      "^M",
+      "^N",
+      "^O",
+      "^P",
+      "^Q",
+      "^R",
+      "^S",
+      "^T",
+      "^U",
+      "^V",
+      "^W",
+      "^X",
+      "^Y",
+      "^Z",
+      "^[",
+      "^\\",
+      "^]",
+      "^^",
+      "^_",
+      " ",
+      "!",
+      "\"",
+      "#",
+      "$",
+      "%",
+      "&",
+      "'",
+      "(",
+      ")",
+      "*",
+      "+",
+      ",",
+      "-",
+      ".",
+      "/",
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      ":",
+      ";",
+      "<",
+      "=",
+      ">",
+      "?",
+      "@",
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "[",
+      "\\",
+      "]",
+      "^",
+      "_",
+      "`",
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z",
+      "{"/*}*/,
+      "|",
+      /*{*/"}",
+      "~",
+      "^?",
+      "|^@",
+      "|^A",
+      "|^B",
+      "|^C",
+      "|^D",
+      "|^E",
+      "|^F",
+      "|^G",
+      "|^H",
+      "|^I",
+      "|^J",
+      "|^K",
+      "|^L",
+      "|^M",
+      "|^N",
+      "|^O",
+      "|^P",
+      "|^Q",
+      "|^R",
+      "|^S",
+      "|^T",
+      "|^U",
+      "|^V",
+      "|^W",
+      "|^X",
+      "|^Y",
+      "|^Z",
+      "|^[",
+      "|^\\",
+      "|^]",
+      "|^^",
+      "|^_",
+      "| ",
+      "|!",
+      "|\"",
+      "|#",
+      "|$",
+      "|%",
+      "|&",
+      "|'",
+      "|(",
+      "|)",
+      "|*",
+      "|+",
+      "|,",
+      "|-",
+      "|.",
+      "|/",
+      "|0",
+      "|1",
+      "|2",
+      "|3",
+      "|4",
+      "|5",
+      "|6",
+      "|7",
+      "|8",
+      "|9",
+      "|:",
+      "|;",
+      "|<",
+      "|=",
+      "|>",
+      "|?",
+      "|@",
+      "|A",
+      "|B",
+      "|C",
+      "|D",
+      "|E",
+      "|F",
+      "|G",
+      "|H",
+      "|I",
+      "|J",
+      "|K",
+      "|L",
+      "|M",
+      "|N",
+      "|O",
+      "|P",
+      "|Q",
+      "|R",
+      "|S",
+      "|T",
+      "|U",
+      "|V",
+      "|W",
+      "|X",
+      "|Y",
+      "|Z",
+      "|[",
+      "|\\",
+      "|]",
+      "|^",
+      "|_",
+      "|`",
+      "|a",
+      "|b",
+      "|c",
+      "|d",
+      "|e",
+      "|f",
+      "|g",
+      "|h",
+      "|i",
+      "|j",
+      "|k",
+      "|l",
+      "|m",
+      "|n",
+      "|o",
+      "|p",
+      "|q",
+      "|r",
+      "|s",
+      "|t",
+      "|u",
+      "|v",
+      "|w",
+      "|x",
+      "|y",
+      "|z",
+      "|{"/*}*/,
+      "||",
+      /*{*/"|}",
+      "|~",
+      "|^?" };
 
 char *_Unctrl[0400] = { "^@",
-			"^A",
-			"^B",
-			"^C",
-			"^D",
-			"^E",
-			"^F",
-			"^G",
-			"^H",
-			"^I",
-			"^J",
-			"^K",
-			"^L",
-			"^M",
-			"^N",
-			"^O",
-			"^P",
-			"^Q",
-			"^R",
-			"^S",
-			"^T",
-			"^U",
-			"^V",
-			"^W",
-			"^X",
-			"^Y",
-			"^Z",
-			"^[",
-			"^\\",
-			"^]",
-			"^^",
-			"^_",
-			"sp",
-			"!",
-			"\"",
-			"#",
-			"$",
-			"%",
-			"&",
-			"'",
-			"(",
-			")",
-			"*",
-			"+",
-			",",
-			"-",
-			".",
-			"/",
-			"0",
-			"1",
-			"2",
-			"3",
-			"4",
-			"5",
-			"6",
-			"7",
-			"8",
-			"9",
-			":",
-			";",
-			"<",
-			"=",
-			">",
-			"?",
-			"@",
-			"A",
-			"B",
-			"C",
-			"D",
-			"E",
-			"F",
-			"G",
-			"H",
-			"I",
-			"J",
-			"K",
-			"L",
-			"M",
-			"N",
-			"O",
-			"P",
-			"Q",
-			"R",
-			"S",
-			"T",
-			"U",
-			"V",
-			"W",
-			"X",
-			"Y",
-			"Z",
-			"[",
-			"\\",
-			"]",
-			"^",
-			"_",
-			"`",
-			"a",
-			"b",
-			"c",
-			"d",
-			"e",
-			"f",
-			"g",
-			"h",
-			"i",
-			"j",
-			"k",
-			"l",
-			"m",
-			"n",
-			"o",
-			"p",
-			"q",
-			"r",
-			"s",
-			"t",
-			"u",
-			"v",
-			"w",
-			"x",
-			"y",
-			"z",
-			"{"/*}*/,
-			"|",
-			/*{*/"}",
-			"~",
-			"^?",
-			"|^@",
-			"|^A",
-			"|^B",
-			"|^C",
-			"|^D",
-			"|^E",
-			"|^F",
-			"|^G",
-			"|^H",
-			"|^I",
-			"|^J",
-			"|^K",
-			"|^L",
-			"|^M",
-			"|^N",
-			"|^O",
-			"|^P",
-			"|^Q",
-			"|^R",
-			"|^S",
-			"|^T",
-			"|^U",
-			"|^V",
-			"|^W",
-			"|^X",
-			"|^Y",
-			"|^Z",
-			"|^[",
-			"|^\\",
-			"|^]",
-			"|^^",
-			"|^_",
-			"|sp",
-			"|!",
-			"|\"",
-			"|#",
-			"|$",
-			"|%",
-			"|&",
-			"|'",
-			"|(",
-			"|)",
-			"|*",
-			"|+",
-			"|,",
-			"|-",
-			"|.",
-			"|/",
-			"|0",
-			"|1",
-			"|2",
-			"|3",
-			"|4",
-			"|5",
-			"|6",
-			"|7",
-			"|8",
-			"|9",
-			"|:",
-			"|;",
-			"|<",
-			"|=",
-			"|>",
-			"|?",
-			"|@",
-			"|A",
-			"|B",
-			"|C",
-			"|D",
-			"|E",
-			"|F",
-			"|G",
-			"|H",
-			"|I",
-			"|J",
-			"|K",
-			"|L",
-			"|M",
-			"|N",
-			"|O",
-			"|P",
-			"|Q",
-			"|R",
-			"|S",
-			"|T",
-			"|U",
-			"|V",
-			"|W",
-			"|X",
-			"|Y",
-			"|Z",
-			"|[",
-			"|\\",
-			"|]",
-			"|^",
-			"|_",
-			"|`",
-			"|a",
-			"|b",
-			"|c",
-			"|d",
-			"|e",
-			"|f",
-			"|g",
-			"|h",
-			"|i",
-			"|j",
-			"|k",
-			"|l",
-			"|m",
-			"|n",
-			"|o",
-			"|p",
-			"|q",
-			"|r",
-			"|s",
-			"|t",
-			"|u",
-			"|v",
-			"|w",
-			"|x",
-			"|y",
-			"|z",
-			"|{"/*}*/,
-			"||",
-			/*{*/"|}",
-			"|~",
-			"|^?" };
+      "^A",
+      "^B",
+      "^C",
+      "^D",
+      "^E",
+      "^F",
+      "^G",
+      "^H",
+      "^I",
+      "^J",
+      "^K",
+      "^L",
+      "^M",
+      "^N",
+      "^O",
+      "^P",
+      "^Q",
+      "^R",
+      "^S",
+      "^T",
+      "^U",
+      "^V",
+      "^W",
+      "^X",
+      "^Y",
+      "^Z",
+      "^[",
+      "^\\",
+      "^]",
+      "^^",
+      "^_",
+      "sp",
+      "!",
+      "\"",
+      "#",
+      "$",
+      "%",
+      "&",
+      "'",
+      "(",
+      ")",
+      "*",
+      "+",
+      ",",
+      "-",
+      ".",
+      "/",
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      ":",
+      ";",
+      "<",
+      "=",
+      ">",
+      "?",
+      "@",
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "[",
+      "\\",
+      "]",
+      "^",
+      "_",
+      "`",
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z",
+      "{"/*}*/,
+      "|",
+      /*{*/"}",
+      "~",
+      "^?",
+      "|^@",
+      "|^A",
+      "|^B",
+      "|^C",
+      "|^D",
+      "|^E",
+      "|^F",
+      "|^G",
+      "|^H",
+      "|^I",
+      "|^J",
+      "|^K",
+      "|^L",
+      "|^M",
+      "|^N",
+      "|^O",
+      "|^P",
+      "|^Q",
+      "|^R",
+      "|^S",
+      "|^T",
+      "|^U",
+      "|^V",
+      "|^W",
+      "|^X",
+      "|^Y",
+      "|^Z",
+      "|^[",
+      "|^\\",
+      "|^]",
+      "|^^",
+      "|^_",
+      "|sp",
+      "|!",
+      "|\"",
+      "|#",
+      "|$",
+      "|%",
+      "|&",
+      "|'",
+      "|(",
+      "|)",
+      "|*",
+      "|+",
+      "|,",
+      "|-",
+      "|.",
+      "|/",
+      "|0",
+      "|1",
+      "|2",
+      "|3",
+      "|4",
+      "|5",
+      "|6",
+      "|7",
+      "|8",
+      "|9",
+      "|:",
+      "|;",
+      "|<",
+      "|=",
+      "|>",
+      "|?",
+      "|@",
+      "|A",
+      "|B",
+      "|C",
+      "|D",
+      "|E",
+      "|F",
+      "|G",
+      "|H",
+      "|I",
+      "|J",
+      "|K",
+      "|L",
+      "|M",
+      "|N",
+      "|O",
+      "|P",
+      "|Q",
+      "|R",
+      "|S",
+      "|T",
+      "|U",
+      "|V",
+      "|W",
+      "|X",
+      "|Y",
+      "|Z",
+      "|[",
+      "|\\",
+      "|]",
+      "|^",
+      "|_",
+      "|`",
+      "|a",
+      "|b",
+      "|c",
+      "|d",
+      "|e",
+      "|f",
+      "|g",
+      "|h",
+      "|i",
+      "|j",
+      "|k",
+      "|l",
+      "|m",
+      "|n",
+      "|o",
+      "|p",
+      "|q",
+      "|r",
+      "|s",
+      "|t",
+      "|u",
+      "|v",
+      "|w",
+      "|x",
+      "|y",
+      "|z",
+      "|{"/*}*/,
+      "||",
+      /*{*/"|}",
+      "|~",
+      "|^?" };
 
 void do_undef(int expr_sharp)
 {
@@ -4542,8 +4542,8 @@ void do_undef(int expr_sharp)
      }
     else
      { if (undef(mac))
-	{ n_undefines ++;
-	}
+  { n_undefines ++;
+  }
      }
   }
  if (sharp)
@@ -4588,19 +4588,19 @@ void do_endwhile(void)
 
 char *Index(char *s, int c)
 {
-	return strchr(s,c);
+  return strchr(s,c);
 }
 
 char *Rindex(char *s, int c)
 {
-	return strrchr(s,c);
+  return strrchr(s,c);
 }
 
 void Bcopy(char *from, char *to, int len)
 {
 #if defined(GO32)
-	bcopy(from,to,len);
+  bcopy(from,to,len);
 #else
-	memmove((void *)from,(void *)to,(int)len);
+  memmove((void *)from,(void *)to,(int)len);
 #endif
 }

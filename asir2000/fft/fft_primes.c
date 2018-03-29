@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/fft_primes.c,v 1.4 2001/10/09 01:36:16 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/fft_primes.c,v 1.5 2003/02/14 22:29:10 ohara Exp $ 
 */
 #include "dft.h"
 
@@ -13758,24 +13758,24 @@ int int_bits(int);
 
 int fft_available(int d1,int n1,int d2,int n2)
 {
-	int dmin,bound,dlen;
+  int dmin,bound,dlen;
 
-	dmin = d1>d2?d2:d1;
-	bound = n1+n2+int_bits(dmin)+1;
-	dlen = int_bits(d1+d2);
-	if ( dlen > MAX_D )
-		return 0;
-	else if ( blen_prod_fftprime[dlen] <= bound )
-		return 0;
-	else
-		return 1;
+  dmin = d1>d2?d2:d1;
+  bound = n1+n2+int_bits(dmin)+1;
+  dlen = int_bits(d1+d2);
+  if ( dlen > MAX_D )
+    return 0;
+  else if ( blen_prod_fftprime[dlen] <= bound )
+    return 0;
+  else
+    return 1;
 }
 
 void get_fft_prime(int index,int *p,int *d)
 {
-	if ( index < 0 || index >= NPrimes ) {
-		*p = 0; *d = 0;
-	} else {
-		*p = Primes[index].prime; *d = Primes[index].d;
-	}
+  if ( index < 0 || index >= NPrimes ) {
+    *p = 0; *d = 0;
+  } else {
+    *p = Primes[index].prime; *d = Primes[index].d;
+  }
 }

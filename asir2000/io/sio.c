@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.26 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/sio.c,v 1.27 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -82,98 +82,98 @@ void init_socket(void);
 
 int getremotesocket(int s)
 {
-	return iofp[s].s;
+  return iofp[s].s;
 }
 
 void getremotename(int s,char *name)
 {
-	struct sockaddr_in peer;
-	struct hostent *hp;
-	int peerlen;
+  struct sockaddr_in peer;
+  struct hostent *hp;
+  int peerlen;
 
-	peerlen = sizeof(peer);
-	getpeername(getremotesocket(s),(struct sockaddr *)&peer,&peerlen);
-	hp = gethostbyaddr((char *)&peer.sin_addr,sizeof(struct in_addr),AF_INET);
-	if ( hp )
-		strcpy(name,hp->h_name);
-	else
-		strcpy(name,(char *)inet_ntoa(peer.sin_addr));
+  peerlen = sizeof(peer);
+  getpeername(getremotesocket(s),(struct sockaddr *)&peer,&peerlen);
+  hp = gethostbyaddr((char *)&peer.sin_addr,sizeof(struct in_addr),AF_INET);
+  if ( hp )
+    strcpy(name,hp->h_name);
+  else
+    strcpy(name,(char *)inet_ntoa(peer.sin_addr));
 }
 
 void generate_port(int use_unix,char *port_str)
 {
-	double get_current_time();
-	unsigned long mt_genrand();
-	unsigned int port;
-	static int count=0;
+  double get_current_time();
+  unsigned long mt_genrand();
+  unsigned int port;
+  static int count=0;
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	if ( use_unix ) {
-		sprintf(port_str,"/tmp/ox%02x.XXXXXX",count);
-		count++;
-		mktemp(port_str);
-	} else 
+  if ( use_unix ) {
+    sprintf(port_str,"/tmp/ox%02x.XXXXXX",count);
+    count++;
+    mktemp(port_str);
+  } else 
 #endif
-	{
-		port = ((unsigned int)mt_genrand()+(unsigned int)get_current_time())
-			%(65536-1024)+1024;
-		sprintf(port_str,"%d",port);
-	}
+  {
+    port = ((unsigned int)mt_genrand()+(unsigned int)get_current_time())
+      %(65536-1024)+1024;
+    sprintf(port_str,"%d",port);
+  }
 }
 
 int try_bind_listen(int use_unix,char *port_str)
 {
-	struct sockaddr_in sin;
-	struct sockaddr *saddr;
-	int len;
-	int service;
+  struct sockaddr_in sin;
+  struct sockaddr *saddr;
+  int len;
+  int service;
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	struct sockaddr_un s_un;
+  struct sockaddr_un s_un;
 
-	if ( use_unix ) {
-		service = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (service < 0) {
-			perror("in socket");
-			return -1;
-		}
-		s_un.sun_family = AF_UNIX;
-		strcpy(s_un.sun_path,port_str);
+  if ( use_unix ) {
+    service = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (service < 0) {
+      perror("in socket");
+      return -1;
+    }
+    s_un.sun_family = AF_UNIX;
+    strcpy(s_un.sun_path,port_str);
 #if defined(__FreeBSD__)
-		len = SUN_LEN(&s_un);
-		s_un.sun_len = len+1; /* XXX */
+    len = SUN_LEN(&s_un);
+    s_un.sun_len = len+1; /* XXX */
 #else
-		len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
+    len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
 #endif
-		saddr = (struct sockaddr *)&s_un;
-	} else 
+    saddr = (struct sockaddr *)&s_un;
+  } else 
 #endif
-	{
-		service = socket(AF_INET, SOCK_STREAM, 0);
-		if ( service < 0 ) {
-			perror("in socket");
-			return -1;
-		}
-		sin.sin_family = AF_INET; sin.sin_addr.s_addr = INADDR_ANY;
-		sin.sin_port = htons((unsigned short)atoi(port_str));
-		len = sizeof(sin);
-		saddr = (struct sockaddr *)&sin;
-	}
-	if (bind(service, saddr, len) < 0) {
-		perror("in bind");
-		closesocket(service);
-		return -1;
-	}
-	if (getsockname(service,saddr, &len) < 0) {
-	    perror("in getsockname");
-	    closesocket(service);
-	    return -1;
-	}
-	if (listen(service, SOCKQUEUELENGTH) < 0) {
-		perror("in listen");
-		closesocket(service);
-		return -1;
-	}
-	return service;
+  {
+    service = socket(AF_INET, SOCK_STREAM, 0);
+    if ( service < 0 ) {
+      perror("in socket");
+      return -1;
+    }
+    sin.sin_family = AF_INET; sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_port = htons((unsigned short)atoi(port_str));
+    len = sizeof(sin);
+    saddr = (struct sockaddr *)&sin;
+  }
+  if (bind(service, saddr, len) < 0) {
+    perror("in bind");
+    closesocket(service);
+    return -1;
+  }
+  if (getsockname(service,saddr, &len) < 0) {
+      perror("in getsockname");
+      closesocket(service);
+      return -1;
+  }
+  if (listen(service, SOCKQUEUELENGTH) < 0) {
+    perror("in listen");
+    closesocket(service);
+    return -1;
+  }
+  return service;
 }
 
 /*
@@ -192,232 +192,232 @@ int try_bind_listen(int use_unix,char *port_str)
 
 int try_accept(int af_unix,int s)
 {
-	int len,c,i;
-	struct sockaddr_in sin;
+  int len,c,i;
+  struct sockaddr_in sin;
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	struct sockaddr_un s_un;
-	if ( af_unix ) {
-		len = sizeof(s_un);
-		for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
-			c = accept(s, (struct sockaddr *) &s_un, &len);
-	} else 
+  struct sockaddr_un s_un;
+  if ( af_unix ) {
+    len = sizeof(s_un);
+    for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
+      c = accept(s, (struct sockaddr *) &s_un, &len);
+  } else 
 #endif
-	{
+  {
 
-		len = sizeof(sin);
-		for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
-			c = accept(s, (struct sockaddr *) &sin, &len);
-	}
-	if ( i == 10 )
-		c = -1;
-	closesocket(s);
-	return c;
+    len = sizeof(sin);
+    for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
+      c = accept(s, (struct sockaddr *) &sin, &len);
+  }
+  if ( i == 10 )
+    c = -1;
+  closesocket(s);
+  return c;
 }
 
 int try_connect(int use_unix,char *host,char *port_str)
 {
-	struct sockaddr_in sin;
-	struct sockaddr *saddr;
-	struct hostent *hp;
-	int len,s,i;
+  struct sockaddr_in sin;
+  struct sockaddr *saddr;
+  struct hostent *hp;
+  int len,s,i;
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	struct sockaddr_un s_un;
+  struct sockaddr_un s_un;
 #endif
 
-	for ( i = 0; i < 10; i++ ) {
+  for ( i = 0; i < 10; i++ ) {
 #if !defined(VISUAL) && !defined(__MINGW32__)
-		if ( use_unix ) {
-			if ( (s = socket(AF_UNIX,SOCK_STREAM,0)) < 0 ) {
-				perror("socket");
-				return -1;
-			}
-			bzero(&s_un,sizeof(s_un));
-			s_un.sun_family = AF_UNIX;
-			strcpy(s_un.sun_path,port_str);
+    if ( use_unix ) {
+      if ( (s = socket(AF_UNIX,SOCK_STREAM,0)) < 0 ) {
+        perror("socket");
+        return -1;
+      }
+      bzero(&s_un,sizeof(s_un));
+      s_un.sun_family = AF_UNIX;
+      strcpy(s_un.sun_path,port_str);
 #if defined(__FreeBSD__)
-			len = SUN_LEN(&s_un);
-			s_un.sun_len = len+1; /* XXX */
+      len = SUN_LEN(&s_un);
+      s_un.sun_len = len+1; /* XXX */
 #else
-			len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
+      len = strlen(s_un.sun_path)+sizeof(s_un.sun_family);
 #endif
-			saddr = (struct sockaddr *)&s_un;
-		} else 
+      saddr = (struct sockaddr *)&s_un;
+    } else 
 #endif /* VISUAL */
-		{
-			if ( !host )
-				host = "127.0.0.1";
-			if ( (s = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
-				perror("socket");
-				return -1;
-			}
-			bzero(&sin,sizeof(sin));
-			sin.sin_port = htons((unsigned short)atoi(port_str));
-			sin.sin_addr.s_addr = inet_addr(host);
-			if ( sin.sin_addr.s_addr != -1 ) {
-				sin.sin_family = AF_INET;
-			} else {
-				hp = gethostbyname(host);
-				bcopy(hp->h_addr,&sin.sin_addr,hp->h_length);
-				sin.sin_family = hp->h_addrtype;
-			}
-			len = sizeof(sin);
-			saddr = (struct sockaddr *)&sin;
-		}
-		if ( connect(s,saddr,len) >= 0 )
-			break;
-		else {
-			closesocket(s);
+    {
+      if ( !host )
+        host = "127.0.0.1";
+      if ( (s = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
+        perror("socket");
+        return -1;
+      }
+      bzero(&sin,sizeof(sin));
+      sin.sin_port = htons((unsigned short)atoi(port_str));
+      sin.sin_addr.s_addr = inet_addr(host);
+      if ( sin.sin_addr.s_addr != -1 ) {
+        sin.sin_family = AF_INET;
+      } else {
+        hp = gethostbyname(host);
+        bcopy(hp->h_addr,&sin.sin_addr,hp->h_length);
+        sin.sin_family = hp->h_addrtype;
+      }
+      len = sizeof(sin);
+      saddr = (struct sockaddr *)&sin;
+    }
+    if ( connect(s,saddr,len) >= 0 )
+      break;
+    else {
+      closesocket(s);
 #if defined(VISUAL) || defined(__MINGW32__)
-			Sleep(100);
+      Sleep(100);
 #else
-			usleep(100000);
+      usleep(100000);
 #endif
-		}
-	}
-	if ( i == 10 ) {
-		perror("connect");
-		return -1;
-	} else
-		return s;
+    }
+  }
+  if ( i == 10 ) {
+    perror("connect");
+    return -1;
+  } else
+    return s;
 }
 
 #if 0
 void close_allconnections()
 {
-	int s;
+  int s;
 
 #if defined(SIGPIPE)
-	signal(SIGPIPE,SIG_IGN);
+  signal(SIGPIPE,SIG_IGN);
 #endif
-	for ( s = 0; s < MAXIOFP; s++ )
-		close_connection(s);
+  for ( s = 0; s < MAXIOFP; s++ )
+    close_connection(s);
 }
 
 void close_connection(int s)
 {
-	struct IOFP *r;
+  struct IOFP *r;
 
-	r = &iofp[s];
-	if ( r->in && r->out ) {
-		if ( check_sm_by_mc(s,SM_shutdown) )
-			ox_send_cmd(s,SM_shutdown);
-		free_iofp(s);
-	}
+  r = &iofp[s];
+  if ( r->in && r->out ) {
+    if ( check_sm_by_mc(s,SM_shutdown) )
+      ox_send_cmd(s,SM_shutdown);
+    free_iofp(s);
+  }
 }
 #else
 void close_allconnections()
 {
-	shutdown_all();
+  shutdown_all();
 }
 #endif
 
 void free_iofp(int s)
 {
-	struct IOFP *r;
+  struct IOFP *r;
 
-	r = &iofp[s];
+  r = &iofp[s];
 #if defined(VISUAL) || defined(__MINGW32__)
-	if ( r->s ) closesocket(r->s);
+  if ( r->s ) closesocket(r->s);
 #elif !defined(MPI)
-	if ( r->in ) fclose(r->in);
-	if ( r->out ) fclose(r->out);
-	if ( r->socket ) unlink(r->socket);
+  if ( r->in ) fclose(r->in);
+  if ( r->out ) fclose(r->out);
+  if ( r->socket ) unlink(r->socket);
 #endif
-	r->inbuf = r->outbuf = 0;
-	r->in = r->out = 0; r->s = 0;
+  r->inbuf = r->outbuf = 0;
+  r->in = r->out = 0; r->s = 0;
 }
 
 int get_iofp(int s1,char *af_sock,int is_server)
 {
-	int i;
-	unsigned char c,rc;
-	extern int mpi_myid;
+  int i;
+  unsigned char c,rc;
+  extern int mpi_myid;
 
 #if defined(MPI)
-	iofp[s1].s = s1;
-	if ( mpi_myid == s1 ) {
-		iofp[s1].in = 0;
-		iofp[s1].out = 0;
-	} else {
-		iofp[s1].in = WSIO_open(s1,"r");
-		iofp[s1].out = WSIO_open(s1,"w");
-	}
-	iofp[s1].conv = 0;
-	iofp[s1].socket = 0;
+  iofp[s1].s = s1;
+  if ( mpi_myid == s1 ) {
+    iofp[s1].in = 0;
+    iofp[s1].out = 0;
+  } else {
+    iofp[s1].in = WSIO_open(s1,"r");
+    iofp[s1].out = WSIO_open(s1,"w");
+  }
+  iofp[s1].conv = 0;
+  iofp[s1].socket = 0;
 
-	return s1;
+  return s1;
 #else
-	for ( i = 0; i < MAXIOFP; i++ )
-		if ( !iofp[i].in )
-			break;
-	iofp[i].s = s1;
+  for ( i = 0; i < MAXIOFP; i++ )
+    if ( !iofp[i].in )
+      break;
+  iofp[i].s = s1;
 #if defined(VISUAL) || defined(__MINGW32__)
-	iofp[i].in = WSIO_open(s1,"r");
-	iofp[i].out = WSIO_open(s1,"w");
+  iofp[i].in = WSIO_open(s1,"r");
+  iofp[i].out = WSIO_open(s1,"w");
 #else
-	iofp[i].in = fdopen(s1,"r");
-	iofp[i].out = fdopen(s1,"w");
+  iofp[i].in = fdopen(s1,"r");
+  iofp[i].out = fdopen(s1,"w");
 #if !defined(__CYGWIN__)
-	setbuffer(iofp[i].in,iofp[i].inbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
-	setbuffer(iofp[i].out,iofp[i].outbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
+  setbuffer(iofp[i].in,iofp[i].inbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
+  setbuffer(iofp[i].out,iofp[i].outbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
 #endif
 #endif
-	if ( little_endian )
-		c = 1;
-	else
-		c = 0xff;
-	if ( is_server ) {
-		/* server : write -> read */
-		write_char((FILE *)iofp[i].out,&c); ox_flush_stream_force(i);
-		read_char((FILE *)iofp[i].in,&rc);
-	} else {
-		/* client : read -> write */
-		read_char((FILE *)iofp[i].in,&rc);
-		/* special care for a failure of spawing a server */
-		if ( rc !=0 && rc != 1 && rc != 0xff )
-			return -1;	
-		write_char((FILE *)iofp[i].out,&c); ox_flush_stream_force(i);
-	}
-	iofp[i].conv = c == rc ? 0 : 1;
-	if ( af_sock && af_sock[0] ) {
-		iofp[i].socket = (char *)malloc(strlen(af_sock)+1);
-		strcpy(iofp[i].socket,af_sock);
-	} else
-		iofp[i].socket = 0;
-	return i;
+  if ( little_endian )
+    c = 1;
+  else
+    c = 0xff;
+  if ( is_server ) {
+    /* server : write -> read */
+    write_char((FILE *)iofp[i].out,&c); ox_flush_stream_force(i);
+    read_char((FILE *)iofp[i].in,&rc);
+  } else {
+    /* client : read -> write */
+    read_char((FILE *)iofp[i].in,&rc);
+    /* special care for a failure of spawing a server */
+    if ( rc !=0 && rc != 1 && rc != 0xff )
+      return -1;  
+    write_char((FILE *)iofp[i].out,&c); ox_flush_stream_force(i);
+  }
+  iofp[i].conv = c == rc ? 0 : 1;
+  if ( af_sock && af_sock[0] ) {
+    iofp[i].socket = (char *)malloc(strlen(af_sock)+1);
+    strcpy(iofp[i].socket,af_sock);
+  } else
+    iofp[i].socket = 0;
+  return i;
 #endif
 }
 
 #if defined(VISUAL) || defined(__MINGW32__)
 void init_socket()
 {
-	static int socket_is_initialized;
-	WORD wVersionRequested;
-	WSADATA wsaData;
-	int err;
-	wVersionRequested = MAKEWORD(2,0);
+  static int socket_is_initialized;
+  WORD wVersionRequested;
+  WSADATA wsaData;
+  int err;
+  wVersionRequested = MAKEWORD(2,0);
 
-	if ( socket_is_initialized )
-		return;
-	err = WSAStartup(wVersionRequested,&wsaData);	
-	if ( err )
-		return;
+  if ( socket_is_initialized )
+    return;
+  err = WSAStartup(wVersionRequested,&wsaData);  
+  if ( err )
+    return;
 }
 #endif
 
 int get_fd(int index)
 {
-	return iofp[index].s;
+  return iofp[index].s;
 }
 
 int get_index(int fd)
 {
-	int i;
+  int i;
 
-	for ( i = 0; i < MAXIOFP; i++ )
-		if ( iofp[i].s == fd )
-			return i;
-	return -1;
+  for ( i = 0; i < MAXIOFP; i++ )
+    if ( iofp[i].s == fd )
+      return i;
+  return -1;
 }
 

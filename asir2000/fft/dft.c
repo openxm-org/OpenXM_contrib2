@@ -45,15 +45,15 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.c,v 1.3 2000/08/22 05:04:12 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.c,v 1.4 2003/02/14 22:29:10 ohara Exp $ 
 */
 /*
- *		store			arith		modulus
- *	-------------------------------------------------------
- *	IEEE:	float (23+1)	<->	double (52+1)	24 bits
- *		int   (32)	<->	double (52+1)	26 bits
- *	370:	float (24)	<->	double (56)	24/25 bits
- *		int   (32)	<->	double (56)	28 bits
+ *    store      arith    modulus
+ *  -------------------------------------------------------
+ *  IEEE:  float (23+1)  <->  double (52+1)  24 bits
+ *    int   (32)  <->  double (52+1)  26 bits
+ *  370:  float (24)  <->  double (56)  24/25 bits
+ *    int   (32)  <->  double (56)  28 bits
  */
 
 
@@ -71,9 +71,9 @@
 
 void C_DFT_FORE( in, nin, i1, K, powa,
 #ifdef POWA_STRIDE
-		 a1,
+     a1,
 #endif
-		 out, o1, P, Pinv, wk )
+     out, o1, P, Pinv, wk )
 ModNum in[], powa[], out[], wk[];
 ModNum P;
 int nin, i1, K, o1;
@@ -102,13 +102,13 @@ double Pinv;
   ModNum *qi, *qo, *qis, *qos, a, t0, tn;
 
   /*
-   *	for k = K-1, ..., 0 do the following:
+   *  for k = K-1, ..., 0 do the following:
    *
-   *	    Out[2^{K-k}*i + j]		   <= t0 + \alpha^{2^k * j} * tn;
-   *	    Out[2^{K-k}*i + j + 2^{K-k-1}] <= t0 - \alpha^{2^k * j} * tn;
+   *      Out[2^{K-k}*i + j]       <= t0 + \alpha^{2^k * j} * tn;
+   *      Out[2^{K-k}*i + j + 2^{K-k-1}] <= t0 - \alpha^{2^k * j} * tn;
    *
    *      where t0 = In[2^{K-k-1}*i + j] and
-   *		tn = In[2^{K-k-1}*i + j + 2^{K-1}],
+   *    tn = In[2^{K-k-1}*i + j + 2^{K-1}],
    *      for 0 <= i < 2^k and 0 <= j < 2^{K-k-1}.
    *
    */
@@ -127,13 +127,13 @@ double Pinv;
     for ( i = nin; i > 0; i--, qi += i1, qo += ostep ) qo[0] = qo[odist] = qi[0];
     for ( i = n - nin; i > 0; i--, qo += ostep ) qo[0] = qo[odist] = 0;
   } else {
-    idist = i1 << k;	/* distance = 2^{K-1} */
+    idist = i1 << k;  /* distance = 2^{K-1} */
     for ( j = i = nin - n; i > 0; i--, qi += i1, qo += ostep ) {
       t0 = qi[0],  tn = qi[idist];
       if ( tn == (ModNum)0 ) qo[0] = qo[odist] = t0;
       else {
-	qo[0] = AplusBmodP( t0, tn, P );
-	qo[odist] = A_BmodP( t0, tn, P );
+  qo[0] = AplusBmodP( t0, tn, P );
+  qo[odist] = A_BmodP( t0, tn, P );
       }
     }
     for ( i = n - j; i > 0; i--, qi += i1, qo += ostep )
@@ -145,15 +145,15 @@ double Pinv;
 #ifndef OPT
     K_k = (K_k_1 = K_k) + 1;
 #endif
-    n >>= 1;		/* == 2^k */
-    Ndiv2n <<= 1;	/* == 2^{K-k-1} */
+    n >>= 1;    /* == 2^k */
+    Ndiv2n <<= 1;  /* == 2^{K-k-1} */
     if ( inwk )
       qi = wk, qo = out, iostep = 1, oostep = o1, idist = idistwk;
     else
       qi = out, qo = wk, iostep = o1, oostep = 1, idist = idistout;
     qis = qi,  qos = qo;
     /**/
-    istep = ostep;	/* = iostep << K_k_1; */
+    istep = ostep;  /* = iostep << K_k_1; */
 #ifndef OPT
     ostep = oostep << K_k;
     odist = oostep << K_k_1;
@@ -167,8 +167,8 @@ double Pinv;
       t0 = qi[0],  tn = qi[idist];
       if ( tn == (ModNum)0 ) qo[0] = qo[odist] = t0;
       else {
-	qo[0] = AplusBmodP( t0, tn, P );
-	qo[odist] = A_BmodP( t0, tn, P );
+  qo[0] = AplusBmodP( t0, tn, P );
+  qo[odist] = A_BmodP( t0, tn, P );
       }
     }
     /**/
@@ -181,19 +181,19 @@ double Pinv;
 #endif
       qi = (qis += iostep),  qo = (qos += oostep);
       for ( i = 0; i < n; i++, qi += istep, qo += ostep ) {
-	t0 = qi[0],  tn = qi[idist];
-	if ( tn == (ModNum)0 ) qo[0] = qo[odist] = t0;
-	else {
-	  AxBmodP( tn, ModNum, tn, a, P, Pinv );
-	  qo[0] = AplusBmodP( t0, tn, P );
-	  qo[odist] = A_BmodP( t0, tn, P );
-	}
+  t0 = qi[0],  tn = qi[idist];
+  if ( tn == (ModNum)0 ) qo[0] = qo[odist] = t0;
+  else {
+    AxBmodP( tn, ModNum, tn, a, P, Pinv );
+    qo[0] = AplusBmodP( t0, tn, P );
+    qo[odist] = A_BmodP( t0, tn, P );
+  }
       }
     }
   }
   /*
    *  When k = 0, for i = 0 (0 <= i < 2^0=1) and 0 <= j < 2^{K-1},
-   *	Out[j] <= t0 + \alpha^{j}*tn and Out[j+2^{K-1}] <= t0 - \alpha^{j}*tn,
+   *  Out[j] <= t0 + \alpha^{j}*tn and Out[j+2^{K-1}] <= t0 - \alpha^{j}*tn,
    *  where t0 = In[j] and tn = In[j + 2^{K-1}].
    */
   qi = wk, qo = out, idist = idistwk, odist = idistout;
@@ -228,13 +228,13 @@ double Pinv;
 #ifndef OPT
     K_k = (K_k_1 = K_k) + 1;
 #endif
-    n >>= 1;		/* == 2^k */
-    Ndiv2n <<= 1;	/* == 2^{K-k-1} */
+    n >>= 1;    /* == 2^k */
+    Ndiv2n <<= 1;  /* == 2^{K-k-1} */
     if ( inwk ) qi = wk, qo = out, istep = 1, ostep = o1, idist = idistwk;
     else qi = out, qo = wk, istep = o1, ostep = 1, idist = idistout;
     qis = qi,  qos = qo;
     /**/
-    iostep = oostep;	/* = istep << K_k_1; */
+    iostep = oostep;  /* = istep << K_k_1; */
 #ifndef OPT
     oostep = ostep << K_k;
     odist = ostep << K_k_1;
@@ -248,27 +248,27 @@ double Pinv;
       t0 = qis[0],  tn = qis[idist];
       if ( tn == (ModNum)0 ) qos[0] = qos[odist] = t0;
       else {
-	qos[0] = AplusBmodP( t0, tn, P );
-	qos[odist] = A_BmodP( t0, tn, P );
+  qos[0] = AplusBmodP( t0, tn, P );
+  qos[odist] = A_BmodP( t0, tn, P );
       }
 #ifdef POWA_STRIDE
       for ( aj = a1, j = 1, qi = qis, qo = qos; j < Ndiv2n; aj += a1, j++ ) {
 #else
       for ( j = 1, qi = qis, qo = qos; j < Ndiv2n; j++ ) {
 #endif
-	qi += istep,  qo += ostep;
-	t0 = qi[0],  tn = qi[idist];
-	if ( tn == (ModNum)0 ) qo[0] = qo[odist] = t0;
-	else {
+  qi += istep,  qo += ostep;
+  t0 = qi[0],  tn = qi[idist];
+  if ( tn == (ModNum)0 ) qo[0] = qo[odist] = t0;
+  else {
 #ifdef POWA_STRIDE
-	  a = powa[aj << k];
+    a = powa[aj << k];
 #else
-	  a = powa[j << k];
+    a = powa[j << k];
 #endif
-	  AxBmodP( tn, ModNum, tn, a, P, Pinv );
-	  qo[0] = AplusBmodP( t0, tn, P );
-	  qo[odist] = A_BmodP( t0, tn, P );
-	}
+    AxBmodP( tn, ModNum, tn, a, P, Pinv );
+    qo[0] = AplusBmodP( t0, tn, P );
+    qo[odist] = A_BmodP( t0, tn, P );
+  }
       }
     }
   }
@@ -280,20 +280,20 @@ double Pinv;
  *  NOTE:
  *  (1) Let \alpha be a primitive N-th root of unity modulo P, 
  *  where N is even,
- *	and t be an integer s.t. 0 <= t < N/2.
- *	Then, 1/\alpha^t is given by (- \alpha^s) with s = N/2 - t.
+ *  and t be an integer s.t. 0 <= t < N/2.
+ *  Then, 1/\alpha^t is given by (- \alpha^s) with s = N/2 - t.
  *
  *  (2) Let P be a prime s.t. P = 2^n*Q + 1, where Q is an odd integer.
- *	Then, for 0 < s <= n, 2^{-s} \equiv - 2^{n-s}*Q \bmod P, 
- *	because 1 \equiv - 2^n*Q \bmod P.
+ *  Then, for 0 < s <= n, 2^{-s} \equiv - 2^{n-s}*Q \bmod P, 
+ *  because 1 \equiv - 2^n*Q \bmod P.
  *
  **********************************************************************/
 
 void C_DFT_BACK( in, N, i1, log2N, powa,
 #ifdef POWA_STRIDE
-		 a1,
+     a1,
 #endif
-		 out, o1, osi, nout, Ninv, P, Pinv, wk )
+     out, o1, osi, nout, Ninv, P, Pinv, wk )
 ModNum in[], powa[], out[], wk[];
 int N, log2N, osi, nout, i1, o1;
 #ifdef POWA_STRIDE
@@ -319,21 +319,21 @@ double Pinv;
   ModNum *qi, *qo, *qis, *qos, a, t0, tn, tt;
 
   /*
-   *	for k = K-1, ..., 0 do the following:
+   *  for k = K-1, ..., 0 do the following:
    *
-   *	    Out[2^{K-k}*i + j]		   <= t0 + \alpha^{- 2^k * j} * tn;
-   *					    = t0 - \alpha^{N/2 - 2^k * j}*tn;
-   *	    Out[2^{K-k}*i + j + 2^{K-k-1}] <= t0 - \alpha^{- 2^k * j} * tn;
-   *					    = t0 + \alpha^{N/2 - 2^k * j}*tn;
+   *      Out[2^{K-k}*i + j]       <= t0 + \alpha^{- 2^k * j} * tn;
+   *              = t0 - \alpha^{N/2 - 2^k * j}*tn;
+   *      Out[2^{K-k}*i + j + 2^{K-k-1}] <= t0 - \alpha^{- 2^k * j} * tn;
+   *              = t0 + \alpha^{N/2 - 2^k * j}*tn;
    *
    *      where t0 = In[2^{K-k-1}*i + j] and
-   *		tn = In[2^{K-k-1}*i + j + 2^{K-1}],
+   *    tn = In[2^{K-k-1}*i + j + 2^{K-1}],
    *      for 0 <= i < 2^k and 0 <= j < 2^{K-k-1}.
    *
    */
   if ( log2N == 1 ) {
     /*  K = 1, k = 0, 0 <= i < 1, 0 <= j < 1.
-     *	Out[0] <= t0 + tn, Out[1] <= t0 - tn,
+     *  Out[0] <= t0 + tn, Out[1] <= t0 - tn,
      *  where t0 = In[0] and Tn = In[1].
      */
     t0 = in[0],  tn = in[i1];
@@ -341,7 +341,7 @@ double Pinv;
       /*  out[0] = (t0 + tn)*Ninv; */
       tt = tn == (ModNum)0 ? t0 : AplusBmodP( t0, tn, P );
       if ( tt != (ModNum)0 ) {
-	AxBmodP( tt, ModNum, tt, Ninv, P, Pinv );
+  AxBmodP( tt, ModNum, tt, Ninv, P, Pinv );
       }
       out[0] = tt;
       i = 1;
@@ -351,20 +351,20 @@ double Pinv;
       /*  out[osi == 0 ? 1 : 0] = (t0 - tn)*Ninv; */
       tt = tn == (ModNum)0 ? t0 : A_BmodP( t0, tn, P );
       if ( tt != (ModNum)0 ) {
-	AxBmodP( tt, ModNum, tt, Ninv, P, Pinv );
+  AxBmodP( tt, ModNum, tt, Ninv, P, Pinv );
       }
       out[i] = tt;
     }
     return;
   }
   /****/
-  halfN = n = 1 << (k = log2N - 1);	/* == 2^{K-1} */
+  halfN = n = 1 << (k = log2N - 1);  /* == 2^{K-1} */
 #ifdef POWA_STRIDE
   halfNa = a1 << k;
 #endif
   /*
    *  when k = K-1,
-   *	Out[2*i] <= t0 + tn, and Out[2*i+1] <= t0 - tn,
+   *  Out[2*i] <= t0 + tn, and Out[2*i+1] <= t0 - tn,
    *  where t0 = In[i] and tn = In[i+2^{K-1}],
    *  for 0 <= i < 2^{K-1}.
    */
@@ -390,22 +390,22 @@ double Pinv;
   idist = halfN;
   for ( ostep = 2; --k > 0; inwk = 1 - inwk ) {
     n >>= 1;
-    istep = ostep;	/* == 2^{K-k-1} */
-    ostep <<= 1;	/* == 2^{K-k} */
+    istep = ostep;  /* == 2^{K-k-1} */
+    ostep <<= 1;  /* == 2^{K-k} */
     if ( inwk ) qi = &wk[N], qo = wk;
     else qi = wk, qo = &wk[N];
     qis = qi,  qos = qo;
     /*
      *  for j = 0,
-     *	Out[2^{K-k}*i] <= t0 + tn, and Out[2^{K-k}*i + 2^{K-k-1}] <= t0 - tn,
-     *	where t0 = In[2^{K-k-1}*i] and tn = In[2^{K-k-1}*i + 2^{K-1}].
+     *  Out[2^{K-k}*i] <= t0 + tn, and Out[2^{K-k}*i + 2^{K-k-1}] <= t0 - tn,
+     *  where t0 = In[2^{K-k-1}*i] and tn = In[2^{K-k-1}*i + 2^{K-1}].
      */
     for ( i = n, is = os = 0; i-- > 0; qi += istep, qo += ostep ) {
       t0 = qi[0],  tn = qi[idist];
       if ( tn == (ModNum)0 ) qo[0] = qo[istep] = t0;
       else {
-	qo[0] = AplusBmodP( t0, tn, P );
-	qo[istep] = A_BmodP( t0, tn, P );
+  qo[0] = AplusBmodP( t0, tn, P );
+  qo[istep] = A_BmodP( t0, tn, P );
       }
     }
 #ifdef POWA_STRIDE
@@ -419,15 +419,15 @@ double Pinv;
 #endif
       qi = ++qis,  qo = ++qos;
       for ( i = n; i-- > 0; qi += istep, qo += ostep ) {
-	t0 = qi[0],  tn = qi[idist];
-	if ( tn == (ModNum)0 ) qo[0] = qo[istep] = t0;
-	else {
-	  AxBmodP( tn, ModNum, tn, a, P, Pinv );
-/***	  qo[0] = AplusBmodP( t0, tn, P ); ***/
-/***	  qo[istep] = A_BmodP( t0, tn, P ); ***/
-	  qo[0] = A_BmodP( t0, tn, P );
-	  qo[istep] = AplusBmodP( t0, tn, P );
-	}
+  t0 = qi[0],  tn = qi[idist];
+  if ( tn == (ModNum)0 ) qo[0] = qo[istep] = t0;
+  else {
+    AxBmodP( tn, ModNum, tn, a, P, Pinv );
+/***    qo[0] = AplusBmodP( t0, tn, P ); ***/
+/***    qo[istep] = A_BmodP( t0, tn, P ); ***/
+    qo[0] = A_BmodP( t0, tn, P );
+    qo[istep] = AplusBmodP( t0, tn, P );
+  }
       }
     }
   }
@@ -437,22 +437,22 @@ double Pinv;
   /*
    *  The final step of k = 0.  i can take only the value 0.
    *
-   *	    Out[j]	     <= t0 + \alpha^{-j} * tn;
-   *	    Out[j + 2^{K-1}] <= t0 - \alpha^{-j} * tn;
+   *      Out[j]       <= t0 + \alpha^{-j} * tn;
+   *      Out[j + 2^{K-1}] <= t0 - \alpha^{-j} * tn;
    *
    *      where t0 = In[j] and tn = In[j + 2^{K-1}],
    *      for 0 <= j < 2^{K-1}.
    *
    */
   qo = out,  qi = &wk[inwk ? N : 0];
-  if ( (n = osi + nout) > N ) nout = (n = N) - osi;	/* true nout */
-  if ( (k = nout - halfN) <= 0 ) {	/* no overlap, i.e., no +- */
+  if ( (n = osi + nout) > N ) nout = (n = N) - osi;  /* true nout */
+  if ( (k = nout - halfN) <= 0 ) {  /* no overlap, i.e., no +- */
     if ( osi <= 0 ) {
       t0 = qi[0],  tn = qi[idist];
       if ( tn != (ModNum)0 ) t0 = AplusBmodP( t0, tn, P );
       if ( t0 == (ModNum)0 ) qo[0] = t0;
       else {
-	AxBmodP( qo[0], ModNum, t0, Ninv, P, Pinv );
+  AxBmodP( qo[0], ModNum, t0, Ninv, P, Pinv );
       }
 #ifdef POWA_STRIDE
       aj = a1;
@@ -463,10 +463,10 @@ double Pinv;
 #ifdef POWA_STRIDE
       aj = osi*a1;
 #endif
-      if ( n <= halfN ) i = 0, k = n;		/* lower only */
-      else if ( j == halfN ) goto L_halfN;	/* start with j = N/2 */
-      else if ( j > halfN ) goto L_upper;	/* upper only */
-      else i = n - halfN + 1, k = halfN;	/* we have lower, and i upper */
+      if ( n <= halfN ) i = 0, k = n;    /* lower only */
+      else if ( j == halfN ) goto L_halfN;  /* start with j = N/2 */
+      else if ( j > halfN ) goto L_upper;  /* upper only */
+      else i = n - halfN + 1, k = halfN;  /* we have lower, and i upper */
     }
   } else {
     os = o1*halfN;
@@ -476,16 +476,16 @@ double Pinv;
     if ( osi <= 0 ) {
       t0 = qi[0],  tn = qi[idist];
       if ( tn == (ModNum)0 ) {
-	if ( t0 == (ModNum)0 ) tt = t0;
-	else { AxBmodP( tt, ModNum, t0, Ninv, P, Pinv ); }
-	qo[0] = qo[os] = tt;
+  if ( t0 == (ModNum)0 ) tt = t0;
+  else { AxBmodP( tt, ModNum, t0, Ninv, P, Pinv ); }
+  qo[0] = qo[os] = tt;
       } else {
-	tt = AplusBmodP( t0, tn, P );
-	if ( tt == (ModNum)0 ) qo[0] = tt;
-	else { AxBmodP( qo[0], ModNum, tt, Ninv, P, Pinv ); }
-	tt = A_BmodP( t0, tn, P );
-	if ( tt == (ModNum)0 ) qo[os] = tt;
-	else { AxBmodP( qo[os], ModNum, tt, Ninv, P, Pinv ); }
+  tt = AplusBmodP( t0, tn, P );
+  if ( tt == (ModNum)0 ) qo[0] = tt;
+  else { AxBmodP( qo[0], ModNum, tt, Ninv, P, Pinv ); }
+  tt = A_BmodP( t0, tn, P );
+  if ( tt == (ModNum)0 ) qo[os] = tt;
+  else { AxBmodP( qo[os], ModNum, tt, Ninv, P, Pinv ); }
       }
 #ifdef EBUG
     fprintf( stderr, "::::: DFT^{-1} ::: [0]=%d, [%d]=%d\n", (int)qo[0], os, (int)qo[os] );
@@ -503,27 +503,27 @@ double Pinv;
 #endif
       t0 = qi[j],  tn = qi[j+idist];
       if ( tn == (ModNum)0 ) {
-	if ( t0 != (ModNum)0 ) {
-	  AxBmodP( t0, ModNum, t0, Ninv, P, Pinv );
-	}
-	qo[0] = qo[os] = t0;
+  if ( t0 != (ModNum)0 ) {
+    AxBmodP( t0, ModNum, t0, Ninv, P, Pinv );
+  }
+  qo[0] = qo[os] = t0;
       } else {
 #ifdef POWA_STRIDE
-/***	a = P - powa[halfNa - aj]; ***/
-	a = powa[halfNa - aj];
+/***  a = P - powa[halfNa - aj]; ***/
+  a = powa[halfNa - aj];
 #else
-/***	a = P - powa[halfN - j]; ***/
-	a = powa[halfN - j];
+/***  a = P - powa[halfN - j]; ***/
+  a = powa[halfN - j];
 #endif
-	AxBmodP( tn, ModNum, tn, a, P, Pinv );
-/***	tt = AplusBmodP( t0, tn, P ); ***/
-	tt = A_BmodP( t0, tn, P );
-	if ( tt == (ModNum)0 ) qo[0] = tt;
-	else { AxBmodP( qo[0], ModNum, tt, Ninv, P, Pinv ); }
-/***	tt = A_BmodP( t0, tn, P ); ***/
-	tt = AplusBmodP( t0, tn, P );
-	if ( tt == (ModNum)0 ) qo[os] = tt;
-	else { AxBmodP( qo[os], ModNum, tt, Ninv, P, Pinv ); }
+  AxBmodP( tn, ModNum, tn, a, P, Pinv );
+/***  tt = AplusBmodP( t0, tn, P ); ***/
+  tt = A_BmodP( t0, tn, P );
+  if ( tt == (ModNum)0 ) qo[0] = tt;
+  else { AxBmodP( qo[0], ModNum, tt, Ninv, P, Pinv ); }
+/***  tt = A_BmodP( t0, tn, P ); ***/
+  tt = AplusBmodP( t0, tn, P );
+  if ( tt == (ModNum)0 ) qo[os] = tt;
+  else { AxBmodP( qo[os], ModNum, tt, Ninv, P, Pinv ); }
       }
     }
     k = halfN;

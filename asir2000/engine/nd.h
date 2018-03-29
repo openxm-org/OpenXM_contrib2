@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.36 2017/02/21 09:20:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.37 2017/09/14 01:34:54 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -24,104 +24,104 @@ typedef unsigned int UINT;
 /* GeoBucket for polynomial addition */
 
 typedef struct oPGeoBucket {
-	int m;
-	struct oND *body[32];
+  int m;
+  struct oND *body[32];
 } *PGeoBucket;
 
 /* distributed polynomial; linked list rep. */
 typedef struct oND {
-	struct oNM *body;
-	int nv;
-	int len;
-	int sugar;
+  struct oNM *body;
+  int nv;
+  int len;
+  int sugar;
 } *ND;
 
 /* distributed polynomial; array rep. */
 typedef struct oNDV {
-	struct oNMV *body;
-	int nv;
-	int len;
-	int sugar;
+  struct oNMV *body;
+  int nv;
+  int len;
+  int sugar;
 } *NDV;
 
 typedef union oNDC {
-	int m;
-	Q z;
-	LM lm;
-	GZ gz;
-	P p;
-	R r;
-	DAlg a;
+  int m;
+  Q z;
+  LM lm;
+  GZ gz;
+  P p;
+  R r;
+  DAlg a;
 } *NDC;
 
 /* monomial; linked list rep. */
 typedef struct oNM {
-	struct oNM *next;
-	union oNDC c;
-	UINT dl[1];
+  struct oNM *next;
+  union oNDC c;
+  UINT dl[1];
 } *NM;
 
 /* monomial; array rep. */
 typedef struct oNMV {
-	union oNDC c;
-	UINT dl[1];
+  union oNDC c;
+  UINT dl[1];
 } *NMV;
 
 /* history of reducer */
 typedef struct oRHist {
-	struct oRHist *next;
-	int index;
-	int sugar;
-	UINT dl[1];
+  struct oRHist *next;
+  int index;
+  int sugar;
+  UINT dl[1];
 } *RHist;
 
 /* S-pair list */
 typedef struct oND_pairs {
-	struct oND_pairs *next;
-	int i1,i2;
-	int sugar;
-	int sugar2;
-	UINT lcm[1];
+  struct oND_pairs *next;
+  int i1,i2;
+  int sugar;
+  int sugar2;
+  UINT lcm[1];
 } *ND_pairs;
 
 /* index and shift count for each exponent */
 typedef struct oEPOS {
-	int i; /* index */
-	int s; /* shift */
+  int i; /* index */
+  int s; /* shift */
 } *EPOS;
 
 typedef struct oBlockMask {
-	int n;
-	struct order_pair *order_pair;
-	UINT **mask;
+  int n;
+  struct order_pair *order_pair;
+  UINT **mask;
 } *BlockMask;
 
 typedef struct oBaseSet {
-	int len;
-	NDV *ps;
-	UINT **bound;
+  int len;
+  NDV *ps;
+  UINT **bound;
 } *BaseSet;
 
 typedef struct oNM_ind_pair
 {
-	NM mul;
-	int index,sugar;
+  NM mul;
+  int index,sugar;
 } *NM_ind_pair;
 
 typedef struct oIndArray
 {
-	char width;
-	int head;
-	union {
-		unsigned char *c;
-		unsigned short *s;
-		unsigned int *i;
-	} index;
+  char width;
+  int head;
+  union {
+    unsigned char *c;
+    unsigned short *s;
+    unsigned int *i;
+  } index;
 } *IndArray;
 
 typedef struct oNDVI {
-	NDV p;
-	int i;
+  NDV p;
+  int i;
 } *NDVI;
 
 extern int (*ndl_compare_function)(UINT *a1,UINT *a2);
@@ -178,7 +178,7 @@ extern int *current_module_weight_vector;
 (nd_dcomp>0?TD_DL_COMPARE(d1,d2)\
          :(nd_dcomp==0?ndl_lex_compare(d1,d2)\
                      :(nd_blockmask?ndl_block_compare(d1,d2)\
-								   :(*ndl_compare_function)(d1,d2))))
+                   :(*ndl_compare_function)(d1,d2))))
 #else
 #define DL_COMPARE(d1,d2)\
 (nd_dcomp>0?TD_DL_COMPARE(d1,d2):(*ndl_compare_function)(d1,d2))
@@ -347,15 +347,15 @@ INLINE int nd_length(ND p);
 NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz);
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0, ND_pairs *nz);
 NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_mod_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_sf_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
-	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 NODE nd_f4_red_gz_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
-	NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 
 /* NDV functions */
 ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);

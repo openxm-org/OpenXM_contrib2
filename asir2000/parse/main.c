@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.37 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/main.c,v 1.38 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -75,46 +75,46 @@ extern int mpi_nprocs,mpi_myid;
 
 char *find_asirrc()
 {
-	static char name[BUFSIZ];
-	char dir[BUFSIZ];
-	char *env,*env2;
+  static char name[BUFSIZ];
+  char dir[BUFSIZ];
+  char *env,*env2;
 
 /* if ASIR_CONFIG is set, execute it; else execute .asirrc */
-	env = getenv("ASIR_CONFIG");
-	if( env && !access(env, R_OK) ) {
-		strcpy(name,env);
-		return name;
-	}
-	env = getenv("HOME");
-	if ( env ) {
-		sprintf(name, "%s/.asirrc", env);
-		if (!access(name, R_OK)) {
-			return name;
-		}
-	}
+  env = getenv("ASIR_CONFIG");
+  if( env && !access(env, R_OK) ) {
+    strcpy(name,env);
+    return name;
+  }
+  env = getenv("HOME");
+  if ( env ) {
+    sprintf(name, "%s/.asirrc", env);
+    if (!access(name, R_OK)) {
+      return name;
+    }
+  }
 #if defined(VISUAL) || defined(__MINGW32__)
-	env  = getenv("HOMEDRIVE");
-	env2 = getenv("HOMEPATH");
-	if ( env && env2 ) {
-		sprintf(name, "%s%s/.asirrc", env, env2);
-		if (!access(name, R_OK)) {
-			return name;
-		}
-	}
-	env  = getenv("APPDATA");
-	if ( env ) {
-		sprintf(name, "%s/OpenXM/.asirrc", env);
-		if (!access(name, R_OK)) {
-			return name;
-		}
-	}
-	get_rootdir(dir, BUFSIZ);
-	sprintf(name, "%s/.asirrc", dir);
-	if (!access(name, R_OK)) {
-		return name;
-	}
+  env  = getenv("HOMEDRIVE");
+  env2 = getenv("HOMEPATH");
+  if ( env && env2 ) {
+    sprintf(name, "%s%s/.asirrc", env, env2);
+    if (!access(name, R_OK)) {
+      return name;
+    }
+  }
+  env  = getenv("APPDATA");
+  if ( env ) {
+    sprintf(name, "%s/OpenXM/.asirrc", env);
+    if (!access(name, R_OK)) {
+      return name;
+    }
+  }
+  get_rootdir(dir, BUFSIZ);
+  sprintf(name, "%s/.asirrc", dir);
+  if (!access(name, R_OK)) {
+    return name;
+  }
 #endif
-	return NULL;
+  return NULL;
 }
 
 #if defined(VISUAL_LIB)
@@ -126,119 +126,119 @@ void
 main(int argc,char *argv[])
 #endif
 {
-	int tmp;
-	char *ifname;
-	extern int GC_dont_gc;
-	extern int do_asirrc;
-	extern int do_file;
-	extern char *do_filename;
-	extern int asir_setenv;
-	extern FILE *in_fp;
-	extern int *StackBottom;
+  int tmp;
+  char *ifname;
+  extern int GC_dont_gc;
+  extern int do_asirrc;
+  extern int do_file;
+  extern char *do_filename;
+  extern int asir_setenv;
+  extern FILE *in_fp;
+  extern int *StackBottom;
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	char *slash,*bslash,*binname,*p;
+  char *slash,*bslash,*binname,*p;
 #endif
 
-	set_stacksize();
-	StackBottom = &tmp;
-	GC_init();
+  set_stacksize();
+  StackBottom = &tmp;
+  GC_init();
 #if defined(MPI)
-	mpi_init();
-	if ( mpi_myid ) {
-		int slave_argc;
-		char *slave_argv[2];
+  mpi_init();
+  if ( mpi_myid ) {
+    int slave_argc;
+    char *slave_argv[2];
  
-		ox_mpi_slave_init();
-		slave_argc = 1;
-		slave_argv[0] = "ox_asir"; slave_argv[1]=0;
-		ox_main(argc,argv);
-		exit(0);
-	} else
-		ox_mpi_master_init();
+    ox_mpi_slave_init();
+    slave_argc = 1;
+    slave_argv[0] = "ox_asir"; slave_argv[1]=0;
+    ox_main(argc,argv);
+    exit(0);
+  } else
+    ox_mpi_master_init();
 #elif !defined(VISUAL) && !defined(__MINGW32__)
-	slash = (char *)rindex(argv[0],'/');
-	bslash = (char *)rindex(argv[0],'\\');
-	if ( slash )
-		binname = slash+1;
-	else if ( bslash )
-		binname = bslash+1;
-	else
-		binname = argv[0];
-	for ( p = binname; *p; p++ )
-		*p = tolower(*p);
-	if ( !strncmp(binname,"ox_asir",strlen("ox_asir")) ) {
-		/* never return */
-		ox_main(argc,argv);
-		exit(0);
+  slash = (char *)rindex(argv[0],'/');
+  bslash = (char *)rindex(argv[0],'\\');
+  if ( slash )
+    binname = slash+1;
+  else if ( bslash )
+    binname = bslash+1;
+  else
+    binname = argv[0];
+  for ( p = binname; *p; p++ )
+    *p = tolower(*p);
+  if ( !strncmp(binname,"ox_asir",strlen("ox_asir")) ) {
+    /* never return */
+    ox_main(argc,argv);
+    exit(0);
 #if defined(DO_PLOT)
-	} else if ( !strncmp(binname,"ox_plot",strlen("ox_plot")) ) {
-		/* never return */
-		ox_plot_main(argc,argv);
-		exit(0);
+  } else if ( !strncmp(binname,"ox_plot",strlen("ox_plot")) ) {
+    /* never return */
+    ox_plot_main(argc,argv);
+    exit(0);
 #endif
-	} else if ( !strncmp(binname,"ox_launch",strlen("ox_launch")) ) {
-		/* never return */
-		launch_main(argc,argv);
-		exit(0);
-	}
+  } else if ( !strncmp(binname,"ox_launch",strlen("ox_launch")) ) {
+    /* never return */
+    launch_main(argc,argv);
+    exit(0);
+  }
 #endif
 
-	srandom((int)get_current_time());
-/*	mt_sgenrand((unsigned long)get_current_time()); */
+  srandom((int)get_current_time());
+/*  mt_sgenrand((unsigned long)get_current_time()); */
 
-	rtime_init();
-	env_init();
-	endian_init();
-	cppname_init();
-	process_args(--argc,++argv);
-	if (!do_quiet) {
-		copyright();
-	}
-	output_init();
-	arf_init();
-	nglob_init();
-	glob_init();
-	sig_init();
-	tty_init();
-	debug_init();
-	pf_init();
-	sysf_init();
-	parif_init();
-	order_init();
-	/* XXX set the default ordering */
+  rtime_init();
+  env_init();
+  endian_init();
+  cppname_init();
+  process_args(--argc,++argv);
+  if (!do_quiet) {
+    copyright();
+  }
+  output_init();
+  arf_init();
+  nglob_init();
+  glob_init();
+  sig_init();
+  tty_init();
+  debug_init();
+  pf_init();
+  sysf_init();
+  parif_init();
+  order_init();
+  /* XXX set the default ordering */
 #if defined(VISUAL) || defined(__MINGW32__)
-	init_socket();
+  init_socket();
 #endif
 #if defined(UINIT)
-	reg_sysf();
+  reg_sysf();
 #endif
 
-	if ( do_file ) {
-		asir_infile=NULL;
-		loadasirfile(do_filename);
-	} else {
-		/* the bottom of the input stack */
-		input_init(stdin,"stdin");
-	}
+  if ( do_file ) {
+    asir_infile=NULL;
+    loadasirfile(do_filename);
+  } else {
+    /* the bottom of the input stack */
+    input_init(stdin,"stdin");
+  }
 
-	if ( do_asirrc && (ifname = find_asirrc()) ) {
-		if ( !SETJMP(main_env) )
-			execasirfile(ifname);
-	}
+  if ( do_asirrc && (ifname = find_asirrc()) ) {
+    if ( !SETJMP(main_env) )
+      execasirfile(ifname);
+  }
 
-	prompt();
-	while ( 1 ) {
-		if ( SETJMP(main_env) )
-			prompt();
-		if ( !do_file ) {
-			if ( SETJMP(asir_infile->jmpbuf) )
-				prompt();
-			else
-				asir_infile->ready_for_longjmp = 1;
-		}
-		restore_handler();
-		read_eval_loop();
-	}
+  prompt();
+  while ( 1 ) {
+    if ( SETJMP(main_env) )
+      prompt();
+    if ( !do_file ) {
+      if ( SETJMP(asir_infile->jmpbuf) )
+        prompt();
+      else
+        asir_infile->ready_for_longjmp = 1;
+    }
+    restore_handler();
+    read_eval_loop();
+  }
 }
 
 #if !defined(VISUAL_LIB)
@@ -251,13 +251,13 @@ void set_error(int code,char *reason,char *action)
 void set_stacksize()
 {
 #if !defined(VISUAL) && !defined(__MINGW32__)
-	struct rlimit rlim;
-	int c,m;
+  struct rlimit rlim;
+  int c,m;
 
-	getrlimit(RLIMIT_STACK,&rlim);
-	if ( rlim.rlim_cur < (1<<26) ) {
-		rlim.rlim_cur = MIN(1<<26,rlim.rlim_max);
-		setrlimit(RLIMIT_STACK,&rlim);
-	}
+  getrlimit(RLIMIT_STACK,&rlim);
+  if ( rlim.rlim_cur < (1<<26) ) {
+    rlim.rlim_cur = MIN(1<<26,rlim.rlim_max);
+    setrlimit(RLIMIT_STACK,&rlim);
+  }
 #endif
 }

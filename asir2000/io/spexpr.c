@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.39 2015/08/20 08:53:05 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/spexpr.c,v 1.40 2017/08/31 02:36:21 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -122,17 +122,17 @@ extern int hideargs;
 void soutput_init(s)
 char *s;
 {
-	s[0] = 0; buf = s;
+  s[0] = 0; buf = s;
 }
 
 void sprintbf(BF a)
 {
-	int dprec;
-	char fbuf[BUFSIZ];
-	char *s;
-	dprec = a->body->_mpfr_prec*0.30103;
-	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
-	mpfr_asprintf(&s,fbuf,a->body);
-	TAIL PUTS(s);
-	mpfr_free_str(s);
+  int dprec;
+  char fbuf[BUFSIZ];
+  char *s;
+  dprec = a->body->_mpfr_prec*0.30103;
+  sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
+  mpfr_asprintf(&s,fbuf,a->body);
+  TAIL PUTS(s);
+  mpfr_free_str(s);
 }

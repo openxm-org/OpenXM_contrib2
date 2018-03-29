@@ -45,19 +45,19 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/asm/port.c,v 1.2 2000/08/21 08:31:17 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/asm/port.c,v 1.3 2000/08/22 05:03:55 noro Exp $ 
 */
 #include "base.h"
 
 int dsab(base,a1,a2,up)
 int base,a1,a2,*up;
 {
-	return dmab(base,a1,BASE,a2,up);
+  return dmab(base,a1,BASE,a2,up);
 }
 
 int dqr(a,b,qp)
 int a,b,*qp;
 {
-	*qp = a/b;
-	return a - b * (*qp);
+  *qp = a/b;
+  return a - b * (*qp);
 }

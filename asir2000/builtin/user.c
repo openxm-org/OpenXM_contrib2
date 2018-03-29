@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.3 2004/10/06 11:58:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/user.c,v 1.4 2015/09/03 23:05:36 noro Exp $ */
 
 /* a sample file for adding builtin functions */
 
@@ -37,8 +37,8 @@ void Pcomp_f(NODE arg,Q *rp)
     if ( r ) { STOQ(r,*rp); return; }
     m1 = QTOS((Q)ARG1(e1));
     m2 = QTOS((Q)ARG1(e2));
-	r = m1>m2?1:(m1<m2?-1:0);
-	if ( r ) { STOQ(r,*rp); return; }
+  r = m1>m2?1:(m1<m2?-1:0);
+  if ( r ) { STOQ(r,*rp); return; }
   }
   r = l1?1:(l2?-1:0);
   STOQ(r,*rp);
@@ -46,35 +46,35 @@ void Pcomp_f(NODE arg,Q *rp)
 
 void Pzadd(NODE arg,Q *rp)
 {
-	Z z0,z1,z2;
+  Z z0,z1,z2;
 
-	z0 = qtoz((Q)ARG0(arg));
-	z1 = qtoz((Q)ARG1(arg));
-	z2 = addz(z0,z1);
-	printz(z2); printf(" ");
-	*rp = ztoq(z2);
+  z0 = qtoz((Q)ARG0(arg));
+  z1 = qtoz((Q)ARG1(arg));
+  z2 = addz(z0,z1);
+  printz(z2); printf(" ");
+  *rp = ztoq(z2);
 }
 
 void Pzsub(NODE arg,Q *rp)
 {
-	Z z0,z1,z2;
+  Z z0,z1,z2;
 
-	z0 = qtoz((Q)ARG0(arg));
-	z1 = qtoz((Q)ARG1(arg));
-	z2 = subz(z0,z1);
-	printz(z2); printf(" ");
-	*rp = ztoq(z2);
+  z0 = qtoz((Q)ARG0(arg));
+  z1 = qtoz((Q)ARG1(arg));
+  z2 = subz(z0,z1);
+  printz(z2); printf(" ");
+  *rp = ztoq(z2);
 }
 
 void Pzmul(NODE arg,Q *rp)
 {
-	Z z0,z1,z2;
+  Z z0,z1,z2;
 
-	z0 = qtoz((Q)ARG0(arg));
-	z1 = qtoz((Q)ARG1(arg));
-	z2 = mulz(z0,z1);
-	printz(z2); printf(" ");
-	*rp = ztoq(z2);
+  z0 = qtoz((Q)ARG0(arg));
+  z1 = qtoz((Q)ARG1(arg));
+  z2 = mulz(z0,z1);
+  printz(z2); printf(" ");
+  *rp = ztoq(z2);
 }
 
 /*

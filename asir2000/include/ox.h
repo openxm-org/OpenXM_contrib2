@@ -45,76 +45,76 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.29 2015/08/18 02:26:05 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.30 2016/06/29 05:10:14 ohara Exp $ 
 */
 #include "com.h"
 
 /* version */
 
-#define OX_VERSION		199901160
+#define OX_VERSION    199901160
 
 /* header */
 
-#define OX_COMMAND		513
-#define OX_DATA			514
-#define OX_SYNC_BALL	515
+#define OX_COMMAND    513
+#define OX_DATA      514
+#define OX_SYNC_BALL  515
 
-#define OX_DATA_WITH_SIZE		521
-#define OX_DATA_ASIR_BINARY_EXPRESSION		522
+#define OX_DATA_WITH_SIZE    521
+#define OX_DATA_ASIR_BINARY_EXPRESSION    522
 
-#define OX_LOCAL_OBJECT	0x7fcdef30
+#define OX_LOCAL_OBJECT  0x7fcdef30
 
 #define OX_LOCAL_OBJECT_ASIR (OX_LOCAL_OBJECT+0)
-#define OX_LOCAL_OBJECT_SM1	(OX_LOCAL_OBJECT+1)
+#define OX_LOCAL_OBJECT_SM1  (OX_LOCAL_OBJECT+1)
 
 /* cmo_tags */
 
-#define CMO_LARGE_ID	0x7f000000
+#define CMO_LARGE_ID  0x7f000000
 
-#define CMO_ERROR			CMO_LARGE_ID+1
-#define CMO_ERROR2			CMO_LARGE_ID+2
+#define CMO_ERROR      CMO_LARGE_ID+1
+#define CMO_ERROR2      CMO_LARGE_ID+2
 
-#define CMO_NULL			1
-#define CMO_INT32			2
-#define CMO_DATUM			3
-#define CMO_STRING			4
-#define CMO_MATHCAP			5
+#define CMO_NULL      1
+#define CMO_INT32      2
+#define CMO_DATUM      3
+#define CMO_STRING      4
+#define CMO_MATHCAP      5
 
-#define CMO_ARRAY				16
-#define CMO_LIST				17
-#define CMO_ATOM				18
-#define CMO_MONOMIAL32			19
-#define CMO_ZZ					20
-#define CMO_QQ					21
-#define CMO_ZERO				22
+#define CMO_ARRAY        16
+#define CMO_LIST        17
+#define CMO_ATOM        18
+#define CMO_MONOMIAL32      19
+#define CMO_ZZ          20
+#define CMO_QQ          21
+#define CMO_ZERO        22
 
-#define CMO_DMS_GENERIC			24
-#define CMO_DMS_OF_N_VARIABLES	25
-#define CMO_RING_BY_NAME		26
-#define CMO_RECURSIVE_POLYNOMIAL		27
+#define CMO_DMS_GENERIC      24
+#define CMO_DMS_OF_N_VARIABLES  25
+#define CMO_RING_BY_NAME    26
+#define CMO_RECURSIVE_POLYNOMIAL    27
 
-#define CMO_DISTRIBUTED_POLYNOMIAL		31
-#define CMO_UNIVARIATE_POLYNOMIAL		33
-#define CMO_RATIONAL		34
-#define CMO_COMPLEX		35
+#define CMO_DISTRIBUTED_POLYNOMIAL    31
+#define CMO_UNIVARIATE_POLYNOMIAL    33
+#define CMO_RATIONAL    34
+#define CMO_COMPLEX    35
 
 #define CMO_64BIT_MACHINE_DOUBLE   40
 #define CMO_ARRAY_OF_64BIT_MACHINE_DOUBLE  41
 #define CMO_128BIT_MACHINE_DOUBLE   42
 #define CMO_ARRAY_OF_128BIT_MACHINE_DOUBLE  43
 
-#define CMO_BIGFLOAT				50
-#define CMO_IEEE_DOUBLE_FLOAT		51
-#define CMO_BIGFLOAT32				52
+#define CMO_BIGFLOAT        50
+#define CMO_IEEE_DOUBLE_FLOAT    51
+#define CMO_BIGFLOAT32        52
 
-#define CMO_INDETERMINATE		60
-#define CMO_TREE				61
-#define CMO_LAMBDA				62
+#define CMO_INDETERMINATE    60
+#define CMO_TREE        61
+#define CMO_LAMBDA        62
 
 /* asir local object id */
 
-#define ASIR_VL					0
-#define ASIR_OBJ				1
+#define ASIR_VL          0
+#define ASIR_OBJ        1
 
 /* commands */
 
@@ -150,9 +150,9 @@
 /* local SM command in ox_asir */
 #define SM_executeFunctionSync 400
 
-#define SM_control_kill 				1024
-#define SM_control_intr 				1025
-#define SM_control_reset_connection		1030
+#define SM_control_kill         1024
+#define SM_control_intr         1025
+#define SM_control_reset_connection    1030
 
 typedef FILE *ox_stream;
 
@@ -310,10 +310,10 @@ void init_socket();
 int get_fd(int index);
 int get_index(int fd);
 void ox_launch_generic(char *host,char *launcher,char *server,
-		int use_unix,int use_ssh,int use_x,int conn_to_serv,Q *rp);
+    int use_unix,int use_ssh,int use_x,int conn_to_serv,Q *rp);
 void spawn_server(char *host,char *launcher,char *server,
-	int use_unix,int use_ssh,int use_x,int conn_to_serv,
-	char *control_port_str,char *server_port_str);
+  int use_unix,int use_ssh,int use_x,int conn_to_serv,
+  char *control_port_str,char *server_port_str);
 void ox_launch_main(int with_x,NODE arg,Obj *p);
 int register_server(int af_unix,int m,int c,int fd);
 int get_mcindex(int i);

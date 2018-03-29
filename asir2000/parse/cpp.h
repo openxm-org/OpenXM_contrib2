@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.h,v 1.3 2000/08/22 05:04:26 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/cpp.h,v 1.4 2000/12/05 01:24:56 noro Exp $ 
 */
 #ifndef _ACCUM_
 #define _ACCUM_
@@ -53,9 +53,9 @@
 #include <string.h>
 
 typedef struct {
-	  int have;
-	  int used;
-	  char *buf; } ACCUM;
+    int have;
+    int used;
+    char *buf; } ACCUM;
 
 char *init_accum(void);
 char *accum_result(char *A);
@@ -67,11 +67,11 @@ char *accum_buf(char *A);
 #define _EXPR_
 
 typedef struct _node {
-	  int leaf;
-	  char *name;
-	  struct _node *left;
-	  struct _node *right;
-	  int op; } NODE;
+    int leaf;
+    char *name;
+    struct _node *left;
+    struct _node *right;
+    int op; } NODE;
 
 NODE *read_expr();
 NODE *read_expr_p(void);
@@ -83,8 +83,8 @@ extern int expr_sharp;
 #define _IF_
 
 typedef struct _if {
-	  struct _if *next;
-	  int condstate; } IF;
+    struct _if *next;
+    int condstate; } IF;
 #define IFSTATE_TRUE 0
 #define IFSTATE_FALSE 1
 #define IFSTATE_STAYFALSE 2
@@ -171,15 +171,15 @@ extern int n_misses;
 #define _SYMTBL_
 
 typedef struct _def {
-	  struct _def *link;
-	  char *name;
-	  int nargs;
-	  unsigned char *repl;
-	  int how;
+    struct _def *link;
+    char *name;
+    int nargs;
+    unsigned char *repl;
+    int how;
 #define DEF_PREDEF  0
 #define DEF_CMDLINE 1
 #define DEF_DEFINE  2
-	  } DEF;
+    } DEF;
 
 extern DEF **symtbl;
 extern int symtbl_size;

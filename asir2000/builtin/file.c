@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.36 2017/06/12 06:22:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/file.c,v 1.37 2017/09/02 04:04:41 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -90,427 +90,427 @@ extern int des_encryption;
 extern char *asir_libdir;
 
 struct ftab file_tab[] = {
-	{"fprintf",Pfprintf,-99999999},
-	{"purge_stdin",Ppurge_stdin,0},
-	{"open_file",Popen_file,-2},
-	{"close_file",Pclose_file,1},
-	{"get_byte",Pget_byte,1},
-	{"put_byte",Pput_byte,2},
-	{"get_word",Pget_word,1},
-	{"put_word",Pput_word,2},
-	{"get_line",Pget_line,-1},
-	{"remove_file",Premove_file,1},
-	{"access",Paccess,1},
-	{"load",Pload,-1},
-	{"import",Pimport,-1},
-	{"which",Pwhich,1},
-	{"loadfiles",Ploadfiles,1},
-	{"output",Poutput,-1},
-	{"bsave",Pbsave,2},
-	{"bload",Pbload,1},
-	{"get_rootdir",Pget_rootdir,0},
+  {"fprintf",Pfprintf,-99999999},
+  {"purge_stdin",Ppurge_stdin,0},
+  {"open_file",Popen_file,-2},
+  {"close_file",Pclose_file,1},
+  {"get_byte",Pget_byte,1},
+  {"put_byte",Pput_byte,2},
+  {"get_word",Pget_word,1},
+  {"put_word",Pput_word,2},
+  {"get_line",Pget_line,-1},
+  {"remove_file",Premove_file,1},
+  {"access",Paccess,1},
+  {"load",Pload,-1},
+  {"import",Pimport,-1},
+  {"which",Pwhich,1},
+  {"loadfiles",Ploadfiles,1},
+  {"output",Poutput,-1},
+  {"bsave",Pbsave,2},
+  {"bload",Pbload,1},
+  {"get_rootdir",Pget_rootdir,0},
 #if defined(DES_ENC)
-	{"bsave_enc",Pbsave_enc,2},
-	{"bload_enc",Pbload_enc,1},
+  {"bsave_enc",Pbsave_enc,2},
+  {"bload_enc",Pbload_enc,1},
 #endif
-	{"bload27",Pbload27,1},
-	{"bsave_compat",Pbsave_compat,2},
-	{"bload_compat",Pbload_compat,1},
-	{"bsave_cmo",Pbsave_cmo,2},
-	{"bload_cmo",Pbload_cmo,1},
-	{"getpid",Pgetpid,0},
-	{0,0,0},
+  {"bload27",Pbload27,1},
+  {"bsave_compat",Pbsave_compat,2},
+  {"bload_compat",Pbload_compat,1},
+  {"bsave_cmo",Pbsave_cmo,2},
+  {"bload_cmo",Pbload_cmo,1},
+  {"getpid",Pgetpid,0},
+  {0,0,0},
 };
 
 static FILE *file_ptrs[BUFSIZ];
 
 void Pfprintf(NODE arg,pointer *rp)
 {
-	FILE *fp;
-	STRING s;
-	asir_assert(ARG0(arg),O_N,"fprintf");
-	fp = file_ptrs[QTOS((Q)ARG0(arg))];
-	if ( !fp ) {
-		error("fprintf : invalid argument");
-	}
-	arg = NEXT(arg);
-	if ( arg ) {
-		Psprintf(arg,&s);
-		fputs(BDY(s),fp);
-		/* fflush(fp); */
-	}
-	*rp = 0;
-	return;
+  FILE *fp;
+  STRING s;
+  asir_assert(ARG0(arg),O_N,"fprintf");
+  fp = file_ptrs[QTOS((Q)ARG0(arg))];
+  if ( !fp ) {
+    error("fprintf : invalid argument");
+  }
+  arg = NEXT(arg);
+  if ( arg ) {
+    Psprintf(arg,&s);
+    fputs(BDY(s),fp);
+    /* fflush(fp); */
+  }
+  *rp = 0;
+  return;
 }
 
 void Ppurge_stdin(Q *rp)
 {
-	purge_stdin(stdin);
-	*rp = 0;
+  purge_stdin(stdin);
+  *rp = 0;
 }
 
 void Popen_file(NODE arg,Q *rp)
 {
-	char *name;
-	FILE *fp;
-	char errbuf[BUFSIZ];
-	int i;
+  char *name;
+  FILE *fp;
+  char errbuf[BUFSIZ];
+  int i;
 
-	asir_assert(ARG0(arg),O_STR,"open_file");
-	for ( i = 0; i < BUFSIZ && file_ptrs[i]; i++ );
-	if ( i == BUFSIZ )
-		error("open_file : too many open files");
-	name = BDY((STRING)ARG0(arg));
-	if (strcmp(name,"unix://stdin") == 0) {
-	  fp = stdin;
-	}else if (strcmp(name,"unix://stdout") == 0) {
-	  fp = stdout;
+  asir_assert(ARG0(arg),O_STR,"open_file");
+  for ( i = 0; i < BUFSIZ && file_ptrs[i]; i++ );
+  if ( i == BUFSIZ )
+    error("open_file : too many open files");
+  name = BDY((STRING)ARG0(arg));
+  if (strcmp(name,"unix://stdin") == 0) {
+    fp = stdin;
+  }else if (strcmp(name,"unix://stdout") == 0) {
+    fp = stdout;
     }else if (strcmp(name,"unix://stderr") == 0) {
-	  fp = stderr;
+    fp = stderr;
     }else{
-	  if ( argc(arg) == 2 ) {
-		asir_assert(ARG1(arg),O_STR,"open_file");
-		fp = fopen(name,BDY((STRING)ARG1(arg)));
-	  } else
-		fp = fopen(name,"rb");
+    if ( argc(arg) == 2 ) {
+    asir_assert(ARG1(arg),O_STR,"open_file");
+    fp = fopen(name,BDY((STRING)ARG1(arg)));
+    } else
+    fp = fopen(name,"rb");
     }
-	if ( !fp ) {
-		sprintf(errbuf,"open_file : cannot open \"%s\"",name);
-		error(errbuf);
-	}
-	file_ptrs[i] = fp;
-	STOQ(i,*rp);
+  if ( !fp ) {
+    sprintf(errbuf,"open_file : cannot open \"%s\"",name);
+    error(errbuf);
+  }
+  file_ptrs[i] = fp;
+  STOQ(i,*rp);
 }
 
 void Pclose_file(NODE arg,Q *rp)
 {
-	int i;
+  int i;
 
-	asir_assert(ARG0(arg),O_N,"close_file");
-	i = QTOS((Q)ARG0(arg));
-	if ( file_ptrs[i] ) {
-		fclose(file_ptrs[i]);
-		file_ptrs[i] = 0;
-	} else
-		error("close_file : invalid argument");
-	*rp = ONE;
+  asir_assert(ARG0(arg),O_N,"close_file");
+  i = QTOS((Q)ARG0(arg));
+  if ( file_ptrs[i] ) {
+    fclose(file_ptrs[i]);
+    file_ptrs[i] = 0;
+  } else
+    error("close_file : invalid argument");
+  *rp = ONE;
 }
 
 void Pget_line(NODE arg,STRING *rp)
 {
-	int i,j,c;
-	FILE *fp;
-	fpos_t head;
-	char *str;
-	char buf[BUFSIZ];
+  int i,j,c;
+  FILE *fp;
+  fpos_t head;
+  char *str;
+  char buf[BUFSIZ];
 
-	if ( !arg ) {
+  if ( !arg ) {
 #if defined(VISUAL_LIB)
-		get_string(buf,sizeof(buf));
+    get_string(buf,sizeof(buf));
 #else
-		fgets(buf,sizeof(buf),stdin);
+    fgets(buf,sizeof(buf),stdin);
 #endif
-		i = strlen(buf);
-		str = (char *)MALLOC_ATOMIC(i+1);	
-		strcpy(str,buf);
-		MKSTR(*rp,str);
-		return;
-	}
+    i = strlen(buf);
+    str = (char *)MALLOC_ATOMIC(i+1);  
+    strcpy(str,buf);
+    MKSTR(*rp,str);
+    return;
+  }
 
-	asir_assert(ARG0(arg),O_N,"get_line");
-	i = QTOS((Q)ARG0(arg));
-	if ( fp = file_ptrs[i] ) {
-		if ( feof(fp) ) {
-			*rp = 0;
-			return;
-		}
-		fgetpos(fp,&head);
-		j = 0;
-		while ( 1 ) {
-			c = getc(fp);
-			if ( c == EOF ) {
-				if ( !j ) {
-					*rp = 0;
-					return;
-				} else
-					break;
-			}
-			j++;
-			if ( c == '\n' )
-				break;
-		}
-		fsetpos(fp,&head);
-		str = (char *)MALLOC_ATOMIC(j+1);	
-		fgets(str,j+1,fp);	
+  asir_assert(ARG0(arg),O_N,"get_line");
+  i = QTOS((Q)ARG0(arg));
+  if ( fp = file_ptrs[i] ) {
+    if ( feof(fp) ) {
+      *rp = 0;
+      return;
+    }
+    fgetpos(fp,&head);
+    j = 0;
+    while ( 1 ) {
+      c = getc(fp);
+      if ( c == EOF ) {
+        if ( !j ) {
+          *rp = 0;
+          return;
+        } else
+          break;
+      }
+      j++;
+      if ( c == '\n' )
+        break;
+    }
+    fsetpos(fp,&head);
+    str = (char *)MALLOC_ATOMIC(j+1);  
+    fgets(str,j+1,fp);  
                 for ( i = 0; i < j; i++ )
                   if ( str[i] == '\r' ) {
                      str[i] = '\n';
                      str[i+1] = 0;
                      break;
                   }
-		MKSTR(*rp,str);
-	} else
-		error("get_line : invalid argument");
+    MKSTR(*rp,str);
+  } else
+    error("get_line : invalid argument");
 }
 
 void Pget_byte(NODE arg,Q *rp)
 {
-	int i,c;
-	FILE *fp;
+  int i,c;
+  FILE *fp;
 
-	asir_assert(ARG0(arg),O_N,"get_byte");
-	i = QTOS((Q)ARG0(arg));
-	if ( fp = file_ptrs[i] ) {
-		if ( feof(fp) ) {
-			STOQ(-1,*rp);
-			return;
-		}
-		c = getc(fp);
-		STOQ(c,*rp);
-	} else
-		error("get_byte : invalid argument");
+  asir_assert(ARG0(arg),O_N,"get_byte");
+  i = QTOS((Q)ARG0(arg));
+  if ( fp = file_ptrs[i] ) {
+    if ( feof(fp) ) {
+      STOQ(-1,*rp);
+      return;
+    }
+    c = getc(fp);
+    STOQ(c,*rp);
+  } else
+    error("get_byte : invalid argument");
 }
 
 void Pget_word(NODE arg,Q *rp)
 {
-	int i,c;
-	FILE *fp;
+  int i,c;
+  FILE *fp;
 
-	asir_assert(ARG0(arg),O_N,"get_word");
-	i = QTOS((Q)ARG0(arg));
-	if ( fp = file_ptrs[i] ) {
-		if ( feof(fp) ) {
-			error("get_word : end of file");
-			return;
-		}
-		read_int(fp,&c);
-		STOQ(c,*rp);
-	} else
-		error("get_word : invalid argument");
+  asir_assert(ARG0(arg),O_N,"get_word");
+  i = QTOS((Q)ARG0(arg));
+  if ( fp = file_ptrs[i] ) {
+    if ( feof(fp) ) {
+      error("get_word : end of file");
+      return;
+    }
+    read_int(fp,&c);
+    STOQ(c,*rp);
+  } else
+    error("get_word : invalid argument");
 }
 
 void Pput_byte(NODE arg,Obj *rp)
 {
-	int i,j,c;
-	FILE *fp;
-	Obj obj;
-	TB tb;
+  int i,j,c;
+  FILE *fp;
+  Obj obj;
+  TB tb;
 
-	asir_assert(ARG0(arg),O_N,"put_byte");
-	i = QTOS((Q)ARG0(arg));
-	if ( !(fp = file_ptrs[i]) )
-		error("put_byte : invalid argument");
+  asir_assert(ARG0(arg),O_N,"put_byte");
+  i = QTOS((Q)ARG0(arg));
+  if ( !(fp = file_ptrs[i]) )
+    error("put_byte : invalid argument");
 
-	obj = (Obj)ARG1(arg);
-	if ( !obj || OID(obj) == O_N ) {
-		c = QTOS((Q)obj);
-		putc(c,fp);
-	} else if ( OID(obj) == O_STR )
-		fputs(BDY((STRING)obj),fp);
-	else if ( OID(obj) == O_TB ) {
-		tb = (TB)obj;
-		for ( j = 0; j < tb->next; j++ )
-			fputs(tb->body[j],fp);
-	}
-	*rp = obj;
+  obj = (Obj)ARG1(arg);
+  if ( !obj || OID(obj) == O_N ) {
+    c = QTOS((Q)obj);
+    putc(c,fp);
+  } else if ( OID(obj) == O_STR )
+    fputs(BDY((STRING)obj),fp);
+  else if ( OID(obj) == O_TB ) {
+    tb = (TB)obj;
+    for ( j = 0; j < tb->next; j++ )
+      fputs(tb->body[j],fp);
+  }
+  *rp = obj;
 }
 
 void Pput_word(NODE arg,Obj *rp)
 {
-	int i,c;
-	FILE *fp;
-	Obj obj;
+  int i,c;
+  FILE *fp;
+  Obj obj;
 
-	asir_assert(ARG0(arg),O_N,"put_word");
-	asir_assert(ARG1(arg),O_N,"put_word");
-	i = QTOS((Q)ARG0(arg));
-	if ( !(fp = file_ptrs[i]) )
-		error("put_word : invalid argument");
+  asir_assert(ARG0(arg),O_N,"put_word");
+  asir_assert(ARG1(arg),O_N,"put_word");
+  i = QTOS((Q)ARG0(arg));
+  if ( !(fp = file_ptrs[i]) )
+    error("put_word : invalid argument");
 
-	obj = (Q)ARG1(arg);
-	c = QTOS((Q)obj);
-	write_int(fp,&c);
-	*rp = obj;
+  obj = (Q)ARG1(arg);
+  c = QTOS((Q)obj);
+  write_int(fp,&c);
+  *rp = obj;
 }
 
 void Pload(NODE arg,Q *rp)
 {
-	int ret = 0;
-	char *name,*name0;
-	char errbuf[BUFSIZ];
+  int ret = 0;
+  char *name,*name0;
+  char errbuf[BUFSIZ];
 
-	if ( !arg ) error("load : invalid argument");
-	if ( ARG0(arg) ) {
-		switch (OID(ARG0(arg))) {
-			case O_STR:
-				name0 = BDY((STRING)ARG0(arg));
-				searchasirpath(name0,&name);
-				if ( !name ) {
-					sprintf(errbuf,"load : \"%s\" not found in the search path",name0);
-					error(errbuf);
-				}
-				execasirfile(name);
-				break;
-			default:
-				error("load : invalid argument");
-				break;
-		}
-	}
-	STOQ(ret,*rp);
+  if ( !arg ) error("load : invalid argument");
+  if ( ARG0(arg) ) {
+    switch (OID(ARG0(arg))) {
+      case O_STR:
+        name0 = BDY((STRING)ARG0(arg));
+        searchasirpath(name0,&name);
+        if ( !name ) {
+          sprintf(errbuf,"load : \"%s\" not found in the search path",name0);
+          error(errbuf);
+        }
+        execasirfile(name);
+        break;
+      default:
+        error("load : invalid argument");
+        break;
+    }
+  }
+  STOQ(ret,*rp);
 }
 
 NODE imported_files;
 
 void Pimport(NODE arg,Q *rp)
 {
-	char *name;
-	NODE t,p,opt;
+  char *name;
+  NODE t,p,opt;
 
-	name = BDY((STRING)ARG0(arg));
-	for ( t = imported_files; t; t = NEXT(t) )
-		if ( !strcmp((char *)BDY(t),name) ) break;
-	if ( !t ) {
-		Pload(arg,rp);
-		MKNODE(t,name,imported_files); 
-		imported_files = t;
-		return;
-	} else if ( current_option ) {
-		for ( opt = current_option; opt; opt = NEXT(opt) ) {
-			p = BDY((LIST)BDY(opt));
-			if ( !strcmp(BDY((STRING)BDY(p)),"reimport") && BDY(NEXT(p)) ) {
-				Pload(arg,rp);
-				return;
-			}
-		}
-	}
-	*rp = 0;
+  name = BDY((STRING)ARG0(arg));
+  for ( t = imported_files; t; t = NEXT(t) )
+    if ( !strcmp((char *)BDY(t),name) ) break;
+  if ( !t ) {
+    Pload(arg,rp);
+    MKNODE(t,name,imported_files); 
+    imported_files = t;
+    return;
+  } else if ( current_option ) {
+    for ( opt = current_option; opt; opt = NEXT(opt) ) {
+      p = BDY((LIST)BDY(opt));
+      if ( !strcmp(BDY((STRING)BDY(p)),"reimport") && BDY(NEXT(p)) ) {
+        Pload(arg,rp);
+        return;
+      }
+    }
+  }
+  *rp = 0;
 }
 
 void Pwhich(NODE arg,STRING *rp)
 {
-	char *name;
-	STRING str;
+  char *name;
+  STRING str;
 
-	switch (OID(ARG0(arg))) {
-		case O_STR:
-			searchasirpath(BDY((STRING)ARG0(arg)),&name);
-			break;
-		default:
-			name = 0;
-			break;
-	}
-	if ( name ) {
-		MKSTR(str,name); *rp = str;
-	} else
-		*rp = 0;
+  switch (OID(ARG0(arg))) {
+    case O_STR:
+      searchasirpath(BDY((STRING)ARG0(arg)),&name);
+      break;
+    default:
+      name = 0;
+      break;
+  }
+  if ( name ) {
+    MKSTR(str,name); *rp = str;
+  } else
+    *rp = 0;
 }
 
 void Ploadfiles(NODE arg,Q *rp)
 {
-	int ret;
+  int ret;
 
-	if ( ARG0(arg) )
-		if ( OID(ARG0(arg)) != O_LIST )
-			ret = 0;
-		else
-			ret = loadfiles(BDY((LIST)ARG0(arg)));
-	else
-		ret = 0;
-	STOQ(ret,*rp);
+  if ( ARG0(arg) )
+    if ( OID(ARG0(arg)) != O_LIST )
+      ret = 0;
+    else
+      ret = loadfiles(BDY((LIST)ARG0(arg)));
+  else
+    ret = 0;
+  STOQ(ret,*rp);
 }
 
 void Poutput(NODE arg,Q *rp)
 {
 #if defined(PARI)
-	extern FILE *outfile;
+  extern FILE *outfile;
 #endif
-	FILE *fp;
+  FILE *fp;
 
-	fflush(asir_out);
-	if ( asir_out != stdout )
-		fclose(asir_out);
-	switch ( argc(arg) ) {
-		case 0:
-			fp = stdout; break;
-		case 1:
-			asir_assert(ARG0(arg),O_STR,"output");
-			fp = fopen(((STRING)ARG0(arg))->body,"a+");
-			if ( !fp )
-				error("output : invalid filename");
-			break;
-	}
+  fflush(asir_out);
+  if ( asir_out != stdout )
+    fclose(asir_out);
+  switch ( argc(arg) ) {
+    case 0:
+      fp = stdout; break;
+    case 1:
+      asir_assert(ARG0(arg),O_STR,"output");
+      fp = fopen(((STRING)ARG0(arg))->body,"a+");
+      if ( !fp )
+        error("output : invalid filename");
+      break;
+  }
 #if defined(PARI)
-	pari_outfile =
+  pari_outfile =
 #endif
-	asir_out = fp;
-	*rp = ONE;
+  asir_out = fp;
+  *rp = ONE;
 }
 
 extern int ox_file_io;
 
 void Pbsave(NODE arg,Q *rp)
 {
-	FILE *fp;
-	VL vl,t;
+  FILE *fp;
+  VL vl,t;
 
-	asir_assert(ARG1(arg),O_STR,"bsave");
-	get_vars_recursive(ARG0(arg),&vl);
-	for ( t = vl; t; t = NEXT(t) )
-		if ( t->v->attr == (pointer)V_UC )
-			error("bsave : not implemented");
-	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
-	if ( !fp )
-		error("bsave : invalid filename");
-	ox_file_io = 1; /* network byte order is used */
-	savevl(fp,vl);
-	saveobj(fp,ARG0(arg));
-	fclose(fp);
-	ox_file_io = 0;
-	*rp = ONE;
+  asir_assert(ARG1(arg),O_STR,"bsave");
+  get_vars_recursive(ARG0(arg),&vl);
+  for ( t = vl; t; t = NEXT(t) )
+    if ( t->v->attr == (pointer)V_UC )
+      error("bsave : not implemented");
+  fp = fopen(BDY((STRING)ARG1(arg)),"wb");
+  if ( !fp )
+    error("bsave : invalid filename");
+  ox_file_io = 1; /* network byte order is used */
+  savevl(fp,vl);
+  saveobj(fp,ARG0(arg));
+  fclose(fp);
+  ox_file_io = 0;
+  *rp = ONE;
 }
 
 void Pbload(NODE arg,Obj *rp)
 {
-	FILE *fp;
+  FILE *fp;
 
-	asir_assert(ARG0(arg),O_STR,"bload");
-	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-	if ( !fp )
-		error("bload : invalid filename");
-	ox_file_io = 1; /* network byte order is used */
-	loadvl(fp);
-	loadobj(fp,rp);
-	fclose(fp);
-	ox_file_io = 0;
+  asir_assert(ARG0(arg),O_STR,"bload");
+  fp = fopen(BDY((STRING)ARG0(arg)),"rb");
+  if ( !fp )
+    error("bload : invalid filename");
+  ox_file_io = 1; /* network byte order is used */
+  loadvl(fp);
+  loadobj(fp,rp);
+  fclose(fp);
+  ox_file_io = 0;
 }
 
 void Pbsave_cmo(NODE arg,Q *rp)
 {
-	FILE *fp;
+  FILE *fp;
 
-	asir_assert(ARG1(arg),O_STR,"bsave_cmo");
-	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
-	if ( !fp )
-		error("bsave_cmo : invalid filename");
-	ox_file_io = 1; /* network byte order is used */
-	write_cmo(fp,ARG0(arg));
-	fclose(fp);
-	ox_file_io = 0;
-	*rp = ONE;
+  asir_assert(ARG1(arg),O_STR,"bsave_cmo");
+  fp = fopen(BDY((STRING)ARG1(arg)),"wb");
+  if ( !fp )
+    error("bsave_cmo : invalid filename");
+  ox_file_io = 1; /* network byte order is used */
+  write_cmo(fp,ARG0(arg));
+  fclose(fp);
+  ox_file_io = 0;
+  *rp = ONE;
 }
 
 void Pbload_cmo(NODE arg,Obj *rp)
 {
-	FILE *fp;
+  FILE *fp;
 
-	asir_assert(ARG0(arg),O_STR,"bload_cmo");
-	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-	if ( !fp )
-		error("bload_cmo : invalid filename");
-	ox_file_io = 1; /* network byte order is used */
-	read_cmo(fp,rp);
-	fclose(fp);
-	ox_file_io = 0;
+  asir_assert(ARG0(arg),O_STR,"bload_cmo");
+  fp = fopen(BDY((STRING)ARG0(arg)),"rb");
+  if ( !fp )
+    error("bload_cmo : invalid filename");
+  ox_file_io = 1; /* network byte order is used */
+  read_cmo(fp,rp);
+  fclose(fp);
+  ox_file_io = 0;
 }
 
 static struct oSTRING rootdir;
@@ -526,207 +526,207 @@ static void chop_delim(char *s)
 
 void get_rootdir(char *name,int len)
 {
-	LONG	ret;
-	HKEY	hOpenKey;
-	DWORD	Type;
-	char    drive[_MAX_DRIVE], dir0[_MAX_DIR], dir[_MAX_DIR];
-	char    fullname[_MAX_PATH];
+  LONG  ret;
+  HKEY  hOpenKey;
+  DWORD  Type;
+  char    drive[_MAX_DRIVE], dir0[_MAX_DIR], dir[_MAX_DIR];
+  char    fullname[_MAX_PATH];
 
-	if ( rootdir.body ) {
-		strcpy_s(name,len,rootdir.body);
-		return;
-	}
-	if ( GetModuleFileName(NULL,fullname,_MAX_PATH) ) {
+  if ( rootdir.body ) {
+    strcpy_s(name,len,rootdir.body);
+    return;
+  }
+  if ( GetModuleFileName(NULL,fullname,_MAX_PATH) ) {
         _splitpath(fullname,drive,dir0,NULL,NULL);
         chop_delim(dir0);
         _splitpath(dir0,NULL,dir,NULL,NULL);
         chop_delim(dir);
         strcpy_s(name,len,drive);
         strcat_s(name,len,dir);
-		return;
-	}
-	name[0] = 0;
-	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ECGEN_KEYNAME, 0,
-		KEY_QUERY_VALUE, &hOpenKey);
-	if ( ret != ERROR_SUCCESS )
-		ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ASIR_KEYNAME, 0,
-			KEY_QUERY_VALUE, &hOpenKey);
-	if( ret == ERROR_SUCCESS ) {
-		RegQueryValueEx(hOpenKey, "Directory", NULL, &Type, name, &len);
-		RegCloseKey(hOpenKey);
-	} else {
+    return;
+  }
+  name[0] = 0;
+  ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ECGEN_KEYNAME, 0,
+    KEY_QUERY_VALUE, &hOpenKey);
+  if ( ret != ERROR_SUCCESS )
+    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, ASIR_KEYNAME, 0,
+      KEY_QUERY_VALUE, &hOpenKey);
+  if( ret == ERROR_SUCCESS ) {
+    RegQueryValueEx(hOpenKey, "Directory", NULL, &Type, name, &len);
+    RegCloseKey(hOpenKey);
+  } else {
         GetCurrentDirectory(_MAX_PATH,fullname);
         _splitpath(fullname,drive,dir,NULL,NULL);
         chop_delim(dir);
         strcpy_s(name,len,drive);
         strcat_s(name,len,dir);
-	}
+  }
 }
 
 void set_rootdir(char *name)
 {
-	static char DirName[BUFSIZ];
+  static char DirName[BUFSIZ];
 
-	strcpy(DirName,name);
-	rootdir.id = O_STR;
-	rootdir.body = DirName;
-	asir_libdir = DirName;
-	/* XXX */
-	env_init();
+  strcpy(DirName,name);
+  rootdir.id = O_STR;
+  rootdir.body = DirName;
+  asir_libdir = DirName;
+  /* XXX */
+  env_init();
 }
 
 #else
 void get_rootdir(char *name,int len)
 {
-	strcpy(name,asir_libdir);
+  strcpy(name,asir_libdir);
 }
 
 void set_rootdir(char *name)
 {
-	static char DirName[BUFSIZ];
+  static char DirName[BUFSIZ];
 
-	strcpy(DirName,name);
-	asir_libdir = DirName;
-	/* XXX */
-	env_init();
+  strcpy(DirName,name);
+  asir_libdir = DirName;
+  /* XXX */
+  env_init();
 }
 
 #endif
 
 void Pget_rootdir(STRING *rp)
 {
-	static char DirName[BUFSIZ];
+  static char DirName[BUFSIZ];
 
-	if ( !rootdir.body ) {
-		get_rootdir(DirName,sizeof(DirName));
-		rootdir.id = O_STR;
-		rootdir.body = DirName;
-	}
-	*rp = &rootdir;
+  if ( !rootdir.body ) {
+    get_rootdir(DirName,sizeof(DirName));
+    rootdir.id = O_STR;
+    rootdir.body = DirName;
+  }
+  *rp = &rootdir;
 }
 
 void Pgetpid(Q *rp)
 {
-	int id;
+  int id;
 
 #if defined(VISUAL) || defined(__MINGW32__)
-	id = GetCurrentProcessId();
+  id = GetCurrentProcessId();
 #else
-	id = getpid();
+  id = getpid();
 #endif
-	STOQ(id,*rp);
+  STOQ(id,*rp);
 }
 
 #if defined(DES_ENC)
 void Pbsave_enc(NODE arg,Obj *rp)
 {
-	init_deskey();
-	des_encryption = 1;
-	Pbsave(arg,rp);
-	des_encryption = 0;
+  init_deskey();
+  des_encryption = 1;
+  Pbsave(arg,rp);
+  des_encryption = 0;
 }
 
 void Pbload_enc(NODE arg,Obj *rp)
 {
-	init_deskey();
-	des_encryption = 1;
-	Pbload(arg,rp);
-	des_encryption = 0;
+  init_deskey();
+  des_encryption = 1;
+  Pbload(arg,rp);
+  des_encryption = 0;
 }
 #endif
 
 void Pbload27(NODE arg,Obj *rp)
 {
-	FILE *fp;
-	Obj r;
+  FILE *fp;
+  Obj r;
 
-	asir_assert(ARG0(arg),O_STR,"bload27");
-	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-	if ( !fp )
-		error("bload : invalid filename");
-	loadvl(fp);
-	loadobj(fp,&r);
-	fclose(fp);
-	bobjtoobj(BASE27,r,rp);
+  asir_assert(ARG0(arg),O_STR,"bload27");
+  fp = fopen(BDY((STRING)ARG0(arg)),"rb");
+  if ( !fp )
+    error("bload : invalid filename");
+  loadvl(fp);
+  loadobj(fp,&r);
+  fclose(fp);
+  bobjtoobj(BASE27,r,rp);
 }
 
 void Pbsave_compat(NODE arg,Q *rp)
 {
-	FILE *fp;
-	VL vl,t;
+  FILE *fp;
+  VL vl,t;
 
-	asir_assert(ARG1(arg),O_STR,"bsave_compat");
-	get_vars_recursive(ARG0(arg),&vl);
-	for ( t = vl; t; t = NEXT(t) )
-		if ( t->v->attr == (pointer)V_UC )
-			error("bsave : not implemented");
-	fp = fopen(BDY((STRING)ARG1(arg)),"wb");
-	if ( !fp )
-		error("bsave : invalid filename");
-	/* indicator of an asir32 file */
-	putw(0,fp); putw(0,fp);
-	savevl(fp,vl);
-	saveobj(fp,ARG0(arg));
-	fclose(fp);
-	*rp = ONE;
+  asir_assert(ARG1(arg),O_STR,"bsave_compat");
+  get_vars_recursive(ARG0(arg),&vl);
+  for ( t = vl; t; t = NEXT(t) )
+    if ( t->v->attr == (pointer)V_UC )
+      error("bsave : not implemented");
+  fp = fopen(BDY((STRING)ARG1(arg)),"wb");
+  if ( !fp )
+    error("bsave : invalid filename");
+  /* indicator of an asir32 file */
+  putw(0,fp); putw(0,fp);
+  savevl(fp,vl);
+  saveobj(fp,ARG0(arg));
+  fclose(fp);
+  *rp = ONE;
 }
 
 void Pbload_compat(NODE arg,Obj *rp)
 {
-	FILE *fp;
-	unsigned int hdr[2];
-	Obj r;
-	int c;
+  FILE *fp;
+  unsigned int hdr[2];
+  Obj r;
+  int c;
 
-	asir_assert(ARG0(arg),O_STR,"bload_compat");
-	fp = fopen(BDY((STRING)ARG0(arg)),"rb");
-	if ( !fp )
-		error("bload : invalid filename");
-	fread(hdr,sizeof(unsigned int),2,fp);
-	if ( !hdr[0] && !hdr[1] ) {
-		/* asir32 file or asir27 0 */
-		c = fgetc(fp);
-		if ( c == EOF ) {
-			/* asir27 0 */
-			*rp = 0;
-		} else {
-			/* asir32 file */
-			ungetc(c,fp);
-			loadvl(fp);
-			loadobj(fp,rp);
-		}
-	} else {
-		/* asir27 file */
-		rewind(fp);
-		loadvl(fp);
-		loadobj(fp,&r);
-		bobjtoobj(BASE27,r,rp);
-	}
-	fclose(fp);
+  asir_assert(ARG0(arg),O_STR,"bload_compat");
+  fp = fopen(BDY((STRING)ARG0(arg)),"rb");
+  if ( !fp )
+    error("bload : invalid filename");
+  fread(hdr,sizeof(unsigned int),2,fp);
+  if ( !hdr[0] && !hdr[1] ) {
+    /* asir32 file or asir27 0 */
+    c = fgetc(fp);
+    if ( c == EOF ) {
+      /* asir27 0 */
+      *rp = 0;
+    } else {
+      /* asir32 file */
+      ungetc(c,fp);
+      loadvl(fp);
+      loadobj(fp,rp);
+    }
+  } else {
+    /* asir27 file */
+    rewind(fp);
+    loadvl(fp);
+    loadobj(fp,&r);
+    bobjtoobj(BASE27,r,rp);
+  }
+  fclose(fp);
 }
 
 void Premove_file(NODE arg,Q *rp)
 {
-	unlink((char *)BDY((STRING)ARG0(arg)));
-	*rp = ONE;
+  unlink((char *)BDY((STRING)ARG0(arg)));
+  *rp = ONE;
 }
 
 void Paccess(NODE arg,Q *rp)
 {
-	if ( access(BDY((STRING)ARG0(arg)),R_OK) >= 0 )
-		*rp = ONE;
-	else
-		*rp = 0;
+  if ( access(BDY((STRING)ARG0(arg)),R_OK) >= 0 )
+    *rp = ONE;
+  else
+    *rp = 0;
 }
 
 #if defined(VISUAL) || defined(__MINGW32__)
 int process_id()
 {
-	return GetCurrentProcessId();
+  return GetCurrentProcessId();
 }
 
 void call_exe(char *name,char **av)
 {
-	_spawnv(_P_WAIT,name,av);
+  _spawnv(_P_WAIT,name,av);
 }
 #endif

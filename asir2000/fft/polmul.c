@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/polmul.c,v 1.4 2015/08/08 14:19:42 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/polmul.c,v 1.5 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #include "dft.h"
 extern struct PrimesS Primes[];
@@ -154,7 +154,7 @@ double Pinv;
   dft1 = wk,  dft2 = &wk[n];
   dftprod = &dft2[n];
   powa = &dftprod[n];
-  true_wk = &powa[halfn];	/* 2*n areas */
+  true_wk = &powa[halfn];  /* 2*n areas */
   /**/
   C_PREP_ALPHA( a, low0s, log2n, halfn -1, powa, P, Pinv );
 #ifdef TIMING
@@ -204,7 +204,7 @@ double Pinv;
   dft1 = wk,  dft2 = &wk[n];
   dftprod = &dft2[n];
   powa = &dftprod[n];
-  true_wk = &powa[halfn];	/* 2*n areas */
+  true_wk = &powa[halfn];  /* 2*n areas */
   /**/
   C_PREP_ALPHA( a, low0s, log2n, halfn -1, powa, P, Pinv );
 #ifdef TIMING
@@ -278,7 +278,7 @@ char **argv;
     d = (d1 = atoi( av[0] )) + (d2 = atoi( av[1] ));
     if ( d1 <= 0 || d2 <= 0 || d >= MaxNPnts ) {
       fprintf( stderr, "*** invalid degrees %s & %s. (sum < %d)\n",
-	       av[0], av[1], MaxNPnts );
+         av[0], av[1], MaxNPnts );
       continue;
     }
     generate_pol( d1, Pol1 );
@@ -407,8 +407,8 @@ int *error;
     for ( j = 1; j < 5 && i + j < n; j++ ) printf( ",%10d", (int)v1[i+j] );
     printf( "\n" );
     if ( (int)v1[i] == (int)v2[i] && (int)v1[i+1] == (int)v2[i+1]
-	 && (int)v1[i+2] == (int)v2[i+2] && (int)v1[i+3] == (int)v2[i+3]
-	 && (int)v1[i+4] == (int)v2[i+4] ) continue;
+   && (int)v1[i+2] == (int)v2[i+2] && (int)v1[i+3] == (int)v2[i+3]
+   && (int)v1[i+4] == (int)v2[i+4] ) continue;
     printf( "        " );
     for ( j = 0; j < 5 && i + j < n; j++ )
       if ( (int)v1[i+j] == (int)v2[i+j] ) printf( "           " );

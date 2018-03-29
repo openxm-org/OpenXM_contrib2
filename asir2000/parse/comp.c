@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.c,v 1.9 2015/08/06 10:01:53 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/comp.c,v 1.10 2015/08/14 13:51:56 fujimoto Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -61,61 +61,61 @@ extern f_return;
 #if defined(__GNUC__) || defined(VISUAL) || defined(__MINGW32__) || (defined(__MACH__) && defined(__ppc__)) || defined(__FreeBSD__)
 void call_usrf(FUNC f,...)
 {
-	va_list ap;
-	int ac,i;
-	pointer *c;
-	VS prev_mpvs;
-	NODE tn;
+  va_list ap;
+  int ac,i;
+  pointer *c;
+  VS prev_mpvs;
+  NODE tn;
 
-	va_start(ap,f);
-	if ( !f )
-		notdef(0,0,0,0);
-	else {
-		pushpvs(f);
-		if ( f->f.usrf->module ) {
-			prev_mpvs = MPVS;
-			MPVS = f->f.usrf->module->pvs;
-		}
-		ac = va_arg(ap,int);
-		for ( i = 0, tn = f->f.usrf->args; i < ac;
-			i++, tn = NEXT(tn) )
-			ASSPV((int)FA0((FNODE)BDY(tn)),va_arg(ap,pointer));
-		c = va_arg(ap,pointer *); *c = evalstat(BDY(f->f.usrf));
-		va_end(ap);
-		f_return = 0; poppvs();
-		if ( f->f.usrf->module )
-			MPVS = prev_mpvs;
-	}
+  va_start(ap,f);
+  if ( !f )
+    notdef(0,0,0,0);
+  else {
+    pushpvs(f);
+    if ( f->f.usrf->module ) {
+      prev_mpvs = MPVS;
+      MPVS = f->f.usrf->module->pvs;
+    }
+    ac = va_arg(ap,int);
+    for ( i = 0, tn = f->f.usrf->args; i < ac;
+      i++, tn = NEXT(tn) )
+      ASSPV((int)FA0((FNODE)BDY(tn)),va_arg(ap,pointer));
+    c = va_arg(ap,pointer *); *c = evalstat(BDY(f->f.usrf));
+    va_end(ap);
+    f_return = 0; poppvs();
+    if ( f->f.usrf->module )
+      MPVS = prev_mpvs;
+  }
 }
 #else
 void call_usrf(va_alist)
 va_dcl
 {
-	va_list ap;
-	int ac,i;
-	FUNC f;
-	pointer a,b,*c;
-	VS prev_mpvs;
-	NODE tn;
+  va_list ap;
+  int ac,i;
+  FUNC f;
+  pointer a,b,*c;
+  VS prev_mpvs;
+  NODE tn;
 
-	va_start(ap); f = va_arg(ap,FUNC);
-	if ( !f )
-		notdef(0,0,0,0);
-	else {
-		pushpvs(f);
-		if ( f->f.usrf->module ) {
-			prev_mpvs = MPVS;
-			MPVS = f->f.usrf->module->pvs;
-		}
-		ac = va_arg(ap,int);
-		for ( i = 0, tn = f->f.usrf->args; i < ac;
-			i++, tn = NEXT(tn) )
-			ASSPV((int)FA0((FNODE)BDY(tn)),va_arg(ap,pointer));
-		c = va_arg(ap,pointer *); *c = evalstat(BDY(f->f.usrf));
-		f_return = 0; poppvs();
-		if ( f->f.usrf->module )
-			MPVS = prev_mpvs;
-	}
+  va_start(ap); f = va_arg(ap,FUNC);
+  if ( !f )
+    notdef(0,0,0,0);
+  else {
+    pushpvs(f);
+    if ( f->f.usrf->module ) {
+      prev_mpvs = MPVS;
+      MPVS = f->f.usrf->module->pvs;
+    }
+    ac = va_arg(ap,int);
+    for ( i = 0, tn = f->f.usrf->args; i < ac;
+      i++, tn = NEXT(tn) )
+      ASSPV((int)FA0((FNODE)BDY(tn)),va_arg(ap,pointer));
+    c = va_arg(ap,pointer *); *c = evalstat(BDY(f->f.usrf));
+    f_return = 0; poppvs();
+    if ( f->f.usrf->module )
+      MPVS = prev_mpvs;
+  }
 }
 #endif
 
@@ -123,46 +123,46 @@ void addcomp(vl,a,b,c)
 VL vl;
 COMP a,b,*c;
 {
-	if ( a->type != b->type )
-		error("addcomp : types different");
-	else
-		call_usrf(LSS->sa[a->type].arf.add,2,a,b,c);
+  if ( a->type != b->type )
+    error("addcomp : types different");
+  else
+    call_usrf(LSS->sa[a->type].arf.add,2,a,b,c);
 }
 
 void subcomp(vl,a,b,c)
 VL vl;
 COMP a,b,*c;
 {
-	if ( a->type != b->type )
-		error("subcomp : types different");
-	else
-		call_usrf(LSS->sa[a->type].arf.sub,2,a,b,c);
+  if ( a->type != b->type )
+    error("subcomp : types different");
+  else
+    call_usrf(LSS->sa[a->type].arf.sub,2,a,b,c);
 }
 
 void mulcomp(vl,a,b,c)
 VL vl;
 COMP a,b,*c;
 {
-	if ( a->type != b->type )
-		error("mulcomp : types different");
-	else
-		call_usrf(LSS->sa[a->type].arf.mul,2,a,b,c);
-}	
+  if ( a->type != b->type )
+    error("mulcomp : types different");
+  else
+    call_usrf(LSS->sa[a->type].arf.mul,2,a,b,c);
+}  
 
 void divcomp(vl,a,b,c)
 VL vl;
 COMP a,b,*c;
 {
-	if ( a->type != b->type )
-		error("divcomp : types different");
-	else
-		call_usrf(LSS->sa[a->type].arf.div,2,a,b,c);
-}	
+  if ( a->type != b->type )
+    error("divcomp : types different");
+  else
+    call_usrf(LSS->sa[a->type].arf.div,2,a,b,c);
+}  
 
 void chsgncomp(a,b)
 COMP a,*b;
 {
-	call_usrf(LSS->sa[a->type].arf.chsgn,1,a,b);
+  call_usrf(LSS->sa[a->type].arf.chsgn,1,a,b);
 }
 
 void pwrcomp(vl,a,r,c)
@@ -171,28 +171,28 @@ COMP a;
 Obj r;
 COMP *c;
 {
-	call_usrf(LSS->sa[a->type].arf.pwr,2,a,r,c);
+  call_usrf(LSS->sa[a->type].arf.pwr,2,a,r,c);
 }
 
 int compcomp(vl,a,b)
 VL vl;
 COMP a,b;
 {
-	Q c;
-	int s;
+  Q c;
+  int s;
 
-	if ( a->type > b->type )
-		return 1;
-	else if ( a->type < b->type )
-		return -1;
-	else {
-		call_usrf(LSS->sa[a->type].arf.comp,2,a,b,&c);
-		s = QTOS(c);
-		if ( s > 0 )
-			return 1;
-		else if ( s < 0 )
-			return -1;
-		else
-			return 0;
-	}
+  if ( a->type > b->type )
+    return 1;
+  else if ( a->type < b->type )
+    return -1;
+  else {
+    call_usrf(LSS->sa[a->type].arf.comp,2,a,b,&c);
+    s = QTOS(c);
+    if ( s > 0 )
+      return 1;
+    else if ( s < 0 )
+      return -1;
+    else
+      return 0;
+  }
 }

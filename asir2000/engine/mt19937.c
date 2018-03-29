@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/mt19937.c,v 1.1.1.1 1999/12/03 07:39:08 noro Exp $ 
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/mt19937.c,v 1.2 2000/08/21 08:31:28 noro Exp $ 
 */
 #include <stdio.h>
 
@@ -56,33 +56,33 @@ static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
 int mt_save(name)
 char *name;
 {
-	FILE *fp;
+  FILE *fp;
 
-	if ( !(fp = fopen(name,"wb")) )
-		return 0;
-	fwrite(mt,N,sizeof(unsigned long),fp);
-	fwrite(&mti,1,sizeof(int),fp);
-	fclose(fp);
-	return 1;
+  if ( !(fp = fopen(name,"wb")) )
+    return 0;
+  fwrite(mt,N,sizeof(unsigned long),fp);
+  fwrite(&mti,1,sizeof(int),fp);
+  fclose(fp);
+  return 1;
 }
 
 int mt_load(name)
 char *name;
 {
-	FILE *fp;
+  FILE *fp;
 
-	if ( !(fp = fopen(name,"rb")) )
-		return 0;
-	fread(mt,N,sizeof(unsigned long),fp);
-	fread(&mti,1,sizeof(int),fp);
-	fclose(fp);
-	return 1;
+  if ( !(fp = fopen(name,"rb")) )
+    return 0;
+  fread(mt,N,sizeof(unsigned long),fp);
+  fread(&mti,1,sizeof(int),fp);
+  fclose(fp);
+  return 1;
 }
 
 /* initializing the array with a NONZERO seed */
 void
 sgenrand(seed)
-    unsigned long seed;	
+    unsigned long seed;  
 {
     /* setting initial seeds to mt[N] using         */
     /* the generator Line 25 of Table 1 in          */

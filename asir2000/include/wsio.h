@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/wsio.h,v 1.8 2015/08/06 10:01:52 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/wsio.h,v 1.9 2015/08/14 13:51:55 fujimoto Exp $ 
 */
 #ifndef WSIO_H
 #define WSIO_H
@@ -57,25 +57,25 @@
 #endif
 
 #if defined(MPI)
-#define WSIO_STRING_LENGTH	(1048576)  /* Default size of buffer */
+#define WSIO_STRING_LENGTH  (1048576)  /* Default size of buffer */
 #else
-#define WSIO_STRING_LENGTH	(16384)  /* Default size of buffer */
+#define WSIO_STRING_LENGTH  (16384)  /* Default size of buffer */
 #endif
 
-#define	WSIO_BUFSIZ	WSIO_STRING_LENGTH
+#define  WSIO_BUFSIZ  WSIO_STRING_LENGTH
 
 typedef struct
-	{
-	FILE	fp;
-	int		fildes;
-	int		p;
-	int 		read_flag;
-	int		buf_size;
-	char*		buf;
-	int		max_buf_size;
-	int		eof;
-	int		error;
-	}STREAM;
+  {
+  FILE  fp;
+  int    fildes;
+  int    p;
+  int     read_flag;
+  int    buf_size;
+  char*    buf;
+  int    max_buf_size;
+  int    eof;
+  int    error;
+  }STREAM;
 
 STREAM *WSIO_open(int,char *);
 int cread (char *, unsigned int, int, STREAM *);

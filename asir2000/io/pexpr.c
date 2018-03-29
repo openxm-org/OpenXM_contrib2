@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.41 2015/08/20 08:53:05 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.42 2017/08/31 02:36:21 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -127,39 +127,39 @@ int printmode = PRINTF_G;
 /* spetial functions for file output */
 
 void output_init() {
-	OUT = stdout;
-	sprintf(DFORMAT,"%%0%dd",DLENGTH);
+  OUT = stdout;
+  sprintf(DFORMAT,"%%0%dd",DLENGTH);
 }
 
 int mmono(p)
 P p;
 {
-	if ( NUM(p) )
+  if ( NUM(p) )
 #if defined(INTERVAL)
-		if ( NID(p) != N_IP && NID(p) != N_IntervalDouble && NID(p) != N_IntervalQuad && NID(p) != N_IntervalBigFloat
-			&& compnum(CO,(Num)p,0) < 0 ) 
+    if ( NID(p) != N_IP && NID(p) != N_IntervalDouble && NID(p) != N_IntervalQuad && NID(p) != N_IntervalBigFloat
+      && compnum(CO,(Num)p,0) < 0 ) 
 #else
-		if ( compnum(CO,(Num)p,0) < 0 ) 
+    if ( compnum(CO,(Num)p,0) < 0 ) 
 #endif
-			return ( 1 );
-		else
-			return ( 0 );
-	else if ( NEXT(DC(p)) )
-		return ( 0 );
-	else
-		return (mmono(COEF(DC(p))));
+      return ( 1 );
+    else
+      return ( 0 );
+  else if ( NEXT(DC(p)) )
+    return ( 0 );
+  else
+    return (mmono(COEF(DC(p))));
 }
 
 void printbf(BF a)
 {
-	int dprec;
-	char fbuf[BUFSIZ];
-	char *s;
-	dprec = (a->body->_mpfr_prec)*0.30103;
+  int dprec;
+  char fbuf[BUFSIZ];
+  char *s;
+  dprec = (a->body->_mpfr_prec)*0.30103;
   if ( !dprec ) dprec = 1;
-	sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
-	mpfr_asprintf(&s,fbuf,a->body);
-	TAIL PUTS(s);
-	mpfr_free_str(s);
+  sprintf(fbuf,"%%.%dR%c",dprec,double_output?'f':'g');
+  mpfr_asprintf(&s,fbuf,a->body);
+  TAIL PUTS(s);
+  mpfr_free_str(s);
 }
 
