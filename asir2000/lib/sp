@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.16 2010/07/14 04:48:14 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.17 2016/02/04 04:17:21 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
@@ -1365,20 +1365,25 @@ def resfctr(F,L,V,N)
 	DN = diff(N,V0);
 	LC = coef(N,deg(N,V0),V0);
 	LCD = coef(DN,deg(DN,V0),V0);
-	for ( I = 0, J = 2, Len = deg(N,V0)+1; I < 5; J++ ) {
-		M = prime(J);
-		if ( !(LC%M) || !(LCD%M))
-			continue;
-		G = gcd(N,DN,M);
-		if ( !deg(G,V0) ) {            
-			I++;
-			T = nfctr_mod(N,M);
-			if ( T < Len ) {
-				Len = T; M0 = M;
-			}
-		}
-	}
-	S = spm(L,V,M0);
+  J = 2;
+  while ( 1 ) {
+    Len = deg(N,V0)+1;
+	  for ( I = 0; I < 5; J++ ) {
+		  M = prime(J);
+		  if ( !(LC%M) || !(LCD%M))
+			  continue;
+		  G = gcd(N,DN,M);
+		  if ( !deg(G,V0) ) {            
+			  I++;
+			  T = nfctr_mod(N,M);
+			  if ( T < Len ) {
+				  Len = T; M0 = M;
+			  }
+		  }
+	  }
+	  S = spm(L,V,M0);
+    if ( S ) break;
+  }
 	T = resfctr_mod(F,S,M0);
 	return [T,S,M0];
 }
@@ -1408,11 +1413,13 @@ def spm(L,V,M)
 		U = modfctr(car(L),M);
 		for ( T = cdr(U), R = []; T != []; T = cdr(T) ) {
 			S = car(T);
+      if ( S[1] > 1 ) return 0;
 			R = cons([subst(S[0],var(S[0]),a_),[var(S[0]),a_]],R);
 		}
 		return R;
 	}
 	L1 = spm(cdr(L),cdr(V),M);
+  if ( !L1 ) return 0;
 	F0 = car(L); V0 = car(V); VR = cdr(V);
 	for ( T = L1, R = []; T != []; T = cdr(T) ) {
 		S = car(T);
@@ -1420,6 +1427,7 @@ def spm(L,V,M)
 		U = fctr_mod(F1,V0,S[0],M);
 		VS = var(S[0]);
 		for ( W = U; W != []; W = cdr(W) ) {
+      if ( car(W)[1] > 1 ) return 0;
 			A = car(car(W)); 
 			if ( deg(A,V0) == 1 ) {
 				A = monic_mod(A,V0,S[0],M);
