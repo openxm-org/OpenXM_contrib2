@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.17 2016/02/04 04:17:21 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/sp,v 1.18 2018/04/06 07:40:44 noro Exp $ 
 */
 /* 
 	sp : functions related to algebraic number fields
@@ -623,7 +623,7 @@ def ufctrhint_heuristic(P,HINT,PP,SHIFT) {
 }
 
 def pari_ufctr(P) {
-	F = pari(factor,P);
+	F = pari(factpol,P);
 	S = size(F);
 	for ( I = S[0]-1, R = []; I >= 0; I-- )
 		R = cons(vtol(F[I]),R);

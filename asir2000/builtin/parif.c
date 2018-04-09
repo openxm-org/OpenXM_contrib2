@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.37 2017/08/30 09:40:30 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.38 2018/03/29 01:32:50 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -329,6 +329,7 @@ struct pariftab pariftab[] = {
 
 {"allocatemem",0,0},
 
+{"factpol",0,2},
 {"isprime",0,2},
 {"factorint",0,2},
 {0,0,0},
