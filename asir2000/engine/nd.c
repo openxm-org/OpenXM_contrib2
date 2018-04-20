@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.244 2018/03/05 06:43:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.245 2018/03/29 01:32:52 noro Exp $ */
 
 #include "nd.h"
 
@@ -1659,7 +1659,7 @@ again:
             r = ndv_dup_realloc((NDV)BDY(t),obpe,oadv,oepos);
         else
             r = (NDV)BDY(t);
-        if ( m ) ndv_mod(m,r);
+        if ( m == -2 ) ndv_mod(m,r);
         d = ndvtond(m,r);
         stat = nd_nf(m,0,d,nd_ps,0,0,&nf);
         if ( !stat ) {
