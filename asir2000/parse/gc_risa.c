@@ -1,7 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.18 2018/03/12 02:37:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/parse/gc_risa.c,v 1.19 2018/03/29 01:32:54 noro Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
+#if !defined(SIGUSR1)
+#define SIGUSR1 30
+#endif
 #endif
 #include "gc.h"
 #include <time.h>
