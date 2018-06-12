@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.33 2017/09/04 01:57:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/plotf.c,v 1.34 2018/03/29 01:32:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -203,7 +203,7 @@ void Pmemory_ifplot(NODE arg,Obj *rp){ifplot_main(arg,1,IFPLOT,rp);}
 void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
   Q m2,p2,w300,s_id;
   NODE defrange;
-  LIST xrange,yrange,zrange,range[2],list,geom;
+  LIST xrange,yrange,zrange,range[2],list,geom=0;
   VL vl,vl0;
   V v[2],av[2];
   int stream,ri,i,sign;
@@ -242,7 +242,10 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
       if(OID(BDY(BDY(list)))==O_P)
         if(ri>1) error("ifplot : invalid argument");
         else range[ri++]=list;
-      else geom=list;
+      else if ( geom )
+        error("ifplot : Two geometries are specified. Probably a variable is missing.");
+      else
+        geom=list;
       break;
     case O_N:
       if ( !found_f ) {
@@ -349,11 +352,13 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
         break;
       case O_LIST:
         list = (LIST)BDY(arg);
-        if ( OID(BDY(BDY(list))) == O_P )
+        if ( OID(BDY(BDY(list))) == O_P ) {
           if ( ri > 2 )
             error("ifplot : invalid argument");
           else
             range[ri++] = list;
+        } else if ( geom )
+          error("conplot : Two geometries are specified. Probably a variable is missing.");
         else
           geom = list;
         break;
