@@ -1,0 +1,20 @@
+--- asir-mode.el	2014-12-13 04:10:33.000000000 +0900
++++ asir-mode-v26.el	2018-06-14 12:14:21.800957000 +0900
+@@ -1253,7 +1253,7 @@
+ 	   ((and (eq char-after-ip ?{)
+ 		 (progn
+ 		   (setq placeholder (c-inside-bracelist-p (point)
+-							   paren-state))
++							   paren-state nil))
+ 		   (if placeholder
+ 		       (setq tmpsymbol '(brace-list-open . inexpr-class))
+ 		     (setq tmpsymbol '(block-open . inexpr-statement)
+@@ -1376,7 +1376,7 @@
+                               (save-excursion
+                                 (goto-char containing-sexp)
+                                 (c-looking-at-special-brace-list)))
+-                         (c-inside-bracelist-p containing-sexp paren-state))))
++                         (c-inside-bracelist-p containing-sexp paren-state t))))
+ 	  (cond
+ 
+ 	   ;; CASE 9A: In the middle of a special brace list opener.
