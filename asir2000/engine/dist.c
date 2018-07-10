@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.53 2018/03/29 01:32:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/dist.c,v 1.54 2018/07/10 05:29:36 noro Exp $ 
 */
 #include "ca.h"
 
@@ -1226,7 +1226,7 @@ void divsdc(VL vl,DP p,P c,DP *pr)
     error("disvsdc : division by 0");
   else if ( !p )
     *pr = 0;
-  else if ( OID(p) != O_DP )
+  else if ( OID(c) > O_P )
     error("divsdc : invalid argument");
   else {
     for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
