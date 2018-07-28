@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.107 2017/09/14 01:34:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.108 2018/03/29 01:32:50 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -2438,15 +2438,24 @@ Obj nd_btog(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist);
 void Pnd_btog(NODE arg,Obj *rp)
 {
   LIST f,v,tlist;
+  Q mq;
   int m,ac,pos;
   struct order_spec *ord;
+  NODE node;
+  pointer val;
 
   do_weyl = 0;
   asir_assert(ARG0(arg),O_LIST,"nd_btog");
   asir_assert(ARG1(arg),O_LIST,"nd_btog");
   asir_assert(ARG2(arg),O_N,"nd_btog");
   f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-  m = QTOS((Q)ARG2(arg));
+  mq = (Q)ARG2(arg);
+  if ( mq && (PL(NM(mq)) > 1 || BD(NM(mq))[0] >= (1<<31)) ) {
+    node = mknode(1,mq);
+    Psetmod_ff(node,&val);
+    m = -2;
+  } else 
+    m = QTOS(mq);
   create_order_spec(0,ARG3(arg),&ord);
   tlist = (LIST)ARG4(arg);
   if ( (ac = argc(arg)) == 6 ) {

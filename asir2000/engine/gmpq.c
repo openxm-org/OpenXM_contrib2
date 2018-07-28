@@ -1275,7 +1275,10 @@ void addlf(GZ a,GZ b,GZ *c)
 
   addgz(a,b,c);
   if ( !lf_lazy ) {
-    remgz(*c,current_mod_lf,&t); *c = t;
+//    remgz(*c,current_mod_lf,&t); *c = t;
+    if ( cmpgz(*c,current_mod_lf) >= 0 ) {
+      subgz(*c,current_mod_lf,&t); *c = t;
+    }
   }
 }
 
