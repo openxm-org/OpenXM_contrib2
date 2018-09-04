@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.105 2018/03/27 06:29:19 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.106 2018/03/29 01:32:53 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2666,7 +2666,7 @@ int compnbp(VL vl,NBP p1,NBP p2);
 #define MPQTOGQ(g,q) \
 (!mpq_sgn(g)?((q)=0):(NEWGQ(q),BDY(q)[0]=(g)[0],(q)))
 
-#define INTMPQ(a) (!mpz_cmp_ui(mpq_numref(a),1))
+#define INTMPQ(a) (!mpz_cmp_ui(mpq_denref(a),1))
 
 #define UNIGZ(a) ((a)&&NID(a)==N_GZ&&!mpz_cmp_ui(BDY(a),1))
 #define MUNIGZ(a) ((a)&&NID(a)==N_GZ&&!mpz_cmp_si(BDY(a),-1))
