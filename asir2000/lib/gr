@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.25 2007/01/18 08:09:02 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/lib/gr,v 1.26 2007/07/17 08:17:42 noro Exp $ 
 */
 
 module gr $
@@ -64,25 +64,33 @@ extern REMOTE_MATRIX,REMOTE_NF,REMOTE_VARS$
 
 def gr(B,V,O)
 {
+	Ord=dp_ord();
 	G = dp_gr_main(B,V,0,1,O);
+	dp_ord(Ord);
 	return G;
 }
 
 def hgr(B,V,O)
 {
+	Ord=dp_ord();
 	G = dp_gr_main(B,V,1,1,O);
+	dp_ord(Ord);
 	return G;
 }
 
 def gr_mod(B,V,O,M)
 {
+	Ord=dp_ord();
 	G = dp_gr_mod_main(B,V,0,M,O);
+	dp_ord(Ord);
 	return G;
 }
 
 def hgr_mod(B,V,O,M)
 {
+	Ord=dp_ord();
 	G = dp_gr_mod_main(B,V,1,M,O);
+	dp_ord(Ord);
 	return G;
 }
 
