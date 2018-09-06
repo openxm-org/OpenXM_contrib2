@@ -213,14 +213,14 @@ diff -urN gc-7.4.2.orig/NT_X64_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_X64_STATIC_TH
  
  .c.obj:
 -	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj /wd4701
-+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj /wd4701
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj /wd4701
  # Disable "may not be initialized" warnings.  They're too approximate.
  # Disable crt security warnings, since unfortunately they warn about all sorts
  # of safe uses of strncpy.  It would be nice to leave the rest enabled.
  
  .cpp.obj:
 -	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
-+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
  
  $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\gc_disclaim.h include\private\msvc_dbg.h
  
@@ -241,11 +241,11 @@ diff -urN gc-7.4.2.orig/NT_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_STATIC_THREADS_MA
  
  .c.obj:
 -	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj
-+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj
  
  .cpp.obj:
 -	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
-+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
  
  $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\gc_disclaim.h include\private\msvc_dbg.h
  
