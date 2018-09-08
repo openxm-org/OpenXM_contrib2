@@ -334,7 +334,9 @@ extern int wfep_mode;
 
 void Init_IO()
 {
+#if _MSC_VER < 1900
 	_setargv();
+#endif
 	if ( !strncmp(__argv[0],"ox_asir",strlen("ox_asir")) ) {
 		/* ox_asir or ox_asir_wfep */
 		if ( !strcmp(__argv[0],"ox_asir_wfep") ) wfep_mode = 1;

@@ -154,7 +154,9 @@ BOOL Init_IO(char *errmsg) {
 	char notify[100],notify_ack[100],intr[100],intr_ack[100],kill[100];
 	char name[BUFSIZ],qname[BUFSIZ],home[BUFSIZ];
 
+#if _MSC_VER < 1900
 	_setargv();
+#endif
 	if ( !strcmp(__argv[0],"debuggui") ) {
 		asirgui_kind = ASIRGUI_DEBUG;
 		hRead = atoi(__argv[1]);

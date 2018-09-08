@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.5 2013/08/30 18:18:11 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir32gui/Makefile.vc,v 1.6 2013/11/10 16:18:36 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 RESSRC = asir32gui.rc.EG
@@ -15,7 +15,7 @@ OBJS= FatalDialog.obj MainFrm.obj StdAfx.obj history.obj io.obj \
 all: $(ASIRGUI) ja.dll
 
 $(ASIRGUI): $(OBJS) $(RES)
-	$(LD) $(LDFLAGS) -out:$@ $** advapi32.lib
+	$(LD) $(LDFLAGS) -out:$@ $** setargv.obj advapi32.lib
 
 $(RES): $(RESSRC)
 	copy /y $(RESSRC) en.rc

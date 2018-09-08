@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.18 2015/08/25 22:23:56 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.vc,v 1.19 2017/08/29 07:18:30 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -25,7 +25,7 @@ INCLUDES= $(GCINC) $(GMPINC) -I include -I parse
 CFLAGS=-nologo -MT -W3 -Ox $(INCLUDES) $(DEFS)
 
 LD=link
-LDFLAGS= -nologo -stack:0x10000000 -subsystem:console -dynamicbase:no -incremental:no -nodefaultlib:libcmt.lib $(GCLIB) $(GMPLIB) ws2_32.lib advapi32.lib user32.lib 
+LDFLAGS= -nologo -stack:0x10000000 -subsystem:console -dynamicbase:no -incremental:no $(GCLIB) $(GMPLIB) libucrt.lib ws2_32.lib advapi32.lib user32.lib setargv.obj
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
   asir2000_dummy.obj batch.obj bf.obj bfaux.obj biovar.obj bload.obj \
