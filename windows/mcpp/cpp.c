@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/windows/mcpp/cpp.c,v 1.1 2010/02/26 17:42:36 ohara Exp $ */
+/* $OpenXM: OpenXM_contrib2/windows/mcpp/cpp.c,v 1.2 2018/09/08 02:06:09 ohara Exp $ */
 
 #if !defined(AFX_STDAFX_H__A9DB83DB_A9FD_11D0_BFD1_444553540000__INCLUDED_)
 #define AFX_STDAFX_H__A9DB83DB_A9FD_11D0_BFD1_444553540000__INCLUDED_
@@ -23,7 +23,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow )
 {
-#if _MSC_VER < 1900
+#if _MSC_VER < 1910
 	_setargv();
 #endif
 	main(__argc,__argv);

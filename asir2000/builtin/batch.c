@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/batch.c,v 1.6 2015/08/14 13:51:54 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/batch.c,v 1.7 2018/09/08 02:06:08 ohara Exp $ 
 */
 #if !defined(VISUAL) && !defined(__MINGW32__)
 
@@ -108,7 +108,7 @@ int exec_file(char *bindir,char *fname) {
 	sprintf(remwrite,"%d",(DWORD)hW0);
 
 	sprintf(AsirExe,"%s\\engine.exe",bindir);
-#if _MSC_VER < 1900
+#if _MSC_VER < 1910
 	_setargv();
 #endif
 	av[0] = "asir";
