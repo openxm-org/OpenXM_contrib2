@@ -44,13 +44,14 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.11 2015/08/14 13:51:55 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ws_fileio.c,v 1.12 2018/03/29 01:32:54 noro Exp $ 
 */
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
 #include<stdio.h>
 #include"wsio.h"
 
 STREAM* WSIO_open(int, char *);
+int WSIO_fileno(STREAM *);
 int WSIO_read (char *, int, STREAM *);
 int WSIO_write (char *, int, STREAM *);
 int WSIO_flushbuf(STREAM *);
@@ -159,11 +160,9 @@ char* mode;
   rst = (STREAM*)malloc(sizeof(STREAM));
   if (rst) {
 #if defined(VISUAL)
-#if _MSC_VER < 1500
-    _fileno(&rst->fp) = -1;
-#else
+    rst->_p = NULL;
+#elif defined(__MINGW32__)
     (&rst->fp)->_file = -1;
-#endif
 #elif defined(MPI)
 #if defined(sparc) || defined(__FreeBSD__)
     (&rst->fp)->_file = -1;
@@ -192,6 +191,16 @@ char* mode;
     rst->error = 0;
   }
   return rst;
+}
+
+int WSIO_fileno(STREAM *s)
+{
+#if defined(VISUAL)
+  return s->_p==NULL? -1: _fileno((FILE *)s);
+#elif defined(__MINGW32__)
+  return _fileno((FILE *)s);
+#endif
+  return (int)fileno((FILE *)s);
 }
 
 int WSIO_read (data, count, s)

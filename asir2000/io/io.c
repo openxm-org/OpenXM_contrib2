@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.22 2017/08/31 09:11:04 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.23 2018/03/29 01:32:53 noro Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
@@ -140,7 +140,7 @@ int gen_fread (char *ptr,int size,int nitems,FILE *stream)
     return 0;
   } else {
 #if defined(VISUAL) || defined(__MINGW32__)
-    if ( _fileno(stream) < 0 )
+    if ( WSIO_fileno((STREAM *)stream) < 0 )
       n = cread(ptr,size,nitems,(STREAM *)stream);
     else
 #elif defined(MPI)
@@ -174,7 +174,7 @@ int gen_fwrite (char *ptr,int size,int nitems,FILE *stream)
     return 0;
   } else
 #if defined(VISUAL) || defined(__MINGW32__)
-  if ( _fileno(stream) < 0 )
+  if ( WSIO_fileno((STREAM *)stream) < 0 )
     return cwrite(ptr,size,nitems,(STREAM *)stream);
   else
 #elif defined(MPI)

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.41 2018/03/12 02:37:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox.c,v 1.42 2018/03/29 01:32:53 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -965,12 +965,8 @@ void ox_flush_stream(int s)
 {
   if ( ox_batch )
     return;
-#if defined(VISUAL) || defined(__MINGW32__)
-  if ( _fileno(&iofp[s].out->fp) < 0 )
-    cflush(iofp[s].out);
-  else
-#elif MPI
-  if ( (char)fileno(&iofp[s].out->fp) < 0 )
+#if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
+  if ( WSIO_fileno(iofp[s].out) < 0 )
     cflush(iofp[s].out);
   else
 #endif
@@ -979,12 +975,8 @@ void ox_flush_stream(int s)
 
 void ox_flush_stream_force(int s)
 {
-#if defined(VISUAL) || defined(__MINGW32__)
-  if ( _fileno(&iofp[s].out->fp) < 0 )
-    cflush(iofp[s].out);
-  else
-#elif MPI
-  if ( (char)fileno(&iofp[s].out->fp) < 0 )
+#if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
+  if ( WSIO_fileno(iofp[s].out) < 0 )
     cflush(iofp[s].out);
   else
 #endif
