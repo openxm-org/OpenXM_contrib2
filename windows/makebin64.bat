@@ -1,11 +1,10 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.15 2015/08/13 13:45:26 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makebin64.bat,v 1.16 2016/06/29 13:27:12 ohara Exp $
 @echo off
 
 set ARCH=AMD64
-set INCLUDE=%INCLUDE%;%ProgramFiles(x86)%\Microsoft SDKs\Windows\v7.1A\Include
 
 setlocal
-set PATH=%PATH%;c:\cygwin\bin;c:\cygwin64\bin
+set PATH=%PATH%;c:\cygwin\bin;c:\cygwin64\bin;c:\msys64\usr\bin
 if not exist gc ( bash -c 'PATH=/bin:$PATH ./extract_gc.sh' )
 endlocal
 
