@@ -1,0 +1,196 @@
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.
+ * 
+ * FUJITSU LABORATORIES LIMITED ("FLL") hereby grants you a limited,
+ * non-exclusive and royalty-free license to use, copy, modify and
+ * redistribute, solely for non-commercial and non-profit purposes, the
+ * computer program, "Risa/Asir" ("SOFTWARE"), subject to the terms and
+ * conditions of this Agreement. For the avoidance of doubt, you acquire
+ * only a limited right to use the SOFTWARE hereunder, and FLL or any
+ * third party developer retains all rights, including but not limited to
+ * copyrights, in and to the SOFTWARE.
+ * 
+ * (1) FLL does not grant you a license in any way for commercial
+ * purposes. You may use the SOFTWARE only for non-commercial and
+ * non-profit purposes only, such as academic, research and internal
+ * business use.
+ * (2) The SOFTWARE is protected by the Copyright Law of Japan and
+ * international copyright treaties. If you make copies of the SOFTWARE,
+ * with or without modification, as permitted hereunder, you shall affix
+ * to all such copies of the SOFTWARE the above copyright notice.
+ * (3) An explicit reference to this SOFTWARE and its copyright owner
+ * shall be made on your publication or presentation in any form of the
+ * results obtained by use of the SOFTWARE.
+ * (4) In the event that you modify the SOFTWARE, you shall notify FLL by
+ * e-mail at risa-admin@sec.flab.fujitsu.co.jp of the detailed specification
+ * for such modification or the source code of the modified part of the
+ * SOFTWARE.
+ * 
+ * THE SOFTWARE IS PROVIDED AS IS WITHOUT ANY WARRANTY OF ANY KIND. FLL
+ * MAKES ABSOLUTELY NO WARRANTIES, EXPRESSED, IMPLIED OR STATUTORY, AND
+ * EXPRESSLY DISCLAIMS ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT OF THIRD PARTIES'
+ * RIGHTS. NO FLL DEALER, AGENT, EMPLOYEES IS AUTHORIZED TO MAKE ANY
+ * MODIFICATIONS, EXTENSIONS, OR ADDITIONS TO THIS WARRANTY.
+ * UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, TORT, CONTRACT,
+ * OR OTHERWISE, SHALL FLL BE LIABLE TO YOU OR ANY OTHER PERSON FOR ANY
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, PUNITIVE OR CONSEQUENTIAL
+ * DAMAGES OF ANY CHARACTER, INCLUDING, WITHOUT LIMITATION, DAMAGES
+ * ARISING OUT OF OR RELATING TO THE SOFTWARE OR THIS AGREEMENT, DAMAGES
+ * FOR LOSS OF GOODWILL, WORK STOPPAGE, OR LOSS OF DATA, OR FOR ANY
+ * DAMAGES, EVEN IF FLL SHALL HAVE BEEN INFORMED OF THE POSSIBILITY OF
+ * SUCH DAMAGES, OR FOR ANY CLAIM BY ANY OTHER PARTY. EVEN IF A PART
+ * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
+ * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
+ * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
+ *
+ * $OpenXM$
+*/
+/* find intervals which include roots of a polynomial */
+
+#include "defs.h"
+
+def slice(P,XR,YR,WH) {
+	X = FIRST(XR); XMIN = SECOND(XR); XMAX = THIRD(XR);
+	Y = FIRST(YR); YMIN = SECOND(YR); YMAX = THIRD(YR);
+	W = FIRST(WH); H = SECOND(WH);
+	XS = (XMAX-XMIN)/W; YS = (YMAX-YMIN)/H;
+	T = ptozp(subst(P,X,X*XS+XMIN,Y,Y*YS+YMIN));
+	R = newvect(W+1);
+	for ( I = 0; I <= W; I++ ) {
+		S = sturm(subst(T,X,I));
+		R[I] = numch(S,Y,0)-numch(S,Y,H);
+	}
+	return R;	
+}
+
+def slice1(P,XR,YR,WH) {
+	X = FIRST(XR); XMIN = SECOND(XR); XMAX = THIRD(XR);
+	Y = FIRST(YR); YMIN = SECOND(YR); YMAX = THIRD(YR);
+	W = FIRST(WH); H = SECOND(WH);
+	XS = (XMAX-XMIN)/W; YS = (YMAX-YMIN)/H;
+	T = ptozp(subst(P,X,X*XS+XMIN,Y,Y*YS+YMIN));
+	R = newvect(W+1);
+	for ( I = 0; I <= W; I++ ) {
+		S = sturm(subst(T,X,I));
+		R[I] = newvect(H+1);
+		seproot(S,Y,0,H,R[I]);
+	}
+	return R;	
+}
+
+def seproot(S,X,MI,MA,R) {
+	N = car(size(S));
+	for ( I = MI; I <= MA; I++ )
+		if ( !(T = subst(S[0],X,I)) )
+			R[I] = -1;
+		else
+			break;
+	if ( I > MA )
+		return;
+	for ( J = MA; J >= MI; J-- )
+		if ( !(T = subst(S[0],X,J)) )
+			R[J] = -1;
+		else
+			break;
+	R[I] = numch(S,X,I); R[J] = numch(S,X,J);
+	if ( J <= I+1  )
+		return;
+	if ( R[I] == R[J] ) {
+		for ( K = I + 1; K < J; K++ )
+			R[K] = R[I];
+		return;
+	}
+	T = idiv(I+J,2);
+	seproot(S,X,I,T,R); 
+	seproot(S,X,T,J,R);
+}
+
+/* compute the sturm sequence of P */
+
+def sturm(P) {
+	V = var(P); N = deg(P,V); T = newvect(N+1);
+	G1 = T[0] = P; G2 = T[1] = ptozp(diff(P,var(P)));
+	for ( I = 1, H = 1, X = 1; ; ) {
+		if ( !deg(G2,V) )
+			break;
+		D = deg(G1,V)-deg(G2,V);
+		if ( (L = LCOEF(G2)) < 0 )
+			L = -L;
+		if ( !(R = -srem(L^(D+1)*G1,G2)) )
+			break;
+		if ( type(R) == 1 ) {
+			T[++I] = (R>0?1:-1); break;
+		}
+		M = H^D; G1 = G2; 
+		G2 = T[++I] = sdiv(R,M*X); 
+		if ( (X = LCOEF(G1)) < 0 )
+			X = -X;
+		H = X^D*H/M;
+	}
+	S = newvect(I+1);
+	for ( J = 0; J <= I; J++ )
+		S[J] = T[J];
+	return S;
+}
+
+def numch(S,V,A) {
+	N = car(size(S));
+	for ( T = subst(S[0],V,A), I = 1, C = 0; I < N; I++ ) {
+		T1 = subst(S[I],V,A);
+		if ( !T1 )
+			continue;
+		if ( (T1 > 0 && T < 0) || (T1 < 0 && T > 0) )
+			C++;
+		T = T1;
+	}
+	return C;
+}
+
+def numch0(S,V,A,T) {
+	N = car(size(S));
+	for ( I = 1, C = 0; I < N; I++ ) {
+		T1 = subst(S[I],V,A);
+		if ( !T1 )
+			continue;
+		if ( (T1 > 0 && T < 0) || (T1 < 0 && T > 0) )
+			C++;
+		T = T1;
+	}
+	return C;
+}
+
+def count_real_roots(F)
+{
+	if ( type(F) == 1 )
+		return 0;
+	V = var(F);
+	R = 0;
+	/* remove three roots : -1, 0, 1 */
+	if ( Q = tdiv(F,V) ) {
+		F = Q; R++;
+		while ( Q = tdiv(F,V) )
+			F = Q;
+	}
+	if ( Q = tdiv(F,V-1) ) {
+		F = Q; R++;
+		while ( Q = tdiv(F,V-1) )
+			F = Q;
+	}
+	if ( Q = tdiv(F,V+1) ) {
+		F = Q; R++;
+		while ( Q = tdiv(F,V+1) )
+			F = Q;
+	}
+	if ( type(F) == 1 )
+		return R;
+	S = sturm(F);
+	/* number of roots in [-1,1] */
+	R += numch(S,V,-1)-numch(S,V,1);
+	RS = sturm(ureverse(F));
+	/* number of roots in [-inf,-1] \cup [1,inf] */
+	R += numch(RS,V,-1)-numch(RS,V,1);
+	return R;
+}
+end;

@@ -1,0 +1,225 @@
+# $OpenXM$
+# Patches depend on Risa/Asir
+diff -urN gc6.8/configure gc6.8-risa/configure
+--- gc6.8/configure	2006-03-24 09:42:55.000000000 +0900
++++ gc6.8-risa/configure	2008-03-19 13:31:36.000000000 +0900
+@@ -9628,7 +9628,7 @@
+ _ACEOF
+ 
+ cat >>confdefs.h <<\_ACEOF
+-#define NO_SIGNALS 1
++##define NO_SIGNALS 1
+ _ACEOF
+ 
+ cat >>confdefs.h <<\_ACEOF
+diff -urN gc6.8/alloc.c gc6.8-risa/alloc.c
+--- gc6.8/alloc.c	2005-10-29 09:03:26.000000000 +0900
++++ gc6.8-risa/alloc.c	2008-03-19 13:50:20.000000000 +0900
+@@ -110,6 +110,7 @@
+ GC_bool GC_dont_expand = 0;
+ 
+ word GC_free_space_divisor = 3;
++word GC_free_space_numerator = 1;
+ 
+ extern GC_bool GC_collection_in_progress();
+ 		/* Collection is in progress, or was abandoned.	*/
+@@ -174,9 +175,9 @@
+ 				   /* use a bit more of large empty heap */
+ 			       + total_root_size);
+     if (TRUE_INCREMENTAL) {
+-        return scan_size / (2 * GC_free_space_divisor);
++        return scan_size * GC_free_space_numerator / (2 * GC_free_space_divisor);
+     } else {
+-        return scan_size / GC_free_space_divisor;
++        return scan_size * GC_free_space_numerator / GC_free_space_divisor;
+     }
+ }
+ 
+@@ -492,6 +493,7 @@
+ #   if defined(REGISTER_LIBRARIES_EARLY)
+         GC_cond_register_dynamic_libraries();
+ #   endif
++	GC_timerstart();
+     STOP_WORLD();
+     IF_THREADS(GC_world_stopped = TRUE);
+ #   ifdef CONDPRINT
+@@ -526,6 +528,7 @@
+ 		    GC_deficit = i; /* Give the mutator a chance. */
+                     IF_THREADS(GC_world_stopped = FALSE);
+ 	            START_WORLD();
++				GC_timerstop();
+ 	            return(FALSE);
+ 	    }
+ 	    if (GC_mark_some((ptr_t)(&dummy))) break;
+@@ -560,6 +563,7 @@
+     
+     IF_THREADS(GC_world_stopped = FALSE);
+     START_WORLD();
++	GC_timerstop();
+ #   ifdef PRINTTIMES
+ 	GET_TIME(current_time);
+ 	GC_printf1("World-stopped marking took %lu msecs\n",
+@@ -640,6 +644,7 @@
+ 	GET_TIME(start_time);
+ 	finalize_time = start_time;
+ #   endif
++	GC_timerstart();
+ 
+ #   ifdef GATHERSTATS
+         GC_mem_found = 0;
+@@ -757,6 +762,7 @@
+ 	           MS_TIME_DIFF(finalize_time,start_time),
+ 	           MS_TIME_DIFF(done_time,finalize_time));
+ #   endif
++	GC_timerstop();
+ }
+ 
+ /* Externally callable routine to invoke full, stop-world collection */
+@@ -971,6 +977,9 @@
+         if (GC_collect_at_heapsize < GC_heapsize /* wrapped */)
+ 	  GC_collect_at_heapsize = (word)(-1);
+ #     endif
++#if defined(VISUAL)
++    SendHeapSize();
++#endif
+     return(TRUE);
+ }
+ 
+@@ -1067,6 +1076,22 @@
+     
+     if (sz == 0) return(0);
+ 
++#if defined(VISUAL)
++    {
++#include <signal.h>
++        extern int recv_intr;
++        if ( recv_intr ) {
++            if ( recv_intr == 1 ) {
++                recv_intr = 0;
++                int_handler();
++            } else {
++                recv_intr = 0;
++                ox_usr1_handler(0);
++            }
++        }
++    }
++#endif
++
+     while (*flh == 0) {
+       ENTER_GC();
+       /* Do our share of marking work */
+diff -urN gc6.8/reclaim.c gc6.8-risa/reclaim.c
+--- gc6.8/reclaim.c	2004-11-23 02:58:18.000000000 +0900
++++ gc6.8-risa/reclaim.c	2008-03-19 13:50:56.000000000 +0900
+@@ -1030,6 +1030,7 @@
+ 	
+ 	GET_TIME(start_time);
+ #   endif
++	GC_timerstart();
+     
+     for (kind = 0; kind < GC_n_kinds; kind++) {
+     	ok = &(GC_obj_kinds[kind]);
+@@ -1052,6 +1053,7 @@
+             }
+         }
+     }
++    GC_timerstop();
+ #   ifdef PRINTTIMES
+ 	GET_TIME(done_time);
+ 	GC_printf1("Disposing of reclaim lists took %lu msecs\n",
+--- gc6.8/misc.c	2006-02-11 04:38:46.000000000 +0900
++++ gc6.8-risa/misc.c	2009-02-06 16:30:52.000000000 +0900
+@@ -143,6 +143,93 @@
+ long GC_large_alloc_warn_suppressed = 0;
+ 	/* Number of warnings suppressed so far.	*/
+ 
++#include <time.h>
++
++#if defined(VISUAL)
++#include <windows.h>
++
++static double get_clock()
++{
++	static int initialized = 0;
++	static int is_winnt = 0;
++	static HANDLE curproc;
++
++	if ( !initialized ) {
++		OSVERSIONINFO vinfo;
++
++		curproc = GetCurrentProcess();		
++		vinfo.dwOSVersionInfoSize = sizeof(vinfo);
++		GetVersionEx(&vinfo);
++		if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
++			is_winnt = 1;
++		else
++			is_winnt = 0;
++	}
++	if ( is_winnt ) {
++		FILETIME c,e,k,u;
++
++		GetProcessTimes(curproc,&c,&e,&k,&u);
++		return ((double)k.dwLowDateTime+(double)u.dwLowDateTime
++			+4294967296.0*((double)k.dwHighDateTime+(double)u.dwHighDateTime))/10000000.0;
++	} else
++//		return (double)clock()/(double)CLOCKS_PER_SEC;
++		return ((double)GetTickCount())/1000.0;
++}
++
++#elif defined(THINK_C) || defined(__MWERKS__) || defined(MSWIN32)
++
++static double get_clock()
++{
++	clock_t c;
++
++	c = clock();
++	return (double)c/(double)CLOCKS_PER_SEC;
++}
++
++#elif defined(_PA_RISC1_1) || defined(__svr4__) || defined(__CYGWIN__)
++
++#include <sys/times.h>
++#include <limits.h>
++
++static double get_clock()
++{
++	struct tms buf;
++
++	times(&buf);
++	return (double)(buf.tms_utime+buf.tms_stime)/(double)CLK_TCK;
++}
++
++#else
++
++#include <sys/time.h>
++#include <sys/resource.h>
++
++static double get_clock()
++{
++	int tv_sec,tv_usec;
++	struct rusage ru;
++
++	getrusage(RUSAGE_SELF,&ru);
++	tv_sec = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec;
++	tv_usec = ru.ru_utime.tv_usec + ru.ru_stime.tv_usec;
++	return (double)tv_sec+(double)tv_usec/(double)1000000;
++}
++#endif
++
++static double gctime, gcstart;
++
++void GC_timerstart() {
++	gcstart = get_clock();
++}
++
++void GC_timerstop() {
++	gctime += get_clock() - gcstart;
++}
++
++double GC_get_gctime() {
++	return gctime;
++}
++
+ /*ARGSUSED*/
+ GC_PTR GC_default_oom_fn GC_PROTO((size_t bytes_requested))
+ {

@@ -1,0 +1,555 @@
+/* $OpenXM$ */
+
+/* BUG: this library has not yet been adapted to the new automatic launcher
+        of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
+*/
+
+extern Cfep_loaded$
+
+#define DO_NOT_START_SERVER_EXPLICITLY
+
+/* #define CLIP  1 */
+/* #define DEBUG 1 */
+#define LIST  4
+
+def glib_floor(N) {
+  return(pari(floor,N));
+}
+
+/*
+def join(A,B) {
+  if (type(B) == 0) return(A);
+  return(append(A,B));
+}
+def eigenvalues(M) {
+  return(pari(eigen,M));
+}
+def roots(F) {
+  return(pari(roots,F));
+}
+*/
+
+/*  ---------------------------------------------- */
+def glib_ox_get_errors(P) {
+  ox_push_cmd(P,276);
+  return(ox_pop_cmo(P));
+}
+
+def reset_plot() {   
+  extern Glib_process;
+  if (!Cfep_loaded) {
+    print("  Sending signal to ox_plot",0);
+    ox_reset(Glib_process);
+    print("  Done.");
+  }
+}
+Glib_ps = 0$
+Glib_h = []$
+Glib_canvas_x = 400$
+Glib_canvas_y = 400$
+Glib_xmin=0$  Glib_xmax=Glib_canvas_x$
+Glib_ymin=0$  Glib_ymax=Glib_canvas_y$
+Glib_math_coordinate=0$
+
+
+Glib_canvas = -1$
+Glib_xmag = 1$ Glib_ymag=1$ Glib_xoffset=0$ Glib_yoffset=0$
+Glib_safe_mode = 2 $
+Glib_counter = 100$
+
+extern Glib_ps_sx$
+extern Glib_ps_sy$
+Glib_ps_sx=2$  /* mag=1/2 for PS picture. cf. glib_ps_form, glib_tops */
+Glib_ps_sy=2$  /* mag=1/2 for PS picture */ 
+
+def open_Canvas(P,S) {
+  extern Glib_process;
+  /* print("open_Canvas: ",0);print(S); */
+  if (!Cfep_loaded) {
+    if (P < 0) P=open_canvas(S); /* BUG, get process No. */
+    else open_canvas(P,S);
+    Glib_process = P; 
+    R = ox_pop_cmo(P);
+    /*
+    if (glib_ox_get_errors(P) == []) {
+      R = ox_pop_cmo(P);
+    }else{
+      debug;
+    }
+    */
+  }else{
+    R=cfep.open_canvas(S);
+  }
+  return(R);
+}
+
+/*&usage begin: glib_open()
+  It starts the ox_plot server and opens a canvas.
+  The canvas size is set to {Glib_canvas_x} X {Glib_canvas_y}
+  (the default value is 400). 
+  This function is automatically called when the user calls glib
+  functions.
+end: */
+
+def glib_open() {
+  extern Glib_canvas_x, Glib_canvas_y,
+         Glib_process, Glib_canvas,
+         Glib_server_started, Glib_process$
+  if (!Cfep_loaded) return glib_openx11();
+  else {
+    Glib_canvas = open_Canvas(-1,[Glib_canvas_x,Glib_canvas_y])$
+    Glib_server_started = 1$ 
+    return(Glib_canvas);
+  }
+}
+def glib_openx11() {
+  extern Glib_canvas_x, Glib_canvas_y,
+         Glib_process, Glib_canvas,
+         Glib_server_started, Glib_process$
+#ifndef DO_NOT_START_SERVER_EXPLICITLY
+  if (type(Glib_server_started) == 0) { 
+    Glib_process = ox_launch_nox(0,"ox_plot")$ 
+    register_handler(reset_plot); 
+    Glib_server_started = 1$ 
+  }$
+  Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
+#else
+  Glib_canvas = open_Canvas(-1,[Glib_canvas_x,Glib_canvas_y])$
+  register_handler(reset_plot); 
+  Glib_server_started = 1$ 
+#endif
+  glib_check_strict();
+  return(Glib_canvas);
+}
+
+def glib_check() {
+  extern  Glib_process, Glib_canvas, Glib_safe_mode,
+          Glib_canvas_x, Glib_canvas_y, Glib_counter;
+  if (Glib_safe_mode == 0) {
+     return(0);
+  }
+  if (Glib_safe_mode == 2) {
+   if (Glib_counter > 0) {
+     Glib_counter--;
+     return(0);
+   }else{
+     Glib_counter=100;
+   }
+  }
+  glib_check_strict();
+}
+def glib_check_strict() {
+  extern  Glib_process, Glib_canvas, Glib_safe_mode,
+          Glib_canvas_x, Glib_canvas_y, Glib_counter;
+  if (Glib_canvas < 0) {
+    glib_open();
+  }
+  if (Cfep_loaded) return ;
+  E = glib_ox_get_errors(Glib_process);
+  if (E != []) {
+    ox_pops(Glib_process,200);
+    print(E);
+    print("Warning: ",0);
+    print("Drawing canvas seems to be closed.");
+    print("Opening a new canvas.");
+    Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
+    error("Drawing aborted");
+  }
+}
+
+/*&usage begin: glib_clear()
+  Clear the screen.
+end: */
+def glib_clear() {
+  extern Glib_process, Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (!Cfep_loaded) clear_canvas(Glib_process,Glib_canvas);
+  else cfep.glib_clear();
+}
+
+/*&usage begin: glib_window(Xmin,Ymin,Xmax,Ymax)
+  It generates a window with the left top corner [{Xmin},{Ymin}] and
+  the right bottom corner [{Xmax},{Ymax}].
+  If the global variable {Glib_math_coordinate} is set to 1, mathematical
+  coordinate system will be employed, i.e., the left top
+  corner will have the coordinate [{Xmin},{Ymax}].
+  example: glib_window(-1,-1,10,10);
+end: */
+def glib_window(Xmin,Ymin,Xmax,Ymax) {
+  extern Glib_xmin,  Glib_xmax, Glib_ymin, Glib_ymax,
+         Glib_canvas_x, Glib_canvas_y, Glib_process, Glib_canvas,
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag;
+  if (Xmax <= Xmin) error("glib window: Invalid size");
+  if (Ymax <= Ymin) error("glib window: Invalid size");
+  glib_check_arg(Xmin,Ymin); glib_check_arg(Xmax,Ymax);
+  Glib_xmin = Xmin;  Glib_xmax = Xmax;
+  Glib_ymin = Ymin;  Glib_ymax = Ymax;
+  Glib_xoffset = -Xmin;
+  Glib_yoffset = -Ymin;
+  Glib_xmag    = Glib_canvas_x/(Xmax-Xmin);
+  Glib_ymag    = Glib_canvas_y/(Ymax-Ymin);
+  if (Glib_canvas < 0) glib_open();
+}
+
+def glib_check_arg(X,Y) {
+  if (type(X) <= 1 && type(Y) <= 1) return 1;
+  else {
+    print("Error in glib: arguments ",0);
+    print([X,Y],0);
+    print(" are not numbers.");
+    error("Invalid argument for glib_window, glib_putpixel, glib_line.");
+  }
+}
+
+/*&usage begin: glib_putpixel(X,Y|color)
+  It puts a pixel at [{X},{Y}] with {color}
+  example: glib_putpixel(1,2 | color=0xffff00);
+end: */
+def glib_putpixel(X,Y) {
+  extern Glib_process, Glib_canvas,
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag, Glib_ps,
+         Glib_math_coordinate, Glib_canvas_y;
+  if (Glib_canvas < 0) glib_open();
+  glib_check();
+  glib_check_arg(X,Y);
+  C = getopt(color);
+  if (Glib_math_coordinate) {
+    Pos = [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           Glib_canvas_y-glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+    Pos2= [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+  }else{
+    Pos = [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+    Pos2= [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           Glib_canvas_y-glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+  }
+  if ( type(C) != -1 ) {
+    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos,C);
+    else cfep.draw_obj2(Glib_process,Glib_canvas,Pos,C);
+    if (Glib_ps) glib_history(["putpixel",Pos2,C]);
+  }else{
+    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos);
+    else cfep.draw_obj(Glib_process,Glib_canvas,Pos);
+    if (Glib_ps) glib_history(["putpixel",Pos2,0]);
+  }
+}
+
+/*&usage begin: glib_line(X0,Y0,X1,Y1|color,shape)
+  It draws the line [{X0},{Y0}]-- [{X1},{Y1}] with {color} and {shape}
+  example: glib_line(0,0,5,3/2 | color=0xff00ff);
+           glib_line(0,0,10,0 | shape=arrow);
+end: */
+def glib_line(X0,Y0,X1,Y1) {
+  extern Glib_xmag, Glib_ymag, Glib_xoffset, Glib_yoffset;
+  C = getopt(color);
+  glib_check_arg(X0,Y0);
+  glib_check_arg(X1,Y1);
+  glib_clip_line(glib_floor(Glib_xmag*(X0+Glib_xoffset)),
+                 glib_floor(Glib_ymag*(Y0+Glib_yoffset)),
+                 glib_floor(Glib_xmag*(X1+Glib_xoffset)),
+                 glib_floor(Glib_ymag*(Y1+Glib_yoffset)),C);
+  Shape = getopt(shape);
+  if (type(Shape) != 2) return;
+  Px = X0+(7/8)*(X1-X0);
+  Py = Y0+(7/8)*(Y1-Y0);
+  Qx = (Y0-Y1)/8;
+  Qy = (X1-X0)/8;
+  if (type(C)>0) glib_line(X1,Y1,Px+Qx,Py+Qy | color=C);
+  else glib_line(X1,Y1,Px+Qx,Py+Qy);
+  if (type(C)>0) glib_line(X1,Y1,Px-Qx,Py-Qy | color=C);
+  else glib_line(X1,Y1,Px-Qx,Py-Qy);
+}
+
+def glib_clip_line(X0,Y0,X1,Y1,Color) {
+  /* X0, Y0, X1, Y1 should be integers. 
+     Coordinates are already translated. */
+  extern Glib_process, Glib_canvas, Glib_canvas_x, Glib_canvas_y,
+         Glib_ps,  Glib_math_coordinate;
+  if (Glib_canvas < 0) glib_open();
+
+if (Glib_ps) {
+#ifdef DEBUG
+  print(["clip_line",[X0,Y0,X1,Y1]]);
+#endif
+  /* clip by x = 0 */
+  S = glib_clip0_x(X0,Y0,X1,Y1,0);
+#ifdef DEBUG
+  print(["clip0_x",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+  S = glib_clip1_x(X0,Y0,X1,Y1,Glib_canvas_x-1);
+#ifdef DEBUG
+  print(["clip1_x",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+  S = glib_clip0_y(X0,Y0,X1,Y1,0);
+#ifdef DEBUG
+  print(["clip0_y",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+  S = glib_clip1_y(X0,Y0,X1,Y1,Glib_canvas_y-1);
+#ifdef DEBUG
+  print(["clip1_y",S]);
+#endif
+  if (type(S) == 0) return;
+  X0 = S[0]; Y0 = S[1]; X1 = S[2]; Y1 = S[3];
+
+#ifdef DEBUG
+  print([X0,Y0,X1,Y1]);
+#endif
+}
+
+  glib_check();
+  if (Glib_math_coordinate) {
+    Pos = [glib_floor(X0),Glib_canvas_y-glib_floor(Y0),
+           glib_floor(X1),Glib_canvas_y-glib_floor(Y1)];
+    Pos2= [glib_floor(X0),glib_floor(Y0),glib_floor(X1),glib_floor(Y1)];
+  }else{
+    Pos = [glib_floor(X0),glib_floor(Y0),glib_floor(X1),glib_floor(Y1)];
+    Pos2 = [glib_floor(X0),Glib_canvas_y-glib_floor(Y0),
+           glib_floor(X1),Glib_canvas_y-glib_floor(Y1)];
+  }
+  if ( type(Color) != -1 ) {
+    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos,Color);
+    else cfep.draw_obj2(Glib_process,Glib_canvas,Pos,Color);
+    if (Glib_ps) glib_history(["line",Pos2,Color]);
+  }else{
+    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos);
+    else cfep.draw_obj(Glib_process,Glib_canvas,Pos);
+    if (Glib_ps) glib_history(["line",Pos2,0]);
+  }
+}
+
+def glib_clip0_x(X0,Y0,X1,Y1,Clip) {
+   if (X0 < Clip && X1 < Clip) return(0);
+   if (X0 < Clip && X1 > Clip) {
+     return([Clip, Y0+(Clip-X0)*(Y1-Y0)/(X1-X0),X1,Y1]);
+   }
+   if (X1 > Clip && X1 < Clip) {
+     return([X0,Y0,Clip, Y1+(Clip-X1)*(Y0-Y1)/(X0-X1)]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+def glib_clip0_y(X0,Y0,X1,Y1,Clip) {
+   if (Y0 < Clip && Y1 < Clip) return(0);
+   if (Y0 < Clip && Y1 > Clip) {
+     return([X0+(Clip-Y0)*(X1-X0)/(Y1-Y0),Clip,X1,Y1]);
+   }
+   if (Y1 > Clip && Y1 < Clip) {
+     return([X0,Y0,X1+(Clip-Y1)*(X0-X1)/(Y0-Y1),Clip]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+def glib_clip1_x(X0,Y0,X1,Y1,Clip) {
+   if (X0 > Clip && X1 > Clip) return(0);
+   if (X0 > Clip && X1 < Clip) {
+     return([Clip, Y0+(Clip-X0)*(Y1-Y0)/(X1-X0),X1,Y1]);
+   }
+   if (X1 < Clip && X1 > Clip) {
+     return([X0,Y0,Clip, Y1+(Clip-X1)*(Y0-Y1)/(X0-X1)]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+def glib_clip1_y(X0,Y0,X1,Y1,Clip) {
+   if (Y0 > Clip && Y1 > Clip) return(0);
+   if (Y0 > Clip && Y1 < Clip) {
+     return([X0+(Clip-Y0)*(X1-X0)/(Y1-Y0),Clip,X1,Y1]);
+   }
+   if (Y0 < Clip && Y1 > Clip) {
+     return([X0,Y0,X1+(Clip-Y1)*(X0-X1)/(Y0-Y1),Clip]);
+   }
+   return([X0,Y0,X1,Y1]);
+}
+
+/*&usage begin: glib_print(X,Y,Text|color)
+  It put a string {Text} at [{X},{Y}] on the glib canvas.
+  example: glib_print(100,100,"Hello Worlds" | color=0xff0000);
+end: */
+def glib_print(X,Y,Text) {
+  extern Glib_process, Glib_canvas,
+         Glib_xoffset, Glib_yoffset, Glib_xmag, Glib_ymag, Glib_ps,
+         Glib_math_coordinate, Glib_canvas_y;
+  if (Glib_canvas < 0) glib_open();
+  glib_check();
+  glib_check_arg(X,Y);
+  if (type(Text) != 7) error("glib_print(X,Y,Text): Text must be a string.");
+  C = getopt(color);
+  if (Glib_math_coordinate) {
+    Pos = [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           Glib_canvas_y-glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+    Pos2= [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+  }else{
+    Pos = [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+    Pos2= [glib_floor(Glib_xmag*(X+Glib_xoffset)),
+           Glib_canvas_y-glib_floor(Glib_ymag*(Y+Glib_yoffset))];
+  }
+  if ( type(C) != -1 ) {
+    if (!Cfep_loaded) draw_string(Glib_process,Glib_canvas,Pos,Text,C);
+    else cfep.draw_string2(Glib_process,Glib_canvas,Pos,Text,C);
+    if (Glib_ps) glib_history(["print",Pos2,Text,C]);
+  }else{
+    if (!Cfep_loaded) draw_string(Glib_process,Glib_canvas,Pos,Text);
+    else cfep.draw_string(Glib_process,Glib_canvas,Pos,Text);
+    if (Glib_ps) glib_history(["print",Pos2,Text,0]);
+  }
+}
+
+def glib_history(L) {
+  extern Glib_h, Glib_canvas_x, Glib_canvas_y,
+         Glib_math_coodinate;
+  if (L[0] == "putpixel" || L[0] == "print") {
+    if (L[1][0] <= Glib_canvas_x && L[1][0] >= 0) {
+      if (L[1][1] <= Glib_canvas_x && L[1][1] >= 0) 
+         Glib_h = cons(L,Glib_h);
+    }
+  }else {
+    Glib_h = cons(L,Glib_h);
+  }
+  return 0;
+}
+
+#define xxx(x) idiv(x,Glib_ps_sx)
+#define yyy(y) idiv(y,Glib_ps_sy)
+
+/*&usage begin: glib_tops()
+  If Glib_ps is set to 1, 
+  it returns a postscript program to draw the picture on the canvas.
+  ref: print_output
+end: */
+def glib_tops() {
+  extern Glib_h;
+  return glib_ps(Glib_h);
+}
+def glib_ps(L) {
+  extern Glib_ps_sx;
+  extern Glib_ps_sy;
+  PS = string_to_tb("");
+  Prev_color = 0;
+  /* Prolog */
+  write_to_tb("%%!PS-Adobe-1.0\n",PS);
+  write_to_tb("%%BoundingBox: 0 0 " +
+          rtostr(xxx(Glib_canvas_x)) + " " + rtostr(yyy(Glib_canvas_y)) + "\n",PS);
+  write_to_tb("%%Creator: This is generated by ifplot\n",PS);
+  write_to_tb("%%Title: ifplot\n",PS);
+  write_to_tb("%%EndComments: \n",PS);
+  write_to_tb("0.1 setlinewidth \n",PS);
+  write_to_tb("2 setlinecap \n",PS);
+  write_to_tb("2 setlinejoin \n",PS);
+  write_to_tb("/ifplot_putpixel {  \n",PS);
+  write_to_tb("    /yyy 2 1 roll def /xxx 2 1 roll def \n",PS);
+  write_to_tb("    gsave newpath xxx yyy .5 0 360 arc \n",PS);
+  write_to_tb("    fill grestore \n",PS);
+  write_to_tb("} def \n",PS);
+
+  L = reverse(L);
+  N = length(L);
+  for (I=0; I<N; I++) {
+    C = L[I];
+    if (C[length(C)-1] != Prev_color) {
+      Prev_color = C[length(C)-1];
+      write_to_tb(rtostr(deval(ishift(Prev_color,16)/256)) + " " +
+            rtostr(deval(iand(ishift(Prev_color,8),0xff)/256)) + " " +
+            rtostr(deval(iand(Prev_color,0xff)/256)) + " setrgbcolor \n",PS);
+    }
+    if (C[0] == "putpixel") {
+       write_to_tb(rtostr(xxx(C[1][0])) + " " + rtostr(yyy(C[1][1])) + " ifplot_putpixel \n",PS);
+    }
+    if (C[0] == "line") {
+       write_to_tb(" newpath ",PS);
+       write_to_tb(rtostr(xxx(C[1][0])) + " " + rtostr(yyy(C[1][1])) + " moveto " +
+             rtostr(xxx(C[1][2])) + " " + rtostr(yyy(C[1][3])) + " lineto stroke \n",PS);
+    }
+    if (C[0] == "print") {
+       write_to_tb("/Times-Roman findfont 10 scalefont setfont \n",PS);
+       write_to_tb(rtostr(xxx(C[1][0])) + " " + rtostr(yyy(C[1][1])) + " moveto ",PS);
+       write_to_tb("(" + C[2] + ")  show \n",PS);
+    }
+  }
+
+  /* Epilog */
+  write_to_tb("0 0 0 setrgbcolor \n",PS);
+  write_to_tb("showpage \n",PS);
+
+  return tb_to_string(PS);
+}
+
+/*&usage begin: glib_ps_form(S)
+  It returns the PS code generated by executing {S}
+  (experimental).
+  example: glib_ps_form(quote( glib_line(0,0,100,100) ));
+  example: glib_ps_form(quote([glib_line(0,0,100,100),glib_line(100,0,0,100)]));
+  ref: glib_tops
+end: */
+/* Todo.  Change the canvas size.  */
+def glib_ps_form(F) {
+  extern Glib_h;
+  extern Glib_ps;
+  H = Glib_h; /* push Glib_h */
+  P = Glib_ps; /* push Glib_ps */
+
+  Glib_ps=1; Glib_h = [];
+  if (type(F) != 17) {
+    return "Error: argument should be quote(...).";
+  }
+  eval_quote(F);  
+  /* bug. eval_str causes seg fault for ccurve.rr main(8) */
+  R = glib_tops();
+  Glib_h = H; /* pop Glib_h */
+  Glib_ps = P; /* pop Glib_ps */
+  return R;
+}
+
+/*&usage begin: glib_plot(F)
+  It plots an object {F} on the glib canvas.
+  example: glib_plot([[0,1],[0.1,0.9],[0.2,0.7],[0.3,0.5],[0.4,0.8]]);
+  example: glib_plot(tan(x));
+end: */
+/* bug, xmin, xmax, color should be optional variables. */
+def glib_plot(F) {
+  Opt = getopt();
+  taka_glib_plot(F,Opt);
+}
+
+/*&usage begin: glib_flush();
+  Flush the output. 
+ (Cfep only. It also set initGL to 1.).
+end: */
+def glib_flush() {
+  extern Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (Cfep_loaded) cfep.draw_flush(Glib_canvas);
+}
+/*&usage begin: glib_set_pixel_size(P)
+  Set the size of putpixel to P. 1.0 is the default.
+ (cfep only).
+end: */
+def glib_set_pixel_size(X) {
+  extern  Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (!Cfep_loaded) /*Not implemented.*/ ;
+  else cfep.glib_set_pixel_size(X);
+}
+
+/*&usage begin: glib_remove_last()
+  Remove the last object.  glib_flush() should also be called to remove
+  the last object.
+ (cfep only).
+end: */
+def glib_remove_last() {
+  extern  Glib_canvas;
+  if (Glib_canvas < 0) glib_open();
+  if (!Cfep_loaded) /*Not implemented.*/ ;
+  else cfep.glib_remove_last();
+}
+
+end$
+

@@ -1,0 +1,233 @@
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.
+ * 
+ * FUJITSU LABORATORIES LIMITED ("FLL") hereby grants you a limited,
+ * non-exclusive and royalty-free license to use, copy, modify and
+ * redistribute, solely for non-commercial and non-profit purposes, the
+ * computer program, "Risa/Asir" ("SOFTWARE"), subject to the terms and
+ * conditions of this Agreement. For the avoidance of doubt, you acquire
+ * only a limited right to use the SOFTWARE hereunder, and FLL or any
+ * third party developer retains all rights, including but not limited to
+ * copyrights, in and to the SOFTWARE.
+ * 
+ * (1) FLL does not grant you a license in any way for commercial
+ * purposes. You may use the SOFTWARE only for non-commercial and
+ * non-profit purposes only, such as academic, research and internal
+ * business use.
+ * (2) The SOFTWARE is protected by the Copyright Law of Japan and
+ * international copyright treaties. If you make copies of the SOFTWARE,
+ * with or without modification, as permitted hereunder, you shall affix
+ * to all such copies of the SOFTWARE the above copyright notice.
+ * (3) An explicit reference to this SOFTWARE and its copyright owner
+ * shall be made on your publication or presentation in any form of the
+ * results obtained by use of the SOFTWARE.
+ * (4) In the event that you modify the SOFTWARE, you shall notify FLL by
+ * e-mail at risa-admin@sec.flab.fujitsu.co.jp of the detailed specification
+ * for such modification or the source code of the modified part of the
+ * SOFTWARE.
+ * 
+ * THE SOFTWARE IS PROVIDED AS IS WITHOUT ANY WARRANTY OF ANY KIND. FLL
+ * MAKES ABSOLUTELY NO WARRANTIES, EXPRESSED, IMPLIED OR STATUTORY, AND
+ * EXPRESSLY DISCLAIMS ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT OF THIRD PARTIES'
+ * RIGHTS. NO FLL DEALER, AGENT, EMPLOYEES IS AUTHORIZED TO MAKE ANY
+ * MODIFICATIONS, EXTENSIONS, OR ADDITIONS TO THIS WARRANTY.
+ * UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, TORT, CONTRACT,
+ * OR OTHERWISE, SHALL FLL BE LIABLE TO YOU OR ANY OTHER PERSON FOR ANY
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, PUNITIVE OR CONSEQUENTIAL
+ * DAMAGES OF ANY CHARACTER, INCLUDING, WITHOUT LIMITATION, DAMAGES
+ * ARISING OUT OF OR RELATING TO THE SOFTWARE OR THIS AGREEMENT, DAMAGES
+ * FOR LOSS OF GOODWILL, WORK STOPPAGE, OR LOSS OF DATA, OR FOR ANY
+ * DAMAGES, EVEN IF FLL SHALL HAVE BEEN INFORMED OF THE POSSIBILITY OF
+ * SUCH DAMAGES, OR FOR ANY CLAIM BY ANY OTHER PARTY. EVEN IF A PART
+ * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
+ * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
+ * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
+ *
+ * $OpenXM$
+*/
+/* fraction free gaussian elimination; detructive */
+
+def deter(MAT)
+{
+	S = size(MAT);
+	if ( car(S) != car(cdr(S)) )
+		return 0;
+	N = car(S);
+	for ( J = 0, D = 1; J < N; J++ ) {
+		for ( I = J; (I<N)&&(MAT[I][J] == 0); I++ );
+		if ( I != N ) {
+			for ( L = I; L < N; L++ )
+				if ( MAT[L][J] && (nmono(MAT[L][J]) < nmono(MAT[I][J])) )
+					I = L;
+			if ( J != I )
+				for ( K = 0; K < N; K++ ) {
+					B = MAT[J][K]; MAT[J][K] = MAT[I][K]; MAT[I][K] = B;
+				}
+
+			for ( I = J + 1, V = MAT[J][J]; I < N; I++ )
+				for ( K = J + 1, U = MAT[I][J]; K < N; K++ )
+					MAT[I][K] = sdiv(MAT[I][K]*V-MAT[J][K]*U,D);
+			D = V;
+		} else
+			return ( 0 );
+	}
+	return (D);
+}
+
+/* characteristic polynomial */
+
+def cp(M)
+{
+	tstart;
+	S = size(M);
+	if ( car(S) != car(cdr(S)) )
+		return 0;
+	N = car(S);
+	MAT = newmat(N,N);
+	for ( I = 0; I < N; I++ )
+		for ( J = 0; J < N; J++ )
+			if ( I == J ) 
+				MAT[I][J] = red(M[I][J]-x);
+			else
+				MAT[I][J] = red(M[I][J]);
+	D = deter(MAT);
+	tstop;
+	return (D);
+}
+
+/* calculation of charpoly by danilevskii's method */
+
+def da(MAT)
+{
+	tstart;
+	S = size(MAT);
+	if ( car(S) != car(cdr(S)) )
+		return 0;
+	N = car(S);
+	M = newmat(N,N);
+	for ( I = 0; I < N; I++ )
+		for ( J = 0; J < N; J++ )
+			M[I][J] = red(MAT[I][J]);
+
+	for ( W = newvect(N), J = 0, K = 0, D = 1; J < N; J++ ) {
+		for ( I = J + 1; (I<N) && (M[I][J] == 0); I++ );
+		if ( I == N ) {
+			for ( L = J, S = 1; L >= K; L-- )
+				S = S*x-M[L][J];
+			D *= S;
+			K = J + 1;
+		} else {
+			B = J + 1;
+			for ( L = 0; L < N; L++ ) {
+				T = M[I][L]; M[I][L] = M[B][L]; M[B][L] = T;
+			}
+			for ( L = 0; L < N; L++ ) {
+				T = M[L][B]; M[L][B] = M[L][I]; M[L][I] = T;
+				W[L] = M[L][J];
+			}
+			for ( L = K, T = red(1/M[B][J]); L < N; L++ )
+				M[B][L] *= T;
+			for ( L = K; L < N; L++ )
+				if ( W[L] && (L != J + 1) )
+					for ( B = K, T = W[L]; B < N; B++ )
+						M[L][B] -= M[J+1][B]*T;
+			for ( L = K; L < N; L++ ) {
+				for ( B = 0, T = 0; B < N ; B++ )
+					T += M[L][B] * W[B];
+				M[L][J + 1] = T;
+			}
+		}
+	}
+	tstop;
+	return ( D );
+}
+
+def newvmat(N) {
+	M = newmat(N,N);
+	for ( I = 0; I < N; I++ )
+		for ( J = 0; J < N; J++ )
+			M[I][J] = strtov(rtostr(x)+rtostr(I))^J;
+	return M;
+}
+
+def newssmat(N) {
+	M = newmat(N,N);
+	for ( I = 0; I < N; I++ )
+		for ( J = 0; J < N; J++ )
+			M[I][J] = strtov(rtostr(x)+rtostr(I)+"_"+rtostr(J));
+	return M;
+}
+
+def newasssmat(N) {
+	N *= 2;
+	M = newmat(N,N);
+	for ( I = 0; I < N; I++ )
+		for ( J = 0; J < I; J++ )
+			M[I][J] = strtov(rtostr(x)+rtostr(I)+"_"+rtostr(J));
+	for ( I = 0; I < N; I++ )
+		for ( J = I + 1; J < N; J++ )
+			M[I][J] = -M[J][I];
+	return M;
+}
+
+/* calculation of determinant by minor expansion */
+
+def edet(M) {
+	S = size(M);
+	if ( S[0] == 1 )
+		return M[0][0];
+	else {
+		N = S[0];
+		L = newmat(N-1,N-1);
+		for ( I = 0, R = 0; I < N; I++ ) {
+			for ( J = 1; J < N; J++ ) {
+				for ( K = 0; K < I; K++ )
+					L[J-1][K] = M[J][K];
+				for ( K = I+1; K < N; K++ )
+					L[J-1][K-1] = M[J][K];
+			}
+			R += (-1)^I*edet(L)*M[0][I];
+		}
+		return R;
+	}
+}
+
+/* sylvester's matrix */
+
+def syl(V,P1,P2) {
+	D1 = deg(P1,V); D2 = deg(P2,V);
+	M = newmat(D1+D2,D1+D2);
+	for ( J = 0; J <= D2; J++ )
+		M[0][J] = coef(P2,D2-J,V);
+	for ( I = 1; I < D1; I++ )
+		for ( J = 0; J <= D2; J++ )
+		M[I][I+J] = M[0][J];
+	for ( J = 0; J <= D1; J++ )
+		M[D1][J] = coef(P1,D1-J,V);
+	for ( I = 1; I < D2; I++ )
+		for ( J = 0; J <= D1; J++ )
+		M[D1+I][I+J] = M[D1][J];
+	return M;
+}
+
+/* calculation of resultant by edet() */
+
+def res_minor(V,P1,P2)
+{
+	D1 = deg(P1,V); D2 = deg(P2,V);
+	M = newmat(D1+D2,D1+D2);
+	for ( J = 0; J <= D2; J++ )
+		M[0][J] = coef(P2,D2-J,V);
+	for ( I = 1; I < D1; I++ )
+		for ( J = 0; J <= D2; J++ )
+		M[I][I+J] = M[0][J];
+	for ( J = 0; J <= D1; J++ )
+		M[D1][J] = coef(P1,D1-J,V);
+	for ( I = 1; I < D2; I++ )
+		for ( J = 0; J <= D1; J++ )
+		M[D1+I][I+J] = M[D1][J];
+	return edet(M);
+}
+end$

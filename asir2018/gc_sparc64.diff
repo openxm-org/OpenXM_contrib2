@@ -1,0 +1,23 @@
+# $OpenXM$
+diff -u configure.orig configure
+--- configure.orig	Tue Jun 24 14:11:31 2003
++++ configure	Fri Jun 25 22:27:13 2004
+@@ -8713,6 +8713,7 @@
+ 	  esac
+        done
+        CFLAGS="$new_CFLAGS"
++       CFLAGS="${CFLAGS} -m64"
+     else
+        echo "$as_me:$LINENO: result: no" >&5
+ echo "${ECHO_T}no" >&6
+diff -u configure.in.orig configure.in
+--- configure.in.orig	Tue Jun 24 14:11:32 2003
++++ configure.in	Fri Jun 25 22:30:23 2004
+@@ -358,6 +358,7 @@
+ 	  esac
+        done
+        CFLAGS="$new_CFLAGS"
++       CFLAGS="${CFLAGS} -m64"
+     else
+        AC_MSG_RESULT(no)
+     fi

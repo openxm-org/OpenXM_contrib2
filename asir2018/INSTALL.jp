@@ -1,0 +1,101 @@
+         Asir2000 の install のしかた  (standalone 版; 2006.8.15)
+
+不明な点は, noro@math.kobe-u.ac.jp にお問い合わせ下さい. 
+
+0. コンパイラについて
+
+Sparc の場合, gcc が用いられますが, /usr/ccs/bin が, /usr/local/bin
+より先にサーチされるように, path を設定して下さい. 
+
+Intel PC の場合, gcc が用いられます. 
+
+Alpha の場合, 純正 C コンパイラ /usr/ccs/bin/cc を使用します. 
+
+1. install directory を決める. 
+
+install directory には, 以下のものが置かれます. 
+
+bin       pari, asir の実行ファイル
+lib       pari, asir のライブラリファイル
+include   pari の include ファイル
+
+これらの subdirectory はなければ自動的につくられます. root 権限がある
+場合には, /usr/local などに install することをおすすめします (pari の 
+default はそこ).  もし個人的に使用する場合には, 自分が書き込める 
+directory を指定して下さい.  以下この directory を TARGETDIR と書きま
+す.
+
+PARI ライブラリは, bigfloat 計算や初等関数の値の計算に必要です. asir 
+は, 現状ではライセンスの制限のため libpari.a.2.0 を link します. PARI 
+の最新版は 2.2.x のため, PARI, asir はプライベートなディレクトリにイン
+ストールすることをお勧めします.
+
+2. pari-2.0 の install
+
+% gzip -dc pari.tgz | tar xvf -
+% cd pari
+% ./Configure --prefix=TARGETDIR
+% make all
+% su                         <-- 必要がある場合
+# make install
+# make install-lib-sta
+# exit
+%
+
+もし, make all でエラーが出て止まったら, 
+
+% cd Oxxx           <--- xxx は OS 名
+% make lib-sta
+% su
+# make install-lib-sta
+# make install-include
+# exit
+%
+
+を実行してください. GP はできませんが, asir2000 に必要なライブラリは生
+成されます.
+
+3. asir2000 の install
+
+以下のスイッチがあります.
+
+--prefix=dir
+  インストールディレクトリを 'dir' にする. PARI をインストールするとき 
+  に指定した TARGETDIR と同一でなければならない.
+
+--with-pari
+  PARI を link する場合に必要.
+
+--enable-plot
+  plot 関数をが必要な場合に必要.
+
+% gzip -dc asir-head.tgz | tar xvf -
+% cd asir2000
+% configure --prefix=TARGETDIR                         <- without plot and PARI
+% configure --prefix=TARGETDIR --enable-plot         <- with plot, without PARI
+% configure --prefix=TARGETDIR --with-pari --enable-plot  <- with plot and PARI
+% make
+% su     <- if necessary
+# make install
+# make install-lib
+# make install-doc
+# exit
+%	
+5. 環境変数について
+
+上記の手順で install した場合, 環境変数の設定なしで全て正常に動作する
+はずです. もし, ASIR_LIBDIR が設定されている場合にはその設定をやめて下
+さい. また, load() 関数のサーチパスを指定するASIRLOADPATH は, リスト中
+の directory を左からサーチしたあと, 最後に TARGETDIR/lib/asir をサー
+チします. ASIRLOADPATH に, 旧版のlibrary directory が紛れ込まないよう
+に注意して下さい.
+
+6. manual
+
+asir-doc.tgz は dvi 形式と html 形式のマニュアルを含みます.
+
+% gzip -dc asir-doc.tgz | tar xf -
+
+
+
+

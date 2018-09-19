@@ -1,0 +1,1628 @@
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.
+ * 
+ * FUJITSU LABORATORIES LIMITED ("FLL") hereby grants you a limited,
+ * non-exclusive and royalty-free license to use, copy, modify and
+ * redistribute, solely for non-commercial and non-profit purposes, the
+ * computer program, "Risa/Asir" ("SOFTWARE"), subject to the terms and
+ * conditions of this Agreement. For the avoidance of doubt, you acquire
+ * only a limited right to use the SOFTWARE hereunder, and FLL or any
+ * third party developer retains all rights, including but not limited to
+ * copyrights, in and to the SOFTWARE.
+ * 
+ * (1) FLL does not grant you a license in any way for commercial
+ * purposes. You may use the SOFTWARE only for non-commercial and
+ * non-profit purposes only, such as academic, research and internal
+ * business use.
+ * (2) The SOFTWARE is protected by the Copyright Law of Japan and
+ * international copyright treaties. If you make copies of the SOFTWARE,
+ * with or without modification, as permitted hereunder, you shall affix
+ * to all such copies of the SOFTWARE the above copyright notice.
+ * (3) An explicit reference to this SOFTWARE and its copyright owner
+ * shall be made on your publication or presentation in any form of the
+ * results obtained by use of the SOFTWARE.
+ * (4) In the event that you modify the SOFTWARE, you shall notify FLL by
+ * e-mail at risa-admin@sec.flab.fujitsu.co.jp of the detailed specification
+ * for such modification or the source code of the modified part of the
+ * SOFTWARE.
+ * 
+ * THE SOFTWARE IS PROVIDED AS IS WITHOUT ANY WARRANTY OF ANY KIND. FLL
+ * MAKES ABSOLUTELY NO WARRANTIES, EXPRESSED, IMPLIED OR STATUTORY, AND
+ * EXPRESSLY DISCLAIMS ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT OF THIRD PARTIES'
+ * RIGHTS. NO FLL DEALER, AGENT, EMPLOYEES IS AUTHORIZED TO MAKE ANY
+ * MODIFICATIONS, EXTENSIONS, OR ADDITIONS TO THIS WARRANTY.
+ * UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, TORT, CONTRACT,
+ * OR OTHERWISE, SHALL FLL BE LIABLE TO YOU OR ANY OTHER PERSON FOR ANY
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, PUNITIVE OR CONSEQUENTIAL
+ * DAMAGES OF ANY CHARACTER, INCLUDING, WITHOUT LIMITATION, DAMAGES
+ * ARISING OUT OF OR RELATING TO THE SOFTWARE OR THIS AGREEMENT, DAMAGES
+ * FOR LOSS OF GOODWILL, WORK STOPPAGE, OR LOSS OF DATA, OR FOR ANY
+ * DAMAGES, EVEN IF FLL SHALL HAVE BEEN INFORMED OF THE POSSIBILITY OF
+ * SUCH DAMAGES, OR FOR ANY CLAIM BY ANY OTHER PARTY. EVEN IF A PART
+ * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
+ * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
+ * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
+ *
+ * $OpenXM$
+*/
+/*   Primary decomposition & Radical decomposition program      */
+/*   written by T.Shimoyama, Fujitsu Lab. Date: 1995.10.12      */
+
+/* comments about flags *
+PRIMEORD	term order of Groebner basis in primedec
+PRIMAORD	term order of Groebner basis in primadec
+PRINTLOG	print out log (1 (simple) -- 5 (pricise))
+SHOWTIME	if 1 : print out timings and data
+ISOLATED	if 1 : compute only isolated primary components
+NOEMBEDDED	if 1 : compute only pseudo-primary components
+NOINITGB	if 1 : no initial G-base computation 
+REDUNDANT	if 1 : no redundancy check
+COMPLETE	if 1 : use complete criterion of redundancy 
+COMMONCHECK	if 1 : redundancy check by intersection (in gr_fctr_sub)
+SELECTFLAG	selection strategy of separators (0 -- 3)
+*/
+
+if (!module_definedp("gr")) load("gr")$ else {}$
+module primdec $  
+  /* Empty for now. It will be used in a future. */
+endmodule$
+
+
+#define GR(R,F,V,O) T2=newvect(4,time());R=dp_gr_main(F,V,0,0,O);GRTIME+=newvect(4,time())-T2;
+#define HGRM(R,F,V,O) T2=newvect(4,time());R=dp_gr_main(F,V,1,1,O);GRTIME+=newvect(4,time())-T2;
+#define NF(R,IN,F,G,O) T2=newvect(4,time());R=dp_nf(IN,F,G,O);NFTIME+=newvect(4,time())-T2;
+
+/* optional flags */
+extern PRIMAORD,PRIMEORD,PRINTLOG,SHOWTIME,NOINITGB$
+extern COMMONCHECK,ISOLATED,NOEMBEDDED,REDUNDANT,SELECTFLAG,COMPLETE$
+extern EXTENDED,CONTINUE,BSAVE,MAXALGIND,NOSPECIALDEC$
+def primflags() {
+print("PRIMAORD,PRIMEORD,PRINTLOG,SHOWTIME,NOINITGB,ISOLATED,NOEMBEDDED,COMMONCHECK");
+print("REDUNDANT,SELECTFLAG,COMPLETE,EXTENDED,CONTINUE,BSAVE,MAXALGIND,NOSPECIALDEC");}
+PRIMAORD=0$ PRIMEORD=3$
+
+/* global variables */
+extern DIRECTRY,COMMONIDEAL,NOMRADDEC,NOMISOLATE,RADDECTIME$
+extern MISTIME,ISORADDEC,GRTIME,NFTIME$
+
+
+/* primary ideal decomposition of ideal(F) */
+/* return the list of [P,Q] where Q is P-primary component of ideal(F) */
+def primadec(F,VL)
+{
+	if ( !VL ) {
+		print("invalid variables"); return 0; }
+	if ( !F ) {
+		print("invalid argument"); return 0; }
+	if ( F == [] )
+		return [];
+	if ( length(F) == 1 && type(F[0]) == 1 )
+		return [[1],[1]];
+	NOMRADDEC = NOMISOLATE = 0; RADDECTIME = newvect(4); T0 = newvect(4,time());
+	GRTIME = newvect(4); NFTIME = newvect(4); MISTIME = newvect(4); 
+
+	R = primadec_main(F,[["begin",F,F,[1],[]]],[],VL);
+
+	if ( PRINTLOG ) {
+		print(""); print("primary decomposition done.");
+	}
+	if ( PRINTLOG || SHOWTIME ) {
+		print("number of radical decompositions = ",0); print(NOMRADDEC);
+		print("number of primary components = ",0); print(length(R),0);
+		print(" ( isolated = ",0); print(NOMISOLATE,0); print(" )");
+		print("total time of m.i.s. computation = ",0); 
+		print(MISTIME[0],0); GT = MISTIME[1];
+		if ( GT ) { print(" + gc ",0);print(GT); } else print("");
+		print("total time of n-form computation = ",0); 
+		print(NFTIME[0],0); GT = NFTIME[1];
+		if ( GT ) { print(" + gc ",0);print(GT); } else print("");
+		print("total time of G-base computation = ",0); 
+		print(GRTIME[0],0); GT = GRTIME[1];
+		if ( GT ) { print(" + gc ",0);print(GT); } else print("");
+		print("total time of radical decomposition = ",0); 
+		print(RADDECTIME[0],0); GT = RADDECTIME[1];
+		if ( GT ) { print(" + gc ",0);print(GT,0); }
+		print(" (iso ",0); print(ISORADDEC[0],0); GT = ISORADDEC[1];
+		if ( GT ) { print(" +gc ",0);print(GT,0); } print(")");
+		print("total time of primary decomposition = ",0);
+		TT = newvect(4,time())-T0; print(TT[0],0);
+		if ( TT[1] ) { print(" + gc ",0);print(TT[1]); } else print("");
+	}
+	return R;
+}
+
+/* prime ideal decomposition of radical(F) */
+/* return the list of prime components of radical(F) */
+
+def primedec(F,VL)
+{
+	if ( !VL ) {
+		print("invalid variables"); return 0; }
+	if ( !F ) {
+		print("invalid argument"); return 0; }
+	if ( F == [] )
+		return [];
+	GRTIME = newvect(4);
+	T0 = newvect(4,time());
+	if ( !NOINITGB ) {
+		if ( PRINTLOG ) {
+			print("G-base computation w.r.t ordering = ",0);
+			print(PRIMEORD);
+		}
+		T1 = newvect(4,time());
+		HGRM(F,F,VL,PRIMEORD);
+		Tg = newvect(4,time())-T1;
+		if ( PRINTLOG > 0 ) {
+			print(" G-base time = ",0); print(Tg[0],0);
+			if ( Tg[1] ) { print(" + gc : ",0); print(Tg[1]); }
+			else print("");
+		}
+	}
+
+	R = primedec_main([F],VL);
+
+	Ta = newvect(4,time())-T0;
+	if ( PRINTLOG || SHOWTIME ) {
+		print("number of prime components = ",0); print(length(R));
+		print("G-base time = ",0); print(GRTIME[0],0);
+		if ( GRTIME[1] ) { print(" + gc : ",0); print(GRTIME[1]); }
+		else print("");
+		print("total time = ",0); print(Ta[0],0);
+		if ( Ta[1] ) { print(" + gc : ",0); print(Ta[1]); } else print("");
+	}
+	return R;
+}
+
+/* main procedure for primary decomposition.  */
+/* F : ideal, VL : variable list, REMS : remaining components */
+def primadec_main(F,REMS,H,VL)
+{
+	DEC = RES = [];
+	for (D = [], I = 0; I < length(REMS); I++) {
+		MARK = REMS[I][0]; WF = REMS[I][1]; WP = REMS[I][2]; SC = REMS[I][3];
+		if ( !NOINITGB || MARK != "begin" ) {
+			ORD = PRIMAORD;
+			if ( PRINTLOG > 1 ) {
+				if ( MARK != "begin" ) print("");
+				print("G-base computation w.r.t ordering = ",0);
+				print(ORD);
+			}
+			T1 = newvect(4,time());
+			/* G-base of ideal */
+			GR(GF,WF,VL,ORD);
+			if ( MARK != "begin" && ( COMPLETE || EXTENDED ) ) {
+				if ( SC!=[1] && SC!=[-1] ) {
+					LG = localize(WF,SC,VL,ORD); /* VR_s\cap R */
+					if ( EXTENDED ) { GF = LG; }
+				} else
+					LG = GF;  
+				if ( idealinc(H,LG,VL,ORD) ) {
+					if ( PRINTLOG ) {
+						print("eliminate the remaining component ",0);
+						print("by complete criterion");
+					}
+					continue;  /* complete criterion */
+				}
+			}
+			/* G-base of radical */
+			if ( MARK == "begin" ) {
+				RA = ["begin",GF];
+			} else if ( MARK == "ext" ) {
+				if ( WF==WP || idealinc(WP,GF,VL,ORD) )
+					RA = ["ext",GF];
+				else {
+					if ( EXTENDED ) {
+						GA = localize(WP,SC,VL,PRIMEORD);
+					} else {
+						GR(GA,WP,VL,PRIMEORD);
+					}
+					RA = ["ext",GA];
+				}
+			} else if ( MARK == "sep" ) {
+				for (U=[], T=WP,J=length(T)-1;J>=0;J--) {
+					if ( EXTENDED ) {
+						GA = localize(T[J],SC,VL,PRIMEORD);
+					} else {
+						GR(GA,T[J],VL,PRIMEORD);
+					}
+					if (GA != [1] && GA != [-1])
+						U = cons(GA,U);
+				}
+				RA = ["sep",U];
+			} else debug;
+			Tg = newvect(4,time())-T1;
+			if ( PRINTLOG > 1 ) {
+				print(" G-base time = ",0); print(Tg[0],0);
+				if ( Tg[1] ) { print(" + gc : ",0); print(Tg[1]); }
+				else print("");
+			}
+		} else {
+			GF = F; /* NOINITGB = 1 */
+			RA = ["begin",GF];
+		}
+		if ( PRINTLOG ) {
+			if ( MARK == "begin" ) {
+				print("primary decomposition of the ideal");
+			} else { /* at the begining */
+				print("");
+				print("primary decomposition of the remaining component");
+			}
+			if ( MARK == "begin" && PRINTLOG > 1 ) { /* at the begining */
+				print("  ideal = ",0);
+				print(WF);
+			} else if ( PRINTLOG >= 4 ) {
+				print("  remaining component = ",0);
+				print(GF);
+			}
+		}
+
+		/* input: init, generator, G-base, radical, intersection, sep.cond.*/
+		/* output: primary comp. remaining comp. */
+		Y = isolated(F,WF,GF,RA,REMS[I][4],SC,VL);
+
+		D = append(D,Y[0]);
+		if ( MARK == "begin" )
+			NOMISOLATE = length(Y[0]);
+		RES = append(RES,Y[1]);
+	}
+	if ( MARK == "begin" ) {
+		F = GF; /* input polynomial -> G-base of it */
+	}
+	DEC = append(DEC,D);
+	if ( PRINTLOG ) {
+		print("");
+		print("# number of remainig components = ",0); print(length(RES));
+	}
+	if ( !length(RES) )
+		return DEC;
+	if ( !REDUNDANT ) { /* check whether Id(F,RES) is redundant or not */
+		for(L = [H],I = length(D)-1; I>=0; I--)
+			L=append(L,[D[I][0]]);
+		H = idealsetcap(L,VL,ORD); /* new intersection H */
+		if ( idealinc(H,F,VL,ORD) ) {
+			if ( PRINTLOG ) {
+				print("");
+				print("all primary components are found!"); 
+			}
+			return DEC;
+		}
+		REMS = mksepext(RES,H,VL); /* new remainig comps. */
+	} else {
+		REMS = mksepext(RES,H,VL); /* new rmaining comps. */
+	}
+	D = primadec_main(F,REMS,H,VL);
+	return append(DEC,D);
+}
+
+/* isolated components and embedded components */
+/* GF is the G-base of F, RA is the radical of F */
+def isolated(IP,F,GF,RA,H,SC,VL)
+{
+	T0 = newvect(4,time());
+	if ( RA[0] == "begin" ) {
+		PD = primedec_main([RA[1]],VL);
+		PD = map(dp_gr_main,PD,VL,0,1,PRIMEORD); /* XXX */
+	} else if ( RA[0] == "ext" || RA[0] == "sep" ) {
+		if ( RA[0] == "sep" )
+			T = prime_irred(idealsav(RA[1]),VL);
+		else
+			T = [RA[1]];
+		if ( !NOSPECIALDEC )
+			PD = primedec_special(T,VL);
+		else
+			PD = primedec_main(T,VL);
+	} else debug;
+	T1 = newvect(4,time())-T0;
+	if ( RA[0] == "begin" ) ISORADDEC = T1;
+	NOMRADDEC++; RADDECTIME += T1;
+	if ( PRINTLOG ) {
+		print("number of prime components = ",0); print(length(PD),0);
+		print(", time = ",0); print(T1[0],0);
+		if ( T1[1] ) { print(" + gc : ",0); print(T1[1]); } else print("");
+		if ( PRINTLOG > 0 ) {
+			print("dimensions of primes = ",0);
+			for (I = 0; I < length(PD); I++) {
+				print(length(VL)-length(minalgdep(PD[I],VL,PRIMEORD)),0);
+				print(", ",0);
+			}
+			print("");
+		}
+	}
+	if ( RA[0] == "begin" ) { /* isolated part of initial ideal */
+		if ( PRINTLOG ) {
+			print("check 'prime decomposition = primary decomposition?'");
+		}
+		CP = idealsetcap(PD,VL,PRIMAORD);
+		if ( idealinc(CP,GF,VL,PRIMAORD) ) {
+			if ( PRINTLOG ) {
+				print("lucky!");
+			}
+			for (L = [],I = length(PD)-1; I >= 0; I--)
+				L = cons([PD[I],PD[I]],L);
+			return [L,[]];
+		}
+		if ( PRINTLOG ) {
+			print("done.");
+		}
+	}
+
+	R = pseudo_extract(IP,F,GF,PD,H,SC,VL);
+
+	return R;
+}
+
+def pseudo_extract(IP,F,GF,PD,H,SC,VL)
+{
+	REMS = DEC = PDEC = SEL = RES = [];
+	ZERODIM = 1; CAP = H;
+	for (I = 0; I < length(PD); I++) {
+		P = PD[I];
+		if ( length(minalgdep(P,VL,PRIMEORD)) != length(VL) )
+			ZERODIM=0;
+		if ( length(PD) == 1 ) { /* pseudo primary ideal case */
+			if ( PRINTLOG >= 1 ) { print(""); print("pseudo primary ideal"); }
+			DD = GF; SEL = [SC];
+		} else {
+			T0 = time();
+			Y = pseudodec_main(F,P,PD,VL);
+			T1 = time();
+			DD = Y[0]; SS = Y[1]; SEL = append(SEL,[SS]); 
+			PDEC = append(PDEC,[[DD,P]]);
+			if ( PRINTLOG >= 1 ) {
+				print(""); print("pseudo primary component of ",0);
+				print(I,0); print(", time = ",0); print(T1[0]-T0[0]); 
+				if ( PRINTLOG >= 4 ) { print(" = ",0); print(DD); }
+			}
+			if ( NOEMBEDDED )
+				continue;
+		}
+		if ( !REDUNDANT && H != [] ) { /* elim. pseu-comp. */
+			if ( !sepcond_ps(P,SC,VL) )
+				continue;
+			LG = localize(DD,SC,VL,PRIMAORD);
+			if ( idealinc(H,LG,VL,PRIMAORD)) {
+				if ( PRINTLOG ) {
+					print("eliminate the pseudo primary component ",0);
+					print(I);
+				}
+				continue;
+			}
+		}
+		if ( PRINTLOG ) {
+			print("extraction of the pseudo primary component ",0);
+			print(I);
+			if ( PRINTLOG > 2 ) {
+				print("  associated prime of pseudo primary ideal = ",0);
+				print(P);
+			}
+		}
+		U = extraction(DD,P,VL);
+		if ( !REDUNDANT && H != [] && idealinc(H,U[0][0],VL,PRIMAORD) )  {
+			if ( PRINTLOG )
+				print("redundant primary component!"); 
+		} else {
+			DEC = append(DEC,[U[0]]);
+			H = idealcap(H,U[0][0],VL,PRIMAORD);
+			if ( idealeq(IP,H) ) {
+				if ( PRINTLOG ) {
+					print("");
+					print("all primary components are found!"); 
+				}
+				return [DEC,[]];
+			}
+		}
+		if ( !ISOLATED && U[1] != [] )
+			if ( sepcond_re(U[1],SC,VL) ) {
+				NSC = setunion([SS,SC]); /* new separating condition */
+				REM = cons(DD,append(U[1],[NSC,H]));
+				REMS = append(REMS,[REM]);
+			}
+	}
+	if ( NOEMBEDDED )
+		DEC = PDEC;
+	if ( length(PD) != 1 && !NOEMBEDDED && !ISOLATED && !ZERODIM ) {
+		for (QD=[],I=length(PDEC)-1;I>=0;I--)
+			QD = cons(PDEC[I][0],QD);
+		RES = ["sep",PD,QD,GF];
+		if ( sepcond_re(append(RES,[SEL]),SC,VL) ) {
+			REM = cons(F,append(RES,[SC,H]));
+			REMS = append(REMS,[REM]);
+		}
+	}
+	return [DEC,REMS];
+}
+
+/* F:input set, PD:primes of radical, E:higher dimensional ideal */
+/* length(PD) > 1 */
+/* output : pseudo primary comp., remaining comp., selectors */
+def pseudodec_main(F,P,PD,VL)
+{
+	ZERODIM = 1;
+	S = selects(P,PD,VL,SELECTFLAG);
+	R = localize(F,S,VL,PRIMAORD);
+	if ( R[0] == 1 || R[0] == -1 ) {
+		print("error, R = ",0); print(R);
+		debug;
+	}
+	R = idealnormal(R);
+	return [R,S];
+}
+
+/* Id(GF) is a pseudo primary ideal. (GF must be the G-base.) */
+def extraction(GF,Pr,VL)
+{
+	TMPORD1=TMPORD2=0;
+	V = minalgdep(Pr,VL,PRIMEORD);
+	U = listminus(VL,V);
+	V0 = append(V,U);
+#if 0
+	/* This may be a bug. GF is not a GB w.r.t the elimination order */
+	if ( V0 != VL ) {
+		ORD = [[TMPORD1,length(V)],[TMPORD2,length(U)]];
+		GR(G,GF,V0,ORD);
+	} else
+		G = GF;
+#else
+	ORD = [[TMPORD1,length(V)],[TMPORD2,length(U)]];
+	GR(G,GF,V0,ORD);
+#endif
+	dp_ord(TMPORD1);
+	for (LL = [],HC = 1,I = 0; I < length(G); I++)
+		LL = append(LL,cdr(fctr(dp_hc(dp_ptod(G[I],V)))));
+	for (L=[],I=0;I<length(LL);I++)
+		L = cons(LL[I][0],L);
+	L = setunion([L]);
+	for (S=1,SL=[],I=0;I<length(L);I++) {
+		S *= L[I];
+		if ( SELECTFLAG )
+			SL = cons(L[I],SL);
+	}
+	if ( !SELECTFLAG )
+		SL= [S];
+	if ( PRINTLOG > 1 ) {
+		print("extractor = ",0);
+		print(S);
+	}
+	T0 = time()[0];
+	Q = localize(GF,SL,VL,PRIMAORD);
+	Q = idealnormal(Q);
+	DEC = [Q,Pr];
+	if ( PRINTLOG ) {
+		print("find a primary component! time = ",0);
+		print(time()[0]-T0);
+		if (PRINTLOG >= 3){
+			print("  associated prime of primary component = ",0);
+			print(DEC[1]);
+		}
+		if (PRINTLOG >= 4){print(" primary component = ",0); print(Q);}
+	}
+	if ( !ISOLATED && !NOEMBEDDED && SL != [1] 
+			&& length(V) != length(VL) /* nonzerodim */
+			&& (REDUNDANT || !idealinc(Q,GF,VL,PRIMAORD)) ) {
+		REM = ["ext",[Q,Pr],GF,S];
+		if ( PRINTLOG ) {
+			print("find the remaining component of the extraction");
+		}
+	} else {
+		REM = [];
+		if ( PRINTLOG ) {
+			print("eliminate the remaining component of the extraction");
+		}
+	}
+	return [DEC,REM];
+}
+
+/* sep. cond. for pseudo-primary components */
+def sepcond_ps(P,SC,VL)
+{
+	for (J = 0; J < length(SC); J++) {
+		if ( idealinc([SC[J]],P,VL,PRIMEORD) )
+			break;  /* separating condition */
+	}
+	if ( J != length(SC) ) {
+		if ( PRINTLOG ) {
+			print("");
+			print("elim. the pseudo primary comp. by separating cond.");
+		}
+		return 0;
+	}
+	return 1;
+}
+
+/* sep. cond. for rem. components. */
+/* REM = ["ext",[Q,Pr],GF,S] or ["sep",PD,QD,GF,SEL], SC : sep.cond. */
+def sepcond_re(REM,SC,VL)
+{
+	for (S=1,I=0;I<length(SC);I++)
+		S *= SC[I];
+	if (REM[0] == "ext") {
+		F = cons(REM[3],REM[1][1]);
+		L = localize(F,[S],VL,PRIMAORD);
+		if ( L != [1] )
+			return 1;
+		else 
+			return 0;
+	} else if (REM[0] == "sep") {
+		PL = REM[1]; SEL = REM[4];
+		for (I=0;I<length(PL);I++) {
+			F = append(SEL[I],PL[I]);
+			L = localize(F,[S],VL,PRIMAORD);
+			if ( L != [1] )
+				return 1;
+		}
+		return 0;
+	}
+}
+
+def minalgdep(Pr,VL,ORD)
+{
+	T0=newvect(4,time());
+	if (MAXALGIND)
+		R = minalgdep1(Pr,VL,ORD); /* M.I.S. */
+	else
+		R = minalgdep0(Pr,VL,ORD); /* M.S.I.S. */
+	T1=newvect(4,time())-T0; MISTIME += T1;
+	if ( PRINTLOG >= 6 ) {
+		if (MAXALGIND) print("M.I.S. time = ",0);
+		else print("M.S.I.S. time = ",0);
+		print(T1[0]);
+	}
+	return R;
+}
+
+def minalgdep0(Pr,VL,ORD)
+{
+	dp_ord(ORD); N = length(Pr);
+	for (HD = [],I = N-1; I >= 0; I--)
+		HD = cons(vars(dp_dtop(dp_ht(dp_ptod(Pr[I],VL)),VL)),HD);
+	for (R = X = [], I = length(VL)-1; I >= 0; I--) {
+		V = VL[I];
+		TX = cons(V,X);
+		for (J = 0; J < N; J++) {
+			if ( varinc(HD[J],TX) )
+				break;
+		}
+		if ( J == N )
+			X = TX;
+		else
+			R = cons(V,R);
+	}
+	return R;
+}
+
+def minalgdep1(Pr,VL,ORD)
+{
+	R = all_msis(Pr,VL,ORD);
+	for (E=I=0,D=length(R[0]);I<length(R);I++) {
+		if ( length(R[I])>=D ) {
+			D=length(R[I]); E=I;
+		}
+	}
+	S = listminus(VL,R[E]);
+	return S;
+}
+
+def all_msis(Pr,VL,ORD)
+{
+	dp_ord(ORD); N = length(Pr);
+	for (HD = [],I = N-1; I >= 0; I--)
+		HD = cons(vars(dp_dtop(dp_ht(dp_ptod(Pr[I],VL)),VL)),HD);
+	R = dimrec(HD,0,[],[],VL);
+	return R;
+}
+
+def dimrec(S,K,U,M,X)
+{
+	MM = M;
+	for (I=K;I<length(X);I++) {
+		TX = append(U,[X[I]]);
+		for (J = 0; J < length(S); J++) {
+			if ( varinc(S[J],TX) )
+				break;
+		}
+		if ( J == length(S) )
+			MM = dimrec(S,I+1,TX,MM,X);
+	}
+	for (J = 0; J < length(MM); J++) {
+		if ( varinc(U,MM[J]) )
+			break;
+	}
+	if ( J == length(MM) )
+		MM = append(MM,[U]);
+	return MM;
+}
+
+/* if V is min.alg.dep. return 1 */
+def ismad(Pr,V,VL,ORD)
+{
+	dp_ord(ORD); N = length(Pr);
+	for (HD = [],I = N-1; I >= 0; I--)
+		HD = cons(vars(dp_dtop(dp_ht(dp_ptod(Pr[I],VL)),VL)),HD);
+	W = listminus(VL,V); L = append(W,V);
+	for (R = TX = [],I = 0; I < length(L); I++) {
+		TX = cons(L[I],TX);
+		for (J = 0; J < N; J++) {
+			if ( varinc(HD[J],TX) )
+				break;
+		}
+		if ((I<length(W)&&J!=N) || (I>=length(W)&&J==N))
+			return 0;
+			
+	}
+	return 1;
+}
+
+/* output:list of [flag, generator, primes, sep.cond., intersection] */
+def mksepext(RES,H,VL)
+{
+	for (R = [],I=length(RES)-1;I>=0;I--) {
+		W = RES[I];
+		if ( COMPLETE || EXTENDED )
+			HI = idealcap(H,W[6],VL,PRIMAORD);
+		else
+			HI = H;
+		if (W[1] == "sep") {
+			E = mksep(W[2],W[3],W[4],VL);
+			F = append(E[0],W[0]);
+			if ( ( COMPLETE || EXTENDED ) && !REDUNDANT )
+				HI = idealsetcap(cons(HI,W[3]),VL,PRIMAORD);
+			R = cons(["sep",F,E[1],W[5],HI],R);
+		} else if (W[1] == "ext") {
+			E = mkext(W[2][0],W[3],W[4],VL);
+			F = cons(E[0],W[0]);
+			P = cons(E[1],W[2][1]); /* prime component of rem. comp. */
+			R = cons(["ext",F,P,W[5],HI],R);
+		} else debug;
+	}
+	return R;
+}
+
+/* make extractor with exponents ; F must be G-Base */
+/* output : extractor, max.sqfr.of extractor */
+def mkext(Q,F,S,VL)
+{
+	if ( PRINTLOG > 1 ) {
+		print("make extractor = ",0);
+	}
+	if ( S == 1 || S == -1 ) {
+		print(1); return [1,1];
+	}
+	DD=dp_mkdist([Q],F,VL,PRIMAORD);
+	DQ=DD[0][0]; DF=DD[1];
+	for (L=fctr(S),SL=[],J=length(L)-1;J>0;J--)
+		SL=cons(dp_ptod(L[J][0],VL),SL);
+	K = dp_fexponent(dp_ptod(S,VL),DF,DQ);
+	E = dp_vectexp(SL,EX=dp_minexp(K,SL,DF,DQ));
+	if ( E != 1 ) E = dp_dtop(E,VL);
+	for (U=1, I=0;I<size(EX)[0];I++)
+		if ( EX[I] )
+			U *= L[I+1][0];
+	/* for (L=sqfr(E),U=1,J=length(L)-1;J>0;J--)
+		U *= L[J][0]; */
+	if ( PRINTLOG > 1 ) {
+		print(E);
+	}
+	return [E,U];
+}
+
+/* make separators with exponents ; F must be G-Base */
+/* output [separator, list of components of radical] */
+def mksep(PP,QQ,F,VL)
+{
+	if ( PRINTLOG > 1 ) {
+		print("make separators, ",0); print(length(PP));
+	}
+	DD=dp_mkdist(QQ,F,VL,PRIMAORD);
+	DQ=DD[0]; DF=DD[1];
+	E = dp_mksep(PP,DQ,DF,VL,PRIMAORD);
+	for (RA=[],I=length(E)-1;I>=0;I--) {
+		for (L=fctr(E[I]),J=length(L)-1;J>0;J--) {
+			ES=cons(L[J][0],PP[I]);
+			RA = cons(ES,RA); /* radical of remaining comp. */
+		}
+	}
+	return [E,RA];
+}
+
+def dp_mksep(PP,DQ,DF,VL,ORD)
+{
+	dp_ord(ORD);
+	for (E=[],I=0;I<length(PP);I++) {
+		T0=time()[0];
+		if ( CONTINUE ) {
+			E = bload("sepa");
+			I = length(E);
+			CONTINUE = 0;
+		}
+		S = selects(PP[I],PP,VL,0)[0];
+		for (L=fctr(S),SL=[],J=length(L)-1;J>0;J--)
+			SL=cons(dp_ptod(L[J][0],VL),SL);
+		K = dp_fexponent(dp_ptod(S,VL),DF,DQ[I]);
+		M = dp_vectexp(SL,dp_minexp(K,SL,DF,DQ[I]));
+		if (M != 1) M = dp_dtop(M,VL);
+		E = append(E,[M]);
+		if ( PRINTLOG > 1 ) {
+			print("separator of ",0); print(I,0);
+			print(" in ",0); print(length(PP),0);
+			print(", time = ",0); print(time()[0]-T0,0); print(", ",0);
+			printsep(cdr(fctr(M))); print("");
+		}
+		if (BSAVE) {
+			bsave(E,"sepa");
+			print("bsave to sepa");
+		}
+	}
+	return E;
+}
+
+extern AFO$
+
+/* F,Id,Q is given by distributed polynomials. Id is a G-Base.*/
+/* get the exponent K s.t. (Id : F^K) = Q, Id is a G-Basis */
+def dp_fexponent(F,Id,Q)
+{
+	if (!AFO)
+	for (IN=[],I=size(Id)[0]-1;I>=0;I--) IN = cons(I,IN);
+	else
+	for (IN=[],I=0;I<size(Id)[0];I++) IN = cons(I,IN);
+	NF(G,IN,F,Id,0); 
+	if ( F != G ) { F = G; }
+	N=size(Q)[0]; U = newvect(N);
+	for (I=0;I<N;I++)
+		U[I]=Q[I];
+	for (K = 1;; K++) { /* U[I] = Q[I]*F^K mod Id */
+		for (FLAG = I = 0; I < N; I++) {
+			NF(U[I],IN,U[I]*F,Id,1); 
+			if ( U[I] ) FLAG = 1;
+		}
+		if ( !FLAG )
+			return K;
+	}
+}
+
+/* F must be a G-Base. SL is a set of factors of S.*/
+def dp_minexp(K,SL,F,Q)
+{
+	if (!AFO)
+	for (IN=[],I=size(F)[0]-1;I>=0;I--) IN = cons(I,IN); 
+	else
+	for (IN=[],I=0;I<size(F)[0];I++) IN = cons(I,IN); 
+	N = length(SL); M = size(Q)[0];
+	EX = newvect(N); U = newvect(M); T = newvect(M);
+	for (I=0;I<N;I++)
+		EX[I]=K;
+	for (I=0;I<M;I++) {
+		NF(Q[I],IN,Q[I],F,1);
+	}
+	for (I=0;I<N;I++) {
+		EX[I] = 0; 
+		for (FF=1,II=0;II<N;II++)
+			for (J = 0; J < EX[II]; J++) {
+				NF(FF,IN,FF*SL[II],F,1);
+			}
+		for (J = 0; J < M; J++)
+			U[J] = Q[J]*FF;
+		for (; EX[I] < K; EX[I]++) {
+			FLAG = 0;
+			for (J = 0; J < M; J++) {
+				NF(U[J],IN,U[J],F,1); 
+				if ( U[J] ) FLAG = 1;
+			}
+			if ( !FLAG )
+				break;
+			if ( EX[I] < K-1 )
+				for (J = 0; J < M; J++) U[J] = U[J]*SL[I];
+		}
+	}
+	return EX;
+}
+
+def  dp_vectexp(SS,EE)
+{
+	N = length(SS);
+	for (A=1,I=0;I<N;I++)
+		for (J = 0; J < EE[I]; J++)
+			A *= SS[I];
+	return A;
+}
+
+def dp_mkdist(QQ,F,VL,ORD)
+{
+	dp_ord(ORD);
+	for (DQ=[],I=length(QQ)-1;I>=0;I--) {
+		for (T=[],J=length(QQ[I])-1;J>=0;J--)
+			T = cons(dp_ptod(QQ[I][J],VL),T);
+		DQ=cons(newvect(length(T),T),DQ);
+	}
+	for (T=[],J=length(F)-1;J>=0;J--)
+		T = cons(dp_ptod(F[J],VL),T);
+	DF = newvect(length(T),T);
+	return [DQ,DF]$
+}
+
+/* if FLAG == 0 return singltonset */
+def selects(P,PD,VL,FLAG)
+{
+	PP=dp_mkdist([],P,VL,PRIMEORD)[1];
+	for (M=[],I=length(P)-1;I>=0;I--)
+		M = cons(I,M);
+	for (SL = [],I = length(PD)-1; I >= 0; I--) { 
+		B = PD[I];
+		if (B == P) continue;
+		for (L = [],J = 0; J < length(B); J++) {
+			A = B[J];
+			NF(E,M,dp_ptod(A,VL),PP,0); 
+			if ( E ) {
+				L = append(L,[A]); /* A \notin Id(P) */
+			}
+		}
+		SL = cons(L,SL); /* candidate of separators */
+	}
+	for (S=[],I=length(SL)-1;I>=0;I--) {/* choose an element from L */
+		if ( FLAG >= 2 ) {
+			S = append(SL[I],S);
+			continue;
+		}
+		C = minselect(SL[I],VL,PRIMAORD);
+		S = cons(C,S);
+	}
+	S = setunion([S]);
+	if ( FLAG == 3 || length(S) == 1 )
+		return S;
+	if ( FLAG == 2 ) {
+		for (R=1,I=0;I<length(S);I++)
+			R *= S[I];
+		return [R];
+	}
+	/* FLAG == 0 || FLAG == 1 */
+	for (T=[]; S!=[];S = cdr(S)) { /* FLAG <= 1 and length(S) != 1 */
+		A = car(S);
+		U = append(T,cdr(S));
+		for (R=1,I=0;I<length(U);I++)
+			R *= U[I];
+		for (I=0;I<length(PD);I++) {
+			if ( PD[I] != P && !idealinc([R],PD[I],VL,PRIMAORD) )
+				break;
+		}
+		if ( I != length(PD) )
+			T = append(T,[A]);
+	}
+	if ( FLAG )
+		return T;
+	for (R=1,I=0;I<length(T);I++)
+		R *= T[I];
+	return [R]; /* if FLAG == 0 */
+}
+
+def minselect(L,VL,ORD)
+{
+	dp_ord(ORD);
+	F = dp_ptod(L[0],VL); MAG=dp_mag(F); DEG=dp_td(F);
+	for (J = 0, I = 1; I < length(L); I++) {
+		A = dp_ptod(L[I],VL); M=dp_mag(A); D=dp_td(A);
+		if ( dp_ht(A) > dp_ht(F) )
+			continue;
+		else if ( dp_ht(A) == dp_ht(F) && (D > DEG || (D == DEG && M > MAG)))
+			continue;
+		F = A; J = I; MAG = M; DEG=D;
+	}
+	return L[J];
+}
+
+/* localization Id(F)_MI \cap Q[VL]	  */
+/* output is the G-base w.r.t ordering O */
+def localize(F,MI,VL,O)
+{
+	if ( MI == [1] || MI == [-1] )
+		return F;
+	for (SVL = [],R = [],I = 0; I < length(MI); I++) {
+		V = strtov("zz"+rtostr(I));
+		R = append(R,[V*MI[I]-1]);
+		SVL = append(SVL,[V]);
+	}
+	if ( O == 0 ) {
+		dp_nelim(length(SVL)); ORD = 6;
+	} else if ( O == 1 || O == 2 ) {
+		ORD = [[0,length(SVL)],[O,length(VL)]];
+	} else if ( O == 3 || O == 4 || O == 5 )
+		ORD = [[0,length(SVL)],[O-3,length(VL)-1],[2,1]];
+	else
+		error("invarid ordering");
+	GR(G,append(F,R),append(SVL,VL),ORD);
+	S = varminus(G,SVL);
+	return S;
+}
+
+def varminus(G,VL)
+{
+	for (S = [],I = 0; I < length(G); I++) {
+		V = vars(G[I]);
+		if (listminus(V,VL) == V)
+			S = append(S,[G[I]]);
+	}
+	return S;
+}
+
+def idealnormal(L)
+{
+	R=[];
+	for (I=length(L)-1;I>=0;I--) {
+		A = ptozp(L[I]);
+		V = vars(A);
+		for (B = A,J = 0;J < length(V);J++)
+			B = coef(B,deg(B,V[J]),V[J]);
+		R = cons((B>0?A:-A),R);
+	}
+	return R;
+}
+
+def idealsav(L) /* sub procedure of welldec and normposdec */
+{
+	if ( PRINTLOG >= 4 )
+		print("multiple check ",2);
+	for (R = [],I = 0,N=length(L); I < N; I++) {
+		if ( PRINTLOG >= 4 && !irem(I,10) )
+			print(".",2);
+		if ( R == [] )
+			R = append(R,[L[I]]);
+		else {
+			for (J = 0; J < length(R); J++)
+				if ( idealeq(L[I],R[J]) )
+					break;
+			if ( J == length(R) )
+				R = append(R,[L[I]]);
+		}
+	}
+	if ( PRINTLOG >= 4 )
+		print("done.");
+	return R;
+}
+
+/* intersection of ideals in PL, PL : list of ideals */
+/* VL : variable list, O : output the G-base w.r.t order O */
+def idealsetcap(PL,VL,O)
+{
+	for (U = [], I = 0; I < length(PL); I++)
+		if ( PL[I] != [] )
+			U = append(U,[PL[I]]);
+	if ( U == [] )
+		return [];
+	if ( PRINTLOG >= 4 ) {print("intersection of ideal ",0); print(length(U),0);}
+	for (L = U[0],I=1;I<length(U);I++) {
+		if ( PRINTLOG >=4 ) print(".",2);
+		L = idealcap(L,U[I],VL,O);
+	}
+	if ( PRINTLOG >=4 ) print("");
+	return L;
+}
+
+/* return intersection set of ideals P and Q */
+def idealcap(P,Q,VL,O)
+{
+	if ( P == [] )
+		if ( VL )
+			return Q;
+		else
+			return [];
+	if ( Q == [] )
+		return P;
+	T = tmp;
+	for (PP = [],I = 0; I < length(P); I++)
+		PP = append(PP,[P[I]*T]);
+	for (QQ = [],I = 0; I < length(Q); I++)
+		QQ = append(QQ,[Q[I]*(T-1)]);
+	if ( O == 0 ) {
+		dp_nelim(1); ORD = 6; 
+	} else if ( O == 1 || O == 2 )
+		ORD = [[2,1],[O,length(VL)]];
+	else if ( O == 3 || O == 4 || O == 5 )
+		ORD = [[2,1],[O-3,length(VL)-1],[2,1]];
+	else
+		error("invarid ordering");
+	GR(G,append(PP,QQ),append([T],VL),ORD);
+	S = varminus(G,[T]);
+	return S;
+}
+
+/* return ideal P : Q */
+def idealquo(P,Q,VL,O)
+{
+	for (R = [], I = 0; I < length(Q); I++) {
+		F = car(Q);
+		G = idealcap(P,[F],VL,O);
+		for (H = [],J = 0; J < length(G); J++) {
+			H = append(H,[sdiv(G[J],F)]);
+		}
+		R = idealcap(R,H,VL,O);
+	}
+}
+
+/* if ideal Q includes P then return 1 else return 0 */
+/* Q must be a Groebner Basis w.r.t ordering ORD */
+def idealinc(P,Q,VL,ORD)
+{
+	dp_ord(ORD);
+	for (T=IN=[],I=length(Q)-1;I>=0;I--) {
+		T=cons(dp_ptod(Q[I],VL),T);
+		IN=cons(I,IN);
+	}
+	DQ = newvect(length(Q),T);
+	for (I = 0; I < length(P); I++) {
+		NF(E,IN,dp_ptod(P[I],VL),DQ,0); 
+		if ( E )
+			return 0;
+	}
+	return 1;
+}
+
+/* FL : list of polynomial set */
+def primedec_main(FL,VL)
+{
+	if ( PRINTLOG ) {
+		print("prime decomposition of the radical");
+	}
+	if ( PRINTLOG >= 2 )
+		print("G-base factorization");
+	PP = gr_fctr(FL,VL);
+	if ( PRINTLOG >= 2 )
+		print("irreducible variety decomposition");
+	RP = welldec(PP,VL);
+	SP = normposdec(RP,VL);
+	for (L=[],I=length(SP)-1;I>=0;I--) {
+		L=cons(idealnormal(SP[I]),L); /* head coef. > 0 */
+	}
+	SP = L;
+	return SP;
+}
+
+def gr_fctr(FL,VL)
+{
+	for (TP = [],I = 0; I<length(FL); I++ ) {
+		F = FL[I];
+		SF = idealsqfr(F);
+		if ( !idealeq(F,SF) ) { GR(F,SF,VL,PRIMEORD); }
+		DIRECTRY = []; COMMONIDEAL=[1];
+		SP = gr_fctr_sub(F,VL);
+		TP = append(TP,SP);
+	}
+	TP = idealsav(TP);
+	TP = prime_irred(TP,VL);
+	return TP;
+}
+
+def gr_fctr_sub(G,VL)
+{
+	CONTINUE;
+	if ( length(G) == 1 && type(G[0]) == 1 )
+		return [G];
+	RL = [];
+	for (I = 0; I < length(G); I++) {
+		FL = fctr(G[I]); L = length(FL); N = FL[1][1];
+		if (L > 2 || N > 1) {
+			TLL = [];
+			for (J = 1; J < L; J++) {
+				if ( CONTINUE ) {
+					JCOPP=bload("jcopp");
+					J = JCOPP[0]+1;
+					COMMONIDEAL = JCOPP[1];
+					RL = JCOPP[2];
+					CONTINUE = 0;
+				}
+				if ( PRINTLOG >= 5  ) {
+					for (D = length(DIRECTRY)-1; D >= 0; D--)
+						print(DIRECTRY[D],0);
+					print([L-1,J,length(RL)]);
+					/*
+					L-1:a number of factors of polynomial
+					J:a factor executed now [0,...L-1]
+					length(RL):a number of prime components
+					*/
+				}
+				W = cons(FL[J][0],G);
+				GR(NG,W,VL,PRIMEORD);
+				TNG = idealsqfr(NG);
+				if ( NG != TNG ) { GR(NG,TNG,VL,PRIMEORD); }
+				if ( idealinc(COMMONIDEAL,NG,VL,PRIMEORD) )
+					continue;
+				else {
+					DIRECTRY=cons(L-J-1,DIRECTRY);
+					DG = gr_fctr_sub(NG,VL);
+					DIRECTRY=cdr(DIRECTRY);
+					RL = append(RL,DG);
+					if ( J <= L-2 && !idealinc(COMMONIDEAL,NG,VL,PRIMEORD)
+							&& COMMONCHECK ) {
+						if ( PRINTLOG >= 5  ) {
+							for (D = 0; D < length(DIRECTRY); D++) print(" ",2);
+							print("intersection ideal");
+						}
+						COMMONIDEAL=idealcap(COMMONIDEAL,NG,VL,PRIMEORD);
+					}
+				}
+				if ( BSAVE && !length(DIRECTRY) ) {
+					bsave([J,COMMONIDEAL,RL],"jcopp");
+					if ( PRINTLOG >= 2 )
+						print("bsave j, intersection ideal and primes to icopp ");
+				}
+			}
+			break;
+		}
+	}
+	if (I == length(G)) {
+		RL = append([G],RL);
+		if ( PRINTLOG >= 5  ) {
+			for (D = 0; D < length(DIRECTRY)-1; D++) print(" ",0);
+			print("prime G-base ",0);
+			if ( PRINTLOG >= 6 )
+				print(G);
+			else
+				print("");
+		}
+	}
+	return RL;
+}
+
+def prime_irred(TP,VL)
+{
+	if ( PRINTLOG >= 4  )
+		print("irredundancy check for prime ideal");
+	N = length(TP);
+	for (P = [], I = 0; I < N; I++) {
+		if ( PRINTLOG >= 4 )
+			print(".",2);
+		for (J = 0; J < N; J++)
+			if ( I != J && idealinc(TP[J],TP[I],VL,PRIMEORD) )
+				break;
+		if (J == N)
+			P = append(P,[TP[I]]);
+	}
+	if ( PRINTLOG >= 4 )
+		print("done.");
+	return P;
+}
+
+/* if V1 \subset V2 then return 1 else return 0 */
+def varinc(V1,V2)
+{
+	N1=length(V1); N2=length(V2);
+	for (I=N1-1;I>=0;I--) {
+		for (J=N2-1;J>=0;J--)
+			if (V1[I]==V2[J])
+				break;
+		if (J==-1)
+			return 0;
+	}
+	return 1;
+}
+
+def setunion(PS)
+{
+	for (R=C=[]; PS != [] && car(PS); PS=cdr(PS)) {
+		for (L = car(PS); L != []; L = cdr(L)) {
+			A = car(L);
+			for (G = C; G != []; G = cdr(G)) {
+				if ( A == car(G) || -A == car(G) )
+					break;
+			}
+			if ( G == [] ) {
+				R = append(R,[A]);
+				C = cons(A,C);
+			}
+		}
+	}
+	return R;
+}
+
+def idealeq(L,M)
+{
+	if ((N1=length(L)) != (N2=length(M)))
+		return 0;
+	for (I = 0; I < length(L); I++) {
+		for (J = 0; J < length(M); J++)
+			if (L[I] == M[J] || L[I] == - M[J])
+				break;
+		if (J == length(M))
+			return 0;
+	}
+	return 1;
+}
+
+def listminus(L,M)
+{
+	for (R = []; L != []; L = cdr(L) ) {
+		A = car(L);
+		for (G = M; G != []; G = cdr(G)) {
+			if ( A == car(G) )
+				break;
+		}
+		if ( G == [] ) {
+			R = append(R,[A]);
+			M = cons(A,M);
+		}
+	}
+	return R;
+}
+
+def idealsqfr(G)
+{
+	for(Flag=0,LL=[],I=length(G)-1;I>=0;I--) {
+		for(A=1,L=sqfr(G[I]),J=1;J<length(L);J++)
+			A*=L[J][0];
+		LL=cons(A,LL);
+	}
+	return LL;
+}
+
+def welldec(PRIME,VL)
+{
+	PP = PRIME; NP = [];
+	while ( !Flag ) {
+		LP = [];
+		Flag = 1;
+		for (I=0;I<length(PP);I++) {
+			U = welldec_sub(PP[I],VL);
+			if (length(U) >= 2) {
+				Flag = 0;
+				if ( PRINTLOG >= 3 ) {
+					print("now decomposing to irreducible varieties ",0);
+					print(I,0); print(" ",0); print(length(PP));
+				}
+				DIRECTRY = []; COMMONIDEAL=[1];
+				PL1 = gr_fctr([U[0]],VL);
+				DIRECTRY = []; COMMONIDEAL=[1];
+				PL2 = gr_fctr([U[1]],VL);
+				LP = append(LP,append(PL1,PL2));
+			}
+			else 
+				NP = append(NP,U); 
+		}
+		PP = LP;
+		if ( PRINTLOG > 3 ) {
+			print("prime length and non-prime length = ",0);
+			print(length(NP),0); print(" ",0); print(length(PP));
+		}
+	}
+	if ( length(PRIME) != length(NP) ) {
+		NP = idealsav(NP);
+		NP = prime_irred(NP,VL);
+	}
+	return NP;
+		for (I = 0; I<length(PP);I++) {
+		}
+}
+
+def welldec_sub(PP,VL)
+{
+	VV = minalgdep(PP,VL,PRIMEORD); 
+	S = wellsep(PP,VV,VL);
+	if ( S == 1 )
+		return [PP];
+	P1 = localize(PP,[S],VL,PRIMEORD);
+	if ( idealeq(P1,PP) )
+		return([PP]);
+	GR(P2,cons(S,PP),VL,PRIMEORD);
+	return [P1,P2];
+}
+
+def wellsep(PP,VV,VL)
+{
+	TMPORD = 0;
+	V0 = listminus(VL,VV);
+	V1 = append(VV,V0);
+	/* ORD = [[TMPORD,length(VV)],[0,length(V0)]]; */
+	dp_nelim(length(VV)); ORD = 6; 
+	GR(PP,PP,V1,ORD);
+	dp_ord(TMPORD);
+	for (E=1,I=0;I<length(PP);I++)
+		E = lcm(E,dp_hc(dp_ptod(PP[I],VV)));
+	for (F=1,L=sqfr(E),K=1;K<length(L);K++)
+		F *= L[K][0];
+	return F;
+}
+
+/* prime decomposition by using primitive element method */
+def normposdec(NP,VL)
+{
+	if ( PRINTLOG >= 3 )
+		print("radical decomposition by using normal position.");
+	for (R=MP=[],I=0;I<length(NP);I++) {
+		V=minalgdep(NP[I],VL,PRIMEORD);
+		L=raddec(NP[I],V,VL,1);
+		if ( PRINTLOG >= 3  )
+			if ( length(L) == 1 ) {
+				print(".",2);
+			} else {
+				print(" ",2); print(length(L),2); print(" ",2);
+			}
+		/* if (length(L)==1) {
+			MP=append(MP,[NP[I]]);
+			continue;
+		} */
+		R=append(R,L);
+	}
+	if ( PRINTLOG >= 3  )
+		print("done");
+	if ( length(R) )
+		MP = idealsav(append(R,MP));
+	LP = prime_irred(MP,VL);
+	return LP;
+}
+
+/* radical decomposition program using by Zianni, Trager, Zacharias */
+/* R : factorized G-base in K[X], if FLAG then A is well comp.  */
+def raddec(R,V,X,FLAG)
+{
+	GR(A,R,V,irem(PRIMEORD,3)); 
+	ZQ=zraddec(A,V); /* zero dimensional */
+	/* if ( FLAG && length(ZQ) == 1 )
+		return [R]; */
+	if ( length(V) != length(X) )
+		CQ=radcont(ZQ,V,X); /* contraction */
+	else {
+		for (CQ=[],I=length(ZQ)-1;I>=0;I--) {
+			GR(R,ZQ[I],X,PRIMEORD);
+			CQ=cons(R,CQ);
+		}
+	}
+	return CQ;
+}
+
+/* radical decomposition for zero dimensional ideal */
+/* F is G-base w.r.t irem(PRIMEORD,3) */
+def zraddec(F,X)
+{
+	if (length(F) == 1)
+		return [F];
+	Z=vvv;
+	C=normposit(F,X,Z);
+	/* C=[minimal polynomial, adding polynomial] */
+	T=cdr(fctr(C[0]));
+	if ( length(T) == 1 && T[0][1] == 1 )
+		return [F];
+	for (Q=[],I=0;I<length(T);I++) {
+		if ( !C[1] ) {
+			GR(P,cons(T[I][0],F),X,irem(PRIMEORD,3));
+		} else {
+			P=idealgrsub(append([T[I][0],C[1]],F),X,Z);
+		}
+		Q=cons(P,Q);
+	}
+	return Q;
+}
+
+/* contraction from V to X */
+def radcont(Q,V,X)
+{
+	for (R=[],I=length(Q)-1;I>=0;I--) {
+		dp_ord(irem(PRIMEORD,3)); 
+		G=Q[I];
+		for (E=1,J=0;J<length(G);J++)
+			E = lcm(E,dp_hc(dp_ptod(G[J],V)));
+		for (F=1,L=sqfr(E),K=1;K<length(L);K++)
+			F *= L[K][0];
+		H=localize(G,[F],X,PRIMEORD);
+		R=cons(H,R);
+	}
+	return R;
+}
+
+/* A : polynomials (G-Base) */
+/* return [T,Y], T : minimal polynomial of Z, Y : append polynomial */
+def normposit(A,X,Z)
+{
+	D = idim(A,X,irem(PRIMEORD,3)); /* dimension of the ideal Id(A) */
+	for (I = length(A)-1;I>=0;I--) {
+		for (J = length(X)-1; J>= 0; J--) {
+			T=deg(A[I],X[J]);
+			if ( T == D ) /* A[I] is a primitive polynomial of A */
+				return [A[I],0];
+		}
+	}
+	N=length(X);
+	for (C = [],I = 0; I < N-1; I++) 
+	C=newvect(N-1);
+	V=append(X,[Z]);
+	ZD = (vars(A)==vars(X)); /* A is zero dim. over Q[X] or not */
+	while( 1 ) {
+		C = nextweight(C,cdr(X));
+		for (Y=Z-X[0],I=0;I<N-1;I++) {
+			Y-=C[I]*X[I+1]; /* new polynomial */
+		}
+		if ( !ZD ) {
+			if ( version() == 940420 ) NOREDUCE = 1;
+			else dp_gr_flags(["NoRA",1]);
+			GR(G,cons(Y,A),V,3);
+			if ( version() == 940420 ) NOREDUCE = 0;
+			else dp_gr_flags(["NoRA",0]);
+			for (T=G[length(G)-1],I = length(G)-2;I >= 0; I--)
+				if ( deg(G[I],Z) > deg(T,Z) )
+					T = G[I]; /* minimal polynomial */
+		} else {  
+			T = minipoly(A,X,irem(PRIMEORD,3),Z-Y,Z);
+		}
+		if (deg(T,Z)==D)
+			return [T,Y];
+	}
+}
+
+def nextweight(C,V) /* degrevlex */
+{
+	dp_ord(2);
+	N = length(V);
+	for (D=I=0;I<size(C)[0];I++)
+		D += C[I];
+	if ( C[N-1] == D ) {
+		for (L=[],I=0;I<N-1;I++)
+			L=cons(0,L);
+		L = cons(D+1,L);
+		return newvect(N,L);
+	}
+	CD=dp_vtoe(C);
+	for (F=I=0;I<N;I++)
+		F+=V[I];
+	for (DF=dp_ptod(F^D,V);dp_ht(DF)!=CD;DF=dp_rest(DF));
+	MD = dp_ht(dp_rest(DF));
+	CC = dp_etov(MD);
+	return CC;
+}
+
+def printsep(L)
+{
+	for (I=0;I<length(L);I++) {
+		if ( nmono(L[I][0]) == 1 )
+			print(L[I][0],0);
+		else {
+			print("(",0); print(L[I][0],0); print(")",0);
+		}
+		if (L[I][1] > 1) {
+			print("^",0); print(L[I][1],0);
+		}
+		if (I<length(L)-1)
+			print("*",0);
+	}
+}
+
+def idealgrsub(A,X,Z)
+{
+	if ( PRIMEORD == 0 ) {
+		dp_nelim(1); ORD = 8; 
+	} else 
+		ORD = [[2,1],[PRIMERORD,length(X)]];
+	GR(G,A,cons(Z,X),ORD);
+	for (R=[],I=length(G)-1;I>=0;I--) {
+	V=vars(G[I]);
+	for (J=0;J<length(V);J++)
+		if (V[J]==Z)
+			break;
+	if (J==length(V))
+		R=cons(G[I],R);
+	}
+	return R;
+}
+
+/* dimension of ideal */
+def idim(F,V,ORD)
+{
+	return length(modbase(F,V,ORD));
+}
+
+def modbase(F,V,ORD)
+{
+	dp_ord(ORD);
+	for(G=[],I=length(F)-1;I>=0;I--)
+		G = cons(dp_ptod(F[I],V),G);
+	R = dp_modbase(G,length(V));
+	for(S=[],I=length(R)-1;I>=0;I--)
+		S = cons(dp_dtop(R[I],V),S);
+	return S;
+}
+
+def dp_modbase(G,N)
+{
+	E = newvect(N);
+	R = []; I = 1;
+	for (L = [];G != []; G = cdr(G))
+		L = cons(dp_ht(car(G)),L);
+	while ( I <= N ) {
+		R = cons(dp_vtoe(E),R);
+		E[0]++; I = 1;
+		while( s_redble(dp_vtoe(E),L) ) {
+			E[I-1] = 0;
+			if (I < N)
+				E[I]++;
+			I++;
+		}
+	}
+	return R;
+}
+
+def s_redble(M,L)
+{
+	for (; L != []; L = cdr(L))
+	if ( dp_redble(M,car(L)) )
+		return 1;
+	return 0;
+}
+
+/* FL : list of ideal Id(P,s) */
+def primedec_special(FL,VL)
+{
+	if ( PRINTLOG ) {
+		print("prime decomposition of the radical");
+	}
+	if ( PRINTLOG >= 2 )
+		print("G-base factorization");
+	PP = gr_fctr(FL,VL);
+	if ( PRINTLOG >= 2 )
+		print("special decomposition");
+	SP = yokodec(PP,VL);
+	for (L=[],I=length(SP)-1;I>=0;I--) {
+		L=cons(idealnormal(SP[I]),L); /* head coef. > 0 */
+	}
+	SP = L;
+	return SP;
+}
+
+/* PL : list of ideal Id(P,s) */
+def yokodec(PL,VL)
+{
+	MSISTIME = 0; T = time()[0];
+	for (R = [],I = 0; I<length(PL);I++) {
+		PP = PL[I];
+		if ( PRINTLOG >= 3 ) print(".",2);
+		V = minalgdep(PP,VL,PRIMEORD);
+		E = raddec(PP,V,VL,0);
+		if ( length(E) >= 2 || !idealeq(E[0],PP) ) { /* prime check */
+			T0 = time()[0];
+			L=all_msis(PP,VL,PRIMEORD);
+			MSISTIME += time()[0]-T0;
+			E = yokodec_main(PP,L,VL);
+		}
+		R = append(R,E);
+	} 
+	R = idealsav(R);
+	R = prime_irred(R,VL);
+	if ( PRINTLOG >= 3 ) {
+		print("special dec time = ",0); print(time()[0]-T0);
+		/* print(", ",0); print(MSISTIME); */
+	}
+	return R;
+}
+
+def yokodec_main(PP,L,VL)
+{
+	AL = misset(L,VL); H = [1]; R = []; 
+	for (P=PP,I=0; I<length(AL); I++) {
+		V = AL[I];
+		if ( I && !ismad(P,AL[I],VL,PRIMEORD) )
+			continue;
+		U = raddec(PP,V,VL,0);
+		R = append(R,U);
+		for (I=0;I<length(U);I++)
+			H = idealcap(H,U[I],VL,PRIMEORD);
+		if ( idealeq(H,P) ) 
+			break;
+		F = wellsep(P,V,VL);
+		GR(P,cons(F,P),VL,PRIMEORD);
+	}
+	return R;
+}
+
+/* output M.A.D. sets. AL : M.S.I.S sets */
+def misset(AL,VL)
+{
+	for (L=[],D=0,I=length(AL)-1;I>=0;I--) {
+		E = length(AL[I]);
+		C = listminus(VL,AL[I]);
+		if ( E == D ) 
+			L = cons(C,L);
+		else if ( E > D ) {
+			L = [C]; D = E;
+		}
+	}
+	return L;
+}
+
+end$
+

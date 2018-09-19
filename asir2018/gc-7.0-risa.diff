@@ -1,0 +1,251 @@
+diff -urN gc-7.4.2.orig/alloc.c gc-7.4.2/alloc.c
+--- gc-7.4.2.orig/alloc.c	2014-06-03 15:08:01.000000000 +0900
++++ gc-7.4.2/alloc.c	2015-08-25 16:00:00.000000000 +0900
+@@ -121,6 +121,7 @@
+ #endif
+ 
+ word GC_free_space_divisor = GC_FREE_SPACE_DIVISOR;
++word GC_free_space_numerator = 1;
+ 
+ GC_INNER int GC_CALLBACK GC_never_stop_func(void)
+ {
+@@ -227,8 +228,8 @@
+     total_root_size = 2 * stack_size + GC_root_size;
+     scan_size = 2 * GC_composite_in_use + GC_atomic_in_use / 4
+                 + total_root_size;
+-    result = scan_size / GC_free_space_divisor;
+-    if (GC_incremental) {
++    result = scan_size * GC_free_space_numerator / GC_free_space_divisor;
++    if (1 || GC_incremental) {
+       result /= 2;
+     }
+     return result > 0 ? result : 1;
+@@ -603,6 +604,7 @@
+         GET_TIME(start_time);
+ #   endif
+ 
++	GC_timerstart();
+     STOP_WORLD();
+ #   ifdef THREAD_LOCAL_ALLOC
+       GC_world_stopped = TRUE;
+@@ -632,6 +634,7 @@
+               GC_world_stopped = FALSE;
+ #           endif
+             START_WORLD();
++            GC_timerstop();
+             return(FALSE);
+           }
+           if (GC_mark_some(GC_approx_sp())) break;
+@@ -653,6 +656,7 @@
+       GC_world_stopped = FALSE;
+ #   endif
+     START_WORLD();
++    GC_timerstop();
+ #   ifndef SMALL_CONFIG
+       if (GC_PRINT_STATS_FLAG) {
+         unsigned long time_diff;
+@@ -836,6 +840,7 @@
+         /* FIXME: Add more checks.                              */
+         GC_check_tls();
+ #   endif
++	GC_timerstart();
+ 
+ #   ifndef SMALL_CONFIG
+       if (GC_print_stats)
+@@ -958,6 +963,7 @@
+                       MS_TIME_DIFF(done_time,finalize_time));
+       }
+ #   endif
++    GC_timerstop();
+ }
+ 
+ /* If stop_func == 0 then GC_default_stop_func is used instead.         */
+@@ -1215,6 +1221,9 @@
+     if (GC_on_heap_resize)
+       (*GC_on_heap_resize)(GC_heapsize);
+ 
++#if defined(VISUAL)
++    SendHeapSize();
++#endif
+     return(TRUE);
+ }
+ 
+@@ -1276,7 +1285,7 @@
+       }
+     }
+ 
+-    blocks_to_get = GC_heapsize/(HBLKSIZE*GC_free_space_divisor)
++    blocks_to_get = GC_heapsize * GC_free_space_numerator /(HBLKSIZE*GC_free_space_divisor)
+                         + needed_blocks;
+     if (blocks_to_get > MAXHINCR) {
+       word slop;
+diff -urN gc-7.4.2.orig/misc.c gc-7.4.2/misc.c
+--- gc-7.4.2.orig/misc.c	2014-06-03 15:08:02.000000000 +0900
++++ gc-7.4.2/misc.c	2015-08-04 14:21:02.000000000 +0900
+@@ -161,6 +161,94 @@
+ GC_INNER long GC_large_alloc_warn_interval = GC_LARGE_ALLOC_WARN_INTERVAL;
+                         /* Interval between unsuppressed warnings.      */
+ 
++#include <time.h>
++
++#if defined(_MSC_VER)
++#include <windows.h>
++
++static double get_clock()
++{
++	static int initialized = 0;
++	static int is_winnt = 0;
++	static HANDLE curproc;
++
++	if ( !initialized ) {
++		OSVERSIONINFO vinfo;
++
++		curproc = GetCurrentProcess();		
++		vinfo.dwOSVersionInfoSize = sizeof(vinfo);
++		GetVersionEx(&vinfo);
++		if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
++			is_winnt = 1;
++		else
++			is_winnt = 0;
++	}
++	if ( is_winnt ) {
++		FILETIME c,e,k,u;
++
++		GetProcessTimes(curproc,&c,&e,&k,&u);
++		return ((double)k.dwLowDateTime+(double)u.dwLowDateTime
++			+4294967296.0*((double)k.dwHighDateTime+(double)u.dwHighDateTime))/10000000.0;
++	} else
++//		return (double)clock()/(double)CLOCKS_PER_SEC;
++		return ((double)GetTickCount())/1000.0;
++}
++
++#elif defined(THINK_C) || defined(__MWERKS__) || defined(MSWIN32)
++
++static double get_clock()
++{
++	clock_t c;
++
++	c = clock();
++	return (double)c/(double)CLOCKS_PER_SEC;
++}
++
++#elif defined(_PA_RISC1_1) || defined(__svr4__) || defined(__CYGWIN__)
++
++#include <sys/times.h>
++#include <limits.h>
++
++static double get_clock()
++{
++	struct tms buf;
++
++	times(&buf);
++	return (double)(buf.tms_utime+buf.tms_stime)/(double)CLK_TCK;
++}
++
++#else
++
++#include <sys/time.h>
++#include <sys/resource.h>
++
++static double get_clock()
++{
++	int tv_sec,tv_usec;
++	struct rusage ru;
++
++	getrusage(RUSAGE_SELF,&ru);
++	tv_sec = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec;
++	tv_usec = ru.ru_utime.tv_usec + ru.ru_stime.tv_usec;
++	return (double)tv_sec+(double)tv_usec/(double)1000000;
++}
++#endif
++
++static double gctime, gcstart;
++
++void GC_timerstart() {
++	gcstart = get_clock();
++}
++
++void GC_timerstop() {
++	gctime += get_clock() - gcstart;
++}
++
++double GC_get_gctime() {
++	return gctime;
++}
++
++
+ STATIC void * GC_CALLBACK GC_default_oom_fn(
+                                         size_t bytes_requested GC_ATTR_UNUSED)
+ {
+diff -urN gc-7.4.2.orig/reclaim.c gc-7.4.2/reclaim.c
+--- gc-7.4.2.orig/reclaim.c	2014-06-03 15:08:02.000000000 +0900
++++ gc-7.4.2/reclaim.c	2015-08-04 14:12:42.000000000 +0900
+@@ -706,6 +706,7 @@
+ 
+       if (GC_print_stats == VERBOSE)
+         GET_TIME(start_time);
++      GC_timerstart();
+ #   endif
+ 
+     for (kind = 0; kind < GC_n_kinds; kind++) {
+@@ -730,6 +731,7 @@
+         }
+     }
+ #   ifndef SMALL_CONFIG
++      GC_timerstop();
+       if (GC_print_stats == VERBOSE) {
+         GET_TIME(done_time);
+         GC_verbose_log_printf("Disposing of reclaim lists took %lu msecs\n",
+diff -urN gc-7.4.2.orig/NT_X64_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_X64_STATIC_THREADS_MAKEFILE
+--- gc-7.4.2.orig/NT_X64_STATIC_THREADS_MAKEFILE	2014-06-03 15:08:01.000000000 +0900
++++ gc-7.4.2/NT_X64_STATIC_THREADS_MAKEFILE	2015-08-04 14:12:42.000000000 +0900
+@@ -3,7 +3,7 @@
+ 
+ MY_CPU=AMD64
+ CPU=$(MY_CPU)
+-!include <ntwin32.mak>
++#!include <ntwin32.mak>
+ 
+ # Make sure that .cc is not viewed as a suffix.  It is for VC++2005, but
+ # not earlier versions.  We can deal with either, but not inconsistency.
+@@ -22,13 +22,13 @@
+ all: gctest.exe cord\de.exe test_cpp.exe
+ 
+ .c.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj /wd4701
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj /wd4701
+ # Disable "may not be initialized" warnings.  They're too approximate.
+ # Disable crt security warnings, since unfortunately they warn about all sorts
+ # of safe uses of strncpy.  It would be nice to leave the rest enabled.
+ 
+ .cpp.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
+ 
+ $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\gc_disclaim.h include\private\msvc_dbg.h
+ 
+diff -urN gc-7.4.2.orig/NT_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_STATIC_THREADS_MAKEFILE
+--- gc-7.4.2.orig/NT_STATIC_THREADS_MAKEFILE	2014-06-03 15:08:01.000000000 +0900
++++ gc-7.4.2/NT_STATIC_THREADS_MAKEFILE	2015-08-04 14:12:42.000000000 +0900
+@@ -3,7 +3,7 @@
+ 
+ MY_CPU=X86
+ CPU=$(MY_CPU)
+-!include <ntwin32.mak>
++#!include <ntwin32.mak>
+ 
+ # Make sure that .cc is not viewed as a suffix.  It is for VC++2005, but
+ # not earlier versions.  We can deal with either, but not inconsistency.
+@@ -22,10 +22,10 @@
+ all: gctest.exe cord\de.exe test_cpp.exe
+ 
+ .c.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj
+ 
+ .cpp.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
+ 
+ $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\gc_disclaim.h include\private\msvc_dbg.h
+ 

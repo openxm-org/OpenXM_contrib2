@@ -1,0 +1,327 @@
+# $OpenXM$
+# Patches not depend on Risa/Asir
+diff -urN gc6.8.orig/include/private/gcconfig.h gc6.8/include/private/gcconfig.h
+--- gc6.8.orig/include/private/gcconfig.h	2006-07-08 06:08:05.000000000 +0900
++++ gc6.8/include/private/gcconfig.h	2008-03-19 13:31:36.000000000 +0900
+@@ -63,7 +63,7 @@
+ /* Determine the machine type: */
+ # if defined(__arm__) || defined(__thumb__)
+ #    define ARM32
+-#    if !defined(LINUX) && !defined(NETBSD)
++#    if !defined(LINUX) && !defined(NETBSD) && !defined(FREEBSD)
+ #      define NOSYS
+ #      define mach_type_known
+ #    endif
+@@ -342,10 +342,22 @@
+ #    define X86_64
+ #    define mach_type_known
+ # endif
++# if defined(__FreeBSD__) && defined(__amd64__)
++#    define X86_64
++#    define mach_type_known
++# endif
+ # if defined(FREEBSD) && defined(__sparc__)
+ #    define SPARC
+ #    define mach_type_known
+-#endif
++# endif
++# if defined(FREEBSD) && defined(__powerpc__)
++#    define POWERPC
++#    define mach_type_known
++# endif
++# if defined(FREEBSD) && defined(__arm__)
++#    define ARM32
++#    define mach_type_known
++# endif
+ # if defined(bsdi) && (defined(i386) || defined(__i386__))
+ #    define I386
+ #    define BSDI
+@@ -860,6 +872,16 @@
+ #     define DATASTART GC_data_start
+ #     define DYNAMIC_LOADING
+ #   endif
++#   ifdef FREEBSD
++#   define ALIGNMENT 4
++#       define OS_TYPE "FREEBSD"
++#       ifdef __ELF__
++#           define DYNAMIC_LOADING
++#       endif
++#	define HEURISTIC2
++	extern char etext[];
++#	define SEARCH_FOR_DATA_START
++#   endif
+ #   ifdef NOSYS
+ #     define ALIGNMENT 4
+ #     define OS_TYPE "NOSYS"
+@@ -1862,6 +1884,17 @@
+ #	endif
+ #       define USE_GENERIC_PUSH_REGS
+ #   endif
++#   ifdef FREEBSD
++#   define ALIGNMENT 4
++#       define OS_TYPE "FREEBSD"
++#       ifdef __ELF__
++#           define DYNAMIC_LOADING
++#       endif
++#       define HEURISTIC2
++	extern char etext[];
++#       define SEARCH_FOR_DATA_START
++#   endif
++		   
+ #   ifdef LINUX
+ #       define OS_TYPE "LINUX"
+ #       define LINUX_STACKBOTTOM
+@@ -2026,8 +2059,19 @@
+ #	    define DYNAMIC_LOADING
+ #	endif
+ 	extern char etext[];
++/* T.Saito
+ 	extern char * GC_FreeBSDGetDataStart();
+ #	define DATASTART GC_FreeBSDGetDataStart(0x1000, &etext)
++*/
++	extern int _etext[];
++	extern char edata[];
++	extern char end[];
++#	define DATASTART ((ptr_t)((((word) (_etext)) + 0xfff) & ~0xfff))
++# define NEED_FIND_LIMIT
++# define DATAEND (GC_find_limit (DATASTART, TRUE))
++# define DATASTART2 ((ptr_t)(&edata))
++# define DATAEND2 ((ptr_t)(&end))
++/* end T.Saito */
+ #   endif
+ #   ifdef NETBSD
+ #	define OS_TYPE "NETBSD"
+@@ -2038,6 +2082,17 @@
+ 	extern char etext[];
+ #	define SEARCH_FOR_DATA_START
+ #   endif
++#   ifdef FREEBSD
++#       define OS_TYPE "FREEBSD"
++#       define SIG_SUSPEND SIGUSR1
++#       define SIG_THR_RESTART SIGUSR2
++#       ifdef __ELF__
++#           define DYNAMIC_LOADING
++#       endif
++#	define HEURISTIC2
++	extern char etext[];
++#	define SEARCH_FOR_DATA_START
++#   endif
+ #   ifdef SOLARIS
+ #	define OS_TYPE "SOLARIS"
+ #	define ELF_CLASS ELFCLASS64
+diff -urN gc6.8.orig/os_dep.c gc6.8/os_dep.c
+--- gc6.8.orig/os_dep.c	2006-04-22 08:26:47.000000000 +0900
++++ gc6.8/os_dep.c	2008-03-19 13:31:36.000000000 +0900
+@@ -694,7 +694,7 @@
+     || defined(HURD) || defined(NETBSD)
+ 	static struct sigaction old_segv_act;
+ #	if defined(IRIX5) || defined(HPUX) \
+-	|| defined(HURD) || defined(NETBSD)
++	|| defined(HURD) || defined(NETBSD) || defined(FREEBSD)
+ 	    static struct sigaction old_bus_act;
+ #	endif
+ #   else
+@@ -709,7 +709,7 @@
+ #   endif
+     {
+ #	if defined(SUNOS5SIGS) || defined(IRIX5)  \
+-        || defined(OSF1) || defined(HURD) || defined(NETBSD)
++        || defined(OSF1) || defined(HURD) || defined(NETBSD) || defined(FREEBSD)
+ 	  struct sigaction	act;
+ 
+ 	  act.sa_handler	= h;
+@@ -731,7 +731,7 @@
+ #	  else
+ 	        (void) sigaction(SIGSEGV, &act, &old_segv_act);
+ #		if defined(IRIX5) \
+-		   || defined(HPUX) || defined(HURD) || defined(NETBSD)
++		   || defined(HPUX) || defined(HURD) || defined(NETBSD) || defined(FREEBSD)
+ 		    /* Under Irix 5.x or HP/UX, we may get SIGBUS.	*/
+ 		    /* Pthreads doesn't exist under Irix 5.x, so we	*/
+ 		    /* don't have to worry in the threads case.		*/
+diff -urN gc6.8.orig/dyn_load.c gc6.8/dyn_load.c
+--- gc6.8.orig/dyn_load.c	2006-06-07 14:01:52.000000000 +0900
++++ gc6.8/dyn_load.c	2008-03-19 13:31:36.000000000 +0900
+@@ -102,6 +102,12 @@
+ #      else
+ #        define ElfW(type) Elf64_##type
+ #      endif
++#    elif defined(__FreeBSD__)
++#      if __ELF_WORD_SIZE == 32
++#        define ElfW(type) Elf32_##type
++#      else
++#        define ElfW(type) Elf64_##type
++#      endif
+ #    else
+ #      ifdef NETBSD
+ #        if ELFSIZE == 32
+diff -urN gc6.8.orig/include/gc.h gc6.8/include/gc.h
+--- gc6.8.orig/include/gc.h	2006-07-08 09:10:16.000000000 +0900
++++ gc6.8/include/gc.h	2007-08-03 15:05:31.000000000 +0900
+@@ -504,6 +504,7 @@
+     /* gcc knows how to retrieve return address, but we don't know */
+     /* how to generate call stacks.				   */
+ #   define GC_RETURN_ADDR (GC_word)__builtin_return_address(0)
++#   define GC_RETURN_ADDR_PARENT (GC_word)__builtin_return_address(1)
+ # else
+     /* Just pass 0 for gcc compatibility. */
+ #   define GC_RETURN_ADDR 0
+diff -urN gc6.8.orig/dbg_mlc.c gc6.8/dbg_mlc.c
+--- gc6.8.orig/dbg_mlc.c	2006-02-18 10:38:53.000000000 +0900
++++ gc6.8/dbg_mlc.c	2007-08-03 15:05:31.000000000 +0900
+@@ -477,6 +477,23 @@
+     GC_register_displacement((word)sizeof(oh) + offset);
+ }
+ 
++#if defined(__FreeBSD__)
++#include <dlfcn.h>
++static void GC_caller_func_offset(ad, symp, offp)
++const GC_word ad;
++const char **symp;
++int *offp;
++{
++    Dl_info caller;
++    if (dladdr((const void *)ad, &caller) && caller.dli_sname != NULL) {
++      *symp = caller.dli_sname;
++      *offp = (const char *)ad - (const char *)caller.dli_saddr;
++    }
++}
++#else
++#define GC_caller_func(ad, symp, offp)
++#endif
++
+ # ifdef __STDC__
+     GC_PTR GC_debug_malloc(size_t lb, GC_EXTRA_PARAMS)
+ # else
+@@ -491,6 +508,13 @@
+ {
+     GC_PTR result = GC_malloc(lb + DEBUG_BYTES);
+     
++#ifdef GC_ADD_CALLER
++    if (s == NULL) {
++      GC_caller_func_offset(ra, &s, &i);
++      if (s == NULL)
++        s = "unknown";
++    }
++#endif
+     if (result == 0) {
+         GC_err_printf1("GC_debug_malloc(%ld) returning NIL (",
+         	       (unsigned long) lb);
+@@ -880,6 +904,13 @@
+     register size_t old_sz;
+     register hdr * hhdr;
+     
++#ifdef GC_ADD_CALLER
++    if (s == NULL) {
++      GC_caller_func_offset(ra, &s, &i);
++      if (s == NULL)
++        s = "unknown";
++    }
++#endif
+     if (p == 0) return(GC_debug_malloc(lb, OPT_RA s, i));
+     if (base == 0) {
+         GC_err_printf1(
+@@ -1188,7 +1219,11 @@
+ }
+ 
+ #ifdef GC_ADD_CALLER
+-# define RA GC_RETURN_ADDR,
++# ifdef GC_RETURN_ADDR_PARENT
++#  define RA GC_RETURN_ADDR_PARENT,
++# else
++#  define RA GC_RETURN_ADDR,
++# endif
+ #else
+ # define RA
+ #endif
+@@ -1196,12 +1231,12 @@
+ GC_PTR GC_debug_malloc_replacement(lb)
+ size_t lb;
+ {
+-    return GC_debug_malloc(lb, RA "unknown", 0);
++    return GC_debug_malloc(lb, RA NULL, 0);
+ }
+ 
+ GC_PTR GC_debug_realloc_replacement(p, lb)
+ GC_PTR p;
+ size_t lb;
+ {
+-    return GC_debug_realloc(p, lb, RA "unknown", 0);
++    return GC_debug_realloc(p, lb, RA NULL, 0);
+ }
+diff -urN gc6.8.orig/include/private/gc_priv.h gc6.8/include/private/gc_priv.h
+--- gc6.8.orig/include/private/gc_priv.h	2006-02-11 04:38:40.000000000 +0900
++++ gc6.8/include/private/gc_priv.h	2008-03-19 13:31:36.000000000 +0900
+@@ -19,6 +19,10 @@
+ # ifndef GC_PRIVATE_H
+ # define GC_PRIVATE_H
+ 
++#if defined(__INTERIX)
++#define __CYGWIN__
++#endif
++
+ #if defined(mips) && defined(SYSTYPE_BSD) && defined(sony_news)
+     /* sony RISC NEWS, NEWSOS 4 */
+ #   define BSD_TIME
+diff -urN gc6.8.orig/misc.c gc6.8/misc.c
+--- gc6.8.orig/misc.c	2006-02-11 04:38:46.000000000 +0900
++++ gc6.8/misc.c	2008-03-19 13:31:36.000000000 +0900
+@@ -89,7 +89,7 @@
+ # define GC_REGISTER_MAIN_STATIC_DATA() TRUE
+ #endif
+ 
+-GC_FAR struct _GC_arrays GC_arrays /* = { 0 } */;
++GC_FAR struct _GC_arrays GC_arrays = { 0 };
+ 
+ 
+ GC_bool GC_debugging_started = FALSE;
+diff -urN gc6.8.orig/configure.in gc6.8/configure.in
+--- gc6.8.orig/configure.in	2006-06-07 14:01:52.000000000 +0900
++++ gc6.8/configure.in	2009-02-24 01:01:02.000000000 +0900
+@@ -478,6 +478,14 @@
+     fi
+ fi
+ 
++AC_ARG_ENABLE(large-config,
++    [AC_HELP_STRING([--enable-large-config],
++	[Optimize for large (> 100 MB) heap or root set])])
++
++if test "${enable_large_config}" = yes; then
++    AC_DEFINE(LARGE_CONFIG, 1, [Define to optimize for large heaps or root sets])
++fi
++
+ AC_ARG_ENABLE(gc-assertions,
+ [  --enable-gc-assertions  collector-internal assertion checking])
+ if test "${enable_gc_assertions}" = yes; then
+diff -urN gc6.8.orig/configure gc6.8/configure
+--- gc6.8.orig/configure	2006-03-24 09:42:55.000000000 +0900
++++ gc6.8/configure	2009-02-24 01:04:38.000000000 +0900
+@@ -1043,6 +1043,7 @@
+   --disable-libtool-lock  avoid locking (might break parallel builds)
+   --enable-full-debug	include full support for pointer backtracing etc.
+   --enable-redirect-malloc  redirect malloc and friends to GC routines
++  --enable-large-config   Optimize for large (> 100 MB) heap or root set
+   --enable-gc-assertions  collector-internal assertion checking
+ 
+ Optional Packages:
+@@ -9825,6 +9826,20 @@
+     fi
+ fi
+ 
++# Check whether --enable-large-config or --disable-large-config was given.
++if test "${enable_large_config+set}" = set; then
++  enableval="$enable_large_config"
++
++fi;
++
++if test "${enable_large_config}" = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define LARGE_CONFIG 1
++_ACEOF
++
++fi
++
+ # Check whether --enable-gc-assertions or --disable-gc-assertions was given.
+ if test "${enable_gc_assertions+set}" = set; then
+   enableval="$enable_gc_assertions"

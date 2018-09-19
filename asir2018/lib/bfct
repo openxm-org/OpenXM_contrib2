@@ -1,0 +1,842 @@
+/*
+ * Copyright (c) 1994-2000 FUJITSU LABORATORIES LIMITED 
+ * All rights reserved.
+ * 
+ * FUJITSU LABORATORIES LIMITED ("FLL") hereby grants you a limited,
+ * non-exclusive and royalty-free license to use, copy, modify and
+ * redistribute, solely for non-commercial and non-profit purposes, the
+ * computer program, "Risa/Asir" ("SOFTWARE"), subject to the terms and
+ * conditions of this Agreement. For the avoidance of doubt, you acquire
+ * only a limited right to use the SOFTWARE hereunder, and FLL or any
+ * third party developer retains all rights, including but not limited to
+ * copyrights, in and to the SOFTWARE.
+ * 
+ * (1) FLL does not grant you a license in any way for commercial
+ * purposes. You may use the SOFTWARE only for non-commercial and
+ * non-profit purposes only, such as academic, research and internal
+ * business use.
+ * (2) The SOFTWARE is protected by the Copyright Law of Japan and
+ * international copyright treaties. If you make copies of the SOFTWARE,
+ * with or without modification, as permitted hereunder, you shall affix
+ * to all such copies of the SOFTWARE the above copyright notice.
+ * (3) An explicit reference to this SOFTWARE and its copyright owner
+ * shall be made on your publication or presentation in any form of the
+ * results obtained by use of the SOFTWARE.
+ * (4) In the event that you modify the SOFTWARE, you shall notify FLL by
+ * e-mail at risa-admin@sec.flab.fujitsu.co.jp of the detailed specification
+ * for such modification or the source code of the modified part of the
+ * SOFTWARE.
+ * 
+ * THE SOFTWARE IS PROVIDED AS IS WITHOUT ANY WARRANTY OF ANY KIND. FLL
+ * MAKES ABSOLUTELY NO WARRANTIES, EXPRESSED, IMPLIED OR STATUTORY, AND
+ * EXPRESSLY DISCLAIMS ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT OF THIRD PARTIES'
+ * RIGHTS. NO FLL DEALER, AGENT, EMPLOYEES IS AUTHORIZED TO MAKE ANY
+ * MODIFICATIONS, EXTENSIONS, OR ADDITIONS TO THIS WARRANTY.
+ * UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, TORT, CONTRACT,
+ * OR OTHERWISE, SHALL FLL BE LIABLE TO YOU OR ANY OTHER PERSON FOR ANY
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, PUNITIVE OR CONSEQUENTIAL
+ * DAMAGES OF ANY CHARACTER, INCLUDING, WITHOUT LIMITATION, DAMAGES
+ * ARISING OUT OF OR RELATING TO THE SOFTWARE OR THIS AGREEMENT, DAMAGES
+ * FOR LOSS OF GOODWILL, WORK STOPPAGE, OR LOSS OF DATA, OR FOR ANY
+ * DAMAGES, EVEN IF FLL SHALL HAVE BEEN INFORMED OF THE POSSIBILITY OF
+ * SUCH DAMAGES, OR FOR ANY CLAIM BY ANY OTHER PARTY. EVEN IF A PART
+ * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
+ * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
+ * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
+ *
+ * $OpenXM$
+ */
+/* requires 'primdec' */
+
+#define TMP_S ssssssss
+#define TMP_DS dssssssss
+#define TMP_T dtttttttt
+#define TMP_DT tttttttt
+#define TMP_Y1 yyyyyyyy1
+#define TMP_DY1 dyyyyyyyy1
+#define TMP_Y2 yyyyyyyy2
+#define TMP_DY2 dyyyyyyyy2
+
+if (!module_definedp("gr")) load("gr")$ else{ }$
+if (!module_definedp("primdec")) load("primdec")$ else{ }$
+module bfct $
+  /* Empty for now. It will be used in a future. */
+endmodule $
+
+/* toplevel */
+
+def bfunction(F)
+{
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = 0; I < N; I++ )
+		V = cons(D[I][1],V);
+	return bfct_via_gbfct_weight(F,V);
+}
+
+/* annihilating ideal of F^s */
+
+def ann(F)
+{
+	if ( member(s,vars(F)) )
+		error("ann : the variable 's' is reserved.");
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = N-1; I >= 0; I-- )
+		V = cons(D[I][1],V);
+
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	W = append([TMP_Y1,TMP_Y2,TMP_T],V);
+	DW = append([TMP_DY1,TMP_DY2,TMP_DT],DV);
+
+	B = [1-TMP_Y1*TMP_Y2,TMP_T-TMP_Y1*F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+TMP_Y1*diff(F,V[I])*TMP_DT,B);
+	}
+
+	/* homogenized (heuristics) */
+	dp_nelim(2);
+	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
+	G1 = [];
+	for ( T = G0; T != []; T = cdr(T) ) {
+		E = car(T); VL = vars(E);
+		if ( !member(TMP_Y1,VL) && !member(TMP_Y2,VL) )
+			G1 = cons(E,G1);
+	}
+	G2 = map(psi,G1,TMP_T,TMP_DT);
+	G3 = map(subst,G2,TMP_T,-1-s);
+	return G3;
+}
+
+/*
+ * compute J_f|s=r, where r = the minimal integral root of global b_f(s)
+ * ann0(F) returns [MinRoot,Ideal]
+ */
+
+def ann0(F)
+{
+	F = subst(F,s,TMP_S);
+	Ann = ann(F);
+	Bf = bfunction(F);
+
+	FList = cdr(fctr(Bf));
+	for ( T = FList, Min = 0; T != []; T = cdr(T) ) {
+		LF = car(car(T));
+		Root = -coef(LF,0)/coef(LF,1);
+		if ( dn(Root) == 1 && Root < Min )
+			Min = Root;
+	}
+	return [Min,map(subst,Ann,s,Min,TMP_S,s,TMP_DS,ds)];
+}
+
+def psi(F,T,DT)
+{
+	D = dp_ptod(F,[T,DT]);
+	Wmax = weight(D);
+	D1 = dp_rest(D);
+	for ( ; D1; D1 = dp_rest(D1) )
+		if ( weight(D1) > Wmax )
+			Wmax = weight(D1);
+	for ( D1 = D, Dmax = 0; D1; D1 = dp_rest(D1) )
+		if ( weight(D1) == Wmax )
+			Dmax += dp_hm(D1);
+	if ( Wmax >= 0 )
+		Dmax = dp_weyl_mul(<<Wmax,0>>,Dmax);
+	else
+		Dmax = dp_weyl_mul(<<0,-Wmax>>,Dmax);
+	Rmax = dp_dtop(Dmax,[T,DT]);
+	R = b_subst(subst(Rmax,DT,1),T);
+	return R;
+}
+
+def weight(D)
+{
+	V = dp_etov(D);
+	return V[1]-V[0];
+}
+
+def compare_first(A,B)
+{
+	A0 = car(A);
+	B0 = car(B);
+	if ( A0 > B0 )
+		return 1;
+	else if ( A0 < B0 )
+		return -1;
+	else
+		return 0;
+}
+
+/* generic b-function w.r.t. weight vector W */
+
+def generic_bfct(F,V,DV,W)
+{
+	N = length(V);
+	N2 = N*2;
+
+	/* If W is a list, convert it to a vector */
+	if ( type(W) == 4 )
+		W = newvect(length(W),W);
+	dp_weyl_set_weight(W);
+
+	/* create a term order M in D<x,d> (DRL) */
+	M = newmat(N2,N2);
+	for ( J = 0; J < N2; J++ )
+		M[0][J] = 1;
+	for ( I = 1; I < N2; I++ )
+		M[I][N2-I] = -1;
+	
+	VDV = append(V,DV);
+
+	/* create a non-term order MW in D<x,d> */
+	MW = newmat(N2+1,N2);
+	for ( J = 0; J < N; J++ )
+		MW[0][J] = -W[J];
+	for ( ; J < N2; J++ )
+		MW[0][J] = W[J-N];
+	for ( I = 1; I <= N2; I++ )
+		for ( J = 0; J < N2; J++ )
+			MW[I][J] = M[I-1][J];
+
+	/* create a homogenized term order MWH in D<x,d,h> */
+	MWH = newmat(N2+2,N2+1);
+	for ( J = 0; J <= N2; J++ )
+		MWH[0][J] = 1;
+	for ( I = 1; I <= N2+1; I++ )
+		for ( J = 0; J < N2; J++ )
+			MWH[I][J] = MW[I-1][J];
+
+	/* homogenize F */
+	VDVH = append(VDV,[h]);
+	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
+	
+	/* compute a groebner basis of FH w.r.t. MWH */
+	dp_gr_flags(["Top",1,"NoRA",1]);
+	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
+	dp_gr_flags(["Top",0,"NoRA",0]);
+
+	/* dehomigenize GH */
+	G = map(subst,GH,h,1);
+
+	/* G is a groebner basis w.r.t. a non term order MW */
+	/* take the initial part w.r.t. (-W,W) */
+	GIN = map(initial_part,G,VDV,MW,W);
+
+	/* GIN is a groebner basis w.r.t. a term order M */
+	/* As -W+W=0, gr_(-W,W)(D<x,d>) = D<x,d> */
+	
+	/* find b(W1*x1*d1+...+WN*xN*dN) in Id(GIN) */
+	for ( I = 0, T = 0; I < N; I++ )
+		T += W[I]*V[I]*DV[I];
+	B = weyl_minipoly(GIN,VDV,0,T); /* M represents DRL order */
+	return B;
+}
+
+/* all term reduction + interreduce */
+def generic_bfct_1(F,V,DV,W)
+{
+	N = length(V);
+	N2 = N*2;
+
+	/* If W is a list, convert it to a vector */
+	if ( type(W) == 4 )
+		W = newvect(length(W),W);
+	dp_weyl_set_weight(W);
+
+	/* create a term order M in D<x,d> (DRL) */
+	M = newmat(N2,N2);
+	for ( J = 0; J < N2; J++ )
+		M[0][J] = 1;
+	for ( I = 1; I < N2; I++ )
+		M[I][N2-I] = -1;
+	
+	VDV = append(V,DV);
+
+	/* create a non-term order MW in D<x,d> */
+	MW = newmat(N2+1,N2);
+	for ( J = 0; J < N; J++ )
+		MW[0][J] = -W[J];
+	for ( ; J < N2; J++ )
+		MW[0][J] = W[J-N];
+	for ( I = 1; I <= N2; I++ )
+		for ( J = 0; J < N2; J++ )
+			MW[I][J] = M[I-1][J];
+
+	/* create a homogenized term order MWH in D<x,d,h> */
+	MWH = newmat(N2+2,N2+1);
+	for ( J = 0; J <= N2; J++ )
+		MWH[0][J] = 1;
+	for ( I = 1; I <= N2+1; I++ )
+		for ( J = 0; J < N2; J++ )
+			MWH[I][J] = MW[I-1][J];
+
+	/* homogenize F */
+	VDVH = append(VDV,[h]);
+	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,F,VDV)),VDVH);
+	
+	/* compute a groebner basis of FH w.r.t. MWH */
+/*	dp_gr_flags(["Top",1,"NoRA",1]); */
+	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
+/*	dp_gr_flags(["Top",0,"NoRA",0]); */
+
+	/* dehomigenize GH */
+	G = map(subst,GH,h,1);
+
+	/* G is a groebner basis w.r.t. a non term order MW */
+	/* take the initial part w.r.t. (-W,W) */
+	GIN = map(initial_part,G,VDV,MW,W);
+
+	/* GIN is a groebner basis w.r.t. a term order M */
+	/* As -W+W=0, gr_(-W,W)(D<x,d>) = D<x,d> */
+	
+	/* find b(W1*x1*d1+...+WN*xN*dN) in Id(GIN) */
+	for ( I = 0, T = 0; I < N; I++ )
+		T += W[I]*V[I]*DV[I];
+	B = weyl_minipoly(GIN,VDV,0,T); /* M represents DRL order */
+	return B;
+}
+
+def initial_part(F,V,MW,W)
+{
+	N2 = length(V);
+	N = N2/2;
+	dp_ord(MW);
+	DF = dp_ptod(F,V);
+	R = dp_hm(DF);
+	DF = dp_rest(DF);
+
+	E = dp_etov(R);
+	for ( I = 0, TW = 0; I < N; I++ )
+		TW += W[I]*(-E[I]+E[N+I]);
+	RW = TW;		
+
+	for ( ; DF; DF = dp_rest(DF) ) {
+		E = dp_etov(DF);
+		for ( I = 0, TW = 0; I < N; I++ )
+			TW += W[I]*(-E[I]+E[N+I]);
+		if ( TW == RW )
+			R += dp_hm(DF);
+		else if ( TW < RW )
+			break;
+		else 
+			error("initial_part : cannot happen");
+	}
+	return dp_dtop(R,V);
+	
+}
+
+/* b-function of F ? */
+
+def bfct(F)
+{
+	/* XXX */
+	F = replace_vars_f(F);
+
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = 0; I < N; I++ )
+		V = cons(D[I][1],V);
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+	V1 = cons(s,V); DV1 = cons(ds,DV);
+
+	G0 = indicial1(F,reverse(V));
+	G1 = dp_weyl_gr_main(G0,append(V1,DV1),0,1,0);
+	Minipoly = weyl_minipoly(G1,append(V1,DV1),0,s);
+	return Minipoly;
+}
+
+/* called from bfct() only */
+
+def indicial1(F,V)
+{
+	W = append([y1,t],V);
+	N = length(V);
+	B = [t-y1*F];
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+	DW = append([dy1,dt],DV);
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+y1*diff(F,V[I])*dt,B);
+	}
+	dp_nelim(1);
+
+	/* homogenized (heuristics) */
+	G0 = dp_weyl_gr_main(B,append(W,DW),1,0,6);
+	G1 = map(subst,G0,y1,1);
+	G2 = map(psi,G1,t,dt);
+	G3 = map(subst,G2,t,-s-1);
+	return G3;
+}
+
+/* b-function computation via generic_bfct() (experimental) */
+
+def bfct_via_gbfct(F)
+{
+	V = vars(F);
+	N = length(V);
+	D = newvect(N);
+
+	for ( I = 0; I < N; I++ )
+		D[I] = [deg(F,V[I]),V[I]];
+	qsort(D,compare_first);
+	for ( V = [], I = 0; I < N; I++ )
+		V = cons(D[I][1],V);
+	V = reverse(V);
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [TMP_T-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
+	}
+	V1 = cons(TMP_T,V); DV1 = cons(TMP_DT,DV);
+	W = newvect(N+1);
+	W[0] = 1;
+	R = generic_bfct(B,V1,DV1,W);
+
+	return subst(R,s,-s-1);
+}
+
+/* use an order s.t. [t,x,y,z,...,dt,dx,dy,dz,...,h] */
+
+def bfct_via_gbfct_weight(F,V)
+{
+	N = length(V);
+	D = newvect(N);
+	Wt = getopt(weight);
+	if ( type(Wt) != 4 ) {
+		for ( I = 0, Wt = []; I < N; I++ )
+			Wt = cons(1,Wt);
+	}
+	Tdeg = w_tdeg(F,V,Wt);
+	WtV = newvect(2*(N+1)+1);
+	WtV[0] = Tdeg;
+	WtV[N+1] = 1;
+	/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+	for ( I = 1; I <= N; I++ ) {
+		WtV[I] = Wt[I-1];
+		WtV[N+1+I] = Tdeg-Wt[I-1]+1;
+	}
+	WtV[2*(N+1)] = 1;
+	dp_set_weight(WtV);
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [TMP_T-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
+	}
+	V1 = cons(TMP_T,V); DV1 = cons(TMP_DT,DV);
+	W = newvect(N+1);
+	W[0] = 1;
+	R = generic_bfct_1(B,V1,DV1,W);
+	dp_set_weight(0);
+	return subst(R,s,-s-1);
+}
+
+/* use an order s.t. [x,y,z,...,t,dx,dy,dz,...,dt,h] */
+
+def bfct_via_gbfct_weight_1(F,V)
+{
+	N = length(V);
+	D = newvect(N);
+	Wt = getopt(weight);
+	if ( type(Wt) != 4 ) {
+		for ( I = 0, Wt = []; I < N; I++ )
+			Wt = cons(1,Wt);
+	}
+	Tdeg = w_tdeg(F,V,Wt);
+	WtV = newvect(2*(N+1)+1);
+	/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+	for ( I = 0; I < N; I++ ) {
+		WtV[I] = Wt[I];
+		WtV[N+1+I] = Tdeg-Wt[I]+1;
+	}
+	WtV[N] = Tdeg;
+	WtV[2*N+1] = 1;
+	WtV[2*(N+1)] = 1;
+	dp_set_weight(WtV);
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [TMP_T-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
+	}
+	V1 = append(V,[TMP_T]); DV1 = append(DV,[TMP_DT]);
+	W = newvect(N+1);
+	W[N] = 1;
+	R = generic_bfct_1(B,V1,DV1,W);
+	dp_set_weight(0);
+	return subst(R,s,-s-1);
+}
+
+def bfct_via_gbfct_weight_2(F,V)
+{
+	N = length(V);
+	D = newvect(N);
+	Wt = getopt(weight);
+	if ( type(Wt) != 4 ) {
+		for ( I = 0, Wt = []; I < N; I++ )
+			Wt = cons(1,Wt);
+	}
+	Tdeg = w_tdeg(F,V,Wt);
+
+	/* a weight for the first GB computation */
+	/* [t,x1,...,xn,dt,dx1,...,dxn,h] */
+	WtV = newvect(2*(N+1)+1);
+	WtV[0] = Tdeg;
+	WtV[N+1] = 1;
+	WtV[2*(N+1)] = 1;
+	/* wdeg(V[I])=Wt[I], wdeg(DV[I])=Tdeg-Wt[I]+1 */
+	for ( I = 1; I <= N; I++ ) {
+		WtV[I] = Wt[I-1];
+		WtV[N+1+I] = Tdeg-Wt[I-1]+1;
+	}
+	dp_set_weight(WtV);
+
+	/* a weight for the second GB computation */
+	/* [x1,...,xn,t,dx1,...,dxn,dt,h] */
+	WtV2 = newvect(2*(N+1)+1);
+	WtV2[N] = Tdeg;
+	WtV2[2*N+1] = 1;
+	WtV2[2*(N+1)] = 1;
+	for ( I = 0; I < N; I++ ) {
+		WtV2[I] = Wt[I];
+		WtV2[N+1+I] = Tdeg-Wt[I]+1;
+	}
+
+	for ( I = N-1, DV = []; I >= 0; I-- )
+		DV = cons(strtov("d"+rtostr(V[I])),DV);
+
+	B = [TMP_T-F];
+	for ( I = 0; I < N; I++ ) {
+		B = cons(DV[I]+diff(F,V[I])*TMP_DT,B);
+	}
+	V1 = cons(TMP_T,V); DV1 = cons(TMP_DT,DV);
+	V2 = append(V,[TMP_T]); DV2 = append(DV,[TMP_DT]);
+	W = newvect(N+1,[1]);
+	dp_weyl_set_weight(W);
+
+	VDV = append(V1,DV1);
+	N1 = length(V1);
+	N2 = N1*2;
+
+	/* create a non-term order MW in D<x,d> */
+	MW = newmat(N2+1,N2);
+	for ( J = 0; J < N1; J++ ) {
+		MW[0][J] = -W[J]; MW[0][N1+J] = W[J];
+	}
+	for ( J = 0; J < N2; J++ ) MW[1][J] = 1;
+	for ( I = 2; I <= N2; I++ ) MW[I][N2-I+1] = -1;
+
+	/* homogenize F */
+	VDVH = append(VDV,[h]);
+	FH = map(dp_dtop,map(dp_homo,map(dp_ptod,B,VDV)),VDVH);
+	
+	/* compute a groebner basis of FH w.r.t. MWH */
+	GH = dp_weyl_gr_main(FH,VDVH,0,1,11);
+
+	/* dehomigenize GH */
+	G = map(subst,GH,h,1);
+
+	/* G is a groebner basis w.r.t. a non term order MW */
+	/* take the initial part w.r.t. (-W,W) */
+	GIN = map(initial_part,G,VDV,MW,W);
+
+	/* GIN is a groebner basis w.r.t. a term order M */
+	/* As -W+W=0, gr_(-W,W)(D<x,d>) = D<x,d> */
+	
+	/* find b(W1*x1*d1+...+WN*xN*dN) in Id(GIN) */
+	for ( I = 0, T = 0; I < N1; I++ )
+		T += W[I]*V1[I]*DV1[I];
+
+	/* change of ordering from VDV to VDV2 */
+	VDV2 = append(V2,DV2);
+	dp_set_weight(WtV2);
+	for ( Pind = 0; ; Pind++ ) {
+		Prime = lprime(Pind);
+		GIN2 = dp_weyl_gr_main(GIN,VDV2,0,-Prime,0);
+		if ( GIN2 ) break;
+	}
+
+	R = weyl_minipoly(GIN2,VDV2,0,T); /* M represents DRL order */
+	dp_set_weight(0);
+	return subst(R,s,-s-1);
+}
+
+/* minimal polynomial of s; modular computation */
+
+def weyl_minipolym(G,V,O,M,V0)
+{
+	N = length(V);
+	Len = length(G);
+	dp_ord(O);
+	setmod(M);
+	PS = newvect(Len);
+	PS0 = newvect(Len);
+
+	for ( I = 0, T = G; T != []; T = cdr(T), I++ )
+		PS0[I] = dp_ptod(car(T),V);
+	for ( I = 0, T = G; T != []; T = cdr(T), I++ )
+		PS[I] = dp_mod(dp_ptod(car(T),V),M,[]);
+
+	for ( I = Len - 1, GI = []; I >= 0; I-- )
+		GI = cons(I,GI);
+
+	U = dp_mod(dp_ptod(V0,V),M,[]);
+	U = dp_weyl_nf_mod(GI,U,PS,1,M);
+
+	T = dp_mod(<<0>>,M,[]);
+	TT = dp_mod(dp_ptod(1,V),M,[]);
+	G = H = [[TT,T]];
+
+	for ( I = 1; ; I++ ) {
+		if ( dp_gr_print() )
+			print(".",2);
+		T = dp_mod(<<I>>,M,[]);
+
+		TT = dp_weyl_nf_mod(GI,dp_weyl_mul_mod(TT,U,M),PS,1,M);
+		H = cons([TT,T],H);
+		L = dp_lnf_mod([TT,T],G,M);
+		if ( !L[0] ) {
+			if ( dp_gr_print() )
+				print("");
+			return dp_dtop(L[1],[t]); /* XXX */
+		} else
+			G = insert(G,L);
+	}
+}
+
+/* minimal polynomial of s over Q */
+
+def weyl_minipoly(G0,V0,O0,P)
+{
+	HM = hmlist(G0,V0,O0);
+
+	N = length(V0);
+	Len = length(G0);
+	dp_ord(O0);
+	PS = newvect(Len);
+	for ( I = 0, T = G0, HL = []; T != []; T = cdr(T), I++ )
+		PS[I] = dp_ptod(car(T),V0);
+	for ( I = Len - 1, GI = []; I >= 0; I-- )
+		GI = cons(I,GI);
+	PSM = newvect(Len);
+	DP = dp_ptod(P,V0);
+
+	for ( Pind = 0; ; Pind++ ) {
+		Prime = lprime(Pind);
+		if ( !valid_modulus(HM,Prime) )
+			continue;
+		setmod(Prime);
+		for ( I = 0, T = G0, HL = []; T != []; T = cdr(T), I++ )
+			PSM[I] = dp_mod(dp_ptod(car(T),V0),Prime,[]);
+
+		NFP = weyl_nf(GI,DP,1,PS);
+		NFPM = dp_mod(NFP[0],Prime,[])/ptomp(NFP[1],Prime);
+
+		NF = [[dp_ptod(1,V0),1]];
+		LCM = 1;
+
+		TM = dp_mod(<<0>>,Prime,[]);
+		TTM = dp_mod(dp_ptod(1,V0),Prime,[]);
+		GM = NFM = [[TTM,TM]];
+
+		for ( D = 1; ; D++ ) {
+			if ( dp_gr_print() )
+				print(".",2);
+			NFPrev = car(NF);
+			NFJ = weyl_nf(GI,
+				dp_weyl_mul(NFP[0],NFPrev[0]),NFP[1]*NFPrev[1],PS);
+			NFJ = remove_cont(NFJ);
+			NF = cons(NFJ,NF);
+			LCM = ilcm(LCM,NFJ[1]);
+
+			/* modular computation */
+			TM = dp_mod(<<D>>,Prime,[]);
+			TTM = dp_mod(NFJ[0],Prime,[])/ptomp(NFJ[1],Prime);
+			NFM = cons([TTM,TM],NFM);
+			LM = dp_lnf_mod([TTM,TM],GM,Prime);
+			if ( !LM[0] )
+				break;
+			else
+				GM = insert(GM,LM);
+		}
+
+		if ( dp_gr_print() )
+			print("");
+		U = NF[0][0]*idiv(LCM,NF[0][1]);
+		Coef = [];
+		for ( J = D-1; J >= 0; J-- ) {
+			Coef = cons(strtov("u"+rtostr(J)),Coef);
+			U += car(Coef)*NF[D-J][0]*idiv(LCM,NF[D-J][1]);
+		}
+
+		for ( UU = U, Eq = []; UU; UU = dp_rest(UU) )
+			Eq = cons(dp_hc(UU),Eq);
+		M = etom([Eq,Coef]);
+		B = henleq(M,Prime);
+		if ( dp_gr_print() )
+			print("");
+		if ( B ) {
+			R = 0;
+			for ( I = 0; I < D; I++ )
+				R += B[0][I]*s^I;
+			R += B[1]*s^D;
+			return R;
+		}
+	}
+}
+
+def weyl_nf(B,G,M,PS)
+{
+	for ( D = 0; G; ) {
+		for ( U = 0, L = B; L != []; L = cdr(L) ) {
+			if ( dp_redble(G,R=PS[car(L)]) > 0 ) {
+				GCD = igcd(dp_hc(G),dp_hc(R));
+				CG = idiv(dp_hc(R),GCD); CR = idiv(dp_hc(G),GCD);
+				U = CG*G-dp_weyl_mul(CR*dp_subd(G,R),R);
+				if ( !U )
+					return [D,M];
+				D *= CG; M *= CG;
+				break;
+			}
+		}
+		if ( U )
+			G = U;
+		else {
+			D += dp_hm(G); G = dp_rest(G);
+		}
+	}
+	return [D,M];
+}
+
+def weyl_nf_mod(B,G,PS,Mod)
+{
+	for ( D = 0; G; ) {
+		for ( U = 0, L = B; L != []; L = cdr(L) ) {
+			if ( dp_redble(G,R=PS[car(L)]) > 0 ) {
+				CR = dp_hc(G)/dp_hc(R);
+				U = G-dp_weyl_mul_mod(CR*dp_mod(dp_subd(G,R),Mod,[]),R,Mod);
+				if ( !U )
+					return D;
+				break;
+			}
+		}
+		if ( U )
+			G = U;
+		else {
+			D += dp_hm(G); G = dp_rest(G);
+		}
+	}
+	return D;
+}
+
+def remove_zero(L)
+{
+	for ( R = []; L != []; L = cdr(L) )
+		if ( car(L) )
+			R = cons(car(L),R);
+	return R;
+}
+
+def z_subst(F,V)
+{
+	for ( ; V != []; V = cdr(V) )
+		F = subst(F,car(V),0);
+	return F;
+}
+
+def flatmf(L) {  
+    for ( S = []; L != []; L = cdr(L) )
+		if ( type(F=car(car(L))) != NUM )
+			S = append(S,[F]);
+	return S;
+}
+
+def intersection(A,B)
+{
+	for ( L = []; A != []; A = cdr(A) )
+	if ( member(car(A),B) )
+		L = cons(car(A),L);
+	return L;
+}
+
+def b_subst(F,V)
+{
+	D = deg(F,V);
+	C = newvect(D+1);
+	for ( I = D; I >= 0; I-- )
+		C[I] = coef(F,I,V);
+	for ( I = 0, R = 0; I <= D; I++ )
+		if ( C[I] )
+			R += C[I]*v_factorial(V,I);
+	return R;
+}
+
+def v_factorial(V,N)
+{
+	for ( J = N-1, R = 1; J >= 0; J-- )
+		R *= V-J;
+	return R;
+}
+
+def w_tdeg(F,V,W)
+{
+	dp_set_weight(newvect(length(W),W));
+	T = dp_ptod(F,V);
+	for ( R = 0; T; T = cdr(T) ) {
+		D = dp_td(T);
+		if ( D > R ) R = D;
+	}
+	return R;
+}
+
+def replace_vars_f(F)
+{
+	return subst(F,s,TMP_S,t,TMP_T,y1,TMP_Y1,y2,TMP_Y2);
+}
+
+def replace_vars_v(V)
+{
+	V = replace_var(V,s,TMP_S);
+	V = replace_var(V,t,TMP_T);
+	V = replace_var(V,y1,TMP_Y1);
+	V = replace_var(V,y2,TMP_Y2);
+	return V;
+}
+
+def replace_var(V,X,Y)
+{
+	V = reverse(V);
+	for ( R = []; V != []; V = cdr(V) ) {
+		Z = car(V);
+		if ( Z == X )
+			R = cons(Y,R);
+		else
+			R = cons(Z,R);
+	}
+	return R;
+}
+end$
+
