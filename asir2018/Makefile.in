@@ -79,14 +79,14 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-Asir_PROGRAMS = Asir$(EXEEXT)
+asir_PROGRAMS = asir$(EXEEXT)
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) mkinstalldirs \
 	INSTALL compile config.guess config.sub depcomp install-sh \
 	missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -94,11 +94,11 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(Asirdir)"
-PROGRAMS = $(Asir_PROGRAMS)
-am_Asir_OBJECTS = main.$(OBJEXT)
-Asir_OBJECTS = $(am_Asir_OBJECTS)
-Asir_DEPENDENCIES = libAsir.a
+am__installdirs = "$(DESTDIR)$(asirdir)"
+PROGRAMS = $(asir_PROGRAMS)
+am_asir_OBJECTS = main.$(OBJEXT)
+asir_OBJECTS = $(am_asir_OBJECTS)
+asir_DEPENDENCIES = libasir.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -130,8 +130,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(Asir_SOURCES)
-DIST_SOURCES = $(Asir_SOURCES)
+SOURCES = $(asir_SOURCES)
+DIST_SOURCES = $(asir_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -230,7 +230,7 @@ CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = @DEFS@ -DASIR_LIBDIR=\"${Asirdir}\"
+DEFS = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
 DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -346,10 +346,10 @@ AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 @USE_PLOT_TRUE@PLLIB = plot/libplot.a
 @USE_PLOT_TRUE@X11LIB = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
 SUBDIRS = asm builtin engine fft include io lib parse ${PLOTDIR}
-Asirdir = ${libdir}/Asir
-Asir_SOURCES = parse/main.c
-Asir_LDADD = libAsir.a @ASIR_GCLIB@
-CLEANFILES = ${Asir_LDADD} Asir-openxm-${VERSION}.tgz
+asirdir = ${libdir}/asir
+asir_SOURCES = parse/main.c
+asir_LDADD = libasir.a @ASIR_GCLIB@
+CLEANFILES = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 GC_TAR_GZ = gc-7.4.2.tar.gz
 GC_PATCH = gc-7.diff gc-7.0-risa.diff
 LIB_ATOMIC = libatomic_ops-7.4.0
@@ -407,12 +407,12 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
-install-AsirPROGRAMS: $(Asir_PROGRAMS)
+install-asirPROGRAMS: $(asir_PROGRAMS)
 	@$(NORMAL_INSTALL)
-	@list='$(Asir_PROGRAMS)'; test -n "$(Asirdir)" || list=; \
+	@list='$(asir_PROGRAMS)'; test -n "$(asirdir)" || list=; \
 	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(Asirdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(Asirdir)" || exit 1; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(asirdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(asirdir)" || exit 1; \
 	fi; \
 	for p in $$list; do echo "$$p $$p"; done | \
 	sed 's/$(EXEEXT)$$//' | \
@@ -431,28 +431,28 @@ install-AsirPROGRAMS: $(Asir_PROGRAMS)
 	while read type dir files; do \
 	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
 	    test -z "$$files" || { \
-	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(Asirdir)$$dir'"; \
-	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(Asirdir)$$dir" || exit $$?; \
+	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(asirdir)$$dir'"; \
+	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(asirdir)$$dir" || exit $$?; \
 	    } \
 	; done
 
-uninstall-AsirPROGRAMS:
+uninstall-asirPROGRAMS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(Asir_PROGRAMS)'; test -n "$(Asirdir)" || list=; \
+	@list='$(asir_PROGRAMS)'; test -n "$(asirdir)" || list=; \
 	files=`for p in $$list; do echo "$$p"; done | \
 	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
 	      -e 's/$$/$(EXEEXT)/' \
 	`; \
 	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(Asirdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(Asirdir)" && rm -f $$files
+	echo " ( cd '$(DESTDIR)$(asirdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(asirdir)" && rm -f $$files
 
-clean-AsirPROGRAMS:
-	-test -z "$(Asir_PROGRAMS)" || rm -f $(Asir_PROGRAMS)
+clean-asirPROGRAMS:
+	-test -z "$(asir_PROGRAMS)" || rm -f $(asir_PROGRAMS)
 
-Asir$(EXEEXT): $(Asir_OBJECTS) $(Asir_DEPENDENCIES) $(EXTRA_Asir_DEPENDENCIES) 
-	@rm -f Asir$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(Asir_OBJECTS) $(Asir_LDADD) $(LIBS)
+asir$(EXEEXT): $(asir_OBJECTS) $(asir_DEPENDENCIES) $(EXTRA_asir_DEPENDENCIES) 
+	@rm -f asir$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(asir_OBJECTS) $(asir_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -771,7 +771,7 @@ check: check-recursive
 all-am: Makefile $(PROGRAMS)
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(Asirdir)"; do \
+	for dir in "$(DESTDIR)$(asirdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -807,7 +807,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-AsirPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-asirPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -827,7 +827,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-AsirPROGRAMS
+install-data-am: install-asirPROGRAMS
 
 install-dvi: install-dvi-recursive
 
@@ -873,18 +873,18 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-AsirPROGRAMS
+uninstall-am: uninstall-asirPROGRAMS
 
 .MAKE: $(am__recursive_targets) install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
-	am--refresh check check-am clean clean-AsirPROGRAMS \
+	am--refresh check check-am clean clean-asirPROGRAMS \
 	clean-cscope clean-generic cscope cscopelist-am ctags ctags-am \
 	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
 	dist-tarZ dist-xz dist-zip distcheck distclean \
 	distclean-compile distclean-generic distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
-	html-am info info-am install install-AsirPROGRAMS install-am \
+	html-am info info-am install install-am install-asirPROGRAMS \
 	install-data install-data-am install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-man install-pdf \
@@ -892,7 +892,7 @@ uninstall-am: uninstall-AsirPROGRAMS
 	installcheck installcheck-am installdirs installdirs-am \
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-AsirPROGRAMS uninstall-am
+	tags tags-am uninstall uninstall-am uninstall-asirPROGRAMS
 
 # EXTRALIBS = @EXTRALIBS@
 
@@ -901,7 +901,7 @@ all-recursive: ${GLIB}
 umain.o: parse/main.c
 	${COMPILE} -DUINIT main.c -o umain.o
 
-libAsir-gc.a: ${GC_PATCH}
+libasir-gc.a: ${GC_PATCH}
 	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
 		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
 			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
@@ -929,7 +929,7 @@ libAsir-gc.a: ${GC_PATCH}
 	(cd ${top_srcdir}/${GC}; ${MAKE})
 	cp ${top_srcdir}/${GC}/.libs/libgc.a $@
 
-libAsir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
+libasir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
 	-mkdir ${top_srcdir}/libtmp
 	-rm -f ${top_srcdir}/libtmp/*  ${top_srcdir}/$@
 	for i in ${ASIRLIB}; do (cd ${top_srcdir}/libtmp; ar x ../$$i; chmod 644 *) done
@@ -938,42 +938,42 @@ libAsir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
 	(cd ${top_srcdir}; ${RANLIB} $@)
 	-rm -rf ${top_srcdir}/libtmp
 
-install-libAsir: libAsir.a
+install-libasir: libasir.a
 	mkdir -p ${DESTDIR}${libdir}
-	${INSTALL_DATA} libAsir.a ${DESTDIR}${libdir}/libAsir${libAsir_postfix}.a
+	${INSTALL_DATA} libasir.a ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
 
-install-libAsir-gc: libAsir-gc.a
+install-libasir-gc: libasir-gc.a
 	mkdir -p ${DESTDIR}${libdir}
-	${INSTALL_DATA} libAsir-gc.a ${DESTDIR}${libdir}/libAsir-gc.a
+	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir-gc.a
 
-install-openxm: Asir${EXEEXT} install-libAsir install-libAsir-gc
+install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
 	-mkdir -p ${DESTDIR}${bindir}
-	${INSTALL_PROGRAM} Asir ${DESTDIR}${bindir}
-	-mkdir -p ${DESTDIR}${Asirdir}
+	${INSTALL_PROGRAM} asir ${DESTDIR}${bindir}
+	-mkdir -p ${DESTDIR}${asirdir}
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
-	-rm -f ${DESTDIR}${bindir}/ox_Asir${EXEEXT}
-	(cd ${DESTDIR}${bindir} ; ${LN_S} Asir${EXEEXT} ox_Asir${EXEEXT})
-	-(cd ${DESTDIR}${Asirdir}; \
-    rm -f Asir${EXEEXT} ox_Asir${EXEEXT} ox_Launch${EXEEXT} ox_Plot${EXEEXT})
-	(cd ${DESTDIR}${Asirdir} ; \
-	${LN_S} ../../bin/Asir${EXEEXT} Asir${EXEEXT} ; \
-	${LN_S} Asir${EXEEXT} ox_Asir${EXEEXT} ; \
-	${LN_S} Asir${EXEEXT} ox_Launch${EXEEXT} ; \
-	${LN_S} Asir${EXEEXT} ox_Plot${EXEEXT})
+	-rm -f ${DESTDIR}${bindir}/ox_asir${EXEEXT}
+	(cd ${DESTDIR}${bindir} ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
+	-(cd ${DESTDIR}${asirdir}; \
+    rm -f asir${EXEEXT} ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
+	(cd ${DESTDIR}${asirdir} ; \
+	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
 	(cd ${top_srcdir}/include; ${MAKE} install)
 	(cd ${top_srcdir}/parse; ${MAKE} install)
 
 install-lib:
 	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
-	-(cd ${DESTDIR}${Asirdir}; \
-	rm -f ox_Asir${EXEEXT} ox_Launch${EXEEXT} ox_Plot${EXEEXT})
-	(cd ${DESTDIR}${Asirdir} ; \
-	${LN_S} Asir${EXEEXT} ox_Asir${EXEEXT} ; \
-	${LN_S} Asir${EXEEXT} ox_Launch${EXEEXT} ; \
-	${LN_S} Asir${EXEEXT} ox_Plot${EXEEXT})
+	-(cd ${DESTDIR}${asirdir}; \
+	rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
+	(cd ${DESTDIR}${asirdir} ; \
+	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
+	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
 	-mkdir -p ${DESTDIR}${bindir}
-	-rm -f ${DESTDIR}${bindir}/Asir${EXEEXT}
-	(cd ${DESTDIR}${bindir} ; ${LN_S} ../lib/Asir/Asir${EXEEXT} Asir${EXEEXT})
+	-rm -f ${DESTDIR}${bindir}/asir${EXEEXT}
+	(cd ${DESTDIR}${bindir} ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
 
 install-doc:
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc)
@@ -982,7 +982,7 @@ tarball:
 	-rm -rf tmp
 	-mkdir tmp
 	DESTDIR=`cd tmp; pwd` ${MAKE} install-openxm
-	(cd tmp${prefix}; tar cf - * ) | gzip -c > Asir-openxm-${VERSION}.tgz
+	(cd tmp${prefix}; tar cf - * ) | gzip -c > asir-openxm-${VERSION}.tgz
 	-rm -rf tmp
 
 clean-gc:

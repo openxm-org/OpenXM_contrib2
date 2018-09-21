@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -881,7 +881,7 @@ char *scopyright()
   static char *notice;
   char *s1, *s2, *s3, *s4;
   int d, len;
-  char *format = "This is Risa/Asir%s, Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2007, Risa/Asir committers, http://www.openxm.org/.\n%s%s";
+  char *format = "This is Risa/Asir%s, full GMP Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2018, Risa/Asir committers, http://www.openxm.org/.\n%s%s";
   if (!notice) {
     s1 = get_intervalversion();
     s2 = get_asir_distribution();

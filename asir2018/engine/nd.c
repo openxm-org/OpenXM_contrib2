@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.1 2018/09/19 05:45:07 noro Exp $ */
 
 #include "nd.h"
 
@@ -5796,7 +5796,7 @@ int nd_to_vect_q(UINT *s0,int n,ND d,Z *r)
     for ( i = 0, s = s0, m = BDY(d); m; m = NEXT(m) ) {
         t = DL(m);
         for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
-        r[i] = CQ(m);
+        dupz(CQ(m),&r[i]);
     }
     for ( i = 0; !r[i]; i++ );
     return i;
@@ -5993,21 +5993,21 @@ int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
                     ivc = ivect->index.c;
                     for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
                         pos = prev+ivc[j]; prev = pos;
-                        mulz(CQ(mr),mcs,&c2); addz(svect[pos],c2,&t); svect[pos] = t;
+                        muladdtoz(CQ(mr),mcs,&svect[pos]);
                     }
                     break;
                 case 2:
                     ivs = ivect->index.s; 
                     for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
                         pos = prev+ivs[j]; prev = pos;
-                        mulz(CQ(mr),mcs,&c2); addz(svect[pos],c2,&t); svect[pos] = t;
+                        muladdtoz(CQ(mr),mcs,&svect[pos]);
                     }
                     break;
                 case 4:
                     ivi = ivect->index.i;
                     for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
                         pos = prev+ivi[j]; prev = pos;
-                        mulz(CQ(mr),mcs,&c2); addz(svect[pos],c2,&t); svect[pos] = t;
+                        muladdtoz(CQ(mr),mcs,&svect[pos]);
                     }
                     break;
             }

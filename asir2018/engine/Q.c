@@ -25,7 +25,7 @@ void gc_free(void *p,size_t size)
 
 void init_gmpq()
 {
-  mp_set_memory_functions(Risa_GC_malloc_atomic,gc_realloc,gc_free);
+  mp_set_memory_functions(Risa_GC_malloc,gc_realloc,gc_free);
 
   mpz_init(ONEMPZ); mpz_set_ui(ONEMPZ,1); MPZTOZ(ONEMPZ,ONE);
   gmp_randinit_default(GMP_RAND);
@@ -161,6 +161,7 @@ void mulz(Z n1,Z n2,Z *nr)
 
 void muladdtoz(Z n1,Z n2,Z *nr)
 {
+#if 1
   Z t;
 
   if ( n1 && n2 ) {
@@ -168,7 +169,14 @@ void muladdtoz(Z n1,Z n2,Z *nr)
           NEWZ(t); mpz_init(BDY(t)); *nr = t;
         }
         mpz_addmul(BDY(*nr),BDY(n1),BDY(n2));
+        if ( !mpz_sgn(BDY(*nr)) )
+          *nr = 0;
     }
+#else
+  Z t,s;
+
+  mulz(n1,n2,&t); addz(*nr,t,&s); *nr = s;
+#endif
 }
 
 /* nr += n1*u */
@@ -185,6 +193,8 @@ void mul1addtoz(Z n1,long u,Z *nr)
           mpz_addmul_ui(BDY(*nr),BDY(n1),(unsigned long)u);
         else
           mpz_submul_ui(BDY(*nr),BDY(n1),(unsigned long)(-u));
+        if ( !mpz_sgn(BDY(*nr)) )
+          *nr = 0;
     }
 }
 

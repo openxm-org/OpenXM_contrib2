@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.1 2018/09/19 06:00:58 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2530,6 +2530,13 @@ void *gc_realloc(void *p,size_t osize,size_t nsize);
 void gc_free(void *p,size_t size);
 void init_gmpq();
 Q mpqtozq(mpq_t a);
+
+unsigned long mul64(unsigned long a,unsigned long b,unsigned long *c);
+unsigned long mod64(unsigned long u,unsigned long l,unsigned long b);
+unsigned long mulmod64(unsigned long a,unsigned long b,unsigned long m);
+unsigned long muladdmod64(unsigned long a,unsigned long b,unsigned long c,unsigned long m);
+unsigned long invmod64(unsigned long a,unsigned long m);
+
 void addz(Z n1,Z n2,Z *nr);
 void subz(Z n1,Z n2,Z *nr);
 void mulz(Z n1,Z n2,Z *nr);
