@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.1 2018/09/19 05:45:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.2 2018/09/21 07:06:51 noro Exp $ */
 
 #include "nd.h"
 
@@ -5966,6 +5966,7 @@ int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
     int maxrs;
     double hmag;
     Z *cvect;
+    int l;
 
     maxrs = 0;
     for ( i = 0; i < col && !svect[i]; i++ );
@@ -6713,7 +6714,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
         }
         get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
         if ( DP_Print )
-            fprintf(asir_out,"sugar=%d,symb=%.3fsec,",
+            fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",
                 sugar,eg_f4.exectime+eg_f4.gctime);
         nflist = nd_f4_red(m,nd_nzlist?lh:l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
         if ( checkonly && nflist ) return 0;
@@ -6813,7 +6814,7 @@ NODE nd_f4_trace(int m,int **indp)
         }
         get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
         if ( DP_Print )
-            fprintf(asir_out,"sugar=%d,symb=%.3fsec,",
+            fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",
                 sugar,eg_f4.exectime+eg_f4.gctime);
         nflist = nd_f4_red(m,l,0,s0vect,col,rp0,&l0);
         if ( !l0 ) continue;
@@ -9104,7 +9105,7 @@ NODE nd_f4_lf_trace_main(int m,int **indp)
         }
         get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
         if ( DP_Print )
-            fprintf(asir_out,"sugar=%d,symb=%.3fsec,",
+            fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",
                 sugar,eg_f4.exectime+eg_f4.gctime);
         nflist = nd_f4_red(m,l,0,s0vect,col,rp0,&l0);
         if ( !l0 ) continue;

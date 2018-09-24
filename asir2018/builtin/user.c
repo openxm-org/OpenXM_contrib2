@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/user.c,v 1.1 2018/09/19 05:45:06 noro Exp $ */
 
 /* a sample file for adding builtin functions */
 
@@ -74,3 +74,17 @@ void partial_derivative(VL vl,P p,V v,P *r)
   }
 }
 */
+
+void dsave(char *name,Obj a)
+{
+  extern int ox_file_io;
+  VL vl;
+  FILE *fp = fopen(name,"wb");
+  ox_file_io = 1; /* network byte order is used */
+  get_vars_recursive(a,&vl);
+  savevl(fp,CO);
+  saveobj(fp,a);
+  fclose(fp);
+  ox_file_io = 0;
+}
+

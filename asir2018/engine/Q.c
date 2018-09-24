@@ -25,10 +25,20 @@ void gc_free(void *p,size_t size)
 
 void init_gmpq()
 {
-  mp_set_memory_functions(Risa_GC_malloc,gc_realloc,gc_free);
+  mp_set_memory_functions(Risa_GC_malloc_atomic,gc_realloc,gc_free);
 
   mpz_init(ONEMPZ); mpz_set_ui(ONEMPZ,1); MPZTOZ(ONEMPZ,ONE);
   gmp_randinit_default(GMP_RAND);
+}
+
+void pmat(Z **a,int row,int col)
+{
+  int i,j;
+
+  for ( i = 0; i < row; i++, printf("\n") )
+    for ( j = 0; j < col; j++, printf(" ") )
+      printexpr(CO,a[i][j]);
+  printf("\n");
 }
 
 Z utoz(unsigned int u)
@@ -161,7 +171,7 @@ void mulz(Z n1,Z n2,Z *nr)
 
 void muladdtoz(Z n1,Z n2,Z *nr)
 {
-#if 1
+#if 0
   Z t;
 
   if ( n1 && n2 ) {
@@ -171,7 +181,7 @@ void muladdtoz(Z n1,Z n2,Z *nr)
         mpz_addmul(BDY(*nr),BDY(n1),BDY(n2));
         if ( !mpz_sgn(BDY(*nr)) )
           *nr = 0;
-    }
+  }
 #else
   Z t,s;
 
@@ -183,6 +193,7 @@ void muladdtoz(Z n1,Z n2,Z *nr)
 
 void mul1addtoz(Z n1,long u,Z *nr)
 {
+#if 0
   Z t;
 
   if ( n1 && u ) {
@@ -196,6 +207,11 @@ void mul1addtoz(Z n1,long u,Z *nr)
         if ( !mpz_sgn(BDY(*nr)) )
           *nr = 0;
     }
+#else
+  Z t,s;
+
+  mul1z(n1,u,&t); addz(*nr,t,&s); *nr = s;
+#endif
 }
 
 void mul1z(Z n1,long n2,Z *nr)
@@ -1421,13 +1437,14 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp)
   int *rind,*cind;
   int count;
   int ret;
-  struct oEGT eg_mul,eg_inv,eg_intrat,eg_check,tmp0,tmp1;
+  struct oEGT eg_mul1,eg_mul2,tmp0,tmp1,tmp2;
   int period;
   int *wx,*ptr;
   int wxsize,nsize;
   Z wn;
   Z wq;
 
+init_eg(&eg_mul1); init_eg(&eg_mul2);
   a0 = (Z **)mat->body;
   row = mat->row; col = mat->col;
   w = (int **)almat(row,col);
@@ -1478,40 +1495,54 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp)
       MKMAT(xmat,rank,ri); x = (Z **)(xmat)->body;
       MKMAT(*nmmat,rank,ri); nm = (Z **)(*nmmat)->body;
       wc = (int **)almat(rank,ri);
-      for ( i = 0; i < rank; i++ )
-        wc[i] = w[i]+rank;
       *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
       *cindp = cind = (int *)MALLOC_ATOMIC((ri)*sizeof(int));
 
       period = F4_INTRAT_PERIOD;
       for ( q = ONE, count = 0; ; ) {
+        /* check Ax=B mod q */
         if ( DP_Print > 3 )
           fprintf(stderr,"o");
         /* wc = b mod md */
         for ( i = 0; i < rank; i++ )
-          for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ ) {
+          for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
             wi[j] = remqi((Q)bi[j],md);
-            if ( wi[j] && sgnz(bi[j]) < 0 )
-              wi[j] = md-wi[j];
-          }
-        /* wc = A^(-1)wc; wc is normalized */
-        solve_by_lu_mod(w,rank,md,wc,ri,1);
+        /* wc = A^(-1)wc; wc is not normalized */
+        solve_by_lu_mod(w,rank,md,wc,ri,0);
         /* x += q*wc */
+get_eg(&tmp0);
         for ( i = 0; i < rank; i++ )
           for ( j = 0, wi = wc[i]; j < ri; j++ ) mul1addtoz(q,wi[j],&x[i][j]);
-        /* b =(A*wc+b)/md */
+        /* b =(b-A*wc)/md */
+get_eg(&tmp1); add_eg(&eg_mul1,&tmp0,&tmp1);
         for ( i = 0; i < rank; i++ )
           for ( j = 0; j < ri; j++ ) {
-            u = b[i][j];
-            for ( k = 0; k < rank; k++ ) mul1addtoz(a[i][k],wc[k][j],&u);
+            mpz_t uz;
+
+            if ( b[i][j] )
+              mpz_init_set(uz,BDY(b[i][j]));
+            else
+              mpz_init_set_ui(uz,0);
+            for ( k = 0; k < rank; k++ ) {
+              if ( a[i][k] && wc[k][j] ) {
+                if ( wc[k][j] < 0 )
+                  mpz_addmul_ui(uz,BDY(a[i][k]),-wc[k][j]);
+                else
+                  mpz_submul_ui(uz,BDY(a[i][k]),wc[k][j]);
+              }
+            }
+            MPZTOZ(uz,u);
             divsz(u,mdq,&b[i][j]);
           }
+get_eg(&tmp2); add_eg(&eg_mul2,&tmp1,&tmp2);
         count++;
         /* q = q*md */
         mulz(q,mdq,&u); q = u;
         if ( count == period ) {
           ret = intmtoratm(xmat,q,*nmmat,dn);
           if ( ret ) {
+            print_eg("MUL1",&eg_mul1);
+            print_eg("MUL2",&eg_mul2);
             for ( j = k = l = 0; j < col; j++ )
               if ( cinfo[j] )
                 rind[k++] = j;  
@@ -1623,8 +1654,6 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
       MKMAT(xmat,rank,ri); x = (Z **)(xmat)->body;
       MKMAT(*nmmat,rank,ri); nm = (Z **)(*nmmat)->body;
       wc = (int **)almat(rank,ri);
-      for ( i = 0; i < rank; i++ )
-        wc[i] = w[i]+rank;
       *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
       *cindp = cind = (int *)MALLOC_ATOMIC((ri)*sizeof(int));
 
@@ -1634,21 +1663,31 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
           fprintf(stderr,"o");
         /* wc = b mod md */
         for ( i = 0; i < rank; i++ )
-          for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ ) {
+          for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
             wi[j] = remqi((Q)bi[j],md);
-            if ( wi[j] && sgnz(bi[j]) < 0 )
-              wi[j] = md-wi[j];
-          }
         /* wc = A^(-1)wc; wc is normalized */
         solve_by_lu_mod(w,rank,md,wc,ri,1);
         /* x += q*wc */
         for ( i = 0; i < rank; i++ )
           for ( j = 0, wi = wc[i]; j < ri; j++ ) mul1addtoz(q,wi[j],&x[i][j]);
-        /* b =(A*wc+b)/md */
+        /* b =(b-A*wc)/md */
         for ( i = 0; i < rank; i++ )
           for ( j = 0; j < ri; j++ ) {
-            u = b[i][j];
-            for ( k = 0; k < rank; k++ ) mul1addtoz(a[i][k],wc[k][j],&u);
+            mpz_t uz;
+
+            if ( b[i][j] )
+              mpz_init_set(uz,BDY(b[i][j]));
+            else
+              mpz_init_set_ui(uz,0);
+            for ( k = 0; k < rank; k++ ) {
+              if ( a[i][k] && wc[k][j] ) {
+                if ( wc[k][j] < 0 )
+                  mpz_addmul_ui(uz,BDY(a[i][k]),-wc[k][j]);
+                else
+                  mpz_submul_ui(uz,BDY(a[i][k]),wc[k][j]);
+              }
+            }
+            MPZTOZ(uz,u);
             divsz(u,mdq,&b[i][j]);
           }
         count++;
