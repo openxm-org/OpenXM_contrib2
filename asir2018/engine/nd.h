@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.1 2018/09/19 05:45:07 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -390,17 +390,20 @@ IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,int *s0hash,NM_ind_pa
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
 int nd_to_vect_q(UINT *s0,int n,ND d,Z *r);
 NDV vect_to_ndv_q(Z *vect,int spcol,int col,int *rhead,UINT *s0vect);
-int nd_to_vect64(int mod,UINT *s0,int n,ND d,U64 *r);
-int ndv_reduce_vect64(int m,U64 *svect,U64 *cvect,int col,IndArray *imat,NM_ind_pair *rp0,int nred);
-NDV vect64_to_ndv(U64 *vect,int spcol,int col,int *rhead,UINT *s0vect);
-void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len);
 
 /* elimination */
 int nd_gauss_elim_mod(UINT **mat0,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
 int nd_gauss_elim_sf(UINT **mat0,int *sugar,int row,int col,int md,int *colstat);
 int nd_gauss_elim_q(Z **mat0,int *sugar,int row,int col,int *colstat);
-int nd_gauss_elim_mod64(U64 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
 
 int ndl_ww_lex_compare(UINT *a1,UINT *a2);
+
+#if defined(__GNUC__) && SIZEOF_LONG == 8
+int nd_to_vect64(int mod,UINT *s0,int n,ND d,U64 *r);
+int ndv_reduce_vect64(int m,U64 *svect,U64 *cvect,int col,IndArray *imat,NM_ind_pair *rp0,int nred);
+NDV vect64_to_ndv(U64 *vect,int spcol,int col,int *rhead,UINT *s0vect);
+void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len);
+int nd_gauss_elim_mod64(U64 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
+#endif
 
 
