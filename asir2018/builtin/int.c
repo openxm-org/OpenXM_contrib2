@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.2 2018/09/21 07:06:51 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -365,13 +365,14 @@ void Piqr(NODE arg,LIST *rp)
 void Pinttorat(NODE arg,LIST *rp)
 {
   int ret;
-  Z c,m,b,nm,dn;
+  Z c,m,t,b,nm,dn;
   NODE node;
 
   asir_assert(ARG0(arg),O_N,"inttorat");
   asir_assert(ARG1(arg),O_N,"inttorat");
   asir_assert(ARG2(arg),O_N,"inttorat");
   c = (Z)ARG0(arg); m = (Z)ARG1(arg); b = (Z)ARG2(arg);
+  remz(c,m,&t); c = t;
   ret = inttorat(c,m,b,&nm,&dn);
   if ( !ret )
     *rp = 0;

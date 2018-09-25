@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.2 2018/09/21 07:06:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.3 2018/09/24 22:26:43 noro Exp $ */
 
 #include "nd.h"
 
@@ -4232,6 +4232,44 @@ void removecont_array_q(Z *c,int n)
   for ( i = 0; i < n; i++ ) c[i] = q[i];
 }
 
+void gcdv_mpz_estimate(mpz_t d0,mpz_t *c,int n);
+
+void mpz_removecont_array(mpz_t *c,int n)
+{
+  mpz_t d0,a,u,u1,gcd;
+  int i,j;
+  mpz_t *q,*r;
+
+  for ( i = 0; i < n; i++ ) 
+    if ( mpz_sgn(c[i]) ) break;
+  if ( i == n ) return;
+  gcdv_mpz_estimate(d0,c,n);
+  q = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+  r = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+  for ( i = 0; i < n; i++ ) {
+    mpz_init(q[i]); mpz_init(r[i]);
+    mpz_fdiv_qr(q[i],r[i],c[i],d0);
+  }
+  for ( i = 0; i < n; i++ ) 
+    if ( mpz_sgn(r[i]) ) break;
+  mpz_init(gcd); mpz_init(a); mpz_init(u); mpz_init(u1);
+  if ( i < n ) {
+    mpz_gcd(gcd,d0,r[i]);
+    for ( j = i+1; j < n; j++ ) mpz_gcd(gcd,gcd,r[j]);
+    mpz_div(a,d0,gcd);
+    for ( i = 0; i < n; i++ ) {
+      mpz_mul(u,a,q[i]);
+      if ( mpz_sgn(r[i]) ) {
+        mpz_div(u1,r[i],gcd);
+        mpz_add(q[i],u,u1);
+      } else
+        mpz_set(q[i],u);
+    }
+  }
+  for ( i = 0; i < n; i++ )
+    mpz_set(c[i],q[i]);
+}
+
 void nd_mul_c(int mod,ND p,int mul)
 {
     NM m;
@@ -5952,6 +5990,7 @@ void expand_array(Z *svect,Z *cvect,int n)
         if ( svect[i] ) svect[i] = cvect[j++];
 }
 
+#if 1
 int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
     int i,j,k,len,pos,prev,nz;
@@ -6030,6 +6069,94 @@ int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
     }
     return maxrs;
 }
+#else
+/* direct mpz version */
+int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+{
+    int i,j,k,len,pos,prev;
+    mpz_t *svect;
+    mpz_t cs,cr,gcd;
+    IndArray ivect;
+    unsigned char *ivc;
+    unsigned short *ivs;
+    unsigned int *ivi;
+    NDV redv;
+    NMV mr;
+    NODE rp;
+    int maxrs;
+    double hmag;
+    int l;
+
+    maxrs = 0;
+    for ( i = 0; i < col && !svect0[i]; i++ );
+    if ( i == col ) return maxrs;
+    hmag = p_mag((P)svect0[i])*nd_scale;
+    svect = (mpz_t *)MALLOC(col*sizeof(mpz_t));
+    for ( i = 0; i < col; i++ ) {
+      mpz_init(svect[i]);
+      if ( svect0[i] )
+        mpz_set(svect[i],BDY(svect0[i]));
+      else
+        mpz_set_ui(svect[i],0);
+    }
+    mpz_init(gcd); mpz_init(cs); mpz_init(cr);
+    for ( i = 0; i < nred; i++ ) {
+        ivect = imat[i];
+        k = ivect->head;
+        if ( mpz_sgn(svect[k]) ) {
+            maxrs = MAX(maxrs,rp0[i]->sugar);
+            redv = nd_demand?ndv_load(rp0[i]->index)
+                     :(trace?nd_ps_trace[rp0[i]->index]:nd_ps[rp0[i]->index]);
+            len = LEN(redv); mr = BDY(redv);
+            mpz_gcd(gcd,svect[k],BDY(CQ(mr)));
+            mpz_div(cs,svect[k],gcd);
+            mpz_div(cr,BDY(CQ(mr)),gcd);
+            mpz_neg(cs,cs);
+            for ( j = 0; j < col; j++ )
+              mpz_mul(svect[j],svect[j],cr);
+            mpz_set_ui(svect[k],0);
+            prev = k;
+            switch ( ivect->width ) {
+                case 1:
+                    ivc = ivect->index.c;
+                    for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+                        pos = prev+ivc[j]; prev = pos;
+                        mpz_addmul(svect[pos],BDY(CQ(mr)),cs);
+                    }
+                    break;
+                case 2:
+                    ivs = ivect->index.s; 
+                    for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+                        pos = prev+ivs[j]; prev = pos;
+                        mpz_addmul(svect[pos],BDY(CQ(mr)),cs);
+                    }
+                    break;
+                case 4:
+                    ivi = ivect->index.i;
+                    for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
+                        pos = prev+ivi[j]; prev = pos;
+                        mpz_addmul(svect[pos],BDY(CQ(mr)),cs);
+                    }
+                    break;
+            }
+            for ( j = k+1; j < col && !svect[j]; j++ );
+            if ( j == col ) break;
+            if ( hmag && ((double)mpz_sizeinbase(svect[j],2) > hmag) ) {
+                mpz_removecont_array(svect,col);
+                hmag = ((double)mpz_sizeinbase(svect[j],2))*nd_scale;
+            }
+        }
+    }
+    mpz_removecont_array(svect,col);
+    if ( DP_Print ) { 
+        fprintf(asir_out,"-"); fflush(asir_out);
+    }
+    for ( i = 0; i < col; i++ )
+      if ( mpz_sgn(svect[i]) ) MPZTOZ(svect[i],svect0[i]);
+      else svect0[i] = 0;
+    return maxrs;
+}
+#endif
 
 int ndv_reduce_vect(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {

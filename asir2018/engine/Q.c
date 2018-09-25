@@ -453,13 +453,56 @@ void gcdvz_estimate(VECT v,Z *q)
     else addz(s,b[i],&u);
     s = u;
   }
-  for ( i = 0, t = 0; i < n; i++ ) {
+  for ( t = 0; i < n; i++ ) {
     if ( b[i] && mpz_sgn(BDY(b[i]))<0 ) subz(t,b[i],&u);
     else addz(t,b[i],&u);
     t = u;
   }
   gcdz(s,t,q);
 }
+
+void gcdv_mpz_estimate(mpz_t g,mpz_t *b,int n)
+{
+  int m,m2,i,j;
+  mpz_t s,t;
+
+  mpz_init(g);
+  for ( i = 0, m = 0; i < n; i++ )
+    if ( mpz_sgn(b[i]) ) m++;
+  if ( !m ) {
+    mpz_set_ui(g,0);
+    return;
+  }
+  if ( m == 1 ) {
+    for ( i = 0, m = 0; i < n; i++ )
+      if ( mpz_sgn(b[i]) ) break;
+    if ( mpz_sgn(b[i])<0 ) mpz_neg(g,b[i]);
+    else mpz_set(g,b[i]);
+    return ;
+  }
+  m2 = m/2;
+  mpz_init_set_ui(s,0);
+  for ( i = j = 0; j < m2; i++ ) {
+    if ( mpz_sgn(b[i]) ) {
+      if ( mpz_sgn(b[i])<0 ) 
+        mpz_sub(s,s,b[i]);
+      else
+        mpz_add(s,s,b[i]);
+      j++;
+    }
+  }
+  mpz_init_set_ui(t,0);
+  for ( ; i < n; i++ ) {
+    if ( mpz_sgn(b[i]) ) {
+      if ( mpz_sgn(b[i])<0 ) 
+        mpz_sub(t,t,b[i]);
+      else
+        mpz_add(t,t,b[i]);
+    }
+  }
+  mpz_gcd(g,s,t);
+}
+
 
 void factorialz(unsigned int n,Z *nr)
 {
@@ -1624,14 +1667,14 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
     a = (Z **)almat_pointer(rank,rank); /* lhs mat */
     MKMAT(bmat,rank,col-rank); b = (Z **)bmat->body; /* lhs mat */
     for ( j = li = ri = 0; j < col; j++ )
-      if ( cinfo[j] ) {
+      if ( cinfo[j] > 0 ) {
         /* the column is in lhs */
         for ( i = 0; i < rank; i++ ) {
           w[i][li] = w[i][j];
           a[i][li] = a0[rinfo[i]][j];
         }
         li++;
-      } else {
+      } else if ( !cinfo[j] ) {
         /* the column is in rhs */
         for ( i = 0; i < rank; i++ )
           b[i][ri] = a0[rinfo[i]][j];
