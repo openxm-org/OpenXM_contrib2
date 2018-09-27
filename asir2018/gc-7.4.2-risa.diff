@@ -1,0 +1,105 @@
+diff -urN gc-7.4.2.orig/NT_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_STATIC_THREADS_MAKEFILE
+--- gc-7.4.2.orig/NT_STATIC_THREADS_MAKEFILE	2014-06-03 15:08:01.000000000 +0900
++++ gc-7.4.2/NT_STATIC_THREADS_MAKEFILE	2018-09-27 10:51:50.368874890 +0900
+@@ -3,7 +3,7 @@
+ 
+ MY_CPU=X86
+ CPU=$(MY_CPU)
+-!include <ntwin32.mak>
++#!include <ntwin32.mak>
+ 
+ # Make sure that .cc is not viewed as a suffix.  It is for VC++2005, but
+ # not earlier versions.  We can deal with either, but not inconsistency.
+@@ -22,10 +22,10 @@
+ all: gctest.exe cord\de.exe test_cpp.exe
+ 
+ .c.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -DPARALLEL_MARK -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj
+ 
+ .cpp.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
+ 
+ $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\gc_disclaim.h include\private\msvc_dbg.h
+ 
+diff -urN gc-7.4.2.orig/NT_X64_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_X64_STATIC_THREADS_MAKEFILE
+--- gc-7.4.2.orig/NT_X64_STATIC_THREADS_MAKEFILE	2014-06-03 15:08:01.000000000 +0900
++++ gc-7.4.2/NT_X64_STATIC_THREADS_MAKEFILE	2018-09-27 10:51:50.368874890 +0900
+@@ -3,7 +3,7 @@
+ 
+ MY_CPU=AMD64
+ CPU=$(MY_CPU)
+-!include <ntwin32.mak>
++#!include <ntwin32.mak>
+ 
+ # Make sure that .cc is not viewed as a suffix.  It is for VC++2005, but
+ # not earlier versions.  We can deal with either, but not inconsistency.
+@@ -22,13 +22,13 @@
+ all: gctest.exe cord\de.exe test_cpp.exe
+ 
+ .c.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.c /Fo$*.obj /wd4701
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.c /Fo$*.obj /wd4701
+ # Disable "may not be initialized" warnings.  They're too approximate.
+ # Disable crt security warnings, since unfortunately they warn about all sorts
+ # of safe uses of strncpy.  It would be nice to leave the rest enabled.
+ 
+ .cpp.obj:
+-	$(cc) $(cdebug) $(cflags) $(cvarsmt) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE $*.cpp /Fo$*.obj
++	$(CC) -c $(CDEBUG) $(CFLAGS) $(CVARSMT) -Iinclude -I$(AO_INCLUDE_DIR) -DALL_INTERIOR_POINTERS -DGC_NOT_DLL -DGC_THREADS -DTHREAD_LOCAL_ALLOC -D_CRT_SECURE_NO_DEPRECATE -DLARGE_CONFIG $*.cpp /Fo$*.obj
+ 
+ $(OBJS) tests\test.obj: include\private\gc_priv.h include\private\gc_hdrs.h include\gc.h include\private\gcconfig.h include\private\gc_locks.h include\private\gc_pmark.h include\gc_mark.h include\gc_disclaim.h include\private\msvc_dbg.h
+ 
+diff -urN gc-7.4.2.orig/alloc.c gc-7.4.2/alloc.c
+--- gc-7.4.2.orig/alloc.c	2014-06-03 15:08:01.000000000 +0900
++++ gc-7.4.2/alloc.c	2018-09-27 10:56:21.578349458 +0900
+@@ -121,6 +121,7 @@
+ #endif
+ 
+ word GC_free_space_divisor = GC_FREE_SPACE_DIVISOR;
++word GC_free_space_numerator = 1;
+ 
+ GC_INNER int GC_CALLBACK GC_never_stop_func(void)
+ {
+@@ -227,8 +228,8 @@
+     total_root_size = 2 * stack_size + GC_root_size;
+     scan_size = 2 * GC_composite_in_use + GC_atomic_in_use / 4
+                 + total_root_size;
+-    result = scan_size / GC_free_space_divisor;
+-    if (GC_incremental) {
++    result = scan_size * GC_free_space_numerator / GC_free_space_divisor;
++    if (1 || GC_incremental) {
+       result /= 2;
+     }
+     return result > 0 ? result : 1;
+@@ -1215,6 +1216,9 @@
+     if (GC_on_heap_resize)
+       (*GC_on_heap_resize)(GC_heapsize);
+ 
++#if defined(VISUAL)
++    SendHeapSize();
++#endif
+     return(TRUE);
+ }
+ 
+@@ -1276,7 +1280,7 @@
+       }
+     }
+ 
+-    blocks_to_get = GC_heapsize/(HBLKSIZE*GC_free_space_divisor)
++    blocks_to_get = GC_heapsize * GC_free_space_numerator /(HBLKSIZE*GC_free_space_divisor)
+                         + needed_blocks;
+     if (blocks_to_get > MAXHINCR) {
+       word slop;
+diff -urN gc-7.4.2.orig/include/private/gcconfig.h gc-7.4.2/include/private/gcconfig.h
+--- gc-7.4.2.orig/include/private/gcconfig.h	2014-06-03 15:08:02.000000000 +0900
++++ gc-7.4.2/include/private/gcconfig.h	2018-09-27 10:51:50.388875287 +0900
+@@ -2622,6 +2622,7 @@
+ #if ((defined(UNIX_LIKE) && (defined(DARWIN) || defined(HURD) \
+                              || defined(OPENBSD) || defined(ARM32) \
+                              || defined(MIPS) || defined(AVR32))) \
++     || (defined(FREEBSD) && defined(__FreeBSD__) && __FreeBSD__ < 5) \
+      || (defined(LINUX) && (defined(SPARC) || defined(M68K))) \
+      || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386))) \
+     && !defined(NO_GETCONTEXT)
