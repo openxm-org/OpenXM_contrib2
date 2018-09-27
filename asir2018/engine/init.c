@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -159,14 +159,12 @@ void nglob_init() {
   init_gmpq();
 }
 
-extern double GC_get_gctime();
 double suspend_start;
 double suspended_time=0;
 
 void get_eg(struct oEGT *p)
 {
-  double gctime = GC_get_gctime();
-  p->exectime = get_clock() - gctime - suspended_time; p->gctime = gctime;
+  p->exectime = get_clock()-suspended_time; p->gctime = 0;
 }
 
 void init_eg(struct oEGT *eg)
@@ -177,12 +175,11 @@ void init_eg(struct oEGT *eg)
 void add_eg(struct oEGT *base,struct oEGT *start,struct oEGT *end)
 {
   base->exectime += end->exectime - start->exectime;
-  base->gctime += end->gctime - start->gctime;
 }
 
 void print_eg(char *item,struct oEGT *eg)
 {
-  printf("%s=(%.4g,%.4g)",item,eg->exectime,eg->gctime);
+  printf("%s=(%.4g)",item,eg->exectime);
 }
 
 void print_split_eg(struct oEGT *start,struct oEGT *end)
@@ -190,7 +187,7 @@ void print_split_eg(struct oEGT *start,struct oEGT *end)
   struct oEGT base;
 
   init_eg(&base); add_eg(&base,start,end);
-  printf("(%.4g,%.4g)",base.exectime,base.gctime);
+  printf("(%.4g)",base.exectime);
 }
 
 void print_split_e(struct oEGT *start,struct oEGT *end)

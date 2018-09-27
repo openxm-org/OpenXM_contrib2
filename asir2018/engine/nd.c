@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.3 2018/09/24 22:26:43 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.4 2018/09/25 07:36:01 noro Exp $ */
 
 #include "nd.h"
 
@@ -3837,7 +3837,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     }
     get_eg(&eg1); init_eg(&eg_check); add_eg(&eg_check,&eg0,&eg1);
     if ( DP_Print )
-        fprintf(asir_out,"check=%.3fsec,",eg_check.exectime+eg_check.gctime);
+        fprintf(asir_out,"check=%.3fsec,",eg_check.exectime);
     /* dp->p */
     nd_bpe = cbpe;
     nd_setup_parameters(nd_nvar,0);
@@ -6842,7 +6842,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
         get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
         if ( DP_Print )
             fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",
-                sugar,eg_f4.exectime+eg_f4.gctime);
+                sugar,eg_f4.exectime);
         nflist = nd_f4_red(m,nd_nzlist?lh:l,0,s0vect,col,rp0,nd_gentrace?&ll:0);
         if ( checkonly && nflist ) return 0;
         /* adding new bases */
@@ -6942,7 +6942,7 @@ NODE nd_f4_trace(int m,int **indp)
         get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
         if ( DP_Print )
             fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",
-                sugar,eg_f4.exectime+eg_f4.gctime);
+                sugar,eg_f4.exectime);
         nflist = nd_f4_red(m,l,0,s0vect,col,rp0,&l0);
         if ( !l0 ) continue;
         l = l0;
@@ -7156,7 +7156,7 @@ init_eg(&eg_search);
     init_eg(&eg_elim2); add_eg(&eg_elim2,&eg1,&eg2);
     if ( DP_Print ) {
         fprintf(asir_out,"elim1=%.3fsec,elim2=%.3fsec,",
-      eg_elim1.exectime+eg_elim1.gctime,eg_elim2.exectime+eg_elim2.gctime);
+      eg_elim1.exectime,eg_elim2.exectime);
         fflush(asir_out);
   }
     return r0;
@@ -7262,7 +7262,7 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     }
     get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
         fflush(asir_out);
     }
     /* free index arrays */
@@ -7287,10 +7287,10 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
         fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
             nsp,nred,sprow,spcol,rank);
-        fprintf(asir_out,"%.3fsec,",eg_f4.exectime+eg_f4.gctime);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
     }
     if ( nz ) {
         for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];
@@ -7350,7 +7350,7 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     }
     get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
         fflush(asir_out);
     }
     /* free index arrays */
@@ -7372,10 +7372,10 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
         fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
             nsp,nred,sprow,spcol,rank);
-        fprintf(asir_out,"%.3fsec,",eg_f4.exectime+eg_f4.gctime);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
     }
     if ( nz ) {
         for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];
@@ -7433,7 +7433,7 @@ NODE nd_f4_red_sf_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     }
     get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
         fflush(asir_out);
     }
     /* free index arrays */
@@ -7455,10 +7455,10 @@ NODE nd_f4_red_sf_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
         fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
             nsp,nred,sprow,spcol,rank);
-        fprintf(asir_out,"%.3fsec,",eg_f4.exectime+eg_f4.gctime);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
     }
     if ( nz ) {
         for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];
@@ -7510,7 +7510,7 @@ NODE nd_f4_red_lf_main(int m,ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
     }
     get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
         fflush(asir_out);
     }
     /* free index arrays */
@@ -7545,10 +7545,10 @@ NODE nd_f4_red_lf_main(int m,ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
         fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
             nsp,nred,sprow,spcol,rank);
-        fprintf(asir_out,"%.3fsec,",eg_f4.exectime+eg_f4.gctime);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
     }
     return r0;
 }
@@ -7592,7 +7592,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     }
     get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime+eg_f4_1.gctime);
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
         fflush(asir_out);
     }
     /* free index arrays */
@@ -7626,10 +7626,10 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
-        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime+eg_f4_2.gctime);
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
         fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
             nsp,nred,sprow,spcol,rank);
-        fprintf(asir_out,"%.3fsec,",eg_f4.exectime+eg_f4.gctime);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
     }
     return r0;
 }
@@ -9172,7 +9172,7 @@ void nd_f4_lf_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST
     } 
     get_eg(&eg1); init_eg(&eg_check); add_eg(&eg_check,&eg0,&eg1);
     if ( DP_Print )
-        fprintf(asir_out,"check=%.3fsec\n",eg_check.exectime+eg_check.gctime);
+        fprintf(asir_out,"check=%.3fsec\n",eg_check.exectime);
     /* dp->p */
     nd_bpe = cbpe;
     nd_setup_parameters(nd_nvar,0);
@@ -9232,8 +9232,7 @@ NODE nd_f4_lf_trace_main(int m,int **indp)
         }
         get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
         if ( DP_Print )
-            fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",
-                sugar,eg_f4.exectime+eg_f4.gctime);
+            fprintf(asir_out,"\nsugar=%d,symb=%.3fsec,",sugar,eg_f4.exectime);
         nflist = nd_f4_red(m,l,0,s0vect,col,rp0,&l0);
         if ( !l0 ) continue;
         l = l0;

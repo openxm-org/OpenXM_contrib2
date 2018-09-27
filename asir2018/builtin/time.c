@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/time.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -125,10 +125,6 @@ void printtime(struct oEGT *egt0,struct oEGT *egt1,double r)
 
   e = egt1->exectime - egt0->exectime;
   if ( e < 0 ) e = 0;
-  g = egt1->gctime - egt0->gctime;
-  if ( g < 0 ) g = 0;
-  if ( g )
-    fprintf(stderr,"%.4gsec + gc : %.4gsec(%.4gsec)\n",e,g,r);
-  else
-    fprintf(stderr,"%.4gsec(%.4gsec)\n",e,r);
+  g = 0;
+  fprintf(stderr,"%.4gsec(%.4gsec)\n",e,r);
 }
