@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.1 2018/09/19 05:45:07 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.2 2018/09/25 21:51:21 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -145,14 +145,12 @@ extern int *current_module_weight_vector;
 #define HCU(d) ((d)->body->c)
 #define HCM(d) ((d)->body->c.m)
 #define HCLM(d) ((d)->body->c.lm)
-#define HCQ(d) ((d)->body->c.z)
-#define HCZ(d) ((d)->body->c.gz)
+#define HCZ(d) ((d)->body->c.z)
 #define HCP(d) ((d)->body->c.p)
 #define HCA(d) ((d)->body->c.a)
 #define CM(x) ((x)->c.m)
 #define CLM(x) ((x)->c.lm)
-#define CQ(x) ((x)->c.z)
-#define CZ(x) ((x)->c.gz)
+#define CZ(x) ((x)->c.z)
 #define CP(x) ((x)->c.p)
 #define CA(x) ((x)->c.a)
 #define DL(x) ((x)->dl)
@@ -293,7 +291,7 @@ INLINE int ndl_hash_value(UINT *d);
 INLINE int ndl_find_reducer(UINT *g);
 int nd_sp(int mod,int trace,ND_pairs p,ND *nf);
 int nd_sp_f4(int m,int trace,ND_pairs l,PGeoBucket bucket);
-int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *nf);
+int nd_nf(int mod,ND d,ND g,NDV *ps,int full,ND *nf);
 int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *nf);
 
 /* finalizers */

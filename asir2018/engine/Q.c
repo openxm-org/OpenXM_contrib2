@@ -353,7 +353,7 @@ void pwrz(Z n1,Z n,Z *nr)
   } else if ( !smallz(n) ) {
     error("exponent too big."); *nr = 0;
   } else if ( n1->z && mpz_sgn(BDY((Z)n))>0 ) {
-    mpz_init(z); mpz_pow_ui(z,BDY(n1),QTOS(n)); MPZTOZ(z,*nr);
+    mpz_init(z); mpz_pow_ui(z,BDY(n1),ZTOS(n)); MPZTOZ(z,*nr);
   } else {
     MPZTOMPQ(BDY(n1),q); MPQTOQ(q,r);
     pwrq(r,(Q)n,&p); *nr = (Z)p;
@@ -648,7 +648,7 @@ void pwrq(Q n1,Q n,Q *nr)
   } else if ( !smallz((Z)n) ) {
     error("exponent too big."); *nr = 0;
   } else {
-    e = QTOS(n);
+    e = ZTOS(n);
     if ( e < 0 ) {
       e = -e;
       if ( n1->z ) {
@@ -705,8 +705,8 @@ void mkbc(int n,Z *t)
   Z c,d,iq;
 
   for ( t[0] = ONE, i = 1; i <= n/2; i++ ) {
-    STOQ(n-i+1,c); mulz(t[i-1],c,&d); 
-    STOQ(i,iq); divsz(d,iq,&t[i]);
+    STOZ(n-i+1,c); mulz(t[i-1],c,&d); 
+    STOZ(i,iq); divsz(d,iq,&t[i]);
   }
   for ( ; i <= n; i++ )
     t[i] = t[n-i];
@@ -1369,7 +1369,7 @@ void isqrtz(Z a,Z *r)
   else {
     k = z_bits((Q)a); /* a <= 2^k-1 */
     bshiftz(ONE,-((k>>1)+(k&1)),&x); /* a <= x^2 */
-    STOQ(2,two);
+    STOZ(2,two);
     while ( 1 ) {
       pwrz(x,two,&t);
       if ( cmpz(t,a) <= 0 ) {
@@ -1493,7 +1493,7 @@ init_eg(&eg_mul1); init_eg(&eg_mul2);
   w = (int **)almat(row,col);
   for ( ind = 0; ; ind++ ) {
     md = get_lprime(ind);
-    STOQ(md,mdq);
+    STOZ(md,mdq);
     for ( i = 0; i < row; i++ )
       for ( j = 0, ai = a0[i], wi = w[i]; j < col; j++ )
         wi[j] = remqi((Q)ai[j],md);
@@ -1641,7 +1641,7 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
   w = (int **)almat(row,col);
   for ( ind = 0; ; ind++ ) {
     md = get_lprime(ind);
-    STOQ(md,mdq);
+    STOZ(md,mdq);
     for ( i = 0; i < row; i++ )
       for ( j = 0, ai = a0[i], wi = w[i]; j < col; j++ )
         wi[j] = remqi((Q)ai[j],md);

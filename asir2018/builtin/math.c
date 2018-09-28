@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/math.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -290,10 +290,10 @@ void Pdisnan(NODE arg,Z *rp)
 #if defined(VISUAL) || defined(__MINGW32__)
   c = _fpclass(d);
   if ( c == _FPCLASS_SNAN || c == _FPCLASS_QNAN ) *rp = ONE;
-  else if ( c == _FPCLASS_PINF || c == _FPCLASS_NINF ) STOQ(2,*rp);
+  else if ( c == _FPCLASS_PINF || c == _FPCLASS_NINF ) STOZ(2,*rp);
 #else
   if ( isnan(d) ) *rp = ONE;
-  else if ( isinf(d) ) STOQ(2,*rp);
+  else if ( isinf(d) ) STOZ(2,*rp);
 #endif
   else *rp = 0;
 }

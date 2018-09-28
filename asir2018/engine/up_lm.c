@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/up_lm.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -92,7 +92,7 @@ void fft_mulup_lm(UP n1,UP n2,UP *nr)
     cond = FFT_pol_product(d1,f1,d2,f2,fr,i,w);
     if ( cond )
       error("fft_mulup : error in FFT_pol_product");
-    STOQ(mod,m1); mulz(m,m1,&m2); m = m2;
+    STOZ(mod,m1); mulz(m,m1,&m2); m = m2;
     if ( z_bits((Q)m) > bound ) {
       crup_lm(frarray,d1+d2,modarray,frarray_index,m,lm_mod,&r);
       uptolmup(r,nr);
@@ -137,7 +137,7 @@ void fft_squareup_lm(UP n1,UP *nr)
     cond = FFT_pol_square(d1,f1,fr,i,w);
     if ( cond )
       error("fft_mulup : error in FFT_pol_product");
-    STOQ(mod,m1); mulz(m,m1,&m2); m = m2;
+    STOZ(mod,m1); mulz(m,m1,&m2); m = m2;
     if ( z_bits((Q)m) > bound ) {
       crup_lm(frarray,2*d1,modarray,frarray_index,m,lm_mod,&r);
       uptolmup(r,nr);
@@ -185,7 +185,7 @@ void trunc_fft_mulup_lm(UP n1,UP n2,int dbd,UP *nr)
     cond = FFT_pol_product(d1,f1,d2,f2,fr,i,w);
     if ( cond )
       error("fft_mulup : error in FFT_pol_product");
-    STOQ(mod,m1); mulz(m,m1,&m2); m = m2;
+    STOZ(mod,m1); mulz(m,m1,&m2); m = m2;
     if ( z_bits((Q)m) > bound ) {
       crup_lm(frarray,MIN(dbd-1,d1+d2),modarray,frarray_index,m,lm_mod,&r);
       uptolmup(r,nr);

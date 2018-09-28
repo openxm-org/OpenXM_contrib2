@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/H.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -969,7 +969,7 @@ void ptolum(int q,int bound,P f,LUM fl)
   for ( dc = DC(f), pp = COEF(fl); dc; dc = NEXT(dc) ) {
     absz((Z)COEF(dc),&z);
     d = ztonadic(q,z,&w);
-    c = pp[QTOS(DEG(dc))];
+    c = pp[ZTOS(DEG(dc))];
     for ( i = 0; i < d; i++ ) c[i] = w[i];
     for ( ; i < bound; i++ ) c[i] = 0;
     if ( sgnz((Z)COEF(dc)) < 0 ) 
@@ -1006,7 +1006,7 @@ void modfctrp(P p,int mod,int flag,DCP *dcp)
   if ( (n = DEG(mp)) < 0 ) {
     *dcp = 0; return;
   } else if ( n == 0 ) {
-    cm = dmar(cm,COEF(mp)[0],0,mod); STOQ(cm,q); 
+    cm = dmar(cm,COEF(mp)[0],0,mod); STOZ(cm,q); 
     NEWDC(dc); COEF(dc) = (P)q; DEG(dc) = ONE; 
     NEXT(dc) = 0; *dcp = dc;
     return;
@@ -1068,10 +1068,10 @@ void modfctrp(P p,int mod,int flag,DCP *dcp)
         }
       udc = udc1; break;
   }
-  NEWDC(dc0); STOQ(cm,q); COEF(dc0) = (P)q; DEG(dc0) = ONE; dc = dc0;
+  NEWDC(dc0); STOZ(cm,q); COEF(dc0) = (P)q; DEG(dc0) = ONE; dc = dc0;
   for ( n = 0; udc[n].f; n++ ) {
     NEWDC(NEXT(dc)); dc = NEXT(dc);
-    STOQ(udc[n].n,DEG(dc)); umtop(VR(p),udc[n].f,&COEF(dc));
+    STOZ(udc[n].n,DEG(dc)); umtop(VR(p),udc[n].f,&COEF(dc));
   }
   NEXT(dc) = 0; *dcp = dc0;
 }
@@ -1320,8 +1320,8 @@ void canzas(int mod,UM f,int d,UM *base,UM *r)
     s = W_UMALLOC(DEG(f)); u = W_UMALLOC(DEG(f)); 
     w = W_UMALLOC(DEG(f)); g = W_UMALLOC(DEG(f));
     o = W_UMALLOC(0); DEG(o) = 0; COEF(o)[0] = 1;
-    STOQ(mod,n1); STOQ(d,z); pwrz(n1,z,&n2); subz(n2,ONE,&n3);
-    STOQ(2,n4); divz(n3,n4,&n5);
+    STOZ(mod,n1); STOZ(d,z); pwrz(n1,z,&n2); subz(n2,ONE,&n3);
+    STOZ(2,n4); divz(n3,n4,&n5);
     while ( 1 ) {
       randum(mod,2*d,t); spwrum0(mod,f,t,n5,s);
       subum(mod,s,o,u); cpyum(f,w); Gcdum(mod,w,u,g);
@@ -1381,7 +1381,7 @@ void spwrum0(int mod,UM m,UM f,Z e,UM r)
   } else if ( UNIZ(e) )
     cpyum(f,r);
   else {
-    STOQ(2,two);
+    STOZ(2,two);
     divqrz(e,two,&e1,&rem);
     t = W_UMALLOC(2*DEG(m)); spwrum0(mod,m,f,e1,t);
     s = W_UMALLOC(2*DEG(m)); q = W_UMALLOC(2*DEG(m));

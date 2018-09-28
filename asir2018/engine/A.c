@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/A.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -93,7 +93,7 @@ void rema(VL vl,P p0,P p1,P p2,P *pr)
     g = p1; lc = LC(p2); MKV(v,x);
     while ( ( d1 = deg(v,g) ) >= d2 ) {
       mulp(vl,g,lc,&m); mulp(vl,p2,LC(g),&m1);
-      STOQ(d1-d2,q); pwrp(vl,x,q,&t);
+      STOZ(d1-d2,q); pwrp(vl,x,q,&t);
       mulp(vl,m1,t,&m2); subp(vl,m,m2,&m1); 
       remsdcp(vl,m1,p0,&g); 
     }
@@ -160,7 +160,7 @@ void sqa(VL vl,P p0,P p,DCP *dcp)
       a[i] = flat; b[i] = j;
     }
     for ( i = 0, j = 0, dc0 = 0; a[i]; i++ ) {
-      NEXTDC(dc0,dc); j += b[i]; STOQ(j,DEG(dc));
+      NEXTDC(dc0,dc); j += b[i]; STOZ(j,DEG(dc));
       if ( a[i+1] ) 
         pqra(vl,p0,a[i],a[i+1],&COEF(dc),&t);
       else
@@ -188,7 +188,7 @@ void pqra(VL vl,P p0,P p1,P p2,P *p,P *pr)
   } else if ( (n = deg(v,p1) - deg(v,p2)) < 0 ) {
     *pr = p1; *p = 0;
   } else {      
-    n++; STOQ(n,tq);
+    n++; STOZ(n,tq);
     pwrp(vl,LC(p2),tq,&m); mulp(vl,m,p1,&m1); divsrp(vl,m1,p2,&q,&r); 
     remsdcp(vl,q,p0,p); remsdcp(vl,r,p0,pr); 
   }
@@ -248,7 +248,7 @@ void pinva(P p0, P p, P *pr)
 
   v = VR(p); n=deg(v,p); m=deg(v,p0);
   norm(p,&a); norm(p0,&b);
-  STOQ(m,w); pwrq(a,(Q)w,&t); STOQ(n,w); pwrq(b,(Q)w,&s); 
+  STOZ(m,w); pwrq(a,(Q)w,&t); STOZ(n,w); pwrq(b,(Q)w,&s); 
   mulq(t,s,&ts); 
   factorialz(n+m,&w); mulq(ts,(Q)w,&s); addq(s,s,&f); 
   wg = W_UMALLOC(m+n); wh = W_UMALLOC(m+n);
@@ -302,7 +302,7 @@ void inva_chrem(P p0, P p, NODE *pr)
 
   v = VR(p); n=deg(v,p); m=deg(v,p0);
   norm(p,&a); norm(p0,&b);
-  STOQ(m,w); pwrq(a,(Q)w,&t); STOQ(n,w); pwrq(b,(Q)w,&s); 
+  STOZ(m,w); pwrq(a,(Q)w,&t); STOZ(n,w); pwrq(b,(Q)w,&s); 
   mulq(t,s,&ts); 
   factorialz(n+m,&w); mulq(ts,(Q)w,&s); addq(s,s,&f); 
   wg = W_UMALLOC(m+n); wh = W_UMALLOC(m+n);

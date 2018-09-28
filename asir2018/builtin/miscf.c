@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/miscf.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -150,16 +150,16 @@ void Pchdir(NODE arg, Z *rp)
 #else
   int status = chdir(dir);
 #endif
-  STOQ(status,*rp);
+  STOZ(status,*rp);
 }
 
 void Pset_secure_mode(NODE arg,Z *rp)
 {
   int s;
   if ( argc(arg) )
-    setsecuremode(QTOS((Q)ARG0(arg)));
+    setsecuremode(ZTOS((Q)ARG0(arg)));
   s = getsecuremode();
-  STOQ(s,*rp);
+  STOZ(s,*rp);
 }
 
 void Pset_secure_flag(NODE arg,Z *rp)
@@ -172,7 +172,7 @@ void Pset_secure_flag(NODE arg,Z *rp)
   if ( !ac )
     error("set_secure_flag : a function name must be specified");
   if ( ac == 2 )
-    s = QTOS((Q)ARG1(arg));
+    s = ZTOS((Q)ARG1(arg));
   else
     s = 1;
   f = ARG0(arg);
@@ -189,7 +189,7 @@ void Pset_secure_flag(NODE arg,Z *rp)
   status = setsecureflag(fname,s);
   if ( status < 0 )
     error("set_secure_flag : function not found");
-  STOQ(s,*rp);
+  STOZ(s,*rp);
 }
 
 void Ptest(NODE arg,Z *rp)
@@ -197,14 +197,14 @@ void Ptest(NODE arg,Z *rp)
   int r;
 
   r = equalr(CO,ARG0(arg),ARG1(arg));
-  STOQ(r,*rp);
+  STOZ(r,*rp);
 }
 
 void Psleep(NODE arg,Z *rp)
 {
   int ms;
 
-  ms = QTOS((Q)ARG0(arg));
+  ms = ZTOS((Q)ARG0(arg));
 #if defined(VISUAL) || defined(__MINGW32__)
   Sleep(ms);
 #else
@@ -315,7 +315,7 @@ void Pshell(NODE arg,Z *rp)
       pstr = BDY((STRING)ARG1(arg));
   }
   status = system(com);
-  STOQ(status,*rp);
+  STOZ(status,*rp);
 }
 
 void Pnmono(NODE arg,Z *rp)
@@ -329,10 +329,10 @@ void Pnmono(NODE arg,Z *rp)
   else
     switch (OID(obj)) {
       case O_N: case O_P:
-        n = nmonop((P)obj); STOQ(n,*rp); break;
+        n = nmonop((P)obj); STOZ(n,*rp); break;
       case O_R:
         n = nmonop(NM((R)obj)) + nmonop(DN((R)obj));
-        STOQ(n,*rp); break;
+        STOZ(n,*rp); break;
     }
 }
 
@@ -343,12 +343,12 @@ void Pheap(NODE arg,Z *rp)
   
   h0 = get_heapsize();
   if ( arg ) {
-    h = QTOS((Q)ARG0(arg));
+    h = ZTOS((Q)ARG0(arg));
     if ( h > h0 )
       GC_expand_hp(h-h0);
   }
   h = get_heapsize();
-  UTOQ(h,*rp);
+  UTOZ(h,*rp);
 }
 
 unsigned int get_asir_version();
@@ -365,7 +365,7 @@ void Pversion(NODE arg,Obj *rp)
 
   version = get_asir_version();
   distribution = get_asir_distribution();
-  UTOQ(version,q);
+  UTOZ(version,q);
   if ( !argc(arg) )
     *rp = (Obj)q;
   else {
@@ -423,7 +423,7 @@ void Perror3(NODE arg,Z *rp)
   asir_assert(ARG0(arg),O_N,"error3");
   asir_assert(ARG1(arg),O_STR,"error3");
   asir_assert(ARG2(arg),O_STR,"error3");
-  code = QTOS((Q)ARG0(arg));
+  code = ZTOS((Q)ARG0(arg));
   reason = BDY((STRING)ARG1(arg));
   action = BDY((STRING)ARG2(arg));
 #if defined(VISUAL) || defined(__MINGW32__)
@@ -483,7 +483,7 @@ void Pdelete_history(NODE arg,Z *rp)
       delete_history(0,(int)APVS->n);
       break;
     case 1:
-      delete_history(QTOS((Q)ARG0(arg)),1);
+      delete_history(ZTOS((Q)ARG0(arg)),1);
       break;
   }
   *rp = 0;
@@ -526,7 +526,7 @@ void Pbatch(NODE arg,Z *rp)
   int ret;
 
   ret = exec_file(BDY((STRING)ARG0(arg)),BDY((STRING)ARG1(arg)));
-  STOQ(ret,*rp);  
+  STOZ(ret,*rp);  
 }
 
 #if !defined(VISUAL) && defined(DO_PLOT)
@@ -591,7 +591,7 @@ void Psend_progress(NODE arg,Z *rp)
   short per;
   char *msg;
 
-  per = (short)QTOS((Q)BDY(arg)); arg = NEXT(arg);
+  per = (short)ZTOS((Q)BDY(arg)); arg = NEXT(arg);
   if ( arg )
     msg = BDY((STRING)BDY(arg));
   else
@@ -606,7 +606,7 @@ void Pget_addr(NODE arg,Z *rp)
   pointer obj;
 
   obj = ARG0(arg);
-  UTOQ((unsigned long)obj,*rp);
+  UTOZ((unsigned long)obj,*rp);
 }
 
 unsigned char *qtoaddr(Z q)
@@ -614,7 +614,7 @@ unsigned char *qtoaddr(Z q)
   if ( !q )
     return 0;
   else
-    return (unsigned char *)QTOS(q);
+    return (unsigned char *)ZTOS(q);
 }
 
 void Phex_dump(NODE arg,Z *rp)
@@ -624,7 +624,7 @@ void Phex_dump(NODE arg,Z *rp)
 
   *rp = 0;
   start = qtoaddr((Z)ARG0(arg));
-  len = QTOS((Q)ARG1(arg));
+  len = ZTOS((Q)ARG1(arg));
   for ( i = 0; i < len; i++ ) {
     if ( !(i%16) )
       fprintf(asir_out,"%08x: ",start+i);
@@ -645,7 +645,7 @@ void Ppeek(NODE arg,Z *rp)
 
   a = qtoaddr((Z)ARG0(arg));
   b = (unsigned long) (*a);
-  UTOQ(b,*rp);
+  UTOZ(b,*rp);
 }
 
 void Ppoke(NODE arg,Z *rp)
@@ -653,7 +653,7 @@ void Ppoke(NODE arg,Z *rp)
   unsigned char *addr;
 
   addr = qtoaddr((Z)ARG0(arg));
-  *addr = (unsigned char)QTOS((Q)ARG1(arg));
+  *addr = (unsigned char)ZTOS((Q)ARG1(arg));
   *rp = 0;
 }
 
@@ -693,7 +693,7 @@ optobj(Obj *p)
     switch ( OID(t) ) {
       case O_N:
         if ( (NID(t)==N_Q) && INT(t) && (PL(NM((Q)t))==1) ) {
-          n = QTOS((Q)t);
+          n = ZTOS((Q)t);
           if ( !szinit )
             sz_init();
           if ( n < 1000 )

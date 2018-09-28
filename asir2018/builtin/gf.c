@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gf.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -142,8 +142,8 @@ void Puhensel(NODE arg,LIST *rp)
 
   f = (P)ARG0(arg);
   mfl = BDY((LIST)ARG1(arg));
-  mod = QTOS((Q)ARG2(arg));
-  bound = QTOS((Q)ARG3(arg));
+  mod = ZTOS((Q)ARG2(arg));
+  bound = ZTOS((Q)ARG3(arg));
   uhensel(f,mfl,mod,bound,&r);
   MKLIST(*rp,r);
 }
@@ -156,9 +156,9 @@ void Puhensel_incremental(NODE arg,LIST *rp)
 
   f = (P)ARG0(arg);
   mfl = BDY((LIST)ARG1(arg));
-  mod = QTOS((Q)ARG2(arg));
-  start = QTOS((Q)ARG3(arg));
-  bound = QTOS((Q)ARG4(arg));
+  mod = ZTOS((Q)ARG2(arg));
+  start = ZTOS((Q)ARG3(arg));
+  bound = ZTOS((Q)ARG4(arg));
   uhensel_incremental(f,mfl,mod,start,bound,&r);
   MKLIST(*rp,r);
 }
@@ -238,7 +238,7 @@ void Psfuhensel(NODE arg,LIST *rp)
   f = (P)ARG0(arg);
   mfl = BDY((LIST)ARG1(arg));
   ev = (GFS)ARG2(arg);
-  bound = QTOS((Q)ARG3(arg));
+  bound = ZTOS((Q)ARG3(arg));
   sfuhensel(f,mfl,ev,bound,&r);
   MKLIST(*rp,r);
 }
@@ -327,7 +327,7 @@ void Presfmain(NODE arg,LIST *rp)
   int sflag;
 
   f = (P)ARG0(arg);
-  mod = QTOS((Q)ARG1(arg));
+  mod = ZTOS((Q)ARG1(arg));
   mfl = BDY((LIST)ARG2(arg));
   mdl = BDY((LIST)ARG3(arg));
   for ( n = nb = 0, t = mfl; t; nb++, t = NEXT(t) )
@@ -344,7 +344,7 @@ void Presfmain(NODE arg,LIST *rp)
         sflag = 0;
       for ( j = 0, s = BDY((LIST)BDY(t)); s; j++, s = NEXT(s) )
         mf[k++] = (P)BDY(s);
-      nf[i] = j; md[i] = QTOS((Q)BDY(u));
+      nf[i] = j; md[i] = ZTOS((Q)BDY(u));
     }
     resf_hensel(mod,f,n,mf,&list);
     if ( sflag )
@@ -819,7 +819,7 @@ void Pnullspace(NODE arg,LIST *rp)
   mat = (MAT)ARG0(arg);
   p = (P)ARG1(arg);
   v = VR(p);
-  mod = QTOS((Q)ARG2(arg));
+  mod = ZTOS((Q)ARG2(arg));
   n = mat->row;
   w = (UM **)almat_pointer(n,n);
   for ( i = 0; i < n; i++ )
@@ -837,7 +837,7 @@ void Pnullspace(NODE arg,LIST *rp)
       umtop(v,s[j],&t[j]);
   MKVECT(u,n);
   for ( i = 0; i < n; i++ ) {
-    STOQ(ind[i],q); u->body[i] = (pointer)q;
+    STOZ(ind[i],q); u->body[i] = (pointer)q;
   }
   MKNODE(n1,u,0); MKNODE(n0,r,n1); MKLIST(*rp,n0);
 }
@@ -921,7 +921,7 @@ void Pnullspace_ff(NODE arg,LIST *rp)
       t[j] = s[j];
   MKVECT(u,n);
   for ( i = 0; i < n; i++ ) {
-    STOQ(ind[i],q); u->body[i] = (pointer)q;
+    STOZ(ind[i],q); u->body[i] = (pointer)q;
   }
   MKNODE(n1,u,0); MKNODE(n0,r,n1); MKLIST(*rp,n0);
 }
@@ -1301,7 +1301,7 @@ P *rp;
   p2 = (P)ARG1(arg);
   v = VR((P)ARG2(arg));
   d = (P)ARG3(arg);
-  m = QTOS((Q)ARG4(arg));
+  m = ZTOS((Q)ARG4(arg));
   reordvar(CO,v,&vl);
   reorderp(vl,CO,p1,&t); ptomp(m,t,&m1);
   reorderp(vl,CO,p2,&t); ptomp(m,t,&m2);
@@ -1314,7 +1314,7 @@ P *rp;
   while ( 1 ) {
     inva_mod(COEF(DC(m2)),d,m,&inv);
     NEWDC(dc); NEXT(dc) = 0; MKP(v,dc,h);
-    d0 = deg(v,m1)-deg(v,m2); STOQ(d0,DEG(dc));
+    d0 = deg(v,m1)-deg(v,m2); STOZ(d0,DEG(dc));
     mulgq(m,d,inv,COEF(DC(m1)),&COEF(dc));
     mulgp(vl,m,d,m2,h,&t); subgp(vl,m,d,m1,t,&s);
   }
@@ -1327,7 +1327,7 @@ void Ppwr_mod(NODE arg,P *rp)
   int m;
   Z n;
 
-  m = QTOS((Q)ARG4(arg)); n = (Z)ARG5(arg);
+  m = ZTOS((Q)ARG4(arg)); n = (Z)ARG5(arg);
   ptomp(m,(P)ARG0(arg),&p); ptomp(m,(P)ARG1(arg),&a);
   ptomp(m,(P)ARG3(arg),&d);
   pwr_mod(p,a,VR((P)ARG2(arg)),d,m,n,&r);
@@ -1344,7 +1344,7 @@ void pwr_mod(P p,P a,V v,P d,int m,Z n,P *rp)
   else if ( UNIZ(n) )
     *rp = p;
   else {
-    STOQ(2,two);
+    STOZ(2,two);
     divqrz(n,two,&n1,&b);
     pwr_mod(p,a,v,d,m,n1,&t);
     mulmp(CO,m,t,t,&s); rem_mod(s,a,v,d,m,&r);

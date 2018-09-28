@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/comp.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -187,7 +187,7 @@ COMP a,b;
     return -1;
   else {
     call_usrf(LSS->sa[a->type].arf.comp,2,a,b,&c);
-    s = QTOS(c);
+    s = ZTOS(c);
     if ( s > 0 )
       return 1;
     else if ( s < 0 )

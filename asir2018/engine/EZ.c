@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/EZ.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 
@@ -214,7 +214,7 @@ void ezgcdpp(VL vl,DCP dc,P f,P *r)
     *r = (P)ONE;
     return;
   }
-  k = QTOS(DEG(dc)) - 1;
+  k = ZTOS(DEG(dc)) - 1;
 /*  ezgcd1p(vl,COEF(dc),f,&gcd); */
   ezgcdnp(vl,COEF(dc),&f,1,&gcd);
   g = gcd; divsp(vl,f,gcd,&h);
@@ -251,7 +251,7 @@ void uezgcdpp(DCP dc,P f,P *r)
     return;
   }
 
-  k = QTOS(DEG(dc)) - 1;
+  k = ZTOS(DEG(dc)) - 1;
   uezgcd1p(COEF(dc),f,&gcd);
   g = gcd; divsp(CO,f,gcd,&h);
   for ( ; k > 0; k-- ) {
@@ -482,7 +482,7 @@ void uexgcdnp(VL vl,P p1,P *ps,int n,VN vn,Q cbd,P *g,P *h,P *a,P *b,Z *q)
     gcdum(mod,wg,wh,wt); cpyum(wt,wgcd);
     if ( DEG(wgcd) > 0 )
       continue;
-    STOQ(mod,tq); addq(cbd,cbd,&bb);
+    STOZ(mod,tq); addq(cbd,cbd,&bb);
     for ( k = 1; cmpq((Q)tq,bb) < 0; k++ ) {
       mulz(tq,tq,&tq1); tq = tq1;
     }
@@ -611,7 +611,7 @@ void ezgcdnpp(VL vl,DCP dc,P *pl,int m,P *r)
       return;
     }
   }
-  for ( g = gcd, k = QTOS(DEG(dc)) - 1; k > 0; k-- ) {
+  for ( g = gcd, k = ZTOS(DEG(dc)) - 1; k > 0; k-- ) {
     ezgcdnp(vl,g,pm,m,&t);
     if ( NUM(t) )
       break;

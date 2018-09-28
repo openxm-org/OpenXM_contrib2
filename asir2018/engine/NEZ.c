@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/NEZ.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -203,13 +203,13 @@ P *r;
   for ( n = 0, dc = dcl[0]; dc; dc = NEXT(dc), n++ );
   vn = (VN)ALLOCA(n*sizeof(struct oVN));
   for ( i = 0, dc = dcl[0]; i < n; dc = NEXT(dc), i++ ) {
-    vn[i].v = VR(COEF(dc)); vn[i].n = QTOS(DEG(dc));
+    vn[i].v = VR(COEF(dc)); vn[i].n = ZTOS(DEG(dc));
   }
   for ( i = 1; i < m; i++ ) {
     for ( j = 0; j < n; j++ ) {
       for ( dc = dcl[i]; dc; dc = NEXT(dc) )
         if ( VR(COEF(dc)) == vn[j].v ) {
-          vn[j].n = MIN(vn[j].n,QTOS(DEG(dc))); break;
+          vn[j].n = MIN(vn[j].n,ZTOS(DEG(dc))); break;
         }
       if ( !dc )
         vn[j].n = 0;
@@ -222,7 +222,7 @@ P *r;
   }
   for ( j = 0, g = (P)ONE; j < n; j++ )
     if ( vn[j].n ) {
-      MKV(vn[j].v,x); STOQ(vn[j].n,d); 
+      MKV(vn[j].v,x); STOZ(vn[j].n,d); 
       pwrp(vl,x,d,&t); mulp(vl,t,g,&s); g = s;
     }
   *r = g;
@@ -277,7 +277,7 @@ P *r;
       *r = gcd; return;
     }
   }
-  for ( g = gcd, k = QTOS(DEG(dc))-1; k > 0; k-- ) {
+  for ( g = gcd, k = ZTOS(DEG(dc))-1; k > 0; k-- ) {
     nezgcdnp_sqfr_primitive(vl,g,pm,m,&t);
     if ( NUM(t) )
       break;

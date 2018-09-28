@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/num.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -210,15 +210,15 @@ void field_order_ff(Z *order)
     case FF_GFPN:
       getmod_lm(&m);
       getmod_gfpn(&up);
-      STOQ(up->d,e);
+      STOZ(up->d,e);
       pwrz(m,e,order);
       break;
     case FF_GFS:
-      STOQ(current_gfs_q,*order); break;
+      STOZ(current_gfs_q,*order); break;
     case FF_GFSN:
-      STOQ(current_gfs_q,m);
+      STOZ(current_gfs_q,m);
       getmod_gfsn(&dp);
-      STOQ(DEG(dp),e);
+      STOZ(DEG(dp),e);
       pwrz(m,e,order);
       break;
     default:

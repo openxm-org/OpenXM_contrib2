@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -238,7 +238,7 @@ void dp_idiv(DP p,Z c,DP *rp)
   else {
     for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
       NEXTMP(mr0,mr);
-      divz((Z)(m->c),c,(Z *)&mr->c);
+      divsz((Z)(m->c),c,(Z *)&mr->c);
       mr->dl = m->dl;
     }
     NEXT(mr) = 0; MKDP(p->nv,mr0,*rp);
@@ -475,11 +475,11 @@ void heu_nezgcdnpz(VL vl,P *pl,int m,P *pr)
 
   while ( 1 ) {
     for ( i = 0, s1 = 0; i < m; i++ ) {
-      r = random(); UTOQ(r,rq);
+      r = random(); UTOZ(r,rq);
       mulp(vl,pl[i],(P)rq,&t); addp(vl,s1,t,&u); s1 = u;
     }
     for ( i = 0, s2 = 0; i < m; i++ ) {
-      r = random(); UTOQ(r,rq);
+      r = random(); UTOZ(r,rq);
       mulp(vl,pl[i],(P)rq,&t); addp(vl,s2,t,&u); s2 = u;
     }
     ezgcdp(vl,s1,s2,&gcd);
@@ -565,8 +565,8 @@ void dp_sp(DP p1,DP p2,DP *rp)
   if ( INT(c1) && INT(c2) ) {
     gcdz(c1,c2,&gn);
     if ( !UNIQ(gn) ) {
-      divz(c1,gn,&c); c1 = c;
-      divz(c2,gn,&c);c2 = c;
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c);c2 = c;
     }
   }
 
@@ -623,8 +623,8 @@ void dpm_sp(DPM p1,DPM p2,DPM *rp)
   if ( INT(c1) && INT(c2) ) {
     gcdz(c1,c2,&gn);
     if ( !UNIQ(gn) ) {
-      divz(c1,gn,&c); c1 = c;
-      divz(c2,gn,&c);c2 = c;
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c);c2 = c;
     }
   }
 
@@ -676,8 +676,8 @@ void _dp_sp_dup(DP p1,DP p2,DP *rp)
   if ( INT(c1) && INT(c2) ) {
     gcdz(c1,c2,&gn);
     if ( !UNIQ(gn) ) {
-      divz(c1,gn,&c); c1 = c;
-      divz(c2,gn,&c);c2 = c;
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c);c2 = c;
     }
   }
 
@@ -815,8 +815,8 @@ void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
   } else if ( INT(c1) && INT(c2) ) {
     gcdz(c1,c2,&gn);
     if ( !UNIQ(gn) ) {
-      divz(c1,gn,&c); c1 = c;
-      divz(c2,gn,&c); c2 = c;
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c); c2 = c;
     }
   } else {
     ezgcdpz(CO,(P)c1,(P)c2,&g);
@@ -857,8 +857,8 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
   } else if ( INT(c1) && INT(c2) ) {
     gcdz(c1,c2,&gn);
     if ( !UNIQ(gn) ) {
-      divz(c1,gn,&c); c1 = c;
-      divz(c2,gn,&c); c2 = c;
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c); c2 = c;
     }
   } else {
     ezgcdpz(CO,(P)c1,(P)c2,&g);
@@ -905,8 +905,8 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
   } else if ( INT(c1) && INT(c2) ) {
     gcdz(c1,c2,&gn);
     if ( !UNIQ(gn) ) {
-      divz(c1,gn,&c); c1 = c;
-      divz(c2,gn,&c); c2 = c;
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c); c2 = c;
     }
   } else {
     ezgcdpz(CO,(P)c1,(P)c2,&g);
@@ -1084,7 +1084,7 @@ void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
   sugar = g->sugar;
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
@@ -1152,7 +1152,7 @@ void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Z *contp)
     for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) w[i] = (Z)m->c;
   if ( p2 )
     for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = (Z)m->c;
-  h = w[0]; removecont_array((P *)w,n,1); divz(h,w[0],contp);
+  h = w[0]; removecont_array((P *)w,n,1); divsz(h,w[0],contp);
   i = 0;
   if ( p1 ) {
     for ( m0 = 0, t = BDY(p1); i < n1; i++, t = NEXT(t) ) {
@@ -1195,7 +1195,7 @@ void dp_true_nf_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Z)BDY(l));
+    wb[i] = ZTOS((Z)BDY(l));
   sugar = g->sugar;
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
@@ -1256,7 +1256,7 @@ void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
     wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
   sugar = g->sugar;
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
@@ -1311,7 +1311,7 @@ DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
   q = (DP *)MALLOC(n*sizeof(DP));
   for ( i = 0; i < n; i++ ) q[i] = 0;
   sugar = g->sugar;
@@ -1367,7 +1367,7 @@ DP *dp_true_nf_and_quotient_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp
   }
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
   sugar = g->sugar;
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
@@ -1421,7 +1421,7 @@ void dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *rp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
 
   hmag = multiple*HMAG(g);
   sugar = g->sugar;
@@ -1491,7 +1491,7 @@ void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
 
   hmag = multiple*HMAG(g);
   sugar = g->sugar;
@@ -1559,7 +1559,7 @@ void dp_nf_f(NODE b,DP g,DP *ps,int full,DP *rp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
 
   sugar = g->sugar;
   for ( d = 0; g; ) {
@@ -1610,7 +1610,7 @@ void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
   wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
 
   sugar = g->sugar;
   for ( d = 0; g; ) {
@@ -1711,7 +1711,7 @@ void dp_true_nf_mod(NODE b,DP g,DP *ps,int mod,int full,DP *rp,P *dnp)
   for ( n = 0, l = b; l; l = NEXT(l), n++ );
     wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = QTOS((Q)BDY(l));
+    wb[i] = ZTOS((Q)BDY(l));
   sugar = g->sugar;
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
@@ -1932,7 +1932,7 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
   *specp = spec = (struct order_spec *)MALLOC(sizeof(struct order_spec));
   if ( !obj || NUM(obj) ) {
     spec->id = 0; spec->obj = obj;
-    spec->ord.simple = QTOS((Q)obj);
+    spec->ord.simple = ZTOS((Q)obj);
     return 1;
   } else if ( OID(obj) == O_LIST ) {
     /* module order; obj = [0|1,w,ord] or [0|1,ord] */
@@ -1947,7 +1947,7 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
         spec->module_top_weight = 0;
         spec->ispot = (BDY(node)!=0);
         if ( spec->ispot ) {
-          n = QTOS((Q)BDY(node));
+          n = ZTOS((Q)BDY(node));
           if ( n < 0 )
             spec->pot_nelim = -n;
           else
@@ -1973,12 +1973,12 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
         spec->nv = length(BDY((LIST)wp)); 
         spec->top_weight = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));
         for ( i = 0, t = BDY((LIST)wp); i < spec->nv; t = NEXT(t), i++ )
-          spec->top_weight[i] = QTOS((Q)BDY(t));
+          spec->top_weight[i] = ZTOS((Q)BDY(t));
 
         spec->module_rank = length(BDY((LIST)wm));
         spec->module_top_weight = (int *)MALLOC_ATOMIC(spec->module_rank*sizeof(int));
         for ( i = 0, t = BDY((LIST)wm); i < spec->module_rank; t = NEXT(t), i++ )
-          spec->module_top_weight[i] = QTOS((Q)BDY(t));
+          spec->module_top_weight[i] = ZTOS((Q)BDY(t));
         break;
       default:
         error("create_order_spec : invalid arguments for module order");
@@ -1991,8 +1991,8 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
       for ( n = 0, t = node; t; t = NEXT(t), n++ );
       l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
       for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
-        tn = BDY((LIST)BDY(t)); l[i].order = QTOS((Q)BDY(tn));
-        tn = NEXT(tn); l[i].length = QTOS((Q)BDY(tn));
+        tn = BDY((LIST)BDY(t)); l[i].order = ZTOS((Q)BDY(tn));
+        tn = NEXT(tn); l[i].length = ZTOS((Q)BDY(tn));
         s += l[i].length;
       }
       spec->id = 1; spec->obj = obj;
@@ -2005,7 +2005,7 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
     w = almat(row,col);
     for ( i = 0; i < row; i++ )
       for ( j = 0; j < col; j++ )
-        w[i][j] = QTOS((Q)b[i][j]);
+        w[i][j] = ZTOS((Q)b[i][j]);
     spec->id = 2; spec->obj = obj;
     spec->nv = col; spec->ord.matrix.row = row;
     spec->ord.matrix.matrix = w;
@@ -2077,9 +2077,9 @@ struct order_spec *append_block(struct order_spec *spec,
   r = (struct order_spec *)MALLOC(sizeof(struct order_spec));
   switch ( spec->id ) {
     case 0:
-      STOQ(spec->ord.simple,oq); STOQ(nv,nq);
+      STOZ(spec->ord.simple,oq); STOZ(nv,nq);
       t = mknode(2,oq,nq); MKLIST(list0,t);
-      STOQ(ord,oq); STOQ(nalg,nq);
+      STOZ(ord,oq); STOZ(nalg,nq);
       t = mknode(2,oq,nq); MKLIST(list1,t);
       t = mknode(2,list0,list1); MKLIST(list,t);
       l = (struct order_pair *)MALLOC_ATOMIC(2*sizeof(struct order_pair));
@@ -2105,7 +2105,7 @@ struct order_spec *append_block(struct order_spec *spec,
        for ( t = BDY(list0), s0 = 0; t; t = NEXT(t) ) {
         NEXTNODE(s0,s); BDY(s) = BDY(t);
       }
-      STOQ(ord,oq); STOQ(nalg,nq);
+      STOZ(ord,oq); STOZ(nalg,nq);
       t = mknode(2,oq,nq); MKLIST(list,t);
       NEXTNODE(s0,s); BDY(s) = (pointer)list; NEXT(s) = 0;
       MKLIST(list,s0);
@@ -2123,7 +2123,7 @@ struct order_spec *append_block(struct order_spec *spec,
       MKMAT(mat,row+nalg,col+nalg); wp = (Z **)BDY(mat);
       for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ ) {
-          w[i][j] = QTOS(b[i][j]);
+          w[i][j] = ZTOS(b[i][j]);
           wp[i][j] = b[i][j];
         }
       for ( i = 0; i < nalg; i++ ) {
@@ -2198,7 +2198,7 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
       for ( j = 0, p = a; j < len; p = NEXT(p), j++ ) {
         if ( !INT((Q)BDY(p)) )  
           error("a dense weight vector must be specified as a list of integers");
-        dw[j] = QTOS((Q)BDY(p));
+        dw[j] = ZTOS((Q)BDY(p));
       }
       w_or_b[i].type = IS_DENSE_WEIGHT;
       w_or_b[i].length = len;
@@ -2224,7 +2224,7 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
         sw[j].pos = k;
         if ( !INT((Q)BDY(p)) )
           error("a sparse weight vector must be specified as [var1,weight1,...]");
-        sw[j].value = QTOS((Q)BDY(p)); p = NEXT(p);
+        sw[j].value = ZTOS((Q)BDY(p)); p = NEXT(p);
       }
       qsort(sw,len,sizeof(struct sparse_weight),
         (int (*)(const void *,const void *))comp_sw);
@@ -2248,7 +2248,7 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
       len = end-start+1;
       sw = (struct sparse_weight *)
         MALLOC(sizeof(struct sparse_weight)*len);
-      w = QTOS((Q)BDY(NEXT(a)));
+      w = ZTOS((Q)BDY(NEXT(a)));
       for ( tvl = vl, k = 0; k < start; k++, tvl = NEXT(tvl) );
       for ( j = 0 ; k <= end; k++, tvl = NEXT(tvl), j++ ) {
         sw[j].pos = k;
@@ -2330,12 +2330,12 @@ void create_modorder_spec(int id,LIST shift,struct modorder_spec **s)
     spec->len = l = length(n);
     spec->degree_shift = ds = (int *)MALLOC_ATOMIC(l*sizeof(int));
     for ( t = n, i = 0; t; t = NEXT(t), i++ )
-      ds[i] = QTOS((Q)BDY(t));
+      ds[i] = ZTOS((Q)BDY(t));
   } else {
     spec->len = 0;
     spec->degree_shift = 0;
   }
-  STOQ(id,q);
+  STOZ(id,q);
   n = mknode(2,q,shift);
   MKLIST(list,n);
   spec->obj = (Obj)list;
@@ -2951,7 +2951,7 @@ LIST highest_order(LIST f,int *weight,int n)
     NEXTNODE(r0,r);
     p = (Obj)BDY(nd);
     h = highest_order_dp((DP)p,weight,n);
-    STOQ(h,q);
+    STOZ(h,q);
     BDY(r) = (pointer)q;
   }
   if ( r0 ) NEXT(r) = 0;
@@ -3084,7 +3084,7 @@ Q inner_product_with_small_vector(VECT w,int *v)
   n = w->len;
   s = 0;
   for ( i = 0; i < n; i++ ) {
-    STOQ(v[i],q); mulq((Q)w->body[i],(Q)q,&t); addq(t,s,&u); s = u;
+    STOZ(v[i],q); mulq((Q)w->body[i],(Q)q,&t); addq(t,s,&u); s = u;
   }
   return s;
 }
@@ -3278,7 +3278,7 @@ NODE compute_essential_df(DP *g,DP *gh,int ng)
     dl = (DL)BDY(rt); d = dl->d;
     ri = 0;
     for ( k = nv-1; k >= 0; k-- ) {
-      STOQ(d[k],q);
+      STOZ(d[k],q);
       MKNODE(r1,q,ri); ri = r1;
     }
     MKNODE(r1,0,ri); MKLIST(l,r1);

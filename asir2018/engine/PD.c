@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/PD.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -72,7 +72,7 @@ void plisttop(P *f,V v,int n,P *gp)
         continue;
       NEXTDC(dc0,dc);
       if ( i ) 
-        STOQ(i,DEG(dc));
+        STOZ(i,DEG(dc));
       else 
         DEG(dc) = 0;
       COEF(dc) = f[i];
@@ -129,12 +129,12 @@ int divtp(VL vl,P p1,P p2,P *q)
         *q = 0;
         return ( 0 );
       }
-      d1 = QTOS(deg1); d2 = QTOS(deg2); 
+      d1 = ZTOS(deg1); d2 = ZTOS(deg2); 
       W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
       for ( dc = dc1; dc; dc = NEXT(dc) ) 
-        pr[QTOS(DEG(dc))] = COEF(dc);
+        pr[ZTOS(DEG(dc))] = COEF(dc);
       for ( dc = dc2; dc; dc = NEXT(dc) ) 
-        pd[QTOS(DEG(dc))] = COEF(dc);
+        pd[ZTOS(DEG(dc))] = COEF(dc);
       for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
         if ( !pr[i+d2] ) 
           continue;
@@ -246,12 +246,12 @@ int divtpz(VL vl,P p1,P p2,P *q)
         *q = 0;
         return ( 0 );
       }
-      d1 = QTOS(deg1); d2 = QTOS(deg2); 
+      d1 = ZTOS(deg1); d2 = ZTOS(deg2); 
       W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
       for ( dc = dc1; dc; dc = NEXT(dc) ) 
-        pr[QTOS(DEG(dc))] = COEF(dc);
+        pr[ZTOS(DEG(dc))] = COEF(dc);
       for ( dc = dc2; dc; dc = NEXT(dc) ) 
-        pd[QTOS(DEG(dc))] = COEF(dc);
+        pd[ZTOS(DEG(dc))] = COEF(dc);
       for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
         if ( !pr[i+d2] ) 
           continue;
@@ -334,7 +334,7 @@ void udivpz(P f1,P f2,P *fqp,P *frp)
         *fqp = *frp = 0;
         return;
       } else {
-        pq[QTOS(DEG(dc))] = qn;
+        pq[ZTOS(DEG(dc))] = qn;
       }
     }
     plisttop((P *)pq,VR(f1),n1,fqp);
@@ -348,9 +348,9 @@ void udivpz(P f1,P f2,P *fqp,P *frp)
   }
   W_CALLOC(n1-n2,Z,pq); W_CALLOC(n1,Z,pr); W_CALLOC(n2,Z,pd);
   for ( dc = DC(f1); dc; dc = NEXT(dc) )
-    pr[QTOS(DEG(dc))] = (Z)COEF(dc);
+    pr[ZTOS(DEG(dc))] = (Z)COEF(dc);
   for ( dc = DC(f2); dc; dc = NEXT(dc) )
-    pd[QTOS(DEG(dc))] = (Z)COEF(dc);
+    pd[ZTOS(DEG(dc))] = (Z)COEF(dc);
   for ( d = (Z)UCOEF(f2), i = n1 - n2; i >= 0; i-- ) {
     if ( !pr[i+n2] ) 
       continue;
@@ -411,7 +411,7 @@ void udivpzwm(Z mod,P f1,P f2,P *fqp,P *frp)
         *fqp = *frp = 0;
         return;
       } else {
-        pq[QTOS(DEG(dc))] = qn;
+        pq[ZTOS(DEG(dc))] = qn;
       }
     }
     plisttop((P *)pq,VR(f1),n1,fqp);
@@ -425,9 +425,9 @@ void udivpzwm(Z mod,P f1,P f2,P *fqp,P *frp)
   }
   W_CALLOC(n1-n2,Z,pq); W_CALLOC(n1,Z,pr); W_CALLOC(n2,Z,pd);
   for ( dc = DC(f1); dc; dc = NEXT(dc) )
-    pr[QTOS(DEG(dc))] = (Z)COEF(dc);
+    pr[ZTOS(DEG(dc))] = (Z)COEF(dc);
   for ( dc = DC(f2); dc; dc = NEXT(dc) )
-    pd[QTOS(DEG(dc))] = (Z)COEF(dc);
+    pd[ZTOS(DEG(dc))] = (Z)COEF(dc);
   for ( d = (Z)UCOEF(f2), i = n1 - n2; i >= 0; i-- ) {
     if ( !pr[i+n2] ) 
       continue;

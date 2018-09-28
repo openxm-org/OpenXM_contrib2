@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -323,7 +323,7 @@ void write_cmo_upoly(FILE *s,VL vl,P p)
     for ( i = 0, vlt = vl; vlt->v != v; vlt = NEXT(vlt), i++ );
     write_int(s,&i);
     for ( dct = dc; dct; dct = NEXT(dct) ) {
-      i = QTOS(DEG(dct)); write_int(s,&i);
+      i = ZTOS(DEG(dct)); write_int(s,&i);
       write_cmo_upoly(s,vl,COEF(dct));
     }
   }
@@ -767,10 +767,10 @@ void read_cmo_upoly(FILE *s,P *rp)
     read_cmo(s,&obj); c = (P)obj;
     if ( c ) {
       if ( OID(c) == O_USINT ) {
-        UTOQ(((USINT)c)->body,q); c = (P)q;
+        UTOZ(((USINT)c)->body,q); c = (P)q;
       }
       NEXTDC(dc0,dc); 
-      STOQ(d,q);
+      STOZ(d,q);
       dc->c = c; dc->d = q;
     }
   }

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/calc.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -110,8 +110,8 @@ void calcq(double **tab,struct canvas *can,int nox){
   substr(CO,0,gm,can->vy,can->ymin?(Obj)ry:0,&t); devalr(CO,t,&s);
   can->vmax=can->vmin=ToReal(s);
 
-  subq(can->qxmax,can->qxmin,&dx); STOQ(can->width,w); divq(dx,(Q)w,&xstep);
-  subq(can->qymax,can->qymin,&dy); STOQ(can->height,h); divq(dy,(Q)h,&ystep);
+  subq(can->qxmax,can->qxmin,&dx); STOZ(can->width,w); divq(dx,(Q)w,&xstep);
+  subq(can->qymax,can->qymin,&dy); STOZ(can->height,h); divq(dy,(Q)h,&ystep);
   MKV(can->vx,x); mulp(CO,(P)xstep,x,(P *)&t);
   addp(CO,(P)can->qxmin,(P)t,(P *)&s); substp(CO,can->formula,can->vx,(P)s,&f1);
   MKV(can->vy,y); mulp(CO,(P)ystep,y,(P *)&t);
@@ -120,9 +120,9 @@ void calcq(double **tab,struct canvas *can,int nox){
   if(!nox) initmarker(can,"Evaluating...");
   for(iy=0;iy<can->height;iy++){
     marker(can,DIR_Y,iy);
-    STOQ(iy,q1); substp(CO,g,can->vy,(P)q1,(P *)&t); ptozp((P)t,1,&c,&g1);
+    STOZ(iy,q1); substp(CO,g,can->vy,(P)q1,(P *)&t); ptozp((P)t,1,&c,&g1);
     for(ix=0;ix<can->width;ix++){
-      STOQ(ix,q1);substp(CO,g1,can->vx,(P)q1,(P *)&t);
+      STOZ(ix,q1);substp(CO,g1,can->vx,(P)q1,(P *)&t);
       devalr(CO,t,&s);
       tab[ix][iy]=ToReal(s);
       if(can->vmax<tab[ix][iy])can->vmax=tab[ix][iy];
@@ -150,8 +150,8 @@ void calcb(double **tab,struct canvas *can,int nox){
   can->vmax=can->vmin=ToReal(sm);
 
   for(iy=0;iy<can->height;iy++)for(ix=0;ix<can->width;ix++)tab[ix][iy]=1.0;
-  subq(can->qxmax,can->qxmin,&dx); STOQ(can->width,w); divq(dx,(Q)w,&xstep);
-  subq(can->qymax,can->qymin,&dy); STOQ(can->height,h); divq(dy,(Q)h,&ystep);
+  subq(can->qxmax,can->qxmin,&dx); STOZ(can->width,w); divq(dx,(Q)w,&xstep);
+  subq(can->qymax,can->qymin,&dy); STOZ(can->height,h); divq(dy,(Q)h,&ystep);
   MKV(can->vx,x); mulp(CO,(P)xstep,x,&t);
   addp(CO,(P)can->qxmin,t,&s); substp(CO,can->formula,can->vx,s,&f1);
   MKV(can->vy,y); mulp(CO,(P)ystep,y,&t);
@@ -159,8 +159,8 @@ void calcb(double **tab,struct canvas *can,int nox){
   ptozp(f2,1,&c,&g);
   a=(int *)ALLOCA((MAX(can->width,can->height)+1)*sizeof(int));
   for(iy=0;iy<can->height;iy++)for(ix=0;ix<can->width;ix++)tab[ix][iy]=1.0;
-  subq(can->qxmax,can->qxmin,&dx); STOQ(can->width,w); divq(dx,(Q)w,&xstep);
-  subq(can->qymax,can->qymin,&dy); STOQ(can->height,h); divq(dy,(Q)h,&ystep);
+  subq(can->qxmax,can->qxmin,&dx); STOZ(can->width,w); divq(dx,(Q)w,&xstep);
+  subq(can->qymax,can->qymin,&dy); STOZ(can->height,h); divq(dy,(Q)h,&ystep);
   MKV(can->vx,x); mulp(CO,(P)xstep,x,&t);
   addp(CO,(P)can->qxmin,t,&s); substp(CO,can->formula,can->vx,s,&f1);
   MKV(can->vy,y); mulp(CO,(P)ystep,y,&t);
@@ -168,7 +168,7 @@ void calcb(double **tab,struct canvas *can,int nox){
   ptozp(f2,1,&c,&g);
   a=(int *)ALLOCA((MAX(can->width,can->height)+1)*sizeof(int));
   for(ix=0;ix<can->width;ix++){
-    STOQ(ix,q1); substp(CO,g,can->vx,(P)q1,&t); ptozp(t,1,&c,&g1);
+    STOZ(ix,q1); substp(CO,g,can->vx,(P)q1,&t); ptozp(t,1,&c,&g1);
     if(!g1)for(iy=0;iy<can->height;iy++)tab[ix][iy]=0.0;
     else if(!NUM(g1)){
       sturmseq(CO,g1,&ss);
@@ -176,7 +176,7 @@ void calcb(double **tab,struct canvas *can,int nox){
       for(iy=0,pa=a;iy<can->height;iy++,pa++){
         if(*pa<0||(*(pa+1)>=0&&(*pa>*(pa+1))))tab[ix][iy]=0.0;
         else {
-          STOQ(iy,q1);substp(CO,g1,can->vy,(P)q1,&t);
+          STOZ(iy,q1);substp(CO,g1,can->vy,(P)q1,&t);
           devalr(CO,(Obj)t,(Obj *)&s);
           tab[ix][iy]=ToReal(s);
           if(can->vmax<tab[ix][iy])can->vmax=tab[ix][iy];
@@ -186,7 +186,7 @@ void calcb(double **tab,struct canvas *can,int nox){
     }
   }
   for(iy=0;iy<can->height;iy++){
-    STOQ(iy,q1); substp(CO,g,can->vy,(P)q1,&t); ptozp(t,1,&c,&g1);
+    STOZ(iy,q1); substp(CO,g,can->vy,(P)q1,&t); ptozp(t,1,&c,&g1);
     if(!g1) for(ix=0;ix<can->width;ix++)tab[ix][iy]=0.0;
     else if(!NUM(g1)){
       sturmseq(CO,g1,&ss);
@@ -195,7 +195,7 @@ void calcb(double **tab,struct canvas *can,int nox){
         if(tab[ix][iy]!=0.0){
           if(*pa<0||(*(pa+1)>=0&&(*pa>*(pa+1))))tab[ix][iy]=0.0;
           else {
-            STOQ(ix,q1);substp(CO,g1,can->vx,(P)q1,&t);
+            STOZ(ix,q1);substp(CO,g1,can->vx,(P)q1,&t);
             devalr(CO,(Obj)t,(Obj *)&s);
             tab[ix][iy]=ToReal(s);
             if(can->vmax<tab[ix][iy])can->vmax=tab[ix][iy];
@@ -216,8 +216,8 @@ double usubstrp(P p,double r){
   else if(NUM(p))t=BDY((Real)p);
   else {
     dc=DC(p); t=BDY((Real)COEF(dc));
-    for(d=QTOS(DEG(dc)),dc=NEXT(dc);dc;d=QTOS(DEG(dc)),dc=NEXT(dc)){
-      t=t*pwrreal0(r,(d-QTOS(DEG(dc))))+BDY((Real)COEF(dc));
+    for(d=ZTOS(DEG(dc)),dc=NEXT(dc);dc;d=ZTOS(DEG(dc)),dc=NEXT(dc)){
+      t=t*pwrreal0(r,(d-ZTOS(DEG(dc))))+BDY((Real)COEF(dc));
     }
     if(d)t*=pwrreal0(r,d);
   }
@@ -233,8 +233,8 @@ void qcalc(char **tab,struct canvas *can){
   int *a,*pa;
   VECT ss;
 
-  subq(can->qxmax,can->qxmin,&dx); STOQ(can->width,w); divq(dx,(Q)w,&xstep);
-  subq(can->qymax,can->qymin,&dy); STOQ(can->height,h); divq(dy,(Q)h,&ystep);
+  subq(can->qxmax,can->qxmin,&dx); STOZ(can->width,w); divq(dx,(Q)w,&xstep);
+  subq(can->qymax,can->qymin,&dy); STOZ(can->height,h); divq(dy,(Q)h,&ystep);
   MKV(can->vx,x); mulp(CO,(P)xstep,x,&t); 
   addp(CO,(P)can->qxmin,t,&s); substp(CO,can->formula,can->vx,s,&f1);
   MKV(can->vy,y); mulp(CO,(P)ystep,y,&t);
@@ -244,7 +244,7 @@ void qcalc(char **tab,struct canvas *can){
   initmarker(can,"Horizontal scan...");
   for( ix=0; ix < can->width; ix++ ){
     marker(can,DIR_X,ix);
-    STOQ(ix,q1); substp(CO,g,can->vx,(P)q1,&t); ptozp(t,1,&c,&g1);
+    STOZ(ix,q1); substp(CO,g,can->vx,(P)q1,&t); ptozp(t,1,&c,&g1);
     if( !g1 )
       for(iy=0; iy < can->height; iy++ )
         tab[ix][iy]=1;
@@ -258,7 +258,7 @@ void qcalc(char **tab,struct canvas *can){
   initmarker(can,"Vertical scan...");
   for( iy=0; iy < can->height; iy++ ){
     marker(can,DIR_Y,iy);
-    STOQ(iy,q1); substp(CO,g,can->vy,(P)q1,&t); ptozp(t,1,&c,&g1);
+    STOZ(iy,q1); substp(CO,g,can->vy,(P)q1,&t); ptozp(t,1,&c,&g1);
     if( !g1 )
       for(ix=0; ix < can->width; ix++ )
         tab[ix][iy]=1;
@@ -317,7 +317,7 @@ void seproot(VECT s,int min,int max,int *ar){
 
   ss=(P *)s->body;f=ss[0];
   for(i=min;i<=max;i++){
-    STOQ(i,q);usubstqp(f,(Q)q,&t);
+    STOZ(i,q);usubstqp(f,(Q)q,&t);
     if(!t)ar[i]=-1;
     else {
       ar[i]=numch(s,(Q)q,t);break;
@@ -325,7 +325,7 @@ void seproot(VECT s,int min,int max,int *ar){
   }
   if(i>max) return;
   for(j=max;j>= min;j--){
-    STOQ(j,q); usubstqp(f,(Q)q,&t);
+    STOZ(j,q); usubstqp(f,(Q)q,&t);
     if(!t)ar[j]=-1;
     else {
       if(i!=j)ar[j]=numch(s,(Q)q,t);
@@ -394,13 +394,13 @@ void plotcalcbf(struct canvas *can){
   Z prec,w,h1;
   NODE arg;
 
-  STOQ(can->prec,prec); arg = mknode(1,prec); Psetprec(arg,&t);
+  STOZ(can->prec,prec); arg = mknode(1,prec); Psetprec(arg,&t);
   evalr(CO,(Obj)can->formula,can->prec,&fr);
   MKReal(can->xmin,r); xmin = tobf((Num)r,can->prec);
   MKReal(can->xmax,r); xmax = tobf((Num)r,can->prec);
   MKReal(can->ymin,r); ymin = tobf((Num)r,can->prec);
   MKReal(can->ymax,r); ymax = tobf((Num)r,can->prec);
-  STOQ(can->width,w);
+  STOZ(can->width,w);
   subbf(xmax,xmin,&dx); divbf(dx,(Num)w,&xstep);
   tab=(Num *)MALLOC(can->width*sizeof(Num));
   for(ix=0,x=xmin;ix<can->width;ix++){
@@ -422,7 +422,7 @@ void plotcalcbf(struct canvas *can){
   can->pa=(struct pa *)MALLOC(sizeof(struct pa));
   can->pa[0].length=can->width;
   can->pa[0].pos=pa=(POINT *)MALLOC(can->width*sizeof(POINT));
-  STOQ(can->height-1,h1);
+  STOZ(can->height-1,h1);
   for(ix=0;ix<can->width;ix++){
     XC(pa[ix])=ix; 
     subbf(ymax,tab[ix],&u); divbf(u,dy,&v); mulbf(v,(Num)h1,&u);

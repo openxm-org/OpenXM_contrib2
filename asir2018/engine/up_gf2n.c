@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/up_gf2n.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -153,7 +153,7 @@ void tracemodup_gf2n(UP g,UP f,Z d,UP *xp)
   UP x,t,s,u,invf;
   int en,i;
 
-  en = QTOS(d)*degup2(current_mod_gf2n->dense);
+  en = ZTOS(d)*degup2(current_mod_gf2n->dense);
   remup(g,f,&x);
   if ( !x ) {
     *xp = 0;
@@ -174,7 +174,7 @@ void tracemodup_gf2n_slow(UP g,UP f,Z d,UP *xp)
   UP x,t,s,u;
   int en,i;
 
-  en = QTOS(d)*degup2(current_mod_gf2n->dense);
+  en = ZTOS(d)*degup2(current_mod_gf2n->dense);
   remup(g,f,&x);
   if ( !x ) {
     *xp = 0;
@@ -195,7 +195,7 @@ void tracemodup_gf2n_tab(UP g,UP f,Z d,UP *xp)
   UP *tab;
   GF2N one;
 
-  en = QTOS(d)*degup2(current_mod_gf2n->dense);
+  en = ZTOS(d)*degup2(current_mod_gf2n->dense);
   remup(g,f,&t); g = t;
   if ( !g ) {
     *xp = 0;

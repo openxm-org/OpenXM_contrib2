@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.1 2018/09/19 05:45:06 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -159,13 +159,13 @@ pointer evalparif(FUNC f,NODE arg)
     Pox_push_cmo(oxarg,&dmy);
   }
   MKSTR(name,f->name);
-  STOQ(ac,narg);
+  STOZ(ac,narg);
   oxarg = mknode(3,ox_pari_stream,name,narg);
   Pox_execute_function(oxarg,&dmy);
   ox_get_pari_result = 1;
 #if defined(VISUAL) || defined(__MINGW32__)
 #define SM_popCMO 262
-  STOQ(SM_popCMO,cmd);
+  STOZ(SM_popCMO,cmd);
   oxarg = mknode(2,ox_pari_stream,cmd);
   Pox_push_cmd(oxarg,&dmy);
   nd = mknode(1,ox_pari_stream);

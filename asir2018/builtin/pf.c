@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/pf.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "math.h"
@@ -216,7 +216,7 @@ void make_itri() {
   OALLOC(asindef->deriv,1);
   args = (Obj *)ALLOCA(2*sizeof(Obj));
   mulp(CO,x,x,&xx); subp(CO,(P)ONE,xx,(P *)&args[0]);
-  STOQ(-2,mtwo); divz(ONE,mtwo,(Z *)&args[1]);
+  STOZ(-2,mtwo); divz(ONE,mtwo,(Z *)&args[1]);
   _mkpfins(powdef,args,&v); MKV(v,t);
   asindef->deriv[0] = (Obj)t;
 
@@ -257,7 +257,7 @@ void make_ihyp() {
   OALLOC(asinhdef->deriv,1);
   args = (Obj *)ALLOCA(2*sizeof(Obj));
   mulp(CO,x,x,&xx); addp(CO,(P)ONE,xx,(P *)&args[0]);
-  STOQ(-2,mtwo); divz(ONE,mtwo,(Z *)&args[1]);
+  STOZ(-2,mtwo); divz(ONE,mtwo,(Z *)&args[1]);
   _mkpfins(powdef,args,&v); MKV(v,t);
   asinhdef->deriv[0] = (Obj)t;
 
@@ -415,7 +415,7 @@ void Pfunargs_ext(NODE arg,LIST *rp)
 
     d0 = a0 = 0;
     for ( i = 0; i < pf->argc; i++ ) {
-      NEXTNODE(d0,d); STOQ(ad[i].d,q); BDY(d) = (pointer)q;
+      NEXTNODE(d0,d); STOZ(ad[i].d,q); BDY(d) = (pointer)q;
       NEXTNODE(a0,a); BDY(a) = (pointer)ad[i].arg;
     }
     NEXT(d) = 0; NEXT(a) = 0; MKLIST(alist,a0); MKLIST(dlist,d0);
@@ -433,7 +433,7 @@ void Pvtype(NODE arg,Z *rp)
   if ( !p || ID(p) != O_P )
     *rp = 0;
   else
-    STOQ((long)VR(p)->attr,*rp);
+    STOZ((long)VR(p)->attr,*rp);
 }
 
 extern NODE user_int_handler,user_quit_handler;
@@ -618,7 +618,7 @@ void Pmapat(NODE arg,Obj *rp)
     error("mapat : invalid function specification");
   if ( !INT(ARG1(arg)) )
     error("mapat : invalid position");
-  pos = QTOS((Q)ARG1(arg));
+  pos = ZTOS((Q)ARG1(arg));
   node = NEXT(NEXT(arg));
   len = length(node);
   if ( pos >= len )

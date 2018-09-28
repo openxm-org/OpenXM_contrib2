@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/C.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -210,7 +210,7 @@ void mptop(P f,P *gp)
   if ( !f ) 
     *gp = 0;
   else if ( NUM(f) )
-    STOQ(CONT((MQ)f),q),*gp = (P)q;
+    STOZ(CONT((MQ)f),q),*gp = (P)q;
   else {
     for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
       NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); mptop(COEF(dc),&COEF(dcr));
@@ -258,7 +258,7 @@ void sfptop(P f,P *gp)
     *gp = 0;
   else if ( NUM(f) ) {
     gfstomq((GFS)f,&fq);
-    STOQ(CONT(fq),q);
+    STOZ(CONT(fq),q);
     *gp = (P)q;
   } else {
     for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
@@ -392,7 +392,7 @@ void ptoum(int m,P f,UM wf)
 
   for ( dc = DC(f); dc; dc = NEXT(dc) ) {
     r = remqi(((Q)COEF(dc)),m);
-    COEF(wf)[QTOS(DEG(dc))] = r;
+    COEF(wf)[ZTOS(DEG(dc))] = r;
   }
   degum(wf,UDEG(f));
 }
@@ -407,13 +407,13 @@ void umtop(V v,UM w,P *f)
   if ( DEG(w) < 0 )
     *f = 0;
   else if ( DEG(w) == 0 ) 
-    STOQ(COEF(w)[0],q), *f = (P)q;
+    STOZ(COEF(w)[0],q), *f = (P)q;
   else {
     for ( i = DEG(w), c = COEF(w), dc0 = 0; i >= 0; i-- ) 
       if ( c[i] ) {
         NEXTDC(dc0,dc);
-        STOQ(i,DEG(dc));
-        STOQ(c[i],q), COEF(dc) = (P)q;
+        STOZ(i,DEG(dc));
+        STOZ(c[i],q), COEF(dc) = (P)q;
       }
     NEXT(dc) = 0;
     MKP(v,dc0,*f);
@@ -439,7 +439,7 @@ void ptosfum(P f,UM wf)
   for ( dc = DC(f); dc; dc = NEXT(dc) ) {
     ntogfs((Obj)COEF(dc),&c);
     if ( c )
-      COEF(wf)[QTOS(DEG(dc))] = FTOIF(CONT(c));
+      COEF(wf)[ZTOS(DEG(dc))] = FTOIF(CONT(c));
   }
   degum(wf,UDEG(f));
 }
@@ -462,7 +462,7 @@ void sfumtop(V v,UM w,P *f)
     for ( i = DEG(w), c = COEF(w), dc0 = 0; i >= 0; i-- ) 
       if ( c[i] ) {
         NEXTDC(dc0,dc);
-        STOQ(i,DEG(dc));
+        STOZ(i,DEG(dc));
         t = COEF(w)[i];
         t = IFTOF(t);
         MKGFS(t,q);
@@ -489,7 +489,7 @@ void ptoup(P n,UP *nr)
     up_var = VR(n);
     *nr = r = UPALLOC(d); DEG(r) = d;
     for ( dc = DC(n); dc; dc = NEXT(dc) ) {
-      COEF(r)[QTOS(DEG(dc))] = (Num)COEF(dc);
+      COEF(r)[ZTOS(DEG(dc))] = (Num)COEF(dc);
     }
   }
 }
@@ -506,7 +506,7 @@ void uptop(UP n,P *nr)
   else {
     for ( i = DEG(n), dc0 = 0; i >= 0; i-- )
       if ( COEF(n)[i] ) {
-        NEXTDC(dc0,dc); STOQ(i,DEG(dc)); COEF(dc) = (P)COEF(n)[i];
+        NEXTDC(dc0,dc); STOZ(i,DEG(dc)); COEF(dc) = (P)COEF(n)[i];
       }
     if ( !up_var )
       up_var = CO->v;
@@ -543,7 +543,7 @@ void mptoum(P p,UM pr)
   } else {
     bzero((char *)pr,(int)((UDEG(p)+2)*sizeof(int)));
     for ( dc = DC(p); dc; dc = NEXT(dc) )
-      COEF(pr)[QTOS(DEG(dc))] = CONT((MQ)COEF(dc));
+      COEF(pr)[ZTOS(DEG(dc))] = CONT((MQ)COEF(dc));
     degum(pr,UDEG(p));
   }
 }
@@ -561,7 +561,7 @@ void umtomp(V v,UM p,P *pr)
   else {
     for ( dc0 = 0, i = DEG(p); i >= 0; i-- )
       if ( COEF(p)[i] ) {
-        NEXTDC(dc0,dc); STOQ(i,DEG(dc));
+        NEXTDC(dc0,dc); STOZ(i,DEG(dc));
         STOMQ(COEF(p)[i],q), COEF(dc) = (P)q;
       }
     NEXT(dc) = 0; MKP(v,dc0,*pr);
@@ -580,7 +580,7 @@ void enc_to_p(int p,int a,V v,P *pr)
   for ( i = 0; a; i++, a /= p ) {
     c = a%p;
     if ( c ) {
-      STOQ(i,dq); STOQ(c,cq);
+      STOZ(i,dq); STOZ(c,cq);
       NEWDC(dct); DEG(dct) = dq; COEF(dct) = (P)cq;
       NEXT(dct) = dc; dc = dct;
     }

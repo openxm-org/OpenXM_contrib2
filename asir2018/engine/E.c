@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/E.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 
@@ -54,7 +54,7 @@ void henmv(VL vl,VN vn,P f,P g0,P h0,P a0,P b0,P lg,P lh,P lg0,P lh0,Z q,int k,P
   P g1,h1,a1,b1;
   Z q2,r2,two;
 
-  STOQ(2,two);
+  STOZ(2,two);
   divqrz(q,two,&q2,&r2);
   adjc(vl,g0,a0,lg0,q,&g1,&a1); adjc(vl,h0,b0,lh0,q,&h1,&b1);
   henmvmain(vl,vn,f,g1,h1,b1,a1,lg,lh,q,q2,k,gp,hp);
@@ -167,7 +167,7 @@ void henzq(P f,P i0,UM fi0,P i1,UM fi1,int p,int k,P *fr0p,P *fr1p,P *gr0p,P *gr
   umtop(VR(f),fi0,&f0); umtop(VR(f),fi1,&f1);
   umtop(VR(f),wg0,&g0); umtop(VR(f),wg1,&g1);
 
-  STOQ(2,two); STOQ(p,q); divqrz(q,two,&q2,&r2);
+  STOZ(2,two); STOZ(p,q); divqrz(q,two,&q2,&r2);
   for ( i = 1; i < k; i++ ) {
   /*  c = ((f - f0*f1)/q) mod q;
     q1 = (c*g1) / f1; 
@@ -246,8 +246,8 @@ void henzq1(P g,P h,Q bound,P *gcp,P *hcp,Z *qp)
 
   v = VR(g); n=deg(v,g); m=deg(v,h);
   norm(g,&a); norm(h,&b);
-  STOQ(m,w); pwrq(a,(Q)w,&t); 
-  STOQ(n,w); pwrq(b,(Q)w,&s); 
+  STOZ(m,w); pwrq(a,(Q)w,&t); 
+  STOZ(n,w); pwrq(b,(Q)w,&s); 
   mulq(t,s,&ts); 
 
   factorialz(n+m,&w); mulq(ts,(Q)w,&s); 
@@ -309,7 +309,7 @@ void henzq1(P g,P h,Q bound,P *gcp,P *hcp,Z *qp)
       !remqi((Q)LC(g),mod) || 
       !remqi((Q)LC(h),mod) ) 
       continue;
-    for ( STOQ(mod,q); cmpq((Q)q,bound) < 0; ) {
+    for ( STOZ(mod,q); cmpq((Q)q,bound) < 0; ) {
       mulz(q,q,&q1); q = q1;
     }
     *qp = q;
@@ -478,7 +478,7 @@ void exthpc_generic(VL vl,P p,int d,V v,P *pr)
   else {
     v0 = VR(p);
     for ( MKV(v0,x), dc = DC(p), w = 0; dc; dc = NEXT(dc) ) {
-      exthpc_generic(vl,COEF(dc),d-QTOS(DEG(dc)),v,&t);
+      exthpc_generic(vl,COEF(dc),d-ZTOS(DEG(dc)),v,&t);
       pwrp(vl,x,DEG(dc),&xd);
       mulp(vl,xd,t,&t1); addp(vl,w,t1,&a); w = a;
     }
@@ -500,7 +500,7 @@ void exthp(VL vl,P p,int d,P *pr)
       *pr = 0;
   else {
     for ( MKV(VR(p),x), dc = DC(p), w = 0; dc; dc = NEXT(dc) ) {
-      exthp(vl,COEF(dc),d - QTOS(DEG(dc)),&t);
+      exthp(vl,COEF(dc),d - ZTOS(DEG(dc)),&t);
       pwrp(vl,x,DEG(dc),&xd); 
       mulp(vl,xd,t,&t1); addp(vl,w,t1,&a); w = a;
     }
@@ -537,7 +537,7 @@ void cbound(VL vl,P p,Q *b)
   addq(n,n,&m); 
 
   k = geldb(vl,p);
-  STOQ(3,t); STOQ(k,e);
+  STOZ(3,t); STOZ(k,e);
 
   pwrq((Q)t,(Q)e,&n);
   mulq(m,n,b); 
@@ -736,7 +736,7 @@ int homdeg(P f)
     return( 0 );
   else {
     for ( dc = DC(f), m = 0; dc; dc = NEXT(dc) ) {
-      t = QTOS(DEG(dc))+homdeg(COEF(dc));
+      t = ZTOS(DEG(dc))+homdeg(COEF(dc));
       m = MAX(m,t);
     }
     return ( m );
@@ -754,7 +754,7 @@ int minhomdeg(P f)
     return( 0 );
   else {
     for ( dc = DC(f), m = homdeg(f); dc; dc = NEXT(dc) ) {
-      t = QTOS(DEG(dc))+minhomdeg(COEF(dc));
+      t = ZTOS(DEG(dc))+minhomdeg(COEF(dc));
       m = MIN(m,t);
     }
     return ( m );
@@ -801,11 +801,11 @@ void affinemain(VL vl,P p,V v0,int n,P *pl,P *pr)
     c = COEF(dc);
     for ( d = DEG(dc), dc = NEXT(dc); 
       dc; d = DEG(dc), dc = NEXT(dc) ) {
-        mulp(vl,pl[QTOS(d)-QTOS(DEG(dc))],c,&m); 
+        mulp(vl,pl[ZTOS(d)-ZTOS(DEG(dc))],c,&m); 
         addp(vl,m,COEF(dc),&c); 
     }
     if ( d ) {
-      mulp(vl,pl[QTOS(d)],c,&m); c = m;
+      mulp(vl,pl[ZTOS(d)],c,&m); c = m;
     }
     *pr = c;
   }
@@ -821,7 +821,7 @@ void restore(VL vl,P f,VN vn,P *fr)
   for ( i = 0; vn[i].v; i++ ) {
     MKV(vn[i].v,t);
     if ( vn[i].n ) {
-      STOQ(-vn[i].n,s);
+      STOZ(-vn[i].n,s);
       addp(vl,t,(P)s,&vv);
     } else 
       vv = t;

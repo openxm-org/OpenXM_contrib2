@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/type.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -66,7 +66,7 @@ Obj *rp;
   Z q;
 
   if ( t = (Obj)ARG0(arg) ) {
-    STOQ(OID(t),q); *rp = (Obj)q;
+    STOZ(OID(t),q); *rp = (Obj)q;
   } else 
     *rp = 0;
 }
@@ -80,7 +80,7 @@ Obj *rp;
 
   if ( t = (Obj)ARG0(arg) ) {
     asir_assert(t,O_N,"ntype");
-    STOQ(NID(t),q); *rp = (Obj)q;
+    STOZ(NID(t),q); *rp = (Obj)q;
   } else 
     *rp = 0;
 }

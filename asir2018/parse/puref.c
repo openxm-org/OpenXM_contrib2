@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/puref.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -522,7 +522,7 @@ void evalins(PFINS ins,int prec,Obj *rp)
       NEXTNODE(n0,n); BDY(n) = (pointer)tad[i].arg;
     }
     if ( prec ) {
-      NEXTNODE(n0,n); STOQ(prec,q); BDY(n) = (pointer)q;
+      NEXTNODE(n0,n); STOZ(prec,q); BDY(n) = (pointer)q;
     }
     if ( n0 )
       NEXT(n) = 0;
@@ -697,7 +697,7 @@ void simplify_factorial_ins(PFINS ins,Obj *rp)
   ad = ins->ad;
   a = ad[0].arg;
   if ( !ad[0].d && INT(a) && smallz((Z)a) ) {
-    factorialz(QTOS((Z)a),&q);
+    factorialz(ZTOS((Z)a),&q);
     *rp = (Obj)q;
   } else simplify_elemfunc_ins(ins,rp);
 }

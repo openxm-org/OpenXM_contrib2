@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/ox_plot.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -187,7 +187,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial){
       break;
     case SM_getsp:
       i=asir_OperandStackPtr+1;
-      STOQ(i,q);
+      STOZ(i,q);
       asir_push_one((Obj)q);
       break;
     case SM_popSerializedLocalObject:
@@ -252,22 +252,22 @@ static void asir_executeFunction(int serial){
   switch (fno){
   case 0://IFPLOT
     id=plot(n,fno);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 1://CONPLOT
     id=plot(n,fno);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 2://PLOT
     id=plot(n,fno);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 4://POLARPLOT
     id=plot(n,fno);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 30://MEMORY_PLOT
@@ -276,12 +276,12 @@ static void asir_executeFunction(int serial){
     break;
   case 31://ARRAYPLOT
     id=arrayplot(n);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 32://OPEN_CANVAS
     id=open_canvas(n);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 5://PLOTOVER
@@ -308,7 +308,7 @@ static void asir_executeFunction(int serial){
 // ifplotNG
   case 36://OBJ_CP
     id=objcp(n);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 6://IFPLOTD
@@ -324,7 +324,7 @@ static void asir_executeFunction(int serial){
   case 24://ITVIFPLOT
 #endif
     id=ifplotNG(n,fno);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 12://INEQNDAND
@@ -340,12 +340,12 @@ static void asir_executeFunction(int serial){
   case 26://PLOTOVERQ
   case 27://PLOTOVERB
     id=ifplotOP(n,fno);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   case 38://POLARPLOTD
     id=polarplotNG(n);
-    STOQ(id,ret);
+    STOZ(id,ret);
     asir_push_one((Obj)ret);
     break;
   }

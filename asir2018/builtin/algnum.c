@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/algnum.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -181,7 +181,7 @@ void Pdalgtoup(NODE arg,LIST *r)
   Z q;
 
   pos = dalgtoup((DAlg)ARG0(arg),&up,&dn);
-  STOQ(pos,q);
+  STOZ(pos,q);
   b = mknode(3,up,dn,q);
   MKLIST(*r,b);
 }
@@ -195,7 +195,7 @@ void Pget_field_defpoly(NODE arg,DAlg *r)
   DP d;
 
   nf = get_numberfield();
-  d = nf->ps[QTOS((Q)ARG0(arg))];
+  d = nf->ps[ZTOS((Q)ARG0(arg))];
   MKDAlg(d,ONE,*r);
 }
 
@@ -206,7 +206,7 @@ void Pget_field_generator(NODE arg,DAlg *r)
   MP m;
   DP d;
 
-  index = QTOS((Q)ARG0(arg));
+  index = ZTOS((Q)ARG0(arg));
   n = get_numberfield()->n;
   NEWDL(dl,n);
   for ( i = 0; i < n; i++ ) dl->d[i] = 0;
@@ -506,7 +506,7 @@ Alg *rp;
   if ( a && (OID(a) != O_N || NID(a) != N_Q || !INT(a)) )
     *rp = 0;
   else {
-    n = ACNT-QTOS(a)-1;
+    n = ACNT-ZTOS(a)-1;
     for ( vl = ALG; vl && n; vl = NEXT(vl), n-- );
     if ( vl ) {
       MKV(vl->v,x); MKAlg(x,*rp);
@@ -529,7 +529,7 @@ Obj *rp;
   if ( a && (OID(a) != O_N || NID(a) != N_Q || !INT(a)) )
     *rp = 0;
   else {
-    n = ACNT-QTOS(a)-1;
+    n = ACNT-ZTOS(a)-1;
     for ( vl = ALG; vl && n; vl = NEXT(vl), n-- );
     if ( vl ) {
       MKV(vl->v,x); MKAlg(x,b); algtorat((Num)b,rp);
@@ -657,7 +657,7 @@ void invalg_le(Alg a,LIST *r)
 
   /* setup */
   ptozp(ap,1,&c,&p);
-  STOQ(2,two); create_order_spec(0,(Obj)two,&spec); initd(spec);
+  STOZ(2,two); create_order_spec(0,(Obj)two,&spec); initd(spec);
   for ( n = 0, tvl = vl; tvl; tvl = NEXT(tvl), n++ );
   ps = (DP *)ALLOCA(n*sizeof(DP));
 
@@ -668,7 +668,7 @@ void invalg_le(Alg a,LIST *r)
   ptod(ALG,vl,p,&dp);
   /* index list */
   for ( b = 0, i = 0; i < n; i++ ) {
-    STOQ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
+    STOZ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
   }
   /* simplification */
   dp_true_nf(b,dp,ps,1,&nm,(P *)&dn);
@@ -707,7 +707,7 @@ void invalg_le(Alg a,LIST *r)
     MKNODE(b1,(pointer)h1,hist); hist = b1;
 
     /* dn0 = LCM(dn0,h1->dn) */
-    gcdz(dn0,h1->dn,&ng); divz(dn0,ng,&nq);
+    gcdz(dn0,h1->dn,&ng); divsz(dn0,ng,&nq);
     mulz(nq,h1->dn,&nl); absz(nl,&dn0);
   }
   /* create a matrix */

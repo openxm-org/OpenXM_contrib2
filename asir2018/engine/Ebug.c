@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/Ebug.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 
@@ -58,7 +58,7 @@ void substvp(VL vl,P f,VN vn,P *g)
 
   h = f;
   for ( i = 0; (v = vn[i].v) != 0; i++ ) {
-    STOQ(vn[i].n,t);
+    STOZ(vn[i].n,t);
     substp(vl,h,v,(P)t,&h1); h = h1;
   }
   *g = h;
@@ -83,7 +83,7 @@ void affine(VL vl,P f,VN vn,P *fr)
 
     MKV(vn[i].v,t);
     if ( vn[i].n ) {
-      STOQ(vn[i].n,s); addp(vl,t,(P)s,&vv); 
+      STOZ(vn[i].n,s); addp(vl,t,(P)s,&vv); 
     } else 
       vv = t;
 

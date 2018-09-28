@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/if.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -111,8 +111,8 @@ int open_canvas(NODE arg){
     can->width=DEFAULTWIDTH;
     can->height=DEFAULTHEIGHT;
   } else {
-    can->width=QTOS((Q)BDY(BDY(wsize)));
-    can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
+    can->width=ZTOS((Q)BDY(BDY(wsize)));
+    can->height=ZTOS((Q)BDY(NEXT(BDY(wsize))));
   }
   if(wname)can->wname=BDY(wname);
   else can->wname="";
@@ -157,25 +157,25 @@ int plot(NODE arg,int fn){
     can->zmin=ToReal(BDY(n));
     n=NEXT(n);can->zmax=ToReal(BDY(n));
     n=NEXT(n);
-    if(can->mode==modeNO(CONPLOT))can->nzstep=n?QTOS((Q)BDY(n)):MAXGC;
+    if(can->mode==modeNO(CONPLOT))can->nzstep=n?ZTOS((Q)BDY(n)):MAXGC;
     else {
       can->vx=VR((P)BDY(BDY(zrange)));
-      can->nzstep=n?QTOS((Q)BDY(n)):DEFAULTPOLARSTEP;
+      can->nzstep=n?ZTOS((Q)BDY(n)):DEFAULTPOLARSTEP;
     }
   }
   if(!wsize){
     can->width=DEFAULTWIDTH;
     can->height=DEFAULTHEIGHT;
   } else {
-    can->width=QTOS((Q)BDY(BDY(wsize)));
-    can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
+    can->width=ZTOS((Q)BDY(BDY(wsize)));
+    can->height=ZTOS((Q)BDY(NEXT(BDY(wsize))));
   }
   if(wname) can->wname=BDY(wname);
   else can->wname="";
   can->formula=formula; 
   if(can->mode==modeNO(PLOT)){
     //plot
-    can->prec=argc(arg)==7 ? QTOS((Q)ARG6(arg)) : 0;
+    can->prec=argc(arg)==7 ? ZTOS((Q)ARG6(arg)) : 0;
     plotcalc(can);
     create_canvas(can);
     plot_print(display,can);
@@ -237,7 +237,7 @@ int memory_plot(NODE arg,LIST *bytes){
       n=NEXT(BDY(zrange));
       can->zmin=ToReal(BDY(n)); n=NEXT(n); can->zmax=ToReal(BDY(n));
       n=NEXT(n);
-      if(n) can->nzstep=QTOS((Q)BDY(n));
+      if(n) can->nzstep=ZTOS((Q)BDY(n));
       else can->nzstep=MAXGC;
       can->mode=modeNO(CONPLOT);
     } else
@@ -247,16 +247,16 @@ int memory_plot(NODE arg,LIST *bytes){
   if( !wsize ){
     can->width=DEFAULTWIDTH; can->height=DEFAULTHEIGHT;
   } else {
-    can->width=QTOS((Q)BDY(BDY(wsize)));
-    can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
+    can->width=ZTOS((Q)BDY(BDY(wsize)));
+    can->height=ZTOS((Q)BDY(NEXT(BDY(wsize))));
   }
   can->wname="";
   can->formula=formula; 
   if( can->mode==modeNO(PLOT)){
-    can->prec = argc(arg)==6 ? QTOS((Q)ARG5(arg)) : 0;
+    can->prec = argc(arg)==6 ? ZTOS((Q)ARG5(arg)) : 0;
     plotcalc(can);
     memory_print(can,&barray);
-    STOQ(can->width,qw); STOQ(can->height,qh);
+    STOZ(can->width,qw); STOZ(can->height,qh);
     n=mknode(3,qw,qh,barray);
     MKLIST(*bytes,n);
   } else {
@@ -266,7 +266,7 @@ int memory_plot(NODE arg,LIST *bytes){
       tabe[i]=(double *)ALLOCA(height*sizeof(double));
     calc(tabe,can,1);
     memory_if_print(tabe,can,&barray);
-    STOQ(width,qw); STOQ(height,qh);
+    STOZ(width,qw); STOZ(height,qh);
     n=mknode(3,qw,qh,barray);
     MKLIST(*bytes,n);
   }
@@ -280,11 +280,11 @@ int plotover(NODE arg){
   struct canvas *can;
   VL vl,vl0;
 
-  id=QTOS((Q)ARG0(arg));
+  id=ZTOS((Q)ARG0(arg));
   formula=(P)ARG1(arg);
   can=canvas[id];
   orgcolor=can->color;
-  if(argc(arg)==3) can->color=QTOS((Q)ARG2(arg));
+  if(argc(arg)==3) can->color=ZTOS((Q)ARG2(arg));
   else can->color=0;
   get_vars_recursive((Obj)formula,&vl);
   for(vl0=vl;vl0;vl0=NEXT(vl0))
@@ -296,7 +296,7 @@ int plotover(NODE arg){
   current_can=can;
   can->formula=formula;
   if(can->mode==modeNO(PLOT)){
-    can->prec = argc(arg)==3 ? QTOS((Q)ARG2(arg)) : 0;
+    can->prec = argc(arg)==3 ? ZTOS((Q)ARG2(arg)) : 0;
     plotcalc(can);
     plot_print(display,can);
   } else ifplotmain(can);
@@ -318,10 +318,10 @@ int drawcircle(NODE arg){
   Obj x,y,r;
   struct canvas *can;
 
-  index=QTOS((Q)ARG0(arg));
+  index=ZTOS((Q)ARG0(arg));
   xyr=(LIST)ARG1(arg); 
   x=(Obj)ARG0(BDY(xyr)); y=(Obj)ARG1(BDY(xyr)); r=(Obj)ARG2(BDY(xyr));
-  c=QTOS((Q)ARG2(arg));
+  c=ZTOS((Q)ARG2(arg));
   can=canvas[index];
   if(!can->window)return -1;
   else {
@@ -345,7 +345,7 @@ int draw_obj(NODE arg){
   RealVect *vect;
   struct canvas *can;
 
-  index=QTOS((Q)ARG0(arg));
+  index=ZTOS((Q)ARG0(arg));
   can=canvas[index];
   if(!can && closed_canvas[index]){
     canvas[index]=closed_canvas[index];
@@ -359,7 +359,7 @@ int draw_obj(NODE arg){
   }
 
   obj=BDY((LIST)ARG1(arg));
-  if(argc(arg)== 3) color=QTOS((Q)ARG2(arg));
+  if(argc(arg)== 3) color=ZTOS((Q)ARG2(arg));
   else color=0; // black
   switch(len=length(obj)){
     case 2: // point
@@ -398,7 +398,7 @@ int draw_string(NODE arg){
   NODE pos;
   struct canvas *can;
 
-  index=QTOS((Q)ARG0(arg));
+  index=ZTOS((Q)ARG0(arg));
   can=canvas[index];
   if(!can && closed_canvas[index]){
     canvas[index]=closed_canvas[index];
@@ -413,7 +413,7 @@ int draw_string(NODE arg){
 
   pos=BDY((LIST)ARG1(arg));
   str=BDY((STRING)ARG2(arg));
-  if(argc(arg)==4)color=QTOS((Q)ARG3(arg));
+  if(argc(arg)==4)color=ZTOS((Q)ARG3(arg));
   else color=0; // black
   x=(int)ToReal((Q)ARG0(pos));
   y=(int)ToReal((Q)ARG1(pos));
@@ -428,7 +428,7 @@ int clear_canvas(NODE arg){
   int index;
   struct canvas *can;
 
-  index=QTOS((Q)ARG0(arg));
+  index=ZTOS((Q)ARG0(arg));
   can=canvas[index];
   if(!can||!can->window) return -1;
   clear_pixmap(can);
@@ -461,8 +461,8 @@ int arrayplot(NODE arg){
     can->width=DEFAULTWIDTH;
     can->height=DEFAULTHEIGHT;
   } else {
-    can->width=QTOS((Q)BDY(BDY(wsize)));
-    can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
+    can->width=ZTOS((Q)BDY(BDY(wsize)));
+    can->height=ZTOS((Q)BDY(NEXT(BDY(wsize))));
   }
   can->wname=wname; can->formula=0; can->mode=modeNO(PLOT);
   create_canvas(can);
@@ -538,8 +538,8 @@ void ifplot_resize(struct canvas *can,POINT spos,POINT epos){
       ncan->height=m;
     }
     if(can->wide){
-      STOQ(10,ten);
-      STOQ(2,two);
+      STOZ(10,ten);
+      STOZ(2,two);
       subq(can->qxmax,can->qxmin,&t);
       mulq(t,ten,&dx);
       subq(can->qymax,can->qymin,&t);
@@ -562,8 +562,8 @@ void ifplot_resize(struct canvas *can,POINT spos,POINT epos){
       ymin=can->qymin;
       ymax=can->qymax;
     }
-    STOQ(XC(spos),sx); STOQ(YC(spos),sy); STOQ(XC(epos),ex); STOQ(YC(epos),ey);
-    STOQ(can->width,cw); STOQ(can->height,ch);
+    STOZ(XC(spos),sx); STOZ(YC(spos),sy); STOZ(XC(epos),ex); STOZ(YC(epos),ey);
+    STOZ(can->width,cw); STOZ(can->height,ch);
     mulq(sx,dx,&t); divq(t,cw,&s); addq(xmin,s,&ncan->qxmin);
     mulq(ex,dx,&t); divq(t,cw,&s); addq(xmin,s,&ncan->qxmax);
     mulq(ey,dy,&t); divq(t,ch,&s); subq(ymax,s,&ncan->qymin);
@@ -616,7 +616,7 @@ void plot_resize(struct canvas *can,POINT spos,POINT epos){
       ncan->height=m;
     }
     if( can->wide ){
-      STOQ(10,ten); STOQ(2,two);
+      STOZ(10,ten); STOZ(2,two);
       subq(can->qxmax,can->qxmin,&t); mulq(t,(Q)ten,&dx);
       addq(can->qxmax,can->qxmin,&t); divq(t,(Q)two,&xmid);
       divq(dx,(Q)two,&dx2); subq(xmid,dx2,&xmin); addq(xmid,dx2,&xmax);
@@ -631,7 +631,7 @@ void plot_resize(struct canvas *can,POINT spos,POINT epos){
       ymin=can->ymin;
       ymax=can->ymax;
     }
-    STOQ(XC(spos),sx); STOQ(XC(epos),ex); STOQ(can->width,cw); 
+    STOZ(XC(spos),sx); STOZ(XC(epos),ex); STOZ(can->width,cw); 
     mulq((Q)sx,dx,&t); divq(t,(Q)cw,&s); addq(xmin,s,&ncan->qxmin);
     mulq((Q)ex,dx,&t); divq(t,(Q)cw,&s); addq(xmin,s,&ncan->qxmax);
     ncan->xmin=ToReal(ncan->qxmin); ncan->xmax=ToReal(ncan->qxmax);
@@ -733,7 +733,7 @@ int ifplotNG(NODE arg,int func){
 
   can=canvas[id=search_canvas()];
   formula=(P)ARG0(arg);
-  can->color=QTOS((Q)ARG1(arg));
+  can->color=ZTOS((Q)ARG1(arg));
   xrange=(LIST)ARG2(arg);
   yrange=(LIST)ARG3(arg);
   zrange=(LIST)ARG4(arg);
@@ -754,14 +754,14 @@ int ifplotNG(NODE arg,int func){
   if(zrange){
     n=BDY(zrange); can->zmin=ToReal(BDY(n));
     n=NEXT(n); can->zmax=ToReal(BDY(n));
-    n=NEXT(n); can->nzstep=QTOS((Q)BDY(n));
+    n=NEXT(n); can->nzstep=ZTOS((Q)BDY(n));
   }
   if(!wsize){
     can->width=DEFAULTWIDTH;
     can->height=DEFAULTHEIGHT;
   } else {
-    can->width=QTOS((Q)BDY(BDY(wsize)));
-    can->height=QTOS((Q)BDY(NEXT(BDY(wsize))));
+    can->width=ZTOS((Q)BDY(BDY(wsize)));
+    can->height=ZTOS((Q)BDY(NEXT(BDY(wsize))));
   }
   if(wname) can->wname=BDY(wname);
   else can->wname="";
@@ -783,9 +783,9 @@ int ifplotOP(NODE arg,int func){
   VL vl,vl0;
   NODE n;
 
-  index=QTOS((Q)ARG0(arg));
+  index=ZTOS((Q)ARG0(arg));
   formula=(P)ARG1(arg);
-  color=QTOS((Q)ARG2(arg));
+  color=ZTOS((Q)ARG2(arg));
   // set canvas data
   can=canvas[index];
   orgcolor=can->color;
@@ -923,9 +923,9 @@ int objcp(NODE arg){
   int idsrc, idtrg, op_code;
   struct canvas *cansrc, *cantrg;
 
-  idsrc=QTOS((Q)ARG0(arg));
-  idtrg=QTOS((Q)ARG1(arg));
-  op_code=QTOS((Q)ARG2(arg));
+  idsrc=ZTOS((Q)ARG0(arg));
+  idtrg=ZTOS((Q)ARG1(arg));
+  op_code=ZTOS((Q)ARG2(arg));
   cansrc=canvas[idsrc];
   cantrg=canvas[idtrg];
   obj_op(cansrc, cantrg, op_code);
@@ -1030,7 +1030,7 @@ int polarplotNG(NODE arg){
   can=canvas[id];
   can->mode=modeNO(POLARPLOTD);
   can->formula=(P)ARG0(arg);
-  can->color=QTOS((Q)ARG1(arg));
+  can->color=ZTOS((Q)ARG1(arg));
   range=(LIST)ARG2(arg);
   geom=(LIST)ARG3(arg);
   wname=(STRING)ARG4(arg);
@@ -1041,11 +1041,11 @@ int polarplotNG(NODE arg){
     n=NEXT(n);can->zmax=ToReal(BDY(n));
     n=NEXT(n);
     can->vx=VR((P)BDY(BDY(range)));
-    can->nzstep=n?QTOS((Q)BDY(n)):DEFAULTPOLARSTEP;
+    can->nzstep=n?ZTOS((Q)BDY(n)):DEFAULTPOLARSTEP;
   }
   if(geom){
-    can->width=width=QTOS((Q)BDY(BDY(geom)));
-    can->height=height=QTOS((Q)BDY(NEXT(BDY(geom))));
+    can->width=width=ZTOS((Q)BDY(BDY(geom)));
+    can->height=height=ZTOS((Q)BDY(NEXT(BDY(geom))));
   }
   if(wname)can->wname=BDY(wname);
   else can->wname="";

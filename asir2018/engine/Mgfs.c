@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Mgfs.c,v 1.1 2018/09/19 05:45:07 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -649,7 +649,7 @@ void sfmintdeg(VL vl,P fx,int dy,int c,P *fr)
   for ( dc = DC(fx); dc; dc = NEXT(dc)) {
     chsgnp(COEF(dc),&t);
     ptoup(t,&ut);
-    rx[QTOS(DEG(dc))] = ut;
+    rx[ZTOS(DEG(dc))] = ut;
   }
   /* nf[d] = normal form table of monomials with total degree d */
   nf = (int ***)CALLOC(dx+dy+1,sizeof(int **)); /* xxx */
@@ -759,20 +759,20 @@ static void create_bmono(P c,V x,int i,V y,int j,P *mono)
       /* c*y^j */
       MKV(y,t);
       COEF(DC(t)) = c;
-      STOQ(j,DEG(DC(t)));
+      STOZ(j,DEG(DC(t)));
     }
   else if ( !j ) {
     /* c*x^i */
     MKV(x,t);
     COEF(DC(t)) = c;
-    STOQ(i,DEG(DC(t)));
+    STOZ(i,DEG(DC(t)));
   } else {
     MKV(y,s);
     COEF(DC(s)) = c;
-    STOQ(j,DEG(DC(s)));
+    STOZ(j,DEG(DC(s)));
     MKV(x,t);
     COEF(DC(t)) = s;
-    STOQ(i,DEG(DC(t)));
+    STOZ(i,DEG(DC(t)));
   }
   *mono = t;
 }

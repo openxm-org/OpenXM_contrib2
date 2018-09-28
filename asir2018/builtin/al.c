@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/al.c,v 1.1 2018/09/19 05:45:05 noro Exp $ */
 /* ----------------------------------------------------------------------
    $Id$
    ----------------------------------------------------------------------
@@ -288,7 +288,7 @@ Z *rp;
   oFOP op;
 
   op = FOP((F)ARG0(arg));
-  STOQ((int)op,*rp);
+  STOZ((int)op,*rp);
 }
 
 void Pfargs(arg,rp)
@@ -334,7 +334,7 @@ LIST *rp;
 
   f = (F)ARG0(arg);
   op = FOP(f);
-  STOQ((int)op,op1);
+  STOZ((int)op,op1);
   if ( AL_TVAL(op) )
     n1 = 0;
   else if ( AL_JUNCT(op) )
@@ -358,7 +358,7 @@ void Pcompf(arg,rp)
 NODE arg;
 Z *rp;
 {
-  STOQ(compf(CO,BDY(arg),BDY(NEXT(arg))),*rp);
+  STOZ(compf(CO,BDY(arg),BDY(NEXT(arg))),*rp);
 }
 
 void Patnum(arg,rp)
@@ -1348,7 +1348,7 @@ NODE *peset;
 
   if (FOP(f) != AL_AND)
     return 0;
-  STOQ(2,two);
+  STOZ(2,two);
   for (deg=ONE; cmpz(two,deg) >= 0; addz(deg,ONE,&deg))
     for (scvl=*pvl; scvl; scvl=NEXT(scvl)) {
       v = VR(scvl);
@@ -1385,7 +1385,7 @@ Z deg;
   rld = DC(rlhs);
   if (cmpz(DEG(rld),deg) != 0)
     return 0;
-  STOQ(2,two);
+  STOZ(2,two);
   if (cmpz(deg,two) == 0) {
     *pa = COEF(rld);
     rld = NEXT(rld);
@@ -1488,7 +1488,7 @@ NODE trans[],transc[];
     translate_a1(FOP(at),mp,trans,transc);
     return 1;
   };
-  STOQ(2,two);
+  STOZ(2,two);
   if (cmpz(two,DEG(DC(mp))) == 0) {
     translate_a2(FOP(at),mp,trans,transc);
     return 1;
@@ -1595,7 +1595,7 @@ P a,b,c,*pd;
   Z four;
   
   mulp(CO,a,c,&h1);
-  STOQ(4,four);
+  STOZ(4,four);
   mulp(CO,(P)four,h1,&h2);
   mulp(CO,b,b,&h1);
   subp(CO,h1,h2,pd);
@@ -2042,7 +2042,7 @@ RE re;
   alpha = COEF(DC(prem));
   beta = (NEXT(DC(prem))) ? COEF(NEXT(DC(prem))) : 0;
   getqcoeffs(re->p,&a,&b,&c);
-  STOQ(2,two);
+  STOZ(2,two);
   mulp(CO,(P)two,a,&h1);
   mulp(CO,h1,beta,&h2);
   mulp(CO,b,alpha,&h1);

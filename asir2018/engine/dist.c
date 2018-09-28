@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -263,7 +263,7 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
 
         for ( j = k-1, s = 0; j >= 0; j-- ) {
           ptod(vl,dvl,COEF(w[j]),&t);
-          NEWDL(d,n); d->d[i] = QTOS(DEG(w[j]));
+          NEWDL(d,n); d->d[i] = ZTOS(DEG(w[j]));
           d->td = MUL_WEIGHT(d->d[i],i);
           NEWMP(m); m->dl = d; C(m) = (Obj)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
           comm_muld(vl,t,u,&r); addd(vl,r,s,&t); s = t;
@@ -305,7 +305,7 @@ void dtop(VL vl,VL dvl,DP p,Obj *pr)
       }
       for ( i = 0, d = m->dl, tvl = dvl;
         i < n; tvl = NEXT(tvl), i++ ) {
-        MKV(tvl->v,r); STOQ(d->d[i],q); pwrp(vl,r,q,(P *)&u);
+        MKV(tvl->v,r); STOZ(d->d[i],q); pwrp(vl,r,q,(P *)&u);
         arf_mul(vl,t,(Obj)u,&w); t = w;
       }
       arf_add(vl,s,t,&u); s = u;
@@ -332,7 +332,7 @@ void nodetod(NODE node,DP *dp)
     else if ( !NUM(e) || !RATN(e) || !INT(e) )
       error("nodetod : invalid input");
     else {
-      d->d[i] = QTOS((Q)e); td += MUL_WEIGHT(d->d[i],i);
+      d->d[i] = ZTOS((Q)e); td += MUL_WEIGHT(d->d[i],i);
     }
   }
   d->td = td;
@@ -358,11 +358,11 @@ void nodetodpm(NODE node,Obj pos,DPM *dp)
     else if ( !NUM(e) || !RATN(e) || !INT(e) )
       error("nodetodpm : invalid input");
     else {
-      d->d[i] = QTOS((Q)e); td += MUL_WEIGHT(d->d[i],i);
+      d->d[i] = ZTOS((Q)e); td += MUL_WEIGHT(d->d[i],i);
     }
   }
   d->td = td;
-  NEWDMM(m); m->dl = d; m->pos = QTOS((Q)pos); C(m) = (Obj)ONE; NEXT(m) = 0;
+  NEWDMM(m); m->dl = d; m->pos = ZTOS((Q)pos); C(m) = (Obj)ONE; NEXT(m) = 0;
   MKDPM(len,m,u); u->sugar = td; *dp = u;
 }
 
@@ -942,7 +942,7 @@ void actm(VL vl,int nv,MP m1,MP m2,DP *pr)
   c = ONE;
   for ( i = 0; i < nv; i++ ) {
     for ( j = d2->d[i], k = d1->d[i]; k > 0; k--, j-- ) {
-      STOQ(j,jq); mulz(c,jq,&c1); c = c1;
+      STOZ(j,jq); mulz(c,jq,&c1); c = c1;
     }
     d->d[i] = d2->d[i]-d1->d[i];
   }
@@ -2364,7 +2364,7 @@ void pwrnbp(VL vl,NBP a,Z q,NBP *c)
   else if ( UNIQ(q) )
     *c = a;
   else {
-    STOQ(2,two);
+    STOZ(2,two);
     divqrz(q,two,&q1,&r1);
     pwrnbp(vl,a,q1,&a1);
     mulnbp(vl,a1,a1,&a2);

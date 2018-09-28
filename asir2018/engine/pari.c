@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/pari.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -165,7 +165,7 @@ GEN *rp;
       for ( i = l+2; i >= 2; i-- )
         z[i] = (long)gzero;
       for ( dc = DC((P)a); dc; dc = NEXT(dc) ) {
-        ritopa((Obj)COEF(dc),&u); z[QTOS(DEG(dc))+2] = u;
+        ritopa((Obj)COEF(dc),&u); z[ZTOS(DEG(dc))+2] = u;
       }
       break;
     case O_VECT:
@@ -250,7 +250,7 @@ Obj *rp;
         for ( i = lgef(a)-1, dc0 = 0; i >= 2; i-- )
           if ( !gcmp0((GEN)a[i]) ) {
             NEXTDC(dc0,dc); 
-            patori((GEN)a[i],(Obj *)&COEF(dc)); STOQ(i-2,DEG(dc));
+            patori((GEN)a[i],(Obj *)&COEF(dc)); STOZ(i-2,DEG(dc));
           }
         if ( !dc0 )
           *rp = 0;

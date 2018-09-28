@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.2 2018/09/27 02:39:37 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -126,14 +126,14 @@ void init_lprime();
 void nglob_init() {
   oONEUP2.w = 1; oONEUP2.b[0] = 1;
 
-  STOQ0(1,&oUNIQ);
-  STOQ0(2,&oTWOQ);
-  STOQ0(3,&oTHREEQ);
-  STOQ0(4,&oFOURQ);
-  STOQ0(5,&oFIVEQ);
-  STOQ0(6,&oSIXQ);
-  STOQ0(7,&oSEVENQ);
-  STOQ0(8,&oEIGHTQ);
+  STOZ0(1,&oUNIQ);
+  STOZ0(2,&oTWOQ);
+  STOZ0(3,&oTHREEQ);
+  STOZ0(4,&oFOURQ);
+  STOZ0(5,&oFIVEQ);
+  STOZ0(6,&oSIXQ);
+  STOZ0(7,&oSEVENQ);
+  STOZ0(8,&oEIGHTQ);
 
   STOLM0(1,&oUNILM);
   STOLM0(3,&oTHREELM);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/strobj.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -427,7 +427,7 @@ int register_symbol_table(Obj arg)
 int register_dp_vars_origin(Obj arg)
 {
   if ( INT(arg) ) {
-    dp_vars_origin = QTOS((Q)arg);
+    dp_vars_origin = ZTOS((Q)arg);
     return 1;
   } else return 0;
 }
@@ -435,7 +435,7 @@ int register_dp_vars_origin(Obj arg)
 int register_dp_dvars_origin(Obj arg)
 {
   if ( INT(arg) ) {
-    dp_dvars_origin = QTOS((Q)arg);
+    dp_dvars_origin = ZTOS((Q)arg);
     return 1;
   } else return 0;
 }
@@ -443,7 +443,7 @@ int register_dp_dvars_origin(Obj arg)
 int register_dp_vars_hweyl(Obj arg)
 {
   if ( INT(arg) ) {
-    dp_vars_hweyl = QTOS((Q)arg);
+    dp_vars_hweyl = ZTOS((Q)arg);
     return 1;
   } else return 0;
 }
@@ -451,7 +451,7 @@ int register_dp_vars_hweyl(Obj arg)
 int register_show_lt(Obj arg)
 {
   if ( INT(arg) ) {
-    show_lt = QTOS((Q)arg);
+    show_lt = ZTOS((Q)arg);
     return 1;
   } else return 0;
 }
@@ -459,7 +459,7 @@ int register_show_lt(Obj arg)
 int register_conv_rule(Obj arg)
 {
   if ( INT(arg) ) {
-    conv_flag = QTOS((Q)arg);
+    conv_flag = ZTOS((Q)arg);
     convfunc = 0;
     return 1;
   } else return 0;
@@ -615,7 +615,7 @@ void Pqt_to_bin(NODE arg,QUOTE *rp)
   FNODE f;
   int direction;
 
-  direction = QTOS((Q)ARG1(arg));
+  direction = ZTOS((Q)ARG1(arg));
   f = fnode_to_bin(BDY((QUOTE)ARG0(arg)),direction);
 
   MKQUOTE(*rp,f);  
@@ -629,7 +629,7 @@ void Pqt_is_var(NODE arg,Z *rp)
   q = (QUOTE)ARG0(arg);
   asir_assert(q,O_QUOTE,"qt_is_var");
   ret = fnode_is_var(BDY(q));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pqt_is_coef(NODE arg,Z *rp)
@@ -640,7 +640,7 @@ void Pqt_is_coef(NODE arg,Z *rp)
   q = (QUOTE)ARG0(arg);
   asir_assert(q,O_QUOTE,"qt_is_coef");
   ret = fnode_is_coef(BDY(q));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pqt_is_number(NODE arg,Z *rp)
@@ -651,7 +651,7 @@ void Pqt_is_number(NODE arg,Z *rp)
   q = (QUOTE)ARG0(arg);
   asir_assert(q,O_QUOTE,"qt_is_number");
   ret = fnode_is_number(BDY(q));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pqt_is_rational(NODE arg,Z *rp)
@@ -662,7 +662,7 @@ void Pqt_is_rational(NODE arg,Z *rp)
   q = (QUOTE)ARG0(arg);
   asir_assert(q,O_QUOTE,"qt_is_rational");
   ret = fnode_is_rational(BDY(q));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pqt_is_integer(NODE arg,Z *rp)
@@ -673,7 +673,7 @@ void Pqt_is_integer(NODE arg,Z *rp)
   q = (QUOTE)ARG0(arg);
   asir_assert(q,O_QUOTE,"qt_is_integer");
   ret = fnode_is_integer(BDY(q));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pqt_is_function(NODE arg,Z *rp)
@@ -687,7 +687,7 @@ void Pqt_is_function(NODE arg,Z *rp)
     ret = 1;
   else
     ret = 0;
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pqt_is_dependent(NODE arg,Z *rp)
@@ -706,7 +706,7 @@ void Pqt_is_dependent(NODE arg,Z *rp)
     *rp = 0;
   var = VR(x);
   ret = fnode_is_dependent(BDY(q),var);
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 
@@ -774,7 +774,7 @@ void Pnqt_match_rewrite(NODE arg,Obj *rp)
   if ( OID(cond) == O_QUOTE ) c = BDY((QUOTE)cond);
   else c = mkfnode(1,I_FORMULA,ONE);
 
-  m = QTOS(mode);
+  m = ZTOS(mode);
   r = nfnode_match_rewrite(f,p,c,a,m);
   if ( r ) {
     MKQUOTE(q,r);
@@ -953,7 +953,7 @@ int qt_match_cons(NODE f,NODE pat,Obj rpat,NODE *rp) {
   }
   /* matching of the rest */
   MKLIST(list,tf);
-  STOQ(I_LIST,id); a = mknode(2,id,list);
+  STOZ(I_LIST,id); a = mknode(2,id,list);
   MKLIST(alist,a);
   arg = mknode(1,alist);
   Pfunargs_to_quote(arg,&q);
@@ -971,7 +971,7 @@ void get_quote_id_arg(QUOTE f,int *id,NODE *r)
   NODE arg,fab;
 
   arg = mknode(1,f); Pquote_to_funargs(arg,&fa); fab = BDY((LIST)fa);
-  *id = QTOS((Q)BDY(fab)); *r = NEXT(fab);
+  *id = ZTOS((Q)BDY(fab)); *r = NEXT(fab);
 }
 
 /* *rp : [[quote(A),quote(1)],...] */
@@ -1170,7 +1170,7 @@ Z *rp;
     for ( r = i = 0; i < tb->next; i++ )
       r += strlen(tb->body[i]);
   }
-  STOQ(r,*rp);
+  STOZ(r,*rp);
 }
 
 void Pstr_chr(arg,rp)
@@ -1189,7 +1189,7 @@ Z *rp;
   asir_assert(start,O_N,"str_chr");
   asir_assert(terminator,O_STR,"str_chr");
   p = BDY(str);
-  spos = QTOS(start);
+  spos = ZTOS(start);
   chr = BDY(terminator)[0];
   if ( spos > (int)strlen(p) )
     r = -1;
@@ -1200,7 +1200,7 @@ Z *rp;
     else
       r = -1;
   }
-  STOQ(r,*rp);
+  STOZ(r,*rp);
 }
 
 void Psub_str(arg,rp)
@@ -1219,8 +1219,8 @@ STRING *rp;
   asir_assert(head,O_N,"sub_str");
   asir_assert(tail,O_N,"sub_str");
   p = BDY(str);
-  spos = QTOS(head);
-  epos = QTOS(tail);
+  spos = ZTOS(head);
+  epos = ZTOS(tail);
   len = strlen(p);
   if ( (spos >= len) || (epos < spos) ) {
     *rp = 0; return;
@@ -1249,7 +1249,7 @@ LIST *rp;
   p = BDY(str);
   len = strlen(p);
   for ( i = len-1, n = 0; i >= 0; i-- ) {
-    UTOQ((unsigned int)p[i],q);
+    UTOZ((unsigned int)p[i],q);
     MKNODE(n1,q,n);
     n = n1;
   }
@@ -1274,7 +1274,7 @@ STRING *rp;
   for ( i = 0; i < len; i++, n = NEXT(n) ) {
     q = (Z)BDY(n);
     asir_assert(q,O_N,"asciitostr");
-    j = QTOS(q);
+    j = ZTOS(q);
     if ( j >= 256 || j <= 0 )
       error("asciitostr : argument out of range");
     p[i] = j;
@@ -2098,7 +2098,7 @@ void Pget_quote_id(NODE arg,Z *rp)
   if ( !q || OID(q) != O_QUOTE )
     error("get_quote_id : invalid argument");
   f = BDY(q);
-  STOQ((long)f->id,*rp);
+  STOZ((long)f->id,*rp);
 }
 
 void Pquote_to_funargs(NODE arg,LIST *rp)
@@ -2126,7 +2126,7 @@ void Pquote_to_funargs(NODE arg,LIST *rp)
   if ( !spec )
     error("quote_to_funargs : not supported yet");
   t0 = 0;
-  STOQ((int)f->id,id);
+  STOZ((int)f->id,id);
   NEXTNODE(t0,t);
   BDY(t) = (pointer)id;
   for ( i = 0; spec->type[i] != A_end; i++ ) {
@@ -2137,7 +2137,7 @@ void Pquote_to_funargs(NODE arg,LIST *rp)
         BDY(t) = (pointer)r;
         break;
       case A_int:
-        STOQ((long)f->arg[i],a);
+        STOZ((long)f->arg[i],a);
         BDY(t) = (pointer)a;
         break;
       case A_str:
@@ -2186,7 +2186,7 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
   if ( !l || OID(l) != O_LIST || !(t=BDY(l)) )
     error("funargs_to_quote : invalid argument");
   t = BDY(l);
-  id = (fid)QTOS((Q)BDY(t)); t = NEXT(t);
+  id = (fid)ZTOS((Q)BDY(t)); t = NEXT(t);
   get_fid_spec(id,&spec);
   if ( !spec )
     error("funargs_to_quote : not supported yet");
@@ -2206,7 +2206,7 @@ void Pfunargs_to_quote(NODE arg,QUOTE *rp)
       case A_int:
         if ( !INT(a) )
           error("funargs_to_quote : invalid argument");
-        f->arg[i] = (pointer)QTOS((Q)a);
+        f->arg[i] = (pointer)ZTOS((Q)a);
         break;
       case A_str:
         if ( !a || OID(a) != O_STR )
@@ -2319,7 +2319,7 @@ void Pqt_set_weight(NODE arg,LIST *rp)
     for ( i = 0; i < l; i++, n = NEXT(n) ) {
       pair = BDY((LIST)BDY(n));
       tab[i].v = VR((P)ARG0(pair));
-      tab[i].w = QTOS((Q)ARG1(pair));
+      tab[i].w = ZTOS((Q)ARG1(pair));
     }
     tab[i].v = 0;
     qt_current_weight_obj = (LIST)ARG0(arg);
@@ -2364,7 +2364,7 @@ void Pqt_normalize(NODE arg,QUOTE *rp)
   if ( !ac ) error("qt_normalize : invalid argument");
   q = (QUOTE)ARG0(arg);
   if ( ac == 2 )
-    expand = QTOS((Q)ARG1(arg));
+    expand = ZTOS((Q)ARG1(arg));
   if ( !q || OID(q) != O_QUOTE )
     *rp = q;
   else {
@@ -2541,10 +2541,10 @@ void Pnbm_deg(NODE arg, Z *rp)
 
   p = (NBP)ARG0(arg);
   if ( !p )
-    STOQ(-1,*rp);
+    STOZ(-1,*rp);
   else {
     m = (NBM)BDY(BDY(p));  
-    STOQ(m->d,*rp);
+    STOZ(m->d,*rp);
   }
 }
 
@@ -2557,7 +2557,7 @@ void Pnbm_index(NODE arg, Z *rp)
 
   p = (NBP)ARG0(arg);
   if ( !p )
-    STOQ(0,*rp);
+    STOZ(0,*rp);
   else {
     m = (NBM)BDY(BDY(p));  
     d = m->d;
@@ -2566,7 +2566,7 @@ void Pnbm_index(NODE arg, Z *rp)
     b = m->b;
     for ( r = 0, i = d-2; i > 0; i-- )
       if ( !NBM_GET(b,i) ) r |= (1<<(d-2-i));
-    STOQ(r,*rp);
+    STOZ(r,*rp);
   }
 }
 
@@ -2728,7 +2728,7 @@ void Pnqt_weight(NODE arg,Z *rp)
   q = (QUOTE)ARG0(arg); f = (FNODE)BDY(q);
   f = fnode_normalize(f,0);
   w = nfnode_weight(qt_weight_tab,f);
-  STOQ(w,*rp);
+  STOZ(w,*rp);
 }
 
 void Pnqt_comp(NODE arg,Z *rp)
@@ -2742,7 +2742,7 @@ void Pnqt_comp(NODE arg,Z *rp)
   f1 = fnode_normalize(f1,0);
   f2 = fnode_normalize(f2,0);
   r = nfnode_comp(f1,f2);
-  STOQ(r,*rp);
+  STOZ(r,*rp);
 }
 
 int fnode_is_var(FNODE f)
@@ -2957,7 +2957,7 @@ FNODE fnode_normalize(FNODE f,int expand)
   Z q;
 
   if ( f->normalized && (f->expanded == expand) ) return f;
-  STOQ(-1,q);
+  STOZ(-1,q);
   mone = mkfnode(1,I_FORMULA,q);
   switch ( f->id ) {
     case I_PAREN:
@@ -3217,12 +3217,12 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
     fnode_coef_body(f1,&c1,&b1);
     nf2 = (Num)eval(f2);
     arf_pwr(CO,c1,(Obj)nf2,&c);
-    ee = QTOS((Q)nf2);
+    ee = ZTOS((Q)nf2);
     cc = mkfnode(1,I_FORMULA,c);
     if ( fnode_is_nonnegative_integer(f2) )
       b = fnode_expand_pwr(b1,ee,expand);
     else {
-      STOQ(-1,q);
+      STOZ(-1,q);
       mone = mkfnode(1,I_FORMULA,q);
       b1 = to_narymul(b1);
       for ( t0 = 0, n = (NODE)FA1(b1); n; n = NEXT(n) ) {
@@ -3240,7 +3240,7 @@ FNODE nfnode_pwr(FNODE f1,FNODE f2,int expand)
       && fnode_is_nonnegative_integer(f2) ) {
     q = (Z)eval(f2);
     if ( !smallz(q) ) error("nfnode_pwr : exponent too large");
-    return fnode_expand_pwr(f1,QTOS(q),expand);
+    return fnode_expand_pwr(f1,ZTOS(q),expand);
   } else
     return mkfnode(3,I_BOP,pwrfs,f1,f2);
 }
@@ -3267,7 +3267,7 @@ FNODE fnode_expand_pwr(FNODE f,int n,int expand)
           f1 = nfnode_mul(f1,f,expand);
         return f1;
       case 0: default:
-        STOQ(n,q);
+        STOZ(n,q);
         fn = mkfnode(1,I_FORMULA,q);
         return mkfnode(3,I_BOP,pwrfs,f,fn);
     }
@@ -3408,7 +3408,7 @@ int nfnode_weight(struct wtab *tab,FNODE f)
       /* XXX w(2^x)=0 ? */
       if ( fnode_is_rational(FA2(f)) ) {
         a2 = (Q)eval(FA2(f));
-        w = QTOS(a2);
+        w = ZTOS(a2);
       } else
         w = nfnode_weight(tab,FA2(f));
       return nfnode_weight(tab,FA1(f))*w;

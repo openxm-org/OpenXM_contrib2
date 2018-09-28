@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/mat.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "../parse/parse.h"
@@ -323,7 +323,7 @@ MAT *c;
   } else if ( a->row != a->col ) {
     *c = 0; error("pwrmat : non square matrix");
   }  else
-    pwrmatmain(vl,a,QTOS((Q)r),c);
+    pwrmatmain(vl,a,ZTOS((Q)r),c);
 }
 
 void pwrmatmain(vl,a,e,c)

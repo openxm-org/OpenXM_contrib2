@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -202,12 +202,12 @@ LIST create_control_values(int withdesc)
   n = sizeof(ctrls)/sizeof(struct keyval)-1;
   top = 0;
   for ( i = n-1; i >= 0; i-- ) {
-    STOQ(*(ctrls[i].val),val);
+    STOZ(*(ctrls[i].val),val);
     list = create_control_value(ctrls[i].key,(Obj)val,ctrls[i].desc,withdesc);
     MKNODE(top1,list,top); top = top1;
   }
 /* adj */
-  Risa_GC_get_adj(&nm,&dv); UTOQ(nm,num); UTOQ(dv,den); divq((Q)num,(Q)den,&adj);
+  Risa_GC_get_adj(&nm,&dv); UTOZ(nm,num); UTOZ(dv,den); divq((Q)num,(Q)den,&adj);
   descstr = "Determines the parameter for Boehm's GC.";
   list = create_control_value("adj",(Obj)adj,descstr,withdesc);
   MKNODE(top1,list,top); top = top1;
@@ -233,7 +233,7 @@ LIST create_control_values(int withdesc)
 
 /* oxpari_id */
   if(!ox_pari_stream_initialized) {
-    STOQ(-1,val);
+    STOZ(-1,val);
   } else val = ox_pari_stream;
   descstr = "Id of ox_pari.";
   list = create_control_value("oxpari_id",(Obj)val,descstr,withdesc);
@@ -284,8 +284,8 @@ void Pctrl(NODE arg,Obj *rp)
     /* special treatment is necessary for "adj" */
     if ( argc(arg) == 1 ) {
       Risa_GC_get_adj(&nm,&dv);
-      UTOQ(dv,num);
-      UTOQ(nm,den);
+      UTOZ(dv,num);
+      UTOZ(nm,den);
       divq((Q)num,(Q)den,(Q *)rp);
     } else {
       absq((Q)ARG1(arg),&c);
@@ -293,7 +293,7 @@ void Pctrl(NODE arg,Obj *rp)
         error("ctrl : adj : invalid argument");
       nmq(c,&num);
       dnq(c,&den);
-      Risa_GC_set_adj(QTOS(den),QTOS(num));
+      Risa_GC_set_adj(ZTOS(den),ZTOS(num));
       *rp = (Obj)c;
     }
     return;
@@ -364,7 +364,7 @@ void Pctrl(NODE arg,Obj *rp)
   } else if ( !strcmp(key,"oxpari_id") ) {
     if ( argc(arg) == 1 ) {
       if(!ox_pari_stream_initialized) {
-        STOQ(-1,z);
+        STOZ(-1,z);
         *rp = (Obj)z;
       }else {
         *rp = (Obj)ox_pari_stream;
@@ -376,7 +376,7 @@ void Pctrl(NODE arg,Obj *rp)
         ox_pari_stream = (Z)c;
         *rp = (Obj)c;
       }else {
-        STOQ(-1,z);
+        STOZ(-1,z);
         *rp = (Obj)z;
       }
     }
@@ -402,8 +402,8 @@ void Pctrl(NODE arg,Obj *rp)
     if ( argc(arg) == 1 )
       t = *ctrls[i].val;
     else
-      *ctrls[i].val = t = QTOS((Q)ARG1(arg));
-    STOQ(t,z);
+      *ctrls[i].val = t = ZTOS((Q)ARG1(arg));
+    STOZ(t,z);
     *rp = (Obj)z;
   } else {
     sprintf(buf,"ctrl : %s : no such key",key);

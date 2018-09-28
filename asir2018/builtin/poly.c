@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/poly.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -235,7 +235,7 @@ void Pheadsgn(NODE arg,Z *rp)
   int s;
 
   s = headsgn((P)ARG0(arg));
-  STOQ(s,*rp);
+  STOZ(s,*rp);
 }
 
 void Pmul_trunc(NODE arg,P *rp)
@@ -260,7 +260,7 @@ void Pmul_trunc(NODE arg,P *rp)
   vn[i].n = 0;
   for ( h = p, i = 0; OID(h) == O_P; h = COEF(DC(h)) ) {
     for ( ; vn[i].v != VR(h); i++ );
-    vn[i].n = QTOS(DEG(DC(h)));
+    vn[i].n = ZTOS(DEG(DC(h)));
   }
   mulp_trunc(vl,p1,p2,vn,rp);
 }
@@ -290,7 +290,7 @@ void Pquo_trunc(NODE arg,P *rp)
     vn[i].n = 0;
     for ( h = p2, i = 0; OID(h) == O_P; h = COEF(DC(h)) ) {
       for ( ; vn[i].v != VR(h); i++ );
-      vn[i].n = QTOS(DEG(DC(h)));
+      vn[i].n = ZTOS(DEG(DC(h)));
     }
     quop_trunc(vl,p1,p2,vn,rp);
   }
@@ -299,9 +299,9 @@ void Pquo_trunc(NODE arg,P *rp)
 void Phomogeneous_part(NODE arg,P *rp)
 {
   if ( argc(arg) == 2 )
-    exthp(CO,(P)ARG0(arg),QTOS((Q)ARG1(arg)),rp);
+    exthp(CO,(P)ARG0(arg),ZTOS((Q)ARG1(arg)),rp);
   else
-    exthpc_generic(CO,(P)ARG0(arg),QTOS((Q)ARG2(arg)),
+    exthpc_generic(CO,(P)ARG0(arg),ZTOS((Q)ARG2(arg)),
       VR((P)ARG1(arg)),rp);
 }
 
@@ -313,7 +313,7 @@ void Phomogeneous_deg(NODE arg,Z *rp)
     d = homdeg((P)ARG0(arg));
   else
     d = getchomdeg(VR((P)ARG1(arg)),(P)ARG0(arg));
-  STOQ(d,*rp);
+  STOZ(d,*rp);
 }
 
 /* 
@@ -379,16 +379,16 @@ void Pget_next_fft_prime(NODE arg,LIST *rp)
   NODE n;
   Z q,ind;
 
-  start = QTOS((Q)ARG0(arg));
-  bits = QTOS((Q)ARG1(arg));
+  start = ZTOS((Q)ARG0(arg));
+  bits = ZTOS((Q)ARG1(arg));
   for ( i = start; ; i++ ) {
     get_fft_prime(i,&mod,&d);
     if ( !mod ) {
       *rp = 0; return;
     }
     if ( bits <= (int)d ) {
-      UTOQ(mod,q);
-      UTOQ(i,ind);
+      UTOZ(mod,q);
+      UTOZ(i,ind);
       n = mknode(2,ind,q);
       MKLIST(*rp,n);
       return;
@@ -401,7 +401,7 @@ void Pranp(NODE arg,P *rp)
   int n;
   UP c;
 
-  n = QTOS((Q)ARG0(arg));
+  n = ZTOS((Q)ARG0(arg));
   ranp(n,&c);
   if ( c ) {
     up_var = VR((P)ARG1(arg));
@@ -420,7 +420,7 @@ void ranp(int n,UP *nr)
   *nr = c = UPALLOC(n);
   for ( i = 0; i <= n; i++ ) {
     r = random();
-    UTOQ(r,q);
+    UTOZ(r,q);
     c->c[i] = (Num)q;
   }
   for ( i = n; i >= 0 && !c->c[i]; i-- );
@@ -434,14 +434,14 @@ void Pmaxblen(NODE arg,Z *rp)
 {
   int l;
   l = maxblenp(ARG0(arg));
-  STOQ(l,*rp);
+  STOZ(l,*rp);
 }
 
 void Pp_mag(NODE arg,Z *rp)
 {
   int l;
   l = p_mag(ARG0(arg));
-  STOQ(l,*rp);
+  STOZ(l,*rp);
 }
 
 void Pord(NODE arg,LIST *listp)
@@ -646,7 +646,7 @@ void Pcoef_gf2n(NODE arg,Obj *rp)
   else if ( (n = (Obj)ARG1(arg)) && (OID(n) > O_N) )
     *rp = 0;
   else if ( id == O_N && NID((Num)t) == N_GF2N ) {
-    d = QTOS((Q)n);
+    d = ZTOS((Q)n);
     up2 = ((GF2N)t)->body;
     if ( d > degup2(up2) )
       *rp = 0;
@@ -670,12 +670,12 @@ void Pdeg(NODE arg,Z *rp)
     *rp = (Obj)DEG(DC((P)t));
 #endif
   if ( !(t = (Obj)ARG0(arg)) )
-    STOQ(-1,*rp);
+    STOZ(-1,*rp);
   else if ( OID(t) != O_P ) {
     if ( OID(t) == O_N && NID(t) == N_GF2N 
       && (v=(Obj)ARG1(arg)) && OID(v)== O_N && NID(v) == N_GF2N ) {
       d = degup2(((GF2N)t)->body);
-      STOQ(d,*rp);
+      STOZ(d,*rp);
     } else
       *rp = 0;
   } else
@@ -696,9 +696,9 @@ void Psetmod(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"setmod");
-    current_mod = QTOS((Q)ARG0(arg));
+    current_mod = ZTOS((Q)ARG0(arg));
   }
-  STOQ(current_mod,*rp);
+  STOZ(current_mod,*rp);
 }
 
 void Psparsemod_gf2n(NODE arg,Z *rp)
@@ -711,7 +711,7 @@ void Psparsemod_gf2n(NODE arg,Z *rp)
     id = -1;
   else
     id = current_mod_gf2n->id;
-  STOQ(id,*rp);
+  STOZ(id,*rp);
 }
 
 void Pmultest_gf2n(NODE arg,GF2N *rp)
@@ -753,7 +753,7 @@ void Pbininv_gf2n(NODE arg,GF2N *rp)
   int n;
 
   a = ((GF2N)ARG0(arg))->body;
-  n = QTOS((Q)ARG1(arg));
+  n = ZTOS((Q)ARG1(arg));
   type1_bin_invup2(a,n,&inv);
   MKGF2N(inv,*rp);
 }
@@ -809,7 +809,7 @@ void Pis_irred_ddd_gf2(NODE arg,Z *rp)
 
   ptoup2(ARG0(arg),&t);
   ret = irredcheck_dddup2(t);
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Psetmod_ff(NODE arg,Obj *rp)
@@ -848,7 +848,7 @@ void Psetmod_ff(NODE arg,Obj *rp)
     if ( OID(ARG0(arg)) == O_N ) {
       /* small finite field; primitive root representation */
       current_ff = FF_GFS;
-      setmod_sf(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg)));
+      setmod_sf(ZTOS((Q)ARG0(arg)),ZTOS((Q)ARG1(arg)));
     } else {
       mod = (Obj)ARG1(arg);
       current_ff = FF_GFPN;
@@ -861,8 +861,8 @@ void Psetmod_ff(NODE arg,Obj *rp)
   } else if ( ac == 3 ) {
     /* finite extension of a small finite field */
     current_ff = FF_GFS;
-    setmod_sf(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg)));
-    d = QTOS((Q)ARG2(arg));
+    setmod_sf(ZTOS((Q)ARG0(arg)),ZTOS((Q)ARG1(arg)));
+    d = ZTOS((Q)ARG2(arg));
     generate_defpoly_sfum(d,&dp);
     setmod_gfsn(dp);
     current_ff = FF_GFSN;
@@ -880,7 +880,7 @@ void Psetmod_ff(NODE arg,Obj *rp)
       *rp = (Obj)list; break;
     case FF_GFS:
     case FF_GFSN:
-      STOQ(current_gfs_p,q);
+      STOZ(current_gfs_p,q);
       if ( current_gfs_ext )
         enc_to_p(current_gfs_p,current_gfs_iton[1],
           VR(current_gfs_ext),&p);
@@ -890,7 +890,7 @@ void Psetmod_ff(NODE arg,Obj *rp)
         else if ( !current_gfs_ntoi )
           r = 0;
         else
-          STOQ(current_gfs_iton[1],r);
+          STOZ(current_gfs_iton[1],r);
         p = (P)r;
       }
       switch ( current_ff ) {
@@ -922,9 +922,9 @@ void Pextdeg_ff(Z *rp)
     case FF_GFP:
       *rp = ONE; break;
     case FF_GF2N:
-      getmod_gf2n(&up2); d = degup2(up2); STOQ(d,*rp); break;
+      getmod_gf2n(&up2); d = degup2(up2); STOZ(d,*rp); break;
     case FF_GFPN:
-      getmod_gfpn(&up); STOQ(up->d,*rp); break;
+      getmod_gfpn(&up); STOZ(up->d,*rp); break;
     case FF_GFS:
       if ( !current_gfs_ext )
         *rp = ONE;
@@ -933,7 +933,7 @@ void Pextdeg_ff(Z *rp)
       break;
     case FF_GFSN:
       getmod_gfsn(&dp);
-      STOQ(DEG(dp),*rp);
+      STOZ(DEG(dp),*rp);
       break;
     default:
       error("extdeg_ff : current_ff is not set");
@@ -947,10 +947,10 @@ void Pcharacteristic_ff(Z *rp)
     case FF_GFPN:
       getmod_lm(rp); break;
     case FF_GF2N:
-      STOQ(2,*rp); break;
+      STOZ(2,*rp); break;
     case FF_GFS:
     case FF_GFSN:
-      STOQ(current_gfs_p,*rp); break;
+      STOZ(current_gfs_p,*rp); break;
     default:
       error("characteristic_ff : current_ff is not set");
   }
@@ -958,7 +958,7 @@ void Pcharacteristic_ff(Z *rp)
 
 void Pfield_type_ff(Z *rp)
 {
-  STOQ(current_ff,*rp);
+  STOZ(current_ff,*rp);
 }
 
 void Pfield_order_ff(Z *rp)
@@ -1146,7 +1146,7 @@ void Pptomp(NODE arg,P *rp)
     else
       mod = current_mod;
   } else
-    mod = QTOS((Q)ARG1(arg));
+    mod = ZTOS((Q)ARG1(arg));
   ptomp(mod,(P)ARG0(arg),rp);
 }
 
@@ -1183,7 +1183,7 @@ void Psf_embed(NODE arg,P *rp)
 
   /* GF(pn)={0,1,a,a^2,...}->GF(pm)={0,1,b,b^2,...}; a->b^k */
   k = CONT((GFS)ARG1(arg));
-  pm = QTOS((Q)ARG2(arg));
+  pm = ZTOS((Q)ARG2(arg));
   sf_embed((P)ARG0(arg),k,pm,rp);
 }
 
@@ -1194,7 +1194,7 @@ void Psf_log(NODE arg,Z *rp)
   if ( !ARG0(arg) )
     error("sf_log : invalid armument");
   k = CONT((GFS)ARG0(arg));
-  STOQ(k,*rp);
+  STOZ(k,*rp);
 }
 
 void Psf_find_root(NODE arg,GFS *rp)
@@ -1284,7 +1284,7 @@ void Pureverse(NODE arg,P *rp)
   if ( argc(arg) == 1 )
     reverseup(p,p->d,&r);
   else 
-    reverseup(p,QTOS((Q)ARG1(arg)),&r);
+    reverseup(p,ZTOS((Q)ARG1(arg)),&r);
   uptop(r,rp);
 }
 
@@ -1293,7 +1293,7 @@ void Putrunc(NODE arg,P *rp)
   UP p,r;
 
   ptoup((P)ARG0(arg),&p);
-  truncup(p,QTOS((Q)ARG1(arg))+1,&r);
+  truncup(p,ZTOS((Q)ARG1(arg))+1,&r);
   uptop(r,rp);
 }
 
@@ -1304,7 +1304,7 @@ void Pudecomp(NODE arg,LIST *rp)
   NODE n0,n1;
 
   ptoup((P)ARG0(arg),&p);
-  decompup(p,QTOS((Q)ARG1(arg))+1,&low,&up);
+  decompup(p,ZTOS((Q)ARG1(arg))+1,&low,&up);
   uptop(low,&l);
   uptop(up,&u);
   MKNODE(n1,u,0); MKNODE(n0,l,n1);
@@ -1356,7 +1356,7 @@ void Puinvmod(NODE arg,P *rp)
   UP p,r;
 
   ptoup((P)ARG0(arg),&p);
-  invmodup(p,QTOS((Q)ARG1(arg)),&r);
+  invmodup(p,ZTOS((Q)ARG1(arg)),&r);
   uptop(r,rp);
 }
 
@@ -1366,7 +1366,7 @@ void Purevinvmod(NODE arg,P *rp)
 
   ptoup((P)ARG0(arg),&p);
   reverseup(p,p->d,&pr);
-  invmodup(pr,QTOS((Q)ARG1(arg)),&r);
+  invmodup(pr,ZTOS((Q)ARG1(arg)),&r);
   uptop(r,rp);
 }
 
@@ -1479,7 +1479,7 @@ void Pkpwrtab_lm(NODE arg,VECT *rp)
 
 void Plazy_lm(NODE arg,Q *rp)
 {
-  lm_lazy = QTOS((Q)ARG0(arg));
+  lm_lazy = ZTOS((Q)ARG0(arg));
   *rp = 0;
 }
 
@@ -1508,7 +1508,7 @@ void Pktmul(NODE arg,P *rp)
 
   ptoup((P)ARG0(arg),&p1);
   ptoup((P)ARG1(arg),&p2);
-  tkmulup(p1,p2,QTOS((Q)ARG2(arg))+1,&r);
+  tkmulup(p1,p2,ZTOS((Q)ARG2(arg))+1,&r);
   uptop(r,rp);
 }
 
@@ -1545,7 +1545,7 @@ void Putmul(NODE arg,P *rp)
 
   ptoup((P)ARG0(arg),&p1);
   ptoup((P)ARG1(arg),&p2);
-  hybrid_tmulup(0,p1,p2,QTOS((Q)ARG2(arg))+1,&r);
+  hybrid_tmulup(0,p1,p2,ZTOS((Q)ARG2(arg))+1,&r);
   uptop(r,rp);
 }
 
@@ -1581,7 +1581,7 @@ void Putmul_ff(NODE arg,Obj *rp)
 
   ptoup((P)ARG0(arg),&p1);
   ptoup((P)ARG1(arg),&p2);
-  hybrid_tmulup(current_ff,p1,p2,QTOS((Q)ARG2(arg))+1,&r);
+  hybrid_tmulup(current_ff,p1,p2,ZTOS((Q)ARG2(arg))+1,&r);
   uptop(r,&p);
   simp_ff((Obj)p,rp);
 }
@@ -1638,7 +1638,7 @@ void Pfmultest(NODE arg,LIST *rp)
   Z prime;
   NODE n0,n1;
 
-  p1 = (P)ARG0(arg); p2 = (P)ARG1(arg); index = QTOS((Q)ARG2(arg));
+  p1 = (P)ARG0(arg); p2 = (P)ARG1(arg); index = ZTOS((Q)ARG2(arg));
   FFT_primes(index,&mod,&root,&d);
   maxint = 1<<d;
   d1 = UDEG(p1); d2 = UDEG(p2);
@@ -1665,7 +1665,7 @@ void Pfmultest(NODE arg,LIST *rp)
     for ( i = 0; i <= d1+d2; i++ )
       wr->c[i] = (unsigned int)fr[i];
     umtop(VR(p1),wr,&r);
-    STOQ(mod,prime);
+    STOZ(mod,prime);
     MKNODE(n1,prime,0);
     MKNODE(n0,r,n1);
     MKLIST(*rp,n0);
@@ -1678,7 +1678,7 @@ void Pkmulum(NODE arg,P *rp)
   int d1,d2,mod;
   UM w1,w2,wr;
 
-  p1 = (P)ARG0(arg); p2 = (P)ARG1(arg); mod = QTOS((Q)ARG2(arg));
+  p1 = (P)ARG0(arg); p2 = (P)ARG1(arg); mod = ZTOS((Q)ARG2(arg));
   d1 = UDEG(p1); d2 = UDEG(p2);
   w1 = W_UMALLOC(d1); w2 = W_UMALLOC(d2);
   wr = W_UMALLOC(d1+d2);
@@ -1693,7 +1693,7 @@ void Pksquareum(NODE arg,P *rp)
   int d1,mod;
   UM w1,wr;
 
-  p1 = (P)ARG0(arg); mod = QTOS((Q)ARG1(arg));
+  p1 = (P)ARG0(arg); mod = ZTOS((Q)ARG1(arg));
   d1 = UDEG(p1);
   w1 = W_UMALLOC(d1);
   wr = W_UMALLOC(2*d1);
@@ -1732,7 +1732,7 @@ void Pumul_specialmod(NODE arg,P *rp)
     nmod = length(n);
     modind = (int *)MALLOC_ATOMIC(nmod*sizeof(int));
     for ( i = 0, t = n; i < nmod; i++, t = NEXT(t) )
-      modind[i] = QTOS((Q)BDY(t));
+      modind[i] = ZTOS((Q)BDY(t));
     fft_mulup_specialmod_main(p1,p2,0,modind,nmod,&r);
     uptop(r,rp);
   }
@@ -1757,7 +1757,7 @@ void Pusquare_specialmod(NODE arg,P *rp)
     nmod = length(n);
     modind = (int *)MALLOC_ATOMIC(nmod*sizeof(int));
     for ( i = 0, t = n; i < nmod; i++, t = NEXT(t) )
-      modind[i] = QTOS((Q)BDY(t));
+      modind[i] = ZTOS((Q)BDY(t));
     fft_mulup_specialmod_main(p1,p1,0,modind,nmod,&r);
     uptop(r,rp);
   }
@@ -1783,8 +1783,8 @@ void Putmul_specialmod(NODE arg,P *rp)
     nmod = length(n);
     modind = (int *)MALLOC_ATOMIC(nmod*sizeof(int));
     for ( i = 0, t = n; i < nmod; i++, t = NEXT(t) )
-      modind[i] = QTOS((Q)BDY(t));
-    fft_mulup_specialmod_main(p1,p2,QTOS((Q)ARG2(arg))+1,modind,nmod,&r);
+      modind[i] = ZTOS((Q)BDY(t));
+    fft_mulup_specialmod_main(p1,p2,ZTOS((Q)ARG2(arg))+1,modind,nmod,&r);
     uptop(r,rp);
   }
 }

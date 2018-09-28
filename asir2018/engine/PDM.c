@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/PDM.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #ifndef MODULAR
 #define MODULAR
@@ -102,12 +102,12 @@ int divtmp(VL vl,int mod,P p1,P p2,P *q)
         *q = 0;
         return ( 0 );
       }
-      d1 = QTOS(deg1); d2 = QTOS(deg2); 
+      d1 = ZTOS(deg1); d2 = ZTOS(deg2); 
       W_CALLOC(d1-d2,P,pq); W_CALLOC(d1,P,pr); W_CALLOC(d2,P,pd);
       for ( dc = dc1; dc; dc = NEXT(dc) ) 
-        pr[QTOS(DEG(dc))] = COEF(dc);
+        pr[ZTOS(DEG(dc))] = COEF(dc);
       for ( dc = dc2; dc; dc = NEXT(dc) ) 
-        pd[QTOS(DEG(dc))] = COEF(dc);
+        pd[ZTOS(DEG(dc))] = COEF(dc);
       for ( dvr = COEF(dc2), i = d1 - d2; i >= 0; i-- ) 
         if ( !pr[i+d2] ) 
           continue;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/fctr.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -110,7 +110,7 @@ void Pbivariate_hensel_special(NODE arg,LIST *rp)
   h0 = (P)ARG2(arg);
   vx = VR((P)ARG3(arg));
   vy = VR((P)ARG4(arg));
-  d = QTOS((Q)ARG5(arg));
+  d = ZTOS((Q)ARG5(arg));
   NEWVL(nvl); nvl->v = vx;
   NEWVL(NEXT(nvl)); NEXT(nvl)->v = vy;
   NEXT(NEXT(nvl)) = 0;
@@ -158,7 +158,7 @@ void Pgcd(NODE arg,P *rp)
   else {
     m = (Num)ARG2(arg);
     asir_assert(m,O_P,"gcd");
-    mod = QTOS((Q)m);
+    mod = ZTOS((Q)m);
     ptomp(mod,p1,&g1); ptomp(mod,p2,&g2);
     gcdprsmp(CO,mod,g1,g2,&g);
     mptop(g,rp);
@@ -233,7 +233,7 @@ void Pufctrhint(NODE arg,LIST *rp)
 
   asir_assert(ARG0(arg),O_P,"ufctrhint");
   asir_assert(ARG1(arg),O_N,"ufctrhint");
-  ufctr((P)ARG0(arg),QTOS((Q)ARG1(arg)),&dc);
+  ufctr((P)ARG0(arg),ZTOS((Q)ARG1(arg)),&dc);
   dcptolist(dc,rp);
 }
 
@@ -404,7 +404,7 @@ void Pmodfctr(NODE arg,LIST *rp)
   Obj u;
   VL vl;
 
-  mod = QTOS((Q)ARG1(arg));
+  mod = ZTOS((Q)ARG1(arg));
   if ( mod < 0 )
     error("modfctr : invalid modulus");
   p = (P)ARG0(arg);
@@ -476,7 +476,7 @@ void Psfbfctr(NODE arg,LIST *rp)
   vl2.v = y; vl2.next = 0;
   vl = &vl1;
   if ( argc(arg) == 4 )
-    degbound = QTOS((Q)ARG3(arg));
+    degbound = ZTOS((Q)ARG3(arg));
   else
     degbound = -1;
 
@@ -500,8 +500,8 @@ void Psfmintdeg(NODE arg,P *rp)
   vl1.v = x; vl1.next = &vl2;
   vl2.v = y; vl2.next = 0;
   vl = &vl1;
-  dy = QTOS((Q)ARG3(arg));
-  c = QTOS((Q)ARG4(arg));
+  dy = ZTOS((Q)ARG3(arg));
+  c = ZTOS((Q)ARG4(arg));
   sfmintdeg(vl,(P)ARG0(arg),dy,c,&r);
   reorderp(CO,vl,r,rp);
 }
@@ -513,7 +513,7 @@ void Pmodsqfr(NODE arg,LIST *rp)
   if ( !ARG0(arg) ) {
     NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
   } else
-    modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),SQFR,&dc);
+    modfctrp(ARG0(arg),ZTOS((Q)ARG1(arg)),SQFR,&dc);
   dcptolist(dc,rp);
 }
 
@@ -524,7 +524,7 @@ void Pddd(NODE arg,LIST *rp)
   if ( !ARG0(arg) ) {
     NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
   } else
-    modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),DDD,&dc);
+    modfctrp(ARG0(arg),ZTOS((Q)ARG1(arg)),DDD,&dc);
   dcptolist(dc,rp);
 }
 
@@ -535,7 +535,7 @@ void Pnewddd(NODE arg,LIST *rp)
   if ( !ARG0(arg) ) {
     NEWDC(dc); COEF(dc) = 0; DEG(dc) = ONE; NEXT(dc) = 0;
   } else 
-    modfctrp(ARG0(arg),QTOS((Q)ARG1(arg)),NEWDDD,&dc);
+    modfctrp(ARG0(arg),ZTOS((Q)ARG1(arg)),NEWDDD,&dc);
   dcptolist(dc,rp);
 }
 
@@ -550,7 +550,7 @@ void Pirred_check(NODE arg,Z *rp)
     *rp = 0; return;
   }
   mp = W_UMALLOC(UDEG(p));
-  mod = QTOS((Q)ARG1(arg));
+  mod = ZTOS((Q)ARG1(arg));
   ptoum(mod,p,mp);
   r = irred_check(mp,mod);
   if ( r )
@@ -570,10 +570,10 @@ void Pnfctr_mod(NODE arg,Z *rp)
     *rp = 0; return;
   }
   mp = W_UMALLOC(UDEG(p));
-  mod = QTOS((Q)ARG1(arg));
+  mod = ZTOS((Q)ARG1(arg));
   ptoum(mod,p,mp);
   r = nfctr_mod(mp,mod);
-  STOQ(r,*rp);
+  STOZ(r,*rp);
 }
 
 void Pddd_tab(NODE arg,VECT *rp)
@@ -585,7 +585,7 @@ void Pddd_tab(NODE arg,VECT *rp)
   VECT result;
   V v;
 
-  p = (P)ARG0(arg); mod = QTOS((Q)ARG1(arg));
+  p = (P)ARG0(arg); mod = ZTOS((Q)ARG1(arg));
   v = VR(p);
   n = UDEG(p); mp = W_UMALLOC(n);
   ptoum(mod,p,mp);

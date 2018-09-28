@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/iarray.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -185,7 +185,7 @@ IMAT *rp;
 
   asir_assert(ARG0(arg),O_N,"newimat");
   asir_assert(ARG1(arg),O_N,"newimat");
-  row = QTOS((Q)ARG0(arg)); col = QTOS((Q)ARG1(arg));
+  row = ZTOS((Q)ARG0(arg)); col = ZTOS((Q)ARG1(arg));
   if ( row <= 0 || col <= 0 ) error("newimat : invalid size");
   NEWIMAT(m);
   m->col = col;

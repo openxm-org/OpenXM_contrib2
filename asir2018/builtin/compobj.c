@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/compobj.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -164,7 +164,7 @@ void Pstruct_type(NODE arg,Z *rp)
       error("struct_type : invalid argument");
       break;
   }
-  STOQ(ind,*rp);    
+  STOZ(ind,*rp);    
 }
 
 void Parfreg(NODE arg,Z *rp)

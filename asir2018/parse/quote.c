@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/quote.c,v 1.1 2018/09/19 05:45:08 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -120,7 +120,7 @@ void objtoquote(Obj a,QUOTE *c)
         MKNODE(t1,BDY(nm),t);
         t = t1;
       }
-      STOQ(len,q); 
+      STOZ(len,q); 
       t = mknode(2,mkfnode(1,I_FORMULA,q),mkfnode(1,I_LIST,t));
       gen_searchf("vector",&f);
       MKQUOTE(*c,mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,t)));
@@ -143,8 +143,8 @@ void objtoquote(Obj a,QUOTE *c)
       }
       fn = mkfnode(1,I_LIST,t2);
 
-      STOQ(row,qrow); 
-      STOQ(col,qcol); 
+      STOZ(row,qrow); 
+      STOZ(col,qcol); 
       t = mknode(3,
         mkfnode(1,I_FORMULA,qrow),mkfnode(1,I_FORMULA,qcol),fn);
       gen_searchf("matrix",&f);
@@ -291,7 +291,7 @@ void mptoquote(MP m,int n,QUOTE *r,int *sgn)
   }
   dl = m->dl;
   for ( i = n-1, t = 0; i >= 0; i-- ) {
-    STOQ(dl->d[i],q);
+    STOZ(dl->d[i],q);
     f = mkfnode(1,I_FORMULA,q);
     MKNODE(t1,f,t);
     t = t1;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/P.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #ifndef FBASE
 #define FBASE
@@ -163,7 +163,7 @@ void coefp(P p,int d,P *pr)
     else 
       *pr = 0;
   else {
-    for ( STOQ(d,dq), dc = DC(p); dc; dc = NEXT(dc) ) 
+    for ( STOZ(d,dq), dc = DC(p); dc; dc = NEXT(dc) ) 
       if ( (sgn = cmpz(DEG(dc),dq)) > 0 )
         continue;
       else if ( sgn == 0 ) {
@@ -308,12 +308,12 @@ void mulp_trunc(VL vl,P p1,P p2,VN vn,P *pr)
     d = vn->n;
     for ( dc = DC(p2), s = 0; dc; dc = NEXT(dc) ) {
       for ( dcr0 = 0, dct = DC(p1); dct; dct = NEXT(dct) ) {
-        d1 = QTOS(DEG(dct))+QTOS(DEG(dc));
+        d1 = ZTOS(DEG(dct))+ZTOS(DEG(dc));
         if ( d1 >= d ) {
           mulp_trunc(vl,COEF(dct),COEF(dc),vn+1,&t);
           if ( t ) {
             NEXTDC(dcr0,dcr);
-            STOQ(d1,DEG(dcr));
+            STOZ(d1,DEG(dcr));
             COEF(dcr) = t;
           }
         }
@@ -362,7 +362,7 @@ void mulpq_trunc(P p,Q q,VN vn,P *pr)
     if ( !vn->v )
       error("mulpq_trunc : invalid vn");
     d = vn->n;
-    for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
+    for ( dcr0 = 0, dc = DC(p); dc && ZTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
       mulpq_trunc(COEF(dc),q,vn+1,&t);
       if ( t ) {
         NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);
@@ -395,7 +395,7 @@ void mulpc_trunc(VL vl,P p,P c,VN vn,P *pr)
     if ( !vn->v )
       error("mulpc_trunc : invalid vn");
     d = vn->n;
-    for ( dcr0 = 0, dc = DC(p); dc && QTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
+    for ( dcr0 = 0, dc = DC(p); dc && ZTOS(DEG(dc)) >= d; dc = NEXT(dc) ) {
       mulp_trunc(vl,COEF(dc),c,vn+1,&t);
       if ( t ) {
         NEXTDC(dcr0,dcr); COEF(dcr) = t; DEG(dcr) = DEG(dc);

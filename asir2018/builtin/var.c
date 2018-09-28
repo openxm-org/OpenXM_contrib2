@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/var.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -68,7 +68,7 @@ void Psimple_is_eq(NODE arg,Z *rp)
   int ret;
 
   ret = is_eq(ARG0(arg),ARG1(arg));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 int is_eq(Obj a0,Obj a1)

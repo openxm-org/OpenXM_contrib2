@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/tcpf.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -217,12 +217,12 @@ extern int mpi_myid, mpi_nprocs;
 
 void Pox_mpi_myid(Z *rp)
 {
-  STOQ(mpi_myid,*rp);
+  STOZ(mpi_myid,*rp);
 }
 
 void Pox_mpi_nprocs(Z *rp)
 {
-  STOQ(mpi_nprocs,*rp);
+  STOZ(mpi_nprocs,*rp);
 }
 #endif
 
@@ -238,7 +238,7 @@ void Pox_get_serverinfo(NODE arg,LIST *rp)
       if ( (m_c_tab[i].m>=0) || (m_c_tab[i].c>=0) ) {
         c = m_c_tab[i].c;
         ox_get_serverinfo(c,&list);
-        STOQ(i,s_id);
+        STOZ(i,s_id);
         t = mknode(2,s_id,list);
         MKLIST(l,t);
         NEXTNODE(n0,n);
@@ -248,7 +248,7 @@ void Pox_get_serverinfo(NODE arg,LIST *rp)
       NEXT(n) = 0;
     MKLIST(*rp,n0);  
   } else {
-    i = QTOS((Q)ARG0(arg));
+    i = ZTOS((Q)ARG0(arg));
     if ( i >= 0 && i < m_c_i && ((m_c_tab[i].m>=0) || (m_c_tab[i].c>=0)) )
       ox_get_serverinfo(m_c_tab[i].c,rp);
     else {
@@ -273,7 +273,7 @@ void Pgenerate_port(NODE arg,Obj *rp)
   if ( !arg || !ARG0(arg) ) {
     generate_port(0,port_str);
     port = atoi(port_str);
-    STOQ(port,q);
+    STOZ(port,q);
     *rp = (Obj)q;
   } else {
     generate_port(1,port_str);
@@ -287,7 +287,7 @@ void Pgenerate_port(NODE arg,Obj *rp)
 void Pox_reset_102(NODE arg,Z *rp)
 {
   int s;
-  int  index = QTOS((Q)ARG0(arg));
+  int  index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -301,8 +301,8 @@ void Pox_get_rank_102(LIST *rp)
   Z n,r;
   NODE node;
 
-  STOQ(nserver_102,n);
-  STOQ(myrank_102,r);
+  STOZ(nserver_102,n);
+  STOZ(myrank_102,r);
   node = mknode(2,n,r);
   MKLIST(*rp,node);
 }
@@ -311,7 +311,7 @@ void Pox_set_rank_102(NODE arg,Z *rp)
 {
   Z nserver,rank;
   int s;
-  int  index = QTOS((Q)ARG0(arg));
+  int  index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -329,7 +329,7 @@ void Pox_set_rank_102(NODE arg,Z *rp)
 void Pox_tcp_accept_102(NODE arg,Z *rp)
 {
   int s;
-  int  index = QTOS((Q)ARG0(arg));
+  int  index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -348,7 +348,7 @@ void Pox_tcp_accept_102(NODE arg,Z *rp)
 void Pox_tcp_connect_102(NODE arg,Z *rp)
 {
   int s;
-  int  index = QTOS((Q)ARG0(arg));
+  int  index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -371,7 +371,7 @@ void Ptry_bind_listen(NODE arg,Z *rp)
   int port,s,use_unix;
 
   if ( IS_CYGWIN || !ARG0(arg) || NUM(ARG0(arg)) ) {
-    port = QTOS((Q)ARG0(arg));
+    port = ZTOS((Q)ARG0(arg));
     sprintf(port_str,"%d",port);
     use_unix = 0;
   } else {
@@ -379,7 +379,7 @@ void Ptry_bind_listen(NODE arg,Z *rp)
     use_unix = 1;
   }
   s = try_bind_listen(use_unix,port_str);
-  STOQ(s,*rp);
+  STOZ(s,*rp);
 }
 
 /*
@@ -393,7 +393,7 @@ void Ptry_connect(NODE arg,Z *rp)
   int port,s,use_unix;
 
   if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
-    port = QTOS((Q)ARG1(arg));
+    port = ZTOS((Q)ARG1(arg));
     sprintf(port_str,"%d",port);
     use_unix = 0;
   } else {
@@ -402,7 +402,7 @@ void Ptry_connect(NODE arg,Z *rp)
   }
   host = BDY((STRING)ARG0(arg));
   s = try_connect(use_unix,host,port_str);
-  STOQ(s,*rp);
+  STOZ(s,*rp);
 }
 
 /*
@@ -417,8 +417,8 @@ void Ptry_accept(NODE arg,Z *rp)
     use_unix = 0;
   else
     use_unix = 1;
-  s = try_accept(use_unix,QTOS((Q)ARG0(arg)));
-  STOQ(s,*rp);
+  s = try_accept(use_unix,ZTOS((Q)ARG0(arg)));
+  STOZ(s,*rp);
 }
 
 /*
@@ -432,10 +432,10 @@ void Pregister_server(NODE arg,Z *rp)
   Obj obj;
   MATHCAP server_mathcap;
 
-  cs = QTOS((Q)ARG0(arg));    
-  ss = QTOS((Q)ARG2(arg));    
+  cs = ZTOS((Q)ARG0(arg));    
+  ss = ZTOS((Q)ARG2(arg));    
   if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
-    sprintf(cport_str,"%d",QTOS((Q)ARG1(arg)));
+    sprintf(cport_str,"%d",ZTOS((Q)ARG1(arg)));
     use_unix = 0;
   } else {
     strcpy(cport_str,BDY((STRING)ARG1(arg)));
@@ -444,7 +444,7 @@ void Pregister_server(NODE arg,Z *rp)
   if ( !ARG3(arg) || NUM(ARG3(arg)) ) {
     if ( use_unix )
       error("register_server : the protocol should conincide for two sockets");
-    sprintf(sport_str,"%d",QTOS((Q)ARG3(arg)));
+    sprintf(sport_str,"%d",ZTOS((Q)ARG3(arg)));
   } else {
     if ( !use_unix )
       error("register_server : the protocol should conincide for two sockets");
@@ -458,7 +458,7 @@ void Pregister_server(NODE arg,Z *rp)
   if ( sn < 0 ) {
     /* we should terminate the launcher */
     ox_send_cmd(cn,SM_shutdown); ox_flush_stream_force(cn);
-    STOQ(-1,*rp);
+    STOZ(-1,*rp);
     return;
   }
 
@@ -479,7 +479,7 @@ void Pregister_server(NODE arg,Z *rp)
     ox_send_cmd(sn,SM_setMathcap);
   }
   /* return the server id */
-  STOQ(ind,*rp);
+  STOZ(ind,*rp);
 }
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
@@ -550,7 +550,7 @@ void Pox_launch_generic(NODE arg,Z *rp)
   use_unix = !IS_CYGWIN && ARG3(arg) ? 1 : 0;
   use_ssh = ARG4(arg) ? 1 : 0;
   use_x = ARG5(arg) ? 1 : 0;
-  conn_to_serv = QTOS((Q)ARG6(arg));
+  conn_to_serv = ZTOS((Q)ARG6(arg));
   if ( !IS_CYGWIN && !host )
     use_unix = 1;
   ox_launch_generic(host,launcher,server,
@@ -593,7 +593,7 @@ void ox_launcher_101_generic(char *host,char *launcher,
   /* register server to the server list */
   ind = register_server_101(use_unix,cn);
 
-  STOQ(ind,*rp);
+  STOZ(ind,*rp);
 }
 #endif
 
@@ -616,13 +616,13 @@ void ox_launch_generic(char *host,char *launcher,char *server,
             key = BDY((STRING)BDY(n0));
             value = (Z)BDY(NEXT(n0));
             if ( !strcmp(key,"fd") && value ) {
-                fd = QTOS(value);
+                fd = ZTOS(value);
                 break;
             }
         }
     }
     if (!available_mcindex(fd)) {
-        STOQ(-1,*rp);
+        STOZ(-1,*rp);
         return;
     }
 #if !defined(VISUAL) && !defined(__MINGW32__)
@@ -662,7 +662,7 @@ void ox_launch_generic(char *host,char *launcher,char *server,
   if ( sn < 0 ) {
     /* we should terminate the launcher */
     ox_send_cmd(cn,SM_shutdown); ox_flush_stream_force(cn);
-    STOQ(-1,*rp);
+    STOZ(-1,*rp);
     return;
   }
 
@@ -683,7 +683,7 @@ void ox_launch_generic(char *host,char *launcher,char *server,
     ox_send_cmd(sn,SM_setMathcap);
   }
   /* return the server id */
-  STOQ(ind,*rp);
+  STOZ(ind,*rp);
 }
 
 #if defined(__CYGWIN32__)
@@ -1081,7 +1081,7 @@ void Pox_select(NODE arg,LIST *rp)
   FD_ZERO(&r); FD_ZERO(&w); FD_ZERO(&e);
   maxfd = minfd = -1;
   for ( t = list, t0 = 0; t; t = NEXT(t) ) {
-    index = QTOS((Q)BDY(t));
+    index = ZTOS((Q)BDY(t));
     valid_mctab_index(index);
     s = m_c_tab[index].c;
     if ( ox_data_is_available(s) ) {
@@ -1107,14 +1107,14 @@ void Pox_select(NODE arg,LIST *rp)
       index = get_index(i);
       /* mcind : index to m_c_tab array */
       mcind = get_mcindex(index);
-      n--; STOQ(mcind,q); MKNODE(t1,q,t); t = t1;
+      n--; STOZ(mcind,q); MKNODE(t1,q,t); t = t1;
     }
   MKLIST(*rp,t);
 }
 
 void Pox_flush(NODE arg,Z *rp)
 {
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   ox_flush_stream_force(m_c_tab[index].c);
@@ -1124,7 +1124,7 @@ void Pox_flush(NODE arg,Z *rp)
 void Pox_send_raw_cmo(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1137,7 +1137,7 @@ void Pox_send_raw_cmo(NODE arg,Obj *rp)
 void Pox_recv_raw_cmo(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1146,7 +1146,7 @@ void Pox_recv_raw_cmo(NODE arg,Obj *rp)
 
 void Pox_send_102(NODE arg,Obj *rp)
 {
-  int rank = QTOS((Q)ARG0(arg));
+  int rank = ZTOS((Q)ARG0(arg));
 
   ox_send_data_102(rank,(Obj)ARG1(arg));
   *rp = 0;
@@ -1155,14 +1155,14 @@ void Pox_send_102(NODE arg,Obj *rp)
 void Pox_recv_102(NODE arg,Obj *rp)
 {
   int id;
-  int rank = QTOS((Q)ARG0(arg));
+  int rank = ZTOS((Q)ARG0(arg));
 
   ox_recv_102(rank,&id,rp);
 }
 
 void Pox_bcast_102(NODE arg,Obj *rp)
 {
-  int rank = QTOS((Q)ARG0(arg));
+  int rank = ZTOS((Q)ARG0(arg));
   Obj data;
 
   if ( argc(arg) > 1 )
@@ -1173,7 +1173,7 @@ void Pox_bcast_102(NODE arg,Obj *rp)
 
 void Pox_reduce_102(NODE arg,Obj *rp)
 {
-  int root = QTOS((Q)ARG0(arg));
+  int root = ZTOS((Q)ARG0(arg));
   STRING op;
   char *opname;
   void (*func)();
@@ -1203,7 +1203,7 @@ void Pox_push_local(NODE arg,Obj *rp)
 
   if ( !arg )
     error("ox_push_local : too few arguments.");
-  index = QTOS((Q)ARG0(arg));
+  index = ZTOS((Q)ARG0(arg));
   valid_mctab_index(index);
   s = m_c_tab[index].c; arg = NEXT(arg);
 
@@ -1223,7 +1223,7 @@ void Pox_push_cmo(NODE arg,Obj *rp)
 
   if ( !arg )
     error("ox_push_cmo : too few arguments.");
-  index = QTOS((Q)ARG0(arg));
+  index = ZTOS((Q)ARG0(arg));
   valid_mctab_index(index);
   s = m_c_tab[index].c; arg = NEXT(arg);
   for ( ; arg; arg = NEXT(arg) )
@@ -1233,7 +1233,7 @@ void Pox_push_cmo(NODE arg,Obj *rp)
 
 void Pox_push_vl(NODE arg,Obj *rp)
 {
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   ox_send_local_ring(m_c_tab[index].c,CO);
@@ -1243,7 +1243,7 @@ void Pox_push_vl(NODE arg,Obj *rp)
 void Pox_pop_local(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1255,7 +1255,7 @@ void Pox_pop_local(NODE arg,Obj *rp)
 void Pox_pop_cmo(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1266,7 +1266,7 @@ void Pox_pop_cmo(NODE arg,Obj *rp)
 
 void Pox_pop0_local(NODE arg,Obj *rp)
 {
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   ox_send_cmd(m_c_tab[index].c,SM_popSerializedLocalObject);
@@ -1275,7 +1275,7 @@ void Pox_pop0_local(NODE arg,Obj *rp)
 
 void Pox_pop0_cmo(NODE arg,Obj *rp)
 {
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   ox_send_cmd(m_c_tab[index].c,SM_popCMO);
@@ -1284,7 +1284,7 @@ void Pox_pop0_cmo(NODE arg,Obj *rp)
 
 void Pox_pop0_string(NODE arg,STRING *rp)
 {
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   ox_send_cmd(m_c_tab[index].c,SM_popString);
@@ -1294,7 +1294,7 @@ void Pox_pop0_string(NODE arg,STRING *rp)
 void Pox_pop_string(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1313,7 +1313,7 @@ void Pox_get(NODE arg,Obj *rp)
     ox_get_result(0,rp);
   } else {
     /* server->client */
-    index = QTOS((Q)ARG0(arg));
+    index = ZTOS((Q)ARG0(arg));
     valid_mctab_index(index);
     s = m_c_tab[index].c;
     ox_flush_stream_force(s);
@@ -1325,12 +1325,12 @@ void Pox_pops(NODE arg,Obj *rp)
 {
   int s;
   USINT n;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
   if ( NEXT(arg) )
-    MKUSINT(n,QTOS((Q)ARG1(arg)));
+    MKUSINT(n,ZTOS((Q)ARG1(arg)));
   else
     MKUSINT(n,1);
   ox_send_data(s,n);
@@ -1342,11 +1342,11 @@ void Pox_execute_function(NODE arg,Obj *rp)
 {
   int s;
   USINT ui;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
-  MKUSINT(ui,QTOS((Q)ARG2(arg)));
+  MKUSINT(ui,ZTOS((Q)ARG2(arg)));
   ox_send_data(s,ui);
   ox_send_data(s,ARG1(arg));
   ox_send_cmd(s,SM_executeFunction);
@@ -1356,7 +1356,7 @@ void Pox_execute_function(NODE arg,Obj *rp)
 void Pox_setname(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1368,7 +1368,7 @@ void Pox_setname(NODE arg,Obj *rp)
 void Pox_evalname(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c;
@@ -1380,7 +1380,7 @@ void Pox_evalname(NODE arg,Obj *rp)
 void Pox_execute_string(NODE arg,Obj *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   asir_assert(ARG1(arg),O_STR,"ox_execute_string");
   valid_mctab_index(index);
@@ -1399,7 +1399,7 @@ void Pox_rpc(NODE arg,Obj *rp)
   USINT ui;
   pointer *w;
   NODE t;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   s = m_c_tab[index].c; arg = NEXT(arg);
@@ -1426,7 +1426,7 @@ void Pox_cmo_rpc(NODE arg,Obj *rp)
   NODE t;
   Obj dmy;
   pointer *w;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
   int find;
   Obj sync;
 
@@ -1462,25 +1462,25 @@ void Pox_reset(NODE arg,Z *rp)
   Obj obj;
   NODE nd;
   Z q;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   m = m_c_tab[index].m;
   c = m_c_tab[index].c;
   if ( m >= 0 ) {
     if ( no_ox_reset(c) == 1 ) {
-      STOQ(index,q);
+      STOZ(index,q);
       nd = mknode(1,q);
       switch ( No_ox_reset ) {
       case 1:
          fprintf(stderr,"The server does not implenent OX reset protocol.\n");
          fprintf(stderr,"The server is terminated.\n");
          Pox_shutdown(nd,rp);
-         if ( index == QTOS(ox_pari_stream) ) ox_pari_stream_initialized = 0;
+         if ( index == ZTOS(ox_pari_stream) ) ox_pari_stream_initialized = 0;
          break;
       case 2:
          Pox_shutdown(nd,rp);
-         if ( index == QTOS(ox_pari_stream) ) ox_pari_stream_initialized = 0;
+         if ( index == ZTOS(ox_pari_stream) ) ox_pari_stream_initialized = 0;
          break;
       default:
          error("The server does not implement OX reset protocol.");
@@ -1517,7 +1517,7 @@ void Pox_reset(NODE arg,Z *rp)
 void Pox_intr(NODE arg,Z *rp)
 {
   int m;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   m = m_c_tab[index].m;
@@ -1534,7 +1534,7 @@ void Pox_intr(NODE arg,Z *rp)
 void Pox_sync(NODE arg,Z *rp)
 {
   int c;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
   c = m_c_tab[index].c;
@@ -1545,7 +1545,7 @@ void Pox_sync(NODE arg,Z *rp)
 void Pox_shutdown(NODE arg,Z *rp)
 {
   int s;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 #if !defined(VISUAL) && !defined(__MINGW32__)
   int status;
 #endif
@@ -1568,10 +1568,10 @@ void Pox_shutdown(NODE arg,Z *rp)
 void Pox_push_cmd(NODE arg,Z *rp)
 {
   int ui;
-  int index = QTOS((Q)ARG0(arg));
+  int index = ZTOS((Q)ARG0(arg));
 
   valid_mctab_index(index);
-  ui = QTOS((Q)ARG1(arg));
+  ui = ZTOS((Q)ARG1(arg));
   ox_send_cmd(m_c_tab[index].c,ui);
   *rp = 0;
 }
@@ -1639,7 +1639,7 @@ int validate_ox_plot_stream(int index)
   arg = mknode(2,NULL,name);
   if ( debug_plot ) Pox_launch(arg,&r);
   else Pox_launch_nox(arg,&r);
-  i = QTOS((Q)r);
+  i = ZTOS((Q)r);
 #if defined(VISUAL) || defined(__MINGW32__)
   Sleep(100);
   ox_send_cmd(m_c_tab[i].c,SM_nop);

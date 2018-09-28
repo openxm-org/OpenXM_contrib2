@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Fgfs.c,v 1.1 2018/09/19 05:45:06 noro Exp $ */
 
 #include "ca.h"
 
@@ -118,7 +118,7 @@ void sqfrsfmain(VL vl,P f,DCP *dcp)
     dc = append_dc(dc,dct);
   }
   if ( !NUM(t) ) {
-    STOQ(characteristic_sf(),m);
+    STOZ(characteristic_sf(),m);
     pthrootsf(t,m,&s);
     sqfrsfmain(vl,s,&dct);
     for ( dcs = dct; dcs; dcs = NEXT(dcs) ) {
@@ -184,7 +184,7 @@ void partial_sqfrsf(VL vl,V v,P f,P *r,DCP *dcp)
     flat = flat1;
     NEXTDC(dc0,dc);
     COEF(dc) = g;
-    STOQ(m,DEG(dc));
+    STOZ(m,DEG(dc));
   }
   NEXT(dc) = 0;
   *dcp = dc0;
@@ -318,7 +318,7 @@ int gethdeg(VL vl,V v,P p)
       if ( compp(vl,COEF(dc),cmax) > 0 ) {
         dmax = DEG(dc); cmax = COEF(dc);
       }
-    return QTOS(dmax);
+    return ZTOS(dmax);
   }
 }
 
@@ -780,14 +780,14 @@ void estimatelc_sf(VL vl,VL rvl,P c,DCP dc,int *mev,P *lcp)
       continue;
     /* constant part */
     substvp_sf(vl,rvl,COEF(dct),mev,&f);
-    d = QTOS(DEG(dct));
+    d = ZTOS(DEG(dct));
     for ( i = 0, c1 = c; i < d; i++ )
       if ( !divtp(vl,c1,f,&c2) )
         break;
       else
         c1 = c2;
     if ( i ) {
-      STOQ(i,q);
+      STOZ(i,q);
       pwrp(vl,COEF(dct),q,&s); mulp(vl,r,s,&t); r = t;
     }
   }
@@ -1034,7 +1034,7 @@ void gfsn_univariate_to_sfbm(P f,int dy,BM *r)
   DEG(b) = dy;
   for ( dc = DC(f); dc; dc = NEXT(dc) ) {
     /* d : degree in x, cy : poly in y */
-    d = QTOS(DEG(dc));
+    d = ZTOS(DEG(dc));
     cy = BDY((GFSN)COEF(dc));
     for ( i = DEG(cy); i >= 0; i-- )
       COEF(COEF(b)[i])[d] = COEF(cy)[i];

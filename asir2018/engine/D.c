@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/D.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 
@@ -126,7 +126,7 @@ void dtestsql(P f,ML list,struct oDUM *dc,DCP *dcp)
     }
   }
   for ( t = f, j = 0; j < n; j++ ) {
-    STOQ(dc[j].n,tq); pwrp(CO,true[j],tq,&s); udivpz(t,s,&fq,&fr);
+    STOZ(dc[j].n,tq); pwrp(CO,true[j],tq,&s); udivpz(t,s,&fq,&fr);
     if ( fq && !fr )
       t = fq;
     else {
@@ -135,7 +135,7 @@ void dtestsql(P f,ML list,struct oDUM *dc,DCP *dcp)
     }
   }
   for ( j = 0, dcr = dcr0 = 0; j < n; j++ ) {
-    NEXTDC(dcr0,dcr); STOQ(dc[j].n,DEG(dcr)); COEF(dcr) = true[j];
+    NEXTDC(dcr0,dcr); STOZ(dc[j].n,DEG(dcr)); COEF(dcr) = true[j];
   }
   NEXT(dcr) = 0; *dcp = dcr0;
 }
@@ -170,11 +170,11 @@ void dtestroot(int m,int b,P f,LUM fl,struct oDUM *dc,DCP *dcp)
     *dcp = 0;
     return;
   }
-  STOQ(dc[0].n,q); pwrp(CO,t,q,&s); subp(CO,s,f,&u);
+  STOZ(dc[0].n,q); pwrp(CO,t,q,&s); subp(CO,s,f,&u);
   if ( u )
     *dcp = 0;  
   else {
-    NEWDC(dcr); STOQ(dc[0].n,DEG(dcr));
+    NEWDC(dcr); STOZ(dc[0].n,DEG(dcr));
     COEF(dcr) = t; NEXT(dcr) = 0; *dcp = dcr;
   }
 }
@@ -299,19 +299,19 @@ void nthrootz(Z number,int n,Z *root)
   int sgn,index,p,i,tmp,tp,mlr,num0;
 
   for (  i = 0; !(n % 2); n /= 2, i++ );
-  STOQ(n,z);
+  STOZ(n,z);
   for ( index = 0, num = number; ; index++ ) {
     if ( n == 1 )
       goto TAIL;
     p = get_lprime(index);
     if ( !(num0 = remqi((Q)num,p)) ) 
       continue;
-    STOQ(n,n1); STOQ(p-1,n2); gcdz(n1,n2,&gcd);
+    STOZ(n,n1); STOZ(p-1,n2); gcdz(n1,n2,&gcd);
     if ( !UNIQ(gcd) )
       continue;
-    tp = pwrm(p,num0,invm(n,p-1)); STOQ(tp,s);
+    tp = pwrm(p,num0,invm(n,p-1)); STOZ(tp,s);
     mlr = invm(dmb(p,n,pwrm(p,tp,n-1),&tmp),p);
-    STOQ(p,base); STOQ(p,pn);
+    STOZ(p,base); STOZ(p,pn);
     while ( 1 ) {
       pwrz(s,z,&t); subz(num,t,&u);
       if ( !u ) {
@@ -327,7 +327,7 @@ void nthrootz(Z number,int n,Z *root)
         *root = 0;
         return;
       }
-      STOQ(dmb(p,mlr,remqi((Q)q,p),&tmp),t);
+      STOZ(dmb(p,mlr,remqi((Q)q,p),&tmp),t);
       mulz(t,base,&u); addz(u,s,&t); s = t;
       mulz(base,pn,&t); base = t;
     }
@@ -366,7 +366,7 @@ void sqrtz(Z number,Z *root)
         *root = 0;
         return;
       } else {
-        STOQ(2,two);
+        STOZ(2,two);
         divqrz(sa,two,&q,&r); 
         if ( sgn > 0 ) 
           addz(a,q,&r); 
@@ -390,7 +390,7 @@ void lumtop(V v,int mod,int bound,LUM f,P *g)
     if ( q ) {
       NEXTDC(dc0,dc);
       if ( i ) 
-        STOQ(i,DEG(dc));
+        STOZ(i,DEG(dc));
       else 
         DEG(dc) = 0;
       COEF(dc) = (P)q;
@@ -449,7 +449,7 @@ void lumtop_unsigned(V v,int mod,int bound,LUM f,P *g)
     if ( q ) {
       NEXTDC(dc0,dc);
       if ( i ) 
-        STOQ(i,DEG(dc));
+        STOZ(i,DEG(dc));
       else 
         DEG(dc) = 0;
       COEF(dc) = (P)q;

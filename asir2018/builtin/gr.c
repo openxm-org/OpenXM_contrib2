@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -388,7 +388,7 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
     else
       dtop(CO,vv,ps[(long)BDY(x)],(Obj *)&BDY(r));
     NEXTNODE(ind0,ind);
-    STOQ((long)BDY(x),q); BDY(ind) = q;
+    STOZ((long)BDY(x),q); BDY(ind) = q;
   }
   if ( r0 ) NEXT(r) = 0;
   if ( ind0 ) NEXT(ind) = 0;
@@ -448,7 +448,7 @@ void dp_interreduce(LIST f,LIST v,int field,struct order_spec *ord,LIST *rp)
     else
       dtop(CO,vv,ps[(long)BDY(x)],(Obj *)&BDY(r));
     NEXTNODE(ind0,ind);
-    STOQ((long)BDY(x),q); BDY(ind) = q;
+    STOZ((long)BDY(x),q); BDY(ind) = q;
   }
   if ( r0 ) NEXT(r) = 0;
   if ( ind0 ) NEXT(ind) = 0;
@@ -1211,9 +1211,9 @@ void makesubst(VL v,NODE *s)
   for ( r0 = 0; v; v = NEXT(v) ) {
     NEXTNODE(r0,r); BDY(r) = (pointer)v->v;
 #if defined(_PA_RISC1_1)
-    n = mrand48()&BMASK; UTOQ(n,q);
+    n = mrand48()&BMASK; UTOZ(n,q);
 #else
-    n = random(); UTOQ(n,q);
+    n = random(); UTOZ(n,q);
 #endif
     NEXTNODE(r0,r); BDY(r) = (pointer)q;
   }
@@ -1226,7 +1226,7 @@ void printsubst(NODE s)
   fputc('[',asir_out);
   while ( s ) {
     printv(CO,(V)BDY(s)); s = NEXT(s);
-    fprintf(asir_out,"->%d",QTOS((Q)BDY(s)));
+    fprintf(asir_out,"->%d",ZTOS((Q)BDY(s)));
     if ( NEXT(s) ) {
       fputc(',',asir_out); s = NEXT(s);
     } else
@@ -1318,7 +1318,7 @@ void setup_arrays(NODE f,int m,NODE *r)
     MKLIST(input,t);
 
     if ( OXCheck >= 0 ) {
-      STOQ(OXCheck,q);
+      STOZ(OXCheck,q);
       MKSTR(fname,"register_input");
       arg = mknode(3,q,fname,input);
       Pox_cmo_rpc(arg,&obj);
@@ -1446,7 +1446,7 @@ void reduceall(NODE in,NODE *h)
       NODE node;
       LIST hist;
 
-      STOQ(w[i],q);
+      STOZ(w[i],q);
       node = mknode(4,ONE,q,ONE,ONE);
       MKLIST(hist,node);
       MKNODE(TraceList,hist,0);
@@ -1566,13 +1566,13 @@ int newps(DP a,int m,NODE subst)
     }
     MKLIST(trace,tr);
     if ( OXCheck >= 0 ) {
-      STOQ(OXCheck,q1);
+      STOZ(OXCheck,q1);
       MKSTR(fname,"check_trace");
-      STOQ(psn,q2);
+      STOZ(psn,q2);
       arg = mknode(5,q1,fname,a,q2,trace);
       Pox_cmo_rpc(arg,&obj);
     } else if ( OXCheck < 0 ) {
-      STOQ(psn,q1);
+      STOZ(psn,q1);
       tn = mknode(2,q1,trace);
       MKLIST(trace1,tn);
       MKNODE(tr,trace1,AllTraceList);
@@ -1657,7 +1657,7 @@ void reducebase_dehomo(NODE f,NODE *g)
         LIST hist;
         NODE node;
 
-        STOQ(r[i],q);
+        STOZ(r[i],q);
         node = mknode(4,NULLP,q,NULLP,NULLP);
         MKLIST(hist,node);
         MKNODE(TraceList,hist,0);
@@ -1789,8 +1789,8 @@ NODE gb(NODE f,int m,NODE subst)
       } else
         dp_sp(ps[l->dp1],ps[l->dp2],&h);
       if ( GenTrace ) {
-        STOQ(l->dp1,q); ARG1(BDY((LIST)BDY(NEXT(TraceList)))) = q;
-        STOQ(l->dp2,q); ARG1(BDY((LIST)BDY(TraceList))) = q;
+        STOZ(l->dp1,q); ARG1(BDY((LIST)BDY(NEXT(TraceList)))) = q;
+        STOZ(l->dp2,q); ARG1(BDY((LIST)BDY(TraceList))) = q;
       }
       if ( h )
         new_sugar = h->sugar;
@@ -2222,8 +2222,8 @@ void gbcheck_list(NODE f,int n,VECT *gp,LIST *pp)
 
   for ( u0 = 0, l = d; l; l = NEXT(l) ) {
     NEXTNODE(u0,u);
-    STOQ(l->dp1,q1);
-    STOQ(l->dp2,q2);
+    STOZ(l->dp1,q1);
+    STOZ(l->dp2,q2);
     t = mknode(2,q1,q2);
     MKLIST(pair,t);
     BDY(u) = (pointer)pair;
@@ -2280,9 +2280,9 @@ void dp_set_flag(Obj name,Obj value)
     ratio = (Q)value;
     if ( ratio ) {
       nmq(ratio,&t);
-      DP_Multiple = QTOS(t);
+      DP_Multiple = ZTOS(t);
       dnq(ratio,&t);
-      Denominator = QTOS(t);
+      Denominator = ZTOS(t);
     } else {
       DP_Multiple = 0;
       Denominator = 1;
@@ -2290,7 +2290,7 @@ void dp_set_flag(Obj name,Obj value)
   }
   if ( value && OID(value) != O_N )
     return;
-  v = QTOS((Q)value);
+  v = ZTOS((Q)value);
   if ( !strcmp(n,"NoSugar") )
     NoSugar = v;
   else if ( !strcmp(n,"NoCriB") )
@@ -2343,35 +2343,35 @@ void dp_make_flaglist(LIST *list)
   NODE n,n1;
 
 #if 0
-  STOQ(DP_Multiple,v); MKNODE(n,v,0); MKSTR(name,"DP_Multiple"); MKNODE(n1,name,n); n = n1;
-  STOQ(Denominator,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Denominator"); MKNODE(n1,name,n); n = n1;
+  STOZ(DP_Multiple,v); MKNODE(n,v,0); MKSTR(name,"DP_Multiple"); MKNODE(n1,name,n); n = n1;
+  STOZ(Denominator,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Denominator"); MKNODE(n1,name,n); n = n1;
 #else
   if ( DP_Multiple ) {
-    STOQ(DP_Multiple,nm); STOQ(Denominator,dn); divq((Q)nm,(Q)dn,&r);
+    STOZ(DP_Multiple,nm); STOZ(Denominator,dn); divq((Q)nm,(Q)dn,&r);
   } else
     v = 0;
   MKNODE(n,v,0); MKSTR(name,"Content"); MKNODE(n1,name,n); n = n1;
 #endif
   MKNODE(n1,Dist,n); n = n1; MKSTR(name,"Dist"); MKNODE(n1,name,n); n = n1;
-  STOQ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
-  STOQ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
-  STOQ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
-  STOQ(DP_PrintShort,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PrintShort"); MKNODE(n1,name,n); n = n1;
-  STOQ(DP_NFStat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NFStat"); MKNODE(n1,name,n); n = n1;
-  STOQ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
-  STOQ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
-  STOQ(GenSyz,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenSyz"); MKNODE(n1,name,n); n = n1;
-  STOQ(MaxDeg,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"MaxDeg"); MKNODE(n1,name,n); n = n1;
-  STOQ(OneZeroHomo,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OneZeroHomo"); MKNODE(n1,name,n); n = n1;
-  STOQ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
-  STOQ(ShowMag,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"ShowMag"); MKNODE(n1,name,n); n = n1;
-  STOQ(Top,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Top"); MKNODE(n1,name,n); n = n1;
-  STOQ(NoGCD,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoGCD"); MKNODE(n1,name,n); n = n1;
-  STOQ(NoRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoRA"); MKNODE(n1,name,n); n = n1;
-  STOQ(NoMC,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoMC"); MKNODE(n1,name,n); n = n1;
-  STOQ(NoGC,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoGC"); MKNODE(n1,name,n); n = n1;
-  STOQ(NoCriB,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoCriB"); MKNODE(n1,name,n); n = n1;
-  STOQ(NoSugar,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoSugar"); MKNODE(n1,name,n); n = n1;
+  STOZ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
+  STOZ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
+  STOZ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
+  STOZ(DP_PrintShort,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PrintShort"); MKNODE(n1,name,n); n = n1;
+  STOZ(DP_NFStat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NFStat"); MKNODE(n1,name,n); n = n1;
+  STOZ(OXCheck,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OXCheck"); MKNODE(n1,name,n); n = n1;
+  STOZ(GenTrace,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenTrace"); MKNODE(n1,name,n); n = n1;
+  STOZ(GenSyz,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"GenSyz"); MKNODE(n1,name,n); n = n1;
+  STOZ(MaxDeg,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"MaxDeg"); MKNODE(n1,name,n); n = n1;
+  STOZ(OneZeroHomo,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"OneZeroHomo"); MKNODE(n1,name,n); n = n1;
+  STOZ(PtozpRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"PtozpRA"); MKNODE(n1,name,n); n = n1;
+  STOZ(ShowMag,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"ShowMag"); MKNODE(n1,name,n); n = n1;
+  STOZ(Top,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Top"); MKNODE(n1,name,n); n = n1;
+  STOZ(NoGCD,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoGCD"); MKNODE(n1,name,n); n = n1;
+  STOZ(NoRA,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoRA"); MKNODE(n1,name,n); n = n1;
+  STOZ(NoMC,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoMC"); MKNODE(n1,name,n); n = n1;
+  STOZ(NoGC,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoGC"); MKNODE(n1,name,n); n = n1;
+  STOZ(NoCriB,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoCriB"); MKNODE(n1,name,n); n = n1;
+  STOZ(NoSugar,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoSugar"); MKNODE(n1,name,n); n = n1;
   if ( Demand )
     MKSTR(path,Demand);
   else
@@ -2497,7 +2497,7 @@ void _dp_nf(NODE b,DP g,DP *ps,int full,DP *rp)
           Z cq;
           NODE node,node0;
 
-          STOQ((long)BDY(l),cq);
+          STOZ((long)BDY(l),cq);
           node0 = mknode(4,coef,cq,mult,ONE);
           MKLIST(hist,node0);
           MKNODE(node,hist,TraceList); TraceList = node;
@@ -2579,7 +2579,7 @@ void _dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *r)
 
         if ( GenTrace ) {
           /* u = cr*rp + (-cred)*shift*red */ 
-          STOQ((long)BDY(l),cq);
+          STOZ((long)BDY(l),cq);
           node = mknode(4,cr,cq,NULLP,NULLP);
           mulz(cred,rc,&rcred);
           chsgnz(rcred,&mrcred);

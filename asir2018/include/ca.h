@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.2 2018/09/21 07:06:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.3 2018/09/24 22:26:43 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -771,7 +771,7 @@ typedef unsigned int ModNum;
 #define COEF(p) ((p)->c)
 #define DEG(p) ((p)->d)
 #define CONT(a) ((a)->cont)
-#define UDEG(f) QTOS(DEG(DC(f)))
+#define UDEG(f) ZTOS(DEG(DC(f)))
 #define UCOEF(f) (COEF(DC(f)))
 #define LC(f) (NUM(f)?(f):COEF(DC(f)))
 
@@ -978,14 +978,14 @@ if(!(r)){NEWDMM(r);(c)=(r);}else{NEWDMM(NEXT(c));(c)=NEXT(c);}
 #define DUPZ(p,q) (NEWZ(q),BDY(q)=BDY(p))
 #define DUPQ(p,q) (NEWQ(q),BDY(q)=BDY(p))
 
-#define STOQ(n,q) ((!(n))?((q)=0):(NEWZ(q),mpz_set_si(BDY(q),n)))
-#define UTOQ(n,q) ((!(n))?((q)=0):(NEWZ(q),mpz_set_ui(BDY(q),n)))
+#define STOZ(n,q) ((!(n))?((q)=0):(NEWZ(q),mpz_set_si(BDY(q),n)))
+#define UTOZ(n,q) ((!(n))?((q)=0):(NEWZ(q),mpz_set_ui(BDY(q),n)))
 
 /* for initializing static object */
-#define STOQ0(n,q) (OID(q)=O_N,NID(q)=N_Q,(q)->z=1,mpz_init(BDY(q)),mpz_set_si(BDY(q),n))
+#define STOZ0(n,q) (OID(q)=O_N,NID(q)=N_Q,(q)->z=1,mpz_init(BDY(q)),mpz_set_si(BDY(q),n))
 #define STOLM0(n,q) (OID(q)=O_N,NID(q)=N_LM,mpz_init(BDY(q)),mpz_set_si(BDY(q),n))
 
-#define QTOS(q) (!(q)?0:((q)->z==1?mpz_get_si(BDY((Z)q)):(error("QTOS : invalid argument"),0)))
+#define ZTOS(q) (!(q)?0:((q)->z==1?mpz_get_si(BDY((Z)q)):(error("ZTOS : invalid argument"),0)))
 #define LMTOS(q) (!(q)?0:mpz_get_si(BDY(q)))
 
 #define UTOMQ(a,b) ((a)?(NEWMQ(b),CONT(b)=(unsigned int)(a),(b)):((b)=0))

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/PUM.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -105,12 +105,12 @@ void resultmp(VL vl,int mod,V v,P p1,P p2,P *pr)
       *pr = 0;
       return;
     } else {
-      d = deg(v,q2); STOQ(d,dq);
+      d = deg(v,q2); STOZ(d,dq);
       pwrmp(vl,mod,q1,dq,pr); 
       return;
     }
   else if ( VR(q2) != v ) {
-    d = deg(v,q1); STOQ(d,dq);
+    d = deg(v,q1); STOZ(d,dq);
     pwrmp(vl,mod,q2,dq,pr); 
     return;
   } 
@@ -131,7 +131,7 @@ void resultmp(VL vl,int mod,V v,P p1,P p2,P *pr)
       adj = (P)ONEM;
   } else {
     premmp(nvl,mod,q1,q2,&t);
-    d = deg(v,t); STOQ(d,dq); pwrmp(nvl,mod,LC(q2),dq,&adj); 
+    d = deg(v,t); STOZ(d,dq); pwrmp(nvl,mod,LC(q2),dq,&adj); 
     g1 = q2; g2 = t;
     if ( d1 % 2 ) {
       chsgnmp(mod,adj,&t); adj = t;
@@ -157,7 +157,7 @@ void resultmp(VL vl,int mod,V v,P p1,P p2,P *pr)
         j = k - 1;
       }
     else {
-      d = j - k; STOQ(d,dq);
+      d = j - k; STOZ(d,dq);
       pwrmp(nvl,mod,(VR(g2)==v?LC(g2):g2),dq,&m);
       mulmp(nvl,mod,g2,m,&m1); 
       pwrmp(nvl,mod,lc,dq,&m); divsmp(nvl,mod,m1,m,&t); 
@@ -201,7 +201,7 @@ void premmp(VL vl,int mod,P p1,P p2,P *pr)
     bzero((char *)pw,(int)((n1+1)*sizeof(P)));
 
     for ( dc = DC(p1); dc; dc = NEXT(dc) )
-      pw[QTOS(DEG(dc))] = COEF(dc);
+      pw[ZTOS(DEG(dc))] = COEF(dc);
 
     for ( i = n1; i >= n2; i-- ) {
       if ( pw[i] ) {
@@ -212,8 +212,8 @@ void premmp(VL vl,int mod,P p1,P p2,P *pr)
 
         for ( dc = DC(p2), d = i - n2; dc; dc = NEXT(dc) ) {
           mulmp(vl,mod,COEF(dc),m,&m1);
-          addmp(vl,mod,pw[QTOS(DEG(dc))+d],m1,&m2); 
-          pw[QTOS(DEG(dc))+d] = m2;
+          addmp(vl,mod,pw[ZTOS(DEG(dc))+d],m1,&m2); 
+          pw[ZTOS(DEG(dc))+d] = m2;
         }
       } else 
         for ( j = i; j >= 0; j-- ) 
@@ -252,10 +252,10 @@ void srchmp(VL vl,int mod,V v,P p1,P p2,P *pr)
     if ( VR(q2) != v )
       *pr = 0;
     else {
-      m = getdeg(v,q2); STOQ(m,dq); pwrmp(vl,mod,q1,dq,pr);
+      m = getdeg(v,q2); STOZ(m,dq); pwrmp(vl,mod,q1,dq,pr);
     }
   else if ( VR(q2) != v ) {
-    m = getdeg(v,q1); STOQ(m,dq); pwrmp(vl,mod,q2,dq,pr);
+    m = getdeg(v,q1); STOZ(m,dq); pwrmp(vl,mod,q2,dq,pr);
   } else if ( !NEXT(nvl) )
     srchump(mod,p1,p2,pr);
   else {
@@ -494,7 +494,7 @@ void chnrem(int mod,V v,P c,Z q,UM t,P *cr,Z *qr)
     pc[0] = (Z)c;
   else
     for ( dc = DC(c); dc; dc = NEXT(dc) )
-      pc[QTOS(DEG(dc))] = (Z)COEF(dc);
+      pc[ZTOS(DEG(dc))] = (Z)COEF(dc);
   for ( i = 0; i <= d; i++ ) {
     b = (i>n?0:pc[i]); a = (i>m?0:COEF(t)[i]);
     if ( b ) 
@@ -502,9 +502,9 @@ void chnrem(int mod,V v,P c,Z q,UM t,P *cr,Z *qr)
     sd = dmb(mod,(a>=0?a:a+mod),invm(remqi((Q)q,mod),mod),&tmp);
     if ( ( 2 * sd ) > mod ) 
       sd -= mod;
-    STOQ(sd,z); mulz(z,q,&s); addz(s,b,&pcr[i]); 
+    STOZ(sd,z); mulz(z,q,&s); addz(s,b,&pcr[i]); 
   }
-  STOQ(mod,z); mulz(q,z,qr); plisttop((P *)pcr,v,d,cr);
+  STOZ(mod,z); mulz(q,z,qr); plisttop((P *)pcr,v,d,cr);
 }
 
 void normalizemp(int mod,P g)
@@ -650,7 +650,7 @@ void sprsm(VL vl,int mod,V v,P p1,P p2,P *pr)
     if ( !r ) 
       break;
 
-    d = deg(v,g1) - deg(v,g2); STOQ(d,dq);
+    d = deg(v,g1) - deg(v,g2); STOZ(d,dq);
     pwrmp(nvl,mod,h,dq,&m); mulmp(nvl,mod,m,x,&m1); g1 = g2;
     divsmp(nvl,mod,r,m1,&g2); x = LC(g1); /* g1 is not const w.r.t v */
     pwrmp(nvl,mod,x,dq,&m1); mulmp(nvl,mod,m1,h,&m2); 

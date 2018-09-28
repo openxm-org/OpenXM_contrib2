@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/up2.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -183,7 +183,7 @@ void ptoup2(P n,UP2 *nr)
     W_NEWUP2(r,w);
     for ( dc = DC(n); dc; dc = NEXT(dc) )
       if ( !evenz((Z)COEF(dc)) ) {
-        i = QTOS(DEG(dc));
+        i = ZTOS(DEG(dc));
         r->b[i/BSH] |= 1<<(i%BSH);
       }
     for ( i = w-1; i >= 0 && !r->b[i]; i-- );
@@ -216,7 +216,7 @@ void ptoup2_sparse(P n,UP2 *nr)
     NEWUP2(s,i); s->w = i; *nr = s;
     for ( dc = DC(n), i = 0; dc; dc = NEXT(dc) )
       if ( !evenz((Z)COEF(dc)) )
-        s->b[i++] = QTOS(DEG(dc));
+        s->b[i++] = ZTOS(DEG(dc));
   }
 }
 
@@ -232,7 +232,7 @@ void up2top(UP2 n,P *nr)
   else {
     for ( i = d, dc0 = 0; i >= 0; i-- )
       if ( n->b[i/BSH] & (1<<(i%BSH)) ) {
-        NEXTDC(dc0,dc); STOQ(i,DEG(dc)); COEF(dc) = (P)ONE;
+        NEXTDC(dc0,dc); STOZ(i,DEG(dc)); COEF(dc) = (P)ONE;
       }
     if ( !up2_var )
       up2_var = CO->v;

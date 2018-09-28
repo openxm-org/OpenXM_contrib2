@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -498,7 +498,7 @@ void  pwritvd(Num a, Num e, IntervalDouble *c)
     error("pwritvd : can't calculate a fractional power");
 #endif
   } else {
-    ei = QTOS((Q)e);
+    ei = ZTOS((Q)e);
     pwritv0d((IntervalDouble)a,ei,&t);
     if ( SGN((Q)e) < 0 )
       divnum(0,(Num)ONE,(Num)t,(Num *)c);

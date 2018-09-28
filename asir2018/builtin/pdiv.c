@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/pdiv.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -237,7 +237,7 @@ P *rp;
   else if ( (OID(p1) > O_P) || (OID(p2) > O_P ) )
     *rp = 0;
   else if ( argc(arg) == 3 ) {
-    m = QTOS((Q)ARG2(arg));
+    m = ZTOS((Q)ARG2(arg));
     ptomp(m,p1,&q1); ptomp(m,p2,&q2);
     if ( divtmp(CO,m,q1,q2,&q) )
       mptop(q,rp);
@@ -281,7 +281,7 @@ Obj *rp;
   asir_assert(ARG0(arg),O_P,"sdivm");
   asir_assert(ARG1(arg),O_P,"sdivm");
   asir_assert(ARG2(arg),O_N,"sdivm");
-  dnd = (P)ARG0(arg); dvr = (P)ARG1(arg); m = QTOS((Q)ARG2(arg));
+  dnd = (P)ARG0(arg); dvr = (P)ARG1(arg); m = ZTOS((Q)ARG2(arg));
   if ( argc(arg) == 4 ) {
     v = VR((P)ARG3(arg));
     change_mvar(CO,dnd,v,&dnd1); change_mvar(CO,dvr,v,&dvr1);
@@ -307,7 +307,7 @@ Obj *rp;
   asir_assert(ARG0(arg),O_P,"sremm");
   asir_assert(ARG1(arg),O_P,"sremm");
   asir_assert(ARG2(arg),O_N,"sremm");
-  dnd = (P)ARG0(arg); dvr = (P)ARG1(arg); m = QTOS((Q)ARG2(arg));
+  dnd = (P)ARG0(arg); dvr = (P)ARG1(arg); m = ZTOS((Q)ARG2(arg));
   if ( argc(arg) == 4 ) {
     v = VR((P)ARG3(arg));
     change_mvar(CO,dnd,v,&dnd1); change_mvar(CO,dvr,v,&dvr1);
@@ -334,7 +334,7 @@ LIST *rp;
   asir_assert(ARG0(arg),O_P,"sqrm");
   asir_assert(ARG1(arg),O_P,"sqrm");
   asir_assert(ARG2(arg),O_N,"sqrm");
-  dnd = (P)ARG0(arg); dvr = (P)ARG1(arg); m = QTOS((Q)ARG2(arg));
+  dnd = (P)ARG0(arg); dvr = (P)ARG1(arg); m = ZTOS((Q)ARG2(arg));
   if ( argc(arg) == 4 ) {
     v = VR((P)ARG3(arg));
     change_mvar(CO,dnd,v,&dnd1); change_mvar(CO,dvr,v,&dvr1);
@@ -364,11 +364,11 @@ P *rp;
   asir_assert(ARG1(arg),O_N,"gcda_mod");
   asir_assert(ARG2(arg),O_P,"gcda_mod");
   dp = (P)ARG0(arg);
-  mod = QTOS((Q)ARG1(arg));
+  mod = ZTOS((Q)ARG1(arg));
   f = (P)ARG2(arg);
   if ( NUM(f) ) {
     i = invm(remqi((Q)f,mod),mod);
-    STOQ(i,q); *rp = (P)q;
+    STOZ(i,q); *rp = (P)q;
   } else {
     v = VR(dp);
     n = MAX(UDEG(dp),UDEG(f));
@@ -397,7 +397,7 @@ P *rp;
   asir_assert(ARG0(arg),O_P,"srem_mod");
   asir_assert(ARG1(arg),O_P,"srem_mod");
   asir_assert(ARG2(arg),O_N,"srem_mod");
-  p1 = (P)ARG0(arg); p2 = (P)ARG1(arg); mod = QTOS((Q)ARG2(arg));
+  p1 = (P)ARG0(arg); p2 = (P)ARG1(arg); mod = ZTOS((Q)ARG2(arg));
   if ( !p1 || NUM(p1) )
     *rp = p1;  
   else {

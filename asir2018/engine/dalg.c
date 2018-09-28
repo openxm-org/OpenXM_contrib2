@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dalg.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 
 #include "ca.h"
@@ -46,13 +46,13 @@ void setfield_dalg(NODE alist)
   nf->defpoly = defpoly = (P *)MALLOC(n*sizeof(P));
   nf->ps = ps = (DP *)MALLOC(n*sizeof(DP));
   current_spec = dp_current_spec;
-  STOQ(2,two);
+  STOZ(2,two);
   create_order_spec(0,(Obj)two,&nf->spec);
   initd(nf->spec);  
   for ( b = hlist = 0, i = 0, vl1 = vl; i < n; vl1 = NEXT(vl1), i++ ) {
     ptozp(vl1->v->attr,1,&c,&defpoly[i]);
     ptod(ALG,vl,defpoly[i],&ps[i]);
-    STOQ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
+    STOZ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
     MKNODE(b2,(pointer)ps[i],hlist); hlist = b2;
   }
   ptod(ALG,vl,(P)ONE,&one);
@@ -95,7 +95,7 @@ void setfield_gb(NODE gb,VL vl,struct order_spec *spec)
   for ( b = hlist = 0, i = 0, t = gb; i < nf->psn; t = NEXT(t), i++ ) {
     ptozp((P)BDY(t),1,&c,&defpoly[i]);
     ptod(CO,vl,defpoly[i],&ps[i]);
-    STOQ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
+    STOZ(i,iq); MKNODE(b1,(pointer)iq,b); b = b1;
     MKNODE(b2,(pointer)ps[i],hlist); hlist = b2;
   }
   ptod(ALG,vl,(P)ONE,&one);
@@ -434,7 +434,7 @@ void adddalg(DAlg a,DAlg b,DAlg *c)
     dna = a->dn;
     dnb = b->dn;
     gcdz(dna,dnb,&gn);
-    divz(dna,gn,&a1); divz(dnb,gn,&b1);
+    divsz(dna,gn,&a1); divsz(dnb,gn,&b1);
     /* nma/dna+nmb/dnb = (nma*b1+nmb*a1)/(dna*b1) */
     muldc(CO,a->nm,(Obj)b1,&ta); muldc(CO,b->nm,(Obj)a1,&tb);
     current_spec = dp_current_spec; initd(nf->spec);
@@ -468,7 +468,7 @@ void subdalg(DAlg a,DAlg b,DAlg *c)
     dna = a->dn;
     dnb = b->dn;
     gcdz(dna,dnb,&gn);
-    divz(dna,gn,&a1); divz(dnb,gn,&b1);
+    divsz(dna,gn,&a1); divsz(dnb,gn,&b1);
     /* nma/dna-nmb/dnb = (nma*b1-nmb*a1)/(dna*b1) */
     muldc(CO,a->nm,(Obj)b1,&ta); muldc(CO,b->nm,(Obj)a1,&tb);
     current_spec = dp_current_spec; initd(nf->spec);
@@ -537,7 +537,7 @@ void rmcontdalg(DAlg a, DAlg *r)
     *r = a;
   else {
     dp_ptozp(a->nm,&u);
-    divz((Z)BDY(a->nm)->c,(Z)BDY(u)->c,&cont);
+    divsz((Z)BDY(a->nm)->c,(Z)BDY(u)->c,&cont);
     gcdz(cont,a->dn,&gn);
     divsz(cont,gn,&c);
     divsz(a->dn,gn,&d);
@@ -596,7 +596,7 @@ int invdalg(DAlg a,DAlg *c)
       MKDAlg(m,ONE,t);
       muldalg(t,a0,&simp[i]);
     }
-    gcdz(simp[i]->dn,ln,&gn); divz(ln,gn,&qn);
+    gcdz(simp[i]->dn,ln,&gn); divsz(ln,gn,&qn);
     mulz(simp[i]->dn,qn,&ln);
   }
   initd(current_spec);
@@ -667,7 +667,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
   mb = nf->mb;
   n = nf->n;
   ln = ONE;
-  dp_ptozp(a->nm,&u); divz((Z)BDY(a->nm)->c,(Z)BDY(u)->c,&nmc);
+  dp_ptozp(a->nm,&u); divsz((Z)BDY(a->nm)->c,(Z)BDY(u)->c,&nmc);
   MKDAlg(u,ONE,a0);
   simp = (DAlg *)MALLOC(dim*sizeof(DAlg));
   current_spec = dp_current_spec; initd(nf->spec);
@@ -690,7 +690,7 @@ NODE inv_or_split_dalg(DAlg a,DAlg *c)
       muldalg(t,a0,&simp[i]);
     }
     if ( simp[i] ) {
-      gcdz(simp[i]->dn,ln,&gn); divz(ln,gn,&qn);
+      gcdz(simp[i]->dn,ln,&gn); divsz(ln,gn,&qn);
       mulz(simp[i]->dn,qn,&ln);
     }
   }
@@ -783,7 +783,7 @@ NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
   for ( ind = 0, i = 0, t = gb; i < n; i++, t = NEXT(t) ) {
     ps[i] = (DP)BDY(t);
     NEXTNODE(ind,indt);
-    STOQ(i,iq); BDY(indt) = iq;
+    STOZ(i,iq); BDY(indt) = iq;
   }
   if ( ind ) NEXT(indt) = 0;
   dp_true_nf(ind,f,ps,1,&nm,(P *)&dn);
@@ -818,7 +818,7 @@ NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv)
       MKDAlg(nm,dn,simp[i]);
     }
     if ( simp[i] ) {
-      gcdz(simp[i]->dn,ln,&gn); divz(ln,gn,&qn);
+      gcdz(simp[i]->dn,ln,&gn); divsz(ln,gn,&qn);
       mulz(simp[i]->dn,qn,&ln);
     }
   }
@@ -922,7 +922,7 @@ void pwrdalg(DAlg a,Z e,DAlg *c)
     absz(e,&en);
     y = nf->one;
     z = a;
-    STOQ(2,two);
+    STOZ(2,two);
     while ( 1 ) {
       divqrz(en,two,&qn,&rn); en = qn;
       if ( rn ) {
@@ -976,7 +976,7 @@ int dalgtoup(DAlg da,P *up,Z *dn)
     d->td = t->dl->td - t->dl->d[hi];
     if ( t->dl->d[hi] != current_d ) {
       NEXT(mp) = 0; MKDP(nv,mp0,c); MKDAlg(c,ONE,cc);
-      NEXTDC(dc0,dc); STOQ(current_d,DEG(dc)); COEF(dc) = (P)cc;
+      NEXTDC(dc0,dc); STOZ(current_d,DEG(dc)); COEF(dc) = (P)cc;
       current_d = t->dl->d[hi];
       mp0 = 0;
     }
@@ -984,7 +984,7 @@ int dalgtoup(DAlg da,P *up,Z *dn)
     mp->c = t->c; mp->dl = d;
   }
   NEXT(mp) = 0; MKDP(nv,mp0,c); MKDAlg(c,ONE,cc);
-  NEXTDC(dc0,dc); STOQ(current_d,DEG(dc)); COEF(dc) = (P)cc;
+  NEXTDC(dc0,dc); STOZ(current_d,DEG(dc)); COEF(dc) = (P)cc;
   NEXT(dc) = 0;
   makevar("x",&v);
   MKP(VR(v),dc0,*up);

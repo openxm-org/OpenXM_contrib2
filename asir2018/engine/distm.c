@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/distm.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -91,7 +91,7 @@ void mptomd(VL vl,int mod,VL dvl,P p,DP *pr)
       } else {
         for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
           mptomd(vl,mod,dvl,COEF(dc),&t);
-          NEWDL(d,n); d->d[i] = QTOS(DEG(dc));
+          NEWDL(d,n); d->d[i] = ZTOS(DEG(dc));
           d->td = MUL_WEIGHT(d->d[i],i);
           NEWMP(m); m->dl = d; C(m) = (Obj)ONEM; NEXT(m) = 0; MKDP(n,m,u);
           comm_mulmd(vl,mod,t,u,&r); addmd(vl,mod,r,s,&t); s = t;
@@ -130,7 +130,7 @@ void _mdtodp(DP p,DP *pr)
   else {
     for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
       NEXTMP(mr0,mr); mr->dl = m->dl;
-      i = ITOS(m->c); STOQ(i,q); C(mr) = (Obj)q;
+      i = ITOS(m->c); STOZ(i,q); C(mr) = (Obj)q;
     }
     NEXT(mr) = 0;
     MKDP(NV(p),mr0,*pr);
@@ -153,7 +153,7 @@ void mdtop(VL vl,int mod,VL dvl,DP p,P *pr)
     for ( n = p->nv, m = BDY(p), s = 0; m; m = NEXT(m) ) {
       for ( i = 0, t = (P)C(m), d = m->dl, tvl = dvl;
         i < n; tvl = NEXT(tvl), i++ ) {
-        MKMV(tvl->v,r); STOQ(d->d[i],q); pwrmp(vl,mod,r,q,&u);
+        MKMV(tvl->v,r); STOZ(d->d[i],q); pwrmp(vl,mod,r,q,&u);
         mulmp(vl,mod,t,u,&w); t = w;
       }
       addmp(vl,mod,s,t,&u); s = u;
@@ -509,10 +509,10 @@ void _dtop_mod(VL vl,VL dvl,DP p,P *pr)
     *pr = 0;
   else {
     for ( n = p->nv, m = BDY(p), s = 0; m; m = NEXT(m) ) {
-      i = ITOS(m->c); STOQ(i,q); t = (P)q;
+      i = ITOS(m->c); STOZ(i,q); t = (P)q;
       for ( i = 0, d = m->dl, tvl = dvl;
         i < n; tvl = NEXT(tvl), i++ ) {
-        MKV(tvl->v,r); STOQ(d->d[i],q); pwrp(vl,r,q,&u);
+        MKV(tvl->v,r); STOZ(d->d[i],q); pwrp(vl,r,q,&u);
         mulp(vl,t,u,&w); t = w;
       }
       addp(vl,s,t,&u); s = u;

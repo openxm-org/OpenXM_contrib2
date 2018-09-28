@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/QM.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -135,7 +135,7 @@ MQ *nr;
   else if ( !n1 )
     *nr = 0;
   else {
-    a = pwrm(m,CONT(n1),QTOS(n)); STOMQ(a,*nr);
+    a = pwrm(m,CONT(n1),ZTOS(n)); STOMQ(a,*nr);
   }
 }
 

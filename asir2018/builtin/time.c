@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/time.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/time.c,v 1.2 2018/09/27 02:39:37 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -72,7 +72,7 @@ void Pcurrenttime(Z *rp)
 {
   int t;
 
-  t = (int)get_current_time(); STOQ(t,*rp);
+  t = (int)get_current_time(); STOZ(t,*rp);
 }
 
 void Pdcurrenttime(Real *rp)
@@ -113,7 +113,7 @@ void Ptime(LIST *listp)
 
   rtime = get_rtime(); MKReal(rtime,rr);
   t = get_allocwords();
-  STOQ(t,words);
+  STOZ(t,words);
   get_eg(&eg); MKReal(eg.exectime,re); MKReal(eg.gctime,rg);
   MKNODE(r,rr,0); MKNODE(w,words,r); MKNODE(a,rg,w); MKNODE(b,re,a);
   MKLIST(*listp,b);

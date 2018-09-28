@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/bfaux.c,v 1.1 2018/09/19 05:45:05 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -208,7 +208,7 @@ void Peval(NODE arg,Obj *rp)
 
   asir_assert(ARG0(arg),O_R,"eval");
   if ( argc(arg) == 2 ) {
-    prec = QTOS((Q)ARG1(arg))*3.32193;
+    prec = ZTOS((Q)ARG1(arg))*3.32193;
     if ( prec < MPFR_PREC_MIN ) prec = MPFR_PREC_MIN;
     else if ( prec > MPFR_PREC_MAX ) prec = MPFR_PREC_MAX;
   } else
@@ -227,10 +227,10 @@ void Psetprec(NODE arg,Obj *rp)
   prec = mpfr_get_default_prec();
   /* decimal precision */
   dprec = prec*0.30103;
-  STOQ(dprec,q); *rp = (Obj)q;
+  STOZ(dprec,q); *rp = (Obj)q;
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"setprec");
-    p = QTOS((Q)ARG0(arg))*3.32193;
+    p = ZTOS((Q)ARG0(arg))*3.32193;
     if ( p > 0 )
       prec = p;
   }
@@ -248,10 +248,10 @@ void Psetbprec(NODE arg,Obj *rp)
   long prec;
   
   prec = mpfr_get_default_prec();
-  STOQ(prec,q); *rp = (Obj)q;
+  STOZ(prec,q); *rp = (Obj)q;
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"setbprec");
-    p = QTOS((Q)ARG0(arg));
+    p = ZTOS((Q)ARG0(arg));
     if ( p > 0 )
       prec = p;
   }
@@ -264,10 +264,10 @@ void Psetround(NODE arg,Z *rp)
 {
   int round;
 
-  STOQ(mpfr_roundmode,*rp);
+  STOZ(mpfr_roundmode,*rp);
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"setround");
-    round = QTOS((Q)ARG0(arg)); 
+    round = ZTOS((Q)ARG0(arg)); 
     switch ( round ) {
     case 0:
       mpfr_roundmode = MPFR_RNDN;
@@ -304,7 +304,7 @@ void mp_pi(NODE arg,BF *rp)
   int prec;
   BF r;
 
-  prec = arg ? QTOS((Q)ARG0(arg)) : 0;
+  prec = arg ? ZTOS((Q)ARG0(arg)) : 0;
   NEWBF(r);
   prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
   mpfr_const_pi(r->body,mpfr_roundmode);
@@ -318,7 +318,7 @@ void mp_e(NODE arg,BF *rp)
   mpfr_t one;
   BF r;
 
-  prec = arg ? QTOS((Q)ARG0(arg)) : 0;
+  prec = arg ? ZTOS((Q)ARG0(arg)) : 0;
   NEWBF(r);
   prec ? mpfr_init2(r->body,prec) : mpfr_init(r->body);
   mpfr_init(one);
@@ -336,7 +336,7 @@ void mpfr_or_mpc(NODE arg,int (*mpfr_f)(),int (*mpc_f)(),Num *rp)
   C c;
   mpc_t mpc,a1;
 
-  prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : mpfr_get_default_prec();
+  prec = NEXT(arg) ? ZTOS((Q)ARG1(arg)) : mpfr_get_default_prec();
   a = tobf(ARG0(arg),prec);
   if ( a && NID(a)==N_C ) {
     mpc_init2(mpc,prec); mpc_init2(a1,prec);
@@ -463,7 +463,7 @@ void mp_pow(NODE arg,Num *rp)
   C c;
   mpc_t mpc,a1,e1;
 
-  prec = NEXT(NEXT(arg)) ? QTOS((Q)ARG2(arg)) : mpfr_get_default_prec();
+  prec = NEXT(NEXT(arg)) ? ZTOS((Q)ARG2(arg)) : mpfr_get_default_prec();
   a = tobf(ARG0(arg),prec);
   e = tobf(ARG1(arg),prec);
   if ( NID(a) == N_C || NID(e) == N_C || MPFR_SIGN(((BF)a)->body) < 0 ) {
@@ -502,7 +502,7 @@ void mp_pow(NODE arg,Num *rp)
 }
 
 #define SETPREC \
- (prec)=NEXT(arg)?QTOS((Q)ARG1(arg)):0;\
+ (prec)=NEXT(arg)?ZTOS((Q)ARG1(arg)):0;\
  (prec)*=3.32193;\
  (a)=tobf(ARG0(arg),prec);\
  NEWBF(r);\
@@ -765,10 +765,10 @@ void Prk_ratmat(NODE arg,LIST *rp)
   Real x,t;
   LIST l;
 
-  ord = QTOS((Q)ARG0(arg));
+  ord = ZTOS((Q)ARG0(arg));
   mat = (VECT)ARG1(arg); den = (P)ARG2(arg);
   x0 = ToReal((Num)ARG3(arg)); x1 = ToReal((Num)ARG4(arg));
-  step = QTOS((Q)ARG5(arg)); fv = (VECT)ARG6(arg);
+  step = ZTOS((Q)ARG5(arg)); fv = (VECT)ARG6(arg);
   h = (x1-x0)/step;
 
   n = fv->len;

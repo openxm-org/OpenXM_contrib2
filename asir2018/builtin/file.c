@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/file.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -125,7 +125,7 @@ void Pfprintf(NODE arg,pointer *rp)
   FILE *fp;
   STRING s;
   asir_assert(ARG0(arg),O_N,"fprintf");
-  fp = file_ptrs[QTOS((Q)ARG0(arg))];
+  fp = file_ptrs[ZTOS((Q)ARG0(arg))];
   if ( !fp ) {
     error("fprintf : invalid argument");
   }
@@ -175,7 +175,7 @@ void Popen_file(NODE arg,Z *rp)
     error(errbuf);
   }
   file_ptrs[i] = fp;
-  STOQ(i,*rp);
+  STOZ(i,*rp);
 }
 
 void Pclose_file(NODE arg,Z *rp)
@@ -183,7 +183,7 @@ void Pclose_file(NODE arg,Z *rp)
   int i;
 
   asir_assert(ARG0(arg),O_N,"close_file");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( file_ptrs[i] ) {
     fclose(file_ptrs[i]);
     file_ptrs[i] = 0;
@@ -214,7 +214,7 @@ void Pget_line(NODE arg,STRING *rp)
   }
 
   asir_assert(ARG0(arg),O_N,"get_line");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( fp = file_ptrs[i] ) {
     if ( feof(fp) ) {
       *rp = 0;
@@ -255,14 +255,14 @@ void Pget_byte(NODE arg,Z *rp)
   FILE *fp;
 
   asir_assert(ARG0(arg),O_N,"get_byte");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( fp = file_ptrs[i] ) {
     if ( feof(fp) ) {
-      STOQ(-1,*rp);
+      STOZ(-1,*rp);
       return;
     }
     c = getc(fp);
-    STOQ(c,*rp);
+    STOZ(c,*rp);
   } else
     error("get_byte : invalid argument");
 }
@@ -273,14 +273,14 @@ void Pget_word(NODE arg,Z *rp)
   FILE *fp;
 
   asir_assert(ARG0(arg),O_N,"get_word");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( fp = file_ptrs[i] ) {
     if ( feof(fp) ) {
       error("get_word : end of file");
       return;
     }
     read_int(fp,&c);
-    STOQ(c,*rp);
+    STOZ(c,*rp);
   } else
     error("get_word : invalid argument");
 }
@@ -293,13 +293,13 @@ void Pput_byte(NODE arg,Obj *rp)
   TB tb;
 
   asir_assert(ARG0(arg),O_N,"put_byte");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( !(fp = file_ptrs[i]) )
     error("put_byte : invalid argument");
 
   obj = (Obj)ARG1(arg);
   if ( !obj || OID(obj) == O_N ) {
-    c = QTOS((Q)obj);
+    c = ZTOS((Q)obj);
     putc(c,fp);
   } else if ( OID(obj) == O_STR )
     fputs(BDY((STRING)obj),fp);
@@ -319,12 +319,12 @@ void Pput_word(NODE arg,Obj *rp)
 
   asir_assert(ARG0(arg),O_N,"put_word");
   asir_assert(ARG1(arg),O_N,"put_word");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( !(fp = file_ptrs[i]) )
     error("put_word : invalid argument");
 
   obj = (Obj)ARG1(arg);
-  c = QTOS((Q)obj);
+  c = ZTOS((Q)obj);
   write_int(fp,&c);
   *rp = obj;
 }
@@ -352,7 +352,7 @@ void Pload(NODE arg,Z *rp)
         break;
     }
   }
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 NODE imported_files;
@@ -412,7 +412,7 @@ void Ploadfiles(NODE arg,Z *rp)
       ret = loadfiles(BDY((LIST)ARG0(arg)));
   else
     ret = 0;
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Poutput(NODE arg,Z *rp)
@@ -610,7 +610,7 @@ void Pgetpid(Z *rp)
 #else
   id = getpid();
 #endif
-  STOQ(id,*rp);
+  STOZ(id,*rp);
 }
 
 #if defined(DES_ENC)

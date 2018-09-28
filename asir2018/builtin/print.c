@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -114,7 +114,7 @@ void Pprint(NODE arg,pointer *rp)
       opt = (Q)ARG1(arg);
       if ( INT(opt) ) {
         printexpr(CO,obj);
-        switch ( QTOS(opt) ) {
+        switch ( ZTOS(opt) ) {
           case 0:
             break;
           case 2:

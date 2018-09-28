@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/up.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -163,7 +163,7 @@ void reversep(P p1,Q d,P *rp)
     *rp = 0;
   else {
     ptoup(p1,&n1);
-    reverseup(n1,QTOS(d),&r);
+    reverseup(n1,ZTOS(d),&r);
     uptop(r,rp);
   }
 }
@@ -176,7 +176,7 @@ void invmodp(P p1,Q d,P *rp)
     error("invmodp : invalid input");
   else {
     ptoup(p1,&n1);
-    invmodup(n1,QTOS(d),&r);
+    invmodup(n1,ZTOS(d),&r);
     uptop(r,rp);
   }
 }
@@ -681,7 +681,7 @@ void pwrup(UP n,Z e,UP *nr)
   else if ( UNIQ(e) )
     *nr = n;
   else {
-    STOQ(2,two);
+    STOZ(2,two);
     while ( 1 ) {
       divqrz(e,two,&q,&r); e = q;
       if ( r ) {
@@ -1112,7 +1112,7 @@ void fmarraytoup(ModNum *f,int d,UP *nr)
   } else {
     *nr = r = UPALLOC(d); c = (Z *)r->c;
     for ( i = 0; i <= d; i++ ) {
-      UTOQ((unsigned int)f[i],c[i]);
+      UTOZ((unsigned int)f[i],c[i]);
     }
     for ( i = d; i >= 0 && !c[i]; i-- );
     if ( i < 0 )
@@ -1363,12 +1363,12 @@ void fft_mulup_main(UP n1,UP n2,int dbd,UP *nr)
     }
     if ( cond )
       error("fft_mulup : error in FFT_pol_product");
-    STOQ(mod,m1); mulz(m,m1,&m2); m = m2;
+    STOZ(mod,m1); mulz(m,m1,&m2); m = m2;
     if ( z_bits((Q)m) > bound ) {
       if ( !dbd )
         dbd = d1+d2+1;
       crup(frarray,MIN(d1+d2,dbd-1),modarray,frarray_index,m,&r);
-      STOQ(2,two);
+      STOZ(2,two);
       divqrz(m,two,&m2,&rem);
       adj_coefup(r,m,m2,nr);
       return;
@@ -1462,7 +1462,7 @@ void fft_mulup_specialmod_main(UP n1,UP n2,int dbd,int *modind,int nmod,UP *nr)
     }
     if ( cond )
       error("fft_mulup_specialmod_main : error in FFT_pol_product");
-    STOQ(modarray[i],m1); mulz(m,m1,&m2); m = m2;
+    STOZ(modarray[i],m1); mulz(m,m1,&m2); m = m2;
   }
   if ( !dbd )
     dbd = d1+d2+1;

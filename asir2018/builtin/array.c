@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -206,14 +206,14 @@ void Plusolve_main(NODE arg,VECT *rp)
   v = (VECT)ARG0(arg); len = v->len;
   d = (Z *)BDY(v);
   rhs = (int *)MALLOC_ATOMIC(len*sizeof(int));
-  for ( i = 0; i < len; i++ ) rhs[i] = QTOS(d[i]);
+  for ( i = 0; i < len; i++ ) rhs[i] = ZTOS(d[i]);
   solve_l(ll,l,len,rhs,modulus);
   solve_u(ul,u,len,rhs,modulus);
   NEWVECT(r); r->len = len;
   r->body = (pointer *)MALLOC(len*sizeof(pointer));
   p = (Z *)r->body;
   for ( i = 0; i < len; i++ )
-    STOQ(rhs[i],p[i]);  
+    STOZ(rhs[i],p[i]);  
   *rp = r;
 }
 
@@ -565,7 +565,7 @@ void Psepmat_destructive(NODE arg,LIST *rp)
 
 void Psepvect(NODE arg,VECT *rp)
 {
-  sepvect((VECT)ARG0(arg),QTOS((Q)ARG1(arg)),rp);
+  sepvect((VECT)ARG0(arg),ZTOS((Q)ARG1(arg)),rp);
 }
 
 void sepvect(VECT v,int d,VECT *rp)
@@ -601,7 +601,7 @@ void Pnewvect(NODE arg,VECT *rp)
   NODE tn;
 
   asir_assert(ARG0(arg),O_N,"newvect");
-  len = QTOS((Q)ARG0(arg)); 
+  len = ZTOS((Q)ARG0(arg)); 
   if ( len < 0 )
     error("newvect : invalid size");
   MKVECT(vect,len);
@@ -691,7 +691,7 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
       case O_N:
         if ( !RATN(ARG0(arg)) )
           error("newbytearray : invalid argument");
-        len = QTOS((Q)ARG0(arg)); 
+        len = ZTOS((Q)ARG0(arg)); 
         if ( len < 0 )
           error("newbytearray : invalid size");
         MKBYTEARRAY(array,len);
@@ -701,7 +701,7 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
     }
   } else if ( ac == 2 ) {
     asir_assert(ARG0(arg),O_N,"newbytearray");
-    len = QTOS((Q)ARG0(arg)); 
+    len = ZTOS((Q)ARG0(arg)); 
     if ( len < 0 )
       error("newbytearray : invalid size");
     MKBYTEARRAY(array,len);
@@ -715,7 +715,7 @@ void Pnewbytearray(NODE arg,BYTEARRAY *rp)
         if ( r <= len ) {
           for ( i = 0, tn = BDY(list), vb = BDY(array); tn; 
             i++, tn = NEXT(tn) )
-            vb[i] = (unsigned char)QTOS((Q)BDY(tn));
+            vb[i] = (unsigned char)ZTOS((Q)BDY(tn));
         }
         break;
       case O_STR:
@@ -746,16 +746,16 @@ void Pmemoryplot_to_coord(NODE arg,LIST *rp)
 
   asir_assert(ARG0(arg),O_LIST,"memoryplot_to_coord");
   arg = BDY((LIST)ARG0(arg));
-  len = QTOS((Q)ARG0(arg));
+  len = ZTOS((Q)ARG0(arg));
   blen = (len+7)/8;
-  y = QTOS((Q)ARG1(arg));
+  y = ZTOS((Q)ARG1(arg));
   ba = (BYTEARRAY)ARG2(arg); a = ba->body;
   r0 = 0;
   for ( j = 0; j < y; j++ )
     for ( i = 0; i < len; i++ )
       if ( MEMORY_GETPOINT(a,blen,i,j) ) {
         NEXTNODE(r0,r);
-        STOQ(i,iq); STOQ(j,jq);
+        STOZ(i,iq); STOZ(j,jq);
         n = mknode(2,iq,jq);
         MKLIST(l,n);
         BDY(r) = l;
@@ -775,7 +775,7 @@ void Pnewmat(NODE arg,MAT *rp)
 
   asir_assert(ARG0(arg),O_N,"newmat");
   asir_assert(ARG1(arg),O_N,"newmat");
-  row = QTOS((Q)ARG0(arg)); col = QTOS((Q)ARG1(arg));
+  row = ZTOS((Q)ARG0(arg)); col = ZTOS((Q)ARG1(arg));
   if ( row < 0 || col < 0 )
     error("newmat : invalid size");
   MKMAT(m,row,col);
@@ -967,7 +967,7 @@ void Premainder(NODE arg,Obj *rp)
         cmp(md,(P)a,(P *)rp); break;
       case O_VECT:
         /* strage spec */
-        smd = QTOS(md);
+        smd = ZTOS(md);
         v = (VECT)a; n = v->len; vb = v->body;
         MKVECT(w,n); wb = w->body;
         for ( i = 0; i < n; i++ ) {
@@ -1015,7 +1015,7 @@ void Psremainder(NODE arg,Obj *rp)
       case O_P:
         cmp(md,(P)a,(P *)rp); break;
       case O_VECT:
-        smd = QTOS(md);
+        smd = ZTOS(md);
         v = (VECT)a; n = v->len; vb = v->body;
         MKVECT(w,n); wb = w->body;
         for ( i = 0; i < n; i++ )
@@ -1049,15 +1049,15 @@ void Psize(NODE arg,LIST *rp)
     switch (OID(ARG0(arg))) {
       case O_VECT:
         n = ((VECT)ARG0(arg))->len;
-        STOQ(n,q); MKNODE(t,q,0);
+        STOZ(n,q); MKNODE(t,q,0);
         break;
       case O_MAT:
         n = ((MAT)ARG0(arg))->row; m = ((MAT)ARG0(arg))->col;
-        STOQ(m,q); MKNODE(s,q,0); STOQ(n,q); MKNODE(t,q,s);
+        STOZ(m,q); MKNODE(s,q,0); STOZ(n,q); MKNODE(t,q,s);
         break;
       case O_IMAT:
         n = ((IMAT)ARG0(arg))->row; m = ((IMAT)ARG0(arg))->col;
-        STOQ(m,q); MKNODE(s,q,0); STOQ(n,q); MKNODE(t,q,s);
+        STOZ(m,q); MKNODE(s,q,0); STOZ(n,q); MKNODE(t,q,s);
         break;
       default:
         error("size : invalid argument"); break;
@@ -1080,7 +1080,7 @@ void Pdet(NODE arg,P *rp)
   else if ( argc(arg) == 1 )
     detp(CO,(P **)BDY(m),m->row,rp);
   else {
-    n = m->row; mod = QTOS((Q)ARG1(arg)); mat = (P **)BDY(m);
+    n = m->row; mod = ZTOS((Q)ARG1(arg)); mat = (P **)BDY(m);
     w = (P **)almat_pointer(n,n);
     for ( i = 0; i < n; i++ )
       for ( j = 0; j < n; j++ )
@@ -1109,7 +1109,7 @@ void Pinvmat(NODE arg,LIST *rp)
     nd = mknode(2,r,dn);
     MKLIST(*rp,nd);
   } else {
-    n = m->row; mod = QTOS((Q)ARG1(arg)); mat = (P **)BDY(m);
+    n = m->row; mod = ZTOS((Q)ARG1(arg)); mat = (P **)BDY(m);
     w = (P **)almat_pointer(n,n);
     for ( i = 0; i < n; i++ )
       for ( j = 0; j < n; j++ )
@@ -1169,11 +1169,11 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
   MKVECT(rind,rank);
   MKVECT(cind,t);
   for ( i = 0; i < rank; i++ ) {
-    STOQ(ri[i],q);
+    STOZ(ri[i],q);
     BDY(rind)[i] = (pointer)q;
   }
   for ( i = 0; i < t; i++ ) {
-    STOQ(ci[i],q);
+    STOZ(ci[i],q);
     BDY(cind)[i] = (pointer)q;
   }
   n0 = mknode(4,nm,dn,rind,cind);
@@ -1195,7 +1195,7 @@ void Pindep_rows_mod(NODE arg,VECT *rp)
 
   asir_assert(ARG0(arg),O_MAT,"indep_rows_mod");
   asir_assert(ARG1(arg),O_N,"indep_rows_mod");
-  m = (MAT)ARG0(arg); md = QTOS((Z)ARG1(arg));
+  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; tmat = (Z **)m->body;
   wmat = (int **)almat(row,col);
 
@@ -1211,7 +1211,7 @@ void Pindep_rows_mod(NODE arg,VECT *rp)
   MKVECT(rind,rank);
   rib = (Z *)rind->body;
   for ( j = 0; j < rank; j++ ) {
-    STOQ(rowstat[j],rib[j]);
+    STOZ(rowstat[j],rib[j]);
   }
     *rp = rind;
 }
@@ -1243,7 +1243,7 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 
   asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim_mod");
   asir_assert(ARG1(arg),O_N,"generic_gauss_elim_mod");
-  m = (MAT)ARG0(arg); md = QTOS((Z)ARG1(arg));
+  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; tmat = (Z **)m->body;
   wmat = (int **)almat(row,col);
 
@@ -1261,14 +1261,14 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
   for ( i = 0; i < rank; i++ )
     for ( j = 0, p = wmat[i]; j < row; j++ )
       if ( p == row0[j] )
-        STOQ(j,rnb[i]);
+        STOZ(j,rnb[i]);
 
   MKMAT(mat,rank,col-rank);
   tmat = (Z **)mat->body;
   for ( i = 0; i < rank; i++ )
     for ( j = k = 0; j < col; j++ )
       if ( !colstat[j] ) {
-        UTOQ(wmat[i][j],tmat[i][k]); k++;
+        UTOZ(wmat[i][j],tmat[i][k]); k++;
       }
 
   MKVECT(rind,rank);
@@ -1276,9 +1276,9 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
   rib = (Z *)rind->body; cib = (Z *)cind->body;
   for ( j = k = l = 0; j < col; j++ )
     if ( colstat[j] ) {
-      STOQ(j,rib[k]); k++;
+      STOZ(j,rib[k]); k++;
     } else {
-      STOQ(j,cib[l]); l++;
+      STOZ(j,cib[l]); l++;
     }
   n0 = mknode(4,mat,rind,cind,rnum);
   MKLIST(*rp,n0);
@@ -1296,7 +1296,7 @@ void Pleqm(NODE arg,VECT *rp)
 
   asir_assert(ARG0(arg),O_MAT,"leqm");
   asir_assert(ARG1(arg),O_N,"leqm");
-  m = (MAT)ARG0(arg); md = QTOS((Z)ARG1(arg));
+  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; mat = m->body;
   wmat = (int **)almat(row,col);
   for ( i = 0; i < row; i++ )
@@ -1311,7 +1311,7 @@ void Pleqm(NODE arg,VECT *rp)
     n = col - 1;
     MKVECT(vect,n);
     for ( i = 0, v = (Z *)vect->body; i < n; i++ ) {
-      t = (md-wmat[i][n])%md; STOQ(t,v[i]);
+      t = (md-wmat[i][n])%md; STOZ(t,v[i]);
     }
     *rp = vect;
   }
@@ -2102,7 +2102,7 @@ void Pleqm1(NODE arg,VECT *rp)
 
   asir_assert(ARG0(arg),O_MAT,"leqm1");
   asir_assert(ARG1(arg),O_N,"leqm1");
-  m = (MAT)ARG0(arg); md = QTOS((Z)ARG1(arg));
+  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; mat = m->body;
   wmat = (int **)almat(row,col);
   for ( i = 0; i < row; i++ )
@@ -2117,7 +2117,7 @@ void Pleqm1(NODE arg,VECT *rp)
     n = col - 1;
     MKVECT(vect,n);
     for ( i = 0, v = (Z *)vect->body; i < n; i++ ) {
-      t = (md-wmat[i][n])%md; STOQ(t,v[i]);
+      t = (md-wmat[i][n])%md; STOZ(t,v[i]);
     }
     *rp = vect;
   }
@@ -2173,7 +2173,7 @@ void Pgeninvm(NODE arg,LIST *rp)
 
   asir_assert(ARG0(arg),O_MAT,"leqm1");
   asir_assert(ARG1(arg),O_N,"leqm1");
-  m = (MAT)ARG0(arg); md = QTOS((Q)ARG1(arg));
+  m = (MAT)ARG0(arg); md = ZTOS((Q)ARG1(arg));
   row = m->row; col = m->col; mat = m->body;
   wmat = (unsigned int **)almat(row,col+row);
   for ( i = 0; i < row; i++ ) {
@@ -2188,10 +2188,10 @@ void Pgeninvm(NODE arg,LIST *rp)
     MKMAT(mat1,col,row); MKMAT(mat2,row-col,row);
     for ( i = 0, tmat = (Z **)mat1->body; i < col; i++ )
       for ( j = 0; j < row; j++ )
-        UTOQ(wmat[i][j+col],tmat[i][j]);
+        UTOZ(wmat[i][j+col],tmat[i][j]);
     for ( tmat = (Z **)mat2->body; i < row; i++ )
       for ( j = 0; j < row; j++ )
-        UTOQ(wmat[i][j+col],tmat[i-col][j]);
+        UTOZ(wmat[i][j+col],tmat[i-col][j]);
      MKNODE(node2,mat2,0); MKNODE(node1,mat1,node2); MKLIST(*rp,node1);
   }
 }
@@ -2244,16 +2244,16 @@ void Psolve_by_lu_gfmmat(NODE arg,VECT *rp)
   lu = (GFMMAT)ARG0(arg);
   perm = (Z *)BDY((VECT)ARG1(arg));
   rhs = (Z *)BDY((VECT)ARG2(arg));
-  md = (unsigned int)QTOS((Z)ARG3(arg));
+  md = (unsigned int)ZTOS((Z)ARG3(arg));
   n = lu->col;
   b = (unsigned int *)MALLOC_ATOMIC(n*sizeof(int));
   sol = (unsigned int *)MALLOC_ATOMIC(n*sizeof(int));
   for ( i = 0; i < n; i++ )
-    b[i] = QTOS(rhs[QTOS(perm[i])]);
+    b[i] = ZTOS(rhs[ZTOS(perm[i])]);
   solve_by_lu_gfmmat(lu,md,b,sol);
   MKVECT(r,n);
   for ( i = 0, v = (Z *)r->body; i < n; i++ )
-      UTOQ(sol[i],v[i]);
+      UTOZ(sol[i],v[i]);
   *rp = r;
 }
 
@@ -2308,7 +2308,7 @@ void Plu_mat(NODE arg,LIST *rp)
   lu_dec_cr(m,lu,&dn,&iperm);
   MKVECT(perm,n);
   for ( i = 0, v = (Q *)perm->body; i < n; i++ )
-    STOQ(iperm[i],v[i]);
+    STOZ(iperm[i],v[i]);
   n0 = mknode(3,lu,dn,perm);
   MKLIST(*rp,n0);
 }
@@ -2327,7 +2327,7 @@ void Plu_gfmmat(NODE arg,LIST *rp)
 
   asir_assert(ARG0(arg),O_MAT,"lu_gfmmat");
   asir_assert(ARG1(arg),O_N,"lu_gfmmat");
-  m = (MAT)ARG0(arg); md = (unsigned int)QTOS((Q)ARG1(arg));
+  m = (MAT)ARG0(arg); md = (unsigned int)ZTOS((Q)ARG1(arg));
   mat_to_gfmmat(m,md,&mm);
   row = m->row;
   col = m->col;
@@ -2338,7 +2338,7 @@ void Plu_gfmmat(NODE arg,LIST *rp)
   else {
     MKVECT(perm,row);
     for ( i = 0, v = (Z *)perm->body; i < row; i++ )
-      STOQ(iperm[i],v[i]);
+      STOZ(iperm[i],v[i]);
     n0 = mknode(2,mm,perm);
   }
   MKLIST(*rp,n0);
@@ -2351,7 +2351,7 @@ void Pmat_to_gfmmat(NODE arg,GFMMAT *rp)
 
   asir_assert(ARG0(arg),O_MAT,"mat_to_gfmmat");
   asir_assert(ARG1(arg),O_N,"mat_to_gfmmat");
-  m = (MAT)ARG0(arg); md = (unsigned int)QTOS((Q)ARG1(arg));
+  m = (MAT)ARG0(arg); md = (unsigned int)ZTOS((Q)ARG1(arg));
   mat_to_gfmmat(m,md,rp);  
 }
 
@@ -2390,7 +2390,7 @@ void Pgeninvm_swap(NODE arg,LIST *rp)
 
   asir_assert(ARG0(arg),O_MAT,"geninvm_swap");
   asir_assert(ARG1(arg),O_N,"geninvm_swap");
-  m = (MAT)ARG0(arg); md = QTOS((Z)ARG1(arg));
+  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; mat = m->body;
   wmat = (unsigned int **)almat(row,col+row);
   for ( i = 0; i < row; i++ ) {
@@ -2406,10 +2406,10 @@ void Pgeninvm_swap(NODE arg,LIST *rp)
     MKMAT(mat1,col,col);
     for ( i = 0, tmat = (Z **)mat1->body; i < col; i++ )
       for ( j = 0; j < col; j++ )
-        UTOQ(invmat[i][j],tmat[i][j]);
+        UTOZ(invmat[i][j],tmat[i][j]);
     MKVECT(vect1,row);
     for ( i = 0, tvect = (Z *)vect1->body; i < row; i++ )
-      STOQ(index[i],tvect[i]);
+      STOZ(index[i],tvect[i]);
      MKNODE(node2,vect1,0); MKNODE(node1,mat1,node2); MKLIST(*rp,node1);
   }
 }
@@ -2504,7 +2504,7 @@ void Pgeninv_sf_swap(NODE arg,LIST *rp)
         }
     MKVECT(vect1,row);
     for ( i = 0, tvect = (Z *)vect1->body; i < row; i++ )
-      STOQ(index[i],tvect[i]);
+      STOZ(index[i],tvect[i]);
     MKNODE(node2,vect1,0); MKNODE(node1,mat1,node2); MKLIST(*rp,node1);
   }
 }
@@ -2596,8 +2596,8 @@ void Pnbpoly_up2(NODE arg,GF2N *rp)
   int m,type,ret;
   UP2 r;
 
-  m = QTOS((Z)ARG0(arg));
-  type = QTOS((Z)ARG1(arg));
+  m = ZTOS((Z)ARG0(arg));
+  type = ZTOS((Z)ARG1(arg));
   ret = generate_ONB_polynomial(&r,m,type);
   if ( ret == 0 )
     MKGF2N(r,*rp);
@@ -2611,7 +2611,7 @@ void Px962_irredpoly_up2(NODE arg,GF2N *rp)
   GF2N prev;
   UP2 r;
 
-  m = QTOS((Q)ARG0(arg));
+  m = ZTOS((Q)ARG0(arg));
   prev = (GF2N)ARG1(arg);
   if ( !prev ) {
     w = (m>>5)+1; NEWUP2(r,w); r->w = 0;
@@ -2636,7 +2636,7 @@ void Pirredpoly_up2(NODE arg,GF2N *rp)
   GF2N prev;
   UP2 r;
 
-  m = QTOS((Q)ARG0(arg));
+  m = ZTOS((Q)ARG0(arg));
   prev = (GF2N)ARG1(arg);
   if ( !prev ) {
     w = (m>>5)+1; NEWUP2(r,w); r->w = 0;
@@ -2665,8 +2665,8 @@ void Pmat_swap_row_destructive(NODE arg, MAT *m)
   asir_assert(ARG1(arg),O_N,"mat_swap_row_destructive");
   asir_assert(ARG2(arg),O_N,"mat_swap_row_destructive");
   mat = (MAT)ARG0(arg);
-  i1 = QTOS((Q)ARG1(arg));
-  i2 = QTOS((Q)ARG2(arg));
+  i1 = ZTOS((Q)ARG1(arg));
+  i2 = ZTOS((Q)ARG2(arg));
   if ( i1 < 0 || i2 < 0 || i1 >= mat->row || i2 >= mat->row )
     error("mat_swap_row_destructive : Out of range");
   t = mat->body[i1];
@@ -2686,8 +2686,8 @@ void Pmat_swap_col_destructive(NODE arg, MAT *m)
   asir_assert(ARG1(arg),O_N,"mat_swap_col_destructive");
   asir_assert(ARG2(arg),O_N,"mat_swap_col_destructive");
   mat = (MAT)ARG0(arg);
-  j1 = QTOS((Q)ARG1(arg));
-  j2 = QTOS((Q)ARG2(arg));
+  j1 = ZTOS((Q)ARG1(arg));
+  j2 = ZTOS((Q)ARG2(arg));
   if ( j1 < 0 || j2 < 0 || j1 >= mat->col || j2 >= mat->col )
     error("mat_swap_col_destructive : Out of range");
   n = mat->row;
@@ -2999,7 +2999,7 @@ void Pnd_det(NODE arg,P *rp)
   if ( argc(arg) == 1 )
     nd_det(0,ARG0(arg),rp);
   else
-    nd_det(QTOS((Q)ARG1(arg)),ARG0(arg),rp);
+    nd_det(ZTOS((Q)ARG1(arg)),ARG0(arg),rp);
 }
 
 void Pmat_col(NODE arg,VECT *rp)
@@ -3011,7 +3011,7 @@ void Pmat_col(NODE arg,VECT *rp)
   asir_assert(ARG0(arg),O_MAT,"mat_col");
   asir_assert(ARG1(arg),O_N,"mat_col");
   mat = (MAT)ARG0(arg);
-  j = QTOS((Q)ARG1(arg));
+  j = ZTOS((Q)ARG1(arg));
   if ( j < 0 || j >= mat->col) {
     error("mat_col : Out of range");
   }

@@ -272,7 +272,7 @@ void pwrp(VL vl,P p,Z q,P *pr)
     } else if ( !INT(q) ) {
       error("pwrp: can't calculate fractional power."); *pr = 0;
     } else if ( smallz(q) ) {
-      n = QTOS(q); x = (P *)ALLOCA((n+1)*sizeof(pointer));
+      n = ZTOS(q); x = (P *)ALLOCA((n+1)*sizeof(pointer));
       NEWDC(dct); DEG(dct) = DEG(dc); COEF(dct) = COEF(dc);
       NEXT(dct) = 0; MKP(VR(p),dct,t);
       for ( i = 0, u = (P)One; i < n; i++ ) {

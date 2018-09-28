@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/mattran.c,v 1.1 2018/09/19 05:45:06 noro Exp $
  */
 
 #include "ca.h"
@@ -39,53 +39,53 @@ Obj *rp;
   pointer *coe;
   Q rowq, row2q, colq, col2q;
   int sw, row, row2, col, col2;
-  sw = QTOS( (Q)ARG0(arg) );
+  sw = ZTOS( (Q)ARG0(arg) );
   mat = (MAT)ARG1(arg);
   switch (sw) {
     case 1:
       rowq = (Q)ARG2(arg);
-      row = QTOS( rowq );
+      row = ZTOS( rowq );
       coe = (pointer)ARG3(arg);
       BodyRowMul( mat, row, coe );
       *rp = (Obj)mat;
       return;
     case 2:
       rowq = (Q)ARG2(arg);
-      row = QTOS( rowq );
+      row = ZTOS( rowq );
       row2q = (Q)ARG3(arg);
-      row2 = QTOS( row2q );
+      row2 = ZTOS( row2q );
       BodyRowExh( mat, row, row2 );
       *rp = (Obj)mat;
       return;
     case 3:
       rowq = (Q)ARG2(arg);
-      row = QTOS( rowq );
+      row = ZTOS( rowq );
       row2q = (Q)ARG3(arg);
-      row2 = QTOS( row2q );
+      row2 = ZTOS( row2q );
       coe = (pointer)ARG3(arg);
       BodyRowMulAdd( mat, row, row2, coe );
       *rp = (Obj)mat;
       return;
     case 4:
       colq = (Q)ARG2(arg);
-      col = QTOS( colq );
+      col = ZTOS( colq );
       coe = (pointer)ARG3(arg);
       BodyColMul( mat, col, coe );
       *rp = (Obj)mat;
       return;
     case 5:
       colq = (Q)ARG2(arg);
-      col = QTOS( colq );
+      col = ZTOS( colq );
       col2q = (Q)ARG3(arg);
-      col2 = QTOS( col2q );
+      col2 = ZTOS( col2q );
       BodyColExh( mat, col, col2 );
       *rp = (Obj)mat;
       return;
     case 6:
       colq = (Q)ARG2(arg);
-      col = QTOS( colq );
+      col = ZTOS( colq );
       col2q = (Q)ARG3(arg);
-      col2 = QTOS( col2q );
+      col2 = ZTOS( col2q );
       coe = (pointer)ARG3(arg);
       BodyColMulAdd( mat, col, col2, coe );
       *rp = (Obj)mat;
@@ -107,7 +107,7 @@ Obj *rp;
 
   mat = (MAT)ARG0(arg);
   rowq = (Q)ARG1(arg);
-  row = QTOS( rowq );
+  row = ZTOS( rowq );
   coe = (pointer)ARG2(arg);
   BodyRowMul( mat, row , coe );
   *rp = (Obj)mat;
@@ -125,8 +125,8 @@ Obj *rp;
   mat = (MAT)ARG0(arg);
   QIndexA = (Q)ARG1(arg);
   QIndexB = (Q)ARG2(arg);
-  IndexA = QTOS( QIndexA );
-  IndexB = QTOS( QIndexB );
+  IndexA = ZTOS( QIndexA );
+  IndexB = ZTOS( QIndexB );
   BodyRowExh( mat, IndexA, IndexB );
   *rp = (Obj)mat;
 }
@@ -145,8 +145,8 @@ Obj *rp;
   QIndexA = (Q)ARG1(arg);
   QIndexB = (Q)ARG2(arg);
   coe = (pointer)ARG3(arg);
-  IndexA = QTOS( QIndexA );
-  IndexB = QTOS( QIndexB );
+  IndexA = ZTOS( QIndexA );
+  IndexB = ZTOS( QIndexB );
   BodyRowMulAdd( mat, IndexA, IndexB, coe );
   *rp = (Obj)mat;
 }
@@ -163,7 +163,7 @@ Obj *rp;
 
   mat = (MAT)ARG0(arg);
   QIndex = (Q)ARG1(arg);
-  Index = QTOS( QIndex );
+  Index = ZTOS( QIndex );
   coe = (pointer)ARG2(arg);
   BodyColMul( mat, Index , coe );
   *rp = (Obj)mat;
@@ -181,8 +181,8 @@ Obj *rp;
   mat = (MAT)ARG0(arg);
   QIndexA = (Q)ARG1(arg);
   QIndexB = (Q)ARG2(arg);
-  IndexA = QTOS( QIndexA );
-  IndexB = QTOS( QIndexB );
+  IndexA = ZTOS( QIndexA );
+  IndexB = ZTOS( QIndexB );
   BodyColExh( mat, IndexA, IndexB );
   *rp = (Obj)mat;
 }
@@ -201,8 +201,8 @@ Obj *rp;
   QIndexA = (Q)ARG1(arg);
   QIndexB = (Q)ARG2(arg);
   coe = (pointer)ARG3(arg);
-  IndexA = QTOS( QIndexA );
-  IndexB = QTOS( QIndexB );
+  IndexA = ZTOS( QIndexA );
+  IndexB = ZTOS( QIndexB );
   BodyColMulAdd( mat, IndexA, IndexB, coe );
   *rp = (Obj)mat;
 }

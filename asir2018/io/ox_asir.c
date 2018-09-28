@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_asir.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -220,7 +220,7 @@ static void asir_do_cmd(int cmd,unsigned int serial)
       break;
     case SM_getsp:
       i = asir_OperandStackPtr+1;
-      STOQ(i,q);
+      STOZ(i,q);
       asir_push_one((Obj)q);
       break;
     case SM_popSerializedLocalObject:
@@ -452,7 +452,7 @@ void asir_reduce_102(unsigned int serial)
   op = (STRING)asir_pop_one();
   opname = BDY(op);
   r = (Q)asir_pop_one();
-  root = QTOS(r);
+  root = ZTOS(r);
   if ( !strcmp(opname,"+") )
     func = arf_add;
   else if ( !strcmp(opname,"*") )
@@ -471,7 +471,7 @@ void asir_bcast_102(unsigned int serial)
   Obj data;
 
   r = (Q)asir_pop_one();
-  root = QTOS(r);
+  root = ZTOS(r);
   ox_bcast_102(root);
 }
 
@@ -502,7 +502,7 @@ void asir_set_rank_102(unsigned int serial)
   if ( !nserver || !INT(nserver) || !INT(rank) ) {
     stat = -1;
   } else {
-    n = QTOS(nserver); r = QTOS(rank);
+    n = ZTOS(nserver); r = ZTOS(rank);
     if ( n <= 0 || r < 0 || r >= n ) {
       stat = -1;
     }
@@ -527,7 +527,7 @@ void asir_tcp_accept_102(unsigned int serial)
   r = (Q)asir_pop_one();
   p = (Q)asir_pop_one();
   if ( IS_CYGWIN || !p || NUM(p) ) {
-    port = QTOS(p);
+    port = ZTOS(p);
     sprintf(port_str,"%d",port);
     use_unix = 0;
   } else {
@@ -536,7 +536,7 @@ void asir_tcp_accept_102(unsigned int serial)
   }
   s = try_bind_listen(use_unix,port_str);
   s = try_accept(use_unix,s);
-  rank = QTOS((Q)r);
+  rank = ZTOS((Q)r);
   if ( register_102(s,rank,1) < 0 ) {
     create_error(&err,serial,
       "failed to bind or accept in ox_tcp_accept_102",0);
@@ -558,7 +558,7 @@ void asir_tcp_connect_102(unsigned int serial)
   p = (Q)asir_pop_one();
   h = (STRING)asir_pop_one();
   if ( IS_CYGWIN || !p || NUM(p) ) {
-    port = QTOS(p);
+    port = ZTOS(p);
     sprintf(port_str,"%d",port);
     use_unix = 0;
     host = BDY((STRING)h);
@@ -568,7 +568,7 @@ void asir_tcp_connect_102(unsigned int serial)
     host = 0;
   }
   s = try_connect(use_unix,host,port_str);
-  rank = QTOS((Q)r);
+  rank = ZTOS((Q)r);
   if ( register_102(s,rank,1) < 0 ) {
     create_error(&err,serial,
       "failed to connect in ox_tcp_connect_102",0);

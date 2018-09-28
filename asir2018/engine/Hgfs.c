@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Hgfs.c,v 1.1 2018/09/19 05:45:07 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -72,7 +72,7 @@ void ufctrsf(P p,DCP *dcp)
   NEWDC(dc0); COEF(dc0) = lc; DEG(dc0) = ONE; dc = dc0;
   for ( n = 0; udc[n].f; n++ ) {
     NEWDC(NEXT(dc)); dc = NEXT(dc);
-    STOQ(udc[n].n,DEG(dc)); sfumtop(VR(p),udc[n].f,&COEF(dc));
+    STOZ(udc[n].n,DEG(dc)); sfumtop(VR(p),udc[n].f,&COEF(dc));
   }
   NEXT(dc) = 0; *dcp = dc0;
 }
@@ -182,7 +182,7 @@ void spwrsfum(UM m,UM f,Z e,UM r)
   } else if ( UNIZ(e) )
     cpyum(f,r);
   else {
-    STOQ(2,two);
+    STOZ(2,two);
     divqrz(e,two,&e1,&rem);
     t = W_UMALLOC(2*DEG(m)); spwrsfum(m,f,e1,t);
     s = W_UMALLOC(2*DEG(m)); q = W_UMALLOC(2*DEG(m));
@@ -488,8 +488,8 @@ void canzassf(UM f,int d,UM *r)
     o = W_UMALLOC(0); DEG(o) = 0; COEF(o)[0] = _onesf();
     q = field_order_sf();
     if ( q % 2 ) {
-      STOQ(q,n1); STOQ(d,z); pwrz(n1,z,&n2); subz(n2,ONE,&n3);
-      STOQ(2,n4); divz(n3,n4,&n5);
+      STOZ(q,n1); STOZ(d,z); pwrz(n1,z,&n2); subz(n2,ONE,&n3);
+      STOZ(2,n4); divsz(n3,n4,&n5);
     } else
       ed = d*extdeg_sf();
     while ( 1 ) {
@@ -668,7 +668,7 @@ int sfberle(V x,V y,P f,int count,GFS *ev,DCP *dcp)
   NEWVL(NEXT(vl)); NEXT(vl)->v = y;
   NEXT(NEXT(vl)) =0;
   simp_ff((Obj)f,&obj); f = (P)obj;
-  n = QTOS(DEG(DC(f)));
+  n = ZTOS(DEG(DC(f)));
   wf = W_UMALLOC(n); wf1 = W_UMALLOC(n); wf2 = W_UMALLOC(n);
   wfs = W_UMALLOC(n); gcd = W_UMALLOC(n);
   q = field_order_sf();
@@ -935,14 +935,14 @@ void ptosfbm(int dy,P f,BM fl)
   int d,i,dx;
   UM t;
 
-  dx = QTOS(DEG(DC(f)));
+  dx = ZTOS(DEG(DC(f)));
   if ( DEG(fl) < dy )
     error("ptosfbm : invalid input");
   DEG(fl) = dy;
   clearbm(dx,fl);
   t = UMALLOC(dy);
   for ( dc = DC(f); dc; dc = NEXT(dc) ) {
-    d = QTOS(DEG(dc));
+    d = ZTOS(DEG(dc));
     ptosfum(COEF(dc),t);
     for ( i = 0; i <= DEG(t); i++ )
       COEF(COEF(fl)[i])[d] = COEF(t)[i];
@@ -970,7 +970,7 @@ void sfbmtop(BM f,V x,V y,P *fp)
     for ( j = 0; j <= dy; j++ ) {
       if ( DEG(c[j]) >= i && (a = COEF(c[j])[i]) ) {
         NEWDC(dct);
-        STOQ(j,DEG(dct));
+        STOZ(j,DEG(dct));
         iftogfs(a,&b);
         COEF(dct) = (P)b;
         NEXT(dct) = dc;
@@ -979,7 +979,7 @@ void sfbmtop(BM f,V x,V y,P *fp)
     }
     if ( dc ) {
       NEWDC(dct);
-      STOQ(i,DEG(dct));
+      STOZ(i,DEG(dct));
       MKP(y,dc,COEF(dct));
       NEXT(dct) = dc0;
       dc0 = dct;
@@ -1028,7 +1028,7 @@ void sfusqfr(P f,DCP *dcp)
   W_CALLOC(n+1,struct oDUM,udc);
   gensqfrsfum(mf,udc);
   for ( i = 0, dc = 0; udc[i].f; i++ ) {
-    NEWDC(dct); STOQ(udc[i].n,DEG(dct));
+    NEWDC(dct); STOZ(udc[i].n,DEG(dct));
     sfumtop(x,udc[i].f,&COEF(dct));
     NEXT(dct) = dc; dc = dct;
   }

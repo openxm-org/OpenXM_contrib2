@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/eval.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -196,7 +196,7 @@ pointer eval(FNODE f)
         int interval;
         Obj expired;
 
-        interval = QTOS((Q)eval((FNODE)FA0(f)));
+        interval = ZTOS((Q)eval((FNODE)FA0(f)));
         expired = (Obj)eval((FNODE)FA2(f));
         set_timer(interval);
         savepvs();
@@ -1326,7 +1326,7 @@ pointer evalpf(PF pf,NODE args,NODE dargs)
       ad[i].arg = (Obj)node->body;  
       if ( !dnode ) ad[i].d = 0;
       else
-        ad[i].d = QTOS((Q)dnode->body);
+        ad[i].d = ZTOS((Q)dnode->body);
       node = NEXT(node);
       if ( dnode ) dnode = NEXT(dnode);
     }
@@ -1335,7 +1335,7 @@ pointer evalpf(PF pf,NODE args,NODE dargs)
     s = pf->body;
     if ( dargs ) {
       for ( i = 0, dnode = dargs; dnode; dnode = NEXT(dnode), i++ ) {
-        di = QTOS((Q)dnode->body);
+        di = ZTOS((Q)dnode->body);
         for ( j = 0; j < di; j++ ) {
           derivr(CO,s,pf->args[i],&s1); s = s1;
         }

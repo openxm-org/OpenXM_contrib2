@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/util.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -100,7 +100,7 @@ unsigned int ator(unsigned int addr,Obj *r)
   if ( !addr )
     q = 0;
   if ( addr < BASE )
-    STOQ(addr,q);
+    STOZ(addr,q);
   else {
     n = NALLOC(2); PL(n) = 2; 
     BD(n)[0] = addr-BASE; BD(n)[1] = addr>>BSH; NTOQ(n,1,q);
@@ -124,8 +124,8 @@ void getarray(pointer a,NODE ind,pointer *vp)
     else if ( NEXT(ind) )
       error("getarray : invalid index");
     else {
-      i = (int)BDY((BYTEARRAY)a)[QTOS((Q)len)];
-      STOQ(i,q);
+      i = (int)BDY((BYTEARRAY)a)[ZTOS((Q)len)];
+      STOZ(i,q);
       *vp = (pointer)q;
     }
     return;
@@ -139,7 +139,7 @@ void getarray(pointer a,NODE ind,pointer *vp)
         if ( !rangecheck(len,((VECT)a)->len) )
           error("getarray : Out of range");
         else
-          a = (pointer)(BDY((VECT)a)[QTOS((Q)len)]);
+          a = (pointer)(BDY((VECT)a)[ZTOS((Q)len)]);
         break;
       case O_MAT:
         row = (Obj)BDY(ind);
@@ -151,10 +151,10 @@ void getarray(pointer a,NODE ind,pointer *vp)
           if ( !rangecheck(col,((MAT)a)->col) )
             error("getarray : Out of range");
           else
-            a = (pointer)(BDY((MAT)a)[QTOS((Q)row)][QTOS((Q)col)]);
+            a = (pointer)(BDY((MAT)a)[ZTOS((Q)row)][ZTOS((Q)col)]);
         } else {
           NEWVECT(v); v->len = ((MAT)a)->col; 
-          v->body = (pointer *)BDY((MAT)a)[QTOS((Q)row)];
+          v->body = (pointer *)BDY((MAT)a)[ZTOS((Q)row)];
           a = (pointer)v;
         }
         break;
@@ -162,15 +162,15 @@ void getarray(pointer a,NODE ind,pointer *vp)
         row = (Obj)BDY(ind);
         ind = NEXT(ind);
         col = (Obj)BDY(ind);
-        if ( ((IMAT)a)->row < QTOS((Q)row) ||
-          ((IMAT)a)->col < QTOS((Q)col) ||
-          (QTOS((Q)row) < 0) || (QTOS((Q)col) < 0))
+        if ( ((IMAT)a)->row < ZTOS((Q)row) ||
+          ((IMAT)a)->col < ZTOS((Q)col) ||
+          (ZTOS((Q)row) < 0) || (ZTOS((Q)col) < 0))
             error("putarray : Out of range");
-        GetIbody((IMAT)a, QTOS((Q)row), QTOS((Q)col), (Obj*)&trg);
+        GetIbody((IMAT)a, ZTOS((Q)row), ZTOS((Q)col), (Obj*)&trg);
         a = (pointer)trg;
         break;
       case O_LIST:
-        n0 = BDY((LIST)a); i = QTOS((Q)BDY(ind));
+        n0 = BDY((LIST)a); i = ZTOS((Q)BDY(ind));
         if ( i < 0 )
           error("getarray : Out of range");
         for ( n = n0; i > 0 && n; n = NEXT(n), i-- );
@@ -200,7 +200,7 @@ void putarray(pointer a,NODE ind,pointer b)
     else if ( NEXT(ind) )
       error("putarray : invalid index");
     else
-      BDY((BYTEARRAY)a)[QTOS((Q)len)] = (unsigned char)QTOS((Q)b);
+      BDY((BYTEARRAY)a)[ZTOS((Q)len)] = (unsigned char)ZTOS((Q)b);
     return;
   }
   for ( ; ind; ind = NEXT(ind) ) {
@@ -212,9 +212,9 @@ void putarray(pointer a,NODE ind,pointer b)
         if ( !rangecheck(len,((VECT)a)->len) )
           error("putarray : Out of range");
         else if ( NEXT(ind) )
-          a = BDY((VECT)a)[QTOS((Q)len)];
+          a = BDY((VECT)a)[ZTOS((Q)len)];
         else
-          BDY((VECT)a)[QTOS((Q)len)] = b;
+          BDY((VECT)a)[ZTOS((Q)len)] = b;
         break;
       case O_MAT:
         row = (Obj)BDY(ind);
@@ -226,9 +226,9 @@ void putarray(pointer a,NODE ind,pointer b)
           if ( !rangecheck(col,((MAT)a)->col) )
             error("putarray : Out of range");
           else if ( NEXT(ind) )
-            a = BDY((MAT)a)[QTOS((Q)row)][QTOS((Q)col)];
+            a = BDY((MAT)a)[ZTOS((Q)row)][ZTOS((Q)col)];
           else
-            BDY((MAT)a)[QTOS((Q)row)][QTOS((Q)col)] = b;
+            BDY((MAT)a)[ZTOS((Q)row)][ZTOS((Q)col)] = b;
         } else
           error("putarray : invalid assignment");
         break;
@@ -236,15 +236,15 @@ void putarray(pointer a,NODE ind,pointer b)
         row = (Obj)BDY(ind);
         ind = NEXT(ind);
         col = (Obj)BDY(ind);
-        if ( ((IMAT)a)->row < QTOS((Q)row) ||
-          ((IMAT)a)->col < QTOS((Q)col) ||
-          (QTOS((Q)row) < 0) || (QTOS((Q)col) < 0))
+        if ( ((IMAT)a)->row < ZTOS((Q)row) ||
+          ((IMAT)a)->col < ZTOS((Q)col) ||
+          (ZTOS((Q)row) < 0) || (ZTOS((Q)col) < 0))
             error("putarray : Out of range");
-        PutIent((IMAT)a, QTOS((Q)row), QTOS((Q)col), (Obj)b);
+        PutIent((IMAT)a, ZTOS((Q)row), ZTOS((Q)col), (Obj)b);
         break;
       case O_LIST:
         if ( NEXT(ind) ) {
-          n0 = BDY((LIST)a); i = QTOS((Q)BDY(ind));
+          n0 = BDY((LIST)a); i = ZTOS((Q)BDY(ind));
           if ( i < 0 )
             error("putarray : Out of range");
           for ( n = n0; i > 0 && n; n = NEXT(n), i-- );
@@ -270,7 +270,7 @@ int rangecheck(Obj a,int n)
     return 1;
   if ( OID(a) != O_N || !RATN(a) || !INT(a) || sgnq((Q)a) < 0 )
     return 0;
-  STOQ(n,z);
+  STOZ(n,z);
   if ( cmpz((Z)a,z) >= 0 ) return 0;
   else return 1;
 }

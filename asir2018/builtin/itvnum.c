@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.1 2018/09/19 05:45:06 noro Exp $
  */
 
 #include "ca.h"
@@ -93,8 +93,8 @@ Pifcheck(NODE arg, Obj *rp)
   int width, height, ix, iy;
   int id;
 
-  STOQ(-2,m2); STOQ(2,p2);
-  STOQ(1,one);
+  STOZ(-2,m2); STOZ(2,p2);
+  STOZ(1,one);
   MKNODE(n,p2,0); MKNODE(defrange,m2,n);
   poly = 0; vl = 0; geom = 0; ri = 0;
   v[0] = v[1] = 0;
@@ -164,8 +164,8 @@ Pifcheck(NODE arg, Obj *rp)
     can->width = 300;
     can->height = 300;
   } else {
-    can->width = QTOS((Q)BDY(BDY(geom)));
-    can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+    can->width = ZTOS((Q)BDY(BDY(geom)));
+    can->height = ZTOS((Q)BDY(NEXT(BDY(geom))));
     width = can->width;
     height = can->height;
   }
@@ -237,7 +237,7 @@ void ccalc(double **tab,struct canvas *can,int nox)
 static void
 Pitvversion(Q *rp)
 {
-  STOQ(ASIR_VERSION, *rp);
+  STOZ(ASIR_VERSION, *rp);
 }
 
 extern int  bigfloat;
@@ -591,7 +591,7 @@ Obj *rp;
   } else {
     s = ! compnum(0,(Num)ARG0(arg),(Num)ARG1(arg));
   }
-  STOQ(s,q);
+  STOZ(s,q);
   *rp = (Obj)q;
 }
 
@@ -641,14 +641,14 @@ Pprintmode(NODE arg, Obj *rp)
 
   a = (Z)ARG0(arg);
   if(!a||(NUM(a)&&INT(a))){
-    l=QTOS(a);
+    l=ZTOS(a);
     if ( l < 0 ) l = 0;
 #if defined(INTERVAL)
     else if ( l > MID_PRINTF_E ) l = 0;
 #else
     else if ( l > PRINTF_E ) l = 0;
 #endif
-    STOQ(printmode,r);
+    STOZ(printmode,r);
     *rp = (Obj)r;
     printmode = l;
     pprintmode();

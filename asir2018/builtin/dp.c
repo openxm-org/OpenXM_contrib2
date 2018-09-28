@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -362,20 +362,20 @@ void Pdp_compute_last_w(NODE arg,LIST *rp)
   row2 = w2->row;
   if ( w ) {
     v = W_ALLOC(n);
-    for ( i = 0; i < n; i++ ) v[i] = QTOS((Q)w->body[i]);
+    for ( i = 0; i < n; i++ ) v[i] = ZTOS((Q)w->body[i]);
   } else v = 0;
   m1 = almat(row1,n);
   for ( i = 0; i < row1; i++ )
-    for ( j = 0; j < n; j++ ) m1[i][j] = QTOS((Q)w1->body[i][j]);
+    for ( j = 0; j < n; j++ ) m1[i][j] = ZTOS((Q)w1->body[i][j]);
   m2 = almat(row2,n);
   for ( i = 0; i < row2; i++ )
-    for ( j = 0; j < n; j++ ) m2[i][j] = QTOS((Q)w2->body[i][j]);
+    for ( j = 0; j < n; j++ ) m2[i][j] = ZTOS((Q)w2->body[i][j]);
   r = compute_last_w(g,gh,n,&v,row1,m1,row2,m2);
   if ( !r ) *rp = 0;
   else {
     MKVECT(rv,n);
     for ( i = 0; i < n; i++ ) {
-      STOQ(v[i],q); rv->body[i] = (pointer)q;
+      STOZ(v[i],q); rv->body[i] = (pointer)q;
     }
     MKLIST(l,r);
     r = mknode(2,rv,l);
@@ -452,7 +452,7 @@ void Pdp_sep(NODE arg,VECT *rp)
   pointer *pv;
 
   p = (DP)ARG0(arg); m = BDY(p);
-  d = QTOS((Q)ARG1(arg));
+  d = ZTOS((Q)ARG1(arg));
   for ( t = m, n = 0; t; t = NEXT(t), n++ );
   if ( d > n )
     d = n;
@@ -506,7 +506,7 @@ void Pdp_etov(NODE arg,VECT *rp)
   n = dp->nv; d = BDY(dp)->dl->d;
   MKVECT(v,n);
   for ( i = 0; i < n; i++ ) {
-    STOQ(d[i],t); v->body[i] = (pointer)t;
+    STOZ(d[i],t); v->body[i] = (pointer)t;
   }
   *rp = v;
 }
@@ -525,7 +525,7 @@ void Pdp_vtoe(NODE arg,DP *rp)
   n = v->len;
   NEWDL(dl,n); d = dl->d;
   for ( i = 0, td = 0; i < n; i++ ) {
-    d[i] = QTOS((Q)(v->body[i])); td += MUL_WEIGHT(d[i],i);
+    d[i] = ZTOS((Q)(v->body[i])); td += MUL_WEIGHT(d[i],i);
   }
   dl->td = td;
   NEWMP(m); m->dl = dl; m->c = (Obj)ONE; NEXT(m) = 0;
@@ -543,7 +543,7 @@ void Pdp_lnf_mod(NODE arg,LIST *rp)
   asir_assert(ARG1(arg),O_LIST,"dp_lnf_mod");
   asir_assert(ARG2(arg),O_N,"dp_lnf_mod");
   b = BDY((LIST)ARG0(arg)); g = BDY((LIST)ARG1(arg));
-  mod = QTOS((Q)ARG2(arg));
+  mod = ZTOS((Q)ARG2(arg));
   dp_lnf_mod((DP)BDY(b),(DP)BDY(NEXT(b)),g,mod,&r1,&r2);
   NEWNODE(n); BDY(n) = (pointer)r1;
   NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)r2;
@@ -570,7 +570,7 @@ void Pdp_nf_tab_mod(NODE arg,DP *rp)
   asir_assert(ARG1(arg),O_VECT,"dp_nf_tab_mod");
   asir_assert(ARG2(arg),O_N,"dp_nf_tab_mod");
   dp_nf_tab_mod((DP)ARG0(arg),(LIST *)BDY((VECT)ARG1(arg)),
-    QTOS((Q)ARG2(arg)),rp);
+    ZTOS((Q)ARG2(arg)),rp);
 }
 
 void Pdp_nf_tab_f(NODE arg,DP *rp)
@@ -779,7 +779,7 @@ void Pdpm_dtol(NODE arg,LIST *rp)
   }
   if ( vl )
     NEXT(tvl) = 0;
-   n = QTOS((Q)ARG2(arg));
+   n = ZTOS((Q)ARG2(arg));
    w = (MP *)CALLOC(n,sizeof(MP));
    for ( t = BDY(a), len = 0; t; t = NEXT(t) ) len++;
    wa = (DMM *)MALLOC(len*sizeof(DMM));
@@ -891,7 +891,7 @@ void Pdp_mod(NODE arg,DP *rp)
   asir_assert(ARG0(arg),O_DP,"dp_mod");
   asir_assert(ARG1(arg),O_N,"dp_mod");
   asir_assert(ARG2(arg),O_LIST,"dp_mod");
-  p = (DP)ARG0(arg); mod = QTOS((Q)ARG1(arg));
+  p = (DP)ARG0(arg); mod = ZTOS((Q)ARG1(arg));
   subst = BDY((LIST)ARG2(arg));
   dp_mod(p,mod,subst,rp);
 }
@@ -1089,10 +1089,10 @@ void Pdp_nf_mod(NODE arg,DP *rp)
     *rp = 0; return;
   }
   b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
-  full = QTOS((Q)ARG3(arg)); mod = QTOS((Q)ARG4(arg));
+  full = ZTOS((Q)ARG3(arg)); mod = ZTOS((Q)ARG4(arg));
   for ( n0 = n = 0; b; b = NEXT(b) ) {
     NEXTNODE(n0,n);
-    BDY(n) = (pointer)QTOS((Q)BDY(b));
+    BDY(n) = (pointer)ZTOS((Q)BDY(b));
   }
   if ( n0 )
     NEXT(n) = 0;
@@ -1186,7 +1186,7 @@ void Pdp_true_nf_and_quotient_marked_mod(NODE arg,LIST *rp)
     b = BDY((LIST)ARG0(arg)); 
     ps = (DP *)BDY((VECT)ARG2(arg));
     hps = (DP *)BDY((VECT)ARG3(arg));
-    mod = QTOS((Q)ARG4(arg));
+    mod = ZTOS((Q)ARG4(arg));
     NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
     quo->body = (pointer *)dp_true_nf_and_quotient_marked_mod(b,g,ps,hps,mod,&nm,&dn);
   }
@@ -1248,7 +1248,7 @@ void Pdp_true_nf_marked_mod(NODE arg,LIST *rp)
     b = BDY((LIST)ARG0(arg)); 
     ps = (DP *)BDY((VECT)ARG2(arg));
     hps = (DP *)BDY((VECT)ARG3(arg));
-    mod = QTOS((Q)ARG4(arg));
+    mod = ZTOS((Q)ARG4(arg));
     dp_true_nf_marked_mod(b,g,ps,hps,mod,&nm,&dn);
   }
   n = mknode(2,nm,dn);
@@ -1273,10 +1273,10 @@ void Pdp_weyl_nf_mod(NODE arg,DP *rp)
     *rp = 0; return;
   }
   b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
-  full = QTOS((Q)ARG3(arg)); mod = QTOS((Q)ARG4(arg));
+  full = ZTOS((Q)ARG3(arg)); mod = ZTOS((Q)ARG4(arg));
   for ( n0 = n = 0; b; b = NEXT(b) ) {
     NEXTNODE(n0,n);
-    BDY(n) = (pointer)QTOS((Q)BDY(b));
+    BDY(n) = (pointer)ZTOS((Q)BDY(b));
   }
   if ( n0 )
     NEXT(n) = 0;
@@ -1304,7 +1304,7 @@ void Pdp_true_nf_mod(NODE arg,LIST *rp)
     nm = 0; dn = (P)ONEM;
   } else {
     b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
-    full = QTOS((Q)ARG3(arg)); mod = QTOS((Q)ARG4(arg));
+    full = ZTOS((Q)ARG3(arg)); mod = ZTOS((Q)ARG4(arg));
     dp_true_nf_mod(b,g,ps,mod,full,&nm,&dn);
   }
   NEWNODE(n); BDY(n) = (pointer)nm;
@@ -1369,7 +1369,7 @@ void Pdp_weyl_true_nf_and_quotient_marked_mod(NODE arg,LIST *rp)
     b = BDY((LIST)ARG0(arg)); 
     ps = (DP *)BDY((VECT)ARG2(arg));
     hps = (DP *)BDY((VECT)ARG3(arg));
-    mod = QTOS((Q)ARG4(arg));
+    mod = ZTOS((Q)ARG4(arg));
     NEWVECT(quo); quo->len = ((VECT)ARG2(arg))->len;
     quo->body = (pointer *)dp_true_nf_and_quotient_marked_mod(b,g,ps,hps,mod,&nm,&dn);
   }
@@ -1457,7 +1457,7 @@ void Pdp_red_mod(NODE arg,LIST *rp)
   asir_assert(ARG1(arg),O_DP,"dp_red_mod");
   asir_assert(ARG2(arg),O_DP,"dp_red_mod");
   asir_assert(ARG3(arg),O_N,"dp_red_mod");
-  dp_red_mod((DP)ARG0(arg),(DP)ARG1(arg),(DP)ARG2(arg),QTOS((Q)ARG3(arg)),
+  dp_red_mod((DP)ARG0(arg),(DP)ARG1(arg),(DP)ARG2(arg),ZTOS((Q)ARG3(arg)),
     &h,&r,&dmy);
   NEWNODE(n); BDY(n) = (pointer)h;
   NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)r;
@@ -1550,7 +1550,7 @@ void Pdp_weyl_mul_mod(NODE arg,DP *rp)
   asir_assert(p2,O_DP,"dp_mul_mod");
   asir_assert(m,O_N,"dp_mul_mod");
   do_weyl = 1;
-  mulmd(CO,QTOS(m),p1,p2,rp);
+  mulmd(CO,ZTOS(m),p1,p2,rp);
   do_weyl = 0;
 }
 
@@ -1638,7 +1638,7 @@ void Pdp_sp_mod(NODE arg,DP *rp)
   p1 = (DP)ARG0(arg); p2 = (DP)ARG1(arg);
   asir_assert(p1,O_DP,"dp_sp_mod"); asir_assert(p2,O_DP,"dp_sp_mod");
   asir_assert(ARG2(arg),O_N,"dp_sp_mod");
-  mod = QTOS((Q)ARG2(arg));
+  mod = ZTOS((Q)ARG2(arg));
   dp_sp_mod(p1,p2,mod,rp);
 }
 
@@ -1704,7 +1704,7 @@ void Pdp_td(NODE arg,Z *rp)
   if ( !p )
     *rp = 0;
   else
-    STOQ(BDY(p)->dl->td,*rp);
+    STOZ(BDY(p)->dl->td,*rp);
 }
 
 void Pdp_sugar(NODE arg,Z *rp)
@@ -1715,7 +1715,7 @@ void Pdp_sugar(NODE arg,Z *rp)
   if ( !p )
     *rp = 0;
   else
-    STOQ(p->sugar,*rp);
+    STOZ(p->sugar,*rp);
 }
 
 void Pdp_initial_term(NODE arg,Obj *rp)
@@ -1783,7 +1783,7 @@ void Pdp_set_sugar(NODE arg,Q *rp)
   if ( p && q) {
     asir_assert(p,O_DP,"dp_set_sugar");
     asir_assert(q,O_N, "dp_set_sugar");
-    i = QTOS(q);
+    i = ZTOS(q);
     if (p->sugar < i) {
       p->sugar = i;
     }
@@ -1832,11 +1832,11 @@ void Pdp_minp(NODE arg,LIST *rp)
   d = BDY((LIST)ARG0(arg)); minp = (LIST)BDY(d);
   p = BDY(minp); p = NEXT(NEXT(p)); lcm = (DP)BDY(p); p = NEXT(p);
   if ( !ARG1(arg) ) {
-    s = QTOS((Q)BDY(p)); p = NEXT(p);
+    s = ZTOS((Q)BDY(p)); p = NEXT(p);
     for ( dd0 = 0, d = NEXT(d); d; d = NEXT(d) ) {
       tp = BDY((LIST)BDY(d)); tp = NEXT(NEXT(tp));
       tlcm = (DP)BDY(tp); tp = NEXT(tp);
-      ts = QTOS((Q)BDY(tp)); tp = NEXT(tp);
+      ts = ZTOS((Q)BDY(tp)); tp = NEXT(tp);
       NEXTNODE(dd0,dd);
       if ( ts < s ) {
         BDY(dd) = (pointer)minp;
@@ -1874,7 +1874,7 @@ void Pdp_criB(NODE arg,LIST *rp)
   DL ts,ti,tj,lij,tdl;
 
   asir_assert(ARG0(arg),O_LIST,"dp_criB"); d = BDY((LIST)ARG0(arg));
-  asir_assert(ARG1(arg),O_N,"dp_criB"); s = QTOS((Q)ARG1(arg));
+  asir_assert(ARG1(arg),O_N,"dp_criB"); s = ZTOS((Q)ARG1(arg));
   asir_assert(ARG2(arg),O_VECT,"dp_criB"); ps = (DP *)BDY((VECT)ARG2(arg));
   if ( !d )
     *rp = (LIST)ARG0(arg);
@@ -1884,8 +1884,8 @@ void Pdp_criB(NODE arg,LIST *rp)
     NEWDL(tdl,n);
     for ( dd = 0; d; d = NEXT(d) ) {
       ij = BDY((LIST)BDY(d));
-      i = QTOS((Q)BDY(ij)); ij = NEXT(ij);
-      j = QTOS((Q)BDY(ij)); ij = NEXT(ij);
+      i = ZTOS((Q)BDY(ij)); ij = NEXT(ij);
+      j = ZTOS((Q)BDY(ij)); ij = NEXT(ij);
       lij = BDY((DP)BDY(ij))->dl;
       ti = BDY(ps[i])->dl; tj = BDY(ps[j])->dl;
       if ( lij->td != lcm_of_DL(n,lij,ts,tdl)->td
@@ -1906,9 +1906,9 @@ void Pdp_nelim(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"dp_nelim");
-    dp_nelim = QTOS((Q)ARG0(arg));
+    dp_nelim = ZTOS((Q)ARG0(arg));
   }
-  STOQ(dp_nelim,*rp);
+  STOZ(dp_nelim,*rp);
 }
 
 void Pdp_mag(NODE arg,Z *rp)
@@ -1924,7 +1924,7 @@ void Pdp_mag(NODE arg,Z *rp)
   else {
     for ( s = 0, m = BDY(p); m; m = NEXT(m) )
       s += p_mag((P)m->c);
-    STOQ(s,*rp);
+    STOZ(s,*rp);
   }
 }
 
@@ -1978,7 +1978,7 @@ void Pdp_gr_print(NODE arg,Z *rp)
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"dp_gr_print");
     q = (Z)ARG0(arg);
-    s = QTOS(q);
+    s = ZTOS(q);
     switch ( s ) {
       case 0:
         DP_Print = 0; DP_PrintShort = 0;
@@ -1995,9 +1995,9 @@ void Pdp_gr_print(NODE arg,Z *rp)
     }
   } else {
     if ( DP_Print )  {
-      STOQ(1,q);
+      STOZ(1,q);
     } else if ( DP_PrintShort ) {
-      STOQ(2,q);
+      STOZ(2,q);
     } else
       q = 0;
   }
@@ -2091,13 +2091,13 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
       homo_is_set = 1;
     } else if ( !strcmp(key,"trace") ) {
       m = (Z)value;
-      STOQ(0x80000000,z);
+      STOZ(0x80000000,z);
       if ( !m )
         *modular = 0;
       else if ( cmpz(m,z) >= 0 )
         error("parse_gr_option : too large modulus");
       else
-        *modular = QTOS(m);
+        *modular = ZTOS(m);
       modular_is_set = 1;
     } else if ( !strcmp(key,"dp") ) {
       /* XXX : ignore */
@@ -2132,13 +2132,13 @@ void Pdp_gr_main(NODE arg,LIST *rp)
     v = (LIST)ARG1(arg);
     homo = (Num)ARG2(arg);
     m = (Z)ARG3(arg);
-    STOQ(0x80000000,z);
+    STOZ(0x80000000,z);
     if ( !m )
       modular = 0;
     else if ( cmpz(m,z) >= 0 )
       error("dp_gr_main : too large modulus");
     else
-      modular = QTOS(m);
+      modular = ZTOS(m);
     create_order_spec(0,ARG4(arg),&ord);
   } else if ( current_option )
     parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
@@ -2191,7 +2191,7 @@ void Pdp_gr_f_main(NODE arg,LIST *rp)
   homo = (Num)ARG2(arg);
 #if 0
   asir_assert(ARG3(arg),O_N,"dp_gr_f_main");
-  m = QTOS((Q)ARG3(arg));
+  m = ZTOS((Q)ARG3(arg));
   if ( m )
     error("dp_gr_f_main : trace lifting is not implemented yet");
   create_order_spec(0,ARG4(arg),&ord);
@@ -2243,7 +2243,7 @@ void Pdp_gr_checklist(NODE arg,LIST *rp)
   do_weyl = 0;
   asir_assert(ARG0(arg),O_LIST,"dp_gr_checklist");
   asir_assert(ARG1(arg),O_N,"dp_gr_checklist");
-  n = QTOS((Q)ARG1(arg));
+  n = ZTOS((Q)ARG1(arg));
   gbcheck_list(BDY((LIST)ARG0(arg)),n,&g,&dp);
   r = mknode(2,g,dp);
   MKLIST(*rp,r);
@@ -2259,7 +2259,7 @@ void Pdp_f4_mod_main(NODE arg,LIST *rp)
   asir_assert(ARG0(arg),O_LIST,"dp_f4_mod_main");
   asir_assert(ARG1(arg),O_LIST,"dp_f4_mod_main");
   asir_assert(ARG2(arg),O_N,"dp_f4_mod_main");
-  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = ZTOS((Q)ARG2(arg));
   f = remove_zero_from_list(f);
   if ( !BDY(f) ) {
     *rp = f; return;
@@ -2287,7 +2287,7 @@ void Pdp_gr_mod_main(NODE arg,LIST *rp)
   if ( !BDY(f) ) {
     *rp = f; return;
   }
-  homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
+  homo = (Num)ARG2(arg); m = ZTOS((Q)ARG3(arg));
   if ( !m )
     error("dp_gr_mod_main : invalid argument");
   create_order_spec(0,ARG4(arg),&ord);
@@ -2319,13 +2319,13 @@ void Pnd_f4(NODE arg,LIST *rp)
       *rp = f; return;
     }
       mq = (Z)ARG2(arg);
-      STOQ((unsigned long)0x40000000,z);
+      STOZ((unsigned long)0x40000000,z);
       if ( cmpz(mq,z) >= 0 ) {
         node = mknode(1,mq);
         Psetmod_ff(node,&val);
         m = -2;
     } else
-      m = QTOS(mq);
+      m = ZTOS(mq);
     create_order_spec(0,ARG3(arg),&ord);
     homo = 0;
     if ( get_opt("homo",&val) && val ) homo = 1;
@@ -2334,7 +2334,7 @@ void Pnd_f4(NODE arg,LIST *rp)
   } else if ( ac == 1 ) {
     f = (LIST)ARG0(arg);
     parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
-    homo = QTOS((Q)nhomo);
+    homo = ZTOS((Q)nhomo);
     if ( get_opt("dp",&val) && val ) retdp = 1;
     if ( get_opt("rref2",&val) && val ) nd_rref2 = 1;
   } else
@@ -2364,13 +2364,13 @@ void Pnd_gr(NODE arg,LIST *rp)
       *rp = f; return;
     }
       mq = (Z)ARG2(arg);
-      STOQ(0x40000000,z);
+      STOZ(0x40000000,z);
       if ( cmpz(mq,z) >= 0 ) {
         node = mknode(1,mq);
         Psetmod_ff(node,&val);
         m = -2;
       } else
-        m = QTOS(mq);
+        m = ZTOS(mq);
     create_order_spec(0,ARG3(arg),&ord);
     homo = 0;
     if ( get_opt("homo",&val) && val ) homo = 1;
@@ -2378,7 +2378,7 @@ void Pnd_gr(NODE arg,LIST *rp)
   } else if ( ac == 1 ) {
     f = (LIST)ARG0(arg);
     parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
-    homo = QTOS((Q)nhomo);
+    homo = ZTOS((Q)nhomo);
     if ( get_opt("dp",&val) && val ) retdp = 1;
   } else
     error("nd_gr : invalid argument");
@@ -2404,13 +2404,13 @@ void Pnd_gr_postproc(NODE arg,LIST *rp)
     *rp = f; return;
   }
   mq = (Z)ARG2(arg);
-  STOQ(0x40000000,z);
+  STOZ(0x40000000,z);
   if ( cmpz(mq,z) >= 0 ) {
     node = mknode(1,mq);
     Psetmod_ff(node,&val);
     m = -2;
   } else
-    m = QTOS(mq);
+    m = ZTOS(mq);
   create_order_spec(0,ARG3(arg),&ord);
   do_check = ARG4(arg) ? 1 : 0;
   nd_gr_postproc(f,v,m,ord,do_check,rp);
@@ -2427,7 +2427,7 @@ void Pnd_gr_recompute_trace(NODE arg,LIST *rp)
   asir_assert(ARG1(arg),O_LIST,"nd_gr_recompute_trace");
   asir_assert(ARG2(arg),O_N,"nd_gr_recompute_trace");
   f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-  m = QTOS((Q)ARG2(arg));
+  m = ZTOS((Q)ARG2(arg));
   create_order_spec(0,ARG3(arg),&ord);
   tlist = (LIST)ARG4(arg);
   nd_gr_recompute_trace(f,v,m,ord,tlist,rp);
@@ -2451,18 +2451,18 @@ void Pnd_btog(NODE arg,Obj *rp)
   asir_assert(ARG2(arg),O_N,"nd_btog");
   f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
   mq = (Z)ARG2(arg);
-  STOQ(0x40000000,z);
+  STOZ(0x40000000,z);
   if ( cmpz(mq,z) >= 0 ) {
     node = mknode(1,mq);
     Psetmod_ff(node,(Obj *)&val);
     m = -2;
   } else 
-    m = QTOS(mq);
+    m = ZTOS(mq);
   create_order_spec(0,ARG3(arg),&ord);
   tlist = (LIST)ARG4(arg);
   if ( (ac = argc(arg)) == 6 ) {
     asir_assert(ARG5(arg),O_N,"nd_btog");
-    pos = QTOS((Q)ARG5(arg));
+    pos = ZTOS((Q)ARG5(arg));
     *rp = nd_btog_one(f,v,m,ord,tlist,pos);
   } else if ( ac == 5 )
     *rp = nd_btog(f,v,m,ord,tlist);
@@ -2485,7 +2485,7 @@ void Pnd_weyl_gr_postproc(NODE arg,LIST *rp)
   if ( !BDY(f) ) {
     *rp = f; do_weyl = 0; return;
   }
-  m = QTOS((Q)ARG2(arg));
+  m = ZTOS((Q)ARG2(arg));
   create_order_spec(0,ARG3(arg),&ord);
   do_check = ARG4(arg) ? 1 : 0;
   nd_gr_postproc(f,v,m,ord,do_check,rp);
@@ -2510,13 +2510,13 @@ void Pnd_gr_trace(NODE arg,LIST *rp)
     if ( !BDY(f) ) {
       *rp = f; return;
     }
-    homo = QTOS((Q)ARG2(arg));
-    m = QTOS((Q)ARG3(arg));
+    homo = ZTOS((Q)ARG2(arg));
+    m = ZTOS((Q)ARG3(arg));
     create_order_spec(0,ARG4(arg),&ord);
   } else if ( ac == 1 ) {
     f = (LIST)ARG0(arg);
     parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
-    homo = QTOS((Q)nhomo);
+    homo = ZTOS((Q)nhomo);
   } else
     error("nd_gr_trace : invalid argument");
   nd_gr_trace(f,v,m,homo,0,ord,rp);
@@ -2540,13 +2540,13 @@ void Pnd_f4_trace(NODE arg,LIST *rp)
     if ( !BDY(f) ) {
       *rp = f; return;
     }
-    homo = QTOS((Q)ARG2(arg));
-    m = QTOS((Q)ARG3(arg));
+    homo = ZTOS((Q)ARG2(arg));
+    m = ZTOS((Q)ARG3(arg));
     create_order_spec(0,ARG4(arg),&ord);
   } else if ( ac == 1 ) {
     f = (LIST)ARG0(arg);
     parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
-    homo = QTOS((Q)nhomo);
+    homo = ZTOS((Q)nhomo);
   } else
     error("nd_gr_trace : invalid argument");
   nd_gr_trace(f,v,m,homo,1,ord,rp);
@@ -2571,7 +2571,7 @@ void Pnd_weyl_gr(NODE arg,LIST *rp)
     if ( !BDY(f) ) {
       *rp = f; do_weyl = 0; return;
     }
-    m = QTOS((Q)ARG2(arg));
+    m = ZTOS((Q)ARG2(arg));
     create_order_spec(0,ARG3(arg),&ord);
     homo = 0;
     if ( get_opt("homo",&val) && val ) homo = 1;
@@ -2579,7 +2579,7 @@ void Pnd_weyl_gr(NODE arg,LIST *rp)
   } else if ( ac == 1 ) {
     f = (LIST)ARG0(arg);
     parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
-    homo = QTOS((Q)nhomo);
+    homo = ZTOS((Q)nhomo);
     if ( get_opt("dp",&val) && val ) retdp = 1;
   } else
     error("nd_weyl_gr : invalid argument");
@@ -2605,13 +2605,13 @@ void Pnd_weyl_gr_trace(NODE arg,LIST *rp)
     if ( !BDY(f) ) {
       *rp = f; do_weyl = 0; return;
     }
-    homo = QTOS((Q)ARG2(arg));
-    m = QTOS((Q)ARG3(arg));
+    homo = ZTOS((Q)ARG2(arg));
+    m = ZTOS((Q)ARG3(arg));
     create_order_spec(0,ARG4(arg),&ord);
   } else if ( ac == 1 ) {
     f = (LIST)ARG0(arg);
     parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
-    homo = QTOS((Q)nhomo);
+    homo = ZTOS((Q)nhomo);
   } else
     error("nd_weyl_gr_trace : invalid argument");
   nd_gr_trace(f,v,m,homo,0,ord,rp);
@@ -2635,7 +2635,7 @@ void Pnd_nf(NODE arg,Obj *rp)
   }
   v = (LIST)ARG2(arg);
   create_order_spec(0,ARG3(arg),&ord);
-  nd_nf_p(f,g,v,QTOS((Q)ARG4(arg)),ord,rp);
+  nd_nf_p(f,g,v,ZTOS((Q)ARG4(arg)),ord,rp);
 }
 
 void Pnd_weyl_nf(NODE arg,Obj *rp)
@@ -2655,7 +2655,7 @@ void Pnd_weyl_nf(NODE arg,Obj *rp)
   }
   v = (LIST)ARG2(arg);
   create_order_spec(0,ARG3(arg),&ord);
-  nd_nf_p(f,g,v,QTOS((Q)ARG4(arg)),ord,rp);
+  nd_nf_p(f,g,v,ZTOS((Q)ARG4(arg)),ord,rp);
 }
 
 /* for Weyl algebra */
@@ -2682,13 +2682,13 @@ void Pdp_weyl_gr_main(NODE arg,LIST *rp)
     v = (LIST)ARG1(arg);
     homo = (Num)ARG2(arg);
     m = (Z)ARG3(arg);
-    STOQ(0x80000000,z);
+    STOZ(0x80000000,z);
     if ( !m )
       modular = 0;
     else if ( cmpz(m,z) >= 0 )
       error("dp_weyl_gr_main : too large modulus");
     else
-      modular = QTOS(m);
+      modular = ZTOS(m);
     create_order_spec(0,ARG4(arg),&ord);
   } else if ( current_option )
     parse_gr_option(f,current_option,&v,&homo,&modular,&ord);
@@ -2750,7 +2750,7 @@ void Pdp_weyl_f4_mod_main(NODE arg,LIST *rp)
   asir_assert(ARG0(arg),O_LIST,"dp_weyl_f4_main");
   asir_assert(ARG1(arg),O_LIST,"dp_weyl_f4_main");
   asir_assert(ARG2(arg),O_N,"dp_f4_main");
-  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = QTOS((Q)ARG2(arg));
+  f = (LIST)ARG0(arg); v = (LIST)ARG1(arg); m = ZTOS((Q)ARG2(arg));
   f = remove_zero_from_list(f);
   if ( !BDY(f) ) {
     *rp = f; return;
@@ -2779,7 +2779,7 @@ void Pdp_weyl_gr_mod_main(NODE arg,LIST *rp)
   if ( !BDY(f) ) {
     *rp = f; return;
   }
-  homo = (Num)ARG2(arg); m = QTOS((Q)ARG3(arg));
+  homo = (Num)ARG2(arg); m = ZTOS((Q)ARG3(arg));
   if ( !m )
     error("dp_weyl_gr_mod_main : invalid argument");
   create_order_spec(0,ARG4(arg),&ord);
@@ -2821,7 +2821,7 @@ void Pdp_set_weight(NODE arg,VECT *rp)
     n = v->len;
     current_dl_weight_vector = (int *)CALLOC(n,sizeof(int));
     for ( i = 0; i < n; i++ )
-      current_dl_weight_vector[i] = QTOS((Q)v->body[i]);
+      current_dl_weight_vector[i] = ZTOS((Q)v->body[i]);
         for ( i = 0; i < n; i++ )
             if ( current_dl_weight_vector[i] < 0 ) break;
         if ( i < n )
@@ -2863,7 +2863,7 @@ void Pdp_set_module_weight(NODE arg,VECT *rp)
     n = v->len;
     current_module_weight_vector = (int *)CALLOC(n,sizeof(int));
     for ( i = 0; i < n; i++ )
-      current_module_weight_vector[i] = QTOS((Q)v->body[i]);
+      current_module_weight_vector[i] = ZTOS((Q)v->body[i]);
     *rp = v;
   }
 }
@@ -2954,7 +2954,7 @@ void Pdp_weyl_set_weight(NODE arg,VECT *rp)
     n = v->len;
     current_weyl_weight_vector = (int *)CALLOC(n,sizeof(int));
     for ( i = 0; i < n; i++ )
-      current_weyl_weight_vector[i] = QTOS((Q)v->body[i]);
+      current_weyl_weight_vector[i] = ZTOS((Q)v->body[i]);
     *rp = v;
   }
 }
@@ -3142,8 +3142,8 @@ NODE sumi_criB(int nv,NODE d,DP *f,int m)
  r0 = 0;
  for ( ; d; d = NEXT(d) ) {
   p = (LIST)BDY(d);
-  p0 = QTOS((Q)ARG0(BDY(p)));
-  p1 = QTOS((Q)ARG1(BDY(p)));
+  p0 = ZTOS((Q)ARG0(BDY(p)));
+  p1 = ZTOS((Q)ARG1(BDY(p)));
   p2 = HDL((DP)ARG2(BDY(p)));
     if(!_dl_redble(HDL((DP)f[m]),p2,nv) ||
      dl_equal(nv,lcm_of_DL(nv,HDL(f[p0]),HDL(f[m]),lcm),p2) ||
@@ -3191,7 +3191,7 @@ NODE sumi_criFMD(int nv,DP *f,int m)
        if ( k2 < nv ) {
          NEWMP(mp); mp->dl = l1; C(mp) = (Obj)ONE;
          NEXT(mp) = 0; MKDP(nv,mp,u); u->sugar = l1->td;
-       STOQ(i,iq); STOQ(m,mq);
+       STOZ(i,iq); STOZ(m,mq);
        nd = mknode(3,iq,mq,u);
        MKLIST(list,nd);
        MKNODE(r1,list,r);
@@ -3353,10 +3353,10 @@ void Psumi_symbolic(NODE arg,LIST *rp)
   int q,simp;
 
   l = BDY((LIST)ARG0(arg));
-  q = QTOS((Q)ARG1(arg));
+  q = ZTOS((Q)ARG1(arg));
   f2 = BDY((LIST)ARG2(arg));
   g = (DP *)BDY((VECT)ARG3(arg));
-  simp = QTOS((Q)ARG4(arg));
+  simp = ZTOS((Q)ARG4(arg));
   *rp = sumi_symbolic(l,q,f2,g,simp);
 }
 
@@ -3368,7 +3368,7 @@ void Psumi_updatepairs(NODE arg,LIST *rp)
 
    d = (LIST)ARG0(arg); 
    f = (DP *)BDY((VECT)ARG1(arg)); 
-   m = QTOS((Q)ARG2(arg)); 
+   m = ZTOS((Q)ARG2(arg)); 
    *rp = sumi_updatepairs(d,f,m);
 }
 
@@ -3423,7 +3423,7 @@ void Pdpv_ord(NODE arg,Obj *rp)
 
   ac = argc(arg);
   if ( ac ) {
-    id = QTOS((Q)ARG0(arg));
+    id = ZTOS((Q)ARG0(arg));
     if ( ac > 1 && ARG1(arg) && OID((Obj)ARG1(arg))==O_LIST )
       shift = (LIST)ARG1(arg);
     else
@@ -3445,9 +3445,9 @@ void Pdpm_ord(NODE arg,LIST *rp)
     nd = BDY((LIST)ARG0(arg));
     if ( !create_order_spec(0,(Obj)ARG1(nd),&spec) )
       error("dpm_ord : invalid order specification");
-    initdpm(spec,QTOS((Q)ARG0(nd)));
+    initdpm(spec,ZTOS((Q)ARG0(nd)));
   }
-  STOQ(dpm_ispot,q);
+  STOZ(dpm_ispot,q);
   nd = mknode(2,q,dp_current_spec->obj);
   MKLIST(*rp,nd);
 }
@@ -3493,7 +3493,7 @@ void Pdpv_ht(NODE arg,LIST *rp)
     ht = 0;
   else
     dp_ht(BDY(p)[pos],&ht);
-  STOQ(pos,q);
+  STOZ(pos,q);
   n = mknode(2,q,ht);
   MKLIST(*rp,n);
 }
@@ -3513,7 +3513,7 @@ void Pdpv_hm(NODE arg,LIST *rp)
     ht = 0;
   else
     dp_hm(BDY(p)[pos],&ht);
-  STOQ(pos,q);
+  STOZ(pos,q);
   n = mknode(2,q,ht);
   MKLIST(*rp,n);
 }
@@ -3533,7 +3533,7 @@ void Pdpv_hc(NODE arg,LIST *rp)
     hc = 0;
   else
     hc = (P)BDY(BDY(p)[pos])->c;
-  STOQ(pos,q);
+  STOZ(pos,q);
   n = mknode(2,q,hc);
   MKLIST(*rp,n);
 }

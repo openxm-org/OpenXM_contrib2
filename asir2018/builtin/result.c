@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/result.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -80,12 +80,12 @@ void Pnd_res(NODE arg,P *rp)
     if ( d2 == 0 )
       *rp = (P)ONE;
     else {
-      STOQ(d2,q2);
+      STOZ(d2,q2);
       pwrp(CO,p1,q2,rp);
     }
     return;
   } else if ( d2 == 0 ) {
-    STOQ(d1,q1);
+    STOZ(d1,q1);
     pwrp(CO,p2,q1,rp);
     return;
   } 
@@ -97,15 +97,15 @@ void Pnd_res(NODE arg,P *rp)
   a2 = ALLOCA((d2+1)*sizeof(P));
   for ( i = 0; i <= d1; i++ ) a1[i] = 0;
   for ( i = 0; i <= d2; i++ ) a2[i] = 0;
-  for ( dc = DC(r1); dc; dc = NEXT(dc) ) a1[d1-QTOS(DEG(dc))] = COEF(dc);
-  for ( dc = DC(r2); dc; dc = NEXT(dc) ) a2[d2-QTOS(DEG(dc))] = COEF(dc);
+  for ( dc = DC(r1); dc; dc = NEXT(dc) ) a1[d1-ZTOS(DEG(dc))] = COEF(dc);
+  for ( dc = DC(r2); dc; dc = NEXT(dc) ) a2[d2-ZTOS(DEG(dc))] = COEF(dc);
   for ( i = 0; i < d2; i++ )
     for ( j = 0; j <= d1; j++ )
       m->body[i][i+j] = a1[j];
   for ( i = 0; i < d1; i++ )
     for ( j = 0; j <= d2; j++ )
       m->body[i+d2][i+j] = a2[j];
-  nd_det(argc(arg)==3?0:QTOS((Q)ARG3(arg)),m,rp);
+  nd_det(argc(arg)==3?0:ZTOS((Q)ARG3(arg)),m,rp);
 }
 
 void Presult(NODE arg,P *rp)
@@ -119,7 +119,7 @@ void Presult(NODE arg,P *rp)
   if ( argc(arg) == 3 )
     resultp(CO,VR((P)ARG0(arg)),(P)ARG1(arg),(P)ARG2(arg),rp);
   else {
-    mod = QTOS((Q)ARG3(arg));
+    mod = ZTOS((Q)ARG3(arg));
     ptomp(mod,(P)ARG1(arg),&p1); ptomp(mod,(P)ARG2(arg),&p2);
     resultmp(CO,mod,VR((P)ARG0(arg)),p1,p2,&r);
     mptop(r,rp);

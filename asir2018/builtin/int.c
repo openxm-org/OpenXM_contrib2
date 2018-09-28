@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.2 2018/09/21 07:06:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.3 2018/09/25 07:36:01 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -133,7 +133,7 @@ void Pntoint32(NODE arg,USINT *rp)
   if ( !INT(q) || !smallz(q) )
     error("ntoint32 : invalid argument");
   absz(q,&z);
-  t = QTOS(z);
+  t = ZTOS(z);
   if ( sgnz(q) < 0 )
     t = -(int)t;
   MKUSINT(*rp,t);
@@ -145,16 +145,16 @@ void Pint32ton(NODE arg,Z *rp)
 
   asir_assert(ARG0(arg),O_USINT,"int32ton");
   t = (int)BDY((USINT)ARG0(arg));
-  STOQ(t,*rp);
+  STOZ(t,*rp);
 }
 
 void Pdp_set_mpi(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"dp_set_mpi");
-    mpi_mag = QTOS((Q)ARG0(arg));
+    mpi_mag = ZTOS((Q)ARG0(arg));
   }
-  STOQ(mpi_mag,*rp);
+  STOZ(mpi_mag,*rp);
 }
 
 void Psmall_jacobi(NODE arg,Z *rp)
@@ -172,9 +172,9 @@ void Psmall_jacobi(NODE arg,Z *rp)
     || !smallz(m) || !smallz(a) || sgnz(m) < 0 || evenz(m) )
     error("small_jacobi : invalid input");
   else {
-    a0 = QTOS(a); m0 = QTOS(m);
+    a0 = ZTOS(a); m0 = ZTOS(m);
     s = small_jacobi(a0,m0);
-    STOQ(s,*rp);
+    STOZ(s,*rp);
   }
 }
 
@@ -206,7 +206,7 @@ int small_jacobi(int a,int m)
 
 void Ptype_t_NB(NODE arg,Z *rp)
 {
-  if ( TypeT_NB_check(QTOS((Q)ARG0(arg)),QTOS((Q)ARG1(arg))))
+  if ( TypeT_NB_check(ZTOS((Q)ARG0(arg)),ZTOS((Q)ARG1(arg))))
     *rp = ONE;
   else
     *rp = 0;
@@ -280,7 +280,7 @@ void Pmt_save(NODE arg,Z *rp)
   int ret;
 
   ret = mt_save(BDY((STRING)ARG0(arg)));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void Pmt_load(NODE arg,Z *rp)
@@ -288,7 +288,7 @@ void Pmt_load(NODE arg,Z *rp)
   int ret;
 
   ret = mt_load(BDY((STRING)ARG0(arg)));
-  STOQ(ret,*rp);
+  STOZ(ret,*rp);
 }
 
 void isqrt(Z a,Z *r);
@@ -514,7 +514,7 @@ void Pishift(NODE arg,Z *rp)
   s = (Z)ARG1(arg);
   asir_assert(n1,O_N,"ixor");
   asir_assert(s,O_N,"ixor");
-  bshiftz(n1,QTOS(s),rp);
+  bshiftz(n1,ZTOS(s),rp);
 }
 
 void isqrt(Z a,Z *r)
@@ -601,7 +601,7 @@ void Pinv(NODE arg,Num *rp)
         invz((Z)n,mod,(Z *)rp);
         break;
       case N_M:
-        inv = invm(CONT((MQ)n),QTOS(mod));
+        inv = invm(CONT((MQ)n),ZTOS(mod));
         STOMQ(inv,r);
         *rp = (Num)r;
         break;
@@ -613,13 +613,13 @@ void Pinv(NODE arg,Num *rp)
 void Pfac(NODE arg,Z *rp)
 { 
   asir_assert(ARG0(arg),O_N,"fac");
-  factorialz(QTOS((Q)ARG0(arg)),rp); 
+  factorialz(ZTOS((Q)ARG0(arg)),rp); 
 }
 
 void Plrandom(NODE arg,Z *rp)
 {
   asir_assert(ARG0(arg),O_N,"lrandom");
-  randomz(QTOS((Q)ARG0(arg)),rp);
+  randomz(ZTOS((Q)ARG0(arg)),rp);
 }
 
 void Prandom(NODE arg,Z *rp)
@@ -631,14 +631,14 @@ void Prandom(NODE arg,Z *rp)
   r = mrand48()&BMASK;
 #else
   if ( arg )
-    srandom(QTOS((Q)ARG0(arg)));
+    srandom(ZTOS((Q)ARG0(arg)));
   r = random()&BMASK;
 #endif
 #endif
   if ( arg )
-    mt_sgenrand(QTOS((Q)ARG0(arg)));
+    mt_sgenrand(ZTOS((Q)ARG0(arg)));
   r = mt_genrand();
-  UTOQ(r,*rp);
+  UTOZ(r,*rp);
 }
 
 #if defined(VISUAL) || defined(__MINGW32__)
@@ -666,11 +666,11 @@ void Pprime(NODE arg,Z *rp)
   int i;
 
   asir_assert(ARG0(arg),O_N,"prime");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( i < 0 || i >= 1900 )
     *rp = 0;
   else
-    STOQ(sprime[i],*rp);
+    STOZ(sprime[i],*rp);
 }
 
 void Plprime(NODE arg,Z *rp)
@@ -678,12 +678,12 @@ void Plprime(NODE arg,Z *rp)
   int i,p;
 
   asir_assert(ARG0(arg),O_N,"lprime");
-  i = QTOS((Q)ARG0(arg));
+  i = ZTOS((Q)ARG0(arg));
   if ( i < 0 )
     *rp = 0;
   else 
     p = get_lprime(i);
-  STOQ(p,*rp);
+  STOZ(p,*rp);
 }
 
 extern int up_kara_mag, up_tkara_mag, up_fft_mag;
@@ -692,27 +692,27 @@ void Pset_upfft(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"set_upfft");
-    up_fft_mag = QTOS((Q)ARG0(arg));
+    up_fft_mag = ZTOS((Q)ARG0(arg));
   }
-  STOQ(up_fft_mag,*rp);
+  STOZ(up_fft_mag,*rp);
 }
 
 void Pset_upkara(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"set_upkara");
-    up_kara_mag = QTOS((Q)ARG0(arg));
+    up_kara_mag = ZTOS((Q)ARG0(arg));
   }
-  STOQ(up_kara_mag,*rp);
+  STOZ(up_kara_mag,*rp);
 }
 
 void Pset_uptkara(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"set_uptkara");
-    up_tkara_mag = QTOS((Q)ARG0(arg));
+    up_tkara_mag = ZTOS((Q)ARG0(arg));
   }
-  STOQ(up_tkara_mag,*rp);
+  STOZ(up_tkara_mag,*rp);
 }
 
 extern int up2_kara_mag;
@@ -721,9 +721,9 @@ void Pset_up2kara(NODE arg,Z *rp)
 {
   if ( arg ) {
     asir_assert(ARG0(arg),O_N,"set_up2kara");
-    up2_kara_mag = QTOS((Q)ARG0(arg));
+    up2_kara_mag = ZTOS((Q)ARG0(arg));
   }
-  STOQ(up2_kara_mag,*rp);
+  STOZ(up2_kara_mag,*rp);
 }
 
 void Pigcdbin(NODE arg,Z *rp)

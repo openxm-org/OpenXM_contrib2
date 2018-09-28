@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ec.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -211,13 +211,13 @@ void Pecm_count_order(NODE arg,Z *rp)
       getmod_lm(&p);
       if ( z_bits((Q)p) > 32 )
         error("ecm_count_order : ground field too large");
-      p0 = QTOS(p);
+      p0 = ZTOS(p);
       ec = (VECT)ARG0(arg);
       vb = (Obj *)BDY(ec); simp_ff(vb[0],&a); simp_ff(vb[1],&b);
       a0 = LMTOS((LM)a);
       b0 = LMTOS((LM)b);
       ord = ecm_count_order_gfp(p0,a0,b0);
-      UTOQ(ord,*rp);
+      UTOZ(ord,*rp);
       break;
     case FF_GF2N:
       getmod_gf2n(&d);
@@ -226,7 +226,7 @@ void Pecm_count_order(NODE arg,Z *rp)
       ec = (VECT)ARG0(arg);
       vb = (Obj *)BDY(ec); simp_ff(vb[0],&a); simp_ff(vb[1],&b);
       ord = ecm_count_order_gf2n(d,(GF2N)a,(GF2N)b);
-      UTOQ(ord,*rp);
+      UTOZ(ord,*rp);
       break;
     default:
       error("ecm_count_order : current_ff is not set");
@@ -236,8 +236,8 @@ void Pecm_count_order(NODE arg,Z *rp)
 void Pecm_set_addcounter(NODE arg,Z *rp)
 {
   if ( arg )
-    ecm_addcounter = QTOS((Q)ARG0(arg));
-  UTOQ(ecm_addcounter,*rp);
+    ecm_addcounter = ZTOS((Q)ARG0(arg));
+  UTOZ(ecm_addcounter,*rp);
 }
 
 void Pecm_compute_all_key_homo_ff(NODE arg,VECT *rp)
@@ -295,7 +295,7 @@ void Pnextvect1(NODE arg,Z *rp)
   int index;
 
   index = nextvect1(ARG0(arg),ARG1(arg));
-  STOQ(index,*rp);
+  STOZ(index,*rp);
 }
 
 /* XXX at least n < 32 must hold. What is the strict restriction for n ? */
@@ -315,14 +315,14 @@ void Pseparate_vect(NODE arg,LIST *rp)
   n = v->len; b = (Z *)v->body;
   w = (double *)ALLOCA(n*sizeof(double));
   for ( i = 0; i < n; i++ )
-    w[i] = (double)QTOS(b[i]);
+    w[i] = (double)ZTOS(b[i]);
   s = separate_vect(w,n);
   ns = nc = 0;
   for ( i = n-1; i >= 0; i-- )
     if ( s & (1<<i) ) {
-      STOQ(i,iq); MKNODE(t,iq,ns); ns = t;
+      STOZ(i,iq); MKNODE(t,iq,ns); ns = t;
     } else {
-      STOQ(i,iq); MKNODE(t,iq,nc); nc = t;
+      STOZ(i,iq); MKNODE(t,iq,nc); nc = t;
     }
   MKLIST(ls,ns); MKLIST(lc,nc);
   MKNODE(t,lc,0); MKNODE(t1,ls,t);
@@ -746,7 +746,7 @@ void ecm_find_match(unsigned int *g,int ng,unsigned int *b,int nb,LIST *r)
   for ( i = 0, c0 = 0; i < ng; i++ ) {
     j = find_match(g[i],b,nb);
     if ( j >= 0 ) {
-      STOQ(i,iq); STOQ(j,jq);
+      STOZ(i,iq); STOZ(j,jq);
       MKNODE(n1,jq,0); MKNODE(n0,iq,n1); MKLIST(l,n0);
       NEXTNODE(c0,c);
       BDY(c) = (pointer)l;
@@ -785,8 +785,8 @@ int nextvect1(VECT vect,VECT bound)
   vb = (Z *)vect->body;
   bb = (Z *)bound->body;
   for ( i = size-1; i >= 0; i-- )
-    if ( (a=QTOS(vb[i])) < QTOS(bb[i]) ) {
-      a++; STOQ(a,vb[i]);
+    if ( (a=ZTOS(vb[i])) < ZTOS(bb[i]) ) {
+      a++; STOZ(a,vb[i]);
       break;
     } else
       vb[i] = 0;

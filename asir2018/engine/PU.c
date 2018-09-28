@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/PU.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -365,7 +365,7 @@ void sprs(VL vl,V v,P p1,P p2,P *pr)
     if ( !r ) 
       break;
 
-    d = deg(v,g1) - deg(v,g2); STOQ(d,dq);
+    d = deg(v,g1) - deg(v,g2); STOZ(d,dq);
     pwrp(nvl,h,dq,&m); mulp(nvl,m,x,&m1); g1 = g2;
     divsp(nvl,r,m1,&g2); x = LC(g1); /* g1 is not const w.r.t v */
     pwrp(nvl,x,dq,&m1); mulp(nvl,m1,h,&m2); 
@@ -392,12 +392,12 @@ void resultp(VL vl,V v,P p1,P p2,P *pr)
       *pr = 0;
       return;
     } else {
-      d = deg(v,q2); STOQ(d,dq);
+      d = deg(v,q2); STOZ(d,dq);
       pwrp(vl,q1,dq,pr); 
       return;
     }
   else if ( VR(q2) != v ) {
-    d = deg(v,q1); STOQ(d,dq);
+    d = deg(v,q1); STOZ(d,dq);
     pwrp(vl,q2,dq,pr); 
     return;
   } 
@@ -413,12 +413,12 @@ void resultp(VL vl,V v,P p1,P p2,P *pr)
   } else if ( d1 < d2 ) {
     g2 = q1; g1 = q2;
     if ( (d1 % 2) && (d2 % 2) ) {
-      STOQ(-1,dq); adj = (P)dq;
+      STOZ(-1,dq); adj = (P)dq;
     } else
       adj = (P)ONE;
   } else {
     premp(nvl,q1,q2,&t);
-    d = deg(v,t); STOQ(d,dq); pwrp(nvl,LC(q2),dq,&adj); 
+    d = deg(v,t); STOZ(d,dq); pwrp(nvl,LC(q2),dq,&adj); 
     g1 = q2; g2 = t;
     if ( d1 % 2 ) {
       chsgnp(adj,&t); adj = t;
@@ -444,7 +444,7 @@ void resultp(VL vl,V v,P p1,P p2,P *pr)
         j = k - 1;
       }
     else {
-      d = j - k; STOQ(d,dq);
+      d = j - k; STOZ(d,dq);
       pwrp(nvl,(VR(g2)==v?LC(g2):g2),dq,&m);
       mulp(nvl,g2,m,&m1); 
       pwrp(nvl,lc,dq,&m); divsp(nvl,m1,m,&t); 
@@ -481,12 +481,12 @@ void srch2(VL vl,V v,P p1,P p2,P *pr)
       *pr = 0;
       return;
     } else {
-      d = deg(v,q2); STOQ(d,dq);
+      d = deg(v,q2); STOZ(d,dq);
       pwrp(vl,q1,dq,pr); 
       return;
     }
   else if ( VR(q2) != v ) {
-    d = deg(v,q1); STOQ(d,dq);
+    d = deg(v,q1); STOZ(d,dq);
     pwrp(vl,q2,dq,pr); 
     return;
   } 
@@ -508,7 +508,7 @@ void srch2(VL vl,V v,P p1,P p2,P *pr)
     adj = (P)ONE;
   } else {
     premp(nvl,g1,g2,&t); 
-    d = deg(v,t); STOQ(d,dq);
+    d = deg(v,t); STOZ(d,dq);
     pwrp(nvl,LC(g2),dq,&adj); 
     g1 = g2; g2 = t;
     j = deg(v,g1) - 1;
@@ -533,7 +533,7 @@ void srch2(VL vl,V v,P p1,P p2,P *pr)
         j = k - 1;
       }
     else {
-      d = j - k; STOQ(d,dq);
+      d = j - k; STOZ(d,dq);
       pwrp(nvl,(VR(g2)==v?LC(g2):g2),dq,&m);
       mulp(nvl,g2,m,&m1); 
       pwrp(nvl,lc,dq,&m); divsp(nvl,m1,m,&t); 
@@ -582,7 +582,7 @@ void srcr(VL vl,V v,P p1,P p2,P *pr)
   norm1c(q1,&a); norm1c(q2,&b);
   n = DEG(DC(q1)); m = DEG(DC(q2));
   pwrq(a,(Q)m,&w); pwrq(b,(Q)n,&s); mulq(w,s,&u);
-  factorialz(QTOS(n)+QTOS(m),&t);
+  factorialz(ZTOS(n)+ZTOS(m),&t);
   mulq(u,(Q)t,&s); addq(s,s,&f);
   for ( index = 0, q = (Q)ONE, c = 0; cmpq(f,q) >= 0; ) {
     mod = get_lprime(index++);
@@ -595,7 +595,7 @@ void srcr(VL vl,V v,P p1,P p2,P *pr)
     ptomp(mod,q1,&tg1); ptomp(mod,q2,&tg2);
     srchmp(nvl,mod,v,tg1,tg2,&resg);
     chnremp(nvl,mod,c,(Z)q,resg,&c1); c = c1;
-    STOQ(mod,t); mulq(q,(Q)t,&s); q = s;
+    STOZ(mod,t); mulq(q,(Q)t,&s); q = s;
   }
   *pr = c;
 }
@@ -627,7 +627,7 @@ void res_ch_det(VL vl,V v,P p1,P p2,P *pr)
   norm1c(q1,&a); norm1c(q2,&b);
   n = DEG(DC(q1)); m = DEG(DC(q2));
   pwrq(a,(Q)m,&w); pwrq(b,(Q)n,&s); mulq(w,s,&u);
-  factorialz(QTOS(n)+QTOS(m),&t);
+  factorialz(ZTOS(n)+ZTOS(m),&t);
   mulq(u,(Q)t,&s); addq(s,s,&f);
   for ( index = 0, q = (Q)ONE, c = 0; cmpq(f,q) >= 0; ) {
     mod = get_lprime(index++);
@@ -640,7 +640,7 @@ void res_ch_det(VL vl,V v,P p1,P p2,P *pr)
     ptomp(mod,q1,&tg1); ptomp(mod,q2,&tg2);
     res_detmp(nvl,mod,v,tg1,tg2,&resg);
     chnremp(nvl,mod,c,(Z)q,resg,&c1); c = c1;
-    STOQ(mod,t); mulq(q,(Q)t,&s); q = s;
+    STOZ(mod,t); mulq(q,(Q)t,&s); q = s;
   }
   *pr = c;
 }
@@ -657,12 +657,12 @@ void res_detmp(VL vl,int mod,V v,P p1,P p2,P *dp)
   n1 = UDEG(p1); n2 = UDEG(p2); n = n1+n2;
   mat = (P **)almat_pointer(n,n);
   for ( dc = DC(p1); dc; dc = NEXT(dc) )
-    mat[0][n1-QTOS(DEG(dc))] = COEF(dc);
+    mat[0][n1-ZTOS(DEG(dc))] = COEF(dc);
   for ( i = 1; i < n2; i++ )
     for ( j = 0; j <= n1; j++ )
       mat[i][i+j] = mat[0][j];
   for ( dc = DC(p2); dc; dc = NEXT(dc) )
-    mat[n2][n2-QTOS(DEG(dc))] = COEF(dc);
+    mat[n2][n2-ZTOS(DEG(dc))] = COEF(dc);
   for ( i = 1; i < n1; i++ )
     for ( j = 0; j <= n2; j++ )
       mat[i+n2][i+j] = mat[n2][j];
@@ -739,7 +739,7 @@ void premp(VL vl,P p1,P p2,P *pr)
     bzero((char *)pw,(int)((n1+1)*sizeof(P)));
 
     for ( dc = DC(p1); dc; dc = NEXT(dc) )
-      pw[QTOS(DEG(dc))] = COEF(dc);
+      pw[ZTOS(DEG(dc))] = COEF(dc);
 
     for ( i = n1; i >= n2; i-- ) {
       if ( pw[i] ) {
@@ -750,8 +750,8 @@ void premp(VL vl,P p1,P p2,P *pr)
 
         for ( dc = DC(p2), d = i - n2; dc; dc = NEXT(dc) ) {
           mulp(vl,COEF(dc),m,&m1);
-          subp(vl,pw[QTOS(DEG(dc))+d],m1,&m2); 
-          pw[QTOS(DEG(dc))+d] = m2;
+          subp(vl,pw[ZTOS(DEG(dc))+d],m1,&m2); 
+          pw[ZTOS(DEG(dc))+d] = m2;
         }
       } else 
         for ( j = i; j >= 0; j-- ) 
@@ -973,7 +973,7 @@ int getchomdeg(V v,P p)
     return ( dbound(v,p) );
   else {
     for ( dc = DC(p), m = 0; dc; dc = NEXT(dc) ) {
-      m1 = getchomdeg(v,COEF(dc))+QTOS(DEG(dc));
+      m1 = getchomdeg(v,COEF(dc))+ZTOS(DEG(dc));
       m = MAX(m,m1);
     }
     return ( m );
@@ -989,11 +989,11 @@ int getlchomdeg(V v,P p,int *d)
     *d = 0;
     return ( 0 );
   } else if ( VR(p) == v ) {
-    *d = QTOS(DEG(DC(p)));
+    *d = ZTOS(DEG(DC(p)));
     return ( homdeg(LC(p)) );
   } else {
     for ( dc = DC(p), m0 = 0, d0 = 0; dc; dc = NEXT(dc) ) {
-      m1 = getlchomdeg(v,COEF(dc),&d1)+QTOS(DEG(dc));
+      m1 = getlchomdeg(v,COEF(dc),&d1)+ZTOS(DEG(dc));
       if ( d1 > d0 ) {
         m0 = m1;
         d0 = d1;

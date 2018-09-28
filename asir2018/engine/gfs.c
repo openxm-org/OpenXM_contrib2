@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/gfs.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -667,8 +667,8 @@ void gfs_galois_action(GFS a,Q e,GFS *c)
   GFS t,s;
 
   t = a;
-  k = QTOS(e);
-  STOQ(current_gfs_p,p);
+  k = ZTOS(e);
+  STOZ(current_gfs_p,p);
   for ( i = 0; i < k; i++ ) {
     pwrgfs(t,p,&s); t = s;
   }
@@ -730,7 +730,7 @@ void qtogfs(Q a,GFS *c)
 
   if ( a && (sgnq(a) < 1) )
     error("qtogfs : invalid argument");
-  s = QTOS(a)%current_gfs_q;
+  s = ZTOS(a)%current_gfs_q;
   itogfs(s,c);
 }
 
@@ -762,7 +762,7 @@ void gfstopgfs(GFS a,V v,P *c)
     *c = 0;
   else if ( !current_gfs_ntoi ) {
     UTOMQ(CONT(a),t);
-    STOQ(CONT(t),q);
+    STOZ(CONT(t),q);
     *c = (P)q;
   } else
     enc_to_p(current_gfs_p,current_gfs_iton[CONT(a)],v,c);
@@ -925,15 +925,15 @@ void pwrgfs(GFS a,Z b,GFS *c)
   else if ( !a )
     *c = 0;
   else if ( !current_gfs_ntoi) {
-    ai = pwrm(current_gfs_q,CONT(a),QTOS(b));
+    ai = pwrm(current_gfs_q,CONT(a),ZTOS(b));
     MKGFS(ai,*c);
   } else {
-    STOQ(CONT(a),an); mulz(an,b,&tn);
-    STOQ(current_gfs_q1,an); remz(tn,an,&rn);
+    STOZ(CONT(a),an); mulz(an,b,&tn);
+    STOZ(current_gfs_q1,an); remz(tn,an,&rn);
     if ( !rn )
       itogfs(1,c);
     else {
-      ai = QTOS(rn);
+      ai = ZTOS(rn);
       MKGFS(ai,*c);
     }
   }
@@ -965,7 +965,7 @@ void pthrootgfs(GFS a,GFS *b)
   int e,i;
   GFS t,s;
 
-  STOQ(characteristic_sf(),p);
+  STOZ(characteristic_sf(),p);
   e = extdeg_sf()-1;
   t = a;
   for ( i = 0; i < e; i++ ) {
@@ -1131,7 +1131,7 @@ int _pwrsf(int a,int b)
     return FTOIF(a);
   } else {
     iftogfs(a,&at);
-    STOQ(b,bt);
+    STOZ(b,bt);
     pwrgfs(at,bt,&ct);
     c = CONT(ct);
     return FTOIF(c);

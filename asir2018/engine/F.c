@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/F.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -103,7 +103,7 @@ void homfctr(VL vl,P g,DCP *dcp)
   for ( dct = dc; dct; dct = NEXT(dct) )
     if ( !NUM(dc->c) ) {
       for ( s = 0, f = dc->c, d = d0 = homdeg(f); f; d = homdeg(f) ) {
-        exthp(vl,f,d,&h); STOQ(d0-d,e); pwrp(vl,x,e,&t);
+        exthp(vl,f,d,&h); STOZ(d0-d,e); pwrp(vl,x,e,&t);
         mulp(vl,t,h,&u); addp(vl,s,u,&t); s = t;
         subp(vl,f,h,&u); f = u;
       }
@@ -576,7 +576,7 @@ void mkssum(V v,int e,int s,int sgn,P *r)
     } else {
       NEWDC(NEXT(dc)); dc = NEXT(dc);
     }
-    STOQ(i*e,DEG(dc)); STOQ(sgnt,q),COEF(dc) = (P)q;
+    STOZ(i*e,DEG(dc)); STOZ(sgnt,q),COEF(dc) = (P)q;
   }
   NEXT(dc) = 0; MKP(v,dc0,*r);
 }
@@ -838,7 +838,7 @@ void msqfrmain(VL vl,P p,DCP *dcp)
       usqp(p0,&dc0);
       for ( d1 = 0, dc = dc0; dc; dc = NEXT(dc) )
         if ( DEG(dc) )
-          d1 += (QTOS(DEG(dc))-1)*UDEG(COEF(dc));
+          d1 += (ZTOS(DEG(dc))-1)*UDEG(COEF(dc));
       if ( d1 == 0 ) {
         /* p is squarefree */
         NEWDC(dc); DEG(dc) = ONE; COEF(dc) = p; NEXT(dc) = 0;
@@ -865,7 +865,7 @@ void msqfrmain(VL vl,P p,DCP *dcp)
         usqp(p0,&dc0);
         for ( d1 = 0, dc = dc0; dc; dc = NEXT(dc) )
           if ( DEG(dc) )
-            d1 += (QTOS(DEG(dc))-1)*UDEG(COEF(dc));
+            d1 += (ZTOS(DEG(dc))-1)*UDEG(COEF(dc));
 
         if ( d1 == 0 ) {
           NEWDC(dc); DEG(dc) = ONE; COEF(dc) = g; NEXT(dc) = 0;
@@ -949,7 +949,7 @@ void msqfrmainmain(VL vl,P p,VN vn,P p0,DCP dc0,DCP *dcp,P *pp)
         break;
     } else { 
       for ( t = f, t0 = f0,
-        j = 0, k = QTOS(DEG(a[i]))-1; j < k; j++ ) {
+        j = 0, k = ZTOS(DEG(a[i]))-1; j < k; j++ ) {
         diffp(vl,t,v,&s); t = s;
         diffp(vl,t0,v,&s); t0 = s;
       }
@@ -989,7 +989,7 @@ void msqfrmainmain(VL vl,P p,VN vn,P p0,DCP dc0,DCP *dcp,P *pp)
 
           pwrp(vl,COEF(dcb),DEG(a[i]),&s);
           for ( t = LC(f), j = 0; divtpz(vl,t,s,&tt); j++, t = tt );
-          STOQ(j,qq);
+          STOZ(j,qq);
           if ( cmpz(qq,DEG(dcb)) > 0 )
             qq = DEG(dcb);
           pwrp(vl,COEF(dcb),qq,&t); mulp(vl,u,t,&s); u = s;
@@ -1138,7 +1138,7 @@ void estimatelc(VL vl,Z c,DCP dc,VN vn,P *lcp)
       mulp(vl,r,COEF(dct),&s); r = s;
     } else {
       substvp(vl,COEF(dct),vn,(P *)&c0);
-      for ( i = 0, c1 = c; i < (int)QTOS(DEG(dct)); i++ ) {
+      for ( i = 0, c1 = c; i < (int)ZTOS(DEG(dct)); i++ ) {
         divz(c1,c0,&c2);
         if ( !INT(c2) )
           break;
@@ -1146,7 +1146,7 @@ void estimatelc(VL vl,Z c,DCP dc,VN vn,P *lcp)
           c1 = c2;
       }
       if ( i ) {
-        STOQ(i,c1);
+        STOZ(i,c1);
         pwrp(vl,COEF(dct),c1,&s); mulp(vl,r,s,&t); r = t;
       }
     }
@@ -1232,7 +1232,7 @@ void afctrmain(VL vl,P p0,P p,int init,DCP *dcp)
 
   v = VR(p); MKV(v,x);
   v0 = VR(p0); MKV(v0,y);
-  STOQ(init,q),s = (P)q;
+  STOZ(init,q),s = (P)q;
   mulp(vl,s,y,&m); subp(vl,x,m,&t); addp(vl,x,m,&a); 
   substp(vl,p,v,t,&pt); 
   remsdcp(vl,pt,p0,&pt1); 

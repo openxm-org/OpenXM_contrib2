@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/builtin/user.c,v 1.1 2018/09/19 05:45:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/user.c,v 1.2 2018/09/24 22:26:43 noro Exp $ */
 
 /* a sample file for adding builtin functions */
 
@@ -31,14 +31,14 @@ void Pcomp_f(NODE arg,Z *rp)
     e1 = BDY((LIST)BDY(l1));
     e2 = BDY((LIST)BDY(l2));
     r = compp(CO,(P)ARG0(e1),(P)ARG0(e2));
-    if ( r ) { STOQ(r,*rp); return; }
-    m1 = QTOS((Q)ARG1(e1));
-    m2 = QTOS((Q)ARG1(e2));
+    if ( r ) { STOZ(r,*rp); return; }
+    m1 = ZTOS((Q)ARG1(e1));
+    m2 = ZTOS((Q)ARG1(e2));
   r = m1>m2?1:(m1<m2?-1:0);
-  if ( r ) { STOQ(r,*rp); return; }
+  if ( r ) { STOZ(r,*rp); return; }
   }
   r = l1?1:(l2?-1:0);
-  STOQ(r,*rp);
+  STOZ(r,*rp);
 }
 
 /*

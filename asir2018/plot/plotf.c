@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/plotf.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -174,7 +174,7 @@ void Popen_canvas(NODE arg,Obj *rp){
         geom=(LIST)BDY(arg);
         break;
       case O_N:
-        stream=QTOS((Q)BDY(arg));
+        stream=ZTOS((Q)BDY(arg));
         break;
       case O_STR:
         wname=(STRING)BDY(arg);
@@ -184,9 +184,9 @@ void Popen_canvas(NODE arg,Obj *rp){
         break;
     }
   stream=validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   if(!geom){
-    STOQ(300,w300);
+    STOZ(300,w300);
     MKNODE(n0,w300,0);
     MKNODE(n,w300,n0);
     MKLIST(geom,n);
@@ -214,7 +214,7 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
   Obj t;
   int found_f;
 
-  STOQ(-2,m2);STOQ(2,p2);MKNODE(n,p2,0);MKNODE(defrange,m2,n);
+  STOZ(-2,m2);STOZ(2,p2);MKNODE(n,p2,0);MKNODE(defrange,m2,n);
   poly=0;vl=0;geom=0;wname=0;stream=-1;ri=0;xrange=0;yrange=0;zrange=0;
   v[0]=v[1]=0;
   found_f = 0;
@@ -251,7 +251,7 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
       if ( !found_f ) {
         poly = (Obj)BDY(arg);
         found_f = 1;
-      } else stream=QTOS((Q)BDY(arg));
+      } else stream=ZTOS((Q)BDY(arg));
       break;
     case O_STR:
       wname=(STRING)BDY(arg);break;
@@ -297,9 +297,9 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
     wname=name (STRING)]
   */
   stream=validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   if(!geom){
-    STOQ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
+    STOZ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
   }
   if(is_memory){
     MKSTR(fname,MEMORY_PLOT);
@@ -331,7 +331,7 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
   STRING fname,wname;
   Obj t;
 
-  STOQ(-2,m2); STOQ(2,p2);
+  STOZ(-2,m2); STOZ(2,p2);
   MKNODE(n,p2,0); MKNODE(defrange,m2,n); 
   poly = 0; vl = 0; geom = 0; wname = 0; stream = -1; ri = 0;
   v[0] = v[1] = 0;
@@ -363,7 +363,7 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
           geom = list;
         break;
       case O_N:
-        stream = QTOS((Q)BDY(arg)); break;
+        stream = ZTOS((Q)BDY(arg)); break;
       case O_STR:
         wname = (STRING)BDY(arg); break;
       default:
@@ -425,9 +425,9 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
   */
 
   stream = validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   if ( !geom ) {
-    STOQ(300,w300);
+    STOZ(300,w300);
     MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
   }
   if ( is_memory ) {
@@ -463,7 +463,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
   Obj t;
   Z prec;
 
-  STOQ(-2,m2);STOQ(2,p2);
+  STOZ(-2,m2);STOZ(2,p2);
   MKNODE(n,p2,0);MKNODE(defrange,m2,n);
   func=0;vl=0;geom=0;wname=0;stream=-1;ri=0;
   v[0]=0;
@@ -503,7 +503,7 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
           v[0] = VR(var);
           found_f = 1;
         } else
-          stream=QTOS((Q)BDY(arg));
+          stream=ZTOS((Q)BDY(arg));
         break;
       case O_STR:
         wname=(STRING)BDY(arg);break;
@@ -537,13 +537,13 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
        wname=name (STRING)]
   */
   stream=validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   if(!geom ){
-    STOQ(300,w300);
+    STOZ(300,w300);
     MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
   }
   if(plot_by_bigfloat)
-    STOQ(plot_by_bigfloat,prec);
+    STOZ(plot_by_bigfloat,prec);
   else
     prec = 0;
   if(is_memory ){
@@ -596,7 +596,7 @@ void Ppolarplot(NODE arg,Z *rp){
       else geom=list;
       break;
     case O_N:
-      stream=QTOS((Q)BDY(arg));
+      stream=ZTOS((Q)BDY(arg));
       break;
     case O_STR://wname
       wname=(STRING)BDY(arg);
@@ -622,9 +622,9 @@ void Ppolarplot(NODE arg,Z *rp){
     break;
   }
   stream=validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   if(!geom){
-    STOQ(300,w300);
+    STOZ(300,w300);
     MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
   }
   MKSTR(fname,POLARPLOT);
@@ -739,7 +739,7 @@ void ListCheck(char * head,LIST list){
     if(!BDY(n))printf("%d 0\n",i);
     else if(OID(BDY(n))==O_P) printf("%d poly\n",i);
     else if(OID(BDY(n))==O_R) printf("%d real\n",i);
-    else if(OID(BDY(n))==O_N) printf("%d %d\n",i,QTOS((Q)BDY(n)));
+    else if(OID(BDY(n))==O_N) printf("%d %d\n",i,ZTOS((Q)BDY(n)));
   }
 }
 
@@ -832,7 +832,7 @@ void PpolarplotD(NODE arg,Obj *rp){
         iNo++;
         break;
       case 1://stream arg
-        stream=QTOS((Q)BDY(arg));
+        stream=ZTOS((Q)BDY(arg));
         iNo++;
         break;
       default://error
@@ -899,15 +899,15 @@ void PpolarplotD(NODE arg,Obj *rp){
   }
   // set default
   if(!range){
-    STOQ(DEFAULTPOLARSTEP,defstep);MKReal(2*Pi,pi2);MKV(v[0],var);
+    STOZ(DEFAULTPOLARSTEP,defstep);MKReal(2*Pi,pi2);MKV(v[0],var);
     MKNODE(n,defstep,0);MKNODE(n1,pi2,n);MKNODE(n2,0,n1);
     MKNODE(defrange,var,n2);MKLIST(range,defrange);
   }
   if(!geom){
-    STOQ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
+    STOZ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
   }
   stream=validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   MKSTR(fname,POLARPLOTD);
   arg=mknode(7,s_id,fname,poly,color,range,geom,wname);
   Pox_rpc(arg,&t);
@@ -928,8 +928,8 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
 
   iNo=lNo=sNo=findG=0;pfine=TRUE;
   poly=0;stream=-1;wname=0;color=0;stream=0;
-  STOQ(-2,m2);STOQ(2,p2);MKNODE(n,p2,0);MKNODE(defrange,m2,n);
-  STOQ(MAXGC,mxgc);
+  STOZ(-2,m2);STOZ(2,p2);MKNODE(n,p2,0);MKNODE(defrange,m2,n);
+  STOZ(MAXGC,mxgc);
   for(;arg;arg=NEXT(arg)){
     if(!BDY(arg)) iNo++;
     else switch(OID(BDY(arg))){
@@ -949,7 +949,7 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
         iNo++;
         break;
       case 1: //stream arg
-        stream=QTOS((Q)BDY(arg));
+        stream=ZTOS((Q)BDY(arg));
         iNo++;
         break;
       default:
@@ -1038,7 +1038,7 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
     MKV(v[1],var);MKNODE(n,var,defrange);MKLIST(yrange,n);
   }
   if(!geom){
-    STOQ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
+    STOZ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
   }
   if(!(strcmp(fn,CONPLOTD)&strcmp(fn,CONPLOTQ)&strcmp(fn,CONPLOTB))&!zrange){
     MKNODE(n,mxgc,0);MKNODE(n1,m2,n);MKNODE(n2,m2,n1);MKLIST(zrange,n2);
@@ -1054,7 +1054,7 @@ void ifplot_mainNG(NODE arg,char *fn,Obj *rp){
     wname=name (STRING optional)],
     itvstep (Q) if ITVIFPLOT */
   stream=validate_ox_plot_stream(stream);
-  STOQ(stream,s_id);
+  STOZ(stream,s_id);
   MKSTR(fname,fn);
   arg=mknode(9,s_id,fname,poly,color,xrange,yrange,zrange,geom,wname);
   Pox_rpc(arg,&t);
