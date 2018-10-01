@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.1 2018/09/19 05:45:08 noro Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
@@ -240,21 +240,21 @@ extern int GC_free_space_numerator;
 
 void Risa_GC_get_adj(int *nm, int *dn) {
   *nm = GC_free_space_numerator;
-  *dn = GC_free_space_divisor;
+  *dn = GC_get_free_space_divisor();
 }
 
 void Risa_GC_set_adj(int nm, int dn) {
   GC_free_space_numerator = nm;
-  GC_free_space_divisor = dn;
+  GC_set_free_space_divisor(dn);
 }
 #else
 void Risa_GC_get_adj(int *nm, int *dn) {
   *nm = 1;
-  *dn = GC_free_space_divisor;
+  *dn = GC_get_free_space_divisor();
 }
 
 void Risa_GC_set_adj(int nm, int dn) {
-  GC_free_space_divisor = dn/nm;
+  GC_set_free_space_divisor(dn/nm);
 }
 
 double GC_get_gctime() {

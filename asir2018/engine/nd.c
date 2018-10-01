@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.6 2018/09/28 08:20:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.7 2018/10/01 05:49:06 noro Exp $ */
 
 #include "nd.h"
 
@@ -5962,7 +5962,7 @@ void expand_array(Z *svect,Z *cvect,int n)
         if ( svect[i] ) svect[i] = cvect[j++];
 }
 
-#if 1
+#if 0
 int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
     int i,j,k,len,pos,prev,nz;
