@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.1 2018/09/19 05:45:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1164,7 +1164,7 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
   if ( is_hensel )
     rank = generic_gauss_elim_hensel(m,&nm,&dn,&ri,&ci);
   else
-    rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
+    rank = generic_gauss_elim64(m,&nm,&dn,&ri,&ci);
   t = col-rank;
   MKVECT(rind,rank);
   MKVECT(cind,t);
@@ -1229,6 +1229,65 @@ void Pindep_rows_mod(NODE arg,VECT *rp)
     B[I] <-> x_{R[I]}+B[I][0]x_{C[0]}+B[I][1]x_{C[1]}+...
 */
 
+#if SIZEOF_LONG==8
+void Pgeneric_gauss_elim_mod64(NODE arg,LIST *rp)
+{
+  NODE n0;
+  MAT m,mat;
+  VECT rind,cind,rnum;
+  Z **tmat;
+  mp_limb_t **wmat,**row0;
+  Z *rib,*cib,*rnb;
+  int *colstat;
+  mp_limb_t *p;
+  Z q;
+  mp_limb_t md;
+  int i,j,k,l,row,col,t,rank;
+
+  asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim_mod64");
+  asir_assert(ARG1(arg),O_N,"generic_gauss_elim_mod64");
+  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
+  row = m->row; col = m->col; tmat = (Z **)m->body;
+  wmat = (mp_limb_t **)almat64(row,col);
+
+  row0 = (mp_limb_t **)ALLOCA(row*sizeof(mp_limb_t *));
+  for ( i = 0; i < row; i++ ) row0[i] = wmat[i];
+
+  colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  for ( i = 0; i < row; i++ )
+    for ( j = 0; j < col; j++ )
+      wmat[i][j] = remqi64((Q)tmat[i][j],md);
+  rank = generic_gauss_elim_mod64(wmat,row,col,md,colstat);
+
+  MKVECT(rnum,rank);
+  rnb = (Z *)rnum->body;
+  for ( i = 0; i < rank; i++ )
+    for ( j = 0, p = wmat[i]; j < row; j++ )
+      if ( p == row0[j] )
+        STOZ(j,rnb[i]);
+
+  MKMAT(mat,rank,col-rank);
+  tmat = (Z **)mat->body;
+  for ( i = 0; i < rank; i++ )
+    for ( j = k = 0; j < col; j++ )
+      if ( !colstat[j] ) {
+        UTOZ(wmat[i][j],tmat[i][k]); k++;
+      }
+
+  MKVECT(rind,rank);
+  MKVECT(cind,col-rank);
+  rib = (Z *)rind->body; cib = (Z *)cind->body;
+  for ( j = k = l = 0; j < col; j++ )
+    if ( colstat[j] ) {
+      STOZ(j,rib[k]); k++;
+    } else {
+      STOZ(j,cib[l]); l++;
+    }
+  n0 = mknode(4,mat,rind,cind,rnum);
+  MKLIST(*rp,n0);
+}
+#endif
+
 void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
 {
   NODE n0;
@@ -1239,11 +1298,20 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
   Z *rib,*cib,*rnb;
   int *colstat,*p;
   Z q;
+  long mdl;
   int md,i,j,k,l,row,col,t,rank;
 
   asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim_mod");
   asir_assert(ARG1(arg),O_N,"generic_gauss_elim_mod");
-  m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
+#if SIZEOF_LONG==8
+  mdl = ZTOS((Z)ARG1(arg));
+  if ( mdl >= ((mp_limb_t)1)<<32 ) {
+    Pgeneric_gauss_elim_mod64(arg,rp);
+    return;
+  }
+#endif
+  m = (MAT)ARG0(arg); 
+  md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; tmat = (Z **)m->body;
   wmat = (int **)almat(row,col);
 
@@ -1283,6 +1351,7 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
   n0 = mknode(4,mat,rind,cind,rnum);
   MKLIST(*rp,n0);
 }
+
 
 void Pleqm(NODE arg,VECT *rp)
 {
@@ -1635,12 +1704,12 @@ void red_by_vect(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)
     }
 }
 
-#if defined(__GNUC__) && SIZEOF_LONG==8
-/* 64bit vector += UNIT vector(normalized) */
+#if SIZEOF_LONG==8
+/* mp_limb_t vector += U32 vector(normalized)*U32 */
 
-void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len)
+void red_by_vect64(int m, mp_limb_t *p,unsigned int *c,mp_limb_t *r,unsigned int hc,int len)
 {
-  U64 t;
+  mp_limb_t t;
 
   /* (p[0],c[0]) is normalized */
   *p++ = 0; *c++ = 0; r++; len--;
@@ -1651,6 +1720,60 @@ void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len)
       *p = t;
     }
 }
+
+/* mp_limb_t vector = (mp_limb_t vector+mp_limb_t vector*mp_limb_t)%mp_limb_t */
+
+void red_by_vect64mod(mp_limb_t m, mp_limb_t *p,mp_limb_t *r,mp_limb_t hc,int len)
+{
+  *p++ = 0; r++; len--;
+  for ( ; len; len--, r++, p++ )
+    if ( *r )
+      *p = muladdmod64(*r,hc,*p,m);
+}
+
+int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *colstat)
+{
+  int i,j,k,l,rank;
+  mp_limb_t inv,a;
+  mp_limb_t *t,*pivot,*pk;
+
+  for ( rank = 0, j = 0; j < col; j++ ) {
+    for ( i = rank; i < row; i++ )
+      if ( mat[i][j] )
+        break;
+    if ( i == row ) {
+      colstat[j] = 0;
+      continue;
+    } else
+      colstat[j] = 1;
+    if ( i != rank ) {
+      t = mat[i]; mat[i] = mat[rank]; mat[rank] = t;
+    }
+    pivot = mat[rank];
+    inv = invmod64(pivot[j],md);
+    for ( k = j, pk = pivot+k; k < col; k++, pk++ )
+      if ( *pk )
+        *pk = mulmod64(*pk,inv,md);
+    for ( i = rank+1; i < row; i++ ) {
+      t = mat[i];
+      if ( a = t[j] )
+        red_by_vect64mod(md,t+j,pivot+j,md-a,col-j);
+    }
+    rank++;
+  }
+  for ( j = col-1, l = rank-1; j >= 0; j-- )
+    if ( colstat[j] ) {
+      pivot = mat[l];
+      for ( i = 0; i < l; i++ ) {
+        t = mat[i];
+        if ( a = t[j] )
+          red_by_vect64mod(md,t+j,pivot+j,md-a,col-j);
+      }
+      l--;
+    }
+  return rank;
+}
+
 #endif
 
 void red_by_vect_sf(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.3 2018/09/25 07:36:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.4 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -69,6 +69,7 @@ void Pigcdbin(), Pigcdbmod(), PigcdEuc(), Pigcdacc(), Pigcdcntl();
 void Pihex();
 void Pimaxrsh(), Pilen();
 void Ptype_t_NB();
+void Plprime64();
 
 struct ftab int_tab[] = {
   {"dp_set_mpi",Pdp_set_mpi,-1},
@@ -93,6 +94,9 @@ struct ftab int_tab[] = {
   {"fac",Pfac,1},
   {"prime",Pprime,1},
   {"lprime",Plprime,1},
+#if SIZEOF_LONG==8
+  {"lprime64",Plprime64,1},
+#endif
   {"random",Prandom,-1},
   {"lrandom",Plrandom,1},
   {"iand",Piand,2},
@@ -685,6 +689,22 @@ void Plprime(NODE arg,Z *rp)
     p = get_lprime(i);
   STOZ(p,*rp);
 }
+
+#if SIZEOF_LONG==8
+void Plprime64(NODE arg,Z *rp)
+{
+  int i;
+  mp_limb_t p;
+
+  asir_assert(ARG0(arg),O_N,"lprime64");
+  i = ZTOS((Q)ARG0(arg));
+  if ( i < 0 )
+    *rp = 0;
+  else 
+    p = get_lprime64(i);
+  STOZ(p,*rp);
+}
+#endif
 
 extern int up_kara_mag, up_tkara_mag, up_fft_mag;
 

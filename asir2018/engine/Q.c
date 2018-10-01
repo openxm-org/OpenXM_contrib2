@@ -1,3 +1,4 @@
+/* $OpenXM$ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -9,6 +10,10 @@ int lf_lazy;
 Z current_mod_lf;
 int current_mod_lf_size;
 gmp_randstate_t GMP_RAND;
+
+#define F4_INTRAT_PERIOD 8 
+
+extern int DP_Print;
 
 void isqrtz(Z a,Z *r);
 void bshiftz(Z a,int n,Z *r);
@@ -884,10 +889,6 @@ unsigned int remqi(Q a,unsigned int mod)
   return c;
 }
 
-extern int DP_Print;
-
-#define F4_INTRAT_PERIOD 8 
-
 int generic_gauss_elim(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
 {
   int **wmat;
@@ -898,6 +899,9 @@ int generic_gauss_elim(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
   MAT r,crmat;
   int ret;
 
+#if SIZEOF_LONG == 8
+  return generic_gauss_elim64(mat,nm,dn,rindp,cindp);
+#endif
   bmat = (Z **)mat->body;
   row = mat->row; col = mat->col;
   wmat = (int **)almat(row,col);
@@ -1761,3 +1765,126 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
       }
   }
 }
+
+#if SIZEOF_LONG == 8
+mp_limb_t remqi64(Q a,mp_limb_t mod)
+{
+  mp_limb_t c,nm,dn;
+  mpz_t r;
+
+  if ( !a ) return 0;
+  else if ( a->z ) {
+    mpz_init(r);
+    c = mpz_fdiv_r_ui(r,BDY((Z)a),mod);
+  } else {
+    mpz_init(r);
+    nm = mpz_fdiv_r_ui(r,mpq_numref(BDY(a)),mod);
+    dn = mpz_fdiv_r_ui(r,mpq_denref(BDY(a)),mod);
+    dn = invmod64(dn,mod);    
+    c = mulmod64(nm,dn,mod);
+  }
+  return c;
+}
+
+int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *colstat);
+mp_limb_t get_lprime64(int ind);
+
+int generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
+{
+  mp_limb_t **wmat;
+  mp_limb_t *wmi;
+  mp_limb_t md,inv,t,t1;
+  Z **bmat,**tmat,*bmi,*tmi;
+  Z q,m1,m2,m3,s,u;
+  int *colstat,*wcolstat,*rind,*cind;
+  int row,col,ind,i,j,k,l,rank,rank0;
+  MAT r,crmat;
+  int ret;
+
+  bmat = (Z **)mat->body;
+  row = mat->row; col = mat->col;
+  wmat = (mp_limb_t **)almat64(row,col);
+  colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  wcolstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  for ( ind = 0; ; ind++ ) {
+    if ( DP_Print ) {
+      fprintf(asir_out,"."); fflush(asir_out);
+    }
+    md = get_lprime64(ind);
+    for ( i = 0; i < row; i++ )
+      for ( j = 0, bmi = bmat[i], wmi = wmat[i]; j < col; j++ )
+        wmi[j] = remqi64((Q)bmi[j],md);
+    rank = generic_gauss_elim_mod64(wmat,row,col,md,wcolstat);
+    if ( !ind ) {
+RESET:
+      UTOZ(md,m1);
+      rank0 = rank;
+      bcopy(wcolstat,colstat,col*sizeof(int));
+      MKMAT(crmat,rank,col-rank);
+      MKMAT(r,rank,col-rank); *nm = r;
+      tmat = (Z **)crmat->body;
+      for ( i = 0; i < rank; i++ )
+        for ( j = k = 0, tmi = tmat[i], wmi = wmat[i]; j < col; j++ )
+          if ( !colstat[j] ) { UTOZ(wmi[j],tmi[k]); k++; }
+    } else {
+      if ( rank < rank0 ) {
+        if ( DP_Print ) {
+          fprintf(asir_out,"lower rank matrix; continuing...\n");
+          fflush(asir_out);
+        }
+        continue;
+      } else if ( rank > rank0 ) {
+        if ( DP_Print ) {
+          fprintf(asir_out,"higher rank matrix; resetting...\n");
+          fflush(asir_out);
+        }
+        goto RESET;
+      } else {
+        for ( j = 0; (j<col) && (colstat[j]==wcolstat[j]); j++ );
+        if ( j < col ) {
+          if ( DP_Print ) {
+            fprintf(asir_out,"inconsitent colstat; resetting...\n");
+            fflush(asir_out);
+          }
+          goto RESET;
+        }
+      }
+
+      inv = invmod64(remqi64((Q)m1,md),md);
+      UTOZ(md,m2); mulz(m1,m2,&m3);
+      for ( i = 0; i < rank; i++ )      
+        for ( j = k = 0, tmi = tmat[i], wmi = wmat[i]; j < col; j++ )
+          if ( !colstat[j] ) {
+            if ( tmi[k] ) {
+            /* f3 = f1+m1*(m1 mod m2)^(-1)*(f2 - f1 mod m2) */
+              t = remqi64((Q)tmi[k],md);
+              if ( wmi[j] >= t ) t = wmi[j]-t;
+              else t = md-(t-wmi[j]);
+              t1 = mulmod64(t,inv,md);
+              UTOZ(t1,u); mulz(m1,u,&s); 
+              addz(tmi[k],s,&u); tmi[k] = u;
+            } else if ( wmi[j] ) {
+            /* f3 = m1*(m1 mod m2)^(-1)*f2 */
+              t = mulmod64(wmi[j],inv,md);
+              UTOZ(t,u); mulz(m1,u,&s); tmi[k] = s;
+            }
+            k++;
+          }
+      m1 = m3;
+      if ( ind % F4_INTRAT_PERIOD ) 
+        ret = 0;
+      else 
+        ret = intmtoratm(crmat,m1,*nm,dn);
+      if ( ret ) {
+        *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+        *cindp = cind = (int *)MALLOC_ATOMIC((col-rank)*sizeof(int));
+        for ( j = k = l = 0; j < col; j++ )
+          if ( colstat[j] ) rind[k++] = j;  
+          else cind[l++] = j;
+        if ( gensolve_check(mat,*nm,*dn,rind,cind) )
+          return rank;
+      }
+    }
+  }
+}
+#endif

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/M.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -564,6 +564,18 @@ int **almat(int n,int m)
     mat[i] = (int *)CALLOC(m,sizeof(int));
   return mat;
 }
+
+#if defined(__GNUC__) && SIZEOF_LONG == 8
+mp_limb_t **almat64(int n,int m)
+{
+  mp_limb_t **mat,i;
+
+  mat = (mp_limb_t **)MALLOC(n*sizeof(mp_limb_t *));
+  for ( i = 0; i < n; i++ )
+    mat[i] = (mp_limb_t *)CALLOC(m,sizeof(mp_limb_t));
+  return mat;
+}
+#endif
 
 void mini(int mod,UM f,UM fr)
 {

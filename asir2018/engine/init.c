@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.2 2018/09/27 02:39:37 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.3 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -249,6 +249,9 @@ void create_error(ERR *err,unsigned int serial,char *msg,LIST trace)
   MKERR(*err,list);
 }
 
+static mp_limb_t *lprime64;
+static int lprime64_size;
+
 void init_lprime()
 {
   int s,i;
@@ -258,9 +261,18 @@ void init_lprime()
   lprime_size = s/sizeof(int);  
   for ( i = 0; i < lprime_size; i++ )
     lprime[i] = lprime_init[lprime_size-i-1];
+
+#if SIZEOF_LONG == 8
+  s = sizeof(lprime64_init);
+  lprime64 = (mp_limb_t *)MALLOC_ATOMIC(s);
+  lprime64_size = s/sizeof(mp_limb_t);  
+  for ( i = 0; i < lprime64_size; i++ )
+    lprime64[i] = lprime64_init[lprime64_size-i-1];
+#endif
 }
 
 void create_new_lprimes(int);
+void create_new_lprimes64(int);
 
 int get_lprime(int index)
 {
@@ -268,6 +280,15 @@ int get_lprime(int index)
     create_new_lprimes(index);
   return lprime[index];
 }
+
+#if SIZEOF_LONG == 8
+mp_limb_t get_lprime64(int index)
+{
+  if ( index >= lprime64_size )
+    create_new_lprimes64(index);
+  return lprime64[index];
+}
+#endif
 
 void create_new_lprimes(int index)
 {
@@ -292,4 +313,33 @@ void create_new_lprimes(int index)
     }
   }
   lprime_size += count;
+}
+
+mp_limb_t nextprime(mp_limb_t a)
+{
+  static FUNC f=0;
+  Z z,r;
+
+  if ( f == 0 ) mkparif("nextprime",&f);
+  STOZ(a,z); 
+  r = (Z)evalparif(f,mknode(1,z));
+  return ZTOS(r);
+}
+
+void create_new_lprimes64(int index)
+{
+  int count,j;
+  mp_limb_t p;
+
+  if ( index < lprime64_size )
+    return;
+  count = index-lprime64_size+1;
+  if ( count < 256 )
+    count = 256;
+  lprime64 = (mp_limb_t *)GC_realloc(lprime64,(lprime64_size+count)*sizeof(mp_limb_t));
+  for ( p = lprime64[lprime64_size-1], j = 0; j < count; j++ ) {
+    p = nextprime(p+1);
+    lprime64[lprime64_size+j] = p;
+  }
+  lprime64_size += count;
 }

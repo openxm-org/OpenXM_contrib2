@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.3 2018/09/24 22:26:43 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.4 2018/09/28 08:20:29 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -197,10 +197,10 @@ typedef unsigned _int64 UL;
 #endif
 
 #if defined(__GNUC__) && SIZEOF_LONG == 8
-typedef __uint64_t U64;
 typedef __uint128_t U128;
 typedef __int64_t L64;
 typedef __int128_t L128;
+
 #endif
 
 typedef struct oZ {
@@ -1436,7 +1436,6 @@ int geldb(VL,P);
 int getchomdeg(V,P);
 int getdeg(V,P);
 int getlchomdeg(V,P,int *);
-int get_lprime(int);
 int homdeg(P);
 unsigned int invm(unsigned int,int);
 int iscycm(P);
@@ -2690,6 +2689,12 @@ void hextoz(char *hex,Z *np);
 void todouble(Obj,Obj *);
 
 void lmtolf(LM f,Z *b);
+
+#if SIZEOF_LONG == 8
+mp_limb_t get_lprime64(int index);
+mp_limb_t **almat64(int,int);
+mp_limb_t remqi64(Q n,mp_limb_t m);
+#endif
 
 #if defined(VISUAL) || defined(__MINGW32__)
 void check_intr();
