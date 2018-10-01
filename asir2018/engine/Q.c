@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.6 2018/10/01 05:49:06 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -36,13 +36,15 @@ void init_gmpq()
   gmp_randinit_default(GMP_RAND);
 }
 
+void printexpr(VL,Obj);
+
 void pmat(Z **a,int row,int col)
 {
   int i,j;
 
   for ( i = 0; i < row; i++, printf("\n") )
     for ( j = 0; j < col; j++, printf(" ") )
-      printexpr(CO,a[i][j]);
+      printexpr(CO,(Obj)a[i][j]);
   printf("\n");
 }
 

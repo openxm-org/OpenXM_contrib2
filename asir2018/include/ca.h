@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.4 2018/09/28 08:20:29 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.5 2018/10/01 05:49:06 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2694,6 +2694,8 @@ void lmtolf(LM f,Z *b);
 mp_limb_t get_lprime64(int index);
 mp_limb_t **almat64(int,int);
 mp_limb_t remqi64(Q n,mp_limb_t m);
+int generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp);
+int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *colstat);
 #endif
 
 #if defined(VISUAL) || defined(__MINGW32__)
