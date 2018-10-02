@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.5 2018/10/01 05:49:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.6 2018/10/01 05:54:09 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1021,6 +1021,8 @@ if(!(r)){NEWDMM(r);(c)=(r);}else{NEWDMM(NEXT(c));(c)=NEXT(c);}
 #define UNIMQ(q) ((q)&&NUM(q)&&SFF(q)&&(CONT((MQ)q)==1))
 #define MUNIMQ(q) ((q)&&NUM(q)&&SFF(q)&&(CONT((MQ)q)==-1))
 #define EVENZ(n) ((!(n))||(INT(n)&&mpz_tstbit(((Z)(n))->body,0)==0))
+#define UNIMPZ(q) (mpz_cmp_si(q,1)==0)
+#define MUNIMPZ(q) (mpz_cmp_si(q,-1)==0)
 
 /* special macros for private memory management */
 

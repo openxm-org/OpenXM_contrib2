@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.7 2018/10/01 05:49:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.8 2018/10/01 07:48:01 noro Exp $ */
 
 #include "nd.h"
 
@@ -6042,6 +6042,7 @@ int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
     return maxrs;
 }
 #else
+
 /* direct mpz version */
 int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
@@ -6084,8 +6085,12 @@ int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp
             mpz_div(cs,svect[k],gcd);
             mpz_div(cr,BDY(CZ(mr)),gcd);
             mpz_neg(cs,cs);
-            for ( j = 0; j < col; j++ )
-              mpz_mul(svect[j],svect[j],cr);
+            if ( MUNIMPZ(cr) )
+              for ( j = 0; j < col; j++ ) mpz_neg(svect[j],svect[j]); 
+            else if ( !UNIMPZ(cr) )
+              for ( j = 0; j < col; j++ ) {
+                if ( mpz_sgn(svect[j]) ) mpz_mul(svect[j],svect[j],cr);
+              }
             mpz_set_ui(svect[k],0);
             prev = k;
             switch ( ivect->width ) {

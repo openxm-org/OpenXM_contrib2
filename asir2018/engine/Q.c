@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.6 2018/10/01 05:49:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.7 2018/10/01 05:54:09 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -900,9 +900,14 @@ int generic_gauss_elim(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
   int row,col,ind,md,i,j,k,l,t,t1,rank,rank0,inv;
   MAT r,crmat;
   int ret;
+  MAT mat2,nm2;
+  Z dn2;
+  int *rind2,*cind2;
+  int ret2;
 
 #if SIZEOF_LONG == 8
-  return generic_gauss_elim64(mat,nm,dn,rindp,cindp);
+  ret = generic_gauss_elim64(mat,nm,dn,rindp,cindp);
+  return ret;
 #endif
   bmat = (Z **)mat->body;
   row = mat->row; col = mat->col;
@@ -1180,6 +1185,40 @@ int generic_gauss_elim_direct(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp){
   return rank;
 }
 
+int mpz_intmtoratm(mpz_t **mat,int row,int col,mpz_t md,mpz_t **nm,mpz_t dn)
+{
+  mpz_t t,s,b,u,nm1,dn1;
+  int i,j,k,l,ret;
+  mpz_t *mi,*nmk;
+
+  if ( UNIMPZ(md) )
+    return 0;
+  mpz_init(t); mpz_init(s); mpz_init(b); mpz_init(u);
+  mpz_init(nm1); mpz_init(dn1);
+  mpz_fdiv_q_2exp(t,md,1); mpz_sqrt(s,t); mpz_fdiv_q_2exp(b,s,64);
+  if ( !mpz_sgn(b) ) mpz_set_ui(b,1);
+  mpz_set_ui(dn,1);
+  for ( i = 0; i < row; i++ )
+    for ( j = 0, mi = mat[i]; j < col; j++ )
+      if ( mpz_sgn(mi[j]) ) {
+        mpz_mul(s,mi[j],dn);
+        mpz_mod(u,s,md);
+        ret = mpz_inttorat(u,md,b,nm1,dn1);
+        if ( !ret ) 
+          return 0;
+        else {
+          if ( !UNIMPZ(dn1) ) {
+            for ( k = 0; k < i; k++ )
+              for ( l = 0, nmk = nm[k]; l < col; l++ ) mpz_mul(nmk[l],nmk[l],dn1);
+            for ( l = 0, nmk = nm[i]; l < j; l++ ) mpz_mul(nmk[l],nmk[l],dn1);
+          }
+          mpz_set(nm[i][j],nm1);
+          mpz_mul(dn,dn,dn1);
+        }
+      }
+  return 1;
+}
+
 int intmtoratm(MAT mat,Z md,MAT nm,Z *dn)
 {
   Z t,s,b,dn0,dn1,nm1,q,u,unm,udn,dmy;
@@ -1280,6 +1319,33 @@ int intvtoratv(Z *v,int n,Z md,Z b,Z *nm,Z *dn)
 
 /* assuming 0 < c < m */
 
+int mpz_inttorat(mpz_t c,mpz_t m,mpz_t b,mpz_t nm,mpz_t dn)
+{
+  mpz_t u1,v1,u2,v2,r1,r2;
+  mpz_t q,t;
+
+  mpz_init_set_ui(u1,0); mpz_init_set_ui(v1,1);
+  mpz_init_set(u2,m); mpz_init_set(v2,c);
+  mpz_init(q); mpz_init(t); mpz_init(r1); mpz_init(r2);
+  while ( mpz_cmp(v2,b) >= 0 ) {
+    /* r2 = u2-q*v2 */
+    mpz_fdiv_qr(q,r2,u2,v2);
+    mpz_set(u2,v2); mpz_set(v2,r2);
+    /* r1 = u1-q*v1 */
+    mpz_mul(t,q,v1); mpz_sub(r1,u1,t);
+    mpz_set(u1,v1); mpz_set(v1,r1);
+  }
+  if ( mpz_cmp(v1,b) >= 0 ) return 0;
+  else {
+    if ( mpz_sgn(v1)<0  ) {
+      mpz_neg(dn,v1); mpz_neg(nm,v2);
+    } else {
+      mpz_set(dn,v1); mpz_set(nm,v2);
+    }
+    return 1;
+  }
+}
+
 int inttorat(Z c,Z m,Z b,Z *nmp,Z *dnp)
 {
   Z qq,t,u1,v1,r1;
@@ -1302,6 +1368,38 @@ int inttorat(Z c,Z m,Z b,Z *nmp,Z *dnp)
 }
 
 extern int f4_nocheck;
+
+int mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int *rind,int *cind)
+{
+  int row,col,clen,i,j,k,l;
+  mpz_t t;
+  mpz_t *w;
+  Z *mati;
+  mpz_t *nmk;
+
+  if ( f4_nocheck ) return 1;
+  row = mat->row; col = mat->col; clen = col-rank;
+  w = (mpz_t *)MALLOC(clen*sizeof(mpz_t));
+  mpz_init(t);
+  for ( i = 0; i < clen; i++ ) mpz_init(w[i]);
+  for ( i = 0; i < row; i++ ) {
+    mati = (Z *)mat->body[i];
+    for ( l = 0; l < clen; l++ ) mpz_set_ui(w[l],0);
+    for ( k = 0; k < rank; k++ )
+      for ( l = 0, nmk = (mpz_t *)nm[k]; l < clen; l++ ) {
+        /* w[l] += mati[rind[k]]*nmk[k] */
+        if ( mati[rind[k]] ) mpz_addmul(w[l],BDY(mati[rind[k]]),nmk[l]);
+      }
+    for ( j = 0; j < clen; j++ ) {
+      if ( mati[cind[j]] ) mpz_mul(t,dn,BDY(mati[cind[j]]));
+      else mpz_set_ui(t,0);
+      if ( mpz_cmp(w[j],t) ) break;
+    }
+    if ( j != clen ) break;
+  }
+  if ( i != row ) return 0;
+  else return 1;
+}
 
 int gensolve_check(MAT mat,MAT nm,Z dn,int *rind,int *cind)
 {
@@ -1791,6 +1889,145 @@ mp_limb_t remqi64(Q a,mp_limb_t mod)
 int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *colstat);
 mp_limb_t get_lprime64(int ind);
 
+void mpz_print(mpz_t a)
+{
+  mpz_out_str(stdout,10,a); printf("\n");
+}
+
+void mpz_printmat(mpz_t **a,int row,int col)
+{
+  int i,j;
+  for ( i = 0; i < row; i++ ) {
+    for ( j = 0; j < col; j++ ) {
+      mpz_out_str(stdout,10,a[i][j]); printf(" ");
+    }
+    printf("\n");
+  }
+}
+
+mpz_t **mpz_allocmat(int row,int col)
+{
+  mpz_t **p;
+  int i,j;
+
+  p = (mpz_t **)MALLOC(row*sizeof(mpz_t *));
+  for ( i = 0; i < row; i++ ) {
+    p[i] = (mpz_t *)MALLOC(col*sizeof(mpz_t));
+    for ( j = 0; j < col; j++ ) mpz_init(p[i][j]);
+  }
+  return p;
+}
+
+#if 1
+int generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
+{
+  mp_limb_t **wmat;
+  mp_limb_t *wmi;
+  mp_limb_t md,inv,t,t1;
+  Z z;
+  Z **bmat,*bmi;
+  mpz_t **tmat,**num;
+  mpz_t *tmi;
+  mpz_t den;
+  mpz_t q,m1,m3,s,u;
+  int *colstat,*wcolstat,*rind,*cind;
+  int row,col,ind,i,j,k,l,rank,rank0;
+  MAT r;
+  int ret;
+
+  bmat = (Z **)mat->body;
+  row = mat->row; col = mat->col;
+  wmat = (mp_limb_t **)almat64(row,col);
+  colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  wcolstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  mpz_init(m1); mpz_init(m3); mpz_init(den);
+  for ( ind = 0; ; ind++ ) {
+    if ( DP_Print ) {
+      fprintf(asir_out,"."); fflush(asir_out);
+    }
+    md = get_lprime64(ind);
+    for ( i = 0; i < row; i++ )
+      for ( j = 0, bmi = bmat[i], wmi = wmat[i]; j < col; j++ )
+        wmi[j] = bmi[j]==0?0:mpz_fdiv_ui(BDY(bmi[j]),md);
+    rank = generic_gauss_elim_mod64(wmat,row,col,md,wcolstat);
+    if ( !ind ) {
+RESET:
+      mpz_set_ui(m1,md);
+      rank0 = rank;
+      bcopy(wcolstat,colstat,col*sizeof(int));
+      // crmat
+      tmat = mpz_allocmat(rank,col-rank);
+      // 
+      num = mpz_allocmat(rank,col-rank);
+      for ( i = 0; i < rank; i++ )
+        for ( j = k = 0, tmi = tmat[i], wmi = wmat[i]; j < col; j++ )
+          if ( !colstat[j] ) { mpz_set_ui(tmi[k],wmi[j]); k++; }
+    } else {
+      if ( rank < rank0 ) {
+        if ( DP_Print ) {
+          fprintf(asir_out,"lower rank matrix; continuing...\n");
+          fflush(asir_out);
+        }
+        continue;
+      } else if ( rank > rank0 ) {
+        if ( DP_Print ) {
+          fprintf(asir_out,"higher rank matrix; resetting...\n");
+          fflush(asir_out);
+        }
+        goto RESET;
+      } else {
+        for ( j = 0; (j<col) && (colstat[j]==wcolstat[j]); j++ );
+        if ( j < col ) {
+          if ( DP_Print ) {
+            fprintf(asir_out,"inconsitent colstat; resetting...\n");
+            fflush(asir_out);
+          }
+          goto RESET;
+        }
+      }
+
+      inv = invmod64(mpz_fdiv_ui(m1,md),md);
+      mpz_mul_ui(m3,m1,md);
+      for ( i = 0; i < rank; i++ )      
+        for ( j = k = 0, tmi = tmat[i], wmi = wmat[i]; j < col; j++ )
+          if ( !colstat[j] ) {
+            if ( mpz_sgn(tmi[k]) ) {
+            /* f3 = f1+m1*(m1 mod md)^(-1)*(f2 - f1 mod md) */
+              t = mpz_fdiv_ui(tmi[k],md);
+              if ( wmi[j] >= t ) t = wmi[j]-t;
+              else t = md-(t-wmi[j]);
+              mpz_addmul_ui(tmi[k],m1,mulmod64(t,inv,md));
+            } else if ( wmi[j] ) {
+            /* f3 = m1*(m1 mod m2)^(-1)*f2 */
+              mpz_mul_ui(tmi[k],m1,mulmod64(wmi[j],inv,md));
+            }
+            k++;
+          }
+      mpz_set(m1,m3);
+      if ( ind % F4_INTRAT_PERIOD ) 
+        ret = 0;
+      else 
+        ret = mpz_intmtoratm(tmat,rank,col-rank,m1,num,den);
+      if ( ret ) {
+        *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+        *cindp = cind = (int *)MALLOC_ATOMIC((col-rank)*sizeof(int));
+        for ( j = k = l = 0; j < col; j++ )
+          if ( colstat[j] ) rind[k++] = j;  
+          else cind[l++] = j;
+        if ( mpz_gensolve_check(mat,num,den,rank,rind,cind) ) {
+          MKMAT(r,rank,col-rank); *nm = r;
+          for ( i = 0; i < rank; i++ )
+            for ( j = 0; j < col-rank; j++ ) {
+              MPZTOZ(num[i][j],z); BDY(r)[i][j] = z;
+            }
+          MPZTOZ(den,*dn);
+          return rank;
+        }
+      }
+    }
+  }
+}
+#else
 int generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
 {
   mp_limb_t **wmat;
@@ -1889,4 +2126,6 @@ RESET:
     }
   }
 }
+#endif
+
 #endif
