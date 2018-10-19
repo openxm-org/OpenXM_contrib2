@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.3 2018/10/01 05:49:06 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1774,6 +1774,128 @@ int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *c
   return rank;
 }
 
+int find_lhs_and_lu_mod64(mp_limb_t **a,int row,int col,
+  mp_limb_t md,int **rinfo,int **cinfo)
+{
+  int i,j,k,d;
+  int *rp,*cp;
+  mp_limb_t *t,*pivot;
+  mp_limb_t inv,m;
+
+  *rinfo = rp = (int *)MALLOC_ATOMIC(row*sizeof(int));
+  *cinfo = cp = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  for ( i = 0; i < row; i++ )
+    rp[i] = i;
+  for ( k = 0, d = 0; k < col; k++ ) {
+    for ( i = d; i < row && !a[i][k]; i++ );
+    if ( i == row ) {
+      cp[k] = 0;
+      continue;
+    } else
+      cp[k] = 1;
+    if ( i != d ) {
+      j = rp[i]; rp[i] = rp[d]; rp[d] = j;
+      t = a[i]; a[i] = a[d]; a[d] = t;
+    }
+    pivot = a[d];
+    pivot[k] = inv = invmod64(pivot[k],md);
+    for ( i = d+1; i < row; i++ ) {
+      t = a[i];
+      if ( (m = t[k]) != 0 ) {
+        t[k] = mulmod64(inv,m,md);
+        for ( j = k+1, m = md - t[k]; j < col; j++ )
+          if ( pivot[j] ) {
+            t[j] = muladdmod64(m,pivot[j],t[j],md);
+          }
+      }
+    }
+    d++;
+  }
+  return d;
+}
+
+int lu_mod64(mp_limb_t **a,int n,mp_limb_t md,int **rinfo)
+{
+  int i,j,k;
+  int *rp;
+  mp_limb_t *t,*pivot;
+  mp_limb_t inv,m;
+
+  *rinfo = rp = (int *)MALLOC_ATOMIC(n*sizeof(int));
+  for ( i = 0; i < n; i++ ) rp[i] = i;
+  for ( k = 0; k < n; k++ ) {
+    for ( i = k; i < n && !a[i][k]; i++ );
+    if ( i == n ) return 0;
+    if ( i != k ) {
+      j = rp[i]; rp[i] = rp[k]; rp[k] = j;
+      t = a[i]; a[i] = a[k]; a[k] = t;
+    }
+    pivot = a[k];
+    inv = invmod64(pivot[k],md);
+    for ( i = k+1; i < n; i++ ) {
+      t = a[i];
+      if ( (m = t[k]) != 0 ) {
+        t[k] = mulmod64(inv,m,md);
+        for ( j = k+1, m = md - t[k]; j < n; j++ )
+          if ( pivot[j] ) {
+            t[j] = muladdmod64(m,pivot[j],t[j],md);
+          }
+      }
+    }
+  }
+  return 1;
+}
+
+/*
+  Input
+  a : n x n matrix; a result of LU-decomposition
+  md : modulus
+  b : n x l matrix 
+ Output
+  b = a^(-1)b
+ */
+
+void solve_by_lu_mod64(mp_limb_t **a,int n,mp_limb_t md,mp_limb_signed_t **b,int l,int normalize)
+{
+  mp_limb_t *y,*c;
+  int i,j,k;
+  mp_limb_t t,m,m2;
+
+  y = (mp_limb_t *)MALLOC_ATOMIC(n*sizeof(mp_limb_t));
+  c = (mp_limb_t *)MALLOC_ATOMIC(n*sizeof(mp_limb_t));
+  m2 = md/2;
+  for ( k = 0; k < l; k++ ) {
+    /* copy b[.][k] to c */
+    for ( i = 0; i < n; i++ )
+      c[i] = b[i][k];
+    /* solve Ly=c */
+    for ( i = 0; i < n; i++ ) {
+      for ( t = c[i], j = 0; j < i; j++ )
+        if ( a[i][j] ) {
+          m = md - a[i][j];
+          t = muladdmod64(m,y[j],t,md);
+        }
+      y[i] = t;
+    }
+    /* solve Uc=y */
+    for ( i = n-1; i >= 0; i-- ) {
+      for ( t = y[i], j =i+1; j < n; j++ )
+        if ( a[i][j] ) {
+          m = md - a[i][j];
+          t = muladdmod64(m,c[j],t,md);
+        }
+      /* a[i][i] = 1/U[i][i] */
+      c[i] = mulmod64(t,a[i][i],md);
+    }
+    /* copy c to b[.][k] with normalization */
+    if ( normalize )
+      for ( i = 0; i < n; i++ )
+        b[i][k] = (mp_limb_signed_t)(c[i]>m2 ? c[i]-md : c[i]);
+    else
+      for ( i = 0; i < n; i++ )
+        b[i][k] = (mp_limb_signed_t)c[i];
+  }
+}
 #endif
 
 void red_by_vect_sf(int m,unsigned int *p,unsigned int *r,unsigned int hc,int len)

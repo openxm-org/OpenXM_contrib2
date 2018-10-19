@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.3 2018/09/28 08:20:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.4 2018/10/01 05:49:06 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -45,10 +45,9 @@ typedef struct oNDV {
 } *NDV;
 
 typedef union oNDC {
-  int m;
+  long m;
   Z z;
   LM lm;
-  Z gz;
   P p;
   R r;
   DAlg a;

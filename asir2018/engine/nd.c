@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.8 2018/10/01 07:48:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.9 2018/10/02 09:06:15 noro Exp $ */
 
 #include "nd.h"
 
@@ -8201,7 +8201,7 @@ P ndc_div(int mod,union oNDC a,union oNDC b)
     int inv,t;
 
     if ( mod == -1 ) c.m = _mulsf(a.m,_invsf(b.m));
-    else if ( mod == -2 ) divlf(a.gz,b.gz,&c.gz);
+    else if ( mod == -2 ) divlf(a.z,b.z,&c.z);
     else if ( mod ) {
         inv = invm(b.m,mod);
         DMAR(a.m,inv,0,mod,t); c.m = t;
@@ -8221,7 +8221,7 @@ P ndctop(int mod,union oNDC c)
     if ( mod == -1 ) {
         e = IFTOF(c.m); MKGFS(e,gfs); return (P)gfs;
     } else if ( mod == -2 ) {
-       q = c.gz; return (P)q;
+       q = c.z; return (P)q;
     } else if ( mod > 0 ) {
         STOZ(c.m,q); return (P)q;
     } else

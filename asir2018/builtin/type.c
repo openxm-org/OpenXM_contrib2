@@ -45,16 +45,18 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/type.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/type.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
 
 void Ptype(), Pntype();
+void Preadarray();
 
 struct ftab type_tab[] = {
   {"type",Ptype,1},
   {"ntype",Pntype,1},
+  {"readarray",Preadarray,1},
   {0,0,0},
 };
 
@@ -83,4 +85,53 @@ Obj *rp;
     STOZ(NID(t),q); *rp = (Obj)q;
   } else 
     *rp = 0;
+}
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
+void prod_array_rec(unsigned int *p,unsigned int n,mpz_t r,int level)
+{
+  unsigned int n2;
+  mpz_t s0,s1;
+
+  if ( n == 0 )
+    mpz_set_ui(r,1);
+  else if ( n == 1 )
+    mpz_set_ui(r,p[0]);
+  else {
+    n2 = n/2;
+    mpz_init(s0);
+    prod_array_rec(p,n2,s0,level+1);
+    mpz_init(s1);
+    prod_array_rec(p+n2,n-n2,s1,level+1);
+    mpz_mul(r,s0,s1);
+  }
+}
+
+void Preadarray(NODE arg,VECT *rp)
+{
+  char *name;
+  struct stat buf;
+  FILE *fp;
+  mpz_t z;
+  Z x;
+  unsigned int *p;
+  unsigned int n,i;
+  VECT v;
+
+  name = BDY((STRING)ARG0(arg));
+  stat(name,&buf);
+  n = buf.st_size/sizeof(unsigned int);
+  fp = fopen(name,"rb");
+  p = (unsigned int *)MALLOC(n*sizeof(unsigned int));
+  fread(p,n,sizeof(unsigned int),fp);
+  fclose(fp);
+  MKVECT(v,n);
+  for ( i = 0; i < n; i++ ) {
+    mpz_init_set_ui(z,p[i]);
+    MPZTOZ(z,x);
+    BDY(v)[i] = (pointer)x;
+  }
+  *rp = v;
 }

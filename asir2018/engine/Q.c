@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.7 2018/10/01 05:54:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.8 2018/10/02 09:06:15 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -11,7 +11,7 @@ Z current_mod_lf;
 int current_mod_lf_size;
 gmp_randstate_t GMP_RAND;
 
-#define F4_INTRAT_PERIOD 8 
+#define F4_INTRAT_PERIOD 4 
 
 extern int DP_Print;
 
@@ -1591,6 +1591,9 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp)
   Z wn;
   Z wq;
 
+#if SIZEOF_LONG == 8
+  return generic_gauss_elim_hensel64(mat,nmmat,dn,rindp,cindp);
+#endif
 init_eg(&eg_mul1); init_eg(&eg_mul2);
   a0 = (Z **)mat->body;
   row = mat->row; col = mat->col;
@@ -2127,5 +2130,157 @@ RESET:
   }
 }
 #endif
+
+int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp)
+{
+  MAT r;
+  Z z;
+  Z **a0;
+  Z *ai;
+  mpz_t **a,**b,**x,**nm;
+  mpz_t *bi,*xi;
+  mpz_t q,u,den;
+  mp_limb_t **w;
+  mp_limb_t *wi;
+  mp_limb_t **wc;
+  mp_limb_t md;
+  int row,col;
+  int ind,i,j,k,l,li,ri,rank;
+  int *cinfo,*rinfo;
+  int *rind,*cind;
+  int count;
+  int ret;
+  int period;
+
+  a0 = (Z **)mat->body;
+  row = mat->row; col = mat->col;
+  w = (mp_limb_t **)almat64(row,col);
+  for ( ind = 0; ; ind++ ) {
+    md = get_lprime64(ind);
+    for ( i = 0; i < row; i++ )
+      for ( j = 0, ai = a0[i], wi = w[i]; j < col; j++ )
+        wi[j] = remqi64((Q)ai[j],md);
+
+    if ( DP_Print > 3 ) {
+      fprintf(asir_out,"LU decomposition.."); fflush(asir_out);
+    }
+    rank = find_lhs_and_lu_mod64(w,row,col,md,&rinfo,&cinfo);
+    if ( DP_Print > 3 ) {
+      fprintf(asir_out,"done.\n"); fflush(asir_out);
+    }
+    a = (mpz_t **)mpz_allocmat(rank,rank); /* lhs mat */
+    b = (mpz_t **)mpz_allocmat(rank,col-rank);
+    for ( j = li = ri = 0; j < col; j++ )
+      if ( cinfo[j] ) {
+        /* the column is in lhs */
+        for ( i = 0; i < rank; i++ ) {
+          w[i][li] = w[i][j];
+          if ( a0[rinfo[i]][j] )
+            mpz_set(a[i][li],BDY(a0[rinfo[i]][j]));
+          else
+            mpz_set_ui(a[i][li],0);
+        }
+        li++;
+      } else {
+        /* the column is in rhs */
+        for ( i = 0; i < rank; i++ ) {
+          if ( a0[rinfo[i]][j] )
+            mpz_set(b[i][ri],BDY(a0[rinfo[i]][j]));
+          else
+            mpz_set_ui(b[i][ri],0);
+        }
+        ri++;
+      }
+
+      /* solve Ax=B; A: rank x rank, B: rank x ri */
+      /* algorithm
+         c <- B
+         x <- 0
+         q <- 1
+         do 
+           t <- A^(-1)c mod p
+           x <- x+qt
+           c <- (c-At)/p
+           q <- qp
+         end do
+         then Ax-B=0 mod q and b=(B-Ax)/q hold after "do".
+      */
+      x = (mpz_t **)mpz_allocmat(rank,ri);
+      nm = (mpz_t **)mpz_allocmat(rank,ri);
+      wc = (mp_limb_t **)almat64(rank,ri);
+      *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+      *cindp = cind = (int *)MALLOC_ATOMIC((ri)*sizeof(int));
+
+      period = F4_INTRAT_PERIOD;
+      mpz_init_set_ui(q,1);
+      mpz_init(u);
+      mpz_init(den);
+      for ( count = 0; ; ) {
+        /* check Ax=B mod q */
+        if ( DP_Print > 3 )
+          fprintf(stderr,"o");
+        /* wc = b mod md */
+        for ( i = 0; i < rank; i++ )
+          for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
+            wi[j] = mpz_fdiv_ui(bi[j],md);
+        /* wc = A^(-1)wc; wc is not normalized */
+        solve_by_lu_mod64(w,rank,md,wc,ri,0);
+        /* x += q*wc */
+        for ( i = 0; i < rank; i++ )
+          for ( j = 0, wi = wc[i]; j < ri; j++ )
+            if ( wi[j] > 0 )
+              mpz_addmul_ui(x[i][j],q,wi[j]);
+            else if ( wi[j] < 0 )
+              mpz_submul_ui(x[i][j],q,-wi[j]);
+        /* b =(b-A*wc)/md */
+        for ( i = 0; i < rank; i++ )
+          for ( j = 0; j < ri; j++ ) {
+            mpz_set(u,b[i][j]);
+            for ( k = 0; k < rank; k++ ) {
+              if ( a[i][k] && wc[k][j] ) {
+                if ( wc[k][j] < 0 )
+                  mpz_addmul_ui(u,a[i][k],-wc[k][j]);
+                else
+                  mpz_submul_ui(u,a[i][k],wc[k][j]);
+              }
+            }
+            mpz_divexact_ui(b[i][j],u,md);
+          }
+        count++;
+        /* q = q*md */
+        mpz_mul_ui(q,q,md);
+        fprintf(stderr,".");
+        if ( count == period ) {
+          ret = mpz_intmtoratm(x,rank,ri,q,nm,den);
+          if ( ret ) {
+            for ( j = k = l = 0; j < col; j++ )
+              if ( cinfo[j] )
+                rind[k++] = j;  
+              else
+                cind[l++] = j;
+            ret = mpz_gensolve_check(mat,nm,den,rank,rind,cind);
+            if ( ret ) {
+              *rindp = rind;
+              *cindp = cind;
+              for ( j = k = 0; j < col; j++ )
+                if ( !cinfo[j] )
+                  cind[k++] = j;
+              MKMAT(r,rank,ri); *nmmat = r;
+              for ( i = 0; i < rank; i++ )
+                for ( j = 0; j < ri; j++ ) {
+                  MPZTOZ(nm[i][j],z); BDY(r)[i][j] = z;
+                }
+              MPZTOZ(den,*dn);
+              return rank;
+            }
+          } else {
+            fprintf(stderr,"F");
+            period = period*3/2;
+            count = 0;
+          }
+        }
+      }
+  }
+}
 
 #endif
