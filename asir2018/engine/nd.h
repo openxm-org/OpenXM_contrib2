@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.4 2018/10/01 05:49:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.5 2018/10/19 23:27:38 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -383,7 +383,7 @@ P ndvtop(int mod,VL vl,VL dvl,NDV p);
 NDV ndtondv(int mod,ND p);
 ND ndvtond(int mod,NDV p);
 Z *nm_ind_pair_to_vect(int m,UINT *s0,int n,NM_ind_pair pair);
-IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,int *s0hash,NM_ind_pair pair);
+IndArray nm_ind_pair_to_vect_compress(int m,UINT *s0,int n,NM_ind_pair pair,int prevh);
 int nd_to_vect(int mod,UINT *s0,int n,ND d,UINT *r);
 int nd_to_vect_q(UINT *s0,int n,ND d,Z *r);
 NDV vect_to_ndv_q(Z *vect,int spcol,int col,int *rhead,UINT *s0vect);

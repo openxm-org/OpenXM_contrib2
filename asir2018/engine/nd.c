@@ -1,7 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.9 2018/10/02 09:06:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.10 2018/10/19 23:27:38 noro Exp $ */
 
 #include "nd.h"
 
+int Nnd_add,Nf4_red;
 struct oEGT eg_search;
 
 int diag_period = 6;
@@ -1125,11 +1126,12 @@ int ndl_check_bound2(int index,UINT *d2)
 INLINE int ndl_hash_value(UINT *d)
 {
     int i;
-    int r;
+    UINT r;
 
     r = 0;
     for ( i = 0; i < nd_wpd; i++ )    
-        r = ((r<<16)+d[i])%REDTAB_LEN;
+        r = (r*10007+d[i]);
+    r %= REDTAB_LEN;
     return r;
 }
 
@@ -1216,6 +1218,7 @@ ND nd_add(int mod,ND p1,ND p2)
     ND r;
     NM m1,m2,mr0,mr,s;
 
+    Nnd_add++;
     if ( !p1 ) return p2;
     else if ( !p2 ) return p1;
     else if ( mod == -1 ) return nd_add_sf(p1,p2);
@@ -2081,6 +2084,7 @@ NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
   P cont;
   LIST list;
 
+  Nnd_add = 0;
   g = 0; d = 0;
   for ( i = 0; i < nd_psn; i++ ) {
     d = update_pairs(d,g,i,gensyz);
@@ -2170,7 +2174,7 @@ again:
    }
  }
  conv_ilist(nd_demand,0,g,indp);
-    if ( !checkonly && DP_Print ) { printf("nd_gb done.\n"); fflush(stdout); }
+    if ( !checkonly && DP_Print ) { printf("nd_gb done. Number of nd_add=%d\n",Nnd_add); fflush(stdout); }
     return g;
 }
 
@@ -5889,18 +5893,17 @@ Z *nm_ind_pair_to_vect(int mod,UINT *s0,int n,NM_ind_pair pair)
     return r;
 }
 
-IndArray nm_ind_pair_to_vect_compress(int trace,UINT *s0,int n,int *s0hash,NM_ind_pair pair)
+IndArray nm_ind_pair_to_vect_compress(int trace,UINT *s0,int n,NM_ind_pair pair,int start)
 {
     NM m;
     NMV mr;
-    UINT *d,*t,*s;
+    UINT *d,*t,*s,*u;
     NDV p;
     unsigned char *ivc;
     unsigned short *ivs;
     UINT *v,*ivi,*s0v;
-    int i,j,len,prev,diff,cdiff,h;
+    int i,j,len,prev,diff,cdiff,h,st,ed,md,c;
     IndArray r;
-struct oEGT eg0,eg1;
 
     m = pair->mul;
     d = DL(m);
@@ -5912,14 +5915,20 @@ struct oEGT eg0,eg1;
     len = LEN(p);
     t = (UINT *)MALLOC(nd_wpd*sizeof(UINT));
     v = (unsigned int *)MALLOC(len*sizeof(unsigned int));
-get_eg(&eg0);
-    for ( i = j = 0, s = s0, mr = BDY(p); j < len; j++, NMV_ADV(mr) ) {
-        ndl_add(d,DL(mr),t);    
-    h = ndl_hash_value(t);
-        for ( ; h != s0hash[i] || !ndl_equal(t,s); s += nd_wpd, i++ );
-        v[j] = i;
+    for ( prev = start, mr = BDY(p), j = 0; j < len; j++, NMV_ADV(mr) ) {
+      ndl_add(d,DL(mr),t);    
+      st = prev;
+      ed = n;
+      while ( ed > st ) {
+        md = (st+ed)/2;
+        u = s0+md*nd_wpd;
+        c = DL_COMPARE(u,t);
+        if ( c == 0 ) break;
+        else if ( c > 0 ) st = md;
+        else ed = md;
+      }
+      prev = v[j] = md;
     }
-get_eg(&eg1); add_eg(&eg_search,&eg0,&eg1);
     r = (IndArray)MALLOC(sizeof(struct oIndArray));
     r->head = v[0];
     diff = 0;
@@ -6673,6 +6682,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
 #if 0
     ndv_alloc = 0;
 #endif
+    Nf4_red=0;
     g = 0; d = 0;
     for ( i = 0; i < nd_psn; i++ ) {
         d = update_pairs(d,g,i,0);
@@ -6763,6 +6773,8 @@ NODE nd_f4(int m,int checkonly,int **indp)
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
 #endif
+  if ( DP_Print )
+    fprintf(asir_out,"number of red=%d\n",Nf4_red);
   conv_ilist(nd_demand,0,g,indp);
     return g;
 }
@@ -6986,7 +6998,6 @@ NODE nd_f4_red_2(ND_pairs sp0,UINT *s0vect,int col,NODE rp0,ND_pairs *nz)
     unsigned long *v;
 
     get_eg(&eg0);
-init_eg(&eg_search);
     for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
     nred = length(rp0);
     mat = alloc_matrix(nsp,col);
@@ -7041,18 +7052,18 @@ init_eg(&eg_search);
 NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz)
 {
     IndArray *imat;
-    int nsp,nred,i;
+    int nsp,nred,i,start;
     int *rhead;
     NODE r0,rp;
     ND_pairs sp;
     NM_ind_pair *rvect;
     UINT *s;
     int *s0hash;
+    struct oEGT eg0,eg1,eg_conv;
 
     if ( m == 2 && nd_rref2 )
      return nd_f4_red_2(sp0,s0vect,col,rp0,nz);
 
-init_eg(&eg_search);
     for ( sp = sp0, nsp = 0; sp; sp = NEXT(sp), nsp++ );
     nred = length(rp0);
     imat = (IndArray *)MALLOC(nred*sizeof(IndArray));
@@ -7060,17 +7071,22 @@ init_eg(&eg_search);
     for ( i = 0; i < col; i++ ) rhead[i] = 0;
 
     /* construction of index arrays */
+    get_eg(&eg0);
     if ( DP_Print ) {
-    fprintf(asir_out,"%dx%d,",nsp+nred,col);
+      fprintf(asir_out,"%dx%d,",nsp+nred,col);
+      fflush(asir_out);
     }
     rvect = (NM_ind_pair *)MALLOC(nred*sizeof(NM_ind_pair));
-    s0hash = (int *)MALLOC(col*sizeof(int));
-    for ( i = 0, s = s0vect; i < col; i++, s += nd_wpd )
-        s0hash[i] = ndl_hash_value(s);
-    for ( rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
+    for ( start = 0, rp = rp0, i = 0; rp; i++, rp = NEXT(rp) ) {
         rvect[i] = (NM_ind_pair)BDY(rp);
-        imat[i] = nm_ind_pair_to_vect_compress(trace,s0vect,col,s0hash,rvect[i]);
+        imat[i] = nm_ind_pair_to_vect_compress(trace,s0vect,col,rvect[i],start);
         rhead[imat[i]->head] = 1;
+        start = imat[i]->head;
+    }
+    get_eg(&eg1); init_eg(&eg_conv); add_eg(&eg_conv,&eg0,&eg1);
+    if ( DP_Print ) {
+      fprintf(asir_out,"conv=%.3fsec,",eg_conv.exectime);
+      fflush(asir_out);
     }
     if ( m > 0 )
 #if SIZEOF_LONG==8
@@ -7084,9 +7100,6 @@ init_eg(&eg_search);
         r0 = nd_f4_red_lf_main(m,sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
     else
         r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
-#if 0
-    if ( DP_Print ) print_eg("search",&eg_search);
-#endif
     return r0;
 }
 
@@ -9017,14 +9030,25 @@ NDV vect64_to_ndv(mp_limb_t *vect,int spcol,int col,int *rhead,UINT *s0vect)
 int nd_to_vect64(int mod,UINT *s0,int n,ND d,mp_limb_t *r)
 {
     NM m;
-    UINT *t,*s;
-    int i;
+    UINT *t,*s,*u;
+    int i,st,ed,md,prev,c;
 
     for ( i = 0; i < n; i++ ) r[i] = 0;
-    for ( i = 0, s = s0, m = BDY(d); m; m = NEXT(m) ) {
-        t = DL(m);
-        for ( ; !ndl_equal(t,s); s += nd_wpd, i++ );
-        r[i] = (mp_limb_t)CM(m);
+    prev = 0;
+    for ( i = 0, m = BDY(d); m; m = NEXT(m) ) {
+      t = DL(m);
+      st = prev;
+      ed = n;
+      while ( ed > st ) {
+        md = (st+ed)/2;
+        u = s0+md*nd_wpd;
+        c = DL_COMPARE(u,t);
+        if ( c == 0 ) break;
+        else if ( c > 0 ) st = md;
+        else ed = md;
+      }
+      r[md] = (mp_limb_t)CM(m);
+      prev = md;
     }
     for ( i = 0; !r[i]; i++ );
     return i;
@@ -9054,6 +9078,7 @@ int ndv_reduce_vect64(int m,mp_limb_t *svect,mp_limb_t *cvect,int col,IndArray *
         MOD128(a,c,m);
         svect[k] = a; cvect[k] = 0;
         if ( (c = svect[k]) != 0 ) {
+            Nf4_red++;
             maxrs = MAX(maxrs,rp0[i]->sugar);
             c = m-c; redv = nd_ps[rp0[i]->index];
             len = LEN(redv); mr = BDY(redv);
@@ -9237,6 +9262,7 @@ int nd_gauss_elim_mod64(mp_limb_t **mat,int *sugar,ND_pairs *spactive,int row,in
       if ( (a = mat[i][j]) != 0 ) {
         sugar[i] = MAX(sugar[i],s);
         red_by_vect64(md,mat[i]+j,cmat[i]+j,mat[rank]+j,(int)(md-a),col-j);
+        Nf4_red++;
       }
     }
     rank++;
@@ -9252,6 +9278,7 @@ int nd_gauss_elim_mod64(mp_limb_t **mat,int *sugar,ND_pairs *spactive,int row,in
         if ( a ) {
           sugar[i] = MAX(sugar[i],s);
           red_by_vect64(md,mat[i]+j,cmat[i]+j,mat[l]+j,(int)(md-a),col-j);
+          Nf4_red++;
         }
       }
       l--;
