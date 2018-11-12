@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.4 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/int.c,v 1.5 2018/10/01 05:49:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,6 +63,7 @@ void Pmt_save(), Pmt_load();
 void Psmall_jacobi();
 void Pdp_set_mpi();
 void Pntoint32(),Pint32ton();
+void Pibin();
 
 void Pigcdbin(), Pigcdbmod(), PigcdEuc(), Pigcdacc(), Pigcdcntl();
 
@@ -79,6 +80,7 @@ struct ftab int_tab[] = {
   {"iqr",Piqr,2},
   {"igcd",Pigcd,-2},
   {"ilcm",Pilcm,2},
+  {"ibin",Pibin,2},
   {"up2_inv",Pup2_inv,2},
   {"up2_init_eg",Pup2_init_eg,0},
   {"up2_show_eg",Pup2_show_eg,0},
@@ -122,6 +124,26 @@ static int is_prime_small(unsigned int);
 static unsigned int gcd_small(unsigned int,unsigned int);
 int TypeT_NB_check(unsigned int, unsigned int);
 int mpi_mag;
+
+void ibin(unsigned long int n,unsigned long int k,Z *r)
+{
+  mpz_t t;
+
+  mpz_init(t);
+  mpz_bin_uiui(t,n,k);
+  MPZTOZ(t,*r);
+}
+
+void Pibin(NODE arg,Z *rp)
+{
+  unsigned long int n,k;
+
+  asir_assert(ARG0(arg),O_N,"ibin");
+  asir_assert(ARG1(arg),O_N,"ibin");
+  n = ZTOS((Z)ARG0(arg));
+  k = ZTOS((Z)ARG1(arg));
+  ibin(n,k,rp);
+}
 
 void Pntoint32(NODE arg,USINT *rp)
 {
