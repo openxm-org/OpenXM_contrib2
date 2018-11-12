@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.1 2018/09/19 05:45:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -61,6 +61,7 @@ extern int nd_rref2;
 
 int do_weyl;
 
+void Pdp_monomial_hilbert_poincare();
 void Pdp_sort();
 void Pdp_mul_trunc(),Pdp_quo();
 void Pdp_ord(), Pdp_ptod(), Pdp_dtop(), Phomogenize();
@@ -233,6 +234,9 @@ struct ftab dp_tab[] = {
   {"dp_weyl_f4_main",Pdp_weyl_f4_main,3},
   {"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
 
+  /* Hilbert function */
+  {"dp_monomial_hilbert_poincare",Pdp_monomial_hilbert_poincare,2},
+
   /* misc */
   {"dp_inv_or_split",Pdp_inv_or_split,3},
   {"dp_set_weight",Pdp_set_weight,-1},
@@ -322,6 +326,359 @@ struct ftab dp_supp_tab[] = {
 
 NODE compute_last_w(NODE g,NODE gh,int n,int **v,int row1,int **m1,int row2,int **m2);
 Q compute_last_t(NODE g,NODE gh,Q t,VECT w1,VECT w2,NODE *homo,VECT *wp);
+
+int comp_by_tdeg(DP *a,DP *b)
+{
+  int da,db;
+
+  da = BDY(*a)->dl->td;
+  db = BDY(*b)->dl->td;
+  if ( da>db ) return 1;
+  else if ( da<db ) return -1;
+  else return 0;
+}
+
+#if 0
+void make_reduced(VECT b)
+{
+  int n,i,j;
+  DP *p;
+  DP pi;
+
+  n = b->len;
+  p = (DP *)BDY(b);
+  if ( BDY(p[0])->dl->td == 0 ) {
+    b->len = 1;
+    return;
+  }
+  for ( i = 0; i < n; i++ ) {
+    pi = p[i];
+    if ( !pi ) continue;
+    for ( j = 0; j < n; j++ )
+      if ( i != j && p[j] && dp_redble(p[j],pi) ) p[j] = 0;
+  }
+  for ( i = j = 0; i < n; i++ )
+    if ( p[i] ) p[j++] = p[i];
+  b->len = j;
+}
+
+void make_reduced2(VECT b,int k)
+{
+  int n,i,j,l;
+  DP *p;
+  DP pi;
+
+  n = b->len;
+  p = (DP *)BDY(b);
+  for ( i = l = k; i < n; i++ ) {
+    pi = p[i];
+    for ( j = 0; j < k; j++ )
+      if ( dp_redble(pi,p[j]) ) break;
+    if ( j == k )
+     p[l++] = pi;
+  }
+  b->len = l;
+}
+
+struct oEGT eg_comp;
+
+void mhp_rec(VECT b,VECT x,P t,P *r)
+{
+  int n,i,j,k,l,i2,y,len;
+  int *d;
+  Z mone,z;
+  DCP dc,dc1;
+  P s;
+  P *r2;
+  DP *p,*q;
+  DP pi,xj;
+  VECT c;
+  struct oEGT eg0,eg1;
+
+  n = b->len;
+  y = x->len;
+  p = (DP *)BDY(b);
+  if ( !n ) {
+    r[0] = (P)ONE;
+    return;
+  }
+  if ( n == 1 && BDY(p[0])->dl->td == 0 ) {
+    return;
+  }
+  for ( i = 0; i < n; i++ )
+    if ( BDY(p[i])->dl->td > 1 ) break;
+  if ( i == n ) {
+    r[n] = (P)ONE;
+    return;
+  }
+  get_eg(&eg0);
+  pi = p[i];
+  d = BDY(pi)->dl->d;
+  for ( j = 0; j < y; j++ )
+    if ( d[j] ) break;
+  xj = BDY(x)[j];
+
+  MKVECT(c,n); q = (DP *)BDY(c);
+  for ( i = k = l = 0; i < n; i++ )
+    if ( BDY(p[i])->dl->d[j] ) 
+      dp_subd(p[i],xj,&p[k++]);
+    else
+      q[l++] = p[i];
+  for ( i = k, i2 = 0; i2 < l; i++, i2++ ) 
+    p[i] = q[i2];
+  /* b=(b[0]/xj,...,b[k-1]/xj,b[k],...b[n-1]) where
+    b[0],...,b[k-1] are divisible by k */
+  make_reduced2(b,k);
+  get_eg(&eg1); add_eg(&eg_comp,&eg0,&eg1);
+  mhp_rec(b,x,t,r);
+  /* c = (b[0],...,b[l-1],xj) */
+  q[l] = xj; c->len = l+1;
+  r2 = (P *)CALLOC(y+1,sizeof(P));
+  mhp_rec(c,x,t,r2);
+  get_eg(&eg0);
+  for ( i = 0; i <= y; i++ ) {
+    mulp(CO,r[i],t,&s); addp(CO,s,r2[i],&r[i]);
+  }
+  get_eg(&eg1); add_eg(&eg_comp,&eg0,&eg1);
+}
+
+void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
+{
+  LIST g,v;
+  VL vl;
+  int m,n,i;
+  VECT b,x;
+  NODE t,nd;
+  Z z;
+  P hp,tv,mt,t1,u,w;
+  DP *p;
+  P *plist,*r;
+  struct order_spec *spec;
+  struct oEGT eg0,eg1;
+
+  init_eg(&eg_comp);
+  g = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+  pltovl(v,&vl);
+  m = length(BDY(g)); MKVECT(b,m); p = (DP *)BDY(b);
+  for ( t = BDY(g), i = 0; t; t = NEXT(t), i++ )
+    ptod(CO,vl,(P)BDY(t),&p[i]);
+  n = length(BDY(v)); MKVECT(x,n); p = (DP *)BDY(x);
+  for ( t = BDY(v), i = 0; t; t = NEXT(t), i++ )
+    ptod(CO,vl,(P)BDY(t),&p[i]);
+  create_order_spec(0,0,&spec); initd(spec);
+  /* create (1,1-t,...,(1-t)^n) */
+  plist = (P *)MALLOC((n+1)*sizeof(P));
+  /* t1 = 1-t */
+  makevar("t",&tv); chsgnp(tv,&mt); addp(CO,mt,(P)ONE,&t1);
+  for ( plist[0] = (P)ONE, i = 1; i <= n; i++ )
+    mulp(CO,plist[i-1],t1,&plist[i]);
+  r = (P *)CALLOC(n+1,sizeof(P));
+  make_reduced(b);
+  mhp_rec(b,x,tv,r);
+  for ( hp = 0, i = 0; i <= n; i++ ) {
+    mulp(CO,plist[i],r[i],&u); addp(CO,u,hp,&w); hp = w;
+  }
+  UTOZ(n,z); nd = mknode(2,hp,z);
+  printf("comp %.3fsec\n",eg_comp.exectime);
+  MKLIST(*rp,nd);
+}
+#else
+
+void dl_print(DL d,int n)
+{
+  int i;
+
+  printf("<<");
+  for ( i = 0; i < n; i++ )
+    printf("%d ",d->d[i]);
+  printf(">>\n");
+}
+
+int simple_check(VECT b,int nv)
+{
+  int n,i,j;
+  DL *p;
+
+  n = b->len; p = (DL *)b->body;
+  for ( i = 0; i < n; i++ ) {
+    for ( j = 0; j < nv; j++ ) {
+      if ( p[i]->d[j] ) break;
+    }
+    if ( p[i]->d[j] != p[i]->td ) return 0;
+  }
+  return 1;
+}
+
+void make_reduced(VECT b,int nv)
+{
+  int n,i,j;
+  DL *p;
+  DL pi;
+
+  n = b->len;
+  p = (DL *)BDY(b);
+  if ( p[0]->td == 0 ) {
+    b->len = 1;
+    return;
+  }
+  for ( i = 0; i < n; i++ ) {
+    pi = p[i];
+    if ( !pi ) continue;
+    for ( j = 0; j < n; j++ )
+      if ( i != j && p[j] && _dl_redble(pi,p[j],nv) ) p[j] = 0;
+  }
+  for ( i = j = 0; i < n; i++ )
+    if ( p[i] ) p[j++] = p[i];
+  b->len = j;
+}
+
+void make_reduced2(VECT b,int k,int nv)
+{
+  int n,i,j,l;
+  DL *p;
+  DL pi;
+
+  n = b->len;
+  p = (DL *)BDY(b);
+  for ( i = l = k; i < n; i++ ) {
+    pi = p[i];
+    for ( j = 0; j < k; j++ )
+      if ( _dl_redble(p[j],pi,nv) ) break;
+    if ( j == k )
+     p[l++] = pi;
+  }
+  b->len = l;
+}
+ 
+int i_all,i_simple;
+
+P mhp_simple(VECT b,VECT x,P t)
+{
+  int n,i,j,nv;
+  DL *p;
+  P hp,mt,s,w;
+  Z z;
+
+  n = b->len; nv = x->len; p = (DL *)BDY(b);
+  hp = (P)ONE;
+  for ( i = 0; i < n; i++ ) {
+    for ( j = 0; j < nv; j++ )
+      if ( p[i]->d[j] ) break;
+    STOZ(p[i]->d[j],z); 
+    chsgnp(t,&mt); mt->dc->d =z;
+    addp(CO,mt,(P)ONE,&s); mulp(CO,hp,s,&w); hp = w;
+  }
+  return hp;
+}
+
+struct oEGT eg_comp;
+
+void mhp_rec(VECT b,VECT x,P t,P *r)
+{
+  int n,i,j,k,l,i2,nv,len;
+  int *d;
+  Z mone,z;
+  DCP dc,dc1;
+  P s;
+  P *r2;
+  DL *p,*q;
+  DL pi,xj,d1;
+  VECT c;
+struct oEGT eg0,eg1;
+
+  i_all++;
+  n = b->len; nv = x->len; p = (DL *)BDY(b);
+  if ( !n ) {
+    r[0] = (P)ONE;
+    return;
+  }
+  if ( n == 1 && p[0]->td == 0 )
+    return;
+  for ( i = 0; i < n; i++ )
+    if ( p[i]->td > 1 ) break;
+  if ( i == n ) {
+    r[n] = (P)ONE;
+    return;
+  }
+#if 0
+  if ( simple_check(b,nv) ) {
+    i_simple++;
+    r[0] = mhp_simple(b,x,t);
+    return;
+  }
+#endif
+  for ( j = 0, d = p[i]->d; j < nv; j++ )
+    if ( d[j] ) break;
+  xj = BDY(x)[j];
+  MKVECT(c,n); q = (DL *)BDY(c);
+  for ( i = k = l = 0; i < n; i++ )
+    if ( p[i]->d[j] ) {
+      pi = p[i];
+      NEWDL(d1,nv); d1->td =pi->td - 1;
+      memcpy(d1->d,pi->d,nv*sizeof(int));
+      d1->d[j]--;
+      p[k++] = d1;
+    } else
+      q[l++] = p[i];
+  for ( i = k, i2 = 0; i2 < l; i++, i2++ ) 
+    p[i] = q[i2];
+  /* b=(b[0]/xj,...,b[k-1]/xj,b[k],...b[n-1]) where
+    b[0],...,b[k-1] are divisible by k */
+  make_reduced2(b,k,nv);
+  mhp_rec(b,x,t,r);
+  /* c = (b[0],...,b[l-1],xj) */
+  q[l] = xj; c->len = l+1;
+  r2 = (P *)CALLOC(nv+1,sizeof(P));
+  mhp_rec(c,x,t,r2);
+// get_eg(&eg0);
+  for ( i = 0; i <= nv; i++ ) {
+    mulp(CO,r[i],t,&s); addp(CO,s,r2[i],&r[i]);
+  }
+// get_eg(&eg1); add_eg(&eg_comp,&eg0,&eg1);
+}
+
+void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
+{
+  LIST g,v;
+  VL vl;
+  int m,n,i;
+  VECT b,x;
+  NODE t,nd;
+  Z z;
+  P hp,tv,mt,t1,u,w;
+  DP a;
+  DL *p;
+  P *plist,*r;
+
+// init_eg(&eg_comp);
+  i_simple = i_all = 0;
+  g = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+  pltovl(v,&vl);
+  m = length(BDY(g)); MKVECT(b,m); p = (DL *)BDY(b);
+  for ( t = BDY(g), i = 0; t; t = NEXT(t), i++ ) {
+    ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
+  }
+  n = length(BDY(v)); MKVECT(x,n); p = (DL *)BDY(x);
+  for ( t = BDY(v), i = 0; t; t = NEXT(t), i++ ) {
+    ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
+  }
+  /* create (1,1-t,...,(1-t)^n) */
+  plist = (P *)MALLOC((n+1)*sizeof(P));
+  /* t1 = 1-t */
+  makevar("t",&tv); chsgnp(tv,&mt); addp(CO,mt,(P)ONE,&t1);
+  for ( plist[0] = (P)ONE, i = 1; i <= n; i++ )
+    mulp(CO,plist[i-1],t1,&plist[i]);
+  r = (P *)CALLOC(n+1,sizeof(P));
+  make_reduced(b,n);
+  mhp_rec(b,x,tv,r);
+  for ( hp = 0, i = 0; i <= n; i++ ) {
+    mulp(CO,plist[i],r[i],&u); addp(CO,u,hp,&w); hp = w;
+  }
+//   printf("all=%d,simple=%d,comp=%.3fsec\n",i_all,i_simple,eg_comp.exectime);
+  UTOZ(n,z); nd = mknode(2,hp,z);
+  MKLIST(*rp,nd);
+}
+#endif
 
 void Pdp_compute_last_t(NODE arg,LIST *rp)
 {

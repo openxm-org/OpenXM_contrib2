@@ -1,9 +1,9 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.10 2018/10/19 23:27:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.11 2018/10/23 04:53:37 noro Exp $ */
 
 #include "nd.h"
 
 int Nnd_add,Nf4_red;
-struct oEGT eg_search;
+struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
 
 int diag_period = 6;
 int weight_check = 1;
@@ -1130,7 +1130,7 @@ INLINE int ndl_hash_value(UINT *d)
 
     r = 0;
     for ( i = 0; i < nd_wpd; i++ )    
-        r = (r*10007+d[i]);
+        r = (r*1511+d[i]);
     r %= REDTAB_LEN;
     return r;
 }
@@ -6679,6 +6679,8 @@ NODE nd_f4(int m,int checkonly,int **indp)
     PGeoBucket bucket;
     struct oEGT eg0,eg1,eg_f4;
     Z i1,i2,sugarq;
+
+    init_eg(&f4_symb); init_eg(&f4_conv); init_eg(&f4_conv); init_eg(&f4_elim1); init_eg(&f4_elim2);
 #if 0
     ndv_alloc = 0;
 #endif
@@ -6724,7 +6726,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
             d = nd_reconstruct(0,d);
             continue;
         }
-        get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1);
+        get_eg(&eg1); init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg1); add_eg(&f4_symb,&eg0,&eg1);
         if ( DP_Print )
             fprintf(asir_out,"sugar=%d,symb=%.3fsec,",
                 sugar,eg_f4.exectime);
@@ -6773,8 +6775,11 @@ NODE nd_f4(int m,int checkonly,int **indp)
 #if 0
     fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
 #endif
-  if ( DP_Print )
-    fprintf(asir_out,"number of red=%d\n",Nf4_red);
+  if ( DP_Print ) {
+    fprintf(asir_out,"number of red=%d,",Nf4_red);
+    fprintf(asir_out,"symb=%.3fsec,conv=%.3fsec,elim1=%.3fsec,elim2=%.3fsec\n",
+      f4_symb.exectime,f4_conv.exectime,f4_elim1.exectime,f4_elim2.exectime);
+  }
   conv_ilist(nd_demand,0,g,indp);
     return g;
 }
@@ -7083,7 +7088,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
         rhead[imat[i]->head] = 1;
         start = imat[i]->head;
     }
-    get_eg(&eg1); init_eg(&eg_conv); add_eg(&eg_conv,&eg0,&eg1);
+    get_eg(&eg1); init_eg(&eg_conv); add_eg(&eg_conv,&eg0,&eg1); add_eg(&f4_conv,&eg0,&eg1);
     if ( DP_Print ) {
       fprintf(asir_out,"conv=%.3fsec,",eg_conv.exectime);
       fflush(asir_out);
@@ -9088,33 +9093,27 @@ int ndv_reduce_vect64(int m,mp_limb_t *svect,mp_limb_t *cvect,int col,IndArray *
                     ivc = ivect->index.c;
                     for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
                         pos = prev+ivc[j]; c1 = CM(mr); prev = pos;
-                        if ( c1 ) {
-                          c2 = svect[pos]+c1*c;
-                          if ( c2 < svect[pos] ) cvect[pos]++;
-                          svect[pos] = c2;
-                        }
+                        c2 = svect[pos]+c1*c;
+                        if ( c2 < svect[pos] ) cvect[pos]++;
+                        svect[pos] = c2;
                     }
                     break;
                 case 2:
                     ivs = ivect->index.s; 
                     for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
                         pos = prev+ivs[j]; c1 = CM(mr); prev = pos;
-                        if ( c1 ) {
-                          c2 = svect[pos]+c1*c;
-                          if ( c2 < svect[pos] ) cvect[pos]++;
-                          svect[pos] = c2;
-                        }
+                        c2 = svect[pos]+c1*c;
+                        if ( c2 < svect[pos] ) cvect[pos]++;
+                        svect[pos] = c2;
                     }
                     break;
                 case 4:
                     ivi = ivect->index.i;
                     for ( j = 1, NMV_ADV(mr); j < len; j++, NMV_ADV(mr) ) {
                         pos = prev+ivi[j]; c1 = CM(mr); prev = pos;
-                        if ( c1 ) {
-                          c2 = svect[pos]+c1*c;
-                          if ( c2 < svect[pos] ) cvect[pos]++;
-                          svect[pos] = c2;
-                        }
+                        c2 = svect[pos]+c1*c;
+                        if ( c2 < svect[pos] ) cvect[pos]++;
+                        svect[pos] = c2;
                     }
                     break;
             }
@@ -9170,7 +9169,7 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         }
         nd_free(spol);
     }
-    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
+    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1); add_eg(&f4_elim1,&eg0,&eg1);
     if ( DP_Print ) {
         fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
         fflush(asir_out);
@@ -9191,7 +9190,7 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     if ( r0 ) NEXT(r) = 0;
 
     for ( ; i < sprow; i++ ) GCFREE(spmat[i]);
-    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
+    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2); add_eg(&f4_elim2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
         fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
