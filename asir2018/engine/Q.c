@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.8 2018/10/02 09:06:15 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.9 2018/10/19 23:27:38 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -30,7 +30,7 @@ void gc_free(void *p,size_t size)
 
 void init_gmpq()
 {
-  mp_set_memory_functions(Risa_GC_malloc_atomic,gc_realloc,gc_free);
+  mp_set_memory_functions(Risa_GC_malloc,gc_realloc,gc_free);
 
   mpz_init(ONEMPZ); mpz_set_ui(ONEMPZ,1); MPZTOZ(ONEMPZ,ONE);
   gmp_randinit_default(GMP_RAND);
