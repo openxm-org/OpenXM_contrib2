@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.11 2018/10/23 04:53:37 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.12 2018/11/12 04:25:13 noro Exp $ */
 
 #include "nd.h"
 
@@ -4235,14 +4235,18 @@ void mpz_removecont_array(mpz_t *c,int n)
 {
   mpz_t d0,a,u,u1,gcd;
   int i,j;
-  mpz_t *q,*r;
+  static mpz_t *q,*r;
+  static int c_len = 0;
 
   for ( i = 0; i < n; i++ ) 
     if ( mpz_sgn(c[i]) ) break;
   if ( i == n ) return;
   gcdv_mpz_estimate(d0,c,n);
-  q = (mpz_t *)MALLOC(n*sizeof(mpz_t));
-  r = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+  if ( n > c_len ) {
+    q = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+    r = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+    c_len = n;
+  }
   for ( i = 0; i < n; i++ ) {
     mpz_init(q[i]); mpz_init(r[i]);
     mpz_fdiv_qr(q[i],r[i],c[i],d0);
@@ -6056,7 +6060,6 @@ int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
 int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
     int i,j,k,len,pos,prev;
-    mpz_t *svect;
     mpz_t cs,cr,gcd;
     IndArray ivect;
     unsigned char *ivc;
@@ -6068,12 +6071,17 @@ int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp
     int maxrs;
     double hmag;
     int l;
+    static mpz_t *svect;
+    static int svect_len=0;
 
     maxrs = 0;
     for ( i = 0; i < col && !svect0[i]; i++ );
     if ( i == col ) return maxrs;
     hmag = p_mag((P)svect0[i])*nd_scale;
-    svect = (mpz_t *)MALLOC(col*sizeof(mpz_t));
+    if ( col > svect_len ) {
+      svect = (mpz_t *)MALLOC(col*sizeof(mpz_t));
+      svect_len = col;
+    }
     for ( i = 0; i < col; i++ ) {
       mpz_init(svect[i]);
       if ( svect0[i] )
