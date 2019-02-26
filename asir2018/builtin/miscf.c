@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/miscf.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/miscf.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -370,7 +370,8 @@ void Pversion(NODE arg,Obj *rp)
     *rp = (Obj)q;
   else {
     MKSTR(str,distribution);  
-    n = mknode(2,q,str);
+    /* ONE means the new version */
+    n = mknode(3,q,str,ONE);
     MKLIST(l,n);
     *rp = (Obj)l;
   }

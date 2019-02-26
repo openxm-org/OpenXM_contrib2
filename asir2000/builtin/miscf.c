@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.36 2015/08/14 13:51:54 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.37 2018/03/29 01:32:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -401,7 +401,8 @@ Obj *rp;
     *rp = (Obj)q;
   else {
     MKSTR(str,distribution);  
-    n = mknode(2,q,str);
+    /* 0 means the old version */
+    n = mknode(3,q,str,0);
     MKLIST(l,n);
     *rp = (Obj)l;
   }
