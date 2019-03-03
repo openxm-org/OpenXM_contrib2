@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.75 2017/09/17 02:34:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.76 2018/03/29 01:32:50 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1872,6 +1872,12 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Q *dn,int **rindp,i
       fprintf(asir_out,"LU decomposition.."); fflush(asir_out);
     }
     rank = find_lhs_and_lu_mod((unsigned int **)w,row,col,md,&rinfo,&cinfo);
+    printf("\n");
+    for ( i = 0; i < row; i++ ) {
+      for ( j = 0; j < col; j++ )
+        printf("%d ",w[i][j]);
+      printf("\n");
+    }
     if ( DP_Print ) {
       fprintf(asir_out,"done.\n"); fflush(asir_out);
     }
@@ -1956,6 +1962,13 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Q *dn,int **rindp,i
             } else
               b[i][j] = 0;
           }
+        printf("\n");
+        for ( i = 0; i < rank; i++ ) {
+          for ( j = 0; j < ri; j++ ) {
+            printexpr(CO,b[i][j]); printf(" ");
+          }
+          printf("\n");
+        }
         get_eg(&tmp1);
         add_eg(&eg_mul,&tmp0,&tmp1);
         /* q = q*md */
@@ -1996,8 +2009,10 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Q *dn,int **rindp,i
                 fflush(asir_out);
               }
               return rank;
-            }
+            } else
+              goto reset;
           } else {
+reset:
             period = period*3/2;
             count = 0;
             nsize += period;

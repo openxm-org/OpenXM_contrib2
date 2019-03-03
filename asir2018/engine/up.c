@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/up.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/up.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -296,6 +296,8 @@ void hybrid_squareup(int ff,UP n1,UP *nr)
 
 void hybrid_tmulup(int ff,UP n1,UP n2,int d,UP *nr)
 {
+  UP t;
+
   if ( !n1 || !n2 )
     *nr = 0;
   else if ( MAX(n1->d,n2->d) < up_fft_mag )
@@ -856,7 +858,7 @@ void rembymulup(UP n1,UP n2,UP *nr)
 void hybrid_rembymulup_special(int ff,UP n1,UP n2,UP inv2,UP *nr)
 {
   int d1,d2,d;
-  UP r1,t,s,q;
+  UP r1,t,s,q,t1;
 
   if ( !n2 )
     error("hybrid_rembymulup : division by 0");
@@ -1384,6 +1386,7 @@ void crup(ModNum **f,int d,int *mod,int index,Z m,UP *r)
   mpz_t cof,c,rem;
   mpz_t *s;
   UP u;
+  Z z;
   int inv,i,j,t;
 
   mpz_init(c); mpz_init(cof); mpz_init(rem);
@@ -1408,8 +1411,9 @@ void crup(ModNum **f,int d,int *mod,int index,Z m,UP *r)
   else {
     u = UPALLOC(i);
     DEG(u) = i;
-    for ( j = 0; j <= i; j++ )
-      COEF(u)[j] = (Num)s[j];
+    for ( j = 0; j <= i; j++ ) {
+      MPZTOZ(s[j],z); COEF(u)[j] = (Num)z;
+    }
     remcup(u,m,r);
   }
 }

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -216,7 +216,7 @@ void loadlm(FILE *s,LM *p)
   b = (int *)MALLOC(size*sizeof(int));
   read_intarray(s,b,size);
   mpz_init(z);
-  mpz_import(z,len,-1,sizeof(int),0,0,b);
+  mpz_import(z,size,-1,sizeof(int),0,0,b);
   MKLM(z,*p);
 }
 

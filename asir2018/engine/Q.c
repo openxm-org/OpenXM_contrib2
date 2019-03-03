@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.9 2018/10/19 23:27:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.10 2018/12/10 22:24:42 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -1229,7 +1229,7 @@ int intmtoratm(MAT mat,Z md,MAT nm,Z *dn)
     return 0;
   row = mat->row; col = mat->col;
   bshiftz(md,1,&t);
-  isqrtz(t,&s);
+  isqrt(t,&s);
   bshiftz(s,64,&b);
   if ( !b ) b = ONE;
   dn0 = ONE;
@@ -1469,7 +1469,7 @@ void isqrtz(Z a,Z *r)
   Z two;
 
   if ( !a ) *r = 0;
-  else if ( UNIQ(a) ) *r = ONE;
+  else if ( UNIZ(a) ) *r = ONE;
   else {
     k = z_bits((Q)a); /* a <= 2^k-1 */
     bshiftz(ONE,-((k>>1)+(k&1)),&x); /* a <= x^2 */
@@ -1592,7 +1592,7 @@ int generic_gauss_elim_hensel(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp)
   Z wq;
 
 #if SIZEOF_LONG == 8
-  return generic_gauss_elim_hensel64(mat,nmmat,dn,rindp,cindp);
+  return generic_gauss_elim_hensel64(mat,nmmat,dn,rindp,cindp,0);
 #endif
 init_eg(&eg_mul1); init_eg(&eg_mul2);
   a0 = (Z **)mat->body;
@@ -1706,8 +1706,10 @@ get_eg(&tmp2); add_eg(&eg_mul2,&tmp1,&tmp2);
                 if ( !cinfo[j] )
                   cind[k++] = j;
               return rank;
-            }
+            } else
+              goto reset;
           } else {
+reset:
             period = period*3/2;
             count = 0;
           }
@@ -1743,6 +1745,9 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
   Z wq;
   DP m;
 
+#if SIZEOF_LONG == 8
+  return generic_gauss_elim_hensel64(mat,nmmat,dn,rindp,cindp,mb);
+#endif
   a0 = (Z **)mat->body;
   row = mat->row; col = mat->col;
   w = (int **)almat(row,col);
@@ -1815,8 +1820,8 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
         for ( i = 0; i < rank; i++ )
           for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
             wi[j] = remqi((Q)bi[j],md);
-        /* wc = A^(-1)wc; wc is normalized */
-        solve_by_lu_mod(w,rank,md,wc,ri,1);
+        /* wc = A^(-1)wc; wc is not normalized */
+        solve_by_lu_mod(w,rank,md,wc,ri,0);
         /* x += q*wc */
         for ( i = 0; i < rank; i++ )
           for ( j = 0, wi = wc[i]; j < ri; j++ ) mul1addtoz(q,wi[j],&x[i][j]);
@@ -1829,17 +1834,13 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
               mpz_init_set(uz,BDY(b[i][j]));
             else
               mpz_init_set_ui(uz,0);
-            for ( k = 0; k < rank; k++ ) {
-              if ( a[i][k] && wc[k][j] ) {
-                if ( wc[k][j] < 0 )
-                  mpz_addmul_ui(uz,BDY(a[i][k]),-wc[k][j]);
-                else
+            for ( k = 0; k < rank; k++ )
+              if ( a[i][k] && wc[k][j] )
                   mpz_submul_ui(uz,BDY(a[i][k]),wc[k][j]);
-              }
-            }
             MPZTOZ(uz,u);
             divsz(u,mdq,&b[i][j]);
           }
+
         count++;
         /* q = q*md */
         mulz(q,mdq,&u); q = u;
@@ -1859,8 +1860,10 @@ int generic_gauss_elim_hensel_dalg(MAT mat,DP *mb,MAT *nmmat,Z *dn,int **rindp,i
                 if ( !cinfo[j] )
                   cind[k++] = j;
               return rank;
-            }
+            } else
+              goto reset;
           } else {
+reset:
             period = period*3/2;
             count = 0;
           }
@@ -2131,7 +2134,7 @@ RESET:
 }
 #endif
 
-int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp)
+int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp,DP *mb)
 {
   MAT r;
   Z z;
@@ -2151,6 +2154,7 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
   int count;
   int ret;
   int period;
+  DP m;
 
   a0 = (Z **)mat->body;
   row = mat->row; col = mat->col;
@@ -2168,10 +2172,23 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
     if ( DP_Print > 3 ) {
       fprintf(asir_out,"done.\n"); fflush(asir_out);
     }
+
+    if ( mb ) {
+      /* this part is added for inv_or_split_dalg */
+      for ( i = 0; i < col-1; i++ ) {
+        if ( !cinfo[i] ) {
+          m = mb[i];
+          for ( j = i+1; j < col-1; j++ )
+            if ( dp_redble(mb[j],m) )
+              cinfo[j] = -1;
+        }
+      }
+    }
+  
     a = (mpz_t **)mpz_allocmat(rank,rank); /* lhs mat */
     b = (mpz_t **)mpz_allocmat(rank,col-rank);
     for ( j = li = ri = 0; j < col; j++ )
-      if ( cinfo[j] ) {
+      if ( cinfo[j] > 0 ) {
         /* the column is in lhs */
         for ( i = 0; i < rank; i++ ) {
           w[i][li] = w[i][j];
@@ -2181,7 +2198,7 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
             mpz_set_ui(a[i][li],0);
         }
         li++;
-      } else {
+      } else if ( !cinfo[j] ) {
         /* the column is in rhs */
         for ( i = 0; i < rank; i++ ) {
           if ( a0[rinfo[i]][j] )
@@ -2249,14 +2266,13 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
         count++;
         /* q = q*md */
         mpz_mul_ui(q,q,md);
-        fprintf(stderr,".");
         if ( count == period ) {
           ret = mpz_intmtoratm(x,rank,ri,q,nm,den);
           if ( ret ) {
             for ( j = k = l = 0; j < col; j++ )
-              if ( cinfo[j] )
+              if ( cinfo[j] > 0 )
                 rind[k++] = j;  
-              else
+              else if ( !cinfo[j] )
                 cind[l++] = j;
             ret = mpz_gensolve_check(mat,nm,den,rank,rind,cind);
             if ( ret ) {
@@ -2272,8 +2288,10 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
                 }
               MPZTOZ(den,*dn);
               return rank;
-            }
+            } else
+              goto reset;
           } else {
+reset:
             fprintf(stderr,"F");
             period = period*3/2;
             count = 0;

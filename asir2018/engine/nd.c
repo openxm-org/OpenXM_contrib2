@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.12 2018/11/12 04:25:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.13 2019/01/14 09:17:34 noro Exp $ */
 
 #include "nd.h"
 
@@ -4090,7 +4090,7 @@ void ndv_homogenize(NDV p,int obpe,int oadv,EPOS oepos,int ompos)
     NMV m,mr0,mr,t;
 
     len = p->len;
-    for ( m = BDY(p), i = 0, max = 1; i < len; NMV_OADV(m), i++ )
+    for ( m = BDY(p), i = 0, max = 0; i < len; NMV_OADV(m), i++ )
         max = MAX(max,TD(DL(m)));
     mr0 = nmv_adv>oadv?(NMV)REALLOC(BDY(p),len*nmv_adv):BDY(p);
     m = (NMV)((char *)mr0+(len-1)*oadv);

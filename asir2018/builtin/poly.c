@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/poly.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/poly.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1377,7 +1377,12 @@ void Ppwrmod_ff(NODE arg,P *rp)
   ptoup((P)ARG0(arg),&p1);
   switch ( current_ff ) {
     case FF_GFP:
+/* XXX : hybrid version may not be useful ... */
+#if 1
       hybrid_powermodup(p1,&p2); break;
+#else
+      powermodup(p1,&p2); break;
+#endif
     case FF_GF2N:
       powermodup_gf2n(p1,&p2); break;
     case FF_GFPN:

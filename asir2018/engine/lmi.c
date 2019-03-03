@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/lmi.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -85,12 +85,15 @@ void simplm(LM n,LM *r)
 {
   mpz_t rem;
 
-  if ( !n || NID(n) != N_LM || !lm_lazy )
+  if ( !n || NID(n) != N_LM || lm_lazy )
     *r = n;
   else {
     mpz_init(rem);
     mpz_mod(rem,BDY(n),BDY(current_mod_lm));
-    MKLM(rem,*r);
+    if ( mpz_sgn(rem) )
+      MKLM(rem,*r);
+    else
+      *r = 0;
   }
 }
 
@@ -103,25 +106,39 @@ void simplm_force(LM n,LM *r)
   else {
     mpz_init(rem);
     mpz_mod(rem,BDY(n),BDY(current_mod_lm));
-    MKLM(rem,*r);
+    if ( mpz_sgn(rem) )
+      MKLM(rem,*r);
+    else
+      *r = 0;
   }
 }
 
 void qtolm(Q q,LM *l)
 {
-  LM nm,nm1,dn,dn1;
+  LM nm0,nm,nm1,dn,dn1;
+  mpz_t t;
 
   if ( !q || (OID(q)==O_N && ((NID(q) == N_LM) || (NID(q) == N_GFPN))) ) { /* XXX */
     *l = (LM)q;
   } else if ( OID(q) == O_N && NID(q) == N_Q ) {
     if ( q->z ) {
-      MKLM(BDY((Z)q),nm); 
-      simplm(nm,l);
+      if ( mpz_sgn(BDY((Z)q)) > 0 ) {
+        MKLM(BDY((Z)q),nm); 
+        simplm(nm,l);
+      } else {
+        mpz_init(t); mpz_neg(t,BDY((Z)q));
+        MKLM(t,nm); simplm(nm,&nm1); chsgnlm(nm1,l);
+      }
     } else {
-      MKLM(mpq_numref(BDY(q)),nm);
-      simplm_force(nm,&nm1);
+      if ( mpq_sgn(BDY(q)) > 0 ) {
+        MKLM(mpq_numref(BDY(q)),nm);
+        simplm_force(nm,&nm1);
+      } else {
+        mpz_init(t); mpz_neg(t,mpq_numref(BDY(q)));
+        MKLM(t,nm0); simplm(nm0,&nm); chsgnlm(nm,&nm1);
+      }
       MKLM(mpq_denref(BDY(q)),dn);
-      simplm_force(nm,&dn1);
+      simplm_force(dn,&dn1);
       divlm(nm1,dn1,l);
     }
   } else
@@ -150,6 +167,7 @@ void sublm(LM a,LM b,LM *c)
 {
   mpz_t t;
   LM s,z;
+  int sgn;
 
   qtolm((Q)a,&z); a = z; qtolm((Q)b,&z); b = z;
   if ( !b )
@@ -157,8 +175,15 @@ void sublm(LM a,LM b,LM *c)
   else if ( !a )
     chsgnlm(b,c);
   else {
-    mpz_init(t); mpz_sub(t,BDY(a),BDY(b));
-    MKLM(t,s); simplm(s,c);
+    sgn = mpz_cmp(BDY(a),BDY(b));
+    if ( sgn > 0 ) {
+      mpz_init(t); mpz_sub(t,BDY(a),BDY(b));
+      MKLM(t,*c);
+    } else if ( sgn < 0 ) {
+      mpz_init(t); mpz_sub(t,BDY(b),BDY(a));
+      MKLM(t,s); chsgnlm(s,c);
+    } else
+      *c = 0;
   }
 }
 

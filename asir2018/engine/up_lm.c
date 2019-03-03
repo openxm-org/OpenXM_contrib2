@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/up_lm.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/up_lm.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -58,8 +58,8 @@ extern int current_ff;
 void fft_mulup_lm(UP n1,UP n2,UP *nr)
 {
   ModNum *f1,*f2,*w,*fr;
-  ModNum *frarray[1024];
-  int modarray[1024];
+  ModNum *frarray[NPrimes];
+  int modarray[NPrimes];
   int frarray_index = 0;
   Z m,m1,m2,lm_mod;
   int d1,d2,dmin,i,mod,root,d,cond,bound;
@@ -105,8 +105,8 @@ void fft_mulup_lm(UP n1,UP n2,UP *nr)
 void fft_squareup_lm(UP n1,UP *nr)
 {
   ModNum *f1,*w,*fr;
-  ModNum *frarray[1024];
-  int modarray[1024];
+  ModNum *frarray[NPrimes];
+  int modarray[NPrimes];
   int frarray_index = 0;
   Z m,m1,m2,lm_mod;
   int d1,dmin,i,mod,root,d,cond,bound;
@@ -150,8 +150,8 @@ void fft_squareup_lm(UP n1,UP *nr)
 void trunc_fft_mulup_lm(UP n1,UP n2,int dbd,UP *nr)
 {
   ModNum *f1,*f2,*fr,*w;
-  ModNum *frarray[1024];
-  int modarray[1024];
+  ModNum *frarray[NPrimes];
+  int modarray[NPrimes];
   int frarray_index = 0;
   Z m,m1,m2,lm_mod;
   int d1,d2,dmin,i,mod,root,d,cond,bound;
@@ -205,7 +205,7 @@ void crup_lm(ModNum **f,int d,int *mod,int index,Z m,Z lm_mod,UP *r)
   for ( i = 0; i <= d; i++ ) {
     remz((Z)w->c[i],lm_mod,&t); w->c[i] = (Num)t;
   }
-  for ( i = d; (i >= 0) && (w->c[i] != 0); i-- );
+  for ( i = d; (i >= 0) && (w->c[i] == 0); i-- );
   if ( i < 0 ) *r = 0;
   else {
     w->d = i;
@@ -275,7 +275,7 @@ void save_up(UP obj,char *name)
 void hybrid_powermodup(UP f,UP *xp)
 {
   Z n;
-  UP x,y,t,invf,s;
+  UP x,y,t,invf,s,s1;
   int k;
   LM lm;
 
