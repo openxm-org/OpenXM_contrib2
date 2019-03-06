@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.1 2018/09/19 05:45:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -227,7 +227,7 @@ LIST create_control_values(int withdesc)
     }
   }
   MKLIST(l,node);
-  descstr = "List of paths in ASIRLOADPATHt.";
+  descstr = "List of paths in ASIRLOADPATH.";
   list = create_control_value("loadpath",(Obj)l,descstr,withdesc);
   MKNODE(top1,list,top); top = top1;
 
