@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.2 2018/09/28 08:20:29 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -232,7 +232,7 @@ void write_cmo_q(FILE *s,Q q)
     r = CMO_QQ; write_int(s,&r);
     nmq(q,&nm);
     write_cmo_zz(s,nm);
-    nmq(q,&dn);
+    dnq(q,&dn);
     write_cmo_zz(s,dn);
   } else {
     r = CMO_ZZ; write_int(s,&r);

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.2 2018/10/01 06:06:02 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -143,7 +143,7 @@ void PRINTNUM(Num q)
     case N_Q:
       nmq((Q)q,&num); PRINTZ(num);
       if ( !INT((Q)q) ) {
-        PUTS("/"); nmq((Q)q,&den); PRINTZ(den);
+        PUTS("/"); dnq((Q)q,&den); PRINTZ(den);
       }
       break;
     case N_R:
