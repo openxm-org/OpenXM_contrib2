@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.3 2018/11/12 04:25:13 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.4 2018/11/12 07:59:33 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -536,10 +536,6 @@ void make_reduced(VECT b,int nv)
 
   n = b->len;
   p = (DL *)BDY(b);
-  if ( p[0]->td == 0 ) {
-    b->len = 1;
-    return;
-  }
   for ( i = 0; i < n; i++ ) {
     pi = p[i];
     if ( !pi ) continue;
@@ -672,58 +668,19 @@ P binpoly(P n,int a,int b)
   return r;
 }
 
-void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
+void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf,Z *den)
 {
-  LIST g,v;
-  VL vl;
-  int m,n,i,hf;
-  VECT b,x;
-  NODE t,nd;
-  Z z;
-  P hp,tv,mt,t1,u,w;
-  DP a;
-  DL *p;
-  P *plist,*r;
-  Obj val;
+  P tv,gcd,q,h,hphead,tt,ai,hpoly,nv,bp,w;
+  Z d;
+  DCP dc,topdc;
+  VECT hfhead;
+  int i,s,qd;
 
-// init_eg(&eg_comp);
-  if ( get_opt("hf",&val) && val ) hf = 1;
-  else hf = 0;
-  i_simple = i_all = 0;
-  g = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
-  pltovl(v,&vl);
-  m = length(BDY(g)); MKVECT(b,m); p = (DL *)BDY(b);
-  for ( t = BDY(g), i = 0; t; t = NEXT(t), i++ ) {
-    ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
-  }
-  n = length(BDY(v)); MKVECT(x,n); p = (DL *)BDY(x);
-  for ( t = BDY(v), i = 0; t; t = NEXT(t), i++ ) {
-    ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
-  }
-  /* create (1,1-t,...,(1-t)^n) */
-  plist = (P *)MALLOC((n+1)*sizeof(P));
-  /* t1 = 1-t */
-  makevar("t",&tv); chsgnp(tv,&mt); addp(CO,mt,(P)ONE,&t1);
-  for ( plist[0] = (P)ONE, i = 1; i <= n; i++ )
-    mulp(CO,plist[i-1],t1,&plist[i]);
-  r = (P *)CALLOC(n+1,sizeof(P));
-  make_reduced(b,n);
-  mhp_rec(b,x,tv,r);
-  for ( hp = 0, i = 0; i <= n; i++ ) {
-    mulp(CO,plist[i],r[i],&u); addp(CO,u,hp,&w); hp = w;
-  }
-//   printf("all=%d,simple=%d,comp=%.3fsec\n",i_all,i_simple,eg_comp.exectime);
-  UTOZ(n,z);
-  if ( !hf ) {
-    nd = mknode(2,hp,z);
-    MKLIST(*rp,nd);
+  if ( !hp ) {
+    MKVECT(hfhead,0); *head = hfhead;
+    *hf = 0; *den = ONE;
   } else {
-    P gcd,q,head,hphead,t,w,ai,hpoly,nv,bp;
-    Z den,d;
-    DCP dc,topdc;
-    VECT hfhead;
-    int s,qd,i;
-    
+    makevar("t",&tv);
     ezgcdp(CO,hp,plist[n],&gcd);
     if ( NUM(gcd) ) {
       s = n;
@@ -734,32 +691,102 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
     }
     if ( NUM(q) ) qd = 0;
     else qd = ZTOS(DEG(DC(q)));
-    topdc = 0;
-    for ( i = 0; i < qd; i++ ) {
-      NEWDC(dc); NEXT(dc) = topdc;
-      ibin(i+s-1,s-1,&COEF(dc));
-      STOZ(i,d); DEG(dc) = d;
-      topdc = dc;
+    if ( qd ) { 
+      topdc = 0;
+      for ( i = 0; i < qd; i++ ) {
+        NEWDC(dc); NEXT(dc) = topdc;
+        ibin(i+s-1,s-1,&COEF(dc));
+        STOZ(i,d); DEG(dc) = d;
+        topdc = dc;
+      }
+      MKP(VR(tv),topdc,h);
+      mulp(CO,h,q,&hphead);
     }
-    MKP(VR(tv),topdc,head);
-    mulp(CO,head,q,&hphead);
-    MKVECT(hfhead,qd);
+    MKVECT(hfhead,qd); 
     for ( i = 0; i < qd; i++ )
       coefp(hphead,i,(P *)&BDY(hfhead)[i]);
+    *head = hfhead;
     hpoly = 0;
     makevar("n",&nv);
     for ( i = 0; i <= qd; i++ ) {
       coefp(q,i,&ai);
       bp = binpoly(nv,s-i-1,s-1);
-      mulp(CO,ai,bp,&t);
-      addp(CO,hpoly,t,&w);
+      mulp(CO,ai,bp,&tt);
+      addp(CO,hpoly,tt,&w);
       hpoly = w;
     }
-    factorialz(s-1,&den);
-    nd = mknode(5,hp,z,hfhead,hpoly,den);
-    MKLIST(*rp,nd);
+    *hf = hpoly;
+    factorialz(s-1,den);
   }
 }
+
+/* create (1,1-t,...,(1-t)^n) */
+
+P *mhp_prep(int n,P *tv) {
+  P *plist;
+  P mt,t1;
+  int i;
+
+  plist = (P *)MALLOC((n+1)*sizeof(P));
+  /* t1 = 1-t */
+  makevar("t",tv); chsgnp(*tv,&mt); addp(CO,mt,(P)ONE,&t1);
+  for ( plist[0] = (P)ONE, i = 1; i <= n; i++ )
+    mulp(CO,plist[i-1],t1,&plist[i]);
+  return plist;
+}
+
+P mhp_ctop(P *r,P *plist,int n)
+{
+  int i;
+  P hp,u,w;
+
+  for ( hp = 0, i = 0; i <= n; i++ ) {
+    mulp(CO,plist[i],r[i],&u); addp(CO,u,hp,&w); hp = w;
+  }
+  return hp;
+}
+
+void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
+{
+  LIST g,v;
+  VL vl;
+  int m,n,i;
+  VECT b,x,hfhead;
+  NODE t,nd;
+  Z z,den;
+  P hp,tv,mt,t1,u,w,hpoly;
+  DP a;
+  DL *p;
+  P *plist,*r;
+  Obj val;
+
+  i_simple = i_all = 0;
+  g = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+  pltovl(v,&vl);
+  m = length(BDY(g)); MKVECT(b,m); p = (DL *)BDY(b);
+  for ( t = BDY(g), i = 0; t; t = NEXT(t), i++ ) {
+    if ( !BDY(t) )
+      p[i] = 0;
+    else {
+      ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
+    }
+  }
+  n = length(BDY(v)); MKVECT(x,n); p = (DL *)BDY(x);
+  for ( t = BDY(v), i = 0; t; t = NEXT(t), i++ ) {
+    ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
+  }
+  
+  r = (P *)CALLOC(n+1,sizeof(P));
+  plist = mhp_prep(n,&tv);
+  make_reduced(b,n);
+  mhp_rec(b,x,tv,r);
+  hp = mhp_ctop(r,plist,n);
+  mhp_to_hf(CO,hp,n,plist,&hfhead,&hpoly,&den);
+  UTOZ(n,z);
+  nd = mknode(5,hp,z,hfhead,hpoly,den);
+  MKLIST(*rp,nd);
+}
+
 #endif
 
 void Pdp_compute_last_t(NODE arg,LIST *rp)
