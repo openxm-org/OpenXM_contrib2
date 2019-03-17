@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.10 2018/12/10 22:24:42 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.11 2019/03/03 05:21:17 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -1369,16 +1369,16 @@ int inttorat(Z c,Z m,Z b,Z *nmp,Z *dnp)
 
 extern int f4_nocheck;
 
-int mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int *rind,int *cind)
+int mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int *rind,int *cind)
 {
-  int row,col,clen,i,j,k,l;
+  int row,col,i,j,k,l;
   mpz_t t;
   mpz_t *w;
   Z *mati;
   mpz_t *nmk;
 
   if ( f4_nocheck ) return 1;
-  row = mat->row; col = mat->col; clen = col-rank;
+  row = mat->row; col = mat->col;
   w = (mpz_t *)MALLOC(clen*sizeof(mpz_t));
   mpz_init(t);
   for ( i = 0; i < clen; i++ ) mpz_init(w[i]);
@@ -2020,7 +2020,7 @@ RESET:
         for ( j = k = l = 0; j < col; j++ )
           if ( colstat[j] ) rind[k++] = j;  
           else cind[l++] = j;
-        if ( mpz_gensolve_check(mat,num,den,rank,rind,cind) ) {
+        if ( mpz_gensolve_check(mat,num,den,rank,col-rank,rind,cind) ) {
           MKMAT(r,rank,col-rank); *nm = r;
           for ( i = 0; i < rank; i++ )
             for ( j = 0; j < col-rank; j++ ) {
@@ -2274,7 +2274,7 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
                 rind[k++] = j;  
               else if ( !cinfo[j] )
                 cind[l++] = j;
-            ret = mpz_gensolve_check(mat,nm,den,rank,rind,cind);
+            ret = mpz_gensolve_check(mat,nm,den,rank,ri,rind,cind);
             if ( ret ) {
               *rindp = rind;
               *cindp = cind;
