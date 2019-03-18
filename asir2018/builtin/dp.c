@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.6 2019/03/18 07:00:33 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.7 2019/03/18 07:09:58 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -503,17 +503,17 @@ P binpoly(P n,int a,int b)
   return r;
 }
 
-void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf,Z *den)
+void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf)
 {
   P tv,gcd,q,h,hphead,tt,ai,hpoly,nv,bp,w;
-  Z d;
+  Z d,z;
   DCP dc,topdc;
   VECT hfhead;
   int i,s,qd;
 
   if ( !hp ) {
     MKVECT(hfhead,0); *head = hfhead;
-    *hf = 0; *den = ONE;
+    *hf = 0;
   } else {
     makevar("t",&tv);
     ezgcdp(CO,hp,plist[n],&gcd);
@@ -533,7 +533,6 @@ void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf,Z *den)
       }
       *head = hfhead;
       *hf = 0;
-      *den = ONE;
     } else {
       if ( qd ) { 
         topdc = 0;
@@ -559,8 +558,17 @@ void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf,Z *den)
         addp(CO,hpoly,tt,&w);
         hpoly = w;
       }
+      if ( s > 2 ) {
+        factorialz(s-1,&z);
+        divsp(CO,hpoly,(P)z,&tt); hpoly = tt;
+      }
       *hf = hpoly;
-      factorialz(s-1,den);
+      for ( i = qd-1; i >= 0; i-- ) {
+        UTOZ(i,z);
+        substp(CO,hpoly,VR(nv),(P)z,&tt);
+        if ( cmpz((Z)tt,(Z)BDY(hfhead)[i]) ) break;
+      }
+      hfhead->len = i+1;
     }
   }
 }
@@ -626,9 +634,9 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
   make_reduced(b,n);
   mhp_rec(b,x,tv,r);
   hp = mhp_ctop(r,plist,n);
-  mhp_to_hf(CO,hp,n,plist,&hfhead,&hpoly,&den);
+  mhp_to_hf(CO,hp,n,plist,&hfhead,&hpoly);
   UTOZ(n,z);
-  nd = mknode(5,hp,z,hfhead,hpoly,den);
+  nd = mknode(4,hp,z,hfhead,hpoly);
   MKLIST(*rp,nd);
 }
 
