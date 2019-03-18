@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.11 2019/03/03 05:21:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.12 2019/03/17 02:48:13 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -515,7 +515,7 @@ void factorialz(unsigned int n,Z *nr)
 {
   mpz_t a;
   mpz_init(a);
-  mpz_fac_ui(a,n);
+  mpz_fac_ui(a,(unsigned long)n);
   MPZTOZ(a,*nr);
 }
 

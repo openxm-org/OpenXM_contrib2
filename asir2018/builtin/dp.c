@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.4 2018/11/12 07:59:33 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.5 2019/03/13 08:01:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -691,32 +691,42 @@ void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf,Z *den)
     }
     if ( NUM(q) ) qd = 0;
     else qd = ZTOS(DEG(DC(q)));
-    if ( qd ) { 
-      topdc = 0;
-      for ( i = 0; i < qd; i++ ) {
-        NEWDC(dc); NEXT(dc) = topdc;
-        ibin(i+s-1,s-1,&COEF(dc));
-        STOZ(i,d); DEG(dc) = d;
-        topdc = dc;
+    if ( s == 0 ) {
+      MKVECT(hfhead,qd+1);
+      for ( i = 0; i <= qd; i++ ) {
+        coefp(q,i,(P *)&BDY(hfhead)[i]);
       }
-      MKP(VR(tv),topdc,h);
-      mulp(CO,h,q,&hphead);
+      *head = hfhead;
+      *hf = 0;
+      *den = ONE;
+    } else {
+      if ( qd ) { 
+        topdc = 0;
+        for ( i = 0; i < qd; i++ ) {
+          NEWDC(dc); NEXT(dc) = topdc;
+          ibin(i+s-1,s-1,&COEF(dc));
+          STOZ(i,d); DEG(dc) = d;
+          topdc = dc;
+        }
+        MKP(VR(tv),topdc,h);
+        mulp(CO,h,q,&hphead);
+      }
+      MKVECT(hfhead,qd); 
+      for ( i = 0; i < qd; i++ )
+        coefp(hphead,i,(P *)&BDY(hfhead)[i]);
+      *head = hfhead;
+      hpoly = 0;
+      makevar("n",&nv);
+      for ( i = 0; i <= qd; i++ ) {
+        coefp(q,i,&ai);
+        bp = binpoly(nv,s-i-1,s-1);
+        mulp(CO,ai,bp,&tt);
+        addp(CO,hpoly,tt,&w);
+        hpoly = w;
+      }
+      *hf = hpoly;
+      factorialz(s-1,den);
     }
-    MKVECT(hfhead,qd); 
-    for ( i = 0; i < qd; i++ )
-      coefp(hphead,i,(P *)&BDY(hfhead)[i]);
-    *head = hfhead;
-    hpoly = 0;
-    makevar("n",&nv);
-    for ( i = 0; i <= qd; i++ ) {
-      coefp(q,i,&ai);
-      bp = binpoly(nv,s-i-1,s-1);
-      mulp(CO,ai,bp,&tt);
-      addp(CO,hpoly,tt,&w);
-      hpoly = w;
-    }
-    *hf = hpoly;
-    factorialz(s-1,den);
   }
 }
 
