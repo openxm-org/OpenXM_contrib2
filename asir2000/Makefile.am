@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.48 2016/09/22 07:15:33 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.49 2017/03/12 04:51:49 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -9,7 +9,7 @@ endif
 
 SUBDIRS  = asm builtin engine fft include io lib parse ${PLOTDIR}
 
-asirdir       = ${libdir}/asir
+asirdir       = ${libdir}/asir2000
 asir_PROGRAMS = asir
 asir_SOURCES  = parse/main.c
 asir_LDADD    = libasir.a @ASIR_GCLIB@
@@ -85,23 +85,22 @@ libasir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
 
 install-libasir: libasir.a
 	mkdir -p ${DESTDIR}${libdir}
-	${INSTALL_DATA} libasir.a ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
+	${INSTALL_DATA} libasir.a ${DESTDIR}${libdir}/libasir2000${libasir_postfix}.a
 
 install-libasir-gc: libasir-gc.a
 	mkdir -p ${DESTDIR}${libdir}
-	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir-gc.a
+	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir2000-gc.a
 
 install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
 	-mkdir -p ${DESTDIR}${bindir}
-	${INSTALL_PROGRAM} asir ${DESTDIR}${bindir}
 	-mkdir -p ${DESTDIR}${asirdir}
+	${INSTALL_PROGRAM} asir${EXEEXT} ${DESTDIR}${asirdir}
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
-	-rm -f ${DESTDIR}${bindir}/ox_asir${EXEEXT}
-	(cd ${DESTDIR}${bindir} ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
+	-rm -f ${DESTDIR}${bindir}/ox_asir2000${EXEEXT}
+	(cd ${DESTDIR}${bindir} ; ${LN_S} ${DESTDIR}/${libasir}/asir${EXEEXT} ox_asir2000${EXEEXT})
 	-(cd ${DESTDIR}${asirdir}; \
-    rm -f asir${EXEEXT} ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
+    rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
 	(cd ${DESTDIR}${asirdir} ; \
-	${LN_S} ../../bin/asir${EXEEXT} asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
@@ -117,7 +116,7 @@ install-lib:
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
 	-mkdir -p ${DESTDIR}${bindir}
-	-rm -f ${DESTDIR}${bindir}/asir${EXEEXT}
+	-rm -f ${DESTDIR}${bindir}/asir2000${EXEEXT}
 	(cd ${DESTDIR}${bindir} ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
 
 install-doc:
