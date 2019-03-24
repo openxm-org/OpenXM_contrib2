@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -52,7 +52,7 @@
 #include "ca.h"
 #include "com.h"
 #include "ox.h"
-#include "gc.h"
+// #include "gc.h"
 #if defined(VISUAL) || defined(__MINGW32__)
 #include <stdlib.h>
 #include <windows.h>
@@ -75,6 +75,7 @@ HANDLE hIntr,hReset,hKill;
 extern int _fileinfo;
 #endif
 
+void GC_init();
 static void put_log(char *);
 static int ox_spawn(char *,int,char *,char *);
 static void launch_error(char *);
