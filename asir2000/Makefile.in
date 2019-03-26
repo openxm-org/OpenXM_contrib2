@@ -100,7 +100,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = asir2000
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(asirdir)"
 PROGRAMS = $(asir_PROGRAMS)
@@ -182,8 +182,9 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = asm builtin engine fft include io lib parse plot
-am__DIST_COMMON = $(srcdir)/Makefile.in INSTALL compile config.guess \
-	config.sub depcomp install-sh missing mkinstalldirs
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/asir2000.in INSTALL \
+	compile config.guess config.sub depcomp install-sh missing \
+	mkinstalldirs
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -416,6 +417,8 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+asir2000: $(top_builddir)/config.status $(srcdir)/asir2000.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-asirPROGRAMS: $(asir_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(asir_PROGRAMS)'; test -n "$(asirdir)" || list=; \
@@ -962,11 +965,12 @@ install-libasir-gc: libasir-gc.a
 
 install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
 	-mkdir -p ${DESTDIR}${bindir}
+	${INSTALL_PROGRAM} asir2000 ${DESTDIR}${bindir}
 	-mkdir -p ${DESTDIR}${asirdir}
 	${INSTALL_PROGRAM} asir${EXEEXT} ${DESTDIR}${asirdir}
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
 	-rm -f ${DESTDIR}${bindir}/ox_asir2000${EXEEXT}
-	(cd ${DESTDIR}${bindir} ; ${LN_S} ${DESTDIR}/${libasir}/asir${EXEEXT} ox_asir2000${EXEEXT})
+	${LN_S} ${DESTDIR}${asirdir}/asir${EXEEXT} ${DESTDIR}${bindir}/ox_asir2000${EXEEXT}
 	-(cd ${DESTDIR}${asirdir}; \
     rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
 	(cd ${DESTDIR}${asirdir} ; \

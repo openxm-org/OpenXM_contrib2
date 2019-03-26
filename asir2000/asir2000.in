@@ -1,0 +1,8 @@
+#!/bin/sh
+## $OpenXM$
+
+prefix=@prefix@
+ASIR_LIBDIR=${ASIR_LIBDIR_2000:-${prefix}/lib/asir2000}
+ASIR_BINARY=${ASIR_BINARY_2000:-${prefix}/lib/asir2000/asir}
+export ASIR_LIBDIR
+exec ${ASIR_BINARY} "$@"

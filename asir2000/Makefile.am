@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.49 2017/03/12 04:51:49 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2000/Makefile.am,v 1.50 2019/03/23 12:17:15 ohara Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -93,11 +93,12 @@ install-libasir-gc: libasir-gc.a
 
 install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
 	-mkdir -p ${DESTDIR}${bindir}
+	${INSTALL_PROGRAM} asir2000 ${DESTDIR}${bindir}
 	-mkdir -p ${DESTDIR}${asirdir}
 	${INSTALL_PROGRAM} asir${EXEEXT} ${DESTDIR}${asirdir}
 	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
 	-rm -f ${DESTDIR}${bindir}/ox_asir2000${EXEEXT}
-	(cd ${DESTDIR}${bindir} ; ${LN_S} ${DESTDIR}/${libasir}/asir${EXEEXT} ox_asir2000${EXEEXT})
+	${LN_S} ${DESTDIR}${asirdir}/asir${EXEEXT} ${DESTDIR}${bindir}/ox_asir2000${EXEEXT}
 	-(cd ${DESTDIR}${asirdir}; \
     rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
 	(cd ${DESTDIR}${asirdir} ; \

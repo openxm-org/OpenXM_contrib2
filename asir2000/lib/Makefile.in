@@ -444,7 +444,7 @@ install-doc:
 		gzip -dc help-$$i.tgz | ( cd ${DESTDIR}${asirdir}; tar xf - ) ; \
 		rm -f help-$$i.tgz ; \
 	done
-	-rm ${DESTDIR}${asirdir}/help
+	-rm ${DESTDIR}${asirdir}/help ${DESTDIR}${asirdir}/help-jp ${DESTDIR}${asirdir}/help-eg
 	(cd ${DESTDIR}${asirdir}; ${LN_S} help-ja help-jp)
 	(cd ${DESTDIR}${asirdir}; ${LN_S} help-en help-eg)
 	(cd ${DESTDIR}${asirdir}; ${LN_S} help-en help)

@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.49 2016/09/23 03:03:39 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2000/configure.in,v 1.50 2017/03/12 04:51:49 ohara Exp $
 
 AC_INIT(asir,1.15)
 AC_CONFIG_SRCDIR([LICENSE])
@@ -239,5 +239,5 @@ dnl for Solaris 2.x
 AC_CHECK_FUNC(socket, , [AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname, , [AC_CHECK_LIB(nsl,gethostbyname)])
 
-AC_CONFIG_FILES([Makefile engine/Makefile asm/Makefile builtin/Makefile fft/Makefile include/Makefile io/Makefile lib/Makefile parse/Makefile plot/Makefile])
+AC_CONFIG_FILES([Makefile engine/Makefile asm/Makefile builtin/Makefile fft/Makefile include/Makefile io/Makefile lib/Makefile parse/Makefile plot/Makefile asir2000])
 AC_OUTPUT
