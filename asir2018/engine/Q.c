@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.12 2019/03/17 02:48:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.13 2019/03/18 07:00:33 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -1337,6 +1337,15 @@ int mpz_inttorat(mpz_t c,mpz_t m,mpz_t b,mpz_t nm,mpz_t dn)
   }
   if ( mpz_cmp(v1,b) >= 0 ) return 0;
   else {
+    mpz_gcd(t,v1,v2);
+    if ( UNIMPZ(t) ) 
+      mpz_set_ui(r1,0); 
+    else {
+      /* v1 /= t, v2 /= t, t=c*v1-v2, r1=t%m */
+      mpz_divexact(v1,v1,t); mpz_divexact(v2,v2,t);
+      mpz_mul(t,c,v1); mpz_sub(t,t,v2); mpz_mod(r1,t,m);
+    }
+    if ( mpz_sgn(r1) ) return 0;
     if ( mpz_sgn(v1)<0  ) {
       mpz_neg(dn,v1); mpz_neg(nm,v2);
     } else {
@@ -1348,7 +1357,7 @@ int mpz_inttorat(mpz_t c,mpz_t m,mpz_t b,mpz_t nm,mpz_t dn)
 
 int inttorat(Z c,Z m,Z b,Z *nmp,Z *dnp)
 {
-  Z qq,t,u1,v1,r1;
+  Z qq,t,s,r,u1,v1,r1;
   Z q,u2,v2,r2;
 
   u1 = 0; v1 = ONE; u2 = m; v2 = c;
@@ -1358,10 +1367,20 @@ int inttorat(Z c,Z m,Z b,Z *nmp,Z *dnp)
   }
   if ( cmpz(v1,b) >= 0 ) return 0;
   else {
-    if ( mpz_sgn(BDY(v1))<0  ) {
-      chsgnz(v1,dnp); chsgnz(v2,nmp);
+    /* reduction and check */
+    /* v2/v1 = u2/u1, c*u1-u2 = 0 mod m? */
+    gcdz(v1,v2,&t);
+    if ( UNIZ(t) ) {
+      u1 = v1; u2 = v2; r = 0;
     } else {
-      *dnp = v1; *nmp = v2;
+      divsz(v1,t,&u1); divsz(v2,t,&u2);
+      mulz(c,u1,&t); subz(t,u2,&s); remz(s,m,&r);
+    }
+    if ( r ) return 0;
+    if ( mpz_sgn(BDY(u1))<0  ) {
+      chsgnz(u1,dnp); chsgnz(u2,nmp);
+    } else {
+      *dnp = u1; *nmp = u2;
     }
     return 1;
   }
