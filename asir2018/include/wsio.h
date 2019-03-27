@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/include/wsio.h,v 1.1 2018/09/19 06:00:58 noro Exp $
 */
 #ifndef WSIO_H
 #define WSIO_H
@@ -66,7 +66,11 @@
 
 typedef struct
   {
+#if defined(VISUAL)
+  int*   _p;
+#else
   FILE  fp;
+#endif
   int    fildes;
   int    p;
   int     read_flag;
@@ -78,6 +82,7 @@ typedef struct
   }STREAM;
 
 STREAM *WSIO_open(int,char *);
+int WSIO_fileno(STREAM *);
 int cread (char *, unsigned int, int, STREAM *);
 int cwrite (char *, unsigned int, int, STREAM *);
 int cflush(STREAM *);
