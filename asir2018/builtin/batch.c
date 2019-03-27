@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/batch.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #if !defined(VISUAL) && !defined(__MINGW32__)
 
@@ -125,7 +125,7 @@ int exec_file(char *bindir,char *fname) {
 	av[11] = NULL;
 	hProc = (HANDLE)_spawnv(_P_NOWAIT,AsirExe,av);
 	if ( hProc == (HANDLE)-1 ) {
-		fprintf(stderr,"%s ‚ª‚ ‚è‚Ü‚¹‚ñ",AsirExe);
+		fprintf(stderr,"%s not found.",AsirExe);
 		return 0;
 	}
 	read_until_eof();	
