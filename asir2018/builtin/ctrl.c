@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.3 2019/03/06 10:43:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,6 +70,11 @@ static struct {
   char *release;
   char *full;
   char *lang;
+#if defined(VISUAL)
+  int ver_major;
+  int ver_minor;
+  int ver_build;
+#endif
 } sysinfo;
 
 void Pctrl();
@@ -519,6 +524,8 @@ static char *osnameNT(int major, int minor)
         return "Windows8";
     }else if (major == 6 && minor == 3) {
         return "Windows8.1";
+    }else if (major == 10 && minor == 0) {
+        return "Windows10";
     }
     return "unknown";
 }
@@ -547,6 +554,28 @@ static char *get_lang()
     return "en"; // English
 }
 
+void get_version_win8(int *major,int *minor,int *build)
+{
+    char *res;
+    char fname[4096]; /* fullpath of kernel32.dll (_MAX_PATH==260)*/
+    char cmd[4096];
+    int size;
+    char *version_string;
+    struct LANGANDCODEPAGE {
+        WORD language;
+        WORD codepage;
+    }* lang;
+    sprintf(fname,"%s\\system32\\kernel32.dll", getenv("SYSTEMROOT"));
+    size=GetFileVersionInfoSize(fname,0);
+    res = (char *)MALLOC(size+1);
+    if(GetFileVersionInfo(fname,0,size+1,res)) {
+        VerQueryValue(res,"\\VarFileInfo\\Translation",&lang,&size);
+        sprintf(cmd,"\\StringFileInfo\\%04x%04x\\ProductVersion",lang->language,lang->codepage);
+        VerQueryValue(res,cmd,&version_string,&size);
+        sscanf(version_string,"%d.%d.%d.",major,minor,build);
+    }
+}
+
 static void get_sysinfo()
 {
     int arch64 = 0;
@@ -562,6 +591,14 @@ static void get_sysinfo()
 
     v.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     GetVersionEx(&v);
+    /* Windows8 == version 6.2 */
+    if (v.dwPlatformId == VER_PLATFORM_WIN32_NT
+        && v.dwMajorVersion == 6 && v.dwMinorVersion >= 2) { 
+        get_version_win8(&v.dwMajorVersion, &v.dwMinorVersion, &v.dwBuildNumber);
+    }
+    sysinfo.ver_major=v.dwMajorVersion;
+    sysinfo.ver_minor=v.dwMinorVersion;
+    sysinfo.ver_build=v.dwBuildNumber;
 
     sysinfo.type = "windows";
     sysinfo.arch = "x86";
