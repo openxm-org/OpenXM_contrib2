@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.1 2018/09/19 05:45:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.2 2018/10/01 07:48:01 noro Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
@@ -256,11 +256,10 @@ void Risa_GC_get_adj(int *nm, int *dn) {
 void Risa_GC_set_adj(int nm, int dn) {
   GC_set_free_space_divisor(dn/nm);
 }
-
+#endif
 double GC_get_gctime() {
   return 0.0;
 }
-#endif
 
 #if defined(MSWIN32) && !defined(VISUAL) && !defined(__MINGW32__)
 #include <signal.h>
