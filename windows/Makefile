@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.10 2015/03/12 18:11:21 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.11 2016/06/29 15:37:21 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -8,20 +8,20 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 OS = win64
 CANDLE_ARCH = -nologo -arch x64
 PGDIR=ProgramFiles64Folder
-PRODUCTID=DF150E20-D342-47F1-8F37-F9D5FF1E2724
+PRODUCTID=5FCFE322-2C5D-4AF6-AB56-490A86831FD7
 !else
 OS = win32
 CANDLE_ARCH = -nologo
 PGDIR=ProgramFilesFolder
-PRODUCTID=853C53F2-E21E-4CA7-87DB-4967E728F5DD
+PRODUCTID=4B09EBA0-88B0-4CA5-B284-AA13AC6CCA72
 !endif
 
 # DO NOT CHANGE UPGRADEID!!
 UPGRADEID=B7A582F5-0484-4030-9D38-BFAE00707F0D
-PRODUCTVER=1.0.8
+PRODUCTVER=1.1.0
 
 TARGET= asir$(OS).msi
-SRCS= asir.wxs _lib.wxs _contrib.wxs _help.wxs _share.wxs _doc.wxs
+SRCS= asir.wxs _lib.wxs _contrib.wxs _share.wxs
 # OBJS= asir.wixobj _lib.wixobj _contrib.wixobj _help.wixobj _share.wixobj
 OBJS= $(SRCS:.wxs=.wixobj)
 
@@ -29,7 +29,7 @@ CANDLE = candle -nologo
 CANDLE_FLAGS = $(CANDLE_ARCH) -dprogramfilesDir=$(PGDIR) \
   -dupgradeID=$(UPGRADEID) -dproductID=$(PRODUCTID) -dproductVer=$(PRODUCTVER) \
   -dlibDir=asir\lib\asir -dcontribDir=asir\lib\asir-contrib \
-  -dhelpDir=asir\help -dshareDir=asir\share -ddocDir=asir\doc
+  -dshareDir=asir\share
 LIGHT = light -nologo
 LTFLAGS = -ext WixUIExtension -ext WixUtilExtension
 HEAT = heat
@@ -65,20 +65,10 @@ $(TARGET): $(OBJS) LICENSE.rtf zip
 # 	$(HEAT) dir help $(HEATFLAGS) -dr HELP  -cg HelpGrp -var "var.helpDir"  -out ..\_help.wxs
 # 	cd ..
 #
-# _share.wxs:
-# 	cd asir
-# 	$(HEAT) dir share $(HEATFLAGS) -dr SHARE -cg ShareGrp -var "var.shareDir" -out ..\_share.wxs
-# 	cd ..
-#
 # _contrib.wxs:
 # 	cd asir\lib
 # 	$(HEAT) dir asir-contrib $(HEATFLAGS) -dr LIB_ASIR_CONTRIB -cg ContribGrp -var "var.contribDir" -out ..\..\_contrib.wxs
 # 	cd ..\..
-#
-# _doc.wxs:
-# 	cd asir
-# 	$(HEAT) dir doc $(HEATFLAGS) -dr DOC -cg DocGrp -var "var.docDir" -out ..\_doc.wxs
-# 	cd ..
 #
 # wxsclean:
 # 	@del /q _*.wxs

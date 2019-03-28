@@ -47,13 +47,11 @@
                             <File Id="UNZIP.EXE" Name="unzip.exe" Source="asir\bin\unzip.exe" />
                         </Component>
                     </Directory>
-                    <Directory Id="HELP" Name="help" />
-                    <Directory Name="lib" Id="LIB">
+                    <Directory Id="LIB" Name="lib">
                         <Directory Id="LIB_ASIR" Name="asir" />
                         <Directory Id="LIB_ASIR_CONTRIB" Name="asir-contrib" />
                     </Directory>
                     <Directory Id="SHARE" Name="share" />
-                    <Directory Id="DOC" Name="doc" />
                     <Component Id="LICENSE" Guid="02A83B99-8E61-499B-BCDB-C25B931EEC36">
                         <File Id="LICENSE" Name="LICENSE" Source="asir\LICENSE" />
                     </Component>
@@ -74,10 +72,8 @@
         </Directory>
         <Feature Id="DefaultFeature" Title="Main Feature" Level="1">
             <ComponentGroupRef Id="LibGrp" />
-            <ComponentGroupRef Id="HelpGrp" />
             <ComponentGroupRef Id="ContribGrp" />
             <ComponentGroupRef Id="ShareGrp" />
-            <ComponentGroupRef Id="DocGrp" />
             <ComponentRef Id="asirgui.exe" />
             <ComponentRef Id="engine.exe" />
             <ComponentRef Id="asir.exe" />

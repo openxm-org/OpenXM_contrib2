@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.11 2015/08/25 22:23:56 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.12 2019/03/28 08:03:07 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -9,7 +9,7 @@ if /i "%Platform%" == "X64" (
   if not exist asir32gui\asirgui.exe ( call makebin32.bat )
 )
 
-mkdir asir\bin asir\help\ja asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\share\skel
+mkdir asir\bin asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\share\skel
 
 for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2018\asir.exe curl.exe unzip.exe ) do (
   copy /b %%i asir\bin
@@ -20,14 +20,6 @@ if /i "%Platform%" == "X64" (
 ) else (
   copy /b mpir\win32\*.dll asir\bin
 )
-
-pushd help
-if not exist ja ( call makehelp2.bat ja )
-if not exist en ( call makehelp2.bat en )
-popd
-
-copy /b help\ja\*.chm asir\help\ja
-copy /b help\en\*.chm asir\help
 
 echo import("names.rr")$ > asir\share\skel\.asirrc
 echo end$ >> asir\share\skel\.asirrc
@@ -48,13 +40,7 @@ for %%i in ( de.rr gw.rr module_syz.rr mwl.rr pd.rr rewrite.rr ) do (
 )
 del /q asir\lib\asir-contrib\Makefile.in
 del /q asir\lib\asir-contrib\y_prime\.keepme
-
-for %%i in ( doc-asir2000.zip doc-asir-contrib.zip doc-other-docs.zip ) do (
-  if not exist ..\..\OpenXM_dist\%%i (
-    curl http://www.math.kobe-u.ac.jp/OpenXM/Current/archive-01/%%i -o ..\..\OpenXM_dist\%%i
-  )
-  unzip ..\..\OpenXM_dist\%%i -d asir
-)
+del /q asir\lib\asir-contrib\y_prime\Makefile
 
 if /i "%Platform%" == "X64" (
   zip -r asir_win64_%DATE:/=.%.zip asir
