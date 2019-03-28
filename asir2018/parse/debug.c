@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/debug.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -249,7 +249,7 @@ void debug(SNODE f)
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
         if ( do_server_in_X11 )
-          get_line(buf);
+          xget_line(buf);
         else 
 #endif
         if ( !fgets(buf,BUFSIZ,stdin) )

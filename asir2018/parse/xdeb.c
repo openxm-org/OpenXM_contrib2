@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/xdeb.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #if defined(VISUAL) || defined(__MINGW32__)
 #if defined(VISUAL_LIB)
@@ -248,7 +248,7 @@ void show_debug_window(int on)
   }
 }
 
-void get_line(char *buf)
+void xget_line(char *buf)
 {
   XEvent ev;
 
@@ -265,7 +265,7 @@ void init_cmdwin() {}
 void show_debug_window(int on)
 {}
 
-void get_line(buf)
+void xget_line(buf)
 char *buf;
 {}
 #endif /* DO_PLOT */

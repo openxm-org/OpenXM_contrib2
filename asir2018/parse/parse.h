@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -704,7 +704,7 @@ int myatoi(char *s);
 void yyerror(char *s);
 int Egetc(FILE *fp);
 void Eungetc(int c,FILE *fp);
-void get_line(char *buf);
+void xget_line(char *buf);
 int readline_getc();
 void readline_ungetc();
 char *readline_console(char *prompt);
