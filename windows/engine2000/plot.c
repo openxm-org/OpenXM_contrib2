@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.11 2014/08/20 16:51:34 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.12 2017/08/30 09:40:31 ohara Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -242,7 +242,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 	MATHCAP client_mathcap;
 	LIST list;
 	int i;
-	Q q;
+	Z q;
 
 	switch ( cmd ) {
 		case SM_dupErrors:
@@ -251,7 +251,7 @@ static void asir_do_cmd(unsigned int cmd,unsigned int serial)
 			break;
 		case SM_getsp:
 			i = asir_OperandStackPtr+1;
-			STOQ(i,q);
+			STOZ(i,q);
 			asir_push_one((Obj)q);
 			break;
 		case SM_popSerializedLocalObject:
@@ -299,7 +299,7 @@ static void asir_executeFunction(int serial)
 	char *func;
 	int argc;
 	int id;
-	Q ret;
+	Z ret;
 	ERR err;
 	NODE n,n1; 
 
@@ -315,16 +315,16 @@ static void asir_executeFunction(int serial)
 	id = -1;
 	if ( !strcmp(func,"plot") ) {
 		id = plot(n,modeNO(PLOT));
-		STOQ(id,ret); asir_push_one((Obj)ret);
+		STOZ(id,ret); asir_push_one((Obj)ret);
 	}else if ( !strcmp(func,"ifplot") ) {
 		id = plot(n,modeNO(IFPLOT));
-		STOQ(id,ret); asir_push_one((Obj)ret);
+		STOZ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"arrayplot") ) {
 		id = arrayplot(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
+		STOZ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"open_canvas") ) {
 		id = open_canvas(n);
-		STOQ(id,ret); asir_push_one((Obj)ret);
+		STOZ(id,ret); asir_push_one((Obj)ret);
 	} else if ( !strcmp(func,"plotover") ) {
 		plotover(n);
 	} else if ( !strcmp(func,"drawcircle") ) {
