@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.3 2018/10/01 05:49:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.4 2018/10/19 23:27:38 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1164,7 +1164,7 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
   if ( is_hensel )
     rank = generic_gauss_elim_hensel(m,&nm,&dn,&ri,&ci);
   else
-    rank = generic_gauss_elim64(m,&nm,&dn,&ri,&ci);
+    rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
   t = col-rank;
   MKVECT(rind,rank);
   MKVECT(cind,t);
