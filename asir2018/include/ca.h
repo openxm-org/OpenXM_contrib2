@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.6 2018/10/01 05:54:09 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.7 2018/10/02 09:06:15 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -978,8 +978,8 @@ if(!(r)){NEWDMM(r);(c)=(r);}else{NEWDMM(NEXT(c));(c)=NEXT(c);}
 #define DUPZ(p,q) (NEWZ(q),BDY(q)=BDY(p))
 #define DUPQ(p,q) (NEWQ(q),BDY(q)=BDY(p))
 
-#define STOZ(n,q) ((!(n))?((q)=0):(NEWZ(q),mpz_set_si(BDY(q),n)))
-#define UTOZ(n,q) ((!(n))?((q)=0):(NEWZ(q),mpz_set_ui(BDY(q),n)))
+#define STOZ(n,q) ((!(n))?(void)((q)=0):(NEWZ(q),mpz_set_si(BDY(q),n)))
+#define UTOZ(n,q) ((!(n))?(void)((q)=0):(NEWZ(q),mpz_set_ui(BDY(q),n)))
 
 /* for initializing static object */
 #define STOZ0(n,q) (OID(q)=O_N,NID(q)=N_Q,(q)->z=1,mpz_init(BDY(q)),mpz_set_si(BDY(q),n))

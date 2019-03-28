@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/main.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -120,9 +120,6 @@ char *find_asirrc()
 #if defined(VISUAL_LIB)
 void Main(int argc,char *argv[])
 #else
-#if defined(VISUAL) || defined(__MINGW32__)
-void
-#endif
 int main(int argc,char *argv[])
 #endif
 {

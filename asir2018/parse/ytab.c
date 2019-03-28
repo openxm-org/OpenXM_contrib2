@@ -2349,7 +2349,7 @@ yyreduce:
           if ( f )
             (yyval.f) = mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,NULLP));
           else {
-            gen_searchf_searchonly((yyvsp[(1) - (1)].p),(FUNC *)&f);
+            gen_searchf_searchonly((yyvsp[(1) - (1)].p),(FUNC *)&f,1);
             if ( f )
               makesrvar(f,(P *)&val);
             else

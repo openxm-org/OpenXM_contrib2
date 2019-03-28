@@ -44,18 +44,20 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/tcpf.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/tcpf.c,v 1.2 2018/09/28 08:20:29 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
 #include "com.h"
 #include <signal.h>
 #include <string.h>
+#include <stdlib.h>
+#if !defined(VISUAL) && !defined(__MINGW32__)
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <pwd.h>
+#endif
 
 #include "ox.h"
 
