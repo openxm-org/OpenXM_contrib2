@@ -91,8 +91,6 @@ void AsirMain(int,char **);
 void OxAsirMain(int,char **);
 void OxPlotMain(int,char **);
 
-void Init_Asir(int,char **);
-int Call_Asir(char *,void *);
 void int_handler(int);
 void set_debug_handles(int);
 int create_debug_gui();

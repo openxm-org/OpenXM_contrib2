@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.16 2015/08/20 17:44:35 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/asir2000lib/Makefile.vc,v 1.17 2015/08/25 22:23:56 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -13,7 +13,7 @@ CPU_OBJ= asmiw.obj gf2m_mul_w.obj
 GMPINC= -I ..\mpir\win32
 !endif
 
-SRCDIR=..\..\asir2000
+SRCDIR=..\..\asir2018
 
 GCDIR= ..\gc
 GCINC = -I $(GCDIR)\include
@@ -26,7 +26,7 @@ LD=link
 LDFLAGS=-nologo
 
 OBJS= _distm.obj A.obj al.obj alg.obj algnum.obj arith.obj array.obj \
-  asir_lib.obj batch.obj bf.obj bfaux.obj biovar.obj bload.obj \
+  batch.obj bf.obj bfaux.obj biovar.obj bload.obj \
   bsave.obj C.obj cio.obj comp.obj compobj.obj cpexpr.obj cplx.obj \
   cplxnum.obj cpp.obj ctrl.obj D.obj dalg.obj ddM.obj ddN.obj debug.obj \
   des.obj dft.obj dist.obj distm.obj dp-supp.obj dp.obj E.obj Ebug.obj \
@@ -400,9 +400,6 @@ ws_fileio.obj: {$(VPATH)}ws_fileio.c
 	$(CC) -c $(CFLAGS) $**
 
 arith.obj: {$(VPATH)}arith.c
-	$(CC) -c $(CFLAGS) $**
-
-asir_lib.obj: {$(VPATH)}asir_lib.c
 	$(CC) -c $(CFLAGS) $**
 
 comp.obj: {$(VPATH)}comp.c

@@ -128,7 +128,7 @@ CAPTION "engine2000ÇÃ ﬁ∞ºﬁÆ›èÓïÒ"
 FONT 9, "ÇlÇr ÇoÉSÉVÉbÉN"
 BEGIN
     ICON            128,IDC_STATIC,11,17,20,20
-    LTEXT           "engine2000 Version 1.0",IDC_STATIC,40,10,119,8,
+    LTEXT           "engine2000 Version 2.0",IDC_STATIC,40,10,119,8,
                     SS_NOPREFIX
     LTEXT           "Copyright (C) 2000",IDC_STATIC,40,25,119,8
     DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
@@ -160,13 +160,13 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "engine2000 MFC ±Ãﬂÿπ∞ºÆ›\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "FileVersion", "2, 0, 0, 1\0"
             VALUE "InternalName", "engine2000\0"
             VALUE "LegalCopyright", "Copyright (C) 2000\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "engine2000.EXE\0"
             VALUE "ProductName", "engine2000 ±Ãﬂÿπ∞ºÆ›\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductVersion", "2, 0, 0, 1\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -1,4 +1,4 @@
-@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.10 2015/08/20 17:44:35 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/makepkg.bat,v 1.11 2015/08/25 22:23:56 ohara Exp $
 @echo off
 
 if exist asir ( rmdir /q /s asir )
@@ -11,7 +11,7 @@ if /i "%Platform%" == "X64" (
 
 mkdir asir\bin asir\help\ja asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\share\skel
 
-for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2000\asir.exe curl.exe unzip.exe ) do (
+for %%i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2018\asir.exe curl.exe unzip.exe ) do (
   copy /b %%i asir\bin
 )
 
@@ -35,9 +35,9 @@ echo end$ >> asir\share\skel\.asirrc
 for %%i in ( asirgui.mac  asir-mode.el install-ja-sjis.txt ) do ( 
   copy /b post-msg-asirgui\%%i asir\share\editor
 )
-copy /b ..\asir2000\LICENSE asir
+copy /b ..\asir2018\LICENSE asir
 copy /b gmp\COPYING.LIB asir
-xcopy /q /s ..\asir2000\lib asir\lib\asir
+xcopy /q /s ..\asir2018\lib asir\lib\asir
 del /q asir\lib\Makefile*
 del /q asir\lib\help*.uu
 

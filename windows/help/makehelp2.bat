@@ -1,9 +1,9 @@
-@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.5 2016/06/29 13:29:46 ohara Exp $
+@rem $OpenXM: OpenXM_contrib2/windows/help/makehelp2.bat,v 1.6 2016/06/29 15:24:11 ohara Exp $
 @echo off
 
 setlocal
 
-set PATH=..;..\..;%PATH%;c:\cygwin\bin;c:\cygwin64\bin
+set PATH=..;..\..;%PATH%;c:\cygwin\bin;c:\cygwin64\bin;c:\msys64\usr\bin
 set lang=%~1
 set PERL=perl
 

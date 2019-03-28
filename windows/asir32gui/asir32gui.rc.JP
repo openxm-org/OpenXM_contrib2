@@ -216,7 +216,7 @@ BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
     LTEXT           "asir32gui Version 1.1",IDC_STATIC,40,10,119,8,
                     SS_NOPREFIX
-    LTEXT           "Copyright (C) 1998-2013",IDC_STATIC,40,25,119,8
+    LTEXT           "Copyright (C) 1998-2019",IDC_STATIC,40,25,119,8
     DEFPUSHBUTTON   "OK",IDOK,178,7,32,14,WS_GROUP
 END
 
@@ -277,14 +277,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "Asir99\0"
+            VALUE "FileDescription", "Asir2018\0"
             VALUE "FileVersion", "1, 1, 0, 1\0"
-            VALUE "InternalName", "ASIR99\0"
-            VALUE "LegalCopyright", "Copyright (C) 1998-2013\0"
+            VALUE "InternalName", "ASIR2018\0"
+            VALUE "LegalCopyright", "Copyright (C) 1998-2019\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "ASIR32GUI.EXE\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Asir99\0"
+            VALUE "ProductName", "Asir2018\0"
             VALUE "ProductVersion", "1, 1, 0, 1\0"
             VALUE "SpecialBuild", "\0"
         END
@@ -346,12 +346,12 @@ END
 
 STRINGTABLE PRELOAD DISCARDABLE 
 BEGIN
-    IDR_MAINFRAME           "Asir2000\nMain\n\n\n\nAsir99\nAsir99"
+    IDR_MAINFRAME           "Asir2018\nMain\n\n\n\nAsir2018\nAsir2018"
 END
 
 STRINGTABLE PRELOAD DISCARDABLE 
 BEGIN
-    AFX_IDS_APP_TITLE       "Asir2000"
+    AFX_IDS_APP_TITLE       "Asir2018"
     AFX_IDS_IDLEMESSAGE     "ƒŒƒfƒB"
 END
 
@@ -461,7 +461,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     ID_INDICATOR_HEAP       "HeapSize                      "
-    IDR_DEBUGFRAME          "Asir2000\nDebug\n\n\n\nAsir99\nAsir99"
+    IDR_DEBUGFRAME          "Asir2018\nDebug\n\n\n\nAsir2018\nAsir2018"
 END
 
 #endif    // “ú–{Œê resources
