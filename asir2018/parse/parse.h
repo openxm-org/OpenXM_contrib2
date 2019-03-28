@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.2 2019/03/28 05:28:33 noro Exp $
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -912,7 +912,7 @@ void mp_abs(NODE arg,Num *rp);
 int get_opt(char *key0,Obj *r);
 
 #if defined(VISUAL) || defined(__MINGW32__)
-void ox_plot_main()
+void ox_plot_main();
 #else
 void ox_plot_main(int argc,char **argv);
 #endif
