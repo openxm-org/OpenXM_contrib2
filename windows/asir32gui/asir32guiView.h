@@ -55,6 +55,7 @@ public:
 	void ReplaceString(char *);
 	void UpdateMetrics();
 	void viewHtmlHelp(char *);
+	void viewWebHelp(char *);
 
 protected:
 

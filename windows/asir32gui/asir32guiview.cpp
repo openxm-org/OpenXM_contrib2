@@ -34,6 +34,7 @@ void put_line(char *);
 void send_intr(void);
 void insert_to_theView(char *);
 BOOL get_rootdir(char *,int,char *);
+const char *get_locale_lang_iso639();
 const char *get_helpdir();
 extern int bigfloat, prtime, prresult;
 extern char *asir_libdir;
@@ -524,10 +525,25 @@ void CAsir32guiView::viewHtmlHelp(char *help)
 #endif
 }
 
+void CAsir32guiView::viewWebHelp(char *key)
+{
+	char *base="http://www.math.kobe-u.ac.jp/OpenXM/Current/doc/";
+	char *url = (char *)malloc(strlen(base)+strlen(key)+1);
+	sprintf(url,"%s%s",base,key);
+	ShellExecute(NULL,"open",url,NULL,NULL,SW_SHOWNORMAL);
+	free(url);
+}
+
 void CAsir32guiView::OnAsirhelp() 
 {
+	const char *lang = get_locale_lang_iso639();
+	if(strcmp(lang,"ja")==0) {
+		viewWebHelp("index-doc-ja.html");
+	}else {
+		viewWebHelp("index-doc.html");
+	}
 	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-	viewHtmlHelp("asir");
+//	viewHtmlHelp("asir");
 }
 
 void CAsir32guiView::OnFileLog() 

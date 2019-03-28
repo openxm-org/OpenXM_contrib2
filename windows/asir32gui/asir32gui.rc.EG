@@ -126,25 +126,6 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "&User's Manual",              ID_ASIRHELP
-        MENUITEM "Asir-contrib user's manual",  ID_CONTRIBHELP
-        POPUP "Component manuals"
-        BEGIN
-            MENUITEM "dsolv",                       ID_DSOLV
-            MENUITEM "gnuplot",                     ID_GNUPLOT
-            MENUITEM "ok_diff",                     ID_OKDIFF
-            MENUITEM "ok_dmodule",                  ID_OKDMODULE
-            MENUITEM "om",                          ID_OM
-            MENUITEM "pfpcoh",                      ID_PFPCOH
-            MENUITEM "plucker",                     ID_PLUCKER
-            MENUITEM "sm1",                         ID_SM1
-            MENUITEM "tigers",                      ID_TIGERS
-            MENUITEM "todo_parametrize",            ID_TODOPARAMETRIZE
-            MENUITEM "noro_matrix",            ID_NOROMATRIX
-            MENUITEM "noro_mwl",            ID_NOROMWL
-            MENUITEM "noro_pd",            ID_NOROPD
-            MENUITEM "nn_ndbf",            ID_NNNDBF
-            MENUITEM "ns_twistedlog",            ID_NSTWLG
-        END
         MENUITEM "&About asir32gui...",         ID_APP_ABOUT
     END
 END

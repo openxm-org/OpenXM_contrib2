@@ -143,6 +143,18 @@ const char *get_helpdir() {
     return helpdir;
 }
 
+const char *get_locale_lang_iso639() {
+    static int  initialized;
+    static char lang[16] = {0}; /* ISO 639-1 two letter code */
+    if( !initialized ) {
+        if(GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SISO639LANGNAME, lang, 16)==0) {
+			return NULL;
+		}
+        initialized = 1;
+    }
+    return (const char *)lang;
+}
+
 BOOL Init_IO(char *errmsg) {
 	int i;
 	char *av[BUFSIZ];
