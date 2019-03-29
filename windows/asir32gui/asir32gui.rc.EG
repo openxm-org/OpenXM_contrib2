@@ -126,6 +126,7 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "&User's Manual",              ID_ASIRHELP
+        MENUITEM "Official Web Site (&V)",      ID_VISIT_SITE
         MENUITEM "&About asir32gui...",         ID_APP_ABOUT
     END
 END

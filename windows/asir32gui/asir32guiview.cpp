@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(CAsir32guiView, CEditView)
 	ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
 	ON_COMMAND(ID_FILE_LOG, OnFileLog)
 	ON_COMMAND(ID_ASIRHELP, OnAsirhelp)
+	ON_COMMAND(ID_VISIT_SITE, OnVisitSite)
 	ON_UPDATE_COMMAND_UI(ID_FILE_LOG, OnUpdateFileLog)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
 	ON_COMMAND(IDR_FONT, OnFont)
@@ -525,12 +526,17 @@ void CAsir32guiView::viewHtmlHelp(char *help)
 #endif
 }
 
+void CAsir32guiView::viewWeb(char *url)
+{
+	ShellExecute(NULL,"open",url,NULL,NULL,SW_SHOWNORMAL);
+}
+
 void CAsir32guiView::viewWebHelp(char *key)
 {
 	char *base="http://www.math.kobe-u.ac.jp/OpenXM/Current/doc/";
 	char *url = (char *)malloc(strlen(base)+strlen(key)+1);
 	sprintf(url,"%s%s",base,key);
-	ShellExecute(NULL,"open",url,NULL,NULL,SW_SHOWNORMAL);
+	viewWeb(url);
 	free(url);
 }
 
@@ -538,12 +544,20 @@ void CAsir32guiView::OnAsirhelp()
 {
 	const char *lang = get_locale_lang_iso639();
 	if(strcmp(lang,"ja")==0) {
-		viewWebHelp("index-doc-ja.html");
+		viewWebHelp("index-doc-asir-ja.html");
 	}else {
-		viewWebHelp("index-doc.html");
+		viewWebHelp("index-doc-asir.html");
 	}
-	// TODO: この位置にコマンド ハンドラ用のコードを追加してください
-//	viewHtmlHelp("asir");
+}
+
+void CAsir32guiView::OnVisitSite() 
+{
+	const char *lang = get_locale_lang_iso639();
+	if(strcmp(lang,"ja")==0) {
+		viewWeb("http://www.math.kobe-u.ac.jp/Asir/asir-ja.html");
+	}else {
+		viewWeb("http://www.math.kobe-u.ac.jp/Asir/");
+	}
 }
 
 void CAsir32guiView::OnFileLog() 

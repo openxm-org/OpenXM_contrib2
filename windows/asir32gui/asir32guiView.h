@@ -55,6 +55,7 @@ public:
 	void ReplaceString(char *);
 	void UpdateMetrics();
 	void viewHtmlHelp(char *);
+	void viewWeb(char *);
 	void viewWebHelp(char *);
 
 protected:
@@ -69,6 +70,7 @@ public:
 	afx_msg void OnFileOpen();
 	afx_msg void OnFileLog();
 	afx_msg void OnAsirhelp();
+	afx_msg void OnVisitSite();
 	afx_msg void OnUpdateFileLog(CCmdUI* pCmdUI);
 	afx_msg void OnEditPaste();
 	afx_msg void OnFont();

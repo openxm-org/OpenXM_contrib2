@@ -125,7 +125,8 @@ BEGIN
     END
     POPUP "ヘルプ(&H)"
     BEGIN
-        MENUITEM "ユーザーズマニュアル (&U)",                      ID_ASIRHELP
+        MENUITEM "ユーザーズマニュアル (&U)",         ID_ASIRHELP
+        MENUITEM "公式サイト (&V)",                   ID_VISIT_SITE
         MENUITEM "バージョン情報(asir32gui) (&A)...", ID_APP_ABOUT
     END
 END
