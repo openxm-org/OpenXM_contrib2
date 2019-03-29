@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.2 2018/09/21 07:06:52 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -853,7 +853,7 @@ char *get_asir_distribution();
 
 char *get_gcversion() 
 {
-  return "GC 7.2 copyright 1988-2012, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
+  return "GC 7.4.2 copyright 1988-2015, H-J. Boehm, A. J. Demers, Xerox, SGI, HP.\n";
 }
 
 char *get_pariversion() 
@@ -881,7 +881,7 @@ char *scopyright()
   static char *notice;
   char *s1, *s2, *s3, *s4;
   int d, len;
-  char *format = "This is Risa/Asir%s, full GMP Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2018, Risa/Asir committers, http://www.openxm.org/.\n%s%s";
+  char *format = "This is Risa/Asir%s, full GMP Version %d (%s Distribution).\nCopyright (C) 1994-2000, all rights reserved, FUJITSU LABORATORIES LIMITED.\nCopyright 2000-2019, Risa/Asir committers, http://www.openxm.org/.\n%s%s";
   if (!notice) {
     s1 = get_intervalversion();
     s2 = get_asir_distribution();
