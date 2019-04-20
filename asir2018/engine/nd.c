@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.13 2019/01/14 09:17:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.14 2019/03/03 05:21:17 noro Exp $ */
 
 #include "nd.h"
 
@@ -78,6 +78,7 @@ NDV pltondv(VL vl,VL dvl,LIST p);
 void pltozpl(LIST l,Q *cont,LIST *pp);
 void ndl_max(UINT *d1,unsigned *d2,UINT *d);
 void nmtodp(int mod,NM m,DP *r);
+void ndltodp(UINT *d,DP *r);
 NODE reverse_node(NODE n);
 P ndc_div(int mod,union oNDC a,union oNDC b);
 P ndctop(int mod,union oNDC c);
@@ -3224,6 +3225,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     int *perm;
     EPOS oepos;
     int obpe,oadv,ompos,cbpe;
+    VECT hvect;
 
     nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
@@ -3334,6 +3336,11 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
   if ( !x ) {
     *rp = 0; return;
   }
+  if ( nd_gentrace ) {
+    MKVECT(hvect,nd_psn);
+    for ( i = 0; i < nd_psn; i++ )
+       ndltodp(nd_psh[i]->dl,(DP *)&BDY(hvect)[i]);
+  }
   if ( !ishomo && homo ) {
        /* dehomogenization */
     for ( t = x; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
@@ -3380,8 +3387,7 @@ FINAL:
   if ( f4 ) {
             STOZ(16,bpe);
             STOZ(nd_last_nonzero,last_nonzero);
-            tr = mknode(5,*rp,(!ishomo&&homo)?ONE:0,BDY(nzlist),bpe,last_nonzero); MKLIST(*rp,tr);
-            
+            tr = mknode(6,*rp,(!ishomo&&homo)?ONE:0,BDY(nzlist),bpe,last_nonzero,hvect); MKLIST(*rp,tr);
         } else {
             tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
             tl3 = reverse_node(tl3);
@@ -3401,7 +3407,7 @@ FINAL:
             MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
             MKLIST(l5,tl4);
             STOZ(nd_bpe,bpe);
-            tr = mknode(8,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe); MKLIST(*rp,tr);
+            tr = mknode(9,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe,hvect); MKLIST(*rp,tr);
         }
     }
 #if 0
@@ -3668,6 +3674,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
     int *perm;
     int j,ret;
     Z jq,bpe;
+    VECT hvect;
 
     nd_module = 0;
     nd_lf = 0;
@@ -3785,6 +3792,11 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
             else m = get_lprime(++mindex);
             continue;
         }
+        if ( nd_gentrace ) {
+          MKVECT(hvect,nd_psn);
+          for ( i = 0; i < nd_psn; i++ )
+             ndltodp(nd_psh[i]->dl,(DP *)&BDY(hvect)[i]);
+        }
         if ( !ishomo && homo ) {
             /* dehomogenization */
             for ( t = cand; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
@@ -3862,7 +3874,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,
         MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
     MKLIST(l5,tl4);
       STOZ(nd_bpe,bpe);
-        tr = mknode(8,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe); MKLIST(*rp,tr);
+        tr = mknode(9,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe,hvect); MKLIST(*rp,tr);
     }
 }
 
@@ -3922,6 +3934,18 @@ void nmtodp(int mod,NM m,DP *r)
     NEWMP(mr); 
     mr->dl = ndltodl(nd_nvar,DL(m));
     mr->c = (Obj)ndctop(mod,m->c);
+    NEXT(mr) = 0; MKDP(nd_nvar,mr,dp); dp->sugar = mr->dl->td;
+    *r = dp;
+}
+
+void ndltodp(UINT *d,DP *r)
+{
+    DP dp;
+    MP mr;
+
+    NEWMP(mr); 
+    mr->dl = ndltodl(nd_nvar,d);
+    mr->c = (Obj)ONE;
     NEXT(mr) = 0; MKDP(nd_nvar,mr,dp); dp->sugar = mr->dl->td;
     *r = dp;
 }

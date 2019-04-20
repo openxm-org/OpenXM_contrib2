@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/version.h,v 1.18 2019/03/27 07:45:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/version.h,v 1.19 2019/03/28 05:28:33 noro Exp $
 */
-#define ASIR_VERSION 20190328
+#define ASIR_VERSION 20190420
 #define ASIR_DISTRIBUTION "Kobe"
