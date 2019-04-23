@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.13 2019/03/18 07:00:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.14 2019/03/27 07:45:53 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -558,7 +558,7 @@ void subq(Q n1,Q n2,Q *nr)
 
   if ( !n1 ) {
     if ( !n2 ) *nr = 0;
-    else if ( n1->z ) chsgnz((Z)n1,(Z *)nr);
+    else if ( n2->z ) chsgnz((Z)n2,(Z *)nr);
     else {
         mpq_init(t); mpq_neg(t,BDY(n2)); MPQTOQ(t,*nr);
       }
