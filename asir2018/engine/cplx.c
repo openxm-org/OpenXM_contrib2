@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/cplx.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -189,7 +189,7 @@ Num *c;
   else if ( !INT(e) )
     error("pwrcplx : not implemented (use eval()).");
   else {
-    ei = sgnq((Q)e)*sgnq((Q)e);
+    ei = sgnq((Q)e)*ZTOS((Q)e);
     pwrcplx0(a,ei,&t);
     if ( sgnq((Q)e) < 0 )
       divnum(0,(Num)ONE,t,c);
