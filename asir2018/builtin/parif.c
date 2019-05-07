@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.1 2018/09/19 05:45:06 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.2 2018/09/28 08:20:27 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -121,7 +121,7 @@ pointer evalparif(FUNC f,NODE arg)
   mpfr_func mpfr_function;
   V v;
 
-  if ( arg && ARG0(arg) && NID((Num)ARG0(arg)) != N_C 
+  if ( arg && (!ARG0(arg) || (NUM(ARG0(arg)) && NID((Num)ARG0(arg)) != N_C))
     && (mpfr_function = mpfr_search(f->name)) ) {
     (*mpfr_function)(arg,&ret);
     return (pointer) ret;
