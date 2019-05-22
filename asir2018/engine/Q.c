@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.14 2019/03/27 07:45:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.15 2019/04/23 08:07:24 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -762,12 +762,15 @@ void lgp(P p,Z *g,Z *l);
 
 void ptozp(P p,int sgn,Q *c,P *pr)
 {
-  Z nm,dn;
+  Z nm,dn,nm1;
 
   if ( !p ) {
     *c = 0; *pr = 0;
   } else {
     lgp(p,&nm,&dn);
+    if ( sgn < 0 ) {
+      chsgnz(nm,&nm1); nm = nm1;
+    }
     divz(nm,dn,(Z *)c);
     divsp(CO,p,(P)*c,pr);
   }
