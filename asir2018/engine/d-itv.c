@@ -1,12 +1,14 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
 #include "ca.h"
 #include "base.h"
+#if 0
 #if defined(PARI)
 #include "genpari.h"
+#endif
 #endif
 
 #if defined(ITVDEBUG)
@@ -179,9 +181,11 @@ static double  Q2doubleUp(Q a)
   }
 }
 
+#if 0
 static double  PARI2doubleDown(BF a)
 {
-        GEN     p;
+        //GEN     p;
+        Num     p;
   double  d;
 
         ritopa(a, &p);
@@ -194,6 +198,7 @@ static double  PARI2doubleUp(BF a)
 {
   return PARI2doubleDown(a);
 }
+#endif
 
 double  subulpd(double d)
 {
@@ -227,7 +232,10 @@ double  ToRealDown(Num a)
     case N_R:
       inf = subulpd(BDY((Real)a)); break;
     case N_B:
-      inf = PARI2doubleDown((BF)a); break;
+      //inf = PARI2doubleDown((BF)a); break;
+	inf = 0;
+      error("ToRealDown: not supported operands.");
+	break;
     case N_IP:
       inf = ToRealDown(INF((Itv)a));
       break;
@@ -253,7 +261,10 @@ double  ToRealUp(Num a)
     case N_R:
       sup = addulpd(BDY((Real)a)); break;
     case N_B:
-      sup = PARI2doubleUp((BF)a); break;
+      //sup = PARI2doubleUp((BF)a); break;
+      sup = 0;
+      error("ToRealUp: not supported operands.");
+      break;
     case N_IP:
       sup = ToRealUp(SUP((Itv)a)); break;
     case N_IntervalDouble:
@@ -280,8 +291,10 @@ void  Num2double(Num a, double *inf, double *sup)
       *sup = BDY((Real)a);
       break;
     case N_B:
-      *inf = PARI2doubleDown((BF)a);
-      *sup = PARI2doubleUp((BF)a);
+      //*inf = PARI2doubleDown((BF)a);
+      //*sup = PARI2doubleUp((BF)a);
+      *inf = mpfr_get_d(BDY((BF)a), MPFR_RNDD);
+      *sup = mpfr_get_d(BDY((BF)a), MPFR_RNDU);
       break;
     case N_IP:
       *inf = ToRealDown(INF((Itv)a));
@@ -498,7 +511,8 @@ void  pwritvd(Num a, Num e, IntervalDouble *c)
     error("pwritvd : can't calculate a fractional power");
 #endif
   } else {
-    ei = ZTOS((Q)e);
+    ei = QTOS((Q)e);
+    if (ei<0) ei = -ei;
     pwritv0d((IntervalDouble)a,ei,&t);
     if ( SGN((Q)e) < 0 )
       divnum(0,(Num)ONE,(Num)t,(Num *)c);

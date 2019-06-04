@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.2 2018/09/28 08:20:27 noro Exp $
  */
 
 #include "ca.h"
@@ -9,8 +9,10 @@
 #include "../plot/ifplot.h"
 #endif
 
-#if defined(INTERVAL)
+// in engine/bf.c
+Num tobf(Num,int);
 
+#if defined(INTERVAL)
 static void Pitv(NODE, Obj *);
 static void Pitvd(NODE, Obj *);
 static void Pitvbf(NODE, Obj *);
@@ -24,12 +26,15 @@ static void Pcup(NODE, Obj *);
 static void Pcap(NODE, Obj *);
 static void Pwidth(NODE, Obj *);
 static void Pdistance(NODE, Obj *);
-static void Pitvversion(Q *);
-void miditvp(Itv,Num *);
-void absitvp(Itv,Num *);
-int initvd(Num,IntervalDouble);
-int initvp(Num,Itv);
-int itvinitvp(Itv,Itv);
+static void Pitvversion(NODE, Q *);
+static void PzeroRewriteMode(NODE, Obj *);
+static void PzeroRewriteCountClear(NODE, Obj *);
+static void PzeroRewriteCount(NODE, Obj *);
+//void miditvp(Itv,Num *);
+//void absitvp(Itv,Num *);
+//int initvd(Num,IntervalDouble);
+//int initvp(Num,Itv);
+//int itvinitvp(Itv,Itv);
 #endif
 static void Pprintmode(NODE, Obj *);
 
@@ -61,12 +66,19 @@ struct ftab interval_tab[] = {
   {"width",Pwidth,1},
   {"diam",Pwidth,1},
   {"distance",Pdistance,2},
-  {"iversion",Pitvversion,0},
+  {"iversion",Pitvversion,-1},
+  {"intvalversion",Pitvversion,-1},
+  {"zerorewritemode",PzeroRewriteMode,-1},
+  {"zeroRewriteMode",PzeroRewriteMode,-1},
+  {"zeroRewriteCountClear",PzeroRewriteCountClear,-1},
+  {"zeroRewriteCount",PzeroRewriteCount,-1},
 /* plot time check */
   {"ifcheck",Pifcheck,-7},
 #endif
   {0,0,0},
 };
+
+extern int mpfr_roundmode;
 
 #if defined(INTERVAL)
 
@@ -93,8 +105,8 @@ Pifcheck(NODE arg, Obj *rp)
   int width, height, ix, iy;
   int id;
 
-  STOZ(-2,m2); STOZ(2,p2);
-  STOZ(1,one);
+  STOQ(-2,m2); STOQ(2,p2);
+  STOQ(1,one);
   MKNODE(n,p2,0); MKNODE(defrange,m2,n);
   poly = 0; vl = 0; geom = 0; ri = 0;
   v[0] = v[1] = 0;
@@ -164,8 +176,8 @@ Pifcheck(NODE arg, Obj *rp)
     can->width = 300;
     can->height = 300;
   } else {
-    can->width = ZTOS((Q)BDY(BDY(geom)));
-    can->height = ZTOS((Q)BDY(NEXT(BDY(geom))));
+    can->width = QTOS((Q)BDY(BDY(geom)));
+    can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
     width = can->width;
     height = can->height;
   }
@@ -235,9 +247,9 @@ void ccalc(double **tab,struct canvas *can,int nox)
 /* end plot time check */
 
 static void
-Pitvversion(Q *rp)
+Pitvversion(NODE arg, Q *rp)
 {
-  STOZ(ASIR_VERSION, *rp);
+  STOQ(INT_ASIR_VERSION, *rp);
 }
 
 extern int  bigfloat;
@@ -288,19 +300,28 @@ static void
 Pitvbf(NODE arg, Obj *rp)
 {
   Num  a, i, s;
-  Itv  c;
-  BF  ii,ss;
+  IntervalBigFloat  c;
+  Num  ii,ss;
+  Real di, ds;
   double  inf, sup;
+  int current_roundmode;
 
   asir_assert(ARG0(arg),O_N,"intvalbf");
   a = (Num)ARG0(arg);
   if ( argc(arg) > 1 ) {
     asir_assert(ARG1(arg),O_N,"intvalbf");
+
     i = (Num)ARG0(arg);
     s = (Num)ARG1(arg);
-    ToBf(i, &ii);
-    ToBf(s, &ss);
-    istoitv((Num)ii,(Num)ss,&c);
+    current_roundmode = mpfr_roundmode;
+    mpfr_roundmode = MPFR_RNDD;
+    ii = tobf(i, DEFAULTPREC);
+    mpfr_roundmode = MPFR_RNDU;
+    ss = tobf(s, DEFAULTPREC);
+    istoitv(ii,ss,(Itv *)&c);
+//    MKIntervalBigFloat((BF)ii,(BF)ss,c);
+//    ToBf(s, &ss);
+    mpfr_roundmode = current_roundmode;
   } else {
     if ( ! a ) {
       *rp = 0;
@@ -308,9 +329,14 @@ Pitvbf(NODE arg, Obj *rp)
     }
     else if ( NID(a) == N_IP ) {
       itvtois((Itv)a, &i, &s);
-      ToBf(i, &ii);
-      ToBf(s, &ss);
-      istoitv((Num)ii,(Num)ss,&c);
+      current_roundmode = mpfr_roundmode;
+      mpfr_roundmode = MPFR_RNDD;
+      ii = tobf(i, DEFAULTPREC);
+      mpfr_roundmode = MPFR_RNDU;
+      ss = tobf(s, DEFAULTPREC);
+      istoitv(ii,ss,(Itv *)&c);
+//      MKIntervalBigFloat((BF)ii,(BF)ss,c);
+      mpfr_roundmode = current_roundmode;
     }
     else if ( NID(a) == N_IntervalBigFloat) {
       *rp = (Obj)a;
@@ -319,18 +345,35 @@ Pitvbf(NODE arg, Obj *rp)
     else if ( NID(a) == N_IntervalDouble ) {
       inf = INF((IntervalDouble)a);
       sup = SUP((IntervalDouble)a);
-      double2bf(inf, (BF *)&i);
-      double2bf(sup, (BF *)&s);
-      istoitv(i,s,&c);
+      current_roundmode = mpfr_roundmode;
+      //double2bf(inf, (BF *)&i);
+      //double2bf(sup, (BF *)&s);
+      mpfr_roundmode = MPFR_RNDD;
+      MKReal(inf,di);
+      ii = tobf((Num)di, DEFAULTPREC);
+      mpfr_roundmode = MPFR_RNDU;
+      MKReal(sup,ds);
+      ss = tobf((Num)ds, DEFAULTPREC);
+      istoitv(ii,ss,(Itv *)&c);
+//      MKIntervalBigFloat((BF)ii,(BF)ss,c);
+      mpfr_roundmode = current_roundmode;
     }
     else {
-      ToBf(a, (BF *)&i);
-      istoitv(i,i,&c);
+      current_roundmode = mpfr_roundmode;
+      mpfr_roundmode = MPFR_RNDD;
+      ii = tobf(a, DEFAULTPREC);
+      mpfr_roundmode = MPFR_RNDU;
+      ss = tobf(a, DEFAULTPREC);
+      //ToBf(a, (BF *)&i);
+      istoitv(ii,ss,(Itv *)&c);
+//      MKIntervalBigFloat((BF)ii,(BF)ss,c);
+      mpfr_roundmode = current_roundmode;
     }
   }
-  if ( c && OID( c ) == O_N && NID( c ) == N_IntervalBigFloat )
-    addulp((IntervalBigFloat)c, (IntervalBigFloat *)rp);
-  else *rp = (Obj)c;
+//  if ( c && OID( c ) == O_N && NID( c ) == N_IntervalBigFloat )
+//    addulp((IntervalBigFloat)c, (IntervalBigFloat *)rp);
+//  else *rp = (Obj)c;
+  *rp = (Obj)c;
 }
 
 static void
@@ -591,7 +634,7 @@ Obj *rp;
   } else {
     s = ! compnum(0,(Num)ARG0(arg),(Num)ARG1(arg));
   }
-  STOZ(s,q);
+  STOQ(s,q);
   *rp = (Obj)q;
 }
 
@@ -608,6 +651,50 @@ Obj *rp;
   if ( ! s ) *rp = 0;
   else *rp = (Obj)ONE;
 }
+
+static void
+PzeroRewriteMode(NODE arg, Obj *rp)
+{
+  Q  a, r;
+
+  STOQ(zerorewrite,r);
+  *rp = (Obj)r;
+ 
+  if (arg) {
+    a = (Q)ARG0(arg);
+    if(!a) {
+      zerorewrite = 0;
+    } else if ( (NUM(a)&&INT(a)) ){
+      zerorewrite = 1;
+    }
+  }
+}
+  
+static void
+PzeroRewriteCountClear(NODE arg, Obj *rp)
+{
+  Q  a, r;
+
+  STOQ(zerorewriteCount,r);
+  *rp = (Obj)r;
+
+  if (arg) {
+    a = (Q)ARG0(arg);
+    if(a &&(NUM(a)&&INT(a))){
+      zerorewriteCount = 0;
+    }
+  }
+}
+  
+static void
+PzeroRewriteCount(NODE arg, Obj *rp)
+{
+  Q  r;
+
+  STOQ(zerorewriteCount,r);
+  *rp = (Obj)r;
+}
+  
 
 #endif
 extern int  printmode;
@@ -637,18 +724,18 @@ static void
 Pprintmode(NODE arg, Obj *rp)
 {
   int  l;
-  Z  a, r;
+  Q  a, r;
 
-  a = (Z)ARG0(arg);
+  a = (Q)ARG0(arg);
   if(!a||(NUM(a)&&INT(a))){
-    l=ZTOS(a);
+    l=QTOS(a);
     if ( l < 0 ) l = 0;
 #if defined(INTERVAL)
     else if ( l > MID_PRINTF_E ) l = 0;
 #else
     else if ( l > PRINTF_E ) l = 0;
 #endif
-    STOZ(printmode,r);
+    STOQ(printmode,r);
     *rp = (Obj)r;
     printmode = l;
     pprintmode();

@@ -1,5 +1,5 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/isolv.c,v 1.1 2018/09/19 05:45:06 noro Exp $
  */
 
 #include "ca.h"
@@ -11,12 +11,21 @@
 static void Solve(NODE, Obj *);
 static void NSolve(NODE, Obj *);
 
+/* in builtin/vars.c */
+void Pvars();
+
+/* */
 void Solve1(P, Q, pointer *);
 void Sturm(P, VECT *);
 void boundbody(P, Q *);
 void binary(int , MAT);
 void separate(Q, Q, VECT, Q, Q, int, int, MAT, int *);
 void ueval(P, Q, Q *);
+int stumq(VECT, Q);
+
+
+// in engine/bf.c
+Num tobf(Num,int);
 
 struct ftab isolv_tab[] = {
   {"solve", Solve, 2},
@@ -72,9 +81,7 @@ Obj  *rp;
 }
 
 static void
-NSolve(arg, rp)
-NODE arg;
-Obj  *rp;
+NSolve(NODE arg, Obj *rp)
 {
   pointer  p, Eps;
   pointer  root;
@@ -115,7 +122,8 @@ Obj  *rp;
       for (m0 = BDY((LIST)root), n0 = 0; m0; m0 = NEXT(m0)) {
         m = BDY((LIST)BDY(m0));
         miditvp(BDY(m), &r);
-        ToBf(r, &breal);
+        //ToBf(r, &breal);
+        breal = (BF)tobf(r, DEFAULTPREC);
         NEXTNODE( n0, n );
         MKNODE(ln0, breal, NEXT(m));
         MKLIST(listp, ln0);
@@ -340,9 +348,7 @@ VECT *ret;
 }
 
 int
-stumq(s, val)
-VECT s;
-Q val;
+stumq(VECT s, Q val)
 {
   int len, i, j, c;
   P   *ss;

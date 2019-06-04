@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.7 2015/08/20 08:42:07 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/cplx.c,v 1.8 2018/03/29 01:32:51 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -57,7 +57,7 @@ Num *rp,*ip;
   if ( !a )
     *rp = *ip = 0;
 #if defined(INTERVAL)
-  else if ( NID(a) <= N_PRE_C ) {
+  else if ( NID(a) < N_C ) {
 #else
   else if ( NID(a) <= N_B ) {
 #endif
@@ -91,7 +91,7 @@ Num *c;
   else if ( !b )
     *c = a;
 #if defined(INTERVAL)
-  else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+  else if ( (NID(a) < N_C) && (NID(b) < N_C ) )
 #else
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
 #endif
@@ -114,7 +114,7 @@ Num *c;
   else if ( !b )
     *c = a;
 #if defined(INTERVAL)
-  else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+  else if ( (NID(a) < N_C) && (NID(b) <= N_C ) )
 #else
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
 #endif
@@ -135,7 +135,7 @@ Num *c;
   if ( !a || !b )
     *c = 0;
 #if defined(INTERVAL)
-  else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+  else if ( (NID(a) < N_C) && (NID(b) < N_C ) )
 #else
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
 #endif
@@ -159,7 +159,7 @@ Num *c;
   else if ( !a )
     *c = 0;
 #if defined(INTERVAL)
-  else if ( (NID(a) <= N_PRE_C) && (NID(b) <= N_PRE_C ) )
+  else if ( (NID(a) < N_C) && (NID(b) < N_C ) )
 #else
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
 #endif
@@ -225,7 +225,7 @@ Num a,*c;
   if ( !a )
     *c = 0;
 #if defined(INTERVAL)
-  else if ( NID(a) <= N_PRE_C )
+  else if ( NID(a) < N_C )
 #else
   else if ( NID(a) <= N_B )
 #endif
@@ -244,7 +244,7 @@ Num a,b;
 
   if ( !a ) {
 #if defined(INTERVAL)
-    if ( !b || (NID(b)<=N_PRE_C) )
+    if ( !b || (NID(b)<N_C) )
 #else
     if ( !b || (NID(b)<=N_B) )
 #endif
@@ -253,7 +253,7 @@ Num a,b;
       return -1;
   } else if ( !b ) {
 #if defined(INTERVAL)
-    if ( !a || (NID(a)<=N_PRE_C) )
+    if ( !a || (NID(a)<N_C) )
 #else
     if ( !a || (NID(a)<=N_B) )
 #endif

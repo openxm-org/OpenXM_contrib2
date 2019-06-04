@@ -1,9 +1,10 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.7 2009/03/27 14:42:29 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.8 2018/03/29 01:32:51 noro Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
 #include "base.h"
+#if 0
 #if defined(PARI)
 #include "genpari.h"
 #include "itv-pari.h"
@@ -109,62 +110,109 @@ void addulp(IntervalBigFloat a, IntervalBigFloat *c)
   } else  sup = as;
   istoitv(inf,sup, (Itv *)c);
 }
+#endif
 
-void additvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
+// in builtin/bfaux.c
+extern int mpfr_roundmode;
+
+// in engine/bf.c
+Num tobf(Num,int);
+
+#define BFPREC(a) (((BF)(a))->body->_mpfr_prec)
+
+
+void additvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *rp)
 {
-  Num  ai,as,bi,bs,mas,mbs,tmp;
+  Num  ai,as,bi,bs;
+  IntervalBigFloat c;
+//,mas,mbs;
+//,tmp;
   Num  inf,sup;
-  GEN  pa, pb, z;
-  long  ltop, lbot;
+  //GEN  pa, pb, z;
+  //long  ltop, lbot;
+  int current_roundmode;
 
   if ( !a )
-    *c = b;
+    *rp = b;
   else if ( !b )
-    *c = a;
+    *rp = a;
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
-    addnum(0,(Num)a,(Num)b,(Num *)c);
+    addnum(0,(Num)a,(Num)b,(Num *)rp);
   else {
-    itvtois((Itv)a,&inf,&sup);
-    ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
-    itvtois((Itv)b,&inf,&sup);
-    ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
+    itvtois((Itv)a,&ai,&as);
+    itvtois((Itv)b,&bi,&bs);
+
+    current_roundmode = mpfr_roundmode;
+
+    mpfr_roundmode = MPFR_RNDD;
+    ai = tobf(ai, DEFAULTPREC);
+    bi = tobf(bi, DEFAULTPREC);
+    //addnum(0,ai,bi,&inf);
+    addbf(ai,bi,&inf);
+
+    mpfr_roundmode = MPFR_RNDU;
+    as = tobf(as, DEFAULTPREC);
+    bs = tobf(bs, DEFAULTPREC);
+    //addnum(0,as,bs,&sup);
+    addbf(as,bs,&sup);
+
+    istoitv(inf,sup,(Itv *)&c);
+    mpfr_roundmode = current_roundmode;
+    //MKIntervalBigFloat((BF)inf, (BF)sup, c);
+    *rp = c;
 #if 0
 printexpr(CO, ai);
 printexpr(CO, as);
 printexpr(CO, bi);
 printexpr(CO, bs);
 #endif
-
-    addnum(0,ai,bi,&inf);
-    addnum(0,as,bs,&sup);
-    istoitv(inf,sup,(Itv *)&tmp);
-    addulp((IntervalBigFloat)tmp, c);
     return;
   }
 }
 
-void subitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
+void subitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *rp)
 {
-  Num  ai,as,bi,bs,mas, mbs;
-  Num  inf,sup,tmp;
-  GEN  pa, pb, z;
-  long  ltop, lbot;
+  Num  ai,as,bi,bs;
+  IntervalBigFloat c;
+//,mas, mbs;
+  Num  inf,sup;
+//,tmp;
+  //GEN  pa, pb, z;
+  //long  ltop, lbot;
+  int current_roundmode;
 
   if ( !a )
-    chsgnnum((Num)b,(Num *)c);
+    chsgnnum((Num)b,(Num *)rp);
   else if ( !b )
-    *c = a;
-  else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
-    subnum(0,(Num)a,(Num)b,(Num *)c);
+    *rp = a;
+  else if ( (NID(a) < N_IntervalBigFloat) && (NID(b) < N_IntervalBigFloat ) )
+    subnum(0,(Num)a,(Num)b,(Num *)rp);
   else {
-    itvtois((Itv)a,&inf,&sup);
-    ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
-    itvtois((Itv)b,&inf,&sup);
-    ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
-    subnum(0,ai,bs,&inf);
-    subnum(0,as,bi,&sup);
-    istoitv(inf,sup,(Itv *)&tmp);
-    addulp((IntervalBigFloat)tmp, c);
+    itvtois((Itv)a,&ai,&as);
+    itvtois((Itv)b,&bi,&bs);
+
+    current_roundmode = mpfr_roundmode;
+
+    mpfr_roundmode = MPFR_RNDD;
+    ai = tobf(ai, DEFAULTPREC);
+    bi = tobf(bi, DEFAULTPREC);
+
+    mpfr_roundmode = MPFR_RNDU;
+    as = tobf(as, DEFAULTPREC);
+    bs = tobf(bs, DEFAULTPREC);
+    //subnum(0,as,bi,&sup);
+    subbf(as,bi,&sup);
+
+    mpfr_roundmode = MPFR_RNDD;
+    //subnum(0,ai,bs,&inf);
+    subbf(ai,bs,&inf);
+
+    istoitv(inf,sup,(Itv *)&c);
+    mpfr_roundmode = current_roundmode;
+    //MKIntervalBigFloat((BF)inf, (BF)sup, c);
+    *rp = c;
+
+    //addulp((IntervalBigFloat)tmp, c);
   }
 }
 
@@ -173,16 +221,30 @@ void mulitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
   Num  ai,as,bi,bs,a1,a2,b1,b2,c1,c2,p,t,tmp;
   Num  inf, sup;
   int  ba,bb;
+  int current_roundmode;
 
   if ( !a || !b )
     *c = 0;
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
     mulnum(0,(Num)a,(Num)b,(Num *)c);
   else {
-    itvtois((Itv)a,&inf,&sup);
-    ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
-    itvtois((Itv)b,&inf,&sup);
-    ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
+    itvtois((Itv)a,&ai,&as);
+    itvtois((Itv)b,&bi,&bs);
+
+    current_roundmode = mpfr_roundmode;
+
+    mpfr_roundmode = MPFR_RNDU;
+    as = tobf(as, DEFAULTPREC);
+    bs = tobf(bs, DEFAULTPREC);
+
+    mpfr_roundmode = MPFR_RNDD;
+    ai = tobf(ai, DEFAULTPREC);
+    bi = tobf(bi, DEFAULTPREC);
+
+//    itvtois((Itv)a,&inf,&sup);
+//    ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
+//    itvtois((Itv)b,&inf,&sup);
+//    ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
 
   /* MUST check if ai, as, bi, bs are bigfloat. */
     chsgnnum(as,&a2);
@@ -224,13 +286,14 @@ void mulitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
     }
     if ( ba == bb ) {
       subnum(0,0,c2,&t);
-      istoitv(c1,t,(Itv *)&tmp);
+      istoitv(c1,t,(Itv *)c);
     } else {
       subnum(0,0,c1,&t);
-      istoitv(c2,t,(Itv *)&tmp);
+      istoitv(c2,t,(Itv *)c);
     }
-    addulp((IntervalBigFloat)tmp, c);
+    //addulp((IntervalBigFloat)tmp, c);
   }
+    mpfr_roundmode = current_roundmode;
 }
 
 int     initvf(Num a, Itv b)
@@ -258,6 +321,7 @@ void divitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
   Num  ai,as,bi,bs,a1,a2,b1,b2,c1,c2,t,tmp;
   Num  inf, sup;
   int  ba,bb;
+  int current_roundmode;
 
   if ( !b )
     error("divitv : division by 0");
@@ -266,10 +330,23 @@ void divitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
   else if ( (NID(a) <= N_B) && (NID(b) <= N_B ) )
     divnum(0,(Num)a,(Num)b,(Num *)c);
   else {
-    itvtois((Itv)a,&inf,&sup);
-    ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
-    itvtois((Itv)b,&inf,&sup);
-    ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
+    itvtois((Itv)a,&ai,&as);
+    itvtois((Itv)b,&bi,&bs);
+
+    current_roundmode = mpfr_roundmode;
+
+    mpfr_roundmode = MPFR_RNDU;
+    as = tobf(as, DEFAULTPREC);
+    bs = tobf(bs, DEFAULTPREC);
+
+    mpfr_roundmode = MPFR_RNDD;
+    ai = tobf(ai, DEFAULTPREC);
+    bi = tobf(bi, DEFAULTPREC);
+
+//    itvtois((Itv)a,&inf,&sup);
+//    ToBf(inf, (BF *)&ai); ToBf(sup, (BF *)&as);
+//    itvtois((Itv)b,&inf,&sup);
+//    ToBf(inf, (BF *)&bi); ToBf(sup, (BF *)&bs);
 /* MUST check if ai, as, bi, bs are bigfloat. */
     chsgnnum(as,&a2);
     chsgnnum(bs,&b2);
@@ -298,13 +375,14 @@ void divitvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *c)
     }
     if ( ba == bb ) {
       subnum(0,0,c2,&t);
-      istoitv(c1,t,(Itv *)&tmp);
+      istoitv(c1,t,(Itv *)c);
     } else {
       subnum(0,0,c1,&t);
-      istoitv(c2,t,(Itv *)&tmp);
+      istoitv(c2,t,(Itv *)c);
     }
-    addulp((IntervalBigFloat)tmp, c);
+    //addulp((IntervalBigFloat)tmp, c);
   }
+    mpfr_roundmode = current_roundmode;
 }
 
 void pwritvf(Itv a, Num e, Itv *c)
@@ -322,13 +400,14 @@ void pwritvf(Itv a, Num e, Itv *c)
 #if defined(PARI) && 0
     gpui_ri((Obj)a,(Obj)c,(Obj *)c);
 #else
-    error("pwritv : can't calculate a fractional power");
+    error("pwritvf() : can't calculate a fractional power");
 #endif
   } else {
     ei = QTOS((Q)e);
+    if (ei<0) ei = -ei;
     pwritv0f(a,ei,&t);
     if ( SGN((Q)e) < 0 )
-      divbf((Num)ONE,(Num)t,(Num *)c);
+        divitvf((IntervalBigFloat)ONE,(IntervalBigFloat)t,(IntervalBigFloat *)c); /* bug ?? */
     else
       *c = t;
   }
@@ -340,6 +419,7 @@ void pwritv0f(Itv a, int e, Itv *c)
   Num ai,Xmin,Xmax;
   IntervalBigFloat tmp;
   Q  ne;
+  int current_roundmode;
 
   if ( e == 1 )
     *c = a;
@@ -367,27 +447,46 @@ void pwritv0f(Itv a, int e, Itv *c)
       Xmin = INF(a);
       Xmax = SUP(a);
     }
+
+    current_roundmode = mpfr_roundmode;
     if ( ! Xmin )  inf = 0;
-    else    pwrbf(Xmin,(Num)ne,&inf);
+    else {
+      mpfr_roundmode = MPFR_RNDD;
+      pwrbf(Xmin,(Num)ne,&inf);
+    }
     if ( ! Xmax )   sup = 0;
-    else            pwrbf(Xmax,(Num)ne,&sup);
+    else {
+      mpfr_roundmode = MPFR_RNDU;
+      pwrbf(Xmax,(Num)ne,&sup);
+    }
     istoitv(inf,sup,(Itv *)&tmp);
-    addulp(tmp, (IntervalBigFloat *)c);
+    mpfr_roundmode = current_roundmode;
+    *c = (Itv)tmp;
+ //   addulp(tmp, (IntervalBigFloat *)c);
   }
 }
 
-void chsgnitvf(Itv a, Itv *c)
+void chsgnitvf(IntervalBigFloat a, IntervalBigFloat *rp)
 {
   Num inf,sup;
+  IntervalBigFloat c;
+  int current_roundmode;
 
   if ( !a )
-    *c = 0;
-  else if ( NID(a) <= N_B )
-    chsgnnum((Num)a,(Num *)c);
+    *rp = 0;
+  else if ( NID(a) < N_IntervalBigFloat )
+    chsgnnum((Num)a,(Num *)rp);
   else {
-    chsgnnum(INF((Itv)a),&inf);
-    chsgnnum(SUP((Itv)a),&sup);
-    istoitv(inf,sup,c);
+    current_roundmode = mpfr_roundmode;
+
+    mpfr_roundmode = MPFR_RNDU;
+    chsgnnum((Num)INF(a),&sup);
+    mpfr_roundmode = MPFR_RNDD;
+    chsgnnum((Num)SUP(a),&inf);
+    //MKIntervalBigFloat((BF)inf,(BF)sup,c);
+    istoitv(inf,sup,(Itv *)&c);
+    *rp = c;
+    mpfr_roundmode = current_roundmode;
   }
 }
 

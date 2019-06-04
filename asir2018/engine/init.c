@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.3 2018/09/28 08:20:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/init.c,v 1.4 2018/10/01 05:49:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -103,6 +103,8 @@ static int lprime_size;
 
 #if defined(INTERVAL)
 int zerorewrite = 0;
+int zerorewriteCount = 0;
+//			N_Q,  N_R,	N_A,	N_B, N4, N_IP,	N_IDouble,N_IQ, N_IBF, N_C,     N_M    N_LM, N_GF2N,   N_GFPN, N_GFS,  N_GFSN,  N_DA, 	N_GZ, N_GQ, N_PARIB
 void (*addnumt[])() = { addq, addreal, addalg, ADDBF, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
 void (*subnumt[])() = { subq, subreal, subalg, SUBBF, 0, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn, subdalg };
 void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, 0, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn, muldalg };
@@ -111,6 +113,7 @@ void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, 0, pwritvp, pwritvd, 0, pw
 void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, 0, chsgnitvp, chsgnitvd, 0, chsgnitvf, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs , chsgngfsn, chsgndalg};
 int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, 0, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn, cmpdalg };
 #else
+//			N_Q,  N_R,	N_A,	N_B,   N_C,     N_M,   N_LM, N_GF2N,   N_GFPN, N_GFS,  N_GFSN,  N_DA, 	N_GZ, N_GQ, N_PARIB
 void (*addnumt[])() = { addq, addreal, addalg, ADDBF, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
 void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn, subdalg };
 void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn, muldalg };

@@ -1,12 +1,20 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
 #include "base.h"
+#if 0
 #if defined(PARI)
 #include "genpari.h"
 #endif
+#endif
+
+// in engine/bf.c
+Num tobf(Num,int);
+//int     initvp(Num , Itv );
+
+extern int mpfr_roundmode;
 
 extern int zerorewrite;
 
@@ -25,51 +33,63 @@ void itvtois(Itv a, Num *inf, Num *sup)
 void istoitv(Num inf, Num sup, Itv *rp)
 {
   Num  i, s;
+  Num  ni, ns;
   Itv c;
   int  type=0;
+  int current_roundmode;
 
   if ( !inf && !sup ) {
     *rp = 0;
     return;
   }
-  if ( !sup ) {
+  if ( compnum(0,sup,inf) >= 0 ) {
+    ns = sup; ni = inf;
+  } else {
+    ni = sup; ns = inf;
+  }
+
+  current_roundmode = mpfr_roundmode;
+  if ( !ns ) {
     s = 0;
   }
-  else if ( NID( sup )==N_B ) {
+  else if ( NID( ns )==N_B ) {
     type = 1;
-    ToBf(sup, (BF *)&s);
+
+    mpfr_roundmode = MPFR_RNDU;
+    s = tobf(ns, DEFAULTPREC);
+    //ToBf(sup, (BF *)&s);
   } else {
-    s = sup;
+    s = ns;
   }
-  if ( !inf ) {
+  if ( !ni ) {
     i = 0;
   }
-  else if ( NID( inf )==N_B ) {
+  else if ( NID( ni )==N_B ) {
     type = 1;
-    ToBf(inf, (BF *)&i);
+
+    mpfr_roundmode = MPFR_RNDD;
+    i = tobf(inf, DEFAULTPREC);
+    //ToBf(inf, (BF *)&i);
   } else {
-    i = inf;
+    i = ni;
   }
+  mpfr_roundmode = current_roundmode;
+
   if ( type ) {
-//    NEWIntervalBigFloat((IntervalBigFloat)c);
-    c=MALLOC(sizeof(struct oIntervalBigFloat));
-    OID(c)=O_N;
-    NID(c)=N_IntervalBigFloat;
-  } else 
-    NEWItvP(c);
-
-  if ( compnum(0,i,s) >= 0 ) {
-    INF(c) = s; SUP(c) = i;
+    IntervalBigFloat cc;
+    NEWIntervalBigFloat(cc);
+    c = (Itv)cc;
   } else {
-    INF(c) = i; SUP(c) = s;
+    NEWItvP(c);
   }
+  INF(c) = i; SUP(c) = s;
 
-  if (zerorewrite)
-    if ( initvp(0,c) ) {
-      *rp = 0;
-      return;
-    }
-  *rp = c;
+  if (zerorewrite && initvp(0,c) ) {
+    *rp = 0;
+    zerorewriteCount++;
+  } else {
+    *rp = c;
+  }
 }
 
 void additvp(Itv a, Itv b, Itv *c)
@@ -268,7 +288,7 @@ void pwritvp(Itv a, Num e, Itv *c)
     error("pwritv : can't calculate a fractional power");
 #endif
   } else {
-    ei = ZTOS((Q)e);
+    ei = QTOS((Q)e);
     pwritv0p(a,ei,&t);
     if ( SGN((Q)e) < 0 )
       divnum(0,(Num)ONE,(Num)t,(Num *)c);
@@ -286,7 +306,7 @@ void pwritv0p(Itv a, int e, Itv *c)
   if ( e == 1 )
     *c = a;
   else {
-    STOZ(e,ne);
+    STOQ(e,ne);
     if ( !(e%2) ) {
       if ( initvp(0,a) ) {
         Xmin = 0;
@@ -374,7 +394,7 @@ void miditvp(Itv a, Num *b)
   else if ( (NID(a) <= N_B) )
     *b = (Num)a;
   else {
-    STOZ(2,TWO);
+    STOQ(2,TWO);
     itvtois(a,&ai,&as);
     addnum(0,ai,as,&t);
     divnum(0,t,(Num)TWO,b);

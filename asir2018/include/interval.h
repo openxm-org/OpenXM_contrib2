@@ -1,11 +1,13 @@
 /*
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/include/interval.h,v 1.1 2018/09/19 06:00:58 noro Exp $
 */
 #ifndef  _INTERVAL_H
 #define  _INTERVAL_H
 
 #define  PRINTF_G  0
 #define  PRINTF_E  1
+
+#define	INT_ASIR_VERSION	20181218
 
 #if defined(INTERVAL)
 
@@ -30,6 +32,7 @@ static char  *Interval_dummy;
 #endif
 #endif
 
+#if 0
 #ifdef  linux
 #include  <fpu_control.h>
 #if 1
@@ -99,6 +102,14 @@ static char  *Interval_dummy;
 #define FPMINUSINF _controlfp(_RC_DOWN,_MCW_RC);
 #define FPTOZERO _controlfp(_RC_CHOP,_MCW_RC);
 #endif
+#endif
+#include <fenv.h>
+
+#define	FPNEAREST	fesetround(FE_TONEAREST);
+#define	FPPLUSINF	fesetround(FE_UPWARD);
+#define	FPMINUSINF	fesetround(FE_DOWNWARD);
+#define	FPTOZERO	fesetround(FE_TOWARDZERO);
+
 
 /* no control function of floating point rounding */
 #ifndef FPNEAREST
@@ -117,6 +128,8 @@ static char  *Interval_dummy;
 
 #define  MID_PRINTF_G  2
 #define  MID_PRINTF_E  3
+
+#define DEFAULTPREC	0	/* for mpfr */
 
 /* data structures */
 struct oItv {
@@ -169,6 +182,7 @@ struct oIntervalBigFloat {
 typedef struct oIntervalBigFloat *IntervalBigFloat;
 
 extern int zerorewrite;
+extern int zerorewriteCount;
 
 /* general macros */
 #define INF(p)  ((p)->inf)
@@ -183,8 +197,8 @@ extern int zerorewrite;
 #define NEWIntervalBigFloat(q)  ((q)=(IntervalBigFloat)MALLOC(sizeof(struct oIntervalBigFloat)),\
           OID(q)=O_N,NID(q)=N_IntervalBigFloat)
 #define MKItvP(a,b,c)  (NEWItvP(c),(INF(c)=(a),SUP(c)=(b)))
-#define MKIntervalDouble(a,b,c)  if((zerorewrite) && ((a)<=0.0) && ((b)>=0.0)) (c)=0;\
-      else (NEWIntervalDouble(c),(INF(c)=(a),SUP(c)=(b)))
+#define MKIntervalDouble(a,b,c)  if((zerorewrite) && ((a)<=0.0) && ((b)>=0.0)) {(c)=0;zerorewriteCount++;}\
+	else (NEWIntervalDouble(c),(INF(c)=(a),SUP(c)=(b)))
 #define MKIntervalQuad(a,b,c)  (NEWIntervalQuad(c),(INF(c)=(a),SUP(c)=(b)))
 #define MKIntervalBigFloat(a,b,c)  (NEWIntervalBigFloat(c),(INF(c)=(a),SUP(c)=(b)))
 
@@ -197,19 +211,16 @@ extern int zerorewrite;
 #define ITVQ(a) (NID(a)==N_IntervalQuad)
 #define ITVF(a) (NID(a)==N_IntervalBigFloat)
 
-/***    engine/itv.c    ***/
+#if 0
 double  ToRealSup(Num);
 double  ToRealInf(Num);
 double  RatnToRealUp(Q);
-double  NatToRealUp(Z, int *);
+double  NatToRealUp(N, int *);
 
 void  double2bf(double, BF *);
 double  bf2double(BF);
 
-void  itvtois(Itv, Num *, Num *);
-void  istoitv(Num, Num, Itv *);
 
-#if 0
 void    additv(Num, Num, Num *);
 void    subitv(Num, Num, Num *);
 void    mulitv(Num, Num, Num *);
@@ -228,33 +239,52 @@ void    widthitv(Itv, Num *);
 void    distanceitv(Itv, Itv, Num *);
 #endif
 
+/***    engine/p-itv.c    ***/
+void  itvtois(Itv, Num *, Num *);
+void  istoitv(Num, Num, Itv *);
+
 void    additvp(Itv, Itv, Itv *);
 void    subitvp(Itv, Itv, Itv *);
 void    mulitvp(Itv, Itv, Itv *);
 void    divitvp(Itv, Itv, Itv *);
-void    chsgnitvp(Itv, Itv *);
-int     cmpitvp(Itv, Itv);
 void    pwritvp(Itv, Num, Itv *);
 void    pwritv0p(Itv, int, Itv *);
+void    chsgnitvp(Itv, Itv *);
+int     initvp(Num , Itv );
+int     itvinitvp(Itv, Itv);
+int     cmpitvp(Itv, Itv);
+void miditvp(Itv, Num *);
 void    cupitvp(Itv, Itv, Itv *);
 void    capitvp(Itv, Itv, Itv *);
 void    widthitvp(Itv, Num *);
+void absitvp(Itv, Num *);
 void    distanceitvp(Itv, Itv, Num *);
 
-void  ToBf(Num, BF *);
-void  double2bf(double, BF *);
-double  bf2double(BF);
-void  addulp(IntervalBigFloat, IntervalBigFloat *);
-void  getulp(BF, BF *);
+
+/***    engine/f-itv.c    ***/
+
+//void  ToBf(Num, BF *);
+//void  double2bf(double, BF *);
+//double  bf2double(BF);
+//void  addulp(IntervalBigFloat, IntervalBigFloat *);
+//void  getulp(BF, BF *);
 
 void    additvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
 void    subitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
 void    mulitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
 void    divitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
-void    chsgnitvf(Itv, Itv *);
+void    chsgnitvf(IntervalBigFloat, IntervalBigFloat *);
+int     initvf(Num, Itv);
+int     itvinitvf(Itv, Itv);
 int     cmpitvf(Itv, Itv);
 void    pwritvf(Itv, Num, Itv *);
 void    pwritv0f(Itv, int, Itv *);
+void miditvf(Itv, Num *);
+void cupitvf(Itv, Itv, Itv *);
+void capitvf(Itv, Itv, Itv *);
+void widthitvf(Itv, Num *);
+void absitvf(Itv, Num *);
+void distanceitvf(Itv, Itv, Num *);
 
 /***    engine/d-itv.c    ***/
 double  ToRealDown(Num);
@@ -266,6 +296,7 @@ void    subitvd(Num, Num, IntervalDouble *);
 void    mulitvd(Num, Num, IntervalDouble *);
 void    divitvd(Num, Num, IntervalDouble *);
 void    chsgnitvd(IntervalDouble, IntervalDouble *);
+int     initvd(Num, IntervalDouble);
 int     cmpitvd(IntervalDouble, IntervalDouble);
 void    pwritvd(Num, Num, IntervalDouble *);
 void    pwritv0d(IntervalDouble, int, IntervalDouble *);

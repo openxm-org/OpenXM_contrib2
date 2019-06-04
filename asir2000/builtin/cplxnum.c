@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/cplxnum.c,v 1.4 2000/12/05 01:24:49 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/cplxnum.c,v 1.5 2018/03/29 01:32:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -97,7 +97,7 @@ Obj *r;
   else
     switch ( OID(p) ) {
       case O_N:
-        if ( NID((Num)p) <= N_B )
+        if ( NID((Num)p) < N_C ) // Y.Kondoh  ( NID((Num)p) <= N_B )
           *r = p;
         else {
           NEWC(c); c->r = ((C)p)->r; chsgnnum(((C)p)->i,&c->i);
@@ -128,7 +128,7 @@ Obj *r;
   else
     switch ( OID(p) ) {
       case O_N:
-        if ( NID((Num)p) <= N_B )
+        if ( NID((Num)p) < N_C ) // Y.Kondoh ( NID((Num)p) <= N_B )
           *r = p;
         else
           *r = (Obj)((C)p)->r;
@@ -163,7 +163,7 @@ Obj *r;
   else
     switch ( OID(p) ) {
       case O_N:
-        if ( NID((Num)p) <= N_B )
+        if ( NID((Num)p) < N_C ) // Y.Kondoh ( NID((Num)p) <= N_B )
           *r = 0;
         else
           *r = (Obj)((C)p)->i;
