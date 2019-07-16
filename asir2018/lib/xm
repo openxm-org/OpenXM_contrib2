@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/lib/xm,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 /**  xm  **/
 Xm_noX = 0$  
@@ -245,10 +245,10 @@ def ox_grep(A) {
 
 
 
-load("sm1")$
-load("gnuplot")$
-load("tigers")$
-load("phc")$
+load("sm1.rr")$
+load("gnuplot.rr")$
+load("tigers.rr")$
+load("phc.rr")$
 
 /* This module is obsolete and will no be supported.
    See OpenXM/src/asir-contrib/packages/src/oxrfc100.rr
