@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/lib/glib,v 1.1 2018/09/19 05:45:08 noro Exp $ */
 
 /* BUG: this library has not yet been adapted to the new automatic launcher
         of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
@@ -36,6 +36,7 @@ def glib_ox_get_errors(P) {
 }
 
 def reset_plot() {   
+/* It is no longer used. See, oxrfc103.rr */
   extern Glib_process;
   if (!Cfep_loaded) {
     print("  Sending signal to ox_plot",0);
@@ -109,13 +110,13 @@ def glib_openx11() {
 #ifndef DO_NOT_START_SERVER_EXPLICITLY
   if (type(Glib_server_started) == 0) { 
     Glib_process = ox_launch_nox(0,"ox_plot")$ 
-    register_handler(reset_plot); 
+    /* register_handler(reset_plot);  */
     Glib_server_started = 1$ 
   }$
   Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
 #else
   Glib_canvas = open_Canvas(-1,[Glib_canvas_x,Glib_canvas_y])$
-  register_handler(reset_plot); 
+  /* register_handler(reset_plot);  */
   Glib_server_started = 1$ 
 #endif
   glib_check_strict();
