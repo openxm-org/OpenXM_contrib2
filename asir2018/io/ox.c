@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -408,6 +408,8 @@ int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
     return 1;
 }
 
+extern int Im_ox_plot;
+
 void begin_critical() {
   critical_when_signal = 1;
 }
@@ -437,6 +439,11 @@ void ox_usr1_handler(int sig)
 #if !defined(VISUAL) && !defined(__MINGW32__)
   set_signal_for_restart(SIGUSR1,ox_usr1_handler);
 #endif
+  if ( Im_ox_plot ) {
+    ox_flushing = 1;
+    ox_send_sync(0);
+    return;
+  }
   if ( critical_when_signal ) {
     fprintf(stderr,"usr1 : critical\n");
     ox_usr1_sent = 1;

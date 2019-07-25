@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.2 2018/10/01 07:48:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.3 2019/03/27 05:34:47 noro Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
@@ -7,6 +7,8 @@
 #endif
 #endif
 #include "gc.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <signal.h>
 
@@ -23,8 +25,9 @@ void check_caught_intr()
     int_handler(SIGINT);
   } else if ( caught_intr == 2 ) {
     caught_intr = 0;
+    fprintf(stderr,"entering reset mode...\n");
     ox_usr1_handler(SIGUSR1);
-    }
+  }
 }
 
 void *Risa_GC_malloc(size_t d)
