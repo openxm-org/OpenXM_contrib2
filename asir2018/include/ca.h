@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.7 2018/10/02 09:06:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.8 2019/03/28 06:46:03 ohara Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -535,6 +535,12 @@ typedef struct oDMM {
   struct oDMM *next;
 } *DMM;
 
+typedef struct oDMMstack {
+  int rank,ordtype;
+  DMM *in;
+  struct oDMMstack *next;
+} *DMMstack;
+
 typedef struct oDL {
   int td;
   int d[1];
@@ -896,6 +902,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWVL(vl) ((vl)=(VL)MALLOC(sizeof(struct oVL)))
 #define NEWMP(m) ((m)=(MP)MALLOC(sizeof(struct oMP)))
 #define NEWDMM(m) ((m)=(DMM)MALLOC(sizeof(struct oDMM)))
+#define NEWDMMstack(m) ((m)=(DMMstack)MALLOC(sizeof(struct oDMMstack)))
 #define NEWDLBUCKET(a) ((a)=(DLBUCKET)MALLOC(sizeof(struct oDLBUCKET)))
 #define NEWDPP(a) ((a)=(DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 
@@ -2621,7 +2628,7 @@ void nd_det(int mod,MAT f,P *rp);
 void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
 void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST *rp);
 void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist,LIST *rp);
-void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp);
+void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
 void nd_nf_p(Obj f,LIST g,LIST v,int m,struct order_spec *ord,Obj *rp);
 void obj_algtodalg(Obj obj,Obj *r);
 void obj_dalgtoalg(Obj obj,Obj *r);

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.5 2018/10/19 23:27:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.6 2018/10/23 04:53:38 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -261,7 +261,7 @@ int ndv_newps(int m,NDV a,NDV aq,int f4);
 
 /* top level functions */
 void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
-void nd_gr_trace(LIST f,LIST v,int trace,int homo,int f4,struct order_spec *ord,LIST *rp);
+void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
 NODE nd_f4(int m,int checkonly,int **indp);
 NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp);
 NODE nd_gb_trace(int m,int ishomo,int **indp);

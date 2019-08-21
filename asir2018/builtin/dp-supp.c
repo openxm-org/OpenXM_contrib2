@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.1 2018/09/19 05:45:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -147,7 +147,7 @@ void dp_ptozp2(DP p0,DP p1,DP *hp,DP *rp)
   *hp = h; *rp = r;
 }
 
-void dpm_ptozp(DPM p,DPM *rp)
+void dpm_ptozp(DPM p,Z *cont,DPM *rp)
 {
   DMM m,mr,mr0;
   int i,n;
@@ -155,9 +155,9 @@ void dpm_ptozp(DPM p,DPM *rp)
   Z dvr;
   P t;
 
-  if ( !p )
-    *rp = 0;
-  else {
+  if ( !p ) {
+    *rp = 0; *cont = ONE;
+  } else {
     for ( m =BDY(p), n = 0; m; m = NEXT(m), n++ );
     w = (Q *)ALLOCA(n*sizeof(Q));
     for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
@@ -171,6 +171,7 @@ void dpm_ptozp(DPM p,DPM *rp)
       NEXTDMM(mr0,mr); divsp(CO,(P)m->c,(P)dvr,(P *)&mr->c); mr->dl = m->dl; mr->pos = m->pos;
     }
     NEXT(mr) = 0; MKDPM(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+    *cont = dvr;
   }
 }
 
@@ -178,8 +179,9 @@ void dpm_ptozp2(DPM p0,DPM p1,DPM *hp,DPM *rp)
 {
   DPM t,s,h,r;
   DMM m,mr,mr0,m0;
+  Z cont;
 
-  adddpm(CO,p0,p1,&t); dpm_ptozp(t,&s);
+  adddpm(CO,p0,p1,&t); dpm_ptozp(t,&cont,&s);
   if ( !p0 ) {
     h = 0; r = s;
   } else if ( !p1 ) {
@@ -595,7 +597,7 @@ void dp_sp(DP p1,DP p2,DP *rp)
   }
 }
 
-void dpm_sp(DPM p1,DPM p2,DPM *rp)
+void dpm_sp(DPM p1,DPM p2,DPM *rp,DP *mul1,DP *mul2)
 {
   int i,n,td;
   int *w;
@@ -608,7 +610,7 @@ void dpm_sp(DPM p1,DPM p2,DPM *rp)
 
   n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
   if ( BDY(p1)->pos != BDY(p2)->pos ) {
-    *rp = 0;
+    *mul1 = 0; *mul2 = 0; *rp = 0;
     return;
   }
   w = (int *)ALLOCA(n*sizeof(int));
@@ -630,12 +632,14 @@ void dpm_sp(DPM p1,DPM p2,DPM *rp)
 
   NEWMP(m); m->dl = d; m->c = (Obj)c2; NEXT(m) = 0;
   MKDP(n,m,s1); s1->sugar = d->td; mulobjdpm(CO,(Obj)s1,p1,&t);
+  *mul1 = s1;
 
   NEWDL(d,n); d->td = td - d2->td;
   for ( i = 0; i < n; i++ )
     d->d[i] = w[i] - d2->d[i];
   NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0;
   MKDP(n,m,s2); s2->sugar = d->td; mulobjdpm(CO,(Obj)s2,p2,&u);
+  *mul2 = s2;
 
   subdpm(CO,t,u,rp);
   if ( GenTrace ) {
@@ -789,6 +793,7 @@ void _dp_sp_mod(DP p1,DP p2,int mod,DP *rp)
  * do content reduction over Z or Q(x,...)
  * do nothing over finite fields
  *
+ * head+rest = dn*(p0+p1)+mult*p2
  */
 
 void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
@@ -830,6 +835,7 @@ void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
   *head = h; *rest = r; *dnp = (P)c2;
 }
 
+// head+rest = dn*(p0+p1)-mult*p2
 void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
 {
   int i,n,pos;
@@ -865,9 +871,9 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
     divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
     add_denomlist(g);
   }
-  NEWMP(m); m->dl = d; chsgnp((P)c1,(P *)&m->c); NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
   *multp = s;
-  mulobjdpm(CO,(Obj)s,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); adddpm(CO,u,w,&r);
+  mulobjdpm(CO,(Obj)s,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); subdpm(CO,w,u,&r);
   mulobjdpm(CO,(Obj)c2,p0,&h);
   *head = h; *rest = r; *dnp = (P)c2;
 }
@@ -1253,8 +1259,9 @@ void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
   if ( !g ) {
     *rp = 0; *dnp = dn; return;
   }
-  for ( n = 0, l = b; l; l = NEXT(l), n++ );
-    wb = (int *)ALLOCA(n*sizeof(int));
+  for ( n = 0, l = b; l; l = NEXT(l), n++ )
+    ;
+  wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
     wb[i] = ZTOS((Q)BDY(l));
   sugar = g->sugar;
@@ -1339,6 +1346,72 @@ DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
       NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
       addd(CO,d,t,&s); d = s;
       dp_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( d ) d->sugar = sugar;
+  *rp = d; *dnp = dn;
+  return q;
+}
+
+DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
+{
+  DPM u,p,d,s,t;
+  DP dmy,mult;
+  DPM *ps;
+  DP *q;
+  NODE l;
+  DMM m,mr;
+  int i,n,j,len;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1;
+  Q cont;
+
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return 0;
+  }
+  ps = (DPM *)BDY(psv);
+  len = psv->len;
+  if ( b ) {
+    for ( n = 0, l = b; l; l = NEXT(l), n++ )
+      ;
+    wb = (int *)ALLOCA(n*sizeof(int));
+    for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+      wb[i] = ZTOS((Q)BDY(l));
+  } else {
+    wb = (int *)ALLOCA(len*sizeof(int));
+    for ( i = j = 0; i < len; i++ ) 
+      if ( ps[i] ) wb[j++] = i;
+    n = j;
+  }
+  q = (DP *)MALLOC(len*sizeof(DP));
+  for ( i = 0; i < len; i++ ) q[i] = 0;
+  sugar = g->sugar;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dpm_redble(g,p = ps[wb[i]]) ) {
+        dpm_red(d,g,p,&t,&u,&tdn,&mult);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        for ( j = 0; j < len; j++ ) {
+          muldc(CO,q[j],(Obj)tdn,&dmy); q[j] = dmy;
+        }
+        addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
+        mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        d = t;
+        if ( !u ) goto last;
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
+      adddpm(CO,d,t,&s); d = s;
+      dpm_rest(g,&t); g = t;
     }
   }
 last:
@@ -1478,6 +1551,7 @@ void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
   DPM u,p,d,s,t;
   DP dmy1;
   P dmy;
+  Z cont;
   NODE l;
   DMM m,mr;
   int i,n;
@@ -1520,7 +1594,7 @@ void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
         }
       } else {
         if ( multiple && HMAG(g) > hmag ) {
-          dpm_ptozp(g,&t); g = t;
+          dpm_ptozp(g,&cont,&t); g = t;
           hmag = multiple*HMAG(g);
         }
       }
@@ -1540,6 +1614,57 @@ void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
   if ( d )
     d->sugar = sugar;
   *rp = d;
+}
+
+void dpm_shift(DPM p,int s,DPM *r)
+{
+  DMM m,mr0,mr;
+  DPM t;
+
+  if ( !p ) *r = 0;
+  else {
+    for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos-s;
+      if ( mr->pos <= 0 )
+        error("dpm_shift : too large shift value");
+    }
+    NEXT(mr) = 0;
+    MKDPM(p->nv,mr0,t); t->sugar = p->sugar;
+    *r = t;
+  }
+}
+
+// up=sum{c*<<...:i>>|i<=s}, lo=sum{c*<<...:i>>|i>s}
+
+void dpm_split(DPM p,int s,DPM *up,DPM *lo)
+{
+  DMM m,mu0,mu,ml0,ml;
+  DPM t;
+
+  if ( !p ) {
+    *up = 0; *lo = 0;
+  } else {
+    for ( m = BDY(p), mu0 = ml0 = 0; m; m = NEXT(m) ) {
+      if ( m->pos <= s ) {
+        NEXTDMM(mu0,mu);
+        mu->dl = m->dl; mu->c = m->c; mu->pos = m->pos;
+      } else {
+        NEXTDMM(ml0,ml);
+        ml->dl = m->dl; ml->c = m->c; ml->pos = m->pos;
+      }
+    }
+    if ( mu0 ) {
+      NEXT(mu) = 0; MKDPM(p->nv,mu0,t); t->sugar = p->sugar;
+      *up = t;
+    } else
+      *up = 0;
+    if ( ml0 ) {
+      NEXT(ml) = 0; MKDPM(p->nv,ml0,t); t->sugar = p->sugar;
+      *lo = t;
+    } else
+      *lo = 0;
+  }
 }
 
 /* nf computation over a field */
@@ -1708,8 +1833,9 @@ void dp_true_nf_mod(NODE b,DP g,DP *ps,int mod,int full,DP *rp,P *dnp)
   if ( !g ) {
     *rp = 0; *dnp = dn; return;
   }
-  for ( n = 0, l = b; l; l = NEXT(l), n++ );
-    wb = (int *)ALLOCA(n*sizeof(int));
+  for ( n = 0, l = b; l; l = NEXT(l), n++ )
+    ;
+  wb = (int *)ALLOCA(n*sizeof(int));
   for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
     wb[i] = ZTOS((Q)BDY(l));
   sugar = g->sugar;
@@ -2310,6 +2436,7 @@ int create_composite_order_spec(VL vl,LIST order,struct order_spec **specp)
     w_or_b[n].body.block.order = 0;
     spec->ord.composite.length = n+1;
   }
+  return 1;
 }
 
 /* module order spec */
@@ -2725,6 +2852,26 @@ void dpm_rest(DPM p,DPM *rp)
   }
 }
 
+int dpm_getdeg(DPM p,int *r)
+{
+  int max,n,i,rank;
+  DMM m;
+  int *d;
+
+  if ( !p ) return 0;
+  n = p->nv;
+  max = 0;
+  rank = 0;
+  for ( m = BDY(p); m; m = NEXT(m) ) {
+    d = m->dl->d; 
+    for ( i = 0; i < n; i++ )
+      if ( d[i] > max ) max = d[i];
+    rank = MAX(rank,m->pos);
+  }
+  *r = rank;
+  return max;
+}
+
 DL lcm_of_DL(int nv,DL dl1,DL dl2,DL dl)
 {
   register int i, *d1, *d2, *d, td;
@@ -2788,13 +2935,13 @@ void _print_mp(int nv,MP m)
   if ( !m )
     return;
   for ( ; m; m = NEXT(m) ) {
-    fprintf(stderr,"%d<",ITOS(C(m)));
+    fprintf(stderr,"%ld<",ITOS(C(m)));
     for ( i = 0; i < nv; i++ ) {
       fprintf(stderr,"%d",m->dl->d[i]);
       if ( i != nv-1 )
         fprintf(stderr," ");
     }
-    fprintf(stderr,">",C(m));
+    fprintf(stderr,">");
   }
   fprintf(stderr,"\n");
 }
@@ -2915,6 +3062,7 @@ LIST dp_initial_term(LIST f,struct order_spec *ord)
     default:
       error("dp_initial_term : unsupported order");
   }
+  return 0;
 }
 
 int highest_order_dp(DP p,int *weight,int n);
@@ -2994,6 +3142,7 @@ LIST dp_order(LIST f,struct order_spec *ord)
     default:
       error("dp_initial_term : unsupported order");
   }
+  return 0;
 }
 
 int dpv_ht(DPV p,DP *h)
@@ -3064,7 +3213,7 @@ int compare_facet_preorder(int n,int *u,int *v,
   for ( i = 0; i < row2; i++ ) {
     w2i = w2[i];
     for ( j = 0, tu = tv = 0; j < n; j++ )
-      if ( s = w2i[j] ) {
+      if ( (s = w2i[j]) != 0 ) {
         tu += s*u[j]; tv += s*v[j];
       }
     for ( j = 0; j < n; j++ ) uv[j] = u[j]*tv-v[j]*tu;

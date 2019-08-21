@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 
@@ -208,17 +208,7 @@ void initd(struct order_spec *spec)
   dp_current_spec = spec;
 }
 
-int dpm_ispot;
-
-/* type=0 => TOP, type=1 => POT */
-void initdpm(struct order_spec *spec,int type)
-{
-  int len,i,k,row;
-    Q **mat;
-
-  initd(spec);
-  dpm_ispot = type;
-}
+int dpm_ordtype;
 
 void ptod(VL vl,VL dvl,P p,DP *pr)
 {
@@ -576,6 +566,34 @@ void _adddl(int n,DL d1,DL d2,DL d3)
   d3->td = d1->td+d2->td;
   for ( i = 0; i < n; i++ )
     d3->d[i] = d1->d[i]+d2->d[i];
+}
+
+void _addtodl(int n,DL d1,DL d2)
+{
+  int i;
+
+  d2->td += d1->td;
+  for ( i = 0; i < n; i++ )
+    d2->d[i] += d1->d[i];
+}
+
+void _copydl(int n,DL d1,DL d2)
+{
+  int i;
+
+  d2->td = d1->td;
+  for ( i = 0; i < n; i++ )
+    d2->d[i] = d1->d[i];
+}
+
+int _eqdl(int n,DL d1,DL d2)
+{
+  int i;
+
+  if ( d2->td != d1->td ) return 0;
+  for ( i = 0; i < n; i++ )
+    if ( d2->d[i] != d1->d[i] ) return 0;
+  return 1;
 }
 
 /* m1 <- m1 U dl*f, destructive */
@@ -2616,20 +2634,102 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 
 /* DPM functions */
 
+DMMstack dmm_stack;
+
+// data=[Ink,...,In0,Base]
+// Ini = a list of module monomials
+// Base=an order spec for polynomial ring or module
+void set_schreyer_order(NODE data)
+{
+  DMMstack t;
+  int len,i;
+  NODE in;
+  struct order_spec *base;
+
+  if ( !data ) {
+    dmm_stack = 0;
+    if ( dp_current_spec && dp_current_spec->id >= 256 )
+      dpm_ordtype = dp_current_spec->ispot;
+    else 
+      dpm_ordtype = 0;
+    return;
+  } else if ( NEXT(data) == 0 ) {
+    create_order_spec(0,BDY(data),&base);
+    NEWDMMstack(t);
+    t->in = 0;
+    t->rank = 0;
+    t->ordtype = base->ispot;
+    t->next = 0;
+    dmm_stack = t;
+    dpm_ordtype = 2;
+  } else {
+    set_schreyer_order(NEXT(data));
+    in = BDY((LIST)BDY(data));
+    len = length(in);
+    NEWDMMstack(t);
+    t->in = 0;
+    t->rank = len;
+    t->in = (DMM *)MALLOC((len+1)*sizeof(DMM));
+    t->ordtype = 0;
+    t->next = dmm_stack;
+    dmm_stack = t; 
+    for ( i = 1; i <= len; i++, in = NEXT(in) ) {
+      t->in[i] = BDY((DPM)BDY(in));
+    }
+  }
+}
+
+int compdmm_schreyer(int n,DMM m1,DMM m2)
+{
+   DL d1,d2;
+   int pos1,pos2,t;
+   DMM *in;
+   DMMstack s;
+
+   NEWDL(d1,n); _copydl(n,m1->dl,d1); pos1 = m1->pos;
+   NEWDL(d2,n); _copydl(n,m2->dl,d2); pos2 = m2->pos;
+   for ( s = dmm_stack; s->in; s = NEXT(s) ) {
+     in = s->in;
+     _addtodl(n,in[pos1]->dl,d1);
+     _addtodl(n,in[pos2]->dl,d2);
+     if ( _eqdl(n,d1,d2) && in[pos1]->pos == in[pos2]->pos ) {
+       if ( pos1 < pos2 ) return 1;
+       else if ( pos1 > pos2 ) return -1;
+       else return 0;
+     }
+     pos1 = in[pos1]->pos;
+     pos2 = in[pos2]->pos;
+   }
+   // comparison by the bottom order
+  if ( s->ordtype == 1 ) {
+    if ( pos1 < pos2 ) return 1;
+    else if ( pos1 > pos2 ) return -1;
+    else return (*cmpdl)(n,d1,d2);
+  } else {
+    t = (*cmpdl)(n,d1,d2);
+    if ( t ) return t;
+    else if ( pos1 < pos2 ) return 1;
+    else if ( pos1 > pos2 ) return -1;
+    else return 0;
+  }
+}
+
 int compdmm(int n,DMM m1,DMM m2)
 {
   int t;
 
-  if ( dpm_ispot ) {
+  if ( dpm_ordtype == 1 ) {
     if ( m1->pos < m2->pos ) return 1;
     else if ( m1->pos > m2->pos ) return -1;
     else return (*cmpdl)(n,m1->dl,m2->dl);
-  } else {
+  } else if ( dpm_ordtype == 0 ) {
     t = (*cmpdl)(n,m1->dl,m2->dl);
     if ( t ) return t;
     else if ( m1->pos < m2->pos ) return 1;
     else if ( m1->pos > m2->pos ) return -1;
     else return 0;
+  } else if ( dpm_ordtype == 2 ) {
+    return compdmm_schreyer(n,m1,m2);
   }
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.7 2019/03/18 07:09:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.8 2019/03/18 10:30:41 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -89,8 +89,8 @@ void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
-void Pdpm_ltod(),Pdpm_dtol(),Pdpm_ord(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp();
-void Pdpm_hm(),Pdpm_ht(),Pdpm_hc();
+void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient();
+void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -157,6 +157,7 @@ struct ftab dp_tab[] = {
   {"dp_nf",Pdp_nf,4},
   {"dp_nf_mod",Pdp_nf_mod,5},
   {"dp_nf_f",Pdp_nf_f,4},
+  {"dpm_nf_and_quotient",Pdpm_nf_and_quotient,-3},
   {"dpm_nf_f",Pdpm_nf_f,4},
   {"dpm_weyl_nf_f",Pdpm_weyl_nf_f,4},
   {"dpm_nf",Pdpm_nf,4},
@@ -252,7 +253,7 @@ struct ftab dp_supp_tab[] = {
   /* setting flags */
   {"dp_sort",Pdp_sort,1},
   {"dp_ord",Pdp_ord,-1},
-  {"dpm_ord",Pdpm_ord,-1},
+  {"dpm_set_schreyer",Pdpm_set_schreyer,-1},
   {"dpv_ord",Pdpv_ord,-2},
   {"dp_set_kara",Pdp_set_kara,-1},
   {"dp_nelim",Pdp_nelim,-1},
@@ -274,6 +275,7 @@ struct ftab dp_supp_tab[] = {
   {"dp_ltod",Pdp_ltod,-2},
 
   {"dpm_ltod",Pdpm_ltod,2},
+  {"dpm_dptodpm",Pdpm_dptodpm,2},
   {"dpm_dtol",Pdpm_dtol,3},
 
   /* criteria */
@@ -293,6 +295,9 @@ struct ftab dp_supp_tab[] = {
   {"dpm_hm",Pdpm_hm,1},
   {"dpm_ht",Pdpm_ht,1},
   {"dpm_hc",Pdpm_hc,1},
+  {"dpm_shift",Pdpm_shift,2},
+  {"dpm_split",Pdpm_split,2},
+  {"dpm_sort",Pdpm_sort,1},
   {"dp_rest",Pdp_rest,1},
   {"dp_initial_term",Pdp_initial_term,1},
   {"dp_order",Pdp_order,1},
@@ -307,6 +312,7 @@ struct ftab dp_supp_tab[] = {
   /* misc */
   {"dp_mbase",Pdp_mbase,1},
   {"dp_redble",Pdp_redble,2},
+  {"dpm_redble",Pdpm_redble,2},
   {"dp_sep",Pdp_sep,2},
   {"dp_idiv",Pdp_idiv,2},
   {"dp_tdiv",Pdp_tdiv,2},
@@ -503,6 +509,8 @@ P binpoly(P n,int a,int b)
   return r;
 }
 
+void ibin(unsigned long int n,unsigned long int k,Z *r);
+
 void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf)
 {
   P tv,gcd,q,h,hphead,tt,ai,hpoly,nv,bp,w;
@@ -538,7 +546,7 @@ void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf)
         topdc = 0;
         for ( i = 0; i < qd; i++ ) {
           NEWDC(dc); NEXT(dc) = topdc;
-          ibin(i+s-1,s-1,&COEF(dc));
+          ibin(i+s-1,s-1,(Z *)&COEF(dc));
           STOZ(i,d); DEG(dc) = d;
           topdc = dc;
         }
@@ -897,6 +905,8 @@ void Pdp_nf_tab_f(NODE arg,DP *rp)
   dp_nf_tab_f((DP)ARG0(arg),(LIST *)BDY((VECT)ARG1(arg)),rp);
 }
 
+extern int dpm_ordtype;
+
 void Pdp_ord(NODE arg,Obj *rp)
 {
   struct order_spec *spec;
@@ -914,6 +924,7 @@ void Pdp_ord(NODE arg,Obj *rp)
     else if ( !create_order_spec(0,(Obj)ARG0(arg),&spec) )
       error("dp_ord : invalid order specification");
     initd(spec); *rp = spec->obj;
+    if ( spec->id >= 256 ) dpm_ordtype = spec->ispot; 
   }
 }
 
@@ -1064,12 +1075,34 @@ void Pdpm_ltod(NODE arg,DPM *rp)
 
   nd = BDY(f);
   len = length(nd);
-  for ( i = 0, t = nd, s = 0; i < len; i++, t = NEXT(t) ) {
+  for ( i = 1, t = nd, s = 0; i <= len; i++, t = NEXT(t) ) {
     ptod(CO,vl,(P)BDY(t),&d);
     dtodpm(d,i,&u);
     adddpm(CO,s,u,&w); s = w;
   }
   *rp = s;
+}
+
+// c*[monomial,i]+... -> c*<<monomial:i>>+...
+
+void Pdpm_dptodpm(NODE arg,DPM *rp)
+{
+  DP p;
+  MP mp;
+  int pos;
+  DMM m0,m;
+
+  p = (DP)ARG0(arg);
+  pos = ZTOS((Z)ARG1(arg));
+  if ( pos <= 0 )
+    error("dpm_mtod : position must be positive");
+  if ( !p ) *rp = 0;
+  else {
+    for ( m0 = 0, mp = BDY(p); mp; mp = NEXT(mp) ) {
+      NEXTDMM(m0,m); m->dl = mp->dl; m->c = mp->c; m->pos = pos;
+    }
+    MKDPM(p->nv,m0,*rp); (*rp)->sugar = p->sugar;
+  }
 }
 
 void Pdpm_dtol(NODE arg,LIST *rp)
@@ -1280,6 +1313,41 @@ void Pdpm_nf(NODE arg,DPM *rp)
   b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
   full = (Q)ARG3(arg) ? 1 : 0;
   dpm_nf_z(b,g,ps,full,DP_Multiple,rp);
+}
+
+DP *dpm_nf_and_quotient(NODE b,DPM g,VECT ps,DPM *rp,P *dnp);
+
+void Pdpm_nf_and_quotient(NODE arg,LIST *rp)
+{
+  NODE b;
+  VECT ps;
+  DPM g,nm;
+  P dn;
+  VECT quo;
+  NODE n;
+  int ac;
+
+  do_weyl = 0; dp_fcoeffs = 0;
+  ac = argc(arg);
+  if ( ac < 2 )
+    error("dpm_nf_and_quotient : invalid arguments");
+  else if ( ac == 2 ) {
+    asir_assert(ARG0(arg),O_DPM,"dpm_nf");
+    asir_assert(ARG1(arg),O_VECT,"dpm_nf");
+    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+  } else if ( ac == 3 ) {
+    asir_assert(ARG0(arg),O_LIST,"dpm_nf");
+    asir_assert(ARG1(arg),O_DPM,"dpm_nf");
+    asir_assert(ARG2(arg),O_VECT,"dpm_nf");
+    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+  }
+  if ( !g ) {
+    *rp = 0; return;
+  }
+  NEWVECT(quo); quo->len = ps->len;
+  quo->body = (pointer *)dpm_nf_and_quotient(b,g,ps,&nm,&dn);
+  n = mknode(3,nm,dn,quo);
+  MKLIST(*rp,n);
 }
 
 void Pdpm_weyl_nf(NODE arg,DPM *rp)
@@ -1763,6 +1831,16 @@ void Pdp_redble(NODE arg,Z *rp)
     *rp = 0;
 }
 
+void Pdpm_redble(NODE arg,Z *rp)
+{
+  asir_assert(ARG0(arg),O_DPM,"dpm_redble");
+  asir_assert(ARG1(arg),O_DPM,"dpm_redble");
+  if ( dpm_redble((DPM)ARG0(arg),(DPM)ARG1(arg)) )
+    *rp = ONE;
+  else
+    *rp = 0;
+}
+
 void Pdp_red_mod(NODE arg,LIST *rp)
 {
   DP h,r;
@@ -1925,25 +2003,47 @@ void Pdp_weyl_sp(NODE arg,DP *rp)
   do_weyl = 0;
 }
 
-void Pdpm_sp(NODE arg,DPM *rp)
+void Pdpm_sp(NODE arg,Obj *rp)
 {
-  DPM  p1,p2;
+  DPM  p1,p2,sp;
+  DP mul1,mul2;
+  Obj val;
+  NODE nd;
+  LIST l;
 
   do_weyl = 0;
   p1 = (DPM)ARG0(arg); p2 = (DPM)ARG1(arg);
   asir_assert(p1,O_DPM,"dpm_sp"); asir_assert(p2,O_DPM,"dpm_sp");
-  dpm_sp(p1,p2,rp);
+  dpm_sp(p1,p2,&sp,&mul1,&mul2);
+  if ( get_opt("coef",&val) && val ) {
+    nd = mknode(3,sp,mul1,mul2);
+    MKLIST(l,nd);
+    *rp = (Obj)l;
+  } else {
+    *rp = (Obj)sp;
+  }
 }
 
-void Pdpm_weyl_sp(NODE arg,DPM *rp)
+void Pdpm_weyl_sp(NODE arg,Obj *rp)
 {
-  DPM p1,p2;
+  DPM  p1,p2,sp;
+  DP mul1,mul2;
+  Obj val;
+  NODE nd;
+  LIST l;
 
   p1 = (DPM)ARG0(arg); p2 = (DPM)ARG1(arg);
   asir_assert(p1,O_DPM,"dpm_weyl_sp"); asir_assert(p2,O_DPM,"dpm_weyl_sp");
   do_weyl = 1;
-  dpm_sp(p1,p2,rp);
+  dpm_sp(p1,p2,&sp,&mul1,&mul2);
   do_weyl = 0;
+  if ( get_opt("coef",&val) && val ) {
+    nd = mknode(3,sp,mul1,mul2);
+    MKLIST(l,nd);
+    *rp = (Obj)l;
+  } else {
+    *rp = (Obj)sp;
+  }
 }
 
 void Pdp_sp_mod(NODE arg,DP *rp)
@@ -2813,6 +2913,8 @@ void Pnd_gr_trace(NODE arg,LIST *rp)
 {
   LIST f,v;
   int m,homo,ac;
+  Obj val;
+  int retdp;
   Num nhomo;
   struct order_spec *ord;
 
@@ -2836,13 +2938,17 @@ void Pnd_gr_trace(NODE arg,LIST *rp)
     homo = ZTOS((Q)nhomo);
   } else
     error("nd_gr_trace : invalid argument");
-  nd_gr_trace(f,v,m,homo,0,ord,rp);
+  retdp = 0;
+  if ( get_opt("dp",&val) && val ) retdp = 1;
+  nd_gr_trace(f,v,m,homo,retdp,0,ord,rp);
 }
 
 void Pnd_f4_trace(NODE arg,LIST *rp)
 {
   LIST f,v;
   int m,homo,ac;
+  int retdp;
+  Obj val;
   Num nhomo;
   struct order_spec *ord;
 
@@ -2866,7 +2972,9 @@ void Pnd_f4_trace(NODE arg,LIST *rp)
     homo = ZTOS((Q)nhomo);
   } else
     error("nd_gr_trace : invalid argument");
-  nd_gr_trace(f,v,m,homo,1,ord,rp);
+  retdp = 0;
+  if ( get_opt("dp",&val) && val ) retdp = 1;
+  nd_gr_trace(f,v,m,homo,retdp,1,ord,rp);
 }
 
 void Pnd_weyl_gr(NODE arg,LIST *rp)
@@ -2907,7 +3015,8 @@ void Pnd_weyl_gr(NODE arg,LIST *rp)
 void Pnd_weyl_gr_trace(NODE arg,LIST *rp)
 {
   LIST f,v;
-  int m,homo,ac;
+  int m,homo,ac,retdp;
+  Obj val;
   Num nhomo;
   struct order_spec *ord;
 
@@ -2931,7 +3040,9 @@ void Pnd_weyl_gr_trace(NODE arg,LIST *rp)
     homo = ZTOS((Q)nhomo);
   } else
     error("nd_weyl_gr_trace : invalid argument");
-  nd_gr_trace(f,v,m,homo,0,ord,rp);
+  retdp = 0;
+  if ( get_opt("dp",&val) && val ) retdp = 1;
+  nd_gr_trace(f,v,m,homo,retdp,0,ord,rp);
   do_weyl = 0;
 }
 
@@ -3750,23 +3861,19 @@ void Pdpv_ord(NODE arg,Obj *rp)
   *rp = dp_current_modspec->obj;
 }
 
-extern int dpm_ispot;
+extern int dpm_ordtype;
 
-void Pdpm_ord(NODE arg,LIST *rp)
+void set_schreyer_order(NODE n);
+
+LIST schreyer_obj;
+
+void Pdpm_set_schreyer(NODE arg,Z *rp)
 {
-  Z q;
-  NODE nd;
-  struct order_spec *spec;
-  
-  if ( arg ) {
-    nd = BDY((LIST)ARG0(arg));
-    if ( !create_order_spec(0,(Obj)ARG1(nd),&spec) )
-      error("dpm_ord : invalid order specification");
-    initdpm(spec,ZTOS((Q)ARG0(nd)));
+  if ( argc(arg) ) {
+    schreyer_obj = (LIST)ARG0(arg);
+    set_schreyer_order(schreyer_obj?BDY(schreyer_obj):0);
   }
-  STOZ(dpm_ispot,q);
-  nd = mknode(2,q,dp_current_spec->obj);
-  MKLIST(*rp,nd);
+  *rp = schreyer_obj;
 }
 
 void Pdpm_hm(NODE arg,DPM *rp)
@@ -3781,9 +3888,48 @@ void Pdpm_ht(NODE arg,DPM *rp)
 {
   DPM p;
 
-  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dp_ht");
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_ht");
   dpm_ht(p,rp);
 }
+
+void dpm_shift(DPM p,int s,DPM *rp);
+
+void Pdpm_shift(NODE arg,DPM *rp)
+{
+  DPM p;
+  int s;
+
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_shift");
+  s = ZTOS((Z)ARG1(arg));
+  dpm_shift(p,s,rp);
+}
+
+void dpm_sort(DPM p,DPM *rp);
+
+void Pdpm_sort(NODE arg,DPM *rp)
+{
+  DPM p;
+  int s;
+
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_shift");
+  dpm_sort(p,rp);
+}
+
+void dpm_split(DPM p,int s,DPM *up,DPM *lo);
+
+void Pdpm_split(NODE arg,LIST *rp)
+{
+  DPM p,up,lo;
+  int s;
+  NODE nd;
+
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_split");
+  s = ZTOS((Z)ARG1(arg));
+  dpm_split(p,s,&up,&lo);
+  nd = mknode(2,up,lo);
+  MKLIST(*rp,nd);
+}
+
 
 void Pdpm_hc(NODE arg,Obj *rp)
 {
@@ -3894,6 +4040,10 @@ int dpv_hp(DPV p)
     case ORD_LEX:
       for ( i = 0; i < len; i++ )
         if ( e[i] ) return i;
+      return -1;
+      break;
+    default:
+      error("dpv_hp : unsupported term ordering");
       return -1;
       break;
   }

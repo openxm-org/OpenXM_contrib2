@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.y,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 %{
 #define malloc(x) Risa_GC_malloc(x)
@@ -455,9 +455,7 @@ expr 	: pexpr
 		| '<' node '>'
 			{ $$ = mkfnode(1,I_EV,$2); }
 		| '<' node ':' expr '>'
-			{ 
-        $$ = mkfnode(2,I_EVM,$2,$4); 
-      }
+			{ $$ = mkfnode(2,I_EVM,$2,$4); }
 		| NEWSTRUCT '(' rawstr ')'
 			{ $$ = mkfnode(1,I_NEWCOMP,(int)structtoindex($3)); }
 		| QUOTED '(' expr ')'

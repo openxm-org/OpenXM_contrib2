@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/eval.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/eval.c,v 1.2 2018/09/28 08:20:29 noro Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -173,7 +173,10 @@ pointer eval(FNODE f)
       evalnodebody((NODE)FA0(f),&tn); nodetod(tn,&dp); val = (pointer)dp;
       break;
     case I_EVM:
-      evalnodebody((NODE)FA0(f),&tn); pos = (Obj)eval((FNODE)FA1(f)); nodetodpm(tn,pos,&dpm); val = (pointer)dpm;
+      evalnodebody((NODE)FA0(f),&tn); pos = (Obj)eval((FNODE)FA1(f)); 
+      if ( !pos )
+        error("position of a module element must be positive.");
+      nodetodpm(tn,pos,&dpm); val = (pointer)dpm;
       break;
     case I_FUNC:
       val = evalf((FUNC)FA0(f),(FNODE)FA1(f),0); break;
