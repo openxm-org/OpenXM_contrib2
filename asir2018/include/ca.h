@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.8 2019/03/28 06:46:03 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.9 2019/08/21 00:37:47 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1783,6 +1783,7 @@ void vntovl(VN,int,VL *);
 void saveerror(FILE *,ERR);
 void saveui(FILE *,USINT);
 void savedp(FILE *,DP);
+void savedpm(FILE *,DPM);
 void savestring(FILE *,STRING);
 void savemat(FILE *,MAT);
 void savevect(FILE *,VECT);
@@ -1808,6 +1809,7 @@ void savegfsn(FILE *,GFSN);
 void loaderror(FILE *,ERR *);
 void loadui(FILE *,USINT *);
 void loaddp(FILE *,DP *);
+void loaddpm(FILE *,DPM *);
 void loadstring(FILE *,STRING *);
 void loadmat(FILE *,MAT *);
 void loadvect(FILE *,VECT *);

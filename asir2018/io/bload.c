@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.2 2019/03/03 05:21:17 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -57,7 +57,7 @@ void loadnbp(FILE *s,NBP *p);
 
 void (*loadf[])() = { 0, loadnum, loadp, loadr, loadlist, loadvect, loadmat,
   loadstring, 0, loaddp, loadui, loaderror,0,0,0,loadgfmmat, 
-  loadbytearray, 0, 0, 0, 0, 0, 0, 0, 0,  loadnbp };
+  loadbytearray, 0, 0, 0, 0, 0, 0, 0, 0,  loadnbp, loaddpm };
 
 #if defined(INTERVAL)
 void loaditv();
@@ -437,6 +437,24 @@ void loaddp(FILE *s,DP *p)
     read_int(s,&dl->td); read_intarray(s,&(dl->d[0]),nv);
   }
   NEXT(m) = 0; MKDP(nv,m0,dp); dp->sugar = sugar; *p = dp;
+}
+
+void loaddpm(FILE *s,DPM *p)
+{
+  int nv,n,i,sugar;
+  DPM dp;
+  DMM m,m0;
+  DL dl;
+
+  read_int(s,&nv); read_int(s,&sugar); read_int(s,&n);
+  for ( i = 0, m0 = 0; i < n; i++ ) {
+    NEXTDMM(m0,m);
+    loadobj(s,(Obj *)&(m->c));
+    read_int(s,&m->pos);
+    NEWDL(dl,nv); m->dl = dl;
+    read_int(s,&dl->td); read_intarray(s,&(dl->d[0]),nv);
+  }
+  NEXT(m) = 0; MKDPM(nv,m0,dp); dp->sugar = sugar; *p = dp;
 }
 
 void loadui(FILE *s,USINT *u)

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/bsave.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -57,7 +57,7 @@ void savenbp(FILE *s,NBP p);
 
 void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
   savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat,
-  savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  savenbp };
+  savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  savenbp, savedpm };
 #if defined(INTERVAL)
 void saveitv();
 void saveitvd();
@@ -345,6 +345,21 @@ void savedp(FILE *s,DP p)
   write_short(s,&OID(p)); write_int(s,&nv); write_int(s,&sugar); write_int(s,&n);
   for ( i = 0, t = m; i < n; i++, t = NEXT(t) ) {
     saveobj(s,(Obj)t->c);
+    write_int(s,&t->dl->td); write_intarray(s,&(t->dl->d[0]),nv);
+  }
+}
+
+void savedpm(FILE *s,DPM p)
+{
+  int nv,n,i,sugar;
+  DMM m,t;
+
+  nv = p->nv; m = p->body; sugar = p->sugar;
+  for ( n = 0, t = m; t; t = NEXT(t), n++ );  
+  write_short(s,&OID(p)); write_int(s,&nv); write_int(s,&sugar); write_int(s,&n);
+  for ( i = 0, t = m; i < n; i++, t = NEXT(t) ) {
+    saveobj(s,(Obj)t->c);
+    write_int(s,&t->pos);
     write_int(s,&t->dl->td); write_intarray(s,&(t->dl->d[0]),nv);
   }
 }

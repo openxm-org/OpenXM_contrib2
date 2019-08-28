@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.15 2019/04/20 06:04:18 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.16 2019/08/21 00:37:47 noro Exp $ */
 
 #include "nd.h"
 
@@ -2611,7 +2611,7 @@ ND_pairs nd_newpairs( NODE g, int t )
 
   dl = DL(nd_psh[t]);
   ts = SG(nd_psh[t]) - TD(dl);
-  if ( nd_module && nd_intersect && (MPOS(dl) > 1) ) return 0;
+  if ( nd_module && nd_intersect && (MPOS(dl) > nd_intersect) ) return 0;
   for ( r0 = 0, h = g; h; h = NEXT(h) ) {
     if ( nd_module && (MPOS(DL(nd_psh[(long)BDY(h)])) != MPOS(dl)) )
       continue;
@@ -3370,7 +3370,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     nd_demand = 0;
   if ( nd_module && nd_intersect ) {
     for ( j = nd_psn-1, x = 0; j >= 0; j-- )
-      if ( MPOS(DL(nd_psh[j])) > 1 ) { 
+      if ( MPOS(DL(nd_psh[j])) > nd_intersect ) { 
         MKNODE(xx,(pointer)((unsigned long)j),x); x = xx; 
       }
     conv_ilist(nd_demand,0,x,0);
@@ -3778,7 +3778,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
             Z cont;
             DPM zdpm;
 
-            if ( !m && !nd_gentrace ) dpm_ptozp((DPM)BDY(t),&cont,&zdpm);
+            if ( !nd_gentrace ) dpm_ptozp((DPM)BDY(t),&cont,&zdpm);
             else zdpm = (DPM)BDY(t);
             c = (pointer)dpmtondv(m,zdpm);
           } else {
@@ -3887,10 +3887,10 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     nd_setup_parameters(nd_nvar,0);
     for ( r = cand; r; r = NEXT(r) ) {
       if ( nd_module ) {
-        if ( retdp ) BDY(r) = ndvtodpm(0,BDY(t));
+        if ( retdp ) BDY(r) = ndvtodpm(0,BDY(r));
         else BDY(r) = ndvtopl(0,CO,vv,BDY(r),mrank);
-      } else if ( retdp ) BDY(r) = ndvtodp(0,BDY(t));
-      else BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(t));
+      } else if ( retdp ) BDY(r) = ndvtodp(0,BDY(r));
+      else BDY(r) = (pointer)ndvtop(0,CO,vv,BDY(r));
     }
     if ( nd_nalg )
         cand = postprocess_algcoef(av,alist,cand);
@@ -8491,6 +8491,8 @@ void parse_nd_option(NODE opt)
             nd_newelim = value?1:0;
     else if ( !strcmp(key,"intersect") )
             nd_intersect = value?1:0;
+    else if ( !strcmp(key,"syzgen") )
+            nd_intersect = ZTOS((Q)value);
     else if ( !strcmp(key,"lf") )
             nd_lf = value?1:0;
     else if ( !strcmp(key,"trace") ) {

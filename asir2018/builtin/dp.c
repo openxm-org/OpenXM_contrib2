@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.8 2019/03/18 10:30:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.9 2019/08/21 00:37:47 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -90,7 +90,7 @@ void Pdp_cont();
 void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient();
-void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
+void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -295,6 +295,8 @@ struct ftab dp_supp_tab[] = {
   {"dpm_hm",Pdpm_hm,1},
   {"dpm_ht",Pdpm_ht,1},
   {"dpm_hc",Pdpm_hc,1},
+  {"dpm_hp",Pdpm_hp,1},
+  {"dpm_rest",Pdpm_rest,1},
   {"dpm_shift",Pdpm_shift,2},
   {"dpm_split",Pdpm_split,2},
   {"dpm_sort",Pdpm_sort,1},
@@ -1332,20 +1334,20 @@ void Pdpm_nf_and_quotient(NODE arg,LIST *rp)
   if ( ac < 2 )
     error("dpm_nf_and_quotient : invalid arguments");
   else if ( ac == 2 ) {
-    asir_assert(ARG0(arg),O_DPM,"dpm_nf");
     asir_assert(ARG1(arg),O_VECT,"dpm_nf");
     b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
   } else if ( ac == 3 ) {
     asir_assert(ARG0(arg),O_LIST,"dpm_nf");
-    asir_assert(ARG1(arg),O_DPM,"dpm_nf");
     asir_assert(ARG2(arg),O_VECT,"dpm_nf");
     b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
   }
-  if ( !g ) {
-    *rp = 0; return;
-  }
   NEWVECT(quo); quo->len = ps->len;
-  quo->body = (pointer *)dpm_nf_and_quotient(b,g,ps,&nm,&dn);
+  if ( g ) {
+    quo->body = (pointer *)dpm_nf_and_quotient(b,g,ps,&nm,&dn);
+  } else {
+    quo->body = (pointer *)MALLOC(quo->len*sizeof(pointer));
+    nm = 0; dn = (P)ONE;
+  }
   n = mknode(3,nm,dn,quo);
   MKLIST(*rp,n);
 }
@@ -3867,7 +3869,7 @@ void set_schreyer_order(NODE n);
 
 LIST schreyer_obj;
 
-void Pdpm_set_schreyer(NODE arg,Z *rp)
+void Pdpm_set_schreyer(NODE arg,LIST *rp)
 {
   if ( argc(arg) ) {
     schreyer_obj = (LIST)ARG0(arg);
@@ -3892,6 +3894,27 @@ void Pdpm_ht(NODE arg,DPM *rp)
   dpm_ht(p,rp);
 }
 
+void dpm_rest(DPM p,DPM *r);
+
+void Pdpm_rest(NODE arg,DPM *rp)
+{
+  DPM p;
+
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_ht");
+  dpm_rest(p,rp);
+}
+
+
+void Pdpm_hp(NODE arg,Z *rp)
+{
+  DPM p;
+  int pos;
+
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_ht");
+  pos = BDY(p)->pos;
+  STOZ(pos,*rp);
+}
+
 void dpm_shift(DPM p,int s,DPM *rp);
 
 void Pdpm_shift(NODE arg,DPM *rp)
@@ -3911,7 +3934,8 @@ void Pdpm_sort(NODE arg,DPM *rp)
   DPM p;
   int s;
 
-  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_shift");
+  p = (DPM)ARG0(arg); 
+  if ( !p ) *rp = 0;
   dpm_sort(p,rp);
 }
 
@@ -3923,7 +3947,7 @@ void Pdpm_split(NODE arg,LIST *rp)
   int s;
   NODE nd;
 
-  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_split");
+  p = (DPM)ARG0(arg);
   s = ZTOS((Z)ARG1(arg));
   dpm_split(p,s,&up,&lo);
   nd = mknode(2,up,lo);
