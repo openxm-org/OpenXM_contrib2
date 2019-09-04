@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.3 2019/08/21 00:37:47 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -657,6 +657,32 @@ void dpm_sp(DPM p1,DPM p2,DPM *rp,DP *mul1,DP *mul2)
   }
 }
 
+DP dpm_sp_hm(DPM p1,DPM p2)
+{
+  int i,n,td;
+  int *w;
+  DL d1,d2,d;
+  MP m;
+  DP s1;
+
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl;
+  if ( BDY(p1)->pos != BDY(p2)->pos ) {
+    return 0;
+  }
+  w = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, td = 0; i < n; i++ ) {
+    w[i] = MAX(d1->d[i],d2->d[i]); td += MUL_WEIGHT(w[i],i);
+  }
+
+  NEWDL(d,n); d->td = td - d1->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = w[i] - d1->d[i];
+
+  NEWMP(m); m->dl = d; m->c = (Obj)ONE; NEXT(m) = 0;
+  MKDP(n,m,s1); s1->sugar = d->td;
+  return s1;
+}
+
 void _dp_sp_dup(DP p1,DP p2,DP *rp)
 {
   int i,n,td;
@@ -841,7 +867,7 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
   int i,n,pos;
   DL d1,d2,d;
   MP m;
-  DP s;
+  DP s,ms;
   DPM t,r,h,u,w;
   Z c,c1,c2,gn;
   P g,a;
@@ -873,7 +899,7 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
   }
   NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
   *multp = s;
-  mulobjdpm(CO,(Obj)s,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); subdpm(CO,w,u,&r);
+  chsgnd(s,&ms); mulobjdpm(CO,(Obj)ms,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); adddpm(CO,w,u,&r);
   mulobjdpm(CO,(Obj)c2,p0,&h);
   *head = h; *rest = r; *dnp = (P)c2;
 }
@@ -1354,6 +1380,8 @@ last:
   return q;
 }
 
+// struct oEGT egc;
+
 DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
 {
   DPM u,p,d,s,t;
@@ -1367,6 +1395,7 @@ DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
   int sugar,psugar,multiple;
   P nm,tnm1,dn,tdn,tdn1;
   Q cont;
+  struct oEGT eg0,eg1;
 
   dn = (P)ONE;
   if ( !g ) {
@@ -1395,10 +1424,12 @@ DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
         dpm_red(d,g,p,&t,&u,&tdn,&mult);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
+// get_eg(&eg0);
         for ( j = 0; j < len; j++ ) {
           muldc(CO,q[j],(Obj)tdn,&dmy); q[j] = dmy;
         }
         addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
+// get_eg(&eg1); add_eg(&egc,&eg0,&eg1);
         mulp(CO,dn,tdn,&tdn1); dn = tdn1;
         d = t;
         if ( !u ) goto last;
@@ -1546,8 +1577,9 @@ void dp_nf_z(NODE b,DP g,DP *ps,int full,int multiple,DP *rp)
   *rp = d;
 }
 
-void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
+void dpm_nf_z(NODE b,DPM g,VECT psv,int full,int multiple,DPM *rp)
 {
+  DPM *ps;
   DPM u,p,d,s,t;
   DP dmy1;
   P dmy;
@@ -1562,17 +1594,25 @@ void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp)
   if ( !g ) {
     *rp = 0; return;
   }
-  for ( n = 0, l = b; l; l = NEXT(l), n++ );
-  wb = (int *)ALLOCA(n*sizeof(int));
-  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = ZTOS((Q)BDY(l));
+  if ( b ) {
+    for ( n = 0, l = b; l; l = NEXT(l), n++ );
+    wb = (int *)ALLOCA(n*sizeof(int));
+    for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+      wb[i] = ZTOS((Q)BDY(l));
+    ps = (DPM *)BDY(psv);
+  } else {
+    n = psv->len;
+    wb = (int *)MALLOC(n*sizeof(int));
+    for ( i = 0; i < n; i++ ) wb[i] = i;
+    ps = (DPM *)BDY(psv);
+  }
 
   hmag = multiple*HMAG(g);
   sugar = g->sugar;
 
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
-      if ( dpm_redble(g,p = ps[wb[i]]) ) {
+      if ( (p=ps[wb[i]])!=0 && dpm_redble(g,p) ) {
         dpm_red(d,g,p,&t,&u,&dmy,&dmy1);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
@@ -1720,8 +1760,9 @@ void dp_nf_f(NODE b,DP g,DP *ps,int full,DP *rp)
   *rp = d;
 }
 
-void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp)
+void dpm_nf_f(NODE b,DPM g,VECT psv,int full,DPM *rp)
 {
+  DPM *ps;
   DPM u,p,d,s,t;
   NODE l;
   DMM m,mr;
@@ -1732,15 +1773,23 @@ void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp)
   if ( !g ) {
     *rp = 0; return;
   }
-  for ( n = 0, l = b; l; l = NEXT(l), n++ );
-  wb = (int *)ALLOCA(n*sizeof(int));
-  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
-    wb[i] = ZTOS((Q)BDY(l));
+  if ( b ) {
+    for ( n = 0, l = b; l; l = NEXT(l), n++ );
+    wb = (int *)ALLOCA(n*sizeof(int));
+    for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+      wb[i] = ZTOS((Q)BDY(l));
+    ps = (DPM *)BDY(psv);
+  } else {
+    n = psv->len;
+    wb = (int *)MALLOC(n*sizeof(int));
+    for ( i = 0; i < n; i++ ) wb[i] = i;
+    ps = (DPM *)BDY(psv);
+  }
 
   sugar = g->sugar;
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
-      if ( dpm_redble(g,p = ps[wb[i]]) ) {
+      if ( ( (p=ps[wb[i]]) != 0 ) && dpm_redble(g,p) ) {
         dpm_red_f(g,p,&u);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);

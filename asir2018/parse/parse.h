@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.3 2019/03/28 05:38:07 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.4 2019/08/21 00:37:47 noro Exp $
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -379,8 +379,8 @@ void dp_dtov(DP,VECT *);
 void dp_cont(DP,Z *);
 void dp_idiv(DP,Z,DP *);
 void dtodpm(DP d,int pos,DPM *dp);
-void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp);
-void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp);
+void dpm_nf_z(NODE b,DPM g,VECT ps,int full,int multiple,DPM *rp);
+void dpm_nf_f(NODE b,DPM g,VECT ps,int full,DPM *rp);
 void weyl_actd(VL vl,DP p1,DP p2,DP *pr);
 void dpm_sp(DPM p1,DPM p2,DPM *rp,DP *mul1,DP *mul2);
 void initdpm(struct order_spec *spec,int type);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.9 2019/08/21 00:37:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.10 2019/08/28 23:27:33 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -91,6 +91,7 @@ void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
+void Pdpm_schreyer_base();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -158,9 +159,9 @@ struct ftab dp_tab[] = {
   {"dp_nf_mod",Pdp_nf_mod,5},
   {"dp_nf_f",Pdp_nf_f,4},
   {"dpm_nf_and_quotient",Pdpm_nf_and_quotient,-3},
-  {"dpm_nf_f",Pdpm_nf_f,4},
-  {"dpm_weyl_nf_f",Pdpm_weyl_nf_f,4},
-  {"dpm_nf",Pdpm_nf,4},
+  {"dpm_nf_f",Pdpm_nf_f,-4},
+  {"dpm_weyl_nf_f",Pdpm_weyl_nf_f,-4},
+  {"dpm_nf",Pdpm_nf,-4},
   {"dpm_sp",Pdpm_sp,2},
   {"dpm_weyl_sp",Pdpm_weyl_sp,2},
 
@@ -216,7 +217,7 @@ struct ftab dp_tab[] = {
 
   /* normal form */
   {"dp_weyl_nf",Pdp_weyl_nf,4},
-  {"dpm_weyl_nf",Pdpm_weyl_nf,4},
+  {"dpm_weyl_nf",Pdpm_weyl_nf,-4},
   {"dp_weyl_nf_mod",Pdp_weyl_nf_mod,5},
   {"dp_weyl_nf_f",Pdp_weyl_nf_f,4},
 
@@ -324,6 +325,7 @@ struct ftab dp_supp_tab[] = {
   {"dp_compute_essential_df",Pdp_compute_essential_df,2},
   {"dp_mono_raddec",Pdp_mono_raddec,2},
   {"dp_mono_reduce",Pdp_mono_reduce,2},
+  {"dpm_schreyer_base",Pdpm_schreyer_base,1},
 
   {"dp_rref2",Pdp_rref2,2},
   {"sumi_updatepairs",Psumi_updatepairs,3},
@@ -1300,20 +1302,26 @@ void Pdp_weyl_nf(NODE arg,DP *rp)
 void Pdpm_nf(NODE arg,DPM *rp)
 {
   NODE b;
-  DPM *ps;
+  VECT ps;
   DPM g;
-  int full;
+  int ac,full;
 
   if ( !(g = (DPM)ARG1(arg)) ) {
     *rp = 0; return;
   }
   do_weyl = 0; dp_fcoeffs = 0;
-  asir_assert(ARG0(arg),O_LIST,"dpm_nf");
-  asir_assert(ARG1(arg),O_DPM,"dpm_nf");
-  asir_assert(ARG2(arg),O_VECT,"dpm_nf");
-  asir_assert(ARG3(arg),O_N,"dpm_nf");
-  b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
-  full = (Q)ARG3(arg) ? 1 : 0;
+  ac = argc(arg);
+  if ( ac < 3 )
+    error("dpm_nf: invalid arguments");
+  else if ( ac == 3 ) {
+    asir_assert(ARG1(arg),O_VECT,"dpm_nf");
+    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+  } else if ( ac == 4 ) {
+    asir_assert(ARG0(arg),O_LIST,"dpm_nf");
+    asir_assert(ARG2(arg),O_VECT,"dpm_nf");
+    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+    full = (Q)ARG3(arg) ? 1 : 0;
+  }
   dpm_nf_z(b,g,ps,full,DP_Multiple,rp);
 }
 
@@ -1334,11 +1342,11 @@ void Pdpm_nf_and_quotient(NODE arg,LIST *rp)
   if ( ac < 2 )
     error("dpm_nf_and_quotient : invalid arguments");
   else if ( ac == 2 ) {
-    asir_assert(ARG1(arg),O_VECT,"dpm_nf");
+    asir_assert(ARG1(arg),O_VECT,"dpm_nf_and_quotient");
     b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
   } else if ( ac == 3 ) {
-    asir_assert(ARG0(arg),O_LIST,"dpm_nf");
-    asir_assert(ARG2(arg),O_VECT,"dpm_nf");
+    asir_assert(ARG0(arg),O_LIST,"dpm_nf_and_quotient");
+    asir_assert(ARG2(arg),O_VECT,"dpm_nf_and_quotient");
     b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
   }
   NEWVECT(quo); quo->len = ps->len;
@@ -1355,20 +1363,26 @@ void Pdpm_nf_and_quotient(NODE arg,LIST *rp)
 void Pdpm_weyl_nf(NODE arg,DPM *rp)
 {
   NODE b;
-  DPM *ps;
+  VECT ps;
   DPM g;
-  int full;
+  int ac,full;
 
   if ( !(g = (DPM)ARG1(arg)) ) {
     *rp = 0; return;
   }
-  asir_assert(ARG0(arg),O_LIST,"dpm_weyl_nf");
-  asir_assert(ARG1(arg),O_DPM,"dpm_weyl_nf");
-  asir_assert(ARG2(arg),O_VECT,"dpm_weyl_nf");
-  asir_assert(ARG3(arg),O_N,"dpm_weyl_nf");
-  b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
-  full = (Q)ARG3(arg) ? 1 : 0;
-  do_weyl = 1;
+  do_weyl = 1; dp_fcoeffs = 0;
+  ac = argc(arg);
+  if ( ac < 3 )
+    error("dpm_weyl_nf: invalid arguments");
+  else if ( ac == 3 ) {
+    asir_assert(ARG1(arg),O_VECT,"dpm_nf");
+    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+  } else if ( ac == 4 ) {
+    asir_assert(ARG0(arg),O_LIST,"dpm_weyl_nf");
+    asir_assert(ARG2(arg),O_VECT,"dpm_weyl_nf");
+    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+    full = (Q)ARG3(arg) ? 1 : 0;
+  }
   dpm_nf_z(b,g,ps,full,DP_Multiple,rp);
   do_weyl = 0;
 }
@@ -1419,38 +1433,51 @@ void Pdp_weyl_nf_f(NODE arg,DP *rp)
 void Pdpm_nf_f(NODE arg,DPM *rp)
 {
   NODE b;
-  DPM *ps;
+  VECT ps;
   DPM g;
-  int full;
+  int ac,full;
 
   if ( !(g = (DPM)ARG1(arg)) ) {
     *rp = 0; return;
   }
-  asir_assert(ARG0(arg),O_LIST,"dpm_nf_f");
-  asir_assert(ARG1(arg),O_DPM,"dpm_nf_f");
-  asir_assert(ARG2(arg),O_VECT,"dpm_nf_f");
-  asir_assert(ARG3(arg),O_N,"dpm_nf_f");
-  b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
-  full = (Q)ARG3(arg) ? 1 : 0;
+  ac = argc(arg);
+  if ( ac < 3 )
+    error("dpm_nf_f: invalid arguments");
+  else if ( ac == 3 ) {
+    asir_assert(ARG1(arg),O_VECT,"dpm_nf_f");
+    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+  } else if ( ac == 4 ) {
+    asir_assert(ARG0(arg),O_LIST,"dpm_nf_f");
+    asir_assert(ARG2(arg),O_VECT,"dpm_nf_f");
+    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+    full = (Q)ARG3(arg) ? 1 : 0;
+  }
+  do_weyl = 0;
   dpm_nf_f(b,g,ps,full,rp);
 }
 
 void Pdpm_weyl_nf_f(NODE arg,DPM *rp)
 {
   NODE b;
-  DPM *ps;
+  VECT ps;
   DPM g;
-  int full;
+  int ac,full;
 
   if ( !(g = (DPM)ARG1(arg)) ) {
     *rp = 0; return;
   }
-  asir_assert(ARG0(arg),O_LIST,"dpm_weyl_nf_f");
-  asir_assert(ARG1(arg),O_DP,"dpm_weyl_nf_f");
-  asir_assert(ARG2(arg),O_VECT,"dpm_weyl_nf_f");
-  asir_assert(ARG3(arg),O_N,"dpm_weyl_nf_f");
-  b = BDY((LIST)ARG0(arg)); ps = (DPM *)BDY((VECT)ARG2(arg));
-  full = (Q)ARG3(arg) ? 1 : 0;
+  ac = argc(arg);
+  if ( ac < 3 )
+    error("dpm_weyl_nf_f: invalid arguments");
+  else if ( ac == 3 ) {
+    asir_assert(ARG1(arg),O_VECT,"dpm_weyl_nf_f");
+    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+  } else if ( ac == 4 ) {
+    asir_assert(ARG0(arg),O_LIST,"dpm_weyl_nf_f");
+    asir_assert(ARG2(arg),O_VECT,"dpm_weyl_nf_f");
+    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+    full = (Q)ARG3(arg) ? 1 : 0;
+  }
   do_weyl = 1;
   dpm_nf_f(b,g,ps,full,rp);
   do_weyl = 0;
@@ -1841,6 +1868,14 @@ void Pdpm_redble(NODE arg,Z *rp)
     *rp = ONE;
   else
     *rp = 0;
+}
+
+void dpm_schreyer_base(LIST g,LIST *s);
+
+void Pdpm_schreyer_base(NODE arg,LIST *rp)
+{
+  asir_assert(ARG0(arg),O_LIST,"dpm_schreyer_base");
+  dpm_schreyer_base((LIST)ARG0(arg),rp);
 }
 
 void Pdp_red_mod(NODE arg,LIST *rp)
@@ -3865,7 +3900,7 @@ void Pdpv_ord(NODE arg,Obj *rp)
 
 extern int dpm_ordtype;
 
-void set_schreyer_order(NODE n);
+void set_schreyer_order(LIST n);
 
 LIST schreyer_obj;
 
@@ -3873,7 +3908,7 @@ void Pdpm_set_schreyer(NODE arg,LIST *rp)
 {
   if ( argc(arg) ) {
     schreyer_obj = (LIST)ARG0(arg);
-    set_schreyer_order(schreyer_obj?BDY(schreyer_obj):0);
+    set_schreyer_order(schreyer_obj);
   }
   *rp = schreyer_obj;
 }

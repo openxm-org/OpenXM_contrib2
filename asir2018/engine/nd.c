@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.16 2019/08/21 00:37:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.17 2019/08/28 23:27:34 noro Exp $ */
 
 #include "nd.h"
 
@@ -5512,6 +5512,28 @@ void dpm_sort(DPM p,DPM *rp)
   MKDPM(n,t,d);
   SG(d) = SG(p);
   *rp = d;
+}
+
+int dpm_comp(DPM *a,DPM *b)
+{
+  return compdpm(CO,*a,*b);
+}
+
+NODE dpm_sort_list(NODE l)
+{
+  int i,len;
+  NODE t,t1;
+  DPM *a;
+  
+  len = length(l);
+  a = (DPM *)MALLOC(len*sizeof(DPM));
+  for ( t = l, i = 0; i < len; i++, t = NEXT(t) ) a[i] = (DPM)BDY(t);
+  qsort(a,len,sizeof(DPM),(int (*)(const void *,const void *))dpm_comp);
+  t = 0;
+  for ( i = len-1; i >= 0; i-- ) {
+    MKNODE(t1,(pointer)a[i],t); t = t1;
+  }
+  return t;
 }
 
 NDV dpmtondv(int mod,DPM p)
