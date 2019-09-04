@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.17 2019/08/28 23:27:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.18 2019/09/04 01:12:02 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,6 +8,8 @@ struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
 int diag_period = 6;
 int weight_check = 1;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
+/* for schreyer order */
+int (*ndl_base_compare_function)(UINT *a1,UINT *a2);
 int nd_dcomp;
 int nd_rref2;
 NM _nm_free_list;
@@ -713,16 +715,16 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 
     if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
-    if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
-            if ( TD(d1) > TD(d2) ) return 1;
-            else if ( TD(d1) < TD(d2) ) return -1;
-            if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
-            if ( MPOS(d1) < MPOS(d2) ) return 1;
-            else if ( MPOS(d1) > MPOS(d2) ) return -1;
-            return 0;
-    }
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
+      if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
+         if ( TD(d1) > TD(d2) ) return 1;
+         else if ( TD(d1) < TD(d2) ) return -1;
+         if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
+         if ( MPOS(d1) < MPOS(d2) ) return 1;
+         else if ( MPOS(d1) > MPOS(d2) ) return -1;
+         return 0;
+      }
+      if ( MPOS(d1) < MPOS(d2) ) return 1;
+      else if ( MPOS(d1) > MPOS(d2) ) return -1;
     }
     if ( TD(d1) > TD(d2) ) return 1;
     else if ( TD(d1) < TD(d2) ) return -1;

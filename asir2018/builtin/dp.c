@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.10 2019/08/28 23:27:33 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.11 2019/09/04 01:12:02 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -91,7 +91,7 @@ void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
-void Pdpm_schreyer_base();
+void Pdpm_schreyer_base(),Pdpm_simplify_syz();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -326,6 +326,7 @@ struct ftab dp_supp_tab[] = {
   {"dp_mono_raddec",Pdp_mono_raddec,2},
   {"dp_mono_reduce",Pdp_mono_reduce,2},
   {"dpm_schreyer_base",Pdpm_schreyer_base,1},
+  {"dpm_simplify_syz",Pdpm_simplify_syz,2},
 
   {"dp_rref2",Pdp_rref2,2},
   {"sumi_updatepairs",Psumi_updatepairs,3},
@@ -1877,6 +1878,21 @@ void Pdpm_schreyer_base(NODE arg,LIST *rp)
   asir_assert(ARG0(arg),O_LIST,"dpm_schreyer_base");
   dpm_schreyer_base((LIST)ARG0(arg),rp);
 }
+
+void dpm_simplify_syz(LIST m,LIST s,LIST *m1,LIST *s1);
+
+void Pdpm_simplify_syz(NODE arg,LIST *rp)
+{
+  LIST s1,m1;
+  NODE t;
+
+  asir_assert(ARG0(arg),O_LIST,"dpm_simplify_syz");
+  asir_assert(ARG1(arg),O_LIST,"dpm_simplify_syz");
+  dpm_simplify_syz((LIST)ARG0(arg),(LIST)ARG1(arg),&s1,&m1);
+  t = mknode(2,s1,m1);
+  MKLIST(*rp,t);
+}
+
 
 void Pdp_red_mod(NODE arg,LIST *rp)
 {
