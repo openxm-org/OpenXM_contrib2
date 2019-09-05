@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.11 2019/09/04 01:12:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.12 2019/09/04 05:32:10 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -4006,15 +4006,25 @@ void Pdpm_split(NODE arg,LIST *rp)
 }
 
 
-void Pdpm_hc(NODE arg,Obj *rp)
+void Pdpm_hc(NODE arg,DP *rp)
 {
+  DPM p;
+  DP d;
+  MP m;
+
   asir_assert(ARG0(arg),O_DPM,"dpm_hc");
   if ( !ARG0(arg) )
     *rp = 0;
-  else
-    *rp = BDY((DPM)ARG0(arg))->c;
+  else {
+    p = (DPM)ARG0(arg);
+    NEWMP(m);
+    m->dl = BDY(p)->dl;
+    m->c = BDY(p)->c;
+    NEXT(m) = 0;
+    MKDP(NV(p),m,d); d->sugar = p->sugar;
+    *rp = d;
+  }
 }
-
 
 void Pdpv_ht(NODE arg,LIST *rp)
 {

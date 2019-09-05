@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.4 2019/09/04 01:12:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.5 2019/09/04 05:32:10 noro Exp $
 */
 #include "ca.h"
 
@@ -3134,13 +3134,13 @@ DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
       NEXTMP(d0,d); d->dl = m->dl; arf_chsgn(m->c,&d->c);
     }
   if ( d0 ) {
-    NEXT(d) = 0; MKDP(NV(a),d,f);
+    NEXT(d) = 0; MKDP(NV(a),d0,f);
+    mulcdpm(CO,c,a,&a1);
+    mulobjdpm(CO,(Obj)f,p,&p1); 
+    adddpm(CO,a1,p1,&r);
+    return r;
   } else
-    f = 0;
-  mulcdpm(CO,c,a,&a1);
-  mulobjdpm(CO,(Obj)f,p,&p1); 
-  adddpm(CO,a1,p1,&r);
-  return r;
+    return a;
 }
 
 // <<...:i>> -> <<...:tab[i]>>
@@ -3153,7 +3153,7 @@ DPM dpm_compress(DPM p,int *tab)
   else {
     for ( m = BDY(p), mr0 = 0; m; m = NEXT(m) ) {
       NEXTDMM(mr0,mr);
-      mr->dl = m->dl; mr->c = m->c; mr->pos = tab[mr->pos];
+      mr->dl = m->dl; mr->c = m->c; mr->pos = tab[m->pos];
       if ( mr->pos <= 0 )
         error("dpm_compress : invalid position");
     }
@@ -3164,7 +3164,7 @@ DPM dpm_compress(DPM p,int *tab)
 }
 
 // input : s, s = syz(m) output simplified s, m
-void dpm_simplify_syz(LIST m,LIST s,LIST *m1,LIST *s1)
+void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1)
 {
   int lm,ls,i,j,pos;
   DPM *am,*as;
@@ -3179,16 +3179,18 @@ void dpm_simplify_syz(LIST m,LIST s,LIST *m1,LIST *s1)
   ls = length(BDY(s));
   as = (DPM *)MALLOC(ls*sizeof(DPM));
   for ( i = 1, t = BDY(m); i <= lm; i++, t = NEXT(t) ) am[i] = (DPM)BDY(t);
-  for ( i = 0, t = BDY(m); i < ls; i++, t = NEXT(t) ) as[i] = (DPM)BDY(t);
+  for ( i = 0, t = BDY(s); i < ls; i++, t = NEXT(t) ) as[i] = (DPM)BDY(t);
 
   for ( i = 0; i < ls; i++ ) {
     p = as[i];
+    if ( p == 0 ) continue;
     for ( d = BDY(p); d; d = NEXT(d) ) if ( d->dl->td == 0 ) break;
     if ( d ) {
       c = d->c; pos = d->pos;
       for ( j = 0; j < ls; j++ )
-        if ( j != i )
+        if ( j != i ) {
           as[j] = dpm_eliminate_term(as[j],p,c,pos);
+        }
       // remove m[i]
       am[pos] = 0;
       as[i] = 0;
