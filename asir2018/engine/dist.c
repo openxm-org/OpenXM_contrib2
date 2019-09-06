@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.5 2019/09/04 05:32:10 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.6 2019/09/05 08:49:43 noro Exp $
 */
 #include "ca.h"
 
@@ -2635,12 +2635,13 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 /* DPM functions */
 
 DMMstack dmm_stack;
+extern LIST schreyer_obj;
 
 void push_schreyer_order(LIST data)
 {
   DMMstack t;
   int len,i;
-  NODE in;
+  NODE in,t1;
 
   /* data = [DPM,...,DPM] */
   in = BDY(data);
@@ -2655,8 +2656,9 @@ void push_schreyer_order(LIST data)
   t->next = dmm_stack;
   dmm_stack = t; 
   dpm_ordtype = 2;
+  MKNODE(t1,data,schreyer_obj?BDY(schreyer_obj):0);
+  MKLIST(schreyer_obj,t1);
 }
-
 
 // data=[Ink,...,In0]
 // Ini = a list of module monomials
