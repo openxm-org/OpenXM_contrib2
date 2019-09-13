@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.3 2019/08/21 00:37:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.4 2019/09/04 01:12:02 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -904,6 +904,46 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
   *head = h; *rest = r; *dnp = (P)c2;
 }
 
+void dpm_red2(DPM p1,DPM p2,DPM *rest,P *dnp,DP *multp)
+{
+  int i,n,pos;
+  DL d1,d2,d;
+  MP m;
+  DP s,ms;
+  DPM t,r,h,u,w;
+  Z c,c1,c2,gn;
+  P g,a;
+  P p[2];
+
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(p2)->dl; pos = BDY(p1)->pos;
+  if ( pos != BDY(p2)->pos )
+    error("dpm_red : cannot happen");
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (Z)BDY(p1)->c; c2 = (Z)BDY(p2)->c;
+  if ( dp_fcoeffs == N_GFS ) {
+    p[0] = (P)c1; p[1] = (P)c2;
+    gcdsf(CO,p,2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
+  } else if ( dp_fcoeffs ) {
+    /* do nothing */
+  } else if ( INT(c1) && INT(c2) ) {
+    gcdz(c1,c2,&gn);
+    if ( !UNIQ(gn) ) {
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c); c2 = c;
+    }
+  } else {
+    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
+    add_denomlist(g);
+  }
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  chsgnd(s,&ms); mulobjdpm(CO,(Obj)ms,p2,&u); mulobjdpm(CO,(Obj)c2,p1,&w); adddpm(CO,w,u,&r);
+  *rest = r; *dnp = (P)c2;
+}
 
 /*
  * m-reduction by a marked poly
@@ -1380,17 +1420,41 @@ last:
   return q;
 }
 
-// struct oEGT egc;
+struct oEGT egred;
+
+void mulcmp(Obj c,MP m);
+void mulcdmm(Obj c,DMM m);
+
+DP appendd(DP d,DP m)
+{
+  MP t;
+
+  if ( !d ) return m;
+  for ( t = BDY(d); NEXT(t); t = NEXT(t) );
+  NEXT(t) = BDY(m);
+  return d;
+}
+
+DPM appenddpm(DPM d,DPM m)
+{
+  DMM t;
+
+  if ( !d ) return m;
+  for ( t = BDY(d); NEXT(t); t = NEXT(t) );
+  NEXT(t) = BDY(m);
+  return d;
+}
 
 DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
 {
-  DPM u,p,d,s,t;
-  DP dmy,mult;
+  DPM u,p,s,t,d;
+  DP dmy,mult,zzz;
   DPM *ps;
   DP *q;
   NODE l;
   DMM m,mr;
-  int i,n,j,len;
+  MP mp;
+  int i,n,j,len,nv;
   int *wb;
   int sugar,psugar,multiple;
   P nm,tnm1,dn,tdn,tdn1;
@@ -1401,6 +1465,7 @@ DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
   if ( !g ) {
     *rp = 0; *dnp = dn; return 0;
   }
+  nv = NV(g);
   ps = (DPM *)BDY(psv);
   len = psv->len;
   if ( b ) {
@@ -1421,17 +1486,17 @@ DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
       if ( dpm_redble(g,p = ps[wb[i]]) ) {
-        dpm_red(d,g,p,&t,&u,&tdn,&mult);
+// get_eg(&eg0);
+        dpm_red2(g,p,&u,&tdn,&mult);
+// get_eg(&eg1); add_eg(&egred,&eg0,&eg1);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
-// get_eg(&eg0);
         for ( j = 0; j < len; j++ ) {
-          muldc(CO,q[j],(Obj)tdn,&dmy); q[j] = dmy;
+          if ( q[j] ) { mulcmp((Obj)tdn,BDY(q[j])); }
         }
-        addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
-// get_eg(&eg1); add_eg(&egc,&eg0,&eg1);
+        q[wb[i]] = appendd(q[wb[i]],mult);
         mulp(CO,dn,tdn,&tdn1); dn = tdn1;
-        d = t;
+        if ( d ) mulcdmm((Obj)tdn,BDY(d));
         if ( !u ) goto last;
         break;
       }
@@ -1441,7 +1506,7 @@ DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
     } else {
       m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
       NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
-      adddpm(CO,d,t,&s); d = s;
+      d = appenddpm(d,t);
       dpm_rest(g,&t); g = t;
     }
   }
@@ -1613,15 +1678,15 @@ void dpm_nf_z(NODE b,DPM g,VECT psv,int full,int multiple,DPM *rp)
   for ( d = 0; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
       if ( (p=ps[wb[i]])!=0 && dpm_redble(g,p) ) {
-        dpm_red(d,g,p,&t,&u,&dmy,&dmy1);
+        dpm_red2(g,p,&u,&dmy,&dmy1);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
+        if ( d ) mulcdmm((Obj)dmy,BDY(d));
         if ( !u ) {
           if ( d )
             d->sugar = sugar;
           *rp = d; return;
         }
-        d = t;
         break;
       }
     }
@@ -1647,7 +1712,7 @@ void dpm_nf_z(NODE b,DPM g,VECT psv,int full,int multiple,DPM *rp)
     } else {
       m = BDY(g); NEWDMM(mr); mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
       NEXT(mr) = 0; MKDPM(g->nv,mr,t); t->sugar = mr->dl->td;
-      adddpm(CO,d,t,&s); d = s;
+      d = appenddpm(d,t);
       dpm_rest(g,&t); g = t;
     }
   }
