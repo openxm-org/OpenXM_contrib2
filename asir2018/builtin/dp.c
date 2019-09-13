@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.12 2019/09/04 05:32:10 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.13 2019/09/05 08:49:43 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -277,7 +277,7 @@ struct ftab dp_supp_tab[] = {
 
   {"dpm_ltod",Pdpm_ltod,2},
   {"dpm_dptodpm",Pdpm_dptodpm,2},
-  {"dpm_dtol",Pdpm_dtol,3},
+  {"dpm_dtol",Pdpm_dtol,2},
 
   /* criteria */
   {"dp_cri1",Pdp_cri1,2},
@@ -1124,6 +1124,10 @@ void Pdpm_dtol(NODE arg,LIST *rp)
   Obj s;
 
   a = (DPM)ARG0(arg);
+  if ( !a ) {
+   MKLIST(*rp,0);
+   return;
+  }
   for ( vl = 0, nd = BDY((LIST)ARG1(arg)), nv = 0; nd; nd = NEXT(nd), nv++ ) {
     if ( !vl ) {
       NEWVL(vl); tvl = vl;
@@ -1134,7 +1138,8 @@ void Pdpm_dtol(NODE arg,LIST *rp)
   }
   if ( vl )
     NEXT(tvl) = 0;
-   n = ZTOS((Q)ARG2(arg));
+  for ( t = BDY(a), n = 0; t; t = NEXT(t) )
+    if ( t->pos > n ) n = t->pos;
    w = (MP *)CALLOC(n,sizeof(MP));
    for ( t = BDY(a), len = 0; t; t = NEXT(t) ) len++;
    wa = (DMM *)MALLOC(len*sizeof(DMM));
@@ -1142,8 +1147,8 @@ void Pdpm_dtol(NODE arg,LIST *rp)
    for ( i = len-1; i >= 0; i-- ) {
      NEWMP(m); m->dl = wa[i]->dl; C(m) = C(wa[i]);
      pos = wa[i]->pos;
-     NEXT(m) = w[pos];
-     w[pos] = m;
+     NEXT(m) = w[pos-1];
+     w[pos-1] = m;
    }
   nd = 0;
   for ( i = n-1; i >= 0; i-- ) {
