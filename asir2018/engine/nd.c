@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.18 2019/09/04 01:12:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.19 2019/09/04 05:32:10 noro Exp $ */
 
 #include "nd.h"
 
@@ -478,8 +478,11 @@ int ndl_weight(UINT *d)
             for ( j = 0; j < nd_epw; j++, u>>=nd_bpe )
                 t += (u&nd_mask0); 
         }
-    if ( nd_module && current_module_weight_vector && MPOS(d) )
-        t += current_module_weight_vector[MPOS(d)];
+    if ( nd_module && nd_module_rank && MPOS(d) )
+        t += nd_module_weight[MPOS(d)-1];
+    for ( i = nd_exporigin; i < nd_wpd; i++ )
+      if ( d[i] && !t ) 
+        printf("afo\n");
     return t;
 }
 
@@ -494,8 +497,8 @@ int ndl_weight2(UINT *d)
         u = GET_EXP(d,i);
         t += nd_sugarweight[i]*u;
     }
-    if ( nd_module && current_module_weight_vector && MPOS(d) )
-        t += current_module_weight_vector[MPOS(d)];
+    if ( nd_module && nd_module_rank && MPOS(d) )
+        t += nd_module_weight[MPOS(d)-1];
     return t;
 }
 
@@ -713,7 +716,7 @@ int ndl_module_grlex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
+//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
       if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
          if ( TD(d1) > TD(d2) ) return 1;
@@ -740,7 +743,7 @@ int ndl_module_glex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
+//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -759,7 +762,7 @@ int ndl_module_lex_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
+//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -776,7 +779,7 @@ int ndl_module_block_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
+//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -793,7 +796,7 @@ int ndl_module_matrix_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
+//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) < MPOS(d2) ) return 1;
         else if ( MPOS(d1) > MPOS(d2) ) return -1;
@@ -810,7 +813,7 @@ int ndl_module_composite_compare(UINT *d1,UINT *d2)
 {
     int i,c;
 
-    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
+//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
     if ( nd_ispot ) {
         if ( MPOS(d1) > MPOS(d2) ) return 1;
         else if ( MPOS(d1) < MPOS(d2) ) return -1;
@@ -5538,6 +5541,11 @@ NODE dpm_sort_list(NODE l)
   return t;
 }
 
+int nmv_comp(NMV a,NMV b)
+{
+  return -DL_COMPARE(a->dl,b->dl);
+}
+
 NDV dpmtondv(int mod,DPM p)
 {
   NDV d;
@@ -5562,8 +5570,10 @@ NDV dpmtondv(int mod,DPM p)
   for ( i = 0; i < len; i++, NMV_ADV(m) ) {
     dltondl(n,a[i]->dl,DL(m));
     MPOS(DL(m)) = a[i]->pos;
+    TD(DL(m)) = ndl_weight(DL(m));
     CZ(m) = (Z)a[i]->c;
   }
+  qsort(m0,len,nmv_adv,(int (*)(const void *,const void *))nmv_comp);
   MKNDV(NV(p),m0,len,d);
   SG(d) = SG(p);
   return d;
@@ -7865,7 +7875,9 @@ int ndv_ishomo(NDV p)
     h = TD(DL(m));
     NMV_ADV(m);
     for ( len--; len; len--, NMV_ADV(m) )
-        if ( TD(DL(m)) != h ) return 0;
+        if ( TD(DL(m)) != h ) {
+          return 0;
+        }
     return 1;
 }
 
