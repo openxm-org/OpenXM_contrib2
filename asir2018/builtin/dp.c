@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.13 2019/09/05 08:49:43 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.14 2019/09/13 09:02:49 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -91,7 +91,7 @@ void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
-void Pdpm_schreyer_base(),Pdpm_simplify_syz();
+void Pdpm_schreyer_base(),Pdpm_simplify_syz(),Pdpm_td();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -311,6 +311,7 @@ struct ftab dp_supp_tab[] = {
   {"dp_mag",Pdp_mag,1},
   {"dp_sugar",Pdp_sugar,1},
   {"dp_set_sugar",Pdp_set_sugar,2},
+  {"dpm_td",Pdpm_td,1},
 
   /* misc */
   {"dp_mbase",Pdp_mbase,1},
@@ -929,7 +930,7 @@ void Pdp_ord(NODE arg,Obj *rp)
     else if ( !create_order_spec(0,(Obj)ARG0(arg),&spec) )
       error("dp_ord : invalid order specification");
     initd(spec); *rp = spec->obj;
-    if ( spec->id >= 256 ) dpm_ordtype = spec->ispot; 
+    if ( spec->id >= 256 ) dpm_ordtype = spec->module_ordtype; 
   }
 }
 
@@ -2176,6 +2177,17 @@ void Pdp_td(NODE arg,Z *rp)
   DP p;
 
   p = (DP)ARG0(arg); asir_assert(p,O_DP,"dp_td");
+  if ( !p )
+    *rp = 0;
+  else
+    STOZ(BDY(p)->dl->td,*rp);
+}
+
+void Pdpm_td(NODE arg,Z *rp)
+{
+  DPM p;
+
+  p = (DPM)ARG0(arg); asir_assert(p,O_DPM,"dpm_td");
   if ( !p )
     *rp = 0;
   else
@@ -3920,18 +3932,16 @@ void Pdpv_ord(NODE arg,Obj *rp)
 }
 
 extern int dpm_ordtype;
+extern DMMstack dmm_stack;
 
 void set_schreyer_order(LIST n);
-
-LIST schreyer_obj;
 
 void Pdpm_set_schreyer(NODE arg,LIST *rp)
 {
   if ( argc(arg) ) {
-    schreyer_obj = (LIST)ARG0(arg);
-    set_schreyer_order(schreyer_obj);
+    set_schreyer_order((LIST)ARG0(arg));
   }
-  *rp = schreyer_obj;
+  *rp = dmm_stack->obj;
 }
 
 void Pdpm_hm(NODE arg,DPM *rp)

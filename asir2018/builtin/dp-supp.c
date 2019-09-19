@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.4 2019/09/04 01:12:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.5 2019/09/13 02:04:42 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -2175,51 +2175,84 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
     spec->ord.simple = ZTOS((Q)obj);
     return 1;
   } else if ( OID(obj) == O_LIST ) {
-    /* module order; obj = [0|1,w,ord] or [0|1,ord] */
+    /* module order */
     node = BDY((LIST)obj); 
     if ( !BDY(node) || NUM(BDY(node)) ) {
       switch ( length(node) ) {
-      case 2:
+      case 2: /* [n,ord] */
         create_order_spec(0,(Obj)BDY(NEXT(node)),&spec);
         spec->id += 256; spec->obj = obj;
         spec->top_weight = 0;
         spec->module_rank = 0;
         spec->module_top_weight = 0;
-        spec->ispot = (BDY(node)!=0);
-        if ( spec->ispot ) {
-          n = ZTOS((Q)BDY(node));
-          if ( n < 0 )
-            spec->pot_nelim = -n;
-          else
+        spec->module_ordtype = ZTOS((Z)BDY(node));
+        if ( spec->module_ordtype < 0  ) {
+            spec->pot_nelim = -spec->module_ordtype;
+            spec->module_ordtype = 1;
+        } else
             spec->pot_nelim = 0;
+        break;
+
+      case 3: /* [n,[wv,wm],ord] */
+        spec->module_ordtype = ZTOS((Z)BDY(node));
+        if ( spec->module_ordtype < 0  ) {
+            spec->pot_nelim = -spec->module_ordtype;
+            spec->module_ordtype = 1;
+        } else
+            spec->pot_nelim = 0;
+
+        if ( spec->module_ordtype == 3 ) { /* schreyer order */
+          Obj baseobj;
+          struct order_spec *basespec;
+          int len;
+          NODE in;
+          LIST *la;
+          DMMstack stack;
+          DMMstack push_schreyer_order(LIST l,DMMstack s);
+
+          spec->id = 300; spec->obj = obj;
+          node = NEXT(node);
+          if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
+            error("create_order_spec : [mlist1,mlist,...] must be specified for defining a schreyer order");
+          stack = 0;
+          in = BDY((LIST)BDY(node));
+          len = length(in);
+          la = (LIST *)MALLOC(len*sizeof(LIST));
+          for ( i = 0; i < len; i++, in = NEXT(in) ) la[i] = (LIST)(BDY(in));
+          for ( i = len-1; i >= 0; i-- ) stack = push_schreyer_order(la[i],stack);
+          spec->dmmstack = stack;
+
+          node = NEXT(node);
+          baseobj = (Obj)BDY(node);
+          create_order_spec(0,baseobj,&basespec);
+          basespec->obj = baseobj;
+          spec->base = basespec;
+        } else {  /* weighted order */
+          create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
+          spec->id = 300; spec->obj = obj;
+          node = NEXT(node);
+          if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
+            error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+          wpair = BDY((LIST)BDY(node));
+          if ( length(wpair) != 2 )
+            error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+  
+          wp = BDY(wpair);
+          wm = BDY(NEXT(wpair));
+          if ( !wp || OID(wp) != O_LIST || !wm || OID(wm) != O_LIST )
+            error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
+          spec->nv = length(BDY((LIST)wp)); 
+          spec->top_weight = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));
+          for ( i = 0, t = BDY((LIST)wp); i < spec->nv; t = NEXT(t), i++ )
+            spec->top_weight[i] = ZTOS((Q)BDY(t));
+  
+          spec->module_rank = length(BDY((LIST)wm));
+          spec->module_top_weight = (int *)MALLOC_ATOMIC(spec->module_rank*sizeof(int));
+          for ( i = 0, t = BDY((LIST)wm); i < spec->module_rank; t = NEXT(t), i++ )
+            spec->module_top_weight[i] = ZTOS((Q)BDY(t));
         }
         break;
 
-      case 3:
-        create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
-        spec->id += 256; spec->obj = obj;
-        spec->ispot = (BDY(node)!=0);
-        node = NEXT(node);
-        if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
-          error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
-        wpair = BDY((LIST)BDY(node));
-        if ( length(wpair) != 2 )
-          error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
-
-        wp = BDY(wpair);
-        wm = BDY(NEXT(wpair));
-        if ( !wp || OID(wp) != O_LIST || !wm || OID(wm) != O_LIST )
-          error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
-        spec->nv = length(BDY((LIST)wp)); 
-        spec->top_weight = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));
-        for ( i = 0, t = BDY((LIST)wp); i < spec->nv; t = NEXT(t), i++ )
-          spec->top_weight[i] = ZTOS((Q)BDY(t));
-
-        spec->module_rank = length(BDY((LIST)wm));
-        spec->module_top_weight = (int *)MALLOC_ATOMIC(spec->module_rank*sizeof(int));
-        for ( i = 0, t = BDY((LIST)wm); i < spec->module_rank; t = NEXT(t), i++ )
-          spec->module_top_weight[i] = ZTOS((Q)BDY(t));
-        break;
       default:
         error("create_order_spec : invalid arguments for module order");
       }
@@ -2689,11 +2722,12 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
   struct weight_or_block *owb,*nwb;
 
   *newp = new = (struct order_spec *)MALLOC(sizeof(struct order_spec));
+  bcopy((char *)old,(char *)new,sizeof(struct order_spec));
   switch ( old->id ) {
     case 0:
       switch ( old->ord.simple ) {
         case 0:
-          new->id = 0; new->ord.simple = 0; break;
+          break;
         case 1:
           l = (struct order_pair *)
             MALLOC_ATOMIC(2*sizeof(struct order_pair));
@@ -2704,12 +2738,12 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
           new->ord.block.length = 2; new->nv = n+1;
           break;
         case 2:
-          new->id = 0; new->ord.simple = 1; break;
+          new->ord.simple = 1; break;
         case 3: case 4: case 5:
-          new->id = 0; new->ord.simple = old->ord.simple+3;
+          new->ord.simple = old->ord.simple+3;
           dp_nelim = n-1; break;
         case 6: case 7: case 8: case 9:
-          new->id = 0; new->ord.simple = old->ord.simple; break;
+          break;
         default:
           error("homogenize_order : invalid input");
       }
@@ -2720,10 +2754,9 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
         MALLOC_ATOMIC((length+1)*sizeof(struct order_pair));
       bcopy((char *)old->ord.block.order_pair,(char *)l,length*sizeof(struct order_pair));
       l[length].order = 2; l[length].length = 1;
-      new->id = old->id; new->nv = n+1;
+      new->nv = n+1;
       new->ord.block.order_pair = l;
       new->ord.block.length = length+1;
-      new->ispot = old->ispot;
       break;
     case 2: case 258:
       nv = old->nv; row = old->ord.matrix.row;
@@ -2735,9 +2768,8 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
           newm[i+1][j] = oldm[i][j];
         newm[i+1][j] = 0;
       }
-      new->id = old->id; new->nv = nv+1;
+      new->nv = nv+1;
       new->ord.matrix.row = row+1; new->ord.matrix.matrix = newm;
-      new->ispot = old->ispot;
       break;
     case 3: case 259:
       onv = old->nv;
@@ -2773,17 +2805,15 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
         (struct sparse_weight *)MALLOC(sizeof(struct sparse_weight));
       nwb[i].body.sparse_weight[0].pos = onv;
       nwb[i].body.sparse_weight[0].value = 1;
-      new->id = old->id;
       new->nv = nnv;
       new->ord.composite.length = nlen;
       new->ord.composite.w_or_b = nwb;
-      new->ispot = old->ispot;
       print_composite_order_spec(new);
       break;
     case 256: /* simple module order */
       switch ( old->ord.simple ) {
         case 0:
-          new->id = 256; new->ord.simple = 0; break;
+          break;
         case 1:
           l = (struct order_pair *)
             MALLOC_ATOMIC(2*sizeof(struct order_pair));
@@ -2794,11 +2824,10 @@ void homogenize_order(struct order_spec *old,int n,struct order_spec **newp)
           new->ord.block.length = 2; new->nv = n+1;
           break;
         case 2:
-          new->id = 256; new->ord.simple = 1; break;
+          new->ord.simple = 1; break;
         default:
           error("homogenize_order : invalid input");
       }
-      new->ispot = old->ispot;
       break;
     default:
       error("homogenize_order : invalid input");

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.9 2019/08/21 00:37:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.10 2019/08/28 23:27:34 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -538,6 +538,7 @@ typedef struct oDMM {
 typedef struct oDMMstack {
   int rank,ordtype;
   DMM *in;
+  LIST obj;
   struct oDMMstack *next;
 } *DMMstack;
 
@@ -678,11 +679,13 @@ struct order_spec {
   int id;
   Obj obj;
   int nv;
-  int ispot; /* 1 means Position over Term (Pos then Term) */
+  int module_ordtype; /* 0=TOP, 1=POT, 2=wPOT, 3=Schreyer */
   int pot_nelim; /* size of positions for pot-elimination order */
   int *top_weight;
   int module_rank;
   int *module_top_weight;
+  struct order_spec *base; /* for schreyer order */
+  DMMstack dmmstack;
   union {
     int simple;
     struct {

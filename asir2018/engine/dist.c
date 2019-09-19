@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.7 2019/09/06 00:11:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.8 2019/09/13 02:04:42 noro Exp $
 */
 #include "ca.h"
 
@@ -333,7 +333,7 @@ void nodetod(NODE node,DP *dp)
 void nodetodpm(NODE node,Obj pos,DPM *dp)
 {
   NODE t;
-  int len,i,td;
+  int len,i,td,p;
   Q e;
   DL d;
   DMM m;
@@ -352,7 +352,13 @@ void nodetodpm(NODE node,Obj pos,DPM *dp)
     }
   }
   d->td = td;
-  NEWDMM(m); m->dl = d; m->pos = ZTOS((Q)pos); C(m) = (Obj)ONE; NEXT(m) = 0;
+  p = ZTOS((Q)pos);
+  if ( dp_current_spec->module_rank ) {
+    if ( p > dp_current_spec->module_rank )
+      error("nodetodpm : inconsistent order spec");
+    d->td += dp_current_spec->module_top_weight[p-1];
+  }
+  NEWDMM(m); m->dl = d; m->pos = p; C(m) = (Obj)ONE; NEXT(m) = 0;
   MKDPM(len,m,u); u->sugar = td; *dp = u;
 }
 
@@ -360,12 +366,20 @@ void dtodpm(DP d,int pos,DPM *dp)
 {
   DMM mr0,mr;
   MP m;
+  int shift;
 
   if ( !d ) *dp = 0;
   else {
+    shift = 0;
+    if ( dp_current_spec->module_rank ) {
+      if ( pos > dp_current_spec->module_rank )
+        error("nodetodpm : inconsistent order spec");
+      shift = dp_current_spec->module_top_weight[pos-1];
+    } 
     for ( m = BDY(d), mr0 = 0; m; m = NEXT(m) ) {
       NEXTDMM(mr0,mr);
       mr->dl = m->dl;
+      mr->dl->td += shift;
       mr->pos = pos;
       C(mr) = C(m);
     }
@@ -2635,29 +2649,34 @@ NBP harmonic_mul_nbm(NBM a,NBM b)
 /* DPM functions */
 
 DMMstack dmm_stack;
-extern LIST schreyer_obj;
+int dpm_base_ordtype;;
 
-void push_schreyer_order(LIST data)
+DMMstack push_schreyer_order(LIST data,DMMstack stack)
 {
   DMMstack t;
   int len,i;
   NODE in,t1;
+  LIST l;
 
   /* data = [DPM,...,DPM] */
+  if ( !dmm_stack && ( !dp_current_spec || dp_current_spec->id < 256 ) )
+      error("push_schreyer_order : base module order is not set");
   in = BDY(data);
   len = length(in);
   NEWDMMstack(t);
   t->rank = len;
   t->in = (DMM *)MALLOC((len+1)*sizeof(DMM));
-  t->ordtype = 0;
+  if ( stack ) {
+    MKNODE(t1,data,BDY(stack->obj)); MKLIST(l,t1); t->obj = l;
+  } else {
+    MKNODE(t1,data,0); MKLIST(l,t1); t->obj = l;
+  }
   for ( i = 1; i <= len; i++, in = NEXT(in) ) {
     t->in[i] = BDY((DPM)BDY(in));
   }
-  t->next = dmm_stack;
-  dmm_stack = t; 
-  dpm_ordtype = 2;
-  MKNODE(t1,data,schreyer_obj?BDY(schreyer_obj):0);
-  MKLIST(schreyer_obj,t1);
+  t->next = stack;;
+  dpm_ordtype = 3;
+  return t;
 }
 
 // data=[Ink,...,In0]
@@ -2672,18 +2691,20 @@ void set_schreyer_order(LIST data)
   if ( !data ) {
     dmm_stack = 0;
     if ( dp_current_spec && dp_current_spec->id >= 256 )
-      dpm_ordtype = dp_current_spec->ispot;
+      dpm_ordtype = dp_current_spec->module_ordtype;
     else 
       dpm_ordtype = 0;
     return;
   } else {
+    if ( !dp_current_spec || dp_current_spec->id < 256 )
+      error("set_schreyer_order : base module order is not set");
     dmm_stack = 0;
+    dpm_base_ordtype = dp_current_spec->module_ordtype;
     in = BDY(data);
     len = length(in);
     w = (LIST *)MALLOC(len*sizeof(LIST));
     for ( i = 0; i < len; i++, in = NEXT(in) ) w[i] = (LIST)BDY(in);
-    for ( i = len-1; i >= 0; i-- ) push_schreyer_order(w[i]);
-    dpm_ordtype = 2;
+    for ( i = len-1; i >= 0; i-- ) dmm_stack = push_schreyer_order(w[i],dmm_stack);
   }
 }
 
@@ -2729,10 +2750,13 @@ NODE dpm_reduceall(NODE in)
 
 struct oEGT egra;
 
+void dpm_ht(DPM d,DPM *r);
+
 void dpm_schreyer_base(LIST g,LIST *s)
 {
-  NODE nd,t,b0,b;
+  NODE nd,t0,t,b0,b;
   int n,i,j,k,nv;
+  LIST l;
   Z cont;
   P dn,c;
   DP h,t1,t2;
@@ -2788,7 +2812,12 @@ void dpm_schreyer_base(LIST g,LIST *s)
     }
     if ( b0 ) NEXT(b) = 0;
   }
-  push_schreyer_order(g);
+  for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
+    dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
+  }
+  if ( t0 ) NEXT(t) = 0;
+  MKLIST(l,t0);
+  dmm_stack = push_schreyer_order(l,dmm_stack);
   for ( t = b0; t; t = NEXT(t) ) {
     dpm_sort((DPM)BDY(t),&dpm); 
     BDY(t) = (pointer)dpm;
@@ -2831,7 +2860,7 @@ int compdmm_schreyer(int n,DMM m1,DMM m2)
    }
    // comparison by the bottom order
 LAST:
-  if ( dpm_ordtype == 1 ) {
+  if ( dpm_base_ordtype == 1 ) {
     if ( pos1 < pos2 ) return 1;
     else if ( pos1 > pos2 ) return -1;
     else return (*cmpdl)(n,d1,d2);
@@ -2844,48 +2873,33 @@ LAST:
   }
 }
 
-#if 1
 int compdmm(int n,DMM m1,DMM m2)
 {
   int t;
 
   switch ( dpm_ordtype ) {
-  case 0:
+  case 0: /* TOP ord->pos */
     t = (*cmpdl)(n,m1->dl,m2->dl);
     if ( t ) return t;
     else if ( m1->pos < m2->pos ) return 1;
     else if ( m1->pos > m2->pos ) return -1;
     else return 0;
-  case 1:
+  case 1: /* POT : pos->ord */
     if ( m1->pos < m2->pos ) return 1;
     else if ( m1->pos > m2->pos ) return -1;
     else return (*cmpdl)(n,m1->dl,m2->dl);
-  case 2:
+  case 2:  /* wPOT: weight->pos->ord */
+    if ( m1->dl->td > m2->dl->td ) return 1;
+    else if ( m1->dl->td < m2->dl->td ) return 1;
+    else if ( m1->pos < m2->pos ) return 1;
+    else if ( m1->pos > m2->pos ) return -1;
+    else return (*cmpdl)(n,m1->dl,m2->dl);
+  case 3: /* Schreyer */
     return compdmm_schreyer(n,m1,m2);
   default:
     error("compdmm : invalid dpm_ordtype");
   }
 }
-#else
-int compdmm(int n,DMM m1,DMM m2)
-{
-  int t;
-
-  if ( dpm_ordtype == 1 ) {
-    if ( m1->pos < m2->pos ) return 1;
-    else if ( m1->pos > m2->pos ) return -1;
-    else return (*cmpdl)(n,m1->dl,m2->dl);
-  } else if ( dpm_ordtype == 0 ) {
-    t = (*cmpdl)(n,m1->dl,m2->dl);
-    if ( t ) return t;
-    else if ( m1->pos < m2->pos ) return 1;
-    else if ( m1->pos > m2->pos ) return -1;
-    else return 0;
-  } else if ( dpm_ordtype == 2 ) {
-    return compdmm_schreyer(n,m1,m2);
-  }
-}
-#endif
 
 void adddpm(VL vl,DPM p1,DPM p2,DPM *pr)
 {
@@ -3186,12 +3200,12 @@ DPM dpm_compress(DPM p,int *tab)
 // input : s, s = syz(m) output simplified s, m
 void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1)
 {
-  int lm,ls,i,j,pos;
+  int lm,ls,i,j,k,pos,nv;
   DPM *am,*as;
   DPM p;
   DMM d;
   Obj c;
-  int *tab;
+  int *tab,*dd;
   NODE t,t1;
 
   lm = length(BDY(m));
@@ -3204,7 +3218,12 @@ void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1)
   for ( i = 0; i < ls; i++ ) {
     p = as[i];
     if ( p == 0 ) continue;
-    for ( d = BDY(p); d; d = NEXT(d) ) if ( d->dl->td == 0 ) break;
+    nv = NV(p);
+    for ( d = BDY(p); d; d = NEXT(d) ) {
+      dd = d->dl->d;
+      for ( k = 0; k < nv; k++ ) if ( dd[k] ) break;
+      if ( k == nv ) break;
+    }
     if ( d ) {
       c = d->c; pos = d->pos;
       for ( j = 0; j < ls; j++ )

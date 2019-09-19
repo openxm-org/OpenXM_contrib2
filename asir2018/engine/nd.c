@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.19 2019/09/04 05:32:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.20 2019/09/15 08:46:12 noro Exp $ */
 
 #include "nd.h"
 
@@ -8,8 +8,10 @@ struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
 int diag_period = 6;
 int weight_check = 1;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
-/* for schreyer order */
+/* for general module order */
 int (*ndl_base_compare_function)(UINT *a1,UINT *a2);
+int (*dl_base_compare_function)(int nv,DL a,DL b);
+int nd_base_ordtype;
 int nd_dcomp;
 int nd_rref2;
 NM _nm_free_list;
@@ -57,7 +59,7 @@ static int nd_worb_len;
 static int nd_found,nd_create,nd_notfirst;
 static int nmv_adv;
 static int nd_demand;
-static int nd_module,nd_ispot,nd_mpos,nd_pot_nelim;
+static int nd_module,nd_module_ordtype,nd_mpos,nd_pot_nelim;
 static int nd_module_rank,nd_poly_weight_len;
 static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
@@ -526,6 +528,13 @@ void ndl_weight_mask(UINT *d)
     }
 }
 
+int ndl_glex_compare(UINT *d1,UINT *d2)
+{
+  if ( TD(d1) > TD(d2) ) return 1;
+  else if ( TD(d1) < TD(d2) ) return -1;
+  else return ndl_lex_compare(d1,d2);
+}
+
 int ndl_lex_compare(UINT *d1,UINT *d2)
 {
     int i;
@@ -695,135 +704,143 @@ int ndl_ww_lex_compare(UINT *d1,UINT *d2)
     return ndl_lex_compare(d1,d2);
 }
 
-int ndl_module_weight_compare(UINT *d1,UINT *d2)
+// common function for module glex and grlex comparison
+int ndl_module_glex_compare(UINT *d1,UINT *d2)
 {
-  int s,j;
+  int c;
 
-  if ( nd_nvar != nd_poly_weight_len )
-    error("invalid module weight : the length of polynomial weight != the number of variables");
-  s = 0;
-  for ( j = 0; j < nd_nvar; j++ )
-     s += (GET_EXP(d1,j)-GET_EXP(d2,j))*nd_poly_weight[j];
-  if ( MPOS(d1) >= 1 && MPOS(d2) >= 1 ) {
-    s += nd_module_weight[MPOS(d1)-1]-nd_module_weight[MPOS(d2)-1];
-  }
-  if ( s > 0 ) return 1;
-  else if ( s < 0 ) return -1;
-  else return 0;
-}
+  switch ( nd_module_ordtype ) {
+    case 0:
+      if ( TD(d1) > TD(d2) ) return 1;
+      else if ( TD(d1) < TD(d2) ) return -1;
+      else if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
+      else if ( MPOS(d1) < MPOS(d2) ) return 1;
+      else if ( MPOS(d1) > MPOS(d2) ) return -1;
+      else return 0;
+      break;
 
-int ndl_module_grlex_compare(UINT *d1,UINT *d2)
-{
-    int i,c;
-
-//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
-    if ( nd_ispot ) {
+    case 1:
       if ( nd_pot_nelim && MPOS(d1)>=nd_pot_nelim+1 && MPOS(d2) >= nd_pot_nelim+1 ) {
          if ( TD(d1) > TD(d2) ) return 1;
          else if ( TD(d1) < TD(d2) ) return -1;
          if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
          if ( MPOS(d1) < MPOS(d2) ) return 1;
          else if ( MPOS(d1) > MPOS(d2) ) return -1;
-         return 0;
       }
       if ( MPOS(d1) < MPOS(d2) ) return 1;
       else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    if ( TD(d1) > TD(d2) ) return 1;
-    else if ( TD(d1) < TD(d2) ) return -1;
-    if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
-    if ( !nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    return 0;
+      else if ( TD(d1) > TD(d2) ) return 1;
+      else if ( TD(d1) < TD(d2) ) return -1;
+      else return ndl_lex_compare(d1,d2);
+      break;
+
+    case 2: // weight -> POT
+      if ( TD(d1) > TD(d2) ) return 1;
+      else if ( TD(d1) < TD(d2) ) return -1;
+      else if ( MPOS(d1) < MPOS(d2) ) return 1;
+      else if ( MPOS(d1) > MPOS(d2) ) return -1;
+      else return ndl_lex_compare(d1,d2);
+      break;
+
+    default:    
+      error("ndl_module_glex_compare : invalid module_ordtype");
+  }
 }
 
-int ndl_module_glex_compare(UINT *d1,UINT *d2)
+// common  for module comparison
+int ndl_module_compare(UINT *d1,UINT *d2)
 {
-    int i,c;
+  int c;
 
-//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
-    if ( nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    if ( TD(d1) > TD(d2) ) return 1;
-    else if ( TD(d1) < TD(d2) ) return -1;
-    if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
-    if ( !nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    return 0;
+  switch ( nd_module_ordtype ) {
+    case 0:
+      if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
+      else if ( MPOS(d1) > MPOS(d2) ) return -1;
+      else if ( MPOS(d1) < MPOS(d2) ) return 1;
+      else return 0;
+      break;
+
+    case 1:
+      if ( MPOS(d1) < MPOS(d2) ) return 1;
+      else if ( MPOS(d1) > MPOS(d2) ) return -1;
+      else return (*ndl_base_compare_function)(d1,d2); 
+      break;
+
+    case 2: // weight -> POT
+      if ( TD(d1) > TD(d2) ) return 1;
+      else if ( TD(d1) < TD(d2) ) return -1;
+      else if ( MPOS(d1) < MPOS(d2) ) return 1;
+      else if ( MPOS(d1) > MPOS(d2) ) return -1;
+      else return (*ndl_base_compare_function)(d1,d2); 
+      break;
+
+    default:    
+      error("ndl_module_compare : invalid module_ordtype");
+  }
 }
 
-int ndl_module_lex_compare(UINT *d1,UINT *d2)
+extern DMMstack dmm_stack;
+void _addtodl(int n,DL d1,DL d2);
+int _eqdl(int n,DL d1,DL d2);
+
+int ndl_module_schreyer_compare(UINT *m1,UINT *m2)
 {
-    int i,c;
+  int pos1,pos2,t,j;
+  DMM *in;
+  DMMstack s;
+  static DL d1=0;
+  static DL d2=0;
+  static int dlen=0;
 
-//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
-    if ( nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
+  pos1 = MPOS(m1); pos2 = MPOS(m2);
+  if ( pos1 == pos2 ) return (*ndl_base_compare_function)(m1,m2);
+  if ( nd_nvar > dlen ) {
+    NEWDL(d1,nd_nvar);
+    NEWDL(d2,nd_nvar);
+    dlen = nd_nvar;
+  }
+  d1->td = TD(m1);
+  for ( j = 0; j < nd_nvar; j++ ) d1->d[j] = GET_EXP(m1,j);
+  d2->td = TD(m2);
+  for ( j = 0; j < nd_nvar; j++ ) d2->d[j] = GET_EXP(m2,j);
+  for ( s = dmm_stack; s; s = NEXT(s) ) {
+    in = s->in;
+    _addtodl(nd_nvar,in[pos1]->dl,d1);
+    _addtodl(nd_nvar,in[pos2]->dl,d2);
+    if ( in[pos1]->pos == in[pos2]->pos && _eqdl(nd_nvar,d1,d2)) {
+      if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return 0;
     }
-    if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
-    if ( !nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    return 0;
-}
-
-int ndl_module_block_compare(UINT *d1,UINT *d2)
-{
-    int i,c;
-
-//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
-    if ( nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    if ( (c = ndl_block_compare(d1,d2)) != 0 ) return c;
-    if ( !nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    return 0;
-}
-
-int ndl_module_matrix_compare(UINT *d1,UINT *d2)
-{
-    int i,c;
-
-//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
-    if ( nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    if ( (c = ndl_matrix_compare(d1,d2)) != 0 ) return c;
-    if ( !nd_ispot ) {
-        if ( MPOS(d1) < MPOS(d2) ) return 1;
-        else if ( MPOS(d1) > MPOS(d2) ) return -1;
-    }
-    return 0;
-}
-
-int ndl_module_composite_compare(UINT *d1,UINT *d2)
-{
-    int i,c;
-
-//    if ( nd_module_rank && (c = ndl_module_weight_compare(d1,d2)) ) return c;
-    if ( nd_ispot ) {
-        if ( MPOS(d1) > MPOS(d2) ) return 1;
-        else if ( MPOS(d1) < MPOS(d2) ) return -1;
-    }
-    if ( (c = ndl_composite_compare(d1,d2)) != 0 ) return c;
-    if ( !nd_ispot ) {
-        if ( MPOS(d1) > MPOS(d2) ) return 1;
-        else if ( MPOS(d1) < MPOS(d2) ) return -1;
-    }
-    return 0;
+    pos1 = in[pos1]->pos;
+    pos2 = in[pos2]->pos;
+    if ( pos1 == pos2 ) return (*dl_base_compare_function)(nd_nvar,d1,d2);
+  }
+  // comparison by the bottom order
+LAST:
+  switch ( nd_base_ordtype ) {
+    case 0:
+      t = (*dl_base_compare_function)(nd_nvar,d1,d2);
+      if ( t ) return t;
+      else if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return 0;
+      break;
+    case 1:
+      if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return (*dl_base_compare_function)(nd_nvar,d1,d2);
+      break;
+    case 2:
+      if ( d1->td > d2->td  ) return 1;
+      else if ( d1->td < d2->td ) return -1;
+      else if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return (*dl_base_compare_function)(nd_nvar,d1,d2);
+      break;
+    default:
+      error("ndl_schreyer_compare : invalid base ordtype");
+  }
 }
 
 INLINE int ndl_equal(UINT *d1,UINT *d2)
@@ -4487,7 +4504,7 @@ UINT *nd_compute_bound(ND p)
 int nd_get_exporigin(struct order_spec *ord)
 {
     switch ( ord->id ) {
-        case 0: case 2: case 256: case 258:
+        case 0: case 2: case 256: case 258: case 300:
             return 1+nd_module;
         case 1: case 257:
             /* block order */
@@ -5543,7 +5560,9 @@ NODE dpm_sort_list(NODE l)
 
 int nmv_comp(NMV a,NMV b)
 {
-  return -DL_COMPARE(a->dl,b->dl);
+  int t;
+  t = DL_COMPARE(a->dl,b->dl);
+  return -t;
 }
 
 NDV dpmtondv(int mod,DPM p)
@@ -5731,20 +5750,20 @@ NODE ndv_reducebase(NODE x,int *perm)
 
 /* XXX incomplete */
 
-extern int dpm_ordtype;
+extern DMMstack dmm_stack;
+int ndl_module_schreyer_compare(UINT *a,UINT *b);
 
 void nd_init_ord(struct order_spec *ord)
 {
   nd_module = (ord->id >= 256);
   if ( nd_module ) {
     nd_dcomp = -1;
-    nd_ispot = ord->ispot;
+    nd_module_ordtype = ord->module_ordtype;
     nd_pot_nelim = ord->pot_nelim;
     nd_poly_weight_len = ord->nv;
     nd_poly_weight = ord->top_weight;
     nd_module_rank = ord->module_rank;
     nd_module_weight = ord->module_top_weight;
-    dpm_ordtype = ord->ispot;
   }
   nd_matrix = 0;
   nd_matrix_len = 0;
@@ -5803,39 +5822,72 @@ void nd_init_ord(struct order_spec *ord)
         case 256:
             switch ( ord->ord.simple ) {
                 case 0:
+                    nd_dcomp = 0;
                     nd_isrlex = 1;
-                    ndl_compare_function = ndl_module_grlex_compare;
+                    ndl_compare_function = ndl_module_glex_compare;
                     break;
                 case 1:
+                    nd_dcomp = 0;
                     nd_isrlex = 0;
                     ndl_compare_function = ndl_module_glex_compare;
                     break;
                 case 2:
+                    nd_dcomp = 0;
                     nd_isrlex = 0;
-                    ndl_compare_function = ndl_module_lex_compare;
+                    ndl_compare_function = ndl_module_compare;
+                    ndl_base_compare_function = ndl_lex_compare;
                     break;
                 default:
-                    error("nd_gr : unsupported order");
+                    error("nd_init_ord : unsupported order");
             }
             break;
         case 257:
             /* block order */
             nd_isrlex = 0;
-            ndl_compare_function = ndl_module_block_compare;
+            ndl_compare_function = ndl_module_compare;
+            ndl_base_compare_function = ndl_block_compare;
             break;
         case 258:
             /* matrix order */
             nd_isrlex = 0;
             nd_matrix_len = ord->ord.matrix.row;
             nd_matrix = ord->ord.matrix.matrix;
-            ndl_compare_function = ndl_module_matrix_compare;
+            ndl_compare_function = ndl_module_compare;
+            ndl_base_compare_function = ndl_matrix_compare;
             break;
         case 259:
             /* composite order */
             nd_isrlex = 0;
             nd_worb_len = ord->ord.composite.length;
             nd_worb = ord->ord.composite.w_or_b;
-            ndl_compare_function = ndl_module_composite_compare;
+            ndl_compare_function = ndl_module_compare;
+            ndl_base_compare_function = ndl_composite_compare;
+            break;
+        case 300:
+            /* schreyer order */
+            if ( ord->base->id != 256 )
+               error("nd_init_ord : unsupported base order");
+            ndl_compare_function = ndl_module_schreyer_compare;
+            dmm_stack = ord->dmmstack;
+            switch ( ord->base->ord.simple ) {
+                case 0:
+                    nd_isrlex = 1;
+                    ndl_base_compare_function = ndl_glex_compare;
+                    dl_base_compare_function = cmpdl_revgradlex;
+                    break;
+                case 1:
+                    nd_isrlex = 0;
+                    ndl_base_compare_function = ndl_glex_compare;
+                    dl_base_compare_function = cmpdl_gradlex;
+                    break;
+                case 2:
+                    nd_isrlex = 0;
+                    ndl_base_compare_function = ndl_lex_compare;
+                    dl_base_compare_function = cmpdl_lex;
+                    break;
+                default:
+                    error("nd_init_ord : unsupported order");
+            }
             break;
     }
     nd_ord = ord;
@@ -5872,7 +5924,7 @@ EPOS nd_create_epos(struct order_spec *ord)
 
     epos = (EPOS)MALLOC_ATOMIC(nd_nvar*sizeof(struct oEPOS));
     switch ( ord->id ) {
-        case 0: case 256:
+        case 0: case 256: case 300:
             if ( nd_isrlex ) {
                 for ( i = 0; i < nd_nvar; i++ ) {
                     epos[i].i = nd_exporigin + (nd_nvar-1-i)/nd_epw;
