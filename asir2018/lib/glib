@@ -1,10 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/lib/glib,v 1.1 2018/09/19 05:45:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/lib/glib,v 1.2 2019/07/16 01:29:22 takayama Exp $ */
 
 /* BUG: this library has not yet been adapted to the new automatic launcher
         of ox_plot. 2002, Aug, 4.  Do not load glib more than twice. 
 */
 
 extern Cfep_loaded$
+extern Cfep_use_opengl$
 
 #define DO_NOT_START_SERVER_EXPLICITLY
 
@@ -36,9 +37,9 @@ def glib_ox_get_errors(P) {
 }
 
 def reset_plot() {   
-/* It is no longer used. See, oxrfc103.rr */
+  /* It is no longer used. See, oxrfc103.rr */
   extern Glib_process;
-  if (!Cfep_loaded) {
+  if ((!Cfep_loaded) || (!Cfep_use_opengl)) {
     print("  Sending signal to ox_plot",0);
     ox_reset(Glib_process);
     print("  Done.");
@@ -66,7 +67,7 @@ Glib_ps_sy=2$  /* mag=1/2 for PS picture */
 def open_Canvas(P,S) {
   extern Glib_process;
   /* print("open_Canvas: ",0);print(S); */
-  if (!Cfep_loaded) {
+  if ((!Cfep_loaded) || (!Cfep_use_opengl)) {
     if (P < 0) P=open_canvas(S); /* BUG, get process No. */
     else open_canvas(P,S);
     Glib_process = P; 
@@ -78,7 +79,7 @@ def open_Canvas(P,S) {
       debug;
     }
     */
-  }else{
+  }else {
     R=cfep.open_canvas(S);
   }
   return(R);
@@ -96,7 +97,7 @@ def glib_open() {
   extern Glib_canvas_x, Glib_canvas_y,
          Glib_process, Glib_canvas,
          Glib_server_started, Glib_process$
-  if (!Cfep_loaded) return glib_openx11();
+  if ((!Cfep_loaded) || (!Cfep_use_opengl)) return glib_openx11();
   else {
     Glib_canvas = open_Canvas(-1,[Glib_canvas_x,Glib_canvas_y])$
     Glib_server_started = 1$ 
@@ -110,13 +111,13 @@ def glib_openx11() {
 #ifndef DO_NOT_START_SERVER_EXPLICITLY
   if (type(Glib_server_started) == 0) { 
     Glib_process = ox_launch_nox(0,"ox_plot")$ 
-    /* register_handler(reset_plot);  */
+    /* register_handler(reset_plot); */
     Glib_server_started = 1$ 
   }$
   Glib_canvas = open_Canvas(Glib_process,[Glib_canvas_x,Glib_canvas_y])$
 #else
   Glib_canvas = open_Canvas(-1,[Glib_canvas_x,Glib_canvas_y])$
-  /* register_handler(reset_plot);  */
+  /* register_handler(reset_plot); */
   Glib_server_started = 1$ 
 #endif
   glib_check_strict();
@@ -145,7 +146,7 @@ def glib_check_strict() {
   if (Glib_canvas < 0) {
     glib_open();
   }
-  if (Cfep_loaded) return ;
+  if (Cfep_loaded && Cfep_use_opengl) return ;
   E = glib_ox_get_errors(Glib_process);
   if (E != []) {
     ox_pops(Glib_process,200);
@@ -164,7 +165,7 @@ end: */
 def glib_clear() {
   extern Glib_process, Glib_canvas;
   if (Glib_canvas < 0) glib_open();
-  if (!Cfep_loaded) clear_canvas(Glib_process,Glib_canvas);
+  if ((!Cfep_loaded) || (!Cfep_use_opengl)) clear_canvas(Glib_process,Glib_canvas);
   else cfep.glib_clear();
 }
 
@@ -226,11 +227,11 @@ def glib_putpixel(X,Y) {
            Glib_canvas_y-glib_floor(Glib_ymag*(Y+Glib_yoffset))];
   }
   if ( type(C) != -1 ) {
-    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos,C);
+    if ((!Cfep_loaded) || (!Cfep_use_opengl)) draw_obj(Glib_process,Glib_canvas,Pos,C);
     else cfep.draw_obj2(Glib_process,Glib_canvas,Pos,C);
     if (Glib_ps) glib_history(["putpixel",Pos2,C]);
   }else{
-    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos);
+    if ((!Cfep_loaded) || (!Cfep_use_opengl)) draw_obj(Glib_process,Glib_canvas,Pos);
     else cfep.draw_obj(Glib_process,Glib_canvas,Pos);
     if (Glib_ps) glib_history(["putpixel",Pos2,0]);
   }
@@ -318,11 +319,11 @@ if (Glib_ps) {
            glib_floor(X1),Glib_canvas_y-glib_floor(Y1)];
   }
   if ( type(Color) != -1 ) {
-    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos,Color);
+    if ((!Cfep_loaded) || (!Cfep_use_opengl)) draw_obj(Glib_process,Glib_canvas,Pos,Color);
     else cfep.draw_obj2(Glib_process,Glib_canvas,Pos,Color);
     if (Glib_ps) glib_history(["line",Pos2,Color]);
   }else{
-    if (!Cfep_loaded) draw_obj(Glib_process,Glib_canvas,Pos);
+    if ((!Cfep_loaded) || (!Cfep_use_opengl)) draw_obj(Glib_process,Glib_canvas,Pos);
     else cfep.draw_obj(Glib_process,Glib_canvas,Pos);
     if (Glib_ps) glib_history(["line",Pos2,0]);
   }
@@ -394,11 +395,11 @@ def glib_print(X,Y,Text) {
            Glib_canvas_y-glib_floor(Glib_ymag*(Y+Glib_yoffset))];
   }
   if ( type(C) != -1 ) {
-    if (!Cfep_loaded) draw_string(Glib_process,Glib_canvas,Pos,Text,C);
+    if ((!Cfep_loaded) || (!Cfep_use_opengl)) draw_string(Glib_process,Glib_canvas,Pos,Text,C);
     else cfep.draw_string2(Glib_process,Glib_canvas,Pos,Text,C);
     if (Glib_ps) glib_history(["print",Pos2,Text,C]);
   }else{
-    if (!Cfep_loaded) draw_string(Glib_process,Glib_canvas,Pos,Text);
+    if ((!Cfep_loaded) || (!Cfep_use_opengl)) draw_string(Glib_process,Glib_canvas,Pos,Text);
     else cfep.draw_string(Glib_process,Glib_canvas,Pos,Text);
     if (Glib_ps) glib_history(["print",Pos2,Text,0]);
   }
@@ -527,7 +528,7 @@ end: */
 def glib_flush() {
   extern Glib_canvas;
   if (Glib_canvas < 0) glib_open();
-  if (Cfep_loaded) cfep.draw_flush(Glib_canvas);
+  if (Cfep_loaded && Cfep_use_opengl) cfep.draw_flush(Glib_canvas);
 }
 /*&usage begin: glib_set_pixel_size(P)
   Set the size of putpixel to P. 1.0 is the default.
@@ -536,7 +537,7 @@ end: */
 def glib_set_pixel_size(X) {
   extern  Glib_canvas;
   if (Glib_canvas < 0) glib_open();
-  if (!Cfep_loaded) /*Not implemented.*/ ;
+  if ((!Cfep_loaded) || (!Cfep_use_opengl)) /*Not implemented.*/ ;
   else cfep.glib_set_pixel_size(X);
 }
 
@@ -548,9 +549,12 @@ end: */
 def glib_remove_last() {
   extern  Glib_canvas;
   if (Glib_canvas < 0) glib_open();
-  if (!Cfep_loaded) /*Not implemented.*/ ;
+  if ((!Cfep_loaded) || (!Cfep_use_opengl)) /*Not implemented.*/ ;
   else cfep.glib_remove_last();
 }
 
-end$
+if (Cfep_loaded && (!Cfep_use_opengl)) {
+  printf("OpenGL is no longer supported on cfep.asir. Use X11 instead.\n")$
+}else{;}$
 
+end$
