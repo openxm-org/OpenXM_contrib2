@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.14 2019/09/13 09:02:49 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.15 2019/09/19 06:29:47 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -79,6 +79,7 @@ void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
 void Pdp_minp(),Pdp_sp_mod();
 void Pdp_homo(),Pdp_dehomo();
+void Pdpm_homo(),Pdpm_dehomo();
 void Pdp_gr_mod_main(),Pdp_gr_f_main();
 void Pdp_gr_main(),Pdp_gr_hm_main(),Pdp_gr_d_main(),Pdp_gr_flags();
 void Pdp_interreduce();
@@ -278,6 +279,8 @@ struct ftab dp_supp_tab[] = {
   {"dpm_ltod",Pdpm_ltod,2},
   {"dpm_dptodpm",Pdpm_dptodpm,2},
   {"dpm_dtol",Pdpm_dtol,2},
+  {"dpm_homo",Pdpm_homo,1},
+  {"dpm_dehomo",Pdpm_dehomo,1},
 
   /* criteria */
   {"dp_cri1",Pdp_cri1,2},
@@ -1095,7 +1098,7 @@ void Pdpm_dptodpm(NODE arg,DPM *rp)
 {
   DP p;
   MP mp;
-  int pos;
+  int pos,shift;
   DMM m0,m;
 
   p = (DP)ARG0(arg);
@@ -1107,7 +1110,15 @@ void Pdpm_dptodpm(NODE arg,DPM *rp)
     for ( m0 = 0, mp = BDY(p); mp; mp = NEXT(mp) ) {
       NEXTDMM(m0,m); m->dl = mp->dl; m->c = mp->c; m->pos = pos;
     }
-    MKDPM(p->nv,m0,*rp); (*rp)->sugar = p->sugar;
+    if ( dp_current_spec->module_rank ) {
+      if ( pos > dp_current_spec->module_rank )
+        error("dpm_dptodpm : inconsistent order spec");
+      shift = dp_current_spec->module_top_weight[pos-1];
+      m->dl->td += shift;
+    } else
+      shift = 0;
+
+    MKDPM(p->nv,m0,*rp); (*rp)->sugar = p->sugar+shift;
   }
 }
 
@@ -1885,17 +1896,17 @@ void Pdpm_schreyer_base(NODE arg,LIST *rp)
   dpm_schreyer_base((LIST)ARG0(arg),rp);
 }
 
-void dpm_simplify_syz(LIST m,LIST s,LIST *m1,LIST *s1);
+void dpm_simplify_syz(LIST m,LIST s,LIST *m1,LIST *s1,LIST *w1);
 
 void Pdpm_simplify_syz(NODE arg,LIST *rp)
 {
-  LIST s1,m1;
+  LIST s1,m1,w1;
   NODE t;
 
   asir_assert(ARG0(arg),O_LIST,"dpm_simplify_syz");
   asir_assert(ARG1(arg),O_LIST,"dpm_simplify_syz");
-  dpm_simplify_syz((LIST)ARG0(arg),(LIST)ARG1(arg),&s1,&m1);
-  t = mknode(2,s1,m1);
+  dpm_simplify_syz((LIST)ARG0(arg),(LIST)ARG1(arg),&s1,&m1,&w1);
+  t = mknode(3,s1,m1,w1);
   MKLIST(*rp,t);
 }
 
@@ -2433,6 +2444,22 @@ void Pdp_dehomo(NODE arg,DP *rp)
   asir_assert(ARG0(arg),O_DP,"dp_dehomo");
   dp_dehomo((DP)ARG0(arg),rp);
 }
+
+void dpm_homo(DPM a,DPM *b);
+void dpm_dehomo(DPM a,DPM *b);
+
+void Pdpm_homo(NODE arg,DPM *rp)
+{
+  asir_assert(ARG0(arg),O_DPM,"dpm_homo");
+  dpm_homo((DPM)ARG0(arg),rp);
+}
+
+void Pdpm_dehomo(NODE arg,DPM *rp)
+{
+  asir_assert(ARG0(arg),O_DPM,"dpm_dehomo");
+  dpm_dehomo((DPM)ARG0(arg),rp);
+}
+
 
 void Pdp_gr_flags(NODE arg,LIST *rp)
 {

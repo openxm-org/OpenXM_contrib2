@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.5 2019/09/13 02:04:42 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.6 2019/09/19 06:29:47 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -2228,8 +2228,12 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
           basespec->obj = baseobj;
           spec->base = basespec;
         } else {  /* weighted order */
+          int ordtype;
+
+          ordtype = spec->module_ordtype;
           create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
-          spec->id = 300; spec->obj = obj;
+          spec->module_ordtype = ordtype;
+          spec->id += 256; spec->obj = obj;
           node = NEXT(node);
           if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
             error("create_order_spec : [weight_for_poly,weight_for_modlue] must be specified as a module topweight");
@@ -2620,6 +2624,56 @@ void create_modorder_spec(int id,LIST shift,struct modorder_spec **s)
  *
  */
 
+void dpm_homo(DPM p,DPM *rp)
+{
+  DMM m,mr,mr0,t;
+  int i,n,nv,td;
+  DL dl,dlh;
+
+  if ( !p )
+    *rp = 0;
+  else {
+    n = p->nv; nv = n + 1;
+    m = BDY(p);
+    td = 0;
+    for ( t = m; t; t = NEXT(t) )
+      if ( m->dl->td > td ) td = m->dl->td;
+    for ( mr0 = 0; m; m = NEXT(m) ) {
+      NEXTDMM(mr0,mr); mr->c = m->c; mr->pos = m->pos;
+      dl = m->dl;
+      mr->dl = dlh = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
+      dlh->td = td;
+      for ( i = 0; i < n; i++ )
+        dlh->d[i] = dl->d[i];
+      dlh->d[n] = td - dl->td;
+    }
+    NEXT(mr) = 0; MKDPM(nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
+}
+
+void dpm_dehomo(DPM p,DPM *rp)
+{
+  DMM m,mr,mr0;
+  int i,n,nv;
+  DL dl,dlh;
+
+  if ( !p )
+    *rp = 0;
+  else {
+    n = p->nv; nv = n - 1;
+    m = BDY(p);
+    for ( mr0 = 0; m; m = NEXT(m) ) {
+      NEXTDMM(mr0,mr); mr->c = m->c; mr->pos = m->pos;
+      dlh = m->dl;
+      mr->dl = dl = (DL)MALLOC_ATOMIC((nv+1)*sizeof(int));
+      dl->td = dlh->td - dlh->d[nv];
+      for ( i = 0; i < nv; i++ )
+        dl->d[i] = dlh->d[i];
+    }
+    NEXT(mr) = 0; MKDPM(nv,mr0,*rp); (*rp)->sugar = p->sugar;
+  }
+}
+
 void dp_homo(DP p,DP *rp)
 {
   MP m,mr,mr0;
@@ -2666,6 +2720,7 @@ void dp_dehomo(DP p,DP *rp)
     NEXT(mr) = 0; MKDP(nv,mr0,*rp); (*rp)->sugar = p->sugar;
   }
 }
+
 
 void dp_mod(DP p,int mod,NODE subst,DP *rp)
 {

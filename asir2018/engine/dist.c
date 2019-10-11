@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.8 2019/09/13 02:04:42 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.9 2019/09/19 06:29:47 noro Exp $
 */
 #include "ca.h"
 
@@ -3157,6 +3157,7 @@ int compdpm(VL vl,DPM p1,DPM p2)
 DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
 {
   MP d0,d;
+  DL dl;
   DMM m;
   DP f;
   DPM a1,p1,r;
@@ -3165,7 +3166,15 @@ DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
   d0 = 0;
   for ( m = BDY(a); m; m = NEXT(m) )
     if ( m->pos == pos ) {
-      NEXTMP(d0,d); d->dl = m->dl; arf_chsgn(m->c,&d->c);
+      NEXTMP(d0,d); 
+      arf_chsgn(m->c,&d->c);
+      if ( !dp_current_spec ) d->dl = m->dl; 
+      else {
+        NEWDL(dl,NV(a));
+        _copydl(NV(a),m->dl,dl);
+        dl->td -= dp_current_spec->module_top_weight[pos-1];
+        d->dl = dl;
+      }
     }
   if ( d0 ) {
     NEXT(d) = 0; MKDP(NV(a),d0,f);
@@ -3198,14 +3207,15 @@ DPM dpm_compress(DPM p,int *tab)
 }
 
 // input : s, s = syz(m) output simplified s, m
-void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1)
+void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1,LIST *w1)
 {
   int lm,ls,i,j,k,pos,nv;
   DPM *am,*as;
   DPM p;
   DMM d;
   Obj c;
-  int *tab,*dd;
+  Z q;
+  int *tab,*dd,*new_w;
   NODE t,t1;
 
   lm = length(BDY(m));
@@ -3241,7 +3251,7 @@ void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1)
   tab = (int *)MALLOC((lm+1)*sizeof(int));
   for ( j = 0, i = 1; i <= lm; i++ ) {
     if ( am[i] ) { j++; tab[i] = j; }
-    else tab[i] = 0;
+    else { tab[i] = 0; }
   }
   t = 0;
   for ( i = ls-1; i >= 0; i-- )
@@ -3250,6 +3260,20 @@ void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1)
       MKNODE(t1,(pointer)p,t); t = t1;
     }
   MKLIST(*s1,t);
+
+  if ( dp_current_spec->module_rank ) {
+    new_w = (int *)MALLOC(j*sizeof(int));
+    for ( j = 0, i = 1; i <= lm; i++ )
+      if ( tab[i] ) { new_w[j++] = dp_current_spec->module_top_weight[i-1]; }
+    t = 0;
+    for ( i = j-1; i >= 0; i-- ) {
+      STOZ(new_w[i],q);
+      MKNODE(t1,q,t); t = t1;
+    }
+  } else
+    t = 0;
+  MKLIST(*w1,t);
+
   t = 0;
   for ( i = lm; i >= 1; i-- )
     if ( am[i] ) {
