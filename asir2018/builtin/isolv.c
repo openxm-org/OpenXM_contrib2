@@ -1,12 +1,12 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/isolv.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/isolv.c,v 1.2 2019/06/04 07:11:23 kondoh Exp $
  */
 
 #include "ca.h"
 #include "parse.h"
 #include "version.h"
 
-#if defined(INTERVAL)
+#if defined(INTERVAL) 
 
 static void Solve(NODE, Obj *);
 static void NSolve(NODE, Obj *);
@@ -43,6 +43,9 @@ Obj  *rp;
   V       v;
   Q       eps;
 
+
+      *rp = 0;
+#if 0
   p = (pointer)ARG0(arg);
   if ( !p ) {
     *rp = 0;
@@ -78,6 +81,7 @@ Obj  *rp;
     default:
       *rp = 0;
   }
+#endif
 }
 
 static void
@@ -92,6 +96,9 @@ NSolve(NODE arg, Obj *rp)
   Num    r;
   Itv    iv;
   BF      breal;
+
+      *rp = 0;
+#if 0
 
   p = (pointer)ARG0(arg);
   if ( !p ) {
@@ -443,5 +450,6 @@ Q *rp;
       *rp = t;
     }
   }
+#endif
 }
 #endif

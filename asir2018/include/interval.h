@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/include/interval.h,v 1.1 2018/09/19 06:00:58 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/interval.h,v 1.2 2019/06/04 07:11:23 kondoh Exp $
 */
 #ifndef  _INTERVAL_H
 #define  _INTERVAL_H
@@ -229,7 +229,7 @@ int     itvinitv(Itv, Itv);
 void    divitv(Num, Num, Num *);
 void    sqrtitv(Num, Num *);
 void    pwritv(Num, Num, Num *);
-void    pwritv0(Itv, int, Itv *);
+void    pwritv0(Itv, long, Itv *);
 void    chsgnitv(Num, Num *);
 void    miditv(Itv, Num *);
 int     cmpitv(Itv, Itv);
@@ -248,7 +248,7 @@ void    subitvp(Itv, Itv, Itv *);
 void    mulitvp(Itv, Itv, Itv *);
 void    divitvp(Itv, Itv, Itv *);
 void    pwritvp(Itv, Num, Itv *);
-void    pwritv0p(Itv, int, Itv *);
+void    pwritv0p(Itv, long, Itv *);
 void    chsgnitvp(Itv, Itv *);
 int     initvp(Num , Itv );
 int     itvinitvp(Itv, Itv);
@@ -278,7 +278,7 @@ int     initvf(Num, Itv);
 int     itvinitvf(Itv, Itv);
 int     cmpitvf(Itv, Itv);
 void    pwritvf(Itv, Num, Itv *);
-void    pwritv0f(Itv, int, Itv *);
+void    pwritv0f(Itv, long, Itv *);
 void miditvf(Itv, Num *);
 void cupitvf(Itv, Itv, Itv *);
 void capitvf(Itv, Itv, Itv *);
@@ -299,7 +299,7 @@ void    chsgnitvd(IntervalDouble, IntervalDouble *);
 int     initvd(Num, IntervalDouble);
 int     cmpitvd(IntervalDouble, IntervalDouble);
 void    pwritvd(Num, Num, IntervalDouble *);
-void    pwritv0d(IntervalDouble, int, IntervalDouble *);
+void    pwritv0d(IntervalDouble, long, IntervalDouble *);
 void    miditvd(IntervalDouble, Num *);
 void    cupitvd(IntervalDouble, IntervalDouble, IntervalDouble *);
 void    capitvd(IntervalDouble, IntervalDouble, IntervalDouble *);

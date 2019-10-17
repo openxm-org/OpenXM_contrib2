@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.2 2018/09/28 08:20:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.3 2019/06/04 07:11:23 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -272,7 +272,7 @@ void divitvp(Itv a, Itv b, Itv *c)
 
 void pwritvp(Itv a, Num e, Itv *c)
 {
-  int ei;
+  long ei;
   Itv t;
 
   if ( !e )
@@ -288,16 +288,18 @@ void pwritvp(Itv a, Num e, Itv *c)
     error("pwritv : can't calculate a fractional power");
 #endif
   } else {
-    ei = QTOS((Q)e);
+    //ei = QTOS((Q)e);
+    ei = mpz_get_si(BDY((Q)e));
     pwritv0p(a,ei,&t);
-    if ( SGN((Q)e) < 0 )
+//    if ( SGN((Q)e) < 0 )
+    if ( sgnq((Q)e) < 0 )
       divnum(0,(Num)ONE,(Num)t,(Num *)c);
     else
       *c = t;
   }
 }
 
-void pwritv0p(Itv a, int e, Itv *c)
+void pwritv0p(Itv a, long e, Itv *c)
 {
   Num inf, sup;
   Num ai,Xmin,Xmax;
@@ -306,7 +308,7 @@ void pwritv0p(Itv a, int e, Itv *c)
   if ( e == 1 )
     *c = a;
   else {
-    STOQ(e,ne);
+    STOZ(e,ne);
     if ( !(e%2) ) {
       if ( initvp(0,a) ) {
         Xmin = 0;
@@ -394,7 +396,7 @@ void miditvp(Itv a, Num *b)
   else if ( (NID(a) <= N_B) )
     *b = (Num)a;
   else {
-    STOQ(2,TWO);
+    //STOZ(2,TWO);
     itvtois(a,&ai,&as);
     addnum(0,ai,as,&t);
     divnum(0,t,(Num)TWO,b);

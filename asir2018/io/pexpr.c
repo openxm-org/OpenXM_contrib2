@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/pexpr.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/pexpr.c,v 1.2 2018/10/01 05:49:06 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -158,6 +158,9 @@ void printbf(BF a)
   char *s;
   dprec = (a->body->_mpfr_prec)*0.30103;
   if ( !dprec ) dprec = 1;
+#if defined(INTERVAL)
+	dprec += 3;
+#endif
   sprintf(fbuf,"%%.%dR%c",dprec,(double_output==1)?'f':(double_output==2)?'e':'g');
   mpfr_asprintf(&s,fbuf,a->body);
   TAIL PUTS(s);

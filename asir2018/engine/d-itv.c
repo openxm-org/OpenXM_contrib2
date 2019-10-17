@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.2 2018/09/28 08:20:28 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.3 2019/06/04 07:11:23 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -10,6 +10,12 @@
 #include "genpari.h"
 #endif
 #endif
+
+double  addulpd(double);
+double  subulpd(double);
+extern int mpfr_roundmode;
+Num tobf(Num,int);
+
 
 #if defined(ITVDEBUG)
 void printbinint(int d)
@@ -33,6 +39,7 @@ void printbinint(int d)
 }
 #endif
 
+#if 0
 double NatToRealUp(N a, int *expo)
 {
   int *p;
@@ -181,7 +188,6 @@ static double  Q2doubleUp(Q a)
   }
 }
 
-#if 0
 static double  PARI2doubleDown(BF a)
 {
         //GEN     p;
@@ -199,6 +205,34 @@ static double  PARI2doubleUp(BF a)
   return PARI2doubleDown(a);
 }
 #endif
+
+static double  Q2doubleDown(Q a)
+{
+	Num b;
+	double rd;
+	int current_roundmode=0;
+
+	current_roundmode = mpfr_roundmode;
+ 	mpfr_roundmode = MPFR_RNDD;
+	b = tobf((Num)a,60);
+ 	mpfr_roundmode = current_roundmode;
+	rd = mpfr_get_d(BDY((BF)b),MPFR_RNDD);
+	return rd;
+}
+
+static double  Q2doubleUp(Q a)
+{
+	Num b;
+	double rd;
+	int current_roundmode=0;
+
+	current_roundmode = mpfr_roundmode;
+ 	mpfr_roundmode = MPFR_RNDU;
+	b = tobf((Num)a,60);
+ 	mpfr_roundmode = current_roundmode;
+	rd = mpfr_get_d(BDY((BF)b),MPFR_RNDU);
+	return rd;
+}
 
 double  subulpd(double d)
 {
@@ -232,10 +266,8 @@ double  ToRealDown(Num a)
     case N_R:
       inf = subulpd(BDY((Real)a)); break;
     case N_B:
-      //inf = PARI2doubleDown((BF)a); break;
-	inf = 0;
-      error("ToRealDown: not supported operands.");
-	break;
+		inf = mpfr_get_d(BDY((BF)a),MPFR_RNDD);
+		break;
     case N_IP:
       inf = ToRealDown(INF((Itv)a));
       break;
@@ -261,10 +293,8 @@ double  ToRealUp(Num a)
     case N_R:
       sup = addulpd(BDY((Real)a)); break;
     case N_B:
-      //sup = PARI2doubleUp((BF)a); break;
-      sup = 0;
-      error("ToRealUp: not supported operands.");
-      break;
+		sup = mpfr_get_d(BDY((BF)a),MPFR_RNDU);
+		break;
     case N_IP:
       sup = ToRealUp(SUP((Itv)a)); break;
     case N_IntervalDouble:
@@ -291,8 +321,6 @@ void  Num2double(Num a, double *inf, double *sup)
       *sup = BDY((Real)a);
       break;
     case N_B:
-      //*inf = PARI2doubleDown((BF)a);
-      //*sup = PARI2doubleUp((BF)a);
       *inf = mpfr_get_d(BDY((BF)a), MPFR_RNDD);
       *sup = mpfr_get_d(BDY((BF)a), MPFR_RNDU);
       break;
@@ -493,7 +521,7 @@ void  divitvd(Num a, Num b, IntervalDouble *c)
 
 void  pwritvd(Num a, Num e, IntervalDouble *c)
 {
-  int  ei;
+  long  ei;
   IntervalDouble  t;
 
   if ( !e ) {
@@ -511,17 +539,19 @@ void  pwritvd(Num a, Num e, IntervalDouble *c)
     error("pwritvd : can't calculate a fractional power");
 #endif
   } else {
-    ei = QTOS((Q)e);
+    //ei = QTOS((Q)e);
+	ei = mpz_get_si(BDY((Z)e));
     if (ei<0) ei = -ei;
     pwritv0d((IntervalDouble)a,ei,&t);
-    if ( SGN((Q)e) < 0 )
+//    if ( SGN((Q)e) < 0 )
+    if ( sgnq((Q)e) < 0 )
       divnum(0,(Num)ONE,(Num)t,(Num *)c);
     else
       *c = t;
   }
 }
 
-void  pwritv0d(IntervalDouble a, int e, IntervalDouble *c)
+void  pwritv0d(IntervalDouble a, long e, IntervalDouble *c)
 {
   double inf, sup;
   double t, Xmin, Xmax;

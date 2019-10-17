@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.3 2019/06/04 07:11:23 kondoh Exp $
  */
 
 #include "ca.h"
@@ -86,7 +86,7 @@ extern int mpfr_roundmode;
 static void
 Pifcheck(NODE arg, Obj *rp)
 {
-  Q m2,p2,s_id;
+  Z m2,p2,s_id;
   NODE defrange;
   LIST xrange,yrange,range[2],list,geom;
   VL vl,vl0;
@@ -101,12 +101,12 @@ Pifcheck(NODE arg, Obj *rp)
   MAT m;
   pointer **mb;
   double **tabe, *px, *px1, *px2;
-  Q one;
+  Z one;
   int width, height, ix, iy;
   int id;
 
-  STOQ(-2,m2); STOQ(2,p2);
-  STOQ(1,one);
+  STOZ(-2,m2); STOZ(2,p2);
+  STOZ(1,one);
   MKNODE(n,p2,0); MKNODE(defrange,m2,n);
   poly = 0; vl = 0; geom = 0; ri = 0;
   v[0] = v[1] = 0;
@@ -176,8 +176,8 @@ Pifcheck(NODE arg, Obj *rp)
     can->width = 300;
     can->height = 300;
   } else {
-    can->width = QTOS((Q)BDY(BDY(geom)));
-    can->height = QTOS((Q)BDY(NEXT(BDY(geom))));
+    can->width = ZTOS((Z)BDY(BDY(geom)));
+    can->height = ZTOS((Z)BDY(NEXT(BDY(geom))));
     width = can->width;
     height = can->height;
   }
@@ -249,7 +249,9 @@ void ccalc(double **tab,struct canvas *can,int nox)
 static void
 Pitvversion(NODE arg, Q *rp)
 {
-  STOQ(INT_ASIR_VERSION, *rp);
+	Z r;
+  STOZ(INT_ASIR_VERSION, r);
+	*rp = (Q)r;
 }
 
 extern int  bigfloat;
@@ -608,12 +610,10 @@ Obj *rp;
 }
 
 static void
-Pinitv(arg,rp)
-NODE arg;
-Obj *rp;
+Pinitv(NODE arg, Obj *rp)
 {
   int  s;
-  Q  q;
+  Z  q;
 
   asir_assert(ARG0(arg),O_N,"intval");
   asir_assert(ARG1(arg),O_N,"intval");
@@ -634,7 +634,7 @@ Obj *rp;
   } else {
     s = ! compnum(0,(Num)ARG0(arg),(Num)ARG1(arg));
   }
-  STOQ(s,q);
+  STOZ(s,q);
   *rp = (Obj)q;
 }
 
@@ -655,9 +655,10 @@ Obj *rp;
 static void
 PzeroRewriteMode(NODE arg, Obj *rp)
 {
-  Q  a, r;
+  Q  a;
+  Z r;
 
-  STOQ(zerorewrite,r);
+  STOZ(zerorewrite,r);
   *rp = (Obj)r;
  
   if (arg) {
@@ -673,9 +674,10 @@ PzeroRewriteMode(NODE arg, Obj *rp)
 static void
 PzeroRewriteCountClear(NODE arg, Obj *rp)
 {
-  Q  a, r;
+  Q  a;
+  Z  r;
 
-  STOQ(zerorewriteCount,r);
+  STOZ(zerorewriteCount,r);
   *rp = (Obj)r;
 
   if (arg) {
@@ -689,9 +691,9 @@ PzeroRewriteCountClear(NODE arg, Obj *rp)
 static void
 PzeroRewriteCount(NODE arg, Obj *rp)
 {
-  Q  r;
+  Z  r;
 
-  STOQ(zerorewriteCount,r);
+  STOZ(zerorewriteCount,r);
   *rp = (Obj)r;
 }
   
@@ -724,18 +726,18 @@ static void
 Pprintmode(NODE arg, Obj *rp)
 {
   int  l;
-  Q  a, r;
+  Z  a, r;
 
-  a = (Q)ARG0(arg);
+  a = (Z)ARG0(arg);
   if(!a||(NUM(a)&&INT(a))){
-    l=QTOS(a);
+    l=ZTOS(a);
     if ( l < 0 ) l = 0;
 #if defined(INTERVAL)
     else if ( l > MID_PRINTF_E ) l = 0;
 #else
     else if ( l > PRINTF_E ) l = 0;
 #endif
-    STOQ(printmode,r);
+    STOZ(printmode,r);
     *rp = (Obj)r;
     printmode = l;
     pprintmode();
