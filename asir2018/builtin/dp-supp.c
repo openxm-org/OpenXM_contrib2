@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.6 2019/09/19 06:29:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.7 2019/10/11 03:45:56 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1240,6 +1240,56 @@ void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Z *contp)
     }
     NEXT(m) = 0;
     MKDP(p2->nv,m0,*r2p); (*r2p)->sugar = p2->sugar;
+  } else
+    *r2p = 0;
+}
+
+void dpm_removecont2(DPM p1,DPM p2,DPM *r1p,DPM *r2p,Z *contp)
+{
+  struct oVECT v;
+  int i,n1,n2,n;
+  DMM m,m0,t;
+  Z *w;
+  Z h;
+
+  if ( p1 ) {
+    for ( i = 0, m = BDY(p1); m; m = NEXT(m), i++ );
+    n1 = i;
+  } else
+    n1 = 0;
+  if ( p2 ) {
+    for ( i = 0, m = BDY(p2); m; m = NEXT(m), i++ );
+    n2 = i;
+  } else
+    n2 = 0;
+  n = n1+n2;
+  if ( !n ) {
+    *r1p = 0; *r2p = 0; *contp = ONE; return;
+  }
+  w = (Z *)ALLOCA(n*sizeof(Q));
+  v.len = n;
+  v.body = (pointer *)w;
+  i = 0;
+  if ( p1 )
+    for ( m = BDY(p1); i < n1; m = NEXT(m), i++ ) w[i] = (Z)m->c;
+  if ( p2 )
+    for ( m = BDY(p2); i < n; m = NEXT(m), i++ ) w[i] = (Z)m->c;
+  h = w[0]; removecont_array((P *)w,n,1); divsz(h,w[0],contp);
+  i = 0;
+  if ( p1 ) {
+    for ( m0 = 0, t = BDY(p1); i < n1; i++, t = NEXT(t) ) {
+      NEXTDMM(m0,m); m->c = (Obj)w[i]; m->dl = t->dl; m->pos = t->pos;
+    }
+    NEXT(m) = 0;
+    MKDPM(p1->nv,m0,*r1p); (*r1p)->sugar = p1->sugar;
+  } else
+    *r1p = 0;
+  if ( p2 ) {
+    for ( m0 = 0, t = BDY(p2); i < n; i++, t = NEXT(t) ) {
+      NEXTDMM(m0,m); m->c = (Obj)w[i]; m->dl = t->dl; m->pos = t->pos;
+    }
+    NEXT(m) = 0;
+    MKDPM(p2->nv,m0,*r2p); (*r2p)->sugar = p2->sugar;
   } else
     *r2p = 0;
 }

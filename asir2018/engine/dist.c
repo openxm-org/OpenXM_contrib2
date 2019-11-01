@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.9 2019/09/19 06:29:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.10 2019/10/11 03:45:57 noro Exp $
 */
 #include "ca.h"
 
@@ -3153,6 +3153,8 @@ int compdpm(VL vl,DPM p1,DPM p2)
   }
 }
 
+void dpm_removecont2(DPM p1,DPM p2,DPM *r1p,DPM *r2p,Z *contp);
+
 // p = ...+c*<<0,...0:pos>>+...
 DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
 {
@@ -3160,7 +3162,8 @@ DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
   DL dl;
   DMM m;
   DP f;
-  DPM a1,p1,r;
+  DPM a1,p1,r,r1,dmy;
+  Z dmyz;
 
   if ( !a ) return 0;
   d0 = 0;
@@ -3168,7 +3171,8 @@ DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
     if ( m->pos == pos ) {
       NEXTMP(d0,d); 
       arf_chsgn(m->c,&d->c);
-      if ( !dp_current_spec ) d->dl = m->dl; 
+      if ( !dp_current_spec || !dp_current_spec->module_rank )
+        d->dl = m->dl; 
       else {
         NEWDL(dl,NV(a));
         _copydl(NV(a),m->dl,dl);
@@ -3181,7 +3185,8 @@ DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
     mulcdpm(CO,c,a,&a1);
     mulobjdpm(CO,(Obj)f,p,&p1); 
     adddpm(CO,a1,p1,&r);
-    return r;
+    dpm_removecont2(0,r,&dmy,&r1,&dmyz);
+    return r1;
   } else
     return a;
 }
@@ -3261,7 +3266,7 @@ void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1,LIST *w1)
     }
   MKLIST(*s1,t);
 
-  if ( dp_current_spec->module_rank ) {
+  if ( dp_current_spec && dp_current_spec->module_rank ) {
     new_w = (int *)MALLOC(j*sizeof(int));
     for ( j = 0, i = 1; i <= lm; i++ )
       if ( tab[i] ) { new_w[j++] = dp_current_spec->module_top_weight[i-1]; }
