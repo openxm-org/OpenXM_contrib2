@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.3 2019/06/04 07:11:23 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.4 2019/10/17 03:03:12 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -68,7 +68,7 @@ void istoitv(Num inf, Num sup, Itv *rp)
     type = 1;
 
     mpfr_roundmode = MPFR_RNDD;
-    i = tobf(inf, DEFAULTPREC);
+    i = tobf(ni, DEFAULTPREC);
     //ToBf(inf, (BF *)&i);
   } else {
     i = ni;
