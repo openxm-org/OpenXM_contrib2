@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.11 2019/09/19 06:29:48 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.12 2019/11/12 07:47:45 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -538,6 +538,7 @@ typedef struct oDMM {
 typedef struct oDMMstack {
   int rank,ordtype;
   DMM *in;
+  DMM *sum;
   LIST obj;
   struct oDMMstack *next;
 } *DMMstack;

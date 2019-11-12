@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.12 2019/11/12 07:47:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.13 2019/11/12 12:50:40 noro Exp $
 */
 #include "ca.h"
 
@@ -2654,7 +2654,11 @@ int dpm_base_ordtype;;
 DMMstack push_schreyer_order(LIST data,DMMstack stack)
 {
   DMMstack t;
-  int len,i;
+  DP dp;
+  MP mp;
+  DMM m0,m1;
+  DPM dpm0,dpm1;
+  int len,i,nv;
   NODE in,t1;
   LIST l;
 
@@ -2666,13 +2670,23 @@ DMMstack push_schreyer_order(LIST data,DMMstack stack)
   NEWDMMstack(t);
   t->rank = len;
   t->in = (DMM *)MALLOC((len+1)*sizeof(DMM));
+  t->sum = (DMM *)MALLOC((len+1)*sizeof(DMM));
   if ( stack ) {
     MKNODE(t1,data,BDY(stack->obj)); MKLIST(l,t1); t->obj = l;
+    for ( i = 1; i <= len; i++, in = NEXT(in) ) {
+       m1 = t->in[i] = BDY((DPM)BDY(in));
+       NEWMP(mp); mp->dl = m1->dl; mp->c = m1->c; NEXT(mp) = 0;
+       nv = ((DPM)BDY(in))->nv;
+       MKDP(nv,mp,dp); dp->sugar = mp->dl->td;
+       m0 = stack->sum[m1->pos]; MKDPM(nv,m0,dpm0);
+       mulobjdpm(CO,(Obj)dp,dpm0,&dpm1);
+       t->sum[i] = BDY(dpm1);
+    }
   } else {
     MKNODE(t1,data,0); MKLIST(l,t1); t->obj = l;
-  }
-  for ( i = 1; i <= len; i++, in = NEXT(in) ) {
-    t->in[i] = BDY((DPM)BDY(in));
+    for ( i = 1; i <= len; i++, in = NEXT(in) ) {
+      t->sum[i] = t->in[i] = BDY((DPM)BDY(in));
+    }
   }
   t->next = stack;;
   dpm_ordtype = 3;
