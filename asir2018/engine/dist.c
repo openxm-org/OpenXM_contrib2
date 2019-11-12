@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.11 2019/11/01 04:28:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.12 2019/11/12 07:47:45 noro Exp $
 */
 #include "ca.h"
 
@@ -2716,6 +2716,7 @@ void dpm_sp(DPM p1,DPM p2,DPM *sp,DP *t1,DP *t2);
 DPM dpm_nf_and_quotient3(DPM sp,VECT psv,DPM *nf,P *dn);
 DPM dpm_nf_and_quotient4(DPM sp,DPM *ps,VECT psiv,DPM head,DPM *nf,P *dn);
 DPM dpm_sp_nf(VECT psv,VECT psiv,int i,int j,DPM *nf);
+DPM dpm_sp_nf_asir(VECT psv,int i,int j,DPM *nf);
 void dpm_sort(DPM p,DPM *r);
 
 extern int DP_Multiple;
@@ -2951,10 +2952,14 @@ void dpm_schreyer_base(LIST g,LIST *s)
   DPM quo;
   DP **m;
   NODE *psi;
-  struct oEGT eg0,eg1;
+  NODE n1,n2,n3;
+  int p1,p2,p3;
+  struct oEGT eg0,eg1,egsp,egnf;
   extern struct oEGT egred;
 
   init_eg(&egra);
+  init_eg(&egsp);
+  init_eg(&egnf);
   nd = BDY(g);
   n = length(nd);
   MKVECT(psv,n+1);
@@ -2971,14 +2976,30 @@ void dpm_schreyer_base(LIST g,LIST *s)
   nv = ps[1]->nv;
   m = (DP **)almat_pointer(n+1,n+1);
   b0 = 0;
-  for ( i = 1; i <= n; i++ ) {
-    // sp(ps[i],ps[j]) = ti*ps[i]-tj*ps[j] => m[i][j] = ti
-    for ( j = i+1; j <= n; j++ ) m[i][j] = dpm_sp_hm(ps[i],ps[j]);
-    for ( j = i+1; j <= n; j++ ) {
-      if ( !m[i][j] ) continue;
-      for ( h = m[i][j], k = i+1; k <= n; k++ )
-        if ( k != j && m[i][k] && dp_redble(m[i][k],h) ) m[i][k] = 0;
+  get_eg(&eg0);
+  for ( i = 1; i <= max; i++ ) {
+    for ( n1 = psi[i]; n1; n1 = NEXT(n1) ) {
+      p1 = (long)BDY(n1);
+      for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+        p2 = (long)BDY(n2);
+        m[p1][p2] = dpm_sp_hm(ps[p1],ps[p2]);
+      }
     }
+    for ( n1 = psi[i]; n1; n1 = NEXT(n1) ) {
+      p1 = (long)BDY(n1);
+      for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+        p2 = (long)BDY(n2);
+        if ( !m[p1][p2] ) continue;
+        for ( h = m[p1][p2], n3 = NEXT(n1); n3; n3 = NEXT(n3) ) {
+          p3 = (long)BDY(n3);
+          if ( n3 != n2 && m[p1][p3] && dp_redble(m[p1][p3],h) ) m[p1][p3] = 0;
+        }
+      }
+    }
+  }
+  get_eg(&eg1); add_eg(&egsp,&eg0,&eg1); print_eg("SP",&egsp);
+  get_eg(&eg0);
+  for ( i = 1; i <= n; i++ ) {
     for ( j = i+1; j <= n; j++ ) {
       if ( m[i][j] ) {
         quo = dpm_sp_nf(psv,psiv,i,j,&nf);
@@ -2988,6 +3009,7 @@ void dpm_schreyer_base(LIST g,LIST *s)
       }
     }
   }
+  get_eg(&eg1); add_eg(&egnf,&eg0,&eg1); print_eg("NF",&egnf); printf("\n");
   if ( b0 ) NEXT(b) = 0;
   for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
     dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
@@ -2999,7 +3021,7 @@ void dpm_schreyer_base(LIST g,LIST *s)
 //    dpm_sort((DPM)BDY(t),&dpm); 
 //    BDY(t) = (pointer)dpm;
 //  }
-    b0 = dpm_sort_list(b0);
+//    b0 = dpm_sort_list(b0);
 //  get_eg(&eg0);
 //  b0 = dpm_reduceall(b0);
 //  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);

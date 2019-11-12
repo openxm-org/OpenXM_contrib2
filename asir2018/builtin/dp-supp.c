@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.8 2019/11/01 04:28:52 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.9 2019/11/12 07:47:45 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1800,6 +1800,81 @@ last:
   } else
     q = 0;
   *rp = d; *dnp = dn;
+  return q;
+}
+
+/* an intermediate version for calling from the user language */
+
+DPM dpm_sp_nf_asir(VECT psv,int i,int j,DPM *nf)
+{
+  DPM *ps;
+  int n,nv,s1,s2,sugar,max,pos,psugar;
+  DPM g,u,p,d,q,t;
+  DMM mq0,mq,mr0,mr,m;
+  DP mult,t1,t2;
+  P dn,tdn,tdn1;
+  NODE nd;
+  Obj c1;
+
+  ps = (DPM *)BDY(psv);
+  n = psv->len;
+  nv = ps[1]->nv;
+  dpm_sp(ps[i],ps[j],&g,&t1,&t2);
+  mq0 = 0;
+  NEXTDMM(mq0,mq); mq->c = BDY(t1)->c; mq->pos = i; mq->dl = BDY(t1)->dl;
+  NEXTDMM(mq0,mq); chsgnp((P)BDY(t2)->c,(P *)&mq->c); mq->pos = j; mq->dl = BDY(t2)->dl;
+
+  if ( !g ) {
+    NEXT(mq) = 0;
+    MKDPM(nv,mq0,d);
+    s1 = BDY(t1)->dl->td + ps[i]->sugar;
+    s2 = BDY(t2)->dl->td + ps[j]->sugar;
+    d->sugar = MAX(s1,s2);
+    *nf = 0; 
+    return d;
+  }
+
+  dn = (P)ONE;
+  sugar = g->sugar;
+  mr0 = 0;
+  while ( g ) {
+    for ( u = 0, i = 1; i < n; i++ ) {
+      if ( (p=ps[i])!=0 && dpm_redble(g,p) ) {
+        dpm_red2(g,p,&u,&tdn,&mult);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !UNIZ(tdn) ) {
+          for ( m = mq0; m; m = NEXT(m) ) {
+            arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+          }
+          for ( m = mr0; m; m = NEXT(m) ) {
+            arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+          }
+        }
+        NEXTDMM(mq0,mq); 
+        chsgnp((P)BDY(mult)->c,(P *)&mq->c);
+        mq->dl = BDY(mult)->dl; mq->pos = i;
+        mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        if ( !u ) goto last;
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g);
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( mr0 ) {
+    NEXT(mr) = 0; MKDPM(nv,mr0,d); d->sugar = sugar;
+  } else
+    d = 0;
+  NEXT(mq) = 0; MKDPM(nv,mq0,q); q->sugar = sugar;
+  *nf = d;
   return q;
 }
 
