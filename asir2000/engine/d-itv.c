@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.8 2018/03/29 01:32:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/d-itv.c,v 1.9 2019/06/04 07:11:22 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -221,7 +221,7 @@ double  addulpd(double d)
   return (-sup);
 }
 
-double  ToRealDown(Num a)
+double  toRealDown(Num a)
 {
   double inf;
 
@@ -233,24 +233,27 @@ double  ToRealDown(Num a)
       inf = subulpd(BDY((Real)a)); break;
     case N_B:
       //inf = PARI2doubleDown((BF)a); break;
-	inf = 0;
-      error("ToRealDown: not supported operands.");
-	break;
+	  inf = mpfr_get_d(BDY((BF)a),MPFR_RNDD);;
+      //error("toRealDown: not supported operands.");
+	  break;
     case N_IP:
-      inf = ToRealDown(INF((Itv)a));
+      inf = toRealDown(INF((Itv)a));
       break;
     case N_IntervalDouble:
       inf = INF((IntervalDouble)a); break;
+    case N_IntervalBigFloat:
+	  inf = mpfr_get_d(BDY((BF)INF((IntervalBigFloat)a)),MPFR_RNDD);;
+	  break;
     case N_A:
     default:
       inf = 0.0;
-      error("ToRealDown: not supported operands.");
+      error("toRealDown: not supported operands.");
       break;
   }
   return inf;
 }
 
-double  ToRealUp(Num a)
+double  toRealUp(Num a)
 {
   double sup;
 
@@ -262,17 +265,20 @@ double  ToRealUp(Num a)
       sup = addulpd(BDY((Real)a)); break;
     case N_B:
       //sup = PARI2doubleUp((BF)a); break;
-      sup = 0;
-      error("ToRealUp: not supported operands.");
+      sup = mpfr_get_d(BDY((BF)a),MPFR_RNDU);;
+      //error("toRealUp: not supported operands.");
       break;
     case N_IP:
-      sup = ToRealUp(SUP((Itv)a)); break;
+      sup = toRealUp(SUP((Itv)a)); break;
     case N_IntervalDouble:
       sup = SUP((IntervalDouble)a); break;
+    case N_IntervalBigFloat:
+      sup = mpfr_get_d(BDY((BF)SUP((IntervalBigFloat)a)),MPFR_RNDU);;
+      break;
     case N_A:
     default:
       sup = 0.0;
-      error("ToRealUp: not supported operands.");
+      error("toRealUp: not supported operands.");
       break;
   }
   return sup;
@@ -281,35 +287,39 @@ double  ToRealUp(Num a)
 
 void  Num2double(Num a, double *inf, double *sup)
 {
-  switch ( NID(a) ) {
-    case N_Q:
-      *inf = Q2doubleDown((Q)a);
-      *sup = Q2doubleUp((Q)a);
-      break;
-    case N_R:
-      *inf = BDY((Real)a);
-      *sup = BDY((Real)a);
-      break;
-    case N_B:
-      //*inf = PARI2doubleDown((BF)a);
-      //*sup = PARI2doubleUp((BF)a);
-      *inf = mpfr_get_d(BDY((BF)a), MPFR_RNDD);
-      *sup = mpfr_get_d(BDY((BF)a), MPFR_RNDU);
-      break;
-    case N_IP:
-      *inf = ToRealDown(INF((Itv)a));
-      *sup = ToRealUp(SUP((Itv)a));
-      break;
-    case N_IntervalDouble:
-      *inf = INF((IntervalDouble)a);
-      *sup = SUP((IntervalDouble)a);
-      break;
-    case N_A:
-    default:
-      *inf = 0.0;
-      *sup = 0.0;
-      error("Num2double: not supported operands.");
-      break;
+  *inf = 0.0;
+  *sup = 0.0;
+  if ( a && NUM(a) ) {
+    switch ( NID(a) ) {
+      case N_Q:
+        *inf = Q2doubleDown((Q)a);
+        *sup = Q2doubleUp((Q)a);
+        break;
+      case N_R:
+        *inf = BDY((Real)a);
+        *sup = BDY((Real)a);
+        break;
+      case N_B:
+        //*inf = PARI2doubleDown((BF)a);
+        //*sup = PARI2doubleUp((BF)a);
+        *inf = mpfr_get_d(BDY((BF)a), MPFR_RNDD);
+        *sup = mpfr_get_d(BDY((BF)a), MPFR_RNDU);
+        break;
+      case N_IP:
+        *inf = toRealDown(INF((Itv)a));
+        *sup = toRealUp(SUP((Itv)a));
+        break;
+      case N_IntervalDouble:
+        *inf = INF((IntervalDouble)a);
+        *sup = SUP((IntervalDouble)a);
+        break;
+      case N_A:
+      default:
+        *inf = 0.0;
+        *sup = 0.0;
+        error("Num2double: not supported operands.");
+        break;
+    }
   }
 }
 
@@ -687,6 +697,25 @@ void  absitvd(IntervalDouble a, Num *b)
     MKReal(t,rp);
     *b = (Num)rp;
   }
+}
+
+void  absintvald(IntervalDouble a, IntervalDouble *b)
+{
+  double  ai,as,inf,sup;
+
+  ai = INF(a);
+  as = SUP(a);
+  if ( as < 0 ) {
+    sup = -ai;
+    inf = -as;
+  } else if (ai < 0) {
+    inf = 0.0;
+	sup = MAX(as, -ai);
+  } else {
+    inf = ai;
+    sup = as;
+  }
+  MKIntervalDouble(inf,sup,*b);
 }
 
 void  distanceitvd(IntervalDouble a, IntervalDouble b, Num *c)

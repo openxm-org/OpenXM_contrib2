@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.7 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/compile.c,v 1.8 2018/03/29 01:32:54 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -219,7 +219,11 @@ SNODE f;
         makevar(buf,&u); a[i] = VR((P)u);
         substr(CO,0,(Obj)s,VR((P)t),(Obj)u,(Obj *)&s1); s = s1;
       }
+#if defined(INTERVAL)
+      mkpf((char *)FA0(f),(Obj)s,ac,a,0,0,0,(PF *)&val); val = 0; break;
+#else
       mkpf((char *)FA0(f),(Obj)s,ac,a,0,0,(PF *)&val); val = 0; break;
+#endif
     case S_SINGLE:
       val = compile((FNODE)FA0(f)); break;
     case S_CPLX:

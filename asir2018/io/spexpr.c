@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/spexpr.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/spexpr.c,v 1.2 2018/10/01 05:49:06 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -116,6 +116,10 @@ extern int hideargs;
 #define PRINTFNODENODE sprintfnodenode
 #define PRINTFARGS sprintfargs
 
+#if defined(INTERVAL)
+#define PRINTBF4ITV sprintbf4itv
+#endif
+
 #include "pexpr_body.c"
 
 /* special functions for string output */
@@ -138,6 +142,21 @@ void sprintbf(BF a)
   mpfr_free_str(s);
 }
 
+#if defined(INTERVAL)
+void sprintbf4itv(BF a)
+{
+  int dprec;
+  char fbuf[BUFSIZ];
+  char *s;
+  dprec = a->body->_mpfr_prec*0.30103;
+  dprec += 1;
+  sprintf(fbuf,"%%.%dR%c",dprec,(double_output==1)?'f':(double_output==2)?'e':'g');
+  mpfr_asprintf(&s,fbuf,a->body);
+  TAIL PUTS(s);
+  mpfr_free_str(s);
+}
+#endif
+
 void sprintmpz(mpz_t z)
 {
   char *s;
@@ -154,3 +173,4 @@ void sprintz(Z n)
 {
   sprintmpz(BDY(n));
 }
+

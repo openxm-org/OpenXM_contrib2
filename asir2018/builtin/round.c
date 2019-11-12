@@ -1,7 +1,7 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/round.c,v 1.1 2018/09/19 05:45:06 noro Exp $ */
 
 #undef INTERVAL
-#define INTERVAL
+#define INTERVAL	1
 #include "ca.h"
 #include "parse.h"
 #include "interval.h"

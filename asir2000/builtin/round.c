@@ -1,7 +1,7 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/round.c,v 1.6 2007/01/30 00:38:25 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/round.c,v 1.7 2018/03/29 01:32:50 noro Exp $ */
 
 #undef INTERVAL
-#define INTERVAL
+#define INTERVAL	1
 #include "ca.h"
 #include "parse.h"
 #include "interval.h"

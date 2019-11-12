@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.3 2019/06/04 07:11:23 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.4 2019/10/17 03:03:12 kondoh Exp $
  */
 
 #include "ca.h"
@@ -9,6 +9,8 @@
 #include "../plot/ifplot.h"
 #endif
 
+#include <mpfr.h>
+#include <mpfi.h>
 // in engine/bf.c
 Num tobf(Num,int);
 
@@ -35,6 +37,12 @@ static void PzeroRewriteCount(NODE, Obj *);
 //int initvd(Num,IntervalDouble);
 //int initvp(Num,Itv);
 //int itvinitvp(Itv,Itv);
+static void Pevalitv(NODE, Obj *);
+static void Pevalitvd(NODE, Obj *);
+void Ppi_itvd(NODE, Obj *);
+void Pe_itvd(NODE, Obj *);
+void Psinitv(NODE, Obj *);
+void Psinitvd(NODE, Obj *);
 #endif
 static void Pprintmode(NODE, Obj *);
 
@@ -72,6 +80,56 @@ struct ftab interval_tab[] = {
   {"zeroRewriteMode",PzeroRewriteMode,-1},
   {"zeroRewriteCountClear",PzeroRewriteCountClear,-1},
   {"zeroRewriteCount",PzeroRewriteCount,-1},
+/* eval */
+  {"evalitv", 	Pevalitv,	-2},
+  {"evalitvd",	Pevalitvd,	1},
+/* math */
+  {"piitvd",	Pitvbf_pi,	-1},
+  {"eitvd",		Pitvbf_e,	-1},
+
+  {"piitv",		Pitvbf_pi,	-1},
+  {"eitv",		Pitvbf_e,	-1},
+#if 0
+  {"factorialitv",Pfactorialitv,1},
+  {"factorialitvd",Pfactorialitvd,1},
+#endif
+
+  {"absitv",	Pitvbf_abs,	-2},
+  {"absitvd",	Pitvbf_abs,	-2},
+
+  {"logitv",	Pitvbf_log,	-2},
+  {"logitvd",	Pitvbf_log,	-2},
+  {"expitv",	Pitvbf_exp,	-2},
+  {"expitvd",	Pitvbf_exp,	-2},
+  {"powitv",	Pitvbf_pow,	-3},
+  {"powitvd",	Pitvbf_pow,	-3},
+
+  {"sinitv",	Pitvbf_sin,	-2},
+  {"sinitvd",	Pitvd_sin,	-2},
+
+  {"cositv",	Pitvbf_cos,	-2},
+  {"cositvd",	Pitvd_cos,	-2},
+  {"tanitv",	Pitvbf_tan,	-2},
+  {"tanitvd",	Pitvd_tan,	-2},
+  {"asinitv",	Pitvbf_asin,	-2},
+  {"asinitvd",	Pitvd_asin,	-2},
+  {"acositv",	Pitvbf_acos,	-2},
+  {"acositvd",	Pitvd_acos,	-2},
+  {"atanitv",	Pitvbf_atan,	-2},
+  {"atanitvd",	Pitvd_atan,	-2},
+  {"sinhitv",	Pitvbf_sinh,	-2},
+  {"sinhitvd",	Pitvd_sinh,	-2},
+  {"coshitv",	Pitvbf_cosh,	-2},
+  {"coshitvd",	Pitvd_cosh,	-2},
+  {"tanhitv",	Pitvbf_tanh,	-2},
+  {"tanhitvd",	Pitvd_tanh,	-2},
+  {"asinhitv",	Pitvbf_asinh,	-2},
+  {"asinhitvd",	Pitvd_asinh,	-2},
+  {"acoshitv",	Pitvbf_acosh,	-2},
+  {"acoshitvd",	Pitvd_acosh,	-2},
+  {"atanhitv",	Pitvbf_atanh,	-2},
+  {"atanhitvd",	Pitvd_atanh,	-2},
+
 /* plot time check */
   {"ifcheck",Pifcheck,-7},
 #endif
@@ -404,8 +462,8 @@ Pitvd(NODE arg, Obj *rp)
   if ( compnum(0,a0,a1) > 0 ) {
     t = a0; a0 = a1; a1 = t;
   }
-  inf = ToRealDown(a0);
-  sup = ToRealUp(a1);
+  inf = toRealDown(a0);
+  sup = toRealUp(a1);
   MKIntervalDouble(inf,sup,d);
   *rp = (Obj)d;
 }
@@ -745,5 +803,691 @@ Pprintmode(NODE arg, Obj *rp)
     *rp = 0;
   }
 }
-  
 
+#if defined(INTERVAL)
+void 
+Ppi_itvd(NODE arg, Obj *rp)
+{
+	double inf, sup;
+	IntervalDouble c;
+    FPMINUSINF
+	sscanf("3.1415926535897932384626433832795028841971693993751", "%lf", &inf);
+    FPPLUSINF
+    sscanf("3.1415926535897932384626433832795028841971693993752", "%lf", &sup);
+    FPNEAREST
+    MKIntervalDouble(inf,sup,c);
+	*rp = (Obj)c;
+}
+void 
+Pe_itvd(NODE arg, Obj *rp)
+{
+	double inf, sup;
+	IntervalDouble c;
+    FPMINUSINF
+	sscanf( "2.7182818284590452353602874713526624977572470936999", "%lf", &inf);
+    FPPLUSINF
+    sscanf( "2.7182818284590452353602874713526624977572470937000", "%lf", &sup);
+    FPNEAREST
+    MKIntervalDouble(inf,sup,c);
+	*rp = (Obj)c;
+}
+void 
+Pln2_itvd(NODE arg, Obj *rp)
+{
+	double inf, sup;
+	IntervalDouble c;
+    FPMINUSINF
+	sscanf( "0.69314718055994530941723212145817656807550013436025", "%lf", &inf);
+    FPPLUSINF
+    sscanf( "0.69314718055994530941723212145817656807550013436026", "%lf", &sup);
+    FPNEAREST
+    MKIntervalDouble(inf,sup,c);
+	*rp = (Obj)c;
+}
+
+void mpfi_func(NODE arg, int (*mpfi_f)(), int prec, Obj *rp)
+{
+  Num a, ii, ss;
+  Itv c;
+  BF inf, sup;
+  int arg1prec;
+  mpfi_t mpitv, rv;
+
+
+/*  
+  if ( argc(arg) == 2 ) {
+    prec = QTOS((Q)ARG1(arg))*3.32193;
+    if ( prec < MPFR_PREC_MIN ) prec = MPFR_PREC_MIN;
+    else if ( prec > MPFR_PREC_MAX ) prec = MPFR_PREC_MAX;
+  } else {
+    prec = 0;
+    prec = mpfr_get_default_prec();
+  }
+*/
+  if ( prec > 0 ) arg1prec = prec;
+  else arg1prec = NEXT(arg) ? ZTOS((Q)ARG1(arg)) : mpfr_get_default_prec();
+  a = ARG0(arg);
+  itvtois((Itv)a, &ii, &ss);
+
+  inf = (BF)tobf(ii, arg1prec);
+  sup = (BF)tobf(ss, arg1prec);
+  
+  mpfi_init2(rv,arg1prec);
+  mpfi_init2(mpitv,arg1prec);
+  mpfr_set(&(mpitv->left),  BDY(inf), MPFR_RNDD);
+  mpfr_set(&(mpitv->right), BDY(sup), MPFR_RNDU);
+
+  (*mpfi_f)(rv, mpitv);
+  //mpfi_sin(rv, mpitv);
+
+  MPFRTOBF(&(rv->left), inf);
+  MPFRTOBF(&(rv->right), sup);
+
+  if ( !cmpbf((Num)inf,0) ) inf = 0;
+  if ( !cmpbf((Num)sup,0) ) sup = 0;          
+
+  if ( inf || sup ) {
+  	istoitv((Num)inf, (Num)sup, &c);
+  } else {
+    c = 0;
+  }
+  *rp = (Obj)c;
+  //mpfi_clear(rv);
+  mpfi_clear(mpitv);
+}
+
+void mpfi_func_d(NODE arg, int (*mpfi_f)(), Obj *rp)
+{
+  Obj bfv;
+  Num ii, ss;
+  IntervalDouble c;
+  double inf, sup;
+
+  mpfi_func(arg, mpfi_f, 53, &bfv);
+  itvtois((Itv)bfv, &ii, &ss);
+  inf = toRealDown(ii);
+  sup = toRealUp(ss);
+  MKIntervalDouble(inf,sup,c);
+  *rp = (Obj)c;
+}
+
+  
+void
+Psinitvd(NODE arg, Obj *rp)
+{
+  Obj bfv;
+  Num ii,ss;
+  IntervalDouble c;
+  double  ai,as,mas, bi,bs;
+  double  inf,sup;
+
+#if 1
+  mpfi_func(arg, mpfi_sin, 53, &bfv);
+  itvtois((Itv)bfv, &ii, &ss);
+  inf = toRealDown(ii);
+  sup = toRealUp(ss);
+  MKIntervalDouble(inf,sup,c);
+  *rp = (Obj)c;
+#else
+    a = ARG0(arg);
+    Num2double(a,&ai,&as);
+    FPMINUSINF
+	inf = sin(ai);
+    FPPLUSINF
+	sup = sin(as);
+    FPNEAREST
+    MKIntervalDouble(inf,sup,c);
+	*rp = (Obj)c;
+#endif
+}
+
+void
+Psinitv(NODE arg, Obj *rp)
+{
+  //Num a;
+  //Itv c;
+  //BF inf, sup;
+  //int prec;
+  //BF r,re,im;
+  //mpfi_t mpitv, rv;
+
+#if 1
+  mpfi_func(arg, mpfi_sin, 0, rp);
+#else
+  prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : mpfr_get_default_prec();
+  a = ARG0(arg);
+  itvtois((Itv)a, (Num *)&inf, (Num *)&sup);
+
+  mpfi_init2(rv,prec);
+  mpfi_init2(mpitv,prec);
+  mpfr_set(&(mpitv->left), inf->body, MPFR_RNDD);
+  mpfr_set(&(mpitv->right), BDY(sup), MPFR_RNDU);
+
+  //(*mpfi_f)(rv, mpitv);
+  mpfi_sin(rv, mpitv);
+
+  MPFRTOBF(&(rv->left), inf);
+  MPFRTOBF(&(rv->right), sup);
+  istoitv((Num)inf, (Num)sup, &c);
+  *rp = (Obj)c;
+  mpfi_clear(rv);
+  mpfi_clear(mpitv);
+#endif
+}
+
+
+
+
+//void evalitvr(VL, Obj, int, int, Obj *);
+
+static void
+Pevalitv(NODE arg, Obj *rp)
+{
+  int prec;
+
+  asir_assert(ARG0(arg),O_R,"evalitv");
+  if ( argc(arg) == 2 ) {
+    long int mpfr_prec_max = MPFR_PREC_MAX;
+    prec = ZTOS((Q)ARG1(arg))*3.32193;
+    if ( prec < MPFR_PREC_MIN ) prec = MPFR_PREC_MIN;
+    //else if ( prec > MPFR_PREC_MAX ) prec = MPFR_PREC_MAX;
+    else if ( prec > mpfr_prec_max ) prec = mpfr_prec_max;
+  } else
+    prec = 0;
+  evalitvr(CO,(Obj)ARG0(arg),prec,EvalIntervalBigFloat,rp);
+}
+
+static void
+Pevalitvd(NODE arg, Obj *rp)
+{
+  asir_assert(ARG0(arg),O_R,"evalitvd");
+  evalitvr(CO,(Obj)ARG0(arg),53,EvalIntervalDouble,rp);
+}
+
+// in parse/puref.c
+void instoobj(PFINS ins,Obj *rp);
+
+// in this
+void evalitvr(VL, Obj, int, int, Obj *);
+void evalitvp(VL,   P, int, int, P *);
+void evalitvv(VL,   V, int, int, Obj *);
+void evalitvins(PFINS, int, int, Obj *);
+
+
+
+void evalitvr(VL vl,Obj a,int prec, int type, Obj *c)
+{
+  Obj nm,dn;
+
+  if ( !a )
+    *c = 0;
+  else {
+    switch ( OID(a) ) {
+      case O_N:
+        toInterval((Num)a, prec, type, (Num *)c);
+		break;
+      case O_P:
+        evalitvp(vl,(P)a,prec,type,(P *)c);
+		break;
+      case O_R:  
+        evalitvp(vl,NM((R)a),prec,type,(P *)&nm);
+		evalitvp(vl,DN((R)a),prec,type,(P *)&dn);
+        divr(vl,nm,dn,c);
+        break;
+      default:
+        error("evalr : not implemented"); break;
+    }
+  }
+}
+
+void evalitvp(VL vl,P p,int prec, int type, P *pr)
+{
+  P t;
+  DCP dc,dcr0,dcr;
+  Obj u;
+
+  if ( !p || NUM(p) ) {
+        toInterval((Num)p, prec, type, (Num *)pr);
+    //*pr = p;
+  } else {
+    for ( dcr0 = 0, dc = DC((P)p); dc; dc = NEXT(dc) ) {
+      evalitvp(vl,COEF(dc),prec,type, &t);
+      if ( t ) {
+        NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc); COEF(dcr) = t;
+      }
+    }
+    if ( !dcr0 ) {
+      *pr = 0; return;
+    } else {
+      NEXT(dcr) = 0; MKP(VR(p),dcr0,t);
+    }
+    if ( NUM(t) ) {
+      //*pr = t;
+        toInterval((Num)t, prec, type, (Num *)pr);
+		return;
+	} else if ( (VR(t) != VR(p)) || ((vid)VR(p)->attr != V_PF) ) {
+      *pr = t; return;
+    } else {
+    	evalitvv(vl,VR(p),prec,type,&u);
+		substr(vl,1,(Obj)t,VR(p),u, (Obj *)&t);
+		if ( t && NUM(t) ) {
+        	toInterval((Num)t, prec, type, (Num *)pr);
+		} else {
+			*pr = t;
+		}
+    }
+  }
+}
+
+void evalitvv(VL vl,V v,int prec, int type, Obj *rp)
+{
+  PFINS ins,tins;
+  PFAD ad,tad;
+  PF pf;
+  P t;
+  int i;
+
+  if ( (vid)v->attr != V_PF ) {
+    MKV(v,t); *rp = (Obj)t;
+  } else {
+    ins = (PFINS)v->priv; ad = ins->ad; pf = ins->pf;
+    tins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
+    tins->pf = pf;
+    for ( i = 0, tad = tins->ad; i < pf->argc; i++ ) {
+      tad[i].d = ad[i].d;
+		evalitvr(vl,ad[i].arg,prec,type,&tad[i].arg);
+    }
+    evalitvins(tins,prec,type,rp);
+  }
+}
+
+void evalitvins(PFINS ins,int prec, int type, Obj *rp)
+{
+  PF pf;
+  PFINS tins;
+  PFAD ad,tad;
+  int i;
+  Z q;
+  V v;
+  P x;
+  NODE n0,n;
+
+
+  pf = ins->pf; ad = ins->ad;
+  tins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
+  tins->pf = pf; tad = tins->ad;
+  for ( i = 0; i < pf->argc; i++ ) {
+    //tad[i].d = ad[i].d; evalr(CO,ad[i].arg,prec,&tad[i].arg);
+    tad[i].d = ad[i].d; evalitvr(CO,ad[i].arg,prec,type,&tad[i].arg);
+   }
+  for ( i = 0; i < pf->argc; i++ )
+    if ( tad[i].d || (tad[i].arg && !NUM(tad[i].arg)) ) break;
+  if ( (i != pf->argc) || !pf->intervalfunc[type] ) { ///////////////////////////
+    instoobj(tins,rp);
+  } else {
+	int IsCPLX = 0;
+    for ( n0 = 0, i = 0; i < pf->argc; i++ ) {
+      NEXTNODE(n0,n); BDY(n) = (pointer)tad[i].arg;
+		if (tad[i].arg && NID(tad[i].arg) == N_C) IsCPLX = 1;
+    }
+    if ( prec ) {
+      NEXTNODE(n0,n); STOZ(prec,q); BDY(n) = (pointer)q;
+    }
+    if ( n0 ) NEXT(n) = 0;
+
+
+	if ( IsCPLX ) {
+    	instoobj(tins,rp);
+	} else {
+    	(*pf->intervalfunc[type])(n0,rp);
+	}
+  }
+}
+
+
+void Pitvbf_pi(NODE arg, Obj *rp)
+{
+  BF inf, sup;
+  IntervalBigFloat c;
+  mpfi_t rv;
+  int prec;
+
+  prec = (arg) ? ZTOS((Q)ARG0(arg)) : 0; //mpfr_get_default_prec();
+  prec ? mpfi_init2(rv,prec) : mpfi_init(rv);
+
+  mpfi_const_pi(rv);
+
+  MPFRTOBF(&(rv->left), inf);
+  MPFRTOBF(&(rv->right), sup);
+
+  MKIntervalBigFloat(inf,sup,c);
+
+  *rp = (Obj)c;
+}
+
+void Pitvd_pi(NODE arg, Obj *rp)
+{
+  BF bfinf, bfsup;
+  IntervalDouble c;
+  mpfi_t rv;
+  double inf, sup;
+
+  mpfi_init2(rv,53);
+
+  mpfi_const_pi(rv);
+
+  MPFRTOBF(&(rv->left),  bfinf);
+  MPFRTOBF(&(rv->right), bfsup);
+
+  inf = toRealDown((Num)bfinf);
+  sup = toRealUp((Num)bfsup);
+
+  MKIntervalDouble(inf,sup,c);
+
+  *rp = (Obj)c;
+}
+
+void Pitvbf_e(NODE arg,Obj *rp)
+{
+  BF inf, sup;
+  IntervalBigFloat c;
+  mpfi_t rv;
+  mpfi_t one;
+  int prec;
+
+  prec = (arg) ? ZTOS((Q)ARG0(arg)) : 0; //mpfr_get_default_prec();
+  prec ? mpfi_init2(rv,prec) : mpfi_init(rv);
+
+  mpfi_init(one);
+  mpfi_set_ui(one,1);
+  mpfi_exp(rv,one);
+
+  MPFRTOBF(&(rv->left), inf);
+  MPFRTOBF(&(rv->right), sup);
+
+  MKIntervalBigFloat(inf,sup,c);
+  //istoitv((Num)inf, (Num)sup, &c);
+  *rp = (Obj)c;
+  mpfi_clear(one);
+}
+
+void Pitvd_e(NODE arg, Obj *rp)
+{
+  BF bfinf, bfsup;
+  IntervalDouble c;
+  mpfi_t rv;
+  mpfi_t one;
+  double inf, sup;
+
+  mpfi_init2(rv,53);
+
+  mpfi_init2(one, 53);
+  mpfi_set_ui(one,1);
+  mpfi_exp(rv,one);
+
+
+  MPFRTOBF(&(rv->left),  bfinf);
+  MPFRTOBF(&(rv->right), bfsup);
+
+  inf = toRealDown((Num)bfinf);
+  sup = toRealUp((Num)bfsup);
+
+  MKIntervalDouble(inf,sup,c);
+
+  *rp = (Obj)c;
+}
+
+void (*pi_itv_ft[])() =		{Pitvd_pi,		0,	Pitvbf_pi};
+void (*e_itv_ft[])() =		{Pitvd_e,		0,	Pitvbf_e};
+//void (*sin_itv_ft[])() =	{Psinitvd,	0,	Psinitv};
+void (*sin_itv_ft[])() =	{Pitvd_sin,		0,	Pitvbf_sin};
+void (*cos_itv_ft[])() =	{Pitvbf_cos,	0,	Pitvbf_cos};
+void (*tan_itv_ft[])() =	{Pitvd_tan,		0,	Pitvbf_tan};
+void (*asin_itv_ft[])() =	{Pitvd_asin,	0,	Pitvbf_asin};
+void (*acos_itv_ft[])() =	{Pitvd_acos,	0,	Pitvbf_acos};
+void (*atan_itv_ft[])() =	{Pitvd_atan,	0,	Pitvbf_atan};
+void (*sinh_itv_ft[])() =	{Pitvd_sinh,	0,	Pitvbf_sinh};
+void (*cosh_itv_ft[])() =	{Pitvd_cosh,	0,	Pitvbf_cosh};
+void (*tanh_itv_ft[])() =	{Pitvd_tanh,	0,	Pitvbf_tanh};
+void (*asinh_itv_ft[])() =	{Pitvd_asinh,	0,	Pitvbf_asinh};
+void (*acosh_itv_ft[])() =	{Pitvd_acosh,	0,	Pitvbf_acosh};
+void (*atanh_itv_ft[])() =	{Pitvd_atanh,	0,	Pitvbf_atanh};
+void (*exp_itv_ft[])() =	{Pitvd_exp,		0,	Pitvbf_exp};
+void (*log_itv_ft[])() =	{Pitvd_log,		0,	Pitvbf_log};
+void (*abs_itv_ft[])() =	{0};
+void (*pow_itv_ft[])() =	{Pitvbf_pow,	0,	Pitvbf_pow};
+//void (*pow_itv_ft[])() =	{0,	0,	0};       
+
+
+void Pitvbf_sin(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_sin, 0, rp);
+}
+
+void Pitvbf_cos(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_cos, 0, rp);
+}
+
+void Pitvbf_tan(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_tan, 0, rp);
+}
+
+void Pitvbf_asin(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_asin, 0, rp);
+}
+
+void Pitvbf_acos(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_acos, 0, rp);
+}
+
+void Pitvbf_atan(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_atan, 0, rp);
+}
+
+void Pitvbf_sinh(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_sinh, 0, rp);
+}
+
+void Pitvbf_cosh(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_cosh, 0, rp);
+}
+
+void Pitvbf_tanh(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_tanh, 0, rp);
+}
+
+void Pitvbf_asinh(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_asinh, 0, rp);
+}
+
+void Pitvbf_acosh(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_acosh, 0, rp);
+}
+
+void Pitvbf_atanh(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_atanh, 0, rp);
+}
+
+void Pitvbf_exp(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_exp, 0, rp);
+}
+
+void Pitvbf_log(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_log, 0, rp);
+}
+
+void Pitvbf_abs(NODE arg,Obj *rp)
+{
+  mpfi_func(arg, mpfi_abs, 0, rp);
+}
+
+void Pitvd_sin(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_sin, rp);
+}
+
+void Pitvd_cos(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_cos, rp);
+}
+
+void Pitvd_tan(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_tan, rp);
+}
+
+void Pitvd_asin(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_asin, rp);
+}
+
+void Pitvd_acos(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_acos, rp);
+}
+
+void Pitvd_atan(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_atan, rp);
+}
+
+void Pitvd_sinh(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_sinh, rp);
+}
+
+void Pitvd_cosh(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_cosh, rp);
+}
+
+void Pitvd_tanh(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_tanh, rp);
+}
+
+void Pitvd_asinh(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_asinh, rp);
+}
+
+void Pitvd_acosh(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_acosh, rp);
+}
+
+void Pitvd_atanh(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_atanh, rp);
+}
+
+void Pitvd_exp(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_exp, rp);
+}
+
+void Pitvd_log(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_log, rp);
+}
+
+void Pitvd_abs(NODE arg,Obj *rp)
+{
+  mpfi_func_d(arg, mpfi_abs, rp);
+}
+
+/*
+void mp_factorial(NODE arg,Num *rp)
+{
+  struct oNODE arg0;
+  Num a,a1;
+
+  a = (Num)ARG0(arg);
+  if ( !a ) *rp = (Num)ONE;
+  else if ( INT(a) ) Pfac(arg,rp);
+  else {
+    addnum(0,a,(Num)ONE,&a1);
+    arg0.body = (pointer)a1;
+    arg0.next = arg->next;
+    Pmpfr_gamma(&arg0,rp);
+  }
+}
+*/
+
+void Pitvbf_pow(NODE arg,Num *rp)
+{
+  Num a,e;
+  BF r,re,im;
+  C c;
+  mpc_t mpc,a1,e1;
+  int prec;
+
+  prec = NEXT(NEXT(arg)) ? ZTOS((Q)ARG2(arg)) : mpfr_get_default_prec();
+  a = ARG0(arg);
+  e = ARG1(arg);
+  if ( !e ) {
+    *rp = (Num)ONE;
+  } else if ( !a ) {
+    *rp = 0;
+  } else if ( NID(a) == N_C || NID(e) == N_C ) {
+    error("itv_pow() : not support args");
+    *rp = 0;
+  } else {
+    Num ii, ss;
+    Itv c;
+    BF inf, sup;
+    mpfi_t a_val, e_val, rv;
+
+    mpfi_init2(rv,prec);
+
+    itvtois((Itv)a, &ii, &ss);
+    inf = (BF)tobf(ii, prec);
+    sup = (BF)tobf(ss, prec);
+    mpfi_init2(a_val,prec);
+    mpfr_set(&(a_val->left),  BDY(inf), MPFR_RNDD);
+    mpfr_set(&(a_val->right), BDY(sup), MPFR_RNDU);
+
+    itvtois((Itv)e, &ii, &ss);
+    inf = (BF)tobf(ii, prec);
+    sup = (BF)tobf(ss, prec);
+    mpfi_init2(e_val,prec);
+    mpfr_set(&(e_val->left),  BDY(inf), MPFR_RNDD);
+    mpfr_set(&(e_val->right), BDY(sup), MPFR_RNDU);
+
+
+    mpfi_log(rv, a_val);
+    mpfi_mul(a_val, rv, e_val);
+    mpfi_exp(rv, a_val);
+
+    MPFRTOBF(&(rv->left), inf);
+    MPFRTOBF(&(rv->right), sup);
+ 
+    if ( !cmpbf((Num)inf,0) ) inf = 0;
+    if ( !cmpbf((Num)sup,0) ) sup = 0;
+
+    if ( inf || sup ) {
+      istoitv((Num)inf, (Num)sup, &c);
+    } else {
+      c = 0;
+    }
+    *rp = (Num)c;
+  //mpfi_clear(rv);
+    mpfi_clear(a_val);
+    mpfi_clear(e_val);
+  }
+}
+
+#endif

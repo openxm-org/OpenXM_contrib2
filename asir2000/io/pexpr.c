@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.43 2018/03/29 01:32:53 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/io/pexpr.c,v 1.44 2018/03/29 07:50:06 ohara Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -122,6 +122,10 @@ int printmode = PRINTF_G;
 #define PRINTFNODENODE printfnodenode
 #define PRINTFARGS printfargs
 
+#if defined(INTERVAL)
+#define PRINTBF4ITV printbf4itv
+#endif
+
 #include "pexpr_body.c"
 
 /* spetial functions for file output */
@@ -162,4 +166,20 @@ void printbf(BF a)
   TAIL PUTS(s);
   mpfr_free_str(s);
 }
+
+#if defined(INTERVAL)
+void printbf4itv(BF a)
+{
+  int dprec;
+  char fbuf[BUFSIZ];
+  char *s;
+  dprec = (a->body->_mpfr_prec)*0.30103;
+  if ( !dprec ) dprec = 1;
+  dprec += 1;
+  sprintf(fbuf,"%%.%dR%c",dprec,(double_output==1)?'f':(double_output==2)?'e':'g');
+  mpfr_asprintf(&s,fbuf,a->body);
+  TAIL PUTS(s);
+  mpfr_free_str(s);
+}
+#endif
 

@@ -5554,7 +5554,7 @@ else
 fi
 
 
-GMPLIB="-L${libdir} -lmpc -lmpfr -lgmp"
+GMPLIB="-L${libdir} -lmpfi -lmpc -lmpfr -lgmp"
 # Check whether --enable-static_gmp was given.
 if test "${enable_static_gmp+set}" = set; then :
   enableval=$enable_static_gmp; enable_static_gmp=yes

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.2 2019/03/03 05:21:17 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.3 2019/08/28 23:27:34 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -333,7 +333,11 @@ V loadpfins(FILE *s)
       sprintf(buf,"_%c",'a'+i);
       makevar(buf,&u); a[i] = VR(u);
     }
+#if defined(INTERVAL)
+    mkpf(name,0,argc,a,0,0,0,0,&pf);
+#else
     mkpf(name,0,argc,a,0,0,0,&pf);
+#endif
   }
   darray = (int *)ALLOCA(argc*sizeof(int));
   args = (Obj *)ALLOCA(argc*sizeof(int));

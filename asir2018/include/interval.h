@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/include/interval.h,v 1.2 2019/06/04 07:11:23 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/interval.h,v 1.3 2019/10/17 03:03:12 kondoh Exp $
 */
 #ifndef  _INTERVAL_H
 #define  _INTERVAL_H
@@ -7,8 +7,13 @@
 #define  PRINTF_G  0
 #define  PRINTF_E  1
 
-#define	INT_ASIR_VERSION	20181218
+#define	INT_ASIR_VERSION	20191111
 
+#if defined(INTERVAL)
+#if INTERVAL == 0
+#undef INTERVAL
+#endif
+#endif
 #if defined(INTERVAL)
 
 #include <math.h>
@@ -184,6 +189,8 @@ typedef struct oIntervalBigFloat *IntervalBigFloat;
 extern int zerorewrite;
 extern int zerorewriteCount;
 
+#define	ZEROREWRITE	  if (zerorewrite && initvp(0,c) ) { *rp = 0; zerorewriteCount++; }
+
 /* general macros */
 #define INF(p)  ((p)->inf)
 #define SUP(p)  ((p)->sup)
@@ -203,13 +210,17 @@ extern int zerorewriteCount;
 #define MKIntervalBigFloat(a,b,c)  (NEWIntervalBigFloat(c),(INF(c)=(a),SUP(c)=(b)))
 
 #define ToItvP(a,c)  (NEWItvP(c),INF(c)=(a),SUP(c)=(a))
-#define ToIntervalDouble(a,c)  (NEWIntervalDouble(c),INF(c)=(ToReal(a)),SUP(c)=(ToReal(a)))
+#define ToIntervalDouble(a,c)  (NEWIntervalDouble(c),INF(c)=(toRealDown(a)),SUP(c)=(toRealUp(a)))
 #define ToIntervalBigFloat(a,c)  (NEWIntervalBigFloat(c),INF(c)=(a),SUP(c)=(a))
 
 #define ITVP(a) (NID(a)==N_IP)
 #define ITVD(a) (NID(a)==N_IntervalDouble)
 #define ITVQ(a) (NID(a)==N_IntervalQuad)
 #define ITVF(a) (NID(a)==N_IntervalBigFloat)
+
+#define	EvalIntervalDouble		0
+#define	EvalIntervalQuad		1
+#define	EvalIntervalBigFloat	2
 
 #if 0
 double  ToRealSup(Num);
@@ -257,7 +268,8 @@ void miditvp(Itv, Num *);
 void    cupitvp(Itv, Itv, Itv *);
 void    capitvp(Itv, Itv, Itv *);
 void    widthitvp(Itv, Num *);
-void absitvp(Itv, Num *);
+void	absitvp(Itv, Num *);
+void	absintvalp(Itv, Itv *);
 void    distanceitvp(Itv, Itv, Num *);
 
 
@@ -268,6 +280,9 @@ void    distanceitvp(Itv, Itv, Num *);
 //double  bf2double(BF);
 //void  addulp(IntervalBigFloat, IntervalBigFloat *);
 //void  getulp(BF, BF *);
+double mpfr2dblDown(mpfr_t);
+double mpfr2dblUp(mpfr_t);
+void toInterval(Num, int, int, Num *);
 
 void    additvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
 void    subitvf(IntervalBigFloat, IntervalBigFloat, IntervalBigFloat *);
@@ -287,8 +302,8 @@ void absitvf(Itv, Num *);
 void distanceitvf(Itv, Itv, Num *);
 
 /***    engine/d-itv.c    ***/
-double  ToRealDown(Num);
-double  ToRealUp(Num);
+double  toRealDown(Num);
+double  toRealUp(Num);
 void  Num2double(Num, double *, double *);
 
 void    additvd(Num, Num, IntervalDouble *);
@@ -305,7 +320,76 @@ void    cupitvd(IntervalDouble, IntervalDouble, IntervalDouble *);
 void    capitvd(IntervalDouble, IntervalDouble, IntervalDouble *);
 void    widthitvd(IntervalDouble, Num *);
 void    absitvd(IntervalDouble, Num *);
+void    absintvald(IntervalDouble, IntervalDouble *);
 void    distanceitvd(IntervalDouble, IntervalDouble, Num *);
+
+/***    builtin/itvnum.c    ***/
+
+void evalitvr(VL ,Obj ,int , int , Obj *);
+void evalitvp(VL ,P ,int , int , P *);
+void evalitvv(VL ,V ,int , int , Obj *);
+//void evalitvins(PFINS ,int , int , Obj *);
+extern void (*pi_itv_ft[])();
+extern void (*e_itv_ft[])();
+extern void (*sin_itv_ft[])();
+extern void (*cos_itv_ft[])();
+extern void (*tan_itv_ft[])();
+extern void (*asin_itv_ft[])();
+extern void (*acos_itv_ft[])();
+extern void (*atan_itv_ft[])();
+extern void (*sinh_itv_ft[])();
+extern void (*cosh_itv_ft[])();
+extern void (*tanh_itv_ft[])();
+extern void (*asinh_itv_ft[])();
+extern void (*acosh_itv_ft[])();
+extern void (*atanh_itv_ft[])();
+extern void (*exp_itv_ft[])();
+extern void (*log_itv_ft[])();
+extern void (*abs_itv_ft[])();
+extern void (*pow_itv_ft[])();
+//void devalr(VL ,Obj ,Obj *);
+//void devalp(VL ,P ,P *);
+//void devalv(VL ,V ,Obj *);
+//void devalins(PFINS ,Obj *);
+
+void Pitvbf_pi(NODE ,Obj *);
+void Pitvbf_e(NODE ,Obj *);
+void Pitvbf_sin(NODE ,Obj *);
+void Pitvbf_cos(NODE ,Obj *);
+void Pitvbf_tan(NODE ,Obj *);
+void Pitvbf_asin(NODE ,Obj *);
+void Pitvbf_acos(NODE ,Obj *);
+void Pitvbf_atan(NODE ,Obj *);
+void Pitvbf_sinh(NODE ,Obj *);
+void Pitvbf_cosh(NODE ,Obj *);
+void Pitvbf_tanh(NODE ,Obj *);
+void Pitvbf_asinh(NODE ,Obj *);
+void Pitvbf_acosh(NODE ,Obj *);
+void Pitvbf_atanh(NODE ,Obj *);
+void Pitvbf_exp(NODE ,Obj *);
+void Pitvbf_log(NODE ,Obj *);
+void Pitvbf_abs(NODE ,Obj *);
+//void mp_factorial(NODE ,Num *);
+void Pitvbf_pow(NODE ,Num *);
+
+void Pitvd_pi(NODE ,Obj *);
+void Pitvd_e(NODE ,Obj *);
+void Pitvd_sin(NODE ,Obj *);
+void Pitvd_cos(NODE ,Obj *);
+void Pitvd_tan(NODE ,Obj *);
+void Pitvd_asin(NODE ,Obj *);
+void Pitvd_acos(NODE ,Obj *);
+void Pitvd_atan(NODE ,Obj *);
+void Pitvd_sinh(NODE ,Obj *);
+void Pitvd_cosh(NODE ,Obj *);
+void Pitvd_tanh(NODE ,Obj *);
+void Pitvd_asinh(NODE ,Obj *);
+void Pitvd_acosh(NODE ,Obj *);
+void Pitvd_atanh(NODE ,Obj *);
+void Pitvd_exp(NODE ,Obj *);
+void Pitvd_log(NODE ,Obj *);
+void Pitvd_abs(NODE ,Obj *);
+void Pitvd_pow(NODE ,Num *);
 
 #endif /* end of INTERVAL */
 #endif /* end of _INTERVAL_H */

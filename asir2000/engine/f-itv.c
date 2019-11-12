@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.8 2018/03/29 01:32:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/f-itv.c,v 1.9 2019/06/04 07:11:22 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -119,6 +119,114 @@ extern int mpfr_roundmode;
 Num tobf(Num,int);
 
 #define BFPREC(a) (((BF)(a))->body->_mpfr_prec)
+
+double mpfr2dblDown(mpfr_t a)
+{
+	return mpfr_get_d(a,MPFR_RNDD);
+}
+
+double mpfr2dblUp(mpfr_t a)
+{
+	return mpfr_get_d(a,MPFR_RNDU);
+}
+
+
+void toInterval(Num a, int prec, int type, Num *rp)
+{
+	if ( ! a ) {
+		*rp = 0;
+	} else if (type == EvalIntervalDouble) {
+		if (NID(a)==N_C) {
+			double inf,sup;
+			C z;
+			IntervalDouble re, im;
+
+			if ( ! ((C)a)->r ) {
+				re = 0;
+			} else {
+				inf = toRealDown(((C)a)->r);
+				sup = toRealUp(((C)a)->r);
+				MKIntervalDouble(inf,sup,re);
+            }
+			if ( ! ((C)a)->i ) {
+				im = 0;
+			} else {
+				inf = toRealDown(((C)a)->i);
+				sup = toRealUp(((C)a)->i);
+				MKIntervalDouble(inf,sup,im);
+			}
+			if ( !re && !im )
+				z = 0;
+			else
+				reimtocplx((Num)re,(Num)im,(Num *)&z);
+			*rp = (Num)z;
+		} else {
+			double inf,sup;
+			IntervalDouble c;
+	
+			inf = toRealDown(a);
+			sup = toRealUp(a);
+	
+			MKIntervalDouble(inf,sup,c);
+			*rp = (Num) c;
+		}
+	} else if (type == EvalIntervalBigFloat) {
+		if (NID(a)==N_C) {
+			Num ai,as;
+			Num inf,sup;
+			C z;
+			IntervalBigFloat re, im;
+			int current_roundmode;
+
+			current_roundmode = mpfr_roundmode;
+
+			if ( ! ((C)a)->r ) 
+				re = 0;
+			else {
+				itvtois((Itv)((C)a)->r,&ai,&as);
+    			mpfr_roundmode = MPFR_RNDD;
+				inf = tobf(ai, prec);
+				mpfr_roundmode = MPFR_RNDU;
+				sup = tobf(as, prec);
+				istoitv(inf,sup,(Itv *)&re);
+			}
+
+			if ( ! ((C)a)->i ) 
+				im = 0;
+			else {
+				itvtois((Itv)((C)a)->i,&ai,&as);
+    			mpfr_roundmode = MPFR_RNDD;
+				inf = tobf(ai, prec);
+				mpfr_roundmode = MPFR_RNDU;
+				sup = tobf(as, prec);
+				istoitv(inf,sup,(Itv *)&im);
+			}
+
+    		mpfr_roundmode = current_roundmode;	
+			reimtocplx((Num)re,(Num)im,(Num *)&z);
+			*rp = (Num)z;
+		} else {
+			Num ai,as;
+			Num inf,sup;
+			IntervalBigFloat c;
+			int current_roundmode;
+
+			itvtois((Itv)a,&ai,&as);
+
+			current_roundmode = mpfr_roundmode;
+    		mpfr_roundmode = MPFR_RNDD;
+			inf = tobf(ai, prec);
+			mpfr_roundmode = MPFR_RNDU;
+			sup = tobf(as, prec);
+			istoitv(inf,sup,(Itv *)&c);
+    		mpfr_roundmode = current_roundmode;	
+			*rp = (Num) c;
+		}
+	} else {
+		error("toInterval: not supported types.");
+		*rp = 0;
+	}
+}
 
 
 void additvf(IntervalBigFloat a, IntervalBigFloat b, IntervalBigFloat *rp)

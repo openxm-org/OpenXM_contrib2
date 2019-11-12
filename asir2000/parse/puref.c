@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.14 2018/03/28 05:27:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/puref.c,v 1.15 2018/03/29 01:32:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,8 +89,13 @@ void searchc(char *name,FUNC *fp)
   *fp = 0;
 }
 
+#if defined(INTERVAL)
+void mkpf(char *name,Obj body,int argc,V *args,
+  int (*parif)(),double (*libmf)(), int (*simp)(), void (**intervalfunc)(), PF *pfp)
+#else
 void mkpf(char *name,Obj body,int argc,V *args,
   int (*parif)(),double (*libmf)(), int (*simp)(),PF *pfp)
+#endif
 {
   PF pf;
   NODE node;
@@ -98,6 +103,9 @@ void mkpf(char *name,Obj body,int argc,V *args,
   NEWPF(pf); pf->name = name; pf->body = body; 
   pf->argc = argc; pf->args = args; pf->pari = parif; pf->simplify = simp;
   pf->libm = libmf;
+#if defined(INTERVAL)
+  pf->intervalfunc = intervalfunc;
+#endif
   for ( node = pflist; node; node = NEXT(node) )
     if ( !strcmp(((PF)BDY(node))->name,name) )
       break;
@@ -724,6 +732,12 @@ void simplify_abs_ins(PFINS ins,Obj *rp)
   } else if ( !ad[0].d && BIGFLOAT(a) ) {
     arg0.body = (pointer)a; arg0.next = 0;
     mp_abs(&arg0,rp);
+#if defined(INTERVAL)
+  } else if ( !ad[0].d && ITVD(a) ) {
+    absintvald((IntervalDouble)a,(IntervalDouble*)rp);
+  } else if ( !ad[0].d && ITVF(a) ) {
+    absintvalp((Itv)a,(Itv*)rp);
+#endif
   } else simplify_elemfunc_ins(ins,rp);
 }
 

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.79 2018/03/28 05:27:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.80 2018/03/29 01:32:54 noro Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -745,7 +745,11 @@ pointer evalstat(SNODE f)
         makevar(buf,&u); a[i] = VR(u);
         substr(CO,0,(Obj)s,VR((P)t),(Obj)u,(Obj *)&s1); s = s1;
       }
+#if defined(INTERVAL)
+      mkpf((char *)FA0(f),(Obj)s,ac,a,0,0,0,0,(PF *)&val); val = 0;
+#else
       mkpf((char *)FA0(f),(Obj)s,ac,a,0,0,0,(PF *)&val); val = 0;
+#endif
       v = searchvar((char *)FA0(f));
       if ( v ) {
         searchpf((char *)FA0(f),&func);

@@ -1,4 +1,4 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.1 2018/09/19 05:45:08 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -45,6 +45,9 @@ void PRINTSF(unsigned int i);
 void PRINTSYMBOL(SYMBOL sym);
 void PRINTBF(BF a);
 void PRINTMPZ(mpz_t z);
+#if defined(INTERVAL)
+void PRINTBF4ITV(BF);
+#endif
 
 void PRINTEXPR(VL vl,Obj p)
 {
@@ -742,21 +745,27 @@ void PRINTNUM(Num q)
       PRINTBF((BF)q); break;
 #if defined(INTERVAL)
     case N_IP:
+      PUTS("[");
+      PRINTNUM(INF((Itv)q));
+      PUTS(",");
+      PRINTNUM(SUP((Itv)q));
+      PUTS("]");
+      break;
     case N_IntervalBigFloat:
       switch ( outputstyle ) {
         case 1:
           PUTS("intval(");
-          PRINTNUM(INF((Itv)q));
+          PRINTBF4ITV(INF((IntervalBigFloat)q));
           PUTS(",");
-          PRINTNUM(SUP((Itv)q));
+          PRINTBF4ITV(SUP((IntervalBigFloat)q));
           PUTS(")");
           break;
         case 0:
         default:
           PUTS("[");
-          PRINTNUM(INF((Itv)q));
+          PRINTBF4ITV(INF((IntervalBigFloat)q));
           PUTS(",");
-          PRINTNUM(SUP((Itv)q));
+          PRINTBF4ITV(SUP((IntervalBigFloat)q));
           PUTS("]");
           break;
       }

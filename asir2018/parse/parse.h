@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.5 2019/09/04 01:12:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.6 2019/11/12 07:47:45 noro Exp $
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -184,6 +184,9 @@ typedef struct oPF {
   int (*pari)();
   double (*libm)();
   int (*simplify)();
+#if defined(INTERVAL)
+  void (**intervalfunc)();
+#endif
 } *PF;
 
 typedef struct oPFAD {
@@ -534,7 +537,11 @@ void getmemberp(FNODE,Obj **);
 void help(char *);
 void instov(PFINS ,V *);
 Obj memberofstruct(COMP,char *);
-void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(),PF *);
+#if defined(INTERVAL)
+void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(),void (*[])(), PF *);
+#else
+void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(), PF *);
+#endif
 void mkpfins(PF ,V *,V *);
 void mkuf(char *,char *,NODE,SNODE,int,int,char *,MODULE);
 void newstruct(int,struct oCOMP **);
@@ -815,8 +822,13 @@ void show_debug_window(int on);
 void init_cmdwin();
 void searchpf(char *name,FUNC *fp);
 void searchc(char *name,FUNC *fp);
+#if defined(INTERVAL)
 void mkpf(char *name,Obj body,int argc,V *args,
-  int (*parif)(),double (*libmf)(), int (*simp)(),PF *pfp);
+  int (*parif)(),double (*libmf)(), int (*simp)(), void (*intervalfunc[])(), PF *pfp);
+#else
+void mkpf(char *name,Obj body,int argc,V *args,
+  int (*parif)(),double (*libmf)(), int (*simp)(), PF *pfp);
+#endif
 void mkpfins(PF pf,V *args,V *vp);
 void _mkpfins(PF pf,Obj *args,V *vp);
 void _mkpfins_with_darray(PF pf,Obj *args,int *darray,V *vp);

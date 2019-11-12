@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.4 2019/10/17 03:03:12 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/p-itv.c,v 1.5 2019/11/07 08:50:49 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include "ca.h"
@@ -15,7 +15,6 @@ Num tobf(Num,int);
 //int     initvp(Num , Itv );
 
 extern int mpfr_roundmode;
-
 extern int zerorewrite;
 
 void itvtois(Itv a, Num *inf, Num *sup)
@@ -24,6 +23,12 @@ void itvtois(Itv a, Num *inf, Num *sup)
     *inf = *sup = (Num)0;
   else if ( NID(a) <= N_B ) {
     *inf = (Num)a; *sup = (Num)a;
+  } else if ( ITVD(a) ) {
+    double dinf, dsup;
+    Real rinf, rsup;
+    dinf = INF((IntervalDouble)a); dsup = SUP((IntervalDouble)a);
+    MKReal(dinf, rinf); MKReal(dsup, rsup);
+    *inf = (Num)rinf; *sup = (Num)rsup;
   } else {
     *inf = INF(a);
     *sup = SUP(a);
@@ -32,7 +37,7 @@ void itvtois(Itv a, Num *inf, Num *sup)
 
 void istoitv(Num inf, Num sup, Itv *rp)
 {
-  Num  i, s;
+  Num  ii, ss;
   Num  ni, ns;
   Itv c;
   int  type=0;
@@ -50,28 +55,28 @@ void istoitv(Num inf, Num sup, Itv *rp)
 
   current_roundmode = mpfr_roundmode;
   if ( !ns ) {
-    s = 0;
+    ss = 0;
   }
   else if ( NID( ns )==N_B ) {
     type = 1;
 
     mpfr_roundmode = MPFR_RNDU;
-    s = tobf(ns, DEFAULTPREC);
+    ss = tobf(ns, DEFAULTPREC);
     //ToBf(sup, (BF *)&s);
   } else {
-    s = ns;
+    ss = ns;
   }
   if ( !ni ) {
-    i = 0;
+    ii = 0;
   }
   else if ( NID( ni )==N_B ) {
     type = 1;
 
     mpfr_roundmode = MPFR_RNDD;
-    i = tobf(ni, DEFAULTPREC);
+    ii = tobf(ni, DEFAULTPREC);
     //ToBf(inf, (BF *)&i);
   } else {
-    i = ni;
+    ii = ni;
   }
   mpfr_roundmode = current_roundmode;
 
@@ -82,14 +87,11 @@ void istoitv(Num inf, Num sup, Itv *rp)
   } else {
     NEWItvP(c);
   }
-  INF(c) = i; SUP(c) = s;
+  INF(c) = ii; SUP(c) = ss;
 
-  if (zerorewrite && initvp(0,c) ) {
-    *rp = 0;
-    zerorewriteCount++;
-  } else {
-    *rp = c;
-  }
+  *rp = c;
+
+  ZEROREWRITE
 }
 
 void additvp(Itv a, Itv b, Itv *c)
@@ -464,6 +466,28 @@ void absitvp(Itv a, Num *b)
     else        *b = bs;
   }
 }
+
+void absintvalp(Itv a, Itv *c)
+{
+  Num  ai,as,mai;
+  Num  inf,sup;
+
+  itvtois(a,&ai,&as);
+  if ( compnum(0,as,0 ) < 0 ) {
+    chsgnnum(ai, &sup);
+    chsgnnum(as, &inf);
+  } else if ( compnum(0,ai,0) < 0 ) {
+	inf = 0;
+    chsgnnum(ai, &mai);
+    if ( compnum(0,as,mai ) > 0 )	sup = as;
+    else							sup = mai; 
+  } else {
+    inf = ai;
+    sup = as;
+  }  
+  istoitv(inf,sup,c);
+}
+
 
 void distanceitvp(Itv a, Itv b, Num *c)
 {

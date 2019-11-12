@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.21 2018/03/29 01:32:53 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/io/pexpr_body.c,v 1.22 2018/03/29 07:50:06 ohara Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -42,6 +42,9 @@ void PRINTDPV();
 void PRINTFNODE();
 void PRINTBF();
 void PRINTDAlg();
+#if defined(INTERVAL)
+void PRINTBF4ITV();
+#endif
 
 void PRINTEXPR(vl,p)
 VL vl;
@@ -772,21 +775,27 @@ Num q;
       PRINTBF((BF)q); break;
 #if defined(INTERVAL)
     case N_IP:
-    case N_IntervalBigFloat:
-      switch ( outputstyle ) {
-        case 1:
-          PUTS("intval(");
+          PUTS("[");
           PRINTNUM(INF((Itv)q));
           PUTS(",");
           PRINTNUM(SUP((Itv)q));
+          PUTS("]");
+          break;
+    case N_IntervalBigFloat:
+      switch ( outputstyle ) {
+        case 1:
+          PUTS("intvalbf(");
+          PRINTBF4ITV(INF((Itv)q));
+          PUTS(",");
+          PRINTBF4ITV(SUP((Itv)q));
           PUTS(")");
           break;
         case 0:
         default:
           PUTS("[");
-          PRINTNUM(INF((Itv)q));
+          PRINTBF4ITV(INF((Itv)q));
           PUTS(",");
-          PRINTNUM(SUP((Itv)q));
+          PRINTBF4ITV(SUP((Itv)q));
           PUTS("]");
           break;
       }
@@ -796,7 +805,7 @@ Num q;
         case PRINTF_E:
           switch ( outputstyle ) {
             case 1:
-              TAIL PRINTF(OUT, "intval(%.16e,%.16e)",
+              TAIL PRINTF(OUT, "intvald(%.16e,%.16e)",
                 INF((IntervalDouble)q),SUP((IntervalDouble)q));
               break;
             case 0:

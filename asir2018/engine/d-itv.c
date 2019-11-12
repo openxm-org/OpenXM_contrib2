@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.3 2019/06/04 07:11:23 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/d-itv.c,v 1.4 2019/10/17 03:03:12 kondoh Exp $
 */
 #if defined(INTERVAL)
 #include <float.h>
@@ -255,7 +255,7 @@ double  addulpd(double d)
   return (-sup);
 }
 
-double  ToRealDown(Num a)
+double  toRealDown(Num a)
 {
   double inf;
 
@@ -269,20 +269,23 @@ double  ToRealDown(Num a)
 		inf = mpfr_get_d(BDY((BF)a),MPFR_RNDD);
 		break;
     case N_IP:
-      inf = ToRealDown(INF((Itv)a));
+      inf = toRealDown(INF((Itv)a));
       break;
     case N_IntervalDouble:
       inf = INF((IntervalDouble)a); break;
+	case N_IntervalBigFloat:
+		inf = mpfr_get_d(BDY((BF)INF((IntervalBigFloat)a)),MPFR_RNDD);
+		break;
     case N_A:
     default:
       inf = 0.0;
-      error("ToRealDown: not supported operands.");
+      error("toRealDown: not supported operands.");
       break;
   }
   return inf;
 }
 
-double  ToRealUp(Num a)
+double  toRealUp(Num a)
 {
   double sup;
 
@@ -296,13 +299,16 @@ double  ToRealUp(Num a)
 		sup = mpfr_get_d(BDY((BF)a),MPFR_RNDU);
 		break;
     case N_IP:
-      sup = ToRealUp(SUP((Itv)a)); break;
+      sup = toRealUp(SUP((Itv)a)); break;
     case N_IntervalDouble:
       sup = SUP((IntervalDouble)a); break;
+	case N_IntervalBigFloat:
+		sup = mpfr_get_d(BDY((BF)INF((IntervalBigFloat)a)),MPFR_RNDU);
+		break;
     case N_A:
     default:
       sup = 0.0;
-      error("ToRealUp: not supported operands.");
+      error("toRealUp: not supported operands.");
       break;
   }
   return sup;
@@ -311,6 +317,9 @@ double  ToRealUp(Num a)
 
 void  Num2double(Num a, double *inf, double *sup)
 {
+  *inf = 0.0;
+  *sup = 0.0;
+  if (a && NUM(a) )
   switch ( NID(a) ) {
     case N_Q:
       *inf = Q2doubleDown((Q)a);
@@ -325,8 +334,8 @@ void  Num2double(Num a, double *inf, double *sup)
       *sup = mpfr_get_d(BDY((BF)a), MPFR_RNDU);
       break;
     case N_IP:
-      *inf = ToRealDown(INF((Itv)a));
-      *sup = ToRealUp(SUP((Itv)a));
+      *inf = toRealDown(INF((Itv)a));
+      *sup = toRealUp(SUP((Itv)a));
       break;
     case N_IntervalDouble:
       *inf = INF((IntervalDouble)a);
@@ -334,8 +343,6 @@ void  Num2double(Num a, double *inf, double *sup)
       break;
     case N_A:
     default:
-      *inf = 0.0;
-      *sup = 0.0;
       error("Num2double: not supported operands.");
       break;
   }
@@ -717,6 +724,24 @@ void  absitvd(IntervalDouble a, Num *b)
     MKReal(t,rp);
     *b = (Num)rp;
   }
+}
+void  absintvald(IntervalDouble a, IntervalDouble *b)
+{
+  double  ai,as,inf,sup;
+
+  ai = INF(a);
+  as = SUP(a);
+  if ( as < 0 ) {
+    sup = -ai;
+    inf = -as;
+  } else if (ai < 0) {
+    inf = 0.0;
+  sup = MAX(as, -ai);
+  } else {
+    inf = ai;
+    sup = as;
+  }
+  MKIntervalDouble(inf,sup,*b);
 }
 
 void  distanceitvd(IntervalDouble a, IntervalDouble b, Num *c)
