@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.10 2019/10/11 03:45:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.11 2019/11/01 04:28:53 noro Exp $
 */
 #include "ca.h"
 
@@ -2713,7 +2713,9 @@ void set_schreyer_order(LIST data)
 
 DP dpm_sp_hm(DPM p1,DPM p2);
 void dpm_sp(DPM p1,DPM p2,DPM *sp,DP *t1,DP *t2);
-DP *dpm_nf_and_quotient(NODE b,DPM sp,VECT psv,DPM *nf,P *dn);
+DPM dpm_nf_and_quotient3(DPM sp,VECT psv,DPM *nf,P *dn);
+DPM dpm_nf_and_quotient4(DPM sp,DPM *ps,VECT psiv,DPM head,DPM *nf,P *dn);
+DPM dpm_sp_nf(VECT psv,VECT psiv,int i,int j,DPM *nf);
 void dpm_sort(DPM p,DPM *r);
 
 extern int DP_Multiple;
@@ -2752,20 +2754,24 @@ struct oEGT egra;
 
 void dpm_ht(DPM d,DPM *r);
 
+#if 0
 void dpm_schreyer_base(LIST g,LIST *s)
 {
   NODE nd,t0,t,b0,b;
-  int n,i,j,k,nv;
+  int n,i,j,k,nv,max,pos;
   LIST l;
   Z cont;
   P dn,c;
   DP h,t1,t2;
   MP d;
-  DMM r0,r;
+  DMM r0,r,r1;
   DPM sp,nf,dpm;
   DPM *ps;
-  VECT psv;
-  DP **m,*quo;
+  VECT psv,psv2;
+  DPM quo;
+  DP **m;
+  NODE2 *ps2;
+  NODE2 nd2;
   struct oEGT eg0,eg1;
   extern struct oEGT egred;
 
@@ -2775,9 +2781,18 @@ void dpm_schreyer_base(LIST g,LIST *s)
   MKVECT(psv,n);
   ps = (DPM *)BDY(psv);
   for ( i = 0, t = nd; i < n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
+  for ( i = 0, max = 0; i < n; i++ )
+    if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
+  MKVECT(psv2,max+1);
+  ps2 = (NODE2 *)BDY(psv2);
+  for ( i = n-1; i >= 0; i-- ) {
+    pos = BDY(ps[i])->pos;
+    MKNODE2(nd2,ps[i],(long)i+1,ps2[pos]); ps2[pos] = nd2;
+  }
   nv = ps[0]->nv;
   m = (DP **)almat_pointer(n,n);
   b0 = 0;
+  k = 0;
   for ( i = 0; i < n; i++ ) {
     // sp(ps[i],ps[j]) = ti*ps[i]-tj*ps[j] => m[i][j] = ti
     for ( j = i+1; j < n; j++ ) m[i][j] = dpm_sp_hm(ps[i],ps[j]);
@@ -2788,8 +2803,11 @@ void dpm_schreyer_base(LIST g,LIST *s)
     }
     for ( j = i+1; j < n; j++ ) {
       if ( m[i][j] ) {
+        DPM quo1,nf1;
+        P dn1;
+
         dpm_sp(ps[i],ps[j],&sp,&t1,&t2);
-        quo = dpm_nf_and_quotient(0,sp,psv,&nf,&dn);
+        quo = dpm_nf_and_quotient3(sp,psv2,&nf,&dn);
         if ( nf ) 
           error("dpm_schreyer_base : cannot happen");
         NEWDMM(r0); r = r0; 
@@ -2797,17 +2815,16 @@ void dpm_schreyer_base(LIST g,LIST *s)
         NEWDMM(NEXT(r)); r=NEXT(r);
         mulp(CO,(P)BDY(t2)->c,dn,&c); chsgnp(c,(P *)&r->c); r->pos = j+1; r->dl = BDY(t2)->dl;
         if ( quo ) {
-          for ( k = 0; k < n; k++ ) {
-            if ( !quo[k] ) continue;
-            for ( d = BDY(quo[k]); d; d = NEXT(d) ) {
-              NEXTDMM(r0,r); chsgnp((P)d->c,(P *)&r->c); r->pos = k+1; r->dl = d->dl;
-            }
+          for ( r1 = BDY(quo); r1; r1 = NEXT(r1) ) {
+            chsgnp((P)r1->c,&c); r1->c = (Obj)c;
           }
-        }
-        NEXT(r) = 0;
+          NEXT(r) = BDY(quo);
+        } else
+          NEXT(r) = 0;
         MKDPM(nv,r0,dpm); // XXX : sugar is not set
         NEXTNODE(b0,b);
         BDY(b) = (pointer)dpm;
+        k++;
       }
     }
     if ( b0 ) NEXT(b) = 0;
@@ -2818,17 +2835,178 @@ void dpm_schreyer_base(LIST g,LIST *s)
   if ( t0 ) NEXT(t) = 0;
   MKLIST(l,t0);
   dmm_stack = push_schreyer_order(l,dmm_stack);
-  for ( t = b0; t; t = NEXT(t) ) {
-    dpm_sort((DPM)BDY(t),&dpm); 
-    BDY(t) = (pointer)dpm;
-  }
+//  for ( t = b0; t; t = NEXT(t) ) {
+//    dpm_sort((DPM)BDY(t),&dpm); 
+//    BDY(t) = (pointer)dpm;
+//  }
   b0 = dpm_sort_list(b0);
-// get_eg(&eg0);
+  get_eg(&eg0);
   b0 = dpm_reduceall(b0);
-// get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
+  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
   MKLIST(*s,b0);
 //  print_eg("red",&egred); printf("\n");
 }
+#elif 0
+void dpm_schreyer_base(LIST g,LIST *s)
+{
+  NODE nd,t0,t,b0,b;
+  int n,i,j,k,nv,max,pos;
+  LIST l;
+  Z cont;
+  P dn,c;
+  DP h,t1,t2;
+  MP d;
+  DMM r0,r,r1;
+  DPM sp,nf,dpm;
+  DPM *ps;
+  VECT psiv;
+  DPM quo;
+  DP **m;
+  NODE *psi;
+  struct oEGT eg0,eg1;
+  extern struct oEGT egred;
+
+  init_eg(&egra);
+  nd = BDY(g);
+  n = length(nd);
+  ps = (DPM *)MALLOC(n*sizeof(DPM));
+  for ( i = 0, t = nd; i < n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
+  for ( i = 0, max = 0; i < n; i++ )
+    if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
+  MKVECT(psiv,max+1);
+  psi = (NODE *)BDY(psiv);
+  for ( i = n-1; i >= 0; i-- ) {
+    pos = BDY(ps[i])->pos;
+    MKNODE(nd,(long)(i+1),psi[pos]); psi[pos] = nd;
+  }
+  nv = ps[0]->nv;
+  m = (DP **)almat_pointer(n,n);
+  b0 = 0;
+  k = 0;
+  for ( i = 0; i < n; i++ ) {
+    // sp(ps[i],ps[j]) = ti*ps[i]-tj*ps[j] => m[i][j] = ti
+    for ( j = i+1; j < n; j++ ) m[i][j] = dpm_sp_hm(ps[i],ps[j]);
+    for ( j = i+1; j < n; j++ ) {
+      if ( !m[i][j] ) continue;
+      for ( h = m[i][j], k = i+1; k < n; k++ )
+        if ( k != j && m[i][k] && dp_redble(m[i][k],h) ) m[i][k] = 0;
+    }
+    for ( j = i+1; j < n; j++ ) {
+      if ( m[i][j] ) {
+        DPM quo1,nf1;
+        P dn1;
+
+        dpm_sp(ps[i],ps[j],&sp,&t1,&t2);
+        quo = dpm_nf_and_quotient4(sp,ps,psiv,0,&nf,&dn);
+        if ( nf ) 
+          error("dpm_schreyer_base : cannot happen");
+        NEWDMM(r0); r = r0; 
+        mulp(CO,(P)BDY(t1)->c,dn,(P *)&r->c); r->pos = i+1; r->dl = BDY(t1)->dl;
+        NEWDMM(NEXT(r)); r=NEXT(r);
+        mulp(CO,(P)BDY(t2)->c,dn,&c); chsgnp(c,(P *)&r->c); r->pos = j+1; r->dl = BDY(t2)->dl;
+        if ( quo ) {
+          for ( r1 = BDY(quo); r1; r1 = NEXT(r1) ) {
+            chsgnp((P)r1->c,&c); r1->c = (Obj)c;
+          }
+          NEXT(r) = BDY(quo);
+        } else
+          NEXT(r) = 0;
+        MKDPM(nv,r0,dpm); // XXX : sugar is not set
+        NEXTNODE(b0,b);
+        BDY(b) = (pointer)dpm;
+        k++;
+      }
+    }
+    if ( b0 ) NEXT(b) = 0;
+  }
+  for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
+    dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
+  }
+  if ( t0 ) NEXT(t) = 0;
+  MKLIST(l,t0);
+  dmm_stack = push_schreyer_order(l,dmm_stack);
+//  for ( t = b0; t; t = NEXT(t) ) {
+//    dpm_sort((DPM)BDY(t),&dpm); 
+//    BDY(t) = (pointer)dpm;
+//  }
+//  b0 = dpm_sort_list(b0);
+//  get_eg(&eg0);
+//  b0 = dpm_reduceall(b0);
+//  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
+  MKLIST(*s,b0);
+//  print_eg("red",&egred); printf("\n");
+}
+#else
+void dpm_schreyer_base(LIST g,LIST *s)
+{
+  NODE nd,t0,t,b0,b;
+  int n,i,j,k,nv,max,pos;
+  LIST l;
+  DP h,t1,t2;
+  MP d;
+  DMM r0,r,r1;
+  DPM sp,nf,dpm;
+  DPM *ps;
+  VECT psv,psiv;
+  DPM quo;
+  DP **m;
+  NODE *psi;
+  struct oEGT eg0,eg1;
+  extern struct oEGT egred;
+
+  init_eg(&egra);
+  nd = BDY(g);
+  n = length(nd);
+  MKVECT(psv,n+1);
+  ps = (DPM *)BDY(psv);
+  for ( i = 1, t = nd; i <= n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
+  for ( i = 1, max = 0; i <= n; i++ )
+    if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
+  MKVECT(psiv,max+1);
+  psi = (NODE *)BDY(psiv);
+  for ( i = n; i >= 1; i-- ) {
+    pos = BDY(ps[i])->pos;
+    MKNODE(nd,(long)i,psi[pos]); psi[pos] = nd;
+  }
+  nv = ps[1]->nv;
+  m = (DP **)almat_pointer(n+1,n+1);
+  b0 = 0;
+  for ( i = 1; i <= n; i++ ) {
+    // sp(ps[i],ps[j]) = ti*ps[i]-tj*ps[j] => m[i][j] = ti
+    for ( j = i+1; j <= n; j++ ) m[i][j] = dpm_sp_hm(ps[i],ps[j]);
+    for ( j = i+1; j <= n; j++ ) {
+      if ( !m[i][j] ) continue;
+      for ( h = m[i][j], k = i+1; k <= n; k++ )
+        if ( k != j && m[i][k] && dp_redble(m[i][k],h) ) m[i][k] = 0;
+    }
+    for ( j = i+1; j <= n; j++ ) {
+      if ( m[i][j] ) {
+        quo = dpm_sp_nf(psv,psiv,i,j,&nf);
+        if ( nf ) 
+          error("dpm_schreyer_base : cannot happen");
+        NEXTNODE(b0,b); BDY(b) = (pointer)quo;
+      }
+    }
+  }
+  if ( b0 ) NEXT(b) = 0;
+  for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
+    dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
+  }
+  if ( t0 ) NEXT(t) = 0;
+  MKLIST(l,t0);
+  dmm_stack = push_schreyer_order(l,dmm_stack);
+//  for ( t = b0; t; t = NEXT(t) ) {
+//    dpm_sort((DPM)BDY(t),&dpm); 
+//    BDY(t) = (pointer)dpm;
+//  }
+    b0 = dpm_sort_list(b0);
+//  get_eg(&eg0);
+//  b0 = dpm_reduceall(b0);
+//  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
+  MKLIST(*s,b0);
+//  print_eg("red",&egred); printf("\n");
+}
+#endif
 
 int compdmm_schreyer(int n,DMM m1,DMM m2)
 {

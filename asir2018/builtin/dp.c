@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.15 2019/09/19 06:29:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.16 2019/10/11 03:45:56 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -90,7 +90,7 @@ void Pdp_vtoe(), Pdp_etov(), Pdp_dtov(), Pdp_idiv(), Pdp_sep();
 void Pdp_cont();
 void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
-void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient();
+void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient(),Pdpm_nf_and_quotient2();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 void Pdpm_schreyer_base(),Pdpm_simplify_syz(),Pdpm_td();
 
@@ -160,6 +160,7 @@ struct ftab dp_tab[] = {
   {"dp_nf_mod",Pdp_nf_mod,5},
   {"dp_nf_f",Pdp_nf_f,4},
   {"dpm_nf_and_quotient",Pdpm_nf_and_quotient,-3},
+  {"dpm_nf_and_quotient2",Pdpm_nf_and_quotient2,-3},
   {"dpm_nf_f",Pdpm_nf_f,-4},
   {"dpm_weyl_nf_f",Pdpm_weyl_nf_f,-4},
   {"dpm_nf",Pdpm_nf,-4},
@@ -1344,6 +1345,7 @@ void Pdpm_nf(NODE arg,DPM *rp)
 }
 
 DP *dpm_nf_and_quotient(NODE b,DPM g,VECT ps,DPM *rp,P *dnp);
+DPM dpm_nf_and_quotient2(NODE b,DPM g,VECT ps,DPM *rp,P *dnp);
 
 void Pdpm_nf_and_quotient(NODE arg,LIST *rp)
 {
@@ -1375,6 +1377,36 @@ void Pdpm_nf_and_quotient(NODE arg,LIST *rp)
     nm = 0; dn = (P)ONE;
   }
   n = mknode(3,nm,dn,quo);
+  MKLIST(*rp,n);
+}
+
+void Pdpm_nf_and_quotient2(NODE arg,LIST *rp)
+{
+  NODE b;
+  VECT ps;
+  DPM g,nm,q;
+  P dn;
+  NODE n;
+  int ac;
+
+  do_weyl = 0; dp_fcoeffs = 0;
+  ac = argc(arg);
+  if ( ac < 2 )
+    error("dpm_nf_and_quotient2 : invalid arguments");
+  else if ( ac == 2 ) {
+    asir_assert(ARG1(arg),O_VECT,"dpm_nf_and_quotient2");
+    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+  } else if ( ac == 3 ) {
+    asir_assert(ARG0(arg),O_LIST,"dpm_nf_and_quotient2");
+    asir_assert(ARG2(arg),O_VECT,"dpm_nf_and_quotient2");
+    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+  }
+  if ( g ) {
+    q = dpm_nf_and_quotient2(b,g,ps,&nm,&dn);
+  } else {
+    q = 0; nm = 0; dn = (P)ONE;
+  }
+  n = mknode(3,nm,dn,q);
   MKLIST(*rp,n);
 }
 
@@ -3966,9 +3998,12 @@ void set_schreyer_order(LIST n);
 void Pdpm_set_schreyer(NODE arg,LIST *rp)
 {
   if ( argc(arg) ) {
-    set_schreyer_order((LIST)ARG0(arg));
+    set_schreyer_order(ARG0(arg)?(LIST)ARG0(arg):0);
   }
-  *rp = dmm_stack->obj;
+  if ( dmm_stack )
+    *rp = dmm_stack->obj;
+  else
+    *rp = 0;
 }
 
 void Pdpm_hm(NODE arg,DPM *rp)

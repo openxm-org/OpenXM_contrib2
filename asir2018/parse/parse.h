@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.4 2019/08/21 00:37:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.5 2019/09/04 01:12:02 noro Exp $
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -223,11 +223,6 @@ typedef struct oPVI {
   NODE index;
 } *PVI;
 
-typedef struct oNODE2 {
-  pointer body1,body2;
-  struct oNODE2 *next;
-} *NODE2;
-
 struct ftab {
   char *name;
   void (*f)();
@@ -316,11 +311,6 @@ switch ( id ) {\
       :PVATTR(i)==2?(long)(MPVS->va[PVIND(i)].priv=(pointer)(p))\
          :(long)(PPVS->va[PVIND(i)].priv=(pointer)(p)))
 
-#define NEWNODE2(a) ((a)=(NODE2)MALLOC(sizeof(struct oNODE2)))
-#define MKNODE2(a,b,c,d) \
-(NEWNODE2(a),(a)->body1=(pointer)b,(a)->body2=(pointer)c,NEXT(a)=(NODE2)(d))
-#define BDY1(a) ((a)->body1)
-#define BDY2(a) ((a)->body2)
 
 extern VS GPVS,CPVS,EPVS,APVS,MPVS,PPVS;
 extern MODULE CUR_MODULE;

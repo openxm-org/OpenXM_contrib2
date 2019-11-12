@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.10 2019/08/28 23:27:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.11 2019/09/19 06:29:48 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -605,6 +605,11 @@ typedef struct oNODE {
   struct oNODE *next;
 } *NODE;
 
+typedef struct oNODE2 {
+  pointer body1,body2;
+  struct oNODE2 *next;
+} *NODE2;
+
 /* univariate poly over small finite field; dense */
 typedef struct oUM {
   int d;
@@ -942,6 +947,11 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONE,NEXT(DC(p))=0)
 DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKNODE(a,b,c) \
 (NEWNODE(a),(a)->body=(pointer)b,NEXT(a)=(NODE)(c))
+#define NEWNODE2(a) ((a)=(NODE2)MALLOC(sizeof(struct oNODE2)))
+#define MKNODE2(a,b,c,d) \
+(NEWNODE2(a),(a)->body1=(pointer)b,(a)->body2=(pointer)c,NEXT(a)=(NODE2)(d))
+#define BDY1(a) ((a)->body1)
+#define BDY2(a) ((a)->body2)
 #define MKLIST(a,b) (NEWLIST(a),(a)->body=(NODE)(b))
 #define MKVECT(m,l) \
 (NEWVECT(m),(m)->len=(l),(m)->body=(pointer *)CALLOC((l),sizeof(pointer)))

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.7 2019/10/11 03:45:56 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.8 2019/11/01 04:28:52 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1563,6 +1563,322 @@ DP *dpm_nf_and_quotient(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
 last:
   if ( d ) d->sugar = sugar;
   *rp = d; *dnp = dn;
+  return q;
+}
+
+DPM dpm_nf_and_quotient2(NODE b,DPM g,VECT psv,DPM *rp,P *dnp)
+{
+  DPM u,p,s,t,d,q;
+  DP dmy,mult,zzz;
+  DPM *ps;
+  NODE l;
+  DMM mr0,mq0,mr,mq,m;
+  MP mp;
+  int i,n,j,len,nv;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1;
+  Q cont;
+  Obj c1;
+  struct oEGT eg0,eg1;
+
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return 0;
+  }
+  nv = NV(g);
+  ps = (DPM *)BDY(psv);
+  len = psv->len;
+  if ( b ) {
+    for ( n = 0, l = b; l; l = NEXT(l), n++ )
+      ;
+    wb = (int *)ALLOCA(n*sizeof(int));
+    for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+      wb[i] = ZTOS((Q)BDY(l));
+  } else {
+    wb = (int *)ALLOCA(len*sizeof(int));
+    for ( i = j = 0; i < len; i++ ) 
+      if ( ps[i] ) wb[j++] = i;
+    n = j;
+  }
+  sugar = g->sugar;
+  mq0 = 0;
+  mr0 = 0;
+  for ( ; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dpm_redble(g,p = ps[wb[i]]) ) {
+        dpm_red2(g,p,&u,&tdn,&mult);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        for ( m = mq0; m; m = NEXT(m) ) {
+          arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+        }
+        for ( m = mr0; m; m = NEXT(m) ) {
+          arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+        }
+        NEXTDMM(mq0,mq); 
+        mq->c = BDY(mult)->c; mq->dl = BDY(mult)->dl; mq->pos = wb[i]+1;
+        mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        if ( !u ) goto last;
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g);
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( mr0 ) {
+    NEXT(mr) = 0;
+    MKDPM(nv,mr0,d); d->sugar = sugar;
+  } else
+    d = 0;
+  if ( mq0 ) {
+    NEXT(mq) = 0;
+    MKDPM(nv,mq0,q); q->sugar = sugar;
+  } else
+    q = 0;
+  *rp = d; *dnp = dn;
+  return q;
+}
+
+DPM dpm_nf_and_quotient3(DPM g,VECT psv,DPM *rp,P *dnp)
+{
+  DPM u,p,s,t,d,q;
+  DP dmy,mult,zzz;
+  DPM *ps;
+  NODE2 nd;
+  DMM mr0,mq0,mr,mq,m;
+  MP mp;
+  int i,n,j,len,nv,pos,max;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1;
+  Q cont;
+  Obj c1;
+  struct oEGT eg0,eg1;
+
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return 0;
+  }
+  nv = NV(g);
+  sugar = g->sugar;
+  mq0 = 0;
+  mr0 = 0;
+  max = psv->len;
+  for ( ; g; ) {
+    pos = BDY(g)->pos;
+    u = 0;
+    if ( pos < max ) {
+      nd = (NODE2)BDY(psv)[pos];
+      for ( u = 0; nd; nd = NEXT(nd) ) {
+        if ( dpm_redble(g,p = (DPM)(nd->body1)) ) {
+          dpm_red2(g,p,&u,&tdn,&mult);
+          psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+          sugar = MAX(sugar,psugar);
+          if ( !UNIZ(tdn) ) {
+            for ( m = mq0; m; m = NEXT(m) ) {
+              arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+            }
+            for ( m = mr0; m; m = NEXT(m) ) {
+              arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+            }
+          }
+          NEXTDMM(mq0,mq); 
+          mq->c = BDY(mult)->c; mq->dl = BDY(mult)->dl; mq->pos = (long)nd->body2;
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+          if ( !u ) goto last;
+          break;
+        }
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g);
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( mr0 ) {
+    NEXT(mr) = 0;
+    MKDPM(nv,mr0,d); d->sugar = sugar;
+  } else
+    d = 0;
+  if ( mq0 ) {
+    NEXT(mq) = 0;
+    MKDPM(nv,mq0,q); q->sugar = sugar;
+  } else
+    q = 0;
+  *rp = d; *dnp = dn;
+  return q;
+}
+
+DPM dpm_nf_and_quotient4(DPM g,DPM *ps,VECT psiv,DPM head,DPM *rp,P *dnp)
+{
+  DPM u,p,s,t,d,q;
+  DP dmy,mult,zzz;
+  NODE nd;
+  DMM mr0,mq0,mr,mq,m;
+  MP mp;
+  int i,n,j,len,nv,pos,max;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1,c;
+  Q cont;
+  Obj c1;
+  struct oEGT eg0,eg1;
+
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return 0;
+  }
+  nv = NV(g);
+  sugar = g->sugar;
+  mq0 = 0;
+  if ( head ) {
+    for ( m = BDY(head); m; m = NEXT(m) ) {
+      NEXTDMM(mq0,mq); 
+      mq->c = m->c; mq->dl = m->dl; mq->pos = m->pos;
+    }
+  }
+  mr0 = 0;
+  max = psiv->len;
+  for ( ; g; ) {
+    pos = BDY(g)->pos;
+    u = 0;
+    if ( pos < max ) {
+      nd = (NODE)BDY(psiv)[pos];
+      for ( u = 0; nd; nd = NEXT(nd) ) {
+        if ( dpm_redble(g,p = ps[(long)(BDY(nd))-1]) ) {
+          dpm_red2(g,p,&u,&tdn,&mult);
+          psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+          sugar = MAX(sugar,psugar);
+          if ( !UNIZ(tdn) ) {
+            for ( m = mq0; m; m = NEXT(m) ) {
+              arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+            }
+            for ( m = mr0; m; m = NEXT(m) ) {
+              arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+            }
+          }
+          NEXTDMM(mq0,mq); 
+          mq->c = BDY(mult)->c; 
+          mq->dl = BDY(mult)->dl; mq->pos = (long)BDY(nd);
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+          if ( !u ) goto last;
+          break;
+        }
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g);
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( mr0 ) {
+    NEXT(mr) = 0;
+    MKDPM(nv,mr0,d); d->sugar = sugar;
+  } else
+    d = 0;
+  if ( mq0 ) {
+    NEXT(mq) = 0;
+    MKDPM(nv,mq0,q); q->sugar = sugar;
+  } else
+    q = 0;
+  *rp = d; *dnp = dn;
+  return q;
+}
+
+DPM dpm_sp_nf(VECT psv,VECT psiv,int i,int j,DPM *nf)
+{
+  DPM *ps;
+  int n,nv,s1,s2,sugar,max,pos,psugar;
+  DPM g,u,p,d,q,t;
+  DMM mq0,mq,mr0,mr,m;
+  DP mult,t1,t2;
+  P dn,tdn,tdn1;
+  NODE nd;
+  Obj c1;
+
+  ps = (DPM *)BDY(psv);
+  n = psv->len;
+  nv = ps[1]->nv;
+  dpm_sp(ps[i],ps[j],&g,&t1,&t2);
+  mq0 = 0;
+  NEXTDMM(mq0,mq); mq->c = BDY(t1)->c; mq->pos = i; mq->dl = BDY(t1)->dl;
+  NEXTDMM(mq0,mq); chsgnp((P)BDY(t2)->c,(P *)&mq->c); mq->pos = j; mq->dl = BDY(t2)->dl;
+
+  if ( !g ) {
+    NEXT(mq) = 0;
+    MKDPM(nv,mq0,d);
+    s1 = BDY(t1)->dl->td + ps[i]->sugar;
+    s2 = BDY(t2)->dl->td + ps[j]->sugar;
+    d->sugar = MAX(s1,s2);
+    *nf = 0; 
+    return d;
+  }
+
+  dn = (P)ONE;
+  sugar = g->sugar;
+  mr0 = 0;
+  max = psiv->len;
+  while ( g ) {
+    pos = BDY(g)->pos;
+    u = 0;
+    if ( pos < max ) {
+      nd = (NODE)BDY(psiv)[pos];
+      for ( u = 0; nd; nd = NEXT(nd) ) {
+        if ( dpm_redble(g,p = ps[(long)(BDY(nd))]) ) {
+          dpm_red2(g,p,&u,&tdn,&mult);
+          psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+          sugar = MAX(sugar,psugar);
+          if ( !UNIZ(tdn) ) {
+            for ( m = mq0; m; m = NEXT(m) ) {
+              arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+            }
+            for ( m = mr0; m; m = NEXT(m) ) {
+              arf_mul(CO,(Obj)tdn,m->c,&c1); m->c = c1;
+            }
+          }
+          NEXTDMM(mq0,mq); 
+          chsgnp((P)BDY(mult)->c,(P *)&mq->c);
+          mq->dl = BDY(mult)->dl; mq->pos = (long)BDY(nd);
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+          if ( !u ) goto last;
+          break;
+        }
+      }
+    }
+    if ( u ) {
+      g = u;
+    } else {
+      m = BDY(g);
+      NEXTDMM(mr0,mr);
+      mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
+      dpm_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( mr0 ) {
+    NEXT(mr) = 0; MKDPM(nv,mr0,d); d->sugar = sugar;
+  } else
+    d = 0;
+  NEXT(mq) = 0; MKDPM(nv,mq0,q); q->sugar = sugar;
+  *nf = d;
   return q;
 }
 
