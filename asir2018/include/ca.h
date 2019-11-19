@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.12 2019/11/12 07:47:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.13 2019/11/12 22:27:04 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -543,6 +543,11 @@ typedef struct oDMMstack {
   struct oDMMstack *next;
 } *DMMstack;
 
+typedef struct oDMMstack_array {
+  int len;
+  DMMstack *body;
+} *DMMstack_array;
+
 typedef struct oDL {
   int td;
   int d[1];
@@ -912,6 +917,7 @@ bzero((char *)(q)->b,(w)*sizeof(unsigned int)))
 #define NEWMP(m) ((m)=(MP)MALLOC(sizeof(struct oMP)))
 #define NEWDMM(m) ((m)=(DMM)MALLOC(sizeof(struct oDMM)))
 #define NEWDMMstack(m) ((m)=(DMMstack)MALLOC(sizeof(struct oDMMstack)))
+#define NEWDMMstack_array(m) ((m)=(DMMstack_array)MALLOC(sizeof(struct oDMMstack_array)))
 #define NEWDLBUCKET(a) ((a)=(DLBUCKET)MALLOC(sizeof(struct oDLBUCKET)))
 #define NEWDPP(a) ((a)=(DP_pairs)MALLOC(sizeof(struct dp_pairs)))
 

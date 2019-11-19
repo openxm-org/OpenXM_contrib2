@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.16 2019/10/11 03:45:56 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.17 2019/11/12 07:47:45 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -91,6 +91,7 @@ void Pdp_cont();
 void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient(),Pdpm_nf_and_quotient2();
+void Pdpm_schreyer_frame(),Pdpm_set_schreyer_level();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 void Pdpm_schreyer_base(),Pdpm_simplify_syz(),Pdpm_td();
 
@@ -257,6 +258,8 @@ struct ftab dp_supp_tab[] = {
   {"dp_sort",Pdp_sort,1},
   {"dp_ord",Pdp_ord,-1},
   {"dpm_set_schreyer",Pdpm_set_schreyer,-1},
+  {"dpm_set_schreyer_level",Pdpm_set_schreyer_level,1},
+  {"dpm_schreyer_frame",Pdpm_schreyer_frame,1},
   {"dpv_ord",Pdpv_ord,-2},
   {"dp_set_kara",Pdp_set_kara,-1},
   {"dp_nelim",Pdp_nelim,-1},
@@ -4005,6 +4008,37 @@ void Pdpm_set_schreyer(NODE arg,LIST *rp)
   else
     *rp = 0;
 }
+
+DMMstack_array Schreyer_Frame;
+DMMstack_array dpm_schreyer_frame(NODE n);
+void set_schreyer_level(DMMstack_array array,int level);
+
+void Pdpm_set_schreyer_level(NODE arg,Q *rp)
+{
+  set_schreyer_level(Schreyer_Frame,ZTOS((Q)ARG0(arg)));
+  *rp = (Q)ARG0(arg);
+}
+
+void Pdpm_schreyer_frame(NODE arg,LIST *rp)
+{
+  DMMstack_array a;
+  DMMstack *body;
+  NODE b,b1;
+  LIST l;
+  int len,i;
+
+  Schreyer_Frame = a = dpm_schreyer_frame(BDY((LIST)ARG0(arg)));
+  len = a->len;
+  body = a->body;
+  b = 0;
+  for ( i = 0; i < len; i++ ) {
+    MKNODE(b1,(pointer)body[i]->obj,b);
+    b = b1;
+  }
+  MKLIST(l,b);
+  *rp = l;
+}
+
 
 void Pdpm_hm(NODE arg,DPM *rp)
 {

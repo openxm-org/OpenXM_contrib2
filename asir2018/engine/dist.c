@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.13 2019/11/12 12:50:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.14 2019/11/12 22:27:04 noro Exp $
 */
 #include "ca.h"
 
@@ -2722,6 +2722,26 @@ void set_schreyer_order(LIST data)
   }
 }
 
+void set_schreyer_level(DMMstack_array array,int level)
+{
+  if ( !level ) {
+    dmm_stack = 0;
+    if ( dp_current_spec && dp_current_spec->id >= 256 )
+      dpm_ordtype = dp_current_spec->module_ordtype;
+    else 
+      dpm_ordtype = 0;
+    return;
+  } else {
+    if ( !dp_current_spec || dp_current_spec->id < 256 )
+      error("set_schreyer_level : base module order is not set");
+    if ( level > array->len )
+      error("set_schreyer_level : invalid level");
+    dmm_stack = array->body[level-1];
+    dpm_base_ordtype = dp_current_spec->module_ordtype;
+    dpm_ordtype = 3;
+  }
+}
+
 // construct a base of syz(g) 
 // assuming the schrerer order is properly set
 
@@ -2769,189 +2789,6 @@ struct oEGT egra;
 
 void dpm_ht(DPM d,DPM *r);
 
-#if 0
-void dpm_schreyer_base(LIST g,LIST *s)
-{
-  NODE nd,t0,t,b0,b;
-  int n,i,j,k,nv,max,pos;
-  LIST l;
-  Z cont;
-  P dn,c;
-  DP h,t1,t2;
-  MP d;
-  DMM r0,r,r1;
-  DPM sp,nf,dpm;
-  DPM *ps;
-  VECT psv,psv2;
-  DPM quo;
-  DP **m;
-  NODE2 *ps2;
-  NODE2 nd2;
-  struct oEGT eg0,eg1;
-  extern struct oEGT egred;
-
-  init_eg(&egra);
-  nd = BDY(g);
-  n = length(nd);
-  MKVECT(psv,n);
-  ps = (DPM *)BDY(psv);
-  for ( i = 0, t = nd; i < n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
-  for ( i = 0, max = 0; i < n; i++ )
-    if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
-  MKVECT(psv2,max+1);
-  ps2 = (NODE2 *)BDY(psv2);
-  for ( i = n-1; i >= 0; i-- ) {
-    pos = BDY(ps[i])->pos;
-    MKNODE2(nd2,ps[i],(long)i+1,ps2[pos]); ps2[pos] = nd2;
-  }
-  nv = ps[0]->nv;
-  m = (DP **)almat_pointer(n,n);
-  b0 = 0;
-  k = 0;
-  for ( i = 0; i < n; i++ ) {
-    // sp(ps[i],ps[j]) = ti*ps[i]-tj*ps[j] => m[i][j] = ti
-    for ( j = i+1; j < n; j++ ) m[i][j] = dpm_sp_hm(ps[i],ps[j]);
-    for ( j = i+1; j < n; j++ ) {
-      if ( !m[i][j] ) continue;
-      for ( h = m[i][j], k = i+1; k < n; k++ )
-        if ( k != j && m[i][k] && dp_redble(m[i][k],h) ) m[i][k] = 0;
-    }
-    for ( j = i+1; j < n; j++ ) {
-      if ( m[i][j] ) {
-        DPM quo1,nf1;
-        P dn1;
-
-        dpm_sp(ps[i],ps[j],&sp,&t1,&t2);
-        quo = dpm_nf_and_quotient3(sp,psv2,&nf,&dn);
-        if ( nf ) 
-          error("dpm_schreyer_base : cannot happen");
-        NEWDMM(r0); r = r0; 
-        mulp(CO,(P)BDY(t1)->c,dn,(P *)&r->c); r->pos = i+1; r->dl = BDY(t1)->dl;
-        NEWDMM(NEXT(r)); r=NEXT(r);
-        mulp(CO,(P)BDY(t2)->c,dn,&c); chsgnp(c,(P *)&r->c); r->pos = j+1; r->dl = BDY(t2)->dl;
-        if ( quo ) {
-          for ( r1 = BDY(quo); r1; r1 = NEXT(r1) ) {
-            chsgnp((P)r1->c,&c); r1->c = (Obj)c;
-          }
-          NEXT(r) = BDY(quo);
-        } else
-          NEXT(r) = 0;
-        MKDPM(nv,r0,dpm); // XXX : sugar is not set
-        NEXTNODE(b0,b);
-        BDY(b) = (pointer)dpm;
-        k++;
-      }
-    }
-    if ( b0 ) NEXT(b) = 0;
-  }
-  for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
-    dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
-  }
-  if ( t0 ) NEXT(t) = 0;
-  MKLIST(l,t0);
-  dmm_stack = push_schreyer_order(l,dmm_stack);
-//  for ( t = b0; t; t = NEXT(t) ) {
-//    dpm_sort((DPM)BDY(t),&dpm); 
-//    BDY(t) = (pointer)dpm;
-//  }
-  b0 = dpm_sort_list(b0);
-  get_eg(&eg0);
-  b0 = dpm_reduceall(b0);
-  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
-  MKLIST(*s,b0);
-//  print_eg("red",&egred); printf("\n");
-}
-#elif 0
-void dpm_schreyer_base(LIST g,LIST *s)
-{
-  NODE nd,t0,t,b0,b;
-  int n,i,j,k,nv,max,pos;
-  LIST l;
-  Z cont;
-  P dn,c;
-  DP h,t1,t2;
-  MP d;
-  DMM r0,r,r1;
-  DPM sp,nf,dpm;
-  DPM *ps;
-  VECT psiv;
-  DPM quo;
-  DP **m;
-  NODE *psi;
-  struct oEGT eg0,eg1;
-  extern struct oEGT egred;
-
-  init_eg(&egra);
-  nd = BDY(g);
-  n = length(nd);
-  ps = (DPM *)MALLOC(n*sizeof(DPM));
-  for ( i = 0, t = nd; i < n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
-  for ( i = 0, max = 0; i < n; i++ )
-    if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
-  MKVECT(psiv,max+1);
-  psi = (NODE *)BDY(psiv);
-  for ( i = n-1; i >= 0; i-- ) {
-    pos = BDY(ps[i])->pos;
-    MKNODE(nd,(long)(i+1),psi[pos]); psi[pos] = nd;
-  }
-  nv = ps[0]->nv;
-  m = (DP **)almat_pointer(n,n);
-  b0 = 0;
-  k = 0;
-  for ( i = 0; i < n; i++ ) {
-    // sp(ps[i],ps[j]) = ti*ps[i]-tj*ps[j] => m[i][j] = ti
-    for ( j = i+1; j < n; j++ ) m[i][j] = dpm_sp_hm(ps[i],ps[j]);
-    for ( j = i+1; j < n; j++ ) {
-      if ( !m[i][j] ) continue;
-      for ( h = m[i][j], k = i+1; k < n; k++ )
-        if ( k != j && m[i][k] && dp_redble(m[i][k],h) ) m[i][k] = 0;
-    }
-    for ( j = i+1; j < n; j++ ) {
-      if ( m[i][j] ) {
-        DPM quo1,nf1;
-        P dn1;
-
-        dpm_sp(ps[i],ps[j],&sp,&t1,&t2);
-        quo = dpm_nf_and_quotient4(sp,ps,psiv,0,&nf,&dn);
-        if ( nf ) 
-          error("dpm_schreyer_base : cannot happen");
-        NEWDMM(r0); r = r0; 
-        mulp(CO,(P)BDY(t1)->c,dn,(P *)&r->c); r->pos = i+1; r->dl = BDY(t1)->dl;
-        NEWDMM(NEXT(r)); r=NEXT(r);
-        mulp(CO,(P)BDY(t2)->c,dn,&c); chsgnp(c,(P *)&r->c); r->pos = j+1; r->dl = BDY(t2)->dl;
-        if ( quo ) {
-          for ( r1 = BDY(quo); r1; r1 = NEXT(r1) ) {
-            chsgnp((P)r1->c,&c); r1->c = (Obj)c;
-          }
-          NEXT(r) = BDY(quo);
-        } else
-          NEXT(r) = 0;
-        MKDPM(nv,r0,dpm); // XXX : sugar is not set
-        NEXTNODE(b0,b);
-        BDY(b) = (pointer)dpm;
-        k++;
-      }
-    }
-    if ( b0 ) NEXT(b) = 0;
-  }
-  for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
-    dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
-  }
-  if ( t0 ) NEXT(t) = 0;
-  MKLIST(l,t0);
-  dmm_stack = push_schreyer_order(l,dmm_stack);
-//  for ( t = b0; t; t = NEXT(t) ) {
-//    dpm_sort((DPM)BDY(t),&dpm); 
-//    BDY(t) = (pointer)dpm;
-//  }
-//  b0 = dpm_sort_list(b0);
-//  get_eg(&eg0);
-//  b0 = dpm_reduceall(b0);
-//  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
-  MKLIST(*s,b0);
-//  print_eg("red",&egred); printf("\n");
-}
-#else
 void dpm_schreyer_base(LIST g,LIST *s)
 {
   NODE nd,t0,t,b0,b;
@@ -2970,7 +2807,9 @@ void dpm_schreyer_base(LIST g,LIST *s)
   int p1,p2,p3;
   struct oEGT eg0,eg1,egsp,egnf;
   extern struct oEGT egred;
+  extern int sch_count,schrec_count,schlast_count;
 
+  sch_count = schlast_count= 0;
   init_eg(&egra);
   init_eg(&egsp);
   init_eg(&egnf);
@@ -3041,49 +2880,163 @@ void dpm_schreyer_base(LIST g,LIST *s)
 //  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
   MKLIST(*s,b0);
 //  print_eg("red",&egred); printf("\n");
+  printf("sch_count=%d, schlast_count=%d\n",sch_count,schlast_count);
 }
-#endif
+
+
+DMMstack_array dpm_schreyer_frame(NODE g)
+{
+  LIST l;
+  NODE nd,in,b0,b,n1,n2,n3,t;
+  NODE *psi;
+  long p1,p2,p3;
+  int nv,n,i,max,pos,level;
+  DMMstack s,s1;
+  DMM m1,m0,dmm;
+  MP mp;
+  DP dp,h;
+  DP *m;
+  DPM dpm,dpm0,dpm1;
+  VECT psv,psiv;
+  DPM *ps;
+  DMMstack_array dmmstack_array;
+
+  nd = g;
+  nv = ((DPM)BDY(nd))->nv;
+  s = 0;
+  level = 0;
+  while ( 1 ) {
+    /* store the current nd to a DMMstack */
+    n = length(nd);
+    NEWDMMstack(s1);
+    MKLIST(l,nd); s1->obj = l;
+    s1->rank = n;
+    s1->in = (DMM *)MALLOC((n+1)*sizeof(DMM));
+    s1->sum = (DMM *)MALLOC((n+1)*sizeof(DMM));
+    NEXT(s1) = s;
+    if ( s ) {
+      for ( i = 1, in = nd; i <= n; i++, in = NEXT(in) ) {
+        m1 = s1->in[i] = BDY((DPM)BDY(in));
+        NEWMP(mp); mp->dl = m1->dl; mp->c = m1->c; NEXT(mp) = 0;
+        MKDP(nv,mp,dp); dp->sugar = mp->dl->td;
+        m0 = s->sum[m1->pos]; MKDPM(nv,m0,dpm0);
+        mulobjdpm(CO,(Obj)dp,dpm0,&dpm1);
+        s1->sum[i] = BDY(dpm1);
+      }
+    } else {
+      for ( i = 1, in = nd; i <= n; i++, in = NEXT(in) ) 
+        s1->sum[i] = s1->in[i] = BDY((DPM)BDY(in));
+
+    }
+    s = s1;
+    level++;
+
+
+    /* create new list */
+    MKVECT(psv,n+1);
+    ps = (DPM *)BDY(psv);
+    for ( i = 1, t = nd; i <= n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
+    for ( i = 1, max = 0; i <= n; i++ )
+      if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
+    MKVECT(psiv,max+1);
+    psi = (NODE *)BDY(psiv);
+    for ( i = n; i >= 1; i-- ) {
+      pos = BDY(ps[i])->pos;
+      MKNODE(nd,(long)i,psi[pos]); psi[pos] = nd;
+    }
+    m = (DP *)MALLOC((n+1)*sizeof(DP));
+    b0 = 0;
+    for ( i = 1; i <= max; i++ ) {
+      for ( n1 = psi[i]; n1; n1 = NEXT(n1) ) {
+        bzero(m,(n+1)*sizeof(DP));
+        p1 = (long)BDY(n1);
+        for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+          p2 = (long)BDY(n2);
+          h = dpm_sp_hm(ps[p1],ps[p2]);
+          for ( n3 = NEXT(n1); n3 != n2; n3 = NEXT(n3) ) {
+            p3 = (long)BDY(n3);
+            if ( m[p3] ) {
+              if ( dp_redble(h,m[p3]) ) {
+                h = 0; break;
+              }
+              if ( dp_redble(m[p3],h) ) m[p3] = 0;
+            }
+          }
+          if ( h ) m[p2] = h;
+        }
+        for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+          p2 = (long)BDY(n2);
+          if ( m[p2] ) {
+            NEWDMM(dmm); dmm->dl = BDY(m[p2])->dl; dmm->pos = p1; dmm->c = (Obj)ONE;
+            MKDPM(nv,dmm,dpm);
+            NEXTNODE(b0,b); BDY(b) = (pointer)dpm;
+          }
+        }
+      }
+    }
+    if ( !b0 ) {
+      NEWDMMstack_array(dmmstack_array);
+      dmmstack_array->len = level;
+      dmmstack_array->body = (DMMstack *)MALLOC(level*sizeof(DMMstack));
+      for ( i = level-1, s1 = s; i >= 0; i--, s1 = NEXT(s1) )
+        dmmstack_array->body[i] = s1;
+      return dmmstack_array;
+    } else {
+      NEXT(b) = 0;
+      nd = b0;
+    }
+  }
+}
+
+int sch_count,schlast_count;
 
 int compdmm_schreyer(int n,DMM m1,DMM m2)
 {
-   int pos1,pos2,t;
-   DMM *in;
-   DMMstack s;
-   static DL d1=0,d2=0;
-   static int dlen=0;
+  int pos1,pos2,t,npos1,npos2;
+  DMM *in,*sum;
+  DMMstack s;
+  static DL d1=0,d2=0;
+  static int dlen=0;
 
-   pos1 = m1->pos; pos2 = m2->pos;
-   if ( pos1 == pos2 ) return (*cmpdl)(n,m1->dl,m2->dl);
-   if ( n > dlen ) {
-     NEWDL(d1,n); NEWDL(d2,n); dlen = n;
-   }
-   _copydl(n,m1->dl,d1); 
-   _copydl(n,m2->dl,d2); 
-   for ( s = dmm_stack; s; s = NEXT(s) ) {
-     in = s->in;
-     _addtodl(n,in[pos1]->dl,d1);
-     _addtodl(n,in[pos2]->dl,d2);
-     if ( in[pos1]->pos == in[pos2]->pos && _eqdl(n,d1,d2)) {
-       if ( pos1 < pos2 ) return 1;
-       else if ( pos1 > pos2 ) return -1;
-       else return 0;
-     }
-     pos1 = in[pos1]->pos;
-     pos2 = in[pos2]->pos;
-     if ( pos1 == pos2 ) return (*cmpdl)(n,d1,d2);
-   }
-   // comparison by the bottom order
-LAST:
-  if ( dpm_base_ordtype == 1 ) {
+  sch_count++;
+  pos1 = m1->pos; pos2 = m2->pos;
+  if ( pos1 == pos2 ) return (*cmpdl)(n,m1->dl,m2->dl);
+  if ( n > dlen ) {
+    NEWDL(d1,n); NEWDL(d2,n); dlen = n;
+  }
+  sum = dmm_stack->sum;
+  _adddl(n,m1->dl,sum[pos1]->dl,d1);
+  _adddl(n,m2->dl,sum[pos2]->dl,d2);
+  t = (*cmpdl)(n,d1,d2);
+  if ( sum[pos1]->pos == sum[pos2]->pos && t == 0 ) {
+    for ( s = dmm_stack; s; s = NEXT(s) ) {
+      in = s->in;
+      npos1 = in[pos1]->pos;
+      npos2 = in[pos2]->pos;
+      if ( npos1 == npos2 ) break;
+      else {
+        pos1 = npos1;
+        pos2 = npos2;
+      }
+    }
+    // (pos1,pos2) = the last pair s.t. pos1 != pos2
+    // simply compare pos1 and pos2
     if ( pos1 < pos2 ) return 1;
     else if ( pos1 > pos2 ) return -1;
-    else return (*cmpdl)(n,d1,d2);
   } else {
-    t = (*cmpdl)(n,d1,d2);
-    if ( t ) return t;
-    else if ( pos1 < pos2 ) return 1;
-    else if ( pos1 > pos2 ) return -1;
-    else return 0;
+    schlast_count++;
+    pos1 = sum[pos1]->pos;
+    pos2 = sum[pos2]->pos;
+    if ( dpm_base_ordtype == 1 ) {
+      if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return t;
+    } else {
+      if ( t ) return t;
+      else if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return 0;
+    }
   }
 }
 
