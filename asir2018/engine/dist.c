@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.15 2019/11/19 10:50:31 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.16 2019/11/21 01:54:01 noro Exp $
 */
 #include "ca.h"
 
@@ -2750,6 +2750,7 @@ void dpm_sp(DPM p1,DPM p2,DPM *sp,DP *t1,DP *t2);
 DPM dpm_nf_and_quotient3(DPM sp,VECT psv,DPM *nf,P *dn);
 DPM dpm_nf_and_quotient4(DPM sp,DPM *ps,VECT psiv,DPM head,DPM *nf,P *dn);
 DPM dpm_sp_nf(VECT psv,VECT psiv,int i,int j,DPM *nf);
+DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf);
 DPM dpm_sp_nf_asir(VECT psv,int i,int j,DPM *nf);
 void dpm_sort(DPM p,DPM *r);
 
@@ -2861,7 +2862,7 @@ void dpm_schreyer_base(LIST g,LIST *s)
   get_eg(&eg0);
   get_eg(&eg1); add_eg(&egnf,&eg0,&eg1); print_eg("NF",&egnf); printf("\n");
   if ( b0 ) NEXT(b) = 0;
-  for ( t0 = t, nd = BDY(g); nd; nd = NEXT(nd) ) {
+  for ( t0 = 0, nd = BDY(g); nd; nd = NEXT(nd) ) {
     dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
   }
   if ( t0 ) NEXT(t) = 0;
@@ -2876,6 +2877,134 @@ void dpm_schreyer_base(LIST g,LIST *s)
   printf("sch_count=%d, schlast_count=%d\n",sch_count,schlast_count);
 }
 
+void dpm_list_to_array(LIST g,VECT *psvect,VECT *psindvect)
+{
+  NODE nd,t;
+  int n;
+  VECT psv,psiv;
+  DPM *ps;
+  int i,max,pos;
+  LIST *psi;
+  LIST l;
+  Z iz;
+
+  nd = BDY(g);
+  n = length(nd);
+  MKVECT(psv,n+1);
+  ps = (DPM *)BDY(psv);
+  for ( i = 1, t = nd; i <= n; i++, t = NEXT(t) ) ps[i] = (DPM)BDY(t);
+  for ( i = 1, max = 0; i <= n; i++ )
+    if ( (pos=BDY(ps[i])->pos) > max ) max = pos;
+  MKVECT(psiv,max+1);
+  psi = (LIST *)BDY(psiv);
+  for ( i = 0; i <= max; i++ ) {
+    MKLIST(l,0); psi[i] = l;
+  }
+  for ( i = n; i >= 1; i-- ) {
+    pos = BDY(ps[i])->pos;
+    STOZ(i,iz); MKNODE(nd,iz,BDY(psi[pos])); BDY(psi[pos]) = nd;
+  }
+  *psvect = psv; *psindvect = psiv;
+}
+
+void dpm_insert_to_zlist(VECT psiv,int pos,int i)
+{
+  LIST l;
+  NODE prev,cur,nd;
+  int curi;
+  Z iz;
+
+  l = (LIST)BDY(psiv)[pos];
+  for ( prev = 0, cur = BDY(l); cur; cur = NEXT(cur) ) {
+    curi = ZTOS((Q)BDY(cur));
+    if ( curi == i )
+      error("dpm_insert_to_list : invalid index");
+    if ( i < curi ) break;
+    prev = cur;
+  }
+  STOZ(i,iz); MKNODE(nd,iz,cur);
+  if ( prev == 0 ) BDY(l) = nd;
+  else NEXT(prev) = nd;
+}
+
+void dpm_schreyer_base_zlist(LIST g,LIST *s)
+{
+  NODE nd,t0,t,b0,b;
+  int n,i,j,k,nv,max,pos;
+  LIST l;
+  DP h,t1,t2;
+  MP d;
+  DMM r0,r,r1;
+  DPM sp,nf,dpm;
+  DPM *ps;
+  VECT psv,psiv;
+  DPM quo;
+  DP *mm;
+  LIST *psi;
+  NODE n1,n2,n3;
+  int p1,p2,p3;
+  Z iz;
+  struct oEGT eg0,eg1,egsp,egnf;
+  extern struct oEGT egred;
+  extern int sch_count,schrec_count,schlast_count;
+
+  sch_count = schlast_count= 0;
+  init_eg(&egra);
+  init_eg(&egsp);
+  init_eg(&egnf);
+  dpm_list_to_array(g,&psv,&psiv);
+  ps = (DPM *)BDY(psv);
+  psi = (LIST *)BDY(psiv);
+  nv = ps[1]->nv;
+  n = psv->len-1;
+  max = psiv->len-1;
+  mm = (DP *)MALLOC((n+1)*sizeof(DP));
+  b0 = 0;
+  get_eg(&eg0);
+  for ( i = 1; i <= max; i++ ) {
+    memset(mm,0,(n+1)*sizeof(DP));
+    for ( n1 = BDY((LIST)psi[i]); n1; n1 = NEXT(n1) ) {
+      p1 = ZTOS((Q)BDY(n1));
+      for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+        p2 = ZTOS((Q)BDY(n2));
+        mm[p2] = dpm_sp_hm(ps[p1],ps[p2]);
+      }
+      for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+        p2 = ZTOS((Q)BDY(n2));
+        if ( !mm[p2] ) continue;
+        for ( h = mm[p2], n3 = NEXT(n1); n3; n3 = NEXT(n3) ) {
+          p3 = ZTOS((Q)BDY(n3));
+          if ( n3 != n2 && mm[p3] && dp_redble(mm[p3],h) ) mm[p3] = 0;
+        }
+      }
+      for ( j = p1+1; j <= n; j++ ) {
+        if ( mm[j] ) {
+          quo = dpm_sp_nf_zlist(psv,psiv,p1,j,&nf);
+          if ( nf ) 
+            error("dpm_schreyer_base : cannot happen");
+          NEXTNODE(b0,b); BDY(b) = (pointer)quo;
+        }
+      }
+    }
+  }
+  get_eg(&eg1); add_eg(&egsp,&eg0,&eg1); print_eg("SP",&egsp);
+  get_eg(&eg0);
+  get_eg(&eg1); add_eg(&egnf,&eg0,&eg1); print_eg("NF",&egnf); printf("\n");
+  if ( b0 ) NEXT(b) = 0;
+  for ( t0 = 0, nd = BDY(g); nd; nd = NEXT(nd) ) {
+    dpm_ht((DPM)BDY(nd),&dpm); NEXTNODE(t0,t); BDY(t) = (pointer)dpm;
+  }
+  if ( t0 ) NEXT(t) = 0;
+  MKLIST(l,t0);
+  dmm_stack = push_schreyer_order(l,dmm_stack);
+//  b0 = dpm_sort_list(b0);
+//  get_eg(&eg0);
+//  b0 = dpm_reduceall(b0);
+//  get_eg(&eg1); add_eg(&egra,&eg0,&eg1); print_eg("RA",&egra);
+  MKLIST(*s,b0);
+//  print_eg("red",&egred); printf("\n");
+  printf("sch_count=%d, schlast_count=%d\n",sch_count,schlast_count);
+}
 
 DMMstack_array dpm_schreyer_frame(NODE g)
 {

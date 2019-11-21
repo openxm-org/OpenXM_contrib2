@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.17 2019/11/12 07:47:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.18 2019/11/19 10:50:31 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -92,6 +92,7 @@ void Pdp_gr_checklist();
 void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient(),Pdpm_nf_and_quotient2();
 void Pdpm_schreyer_frame(),Pdpm_set_schreyer_level();
+void Pdpm_list_to_array(),Pdpm_sp_nf(),Pdpm_insert_to_zlist();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 void Pdpm_schreyer_base(),Pdpm_simplify_syz(),Pdpm_td();
 
@@ -334,6 +335,9 @@ struct ftab dp_supp_tab[] = {
   {"dp_mono_raddec",Pdp_mono_raddec,2},
   {"dp_mono_reduce",Pdp_mono_reduce,2},
   {"dpm_schreyer_base",Pdpm_schreyer_base,1},
+  {"dpm_list_to_array",Pdpm_list_to_array,1},
+  {"dpm_sp_nf",Pdpm_sp_nf,4},
+  {"dpm_insert_to_zlist",Pdpm_insert_to_zlist,3},
   {"dpm_simplify_syz",Pdpm_simplify_syz,2},
 
   {"dp_rref2",Pdp_rref2,2},
@@ -1924,12 +1928,61 @@ void Pdpm_redble(NODE arg,Z *rp)
 }
 
 void dpm_schreyer_base(LIST g,LIST *s);
+void dpm_schreyer_base_zlist(LIST g,LIST *s);
 
 void Pdpm_schreyer_base(NODE arg,LIST *rp)
 {
   asir_assert(ARG0(arg),O_LIST,"dpm_schreyer_base");
-  dpm_schreyer_base((LIST)ARG0(arg),rp);
+  dpm_schreyer_base_zlist((LIST)ARG0(arg),rp);
 }
+
+void dpm_list_to_array(LIST g,VECT *psv,VECT *psiv);
+
+void Pdpm_list_to_array(NODE arg,LIST *rp)
+{
+  VECT psv,psiv;
+  NODE nd;
+
+  asir_assert(ARG0(arg),O_LIST,"dpm_list_to_array");
+  dpm_list_to_array((LIST)ARG0(arg),&psv,&psiv);
+  nd = mknode(2,psv,psiv);
+  MKLIST(*rp,nd);
+}
+
+/* [quo,nf] = dpm_sp_nf(psv,psiv,i,j) */
+DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf);
+
+void Pdpm_sp_nf(NODE arg,LIST *rp)
+{
+  VECT psv,psiv;
+  DPM quo,nf;
+  int i,j;
+  NODE nd;
+
+  asir_assert(ARG0(arg),O_VECT,"dpm_sp_nf"); psv = (VECT)ARG0(arg);
+  asir_assert(ARG1(arg),O_VECT,"dpm_sp_nf"); psiv = (VECT)ARG1(arg);
+  asir_assert(ARG2(arg),O_N,"dpm_sp_nf"); i = ZTOS((Q)ARG2(arg));
+  asir_assert(ARG3(arg),O_N,"dpm_sp_nf"); j = ZTOS((Q)ARG3(arg));
+  quo = dpm_sp_nf_zlist(psv,psiv,i,j,&nf);
+  nd = mknode(2,quo,nf);
+  MKLIST(*rp,nd);
+}
+
+void dpm_insert_to_zlist(VECT psiv,int pos,int i);
+
+/* insert_to_zlist(indarray,dpm_hp(f),i) */
+void Pdpm_insert_to_zlist(NODE arg,VECT *rp)
+{
+  VECT psiv;
+  int i,pos;
+
+  asir_assert(ARG0(arg),O_VECT,"dpm_insert_to_zlist"); psiv = (VECT)ARG0(arg);
+  asir_assert(ARG1(arg),O_N,"dpm_insert_to_zlist"); pos = ZTOS((Q)ARG1(arg));
+  asir_assert(ARG2(arg),O_N,"dpm_insert_to_zlist"); i = ZTOS((Q)ARG2(arg));
+  dpm_insert_to_zlist(psiv,pos,i);
+  *rp = psiv;
+}
+
 
 void dpm_simplify_syz(LIST m,LIST s,LIST *m1,LIST *s1,LIST *w1);
 
