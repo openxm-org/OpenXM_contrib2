@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.20 2019/09/15 08:46:12 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.21 2019/09/19 06:29:48 noro Exp $ */
 
 #include "nd.h"
 
@@ -5538,7 +5538,7 @@ void dpm_sort(DPM p,DPM *rp)
 
 int dpm_comp(DPM *a,DPM *b)
 {
-  return compdpm(CO,*a,*b);
+  return -compdpm(CO,*a,*b);
 }
 
 NODE dpm_sort_list(NODE l)
