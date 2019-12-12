@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.10 2019/11/12 12:50:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.11 2019/11/21 04:03:16 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1893,7 +1893,7 @@ DPM dpm_sp_nf(VECT psv,VECT psiv,int i,int j,DPM *nf)
 
   ps = (DPM *)BDY(psv);
   n = psv->len;
-  nv = ps[1]->nv;
+  nv = ps[i]->nv;
   dpm_sp(ps[i],ps[j],&g,&t1,&t2);
   mq0 = 0;
   NEXTDMM(mq0,mq); mq->c = BDY(t1)->c; mq->pos = i; mq->dl = BDY(t1)->dl;
@@ -1974,7 +1974,7 @@ DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf)
 
   ps = (DPM *)BDY(psv);
   n = psv->len;
-  nv = ps[1]->nv;
+  nv = ps[i]->nv;
   dpm_sp(ps[i],ps[j],&g,&t1,&t2);
   mq0 = 0;
   NEXTDMM(mq0,mq); mq->c = BDY(t1)->c; mq->pos = i; mq->dl = BDY(t1)->dl;
@@ -2024,10 +2024,19 @@ DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf)
     if ( u ) {
       g = u;
     } else {
+#if 0
       m = BDY(g);
       NEXTDMM(mr0,mr);
       mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
       dpm_rest(g,&t); g = t;
+#else
+      *nf = g;
+      if ( mq0 ) {
+        NEXT(mq) = 0; MKDPM(nv,mq0,q); q->sugar = sugar;
+      } else
+        q = 0;
+      return q;
+#endif
     }
   }
 last:

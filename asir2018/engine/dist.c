@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.16 2019/11/21 01:54:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.17 2019/11/21 04:03:16 noro Exp $
 */
 #include "ca.h"
 
@@ -3046,9 +3046,11 @@ DMMstack_array dpm_schreyer_frame(NODE g)
         s1->sum[i] = BDY(dpm1);
       }
     } else {
-      for ( i = 1, in = nd; i <= n; i++, in = NEXT(in) ) 
-        s1->sum[i] = s1->in[i] = BDY((DPM)BDY(in));
-
+      for ( i = 1, in = nd; i <= n; i++, in = NEXT(in) )  {
+        m0 = BDY((DPM)BDY(in));
+        NEWDMM(m1); *m1 = *m0; m1->c = (Obj)ONE; NEXT(m1) = 0;
+        s1->sum[i] = s1->in[i] = m1;
+      }
     }
     s = s1;
     level++;

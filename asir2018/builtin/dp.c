@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.18 2019/11/19 10:50:31 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.19 2019/11/21 04:03:16 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -4072,20 +4072,44 @@ void Pdpm_set_schreyer_level(NODE arg,Q *rp)
   *rp = (Q)ARG0(arg);
 }
 
+DPM dmmtodpm(DMM d)
+{
+}
+
 void Pdpm_schreyer_frame(NODE arg,LIST *rp)
 {
   DMMstack_array a;
   DMMstack *body;
-  NODE b,b1;
+  DMM *in,*sum;
+  DPM f,s;
+  NODE b,b1,nd;
   LIST l;
-  int len,i;
+  VECT v;
+  Z lev,deg,ind;
+  int len,i,nv,rank,j;
 
   Schreyer_Frame = a = dpm_schreyer_frame(BDY((LIST)ARG0(arg)));
   len = a->len;
   body = a->body;
+  /* XXX */
+  nv = ((DPM)BDY(BDY((LIST)body[0]->obj)))->nv;
   b = 0;
   for ( i = 0; i < len; i++ ) {
-    MKNODE(b1,(pointer)body[i]->obj,b);
+    rank = body[i]->rank;
+    in = body[i]->in;
+    sum = body[i]->sum;
+    MKVECT(v,rank+1);
+    STOZ(i+1,lev);
+    for ( j = 1; j <= rank; j++ ) {
+      MKDPM(nv,in[j],f); f->sugar = in[j]->dl->td;
+      MKDPM(nv,sum[j],s);s->sugar = sum[j]->dl->td;
+      STOZ(s->sugar,deg);
+      STOZ(j,ind);
+      nd = mknode(5,f,s,ind,lev,deg); 
+      MKLIST(l,nd);
+      BDY(v)[j] = (pointer)l;
+    }
+    MKNODE(b1,(pointer)v,b);
     b = b1;
   }
   MKLIST(l,b);
