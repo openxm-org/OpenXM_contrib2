@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox_asir.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_asir.c,v 1.2 2018/09/28 08:20:29 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1000,7 +1000,16 @@ void ox_io_init() {
   extern int I_am_server;
 
   /* XXX : ssh forwards stdin to a remote host on PC Unix */
-#if defined(linux)
+#if defined(ANDROID)
+#include <sys/resource.h>
+  int i;
+  struct rlimit rl;
+
+  getrlimit(RLIMIT_NOFILE,&rl);
+  close(0);
+  for ( i = 5; i < rl.rlim_cur; i++ )
+    close(i);
+#elif defined(linux)
 #include <sys/param.h>
   int i;
 

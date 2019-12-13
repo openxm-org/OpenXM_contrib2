@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -459,7 +459,7 @@ int yylex()
 
 void purge_stdin()
 {
-#if defined(__FreeBSD__) || defined(__DARWIN__)
+#if defined(__FreeBSD__) || defined(__DARWIN__) || defined(ANDROID)
   fpurge(stdin);
 #elif defined(linux)
   stdin->_IO_read_end = stdin->_IO_read_base;

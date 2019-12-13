@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.2 2019/07/25 05:57:55 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -409,6 +409,9 @@ int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
 }
 
 extern int Im_ox_plot;
+#if defined(ANDROID)
+int Im_ox_plot = 0;
+#endif
 
 void begin_critical() {
   critical_when_signal = 1;
@@ -466,7 +469,9 @@ void ox_usr1_handler(int sig)
 
 void clear_readbuffer()
 {
-#if defined(linux)
+#if defined(ANDROID)
+  fpurge(iofp[0].in);
+#elif defined(linux)
   iofp[0].in->_IO_read_ptr = iofp[0].in->_IO_read_end;
 #elif defined(__FreeBSD__)
   fpurge(iofp[0].in);

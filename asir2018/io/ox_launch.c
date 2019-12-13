@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.2 2019/03/24 09:51:41 noro Exp $
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -99,7 +99,11 @@ char *str;
   static FILE *logfile;
 
   if ( !logfile )
+#if defined(ANDROID)
+    logfile = fopen("/data/data/com.termux/files/usr/tmp/ox_log","w");
+#else
     logfile = fopen("/tmp/ox_log","w");
+#endif
   fprintf(logfile,"%s\n",str);
   fflush(logfile);
 }
@@ -331,7 +335,16 @@ char *nolog;
     if ( bs != 4 && dup2(bs,4) != 4 )
       exit(1);
     {
-#if defined(linux) || defined(__NeXT__) || defined(ultrix) || defined(__CYGWIN__)
+#if defined(ANDROID)
+#include <sys/resource.h>
+      struct rlimit rl;
+
+      getrlimit(RLIMIT_NOFILE,&rl);
+      close(0);
+      for ( i = 5; i < rl.rlim_cur; i++ )
+        close(i);
+#elif defined(linux) || defined(__NeXT__) || defined(ultrix) || defined(__CYGWIN
+__)
 #include <sys/param.h>
       close(0);
       for ( i = 5; i < NOFILE; i++ )

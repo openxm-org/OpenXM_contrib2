@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.4 2018/10/19 23:27:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.5 2019/03/28 06:44:04 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -170,6 +170,13 @@ void solve_u(int *,ent **,int,int *,int);
 static int *ul,*ll;
 static ent **u,**l;
 static int modulus;
+#if defined(ANDROID)
+int getw(FILE *fp)
+{
+	int x;
+	return (fread((void *)&x, sizeof(x), 1, fp) == 1 ? x : EOF);
+}
+#endif
 
 void Plusolve_prep(NODE arg,Q *rp)
 {

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/sio.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/sio.c,v 1.2 2018/09/21 07:06:51 noro Exp $
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -113,7 +113,11 @@ void generate_port(int use_unix,char *port_str)
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
   if ( use_unix ) {
+#if defined(ANDROID)
+    sprintf(port_str,"/data/data/com.termux/files/usr/tmp/ox%02x.XXXXXX",count);
+#else
     sprintf(port_str,"/tmp/ox%02x.XXXXXX",count);
+#endif
     count++;
     fd = mkstemp(port_str);
     unlink(port_str);

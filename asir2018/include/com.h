@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/include/com.h,v 1.1 2018/09/19 06:00:58 noro Exp $
 */
 #ifndef _COM_H_
 #define _COM_H_
@@ -65,7 +65,11 @@
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
+#if defined(ANDROID)
+#include <netinet/in.h>
+#else
 #include <rpc/rpc.h>
+#endif
 #define IS_CYGWIN 0
 #endif
 #include <setjmp.h>

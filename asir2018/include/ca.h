@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.13 2019/11/12 22:27:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.14 2019/11/19 10:50:31 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,7 +95,12 @@ typedef caddr_t pointer;
 
 typedef void * pointer;
 
-#if defined(sun)
+#if defined(ANDROID)
+#include <strings.h>
+#include <string.h>
+#define index(s,c) strchr(s,c)
+#define rindex(s,c) strrchr(s,c)
+#elif defined(sun)
 #include <strings.h>
 #else
 #include <string.h>

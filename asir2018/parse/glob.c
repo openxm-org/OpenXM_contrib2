@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.2 2018/09/21 07:06:52 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.3 2019/03/29 04:43:18 ohara Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -567,7 +567,7 @@ void int_handler(int sig)
     return;
   }
 #endif
-#if defined(linux)
+#if !defined(ANDROID) && defined(linux)
 #if 1
   while ( stdin->_IO_read_ptr < stdin->_IO_read_end )
 #else
