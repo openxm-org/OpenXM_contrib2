@@ -1,5 +1,11 @@
 /*	Copyright (c) 1987, 1988 by Software Research Associates, Inc.	*/
 
+#if defined(ANDROID)
+#include <strings.h>
+#define index(s,c) strchr(s,c)
+#define rindex(s,c) strrchr(s,c)
+#endif
+
 #ifndef lint
 static char rcsid[]=
 "$Id$ (SRA)";
@@ -26,7 +32,7 @@ static char rcsid[]=
 #if defined(__CYGWIN__)
 #include <sys/dirent.h>
 #define direct dirent
-#elif defined(sun) || defined(__FreeBSD__)
+#elif defined(sun) || defined(__FreeBSD__) || defined(ANDROID)
 #include <dirent.h>
 #define direct dirent
 #include <unistd.h>
@@ -1771,7 +1777,9 @@ expand_file_name ()
     int found = 0;
     int i;
     int tilde_expanded = 0;
+#if !defined(ANDROID)
     CHAR *index(), *rindex();
+#endif
     
     if (delimiters == NULL)
         delimiters = DEFAULT_DELIMITERS;
@@ -1884,7 +1892,9 @@ list_file_name ()
     CHAR *cp;
     char dir[256];
     DIR *dirp, *x_opendir();
+#if !defined(ANDROID)
     CHAR *index(), *rindex();
+#endif
 
     if (delimiters == NULL)
         delimiters = DEFAULT_DELIMITERS;

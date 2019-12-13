@@ -1,5 +1,11 @@
 /*	Copyright (c) 1987, 1988 by Software Research Associates, Inc.	*/
 
+#if defined(ANDROID)
+#include <strings.h>
+#define index(s,c) strchr(s,c)
+#define rindex(s,c) strrchr(s,c)
+#endif
+
 #ifndef lint
 static char rcsid[]=
 "$Header$ (SRA)";
@@ -11,7 +17,7 @@ static char rcsid[]=
 #include <string.h>
 #include <pwd.h>
 #include <sys/types.h>
-#if defined(__CYGWIN__) || defined(sun)
+#if defined(__CYGWIN__) || defined(sun) || defined(ANDROID)
 #include <dirent.h>
 #else
 #include <sys/dir.h>
@@ -94,7 +100,9 @@ x_dirname (dir)
     char *dir;
 {
     static char dirname [256];
+#if !defined(ANDROID)
     char *index();
+#endif
 
     if (*dir != '~')
 	strcpy (dirname, dir);

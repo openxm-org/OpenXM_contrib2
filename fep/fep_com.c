@@ -1,5 +1,11 @@
 /*	Copyright (c) 1987, 1988 by Software Research Associates, Inc.	*/
 
+#if defined(ANDROID)
+#include <strings.h>
+#define index(s,c) strchr(s,c)
+#define rindex(s,c) strrchr(s,c)
+#endif
+
 #ifndef lint
 static char rcsid[]=
 "$Header$ (SRA)";
@@ -39,6 +45,11 @@ typedef struct {
 } MORE;
 MORE *create_more();
 
+#if defined(ANDROID)
+#define S_IREAD S_IRUSR
+#define S_IWRITE S_IWUSR
+#define S_IEXEC S_IXUSR
+#endif
 /*
  * Check command line if it call built-in function or not and execute it
  */
@@ -311,7 +322,11 @@ set (comline)
     char *comline;
 {
     char line[MAXCMDLEN];
+#if defined(ANDROID)
+    char *cp;
+#else
     char *cp, *index();
+#endif
     char *argv[MAXARGS];
     int argc;
 

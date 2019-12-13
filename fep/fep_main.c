@@ -1,5 +1,11 @@
 /*	Copyright (c) 1987, 1988 by Software Research Associates, Inc.	*/
 
+#if defined(ANDROID)
+#include <strings.h>
+#define index(s,c) strchr(s,c)
+#define rindex(s,c) strrchr(s,c)
+#endif
+
 #ifndef lint
 static char rcsid[]=
 "$Id$ (SRA)";
@@ -248,7 +254,11 @@ DEFAULT:
      * Set variable of command name.
      */
     {
+#if defined(ANDROID)
+	char *cp = argv[1];
+#else
 	char *cp = argv[1], *rindex();
+#endif
 
 	if (any ('/', cp))
 	    cp = rindex (cp, '/') + 1;
