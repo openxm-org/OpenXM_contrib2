@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.2 2019/03/24 09:51:41 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.3 2019/12/13 14:40:50 fujimoto Exp $
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -343,8 +343,7 @@ char *nolog;
       close(0);
       for ( i = 5; i < rl.rlim_cur; i++ )
         close(i);
-#elif defined(linux) || defined(__NeXT__) || defined(ultrix) || defined(__CYGWIN
-__)
+#elif defined(linux) || defined(__NeXT__) || defined(ultrix) || defined(__CYGWIN__)
 #include <sys/param.h>
       close(0);
       for ( i = 5; i < NOFILE; i++ )
