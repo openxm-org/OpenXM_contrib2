@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.4 2019/10/17 03:03:12 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/itvnum.c,v 1.5 2019/11/12 10:53:22 kondoh Exp $
  */
 
 #include "ca.h"
@@ -38,11 +38,65 @@ static void PzeroRewriteCount(NODE, Obj *);
 //int initvp(Num,Itv);
 //int itvinitvp(Itv,Itv);
 static void Pevalitv(NODE, Obj *);
+static void Pevalitvbf(NODE, Obj *);
 static void Pevalitvd(NODE, Obj *);
-void Ppi_itvd(NODE, Obj *);
-void Pe_itvd(NODE, Obj *);
-void Psinitv(NODE, Obj *);
-void Psinitvd(NODE, Obj *);
+
+static void Pitvbf_pi(NODE ,Obj *);
+static void Pitvbf_e(NODE ,Obj *);
+static void Pitvbf_sin(NODE ,Obj *);
+static void Pitvbf_cos(NODE ,Obj *);
+static void Pitvbf_tan(NODE ,Obj *);
+static void Pitvbf_asin(NODE ,Obj *);
+static void Pitvbf_acos(NODE ,Obj *);
+static void Pitvbf_atan(NODE ,Obj *);
+static void Pitvbf_sinh(NODE ,Obj *);
+static void Pitvbf_cosh(NODE ,Obj *);
+static void Pitvbf_tanh(NODE ,Obj *);
+static void Pitvbf_asinh(NODE ,Obj *);
+static void Pitvbf_acosh(NODE ,Obj *);
+static void Pitvbf_atanh(NODE ,Obj *);
+static void Pitvbf_exp(NODE ,Obj *);
+static void Pitvbf_log(NODE ,Obj *);
+static void Pitvbf_abs(NODE ,Obj *);
+static void Pitvbf_pow(NODE ,Num *);
+
+static void Pitvd_pi(NODE ,Obj *);
+static void Pitvd_e(NODE ,Obj *);
+static void Pitvd_sin(NODE ,Obj *);
+static void Pitvd_cos(NODE ,Obj *);
+static void Pitvd_tan(NODE ,Obj *);
+static void Pitvd_asin(NODE ,Obj *);
+static void Pitvd_acos(NODE ,Obj *);
+static void Pitvd_atan(NODE ,Obj *);
+static void Pitvd_sinh(NODE ,Obj *);
+static void Pitvd_cosh(NODE ,Obj *);
+static void Pitvd_tanh(NODE ,Obj *);
+static void Pitvd_asinh(NODE ,Obj *);
+static void Pitvd_acosh(NODE ,Obj *);
+static void Pitvd_atanh(NODE ,Obj *);
+static void Pitvd_exp(NODE ,Obj *);
+static void Pitvd_log(NODE ,Obj *);
+static void Pitvd_abs(NODE ,Obj *);
+static void Pitvd_pow(NODE ,Num *);
+
+static void Pitv_pi(NODE ,Obj *);
+static void Pitv_e(NODE ,Obj *);
+static void Pitv_sin(NODE ,Obj *);
+static void Pitv_cos(NODE ,Obj *);
+static void Pitv_tan(NODE ,Obj *);
+static void Pitv_asin(NODE ,Obj *);
+static void Pitv_acos(NODE ,Obj *);
+static void Pitv_atan(NODE ,Obj *);
+static void Pitv_sinh(NODE ,Obj *);
+static void Pitv_cosh(NODE ,Obj *);
+static void Pitv_tanh(NODE ,Obj *);
+static void Pitv_asinh(NODE ,Obj *);
+static void Pitv_acosh(NODE ,Obj *);
+static void Pitv_atanh(NODE ,Obj *);
+static void Pitv_exp(NODE ,Obj *);
+static void Pitv_log(NODE ,Obj *);
+static void Pitv_abs(NODE ,Obj *);
+static void Pitv_pow(NODE ,Num *);
 #endif
 static void Pprintmode(NODE, Obj *);
 
@@ -66,6 +120,7 @@ struct ftab interval_tab[] = {
   {"inf",Pinf,1},
   {"sup",Psup,1},
   {"absintval",Pabsitv,1},
+  {"absitv",Pabsitv,1},
   {"disintval",Pdisjitv,2},
   {"inintval",Pinitv,2},
   {"cup",Pcup,2},
@@ -82,53 +137,71 @@ struct ftab interval_tab[] = {
   {"zeroRewriteCount",PzeroRewriteCount,-1},
 /* eval */
   {"evalitv", 	Pevalitv,	-2},
+  {"evalitvbf",	Pevalitvbf,	-2},
   {"evalitvd",	Pevalitvd,	1},
 /* math */
-  {"piitvd",	Pitvbf_pi,	-1},
-  {"eitvd",		Pitvbf_e,	-1},
 
-  {"piitv",		Pitvbf_pi,	-1},
-  {"eitv",		Pitvbf_e,	-1},
+  {"piitv",		Pitv_pi,	-1},
+  {"piitvbf",	Pitvbf_pi,	-1},
+  {"piitvd",	Pitvd_pi,	-1},
+  {"eitv",		Pitv_e,	-1},
+  {"eitvbf",	Pitvbf_e,	-1},
+  {"eitvd",		Pitvd_e,	-1},
 #if 0
   {"factorialitv",Pfactorialitv,1},
   {"factorialitvd",Pfactorialitvd,1},
+
+  {"absitv",	Pitv_abs,	-2},
+  {"absitvbf",	Pitvbf_abs,	-2},
+  {"absitvd",	Pitvd_abs,	-2},
 #endif
 
-  {"absitv",	Pitvbf_abs,	-2},
-  {"absitvd",	Pitvbf_abs,	-2},
+  {"logitv",	Pitv_log,	-2},
+  {"logitvbf",	Pitvbf_log,	-2},
+  {"logitvd",	Pitvd_log,	-2},
+  {"expitv",	Pitv_exp,	-2},
+  {"expitvbf",	Pitvbf_exp,	-2},
+  {"expitvd",	Pitvd_exp,	-2},
+  {"powitv",	Pitv_pow,	-3},
+  {"powitvbf",	Pitvbf_pow,	-3},
+  {"powitvd",	Pitvd_pow,	-3},
 
-  {"logitv",	Pitvbf_log,	-2},
-  {"logitvd",	Pitvbf_log,	-2},
-  {"expitv",	Pitvbf_exp,	-2},
-  {"expitvd",	Pitvbf_exp,	-2},
-  {"powitv",	Pitvbf_pow,	-3},
-  {"powitvd",	Pitvbf_pow,	-3},
-
-  {"sinitv",	Pitvbf_sin,	-2},
+  {"sinitv",	Pitv_sin,	-2},
+  {"sinitvbf",	Pitvbf_sin,	-2},
   {"sinitvd",	Pitvd_sin,	-2},
-
-  {"cositv",	Pitvbf_cos,	-2},
+  {"cositv",	Pitv_cos,	-2},
+  {"cositvbf",	Pitvbf_cos,	-2},
   {"cositvd",	Pitvd_cos,	-2},
-  {"tanitv",	Pitvbf_tan,	-2},
+  {"tanitv",	Pitv_tan,	-2},
+  {"tanitvbf",	Pitvbf_tan,	-2},
   {"tanitvd",	Pitvd_tan,	-2},
-  {"asinitv",	Pitvbf_asin,	-2},
-  {"asinitvd",	Pitvd_asin,	-2},
-  {"acositv",	Pitvbf_acos,	-2},
-  {"acositvd",	Pitvd_acos,	-2},
-  {"atanitv",	Pitvbf_atan,	-2},
-  {"atanitvd",	Pitvd_atan,	-2},
-  {"sinhitv",	Pitvbf_sinh,	-2},
-  {"sinhitvd",	Pitvd_sinh,	-2},
-  {"coshitv",	Pitvbf_cosh,	-2},
-  {"coshitvd",	Pitvd_cosh,	-2},
-  {"tanhitv",	Pitvbf_tanh,	-2},
-  {"tanhitvd",	Pitvd_tanh,	-2},
-  {"asinhitv",	Pitvbf_asinh,	-2},
-  {"asinhitvd",	Pitvd_asinh,	-2},
-  {"acoshitv",	Pitvbf_acosh,	-2},
-  {"acoshitvd",	Pitvd_acosh,	-2},
-  {"atanhitv",	Pitvbf_atanh,	-2},
-  {"atanhitvd",	Pitvd_atanh,	-2},
+  {"asinitv",	Pitv_asin,	-2},
+  {"asinitvbf",	Pitvbf_asin,	-2},
+  {"asinitvd",	Pitvd_asin,		-2},
+  {"acositv",	Pitv_acos,		-2},
+  {"acositvbf",	Pitvbf_acos,	-2},
+  {"acositvd",	Pitvd_acos,		-2},
+  {"atanitv",	Pitv_atan,		-2},
+  {"atanitvbf",	Pitvbf_atan,	-2},
+  {"atanitvd",	Pitvd_atan,		-2},
+  {"sinhitv",	Pitv_sinh,		-2},
+  {"sinhitvbf",	Pitvbf_sinh,	-2},
+  {"sinhitvd",	Pitvd_sinh,		-2},
+  {"coshitv",	Pitv_cosh,		-2},
+  {"coshitvbf",	Pitvbf_cosh,	-2},
+  {"coshitvd",	Pitvd_cosh,		-2},
+  {"tanhitv",	Pitv_tanh,		-2},
+  {"tanhitvbf",	Pitvbf_tanh,	-2},
+  {"tanhitvd",	Pitvd_tanh,		-2},
+  {"asinhitv",	Pitv_asinh,		-2},
+  {"asinhitvbf",	Pitvbf_asinh,	-2},
+  {"asinhitvd",		Pitvd_asinh,	-2},
+  {"acoshitv",		Pitv_acosh,		-2},
+  {"acoshitvbf",	Pitvbf_acosh,	-2},
+  {"acoshitvd",		Pitvd_acosh,	-2},
+  {"atanhitv",		Pitv_atanh,		-2},
+  {"atanhitvbf",	Pitvbf_atanh,	-2},
+  {"atanhitvd",		Pitvd_atanh,	-2},
 
 /* plot time check */
   {"ifcheck",Pifcheck,-7},
@@ -921,58 +994,19 @@ Psinitvd(NODE arg, Obj *rp)
   double  ai,as,mas, bi,bs;
   double  inf,sup;
 
-#if 1
   mpfi_func(arg, mpfi_sin, 53, &bfv);
   itvtois((Itv)bfv, &ii, &ss);
   inf = toRealDown(ii);
   sup = toRealUp(ss);
   MKIntervalDouble(inf,sup,c);
   *rp = (Obj)c;
-#else
-    a = ARG0(arg);
-    Num2double(a,&ai,&as);
-    FPMINUSINF
-	inf = sin(ai);
-    FPPLUSINF
-	sup = sin(as);
-    FPNEAREST
-    MKIntervalDouble(inf,sup,c);
-	*rp = (Obj)c;
-#endif
 }
 
+static
 void
 Psinitv(NODE arg, Obj *rp)
 {
-  //Num a;
-  //Itv c;
-  //BF inf, sup;
-  //int prec;
-  //BF r,re,im;
-  //mpfi_t mpitv, rv;
-
-#if 1
   mpfi_func(arg, mpfi_sin, 0, rp);
-#else
-  prec = NEXT(arg) ? QTOS((Q)ARG1(arg)) : mpfr_get_default_prec();
-  a = ARG0(arg);
-  itvtois((Itv)a, (Num *)&inf, (Num *)&sup);
-
-  mpfi_init2(rv,prec);
-  mpfi_init2(mpitv,prec);
-  mpfr_set(&(mpitv->left), inf->body, MPFR_RNDD);
-  mpfr_set(&(mpitv->right), BDY(sup), MPFR_RNDU);
-
-  //(*mpfi_f)(rv, mpitv);
-  mpfi_sin(rv, mpitv);
-
-  MPFRTOBF(&(rv->left), inf);
-  MPFRTOBF(&(rv->right), sup);
-  istoitv((Num)inf, (Num)sup, &c);
-  *rp = (Obj)c;
-  mpfi_clear(rv);
-  mpfi_clear(mpitv);
-#endif
 }
 
 
@@ -982,6 +1016,15 @@ Psinitv(NODE arg, Obj *rp)
 
 static void
 Pevalitv(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pevalitvbf(arg, rp);
+  else
+	Pevalitvd(arg, rp);
+}
+
+static void
+Pevalitvbf(NODE arg, Obj *rp)
 {
   int prec;
 
@@ -1145,6 +1188,7 @@ void evalitvins(PFINS ins,int prec, int type, Obj *rp)
 }
 
 
+static
 void Pitvbf_pi(NODE arg, Obj *rp)
 {
   BF inf, sup;
@@ -1165,6 +1209,7 @@ void Pitvbf_pi(NODE arg, Obj *rp)
   *rp = (Obj)c;
 }
 
+static
 void Pitvd_pi(NODE arg, Obj *rp)
 {
   BF bfinf, bfsup;
@@ -1187,6 +1232,7 @@ void Pitvd_pi(NODE arg, Obj *rp)
   *rp = (Obj)c;
 }
 
+static
 void Pitvbf_e(NODE arg,Obj *rp)
 {
   BF inf, sup;
@@ -1211,6 +1257,7 @@ void Pitvbf_e(NODE arg,Obj *rp)
   mpfi_clear(one);
 }
 
+static
 void Pitvd_e(NODE arg, Obj *rp)
 {
   BF bfinf, bfsup;
@@ -1259,151 +1306,181 @@ void (*pow_itv_ft[])() =	{Pitvbf_pow,	0,	Pitvbf_pow};
 //void (*pow_itv_ft[])() =	{0,	0,	0};       
 
 
+static
 void Pitvbf_sin(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_sin, 0, rp);
 }
 
+static
 void Pitvbf_cos(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_cos, 0, rp);
 }
 
+static
 void Pitvbf_tan(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_tan, 0, rp);
 }
 
+static
 void Pitvbf_asin(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_asin, 0, rp);
 }
 
+static
 void Pitvbf_acos(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_acos, 0, rp);
 }
 
+static
 void Pitvbf_atan(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_atan, 0, rp);
 }
 
+static
 void Pitvbf_sinh(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_sinh, 0, rp);
 }
 
+static
 void Pitvbf_cosh(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_cosh, 0, rp);
 }
 
+static
 void Pitvbf_tanh(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_tanh, 0, rp);
 }
 
+static
 void Pitvbf_asinh(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_asinh, 0, rp);
 }
 
+static
 void Pitvbf_acosh(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_acosh, 0, rp);
 }
 
+static
 void Pitvbf_atanh(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_atanh, 0, rp);
 }
 
+static
 void Pitvbf_exp(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_exp, 0, rp);
 }
 
+static
 void Pitvbf_log(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_log, 0, rp);
 }
 
+static
 void Pitvbf_abs(NODE arg,Obj *rp)
 {
   mpfi_func(arg, mpfi_abs, 0, rp);
 }
 
+static
 void Pitvd_sin(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_sin, rp);
 }
 
+static
 void Pitvd_cos(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_cos, rp);
 }
 
+static
 void Pitvd_tan(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_tan, rp);
 }
 
+static
 void Pitvd_asin(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_asin, rp);
 }
 
+static
 void Pitvd_acos(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_acos, rp);
 }
 
+static
 void Pitvd_atan(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_atan, rp);
 }
 
+static
 void Pitvd_sinh(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_sinh, rp);
 }
 
+static
 void Pitvd_cosh(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_cosh, rp);
 }
 
+static
 void Pitvd_tanh(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_tanh, rp);
 }
 
+static
 void Pitvd_asinh(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_asinh, rp);
 }
 
+static
 void Pitvd_acosh(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_acosh, rp);
 }
 
+static
 void Pitvd_atanh(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_atanh, rp);
 }
 
+static
 void Pitvd_exp(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_exp, rp);
 }
 
+static
 void Pitvd_log(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_log, rp);
 }
 
+static
 void Pitvd_abs(NODE arg,Obj *rp)
 {
   mpfi_func_d(arg, mpfi_abs, rp);
@@ -1426,7 +1503,23 @@ void mp_factorial(NODE arg,Num *rp)
   }
 }
 */
+static
+void Pitvd_pow(NODE arg,Num *rp)
+{
+  Num ii, ss;
+  IntervalDouble c;
+  Num rpbf;
+  double inf, sup;
 
+  Pitvbf_pow(arg, &rpbf);
+  itvtois((Itv)rpbf, &ii, &ss);
+  inf = toRealDown(ii);
+  sup = toRealUp(ss);
+  MKIntervalDouble(inf,sup,c);
+  *rp = (Num)c;
+}
+
+static
 void Pitvbf_pow(NODE arg,Num *rp)
 {
   Num a,e;
@@ -1488,6 +1581,150 @@ void Pitvbf_pow(NODE arg,Num *rp)
     mpfi_clear(a_val);
     mpfi_clear(e_val);
   }
+}
+
+static void Pitv_pi(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_pi(arg, rp);
+  else
+	Pitvd_pi(arg, rp);
+}
+
+static void Pitv_e(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_e(arg, rp);
+  else
+	Pitvd_e(arg, rp);
+}
+
+static void Pitv_sin(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_sin(arg, rp);
+  else
+	Pitvd_sin(arg, rp);
+}
+
+static void Pitv_cos(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_cos(arg, rp);
+  else
+	Pitvd_cos(arg, rp);
+}
+
+static void Pitv_tan(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_tan(arg, rp);
+  else
+	Pitvd_tan(arg, rp);
+}
+
+static void Pitv_asin(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_asin(arg, rp);
+  else
+	Pitvd_asin(arg, rp);
+}
+
+static void Pitv_acos(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_acos(arg, rp);
+  else
+	Pitvd_acos(arg, rp);
+}
+
+static void Pitv_atan(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_atan(arg, rp);
+  else
+	Pitvd_atan(arg, rp);
+}
+
+static void Pitv_sinh(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_sinh(arg, rp);
+  else
+	Pitvd_sinh(arg, rp);
+}
+
+static void Pitv_cosh(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_cosh(arg, rp);
+  else
+	Pitvd_cosh(arg, rp);
+}
+
+static void Pitv_tanh(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_tanh(arg, rp);
+  else
+	Pitvd_tanh(arg, rp);
+}
+
+static void Pitv_asinh(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_asinh(arg, rp);
+  else
+	Pitvd_asinh(arg, rp);
+}
+
+static void Pitv_acosh(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_acosh(arg, rp);
+  else
+	Pitvd_acosh(arg, rp);
+}
+
+static void Pitv_atanh(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_atanh(arg, rp);
+  else
+	Pitvd_atanh(arg, rp);
+}
+
+static void Pitv_exp(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_exp(arg, rp);
+  else
+	Pitvd_exp(arg, rp);
+}
+
+static void Pitv_log(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_log(arg, rp);
+  else
+	Pitvd_log(arg, rp);
+}
+
+static void Pitv_abs(NODE arg, Obj *rp)
+{
+  if ( bigfloat )
+	Pitvbf_abs(arg, rp);
+  else
+	Pitvd_abs(arg, rp);
+}
+
+static void Pitv_pow(NODE arg, Num *rp)
+{
+  if ( bigfloat )
+	Pitvbf_pow(arg, rp);
+  else
+	Pitvd_pow(arg, rp);
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/isolv.c,v 1.2 2019/06/04 07:11:23 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/isolv.c,v 1.3 2019/10/17 03:03:12 kondoh Exp $
  */
 
 #include "ca.h"
@@ -7,6 +7,9 @@
 #include "version.h"
 
 #if defined(INTERVAL) 
+
+/* in Q.c */
+void dupz(Z, Z*);
 
 static void Solve(NODE, Obj *);
 static void NSolve(NODE, Obj *);
@@ -38,28 +41,30 @@ Solve(arg, rp)
 NODE arg;
 Obj  *rp;
 {
-  pointer p, Eps;
-  pointer    root;
-  V       v;
-  Q       eps;
+  //pointer p, Eps;
+  pointer	root;
+  V			v;
+  Q			eps;
+  Q			Eps;
+  P			p;
 
 
-      *rp = 0;
-#if 0
-  p = (pointer)ARG0(arg);
+  p = (P)ARG0(arg);
   if ( !p ) {
     *rp = 0;
     return;
   }
-  Eps = (pointer)ARG1(arg);
+  Eps = (Q)ARG1(arg);
   asir_assert(Eps, O_N, "solve");
   if ( NID(Eps) != N_Q ) {
     fprintf(stderr,"solve arg 2 is required a rational number");
     error(" : invalid argument");
     return;
   }
-  DUPQ((Q)Eps, eps);
-  SGN(eps) = 1;
+  //DUPQ((Q)Eps, eps);
+  //SGN(eps) = 1;
+  NEWQ(eps); mpq_abs(BDY(eps),BDY(Eps));
+ 
   switch (OID(p)) {
     case O_N:
       *rp = 0;
@@ -71,7 +76,7 @@ Obj  *rp;
         error(" : invalid argument");
         break;
       }
-      Solve1((P)p, eps, &root);
+      Solve1(p, eps, &root);
       *rp = (Obj)root;
       break;
     case O_LIST:
@@ -81,39 +86,38 @@ Obj  *rp;
     default:
       *rp = 0;
   }
-#endif
 }
 
 static void
 NSolve(NODE arg, Obj *rp)
 {
-  pointer  p, Eps;
+  P			p;
+  Q			Eps;
+  Q			eps;
   pointer  root;
   LIST    listp;
   V      v;
-  Q      eps;
   NODE    n, n0, m0, m, ln0;
   Num    r;
   Itv    iv;
   BF      breal;
 
-      *rp = 0;
-#if 0
-
-  p = (pointer)ARG0(arg);
+  p = (P)ARG0(arg);
   if ( !p ) {
     *rp = 0;
     return;
   }
-  Eps = (pointer)ARG1(arg);
+  Eps = (Q)ARG1(arg);
   asir_assert(Eps, O_N, "solve");
   if ( NID(Eps) != N_Q ) {
     fprintf(stderr,"solve arg 2 is required a rational number");
     error(" : invalid argument");
     return;
   }
-  DUPQ((Q)Eps, eps);
-  SGN(eps) = 1;
+  //DUPQ((Q)Eps, eps);
+  //SGN(eps) = 1;
+  NEWQ(eps); mpq_abs(BDY(eps),BDY(Eps));
+
   switch (OID(p)) {
     case O_N:
       *rp = 0;
@@ -125,7 +129,7 @@ NSolve(NODE arg, Obj *rp)
         error(" : invalid argument");
         break;
       }
-      Solve1((P)p, eps, &root);
+      Solve1(p, eps, &root);
       for (m0 = BDY((LIST)root), n0 = 0; m0; m0 = NEXT(m0)) {
         m = BDY((LIST)BDY(m0));
         miditvp(BDY(m), &r);
@@ -171,8 +175,9 @@ pointer *rt;
     return;
   }
   Sturm(inp, &sseq);
-  DUPQ(up,low);
-  SGN(low) = -1;
+  //DUPQ(up,low);
+  //SGN(low) = -1;
+  NEWQ(low); mpq_neg(BDY(low),BDY(up));
   chvu = stumq(sseq, up);
   chvl = stumq(sseq, low);
   tnumb = abs(chvu - chvl);
@@ -183,7 +188,7 @@ pointer *rt;
   for (fctp = NEXT(fctp), i = 0; fctp; fctp = NEXT(fctp)) {
     p = COEF(fctp);
     onedeg = DC(p);
-    if ( !cmpq(DEG(onedeg), ONE) ) {
+    if ( !cmpz(DEG(onedeg), ONE) ) {
       pad++;
       if ( !NEXT(onedeg) ) {
         BDY(root)[pad][0] = 0;
@@ -201,12 +206,13 @@ pointer *rt;
     }
     boundbody(p, &up);
     Sturm(p, &sseq);
-    DUPQ(up,low);
-    SGN(low) = -1;
+    //DUPQ(up,low);
+    //SGN(low) = -1;
+    NEWQ(low); mpq_neg(BDY(low),BDY(up));
     chvu = stumq(sseq, up);
     chvl = stumq(sseq, low);
     numb = abs(chvu - chvl);
-    separate(DEG(fctp), eps, sseq, up, low, chvu, chvl, root, &pad);
+    separate((Q)DEG(fctp), eps, sseq, up, low, chvu, chvl, root, &pad);
   }
   for (i = 0; i < pad; i++) {
     for (j = i; j <= pad; j++) {
@@ -269,6 +275,7 @@ int  *padp;
   int de, midn;
   Q   mid, e;
   P   p;
+  Q tmp_e;
 
   de = abs(lown - upn);
   if (de == 0) return;
@@ -277,18 +284,20 @@ int  *padp;
     BDY(root)[*padp][0] = up;
     BDY(root)[*padp][1] = low;
     BDY(root)[*padp][3] = (P *)sseq->body[0];
-    subq( BDY(root)[*padp][1], BDY(root)[*padp][0], &e );
-    SGN(e) = 1;
+    subq( BDY(root)[*padp][1], BDY(root)[*padp][0], &tmp_e );
+    //SGN(e) = 1;
+    absq(tmp_e, &e);
     while (cmpq(e, eps) > 0) {
       binary(*padp, root);
-      subq( BDY(root)[*padp][1], BDY(root)[*padp][0], &e);
-      SGN(e) = 1;
+      subq( BDY(root)[*padp][1], BDY(root)[*padp][0], &tmp_e);
+      //SGN(e) = 1;
+      absq(tmp_e, &e);
     }
     BDY(root)[*padp][2] = mult;
     return;
   }
   addq(up, low, &mid);
-  divq(mid, TWO, &mid);
+  divq(mid, (Q)TWO, &mid);
   midn = stumq(sseq, mid);
   separate(mult, eps, sseq, low, mid, lown, midn, root, padp);
   separate(mult, eps, sseq, mid, up, midn, upn, root, padp);
@@ -303,10 +312,10 @@ MAT root;
   P  p;
   p = (P)BDY(root)[indx][3];
   addq(BDY(root)[indx][0], BDY(root)[indx][1], &c);
-  divq(c, TWO, &d);
+  divq(c, (Q)TWO, &d);
   ueval(p, BDY(root)[indx][1], &a);
   ueval(p, d, &b);
-  if (SGN(a) == SGN(b)){
+  if (sgnq(a) == sgnq(b)){
     BDY(root)[indx][1] = d;
   } else {
     BDY(root)[indx][0] = d;
@@ -327,14 +336,18 @@ VECT *ret;
   v = VR(p);
   t = (P *)ALLOCA((deg(v,p)+1)*sizeof(P));
   g1 = t[0] = p; diffp(CO,p,v,(P *)&a); ptozp((P)a,1,&c,&g2); t[1] = g2;
-  for ( i = 1, h = ONE, x = ONE; ; ) {
+  NEWQ(h);
+  NEWQ(x);
+  dupz(ONE, (Z *)&h);
+  dupz(ONE, (Z *)&x);
+  for ( i = 1; ; ) {
     if ( NUM(g2) ) break;
-    subq(DEG(DC(g1)),DEG(DC(g2)),&d);
+    subz(DEG(DC(g1)),DEG(DC(g2)),(Z*)&d);
     l = (Q)LC(g2);
-    if ( SGN(l) < 0 ) {
+    if ( sgnq(l) < 0 ) {
       chsgnq(l,&a); l = a;
     }
-    addq(d,ONE,&a); pwrq(l,a,&b); mulp(CO,(P)b,g1,(P *)&a);
+    addq(d,(Q)ONE,&a); pwrq(l,a,&b); mulp(CO,(P)b,g1,(P *)&a);
     divsrp(CO,(P)a,g2,&q,&r);
     if ( !r ) break;
     chsgnp(r,&s); r = s; i++;
@@ -344,7 +357,7 @@ VECT *ret;
     pwrq(h,d,&m); g1 = g2;
     mulq(m,x,&a); divsp(CO,r,(P)a,&g2); t[i] = g2;
     x = (Q)LC(g1);
-    if ( SGN(x) < 0 ) {
+    if ( sgnq(x) < 0 ) {
       chsgnq(x,&a); x = a;
     }
     pwrq(x,d,&a); mulq(a,h,&b); divq(b,m,&h);
@@ -370,7 +383,7 @@ stumq(VECT s, Q val)
   for ( i = j++, c =0; i < len; i++) {
     ueval( ss[i], val, &a);
     if ( a ) {
-      if( (SGN(a) > 0 && SGN(a0) < 0) || (SGN(a) < 0 && SGN(a0) > 0) ){
+      if( (sgnq(a) > 0 && sgnq(a0) < 0) || (sgnq(a) < 0 && sgnq(a0) > 0) ){
         c++;
         a0 = a;
       }
@@ -392,15 +405,17 @@ Q *q;
   else if ( p->id == O_N )
     *q = 0;
   else {
-    NEWQ(tmp);
-    SGN(tmp)=1;
-    for ( dc = DC(p), max=0; dc; dc = NEXT(dc) ) {
+    //NEWQ(tmp);
+    //SGN(tmp)=1;
+    NEWQ(max);
+    for ( dc = DC(p); dc; dc = NEXT(dc) ) {
       t = (Q)COEF(dc);
-      NM(tmp)=NM(t);
-      DN(tmp)=DN(t);
-      if ( cmpq(tmp, max) > 0 ) DUPQ(tmp, max);
+      if ( cmpq(t, max) > 0 ) { //DUPQ(tmp, max);
+        mpq_abs(BDY(max),BDY(t));
+      }
     }
-    addq(ONE, max, q);
+    addq((Q)ONE, max, q);
+    //mpq_clear(max);
   }
 }
 
@@ -410,17 +425,21 @@ P p;
 Q q;
 Q *rp;
 {
-  Q   d, d1, a, b, t;
-  Q   deg, da;
-  Q   nm, dn;
+  Z   d, d1;
+  Z   deg;
+  Q   da;
+  Q   a, b, t;
+  Z   nm, dn;
   DCP dc;
 
   if ( !p ) *rp = 0;
   else if ( NUM(p) ) *rp = (Q)p;
   else {
     if ( q ) {
-      NTOQ( DN(q), 1, dn );
-      NTOQ( NM(q), SGN(q), nm );
+      //NTOQ( DN(q), 1, dn );
+      dnq(q, &dn);
+      //NTOQ( NM(q), sgnq(q), nm );
+      nmq(q, &nm);
     } else {
       dn = 0;
       nm = 0;
@@ -428,28 +447,27 @@ Q *rp;
     if ( !dn ) {
       dc = DC(p); t = (Q)COEF(dc);
       for ( d = DEG(dc), dc = NEXT(dc); dc; d = DEG(dc), dc= NEXT(dc) ) {
-        subq(d, DEG(dc), &d1); pwrq(nm, d1, &a);
+        subz(d, DEG(dc), &d1); pwrq((Q)nm, (Q)d1, &a);
         mulq(t,a,&b); addq(b,(Q)COEF(dc),&t);
       }
       if ( d ) {
-        pwrq(nm,d,&a); mulq(t,a,&b); t = b;
+        pwrq((Q)nm,(Q)d,&a); mulq(t,a,&b); t = b;
       }
       *rp = t;
     } else {
       dc = DC(p); t = (Q)COEF(dc);
       for ( d=deg= DEG(dc), dc = NEXT(dc); dc; d = DEG(dc), dc= NEXT(dc) ) {
-        subq(d, DEG(dc), &d1); pwrq(nm, d1, &a);
+        subz(d, DEG(dc), &d1); pwrq((Q)nm, (Q)d1, &a);
         mulq(t,a,&b);
-        subq(deg, DEG(dc), &d1); pwrq(dn, d1, &a);
+        subz(deg, DEG(dc), &d1); pwrq((Q)dn, (Q)d1, &a);
         mulq(a, (Q)COEF(dc), &da);
         addq(b,da,&t);
       }
       if ( d ) {
-        pwrq(nm,d,&a); mulq(t,a,&b); t = b;
+        pwrz(nm,d,(Z*)&a); mulq(t,a,&b); t = b;
       }
       *rp = t;
     }
   }
-#endif
 }
 #endif

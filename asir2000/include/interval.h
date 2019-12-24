@@ -1,10 +1,10 @@
 /*
- * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.16 2019/06/04 07:11:22 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/include/interval.h,v 1.17 2019/11/12 10:52:04 kondoh Exp $
 */
 #ifndef  _INTERVAL_H
 #define  _INTERVAL_H
 
-#define       INT_ASIR_VERSION        20191111
+#define       INT_ASIR_VERSION        20191219
 
 #define  PRINTF_G  0
 #define  PRINTF_E  1
