@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.19 2019/11/21 04:03:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.20 2019/12/12 04:44:59 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -93,8 +93,9 @@ void Pdp_ltod(),Pdpv_ord(),Pdpv_ht(),Pdpv_hm(),Pdpv_hc();
 void Pdpm_ltod(),Pdpm_dtol(),Pdpm_set_schreyer(),Pdpm_nf(),Pdpm_weyl_nf(),Pdpm_sp(),Pdpm_weyl_sp(),Pdpm_nf_and_quotient(),Pdpm_nf_and_quotient2();
 void Pdpm_schreyer_frame(),Pdpm_set_schreyer_level();
 void Pdpm_list_to_array(),Pdpm_sp_nf(),Pdpm_insert_to_zlist();
-void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
+void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_extract(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 void Pdpm_schreyer_base(),Pdpm_simplify_syz(),Pdpm_td();
+void Pdpm_remove_cont();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -143,6 +144,7 @@ struct ftab dp_tab[] = {
   {"dp_prim",Pdp_prim,1},
   {"dp_red_coef",Pdp_red_coef,2},
   {"dp_cont",Pdp_cont,1},
+  {"dpm_remove_cont",Pdpm_remove_cont,1},
 
 /* polynomial ring */
   /* special operations */
@@ -308,6 +310,7 @@ struct ftab dp_supp_tab[] = {
   {"dpm_rest",Pdpm_rest,1},
   {"dpm_shift",Pdpm_shift,2},
   {"dpm_split",Pdpm_split,2},
+  {"dpm_extract",Pdpm_extract,2},
   {"dpm_sort",Pdpm_sort,1},
   {"dp_rest",Pdp_rest,1},
   {"dp_initial_term",Pdp_initial_term,1},
@@ -821,6 +824,19 @@ void Pdp_cont(NODE arg,Z *rp)
   dp_cont((DP)ARG0(arg),rp);
 }
 
+void dpm_ptozp(DPM p,Z *cont,DPM *r);
+
+void Pdpm_remove_cont(NODE arg,LIST *rp)
+{
+  NODE nd;
+  Z cont;
+  DPM p;
+
+  dpm_ptozp((DPM)ARG0(arg),&cont,&p);
+  nd = mknode(2,cont,p);
+  MKLIST(*rp,nd);
+}
+
 void Pdp_dtov(NODE arg,VECT *rp)
 {
   dp_dtov((DP)ARG0(arg),rp);
@@ -1118,7 +1134,7 @@ void Pdpm_dptodpm(NODE arg,DPM *rp)
     for ( m0 = 0, mp = BDY(p); mp; mp = NEXT(mp) ) {
       NEXTDMM(m0,m); m->dl = mp->dl; m->c = mp->c; m->pos = pos;
     }
-    if ( dp_current_spec->module_rank ) {
+    if ( dp_current_spec->module_top_weight ) {
       if ( pos > dp_current_spec->module_rank )
         error("dpm_dptodpm : inconsistent order spec");
       shift = dp_current_spec->module_top_weight[pos-1];
@@ -1949,21 +1965,26 @@ void Pdpm_list_to_array(NODE arg,LIST *rp)
   MKLIST(*rp,nd);
 }
 
-/* [quo,nf] = dpm_sp_nf(psv,psiv,i,j) */
-DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf);
+/* [quo,nf] = dpm_sp_nf(psv,psiv,i,j,top) */
+DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,int top,DPM *nf);
 
 void Pdpm_sp_nf(NODE arg,LIST *rp)
 {
   VECT psv,psiv;
   DPM quo,nf;
-  int i,j;
+  Obj val;
+  int i,j,top;
   NODE nd;
 
   asir_assert(ARG0(arg),O_VECT,"dpm_sp_nf"); psv = (VECT)ARG0(arg);
   asir_assert(ARG1(arg),O_VECT,"dpm_sp_nf"); psiv = (VECT)ARG1(arg);
   asir_assert(ARG2(arg),O_N,"dpm_sp_nf"); i = ZTOS((Q)ARG2(arg));
   asir_assert(ARG3(arg),O_N,"dpm_sp_nf"); j = ZTOS((Q)ARG3(arg));
-  quo = dpm_sp_nf_zlist(psv,psiv,i,j,&nf);
+  if ( get_opt("top",&val) && val ) 
+    top = 1;
+  else
+    top = 0;
+  quo = dpm_sp_nf_zlist(psv,psiv,i,j,top,&nf);
   nd = mknode(2,quo,nf);
   MKLIST(*rp,nd);
 }
@@ -4175,10 +4196,11 @@ void Pdpm_sort(NODE arg,DPM *rp)
 
   p = (DPM)ARG0(arg); 
   if ( !p ) *rp = 0;
-  dpm_sort(p,rp);
+  else dpm_sort(p,rp);
 }
 
 void dpm_split(DPM p,int s,DPM *up,DPM *lo);
+void dpm_extract(DPM p,int s,DP *r);
 
 void Pdpm_split(NODE arg,LIST *rp)
 {
@@ -4191,6 +4213,16 @@ void Pdpm_split(NODE arg,LIST *rp)
   dpm_split(p,s,&up,&lo);
   nd = mknode(2,up,lo);
   MKLIST(*rp,nd);
+}
+
+void Pdpm_extract(NODE arg,DP *rp)
+{
+  DPM p;
+  int s;
+
+  p = (DPM)ARG0(arg);
+  s = ZTOS((Z)ARG1(arg));
+  dpm_extract(p,s,rp);
 }
 
 

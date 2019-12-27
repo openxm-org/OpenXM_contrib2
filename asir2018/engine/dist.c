@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.17 2019/11/21 04:03:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.18 2019/12/12 04:44:59 noro Exp $
 */
 #include "ca.h"
 
@@ -353,7 +353,7 @@ void nodetodpm(NODE node,Obj pos,DPM *dp)
   }
   d->td = td;
   p = ZTOS((Q)pos);
-  if ( dp_current_spec->module_rank ) {
+  if ( dp_current_spec->module_top_weight ) {
     if ( p > dp_current_spec->module_rank )
       error("nodetodpm : inconsistent order spec");
     d->td += dp_current_spec->module_top_weight[p-1];
@@ -371,7 +371,7 @@ void dtodpm(DP d,int pos,DPM *dp)
   if ( !d ) *dp = 0;
   else {
     shift = 0;
-    if ( dp_current_spec->module_rank ) {
+    if ( dp_current_spec->module_top_weight ) {
       if ( pos > dp_current_spec->module_rank )
         error("nodetodpm : inconsistent order spec");
       shift = dp_current_spec->module_top_weight[pos-1];
@@ -2750,7 +2750,7 @@ void dpm_sp(DPM p1,DPM p2,DPM *sp,DP *t1,DP *t2);
 DPM dpm_nf_and_quotient3(DPM sp,VECT psv,DPM *nf,P *dn);
 DPM dpm_nf_and_quotient4(DPM sp,DPM *ps,VECT psiv,DPM head,DPM *nf,P *dn);
 DPM dpm_sp_nf(VECT psv,VECT psiv,int i,int j,DPM *nf);
-DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf);
+DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,int top,DPM *nf);
 DPM dpm_sp_nf_asir(VECT psv,int i,int j,DPM *nf);
 void dpm_sort(DPM p,DPM *r);
 
@@ -2907,6 +2907,7 @@ void dpm_list_to_array(LIST g,VECT *psvect,VECT *psindvect)
   *psvect = psv; *psindvect = psiv;
 }
 
+#if 0
 void dpm_insert_to_zlist(VECT psiv,int pos,int i)
 {
   LIST l;
@@ -2926,6 +2927,26 @@ void dpm_insert_to_zlist(VECT psiv,int pos,int i)
   if ( prev == 0 ) BDY(l) = nd;
   else NEXT(prev) = nd;
 }
+#else
+void dpm_insert_to_zlist(VECT psiv,int pos,int i)
+{
+  LIST l;
+  NODE prev,cur,nd;
+  int curi;
+  Z iz;
+
+  l = (LIST)BDY(psiv)[pos];
+  for ( prev = 0, cur = BDY(l); cur; cur = NEXT(cur) ) {
+    curi = ZTOS((Q)BDY(cur));
+    if ( curi == i )
+      error("dpm_insert_to_list : invalid index");
+    prev = cur;
+  }
+  STOZ(i,iz); MKNODE(nd,iz,cur);
+  if ( prev == 0 ) BDY(l) = nd;
+  else NEXT(prev) = nd;
+}
+#endif
 
 void dpm_schreyer_base_zlist(LIST g,LIST *s)
 {
@@ -2979,7 +3000,7 @@ void dpm_schreyer_base_zlist(LIST g,LIST *s)
       }
       for ( j = p1+1; j <= n; j++ ) {
         if ( mm[j] ) {
-          quo = dpm_sp_nf_zlist(psv,psiv,p1,j,&nf);
+          quo = dpm_sp_nf_zlist(psv,psiv,p1,j,0,&nf);
           if ( nf ) 
             error("dpm_schreyer_base : cannot happen");
           NEXTNODE(b0,b); BDY(b) = (pointer)quo;
@@ -3006,25 +3027,37 @@ void dpm_schreyer_base_zlist(LIST g,LIST *s)
   printf("sch_count=%d, schlast_count=%d\n",sch_count,schlast_count);
 }
 
+static int compdp_nv;
+
+int compdp_revgradlex(DP *a,DP *b)
+{
+  return -cmpdl_revgradlex(compdp_nv,BDY(*a)->dl,BDY(*b)->dl);
+}
+
+int compdp_lex(DP *a,DP *b)
+{
+  return -cmpdl_lex(compdp_nv,BDY(*a)->dl,BDY(*b)->dl);
+}
+
 DMMstack_array dpm_schreyer_frame(NODE g)
 {
   LIST l;
   NODE nd,in,b0,b,n1,n2,n3,t;
   NODE *psi;
   long p1,p2,p3;
-  int nv,n,i,max,pos,level;
+  int nv,n,i,j,k,max,pos,level;
   DMMstack s,s1;
   DMM m1,m0,dmm;
   MP mp;
   DP dp,h;
-  DP *m;
+  DP *m,*m2;
   DPM dpm,dpm0,dpm1;
   VECT psv,psiv;
   DPM *ps;
   DMMstack_array dmmstack_array;
 
   nd = g;
-  nv = ((DPM)BDY(nd))->nv;
+  compdp_nv = nv = ((DPM)BDY(nd))->nv;
   s = 0;
   level = 0;
   while ( 1 ) {
@@ -3069,6 +3102,7 @@ DMMstack_array dpm_schreyer_frame(NODE g)
       MKNODE(nd,(long)i,psi[pos]); psi[pos] = nd;
     }
     m = (DP *)MALLOC((n+1)*sizeof(DP));
+    m2 = (DP *)MALLOC((n+1)*sizeof(DP));
     b0 = 0;
     for ( i = 1; i <= max; i++ ) {
       for ( n1 = psi[i]; n1; n1 = NEXT(n1) ) {
@@ -3088,6 +3122,19 @@ DMMstack_array dpm_schreyer_frame(NODE g)
           }
           if ( h ) m[p2] = h;
         }
+#if 0
+        // compress m to m2
+        for ( j = 0, n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+          p2 = (long)BDY(n2);
+          if ( m[p2] ) m2[j++] = m[p2];
+        }
+        qsort(m2,j,sizeof(DP),(int (*)(const void *,const void *))compdp_lex);
+        for ( k = 0; k < j; k++ ) {
+          NEWDMM(dmm); dmm->dl = BDY(m2[k])->dl; dmm->pos = p1; dmm->c = (Obj)ONE;
+          MKDPM(nv,dmm,dpm);
+          NEXTNODE(b0,b); BDY(b) = (pointer)dpm;
+        }
+#else
         for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
           p2 = (long)BDY(n2);
           if ( m[p2] ) {
@@ -3096,6 +3143,7 @@ DMMstack_array dpm_schreyer_frame(NODE g)
             NEXTNODE(b0,b); BDY(b) = (pointer)dpm;
           }
         }
+#endif
       }
     }
     if ( !b0 ) {
@@ -3167,6 +3215,7 @@ int compdmm_schreyer(int n,DMM m1,DMM m2)
 int compdmm(int n,DMM m1,DMM m2)
 {
   int t;
+  int *base_ord;
 
   switch ( dpm_ordtype ) {
   case 0: /* TOP ord->pos */
@@ -3187,6 +3236,11 @@ int compdmm(int n,DMM m1,DMM m2)
     else return (*cmpdl)(n,m1->dl,m2->dl);
   case 3: /* Schreyer */
     return compdmm_schreyer(n,m1,m2);
+  case 4:  /* POT with base_ord */
+    base_ord = dp_current_spec->module_base_ord;
+    if ( base_ord[m1->pos] < base_ord[m2->pos] ) return 1;
+    else if ( base_ord[m1->pos] > base_ord[m2->pos] ) return -1;
+    else return (*cmpdl)(n,m1->dl,m2->dl);
   default:
     error("compdmm : invalid dpm_ordtype");
   }
@@ -3462,7 +3516,7 @@ DPM dpm_eliminate_term(DPM a,DPM p,Obj c,int pos)
     if ( m->pos == pos ) {
       NEXTMP(d0,d); 
       arf_chsgn(m->c,&d->c);
-      if ( !dp_current_spec || !dp_current_spec->module_rank )
+      if ( !dp_current_spec || !dp_current_spec->module_top_weight )
         d->dl = m->dl; 
       else {
         NEWDL(dl,NV(a));
@@ -3557,7 +3611,7 @@ void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1,LIST *w1)
     }
   MKLIST(*s1,t);
 
-  if ( dp_current_spec && dp_current_spec->module_rank ) {
+  if ( dp_current_spec && dp_current_spec->module_top_weight ) {
     new_w = (int *)MALLOC(j*sizeof(int));
     for ( j = 0, i = 1; i <= lm; i++ )
       if ( tab[i] ) { new_w[j++] = dp_current_spec->module_top_weight[i-1]; }

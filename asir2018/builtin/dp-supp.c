@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.11 2019/11/21 04:03:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.12 2019/12/12 04:44:59 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1961,7 +1961,7 @@ last:
 
 /* psiv is a vector of lists of Z */
 
-DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf)
+DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,int top,DPM *nf)
 {
   DPM *ps;
   int n,nv,s1,s2,sugar,max,pos,psugar;
@@ -2023,20 +2023,18 @@ DPM dpm_sp_nf_zlist(VECT psv,VECT psiv,int i,int j,DPM *nf)
     }
     if ( u ) {
       g = u;
-    } else {
-#if 0
+    } else if ( !top ) {
       m = BDY(g);
       NEXTDMM(mr0,mr);
       mr->dl = m->dl; mr->c = m->c; mr->pos = m->pos;
       dpm_rest(g,&t); g = t;
-#else
+    } else {
       *nf = g;
       if ( mq0 ) {
         NEXT(mq) = 0; MKDPM(nv,mq0,q); q->sugar = sugar;
       } else
         q = 0;
       return q;
-#endif
     }
   }
 last:
@@ -2303,6 +2301,29 @@ void dpm_split(DPM p,int s,DPM *up,DPM *lo)
     } else
       *lo = 0;
   }
+}
+
+/* extract the component in DP of position s */
+void dpm_extract(DPM p,int s,DP *r)
+{
+  DMM m;
+  MP mu0,mu;
+  DP t;
+
+  if ( !p ) {
+    *r = 0; return;
+  }
+  for ( m = BDY(p), mu0 = 0; m; m = NEXT(m) ) {
+    if ( m->pos == s ) {
+      NEXTMP(mu0,mu);
+      mu->dl = m->dl; mu->c = m->c;
+    }
+  }
+  if ( mu0 ) {
+    NEXT(mu) = 0; MKDP(p->nv,mu0,t); t->sugar = p->sugar;
+    *r = t;
+  } else
+    *r = 0;
 }
 
 /* nf computation over a field */
@@ -2760,7 +2781,27 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
           create_order_spec(0,baseobj,&basespec);
           basespec->obj = baseobj;
           spec->base = basespec;
-        } else {  /* weighted order */
+        } else if ( spec->module_ordtype == 4 ) {  /* POT with base order [n,bord,ord] */
+          NODE base_ord;
+          int rank;
+
+          create_order_spec(0,(Obj)BDY(NEXT(NEXT(node))),&spec);
+          spec->id += 256; spec->obj = obj;
+          spec->top_weight = 0;
+          spec->module_rank = 0;
+          spec->module_top_weight = 0;
+          spec->pot_nelim = 0;
+          spec->module_ordtype = 4;
+          node = NEXT(node);
+          if ( !BDY(node) || OID(BDY(node)) != O_LIST ) 
+            error("create_order_spec : a permitation list must be specified");
+          base_ord = BDY((LIST)BDY(node));
+          spec->module_rank = rank = length(base_ord);
+          spec->module_base_ord = (int *)MALLOC_ATOMIC((rank+1)*sizeof(int));
+          for ( i = 1, t = base_ord; i <= rank; i++, t = NEXT(t) )
+            spec->module_base_ord[ZTOS((Q)BDY(t))] = i;
+          break;
+        } else {  /* weighted order * [n,[wv,wm],ord] */
           int ordtype;
 
           ordtype = spec->module_ordtype;
