@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2018/Makefile.am,v 1.3 2018/09/21 07:06:51 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2018/Makefile.am,v 1.4 2018/09/27 02:39:36 noro Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
 if USE_PLOT
@@ -16,11 +16,9 @@ asir_LDADD    = libasir.a @ASIR_GCLIB@
 CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
 
 GC_TAR_GZ     = gc-7.4.2.tar.gz
-GC_PATCH      = gc-7.4.2-risa.diff
+GC_PATCH      = gc-7.diff gc-7.4.2-risa.diff
 LIB_ATOMIC     = libatomic_ops-7.4.0
 LIB_ATOMIC_TAR_GZ     = ${LIB_ATOMIC}.tar.gz
-#GC_TAR_GZ     = ${GC}.tar.gz
-#GC_PATCH      = gc6.diff gc6-risa.diff
 GC_MASTER_SITE=http://www.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH      = ${bindir}/oxfetch.sh
 
