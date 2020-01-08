@@ -1,99 +1,103 @@
-## $OpenXM: OpenXM_contrib2/asir2018/Makefile.am,v 1.4 2018/09/27 02:39:36 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2018/Makefile.am,v 1.5 2020/01/04 15:57:08 ohara Exp $
 
-AUTOMAKE_OPTIONS = foreign no-dependencies 1.5
+AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects 1.16
+
+asirdir   = ${prefix}/lib/asir
+asir_DATA = lib/alpi lib/bfct lib/bgk lib/const lib/cyclic lib/defs.h \
+  lib/dfff lib/dmul lib/dmul102 lib/fctrdata lib/fctrtest lib/fff lib/glib \
+  lib/gr lib/ifplot lib/katsura lib/mat lib/nf lib/num lib/primdec \
+  lib/primdec_lex lib/ratint lib/robot lib/solve lib/sp lib/sturm lib/sym \
+  lib/xm lib/primdec_mod lib/weight
+
+incdir      = ${prefix}/include/asir
+inc_HEADERS = parse/comp.h parse/cpp.h parse/parse.h parse/w_stdio.h \
+  include/al.h include/b.h include/base.h include/bf.h include/ca-27.h \
+  include/ca.h include/com.h include/inline.h include/ox.h include/prime.h \
+  include/version.h include/wsio.h include/interval.h
+
+DEFS       = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
+AM_CPPFLAGS   = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
+              -I${top_srcdir}/gc/include \
+              -I${prefix}/include @X_CFLAGS@
+
+## libasir
+
+ASM_SRCS = asm/ddM.c asm/ddN.c asm/asmalpha.c
+BUILTIN_SRCS = builtin/ftab.c builtin/algnum.c builtin/array.c \
+  builtin/cplxnum.c builtin/ctrl.c builtin/dp.c builtin/fctr.c \
+  builtin/file.c builtin/help.c builtin/int.c builtin/list.c \
+  builtin/miscf.c builtin/parif.c builtin/poly.c builtin/pdiv.c \
+  builtin/print.c builtin/pf.c builtin/rat.c builtin/reduct.c \
+  builtin/result.c builtin/itvnum.c builtin/mattran.c builtin/isolv.c \
+  builtin/strobj.c builtin/subst.c builtin/time.c builtin/type.c \
+  builtin/var.c builtin/compobj.c builtin/gr.c builtin/dp-supp.c \
+  builtin/gf.c builtin/math.c builtin/numerical.c builtin/ec.c \
+  builtin/al.c builtin/batch.c builtin/sha1.c builtin/user.c \
+  builtin/round.c builtin/iarray.c builtin/bfaux.c 
+ENGINE_SRCS = engine/init.c engine/mat.c engine/vect.c engine/str.c \
+  engine/dist.c engine/distm.c engine/_distm.c engine/ui.c engine/N.c \
+  engine/Q.c engine/QM.c engine/real.c engine/bf.c engine/cplx.c \
+  engine/num.c engine/pari.c engine/mi.c engine/lmi.c engine/mt19937.c \
+  engine/P.c engine/PM.c engine/PD.c engine/PDM.c engine/up.c \
+  engine/up_lm.c engine/up_gf2n.c engine/up2.c engine/gf2n.c \
+  engine/gfpn.c engine/gfs.c engine/gfspn.c engine/PU.c engine/PUM.c \
+  engine/R.c engine/RU.c engine/F.c engine/D.c engine/E.c engine/Ebug.c \
+  engine/EZ.c engine/H.c engine/M.c engine/NEZ.c engine/Mgfs.c \
+  engine/Hgfs.c engine/Fgfs.c engine/C.c engine/A.c engine/alg.c \
+  engine/p-itv.c engine/f-itv.c engine/d-itv.c engine/nd.c \
+  engine/ndbug.c engine/Z.c engine/dalg.c engine/gmpq.c 
+FFT_SRCS = fft/dft.c fft/polmul.c fft/fft_primes.c
+IO_SRCS = io/pexpr.c io/spexpr.c io/biovar.c io/bsave.c io/bload.c \
+  io/io.c io/sio.c io/cpexpr.c io/cio.c io/ox.c io/ox_asir.c \
+  io/ox_launch.c io/tcpf.c io/ws_fileio.c 
+PARSE_SRCS = parse/arith.c parse/comp.c parse/debug.c parse/eval.c \
+  parse/evall.c parse/function.c parse/glob.c parse/kwd.c parse/lex.c \
+  parse/load.c parse/parser.c parse/puref.c parse/pvar.c parse/quote.c \
+  parse/struct.c parse/util.c parse/xdeb.c parse/gc_risa.c
+PLOT_SRCS = plot/calc.c plot/if.c plot/plotp.c plot/plotg.c \
+  plot/ox_plot.c plot/plotf.c plot/ox_plot_xevent.c plot/smoothing.c
+
+YTAB_SRCS = parse/y.tab.c parse/y.tab.h
+BUILT_SOURCES = ${YTAB_SRCS}
+parse/lex.o parse/kwd.o: parse/y.tab.h
+${YTAB_SRCS}: parse/parse.y
+	${YACC} ${YFLAGS} -o parse/y.tab.c -d parse/parse.y 
+
+lib_LTLIBRARIES = libasir@sufx@.la
+libasir@sufx@_la_SOURCES = ${ASM_SRCS} ${BUILTIN_SRCS} ${ENGINE_SRCS} ${FFT_SRCS} \
+  ${IO_SRCS} ${PARSE_SRCS} ${inc_HEADERS}
+nodist_libasir@sufx@_la_SOURCES = ${YTAB_SRCS}
+
 if USE_PLOT
-    PLOTDIR = plot
-    PLLIB   = plot/libplot.a
-    X11LIB  = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
+  X11LIB  = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
+  libasir@sufx@_la_SOURCES += ${PLOT_SRCS}
 endif
 
-SUBDIRS  = asm builtin engine fft include io lib parse ${PLOTDIR}
+LIBS = -L${libdir} @LIBS@ @GCLIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} @GMPLIB@ \
+  -lm @WSLIB@ ${EXTRALIBS}
 
-asirdir       = ${libdir}/asir
-asir_PROGRAMS = asir
-asir_SOURCES  = parse/main.c
-asir_LDADD    = libasir.a @ASIR_GCLIB@
-CLEANFILES    = ${asir_LDADD} asir-openxm-${VERSION}.tgz
+## main program
 
-GC_TAR_GZ     = gc-7.4.2.tar.gz
-GC_PATCH      = gc-7.diff gc-7.4.2-risa.diff
-LIB_ATOMIC     = libatomic_ops-7.4.0
-LIB_ATOMIC_TAR_GZ     = ${LIB_ATOMIC}.tar.gz
-GC_MASTER_SITE=http://www.math.kobe-u.ac.jp/pub/OpenXM/misc/
-OX_FETCH      = ${bindir}/oxfetch.sh
+bin_PROGRAMS = asir
+asir_SOURCES = parse/main.c
+asir_LDADD   = -lasir@sufx@ ${LIBS}
 
-DEFS     = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
-AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
-           -I${prefix}/include @GCINC@ @PARIINC@ @X_CFLAGS@
+CLEANFILES = ${YTAB_SRCS}
 
-GLIB  = @ASIR_GCLIB@
-ALIB  = asm/libasm.a
-BLIB  = builtin/libfunc.a
-ELIB  = engine/libca.a
-FLIB  = fft/libdft.a
-IOLIB = io/libio.a
-PLIB  = parse/libparse.a
-GMPLIB = -L${libdir} @GMPLIB@
+install-doc:
+	${MKDIR_P} ${DESTDIR}${asirdir}
+	-for i in ja en ; do \
+		uudecode lib/help-$$i.uu ; \
+		gzip -dc help-$$i.tgz | ( cd ${DESTDIR}${asirdir}; tar xf - ) ; \
+		rm -f help-$$i.tgz ; \
+	done
+	-(cd ${DESTDIR}${asirdir}; rm -rf help-jp help-eg help)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-ja help-jp)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-en help-eg)
+	(cd ${DESTDIR}${asirdir}; ${LN_S} help-en help)
 
-ASIRLIB  = ${BLIB} ${PLIB} ${IOLIB} ${PLLIB} ${ELIB} ${FLIB} ${ALIB}
-LIBS     = @LIBS@ @GCLIB@ @PARILIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} ${GMPLIB} -lm @WSLIB@ ${EXTRALIBS}
-# EXTRALIBS = @EXTRALIBS@
-
-all-recursive: ${GLIB}
-
-umain.o: parse/main.c
-	${COMPILE} -DUINIT main.c -o umain.o
-
-libasir-gc.a: ${GC_PATCH}
-	-if [ ! -f ${top_srcdir}/.gc_fetch_done ]; then \
-		if [ ! -f ${GC_DISTDIR}/${GC_TAR_GZ} ]; then \
-			${OX_FETCH} ${GC_MASTER_SITE}${GC_TAR_GZ} ${GC_DISTDIR}; \
-			${OX_FETCH} ${GC_MASTER_SITE}${LIB_ATOMIC_TAR_GZ} ${GC_DISTDIR}; \
-		fi ; \
-		touch ${top_srcdir}/.gc_fetch_done ; \
-	fi
-	-if [ ! -f ${top_srcdir}/.gc_risa_done ]; then \
-	    (cd ${top_srcdir}; tar xzvf ${GC_DISTDIR}/${GC_TAR_GZ}) ; \
-	    (cd ${top_srcdir}/${GC}; tar xzvf ${GC_DISTDIR}/${LIB_ATOMIC_TAR_GZ}; mv ${LIB_ATOMIC} libatomic_ops) ; \
-		for i in ${GC_PATCH} ; do \
-	    (cd ${top_srcdir}/${GC}; patch -p1 < ../$$i) ; \
-		done ; \
-	    touch ${top_srcdir}/.gc_risa_done ; \
-	fi
-	-if [ "${USE_GC_SPARC64}" = yes \
-            -a ! -f ${top_srcdir}/${GC}/.patch_gc_sparc64_done ]; then \
-	    (cd ${top_srcdir}/${GC}; patch -p0 < ../gc_sparc64.diff) ; \
-	    touch ${top_srcdir}/${GC}/.patch_gc_sparc64_done ; \
-	fi
-	-if [ ! -f ${top_srcdir}/${GC}/.configure_done ]; then \
-	    (cd ${top_srcdir}/${GC}; ./configure ${GC_CONFIGURE_ARGS}) ; \
-	    touch ${top_srcdir}/${GC}/.configure_done ; \
-	fi
-	(cd ${top_srcdir}/${GC}; ${MAKE})
-	cp ${top_srcdir}/${GC}/.libs/libgc.a $@
-
-libasir.a: ${ASIRLIB} ${GLIB} parse/gc_risa.c
-	-mkdir ${top_srcdir}/libtmp
-	-rm -f ${top_srcdir}/libtmp/*  ${top_srcdir}/$@
-	for i in ${ASIRLIB}; do (cd ${top_srcdir}/libtmp; ar x ../$$i; chmod 644 *) done
-	(cd ${top_srcdir}/parse; ${MAKE} gc_risa.o; cp gc_risa.o ../libtmp)
-	(cd ${top_srcdir}/libtmp; ${AR} cq ../$@ *.o)
-	(cd ${top_srcdir}; ${RANLIB} $@)
-	-rm -rf ${top_srcdir}/libtmp
-
-install-libasir: libasir.a
-	mkdir -p ${DESTDIR}${libdir}
-	${INSTALL_DATA} libasir.a ${DESTDIR}${libdir}/libasir${libasir_postfix}.a
-
-install-libasir-gc: libasir-gc.a
-	mkdir -p ${DESTDIR}${libdir}
-	${INSTALL_DATA} libasir-gc.a ${DESTDIR}${libdir}/libasir-gc.a
-
-install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
-	-mkdir -p ${DESTDIR}${bindir}
-	${INSTALL_PROGRAM} asir ${DESTDIR}${bindir}
-	-mkdir -p ${DESTDIR}${asirdir}
-	(cd ${top_srcdir}/lib; ${MAKE} install-doc install-lib)
+install-openxm: install install-doc
+	${MKDIR_P} ${DESTDIR}${asirdir}
 	-rm -f ${DESTDIR}${bindir}/ox_asir${EXEEXT}
 	(cd ${DESTDIR}${bindir} ; ${LN_S} asir${EXEEXT} ox_asir${EXEEXT})
 	-(cd ${DESTDIR}${asirdir}; \
@@ -103,33 +107,4 @@ install-openxm: asir${EXEEXT} install-libasir install-libasir-gc
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
-	(cd ${top_srcdir}/include; ${MAKE} install)
-	(cd ${top_srcdir}/parse; ${MAKE} install)
 
-install-lib:
-	(cd ${top_srcdir}/lib; ${MAKE} install-lib)
-	-(cd ${DESTDIR}${asirdir}; \
-	rm -f ox_asir${EXEEXT} ox_launch${EXEEXT} ox_plot${EXEEXT})
-	(cd ${DESTDIR}${asirdir} ; \
-	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
-	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
-	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
-	-mkdir -p ${DESTDIR}${bindir}
-	-rm -f ${DESTDIR}${bindir}/asir${EXEEXT}
-	(cd ${DESTDIR}${bindir} ; ${LN_S} ../lib/asir/asir${EXEEXT} asir${EXEEXT})
-
-install-doc:
-	(cd ${top_srcdir}/lib; ${MAKE} install-doc)
-
-tarball:
-	-rm -rf tmp
-	-mkdir tmp
-	DESTDIR=`cd tmp; pwd` ${MAKE} install-openxm
-	(cd tmp${prefix}; tar cf - * ) | gzip -c > asir-openxm-${VERSION}.tgz
-	-rm -rf tmp
-
-clean-gc:
-	-rm -rf ${top_srcdir}/.gc_*_done ${top_srcdir}/${GC}
-	-rm -rf ${top_srcdir}/autom4te.cache
-
-distclean-recursive: clean-gc

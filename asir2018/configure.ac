@@ -1,18 +1,19 @@
-dnl $OpenXM: OpenXM_contrib2/asir2018/configure.ac,v 1.1 2018/09/21 07:06:51 noro Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2018/configure.ac,v 1.2 2019/11/12 10:53:22 kondoh Exp $
 
-AC_INIT(asir,1.15)
+AC_INIT(asir,1.16)
 AC_CONFIG_SRCDIR([LICENSE])
 AC_PREREQ(2.69)
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
+LT_INIT
 
-dnl AM_PROG_AS
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_YACC
+AC_PROG_MKDIR_P
 
 AC_PATH_XTRA
 
@@ -34,57 +35,19 @@ elif test `basename ./"${CC}"` = "icc" ; then
     CFLAGS="-g -O"
 fi
 
-GC=gc-7.4.2
 AC_ARG_WITH([asir-gc],
 [  --with-asir-gc          modify Boehm's GC [[yes]]],
 [with_asir_gc=${withval}],[with_asir_gc=yes])
 if test ${with_asir_gc:=yes} != no; then
-   ASIR_GCLIB=libasir-gc.a
-   GCINC='-I${top_srcdir}/${GC}/include'
+   GCLIB='-L${prefix}/lib -lasir-gc'
 else
    GCLIB='-L${prefix}/lib -lgc'
-   GCINC='-I${prefix}/include'
    AC_DEFINE([NO_ASIR_GC])
 fi
-dnl GC_CONFIGURE_ARGS=--disable-threads --enable-shared=no
-GC_CONFIGURE_ARGS="--disable-threads --enable-large-config"
-if test -n "${host_alias}" ; then
-    GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
-fi
-
+GCINC='-I${prefix}/include'
 AC_DEFINE([GC7])
-AC_SUBST([ASIR_GCLIB])
 AC_SUBST([GCLIB])
 AC_SUBST([GCINC])
-AC_SUBST([GC])
-AC_SUBST([GC_CONFIGURE_ARGS])
-
-AC_ARG_WITH([distdir],
-[  --with-distdir          specify the spool for fetching. [[no]]],
-[with_distdir=${withval}],[with_distdir=no])
-GC_DISTDIR='${prefix}/../OpenXM_dist'
-if test ${with_distdir:=no} != no -a ${with_distdir} != yes ; then
-    GC_DISTDIR=${with_distdir}
-fi   
-AC_SUBST([GC_DISTDIR])
-
-libasir_postfix=""
-AC_ARG_WITH([pari],
-[  --with-pari             use the PARI library. [[no]]],
-[with_pari=${withval}],[with_pari=no])
-
-if test ${with_pari:=no} != no ; then
-    libasir_postfix=${libasir_postfix}_pari
-    PARIINC='-I${prefix}/include/pari'
-    if test "${enable_shared}" != yes ; then
-        PARILIB='${libdir}/libpari.a'
-    else
-        PARILIB='-L${libdir} -lpari'
-    fi
-    AC_DEFINE([PARI])
-fi
-AC_SUBST([PARIINC])
-AC_SUBST([PARILIB])
 
 AC_CHECK_TYPES([unsigned long long])
 AC_CHECK_SIZEOF(long)
@@ -103,8 +66,10 @@ if test "${no_x}" != yes ; then
 fi
 AC_SUBST([XPMLIB])
 
+dnl sufx is suffix for libasir
+sufx=""
 if test ${enable_plot:=no} != no ; then
-    libasir_postfix=${libasir_postfix}_X
+    sufx=${sufx}_X
     AC_DEFINE([DO_PLOT])
 fi
 AM_CONDITIONAL([USE_PLOT],[test "$enable_plot" = yes])
@@ -123,7 +88,7 @@ AC_ARG_ENABLE([interval],
 [enable_interval=${enableval}],[enable_interval=no])
 
 if test ${enable_interval:=no} != no ; then
-    libasir_postfix=${libasir_postfix}_itv
+    sufx=${sufx}_itv
     AC_DEFINE([INTERVAL])
     if test "${enable_interval}" = debug ; then
        AC_DEFINE([ITVDEBUG])
@@ -166,72 +131,40 @@ if test "${with_lapack:=no}" != no ; then
 fi
 AC_SUBST([LAPACKLIB])
 
-AC_SUBST([libasir_postfix])
-
-dnl Object files in assembly languages for each micro processors.
-dnl i386_elf_obj:  for FreeBSD 3.x or later and Linux 2.x
-dnl i386_aout_obj: for FreeBSD 2.x, Linux 1.x, and Cygwin
-dnl sparc_v8_obj:  for Sparc V8 processor on Solaris 2.x
-dnl sparc_v9_obj:  for Sparc V9 processor on Solaris 2.x
-dnl generic_obj:   for 32bits/64bits generic micro processors
-
-i386_elf_obj=asmi_l.o
-i386_aout_obj=asmi.o
-sparc_v8_obj="sparc-2.o asm4-2.o edr-2.o"
-sparc_v9_obj=asmalpha.o
-generic_obj=asmalpha.o
+AC_SUBST([sufx])
 
 case "${host}" in
-[i[3-6]86-*-freebsd[3-9].*])
-    asm_obj="${i386_elf_obj}"
-    ;;
 [i[3-6]86-*-linux*]|x86-*-linux*)
-    asm_obj="${i386_elf_obj}"
     AC_DEFINE([_BSD_SOURCE])
     ;;
-[i[3-6]86-*-cygwin*]|x86-*-cygwin*)
-    asm_obj="${i386_aout_obj}"
+arm*-*-linux*)
+    if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
+        CFLAGS="${CFLAGS} -fsigned-char"
+    fi
     ;;
-[i[3-6]86-*-interix*])
-    asm_obj="${i386_aout_obj}"
+[*-*-interix*])
     AC_DEFINE([_ALL_SOURCE])
     ;;
 sparc-sun-solaris2.*)
     case "`uname -m`" in
-    [sun4[dm]]) asm_obj="${sparc_v8_obj}" ;;
-    sun4u*)     asm_obj="${sparc_v9_obj}"
-                if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
+    sun4u*)     if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
                     CFLAGS="${CFLAGS} -m64"
                 fi
                 AC_SUBST([USE_GC_SPARC64])
                 ;;
-    *)          asm_obj="${generic_obj}"  ;;
     esac
     AC_DEFINE([SYSV])
     ;;
 *-apple-darwin*)
-    asm_obj="${generic_obj}"
     AC_DEFINE([__DARWIN__])
     if test -d /usr/X11/include -a x"${X_CFLAGS}" = x ; then
         X_CFLAGS=-I/usr/X11/include 
     fi
     ;;
-arm*-*-linux*)
-    asm_obj="${generic_obj}"
-    if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
-        CFLAGS="${CFLAGS} -fsigned-char"
-    fi
-    ;;
 *-*-mingw*)
 	WSLIB="-lws2_32"
-    asm_obj="${generic_obj}"
-    ;;
-*)
-    asm_obj="${generic_obj}"
     ;;
 esac
-
-AC_SUBST([asm_obj])
 AC_SUBST([WSLIB])
 
 AC_CHECK_FUNCS(sigaction)
@@ -239,5 +172,5 @@ dnl for Solaris 2.x
 AC_CHECK_FUNC(socket, , [AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname, , [AC_CHECK_LIB(nsl,gethostbyname)])
 
-AC_CONFIG_FILES([Makefile engine/Makefile asm/Makefile builtin/Makefile fft/Makefile include/Makefile io/Makefile lib/Makefile parse/Makefile plot/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
