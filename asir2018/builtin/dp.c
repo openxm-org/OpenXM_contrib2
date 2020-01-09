@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.20 2019/12/12 04:44:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.21 2019/12/27 08:13:59 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -59,7 +59,7 @@ extern struct order_spec *dp_current_spec;
 extern struct modorder_spec *dp_current_modspec;
 extern int nd_rref2;
 
-int do_weyl;
+extern int do_weyl;
 
 void Pdp_monomial_hilbert_poincare();
 void Pdp_sort();

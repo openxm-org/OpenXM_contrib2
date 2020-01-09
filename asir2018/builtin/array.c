@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.5 2019/03/28 06:44:04 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.6 2019/12/13 14:40:49 fujimoto Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1430,7 +1430,7 @@ int gauss_elim_mod(int **mat,int row,int col,int md)
     return -1;
 }
 
-struct oEGT eg_mod,eg_elim,eg_elim1,eg_elim2,eg_chrem,eg_gschk,eg_intrat,eg_symb;
+struct oEGT eg_mod,eg_elim,eg_elim1,eg_elim2,eg_chrem,eg_gschk,eg_intrat,eg_symb,eg_back,eg_fore;
 struct oEGT eg_conv;
 
 #if 0

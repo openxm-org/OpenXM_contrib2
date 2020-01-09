@@ -1,11 +1,11 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.15 2019/04/23 08:07:24 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.16 2019/05/22 02:41:16 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
 #include "inline.h"
 
 mpz_t ONEMPZ;
-Z ONE;
+extern Z ONE;
 int lf_lazy;
 Z current_mod_lf;
 int current_mod_lf_size;
