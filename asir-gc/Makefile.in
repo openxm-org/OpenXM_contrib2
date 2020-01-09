@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir-gc/Makefile.in,v 1.1 2020/01/08 16:02:00 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir-gc/Makefile.in,v 1.2 2020/01/09 00:32:25 ohara Exp $
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@
@@ -11,13 +11,13 @@ INSTALL_PROGRAM=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 MKDIR_P=@MKDIR_P@
 
-GC=@GC@
+GC=gc-7.6.12
 GC_CONFIGURE_ARGS=@GC_CONFIGURE_ARGS@
 GC_DISTDIR=@GC_DISTDIR@
 
-GC_TAR_GZ         = gc-7.4.2.tar.gz
-GC_PATCH          = gc-7.diff gc-7.4.2-risa.diff
-LIB_ATOMIC        = libatomic_ops-7.4.0
+GC_TAR_GZ         = gc-7.6.12.tar.gz
+GC_PATCH          = gc-7.4.2-risa.diff
+LIB_ATOMIC        = libatomic_ops-7.6.10
 LIB_ATOMIC_TAR_GZ = ${LIB_ATOMIC}.tar.gz
 GC_MASTER_SITE    = http://www.math.kobe-u.ac.jp/pub/OpenXM/misc/
 OX_FETCH          = ${bindir}/oxfetch.sh
@@ -69,3 +69,7 @@ clean:
 	-rm -rf ${top_srcdir}/autom4te.cache
 	-rm -rf ${top_srcdir}/.gc_*_done
 	-rm -rf ${top_srcdir}/${GC}
+
+distclean: clean
+	-rm -f config.log config.status
+	-rm -f Makefile

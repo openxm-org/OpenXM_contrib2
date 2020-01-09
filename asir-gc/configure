@@ -586,7 +586,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 GC_DISTDIR
 GC_CONFIGURE_ARGS
-GC
 MKDIR_P
 INSTALL_DATA
 INSTALL_SCRIPT
@@ -1926,7 +1925,6 @@ fi
 $as_echo "$MKDIR_P" >&6; }
 
 
-GC=gc-7.4.2
 GC_CONFIGURE_ARGS="--prefix=${prefix} --disable-threads --enable-large-config"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
@@ -1943,7 +1941,6 @@ GC_DISTDIR='${prefix}/../OpenXM_dist'
 if test ${with_distdir:=no} != no -a ${with_distdir} != yes ; then
     GC_DISTDIR=${with_distdir}
 fi
-
 
 
 
