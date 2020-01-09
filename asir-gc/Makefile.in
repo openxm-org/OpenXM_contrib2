@@ -1,4 +1,4 @@
-## $OpenXM$
+## $OpenXM: OpenXM_contrib2/asir-gc/Makefile.in,v 1.1 2020/01/08 16:02:00 ohara Exp $
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@
@@ -61,10 +61,9 @@ install: build
 	${MKDIR_P} ${DESTDIR}${libdir}
 	${INSTALL_PROGRAM} ${top_srcdir}/${GC}/.libs/libasir-gc.* ${DESTDIR}${libdir}/
 	chmod 644 ${DESTDIR}${libdir}/libasir-gc.a
-
-install-headers: build
-	${MKDIR_P} ${DESTDIR}${includedir}
+	${MKDIR_P} ${DESTDIR}${includedir}/gc
 	${INSTALL_DATA} ${top_srcdir}/${GC}/include/*.h ${DESTDIR}${includedir}/gc/
+	${INSTALL_DATA} ${top_srcdir}/${GC}/include/extra/gc.h ${DESTDIR}${includedir}/
 
 clean:
 	-rm -rf ${top_srcdir}/autom4te.cache
