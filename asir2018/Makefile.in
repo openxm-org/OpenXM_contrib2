@@ -237,7 +237,6 @@ am_asir_OBJECTS = parse/main.$(OBJEXT)
 asir_OBJECTS = $(am_asir_OBJECTS)
 am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-asir_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -525,7 +524,8 @@ libasir@sufx@_la_SOURCES = ${ASM_SRCS} ${BUILTIN_SRCS} ${ENGINE_SRCS} \
 nodist_libasir@sufx@_la_SOURCES = ${YTAB_SRCS}
 @USE_PLOT_TRUE@X11LIB = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
 asir_SOURCES = parse/main.c
-asir_LDADD = -lasir@sufx@ ${LIBS}
+asir_LDADD = -L${top_srcdir}/.libs -lasir@sufx@ ${LIBS}
+asir_DEPENDENCIES = libasir@sufx@.la
 CLEANFILES = ${YTAB_SRCS}
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
