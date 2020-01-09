@@ -250,8 +250,83 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@
-depcomp =
-am__maybe_remake_depfiles =
+depcomp = $(SHELL) $(top_srcdir)/depcomp
+am__maybe_remake_depfiles = depfiles
+am__depfiles_remade = asm/$(DEPDIR)/asmalpha.Plo asm/$(DEPDIR)/ddM.Plo \
+	asm/$(DEPDIR)/ddN.Plo builtin/$(DEPDIR)/al.Plo \
+	builtin/$(DEPDIR)/algnum.Plo builtin/$(DEPDIR)/array.Plo \
+	builtin/$(DEPDIR)/batch.Plo builtin/$(DEPDIR)/bfaux.Plo \
+	builtin/$(DEPDIR)/compobj.Plo builtin/$(DEPDIR)/cplxnum.Plo \
+	builtin/$(DEPDIR)/ctrl.Plo builtin/$(DEPDIR)/dp-supp.Plo \
+	builtin/$(DEPDIR)/dp.Plo builtin/$(DEPDIR)/ec.Plo \
+	builtin/$(DEPDIR)/fctr.Plo builtin/$(DEPDIR)/file.Plo \
+	builtin/$(DEPDIR)/ftab.Plo builtin/$(DEPDIR)/gf.Plo \
+	builtin/$(DEPDIR)/gr.Plo builtin/$(DEPDIR)/help.Plo \
+	builtin/$(DEPDIR)/iarray.Plo builtin/$(DEPDIR)/int.Plo \
+	builtin/$(DEPDIR)/isolv.Plo builtin/$(DEPDIR)/itvnum.Plo \
+	builtin/$(DEPDIR)/list.Plo builtin/$(DEPDIR)/math.Plo \
+	builtin/$(DEPDIR)/mattran.Plo builtin/$(DEPDIR)/miscf.Plo \
+	builtin/$(DEPDIR)/numerical.Plo builtin/$(DEPDIR)/parif.Plo \
+	builtin/$(DEPDIR)/pdiv.Plo builtin/$(DEPDIR)/pf.Plo \
+	builtin/$(DEPDIR)/poly.Plo builtin/$(DEPDIR)/print.Plo \
+	builtin/$(DEPDIR)/rat.Plo builtin/$(DEPDIR)/reduct.Plo \
+	builtin/$(DEPDIR)/result.Plo builtin/$(DEPDIR)/round.Plo \
+	builtin/$(DEPDIR)/sha1.Plo builtin/$(DEPDIR)/strobj.Plo \
+	builtin/$(DEPDIR)/subst.Plo builtin/$(DEPDIR)/time.Plo \
+	builtin/$(DEPDIR)/type.Plo builtin/$(DEPDIR)/user.Plo \
+	builtin/$(DEPDIR)/var.Plo engine/$(DEPDIR)/A.Plo \
+	engine/$(DEPDIR)/C.Plo engine/$(DEPDIR)/D.Plo \
+	engine/$(DEPDIR)/E.Plo engine/$(DEPDIR)/EZ.Plo \
+	engine/$(DEPDIR)/Ebug.Plo engine/$(DEPDIR)/F.Plo \
+	engine/$(DEPDIR)/Fgfs.Plo engine/$(DEPDIR)/H.Plo \
+	engine/$(DEPDIR)/Hgfs.Plo engine/$(DEPDIR)/M.Plo \
+	engine/$(DEPDIR)/Mgfs.Plo engine/$(DEPDIR)/N.Plo \
+	engine/$(DEPDIR)/NEZ.Plo engine/$(DEPDIR)/P.Plo \
+	engine/$(DEPDIR)/PD.Plo engine/$(DEPDIR)/PDM.Plo \
+	engine/$(DEPDIR)/PM.Plo engine/$(DEPDIR)/PU.Plo \
+	engine/$(DEPDIR)/PUM.Plo engine/$(DEPDIR)/Q.Plo \
+	engine/$(DEPDIR)/QM.Plo engine/$(DEPDIR)/R.Plo \
+	engine/$(DEPDIR)/RU.Plo engine/$(DEPDIR)/Z.Plo \
+	engine/$(DEPDIR)/_distm.Plo engine/$(DEPDIR)/alg.Plo \
+	engine/$(DEPDIR)/bf.Plo engine/$(DEPDIR)/cplx.Plo \
+	engine/$(DEPDIR)/d-itv.Plo engine/$(DEPDIR)/dalg.Plo \
+	engine/$(DEPDIR)/dist.Plo engine/$(DEPDIR)/distm.Plo \
+	engine/$(DEPDIR)/f-itv.Plo engine/$(DEPDIR)/gf2n.Plo \
+	engine/$(DEPDIR)/gfpn.Plo engine/$(DEPDIR)/gfs.Plo \
+	engine/$(DEPDIR)/gfspn.Plo engine/$(DEPDIR)/gmpq.Plo \
+	engine/$(DEPDIR)/init.Plo engine/$(DEPDIR)/lmi.Plo \
+	engine/$(DEPDIR)/mat.Plo engine/$(DEPDIR)/mi.Plo \
+	engine/$(DEPDIR)/mt19937.Plo engine/$(DEPDIR)/nd.Plo \
+	engine/$(DEPDIR)/ndbug.Plo engine/$(DEPDIR)/num.Plo \
+	engine/$(DEPDIR)/p-itv.Plo engine/$(DEPDIR)/pari.Plo \
+	engine/$(DEPDIR)/real.Plo engine/$(DEPDIR)/str.Plo \
+	engine/$(DEPDIR)/ui.Plo engine/$(DEPDIR)/up.Plo \
+	engine/$(DEPDIR)/up2.Plo engine/$(DEPDIR)/up_gf2n.Plo \
+	engine/$(DEPDIR)/up_lm.Plo engine/$(DEPDIR)/vect.Plo \
+	fft/$(DEPDIR)/dft.Plo fft/$(DEPDIR)/fft_primes.Plo \
+	fft/$(DEPDIR)/polmul.Plo io/$(DEPDIR)/biovar.Plo \
+	io/$(DEPDIR)/bload.Plo io/$(DEPDIR)/bsave.Plo \
+	io/$(DEPDIR)/cio.Plo io/$(DEPDIR)/cpexpr.Plo \
+	io/$(DEPDIR)/io.Plo io/$(DEPDIR)/ox.Plo \
+	io/$(DEPDIR)/ox_asir.Plo io/$(DEPDIR)/ox_launch.Plo \
+	io/$(DEPDIR)/pexpr.Plo io/$(DEPDIR)/sio.Plo \
+	io/$(DEPDIR)/spexpr.Plo io/$(DEPDIR)/tcpf.Plo \
+	io/$(DEPDIR)/ws_fileio.Plo parse/$(DEPDIR)/arith.Plo \
+	parse/$(DEPDIR)/comp.Plo parse/$(DEPDIR)/debug.Plo \
+	parse/$(DEPDIR)/eval.Plo parse/$(DEPDIR)/evall.Plo \
+	parse/$(DEPDIR)/function.Plo parse/$(DEPDIR)/gc_risa.Plo \
+	parse/$(DEPDIR)/glob.Plo parse/$(DEPDIR)/kwd.Plo \
+	parse/$(DEPDIR)/lex.Plo parse/$(DEPDIR)/load.Plo \
+	parse/$(DEPDIR)/main.Po parse/$(DEPDIR)/parser.Plo \
+	parse/$(DEPDIR)/puref.Plo parse/$(DEPDIR)/pvar.Plo \
+	parse/$(DEPDIR)/quote.Plo parse/$(DEPDIR)/struct.Plo \
+	parse/$(DEPDIR)/util.Plo parse/$(DEPDIR)/xdeb.Plo \
+	parse/$(DEPDIR)/y.tab.Plo plot/$(DEPDIR)/calc.Plo \
+	plot/$(DEPDIR)/if.Plo plot/$(DEPDIR)/ox_plot.Plo \
+	plot/$(DEPDIR)/ox_plot_xevent.Plo plot/$(DEPDIR)/plotf.Plo \
+	plot/$(DEPDIR)/plotg.Plo plot/$(DEPDIR)/plotp.Plo \
+	plot/$(DEPDIR)/smoothing.Plo
+am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -458,7 +533,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects 1.16
+AUTOMAKE_OPTIONS = foreign subdir-objects 1.16
 asirdir = ${prefix}/lib/asir
 asir_DATA = lib/alpi lib/bfct lib/bgk lib/const lib/cyclic lib/defs.h \
   lib/dfff lib/dmul lib/dmul102 lib/fctrdata lib/fctrtest lib/fff lib/glib \
@@ -524,7 +599,8 @@ libasir@sufx@_la_SOURCES = ${ASM_SRCS} ${BUILTIN_SRCS} ${ENGINE_SRCS} \
 nodist_libasir@sufx@_la_SOURCES = ${YTAB_SRCS}
 @USE_PLOT_TRUE@X11LIB = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
 asir_SOURCES = parse/main.c
-asir_LDADD = -L${top_srcdir}/.libs -lasir@sufx@ ${LIBS}
+@ASIR_STATIC_FALSE@asir_LDADD = ${top_srcdir}/.libs/libasir@sufx@.la ${LIBS}
+@ASIR_STATIC_TRUE@asir_LDADD = ${top_srcdir}/.libs/libasir@sufx@.a ${LIBS}
 asir_DEPENDENCIES = libasir@sufx@.la
 CLEANFILES = ${YTAB_SRCS}
 all: $(BUILT_SOURCES)
@@ -652,174 +728,265 @@ clean-libLTLIBRARIES:
 asm/$(am__dirstamp):
 	@$(MKDIR_P) asm
 	@: > asm/$(am__dirstamp)
-asm/ddM.lo: asm/$(am__dirstamp)
-asm/ddN.lo: asm/$(am__dirstamp)
-asm/asmalpha.lo: asm/$(am__dirstamp)
+asm/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) asm/$(DEPDIR)
+	@: > asm/$(DEPDIR)/$(am__dirstamp)
+asm/ddM.lo: asm/$(am__dirstamp) asm/$(DEPDIR)/$(am__dirstamp)
+asm/ddN.lo: asm/$(am__dirstamp) asm/$(DEPDIR)/$(am__dirstamp)
+asm/asmalpha.lo: asm/$(am__dirstamp) asm/$(DEPDIR)/$(am__dirstamp)
 builtin/$(am__dirstamp):
 	@$(MKDIR_P) builtin
 	@: > builtin/$(am__dirstamp)
-builtin/ftab.lo: builtin/$(am__dirstamp)
-builtin/algnum.lo: builtin/$(am__dirstamp)
-builtin/array.lo: builtin/$(am__dirstamp)
-builtin/cplxnum.lo: builtin/$(am__dirstamp)
-builtin/ctrl.lo: builtin/$(am__dirstamp)
-builtin/dp.lo: builtin/$(am__dirstamp)
-builtin/fctr.lo: builtin/$(am__dirstamp)
-builtin/file.lo: builtin/$(am__dirstamp)
-builtin/help.lo: builtin/$(am__dirstamp)
-builtin/int.lo: builtin/$(am__dirstamp)
-builtin/list.lo: builtin/$(am__dirstamp)
-builtin/miscf.lo: builtin/$(am__dirstamp)
-builtin/parif.lo: builtin/$(am__dirstamp)
-builtin/poly.lo: builtin/$(am__dirstamp)
-builtin/pdiv.lo: builtin/$(am__dirstamp)
-builtin/print.lo: builtin/$(am__dirstamp)
-builtin/pf.lo: builtin/$(am__dirstamp)
-builtin/rat.lo: builtin/$(am__dirstamp)
-builtin/reduct.lo: builtin/$(am__dirstamp)
-builtin/result.lo: builtin/$(am__dirstamp)
-builtin/itvnum.lo: builtin/$(am__dirstamp)
-builtin/mattran.lo: builtin/$(am__dirstamp)
-builtin/isolv.lo: builtin/$(am__dirstamp)
-builtin/strobj.lo: builtin/$(am__dirstamp)
-builtin/subst.lo: builtin/$(am__dirstamp)
-builtin/time.lo: builtin/$(am__dirstamp)
-builtin/type.lo: builtin/$(am__dirstamp)
-builtin/var.lo: builtin/$(am__dirstamp)
-builtin/compobj.lo: builtin/$(am__dirstamp)
-builtin/gr.lo: builtin/$(am__dirstamp)
-builtin/dp-supp.lo: builtin/$(am__dirstamp)
-builtin/gf.lo: builtin/$(am__dirstamp)
-builtin/math.lo: builtin/$(am__dirstamp)
-builtin/numerical.lo: builtin/$(am__dirstamp)
-builtin/ec.lo: builtin/$(am__dirstamp)
-builtin/al.lo: builtin/$(am__dirstamp)
-builtin/batch.lo: builtin/$(am__dirstamp)
-builtin/sha1.lo: builtin/$(am__dirstamp)
-builtin/user.lo: builtin/$(am__dirstamp)
-builtin/round.lo: builtin/$(am__dirstamp)
-builtin/iarray.lo: builtin/$(am__dirstamp)
-builtin/bfaux.lo: builtin/$(am__dirstamp)
+builtin/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) builtin/$(DEPDIR)
+	@: > builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/ftab.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/algnum.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/array.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/cplxnum.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/ctrl.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/dp.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/fctr.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/file.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/help.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/int.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/list.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/miscf.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/parif.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/poly.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/pdiv.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/print.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/pf.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/rat.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/reduct.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/result.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/itvnum.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/mattran.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/isolv.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/strobj.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/subst.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/time.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/type.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/var.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/compobj.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/gr.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/dp-supp.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/gf.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/math.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/numerical.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/ec.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/al.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/batch.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/sha1.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/user.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/round.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/iarray.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
+builtin/bfaux.lo: builtin/$(am__dirstamp) \
+	builtin/$(DEPDIR)/$(am__dirstamp)
 engine/$(am__dirstamp):
 	@$(MKDIR_P) engine
 	@: > engine/$(am__dirstamp)
-engine/init.lo: engine/$(am__dirstamp)
-engine/mat.lo: engine/$(am__dirstamp)
-engine/vect.lo: engine/$(am__dirstamp)
-engine/str.lo: engine/$(am__dirstamp)
-engine/dist.lo: engine/$(am__dirstamp)
-engine/distm.lo: engine/$(am__dirstamp)
-engine/_distm.lo: engine/$(am__dirstamp)
-engine/ui.lo: engine/$(am__dirstamp)
-engine/N.lo: engine/$(am__dirstamp)
-engine/Q.lo: engine/$(am__dirstamp)
-engine/QM.lo: engine/$(am__dirstamp)
-engine/real.lo: engine/$(am__dirstamp)
-engine/bf.lo: engine/$(am__dirstamp)
-engine/cplx.lo: engine/$(am__dirstamp)
-engine/num.lo: engine/$(am__dirstamp)
-engine/pari.lo: engine/$(am__dirstamp)
-engine/mi.lo: engine/$(am__dirstamp)
-engine/lmi.lo: engine/$(am__dirstamp)
-engine/mt19937.lo: engine/$(am__dirstamp)
-engine/P.lo: engine/$(am__dirstamp)
-engine/PM.lo: engine/$(am__dirstamp)
-engine/PD.lo: engine/$(am__dirstamp)
-engine/PDM.lo: engine/$(am__dirstamp)
-engine/up.lo: engine/$(am__dirstamp)
-engine/up_lm.lo: engine/$(am__dirstamp)
-engine/up_gf2n.lo: engine/$(am__dirstamp)
-engine/up2.lo: engine/$(am__dirstamp)
-engine/gf2n.lo: engine/$(am__dirstamp)
-engine/gfpn.lo: engine/$(am__dirstamp)
-engine/gfs.lo: engine/$(am__dirstamp)
-engine/gfspn.lo: engine/$(am__dirstamp)
-engine/PU.lo: engine/$(am__dirstamp)
-engine/PUM.lo: engine/$(am__dirstamp)
-engine/R.lo: engine/$(am__dirstamp)
-engine/RU.lo: engine/$(am__dirstamp)
-engine/F.lo: engine/$(am__dirstamp)
-engine/D.lo: engine/$(am__dirstamp)
-engine/E.lo: engine/$(am__dirstamp)
-engine/Ebug.lo: engine/$(am__dirstamp)
-engine/EZ.lo: engine/$(am__dirstamp)
-engine/H.lo: engine/$(am__dirstamp)
-engine/M.lo: engine/$(am__dirstamp)
-engine/NEZ.lo: engine/$(am__dirstamp)
-engine/Mgfs.lo: engine/$(am__dirstamp)
-engine/Hgfs.lo: engine/$(am__dirstamp)
-engine/Fgfs.lo: engine/$(am__dirstamp)
-engine/C.lo: engine/$(am__dirstamp)
-engine/A.lo: engine/$(am__dirstamp)
-engine/alg.lo: engine/$(am__dirstamp)
-engine/p-itv.lo: engine/$(am__dirstamp)
-engine/f-itv.lo: engine/$(am__dirstamp)
-engine/d-itv.lo: engine/$(am__dirstamp)
-engine/nd.lo: engine/$(am__dirstamp)
-engine/ndbug.lo: engine/$(am__dirstamp)
-engine/Z.lo: engine/$(am__dirstamp)
-engine/dalg.lo: engine/$(am__dirstamp)
-engine/gmpq.lo: engine/$(am__dirstamp)
+engine/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) engine/$(DEPDIR)
+	@: > engine/$(DEPDIR)/$(am__dirstamp)
+engine/init.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/mat.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/vect.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/str.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/dist.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/distm.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/_distm.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/ui.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/N.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/Q.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/QM.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/real.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/bf.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/cplx.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/num.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/pari.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/mi.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/lmi.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/mt19937.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/P.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/PM.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/PD.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/PDM.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/up.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/up_lm.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/up_gf2n.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/up2.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/gf2n.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/gfpn.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/gfs.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/gfspn.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/PU.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/PUM.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/R.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/RU.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/F.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/D.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/E.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/Ebug.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/EZ.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/H.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/M.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/NEZ.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/Mgfs.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/Hgfs.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/Fgfs.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/C.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/A.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/alg.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/p-itv.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/f-itv.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/d-itv.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/nd.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/ndbug.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/Z.lo: engine/$(am__dirstamp) engine/$(DEPDIR)/$(am__dirstamp)
+engine/dalg.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
+engine/gmpq.lo: engine/$(am__dirstamp) \
+	engine/$(DEPDIR)/$(am__dirstamp)
 fft/$(am__dirstamp):
 	@$(MKDIR_P) fft
 	@: > fft/$(am__dirstamp)
-fft/dft.lo: fft/$(am__dirstamp)
-fft/polmul.lo: fft/$(am__dirstamp)
-fft/fft_primes.lo: fft/$(am__dirstamp)
+fft/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) fft/$(DEPDIR)
+	@: > fft/$(DEPDIR)/$(am__dirstamp)
+fft/dft.lo: fft/$(am__dirstamp) fft/$(DEPDIR)/$(am__dirstamp)
+fft/polmul.lo: fft/$(am__dirstamp) fft/$(DEPDIR)/$(am__dirstamp)
+fft/fft_primes.lo: fft/$(am__dirstamp) fft/$(DEPDIR)/$(am__dirstamp)
 io/$(am__dirstamp):
 	@$(MKDIR_P) io
 	@: > io/$(am__dirstamp)
-io/pexpr.lo: io/$(am__dirstamp)
-io/spexpr.lo: io/$(am__dirstamp)
-io/biovar.lo: io/$(am__dirstamp)
-io/bsave.lo: io/$(am__dirstamp)
-io/bload.lo: io/$(am__dirstamp)
-io/io.lo: io/$(am__dirstamp)
-io/sio.lo: io/$(am__dirstamp)
-io/cpexpr.lo: io/$(am__dirstamp)
-io/cio.lo: io/$(am__dirstamp)
-io/ox.lo: io/$(am__dirstamp)
-io/ox_asir.lo: io/$(am__dirstamp)
-io/ox_launch.lo: io/$(am__dirstamp)
-io/tcpf.lo: io/$(am__dirstamp)
-io/ws_fileio.lo: io/$(am__dirstamp)
+io/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) io/$(DEPDIR)
+	@: > io/$(DEPDIR)/$(am__dirstamp)
+io/pexpr.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/spexpr.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/biovar.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/bsave.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/bload.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/io.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/sio.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/cpexpr.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/cio.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/ox.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/ox_asir.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/ox_launch.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/tcpf.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
+io/ws_fileio.lo: io/$(am__dirstamp) io/$(DEPDIR)/$(am__dirstamp)
 parse/$(am__dirstamp):
 	@$(MKDIR_P) parse
 	@: > parse/$(am__dirstamp)
-parse/arith.lo: parse/$(am__dirstamp)
-parse/comp.lo: parse/$(am__dirstamp)
-parse/debug.lo: parse/$(am__dirstamp)
-parse/eval.lo: parse/$(am__dirstamp)
-parse/evall.lo: parse/$(am__dirstamp)
-parse/function.lo: parse/$(am__dirstamp)
-parse/glob.lo: parse/$(am__dirstamp)
-parse/kwd.lo: parse/$(am__dirstamp)
-parse/lex.lo: parse/$(am__dirstamp)
-parse/load.lo: parse/$(am__dirstamp)
-parse/parser.lo: parse/$(am__dirstamp)
-parse/puref.lo: parse/$(am__dirstamp)
-parse/pvar.lo: parse/$(am__dirstamp)
-parse/quote.lo: parse/$(am__dirstamp)
-parse/struct.lo: parse/$(am__dirstamp)
-parse/util.lo: parse/$(am__dirstamp)
-parse/xdeb.lo: parse/$(am__dirstamp)
-parse/gc_risa.lo: parse/$(am__dirstamp)
+parse/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) parse/$(DEPDIR)
+	@: > parse/$(DEPDIR)/$(am__dirstamp)
+parse/arith.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/comp.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/debug.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/eval.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/evall.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/function.lo: parse/$(am__dirstamp) \
+	parse/$(DEPDIR)/$(am__dirstamp)
+parse/glob.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/kwd.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/lex.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/load.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/parser.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/puref.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/pvar.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/quote.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/struct.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/util.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/xdeb.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
+parse/gc_risa.lo: parse/$(am__dirstamp) \
+	parse/$(DEPDIR)/$(am__dirstamp)
 plot/$(am__dirstamp):
 	@$(MKDIR_P) plot
 	@: > plot/$(am__dirstamp)
-plot/calc.lo: plot/$(am__dirstamp)
-plot/if.lo: plot/$(am__dirstamp)
-plot/plotp.lo: plot/$(am__dirstamp)
-plot/plotg.lo: plot/$(am__dirstamp)
-plot/ox_plot.lo: plot/$(am__dirstamp)
-plot/plotf.lo: plot/$(am__dirstamp)
-plot/ox_plot_xevent.lo: plot/$(am__dirstamp)
-plot/smoothing.lo: plot/$(am__dirstamp)
-parse/y.tab.lo: parse/$(am__dirstamp)
+plot/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) plot/$(DEPDIR)
+	@: > plot/$(DEPDIR)/$(am__dirstamp)
+plot/calc.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+plot/if.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+plot/plotp.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+plot/plotg.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+plot/ox_plot.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+plot/plotf.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+plot/ox_plot_xevent.lo: plot/$(am__dirstamp) \
+	plot/$(DEPDIR)/$(am__dirstamp)
+plot/smoothing.lo: plot/$(am__dirstamp) plot/$(DEPDIR)/$(am__dirstamp)
+parse/y.tab.lo: parse/$(am__dirstamp) parse/$(DEPDIR)/$(am__dirstamp)
 
 libasir@sufx@.la: $(libasir@sufx@_la_OBJECTS) $(libasir@sufx@_la_DEPENDENCIES) $(EXTRA_libasir@sufx@_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libasir@sufx@_la_OBJECTS) $(libasir@sufx@_la_LIBADD) $(LIBS)
-parse/main.$(OBJEXT): parse/$(am__dirstamp)
+parse/main.$(OBJEXT): parse/$(am__dirstamp) \
+	parse/$(DEPDIR)/$(am__dirstamp)
 
 asir$(EXEEXT): $(asir_OBJECTS) $(asir_DEPENDENCIES) $(EXTRA_asir_DEPENDENCIES) 
 	@rm -f asir$(EXEEXT)
@@ -845,14 +1012,183 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@asm/$(DEPDIR)/asmalpha.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@asm/$(DEPDIR)/ddM.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@asm/$(DEPDIR)/ddN.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/al.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/algnum.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/array.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/batch.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/bfaux.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/compobj.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/cplxnum.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/ctrl.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/dp-supp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/dp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/ec.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/fctr.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/file.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/ftab.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/gf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/gr.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/help.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/iarray.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/int.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/isolv.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/itvnum.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/list.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/math.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/mattran.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/miscf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/numerical.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/parif.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/pdiv.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/pf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/poly.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/print.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/rat.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/reduct.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/result.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/round.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/sha1.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/strobj.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/subst.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/time.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/type.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/user.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@builtin/$(DEPDIR)/var.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/A.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/C.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/D.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/E.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/EZ.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/Ebug.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/F.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/Fgfs.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/H.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/Hgfs.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/M.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/Mgfs.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/N.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/NEZ.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/P.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/PD.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/PDM.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/PM.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/PU.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/PUM.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/Q.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/QM.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/R.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/RU.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/Z.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/_distm.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/alg.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/bf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/cplx.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/d-itv.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/dalg.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/dist.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/distm.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/f-itv.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/gf2n.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/gfpn.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/gfs.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/gfspn.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/gmpq.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/init.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/lmi.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/mat.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/mi.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/mt19937.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/nd.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/ndbug.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/num.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/p-itv.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/pari.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/real.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/str.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/ui.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/up.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/up2.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/up_gf2n.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/up_lm.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@engine/$(DEPDIR)/vect.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@fft/$(DEPDIR)/dft.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@fft/$(DEPDIR)/fft_primes.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@fft/$(DEPDIR)/polmul.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/biovar.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/bload.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/bsave.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/cio.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/cpexpr.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/io.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/ox.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/ox_asir.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/ox_launch.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/pexpr.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/sio.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/spexpr.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/tcpf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@io/$(DEPDIR)/ws_fileio.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/arith.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/comp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/debug.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/eval.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/evall.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/function.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/gc_risa.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/glob.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/kwd.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/lex.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/load.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/parser.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/puref.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/pvar.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/quote.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/struct.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/util.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/xdeb.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@parse/$(DEPDIR)/y.tab.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/calc.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/if.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/ox_plot.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/ox_plot_xevent.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/plotf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/plotg.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/plotp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@plot/$(DEPDIR)/smoothing.Plo@am__quote@ # am--include-marker
+
+$(am__depfiles_remade):
+	@$(MKDIR_P) $(@D)
+	@echo '# dummy' >$@-t && $(am__mv) $@-t $@
+
+am--depfiles: $(am__depfiles_remade)
+
 .c.o:
-	$(AM_V_CC)$(COMPILE) -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1175,12 +1511,19 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f asm/$(DEPDIR)/$(am__dirstamp)
 	-rm -f asm/$(am__dirstamp)
+	-rm -f builtin/$(DEPDIR)/$(am__dirstamp)
 	-rm -f builtin/$(am__dirstamp)
+	-rm -f engine/$(DEPDIR)/$(am__dirstamp)
 	-rm -f engine/$(am__dirstamp)
+	-rm -f fft/$(DEPDIR)/$(am__dirstamp)
 	-rm -f fft/$(am__dirstamp)
+	-rm -f io/$(DEPDIR)/$(am__dirstamp)
 	-rm -f io/$(am__dirstamp)
+	-rm -f parse/$(DEPDIR)/$(am__dirstamp)
 	-rm -f parse/$(am__dirstamp)
+	-rm -f plot/$(DEPDIR)/$(am__dirstamp)
 	-rm -f plot/$(am__dirstamp)
 
 maintainer-clean-generic:
@@ -1194,6 +1537,153 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
+		-rm -f asm/$(DEPDIR)/asmalpha.Plo
+	-rm -f asm/$(DEPDIR)/ddM.Plo
+	-rm -f asm/$(DEPDIR)/ddN.Plo
+	-rm -f builtin/$(DEPDIR)/al.Plo
+	-rm -f builtin/$(DEPDIR)/algnum.Plo
+	-rm -f builtin/$(DEPDIR)/array.Plo
+	-rm -f builtin/$(DEPDIR)/batch.Plo
+	-rm -f builtin/$(DEPDIR)/bfaux.Plo
+	-rm -f builtin/$(DEPDIR)/compobj.Plo
+	-rm -f builtin/$(DEPDIR)/cplxnum.Plo
+	-rm -f builtin/$(DEPDIR)/ctrl.Plo
+	-rm -f builtin/$(DEPDIR)/dp-supp.Plo
+	-rm -f builtin/$(DEPDIR)/dp.Plo
+	-rm -f builtin/$(DEPDIR)/ec.Plo
+	-rm -f builtin/$(DEPDIR)/fctr.Plo
+	-rm -f builtin/$(DEPDIR)/file.Plo
+	-rm -f builtin/$(DEPDIR)/ftab.Plo
+	-rm -f builtin/$(DEPDIR)/gf.Plo
+	-rm -f builtin/$(DEPDIR)/gr.Plo
+	-rm -f builtin/$(DEPDIR)/help.Plo
+	-rm -f builtin/$(DEPDIR)/iarray.Plo
+	-rm -f builtin/$(DEPDIR)/int.Plo
+	-rm -f builtin/$(DEPDIR)/isolv.Plo
+	-rm -f builtin/$(DEPDIR)/itvnum.Plo
+	-rm -f builtin/$(DEPDIR)/list.Plo
+	-rm -f builtin/$(DEPDIR)/math.Plo
+	-rm -f builtin/$(DEPDIR)/mattran.Plo
+	-rm -f builtin/$(DEPDIR)/miscf.Plo
+	-rm -f builtin/$(DEPDIR)/numerical.Plo
+	-rm -f builtin/$(DEPDIR)/parif.Plo
+	-rm -f builtin/$(DEPDIR)/pdiv.Plo
+	-rm -f builtin/$(DEPDIR)/pf.Plo
+	-rm -f builtin/$(DEPDIR)/poly.Plo
+	-rm -f builtin/$(DEPDIR)/print.Plo
+	-rm -f builtin/$(DEPDIR)/rat.Plo
+	-rm -f builtin/$(DEPDIR)/reduct.Plo
+	-rm -f builtin/$(DEPDIR)/result.Plo
+	-rm -f builtin/$(DEPDIR)/round.Plo
+	-rm -f builtin/$(DEPDIR)/sha1.Plo
+	-rm -f builtin/$(DEPDIR)/strobj.Plo
+	-rm -f builtin/$(DEPDIR)/subst.Plo
+	-rm -f builtin/$(DEPDIR)/time.Plo
+	-rm -f builtin/$(DEPDIR)/type.Plo
+	-rm -f builtin/$(DEPDIR)/user.Plo
+	-rm -f builtin/$(DEPDIR)/var.Plo
+	-rm -f engine/$(DEPDIR)/A.Plo
+	-rm -f engine/$(DEPDIR)/C.Plo
+	-rm -f engine/$(DEPDIR)/D.Plo
+	-rm -f engine/$(DEPDIR)/E.Plo
+	-rm -f engine/$(DEPDIR)/EZ.Plo
+	-rm -f engine/$(DEPDIR)/Ebug.Plo
+	-rm -f engine/$(DEPDIR)/F.Plo
+	-rm -f engine/$(DEPDIR)/Fgfs.Plo
+	-rm -f engine/$(DEPDIR)/H.Plo
+	-rm -f engine/$(DEPDIR)/Hgfs.Plo
+	-rm -f engine/$(DEPDIR)/M.Plo
+	-rm -f engine/$(DEPDIR)/Mgfs.Plo
+	-rm -f engine/$(DEPDIR)/N.Plo
+	-rm -f engine/$(DEPDIR)/NEZ.Plo
+	-rm -f engine/$(DEPDIR)/P.Plo
+	-rm -f engine/$(DEPDIR)/PD.Plo
+	-rm -f engine/$(DEPDIR)/PDM.Plo
+	-rm -f engine/$(DEPDIR)/PM.Plo
+	-rm -f engine/$(DEPDIR)/PU.Plo
+	-rm -f engine/$(DEPDIR)/PUM.Plo
+	-rm -f engine/$(DEPDIR)/Q.Plo
+	-rm -f engine/$(DEPDIR)/QM.Plo
+	-rm -f engine/$(DEPDIR)/R.Plo
+	-rm -f engine/$(DEPDIR)/RU.Plo
+	-rm -f engine/$(DEPDIR)/Z.Plo
+	-rm -f engine/$(DEPDIR)/_distm.Plo
+	-rm -f engine/$(DEPDIR)/alg.Plo
+	-rm -f engine/$(DEPDIR)/bf.Plo
+	-rm -f engine/$(DEPDIR)/cplx.Plo
+	-rm -f engine/$(DEPDIR)/d-itv.Plo
+	-rm -f engine/$(DEPDIR)/dalg.Plo
+	-rm -f engine/$(DEPDIR)/dist.Plo
+	-rm -f engine/$(DEPDIR)/distm.Plo
+	-rm -f engine/$(DEPDIR)/f-itv.Plo
+	-rm -f engine/$(DEPDIR)/gf2n.Plo
+	-rm -f engine/$(DEPDIR)/gfpn.Plo
+	-rm -f engine/$(DEPDIR)/gfs.Plo
+	-rm -f engine/$(DEPDIR)/gfspn.Plo
+	-rm -f engine/$(DEPDIR)/gmpq.Plo
+	-rm -f engine/$(DEPDIR)/init.Plo
+	-rm -f engine/$(DEPDIR)/lmi.Plo
+	-rm -f engine/$(DEPDIR)/mat.Plo
+	-rm -f engine/$(DEPDIR)/mi.Plo
+	-rm -f engine/$(DEPDIR)/mt19937.Plo
+	-rm -f engine/$(DEPDIR)/nd.Plo
+	-rm -f engine/$(DEPDIR)/ndbug.Plo
+	-rm -f engine/$(DEPDIR)/num.Plo
+	-rm -f engine/$(DEPDIR)/p-itv.Plo
+	-rm -f engine/$(DEPDIR)/pari.Plo
+	-rm -f engine/$(DEPDIR)/real.Plo
+	-rm -f engine/$(DEPDIR)/str.Plo
+	-rm -f engine/$(DEPDIR)/ui.Plo
+	-rm -f engine/$(DEPDIR)/up.Plo
+	-rm -f engine/$(DEPDIR)/up2.Plo
+	-rm -f engine/$(DEPDIR)/up_gf2n.Plo
+	-rm -f engine/$(DEPDIR)/up_lm.Plo
+	-rm -f engine/$(DEPDIR)/vect.Plo
+	-rm -f fft/$(DEPDIR)/dft.Plo
+	-rm -f fft/$(DEPDIR)/fft_primes.Plo
+	-rm -f fft/$(DEPDIR)/polmul.Plo
+	-rm -f io/$(DEPDIR)/biovar.Plo
+	-rm -f io/$(DEPDIR)/bload.Plo
+	-rm -f io/$(DEPDIR)/bsave.Plo
+	-rm -f io/$(DEPDIR)/cio.Plo
+	-rm -f io/$(DEPDIR)/cpexpr.Plo
+	-rm -f io/$(DEPDIR)/io.Plo
+	-rm -f io/$(DEPDIR)/ox.Plo
+	-rm -f io/$(DEPDIR)/ox_asir.Plo
+	-rm -f io/$(DEPDIR)/ox_launch.Plo
+	-rm -f io/$(DEPDIR)/pexpr.Plo
+	-rm -f io/$(DEPDIR)/sio.Plo
+	-rm -f io/$(DEPDIR)/spexpr.Plo
+	-rm -f io/$(DEPDIR)/tcpf.Plo
+	-rm -f io/$(DEPDIR)/ws_fileio.Plo
+	-rm -f parse/$(DEPDIR)/arith.Plo
+	-rm -f parse/$(DEPDIR)/comp.Plo
+	-rm -f parse/$(DEPDIR)/debug.Plo
+	-rm -f parse/$(DEPDIR)/eval.Plo
+	-rm -f parse/$(DEPDIR)/evall.Plo
+	-rm -f parse/$(DEPDIR)/function.Plo
+	-rm -f parse/$(DEPDIR)/gc_risa.Plo
+	-rm -f parse/$(DEPDIR)/glob.Plo
+	-rm -f parse/$(DEPDIR)/kwd.Plo
+	-rm -f parse/$(DEPDIR)/lex.Plo
+	-rm -f parse/$(DEPDIR)/load.Plo
+	-rm -f parse/$(DEPDIR)/main.Po
+	-rm -f parse/$(DEPDIR)/parser.Plo
+	-rm -f parse/$(DEPDIR)/puref.Plo
+	-rm -f parse/$(DEPDIR)/pvar.Plo
+	-rm -f parse/$(DEPDIR)/quote.Plo
+	-rm -f parse/$(DEPDIR)/struct.Plo
+	-rm -f parse/$(DEPDIR)/util.Plo
+	-rm -f parse/$(DEPDIR)/xdeb.Plo
+	-rm -f parse/$(DEPDIR)/y.tab.Plo
+	-rm -f plot/$(DEPDIR)/calc.Plo
+	-rm -f plot/$(DEPDIR)/if.Plo
+	-rm -f plot/$(DEPDIR)/ox_plot.Plo
+	-rm -f plot/$(DEPDIR)/ox_plot_xevent.Plo
+	-rm -f plot/$(DEPDIR)/plotf.Plo
+	-rm -f plot/$(DEPDIR)/plotg.Plo
+	-rm -f plot/$(DEPDIR)/plotp.Plo
+	-rm -f plot/$(DEPDIR)/smoothing.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
@@ -1241,6 +1731,153 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
+		-rm -f asm/$(DEPDIR)/asmalpha.Plo
+	-rm -f asm/$(DEPDIR)/ddM.Plo
+	-rm -f asm/$(DEPDIR)/ddN.Plo
+	-rm -f builtin/$(DEPDIR)/al.Plo
+	-rm -f builtin/$(DEPDIR)/algnum.Plo
+	-rm -f builtin/$(DEPDIR)/array.Plo
+	-rm -f builtin/$(DEPDIR)/batch.Plo
+	-rm -f builtin/$(DEPDIR)/bfaux.Plo
+	-rm -f builtin/$(DEPDIR)/compobj.Plo
+	-rm -f builtin/$(DEPDIR)/cplxnum.Plo
+	-rm -f builtin/$(DEPDIR)/ctrl.Plo
+	-rm -f builtin/$(DEPDIR)/dp-supp.Plo
+	-rm -f builtin/$(DEPDIR)/dp.Plo
+	-rm -f builtin/$(DEPDIR)/ec.Plo
+	-rm -f builtin/$(DEPDIR)/fctr.Plo
+	-rm -f builtin/$(DEPDIR)/file.Plo
+	-rm -f builtin/$(DEPDIR)/ftab.Plo
+	-rm -f builtin/$(DEPDIR)/gf.Plo
+	-rm -f builtin/$(DEPDIR)/gr.Plo
+	-rm -f builtin/$(DEPDIR)/help.Plo
+	-rm -f builtin/$(DEPDIR)/iarray.Plo
+	-rm -f builtin/$(DEPDIR)/int.Plo
+	-rm -f builtin/$(DEPDIR)/isolv.Plo
+	-rm -f builtin/$(DEPDIR)/itvnum.Plo
+	-rm -f builtin/$(DEPDIR)/list.Plo
+	-rm -f builtin/$(DEPDIR)/math.Plo
+	-rm -f builtin/$(DEPDIR)/mattran.Plo
+	-rm -f builtin/$(DEPDIR)/miscf.Plo
+	-rm -f builtin/$(DEPDIR)/numerical.Plo
+	-rm -f builtin/$(DEPDIR)/parif.Plo
+	-rm -f builtin/$(DEPDIR)/pdiv.Plo
+	-rm -f builtin/$(DEPDIR)/pf.Plo
+	-rm -f builtin/$(DEPDIR)/poly.Plo
+	-rm -f builtin/$(DEPDIR)/print.Plo
+	-rm -f builtin/$(DEPDIR)/rat.Plo
+	-rm -f builtin/$(DEPDIR)/reduct.Plo
+	-rm -f builtin/$(DEPDIR)/result.Plo
+	-rm -f builtin/$(DEPDIR)/round.Plo
+	-rm -f builtin/$(DEPDIR)/sha1.Plo
+	-rm -f builtin/$(DEPDIR)/strobj.Plo
+	-rm -f builtin/$(DEPDIR)/subst.Plo
+	-rm -f builtin/$(DEPDIR)/time.Plo
+	-rm -f builtin/$(DEPDIR)/type.Plo
+	-rm -f builtin/$(DEPDIR)/user.Plo
+	-rm -f builtin/$(DEPDIR)/var.Plo
+	-rm -f engine/$(DEPDIR)/A.Plo
+	-rm -f engine/$(DEPDIR)/C.Plo
+	-rm -f engine/$(DEPDIR)/D.Plo
+	-rm -f engine/$(DEPDIR)/E.Plo
+	-rm -f engine/$(DEPDIR)/EZ.Plo
+	-rm -f engine/$(DEPDIR)/Ebug.Plo
+	-rm -f engine/$(DEPDIR)/F.Plo
+	-rm -f engine/$(DEPDIR)/Fgfs.Plo
+	-rm -f engine/$(DEPDIR)/H.Plo
+	-rm -f engine/$(DEPDIR)/Hgfs.Plo
+	-rm -f engine/$(DEPDIR)/M.Plo
+	-rm -f engine/$(DEPDIR)/Mgfs.Plo
+	-rm -f engine/$(DEPDIR)/N.Plo
+	-rm -f engine/$(DEPDIR)/NEZ.Plo
+	-rm -f engine/$(DEPDIR)/P.Plo
+	-rm -f engine/$(DEPDIR)/PD.Plo
+	-rm -f engine/$(DEPDIR)/PDM.Plo
+	-rm -f engine/$(DEPDIR)/PM.Plo
+	-rm -f engine/$(DEPDIR)/PU.Plo
+	-rm -f engine/$(DEPDIR)/PUM.Plo
+	-rm -f engine/$(DEPDIR)/Q.Plo
+	-rm -f engine/$(DEPDIR)/QM.Plo
+	-rm -f engine/$(DEPDIR)/R.Plo
+	-rm -f engine/$(DEPDIR)/RU.Plo
+	-rm -f engine/$(DEPDIR)/Z.Plo
+	-rm -f engine/$(DEPDIR)/_distm.Plo
+	-rm -f engine/$(DEPDIR)/alg.Plo
+	-rm -f engine/$(DEPDIR)/bf.Plo
+	-rm -f engine/$(DEPDIR)/cplx.Plo
+	-rm -f engine/$(DEPDIR)/d-itv.Plo
+	-rm -f engine/$(DEPDIR)/dalg.Plo
+	-rm -f engine/$(DEPDIR)/dist.Plo
+	-rm -f engine/$(DEPDIR)/distm.Plo
+	-rm -f engine/$(DEPDIR)/f-itv.Plo
+	-rm -f engine/$(DEPDIR)/gf2n.Plo
+	-rm -f engine/$(DEPDIR)/gfpn.Plo
+	-rm -f engine/$(DEPDIR)/gfs.Plo
+	-rm -f engine/$(DEPDIR)/gfspn.Plo
+	-rm -f engine/$(DEPDIR)/gmpq.Plo
+	-rm -f engine/$(DEPDIR)/init.Plo
+	-rm -f engine/$(DEPDIR)/lmi.Plo
+	-rm -f engine/$(DEPDIR)/mat.Plo
+	-rm -f engine/$(DEPDIR)/mi.Plo
+	-rm -f engine/$(DEPDIR)/mt19937.Plo
+	-rm -f engine/$(DEPDIR)/nd.Plo
+	-rm -f engine/$(DEPDIR)/ndbug.Plo
+	-rm -f engine/$(DEPDIR)/num.Plo
+	-rm -f engine/$(DEPDIR)/p-itv.Plo
+	-rm -f engine/$(DEPDIR)/pari.Plo
+	-rm -f engine/$(DEPDIR)/real.Plo
+	-rm -f engine/$(DEPDIR)/str.Plo
+	-rm -f engine/$(DEPDIR)/ui.Plo
+	-rm -f engine/$(DEPDIR)/up.Plo
+	-rm -f engine/$(DEPDIR)/up2.Plo
+	-rm -f engine/$(DEPDIR)/up_gf2n.Plo
+	-rm -f engine/$(DEPDIR)/up_lm.Plo
+	-rm -f engine/$(DEPDIR)/vect.Plo
+	-rm -f fft/$(DEPDIR)/dft.Plo
+	-rm -f fft/$(DEPDIR)/fft_primes.Plo
+	-rm -f fft/$(DEPDIR)/polmul.Plo
+	-rm -f io/$(DEPDIR)/biovar.Plo
+	-rm -f io/$(DEPDIR)/bload.Plo
+	-rm -f io/$(DEPDIR)/bsave.Plo
+	-rm -f io/$(DEPDIR)/cio.Plo
+	-rm -f io/$(DEPDIR)/cpexpr.Plo
+	-rm -f io/$(DEPDIR)/io.Plo
+	-rm -f io/$(DEPDIR)/ox.Plo
+	-rm -f io/$(DEPDIR)/ox_asir.Plo
+	-rm -f io/$(DEPDIR)/ox_launch.Plo
+	-rm -f io/$(DEPDIR)/pexpr.Plo
+	-rm -f io/$(DEPDIR)/sio.Plo
+	-rm -f io/$(DEPDIR)/spexpr.Plo
+	-rm -f io/$(DEPDIR)/tcpf.Plo
+	-rm -f io/$(DEPDIR)/ws_fileio.Plo
+	-rm -f parse/$(DEPDIR)/arith.Plo
+	-rm -f parse/$(DEPDIR)/comp.Plo
+	-rm -f parse/$(DEPDIR)/debug.Plo
+	-rm -f parse/$(DEPDIR)/eval.Plo
+	-rm -f parse/$(DEPDIR)/evall.Plo
+	-rm -f parse/$(DEPDIR)/function.Plo
+	-rm -f parse/$(DEPDIR)/gc_risa.Plo
+	-rm -f parse/$(DEPDIR)/glob.Plo
+	-rm -f parse/$(DEPDIR)/kwd.Plo
+	-rm -f parse/$(DEPDIR)/lex.Plo
+	-rm -f parse/$(DEPDIR)/load.Plo
+	-rm -f parse/$(DEPDIR)/main.Po
+	-rm -f parse/$(DEPDIR)/parser.Plo
+	-rm -f parse/$(DEPDIR)/puref.Plo
+	-rm -f parse/$(DEPDIR)/pvar.Plo
+	-rm -f parse/$(DEPDIR)/quote.Plo
+	-rm -f parse/$(DEPDIR)/struct.Plo
+	-rm -f parse/$(DEPDIR)/util.Plo
+	-rm -f parse/$(DEPDIR)/xdeb.Plo
+	-rm -f parse/$(DEPDIR)/y.tab.Plo
+	-rm -f plot/$(DEPDIR)/calc.Plo
+	-rm -f plot/$(DEPDIR)/if.Plo
+	-rm -f plot/$(DEPDIR)/ox_plot.Plo
+	-rm -f plot/$(DEPDIR)/ox_plot_xevent.Plo
+	-rm -f plot/$(DEPDIR)/plotf.Plo
+	-rm -f plot/$(DEPDIR)/plotg.Plo
+	-rm -f plot/$(DEPDIR)/plotp.Plo
+	-rm -f plot/$(DEPDIR)/smoothing.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1262,8 +1899,8 @@ uninstall-am: uninstall-asirDATA uninstall-binPROGRAMS \
 
 .MAKE: all check install install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-cscope clean-generic \
+.PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
+	check-am clean clean-binPROGRAMS clean-cscope clean-generic \
 	clean-libLTLIBRARIES clean-libtool cscope cscopelist-am ctags \
 	ctags-am dist dist-all dist-bzip2 dist-gzip dist-lzip \
 	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \

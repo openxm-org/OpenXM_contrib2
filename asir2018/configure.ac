@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2018/configure.ac,v 1.2 2019/11/12 10:53:22 kondoh Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2018/configure.ac,v 1.3 2020/01/08 17:10:53 ohara Exp $
 
 AC_INIT(asir,1.16)
 AC_CONFIG_SRCDIR([LICENSE])
@@ -17,13 +17,10 @@ AC_PROG_MKDIR_P
 
 AC_PATH_XTRA
 
-AC_ARG_ENABLE([shared],
-[  --enable-shared         enable linking shared libraries.  [[no]]],
-[enable_shared=yes],[enable_shared=no])
-
-if test "${enable_shared:=no}" != no ; then
-   true
-fi
+AC_ARG_ENABLE([static_asir],
+[  --enable-static-asir    force to link statically with libasir. [[yes]]],
+[enable_static_asir=${enableval}],[enable_static_asir=yes])
+AM_CONDITIONAL([ASIR_STATIC],[test "${enable_static_asir}" = yes])
 
 if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
     if test "${ac_cv_prog_cc_g}" = yes; then

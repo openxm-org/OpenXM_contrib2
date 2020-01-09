@@ -644,6 +644,8 @@ USE_PLOT_TRUE
 XPMLIB
 GCINC
 GCLIB
+ASIR_STATIC_FALSE
+ASIR_STATIC_TRUE
 X_EXTRA_LIBS
 X_LIBS
 X_PRE_LIBS
@@ -786,6 +788,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 with_x
+enable_static_asir
 with_asir_gc
 enable_plot
 enable_static_gmp
@@ -1443,7 +1446,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-shared         enable linking shared libraries.  [no]
+  --enable-static-asir    force to link statically with libasir. [yes]
   --enable-plot           enable plot feature. [no]
   --enable-static-gmp     force to link statically with gmp. [no]
   --enable-interval       enable interval feature. [no]
@@ -13748,17 +13751,21 @@ fi
 fi
 
 
-# Check whether --enable-shared was given.
-if test "${enable_shared+set}" = set; then :
-  enableval=$enable_shared; enable_shared=yes
+# Check whether --enable-static_asir was given.
+if test "${enable_static_asir+set}" = set; then :
+  enableval=$enable_static_asir; enable_static_asir=${enableval}
 else
-  enable_shared=no
+  enable_static_asir=yes
 fi
 
-
-if test "${enable_shared:=no}" != no ; then
-   true
+ if test "${enable_static_asir}" = yes; then
+  ASIR_STATIC_TRUE=
+  ASIR_STATIC_FALSE='#'
+else
+  ASIR_STATIC_TRUE='#'
+  ASIR_STATIC_FALSE=
 fi
+
 
 if test "${ac_test_CFLAGS}" != set -a "${GCC}" = yes ; then
     if test "${ac_cv_prog_cc_g}" = yes; then
@@ -14275,6 +14282,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ASIR_STATIC_TRUE}" && test -z "${ASIR_STATIC_FALSE}"; then
+  as_fn_error $? "conditional \"ASIR_STATIC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USE_PLOT_TRUE}" && test -z "${USE_PLOT_FALSE}"; then

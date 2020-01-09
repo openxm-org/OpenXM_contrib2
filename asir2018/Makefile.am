@@ -1,6 +1,6 @@
-## $OpenXM: OpenXM_contrib2/asir2018/Makefile.am,v 1.6 2020/01/08 17:10:53 ohara Exp $
+## $OpenXM: OpenXM_contrib2/asir2018/Makefile.am,v 1.7 2020/01/09 01:04:13 ohara Exp $
 
-AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects 1.16
+AUTOMAKE_OPTIONS = foreign subdir-objects 1.16
 
 asirdir   = ${prefix}/lib/asir
 asir_DATA = lib/alpi lib/bfct lib/bgk lib/const lib/cyclic lib/defs.h \
@@ -80,7 +80,11 @@ LIBS = -L${libdir} @LIBS@ @GCLIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} @GMPLIB@ \
 
 bin_PROGRAMS = asir
 asir_SOURCES = parse/main.c
-asir_LDADD   = -L${top_srcdir}/.libs -lasir@sufx@ ${LIBS}
+if ASIR_STATIC
+  asir_LDADD   = ${top_srcdir}/.libs/libasir@sufx@.a ${LIBS}
+else
+  asir_LDADD   = ${top_srcdir}/.libs/libasir@sufx@.la ${LIBS}
+endif
 asir_DEPENDENCIES = libasir@sufx@.la
 
 CLEANFILES = ${YTAB_SRCS}
