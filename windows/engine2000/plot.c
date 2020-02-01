@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.12 2017/08/30 09:40:31 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/windows/engine2000/plot.c,v 1.13 2019/03/28 07:04:13 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -91,6 +91,7 @@ static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
 static void asir_executeFunction();
 static void process_resize(struct canvas *can,POINT startp,POINT endp);
+int Im_ox_plot;
 
 #if defined(VISUAL)
 
@@ -128,6 +129,7 @@ void ox_plot_main(int argc,char **argv)
 #endif
 	if ( do_message )
 		fprintf(stderr,"I'm an ox_plot, Version %d.\n",ASIR_VERSION);
+	Im_ox_plot=1;
 
 	/* XXX: dummy */
 	MKUSINT(ui,0); GC_free(ui);
