@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.12 2019/03/28 18:10:10 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.13 2020/02/02 05:24:44 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -70,7 +70,7 @@ msi: $(TARGET)
 
 wxs: $(SRCS)
 
-zip:
+zip: build
 	@makepkg.bat
 
 $(TARGET): $(OBJS) LICENSE.rtf zip
@@ -78,30 +78,27 @@ $(TARGET): $(OBJS) LICENSE.rtf zip
 
 ## generating wxs files by heat if the directory asir exists
 
-# _lib.wxs:
-# 	cd asir\lib
-# 	$(HEAT) dir asir $(HEATFLAGS) -dr LIB_ASIR -cg LibGrp -var "var.libDir" -out ..\..\_lib.wxs
-# 	cd ..\..
-#
-# _help.wxs:
-# 	cd asir
-# 	$(HEAT) dir help $(HEATFLAGS) -dr HELP  -cg HelpGrp -var "var.helpDir"  -out ..\_help.wxs
-# 	cd ..
-#
-# _contrib.wxs:
-# 	cd asir\lib
-# 	$(HEAT) dir asir-contrib $(HEATFLAGS) -dr LIB_ASIR_CONTRIB -cg ContribGrp -var "var.contribDir" -out ..\..\_contrib.wxs
-# 	cd ..\..
-#
-# wxsclean:
-# 	@del /q _*.wxs
+!IFDEF WXS
+_lib.wxs: zip
+	cd asir\lib && $(HEAT) dir asir $(HEATFLAGS) -dr LIB_ASIR -cg LibGrp -var "var.libDir" -out ..\..\_lib.wxs
+
+_help.wxs: zip
+	cd asir && $(HEAT) dir help $(HEATFLAGS) -dr HELP  -cg HelpGrp -var "var.helpDir"  -out ..\_help.wxs
+
+_contrib.wxs: zip
+	cd asir\lib && $(HEAT) dir asir-contrib $(HEATFLAGS) -dr LIB_ASIR_CONTRIB -cg ContribGrp -var "var.contribDir" -out ..\..\_contrib.wxs
+!ENDIF
+
+wxsclean:
+	@del /q _*.wxs
 
 clean:
 	@del /q *.wixobj
 	@del /q *.wixpdb
 
 distclean: clean
-	@distclean.bat
+	@if exist asir ( rmdir /s /q asir )
+	@for %i in ( ..\asir-gc asir2000lib engine2000 mcpp asir32gui post-msg-asirgui ..\asir2018 ) do ( pushd %i && nmake -f Makefile.vc distclean && popd)
 
 msiclean:
 	@del /q $(TARGET)
