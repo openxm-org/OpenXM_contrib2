@@ -1,0 +1,26 @@
+## $OpenXM$
+
+GC                = gc-7.6.12
+GC_TAR_GZ         = $(GC).tar.gz
+GC_PATCH          = gc-7.4.2-risa.diff
+LIB_ATOMIC        = libatomic_ops-7.6.10
+LIB_ATOMIC_TAR_GZ = $(LIB_ATOMIC).tar.gz
+MASTER_SITE    = http://www.math.kobe-u.ac.jp/pub/OpenXM/misc/
+
+all: build
+
+fetch: 
+	for %i in ( $(GC_TAR_GZ) $(LIB_ATOMIC_TAR_GZ) ) do ( if not exist %i curl $(MASTER_SITE)%i -o %i )
+
+build: $(GC_PATCH) fetch
+	tar xzvf $(GC_TAR_GZ)
+	tar xzvf $(LIB_ATOMIC_TAR_GZ)
+	move $(GC) gc
+	move $(LIB_ATOMIC) gc\libatomic_ops
+	..\windows\patch --binary -d gc -p1 < $(GC_PATCH)
+	cd gc && $(MAKE) -f NT_MAKEFILE gc.lib MAKE_AS_LIB=1 NODEBUG=1
+
+distclean clean:
+	if exist gc ( rmdir /s /q gc )
+	@del /q $(GC_TAR_GZ)
+	@del /q $(LIB_ATOMIC_TAR_GZ)
