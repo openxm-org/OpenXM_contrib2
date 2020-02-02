@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.13 2020/02/02 05:24:44 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.14 2020/02/02 05:41:42 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -70,15 +70,35 @@ msi: $(TARGET)
 
 wxs: $(SRCS)
 
-zip: build
-	@makepkg.bat
+mkdir:
+	if not exist asir ( mkdir asir\bin asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\share\skel )
+
+!if "$(ARCH)" == "AMD64"
+GMPDIR=mpir\x64
+!else
+GMPDIR=mpir\win32
+!endif
+
+install: build mkdir
+	for %i in ( asir32gui\asirgui.exe asir32gui\ja.dll engine2000\engine.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2018\asir.exe curl.exe unzip.exe $(GMPDIR)\*.dll ) do ( copy /b %i asir\bin )
+	echo import("names.rr")$$ end$$ > asir\share\skel\.asirrc
+	for %i in ( ..\asir2018\LICENSE gmp\COPYING.LIB ) do ( copy /b %i asir )
+	-robocopy post-msg-asirgui asir\share\editor asirgui.mac  asir-mode.el install-ja-sjis.txt /nfl /ndl /njh /njs /np 
+	-robocopy ..\asir2018\lib asir\lib\asir /nfl /ndl /njh /njs /np /xf help*.uu
+	-robocopy ..\..\OpenXM\src\asir-contrib\packages\src asir\lib\asir-contrib /nfl /ndl /njh /njs /np /mir /xd CVS /xf *.in *.c *.sh *-sh .keepme
+	-robocopy ..\..\OpenXM\src\asir-contrib\testing\noro asir\lib\asir-contrib de.rr gw.rr module_syz.rr mwl.rr rewrite.rr ndbf.rr /nfl /ndl /njh /njs /np
+	for %i in ( de.rr gw.rr module_syz.rr mwl.rr rewrite.rr ) do ( pushd asir\lib\asir-contrib && move %i noro_%i && popd)	
+	pushd asir\lib\asir-contrib && move ndbf.rr nn_ndbf.rr && popd
+
+zip: install
+	zip -r asir_$(OS)_%DATE:/=.%.zip asir
 
 $(TARGET): $(OBJS) LICENSE.rtf zip
 	$(LIGHT) $(LTFLAGS) -out $(TARGET) $(OBJS)
 
 ## generating wxs files by heat if the directory asir exists
 
-!IFDEF WXS
+!ifdef WXS
 _lib.wxs: zip
 	cd asir\lib && $(HEAT) dir asir $(HEATFLAGS) -dr LIB_ASIR -cg LibGrp -var "var.libDir" -out ..\..\_lib.wxs
 
@@ -87,7 +107,7 @@ _help.wxs: zip
 
 _contrib.wxs: zip
 	cd asir\lib && $(HEAT) dir asir-contrib $(HEATFLAGS) -dr LIB_ASIR_CONTRIB -cg ContribGrp -var "var.contribDir" -out ..\..\_contrib.wxs
-!ENDIF
+!endif
 
 wxsclean:
 	@del /q _*.wxs
@@ -98,7 +118,7 @@ clean:
 
 distclean: clean
 	@if exist asir ( rmdir /s /q asir )
-	@for %i in ( ..\asir-gc asir2000lib engine2000 mcpp asir32gui post-msg-asirgui ..\asir2018 ) do ( pushd %i && nmake -f Makefile.vc distclean && popd)
+	@for %i in ( ..\asir-gc asir2000lib engine2000 mcpp asir32gui post-msg-asirgui ..\asir2018 ) do ( pushd %i && $(MAKE) -f Makefile.vc distclean && popd)
 
 msiclean:
 	@del /q $(TARGET)
