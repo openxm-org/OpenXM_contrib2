@@ -1,10 +1,10 @@
-## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.22 2018/09/13 19:20:48 ohara Exp $
+## $OpenXM: OpenXM_contrib2/windows/engine2000/Makefile.vc,v 1.23 2019/03/28 08:03:07 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 SRCDIR=..\..\asir2018
 ASIRLIB=..\asir2000lib\asir2000lib.lib
 
-GCDIR= ..\gc
+GCDIR= ..\..\asir-gc\gc
 GCLIB= $(GCDIR)\gc.lib
 
 !if "$(ARCH)" == "AMD64"
@@ -24,7 +24,7 @@ RC=rc
 RFLAGS=-l 0x411 -d NDEBUG
 
 LD=link
-LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -dynamicbase:no -incremental:no $(ASIRLIB) $(GCLIB) $(GMPLIB) ws2_32.lib user32.lib libucrt.lib version.lib setargv.obj
+LDFLAGS=-nologo -stack:0x10000000 -subsystem:windows -dynamicbase:no -incremental:no nafxcw.lib $(ASIRLIB) $(GCLIB) $(GMPLIB) ws2_32.lib user32.lib libucrt.lib version.lib setargv.obj
 
 OBJS= engine2000.res ChildView.obj MainFrm.obj StdAfx.obj calc.obj \
   if.obj io.obj ox_asir.obj ox_launch.obj ox_plot.obj ox_plot_win.obj \

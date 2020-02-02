@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.11 2016/06/29 15:37:21 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.12 2019/03/28 18:10:10 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -40,7 +40,30 @@ HEATFLAGS = -nologo -gg -g1 -sfrag -srd
 .wxs.wixobj:
 	$(CANDLE) $(CANDLE_FLAGS) $<
 
-all:
+all: build
+
+build: ..\asir-gc\gc\gc.lib asir2000lib\asir2000lib.lib engine2000\engine.exe asir32gui\asirgui.exe mcpp\cpp.exe post-msg-asirgui\cmdasir.exe ..\asir2018\asir.exe
+
+..\asir-gc\gc\gc.lib:
+	cd ..\asir-gc && $(MAKE) -e -f Makefile.vc
+
+asir2000lib\asir2000lib.lib: ..\asir-gc\gc\gc.lib
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
+
+engine2000\engine.exe: asir2000lib\asir2000lib.lib
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
+
+asir32gui\asirgui.exe:
+	cd $(@D) && $(MAKE) -e -f Makefile.vc
+
+mcpp\cpp.exe:
+	cd $(@D) && $(MAKE) -e -f Makefile.vc
+
+post-msg-asirgui\cmdasir.exe:
+	cd $(@D) && $(MAKE) -e -f Makefile.vc
+
+..\asir2018\asir.exe: ..\asir-gc\gc\gc.lib
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
 
 msi: $(TARGET)
 	copy /b $(TARGET) asir_$(OS)_%DATE:/=.%.msi

@@ -1,4 +1,4 @@
-## $OpenXM: OpenXM_contrib2/asir2018/Makefile.vc,v 1.1 2018/09/19 05:45:05 noro Exp $
+## $OpenXM: OpenXM_contrib2/asir2018/Makefile.vc,v 1.2 2019/03/27 08:07:57 ohara Exp $
 ## Makefile for Visual Studio 2008
 
 !if "$(ARCH)" == ""
@@ -13,7 +13,7 @@ CPU_OBJ= asmiw.obj gf2m_mul_w.obj
 GMPDIR= ..\windows\mpir\win32
 !endif
 
-GCDIR= ..\windows\gc
+GCDIR= ..\asir-gc\gc
 GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
