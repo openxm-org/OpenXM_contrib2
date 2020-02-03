@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.18 2019/12/12 04:44:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.19 2019/12/27 08:13:59 noro Exp $
 */
 #include "ca.h"
 
@@ -3212,9 +3212,54 @@ int compdmm_schreyer(int n,DMM m1,DMM m2)
   }
 }
 
+int compdmm_schreyer_old(int n,DMM m1,DMM m2)
+{
+  int pos1,pos2,t,npos1,npos2;
+  DMM *in,*sum;
+  DMMstack s;
+  static DL d1=0,d2=0;
+  static int dlen=0;
+
+  sch_count++;
+  pos1 = m1->pos; pos2 = m2->pos;
+  if ( pos1 == pos2 ) return (*cmpdl)(n,m1->dl,m2->dl);
+  if ( n > dlen ) {
+    NEWDL(d1,n); NEWDL(d2,n); dlen = n;
+  }
+  sum = dmm_stack->sum;
+  _copydl(n,m1->dl,d1);
+  _copydl(n,m2->dl,d2);
+  for ( s = dmm_stack; s; s = NEXT(s) ) {
+    in = s->in;
+    _addtodl(n,in[pos1]->dl,d1);
+    _addtodl(n,in[pos2]->dl,d2);
+    if ( in[pos1]->pos == in[pos2]->pos && _eqdl(n,d1,d2)) {
+      if ( pos1 < pos2 ) return 1;
+      else if ( pos1 > pos2 ) return -1;
+      else return 0;
+    }
+    pos1 = in[pos1]->pos;
+    pos2 = in[pos2]->pos;
+    if ( pos1 == pos2 ) return (*cmpdl)(n,d1,d2);
+  }
+  if ( dpm_base_ordtype == 1 ) {
+    if ( pos1 < pos2 ) return 1;
+    else if ( pos1 > pos2 ) return -1;
+    else return (*cmpdl)(n,d1,d2);
+  } else {
+    t = (*cmpdl)(n,d1,d2);
+    if ( t ) return t;
+    else if ( pos1 < pos2 ) return 1;
+    else if ( pos1 > pos2 ) return -1;
+    else return 0;
+  }
+}
+
+extern int NaiveSchreyer;
+
 int compdmm(int n,DMM m1,DMM m2)
 {
-  int t;
+  int t,t1;
   int *base_ord;
 
   switch ( dpm_ordtype ) {
@@ -3235,7 +3280,11 @@ int compdmm(int n,DMM m1,DMM m2)
     else if ( m1->pos > m2->pos ) return -1;
     else return (*cmpdl)(n,m1->dl,m2->dl);
   case 3: /* Schreyer */
-    return compdmm_schreyer(n,m1,m2);
+    if ( NaiveSchreyer )
+      t = compdmm_schreyer_old(n,m1,m2);
+    else
+      t = compdmm_schreyer(n,m1,m2);
+    return t;
   case 4:  /* POT with base_ord */
     base_ord = dp_current_spec->module_base_ord;
     if ( base_ord[m1->pos] < base_ord[m2->pos] ) return 1;
