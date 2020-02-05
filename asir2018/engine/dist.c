@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.19 2019/12/27 08:13:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.20 2020/02/03 05:51:52 noro Exp $
 */
 #include "ca.h"
 
@@ -3606,6 +3606,7 @@ DPM dpm_compress(DPM p,int *tab)
 }
 
 // input : s, s = syz(m) output simplified s, m
+// assuming the term order is POT
 void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1,LIST *w1)
 {
   int lm,ls,i,j,k,pos,nv;
@@ -3628,10 +3629,12 @@ void dpm_simplify_syz(LIST s,LIST m,LIST *s1,LIST *m1,LIST *w1)
     p = as[i];
     if ( p == 0 ) continue;
     nv = NV(p);
-    for ( d = BDY(p); d; d = NEXT(d) ) {
+    for ( d = BDY(p); d; ) {
       dd = d->dl->d;
       for ( k = 0; k < nv; k++ ) if ( dd[k] ) break;
       if ( k == nv ) break;
+      pos = d->pos;
+      while ( d && d->pos == pos ) d = NEXT(d);
     }
     if ( d ) {
       c = d->c; pos = d->pos;

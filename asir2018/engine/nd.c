@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.21 2019/09/19 06:29:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.22 2019/11/21 01:54:01 noro Exp $ */
 
 #include "nd.h"
 
@@ -754,7 +754,7 @@ int ndl_module_compare(UINT *d1,UINT *d2)
 
   switch ( nd_module_ordtype ) {
     case 0:
-      if ( (c = ndl_lex_compare(d1,d2)) != 0 ) return c;
+      if ( (c = (*ndl_base_compare_function)(d1,d2)) != 0 ) return c;
       else if ( MPOS(d1) > MPOS(d2) ) return -1;
       else if ( MPOS(d1) < MPOS(d2) ) return 1;
       else return 0;
