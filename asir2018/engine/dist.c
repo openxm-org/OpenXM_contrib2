@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.20 2020/02/03 05:51:52 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.21 2020/02/05 04:56:10 noro Exp $
 */
 #include "ca.h"
 
@@ -2755,6 +2755,7 @@ DPM dpm_sp_nf_asir(VECT psv,int i,int j,DPM *nf);
 void dpm_sort(DPM p,DPM *r);
 
 extern int DP_Multiple;
+extern int DP_Print;
 
 void dpm_nf_z(NODE b,DPM g,VECT psv,int full,int multiple,DPM *rp);
 NODE dpm_sort_list(NODE l);
@@ -3039,7 +3040,7 @@ int compdp_lex(DP *a,DP *b)
   return -cmpdl_lex(compdp_nv,BDY(*a)->dl,BDY(*b)->dl);
 }
 
-DMMstack_array dpm_schreyer_frame(NODE g)
+DMMstack_array dpm_schreyer_frame(NODE g,int lex)
 {
   LIST l;
   NODE nd,in,b0,b,n1,n2,n3,t;
@@ -3087,7 +3088,7 @@ DMMstack_array dpm_schreyer_frame(NODE g)
     }
     s = s1;
     level++;
-
+    if ( DP_Print ) printf("level=%d,len=%d\n",level,n);
 
     /* create new list */
     MKVECT(psv,n+1);
@@ -3122,28 +3123,28 @@ DMMstack_array dpm_schreyer_frame(NODE g)
           }
           if ( h ) m[p2] = h;
         }
-#if 0
-        // compress m to m2
-        for ( j = 0, n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
-          p2 = (long)BDY(n2);
-          if ( m[p2] ) m2[j++] = m[p2];
-        }
-        qsort(m2,j,sizeof(DP),(int (*)(const void *,const void *))compdp_lex);
-        for ( k = 0; k < j; k++ ) {
-          NEWDMM(dmm); dmm->dl = BDY(m2[k])->dl; dmm->pos = p1; dmm->c = (Obj)ONE;
-          MKDPM(nv,dmm,dpm);
-          NEXTNODE(b0,b); BDY(b) = (pointer)dpm;
-        }
-#else
-        for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
-          p2 = (long)BDY(n2);
-          if ( m[p2] ) {
-            NEWDMM(dmm); dmm->dl = BDY(m[p2])->dl; dmm->pos = p1; dmm->c = (Obj)ONE;
+        if ( lex ) {
+          // compress m to m2
+          for ( j = 0, n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+            p2 = (long)BDY(n2);
+            if ( m[p2] ) m2[j++] = m[p2];
+          }
+          qsort(m2,j,sizeof(DP),(int (*)(const void *,const void *))compdp_lex);
+          for ( k = 0; k < j; k++ ) {
+            NEWDMM(dmm); dmm->dl = BDY(m2[k])->dl; dmm->pos = p1; dmm->c = (Obj)ONE;
             MKDPM(nv,dmm,dpm);
             NEXTNODE(b0,b); BDY(b) = (pointer)dpm;
           }
+        } else {
+          for ( n2 = NEXT(n1); n2; n2 = NEXT(n2) ) {
+            p2 = (long)BDY(n2);
+            if ( m[p2] ) {
+              NEWDMM(dmm); dmm->dl = BDY(m[p2])->dl; dmm->pos = p1; dmm->c = (Obj)ONE;
+              MKDPM(nv,dmm,dpm);
+              NEXTNODE(b0,b); BDY(b) = (pointer)dpm;
+            }
+          }
         }
-#endif
       }
     }
     if ( !b0 ) {

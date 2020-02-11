@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.21 2019/12/27 08:13:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.22 2020/01/09 01:47:40 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -4084,17 +4084,13 @@ void Pdpm_set_schreyer(NODE arg,LIST *rp)
 }
 
 DMMstack_array Schreyer_Frame;
-DMMstack_array dpm_schreyer_frame(NODE n);
+DMMstack_array dpm_schreyer_frame(NODE n,int lex);
 void set_schreyer_level(DMMstack_array array,int level);
 
 void Pdpm_set_schreyer_level(NODE arg,Q *rp)
 {
   set_schreyer_level(Schreyer_Frame,ZTOS((Q)ARG0(arg)));
   *rp = (Q)ARG0(arg);
-}
-
-DPM dmmtodpm(DMM d)
-{
 }
 
 void Pdpm_schreyer_frame(NODE arg,LIST *rp)
@@ -4107,9 +4103,25 @@ void Pdpm_schreyer_frame(NODE arg,LIST *rp)
   LIST l;
   VECT v;
   Z lev,deg,ind;
-  int len,i,nv,rank,j;
+  int len,i,nv,rank,j,lex;
+  NODE tt,p;
+  char *key;
+  Obj value;
 
-  Schreyer_Frame = a = dpm_schreyer_frame(BDY((LIST)ARG0(arg)));
+  lex = 0;
+  if ( current_option ) {
+    for ( tt = current_option; tt; tt = NEXT(tt) ) {
+      p = BDY((LIST)BDY(tt));
+      key = BDY((STRING)BDY(p));
+      value = (Obj)BDY(NEXT(p));
+      if ( !strcmp(key,"lex") )
+        lex = value!=0?1:0;
+      else {
+        error("dpm_schreyer_frame: unknown option.");
+      }
+    }
+  }
+  Schreyer_Frame = a = dpm_schreyer_frame(BDY((LIST)ARG0(arg)),lex);
   len = a->len;
   body = a->body;
   /* XXX */
