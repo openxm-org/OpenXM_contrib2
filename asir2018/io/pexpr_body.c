@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.1 2018/09/19 05:45:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.2 2019/11/12 10:53:23 kondoh Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -1014,7 +1014,7 @@ void PRINTQUOTE(VL vl,QUOTE quote)
   LIST list;
 
   if ( print_quote == 1 ) {
-    fnodetotree(BDY(quote),&list);
+    fnodetotree(BDY(quote),quote->pvs,&list);
     PRINTEXPR(vl,(Obj)list);
   } else if ( print_quote == 2 ) {
     PRINTFNODE(BDY(quote),0);

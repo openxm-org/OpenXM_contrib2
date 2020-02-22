@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.2 2018/09/28 08:20:29 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.3 2019/03/06 07:35:40 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -89,6 +89,7 @@ void write_cmo(FILE *s,Obj obj)
   int r;
   char errmsg[BUFSIZ];
   LIST l;
+  QUOTE quote;
 
   if ( !obj ) {
     r = CMO_NULL; write_int(s,&r);
@@ -147,7 +148,8 @@ void write_cmo(FILE *s,Obj obj)
       r = ((USINT)obj)->body; write_int(s,&r);
       break;
     case O_QUOTE:
-      fnodetotree(BDY((QUOTE)obj),&l);
+      quote = (QUOTE)obj;
+      fnodetotree(BDY(quote),quote->pvs,&l);
       write_cmo_tree(s,l);
       break;
     case O_MAT:

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -143,8 +143,11 @@ void Pobjtoquote(NODE arg,QUOTE *rp)
 
 void Pquotetolist(NODE arg,LIST *rp)
 {
+  QUOTE q;
+
   asir_assert(ARG0(arg),O_QUOTE,"quotetolist");  
-  fnodetotree((FNODE)BDY((QUOTE)(ARG0(arg))),rp);
+  q = (QUOTE)ARG0(arg);
+  fnodetotree((FNODE)BDY(q),q->pvs,rp);
 }
 
 void Peval_variables_in_quote(NODE arg,QUOTE *rp)
@@ -158,7 +161,7 @@ void Peval_variables_in_quote(NODE arg,QUOTE *rp)
 
 /* fnode -> [tag,name,arg0,arg1,...] */
 
-void fnodetotree(FNODE f,LIST *rp)
+void fnodetotree(FNODE f,VS vs,LIST *rp)
 {
   LIST a1,a2,a3;
   NODE n,t,t0;
@@ -186,7 +189,7 @@ void fnodetotree(FNODE f,LIST *rp)
           MKSTR(op,"-");
           break;
       }
-      fnodetotree((FNODE)FA0(f),&a1);
+      fnodetotree((FNODE)FA0(f),vs,&a1);
       n = mknode(3,head,op,a1);
       MKLIST(*rp,n);
       break;
@@ -199,12 +202,12 @@ void fnodetotree(FNODE f,LIST *rp)
       /* arg list */
       switch ( f->id ) {
         case I_AND: case I_OR:
-          fnodetotree((FNODE)FA0(f),&a1);
-          fnodetotree((FNODE)FA1(f),&a2);
+          fnodetotree((FNODE)FA0(f),vs,&a1);
+          fnodetotree((FNODE)FA1(f),vs,&a2);
           break;
         default:
-          fnodetotree((FNODE)FA1(f),&a1);
-          fnodetotree((FNODE)FA2(f),&a2);
+          fnodetotree((FNODE)FA1(f),vs,&a1);
+          fnodetotree((FNODE)FA2(f),vs,&a2);
           break;
       }
 
@@ -261,7 +264,7 @@ void fnodetotree(FNODE f,LIST *rp)
       n = (NODE)FA1(f);
       for ( t0 = 0; n; n = NEXT(n) ) {
         NEXTNODE(t0,t);
-        fnodetotree((FNODE)BDY(n),&a1);
+        fnodetotree((FNODE)BDY(n),vs,&a1);
         BDY(t) = (pointer)a1;
       }
       MKSTR(op,((ARF)FA0(f))->name);
@@ -274,9 +277,9 @@ void fnodetotree(FNODE f,LIST *rp)
     case I_CE:
       MKSTR(head,"t_op");
       MKSTR(op,"?:");
-      fnodetotree((FNODE)FA0(f),&a1);
-      fnodetotree((FNODE)FA1(f),&a2);
-      fnodetotree((FNODE)FA2(f),&a3);
+      fnodetotree((FNODE)FA0(f),vs,&a1);
+      fnodetotree((FNODE)FA1(f),vs,&a2);
+      fnodetotree((FNODE)FA2(f),vs,&a3);
       n = mknode(5,head,op,a1,a2,a3);
       MKLIST(*rp,n);
       break;
@@ -286,7 +289,7 @@ void fnodetotree(FNODE f,LIST *rp)
       n = (NODE)FA0(f);
       for ( t0 = 0; n; n = NEXT(n) ) {
         NEXTNODE(t0,t);
-        fnodetotree((FNODE)BDY(n),&a1);
+        fnodetotree((FNODE)BDY(n),vs,&a1);
         BDY(t) = (pointer)a1;
       }
       if ( t0 )
@@ -302,20 +305,20 @@ void fnodetotree(FNODE f,LIST *rp)
       switch ( f->id ) {
         case I_FUNC: case I_FUNC_QARG:
           MKSTR(op,((FUNC)FA0(f))->fullname);
-          fnodetotree((FNODE)FA1(f),&a1);
+          fnodetotree((FNODE)FA1(f),vs,&a1);
           break;
         case I_CAR:
           MKSTR(op,"car");
-          fnodetotree((FNODE)FA0(f),&a1);
+          fnodetotree((FNODE)FA0(f),vs,&a1);
           break;
         case I_CDR:
           MKSTR(op,"cdr");
-          fnodetotree((FNODE)FA0(f),&a1);
+          fnodetotree((FNODE)FA0(f),vs,&a1);
           break;
         case I_EV:
           /* exponent vector; should be treated as function call */
           MKSTR(op,"exponent_vector");
-          fnodetotree(mkfnode(1,I_LIST,FA0(f)),&a1);
+          fnodetotree(mkfnode(1,I_LIST,FA0(f)),vs,&a1);
           break;
       }
       t0 = NEXT(BDY(a1)); /* XXX : skip the headers */
@@ -341,7 +344,7 @@ void fnodetotree(FNODE f,LIST *rp)
       if ( FA1(f) )
         error("fnodetotree : not implemented yet");
       MKSTR(head,"variable");
-      GETPVNAME(FA0(f),opname);
+      GETPVNAME2(FA0(f),opname,vs);
       MKSTR(op,opname);
       n = mknode(2,head,op);
       MKLIST(*rp,n);

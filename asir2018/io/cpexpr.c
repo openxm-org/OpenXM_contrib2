@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.2 2018/10/01 06:06:02 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.3 2019/03/06 07:35:40 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -354,7 +354,7 @@ void PRINTQUOTE(VL vl,QUOTE quote)
     PRINTFNODE(BDY(quote),0);
   } else if ( print_quote == 1 ) {
     /* XXX */
-    fnodetotree(BDY(quote),&list);
+    fnodetotree(BDY(quote),quote->pvs,&list);
     PRINTEXPR(vl,(Obj)list);
   } else {
     /* <...quoted...> */

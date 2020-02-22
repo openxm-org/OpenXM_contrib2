@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.6 2019/11/12 07:47:45 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/parse.h,v 1.7 2019/11/12 10:53:23 kondoh Exp $
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -313,6 +313,31 @@ switch ( id ) {\
    :PVATTR(i)==1?(long)(GPVS->va[PVIND(i)].priv=(pointer)(p))\
       :PVATTR(i)==2?(long)(MPVS->va[PVIND(i)].priv=(pointer)(p))\
          :(long)(PPVS->va[PVIND(i)].priv=(pointer)(p)))
+
+#define GETPV2(i,p,pvs) \
+(PVATTR(i)==0?(long)((p)=pvs->va[(unsigned int)(i)].priv)\
+   :PVATTR(i)==1?(long)((p)=GPVS->va[PVIND(i)].priv)\
+      :PVATTR(i)==2?(long)((p)=MPVS->va[PVIND(i)].priv)\
+         :(long)((p)=PPVS->va[PVIND(i)].priv))
+
+#define GETPVREF2(i,p,pvs) \
+(PVATTR(i)==0?(long)((p)=&(pvs->va[(unsigned long)(i)].priv))\
+   :PVATTR(i)==1?(long)((p)=&(GPVS->va[PVIND(i)].priv))\
+      :PVATTR(i)==2?(long)((p)=&(MPVS->va[PVIND(i)].priv))\
+         :(long)((p)=&(PPVS->va[PVIND(i)].priv)))
+
+#define GETPVNAME2(i,p,pvs) \
+(PVATTR(i)==0?(long)((p)=pvs->va[(unsigned long)(i)].name)\
+   :PVATTR(i)==1?(long)((p)=GPVS->va[PVIND(i)].name)\
+      :PVATTR(i)==2?(long)((p)=MPVS->va[PVIND(i)].name)\
+         :(long)((p)=PPVS->va[PVIND(i)].name))
+
+#define ASSPV2(i,p,pvs) \
+(PVATTR(i)==0?(long)(pvs->va[(unsigned long)(i)].priv=(pointer)(p))\
+   :PVATTR(i)==1?(long)(GPVS->va[PVIND(i)].priv=(pointer)(p))\
+      :PVATTR(i)==2?(long)(MPVS->va[PVIND(i)].priv=(pointer)(p))\
+         :(long)(PPVS->va[PVIND(i)].priv=(pointer)(p)))
+
 
 
 extern VS GPVS,CPVS,EPVS,APVS,MPVS,PPVS;
@@ -781,7 +806,7 @@ void dptoquote(DP a,QUOTE *c);
 void dctoquote(DCP dc,QUOTE v,QUOTE *c,int *sgn);
 void mptoquote(MP m,int n,QUOTE *c,int *sgn);
 void vartoquote(V v,QUOTE *c);
-void fnodetotree(FNODE f,LIST *rp);
+void fnodetotree(FNODE f,VS vs,LIST *rp);
 int compfnode(FNODE f1,FNODE f2);
 FNODE eval_pvar_in_fnode(FNODE f);
 FNODE subst_in_fnode(FNODE f,V v,FNODE g);

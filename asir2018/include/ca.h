@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.16 2019/12/19 08:34:42 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.17 2019/12/27 08:13:59 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -450,6 +450,7 @@ typedef struct oQUOTE {
   short id;
   short pad;
   pointer body;
+  struct oVS *pvs;
 } *QUOTE;
 
 typedef struct oQUOTEARG {
@@ -988,7 +989,7 @@ DEG(DC(p))=ONE,COEF(DC(p))=(P)ONEM,NEXT(DC(p))=0)
 #define MKMATHCAP(e,b) (NEWMATHCAP(e),(e)->body=(LIST)(b))
 #define MKBYTEARRAY(m,l) \
 (NEWBYTEARRAY(m),(m)->len=(l),(m)->body=(unsigned char *)MALLOC_ATOMIC((l)),bzero((m)->body,(l)))
-#define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b))
+#define MKQUOTE(q,b) (NEWQUOTE(q),(q)->body=(pointer)(b),(q)->pvs=CPVS)
 #define MKQUOTEARG(q,t,b) (NEWQUOTEARG(q),(q)->type=(t),(q)->body=(pointer)(b))
 
 #define NEXTDC(r,c) \
