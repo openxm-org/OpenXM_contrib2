@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.2 2019/12/13 14:40:50 fujimoto Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -462,8 +462,9 @@ void purge_stdin()
 #if defined(__FreeBSD__) || defined(__DARWIN__) || defined(ANDROID)
   fpurge(stdin);
 #elif defined(linux)
-  stdin->_IO_read_end = stdin->_IO_read_base;
-  stdin->_IO_read_ptr = stdin->_IO_read_base;
+//  stdin->_IO_read_end = stdin->_IO_read_base;
+//  stdin->_IO_read_ptr = stdin->_IO_read_base;
+  __fpurge(stdin);
 #elif defined(VISUAL_LIB)
   void w_purge_stdin();
 

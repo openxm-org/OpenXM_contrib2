@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.3 2019/12/13 14:40:50 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.4 2020/02/02 05:13:30 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -476,7 +476,8 @@ void clear_readbuffer()
 #if defined(ANDROID)
   fpurge(iofp[0].in);
 #elif defined(linux)
-  iofp[0].in->_IO_read_ptr = iofp[0].in->_IO_read_end;
+//  iofp[0].in->_IO_read_ptr = iofp[0].in->_IO_read_end;
+  __fpurge(iofp[0].in);
 #elif defined(__FreeBSD__)
   fpurge(iofp[0].in);
 #endif
