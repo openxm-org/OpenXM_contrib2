@@ -45,10 +45,10 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ox.h,v 1.2 2019/12/13 14:40:50 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ox.h,v 1.3 2020/03/29 17:01:55 fujimoto Exp $
 */
 #include "com.h"
-#defined(linux)
+#if defined(linux)
 #include <stdio_ext.h>
 #endif
 
