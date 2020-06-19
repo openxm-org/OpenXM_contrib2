@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.23 2020/02/05 04:56:10 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.24 2020/06/19 10:18:13 noro Exp $ */
 
 #include "nd.h"
 
@@ -1914,6 +1914,132 @@ int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *rp)
     }
 }
 
+int nd_nf_pbucket_s(int mod,ND g,NDV *ps,int full,ND *rp)
+{
+  int hindex,index;
+  NDV p;
+  ND u,d,red;
+  NODE l;
+  NM mul,m,mrd,tail;
+  int sugar,psugar,n,h_reducible;
+  PGeoBucket bucket;
+  int c,c1,c2;
+  Z cg,cred,gcd,zzz;
+  RHist h;
+  double hmag,gmag;
+  int count = 0;
+  int hcount = 0;
+  SIG sig;
+
+  if ( !g ) {
+    *rp = 0;
+    return 1;
+  }
+  sugar = SG(g);
+  n = NV(g);
+  if ( !mod ) hmag = ((double)p_mag((P)HCZ(g)))*nd_scale;
+  bucket = create_pbucket();
+  add_pbucket(mod,bucket,g);
+  d = 0;
+  mul = (NM)MALLOC(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
+  sig = g->sig;
+  while ( 1 ) {
+    if ( mod > 0 || mod == -1 )
+      hindex = head_pbucket(mod,bucket);
+    else if ( mod == -2 )
+      hindex = head_pbucket_lf(bucket);
+    else
+      hindex = head_pbucket_q(bucket);
+    if ( hindex < 0 ) {
+      if ( DP_Print > 3 ) printf("(%d %d)",count,hcount);
+      if ( d ) {
+        SG(d) = sugar;
+        d->sig = sig;
+      }
+      *rp = d;
+      return 1;
+    }
+    g = bucket->body[hindex];
+    index = ndl_find_reducer_s(HDL(g),sig);
+    if ( index >= 0 && index < nd_psn ) {
+      count++;
+      if ( !d ) hcount++;
+      h = nd_psh[index];
+      ndl_sub(HDL(g),DL(h),DL(mul));
+      if ( ndl_check_bound2(index,DL(mul)) ) {
+        nd_free(d);
+        free_pbucket(bucket);
+        *rp = 0;
+        return 0;
+      }
+      p = ps[index];
+      if ( mod == -1 )
+        CM(mul) = _mulsf(_invsf(HCM(p)),_chsgnsf(HCM(g)));
+      else if ( mod == -2 ) { 
+        Z inv,t;
+        divlf(ONE,HCZ(p),&inv);
+        chsgnlf(HCZ(g),&t);
+        mullf(inv,t,&CZ(mul));
+      } else if ( mod ) {
+        c1 = invm(HCM(p),mod); c2 = mod-HCM(g);
+        DMAR(c1,c2,0,mod,c); CM(mul) = c;
+      } else {
+        igcd_cofactor(HCZ(g),HCZ(p),&gcd,&cg,&cred);
+        chsgnz(cg,&CZ(mul));
+        nd_mul_c_q(d,(P)cred);
+        mulq_pbucket(bucket,cred);
+        g = bucket->body[hindex];
+        gmag = (double)p_mag((P)HCZ(g));
+      }
+      red = ndv_mul_nm(mod,mul,p);
+      bucket->body[hindex] = nd_remove_head(g);
+      red = nd_remove_head(red);
+      add_pbucket(mod,bucket,red);
+      psugar = SG(p)+TD(DL(mul));
+      sugar = MAX(sugar,psugar);
+      if ( !mod && hmag && (gmag > hmag) ) {
+         g = normalize_pbucket(mod,bucket);
+         if ( !g ) {
+           if ( d ) {
+             SG(d) = sugar;
+             d->sig = sig;
+           }
+           *rp = d;
+           return 1;
+         }
+         nd_removecont2(d,g);
+         hmag = ((double)p_mag((P)HCZ(g)))*nd_scale;
+         add_pbucket(mod,bucket,g);
+      }
+    } else if ( index == -1 ) {
+      // singular top reducible
+      return -1;
+    } else if ( !full ) {
+      g = normalize_pbucket(mod,bucket);
+      if ( g ) {
+        SG(g) = sugar;
+        g->sig = sig;
+      }
+      *rp = g;
+      return 1;
+    } else {
+      m = BDY(g); 
+      if ( NEXT(m) ) {
+        BDY(g) = NEXT(m); NEXT(m) = 0; LEN(g)--;
+      } else {
+        FREEND(g); g = 0;
+      }
+      bucket->body[hindex] = g;
+      NEXT(m) = 0;
+      if ( d ) {
+        NEXT(tail)=m; tail=m; LEN(d)++;
+      } else {
+        MKND(n,m,1,d); tail = BDY(d);
+      }
+    }
+  }
+}
+
 /* input : list of NDV, cand : list of NDV */
 
 int ndv_check_membership(int m,NODE input,int obpe,int oadv,EPOS oepos,NODE cand)
@@ -2587,7 +2713,7 @@ again:
       d = nd_reconstruct(0,d);
       goto again;
     }
-#if 0 && USE_GEOBUCKET
+#if USE_GEOBUCKET
     stat = m?nd_nf_pbucket_s(m,h,nd_ps,!Top,&nf):nd_nf_s(m,0,h,nd_ps,!Top,&nf);
 #else
     stat = nd_nf_s(m,0,h,nd_ps,!Top,&nf);
@@ -4140,8 +4266,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,struct order_spec *ord,LIST *
       max = MAX(e,max);
     }
   }
-//  nd_setup_parameters(nvar,max);
-  nd_setup_parameters(nvar,16);
+  nd_setup_parameters(nvar,max);
   obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos; ompos = nd_mpos;
   ishomo = 1;
   for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
