@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.6 2018/10/23 04:53:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.7 2019/08/21 00:37:47 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -28,12 +28,18 @@ typedef struct oPGeoBucket {
   struct oND *body[32];
 } *PGeoBucket;
 
+typedef struct oSIG {
+  int pos;
+  DL dl;
+} *SIG;
+
 /* distributed polynomial; linked list rep. */
 typedef struct oND {
   struct oNM *body;
   int nv;
   int len;
   int sugar;
+  SIG sig;
 } *ND;
 
 /* distributed polynomial; array rep. */
@@ -42,6 +48,7 @@ typedef struct oNDV {
   int nv;
   int len;
   int sugar;
+  SIG sig;
 } *NDV;
 
 typedef union oNDC {
@@ -71,6 +78,7 @@ typedef struct oRHist {
   struct oRHist *next;
   int index;
   int sugar;
+  SIG sig;
   UINT dl[1];
 } *RHist;
 
@@ -80,6 +88,7 @@ typedef struct oND_pairs {
   int i1,i2;
   int sugar;
   int sugar2;
+  SIG sig;
   UINT lcm[1];
 } *ND_pairs;
 
@@ -198,6 +207,8 @@ NV(d)=(n); LEN(d)=(len); BDY(d)=(m)
 #define MKNDV(n,m,l,d) NEWNDV(d); NV(d)=(n); BDY(d)=(m); LEN(d) = l;
 #define NEWNM_ind_pair(p)\
 ((p)=(NM_ind_pair)MALLOC(sizeof(struct oNM_ind_pair)))
+#define NEWSIG(r) \
+((r)=(SIG)MALLOC(sizeof(struct oSIG)),NEWDL((r)->dl,nd_nvar))
 
 /* allocate and link a new object */
 #define NEXTRHist(r,c) \
@@ -257,7 +268,7 @@ ND_pairs crit_B( ND_pairs d, int s );
 ND_pairs crit_M( ND_pairs d1 );
 ND_pairs crit_F( ND_pairs d1 );
 int crit_2( int dp1, int dp2 );
-int ndv_newps(int m,NDV a,NDV aq,int f4);
+int ndv_newps(int m,NDV a,NDV aq);
 
 /* top level functions */
 void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
@@ -266,6 +277,7 @@ NODE nd_f4(int m,int checkonly,int **indp);
 NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp);
 NODE nd_gb_trace(int m,int ishomo,int **indp);
 NODE nd_f4_trace(int m,int **indp);
+void nd_sba(LIST f,LIST v,int m,int homo,int retdp,struct order_spec *ord,LIST *rp);
 
 /* ndl functions */
 int ndl_weight(UINT *d);
@@ -314,7 +326,7 @@ void ndp_print(ND_pairs d);
 /* setup, reconstruct */
 void nd_init_ord(struct order_spec *spec);
 ND_pairs nd_reconstruct(int trace,ND_pairs ndp);
-int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont);
+int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont,int sba);
 void nd_setup_parameters(int nvar,int max);
 BlockMask nd_create_blockmask(struct order_spec *ord);
 EPOS nd_create_epos(struct order_spec *ord);
