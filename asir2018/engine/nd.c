@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.25 2020/06/19 22:58:48 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.26 2020/06/23 01:49:58 noro Exp $ */
 
 #include "nd.h"
 
@@ -71,6 +71,7 @@ static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
 static int *nd_sugarweight;
 static int nd_f4red,nd_rank0,nd_last_nonzero;
+static DL *nd_sba_hm;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -952,35 +953,6 @@ INLINE void ndl_addto(UINT *d1,UINT *d2)
 #endif
 }
 
-/* d1 -= d2 */
-INLINE void ndl_subfrom(UINT *d1,UINT *d2)
-{
-    int i;
-
-    if ( nd_module ) {
-        if ( MPOS(d1) && MPOS(d2) && (MPOS(d1) != MPOS(d2)) ) 
-            error("ndl_addto : invalid operation");
-    }
-#if 1
-    switch ( nd_wpd ) {
-        case 2:
-            TD(d1) -= TD(d2);
-            d1[1] -= d2[1];
-            break;
-        case 3:
-            TD(d1) -= TD(d2);
-            d1[1] -= d2[1];
-            d1[2] -= d2[2];
-            break;
-        default:
-            for ( i = 0; i < nd_wpd; i++ ) d1[i] -= d2[i];
-            break;
-    }
-#else
-    for ( i = 0; i < nd_wpd; i++ ) d1[i] -= d2[i];
-#endif
-}
-
 INLINE void ndl_sub(UINT *d1,UINT *d2,UINT *d)
 {
     int i;
@@ -1249,7 +1221,7 @@ void print_sig(SIG s)
 INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
 {
   RHist r;
-  int i,singular,ret;
+  int i,singular,ret,d,k;
   static int wpd,nvar;
   static SIG quo;
   static UINT *tmp;
@@ -1259,12 +1231,17 @@ INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
     wpd = nd_wpd;
     tmp = (UINT *)MALLOC(wpd*sizeof(UINT));
   }
+  d = ndl_hash_value(dg);
+  for ( r = nd_red[d], k = 0; r; r = NEXT(r), k++ ) {
+    if ( ndl_equal(dg,DL(r)) ) {
+      return r->index;
+    }
+  }
   singular = 0;
   for ( i = 0; i < nd_psn; i++ ) {
     r = nd_psh[i];
     if ( ndl_reducible(dg,DL(r)) ) {
-      ndl_copy(dg,tmp);
-      ndl_subfrom(tmp,DL(r));
+      ndl_sub(dg,DL(r),tmp);
       _ndltodl(tmp,DL(quo));
       _addtodl(nd_nvar,DL(nd_psh[i]->sig),DL(quo));
       quo->pos = nd_psh[i]->sig->pos;
@@ -1274,7 +1251,9 @@ INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
     }
   }
   if ( singular ) return -1;
-  else return i;
+  else if ( i < nd_psn )
+    nd_append_red(dg,i);
+  return i;
 }
 
 ND nd_merge(ND p1,ND p2)
@@ -2401,7 +2380,9 @@ NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
   int diag_count = 0;
   P cont;
   LIST list;
+struct oEGT eg1,eg2,eg_update;
 
+init_eg(&eg_update);
   Nnd_add = 0;
   g = 0; d = 0;
   for ( i = 0; i < nd_psn; i++ ) {
@@ -2476,7 +2457,9 @@ again:
           goto again;
         }
       }
+get_eg(&eg1);
       d = update_pairs(d,g,nh,0);
+get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       g = update_base(g,nh);
       FREENDP(l);
    } else {
@@ -2493,6 +2476,7 @@ again:
  }
  conv_ilist(nd_demand,0,g,indp);
     if ( !checkonly && DP_Print ) { printf("nd_gb done. Number of nd_add=%d\n",Nnd_add); fflush(stdout); }
+print_eg("update",&eg_update);
     return g;
 }
 
@@ -2527,9 +2511,12 @@ NODE insert_sig(NODE l,SIG s)
     } else
       prev = p;
   }
-  NEWNODE(r); r->body = (pointer)s;
-  r->next = root.next;
-  return r;
+  NEWNODE(r); r->body = (pointer)s; r->next = 0;
+  for ( p = &root; p->next; p = p->next );
+  p->next = r;
+//  r->next = root.next;
+//  return r;
+  return root.next;
 }
 
 ND_pairs remove_spair_s(ND_pairs d,SIG sig)
@@ -2572,8 +2559,9 @@ NODE nd_sba_buch(int m,int ishomo,int **indp)
   int Nredundant;
   static int wpd,nvar;
   static DL lcm,quo,mul;
-  struct oEGT eg1,eg2,eg_update;
+  struct oEGT eg1,eg2,eg_update,eg_remove;
 
+init_eg(&eg_remove);
   syzlist = 0;
   Nsyz = 0;
   Nnd_add = 0;
@@ -2635,6 +2623,7 @@ again:
       goto again;
     } else if ( stat == -1 ) {
       if ( DP_Print ) { printf("S"); fflush(stdout); }
+      FREENDP(l);
     } else if ( nf ) {
       if ( DP_Print ) { printf("+"); fflush(stdout); }
       hc = HCU(nf);
@@ -2647,7 +2636,9 @@ again:
       FREENDP(l);
    } else {
      // syzygy
+get_eg(&eg1);
      d = remove_spair_s(d,sig);
+get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
      syzlist = insert_sig(syzlist,sig);
      if ( DP_Print ) { printf("."); fflush(stdout); }
      FREENDP(l);
@@ -2659,6 +2650,8 @@ again:
    fflush(stdout); 
    print_eg("create",&eg_create);
    print_eg("merge",&eg_merge);
+   print_eg("remove",&eg_remove);
+   printf("\n");
  }
  return g;
 }
@@ -3148,8 +3141,10 @@ int comp_sig(SIG s1,SIG s2)
   if ( nvar != nd_nvar ) {
     nvar = nd_nvar; NEWDL(m1,nvar); NEWDL(m2,nvar);
   }
-  _ndltodl(DL(nd_psh[s1->pos]),m1);
-  _ndltodl(DL(nd_psh[s2->pos]),m2);
+//  _ndltodl(DL(nd_psh[s1->pos]),m1);
+//  _ndltodl(DL(nd_psh[s2->pos]),m2);
+  _copydl(nd_nvar,nd_sba_hm[s1->pos],m1);
+  _copydl(nd_nvar,nd_sba_hm[s2->pos],m2);
   _addtodl(nd_nvar,s1->dl,m1);
   _addtodl(nd_nvar,s2->dl,m2);
   ret = (*cmpdl)(nd_nvar,m1,m2);
@@ -3183,8 +3178,7 @@ int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
   // DL(sig1) <- sp->lcm
   // DL(sig1) -= DL(p1)
   // DL(sig1) += DL(p1->sig)
-  ndl_copy(sp->lcm,lcm);
-  ndl_subfrom(lcm,DL(p1));
+  ndl_sub(sp->lcm,DL(p1),lcm);
   _ndltodl(lcm,DL(sig1));
   _addtodl(nd_nvar,DL(p1->sig),DL(sig1));
   sig1->pos = p1->sig->pos;
@@ -3192,8 +3186,7 @@ int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
   // DL(sig2) <- sp->lcm
   // DL(sig2) -= DL(p2)
   // DL(sig2) += DL(p2->sig)
-  ndl_copy(sp->lcm,lcm);
-  ndl_subfrom(lcm,DL(p2));
+  ndl_sub(sp->lcm,DL(p2),lcm);
   _ndltodl(lcm,DL(sig2));
   _addtodl(nd_nvar,DL(p2->sig),DL(sig2));
   sig2->pos = p2->sig->pos;
@@ -3298,18 +3291,18 @@ ND_pairs nd_newpairs_s( NODE g, int t, NODE syz)
 {
   NODE h,s;
   UINT *dl;
-  int ts,ret;
+  int ts,ret,i;
   ND_pairs r,r0,_sp,sp;
   SIG _sig1,_sig2,spsig,tsig;
   struct oEGT eg1,eg2,eg3,eg4;
 
-  dl = DL(nd_psh[t]);
-  ts = SG(nd_psh[t]) - TD(dl);
   NEWND_pairs(_sp);
   NEWSIG(_sig1); NEWSIG(_sig2);
   r0 = 0;
-  for ( h = g; h; h = NEXT(h) ) {
-    ret = _create_spair_s((long)BDY(h),t,_sp,_sig1,_sig2);
+  for ( i = 0; i < t; i++ ) {
+    ret = _create_spair_s(i,t,_sp,_sig1,_sig2);
+//  for ( h = g; h; h = NEXT(h) ) {
+//    ret = _create_spair_s((long)BDY(h),t,_sp,_sig1,_sig2);
     if ( ret ) {
       spsig = _sp->sig;
       for ( s = syz; s; s = s->next ) {
@@ -3790,19 +3783,22 @@ int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont,int sba
     }
   }
   if ( sba ) {
+    nd_sba_hm = (DL *)MALLOC(nd_psn*sizeof(DL));
    // setup signatures
-   for ( i = 0; i < nd_psn; i++ ) {
-     SIG sig;
+    for ( i = 0; i < nd_psn; i++ ) {
+      SIG sig;
 
-     NEWSIG(sig); sig->pos = i;
-     nd_ps[i]->sig = sig;
-     if ( nd_demand ) nd_ps_sym[i]->sig = sig;
-      nd_psh[i]->sig = sig;
-     if ( trace ) { 
-       nd_ps_trace[i]->sig = sig;
-       if ( nd_demand ) nd_ps_trace_sym[i]->sig = sig;
-     }
-   }
+      NEWSIG(sig); sig->pos = i;
+      nd_ps[i]->sig = sig;
+      if ( nd_demand ) nd_ps_sym[i]->sig = sig;
+        nd_psh[i]->sig = sig;
+      if ( trace ) { 
+        nd_ps_trace[i]->sig = sig;
+        if ( nd_demand ) nd_ps_trace_sym[i]->sig = sig;
+      }
+      NEWDL(nd_sba_hm[i],nd_nvar);
+      _ndltodl(DL(nd_psh[i]),nd_sba_hm[i]);
+    }
   }
   if ( nd_gentrace && nd_tracelist ) NEXT(tn) = 0;
   return 1;
