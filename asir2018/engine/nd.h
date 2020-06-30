@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.7 2019/08/21 00:37:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.8 2020/06/19 10:18:13 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -114,6 +114,7 @@ typedef struct oNM_ind_pair
 {
   NM mul;
   int index,sugar;
+  SIG sig;
 } *NM_ind_pair;
 
 typedef struct oIndArray
@@ -219,7 +220,8 @@ if(!(r)){NEWNM(r);(c)=(r);}else{NEWNM(NEXT(c));(c)=NEXT(c);}
 if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
 #define NEXTND_pairs(r,c) \
 if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
-#define MKNM_ind_pair(p,m,i,s) (NEWNM_ind_pair(p),(p)->mul=(m),(p)->index=(i),(p)->sugar = (s))
+#define MKNM_ind_pair(p,m,i,s,sg)\
+ (NEWNM_ind_pair(p),(p)->mul=(m),(p)->index=(i),(p)->sugar = (s),(p)->sig=(sg))
 
 /* deallocators */
 #define FREENM(m) NEXT(m)=_nm_free_list; _nm_free_list=(m)
@@ -277,7 +279,7 @@ NODE nd_f4(int m,int checkonly,int **indp);
 NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp);
 NODE nd_gb_trace(int m,int ishomo,int **indp);
 NODE nd_f4_trace(int m,int **indp);
-void nd_sba(LIST f,LIST v,int m,int homo,int retdp,struct order_spec *ord,LIST *rp);
+void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp);
 
 /* ndl functions */
 int ndl_weight(UINT *d);
@@ -409,7 +411,7 @@ int ndl_ww_lex_compare(UINT *a1,UINT *a2);
 
 #if SIZEOF_LONG == 8
 int nd_to_vect64(int mod,UINT *s0,int n,ND d,mp_limb_t *r);
-int ndv_reduce_vect64(int m,mp_limb_t *svect,mp_limb_t *cvect,int col,IndArray *imat,NM_ind_pair *rp0,int nred);
+int ndv_reduce_vect64(int m,mp_limb_t *svect,mp_limb_t *cvect,int col,IndArray *imat,NM_ind_pair *rp0,int nred,SIG sig);
 NDV vect64_to_ndv(mp_limb_t *vect,int spcol,int col,int *rhead,UINT *s0vect);
 void red_by_vect64(int m, mp_limb_t *p,unsigned int *c,mp_limb_t *r,unsigned int hc,int len);
 int nd_gauss_elim_mod64(mp_limb_t **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
