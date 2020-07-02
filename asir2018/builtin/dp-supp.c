@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.12 2019/12/12 04:44:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.13 2019/12/27 08:13:59 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -308,6 +308,21 @@ int _dl_redble(DL d1,DL d2,int nvar)
     return 0;
   for ( i = 0; i < nvar; i++ )
     if ( d1->d[i] > d2->d[i] )
+      break;
+  if ( i < nvar )
+    return 0;
+  else
+    return 1;
+}
+
+int _dl_redble_ext(DL d1,DL d2,DL quo,int nvar)
+{
+  int i;
+
+  if ( (quo->td = d2->td-d1->td) < 0 )
+    return 0;
+  for ( i = 0; i < nvar; i++ )
+    if ( (quo->d[i] = d2->d[i]-d1->d[i]) < 0 )
       break;
   if ( i < nvar )
     return 0;
