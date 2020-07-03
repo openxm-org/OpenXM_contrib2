@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.28 2020/06/30 01:52:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.29 2020/07/02 09:24:17 noro Exp $ */
 
 #include "nd.h"
 
@@ -50,7 +50,7 @@ static NDV *nd_ps_trace;
 static NDV *nd_ps_sym;
 static NDV *nd_ps_trace_sym;
 static RHist *nd_psh;
-static int nd_psn,nd_pslen;
+static int nd_psn,nd_pslen,nd_nbase;
 static RHist *nd_red;
 static int *nd_work_vector;
 static int **nd_matrix;
@@ -2484,8 +2484,8 @@ print_eg("update",&eg_update);
     return g;
 }
 
-ND_pairs update_pairs_s(ND_pairs d,NODE g,int t,NODE *syz);
-ND_pairs nd_newpairs_s( NODE g, int t ,NODE *syz);
+ND_pairs update_pairs_s(ND_pairs d,int t,NODE *syz);
+ND_pairs nd_newpairs_s(int t ,NODE *syz);
 
 int nd_nf_pbucket_s(int mod,ND g,NDV *ps,int full,ND *nf);
 int nd_nf_s(int mod,ND d,ND g,NDV *ps,int full,ND *nf);
@@ -2606,10 +2606,12 @@ ND_pairs remove_large_lcm(ND_pairs d)
 
 struct oEGT eg_create,eg_newpairs,eg_merge;
 
+NODE conv_ilist_s(int demand,int trace,int **indp);
+
 NODE nd_sba_buch(int m,int ishomo,int **indp)
 {
   int i,j,nh,sugar,stat;
-  NODE r,g,t;
+  NODE r,t,g;
   ND_pairs d;
   ND_pairs l;
   ND h,nf,s,head,nf1;
@@ -2629,10 +2631,9 @@ init_eg(&eg_remove);
   Nsyz = 0;
   Nnd_add = 0;
   Nredundant = 0;
-  g = 0; d = 0;
+  d = 0;
   for ( i = 0; i < nd_psn; i++ ) {
-    d = update_pairs_s(d,g,i,syzlist);
-    g = append_one(g,i);
+    d = update_pairs_s(d,i,syzlist);
   }
   for ( i = 0; i < nd_psn; i++ )
     for ( j = i+1; j < nd_psn; j++ ) {
@@ -2690,8 +2691,7 @@ again:
       nfv = ndtondv(m,nf); nd_free(nf);
       nh = ndv_newps(m,nfv,0);
 
-      d = update_pairs_s(d,g,nh,syzlist);
-      g = append_one(g,nh);
+      d = update_pairs_s(d,nh,syzlist);
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
       FREENDP(l);
    } else {
@@ -2704,7 +2704,7 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
      FREENDP(l);
    }
  }
- conv_ilist(nd_demand,0,g,indp);
+ g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
    printf("\nnd_sba done. nd_add=%d,Nsyz=%d,Nredundant=%d\n",Nnd_add,Nsyz,Nredundant);
    fflush(stdout); 
@@ -3135,14 +3135,14 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
 
 ND_pairs merge_pairs_s(ND_pairs d,ND_pairs d1);
 
-ND_pairs update_pairs_s( ND_pairs d, NODE /* of index */ g, int t,NODE *syz)
+ND_pairs update_pairs_s( ND_pairs d, int t,NODE *syz)
 {
   ND_pairs d1;
   struct oEGT eg1,eg2,eg3;
 
-  if ( !g ) return d;
+  if ( !t ) return d;
 get_eg(&eg1);
-  d1 = nd_newpairs_s(g,t,syz);
+  d1 = nd_newpairs_s(t,syz);
 get_eg(&eg2); add_eg(&eg_create,&eg1,&eg2);
   d = merge_pairs_s(d,d1);
 get_eg(&eg3); add_eg(&eg_merge,&eg2,&eg3);
@@ -3185,7 +3185,6 @@ ND_pairs nd_newpairs( NODE g, int t )
   if ( r0 ) NEXT(r) = 0;
   return r0;
 }
-
 
 int comp_sig(SIG s1,SIG s2)
 {
@@ -3362,7 +3361,7 @@ INLINE int __dl_redble(DL d1,DL d2,int nvar)
     return 1;
 }
 
-ND_pairs nd_newpairs_s( NODE g, int t, NODE *syz)
+ND_pairs nd_newpairs_s(int t, NODE *syz)
 {
   NODE h,s;
   UINT *dl;
@@ -3380,8 +3379,6 @@ ND_pairs nd_newpairs_s( NODE g, int t, NODE *syz)
   r0 = 0;
   for ( i = 0; i < t; i++ ) {
     ret = _create_spair_s(i,t,_sp,_sig1,_sig2);
-//  for ( h = g; h; h = NEXT(h) ) {
-//    ret = _create_spair_s((long)BDY(h),t,_sp,_sig1,_sig2);
     if ( ret ) {
       spsig = _sp->sig;
       for ( s = syz[spsig->pos]; s; s = s->next ) {
@@ -5580,6 +5577,91 @@ ND_pairs nd_reconstruct(int trace,ND_pairs d)
     GC_gcollect();
 #endif
     return s0;
+}
+
+void nd_reconstruct_s(int trace,ND_pairs *d)
+{
+    int i,obpe,oadv,h;
+    static NM prev_nm_free_list;
+    static ND_pairs prev_ndp_free_list;
+    RHist mr0,mr;
+    RHist r;
+    RHist *old_red;
+    ND_pairs s0,s,t;
+    EPOS oepos;
+
+    obpe = nd_bpe;
+    oadv = nmv_adv;
+    oepos = nd_epos;
+    if ( obpe < 2 ) nd_bpe = 2;
+    else if ( obpe < 3 ) nd_bpe = 3;
+    else if ( obpe < 4 ) nd_bpe = 4;
+    else if ( obpe < 5 ) nd_bpe = 5;
+    else if ( obpe < 6 ) nd_bpe = 6;
+    else if ( obpe < 8 ) nd_bpe = 8;
+    else if ( obpe < 10 ) nd_bpe = 10;
+    else if ( obpe < 16 ) nd_bpe = 16;
+    else if ( obpe < 32 ) nd_bpe = 32;
+    else error("nd_reconstruct_s : exponent too large");
+
+    nd_setup_parameters(nd_nvar,0);
+    prev_nm_free_list = _nm_free_list;
+    prev_ndp_free_list = _ndp_free_list;
+    _nm_free_list = 0;
+    _ndp_free_list = 0;
+    for ( i = nd_psn-1; i >= 0; i-- ) {
+        ndv_realloc(nd_ps[i],obpe,oadv,oepos);
+        ndv_realloc(nd_ps_sym[i],obpe,oadv,oepos);
+    }
+    if ( trace )
+        for ( i = nd_psn-1; i >= 0; i-- ) {
+            ndv_realloc(nd_ps_trace[i],obpe,oadv,oepos);
+            ndv_realloc(nd_ps_trace_sym[i],obpe,oadv,oepos);
+        }
+
+    for ( i = 0; i < nd_nbase; i++ ) {
+      s0 = 0;
+      for ( t = d[i]; t; t = NEXT(t) ) {
+          NEXTND_pairs(s0,s);
+          s->i1 = t->i1;
+          s->i2 = t->i2;
+          s->sig = t->sig;
+          SG(s) = SG(t);
+          ndl_reconstruct(LCM(t),LCM(s),obpe,oepos);
+      }
+      d[i] = s0;
+    }
+    
+    old_red = (RHist *)MALLOC(REDTAB_LEN*sizeof(RHist));
+    for ( i = 0; i < REDTAB_LEN; i++ ) {
+        old_red[i] = nd_red[i];
+        nd_red[i] = 0;
+    }
+    for ( i = 0; i < REDTAB_LEN; i++ )
+        for ( r = old_red[i]; r; r = NEXT(r) ) {
+            NEWRHist(mr);
+            mr->index = r->index;
+            SG(mr) = SG(r);
+            ndl_reconstruct(DL(r),DL(mr),obpe,oepos);
+            h = ndl_hash_value(DL(mr));
+            NEXT(mr) = nd_red[h];
+            nd_red[h] = mr;
+            mr->sig = r->sig;
+        }
+    for ( i = 0; i < REDTAB_LEN; i++ ) old_red[i] = 0;
+    old_red = 0;
+    for ( i = 0; i < nd_psn; i++ ) {
+        NEWRHist(r); SG(r) = SG(nd_psh[i]);
+        ndl_reconstruct(DL(nd_psh[i]),DL(r),obpe,oepos);
+        r->sig = nd_psh[i]->sig;
+        nd_psh[i] = r;
+    }
+    if ( s0 ) NEXT(s) = 0;
+    prev_nm_free_list = 0;
+    prev_ndp_free_list = 0;
+#if 0
+    GC_gcollect();
+#endif
 }
 
 void ndl_reconstruct(UINT *d,UINT *r,int obpe,EPOS oepos)
@@ -9452,6 +9534,25 @@ void conv_ilist(int demand,int trace,NODE g,int **indp)
   if ( indp ) *indp = ind;
 }
 
+NODE conv_ilist_s(int demand,int trace,int **indp)
+{
+  int n,i,j;
+  int *ind;
+  NODE g0,g;
+
+  n = nd_psn;
+  ind = (int *)MALLOC(n*sizeof(int));
+  g0 = 0;
+  for ( i = 0; i < n; i++ ) {
+    ind[i] = i;
+    NEXTNODE(g0,g);
+    BDY(g) = (pointer)(demand?ndv_load(i):(trace?nd_ps_trace[i]:nd_ps[i]));
+  }
+  if ( g0 ) NEXT(g) = 0;
+  if ( indp ) *indp = ind;
+  return g0;
+}
+
 void parse_nd_option(NODE opt)
 {
     NODE t,p,u;
@@ -10806,18 +10907,19 @@ NODE nd_sba_f4(int m,int **indp)
   int *rhead;
   int spcol,sprow;
   int sugar,sugarh;
+  int nbase;
   PGeoBucket bucket;
   struct oEGT eg0,eg1,eg_f4;
   Z i1,i2,sugarq;
   NODE *syzlist;
 
   Nf4_red=0;
-  g = 0; d = 0;
+  d = 0;
   syzlist = (NODE *)MALLOC(nd_psn*sizeof(NODE));
   for ( i = 0; i < nd_psn; i++ ) {
-    d = update_pairs_s(d,g,i,syzlist);
-    g = append_one(g,i);
+    d = update_pairs_s(d,i,syzlist);
   }
+  nd_nbase = nd_psn;
   f4red = 1;
   while ( d ) {
     l = nd_minsugarp_s(d,&d);
@@ -10859,15 +10961,15 @@ NODE nd_sba_f4(int m,int **indp)
         nf = ndtondv(m,tmpred);
         ndv_removecont(m,nf);
         nh = ndv_newps(m,nf,0);
-        d = update_pairs_s(d,g,nh,syzlist);
-        g = append_one(g,nh);
+        d = update_pairs_s(d,nh,syzlist);
+        nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
       } else {
         syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
       } 
     }
-// YYY
-//    for ( r = syzlist; r; r = NEXT(r) )
-//      d = remove_spair_s(d,(SIG)BDY(r));
+    for ( i = 0; i < nd_nbase; i++ )
+      for ( r = syzlist[i]; r; r = NEXT(r) )
+        d = remove_spair_s(d,(SIG)BDY(r));
     if ( DP_Print ) { 
       fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,length(g)); fflush(asir_out);
     }
@@ -10878,6 +10980,6 @@ NODE nd_sba_f4(int m,int **indp)
   if ( DP_Print ) {
     fprintf(asir_out,"number of red=%d,",Nf4_red);
   }
-  conv_ilist(nd_demand,0,g,indp);
+  g = conv_ilist_s(nd_demand,0,indp);
   return g;
 }

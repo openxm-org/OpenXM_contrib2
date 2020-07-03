@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.8 2020/06/19 10:18:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.9 2020/06/30 01:52:17 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -328,6 +328,7 @@ void ndp_print(ND_pairs d);
 /* setup, reconstruct */
 void nd_init_ord(struct order_spec *spec);
 ND_pairs nd_reconstruct(int trace,ND_pairs ndp);
+void nd_reconstruct_s(int trace,ND_pairs *ndp);
 int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont,int sba);
 void nd_setup_parameters(int nvar,int max);
 BlockMask nd_create_blockmask(struct order_spec *ord);
