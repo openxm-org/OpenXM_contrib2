@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.29 2020/07/02 09:24:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.30 2020/07/03 03:37:59 noro Exp $ */
 
 #include "nd.h"
 
@@ -786,6 +786,7 @@ int ndl_module_compare(UINT *d1,UINT *d2)
 
 extern DMMstack dmm_stack;
 void _addtodl(int n,DL d1,DL d2);
+void _adddl(int n,DL d1,DL d2,DL d3);
 int _eqdl(int n,DL d1,DL d2);
 
 int ndl_module_schreyer_compare(UINT *m1,UINT *m2)
@@ -2624,7 +2625,7 @@ NODE nd_sba_buch(int m,int ishomo,int **indp)
   NODE *syzlist;
   int Nredundant;
   DL lcm,quo,mul;
-  struct oEGT eg1,eg2,eg_update,eg_remove,eg_large;
+  struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero;
 
 init_eg(&eg_remove);
   syzlist = (NODE *)MALLOC(nd_psn*sizeof(NODE));
@@ -2646,6 +2647,8 @@ init_eg(&eg_remove);
 init_eg(&eg_create);
 init_eg(&eg_merge);
 init_eg(&eg_large);
+init_eg(&eg_nf);
+init_eg(&eg_nfzero);
   while ( d ) {
 again:
     if ( DP_Print ) {
@@ -2672,11 +2675,13 @@ again:
       d = nd_reconstruct(0,d);
       goto again;
     }
+get_eg(&eg1);
 #if USE_GEOBUCKET
     stat = m?nd_nf_pbucket_s(m,h,nd_ps,!Top,&nf):nd_nf_s(m,0,h,nd_ps,!Top,&nf);
 #else
     stat = nd_nf_s(m,0,h,nd_ps,!Top,&nf);
 #endif
+get_eg(&eg2); 
     if ( !stat ) {
       NEXT(l) = d; d = l;
       d = nd_reconstruct(0,d);
@@ -2686,6 +2691,7 @@ again:
       FREENDP(l);
     } else if ( nf ) {
       if ( DP_Print ) { printf("+"); fflush(stdout); }
+      add_eg(&eg_nf,&eg1,&eg2);
       hc = HCU(nf);
       nd_removecont(m,nf);
       nfv = ndtondv(m,nf); nd_free(nf);
@@ -2695,6 +2701,7 @@ again:
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
       FREENDP(l);
    } else {
+      add_eg(&eg_nfzero,&eg1,&eg2);
      // syzygy
 get_eg(&eg1);
      d = remove_spair_s(d,sig);
@@ -2711,6 +2718,8 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
    print_eg("create",&eg_create);
    print_eg("merge",&eg_merge);
    print_eg("remove",&eg_remove);
+   print_eg("nf",&eg_nf);
+   print_eg("nfzero",&eg_nfzero);
    printf("\n");
  }
  return g;
@@ -3200,12 +3209,15 @@ int comp_sig(SIG s1,SIG s2)
   if ( nvar != nd_nvar ) {
     nvar = nd_nvar; NEWDL(m1,nvar); NEWDL(m2,nvar);
   }
-//  _ndltodl(DL(nd_psh[s1->pos]),m1);
-//  _ndltodl(DL(nd_psh[s2->pos]),m2);
+#if 0
   _copydl(nd_nvar,nd_sba_hm[s1->pos],m1);
   _copydl(nd_nvar,nd_sba_hm[s2->pos],m2);
   _addtodl(nd_nvar,s1->dl,m1);
   _addtodl(nd_nvar,s2->dl,m2);
+#else
+  _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
+  _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
+#endif
   ret = (*cmpdl)(nd_nvar,m1,m2);
   if ( ret != 0 ) return ret;
   else if ( s1->pos > s2->pos ) return 1;
@@ -3679,7 +3691,7 @@ ND_pairs nd_minsugarp_s( ND_pairs d, ND_pairs *prest )
   int msugar;
   ND_pairs t,last;
 
-#if 0
+#if 1
   for ( msugar = SG(d), t = d; t; t = NEXT(t) )
     if ( SG(t) == msugar ) last = t;
 #else
@@ -10596,71 +10608,52 @@ int nd_gauss_elim_mod64_s(mp_limb_t **mat,int *sugar,ND_pairs *spactive,int row,
   UINT *ct;
   ND_pairs pair;
   SIG sg;
+  int *used;
 
+  used = (int *)MALLOC(row*sizeof(int));
   cmat = (UINT **)MALLOC(row*sizeof(UINT *));
   for ( i = 0; i < row; i++ ) {
     cmat[i] = MALLOC_ATOMIC(col*sizeof(UINT));
     bzero(cmat[i],col*sizeof(UINT));
   }
 
-  for ( rank = 0, j = 0; j < col; j++ ) {
-    for ( i = rank; i < row; i++ ) {
+  for ( j = 0; j < col; j++ ) {
+    for ( i = 0; i < row; i++ ) {
       a = mat[i][j]; c = cmat[i][j];
       MOD128(a,c,md);
       mat[i][j] = a; cmat[i][j] = 0;
     }
-    imin = -1;
-    for ( i = rank; i < row; i++ )
-      if ( mat[i][j] && (imin < 0 || comp_sig(sig[imin],sig[i]) > 0) ) imin = i;
-    if ( imin == -1 ) {
+    for ( i = 0; i < row; i++ )
+      if ( !used[i] && mat[i][j] ) break;
+    if ( i == row ) {
       colstat[j] = 0;
       continue;
-    } else
+    } else {
       colstat[j] = 1;
-    if ( imin != rank ) {
-      t = mat[imin]; mat[imin] = mat[rank]; mat[rank] = t;
-      ct = cmat[imin]; cmat[imin] = cmat[rank]; cmat[rank] = ct;
-      s = sugar[imin]; sugar[imin] = sugar[rank]; sugar[rank] = s;
-      sg = sig[imin]; sig[imin] = sig[rank]; sig[rank] = sg;
-      if ( spactive ) {
-        pair = spactive[imin]; spactive[imin] = spactive[rank]; 
-        spactive[rank] = pair;
-      }
+      used[i] = 1;
     }
     /* column j is normalized */
-    s = sugar[rank];
-    inv = invm((UINT)mat[rank][j],md);
+    s = sugar[i];
+    inv = invm((UINT)mat[i][j],md);
     /* normalize pivot row */
-    for ( k = j, pk = mat[rank]+j, ck = cmat[rank]+j; k < col; k++, pk++, ck++ ) {
+    for ( k = j, pk = mat[i]+j, ck = cmat[i]+j; k < col; k++, pk++, ck++ ) {
       a = *pk; c = *ck; MOD128(a,c,md); *pk = (a*inv)%md; *ck = 0;
     }
-    for ( i = rank+1; i < row; i++ ) {
-      if ( (a = mat[i][j]) != 0 ) {
-        sugar[i] = MAX(sugar[i],s);
-        red_by_vect64(md,mat[i]+j,cmat[i]+j,mat[rank]+j,(int)(md-a),col-j);
+    for ( k = i+1; k < row; k++ ) {
+      if ( (a = mat[k][j]) != 0 ) {
+        sugar[k] = MAX(sugar[k],s);
+        red_by_vect64(md,mat[k]+j,cmat[k]+j,mat[i]+j,(int)(md-a),col-j);
         Nf4_red++;
       }
     }
-    rank++;
   }
-#if 1
-  for ( j = col-1, l = rank-1; j >= 0; j-- )
-    if ( colstat[j] ) {
-      for ( k = j, pk = mat[l]+j, ck = cmat[l]+j; k < col; k++, pk++, ck++ ) {
-        a = *pk; c = *ck; MOD128(a,c,md); *pk = a; *ck = 0;
-      }
-      s = sugar[l];
-      for ( i = 0; i < l; i++ ) {
-        a = mat[i][j]; c = cmat[i][j]; MOD128(a,c,md); mat[i][j] = a; cmat[i][j] = 0;
-        if ( a && comp_sig(sig[i],sig[l]) > 0 ) {
-          sugar[i] = MAX(sugar[i],s);
-          red_by_vect64(md,mat[i]+j,cmat[i]+j,mat[l]+j,(int)(md-a),col-j);
-          Nf4_red++;
-        }
-      }
-      l--;
-    }
-#endif
+  rank = 0;
+  for ( i = 0; i < row; i++ ) {
+    for ( j = 0; j < col; j++ )
+      if ( mat[i][j] ) break;
+    if ( j == col ) sugar[i] = -1;
+    else rank++;
+  }
   for ( i = 0; i < row; i++ ) GCFREE(cmat[i]);
   GCFREE(cmat);
   return rank;
@@ -10722,19 +10715,17 @@ NODE nd_f4_red_mod64_main_s(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     colstat = (int *)MALLOC(col*sizeof(int));
     rank = nd_gauss_elim_mod64_s(spmat,spsugar,0,sprow,col,m,colstat,spsig);
     r0 = 0;
-    for ( i = 0; i < rank; i++ ) {
-        NEXTNODE(r0,r);
-        BDY(r) = vect64_to_ndv_s(spmat[i],col,s0vect);
-        SG((NDV)BDY(r)) = spsugar[i];
-        ((NDV)BDY(r))->sig = spsig[i];
+    for ( i = 0; i < sprow; i++ ) {
+        if ( spsugar[i] >= 0 ) {
+          NEXTNODE(r0,r);
+          BDY(r) = vect64_to_ndv_s(spmat[i],col,s0vect);
+          SG((NDV)BDY(r)) = spsugar[i];
+          ((NDV)BDY(r))->sig = spsig[i];
+        } else
+          syzlistp[spsig[i]->pos] = insert_sig(syzlistp[spsig[i]->pos],spsig[i]);
         GCFREE(spmat[i]);
     }
     if ( r0 ) NEXT(r) = 0;
-
-    for ( ; i < sprow; i++ ) {
-      GCFREE(spmat[i]);
-      syzlistp[spsig[i]->pos] = insert_sig(syzlistp[spsig[i]->pos],spsig[i]);
-    }
     get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2); add_eg(&f4_elim2,&eg1,&eg2);
     init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
     if ( DP_Print ) {
@@ -10947,6 +10938,7 @@ NODE nd_sba_f4(int m,int **indp)
     nflist = nd_f4_red_s(m,l,0,s0vect,col,rp0,syzlist);
     /* adding new bases */
     for ( r = nflist; r; r = NEXT(r) ) {
+#if 0
       ND tmp,tmpred;
       SIG sig;
 
@@ -10954,10 +10946,14 @@ NODE nd_sba_f4(int m,int **indp)
       sig = nf->sig;
       tmp = ndvtond(m,nf);
       stat = nd_nf_s(m,0,tmp,nd_ps,!Top,&tmpred);
+#if 0
       if ( stat < 0 ) {
         // top reducible
         if ( DP_Print ) { fprintf(asir_out,"S"); fflush(asir_out); }
       } else if ( tmpred ) {
+#else
+      if ( tmpred ) {
+#endif
         nf = ndtondv(m,tmpred);
         ndv_removecont(m,nf);
         nh = ndv_newps(m,nf,0);
@@ -10966,6 +10962,13 @@ NODE nd_sba_f4(int m,int **indp)
       } else {
         syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
       } 
+#else
+      nf = (NDV)BDY(r);
+      ndv_removecont(m,nf);
+      nh = ndv_newps(m,nf,0);
+      d = update_pairs_s(d,nh,syzlist);
+      nd_sba_pos[nf->sig->pos] = append_one(nd_sba_pos[nf->sig->pos],nh);
+#endif
     }
     for ( i = 0; i < nd_nbase; i++ )
       for ( r = syzlist[i]; r; r = NEXT(r) )
