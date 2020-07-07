@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.30 2020/07/03 03:37:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.31 2020/07/07 08:04:30 noro Exp $ */
 
 #include "nd.h"
 
@@ -10974,7 +10974,7 @@ NODE nd_sba_f4(int m,int **indp)
       for ( r = syzlist[i]; r; r = NEXT(r) )
         d = remove_spair_s(d,(SIG)BDY(r));
     if ( DP_Print ) { 
-      fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,length(g)); fflush(asir_out);
+      fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,nd_psn); fflush(asir_out);
     }
     f4red++;
     if ( nd_f4red && f4red > nd_f4red ) break;
