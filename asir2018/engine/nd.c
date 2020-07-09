@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.31 2020/07/07 08:04:30 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.32 2020/07/07 08:08:26 noro Exp $ */
 
 #include "nd.h"
 
@@ -3691,14 +3691,8 @@ ND_pairs nd_minsugarp_s( ND_pairs d, ND_pairs *prest )
   int msugar;
   ND_pairs t,last;
 
-#if 1
   for ( msugar = SG(d), t = d; t; t = NEXT(t) )
     if ( SG(t) == msugar ) last = t;
-#else
-  msugar = (d->sig->dl->td)+nd_sba_hm[d->sig->pos]->td;
-  for ( t = d; t; t = NEXT(t) )
-    if ( ((t->sig->dl->td)+nd_sba_hm[t->sig->pos]->td) == msugar ) last = t;
-#endif
   *prest = last->next;
   last->next = 0;
   return d;
@@ -4864,7 +4858,7 @@ DL ndltodl(int n,UINT *ndl)
     int i,j,l,s,ord_l;
     struct order_pair *op;
 
-    NEWDL(dl,n);
+    NEWDL_NOINIT(dl,n);
     dl->td = TD(ndl);
     d = dl->d;
     if ( nd_blockmask ) {
@@ -10882,27 +10876,19 @@ int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
 NODE nd_sba_f4(int m,int **indp)
 {
   int i,nh,stat,index,f4red;
-  NODE r,g,tn0,tn,node;
-  ND_pairs d,l,t,ll0,ll,lh;
-  LIST l0,l1;
-  ND spol,red;
-  NDV nf,redv;
-  NM s0,s;
-  NODE rp0,srp0,nflist;
-  int nsp,nred,col,rank,len,k,j,a,i1s,i2s;
+  int col,rank,len,k,j,a,sugar,nbase,psugar,ms;
+  NODE r,g,rp0,nflist;
+  ND_pairs d,l,t;
+  ND h,nf;
+  NDV nfv;
+  union oNDC hc;
+  UINT *s0vect;
   UINT c;
-  UINT **spmat;
-  UINT *s0vect,*svect,*p,*v;
-  int *colstat;
-  IndArray *imat;
-  int *rhead;
-  int spcol,sprow;
-  int sugar,sugarh;
-  int nbase;
   PGeoBucket bucket;
-  struct oEGT eg0,eg1,eg_f4;
-  Z i1,i2,sugarq;
   NODE *syzlist;
+  SIG sig;
+  struct oEGT eg0,eg1,eg_f4;
+  struct oEGT eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero;
 
   Nf4_red=0;
   d = 0;
@@ -10912,73 +10898,100 @@ NODE nd_sba_f4(int m,int **indp)
   }
   nd_nbase = nd_psn;
   f4red = 1;
+  psugar = 0;
   while ( d ) {
-    l = nd_minsugarp_s(d,&d);
-    if ( !l ) continue;
-    sugar = nd_sugarweight?l->sugar2:SG(l);
-    if ( MaxDeg > 0 && sugar > MaxDeg ) break;
-    bucket = create_pbucket();
-    stat = nd_sp_f4(m,0,l,bucket);
-    if ( !stat ) {
-      for ( t = l; NEXT(t); t = NEXT(t) );
-      NEXT(t) = d; d = l;
-      d = nd_reconstruct(0,d);
-      continue;
-    }
-    if ( bucket->m < 0 ) continue;
-    col = nd_symbolic_preproc_s(bucket,0,&s0vect,&rp0);
-    if ( !col ) {
-      for ( t = l; NEXT(t); t = NEXT(t) );
-      NEXT(t) = d; d = l;
-      d = nd_reconstruct(0,d);
-      continue;
-    }
-    if ( DP_Print ) fprintf(asir_out,"sugar=%d,",sugar);
-    l = remove_large_lcm(l);
-    nflist = nd_f4_red_s(m,l,0,s0vect,col,rp0,syzlist);
-    /* adding new bases */
-    for ( r = nflist; r; r = NEXT(r) ) {
-#if 0
-      ND tmp,tmpred;
-      SIG sig;
-
-      nf = (NDV)BDY(r);
-      sig = nf->sig;
-      tmp = ndvtond(m,nf);
-      stat = nd_nf_s(m,0,tmp,nd_ps,!Top,&tmpred);
-#if 0
-      if ( stat < 0 ) {
-        // top reducible
-        if ( DP_Print ) { fprintf(asir_out,"S"); fflush(asir_out); }
-      } else if ( tmpred ) {
-#else
-      if ( tmpred ) {
-#endif
-        nf = ndtondv(m,tmpred);
-        ndv_removecont(m,nf);
-        nh = ndv_newps(m,nf,0);
+    for ( t = d, ms = SG(d); t; t = NEXT(t) )
+      if ( SG(t) < ms ) ms = SG(t);
+    if ( ms == psugar ) {
+again:
+      l = d; d = d->next;
+      if ( small_lcm(l) ) {
+        if ( DP_Print ) fprintf(asir_out,"M");
+        continue;
+      }
+      sig = l->sig;
+      stat = nd_sp(m,0,l,&h);
+      if ( !stat ) {
+        NEXT(l) = d; d = l;
+        d = nd_reconstruct(0,d);
+        goto again;
+      }
+  get_eg(&eg1);
+  #if USE_GEOBUCKET
+      stat = m?nd_nf_pbucket_s(m,h,nd_ps,!Top,&nf):nd_nf_s(m,0,h,nd_ps,!Top,&nf);
+  #else
+      stat = nd_nf_s(m,0,h,nd_ps,!Top,&nf);
+  #endif
+  get_eg(&eg2); 
+      if ( !stat ) {
+        NEXT(l) = d; d = l;
+        d = nd_reconstruct(0,d);
+        goto again;
+      } else if ( stat == -1 ) {
+        if ( DP_Print ) { printf("S"); fflush(stdout); }
+        FREENDP(l);
+      } else if ( nf ) {
+        if ( DP_Print ) { printf("+"); fflush(stdout); }
+        add_eg(&eg_nf,&eg1,&eg2);
+        hc = HCU(nf);
+        nd_removecont(m,nf);
+        nfv = ndtondv(m,nf); nd_free(nf);
+        nh = ndv_newps(m,nfv,0);
+  
         d = update_pairs_s(d,nh,syzlist);
         nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
+        FREENDP(l);
       } else {
+        add_eg(&eg_nfzero,&eg1,&eg2);
+       // syzygy
+  get_eg(&eg1);
+        d = remove_spair_s(d,sig);
+  get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
         syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
-      } 
-#else
-      nf = (NDV)BDY(r);
-      ndv_removecont(m,nf);
-      nh = ndv_newps(m,nf,0);
-      d = update_pairs_s(d,nh,syzlist);
-      nd_sba_pos[nf->sig->pos] = append_one(nd_sba_pos[nf->sig->pos],nh);
-#endif
+        if ( DP_Print ) { printf("."); fflush(stdout); }
+        FREENDP(l);
+      }
+    } else {
+again2:
+      if ( DP_Print ) { printf("\n"); fflush(stdout); }
+      psugar = ms;
+      l = nd_minsugarp_s(d,&d);
+      sugar = nd_sugarweight?d->sugar2:SG(d);
+      bucket = create_pbucket();
+      stat = nd_sp_f4(m,0,l,bucket);
+      if ( !stat ) {
+        for ( t = l; NEXT(t); t = NEXT(t) );
+        NEXT(t) = d; d = l;
+        d = nd_reconstruct(0,d);
+        goto again2;
+      }
+      if ( bucket->m < 0 ) continue;
+      col = nd_symbolic_preproc_s(bucket,0,&s0vect,&rp0);
+      if ( !col ) {
+        for ( t = l; NEXT(t); t = NEXT(t) );
+          NEXT(t) = d; d = l;
+        d = nd_reconstruct(0,d);
+        goto again2;
+      }
+      if ( DP_Print ) fprintf(asir_out,"sugar=%d,",psugar);
+      nflist = nd_f4_red_s(m,l,0,s0vect,col,rp0,syzlist);
+      /* adding new bases */
+      for ( r = nflist; r; r = NEXT(r) ) {
+        nfv = (NDV)BDY(r);
+        ndv_removecont(m,nfv);
+        nh = ndv_newps(m,nfv,0);
+        d = update_pairs_s(d,nh,syzlist);
+        nd_sba_pos[nfv->sig->pos] = append_one(nd_sba_pos[nfv->sig->pos],nh);
+      }
+      for ( i = 0; i < nd_nbase; i++ )
+        for ( r = syzlist[i]; r; r = NEXT(r) )
+            d = remove_spair_s(d,(SIG)BDY(r));
+      d = remove_large_lcm(d);
+      if ( DP_Print ) { 
+        fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,nd_psn); fflush(asir_out);
+      }
+      f4red++;
     }
-    for ( i = 0; i < nd_nbase; i++ )
-      for ( r = syzlist[i]; r; r = NEXT(r) )
-        d = remove_spair_s(d,(SIG)BDY(r));
-    if ( DP_Print ) { 
-      fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,nd_psn); fflush(asir_out);
-    }
-    f4red++;
-    if ( nd_f4red && f4red > nd_f4red ) break;
-    if ( nd_rank0 && !nflist ) break;
   }
   if ( DP_Print ) {
     fprintf(asir_out,"number of red=%d,",Nf4_red);
