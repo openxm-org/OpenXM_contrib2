@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.32 2020/07/07 08:08:26 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.33 2020/07/09 02:33:38 noro Exp $ */
 
 #include "nd.h"
 
@@ -4337,7 +4337,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   for ( r0 = 0, t = x; t; t = NEXT(t) ) {
     NEXTNODE(r0,r); 
     if ( retdp ) BDY(r) = ndvtodp(m,BDY(t));
-    BDY(r) = ndvtop(m,CO,vv,BDY(t));
+    else BDY(r) = ndvtop(m,CO,vv,BDY(t));
   }
   if ( r0 ) NEXT(r) = 0;
   MKLIST(*rp,r0);
@@ -10875,7 +10875,7 @@ int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
 
 NODE nd_sba_f4(int m,int **indp)
 {
-  int i,nh,stat,index,f4red;
+  int i,nh,stat,index,f4red,f4step;
   int col,rank,len,k,j,a,sugar,nbase,psugar,ms;
   NODE r,g,rp0,nflist;
   ND_pairs d,l,t;
@@ -10899,10 +10899,11 @@ NODE nd_sba_f4(int m,int **indp)
   nd_nbase = nd_psn;
   f4red = 1;
   psugar = 0;
+  f4step = 0;
   while ( d ) {
     for ( t = d, ms = SG(d); t; t = NEXT(t) )
       if ( SG(t) < ms ) ms = SG(t);
-    if ( ms == psugar ) {
+    if ( ms == psugar && f4step >= 2 ) {
 again:
       l = d; d = d->next;
       if ( small_lcm(l) ) {
@@ -10952,8 +10953,9 @@ again:
         FREENDP(l);
       }
     } else {
+      if ( ms != psugar ) f4step = 1;
+      else f4step++;
 again2:
-      if ( DP_Print ) { printf("\n"); fflush(stdout); }
       psugar = ms;
       l = nd_minsugarp_s(d,&d);
       sugar = nd_sugarweight?d->sugar2:SG(d);
@@ -10973,7 +10975,7 @@ again2:
         d = nd_reconstruct(0,d);
         goto again2;
       }
-      if ( DP_Print ) fprintf(asir_out,"sugar=%d,",psugar);
+      if ( DP_Print ) fprintf(asir_out,"\nsugar=%d,",psugar);
       nflist = nd_f4_red_s(m,l,0,s0vect,col,rp0,syzlist);
       /* adding new bases */
       for ( r = nflist; r; r = NEXT(r) ) {
@@ -10988,13 +10990,13 @@ again2:
             d = remove_spair_s(d,(SIG)BDY(r));
       d = remove_large_lcm(d);
       if ( DP_Print ) { 
-        fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,nd_psn); fflush(asir_out);
+        fprintf(asir_out,"f4red=%d,gblen=%d",f4red,nd_psn); fflush(asir_out);
       }
       f4red++;
     }
   }
   if ( DP_Print ) {
-    fprintf(asir_out,"number of red=%d,",Nf4_red);
+    fprintf(asir_out,"\nnumber of red=%d,",Nf4_red);
   }
   g = conv_ilist_s(nd_demand,0,indp);
   return g;
