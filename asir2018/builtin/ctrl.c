@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.3 2019/03/06 10:43:25 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.4 2019/03/27 06:41:45 ohara Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -120,6 +120,7 @@ extern int ASIRLOADPATH_LEN;
 extern int No_ox_reset;
 extern int plot_by_bigfloat;
 extern int debug_plot;
+extern int debug_pari;
 
 static struct keyval {
   char *key;
@@ -170,6 +171,7 @@ static struct keyval {
   {"zerorewrite",&zerorewrite,""},
   {"itvplotsize",&Itvplot,""},
 #endif
+  {"debug_pari",&debug_pari,"If set to 1, ox_pari is executed with the message window."},
   {0,0},
 };
 

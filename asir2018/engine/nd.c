@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.33 2020/07/09 02:33:38 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.34 2020/07/10 08:09:05 noro Exp $ */
 
 #include "nd.h"
 
@@ -18,7 +18,7 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 NODE nd_hcf;
-int Nsyz;
+int Nsyz,Nsamesig;
 
 Obj nd_top_weight;
 
@@ -1223,6 +1223,8 @@ void print_sig(SIG s)
   fprintf(asir_out,">>*e%d",s->pos);
 }
 
+// assuming increasing order wrt signature 
+
 INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
 {
   RHist r;
@@ -1237,11 +1239,13 @@ INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
     tmp = (UINT *)MALLOC(wpd*sizeof(UINT));
   }
   d = ndl_hash_value(dg);
+#if 1
   for ( r = nd_red[d], k = 0; r; r = NEXT(r), k++ ) {
     if ( ndl_equal(dg,DL(r)) ) {
       return r->index;
     }
   }
+#endif
   singular = 0;
   for ( i = 0; i < nd_psn; i++ ) {
     r = nd_psh[i];
@@ -2713,7 +2717,7 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
  }
  g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
-   printf("\nnd_sba done. nd_add=%d,Nsyz=%d,Nredundant=%d\n",Nnd_add,Nsyz,Nredundant);
+   printf("\nnd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nredundant=%d\n",Nnd_add,Nsyz,Nsamesig,Nredundant);
    fflush(stdout); 
    print_eg("create",&eg_create);
    print_eg("merge",&eg_merge);
@@ -3307,6 +3311,7 @@ ND_pairs merge_pairs_s(ND_pairs p1,ND_pairs p2)
       r->next = q2; r = q2; q2 = q2->next;
     } else {
       ret = DL_COMPARE(q1->lcm,q2->lcm);
+      Nsamesig++;
       if ( ret < 0 ) {
         r->next = q1; r = q1; q1 = q1->next;
         q2 = q2->next;
@@ -4266,7 +4271,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   nd_module = 0;
   nd_demand = 0;
   parse_nd_option(current_option);
-
+  Nsamesig = 0;
   if ( DP_Multiple )
     nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);

@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.2 2018/09/28 08:20:27 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.3 2019/05/07 02:09:50 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -20,9 +20,12 @@ void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
 
 void Pox_shutdown(NODE arg,Q *rp);
 void Pox_launch_nox(NODE arg,Obj *rp);
+void Pox_launch(NODE arg,Obj *rp);
 void Pox_push_cmo(NODE arg,Obj *rp);
 void Pox_pop_cmo(NODE arg,Obj *rp);
 void Pox_execute_function(NODE arg,Obj *rp);
+
+int debug_pari;
 
 struct mpfr_tab_rec {
   char *name;
@@ -139,7 +142,10 @@ pointer evalparif(FUNC f,NODE arg)
 #if !defined(VISUAL)    
   MKSTR(name,"ox_pari");
   nd = mknode(2,NULL,name);
-  Pox_launch_nox(nd,(Obj *)&r);
+  if ( debug_pari )
+    Pox_launch(nd,(Obj *)&r);
+  else
+    Pox_launch_nox(nd,(Obj *)&r);
 #else
   error("Please load names.rr from latest asir-contrib library before using pari functions.");
 #endif
