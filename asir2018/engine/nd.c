@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.34 2020/07/10 08:09:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.35 2020/08/26 06:40:36 noro Exp $ */
 
 #include "nd.h"
 
@@ -2481,12 +2481,14 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
      }
      if ( DP_Print ) { printf("."); fflush(stdout); }
        FREENDP(l);
-   }
- }
- conv_ilist(nd_demand,0,g,indp);
-    if ( !checkonly && DP_Print ) { printf("nd_gb done. Number of nd_add=%d\n",Nnd_add); fflush(stdout); }
-print_eg("update",&eg_update);
-    return g;
+     }
+  }
+  conv_ilist(nd_demand,0,g,indp);
+  if ( !checkonly && DP_Print ) { printf("nd_gb done. Number of nd_add=%d\n",Nnd_add); fflush(stdout); }
+ 
+  if ( DP_Print )
+    print_eg("update",&eg_update);
+  return g;
 }
 
 ND_pairs update_pairs_s(ND_pairs d,int t,NODE *syz);
