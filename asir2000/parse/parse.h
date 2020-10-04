@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.57 2018/03/29 01:32:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/parse.h,v 1.58 2019/11/12 10:52:05 kondoh Exp $ 
 */
 # if defined(VISUAL) || defined(__MINGW32__)
 #include <time.h>
@@ -58,6 +58,9 @@
 #undef ABS
 #define ABS(a) ((a)>0?(a):-(a))
 #endif
+
+#include <math.h>
+#include <ctype.h>
 
 /* identifiers for expressions */
 
@@ -374,7 +377,16 @@ void dp_mbase(NODE,NODE *);
 void dp_dtov(DP,VECT *);
 void dp_cont(DP,Q *);
 void dp_idiv(DP,Q,DP *);
-
+void dtodpm(DP d,int pos,DPM *dp);
+void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp);
+void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp);
+void weyl_actd(VL vl,DP p1,DP p2,DP *pr);
+void dpm_sp(DPM p1,DPM p2,DPM *rp);
+void initdpm(struct order_spec *spec,int type);
+void dpm_ht(DPM p,DPM *rp);
+void dpm_hm(DPM p,DPM *rp);
+int dpm_redble(DPM p1,DPM p2);
+void lumtop_unsigned(V v,int mod,int bound,LUM f,P *g);
 int dp_nt(DP);
 void dp_dehomo(DP,DP *);
 void dp_homo(DP,DP *);
@@ -914,3 +926,57 @@ int estimate_length(VL vl,pointer p);
 void send_progress(short per,char *msg);
 void set_error(int code,char *reason,char *action);
 double get_current_time();
+int get_opt(char *key0,Obj *r);
+
+#if defined(VISUAL) || defined(__MINGW32__)
+void ox_plot_main();
+#else
+void ox_plot_main(int argc,char **argv);
+#endif
+void launch_main(int argc,char **argv);
+void ox_main(int argc,char **argv);
+
+void get_fid_spec(fid id,fid_spec_p *spec);
+FNODE strip_paren(FNODE f);
+NODE flatten_fnodenode(NODE n,char *opname);
+FNODE flatten_fnode(FNODE f,char *opname);
+int compquote(VL vl,QUOTE q1,QUOTE q2);
+int compqa(VL vl,QUOTEARG q1,QUOTEARG q2);
+int compfnode(FNODE f1,FNODE f2);
+void shuffle_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void harmonic_mulnbp(VL vl,NBP p1,NBP p2, NBP *rp);
+void mulnbmnbp(VL vl,NBM m,NBP p, NBP *rp);
+void mulnbpnbm(VL vl,NBP p,NBM m, NBP *rp);
+P separate_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar);
+P separate_tail_nbm(NBM a,NBP *a0,NBP *ar,NBP *at);
+P separate_xky_nbm(NBM a,NBP *a0,NBP *ah,NBP *ar);
+
+int fnode_is_var(FNODE f);
+int fnode_is_coef(FNODE f);
+int fnode_is_number(FNODE f);
+int fnode_is_rational(FNODE f);
+int fnode_is_integer(FNODE f);
+int fnode_is_nonnegative_integer(FNODE f);
+int fnode_is_one(FNODE f);
+int fnode_is_minusone(FNODE f);
+int fnode_is_dependent(FNODE f,V v);
+
+int nfnode_comp(FNODE f1,FNODE f2);
+int nfnode_comp_lex(FNODE f1,FNODE f2);
+int nfnode_match(FNODE f,FNODE pat,NODE *rp);
+int nfnode_match_naryadd(FNODE f,FNODE p,NODE *rp);
+int nfnode_match_narymul(FNODE f,FNODE p,NODE *rp);
+
+int exprparse_create_var(FUNC f,char *str,SNODE *statp);
+int obj_is_dependent(Obj a,V v);
+void instoobj(PFINS ins,Obj *rp);
+void goto_toplevel(char *s);
+void add_bucket(GeoBucket g,NODE d,int nv);
+void gen_searchf_searchonly(char *name,FUNC *r,int global);
+void update_LASTCO();
+void order_init();
+void GC_init(void);
+void showpos_to_list(LIST *r);
+void mp_abs(NODE arg,Num *rp);
+void print_crossref(FUNC f);
+void ox_usr1_handler(int sig);

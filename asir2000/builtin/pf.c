@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.25 2018/03/29 01:32:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/pf.c,v 1.26 2019/11/12 10:52:04 kondoh Exp $ 
 */
 #include "ca.h"
 #include "math.h"
@@ -94,7 +94,7 @@ int mp_pi(),mp_e();
 int mp_exp(), mp_log(), mp_pow();
 int mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
 int mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
-int mp_factorial(),mp_abs();
+int mp_factorial();
 
 static V *uarg,*darg;
 static P x,y;
@@ -543,7 +543,7 @@ Q *rp;
       error("add_hanlder : no such function");
     func = (FUNC)v->priv;
   } else if ( OID(p) == O_STR ) {
-    gen_searchf_searchonly(BDY((STRING)p),&func);
+    gen_searchf_searchonly(BDY((STRING)p),&func,0);
     if ( !func )
       error("add_hanlder : no such function");
   }

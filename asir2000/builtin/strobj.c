@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.124 2015/08/14 13:51:54 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/strobj.c,v 1.125 2018/03/29 01:32:50 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -70,6 +70,15 @@ struct TeXSymbol {
   char *text;
   char *symbol;
 };
+
+struct wtab {
+  V v;
+  int w;
+};
+
+struct wtab *qt_weight_tab;
+VL qt_current_ord, qt_current_coef;
+LIST qt_current_ord_obj,qt_current_coef_obj,qt_current_weight_obj;
 
 #define OPNAME(f) (((ARF)FA0(f))->name[0])
 #define IS_ZERO(f) (((f)->id==I_FORMULA) && FA0(f)==0 )
@@ -140,6 +149,7 @@ FNODE nfnode_match_rewrite(FNODE f,FNODE p,FNODE c,FNODE a,int mode);
 FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand);
 FNODE fnode_normalize(FNODE f,int expand);
 FNODE rewrite_fnode(FNODE f,NODE arg,int qarg);
+int nfnode_weight(struct wtab *tab,FNODE f);
 
 struct ftab str_tab[] = {
   {"sprintf",Psprintf,-99999999},
@@ -1344,7 +1354,7 @@ P *rp;
       makevar(p,rp);
   }
 #else
-  gen_searchf_searchonly(p,&f);
+  gen_searchf_searchonly(p,&f,1);
   if ( f )
     makesrvar(f,rp);
   else
@@ -2273,14 +2283,6 @@ VL reordvars(VL vl0,NODE head)
   return vl;
 }
 
-struct wtab {
-  V v;
-  int w;
-};
-
-struct wtab *qt_weight_tab;
-VL qt_current_ord, qt_current_coef;
-LIST qt_current_ord_obj,qt_current_coef_obj,qt_current_weight_obj;
 LIST qt_current_weight_obj;
 
 void Pqt_set_ord(NODE arg,LIST *rp)

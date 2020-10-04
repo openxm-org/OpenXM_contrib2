@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.30 2016/06/29 05:10:14 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ox.h,v 1.31 2018/03/29 01:32:53 noro Exp $ 
 */
 #include "com.h"
 
@@ -318,6 +318,7 @@ void ox_launch_main(int with_x,NODE arg,Obj *p);
 int register_server(int af_unix,int m,int c,int fd);
 int get_mcindex(int i);
 void shutdown_all();
+int register_102(int s1,int rank,int is_master);
 
 /* library functions */
 void asir_ox_push_cmo(void *);
@@ -326,4 +327,4 @@ void asir_ox_push_cmd(int);
 void asir_ox_execute_string(char *);
 int asir_ox_peek_cmo_size();
 int asir_ox_init(int);
-
+int no_ox_reset(int s);

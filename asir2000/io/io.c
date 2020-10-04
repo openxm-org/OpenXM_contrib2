@@ -44,11 +44,12 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.23 2018/03/29 01:32:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/io.c,v 1.24 2018/09/09 08:13:42 ohara Exp $ 
 */
 #include <stdio.h>
 #include "ca.h"
 #include "parse.h"
+#include "ox.h"
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
 #include "wsio.h"
 #endif
@@ -58,8 +59,7 @@ extern int ox_do_copy, ox_do_count, ox_count_length, ox_file_io, ox_need_conv;
 extern char *ox_copy_bptr;
 extern int ox_get_pari_result;
 
-/* XXX */
-void write_cmo(pointer,Obj);
+void reset_ox_pari();
 
 void reset_io()
 {

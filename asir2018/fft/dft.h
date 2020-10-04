@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/fft/dft.h,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #if SIZEOF_LONG == 8
 typedef unsigned long UL;
@@ -94,6 +94,7 @@ typedef float ModNum;
 #else
 
 #include "inline.h"
+int dmar(int,int,int,int);
 
 typedef unsigned int ModNum;
 

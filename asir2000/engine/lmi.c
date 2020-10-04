@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/lmi.c,v 1.5 2017/01/08 03:05:39 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/lmi.c,v 1.6 2018/03/29 01:32:52 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -62,6 +62,7 @@ typedef struct oGEN_LM {
 void pwrlm0(N,N,N *);
 void gen_simpn(N,N*);
 void gen_simpn_force(N,N*);
+void setmod_lf(N p);
 
 int lm_lazy;
 

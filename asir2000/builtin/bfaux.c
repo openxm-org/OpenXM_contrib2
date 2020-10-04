@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.16 2018/03/28 05:27:22 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/bfaux.c,v 1.17 2018/03/29 01:32:50 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 
@@ -11,6 +11,7 @@ void Pmpfr_y0(), Pmpfr_y1();
 void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
 void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
 void Prk_ratmat();
+void Pfac();
 void mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
 void mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
 void mp_exp(),mp_log(),mp_pow();

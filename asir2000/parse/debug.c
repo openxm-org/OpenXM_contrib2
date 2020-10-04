@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.24 2015/08/14 13:51:56 fujimoto Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/debug.c,v 1.25 2018/03/29 01:32:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -193,6 +193,8 @@ void show_alias(char *alias)
           fprintf(stderr,"%s->%s\n",alias,debcom[i]); return;
         }
 }
+
+int get_line(char *);
 
 void debug(SNODE f)
 {
@@ -345,6 +347,8 @@ LAST:
 #endif
     show_debug_window(0);
 }
+
+void searchuf(char *name,FUNC *r);
 
 void setf(int ac,char **av)
 {

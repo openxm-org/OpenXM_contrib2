@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.24 2017/02/27 05:14:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/fctr.c,v 1.25 2018/03/29 01:32:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -59,6 +59,7 @@ void Pirred_check(), Pnfctr_mod();
 void Pbivariate_hensel_special();
 
 void sfmintdeg(VL vl,P fx,int dy,int c,P *fr);
+void sqfrsf(VL vl, P f, DCP *dcp);
 
 struct ftab fctr_tab[] = {
   {"bivariate_hensel_special",Pbivariate_hensel_special,6},

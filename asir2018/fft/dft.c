@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/fft/dft.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 /*
  *    store      arith    modulus
@@ -58,7 +58,6 @@
 
 
 #include "dft.h"
-
 
 /*
 #define C_DFT_FORE C_DFTfore

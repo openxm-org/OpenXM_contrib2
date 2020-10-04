@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.7 2009/03/16 16:56:35 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/fft/dft.h,v 1.8 2018/03/29 01:32:53 noro Exp $ 
 */
 #if SIZEOF_LONG == 8
 typedef unsigned long UL;
@@ -54,6 +54,8 @@ typedef unsigned long long UL;
 #elif defined(_MSC_VER)
 typedef unsigned _int64 UL;
 #endif
+
+int dmar(int,int,int,int);
 
 struct PrimesS {
   int  prime, primroot;

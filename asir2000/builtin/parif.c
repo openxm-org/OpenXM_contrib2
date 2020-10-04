@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.38 2018/03/29 01:32:50 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/builtin/parif.c,v 1.39 2018/04/09 04:07:27 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -17,6 +17,13 @@ void Pmpfr_j0(), Pmpfr_j1();
 void Pmpfr_y0(), Pmpfr_y1();
 void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
 void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
+
+void Pox_shutdown(NODE arg,Q *rp);
+void Pox_launch_nox(NODE arg,Obj *rp);
+void Pox_launch(NODE arg,Obj *rp);
+void Pox_push_cmo(NODE arg,Obj *rp);
+void Pox_pop_cmo(NODE arg,Obj *rp);
+void Pox_execute_function(NODE arg,Obj *rp);
 
 struct mpfr_tab_rec {
   char *name;
@@ -91,7 +98,7 @@ Obj vect_to_mat(VECT v)
 void reset_ox_pari()
 {
   NODE nd;
-  Obj r;
+  Q r;
 
   if ( ox_get_pari_result ) {
   nd = mknode(1,ox_pari_stream);
@@ -104,13 +111,13 @@ void reset_ox_pari()
 pointer evalparif(FUNC f,NODE arg)
 {
   int ac,intarg,opt,prec;
-  Q q,r,narg,cmd;
+  Q q,narg,cmd;
   Real sec;
   NODE nd,oxarg,t,t1,n;
   STRING name;
   USINT ui;
   LIST list;
-  Obj ret,dmy;
+  Obj ret,dmy,r;
   mpfr_func mpfr_function;
   V v;
 

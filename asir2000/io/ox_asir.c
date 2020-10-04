@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.79 2017/08/30 09:40:30 ohara Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/ox_asir.c,v 1.80 2018/03/29 01:32:53 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -784,7 +784,7 @@ static void asir_executeFunction(int serial)
 #endif
     searchf(noargsysf,func,&f);
     if ( !f )
-      gen_searchf_searchonly(func,&f); 
+      gen_searchf_searchonly(func,&f,0); 
     if ( !f ) {
       sprintf(buf,"executeFunction : the function %s not found",func);
       goto error;
@@ -858,7 +858,7 @@ static void asir_executeFunctionSync(int serial)
 #endif
     searchf(noargsysf,func,&f);
     if ( !f )
-      gen_searchf_searchonly(func,&f); 
+      gen_searchf_searchonly(func,&f,0); 
     if ( !f ) {
       sprintf(buf,"executeFunction : the function %s not found",func);
       goto error;

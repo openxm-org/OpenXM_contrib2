@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.80 2018/03/29 01:32:54 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/eval.c,v 1.81 2019/11/12 10:52:05 kondoh Exp $ 
 */
 #include <ctype.h>
 #include "ca.h"
@@ -69,6 +69,8 @@ int show_crossref;
 int at_root;
 void gen_searchf_searchonly(char *name,FUNC *r,int global);
 LIST eval_arg(FNODE a,unsigned int quote);
+void nodetodpm(NODE node,Obj pos,DPM *dp);
+void *GC_get_main_stack_base();
 
 pointer eval(FNODE f)
 {

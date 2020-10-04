@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.108 2018/03/29 01:32:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/dp.c,v 1.109 2018/07/28 00:45:54 noro Exp $ 
 */
 #include "ca.h"
 #include "base.h"
@@ -130,6 +130,16 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
 NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv);
 
 LIST remove_zero_from_list(LIST);
+void dtodpm(DP d,int pos,DPM *dp);
+void dpm_nf_z(NODE b,DPM g,DPM *ps,int full,int multiple,DPM *rp);
+void dpm_nf_f(NODE b,DPM g,DPM *ps,int full,DPM *rp);
+void weyl_actd(VL vl,DP p1,DP p2,DP *pr);
+void dpm_sp(DPM p1,DPM p2,DPM *rp);
+void Psetmod_ff();
+int get_opt(char *key0,Obj *r);
+void initdpm(struct order_spec *spec,int type);
+void dpm_hm(DPM p,DPM *rp);
+void dpm_ht(DPM p,DPM *rp);
 
 struct ftab dp_tab[] = {
   /* content reduction */

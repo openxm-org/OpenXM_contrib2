@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.3 2019/03/27 05:34:47 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.4 2019/07/25 05:57:56 noro Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
@@ -14,6 +14,7 @@
 
 void error(char *);
 void int_handler();
+void ox_usr1_handler(int sig);
 
 int *StackBottom;
 int in_gc, caught_intr;

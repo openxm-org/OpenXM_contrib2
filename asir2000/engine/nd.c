@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.247 2018/07/28 00:45:55 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.c,v 1.248 2019/03/03 05:21:16 noro Exp $ */
 
 #include "nd.h"
 
@@ -107,6 +107,17 @@ NODE nd_f4_red_lf_main(int m,ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
 int nd_gauss_elim_lf(mpz_t **mat0,int *sugar,int row,int col,int *colstat);
 NODE nd_f4_lf_trace_main(int m,int **indp);
 void nd_f4_lf_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp);
+void addlf(Z a,Z b,Z *c);
+void sublf(Z a,Z b,Z *c);
+void mullf(Z a,Z b,Z *c);
+void divlf(Z a,Z b,Z *c);
+void chsgnlf(Z a,Z *c);
+int cmplf(Z a,Z b);
+void simplf(Z a,Z *b);
+void simplf_force(Z a,Z *b);
+void setmod_lf(Z p);
+void lmtolf(LM f,Z *b);
+void invgz(GZ n1,GZ *nq);
 
 extern int lf_lazy;
 extern GZ current_mod_lf;

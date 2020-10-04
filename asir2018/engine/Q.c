@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.16 2019/05/22 02:41:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.17 2020/01/09 01:47:41 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -17,6 +17,10 @@ extern int DP_Print;
 
 void isqrtz(Z a,Z *r);
 void bshiftz(Z a,int n,Z *r);
+int mpz_inttorat(mpz_t c,mpz_t m,mpz_t b,mpz_t nm,mpz_t dn);
+int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp,DP *mb);
+int find_lhs_and_lu_mod64(mp_limb_t **a,int row,int col,mp_limb_t md,int **rinfo,int **cinfo);
+void solve_by_lu_mod64(mp_limb_t **a,int n,mp_limb_t md,mp_limb_signed_t **b,int l,int normalize);
 
 void *gc_realloc(void *p,size_t osize,size_t nsize)
 {
@@ -1232,7 +1236,7 @@ int intmtoratm(MAT mat,Z md,MAT nm,Z *dn)
     return 0;
   row = mat->row; col = mat->col;
   bshiftz(md,1,&t);
-  isqrt(t,&s);
+  isqrtz(t,&s);
   bshiftz(s,64,&b);
   if ( !b ) b = ONE;
   dn0 = ONE;

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.37 2018/03/29 01:32:50 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/miscf.c,v 1.38 2019/02/26 02:48:12 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -84,6 +84,9 @@ void Ptest();
 
 void delete_history(int,int);
 void grab_pointer();
+int equalr(VL,Obj,Obj);
+int init_display();
+void goto_toplevel(char *s);
 
 struct ftab misc_tab[] = {
   {"pwd",Pgetcwd,0},

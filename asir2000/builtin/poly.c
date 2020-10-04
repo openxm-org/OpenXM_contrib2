@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.29 2018/03/28 05:27:22 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/poly.c,v 1.30 2018/03/29 01:32:50 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -109,6 +109,7 @@ void Phomogeneous_deg();
 void simp_ff(Obj,Obj *);
 void ranp(int,UP *);
 void field_order_ff(N *);
+void update_LASTCO();
 
 int current_ff;
 

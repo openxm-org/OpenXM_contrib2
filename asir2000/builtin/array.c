@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.76 2018/03/29 01:32:50 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.77 2019/03/03 05:21:16 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1179,6 +1179,8 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
   n0 = mknode(4,nm,dn,rind,cind);
   MKLIST(*rp,n0);
 }
+
+int indep_rows_mod(int **mat0,int row,int col,int md,int *rowstat);
 
 void Pindep_rows_mod(NODE arg,VECT *rp)
 {
@@ -3220,6 +3222,8 @@ int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,unsigned int m
       s[j] = t[col+index[j]];
   return 0;
 }
+
+int gauss_elim_geninv_sf_swap(int **mat,int row,int col,int ***invmatp,int **indexp);
 
 void Pgeninv_sf_swap(NODE arg,LIST *rp)
 {

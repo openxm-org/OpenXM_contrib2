@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.37 2017/09/14 01:34:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.38 2018/03/29 01:32:52 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -241,6 +241,7 @@ void removecont_array_q(Q *c,int n);
 ND normalize_pbucket(int mod,PGeoBucket g);
 int head_pbucket(int mod,PGeoBucket g);
 int head_pbucket_q(PGeoBucket g);
+int head_pbucket_lf(PGeoBucket g);
 void add_pbucket_symbolic(PGeoBucket g,ND d);
 void add_pbucket(int mod,PGeoBucket g,ND d);
 void free_pbucket(PGeoBucket b);
@@ -292,6 +293,7 @@ INLINE int ndl_hash_value(UINT *d);
 /* normal forms */
 INLINE int ndl_find_reducer(UINT *g);
 int nd_sp(int mod,int trace,ND_pairs p,ND *nf);
+int nd_sp_f4(int m,int trace,ND_pairs l,PGeoBucket bucket);
 int nd_nf(int mod,ND d,ND g,NDV *ps,int full,NDC dn,ND *nf);
 int nd_nf_pbucket(int mod,ND g,NDV *ps,int full,ND *nf);
 
@@ -325,6 +327,7 @@ void ndv_mod(int mod,NDV p);
 NDV ndv_dup(int mod,NDV p);
 NDV ndv_symbolic(int mod,NDV p);
 ND nd_dup(ND p);
+int ndv_ishomo(NDV p);
 
 /* ND functions */
 int ndv_check_membership(int m,NODE input,int obpe,int oadv,EPOS oepos,NODE cand);
@@ -394,5 +397,10 @@ int nd_gauss_elim_sf(int **mat0,int *sugar,int row,int col,int md,int *colstat);
 int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat);
 
 int ndl_ww_lex_compare(UINT *a1,UINT *a2);
+
+void red_by_vect_lf(mpz_t *p,mpz_t *r,mpz_t hc,int len);
+void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len);
+int nd_symbolic_preproc(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r);
+int nd_gauss_elim_mod64(U64 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
 
 

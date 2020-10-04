@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.16 2016/08/24 00:52:51 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/parse/xdeb.c,v 1.17 2018/03/29 01:32:54 noro Exp $ 
 */
 #if defined(VISUAL) || defined(__MINGW32__)
 #if defined(VISUAL_LIB)
@@ -102,6 +102,7 @@ void show_debug_window(int on)
 #include <X11/Xaw/Dialog.h>
 #include  <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 static XrmOptionDescRec options[] = {
   {"-reverse","*reverse",XrmoptionNoArg,"on"},

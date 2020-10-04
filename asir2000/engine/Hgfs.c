@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.33 2015/08/14 13:51:54 fujimoto Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/Hgfs.c,v 1.34 2018/03/29 01:32:51 noro Exp $ */
 
 #include "ca.h"
 #include "inline.h"
@@ -7,6 +7,7 @@ int debug_sfbfctr;
 
 void lnfsf(int n,UM p0,UM p1,struct p_pair *list,UM np0,UM np1);
 void extractcoefbm(BM f,int dx,UM r);
+void sqfrsf(VL vl, P f, DCP *dcp);
 
 int comp_dum(DUM a,DUM b)
 {

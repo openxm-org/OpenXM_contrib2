@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.13 2017/09/04 01:57:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/plot/calc.c,v 1.14 2018/03/29 01:32:55 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -58,6 +58,9 @@
 #ifndef MAXSHORT
 #define MAXSHORT ((short)0x7fff)
 #endif
+
+void todouble(Obj,Obj *);
+void Psetprec();
 
 void calc(double **tab,struct canvas *can,int nox){
   //memory_plot,IFPLOTD,INEQND,INEQNANDD,INEQNORD

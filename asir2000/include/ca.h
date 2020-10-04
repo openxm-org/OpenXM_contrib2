@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.106 2018/03/29 01:32:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/include/ca.h,v 1.107 2018/09/04 07:03:38 noro Exp $ 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -2837,3 +2837,5 @@ void leave_signal_cs_all();
 #else
 #define LEAVE_SIGNAL_CS_ALL
 #endif
+
+int equalr(VL,Obj,Obj);
