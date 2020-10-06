@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.3 2020/03/29 17:01:55 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.4 2020/10/06 06:31:20 noro Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -458,6 +458,11 @@ int yylex()
   /* XXX */
   return 0;
 }
+
+/* for __fpurge() */
+#if defined(linux)
+#include <stdio_ext.h>
+#endif
 
 void purge_stdin()
 {
