@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/vect.c,v 1.1 2018/09/19 05:45:07 noro Exp $
 */
 #include "ca.h"
 
@@ -180,7 +180,7 @@ VECT a,b;
     return a->len>b->len ? 1 : -1;
   else {
     for ( i = 0, len = a->len; i < len; i++ )
-      if ( t = arf_comp(vl,(Obj)BDY(a)[i],(Obj)BDY(b)[i]) )
+      if ( ( t = arf_comp(vl,(Obj)BDY(a)[i],(Obj)BDY(b)[i]) ) != 0 )
         return t;
     return 0;
   }

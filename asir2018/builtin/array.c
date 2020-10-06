@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.6 2019/12/13 14:40:49 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.7 2020/01/09 01:47:40 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1543,7 +1543,7 @@ void lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm)
 
 int f4_nocheck;
 
-#define ONE_STEP1  if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+#define ONE_STEP1  if ( ( zzz = *s ) != 0 ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
 
 void reduce_reducers_mod(int **mat,int row,int col,int md)
 {
@@ -1559,7 +1559,7 @@ void reduce_reducers_mod(int **mat,int row,int col,int md)
     ind[i] = j;
     for ( l = i-1; l >= 0; l-- ) {
       /* reduce mat[i] by mat[l] */
-      if ( hc = t[ind[l]] ) {
+      if ( ( hc = t[ind[l]] ) != 0 ) {
         /* mat[i] = mat[i]-hc*mat[l] */
         j = ind[l];
         s = mat[l]+j;
@@ -1585,7 +1585,7 @@ void reduce_reducers_mod(int **mat,int row,int col,int md)
           ONE_STEP1 ONE_STEP1 ONE_STEP1 ONE_STEP1
         }
         for ( ; k > 0; k-- ) {
-          if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+          if ( ( zzz = *s ) != 0 ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
         }
       }
     }
@@ -1620,7 +1620,7 @@ void pre_reduce_mod(int **mat,int row,int col,int nred,int md)
         DMAR(t[k],inv,0,md,t[k])
     for ( l = i-1; l >= 0; l-- ) {
       /* reduce mat[i] by mat[l] */
-      if ( hc = t[ind[l]] ) {
+      if ( ( hc = t[ind[l]] ) != 0 ) {
         /* mat[i] = mat[i]-hc*mat[l] */
         for ( k = ind[l], hc = md-hc, s = mat[l]+k, tk = t+k;
           k < col; k++, tk++, s++ )
@@ -1634,7 +1634,7 @@ void pre_reduce_mod(int **mat,int row,int col,int nred,int md)
     t = mat[i];
     for ( l = nred-1; l >= 0; l-- ) {
       /* reduce mat[i] by mat[l] */
-      if ( hc = t[ind[l]] ) {
+      if ( ( hc = t[ind[l]] ) != 0 ) {
         /* mat[i] = mat[i]-hc*mat[l] */
         for ( k = ind[l], hc = md-hc, s = mat[l]+k, tk = t+k;
           k < col; k++, tk++, s++ )
@@ -1658,14 +1658,14 @@ void reduce_sp_by_red_mod(int *sp,int **redmat,int *ind,int nred,int col,int md)
   /* reduce the spolys by redmat */
   for ( i = nred-1; i >= 0; i-- ) {
     /* reduce sp by redmat[i] */
-    if ( hc = sp[ind[i]] ) {
+    if ( ( hc = sp[ind[i]] ) != 0 ) {
       /* sp = sp-hc*redmat[i] */
       j = ind[i];
       hc = md-hc;
       s = redmat[i]+j;
       tj = sp+j;
       for ( k = col-j; k > 0; k-- ) {
-        if ( zzz = *s ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
+        if ( ( zzz = *s ) != 0 ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
       }
     }
   }
@@ -1763,7 +1763,7 @@ int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *c
         *pk = mulmod64(*pk,inv,md);
     for ( i = rank+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         red_by_vect64mod(md,t+j,pivot+j,md-a,col-j);
     }
     rank++;
@@ -1773,7 +1773,7 @@ int generic_gauss_elim_mod64(mp_limb_t **mat,int row,int col,mp_limb_t md,int *c
       pivot = mat[l];
       for ( i = 0; i < l; i++ ) {
         t = mat[i];
-        if ( a = t[j] )
+        if ( ( a = t[j] ) != 0 )
           red_by_vect64mod(md,t+j,pivot+j,md-a,col-j);
       }
       l--;
@@ -1944,7 +1944,7 @@ void reduce_sp_by_red_mod_compress (int *sp,CDP *redmat,int *ind,
   for ( i = nred-1; i >= 0; i-- ) {
     /* reduce sp by redmat[i] */
     usp[ind[i]] %= md;
-    if ( hc = usp[ind[i]] ) {
+    if ( ( hc = usp[ind[i]] ) != 0 ) {
       /* sp = sp-hc*redmat[i] */
       hc = md-hc;
       ri = redmat[i];
@@ -1990,7 +1990,7 @@ int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat)
       }
     for ( i = rank+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         red_by_vect(md,t+j,pivot+j,md-a,col-j);
     }
     rank++;
@@ -2001,7 +2001,7 @@ int generic_gauss_elim_mod(int **mat0,int row,int col,int md,int *colstat)
       for ( i = 0; i < l; i++ ) {
         t = mat[i];
         t[j] %= md;
-        if ( a = t[j] )
+        if ( ( a = t[j] ) != 0 )
           red_by_vect(md,t+j,pivot+j,md-a,col-j);
       }
       l--;
@@ -2050,7 +2050,7 @@ int generic_gauss_elim_mod2(int **mat0,int row,int col,int md,int *colstat,int *
       }
     for ( i = rank+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         red_by_vect(md,t+j,pivot+j,md-a,col-j);
     }
     rank++;
@@ -2061,7 +2061,7 @@ int generic_gauss_elim_mod2(int **mat0,int row,int col,int md,int *colstat,int *
       for ( i = 0; i < l; i++ ) {
         t = mat[i];
         t[j] %= md;
-        if ( a = t[j] )
+        if ( ( a = t[j] ) != 0 )
           red_by_vect(md,t+j,pivot+j,md-a,col-j);
       }
       l--;
@@ -2106,7 +2106,7 @@ int indep_rows_mod(int **mat0,int row,int col,int md,int *rowstat)
       }
     for ( i = rank+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         red_by_vect(md,t+j,pivot+j,md-a,col-j);
     }
     rank++;
@@ -2140,7 +2140,7 @@ int generic_gauss_elim_sf(int **mat0,int row,int col,int md,int *colstat)
         *pk = _mulsf(*pk,inv);
     for ( i = rank+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         red_by_vect_sf(md,t+j,pivot+j,_chsgnsf(a),col-j);
     }
     rank++;
@@ -2150,7 +2150,7 @@ int generic_gauss_elim_sf(int **mat0,int row,int col,int md,int *colstat)
       pivot = mat[l];
       for ( i = 0; i < l; i++ ) {
         t = mat[i];
-        if ( a = t[j] )
+        if ( ( a = t[j] ) != 0 )
           red_by_vect_sf(md,t+j,pivot+j,_chsgnsf(a),col-j);
       }
       l--;
@@ -2186,7 +2186,7 @@ int lu_gfmmat(GFMMAT mat,unsigned int md,int *perm)
     pivot[k] = inv = invm(pivot[k],md);
     for ( i = k+1; i < row; i++ ) {
       t = a[i];
-      if ( m = t[k] ) {
+      if ( ( m = t[k] ) != 0 ) {
         DMAR(inv,m,0,md,t[k])
         for ( j = k+1, m = md - t[k]; j < col; j++ )
           if ( pivot[j] ) {
@@ -2242,7 +2242,7 @@ int find_lhs_and_lu_mod(unsigned int **a,int row,int col,
     pivot[k] = inv = invm(pivot[k],md);
     for ( i = d+1; i < row; i++ ) {
       t = a[i];
-      if ( m = t[k] ) {
+      if ( ( m = t[k] ) != 0 ) {
         DMAR(inv,m,0,md,t[k])
         for ( j = k+1, m = md - t[k]; j < col; j++ )
           if ( pivot[j] ) {
@@ -2277,7 +2277,7 @@ int lu_mod(unsigned int **a,int n,unsigned int md,int **rinfo)
     inv = invm(pivot[k],md);
     for ( i = k+1; i < n; i++ ) {
       t = a[i];
-      if ( m = t[k] ) {
+      if ( ( m = t[k] ) != 0 ) {
         DMAR(inv,m,0,md,t[k])
         for ( j = k+1, m = md - t[k]; j < n; j++ )
           if ( pivot[j] ) {
@@ -2306,8 +2306,8 @@ void solve_by_lu_mod(int **a,int n,int md,int **b,int l,int normalize)
   int i,j,k;
   unsigned int t,m,m2;
 
-  y = (int *)MALLOC_ATOMIC(n*sizeof(int));
-  c = (int *)MALLOC_ATOMIC(n*sizeof(int));
+  y = (unsigned int *)MALLOC_ATOMIC(n*sizeof(int));
+  c = (unsigned int *)MALLOC_ATOMIC(n*sizeof(int));
   m2 = md>>1;
   for ( k = 0; k < l; k++ ) {
     /* copy b[.][k] to c */
@@ -2467,7 +2467,7 @@ int gauss_elim_geninv_mod(unsigned int **mat,int row,int col,int md)
       pivot[k] = dmar(pivot[k],inv,0,md);
     for ( i = j+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0  )
         for ( k = j, a = md - a; k < m; k++ )
           t[k] = dmar(pivot[k],a,t[k],md);
     }
@@ -2476,7 +2476,7 @@ int gauss_elim_geninv_mod(unsigned int **mat,int row,int col,int md)
     pivot = mat[j];
     for ( i = j-1; i >= 0; i-- ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         for ( k = j, a = md - a; k < m; k++ )
           t[k] = dmar(pivot[k],a,t[k],md);
     }
@@ -2694,7 +2694,7 @@ int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,unsigned int m
         pivot[k] = (unsigned int)dmar(pivot[k],inv,0,md);
     for ( i = j+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         for ( k = j, a = md - a; k < m; k++ )
           if ( pivot[k] )
             t[k] = dmar(pivot[k],a,t[k],md);
@@ -2704,7 +2704,7 @@ int gauss_elim_geninv_mod_swap(unsigned int **mat,int row,int col,unsigned int m
     pivot = mat[j];
     for ( i = j-1; i >= 0; i-- ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         for ( k = j, a = md - a; k < m; k++ )
           if ( pivot[k] )
             t[k] = dmar(pivot[k],a,t[k],md);
@@ -2740,7 +2740,7 @@ void Pgeninv_sf_swap(NODE arg,LIST *rp)
   for ( i = 0; i < row; i++ ) {
     bzero((char *)wmat[i],(col+row)*sizeof(int));
     for ( j = 0; j < col; j++ )
-      if ( q = (GFS)mat[i][j] )
+      if ( ( q = (GFS)mat[i][j] ) != 0 )
         wmat[i][j] = FTOIF(CONT(q));
     wmat[i][col+i] = _onesf();
   }
@@ -2751,7 +2751,7 @@ void Pgeninv_sf_swap(NODE arg,LIST *rp)
     MKMAT(mat1,col,col);
     for ( i = 0, tmat = (GFS **)mat1->body; i < col; i++ )
       for ( j = 0; j < col; j++ )
-        if ( t = invmat[i][j] ) {
+        if ( ( t = invmat[i][j] ) != 0 ) {
           MKGFS(IFTOF(t),tmat[i][j]);
         }
     MKVECT(vect1,row);
@@ -2788,7 +2788,7 @@ int gauss_elim_geninv_sf_swap(int **mat,int row,int col, int ***invmatp,int **in
         pivot[k] = _mulsf(pivot[k],inv);
     for ( i = j+1; i < row; i++ ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         for ( k = j, a = _chsgnsf(a); k < m; k++ )
           if ( pivot[k] ) {
             u = _mulsf(pivot[k],a);
@@ -2800,7 +2800,7 @@ int gauss_elim_geninv_sf_swap(int **mat,int row,int col, int ***invmatp,int **in
     pivot = mat[j];
     for ( i = j-1; i >= 0; i-- ) {
       t = mat[i];
-      if ( a = t[j] )
+      if ( ( a = t[j] ) != 0 )
         for ( k = j, a = _chsgnsf(a); k < m; k++ )
           if ( pivot[k] ) {
             u = _mulsf(pivot[k],a);
@@ -2973,7 +2973,7 @@ int generate_ONB_polynomial(UP2 *rp,int m,int type)
       for ( i = 0; i < w; i++ )
         f->b[i] = 0xffffffff;
       /* mask the top word if necessary */
-      if ( r = (m+1)&31 )
+      if ( ( r = (m+1)&31 ) != 0 )
         f->b[w-1] &= (1<<r)-1;
       return 0;
       break;

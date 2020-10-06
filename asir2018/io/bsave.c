@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/bsave.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/bsave.c,v 1.2 2019/08/28 23:27:34 noro Exp $
 */
 /* saveXXX must not use GC_malloc(), GC_malloc_atomic(). */
 
@@ -71,7 +71,7 @@ static short zeroval = 0;
 void saveobj(FILE *s,Obj p)
 {
   if ( !p )
-    write_short(s,&zeroval);
+    write_short(s,(unsigned short *)&zeroval);
   else if ( !savef[OID(p)] )
     error("saveobj : not implemented");
   else
@@ -85,12 +85,12 @@ void savenum(FILE *s,Num p)
   if ( !nsavef[NID(p)] )
     error("savenum : not implemented");
   else {
-    write_short(s,&OID(p)); write_char(s,&NID(p));
+    write_short(s,(unsigned short *)&OID(p)); write_char(s,(unsigned char *)&NID(p));
     if ( NID(p) == N_Q ) {
       sgn = sgnq((Q)p);
-      write_char(s,&sgn);
+      write_char(s,(unsigned char *)&sgn);
     } else
-      write_char(s,&(p->pad));
+      write_char(s,(unsigned char *)&(p->pad));
     (*nsavef[NID(p)])(s,p); 
   }
 }
@@ -107,8 +107,8 @@ void saveq(FILE *s,Q p)
     bnm = (int *)mpz_export(0,&lnm,-1,sizeof(int),0,0,BDY((Z)p));
     size[0] = lnm;
     size[1] = 0;
-    write_intarray(s,size,len);
-    write_intarray(s,bnm,size[0]);
+    write_intarray(s,(unsigned int *)size,len);
+    write_intarray(s,(unsigned int *)bnm,size[0]);
   } else {
     nmq(p,&nm);
     bnm = (int *)mpz_export(0,&lnm,-1,sizeof(int),0,0,BDY(nm));
@@ -116,9 +116,9 @@ void saveq(FILE *s,Q p)
     bdn = (int *)mpz_export(0,&ldn,-1,sizeof(int),0,0,BDY(dn));
     size[0] = lnm;
     size[1] = ldn;
-    write_intarray(s,size,len);
-    write_intarray(s,bnm,size[0]);
-    write_intarray(s,bdn,size[1]);
+    write_intarray(s,(unsigned int *)size,len);
+    write_intarray(s,(unsigned int *)bnm,size[0]);
+    write_intarray(s,(unsigned int *)bdn,size[1]);
   }
 }
 
@@ -142,25 +142,25 @@ void savebf(FILE *s,BF p)
   sgn = MPFR_SIGN(p->body);
   len = MPFR_LIMB_SIZE(p->body);
 
-  write_int(s,&sgn);
-  write_int(s,(int *)&prec);
+  write_int(s,(unsigned int *)&sgn);
+  write_int(s,&prec);
   write_int64(s,(UL *)&exp);
 #if defined(VISUAL)
 #if !defined(_WIN64)
-  write_int(s,&len);
+  write_int(s,(unsigned int *)&len);
   write_intarray(s,p->body->_mpfr_d,len);
 #else
   t = (prec+31)/32; 
-  write_int(s,&t);
+  write_int(s,(unsigned int *)&t);
   write_longarray(s,(long long *)p->body->_mpfr_d,t);
 #endif
 #else
 #if SIZEOF_LONG == 4
-  write_int(s,&len);
+  write_int(s,(unsigned int *)&len);
   write_intarray(s,p->body->_mpfr_d,len);
 #else /* SIZEOF_LONG == 8 */
   t = (prec+31)/32; 
-  write_int(s,&t);
+  write_int(s,(unsigned int *)&t);
   write_longarray(s,p->body->_mpfr_d,t);
 #endif
 #endif
@@ -184,7 +184,7 @@ void savecplx(FILE *s,C p)
 { saveobj(s,(Obj)p->r); saveobj(s,(Obj)p->i); }
 
 void savemi(FILE *s,MQ p)
-{ write_int(s,&CONT(p)); }
+{ write_int(s,(unsigned int *)&CONT(p)); }
 
 void savelm(FILE *s,LM p)
 {
@@ -194,8 +194,8 @@ void savelm(FILE *s,LM p)
 
   b = (int *)mpz_export(0,&l,-1,sizeof(int),0,0,BDY(p));
   size = l;
-  write_int(s,&size);
-  write_intarray(s,b,size);
+  write_int(s,(unsigned int *)&size);
+  write_intarray(s,(unsigned int *)b,size);
 }
 
 void savegf2n(FILE *s,GF2N p)
@@ -203,7 +203,7 @@ void savegf2n(FILE *s,GF2N p)
   int len;
 
   len = p->body->w;
-  write_int(s,&len);
+  write_int(s,(unsigned int *)&len);
   write_intarray(s,p->body->b,len);
 }
 
@@ -212,21 +212,21 @@ void savegfpn(FILE *s,GFPN p)
   int d,i;
 
   d = p->body->d;
-  write_int(s,&d);
+  write_int(s,(unsigned int *)&d);
   for ( i = 0; i <= d; i++ )
     saveobj(s,(Obj)p->body->c[i]);
 }
 
 void savegfs(FILE *s,GFS p)
-{ write_int(s,&CONT(p)); }
+{ write_int(s,(unsigned int *)&CONT(p)); }
 
 void savegfsn(FILE *s,GFSN p)
 {
   int d;
 
   d = DEG(BDY(p));
-  write_int(s,&d);
-  write_intarray(s,COEF(BDY(p)),d+1);
+  write_int(s,(unsigned int *)&d);
+  write_intarray(s,(unsigned int *)COEF(BDY(p)),d+1);
 }
 
 void savedalg(FILE *s,DAlg p)
@@ -246,11 +246,11 @@ void savep(FILE *s,P p)
   else {
     vindex = save_convv(VR(p)); 
     for ( dc = DC(p), n = 0; dc; dc = NEXT(dc), n++ );
-    write_short(s,&OID(p));
-    write_int(s,&vindex);
+    write_short(s,(unsigned short *)&OID(p));
+    write_int(s,(unsigned int *)&vindex);
     if ( vindex < 0 )
       savepfins(s,VR(p));
-    write_int(s,&n);
+    write_int(s,(unsigned int *)&n);
     for ( dc = DC(p); dc; dc = NEXT(dc) ) {
       saveobj(s,(Obj)DEG(dc)); saveobj(s,(Obj)COEF(dc));
     }
@@ -271,11 +271,11 @@ void savepfins(FILE *s,V v)
   pf = ins->pf;
   savestr(s,NAME(pf));
   argc = pf->argc;
-  write_int(s,&argc);
+  write_int(s,(unsigned int *)&argc);
   darray = (int *)ALLOCA(argc*sizeof(int));
   for ( i = 0; i < argc; i++ )
     darray[i] = ins->ad[i].d;
-  write_intarray(s,darray,argc);
+  write_intarray(s,(unsigned int *)darray,argc);
   for ( i = 0; i < argc; i++ )
     saveobj(s,ins->ad[i].arg);
 }
@@ -285,7 +285,7 @@ void saver(FILE *s,R p)
   if ( !RAT(p) )
     savep(s,(P)p);
   else {
-    write_short(s,&OID(p)); write_short(s,&p->reduced);
+    write_short(s,(unsigned short *)&OID(p)); write_short(s,(unsigned short *)&p->reduced);
     savep(s,NM(p)); savep(s,DN(p));
   }
 }
@@ -296,7 +296,7 @@ void savelist(FILE *s,LIST p)
   NODE tn;
 
   for ( tn = BDY(p), n = 0; tn; tn = NEXT(tn), n++ );
-  write_short(s,&OID(p)); write_int(s,&n);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&n);
   for ( tn = BDY(p); tn; tn = NEXT(tn) )
     saveobj(s,(Obj)BDY(tn));
 }
@@ -305,7 +305,7 @@ void savevect(FILE *s,VECT p)
 {
   int i,len = 2;
 
-  write_short(s,&OID(p)); write_int(s,&p->len);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&p->len);
   for ( i = 0, len = p->len; i < len; i++ )
     saveobj(s,(Obj)BDY(p)[i]);
 }
@@ -315,7 +315,7 @@ void savemat(FILE *s,MAT p)
   int i,j,row,col;
   int len = 3;
 
-  write_short(s,&OID(p)); write_int(s,&p->row); write_int(s,&p->col);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&p->row); write_int(s,(unsigned int *)&p->col);
   for ( i = 0, row = p->row, col = p->col; i < row; i++ )
     for ( j = 0; j < col; j++ )
       saveobj(s,(Obj)BDY(p)[i][j]);
@@ -323,16 +323,16 @@ void savemat(FILE *s,MAT p)
 
 void savestring(FILE *s,STRING p)
 {
-  write_short(s,&OID(p)); savestr(s,BDY(p));
+  write_short(s,(unsigned short *)&OID(p)); savestr(s,BDY(p));
 }
 
 void savestr(FILE *s,char *p)
 {
   int size;
 
-  size = p ? strlen(p) : 0; write_int(s,&size);
+  size = p ? strlen(p) : 0; write_int(s,(unsigned int *)&size);
   if ( size )
-    write_string(s,p,size);
+    write_string(s,(unsigned char *)p,size);
 }
 
 void savedp(FILE *s,DP p)
@@ -342,10 +342,10 @@ void savedp(FILE *s,DP p)
 
   nv = p->nv; m = p->body; sugar = p->sugar;
   for ( n = 0, t = m; t; t = NEXT(t), n++ );  
-  write_short(s,&OID(p)); write_int(s,&nv); write_int(s,&sugar); write_int(s,&n);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&nv); write_int(s,(unsigned int *)&sugar); write_int(s,(unsigned int *)&n);
   for ( i = 0, t = m; i < n; i++, t = NEXT(t) ) {
     saveobj(s,(Obj)t->c);
-    write_int(s,&t->dl->td); write_intarray(s,&(t->dl->d[0]),nv);
+    write_int(s,(unsigned int *)&t->dl->td); write_intarray(s,(unsigned int *)&(t->dl->d[0]),nv);
   }
 }
 
@@ -356,36 +356,36 @@ void savedpm(FILE *s,DPM p)
 
   nv = p->nv; m = p->body; sugar = p->sugar;
   for ( n = 0, t = m; t; t = NEXT(t), n++ );  
-  write_short(s,&OID(p)); write_int(s,&nv); write_int(s,&sugar); write_int(s,&n);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&nv); write_int(s,(unsigned int *)&sugar); write_int(s,(unsigned int *)&n);
   for ( i = 0, t = m; i < n; i++, t = NEXT(t) ) {
     saveobj(s,(Obj)t->c);
-    write_int(s,&t->pos);
-    write_int(s,&t->dl->td); write_intarray(s,&(t->dl->d[0]),nv);
+    write_int(s,(unsigned int *)&t->pos);
+    write_int(s,(unsigned int *)&t->dl->td); write_intarray(s,(unsigned int *)&(t->dl->d[0]),nv);
   }
 }
 
 void saveui(FILE *s,USINT u)
 {
-  write_short(s,&OID(u)); write_int(s,&BDY(u));
+  write_short(s,(unsigned short *)&OID(u)); write_int(s,(unsigned int *)&BDY(u));
 }
 
 void saveerror(FILE *s,ERR e)
 {
-  write_short(s,&OID(e)); saveobj(s,(Obj)BDY(e));
+  write_short(s,(unsigned short *)&OID(e)); saveobj(s,(Obj)BDY(e));
 }
 
 void savegfmmat(FILE *s,GFMMAT p)
 {
   int i,row,col;
 
-  write_short(s,&OID(p)); write_int(s,&p->row); write_int(s,&p->col);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&p->row); write_int(s,(unsigned int *)&p->col);
   for ( i = 0, row = p->row, col = p->col; i < row; i++ )
-    write_intarray(s,p->body[i],col);
+    write_intarray(s,(unsigned int *)p->body[i],col);
 }
 
 void savebytearray(FILE *s,BYTEARRAY p)
 {
-  write_short(s,&OID(p)); write_int(s,&p->len);
+  write_short(s,(unsigned short *)&OID(p)); write_int(s,(unsigned int *)&p->len);
   write_string(s,p->body,p->len);
 }
 
@@ -395,13 +395,13 @@ void savenbp(FILE *s,NBP p)
   NODE t;
   NBM m;
 
-  write_short(s,&OID(p));
+  write_short(s,(unsigned short *)&OID(p));
   for ( n = 0, t = BDY(p); t; t = NEXT(t), n++ );
-  write_int(s,&n);
+  write_int(s,(unsigned int *)&n);
   for ( i = 0, t = BDY(p); i < n; t = NEXT(t), i++ ) {
     m = (NBM)BDY(t);
     saveobj(s,(Obj)m->c);
-    write_int(s,&m->d);
-    write_intarray(s,m->b,(m->d+31)/32);
+    write_int(s,(unsigned int *)&m->d);
+    write_intarray(s,(unsigned int *)m->b,(m->d+31)/32);
   }
 }

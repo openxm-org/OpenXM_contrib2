@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/D.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/D.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 
@@ -296,7 +296,8 @@ int ncombi(int n0,int n,int k,int *c)
 void nthrootz(Z number,int n,Z *root)
 {
   Z s,t,u,pn,base,n1,n2,q,r,gcd,num,z;
-  int sgn,index,p,i,tmp,tp,mlr,num0;
+  int sgn,index,p,i,tp,mlr,num0;
+  unsigned int tmp;
 
   for (  i = 0; !(n % 2); n /= 2, i++ );
   STOZ(n,z);

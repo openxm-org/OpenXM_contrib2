@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/H.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/H.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -474,7 +474,8 @@ void hsq(int index,int count,P f,int *nindex,DCP *dcp)
   register int **pp,**fpp;
   register int *px,*py;
   int **wpp;
-  int n,dr,tmp,m,b,e,np,dt;
+  int n,dr,m,b,e,np,dt;
+  unsigned int tmp;
   LUM fpa,wb0,wb1,lcpa,tpa,tlum;
   struct oDUM *dct;
   UM wt,wq0,wq,wr,wm,wm0,wa,ws,wb;

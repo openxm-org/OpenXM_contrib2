@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ftab.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -98,7 +98,7 @@ void sysf_init() {
   int i,j;
   struct ftab *tab;
 
-  for ( j = 0, sysf = 0; tab = ftabs[j]; j++ )
+  for ( j = 0, sysf = 0; (tab = ftabs[j]) != 0; j++ )
     for ( i = 0; tab[i].name; i++ )
       appendbinf(&sysf,tab[i].name,tab[i].f,tab[i].argc,tab[i].quote);
   for ( i = 0, noargsysf = 0; nasysftab[i].name; i++ )

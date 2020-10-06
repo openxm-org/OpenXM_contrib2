@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/poly.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/poly.c,v 1.3 2019/03/03 05:21:16 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -382,7 +382,7 @@ void Pget_next_fft_prime(NODE arg,LIST *rp)
   start = ZTOS((Q)ARG0(arg));
   bits = ZTOS((Q)ARG1(arg));
   for ( i = start; ; i++ ) {
-    get_fft_prime(i,&mod,&d);
+    get_fft_prime(i,(int *)&mod,(int *)&d);
     if ( !mod ) {
       *rp = 0; return;
     }

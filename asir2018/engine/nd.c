@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.35 2020/08/26 06:40:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.36 2020/09/27 04:35:04 noro Exp $ */
 
 #include "nd.h"
 
@@ -10977,8 +10977,9 @@ again2:
       if ( bucket->m < 0 ) continue;
       col = nd_symbolic_preproc_s(bucket,0,&s0vect,&rp0);
       if ( !col ) {
-        for ( t = l; NEXT(t); t = NEXT(t) );
-          NEXT(t) = d; d = l;
+        for ( t = l; NEXT(t); t = NEXT(t) )
+          ;
+        NEXT(t) = d; d = l;
         d = nd_reconstruct(0,d);
         goto again2;
       }

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.4 2020/02/02 05:13:30 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.5 2020/03/29 17:01:55 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -204,16 +204,16 @@ void create_my_mathcap(char *system)
   /* sm tag */
   n0 = 0;
   if ( !strcmp(system,"asir") ) {
-    for ( i = 0; k = asir_available_sm[i]; i++ ) {
+    for ( i = 0; (k = asir_available_sm[i]) != 0; i++ ) {
       NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
     }
   } else if ( !strcmp(system,"ox_asir") ) {
-    for ( i = 0; k = ox_asir_available_sm[i]; i++ ) {
+    for ( i = 0; (k = ox_asir_available_sm[i]) != 0; i++ ) {
       NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
     }
     NEXT(n) = 0;
   } else if ( !strcmp(system,"ox_plot") ) {
-    for ( i = 0; k = ox_plot_available_sm[i]; i++ ) {
+    for ( i = 0; (k = ox_plot_available_sm[i]) != 0; i++ ) {
       NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
     }
     NEXT(n) = 0;
@@ -224,7 +224,7 @@ void create_my_mathcap(char *system)
   /* ox tag */
   MKUSINT(tag,OX_DATA);
   /* cmo tag */
-  for ( n0 = 0, i = 0; k = available_cmo[i]; i++ ) {
+  for ( n0 = 0, i = 0; (k = available_cmo[i]) != 0; i++ ) {
     NEXTNODE(n0,n); MKUSINT(t,k); BDY(n) = (pointer)t;
   }
   NEXT(n) = 0; MKLIST(cmolist,n0);
@@ -299,7 +299,7 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc)
 {
   int l,i,j;
   NODE n,t,oxcmo,cap;
-  int *ptr;
+  unsigned int *ptr;
 
   /*
     [ 
@@ -322,7 +322,7 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc)
   n = NEXT(n);
   t = BDY((LIST)BDY(n));
   mc->nsmcap = length(t);
-  mc->smcap = (int *)MALLOC_ATOMIC(mc->nsmcap*sizeof(int));
+  mc->smcap = (unsigned int *)MALLOC_ATOMIC(mc->nsmcap*sizeof(unsigned int));
   for ( j = 0, ptr = mc->smcap; j < mc->nsmcap; j++, t = NEXT(t) )
     ptr[j] = BDY((USINT)BDY(t));
 
@@ -339,8 +339,8 @@ void mclist_to_mc(LIST mclist,struct mathcap *mc)
     /* cap ->BDY(CMOlistj) */
     l = length(cap);
     mc->oxcap[j].ncap = l;
-    mc->oxcap[j].cap = (unsigned int *)CALLOC(l+1,sizeof(unsigned int));
-    for ( t = cap, ptr = mc->oxcap[j].cap, i = 0; i < l; t = NEXT(t), i++ )
+    mc->oxcap[j].cap = (int *)CALLOC(l+1,sizeof(int));
+    for ( t = cap, ptr = (unsigned int *)mc->oxcap[j].cap, i = 0; i < l; t = NEXT(t), i++ )
       ptr[i] = BDY((USINT)BDY(t));
   }
   /* check of no_ox_reset */
@@ -398,7 +398,7 @@ int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
   if ( i == noxcap )
     return 0;
   ncap = oxcap[i].ncap;
-  cap = oxcap[i].cap;
+  cap = (unsigned int *)oxcap[i].cap;
   for ( j = 0; j < ncap; j++ )
     if ( cap[j] == cmotag )
       break;
@@ -719,7 +719,7 @@ void ox_send_local_ring_102(int rank,VL vl)
 
 unsigned int ox_recv(int s, int *id, Obj *p)
 {
-  unsigned int cmd,serial;
+  int cmd,serial;
   USINT ui;
 
   wait_for_data(s);
@@ -748,7 +748,7 @@ unsigned int ox_recv(int s, int *id, Obj *p)
 
 unsigned int ox_recv_102(int rank, int *id, Obj *p)
 {
-  unsigned int cmd,serial;
+  int cmd,serial;
   USINT ui;
 
   wait_for_data_102(rank);
@@ -802,13 +802,13 @@ void ox_get_result(int s,Obj *rp)
 void ox_read_int(int s, int *n)
 {
   ox_need_conv = iofp[s].conv;
-  read_int((FILE *)iofp[s].in,n);
+  read_int((FILE *)iofp[s].in,(unsigned int *)n);
 }
 
 void ox_read_int_102(int rank, int *n)
 {
   ox_need_conv = iofp_102[rank].conv;
-  read_int((FILE *)iofp_102[rank].in,n);
+  read_int((FILE *)iofp_102[rank].in,(unsigned int *)n);
 }
 
 void ox_read_cmo(int s, Obj *rp)
@@ -829,7 +829,7 @@ void ox_read_local(int s, Obj *rp)
   int id;
 
   ox_need_conv = iofp[s].conv;
-  read_int((FILE *)iofp[s].in,&id);
+  read_int((FILE *)iofp[s].in,(unsigned int *)&id);
   switch ( id ) {
     case ASIR_VL:
       loadvl((FILE *)iofp[s].in);
@@ -849,7 +849,7 @@ void ox_read_local_102(int rank, Obj *rp)
   int id;
 
   ox_need_conv = iofp_102[rank].conv;
-  read_int((FILE *)iofp_102[rank].in,&id);
+  read_int((FILE *)iofp_102[rank].in,(unsigned int *)&id);
   switch ( id ) {
     case ASIR_VL:
       loadvl((FILE *)iofp_102[rank].in);
@@ -867,13 +867,13 @@ void ox_read_local_102(int rank, Obj *rp)
 void ox_write_int(int s, int n)
 {
   ox_need_conv = iofp[s].conv;
-  write_int((FILE *)iofp[s].out,&n);
+  write_int((FILE *)iofp[s].out,(unsigned int *)&n);
 }
 
 void ox_write_int_102(int rank, int n)
 {
   ox_need_conv = iofp_102[rank].conv;
-  write_int((FILE *)iofp_102[rank].out,&n);
+  write_int((FILE *)iofp_102[rank].out,(unsigned int *)&n);
 }
 
 void ox_write_cmo(int s, Obj obj)

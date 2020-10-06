@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/debug.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/debug.c,v 1.2 2019/03/28 05:28:33 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -176,7 +176,7 @@ void show_alias(char *alias)
 
   if ( !alias )
     for ( i = 0; dckwd[i].names; i++ ) {
-      if ( tn = NEXT(dckwd[i].names) )
+      if ( ( tn = NEXT(dckwd[i].names) ) != 0 )
         fprintf(stderr,"%s\t",debcom[i]);
       for ( ; tn; tn = NEXT(tn) ) {
         fputs(BDY(tn),stderr);
@@ -214,11 +214,12 @@ void debug(SNODE f)
   NODE pvss;
 
 #if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__)
-  if ( !isatty(fileno(stdin)) && !do_server_in_X11 )
+  if ( !isatty(fileno(stdin)) && !do_server_in_X11 ) {
     if ( do_file )
       ExitAsir();
     else
       return;
+  }
 #endif
 #if defined(VISUAL) || defined(__MINGW32__)
   suspend_timer();
@@ -589,8 +590,8 @@ void showbps() {
 
 void showbp(int n)
 {
-  if ( bpt[n].snp )
-    if ( bpt[n].texpr )
+  if ( bpt[n].snp ) {
+    if ( bpt[n].texpr ) {
       if ( bpt[n].at ) {
         if ( bpt[n].cond )
           fprintf(stderr,"(%d) trace %s at \"%s\":%d if %s\n",
@@ -605,7 +606,7 @@ void showbp(int n)
         else
           fprintf(stderr,"(%d) trace %s in %s\n",n,bpt[n].texpr,bpt[n].f->name);
       }
-    else
+    } else {
       if ( bpt[n].at ) {
         if ( bpt[n].cond )
           fprintf(stderr,"(%d) stop at \"%s\":%d if %s\n",
@@ -620,6 +621,8 @@ void showbp(int n)
         else
           fprintf(stderr,"(%d) stop in %s\n",n,bpt[n].f->name);
       }
+    }
+  }
 }
 
 void searchsn(SNODE *fp,int n,SNODE **fpp)
@@ -632,7 +635,7 @@ void searchsn(SNODE *fp,int n,SNODE **fpp)
   switch (ID(*fp)) {
     case S_CPLX:
       for ( tn = (NODE)FA0(*fp); tn; tn = NEXT(tn) )
-        if ( sn = (SNODE)BDY(tn) ) {
+        if ( ( sn = (SNODE)BDY(tn) ) != 0 ) {
           snp = (SNODE *)(ID(sn) == S_BP ? &FA0(sn) : &BDY(tn));
           if ( (*snp)->ln >= n ) {
             searchsn(snp,n,fpp); break;

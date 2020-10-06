@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/asm/ddM.c,v 1.1 2018/09/19 05:45:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -70,7 +70,7 @@ void mulum(int mod,UM p1,UM p2,UM pr)
   c1 = COEF(p1); c2 = COEF(p2); cr = COEF(pr);
   bzero((char *)cr,(int)((d1+d2+1)*sizeof(int)));
   for ( i = 0; i <= d2; i++, cr++ ) 
-    if ( mul = *c2++ ) 
+    if ( (mul = *c2++) != 0 ) 
       for ( j = 0, pc1 = c1, pcr = cr; j <= d1; j++, pc1++, pcr++ ) {
         DMAR(*pc1,mul,*pcr,mod,*pcr)
       }
@@ -108,7 +108,7 @@ int divum(int mod,UM p1,UM p2,UM pq)
   } else 
     inv = 1;
   for ( i = dd, ct = c1+d1; i >= 0; i-- ) 
-    if ( tmp = *ct-- ) {
+    if ( (tmp = *ct--) != 0 ) {
       tmp = mod - tmp;
       for ( j = d2-1, pct = ct, pc1 = c2+j; j >= 0; j--, pct--, pc1-- ) {
         DMAR(*pc1,tmp,*pct,mod,*pct)
@@ -206,7 +206,7 @@ void mulpadic(int mod,int n,unsigned int *n1,unsigned int *n2,unsigned int *nr)
 
   bzero((char *)nr,(int)(n*sizeof(int)));
   for ( j = 0; j < n; j++, n2++, nr++ ) 
-    if ( mul = *n2 )
+    if ( (mul = *n2) != 0 )
       for ( i = j, carry = 0, pn1 = n1, pnr = nr; 
         i < n; i++, pn1++, pnr++ ) {
         carry += *pnr;
@@ -249,14 +249,14 @@ void kmulum(int mod,UM n1,UM n2,UM nr)
     if ( m ) {
       kmulum(mod,m,n2,t);
       addum(mod,t,carry,s);
-      c_copyum(s,d2,r);
+      c_copyum(s,d2,(int *)r);
       extractum(s,d2,d2,carry);
     } else {
-      c_copyum(carry,d2,r);
+      c_copyum(carry,d2,(int *)r);
       carry = 0;
     }
   }
-  c_copyum(carry,d2,r);
+  c_copyum(carry,d2,(int *)r);
   for ( l = len - 1; !r0[l]; l-- );
   l++;
   DEG(nr) = l-1;

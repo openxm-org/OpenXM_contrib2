@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.2 2019/11/12 10:53:23 kondoh Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.3 2020/02/22 06:23:36 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -568,6 +568,7 @@ void PRINTFNODE(FNODE f,int paren)
         case L_AND: opname = ("@&&"); break;
         case L_OR: opname = ("@||"); break;
         case L_NOT: opname = ("@!"); break;
+        default: break;
       }
       if ( (lid)FA0(f)==L_NOT ) {
         PUTS(opname); PRINTFNODE((FNODE)FA1(f),1);
@@ -1098,7 +1099,7 @@ void PRINTUP2(UP2 p)
       PUTS("@"); PRINTHAT; TAIL PRINTF(OUT,"%d",d);
     }
     for ( i = d-1; i >= 0; i-- ) {
-      if ( p->b[i/BSH] & (1<<(i%BSH)) )
+      if ( p->b[i/BSH] & (1<<(i%BSH)) ) {
         if ( !i ) {
           TAIL PRINTF(OUT,"+1");
         } else if ( i == 1 ) {
@@ -1106,6 +1107,7 @@ void PRINTUP2(UP2 p)
         } else {
           PUTS("+@"); PRINTHAT; TAIL PRINTF(OUT,"%d",i);
         }
+      }
     }
     TAIL PRINTF(OUT,")");
   }

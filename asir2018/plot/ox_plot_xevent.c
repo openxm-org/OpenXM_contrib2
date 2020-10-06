@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/ox_plot_xevent.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -913,7 +913,7 @@ static void set_printing_method(Widget w,XtPointer number,XtPointer call_data)
   Widget shell;
   extern int PrintingMethod;
   PrintingMethod = (long) number;
-  fprintf(stderr,"PrintingMethod=%d\n",(long)number);
+  fprintf(stderr,"PrintingMethod=%ld\n",(long)number);
   shell = XtParent(XtParent(w));
   XtPopdown(shell); XtDestroyWidget(shell);
 }

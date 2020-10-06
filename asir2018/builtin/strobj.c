@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/strobj.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/strobj.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -880,7 +880,7 @@ void fnode_do_assign(NODE arg)
 }
 
 /* 
-/* consistency check and merge
+ * consistency check and merge
  */
 
 int merge_matching_node(NODE n,NODE a,NODE *rp)
@@ -1080,6 +1080,8 @@ int qt_match(Obj f, Obj pat, NODE *rp)
         return qt_match_node(farg,parg,rp);
     }
   }
+  /* XXX */
+  return 0;
 }
 
 void Pquotetotex(NODE arg,STRING *rp)
@@ -1239,7 +1241,7 @@ NODE arg;
 LIST *rp;
 {
   STRING str;
-  unsigned char *p;
+  char *p;
   int len,i;
   NODE n,n1;
   Z q;
@@ -1677,6 +1679,8 @@ void fnodetotex_tb(FNODE f,TB tb)
           fnodetotex_tb((FNODE)FA1(f),tb);
           write_tb(")",tb);
           return;
+        default:
+          return;
       }
       break;
 
@@ -1829,6 +1833,7 @@ void fnodetotex_tb(FNODE f,TB tb)
 
     default:
       error("fnodetotex_tb : not implemented yet");
+      return;
   }
 }
 
@@ -2583,7 +2588,7 @@ void Pnbm_hp_rest(NODE arg, LIST *rp)
     MKLIST(*rp,0);
   else {
     m = (NBM)BDY(BDY(p));  
-    b = m->b; d = m->d;
+    b = (int *)m->b; d = m->d;
     if ( !d )
       MKLIST(*rp,0);
     else {
@@ -2591,14 +2596,14 @@ void Pnbm_hp_rest(NODE arg, LIST *rp)
       for ( i = 1; i < d; i++ )
         if ( NBM_GET(b,i) != v ) break;
       NEWNBM(m1); NEWNBMBDY(m1,i); 
-      b1 = m1->b; m1->d = i; m1->c = (P)ONE;
+      b1 = (int *)m1->b; m1->d = i; m1->c = (P)ONE;
       if ( v ) for ( j = 0; j < i; j++ ) NBM_SET(b1,j);
       else for ( j = 0; j < i; j++ ) NBM_CLR(b1,j);
       MKNODE(n,m1,0); MKNBP(h,n);
 
       d1 = d-i;
       NEWNBM(m1); NEWNBMBDY(m1,d1);
-      b1 = m1->b; m1->d = d1; m1->c = (P)ONE;
+      b1 = (int *)m1->b; m1->d = d1; m1->c = (P)ONE;
       for ( j = 0, k = i; j < d1; j++, k++ )
         if ( NBM_GET(b,k) ) NBM_SET(b1,j);
         else NBM_CLR(b1,j);
@@ -2717,6 +2722,8 @@ NBP fnode_to_nbp(FNODE f)
     pwrnbp(CO,u,r,&u1);
     return u1;
   }
+  /* XXX */
+  return 0;
 }
 
 void Pnqt_weight(NODE arg,Z *rp)
@@ -3341,6 +3348,8 @@ FNODE nfnode_mul_coef(Obj c,FNODE f,int expand)
         return fnode_node_to_nary(mulfs,mknode(2,cc,b1));
     }
   }
+  /* XXX */
+  return 0;
 }
 
 void fnode_coef_body(FNODE f,Obj *cp,FNODE *bp)
@@ -3414,6 +3423,7 @@ int nfnode_weight(struct wtab *tab,FNODE f)
       return nfnode_weight(tab,FA1(f))*w;
     default:
       error("nfnode_weight : not_implemented");
+      return 0;
   }
 }
 
@@ -3470,7 +3480,7 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
   if ( IS_BINARYPWR(f1) || IS_BINARYPWR(f2) ) {
     fnode_base_exp(f1,&b1,&e1);
     fnode_base_exp(f2,&b2,&e2);
-    if ( r = nfnode_comp_lex(b1,b2) ) {
+    if ( ( r = nfnode_comp_lex(b1,b2) ) != 0 ) {
       if ( r > 0 )
         return nfnode_comp_lex(e1,mkfnode(1,I_FORMULA,NULLP));
       else if ( r < 0 )
@@ -3506,7 +3516,7 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
             /* compare args */
             n1 = FA0((FNODE)FA1(f1)); n2 = FA0((FNODE)FA1(f2));
             while ( n1 && n2 )
-              if ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) return r;
+              if ( ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) != 0 ) return r;
               else {
                 n1 = NEXT(n1); n2 = NEXT(n2);
               }
@@ -3544,7 +3554,7 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
             /* compare args */
             n1 = FA0((FNODE)FA1(f1)); n2 = FA0((FNODE)FA1(f2));
             while ( n1 && n2 )
-              if ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) return r;
+              if ( ( r = nfnode_comp_lex(BDY(n1),BDY(n2)) ) != 0 ) return r;
               else {
                 n1 = NEXT(n1); n2 = NEXT(n2);
               }
@@ -3554,11 +3564,14 @@ int nfnode_comp_lex(FNODE f1,FNODE f2)
 
         default:
           error("nfnode_comp_lex : undefined");
+          return 0;
       }
       break;
     default:
       error("nfnode_comp_lex : undefined");
+      return 0;  
   }
+  return 0;  
 }
 
 NODE append_node(NODE a1,NODE a2)
@@ -3661,7 +3674,9 @@ int nfnode_match(FNODE f,FNODE pat,NODE *rp)
 
     default:
       error("nfnode_match : invalid pattern");
+      return 0;  
   }
+  return 0;
 }
 
 /* remove i-th element */
@@ -3684,7 +3699,8 @@ FNODE fnode_removeith_naryadd(FNODE p,int i)
     NEXT(r) = NEXT(t);
     return fnode_node_to_nary(addfs,r0);
   }
-  
+  /* XXX */
+  return 0;  
 }
 
 /* a0,...,a(i-1) */
@@ -3883,5 +3899,6 @@ NODE nfnode_pvars(FNODE pat,NODE found)
 
     default:
       error("nfnode_match : invalid pattern");
+      return 0;
   }
 }

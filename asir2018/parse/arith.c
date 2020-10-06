@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/arith.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -220,7 +220,7 @@ void arf_div(VL vl,Obj a,Obj b,Obj *r)
     error("div : division by 0");
   if ( !a )
     *r = 0;
-  else if ( (OID(a) == OID(b)) )
+  else if ( OID(a) == OID(b) )
     (*(afunc[OID(a)].div))(vl,a,b,r);
   else if ( (mid = MAX(OID(a),OID(b))) <= O_R || 
     (mid == O_MAT) || (mid == O_VECT) || (mid == O_DP) || mid == O_QUOTE )
@@ -325,7 +325,7 @@ int complist(VL vl,LIST a,LIST b)
   else if ( !an && bn )
     return -1;
   for ( an = BDY(a), bn = BDY(b); an; an = NEXT(an), bn = NEXT(bn) )
-    if ( t = arf_comp(vl,BDY(an),BDY(bn)) )
+    if ( ( t = arf_comp(vl,BDY(an),BDY(bn)) ) != 0 )
       return t;
   return 0;
 }

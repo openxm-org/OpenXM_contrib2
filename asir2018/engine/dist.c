@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.22 2020/02/11 01:43:57 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.23 2020/06/19 10:18:13 noro Exp $
 */
 #include "ca.h"
 
@@ -3220,6 +3220,8 @@ int compdmm_schreyer(int n,DMM m1,DMM m2)
       else return 0;
     }
   }
+  /* XXX */
+  return 0;
 }
 
 int compdmm_schreyer_old(int n,DMM m1,DMM m2)
@@ -3302,6 +3304,7 @@ int compdmm(int n,DMM m1,DMM m2)
     else return (*cmpdl)(n,m1->dl,m2->dl);
   default:
     error("compdmm : invalid dpm_ordtype");
+    return 0;
   }
 }
 

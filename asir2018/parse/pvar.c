@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/pvar.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/pvar.c,v 1.2 2020/09/27 04:35:05 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -234,7 +234,7 @@ unsigned int makepvar(char *str)
       c = PVGLOBAL((unsigned int)c);
     } else {
       /* not declared as static or extern */
-      buf = ALLOCA(strlen("undeclared variable"+strlen(str)+10));
+      buf = ALLOCA(strlen("undeclared variable")+strlen(str)+10);
       sprintf(buf,"undeclared variable `%s'",str);
       yyerror(buf);
     }
@@ -245,9 +245,10 @@ unsigned int makepvar(char *str)
   return c;
 
 CONFLICTION:
-  buf = ALLOCA(strlen("conflicting declarations for "+strlen(str)+10));
+  buf = ALLOCA(strlen("conflicting declarations for ")+strlen(str)+10);
   sprintf(buf,"conflicting declarations for `%s'",str);
   yyerror(buf);
+  return 0;
 }
 
 extern FUNC parse_targetf;

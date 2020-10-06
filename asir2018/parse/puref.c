@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/puref.c,v 1.2 2018/09/28 08:20:29 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/puref.c,v 1.3 2019/11/12 10:53:23 kondoh Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -322,8 +322,10 @@ int obj_is_dependent(Obj a,V v)
   else if ( OID(a) == O_P ) return poly_is_dependent((P)a,v);
   else if ( OID(a) == O_R ) return poly_is_dependent(NM((R)a),v) 
     || poly_is_dependent(DN((R)a),v);
-  else
+  else {
     error("obj_is_dependent : not implemented");
+    return 0;
+  }
 }
 
 int poly_is_dependent(P p,V v)
@@ -731,7 +733,7 @@ void simplify_abs_ins(PFINS ins,Obj *rp)
     MKReal(t,r); *rp = (Obj)r;
   } else if ( !ad[0].d && BIGFLOAT(a) ) {
     arg0.body = (pointer)a; arg0.next = 0;
-    mp_abs(&arg0,rp);
+    mp_abs(&arg0,(Num *)rp);
 #if defined(INTERVAL)
   } else if ( !ad[0].d && ITVD(a) ) {
     absintvald((IntervalDouble)a,(IntervalDouble*)rp);

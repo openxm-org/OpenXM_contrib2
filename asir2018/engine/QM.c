@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/QM.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/QM.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 
@@ -83,7 +83,7 @@ void mulmq(m,n1,n2,nr)
 int m;
 MQ n1,n2,*nr;
 {
-  int a,b;
+  unsigned int a,b;
 
   if ( !n1 || !n2 ) 
     *nr = 0;
@@ -96,7 +96,7 @@ void divmq(m,n1,n2,nq)
 int m;
 MQ n1,n2,*nq;
 {
-  int a,b;
+  unsigned int a,b;
 
   if ( !n2 )
     error("divmq : division by 0");

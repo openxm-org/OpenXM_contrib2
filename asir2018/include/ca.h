@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.17 2019/12/27 08:13:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.18 2020/02/22 06:23:36 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1466,11 +1466,11 @@ int divcheck(VL,P *,int,P,P);
 int divtdcpz(VL,P,P,P *);
 int divtpz(VL,P,P,P *);
 int divum(register int,UM,UM,UM);
-int dm(int,int,int *);
-int dmb(int,int,int,int *);
-int dma(int,int,int,int *);
-int dmab(int,int,int,int,int *);
-int dmar(int,int,int,int);
+unsigned int dm(unsigned int,unsigned int,unsigned int *);
+unsigned int dmb(unsigned int,unsigned int,unsigned int,unsigned int *);
+unsigned int dma(unsigned int,unsigned int,unsigned int,unsigned int *);
+unsigned int dmab(unsigned int,unsigned int,unsigned int,unsigned int,unsigned int *);
+unsigned int dmar(unsigned int,unsigned int,unsigned int,unsigned int);
 int dtestmain(P,Q,ML,int,int *,P *,P *);
 int geldb(VL,P);
 int getchomdeg(V,P);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/file.c,v 1.1 2018/09/19 05:45:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/file.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -215,7 +215,7 @@ void Pget_line(NODE arg,STRING *rp)
 
   asir_assert(ARG0(arg),O_N,"get_line");
   i = ZTOS((Q)ARG0(arg));
-  if ( fp = file_ptrs[i] ) {
+  if ( ( fp = file_ptrs[i] ) != 0 ) {
     if ( feof(fp) ) {
       *rp = 0;
       return;
@@ -256,7 +256,7 @@ void Pget_byte(NODE arg,Z *rp)
 
   asir_assert(ARG0(arg),O_N,"get_byte");
   i = ZTOS((Q)ARG0(arg));
-  if ( fp = file_ptrs[i] ) {
+  if ( ( fp = file_ptrs[i] ) != 0 ) {
     if ( feof(fp) ) {
       STOZ(-1,*rp);
       return;
@@ -274,12 +274,12 @@ void Pget_word(NODE arg,Z *rp)
 
   asir_assert(ARG0(arg),O_N,"get_word");
   i = ZTOS((Q)ARG0(arg));
-  if ( fp = file_ptrs[i] ) {
+  if ( ( fp = file_ptrs[i] ) != 0 ) {
     if ( feof(fp) ) {
       error("get_word : end of file");
       return;
     }
-    read_int(fp,&c);
+    read_int(fp,(unsigned int *)&c);
     STOZ(c,*rp);
   } else
     error("get_word : invalid argument");
@@ -325,7 +325,7 @@ void Pput_word(NODE arg,Obj *rp)
 
   obj = (Obj)ARG1(arg);
   c = ZTOS((Q)obj);
-  write_int(fp,&c);
+  write_int(fp,(unsigned int *)&c);
   *rp = obj;
 }
 

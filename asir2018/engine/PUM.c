@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/PUM.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/PUM.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 
@@ -330,7 +330,8 @@ P p1,p2,*pr;
 void srchump(int mod,P p1,P p2,P *pr)
 {
   UM m,m1,q,r,t,g1,g2;
-  int lc,d,d1,d2,i,j,k,l,l1,l2,tmp,adj;
+  int lc,d,d1,d2,i,j,k,l,l1,l2,adj;
+  unsigned int tmp;
   V v;
 
   v = VR(p1); d = MAX(UDEG(p1),UDEG(p2));
@@ -478,7 +479,8 @@ void chnremp(VL vl,int mod,P p,Z q,P c,P *r)
 
 void chnrem(int mod,V v,P c,Z q,UM t,P *cr,Z *qr)
 {
-  int n,m,i,d,a,sd,tmp;
+  int n,m,i,d,a,sd;
+  unsigned int tmp;
   Z b,s,z;
   Z *pc,*pcr;
   DCP dc;

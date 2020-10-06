@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/eval.c,v 1.3 2019/08/21 00:37:47 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/eval.c,v 1.4 2019/11/12 10:53:23 kondoh Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -435,6 +435,7 @@ FNODE fnode_to_nary(FNODE f)
 
     default:
       error("fnode_to_nary : not implemented yet");
+      return 0;
   }
 }
 
@@ -506,6 +507,7 @@ FNODE fnode_to_bin(FNODE f,int dir)
 
     default:
       error("fnode_to_bin : not implemented yet");
+      return 0;
   }
 }
 
@@ -583,6 +585,7 @@ FNODE partial_eval(FNODE f)
 
     default:
       error("partial_eval : not implemented yet");
+      return 0;
   }
 }
 
@@ -666,6 +669,7 @@ FNODE rewrite_fnode(FNODE f,NODE arg,int qarg)
 
     default:
       error("rewrite_fnode : not implemented yet");
+      return 0;
   }
 }
 
@@ -1396,7 +1400,7 @@ void searchuf(char *name,FUNC *r)
   MODULE mod;
   char *name0,*dot;
 
-  if ( dot = strchr(name,'.') ) {
+  if ( ( dot = strchr(name,'.') ) != 0 ) {
     name0 = (char *)ALLOCA(strlen(name)+1);
     strcpy(name0,name);
     dot = strchr(name0,'.');
@@ -1455,12 +1459,12 @@ void searchf(NODE fn,char *name,FUNC *r)
 {
   NODE tn;
 
-  for ( tn = fn; 
-    tn && strcmp(NAME((FUNC)BDY(tn)),name); tn = NEXT(tn) );
-    if ( tn ) {
-      *r = (FUNC)BDY(tn);
-      return;
-    }
+  for ( tn = fn; tn && strcmp(NAME((FUNC)BDY(tn)),name); tn = NEXT(tn) )
+    ;
+  if ( tn ) {
+    *r = (FUNC)BDY(tn);
+    return;
+  }
   *r = 0;
 }
 
@@ -1476,7 +1480,7 @@ void appenduf(char *name,FUNC *r)
 
   f=(FUNC)MALLOC(sizeof(struct oFUNC)); 
   f->id = A_UNDEF; f->argc = 0; f->f.binf = 0;
-  if ( dot = strchr(name,'.') ) {
+  if ( ( dot = strchr(name,'.') ) != 0 ) {
     /* undefined function in a module */
     len = dot-name;
     modname = (char *)MALLOC_ATOMIC(len+1);

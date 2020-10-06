@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.3 2019/03/06 07:35:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cio.c,v 1.4 2020/02/22 06:23:36 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -92,7 +92,7 @@ void write_cmo(FILE *s,Obj obj)
   QUOTE quote;
 
   if ( !obj ) {
-    r = CMO_NULL; write_int(s,&r);
+    r = CMO_NULL; write_int(s,(unsigned int *)&r);
     return;
   }
   switch ( OID(obj) ) {
@@ -145,7 +145,7 @@ void write_cmo(FILE *s,Obj obj)
       write_cmo_bytearray(s,(BYTEARRAY)obj);
       break;
     case O_VOID:
-      r = ((USINT)obj)->body; write_int(s,&r);
+      r = ((USINT)obj)->body; write_int(s,(unsigned int *)&r);
       break;
     case O_QUOTE:
       quote = (QUOTE)obj;
@@ -213,7 +213,7 @@ void write_cmo_mathcap(FILE *s,MATHCAP mc)
 {
   unsigned int r;
 
-  r = CMO_MATHCAP; write_int(s,&r);
+  r = CMO_MATHCAP; write_int(s,(unsigned int *)&r);
   write_cmo(s,(Obj)BDY(mc));
 }
 
@@ -221,8 +221,8 @@ void write_cmo_uint(FILE *s,USINT ui)
 {
   unsigned int r;
 
-  r = CMO_INT32; write_int(s,&r);
-  r = ui->body; write_int(s,&r);
+  r = CMO_INT32; write_int(s,(unsigned int *)&r);
+  r = ui->body; write_int(s,(unsigned int *)&r);
 }
 
 void write_cmo_q(FILE *s,Q q)
@@ -231,13 +231,13 @@ void write_cmo_q(FILE *s,Q q)
   Z nm,dn;
 
   if ( q && !INT(q) ) {
-    r = CMO_QQ; write_int(s,&r);
+    r = CMO_QQ; write_int(s,(unsigned int *)&r);
     nmq(q,&nm);
     write_cmo_zz(s,nm);
     dnq(q,&dn);
     write_cmo_zz(s,dn);
   } else {
-    r = CMO_ZZ; write_int(s,&r);
+    r = CMO_ZZ; write_int(s,(unsigned int *)&r);
     write_cmo_zz(s,(Z)q);  
   }
 }
@@ -247,7 +247,7 @@ void write_cmo_real(FILE *s,Real real)
   unsigned int r;
   double dbl;
 
-  r = CMO_IEEE_DOUBLE_FLOAT; write_int(s,&r);
+  r = CMO_IEEE_DOUBLE_FLOAT; write_int(s,(unsigned int *)&r);
   dbl = real->body; write_double(s,&dbl);
 }
 
@@ -257,13 +257,13 @@ void write_cmo_bf(FILE *s,BF bf)
   int len_r,len;
   unsigned int *ptr;
 
-  r = CMO_BIGFLOAT32; write_int(s,&r);
-  r = MPFR_PREC(bf->body); write_int(s,&r);
-  r = MPFR_SIGN(bf->body); write_int(s,&r);
-  r = MPFR_EXP(bf->body);  write_int(s,&r);
+  r = CMO_BIGFLOAT32; write_int(s,(unsigned int *)&r);
+  r = MPFR_PREC(bf->body); write_int(s,(unsigned int *)&r);
+  r = MPFR_SIGN(bf->body); write_int(s,(unsigned int *)&r);
+  r = MPFR_EXP(bf->body);  write_int(s,(unsigned int *)&r);
   len_r = MPFR_LIMB_SIZE_REAL(bf->body);
   len   = MPFR_LIMB_SIZE_BODY(bf->body);
-  write_int(s,&len);
+  write_int(s,(unsigned int *)&len);
   ptr = (unsigned int *)MPFR_MANT(bf->body);
   write_intarray(s,ptr+(len_r-len),len);
 }
@@ -276,8 +276,8 @@ void write_cmo_zz(FILE *s,Z n)
 
   b = (int *)mpz_export(0,&l,-1,sizeof(int),0,0,BDY(n));
   bytes = sgnz(n)*l;
-  write_int(s,&bytes);
-  write_intarray(s,b,l);
+  write_int(s,(unsigned int *)&bytes);
+  write_intarray(s,(unsigned int *)b,l);
 }
 
 void write_cmo_p(FILE *s,P p)
@@ -287,16 +287,16 @@ void write_cmo_p(FILE *s,P p)
   char *namestr;
   STRING name;
 
-  r = CMO_RECURSIVE_POLYNOMIAL; write_int(s,&r);
+  r = CMO_RECURSIVE_POLYNOMIAL; write_int(s,(unsigned int *)&r);
   get_vars((Obj)p,&vl);
 
   /* indeterminate list */
-  r = CMO_LIST; write_int(s,&r);
+  r = CMO_LIST; write_int(s,(unsigned int *)&r);
   for ( t = vl, i = 0; t; t = NEXT(t), i++ );
-  write_int(s,&i);
+  write_int(s,(unsigned int *)&i);
   r = CMO_INDETERMINATE;
   for ( t = vl; t; t = NEXT(t) ) {
-    write_int(s,&r);
+    write_int(s,(unsigned int *)&r);
 /*    localname_to_cmoname(NAME(t->v),&namestr); */
     namestr = NAME(t->v);
     MKSTR(name,namestr);
@@ -317,15 +317,15 @@ void write_cmo_upoly(FILE *s,VL vl,P p)
   if ( NUM(p) )
     write_cmo(s,(Obj)p);
   else {
-    r = CMO_UNIVARIATE_POLYNOMIAL; write_int(s,&r);
+    r = CMO_UNIVARIATE_POLYNOMIAL; write_int(s,(unsigned int *)&r);
     v = VR(p);
     dc = DC(p);
     for ( i = 0, dct = dc; dct; dct = NEXT(dct), i++ );
-    write_int(s,&i);
+    write_int(s,(unsigned int *)&i);
     for ( i = 0, vlt = vl; vlt->v != v; vlt = NEXT(vlt), i++ );
-    write_int(s,&i);
+    write_int(s,(unsigned int *)&i);
     for ( dct = dc; dct; dct = NEXT(dct) ) {
-      i = ZTOS(DEG(dct)); write_int(s,&i);
+      i = ZTOS(DEG(dct)); write_int(s,(unsigned int *)&i);
       write_cmo_upoly(s,vl,COEF(dct));
     }
   }
@@ -335,7 +335,7 @@ void write_cmo_r(FILE *s,R f)
 {
   int r;
 
-  r = CMO_RATIONAL; write_int(s,&r);
+  r = CMO_RATIONAL; write_int(s,(unsigned int *)&r);
   write_cmo(s,(Obj)NM(f));
   write_cmo(s,(Obj)DN(f));
 }
@@ -344,7 +344,7 @@ void write_cmo_complex(FILE *s,C f)
 {
   int r;
 
-  r = CMO_COMPLEX; write_int(s,&r);
+  r = CMO_COMPLEX; write_int(s,(unsigned int *)&r);
   write_cmo(s,(Obj)f->r);
   write_cmo(s,(Obj)f->i);
 }
@@ -355,9 +355,9 @@ void write_cmo_dp(FILE *s,DP dp)
   MP m;
 
   for ( n = 0, m = BDY(dp); m; m = NEXT(m), n++ );
-  r = CMO_DISTRIBUTED_POLYNOMIAL; write_int(s,&r);
-  r = n; write_int(s,&r);
-  r = CMO_DMS_GENERIC; write_int(s,&r);
+  r = CMO_DISTRIBUTED_POLYNOMIAL; write_int(s,(unsigned int *)&r);
+  r = n; write_int(s,(unsigned int *)&r);
+  r = CMO_DMS_GENERIC; write_int(s,(unsigned int *)&r);
   nv = dp->nv;
   for ( i = 0, m = BDY(dp); i < n; i++, m = NEXT(m) )
     write_cmo_monomial(s,m,nv);
@@ -368,10 +368,10 @@ void write_cmo_monomial(FILE *s,MP m,int n)
   int i,r;
   int *p;
 
-  r = CMO_MONOMIAL32; write_int(s,&r);
-  write_int(s,&n);
+  r = CMO_MONOMIAL32; write_int(s,(unsigned int *)&r);
+  write_int(s,(unsigned int *)&n);
   for ( i = 0, p = m->dl->d; i < n; i++ ) {
-    write_int(s,p++);
+    write_int(s,(unsigned int *)p++);
   }
   write_cmo_q(s,(Q)m->c);
 }
@@ -382,8 +382,8 @@ void write_cmo_list(FILE *s,LIST list)
   int i,n,r;
 
   for ( n = 0, m = BDY(list); m; m = NEXT(m), n++ );
-  r = CMO_LIST; write_int(s,&r);
-  write_int(s,&n);
+  r = CMO_LIST; write_int(s,(unsigned int *)&r);
+  write_int(s,(unsigned int *)&n);
   for ( i = 0, m = BDY(list); i < n; i++, m = NEXT(m) )
     write_cmo(s,BDY(m));
 }
@@ -392,7 +392,7 @@ void write_cmo_string(FILE *s,STRING str)
 {
   int r;
 
-  r = CMO_STRING; write_int(s,&r);
+  r = CMO_STRING; write_int(s,(unsigned int *)&r);
   savestr(s,BDY(str));  
 }
 
@@ -400,8 +400,8 @@ void write_cmo_bytearray(FILE *s,BYTEARRAY array)
 {
   int r;
 
-  r = CMO_DATUM; write_int(s,&r);
-  write_int(s,&array->len);
+  r = CMO_DATUM; write_int(s,(unsigned int *)&r);
+  write_int(s,(unsigned int *)&array->len);
   write_string(s,array->body,array->len);
 }
 
@@ -409,7 +409,7 @@ void write_cmo_error(FILE *s,ERR e)
 {
   int r;
 
-  r = CMO_ERROR2; write_int(s,&r);
+  r = CMO_ERROR2; write_int(s,(unsigned int *)&r);
   write_cmo(s,BDY(e));
 }
 
@@ -434,24 +434,24 @@ void write_cmo_tree(FILE *s,LIST l)
     write_cmo(s,(Obj)BDY(n));
   } else {
     if ( strcmp(BDY(prop),"list") ) {
-      r = CMO_TREE; write_int(s,&r);
+      r = CMO_TREE; write_int(s,(unsigned int *)&r);
       name = (STRING)BDY(n);
       n = NEXT(n);
       /* function name */
       write_cmo(s,(Obj)name);
 
       /* attribute list */
-      r = CMO_LIST; write_int(s,&r);
-      r = 2; write_int(s,&r);
+      r = CMO_LIST; write_int(s,(unsigned int *)&r);
+      r = 2; write_int(s,(unsigned int *)&r);
       MKSTR(key,"asir");
       write_cmo(s,(Obj)key);
       write_cmo(s,(Obj)prop);
     }
 
     /* argument list */
-    r = CMO_LIST; write_int(s,&r);
+    r = CMO_LIST; write_int(s,(unsigned int *)&r);
     /* len = number of arguments */
-    r = length(n); write_int(s,&r);
+    r = length(n); write_int(s,(unsigned int *)&r);
     while ( n ) {
       write_cmo_tree(s,BDY(n));
       n = NEXT(n);
@@ -466,11 +466,11 @@ void write_cmo_matrix_as_list(FILE *s,MAT a)
   /* CMO_LIST row (CMO_LIST col a[0][0] ... a[0][col-1]) ... (CMO_LIST col a[row-1][0] ... a[row-1][col-1] */
   row = a->row; col = a->col;
   r = CMO_LIST;
-  write_int(s,&r);
-  write_int(s,&row);
+  write_int(s,(unsigned int *)&r);
+  write_int(s,(unsigned int *)&row);
   for ( i = 0; i < row; i++ ) {
-    write_int(s,&r);
-    write_int(s,&col);
+    write_int(s,(unsigned int *)&r);
+    write_int(s,(unsigned int *)&col);
     for ( j = 0; j < col; j++ )
       write_cmo(s,a->body[i][j]);
   }
@@ -496,7 +496,7 @@ void read_cmo(FILE *s,Obj *rp)
   BYTEARRAY array;
   LIST list;
 
-  read_int(s,&id);
+  read_int(s,(unsigned int *)&id);
   switch ( id ) {
   /* level 0 objects */
     case CMO_NULL:
@@ -596,7 +596,7 @@ void read_cmo_uint(FILE *s,USINT *rp)
 {
   unsigned int body;
 
-  read_int(s,&body);
+  read_int(s,(unsigned int *)&body);
   MKUSINT(*rp,body);
 }
 
@@ -606,7 +606,7 @@ void read_cmo_zz(FILE *s,Z *rp)
   int *b;
   mpz_t z;
 
-  read_int(s,&l);
+  read_int(s,(unsigned int *)&l);
   if ( l == 0 ) {
     *rp = 0;
     return;
@@ -616,7 +616,7 @@ void read_cmo_zz(FILE *s,Z *rp)
   } else
     sgn = 1; 
   b = (int *)MALLOC(l*sizeof(int));
-  read_intarray(s,b,l);
+  read_intarray(s,(unsigned int *)b,l);
   mpz_init(z);
   mpz_import(z,l,-1,sizeof(int),0,0,b);
   if ( sgn < 0 ) mpz_neg(z,z);
@@ -630,10 +630,10 @@ void read_cmo_bf(FILE *s,BF *bf)
   unsigned int *ptr;
 
   NEWBF(r);
-  read_int(s,&prec);
-  read_int(s,&sgn);
-  read_int(s,&exp);
-  read_int(s,&len);
+  read_int(s,(unsigned int *)&prec);
+  read_int(s,(unsigned int *)&sgn);
+  read_int(s,(unsigned int *)&exp);
+  read_int(s,(unsigned int *)&len);
   mpfr_init2(r->body,prec);
   MPFR_SIGN(r->body) = sgn;
   MPFR_EXP(r->body) = exp;
@@ -652,7 +652,7 @@ void read_cmo_list(FILE *s,Obj *rp)
   NODE n0,n1;
   LIST list;
 
-  read_int(s,&len);
+  read_int(s,(unsigned int *)&len);
   w = (Obj *)ALLOCA(len*sizeof(Obj));
   for ( i = 0; i < len; i++ )
     read_cmo(s,&w[i]);    
@@ -672,7 +672,7 @@ void read_cmo_dp(FILE *s,DP *rp)
   DP dp;
   Obj obj;
 
-  read_int(s,&len);
+  read_int(s,(unsigned int *)&len);
   /* skip the ring definition */
   read_cmo(s,&obj);
   for ( mp0 = 0, i = 0, d = 0; i < len; i++ ) {
@@ -699,9 +699,9 @@ void read_cmo_monomial(FILE *s,DP *rp)
   int i,sugar,n;
   DL dl;
 
-  read_int(s,&n);
+  read_int(s,(unsigned int *)&n);
   NEWMP(m); NEWDL(dl,n); m->dl = dl;
-  read_intarray(s,dl->d,n);
+  read_intarray(s,(unsigned int *)dl->d,n);
   for ( sugar = 0, i = 0; i < n; i++ )
     sugar += dl->d[i];
   dl->td = sugar;
@@ -762,10 +762,10 @@ void read_cmo_upoly(FILE *s,P *rp)
   Z q;
   DCP dc0,dc;
 
-  read_int(s,&n);
-  read_int(s,&ind);
+  read_int(s,(unsigned int *)&n);
+  read_int(s,(unsigned int *)&ind);
   for ( i = 0, dc0 = 0; i < n; i++ ) {
-    read_int(s,&d);
+    read_int(s,(unsigned int *)&d);
     read_cmo(s,&obj); c = (P)obj;
     if ( c ) {
       if ( OID(c) == O_USINT ) {
@@ -887,8 +887,8 @@ pointer **argp;
   pointer *ap;
   Obj t;
 
-  read_int(s,&id); /* id = CMO_LIST */
-  read_int(s,&n); /* n = the number of args */
+  read_int(s,(unsigned int *)&id); /* id = CMO_LIST */
+  read_int(s,(unsigned int *)&n); /* n = the number of args */
   *argp = ap = (pointer *) MALLOC(n*sizeof(pointer));
   for ( i = 0; i < n; i++ ) {
     read_cmo(s,&t);

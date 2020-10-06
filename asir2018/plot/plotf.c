@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/plot/plotf.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/plotf.c,v 1.2 2018/09/28 08:20:29 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -344,11 +344,12 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
         poly = (P)BDY(arg);
         get_vars_recursive((Obj)poly,&vl);
         for ( vl0 = vl, i = 0; vl0; vl0 = NEXT(vl0) )
-          if ( vl0->v->attr == (pointer)V_IND )
+          if ( vl0->v->attr == (pointer)V_IND ) {
             if ( i >= 2 )
               error("ifplot : invalid argument");
             else
               v[i++] = vl0->v;
+          }
         break;
       case O_LIST:
         list = (LIST)BDY(arg);
@@ -583,9 +584,10 @@ void Ppolarplot(NODE arg,Z *rp){
       poly=(P)BDY(arg);
       get_vars_recursive((Obj)poly,&vl);
       for(vl0=vl,i=0;vl0;vl0=NEXT(vl0))
-        if(vl0->v->attr==(pointer)V_IND)
+        if(vl0->v->attr==(pointer)V_IND) {
           if(i>=1)error("polarplot : invalid argument");
-        else v[i++]=vl0->v;
+          else v[i++]=vl0->v;
+        }
       if(i!=1)error("polarplot : invalid argument");
       break;
     case O_LIST://range,geomerty
@@ -739,7 +741,7 @@ void ListCheck(char * head,LIST list){
     if(!BDY(n))printf("%d 0\n",i);
     else if(OID(BDY(n))==O_P) printf("%d poly\n",i);
     else if(OID(BDY(n))==O_R) printf("%d real\n",i);
-    else if(OID(BDY(n))==O_N) printf("%d %d\n",i,ZTOS((Q)BDY(n)));
+    else if(OID(BDY(n))==O_N) printf("%d %ld\n",i,ZTOS((Q)BDY(n)));
   }
 }
 

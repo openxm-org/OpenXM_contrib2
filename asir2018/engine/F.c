@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/F.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/F.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 #include <math.h>
@@ -666,7 +666,8 @@ void sortfsrev(DCP *dcp)
 void nthrootchk(P f,struct oDUM *dc,ML fp,DCP *dcp)
 {
   register int i,k;
-  int e,n,dr,tmp,t;
+  int e,n,dr,t;
+  unsigned int tmp;
   int *tmpp,**tmppp;
   int **pp,**wpp;
   LUM fpa,tpa,f0l;

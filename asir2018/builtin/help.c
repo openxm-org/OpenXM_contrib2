@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/help.c,v 1.1 2018/09/19 05:45:06 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -117,7 +117,7 @@ char *s;
     FILE *fp;
 
     sprintf(name,"%s/%s/%s",asir_libdir,helpdir,s);
-    if ( fp = fopen(name,"r") ) {
+    if ( ( fp = fopen(name,"r") ) != 0 ) {
       fclose(fp);
       if (!ja_JP_UTF_8)
         sprintf(com,"%s %s",asir_pager,name);

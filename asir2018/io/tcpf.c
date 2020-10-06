@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/tcpf.c,v 1.3 2019/03/28 06:46:04 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/tcpf.c,v 1.4 2020/01/09 01:47:41 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -437,7 +437,7 @@ void Pregister_server(NODE arg,Z *rp)
   cs = ZTOS((Q)ARG0(arg));    
   ss = ZTOS((Q)ARG2(arg));    
   if ( IS_CYGWIN || !ARG1(arg) || NUM(ARG1(arg)) ) {
-    sprintf(cport_str,"%d",ZTOS((Q)ARG1(arg)));
+    sprintf(cport_str,"%ld",ZTOS((Q)ARG1(arg)));
     use_unix = 0;
   } else {
     strcpy(cport_str,BDY((STRING)ARG1(arg)));
@@ -446,7 +446,7 @@ void Pregister_server(NODE arg,Z *rp)
   if ( !ARG3(arg) || NUM(ARG3(arg)) ) {
     if ( use_unix )
       error("register_server : the protocol should conincide for two sockets");
-    sprintf(sport_str,"%d",ZTOS((Q)ARG3(arg)));
+    sprintf(sport_str,"%ld",ZTOS((Q)ARG3(arg)));
   } else {
     if ( !use_unix )
       error("register_server : the protocol should conincide for two sockets");
@@ -875,7 +875,7 @@ void spawn_server(char *host,char *launcher,char *server,
       sprintf(cmd,
         "%s -n %s \"(cd %s; java %s -host %s -control %s -data %s)>&/dev/null&\">/dev/null",
         rsh,host,launcher,server,localhost,
-        control_port_str,server_port_str,server);
+        control_port_str,server_port_str);
     fprintf(stderr,"%s\n",cmd);
     sleep(20);
 /*    system(cmd); */

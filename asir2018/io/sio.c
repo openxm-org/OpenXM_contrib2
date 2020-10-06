@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/sio.c,v 1.2 2018/09/21 07:06:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/sio.c,v 1.3 2019/12/13 14:40:50 fujimoto Exp $
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -95,7 +95,7 @@ void getremotename(int s,char *name)
   int peerlen;
 
   peerlen = sizeof(peer);
-  getpeername(getremotesocket(s),(struct sockaddr *)&peer,&peerlen);
+  getpeername(getremotesocket(s),(struct sockaddr *)&peer,(socklen_t *)&peerlen);
   hp = gethostbyaddr((char *)&peer.sin_addr,sizeof(struct in_addr),AF_INET);
   if ( hp )
     strcpy(name,hp->h_name);
@@ -172,7 +172,7 @@ int try_bind_listen(int use_unix,char *port_str)
     closesocket(service);
     return -1;
   }
-  if (getsockname(service,saddr, &len) < 0) {
+  if (getsockname(service,saddr, (socklen_t *)&len) < 0) {
       perror("in getsockname");
       closesocket(service);
       return -1;
@@ -209,14 +209,14 @@ int try_accept(int af_unix,int s)
   if ( af_unix ) {
     len = sizeof(s_un);
     for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
-      c = accept(s, (struct sockaddr *) &s_un, &len);
+      c = accept(s, (struct sockaddr *) &s_un, (socklen_t *)&len);
   } else 
 #endif
   {
 
     len = sizeof(sin);
     for ( c = -1, i = 0; (c < 0)&&(i = 10) ; i++ )
-      c = accept(s, (struct sockaddr *) &sin, &len);
+      c = accept(s, (struct sockaddr *) &sin, (socklen_t *)&len);
   }
   if ( i == 10 )
     c = -1;

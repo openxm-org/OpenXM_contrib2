@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/gf.c,v 1.1 2018/09/19 05:45:06 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gf.c,v 1.2 2018/09/28 08:20:27 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -458,21 +458,22 @@ void resf_dtest(P f,ML list,int nb,int *nfl,int *mdl,DCP *dcp)
       }
       if ( ( np -= k ) < k ) 
         break;
-      if ( np - win[0] + 1 < k ) 
+      if ( np - win[0] + 1 < k ) {
         if ( ++k > np )
           break;
         else
           for ( i = 0; i < k; i++ ) 
             win[i] = i + 1;
-      else 
+      } else 
         for ( i = 1; i < k; i++ ) 
           win[i] = win[0] + i;
-    } else if ( !ncombi(1,np,k,win) ) 
+    } else if ( !ncombi(1,np,k,win) ) {
       if ( k == np ) 
         break;
       else
         for ( i = 0, ++k; i < k; i++ ) 
           win[i] = i + 1;
+    }
   }
   NEXTDC(dcf0,dcf); COEF(dcf) = g;
   DEG(dcf) = ONE; NEXT(dcf) = 0;*dcp = dcf0;
@@ -1284,7 +1285,7 @@ void showgfmat(UM **mat,int n)
           if ( k > 1 )
             fprintf(asir_out,"a^%d",k);
           else if ( k == 1 )
-            fprintf(asir_out,"a",k);
+            fprintf(asir_out,"a");
         }
       fprintf(asir_out," ");
     }

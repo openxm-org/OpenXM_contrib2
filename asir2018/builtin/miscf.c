@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/miscf.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/miscf.c,v 1.3 2019/02/26 02:48:12 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -565,6 +565,7 @@ int init_display()
     return 0;
   }
   rootwin = RootWindow(display,DefaultScreen(display));
+  return 1;
 }
 
 void grab_pointer()
@@ -628,7 +629,7 @@ void Phex_dump(NODE arg,Z *rp)
   len = ZTOS((Q)ARG1(arg));
   for ( i = 0; i < len; i++ ) {
     if ( !(i%16) )
-      fprintf(asir_out,"%08x: ",start+i);
+      fprintf(asir_out,"%08x: ",(unsigned int)(start+i));
     fprintf(asir_out,"%02x",start[i]);
     if ( !((i+1)%16) )
       fprintf(asir_out,"\n");

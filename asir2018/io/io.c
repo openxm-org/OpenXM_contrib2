@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/io.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include <stdio.h>
 #include "ca.h"
@@ -187,7 +187,7 @@ int gen_fwrite (char *ptr,int size,int nitems,FILE *stream)
 
 void write_char(FILE *f,unsigned char *p)
 {
-  gen_fwrite(p,sizeof(unsigned char),1,f);
+  gen_fwrite((char *)p,sizeof(unsigned char),1,f);
 }
 
 void write_short(FILE *f,unsigned short *p)
@@ -353,7 +353,7 @@ void write_double(FILE *f,double *p)
 
 void write_string(FILE *f,unsigned char *p,int l)
 {
-  gen_fwrite(p,sizeof(unsigned char),l,f);
+  gen_fwrite((char *)p,sizeof(unsigned char),l,f);
 }
 
 void read_char(FILE *f,unsigned char *p)

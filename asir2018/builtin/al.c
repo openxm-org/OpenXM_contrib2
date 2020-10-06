@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/builtin/al.c,v 1.1 2018/09/19 05:45:05 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/al.c,v 1.2 2018/09/28 08:20:27 noro Exp $ */
 /* ----------------------------------------------------------------------
    $Id$
    ----------------------------------------------------------------------
@@ -783,6 +783,8 @@ int simpl_gand_smtbelhs(thop,atop,pnatop)
       return(DROP);
     }
   }
+  /* XXX */
+  return 0;
 }
 
 int simpl_gand_smtbdlhs(thop,atop,difference)
@@ -843,6 +845,8 @@ int simpl_gand_smtbdlhs(thop,atop,difference)
       return(drop2);
     }
   }
+  /* XXX */
+  return 0;
 }
 
 void lbc(f,pc)
@@ -985,6 +989,7 @@ oFOP op1,op2;
     return -1;
   }
   error("unknown relation in comprel");
+  return 0;
 }
 
 int synequalf(f1,f2)
@@ -1005,6 +1010,8 @@ F f1,f2;
       return 0;
     return 1;
   }
+  /* XXX */
+  return 0;
 }
 
 void simpl_impl(op,prem,concl,th,n,pf)
@@ -1226,7 +1233,7 @@ F f,*pnf;
     w = qevar(MAT(cel),&cvl,&n);
     qeblock_verbose1b(w,pr);
     for (sc=n; sc; sc=NEXT(sc))
-      if ((F)BDY(sc) != F_FALSE)
+      if ((F)BDY(sc) != F_FALSE) {
         if (cvl) {
           MKCEL(cel,cvl,(F)BDY(sc));
           if (!comember(co,cel))
@@ -1235,6 +1242,7 @@ F f,*pnf;
           NEXTNODE(nargl,narglc);
           BDY(narglc) = BDY(sc);
         }
+      }
   }
   qeblock_verbose2();
   smkjf(pnf,AL_OR,nargl);
@@ -1327,7 +1335,7 @@ NODE *pfl;
   for (sc=eset; sc; sc=NEXT(sc)) {
     NEXTNODE(r,rc);
     subgpf(f,x,BDY(sc),&h);
-    simpl(h,(NODE)NULL,&BDY(rc));
+    simpl(h,(NODE)NULL,(F *)BDY(rc));
   }
   *pfl = r;
   return w;
@@ -2249,7 +2257,7 @@ pointer argv[];
     NODE sc,n=NULL,c;
     for (sc=FJARG(f); sc; sc=NEXT(sc)) {
       NEXTNODE(n,c);
-      apply2ats(BDY(sc),client,argv,&BDY(c));
+      apply2ats(BDY(sc),client,argv,(F *)&BDY(c));
     }
     MKJF(*pnf,FOP(f),n);
   }
@@ -2550,7 +2558,7 @@ RE re;
 void gpp(gp)
 GP gp;
 {
-  ap(gp->g);
+  ap((pointer *)gp->g);
   rep(gp->p);
 }
 

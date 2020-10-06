@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/io/biovar.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -63,7 +63,7 @@ VL vl;
   for ( tvl = vl, n = 0; tvl; tvl = NEXT(tvl))
     if ( tvl->v->attr != (pointer)V_UC && tvl->v->attr != (pointer)V_PF )
       n++;
-  write_int(s,&n);
+  write_int(s,(unsigned int *)&n);
   vtab = (V *)CALLOC(n,sizeof(V));
   for ( tvl = vl, i = 0; i < n; tvl = NEXT(tvl) )
     if ( tvl->v->attr != (pointer)V_UC && tvl->v->attr != (pointer)V_PF ) {
@@ -78,7 +78,7 @@ FILE *s;
   V v1,v2;
   VL t,t1;
 
-  read_int(s,&n);
+  read_int(s,(unsigned int *)&n);
   vtab = (V *)CALLOC(n,sizeof(V));
   for ( i = 0; i < n; i++ )
     loadv(s,&vtab[i]);
@@ -104,9 +104,9 @@ FILE *s;
 {
   int n,i,size,len;
 
-  read_int(s,&n);
+  read_int(s,(unsigned int *)&n);
   for ( i = 0, size = 0; i < n; i++ ) {
-    read_int(s,&len); size += len;
+    read_int(s,(unsigned int *)&len); size += len;
   }
   fseek(s,size,1L);
 }

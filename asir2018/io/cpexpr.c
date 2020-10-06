@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.3 2019/03/06 07:35:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.4 2020/02/22 06:23:36 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -403,7 +403,7 @@ void PRINTUP2(UP2 p)
       total_length += 11;
     }
     for ( i = d-1; i >= 0; i-- ) {
-      if ( p->b[i/BSH] & (1<<(i%BSH)) )
+      if ( p->b[i/BSH] & (1<<(i%BSH)) ) {
         if ( !i ) {
           PUTS("+1");
         } else if ( i == 1 ) {
@@ -412,6 +412,7 @@ void PRINTUP2(UP2 p)
           PRINTHAT;
           total_length += 12;
         }
+      }
     }
     PUTS(")");
   }

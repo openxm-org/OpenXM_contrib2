@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.2 2019/12/13 14:40:50 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/lex.c,v 1.3 2020/03/29 17:01:55 fujimoto Exp $
 */
 #include <ctype.h>
 #include "ca.h"
@@ -455,6 +455,8 @@ int yylex()
     }
   } else
     return ( c );
+  /* XXX */
+  return 0;
 }
 
 void purge_stdin()
@@ -520,12 +522,13 @@ int afternl() {
         quote = quote ? 0 : 1;
       else if ( quote && (*ptr == ' ') )
         *ptr = '_';
-    stoarg(buf0,&ac,av);
-    if ( ac == 3 )
+    stoarg(buf0,&ac,av); 
+    if ( ac == 3 ) {
       if ( (i = atoi(av[2])) == 1 )
         ilevel++;
       else if ( i == 2 )
         ilevel--;
+    }
     if ( !ilevel )
       asir_infile->ln = atoi(av[0]);
   }

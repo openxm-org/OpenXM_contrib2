@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.3 2019/12/13 14:40:50 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_launch.c,v 1.4 2019/12/14 12:34:02 fujimoto Exp $
 */
 #include <setjmp.h>
 #include <signal.h>
@@ -166,7 +166,7 @@ char **argv;
 
   /* XXX a dirty hack */
   if ( !getenv("LD_LIBRARY_PATH") ) {
-    if ( e = getenv("OpenXM_HOME") ) {
+    if ( ( e = getenv("OpenXM_HOME") ) != 0 ) {
       s = (char *)alloca(strlen(e)+100);
       sprintf(s,"LD_LIBRARY_PATH=%s/lib",e);
       putenv(s);
@@ -392,19 +392,23 @@ char *s;
   exit(0);
 }
 
+#define asir_OperandStackSize BUFSIZ
+
 static void ox_io_init(sock)
 int sock;
 {
   endian_init();
   /* server mode */
   sindex = get_iofp(sock,0,1);
-  asir_OperandStack = (Obj *)CALLOC(BUFSIZ,sizeof(Obj));
+  asir_OperandStack = (Obj *)CALLOC(asir_OperandStackSize,sizeof(Obj));
   asir_OperandStackPtr = -1;
 }
 
 static void push_one(obj)
 Obj obj;
 {
+  if ( asir_OperandStackPtr == asir_OperandStackSize-1 )
+    return;
   if ( !obj || OID(obj) != O_VOID )
     asir_OperandStack[++asir_OperandStackPtr] = obj;
 }
@@ -412,7 +416,8 @@ Obj obj;
 static Obj pop_one() {
   if ( asir_OperandStackPtr >= 0 ) {
     return asir_OperandStack[asir_OperandStackPtr--];
-  }
+  } else
+    return 0;
 }
 
 static void terminate_server(int sig)

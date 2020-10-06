@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.3 2019/08/28 23:27:34 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/bload.c,v 1.4 2019/11/12 10:53:23 kondoh Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -71,7 +71,7 @@ void loadobj(FILE *s,Obj *p)
 {
   short id;
 
-  read_short(s,&id);
+  read_short(s,(unsigned short *)&id);
   if ( !id )
     *p = 0;
   else if ( !loadf[id] )
@@ -84,7 +84,7 @@ void loadnum(FILE *s,Num *p)
 { 
   char nid;
 
-  read_char(s,&nid);
+  read_char(s,(unsigned char *)&nid);
   if ( !nloadf[nid] )
     error("loadnum : not implemented");
   else
@@ -100,16 +100,16 @@ void loadq(FILE *s,Q *p)
   mpz_t z;
   Z nm,dn;
 
-  read_char(s,&sgn); read_intarray(s,size,len);
+  read_char(s,(unsigned char *)&sgn); read_intarray(s,(unsigned int *)size,len);
   bnm = (int *)MALLOC(size[0]*sizeof(int));
-  read_intarray(s,bnm,size[0]);
+  read_intarray(s,(unsigned int *)bnm,size[0]);
   mpz_init(z);
   mpz_import(z,size[0],-1,sizeof(int),0,0,bnm);
   if ( sgn < 0 ) mpz_neg(z,z);
   MPZTOZ(z,nm);
   if ( size[1] ) {
     bdn = (int *)MALLOC(size[1]*sizeof(int));
-    read_intarray(s,bdn,size[1]);
+    read_intarray(s,(unsigned int *)bdn,size[1]);
     mpz_init(z);
     mpz_import(z,size[1],-1,sizeof(int),0,0,bdn);
     MPZTOZ(z,dn);
@@ -123,7 +123,7 @@ void loadreal(FILE *s,Real *p)
   Real q;
   char dmy;
 
-  read_char(s,&dmy);
+  read_char(s,(unsigned char *)&dmy);
   NEWReal(q); read_double(s,&BDY(q));
   *p = q;
 }
@@ -136,26 +136,26 @@ void loadbf(FILE *s,BF *p)
   UL exp;
 
   int len;
-  read_char(s,&dmy);
+  read_char(s,(unsigned char *)&dmy);
   NEWBF(r);
-  read_int(s,&sgn);
-  read_int(s,&prec);
+  read_int(s,(unsigned int *)&sgn);
+  read_int(s,(unsigned int *)&prec);
   read_int64(s,&exp);
-  read_int(s,&len);
+  read_int(s,(unsigned int *)&len);
   mpfr_init2(r->body,prec);
   MPFR_SIGN(r->body) = sgn;
   MPFR_EXP(r->body) = (int)exp;
 #if defined(VISUAL)
 #if !defined(_WIN64)
-  read_intarray(s,(int *)r->body->_mpfr_d,len);
+  read_intarray(s,r->body->_mpfr_d,len);
 #else
   read_longarray(s,(long long*)r->body->_mpfr_d,len);
 #endif
 #else
 #if SIZEOF_LONG == 4
-  read_intarray(s,(int *)r->body->_mpfr_d,len);
+  read_intarray(s,r->body->_mpfr_d,len);
 #else /* SIZEOF_LONG == 8 */
-  read_longarray(s,(long *)r->body->_mpfr_d,len);
+  read_longarray(s,(unsigned long *)r->body->_mpfr_d,len);
 #endif
 #endif
   *p = r;
@@ -167,7 +167,7 @@ void loaditv(FILE *s,Itv *p)
   Itv q;
   char dmy;
 
-  read_char(s,&dmy);
+  read_char(s,(unsigned char *)&dmy);
   NEWItvP(q); loadobj(s,(Obj *)&INF(q)); loadobj(s,(Obj *)&SUP(q));
   *p = q;
 }
@@ -177,7 +177,7 @@ void loaditvd(FILE *s,IntervalDouble *p)
   IntervalDouble q;
   char dmy;
 
-  read_char(s,&dmy);
+  read_char(s,(unsigned char *)&dmy);
   NEWIntervalDouble(q);
   read_double(s,&INF(q));
   read_double(s,&SUP(q));
@@ -190,7 +190,7 @@ void loadcplx(FILE *s,C *p)
   C q;
   char dmy;
 
-  read_char(s,&dmy);
+  read_char(s,(unsigned char *)&dmy);
   NEWC(q); loadobj(s,(Obj *)&q->r); loadobj(s,(Obj *)&q->i);
   *p = q;
 }
@@ -200,8 +200,8 @@ void loadmi(FILE *s,MQ *p)
   MQ q;
   char dmy;
 
-  read_char(s,&dmy);
-  NEWMQ(q); read_int(s,(int *)&CONT(q));
+  read_char(s,(unsigned char *)&dmy);
+  NEWMQ(q); read_int(s,(unsigned int *)&CONT(q));
   *p = q;
 }
 
@@ -212,9 +212,9 @@ void loadlm(FILE *s,LM *p)
   int *b;
   mpz_t z;
 
-  read_char(s,&dmy); read_int(s,&size);
+  read_char(s,(unsigned char *)&dmy); read_int(s,(unsigned int *)&size);
   b = (int *)MALLOC(size*sizeof(int));
-  read_intarray(s,b,size);
+  read_intarray(s,(unsigned int *)b,size);
   mpz_init(z);
   mpz_import(z,size,-1,sizeof(int),0,0,b);
   MKLM(z,*p);
@@ -226,9 +226,9 @@ void loadgf2n(FILE *s,GF2N *p)
   int len;
   UP2 body;
 
-  read_char(s,&dmy); read_int(s,&len);
+  read_char(s,(unsigned char *)&dmy); read_int(s,(unsigned int *)&len);
   NEWUP2(body,len); body->w = len;
-  read_intarray(s,body->b,len);
+  read_intarray(s,(unsigned int *)body->b,len);
   MKGF2N(body,*p);
 }
 
@@ -238,7 +238,7 @@ void loadgfpn(FILE *s,GFPN *p)
   int d,i;
   UP body;
 
-  read_char(s,&dmy); read_int(s,&d);
+  read_char(s,(unsigned char *)&dmy); read_int(s,(unsigned int *)&d);
   body = UPALLOC(d);
   body->d = d;
   for ( i = 0; i <= d; i++ )
@@ -251,8 +251,8 @@ void loadgfs(FILE *s,GFS *p)
   GFS q;
   char dmy;
 
-  read_char(s,&dmy);
-  NEWGFS(q); read_int(s,(int *)&CONT(q));
+  read_char(s,(unsigned char *)&dmy);
+  NEWGFS(q); read_int(s,(unsigned int *)&CONT(q));
   *p = q;
 }
 
@@ -262,9 +262,9 @@ void loadgfsn(FILE *s,GFSN *p)
   int d;
   UM body;
 
-  read_char(s,&dmy); read_int(s,&d);
+  read_char(s,(unsigned char *)&dmy); read_int(s,(unsigned int *)&d);
   body = UMALLOC(d); DEG(body) = d;
-  read_intarray(s,COEF(body),d+1);
+  read_intarray(s,(unsigned int *)COEF(body),d+1);
   MKGFSN(body,*p);
 }
 
@@ -273,7 +273,7 @@ void loaddalg(FILE *s,DAlg *p)
   char dmy;
   Obj nm,dn;
 
-  read_char(s,&dmy);
+  read_char(s,(unsigned char *)&dmy);
   loadobj(s,&nm);
   loadobj(s,&dn);
   MKDAlg((DP)nm,(Z)dn,*p);
@@ -286,13 +286,13 @@ void loadp(FILE *s,P *p)
   DCP dc,dc0;
   P t;
 
-  read_int(s,&vindex);
+  read_int(s,(unsigned int *)&vindex);
   if ( vindex < 0 )
   /* v is a pure function */
     v = loadpfins(s);
   else 
     v = (V)load_convv(vindex);
-  read_int(s,&n);
+  read_int(s,(unsigned int *)&n);
   for ( dc0 = 0; n; n-- ) {
     NEXTDC(dc0,dc); loadobj(s,(Obj *)&DEG(dc)); loadobj(s,(Obj *)&COEF(dc));
   }
@@ -320,7 +320,7 @@ V loadpfins(FILE *s)
   P u;
 
   loadstr(s,&name);
-  read_int(s,&argc);
+  read_int(s,(unsigned int *)&argc);
   searchpf(name,&fp);
   if ( fp ) {
     pf = fp->f.puref;
@@ -341,7 +341,7 @@ V loadpfins(FILE *s)
   }
   darray = (int *)ALLOCA(argc*sizeof(int));
   args = (Obj *)ALLOCA(argc*sizeof(int));
-  read_intarray(s,darray,argc);
+  read_intarray(s,(unsigned int *)darray,argc);
   for ( i = 0; i < argc; i++ )
     loadobj(s,&args[i]);
   _mkpfins_with_darray(pf,args,darray,&v);
@@ -352,7 +352,7 @@ void loadr(FILE *s,R *p)
 {
   R r;
 
-  NEWR(r); read_short(s,&r->reduced);
+  NEWR(r); read_short(s,(unsigned short *)&r->reduced);
   loadobj(s,(Obj *)&NM(r)); loadobj(s,(Obj *)&DN(r)); *p = r;
 }
 
@@ -361,7 +361,7 @@ void loadlist(FILE *s,LIST *p)
   int n;
   NODE tn,tn0;
 
-  read_int(s,&n);
+  read_int(s,(unsigned int *)&n);
   for ( tn0 = 0; n; n-- ) {
     NEXTNODE(tn0,tn); loadobj(s,(Obj *)&BDY(tn));
   }
@@ -375,7 +375,7 @@ void loadvect(FILE *s,VECT *p)
   int i,len;
   VECT vect;
 
-  read_int(s,&len); MKVECT(vect,len);
+  read_int(s,(unsigned int *)&len); MKVECT(vect,len);
   for ( i = 0; i < len; i++ )
     loadobj(s,(Obj *)&BDY(vect)[i]);
   *p = vect;
@@ -386,7 +386,7 @@ void loadmat(FILE *s,MAT *p)
   int row,col,i,j;
   MAT mat;
 
-  read_int(s,&row); read_int(s,&col); MKMAT(mat,row,col);
+  read_int(s,(unsigned int *)&row); read_int(s,(unsigned int *)&col); MKMAT(mat,row,col);
   for ( i = 0; i < row; i++ )
     for ( j = 0; j < col; j++ )
       loadobj(s,(Obj *)&BDY(mat)[i][j]);
@@ -405,9 +405,9 @@ void loadstr(FILE *s,char **p)
   int len;
   char *t;
 
-  read_int(s,&len);
+  read_int(s,(unsigned int *)&len);
   if ( len ) {
-    t = (char *)MALLOC(len+1); read_string(s,t,len); t[len] = 0;
+    t = (char *)MALLOC(len+1); read_string(s,(unsigned char *)t,len); t[len] = 0;
   } else
     t = "";
   *p = t;
@@ -418,7 +418,7 @@ void loadbytearray(FILE *s,BYTEARRAY *p)
   int len;
   BYTEARRAY array;
 
-  read_int(s,&len);
+  read_int(s,(unsigned int *)&len);
   MKBYTEARRAY(array,len);
   if ( len ) {
     read_string(s,array->body,len);
@@ -433,12 +433,12 @@ void loaddp(FILE *s,DP *p)
   MP m,m0;
   DL dl;
 
-  read_int(s,&nv); read_int(s,&sugar); read_int(s,&n);
+  read_int(s,(unsigned int *)&nv); read_int(s,(unsigned int *)&sugar); read_int(s,(unsigned int *)&n);
   for ( i = 0, m0 = 0; i < n; i++ ) {
     NEXTMP(m0,m);
     loadobj(s,(Obj *)&(m->c));
     NEWDL(dl,nv); m->dl = dl;
-    read_int(s,&dl->td); read_intarray(s,&(dl->d[0]),nv);
+    read_int(s,(unsigned int *)&dl->td); read_intarray(s,(unsigned int *)&(dl->d[0]),nv);
   }
   NEXT(m) = 0; MKDP(nv,m0,dp); dp->sugar = sugar; *p = dp;
 }
@@ -450,13 +450,13 @@ void loaddpm(FILE *s,DPM *p)
   DMM m,m0;
   DL dl;
 
-  read_int(s,&nv); read_int(s,&sugar); read_int(s,&n);
+  read_int(s,(unsigned int *)&nv); read_int(s,(unsigned int *)&sugar); read_int(s,(unsigned int *)&n);
   for ( i = 0, m0 = 0; i < n; i++ ) {
     NEXTDMM(m0,m);
     loadobj(s,(Obj *)&(m->c));
-    read_int(s,&m->pos);
+    read_int(s,(unsigned int *)&m->pos);
     NEWDL(dl,nv); m->dl = dl;
-    read_int(s,&dl->td); read_intarray(s,&(dl->d[0]),nv);
+    read_int(s,(unsigned int *)&dl->td); read_intarray(s,(unsigned int *)&(dl->d[0]),nv);
   }
   NEXT(m) = 0; MKDPM(nv,m0,dp); dp->sugar = sugar; *p = dp;
 }
@@ -482,7 +482,7 @@ void loadgfmmat(FILE *s,GFMMAT *p)
   unsigned int **a;
   GFMMAT mat;
 
-  read_int(s,&row); read_int(s,&col);
+  read_int(s,(unsigned int *)&row); read_int(s,(unsigned int *)&col);
   a = (unsigned int **)almat(row,col);
   TOGFMMAT(row,col,a,mat);
   for ( i = 0; i < row; i++ )
@@ -496,12 +496,12 @@ void loadnbp(FILE *s,NBP *p)
   NBM m;
   NODE r0,r;
 
-  read_int(s,&n);
+  read_int(s,(unsigned int *)&n);
   for ( i = 0, r0 = 0; i < n; i++ ) {
     NEWNBM(m);
     loadobj(s,(Obj *)&m->c);
-    read_int(s,&m->d); 
-    NEWNBMBDY(m,m->d); read_intarray(s,m->b,(m->d+31)/32);
+    read_int(s,(unsigned int *)&m->d); 
+    NEWNBMBDY(m,m->d); read_intarray(s,(unsigned int *)m->b,(m->d+31)/32);
     NEXTNODE(r0,r); BDY(r) = (pointer)m;
   }
   if ( r0 ) NEXT(r) = 0;

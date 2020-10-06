@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.3 2020/02/03 05:51:52 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.4 2020/02/22 06:23:35 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -380,11 +380,12 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
       } else
         break;
     }
-    if ( modular )
+    if ( modular ) {
       if ( modular > 1 ) {
         *rp = 0; return;
       } else
         m = get_lprime(++mindex);
+    }
     makesubst(vc,&subst);
     psn = length(s);
     for ( i = psn; i < pslen; i++ ) {
@@ -721,7 +722,7 @@ NODE gb_f4(NODE f)
     rank = generic_gauss_elim(mat,&nm,&dn,&rind,&cind);
 #endif
     if ( DP_Print )
-      fprintf(asir_out,"done rank = %d\n",rank,row,col);
+      fprintf(asir_out,"done rank = %d\n",rank);
     for ( i = 0; i < rank; i++ ) {
       for ( k = 0; k < nred; k++ )
         if ( !cmpdl(nv,at[rind[i]],ht[k]) )
@@ -946,7 +947,7 @@ NODE gb_f4_mod(NODE f,int m)
     init_eg(&eg_split_elim2); add_eg(&eg_split_elim2,&tmp0,&tmp1);
 
     if ( DP_Print ) {
-      fprintf(asir_out,"done rank = %d\n",rank,row,col);
+      fprintf(asir_out,"done rank = %d\n",rank);
       print_eg("Symb",&eg_split_symb);
       print_eg("Conv",&eg_split_conv);
       print_eg("Elim1",&eg_split_elim1);
@@ -1134,7 +1135,7 @@ NODE gb_f4_mod_old(NODE f,int m)
     init_eg(&eg_split_elim2); add_eg(&eg_split_elim2,&tmp0,&tmp1);
 
     if ( DP_Print ) {
-      fprintf(asir_out,"done rank = %d\n",rank,row,col);
+      fprintf(asir_out,"done rank = %d\n",rank);
       print_eg("Symb",&eg_split_symb);
       print_eg("Elim1",&eg_split_elim1);
       print_eg("Elim2",&eg_split_elim2);
@@ -1236,7 +1237,7 @@ void printsubst(NODE s)
   fputc('[',asir_out);
   while ( s ) {
     printv(CO,(V)BDY(s)); s = NEXT(s);
-    fprintf(asir_out,"->%d",ZTOS((Q)BDY(s)));
+    fprintf(asir_out,"->%ld",ZTOS((Q)BDY(s)));
     if ( NEXT(s) ) {
       fputc(',',asir_out); s = NEXT(s);
     } else
@@ -1379,7 +1380,7 @@ NODE /* of DP */ NODE_sortb_insert( DP newdp, NODE /* of DP */ nd, int dec )
     NEXT(newnd) = last;
     return newnd;
   }
-  for ( ; p = NEXT(last); last = p )
+  for ( ; (p = NEXT(last)) != 0; last = p )
     if ( sgn*(*cmpfun)( nv, newdl, BDY((DP) BDY(p))->dl ) > 0 ) break;
   if ( p ) NEXT(NEXT(last) = newnd) = p;
   else NEXT(last) = newnd;
@@ -1407,7 +1408,7 @@ NODE /* of index */ NODE_sortbi_insert( int newdpi, NODE /* of index */ nd, int 
     NEXT(newnd) = last;
     return newnd;
   }
-  for ( ; p = NEXT(last); last = p )
+  for ( ; (p = NEXT(last)) != 0; last = p )
     if ( sgn*(*cmpfun)( nv, newdl, psh[(long)BDY(p)] ) > 0 ) break;
   if ( p ) NEXT(NEXT(last) = newnd) = p;
   else NEXT(last) = newnd;
@@ -1705,7 +1706,7 @@ DP_pairs minp( DP_pairs d, DP_pairs *prest )
   }
   for ( lcm = m->lcm, s = m->sugar, ml = 0, l = m; p; p = NEXT(l = p) )
     if ( NoSugar ? (*cmpfun)( nv, lcm, p->lcm ) >= 0 :
-         (s > p->sugar || s == p->sugar && (*cmpfun)( nv, lcm, p->lcm ) >= 0) )
+         (s > p->sugar || (s == p->sugar && (*cmpfun)( nv, lcm, p->lcm ) >= 0)) )
       ml = l,  lcm = (m = p)->lcm,  s = p->sugar;
   if ( !ml ) *prest = NEXT(m);
   else {
@@ -1969,7 +1970,7 @@ DP_pairs updpairs( DP_pairs d, NODE /* of index */ g, int t)
     dd = d1;
   dl1 = DPPlength(dd); NDP += (dl-dl1);
   if ( !(nd = d) ) return dd;
-  while ( nd = NEXT(d1 = nd) ) ;
+  while ( (nd = NEXT(d1 = nd)) != 0 ) ;
   NEXT(d1) = dd;
   return d;
 }
@@ -2107,7 +2108,7 @@ DP_pairs criterion_F( DP_pairs d1 )
 
   for ( head = last = 0, p = d1; NEXT(p); ) {
     s = (r = w = collect_pairs_of_hdlcm( p, &rest ))->sugar;
-    while ( w = NEXT(w) )
+    while ( (w = NEXT(w)) != 0 )
       if ( !do_weyl && criterion_2( w->dp1, w->dp2 ) ) {
         r = w;
         break;

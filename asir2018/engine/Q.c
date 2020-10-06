@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.17 2020/01/09 01:47:41 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.18 2020/10/04 03:14:09 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -392,6 +392,8 @@ int cmpz(Z q1,Z q2)
     else if ( sgn < 0 ) return -1;
     else return 0;
   }
+  /* XXX */
+  return 0;
 }
 
 void gcdz(Z n1,Z n2,Z *nq)
@@ -2267,7 +2269,7 @@ int generic_gauss_elim_hensel64(MAT mat,MAT *nmmat,Z *dn,int **rindp,int **cindp
           for ( j = 0, bi = b[i], wi = wc[i]; j < ri; j++ )
             wi[j] = mpz_fdiv_ui(bi[j],md);
         /* wc = A^(-1)wc; wc is not normalized */
-        solve_by_lu_mod64(w,rank,md,wc,ri,0);
+        solve_by_lu_mod64(w,rank,md,(mp_limb_signed_t **)wc,ri,0);
         /* x += q*wc */
         for ( i = 0; i < rank; i++ )
           for ( j = 0, wi = wc[i]; j < ri; j++ )

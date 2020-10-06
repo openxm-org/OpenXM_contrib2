@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.6 2020/06/19 08:14:38 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.7 2020/06/20 05:56:08 fujimoto Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -332,7 +332,7 @@ void cppname_init()
   char oxcpp[BUFSIZ];
 #define OXCPP "/bin/ox_cpp"
 
-  if ( oxhome = getenv("OpenXM_HOME") ) {
+  if ( ( oxhome = getenv("OpenXM_HOME") ) != 0 ) {
     if ( strlen(oxhome)+strlen(OXCPP)<BUFSIZ ) {
       sprintf(oxcpp,"%s%s",oxhome,OXCPP);
       if ( access(oxcpp,X_OK&R_OK) == 0 ) {

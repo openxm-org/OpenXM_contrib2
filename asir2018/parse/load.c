@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM$
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/load.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -147,7 +147,7 @@ void env_init() {
   char rootname[BUFSIZ];
     size_t len;
 
-  if ( oxhome = getenv("OpenXM_HOME") ) {
+  if ( ( oxhome = getenv("OpenXM_HOME") ) != 0 ) {
     len = strlen(oxhome);
   }else {
 #if defined(VISUAL) || defined(__MINGW32__)
@@ -206,7 +206,7 @@ void env_init() {
       strcpy(asir_pager,MORE);
     }
   }
-  if ( e = getenv("ASIRLOADPATH" ) ) {
+  if ( ( e = getenv("ASIRLOADPATH" ) ) != 0 ) {
     for ( i = 0; ; i++, e = p+1 ) {
       p = (char *)index(e,ENVDELIM);
       if ( !p )
@@ -400,7 +400,7 @@ int loadfile(char *s)
 {
   FILE *in;
 
-  if ( in = fopen(s,"r") ) {
+  if ( ( in = fopen(s,"r") ) != 0 ) {
     fclose(in);
     loadasirfile(s);
     return 1;

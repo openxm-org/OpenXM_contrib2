@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/distm.c,v 1.1 2018/09/19 05:45:07 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/distm.c,v 1.2 2018/09/28 08:20:28 noro Exp $
 */
 #include "ca.h"
 #include "inline.h"
@@ -574,7 +574,7 @@ void _printdp(DP d)
     printf("0"); return;
   }
   for ( n = d->nv, m = BDY(d); m; m = NEXT(m) ) {
-    printf("%d*<<",ITOS(m->c));
+    printf("%ld*<<",ITOS(m->c));
     for ( i = 0, dl = m->dl; i < n-1; i++ )
       printf("%d,",dl->d[i]);
     printf("%d",dl->d[i]);

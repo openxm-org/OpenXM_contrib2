@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox_asir.c,v 1.2 2018/09/28 08:20:29 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox_asir.c,v 1.3 2019/12/13 14:40:50 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -175,7 +175,7 @@ void ox_main(int argc,char **argv) {
           break;
         if ( do_message )
           fprintf(stderr," %s\n",name_of_cmd(cmd));
-        if ( ret = SETJMP(main_env) ) {
+        if ( ( ret = SETJMP(main_env) ) != 0 ) {
           if ( ret == 1 ) {
             create_error(&err,serial,LastError,LastStackTrace);
             asir_push_one((Obj)err);
@@ -1138,7 +1138,7 @@ void asir_ox_push_cmd(int cmd)
   ERR err;
   extern char LastError[];
 
-  if ( ret = SETJMP(main_env) ) {
+  if ( ( ret = SETJMP(main_env) ) != 0 ) {
     asir_reset_handler();
     if ( ret == 1 ) {
       create_error(&err,0,LastError,LastStackTrace); /* XXX */
@@ -1165,7 +1165,7 @@ void asir_ox_execute_string(char *s)
 
   MKSTR(str,s);
   asir_push_one((Obj)str);
-  if ( ret = SETJMP(main_env) ) {
+  if ( ( ret = SETJMP(main_env) ) != 0 ) {
     asir_reset_handler();
     if ( ret == 1 ) {
       create_error(&err,0,LastError,LastStackTrace); /* XXX */
