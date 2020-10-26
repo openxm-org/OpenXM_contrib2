@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.36 2020/09/27 04:35:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.37 2020/10/06 06:31:19 noro Exp $ */
 
 #include "nd.h"
 
@@ -66,6 +66,7 @@ static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf;
+static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
@@ -1256,7 +1257,7 @@ INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
       quo->pos = nd_psh[i]->sig->pos;
       ret = comp_sig(sig,quo);
       if ( ret > 0 ) { singular = 0; break; }
-      if ( ret == 0 ) { fprintf(asir_out,"s"); fflush(asir_out); singular = 1; }
+      if ( ret == 0 ) { /* fprintf(asir_out,"s"); fflush(asir_out); */ singular = 1; }
     }
   }
   if ( singular ) return -1;
@@ -2561,6 +2562,7 @@ int small_lcm(ND_pairs l)
   static DL lcm,mul,quo;
   static int nvar;
 
+  if ( nd_sba_largelcm ) return 0;
   if ( nvar < nd_nvar ) {
     nvar = nd_nvar; NEWDL(lcm,nvar); NEWDL(quo,nvar); NEWDL(mul,nvar);
   }
@@ -3203,33 +3205,26 @@ ND_pairs nd_newpairs( NODE g, int t )
 
 int comp_sig(SIG s1,SIG s2)
 {
-#if 0
-  if ( s1->pos > s2->pos ) return 1;
-  else if ( s1->pos < s2->pos ) return -1;
-  else return (*cmpdl)(nd_nvar,s1->dl,s2->dl);
-#else
-  static DL m1,m2;
-  static int nvar;
-  int ret;
-
-  if ( nvar != nd_nvar ) {
-    nvar = nd_nvar; NEWDL(m1,nvar); NEWDL(m2,nvar);
+  if ( nd_sba_pot ) {
+    if ( s1->pos > s2->pos ) return 1;
+    else if ( s1->pos < s2->pos ) return -1;
+    else return (*cmpdl)(nd_nvar,s1->dl,s2->dl);
+  } else {
+    static DL m1,m2;
+    static int nvar;
+    int ret;
+  
+    if ( nvar != nd_nvar ) {
+      nvar = nd_nvar; NEWDL(m1,nvar); NEWDL(m2,nvar);
+    }
+    _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
+    _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
+    ret = (*cmpdl)(nd_nvar,m1,m2);
+    if ( ret != 0 ) return ret;
+    else if ( s1->pos > s2->pos ) return 1;
+    else if ( s1->pos < s2->pos ) return -1;
+    else return 0;
   }
-#if 0
-  _copydl(nd_nvar,nd_sba_hm[s1->pos],m1);
-  _copydl(nd_nvar,nd_sba_hm[s2->pos],m2);
-  _addtodl(nd_nvar,s1->dl,m1);
-  _addtodl(nd_nvar,s2->dl,m2);
-#else
-  _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
-  _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
-#endif
-  ret = (*cmpdl)(nd_nvar,m1,m2);
-  if ( ret != 0 ) return ret;
-  else if ( s1->pos > s2->pos ) return 1;
-  else if ( s1->pos < s2->pos ) return -1;
-  else return 0;
-#endif
 }
 
 int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
@@ -7999,6 +7994,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
         if ( nflist ) nd_last_nonzero = f4red;
         for ( r = nflist; r; r = NEXT(r) ) {
             nf = (NDV)BDY(r);
+            if ( nd_f4_td ) SG(nf) = nd_tdeg(nf);
             ndv_removecont(m,nf);
             if ( !m && nd_nalg ) {
                 ND nf1;
@@ -9568,39 +9564,38 @@ NODE conv_ilist_s(int demand,int trace,int **indp)
 
 void parse_nd_option(NODE opt)
 {
-    NODE t,p,u;
+  NODE t,p,u;
   int i,s,n;
-    char *key;
-    Obj value;
+  char *key;
+  Obj value;
 
-    nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
+  nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
   nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
   nd_splist = 0; nd_check_splist = 0;
-    nd_sugarweight = 0;
-    nd_f4red =0;
-    nd_rank0 = 0;
-    for ( t = opt; t; t = NEXT(t) ) {
-        p = BDY((LIST)BDY(t));
-        key = BDY((STRING)BDY(p));
-        value = (Obj)BDY(NEXT(p));
-        if ( !strcmp(key,"gentrace") )
-            nd_gentrace = value?1:0;
-        else if ( !strcmp(key,"gensyz") )
-            nd_gensyz = value?1:0;
-        else if ( !strcmp(key,"nora") )
-            nd_nora = value?1:0;
-        else if ( !strcmp(key,"gbblock") ) {
-            if ( value && OID(value) == O_LIST ) {
+  nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
+  nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
+  for ( t = opt; t; t = NEXT(t) ) {
+    p = BDY((LIST)BDY(t));
+    key = BDY((STRING)BDY(p));
+    value = (Obj)BDY(NEXT(p));
+    if ( !strcmp(key,"gentrace") )
+      nd_gentrace = value?1:0;
+    else if ( !strcmp(key,"gensyz") )
+      nd_gensyz = value?1:0;
+    else if ( !strcmp(key,"nora") )
+      nd_nora = value?1:0;
+    else if ( !strcmp(key,"gbblock") ) {
+      if ( value && OID(value) == O_LIST ) {
         u = BDY((LIST)value);
-              nd_gbblock = MALLOC((2*length(u)+1)*sizeof(int));
+        nd_gbblock = MALLOC((2*length(u)+1)*sizeof(int));
         for ( i = 0; u; u = NEXT(u) ) {
           p = BDY((LIST)BDY(u));
           s = nd_gbblock[i++] = ZTOS((Q)BDY(p));
           nd_gbblock[i++] = s+ZTOS((Q)BDY(NEXT(p)))-1;
         }
         nd_gbblock[i] = -1;
-            } else
-              nd_gbblock = 0;
+      } else
+        nd_gbblock = 0;
     } else if ( !strcmp(key,"newelim") )
             nd_newelim = value?1:0;
     else if ( !strcmp(key,"intersect") )
@@ -9610,27 +9605,35 @@ void parse_nd_option(NODE opt)
     else if ( !strcmp(key,"lf") )
             nd_lf = value?1:0;
     else if ( !strcmp(key,"trace") ) {
-           if ( value ) {
-               u = BDY((LIST)value);
-           nd_nzlist = BDY((LIST)ARG2(u));
-           nd_bpe = ZTOS((Q)ARG3(u));
-           }
+      if ( value ) {
+        u = BDY((LIST)value);
+        nd_nzlist = BDY((LIST)ARG2(u));
+        nd_bpe = ZTOS((Q)ARG3(u));
+      }
     } else if ( !strcmp(key,"f4red") ) {
-       nd_f4red = ZTOS((Q)value);
+      nd_f4red = ZTOS((Q)value);
     } else if ( !strcmp(key,"rank0") ) {
-            nd_rank0 = value?1:0;
+      nd_rank0 = value?1:0;
     } else if ( !strcmp(key,"splist") ) {
-            nd_splist = value?1:0;
+      nd_splist = value?1:0;
     } else if ( !strcmp(key,"check_splist") ) {
       nd_check_splist = BDY((LIST)value);
     } else if ( !strcmp(key,"sugarweight") ) {
       u = BDY((LIST)value);
-            n = length(u);
-            nd_sugarweight = MALLOC(n*sizeof(int));
+      n = length(u);
+      nd_sugarweight = MALLOC(n*sizeof(int));
       for ( i = 0; i < n; i++, u = NEXT(u) ) 
-                nd_sugarweight[i] = ZTOS((Q)BDY(u));
+        nd_sugarweight[i] = ZTOS((Q)BDY(u));
+    } else if ( !strcmp(key,"f4_td") ) {
+      nd_f4_td = value?1:0;
+    } else if ( !strcmp(key,"sba_f4step") ) {
+      nd_sba_f4step = value?ZTOS((Q)value):0;
+    } else if ( !strcmp(key,"sba_pot") ) {
+      nd_sba_pot = value?1:0;
+    } else if ( !strcmp(key,"sba_largelcm") ) {
+      nd_sba_largelcm = value?1:0;
     }
-    }
+  }
 }
 
 ND mdptond(DP d);
@@ -10910,7 +10913,7 @@ NODE nd_sba_f4(int m,int **indp)
   while ( d ) {
     for ( t = d, ms = SG(d); t; t = NEXT(t) )
       if ( SG(t) < ms ) ms = SG(t);
-    if ( ms == psugar && f4step >= 2 ) {
+    if ( ms == psugar && f4step >= nd_sba_f4step ) {
 again:
       l = d; d = d->next;
       if ( small_lcm(l) ) {
@@ -10988,6 +10991,7 @@ again2:
       /* adding new bases */
       for ( r = nflist; r; r = NEXT(r) ) {
         nfv = (NDV)BDY(r);
+        if ( nd_f4_td ) SG(nfv) = nd_tdeg(nfv);
         ndv_removecont(m,nfv);
         nh = ndv_newps(m,nfv,0);
         d = update_pairs_s(d,nh,syzlist);

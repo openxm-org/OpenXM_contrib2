@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.13 2019/12/27 08:13:59 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.14 2020/07/02 09:24:16 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -3333,6 +3333,29 @@ void dp_mod(DP p,int mod,NODE subst,DP *rp)
     }
     if ( mr0 ) {
       NEXT(mr) = 0; MKDP(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+    } else
+      *rp = 0;
+  }
+}
+
+void dpm_mod(DPM p,int mod,DPM *rp)
+{
+  DMM m,mr,mr0;
+  P t;
+  V v;
+  NODE tn;
+
+  if ( !p )
+    *rp = 0;
+  else {
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      ptomp(mod,(P)m->c,&t);
+      if ( t ) {
+        NEXTDMM(mr0,mr); mr->c = (Obj)t; mr->dl = m->dl;
+      }
+    }
+    if ( mr0 ) {
+      NEXT(mr) = 0; MKDPM(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
     } else
       *rp = 0;
   }

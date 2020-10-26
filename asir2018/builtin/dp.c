@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.24 2020/06/19 10:18:13 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.25 2020/06/30 01:52:17 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -79,7 +79,7 @@ void Pdp_nf_mod(),Pdp_true_nf_mod();
 void Pdp_criB(),Pdp_nelim();
 void Pdp_minp(),Pdp_sp_mod();
 void Pdp_homo(),Pdp_dehomo();
-void Pdpm_homo(),Pdpm_dehomo();
+void Pdpm_homo(),Pdpm_dehomo(),Pdpm_mod();
 void Pdp_gr_mod_main(),Pdp_gr_f_main();
 void Pdp_gr_main(),Pdp_gr_hm_main(),Pdp_gr_d_main(),Pdp_gr_flags();
 void Pdp_interreduce();
@@ -291,6 +291,7 @@ struct ftab dp_supp_tab[] = {
   {"dpm_dtol",Pdpm_dtol,2},
   {"dpm_homo",Pdpm_homo,1},
   {"dpm_dehomo",Pdpm_dehomo,1},
+  {"dpm_mod",Pdpm_mod,2},
 
   /* criteria */
   {"dp_cri1",Pdp_cri1,2},
@@ -1294,6 +1295,21 @@ void Pdp_mod(NODE arg,DP *rp)
   subst = BDY((LIST)ARG2(arg));
   dp_mod(p,mod,subst,rp);
 }
+
+void dpm_mod(DPM,int,DPM *);
+
+void Pdpm_mod(NODE arg,DPM *rp)
+{
+  DPM p;
+  int mod;
+  NODE subst;
+
+  asir_assert(ARG0(arg),O_DP,"dp_mod");
+  asir_assert(ARG1(arg),O_N,"dp_mod");
+  p = (DPM)ARG0(arg); mod = ZTOS((Q)ARG1(arg));
+  dpm_mod(p,mod,rp);
+}
+
 
 void Pdp_rat(NODE arg,DP *rp)
 {

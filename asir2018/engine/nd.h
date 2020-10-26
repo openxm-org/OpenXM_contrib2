@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.9 2020/06/30 01:52:17 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.10 2020/07/03 03:37:59 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -89,6 +89,7 @@ typedef struct oND_pairs {
   int sugar;
   int sugar2;
   SIG sig;
+  int zero;
   UINT lcm[1];
 } *ND_pairs;
 
@@ -196,7 +197,7 @@ extern int *current_module_weight_vector;
 ((r)=(RHist)MALLOC(sizeof(struct oRHist)+(nd_wpd-1)*sizeof(UINT)))
 #define NEWND_pairs(m) \
 if(!_ndp_free_list)_NDP_alloc();\
-(m)=_ndp_free_list; _ndp_free_list = NEXT(_ndp_free_list)   
+(m)=_ndp_free_list; (m)->zero = 0; _ndp_free_list = NEXT(_ndp_free_list)   
 #define NEWNM(m)\
 if(!_nm_free_list)_NM_alloc();\
 (m)=_nm_free_list; _nm_free_list = NEXT(_nm_free_list)   
