@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.37 2020/10/06 06:31:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.38 2020/10/26 02:41:05 noro Exp $ */
 
 #include "nd.h"
 
@@ -66,7 +66,8 @@ static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf;
-static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm;
+static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort;
+static int nd_top;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
@@ -2029,6 +2030,7 @@ void free_pbucket(PGeoBucket b) {
     GCFREE(b);
 }
 
+#if 0
 void add_pbucket_symbolic(PGeoBucket g,ND d)
 {
     int l,i,k,m;
@@ -2046,7 +2048,32 @@ void add_pbucket_symbolic(PGeoBucket g,ND d)
     g->body[k] = d;
     g->m = MAX(g->m,k);
 }
+#else
+void add_pbucket_symbolic(PGeoBucket g,ND d)
+{
+  int l,i,k,m,m0;
 
+  if ( !d )
+    return;
+  m0 = g->m;
+  while ( 1 ) {
+    l = LEN(d);
+    for ( k = 0, m = 1; l > m; k++, m <<= 1 );
+    /* 2^(k-1) < l <= 2^k (=m) */
+    if ( g->body[k] == 0 ) {
+      g->body[k] = d;
+      m0 = MAX(k,m0);
+      break;
+    } else { 
+      d = nd_merge(g->body[k],d);
+      g->body[k] = 0; 
+    }
+  }
+  g->m = m0;
+}
+#endif
+
+#if 0
 void add_pbucket(int mod,PGeoBucket g,ND d)
 {
     int l,i,k,m;
@@ -2064,6 +2091,28 @@ void add_pbucket(int mod,PGeoBucket g,ND d)
     g->body[k] = d;
     g->m = MAX(g->m,k);
 }
+#else
+void add_pbucket(int mod,PGeoBucket g,ND d)
+{
+  int l,i,k,m,m0;
+
+  m0 = g->m;
+  while ( d != 0 ) {
+    l = LEN(d);
+    for ( k = 0, m = 1; l > m; k++, m <<= 1 );
+    /* 2^(k-1) < l <= 2^k (=m) */
+    if ( g->body[k] == 0 ) {
+      g->body[k] = d;
+      m0 = MAX(k,m0);
+      break;
+    } else { 
+      d = nd_add(mod,g->body[k],d);
+      g->body[k] = 0; 
+    }
+  }
+  g->m = m0;
+}
+#endif
 
 void mulq_pbucket(PGeoBucket g,Z c)
 {
@@ -2424,10 +2473,10 @@ again:
       goto again;
     }
 #if USE_GEOBUCKET
-    stat = (m&&!nd_gentrace)?nd_nf_pbucket(m,h,nd_ps,!Top,&nf)
-      :nd_nf(m,0,h,nd_ps,!Top,&nf);
+    stat = (m&&!nd_gentrace)?nd_nf_pbucket(m,h,nd_ps,!nd_top&&!Top,&nf)
+      :nd_nf(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #else
-    stat = nd_nf(m,0,h,nd_ps,!Top,&nf);
+    stat = nd_nf(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #endif
     if ( !stat ) {
       NEXT(l) = d; d = l;
@@ -2619,7 +2668,7 @@ NODE conv_ilist_s(int demand,int trace,int **indp);
 
 NODE nd_sba_buch(int m,int ishomo,int **indp)
 {
-  int i,j,nh,sugar,stat;
+  int i,j,nh,sugar,stat,pos;
   NODE r,t,g;
   ND_pairs d;
   ND_pairs l;
@@ -2651,6 +2700,7 @@ init_eg(&eg_remove);
       syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
     }
   sugar = 0;
+  pos = 0;
   NEWDL(lcm,nd_nvar); NEWDL(quo,nd_nvar); NEWDL(mul,nd_nvar);
 init_eg(&eg_create);
 init_eg(&eg_merge);
@@ -2677,6 +2727,12 @@ again:
       if ( DP_Print ) fprintf(asir_out,"%d",sugar);
     }
     sig = l->sig;
+    if ( DP_Print && nd_sba_pot ) {
+      if ( sig->pos != pos ) {
+        fprintf(asir_out,"[%d]",sig->pos);
+        pos = sig->pos;
+      }
+    }
     stat = nd_sp(m,0,l,&h);
     if ( !stat ) {
       NEXT(l) = d; d = l;
@@ -2685,9 +2741,9 @@ again:
     }
 get_eg(&eg1);
 #if USE_GEOBUCKET
-    stat = m?nd_nf_pbucket_s(m,h,nd_ps,!Top,&nf):nd_nf_s(m,0,h,nd_ps,!Top,&nf);
+    stat = m?nd_nf_pbucket_s(m,h,nd_ps,!nd_top&&!Top,&nf):nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #else
-    stat = nd_nf_s(m,0,h,nd_ps,!Top,&nf);
+    stat = nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #endif
 get_eg(&eg2); 
     if ( !stat ) {
@@ -2760,7 +2816,7 @@ again:
       d = nd_reconstruct(0,d);
       goto again;
     }
-    stat = nd_nf(m,0,h,nd_ps,!Top,&nf);
+    stat = nd_nf(m,0,h,nd_ps,!nd_top&&!Top,&nf);
     if ( !stat ) {
       NEXT(l) = d; d = l;
       d = nd_reconstruct(0,d);
@@ -2935,9 +2991,9 @@ again:
       goto again;
     }
 #if USE_GEOBUCKET
-    stat = nd_nf_pbucket(m,h,nd_ps,!Top,&nf);
+    stat = nd_nf_pbucket(m,h,nd_ps,!nd_top&&!Top,&nf);
 #else
-    stat = nd_nf(m,0,h,nd_ps,!Top,&nf);
+    stat = nd_nf(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #endif
     if ( !stat ) {
       NEXT(l) = d; d = l;
@@ -2950,7 +3006,7 @@ again:
       } else
         nfq = 0;
       if ( !nfq ) {
-        if ( !nd_sp(0,1,l,&h) || !nd_nf(0,0,h,nd_ps_trace,!Top,&nfq) ) {
+        if ( !nd_sp(0,1,l,&h) || !nd_nf(0,0,h,nd_ps_trace,!nd_top&&!Top,&nfq) ) {
           NEXT(l) = d; d = l;
           d = nd_reconstruct(1,d);
           goto again;
@@ -4320,7 +4376,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
         ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
   }
 
-  ndv_setup(m,0,fd0,0,0,1);
+  ndv_setup(m,0,fd0,nd_sba_dontsort,0,1);
   x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm);
   if ( !x ) {
     *rp = 0; return;
@@ -9574,6 +9630,8 @@ void parse_nd_option(NODE opt)
   nd_splist = 0; nd_check_splist = 0;
   nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
+  nd_sba_dontsort = 0; nd_top = 0;
+
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
     key = BDY((STRING)BDY(p));
@@ -9632,6 +9690,10 @@ void parse_nd_option(NODE opt)
       nd_sba_pot = value?1:0;
     } else if ( !strcmp(key,"sba_largelcm") ) {
       nd_sba_largelcm = value?1:0;
+    } else if ( !strcmp(key,"sba_dontsort") ) {
+      nd_sba_dontsort = value?1:0;
+    } else if ( !strcmp(key,"top") ) {
+      nd_top = value?1:0;
     }
   }
 }
@@ -10929,9 +10991,9 @@ again:
       }
   get_eg(&eg1);
   #if USE_GEOBUCKET
-      stat = m?nd_nf_pbucket_s(m,h,nd_ps,!Top,&nf):nd_nf_s(m,0,h,nd_ps,!Top,&nf);
+      stat = m?nd_nf_pbucket_s(m,h,nd_ps,!nd_top&&!Top,&nf):nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
   #else
-      stat = nd_nf_s(m,0,h,nd_ps,!Top,&nf);
+      stat = nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
   #endif
   get_eg(&eg2); 
       if ( !stat ) {
