@@ -37,8 +37,7 @@ char	*getYoungestHistory();
 char *argv[MAXARGS];
 int argc;
 
-init_hist(size)
-    int size;
+void init_hist(int size)
 {
     char *itoa();
 
@@ -54,9 +53,7 @@ init_hist(size)
     set_var ("history", itoa (HistorySize));
 }
 
-char *
-itoa (i)
-    int i;
+char * itoa (int i)
 {
     static char buf[64];
 
@@ -64,8 +61,7 @@ itoa (i)
     return (buf);
 }
 
-addHistory(string)
-    char *string;
+void addHistory(char *string)
 {
     char *allocAndCopyThere();
     char *prev;
@@ -90,15 +86,12 @@ addHistory(string)
     CurrentHist = TailOfHist;
 }
 
-void
-resetCurrentHistory()
+void resetCurrentHistory()
 {
     CurrentHist = TailOfHist;
 }
 
-char *
-getHistory(num)
-    int num;
+char * getHistory(int num)
 {
     if (HistorySize <= 0)
 	return (0);
@@ -111,14 +104,12 @@ getHistory(num)
     }
 }
 
-char *
-getCurrentHistory()
+char * getCurrentHistory()
 {
     return (getHistory (CurrentHist));
 }
 
-char *
-getPreviousHistory()
+char * getPreviousHistory()
 {
     if (HistorySize <= 0)
 	return (0);
@@ -133,8 +124,7 @@ getPreviousHistory()
     return (getCurrentHistory ());
 }
 
-char *
-getNextHistory()
+char * getNextHistory()
 {
     
     if (HistorySize <= 0)
@@ -147,20 +137,19 @@ getNextHistory()
     return (getCurrentHistory ());
 }
 
-getOldestHistNum()
+int getOldestHistNum()
 {
 
     return (TopOfHist);
 }
 
-getYoungestHistNum()
+int getYoungestHistNum()
 {
 
     return (TailOfHist-1);
 }
 
-char *
-getOldestHistory()
+char * getOldestHistory()
 {
     register char *cp;
 
@@ -171,8 +160,7 @@ getOldestHistory()
     return (cp ? cp : "");
 }
 
-char *
-getYoungestHistory()
+char * getYoungestHistory()
 {
     register char *cp;
 
@@ -183,14 +171,12 @@ getYoungestHistory()
     return (cp ? cp : "");
 }
 
-getCurrentHistNum()
+int getCurrentHistNum()
 {
     return (CurrentHist);
 }
 
-char *
-allocAndCopyThere(string)
-    char *string;
+char * allocAndCopyThere(char *string)
 {
     register char *cp;
     
@@ -203,9 +189,7 @@ allocAndCopyThere(string)
     return(cp);
 }
 
-char *
-historyExtract(string)
-    char *string;
+char * historyExtract(char *string)
 {
     char *search_reverse_history();
 
@@ -277,9 +261,7 @@ historyExtract(string)
     return ((char *) 0);
 }
 
-char *
-search_reverse_history (string)
-    char *string;
+char * search_reverse_history (char *string)
 {
     register int i;
 
@@ -301,9 +283,7 @@ search_reverse_history (string)
     return ((char *) 0);
 }
 
-char *
-search_forward_history (string)
-    char *string;
+char * search_forward_history (char *string)
 {
     register int i;
 
@@ -327,8 +307,7 @@ search_forward_history (string)
 /*
  * Change history table size.
  */
-changeHistorySize(newsize)
-    int newsize;
+int changeHistorySize(int newsize)
 {
     char **newHistTable;
     register int newTop, i;
@@ -378,8 +357,7 @@ changeHistorySize(newsize)
 /*
  * Built-in function "fep-history"
  */
-fep_history (comline)
-    char *comline;
+void fep_history (char *comline)
 {
     int num;
 
@@ -393,8 +371,7 @@ fep_history (comline)
     hist_showHistory (num);
 }
 
-hist_showHistory (num)
-    int num;
+void hist_showHistory (int num)
 {
     register int from, to, i;
     char *cp;
@@ -420,9 +397,7 @@ hist_showHistory (num)
     }
 }
 
-char *
-mk_home_relative (cp)
-    char *cp;
+char * mk_home_relative (char *cp)
 {
     static char buf[256];
 
@@ -441,8 +416,7 @@ mk_home_relative (cp)
     return (buf);
 }
 
-fep_save_history (comline)
-    char *comline;
+void fep_save_history (char *comline)
 {
     char *file;
     char **argp;
@@ -479,9 +453,7 @@ fep_save_history (comline)
 
 #define MAXSAVEHIST 512
 
-save_history (file, num)
-    char *file;
-    int num;
+void save_history (char *file, int num)
 {
     int old, new;
     FILE *fp, *fopen();
@@ -516,8 +488,7 @@ save_history (file, num)
     return;
 }
 
-fep_read_history (comline)
-    char *comline;
+void fep_read_history (char *comline)
 {
     char *file;
     char **argp;
@@ -548,8 +519,7 @@ fep_read_history (comline)
     read_history (file);
 }
 
-read_history (file)
-    char *file;
+void read_history (char *file)
 {
     FILE *fp;
     char line [MAXCMDLEN];

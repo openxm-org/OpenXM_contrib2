@@ -6,9 +6,11 @@ static char rcsid[]=
 #endif /* lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "fep_defs.h"
+#include "fep_funcs.h"
 #include "fep_glob.h"
 
 typedef struct _alias {
@@ -24,19 +26,15 @@ CHAR	aliased_line[MAXCMDLEN+1];
 /*
  * Functions
  */
-int	set_alias	(/* char *name, char *value */);
-char	*look_alias	(/* char *name */);
-ALIAS	*getap		(/* char *name */);
 
+ALIAS * getap (char *name, int alloc, ALIAS **lastvp);
 extern	char	*allocAndCopyThere();
 extern	char	*prompt;
 
 /*
  * Check alias list, and if found alias change command by its value
  */
-CHAR *
-check_alias (comline)
-    char *comline;
+CHAR * check_alias (char *comline)
 {
     char *argv[MAXARGS];
     int argc;
@@ -118,8 +116,7 @@ check_alias (comline)
 /*
  * Set alias
  */
-set_alias (name, value)
-    char *name, *value;
+void set_alias (char *name, char *value)
 {
     ALIAS *vp;
 
@@ -134,8 +131,7 @@ set_alias (name, value)
 /*
  * Unset alias
  */
-unset_alias (name)
-    char *name;
+void unset_alias (char *name)
 {
     ALIAS *vp, *prev;
 
@@ -154,9 +150,7 @@ unset_alias (name)
 /*
  * Look up alias
  */
-char *
-look_alias (name)
-    char *name;
+char * look_alias (char *name)
 {
 
     ALIAS *vp;
@@ -172,8 +166,7 @@ look_alias (name)
 /*
  * Show alias list
  */
-show_aliaslist (a)
-    char *a;
+void show_aliaslist (char *a)
 {
     register ALIAS *vp;
 
@@ -190,11 +183,7 @@ show_aliaslist (a)
  * If there is no memoly associated to the alias and alloc argument is 1,
  * allocate the area and initialize name field.
  */
-ALIAS *
-getap (name, alloc, lastvp)
-    char *name;
-    int alloc;
-    ALIAS **lastvp;
+ALIAS * getap (char *name, int alloc, ALIAS **lastvp)
 {
     ALIAS *vp, *last = (ALIAS *)0;
 

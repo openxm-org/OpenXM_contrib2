@@ -7,8 +7,11 @@ static char rcsid[]=
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "fep_defs.h"
+#include "fep_funcs.h"
 #include "fep_glob.h"
+void initViBindings (FUNC cft[], FUNC aft[]);
 
 VAR default_set_vars [] = {
 	{"expand-tilde",	"",
@@ -76,18 +79,13 @@ VAR *var_list = &var_top;
 /*
  * Functions
  */
-int	set_var		(/* char *name, char *value */);
-char	*look_var	(/* char *name */);
-int	lookd_var	(/* char *name */);
-VAR	*getvp		(/* char *name */);
-
 extern	char	*allocAndCopyThere();
 extern	char	*prompt;
 
 /*
  * Set default variables
  */
-set_default_vars ()
+void set_default_vars ()
 {
     register VAR *vp;
 
@@ -98,9 +96,7 @@ set_default_vars ()
 /*
  * Set variable
  */
-set_var (name, value)
-    char *name;
-    char *value;
+int set_var (char *name, char *value)
 {
     /*
      * Process special variable
@@ -151,8 +147,7 @@ set_var (name, value)
     set_only_var (name, value);
 }
 
-set_only_var (name, value)
-    char *name, *value;
+void set_only_var (char *name, char *value)
 {
     VAR *vp;
 
@@ -170,8 +165,7 @@ set_only_var (name, value)
 /*
  * Unset variable
  */
-unset_var (name)
-    char *name;
+void unset_var (char *name)
 {
     VAR *vp, *prev;
 
@@ -202,9 +196,7 @@ unset_var (name)
 /*
  * Look up variable
  */
-char *
-look_var (name)
-    char *name;
+char * look_var (char *name)
 {
 
     VAR *vp;
@@ -220,9 +212,7 @@ look_var (name)
 /*
  * Look up variable and get integer result
  */
-int
-lookd_var (name)
-    char *name;
+int lookd_var (char *name)
 {
     VAR *vp;
 
@@ -237,7 +227,7 @@ lookd_var (name)
 /*
  * Show variable list
  */
-show_varlist ()
+void show_varlist ()
 {
 #ifdef HASH
     register int i;
@@ -264,8 +254,7 @@ show_varlist ()
 /*
  * Get hash index from variable name
  */
-static getindex (s)
-    register char *s;
+static getindex (char *s)
 {
     register int sum = 0;
 
@@ -281,11 +270,7 @@ static getindex (s)
  * If there is no memoly associated to the variable and alloc argument is 1,
  * allocate the area and initialize name field.
  */
-VAR *
-getvp (name, alloc, lastvp)
-    char *name;
-    int alloc;
-    VAR **lastvp;
+VAR * getvp (char *name, int alloc, VAR **lastvp)
 {
 #ifdef HASH
     register i = getindex (name);

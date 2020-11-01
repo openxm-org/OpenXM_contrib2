@@ -13,6 +13,7 @@ static char rcsid[]=
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #ifdef TERMIOS
@@ -44,6 +45,11 @@ typedef struct {
 	int max_line;
 } MORE;
 MORE *create_more();
+int more (MORE *mp);
+int showTable (MORE *m, FunctionTableEnt *fnte);
+int showVariables (MORE *m);
+void destroy_more(MORE *mp);
+int showBindingTbl (MORE *m, FUNC ft[], char *prefix);
 
 #if defined(ANDROID)
 #define S_IREAD S_IRUSR
@@ -53,8 +59,7 @@ MORE *create_more();
 /*
  * Check command line if it call built-in function or not and execute it
  */
-executeBuiltInFunction (comline, more)
-    char *comline, **more;
+int executeBuiltInFunction (char *comline, char **more)
 {
     register FunctionTableEnt *ftp;
     char linebuf[MAXCMDLEN], *line;
@@ -113,8 +118,7 @@ executeBuiltInFunction (comline, more)
     return (NOT_PROCESSED);
 }
 
-is_same_command (a, b)
-    register char *a, *b;
+int is_same_command (char *a, char *b)
 {
 
     while (*a && *b && *a == *b)
@@ -128,8 +132,7 @@ is_same_command (a, b)
 /*
  * Process 'fep-if' and 'fep-elseif'
  */
-fep_if (comline)
-    char *comline;
+void fep_if (char *comline)
 {
     char *argv[MAXARGS];
     int argc;
@@ -214,7 +217,7 @@ fep_if (comline)
     return;
 }
 
-fep_else ()
+void fep_else ()
 {
     char *err;
 
@@ -224,7 +227,7 @@ fep_else ()
     return;
 }
 
-fep_endif ()
+void fep_endif ()
 {
     char *err;
 
@@ -234,8 +237,7 @@ fep_endif ()
     return;
 }
 
-bind_to_key (comline)
-    char *comline;
+void bind_to_key (char *comline)
 {
     register FunctionTableEnt *fnte;
     char *argv[MAXARGS];
@@ -276,8 +278,7 @@ bind_to_key (comline)
 	printf ("%s: no such built-in command\n", argv[1]);
 }
 
-alias(comline)
-    char *comline;
+void alias(char *comline)
 {
     char *argv[MAXARGS];
     int argc;
@@ -303,8 +304,7 @@ alias(comline)
     return;
 }
 
-unalias (comline)
-    char *comline;
+void unalias (char *comline)
 {
     char *argv[MAXARGS];
     int argc;
@@ -318,8 +318,7 @@ unalias (comline)
     return;
 }
 
-set (comline)
-    char *comline;
+void set (char *comline)
 {
     char line[MAXCMDLEN];
 #if defined(ANDROID)
@@ -362,8 +361,7 @@ set (comline)
     }
 }
 
-unset(comline)
-    char *comline;
+void unset(char *comline)
 {
     char **vp;
     char *argv[MAXARGS];
@@ -399,7 +397,7 @@ extern	char slave_tty[];
  * But this Transparency is set automaticaly by getcharacter() routine,
  * if the variable auto-tty-fix is ON.
  */
-toggle_through()
+void toggle_through()
 {
     int r;
     int slave_fd;
@@ -461,7 +459,7 @@ toggle_through()
 /*
  * Check tty mode of slave tty and fix stdout tty mode
  */
-fix_transparency()
+void fix_transparency()
 {
     int r;
 #ifdef TERMIOS
@@ -539,8 +537,7 @@ fix_transparency()
     }
 }
 
-putch (c)
-    int c;
+void putch (int c)
 {
     putchar (c);
     fflush (stdout);
@@ -550,7 +547,7 @@ putch (c)
 int crt, sline;
 */
 
-show_bindings ()
+int show_bindings ()
 {
     MORE *m;
 
@@ -568,10 +565,7 @@ show_bindings ()
     return (0);
 }
 
-showBindingTbl (m, ft, prefix)
-    MORE *m;
-    FUNC ft[];
-    char *prefix;
+int showBindingTbl (MORE *m, FUNC ft[], char *prefix)
 {
     register FunctionTableEnt *fnte;
     register int i;
@@ -629,7 +623,7 @@ showBindingTbl (m, ft, prefix)
     return (1);
 }
 
-show_help ()
+void show_help ()
 {
     MORE *m;
 
@@ -654,9 +648,7 @@ show_help ()
     recover_edit_line (1);
 }
 
-showTable (m, fnte)
-    MORE *m;
-    FunctionTableEnt *fnte;
+int showTable (MORE *m, FunctionTableEnt *fnte)
 {
     int i;
 
@@ -672,8 +664,7 @@ showTable (m, fnte)
     return (1);
 }
 
-showVariables (m)
-    MORE *m;
+int showVariables (MORE *m)
 {
     extern VAR default_set_vars[], default_unset_vars[];
     VAR *vp;
@@ -696,8 +687,7 @@ showVariables (m)
     return (1);
 }
 
-MORE *create_more(maxline)
-    int maxline;
+MORE *create_more(int maxline)
 {
     MORE *mp;
 
@@ -712,15 +702,13 @@ MORE *create_more(maxline)
     }
 }
 
-destroy_more(mp)
-    MORE *mp;
+void destroy_more(MORE *mp)
 {
     if (mp)
 	free (mp);
 }
 
-more (mp)
-    MORE *mp;
+int more (MORE *mp)
 {
 
     /*
@@ -762,8 +750,7 @@ more (mp)
 /*
  * Change directory
  */
-fep_chdir (line)
-char *line;
+void fep_chdir (char *line)
 {
     char *argv[MAXARGS];
     int argc;
@@ -813,8 +800,7 @@ char *line;
     }
 }
 
-fep_pwd (line)
-    char *line;
+void fep_pwd (char *line)
 {
     char cwd[MAXPATHLEN];
 
@@ -822,8 +808,7 @@ fep_pwd (line)
     printf ("%s\n", cwd);
 }
 
-fep_echo (comline)
-    char *comline;
+void fep_echo (char *comline)
 {
     char *argv[MAXARGS];
     int argc;
@@ -862,8 +847,7 @@ fep_echo (comline)
 	printf ("%c", '\n');
 }
 
-fep_command (comline)
-    char *comline;
+void fep_command (char *comline)
 {
     char *argv[MAXARGS];
     int argc;
@@ -887,8 +871,7 @@ fep_command (comline)
     invoke_command (buf);
 }
 
-fep_source (comline)
-    char *comline;
+void fep_source (char *comline)
 {
     FILE *fp;
     static char *argv[MAXARGS];
@@ -908,7 +891,7 @@ fep_source (comline)
     return;
 }
 
-sourceRcFile ()
+void sourceRcFile ()
 {
     char *home, filename[64], *getenv();
     char line[256];
@@ -936,8 +919,7 @@ sourceRcFile ()
     return;
 }
 
-source_file (file)
-    char *file;
+void source_file (char *file)
 {
     FILE *fp;
     char line[512], line2[512];
@@ -977,7 +959,7 @@ source_file (file)
 int condition_stack [MAX_IF_NEST] = {1};
 int current_if_stack = 0;
 
-condition ()
+int condition ()
 {
     int cond = 1, i;
 
@@ -990,9 +972,7 @@ condition ()
     return (cond & CONDITION_MASK);
 }
 
-char *
-change_condition (cond)
-    int cond;
+char * change_condition (int cond)
 {
     if (debug)
 	printf ("old=0x%x, new=0x%x\n",
@@ -1011,9 +991,7 @@ change_condition (cond)
 	return ("Not in if close\n");
 }
 
-char *
-push_condition (cond)
-    int cond;
+char * push_condition (int cond)
 {
     if (current_if_stack < MAX_IF_NEST){
 	++current_if_stack;
@@ -1026,8 +1004,7 @@ push_condition (cond)
 	return ("If stack over flow\n");
 }
 
-char *
-pop_condition ()
+char * pop_condition ()
 {
 
     if (current_if_stack > 0) {
@@ -1038,7 +1015,7 @@ pop_condition ()
 	return ("No more if stack\n");
 }
 
-invoke_shell ()
+void invoke_shell ()
 {
     char *shell = "/bin/sh";
 
@@ -1048,10 +1025,8 @@ invoke_shell ()
     invoke_command (shell);
 }
 
-invoke_command (cmd)
-    char *cmd;
+void invoke_command (char *cmd)
 {
-    int catchsig();
     int (*func)();
 
     clear_edit_line ();
@@ -1071,8 +1046,7 @@ invoke_command (cmd)
 FILE *redirect_fp = NULL;
 int redirect_line = 0;
 
-fep_read_from_file (comline)
-    char *comline;
+void fep_read_from_file (char *comline)
 {
     FILE *fp;
     static char *argv[MAXARGS];
@@ -1110,8 +1084,7 @@ fep_read_from_file (comline)
  */
 int redirect_pid = 0;
 
-fep_read_from_command (comline)
-    char *comline;
+void fep_read_from_command (char *comline)
 {
     static char *argv[MAXARGS];
     char buf[256];
@@ -1151,8 +1124,7 @@ fep_read_from_command (comline)
 
 char script_file[128];
 
-fep_start_script (comline)
-    char *comline;
+void fep_start_script (char *comline)
 {
     char *name;
 
@@ -1214,7 +1186,7 @@ fep_start_script (comline)
     recover_edit_line (1);
 }
 
-fep_end_script ()
+void fep_end_script ()
 {
     if (!script_fp) {
 	clear_edit_line ();
@@ -1233,8 +1205,7 @@ fep_end_script ()
     return;
 }
 
-fep_repaint(comline)
-    char *comline;
+void fep_repaint(char *comline)
 {
     int i;
     int line;
@@ -1295,8 +1266,7 @@ fep_repaint(comline)
     fflush (stdout);
 }
 
-view_buffer (comline)
-    char *comline;
+int view_buffer (char *comline)
 {
     BUFFER *bp = output_buffer;
     MORE *m;
@@ -1360,7 +1330,7 @@ struct statistics stat_info[] = {
     NULL, NULL
 };
 
-fep_showstat ()
+void fep_showstat ()
 {
     struct statistics *sp = stat_info;
     BUFFER *bp = output_buffer;

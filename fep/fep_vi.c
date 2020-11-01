@@ -159,8 +159,7 @@ BINDENT viInsertBindings[] = {
 FUNC *viComTable;
 FUNC *viInsTable;
 
-initViBindings (cft, aft)
-FUNC cft[], aft[];
+void initViBindings (FUNC cft[], FUNC aft[])
 {
     register int i;
     BINDENT *ftp;
@@ -239,8 +238,7 @@ FUNC cft[], aft[];
     vi_mode = INSERTMODE;
 }
 
-vi_edit (c)
-    int c;
+int vi_edit (int c)
 {
     int count = vi_count ? vi_count : 1;
 
@@ -324,7 +322,7 @@ vi_edit (c)
     return (0);
 }
 
-altenateEditmode ()
+int altenateEditmode ()
 {
     FUNC *tmp;
 
@@ -336,15 +334,13 @@ altenateEditmode ()
     return (0);
 }
 
-vi_num (c)
-    int c;
+int vi_num (int c)
 {
     vi_count = vi_count * 10 + ((int)c - (int)'0');
     return (0);
 }
 
-vi_motion (c)
-    int c;
+int vi_motion (int c)
 {
     int count = vi_count ? vi_count : 1;
 
@@ -435,8 +431,7 @@ vi_motion (c)
     return (0);
 }
 
-vi_c (c)
-    int c;
+int vi_c (int c)
 {
     int count = vi_count ? vi_count : 1;
 
@@ -478,8 +473,7 @@ vi_c (c)
     return (0);
 }
 
-vi_d (c)
-    int c;
+int vi_d (int c)
 {
     int count = vi_count ? vi_count : 1;
 
@@ -520,8 +514,7 @@ vi_d (c)
     return (0);
 }
 
-vi_new_line (c)
-    int c;
+int vi_new_line (int c)
 {
     int count = vi_count ? vi_count : 1;
 
@@ -534,8 +527,7 @@ vi_new_line (c)
     return (1);
 }
 
-vi_ins_edit (c)
-    int c;
+int vi_ins_edit (int c)
 {
     switch (c) {
 

@@ -13,6 +13,7 @@ static char rcsid[]=
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -62,6 +63,8 @@ jmp_buf	jbuf;				/* jump buffer */
 
 FUNC	*curFuncTab;			/* current function table */
 FUNC	*altFuncTab;			/* alternative function table */
+
+void ls (DIR *dirp, char *prefixstring);
 
 /*
  * Default binding table
@@ -123,7 +126,7 @@ BINDENT emacsBindings[] = {
 /*
  * Initialize function table buffer
  */
-init_bind_table ()
+void init_bind_table ()
 {
 
     curFuncTab = (FUNC *) calloc (sizeof (FUNC), 256);
@@ -139,7 +142,7 @@ init_bind_table ()
  */
 char strspace [256], *strspace_addr = strspace;
 
-init_edit_params ()
+void init_edit_params ()
 {
     struct indirect *idp;
     char *cp, *getenv();
@@ -209,8 +212,7 @@ init_edit_params ()
 /*
  * Initialize emacs bindings
  */
-initEmacsBindings (cft, aft)
-    FUNC cft[], aft[];
+void initEmacsBindings (FUNC cft[], FUNC aft[])
 {
     register int i;
     BINDENT *ftp;
@@ -293,8 +295,7 @@ initEmacsBindings (cft, aft)
 /*
  * Main function of front end program
  */
-CHAR *
-mygetline()
+CHAR * mygetline()
 {
     int c;
     CHAR *execute_command, *check_alias();
@@ -459,9 +460,7 @@ RETURN:
  * Invoke appropliate function according to fucntion table
  * Return value 1 means exit from line editing
  */
-callfunc (ft, c)
-    FUNC ft[];
-    int c;
+int callfunc (FUNC ft[], int c)
 {
 
     if (isIndirect(ft[(int) c])) {
@@ -478,7 +477,7 @@ callfunc (ft, c)
 /*
  * Beep and do nothing
  */
-fep_abort()
+int fep_abort()
 {
     (void) errorBell ();
     return (0);
@@ -487,8 +486,7 @@ fep_abort()
 /*
  * Insert the character self
  */
-self_insert(c)
-    CHAR c;
+int self_insert(CHAR c)
 {
     register int i, nbyte = 1, currentNull;
 #ifdef KANJI
@@ -537,8 +535,7 @@ self_insert(c)
 /*
  * Insert string in current position
  */
-insert_string (s)
-    CHAR *s;
+int insert_string (CHAR *s)
 {
     register int i, nbyte = strlen (s), currentNull;
 
@@ -569,7 +566,7 @@ insert_string (s)
 /*
  * Yank string from kill buffer.
  */
-yank_from_kill_buffer ()
+void yank_from_kill_buffer ()
 {
     insert_string (KillBuffer);
 }
@@ -577,7 +574,7 @@ yank_from_kill_buffer ()
 /*
  * Set mark to current position
  */
-mark ()
+int mark ()
 {
     set_mark (CurrentPosition);
     return (0);
@@ -586,8 +583,7 @@ mark ()
 /*
  * Set mark to specified position
  */
-set_mark (pos)
-    int pos;
+int set_mark (int pos)
 {
     MarkPosition = pos;
     return (0);
@@ -596,7 +592,7 @@ set_mark (pos)
 /*
  * Delete area from mark to current position to kill buffer
  */
-delete_to_kill_buffer ()
+int delete_to_kill_buffer ()
 {
     int n = abs (CurrentPosition - MarkPosition);
 
@@ -618,7 +614,7 @@ delete_to_kill_buffer ()
 /*
  * Move to specified position.
  */
-moveto (position)
+void moveto (int position)
 {
     if (position < CurrentPosition)
 	while (position < CurrentPosition)
@@ -636,7 +632,7 @@ moveto (position)
 /*
  * Move cursor to top of line
  */
-beginning_of_line()
+int beginning_of_line()
 {
     register int i;
 
@@ -660,7 +656,7 @@ beginning_of_line()
 /*
  * Move cursor to end of line
  */
-end_of_line()
+int end_of_line()
 {
     register int    i;
 
@@ -679,7 +675,7 @@ end_of_line()
 /*
  * Move cursor left one space
  */
-backward_character()
+int backward_character()
 {
 
     return (backward_n_character (1));
@@ -688,8 +684,7 @@ backward_character()
 /*
  * Move cursor left "n" space
  */
-backward_n_character(n)
-    int n;
+int backward_n_character(int n)
 {
     int space;
     int i = CurrentPosition;
@@ -724,7 +719,7 @@ backward_n_character(n)
 /*
  * Move cursor backward one word
  */
-backward_word ()
+int backward_word ()
 {
 
     return (backward_n_word (1));
@@ -733,8 +728,7 @@ backward_word ()
 /*
  * Move cursor backward n word
  */
-backward_n_word (n)
-    int n;
+int backward_n_word (int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -785,7 +779,7 @@ backward_n_word (n)
 /*
  * Move cursor backward one Word
  */
-backward_Word ()
+int backward_Word ()
 {
 
     return (backward_n_Word (1));
@@ -794,8 +788,7 @@ backward_Word ()
 /*
  * Move cursor backward n Word
  */
-backward_n_Word (n)
-    int n;
+int backward_n_Word (int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -844,7 +837,7 @@ backward_n_Word (n)
 /*
  * Move cursor forward one character
  */
-forward_character()
+int forward_character()
 {
 
     return (forward_n_character (1));
@@ -853,8 +846,7 @@ forward_character()
 /*
  * Move cursor forward n character
  */
-forward_n_character(n)
-    int n;
+int forward_n_character(int n)
 {
     int space;
     register int i = CurrentPosition;
@@ -905,7 +897,7 @@ forward_n_character(n)
 /*
  * Move cursor forward one word
  */
-forward_word ()
+int forward_word ()
 {
     return (forward_n_word (1));
 }
@@ -913,8 +905,7 @@ forward_word ()
 /*
  * Move cursor forward n word
  */
-forward_n_word (n)
-    int n;
+int forward_n_word (int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -939,7 +930,7 @@ forward_n_word (n)
 /*
  * Move cursor forward one word
  */
-forward_Word ()
+int forward_Word ()
 {
     return (forward_n_Word (1));
 }
@@ -947,8 +938,7 @@ forward_Word ()
 /*
  * Move cursor forward n word
  */
-forward_n_Word (n)
-    int n;
+int forward_n_Word (int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -973,7 +963,7 @@ forward_n_Word (n)
 /*
  * Forward to end of word
  */
-forward_to_end_of_word ()
+int forward_to_end_of_word ()
 {
 
     return (forward_to_end_of_n_word (1));
@@ -982,7 +972,7 @@ forward_to_end_of_word ()
 /*
  * Forward to end of n word
  */
-forward_to_end_of_n_word (n)
+int forward_to_end_of_n_word (int n)
 {    
     register int i = CurrentPosition, nchars = 0;
 
@@ -1009,7 +999,7 @@ forward_to_end_of_n_word (n)
 /*
  * Forward to end of word
  */
-forward_to_end_of_Word ()
+int forward_to_end_of_Word ()
 {
 
     return (forward_to_end_of_n_Word (1));
@@ -1018,7 +1008,7 @@ forward_to_end_of_Word ()
 /*
  * Forward to end of n word
  */
-forward_to_end_of_n_Word (n)
+int forward_to_end_of_n_Word (int n)
 {    
     register int i = CurrentPosition, nchars = 0;
 
@@ -1045,7 +1035,7 @@ forward_to_end_of_n_Word (n)
 /*
  * Delete previous one character
  */
-delete_previous_character()
+int delete_previous_character()
 {
 
     return (delete_previous_n_character (1));
@@ -1054,8 +1044,7 @@ delete_previous_character()
 /*
  * Delete previous n characters
  */
-delete_previous_n_character(n)
-    int n;
+int delete_previous_n_character(int n)
 {
     register int i, nbyte;
     int deleteArea, restArea;
@@ -1101,7 +1090,7 @@ delete_previous_n_character(n)
 /*
  * Delete previous one word
  */
-delete_previous_word()
+int delete_previous_word()
 {
     
     return (delete_previous_n_word (1));
@@ -1110,8 +1099,7 @@ delete_previous_word()
 /*
  * Delete previous n word
  */
-delete_previous_n_word(n)
-    int n;
+int delete_previous_n_word(int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -1162,7 +1150,7 @@ delete_previous_n_word(n)
 /*
  * Delete previous one word
  */
-delete_previous_Word()
+int delete_previous_Word()
 {
     
     return (delete_previous_n_Word (1));
@@ -1171,8 +1159,7 @@ delete_previous_Word()
 /*
  * Delete previous n word
  */
-delete_previous_n_Word(n)
-    int n;
+int delete_previous_n_Word(int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -1223,7 +1210,7 @@ delete_previous_n_Word(n)
 /*
  * Delete next one character
  */
-delete_next_character ()
+int delete_next_character ()
 {
 
     return (delete_next_n_character (1));
@@ -1232,8 +1219,7 @@ delete_next_character ()
 /*
  * Delete next n character
  */
-delete_next_n_character (n)
-    int n;
+int delete_next_n_character (int n)
 {
     register int i, nbyte;
     int deleteArea, restArea;
@@ -1282,7 +1268,7 @@ delete_next_n_character (n)
 /*
  * Delete next one word
  */
-delete_next_word ()
+int delete_next_word ()
 {
     return (delete_next_n_word (1));
 }
@@ -1290,8 +1276,7 @@ delete_next_word ()
 /*
  * Delete next n word
  */
-delete_next_n_word (n)
-    int n;
+int delete_next_n_word (int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -1316,7 +1301,7 @@ delete_next_n_word (n)
 /*
  * Delete next one word
  */
-delete_next_Word ()
+int delete_next_Word ()
 {
     return (delete_next_n_Word (1));
 }
@@ -1324,8 +1309,7 @@ delete_next_Word ()
 /*
  * Delete next n word
  */
-delete_next_n_Word (n)
-    int n;
+int delete_next_n_Word (int n)
 {
     register int i = CurrentPosition, nchars = 0;
 
@@ -1350,7 +1334,7 @@ delete_next_n_Word (n)
 /*
  * Erase whole line
  */
-delete_line()
+int delete_line()
 {
     register int i = CurrentPosition;
     register int len;
@@ -1385,7 +1369,7 @@ delete_line()
 /*
  * Delete characters from current position to top of line
  */
-kill_to_top_of_line()
+int kill_to_top_of_line()
 {
     int i = CurrentPosition;
 
@@ -1396,7 +1380,7 @@ kill_to_top_of_line()
 /*
  * Delete characters from current position to end of line
  */
-kill_to_end_of_line()
+int kill_to_end_of_line()
 {
     register int    i, backCnt = 0;
 
@@ -1422,7 +1406,7 @@ kill_to_end_of_line()
 /*
  * Insert tab to current cursor position
  */
-insert_tab()
+int insert_tab()
 {
 
     /* sorry, not implemented */
@@ -1432,7 +1416,7 @@ insert_tab()
 /*
  * Process new line
  */
-new_line()
+int new_line()
 {
 
     (void) end_of_line;
@@ -1446,7 +1430,7 @@ new_line()
 /*
  * Check current position is top-of-line
  */
-is_tol()
+int is_tol()
 {
     return (CurrentPosition == 0);
 }
@@ -1454,7 +1438,7 @@ is_tol()
 /*
  * Check current position is end-of-line
  */
-is_eol()
+int is_eol()
 {
     return (CommandLine [CurrentPosition] == '\0');
 }
@@ -1462,7 +1446,7 @@ is_eol()
 /*
  * Check command line if it refer history or not
  */
-refer_history()
+int refer_history()
 {
     char   *historyExtract ();
     char   *his;
@@ -1488,18 +1472,17 @@ refer_history()
 #define FORWARD	    1
 #define REVERSE	    2
 
-search_reverse ()
+int search_reverse ()
 {
     return (search_history (REVERSE));
 }
 
-search_forward ()
+int search_forward ()
 {
     return (search_history (FORWARD));
 }
 
-search_history (direct)
-    int direct;
+int search_history (int direct)
 {
     char *his, *search_reverse_history(), *search_forward_history();
     char *(*func)();
@@ -1539,8 +1522,7 @@ AGAIN:
 /*
  * Insert the character and flush buffer
  */
-insert_and_flush(c)
-    char c;
+int insert_and_flush(char c)
 {
     (void) self_insert (c);
     return (1);
@@ -1550,7 +1532,7 @@ insert_and_flush(c)
  * Insert the character, but it means EOL. Therefore move cursor backward and
  * flush buffer
  */
-send_eof()
+int send_eof()
 {
 #ifdef TERMIOS
     char c = initial_ttymode.c_cc[VEOF];
@@ -1569,7 +1551,7 @@ send_eof()
 /*
  * Alarm for EOF on only the first time finding eof character
  */
-alarm_on_eof ()
+int alarm_on_eof ()
 {
 
     errorBell ();
@@ -1581,7 +1563,7 @@ alarm_on_eof ()
 /*
  * Clear screen
  */
-clear_screen()
+int clear_screen()
 {
 
     if (term_clear) {
@@ -1598,10 +1580,12 @@ clear_screen()
 typedef enum {HOP_INSERT, HOP_REPLACE} HISTOP;
 typedef enum {HDIR_PREV, HDIR_CURRENT, HDIR_NEXT} HISTDIR;
 
+int serv_history(HISTOP op, HISTDIR dir);
+
 /*
  * Get next history entry
  */
-next_history()
+int next_history()
 {
     return (serv_history (HOP_REPLACE, HDIR_NEXT));
 }
@@ -1609,7 +1593,7 @@ next_history()
 /*
  * Get next history entry
  */
-previous_history()
+int previous_history()
 {
     return (serv_history (HOP_REPLACE, HDIR_PREV));
 }
@@ -1617,7 +1601,7 @@ previous_history()
 /*
  * Insert next history entry
  */
-insert_current_history()
+int insert_current_history()
 {
     return (serv_history (HOP_INSERT, HDIR_CURRENT));
 }
@@ -1625,7 +1609,7 @@ insert_current_history()
 /*
  * Insert next history entry
  */
-insert_next_history()
+int insert_next_history()
 {
     return (serv_history (HOP_INSERT, HDIR_NEXT));
 }
@@ -1633,7 +1617,7 @@ insert_next_history()
 /*
  * Insert next history entry
  */
-insert_previous_history()
+int insert_previous_history()
 {
     return (serv_history (HOP_INSERT, HDIR_PREV));
 }
@@ -1641,9 +1625,7 @@ insert_previous_history()
 /*
  * Get previous history
  */
-serv_history(op, dir)
-    HISTOP op;
-    HISTDIR dir; 
+int serv_history(HISTOP op, HISTDIR dir)
 {
     register char *cp;
     char *getPreviousHistory (), *getNextHistory (), *getCurrentHistory ();
@@ -1670,7 +1652,7 @@ serv_history(op, dir)
 /*
  * Show history
  */
-show_history()
+void show_history()
 {
 
     (void) clear_edit_line ();
@@ -1681,7 +1663,7 @@ show_history()
 /*
  * Do nothing
  */
-ignore()
+int ignore()
 {
     return(0);
 }
@@ -1689,7 +1671,7 @@ ignore()
 /*
  * Next character is literal
  */
-literal_next()
+int literal_next()
 {
 
     return (self_insert (getcharacter ()));
@@ -1698,7 +1680,7 @@ literal_next()
 /*
  * Reprint command line
  */
-reprint()
+int reprint()
 {
 
     (void) clear_edit_line ();
@@ -1709,7 +1691,7 @@ reprint()
 /*
  * Print whole command line and move cursor to the current position
  */
-print_com_line()
+void print_com_line()
 {
 
     printS (CommandLine);
@@ -1722,9 +1704,7 @@ print_com_line()
 /*
  * Calcurate space of string using "^" for control character
  */
-howlong(s, n)
-    char *s;
-    int n;
+int howlong(char *s, int n)
 {
     register char *sp;
     register int area = 0;
@@ -1743,9 +1723,7 @@ howlong(s, n)
 /*
  * Repeat puting character n times
  */
-repeat(c, n)
-    char c;
-    register int n;
+void repeat(char c, int n)
 {
     for (n = n; n; n--)
 	(void) putchar(c);
@@ -1754,9 +1732,7 @@ repeat(c, n)
 /*
  * Repeat putting string n times
  */
-repeat_string(s, n)
-    char *s;
-    register int n;
+void repeat_string(char *s, int n)
 {
     for (n = n; n; n--)
 	fputs(s, stdout);
@@ -1765,7 +1741,7 @@ repeat_string(s, n)
 /*
  * Expand file name
  */
-expand_file_name ()
+int expand_file_name ()
 {
     CHAR *cp, *start_expand;
     char *x_dirname();
@@ -1887,7 +1863,7 @@ expand_file_name ()
 /*
  * List file name
  */
-list_file_name ()
+int list_file_name ()
 {
     CHAR *cp;
     char dir[256];
@@ -1946,7 +1922,7 @@ list_file_name ()
 
 int	rememberPosition;
 
-clear_edit_line ()
+void clear_edit_line ()
 {
 
     if (editstatus == NOTEDITING)
@@ -1957,8 +1933,7 @@ clear_edit_line ()
     (void) fputs ("\r\n", stdout);
 }
 
-recover_edit_line (put_prompt)
-    int put_prompt;
+void recover_edit_line (int put_prompt)
 {
 
     if (editstatus == NOTEDITING)
@@ -1978,9 +1953,7 @@ recover_edit_line (put_prompt)
 /*
  * Do ls
  */
-ls (dirp, prefixstring)
-    DIR *dirp;
-    char *prefixstring;
+void ls (DIR *dirp, char *prefixstring)
 {
     struct direct *dp;
     char *fileList[MAXFILES + 1];
@@ -2062,8 +2035,7 @@ BACK:
 
 #include "../rinfo/rinfo.h"
 
-list_remote_file (host, pattern)
-    char *host, *pattern;
+void list_remote_file (char *host, char *pattern)
 {
     struct slist *slp, *getfilelist();
     int i, j;
@@ -2103,11 +2075,14 @@ list_remote_file (host, pattern)
 }
 #endif /* RINFO */
 
-bind_key (ft, func, s, dfunc)
-    FUNC ft[];		/* Function table */
-    FUNC func;		/* Function to be binded */
-    char *s;		/* String to bind */
-    FUNC dfunc;		/* Default function for table allocating */
+/*
+    FUNC ft[];		Function table
+    FUNC func;		Function to be binded
+    char *s;		String to bind
+    FUNC dfunc;		Default function for table allocating
+*/
+
+int bind_key (FUNC ft[], FUNC func, char *s, FUNC dfunc)
 {
     char tmps[16];
 

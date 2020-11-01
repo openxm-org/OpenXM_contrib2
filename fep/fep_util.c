@@ -14,6 +14,8 @@ static char rcsid[]=
 #ifndef MKARGDEBUG
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <pwd.h>
 #include <sys/types.h>
@@ -24,20 +26,19 @@ static char rcsid[]=
 #endif
 #include <ctype.h>
 #include "fep_defs.h"
+#include "fep_funcs.h"
 
-message(messageString)
-    char *messageString;
+void message(char *messageString)
 {
     write (2, messageString, strlen (messageString));
 }
 
-errorBell()
+void errorBell()
 {
     write (2, "\007", 1);
 }
 
-ctlprint(string)
-    char *string;
+void ctlprint(char *string)
 {
     register char  *cp;
 
@@ -56,8 +57,7 @@ ctlprint(string)
 /*
  * Print string using "^" for control characters
  */
-printS (string)
-    char *string;
+void printS (char *string)
 {
     char *cp;
 
@@ -68,8 +68,7 @@ printS (string)
 /*
  * Check the line is empty or not
  */
-is_empty_line(line)
-    char *line;
+int is_empty_line(char *line)
 {
     register char *cp;
 
@@ -84,8 +83,7 @@ is_empty_line(line)
 /*
  * Put character using "^" for control characters
  */
-putChar(c)
-    char c;
+void putChar(char c)
 {
     if (isctlchar(c)) {
 	(void) putchar('^');
@@ -95,9 +93,7 @@ putChar(c)
 	(void) putchar(c);
 }
 
-char *
-x_dirname (dir)
-    char *dir;
+char * x_dirname (char *dir)
 {
     static char dirname [256];
 #if !defined(ANDROID)
@@ -134,9 +130,7 @@ x_dirname (dir)
     return (dirname);
 }
 
-DIR *
-x_opendir (dir)
-    char *dir;
+DIR * x_opendir (char *dir)
 {
     return (opendir (x_dirname (dir)));
 }
@@ -144,8 +138,7 @@ x_opendir (dir)
 /*
  * Strring compare for qsort
  */
-scmp (a, b)
-    char **a, **b;
+int scmp (char **a, char **b)
 {
 
     return (strcmp (*a, *b));
@@ -154,8 +147,7 @@ scmp (a, b)
 /*
  * Return 1 if "str" is prefixed by "sub"
  */
-prefix (sub, str)
-    register char *sub, *str;
+int prefix (char *sub, char *str)
 {
 
     for (;;) {
@@ -171,9 +163,7 @@ prefix (sub, str)
 /*
  * Return 1 if s includes character c
  */
-any (c, s)
-    register int c;
-    register char *s;
+int any (int c, char *s)
 {
 
     while (*s)
@@ -186,8 +176,7 @@ any (c, s)
 /*
  * Return maximum number of d1 and d2
  */
-max (d1, d2)
-    int d1, d2;
+int max (int d1, int d2)
 {
     return (d1 > d2 ? d1 : d2);
 }
@@ -213,8 +202,7 @@ main()
 }
 #endif /* MKARGDEBUG */
 
-showArgs (comline)
-    char *comline;
+void showArgs (char *comline)
 {
     char *argv[MAXARGS];
     register int c;
@@ -233,10 +221,7 @@ showArgs (comline)
     printf ("\n");
 }
 
-mkargv (s, argv, maxarg)
-    char *s;
-    char *argv[];
-    int maxarg;
+int mkargv (char *s, char *argv[], int maxarg)
 {
     register char *cp;
     register int argc = 0;
@@ -347,8 +332,7 @@ THROUGH:
     return (argc);
 }
 
-reverse_strcpy (to, from)
-    register char *to, *from;
+void reverse_strcpy (char *to, char *from)
 {
     register int len;
 
@@ -356,8 +340,7 @@ reverse_strcpy (to, from)
 	*(to + len) = *(from + len);
 }
 
-char *search_string (s, lookup)
-    char *s, *lookup;
+char *search_string (char *s, char *lookup)
 {
     int len = strlen (lookup);
     enum {SQUOTE, DQUOTE, NORMAL} status = NORMAL;
@@ -394,9 +377,7 @@ char *search_string (s, lookup)
  * It is assumed that first byte of strint s can't be second byte of KANJI
  * code.
  */
-iskanji_in_string (s, i)
-    char *s;
-    int i;
+int iskanji_in_string (char *s, int i)
 {
     register char *cp = s, *target = s + i;
 

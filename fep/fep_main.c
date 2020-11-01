@@ -12,6 +12,7 @@ static char rcsid[]=
 #endif /* lint */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -136,9 +137,7 @@ struct cmdinfo {
 	{0,			0}
 };
 
-main(argc, argv)
-    int argc;
-    char *argv[];
+int main(int argc, char *argv[])
 {
     int     i;
     char    *cp;
@@ -272,7 +271,7 @@ DEFAULT:
 #if defined(__INTERIX)
 	execvp (*commandv, commandv);
 #else
-	execvp (*commandv, commandv, 0);
+	execvp (*commandv, commandv);
 #endif
 	perror (*commandv);
 	exit (1);
@@ -321,7 +320,7 @@ DEFAULT:
     input_handler ();
 }
 
-fix_signal ()
+void fix_signal ()
 {
 #ifdef SIGWINCH
 #if defined(sun)
@@ -340,7 +339,7 @@ fix_signal ()
 #endif
 }
 
-recover_signal ()
+void recover_signal ()
 {
 
     (void) signal (SIGHUP, sighup);
@@ -348,7 +347,7 @@ recover_signal ()
     (void) signal (SIGTSTP, sigtstp);
 }
 
-input_handler()
+void input_handler()
 {
     char   *inputline;
     char   *mygetline ();
@@ -433,7 +432,7 @@ struct timeval *notimeout[] = {
 	TIMEOUT_FOREVER
 };
 
-getcharacter()
+int getcharacter()
 {
     char c;
     int n;
@@ -553,9 +552,7 @@ RETRY:
     goto RETRY;
 }
 
-int set_buffer (bp, size)
-    BUFFER *bp;
-    int size;
+int set_buffer (BUFFER *bp, int size)
 {
     char *newbuf;
 
@@ -580,9 +577,10 @@ int set_buffer (bp, size)
     return (1);
 }
 	
-int buf_read (fd, bp)
-    int fd;			/* file discriptor */
-    BUFFER *bp;			/* buffer pointer */
+/*    int fd;			file discriptor */
+/*    BUFFER *bp;		buffer pointer */
+
+int buf_read (int fd, BUFFER *bp)
 {
     int nbyte;
 
@@ -620,9 +618,12 @@ int buf_read (fd, bp)
     return (nbyte);
 }
 
-buf_put (bp, s)
-    BUFFER *bp;			/* buffer pointer */
-    char *s;			/* string pointer */
+/*
+    BUFFER *bp;			buffer pointer
+    char *s;			string pointer
+*/
+
+void buf_put (BUFFER *bp, char *s)
 {
     int nbyte;
     int slen;
@@ -647,7 +648,7 @@ buf_put (bp, s)
     }
 }
 
-swallow_output()
+void swallow_output()
 {
     fd_set readfd = mastermask;
     int r;
@@ -693,9 +694,7 @@ swallow_output()
 #define wait3(s,opt,rp)   (waitpid((-1),(s),(opt)))
 #endif
 
-void
-catchsig(n)
-    int n;
+void catchsig(int n)
 {
     int status;
     struct rusage   ru;
@@ -712,8 +711,7 @@ catchsig(n)
     terminate (0);
 }
 
-exec_to_command(argv)
-    char *argv[];
+void exec_to_command(char *argv[])
 {
     int t;
 
@@ -744,14 +742,14 @@ exec_to_command(argv)
 #if defined(__INTERIX)
     execvp (*argv, argv);
 #else
-    execvp (*argv, argv, 0);
+    execvp (*argv, argv);
 #endif
     perror (*argv);
     exit (1);
 }
 
 #ifdef TERMIOS
-fix_tty()
+void fix_tty()
 {
     int i;
     master_ttymode = initial_ttymode;
@@ -771,7 +769,7 @@ fix_tty()
 
 #elif defined(TIOCSETN)
 
-fix_tty()
+void fix_tty()
 {
     struct tchars tcbuf;
     struct ltchars lcbuf;
@@ -810,16 +808,14 @@ fix_tty()
 }
 #endif
 
-kill_process()
+void kill_process()
 {
 
     if (child_pid)
 	(void) killpg (child_pid, SIGTERM);
 }
 
-void
-terminate(n)
-    int n;
+void terminate(int n)
 {
     extern int errno;
 
@@ -861,14 +857,14 @@ terminate(n)
     exit (0);
 }
 
-send_int_sig() {
+int send_int_sig() {
 #ifndef __CYGWIN__
     kill(child_pid,SIGINT);
 #endif
 	return 0;
 }
 
-get_pty_master()
+void get_pty_master()
 {
     char    c;
     struct stat stb;
@@ -971,7 +967,7 @@ get_pty_master()
     return;
 }
 
-get_pty_slave()
+void get_pty_slave()
 {
 
     slave = open (slave_tty, 2);
@@ -1009,7 +1005,7 @@ get_pty_slave()
 #endif
 }
 
-recover_tty()
+void recover_tty()
 {
 #ifdef TERMIOS
     tcsetattr(0, TCSANOW, &initial_ttymode);
@@ -1020,7 +1016,7 @@ recover_tty()
 #endif
 }
 
-suspend()
+int suspend()
 {
     long	pid;
 #if defined(sun)
@@ -1060,8 +1056,7 @@ suspend()
 	fep_repaint(0);
 }
 
-look_cmdinfo (command)
-    char *command;
+void look_cmdinfo (char *command)
 {
     struct cmdinfo *p;
     char *allocAndCopyThere();
@@ -1080,7 +1075,7 @@ look_cmdinfo (command)
 }
 
 
-usageAndExit()
+void usageAndExit()
 {
 
     printf ("Usage: %s [-emacs|-vi] command\n", myself);
