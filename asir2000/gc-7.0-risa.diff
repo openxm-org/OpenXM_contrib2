@@ -226,3 +226,15 @@ diff -urN gc-7.4.2.orig/NT_STATIC_THREADS_MAKEFILE gc-7.4.2/NT_STATIC_THREADS_MA
  
  # Make sure that .cc is not viewed as a suffix.  It is for VC++2005, but
  # not earlier versions.  We can deal with either, but not inconsistency.
+diff -urN gc-7.4.2.orig/include/private/gc_priv.h gc-7.4.2/include/private/gc_priv.h
+--- gc-7.4.2.orig/include/private/gc_priv.h	2014-06-03 15:08:02.000000000 +0900
++++ gc-7.4.2/include/private/gc_priv.h	2020-11-02 22:27:25.000000000 +0900
+@@ -1840,6 +1840,8 @@
+                                 /* free list nonempty, and return its   */
+                                 /* head.  Sz is in granules.            */
+ 
++void GC_timerstart(), GC_timerstop();
++
+ #ifdef GC_ADD_CALLER
+   /* GC_DBG_EXTRAS is used by GC debug API functions (unlike GC_EXTRAS  */
+   /* used by GC debug API macros) thus GC_RETURN_ADDR_PARENT (pointing  */
