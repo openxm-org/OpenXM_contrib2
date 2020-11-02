@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.38 2018/03/29 01:32:52 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2000/engine/nd.h,v 1.39 2020/10/04 03:14:08 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -399,8 +399,10 @@ int nd_gauss_elim_q(Q **mat0,int *sugar,int row,int col,int *colstat);
 int ndl_ww_lex_compare(UINT *a1,UINT *a2);
 
 void red_by_vect_lf(mpz_t *p,mpz_t *r,mpz_t hc,int len);
-void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len);
 int nd_symbolic_preproc(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r);
-int nd_gauss_elim_mod64(U64 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
 
+#if SIZEOF_LONG==8
+void red_by_vect64(int m, U64 *p,unsigned int *c,U64 *r,unsigned int hc,int len);
+int nd_gauss_elim_mod64(U64 **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat);
+#endif
 
