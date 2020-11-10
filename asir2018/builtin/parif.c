@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.3 2019/05/07 02:09:50 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/builtin/parif.c,v 1.4 2020/08/26 06:40:36 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -110,9 +110,28 @@ void reset_ox_pari()
   }
 }
 
+void pari_setprec(long n)
+{
+  struct oFUNC f;
+  Z z;
+  NODE arg;
+
+  f.name = f.fullname = "pari_setprec";
+  f.id = A_PARI;
+  f.argc = 1;
+  f.f.binf = 0;
+  STOZ(n,z);
+  arg = mknode(1,z);
+  evalparif(&f,arg);
+}
+
+/* decimal precision */
+long mpfrprec = 0;
+
 pointer evalparif(FUNC f,NODE arg)
 {
-  int ac,intarg,opt,prec;
+  long prec;
+  int ac,intarg,opt;
   Q q,r,cmd;
   Z narg;
   Real sec;
@@ -154,6 +173,11 @@ pointer evalparif(FUNC f,NODE arg)
     ox_pari_stream_initialized = 1;
   }
 
+  prec = mpfr_get_default_prec()*0.30103+1;
+  if ( prec != mpfrprec ) {
+    mpfrprec = prec;
+    pari_setprec(prec);
+  }
   ac = argc(arg);
   /* reverse the arg list */
   for ( n = arg, t = 0; n; n = NEXT(n) ) {
