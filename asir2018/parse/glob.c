@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.7 2020/06/20 05:56:08 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.8 2020/10/06 06:31:20 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -567,16 +567,13 @@ void int_handler(int sig)
     return;
   }
 #endif
-#if !defined(ANDROID) && defined(linux)
-/*
-#if 1
-  while ( stdin->_IO_read_ptr < stdin->_IO_read_end )
+#if defined(linux)
+#if !defined(__GLIBC__) && !defined(ANDROID)
+  if( __freadahead(stdin) > 0 ) __fpurge(stdin);
 #else
-  while ( stdin->_gptr < stdin->_egptr )
-#endif
+  while ( FP_DATA_IS_AVAILABLE(stdin) )
     getchar();
-*/
-  if( __freadable(stdin) ) __fpurge(stdin);
+#endif
 #endif
   while ( 1 ) {
     char buf[BUFSIZ];
