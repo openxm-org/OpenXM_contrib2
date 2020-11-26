@@ -1,8 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.39 2020/10/29 01:50:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.40 2020/11/02 08:30:55 noro Exp $ */
 
 #include "nd.h"
 
-int Nnd_add,Nf4_red;
+int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
 
 int diag_period = 6;
@@ -65,8 +65,8 @@ static int nd_module_rank,nd_poly_weight_len;
 static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf;
-static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort;
+static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
+static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check;
 static int nd_top;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
@@ -1204,6 +1204,18 @@ INLINE int ndl_find_reducer(UINT *dg)
                 return i;
             }
         }
+    return -1;
+}
+
+INLINE int ndl_find_reducer_nonsig(UINT *dg)
+{
+    RHist r;
+    int i;
+
+    for ( i = 0; i < nd_psn; i++ ) {
+      r = nd_psh[i];
+      if ( ndl_reducible(dg,DL(r)) ) return i;
+    }
     return -1;
 }
 
@@ -2438,6 +2450,7 @@ NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
   Z q;
   union oNDC dn,hc;
   int diag_count = 0;
+  int Nnfnz = 0,Nnfz = 0;
   P cont;
   LIST list;
 struct oEGT eg1,eg2,eg_update;
@@ -2484,6 +2497,7 @@ again:
       d = nd_reconstruct(0,d);
       goto again;
     } else if ( nf ) {
+      Nnfnz++;
       if ( checkonly || gensyz ) return 0;
       if ( nd_newelim ) {
         if ( nd_module ) {
@@ -2522,23 +2536,28 @@ get_eg(&eg1);
 get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       g = update_base(g,nh);
       FREENDP(l);
-   } else {
-     if ( nd_gentrace && gensyz ) {
-       nd_tracelist = reverse_node(nd_tracelist); 
-       MKLIST(list,nd_tracelist);
-       STOZ(-1,q); t = mknode(2,q,list); MKLIST(list,t);
-       MKNODE(t,list,nd_alltracelist); 
-       nd_alltracelist = t; nd_tracelist = 0;
-     }
-     if ( DP_Print ) { printf("."); fflush(stdout); }
-       FREENDP(l);
-     }
+    } else {
+      Nnfz++;
+      if ( nd_gentrace && gensyz ) {
+        nd_tracelist = reverse_node(nd_tracelist); 
+        MKLIST(list,nd_tracelist);
+        STOZ(-1,q); t = mknode(2,q,list); MKLIST(list,t);
+        MKNODE(t,list,nd_alltracelist); 
+        nd_alltracelist = t; nd_tracelist = 0;
+      }
+      if ( DP_Print ) { printf("."); fflush(stdout); }
+        FREENDP(l);
+    }
   }
   conv_ilist(nd_demand,0,g,indp);
-  if ( !checkonly && DP_Print ) { printf("nd_gb done. Number of nd_add=%d\n",Nnd_add); fflush(stdout); }
- 
-  if ( DP_Print )
-    print_eg("update",&eg_update);
+  if ( !checkonly && DP_Print ) { 
+    printf("\nnd_gb done. Nnd_add=%d,Npairs=%d, Nnfnz=%d,Nnfz=%d,",Nnd_add,Npairs,Nnfnz,Nnfz);
+    printf("Nremoved=%d\n",NcriB+NcriMF+Ncri2);
+    fflush(asir_out);
+  }
+  if ( DP_Print ) {
+    print_eg("update",&eg_update); fprintf(asir_out,"\n");
+  }
   return g;
 }
 
@@ -2645,6 +2664,60 @@ int small_lcm(ND_pairs l)
 #endif
 }
 
+ND_pairs find_smallest_lcm(ND_pairs l)
+{
+  SIG sig;
+  int i,minindex;
+  NODE t;
+  ND_pairs r;
+  struct oSIG sig1;
+  static DL mul,quo,minlm;
+  static int nvar;
+
+  if ( nvar < nd_nvar ) {
+    nvar = nd_nvar; 
+    NEWDL(quo,nvar); NEWDL(mul,nvar);
+    NEWDL(minlm,nvar);
+  }
+  sig = l->sig;
+  // find mg s.t. m*s(g)=sig and m*lm(g) is minimal
+  _ndltodl(l->lcm,minlm); minindex = -1;
+  for ( t = nd_sba_pos[sig->pos]; t; t = t->next ) {
+    i = (long)BDY(t);
+    if ( _dl_redble_ext(DL(nd_psh[i]->sig),DL(sig),quo,nd_nvar) ) {
+      _ndltodl(DL(nd_psh[i]),mul);
+      _addtodl(nd_nvar,quo,mul);
+      if ( (*cmpdl)(nd_nvar,minlm,mul) > 0 ) {
+        minindex = i;
+        _copydl(nd_nvar,mul,minlm);
+      }
+    }
+  }
+  // l->lcm is minimal; return l itself
+  if ( minindex < 0 ) return l;
+  for ( i = 0; i < nd_psn; i++ ) {
+    if ( i == minindex ) continue;
+    _ndltodl(DL(nd_psh[i]),mul);
+    if ( _dl_redble_ext(mul,minlm,quo,nd_nvar) ) {
+      _addtodl(nd_nvar,nd_ps[i]->sig->dl,quo);
+      sig1.pos = nd_ps[i]->sig->pos;
+      sig1.dl = quo;
+      if ( comp_sig(sig,&sig1) > 0 ) {
+//        printf("X");
+        NEWND_pairs(r);
+        r->sig = sig;
+        r->i1 = minindex;
+        r->i2 = i;
+        dltondl(nd_nvar,minlm,r->lcm);
+        r->next = 0;
+        return r;
+      }
+    }
+  }
+  // there is no suitable spair 
+  return 0;
+}
+
 ND_pairs remove_large_lcm(ND_pairs d)
 {
   struct oND_pairs root;
@@ -2653,10 +2726,17 @@ ND_pairs remove_large_lcm(ND_pairs d)
   root.next = d;
   prev = &root; p = d;
   while ( p ) {
+#if 0
     if ( small_lcm(p) ) {
       // remove p
       prev->next = p->next;
     } else
+#else
+    if ( find_smallest_lcm(p) == 0 ) {
+      // remove p
+      prev->next = p->next;
+    } else
+#endif
       prev = p;
     p = p->next;
   }
@@ -2672,7 +2752,7 @@ NODE nd_sba_buch(int m,int ishomo,int **indp)
   int i,j,nh,sugar,stat,pos;
   NODE r,t,g;
   ND_pairs d;
-  ND_pairs l;
+  ND_pairs l,l1;
   ND h,nf,s,head,nf1;
   NDV nfv;
   Z q;
@@ -2681,25 +2761,27 @@ NODE nd_sba_buch(int m,int ishomo,int **indp)
   LIST list;
   SIG sig;
   NODE *syzlist;
-  int Nredundant;
+  int Nnominimal,Nredundant;
   DL lcm,quo,mul;
   struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero;
+  int Nnfs=0,Nnfz=0,Nnfnz=0;
 
 init_eg(&eg_remove);
   syzlist = (NODE *)MALLOC(nd_psn*sizeof(NODE));
   Nsyz = 0;
   Nnd_add = 0;
+  Nnominimal = 0;
   Nredundant = 0;
   d = 0;
-  for ( i = 0; i < nd_psn; i++ ) {
-    d = update_pairs_s(d,i,syzlist);
-  }
   for ( i = 0; i < nd_psn; i++ )
     for ( j = i+1; j < nd_psn; j++ ) {
       NEWSIG(sig); sig->pos = j;
       _copydl(nd_nvar,nd_sba_hm[i],sig->dl);
       syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
     }
+  for ( i = 0; i < nd_psn; i++ ) {
+    d = update_pairs_s(d,i,syzlist);
+  }
   sugar = 0;
   pos = 0;
   NEWDL(lcm,nd_nvar); NEWDL(quo,nd_nvar); NEWDL(mul,nd_nvar);
@@ -2718,9 +2800,10 @@ again:
        if ( !(len%100) ) fprintf(asir_out,"(%d)",len);
       }
     l = d; d = d->next;
+#if 0
     if ( small_lcm(l) ) {
       if ( DP_Print ) fprintf(asir_out,"M");
-      Nredundant++;
+      Nnominimal++;
       continue;
     }
     if ( SG(l) != sugar ) {
@@ -2735,6 +2818,26 @@ again:
       }
     }
     stat = nd_sp(m,0,l,&h);
+#else
+    l1 = find_smallest_lcm(l);
+    if ( l1 == 0 ) {
+      if ( DP_Print ) fprintf(asir_out,"M");
+      Nnominimal++;
+      continue;
+    }
+    if ( SG(l1) != sugar ) {
+      sugar = SG(l1);
+      if ( DP_Print ) fprintf(asir_out,"%d",sugar);
+    }
+    sig = l1->sig;
+    if ( DP_Print && nd_sba_pot ) {
+      if ( sig->pos != pos ) {
+        fprintf(asir_out,"[%d]",sig->pos);
+        pos = sig->pos;
+      }
+    }
+    stat = nd_sp(m,0,l1,&h);
+#endif
     if ( !stat ) {
       NEXT(l) = d; d = l;
       d = nd_reconstruct(0,d);
@@ -2752,10 +2855,22 @@ get_eg(&eg2);
       d = nd_reconstruct(0,d);
       goto again;
     } else if ( stat == -1 ) {
+      Nnfs++;
       if ( DP_Print ) { printf("S"); fflush(stdout); }
       FREENDP(l);
     } else if ( nf ) {
-      if ( DP_Print ) { printf("+"); fflush(stdout); }
+      Nnfnz++;
+      if ( DP_Print ) { 
+        if ( nd_sba_redundant_check ) {
+          if ( ndl_find_reducer_nonsig(HDL(nf)) >= 0 ) {
+            Nredundant++;
+            printf("R"); 
+          } else 
+            printf("+"); 
+        } else
+          printf("+"); 
+        fflush(stdout); 
+      }
       add_eg(&eg_nf,&eg1,&eg2);
       hc = HCU(nf);
       nd_removecont(m,nf);
@@ -2766,6 +2881,7 @@ get_eg(&eg2);
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
       FREENDP(l);
    } else {
+      Nnfz++;
       add_eg(&eg_nfzero,&eg1,&eg2);
      // syzygy
 get_eg(&eg1);
@@ -2778,7 +2894,11 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
  }
  g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
-   printf("\nnd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nredundant=%d\n",Nnd_add,Nsyz,Nsamesig,Nredundant);
+   printf("\nnd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",Nnd_add,Nsyz,Nsamesig,Nnominimal);
+   printf("Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",Nnfnz,Nnfz,Nnfs);
+   fflush(stdout); 
+   if ( nd_sba_redundant_check )
+   printf("Nredundant=%d\n",Nredundant);
    fflush(stdout); 
    print_eg("create",&eg_create);
    print_eg("merge",&eg_merge);
@@ -3073,7 +3193,7 @@ again:
     }
   }
   conv_ilist(nd_demand,1,g,indp);
-  if ( DP_Print ) { printf("nd_gb_trace done.\n"); fflush(stdout); }
+  if ( DP_Print ) { printf("\nnd_gb_trace done.\n"); fflush(stdout); }
   return g;
 }
 
@@ -3161,9 +3281,17 @@ NODE ndv_reduceall(int m,NODE f)
   return a0;
 }
 
+int ndplength(ND_pairs d)
+{
+  int i;
+  for ( i = 0; d; i++ ) d = NEXT(d);
+  return i;
+}
+
 ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
 {
   ND_pairs d1,nd,cur,head,prev,remove;
+  int len0;
 
   if ( !g ) return d;
   /* for testing */
@@ -3180,8 +3308,10 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
   }
   d = crit_B(d,t);
   d1 = nd_newpairs(g,t);
+  len0 = ndplength(d1); 
   d1 = crit_M(d1);
   d1 = crit_F(d1);
+  NcriMF += len0-ndplength(d1); 
   if ( gensyz || do_weyl )
     head = d1;
   else {
@@ -3191,7 +3321,7 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
         remove = cur;
         if ( !prev ) head = cur = NEXT(cur);
         else cur = NEXT(prev) = NEXT(cur);
-        FREENDP(remove);
+        FREENDP(remove); Ncri2++;
       } else {
         prev = cur; cur = NEXT(cur);
       }
@@ -3246,7 +3376,7 @@ ND_pairs nd_newpairs( NODE g, int t )
       if ( nd_gbblock[i] >= 0 )
         continue;
     }
-    NEXTND_pairs(r0,r);
+    NEXTND_pairs(r0,r); Npairs++;
     r->i1 = (long)BDY(h);
     r->i2 = t;
     ndl_lcm(DL(nd_psh[r->i1]),dl,r->lcm);
@@ -3518,7 +3648,7 @@ ND_pairs crit_B( ND_pairs d, int s )
           } else {
             cur = NEXT(prev) = NEXT(cur);
           }
-          FREENDP(remove);
+          FREENDP(remove); NcriB++;
         } else {
           prev = cur; cur = NEXT(cur);
         }
@@ -4098,6 +4228,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     int obpe,oadv,ompos,cbpe;
     VECT hvect;
 
+    NcriB = NcriMF = Ncri2 = 0;
     nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
     else nd_demand = 0;
@@ -4665,6 +4796,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     Z jq,bpe;
     VECT hvect;
 
+    NcriB = NcriMF = Ncri2 = 0;
     nd_module = 0;
     nd_lf = 0;
     parse_nd_option(current_option);
@@ -6784,6 +6916,7 @@ NODE ndv_reducebase(NODE x,int *perm)
     NDVI w;
     NODE t,t0;
 
+    if ( nd_norb ) return x;
     len = length(x);
     w = (NDVI)MALLOC(len*sizeof(struct oNDVI));
     for ( i = 0, t = x; i < len; i++, t = NEXT(t) ) {
@@ -8118,6 +8251,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
     fprintf(asir_out,"number of red=%d,",Nf4_red);
     fprintf(asir_out,"symb=%.3fsec,conv=%.3fsec,elim1=%.3fsec,elim2=%.3fsec\n",
       f4_symb.exectime,f4_conv.exectime,f4_elim1.exectime,f4_elim2.exectime);
+    fprintf(asir_out,"number of removed pairs=%d\n,",NcriB+NcriMF+Ncri2);
   }
   conv_ilist(nd_demand,0,g,indp);
     return g;
@@ -9776,12 +9910,12 @@ void parse_nd_option(NODE opt)
   char *key;
   Obj value;
 
-  nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_gbblock = 0;
+  nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_norb = 0; nd_gbblock = 0;
   nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
   nd_splist = 0; nd_check_splist = 0;
   nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
-  nd_sba_dontsort = 0; nd_top = 0;
+  nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -9793,6 +9927,8 @@ void parse_nd_option(NODE opt)
       nd_gensyz = value?1:0;
     else if ( !strcmp(key,"nora") )
       nd_nora = value?1:0;
+    else if ( !strcmp(key,"norb") )
+      nd_norb = value?1:0;
     else if ( !strcmp(key,"gbblock") ) {
       if ( value && OID(value) == O_LIST ) {
         u = BDY((LIST)value);
@@ -9843,6 +9979,8 @@ void parse_nd_option(NODE opt)
       nd_sba_largelcm = value?1:0;
     } else if ( !strcmp(key,"sba_dontsort") ) {
       nd_sba_dontsort = value?1:0;
+    } else if ( !strcmp(key,"sba_redundant_check") ) {
+      nd_sba_redundant_check = value?1:0;
     } else if ( !strcmp(key,"top") ) {
       nd_top = value?1:0;
     }
@@ -11105,7 +11243,7 @@ NODE nd_sba_f4(int m,int **indp)
   int i,nh,stat,index,f4red,f4step;
   int col,rank,len,k,j,a,sugar,nbase,psugar,ms;
   NODE r,g,rp0,nflist;
-  ND_pairs d,l,t;
+  ND_pairs d,l,t,l1;
   ND h,nf;
   NDV nfv;
   union oNDC hc;
@@ -11133,12 +11271,22 @@ NODE nd_sba_f4(int m,int **indp)
     if ( ms == psugar && f4step >= nd_sba_f4step ) {
 again:
       l = d; d = d->next;
+#if 0
       if ( small_lcm(l) ) {
         if ( DP_Print ) fprintf(asir_out,"M");
         continue;
       }
       sig = l->sig;
       stat = nd_sp(m,0,l,&h);
+#else
+      l1 = find_smallest_lcm(l);
+      if ( l1 == 0 ) {
+        if ( DP_Print ) fprintf(asir_out,"M");
+        continue;
+      }
+      sig = l1->sig;
+      stat = nd_sp(m,0,l1,&h);
+#endif
       if ( !stat ) {
         NEXT(l) = d; d = l;
         d = nd_reconstruct(0,d);
