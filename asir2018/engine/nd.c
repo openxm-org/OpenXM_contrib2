@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.40 2020/11/02 08:30:55 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.41 2020/11/26 03:55:23 noro Exp $ */
 
 #include "nd.h"
 
@@ -4503,6 +4503,8 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
       }
       homogenize_order(ord,nvar,&ord1);
       nd_init_ord(ord1);
+      // for SIG comparison
+      initd(ord1);
       nd_setup_parameters(nvar+1,nd_nzlist?0:wmax);
       for ( t = fd0; t; t = NEXT(t) )
         ndv_homogenize((NDV)BDY(t),obpe,oadv,oepos,ompos);
@@ -4517,6 +4519,8 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
        /* dehomogenization */
     for ( t = x; t; t = NEXT(t) ) ndv_dehomogenize((NDV)BDY(t),ord);
     nd_init_ord(ord);
+    // for SIG comparison
+    initd(ord);
     nd_setup_parameters(nvar,0);
   }
   nd_demand = 0;
