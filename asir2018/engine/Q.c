@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.18 2020/10/04 03:14:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.19 2020/10/06 06:31:19 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -671,6 +671,10 @@ void pwrq(Q n1,Q n,Q *nr)
         nm[0] = mpq_denref(BDY(n1))[0];
         dn[0] = mpq_numref(BDY(n1))[0];
       }
+      if ( mpz_sgn(dn)<0 ) {
+        mpz_neg(nm,nm);
+        mpz_neg(dn,dn);
+      }      
     } else {
       if ( n1->z ) {
         nm[0] = BDY((Z)n1)[0];
