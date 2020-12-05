@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.41 2020/11/26 03:55:23 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.42 2020/12/03 07:58:54 noro Exp $ */
 
 #include "nd.h"
 
@@ -98,7 +98,9 @@ void dltondl(int n,DL dl,UINT *r);
 DP ndvtodp(int mod,NDV p);
 DP ndtodp(int mod,ND p);
 DPM ndvtodpm(int mod,NDV p);
+NDV dptondv(int mod,DP p);
 NDV dpmtondv(int mod,DPM p);
+int dp_getdeg(DP p);
 int dpm_getdeg(DPM p,int *rank);
 void dpm_ptozp(DPM p,Z *cont,DPM *r);
 int compdmm(int nv,DMM a,DMM b);
@@ -4285,8 +4287,13 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
                   }
                 }
             } else {
-                e = getdeg(tv->v,(P)BDY(t));
-                max = MAX(e,max);
+                if ( OID(BDY(t)) == O_DP ) {
+                  e = dp_getdeg((DP)BDY(t));
+                  max = MAX(e,max);
+                } else {
+                  e = getdeg(tv->v,(P)BDY(t));
+                  max = MAX(e,max);
+                }
             }
         }
     nd_setup_parameters(nvar,nd_nzlist?0:max);
@@ -4307,9 +4314,17 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
           b = (pointer)pltondv(CO,vv,zpl);
         }
       } else {
-        if ( !m && !nd_gentrace ) ptozp((P)BDY(t),1,&dmy,&zp);
-        else zp = (P)BDY(t);
-        b = (pointer)ptondv(CO,vv,zp);
+        if ( OID(BDY(t)) == O_DP ) {
+          DP zdp;
+
+          if ( !m && !nd_gentrace ) dp_ptozp((DP)BDY(t),&zdp);
+          else zdp = (DP)BDY(t);
+          b = (pointer)dptondv(m,zdp);
+        } else {
+          if ( !m && !nd_gentrace ) ptozp((P)BDY(t),1,&dmy,&zp);
+          else zp = (P)BDY(t);
+          b = (pointer)ptondv(CO,vv,zp);
+        }
       }
       if ( ishomo )
         ishomo = ishomo && ndv_ishomo(b);
@@ -4477,17 +4492,30 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   initd(ord);
   for ( t = BDY(f), max = 1; t; t = NEXT(t) ) {
     for ( tv = vv; tv; tv = NEXT(tv) ) {
-      e = getdeg(tv->v,(P)BDY(t));
-      max = MAX(e,max);
+      if ( OID(BDY(t)) == O_DP ) {
+        e = dp_getdeg((DP)BDY(t));
+        max = MAX(e,max);
+      } else {
+        e = getdeg(tv->v,(P)BDY(t));
+        max = MAX(e,max);
+      }
     }
   }
   nd_setup_parameters(nvar,max);
   obpe = nd_bpe; oadv = nmv_adv; oepos = nd_epos; ompos = nd_mpos;
   ishomo = 1;
   for ( fd0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-    if ( !m ) ptozp((P)BDY(t),1,&dmy,&zp);
-    else zp = (P)BDY(t);
-    b = (pointer)ptondv(CO,vv,zp);
+    if ( OID(BDY(t)) == O_DP ) {
+      DP zdp;
+
+      if ( !m ) dp_ptozp((DP)BDY(t),&zdp);
+      else zdp = (DP)BDY(t);
+      b = (pointer)dptondv(m,zdp);
+    } else {
+      if ( !m ) ptozp((P)BDY(t),1,&dmy,&zp);
+      else zp = (P)BDY(t);
+      b = (pointer)ptondv(CO,vv,zp);
+    }
     if ( ishomo )
       ishomo = ishomo && ndv_ishomo(b);
     if ( m ) ndv_mod(m,b);
@@ -4868,8 +4896,13 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
                 }
               }
             } else {
+              if ( OID(BDY(t)) == O_DP ) {
+                e = dp_getdeg((DP)BDY(t));
+                max = MAX(e,max);
+              } else {
                 e = getdeg(tv->v,(P)BDY(t));
                 max = MAX(e,max);
+              }
             }
         }
     nd_setup_parameters(nvar,max);
@@ -4890,9 +4923,17 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
             c = (pointer)pltondv(CO,vv,zpl);
           }
         } else {
-          if ( !nd_gentrace ) ptozp((P)BDY(t),1,&dmy,&zp);
-          else zp = (P)BDY(t);
-          c = (pointer)ptondv(CO,vv,zp);
+          if ( OID(BDY(t)) == O_DP ) {
+            DP zdp;
+
+            if ( !nd_gentrace ) dp_ptozp((DP)BDY(t),&zdp);
+            else zdp = (DP)BDY(t);
+            c = (pointer)dptondv(m,zdp);
+          } else {
+            if ( !nd_gentrace ) ptozp((P)BDY(t),1,&dmy,&zp);
+            else zp = (P)BDY(t);
+            c = (pointer)ptondv(CO,vv,zp);
+          }
         }
         if ( ishomo )
             ishomo = ishomo && ndv_ishomo(c);
@@ -6757,6 +6798,32 @@ int nmv_comp(NMV a,NMV b)
   int t;
   t = DL_COMPARE(a->dl,b->dl);
   return -t;
+}
+
+NDV dptondv(int mod,DP p)
+{
+  NDV d;
+  NMV m,m0;
+  MP t;
+  MP *a;
+  int i,len,n;
+
+  if ( !p ) return 0;
+  for ( t = BDY(p), len = 0; t; t = NEXT(t), len++ );
+  n = p->nv;
+  if ( mod > 0 || mod == -1 )
+    m0 = m = (NMV)MALLOC_ATOMIC_IGNORE_OFF_PAGE(len*nmv_adv);
+  else
+    m0 = m = MALLOC(len*nmv_adv);
+  for ( i = 0, t = BDY(p); i < len; i++, NMV_ADV(m), t = NEXT(t) ) {
+    dltondl(n,t->dl,DL(m));
+    TD(DL(m)) = ndl_weight(DL(m));
+    CZ(m) = (Z)t->c;
+  }
+  qsort(m0,len,nmv_adv,(int (*)(const void *,const void *))nmv_comp);
+  MKNDV(NV(p),m0,len,d);
+  SG(d) = SG(p);
+  return d;
 }
 
 NDV dpmtondv(int mod,DPM p)

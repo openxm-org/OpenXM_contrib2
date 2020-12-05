@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.14 2020/07/02 09:24:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.15 2020/10/26 02:41:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -3660,6 +3660,23 @@ void dpm_rest(DPM p,DPM *rp)
     if ( *rp )
       (*rp)->sugar = p->sugar;
   }
+}
+
+int dp_getdeg(DP p)
+{
+  int max,n,i;
+  MP m;
+  int *d;
+
+  if ( !p ) return 0;
+  n = p->nv;
+  max = 0;
+  for ( m = BDY(p); m; m = NEXT(m) ) {
+    d = m->dl->d; 
+    for ( i = 0; i < n; i++ )
+      if ( d[i] > max ) max = d[i];
+  }
+  return max;
 }
 
 int dpm_getdeg(DPM p,int *r)
