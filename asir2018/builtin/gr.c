@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.4 2020/02/22 06:23:35 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.5 2020/10/06 06:31:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -115,6 +115,7 @@ static int Max_mag = 0;
 static int Max_coef = 0;
 char *Demand = 0;
 static int PtozpRA = 0;
+int ReversePOT = 0;
 
 int doing_f4;
 NODE TraceList;
@@ -2346,6 +2347,8 @@ void dp_set_flag(Obj name,Obj value)
     MaxDeg = v;
   else if ( !strcmp(n,"NaiveSchreyer") )
     NaiveSchreyer = v;
+  else if ( !strcmp(n,"ReversePOT") )
+    ReversePOT = v;
 }
 
 void dp_make_flaglist(LIST *list)
@@ -2386,6 +2389,7 @@ void dp_make_flaglist(LIST *list)
   STOZ(NoGC,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoGC"); MKNODE(n1,name,n); n = n1;
   STOZ(NoCriB,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoCriB"); MKNODE(n1,name,n); n = n1;
   STOZ(NoSugar,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"NoSugar"); MKNODE(n1,name,n); n = n1;
+  STOZ(ReversePOT,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"ReversePOT"); MKNODE(n1,name,n); n = n1;
   if ( Demand )
     MKSTR(path,Demand);
   else

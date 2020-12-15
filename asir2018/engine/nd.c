@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.42 2020/12/03 07:58:54 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.43 2020/12/05 03:27:20 noro Exp $ */
 
 #include "nd.h"
 
@@ -67,7 +67,7 @@ static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check;
-static int nd_top;
+static int nd_top,nd_sba_syz;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
@@ -104,6 +104,8 @@ int dp_getdeg(DP p);
 int dpm_getdeg(DPM p,int *rank);
 void dpm_ptozp(DPM p,Z *cont,DPM *r);
 int compdmm(int nv,DMM a,DMM b);
+DPM sigtodpm(SIG s);
+SIG dup_sig(SIG sig);
 
 void Pdp_set_weight(NODE,VECT *);
 void Pox_cmo_rpc(NODE,Obj *);
@@ -796,13 +798,16 @@ int _eqdl(int n,DL d1,DL d2);
 
 int ndl_module_schreyer_compare(UINT *m1,UINT *m2)
 {
-  int pos1,pos2,t,j;
+  int pos1,pos2,t,j,retpot;
   DMM *in;
   DMMstack s;
   static DL d1=0;
   static DL d2=0;
   static int dlen=0;
+  extern int ReversePOT;
 
+  if ( ReversePOT ) retpot = -1;
+  else retpot = 1;
   pos1 = MPOS(m1); pos2 = MPOS(m2);
   if ( pos1 == pos2 ) return (*ndl_base_compare_function)(m1,m2);
   if ( nd_nvar > dlen ) {
@@ -819,8 +824,8 @@ int ndl_module_schreyer_compare(UINT *m1,UINT *m2)
     _addtodl(nd_nvar,in[pos1]->dl,d1);
     _addtodl(nd_nvar,in[pos2]->dl,d2);
     if ( in[pos1]->pos == in[pos2]->pos && _eqdl(nd_nvar,d1,d2)) {
-      if ( pos1 < pos2 ) return 1;
-      else if ( pos1 > pos2 ) return -1;
+      if ( pos1 < pos2 ) return retpot;
+      else if ( pos1 > pos2 ) return -retpot;
       else return 0;
     }
     pos1 = in[pos1]->pos;
@@ -833,20 +838,20 @@ LAST:
     case 0:
       t = (*dl_base_compare_function)(nd_nvar,d1,d2);
       if ( t ) return t;
-      else if ( pos1 < pos2 ) return 1;
-      else if ( pos1 > pos2 ) return -1;
+      else if ( pos1 < pos2 ) return retpot;
+      else if ( pos1 > pos2 ) return -retpot;
       else return 0;
       break;
     case 1:
-      if ( pos1 < pos2 ) return 1;
-      else if ( pos1 > pos2 ) return -1;
+      if ( pos1 < pos2 ) return retpot;
+      else if ( pos1 > pos2 ) return -retpot;
       else return (*dl_base_compare_function)(nd_nvar,d1,d2);
       break;
     case 2:
       if ( d1->td > d2->td  ) return 1;
       else if ( d1->td < d2->td ) return -1;
-      else if ( pos1 < pos2 ) return 1;
-      else if ( pos1 > pos2 ) return -1;
+      else if ( pos1 < pos2 ) return retpot;
+      else if ( pos1 > pos2 ) return -retpot;
       else return (*dl_base_compare_function)(nd_nvar,d1,d2);
       break;
     default:
@@ -2631,7 +2636,7 @@ int small_lcm(ND_pairs l)
   int i;
   NODE t;
   static DL lcm,mul,quo;
-  static int nvar;
+  static int nvar = 0;
 
   if ( nd_sba_largelcm ) return 0;
   if ( nvar < nd_nvar ) {
@@ -2674,7 +2679,7 @@ ND_pairs find_smallest_lcm(ND_pairs l)
   ND_pairs r;
   struct oSIG sig1;
   static DL mul,quo,minlm;
-  static int nvar;
+  static int nvar = 0;
 
   if ( nvar < nd_nvar ) {
     nvar = nd_nvar; 
@@ -2749,7 +2754,25 @@ struct oEGT eg_create,eg_newpairs,eg_merge;
 
 NODE conv_ilist_s(int demand,int trace,int **indp);
 
-NODE nd_sba_buch(int m,int ishomo,int **indp)
+// S(fj*ei-fi*ej) 
+
+SIG trivial_sig(int i,int j)
+{
+  static struct oSIG sigi,sigj;
+  static int nvar = 0;
+  SIG sig;
+
+  if ( nvar != nd_nvar ) {
+    nvar = nd_nvar; NEWDL(sigi.dl,nvar); NEWDL(sigj.dl,nvar);
+  }
+  sigi.pos = i; _copydl(nd_nvar,nd_sba_hm[j],sigi.dl);
+  sigj.pos = j; _copydl(nd_nvar,nd_sba_hm[i],sigj.dl);
+  if ( comp_sig(&sigi,&sigj) > 0 ) sig = dup_sig(&sigi);
+  else sig = dup_sig(&sigj);
+  return sig;
+}
+
+NODE nd_sba_buch(int m,int ishomo,int **indp,NODE *syzp)
 {
   int i,j,nh,sugar,stat,pos;
   NODE r,t,g;
@@ -2763,6 +2786,7 @@ NODE nd_sba_buch(int m,int ishomo,int **indp)
   LIST list;
   SIG sig;
   NODE *syzlist;
+  int ngen;
   int Nnominimal,Nredundant;
   DL lcm,quo,mul;
   struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero;
@@ -2775,10 +2799,10 @@ init_eg(&eg_remove);
   Nnominimal = 0;
   Nredundant = 0;
   d = 0;
+  ngen = nd_psn;
   for ( i = 0; i < nd_psn; i++ )
     for ( j = i+1; j < nd_psn; j++ ) {
-      NEWSIG(sig); sig->pos = j;
-      _copydl(nd_nvar,nd_sba_hm[i],sig->dl);
+      sig = trivial_sig(i,j);
       syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
     }
   for ( i = 0; i < nd_psn; i++ ) {
@@ -2909,6 +2933,20 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
    print_eg("nfzero",&eg_nfzero);
    printf("\n");
  }
+ if ( nd_sba_syz ) {
+   NODE hsyz,tsyz,prev;
+
+   hsyz = 0;
+   for ( i = 0; i < ngen; i++ ) {
+     tsyz = syzlist[i];
+     for ( prev = 0; tsyz != 0; prev = tsyz, tsyz = NEXT(tsyz))
+       BDY(tsyz) = (pointer)sigtodpm((SIG)BDY(tsyz));
+     if ( prev != 0 ) {
+       prev->next = hsyz; hsyz = syzlist[i];
+     }
+   }
+   *syzp = hsyz;
+ } else *syzp = 0;
  return g;
 }
 
@@ -3400,7 +3438,7 @@ int comp_sig(SIG s1,SIG s2)
     else return (*cmpdl)(nd_nvar,s1->dl,s2->dl);
   } else {
     static DL m1,m2;
-    static int nvar;
+    static int nvar = 0;
     int ret;
   
     if ( nvar != nd_nvar ) {
@@ -3571,7 +3609,7 @@ ND_pairs nd_newpairs_s(int t, NODE *syz)
   int ts,ret,i;
   ND_pairs r,r0,_sp,sp;
   SIG spsig,tsig;
-  static int nvar;
+  static int nvar = 0;
   static SIG _sig1,_sig2;
   struct oEGT eg1,eg2,eg3,eg4;
 
@@ -4454,7 +4492,7 @@ NODE nd_sba_f4(int m,int **indp);
 void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp)
 {
   VL tv,fv,vv,vc,av;
-  NODE fd,fd0,r,r0,t,x,s,xx;
+  NODE fd,fd0,r,r0,t,x,s,xx,nd,syz;
   int e,max,nvar,i;
   NDV b;
   int ishomo,nalg,wmax,len;
@@ -4539,7 +4577,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   }
 
   ndv_setup(m,0,fd0,nd_sba_dontsort,0,1);
-  x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm);
+  x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm,&syz);
   if ( !x ) {
     *rp = 0; return;
   }
@@ -4562,7 +4600,16 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
     else BDY(r) = ndvtop(m,CO,vv,BDY(t));
   }
   if ( r0 ) NEXT(r) = 0;
-  MKLIST(*rp,r0);
+  if ( nd_sba_syz ) {
+    LIST gb,hsyz;
+    NODE nd;
+
+    MKLIST(gb,r0);
+    MKLIST(hsyz,syz);
+    nd = mknode(2,gb,hsyz);
+    MKLIST(*rp,nd);
+  } else
+    MKLIST(*rp,r0);
   get_eg(&eg1); init_eg(&egconv); add_eg(&egconv,&eg0,&eg1);
   print_eg("conv",&egconv); fprintf(asir_out,"\n");
 }
@@ -6900,6 +6947,21 @@ DP ndvtodp(int mod,NDV p)
   MKDP(nd_nvar,m0,d);
     SG(d) = SG(p);
     return d;
+}
+
+DPM sigtodpm(SIG s)
+{
+  DMM m;
+  DPM d;
+
+  NEWDMM(m); 
+  m->c = (Obj)ONE;
+  m->dl = s->dl;
+  m->pos = s->pos+1;
+  m->next = 0;
+  MKDPM(nd_nvar,m,d);
+  SG(d) = s->dl->td;
+  return d;
 }
 
 DPM ndvtodpm(int mod,NDV p)
@@ -9987,6 +10049,7 @@ void parse_nd_option(NODE opt)
   nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
+  nd_sba_syz = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -10045,17 +10108,20 @@ void parse_nd_option(NODE opt)
     } else if ( !strcmp(key,"sba_f4step") ) {
       nd_sba_f4step = value?ZTOS((Q)value):0;
     } else if ( !strcmp(key,"sba_pot") ) {
-      nd_sba_pot = value?1:0;
+      nd_sba_pot = ZTOS((Q)value);
     } else if ( !strcmp(key,"sba_largelcm") ) {
       nd_sba_largelcm = value?1:0;
     } else if ( !strcmp(key,"sba_dontsort") ) {
       nd_sba_dontsort = value?1:0;
+    } else if ( !strcmp(key,"sba_syz") ) {
+      nd_sba_syz = value?1:0;
     } else if ( !strcmp(key,"sba_redundant_check") ) {
       nd_sba_redundant_check = value?1:0;
     } else if ( !strcmp(key,"top") ) {
       nd_top = value?1:0;
     }
   }
+  if ( nd_sba_syz ) nd_sba_dontsort = 1;
 }
 
 ND mdptond(DP d);

@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.15 2020/10/26 02:41:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.16 2020/12/05 03:27:20 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -2762,7 +2762,7 @@ int create_order_spec(VL vl,Obj obj,struct order_spec **specp)
             spec->pot_nelim = 0;
         break;
 
-      case 3: /* [n,[wv,wm],ord] */
+      case 3: /* [n,[mlist1,mlist2,...],ord] or [n,[wv,wm],ord] */
         spec->module_ordtype = ZTOS((Z)BDY(node));
         if ( spec->module_ordtype < 0  ) {
             spec->pot_nelim = -spec->module_ordtype;
