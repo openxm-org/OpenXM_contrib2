@@ -1,6 +1,8 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.43 2020/12/05 03:27:20 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.44 2020/12/15 07:40:09 noro Exp $ */
 
 #include "nd.h"
+
+void print_siglist(NODE l);
 
 int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
@@ -67,7 +69,7 @@ static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check;
-static int nd_top,nd_sba_syz;
+static int nd_top,nd_sba_syz,nd_sba_fixord,nd_sba_grevlexgb;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
@@ -1244,6 +1246,13 @@ void print_sig(SIG s)
   }
   fprintf(asir_out,">>*e%d",s->pos);
 }
+
+void print_siglist(NODE l)
+{
+  for ( ; l; l = NEXT(l) )
+   print_sig((SIG)l->body);
+}
+
 
 // assuming increasing order wrt signature 
 
@@ -2596,6 +2605,8 @@ NODE insert_sig(NODE l,SIG s)
       else if ( _dl_redble(sig,DL(t),nd_nvar) )
         // remove p
         prev->next = p->next;
+      else
+        prev = p;
     } else
       prev = p;
   }
@@ -2756,19 +2767,30 @@ NODE conv_ilist_s(int demand,int trace,int **indp);
 
 // S(fj*ei-fi*ej) 
 
+void _subdl(int,DL,DL,DL);
+
 SIG trivial_sig(int i,int j)
 {
+  static DL lcm;
   static struct oSIG sigi,sigj;
   static int nvar = 0;
   SIG sig;
 
   if ( nvar != nd_nvar ) {
-    nvar = nd_nvar; NEWDL(sigi.dl,nvar); NEWDL(sigj.dl,nvar);
+    nvar = nd_nvar; NEWDL(lcm,nvar); NEWDL(sigi.dl,nvar); NEWDL(sigj.dl,nvar);
   }
-  sigi.pos = i; _copydl(nd_nvar,nd_sba_hm[j],sigi.dl);
-  sigj.pos = j; _copydl(nd_nvar,nd_sba_hm[i],sigj.dl);
-  if ( comp_sig(&sigi,&sigj) > 0 ) sig = dup_sig(&sigi);
-  else sig = dup_sig(&sigj);
+  if ( nd_sba_grevlexgb != 0 ) {
+    lcm_of_DL(nd_nvar,nd_sba_hm[i],nd_sba_hm[j],lcm);
+    sigi.pos = i; _subdl(nd_nvar,lcm,nd_sba_hm[i],sigi.dl);
+    sigj.pos = j; _subdl(nd_nvar,lcm,nd_sba_hm[j],sigj.dl);
+    if ( comp_sig(&sigi,&sigj) > 0 ) sig = dup_sig(&sigi);
+    else sig = dup_sig(&sigj);
+  } else {
+    sigi.pos = i; _copydl(nd_nvar,nd_sba_hm[j],sigi.dl);
+    sigj.pos = j; _copydl(nd_nvar,nd_sba_hm[i],sigj.dl);
+    if ( comp_sig(&sigi,&sigj) > 0 ) sig = dup_sig(&sigi);
+    else sig = dup_sig(&sigj);
+  }
   return sig;
 }
 
@@ -3446,7 +3468,10 @@ int comp_sig(SIG s1,SIG s2)
     }
     _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
     _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
-    ret = (*cmpdl)(nd_nvar,m1,m2);
+    if ( nd_sba_fixord )
+      ret = cmpdl_revgradlex(nd_nvar,m1,m2);
+    else
+      ret = (*cmpdl)(nd_nvar,m1,m2);
     if ( ret != 0 ) return ret;
     else if ( s1->pos > s2->pos ) return 1;
     else if ( s1->pos < s2->pos ) return -1;
@@ -4008,6 +4033,24 @@ int ndv_newps(int m,NDV a,NDV aq)
     return nd_psn++;
 }
 
+// find LM wrt grevlex
+void ndv_lm_fixord(NDV p,DL d)
+{
+  NMV m;
+  DL tmp;
+  int len,i,ret;
+
+  NEWDL(tmp,nd_nvar);
+  m = BDY(p); len = LEN(p);
+  _ndltodl(DL(m),d); printdl(d); printf("->");
+  for ( i = 1, NMV_ADV(m); i < len; i++, NMV_ADV(m) ) {
+    _ndltodl(DL(m),tmp);
+    ret = cmpdl_revgradlex(nd_nvar,tmp,d);
+    if ( ret > 0 ) _copydl(nd_nvar,tmp,d);
+  }
+  printdl(d); printf("\n");
+}
+
 /* nd_tracelist = [[0,index,div],...,[nd_psn-1,index,div]] */
 /* return 1 if success, 0 if failure (HC(a mod p)) */
 
@@ -4126,7 +4169,10 @@ int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont,int sba
         if ( nd_demand ) nd_ps_trace_sym[i]->sig = sig;
       }
       NEWDL(nd_sba_hm[i],nd_nvar);
-      _ndltodl(DL(nd_psh[i]),nd_sba_hm[i]);
+      if ( nd_sba_fixord )
+        ndv_lm_fixord(nd_ps[i],nd_sba_hm[i]);
+      else
+        _ndltodl(DL(nd_psh[i]),nd_sba_hm[i]);
     }
     nd_sba_pos = (NODE *)MALLOC(nd_psn*sizeof(NODE));
     for ( i = 0; i < nd_psn; i++ ) {
@@ -5716,8 +5762,10 @@ int nd_get_exporigin(struct order_spec *ord)
 void nd_setup_parameters(int nvar,int max) {
     int i,j,n,elen,ord_o,ord_l,l,s,wpd;
     struct order_pair *op;
+    extern int CNVars;
 
     nd_nvar = nvar;
+    CNVars = nvar;
     if ( max ) {
         /* XXX */
         if ( do_weyl ) nd_bpe = 32;
@@ -10049,7 +10097,7 @@ void parse_nd_option(NODE opt)
   nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
-  nd_sba_syz = 0;
+  nd_sba_syz = 0; nd_sba_fixord = 0; nd_sba_grevlexgb = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -10115,6 +10163,10 @@ void parse_nd_option(NODE opt)
       nd_sba_dontsort = value?1:0;
     } else if ( !strcmp(key,"sba_syz") ) {
       nd_sba_syz = value?1:0;
+    } else if ( !strcmp(key,"sba_fixord") ) {
+      nd_sba_fixord = value?1:0;
+    } else if ( !strcmp(key,"sba_grevlexgb") ) {
+      nd_sba_grevlexgb = value?1:0;
     } else if ( !strcmp(key,"sba_redundant_check") ) {
       nd_sba_redundant_check = value?1:0;
     } else if ( !strcmp(key,"top") ) {

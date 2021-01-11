@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.5 2020/10/06 06:31:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.6 2020/12/15 07:40:09 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -84,7 +84,8 @@ static P *psc;
 
 static int *pss;
 static int psn,pslen;
-static int NVars,CNVars;
+static int NVars;
+int CNVars;
 static VL VC;
 
 int PCoeffs;

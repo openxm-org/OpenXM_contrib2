@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.23 2020/06/19 10:18:13 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.24 2020/10/06 06:31:19 noro Exp $
 */
 #include "ca.h"
 
@@ -581,6 +581,16 @@ void _adddl(int n,DL d1,DL d2,DL d3)
   for ( i = 0; i < n; i++ )
     d3->d[i] = d1->d[i]+d2->d[i];
 }
+
+void _subdl(int n,DL d1,DL d2,DL d3)
+{
+  int i;
+
+  d3->td = d1->td-d2->td;
+  for ( i = 0; i < n; i++ )
+    d3->d[i] = d1->d[i]-d2->d[i];
+}
+
 
 void _addtodl(int n,DL d1,DL d2)
 {
