@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.18 2020/02/22 06:23:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.19 2020/10/06 06:31:19 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -704,6 +704,7 @@ struct order_spec {
   int *module_base_ord;
   struct order_spec *base; /* for schreyer order */
   DMMstack dmmstack;
+  int (*cmpdl)(int n,DL d1,DL d2);
   union {
     int simple;
     struct {

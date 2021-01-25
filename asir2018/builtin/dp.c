@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.25 2020/06/30 01:52:17 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.26 2020/10/26 02:41:05 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -114,6 +114,7 @@ void Pdpm_nf_f(),Pdpm_weyl_nf_f();
 void Pdp_lnf_f();
 void Pnd_gr(),Pnd_gr_trace(),Pnd_f4(),Pnd_f4_trace();
 void Pnd_sba(),Pnd_sba_f4();
+void Pnd_weyl_sba();
 void Pnd_gr_postproc(), Pnd_weyl_gr_postproc();
 void Pnd_gr_recompute_trace(), Pnd_btog();
 void Pnd_weyl_gr(),Pnd_weyl_gr_trace();
@@ -196,6 +197,7 @@ struct ftab dp_tab[] = {
   {"nd_f4",Pnd_f4,-4},
   {"nd_gr",Pnd_gr,-4},
   {"nd_sba",Pnd_sba,-4},
+  {"nd_weyl_sba",Pnd_weyl_sba,-4},
   {"nd_sba_f4",Pnd_sba_f4,-4},
   {"nd_gr_trace",Pnd_gr_trace,-5},
   {"nd_f4_trace",Pnd_f4_trace,-5},
@@ -3070,6 +3072,50 @@ void Pnd_sba(NODE arg,LIST *rp)
   } else
     error("nd_gr : invalid argument");
   nd_sba(f,v,m,homo,retdp,0,ord,rp);
+}
+
+void Pnd_weyl_sba(NODE arg,LIST *rp)
+{
+  LIST f,v;
+  int m,homo,retdp,ac;
+  Obj val;
+  Z mq,z;
+  Num nhomo;
+  NODE node;
+  struct order_spec *ord;
+
+  do_weyl = 1;
+  retdp = 0;
+  if ( (ac=argc(arg)) == 4 ) {
+    asir_assert(ARG0(arg),O_LIST,"nd_sba");
+    asir_assert(ARG1(arg),O_LIST,"nd_sba");
+    asir_assert(ARG2(arg),O_N,"nd_sba");
+    f = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
+    f = remove_zero_from_list(f);
+    if ( !BDY(f) ) {
+      *rp = f; do_weyl = 0; return;
+    }
+      mq = (Z)ARG2(arg);
+      STOZ(0x40000000,z);
+      if ( cmpz(mq,z) >= 0 ) {
+        node = mknode(1,mq);
+        Psetmod_ff(node,&val);
+        m = -2;
+      } else
+        m = ZTOS(mq);
+    create_order_spec(0,ARG3(arg),&ord);
+    homo = 0;
+    if ( get_opt("homo",&val) && val ) homo = 1;
+    if ( get_opt("dp",&val) && val ) retdp = 1;
+  } else if ( ac == 1 ) {
+    f = (LIST)ARG0(arg);
+    parse_gr_option(f,current_option,&v,&nhomo,&m,&ord);
+    homo = ZTOS((Q)nhomo);
+    if ( get_opt("dp",&val) && val ) retdp = 1;
+  } else
+    error("nd_gr : invalid argument");
+  nd_sba(f,v,m,homo,retdp,0,ord,rp);
+  do_weyl = 0;
 }
 
 void Pnd_sba_f4(NODE arg,LIST *rp)

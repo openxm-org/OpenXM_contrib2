@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.44 2020/12/15 07:40:09 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.45 2021/01/11 08:37:44 noro Exp $ */
 
 #include "nd.h"
 
@@ -69,7 +69,7 @@ static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check;
-static int nd_top,nd_sba_syz,nd_sba_fixord,nd_sba_grevlexgb;
+static int nd_top,nd_sba_syz,nd_sba_inputisgb;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
@@ -77,6 +77,20 @@ static int *nd_sugarweight;
 static int nd_f4red,nd_rank0,nd_last_nonzero;
 static DL *nd_sba_hm;
 static NODE *nd_sba_pos;
+
+struct comp_sig_spec {
+  int n;
+  // current_i <-> oldv[i]
+  int *oldv;
+  int *weight;
+  struct order_pair *order_pair;
+  int block_length;
+  int **matrix;
+  int row;
+  int (*cmpdl)(int n,DL d1,DL d2);
+};
+
+struct comp_sig_spec *nd_sba_modord;
 
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -95,7 +109,7 @@ P ndc_div(int mod,union oNDC a,union oNDC b);
 P ndctop(int mod,union oNDC c);
 void finalize_tracelist(int i,P cont);
 void conv_ilist(int demand,int trace,NODE g,int **indp);
-void parse_nd_option(NODE opt);
+void parse_nd_option(VL vl,NODE opt);
 void dltondl(int n,DL dl,UINT *r);
 DP ndvtodp(int mod,NDV p);
 DP ndtodp(int mod,ND p);
@@ -2779,7 +2793,7 @@ SIG trivial_sig(int i,int j)
   if ( nvar != nd_nvar ) {
     nvar = nd_nvar; NEWDL(lcm,nvar); NEWDL(sigi.dl,nvar); NEWDL(sigj.dl,nvar);
   }
-  if ( nd_sba_grevlexgb != 0 ) {
+  if ( nd_sba_inputisgb != 0 ) {
     lcm_of_DL(nd_nvar,nd_sba_hm[i],nd_sba_hm[j],lcm);
     sigi.pos = i; _subdl(nd_nvar,lcm,nd_sba_hm[i],sigi.dl);
     sigj.pos = j; _subdl(nd_nvar,lcm,nd_sba_hm[j],sigj.dl);
@@ -2867,6 +2881,8 @@ again:
     }
     stat = nd_sp(m,0,l,&h);
 #else
+//    if ( l->sig->dl->td == 0 )
+//      if ( DP_Print ) print_sig(l->sig); 
     l1 = find_smallest_lcm(l);
     if ( l1 == 0 ) {
       if ( DP_Print ) fprintf(asir_out,"M");
@@ -3452,12 +3468,205 @@ ND_pairs nd_newpairs( NODE g, int t )
   return r0;
 }
 
+int sig_cmpdl_op(int n,DL d1,DL d2)
+{
+  int e1,e2,i,j,l;
+  int *t1,*t2;
+  int len,head;
+  struct order_pair *pair;
+
+  len = nd_sba_modord->block_length;
+  pair = nd_sba_modord->order_pair;
+
+  head = 0;
+  for ( i = 0, t1 = d1->d, t2 = d2->d; i < len; i++ ) {
+    l = pair[i].length;
+    switch ( pair[i].order ) {
+      case 0:
+        for ( j = 0, e1 = e2 = 0; j < l; j++ ) {
+          e1 += t1[j];
+          e2 += t2[j];
+        }
+        if ( e1 > e2 )
+          return 1;
+        else if ( e1 < e2 )
+          return -1;
+        else {
+          for ( j = l - 1; j >= 0 && t1[j] == t2[j]; j-- );
+          if ( j >= 0 )
+            return t1[j] < t2[j] ? 1 : -1;
+        }
+        break;
+      case 1:
+        for ( j = 0, e1 = e2 = 0; j < l; j++ ) {
+          e1 += t1[j];
+          e2 += t2[j];
+        }
+        if ( e1 > e2 )
+          return 1;
+        else if ( e1 < e2 )
+          return -1;
+        else {
+          for ( j = 0; j < l && t1[j] == t2[j]; j++ );
+          if ( j < l )
+            return t1[j] > t2[j] ? 1 : -1;
+        }
+        break;
+      case 2:
+        for ( j = 0; j < l && t1[j] == t2[j]; j++ );
+        if ( j < l )
+          return t1[j] > t2[j] ? 1 : -1;
+        break;
+      default:
+        error("sig_cmpdl_op : invalid order"); break;
+    }
+    t1 += l; t2 += l; head += l;
+  }
+  return 0;
+}
+
+int sig_cmpdl_mat(int n,DL d1,DL d2)
+{
+  int *v,*t1,*t2;
+  int s,i,j,len;
+  int **matrix;
+  static int *w;
+  static int nvar = 0;
+
+  if ( nvar != n ) {
+    nvar = n; w = (int *)MALLOC(n*sizeof(int));
+  }
+  for ( i = 0, t1 = d1->d, t2 = d2->d; i < n; i++ )
+    w[i] = t1[i]-t2[i];
+  len = nd_sba_modord->row;
+  matrix = nd_sba_modord->matrix;
+  for ( j = 0; j < len; j++ ) {
+    v = matrix[j];
+    for ( i = 0, s = 0; i < n; i++ )
+      s += v[i]*w[i];
+    if ( s > 0 )
+      return 1;
+    else if ( s < 0 )
+      return -1;
+  }
+  return 0;
+}
+
+struct comp_sig_spec *create_comp_sig_spec(VL current_vl,VL old_vl,Obj ord,Obj weight)
+{
+  struct comp_sig_spec *spec;
+  VL ovl,vl;
+  V ov;
+  int i,j,n,nvar,s;
+  NODE node,t,tn;
+  struct order_pair *l;
+  MAT m;
+  Obj **b;
+  int **w;
+  int *a;
+
+  spec = (struct comp_sig_spec *)MALLOC(sizeof(struct comp_sig_spec));
+  for ( i = 0, vl = current_vl; vl; vl = NEXT(vl), i++ );
+  spec->n = nvar = i;
+  if ( old_vl != 0 ) {
+    spec->oldv = (int *)MALLOC(nvar*sizeof(int));
+    for ( i = 0, ovl = old_vl; i < nvar; ovl = NEXT(ovl), i++ ) {
+      ov = ovl->v;
+      for ( j = 0, vl = current_vl; vl; vl = NEXT(vl), j++ )
+        if ( ov == vl->v ) break;
+      spec->oldv[i] = j;
+    }
+  } else
+    spec->oldv = 0;
+  if ( !ord || NUM(ord) ) {
+    switch ( ZTOS((Z)ord) ) {
+      case 0:
+        spec->cmpdl = cmpdl_revgradlex; break;
+      case 1:
+        spec->cmpdl = cmpdl_gradlex; break;
+      case 2:
+        spec->cmpdl = cmpdl_lex; break;
+      default:
+        error("create_comp_sig_spec : invalid spec"); break;
+    }
+  } else if ( OID(ord) == O_LIST ) {
+    node = BDY((LIST)ord);
+    for ( n = 0, t = node; t; t = NEXT(t), n++ );
+    l = (struct order_pair *)MALLOC_ATOMIC(n*sizeof(struct order_pair));
+    for ( i = 0, t = node, s = 0; i < n; t = NEXT(t), i++ ) {
+      tn = BDY((LIST)BDY(t)); l[i].order = ZTOS((Q)BDY(tn));
+      tn = NEXT(tn); l[i].length = ZTOS((Q)BDY(tn));
+      s += l[i].length;
+    }
+    if ( s != nvar )
+      error("create_comp_sig_spec : invalid spec");
+    spec->order_pair = l;
+    spec->block_length = n;
+    spec->cmpdl = sig_cmpdl_op;
+  } else if ( OID(ord) == O_MAT ) {
+    m = (MAT)ord; b = (Obj **)BDY(m);
+    if ( m->col != nvar )
+      error("create_comp_sig_spec : invalid spec");
+    w = almat(m->row,m->col);
+    for ( i = 0; i < m->row; i++ )
+      for ( j = 0; j < m->col; j++ )
+        w[i][j] = ZTOS((Q)b[i][j]);
+    spec->row = m->row;
+    spec->matrix = w;
+    spec->cmpdl = sig_cmpdl_mat;
+  } else
+    error("create_comp_sig_spec : invalid spec");
+  if ( weight != 0 ) {
+    node = BDY((LIST)weight);
+    a = (int *)MALLOC(nvar*sizeof(int));
+    for ( i = 0; i < nvar; i++, node = NEXT(node) )
+      a[i] = ZTOS((Z)BDY(node));
+    spec->weight = a;
+  }
+  return spec;
+}
+
+#define SIG_MUL_WEIGHT(a,i) (weight?(a)*weight[i]:(a))
+  
+int comp_sig_monomial(int n,DL d1,DL d2)
+{
+  static DL m1,m2;
+  static int nvar = 0;
+  int *oldv,*weight;
+  int i,w1,w2;
+ 
+  if ( nvar != n ) {
+    nvar = n; NEWDL(m1,nvar); NEWDL(m2,nvar);
+  }
+  if ( !nd_sba_modord )
+    return (*cmpdl)(n,d1,d2);
+  else {
+    weight = nd_sba_modord->weight;
+    oldv = nd_sba_modord->oldv;
+    if ( oldv ) {
+      for ( i = 0; i < n; i++ ) {
+        m1->d[i] = d1->d[oldv[i]]; m2->d[i] = d2->d[oldv[i]];
+      }
+    } else {
+      for ( i = 0; i < n; i++ ) {
+        m1->d[i] = d1->d[i]; m2->d[i] = d2->d[i];
+      }
+    }
+    for ( i = 0, w1 = w2 = 0; i < n; i++ ) {
+      w1 += SIG_MUL_WEIGHT(m1->d[i],i); 
+      w2 += SIG_MUL_WEIGHT(m2->d[i],i);
+    }
+    m1->td = w1; m2->td = w2;
+    return (*nd_sba_modord->cmpdl)(n,m1,m2);
+  }
+}
+
 int comp_sig(SIG s1,SIG s2)
 {
   if ( nd_sba_pot ) {
     if ( s1->pos > s2->pos ) return 1;
     else if ( s1->pos < s2->pos ) return -1;
-    else return (*cmpdl)(nd_nvar,s1->dl,s2->dl);
+    else return comp_sig_monomial(nd_nvar,s1->dl,s2->dl);
   } else {
     static DL m1,m2;
     static int nvar = 0;
@@ -3468,10 +3677,7 @@ int comp_sig(SIG s1,SIG s2)
     }
     _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
     _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
-    if ( nd_sba_fixord )
-      ret = cmpdl_revgradlex(nd_nvar,m1,m2);
-    else
-      ret = (*cmpdl)(nd_nvar,m1,m2);
+    ret = comp_sig_monomial(nd_nvar,m1,m2);
     if ( ret != 0 ) return ret;
     else if ( s1->pos > s2->pos ) return 1;
     else if ( s1->pos < s2->pos ) return -1;
@@ -4033,8 +4239,8 @@ int ndv_newps(int m,NDV a,NDV aq)
     return nd_psn++;
 }
 
-// find LM wrt grevlex
-void ndv_lm_fixord(NDV p,DL d)
+// find LM wrt the specified modord
+void ndv_lm_modord(NDV p,DL d)
 {
   NMV m;
   DL tmp;
@@ -4042,13 +4248,13 @@ void ndv_lm_fixord(NDV p,DL d)
 
   NEWDL(tmp,nd_nvar);
   m = BDY(p); len = LEN(p);
-  _ndltodl(DL(m),d); printdl(d); printf("->");
+  _ndltodl(DL(m),d); // printdl(d); printf("->");
   for ( i = 1, NMV_ADV(m); i < len; i++, NMV_ADV(m) ) {
     _ndltodl(DL(m),tmp);
-    ret = cmpdl_revgradlex(nd_nvar,tmp,d);
+    ret = comp_sig_monomial(nd_nvar,tmp,d);
     if ( ret > 0 ) _copydl(nd_nvar,tmp,d);
   }
-  printdl(d); printf("\n");
+//   printdl(d); printf("\n");
 }
 
 /* nd_tracelist = [[0,index,div],...,[nd_psn-1,index,div]] */
@@ -4169,8 +4375,8 @@ int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont,int sba
         if ( nd_demand ) nd_ps_trace_sym[i]->sig = sig;
       }
       NEWDL(nd_sba_hm[i],nd_nvar);
-      if ( nd_sba_fixord )
-        ndv_lm_fixord(nd_ps[i],nd_sba_hm[i]);
+      if ( nd_sba_modord )
+        ndv_lm_modord(nd_ps[i],nd_sba_hm[i]);
       else
         _ndltodl(DL(nd_psh[i]),nd_sba_hm[i]);
     }
@@ -4318,7 +4524,6 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     nd_module = 0;
     if ( !m && Demand ) nd_demand = 1;
     else nd_demand = 0;
-    parse_nd_option(current_option);
 
     if ( DP_Multiple )
         nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
@@ -4326,6 +4531,7 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     ndv_alloc = 0;
 #endif
     get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    parse_nd_option(vv,current_option);
     if ( m && nd_vc )
        error("nd_{gr,f4} : computation over Fp(X) is unsupported. Use dp_gr_mod_main().");
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -4554,11 +4760,11 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
 
   nd_module = 0;
   nd_demand = 0;
-  parse_nd_option(current_option);
   Nsamesig = 0;
   if ( DP_Multiple )
     nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  parse_nd_option(vv,current_option);
   if ( m && nd_vc )
     error("nd_sba : computation over Fp(X) is unsupported. Use dp_gr_mod_main().");
   for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
@@ -4676,8 +4882,8 @@ void nd_gr_postproc(LIST f,LIST v,int m,struct order_spec *ord,int do_check,LIST
     struct order_spec *ord1;
     int *perm;
 
-    parse_nd_option(current_option);
     get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    parse_nd_option(vv,current_option);
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
     switch ( ord->id ) {
         case 1:
@@ -4824,8 +5030,8 @@ void nd_gr_recompute_trace(LIST f,LIST v,int m,struct order_spec *ord,LIST tlist
   int len,n,j;
   NDV *db,*pb;
 
-    parse_nd_option(current_option);
     get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    parse_nd_option(vv,current_option);
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
     switch ( ord->id ) {
         case 1:
@@ -4924,7 +5130,8 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     NcriB = NcriMF = Ncri2 = 0;
     nd_module = 0;
     nd_lf = 0;
-    parse_nd_option(current_option);
+    get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    parse_nd_option(vv,current_option);
     if ( nd_lf ) {
       if ( f4 )
         nd_f4_lf_trace(f,v,trace,homo,ord,rp);
@@ -4935,7 +5142,6 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     if ( DP_Multiple )
         nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
 
-    get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
     switch ( ord->id ) {
         case 1:
@@ -10084,12 +10290,13 @@ NODE conv_ilist_s(int demand,int trace,int **indp)
   return g0;
 }
 
-void parse_nd_option(NODE opt)
+void parse_nd_option(VL vl,NODE opt)
 {
   NODE t,p,u;
   int i,s,n;
   char *key;
   Obj value;
+  VL oldvl;
 
   nd_gentrace = 0; nd_gensyz = 0; nd_nora = 0; nd_norb = 0; nd_gbblock = 0;
   nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
@@ -10097,7 +10304,7 @@ void parse_nd_option(NODE opt)
   nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
-  nd_sba_syz = 0; nd_sba_fixord = 0; nd_sba_grevlexgb = 0;
+  nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -10163,10 +10370,19 @@ void parse_nd_option(NODE opt)
       nd_sba_dontsort = value?1:0;
     } else if ( !strcmp(key,"sba_syz") ) {
       nd_sba_syz = value?1:0;
-    } else if ( !strcmp(key,"sba_fixord") ) {
-      nd_sba_fixord = value?1:0;
-    } else if ( !strcmp(key,"sba_grevlexgb") ) {
-      nd_sba_grevlexgb = value?1:0;
+    } else if ( !strcmp(key,"sba_modord") ) {
+      // value=[vlist,ordspec,weight]
+      u = BDY((LIST)value);
+      pltovl((LIST)ARG0(u),&oldvl);
+      nd_sba_modord = create_comp_sig_spec(vl,oldvl,(Obj)ARG1(u),argc(u)==3?ARG2(u):0);
+    } else if ( !strcmp(key,"sba_gbinput") ) {
+      nd_sba_inputisgb = value?1:0;
+      if ( nd_sba_inputisgb != 0 ) {
+        // value=[vlist,ordspec,weight]
+        u = BDY((LIST)value);
+        pltovl((LIST)ARG0(u),&oldvl);
+        nd_sba_modord = create_comp_sig_spec(vl,oldvl,(Obj)ARG1(u),argc(u)==3?ARG2(u):0);
+      }
     } else if ( !strcmp(key,"sba_redundant_check") ) {
       nd_sba_redundant_check = value?1:0;
     } else if ( !strcmp(key,"top") ) {
@@ -10378,8 +10594,8 @@ MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
   if ( mod == -2 )
     return nd_btog_lf(f,v,ord,tlist,rp);
 
-  parse_nd_option(current_option);
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  parse_nd_option(vv,current_option);
   for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
   switch ( ord->id ) {
     case 1:
@@ -10447,8 +10663,8 @@ MAT nd_btog_lf(LIST f,LIST v,struct order_spec *ord,LIST tlist,MAT *rp)
   LM lm;
   Z lf,inv;
 
-  parse_nd_option(current_option);
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  parse_nd_option(vv,current_option);
   for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
   switch ( ord->id ) {
     case 1:
@@ -10518,8 +10734,8 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
   if ( mod == -2 )
     error("nd_btog_one : not implemented yet for a large finite field");
 
-  parse_nd_option(current_option);
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  parse_nd_option(vv,current_option);
   for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
   switch ( ord->id ) {
     case 1:
@@ -10632,8 +10848,8 @@ void nd_f4_lf_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST
     Q jq,bpe;
 
     nd_module = 0;
-    parse_nd_option(current_option);
     get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+    parse_nd_option(vv,current_option);
     if ( nd_vc )
       error("nd_f4_lf_trace : computation over a rational function field is not implemented");
     for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
