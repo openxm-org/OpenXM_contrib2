@@ -1,10 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.45 2021/01/11 08:37:44 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.46 2021/01/25 00:39:52 noro Exp $ */
 
 #include "nd.h"
 
 void print_siglist(NODE l);
 
-int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs;
+int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs,Nnewpair;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
 
 int diag_period = 6;
@@ -2592,7 +2592,9 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
 }
 
 ND_pairs update_pairs_s(ND_pairs d,int t,NODE *syz);
+int update_pairs_array_s(ND_pairs *d,int t,NODE *syz);
 ND_pairs nd_newpairs_s(int t ,NODE *syz);
+ND_pairs *nd_newpairs_array_s(int t ,NODE *syz);
 
 int nd_nf_pbucket_s(int mod,ND g,NDV *ps,int full,ND *nf);
 int nd_nf_s(int mod,ND d,ND g,NDV *ps,int full,ND *nf);
@@ -2721,12 +2723,14 @@ ND_pairs find_smallest_lcm(ND_pairs l)
       _addtodl(nd_nvar,quo,mul);
       if ( (*cmpdl)(nd_nvar,minlm,mul) > 0 ) {
         minindex = i;
+        break;
         _copydl(nd_nvar,mul,minlm);
       }
     }
   }
   // l->lcm is minimal; return l itself
   if ( minindex < 0 ) return l;
+  else return 0;
   for ( i = 0; i < nd_psn; i++ ) {
     if ( i == minindex ) continue;
     _ndltodl(DL(nd_psh[i]),mul);
@@ -2808,11 +2812,35 @@ SIG trivial_sig(int i,int j)
   return sig;
 }
 
+int nd_minsig(ND_pairs *d) 
+{
+  int min,i,ret;
+
+  min = -1;
+  for ( i = 0; i < nd_nbase; i++ ) {
+    if ( d[i] != 0 ) {
+      if ( min < 0 ) min = i;
+      else {
+        ret = comp_sig(d[i]->sig,d[min]->sig);
+        if ( ret < 0 ) min = i;
+      }
+    }
+  }
+  return min;
+}
+
+int dlength(ND_pairs d)
+{
+  int i;
+  for ( i = 0; d; d = d->next, i++ );
+  return i;
+}
+
 NODE nd_sba_buch(int m,int ishomo,int **indp,NODE *syzp)
 {
   int i,j,nh,sugar,stat,pos;
   NODE r,t,g;
-  ND_pairs d;
+  ND_pairs *d;
   ND_pairs l,l1;
   ND h,nf,s,head,nf1;
   NDV nfv;
@@ -2822,69 +2850,54 @@ NODE nd_sba_buch(int m,int ishomo,int **indp,NODE *syzp)
   LIST list;
   SIG sig;
   NODE *syzlist;
-  int ngen;
+  int ngen,ind;
   int Nnominimal,Nredundant;
   DL lcm,quo,mul;
-  struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero;
-  int Nnfs=0,Nnfz=0,Nnfnz=0;
+  struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero,eg_minsig,eg_smallest;
+  int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz;
 
 init_eg(&eg_remove);
   syzlist = (NODE *)MALLOC(nd_psn*sizeof(NODE));
+  d = (ND_pairs *)MALLOC(nd_psn*sizeof(ND_pairs));
+  nd_nbase = nd_psn;
   Nsyz = 0;
   Nnd_add = 0;
   Nnominimal = 0;
   Nredundant = 0;
-  d = 0;
   ngen = nd_psn;
   for ( i = 0; i < nd_psn; i++ )
     for ( j = i+1; j < nd_psn; j++ ) {
       sig = trivial_sig(i,j);
       syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
     }
+  dlen = 0;
   for ( i = 0; i < nd_psn; i++ ) {
-    d = update_pairs_s(d,i,syzlist);
+    dlen += update_pairs_array_s(d,i,syzlist);
   }
   sugar = 0;
   pos = 0;
   NEWDL(lcm,nd_nvar); NEWDL(quo,nd_nvar); NEWDL(mul,nd_nvar);
 init_eg(&eg_create);
 init_eg(&eg_merge);
+init_eg(&eg_minsig);
+init_eg(&eg_smallest);
 init_eg(&eg_large);
 init_eg(&eg_nf);
 init_eg(&eg_nfzero);
-  while ( d ) {
-again:
-    if ( DP_Print ) {
-      int len;
-      ND_pairs td;
-      for ( td = d, len=0; td; td = td->next, len++)
-        ;
-       if ( !(len%100) ) fprintf(asir_out,"(%d)",len);
-      }
-    l = d; d = d->next;
-#if 0
-    if ( small_lcm(l) ) {
-      if ( DP_Print ) fprintf(asir_out,"M");
-      Nnominimal++;
-      continue;
-    }
-    if ( SG(l) != sugar ) {
-      sugar = SG(l);
-      if ( DP_Print ) fprintf(asir_out,"%d",sugar);
-    }
-    sig = l->sig;
-    if ( DP_Print && nd_sba_pot ) {
-      if ( sig->pos != pos ) {
-        fprintf(asir_out,"[%d]",sig->pos);
-        pos = sig->pos;
-      }
-    }
-    stat = nd_sp(m,0,l,&h);
-#else
-//    if ( l->sig->dl->td == 0 )
-//      if ( DP_Print ) print_sig(l->sig); 
+  while ( 1 ) {
+    if ( DP_Print && dlen%100 == 0 ) fprintf(asir_out,"(%d)",dlen);
+again :
+get_eg(&eg1);
+    ind = nd_minsig(d); 
+get_eg(&eg2); add_eg(&eg_minsig,&eg1,&eg2);
+    if ( ind < 0 ) break;
+    l = d[ind];
+//    printf("(%d,%d)",l->i1,l->i2); print_sig(l->sig); printf("\n");
+get_eg(&eg1);
     l1 = find_smallest_lcm(l);
+get_eg(&eg2); add_eg(&eg_smallest,&eg1,&eg2);
     if ( l1 == 0 ) {
+      d[ind] = d[ind]->next; dlen--;
       if ( DP_Print ) fprintf(asir_out,"M");
       Nnominimal++;
       continue;
@@ -2901,10 +2914,8 @@ again:
       }
     }
     stat = nd_sp(m,0,l1,&h);
-#endif
     if ( !stat ) {
-      NEXT(l) = d; d = l;
-      d = nd_reconstruct(0,d);
+      nd_reconstruct_s(0,d);
       goto again;
     }
 get_eg(&eg1);
@@ -2915,14 +2926,14 @@ get_eg(&eg1);
 #endif
 get_eg(&eg2); 
     if ( !stat ) {
-      NEXT(l) = d; d = l;
-      d = nd_reconstruct(0,d);
+      nd_reconstruct_s(0,d);
       goto again;
     } else if ( stat == -1 ) {
+      d[ind] = d[ind]->next; dlen--;
       Nnfs++;
       if ( DP_Print ) { printf("S"); fflush(stdout); }
-      FREENDP(l);
     } else if ( nf ) {
+      d[ind] = d[ind]->next; dlen--;
       Nnfnz++;
       if ( DP_Print ) { 
         if ( nd_sba_redundant_check ) {
@@ -2941,24 +2952,25 @@ get_eg(&eg2);
       nfv = ndtondv(m,nf); nd_free(nf);
       nh = ndv_newps(m,nfv,0);
 
-      d = update_pairs_s(d,nh,syzlist);
+      dlen += update_pairs_array_s(d,nh,syzlist);
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
-      FREENDP(l);
    } else {
+      d[ind] = d[ind]->next; dlen--;
       Nnfz++;
       add_eg(&eg_nfzero,&eg1,&eg2);
      // syzygy
 get_eg(&eg1);
-     d = remove_spair_s(d,sig);
+     nsyz = Nsyz;
+     d[sig->pos] = remove_spair_s(d[sig->pos],sig);
+     dlen -= Nsyz-nsyz;
 get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
      syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
      if ( DP_Print ) { printf("."); fflush(stdout); }
-     FREENDP(l);
    }
  }
  g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
-   printf("\nnd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",Nnd_add,Nsyz,Nsamesig,Nnominimal);
+   printf("\ndlen=%d,nd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",dlen,Nnd_add,Nsyz,Nsamesig,Nnominimal);
    printf("Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",Nnfnz,Nnfz,Nnfs);
    fflush(stdout); 
    if ( nd_sba_redundant_check )
@@ -2966,6 +2978,14 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
    fflush(stdout); 
    print_eg("create",&eg_create);
    print_eg("merge",&eg_merge);
+   print_eg("minsig",&eg_minsig);
+   print_eg("smallest",&eg_smallest);
+   print_eg("remove",&eg_remove);
+   print_eg("nf",&eg_nf);
+   print_eg("nfzero",&eg_nfzero);
+   printf("\n");
+ }
+ if ( nd_sba_syz ) {
    print_eg("remove",&eg_remove);
    print_eg("nf",&eg_nf);
    print_eg("nfzero",&eg_nfzero);
@@ -3431,6 +3451,23 @@ get_eg(&eg3); add_eg(&eg_merge,&eg2,&eg3);
   return d;
 }
 
+int update_pairs_array_s( ND_pairs *d, int t,NODE *syz)
+{
+  ND_pairs *d1;
+  struct oEGT eg1,eg2,eg3;
+  int i;
+
+  if ( !t ) return 0;
+get_eg(&eg1);
+  Nnewpair = 0;
+  d1 = nd_newpairs_array_s(t,syz);
+get_eg(&eg2); add_eg(&eg_create,&eg1,&eg2);
+  for ( i = 0; i < nd_nbase; i++ )
+    d[i] = merge_pairs_s(d[i],d1[i]);
+get_eg(&eg3); add_eg(&eg_merge,&eg2,&eg3);
+  return Nnewpair;
+}
+
 ND_pairs nd_newpairs( NODE g, int t )
 {
   NODE h;
@@ -3677,7 +3714,10 @@ int comp_sig(SIG s1,SIG s2)
     }
     _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
     _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
-    ret = comp_sig_monomial(nd_nvar,m1,m2);
+    if ( !nd_sba_modord )
+      ret = (*cmpdl)(nd_nvar,m1,m2);
+    else
+      ret = comp_sig_monomial(nd_nvar,m1,m2);
     if ( ret != 0 ) return ret;
     else if ( s1->pos > s2->pos ) return 1;
     else if ( s1->pos < s2->pos ) return -1;
@@ -3765,6 +3805,7 @@ ND_pairs merge_pairs_s(ND_pairs p1,ND_pairs p2)
     } else if ( ret > 0 ) {
       r->next = q2; r = q2; q2 = q2->next;
     } else {
+      Nnewpair--;
       ret = DL_COMPARE(q1->lcm,q2->lcm);
       Nsamesig++;
       if ( ret < 0 ) {
@@ -3787,7 +3828,7 @@ ND_pairs merge_pairs_s(ND_pairs p1,ND_pairs p2)
 ND_pairs insert_pair_s(ND_pairs l,ND_pairs s)
 {
   ND_pairs p,prev;
-  int ret;
+  int ret=1;
 
   for ( p = l, prev = 0; p != 0; prev = p, p = p->next ) {
     if ( (ret = comp_sig(s->sig,p->sig)) <= 0 )
@@ -3808,6 +3849,7 @@ ND_pairs insert_pair_s(ND_pairs l,ND_pairs s)
       return l;
   } else {
     // insert s between prev and p
+    Nnewpair++;
     s->next = p;
     if ( prev == 0 ) {
       return s;
@@ -3867,6 +3909,44 @@ ND_pairs nd_newpairs_s(int t, NODE *syz)
     }
   }
   return r0;
+}
+
+ND_pairs *nd_newpairs_array_s(int t, NODE *syz)
+{
+  NODE h,s;
+  UINT *dl;
+  int ts,ret,i;
+  ND_pairs r,r0,_sp,sp;
+  ND_pairs *d;
+  SIG spsig,tsig;
+  static int nvar = 0;
+  static SIG _sig1,_sig2;
+  struct oEGT eg1,eg2,eg3,eg4;
+
+  NEWND_pairs(_sp);
+  if ( !_sig1 || nvar != nd_nvar ) {
+    nvar = nd_nvar; NEWSIG(_sig1); NEWSIG(_sig2);
+  }
+  d = (ND_pairs *)MALLOC(nd_nbase*sizeof(ND_pairs));
+  Nnewpair = 0;
+  for ( i = 0; i < t; i++ ) {
+    ret = _create_spair_s(i,t,_sp,_sig1,_sig2);
+    if ( ret ) {
+      spsig = _sp->sig;
+      for ( s = syz[spsig->pos]; s; s = s->next ) {
+        tsig = (SIG)s->body;
+        if ( _dl_redble(DL(tsig),DL(spsig),nd_nvar) )
+          break;
+      }
+      if ( s == 0 ) {
+        NEWND_pairs(sp);
+        dup_ND_pairs(sp,_sp);
+        d[spsig->pos] = insert_pair_s(d[spsig->pos],sp);
+      } else
+        Nsyz++;
+    }
+  }
+  return d;
 }
 
 /* ipair = [i1,i2],[i1,i2],... */
@@ -6172,6 +6252,7 @@ void nd_reconstruct_s(int trace,ND_pairs *d)
           SG(s) = SG(t);
           ndl_reconstruct(LCM(t),LCM(s),obpe,oepos);
       }
+      if ( s0 ) NEXT(s) = 0;
       d[i] = s0;
     }
     
