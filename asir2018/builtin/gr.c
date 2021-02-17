@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.6 2020/12/15 07:40:09 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.7 2021/01/11 08:37:43 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -321,13 +321,15 @@ void dp_gr_main(LIST f,LIST v,Num homo,int modular,int field,struct order_spec *
   if ( ord->id && NVars != ord->nv )
     error("dp_gr_main : invalid order specification");
   initd(ord);
-  // clear denominators
-  for ( r0 = 0, t = BDY(f); t; t = NEXT(t) ) {
-    ptozp((P)BDY(t),1,&cont,&pp);
-    NEXTNODE(r0,r); BDY(r) = (pointer)pp;
+  // clear denominators if the ground field is Q
+  if ( field == 0 ) {
+    for ( r0 = 0, t = BDY(f); t; t = NEXT(t) ) {
+      ptozp((P)BDY(t),1,&cont,&pp);
+      NEXTNODE(r0,r); BDY(r) = (pointer)pp;
+    }
+    if ( r0 ) NEXT(r) = 0;
+    MKLIST(f,r0);
   }
-  if ( r0 ) NEXT(r) = 0;
-  MKLIST(f,r0);
   if ( homo ) {
     homogenize_order(ord,NVars,&ord1);
     for ( fd0 = fi0 = 0, t = BDY(f); t; t = NEXT(t) ) {
