@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.46 2021/01/25 00:39:52 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.47 2021/02/01 08:06:33 noro Exp $ */
 
 #include "nd.h"
 
@@ -2865,10 +2865,12 @@ init_eg(&eg_remove);
   Nnominimal = 0;
   Nredundant = 0;
   ngen = nd_psn;
-  for ( i = 0; i < nd_psn; i++ )
-    for ( j = i+1; j < nd_psn; j++ ) {
-      sig = trivial_sig(i,j);
-      syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
+  if ( !do_weyl ) {
+    for ( i = 0; i < nd_psn; i++ )
+      for ( j = i+1; j < nd_psn; j++ ) {
+        sig = trivial_sig(i,j);
+        syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
+      }
     }
   dlen = 0;
   for ( i = 0; i < nd_psn; i++ ) {
@@ -6968,7 +6970,7 @@ ND ptond(VL vl,VL dvl,P p)
     else if ( NUM(p) ) {
         NEWNM(m);
         ndl_zero(DL(m));
-        if ( !INT((Q)p) )
+        if ( RATN(p) && !INT((Q)p) )
           error("ptond : input must be integer-coefficient");
         CZ(m) = (Z)p;
         NEXT(m) = 0;

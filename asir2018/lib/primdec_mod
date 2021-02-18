@@ -1,5 +1,6 @@
-/* $OpenXM$ */
+/* $OpenXM: OpenXM_contrib2/asir2018/lib/primdec_mod,v 1.1 2018/09/19 05:45:08 noro Exp $ */
 
+extern First_Component,Minipoly_SBA,NDGR$
 extern Hom,GBTime$
 extern DIVLIST,INTIDEAL,ORIGINAL,ORIGINALDIMENSION,STOP,Trials,REM$
 extern T_GRF,T_INT,T_PD,T_MP$
@@ -880,6 +881,12 @@ def testinclusion(Sample,Test)
 
 def primedec_mod(P,VSet,Ord,Mod,Strategy)
 {
+    First_Component = getopt(first);
+    if ( type(First_Component) == -1 ) First_Component = 0;
+    Minipoly_SBA = getopt(sba);
+    if ( type(Minipoly_SBA) == -1 ) Minipoly_SBA = 0;
+    NDGR = getopt(ndgr);
+    if ( type(NDGR) == -1 ) NDGR = 0;
 	for ( Q = Mod, E = 1; Q < 2^14; Q *= Mod, E++ );
 	Q /= Mod;
 	E--;
@@ -1158,7 +1165,7 @@ def primedecomposition(P,VSet,Ord,COUNTER,Strategy)
 		if (CHECKADD == 0 )
 			{
 			DIVLIST=append(DIVLIST,[[Primedivisor,Dimension]]);
-
+            if ( First_Component ) return 0;
 			if (Strategy != 1 )
 				{
 				/* NO-OPERATION */
@@ -1487,10 +1494,17 @@ def zeroseparableprimedecomposition(P,TargetVSet,VSet)
 #if 0
 		Q = dp_gr_f_main(cons(Factor,NewGP),ElimVSet,Hom,ElimOrd);
 #else
-		Q0 = dp_gr_f_main(cons(Factor,NewGP),ElimVSet,Hom,0);
-		Q = dp_gr_f_main(Q0,ElimVSet,Hom,ElimOrd);
+        if ( NDGR ) {
+		  Q0 = nd_gr(cons(Factor,NewGP),ElimVSet,-1,0);
+		  Q = nd_gr(Q0,ElimVSet,-1,ElimOrd);
+		  Q = nd_gr(Q,TargetVSet,-1,Ord);
+          dp_ord(0);
+        } else {
+		  Q0 = dp_gr_f_main(cons(Factor,NewGP),ElimVSet,Hom,0);
+		  Q = dp_gr_f_main(Q0,ElimVSet,Hom,ElimOrd);
+		  Q = dp_gr_f_main(Q,TargetVSet,Hom,Ord);
+        }
 #endif
-		Q = dp_gr_f_main(Q,TargetVSet,Hom,Ord);
 		ANS = cons(Q,ANS);
 	}
 #endif
@@ -1587,9 +1601,16 @@ def zerosepdec_main(P,W,V,Ord,Factors)
 	ANS = [];
 	for ( J = 0; J < NFactors; J++ ) {
 		Factor = dp_dtop(nf_sfrat(Ind,dp_ptod(Factors[J],W),1,PS)[0],W);
-		Q = dp_gr_f_main(cons(Factor,P),ElimV,Hom,ElimOrd);
-		Q = dp_gr_f_main(Q,W,Hom,Ord);
+        if ( NDGR ) {
+		  Q = nd_gr(cons(Factor,P),ElimV,-1,ElimOrd);
+		  Q = nd_gr(Q,W,-1,Ord);
+          dp_ord(0);
+        } else {
+		  Q = dp_gr_f_main(cons(Factor,P),ElimV,Hom,ElimOrd);
+		  Q = dp_gr_f_main(Q,W,Hom,Ord);
+        }
 		ANS = cons(Q,ANS);
+        if ( First_Component ) break;
 	}
 	return ANS;
 }
@@ -2405,6 +2426,19 @@ def minipoly_sf_0dim(G,V,O,F,V0,Server)
 {
 	if ( Server )
 		ox_sync(0);
+
+    if ( Minipoly_SBA ) {
+       G1 = cons(simp_ff(V0-F),G);
+       V1 = append(V,[V0]);
+       G2 = nd_sba(G1,V1,-1,[[0,length(V)],[0,1]]|sba_modord=[[],0]);
+       dp_ord(0);
+       for ( T = G2; T != []; T = cdr(T) )
+         if ( vars(car(T)) == [V0] ) break;
+       if ( T == [] )
+         error("minipoly does not exit");
+       return car(T);
+    }
+
 	N = length(V);
 	Len = length(G);
 	dp_ord(O);

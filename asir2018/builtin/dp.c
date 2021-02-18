@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.26 2020/10/26 02:41:05 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.27 2021/01/25 00:39:51 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -3039,8 +3039,9 @@ void Pnd_sba(NODE arg,LIST *rp)
   Z mq,z;
   Num nhomo;
   NODE node;
-  struct order_spec *ord;
+  struct order_spec *ord,*current_spec;
 
+  current_spec = dp_current_spec;
   do_weyl = 0;
   retdp = 0;
   if ( (ac=argc(arg)) == 4 ) {
@@ -3072,6 +3073,7 @@ void Pnd_sba(NODE arg,LIST *rp)
   } else
     error("nd_gr : invalid argument");
   nd_sba(f,v,m,homo,retdp,0,ord,rp);
+  initd(current_spec);
 }
 
 void Pnd_weyl_sba(NODE arg,LIST *rp)
