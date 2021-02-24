@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.13 2013/11/27 17:18:07 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.14 2014/12/01 19:27:01 ohara Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1253,7 +1253,7 @@ Key bindings:
 	   ((and (eq char-after-ip ?{)
 		 (progn
 		   (setq placeholder (c-inside-bracelist-p (point)
-							   paren-state))
+							   paren-state nil))
 		   (if placeholder
 		       (setq tmpsymbol '(brace-list-open . inexpr-class))
 		     (setq tmpsymbol '(block-open . inexpr-statement)
@@ -1376,7 +1376,7 @@ Key bindings:
                               (save-excursion
                                 (goto-char containing-sexp)
                                 (c-looking-at-special-brace-list)))
-                         (c-inside-bracelist-p containing-sexp paren-state))))
+                         (c-inside-bracelist-p containing-sexp paren-state t))))
 	  (cond
 
 	   ;; CASE 9A: In the middle of a special brace list opener.
