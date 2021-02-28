@@ -1,9 +1,10 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.47 2021/02/01 08:06:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.48 2021/02/18 05:35:01 noro Exp $ */
 
 #include "nd.h"
 
 void print_siglist(NODE l);
 
+NODE nd_hpdata;
 int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs,Nnewpair;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
 
@@ -92,6 +93,7 @@ struct comp_sig_spec {
 
 struct comp_sig_spec *nd_sba_modord;
 
+DL ndltodl(int n,UINT *ndl);
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
 void nd_det_reconstruct(NDV **dm,int n,int j,NDV d);
@@ -2467,6 +2469,130 @@ LIST compute_splist()
   return l0;
 }
 
+typedef struct oHPDATA {
+  P hn; // HP(t)=hn(t)/(1-t)^n
+  int len;
+  P *head; // hp(i)=head[i] (i=0,...,len-1)
+  P hp; // dim Hm(i)=hp(i) (i >= len)
+  VECT x; // BDY(x)[i] = <<0,...,1,...,0>>
+  P *plist; // plist[i]=(1-t)^i
+} *HPDATA;
+
+void make_reduced(VECT b,int nv);
+void mhp_rec(VECT b,VECT x,P t,P *r);
+P mhp_ctop(P *r,P *plist,int n);
+void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf);
+DL monomial_colon(DL a,DL b,int n);
+LIST dp_monomial_hilbert_poincare(VECT b,VECT x,P *plist);
+
+int hpvalue(HPDATA data,int d)
+{
+  P *head;
+  int len;
+  P hp,val;
+  Z dz;
+
+  head = data->head;
+  len = data->len;
+  hp = data->hp;
+  if ( d < len )
+    return ZTOS((Z)head[d]);
+  else {
+    STOZ(d,dz);
+    substp(CO,hp,hp->v,(P)dz,&val);
+    return ZTOS((Z)val);
+  }
+}
+
+void setup_hpdata(HPDATA final,HPDATA current)
+{
+  int n,i;
+  P *r;
+  DL *p;
+  P tv;
+  VECT b,x,head;
+  DL dl;
+
+  n = nd_nvar;
+  final->hn = (P)ARG0(nd_hpdata);
+  head = (VECT)ARG2(nd_hpdata);
+  final->len = head->len;
+  final->head = (P *)BDY(head);
+  final->hp = (P)ARG3(nd_hpdata);
+  final->plist = (P *)BDY((VECT)ARG4(nd_hpdata));
+  MKVECT(x,n);
+  for ( i = 0; i < n; i++ ) {
+    NEWDL(dl,n); dl->d[i] = 1; dl->td = 1; BDY(x)[i] = dl;
+  }
+  final->x = x;
+
+  r = (P *)CALLOC(n+1,sizeof(P));
+  MKVECT(b,nd_psn); p = (DL *)BDY(b);
+  for ( i = 0; i < nd_psn; i++ ) {
+    p[i] = ndltodl(n,nd_psh[i]->dl);
+  }
+  make_reduced(b,n);
+  makevar("t",&tv);
+  mhp_rec(b,x,tv,r);
+  current->hn = mhp_ctop(r,final->plist,n);
+  mhp_to_hf(CO,current->hn,n,final->plist,&head,&current->hp);
+  current->head = (P *)BDY(head);
+  current->len = head->len;
+  current->x = x;
+  current->plist = final->plist;
+}
+
+void update_hpdata(HPDATA current,int nh,int do_hf)
+{
+  NODE data1,nd,t;
+  DL new,dl;
+  int len,i,n;
+  Z dz;
+  DL *p;
+  VECT b,head;
+  P tv,td,s,hn,hpoly;
+  LIST list1;
+
+  n = nd_nvar;
+  new = ndltodl(n,nd_psh[nh]->dl);
+  MKVECT(b,nh); p = (DL *)BDY(b);
+  for ( i = 0; i < nh; i++ ) {
+    p[i] = monomial_colon(ndltodl(n,nd_psh[i]->dl),new,n);
+  }
+  // compute HP(I:new)
+  list1 = dp_monomial_hilbert_poincare(b,current->x,current->plist);
+  data1 = BDY((LIST)list1);
+  // HP(I+<new>) = H(I)-t^d*H(I:new), d=tdeg(new)
+  makevar("t",&tv); UTOZ(new->td,dz);
+  pwrp(CO,tv,dz,&td);
+  mulp(CO,(P)ARG0(data1),td,&s);
+  subp(CO,current->hn,s,&hn);
+  current->hn = hn;
+  if ( do_hf ) {
+    mhp_to_hf(CO,hn,n,current->plist,&head,&hpoly);
+    current->head = (P *)BDY(head);
+    current->len = head->len;
+    current->hp = hpoly;
+  }
+}
+
+ND_pairs nd_remove_same_sugar( ND_pairs d, int sugar)
+{
+  struct oND_pairs root;
+  ND_pairs prev,cur;
+
+  root.next = d;
+  prev = &root; cur = d;
+  while ( cur ) {
+    if ( SG(cur) == sugar )
+      prev->next = cur->next;
+    else
+      prev = cur;
+    cur = cur->next;
+  }
+  return root.next;
+}
+
 /* return value = 0 => input is not a GB */
 
 NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
@@ -2483,6 +2609,9 @@ NODE nd_gb(int m,int ishomo,int checkonly,int gensyz,int **indp)
   int Nnfnz = 0,Nnfz = 0;
   P cont;
   LIST list;
+  struct oHPDATA current_hpdata,final_hpdata;
+  int final_hpvalue;
+
 struct oEGT eg1,eg2,eg_update;
 
 init_eg(&eg_update);
@@ -2493,6 +2622,9 @@ init_eg(&eg_update);
     g = update_base(g,i);
   }
   sugar = 0;
+  if ( nd_hpdata ) {
+    setup_hpdata(&final_hpdata,&current_hpdata);
+  }
   while ( d ) {
 again:
     l = nd_minp(d,&d);
@@ -2509,6 +2641,18 @@ again:
       }
       sugar = SG(l);
       if ( DP_Print ) fprintf(asir_out,"%d",sugar);
+      if ( nd_hpdata ) {
+        if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) )
+          break;
+        else {
+          final_hpvalue = hpvalue(&final_hpdata,sugar);
+          if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
+            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+            d = nd_remove_same_sugar(d,sugar);
+            continue;
+          }
+        }
+      }
     }
     stat = nd_sp(m,0,l,&h);
     if ( !stat ) {
@@ -2566,6 +2710,13 @@ get_eg(&eg1);
 get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       g = update_base(g,nh);
       FREENDP(l);
+      if ( nd_hpdata ) {
+        update_hpdata(&current_hpdata,nh,1);
+        if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
+          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+          d = nd_remove_same_sugar(d,sugar);
+        }
+      }
     } else {
       Nnfz++;
       if ( nd_gentrace && gensyz ) {
@@ -2853,6 +3004,7 @@ NODE nd_sba_buch(int m,int ishomo,int **indp,NODE *syzp)
   int ngen,ind;
   int Nnominimal,Nredundant;
   DL lcm,quo,mul;
+  struct oHPDATA final_hpdata,current_hpdata;
   struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero,eg_minsig,eg_smallest;
   int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz;
 
@@ -2878,6 +3030,9 @@ init_eg(&eg_remove);
   }
   sugar = 0;
   pos = 0;
+  if ( nd_hpdata ) {
+    setup_hpdata(&final_hpdata,&current_hpdata);
+  }
   NEWDL(lcm,nd_nvar); NEWDL(quo,nd_nvar); NEWDL(mul,nd_nvar);
 init_eg(&eg_create);
 init_eg(&eg_merge);
@@ -2956,6 +3111,13 @@ get_eg(&eg2);
 
       dlen += update_pairs_array_s(d,nh,syzlist);
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
+      if ( nd_hpdata ) {
+        update_hpdata(&current_hpdata,nh,0);
+        if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
+          if ( DP_Print ) { printf("\nWe found a gb.\n"); }
+          break;
+        }
+      }
    } else {
       d[ind] = d[ind]->next; dlen--;
       Nnfz++;
@@ -3174,6 +3336,8 @@ NODE nd_gb_trace(int m,int ishomo,int **indp)
   int diag_count = 0;
   P cont;
   LIST list;
+  struct oHPDATA current_hpdata,final_hpdata;
+  int final_hpvalue;
 
   init_eg(&eg_monic);
   init_eg(&eg_invdalg);
@@ -3184,6 +3348,10 @@ NODE nd_gb_trace(int m,int ishomo,int **indp)
     g = update_base(g,i);
   }
   sugar = 0;
+  if ( nd_hpdata ) {
+    setup_hpdata(&final_hpdata,&current_hpdata);
+  }
+
   while ( d ) {
 again:
     l = nd_minp(d,&d);
@@ -3204,6 +3372,18 @@ again:
 #endif
       sugar = SG(l);
       if ( DP_Print ) fprintf(asir_out,"%d",sugar);
+      if ( nd_hpdata ) {
+        if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) )
+          break;
+        else {
+          final_hpvalue = hpvalue(&final_hpdata,sugar);
+          if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
+            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+            d = nd_remove_same_sugar(d,sugar);
+            continue;
+          }
+        }
+      }
     }
     stat = nd_sp(m,0,l,&h);
     if ( !stat ) {
@@ -3277,6 +3457,13 @@ again:
         }
         d = update_pairs(d,g,nh,0);
         g = update_base(g,nh);
+        if ( nd_hpdata ) {
+          update_hpdata(&current_hpdata,nh,1);
+          if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
+            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+            d = nd_remove_same_sugar(d,sugar);
+          }
+        }
       } else {
         if ( DP_Print ) { printf("*"); fflush(stdout); }
       }
@@ -3739,9 +3926,11 @@ int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
   p1 = nd_psh[i1];
   p2 = nd_psh[i2];
   ndl_lcm(DL(p1),DL(p2),sp->lcm);
+#if 0
   s1 = SG(p1)-TD(DL(p1));
   s2 = SG(p2)-TD(DL(p2));
   SG(sp) = MAX(s1,s2) + TD(sp->lcm);
+#endif
 
   if ( wpd != nd_wpd ) {
     wpd = nd_wpd;
@@ -3767,6 +3956,11 @@ int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
   if ( ret == 0 ) return 0;
   else if ( ret > 0 ) sp->sig = sig1;
   else sp->sig = sig2;
+
+  s1 = DL(sig1)->td+nd_sba_hm[p1->sig->pos]->td;
+  s2 = DL(sig2)->td+nd_sba_hm[p2->sig->pos]->td;
+  SG(sp) = MAX(s1,s2);
+
   return 1;
 }
 
@@ -10388,6 +10582,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
+  nd_hpdata = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -10435,6 +10630,8 @@ void parse_nd_option(VL vl,NODE opt)
       nd_splist = value?1:0;
     } else if ( !strcmp(key,"check_splist") ) {
       nd_check_splist = BDY((LIST)value);
+    } else if ( !strcmp(key,"hpdata") ) {
+      nd_hpdata = BDY((LIST)value);
     } else if ( !strcmp(key,"sugarweight") ) {
       u = BDY((LIST)value);
       n = length(u);

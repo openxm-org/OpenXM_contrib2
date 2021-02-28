@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.27 2021/01/25 00:39:51 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.28 2021/02/18 05:35:01 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -61,7 +61,7 @@ extern int nd_rref2;
 
 extern int do_weyl;
 
-void Pdp_monomial_hilbert_poincare();
+void Pdp_monomial_hilbert_poincare(),Pdp_monomial_hilbert_poincare_incremental();
 void Pdp_sort();
 void Pdp_mul_trunc(),Pdp_quo();
 void Pdp_ord(), Pdp_ptod(), Pdp_dtop(), Phomogenize();
@@ -249,6 +249,7 @@ struct ftab dp_tab[] = {
 
   /* Hilbert function */
   {"dp_monomial_hilbert_poincare",Pdp_monomial_hilbert_poincare,2},
+  {"dp_monomial_hilbert_poincare_incremental",Pdp_monomial_hilbert_poincare_incremental,3},
 
   /* misc */
   {"dp_inv_or_split",Pdp_inv_or_split,3},
@@ -466,7 +467,7 @@ void mhp_rec(VECT b,VECT x,P t,P *r)
   DL *p,*q;
   DL pi,xj,d1;
   VECT c;
-struct oEGT eg0,eg1;
+  struct oEGT eg0,eg1;
 
   i_all++;
   n = b->len; nv = x->len; p = (DL *)BDY(b);
@@ -613,6 +614,7 @@ P *mhp_prep(int n,P *tv) {
   P *plist;
   P mt,t1;
   int i;
+  VECT list;
 
   plist = (P *)MALLOC((n+1)*sizeof(P));
   /* t1 = 1-t */
@@ -633,18 +635,44 @@ P mhp_ctop(P *r,P *plist,int n)
   return hp;
 }
 
+LIST dp_monomial_hilbert_poincare(VECT b,VECT x,P *plist)
+{
+  int n;
+  P *r;
+  P tv;
+  P hp,hpoly;
+  VECT hfhead;
+  Z z;
+  NODE nd;
+  VECT vect;
+  LIST list;
+
+  n = x->len;
+  r = (P *)CALLOC(n+1,sizeof(P));
+  make_reduced(b,n);
+  makevar("t",&tv);
+  mhp_rec(b,x,tv,r);
+  hp = mhp_ctop(r,plist,n);
+  mhp_to_hf(CO,hp,n,plist,&hfhead,&hpoly);
+  UTOZ(n,z);
+  NEWVECT(vect); vect->len = n+1; BDY(vect) = (pointer)plist;
+  nd = mknode(5,hp,z,hfhead,hpoly,vect);
+  MKLIST(list,nd);
+  return list;
+}
+
 void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
 {
   LIST g,v;
   VL vl;
   int m,n,i;
-  VECT b,x,hfhead;
+  VECT b,x,hfhead,prep;
   NODE t,nd;
   Z z,den;
   P hp,tv,mt,t1,u,w,hpoly;
   DP a;
   DL *p;
-  P *plist,*r;
+  P *plist;
   Obj val;
 
   i_simple = i_all = 0;
@@ -662,16 +690,63 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
   for ( t = BDY(v), i = 0; t; t = NEXT(t), i++ ) {
     ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
   }
-  
-  r = (P *)CALLOC(n+1,sizeof(P));
   plist = mhp_prep(n,&tv);
-  make_reduced(b,n);
-  mhp_rec(b,x,tv,r);
-  hp = mhp_ctop(r,plist,n);
-  mhp_to_hf(CO,hp,n,plist,&hfhead,&hpoly);
-  UTOZ(n,z);
-  nd = mknode(4,hp,z,hfhead,hpoly);
-  MKLIST(*rp,nd);
+  *rp = dp_monomial_hilbert_poincare(b,x,plist);
+}
+
+DL monomial_colon(DL a,DL b,int n)
+{
+  int i,d,td;
+  DL r;
+
+  NEWDL(r,n);
+  td = 0;
+  for ( i = 0; i < n; i++ ) {
+    d = a->d[i]-b->d[i];
+    r->d[i] = MAX(d,0);
+    td += r->d[i];
+  }
+  r->td = td;
+  return r;
+}
+
+// arguments : DPlist, Xlist, Mono, [HN(t),NV,Head,HP(n),Plist]
+void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp)
+{
+  NODE g,data,data1,nd,t;
+  LIST list,list1;
+  DL new,dl;
+  int len,i,n;
+  Z dz;
+  DL *p;
+  P hn,hn1,newhn,tv,newhpoly,td,s;
+  VECT b,x,newhfhead;
+  P *plist;
+
+  g = BDY((LIST)ARG0(arg)); new = BDY((DP)ARG1(arg))->dl;
+  data = BDY((LIST)ARG2(arg));
+  hn = (P)ARG0(data); n = ZTOS((Z)ARG1(data)); 
+  plist = (P *)BDY((VECT)ARG4(data));
+  len = length(g); MKVECT(b,len); p = (DL *)BDY(b);
+  for ( t = g, i = 0; t; t = NEXT(t), i++ )
+    p[i] = monomial_colon(BDY((DP)BDY(t))->dl,new,n);
+  MKVECT(x,n);
+  for ( i = 0; i < n; i++ ) {
+    NEWDL(dl,n); dl->d[i] = 1; dl->td = 1; BDY(x)[i] = dl;
+  }
+  // compute HP(I:new)
+  list1 = dp_monomial_hilbert_poincare(b,x,plist);
+  data1 = BDY((LIST)list1);
+  hn1 = (P)ARG0(data1);
+  // HP(I+<new>) = H(I)-t^d*H(I:new), d=tdeg(new)
+  makevar("t",&tv); UTOZ(new->td,dz);
+  pwrp(CO,tv,dz,&td);
+  mulp(CO,hn1,td,&s);
+  subp(CO,hn,s,&newhn);
+  mhp_to_hf(CO,newhn,n,plist,&newhfhead,&newhpoly);
+  nd = mknode(5,newhn,ARG1(data),newhfhead,newhpoly,(VECT)ARG4(data));
+  MKLIST(list,nd);
+  *rp = list;
 }
 
 void Pdp_compute_last_t(NODE arg,LIST *rp)
