@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.48 2021/02/18 05:35:01 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.49 2021/02/28 02:33:16 noro Exp $ */
 
 #include "nd.h"
 
@@ -3005,7 +3005,8 @@ NODE nd_sba_buch(int m,int ishomo,int **indp,NODE *syzp)
   int Nnominimal,Nredundant;
   DL lcm,quo,mul;
   struct oHPDATA final_hpdata,current_hpdata;
-  struct oEGT eg1,eg2,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero,eg_minsig,eg_smallest;
+  struct oEGT eg1,eg2,eg3,eg4,eg_update,eg_remove,eg_large,eg_nf,eg_nfzero;
+  struct oEGT eg_minsig,eg_smallest,eg_removecont,eg_hpdata,eg_updatepairs,eg_sbabuch,eg_sp;
   int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz;
 
 init_eg(&eg_remove);
@@ -3034,6 +3035,7 @@ init_eg(&eg_remove);
     setup_hpdata(&final_hpdata,&current_hpdata);
   }
   NEWDL(lcm,nd_nvar); NEWDL(quo,nd_nvar); NEWDL(mul,nd_nvar);
+init_eg(&eg_sp);
 init_eg(&eg_create);
 init_eg(&eg_merge);
 init_eg(&eg_minsig);
@@ -3041,6 +3043,11 @@ init_eg(&eg_smallest);
 init_eg(&eg_large);
 init_eg(&eg_nf);
 init_eg(&eg_nfzero);
+init_eg(&eg_removecont);
+init_eg(&eg_updatepairs);
+init_eg(&eg_hpdata);
+init_eg(&eg_sbabuch);
+get_eg(&eg3);
   while ( 1 ) {
     if ( DP_Print && dlen%100 == 0 ) fprintf(asir_out,"(%d)",dlen);
 again :
@@ -3055,7 +3062,7 @@ get_eg(&eg1);
 get_eg(&eg2); add_eg(&eg_smallest,&eg1,&eg2);
     if ( l1 == 0 ) {
       d[ind] = d[ind]->next; dlen--;
-      if ( DP_Print ) fprintf(asir_out,"M");
+      if ( DP_Print && !nd_hpdata ) fprintf(asir_out,"M");
       Nnominimal++;
       continue;
     }
@@ -3070,7 +3077,9 @@ get_eg(&eg2); add_eg(&eg_smallest,&eg1,&eg2);
         pos = sig->pos;
       }
     }
+get_eg(&eg1);
     stat = nd_sp(m,0,l1,&h);
+get_eg(&eg2); add_eg(&eg_sp,&eg1,&eg2);
     if ( !stat ) {
       nd_reconstruct_s(0,d);
       goto again;
@@ -3105,14 +3114,20 @@ get_eg(&eg2);
       }
       add_eg(&eg_nf,&eg1,&eg2);
       hc = HCU(nf);
+      get_eg(&eg1);
       nd_removecont(m,nf);
+      get_eg(&eg2); add_eg(&eg_removecont,&eg1,&eg2);
       nfv = ndtondv(m,nf); nd_free(nf);
       nh = ndv_newps(m,nfv,0);
 
+      get_eg(&eg1);
       dlen += update_pairs_array_s(d,nh,syzlist);
+      get_eg(&eg2); add_eg(&eg_updatepairs,&eg1,&eg2);
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
       if ( nd_hpdata ) {
+        get_eg(&eg1);
         update_hpdata(&current_hpdata,nh,0);
+        get_eg(&eg2); add_eg(&eg_hpdata,&eg1,&eg2);
         if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
           if ( DP_Print ) { printf("\nWe found a gb.\n"); }
           break;
@@ -3132,21 +3147,28 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
      if ( DP_Print ) { printf("."); fflush(stdout); }
    }
  }
+ get_eg(&eg4); add_eg(&eg_sbabuch,&eg3,&eg4);
  g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
    printf("\ndlen=%d,nd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",dlen,Nnd_add,Nsyz,Nsamesig,Nnominimal);
    printf("Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",Nnfnz,Nnfz,Nnfs);
-   fflush(stdout); 
+   fflush(stdout);
    if ( nd_sba_redundant_check )
    printf("Nredundant=%d\n",Nredundant);
-   fflush(stdout); 
+   fflush(stdout);
+   print_eg("sp",&eg_sp);
    print_eg("create",&eg_create);
    print_eg("merge",&eg_merge);
    print_eg("minsig",&eg_minsig);
    print_eg("smallest",&eg_smallest);
    print_eg("remove",&eg_remove);
+   printf("\n");
    print_eg("nf",&eg_nf);
    print_eg("nfzero",&eg_nfzero);
+   print_eg("removecont",&eg_removecont);
+   print_eg("updatepairs",&eg_updatepairs);
+   print_eg("hpdata",&eg_hpdata);
+   print_eg("total",&eg_sbabuch);
    printf("\n");
  }
  if ( nd_sba_syz ) {
@@ -10631,7 +10653,8 @@ void parse_nd_option(VL vl,NODE opt)
     } else if ( !strcmp(key,"check_splist") ) {
       nd_check_splist = BDY((LIST)value);
     } else if ( !strcmp(key,"hpdata") ) {
-      nd_hpdata = BDY((LIST)value);
+      if ( value )
+        nd_hpdata = BDY((LIST)value);
     } else if ( !strcmp(key,"sugarweight") ) {
       u = BDY((LIST)value);
       n = length(u);
