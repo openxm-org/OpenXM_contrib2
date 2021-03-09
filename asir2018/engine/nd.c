@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.50 2021/03/09 05:20:35 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.51 2021/03/09 07:07:02 noro Exp $ */
 
 #include "nd.h"
 
@@ -2623,6 +2623,7 @@ init_eg(&eg_update);
   }
   sugar = 0;
   if ( nd_hpdata ) {
+    if ( DP_Print ) fprintf(asir_out,"Hilbert driven algorithm.\n");
     setup_hpdata(&final_hpdata,&current_hpdata);
   }
   while ( d ) {
@@ -2647,7 +2648,7 @@ again:
         else {
           final_hpvalue = hpvalue(&final_hpdata,sugar);
           if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+//            if ( DP_Print ) fprintf(asir_out,"done.\n",sugar);
             d = nd_remove_same_sugar(d,sugar);
             continue;
           }
@@ -2713,7 +2714,7 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       if ( nd_hpdata ) {
         update_hpdata(&current_hpdata,nh,1);
         if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+//          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
           d = nd_remove_same_sugar(d,sugar);
         }
       }
@@ -3049,7 +3050,7 @@ init_eg(&eg_hpdata);
 init_eg(&eg_sbabuch);
 get_eg(&eg3);
   while ( 1 ) {
-    if ( DP_Print && dlen%100 == 0 ) fprintf(asir_out,"(%d)",dlen);
+    if ( DP_Print && !nd_hpdata && dlen%100 == 0 ) fprintf(asir_out,"(%d)",dlen);
 again :
 get_eg(&eg1);
     ind = nd_minsig(d); 
@@ -3371,6 +3372,7 @@ NODE nd_gb_trace(int m,int ishomo,int **indp)
   }
   sugar = 0;
   if ( nd_hpdata ) {
+    if ( DP_Print ) fprintf(asir_out,"Hilbert driven algorithm.\n");
     setup_hpdata(&final_hpdata,&current_hpdata);
   }
 
@@ -3400,7 +3402,7 @@ again:
         else {
           final_hpvalue = hpvalue(&final_hpdata,sugar);
           if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+//            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
             d = nd_remove_same_sugar(d,sugar);
             continue;
           }
@@ -3482,7 +3484,7 @@ again:
         if ( nd_hpdata ) {
           update_hpdata(&current_hpdata,nh,1);
           if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+//            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
             d = nd_remove_same_sugar(d,sugar);
           }
         }
