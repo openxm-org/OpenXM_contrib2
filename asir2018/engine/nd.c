@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.49 2021/02/28 02:33:16 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.50 2021/03/09 05:20:35 noro Exp $ */
 
 #include "nd.h"
 
@@ -5054,7 +5054,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   int *perm;
   EPOS oepos;
   int obpe,oadv,ompos,cbpe;
-  struct oEGT eg0,eg1,egconv;
+  struct oEGT eg0,eg1,egconv,egintred;
 
   nd_module = 0;
   nd_demand = 0;
@@ -5140,8 +5140,10 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
     nd_setup_parameters(nvar,0);
   }
   nd_demand = 0;
+  get_eg(&eg0);
   x = ndv_reducebase(x,perm);
   x = ndv_reduceall(m,x);
+  get_eg(&eg1); init_eg(&egintred); add_eg(&egintred,&eg0,&eg1);
   nd_setup_parameters(nd_nvar,0);
   get_eg(&eg0);
   for ( r0 = 0, t = x; t; t = NEXT(t) ) {
@@ -5161,6 +5163,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   } else
     MKLIST(*rp,r0);
   get_eg(&eg1); init_eg(&egconv); add_eg(&egconv,&eg0,&eg1);
+  print_eg("intred",&egintred); fprintf(asir_out,"\n");
   print_eg("conv",&egconv); fprintf(asir_out,"\n");
 }
 
