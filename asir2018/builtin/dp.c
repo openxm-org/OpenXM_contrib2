@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.28 2021/02/18 05:35:01 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.29 2021/02/28 02:33:15 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -133,6 +133,7 @@ void Pdp_rref2(),Psumi_updatepairs(),Psumi_symbolic();
 
 LIST dp_initial_term();
 LIST dp_order();
+int peek_option(NODE opt,char *find,Obj *ret);
 void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
   int *modular,struct order_spec **ord);
 NODE dp_inv_or_split(NODE gb,DP f,struct order_spec *spec, DP *inv);
@@ -673,8 +674,16 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
   DP a;
   DL *p;
   P *plist;
-  Obj val;
-
+  Obj val,ord;
+  struct order_spec *current_spec=0,*spec;
+  
+  if ( current_option ) {
+    if ( peek_option(current_option,"ord",&ord) ) {
+      current_spec = dp_current_spec;
+      create_order_spec(0,ord,&spec);
+      initd(spec);
+    }
+  }
   i_simple = i_all = 0;
   g = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
   pltovl(v,&vl);
@@ -692,6 +701,8 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
   }
   plist = mhp_prep(n,&tv);
   *rp = dp_monomial_hilbert_poincare(b,x,plist);
+  if ( current_spec )
+    initd(current_spec);
 }
 
 DL monomial_colon(DL a,DL b,int n)
@@ -722,7 +733,16 @@ void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp)
   P hn,hn1,newhn,tv,newhpoly,td,s;
   VECT b,x,newhfhead;
   P *plist;
-
+  Obj ord;
+  struct order_spec *current_spec=0,*spec;
+  
+  if ( current_option ) {
+    if ( peek_option(current_option,"ord",&ord) ) {
+      current_spec = dp_current_spec;
+      create_order_spec(0,ord,&spec);
+      initd(spec);
+    }
+  }
   g = BDY((LIST)ARG0(arg)); new = BDY((DP)ARG1(arg))->dl;
   data = BDY((LIST)ARG2(arg));
   hn = (P)ARG0(data); n = ZTOS((Z)ARG1(data)); 
@@ -747,6 +767,8 @@ void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp)
   nd = mknode(5,newhn,ARG1(data),newhfhead,newhpoly,(VECT)ARG4(data));
   MKLIST(list,nd);
   *rp = list;
+  if ( current_spec )
+    initd(current_spec);
 }
 
 void Pdp_compute_last_t(NODE arg,LIST *rp)
@@ -2826,6 +2848,24 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
   if ( !ord_is_set ) create_order_spec(0,0,ord);
   if ( !modular_is_set ) *modular = 0;
   if ( !homo_is_set ) *homo = 0;
+}
+
+int peek_option(NODE opt,char *find,Obj *retp)
+{
+  NODE t,p;
+  char *key;
+  Obj value;
+
+  for ( t = opt; t; t = NEXT(t) ) {
+    p = BDY((LIST)BDY(t));
+    key = BDY((STRING)BDY(p));
+    value = (Obj)BDY(NEXT(p));
+    if ( !strcmp(key,find) ) {
+      *retp = value;
+      return 1;
+    }
+  }
+  return 0;
 }
 
 void Pdp_gr_main(NODE arg,LIST *rp)
