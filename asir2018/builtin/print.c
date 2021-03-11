@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.4 2020/10/06 06:31:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.5 2021/03/11 03:41:13 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -491,6 +491,11 @@ FNODE subst_in_fnode(FNODE f,V v,FNODE g)
     case I_FUNC:
       a1 = subst_in_fnode((FNODE)FA1(f),v,g);
       return mkfnode(2,f->id,FA0(f),a1);
+      break;
+    /* derivative */
+    case I_PFDERIV:
+      a1 = subst_in_fnode((FNODE)FA1(f),v,g);
+      return mkfnode(3,f->id,FA0(f),a1,FA2(f));
       break;
     case I_CAR: case I_CDR:
       a1 = subst_in_fnode((FNODE)FA0(f),v,g);
