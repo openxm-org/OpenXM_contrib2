@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.3 2020/02/22 06:23:36 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/io/pexpr_body.c,v 1.4 2020/10/06 06:31:20 noro Exp $ */
 
 #define PRINTHAT (fortran_output?PUTS("**"):PUTS("^"))
 
@@ -603,6 +603,11 @@ void PRINTFNODE(FNODE f,int paren)
         PUTS(((FUNC)FA0(f))->name);
         PUTS("("); PRINTFARGS(FA1(f)); PUTS(")");
       }
+      break;
+    case I_PFDERIV:
+      PUTS(((FUNC)FA0(f))->name);
+      PUTS("{"); PRINTFARGS(FA2(f)); PUTS("}");
+      PUTS("("); PRINTFARGS(FA1(f)); PUTS(")");
       break;
     /* XXX */
     case I_CAR: PUTS("car("); PRINTFNODE(FA0(f),0); PUTS(")"); break;

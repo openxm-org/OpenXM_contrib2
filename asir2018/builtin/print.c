@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.3 2020/02/22 06:23:35 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/print.c,v 1.4 2020/10/06 06:31:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -164,7 +164,7 @@ void Peval_variables_in_quote(NODE arg,QUOTE *rp)
 void fnodetotree(FNODE f,VS vs,LIST *rp)
 {
   LIST a1,a2,a3;
-  NODE n,t,t0;
+  NODE n,t,t0,t1;
   STRING head,op,str;
   char *opname;
 
@@ -326,6 +326,16 @@ void fnodetotree(FNODE f,VS vs,LIST *rp)
       t0 = NEXT(BDY(a1)); /* XXX : skip the headers */
       MKNODE(t,op,t0);
       MKNODE(n,head,t);
+      MKLIST(*rp,n);
+      break;
+
+    /* partial derivative of function */
+    case I_PFDERIV:
+      MKSTR(head,"derivative");
+      MKSTR(op,((FUNC)FA0(f))->fullname);
+      fnodetotree((FNODE)FA1(f),vs,&a1);
+      fnodetotree((FNODE)FA2(f),vs,&a2);
+      n = mknode(4,head,op,a1,a2);
       MKLIST(*rp,n);
       break;
 

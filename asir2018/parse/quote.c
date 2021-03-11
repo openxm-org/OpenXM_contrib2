@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/parse/quote.c,v 1.1 2018/09/19 05:45:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/quote.c,v 1.2 2018/09/28 08:20:29 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -378,7 +378,7 @@ struct fid_spec fid_spec_tab[] = {
   {I_IFUNC,A_fnode,A_fnode,A_end},
   {I_MAP,A_func,A_fnode,A_end},
   {I_RECMAP,A_func,A_fnode,A_end},
-  {I_PFDERIV,A_notimpl,A_end},
+  {I_PFDERIV,A_func,A_fnode,A_fnode,A_end},
   {I_ANS,A_int,A_end},
   {I_PVAR,A_int,A_node,A_end},
   {I_ASSPVAR,A_fnode,A_fnode,A_end},
