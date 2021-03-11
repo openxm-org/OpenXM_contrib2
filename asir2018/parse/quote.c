@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/parse/quote.c,v 1.2 2018/09/28 08:20:29 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/quote.c,v 1.3 2021/03/11 03:41:13 noro Exp $ */
 
 #include "ca.h"
 #include "parse.h"
@@ -311,7 +311,9 @@ void vartoquote(V v,QUOTE *c)
   QUOTE a,b,u;
   int i;
   FUNC f;
-  NODE t,t1;
+  Z z;
+  FNODE fa,fd;
+  NODE t,t1,s,s1;
 
   if ( NAME(v) ) {
     MKV(v,x);
@@ -335,19 +337,33 @@ void vartoquote(V v,QUOTE *c)
       objtoquote(ad[1].arg,&b);
       pwrquote(CO,a,b,c);
     } else {
+      gen_searchf(NAME(pf),&f);
       for ( i = 0; i < pf->argc; i++ )
         if ( ad[i].d )
           break;
-      if ( i < pf->argc )
-        error("vartoquote : not implemented");
-      gen_searchf(NAME(pf),&f);
-      t = 0;
-      for ( i = pf->argc-1; i >= 0; i-- ) {
-        objtoquote(ad[i].arg,&a);
-        MKNODE(t1,BDY(a),t);
-        t = t1;
+      if ( i < pf->argc ) {
+        t = s = 0;
+        for ( i = pf->argc-1; i >= 0; i-- ) {
+          objtoquote(ad[i].arg,&a);
+          MKNODE(t1,BDY(a),t);
+          t = t1;
+          STOZ(ad[i].d,z);
+          objtoquote((Obj)z,&a);
+          MKNODE(s1,BDY(a),s);
+          s = s1;
+        }
+        fa = mkfnode(1,I_LIST,t);
+        fd = mkfnode(1,I_LIST,s);
+        MKQUOTE(*c,mkfnode(3,I_PFDERIV,f,fa,fd));
+      } else {
+        t = 0;
+        for ( i = pf->argc-1; i >= 0; i-- ) {
+          objtoquote(ad[i].arg,&a);
+          MKNODE(t1,BDY(a),t);
+          t = t1;
+        }
+        MKQUOTE(*c,mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,t)));
       }
-      MKQUOTE(*c,mkfnode(2,I_FUNC,f,mkfnode(1,I_LIST,t)));
     }
   }
 }
