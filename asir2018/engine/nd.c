@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.51 2021/03/09 07:07:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.52 2021/03/09 08:48:50 noro Exp $ */
 
 #include "nd.h"
 
@@ -2754,6 +2754,37 @@ int nd_nf_s(int mod,ND d,ND g,NDV *ps,int full,ND *nf);
 void _copydl(int n,DL d1,DL d2);
 void _subfromdl(int n,DL d1,DL d2);
 extern int (*cmpdl)(int n,DL d1,DL d2);
+int _dl_redble_ext(DL,DL,DL,int);
+
+int primitive_irred(ND p,SIG sig)
+{
+  static int wpd=0,dlen=0;
+  static DL dquo,squo;
+  static UINT *quo;
+  int i;
+
+  if ( dlen < nd_nvar ) {
+    NEWDL(dquo,nd_nvar);
+    NEWDL(squo,nd_nvar);
+    dlen = nd_nvar;
+  }
+  if ( wpd != nd_wpd ) {
+    wpd = nd_wpd;
+    quo = (UINT *)MALLOC(wpd*sizeof(UINT));
+  }
+  for ( i = 0; i < nd_psn; i++ ) {
+    if ( sig->pos == nd_psh[i]->sig->pos &&
+      _dl_redble_ext(DL(nd_psh[i]->sig),DL(sig),squo,nd_nvar) )
+      if ( ndl_reducible(HDL(p),DL(nd_psh[i])) ) {
+        if ( DP_Print ) fprintf(asir_out,"D");
+        ndl_sub(HDL(p),DL(nd_psh[i]),quo);
+        _ndltodl(quo,dquo);
+        if ( _eqdl(nd_nvar,squo,dquo) ) 
+          return 0;
+      }
+  }
+  return 1;
+}
 
 NODE insert_sig(NODE l,SIG s)
 {
@@ -2806,8 +2837,6 @@ ND_pairs remove_spair_s(ND_pairs d,SIG sig)
   }
   return (ND_pairs)root.next;
 }
-
-int _dl_redble_ext(DL,DL,DL,int);
 
 int small_lcm(ND_pairs l)
 {
@@ -3050,7 +3079,7 @@ init_eg(&eg_hpdata);
 init_eg(&eg_sbabuch);
 get_eg(&eg3);
   while ( 1 ) {
-    if ( DP_Print && !nd_hpdata && dlen%100 == 0 ) fprintf(asir_out,"(%d)",dlen);
+    if ( DP_Print && !nd_hpdata && dlen%1000 == 0 ) fprintf(asir_out,"(%d)",dlen);
 again :
 get_eg(&eg1);
     ind = nd_minsig(d); 
@@ -3063,7 +3092,7 @@ get_eg(&eg1);
 get_eg(&eg2); add_eg(&eg_smallest,&eg1,&eg2);
     if ( l1 == 0 ) {
       d[ind] = d[ind]->next; dlen--;
-      if ( DP_Print && !nd_hpdata ) fprintf(asir_out,"M");
+//      if ( DP_Print && !nd_hpdata ) fprintf(asir_out,"M");
       Nnominimal++;
       continue;
     }
@@ -3120,7 +3149,7 @@ get_eg(&eg2);
       get_eg(&eg2); add_eg(&eg_removecont,&eg1,&eg2);
       nfv = ndtondv(m,nf); nd_free(nf);
       nh = ndv_newps(m,nfv,0);
-
+ 
       get_eg(&eg1);
       dlen += update_pairs_array_s(d,nh,syzlist);
       get_eg(&eg2); add_eg(&eg_updatepairs,&eg1,&eg2);
@@ -3131,7 +3160,7 @@ get_eg(&eg2);
         get_eg(&eg2); add_eg(&eg_hpdata,&eg1,&eg2);
         if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
           if ( DP_Print ) { printf("\nWe found a gb.\n"); }
-          break;
+            break;
         }
       }
    } else {
