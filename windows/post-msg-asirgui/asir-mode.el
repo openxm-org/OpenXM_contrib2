@@ -2,7 +2,7 @@
 ;;
 ;; asir-mode.el -- asir mode
 ;;
-;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.14 2014/12/01 19:27:01 ohara Exp $
+;; $OpenXM: OpenXM_contrib2/windows/post-msg-asirgui/asir-mode.el,v 1.15 2021/02/24 23:10:32 takayama Exp $
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@
               (shell (get-buffer-create asir-cmd-buffer-name)))
             (sleep-for 1)
             (goto-char (point-max))
-            (insert "asir")
+            (insert "openxm asir")
             (comint-send-input)
             (select-frame current-frame))))))
 
