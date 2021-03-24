@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/load.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/load.c,v 1.2 2020/10/06 06:31:20 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -212,9 +212,9 @@ void env_init() {
       if ( !p )
         break;
     }
-    i += 5;
+    i += 6;
     ASIRLOADPATH_LEN=i;
-        ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
+    ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*i);
     for ( l = 0; l<i; l++) ASIRLOADPATH[l] = NULL; 
     e = getenv("ASIRLOADPATH");
     for ( i = 0; ; i++, e = p+1 ) {
@@ -226,8 +226,8 @@ void env_init() {
       if ( !p )
         break;
     }
-    }else{
-    ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*3);
+  }else{
+    ASIRLOADPATH=(char **)MALLOC(sizeof(char *)*6);
     ASIRLOADPATH[0] = NULL;
   }
 
