@@ -27,6 +27,7 @@ CONFIG	= $(STAT) $(KANJI) -DTERMIOS -D_ALL_SOURCE
 
 CFLAGS	+= $(DEBUG) $(CONFIG) -Wno-implicit-int -Wno-return-type
 LDFLAGS = -ltermcap
+INSTALL = install -s
 
 all: $(TARGET)
 
@@ -37,7 +38,7 @@ argv: fep_com.c
 	$(CC) -o argv -DMKARGDEBUG fep_util.c
 
 install: $(TARGET)
-	install -s $(TARGET) $(INSTDIR)
+	$(INSTALL) $(TARGET) $(INSTDIR)
 	gzip -9n -c fep.1 > ${PREFIX}/man/man1/fep.1.gz
 
 fep.1: fep.jman
