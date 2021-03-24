@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.75 2017/09/04 01:57:53 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/io/tcpf.c,v 1.76 2018/03/29 01:32:54 noro Exp $ 
 */
 #include "ca.h"
 #include "parse.h"
@@ -78,7 +78,7 @@ static struct m_c {
 } *m_c_tab;
 
 static int m_c_i,m_c_s;
-int I_am_server;
+extern int I_am_server;
 
 extern int little_endian;
 

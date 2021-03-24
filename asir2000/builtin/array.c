@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.77 2019/03/03 05:21:16 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2000/builtin/array.c,v 1.78 2020/10/04 03:14:07 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1526,6 +1526,8 @@ RESET:
     }
   }
 }
+
+struct oEGT eg_chrem,eg_back,eg_fore;
 
 void lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm);
 

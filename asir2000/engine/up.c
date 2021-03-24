@@ -45,12 +45,12 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2000/engine/up.c,v 1.5 2001/10/09 01:36:13 noro Exp $ 
+ * $OpenXM: OpenXM_contrib2/asir2000/engine/up.c,v 1.6 2018/03/29 01:32:52 noro Exp $ 
 */
 #include "ca.h"
 #include <math.h>
 
-struct oEGT eg_chrem,eg_fore,eg_back;
+extern struct oEGT eg_chrem,eg_fore,eg_back;
 
 /*
 int up_kara_mag=15;
