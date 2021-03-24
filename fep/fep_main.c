@@ -690,7 +690,7 @@ void swallow_output()
 #include <sys/m_wait.h>
 #endif
 
-#if defined(__INTERIX)
+#if defined(__INTERIX) || defined(ANDROID)
 #define wait3(s,opt,rp)   (waitpid((-1),(s),(opt)))
 #endif
 
