@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/sio.c,v 1.3 2019/12/13 14:40:50 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/sio.c,v 1.4 2020/10/06 06:31:20 noro Exp $
 */
 #include "ca.h"
 #include <setjmp.h>
@@ -79,6 +79,9 @@ struct IOFP iofp[MAXIOFP];
 
 void init_socket(void);
 
+#if defined(VISUAL)
+typedef int socklen_t;
+#endif
 #if !defined(VISUAL) && !defined(__MINGW32__)
 #define closesocket(s)   (close((s)))
 #endif
