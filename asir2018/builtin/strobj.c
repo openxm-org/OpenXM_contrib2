@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/strobj.c,v 1.2 2018/09/28 08:20:27 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/strobj.c,v 1.3 2020/10/06 06:31:19 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -1967,7 +1967,7 @@ void Psprintf(NODE arg,STRING *rp)
     if (argc < n) {
         error("sprintf: invalid argument");
     }
-    r = (char *)MALLOC_ATOMIC(len);
+    r = (char *)MALLOC_ATOMIC(len+1);
     for(node = NEXT(arg), t = r; *s; s++) {
         if (*s=='%' && *(s+1)=='a') {
             strcpy(t,objtostr(BDY(node)));
