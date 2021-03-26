@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.7 2020/01/09 01:47:40 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.8 2020/10/06 06:31:19 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -622,7 +622,7 @@ void Pnewvect(NODE arg,VECT *rp)
       return;
     }
 #endif
-    for ( i = 0, tn = BDY(list), vb = BDY(vect); tn; i++, tn = NEXT(tn) )
+    for ( i = 0, tn = BDY(list), vb = BDY(vect); tn && i<len; i++, tn = NEXT(tn) )
       vb[i] = (pointer)BDY(tn);
   }
   *rp = vect;
