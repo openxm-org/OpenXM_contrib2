@@ -1925,7 +1925,7 @@ fi
 $as_echo "$MKDIR_P" >&6; }
 
 
-GC_CONFIGURE_ARGS="--prefix=${prefix} --disable-threads --enable-large-config"
+GC_CONFIGURE_ARGS="--prefix=${prefix} --disable-threads --enable-large-config --enable-static"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi

@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir-gc/configure.ac,v 1.1 2020/01/08 16:02:00 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir-gc/configure.ac,v 1.2 2020/01/09 12:56:05 ohara Exp $
 
 AC_INIT(asir-gc,1.0)
 AC_CONFIG_SRCDIR([LICENSE])
@@ -8,7 +8,7 @@ AC_CANONICAL_HOST
 AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
-GC_CONFIGURE_ARGS="--prefix=${prefix} --disable-threads --enable-large-config"
+GC_CONFIGURE_ARGS="--prefix=${prefix} --disable-threads --enable-large-config --enable-static"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
