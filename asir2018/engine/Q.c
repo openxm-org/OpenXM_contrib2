@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.19 2020/10/06 06:31:19 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.20 2020/12/04 08:09:33 noro Exp $ */
 #include "ca.h"
 #include "gmp.h"
 #include "base.h"
@@ -97,8 +97,11 @@ void dnq(Q q,Z *r)
 int sgnq(Q q)
 {
   if ( !q ) return 0;
-  else if ( q->z ) return mpz_sgn(BDY((Z)q));
-  else return mpz_sgn(mpq_numref(BDY(q)));
+  else if ( q->z ) {
+   int sgn;
+   sgn = mpz_sgn(BDY((Z)q));
+   return sgn;
+  } else return mpz_sgn(mpq_numref(BDY(q)));
 }
 
 Q mpqtozq(mpq_t a)
@@ -793,10 +796,10 @@ void lgp(P p,Z *g,Z *l)
 
   if ( NUM(p) ) {
     if ( ((Q)p)->z ) {
-      MPZTOZ(BDY((Z)p),*g);
+      absz((Z)p,g);
       *l = ONE;
     } else {
-      MPZTOZ(mpq_numref(BDY((Q)p)),*g);
+      MPZTOZ(mpq_numref(BDY((Q)p)),g1); absz(g1,g);
       MPZTOZ(mpq_denref(BDY((Q)p)),*l);
     }
   } else {
