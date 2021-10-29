@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.52 2021/03/09 08:48:50 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.53 2021/03/12 01:18:33 noro Exp $ */
 
 #include "nd.h"
 
@@ -5629,7 +5629,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
           tl3 = nd_alltracelist; nd_alltracelist = 0; 
         } else tl3 = 0;
             /* gbcheck : cand is a GB of Id(cand) ? */
-            if ( nd_vc || nd_gentrace || nd_gensyz )
+            if ( nd_vc || nd_gentrace || nd_gensyz || do_weyl )
               ret = nd_gb(0,0,1,nd_gensyz?1:0,0)!=0;
             else
               ret = nd_f4(0,1,0)!=0;
