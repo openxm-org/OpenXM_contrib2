@@ -385,8 +385,8 @@ extern	int Through;
 #elif defined(TIOCSETN)
 #define ttystruct sgttyb
 #endif
-struct	ttystruct master_ttymode;		/* master tty mode */
-struct	ttystruct slave_ttymode;		/* slave tty mode */
+extern struct	ttystruct master_ttymode;		/* master tty mode */
+extern struct	ttystruct slave_ttymode;		/* slave tty mode */
 extern	int master, slave;
 extern	char slave_tty[];
 
