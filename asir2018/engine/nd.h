@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.10 2020/07/03 03:37:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.h,v 1.11 2020/10/26 02:41:05 noro Exp $ */
 #include "ca.h"
 #include "parse.h"
 #include "ox.h"
@@ -30,7 +30,7 @@ typedef struct oPGeoBucket {
 
 typedef struct oSIG {
   int pos;
-  DL dl;
+  DL dl,dl2;
 } *SIG;
 
 /* distributed polynomial; linked list rep. */
@@ -164,6 +164,7 @@ extern int *current_module_weight_vector;
 #define CP(x) ((x)->c.p)
 #define CA(x) ((x)->c.a)
 #define DL(x) ((x)->dl)
+#define DL2(x) ((x)->dl2)
 #define SG(x) ((x)->sugar)
 #define LEN(x) ((x)->len)
 #define LCM(x) ((x)->lcm)
@@ -210,7 +211,7 @@ NV(d)=(n); LEN(d)=(len); BDY(d)=(m)
 #define NEWNM_ind_pair(p)\
 ((p)=(NM_ind_pair)MALLOC(sizeof(struct oNM_ind_pair)))
 #define NEWSIG(r) \
-((r)=(SIG)MALLOC(sizeof(struct oSIG)),NEWDL((r)->dl,nd_nvar))
+((r)=(SIG)MALLOC(sizeof(struct oSIG)),NEWDL((r)->dl,nd_nvar),NEWDL((r)->dl2,nd_nvar))
 
 /* allocate and link a new object */
 #define NEXTRHist(r,c) \

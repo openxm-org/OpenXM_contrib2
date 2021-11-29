@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.53 2021/03/12 01:18:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.54 2021/10/29 20:50:02 noro Exp $ */
 
 #include "nd.h"
 
@@ -1301,6 +1301,7 @@ INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
       _ndltodl(tmp,DL(quo));
       _addtodl(nd_nvar,DL(nd_psh[i]->sig),DL(quo));
       quo->pos = nd_psh[i]->sig->pos;
+      _adddl(nd_nvar,DL(quo),nd_sba_hm[quo->pos],DL2(quo));
       ret = comp_sig(sig,quo);
       if ( ret > 0 ) { singular = 0; break; }
       if ( ret == 0 ) { /* fprintf(asir_out,"s"); fflush(asir_out); */ singular = 1; }
@@ -1709,6 +1710,14 @@ int nd_nf_s(int mod,ND d,ND g,NDV *ps,int full,ND *rp)
                 nd_removecont2(d,g);
                 hmag = ((double)p_mag(HCP(g)))*nd_scale;
             }
+            if ( nd_gentrace ) {
+                /* Trace=[div,index,mul,ONE] */
+                STOZ(index,iq);
+                nmtodp(mod,mul,&dmul);
+                node = mknode(4,div,iq,dmul,ONE);
+            }
+            MKLIST(hist,node);
+            MKNODE(node,hist,nd_tracelist); nd_tracelist = node;
         } else if ( index == -1 ) {
           // singular top reducible
           return -1;
@@ -2886,12 +2895,12 @@ ND_pairs find_smallest_lcm(ND_pairs l)
   NODE t;
   ND_pairs r;
   struct oSIG sig1;
-  static DL mul,quo,minlm;
+  static DL mul,quo,quo2,minlm;
   static int nvar = 0;
 
   if ( nvar < nd_nvar ) {
     nvar = nd_nvar; 
-    NEWDL(quo,nvar); NEWDL(mul,nvar);
+    NEWDL(quo,nvar); NEWDL(quo2,nvar); NEWDL(mul,nvar);
     NEWDL(minlm,nvar);
   }
   sig = l->sig;
@@ -2919,6 +2928,8 @@ ND_pairs find_smallest_lcm(ND_pairs l)
       _addtodl(nd_nvar,nd_ps[i]->sig->dl,quo);
       sig1.pos = nd_ps[i]->sig->pos;
       sig1.dl = quo;
+      sig1.dl2 = quo2;
+      _adddl(nd_nvar,sig1.dl,nd_sba_hm[sig1.pos],sig1.dl2);
       if ( comp_sig(sig,&sig1) > 0 ) {
 //        printf("X");
         NEWND_pairs(r);
@@ -2977,16 +2988,21 @@ SIG trivial_sig(int i,int j)
 
   if ( nvar != nd_nvar ) {
     nvar = nd_nvar; NEWDL(lcm,nvar); NEWDL(sigi.dl,nvar); NEWDL(sigj.dl,nvar);
+    NEWDL(sigi.dl2,nvar); NEWDL(sigj.dl2,nvar);
   }
   if ( nd_sba_inputisgb != 0 ) {
     lcm_of_DL(nd_nvar,nd_sba_hm[i],nd_sba_hm[j],lcm);
     sigi.pos = i; _subdl(nd_nvar,lcm,nd_sba_hm[i],sigi.dl);
+    _copydl(nd_nvar,lcm,sigi.dl2);
     sigj.pos = j; _subdl(nd_nvar,lcm,nd_sba_hm[j],sigj.dl);
+    _copydl(nd_nvar,lcm,sigj.dl2);
     if ( comp_sig(&sigi,&sigj) > 0 ) sig = dup_sig(&sigi);
     else sig = dup_sig(&sigj);
   } else {
     sigi.pos = i; _copydl(nd_nvar,nd_sba_hm[j],sigi.dl);
+    _adddl(nd_nvar,sigi.dl,nd_sba_hm[i],sigi.dl2);
     sigj.pos = j; _copydl(nd_nvar,nd_sba_hm[i],sigj.dl);
+    _adddl(nd_nvar,sigj.dl,nd_sba_hm[j],sigj.dl2);
     if ( comp_sig(&sigi,&sigj) > 0 ) sig = dup_sig(&sigi);
     else sig = dup_sig(&sigj);
   }
@@ -3116,7 +3132,7 @@ get_eg(&eg2); add_eg(&eg_sp,&eg1,&eg2);
     }
 get_eg(&eg1);
 #if USE_GEOBUCKET
-    stat = m?nd_nf_pbucket_s(m,h,nd_ps,!nd_top&&!Top,&nf):nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
+    stat = (m&&!nd_gentrace)?nd_nf_pbucket_s(m,h,nd_ps,!nd_top&&!Top,&nf):nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #else
     stat = nd_nf_s(m,0,h,nd_ps,!nd_top&&!Top,&nf);
 #endif
@@ -3144,24 +3160,24 @@ get_eg(&eg2);
       }
       add_eg(&eg_nf,&eg1,&eg2);
       hc = HCU(nf);
-      get_eg(&eg1);
-      nd_removecont(m,nf);
-      get_eg(&eg2); add_eg(&eg_removecont,&eg1,&eg2);
-      nfv = ndtondv(m,nf); nd_free(nf);
-      nh = ndv_newps(m,nfv,0);
- 
-      get_eg(&eg1);
-      dlen += update_pairs_array_s(d,nh,syzlist);
-      get_eg(&eg2); add_eg(&eg_updatepairs,&eg1,&eg2);
-      nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
-      if ( nd_hpdata ) {
-        get_eg(&eg1);
-        update_hpdata(&current_hpdata,nh,0);
-        get_eg(&eg2); add_eg(&eg_hpdata,&eg1,&eg2);
-        if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
-          if ( DP_Print ) { printf("\nWe found a gb.\n"); }
-            break;
-        }
+       get_eg(&eg1);
+       nd_removecont(m,nf);
+       get_eg(&eg2); add_eg(&eg_removecont,&eg1,&eg2);
+       nfv = ndtondv(m,nf); nd_free(nf);
+       nh = ndv_newps(m,nfv,0);
+  
+       get_eg(&eg1);
+       dlen += update_pairs_array_s(d,nh,syzlist);
+       get_eg(&eg2); add_eg(&eg_updatepairs,&eg1,&eg2);
+       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
+       if ( nd_hpdata ) {
+         get_eg(&eg1);
+         update_hpdata(&current_hpdata,nh,0);
+         get_eg(&eg2); add_eg(&eg_hpdata,&eg1,&eg2);
+         if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
+           if ( DP_Print ) { printf("\nWe found a gb.\n"); }
+             break;
+         }
       }
    } else {
       d[ind] = d[ind]->next; dlen--;
@@ -3919,7 +3935,9 @@ int comp_sig_monomial(int n,DL d1,DL d2)
   }
   if ( !nd_sba_modord )
     return (*cmpdl)(n,d1,d2);
-  else {
+  else if ( !nd_sba_modord->weight && !nd_sba_modord->oldv ) {
+    return (*nd_sba_modord->cmpdl)(n,d1,d2);
+  } else {
     weight = nd_sba_modord->weight;
     oldv = nd_sba_modord->oldv;
     if ( oldv ) {
@@ -3945,7 +3963,7 @@ int comp_sig(SIG s1,SIG s2)
   if ( nd_sba_pot ) {
     if ( s1->pos > s2->pos ) return 1;
     else if ( s1->pos < s2->pos ) return -1;
-    else return comp_sig_monomial(nd_nvar,s1->dl,s2->dl);
+    else return comp_sig_monomial(nd_nvar,DL(s1),DL(s2));
   } else {
     static DL m1,m2;
     static int nvar = 0;
@@ -3954,12 +3972,10 @@ int comp_sig(SIG s1,SIG s2)
     if ( nvar != nd_nvar ) {
       nvar = nd_nvar; NEWDL(m1,nvar); NEWDL(m2,nvar);
     }
-    _adddl(nd_nvar,s1->dl,nd_sba_hm[s1->pos],m1);
-    _adddl(nd_nvar,s2->dl,nd_sba_hm[s2->pos],m2);
     if ( !nd_sba_modord )
-      ret = (*cmpdl)(nd_nvar,m1,m2);
+      ret = (*cmpdl)(nd_nvar,DL2(s1),DL2(s2));
     else
-      ret = comp_sig_monomial(nd_nvar,m1,m2);
+      ret = comp_sig_monomial(nd_nvar,DL2(s1),DL2(s2));
     if ( ret != 0 ) return ret;
     else if ( s1->pos > s2->pos ) return 1;
     else if ( s1->pos < s2->pos ) return -1;
@@ -3996,6 +4012,7 @@ int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
   _ndltodl(lcm,DL(sig1));
   _addtodl(nd_nvar,DL(p1->sig),DL(sig1));
   sig1->pos = p1->sig->pos;
+  _adddl(nd_nvar,DL(sig1),nd_sba_hm[sig1->pos],DL2(sig1));
 
   // DL(sig2) <- sp->lcm
   // DL(sig2) -= DL(p2)
@@ -4004,6 +4021,7 @@ int _create_spair_s(int i1,int i2,ND_pairs sp,SIG sig1,SIG sig2)
   _ndltodl(lcm,DL(sig2));
   _addtodl(nd_nvar,DL(p2->sig),DL(sig2));
   sig2->pos = p2->sig->pos;
+  _adddl(nd_nvar,DL(sig2),nd_sba_hm[sig2->pos],DL2(sig2));
 
   ret = comp_sig(sig1,sig2);
   if ( ret == 0 ) return 0;
@@ -4025,6 +4043,7 @@ SIG dup_sig(SIG sig)
   else {
     NEWSIG(r);
     _copydl(nd_nvar,DL(sig),DL(r));
+    _copydl(nd_nvar,DL2(sig),DL2(r));
     r->pos = sig->pos;
     return r;
   }
@@ -4708,6 +4727,7 @@ int ndv_setup(int mod,int trace,NODE f,int dont_sort,int dont_removecont,int sba
         ndv_lm_modord(nd_ps[i],nd_sba_hm[i]);
       else
         _ndltodl(DL(nd_psh[i]),nd_sba_hm[i]);
+      _adddl(nd_nvar,DL(sig),nd_sba_hm[i],DL2(sig));
     }
     nd_sba_pos = (NODE *)MALLOC(nd_psn*sizeof(NODE));
     for ( i = 0; i < nd_psn; i++ ) {
@@ -5073,7 +5093,7 @@ NODE nd_sba_f4(int m,int **indp);
 void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,LIST *rp)
 {
   VL tv,fv,vv,vc,av;
-  NODE fd,fd0,r,r0,t,x,s,xx,nd,syz;
+  NODE fd,fd0,r,r0,t,x,s,xx,nd,nd1,syz;
   int e,max,nvar,i;
   NDV b;
   int ishomo,nalg,wmax,len;
@@ -5086,6 +5106,8 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   EPOS oepos;
   int obpe,oadv,ompos,cbpe;
   struct oEGT eg0,eg1,egconv,egintred;
+  LIST l1,redind;
+  Z z;
 
   nd_module = 0;
   nd_demand = 0;
@@ -5158,6 +5180,9 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   }
 
   ndv_setup(m,0,fd0,nd_sba_dontsort,0,1);
+  if ( nd_gentrace ) {
+    MKLIST(l1,nd_tracelist); MKNODE(nd_alltracelist,l1,0);
+  }
   x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm,&syz);
   if ( !x ) {
     *rp = 0; return;
@@ -5173,6 +5198,10 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   nd_demand = 0;
   get_eg(&eg0);
   x = ndv_reducebase(x,perm);
+  for ( nd = 0, i = length(x)-1; i >= 0; i-- ) {
+    STOZ(perm[i],z); MKNODE(nd1,z,nd); nd = nd1;
+  }
+  MKLIST(redind,nd);
   x = ndv_reduceall(m,x);
   get_eg(&eg1); init_eg(&egintred); add_eg(&egintred,&eg0,&eg1);
   nd_setup_parameters(nd_nvar,0);
@@ -5185,11 +5214,17 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   if ( r0 ) NEXT(r) = 0;
   if ( nd_sba_syz ) {
     LIST gb,hsyz;
-    NODE nd;
 
     MKLIST(gb,r0);
     MKLIST(hsyz,syz);
     nd = mknode(2,gb,hsyz);
+    MKLIST(*rp,nd);
+  } else if ( nd_gentrace ) {
+    LIST gb,trace;
+
+    MKLIST(trace,nd_alltracelist);
+    MKLIST(gb,r0);
+    nd = mknode(3,gb,redind,trace);
     MKLIST(*rp,nd);
   } else
     MKLIST(*rp,r0);
@@ -11912,6 +11947,7 @@ INLINE int ndl_find_reducer_minsig(UINT *dg)
       _ndltodl(tmp,DL(quo));
       _addtodl(nd_nvar,DL(nd_psh[i]->sig),DL(quo));
       quo->pos = nd_psh[i]->sig->pos;
+      _adddl(nd_nvar,DL(quo),nd_sba_hm[quo->pos],DL2(quo));
       if ( imin < 0 || comp_sig(quomin,quo) > 0 ) {
         t = quo; quo = quomin; quomin = t;
         imin = i;
@@ -11962,6 +11998,7 @@ int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,UINT **s0vect,NODE *r)
       _ndltodl(DL(mul),DL(sig));
       _addtodl(nd_nvar,DL(nd_psh[index]->sig),DL(sig));
       sig->pos = nd_psh[index]->sig->pos;
+      _adddl(nd_nvar,DL(sig),nd_sba_hm[sig->pos],DL2(sig));
       MKNM_ind_pair(pair,mul,index,sugar,sig);
       red = ndv_mul_nm_symbolic(mul,ps[index]);
       add_pbucket_symbolic(bucket,nd_remove_head(red));
