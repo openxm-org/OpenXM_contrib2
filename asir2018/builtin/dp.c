@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.29 2021/02/28 02:33:15 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.30 2021/03/10 06:36:20 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -521,6 +521,69 @@ void mhp_rec(VECT b,VECT x,P t,P *r)
 // get_eg(&eg1); add_eg(&eg_comp,&eg0,&eg1);
 }
 
+P mhp_rec_weight(VECT b,VECT x,P t,int *w)
+{
+  int n,i,j,k,l,i2,nv,len,td;
+  int *d;
+  Z wj;
+  P twj,tmp,tmp2,ret,qadd,qcolon;
+  DL *p,*q;
+  DL pi,xj,d1;
+  VECT c;
+  
+  i_all++;
+  n = b->len; nv = x->len; p = (DL *)BDY(b);
+  if ( !n ) {
+    // I=<0> => HP(t)=1/(1-t^w1)...(1-t^wn) => Q(t)=1
+    return (P)ONE;
+  }
+  if ( n == 1 && p[0]->td == 0 ) {
+    // I=<1> => HP(t)=0 => Q(t)=0
+    return 0;
+  }
+  for ( i = 0; i < n; i++ ) {
+    d = p[i]->d;
+    for ( td = 0, j = 0; j < nv; j++ ) td += d[j];
+    if (td > 1 ) break;
+  }
+  if ( i == n ) {
+    // I=<xi1,...,xin> => Q(t)=(1-t^wi1)...(1-t^win)
+    for ( ret = (P)ONE, i = 0; i < n; i++ ) {
+      d = p[i]->d;
+      for ( j = 0; j < nv; j++ ) if ( d[j] ) break;
+      STOZ(w[j],wj); pwrp(CO,t,wj,&tmp); 
+      subp(CO,(P)ONE,tmp,&tmp2); mulp(CO,ret,tmp2,&tmp); ret = tmp;
+    }
+    return ret;
+  }
+  for ( j = 0, d = p[i]->d; j < nv; j++ )
+    if ( d[j] ) break;
+  xj = BDY(x)[j];
+  MKVECT(c,n); q = (DL *)BDY(c);
+  for ( i = k = l = 0; i < n; i++ )
+    if ( p[i]->d[j] ) {
+      pi = p[i];
+      NEWDL(d1,nv); d1->td =pi->td - 1;
+      memcpy(d1->d,pi->d,nv*sizeof(int));
+      d1->d[j]--;
+      p[k++] = d1;
+    } else
+      q[l++] = p[i];
+  for ( i = k, i2 = 0; i2 < l; i++, i2++ ) 
+    p[i] = q[i2];
+  /* b=(b[0]/xj,...,b[k-1]/xj,b[k],...b[n-1]) where
+    b[0],...,b[k-1] are divisible by k */
+  make_reduced2(b,k,nv);
+  qcolon = mhp_rec_weight(b,x,t,w);
+  /* c = (b[0],...,b[l-1],xj) */
+  q[l] = xj; c->len = l+1;
+  qadd = mhp_rec_weight(c,x,t,w);
+  // Q(t)=Qadd+t^wj*Qcolon
+  STOZ(w[j],wj); pwrp(CO,t,wj,&twj); 
+  mulp(CO,twj,qcolon,&tmp); addp(CO,qadd,tmp,&ret);  
+  return ret;
+}
+
 /* (n+a)Cb as a polynomial of n; return (n+a)*...*(n+a-b+1) */
 
 P binpoly(P n,int a,int b)
@@ -636,10 +699,10 @@ P mhp_ctop(P *r,P *plist,int n)
   return hp;
 }
 
-LIST dp_monomial_hilbert_poincare(VECT b,VECT x,P *plist)
+LIST dp_monomial_hilbert_poincare(VECT b,VECT x)
 {
   int n;
-  P *r;
+  P *r,*plist;
   P tv;
   P hp,hpoly;
   VECT hfhead;
@@ -649,9 +712,9 @@ LIST dp_monomial_hilbert_poincare(VECT b,VECT x,P *plist)
   LIST list;
 
   n = x->len;
+  plist = mhp_prep(n,&tv);
   r = (P *)CALLOC(n+1,sizeof(P));
   make_reduced(b,n);
-  makevar("t",&tv);
   mhp_rec(b,x,tv,r);
   hp = mhp_ctop(r,plist,n);
   mhp_to_hf(CO,hp,n,plist,&hfhead,&hpoly);
@@ -662,27 +725,45 @@ LIST dp_monomial_hilbert_poincare(VECT b,VECT x,P *plist)
   return list;
 }
 
+LIST dp_monomial_hilbert_poincare_weight(VECT b,VECT x,int *w)
+{
+  int n,i;
+  NODE nd;
+  LIST list;
+  P tv,ret;
+
+  n = x->len;
+  make_reduced(b,n);
+  makevar("t",&tv);
+  ret = mhp_rec_weight(b,x,tv,w);
+  nd = mknode(1,ret);
+  MKLIST(list,nd);
+  return list;
+}
+
 void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
 {
   LIST g,v;
   VL vl;
-  int m,n,i;
+  int m,n,i,wlen;
   VECT b,x,hfhead,prep;
   NODE t,nd;
   Z z,den;
-  P hp,tv,mt,t1,u,w,hpoly;
+  P hp,tv,mt,t1,u,hpoly;
   DP a;
   DL *p;
-  P *plist;
-  Obj val,ord;
+  Obj val,ord,weight;
+  int *w;
   struct order_spec *current_spec=0,*spec;
   
+  weight = 0;
   if ( current_option ) {
     if ( peek_option(current_option,"ord",&ord) ) {
       current_spec = dp_current_spec;
       create_order_spec(0,ord,&spec);
       initd(spec);
     }
+    peek_option(current_option,"weight",&weight);
   }
   i_simple = i_all = 0;
   g = (LIST)ARG0(arg); v = (LIST)ARG1(arg);
@@ -699,8 +780,22 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp)
   for ( t = BDY(v), i = 0; t; t = NEXT(t), i++ ) {
     ptod(CO,vl,(P)BDY(t),&a); p[i] = BDY(a)->dl;
   }
-  plist = mhp_prep(n,&tv);
-  *rp = dp_monomial_hilbert_poincare(b,x,plist);
+  if ( weight ) {
+    wlen = length(BDY((LIST)weight));
+    if ( n != wlen )
+      error("dp_monomial_hilbert_poincare: inconsistent weight length");
+    w = (int *)MALLOC(n*sizeof(int));
+    for ( i = 0, nd = BDY((LIST)weight); i < n; i++, nd = NEXT(nd) ) 
+      w[i] = ZTOS((Z)BDY(nd));
+  } else if ( current_dl_weight_vector )
+    w = current_dl_weight_vector;
+  else
+    w = 0;
+  if ( w ) {
+    *rp = dp_monomial_hilbert_poincare_weight(b,x,w);
+  } else {
+    *rp = dp_monomial_hilbert_poincare(b,x);
+  }
   if ( current_spec )
     initd(current_spec);
 }
@@ -746,7 +841,6 @@ void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp)
   g = BDY((LIST)ARG0(arg)); new = BDY((DP)ARG1(arg))->dl;
   data = BDY((LIST)ARG2(arg));
   hn = (P)ARG0(data); n = ZTOS((Z)ARG1(data)); 
-  plist = (P *)BDY((VECT)ARG4(data));
   len = length(g); MKVECT(b,len); p = (DL *)BDY(b);
   for ( t = g, i = 0; t; t = NEXT(t), i++ )
     p[i] = monomial_colon(BDY((DP)BDY(t))->dl,new,n);
@@ -755,11 +849,12 @@ void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp)
     NEWDL(dl,n); dl->d[i] = 1; dl->td = 1; BDY(x)[i] = dl;
   }
   // compute HP(I:new)
-  list1 = dp_monomial_hilbert_poincare(b,x,plist);
+  list1 = dp_monomial_hilbert_poincare(b,x);
   data1 = BDY((LIST)list1);
   hn1 = (P)ARG0(data1);
   // HP(I+<new>) = H(I)-t^d*H(I:new), d=tdeg(new)
-  makevar("t",&tv); UTOZ(new->td,dz);
+  plist = mhp_prep(n,&tv);
+  UTOZ(new->td,dz);
   pwrp(CO,tv,dz,&td);
   mulp(CO,hn1,td,&s);
   subp(CO,hn,s,&newhn);

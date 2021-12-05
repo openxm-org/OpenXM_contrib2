@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.54 2021/10/29 20:50:02 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.55 2021/11/29 09:19:33 noro Exp $ */
 
 #include "nd.h"
 
@@ -2479,79 +2479,77 @@ LIST compute_splist()
 }
 
 typedef struct oHPDATA {
-  P hn; // HP(t)=hn(t)/(1-t)^n
-  int len;
-  P *head; // hp(i)=head[i] (i=0,...,len-1)
-  P hp; // dim Hm(i)=hp(i) (i >= len)
+  int n;
+  P hn; // HP(t)=hn(t)/((1-t^w0)*...*(1-t^w(n-1)))
   VECT x; // BDY(x)[i] = <<0,...,1,...,0>>
-  P *plist; // plist[i]=(1-t)^i
+  int *w;
 } *HPDATA;
 
 void make_reduced(VECT b,int nv);
 void mhp_rec(VECT b,VECT x,P t,P *r);
 P mhp_ctop(P *r,P *plist,int n);
-void mhp_to_hf(VL vl,P hp,int n,P *plist,VECT *head,P *hf);
 DL monomial_colon(DL a,DL b,int n);
-LIST dp_monomial_hilbert_poincare(VECT b,VECT x,P *plist);
-
-int hpvalue(HPDATA data,int d)
-{
-  P *head;
-  int len;
-  P hp,val;
-  Z dz;
-
-  head = data->head;
-  len = data->len;
-  hp = data->hp;
-  if ( d < len )
-    return ZTOS((Z)head[d]);
-  else {
-    STOZ(d,dz);
-    substp(CO,hp,hp->v,(P)dz,&val);
-    return ZTOS((Z)val);
-  }
-}
+LIST dp_monomial_hilbert_poincare(VECT b,VECT x);
+LIST dp_monomial_hilbert_poincare_weight(VECT b,VECT x,int *w);
 
 void setup_hpdata(HPDATA final,HPDATA current)
 {
-  int n,i;
-  P *r;
+  int n,i,wlen;
   DL *p;
-  P tv;
-  VECT b,x,head;
+  VECT b,x;
   DL dl;
+  LIST weight;
+  LIST ret;
+  int *w;
+  NODE nd;
 
-  n = nd_nvar;
-  final->hn = (P)ARG0(nd_hpdata);
-  head = (VECT)ARG2(nd_hpdata);
-  final->len = head->len;
-  final->head = (P *)BDY(head);
-  final->hp = (P)ARG3(nd_hpdata);
-  final->plist = (P *)BDY((VECT)ARG4(nd_hpdata));
+  final->n = n = nd_nvar;
+  final->hn = (P)BDY(nd_hpdata);
+  if ( NEXT(nd_hpdata) != 0 && (weight=(LIST)BDY(NEXT(nd_hpdata))) != 0 ) {
+    wlen = length(BDY(weight));
+    if ( n != wlen )
+      error("setup_hpdata : inconsistent weight length");
+    w = (int *)MALLOC(n*sizeof(int));
+    for ( i = 0, nd = BDY((LIST)weight); i < n; i++, nd = NEXT(nd) ) 
+      w[i] = ZTOS((Z)BDY(nd));
+  } else
+    w = 0;
   MKVECT(x,n);
   for ( i = 0; i < n; i++ ) {
     NEWDL(dl,n); dl->d[i] = 1; dl->td = 1; BDY(x)[i] = dl;
   }
   final->x = x;
+  final->w = w;
 
-  r = (P *)CALLOC(n+1,sizeof(P));
   MKVECT(b,nd_psn); p = (DL *)BDY(b);
   for ( i = 0; i < nd_psn; i++ ) {
     p[i] = ndltodl(n,nd_psh[i]->dl);
   }
-  make_reduced(b,n);
-  makevar("t",&tv);
-  mhp_rec(b,x,tv,r);
-  current->hn = mhp_ctop(r,final->plist,n);
-  mhp_to_hf(CO,current->hn,n,final->plist,&head,&current->hp);
-  current->head = (P *)BDY(head);
-  current->len = head->len;
+  if ( w ) {
+    ret = dp_monomial_hilbert_poincare_weight(b,x,w);
+  } else
+    ret = dp_monomial_hilbert_poincare(b,x);
+  current->n = n;
+  current->hn = (P)BDY(BDY(ret));
   current->x = x;
-  current->plist = final->plist;
+  current->w = w;
 }
 
-void update_hpdata(HPDATA current,int nh,int do_hf)
+int comp_hn(P a, P b)
+{
+  P s;
+  DCP dc;
+
+  subp(CO,a,b,&s);
+  if ( !s ) return 99999999; /* XXX */
+  else if ( OID(s) == 1 ) return 0;
+  else {
+    for ( dc = DC(s); NEXT(dc); dc = NEXT(dc) );
+    return (int)ZTOS((Z)dc->d);
+  }
+}
+
+void update_hpdata(HPDATA current,int nh)
 {
   NODE data1,nd,t;
   DL new,dl;
@@ -2569,7 +2567,10 @@ void update_hpdata(HPDATA current,int nh,int do_hf)
     p[i] = monomial_colon(ndltodl(n,nd_psh[i]->dl),new,n);
   }
   // compute HP(I:new)
-  list1 = dp_monomial_hilbert_poincare(b,current->x,current->plist);
+  if ( current->w )
+    list1 = dp_monomial_hilbert_poincare_weight(b,current->x,current->w);
+  else
+    list1 = dp_monomial_hilbert_poincare(b,current->x);
   data1 = BDY((LIST)list1);
   // HP(I+<new>) = H(I)-t^d*H(I:new), d=tdeg(new)
   makevar("t",&tv); UTOZ(new->td,dz);
@@ -2577,12 +2578,6 @@ void update_hpdata(HPDATA current,int nh,int do_hf)
   mulp(CO,(P)ARG0(data1),td,&s);
   subp(CO,current->hn,s,&hn);
   current->hn = hn;
-  if ( do_hf ) {
-    mhp_to_hf(CO,hn,n,current->plist,&head,&hpoly);
-    current->head = (P *)BDY(head);
-    current->len = head->len;
-    current->hp = hpoly;
-  }
 }
 
 ND_pairs nd_remove_same_sugar( ND_pairs d, int sugar)
@@ -2651,18 +2646,6 @@ again:
       }
       sugar = SG(l);
       if ( DP_Print ) fprintf(asir_out,"%d",sugar);
-      if ( nd_hpdata ) {
-        if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) )
-          break;
-        else {
-          final_hpvalue = hpvalue(&final_hpdata,sugar);
-          if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-//            if ( DP_Print ) fprintf(asir_out,"done.\n",sugar);
-            d = nd_remove_same_sugar(d,sugar);
-            continue;
-          }
-        }
-      }
     }
     stat = nd_sp(m,0,l,&h);
     if ( !stat ) {
@@ -2721,10 +2704,17 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       g = update_base(g,nh);
       FREENDP(l);
       if ( nd_hpdata ) {
-        update_hpdata(&current_hpdata,nh,1);
-        if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-//          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+        int dg;
+
+        update_hpdata(&current_hpdata,nh); 
+        dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
+        if ( dg > sugar ) {
+          printexpr(CO,(Obj)current_hpdata.hn); printf("\n");
+        }
+        while ( d && dg > sugar ) {
+          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
           d = nd_remove_same_sugar(d,sugar);
+          sugar++;
         }
       }
     } else {
@@ -3064,7 +3054,7 @@ init_eg(&eg_remove);
   Nnominimal = 0;
   Nredundant = 0;
   ngen = nd_psn;
-  if ( !do_weyl ) {
+  if ( !do_weyl || nd_sba_inputisgb ) {
     for ( i = 0; i < nd_psn; i++ )
       for ( j = i+1; j < nd_psn; j++ ) {
         sig = trivial_sig(i,j);
@@ -3172,7 +3162,7 @@ get_eg(&eg2);
        nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
        if ( nd_hpdata ) {
          get_eg(&eg1);
-         update_hpdata(&current_hpdata,nh,0);
+         update_hpdata(&current_hpdata,nh);
          get_eg(&eg2); add_eg(&eg_hpdata,&eg1,&eg2);
          if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
            if ( DP_Print ) { printf("\nWe found a gb.\n"); }
@@ -3441,18 +3431,6 @@ again:
 #endif
       sugar = SG(l);
       if ( DP_Print ) fprintf(asir_out,"%d",sugar);
-      if ( nd_hpdata ) {
-        if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) )
-          break;
-        else {
-          final_hpvalue = hpvalue(&final_hpdata,sugar);
-          if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-//            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
-            d = nd_remove_same_sugar(d,sugar);
-            continue;
-          }
-        }
-      }
     }
     stat = nd_sp(m,0,l,&h);
     if ( !stat ) {
@@ -3527,10 +3505,17 @@ again:
         d = update_pairs(d,g,nh,0);
         g = update_base(g,nh);
         if ( nd_hpdata ) {
-          update_hpdata(&current_hpdata,nh,1);
-          if ( final_hpvalue == hpvalue(&current_hpdata,sugar) ) {
-//            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
+          int dg;
+
+          update_hpdata(&current_hpdata,nh);
+          dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
+          if ( dg > sugar ) {
+            printexpr(CO,(Obj)current_hpdata.hn); printf("\n");
+          }
+          while ( d && dg > sugar ) {
+            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
             d = nd_remove_same_sugar(d,sugar);
+            sugar++;
           }
         }
       } else {
