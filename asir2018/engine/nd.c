@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.56 2021/12/05 22:41:04 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.57 2021/12/07 08:48:34 noro Exp $ */
 
 #include "nd.h"
 
@@ -2718,8 +2718,8 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
         }
         sugar0 = sugar;
         while ( d && dg > sugar0 ) {
-          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
-          d = nd_remove_same_sugar(d,sugar);
+          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar0);
+          d = nd_remove_same_sugar(d,sugar0);
           sugar0++;
         }
       }
@@ -3525,8 +3525,8 @@ again:
           }
           sugar0 = sugar;
           while ( d && dg > sugar0 ) {
-            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
-            d = nd_remove_same_sugar(d,sugar);
+            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar0);
+            d = nd_remove_same_sugar(d,sugar0);
             sugar0++;
           }
         }
