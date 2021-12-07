@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.55 2021/11/29 09:19:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.56 2021/12/05 22:41:04 noro Exp $ */
 
 #include "nd.h"
 
@@ -2541,7 +2541,7 @@ int comp_hn(P a, P b)
   DCP dc;
 
   subp(CO,a,b,&s);
-  if ( !s ) return 99999999; /* XXX */
+  if ( !s ) return -1; 
   else if ( OID(s) == 1 ) return 0;
   else {
     for ( dc = DC(s); NEXT(dc); dc = NEXT(dc) );
@@ -2704,17 +2704,23 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       g = update_base(g,nh);
       FREENDP(l);
       if ( nd_hpdata ) {
-        int dg;
+        int dg,sugar0;
 
         update_hpdata(&current_hpdata,nh); 
         dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
-        if ( dg > sugar ) {
-          printexpr(CO,(Obj)current_hpdata.hn); printf("\n");
+        if ( dg < 0 ) {
+           fprintf(asir_out,"We found a gb\n");
+           d = 0;
         }
-        while ( d && dg > sugar ) {
+        if ( dg > sugar ) {
+           // printexpr(CO,(Obj)current_hpdata.hn); 
+           fprintf(asir_out,"\n");
+        }
+        sugar0 = sugar;
+        while ( d && dg > sugar0 ) {
           if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
           d = nd_remove_same_sugar(d,sugar);
-          sugar++;
+          sugar0++;
         }
       }
     } else {
@@ -2726,14 +2732,14 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
         MKNODE(t,list,nd_alltracelist); 
         nd_alltracelist = t; nd_tracelist = 0;
       }
-      if ( DP_Print ) { printf("."); fflush(stdout); }
+      if ( DP_Print ) { fprintf(asir_out,"."); fflush(asir_out); }
         FREENDP(l);
     }
   }
   conv_ilist(nd_demand,0,g,indp);
   if ( !checkonly && DP_Print ) { 
-    printf("\nnd_gb done. Nnd_add=%d,Npairs=%d, Nnfnz=%d,Nnfz=%d,",Nnd_add,Npairs,Nnfnz,Nnfz);
-    printf("Nremoved=%d\n",NcriB+NcriMF+Ncri2);
+    fprintf(asir_out,"\nnd_gb done. Nnd_add=%d,Npairs=%d, Nnfnz=%d,Nnfz=%d,",Nnd_add,Npairs,Nnfnz,Nnfz);
+    fprintf(asir_out,"Nremoved=%d\n",NcriB+NcriMF+Ncri2);
     fflush(asir_out);
   }
   if ( DP_Print ) {
@@ -3505,24 +3511,30 @@ again:
         d = update_pairs(d,g,nh,0);
         g = update_base(g,nh);
         if ( nd_hpdata ) {
-          int dg;
+          int dg,sugar0;
 
           update_hpdata(&current_hpdata,nh);
           dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
-          if ( dg > sugar ) {
-            printexpr(CO,(Obj)current_hpdata.hn); printf("\n");
+          if ( dg < 0 ) {
+             fprintf(asir_out,"We found a gb\n");
+             d = 0;
           }
-          while ( d && dg > sugar ) {
+          if ( dg > sugar ) {
+            // printexpr(CO,(Obj)current_hpdata.hn); 
+            fprintf(asir_out,"\n");
+          }
+          sugar0 = sugar;
+          while ( d && dg > sugar0 ) {
             if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar);
             d = nd_remove_same_sugar(d,sugar);
-            sugar++;
+            sugar0++;
           }
         }
       } else {
-        if ( DP_Print ) { printf("*"); fflush(stdout); }
+        if ( DP_Print ) { fprintf(asir_out,"*"); fflush(asir_out); }
       }
     } else {
-      if ( DP_Print ) { printf("."); fflush(stdout); }
+      if ( DP_Print ) { fprintf(asir_out,"."); fflush(asir_out); }
     }
     FREENDP(l);
   }
@@ -3534,7 +3546,7 @@ again:
     }
   }
   conv_ilist(nd_demand,1,g,indp);
-  if ( DP_Print ) { printf("\nnd_gb_trace done.\n"); fflush(stdout); }
+  if ( DP_Print ) { fprintf(asir_out,"\nnd_gb_trace done.\n"); fflush(asir_out); }
   return g;
 }
 
