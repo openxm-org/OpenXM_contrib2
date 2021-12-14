@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.57 2021/12/07 08:48:34 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.58 2021/12/07 08:58:08 noro Exp $ */
 
 #include "nd.h"
 
@@ -2505,6 +2505,7 @@ void setup_hpdata(HPDATA final,HPDATA current)
 
   final->n = n = nd_nvar;
   final->hn = (P)BDY(nd_hpdata);
+#if 0
   if ( NEXT(nd_hpdata) != 0 && (weight=(LIST)BDY(NEXT(nd_hpdata))) != 0 ) {
     wlen = length(BDY(weight));
     if ( n != wlen )
@@ -2514,6 +2515,9 @@ void setup_hpdata(HPDATA final,HPDATA current)
       w[i] = ZTOS((Z)BDY(nd));
   } else
     w = 0;
+#else
+  w = current_dl_weight_vector;
+#endif
   MKVECT(x,n);
   for ( i = 0; i < n; i++ ) {
     NEWDL(dl,n); dl->d[i] = 1; dl->td = 1; BDY(x)[i] = dl;
@@ -2712,13 +2716,9 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
            fprintf(asir_out,"We found a gb\n");
            d = 0;
         }
-        if ( dg > sugar ) {
-           // printexpr(CO,(Obj)current_hpdata.hn); 
-           fprintf(asir_out,"\n");
-        }
         sugar0 = sugar;
         while ( d && dg > sugar0 ) {
-          if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar0);
+          if ( DP_Print ) { fprintf(asir_out,"[%d]",sugar0); fflush(asir_out); }
           d = nd_remove_same_sugar(d,sugar0);
           sugar0++;
         }
@@ -3519,13 +3519,9 @@ again:
              fprintf(asir_out,"We found a gb\n");
              d = 0;
           }
-          if ( dg > sugar ) {
-            // printexpr(CO,(Obj)current_hpdata.hn); 
-            fprintf(asir_out,"\n");
-          }
           sugar0 = sugar;
           while ( d && dg > sugar0 ) {
-            if ( DP_Print ) fprintf(asir_out,"sugar=%d done.\n",sugar0);
+            if ( DP_Print ) { fprintf(asir_out,"[%d]",sugar0); fflush(asir_out); }
             d = nd_remove_same_sugar(d,sugar0);
             sugar0++;
           }
