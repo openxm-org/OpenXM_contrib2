@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.58 2021/12/07 08:58:08 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.59 2021/12/14 01:02:40 noro Exp $ */
 
 #include "nd.h"
 
@@ -2738,7 +2738,7 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
   }
   conv_ilist(nd_demand,0,g,indp);
   if ( !checkonly && DP_Print ) { 
-    fprintf(asir_out,"\nnd_gb done. Nnd_add=%d,Npairs=%d, Nnfnz=%d,Nnfz=%d,",Nnd_add,Npairs,Nnfnz,Nnfz);
+    fprintf(asir_out,"\nnd_gb done. Nbase=%d,Nnd_add=%d,Npairs=%d, Nnfnz=%d,Nnfz=%d,",nd_psn,Nnd_add,Npairs,Nnfnz,Nnfz);
     fprintf(asir_out,"Nremoved=%d\n",NcriB+NcriMF+Ncri2);
     fflush(asir_out);
   }
@@ -3193,7 +3193,7 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
  g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
    printf("\ndlen=%d,nd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",dlen,Nnd_add,Nsyz,Nsamesig,Nnominimal);
-   printf("Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",Nnfnz,Nnfz,Nnfs);
+   printf("Nbase=%d,Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",Nnfnz,Nnfz,Nnfs,nd_psn);
    fflush(stdout);
    if ( nd_sba_redundant_check )
    printf("Nredundant=%d\n",Nredundant);
@@ -3542,7 +3542,7 @@ again:
     }
   }
   conv_ilist(nd_demand,1,g,indp);
-  if ( DP_Print ) { fprintf(asir_out,"\nnd_gb_trace done.\n"); fflush(asir_out); }
+  if ( DP_Print ) { fprintf(asir_out,"\nnd_gb_trace done. Nbase=%d\n",nd_psn); fflush(asir_out); }
   return g;
 }
 
