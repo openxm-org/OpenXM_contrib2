@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.59 2021/12/14 01:02:40 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.60 2021/12/17 23:53:13 noro Exp $ */
 
 #include "nd.h"
 
@@ -2588,16 +2588,20 @@ ND_pairs nd_remove_same_sugar( ND_pairs d, int sugar)
 {
   struct oND_pairs root;
   ND_pairs prev,cur;
+  int i;
 
   root.next = d;
   prev = &root; cur = d;
+  i = 0;
   while ( cur ) {
-    if ( SG(cur) == sugar )
+    if ( SG(cur) == sugar ) {
       prev->next = cur->next;
-    else
+      i++;
+    } else
       prev = cur;
     cur = cur->next;
   }
+  if ( DP_Print ) fprintf(asir_out,"[%d]",i);
   return root.next;
 }
 
@@ -2713,12 +2717,12 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
         update_hpdata(&current_hpdata,nh); 
         dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
         if ( dg < 0 ) {
-           fprintf(asir_out,"We found a gb\n");
-           d = 0;
+           int d_len;
+           for ( d_len = 0; d; d = d->next, d_len++);
+           fprintf(asir_out,"[%d] We found a gb\n",d_len);
         }
         sugar0 = sugar;
         while ( d && dg > sugar0 ) {
-          if ( DP_Print ) { fprintf(asir_out,"[%d]",sugar0); fflush(asir_out); }
           d = nd_remove_same_sugar(d,sugar0);
           sugar0++;
         }
@@ -3516,12 +3520,12 @@ again:
           update_hpdata(&current_hpdata,nh);
           dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
           if ( dg < 0 ) {
-             fprintf(asir_out,"We found a gb\n");
-             d = 0;
+             int d_len;
+             for ( d_len = 0; d; d = d->next, d_len++);
+             fprintf(asir_out,"[%d] We found a gb\n",d_len);
           }
           sugar0 = sugar;
           while ( d && dg > sugar0 ) {
-            if ( DP_Print ) { fprintf(asir_out,"[%d]",sugar0); fflush(asir_out); }
             d = nd_remove_same_sugar(d,sugar0);
             sugar0++;
           }
