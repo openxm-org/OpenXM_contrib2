@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.60 2021/12/17 23:53:13 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.61 2021/12/18 04:43:59 noro Exp $ */
 
 #include "nd.h"
 
@@ -3197,7 +3197,7 @@ get_eg(&eg2); add_eg(&eg_remove,&eg1,&eg2);
  g = conv_ilist_s(nd_demand,0,indp);
  if ( DP_Print ) { 
    printf("\ndlen=%d,nd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",dlen,Nnd_add,Nsyz,Nsamesig,Nnominimal);
-   printf("Nbase=%d,Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",Nnfnz,Nnfz,Nnfs,nd_psn);
+   printf("Nbase=%d,Nnfnz=%d,Nnfz=%d,Nnfsingular=%d\n",nd_psn,Nnfnz,Nnfz,Nnfs);
    fflush(stdout);
    if ( nd_sba_redundant_check )
    printf("Nredundant=%d\n",Nredundant);
