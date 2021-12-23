@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.24 2020/10/06 06:31:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.25 2021/01/11 08:37:44 noro Exp $
 */
 #include "ca.h"
 
@@ -210,6 +210,7 @@ void initd(struct order_spec *spec)
 
 int dpm_ordtype;
 
+#if 0
 void ptod(VL vl,VL dvl,P p,DP *pr)
 {
   int n,i,j,k;
@@ -267,6 +268,60 @@ void ptod(VL vl,VL dvl,P p,DP *pr)
     dp_fcoeffs = N_GFS;
 #endif
 }
+#else
+void ptod(VL vl,VL dvl,P p,DP *pr)
+{
+  int n,i,j,k;
+  VL tvl;
+  V v;
+  DL d;
+  MP m;
+  DCP dc;
+  DP *y;
+  DP r,s,t,u;
+  P x,c;
+
+  if ( !p )
+    *pr = 0;
+  else if ( OID(p) > O_P )
+    error("ptod : only polynomials can be converted.");
+  else {
+    for ( n = 0, tvl = dvl; tvl; tvl = NEXT(tvl), n++ );
+    if ( NUM(p) ) {
+      NEWDL(d,n);
+      NEWMP(m); m->dl = d; C(m) = (Obj)p; NEXT(m) = 0; MKDP(n,m,*pr); (*pr)->sugar = 0;
+    } else {
+      for ( i = 0, tvl = dvl, v = VR(p); tvl && tvl->v != v; tvl = NEXT(tvl), i++ );
+      for ( dc = DC(p), k = 0; dc; dc = NEXT(dc), k++ );
+      y = (DP *)ALLOCA(k*sizeof(DP));
+      if ( !tvl ) {
+        MKV(v,x);
+        for ( dc = DC(p), j = 0; dc; dc = NEXT(dc), j++ ) {
+          ptod(vl,dvl,COEF(dc),&t); pwrp(vl,x,DEG(dc),&c);
+          muldc(vl,t,(Obj)c,&y[j]);
+        }
+      } else {
+        for ( dc = DC(p), j = 0; dc; dc = NEXT(dc), j++ ) {
+          ptod(vl,dvl,COEF(dc),&t);
+          NEWDL(d,n); 
+          d->d[i] = ZTOS(DEG(dc));
+          d->td = MUL_WEIGHT(d->d[i],i);
+          NEWMP(m); m->dl = d; C(m) = (Obj)ONE; NEXT(m) = 0; MKDP(n,m,u); u->sugar = d->td;
+          comm_muld(vl,t,u,&y[j]); 
+        }
+      }
+      for ( j = k-1, s = 0; j >= 0; j-- ) {
+        addd(vl,y[j],s,&t); s = t;
+      }
+      *pr = s;
+    }
+  }
+#if 0
+  if ( !dp_fcoeffs && has_sfcoef(*pr) )
+    dp_fcoeffs = N_GFS;
+#endif
+}
+#endif
 
 void dtop(VL vl,VL dvl,DP p,Obj *pr)
 {
