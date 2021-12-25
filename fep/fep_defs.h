@@ -40,7 +40,7 @@
 #define toctrl(c)	((c)&~0100)
 #define ctrl(c)		((c)&037)
 
-#if defined(__alpha) || defined(__x86_64__) || defined(__amd64__) || defined(ANDROID)
+#if defined(__alpha) || defined(__x86_64__) || defined(__amd64__) || defined(ANDROID) || defined(__aarch64__)
 #define INDIRECTED      (((u_long)1)<<63)
 #define isIndirect(f)   ((u_long)(f)&(u_long)INDIRECTED)
 #define setIndirect(f)  (FUNC)((u_long)(f)|(u_long)INDIRECTED)
