@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.9 2021/03/26 09:05:41 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.10 2022/01/13 08:15:02 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1269,7 +1269,7 @@ void Pgeneric_gauss_elim_mod64(NODE arg,LIST *rp)
       wmat[i][j] = remqi64((Q)tmat[i][j],md);
   rank = generic_gauss_elim_mod64(wmat,row,col,md,colstat);
   if ( asis ) {
-    MKMAT(mat,row,col);
+    MKMAT(mat,rank,col);
     tmat = (Z **)mat->body;
     for ( i = 0; i < rank; i++ )
       for ( j = 0; j < col; j++ ) {
@@ -1347,7 +1347,7 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
       wmat[i][j] = remqi((Q)tmat[i][j],md);
   rank = generic_gauss_elim_mod(wmat,row,col,md,colstat);
   if ( asis ) {
-    MKMAT(mat,row,col);
+    MKMAT(mat,rank,col);
     tmat = (Z **)mat->body;
     for ( i = 0; i < rank; i++ )
       for ( j = 0; j < col; j++ ) {
