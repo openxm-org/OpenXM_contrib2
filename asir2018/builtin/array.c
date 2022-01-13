@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.8 2020/10/06 06:31:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/array.c,v 1.9 2021/03/26 09:05:41 ohara Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1250,9 +1250,12 @@ void Pgeneric_gauss_elim_mod64(NODE arg,LIST *rp)
   Z q;
   mp_limb_t md;
   int i,j,k,l,row,col,t,rank;
+  Obj val;
+  int asis = 0;
 
   asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim_mod64");
   asir_assert(ARG1(arg),O_N,"generic_gauss_elim_mod64");
+  if ( get_opt("asis",&val) && val ) asis = 1;
   m = (MAT)ARG0(arg); md = ZTOS((Z)ARG1(arg));
   row = m->row; col = m->col; tmat = (Z **)m->body;
   wmat = (mp_limb_t **)almat64(row,col);
@@ -1265,6 +1268,16 @@ void Pgeneric_gauss_elim_mod64(NODE arg,LIST *rp)
     for ( j = 0; j < col; j++ )
       wmat[i][j] = remqi64((Q)tmat[i][j],md);
   rank = generic_gauss_elim_mod64(wmat,row,col,md,colstat);
+  if ( asis ) {
+    MKMAT(mat,row,col);
+    tmat = (Z **)mat->body;
+    for ( i = 0; i < rank; i++ )
+      for ( j = 0; j < col; j++ ) {
+        UTOZ(wmat[i][j],tmat[i][j]);
+      } 
+    *rp = (LIST)mat;
+    return;
+  }
 
   MKVECT(rnum,rank);
   rnb = (Z *)rnum->body;
@@ -1307,9 +1320,12 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
   Z q;
   long mdl;
   int md,i,j,k,l,row,col,t,rank;
+  Obj val;
+  int asis = 0;
 
   asir_assert(ARG0(arg),O_MAT,"generic_gauss_elim_mod");
   asir_assert(ARG1(arg),O_N,"generic_gauss_elim_mod");
+  if ( get_opt("asis",&val) && val ) asis = 1;
 #if SIZEOF_LONG==8
   mdl = ZTOS((Z)ARG1(arg));
   if ( mdl >= ((mp_limb_t)1)<<32 ) {
@@ -1330,6 +1346,16 @@ void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp)
     for ( j = 0; j < col; j++ )
       wmat[i][j] = remqi((Q)tmat[i][j],md);
   rank = generic_gauss_elim_mod(wmat,row,col,md,colstat);
+  if ( asis ) {
+    MKMAT(mat,row,col);
+    tmat = (Z **)mat->body;
+    for ( i = 0; i < rank; i++ )
+      for ( j = 0; j < col; j++ ) {
+        UTOZ(wmat[i][j],tmat[i][j]);
+      } 
+    *rp = (LIST)mat;
+    return;
+  }
 
   MKVECT(rnum,rank);
   rnb = (Z *)rnum->body;

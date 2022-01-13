@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.61 2021/12/18 04:43:59 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.62 2021/12/19 08:23:28 noro Exp $ */
 
 #include "nd.h"
 
@@ -70,7 +70,7 @@ static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check;
-static int nd_top,nd_sba_syz,nd_sba_inputisgb;
+static int nd_top,nd_sba_syz,nd_sba_inputisgb,nd_sba_heu;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
 static int nd_splist;
@@ -2601,7 +2601,7 @@ ND_pairs nd_remove_same_sugar( ND_pairs d, int sugar)
       prev = cur;
     cur = cur->next;
   }
-  if ( DP_Print ) fprintf(asir_out,"[%d]",i);
+  if ( DP_Print && i ) fprintf(asir_out,"[%d]",i);
   return root.next;
 }
 
@@ -3171,13 +3171,25 @@ get_eg(&eg2);
        get_eg(&eg2); add_eg(&eg_updatepairs,&eg1,&eg2);
        nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
        if ( nd_hpdata ) {
+         int dg,sugar0;
+
          get_eg(&eg1);
          update_hpdata(&current_hpdata,nh);
          get_eg(&eg2); add_eg(&eg_hpdata,&eg1,&eg2);
-         if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) {
+         dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
+//         if ( !compp(CO,final_hpdata.hn,current_hpdata.hn) ) 
+         if ( dg < 0 ) {
            if ( DP_Print ) { printf("\nWe found a gb.\n"); }
              break;
-         }
+         } else if ( nd_sba_heu == 1 ) {
+           for ( i = 0; i < ngen; i++ ) {
+             sugar0 = sugar;
+             while ( d[i] && dg > sugar0 ) {
+               d[i] = nd_remove_same_sugar(d[i],sugar0);
+               sugar0++;
+             }
+          }
+        }
       }
    } else {
       d[ind] = d[ind]->next; dlen--;
@@ -10670,7 +10682,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
-  nd_hpdata = 0;
+  nd_hpdata = 0; nd_sba_heu = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -10739,6 +10751,8 @@ void parse_nd_option(VL vl,NODE opt)
       nd_sba_dontsort = value?1:0;
     } else if ( !strcmp(key,"sba_syz") ) {
       nd_sba_syz = value?1:0;
+    } else if ( !strcmp(key,"sba_heu") ) {
+      nd_sba_heu = value?1:0;
     } else if ( !strcmp(key,"sba_modord") ) {
       // value=[vlist,ordspec,weight]
       u = BDY((LIST)value);
