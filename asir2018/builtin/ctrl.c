@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.4 2019/03/27 06:41:45 ohara Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.5 2020/08/26 06:40:36 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -441,8 +441,13 @@ static char *get_lang()
     char *c, *p, *q;
     c = setlocale(LC_ALL, NULL); /* saving current locale */
     p = setlocale(LC_ALL, "");
-    q = (char *)MALLOC(strlen(p)+1);
-    strcpy(q,p);
+    if ( p != 0 ) {
+      q = (char *)MALLOC(strlen(p)+1);
+      strcpy(q,p);
+    } else {
+      q = (char *)MALLOC(2);
+      strcpy(q,"C");
+    }
     setlocale(LC_ALL, c);        /* restoring current locale */
     return q;
 }
