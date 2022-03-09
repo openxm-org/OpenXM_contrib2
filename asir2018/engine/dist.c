@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.26 2021/12/23 08:55:33 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/engine/dist.c,v 1.27 2022/01/13 08:15:02 noro Exp $
 */
 #include "ca.h"
 
@@ -210,7 +210,7 @@ void initd(struct order_spec *spec)
 
 int dpm_ordtype;
 
-#if 1
+#if 0
 void ptod(VL vl,VL dvl,P p,DP *pr)
 {
   int n,i,j,k;

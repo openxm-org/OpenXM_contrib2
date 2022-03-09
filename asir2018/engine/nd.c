@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.62 2021/12/19 08:23:28 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.63 2022/01/13 08:15:02 noro Exp $ */
 
 #include "nd.h"
 
@@ -1303,6 +1303,7 @@ INLINE int ndl_find_reducer_s(UINT *dg,SIG sig)
       quo->pos = nd_psh[i]->sig->pos;
       _adddl(nd_nvar,DL(quo),nd_sba_hm[quo->pos],DL2(quo));
       ret = comp_sig(sig,quo);
+//      if ( ret >= 0 ) { singular = 0; break; }
       if ( ret > 0 ) { singular = 0; break; }
       if ( ret == 0 ) { /* fprintf(asir_out,"s"); fflush(asir_out); */ singular = 1; }
     }
@@ -2423,6 +2424,7 @@ int do_diagonalize(int sugar,int m)
   LIST l;
   Z iq;
 
+  if ( diag_period == 0 ) return 1;
   for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
     if ( nd_gentrace ) {
       /* Trace = [1,index,1,1] */
@@ -3344,6 +3346,7 @@ int do_diagonalize_trace(int sugar,int m)
   Z iq;
   P cont,cont1;
 
+  if ( diag_period == 0 ) return 1;
   for ( i = nd_psn-1; i >= 0 && SG(nd_psh[i]) == sugar; i-- ) {
     if ( nd_gentrace ) {
         /* Trace = [1,index,1,1] */
@@ -5495,7 +5498,7 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     Obj obj;
     NumberField nf;
     struct order_spec *ord1;
-    struct oEGT eg_check,eg0,eg1;
+    struct oEGT eg_check,eg_gb,eg_intred,eg0,eg1;
     NODE tr,tl1,tl2,tl3,tl4;
     LIST l1,l2,l3,l4,l5;
     int *perm;
@@ -5633,7 +5636,8 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     }
     if ( MaxDeg > 0 ) nocheck = 1;
     while ( 1 ) {
-    tl1 = tl2 = tl3 = tl4 = 0;
+        get_eg(&eg0);
+        tl1 = tl2 = tl3 = tl4 = 0;
         if ( Demand )
             nd_demand = 1;
         ret = ndv_setup(m,1,fd0,nd_gbblock?1:0,0,0);
@@ -5659,10 +5663,13 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
             nd_init_ord(ord);
             nd_setup_parameters(nvar,0);
         }
+        get_eg(&eg1); init_eg(&eg_gb); add_eg(&eg_gb,&eg0,&eg1);
         nd_demand = 0;
         cand = ndv_reducebase(cand,perm);
         if ( nd_gentrace ) { tl1 = nd_alltracelist; nd_alltracelist = 0; }
+        get_eg(&eg0);
         cand = ndv_reduceall(0,cand);
+        get_eg(&eg1); init_eg(&eg_intred); add_eg(&eg_intred,&eg0,&eg1);
         cbpe = nd_bpe;
         if ( nd_gentrace ) { tl2 = nd_alltracelist; nd_alltracelist = 0; }
         get_eg(&eg0);
@@ -5700,7 +5707,8 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
     }
     get_eg(&eg1); init_eg(&eg_check); add_eg(&eg_check,&eg0,&eg1);
     if ( DP_Print )
-        fprintf(asir_out,"check=%.3fsec\n",eg_check.exectime);
+        fprintf(asir_out,"gb=%.3fsec,check=%.3fsec,intred=%.3fsec\n",
+          eg_gb.exectime,eg_check.exectime,eg_intred.exectime);
     /* dp->p */
     nd_bpe = cbpe;
     nd_setup_parameters(nd_nvar,0);
