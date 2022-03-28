@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/plot/ox_plot_xevent.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/plot/ox_plot_xevent.c,v 1.2 2020/10/06 06:31:20 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -705,13 +705,15 @@ int init_plot_display(int argc,char **argv)
 }
 
 static char *scalefont = "*-8-80-*";
+static char *scalefont_f = "fixed";
 
 void create_font() {
   Font sfid;
 
-  sfid = XLoadFont(display,scalefont);
-  sffs = XQueryFont(display,sfid);
-  XSetFont(display,scaleGC,sfid);
+  sffs = XLoadQueryFont(display,scalefont);
+  if ( !sfid )
+      sffs = XLoadQueryFont(display,scalefont_f);
+  XSetFont(display,scaleGC,sffs->fid);
 }
 
 void create_gc() {
