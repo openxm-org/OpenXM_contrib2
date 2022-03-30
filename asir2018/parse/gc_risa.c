@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.4 2019/07/25 05:57:56 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/parse/gc_risa.c,v 1.5 2020/10/04 03:14:09 noro Exp $ */
 
 #if defined(VISUAL) || defined(__MINGW32__)
 #include "private/gcconfig.h"
@@ -19,6 +19,21 @@ void ox_usr1_handler(int sig);
 int *StackBottom;
 int in_gc, caught_intr;
 
+#if defined(_WIN64)
+extern int recv_intr;
+
+void check_caught_intr()
+{
+  if ( caught_intr == 1 || recv_intr == 1 ) {
+    caught_intr = 0; recv_intr = 0;
+    int_handler(SIGINT);
+  } else if ( caught_intr == 2 || recv_intr == 2 ) {
+    caught_intr = 0; recv_intr = 0;
+    fprintf(stderr,"entering reset mode...\n");
+    ox_usr1_handler(SIGUSR1);
+  }
+}
+#else
 void check_caught_intr()
 {
   if ( caught_intr == 1 ) {
@@ -30,6 +45,7 @@ void check_caught_intr()
     ox_usr1_handler(SIGUSR1);
   }
 }
+#endif
 
 void *Risa_GC_malloc(size_t d)
 {
