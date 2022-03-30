@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ox.h,v 1.6 2020/11/15 16:15:17 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ox.h,v 1.7 2021/03/26 07:54:17 fujimoto Exp $
 */
 #include "com.h"
 #if defined(linux)
@@ -293,7 +293,6 @@ void write_int(FILE *f,unsigned int *p);
 void write_int64(FILE *f,UL *p);
 void init_deskey();
 void write_intarray(FILE *f,unsigned int *p,int l);
-void write_longarray(FILE *f,unsigned long *p,int l);
 void write_double(FILE *f,double *p);
 void write_string(FILE *f,unsigned char *p,int l);
 void read_char(FILE *f,unsigned char *p);
@@ -301,9 +300,15 @@ void read_short(FILE *f,unsigned short *p);
 void read_int(FILE *f,unsigned int *p);
 void read_int64(FILE *f,UL *p);
 void read_intarray(FILE *f,unsigned int *p,int l);
-void read_longarray(FILE *f,unsigned long *p,int l);
 void read_string(FILE *f,unsigned char *p,int l);
 void read_double(FILE *f,double *p);
+#if defined(_WIN64)
+void write_longarray(FILE *f,unsigned long long *p,int l);
+void read_longarray(FILE *f,unsigned long long *p,int l);
+#else
+void write_longarray(FILE *f,unsigned long *p,int l);
+void read_longarray(FILE *f,unsigned long *p,int l);
+#endif
 int getremotesocket(int s);
 void getremotename(int s,char *name);
 void generate_port(int use_unix,char *port_str);

@@ -1,4 +1,4 @@
-# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.16 2021/03/25 06:31:59 ohara Exp $
+# $OpenXM: OpenXM_contrib2/windows/Makefile,v 1.17 2021/05/12 08:27:26 ohara Exp $
 
 !if "$(ARCH)" == ""
 ARCH=$(PROCESSOR_ARCHITECTURE)
@@ -48,7 +48,7 @@ build: ..\asir-gc\gc\gc.lib asir2000lib\asir2000lib.lib engine2000\engine.exe as
 	cd ..\asir-gc && $(MAKE) -e -f Makefile.vc
 
 asir2000lib\asir2000lib.lib: ..\asir-gc\gc\gc.lib
-	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH) CC=clang-cl
 
 engine2000\engine.exe: asir2000lib\asir2000lib.lib
 	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
@@ -63,7 +63,7 @@ post-msg-asirgui\cmdasir.exe:
 	cd $(@D) && $(MAKE) -e -f Makefile.vc
 
 ..\asir2018\asir.exe: ..\asir-gc\gc\gc.lib
-	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH) CC=clang-cl
 
 msi: $(TARGET) wxs
 	copy /b $(TARGET) asir_$(OS)_%DATE:/=.%.msi

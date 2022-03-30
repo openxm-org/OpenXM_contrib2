@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.19 2020/10/06 06:31:19 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/include/ca.h,v 1.20 2021/01/25 00:39:52 noro Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -836,7 +836,7 @@ void (*set_signal(int sig, void (*handler)(int)))(int);
 #define JMP_BUF jmp_buf
 #define SETJMP(x) _setjmp(x)
 #define LONGJMP(x,y) _longjmp(x,y)
-#elif defined(__CYGWIN__) || defined(HAVE_SIGACTION) || (defined(__x86_64) && !defined(__MINGW32__))
+#elif !defined(_WIN64) && (defined(__CYGWIN__) || defined(HAVE_SIGACTION) || (defined(__x86_64) && !defined(__MINGW32__)))
 #define JMP_BUF sigjmp_buf
 #define SETJMP(x) sigsetjmp(x,~0)
 #define LONGJMP(x,y) siglongjmp(x,y)
