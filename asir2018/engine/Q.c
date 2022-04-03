@@ -1,5 +1,6 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.20 2020/12/04 08:09:33 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/Q.c,v 1.21 2021/10/08 07:27:05 noro Exp $ */
 #include "ca.h"
+#include "parse.h"
 #include "gmp.h"
 #include "base.h"
 #include "inline.h"
