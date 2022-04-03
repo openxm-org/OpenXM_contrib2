@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.5 2020/08/26 06:40:36 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/ctrl.c,v 1.6 2022/01/27 01:29:31 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -142,7 +142,7 @@ static struct keyval {
   {"f4_nocheck",&f4_nocheck,"If set to 1, correctness check of the result of modular computation are omitted in nd_f4()."},
   {"fake_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
   {"fortran_output",&fortran_output,"If set to 1, ** is used instead of ^ for representing the power."},
-  {"hex",&hex_output,"If set to 1, integers are printed by the hexadecimal notation."},
+  {"hex",&hex_output,"If set to 1 (to 2), integers are printed by the hexadecimal (binary) notation."},
   {"hideargs",&hideargs,"If set to 1, the arguments of a function call are not printed."},
   {"message",&do_message,"If set to 1, an opening message is printed in ox_asir and ox_plot."},
   {"new_hensel",&use_new_hensel,"If set to 1, a function hensel2() is used in the univariate factorizer over Q."},

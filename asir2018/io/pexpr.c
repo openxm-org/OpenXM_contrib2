@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/pexpr.c,v 1.5 2019/12/24 10:26:39 kondoh Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/pexpr.c,v 1.6 2020/02/01 14:20:42 ohara Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -201,6 +201,9 @@ void printmpz(mpz_t z)
   if ( hex_output == 1 ) {
     TAIL PUTS("0x");
     mpz_out_str(OUT,16,z);
+  } else if ( hex_output == 2 ) {
+    TAIL PUTS("0b");
+    mpz_out_str(OUT,2,z);
   } else
     mpz_out_str(OUT,10,z);
 #else
@@ -208,6 +211,9 @@ void printmpz(mpz_t z)
   if ( hex_output == 1 ) {
     TAIL PUTS("0x");
     s = mpz_get_str(0,16,z);
+  } else if ( hex_output == 2 ) {
+    TAIL PUTS("0b");
+    mpz_out_str(0,2,z);
   } else {
     s = mpz_get_str(0,10,z);
   }

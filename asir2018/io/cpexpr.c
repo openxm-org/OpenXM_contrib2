@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.5 2020/10/06 06:31:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/cpexpr.c,v 1.6 2021/03/25 22:09:25 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -252,8 +252,10 @@ void PRINTV(VL vl,V v)
 
 void PRINTMPZ(mpz_t n)
 {
-  if ( hex_output )
+  if ( hex_output == 1 )
     total_length += mpz_sizeinbase(n,16)+3;
+  else if ( hex_output == 2 )
+    total_length += mpz_sizeinbase(n,2)+3;
   else
     total_length += mpz_sizeinbase(n,10)+1;
 }
