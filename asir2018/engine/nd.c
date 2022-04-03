@@ -1,4 +1,4 @@
-/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.64 2022/03/09 07:50:51 noro Exp $ */
+/* $OpenXM: OpenXM_contrib2/asir2018/engine/nd.c,v 1.65 2022/04/03 00:39:12 noro Exp $ */
 
 #include "nd.h"
 
@@ -1430,6 +1430,7 @@ ND nd_add_q(ND p1,ND p2)
 {
     int c,can;
     NM m1,m2,mr0,mr,s;
+    P t;
 
     if ( !p1 ) return p2;
     else if ( !p2 ) return p1;
