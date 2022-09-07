@@ -1,4 +1,4 @@
-dnl $OpenXM: OpenXM_contrib2/asir2018/configure.ac,v 1.3 2020/01/08 17:10:53 ohara Exp $
+dnl $OpenXM: OpenXM_contrib2/asir2018/configure.ac,v 1.4 2020/01/09 02:34:59 ohara Exp $
 
 AC_INIT(asir,1.16)
 AC_CONFIG_SRCDIR([LICENSE])
@@ -92,13 +92,13 @@ if test ${enable_interval:=no} != no ; then
     fi
 fi
 
-dnl AC_ARG_ENABLE([fep],
-dnl [  --enable-fep            enable fep for human interfaces. [[no]]],
-dnl [enable_fep=yes],[enable_fep=no])
+AC_ARG_ENABLE([fep],
+[  --enable-fep            enable fep for human interfaces. [[no]]],
+[enable_fep=yes],[enable_fep=no])
 
 if test "${enable_fep:=no}" != no ; then
     AC_DEFINE([FEP])
-    FEPLIB="-lreadline -ltermcap"
+    FEPLIB="-L${prefix}/lib -ledit"
 fi
 AC_SUBST([FEPLIB])
 
