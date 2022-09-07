@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.9 2020/11/15 16:15:17 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/parse/glob.c,v 1.10 2021/03/25 23:25:03 noro Exp $
 */
 #include "ca.h"
 #include "al.h"
@@ -257,7 +257,7 @@ void asir_terminate(int status)
 #endif
     if ( asir_out )
       fflush(asir_out);
-#if FEP
+#if defined(FEP)
     if ( do_fep ) {
       stifle_history(MAXHIST);
       write_history(asir_history);
@@ -360,6 +360,9 @@ void process_args(int ac,char **av)
 #if defined(VISUAL) && defined(VISUAL_CONSOLE)
   disable_debugger=1;
 #endif
+#if defined(FEP)
+  do_fep = 1;
+#endif
   do_quiet = 0;
   while ( ac > 0 ) {
     if ( !strcmp(*av,"-heap") && (ac >= 2) ) {
@@ -416,9 +419,11 @@ void process_args(int ac,char **av)
     } else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
       strcpy(displayname,*(av+1)); av += 2; ac -= 2;
 #endif
-#if FEP
+#if defined(FEP)
     } else if ( !strcmp(*av,"-fep") ) {
       do_fep = 1; av++; ac--;
+    } else if ( !strcmp(*av,"-nofep") ) {
+      do_fep = 0; av++; ac--;
 #endif
     } else {
       fprintf(stderr,"%s : unknown option.\n",*av);
@@ -428,7 +433,7 @@ void process_args(int ac,char **av)
       asir_terminate(1);
     }
   }
-#if FEP
+#if defined(FEP)
   if ( do_fep ) {
     char *home;
     home = (char *)getenv("HOME");
