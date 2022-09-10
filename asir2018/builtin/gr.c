@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.7 2021/01/11 08:37:43 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/gr.c,v 1.8 2021/02/17 22:18:39 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -2368,8 +2368,8 @@ void dp_make_flaglist(LIST *list)
   if ( DP_Multiple ) {
     STOZ(DP_Multiple,nm); STOZ(Denominator,dn); divq((Q)nm,(Q)dn,&r);
   } else
-    v = 0;
-  MKNODE(n,v,0); MKSTR(name,"Content"); MKNODE(n1,name,n); n = n1;
+    r = 0;
+  MKNODE(n,r,0); MKSTR(name,"Content"); MKNODE(n1,name,n); n = n1;
 #endif
   MKNODE(n1,Dist,n); n = n1; MKSTR(name,"Dist"); MKNODE(n1,name,n); n = n1;
   STOZ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;

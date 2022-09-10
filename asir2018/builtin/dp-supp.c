@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.16 2020/12/05 03:27:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.17 2020/12/15 07:40:09 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -94,6 +94,16 @@ LIST get_denomlist()
 
   MKLIST(l,RatDenomList); RatDenomList = 0;
   return l;
+}
+
+int dp_iszp(DP p)
+{
+  MP m;
+
+  if ( !p ) return 1;
+  for ( m = BDY(p); m; m = NEXT(m))
+    if ( !INT(m->c) ) return 0;
+  return 1;
 }
 
 void dp_ptozp(DP p,DP *rp)
@@ -145,6 +155,16 @@ void dp_ptozp2(DP p0,DP p1,DP *hp,DP *rp)
   if ( r )
     r->sugar = p1->sugar;
   *hp = h; *rp = r;
+}
+
+int dpm_iszp(DPM p)
+{
+  DMM m;
+
+  if ( !p ) return 1;
+  for ( m = BDY(p); m; m = NEXT(m))
+    if ( !INT(m->c) ) return 0;
+  return 1;
 }
 
 void dpm_ptozp(DPM p,Z *cont,DPM *rp)

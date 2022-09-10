@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.30 2021/03/10 06:36:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp.c,v 1.31 2021/12/05 22:41:03 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -1513,11 +1513,74 @@ void Pdp_rat(NODE arg,DP *rp)
 
 extern int DP_Multiple;
 
+int dp_iszp(DP);
+int dpm_iszp(DPM);
+
+DP dptozdp(DP g)
+{
+  DP gz;
+
+  if ( dp_iszp(g) )
+    gz = g;
+  else 
+    dp_ptozp(g,&gz);
+  return gz;
+}
+
+VECT dpvtozdpv(VECT v)
+{
+  DP *ps,*psz;
+  int len,i;
+  VECT r;
+
+  ps = (DP *)BDY(v);
+  len = v->len;
+  for ( i = 0; i < len; i++ )
+    if ( !dp_iszp(ps[i]) ) break;
+  if ( i == len ) return v;
+  MKVECT(r,len);
+  psz = (DP *)BDY(r);
+  for ( i = 0; i < len; i++ )
+     psz[i] = dptozdp(ps[i]);
+  return r;
+}
+
+DPM dpmtozdpm(DPM g)
+{
+  DPM gz;
+  Z cont;
+
+  if ( dpm_iszp(g) )
+    gz = g;
+  else 
+    dpm_ptozp(g,&cont,&gz);
+  return gz;
+}
+
+VECT dpmvtozdpmv(VECT v)
+{
+  DPM *ps,*psz;
+  int len,i;
+  VECT r;
+
+  ps = (DPM *)BDY(v);
+  len = v->len;
+  for ( i = 0; i < len; i++ )
+    if ( !dpm_iszp(ps[i]) ) break;
+  if ( i == len ) return v;
+  MKVECT(r,len);
+  psz = (DPM *)BDY(r);
+  for ( i = 0; i < len; i++ )
+     psz[i] = dpmtozdpm(ps[i]);
+  return r;
+}
+
 void Pdp_nf(NODE arg,DP *rp)
 {
   NODE b;
   DP *ps;
   DP g;
+  VECT zv;
   int full;
 
   do_weyl = 0; dp_fcoeffs = 0;
@@ -1528,7 +1591,10 @@ void Pdp_nf(NODE arg,DP *rp)
   if ( !(g = (DP)ARG1(arg)) ) {
     *rp = 0; return;
   }
-  b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
+  b = BDY((LIST)ARG0(arg));
+  zv = dpvtozdpv((VECT)ARG2(arg));
+  g = dptozdp(g);
+  ps = (DP *)BDY(zv);
   full = (Q)ARG3(arg) ? 1 : 0;
   dp_nf_z(b,g,ps,full,DP_Multiple,rp);
 }
@@ -1538,6 +1604,7 @@ void Pdp_weyl_nf(NODE arg,DP *rp)
   NODE b;
   DP *ps;
   DP g;
+  VECT zv;
   int full;
 
   asir_assert(ARG0(arg),O_LIST,"dp_weyl_nf");
@@ -1547,7 +1614,9 @@ void Pdp_weyl_nf(NODE arg,DP *rp)
   if ( !(g = (DP)ARG1(arg)) ) {
     *rp = 0; return;
   }
-  b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
+  b = BDY((LIST)ARG0(arg));
+  zv = dpvtozdpv((VECT)ARG2(arg));
+  g = dptozdp(g);
   full = (Q)ARG3(arg) ? 1 : 0;
   do_weyl = 1;
   dp_nf_z(b,g,ps,full,DP_Multiple,rp);
@@ -1570,11 +1639,16 @@ void Pdpm_nf(NODE arg,DPM *rp)
     error("dpm_nf: invalid arguments");
   else if ( ac == 3 ) {
     asir_assert(ARG1(arg),O_VECT,"dpm_nf");
-    b = 0; g = (DPM)ARG0(arg); ps = (VECT)ARG1(arg);
+    b = 0;
+    g = dpmtozdpm((DPM)ARG0(arg));
+    ps = dpmvtozdpmv((VECT)ARG1(arg));
+    full = (Q)ARG2(arg) ? 1 : 0;
   } else if ( ac == 4 ) {
     asir_assert(ARG0(arg),O_LIST,"dpm_nf");
     asir_assert(ARG2(arg),O_VECT,"dpm_nf");
-    b = BDY((LIST)ARG0(arg)); g = (DPM)ARG1(arg); ps = (VECT)ARG2(arg);
+    b = BDY((LIST)ARG0(arg));
+    g = dpmtozdpm((DPM)ARG1(arg));
+    ps = dpmvtozdpmv((VECT)ARG2(arg));
     full = (Q)ARG3(arg) ? 1 : 0;
   }
   dpm_nf_z(b,g,ps,full,DP_Multiple,rp);
@@ -1803,9 +1877,11 @@ void Pdp_true_nf(NODE arg,LIST *rp)
 {
   NODE b,n;
   DP *ps;
-  DP g;
-  DP nm;
-  P dn;
+  DP g,gz;
+  DP nm,nm1;
+  P dn,dn1;
+  Z cont,cnm,cdn;
+  VECT zv;
   int full;
 
   do_weyl = 0; dp_fcoeffs = 0;
@@ -1816,9 +1892,25 @@ void Pdp_true_nf(NODE arg,LIST *rp)
   if ( !(g = (DP)ARG1(arg)) ) {
     nm = 0; dn = (P)ONE;
   } else {
-    b = BDY((LIST)ARG0(arg)); ps = (DP *)BDY((VECT)ARG2(arg));
+    b = BDY((LIST)ARG0(arg));
+    zv = dpvtozdpv((VECT)ARG2(arg));
+    ps = (DP *)BDY(zv);
     full = (Q)ARG3(arg) ? 1 : 0;
-    dp_true_nf(b,g,ps,full,&nm,&dn);
+    if ( dp_iszp(g) ) {
+      dp_true_nf(b,g,ps,full,&nm,&dn);
+    } else {
+      dp_ptozp3(g,&cont,&gz);
+      dp_true_nf(b,gz,ps,full,&nm1,&dn1);
+      if ( INT(cont) ) {
+        muldc(CO,nm1,(Obj)cont,&nm);
+        dn = dn1;
+      } else {
+        nmq((Q)cont,&cnm);
+        muldc(CO,nm1,(Obj)cnm,&nm);
+        dnq((Q)cont,&cdn);
+        mulp(CO,dn1,(P)cdn,&dn);
+      }
+    }
   }
   NEWNODE(n); BDY(n) = (pointer)nm;
   NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)dn;
