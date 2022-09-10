@@ -45,7 +45,7 @@
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
  *
- * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.17 2020/12/15 07:40:09 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/builtin/dp-supp.c,v 1.18 2022/09/10 04:04:50 noro Exp $
 */
 #include "ca.h"
 #include "base.h"
@@ -885,7 +885,7 @@ void dp_red(DP p0,DP p1,DP p2,DP *head,DP *rest,P *dnp,DP *multp)
       divsz(c2,gn,&c); c2 = c;
     }
   } else {
-    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    ezgcdp(CO,(P)c1,(P)c2,&g);
     divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
     add_denomlist(g);
   }
@@ -928,7 +928,7 @@ void dpm_red(DPM p0,DPM p1,DPM p2,DPM *head,DPM *rest,P *dnp,DP *multp)
       divsz(c2,gn,&c); c2 = c;
     }
   } else {
-    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    ezgcdp(CO,(P)c1,(P)c2,&g);
     divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
     add_denomlist(g);
   }
@@ -970,7 +970,7 @@ void dpm_red2(DPM p1,DPM p2,DPM *rest,P *dnp,DP *multp)
       divsz(c2,gn,&c); c2 = c;
     }
   } else {
-    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    ezgcdp(CO,(P)c1,(P)c2,&g);
     divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
     add_denomlist(g);
   }
@@ -1016,7 +1016,7 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
       divsz(c2,gn,&c); c2 = c;
     }
   } else {
-    ezgcdpz(CO,(P)c1,(P)c2,&g);
+    ezgcdp(CO,(P)c1,(P)c2,&g);
     divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
   }
   NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
