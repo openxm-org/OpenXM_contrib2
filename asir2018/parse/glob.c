@@ -73,6 +73,13 @@
 #define HISTORY asir_history
 #endif
 
+#if defined(FEP)
+int read_history(const char *filename);
+int write_history(const char *filename);
+void stifle_history(int max);
+void using_history(void);
+#endif
+
 #define MAXHIST 100
 
 extern FILE *asir_out;
