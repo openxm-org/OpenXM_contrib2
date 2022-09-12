@@ -78,6 +78,9 @@ int read_history(const char *filename);
 int write_history(const char *filename);
 void stifle_history(int max);
 void using_history(void);
+extern char history_expansion_char;
+extern char *history_no_expand_chars;
+static char asir_history_no_expand_chars[] = { ' ', '\t', '\n', '=', '(', '+', '-', '*', '&', '|', ')', '^', ';', '$', '\0' };
 #endif
 
 #define MAXHIST 100
@@ -369,6 +372,8 @@ void process_args(int ac,char **av)
 #endif
 #if defined(FEP)
   do_fep = 1;
+  history_no_expand_chars = asir_history_no_expand_chars;
+  history_expansion_char = 0;
 #endif
   do_quiet = 0;
   while ( ac > 0 ) {
