@@ -913,7 +913,7 @@ INLINE int ndl_ringpart_equal(UINT *d1,UINT *d2)
 
     if ( TD(d2) != TD(d1) ) return 0;
     for ( i = nd_exporigin; i < nd_wpd; i++ )
-        if ( *d1++ != *d2++ ) return 0;
+        if ( d1[i] != d2[i] ) return 0;
     return 1;
 }
 
