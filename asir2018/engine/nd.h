@@ -28,6 +28,13 @@ typedef struct oPGeoBucket {
   struct oND *body[32];
 } *PGeoBucket;
 
+/* GeoBucket for monomial list with sig */
+typedef struct oSGeoBucket {
+  int m;
+  struct oNMs *body[32];
+} *SGeoBucket;
+
+
 typedef struct oSIG {
   int pos;
   DL dl,dl2;
@@ -73,6 +80,13 @@ typedef struct oNMV {
   UINT dl[1];
 } *NMV;
 
+/* monomial with sig; linked list rep. */
+typedef struct oNMs {
+  struct oNMs *next;
+  SIG sig;
+  UINT dl[1];
+} *NMs;
+
 /* history of reducer */
 typedef struct oRHist {
   struct oRHist *next;
@@ -114,6 +128,7 @@ typedef struct oBaseSet {
 typedef struct oNM_ind_pair
 {
   NM mul;
+  NM head;
   int index,sugar;
   SIG sig;
 } *NM_ind_pair;
@@ -122,6 +137,9 @@ typedef struct oIndArray
 {
   char width;
   int head;
+  int number;
+  NM mul;
+  SIG sig;
   union {
     unsigned char *c;
     unsigned short *s;
@@ -213,6 +231,8 @@ NV(d)=(n); LEN(d)=(len); BDY(d)=(m)
 #define NEWSIG(r) \
 ((r)=(SIG)MALLOC(sizeof(struct oSIG)),NEWDL((r)->dl,nd_nvar),NEWDL((r)->dl2,nd_nvar))
 
+#define NEWNMs(d) ((d)=(NMs)MALLOC(sizeof(struct oNMs)+(nd_wpd-1)*sizeof(UINT)))
+
 /* allocate and link a new object */
 #define NEXTRHist(r,c) \
 if(!(r)){NEWRHist(r);(c)=(r);}else{NEWRHist(NEXT(c));(c)=NEXT(c);}
@@ -220,6 +240,8 @@ if(!(r)){NEWRHist(r);(c)=(r);}else{NEWRHist(NEXT(c));(c)=NEXT(c);}
 if(!(r)){NEWNM(r);(c)=(r);}else{NEWNM(NEXT(c));(c)=NEXT(c);}
 #define NEXTNM2(r,c,s) \
 if(!(r)){(c)=(r)=(s);}else{NEXT(c)=(s);(c)=(s);}
+#define NEXTNMs(r,c) \
+if(!(r)){NEWNMs(r);(c)=(r);}else{NEWNMs(NEXT(c));(c)=NEXT(c);}
 #define NEXTND_pairs(r,c) \
 if(!(r)){NEWND_pairs(r);(c)=(r);}else{NEWND_pairs(NEXT(c));(c)=NEXT(c);}
 #define MKNM_ind_pair(p,m,i,s,sg)\
@@ -295,6 +317,7 @@ INLINE int ndl_block_compare(UINT *d1,UINT *d2);
 INLINE int ndl_matrix_compare(UINT *d1,UINT *d2);
 INLINE int ndl_composite_compare(UINT *d1,UINT *d2);
 INLINE int ndl_equal(UINT *d1,UINT *d2);
+INLINE int ndl_ringpart_equal(UINT *d1,UINT *d2);
 INLINE void ndl_copy(UINT *d1,UINT *d2);
 INLINE void ndl_zero(UINT *d);
 INLINE void ndl_add(UINT *d1,UINT *d2,UINT *d);
