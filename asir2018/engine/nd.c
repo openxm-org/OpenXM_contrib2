@@ -22,6 +22,7 @@ ND _nd_free_list;
 ND_pairs _ndp_free_list;
 NODE nd_hcf;
 int Nsyz,Nsamesig;
+long Nredcheck;
 
 Obj nd_top_weight;
 
@@ -69,7 +70,7 @@ static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
-static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check;
+static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check,nd_sba_nominsig;
 static int nd_top,nd_sba_syz,nd_sba_inputisgb,nd_sba_heu;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
@@ -244,6 +245,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
         case 3:
             for ( i = nd_exporigin; i < nd_wpd; i++ ) {
                 u1 = d1[i]; u2 = d2[i];
+                if ( u1 < u2 ) return 0;
                 if ( (u1&0x38000000) < (u2&0x38000000) ) return 0;
                 if ( (u1& 0x7000000) < (u2& 0x7000000) ) return 0;
                 if ( (u1&  0xe00000) < (u2&  0xe00000) ) return 0;
@@ -260,6 +262,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
         case 4:
             for ( i = nd_exporigin; i < nd_wpd; i++ ) {
                 u1 = d1[i]; u2 = d2[i];
+                if ( u1 < u2 ) return 0;
                 if ( (u1&0xf0000000) < (u2&0xf0000000) ) return 0;
                 if ( (u1& 0xf000000) < (u2& 0xf000000) ) return 0;
                 if ( (u1&  0xf00000) < (u2&  0xf00000) ) return 0;
@@ -274,6 +277,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
         case 6:
             for ( i = nd_exporigin; i < nd_wpd; i++ ) {
                 u1 = d1[i]; u2 = d2[i];
+                if ( u1 < u2 ) return 0;
                 if ( (u1&0x3f000000) < (u2&0x3f000000) ) return 0;
                 if ( (u1&  0xfc0000) < (u2&  0xfc0000) ) return 0;
                 if ( (u1&   0x3f000) < (u2&   0x3f000) ) return 0;
@@ -285,6 +289,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
         case 8:
             for ( i = nd_exporigin; i < nd_wpd; i++ ) {
                 u1 = d1[i]; u2 = d2[i];
+                if ( u1 < u2 ) return 0;
                 if ( (u1&0xff000000) < (u2&0xff000000) ) return 0;
                 if ( (u1&  0xff0000) < (u2&  0xff0000) ) return 0;
                 if ( (u1&    0xff00) < (u2&    0xff00) ) return 0;
@@ -295,6 +300,7 @@ INLINE int ndl_reducible(UINT *d1,UINT *d2)
         case 16:
             for ( i = nd_exporigin; i < nd_wpd; i++ ) {
                 u1 = d1[i]; u2 = d2[i];
+                if ( u1 < u2 ) return 0;
                 if ( (u1&0xffff0000) < (u2&0xffff0000) ) return 0;
                 if ( (u1&    0xffff) < (u2&    0xffff) ) return 0;
             }
@@ -1392,11 +1398,13 @@ NMs nms_merge(NMs p1,NMs p2)
             c = DL_COMPARE(DL(m1),DL(m2));
             switch ( c ) {
                 case 0:
-                    if ( comp_sig(m1->sig,m2->sig) > 0 ) {
-                      s = m2; m2 = NEXT(m2);
+                    c = comp_sig(m1->sig,m2->sig);
+                    if ( c > 0 ) {
+                      s = m2;
                     } else {
-                      s = m1; m1 = NEXT(m1);
+                      s = m1; 
                     }
+                    m1 = NEXT(m1); m2 = NEXT(m2);
                     can++; NEXTNM2(mr0,mr,s);
                     break;
                 case 1:
@@ -2122,6 +2130,14 @@ PGeoBucket create_pbucket()
     g->m = -1;
     return g;
 }
+SGeoBucket create_sbucket()
+{
+    SGeoBucket g;
+     
+    g = CALLOC(1,sizeof(struct oSGeoBucket));
+    g->m = -1;
+    return g;
+}
 
 void free_pbucket(PGeoBucket b) {
     int i;
@@ -2298,6 +2314,41 @@ NM remove_head_pbucket_symbolic(PGeoBucket g)
             BDY(g->body[j]) = NEXT(head);
             LEN(g->body[j])--;
         }
+        return head;
+    }
+}
+
+NMs remove_head_sbucket(SGeoBucket g)
+{
+    int j,i,k,c;
+    NMs head;
+    
+    k = g->m;
+    j = -1;
+    for ( i = 0; i <= k; i++ ) {
+        if ( !g->body[i] ) continue;
+        if ( j < 0 ) j = i;
+        else {
+            c = DL_COMPARE(DL(g->body[i]),DL(g->body[j]));
+            if ( c > 0 )
+                j = i;
+            else if ( c == 0 ) {
+                c = comp_sig(g->body[i]->sig,g->body[j]->sig);
+                if ( c > 0 )
+                  g->body[i] = NEXT(g->body[i]);
+                else if ( c < 0 ) {
+                  g->body[j] = NEXT(g->body[j]);
+                  j = i;
+                } else {
+                  g->body[i] = NEXT(g->body[i]);
+                }
+            }
+        }
+    }
+    if ( j < 0 ) return 0;
+    else {
+        head = g->body[j];
+        g->body[j] = NEXT(head);
         return head;
     }
 }
@@ -3194,14 +3245,14 @@ get_eg(&eg1);
 get_eg(&eg2); add_eg(&eg_smallest,&eg1,&eg2);
     if ( l1 == 0 ) {
       d[ind] = d[ind]->next; dlen--;
-//      if ( DP_Print && !nd_hpdata ) fprintf(asir_out,"M");
+      if ( DP_Print && !nd_hpdata ) fprintf(asir_out,"M");
       Nnominimal++;
       continue;
     }
     if ( SG(l1) != sugar ) {
       int k;
       sugar = SG(l1);
-      if ( DP_Print ) fprintf(asir_out,"%d",sugar);
+      if ( DP_Print ) fprintf(asir_out,"{%d}",sugar);
       k = 0;
       for ( i = 0; i < nd_nbase; i++ )
         for ( t = d[i]; t; t = NEXT(t) )
@@ -3819,6 +3870,7 @@ get_eg(&eg2); add_eg(&eg_create,&eg1,&eg2);
   for ( i = 0; i < nd_nbase; i++ )
     d[i] = merge_pairs_s(d[i],d1[i]);
 get_eg(&eg3); add_eg(&eg_merge,&eg2,&eg3);
+  if ( Nnewpair < 0 ) fprintf(asir_out,"{%d}",Nnewpair);
   return Nnewpair;
 }
 
@@ -5294,7 +5346,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   }
 //  x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm,&syz);
   if ( f4 ) {
-    if ( 1 && (ishomo || homo) )
+    if ( 0 || (ishomo || homo) )
       x = nd_sba_buch_f4(m,&perm);
     else
       x = nd_sba_f4(m,&perm);
@@ -5963,6 +6015,21 @@ void nd_print(ND p)
         for ( m = BDY(p); m; m = NEXT(m) ) {
             if ( CM(m) & 0x80000000 ) printf("+@_%d*",IFTOF(CM(m)));
             else printf("+%ld*",CM(m));
+            ndl_print(DL(m));
+        }
+        printf("\n");
+    }
+}
+
+void nms_print(NMs p)
+{
+    NMs m;
+
+    if ( !p )
+        printf("0\n");
+    else {
+        for ( m = p; m; m = NEXT(m) ) {
+            printf("+");
             ndl_print(DL(m));
         }
         printf("\n");
@@ -8957,37 +9024,35 @@ int nd_sp_f4(int m,int trace,ND_pairs l,PGeoBucket bucket)
     return 1;
 }
 
-int nd_sp_f4_s(int m,int trace,ND_pairs l,PGeoBucket bucket,SIG *maxsig,SIG *minsig)
+int nd_sp_f4_s(int m,int trace,ND_pairs l,PGeoBucket bucket,SIG *minsig)
 {
     ND_pairs t;
     int stat;
     ND spol;
-    SIG max,min;
+    SIG min;
 
-    max = 0; min = 0;
+    min = 0;
     for ( t = l; t; t = NEXT(t) ) {
         stat = nd_sp(m,trace,t,&spol);
         if ( !stat ) return 0;
         if ( spol ) {
             add_pbucket_symbolic(bucket,spol);
         }
-        if ( max == 0 || comp_sig(max,t->sig) < 0 ) 
-          max = t->sig;
         if ( min == 0 || comp_sig(min,t->sig) > 0 ) 
           min = t->sig;
     }
-    *maxsig = max; *minsig = min;
+    *minsig = min;
     return 1;
 }
 
-int nd_sp_f4_array(int m,int trace,ND_pairs *l,PGeoBucket bucket,SIG *maxsig,SIG *minsig)
+int nd_sp_f4_array(int m,int trace,ND_pairs *l,PGeoBucket bucket,SIG *minsig)
 {
   ND_pairs t;
   int stat,i;
   ND spol,left,right;
-  SIG max,min;
+  SIG min;
 
-  max = 0; min = 0;
+  min = 0;
   for ( i = 0; i < nd_nbase; i++ ) {
     for ( t = l[i]; t; t = NEXT(t) ) {
 #if 0
@@ -9001,13 +9066,33 @@ int nd_sp_f4_array(int m,int trace,ND_pairs *l,PGeoBucket bucket,SIG *maxsig,SIG
       if ( spol )
         add_pbucket_symbolic(bucket,spol);
 #endif
-      if ( max == 0 || comp_sig(max,t->sig) < 0 ) 
-        max = t->sig;
       if ( min == 0 || comp_sig(min,t->sig) > 0 ) 
         min = t->sig;
     }
   }
-  *maxsig = max; *minsig = min;
+  *minsig = min;
+  return 1;
+}
+
+int nd_sp_f4_array_nms(int m,int trace,ND_pairs *l,SGeoBucket bucket,SIG *minsig)
+{
+  ND_pairs t;
+  int stat,i;
+  ND spol;
+  SIG min;
+
+  min = 0;
+  for ( i = 0; i < nd_nbase; i++ ) {
+    for ( t = l[i]; t; t = NEXT(t) ) {
+      stat = nd_sp(m,trace,t,&spol);
+      if ( !stat ) return 0;
+      if ( spol )
+        add_sbucket(bucket,nd_to_nms(spol));
+      if ( min == 0 || comp_sig(min,t->sig) > 0 ) 
+        min = t->sig;
+    }
+  }
+  *minsig = min;
   return 1;
 }
 
@@ -10827,7 +10912,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
-  nd_hpdata = 0; nd_sba_heu = 0;
+  nd_hpdata = 0; nd_sba_heu = 0; nd_sba_nominsig = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -10894,6 +10979,8 @@ void parse_nd_option(VL vl,NODE opt)
       nd_sba_largelcm = value?1:0;
     } else if ( !strcmp(key,"sba_dontsort") ) {
       nd_sba_dontsort = value?1:0;
+    } else if ( !strcmp(key,"sba_nominsig") ) {
+      nd_sba_nominsig = value?1:0;
     } else if ( !strcmp(key,"sba_syz") ) {
       nd_sba_syz = value?1:0;
     } else if ( !strcmp(key,"sba_heu") ) {
@@ -12235,7 +12322,7 @@ NODE nd_f4_red_s(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,NODE
 
 clock_t eg_reducible;
 
-INLINE int ndl_find_reducer_minsig(UINT *dg)
+int ndl_find_reducer_minsig(UINT *dg)
 {
   RHist r;
   long i;
@@ -12288,7 +12375,7 @@ clock_t eg1,eg2;
   }
 }
 
-INLINE int ndl_find_reducer_sigrange(UINT *dg,SIG maxsig,SIG minsig)
+int ndl_find_reducer_sigrange(UINT *dg,SIG minsig)
 {
   RHist r;
   long i;
@@ -12300,6 +12387,57 @@ INLINE int ndl_find_reducer_sigrange(UINT *dg,SIG maxsig,SIG minsig)
   NODE nd,nd1;
 clock_t eg1,eg2;
 
+  if ( !quo || nvar != nd_nvar ) { NEWSIG(quo); NEWSIG(quomin); }
+  if ( wpd != nd_wpd ) {
+    wpd = nd_wpd;
+    tmp = (UINT *)MALLOC(wpd*sizeof(UINT));
+  }
+  imin = -1;
+  nd = 0;
+  for ( i = 0; i < nd_psn; i++ ) {
+Nredcheck++;
+    r = nd_psh[i];
+    c = ndl_reducible(dg,DL(r));
+    if ( c ) {
+// eg1=clock();
+      ndl_sub(dg,DL(r),tmp);
+      _ndltodl(tmp,DL(quo));
+      _addtodl(nd_nvar,DL(nd_psh[i]->sig),DL(quo));
+      quo->pos = nd_psh[i]->sig->pos;
+      _adddl(nd_nvar,DL(quo),nd_sba_hm[quo->pos],DL2(quo));
+// eg_reducible += clock()-eg1;
+      if ( !nd_sba_nominsig && comp_sig(quo,minsig) < 0 ) {
+        imin = i; break;
+      }
+      // minsig <= quo
+      if ( imin < 0 || comp_sig(quomin,quo) > 0 ) {
+        t = quo; quo = quomin; quomin = t;
+        imin = i;
+      }
+    }
+  }
+  if ( imin == -1 ) return nd_psn;
+  else {
+    return imin;
+  }
+}
+
+int ndl_find_reducer_nms(NMs nms)
+{
+  UINT *dg;
+  SIG minsig;
+  RHist r;
+  long i;
+  int imin,k,d,c;
+  SIG t;
+  static int wpd,nvar;
+  static SIG quo,quomin;
+  static UINT *tmp;
+  NODE nd,nd1;
+clock_t eg1,eg2;
+
+  dg = DL(nms);
+  minsig = nms->sig;
   if ( !quo || nvar != nd_nvar ) { NEWSIG(quo); NEWSIG(quomin); }
   if ( wpd != nd_wpd ) {
     wpd = nd_wpd;
@@ -12321,8 +12459,7 @@ clock_t eg1,eg2;
       if ( comp_sig(quo,minsig) < 0 ) {
         imin = i; break;
       }
-      if ( comp_sig(quo,maxsig) >= 0 ) continue;
-      // minsig <= quo < maxsig
+      // minsig <= quo
       if ( imin < 0 || comp_sig(quomin,quo) > 0 ) {
         t = quo; quo = quomin; quomin = t;
         imin = i;
@@ -12335,8 +12472,8 @@ clock_t eg1,eg2;
   }
 }
 
-struct oEGT eg_find,eg_sig;
-int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,SIG maxsig,SIG minsig,UINT **s0vect,NODE *r)
+struct oEGT eg_find,eg_sig,eg_smul,eg_sadd;
+int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,SIG minsig,UINT **s0vect,NODE *r)
 {
   NODE rp0,rp;
   NM mul,head,s0,s;
@@ -12353,7 +12490,6 @@ int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,SIG maxsig,SIG minsig,UINT
   PGeoBucket tbucket;
   ND t;
 
-  printf("\nmaxsig="); print_sig(maxsig);
   printf("minsig="); print_sig(minsig);
   printf("\n");
   s0 = 0; rp0 = 0; col = 0;
@@ -12368,7 +12504,78 @@ int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,SIG maxsig,SIG minsig,UINT
     else NEXT(s) = head;
     s = head;
 get_eg(&eg1);
-    index = ndl_find_reducer_sigrange(DL(head),maxsig,minsig);
+    index = ndl_find_reducer_sigrange(DL(head),minsig);
+get_eg(&eg2); add_eg(&eg_find,&eg1,&eg2);
+    if ( index >= 0 && index < nd_psn ) {
+//      ndl_print(DL(head)); ndl_print(DL(nd_psh[index])); printf("%ld\n",index);
+      h = nd_psh[index];
+      NEWNM(mul);
+      ndl_sub(DL(head),DL(h),DL(mul));
+      if ( ndl_check_bound2(index,DL(mul)) ) 
+        return 0;
+      sugar = TD(DL(mul))+SG(ps[index]);
+      NEWSIG(sig);
+get_eg(&eg1);
+      _ndltodl(DL(mul),DL(sig));
+      _addtodl(nd_nvar,DL(nd_psh[index]->sig),DL(sig));
+      sig->pos = nd_psh[index]->sig->pos;
+      _adddl(nd_nvar,DL(sig),nd_sba_hm[sig->pos],DL2(sig));
+      MKNM_ind_pair(pair,mul,index,sugar,sig);
+      pair->head = head;
+      red = ndv_mul_nm_symbolic(mul,ps[index]);
+get_eg(&eg2); add_eg(&eg_smul,&eg1,&eg2);
+get_eg(&eg1);
+      add_pbucket_symbolic(bucket,nd_remove_head(red));
+get_eg(&eg2); add_eg(&eg_sadd,&eg1,&eg2);
+      NEXTNODE(rp0,rp); BDY(rp) = (pointer)pair;
+    }
+    col++;
+  }
+  if ( rp0 ) NEXT(rp) = 0;
+  NEXT(s) = 0;
+  s0v = (UINT *)MALLOC_ATOMIC(col*nd_wpd*sizeof(UINT));
+  for ( i = 0, p = s0v, s = s0; i < col;
+    i++, p += nd_wpd, s = NEXT(s) ) ndl_copy(DL(s),p);
+  *s0vect = s0v;        
+  *r = rp0;
+
+  return col;
+}
+
+int nd_symbolic_preproc_nms(SGeoBucket bucket,int trace,SIG minsig,UINT **s0vect,NODE *r)
+{
+  NODE rp0,rp;
+  NMs head,s0,s;
+  NM mul,head1;
+  long index,index1;
+  int col,i,sugar;
+  RHist h;
+  UINT *s0v,*p;
+  NM_ind_pair pair;
+  ND red;
+  NODE nd;
+  NDV *ps;
+  SIG sig;
+  struct oEGT eg1,eg2;
+  PGeoBucket tbucket;
+  ND t;
+
+  printf("minsig="); print_sig(minsig);
+  printf("\n");
+  s0 = 0; rp0 = 0; col = 0;
+  if ( nd_demand )
+    ps = trace?nd_ps_trace_sym:nd_ps_sym;
+  else
+    ps = trace?nd_ps_trace:nd_ps;
+  while ( 1 ) {
+    head = remove_head_sbucket(bucket);
+    if ( !head ) break;
+    if ( !s0 ) s0 = head;
+    else NEXT(s) = head;
+    s = head;
+//    ndl_print(DL(head)); printf("\n");
+get_eg(&eg1);
+    index = ndl_find_reducer_nms(head);
 get_eg(&eg2); add_eg(&eg_find,&eg1,&eg2);
     if ( index >= 0 && index < nd_psn ) {
 //      ndl_print(DL(head)); ndl_print(DL(nd_psh[index])); printf("%ld\n",index);
@@ -12384,9 +12591,13 @@ get_eg(&eg2); add_eg(&eg_find,&eg1,&eg2);
       sig->pos = nd_psh[index]->sig->pos;
       _adddl(nd_nvar,DL(sig),nd_sba_hm[sig->pos],DL2(sig));
       MKNM_ind_pair(pair,mul,index,sugar,sig);
-      pair->head = head;
+      NEWNM(head1);
+      NEXT(head1)=0; ndl_copy(DL(head),DL(head1)); CM(head1)=1;
+      pair->head = head1;
       red = ndv_mul_nm_symbolic(mul,ps[index]);
-      add_pbucket_symbolic(bucket,nd_remove_head(red));
+      // ndl_print(DL(head1)); // ndl_print(DL(mul)); nd_print(red); printf("\n");
+      red->sig = head->sig;
+      add_sbucket(bucket,nd_to_nms(nd_remove_head(red)));
       NEXTNODE(rp0,rp); BDY(rp) = (pointer)pair;
     }
     col++;
@@ -12414,11 +12625,11 @@ NODE nd_sba_f4(int m,int **indp)
   UINT *s0vect;
   PGeoBucket bucket;
   NODE *syzlist;
-  SIG sig,maxsig,minsig;
+  SIG sig,minsig;
   struct oEGT eg1;
-  struct oEGT eg2,eg_remove,eg_nf,eg_nfzero,eg_symb,eg_find;
+  struct oEGT eg2,eg_remove,eg_nf,eg_nfzero,eg_symb,eg_find,eg_smul,eg_sadd;
 
-  init_eg(&eg_symb); init_eg(&eg_find);
+  init_eg(&eg_symb); init_eg(&eg_find); init_eg(&eg_smul); init_eg(&eg_sadd);
   Nf4_red=0;
   d = 0;
   syzlist = (NODE *)MALLOC(nd_psn*sizeof(NODE));
@@ -12499,7 +12710,7 @@ again2:
       l = nd_minsugarp_s(d,&d);
 //      sugar = nd_sugarweight?d->sugar2:SG(d);
       bucket = create_pbucket();
-      stat = nd_sp_f4_s(m,0,l,bucket,&maxsig,&minsig);
+      stat = nd_sp_f4_s(m,0,l,bucket,&minsig);
       if ( !stat ) {
         for ( t = l; NEXT(t); t = NEXT(t) );
         NEXT(t) = d; d = l;
@@ -12508,7 +12719,7 @@ again2:
       }
       if ( bucket->m < 0 ) continue;
   get_eg(&eg1);
-      col = nd_symbolic_preproc_s(bucket,0,maxsig,minsig,&s0vect,&rp0);
+      col = nd_symbolic_preproc_s(bucket,0,minsig,&s0vect,&rp0);
   get_eg(&eg2); add_eg(&eg_symb,&eg1,&eg2);
       if ( !col ) {
         for ( t = l; NEXT(t); t = NEXT(t) )
@@ -12686,6 +12897,7 @@ IndArray *redlist_to_array(NODE rp0,int col)
 }
 
 // homo only
+#if 1
 NODE nd_sba_buch_f4(int m,int **indp)
 {
   int i,j,nh,sugar,stat,pos,k;
@@ -12707,7 +12919,223 @@ NODE nd_sba_buch_f4(int m,int **indp)
   IndArray ia;
   IndArray *redarray;
   UINT *s0vect;
-  SIG maxsig,minsig;
+  SIG minsig;
+  int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz;
+  struct oEGT eg1,eg2,eg_ia,eg_sp,eg_symb;
+
+init_eg(&eg_find); init_eg(&eg_sig); init_eg(&eg_sadd); init_eg(&eg_smul);
+init_eg(&eg_ia); init_eg(&eg_sp); init_eg(&eg_symb); eg_reducible=0;
+  syzlist = (NODE *)MALLOC(nd_psn*sizeof(NODE));
+  d = (ND_pairs *)MALLOC(nd_psn*sizeof(ND_pairs));
+  nd_nbase = nd_psn;
+  Nsyz = 0;
+  Nnd_add = 0;
+  Nnominimal = 0;
+  Nredundant = 0;
+  Nredcheck = 0;
+  ngen = nd_psn;
+  if ( !do_weyl || nd_sba_inputisgb ) {
+    for ( i = 0; i < nd_psn; i++ )
+      for ( j = i+1; j < nd_psn; j++ ) {
+        sig = trivial_sig(i,j);
+        syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
+      }
+    }
+  dlen = 0;
+  for ( i = 0; i < nd_psn; i++ ) {
+    dlen += update_pairs_array_s(d,i,syzlist);
+  }
+  sugar = 0;
+  pos = 0;
+  while ( 1 ) {
+again :
+    dmin = nd_minsugar_array_s(d,-1);
+    while ( 1 ) {
+      ind = nd_minsig(dmin); 
+      if ( ind < 0 ) 
+         break;
+      l = dmin[ind];
+      l1 = find_smallest_lcm(l);
+      if ( l1 == 0 ) {
+        dmin[ind] = dmin[ind]->next; dlen--;
+        Nnominimal++;
+        continue;
+      } else
+        break;
+    }
+    for ( i = 0; i < nd_nbase; i++ )
+      if ( dmin[i] ) break;
+    if ( i == nd_nbase ) break;
+    sugar = dmin[i]->sugar;
+    fprintf(stderr,"%d",sugar); 
+    k = 0;
+    for ( i = 0; i < nd_nbase; i++ )
+      for ( j = 0, t = dmin[i]; t; t = NEXT(t), k++ );
+    printf("\nsugar=%d:number of spairs=%d\n",sugar,k);
+    bucket = create_pbucket();
+  get_eg(&eg1);
+    stat = nd_sp_f4_array(m,0,dmin,bucket,&minsig);
+  get_eg(&eg2); add_eg(&eg_sp,&eg1,&eg2);
+    if ( !stat ) {
+      for ( i = 0; i < nd_nbase; i++ ) {
+        t = dmin[i];
+        if ( t != 0 ) {
+          for ( ; NEXT(t); t = NEXT(t) );
+          NEXT(t) = d[i]; d[i] = dmin[i];
+        }
+      }
+      nd_reconstruct_s(0,d);
+      goto again;
+    }
+    if ( bucket->m < 0 ) continue;
+  get_eg(&eg1);
+    col = nd_symbolic_preproc_s(bucket,0,minsig,&s0vect,&rp0);
+  get_eg(&eg2); add_eg(&eg_symb,&eg1,&eg2);
+    if ( !col ) {
+      for ( i = 0; i < nd_nbase; i++ ) {
+        t = dmin[i];
+        if ( t != 0 ) {
+          for ( ; NEXT(t); t = NEXT(t) );
+          NEXT(t) = d[i]; d[i] = dmin[i];
+        }
+      }
+      nd_reconstruct_s(0,d);
+      goto again;
+    }
+    // inita reducer list expressed by IndexArray
+  get_eg(&eg1);
+    printf("number of reducers=%d\n",length(rp0));
+    redlist = conv_ind_pairs(rp0,s0vect,col);
+    redarray = redlist_to_array(redlist,col);
+  get_eg(&eg2); add_eg(&eg_ia,&eg1,&eg2);
+
+    cvect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
+    svect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
+    while ( 1 ) {
+      ind = nd_minsig(dmin); 
+      if ( ind < 0 ) break;
+      l = dmin[ind];
+      l1 = find_smallest_lcm(l);
+      if ( l1 == 0 ) {
+        dmin[ind] = dmin[ind]->next; dlen--;
+        Nnominimal++;
+        continue;
+      }
+      sig = l1->sig;
+// printf("(%d,%d)",l->i1,l->i2); print_sig(l->sig); printf("\n");
+      nd_sp(m,0,l1,&h);
+      if ( !h ) {
+        dmin[ind] = dmin[ind]->next; dlen--;
+        syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
+        continue;
+      }
+      if ( nd_to_vect64(m,s0vect,col,h,svect) < 0 ) {
+        int col1;
+        UINT *s1vect,*s2vect;
+        NODE rp1;
+
+        printf("reconstruct redlist\n");
+        bucket = create_pbucket();
+        add_pbucket_symbolic(bucket,h);
+        col1 = nd_symbolic_preproc_s(bucket,0,minsig,&s1vect,&rp1);
+        rp0 = merge_ind_list(rp0,rp1);
+        printf("col : %d->",col);
+        col = merge_dl_vect(s0vect,col,s1vect,col1,&s2vect); 
+        printf("%d\n",col);
+        s0vect = s2vect;
+        redlist = conv_ind_pairs(rp0,s0vect,col);
+        redarray = redlist_to_array(redlist,col);
+        cvect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
+        svect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
+        nd_to_vect64(m,s0vect,col,h,svect);
+      }
+//      ndv_reduce_vect64_by_redlist(m,svect,cvect,col,redlist,sig);
+      ndv_reduce_vect64_by_redarray(m,svect,cvect,col,redarray,sig);
+      for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+      if ( i < col ) {
+        dmin[ind] = dmin[ind]->next; dlen--;
+        Nnfnz++;
+        if ( DP_Print ) { 
+          printf("+"); fflush(stdout); 
+        }
+        nfv = vect64_to_ndv_s(svect,col,s0vect);
+        ndv_removecont(m,nfv);
+        nfv->sig = sig; 
+        nfv->sugar = sugar;
+        nh = ndv_newps(m,nfv,0);
+//  printf("\n"), ndv_print(nfv), printf("\n");
+    
+        dlen += update_pairs_array_s(d,nh,syzlist);
+        dmin2 = nd_minsugar_array_s(d,sugar);
+        for ( i = j = 0; i < nd_nbase; i++ ) {
+          for ( t = dmin2[i]; t; t = NEXT(t) ) j++;
+          dmin[i] = merge_pairs_s(dmin[i],dmin2[i]);
+        }
+        if ( j && DP_Print ) printf("<%d>",j);
+        nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
+        // mul=1
+        NEWNM(mul); CM(mul) = 1; ndl_zero(DL(mul));
+        MKNM_ind_pair(pair,mul,nh,sugar,0);
+        ia = nm_ind_pair_to_vect_compress(0,s0vect,col,pair,0);
+        ia->sig = sig;
+        ia->number = nh;
+        ia->mul = mul;
+        redlist = ia_insert_or_replace(redlist,ia);
+        redarray = redlist_to_array(redlist,col);
+      } else {
+        dmin[ind] = dmin[ind]->next; dlen--;
+        Nnfz++;
+      // syzygy
+        nsyz = Nsyz;
+        d[sig->pos] = remove_spair_s(d[sig->pos],sig);
+        dlen -= Nsyz-nsyz;
+        syzlist[sig->pos] = insert_sig(syzlist[sig->pos],sig);
+        if ( DP_Print ) { printf("."); fflush(stdout); }
+      }
+    }
+  }
+  g = conv_ilist_s(nd_demand,0,indp);
+  if ( DP_Print ) { 
+    printf("\ndlen=%d,nd_sba done. nd_add=%d,Nsyz=%d,Nsamesig=%d,Nnominimal=%d\n",dlen,Nnd_add,Nsyz,Nsamesig,Nnominimal);
+    printf("Nbase=%d,Nnfnz=%d,Nnfz=%d,Nnfsingular=%d,Nredcheck=%ld\n",nd_psn,Nnfnz,Nnfz,Nnfs,Nredcheck);
+    fflush(stdout);
+    if ( nd_sba_redundant_check )
+      printf("Nredundant=%d\n",Nredundant);
+    fflush(stdout);
+     printf("\n");
+     print_eg("ia",&eg_ia); fprintf(asir_out,"\n");
+     print_eg("sp",&eg_sp); fprintf(asir_out,"\n");
+     print_eg("symb",&eg_symb); fprintf(asir_out,"\n");
+     print_eg("(find)",&eg_find); fprintf(asir_out,"\n");
+    print_eg("(smul)",&eg_smul); fprintf(asir_out,"\n");
+    print_eg("(sadd)",&eg_sadd); fprintf(asir_out,"\n");
+     printf("%lfsec\n",(double)eg_reducible/CLOCKS_PER_SEC);
+  }
+  return g;
+}
+#else
+NODE nd_sba_buch_f4(int m,int **indp)
+{
+  int i,j,nh,sugar,stat,pos,k;
+  NODE g,u;
+  ND_pairs *d,*dmin,*dmin2;
+  ND_pairs l,l1,t;
+  ND h,nf;
+  NDV nfv;
+  SIG sig;
+  NODE *syzlist;
+  mp_limb_t *cvect,*svect;
+  int ngen,ind;
+  int Nnominimal,Nredundant;
+  NM mul;
+  NM_ind_pair pair;
+  SGeoBucket sbucket;
+  int start,col;
+  NODE redlist,rp,rp0;
+  IndArray ia;
+  IndArray *redarray;
+  UINT *s0vect;
+  SIG minsig;
   int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz;
   struct oEGT eg1,eg2,eg_ia,eg_sp,eg_symb;
 
@@ -12759,9 +13187,9 @@ again :
     for ( i = 0; i < nd_nbase; i++ )
       for ( j = 0, t = dmin[i]; t; t = NEXT(t), k++ );
     printf("\nsugar=%d:number of spairs=%d\n",sugar,k);
-    bucket = create_pbucket();
+    sbucket = create_sbucket();
   get_eg(&eg1);
-    stat = nd_sp_f4_array(m,0,dmin,bucket,&maxsig,&minsig);
+    stat = nd_sp_f4_array_nms(m,0,dmin,sbucket,&minsig);
   get_eg(&eg2); add_eg(&eg_sp,&eg1,&eg2);
     if ( !stat ) {
       for ( i = 0; i < nd_nbase; i++ ) {
@@ -12774,9 +13202,9 @@ again :
       nd_reconstruct_s(0,d);
       goto again;
     }
-    if ( bucket->m < 0 ) continue;
+    if ( sbucket->m < 0 ) continue;
   get_eg(&eg1);
-    col = nd_symbolic_preproc_s(bucket,0,maxsig,minsig,&s0vect,&rp0);
+    col = nd_symbolic_preproc_nms(sbucket,0,minsig,&s0vect,&rp0);
   get_eg(&eg2); add_eg(&eg_symb,&eg1,&eg2);
     if ( !col ) {
       for ( i = 0; i < nd_nbase; i++ ) {
@@ -12822,9 +13250,9 @@ again :
         NODE rp1;
 
         printf("reconstruct redlist\n");
-        bucket = create_pbucket();
-        add_pbucket_symbolic(bucket,h);
-        col1 = nd_symbolic_preproc_s(bucket,0,maxsig,minsig,&s1vect,&rp1);
+        sbucket = create_sbucket();
+        add_sbucket(sbucket,nd_to_nms(h));
+        col1 = nd_symbolic_preproc_nms(sbucket,0,minsig,&s1vect,&rp1);
         rp0 = merge_ind_list(rp0,rp1);
         printf("col : %d->",col);
         col = merge_dl_vect(s0vect,col,s1vect,col1,&s2vect); 
@@ -12854,8 +13282,11 @@ again :
     
         dlen += update_pairs_array_s(d,nh,syzlist);
         dmin2 = nd_minsugar_array_s(d,sugar);
-        for ( i = 0; i < nd_nbase; i++ )
+        for ( i = j = 0; i < nd_nbase; i++ ) {
+          for ( t = dmin2[i]; t; t = NEXT(t) ) j++;
           dmin[i] = merge_pairs_s(dmin[i],dmin2[i]);
+        }
+        if ( j && DP_Print ) printf("<%d>",j);
         nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
         // mul=1
         NEWNM(mul); CM(mul) = 1; ndl_zero(DL(mul));
@@ -12895,4 +13326,4 @@ again :
   }
   return g;
 }
-
+#endif
