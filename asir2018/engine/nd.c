@@ -21,7 +21,7 @@ NM _nm_free_list;
 ND _nd_free_list;
 ND_pairs _ndp_free_list;
 NODE nd_hcf;
-int Nsyz,Nsamesig;
+int Nsyz,Nsamesig,Nnominimal;
 long Nredcheck;
 
 Obj nd_top_weight;
@@ -3103,6 +3103,7 @@ ND_pairs remove_large_lcm(ND_pairs d)
     if ( find_smallest_lcm(p) == 0 ) {
       // remove p
       prev->next = p->next;
+      Nnominimal++;
     } else
 #endif
       prev = p;
@@ -3110,6 +3111,7 @@ ND_pairs remove_large_lcm(ND_pairs d)
   }
   return (ND_pairs)root.next;
 }
+
 
 struct oEGT eg_create,eg_newpairs,eg_merge;
 
@@ -3185,7 +3187,7 @@ NODE nd_sba_buch(int m,int ishomo,int **indp,NODE *syzp)
   SIG sig;
   NODE *syzlist;
   int ngen,ind;
-  int Nnominimal,Nredundant;
+  int Nredundant;
   DL lcm,quo,mul;
   struct oHPDATA final_hpdata,current_hpdata;
   struct oEGT eg1,eg2,eg3,eg4,eg_remove,eg_large,eg_nf,eg_nfzero;
@@ -4322,6 +4324,22 @@ ND_pairs nd_newpairs_s(int t, NODE *syz)
     }
   }
   return r0;
+}
+
+int syzcheck(SIG sig,NODE *syz)
+{
+  NODE s;
+  SIG tsig;
+  
+  for ( s = syz[sig->pos]; s; s = s->next ) {
+    tsig = (SIG)s->body;
+    if ( _dl_redble(DL(tsig),DL(sig),nd_nvar) )
+      break;
+  }
+  if ( s != 0 )
+    return 1;
+  else
+    return 0;
 }
 
 ND_pairs *nd_newpairs_array_s(int t, NODE *syz)
@@ -12910,7 +12928,7 @@ NODE nd_sba_buch_f4(int m,int **indp)
   NODE *syzlist;
   mp_limb_t *cvect,*svect;
   int ngen,ind;
-  int Nnominimal,Nredundant;
+  int Nredundant;
   NM mul;
   NM_ind_pair pair;
   PGeoBucket bucket;
@@ -12950,6 +12968,9 @@ init_eg(&eg_ia); init_eg(&eg_sp); init_eg(&eg_symb); eg_reducible=0;
   while ( 1 ) {
 again :
     dmin = nd_minsugar_array_s(d,-1);
+    for ( i = 0; i < nd_nbase; i++ )
+      dmin[i] = remove_large_lcm(dmin[i]);
+#if 0
     while ( 1 ) {
       ind = nd_minsig(dmin); 
       if ( ind < 0 ) 
@@ -12963,6 +12984,7 @@ again :
       } else
         break;
     }
+#endif
     for ( i = 0; i < nd_nbase; i++ )
       if ( dmin[i] ) break;
     if ( i == nd_nbase ) break;
@@ -13015,6 +13037,11 @@ again :
       ind = nd_minsig(dmin); 
       if ( ind < 0 ) break;
       l = dmin[ind];
+      if ( syzcheck(l->sig,syzlist) ) {
+        dmin[ind] = dmin[ind]->next; dlen--;
+        Nsyz++;
+        continue;
+      }
       l1 = find_smallest_lcm(l);
       if ( l1 == 0 ) {
         dmin[ind] = dmin[ind]->next; dlen--;
@@ -13126,7 +13153,7 @@ NODE nd_sba_buch_f4(int m,int **indp)
   NODE *syzlist;
   mp_limb_t *cvect,*svect;
   int ngen,ind;
-  int Nnominimal,Nredundant;
+  int Nredundant;
   NM mul;
   NM_ind_pair pair;
   SGeoBucket sbucket;
@@ -13165,6 +13192,8 @@ init_eg(&eg_ia); init_eg(&eg_sp); init_eg(&eg_symb); eg_reducible=0;
   while ( 1 ) {
 again :
     dmin = nd_minsugar_array_s(d,-1);
+    for ( i = 0; i < nd_nbase; i++ )
+      dmin[i] = remove_large_lcm(dmin[i]);
     while ( 1 ) {
       ind = nd_minsig(dmin); 
       if ( ind < 0 ) 
