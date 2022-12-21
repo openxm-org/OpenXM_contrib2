@@ -3112,7 +3112,6 @@ ND_pairs remove_large_lcm(ND_pairs d)
   return (ND_pairs)root.next;
 }
 
-
 struct oEGT eg_create,eg_newpairs,eg_merge;
 
 NODE conv_ilist_s(int demand,int trace,int **indp);
@@ -12938,7 +12937,7 @@ NODE nd_sba_buch_f4(int m,int **indp)
   IndArray *redarray;
   UINT *s0vect;
   SIG minsig;
-  int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz;
+  int Nnfs=0,Nnfz=0,Nnfnz=0,dlen,nsyz,nnominimal,nsamesig;
   struct oEGT eg1,eg2,eg_ia,eg_sp,eg_symb;
 
 init_eg(&eg_find); init_eg(&eg_sig); init_eg(&eg_sadd); init_eg(&eg_smul);
@@ -12969,7 +12968,18 @@ init_eg(&eg_ia); init_eg(&eg_sp); init_eg(&eg_symb); eg_reducible=0;
 again :
     dmin = nd_minsugar_array_s(d,-1);
     for ( i = 0; i < nd_nbase; i++ )
+      if ( dmin[i] ) break;
+    if ( i == nd_nbase ) break;
+
+    nnominimal = Nnominimal;
+    for ( i = 0; i < nd_nbase; i++ )
       dmin[i] = remove_large_lcm(dmin[i]);
+    dlen -= Nnominimal-nnominimal;
+
+    for ( i = 0; i < nd_nbase; i++ )
+      if ( dmin[i] ) break;
+    if ( i == nd_nbase ) continue;
+
 #if 0
     while ( 1 ) {
       ind = nd_minsig(dmin); 
@@ -12985,9 +12995,6 @@ again :
         break;
     }
 #endif
-    for ( i = 0; i < nd_nbase; i++ )
-      if ( dmin[i] ) break;
-    if ( i == nd_nbase ) break;
     sugar = dmin[i]->sugar;
     fprintf(stderr,"%d",sugar); 
     k = 0;
@@ -13037,11 +13044,6 @@ again :
       ind = nd_minsig(dmin); 
       if ( ind < 0 ) break;
       l = dmin[ind];
-      if ( syzcheck(l->sig,syzlist) ) {
-        dmin[ind] = dmin[ind]->next; dlen--;
-        Nsyz++;
-        continue;
-      }
       l1 = find_smallest_lcm(l);
       if ( l1 == 0 ) {
         dmin[ind] = dmin[ind]->next; dlen--;
@@ -13094,11 +13096,13 @@ again :
     
         dlen += update_pairs_array_s(d,nh,syzlist);
         dmin2 = nd_minsugar_array_s(d,sugar);
+        nsamesig = Nsamesig;
         for ( i = j = 0; i < nd_nbase; i++ ) {
           for ( t = dmin2[i]; t; t = NEXT(t) ) j++;
           dmin[i] = merge_pairs_s(dmin[i],dmin2[i]);
         }
-        if ( j && DP_Print ) printf("<%d>",j);
+        dlen -= Nsamesig-nsamesig;
+//        if ( j && DP_Print ) printf("<%d>",j);
         nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
         // mul=1
         NEWNM(mul); CM(mul) = 1; ndl_zero(DL(mul));
