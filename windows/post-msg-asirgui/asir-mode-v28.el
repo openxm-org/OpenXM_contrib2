@@ -93,7 +93,7 @@
               (shell (get-buffer-create asir-cmd-buffer-name)))
             (sleep-for 1)
             (goto-char (point-max))
-            (insert "asir -nofep")
+            (insert "openxm asir -nofep")
             (comint-send-input)
             (select-frame current-frame))))))
 
