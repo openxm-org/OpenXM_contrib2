@@ -1241,14 +1241,14 @@ NODE arg;
 LIST *rp;
 {
   STRING str;
-  char *p;
+  unsigned char *p;
   int len,i;
   NODE n,n1;
   Z q;
 
   str = (STRING)ARG0(arg);
   asir_assert(str,O_STR,"strtoascii");
-  p = BDY(str);
+  p = (unsigned char *)BDY(str);
   len = strlen(p);
   for ( i = len-1, n = 0; i >= 0; i-- ) {
     UTOZ((unsigned int)p[i],q);
