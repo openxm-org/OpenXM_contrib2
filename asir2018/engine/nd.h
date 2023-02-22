@@ -147,6 +147,21 @@ typedef struct oIndArray
   } index;
 } *IndArray;
 
+struct oIndCoef {
+  int ind;
+  union oNDC coef;
+};
+ 
+typedef struct oIndCoefArray
+{
+  int len;
+  int head;
+  int number;
+  NM mul;
+  SIG sig;
+  struct oIndCoef *indcoef;
+} *IndCoefArray;
+
 typedef struct oNDVI {
   NDV p;
   int i;
