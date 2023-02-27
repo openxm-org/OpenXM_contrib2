@@ -70,7 +70,7 @@ static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
-static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check,nd_sba_nominsig;
+static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check,nd_sba_nosigrange,nd_sba_minsig;
 static int nd_top,nd_sba_syz,nd_sba_inputisgb,nd_sba_heu;
 static int *nd_gbblock;
 static NODE nd_nzlist,nd_check_splist;
@@ -94,6 +94,7 @@ struct comp_sig_spec {
 
 struct comp_sig_spec *nd_sba_modord;
 
+int ndl_find_reducer_minsig(UINT *dg,SIG *minsig);
 DL ndltodl(int n,UINT *ndl);
 NumberField get_numberfield();
 UINT *nd_det_compute_bound(NDV **dm,int n,int j);
@@ -1753,8 +1754,13 @@ int nd_nf_s(int mod,ND d,ND g,NDV *ps,int full,ND *rp)
         for ( tail = BDY(d); NEXT(tail); tail = NEXT(tail) );
     sig = g->sig;
     for ( ; g; ) {
-        index = ndl_find_reducer_s(HDL(g),sig);
-        if ( index >= 0 && index < nd_psn ) {
+        SIG minsig;
+        if ( nd_sba_minsig )
+          index = ndl_find_reducer_minsig(HDL(g),&minsig);
+        else
+          index = ndl_find_reducer_s(HDL(g),sig);
+        if ( index >= 0 && index < nd_psn &&
+             (!nd_sba_minsig || comp_sig(sig,minsig) >0) )  {
             // reducer found
             h = nd_psh[index];
             ndl_sub(HDL(g),DL(h),DL(mul));
@@ -1948,6 +1954,8 @@ int nd_nf_pbucket_s(int mod,ND g,NDV *ps,int full,ND *rp)
   mul = (NM)MALLOC(sizeof(struct oNM)+(nd_wpd-1)*sizeof(UINT));
   sig = g->sig;
   while ( 1 ) {
+    SIG minsig;
+
     if ( mod > 0 || mod == -1 )
       hindex = head_pbucket(mod,bucket);
     else if ( mod == -2 )
@@ -1965,6 +1973,7 @@ int nd_nf_pbucket_s(int mod,ND g,NDV *ps,int full,ND *rp)
     }
     g = bucket->body[hindex];
     index = ndl_find_reducer_s(HDL(g),sig);
+//    index = ndl_find_reducer_minsig(HDL(g),&minsig);
     if ( index >= 0 && index < nd_psn ) {
       count++;
       if ( !d ) hcount++;
@@ -11102,7 +11111,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
-  nd_hpdata = 0; nd_sba_heu = 0; nd_sba_nominsig = 0;
+  nd_hpdata = 0; nd_sba_heu = 0; nd_sba_nosigrange = 0; nd_sba_minsig = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -11169,8 +11178,10 @@ void parse_nd_option(VL vl,NODE opt)
       nd_sba_largelcm = value?1:0;
     } else if ( !strcmp(key,"sba_dontsort") ) {
       nd_sba_dontsort = value?1:0;
-    } else if ( !strcmp(key,"sba_nominsig") ) {
-      nd_sba_nominsig = value?1:0;
+    } else if ( !strcmp(key,"sba_nosigrange") ) {
+      nd_sba_nosigrange = value?1:0;
+    } else if ( !strcmp(key,"sba_minsig") ) {
+      nd_sba_minsig = value?1:0;
     } else if ( !strcmp(key,"sba_syz") ) {
       nd_sba_syz = value?1:0;
     } else if ( !strcmp(key,"sba_heu") ) {
@@ -12557,7 +12568,7 @@ NODE nd_f4_red_s(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,NODE
 
 clock_t eg_reducible;
 
-int ndl_find_reducer_minsig(UINT *dg)
+int ndl_find_reducer_minsig(UINT *dg,SIG *minsig)
 {
   RHist r;
   long i;
@@ -12606,6 +12617,7 @@ clock_t eg1,eg2;
 #if 0
     nd_append_red(dg,imin);
 #endif
+    *minsig = quomin;
     return imin;
   }
 }
@@ -12641,7 +12653,7 @@ Nredcheck++;
       quo->pos = nd_psh[i]->sig->pos;
       _adddl(nd_nvar,DL(quo),nd_sba_hm[quo->pos],DL2(quo));
 // eg_reducible += clock()-eg1;
-      if ( !nd_sba_nominsig && comp_sig(quo,minsig) < 0 ) {
+      if ( !nd_sba_nosigrange && comp_sig(quo,minsig) < 0 ) {
         imin = i; break;
       }
       // minsig <= quo
