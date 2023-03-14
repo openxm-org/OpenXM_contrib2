@@ -5372,7 +5372,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   }
 //  x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm,&syz);
   if ( f4 ) {
-    if ( 0 || (ishomo || homo) )
+    if ( 1 || (ishomo || homo) )
       x = nd_sba_buch_f4(m,&perm);
     else
       x = nd_sba_f4(m,&perm);
