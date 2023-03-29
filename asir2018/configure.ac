@@ -163,12 +163,6 @@ sparc-sun-solaris2.*)
     ;;
 esac
 
-case "${host}" in
-arm-apple-darwin*)
-	LDFLAGS="${LDFLAGS} -Wl,-platform_version -Wl,macos -Wl,13.0.0 -Wl,0.0.0"
-    ;;
-esac
-
 AC_SUBST([WSLIB])
 
 AC_CHECK_FUNCS(sigaction)
