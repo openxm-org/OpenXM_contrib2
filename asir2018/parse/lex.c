@@ -751,7 +751,9 @@ char *readline_console(char *prompt)
                         exp_result = history_expand(line,&expansion);
                         if ( !exp_result ) {
                                 free(expansion);
+#if 0
                                 for ( ; isspace((unsigned char)*line); line++ );
+#endif
                                 add_history(line);
                                 break;
                         } else if ( exp_result > 0 ) {
