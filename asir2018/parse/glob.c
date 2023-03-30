@@ -80,6 +80,8 @@ void stifle_history(int max);
 void using_history(void);
 extern char history_expansion_char;
 extern char *history_no_expand_chars;
+int asir_history_inhibit_expansion_function(const char *s,int i);
+extern int (*history_inhibit_expansion_function)(const char *s,int i);
 static char asir_history_no_expand_chars[] = { ' ', '\t', '\n', '=', '(', '+', '-', '*', '&', '|', ')', '^', ';', '$', '\0' };
 #endif
 
@@ -373,7 +375,8 @@ void process_args(int ac,char **av)
 #if defined(FEP)
   do_fep = 1;
   history_no_expand_chars = asir_history_no_expand_chars;
-  history_expansion_char = 0;
+/*  history_expansion_char = 0; */
+  history_inhibit_expansion_function = asir_history_inhibit_expansion_function;
 #endif
   do_quiet = 0;
   while ( ac > 0 ) {

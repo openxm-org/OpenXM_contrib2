@@ -738,6 +738,11 @@ void readline_ungetc()
         readline_nc++; readline_index--;
 }
 
+int asir_history_inhibit_expansion_function(const char *s,int i)
+{
+	return (i>0)? 1: 0;
+}
+
 char *readline_console(char *prompt)
 {
         char *line;
