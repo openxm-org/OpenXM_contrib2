@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.5 2020/03/29 17:01:55 fujimoto Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.6 2020/10/06 06:31:20 noro Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -983,7 +983,7 @@ void ox_flush_stream(int s)
   if ( ox_batch )
     return;
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
-  if ( WSIO_fileno(iofp[s].out) < 0 )
+  if ( ((unsigned long long)iofp[s].out) & 0x1 )
     cflush(iofp[s].out);
   else
 #endif
@@ -993,7 +993,7 @@ void ox_flush_stream(int s)
 void ox_flush_stream_force(int s)
 {
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
-  if ( WSIO_fileno(iofp[s].out) < 0 )
+  if ( ((unsigned long long)iofp[s].out) & 0x1 )
     cflush(iofp[s].out);
   else
 #endif
