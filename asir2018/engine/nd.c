@@ -5372,9 +5372,11 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   }
 //  x = f4 ? nd_sba_f4(m,&perm) : nd_sba_buch(m,ishomo || homo,&perm,&syz);
   if ( f4 ) {
+#if SIZEOF_LONG==8
     if ( 1 || (ishomo || homo) )
       x = nd_sba_buch_f4(m,&perm);
     else
+#endif
       x = nd_sba_f4(m,&perm);
   } else
     x = nd_sba_buch(m,ishomo || homo,&perm,&syz);
@@ -13663,6 +13665,7 @@ again :
 #endif
 #endif
 
+#if SIZEOF_LONG==8
 NODE nd_sba_buch_f4(int m,int **indp)
 {
   int i,j,nh,sugar,stat,pos,k,ret;
@@ -13988,3 +13991,4 @@ final:
   }
   return g;
 }
+#endif
