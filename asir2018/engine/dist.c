@@ -145,15 +145,15 @@ void initd(struct order_spec *spec)
   Q **mat;
 
   switch ( spec->id ) {
-    case 3:
+    case 3: case 259:
       cmpdl = cmpdl_composite;
       dp_dl_work = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));  
       break;
-    case 2:
+    case 2: case 258:
       cmpdl = cmpdl_matrix;
       dp_dl_work = (int *)MALLOC_ATOMIC(spec->nv*sizeof(int));  
       break;
-    case 1:
+    case 1: case 257:
       cmpdl = cmpdl_order_pair;
       break;
     default:
