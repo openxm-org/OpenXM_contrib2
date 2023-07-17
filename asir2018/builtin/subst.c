@@ -166,6 +166,8 @@ Obj *rp;
   struct oNODE arg0;
   MP m,mp,mp0;
   DP d;
+  DMM dm,dmp,dmp0;
+  DPM dr;
   VL lastvl,vl,tvl,prev,cur;
 
   if ( !arg ) {
@@ -250,6 +252,26 @@ Obj *rp;
         MKDP(NV((DP)a),mp0,d);
         d->sugar = ((DP)a)->sugar;
         *rp = (Obj)d;
+      } else
+        *rp = 0;
+
+      break;
+    case O_DPM:
+      dmp0 = 0;
+      for ( dm = BDY((DPM)a); dm; dm = NEXT(dm) ) {
+        arg0.body = (pointer)C(dm);
+        arg0.next = NEXT(arg);
+        Psubst(&arg0,&b);
+        if ( b ) {
+          NEXTDMM(dmp0,dmp);
+          C(dmp) = (Obj)b;
+          dmp->dl = dm->dl;
+        }
+      }
+      if ( dmp0 ) {
+        MKDPM(NV((DPM)a),dmp0,dr);
+        dr->sugar = ((DPM)a)->sugar;
+        *rp = (Obj)dr;
       } else
         *rp = 0;
 
