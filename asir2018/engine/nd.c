@@ -2703,6 +2703,16 @@ int comp_hn(P a, P b)
   }
 }
 
+/* return 1 if nd_psh[nh] is not divisible by any nd_psh[i] (i=0,...,nh-1) */
+int irredundant_check(int nh)
+{
+  int i;
+
+  for ( i = 0; i < nh; i++ )
+    if ( ndl_reducible(DL(nd_psh[nh]),DL(nd_psh[i])) ) return 0;
+  return 1;
+}
+
 void update_hpdata(HPDATA current,int nh)
 {
   NODE data1;
@@ -3324,7 +3334,7 @@ get_eg(&eg2);
       dlen += update_pairs_array_s(d,nh,syzlist);
       get_eg(&eg2); add_eg(&eg_updatepairs,&eg1,&eg2);
       nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
-      if ( nd_hpdata ) {
+      if ( nd_hpdata && irredundant_check(nh) ) {
         int dg,sugar0;
 
         get_eg(&eg1);
@@ -4300,6 +4310,34 @@ INLINE int __dl_redble(DL d1,DL d2,int nvar)
     return 1;
 }
 
+int ndpairs_compare(ND_pairs *a,ND_pairs *b)
+{
+  int ret;
+
+  ret = comp_sig((*a)->sig,(*b)->sig);
+  if ( ret != 0 )
+    return ret;
+  else
+    return DL_COMPARE((*a)->lcm,(*b)->lcm);
+}
+
+ND_pairs nd_sort_pairs_s(ND_pairs p)
+{
+  int i,n;
+  ND_pairs t,r;
+  ND_pairs *u;
+
+  for ( n = 0, t = p; t; t = NEXT(t), n++ );
+  u = (ND_pairs *)MALLOC(n*sizeof(ND_pairs));
+  for ( i = 0, t = p; t; t = NEXT(t), i++ ) u[i] = t;
+  qsort(u,n,sizeof(ND_pairs),(int (*)(const void *,const void *))ndpairs_compare);
+  r = 0;
+  for ( i = n-1; i >= 0; i++ ) {
+    u[i]->next = r; r = u[i];
+  }
+  return r;
+}
+
 ND_pairs nd_newpairs_s(int t, NODE *syz)
 {
   NODE s;
@@ -4327,11 +4365,13 @@ ND_pairs nd_newpairs_s(int t, NODE *syz)
         NEWND_pairs(sp);
         dup_ND_pairs(sp,_sp);
         r0 = insert_pair_s(r0,sp);
+        sp->next = r0; r0 = sp;
       } else
         Nsyz++;
     }
   }
   return r0;
+//  return nd_sort_pairs_s(r0);
 }
 
 int syzcheck(SIG sig,NODE *syz)
@@ -13784,7 +13824,7 @@ again :
     
         dlen += update_pairs_array_s(d,nh,syzlist);
         nd_sba_pos[sig->pos] = append_one(nd_sba_pos[sig->pos],nh);
-        if ( nd_hpdata ) {
+        if ( nd_hpdata && irredundant_check(nh) ) {
           int dg,sugar0;
   
           update_hpdata(&current_hpdata,nh);
