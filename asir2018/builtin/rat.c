@@ -51,6 +51,7 @@
 #include "parse.h"
 
 void Pnm(), Pdn(), Pderiv(), Pederiv(), Prderiv();
+void Plaurent_to_rat();
 
 struct ftab rat_tab[] = {
   {"nm",Pnm,1},
@@ -58,6 +59,7 @@ struct ftab rat_tab[] = {
   {"diff",Pderiv,-99999999},
   {"ediff",Pederiv,-99999999},
   {"rdiff",Prderiv,-99999999},
+  {"laurent_to_rat",Plaurent_to_rat,1},
   {0,0,0},
 };
 
@@ -184,4 +186,46 @@ void Pederiv(NODE arg,Obj *rp)
     ediffp(CO,(P)a,VR(v),(P *)&t); a = t;
   }
   *rp = a;
+}
+
+Obj laurent_to_rat(P p)
+{
+  VL vl,tvl;
+  P dn,pdn,v,vm,t;
+  R r;
+  Z m,d;
+
+  if ( p == 0 || NUM(p) ) return (Obj)p;
+  clctv(CO,p,&vl);
+  dn = (P)ONE;
+  for ( tvl = vl; tvl; tvl = NEXT(tvl) ) {
+    getmindeg(tvl->v,p,&d);
+    if ( cmpz(d,0) < 0 ) {
+      MKV(tvl->v,v);
+      chsgnz(d,&m);
+      pwrp(CO,v,m,&vm);
+      mulp(CO,dn,vm,&t); dn = t;
+    }
+  }
+  mulp(CO,p,dn,&pdn);
+  MKRAT(pdn,dn,1,r);
+  return (Obj)r;
+}
+
+void Plaurent_to_rat(NODE arg,Obj *rp)
+{
+  R a;
+  Obj nm,dn,r;
+
+  asir_assert(ARG0(arg),O_R,"laurent_to_rat");
+  a = (R)ARG0(arg);
+  if ( !a || NUM(a) ) *rp = (Obj)a;
+  else if ( POLY(a) ) {
+    *rp = laurent_to_rat((P)a);
+  } else {
+    nm = laurent_to_rat(a->nm);
+    dn = laurent_to_rat(a->dn);
+    divr(CO,nm,dn,&r);
+    reductr(CO,r,rp);
+  }
 }
