@@ -3019,7 +3019,7 @@ void parse_gr_option(LIST f,NODE opt,LIST *v,Num *homo,
       homo_is_set = 1;
     } else if ( !strcmp(key,"trace") ) {
       m = (Z)value;
-      STOZ(0x80000000,z);
+      UTOZ(0x80000000,z);
       if ( !m )
         *modular = 0;
       else if ( cmpz(m,z) >= 0 )
@@ -3078,7 +3078,7 @@ void Pdp_gr_main(NODE arg,LIST *rp)
     v = (LIST)ARG1(arg);
     homo = (Num)ARG2(arg);
     m = (Z)ARG3(arg);
-    STOZ(0x80000000,z);
+    UTOZ(0x80000000,z);
     if ( !m )
       modular = 0;
     else if ( cmpz(m,z) >= 0 )
@@ -3773,7 +3773,7 @@ void Pdp_weyl_gr_main(NODE arg,LIST *rp)
     v = (LIST)ARG1(arg);
     homo = (Num)ARG2(arg);
     m = (Z)ARG3(arg);
-    STOZ(0x80000000,z);
+    UTOZ(0x80000000,z);
     if ( !m )
       modular = 0;
     else if ( cmpz(m,z) >= 0 )
