@@ -95,7 +95,7 @@ void Pdpm_schreyer_frame(),Pdpm_set_schreyer_level();
 void Pdpm_list_to_array(),Pdpm_sp_nf(),Pdpm_insert_to_zlist();
 void Pdpm_hm(),Pdpm_ht(),Pdpm_hc(),Pdpm_hp(),Pdpm_rest(),Pdpm_shift(),Pdpm_split(),Pdpm_extract(),Pdpm_sort(),Pdpm_dptodpm(),Pdpm_redble();
 void Pdpm_schreyer_base(),Pdpm_simplify_syz(),Pdpm_td();
-void Pdpm_remove_cont(),Pdpm_ptozp(),Pdpm_prim();
+void Pdpm_remove_cont(),Pdpm_ptozp(),Pdpm_prim(),Pdpm_pos();
 
 void Pdp_weyl_red();
 void Pdp_weyl_sp();
@@ -150,6 +150,7 @@ struct ftab dp_tab[] = {
   {"dpm_ptozp",Pdpm_ptozp,1},
   {"dpm_remove_cont",Pdpm_remove_cont,1},
   {"dpm_prim",Pdpm_prim,1},
+  {"dpm_pos",Pdpm_pos,1},
 
 /* polynomial ring */
   /* special operations */
@@ -1024,6 +1025,22 @@ void Pdp_cont(NODE arg,Z *rp)
   dp_cont((DP)ARG0(arg),rp);
 }
 
+void Pdpm_pos(NODE arg,Z *rp)
+{
+  DPM p;
+  int pos;
+  Z z;
+
+  p = (DPM)ARG0(arg);
+  if ( p == 0 ) *rp = 0;
+  else {
+    asir_assert(p,O_DPM,"dpm_pos");
+    pos = BDY(p)->pos;
+    STOZ(pos,z);
+    *rp = z;
+  }
+}
+
 void dpm_ptozp(DPM p,Z *cont,DPM *r);
 
 void Pdpm_ptozp(NODE arg,DPM *rp)
@@ -1040,7 +1057,6 @@ void Pdpm_prim(NODE arg,DPM *rp)
   DPM t;
   Z cont;
 
-  asir_assert(ARG0(arg),O_DPM,"dpm_prim");
   dpm_prim((DPM)ARG0(arg),&t); dpm_ptozp(t,&cont,rp);
 }
   
