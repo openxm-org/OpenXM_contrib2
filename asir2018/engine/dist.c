@@ -1344,6 +1344,26 @@ void divsdc(VL vl,DP p,P c,DP *pr)
   }
 }
 
+void divsdpmc(VL vl,DPM p,P c,DPM *pr)
+{
+  DMM m,mr=0,mr0;
+
+  if ( !c )
+    error("disvsdc : division by 0");
+  else if ( !p )
+    *pr = 0;
+  else if ( OID(c) > O_P )
+    error("divsdpmc : invalid argument");
+  else {
+    for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+      NEXTDMM(mr0,mr); divsp(vl,(P)C(m),c,(P *)&C(mr)); mr->dl = m->dl; mr->pos = m->pos;
+    }
+    NEXT(mr) = 0; MKDPM(NV(p),mr0,*pr);
+    if ( *pr )
+      (*pr)->sugar = p->sugar;
+  }
+}
+
 void adddl(int n,DL d1,DL d2,DL *dr)
 {
   DL dt;

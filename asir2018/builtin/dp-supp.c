@@ -195,6 +195,77 @@ void dpm_ptozp(DPM p,Z *cont,DPM *rp)
   }
 }
 
+void dpm_monic_sf(DPM p,DPM *rp);
+
+void dpm_prim(DPM p,DPM *rp)
+{
+  P t,g;
+  DPM p1;
+  DMM m,mr,mr0;
+  int i,n;
+  P *w;
+  Q *c;
+  Z dvr;
+  NODE tn;
+
+  if ( !p )
+    *rp = 0;
+  else if ( dp_fcoeffs == N_GFS ) {
+    for ( m = BDY(p); m; m = NEXT(m) )
+      if ( OID(m->c) == O_N ) {
+        /* GCD of coeffs = 1 */
+        dpm_monic_sf(p,rp);
+        return;
+      } else break;
+    /* compute GCD over the finite fieid */
+    for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+    w = (P *)ALLOCA(n*sizeof(P));
+    for ( m = BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      w[i] = (P)m->c;
+    gcdsf(CO,w,n,&g);
+    if ( NUM(g) )
+      dpm_monic_sf(p,rp);
+    else {
+      for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+        NEXTDMM(mr0,mr); divsp(CO,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl; mr->pos = m->pos;
+      }
+      NEXT(mr) = 0; MKDPM(p->nv,mr0,p1); p1->sugar = p->sugar;
+      dpm_monic_sf(p1,rp);
+    }
+    return;
+  } else if ( dp_fcoeffs )
+    *rp = p;
+  else if ( NoGCD )
+    dpm_ptozp(p,&dvr,rp);
+  else {
+    dpm_ptozp(p,&dvr,&p1); p = p1;
+    for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
+    if ( n == 1 ) {
+      m = BDY(p);
+      NEWDMM(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
+      MKDPM(p->nv,mr,*rp); (*rp)->sugar = p->sugar;
+      return;
+    }
+    w = (P *)ALLOCA(n*sizeof(P));
+    c = (Q *)ALLOCA(n*sizeof(Q));
+    for ( m =BDY(p), i = 0; i < n; m = NEXT(m), i++ )
+      if ( NUM(m->c) ) {
+        c[i] = (Q)m->c; w[i] = (P)ONE;
+      } else
+        ptozp((P)m->c,1,&c[i],&w[i]);
+    qltozl(c,n,&dvr); heu_nezgcdnpz(CO,w,n,&t); mulp(CO,t,(P)dvr,&g);
+    if ( NUM(g) )
+      *rp = p;
+    else {
+      for ( mr0 = 0, m = BDY(p); m; m = NEXT(m) ) {
+        NEXTDMM(mr0,mr); divsp(CO,(P)m->c,g,(P *)&mr->c); mr->dl = m->dl; mr->pos = m->pos;
+      }
+      NEXT(mr) = 0; MKDPM(p->nv,mr0,*rp); (*rp)->sugar = p->sugar;
+      add_denomlist(g);
+    }
+  }
+}
+
 void dpm_ptozp2(DPM p0,DPM p1,DPM *hp,DPM *rp)
 {
   DPM t,s,h,r;
@@ -430,6 +501,20 @@ void dp_monic_sf(DP p,DP *rp)
   else {
     head_coef((P)BDY(p)->c,&c);
     divsdc(CO,p,(P)c,rp);
+  }
+}
+
+void divsdpmc(VL vl,DPM p,P c,DPM *pr);
+
+void dpm_monic_sf(DPM p,DPM *rp)
+{
+  Num c;
+
+  if ( !p )
+    *rp = 0;
+  else {
+    head_coef((P)BDY(p)->c,&c);
+    divsdpmc(CO,p,(P)c,rp);
   }
 }
 
