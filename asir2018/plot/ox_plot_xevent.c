@@ -708,10 +708,8 @@ static char *scalefont = "*-8-80-*";
 static char *scalefont_f = "fixed";
 
 void create_font() {
-  Font sfid;
-
   sffs = XLoadQueryFont(display,scalefont);
-  if ( !sfid )
+  if ( !sffs )
       sffs = XLoadQueryFont(display,scalefont_f);
   XSetFont(display,scaleGC,sffs->fid);
 }
