@@ -242,7 +242,7 @@ void dpm_prim(DPM p,DPM *rp)
     for ( m = BDY(p), n = 0; m; m = NEXT(m), n++ );
     if ( n == 1 ) {
       m = BDY(p);
-      NEWDMM(mr); mr->dl = m->dl; mr->c = (Obj)ONE; NEXT(mr) = 0;
+      NEWDMM(mr); mr->dl = m->dl; mr->pos = m->pos; mr->c = (Obj)ONE; NEXT(mr) = 0;
       MKDPM(p->nv,mr,*rp); (*rp)->sugar = p->sugar;
       return;
     }
