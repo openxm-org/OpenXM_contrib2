@@ -722,8 +722,8 @@ int readline_getc()
         char buf[BUFSIZ];
 
         if ( !readline_nc ) {
-                if ( readline_line )
-                        free(readline_line);
+                free(readline_line);
+				readline_line = NULL;
                 sprompt(buf);
                 readline_line = readline_console(buf);
                 readline_nc = strlen(readline_line);
