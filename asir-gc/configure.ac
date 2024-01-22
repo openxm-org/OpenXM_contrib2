@@ -8,7 +8,7 @@ AC_CANONICAL_HOST
 AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
-GC_CONFIGURE_ARGS="--prefix=${prefix} --disable-threads --enable-large-config --enable-static"
+GC_CONFIGURE_ARGS="--prefix=${prefix} --enable-threads=pthreads --enable-large-config --enable-static"
 if test -n "${host_alias}" ; then
     GC_CONFIGURE_ARGS="--host=${host_alias} ${GC_CONFIGURE_ARGS}"
 fi
