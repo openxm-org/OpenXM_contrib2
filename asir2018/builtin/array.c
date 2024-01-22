@@ -67,41 +67,52 @@
 
 extern int DP_Print; /* XXX */
 
-
-void Pnewvect(), Pnewmat(), Psepvect(), Psize(), Pdet(), Pleqm(), Pleqm1(), Pgeninvm(), Ptriangleq();
-void Pinvmat();
-void Pnewbytearray(),Pmemoryplot_to_coord();
-
-void Pgeneric_gauss_elim();
-void Pgeneric_gauss_elim_mod();
-
-void Pindep_rows_mod();
-
-void Pmat_to_gfmmat(),Plu_gfmmat(),Psolve_by_lu_gfmmat();
-void Pgeninvm_swap(), Premainder(), Psremainder(), Pvtol(), Pltov();
-void Pgeninv_sf_swap();
-void sepvect();
-void Pmulmat_gf2n();
-void Pbconvmat_gf2n();
-void Pmul_vect_mat_gf2n();
-void PNBmul_gf2n();
-void Pmul_mat_vect_int();
-void Psepmat_destructive();
-void Px962_irredpoly_up2();
-void Pirredpoly_up2();
-void Pnbpoly_up2();
-void Pqsort();
-void Pexponent_vector();
-void Pmat_swap_row_destructive();
-void Pmat_swap_col_destructive();
-void Pvect();
-void Pmat();
-void Pmatc();
-void Pnd_det();
-void Plu_mat();
-void Pmat_col();
-void Plusolve_prep();
-void Plusolve_main();
+void Plusolve_prep(NODE arg,Q *rp);
+void Plusolve_main(NODE arg,VECT *rp);
+void Pqsort(NODE arg,LIST *rp);
+void PNBmul_gf2n(NODE arg,GF2N *rp);
+void Pmul_vect_mat_gf2n(NODE arg,GF2N *rp);
+void Pbconvmat_gf2n(NODE arg,LIST *rp);
+void Pmulmat_gf2n(NODE arg,GF2MAT *rp);
+void Psepmat_destructive(NODE arg,LIST *rp);
+void Psepvect(NODE arg,VECT *rp);
+void Pnewvect(NODE arg,VECT *rp);
+void Pvect(NODE arg,VECT *rp);
+void Pexponent_vector(NODE arg,DP *rp);
+void Pnewbytearray(NODE arg,BYTEARRAY *rp);
+void Pmemoryplot_to_coord(NODE arg,LIST *rp);
+void Pnewmat(NODE arg,MAT *rp);
+void Pmat(NODE arg, MAT *rp);
+void Pmatc(NODE arg, MAT *rp);
+void Pvtol(NODE arg,LIST *rp);
+void Pltov(NODE arg,VECT *rp);
+void Premainder(NODE arg,Obj *rp);
+void Psremainder(NODE arg,Obj *rp);
+void Psize(NODE arg,LIST *rp);
+void Pdet(NODE arg,P *rp);
+void Pinvmat(NODE arg,LIST *rp);
+void Pgeneric_gauss_elim(NODE arg,LIST *rp);
+void Pindep_rows_mod(NODE arg,VECT *rp);
+void Pgeneric_gauss_elim_mod64(NODE arg,LIST *rp);
+void Pgeneric_gauss_elim_mod(NODE arg,LIST *rp);
+void Pleqm(NODE arg,VECT *rp);
+void Pleqm1(NODE arg,VECT *rp);
+void Pgeninvm(NODE arg,LIST *rp);
+void Psolve_by_lu_gfmmat(NODE arg,VECT *rp);
+void Plu_mat(NODE arg,LIST *rp);
+void Plu_gfmmat(NODE arg,LIST *rp);
+void Pmat_to_gfmmat(NODE arg,GFMMAT *rp);
+void Pgeninvm_swap(NODE arg,LIST *rp);
+void Pgeninv_sf_swap(NODE arg,LIST *rp);
+void Pmul_mat_vect_int(NODE arg,VECT *rp);
+void Pnbpoly_up2(NODE arg,GF2N *rp);
+void Px962_irredpoly_up2(NODE arg,GF2N *rp);
+void Pirredpoly_up2(NODE arg,GF2N *rp);
+void Pmat_swap_row_destructive(NODE arg, MAT *m);
+void Pmat_swap_col_destructive(NODE arg, MAT *m);
+void Pnd_det(NODE arg,P *rp);
+void Pmat_col(NODE arg,VECT *rp);
+void Ptriangleq(NODE arg,LIST *rp);
 
 struct ftab array_tab[] = {
 #if 0

@@ -2,19 +2,49 @@
 #include "ca.h"
 #include "parse.h"
 
-void Peval(), Psetprec(), Psetbprec(), Ptodouble(), Psetround();
-void Pmpfr_ai();
-void Pmpfr_eint(), Pmpfr_erf(), Pmpfr_erfc(), Pmpfr_li2();
-void Pmpfr_zeta();
-void Pmpfr_j0(), Pmpfr_j1();
-void Pmpfr_y0(), Pmpfr_y1();
-void Pmpfr_gamma(), Pmpfr_lngamma(), Pmpfr_digamma();
-void Pmpfr_floor(), Pmpfr_round(), Pmpfr_ceil();
-void Prk_ratmat();
-void mp_sin(),mp_cos(),mp_tan(),mp_asin(),mp_acos(),mp_atan();
-void mp_sinh(),mp_cosh(),mp_tanh(),mp_asinh(),mp_acosh(),mp_atanh();
-void mp_exp(),mp_log(),mp_pow();
-void mp_factorial(),mp_abs();
+void Ptodouble(NODE arg,Obj *rp);
+void Peval(NODE arg,Obj *rp);
+void Psetprec(NODE arg,Obj *rp);
+void Psetbprec(NODE arg,Obj *rp);
+void Psetround(NODE arg,Z *rp);
+void Pfac(NODE arg,Num *rp);;
+void Pmpfr_gamma(NODE arg,BF *rp);
+void Pmpfr_lngamma(NODE arg,BF *rp);
+void Pmpfr_digamma(NODE arg,BF *rp);
+void Pmpfr_zeta(NODE arg,BF *rp);
+void Pmpfr_eint(NODE arg,BF *rp);
+void Pmpfr_erf(NODE arg,BF *rp);
+void Pmpfr_erfc(NODE arg,BF *rp);
+void Pmpfr_j0(NODE arg,BF *rp);
+void Pmpfr_j1(NODE arg,BF *rp);
+void Pmpfr_y0(NODE arg,BF *rp);
+void Pmpfr_y1(NODE arg,BF *rp);
+void Pmpfr_li2(NODE arg,BF *rp);
+void Pmpfr_ai(NODE arg,BF *rp);
+void Pmpfr_floor(NODE arg,Z *rp);
+void Pmpfr_ceil(NODE arg,Z *rp);
+void Pmpfr_round(NODE arg,Z *rp);
+void Prk_ratmat(NODE arg,LIST *rp);
+void mp_pi(NODE arg,BF *rp);
+void mp_e(NODE arg,BF *rp);
+void mpfr_or_mpc(NODE arg,int (*mpfr_f)(),int (*mpc_f)(),Num *rp);
+void mp_sin(NODE arg,Num *rp);
+void mp_cos(NODE arg,Num *rp);
+void mp_tan(NODE arg,Num *rp);
+void mp_asin(NODE arg,Num *rp);
+void mp_acos(NODE arg,Num *rp);
+void mp_atan(NODE arg,Num *rp);
+void mp_sinh(NODE arg,Num *rp);
+void mp_cosh(NODE arg,Num *rp);
+void mp_tanh(NODE arg,Num *rp);
+void mp_asinh(NODE arg,Num *rp);
+void mp_acosh(NODE arg,Num *rp);
+void mp_atanh(NODE arg,Num *rp);
+void mp_exp(NODE arg,Num *rp);
+void mp_log(NODE arg,Num *rp);
+void mp_abs(NODE arg,Num *rp);
+void mp_factorial(NODE arg,Num *rp);
+void mp_pow(NODE arg,Num *rp);
 
 struct ftab bf_tab[] = {
   {"eval",Peval,-2},

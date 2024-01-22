@@ -55,9 +55,7 @@ extern int StrassenSize;
 void mulmatmat_miser();
 */
 
-void addmat(vl,a,b,c)
-VL vl;
-MAT a,b,*c;
+void addmat(VL vl,MAT a,MAT b,MAT *c)
 {
   int row,col,i,j;
   MAT t;
@@ -80,9 +78,7 @@ MAT a,b,*c;
   }
 }
 
-void submat(vl,a,b,c)
-VL vl;
-MAT a,b,*c;
+void submat(VL vl,MAT a,MAT b,MAT *c)
 {
   int row,col,i,j;
   MAT t;
@@ -106,10 +102,7 @@ MAT a,b,*c;
 }
 
 /* remove miser type
-void addmat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
-VL vl;
-MAT a,b,*c;
-int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
+void addmat_miser(VL vl,MAT a,MAT b,MAT *c,int ar0,int ac0,int ar1,int ac1,int br0,int bc0,int br1,int bc1)
 {
   int row,col,i,j;
   MAT t;
@@ -153,10 +146,7 @@ int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
   }
 }
 
-void submat_miser(vl,a,b,c,ar0,ac0,ar1,ac1,br0,bc0,br1,bc1)
-VL vl;
-MAT a,b,*c;
-int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
+void submat_miser(VL vl,MAT a,MAT b,MAT *c,int ar0,int ac0,int ar1,int ac1,int br0,int bc0,int br1,int bc1)
 {
   int row,col,i,j;
   MAT t;
@@ -202,9 +192,7 @@ int ar0,ac0,ar1,ac1,br0,bc0,br1,bc1;
 }
 */
 
-void mulmat(vl,a,b,c)
-VL vl;
-Obj a,b,*c;
+void mulmat(VL vl,Obj a,Obj b,Obj *c)
 {
   VECT vect;
   MAT mat;
@@ -259,9 +247,7 @@ Obj a,b,*c;
     }
 }  
 
-void divmat(vl,a,b,c)
-VL vl;
-Obj a,b,*c;
+void divmat(VL vl,Obj a,Obj b,Obj *c)
 {
   Obj t;
 
@@ -276,8 +262,7 @@ Obj a,b,*c;
   }
 }  
 
-void chsgnmat(a,b)
-MAT a,*b;
+void chsgnmat(MAT a,MAT *b)
 {
   MAT t;
   int row,col,i,j;
@@ -296,11 +281,7 @@ MAT a,*b;
   } 
 }
 
-void pwrmat(vl,a,r,c)
-VL vl;
-MAT a;
-Obj r;
-MAT *c;
+void pwrmat(VL vl,MAT a,Obj r,MAT *c)
 {
   int n,i;
   MAT t;
@@ -326,11 +307,7 @@ MAT *c;
     pwrmatmain(vl,a,ZTOS((Q)r),c);
 }
 
-void pwrmatmain(vl,a,e,c)
-VL vl;
-MAT a;
-int e;
-MAT *c;
+void pwrmatmain(VL vl,MAT a,int e,MAT *c)
 {
   MAT t,s;
 
@@ -347,10 +324,7 @@ MAT *c;
     *c = s;
 }
 
-void mulrmat(vl,a,b,c)
-VL vl;
-Obj a;
-MAT b,*c;
+void mulrmat(VL vl,Obj a,MAT b,MAT *c)
 {
   int row,col,i,j;
   MAT t;
@@ -369,9 +343,7 @@ MAT b,*c;
   }
 }
 
-void mulmatmat(vl,a,b,c)
-VL vl;
-MAT a,b,*c;
+void mulmatmat(VL vl,MAT a,MAT b,MAT *c)
 {
   int arow,bcol,i,j,k,m, h, arowh, bcolh;
   MAT t, a11, a12, a21, a22;
@@ -794,11 +766,7 @@ int ar0, ac0, ar1, ac1, br0, bc0, br1, bc1;
 }
 #endif
 
-void mulmatvect(vl,a,b,c)
-VL vl;
-MAT a;
-VECT b;
-VECT *c;
+void mulmatvect(VL vl,MAT a,VECT b,VECT *c)
 {
   int arow,i,j,m;
   VECT t;
@@ -827,11 +795,7 @@ VECT *c;
   }
 }
 
-void mulvectmat(vl,a,b,c)
-VL vl;
-VECT a;
-MAT b;
-VECT *c;
+void mulvectmat(VL vl,VECT a,MAT b,VECT *c)
 {
   int bcol,i,j,m;
   VECT t;
@@ -857,9 +821,7 @@ VECT *c;
   }
 }
 
-int compmat(vl,a,b)
-VL vl;
-MAT a,b;
+int compmat(VL vl,MAT a,MAT b)
 {
   int i,j,t,row,col;
 
@@ -881,8 +843,7 @@ MAT a,b;
   }
 }
 
-pointer **almat_pointer(n,m)
-int n,m;
+pointer **almat_pointer(int n,int m)
 {
   pointer **mat;
   int i;

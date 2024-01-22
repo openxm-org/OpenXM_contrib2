@@ -55,7 +55,7 @@
 #include <X11/Xaw/MenuButton.h>
 #include <X11/Xaw/Paned.h>
 
-static void Quit();
+static void Quit(Widget w, XEvent *ev, String *params,Cardinal *nparams);
 static void print_canvas(Widget w, struct canvas *can, XtPointer calldata);
 static void output_to_printer(Widget w, struct canvas *can, XtPointer calldata);
 static void print_canvas_to_file(Widget w, struct canvas *can, XtPointer calldata);
@@ -64,6 +64,7 @@ void clear_pixmap(struct canvas *);
 void create_gc();
 void create_font();
 void create_cursors();
+Cursor create_cursor(char *image,char *mask,int width,int height,int xhot,int yhot,XColor *fg,XColor *bg);
 void copy_to_canvas(struct canvas *can);
 void draw_level(struct canvas *can,int index,GC gc);
 void draw_frame(Window window,POINT spos,POINT opos,POINT epos);
@@ -76,7 +77,20 @@ int search_canvas();
 int search_active_canvas();
 void PSFromImage(FILE *fp,XImage *image,struct canvas *can);
 
-
+void popup_canvas(int index);
+void destroy_canvas(Widget w,struct canvas *can,XtPointer calldata);
+void precise_canvas(Widget w,struct canvas *can,XtPointer calldata);
+void wide_canvas(Widget w,struct canvas *can,XtPointer calldata);
+void noaxis_canvas(Widget w,struct canvas *can,XtPointer calldata);
+void toggle_button(Widget w,int flag);
+void draw_wideframe(struct canvas *can);
+void create_popup(Widget parent,char *name,char *str,Widget *shell,Widget *dialog);
+void warning(struct canvas *can,char *s);
+void popdown_warning(Widget w,XtPointer client,XtPointer call);
+void show_formula(Widget w,struct canvas *can,XtPointer calldata);
+void popdown_formula(Widget w,Widget fbutton,XtPointer call);
+void create_canvas(struct canvas *can);
+void alloc_pixmap(struct canvas *can);
 
 static Atom wm_delete_window;
 
@@ -147,7 +161,7 @@ static struct PlotResources {
 
 Pixel BackPixel;
 
-Cursor create_cursor();
+// Cursor create_cursor();
 
 #define blackPixel  BlackPixel(display,scrn)
 #define whitePixel  WhitePixel(display,scrn)
@@ -459,7 +473,6 @@ void create_popup(Widget parent,char *name,char *str,Widget *shell,Widget *dialo
 
 void warning(struct canvas *can,char *s)
 {
-  void popdown_warning();
   Widget warnshell,warndialog;
 
   if ( !can->shell )
@@ -477,13 +490,12 @@ void popdown_warning(Widget w,XtPointer client,XtPointer call)
 
 void show_formula(Widget w,struct canvas *can,XtPointer calldata)
 {
-  void popdown_formula();
   Widget fshell,fdialog;
   char buf[BUFSIZ];
 
   soutput_init(buf); sprintexpr(CO,(Obj)can->formula);
   create_popup(can->shell,"formula",buf,&fshell,&fdialog);
-  XawDialogAddButton(fdialog,"dismiss",popdown_formula,w);
+  XawDialogAddButton(fdialog,"dismiss",(XtCallbackProc)popdown_formula,w);
   XtSetSensitive(w,False); XtPopup(fshell,XtGrabNone);
   SetWM_Proto(fshell);
 }
@@ -765,11 +777,11 @@ void create_cursors() {
 
   XAllocColor(display,DefaultColormap(display,scrn),&fg);
   XAllocColor(display,DefaultColormap(display,scrn),&bg);
-  normalcur = create_cursor(h_bits,h_m_bits,h_width,h_height,
+  normalcur = create_cursor((char *)h_bits,(char *)h_m_bits,h_width,h_height,
     h_x_hot,h_y_hot,&fg,&bg);
-  runningcur = create_cursor(ht_bits,ht_m_bits,ht_width,ht_height,
+  runningcur = create_cursor((char *)ht_bits,(char *)ht_m_bits,ht_width,ht_height,
     ht_width/2,ht_height/2,&fg,&bg);
-  errorcur = create_cursor(m_bits,m_m_bits,m_width,m_height,
+  errorcur = create_cursor((char *)m_bits,(char *)m_m_bits,m_width,m_height,
     m_width/2,m_height/2,&fg,&bg);
 }
 

@@ -50,8 +50,9 @@
 #include "ca.h"
 #include "parse.h"
 
-void Ptype(), Pntype();
-void Preadarray();
+void Ptype(NODE arg,Obj *rp);
+void Pntype(NODE arg,Obj *rp);
+void Preadarray(NODE arg,VECT *rp);
 
 struct ftab type_tab[] = {
   {"type",Ptype,1},
@@ -60,9 +61,7 @@ struct ftab type_tab[] = {
   {0,0,0},
 };
 
-void Ptype(arg,rp)
-NODE arg;
-Obj *rp;
+void Ptype(NODE arg,Obj *rp)
 {
   Obj t;
   Z q;
@@ -73,9 +72,7 @@ Obj *rp;
     *rp = 0;
 }
 
-void Pntype(arg,rp)
-NODE arg;
-Obj *rp;
+void Pntype(NODE arg,Obj *rp)
 {
   Obj t;
   Z q;

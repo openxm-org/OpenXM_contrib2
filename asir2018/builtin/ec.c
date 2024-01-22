@@ -67,16 +67,17 @@ struct oKeyIndexPair {
   int index;
 };
 
-void Psha1();
-void Psha1_ec();
-void Pecm_add_ff();
-void Pecm_chsgn_ff();
-void Pecm_sub_ff();
-void Pecm_compute_all_key_homo_ff();
-void Pnextvect1(),Psort_ktarray(),Pecm_find_match(),Pseparate_vect();
-void Pecm_set_addcounter();
-void Pecm_count_order();
-
+void Psha1(NODE arg,Z *rp);
+void Pecm_count_order(NODE arg,Z *rp);
+void Pecm_set_addcounter(NODE arg,Z *rp);
+void Pecm_compute_all_key_homo_ff(NODE arg,VECT *rp);
+void Psort_ktarray(NODE arg,LIST *rp);
+void Pecm_add_ff(NODE arg,VECT *rp);
+void Pecm_sub_ff(NODE arg,VECT *rp);
+void Pecm_chsgn_ff(NODE arg,VECT *rp);
+void Pnextvect1(NODE arg,Z *rp);
+void Pseparate_vect(NODE arg,LIST *rp);
+void Pecm_find_match(NODE arg,LIST *rp);
 void ecm_add_ff(VECT,VECT,VECT,VECT *);
 void ecm_add_gfp(VECT,VECT,VECT,VECT *);
 void ecm_add_gf2n(VECT,VECT,VECT,VECT *);
@@ -151,9 +152,7 @@ void Psha1(NODE arg,Z *rp)
 }
 
 #if 0
-void Psha1_ec(arg,rp)
-NODE arg;
-Q *rp;
+void Psha1_ec(NODE arg,Q *rp)
 {
 #include <fj_crypt.h>
   SHS_CTX context;

@@ -51,13 +51,13 @@
 #include "parse.h"
 #include "comp.h"
 
-void Parfreg();
-void Pstruct_type();
-void Prange();
-void Pget_element_at();
-void Pput_element_at();
-void Pget_element_names();
-void Pget_struct_name();
+void Pget_element_at(NODE arg,Obj *rp);
+void Pput_element_at(NODE arg,Obj *rp);
+void Pget_element_names(NODE arg,LIST *rp);
+void Pget_struct_name(NODE arg,STRING *rp);
+void Pstruct_type(NODE arg,Z *rp);
+void Parfreg(NODE arg,Z *rp);
+void Prange(NODE arg,RANGE *rp);
 
 struct ftab comp_tab[] = {
   {"arfreg",Parfreg,8},

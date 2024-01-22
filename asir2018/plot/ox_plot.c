@@ -93,7 +93,7 @@ LIST asir_GetErrorList();
 
 static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
-static void asir_executeFunction();
+static void asir_executeFunction(int serial);
 
 int Im_ox_plot;
 

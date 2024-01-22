@@ -53,7 +53,7 @@
 #include "version.h"
 
 char *find_asirrc();
-int asir_ox_init();
+int asir_ox_init(int byteorder);
 
 /* environement is defined in libpari.a */
 #if 0

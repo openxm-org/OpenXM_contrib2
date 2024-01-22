@@ -50,7 +50,9 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pconj(),Preal(),Pimag();
+void Pconj(NODE arg,Obj *rp);
+void Preal(NODE arg,Obj *rp);
+void Pimag(NODE arg,Obj *rp);
 
 void cplx_conj(Obj,Obj *);
 void cplx_real(Obj,Obj *);
@@ -63,30 +65,22 @@ struct ftab cplx_tab[] = {
   {0,0,0},
 };
 
-void Pconj(arg,rp)
-NODE arg;
-Obj *rp;
+void Pconj(NODE arg,Obj *rp)
 {
   cplx_conj((Obj)ARG0(arg),rp);
 }
 
-void Preal(arg,rp)
-NODE arg;
-Obj *rp;
+void Preal(NODE arg,Obj *rp)
 {
   cplx_real((Obj)ARG0(arg),rp);
 }
 
-void Pimag(arg,rp)
-NODE arg;
-Obj *rp;
+void Pimag(NODE arg,Obj *rp)
 {
   cplx_imag((Obj)ARG0(arg),rp);
 }
 
-void cplx_conj(p,r)
-Obj p;
-Obj *r;
+void cplx_conj(Obj p,Obj *r)
 {
   C c;
   DCP dc,dcr,dcr0;
@@ -116,9 +110,7 @@ Obj *r;
     }
 }
 
-void cplx_real(p,r)
-Obj p;
-Obj *r;
+void cplx_real(Obj p,Obj *r)
 {
   DCP dc,dcr,dcr0;
   P t;
@@ -151,9 +143,7 @@ Obj *r;
     }
 }
 
-void cplx_imag(p,r)
-Obj p;
-Obj *r;
+void cplx_imag(Obj p,Obj *r)
 {
   DCP dc,dcr,dcr0;
   P t;

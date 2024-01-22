@@ -50,8 +50,12 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pvar(), Pvars(), Puc(), Pvars_recursive(),Psimple_is_eq();
-void Pdelete_uc();
+void Psimple_is_eq(NODE arg,Z *rp);
+void Pvar(NODE arg,Obj *rp);
+void Pvars(NODE arg,LIST *rp);
+void Pvars_recursive(NODE arg,LIST *rp);
+void Puc(Obj *p);
+void Pdelete_uc(NODE arg,Obj *p);
 
 struct ftab var_tab[] = {
   {"var",Pvar,1},

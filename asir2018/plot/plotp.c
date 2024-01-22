@@ -562,7 +562,7 @@ void pline(DISPLAY *display,struct canvas *can,DRAWABLE d){
   double w,w1,e,n;
   int x0,y0,x,y,xadj,yadj;
   char buf[BUFSIZ];
-  double adjust_scale();
+  double adjust_scale(double e,double w);
 
   /* XXX : should be cleaned up */
   if ( can->noaxis || (can->mode==modeNO(PLOT)&& !can->pa) )

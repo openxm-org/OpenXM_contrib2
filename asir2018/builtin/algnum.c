@@ -50,15 +50,27 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pdefpoly(), Pnewalg(), Pmainalg(), Palgtorat(), Prattoalg(), Pgetalg();
-void Palg(), Palgv(), Pgetalgtree();
-void Pinvalg_le();
-void Pset_field(),Palgtodalg(),Pdalgtoalg();
-void Pinv_or_split_dalg();
-void Pdalgtoup();
-void Pget_field_defpoly();
-void Pget_field_generator();
 
+void Pset_field(NODE arg,Q *rp);
+void Palgtodalg(NODE arg,DAlg *rp);
+void Pdalgtoalg(NODE arg,Alg *rp);
+void Pdalgtodp(NODE arg,LIST *r);
+void Pdptodalg(NODE arg,DAlg *r);
+void Pdalgtoup(NODE arg,LIST *r);
+void Pget_field_defpoly(NODE arg,DAlg *r);
+void Pget_field_generator(NODE arg,DAlg *r);
+void Pinv_or_split_dalg(NODE arg,Obj *rp);
+void Pnewalg(NODE arg,Alg *rp);
+void Pdefpoly(NODE arg,P *rp);
+void Pmainalg(NODE arg,Alg *r);
+void Palgtorat(NODE arg,Obj *rp);
+void Prattoalg(NODE arg,Alg *rp);
+void Pgetalg(NODE arg,LIST *rp);
+void Pgetalgtree(NODE arg,LIST *rp);
+void Palg(NODE arg,Alg *rp);
+void Palgv(NODE arg,Obj *rp);
+void Pinvalg_chrem(NODE arg,LIST *r);
+void Pinvalg_le(NODE arg,LIST *r);
 void mkalg(P,Alg *);
 int cmpalgp(P,P);
 void algptop(P,P *);
@@ -67,9 +79,6 @@ void rattoalg(Obj,Alg *);
 void ptoalgp(P,P *);
 void clctalg(P,VL *);
 void get_algtree(Obj f,VL *r);
-void Pinvalg_chrem();
-void Pdalgtodp();
-void Pdptodalg();
 
 struct ftab alg_tab[] = {
   {"set_field",Pset_field,-3},
@@ -267,9 +276,7 @@ void Pinv_or_split_dalg(NODE arg,Obj *rp)
   }
 }
 
-void Pnewalg(arg,rp)
-NODE arg;
-Alg *rp;
+void Pnewalg(NODE arg,Alg *rp)
 {
   P p;
   VL vl;
@@ -287,9 +294,7 @@ Alg *rp;
   mkalg(p,rp);
 }
 
-void mkalg(p,r)
-P p;
-Alg *r;
+void mkalg(P p,Alg *r)
 {
   VL vl,mvl,nvl;
   V a,tv;
@@ -334,8 +339,7 @@ Alg *r;
   MKV(a,x); MKAlg(x,*r);
 }
 
-int cmpalgp(p,defp)
-P p,defp;
+int cmpalgp(P p,P defp)
 {
   DCP dc,dcd;
   P t;
@@ -354,17 +358,13 @@ P p,defp;
     return 0;
 }
 
-void Pdefpoly(arg,rp)
-NODE arg;
-P *rp;
+void Pdefpoly(NODE arg,P *rp)
 {
   asir_assert(ARG0(arg),O_N,"defpoly");
   algptop((P)VR((P)BDY((Alg)ARG0(arg)))->attr,rp);
 }
 
-void Pmainalg(arg,r)
-NODE arg;
-Alg *r;
+void Pmainalg(NODE arg,Alg *r)
 {
   Num c;
   V v;
@@ -378,25 +378,19 @@ Alg *r;
   }
 }
 
-void Palgtorat(arg,rp)
-NODE arg;
-Obj *rp;
+void Palgtorat(NODE arg,Obj *rp)
 {
   asir_assert(ARG0(arg),O_N,"algtorat");
   algtorat((Num)ARG0(arg),rp);
 }
 
-void Prattoalg(arg,rp)
-NODE arg;
-Alg *rp;
+void Prattoalg(NODE arg,Alg *rp)
 {
   asir_assert(ARG0(arg),O_R,"rattoalg");
   rattoalg((Obj)ARG0(arg),rp);
 }
 
-void Pgetalg(arg,rp)
-NODE arg;
-LIST *rp;
+void Pgetalg(NODE arg,LIST *rp)
 {
   Obj t;
   P p;
@@ -424,9 +418,7 @@ LIST *rp;
   MKLIST(*rp,n0);
 }
 
-void Pgetalgtree(arg,rp)
-NODE arg;
-LIST *rp;
+void Pgetalgtree(NODE arg,LIST *rp)
 {
   Obj t;
   P p;
@@ -462,9 +454,7 @@ LIST *rp;
   MKLIST(*rp,n0);
 }
 
-void clctalg(p,vl)
-P p;
-VL *vl;
+void clctalg(P p,VL *vl)
 {
   int n,i;
   VL tvl;
@@ -493,9 +483,7 @@ VL *vl;
   vntovl(vn1,n,vl);
 }
 
-void Palg(arg,rp)
-NODE arg;
-Alg *rp;
+void Palg(NODE arg,Alg *rp)
 {
   Q a;
   VL vl;
@@ -515,9 +503,7 @@ Alg *rp;
   }
 }
 
-void Palgv(arg,rp)
-NODE arg;
-Obj *rp;
+void Palgv(NODE arg,Obj *rp)
 {
   Q a;
   VL vl;
@@ -538,8 +524,7 @@ Obj *rp;
   }
 }
 
-void algptop(p,r)
-P p,*r;
+void algptop(P p,P *r)
 {
   DCP dc,dcr,dcr0;
 
@@ -554,9 +539,7 @@ P p,*r;
   }
 }
 
-void algtorat(n,r)
-Num n;
-Obj *r;
+void algtorat(Num n,Obj *r)
 {
   Obj obj;
   P nm,dn;
@@ -574,9 +557,7 @@ Obj *r;
   }  
 }
 
-void rattoalg(obj,n)
-Obj obj;
-Alg *n;
+void rattoalg(Obj obj,Alg *n)
 {
   P nm,dn;
   Obj t;
@@ -591,8 +572,7 @@ Alg *n;
   }
 }
 
-void ptoalgp(p,r)
-P p,*r;
+void ptoalgp(P p,P *r)
 {
   DCP dc,dcr,dcr0;
 

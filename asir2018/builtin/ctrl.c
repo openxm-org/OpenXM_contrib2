@@ -77,7 +77,7 @@ static struct {
 #endif
 } sysinfo;
 
-void Pctrl();
+void Pctrl(NODE arg,Obj *rp);
 void Psysinfo(LIST *rp);
 static void get_sysinfo();
 

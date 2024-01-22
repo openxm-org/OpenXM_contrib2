@@ -51,8 +51,12 @@
 #include "parse.h"
 #include <limits.h>
 
-void Ptime(), Pcputime(), Pcurrenttime(), Ptstart(), Ptstop();
-void Pdcurrenttime();
+void Pcurrenttime(Z *rp);
+void Pdcurrenttime(Real *rp);
+void Ptstart(pointer *rp);
+void Ptstop(pointer *rp);
+void Pcputime(NODE arg,pointer *rp);
+void Ptime(LIST *listp);
 
 struct ftab time_tab[] = {
   {"time",Ptime,0},

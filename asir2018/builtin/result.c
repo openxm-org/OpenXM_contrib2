@@ -50,7 +50,9 @@
 #include "ca.h"
 #include "parse.h"
 
-void Presult(), Psrcr(), Pnd_res();
+void Pnd_res(NODE arg,P *rp);
+void Presult(NODE arg,P *rp);
+void Psrcr(NODE arg,P *rp);
 
 struct ftab result_tab[] = {
   {"res",Presult,-4},

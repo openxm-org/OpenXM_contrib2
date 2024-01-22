@@ -64,24 +64,41 @@
 #include <sys/param.h>
 #endif
 
-void Pgetcwd(), Pchdir();
-void Pset_secure_mode();
-void Pset_secure_flag();
-void Pquit(), Pdebug(), Pnmono(), Pnez(), Popt(), Pshell(), Pheap();
-void Ptoplevel();
-void Perror(), Perror3(), Pversion(), Pcopyright(), Pflist(), Pdelete_history(), Ppause(), Pxpause();
-void Pr2g(), Pread_cmo(), Pwrite_cmo();
-void Pgc(),Pbatch(),Psend_progress();
-void Pnull_command();
-void Pgetenv();
-void Pget_addr(),Phex_dump();
-void Ppeek(),Ppoke();
-void Psleep();
-void Premove_module();
-void Pmodule_list();
-void Pmodule_definedp();
-void Ptest();
 
+void Pgetcwd(STRING *rp);
+void Pchdir(NODE arg, Z *rp);
+void Pset_secure_mode(NODE arg,Z *rp);
+void Pset_secure_flag(NODE arg,Z *rp);
+void Ptest(NODE arg,Z *rp);
+void Psleep(NODE arg,Z *rp);
+void Pmodule_list(LIST *rp);
+void Premove_module(NODE arg,Z *rp);
+void Pmodule_definedp(NODE arg,Z *rp);
+void Pgetenv(NODE arg,STRING *rp);
+void Pnull_command(NODE arg,Z *rp);
+void Pquit(pointer *rp);
+void Pdebug(pointer *rp);
+void Pshell(NODE arg,Z *rp);
+void Pnmono(NODE arg,Z *rp);
+void Pheap(NODE arg,Z *rp);
+void Pversion(NODE arg,Obj *rp);
+void Pcopyright(STRING *rp);
+void Pnez(NODE arg,Z *rp);
+void Perror(NODE arg,Z *rp);
+void Ptoplevel(NODE arg,Z *rp);
+void Perror3(NODE arg,Z *rp);
+void Pflist(NODE arg,LIST *rp);
+void Pdelete_history(NODE arg,Z *rp);
+void Ppause(LIST *rp);
+void Pgc(LIST *rp);
+void Pbatch(NODE arg,Z *rp);
+void Pxpause(Z *rp);
+void Psend_progress(NODE arg,Z *rp);
+void Pget_addr(NODE arg,Z *rp);
+void Phex_dump(NODE arg,Z *rp);
+void Ppeek(NODE arg,Z *rp);
+void Ppoke(NODE arg,Z *rp);
+void Popt(NODE arg,Z *rp);
 void delete_history(int,int);
 void grab_pointer();
 
@@ -213,8 +230,7 @@ void Psleep(NODE arg,Z *rp)
   *rp = ONE;
 }
 
-void Pmodule_list(rp)
-LIST *rp;
+void Pmodule_list(LIST *rp)
 {
   char *name;
   NODE r,r1,m;
@@ -284,8 +300,7 @@ void Pnull_command(NODE arg,Z *rp)
   *rp = 0;
 }
 
-void Pquit(rp)
-pointer *rp;
+void Pquit(pointer *rp)
 {
   if ( asir_infile && NEXT(asir_infile) && asir_infile->ready_for_longjmp )
     LONGJMP(asir_infile->jmpbuf,1);
@@ -296,8 +311,7 @@ pointer *rp;
   *rp = 0;
 }
 
-void Pdebug(rp)
-pointer *rp;
+void Pdebug(pointer *rp)
 {
   debug(0); *rp = 0;
 }
@@ -379,8 +393,7 @@ void Pversion(NODE arg,Obj *rp)
 
 char *scopyright();
 
-void Pcopyright(rp)
-STRING *rp;
+void Pcopyright(STRING *rp)
 {
   MKSTR(*rp,scopyright());
 }
@@ -490,8 +503,7 @@ void Pdelete_history(NODE arg,Z *rp)
   *rp = 0;
 }
 
-void delete_history(start,n)
-int start,n;
+void delete_history(int start,int n)
 {
   int i,max;
 
@@ -504,8 +516,7 @@ int start,n;
     APVS->va[start+i].priv = 0;
 }
 
-void Ppause(rp)
-LIST *rp;
+void Ppause(LIST *rp)
 {
   char buf[BUFSIZ];
 
@@ -513,8 +524,7 @@ LIST *rp;
   *rp = 0;
 }
 
-void Pgc(rp)
-LIST *rp;
+void Pgc(LIST *rp)
 {
   GC_gcollect();
   *rp = 0;

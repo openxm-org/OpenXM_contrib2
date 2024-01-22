@@ -80,39 +80,66 @@ struct TeXSymbol {
 
 extern char *parse_strp;
 
-void Psprintf();
-void Prtostr(), Pstrtov(), Peval_str();
-void Pstrtoascii(), Pasciitostr();
-void Pstr_len(), Pstr_chr(), Psub_str();
-void Pwrite_to_tb();
-void Ptb_to_string();
-void Pclear_tb();
-void Pstring_to_tb();
-void Pquotetotex_tb();
-void Pquotetotex();
-void Pquotetotex_env();
-void Pflatten_quote();
+void Pquotetotex_env(NODE arg,Obj *rp);
+void Pwrite_to_tb(NODE arg,Q *rp);
+void Pqt_to_nary(NODE arg,QUOTE *rp);
+void Pqt_to_bin(NODE arg,QUOTE *rp);
+void Pqt_is_var(NODE arg,Z *rp);
+void Pqt_is_coef(NODE arg,Z *rp);
+void Pqt_is_number(NODE arg,Z *rp);
+void Pqt_is_rational(NODE arg,Z *rp);
+void Pqt_is_integer(NODE arg,Z *rp);
+void Pqt_is_function(NODE arg,Z *rp);
+void Pqt_is_dependent(NODE arg,Z *rp);
+void Pqt_match(NODE arg,Z *rp);
+void Pnqt_match(NODE arg,Z *rp);
+void Pnqt_match_rewrite(NODE arg,Obj *rp);
+void Pquotetotex(NODE arg,STRING *rp);
+void Pquotetotex_tb(NODE arg,Q *rp);
+void Pstring_to_tb(NODE arg,TB *rp);
+void Ptb_to_string(NODE arg,STRING *rp);
+void Pclear_tb(NODE arg,Q *rp);
+void Pstr_len(NODE arg,Z *rp);
+void Pstr_chr(NODE arg,Z *rp);
+void Psub_str(NODE arg,STRING *rp);
+void Pstrtoascii(NODE arg,LIST *rp);
+void Pasciitostr(NODE arg,STRING *rp);
+void Peval_str(NODE arg,Obj *rp);
+void Prtostr(NODE arg,STRING *rp);
+void Pstrtov(NODE arg,P *rp);
+void Pget_function_name(NODE arg,STRING *rp);
+void Psprintf(NODE arg,STRING *rp);
+void Pflatten_quote(NODE arg,Obj *rp);
+void Pget_quote_id(NODE arg,Z *rp);
+void Pquote_to_funargs(NODE arg,LIST *rp);
+void Pfunargs_to_quote(NODE arg,QUOTE *rp);
+void Pqt_set_ord(NODE arg,LIST *rp);
+void Pqt_set_weight(NODE arg,LIST *rp);
+void Pqt_set_coef(NODE arg,LIST *rp);
+void Pqt_normalize(NODE arg,QUOTE *rp);
+void Pqt_to_nbp(NODE arg,NBP *rp);
+void Pshuffle_mul(NODE arg,NBP *rp);
+void Pharmonic_mul(NODE arg,NBP *rp);
+void Pnbp_hm(NODE arg, NBP *rp);
+void Pnbp_ht(NODE arg, NBP *rp);
+void Pnbp_hc(NODE arg, P *rp);
+void Pnbp_rest(NODE arg, NBP *rp);
+void Pnbp_tm(NODE arg, NBP *rp);
+void Pnbp_tt(NODE arg, NBP *rp);
+void Pnbp_tc(NODE arg, P *rp);
+void Pnbp_trest(NODE arg, NBP *rp);
+void Pnbm_deg(NODE arg, Z *rp);
+void Pnbm_index(NODE arg, Z *rp);
+void Pnbm_hp_rest(NODE arg, LIST *rp);
+void Pnbm_hxky(NODE arg, NBP *rp);
+void Pnbm_xky_rest(NODE arg,NBP *rp);
+void Pnbm_hv(NODE arg, NBP *rp);
+void Pnbm_rest(NODE arg, NBP *rp);
+void Pnbm_tv(NODE arg, NBP *rp);
+void Pnbm_trest(NODE arg, NBP *rp);
+void Pnqt_weight(NODE arg,Z *rp);
+void Pnqt_comp(NODE arg,Z *rp);
 
-void Pqt_is_integer(),Pqt_is_rational(),Pqt_is_number(),Pqt_is_coef();
-void Pqt_is_dependent(),Pqt_is_function(),Pqt_is_var();
-void Pqt_set_ord(),Pqt_set_coef(),Pqt_set_weight();
-void Pqt_normalize();
-void Pnqt_comp(),Pnqt_weight();
-void Pnqt_match();
-void Pnqt_match_rewrite();
-
-void Pqt_to_nbp();
-void Pshuffle_mul(), Pharmonic_mul();
-void Pnbp_hm(), Pnbp_ht(), Pnbp_hc(), Pnbp_rest();
-void Pnbp_tm(), Pnbp_tt(), Pnbp_tc(), Pnbp_trest();
-void Pnbm_deg(), Pnbm_index();
-void Pnbm_hp_rest();
-void Pnbm_hxky(), Pnbm_xky_rest();
-void Pnbm_hv(), Pnbm_tv(), Pnbm_rest(),Pnbm_trest();
-
-void Pquote_to_funargs(),Pfunargs_to_quote(),Pget_function_name();
-void Pqt_match(),Pget_quote_id();
-void Pqt_to_nary(),Pqt_to_bin();
 void fnode_do_assign(NODE arg);
 void do_assign(NODE arg);
 void fnodetotex_tb(FNODE f,TB tb);
@@ -251,7 +278,7 @@ static int dp_vars_hweyl;
 static struct {
   char *name;
   Obj value;
-  int (*reg)();
+  int (*reg)(Obj);
 } qtot_env[] = {
   {"symbol_table",0,register_symbol_table},
   {"conv_rule",0,register_conv_rule},
@@ -1154,9 +1181,7 @@ void Pclear_tb(NODE arg,Q *rp)
   *rp = 0;
 }
 
-void Pstr_len(arg,rp)
-NODE arg;
-Z *rp;
+void Pstr_len(NODE arg,Z *rp)
 {
   Obj obj;
   TB tb;
@@ -1175,9 +1200,7 @@ Z *rp;
   STOZ(r,*rp);
 }
 
-void Pstr_chr(arg,rp)
-NODE arg;
-Z *rp;
+void Pstr_chr(NODE arg,Z *rp)
 {
   STRING str,terminator;
   Z start;
@@ -1205,9 +1228,7 @@ Z *rp;
   STOZ(r,*rp);
 }
 
-void Psub_str(arg,rp)
-NODE arg;
-STRING *rp;
+void Psub_str(NODE arg,STRING *rp)
 {
   STRING str;
   Q head,tail;
@@ -1236,9 +1257,7 @@ STRING *rp;
   MKSTR(*rp,r);
 }
 
-void Pstrtoascii(arg,rp)
-NODE arg;
-LIST *rp;
+void Pstrtoascii(NODE arg,LIST *rp)
 {
   STRING str;
   unsigned char *p;
@@ -1249,7 +1268,7 @@ LIST *rp;
   str = (STRING)ARG0(arg);
   asir_assert(str,O_STR,"strtoascii");
   p = (unsigned char *)BDY(str);
-  len = strlen(p);
+  len = strlen((char *)p);
   for ( i = len-1, n = 0; i >= 0; i-- ) {
     UTOZ((unsigned int)p[i],q);
     MKNODE(n1,q,n);
@@ -1258,9 +1277,7 @@ LIST *rp;
   MKLIST(*rp,n);
 }
 
-void Pasciitostr(arg,rp)
-NODE arg;
-STRING *rp;
+void Pasciitostr(NODE arg,STRING *rp)
 {
   LIST list;
   unsigned char *p;
@@ -1285,9 +1302,7 @@ STRING *rp;
   MKSTR(*rp,(char *)p);
 }
 
-void Peval_str(arg,rp)
-NODE arg;
-Obj *rp;
+void Peval_str(NODE arg,Obj *rp)
 {
   FNODE fnode;
   SNODE snode;
@@ -1313,9 +1328,7 @@ Obj *rp;
 #endif
 }
 
-void Prtostr(arg,rp)
-NODE arg;
-STRING *rp;
+void Prtostr(NODE arg,STRING *rp)
 {
   char *b;
   int len;
@@ -1327,9 +1340,7 @@ STRING *rp;
   MKSTR(*rp,b);
 }
 
-void Pstrtov(arg,rp)
-NODE arg;
-P *rp;
+void Pstrtov(NODE arg,P *rp)
 {
   char *p;
   FUNC f;
@@ -1597,7 +1608,7 @@ void fnodetotex_tb(FNODE f,TB tb)
       break;
 
     case I_COP:
-      switch( (cid)FA0(f) ) {
+      switch( (long)FA0(f) ) {
         case C_EQ:
           fnodetotex_tb((FNODE)FA1(f),tb);
           write_tb(" = ",tb);
@@ -1632,7 +1643,7 @@ void fnodetotex_tb(FNODE f,TB tb)
       break;
 
     case I_LOP:
-      switch( (lid)FA0(f) ) {
+      switch( (long)FA0(f) ) {
         case L_EQ:
           fnodetotex_tb((FNODE)FA1(f),tb);
           write_tb(" = ",tb);
@@ -2036,7 +2047,7 @@ int top_is_minus(FNODE f)
     case I_COP:
       return top_is_minus((FNODE)FA1(f));
     case I_LOP:
-      if ( (lid)FA0(f) == L_NOT ) return 0;
+      if ( (long)FA0(f) == L_NOT ) return 0;
       else return top_is_minus((FNODE)FA1(f));
     case I_AND: case I_OR:
       return top_is_minus((FNODE)FA0(f));
@@ -3035,7 +3046,7 @@ FNODE fnode_normalize(FNODE f,int expand)
   return r;
 }
 
-FNODE fnode_apply(FNODE f,FNODE (*func)(),int expand)
+FNODE fnode_apply(FNODE f,FNODE (*func)(FNODE,int),int expand)
 {
   fid_spec_p spec;
   FNODE r;

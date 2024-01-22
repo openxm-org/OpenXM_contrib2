@@ -6,10 +6,14 @@
 #include "parse.h"
 #include "interval.h"
 
-void Padd_pinf(),Padd_minf();
-void Psub_pinf(),Psub_minf();
-void Pmul_pinf(),Pmul_minf();
-void Pdiv_pinf(),Pdiv_minf();
+void Padd_pinf(NODE arg,Real *rp);
+void Padd_minf(NODE arg,Real *rp);
+void Psub_pinf(NODE arg,Real *rp);
+void Psub_minf(NODE arg,Real *rp);
+void Pmul_pinf(NODE arg,Real *rp);
+void Pmul_minf(NODE arg,Real *rp);
+void Pdiv_pinf(NODE arg,Real *rp);
+void Pdiv_minf(NODE arg,Real *rp);
 
 struct ftab round_tab[] = {
   {"add_pinf",Padd_pinf,2},

@@ -31,9 +31,7 @@ struct ftab mat_tab[] = {
 };
 
 static void
-MatFund(arg, rp)
-NODE arg;
-Obj *rp;
+MatFund(NODE arg,Obj *rp)
 {
   MAT mat;
   pointer *coe;
@@ -96,9 +94,7 @@ Obj *rp;
 }
 
 static void
-RowMul(arg, rp)
-NODE arg;
-Obj *rp;
+RowMul(NODE arg,Obj *rp)
 {
   MAT mat;
   Q rowq;
@@ -114,9 +110,7 @@ Obj *rp;
 }
 
 static void
-RowExh(arg, rp)
-NODE arg;
-Obj *rp;
+RowExh(NODE arg,Obj *rp)
 {
   MAT mat;
   Q QIndexA, QIndexB;
@@ -132,9 +126,7 @@ Obj *rp;
 }
 
 static void
-RowMulAdd(arg, rp)
-NODE arg;
-Obj *rp;
+RowMulAdd(NODE arg,Obj *rp)
 {
   MAT mat;
   Q QIndexA, QIndexB;
@@ -152,9 +144,7 @@ Obj *rp;
 }
 
 static void
-ColMul(arg, rp)
-NODE arg;
-Obj *rp;
+ColMul(NODE arg,Obj *rp)
 {
   MAT mat;
   Q QIndex;
@@ -170,9 +160,7 @@ Obj *rp;
 }
 
 static void
-ColExh(arg, rp)
-NODE arg;
-Obj *rp;
+ColExh(NODE arg,Obj *rp)
 {
   MAT mat;
   Q QIndexA, QIndexB;
@@ -188,9 +176,7 @@ Obj *rp;
 }
 
 static void
-ColMulAdd(arg, rp)
-NODE arg;
-Obj *rp;
+ColMulAdd(NODE arg,Obj *rp)
 {
   MAT mat;
   Q QIndexA, QIndexB;
@@ -208,10 +194,7 @@ Obj *rp;
 }
 
 static void
-BodyRowMul( mat, row, coe )
-MAT mat;
-int row;
-pointer coe;
+BodyRowMul(MAT mat,int row,pointer coe)
 {
   int size, i;
   pointer *t, *matrow;
@@ -225,9 +208,7 @@ pointer coe;
 }
 
 static void
-BodyRowExh( mat, IndexA, IndexB )
-MAT mat;
-int IndexA, IndexB;
+BodyRowExh(MAT mat,int IndexA,int IndexB)
 {
   int i, size;
   pointer *t, *PRowA, *PRowB;
@@ -243,10 +224,7 @@ int IndexA, IndexB;
 }
 
 static void
-BodyRowMulAdd( mat, IndexA, IndexB, coe )
-MAT mat;
-int IndexA, IndexB;
-pointer coe;
+BodyRowMulAdd(MAT mat,int IndexA,int IndexB,pointer coe)
 {
   int i, size;
   pointer *t, *PRowA, *PRowB;
@@ -263,10 +241,7 @@ pointer coe;
 }
 
 static void
-BodyColMul( mat, Index, coe )
-MAT mat;
-int Index;
-pointer coe;
+BodyColMul(MAT mat,int Index,pointer coe)
 {
   int size, i;
 
@@ -277,9 +252,7 @@ pointer coe;
 }
 
 static void
-BodyColExh( mat, IndexA, IndexB )
-MAT mat;
-int IndexA, IndexB;
+BodyColExh(MAT mat,int IndexA,int IndexB)
 {
   int i, size;
   pointer *t;
@@ -293,10 +266,7 @@ int IndexA, IndexB;
 }
 
 static void
-BodyColMulAdd( mat, IndexA, IndexB, coe )
-MAT mat;
-int IndexA, IndexB;
-pointer coe;
+BodyColMulAdd(MAT mat,int IndexA,int IndexB,pointer coe)
 {
   int i, size;
   pointer *t;

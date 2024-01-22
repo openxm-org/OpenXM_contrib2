@@ -51,13 +51,12 @@
 #include "parse.h"
 
 void Psprintf(NODE,STRING *);
-
-void Pprintf();
-void Pprint();
-void Pquotetolist();
-void Pobjtoquote();
-void Peval_variables_in_quote();
-void Pset_print_function();
+void Pprintf(NODE arg,pointer *rp);
+void Pprint(NODE arg,pointer *rp);
+void Pobjtoquote(NODE arg,QUOTE *rp);
+void Pquotetolist(NODE arg,LIST *rp);
+void Peval_variables_in_quote(NODE arg,QUOTE *rp);
+void Pset_print_function(NODE arg,pointer *rp);
 
 struct ftab print_tab[] = {
   {"printf",Pprintf,-99999999},
@@ -217,7 +216,7 @@ void fnodetotree(FNODE f,VS vs,LIST *rp)
           MKSTR(op,((ARF)FA0(f))->name); break;
 
         case I_COP:
-          switch( (cid)FA0(f) ) {
+          switch( (long)FA0(f) ) {
             case C_EQ: opname = "=="; break;
             case C_NE: opname = "!="; break;
             case C_GT: opname = ">"; break;
@@ -228,7 +227,7 @@ void fnodetotree(FNODE f,VS vs,LIST *rp)
           MKSTR(op,opname); break;
 
         case I_LOP:
-          switch( (lid)FA0(f) ) {
+          switch( (long)FA0(f) ) {
             case L_EQ: opname = "@=="; break;
             case L_NE: opname = "@!="; break;
             case L_GT: opname = "@>"; break;

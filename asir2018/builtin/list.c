@@ -50,9 +50,19 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pcar(), Pcdr(), Pcons(), Pappend(), Preverse(), Plength();
-void Plist(), Passoc(), Pcadr(), Pcddr();
-void Pnconc(), Preplcd(), Preplca();
+void Pcar(NODE arg,pointer *rp);
+void Pcdr(NODE arg,LIST *rp);
+void Pcddr(NODE arg,LIST *rp);
+void Pcadr(NODE arg,pointer *rp);
+void Pcons(NODE arg,LIST *rp);
+void Pappend(NODE arg,LIST *rp);
+void Preverse(NODE arg,LIST *rp);
+void Plength(NODE arg,Z *rp);
+void Plist(NODE arg, LIST *rp);
+void Pnconc(NODE arg,LIST *rp);
+void Preplcd(NODE arg,LIST *rp);
+void Preplca(NODE arg,LIST *rp);
+void Passoc(NODE arg, LIST *rp);
 
 struct ftab list_tab[] = {
   {"car",Pcar,1},
@@ -71,9 +81,7 @@ struct ftab list_tab[] = {
   {0,0,0},
 };
 
-void Pcar(arg,rp)
-NODE arg;
-pointer *rp;
+void Pcar(NODE arg,pointer *rp)
 {
   asir_assert(ARG0(arg),O_LIST,"car");
   if ( !BDY((LIST)ARG0(arg)) )
@@ -82,9 +90,7 @@ pointer *rp;
     *rp = (pointer)BDY(BDY((LIST)ARG0(arg)));
 }
 
-void Pcdr(arg,rp)
-NODE arg;
-LIST *rp;
+void Pcdr(NODE arg,LIST *rp)
 {
   asir_assert(ARG0(arg),O_LIST,"cdr");
   if ( !BDY((LIST)ARG0(arg)) )
@@ -93,9 +99,7 @@ LIST *rp;
     MKLIST(*rp,NEXT(BDY((LIST)ARG0(arg))));
 }
 
-void Pcddr(arg,rp)
-NODE arg;
-LIST *rp;
+void Pcddr(NODE arg,LIST *rp)
 {
     NODE n;
     asir_assert(ARG0(arg),O_LIST,"cddr");
@@ -110,9 +114,7 @@ LIST *rp;
     }
 }
 
-void Pcadr(arg,rp)
-NODE arg;
-pointer *rp;
+void Pcadr(NODE arg,pointer *rp)
 {
     NODE n;
     LIST t;
@@ -130,9 +132,7 @@ pointer *rp;
     }
 }
 
-void Pcons(arg,rp)
-NODE arg;
-LIST *rp;
+void Pcons(NODE arg,LIST *rp)
 {
   NODE t;
 
@@ -140,9 +140,7 @@ LIST *rp;
   MKNODE(t,ARG0(arg),BDY((LIST)ARG1(arg))); MKLIST(*rp,t);
 }
 
-void Pappend(arg,rp)
-NODE arg;
-LIST *rp;
+void Pappend(NODE arg,LIST *rp)
 {
   NODE t,t0,n;
 
@@ -159,9 +157,7 @@ LIST *rp;
   }
 }
 
-void Preverse(arg,rp)
-NODE arg;
-LIST *rp;
+void Preverse(NODE arg,LIST *rp)
 {
   NODE t,t1,n;
 

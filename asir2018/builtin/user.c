@@ -5,10 +5,8 @@
 #include "ca.h"
 #include "parse.h"
 
-void Ppartial_derivative();
 void partial_derivative(VL vl,P p,V v,P *r);
-void Pzadd(),Pzsub(),Pzmul();
-void Pcomp_f();
+void Pcomp_f(NODE arg,Z *rp);
 
 struct ftab user_tab[] = {
 /*

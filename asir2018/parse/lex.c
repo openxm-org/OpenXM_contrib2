@@ -132,7 +132,7 @@ int yylex()
   int floatingpoint = 0;
   double dbl;
   Real real;
-  double atof();
+//  double atof();
   extern int bigfloat;
 
   
@@ -715,7 +715,7 @@ static void Gets(char *s)
 
 static char *readline_line;
 static int readline_nc,readline_index;
-char *readline_console();
+// char *readline_console();
 
 int readline_getc()
 {

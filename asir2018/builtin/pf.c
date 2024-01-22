@@ -64,13 +64,20 @@ void make_exp(void);
 void simplify_pow(PFINS,Obj *);
 FNODE partial_eval(FNODE f);
 
-void Pfunctor(),Pargs(),Pfunargs(),Pvtype(),Pcall(),Pdeval(),Pfunargs_ext();
-void Pregister_handler();
-void Peval_quote();
-void Pmapat(), Pmap();
-void Padd_handler();
-void Plist_handler();
-void Pclear_handler();
+void Pfunctor(NODE arg,P *rp);
+void Pargs(NODE arg,LIST *rp);
+void Pfunargs(NODE arg,LIST *rp);
+void Pfunargs_ext(NODE arg,LIST *rp);
+void Pvtype(NODE arg,Z *rp);
+void Pregister_handler(NODE arg,Z *rp);
+void Padd_handler(NODE arg,Z *rp);
+void Plist_handler(NODE arg,LIST *rp);
+void Pclear_handler(NODE arg,Z *rp);
+void Pcall(NODE arg,Obj *rp);
+void Pmapat(NODE arg,Obj *rp);
+void Pmap(NODE arg,Obj *rp);
+void Pdeval(NODE arg,Obj *rp);
+void Peval_quote(NODE arg,Obj *rp);
 
 struct ftab puref_tab[] = {
   {"mapat",Pmapat,-99999999},

@@ -75,15 +75,15 @@ void showgfmat(UM **,int);
 void pwr_mod(P,P,V,P,int,Z,P *);
 void rem_mod(P,P,V,P,int,P *);
 
-void Pnullspace(),Pgcda_mod(),Pftest(),Presfmain(),Ppwr_mod(),Puhensel();
-void Puhensel_incremental();
-void Psfuhensel();
-
-void Pnullspace_ff();
-
-void Psolve_linear_equation_gf2n();
-void Plinear_form_to_vect(),Pvect_to_linear_form();
-
+void Puhensel(NODE arg,LIST *rp);
+void Puhensel_incremental(NODE arg,LIST *rp);
+void Psfuhensel(NODE arg,LIST *rp);
+void Presfmain(NODE arg,LIST *rp);
+void Pftest(NODE arg,P *rp);
+void Pnullspace(NODE arg,LIST *rp);
+void Pnullspace_ff(NODE arg,LIST *rp);
+void Psolve_linear_equation_gf2n(NODE arg,LIST *rp);
+void Ppwr_mod(NODE arg,P *rp);
 void solve_linear_equation_gf2n(GF2N **,int,int,int *);
 void linear_form_to_array(P,VL,int,Num *);
 void array_to_linear_form(Num *,VL,int,P *);
@@ -520,9 +520,7 @@ void resf_dtest_special(P f,ML list,int nb,int *nfl,int *mdl,DCP *dcp)
 }
 
 #if 0
-void Pftest(arg,rp)
-NODE arg;
-P *rp;
+void Pftest(NODE arg,P *rp)
 {
   ML list;
   DCP dc;
@@ -534,10 +532,7 @@ P *rp;
   dtest_special(p,list,rp);
 }
 
-void dtest_special(f,list,pr)
-P f;
-ML list;
-P *pr;
+void dtest_special(P f,ML list,P *pr)
 {
   int n,np,bound,q;
   int i,j,k;
@@ -570,11 +565,7 @@ P *pr;
   }
 }
 
-void hensel_special(index,count,f,mfl,listp)
-int index,count;
-P f;
-P *mfl;
-ML *listp;
+void hensel_special(int index,int count,P f,P *mfl,ML *listp)
 {
   register int i,j;
   int q,n,t,d,r,u,br,tmp,bound;
@@ -610,9 +601,7 @@ ML *listp;
 #endif
 
 #if 0
-void Pftest(arg,rp)
-NODE arg;
-P *rp;
+void Pftest(NODE arg,P *rp)
 {
   ML list;
   DCP dc;
@@ -624,10 +613,7 @@ P *rp;
   dtest_special(p,list,rp);
 }
 
-void dtest_special(f,list,pr)
-P f;
-ML list;
-P *pr;
+void dtest_special(P f,ML list,P *pr)
 {
   int n,np,bound,q;
   int i,j,k,t,b0;
@@ -673,11 +659,7 @@ P *pr;
   *pr = f;
 }
 
-void hensel_special(index,count,f,mfl,listp)
-int index,count;
-P f;
-P *mfl;
-ML *listp;
+void hensel_special(int index,int count,P f,P *mfl,ML *listp)
 {
   register int i,j;
   int q,n,t,d,r,u,br,tmp,bound;
@@ -1294,9 +1276,7 @@ void showgfmat(UM **mat,int n)
 }
 
 #if 0
-void Pgcda_mod(arg,rp)
-NODE arg;
-P *rp;
+void Pgcda_mod(NODE arg,P *rp)
 {
   p1 = (P)ARG0(arg);
   p2 = (P)ARG1(arg);

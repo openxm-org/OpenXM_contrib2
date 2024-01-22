@@ -50,7 +50,7 @@
 #include "ca.h"
 #include "parse.h"
 
-void Phelp();
+void Phelp(NODE arg,Obj *rp);
 void ghelp(void);
 
 struct ftab help_tab[] = {
@@ -58,9 +58,7 @@ struct ftab help_tab[] = {
   {0,0,0},
 };
 
-void Phelp(arg,rp)
-NODE arg;
-Obj *rp;
+void Phelp(NODE arg,Obj *rp)
 {
   if ( !arg || !ARG0(arg) )
      help(0);
@@ -86,8 +84,7 @@ static char *ghelpstr[] = {
 0
 };
 
-void help(s)
-char *s;
+void help(char *s)
 {
   extern char *asir_libdir;
   extern char *asir_pager;

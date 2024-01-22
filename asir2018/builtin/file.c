@@ -69,21 +69,30 @@
 #define R_OK 0x04
 #endif
 
-void Psprintf(NODE,STRING *);
-
-void Pget_rootdir();
-void Paccess(),Premove_file();
-void Pbsave_enc(), Pbload_enc();
-
-void Pload(), Pwhich(), Ploadfiles(), Poutput();
-void Pbsave(), Pbload();
-void Pbsave_cmo(), Pbload_cmo();
-void Popen_file(), Pclose_file(), Pget_line(), Pget_byte(), Pput_byte();
-void Pput_word(), Pget_word();
-void Ppurge_stdin();
-void Pfprintf();
-void Pimport();
-void Pgetpid();
+void Pfprintf(NODE arg,pointer *rp);
+void Ppurge_stdin(Q *rp);
+void Popen_file(NODE arg,Z *rp);
+void Pclose_file(NODE arg,Z *rp);
+void Pget_line(NODE arg,STRING *rp);
+void Pget_byte(NODE arg,Z *rp);
+void Pget_word(NODE arg,Z *rp);
+void Pput_byte(NODE arg,Obj *rp);
+void Pput_word(NODE arg,Obj *rp);
+void Pload(NODE arg,Z *rp);
+void Pimport(NODE arg,Z *rp);
+void Pwhich(NODE arg,STRING *rp);
+void Ploadfiles(NODE arg,Z *rp);
+void Poutput(NODE arg,Z *rp);
+void Pbsave(NODE arg,Z *rp);
+void Pbload(NODE arg,Obj *rp);
+void Pbsave_cmo(NODE arg,Z *rp);
+void Pbload_cmo(NODE arg,Obj *rp);
+void Pget_rootdir(STRING *rp);
+void Pgetpid(Z *rp);
+void Pbsave_enc(NODE arg,Obj *rp);
+void Pbload_enc(NODE arg,Obj *rp);
+void Premove_file(NODE arg,Z *rp);
+void Paccess(NODE arg,Z *rp);
 
 extern int des_encryption;
 extern char *asir_libdir;
@@ -120,6 +129,8 @@ struct ftab file_tab[] = {
 
 static FILE *file_ptrs[BUFSIZ];
 
+void Psprintf(NODE,STRING *);
+
 void Pfprintf(NODE arg,pointer *rp)
 {
   FILE *fp;
@@ -141,7 +152,7 @@ void Pfprintf(NODE arg,pointer *rp)
 
 void Ppurge_stdin(Q *rp)
 {
-  purge_stdin(stdin);
+  purge_stdin();
   *rp = 0;
 }
 

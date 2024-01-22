@@ -50,8 +50,12 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pnm(), Pdn(), Pderiv(), Pederiv(), Prderiv();
-void Plaurent_to_rat();
+void Pnm(NODE arg,Obj *rp);
+void Pdn(NODE arg,Obj *rp);
+void Pderiv(NODE arg,Obj *rp);
+void Prderiv(NODE arg,Obj *rp);
+void Pederiv(NODE arg,Obj *rp);
+void Plaurent_to_rat(NODE arg,Obj *rp);
 
 struct ftab rat_tab[] = {
   {"nm",Pnm,1},

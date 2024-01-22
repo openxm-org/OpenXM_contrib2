@@ -50,7 +50,9 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pred(), Predc(), Pprim();
+void Pred(NODE arg,Obj *rp);
+void Predc(NODE arg,P *rp);
+void Pprim(NODE arg,P *rp);
 
 struct ftab reduct_tab[] = {
   {"red",Pred,1},

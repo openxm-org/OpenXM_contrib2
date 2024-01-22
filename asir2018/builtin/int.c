@@ -51,26 +51,46 @@
 #include "parse.h"
 #include "base.h"
 
-void Pidiv(), Pirem(), Pigcd(), Pilcm(), Pfac(), Prandom(), Pinv();
-void Pup2_inv(),Pgf2nton(), Pntogf2n();
-void Pup2_init_eg(), Pup2_show_eg();
-void Piqr(), Pprime(), Plprime(), Pinttorat();
-void Piand(), Pior(), Pixor(), Pishift();
-void Pisqrt();
-void Plrandom();
-void Pset_upkara(), Pset_uptkara(), Pset_up2kara(), Pset_upfft();
-void Pmt_save(), Pmt_load();
-void Psmall_jacobi();
-void Pdp_set_mpi();
-void Pntoint32(),Pint32ton();
-void Pibin();
-
-void Pigcdbin(), Pigcdbmod(), PigcdEuc(), Pigcdacc(), Pigcdcntl();
-
-void Pihex();
-void Pimaxrsh(), Pilen();
-void Ptype_t_NB();
-void Plprime64();
+void Pibin(NODE arg,Z *rp);
+void Pntoint32(NODE arg,USINT *rp);
+void Pint32ton(NODE arg,Z *rp);
+void Pdp_set_mpi(NODE arg,Z *rp);
+void Psmall_jacobi(NODE arg,Z *rp);
+void Ptype_t_NB(NODE arg,Z *rp);
+void Pmt_save(NODE arg,Z *rp);
+void Pmt_load(NODE arg,Z *rp);
+void Pisqrt(NODE arg,Z *rp);
+void Pidiv(NODE arg,Z *rp);
+void Pirem(NODE arg,Z *rp);
+void Piqr(NODE arg,LIST *rp);
+void Pinttorat(NODE arg,LIST *rp);
+void Pigcd(NODE arg,Z *rp);
+void Pilcm(NODE arg,Z *rp);
+void Piand(NODE arg,Z *rp);
+void Pior(NODE arg,Z *rp);
+void Pixor(NODE arg,Z *rp);
+void Pishift(NODE arg,Z *rp);
+void Pup2_init_eg(Obj *rp);
+void Pup2_show_eg(Obj *rp);
+void Pgf2nton(NODE arg,Z *rp);
+void Pntogf2n(NODE arg,GF2N *rp);
+void Pup2_inv(NODE arg,P *rp);
+void Pinv(NODE arg,Num *rp);
+void Pfac(NODE arg,Z *rp);
+void Plrandom(NODE arg,Z *rp);
+void Prandom(NODE arg,Z *rp);
+void Pprime(NODE arg,Z *rp);
+void Plprime(NODE arg,Z *rp);
+void Plprime64(NODE arg,Z *rp);
+void Pset_upfft(NODE arg,Z *rp);
+void Pset_upkara(NODE arg,Z *rp);
+void Pset_uptkara(NODE arg,Z *rp);
+void Pset_up2kara(NODE arg,Z *rp);
+void Pigcdbin(NODE arg,Z *rp);
+void Pigcdbmod(NODE arg,Z *rp);
+void Pigcdacc(NODE arg,Z *rp);
+void PigcdEuc(NODE arg,Z *rp);
+void Pigcdcntl(NODE arg,Z *rp);
 
 struct ftab int_tab[] = {
   {"dp_set_mpi",Pdp_set_mpi,-1},

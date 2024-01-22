@@ -59,6 +59,8 @@
 #define MAXSHORT ((short)0x7fff)
 #endif
 
+double usubstrp(P p,double r);
+
 void calc(double **tab,struct canvas *can,int nox){
   //memory_plot,IFPLOTD,INEQND,INEQNANDD,INEQNORD
   //INEQNXORD,conplotmainD
@@ -210,7 +212,8 @@ void calcb(double **tab,struct canvas *can,int nox){
 double usubstrp(P p,double r){
   DCP dc;
   int d;
-  double t,pwrreal0();
+  double t;
+  double pwrreal0(double n,int e);
 
   if(!p) t=0.0;
   else if(NUM(p))t=BDY((Real)p);
@@ -435,7 +438,7 @@ void plotcalcbf(struct canvas *can){
 
 void plotcalc(struct canvas *can){
   //plot,memory_plot,plotover,plot_resize
-  double x,xmin,xstep,ymax,ymin,dy,*tab,usubstrp();
+  double x,xmin,xstep,ymax,ymin,dy,*tab;
   int ix,w,h;
   Real r,rx;
   Obj fr,t,s;
@@ -484,7 +487,6 @@ void plotcalc(struct canvas *can){
 
 void polarcalc(struct canvas *can){
   double xmax,xmin,ymax,ymin,dx,dy,pmin,pstep,tr,p,*tabx,*taby;
-  double usubstrp();
   int i,nstep,w,h;
   POINT *pa;
   Real r;
@@ -532,7 +534,6 @@ void polarcalc(struct canvas *can){
 void polarcalcNG(struct canvas *can){
   //polarplotNG
   double xmax,xmin,ymax,ymin,dx,dy,pmin,pstep,tr,p, *tabx,*taby;
-  double usubstrp();
   int i,ix,iy,nstep,w,h;
   POINT *pa;
   Real r;

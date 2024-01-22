@@ -50,8 +50,11 @@
 #include "ca.h"
 #include "parse.h"
 
-void Psubst(), Ppsubst(), Psubstf(), Psubst_quote();
-void Psubstr2np();
+void Psubstr2np(NODE arg,Obj *rp);
+void Psubst(NODE arg,Obj *rp);
+void Psubst_quote(NODE arg,QUOTE *rp);
+void Ppsubst(NODE arg,Obj *rp);
+void Psubstf(NODE arg,Obj *rp);
 
 struct ftab subst_tab[] = {
   {"subst",Psubst,-99999999},
@@ -151,9 +154,7 @@ void Psubstr2np(NODE arg,Obj *rp)
   }
 }
 
-void Psubst(arg,rp)
-NODE arg;
-Obj *rp;
+void Psubst(NODE arg,Obj *rp)
 {
   Obj a,b,t;
   LIST l;
@@ -293,11 +294,7 @@ Obj *rp;
   }
 }
 
-FNODE subst_in_fnode();
-
-void Psubst_quote(arg,rp)
-NODE arg;
-QUOTE *rp;
+void Psubst_quote(NODE arg,QUOTE *rp)
 {
   QUOTE h;
   FNODE fn;
@@ -327,9 +324,7 @@ QUOTE *rp;
   MKQUOTE(*rp,fn);
 }
 
-void Ppsubst(arg,rp)
-NODE arg;
-Obj *rp;
+void Ppsubst(NODE arg,Obj *rp)
 {
   Obj a,b,t;
   LIST l;
@@ -357,9 +352,7 @@ Obj *rp;
   *rp = a;
 }
 
-void Psubstf(arg,rp)
-NODE arg;
-Obj *rp;
+void Psubstf(NODE arg,Obj *rp)
 {
   Obj a,t;
   LIST l;

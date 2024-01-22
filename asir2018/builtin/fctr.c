@@ -50,14 +50,31 @@
 #include "ca.h"
 #include "parse.h"
 
-void Pfctr(), Pgcd(), Pgcdz(), Plcm(), Psqfr(), Pufctrhint();
-void Pptozp(), Pcont(), Psfcont();
-void Pafctr(), Pagcd();
-void Pmodsqfr(),Pmodfctr(),Pddd(),Pnewddd(),Pddd_tab();
-void Psfsqfr(),Psffctr(),Psfbfctr(),Psfufctr(),Psfmintdeg(),Psfgcd();
-void Pirred_check(), Pnfctr_mod();
-void Pbivariate_hensel_special();
-
+void Pbivariate_hensel_special(NODE arg,LIST *rp);
+void Pfctr(NODE arg,LIST *rp);
+void Pgcd(NODE arg,P *rp);
+void Pgcdz(NODE arg,P *rp);
+void Plcm(NODE arg,P *rp);
+void Psqfr(NODE arg,LIST *rp);
+void Pufctrhint(NODE arg,LIST *rp);
+void Pcont(NODE arg,P *rp);
+void Psfcont(NODE arg,P *rp);
+void Pptozp(NODE arg,Obj *rp);
+void Pafctr(NODE arg,LIST *rp);
+void Pagcd(NODE arg,P *rp);
+void Pmodfctr(NODE arg,LIST *rp);
+void Psfgcd(NODE arg,P *rp);
+void Psffctr(NODE arg,LIST *rp);
+void Psfsqfr(NODE arg,LIST *rp);
+void Psfufctr(NODE arg,LIST *rp);
+void Psfbfctr(NODE arg,LIST *rp);
+void Psfmintdeg(NODE arg,P *rp);
+void Pmodsqfr(NODE arg,LIST *rp);
+void Pddd(NODE arg,LIST *rp);
+void Pnewddd(NODE arg,LIST *rp);
+void Pirred_check(NODE arg,Z *rp);
+void Pnfctr_mod(NODE arg,Z *rp);
+void Pddd_tab(NODE arg,VECT *rp);
 void sfmintdeg(VL vl,P fx,int dy,int c,P *fr);
 
 struct ftab fctr_tab[] = {
@@ -384,8 +401,8 @@ void Pagcd(NODE arg,P *rp)
 #define Gcdum gcdum
 #endif
 
-void Mulum(), Mulsum(), Gcdum();
-int Divum();
+//void Mulum(), Mulsum(), Gcdum();
+//int Divum();
 
 #define FCTR 0 /* berlekamp */
 #define SQFR 1

@@ -71,7 +71,7 @@ struct oEGT eg_nf,eg_nfm;
 struct oEGT eg_znfm,eg_pz,eg_np,eg_ra,eg_mc,eg_gc;
 int TP,N_BP,NMP,NFP,NDP,ZR,NZR;
 
-extern int (*cmpdl)();
+extern int (*cmpdl)(int,DL,DL);
 extern int do_weyl;
 
 extern int DP_Print;
@@ -1376,7 +1376,7 @@ NODE /* of DP */ NODE_sortb_insert( DP newdp, NODE /* of DP */ nd, int dec )
 {
   register NODE last, p;
   register DL newdl = BDY(newdp)->dl;
-  register int (*cmpfun)() = cmpdl, nv = CNVars;
+  register int (*cmpfun)(int,DL,DL) = cmpdl, nv = CNVars;
   NODE newnd;
   int sgn = dec ? 1 : -1;
   MKNODE( newnd, newdp, 0 );
@@ -1404,7 +1404,7 @@ NODE /* of index */ NODE_sortbi_insert( int newdpi, NODE /* of index */ nd, int 
 {
   register NODE last, p;
   register DL newdl = psh[newdpi];
-  register int (*cmpfun)() = cmpdl, nv = CNVars;
+  register int (*cmpfun)(int,DL,DL) = cmpdl, nv = CNVars;
   NODE newnd;
   int sgn = dec ? 1 : -1;
   MKNODE( newnd, (pointer)((long)newdpi), 0 );
@@ -1701,7 +1701,7 @@ DP_pairs minp( DP_pairs d, DP_pairs *prest )
   register DP_pairs m, ml, p, l;
   register DL lcm;
   register int s, nv = CNVars;
-  register int (*cmpfun)() = cmpdl;
+  register int (*cmpfun)(int,DL,DL) = cmpdl;
 
   if ( !(p = NEXT(m = d)) ) {
     *prest = p;
@@ -2683,7 +2683,7 @@ final:
       pz_t_e, pz_t_d, pz_t_d1, pz_t_c);
 }
 
-void imulv();
+void imulv(VECT w,Q c,VECT *rp);
 
 void dp_imul_d(DP p,Q q,DP *rp)
 {

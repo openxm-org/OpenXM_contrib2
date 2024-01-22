@@ -55,8 +55,7 @@ typedef unsigned long long UL;
 
 #include "base.h"
 
-unsigned int dm(a1,a2,u)
-unsigned int a1,a2,*u;
+unsigned int dm(unsigned int a1,unsigned int a2,unsigned int *u)
 {
   UL t;
 
@@ -65,8 +64,7 @@ unsigned int a1,a2,*u;
   return (unsigned int)(t&0xffffffff);
 }
 
-unsigned int dma(a1,a2,a3,u)
-unsigned int a1,a2,a3,*u;
+unsigned int dma(unsigned int a1,unsigned int a2,unsigned int a3,unsigned int *u)
 {
   UL t;
 
@@ -75,8 +73,7 @@ unsigned int a1,a2,a3,*u;
   return (unsigned int)(t&0xffffffff);
 }
 
-unsigned int dma2(a1,a2,a3,a4,u)
-unsigned int a1,a2,a3,a4,*u;
+unsigned int dma2(unsigned int a1,unsigned int a2,unsigned int a3,unsigned int a4,unsigned int *u)
 {
   UL t;
 
@@ -85,8 +82,7 @@ unsigned int a1,a2,a3,a4,*u;
   return (unsigned int)(t&0xffffffff);
 }
 
-unsigned int dmb(base,a1,a2,u)
-unsigned int base,a1,a2,*u;
+unsigned int dmb(unsigned int base,unsigned int a1,unsigned int a2,unsigned int *u)
 {
   UL t;
 
@@ -95,8 +91,7 @@ unsigned int base,a1,a2,*u;
   return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
-unsigned int dmab(base,a1,a2,a3,u)
-unsigned int base,a1,a2,a3,*u;
+unsigned int dmab(unsigned int base,unsigned int a1,unsigned int a2,unsigned int a3,unsigned int *u)
 {
   UL t;
 
@@ -105,8 +100,7 @@ unsigned int base,a1,a2,a3,*u;
   return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
-unsigned int dmar(a1,a2,a3,d)
-unsigned int a1,a2,a3,d;
+unsigned int dmar(unsigned int a1,unsigned int a2,unsigned int a3,unsigned int d)
 {
   UL t;
 
@@ -114,8 +108,7 @@ unsigned int a1,a2,a3,d;
   return (unsigned int)(t%(UL)d);
 }
 
-unsigned int dsab(base,a1,a2,u)
-unsigned int base,a1,a2,*u;
+unsigned int dsab(unsigned int base,unsigned int a1,unsigned int a2,unsigned int *u)
 {
   UL t;
 
@@ -124,8 +117,7 @@ unsigned int base,a1,a2,*u;
   return (unsigned int)(t-(UL)base*(UL)(*u));
 }
 
-unsigned int dqr(a,b,qp)
-unsigned int a,b,*qp;
+unsigned int dqr(unsigned int a,unsigned int b,unsigned int *qp)
 {
   *qp = a/b;
   return a - b * (*qp);

@@ -50,13 +50,22 @@
 #include "ca.h"
 #include "parse.h"
 
-void Psdiv(), Psrem(), Ptdiv(), Psqr(), Pinva_mod(), Pprem();
-void Psdiv_gf2n(), Psrem_gf2n(), Pgcd_gf2n();
-void Psdivm(), Psremm(), Psqrm();
-void Psrem_mod();
-void Pugcd();
-void Purem();
-void Pudiv();
+void Psdiv(NODE arg, Obj *rp);
+void Psrem(NODE arg, Obj *rp);
+void Pprem(NODE arg, P *rp);
+void Psqr(NODE arg, LIST *rp);
+void Psdiv_gf2n(NODE arg, GF2N *rp);
+void Psrem_gf2n(NODE arg, GF2N *rp);
+void Pgcd_gf2n(NODE arg, GF2N *rp);
+void Ptdiv(NODE arg, P *rp);
+void Pudiv(NODE arg, LIST *rp);
+void Psdivm(NODE arg, Obj *rp);
+void Psremm(NODE arg, Obj *rp);
+void Psqrm(NODE arg, LIST *rp);
+void Pinva_mod(NODE arg, P *rp);
+void Psrem_mod(NODE arg, P *rp);
+void Purem(NODE arg, P *rp);
+void Pugcd(NODE arg, P *rp);
 
 struct ftab pdiv_tab[] = {
   {"sdiv",Psdiv,-3},
@@ -78,9 +87,7 @@ struct ftab pdiv_tab[] = {
   {0,0,0},
 };
 
-void Psdiv(arg,rp)
-NODE arg;
-Obj *rp;
+void Psdiv(NODE arg, Obj *rp)
 {
   P q,r,dnd,dnd1,dvr,dvr1;
   V v;
@@ -99,9 +106,7 @@ Obj *rp;
     divsrp(CO,dnd,dvr,(P *)rp,&r);
 }
 
-void Psrem(arg,rp)
-NODE arg;
-Obj *rp;
+void Psrem(NODE arg, Obj *rp)
 {
   P q,r,dnd,dnd1,dvr,dvr1;
   V v;
@@ -120,9 +125,7 @@ Obj *rp;
     divsrp(CO,dnd,dvr,&q,(P *)rp);
 }
 
-void Pprem(arg,rp)
-NODE arg;
-P *rp;
+void Pprem(NODE arg, P *rp)
 {
   P q,r,dnd,dnd1,dvr,dvr1;
   V v;
@@ -145,9 +148,7 @@ P *rp;
     premp(CO,dnd,dvr,rp);
 }
 
-void Psqr(arg,rp)
-NODE arg;
-LIST *rp;
+void Psqr(NODE arg, LIST *rp)
 {
   P q,q1,r,r1,dnd,dnd1,dvr,dvr1;
   NODE n,tn;
@@ -168,9 +169,7 @@ LIST *rp;
   MKNODE(tn,r,0); MKNODE(n,q,tn); MKLIST(*rp,n);
 }
 
-void Psdiv_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Psdiv_gf2n(NODE arg, GF2N *rp)
 {
   GF2N dnd,dvr;
   UP2 q,r;
@@ -186,9 +185,7 @@ GF2N *rp;
   }
 }
 
-void Psrem_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Psrem_gf2n(NODE arg, GF2N *rp)
 {
   GF2N dnd,dvr;
   UP2 q,r;
@@ -204,9 +201,7 @@ GF2N *rp;
   }
 }
 
-void Pgcd_gf2n(arg,rp)
-NODE arg;
-GF2N *rp;
+void Pgcd_gf2n(NODE arg, GF2N *rp)
 {
   GF2N p1,p2;
   UP2 gcd;
@@ -222,9 +217,7 @@ GF2N *rp;
   }
 }
 
-void Ptdiv(arg,rp)
-NODE arg;
-P *rp;
+void Ptdiv(NODE arg, P *rp)
 {
   P p1,p2,q1,q2,q,c1,c2,c;
   int m;
@@ -255,9 +248,7 @@ P *rp;
   }
 }
 
-void Pudiv(arg,rp)
-NODE arg;
-LIST *rp;
+void Pudiv(NODE arg, LIST *rp)
 {
   P q,r,dnd,dvr;
   NODE n,tn;
@@ -269,9 +260,7 @@ LIST *rp;
   MKNODE(tn,r,0); MKNODE(n,q,tn); MKLIST(*rp,n);
 }
 
-void Psdivm(arg,rp)
-NODE arg;
-Obj *rp;
+void Psdivm(NODE arg, Obj *rp)
 {
   P q,r,dnd,dnd1,dndm,dvr,dvr1,dvrm,t;
   V v;
@@ -295,9 +284,7 @@ Obj *rp;
   }
 }
 
-void Psremm(arg,rp)
-NODE arg;
-Obj *rp;
+void Psremm(NODE arg, Obj *rp)
 {
   P q,r,dnd,dnd1,dndm,dvr,dvr1,dvrm,t;
   V v;
@@ -321,9 +308,7 @@ Obj *rp;
   }
 }
 
-void Psqrm(arg,rp)
-NODE arg;
-LIST *rp;
+void Psqrm(NODE arg, LIST *rp)
 {
   P q,q1,r,r1,dnd,dnd1,dndm,dvr,dvr1,dvrm;
   NODE n,tn;
@@ -349,9 +334,7 @@ LIST *rp;
   MKNODE(tn,r,0); MKNODE(n,q,tn); MKLIST(*rp,n);
 }
 
-void Pinva_mod(arg,rp)
-NODE arg;
-P *rp;
+void Pinva_mod(NODE arg, P *rp)
 {
   P dp,f;
   Z q;
@@ -384,9 +367,7 @@ P *rp;
   }
 }
 
-void Psrem_mod(arg,rp)
-NODE arg;
-P *rp;
+void Psrem_mod(NODE arg, P *rp)
 {
   P p1,p2;
   int n,dr;
@@ -413,27 +394,21 @@ P *rp;
   }
 }
 
-void Purem(arg,rp)
-NODE arg;
-P *rp;
+void Purem(NODE arg, P *rp)
 { 
   asir_assert(ARG0(arg),O_P,"urem");
   asir_assert(ARG1(arg),O_P,"urem");
   uremp((P)ARG0(arg),(P)ARG1(arg),rp);
 }
 
-void Pugcd(arg,rp)
-NODE arg;
-P *rp;
+void Pugcd(NODE arg, P *rp)
 {
   asir_assert(ARG0(arg),O_P,"ugcd");
   asir_assert(ARG1(arg),O_P,"ugcd");
   ugcdp((P)ARG0(arg),(P)ARG1(arg),rp);
 }
 
-void invum(mod,dp,f,inv)
-int mod;
-UM dp,f,inv;
+void invum(int mod,UM dp,UM f,UM inv)
 {
   UM g1,g2,a1,a2,a3,wm,q,tum;
   int d,dr;

@@ -394,14 +394,14 @@ void create_canvas(struct canvas *can);
 void copy_to_canvas(struct canvas *can);
 void set_selection();
 void reset_selection();
-void set_busy();
-void reset_busy();
 void clear_pixmap(struct canvas *can);
 void alloc_pixmap(struct canvas *can);
 void copy_subimage(struct canvas *subcan,struct canvas *can,POINT pos);
 int init_plot_display(int,char **);
 void reset_current_computation();
 void process_xevent();
+void set_busy(struct canvas *can);
+void reset_busy(struct canvas *can);
 
 #if defined(VISUAL) || defined(__MINGW32__)
 int search_active_canvas();
