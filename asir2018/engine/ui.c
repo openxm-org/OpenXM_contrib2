@@ -49,9 +49,7 @@
 */
 #include "ca.h"
 
-int compui(vl,a,b)
-VL vl;
-USINT a,b;
+int compui(VL vl,USINT a,USINT b)
 {
   if ( !a ) 
     if ( !b ) 

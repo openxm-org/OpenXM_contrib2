@@ -50,7 +50,7 @@
 #include "ca.h"
 #include "inline.h"
 
-extern int (*cmpdl)();
+extern int (*cmpdl)(int,DL,DL);
 extern int do_weyl;
 
 void ptomd(VL vl,int mod,VL dvl,P p,DP *pr)

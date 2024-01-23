@@ -63,7 +63,7 @@ void divcp(P f,Q q,P *rp)
   if ( !f ) 
     *rp = 0;
   else if ( NUM(f) )
-    DIVNUM(f,q,rp);
+    DIVNUM((Num)f,(Num)q,(Num *)rp);
   else {
     for ( dc = DC(f), dcr0 = 0; dc; dc = NEXT(dc) ) {
       NEXTDC(dcr0,dcr); DEG(dcr) = DEG(dc);
@@ -187,7 +187,7 @@ int compp(VL vl,P p1,P p2)
   else if ( !p2 )
     return 1;
   else if ( NUM(p1) )
-    return NUM(p2) ? (*cmpnumt[MAX(NID(p1),NID(p2))])(p1,p2) : -1;
+    return NUM(p2) ? (*cmpnumt[MAX(NID(p1),NID(p2))])((Num)p1,(Num)p2) : -1;
   else if ( NUM(p2) )
     return 1;
   if ( (v1 = VR(p1)) == (v2 = VR(p2)) ) {
@@ -233,7 +233,7 @@ int equalp(VL vl,P p1,P p2)
     if ( !NUM(p2) ) return 0;
     /* p1 and p2 are numbers */
     if ( NID((Num)p1) != NID((Num)p2) ) return 0;
-    if ( !(*cmpnumt[NID(p1),NID(p1)])(p1,p2) ) return 1;
+    if ( !(*cmpnumt[NID(p1),NID(p1)])((Num)p1,(Num)p2) ) return 1;
     return 0;
   }
   if ( VR(p1) != VR(p2) ) return 0;
@@ -349,7 +349,7 @@ void mulpq_trunc(P p,Q q,VN vn,P *pr)
         *pr = 0;
         return;
       }
-    MULNUM(p,q,pr);
+    MULNUM((Num)p,(Num)q,(Num *)pr);
   } else {
     v = VR(p);
     for ( ; vn->v && vn->v != v; vn++ ) {

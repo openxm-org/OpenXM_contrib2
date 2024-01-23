@@ -49,8 +49,7 @@
 */
 #include "ca.h"
 
-int qcoefr(r)
-Obj r;
+int qcoefr(Obj r)
 {
   if ( !r )
     return 1;
@@ -65,8 +64,7 @@ Obj r;
     }
 }
 
-int qcoefp(p)
-Obj p;
+int qcoefp(Obj p)
 {
   DCP dc;
 
@@ -84,9 +82,7 @@ Obj p;
     }
 }
 
-void reductr(vl,p,r)
-VL vl;
-Obj p,*r;
+void reductr(VL vl,Obj p,Obj *r)
 {
   P t,s,u,cnm,cdn,pnm,pdn;
   R a;
@@ -118,10 +114,7 @@ Obj p,*r;
   }
 }
 
-void pderivr(vl,a,v,b)
-VL vl;
-V v;
-Obj a,*b;
+void pderivr(VL vl,Obj a,V v,Obj *b)
 {
   P t,s,u;
   R r;
@@ -141,9 +134,7 @@ Obj a,*b;
   }
 }
 
-void clctvr(vl,p,nvl)
-VL vl,*nvl;
-Obj p;
+void clctvr(VL vl,Obj p,VL *nvl)
 {
   VL vl1,vl2;
 

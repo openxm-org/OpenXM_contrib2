@@ -50,9 +50,7 @@
 #include "ca.h"
 #include "base.h"
 
-void toreim(a,rp,ip)
-Num a;
-Num *rp,*ip;
+void toreim(Num a,Num *rp,Num *ip)
 {
   if ( !a )
     *rp = *ip = 0;
@@ -67,9 +65,7 @@ Num *rp,*ip;
   }
 }
 
-void reimtocplx(r,i,cp)
-Num r,i;
-Num *cp;
+void reimtocplx(Num r,Num i,Num *cp)
 {
   C c;
 
@@ -80,9 +76,7 @@ Num *cp;
   }
 }
 
-void addcplx(a,b,c)
-Num a,b;
-Num *c;
+void addcplx(Num a,Num b,Num *c)
 {
   Num ar,ai,br,bi,cr,ci;
 
@@ -103,9 +97,7 @@ Num *c;
   }
 }
 
-void subcplx(a,b,c)
-Num a,b;
-Num *c;
+void subcplx(Num a,Num b,Num *c)
 {
   Num ar,ai,br,bi,cr,ci;
 
@@ -126,9 +118,7 @@ Num *c;
   }
 }
 
-void mulcplx(a,b,c)
-Num a,b;
-Num *c;
+void mulcplx(Num a,Num b,Num *c)
 {
   Num ar,ai,br,bi,cr,ci,t,s;
 
@@ -148,9 +138,7 @@ Num *c;
   }
 }
 
-void divcplx(a,b,c)
-Num a,b;
-Num *c;
+void divcplx(Num a,Num b,Num *c)
 {
   Num ar,ai,br,bi,cr,ci,t,s,u,w;
 
@@ -175,9 +163,7 @@ Num *c;
   }
 }
 
-void pwrcplx(a,e,c)
-Num a,e;
-Num *c;
+void pwrcplx(Num a,Num e,Num *c)
 {
   int ei;
   Num t;
@@ -198,10 +184,7 @@ Num *c;
   }
 }
 
-void pwrcplx0(a,e,c)
-Num a;
-int e;
-Num *c;
+void pwrcplx0(Num a,int e,Num *c)
 {
   Num t,s;
 
@@ -217,8 +200,7 @@ Num *c;
   }
 }
 
-void chsgncplx(a,c)
-Num a,*c;
+void chsgncplx(Num a,Num *c)
 {
   Num r,i;
 
@@ -236,8 +218,7 @@ Num a,*c;
   }
 }
 
-int cmpcplx(a,b)
-Num a,b;
+int cmpcplx(Num a,Num b)
 {
   Num ar,ai,br,bi;
   int s;

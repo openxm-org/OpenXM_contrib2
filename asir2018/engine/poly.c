@@ -14,7 +14,7 @@ void addp(VL vl,P p1,P p2,P *pr)
     *pr = p1;
   else if ( NUM(p1) )
     if ( NUM(p2) ) 
-      ADDNUM(p1,p2,pr);
+      ADDNUM((Num)p1,(Num)p2,(Num *)pr);
     else 
       ADDPQ(p2,p1,pr);
   else if ( NUM(p2) ) 
@@ -318,7 +318,7 @@ void chsgnp(P p,P *pr)
     NEWMQ(mq); CONT(mq)=mod-CONT((MQ)p); *pr = (P)mq;
 #endif
 #else
-    CHSGNNUM(p,*pr);
+    CHSGNNUM((Num)p,*pr); 
 #endif
   } else {
     for ( dcr0 = 0, dc = DC(p); dc; dc = NEXT(dc) ) {

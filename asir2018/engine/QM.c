@@ -49,9 +49,7 @@
 */
 #include "ca.h"
 
-void addmq(m,n1,n2,nr)
-int m;
-MQ n1,n2,*nr;
+void addmq(int m,MQ n1,MQ n2,MQ *nr)
 {
   int a;
 
@@ -64,9 +62,7 @@ MQ n1,n2,*nr;
   }
 }
 
-void submq(m,n1,n2,nr)
-int m;
-MQ n1,n2,*nr;
+void submq(int m,MQ n1,MQ n2,MQ *nr)
 {
   int a;
 
@@ -79,9 +75,7 @@ MQ n1,n2,*nr;
   }
 }
 
-void mulmq(m,n1,n2,nr)
-int m;
-MQ n1,n2,*nr;
+void mulmq(int m,MQ n1,MQ n2,MQ *nr)
 {
   unsigned int a,b;
 
@@ -92,9 +86,7 @@ MQ n1,n2,*nr;
   }
 }
 
-void divmq(m,n1,n2,nq)
-int m;
-MQ n1,n2,*nq;
+void divmq(int m,MQ n1,MQ n2,MQ *nq)
 {
   unsigned int a,b;
 
@@ -109,9 +101,7 @@ MQ n1,n2,*nq;
   }
 }
 
-void invmq(m,n1,nq)
-int m;
-MQ n1,*nq;
+void invmq(int m,MQ n1,MQ *nq)
 {
   int a;
 
@@ -122,11 +112,7 @@ MQ n1,*nq;
   }
 }
 
-void pwrmq(m,n1,n,nr)
-int m;
-MQ n1;
-Q n;
-MQ *nr;
+void pwrmq(int m,MQ n1,Q n,MQ *nr)
 {
   int a;
 
@@ -139,9 +125,7 @@ MQ *nr;
   }
 }
 
-void mkbcm(m,n,t)
-int m,n;
-MQ *t;
+void mkbcm(int m,int n,MQ *t)
 {
   int i,j;
   int *a,*b,*c;

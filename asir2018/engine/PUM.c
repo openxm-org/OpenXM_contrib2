@@ -49,7 +49,8 @@
 */
 #include "ca.h"
 
-void gcdcmp(), sprsm();
+void sprsm(VL vl,int mod,V v,P p1,P p2,P *pr);
+void gcdcmp(VL vl,int mod,P p,P *pr);
 
 void detmp(VL vl,int mod,P **rmat,int n,P *dp)
 {

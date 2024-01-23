@@ -264,7 +264,7 @@ void save_up(UP obj,char *name)
   Obj ret;
   NODE n0,n1;
   STRING s;
-  void Pbsave();
+  void Pbsave(NODE,Obj *);
 
   uptop(obj,&p);
   MKSTR(s,name);

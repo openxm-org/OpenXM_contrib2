@@ -16,7 +16,7 @@ void divsrp(VL vl,P p1,P p2,P *q,P *r)
     *q = 0; *r = 0;
   } else if ( NUM(p2) ) 
     if ( NUM(p1) ) {
-      DIVNUM(p1,p2,q); *r = 0;
+      DIVNUM((Num)p1,(Num)p2,(Num *)q); *r = 0;
     } else {
       DIVSDCP(vl,p1,p2,q); *r = 0;
     }

@@ -49,10 +49,7 @@
 */
 #include "ca.h"
 
-void addstr(vl,a,b,c)
-VL vl;
-STRING a,b;
-STRING *c;
+void addstr(VL vl,STRING a,STRING b,STRING *c)
 {
   char *buf;
 
@@ -61,18 +58,14 @@ STRING *c;
   MKSTR(*c,buf); 
 }
 
-int compstr(vl,a,b)
-VL vl;
-STRING a,b;
+int compstr(VL vl,STRING a,STRING b)
 {
   return a ? (b?strcmp(BDY(a),BDY(b)):1) : (b?-1:0);
 }
 
 /* primitive functions for BYTEARRAY */
 
-int compbytearray(vl,a,b)
-VL vl;
-BYTEARRAY a,b;
+int compbytearray(VL vl,BYTEARRAY a,BYTEARRAY b)
 {
   int i;
 

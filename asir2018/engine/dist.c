@@ -64,11 +64,11 @@
 #define ORD_DRL_ZIGZAG 12
 #define ORD_HOMO_WW_DRL_ZIGZAG 13
 
-int cmpdl_drl_zigzag(), cmpdl_homo_ww_drl_zigzag();
-int cmpdl_top_weight();
+int cmpdl_drl_zigzag(int,DL,DL), cmpdl_homo_ww_drl_zigzag(int,DL,DL);
+int cmpdl_top_weight(int,DL,DL);
 
-int (*cmpdl)()=cmpdl_revgradlex;
-int (*cmpdl_tie_breaker)();
+int (*cmpdl)(int,DL,DL)=cmpdl_revgradlex;
+int (*cmpdl_tie_breaker)(int,DL,DL);
 int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
 
 Obj current_top_weight;

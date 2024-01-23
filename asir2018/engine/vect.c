@@ -49,9 +49,7 @@
 */
 #include "ca.h"
 
-void addvect(vl,a,b,c)
-VL vl;
-VECT a,b,*c;
+void addvect(VL vl,VECT a,VECT b,VECT *c)
 {
   int len,i;
   VECT t;
@@ -72,9 +70,7 @@ VECT a,b,*c;
   }
 }
 
-void subvect(vl,a,b,c)
-VL vl;
-VECT a,b,*c;
+void subvect(VL vl,VECT a,VECT b,VECT *c)
 {
   int len,i;
   VECT t;
@@ -96,9 +92,7 @@ VECT a,b,*c;
   }
 }
 
-void mulvect(vl,a,b,c)
-VL vl;
-Obj a,b,*c;
+void mulvect(VL vl,Obj a,Obj b,Obj *c)
 {
   if ( !a || !b )
     *c = 0;
@@ -110,9 +104,7 @@ Obj a,b,*c;
     notdef(vl,a,b,c);
 }
 
-void divvect(vl,a,b,c)
-VL vl;
-Obj a,b,*c;
+void divvect(VL vl,Obj a,Obj b,Obj *c)
 {
   Obj t;
 
@@ -127,8 +119,7 @@ Obj a,b,*c;
   }
 }
 
-void chsgnvect(a,b)
-VECT a,*b;
+void chsgnvect(VECT a,VECT *b)
 {
   VECT t;
   int len,i;
@@ -146,10 +137,7 @@ VECT a,*b;
   } 
 }
 
-void mulrvect(vl,a,b,c)
-VL vl;
-Obj a;
-VECT b,*c;
+void mulrvect(VL vl,Obj a,VECT b,VECT *c)
 {
   int len,i;
   VECT t;
@@ -166,9 +154,7 @@ VECT b,*c;
   }
 }
 
-int compvect(vl,a,b)
-VL vl;
-VECT a,b;
+int compvect(VL vl,VECT a,VECT b)
 {
   int i,len,t;
 

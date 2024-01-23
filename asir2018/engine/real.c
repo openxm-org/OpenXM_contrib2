@@ -121,11 +121,12 @@ void chsgnreal(Num a,Num *c)
   }
 }
 
+double pwrreal0(double n,int e);
+
 void pwrreal(Num a,Num b,Real *c)
 {
   int e,ea;
   double t;
-  double pwrreal0();
 
   if ( !b ) 
     MKReal(1.0,*c);

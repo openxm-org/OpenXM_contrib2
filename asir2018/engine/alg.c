@@ -52,10 +52,9 @@
 
 extern VL ALG;
 
-Obj ToAlg();
+Obj ToAlg(Num);
 
-Obj ToAlg(a)
-Num a;
+Obj ToAlg(Num a)
 {
   Obj t;
 
@@ -66,8 +65,7 @@ Num a;
   return t;
 }
 
-void addalg(a,b,c)
-Num a,b,*c;
+void addalg(Num a,Num b,Num *c)
 {
   Obj t;
   Alg r;
@@ -75,8 +73,7 @@ Num a,b,*c;
   addr(ALG,ToAlg(a),ToAlg(b),&t); MKAlg(t,r); *c = (Num)r;
 }
 
-void subalg(a,b,c)
-Num a,b,*c;
+void subalg(Num a,Num b,Num *c)
 {
   Obj t;
   Alg r;
@@ -84,8 +81,7 @@ Num a,b,*c;
   subr(ALG,ToAlg(a),ToAlg(b),&t); MKAlg(t,r); *c = (Num)r;
 }
 
-void mulalg(a,b,c)
-Num a,b,*c;
+void mulalg(Num a,Num b,Num *c)
 {
   Obj t;
   Alg r;
@@ -93,8 +89,7 @@ Num a,b,*c;
   mulr(ALG,ToAlg(a),ToAlg(b),&t); MKAlg(t,r); *c = (Num)r;
 }
 
-void divalg(a,b,c)
-Num a,b,*c;
+void divalg(Num a,Num b,Num *c)
 {
   Obj t;
   Alg r;
@@ -102,8 +97,7 @@ Num a,b,*c;
   divr(ALG,ToAlg(a),ToAlg(b),&t); MKAlg(t,r); *c = (Num)r;
 }
 
-void chsgnalg(a,c)
-Num a,*c;
+void chsgnalg(Num a,Num *c)
 {
   Obj t;
   Alg r;
@@ -111,8 +105,7 @@ Num a,*c;
   chsgnr(ToAlg(a),&t); MKAlg(t,r); *c = (Num)r;
 }
 
-void pwralg(a,b,c)
-Num a,b,*c;
+void pwralg(Num a,Num b,Num *c)
 {
   Obj t;
   Alg r;
@@ -120,8 +113,7 @@ Num a,b,*c;
   pwrr(ALG,ToAlg(a),(Obj)b,&t); MKAlg(t,r); *c = (Num)r;
 }
 
-int cmpalg(a,b)
-Num a,b;
+int cmpalg(Num a,Num b)
 {
   return compr(ALG,ToAlg(a),ToAlg(b));
 }

@@ -17,10 +17,7 @@ struct ftab imat_tab[] = {
 
 const IENT zent = { -1, -1, -1, 0}; /* last ient const */
 
-void MEnt(cr, row, col, trg, ent)
-int cr, row, col;
-Obj trg;
-IENT *ent;
+void MEnt(int cr, int row, int col, Obj trg, IENT *ent)
 {
   /* make Index Entry IENT */
   /* set:cr, row, trag */
@@ -33,10 +30,7 @@ IENT *ent;
   ent->body = (pointer)trg;
 }
 
-void GetNextIent(Im, ent, c)
-IMATC *Im;
-IENT *ent;
-int *c;
+void GetNextIent(IMATC *Im,IENT *ent,int *c)
 {
   /* get next IENT */
   /* set: Im, c */
@@ -55,10 +49,7 @@ int *c;
   *ent = (*Im)->ient[*c];
 }
 
-void GetForeIent(Im, ent, c)
-IMATC *Im;
-IENT *ent;
-int *c;
+void GetForeIent(IMATC *Im,IENT *ent,int *c)
 {
   /* GetForeIent(&Im, &ent, &c); */
 
@@ -76,10 +67,7 @@ int *c;
   *ent = (*Im)->ient[*c];
 }
 
-void AppendIent(m, row, col, body)
-IMAT m;
-int row, col;
-Obj body;
+void AppendIent(IMAT m,int row,int col,Obj body)
 {
   /* append row, col, body to matrix m */
   IMATC Im, Imt;
@@ -113,10 +101,7 @@ Obj body;
   }
 }
 
-void PutIent(m, row, col, trg)
-IMAT m;
-int row, col;
-Obj trg;
+void PutIent(IMAT m,int row,int col,Obj trg)
 {
   /* insert or replace IENT */
   IMATC Im, Imn;
@@ -175,9 +160,7 @@ printf("cr = %d\n",cr);
   }
 }
 
-void Pnewimat(arg, rp)
-NODE arg;
-IMAT *rp;
+void Pnewimat(NODE arg,IMAT *rp)
 {
   /* make new index type matrix for parser */
   int row,col;
@@ -193,10 +176,7 @@ IMAT *rp;
   *rp = m;
 }
 
-void GetIbody(m, row, col, trg)
-IMAT m;
-int col, row;
-Obj *trg;
+void GetIbody(IMAT m,int row,int col,Obj *trg)
 {
   /* get entry body from m for parser */
   IMATC Im;
@@ -227,9 +207,7 @@ Obj *trg;
   }
 }
 
-void PChsgnI(arg, rp)
-NODE arg;
-IMAT *rp;
+void PChsgnI(NODE arg,IMAT *rp)
 {
   /* index type matrix all entry sgn cheng for parser */
   VL vl;
@@ -242,9 +220,7 @@ IMAT *rp;
   *rp = n;
 }
 
-void ChsgnI(a, c)
-IMAT a;
-IMAT *c;
+void ChsgnI(IMAT a,IMAT *c)
 {
   /* index type matrix all entry sgn chg */
   IMAT b;
@@ -272,9 +248,7 @@ IMAT *c;
   }
 }
 
-void Pm2Im(arg, rp)
-NODE arg;
-IMAT *rp;
+void Pm2Im(NODE arg,IMAT *rp)
 {
   /* matrix type convert from MAT to IMAT */
   int i,j, row, col;
@@ -294,9 +268,7 @@ IMAT *rp;
   *rp = Im;
 }
 
-void PIm2m(arg, rp)
-NODE arg;
-MAT *rp;
+void PIm2m(NODE arg,MAT *rp)
 {
   /* matrix type convert from IMAT to MAT */
   IMAT Im;
@@ -320,9 +292,7 @@ MAT *rp;
   *rp = m;
 }
 
-void AddMatI(vl, a, b, c)
-VL vl;
-IMAT a, b, *c;
+void AddMatI(VL vl,IMAT a,IMAT b,IMAT *c)
 {
   /* add index type matrix */
   int ai, bi;
@@ -384,9 +354,7 @@ IMAT a, b, *c;
   return;
 }
 
-void SubMatI(vl, a, b, c)
-VL vl;
-IMAT a, b, *c;
+void SubMatI(VL vl,IMAT a,IMAT b,IMAT *c)
 {
   /* subtract index type matrix */
   int ai, bi;
@@ -452,9 +420,7 @@ IMAT a, b, *c;
   }
 }
 
-void MulrMatI(vl, a, b, rp)
-VL vl;
-Obj a, b, *rp;
+void MulrMatI(VL vl,Obj a,Obj b,Obj *rp)
 {
   /* multiply a expression and a index type matrix */
   IMAT m;
@@ -477,9 +443,7 @@ Obj a, b, *rp;
   *rp = (Obj)m;
 }
 
-void MulMatG(vl, a, b, c)
-VL vl;
-Obj a, b, *c;
+void MulMatG(VL vl,Obj a,Obj b,Obj *c)
 {
   /* multiply index type matrix general procedure */
   IMAT m;
@@ -499,9 +463,7 @@ Obj a, b, *c;
   else MulMatS(vl, (IMAT)a, (IMAT)b, (IMAT *)c);
 }
 
-void MulMatS(vl, m,n,rp)
-VL vl;
-IMAT m, n, *rp;
+void MulMatS(VL vl,IMAT m,IMAT n,IMAT *rp)
 {
   /* multiply index type matrix and index type matrix */
   IMAT r, a11, a12, a21, a22, b11, b12, b21, b22;
@@ -730,9 +692,7 @@ IMAT m, n, *rp;
   return;
 }
 
-void MulMatI(vl,m,n,r)
-VL vl;
-IMAT m, n, *r;
+void MulMatI(VL vl,IMAT m,IMAT n,IMAT *r)
 {
   /* inner prodocut algorithm for index type multiply procedure */
   IMAT l;

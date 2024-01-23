@@ -1144,13 +1144,13 @@ extern const int sprime[];
 extern int sprime[];
 #endif
 
-extern void (*addnumt[])();
-extern void (*subnumt[])();
-extern void (*mulnumt[])();
-extern void (*divnumt[])();
-extern void (*pwrnumt[])();
-extern int (*cmpnumt[])();
-extern void (*chsgnnumt[])();
+extern void (*addnumt[])(Num,Num,Num *);
+extern void (*subnumt[])(Num,Num,Num *);
+extern void (*mulnumt[])(Num,Num,Num *);
+extern void (*divnumt[])(Num,Num,Num *);
+extern void (*pwrnumt[])(Num,Num,Num *);
+extern int (*cmpnumt[])(Num,Num);
+extern void (*chsgnnumt[])(Num,Num *);
 
 extern int current_mod;
 extern GEN_UP2 current_mod_gf2n;

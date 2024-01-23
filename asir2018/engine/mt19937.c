@@ -52,8 +52,7 @@
 static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
 
-int mt_save(name)
-char *name;
+int mt_save(char *name)
 {
   FILE *fp;
 
@@ -65,8 +64,7 @@ char *name;
   return 1;
 }
 
-int mt_load(name)
-char *name;
+int mt_load(char *name)
 {
   FILE *fp;
 
@@ -80,8 +78,7 @@ char *name;
 
 /* initializing the array with a NONZERO seed */
 void
-sgenrand(seed)
-    unsigned long seed;  
+sgenrand(unsigned long seed)
 {
     /* setting initial seeds to mt[N] using         */
     /* the generator Line 25 of Table 1 in          */

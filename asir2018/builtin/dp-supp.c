@@ -55,7 +55,7 @@
 
 #define HMAG(p) (p_mag((P)BDY(p)->c))
 
-extern int (*cmpdl)();
+extern int (*cmpdl)(int,DL,DL);
 extern double pz_t_e,pz_t_d,pz_t_d1,pz_t_c;
 extern int dp_nelim,dp_fcoeffs;
 extern int NoGCD;

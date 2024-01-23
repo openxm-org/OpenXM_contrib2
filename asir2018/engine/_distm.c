@@ -50,7 +50,7 @@
 #include "ca.h"
 #include "inline.h"
 
-extern int (*cmpdl)();
+extern int (*cmpdl)(int,DL,DL);
 extern int do_weyl;
 
 MP _mp_free_list;
