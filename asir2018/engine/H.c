@@ -64,7 +64,7 @@
 #define DDD 2
 #define NEWDDD 3
       
-LUM LUMALLOC();
+LUM LUMALLOC(int,int);
 
 void berle(int index,int count,P f,ML *listp)
 {
@@ -113,7 +113,7 @@ int berlecnt(int mod,UM f)
   register int i,j,**c;
   int d,dr,n;
   UM w,q;
-  int **almat();
+  int **almat(int,int);
 
   n = DEG(f); c = almat(n,n);
   w = W_UMALLOC(mod + n); q = W_UMALLOC(mod + n);

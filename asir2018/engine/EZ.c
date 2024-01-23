@@ -502,7 +502,7 @@ void ezgcdhensel(P f,int mod,UM cof,UM gcd,ML *listp)
   UM *b;
   LUM fl,tl;
   LUM *l;
-  LUM LUMALLOC();
+  LUM LUMALLOC(int,int);
   
   blist = W_MLALLOC(2);
   blist->n = 2; blist->mod = mod;

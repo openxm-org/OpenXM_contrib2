@@ -49,10 +49,7 @@
 */
 #include "ca.h"
 
-void nezgcdnpz(vl,ps,m,pr)
-VL vl;
-P *ps,*pr;
-int m;
+void nezgcdnpz(VL vl,P *ps,int m,P *pr)
 {
   P t,s,mg;
   VL tvl,svl,avl,nvl;
@@ -141,9 +138,7 @@ int m;
   mulp(vl,t,(P)cq,&s); mulp(vl,s,mg,pr);
 }
 
-void sortplistbyhomdeg(p,n)
-P *p;
-int n;
+void sortplistbyhomdeg(P *p,int n)
 {
   int i,j,k;
   int *l;
@@ -160,11 +155,7 @@ int n;
       }
 }
 
-void nuezgcdnpzmain(vl,ps,m,r)
-VL vl;
-P *ps;
-int m;
-P *r;
+void nuezgcdnpzmain(VL vl,P *ps,int m,P *r)
 {
   P *tps;
   P f,t;
@@ -184,11 +175,7 @@ P *r;
   *r = f;
 }
 
-void gcdmonomial(vl,dcl,m,r)
-VL vl;
-DCP *dcl;
-int m;
-P *r;
+void gcdmonomial(VL vl,DCP *dcl,int m,P *r)
 {
   int i,j,n;
   P g,x,s,t;
@@ -228,10 +215,7 @@ P *r;
   *r = g;
 }
 
-void nezgcdnpzmain(vl,pl,m,pr)
-VL vl;
-P *pl,*pr;
-int m;
+void nezgcdnpzmain(VL vl,P *pl,int m,P *pr)
 {
   P *ppl,*pcl;
   int i;
@@ -255,12 +239,7 @@ int m;
   mulp(vl,gcd,cont,pr);
 }
 
-void nezgcdnpp(vl,dc,pl,m,r)
-VL vl;
-DCP dc;
-P *pl;
-int m;
-P *r;
+void nezgcdnpp(VL vl,DCP dc,P *pl,int m,P *r)
 {
   int i,k;
   P g,t,s,gcd;
@@ -301,10 +280,7 @@ P *r;
  *
  */
 
-void nezgcdnp_sqfr_primitive(vl,p0,ps,m,pr)
-VL vl;
-int m;
-P p0,*ps,*pr;
+void nezgcdnp_sqfr_primitive(VL vl,P p0,P *ps,int m,P *pr)
 {
   /* variables */
   P p00,g,h,g0,h0,a0,b0;
@@ -399,8 +375,7 @@ P p0,*ps,*pr;
     }
 }
 
-void intersectv(vl1,vl2,vlp)
-VL vl1,vl2,*vlp;
+void intersectv(VL vl1,VL vl2,VL *vlp)
 {
   int i,n;
   VL tvl;
@@ -422,10 +397,7 @@ VL vl1,vl2,*vlp;
   vntovl(tvn,n,vlp);
 }
 
-int pcoef(vl,ivl,p,cp)
-VL vl,ivl;
-P p;
-P *cp;
+int pcoef(VL vl,VL ivl,P p,P *cp)
 {
   VL nvl,tvl,svl,mvl,mvl0;
   P t;
@@ -456,10 +428,7 @@ P *cp;
   }
 }
 
-int pcoef0(vl,ivl,p,cp)
-VL vl,ivl;
-P p;
-P *cp;
+int pcoef0(VL vl,VL ivl,P p,P *cp)
 {
   int cn,n;
   DCP dc;
@@ -483,8 +452,7 @@ P *cp;
   }
 }
 
-int lengthp(p)
-P p;
+int lengthp(P p)
 {
   int n;
   DCP dc;

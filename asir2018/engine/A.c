@@ -50,7 +50,7 @@
 #include "ca.h"
 #include "parse.h"
 
-int get_lprime();
+int get_lprime(int);
 
 void pdiva(VL vl,P p0,P p1,P p2,P *pr)
 {
