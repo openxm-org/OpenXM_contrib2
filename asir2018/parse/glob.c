@@ -204,6 +204,17 @@ void notdef(VL vl,Obj a,Obj b,Obj *c)
   error("undefined arithmetic operation.");
 }
 
+void notdef2(Obj b,Obj *c)
+{
+  error("undefined arithmetic operation.");
+}
+
+int notdefi(VL vl,Obj a,Obj b)
+{
+  error("undefined arithmetic operation.");
+  return 0;
+}
+
 int disable_debugger;
 int do_asirrc;
 int do_file;

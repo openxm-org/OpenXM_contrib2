@@ -55,15 +55,18 @@
 
 void savenbp(FILE *s,NBP p);
 
-void (*savef[])(FILE *,Obj) = { 0, (void (*)(FILE *,Obj))savenum, (void (*)(FILE *,Obj))savep, (void (*)(FILE *,Obj))saver, (void (*)(FILE *,Obj))savelist, (void (*)(FILE *,Obj))savevect,
-  (void (*)(FILE *,Obj))savemat, (void (*)(FILE *,Obj))savestring, 0, (void (*)(FILE *,Obj))savedp, (void (*)(FILE *,Obj))saveui, (void (*)(FILE *,Obj))saveerror,0,0,0,(void (*)(FILE *,Obj))savegfmmat,
-  (void (*)(FILE *,Obj))savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  (void (*)(FILE *,Obj))savenbp, (void (*)(FILE *,Obj))savedpm };
+typedef void (*SFUNC)(FILE *,Obj);
+typedef void (*NSFUNC)(FILE *,Num);
+
+SFUNC  savef[] = { 0, (SFUNC)savenum, (SFUNC)savep, (SFUNC)saver, (SFUNC)savelist, (SFUNC)savevect,
+  (SFUNC)savemat, (SFUNC)savestring, 0, (SFUNC)savedp, (SFUNC)saveui, (SFUNC)saveerror,0,0,0,(SFUNC)savegfmmat,
+  (SFUNC)savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  (SFUNC)savenbp, (SFUNC)savedpm };
 #if defined(INTERVAL)
 void saveitv(FILE *s,Itv p);
 void saveitvd(FILE *s,IntervalDouble p);
-void (*nsavef[])(FILE *,Num) = { (void (*)(FILE *,Num))saveq, (void (*)(FILE *,Num))savereal, 0, (void (*)(FILE *,Num))savebf, (void (*)(FILE *,Num))saveitv, (void (*)(FILE *,Num))saveitvd, 0, (void (*)(FILE *,Num))saveitv, (void (*)(FILE *,Num))savecplx ,(void (*)(FILE *,Num))savemi, (void (*)(FILE *,Num))savelm, (void (*)(FILE *,Num))savegf2n, (void (*)(FILE *,Num))savegfpn, (void (*)(FILE *,Num))savegfs, (void (*)(FILE *,Num))savegfsn,(void (*)(FILE *,Num))savedalg};
+NSFUNC nsavef[] = { (NSFUNC)saveq, (NSFUNC)savereal, 0, (NSFUNC)savebf, (NSFUNC)saveitv, (NSFUNC)saveitvd, 0, (NSFUNC)saveitv, (NSFUNC)savecplx ,(NSFUNC)savemi, (NSFUNC)savelm, (NSFUNC)savegf2n, (NSFUNC)savegfpn, (NSFUNC)savegfs, (NSFUNC)savegfsn,(NSFUNC)savedalg};
 #else
-void (*nsavef[])(FILE *,Num) = { (void (*)(FILE *,Num))saveq, (void (*)(FILE *,Num))savereal, 0, (void (*)(FILE *,Num))savebf, (void (*)(FILE *,Num))savecplx ,(void (*)(FILE *,Num))savemi, (void (*)(FILE *,Num))savelm, (void (*)(FILE *,Num))savegf2n, (void (*)(FILE *,Num))savegfpn, (void (*)(FILE *,Num))savegfs, (void (*)(FILE *,Num))savegfsn,(void (*)(FILE *,Num))savedalg};
+NSFUNC nsavef[] = { (NSFUNC)saveq, (NSFUNC)savereal, 0, (NSFUNC)savebf, (NSFUNC)savecplx ,(NSFUNC)savemi, (NSFUNC)savelm, (NSFUNC)savegf2n, (NSFUNC)savegfpn, (NSFUNC)savegfs, (NSFUNC)savegfsn,(NSFUNC)savedalg};
 #endif
 
 static short zeroval = 0;

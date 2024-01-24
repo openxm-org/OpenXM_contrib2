@@ -55,16 +55,20 @@ extern VL file_vl;
 
 void loadnbp(FILE *s,NBP *p);
 
-void (*loadf[])(FILE *,Obj *) = { 0, (void (*)(FILE *,Obj *))loadnum, (void (*)(FILE *,Obj *))loadp, (void (*)(FILE *,Obj *))loadr, (void (*)(FILE *,Obj *))loadlist, (void (*)(FILE *,Obj *))loadvect, (void (*)(FILE *,Obj *))loadmat,
-  (void (*)(FILE *,Obj *))loadstring, 0, (void (*)(FILE *,Obj *))loaddp, (void (*)(FILE *,Obj *))loadui, (void (*)(FILE *,Obj *))loaderror,0,0,0,(void (*)(FILE *,Obj *))loadgfmmat, 
-  (void (*)(FILE *,Obj *))loadbytearray, 0, 0, 0, 0, 0, 0, 0, 0,  (void (*)(FILE *,Obj *))loadnbp, (void (*)(FILE *,Obj *))loaddpm };
+typedef void (*LFUNC)(FILE *,Obj *);
+typedef void (*NLFUNC)(FILE *,Num *);
+
+LFUNC loadf[] = { 0, (LFUNC)loadnum, (LFUNC)loadp, (LFUNC)loadr, (LFUNC)loadlist, (LFUNC)loadvect, (LFUNC)loadmat,
+  (LFUNC)loadstring, 0, (LFUNC)loaddp, (LFUNC)loadui, (LFUNC)loaderror,0,0,0,(LFUNC)loadgfmmat, 
+  (LFUNC)loadbytearray, 0, 0, 0, 0, 0, 0, 0, 0,  (LFUNC)loadnbp, (LFUNC)loaddpm };
 
 #if defined(INTERVAL)
-void loaditv();
-void loaditvd();
-void (*nloadf[])(FILE *,Num *) = { (void (*)(FILE *,Num *))loadq, (void (*)(FILE *,Num *))loadreal, 0, (void (*)(FILE *,Num *))loadbf, (void (*)(FILE *,Num *))loaditv, (void (*)(FILE *,Num *))loaditvd, 0, (void (*)(FILE *,Num *))loaditv, (void (*)(FILE *,Num *))loadcplx, (void (*)(FILE *,Num *))loadmi, (void (*)(FILE *,Num *))loadlm, (void (*)(FILE *,Num *))loadgf2n, (void (*)(FILE *,Num *))loadgfpn, (void (*)(FILE *,Num *))loadgfs, (void (*)(FILE *,Num *))loadgfsn, (void (*)(FILE *,Num *))loaddalg };
+void loaditv(FILE *s,Itv *p);
+void loaditvd(FILE *s,IntervalDouble *p);
+
+NLFUNC nloadf[] = { (NLFUNC)loadq, (NLFUNC)loadreal, 0, (NLFUNC)loadbf, (NLFUNC)loaditv, (NLFUNC)loaditvd, 0, (NLFUNC)loaditv, (NLFUNC)loadcplx, (NLFUNC)loadmi, (NLFUNC)loadlm, (NLFUNC)loadgf2n, (NLFUNC)loadgfpn, (NLFUNC)loadgfs, (NLFUNC)loadgfsn, (NLFUNC)loaddalg };
 #else
-void (*nloadf[])(FILE *,Num *) = { (void (*)(FILE *,Num *))loadq, (void (*)(FILE *,Num *))loadreal, 0, (void (*)(FILE *,Num *))loadbf, (void (*)(FILE *,Num *))loadcplx, (void (*)(FILE *,Num *))loadmi, (void (*)(FILE *,Num *))loadlm, (void (*)(FILE *,Num *))loadgf2n, (void (*)(FILE *,Num *))loadgfpn, (void (*)(FILE *,Num *))loadgfs, (void (*)(FILE *,Num *))loadgfsn, (void (*)(FILE *,Num *))loaddalg };
+NLFUNC nloadf[] = { (NLFUNC)loadq, (NLFUNC)loadreal, 0, (NLFUNC)loadbf, (NLFUNC)loadcplx, (NLFUNC)loadmi, (NLFUNC)loadlm, (NLFUNC)loadgf2n, (NLFUNC)loadgfpn, (NLFUNC)loadgfs, (NLFUNC)loadgfsn, (NLFUNC)loaddalg };
 #endif
 
 void loadobj(FILE *s,Obj *p)

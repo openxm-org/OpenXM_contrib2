@@ -1144,13 +1144,13 @@ extern const int sprime[];
 extern int sprime[];
 #endif
 
-extern void (*addnumt[])(Num,Num,Num *);
-extern void (*subnumt[])(Num,Num,Num *);
-extern void (*mulnumt[])(Num,Num,Num *);
-extern void (*divnumt[])(Num,Num,Num *);
-extern void (*pwrnumt[])(Num,Num,Num *);
-extern int (*cmpnumt[])(Num,Num);
-extern void (*chsgnnumt[])(Num,Num *);
+typedef void (*NFUNC)(Num,Num,Num *);
+typedef void (*NFUNC2)(Num,Num *);
+typedef int (*NFUNCI)(Num,Num);
+
+extern NFUNC addnumt[], subnumt[], mulnumt[], divnumt[], pwrnumt[];
+extern NFUNCI cmpnumt[];
+extern NFUNC2 chsgnnumt[];
 
 extern int current_mod;
 extern GEN_UP2 current_mod_gf2n;
@@ -1332,7 +1332,6 @@ void print_split_e(struct oEGT *,struct oEGT *);
 void suspend_timer(void);
 void resume_timer(void);
 void reset_engine(void);
-void notdef(VL,Obj,Obj,Obj *);
 void error(char *);
 void ptoup2(P,UP2 *);
 void ptoup2_sparse(P,UP2 *);
@@ -2730,7 +2729,9 @@ int sgnq(Q n);
 void binarytoz(char *binary,Z *np);
 void hextoz(char *hex,Z *np);
 void todouble(Obj,Obj *);
-
+void notdef(VL vl,Obj a,Obj b,Obj *c);
+void notdef2(Obj b,Obj *c);
+int notdefi(VL vl,Obj b,Obj c);
 void lmtolf(LM f,Z *b);
 
 #if SIZEOF_LONG == 8

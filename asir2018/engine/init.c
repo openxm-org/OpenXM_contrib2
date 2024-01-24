@@ -101,11 +101,16 @@ static int lprime_size;
 #define CHSGNBF chsgnbf
 #define CMPBF cmpbf
 
+typedef void (*NFUNC)(Num,Num,Num *);
+typedef void (*NFUNC2)(Num,Num *);
+typedef int (*NFUNCI)(Num,Num);
+
 #if defined(INTERVAL)
 int zerorewrite = 0;
 int zerorewriteCount = 0;
+
 //			N_Q,  N_R,	N_A,	N_B, N4, N_IP,	N_IDouble,N_IQ, N_IBF, N_C,     N_M    N_LM, N_GF2N,   N_GFPN, N_GFS,  N_GFSN,  N_DA, 	N_GZ, N_GQ, N_PARIB
-void (*addnumt[])() = { addq, addreal, addalg, ADDBF, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
+void (*addnumt[])(Num,Num,Num *) = { addq, addreal, addalg, ADDBF, 0, additvp, additvd, 0, additvf, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
 void (*subnumt[])() = { subq, subreal, subalg, SUBBF, 0, subitvp, subitvd, 0, subitvf, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn, subdalg };
 void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, 0, mulitvp, mulitvd, 0, mulitvf, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn, muldalg };
 void (*divnumt[])() = { divq, divreal, divalg, DIVBF, 0, divitvp, divitvd, 0, divitvf, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn, divdalg };
@@ -114,13 +119,13 @@ void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, 0, chsgnitvp, ch
 int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, 0, cmpitvp, cmpitvd, 0, cmpitvf, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn, cmpdalg };
 #else
 //			N_Q,  N_R,	N_A,	N_B,   N_C,     N_M,   N_LM, N_GF2N,   N_GFPN, N_GFS,  N_GFSN,  N_DA, 	N_GZ, N_GQ, N_PARIB
-void (*addnumt[])() = { addq, addreal, addalg, ADDBF, addcplx, addmi, addlm, addgf2n, addgfpn, addgfs, addgfsn, adddalg };
-void (*subnumt[])() = { subq, subreal, subalg, SUBBF, subcplx, submi, sublm, subgf2n, subgfpn, subgfs, subgfsn, subdalg };
-void (*mulnumt[])() = { mulq, mulreal, mulalg, MULBF, mulcplx, mulmi, mullm, mulgf2n, mulgfpn, mulgfs, mulgfsn, muldalg };
-void (*divnumt[])() = { divq, divreal, divalg, DIVBF, divcplx, divmi, divlm, divgf2n, divgfpn, divgfs, divgfsn, divdalg };
-void (*pwrnumt[])() = { pwrq, pwrreal, pwralg, PWRBF, pwrcplx, pwrmi, pwrlm, pwrgf2n, pwrgfpn, pwrgfs, pwrgfsn, pwrdalg };
-void (*chsgnnumt[])() = { chsgnq, chsgnreal, chsgnalg, CHSGNBF, chsgncplx, chsgnmi, chsgnlm, chsgngf2n, chsgngfpn, chsgngfs, chsgngfsn, chsgndalg };
-int (*cmpnumt[])() = { cmpq, cmpreal, cmpalg, CMPBF, cmpcplx, cmpmi, cmplm, cmpgf2n, cmpgfpn, cmpgfs, cmpgfsn, cmpdalg };
+NFUNC addnumt[] = { (NFUNC)addq, (NFUNC)addreal, (NFUNC)addalg, (NFUNC)ADDBF, (NFUNC)addcplx, (NFUNC)addmi, (NFUNC)addlm, (NFUNC)addgf2n, (NFUNC)addgfpn, (NFUNC)addgfs, (NFUNC)addgfsn, (NFUNC)adddalg };
+NFUNC subnumt[] = { (NFUNC)subq, (NFUNC)subreal, (NFUNC)subalg, (NFUNC)SUBBF, (NFUNC)subcplx, (NFUNC)submi, (NFUNC)sublm, (NFUNC)subgf2n, (NFUNC)subgfpn, (NFUNC)subgfs, (NFUNC)subgfsn, (NFUNC)subdalg };
+NFUNC mulnumt[] = { (NFUNC)mulq, (NFUNC)mulreal, (NFUNC)mulalg, (NFUNC)MULBF, (NFUNC)mulcplx, (NFUNC)mulmi, (NFUNC)mullm, (NFUNC)mulgf2n, (NFUNC)mulgfpn, (NFUNC)mulgfs, (NFUNC)mulgfsn, (NFUNC)muldalg };
+NFUNC divnumt[] = { (NFUNC)divq, (NFUNC)divreal, (NFUNC)divalg, (NFUNC)DIVBF, (NFUNC)divcplx, (NFUNC)divmi, (NFUNC)divlm, (NFUNC)divgf2n, (NFUNC)divgfpn, (NFUNC)divgfs, (NFUNC)divgfsn, (NFUNC)divdalg };
+NFUNC pwrnumt[] = { (NFUNC)pwrq, (NFUNC)pwrreal, (NFUNC)pwralg, (NFUNC)PWRBF, (NFUNC)pwrcplx, (NFUNC)pwrmi, (NFUNC)pwrlm, (NFUNC)pwrgf2n, (NFUNC)pwrgfpn, (NFUNC)pwrgfs, (NFUNC)pwrgfsn, (NFUNC)pwrdalg };
+NFUNC2 chsgnnumt[] = { (NFUNC2)chsgnq, (NFUNC2)chsgnreal, (NFUNC2)chsgnalg, (NFUNC2)CHSGNBF, (NFUNC2)chsgncplx, (NFUNC2)chsgnmi, (NFUNC2)chsgnlm, (NFUNC2)chsgngf2n, (NFUNC2)chsgngfpn, (NFUNC2)chsgngfs, (NFUNC2)chsgngfsn, (NFUNC2)chsgndalg };
+NFUNCI cmpnumt[] = { (NFUNCI)cmpq, (NFUNCI)cmpreal, (NFUNCI)cmpalg, (NFUNCI)CMPBF, (NFUNCI)cmpcplx, (NFUNCI)cmpmi, (NFUNCI)cmplm, (NFUNCI)cmpgf2n, (NFUNCI)cmpgfpn, (NFUNCI)cmpgfs, (NFUNCI)cmpgfsn, (NFUNCI)cmpdalg };
 #endif
 
 double get_current_time();

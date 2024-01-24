@@ -814,7 +814,6 @@ char *get_attribute(char *key,LIST attr);
 void treetofnode(Obj obj,FNODE *f);
 void glob_init() ;
 void input_init(FILE *fp,char *name);
-void notdef(VL vl,Obj a,Obj b,Obj *c);
 void ExitAsir() ;
 void asir_terminate(int status);
 void param_init() ;

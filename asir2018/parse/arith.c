@@ -50,53 +50,51 @@
 #include "ca.h"
 #include "parse.h"
 
+typedef void (*AF)(VL,Obj,Obj,Obj *);
+typedef void (*AF2)(Obj,Obj *);
+typedef int (*AFI)(VL,Obj,Obj);
+
+int compvoid(VL vl,Obj a,Obj b);
+
 struct oAFUNC {
-  void (*add)();
-  void (*sub)();
-  void (*mul)();
-  void (*div)();
-  void (*pwr)();
-  void (*chsgn)();
-  int (*comp)();
+  AF add, sub,mul,div,pwr;
+  AF2 chsgn;
+  AFI comp;
 };
 
 struct oARF arf[6];
 ARF addfs, subfs, mulfs, divfs, remfs, pwrfs;
 
-void divsdc();
-int compqa();
-int compquote();
-int compvoid();
 
 struct oAFUNC afunc0[] = {
-/* O_VOID=-1 */ {notdef,notdef,notdef,notdef,notdef,notdef,compvoid},
-/* ???=0 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_N=1 */  {addnum,subnum,mulnum,divnum,pwrnum,chsgnnum,compnum},
-/* O_P=2 */  {addp,subp,mulp,divr,pwrp,chsgnp,compp},
-/* O_R=3 */  {addr,subr,mulr,divr,pwrr,chsgnr,compr},
-/* O_LIST=4 */  {notdef,notdef,notdef,notdef,notdef,notdef,complist},
-/* O_VECT=5 */  {addvect,subvect,mulvect,divvect,notdef,chsgnvect,compvect},
-/* O_MAT=6 */  {addmat,submat,mulmat,divmat,pwrmat,chsgnmat,compmat},
-/* O_STR=7 */  {addstr,notdef,notdef,notdef,notdef,notdef,compstr},
-/* O_COMP=8 */  {addcomp,subcomp,mulcomp,divcomp,pwrcomp,chsgncomp,compcomp},
-/* O_DP=9 */   {addd,subd,muld,divdc,notdef,chsgnd,compd},
-/* O_USINT=10 */  {notdef,notdef,notdef,notdef,notdef,notdef,compui},
-/* O_ERR=11 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_GF2MAT=12 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_MATHCAP=13 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_F=14 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_GFMMAT=15 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_BYTEARRAY=16 */  {notdef,notdef,notdef,notdef,notdef,notdef,compbytearray},
-/* O_QUOTE=17 */  {addquote,subquote,mulquote,divquote,pwrquote,chsgnquote,compquote},
-/* O_OPTLIST=18 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_SYMBOL=19 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_RANGE=20 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_TB=21 */  {notdef,notdef,notdef,notdef,notdef,notdef,(int(*)())notdef},
-/* O_DPV=22 */  {adddv,subdv,muldv,notdef,notdef,chsgndv,compdv},
-/* O_QUOTEARG=23 */  {notdef,notdef,notdef,notdef,notdef,notdef,compqa},
-/* O_MAT=24 */  {AddMatI,SubMatI,MulMatG,notdef,notdef,ChsgnI,(int(*)())notdef},
-/* O_NBP=25 */  {addnbp,subnbp,mulnbp,notdef,pwrnbp,chsgnnbp,compnbp},
-/* O_DPM=26 */  {adddpm,subdpm,mulobjdpm,notdef,notdef,chsgndpm,compdpm},
+/* O_VOID=-1 */ {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)compvoid},
+/* ???=0 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_N=1 */  {(AF)addnum,(AF)subnum,(AF)mulnum,(AF)divnum,(AF)pwrnum,(AF2)chsgnnum,(AFI)compnum},
+/* O_P=2 */  {(AF)addp,(AF)subp,(AF)mulp,(AF)divr,(AF)pwrp,(AF2)chsgnp,(AFI)compp},
+/* O_R=3 */  {(AF)addr,(AF)subr,(AF)mulr,(AF)divr,(AF)pwrr,(AF2)chsgnr,(AFI)compr},
+/* O_LIST=4 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)complist},
+/* O_VECT=5 */  {(AF)addvect,(AF)subvect,(AF)mulvect,(AF)divvect,(AF)notdef,(AF2)chsgnvect,(AFI)compvect},
+/* O_MAT=6 */  {(AF)addmat,(AF)submat,(AF)mulmat,(AF)divmat,(AF)pwrmat,(AF2)chsgnmat,(AFI)compmat},
+/* O_STR=7 */  {(AF)addstr,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)compstr},
+/* O_COMP=8 */  {(AF)addcomp,(AF)subcomp,(AF)mulcomp,(AF)divcomp,(AF)pwrcomp,(AF2)chsgncomp,(AFI)compcomp},
+/* O_DP=9 */   {(AF)addd,(AF)subd,(AF)muld,(AF)divdc,(AF)notdef,(AF2)chsgnd,(AFI)compd},
+/* O_USINT=10 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)compui},
+/* O_ERR=11 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_GF2MAT=12 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_MATHCAP=13 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_F=14 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_GFMMAT=15 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_BYTEARRAY=16 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)compbytearray},
+/* O_QUOTE=17 */  {(AF)addquote,(AF)subquote,(AF)mulquote,(AF)divquote,(AF)pwrquote,(AF2)chsgnquote,(AFI)compquote},
+/* O_OPTLIST=18 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_SYMBOL=19 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_RANGE=20 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_TB=21 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)notdefi},
+/* O_DPV=22 */  {(AF)adddv,(AF)subdv,(AF)muldv,(AF)notdef,(AF)notdef,(AF2)chsgndv,(AFI)compdv},
+/* O_QUOTEARG=23 */  {(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF)notdef,(AF2)notdef2,(AFI)compqa},
+/* O_MAT=24 */  {(AF)AddMatI,(AF)SubMatI,(AF)MulMatG,(AF)notdef,(AF)notdef,(AF2)ChsgnI,(AFI)notdefi},
+/* O_NBP=25 */  {(AF)addnbp,(AF)subnbp,(AF)mulnbp,(AF)notdef,(AF)pwrnbp,(AF2)chsgnnbp,(AFI)compnbp},
+/* O_DPM=26 */  {(AF)adddpm,(AF)subdpm,(AF)mulobjdpm,(AF)notdef,(AF)notdef,(AF2)chsgndpm,(AFI)compdpm},
 };
 
 struct oAFUNC *afunc = &afunc0[1];
@@ -267,7 +265,7 @@ void arf_pwr(VL vl,Obj a,Obj e,Obj *r)
         (*(afunc[O_P].pwr))(vl,a,e,r);
       else {
         MKRAT((P)a,(P)ONE,1,t);
-        (*(afunc[O_R].pwr))(vl,t,e,r);
+        (*(afunc[O_R].pwr))(vl,(Obj)t,e,r);
       }
     } else
       (*(afunc[OID(a)].pwr))(vl,a,e,r);
