@@ -76,24 +76,22 @@ static struct timing time_duration[MAXTIMING];
 #define RECORD_TIME(i) getrusage( RUSAGE_SELF, &ru_time[i] )
 #endif /* TIMING */
 
-void FFT_primes(Num, p_prime, p_primroot, p_d)
-int Num, *p_prime, *p_primroot, *p_d;
+void MNpol_product_DFT( unsigned int d1, unsigned int C1[], unsigned int d2, unsigned int C2[], unsigned int Prod[], unsigned int a, unsigned int low0s, unsigned int P, double Pinv, unsigned int wk[] );
+void MNpol_square_DFT( unsigned int d1, unsigned int C1[], unsigned int Prod[], unsigned int a, unsigned int low0s, unsigned int P, double Pinv, unsigned int wk[] );
+
+void FFT_primes(int Num, int *p_prime, int *p_primroot, int *p_d)
 {
   *p_prime =  Primes[Num].prime;
   *p_primroot =  Primes[Num].primroot;
   *p_d = Primes[Num].d;
 }    
 
-int FFT_pol_square( d1, C1, Prod,  MinMod, wk)
-unsigned int d1;
-int MinMod;
-unsigned int C1[], Prod[], wk[];
+int FFT_pol_square( unsigned int d1, unsigned int C1[], unsigned int Prod[],  int MinMod, unsigned int wk[])
 {
 
   unsigned int  Low0bits;
   unsigned int Proot, Prime;
   double Pinv;
-  void MNpol_square_DFT();
 
    if ( MinMod < 0  || MinMod > NPrimes - 1 ) return 2;
    Prime =  Primes[MinMod].prime;
@@ -106,16 +104,12 @@ unsigned int C1[], Prod[], wk[];
     return 0;
 }
 
-int FFT_pol_product( d1, C1, d2, C2, Prod,  MinMod, wk)
-unsigned int d1, d2;
-int MinMod;
-unsigned int C1[], C2[], Prod[], wk[];
+int FFT_pol_product( unsigned int d1, unsigned int C1[], unsigned int d2, unsigned int C2[], unsigned int Prod[],  int MinMod, unsigned int wk[])
 {
 
   unsigned int  Low0bits;
   unsigned int Proot, Prime;
   double Pinv;
-  void MNpol_product_DFT();
 
    if ( MinMod < 0  || MinMod > NPrimes - 1 ) return 2;
    Prime =  Primes[MinMod].prime;
@@ -135,10 +129,7 @@ extern struct oEGT eg_fore,eg_back;
 void get_eg(struct oEGT *);
 void add_eg(struct oEGT *,struct oEGT *, struct oEGT *);
 
-void MNpol_product_DFT( d1, C1, d2, C2, Prod, a, low0s, P, Pinv, wk )
-unsigned int d1, d2, low0s;
-unsigned int C1[], C2[], Prod[], a, P, wk[];
-double Pinv;
+void MNpol_product_DFT( unsigned int d1, unsigned int C1[], unsigned int d2, unsigned int C2[], unsigned int Prod[], unsigned int a, unsigned int low0s, unsigned int P, double Pinv, unsigned int wk[] )
 /*
  *  The amount of space of wk[] must be >= (11/2)*2^{\lceil \log_2(d1+d2+1) \rceil}.
  */
@@ -185,10 +176,7 @@ double Pinv;
   get_eg(&eg1); add_eg(&eg_back,&eg0,&eg1);
 }
 
-void MNpol_square_DFT( d1, C1, Prod, a, low0s, P, Pinv, wk )
-unsigned int d1, low0s;
-unsigned int C1[], Prod[], a, P, wk[];
-double Pinv;
+void MNpol_square_DFT( unsigned int d1, unsigned int C1[], unsigned int Prod[], unsigned int a, unsigned int low0s, unsigned int P, double Pinv, unsigned int wk[] )
 /*
  *  The amount of space of wk[] must be >= (11/2)*2^{\lceil \log_2(d1+d2+1) \rceil}.
  */
@@ -468,10 +456,7 @@ int s, e, n;
 
 #endif /* TEST */
 
-void MNpol_product( d1, C1, d2, C2, Prod, P, Pinv )
-unsigned int d1, d2;
-unsigned int C1[], C2[], Prod[], P;
-double Pinv;
+void MNpol_product( unsigned int d1, unsigned int C1[], unsigned int d2, unsigned int C2[], unsigned int Prod[], unsigned int P, double Pinv )
 {
   unsigned int i, j;
   unsigned int c;

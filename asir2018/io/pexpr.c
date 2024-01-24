@@ -136,8 +136,7 @@ void output_init() {
   sprintf(DFORMAT,"%%0%dd",DLENGTH);
 }
 
-int mmono(p)
-P p;
+int mmono(P p)
 {
   if ( NUM(p) )
 #if defined(INTERVAL)

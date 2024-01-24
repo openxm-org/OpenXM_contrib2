@@ -55,15 +55,15 @@
 
 void savenbp(FILE *s,NBP p);
 
-void (*savef[])() = { 0, savenum, savep, saver, savelist, savevect,
-  savemat, savestring, 0, savedp, saveui, saveerror,0,0,0,savegfmmat,
-  savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  savenbp, savedpm };
+void (*savef[])(FILE *,Obj) = { 0, (void (*)(FILE *,Obj))savenum, (void (*)(FILE *,Obj))savep, (void (*)(FILE *,Obj))saver, (void (*)(FILE *,Obj))savelist, (void (*)(FILE *,Obj))savevect,
+  (void (*)(FILE *,Obj))savemat, (void (*)(FILE *,Obj))savestring, 0, (void (*)(FILE *,Obj))savedp, (void (*)(FILE *,Obj))saveui, (void (*)(FILE *,Obj))saveerror,0,0,0,(void (*)(FILE *,Obj))savegfmmat,
+  (void (*)(FILE *,Obj))savebytearray, 0, 0, 0, 0, 0, 0, 0, 0,  (void (*)(FILE *,Obj))savenbp, (void (*)(FILE *,Obj))savedpm };
 #if defined(INTERVAL)
-void saveitv();
-void saveitvd();
-void (*nsavef[])() = { saveq, savereal, 0, savebf, saveitv, saveitvd, 0, saveitv, savecplx ,savemi, savelm, savegf2n, savegfpn, savegfs, savegfsn,savedalg};
+void saveitv(FILE *s,Itv p);
+void saveitvd(FILE *s,IntervalDouble p);
+void (*nsavef[])(FILE *,Num) = { (void (*)(FILE *,Num))saveq, (void (*)(FILE *,Num))savereal, 0, (void (*)(FILE *,Num))savebf, (void (*)(FILE *,Num))saveitv, (void (*)(FILE *,Num))saveitvd, 0, (void (*)(FILE *,Num))saveitv, (void (*)(FILE *,Num))savecplx ,(void (*)(FILE *,Num))savemi, (void (*)(FILE *,Num))savelm, (void (*)(FILE *,Num))savegf2n, (void (*)(FILE *,Num))savegfpn, (void (*)(FILE *,Num))savegfs, (void (*)(FILE *,Num))savegfsn,(void (*)(FILE *,Num))savedalg};
 #else
-void (*nsavef[])() = { saveq, savereal, 0, savebf, savecplx ,savemi, savelm, savegf2n, savegfpn, savegfs, savegfsn,savedalg};
+void (*nsavef[])(FILE *,Num) = { (void (*)(FILE *,Num))saveq, (void (*)(FILE *,Num))savereal, 0, (void (*)(FILE *,Num))savebf, (void (*)(FILE *,Num))savecplx ,(void (*)(FILE *,Num))savemi, (void (*)(FILE *,Num))savelm, (void (*)(FILE *,Num))savegf2n, (void (*)(FILE *,Num))savegfpn, (void (*)(FILE *,Num))savegfs, (void (*)(FILE *,Num))savegfsn,(void (*)(FILE *,Num))savedalg};
 #endif
 
 static short zeroval = 0;

@@ -13,7 +13,7 @@
 #include <signal.h>
 
 void error(char *);
-void int_handler();
+void int_handler(int);
 void ox_usr1_handler(int sig);
 
 int *StackBottom;
@@ -21,6 +21,7 @@ int in_gc, caught_intr;
 
 #if defined(_WIN64)
 extern int recv_intr;
+
 
 void check_caught_intr()
 {

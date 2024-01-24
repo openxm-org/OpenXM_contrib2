@@ -111,14 +111,14 @@ pointer eval(FNODE f)
       break;
     case I_BOP:
       a1 = eval((FNODE)FA1(f)); a2 = eval((FNODE)FA2(f));
-      (*((ARF)FA0(f))->fp)(CO,a1,a2,&val); 
+      (*((ARF)FA0(f))->fp)(CO,(Obj)a1,(Obj)a2,(Obj *)&val); 
       break;
     case I_NARYOP:
       tn = (NODE)FA1(f);
       a = eval((FNODE)BDY(tn));
       for ( tn = NEXT(tn); tn; tn = NEXT(tn) ) {
         a1 = eval((FNODE)BDY(tn));
-        (*((ARF)FA0(f))->fp)(CO,a,a1,&a2); 
+        (*((ARF)FA0(f))->fp)(CO,(Obj)a,(Obj)a1,(Obj *)&a2); 
         a = a2;
       }
       val = a;
@@ -126,7 +126,7 @@ pointer eval(FNODE f)
     case I_COP:
       a1 = eval((FNODE)FA1(f)); a2 = eval((FNODE)FA2(f));
       c = arf_comp(CO,a1,a2);
-      switch ( (cid)FA0(f) ) {
+      switch ( (long)FA0(f) ) {
         case C_EQ:
           c = (c == 0); break;
         case C_NE:
@@ -161,7 +161,7 @@ pointer eval(FNODE f)
       break;
     case I_LOP:
       a1 = eval((FNODE)FA1(f)); a2 = eval((FNODE)FA2(f));
-      val = evall((lid)FA0(f),a1,a2);
+      val = evall((long)FA0(f),a1,a2);
       break;
     case I_CE:
       if ( eval((FNODE)FA0(f)) )
@@ -218,10 +218,10 @@ pointer eval(FNODE f)
       if ( ID(f1) == I_PVAR ) {
         pv = (unsigned long)FA0(f1); ind = (NODE)FA1(f1); GETPV(pv,a); 
         if ( !ind ) {
-          (*((ARF)FA0(f))->fp)(CO,a,ONE,&val); ASSPV(pv,val); 
+          (*((ARF)FA0(f))->fp)(CO,(Obj)a,(Obj)ONE,(Obj *)&val); ASSPV(pv,val); 
         } else if ( a ) {
           evalnodebody(ind,&tn); getarray(a,tn,(pointer *)&u); 
-          (*((ARF)FA0(f))->fp)(CO,u,ONE,&val); putarray(a,tn,val);
+          (*((ARF)FA0(f))->fp)(CO,(Obj)u,(Obj)ONE,(Obj *)&val); putarray(a,tn,val);
         }
       } else
         error("++ : not implemented yet");
@@ -231,10 +231,10 @@ pointer eval(FNODE f)
       if ( ID(f1) == I_PVAR ) {
         pv = (unsigned long)FA0(f1); ind = (NODE)FA1(f1); GETPV(pv,val); 
         if ( !ind ) {
-          (*((ARF)FA0(f))->fp)(CO,val,ONE,&u); ASSPV(pv,u);
+          (*((ARF)FA0(f))->fp)(CO,(Obj)val,(Obj)ONE,(Obj *)&u); ASSPV(pv,u);
         } else if ( val ) {
           evalnodebody(ind,&tn); getarray(val,tn,&a);
-          (*((ARF)FA0(f))->fp)(CO,a,ONE,&u); putarray(val,tn,(pointer)u);
+          (*((ARF)FA0(f))->fp)(CO,(Obj)a,(Obj)ONE,(Obj *)&u); putarray(val,tn,(pointer)u);
           val = a;
         }
       } else

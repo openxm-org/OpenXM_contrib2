@@ -97,7 +97,7 @@ int ASIRLOADPATH_LEN;
 #define ASIR_CONTRIB_DIR "/usr/local/lib/asir-contrib"
 #endif
 
-char *getenv();
+// char *getenv();
 void Pget_rootdir();
 char *search_executable(char *name);
 
@@ -142,7 +142,7 @@ char *search_executable(char *name)
 void env_init() {
   char *e,*p,*q;
   int i,l,japanese;
-  char *getenv();
+//   char *getenv();
   char *oxhome;
   char rootname[BUFSIZ];
     size_t len;

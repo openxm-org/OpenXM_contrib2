@@ -115,10 +115,10 @@ static String fallback[] = {
   NULL
 };
 
-static void Done();
-static void Quit();
-static void SetSelected();
-static void SetDismiss();
+static void Done(Widget w,XEvent *e,String *p,Cardinal *n);
+static void Quit(Widget w, XEvent *ev, String *params,Cardinal *nparams);
+static void SetSelected(Widget w,XtPointer cld,XtPointer cad);
+static void SetDismiss(Widget w,XtPointer cld,XtPointer cad);
 
 static XtActionsRec actions_table[] = {
   {"done",Done},

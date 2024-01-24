@@ -119,9 +119,7 @@ va_dcl
 }
 #endif
 
-void addcomp(vl,a,b,c)
-VL vl;
-COMP a,b,*c;
+void addcomp(VL vl,COMP a,COMP b,COMP *c)
 {
   if ( a->type != b->type )
     error("addcomp : types different");
@@ -129,9 +127,7 @@ COMP a,b,*c;
     call_usrf(LSS->sa[a->type].arf.add,2,a,b,c);
 }
 
-void subcomp(vl,a,b,c)
-VL vl;
-COMP a,b,*c;
+void subcomp(VL vl,COMP a,COMP b,COMP *c)
 {
   if ( a->type != b->type )
     error("subcomp : types different");
@@ -139,9 +135,7 @@ COMP a,b,*c;
     call_usrf(LSS->sa[a->type].arf.sub,2,a,b,c);
 }
 
-void mulcomp(vl,a,b,c)
-VL vl;
-COMP a,b,*c;
+void mulcomp(VL vl,COMP a,COMP b,COMP *c)
 {
   if ( a->type != b->type )
     error("mulcomp : types different");
@@ -149,9 +143,7 @@ COMP a,b,*c;
     call_usrf(LSS->sa[a->type].arf.mul,2,a,b,c);
 }  
 
-void divcomp(vl,a,b,c)
-VL vl;
-COMP a,b,*c;
+void divcomp(VL vl,COMP a,COMP b,COMP *c)
 {
   if ( a->type != b->type )
     error("divcomp : types different");
@@ -159,24 +151,17 @@ COMP a,b,*c;
     call_usrf(LSS->sa[a->type].arf.div,2,a,b,c);
 }  
 
-void chsgncomp(a,b)
-COMP a,*b;
+void chsgncomp(COMP a,COMP *b)
 {
   call_usrf(LSS->sa[a->type].arf.chsgn,1,a,b);
 }
 
-void pwrcomp(vl,a,r,c)
-VL vl;
-COMP a;
-Obj r;
-COMP *c;
+void pwrcomp(VL vl,COMP a,Obj r,COMP *c)
 {
   call_usrf(LSS->sa[a->type].arf.pwr,2,a,r,c);
 }
 
-int compcomp(vl,a,b)
-VL vl;
-COMP a,b;
+int compcomp(VL vl,COMP a,COMP b)
 {
   Q c;
   int s;

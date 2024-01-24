@@ -124,8 +124,7 @@ extern int hideargs;
 
 /* special functions for string output */
 
-void soutput_init(s)
-char *s;
+void soutput_init(char *s)
 {
   s[0] = 0; buf = s;
 }

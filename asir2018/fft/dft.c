@@ -68,11 +68,12 @@
 
 /*****************************************************/
 
-void C_DFT_FORE( in, nin, i1, K, powa,
+void C_DFT_FORE( ModNum in[], int nin, int i1, int K, ModNum powa[],
 #ifdef POWA_STRIDE
-     a1,
+     int a1,
 #endif
-     out, o1, P, Pinv, wk )
+     ModNum out[], int o1, ModNum P, double Pinv, ModNum wk[] )
+#if 0
 ModNum in[], powa[], out[], wk[];
 ModNum P;
 int nin, i1, K, o1;
@@ -80,6 +81,7 @@ int nin, i1, K, o1;
 int a1;
 #endif
 double Pinv;
+#endif
 /*
  *  Let N = 2^K, and \alpha be a primitive N-th root of 1.
  *  out[0:N-1][o1] = DFT of in[0:nin-1][i1] using \alpha modulo P.
@@ -288,11 +290,12 @@ double Pinv;
  *
  **********************************************************************/
 
-void C_DFT_BACK( in, N, i1, log2N, powa,
+void C_DFT_BACK( ModNum in[], int N, int i1, int log2N, ModNum powa[],
 #ifdef POWA_STRIDE
-     a1,
+     int a1,
 #endif
-     out, o1, osi, nout, Ninv, P, Pinv, wk )
+     ModNum out[], int o1, int osi, int nout, ModNum Ninv, ModNum P, double Pinv, ModNum wk[] )
+#if 0
 ModNum in[], powa[], out[], wk[];
 int N, log2N, osi, nout, i1, o1;
 #ifdef POWA_STRIDE
@@ -300,6 +303,7 @@ int a1;
 #endif
 ModNum P, Ninv;
 double Pinv;
+#endif
 /*
  *  Let K denote log2N.  Let N = 2^K, and \alpha be a primitive N-th root of 1.
  *  This routine computes the inverse discrete-Fourier transform of in[0:N-1][i1]
@@ -584,10 +588,12 @@ double Pinv;
 }
 
 #if defined(USE_FLOAT)
-void C_PREP_ALPHA( r, log2ord, log2k, n, tbl, P, Pinv )
+void C_PREP_ALPHA( ModNum r, int log2ord, int log2k, int n, ModNum tbl[], ModNum P, double Pinv )
+#if 0
 ModNum r, tbl[], P;
 int log2ord, log2k, n;
 double Pinv;
+#endif
 /*
  *  Let K and k denote log2ord and log2k, respectively.
  *  Let r be a primitive (2^K)-th root of unity in Z/(P), where P is a prime.
@@ -614,10 +620,12 @@ double Pinv;
 }
 #else
 
-void C_PREP_ALPHA( r, log2ord, log2k, n, tbl, P, Pinv )
+void C_PREP_ALPHA( ModNum r, int log2ord, int log2k, int n, ModNum tbl[], ModNum P, double Pinv )
+#if 0
 ModNum r, tbl[], P;
 int log2ord, log2k, n;
 double Pinv;
+#endif
 /*
  *  Let K and k denote log2ord and log2k, respectively.
  *  Let r be a primitive (2^K)-th root of unity in Z/(P), where P is a prime.

@@ -318,7 +318,7 @@ void vartoquote(V v,QUOTE *c)
   if ( NAME(v) ) {
     MKV(v,x);
     MKQUOTE(*c,mkfnode(1,I_FORMULA,(pointer)x));
-  } else if ( (vid)v->attr == V_PF ) {
+  } else if ( (long)v->attr == V_PF ) {
     /* pure function */
     pf = ((PFINS)v->priv)->pf;
     ad = ((PFINS)v->priv)->ad;

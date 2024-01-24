@@ -79,12 +79,7 @@ int setsecureflag(char *name,int value)
   return -1;
 }
 
-void appendbinf(flistp,name,func,argc,quote)
-NODE *flistp;
-char *name;
-void (*func)();
-int argc;
-unsigned int quote;
+void appendbinf(NODE *flistp,char *name,void (*func)(),int argc,unsigned int quote)
 {
   FUNC t;
   NODE n;
@@ -95,11 +90,7 @@ unsigned int quote;
   MKNODE(n,t,*flistp); *flistp = n;
 }
 
-void appendparif(flistp,name,func,type)
-NODE *flistp;
-char *name;
-int (*func)();
-int type;
+void appendparif(NODE *flistp,char *name,int (*func)(),int type)
 {
   FUNC t;
   NODE n;
@@ -110,20 +101,12 @@ int type;
   MKNODE(n,t,*flistp); *flistp = n;
 }
 
-void appendsysf(name,func,argc,quote)
-char *name;
-void (*func)();
-int argc;
-unsigned int quote;
+void appendsysf(char *name,void (*func)(),int argc,unsigned int quote)
 {
   appendbinf(&sysf,name,func,argc,quote);
 }
 
-void appendubinf(name,func,argc,quote)
-char *name;
-void (*func)();
-int argc;
-unsigned int quote;
+void appendubinf(char *name,void (*func)(),int argc,unsigned int quote)
 {
   appendbinf(&ubinf,name,func,argc,quote);
 }
@@ -138,9 +121,7 @@ int comp_dcp(DCP *a,DCP *b)
   else return 0;
 }
 
-void dcptolist(dc,listp)
-DCP dc;
-LIST *listp;
+void dcptolist(DCP dc,LIST *listp)
 {
   NODE node,tnode,ln0,ln1;
   LIST l;

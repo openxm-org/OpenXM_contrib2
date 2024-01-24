@@ -202,7 +202,7 @@ void PRINTV(VL vl,V v)
 
   if ( NAME(v) )
     PUTS(NAME(v));
-  else if ( (vid)v->attr == V_PF ) {
+  else if ( (long)v->attr == V_PF ) {
     pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
     if ( !strcmp(NAME(pf),"pow") ) {
       PUTS("(("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");

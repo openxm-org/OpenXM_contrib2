@@ -105,42 +105,58 @@ int myrank_102;
 
 int register_102(int s,int rank, int is_master);
 
-int register_server();
+int register_server(int af_unix,int m,int c,int ind);
 int get_mcindex(int);
 
-void Pox_send_raw_cmo(), Pox_recv_raw_cmo();
+void Pox_mpi_myid(Z *rp);
+void Pox_mpi_nprocs(Z *rp);
+void Pox_get_serverinfo(NODE arg,LIST *rp);
+void Pgenerate_port(NODE arg,Obj *rp);
+void Pox_reset_102(NODE arg,Z *rp);
+void Pox_get_rank_102(LIST *rp);
+void Pox_set_rank_102(NODE arg,Z *rp);
+void Pox_tcp_accept_102(NODE arg,Z *rp);
+void Pox_tcp_connect_102(NODE arg,Z *rp);
+void Ptry_bind_listen(NODE arg,Z *rp);
+void Ptry_connect(NODE arg,Z *rp);
+void Ptry_accept(NODE arg,Z *rp);
+void Pregister_server(NODE arg,Z *rp);
+void Pox_launch_generic(NODE arg,Z *rp);
+void Pox_launch(NODE arg,Obj *rp);
+void Pox_launch_nox(NODE arg,Obj *rp);
+void Pox_select(NODE arg,LIST *rp);
+void Pox_flush(NODE arg,Z *rp);
+void Pox_send_raw_cmo(NODE arg,Obj *rp);
+void Pox_recv_raw_cmo(NODE arg,Obj *rp);
+void Pox_send_102(NODE arg,Obj *rp);
+void Pox_recv_102(NODE arg,Obj *rp);
+void Pox_bcast_102(NODE arg,Obj *rp);
+void Pox_reduce_102(NODE arg,Obj *rp);
+void Pox_push_local(NODE arg,Obj *rp);
+void Pox_push_cmo(NODE arg,Obj *rp);
+void Pox_push_vl(NODE arg,Obj *rp);
+void Pox_pop_local(NODE arg,Obj *rp);
+void Pox_pop_cmo(NODE arg,Obj *rp);
+void Pox_pop0_local(NODE arg,Obj *rp);
+void Pox_pop0_cmo(NODE arg,Obj *rp);
+void Pox_pop0_string(NODE arg,STRING *rp);
+void Pox_pop_string(NODE arg,Obj *rp);
+void Pox_get(NODE arg,Obj *rp);
+void Pox_pops(NODE arg,Obj *rp);
+void Pox_execute_function(NODE arg,Obj *rp);
+void Pox_setname(NODE arg,Obj *rp);
+void Pox_evalname(NODE arg,Obj *rp);
+void Pox_execute_string(NODE arg,Obj *rp);
+void Pox_rpc(NODE arg,Obj *rp);
+void Pox_cmo_rpc(NODE arg,Obj *rp);
+void Pox_reset(NODE arg,Z *rp);
+void Pox_intr(NODE arg,Z *rp);
+void Pox_sync(NODE arg,Z *rp);
+void Pox_shutdown(NODE arg,Z *rp);
+void Pox_push_cmd(NODE arg,Z *rp);
+void ox_launch_generic(char *host,char *launcher,char *server,
+    int use_unix,int use_ssh,int use_x,int conn_to_serv,Z *rp);
 
-void Pox_launch(),Pox_launch_nox();
-void Pox_launch_generic();
-void Pox_shutdown();
-
-void Pox_rpc(),Pox_cmo_rpc(),Pox_reset(),Pox_intr(),Pox_sync(),Pox_select();
-
-void Pox_push_local(),Pox_push_cmo(),Pox_push_vl(),Pox_push_cmd();
-
-void Pox_pop_local(),Pox_pop_cmo();
-void Pox_pop0_local(),Pox_pop0_cmo();
-void Pox_pop_string(),Pox_pop0_string();
-void Pox_get(),Pox_pops();
-
-void Pox_execute_function(),Pox_execute_string();
-void Pox_setname(), Pox_evalname();
-void Pox_flush();
-void Pgenerate_port(),Ptry_bind_listen(),Ptry_connect(),Ptry_accept();
-void Pregister_server();
-void Pox_get_serverinfo();
-void Pox_mpi_myid(), Pox_mpi_nprocs();
-void Pox_tcp_accept_102(),Pox_tcp_connect_102();
-void Pox_send_102(),Pox_recv_102();
-void Pox_set_rank_102();
-void Pox_get_rank_102();
-void Pox_reset_102();
-void Pox_bcast_102();
-void Pox_reduce_102();
-
-void ox_launch_generic();
-
-pointer bevalf();
 
 struct ftab tcp_tab[] = {
   {"ox_send_raw_cmo",Pox_send_raw_cmo,2},

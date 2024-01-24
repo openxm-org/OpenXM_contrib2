@@ -481,7 +481,7 @@ void mp_factorial(NODE arg,Num *rp)
     addnum(0,a,(Num)ONE,&a1);
     arg0.body = (pointer)a1;
     arg0.next = arg->next;
-    Pmpfr_gamma(&arg0,rp);
+    Pmpfr_gamma(&arg0,(BF *)rp);
   }
 }
 

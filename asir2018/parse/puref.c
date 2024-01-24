@@ -263,7 +263,7 @@ void derivr(VL vl,Obj a,V v,Obj *b)
         for ( dnm = 0, svl = tvl; svl; svl = NEXT(svl) ) {
           if ( svl->v == v ) {
             pderivr(vl,a,v,&s); addr(vl,s,dnm,&u); dnm = u;
-          } else if ( (vid)svl->v->attr == V_PF ) {
+          } else if ( (long)svl->v->attr == V_PF ) {
             pderivr(vl,a,svl->v,&s); derivvar(vl,svl->v,v,&r);
             mulr(vl,s,r,&u); addr(vl,u,dnm,&s); dnm = s;
           }
@@ -276,7 +276,7 @@ void derivr(VL vl,Obj a,V v,Obj *b)
           if ( svl->v == v ) {
             pderivr(vl,nm,v,&s); addr(vl,s,dnm,&u); dnm = u;
             pderivr(vl,dn,v,&s); addr(vl,s,ddn,&u); ddn = u;
-          } else if ( (vid)svl->v->attr == V_PF ) {
+          } else if ( (long)svl->v->attr == V_PF ) {
             pderivr(vl,nm,svl->v,&s); derivvar(vl,svl->v,v,&r);
             mulr(vl,s,r,&u); addr(vl,u,dnm,&s); dnm = s;
             pderivr(vl,dn,svl->v,&s); derivvar(vl,svl->v,v,&r);
@@ -389,7 +389,7 @@ void substpr(VL vl,int partial,Obj p,V v0,Obj p0,Obj *pr)
   else if ( NUM(p) ) 
     *pr = (Obj)p;
   else if ( (v = VR((P)p)) != v0 ) {
-    if ( !partial && ((vid)v->attr == V_PF) ) {
+    if ( !partial && ((long)v->attr == V_PF) ) {
       ad = ((PFINS)v->priv)->ad; pf = ((PFINS)v->priv)->pf;
       tins = (PFINS)CALLOC(1,sizeof(PF)+pf->argc*sizeof(struct oPFAD));
       tins->pf = pf;
@@ -477,7 +477,7 @@ void evalp(VL vl,P p,int prec,P *pr)
     } else {
       NEXT(dcr) = 0; MKP(VR(p),dcr0,t);
     }
-    if ( NUM(t) || (VR(t) != VR(p)) || ((vid)VR(p)->attr != V_PF) ) {
+    if ( NUM(t) || (VR(t) != VR(p)) || ((long)VR(p)->attr != V_PF) ) {
       *pr = t; return;
     } else {
       evalv(vl,VR(p),prec,&u); substr(vl,1,(Obj)t,VR(p),u,(Obj *)pr);
@@ -493,7 +493,7 @@ void evalv(VL vl,V v,int prec,Obj *rp)
   P t;
   int i;
 
-  if ( (vid)v->attr != V_PF ) {
+  if ( (long)v->attr != V_PF ) {
     MKV(v,t); *rp = (Obj)t;
   } else {
     ins = (PFINS)v->priv; ad = ins->ad; pf = ins->pf;
@@ -630,7 +630,7 @@ void devalv(VL vl,V v,Obj *rp)
   P t;
   int i;
 
-  if ( (vid)v->attr != V_PF ) {
+  if ( (long)v->attr != V_PF ) {
     MKV(v,t); *rp = (Obj)t;
   } else {
     ins = (PFINS)v->priv; ad = ins->ad; pf = ins->pf;

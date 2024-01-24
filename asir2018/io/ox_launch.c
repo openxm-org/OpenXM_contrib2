@@ -83,7 +83,7 @@ static void ox_io_init(int);
 static void push_one(Obj);
 static Obj pop_one();
 static void do_cmd(int);
-static void terminate_server();
+static void terminate_server(int sig);
 
 static Obj *asir_OperandStack;
 static int asir_OperandStackPtr;
@@ -93,8 +93,7 @@ static int sindex;
 static struct sockaddr_in peer;
 static int cpid;
 
-static void put_log(str)
-char *str;
+static void put_log(char *str)
 {
   static FILE *logfile;
 
@@ -120,9 +119,7 @@ char *str;
   XXX : argv[7] is used to pass the path of engine.exe in Windows.
 */
 
-void launch_main(argc,argv)
-int argc;
-char **argv;
+void launch_main(int argc,char **argv)
 {
 #if !defined(VISUAL) && !defined(__MINGW32__)
   Obj p;
@@ -206,8 +203,7 @@ char **argv;
 }
 
 #if defined(VISUAL) || defined(__MINGW32__)
-static void do_cmd(cmd)
-int cmd;
+static void do_cmd(int cmd)
 {
   USINT t;
 
@@ -235,8 +231,7 @@ int cmd;
   }
 }
 #else
-static void do_cmd(cmd)
-int cmd;
+static void do_cmd(int cmd)
 {
   USINT t;
   int id,cindex;
@@ -269,11 +264,7 @@ int cmd;
 }
 #endif
 
-static int ox_spawn(prog,bs,dname,nolog)
-char *prog;
-int bs;
-char *dname;
-char *nolog;
+static int ox_spawn(char *prog,int bs,char *dname,char *nolog)
 {
 #if defined(VISUAL) || defined(__MINGW32__)
   char *av[BUFSIZ];
@@ -386,16 +377,14 @@ char *nolog;
 #endif
 }
 
-static void launch_error(s)
-char *s;
+static void launch_error(char *s)
 {
   exit(0);
 }
 
 #define asir_OperandStackSize BUFSIZ
 
-static void ox_io_init(sock)
-int sock;
+static void ox_io_init(int sock)
 {
   endian_init();
   /* server mode */
@@ -404,8 +393,7 @@ int sock;
   asir_OperandStackPtr = -1;
 }
 
-static void push_one(obj)
-Obj obj;
+static void push_one(Obj obj)
 {
   if ( asir_OperandStackPtr == asir_OperandStackSize-1 )
     return;

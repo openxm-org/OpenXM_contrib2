@@ -53,9 +53,7 @@
 static V *vtab;
 VL file_vl;
 
-void savevl(s,vl)
-FILE *s;
-VL vl;
+void savevl(FILE *s,VL vl)
 {
   int n,i;
   VL tvl;
@@ -71,8 +69,7 @@ VL vl;
     }
 }
 
-void loadvl(s)
-FILE *s;
+void loadvl(FILE *s)
 {
   int n,i,need_reorder;
   V v1,v2;
@@ -99,8 +96,7 @@ FILE *s;
     file_vl = 0;
 }
 
-void skipvl(s)
-FILE *s;
+void skipvl(FILE *s)
 {
   int n,i,size,len;
 
@@ -111,16 +107,12 @@ FILE *s;
   fseek(s,size,1L);
 }
 
-void savev(s,v)
-FILE *s;
-V v;
+void savev(FILE *s,V v)
 {
   savestr(s,NAME(v));
 }
 
-void loadv(s,vp)
-FILE *s;
-V *vp;
+void loadv(FILE *s,V *vp)
 {
   P p;
   char *name;
@@ -139,8 +131,7 @@ V *vp;
     *vp = 0;
 }
 
-int save_convv(v)
-V v;
+int save_convv(V v)
 {
   int i;
 
@@ -156,15 +147,12 @@ V v;
     return -1;
 }
 
-V load_convv(vindex)
-int vindex;
+V load_convv(int vindex)
 {
   return vtab[vindex];
 }
 
-void swap_bytes(ptr,unit,size)
-char *ptr;
-int unit,size;
+void swap_bytes(char *ptr,int unit,int size)
 {
   char *p;
   int i,j,hunit;

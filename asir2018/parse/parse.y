@@ -309,7 +309,7 @@ pexpr	: STR
 			{
 				searchpf($1,(FUNC *)&val);
 				if ( val == 0 ) {
-					fprintf(stderr,"%s : no such function.\n",$1);
+					fprintf(stderr,"%s : no such function.\n",(char *)$1);
                     YYABORT;
                 }
 				$$ = mkfnode(3,I_PFDERIV,val,mkfnode(1,I_LIST,$6),mkfnode(1,I_LIST,$3));
@@ -356,7 +356,7 @@ pexpr	: STR
 				else {
 					ind = searchpvar($1);
 					if ( ind == -1 ) {
-						fprintf(stderr,"%s : no such variable.\n",$1);
+						fprintf(stderr,"%s : no such variable.\n",(char *)$1);
 						YYABORT;
 					} else
 						t = mkfnode(2,I_PVAR,ind,NULLP);
@@ -376,7 +376,7 @@ pexpr	: STR
 				else {
 					ind = searchpvar($1);
 					if ( ind == -1 ) {
-						fprintf(stderr,"%s : no such variable.\n",$1);
+						fprintf(stderr,"%s : no such variable.\n",(char *)$1);
 						YYABORT;
 					} else
 						$$ = mkfnode(2,I_PVAR,ind,NULLP);

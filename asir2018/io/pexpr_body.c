@@ -545,7 +545,7 @@ void PRINTFNODE(FNODE f,int paren)
       }
       break;
     case I_COP:
-      switch( (cid)FA0(f) ) {
+      switch( (long)FA0(f) ) {
         case C_EQ: opname = ("=="); break;
         case C_NE: opname = ("!="); break;
         case C_GT: opname = (">"); break;
@@ -558,7 +558,7 @@ void PRINTFNODE(FNODE f,int paren)
       PRINTFNODE((FNODE)FA2(f),1);
       break;
     case I_LOP:
-      switch( (lid)FA0(f) ) {
+      switch( (long)FA0(f) ) {
         case L_EQ: opname = ("@=="); break;
         case L_NE: opname = ("@!="); break;
         case L_GT: opname = ("@>"); break;
@@ -570,7 +570,7 @@ void PRINTFNODE(FNODE f,int paren)
         case L_NOT: opname = ("@!"); break;
         default: break;
       }
-      if ( (lid)FA0(f)==L_NOT ) {
+      if ( (long)FA0(f)==L_NOT ) {
         PUTS(opname); PRINTFNODE((FNODE)FA1(f),1);
       } else {
         PRINTFNODE((FNODE)FA1(f),1);
@@ -886,7 +886,7 @@ void PRINTV(VL vl,V v)
 
   if ( NAME(v) )
     PUTS(NAME(v));
-  else if ( (vid)v->attr == V_PF ) {
+  else if ( (long)v->attr == V_PF ) {
     pf = ((PFINS)v->priv)->pf; ad = ((PFINS)v->priv)->ad;
     if ( !strcmp(NAME(pf),"pow") ) {
       PUTS("(("); PRINTR(vl,(R)ad[0].arg); PUTS(")"); PRINTHAT; PUTS("(");
