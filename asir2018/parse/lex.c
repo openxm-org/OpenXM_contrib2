@@ -748,6 +748,8 @@ char *readline_console(char *prompt)
         char *line;
         int exp_result;
         char *expansion;
+        char buf[1024];
+        int n;
 
         while ( 1 ) {
                 line = (char *)readline(prompt);
@@ -761,9 +763,18 @@ char *readline_console(char *prompt)
 #endif
                                 add_history(line);
                                 break;
-                        } else if ( exp_result > 0 ) {
+                        } else if ( exp_result == 2 ) {
+                                // !pattern:p
                                 free(line);
                                 line = expansion;
+                                // rl_insert_text(line) should work, but it does not work.
+                                for ( n=0; line[n]!=0; n++ ) rl_insert(1,line[n]);
+                                prompt = 0;
+                        } else if ( exp_result == 1 ) {
+                                // !pattern
+                                free(line);
+                                line = expansion;
+                                puts(line);
                                 break;
                         }
                 }
