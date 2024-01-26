@@ -187,6 +187,7 @@ void get_vars(Obj t,VL *vlp)
   VL vl,vl1,vl2;
   NODE n;
   MP mp;
+  DMM mm;
   int i,j,row,col,len;
 
   if ( !t )
@@ -221,6 +222,13 @@ void get_vars(Obj t,VL *vlp)
         mp = ((DP)t)->body;
         for ( vl = 0; mp; mp = NEXT(mp) ) {
           get_vars((Obj)mp->c,&vl1); mergev(CO,vl,vl1,&vl2);
+          vl = vl2;
+        }
+        break;
+      case O_DPM:
+        mm = ((DPM)t)->body;
+        for ( vl = 0; mm; mm = NEXT(mm) ) {
+          get_vars((Obj)mm->c,&vl1); mergev(CO,vl,vl1,&vl2);
           vl = vl2;
         }
         break;
