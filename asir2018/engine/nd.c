@@ -70,7 +70,7 @@ static int nd_module_rank,nd_poly_weight_len;
 static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
-static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb;
+static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb,nd_allbase;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check,nd_sba_nosigrange,nd_sba_minsig;
 static int nd_top,nd_sba_syz,nd_sba_inputisgb,nd_sba_heu;
 static int *nd_gbblock;
@@ -5235,6 +5235,12 @@ void nd_gr(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord,
     return;
   }
   x = f4?nd_f4(m,0,&perm):nd_gb(m,ishomo || homo,0,0,&perm);
+  if ( nd_allbase ) {
+    x = 0;
+    for ( i = nd_psn-1; i >= 0; i-- ) {
+      MKNODE(xx,(pointer)((unsigned long)nd_ps[i]),x); x = xx; 
+    }
+  }
   if ( !x ) {
     *rp = 0; return;
   }
@@ -5865,6 +5871,13 @@ void nd_gr_trace(LIST f,LIST v,int trace,int homo,int retdp,int f4,struct order_
             if ( trace > 1 ) { *rp = 0; return; }
             else m = get_lprime(++mindex);
             continue;
+        }
+        if ( nd_allbase ) {
+          NODE xx;
+          cand = 0;
+          for ( i = nd_psn-1; i >= 0; i-- ) {
+            MKNODE(xx,(pointer)((unsigned long)nd_ps_trace[i]),cand); cand = xx; 
+          }
         }
         if ( nd_gentrace ) {
           MKVECT(hvect,nd_psn);
@@ -11174,7 +11187,13 @@ void parse_nd_option(VL vl,NODE opt)
       nd_nora = value?1:0;
     else if ( !strcmp(key,"norb") )
       nd_norb = value?1:0;
-    else if ( !strcmp(key,"gbblock") ) {
+    else if ( !strcmp(key,"allbase") ) {
+      nd_allbase = value?1:0; 
+      if ( nd_allbase != 0 ) {
+        nd_norb = 1;
+        nd_nora = 1;
+      }
+    } else if ( !strcmp(key,"gbblock") ) {
       if ( value && OID(value) == O_LIST ) {
         u = BDY((LIST)value);
         nd_gbblock = MALLOC((2*length(u)+1)*sizeof(int));
