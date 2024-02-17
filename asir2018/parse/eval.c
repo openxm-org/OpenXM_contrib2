@@ -278,7 +278,7 @@ pointer eval(FNODE f)
            if ( length(tn) != length(tn1) )
              error("eval : len(lhs) != len(rhs) in assignment");
            for ( ; tn != 0 && tn1 != 0; tn = NEXT(tn), tn1 = NEXT(tn1) ) {
-             val = eval(mkfnode(2,I_ASSPVAR,BDY(tn),mkfnode(1,I_FORMULA,BDY(tn1))));
+             eval(mkfnode(2,I_ASSPVAR,BDY(tn),mkfnode(1,I_FORMULA,BDY(tn1))));
            }
         } else 
           error("eval : invalid assignment");
