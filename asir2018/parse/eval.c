@@ -270,6 +270,18 @@ pointer eval(FNODE f)
         a = eval((FNODE)FA0(f1)); ind = (NODE)FA1(f1);
         evalnodebody(ind,&tn);
         putarray(a,tn,val = eval((FNODE)FA1(f)));
+      } else if ( ID(f1) == I_LIST ) {
+        val = eval((FNODE)FA1(f));
+        if ( val != 0 && OID((Obj)val) == O_LIST ) {
+           tn = (NODE)FA0(f1);
+           tn1 = (NODE)BDY((LIST)val);
+           if ( length(tn) != length(tn1) )
+             error("eval : len(lhs) != len(rhs) in assignment");
+           for ( ; tn != 0 && tn1 != 0; tn = NEXT(tn), tn1 = NEXT(tn1) ) {
+             val = eval(mkfnode(2,I_ASSPVAR,BDY(tn),mkfnode(1,I_FORMULA,BDY(tn1))));
+           }
+        } else 
+          error("eval : invalid assignment");
       } else {
         error("eval : invalid assignment");
       }
