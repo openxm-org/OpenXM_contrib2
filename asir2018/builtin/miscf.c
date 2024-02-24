@@ -353,7 +353,6 @@ void Pnmono(NODE arg,Z *rp)
 void Pheap(NODE arg,Z *rp)
 {
   size_t h0,h;
-  void GC_expand_hp(int);
   
   h0 = get_heapsize();
   if ( arg ) {

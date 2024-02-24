@@ -43,6 +43,7 @@ else
 fi
 GCINC='-I${prefix}/include'
 AC_DEFINE([GC7])
+AC_DEFINE([GC_THREADS])
 AC_SUBST([GCLIB])
 AC_SUBST([GCINC])
 

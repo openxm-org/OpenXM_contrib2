@@ -14978,6 +14978,8 @@ fi
 GCINC='-I${prefix}/include'
 printf "%s\n" "#define GC7 1" >>confdefs.h
 
+printf "%s\n" "#define GC_THREADS 1" >>confdefs.h
+
 
 
 

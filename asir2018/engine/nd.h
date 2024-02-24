@@ -5,6 +5,7 @@
 #include "base.h"
 #include "inline.h"
 #include <time.h>
+#include <pthread.h>
 
 #if defined(__GNUC__)
 #define INLINE static inline
@@ -166,6 +167,43 @@ typedef struct oNDVI {
   NDV p;
   int i;
 } *NDVI;
+
+struct reduce_data {
+  int m;
+  int thrd;
+  NODE sp;
+  NODE spair;
+  int nsp;
+  UINT *s0vect;
+  int col;
+  NM_ind_pair *rvect;
+  int *rhead;
+  IndArray *imat;
+  int nred;
+  mp_limb_t **spmat;
+  mp_limb_t *svect,*cvect;
+  int *spsugar;
+  ND_pairs *spactive;
+  int sprow;
+};
+
+struct reduce_data_q {
+  int thrd;
+  NODE sp;
+  int nsp;
+  UINT *s0vect;
+  int col;
+  int trace;
+  NM_ind_pair *rvect;
+  int *rhead;
+  IndArray *imat;
+  int nred;
+  Z **spmat;
+  Z *svect;
+  int *spsugar;
+  ND_pairs *spactive;
+  int sprow;
+};
 
 extern int (*ndl_compare_function)(UINT *a1,UINT *a2);
 extern int nd_dcomp;
@@ -397,7 +435,10 @@ ND nd_merge(ND p1,ND p2);
 ND nd_add(int mod,ND p1,ND p2);
 ND nd_add_q(ND p1,ND p2);
 ND nd_add_sf(ND p1,ND p2);
+ND nd_add_lf(ND p1,ND p2);
 ND nd_quo(int mod,PGeoBucket p,NDV d);
+void nd_mul_c_lf(ND p,Z mul);
+void ndv_mul_c_lf(NDV p,Z mul);
 INLINE int nd_length(ND p);
 NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz);
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0, ND_pairs *nz);
@@ -405,13 +446,33 @@ NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_mod_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_sf_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+NODE nd_f4_red_lf_main(int m,ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 NODE nd_f4_red_gz_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
 
+NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread,ND_pairs *nz);
+NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int ntread);
+void thread_reduce_vect_q(struct reduce_data_q *data);
+void thread_reduce_vect64(struct reduce_data *data);
+
+int nd_gauss_elim_lf(mpz_t **mat0,int *sugar,int row,int col,int *colstat);
+int nd_gauss_elim_mod_s(UINT **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat,SIG *sig);
+NODE nd_f4_lf_trace_main(int m,int **indp);
+void nd_f4_lf_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp);
+ND_pairs merge_pairs_s(ND_pairs d,ND_pairs d1);
+void ndv_reduce_vect64_by_redlist(int m,mp_limb_t *svect,mp_limb_t *cvect,int col,NODE rp0,SIG sig);
+ND_pairs *nd_minsugar_array_s( ND_pairs *d, int sugar);
+NODE ia_insert_or_replace(NODE,IndArray);
+NODE nd_sba_buch_f4(int m,int **indp);
 /* NDV functions */
 ND weyl_ndv_mul_nm(int mod,NM m0,NDV p);
 void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen);

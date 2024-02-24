@@ -131,26 +131,6 @@ SIG dup_sig(SIG sig);
 void Pdp_set_weight(NODE,VECT *);
 void Pox_cmo_rpc(NODE,Obj *);
 
-ND nd_add_lf(ND p1,ND p2);
-void nd_mul_c_lf(ND p,Z mul);
-void ndv_mul_c_lf(NDV p,Z mul);
-NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
-NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
-NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread);
-NODE nd_f4_red_lf_main(int m,ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
-        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred);
-int nd_gauss_elim_lf(mpz_t **mat0,int *sugar,int row,int col,int *colstat);
-int nd_gauss_elim_mod_s(UINT **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat,SIG *sig);
-NODE nd_f4_lf_trace_main(int m,int **indp);
-void nd_f4_lf_trace(LIST f,LIST v,int trace,int homo,struct order_spec *ord,LIST *rp);
-ND_pairs merge_pairs_s(ND_pairs d,ND_pairs d1);
-void ndv_reduce_vect64_by_redlist(int m,mp_limb_t *svect,mp_limb_t *cvect,int col,NODE rp0,SIG sig);
-ND_pairs *nd_minsugar_array_s( ND_pairs *d, int sugar);
-NODE ia_insert_or_replace(NODE,IndArray);
-NODE nd_sba_buch_f4(int m,int **indp);
 
 extern int lf_lazy;
 extern Z current_mod_lf;
@@ -6387,18 +6367,27 @@ void mpz_removecont_array(mpz_t *c,int n)
 {
   mpz_t d0,a,u,u1,gcd;
   int i,j;
+#if 0
   static mpz_t *q,*r;
   static int c_len = 0;
+#else
+  mpz_t *q,*r;
+#endif
 
   for ( i = 0; i < n; i++ ) 
     if ( mpz_sgn(c[i]) ) break;
   if ( i == n ) return;
   gcdv_mpz_estimate(d0,c,n);
+#if 0
   if ( n > c_len ) {
     q = (mpz_t *)MALLOC(n*sizeof(mpz_t));
     r = (mpz_t *)MALLOC(n*sizeof(mpz_t));
     c_len = n;
   }
+#else
+  q = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+  r = (mpz_t *)MALLOC(n*sizeof(mpz_t));
+#endif
   for ( i = 0; i < n; i++ ) {
     mpz_init(q[i]); mpz_init(r[i]);
     mpz_fdiv_qr(q[i],r[i],c[i],d0);
@@ -8544,8 +8533,7 @@ void expand_array(Z *svect,Z *cvect,int n)
         if ( svect[i] ) svect[i] = cvect[j++];
 }
 
-#if 0
-int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+int ndv_reduce_vect_q_0(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
 {
     int i,j,k,len,pos,prev,nz;
     Z cs,mcs,c1,c2,cr,gcd,t;
@@ -8623,10 +8611,9 @@ int ndv_reduce_vect_q(Z *svect,int trace,int col,IndArray *imat,NM_ind_pair *rp0
     }
     return maxrs;
 }
-#else
 
 /* direct mpz version */
-int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred)
+int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp0,int nred,mpz_t *svect)
 {
     int i,j,k,len,pos,prev;
     mpz_t cs,cr,gcd;
@@ -8638,17 +8625,11 @@ int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp
     NMV mr;
     int maxrs;
     double hmag;
-    static mpz_t *svect;
-    static int svect_len=0;
 
     maxrs = 0;
     for ( i = 0; i < col && !svect0[i]; i++ );
     if ( i == col ) return maxrs;
     hmag = p_mag((P)svect0[i])*nd_scale;
-    if ( col > svect_len ) {
-      svect = (mpz_t *)MALLOC(col*sizeof(mpz_t));
-      svect_len = col;
-    }
     for ( i = 0; i < col; i++ ) {
       mpz_init(svect[i]);
       if ( svect0[i] )
@@ -8717,7 +8698,6 @@ int ndv_reduce_vect_q(Z *svect0,int trace,int col,IndArray *imat,NM_ind_pair *rp
       else svect0[i] = 0;
     return maxrs;
 }
-#endif
 
 void ndv_reduce_vect_q_by_ica(Z *svect0,int col,IndCoefArray *ica,SIG sig)
 {
@@ -9830,7 +9810,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
     if ( m > 0 )
 #if SIZEOF_LONG==8
         if ( nd_thread )
-          r0 = thread_nd_f4_red_mod64_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nd_thread);
+          r0 = thread_nd_f4_red_mod64_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nd_thread,nz);
         else
           r0 = nd_f4_red_mod64_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
 #else
@@ -9840,6 +9820,8 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
         r0 = nd_f4_red_sf_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
     else if ( m == -2 )
         r0 = nd_f4_red_lf_main(m,sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
+    else if ( nd_thread )
+        r0 = thread_nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred,nd_thread);
     else
         r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
     return r0;
@@ -10183,6 +10165,7 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     ND spol;
     Z **spmat;
     Z *svect,*v;
+    mpz_t *svectbuf;
     int *colstat;
     struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
     int maxrs;
@@ -10192,14 +10175,15 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     spcol = col-nred;
     get_eg(&eg0);
     /* elimination (1st step) */
-    spmat = (Z **)MALLOC(nsp*sizeof(Q *));
-    svect = (Z *)MALLOC(col*sizeof(Q));
+    spmat = (Z **)MALLOC(nsp*sizeof(Z *));
+    svect = (Z *)MALLOC(col*sizeof(Z));
+    svectbuf = (mpz_t *)MALLOC(col*sizeof(mpz_t));
     spsugar = (int *)MALLOC(nsp*sizeof(int));
     for ( a = sprow = 0, sp = sp0; a < nsp; a++, sp = NEXT(sp) ) {
         nd_sp(0,trace,sp,&spol);
         if ( !spol ) continue;
         nd_to_vect_q(s0vect,col,spol,svect);
-        maxrs = ndv_reduce_vect_q(svect,trace,col,imat,rvect,nred);
+        maxrs = ndv_reduce_vect_q(svect,trace,col,imat,rvect,nred,svectbuf);
         for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
         if ( i < col ) {
             spmat[sprow] = v = (Z *)MALLOC(spcol*sizeof(Q));
@@ -10253,6 +10237,29 @@ NODE nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
     }
     return r0;
 }
+
+void print_zvect(Z *vect,int len)
+{
+  int i;
+
+  for ( i = 0; i < len; i++ ) {
+    printexpr(CO,(Obj)vect[i]); printf(" ");
+  }
+  printf("\n");
+}
+
+void print_zmat(Z **mat,int row,int col)
+{
+  int i,j;
+
+  for ( i = 0; i < row; i++ ) {
+    for ( j = 0; j < col; j++ ) {
+      printexpr(CO,(Obj)mat[i][j]); printf(" ");
+    }
+    printf("\n");
+  }
+}
+
 
 FILE *nd_write,*nd_read;
 
@@ -12368,160 +12375,6 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     return r0;
 }
 
-struct reduce_data {
-  int m;
-  int thrd;
-  NODE sp;
-  int nsp;
-  UINT *s0vect;
-  int col;
-  NM_ind_pair *rvect;
-  int *rhead;
-  IndArray *imat;
-  int nred;
-  mp_limb_t **spmat;
-  mp_limb_t *svect,*cvect;
-  int *spsugar;
-  ND_pairs *spactive;
-  int sprow;
-};
-
-#include <pthread.h>
-
-void thread_reduce_vect64(struct reduce_data *data)
-{
-  int m; NODE sp; int nsp; UINT *s0vect;
-  int col; NM_ind_pair *rvect; int *rhead; IndArray *imat; int nred;
-  mp_limb_t **spmat; int *spsugar; ND_pairs *spactive; int sprow;
-  mp_limb_t *svect,*cvect,*v;
-  int i,j,k,a,maxrs,spcol;
-  ND spol;
- 
-  m = data->m; sp = data->sp; nsp = data->nsp; s0vect = data->s0vect;
-  col = data->col; rvect = data->rvect; rhead = data->rhead; imat = data->imat; nred = data->nred;
-  svect = data->svect; cvect = data->cvect;
-  spsugar = data->spsugar; spmat = data->spmat;
-  spcol = col-nred;
-  for ( a = sprow = 0; a < nsp; a++, sp = NEXT(sp) ) {
-      spol = (ND)BDY(sp);
-      if ( !spol ) continue;
-      nd_to_vect64(m,s0vect,col,spol,svect);
-      maxrs = ndv_reduce_vect64(m,svect,cvect,col,imat,rvect,nred,0);
-      for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
-      if ( i < col ) {
-          v = spmat[sprow];
-          for ( j = k = 0; j < col; j++ )
-              if ( !rhead[j] ) v[k++] = (UINT)svect[j];
-          spsugar[sprow] = MAX(maxrs,SG(spol));
-          sprow++;
-      }
-  }
-  data->sprow = sprow;
-  pthread_exit(NULL);
-}
-
-NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
-        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread)
-{
-    int spcol,sprow,a;
-    int i,j,k,l,rank;
-    NODE r0,r;
-    ND_pairs sp;
-    ND spol;
-    mp_limb_t **spmat;
-    mp_limb_t *v;
-    int *colstat;
-    struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
-    int maxrs;
-    int *spsugar;
-    struct reduce_data rd[nthread];
-    pthread_t thrd[nthread];
-    NODE spi[nthread];
-    NODE tspi[nthread];
-    int ret;
-    void *status;
-    int nspblock,nsprem,nspi;
-    ND_pairs t;
-
-    spcol = col-nred;
-    get_eg(&eg0);
-    /* elimination (1st step) */
-    spmat = (mp_limb_t **)MALLOC(nsp*sizeof(mp_limb_t *));
-    spsugar = (int *)MALLOC(nsp*sizeof(int));
-    extern int GC_dont_gc;
-
-    nspblock = nsp/nthread;
-    nsprem = nsp%nthread;
-    t = sp0;
-    for ( i = 0; i < nthread; i++ ) spi[i] = 0;
-    for ( j = 0; t != 0; t = NEXT(t), j=(j+1)%nthread ) {
-      nd_sp(m,0,t,&spol);
-      NEXTNODE(spi[j],tspi[j]); 
-      BDY(tspi[j])=(pointer)spol;
-      NEXT(tspi[j])=0;
-    }
-    for ( i = 0; i < nthread; i++ ) {
-      nspi = length(spi[i]); 
-      if ( nspi == 0 ) break;
-      rd[i].thrd = i;
-      rd[i].sp = spi[i]; rd[i].nsp = nspi;
-      rd[i].m = m; rd[i].s0vect = s0vect;
-      rd[i].col = col; rd[i].rvect = rvect; rd[i].rhead = rhead; 
-      rd[i].imat = imat; rd[i].nred = nred;
-      rd[i].svect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
-      rd[i].cvect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
-      rd[i].spsugar = (int *)MALLOC(nspi*sizeof(int));
-      rd[i].spmat = (mp_limb_t **)MALLOC(nspi*sizeof(mp_limb_t *));
-      for ( j = 0; j < nspi; j++ )
-        rd[i].spmat[j] = (mp_limb_t *)MALLOC_ATOMIC(spcol*sizeof(mp_limb_t));
-      ret = pthread_create(&thrd[i],NULL,(void *)thread_reduce_vect64,&rd[i]);
-      if ( ret != 0 )
-        error("thread_nd_f4_red_mod64_main : failed to create thread");
-    }
-    k = i;
-    sprow = 0;
-    for ( i = 0; i < k; i++ ) {
-      ret = pthread_join(thrd[i],&status);
-      if ( ret != 0 )
-        error("thread_nd_f4_red_mod64_main : failed to join thread");
-      nspi = rd[i].sprow;
-      for ( j = 0; j < nspi; j++, sprow++ ) {
-        spmat[sprow] = rd[i].spmat[j];
-        spsugar[sprow] = rd[i].spsugar[j];
-      }
-    }
-
-    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1); add_eg(&f4_elim1,&eg0,&eg1);
-    if ( DP_Print ) {
-        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
-        fflush(asir_out);
-    }
-    /* free index arrays */
-    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c);
-
-    /* elimination (2nd step) */
-    colstat = (int *)MALLOC(spcol*sizeof(int));
-    rank = nd_gauss_elim_mod64(spmat,spsugar,0,sprow,spcol,m,colstat);
-    r0 = 0;
-    for ( i = 0; i < rank; i++ ) {
-        NEXTNODE(r0,r); BDY(r) = 
-          (pointer)vect64_to_ndv(spmat[i],spcol,col,rhead,s0vect);
-        SG((NDV)BDY(r)) = spsugar[i];
-        GCFREE(spmat[i]);
-    }
-    if ( r0 ) NEXT(r) = 0;
-
-    for ( ; i < sprow; i++ ) GCFREE(spmat[i]);
-    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2); add_eg(&f4_elim2,&eg1,&eg2);
-    init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
-    if ( DP_Print ) {
-        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
-        fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
-            nsp,nred,sprow,spcol,rank);
-        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
-    }
-    return r0;
-}
 
 int nd_gauss_elim_mod64(mp_limb_t **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat)
 {
@@ -14215,3 +14068,299 @@ final:
   return g;
 }
 #endif
+
+void thread_reduce_vect64(struct reduce_data *data)
+{
+  int m; NODE sp; NODE spair; int nsp; UINT *s0vect;
+  int col; NM_ind_pair *rvect; int *rhead; IndArray *imat; int nred;
+  mp_limb_t **spmat; int *spsugar; ND_pairs *spactive; int sprow;
+  mp_limb_t *svect,*cvect,*v;
+  int i,j,k,a,maxrs,spcol;
+  ND spol;
+ 
+  m = data->m; sp = data->sp; spair = data->spair; nsp = data->nsp; s0vect = data->s0vect;
+  col = data->col; rvect = data->rvect; rhead = data->rhead; 
+  imat = data->imat; nred = data->nred;
+  spcol = col-nred;
+  data->spsugar = spsugar = (int *)MALLOC(nsp*sizeof(int));
+  data->spmat = spmat = (mp_limb_t **)MALLOC(nsp*sizeof(mp_limb_t *));
+  data->spactive = spactive = (ND_pairs *)MALLOC(nsp*sizeof(ND_pairs));
+      for ( j = 0; j < nsp; j++ )
+        spmat[j] = (mp_limb_t *)MALLOC_ATOMIC(spcol*sizeof(mp_limb_t));
+  svect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
+  cvect = (mp_limb_t *)MALLOC(col*sizeof(mp_limb_t));
+  for ( a = sprow = 0; a < nsp; a++, sp = NEXT(sp), spair = NEXT(spair) ) {
+      spol = (ND)BDY(sp);
+      if ( !spol ) continue;
+      nd_to_vect64(m,s0vect,col,spol,svect);
+      maxrs = ndv_reduce_vect64(m,svect,cvect,col,imat,rvect,nred,0);
+      for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+      if ( i < col ) {
+          v = spmat[sprow];
+          for ( j = k = 0; j < col; j++ )
+              if ( !rhead[j] ) v[k++] = (UINT)svect[j];
+          spsugar[sprow] = MAX(maxrs,SG(spol));
+          spactive[sprow] = (ND_pairs) BDY(spair);
+          sprow++;
+      }
+  }
+  data->sprow = sprow;
+  pthread_exit(NULL);
+}
+
+void thread_reduce_vect_q(struct reduce_data_q *data)
+{
+  int m; NODE sp; int nsp; UINT *s0vect;
+  int col; NM_ind_pair *rvect; int *rhead; IndArray *imat; int nred;
+  Z **spmat; int *spsugar; ND_pairs *spactive; int sprow;
+  Z *svect,*v;
+  mpz_t *svectbuf;
+  int i,j,k,a,maxrs,spcol,trace;
+  ND spol;
+ 
+  sp = data->sp; nsp = data->nsp; s0vect = data->s0vect; trace = data->trace;
+  col = data->col; rvect = data->rvect; rhead = data->rhead; imat = data->imat; nred = data->nred;
+  svect = (Z *)MALLOC(col*sizeof(Z));
+  svectbuf = (mpz_t *)MALLOC(col*sizeof(mpz_t));
+  data->spsugar = spsugar = (int *)MALLOC(nsp*sizeof(int));
+  data->spmat = spmat = (Z **)MALLOC(nsp*sizeof(Z *));
+  spcol = col-nred;
+  for ( j = 0; j < nsp; j++ )
+    spmat[j] = (Z *)MALLOC(spcol*sizeof(Z));
+  for ( a = sprow = 0; a < nsp; a++, sp = NEXT(sp) ) {
+      spol = (ND)BDY(sp);
+      if ( !spol ) continue;
+      nd_to_vect_q(s0vect,col,spol,svect);
+      maxrs = ndv_reduce_vect_q(svect,trace,col,imat,rvect,nred,svectbuf);
+      for ( i = 0; i < col; i++ ) if ( svect[i] ) break;
+      if ( i < col ) {
+          v = spmat[sprow];
+          for ( j = k = 0; j < col; j++ )
+              if ( !rhead[j] ) v[k++] = svect[j];
+          spsugar[sprow] = MAX(maxrs,SG(spol));
+          sprow++;
+      }
+  }
+//  printf("\nthread %d output:\n",data->thrd);
+//  print_zmat(data->spmat,sprow,spcol);
+  data->sprow = sprow;
+  pthread_exit(NULL);
+}
+
+NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread)
+{
+    int spcol,sprow,a;
+    int i,j,k,rank;
+    NODE r0,r;
+    ND_pairs sp;
+    ND spol;
+    Z **spmat;
+    Z *svect,*v;
+    int *colstat;
+    struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
+    int maxrs;
+    int *spsugar;
+    pointer *w;
+    struct reduce_data_q rd[nthread];
+    pthread_t thrd[nthread];
+    NODE spi[nthread];
+    NODE tspi[nthread];
+    int nspblock,nsprem,nspi,ret;
+    void *status;
+    ND_pairs t;
+
+    spcol = col-nred;
+    get_eg(&eg0);
+    /* elimination (1st step) */
+    spmat = (Z **)MALLOC(nsp*sizeof(Z *));
+    spsugar = (int *)MALLOC(nsp*sizeof(int));
+    extern int GC_dont_gc;
+
+    nspblock = nsp/nthread;
+    nsprem = nsp%nthread;
+    t = sp0;
+    for ( i = 0; i < nthread; i++ ) spi[i] = 0;
+    for ( j = 0; t != 0; t = NEXT(t), j=(j+1)%nthread ) {
+      nd_sp(0,trace,t,&spol);
+      NEXTNODE(spi[j],tspi[j]); 
+      BDY(tspi[j])=(pointer)spol;
+      NEXT(tspi[j])=0;
+    }
+    for ( i = 0; i < nthread; i++ ) {
+      nspi = length(spi[i]); 
+      if ( nspi == 0 ) break;
+      rd[i].thrd = i;
+      rd[i].sp = spi[i]; rd[i].nsp = nspi;
+      rd[i].s0vect = s0vect;
+      rd[i].col = col; rd[i].rvect = rvect; rd[i].rhead = rhead; 
+      rd[i].trace = trace;
+      rd[i].imat = imat; rd[i].nred = nred;
+      ret = pthread_create(&thrd[i],NULL,(void *)thread_reduce_vect_q,&rd[i]);
+      if ( ret != 0 )
+        error("thread_nd_f4_red_q_main : failed to create thread");
+//      sleep(1);
+    }
+    k = i;
+    sprow = 0;
+    for ( i = 0; i < k; i++ ) {
+      ret = pthread_join(thrd[i],&status);
+      if ( ret != 0 )
+        error("thread_nd_f4_red_q_main : failed to join thread");
+      nspi = rd[i].sprow;
+      for ( j = 0; j < nspi; j++, sprow++ ) {
+        spmat[sprow] = rd[i].spmat[j];
+        spsugar[sprow] = rd[i].spsugar[j];
+      }
+    }
+    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
+        fflush(asir_out);
+    }
+    /* free index arrays */
+/*    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c); */
+
+    /* elimination (2nd step) */
+    colstat = (int *)MALLOC(spcol*sizeof(int));
+    rank = nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat);
+    w = (pointer *)MALLOC(rank*sizeof(pointer));
+    for ( i = 0; i < rank; i++ ) {
+#if 0
+        w[rank-i-1] = (pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
+        SG((NDV)w[rank-i-1]) = spsugar[i];
+#else
+        w[i] = (pointer)vect_to_ndv_q(spmat[i],spcol,col,rhead,s0vect);
+        SG((NDV)w[i]) = spsugar[i];
+#endif
+/*        GCFREE(spmat[i]); */
+    }
+#if 0
+    qsort(w,rank,sizeof(NDV),
+        (int (*)(const void *,const void *))ndv_compare);
+#endif
+    r0 = 0;
+    for ( i = 0; i < rank; i++ ) {
+        NEXTNODE(r0,r); BDY(r) = w[i];
+    }
+    if ( r0 ) NEXT(r) = 0;
+
+/*    for ( ; i < sprow; i++ ) GCFREE(spmat[i]); */
+    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2);
+    init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
+        fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
+            nsp,nred,sprow,spcol,rank);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
+    }
+    return r0;
+}
+
+NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+        NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread,ND_pairs *nz)
+{
+    int spcol,sprow,a;
+    int i,j,k,l,rank;
+    NODE r0,r;
+    ND_pairs sp;
+    ND_pairs *spactive;
+    ND spol;
+    mp_limb_t **spmat;
+    mp_limb_t *v;
+    int *colstat;
+    struct oEGT eg0,eg1,eg2,eg_f4,eg_f4_1,eg_f4_2;
+    int maxrs;
+    int *spsugar;
+    struct reduce_data rd[nthread];
+    pthread_t thrd[nthread];
+    NODE spi[nthread],spairi[nthread],tspi[nthread],tspairi[nthread];
+    int ret;
+    void *status;
+    int nspblock,nsprem,nspi;
+    ND_pairs t;
+
+    spactive = !nz?0:(ND_pairs *)MALLOC(nsp*sizeof(ND_pairs));
+    spcol = col-nred;
+    get_eg(&eg0);
+    /* elimination (1st step) */
+    spmat = (mp_limb_t **)MALLOC(nsp*sizeof(mp_limb_t *));
+    spsugar = (int *)MALLOC(nsp*sizeof(int));
+    extern int GC_dont_gc;
+
+    nspblock = nsp/nthread;
+    nsprem = nsp%nthread;
+    t = sp0;
+    for ( i = 0; i < nthread; i++ ) {
+      spi[i] = 0; spairi[i] = 0;
+    }
+    for ( j = 0; t != 0; t = NEXT(t), j=(j+1)%nthread ) {
+      NEXTNODE(spairi[j],tspairi[j]); NEXTNODE(spi[j],tspi[j]); 
+      nd_sp(m,0,t,&spol);
+      BDY(tspairi[j])=(pointer)t; BDY(tspi[j])=(pointer)spol;
+      NEXT(tspairi[j])=0; NEXT(tspi[j])=0;
+    }
+    for ( i = 0; i < nthread; i++ ) {
+      nspi = length(spi[i]); 
+      if ( nspi == 0 ) break;
+      rd[i].thrd = i;
+      rd[i].spair = spairi[i];
+      rd[i].sp = spi[i]; rd[i].nsp = nspi;
+      rd[i].m = m; rd[i].s0vect = s0vect;
+      rd[i].col = col; rd[i].rvect = rvect; rd[i].rhead = rhead; 
+      rd[i].imat = imat; rd[i].nred = nred;
+      ret = pthread_create(&thrd[i],NULL,(void *)thread_reduce_vect64,&rd[i]);
+      if ( ret != 0 )
+        error("thread_nd_f4_red_mod64_main : failed to create thread");
+    }
+    k = i;
+    sprow = 0;
+    for ( i = 0; i < k; i++ ) {
+      ret = pthread_join(thrd[i],&status);
+      if ( ret != 0 )
+        error("thread_nd_f4_red_mod64_main : failed to join thread");
+      nspi = rd[i].sprow;
+      for ( j = 0; j < nspi; j++, sprow++ ) {
+        spmat[sprow] = rd[i].spmat[j];
+        spsugar[sprow] = rd[i].spsugar[j];
+        if ( nz ) spactive[sprow] = rd[i].spactive[j];
+      }
+    }
+
+    get_eg(&eg1); init_eg(&eg_f4_1); add_eg(&eg_f4_1,&eg0,&eg1); add_eg(&f4_elim1,&eg0,&eg1);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim1=%.3fsec,",eg_f4_1.exectime);
+        fflush(asir_out);
+    }
+    /* free index arrays */
+    for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c);
+
+    /* elimination (2nd step) */
+    colstat = (int *)MALLOC(spcol*sizeof(int));
+    rank = nd_gauss_elim_mod64(spmat,spsugar,spactive,sprow,spcol,m,colstat);
+    r0 = 0;
+    for ( i = 0; i < rank; i++ ) {
+        NEXTNODE(r0,r); BDY(r) = 
+          (pointer)vect64_to_ndv(spmat[i],spcol,col,rhead,s0vect);
+        SG((NDV)BDY(r)) = spsugar[i];
+        GCFREE(spmat[i]);
+    }
+    if ( r0 ) NEXT(r) = 0;
+    if ( nz ) {
+        for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];
+        if ( rank > 0 ) {
+            NEXT(spactive[rank-1]) = 0;
+            *nz = spactive[0];
+        } else
+            *nz = 0;
+    }
+    get_eg(&eg2); init_eg(&eg_f4_2); add_eg(&eg_f4_2,&eg1,&eg2); add_eg(&f4_elim2,&eg1,&eg2);
+    init_eg(&eg_f4); add_eg(&eg_f4,&eg0,&eg2);
+    if ( DP_Print ) {
+        fprintf(asir_out,"elim2=%.3fsec,",eg_f4_2.exectime);
+        fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
+            nsp,nred,sprow,spcol,rank);
+        fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
+    }
+    return r0;
+}

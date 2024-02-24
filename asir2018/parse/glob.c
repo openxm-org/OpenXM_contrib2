@@ -392,8 +392,6 @@ void process_args(int ac,char **av)
   do_quiet = 0;
   while ( ac > 0 ) {
     if ( !strcmp(*av,"-heap") && (ac >= 2) ) {
-      void GC_expand_hp(int);
-
       GC_expand_hp(atoi(*(av+1))); av += 2; ac -= 2;
     } else if ( !strcmp(*av,"-adj") && (ac >= 2) ) {
       char *slash;
@@ -438,8 +436,6 @@ void process_args(int ac,char **av)
     } else if ( !strcmp(*av,"-rootdir") && (ac >= 2) ) {
       set_rootdir(*(av+1)); av += 2; ac -= 2;
     } else if ( !strcmp(*av,"-maxheap") && (ac >= 2) ) {
-      void GC_set_max_heap_size(int);
-
       GC_set_max_heap_size(atoi(*(av+1))); av += 2; ac -= 2;
 #if !defined(VISUAL) && !defined(__MINGW32__)
     } else if ( !strcmp(*av,"-display") && (ac >= 2) ) {
