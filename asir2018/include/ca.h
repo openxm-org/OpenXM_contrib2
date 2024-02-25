@@ -52,6 +52,7 @@
 #include <gmp.h>
 #include <mpc.h>
 #include <limits.h>
+#include "gc.h"
 
 /* from mpfr-impl.h */
 #define MPFR_PREC(x)      ((x)->_mpfr_prec)
