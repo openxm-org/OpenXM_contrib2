@@ -1438,6 +1438,78 @@ int mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int *rind,i
   else return 1;
 }
 
+struct check_data {
+  MAT mat;
+  int clen,thrd,nthread,rank,ret;
+  int *rind,*cind;
+  mpz_t **nm;
+  mpz_t dn;
+}; 
+ 
+void thread_mpz_gensolve_check_main(struct check_data *data)
+{
+  MAT mat;
+  int row,col,i,j,k,l,clen,rank;
+  mpz_t t;
+  mpz_t *w;
+  Z *mati;
+  int *rind,*cind;
+  mpz_t *nmk;
+  mpz_t **nm;
+  mpz_t dn;
+
+  mat = data->mat;
+  clen = data->clen; rind = data->rind; cind = data->cind; rank = data->rank;
+  nm = data->nm; dn[0] = data->dn[0];
+  row = mat->row; col = mat->col;
+  w = (mpz_t *)MALLOC(clen*sizeof(mpz_t));
+  mpz_init(t);
+  for ( i = 0; i < clen; i++ ) mpz_init(w[i]);
+  for ( i = data->thrd; i < row; i+= data->nthread ) {
+    mati = (Z *)mat->body[i];
+    for ( l = 0; l < clen; l++ ) mpz_set_ui(w[l],0);
+    for ( k = 0; k < rank; k++ )
+      for ( l = 0, nmk = (mpz_t *)nm[k]; l < clen; l++ ) {
+        /* w[l] += mati[rind[k]]*nmk[k] */
+        if ( mati[rind[k]] ) mpz_addmul(w[l],BDY(mati[rind[k]]),nmk[l]);
+      }
+    for ( j = 0; j < clen; j++ ) {
+      if ( mati[cind[j]] ) mpz_mul(t,dn,BDY(mati[cind[j]]));
+      else mpz_set_ui(t,0);
+      if ( mpz_cmp(w[j],t) ) break;
+    }
+    if ( j != clen ) break;
+  }
+  if ( i < row ) data->ret = 0;
+  else data->ret = 1;
+}
+
+int thread_mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int *rind,int *cind,int nthread)
+{
+  struct check_data data[nthread];
+  pthread_t thrd[nthread];
+  int result,i,ret;
+  void *status;
+
+  if ( f4_nocheck ) return 1;
+  for ( i = 0; i < nthread; i++ ) {
+    data[i].mat = mat; data[i].clen = clen; 
+    data[i].thrd = i; data[i].nthread = nthread; 
+    data[i].rind = rind; data[i].cind = cind; 
+    data[i].rank = rank;
+    data[i].nm = nm; data[i].dn[0] = dn[0];
+    ret = pthread_create(&thrd[i],NULL,(void *)thread_mpz_gensolve_check_main,&data[i]);
+  }
+  result = 1;
+  for ( i = 0; i < nthread; i++ ) {
+    ret = pthread_join(thrd[i],&status);
+    if ( ret != 0 )
+      error("thread_mpz_gensolve_check : faied to join thread");
+    result = (result!=0) && (data[i].ret != 0);
+  }
+  return result;
+}
+
 int gensolve_check(MAT mat,MAT nm,Z dn,int *rind,int *cind)
 {
   int row,col,rank,clen,i,j,k,l;
@@ -2370,7 +2442,9 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
   MAT r;
   int first,ret;
   void *status;
+  struct oEGT eg_mod,eg_cr,eg_itor,eg_check,tmp0,tmp1;
 
+  init_eg(&eg_mod); init_eg(&eg_cr); init_eg(&eg_itor); init_eg(&eg_check);
   bmat = (Z **)mat->body;
   row = mat->row; col = mat->col;
   colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
@@ -2387,6 +2461,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
     if ( DP_Print ) {
       fprintf(asir_out,"."); fflush(asir_out);
     }
+    get_eg(&tmp0);
     for ( k = 0; k < nthread; k++ ) {
       data[k].md = get_lprime64(ind++);
       for ( i = 0; i < row; i++ )
@@ -2399,6 +2474,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
       if ( ret != 0 )
         error("thread_generic_gauss_elim64 : faied to join thread");
     }
+    get_eg(&tmp1); add_eg(&eg_mod,&tmp0,&tmp1);
     for ( l = 0; l < nthread; l++ ) {
       rank = data[l].rank;
       if ( first ) {
@@ -2438,6 +2514,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
           }
         }
   
+        get_eg(&tmp0);
         inv = invmod64(mpz_fdiv_ui(m1,data[l].md),data[l].md);
         mpz_mul_ui(m3,m1,data[l].md);
         for ( i = 0; i < rank; i++ )      
@@ -2455,24 +2532,34 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
               }
               k++;
             }
+        get_eg(&tmp1); add_eg(&eg_cr,&tmp0,&tmp1);
         mpz_set(m1,m3);
 //        if ( ind % F4_INTRAT_PERIOD ) 
 //          ret = 0;
 //        else 
+        get_eg(&tmp0);
           ret = mpz_intmtoratm(tmat,rank,col-rank,m1,num,den);
+        get_eg(&tmp1); add_eg(&eg_itor,&tmp0,&tmp1);
         if ( ret ) {
           *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
           *cindp = cind = (int *)MALLOC_ATOMIC((col-rank)*sizeof(int));
           for ( j = k = l = 0; j < col; j++ )
             if ( colstat[j] ) rind[k++] = j;  
             else cind[l++] = j;
-          if ( mpz_gensolve_check(mat,num,den,rank,col-rank,rind,cind) ) {
+          get_eg(&tmp0);
+          ret = thread_mpz_gensolve_check(mat,num,den,rank,col-rank,rind,cind,nthread);
+          get_eg(&tmp1); add_eg(&eg_check,&tmp0,&tmp1);
+          if ( ret != 0 ) {
             MKMAT(r,rank,col-rank); *nm = r;
             for ( i = 0; i < rank; i++ )
               for ( j = 0; j < col-rank; j++ ) {
                 MPZTOZ(num[i][j],z); BDY(r)[i][j] = z;
               }
             MPZTOZ(den,*dn);
+//            print_eg("MOD",&eg_mod);
+//            print_eg("CR",&eg_cr);
+//            print_eg("ITOR",&eg_itor);
+//            print_eg("CHECK",&eg_check);
             return rank;
           }
         }
