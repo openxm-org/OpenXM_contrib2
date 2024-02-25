@@ -4,6 +4,7 @@
 #include "gmp.h"
 #include "base.h"
 #include "inline.h"
+#include <pthread.h>
 
 mpz_t ONEMPZ;
 extern Z ONE;
@@ -2338,3 +2339,144 @@ reset:
 }
 
 #endif
+
+struct gauss_elim_data {
+  mp_limb_t **wmat;
+  mp_limb_t md;
+  int *wcolstat;
+  int row,col,rank;
+};
+
+void thread_generic_gauss_elim_mod64(struct gauss_elim_data *data)
+{
+  data->rank = generic_gauss_elim_mod64(data->wmat,data->row,data->col,data->md,data->wcolstat);
+  pthread_exit(NULL);
+}
+
+int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,int nthread)
+{
+  struct gauss_elim_data data[nthread];
+  pthread_t thrd[nthread];
+  mp_limb_t *wmi;
+  mp_limb_t inv,t,t1;
+  Z z;
+  Z **bmat,*bmi;
+  mpz_t **tmat,**num;
+  mpz_t *tmi;
+  mpz_t den;
+  mpz_t q,m1,m3,s,u;
+  int *colstat,*rind,*cind;
+  int row,col,ind,i,j,k,l,rank0,rank;
+  MAT r;
+  int first,ret;
+  void *status;
+
+  bmat = (Z **)mat->body;
+  row = mat->row; col = mat->col;
+  colstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+  mpz_init(m1); mpz_init(m3); mpz_init(den);
+  for ( k = 0; k < nthread; k++ ) {
+    data[k].wmat = (mp_limb_t **)almat64(row,col);
+    data[k].wcolstat = (int *)MALLOC_ATOMIC(col*sizeof(int));
+    data[k].row = row;
+    data[k].col= col;
+  }
+  ind = 0;
+  first = 1;
+  while ( 1 ) {
+    if ( DP_Print ) {
+      fprintf(asir_out,"."); fflush(asir_out);
+    }
+    for ( k = 0; k < nthread; k++ ) {
+      data[k].md = get_lprime64(ind++);
+      for ( i = 0; i < row; i++ )
+        for ( j = 0, bmi = bmat[i], wmi = data[k].wmat[i]; j < col; j++ )
+          wmi[j] = bmi[j]==0?0:mpz_fdiv_ui(BDY(bmi[j]),data[k].md);
+      ret = pthread_create(&thrd[k],NULL,(void *)thread_generic_gauss_elim_mod64,&data[k]);
+    }
+    for ( k = 0; k < nthread; k++ ) {
+      ret = pthread_join(thrd[k],&status);
+      if ( ret != 0 )
+        error("thread_generic_gauss_elim64 : faied to join thread");
+    }
+    for ( l = 0; l < nthread; l++ ) {
+      rank = data[l].rank;
+      if ( first ) {
+  RESET:
+        mpz_set_ui(m1,data[l].md);
+        rank0 = rank;
+        bcopy(data[l].wcolstat,colstat,col*sizeof(int));
+        // crmat
+        tmat = mpz_allocmat(rank,col-rank);
+        // 
+        num = mpz_allocmat(rank,col-rank);
+        for ( i = 0; i < rank; i++ )
+          for ( j = k = 0, tmi = tmat[i], wmi = data[l].wmat[i]; j < col; j++ )
+            if ( !colstat[j] ) { mpz_set_ui(tmi[k],wmi[j]); k++; }
+        first = 0;
+      } else {
+        if ( rank < rank0 ) {
+          if ( DP_Print ) {
+            fprintf(asir_out,"lower rank matrix; continuing...\n");
+            fflush(asir_out);
+          }
+          continue;
+        } else if ( rank > rank0 ) {
+          if ( DP_Print ) {
+            fprintf(asir_out,"higher rank matrix; resetting...\n");
+            fflush(asir_out);
+          }
+          goto RESET;
+        } else {
+          for ( j = 0; (j<col) && (colstat[j]==data[l].wcolstat[j]); j++ );
+          if ( j < col ) {
+            if ( DP_Print ) {
+              fprintf(asir_out,"inconsitent colstat; resetting...\n");
+              fflush(asir_out);
+            }
+            goto RESET;
+          }
+        }
+  
+        inv = invmod64(mpz_fdiv_ui(m1,data[l].md),data[l].md);
+        mpz_mul_ui(m3,m1,data[l].md);
+        for ( i = 0; i < rank; i++ )      
+          for ( j = k = 0, tmi = tmat[i], wmi = data[l].wmat[i]; j < col; j++ )
+            if ( !colstat[j] ) {
+              if ( mpz_sgn(tmi[k]) ) {
+              /* f3 = f1+m1*(m1 mod md)^(-1)*(f2 - f1 mod md) */
+                t = mpz_fdiv_ui(tmi[k],data[l].md);
+                if ( wmi[j] >= t ) t = wmi[j]-t;
+                else t = data[l].md-(t-wmi[j]);
+                mpz_addmul_ui(tmi[k],m1,mulmod64(t,inv,data[l].md));
+              } else if ( wmi[j] ) {
+              /* f3 = m1*(m1 mod m2)^(-1)*f2 */
+                mpz_mul_ui(tmi[k],m1,mulmod64(wmi[j],inv,data[l].md));
+              }
+              k++;
+            }
+        mpz_set(m1,m3);
+//        if ( ind % F4_INTRAT_PERIOD ) 
+//          ret = 0;
+//        else 
+          ret = mpz_intmtoratm(tmat,rank,col-rank,m1,num,den);
+        if ( ret ) {
+          *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
+          *cindp = cind = (int *)MALLOC_ATOMIC((col-rank)*sizeof(int));
+          for ( j = k = l = 0; j < col; j++ )
+            if ( colstat[j] ) rind[k++] = j;  
+            else cind[l++] = j;
+          if ( mpz_gensolve_check(mat,num,den,rank,col-rank,rind,cind) ) {
+            MKMAT(r,rank,col-rank); *nm = r;
+            for ( i = 0; i < rank; i++ )
+              for ( j = 0; j < col-rank; j++ ) {
+                MPZTOZ(num[i][j],z); BDY(r)[i][j] = z;
+              }
+            MPZTOZ(den,*dn);
+            return rank;
+          }
+        }
+      }
+    }
+  }
+}

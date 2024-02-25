@@ -14108,6 +14108,29 @@ void thread_reduce_vect64(struct reduce_data *data)
   pthread_exit(NULL);
 }
 
+int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,int nthread);
+
+int thread_nd_gauss_elim_q(Z **mat0,int *sugar,int row,int col,int *colstat,int nthread)
+{
+    int i,j,c,rank;
+    int *ci,*ri;
+    Z dn;
+    MAT m,nm;
+
+    NEWMAT(m); m->row = row; m->col = col; m->body = (pointer **)mat0;
+    rank = thread_generic_gauss_elim64(m,&nm,&dn,&ri,&ci,nthread);
+    for ( i = 0; i < row; i++ )
+        for ( j = 0; j < col; j++ )
+            mat0[i][j] = 0;
+    c = col-rank;
+    for ( i = 0; i < rank; i++ ) {
+        mat0[i][ri[i]] = dn;    
+        for ( j = 0; j < c; j++ )
+            mat0[i][ci[j]] = (Z)BDY(nm)[i][j];
+    }
+    return rank;
+}
+
 void thread_reduce_vect_q(struct reduce_data_q *data)
 {
   int m; NODE sp; int nsp; UINT *s0vect;
@@ -14223,7 +14246,7 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
 
     /* elimination (2nd step) */
     colstat = (int *)MALLOC(spcol*sizeof(int));
-    rank = nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat);
+    rank = thread_nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat,nthread);
     w = (pointer *)MALLOC(rank*sizeof(pointer));
     for ( i = 0; i < rank; i++ ) {
 #if 0
