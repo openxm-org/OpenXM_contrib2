@@ -2552,8 +2552,8 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
         if ( ++count % F4_INTRAT_PERIOD ) 
           ret = 0;
         else 
-        get_eg(&tmp0);
           ret = mpz_intmtoratm(tmat,rank,col-rank,m1,num,den);
+        get_eg(&tmp0);
         get_eg(&tmp1); add_eg(&eg_itor,&tmp0,&tmp1);
         if ( ret ) {
           *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
@@ -2571,10 +2571,10 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
                 MPZTOZ(num[i][j],z); BDY(r)[i][j] = z;
               }
             MPZTOZ(den,*dn);
-//            print_eg("MOD",&eg_mod);
-//            print_eg("CR",&eg_cr);
-//            print_eg("ITOR",&eg_itor);
-//            print_eg("CHECK",&eg_check);
+            print_eg("MOD",&eg_mod);
+            print_eg("CR",&eg_cr);
+            print_eg("ITOR",&eg_itor);
+            print_eg("CHECK",&eg_check);
             return rank;
           }
         }
