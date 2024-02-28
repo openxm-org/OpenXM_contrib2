@@ -1404,7 +1404,7 @@ int inttorat(Z c,Z m,Z b,Z *nmp,Z *dnp)
   }
 }
 
-extern int f4_nocheck;
+extern int f4_nocheck,fractionfree_bound;
 
 int mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int *rind,int *cind)
 {
@@ -2155,6 +2155,8 @@ int generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
   MAT r,crmat;
   int ret;
 
+  if ( mat->row <= fractionfree_bound )
+    return generic_gauss_elim_direct(mat,nm,dn,rindp,cindp);
   bmat = (Z **)mat->body;
   row = mat->row; col = mat->col;
   wmat = (mp_limb_t **)almat64(row,col);
@@ -2440,10 +2442,22 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
   int *colstat,*rind,*cind;
   int row,col,ind,i,j,k,l,rank0,rank;
   MAT r;
-  int first,ret;
+  int first,ret,count;
   void *status;
   struct oEGT eg_mod,eg_cr,eg_itor,eg_check,tmp0,tmp1;
+  static int cnt;
+  char name[BUFSIZ];
+  NODE arg;
+  STRING str;
+  Z zret;
+  void Pbsave(NODE,Z *);
 
+//  sprintf(name,"mat%d",cnt++);
+//  MKSTR(str,name);
+//  arg = mknode(2,mat,str);
+//  Pbsave(arg,&zret);
+  if ( mat->row <= fractionfree_bound )
+    return generic_gauss_elim_direct(mat,nm,dn,rindp,cindp);
   init_eg(&eg_mod); init_eg(&eg_cr); init_eg(&eg_itor); init_eg(&eg_check);
   bmat = (Z **)mat->body;
   row = mat->row; col = mat->col;
@@ -2457,6 +2471,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
   }
   ind = 0;
   first = 1;
+  count = 0;
   while ( 1 ) {
     if ( DP_Print ) {
       fprintf(asir_out,"."); fflush(asir_out);
@@ -2534,9 +2549,9 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
             }
         get_eg(&tmp1); add_eg(&eg_cr,&tmp0,&tmp1);
         mpz_set(m1,m3);
-//        if ( ind % F4_INTRAT_PERIOD ) 
-//          ret = 0;
-//        else 
+        if ( ++count % F4_INTRAT_PERIOD ) 
+          ret = 0;
+        else 
         get_eg(&tmp0);
           ret = mpz_intmtoratm(tmat,rank,col-rank,m1,num,den);
         get_eg(&tmp1); add_eg(&eg_itor,&tmp0,&tmp1);

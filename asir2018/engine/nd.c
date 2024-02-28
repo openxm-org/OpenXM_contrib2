@@ -14109,6 +14109,7 @@ void thread_reduce_vect64(struct reduce_data *data)
 }
 
 int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,int nthread);
+int generic_gauss_elim_direct(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp);
 
 int thread_nd_gauss_elim_q(Z **mat0,int *sugar,int row,int col,int *colstat,int nthread)
 {

@@ -1162,6 +1162,7 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
   Z dn,q;
   int i,row,col,t,rank;
   int is_hensel = 0;
+  int is_fractionfree = 0;
   char *key;
   Obj value;
 
@@ -1172,7 +1173,8 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
       value = (Obj)BDY(NEXT(p));
       if ( !strcmp(key,"hensel") && value ) {
         is_hensel = value ? 1 : 0;
-        break;
+      } else if ( !strcmp(key,"direct") && value ) {
+        is_fractionfree = value ? 1 : 0;
       }
     }
   }
@@ -1181,6 +1183,8 @@ void Pgeneric_gauss_elim(NODE arg,LIST *rp)
   row = m->row; col = m->col;
   if ( is_hensel )
     rank = generic_gauss_elim_hensel(m,&nm,&dn,&ri,&ci);
+  else if ( is_fractionfree )
+    rank = generic_gauss_elim_direct(m,&nm,&dn,&ri,&ci);
   else
     rank = generic_gauss_elim(m,&nm,&dn,&ri,&ci);
   t = col-rank;
@@ -1578,7 +1582,7 @@ void lu_dec_cr(MAT mat,MAT lu,Q *dn,int **perm)
 #endif
 
 
-int f4_nocheck;
+int f4_nocheck,fractionfree_bound=10;
 
 #define ONE_STEP1  if ( ( zzz = *s ) != 0 ) { DMAR(zzz,hc,*tj,md,*tj) } tj++; s++;
 

@@ -121,6 +121,7 @@ extern int No_ox_reset;
 extern int plot_by_bigfloat;
 extern int debug_plot;
 extern int debug_pari;
+extern int fractionfree_bound;
 
 static struct keyval {
   char *key;
@@ -140,6 +141,7 @@ static struct keyval {
   {"error_in_timer",&error_in_timer,"If set to 1, the usual error handler is executed when the timer is expired."},
   {"evalef",&evalef,"If set to 1, elementary functions are evaluated immediately."},
   {"f4_nocheck",&f4_nocheck,"If set to 1, correctness check of the result of modular computation are omitted in nd_f4()."},
+  {"fractionfree_bound",&fractionfree_bound,"Determines the upperbound of row size of a matrix for which the fraction free gaussian elimination is applied in generic_gauss_elim."},
   {"fake_ox_reset",&No_ox_reset,"Determines the treatment of OX reset request for a server which does not implement the reset protocol."},
   {"fortran_output",&fortran_output,"If set to 1, ** is used instead of ^ for representing the power."},
   {"hex",&hex_output,"If set to 1 (to 2), integers are printed by the hexadecimal (binary) notation."},
