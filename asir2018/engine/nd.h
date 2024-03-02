@@ -5,7 +5,9 @@
 #include "base.h"
 #include "inline.h"
 #include <time.h>
+#if !defined(VISUAL)
 #include <pthread.h>
+#endif
 
 #if defined(__GNUC__)
 #define INLINE static inline
