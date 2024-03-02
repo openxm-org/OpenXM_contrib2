@@ -992,4 +992,3 @@ void *GC_get_main_stack_base();
 #else
 void *GC_get_stack_base();
 #endif
-

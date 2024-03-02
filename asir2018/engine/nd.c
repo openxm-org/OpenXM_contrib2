@@ -9820,8 +9820,10 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
         r0 = nd_f4_red_sf_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
     else if ( m == -2 )
         r0 = nd_f4_red_lf_main(m,sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
+#if SIZEOF_LONG==8
     else if ( nd_thread )
         r0 = thread_nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred,nd_thread);
+#endif
     else
         r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
     return r0;
@@ -14067,7 +14069,6 @@ final:
   }
   return g;
 }
-#endif
 
 void thread_reduce_vect64(struct reduce_data *data)
 {
@@ -14388,3 +14389,4 @@ NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col
     }
     return r0;
 }
+#endif

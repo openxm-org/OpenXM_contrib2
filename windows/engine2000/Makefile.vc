@@ -5,6 +5,7 @@ SRCDIR=..\..\asir2018
 ASIRLIB=..\asir2000lib\asir2000lib.lib
 
 GCDIR= ..\..\asir-gc\gc
+GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
 !if "$(ARCH)" == "AMD64"
@@ -15,8 +16,8 @@ GMPDIR= ..\mpir\win32
 GMPINC= -I $(GMPDIR)
 GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\mpir.lib
 
-INCLUDES= $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
-DEFS= -D NDEBUG -D VISUAL -D VISUAL_LIB -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS
+INCLUDES= $(GCINC) $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
+DEFS= -D NDEBUG -D VISUAL -D VISUAL_LIB -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D GC7
 CFLAGS= -nologo -MT -W3 -EHsc -Ox $(DEFS) $(INCLUDES)
 CPPFLAGS = $(CFLAGS)
 

@@ -4,7 +4,9 @@
 #include "gmp.h"
 #include "base.h"
 #include "inline.h"
+#if !defined(VISUAL)
 #include <pthread.h>
+#endif
 
 mpz_t ONEMPZ;
 extern Z ONE;
@@ -1446,6 +1448,7 @@ struct check_data {
   mpz_t dn;
 }; 
  
+#if SIZEOF_LONG==8
 void thread_mpz_gensolve_check_main(struct check_data *data)
 {
   MAT mat;
@@ -1509,6 +1512,7 @@ int thread_mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int 
   }
   return result;
 }
+#endif
 
 int gensolve_check(MAT mat,MAT nm,Z dn,int *rind,int *cind)
 {
@@ -2414,6 +2418,7 @@ reset:
 
 #endif
 
+#if SIZEOF_LONG==8
 struct gauss_elim_data {
   mp_limb_t **wmat;
   mp_limb_t md;
@@ -2582,3 +2587,4 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
     }
   }
 }
+#endif
