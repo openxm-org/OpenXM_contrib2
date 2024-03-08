@@ -2554,11 +2554,11 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
             }
         get_eg(&tmp1); add_eg(&eg_cr,&tmp0,&tmp1);
         mpz_set(m1,m3);
+        get_eg(&tmp0);
         if ( ++count % F4_INTRAT_PERIOD ) 
           ret = 0;
         else 
           ret = mpz_intmtoratm(tmat,rank,col-rank,m1,num,den);
-        get_eg(&tmp0);
         get_eg(&tmp1); add_eg(&eg_itor,&tmp0,&tmp1);
         if ( ret ) {
           *rindp = rind = (int *)MALLOC_ATOMIC(rank*sizeof(int));
