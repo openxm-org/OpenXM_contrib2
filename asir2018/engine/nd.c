@@ -14106,7 +14106,6 @@ void thread_reduce_vect64(struct reduce_data *data)
       }
   }
   data->sprow = sprow;
-  pthread_exit(NULL);
 }
 
 int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,int nthread);
@@ -14166,10 +14165,7 @@ void thread_reduce_vect_q(struct reduce_data_q *data)
           sprow++;
       }
   }
-//  printf("\nthread %d output:\n",data->thrd);
-//  print_zmat(data->spmat,sprow,spcol);
   data->sprow = sprow;
-  pthread_exit(NULL);
 }
 
 NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
@@ -14188,7 +14184,6 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
     int *spsugar;
     pointer *w;
     struct reduce_data_q rd[nthread];
-    pthread_t thrd[nthread];
     NODE spi[nthread];
     NODE tspi[nthread];
     int nspblock,nsprem,nspi,ret;
@@ -14221,17 +14216,12 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
       rd[i].col = col; rd[i].rvect = rvect; rd[i].rhead = rhead; 
       rd[i].trace = trace;
       rd[i].imat = imat; rd[i].nred = nred;
-      ret = pthread_create(&thrd[i],NULL,(void *)thread_reduce_vect_q,&rd[i]);
-      if ( ret != 0 )
-        error("thread_nd_f4_red_q_main : failed to create thread");
-//      sleep(1);
+      thread_args[i] = &rd[i]; 
     }
     k = i;
+    execute_worker(k,(WORKER_FUNC)thread_reduce_vect_q);
     sprow = 0;
     for ( i = 0; i < k; i++ ) {
-      ret = pthread_join(thrd[i],&status);
-      if ( ret != 0 )
-        error("thread_nd_f4_red_q_main : failed to join thread");
       nspi = rd[i].sprow;
       for ( j = 0; j < nspi; j++, sprow++ ) {
         spmat[sprow] = rd[i].spmat[j];
@@ -14298,7 +14288,6 @@ NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col
     int maxrs;
     int *spsugar;
     struct reduce_data rd[nthread];
-    pthread_t thrd[nthread];
     NODE spi[nthread],spairi[nthread],tspi[nthread],tspairi[nthread];
     int ret;
     void *status;
@@ -14334,16 +14323,12 @@ NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col
       rd[i].m = m; rd[i].s0vect = s0vect;
       rd[i].col = col; rd[i].rvect = rvect; rd[i].rhead = rhead; 
       rd[i].imat = imat; rd[i].nred = nred;
-      ret = pthread_create(&thrd[i],NULL,(void *)thread_reduce_vect64,&rd[i]);
-      if ( ret != 0 )
-        error("thread_nd_f4_red_mod64_main : failed to create thread");
+      thread_args[i] = &rd[i]; 
     }
     k = i;
+    execute_worker(k,(WORKER_FUNC)thread_reduce_vect64);
     sprow = 0;
     for ( i = 0; i < k; i++ ) {
-      ret = pthread_join(thrd[i],&status);
-      if ( ret != 0 )
-        error("thread_nd_f4_red_mod64_main : failed to join thread");
       nspi = rd[i].sprow;
       for ( j = 0; j < nspi; j++, sprow++ ) {
         spmat[sprow] = rd[i].spmat[j];

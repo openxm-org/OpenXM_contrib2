@@ -2752,3 +2752,8 @@ void leave_signal_cs_all();
 #else
 #define LEAVE_SIGNAL_CS_ALL
 #endif
+
+extern void *thread_args[];
+typedef void (*WORKER_FUNC)(void *);
+void create_and_execute_worker(int nworker,WORKER_FUNC func);
+void execute_worker(int nworker,WORKER_FUNC func);

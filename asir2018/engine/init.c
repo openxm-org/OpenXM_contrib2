@@ -351,3 +351,89 @@ void create_new_lprimes64(int index)
   }
   lprime64_size += count;
 }
+
+void *thread_args[BUFSIZ];
+static pthread_t thread[BUFSIZ];
+static pthread_mutex_t work_mutex;
+static pthread_cond_t work_cond,finish_cond;
+static int thread_working;
+static WORKER_FUNC worker_func;
+
+static void notify_finish()
+{
+  pthread_mutex_lock(&work_mutex);
+  thread_working--;
+  if ( thread_working == 0 )
+    pthread_cond_signal(&finish_cond);
+  pthread_mutex_unlock(&work_mutex);
+}
+
+static void thread_worker(int *idptr)
+{
+  int id = *idptr;
+  while ( 1 ) {
+    pthread_mutex_lock(&work_mutex);
+    pthread_cond_wait(&work_cond,&work_mutex);
+    pthread_mutex_unlock(&work_mutex);
+    if ( thread_args[id] != 0 ) {
+      (*worker_func)(thread_args[id]);
+      notify_finish();
+    }
+  }
+}
+
+static void init_threads(int n)
+{
+  int i,ret;
+  static int current_threads;
+
+  if ( current_threads == 0 ) {
+    pthread_mutex_init(&work_mutex,NULL);
+    pthread_cond_init(&work_cond,NULL);
+    pthread_cond_init(&finish_cond,NULL);
+  }
+  for ( i = n; i < current_threads; i++ ) thread_args[i] = 0;
+  if ( current_threads >= n ) return;
+  for ( i = current_threads; i < n; i++ ) {
+    ret = pthread_create(&thread[i],NULL,(void *)thread_worker,(void *)&i);
+  }
+  if ( ret != 0 )
+    error("init_threads : failed to create thread");
+  current_threads = n;
+}
+
+void execute_worker(int nworker,WORKER_FUNC func)
+{
+  init_threads(nworker);
+  pthread_mutex_lock(&work_mutex);
+  thread_working = nworker;
+  worker_func = func;
+  pthread_mutex_unlock(&work_mutex);
+  pthread_cond_broadcast(&work_cond);
+  pthread_mutex_lock(&work_mutex);
+  while ( 1 ) {
+    if ( thread_working != 0 )
+      pthread_cond_wait(&finish_cond,&work_mutex);
+    else
+      break;
+  }
+  pthread_mutex_unlock(&work_mutex);
+}
+
+void create_and_execute_worker(int nworker,WORKER_FUNC func)
+{
+  int i,ret;
+  pthread_t thrd[nworker];
+  void *status;
+
+  for ( i = 0; i < nworker; i++ ) {
+    ret = pthread_create(&thrd[i],NULL,func,thread_args[i]);
+    if ( ret != 0 )
+      error("create_and_execute_worker : failed to create thread"); 
+  }
+  for ( i = 0; i < nworker; i++ ) {
+    ret = pthread_join(thrd[i],&status);
+    if ( ret != 0 )
+      error("create_and_execute_worker : failed to join thread"); 
+  }
+}
