@@ -24,12 +24,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
 #include <signal.h>
 #include <io.h>
 #include <fcntl.h>
 #include <process.h>
 #include "ca.h"
+#include <windows.h>
 
 /* error message structure */
 

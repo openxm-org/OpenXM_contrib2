@@ -1,6 +1,6 @@
-#include <windows.h>
 #include "gmp.h"
 #include "ca.h"
+#include <windows.h>
 #include "ifplot.h"
 #include "if_canvas.h"
 
