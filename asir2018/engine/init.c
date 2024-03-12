@@ -420,6 +420,7 @@ void execute_worker(int nworker,WORKER_FUNC func)
   pthread_mutex_unlock(&work_mutex);
 }
 
+#if 0
 void create_and_execute_worker(int nworker,WORKER_FUNC func)
 {
   int i,ret;
@@ -437,3 +438,4 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
       error("create_and_execute_worker : failed to join thread"); 
   }
 }
+#endif
