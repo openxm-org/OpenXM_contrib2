@@ -52,6 +52,7 @@
 #include <gmp.h>
 #include <mpc.h>
 #include <limits.h>
+#include "wsio.h"
 #include "gc.h"
 
 /* from mpfr-impl.h */

@@ -260,7 +260,11 @@ int yylex()
       else if ( c1 == '=' ) 
         return BOPASS;
       else if ( (c == '-') && (c1 == '>') )
+#if defined(VISUAL) || defined(__MINGW32__)
+        return PNT;
+#else
         return POINT;
+#endif
       else {
         Ungetc(c1); return c;
       }

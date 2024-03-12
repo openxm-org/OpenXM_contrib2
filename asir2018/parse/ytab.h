@@ -50,7 +50,7 @@ extern int yydebug;
   enum yytokentype
   {
     STRUCT = 258,
-    POINT = 259,
+    PNT = 259,
     NEWSTRUCT = 260,
     ANS = 261,
     FDEF = 262,
@@ -103,7 +103,7 @@ extern int yydebug;
 #endif
 /* Tokens.  */
 #define STRUCT 258
-#define POINT 259
+#define PNT 259
 #define NEWSTRUCT 260
 #define ANS 261
 #define FDEF 262

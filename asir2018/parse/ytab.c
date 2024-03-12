@@ -136,7 +136,7 @@ extern int yydebug;
   enum yytokentype
   {
     STRUCT = 258,
-    POINT = 259,
+    PNT = 259,
     NEWSTRUCT = 260,
     ANS = 261,
     FDEF = 262,
@@ -189,7 +189,7 @@ extern int yydebug;
 #endif
 /* Tokens.  */
 #define STRUCT 258
-#define POINT 259
+#define PNT 259
 #define NEWSTRUCT 260
 #define ANS 261
 #define FDEF 262
@@ -581,7 +581,7 @@ static const yytype_uint16 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "STRUCT", "POINT", "NEWSTRUCT", "ANS",
+  "$end", "error", "$undefined", "STRUCT", "PNT", "NEWSTRUCT", "ANS",
   "FDEF", "PFDEF", "MODDEF", "MODEND", "GLOBAL", "MGLOBAL", "LOCAL",
   "LOCALF", "CMP", "OR", "AND", "CAR", "CDR", "QUOTED", "COLONCOLON", "DO",
   "WHILE", "FOR", "IF", "ELSE", "BREAK", "RETURN", "CONTINUE", "PARIF",
