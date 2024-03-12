@@ -352,6 +352,7 @@ void create_new_lprimes64(int index)
   lprime64_size += count;
 }
 
+#if !defined(VISUAL)
 void *thread_args[BUFSIZ];
 static pthread_t thread[BUFSIZ];
 static pthread_mutex_t work_mutex;
@@ -439,3 +440,4 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
   }
 }
 #endif
+#endif /* VISUAL */
