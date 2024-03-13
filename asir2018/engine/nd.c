@@ -14190,8 +14190,8 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
     ND_pairs t;
 
     rd = (struct reduce_data_q *)MALLOC(sizeof(struct reduce_data_q)*nthread);
-    spi = (NODE **)MALLOC(sizeof(NODE *)*nthread);
-    tspi = (NODE **)MALLOC(sizeof(NODE *)*nthread);
+    spi = (NODE *)MALLOC(sizeof(NODE *)*nthread);
+    tspi = (NODE *)MALLOC(sizeof(NODE *)*nthread);
     spcol = col-nred;
     get_eg(&eg0);
     /* elimination (1st step) */
