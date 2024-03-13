@@ -9820,10 +9820,8 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
         r0 = nd_f4_red_sf_main(m,sp0,nsp,s0vect,col,rvect,rhead,imat,nred,nz);
     else if ( m == -2 )
         r0 = nd_f4_red_lf_main(m,sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
-#if SIZEOF_LONG==8
     else if ( nd_thread )
         r0 = thread_nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred,nd_thread);
-#endif
     else
         r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
     return r0;
@@ -14131,6 +14129,7 @@ int thread_nd_gauss_elim_q(Z **mat0,int *sugar,int row,int col,int *colstat,int 
     }
     return rank;
 }
+#endif
 
 void thread_reduce_vect_q(struct reduce_data_q *data)
 {
@@ -14183,13 +14182,16 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
     int maxrs;
     int *spsugar;
     pointer *w;
-    struct reduce_data_q rd[nthread];
-    NODE spi[nthread];
-    NODE tspi[nthread];
+    struct reduce_data_q *rd;
+    NODE *spi;
+    NODE *tspi;
     int nspblock,nsprem,nspi,ret;
     void *status;
     ND_pairs t;
 
+    rd = (struct reduce_data_q *)MALLOC(sizeof(struct reduce_data_q)*nthread);
+    spi = (NODE **)MALLOC(sizeof(NODE *)*nthread);
+    tspi = (NODE **)MALLOC(sizeof(NODE *)*nthread);
     spcol = col-nred;
     get_eg(&eg0);
     /* elimination (1st step) */
@@ -14238,7 +14240,11 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
 
     /* elimination (2nd step) */
     colstat = (int *)MALLOC(spcol*sizeof(int));
+#if !defined(VISUAL)
     rank = thread_nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat,nthread);
+#else
+    rank = nd_gauss_elim_q(spmat,spsugar,sprow,spcol,colstat);
+#endif
     w = (pointer *)MALLOC(rank*sizeof(pointer));
     for ( i = 0; i < rank; i++ ) {
 #if 0
@@ -14272,6 +14278,7 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
     return r0;
 }
 
+#if SIZEOF_LONG==8
 NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread,ND_pairs *nz)
 {

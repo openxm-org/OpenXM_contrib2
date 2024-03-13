@@ -352,7 +352,83 @@ void create_new_lprimes64(int index)
   lprime64_size += count;
 }
 
-#if !defined(VISUAL)
+#if defined(VISUAL)
+void *thread_args[BUFSIZ];
+static HANDLE thread[BUFSIZ];
+static CRITICAL_SECTION work_mutex;
+static CONDITION_VARIABLE work_cond,finish_cond;
+static int thread_working;
+static WORKER_FUNC worker_func;
+
+static void notify_finish()
+{
+  //fprintf(stderr,"finish\n");
+  EnterCriticalSection(&work_mutex);
+  thread_working--;
+  if ( thread_working == 0 )
+    WakeConditionVariable(&finish_cond);
+  LeaveCriticalSection(&work_mutex);
+}
+
+static DWORD WINAPI thread_worker(LPVOID arg)
+{
+  int id = (int)arg;
+  //fprintf(stderr,"start worker %d\n",id);
+  while ( 1 ) {
+    EnterCriticalSection(&work_mutex);
+    SleepConditionVariableCS(&work_cond,&work_mutex,INFINITE);
+    LeaveCriticalSection(&work_mutex);
+    //fprintf(stderr,"got event %d\n",id);
+    if ( thread_args[id] != 0 ) {
+      (*worker_func)(thread_args[id]);
+      //fprintf(stderr,"end %d\n",id);
+      notify_finish();
+    }
+  }
+}
+
+static void init_threads(int n)
+{
+  int i,ret;
+  static int current_threads;
+  DWORD dwThreadID;
+
+  if ( current_threads == 0 ) {
+    InitializeCriticalSection(&work_mutex);
+    InitializeConditionVariable(&work_cond);
+    InitializeConditionVariable(&finish_cond);
+  }
+  for ( i = n; i < current_threads; i++ ) thread_args[i] = 0;
+  if ( current_threads >= n ) return;
+  for ( i = current_threads; i < n; i++ ) {
+    //fprintf(stderr,"create thread %d\n",i);
+    thread[i] = CreateThread(NULL,0,thread_worker,(LPVOID)i,0,&dwThreadID);
+    if ( thread[i] == NULL )
+      error("init_threads : failed to create thread");
+  }
+  current_threads = n;
+  Sleep(10); // XXX : should be corrected
+}
+
+void execute_worker(int nworker,WORKER_FUNC func)
+{
+  init_threads(nworker);
+  EnterCriticalSection(&work_mutex);
+  thread_working = nworker;
+  worker_func = func;
+  LeaveCriticalSection(&work_mutex);
+  //fprintf(stderr,"strart workers\n");
+  WakeAllConditionVariable(&work_cond);
+  while ( 1 ) {
+    if ( thread_working != 0 ) {
+      EnterCriticalSection(&work_mutex);
+      SleepConditionVariableCS(&finish_cond,&work_mutex,INFINITE);
+      LeaveCriticalSection(&work_mutex);
+    } else
+      break;
+  }
+}
+#else
 void *thread_args[BUFSIZ];
 static pthread_t thread[BUFSIZ];
 static pthread_mutex_t work_mutex;
