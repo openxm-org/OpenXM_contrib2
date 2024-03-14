@@ -401,7 +401,7 @@ static void init_threads(int n)
   for ( i = n; i < current_threads; i++ ) thread_args[i] = 0;
   if ( current_threads >= n ) return;
   for ( i = current_threads; i < n; i++ ) {
-    thread[i] = CreateThread(NULL,0,thread_worker,(LPVOID)i,0,&dwThreadID);
+    thread[i] = GC_CreateThread(NULL,0,thread_worker,(LPVOID)i,0,&dwThreadID);
     if ( thread[i] == NULL )
       error("init_threads : failed to create thread");
   }
@@ -433,7 +433,7 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
   DWORD dwThreadID;
 
   for ( i = 0; i < nworker; i++ ) {
-    thread[i] = CreateThread(NULL,0,func,(LPVOID)thread_args[i],0,&dwThreadID);
+    thread[i] = GC_CreateThread(NULL,0,func,(LPVOID)thread_args[i],0,&dwThreadID);
     if ( thread[i] == NULL )
       error("create_and_execute_worker : failed to create thread");
   }
