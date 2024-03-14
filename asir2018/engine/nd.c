@@ -14068,7 +14068,7 @@ final:
   return g;
 }
 
-void thread_reduce_vect64(struct reduce_data *data)
+void *thread_reduce_vect64(struct reduce_data *data)
 {
   int m; NODE sp; NODE spair; int nsp; UINT *s0vect;
   int col; NM_ind_pair *rvect; int *rhead; IndArray *imat; int nred;
@@ -14104,6 +14104,7 @@ void thread_reduce_vect64(struct reduce_data *data)
       }
   }
   data->sprow = sprow;
+  return (void *)0;
 }
 
 int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,int nthread);
@@ -14131,7 +14132,7 @@ int thread_nd_gauss_elim_q(Z **mat0,int *sugar,int row,int col,int *colstat,int 
 }
 #endif
 
-void thread_reduce_vect_q(struct reduce_data_q *data)
+void *thread_reduce_vect_q(struct reduce_data_q *data)
 {
   int m; NODE sp; int nsp; UINT *s0vect;
   int col; NM_ind_pair *rvect; int *rhead; IndArray *imat; int nred;
@@ -14165,6 +14166,7 @@ void thread_reduce_vect_q(struct reduce_data_q *data)
       }
   }
   data->sprow = sprow;
+  return (void *)0;
 }
 
 NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
@@ -14221,7 +14223,7 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
       thread_args[i] = &rd[i]; 
     }
     k = i;
-    execute_worker(k,(WORKER_FUNC)thread_reduce_vect_q);
+    create_and_execute_worker(k,(WORKER_FUNC)thread_reduce_vect_q);
     sprow = 0;
     for ( i = 0; i < k; i++ ) {
       nspi = rd[i].sprow;
@@ -14333,7 +14335,7 @@ NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col
       thread_args[i] = &rd[i]; 
     }
     k = i;
-    execute_worker(k,(WORKER_FUNC)thread_reduce_vect64);
+    create_and_execute_worker(k,(WORKER_FUNC)thread_reduce_vect64);
     sprow = 0;
     for ( i = 0; i < k; i++ ) {
       nspi = rd[i].sprow;

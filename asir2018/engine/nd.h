@@ -463,8 +463,8 @@ NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int nthread,ND_pairs *nz);
 NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,int ntread);
-void thread_reduce_vect_q(struct reduce_data_q *data);
-void thread_reduce_vect64(struct reduce_data *data);
+void *thread_reduce_vect_q(struct reduce_data_q *data);
+void *thread_reduce_vect64(struct reduce_data *data);
 
 int nd_gauss_elim_lf(mpz_t **mat0,int *sugar,int row,int col,int *colstat);
 int nd_gauss_elim_mod_s(UINT **mat,int *sugar,ND_pairs *spactive,int row,int col,int md,int *colstat,SIG *sig);

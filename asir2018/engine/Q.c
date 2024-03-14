@@ -1446,7 +1446,7 @@ struct check_data {
 }; 
  
 #if SIZEOF_LONG==8
-void thread_mpz_gensolve_check_main(struct check_data *data)
+void *thread_mpz_gensolve_check_main(struct check_data *data)
 {
   MAT mat;
   int row,col,i,j,k,l,clen,rank;
@@ -1482,6 +1482,7 @@ void thread_mpz_gensolve_check_main(struct check_data *data)
   }
   if ( i < row ) data->ret = 0;
   else data->ret = 1;
+  return (void *)0;
 }
 
 int thread_mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int *rind,int *cind,int nthread)
@@ -1500,7 +1501,7 @@ int thread_mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int 
     data[i].nm = nm; data[i].dn[0] = dn[0];
     thread_args[i] = &data[i];
   }
-  execute_worker(nthread, (WORKER_FUNC)thread_mpz_gensolve_check_main);
+  create_and_execute_worker(nthread, (WORKER_FUNC)thread_mpz_gensolve_check_main);
   result = 1;
   for ( i = 0; i < nthread; i++ ) {
     result = (result!=0) && (data[i].ret != 0);
@@ -2442,12 +2443,13 @@ struct chrem_data {
 };
 
 
-void thread_generic_gauss_elim_mod64(struct gauss_elim_data *data)
+void *thread_generic_gauss_elim_mod64(struct gauss_elim_data *data)
 {
   data->rank = generic_gauss_elim_mod64(data->wmat,data->row,data->col,data->md,data->wcolstat);
+  return (void *)0;
 }
 
-void thread_chrem(struct chrem_data *data)
+void *thread_chrem(struct chrem_data *data)
 {
   int rank,i,j,k,thrd,nthread,row,col;
   mp_limb_t md,inv,t;
@@ -2483,6 +2485,7 @@ void thread_chrem(struct chrem_data *data)
       }
       k++;
     }
+  return (void *)0;
 }
 
 int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,int nthread)
@@ -2544,7 +2547,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
           wmi[j] = bmi[j]==0?0:mpz_fdiv_ui(BDY(bmi[j]),data[k].md);
       thread_args[k] = &data[k];
     }
-    execute_worker(nthread, (WORKER_FUNC)thread_generic_gauss_elim_mod64);
+    create_and_execute_worker(nthread, (WORKER_FUNC)thread_generic_gauss_elim_mod64);
     get_eg(&tmp1); add_eg(&eg_mod,&tmp0,&tmp1);
     for ( l = 0; l < nthread; l++ ) {
       rank = data[l].rank;
@@ -2623,7 +2626,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
           chrem_data[i].thrd = i;
           thread_args[i] = &chrem_data[i];
         }
-        execute_worker(nthread,(WORKER_FUNC)thread_chrem);
+        create_and_execute_worker(nthread,(WORKER_FUNC)thread_chrem);
 #endif
         get_eg(&tmp1); add_eg(&eg_cr,&tmp0,&tmp1);
         mpz_set(m1,m3);
