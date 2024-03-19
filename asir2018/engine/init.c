@@ -401,7 +401,6 @@ static void init_threads(int n)
   for ( i = n; i < current_threads; i++ ) thread_args[i] = 0;
   if ( current_threads >= n ) return;
   for ( i = current_threads; i < n; i++ ) {
-    //fprintf(stderr,"create thread %d\n",i);
     thread[i] = CreateThread(NULL,0,thread_worker,(LPVOID)i,0,&dwThreadID);
     if ( thread[i] == NULL )
       error("init_threads : failed to create thread");
@@ -417,7 +416,6 @@ void execute_worker(int nworker,WORKER_FUNC func)
   thread_working = nworker;
   worker_func = func;
   LeaveCriticalSection(&work_mutex);
-  //fprintf(stderr,"strart workers\n");
   WakeAllConditionVariable(&work_cond);
   while ( 1 ) {
     if ( thread_working != 0 ) {
@@ -427,6 +425,19 @@ void execute_worker(int nworker,WORKER_FUNC func)
     } else
       break;
   }
+}
+
+void create_and_execute_worker(int nworker,WORKER_FUNC func)
+{
+  int i,ret;
+  DWORD dwThreadID;
+
+  for ( i = 0; i < nworker; i++ ) {
+    thread[i] = CreateThread(NULL,0,func,(LPVOID)thread_args[i],0,&dwThreadID);
+    if ( thread[i] == NULL )
+      error("create_and_execute_worker : failed to create thread");
+  }
+  WaitForMultipleObjects(nworker,thread,TRUE,INFINITE);
 }
 #else
 void *thread_args[BUFSIZ];
