@@ -2050,6 +2050,8 @@ int generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp)
   MAT r;
   int ret,period,count;
 
+  if ( mat->row <= fractionfree_bound )
+    return generic_gauss_elim_direct(mat,nm,dn,rindp,cindp);
   bmat = (Z **)mat->body;
   row = mat->row; col = mat->col;
   wmat = (mp_limb_t **)almat64(row,col);
