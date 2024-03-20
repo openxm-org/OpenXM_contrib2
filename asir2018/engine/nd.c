@@ -14223,7 +14223,7 @@ NODE thread_nd_f4_red_q_main(ND_pairs sp0,int nsp,int trace,UINT *s0vect,int col
       thread_args[i] = &rd[i]; 
     }
     k = i;
-    create_and_execute_worker(k,(WORKER_FUNC)thread_reduce_vect_q);
+    execute_worker(k,(WORKER_FUNC)thread_reduce_vect_q);
     sprow = 0;
     for ( i = 0; i < k; i++ ) {
       nspi = rd[i].sprow;
@@ -14335,7 +14335,7 @@ NODE thread_nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col
       thread_args[i] = &rd[i]; 
     }
     k = i;
-    create_and_execute_worker(k,(WORKER_FUNC)thread_reduce_vect64);
+    execute_worker(k,(WORKER_FUNC)thread_reduce_vect64);
     sprow = 0;
     for ( i = 0; i < k; i++ ) {
       nspi = rd[i].sprow;

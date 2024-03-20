@@ -440,33 +440,27 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
   WaitForMultipleObjects(nworker,thread,TRUE,INFINITE);
 }
 #else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+typedef int SOCKPAIR[2];
+
 void *thread_args[BUFSIZ];
+static SOCKPAIR sockpair[BUFSIZ];
 static pthread_t thread[BUFSIZ];
-static pthread_mutex_t work_mutex;
-static pthread_cond_t work_cond,finish_cond;
 static int thread_working;
 static WORKER_FUNC worker_func;
-
-static void notify_finish()
-{
-  pthread_mutex_lock(&work_mutex);
-  thread_working--;
-  if ( thread_working == 0 )
-    pthread_cond_signal(&finish_cond);
-  pthread_mutex_unlock(&work_mutex);
-}
 
 static void thread_worker(int *idptr)
 {
   int id = *idptr;
+  char c;
+
   while ( 1 ) {
-    pthread_mutex_lock(&work_mutex);
-    pthread_cond_wait(&work_cond,&work_mutex);
-    pthread_mutex_unlock(&work_mutex);
-    if ( thread_args[id] != 0 ) {
-      (*worker_func)(thread_args[id]);
-      notify_finish();
-    }
+    read(sockpair[id][1],&c,1);
+    (*worker_func)(thread_args[id]);
+    write(sockpair[id][1],&c,1);
   }
 }
 
@@ -475,14 +469,11 @@ static void init_threads(int n)
   int i,ret;
   static int current_threads;
 
-  if ( current_threads == 0 ) {
-    pthread_mutex_init(&work_mutex,NULL);
-    pthread_cond_init(&work_cond,NULL);
-    pthread_cond_init(&finish_cond,NULL);
-  }
   for ( i = n; i < current_threads; i++ ) thread_args[i] = 0;
   if ( current_threads >= n ) return;
   for ( i = current_threads; i < n; i++ ) {
+    if ( socketpair(AF_UNIX,SOCK_STREAM,0,(int *)&sockpair[i]) < 0 )
+      error("init_threads : failed to create socketpair");
     ret = pthread_create(&thread[i],NULL,(void *)thread_worker,(void *)&i);
     if ( ret != 0 )
       error("init_threads : failed to create thread");
@@ -492,20 +483,16 @@ static void init_threads(int n)
 
 void execute_worker(int nworker,WORKER_FUNC func)
 {
+  char c;
+  int i;
+
   init_threads(nworker);
-  pthread_mutex_lock(&work_mutex);
   thread_working = nworker;
   worker_func = func;
-  pthread_mutex_unlock(&work_mutex);
-  pthread_cond_broadcast(&work_cond);
-  pthread_mutex_lock(&work_mutex);
-  while ( 1 ) {
-    if ( thread_working != 0 )
-      pthread_cond_wait(&finish_cond,&work_mutex);
-    else
-      break;
-  }
-  pthread_mutex_unlock(&work_mutex);
+  for ( i = 0; i < nworker; i++ )
+    write(sockpair[i][0],&c,1);
+  for ( i = 0; i < nworker; i++ )
+    read(sockpair[i][0],&c,1);
 }
 
 void create_and_execute_worker(int nworker,WORKER_FUNC func)

@@ -1501,7 +1501,7 @@ int thread_mpz_gensolve_check(MAT mat,mpz_t **nm,mpz_t dn,int rank,int clen,int 
     data[i].nm = nm; data[i].dn[0] = dn[0];
     thread_args[i] = &data[i];
   }
-  create_and_execute_worker(nthread, (WORKER_FUNC)thread_mpz_gensolve_check_main);
+  execute_worker(nthread, (WORKER_FUNC)thread_mpz_gensolve_check_main);
   result = 1;
   for ( i = 0; i < nthread; i++ ) {
     result = (result!=0) && (data[i].ret != 0);
@@ -2549,7 +2549,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
           wmi[j] = bmi[j]==0?0:mpz_fdiv_ui(BDY(bmi[j]),data[k].md);
       thread_args[k] = &data[k];
     }
-    create_and_execute_worker(nthread, (WORKER_FUNC)thread_generic_gauss_elim_mod64);
+    execute_worker(nthread, (WORKER_FUNC)thread_generic_gauss_elim_mod64);
     get_eg(&tmp1); add_eg(&eg_mod,&tmp0,&tmp1);
     for ( l = 0; l < nthread; l++ ) {
       rank = data[l].rank;
@@ -2628,7 +2628,7 @@ int thread_generic_gauss_elim64(MAT mat,MAT *nm,Z *dn,int **rindp,int **cindp,in
           chrem_data[i].thrd = i;
           thread_args[i] = &chrem_data[i];
         }
-        create_and_execute_worker(nthread,(WORKER_FUNC)thread_chrem);
+        execute_worker(nthread,(WORKER_FUNC)thread_chrem);
 #endif
         get_eg(&tmp1); add_eg(&eg_cr,&tmp0,&tmp1);
         mpz_set(m1,m3);
