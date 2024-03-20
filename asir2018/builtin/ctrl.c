@@ -156,6 +156,7 @@ static struct keyval {
   {"ox_batch",&ox_batch,"If set to 1, the OX stream are not flushed at each sending of an OX data."},
   {"ox_check",&ox_check,"If set to 1, mathcap check is done for OpenXM date communication."},
   {"ox_exchange_mathcap",&ox_exchange_mathcap,"If set to 1, mathcaps are exchanged."},
+  {"parallel_gc",&GC_parallel,"Set the number of GC processes in parallel GC."},
   {"print_quote",&print_quote,"Determines the behavior of the printed form of a quote."},
   {"quiet_mode",&do_quiet,"If set to 1, the copyright notices are not printed at the beginning of the session."},
   {"real_binary",&real_binary,"If set to 1, a floating point number is printed by the binary notation."},
