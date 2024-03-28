@@ -495,12 +495,18 @@ void execute_worker(int nworker,WORKER_FUNC func)
     read(sockpair[i][0],&c,1);
 }
 
+int generic_thread;
+
 void create_and_execute_worker(int nworker,WORKER_FUNC func)
 {
   int i,ret;
   pthread_t thrd[nworker];
   void *status;
 
+  if ( generic_thread != 0 ) {
+    execute_worker(nworker,func);
+    return;
+  }
   for ( i = 0; i < nworker; i++ ) {
     ret = pthread_create(&thrd[i],NULL,func,thread_args[i]);
     if ( ret != 0 )

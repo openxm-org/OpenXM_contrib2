@@ -122,6 +122,7 @@ extern int plot_by_bigfloat;
 extern int debug_plot;
 extern int debug_pari;
 extern int fractionfree_bound;
+extern int generic_thread;
 
 static struct keyval {
   char *key;
@@ -175,6 +176,7 @@ static struct keyval {
   {"itvplotsize",&Itvplot,""},
 #endif
   {"debug_pari",&debug_pari,"If set to 1, ox_pari is executed with the message window."},
+  {"generic_thread",&generic_thread,"If set to 1, generic thread is invoked."},
   {0,0},
 };
 
