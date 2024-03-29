@@ -491,6 +491,8 @@ void reset_worker()
 {
   int i;
 
+  if ( thread_working != 0 )
+    fprintf(stderr,"trying to kill workers...\n");
   for ( i = 0; i < thread_working; i++ )
     pthread_kill(thread[i],SIGUSR2);
   thread_working = 0;

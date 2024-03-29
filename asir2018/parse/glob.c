@@ -573,11 +573,14 @@ extern int ox_int_received, critical_when_signal;
 extern int in_gc, caught_intr;
 extern int ox_get_pari_result;
 
+void reset_worker();
+
 void int_handler(int sig)
 {
   extern NODE PVSS;
   NODE t;
 
+  reset_worker();
   if ( do_file || disable_debugger ) {
     LEAVE_SIGNAL_CS_ALL;
     ExitAsir();
@@ -772,10 +775,11 @@ void pipe_handler(int sig)
 void usr2_handler(int sig)
 {
 #if defined(SIGUSR2)
-  void *status;
+  int ret;
 
   set_signal_for_restart(SIGUSR2,usr2_handler);
-  pthread_join(pthread_self(),&status); 
+  ret = 0;
+  pthread_exit((void *)&ret); 
 #endif
 }
 
