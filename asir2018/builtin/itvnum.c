@@ -5,7 +5,7 @@
 #include "ca.h"
 #include "parse.h"
 #include "version.h"
-#if !defined(ANDROID)
+#if defined(DO_PLOT)
 #include "../plot/ifplot.h"
 #endif
 
