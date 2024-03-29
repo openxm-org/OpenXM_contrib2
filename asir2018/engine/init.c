@@ -218,7 +218,6 @@ extern int lm_lazy, up_lazy;
 extern int GC_dont_gc;
 extern int do_weyl;
 extern int dp_fcoeffs;
-void reset_worker();
 
 void reset_engine() {
   lm_lazy = 0;
@@ -226,7 +225,6 @@ void reset_engine() {
   do_weyl = 0;
   dp_fcoeffs = 0;
   GC_dont_gc = 0;
-  reset_worker();
 }
 
 unsigned int get_asir_version() {
@@ -450,10 +448,10 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
 
 typedef int SOCKPAIR[2];
 
+int thread_working;
 void *thread_args[MAXTHREADS];
 static SOCKPAIR sockpair[MAXTHREADS];
 static pthread_t thread[MAXTHREADS];
-static int thread_working;
 static WORKER_FUNC worker_func;
 static int current_threads;
 
@@ -485,18 +483,6 @@ static void init_threads(int n)
       error("init_threads : failed to create thread");
   }
   current_threads = n;
-}
-
-void reset_worker()
-{
-  int i;
-
-  if ( thread_working != 0 )
-    fprintf(stderr,"trying to kill workers...\n");
-  for ( i = 0; i < thread_working; i++ )
-    pthread_kill(thread[i],SIGUSR2);
-  thread_working = 0;
-  current_threads = 0;
 }
 
 void execute_worker(int nworker,WORKER_FUNC func)
