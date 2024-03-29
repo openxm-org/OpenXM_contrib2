@@ -218,6 +218,7 @@ extern int lm_lazy, up_lazy;
 extern int GC_dont_gc;
 extern int do_weyl;
 extern int dp_fcoeffs;
+void reset_worker();
 
 void reset_engine() {
   lm_lazy = 0;
@@ -225,6 +226,7 @@ void reset_engine() {
   do_weyl = 0;
   dp_fcoeffs = 0;
   GC_dont_gc = 0;
+  reset_worker();
 }
 
 unsigned int get_asir_version() {
@@ -352,9 +354,11 @@ void create_new_lprimes64(int index)
   lprime64_size += count;
 }
 
+#define MAXTHREADS 64
+
 #if defined(VISUAL)
-void *thread_args[BUFSIZ];
-static HANDLE thread[BUFSIZ];
+void *thread_args[MAXTHREADS];
+static HANDLE thread[MAXTHREADS];
 static CRITICAL_SECTION work_mutex;
 static CONDITION_VARIABLE work_cond,finish_cond;
 static int thread_working;
@@ -446,11 +450,12 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
 
 typedef int SOCKPAIR[2];
 
-void *thread_args[BUFSIZ];
-static SOCKPAIR sockpair[BUFSIZ];
-static pthread_t thread[BUFSIZ];
+void *thread_args[MAXTHREADS];
+static SOCKPAIR sockpair[MAXTHREADS];
+static pthread_t thread[MAXTHREADS];
 static int thread_working;
 static WORKER_FUNC worker_func;
+static int current_threads;
 
 static void thread_worker(int *idptr)
 {
@@ -467,8 +472,9 @@ static void thread_worker(int *idptr)
 static void init_threads(int n)
 {
   int i,ret;
-  static int current_threads;
 
+  if ( n > MAXTHREADS )
+    error("init_threads : too many threads");
   for ( i = n; i < current_threads; i++ ) thread_args[i] = 0;
   if ( current_threads >= n ) return;
   for ( i = current_threads; i < n; i++ ) {
@@ -479,6 +485,16 @@ static void init_threads(int n)
       error("init_threads : failed to create thread");
   }
   current_threads = n;
+}
+
+void reset_worker()
+{
+  int i;
+
+  for ( i = 0; i < thread_working; i++ )
+    pthread_kill(thread[i],SIGUSR2);
+  thread_working = 0;
+  current_threads = 0;
 }
 
 void execute_worker(int nworker,WORKER_FUNC func)
@@ -493,6 +509,7 @@ void execute_worker(int nworker,WORKER_FUNC func)
     write(sockpair[i][0],&c,1);
   for ( i = 0; i < nworker; i++ )
     read(sockpair[i][0],&c,1);
+  thread_working = 0;
 }
 
 int generic_thread;
@@ -500,22 +517,25 @@ int generic_thread;
 void create_and_execute_worker(int nworker,WORKER_FUNC func)
 {
   int i,ret;
-  pthread_t thrd[nworker];
   void *status;
 
+  if ( nworker > MAXTHREADS )
+    error("create_and_execute_worker : too many threads");
   if ( generic_thread != 0 ) {
     execute_worker(nworker,func);
     return;
   }
   for ( i = 0; i < nworker; i++ ) {
-    ret = pthread_create(&thrd[i],NULL,func,thread_args[i]);
+    ret = pthread_create(&thread[i],NULL,func,thread_args[i]);
     if ( ret != 0 )
       error("create_and_execute_worker : failed to create thread"); 
   }
+  thread_working = nworker;
   for ( i = 0; i < nworker; i++ ) {
-    ret = pthread_join(thrd[i],&status);
+    ret = pthread_join(thread[i],&status);
     if ( ret != 0 )
       error("create_and_execute_worker : failed to join thread"); 
   }
+  thread_working = 0;
 }
 #endif /* VISUAL */

@@ -485,6 +485,8 @@ void (*set_signal(int sig, void (*handler)(int)))(int)
 }
 #endif
 
+void usr2_handler();
+
 void sig_init() {
 #if !defined(VISUAL) && !defined(__MINGW32__)
   set_signal(SIGINT,int_handler);
@@ -506,6 +508,11 @@ void sig_init() {
 #if defined(SIGILL)
   set_signal(SIGILL,ill_handler);
 #endif
+
+#if defined(SIGUSR2)
+  set_signal(SIGUSR2,usr2_handler);
+#endif
+
 
 #if !defined(VISUAL) && !defined(__MINGW32__)
   set_signal(SIGBUS,bus_handler);
@@ -759,6 +766,16 @@ void pipe_handler(int sig)
   set_signal_for_restart(SIGPIPE,pipe_handler);
   end_critical();
   error("internal error (BROKEN PIPE)");
+#endif
+}
+
+void usr2_handler(int sig)
+{
+#if defined(SIGUSR2)
+  void *status;
+
+  set_signal_for_restart(SIGUSR2,usr2_handler);
+  pthread_join(pthread_self(),&status); 
 #endif
 }
 
