@@ -408,11 +408,8 @@ int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
     return 1;
 }
 
-#if !defined(VISUAL_CONSOLE)
+#if !defined(VISUAL_CONSOLE) && defined(DO_PLOT)
 extern int Im_ox_plot;
-#if defined(ANDROID)
-int Im_ox_plot = 0;
-#endif
 #endif
 
 void begin_critical() {
@@ -444,7 +441,7 @@ void ox_usr1_handler(int sig)
 #if !defined(VISUAL) && !defined(__MINGW32__)
   set_signal_for_restart(SIGUSR1,ox_usr1_handler);
 #endif
-#if !defined(VISUAL_CONSOLE)
+#if !defined(VISUAL_CONSOLE) && defined(DO_PLOT)
   if ( Im_ox_plot ) {
     ox_flushing = 1;
     ox_send_sync(0);
