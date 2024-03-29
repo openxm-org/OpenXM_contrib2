@@ -369,7 +369,7 @@ int get_iofp(int s1,char *af_sock,int is_server)
   iofp[i].out = WSIO_open(s1,"w");
 #else
   iofp[i].in = fdopen(s1,"r");
-  iofp[i].out = fdopen(s1,"w");
+  iofp[i].out = fdopen(dup(s1),"w");
 #if !defined(__CYGWIN__)
   setbuffer(iofp[i].in,iofp[i].inbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
   setbuffer(iofp[i].out,iofp[i].outbuf = (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);

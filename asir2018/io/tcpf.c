@@ -1683,7 +1683,7 @@ int register_102(int s1,int rank,int is_master)
   iofp_102[rank].out = WSIO_open(s1,"w");
 #else
   iofp_102[rank].in = fdopen(s1,"r");
-  iofp_102[rank].out = fdopen(s1,"w");
+  iofp_102[rank].out = fdopen(dup(s1),"w");
 #if !defined(__CYGWIN__)
   setbuffer(iofp_102[rank].in,iofp_102[rank].inbuf = 
     (char *)MALLOC_ATOMIC(LBUFSIZ),LBUFSIZ);
