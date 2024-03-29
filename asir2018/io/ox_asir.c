@@ -999,6 +999,9 @@ void ox_io_init() {
   unsigned char c,rc;
   extern int I_am_server;
 
+#if 0
+  // this part is commented out beucause the same procedure 
+  // is already done in ox_spawn() in ox_launch().
   /* XXX : ssh forwards stdin to a remote host on PC Unix */
 #if defined(ANDROID)
 #include <sys/resource.h>
@@ -1025,6 +1028,7 @@ void ox_io_init() {
   close(0);
   for ( i = 5; i < rl.rlim_cur; i++ )
     close(i);
+#endif
 #endif
 
   I_am_server = 1;
