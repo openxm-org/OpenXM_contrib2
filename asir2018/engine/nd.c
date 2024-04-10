@@ -11226,9 +11226,13 @@ void parse_nd_option(VL vl,NODE opt)
         nd_nzlist = BDY((LIST)ARG2(u));
         nd_bpe = (int)ZTOS((Q)ARG3(u));
       }
-    } else if ( !strcmp(key,"thread") ) {
+    } 
+#if !defined(VISUAL)
+    else if ( !strcmp(key,"thread") ) {
       nd_thread = (int)ZTOS((Q)value);
-    } else if ( !strcmp(key,"f4red") ) {
+    } 
+#endif
+    else if ( !strcmp(key,"f4red") ) {
       nd_f4red = (int)ZTOS((Q)value);
     } else if ( !strcmp(key,"rank0") ) {
       nd_rank0 = value?1:0;
