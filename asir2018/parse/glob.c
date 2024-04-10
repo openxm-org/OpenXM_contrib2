@@ -585,6 +585,7 @@ void int_handler(int sig)
     return;
   }
   if ( thread_working != 0 ) {
+    caught_intr = 1;
     return;
   }
 #if defined(VISUAL) || defined(__MINGW32__)

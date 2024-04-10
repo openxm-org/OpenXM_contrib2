@@ -485,6 +485,8 @@ static void init_threads(int n)
   current_threads = n;
 }
 
+void check_caught_intr();
+
 void execute_worker(int nworker,WORKER_FUNC func)
 {
   char c;
@@ -498,6 +500,7 @@ void execute_worker(int nworker,WORKER_FUNC func)
   for ( i = 0; i < nworker; i++ )
     read(sockpair[i][0],&c,1);
   thread_working = 0;
+  check_caught_intr();
 }
 
 int generic_thread;
@@ -525,5 +528,6 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
       error("create_and_execute_worker : failed to join thread"); 
   }
   thread_working = 0;
+  check_caught_intr();
 }
 #endif /* VISUAL */
