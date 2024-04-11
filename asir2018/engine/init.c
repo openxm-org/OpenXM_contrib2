@@ -359,7 +359,7 @@ void *thread_args[MAXTHREADS];
 static HANDLE thread[MAXTHREADS];
 static CRITICAL_SECTION work_mutex;
 static CONDITION_VARIABLE work_cond,finish_cond;
-static int thread_working;
+int generic_thread,thread_working;
 static WORKER_FUNC worker_func;
 
 static void notify_finish()
@@ -434,6 +434,12 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
   int i,ret;
   DWORD dwThreadID;
 
+  if ( nworker > MAXTHREADS )
+    error("create_and_execute_worker : too many threads");
+  if ( generic_thread != 0 ) {
+    execute_worker(nworker,func);
+    return;
+  }
   for ( i = 0; i < nworker; i++ ) {
     thread[i] = GC_CreateThread(NULL,0,func,(LPVOID)thread_args[i],0,&dwThreadID);
     if ( thread[i] == NULL )
@@ -448,7 +454,7 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
 
 typedef int SOCKPAIR[2];
 
-int thread_working;
+int generic_thread,thread_working;
 void *thread_args[MAXTHREADS];
 static SOCKPAIR sockpair[MAXTHREADS];
 static pthread_t thread[MAXTHREADS];
@@ -502,8 +508,6 @@ void execute_worker(int nworker,WORKER_FUNC func)
   thread_working = 0;
   check_caught_intr();
 }
-
-int generic_thread;
 
 void create_and_execute_worker(int nworker,WORKER_FUNC func)
 {

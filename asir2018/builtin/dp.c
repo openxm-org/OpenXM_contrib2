@@ -295,7 +295,9 @@ struct ftab dp_tab[] = {
   {"nd_gr",Pnd_gr,-4},
   {"nd_sba",Pnd_sba,-4},
   {"nd_weyl_sba",Pnd_weyl_sba,-4},
+#if !defined(VISUAL)
   {"nd_sba_f4",Pnd_sba_f4,-4},
+#endif
   {"nd_gr_trace",Pnd_gr_trace,-5},
   {"nd_f4_trace",Pnd_f4_trace,-5},
   {"nd_gr_postproc",Pnd_gr_postproc,5},
