@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.6 2020/10/06 06:31:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/ox.c,v 1.5 2020/03/29 17:01:55 fujimoto Exp $
 */
 #include "ca.h"
 #include "parse.h"
@@ -408,8 +408,11 @@ int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
     return 1;
 }
 
-#if !defined(VISUAL_CONSOLE) && defined(DO_PLOT)
+#if !defined(VISUAL_CONSOLE)
 extern int Im_ox_plot;
+#if defined(ANDROID)
+int Im_ox_plot = 0;
+#endif
 #endif
 
 void begin_critical() {
@@ -441,7 +444,7 @@ void ox_usr1_handler(int sig)
 #if !defined(VISUAL) && !defined(__MINGW32__)
   set_signal_for_restart(SIGUSR1,ox_usr1_handler);
 #endif
-#if !defined(VISUAL_CONSOLE) && defined(DO_PLOT)
+#if !defined(VISUAL_CONSOLE)
   if ( Im_ox_plot ) {
     ox_flushing = 1;
     ox_send_sync(0);
@@ -614,7 +617,7 @@ void ox_bcast_102(int root)
 
 /* func : an arithmetic funcion func(vl,a,b,*c) */
 
-void ox_reduce_102(int root,void (*func)(VL,Obj,Obj,Obj *))
+void ox_reduce_102(int root,void (*func)())
 {
   Obj data,data0,t;
   int r,mask,id,src,dst;
@@ -980,7 +983,7 @@ void ox_flush_stream(int s)
   if ( ox_batch )
     return;
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
-  if ( ((unsigned long long)iofp[s].out) & 0x1 )
+  if ( WSIO_fileno(iofp[s].out) < 0 )
     cflush(iofp[s].out);
   else
 #endif
@@ -990,7 +993,7 @@ void ox_flush_stream(int s)
 void ox_flush_stream_force(int s)
 {
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
-  if ( ((unsigned long long)iofp[s].out) & 0x1 )
+  if ( WSIO_fileno(iofp[s].out) < 0 )
     cflush(iofp[s].out);
   else
 #endif

@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/ws_fileio.c,v 1.1 2018/09/19 05:45:08 noro Exp $
+ * $OpenXM$
 */
 #if defined(VISUAL) || defined(__MINGW32__) || defined(MPI)
 #include<stdio.h>
@@ -66,7 +66,6 @@ STREAM* s;
   int length,total,r;
   char *p;
 
-  s = (STREAM *) ((unsigned long long)s & ~0x1U);
   if (!s || !s->read_flag || !data 
     || !element_size || !count)
     return 0;
@@ -97,7 +96,6 @@ STREAM* s;
   int length,total,r;
   char *p;
 
-  s = (STREAM *) ((unsigned long long)s & ~0x1U);
   if (!s || s->read_flag || !data 
     || !element_size || !count)
     return 0;
@@ -122,7 +120,6 @@ STREAM* s;
 int cflush(s)
 STREAM* s;
 {
-  s = (STREAM *) ((unsigned long long)s & ~0x1U);
   if (!s || s->read_flag)
     return EOF;
 
@@ -135,7 +132,6 @@ STREAM* s;
 int WSIO_fillbuf(s)
 STREAM* s;
 {
-  s = (STREAM *) ((unsigned long long)s & ~0x1U);
   s->buf_size = WSIO_read(s->buf, s->max_buf_size, s);
   s->p = 0;
 
@@ -148,7 +144,6 @@ STREAM* s;
   int rst;
 
 
-  s = (STREAM *) ((unsigned long long)s & ~0x1U);
   rst = WSIO_write(s->buf, s->p, s);
   s->p = 0;
 
@@ -195,7 +190,17 @@ char* mode;
     rst->eof = 0;
     rst->error = 0;
   }
-  return (STREAM *)(((unsigned long long)rst)|0x1);
+  return rst;
+}
+
+int WSIO_fileno(STREAM *s)
+{
+#if defined(VISUAL)
+  return s->_p==NULL? -1: _fileno((FILE *)s);
+#elif defined(__MINGW32__)
+  return _fileno((FILE *)s);
+#endif
+  return (int)fileno((FILE *)s);
 }
 
 int WSIO_read (data, count, s)

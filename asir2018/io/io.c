@@ -44,7 +44,7 @@
  * OF THE SOFTWARE HAS BEEN DEVELOPED BY A THIRD PARTY, THE THIRD PARTY
  * DEVELOPER SHALL HAVE NO LIABILITY IN CONNECTION WITH THE USE,
  * PERFORMANCE OR NON-PERFORMANCE OF THE SOFTWARE.
- * $OpenXM: OpenXM_contrib2/asir2018/io/io.c,v 1.2 2020/10/06 06:31:20 noro Exp $
+ * $OpenXM: OpenXM_contrib2/asir2018/io/io.c,v 1.1 2018/09/19 05:45:08 noro Exp $
 */
 #include <stdio.h>
 #include "ca.h"
@@ -140,9 +140,9 @@ int gen_fread (char *ptr,int size,int nitems,FILE *stream)
     return 0;
   } else {
 #if defined(VISUAL) || defined(__MINGW32__)
-    if ( ((unsigned long long)stream) & 0x1 ) {
+    if ( WSIO_fileno((STREAM *)stream) < 0 )
       n = cread(ptr,size,nitems,(STREAM *)stream);
-    } else
+    else
 #elif defined(MPI)
     if ( (char)fileno(stream) < 0 )
       n = cread(ptr,size,nitems,(STREAM *)stream);
@@ -174,17 +174,15 @@ int gen_fwrite (char *ptr,int size,int nitems,FILE *stream)
     return 0;
   } else
 #if defined(VISUAL) || defined(__MINGW32__)
-  if ( ((unsigned long long)stream) & 0x1 ) {
+  if ( WSIO_fileno((STREAM *)stream) < 0 )
     return cwrite(ptr,size,nitems,(STREAM *)stream);
-  } else
+  else
 #elif defined(MPI)
   if ( (char)fileno(stream) < 0 )
     return cwrite(ptr,size,nitems,(STREAM *)stream);
   else
 #endif
-  {
     return fwrite(ptr,size,nitems,stream);
-  }
 }
 
 void write_char(FILE *f,unsigned char *p)
@@ -210,9 +208,8 @@ void write_int(FILE *f,unsigned int *p)
   if ( little_endian && (ox_file_io || ox_need_conv) ) {
     t = htonl(*p);
     gen_fwrite((char *)&t,sizeof(unsigned int),1,f);
-  } else {
+  } else
     gen_fwrite((char *)p,sizeof(unsigned int),1,f);
-  }
 }
 
 void write_int64(FILE *f,UL *p)
