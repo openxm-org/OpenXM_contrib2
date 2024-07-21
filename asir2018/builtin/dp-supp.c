@@ -1481,6 +1481,83 @@ last:
   *rp = d; *nmp = nm; *dnp = dn;
 }
 
+extern Obj VOIDobj;
+
+void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
+{
+  DP u,p,d,s,t,dmy,hp;
+  NODE l,done;
+  MP m,mr;
+  int i,n,hmag;
+  int *wb;
+  int sugar,psugar,multiple;
+  P nm,tnm1,dn,tdn,tdn1;
+  Z cont;
+
+  multiple = 0;
+  hmag = multiple*HMAG(g);
+  nm = (P)ONE;
+  dn = (P)ONE;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = ZTOS((Z)BDY(l));
+  sugar = g->sugar;
+  done = 0;
+  for ( d = 0; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,hp = hps[wb[i]]) ) {
+        for ( l = done; l; l = NEXT(l) )
+          if ( dl_equal(g->nv,BDY(g)->dl,(DL)BDY(l)) ) break;
+        if ( l != 0 ) {
+          *rp = (DP)VOIDobj;
+          *nmp = (P)ONE;
+          *dnp = (P)ONE;
+          return;
+        }
+        MKNODE(l,BDY(g)->dl,done); done = l;
+        p = ps[wb[i]];
+        dp_red_marked(d,g,p,hp,&t,&u,&tdn,&dmy);
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          goto last;
+        } else {
+          d = t;
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u ) {
+      g = u;
+      if ( multiple && ((d && HMAG(d)>hmag) || (HMAG(g)>hmag)) ) {
+        dp_removecont2(d,g,&t,&u,&cont); d = t; g = u;
+        mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
+        if ( d )
+          hmag = multiple*HMAG(d);
+        else
+          hmag = multiple*HMAG(g);
+      }
+    } else {
+      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+      addd(CO,d,t,&s); d = s;
+      dp_rest(g,&t); g = t;
+    }
+  }
+last:
+  if ( d ) {
+    dp_removecont2(d,0,&t,&u,&cont); d = t;
+    mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
+    d->sugar = sugar;
+  }
+  *rp = d; *nmp = nm; *dnp = dn;
+}
+
 void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
 {
   DP hp,u,p,d,s,t,dmy;
