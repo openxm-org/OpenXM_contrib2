@@ -814,6 +814,22 @@ void chsgnd(DP p,DP *pr)
   }
 }
 
+void _chsgnd(DP *p)
+{
+  MP m;
+  Obj r;
+
+  if ( !p )
+    *p = 0;
+  else if ( OID(p) <= O_R ) {
+    arf_chsgn((Obj)*p,&r); *p = (DP)r;
+  } else {
+    for ( m = BDY(*p); m; m = NEXT(m) ) {
+      arf_chsgn(C(m),&r); C(m) = r;
+    }
+  }
+}
+
 void muld(VL vl,DP p1,DP p2,DP *pr)
 {
   if ( ! do_weyl )
@@ -1284,6 +1300,30 @@ void muldc(VL vl,DP p,Obj c,DP *pr)
     NEXT(mr) = 0; MKDP(NV(p),mr0,*pr);
     if ( *pr )
       (*pr)->sugar = p->sugar;
+  }
+}
+
+// p *= c
+void _muldc(VL vl,DP *p,Obj c)
+{
+  MP m;
+  Q q;
+  Obj obj;
+
+  if ( *p == 0 || c == 0 )
+    *p = 0;
+  else if ( NUM(c) && UNIQ((Q)c) )
+    ; // do nothing
+  else if ( NUM(c) && MUNIQ((Q)c) )
+    _chsgnd(p);
+  else {
+    for ( m = BDY(*p); m; m = NEXT(m) ) {
+      if ( NUM(C(m)) && RATN(C(m)) && NUM(c) && RATN(c) ) {
+        mulq((Q)C(m),(Q)c,&q); C(m) = (Obj)q;
+      } else {
+        arf_mul(vl,C(m),c,&obj); C(m) = obj;
+      }
+    }
   }
 }
 

@@ -66,6 +66,7 @@ int show_orderspec;
 
 void print_composite_order_spec(struct order_spec *spec);
 void dpm_rest(DPM,DPM *);
+void _muldc(VL vl,DP *p,Obj c);
 
 /* 
  * content reduction
@@ -1111,6 +1112,45 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
   *head = h; *rest = r; *dnp = (P)c2;
 }
 
+// p0 *= const
+void _dp_red_marked(DP *p0,DP p1,DP p2,DP hp2,DP *rest,P *dnp,DP *multp)
+{
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  Z c,c1,c2,gn;
+  P g,a;
+  P p[2];
+
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (Z)BDY(p1)->c; c2 = (Z)BDY(hp2)->c;
+  if ( dp_fcoeffs == N_GFS ) {
+    p[0] = (P)c1; p[1] = (P)c2;
+    gcdsf(CO,p,2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
+  } else if ( dp_fcoeffs ) {
+    /* do nothing */
+  } else if ( INT(c1) && INT(c2) ) {
+    gcdz(c1,c2,&gn);
+    if ( !UNIQ(gn) ) {
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c); c2 = c;
+    }
+  } else {
+    ezgcdp(CO,(P)c1,(P)c2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
+  }
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); subd(CO,s,t,&r);
+  _muldc(CO,p0,(Obj)c2);
+  *rest = r; *dnp = (P)c2;
+}
+
 void dp_red_marked_mod(DP p0,DP p1,DP p2,DP hp2,int mod,DP *head,DP *rest,P *dnp,DP *multp)
 {
   int i,n;
@@ -1481,6 +1521,36 @@ last:
   *rp = d; *nmp = nm; *dnp = dn;
 }
 
+void dp_separate_normal(DP g,DP *hps,int *ind,int n,DP *d,DP *r)
+{
+  int nv,i;
+  MP md0,md,mr0,mr,m;
+  DP t;
+
+  if ( g == 0 ) {
+    *d = 0; *r = 0; return;
+  }
+  nv = g->nv;
+  md0 = 0; mr0 = 0;
+  for ( m = BDY(g); m; m = NEXT(m) ) {
+    for ( i = 0; i < n; i++ )
+      if ( _dl_redble(BDY(hps[ind[i]])->dl,m->dl,nv) ) break;
+    if ( i == n ) {
+      NEXTMP(md0,md); md->c = m->c; md->dl = m->dl;
+    } else {
+      NEXTMP(mr0,mr); mr->c = m->c; mr->dl = m->dl;
+    }
+  } 
+  if ( md0 != 0 ) {
+    md->next = 0; MKDP(nv,md0,t); t->sugar = g->sugar; *d = t;
+  } else
+     *d = 0;
+  if ( mr0 != 0 ) {
+    mr->next = 0; MKDP(nv,mr0,t); t->sugar = g->sugar; *r = t;
+  } else
+     *r = 0;
+}
+
 extern Obj VOIDobj;
 
 void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
@@ -1493,9 +1563,8 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
   int sugar,psugar,multiple;
   P nm,tnm1,dn,tdn,tdn1;
   Z cont;
+  int count = 0;
 
-  multiple = 0;
-  hmag = multiple*HMAG(g);
   nm = (P)ONE;
   dn = (P)ONE;
   if ( !g ) {
@@ -1507,12 +1576,13 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
     wb[i] = ZTOS((Z)BDY(l));
   sugar = g->sugar;
   done = 0;
-  for ( d = 0; g; ) {
+  dp_separate_normal(g,hps,wb,n,&d,&u); g = u;
+  for ( ; g; ) {
     for ( u = 0, i = 0; i < n; i++ ) {
       if ( dp_redble(g,hp = hps[wb[i]]) ) {
         for ( l = done; l; l = NEXT(l) )
-          if ( dl_equal(g->nv,BDY(g)->dl,(DL)BDY(l)) ) break;
-        if ( l != 0 ) {
+          if ( dl_equal(g->nv,BDY(g)->dl,(DL)BDY(l)) ) { count++; break; }
+        if ( l != 0 && count > 100 ) {
           *rp = (DP)VOIDobj;
           *nmp = (P)ONE;
           *dnp = (P)ONE;
@@ -1520,34 +1590,21 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
         }
         MKNODE(l,BDY(g)->dl,done); done = l;
         p = ps[wb[i]];
-        dp_red_marked(d,g,p,hp,&t,&u,&tdn,&dmy);
+//        dp_red_marked(d,g,p,hp,&t,&u,&tdn,&dmy);
+        _dp_red_marked(&d,g,p,hp,&u,&tdn,&dmy);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
         if ( !u ) {
           goto last;
         } else {
-          d = t;
+//          d = t;
           mulp(CO,dn,tdn,&tdn1); dn = tdn1;
         }
         break;
       }
     }
-    if ( u ) {
-      g = u;
-      if ( multiple && ((d && HMAG(d)>hmag) || (HMAG(g)>hmag)) ) {
-        dp_removecont2(d,g,&t,&u,&cont); d = t; g = u;
-        mulp(CO,nm,(P)cont,&tnm1); nm = tnm1;
-        if ( d )
-          hmag = multiple*HMAG(d);
-        else
-          hmag = multiple*HMAG(g);
-      }
-    } else {
-      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-      addd(CO,d,t,&s); d = s;
-      dp_rest(g,&t); g = t;
-    }
+    dp_separate_normal(u,hps,wb,n,&t,&g);
+    addd(CO,d,t,&u); d = u;
   }
 last:
   if ( d ) {
@@ -1639,15 +1696,14 @@ DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
     for ( u = 0, i = 0; i < n; i++ ) {
       if ( dp_redble(g,hp = hps[wb[i]]) ) {
         p = ps[wb[i]];
-        dp_red_marked(d,g,p,hp,&t,&u,&tdn,&mult);
+        _dp_red_marked(&d,g,p,hp,&u,&tdn,&mult);
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
         for ( j = 0; j < n; j++ ) {
-          muldc(CO,q[j],(Obj)tdn,&dmy); q[j] = dmy;
+          _muldc(CO,&q[j],(Obj)tdn);
         }
         addd(CO,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
         mulp(CO,dn,tdn,&tdn1); dn = tdn1;
-        d = t;
         if ( !u ) goto last;
         break;
       }
@@ -1655,9 +1711,15 @@ DP *dp_true_nf_and_quotient_marked (NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp)
     if ( u ) {
       g = u;
     } else {
-      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-      addd(CO,d,t,&s); d = s;
+      if ( d == 0 ) {
+        m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+        NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+        d = t;
+      } else {
+        for ( m = BDY(d); NEXT(m) != 0; m = NEXT(m) );
+        NEWMP(mr); *mr = *BDY(g); NEXT(mr) = 0; NEXT(m) = mr;
+        d->sugar = MAX(d->sugar,mr->dl->td);
+      }
       dp_rest(g,&t); g = t;
     }
   }
@@ -4212,13 +4274,12 @@ int compare_zero(int n,int *u,int row,int **w)
 /* u=0 means u=-infty */
 
 int compare_facet_preorder(int n,int *u,int *v,
-  int row1,int **w1,int row2,int **w2)
+  int row1,int **w1,int row2,int **w2,int *uv)
 {
   int i,j,s,t,tu,tv;
-  int *w2i,*uv;
+  int *w2i;
 
   if ( !u ) return 1;
-  uv = W_ALLOC(n);
   for ( i = 0; i < row2; i++ ) {
     w2i = w2[i];
     for ( j = 0, tu = tv = 0; j < n; j++ )
@@ -4323,11 +4384,12 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
 {
   DP d;
   MP f,m0,m;
-  int *wt,*v,*h;
+  int *wt,*v,*h,*uv;
   NODE t,s,n0,tn,n1,r0,r;
   int i;
 
   wt = W_ALLOC(n);
+  uv = W_ALLOC(n);
   n0 = 0;
   for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
     f = BDY((DP)BDY(t));
@@ -4338,7 +4400,7 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
       if ( i == n ) continue;
 
       if ( in_c12(n,wt,row1,w1,row2,w2) && 
-        compare_facet_preorder(n,*w,wt,row1,w1,row2,w2) ) {
+        compare_facet_preorder(n,*w,wt,row1,w1,row2,w2,uv) ) {
         v = (int *)MALLOC_ATOMIC(n*sizeof(int));
         for ( i = 0; i < n; i++ ) v[i] = wt[i];
         MKNODE(n1,v,n0); n0 = n1;
@@ -4349,7 +4411,7 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
   for ( t = n0; t; t = NEXT(t) ) {
     v = (int *)BDY(t);
     for ( s = n0; s; s = NEXT(s) )
-      if ( !compare_facet_preorder(n,v,(int *)BDY(s),row1,w1,row2,w2) )
+      if ( !compare_facet_preorder(n,v,(int *)BDY(s),row1,w1,row2,w2,uv) )
         break;
     if ( !s ) {
       *w = v;
@@ -4366,8 +4428,8 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
       for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
       for ( i = 0; i < n && !wt[i]; i++ );
       if ( i == n  ||
-        (compare_facet_preorder(n,wt,*w,row1,w1,row2,w2)
-        && compare_facet_preorder(n,*w,wt,row1,w1,row2,w2)) ) {
+        (compare_facet_preorder(n,wt,*w,row1,w1,row2,w2,uv)
+        && compare_facet_preorder(n,*w,wt,row1,w1,row2,w2,uv)) ) {
         NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
       }
     }
