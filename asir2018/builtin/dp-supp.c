@@ -4479,10 +4479,19 @@ NODE compute_essential_df(DP *g,DP *gh,int ng)
 #if 1
         for ( rt = r0; rt; rt = NEXT(rt) ) {
           dlt = (DL)BDY(rt);
+#if 1
+          if ( _dl_redble(dlt,dl,nv) ) break;
+          if ( _dl_redble(dl,dlt,nv) ) {
+            BDY(rt) = dl;
+            _NEWDL(dl,nv); d = dl->d;
+            break;
+          }
+#else
           if ( dlt->td != dl->td ) continue;
           for ( dt = dlt->d, k = 0; k < nv; k++ )
             if ( d[k] != dt[k] ) break;
           if ( k == nv ) break;
+#endif
         }
 #else
         rt = 0;
