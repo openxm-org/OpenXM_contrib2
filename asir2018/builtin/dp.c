@@ -61,6 +61,7 @@ extern int nd_rref2;
 
 extern int do_weyl;
 
+void Pdp_symb_preproc(NODE arg,LIST *rp);
 void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp);
 void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp);
 void Pdp_compute_last_t(NODE arg,LIST *rp);
@@ -80,6 +81,7 @@ void Pdp_dtov(NODE arg,VECT *rp);
 void Pdp_mbase(NODE arg,LIST *rp);
 void Pdp_etov(NODE arg,VECT *rp);
 void Pdp_vtoe(NODE arg,DP *rp);
+void Pdp_true_lnf(NODE arg,LIST *rp);
 void Pdp_lnf_mod(NODE arg,LIST *rp);
 void Pdp_lnf_f(NODE arg,LIST *rp);
 void Pdp_nf_tab_mod(NODE arg,DP *rp);
@@ -109,6 +111,7 @@ void Pdp_weyl_nf_f(NODE arg,DP *rp);
 void Pdpm_nf_f(NODE arg,DPM *rp);
 void Pdpm_weyl_nf_f(NODE arg,DPM *rp);
 void Pdp_nf_mod(NODE arg,DP *rp);
+void Pdp_true_lnf(NODE arg,LIST *rp);
 void Pdp_true_nf(NODE arg,LIST *rp);
 void Pdp_true_nf_and_quotient_marked(NODE arg,LIST *rp);
 void Pdp_true_nf_and_quotient(NODE arg,LIST *rp);
@@ -276,6 +279,7 @@ struct ftab dp_tab[] = {
   {"dp_true_nf_marked",Pdp_true_nf_marked,4},
   {"dp_true_nf_marked_check",Pdp_true_nf_marked_check,4},
   {"dp_true_nf_marked_mod",Pdp_true_nf_marked_mod,5},
+  {"dp_true_lnf",Pdp_true_lnf,2},
 
   {"dp_true_nf_and_quotient",Pdp_true_nf_and_quotient,3},
   {"dp_true_nf_and_quotient_mod",Pdp_true_nf_and_quotient_mod,4},
@@ -347,6 +351,7 @@ struct ftab dp_tab[] = {
   /* F4 algorithm */
   {"dp_weyl_f4_main",Pdp_weyl_f4_main,3},
   {"dp_weyl_f4_mod_main",Pdp_weyl_f4_mod_main,4},
+  {"dp_symb_preproc",Pdp_symb_preproc,-3},
 
   /* Hilbert function */
   {"dp_monomial_hilbert_poincare",Pdp_monomial_hilbert_poincare,2},
@@ -964,6 +969,23 @@ void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp)
   *rp = list;
   if ( current_spec )
     initd(current_spec);
+}
+
+LIST dp_symb_preproc(NODE f,NODE g);
+LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h);
+
+void Pdp_symb_preproc(NODE arg,LIST *rp)
+{
+  NODE f,g,h;
+
+  f = (NODE)BDY((LIST)ARG0(arg));
+  g = (NODE)BDY((LIST)ARG1(arg));
+  if ( argc(arg) == 2 ) {
+    *rp = dp_symb_preproc(f,g);
+  } else {
+    h = (NODE)BDY((LIST)ARG2(arg));
+    *rp = dp_symb_preproc_marked(f,g,h);
+  }
 }
 
 void Pdp_compute_last_t(NODE arg,LIST *rp)
@@ -2048,6 +2070,25 @@ void Pdp_true_nf(NODE arg,LIST *rp)
   NEWNODE(n); BDY(n) = (pointer)nm;
   NEWNODE(NEXT(n)); BDY(NEXT(n)) = (pointer)dn;
   NEXT(NEXT(n)) = 0; MKLIST(*rp,n);
+}
+
+void dp_true_lnf(DP f,NODE g,DP *nm,P *dn);
+
+void Pdp_true_lnf(NODE arg,LIST *rp)
+{
+  DP f,nm;
+  P dn;
+  NODE n;
+
+  asir_assert(ARG0(arg),O_DP,"dp_true_nf");
+  asir_assert(ARG1(arg),O_LIST,"dp_true_nf");
+  if ( !(f = (DP)ARG0(arg)) ) {
+    nm = 0; dn = (P)ONE;
+  } else {
+    dp_true_lnf(f,BDY((LIST)ARG1(arg)),&nm,&dn);
+  }
+  n = mknode(2,nm,dn);
+  MKLIST(*rp,n);
 }
 
 DP *dp_true_nf_and_quotient_marked(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *dnp);

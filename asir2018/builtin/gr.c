@@ -2768,3 +2768,138 @@ void dptoca(DP p,unsigned int **rp)
   }
 }
 
+LIST dp_symb_preproc(NODE f,NODE g)
+{
+  int nv,nred;
+  NODE t,s0,s,done0,red0,done,red;
+  DP tdp1,tdp2,sd,f2;
+  DL dl;
+  LIST l0,l1,l2;
+
+  nv = ((DP)BDY(g))->nv;
+  s0 = 0;
+  for ( t = f; t; t = NEXT(t) )
+      s0 = symb_merge(s0,dp_dllist((DP)(BDY(t))),nv);
+  done0 = 0; red0 = 0; s = s0; nred = 0;
+  while ( s != 0 ) {
+    for ( t = g;t ; t = NEXT(t) )
+      if ( _dl_redble(dl=BDY((DP)BDY(t))->dl,BDY(s),nv) )
+        break;
+    dltod((DL)BDY(s),nv,&tdp1);
+    NEXTNODE(done0,done); BDY(done) = (pointer)tdp1;
+    if ( t ) {
+      dltod(dl,nv,&tdp2);
+      dp_subd(tdp1,tdp2,&sd);
+      muld(CO,sd,(DP)BDY(t),&f2);
+      NEXTNODE(red0,red); BDY(red) = (pointer)f2;
+      s = symb_merge(NEXT(s),dp_dllist(f2)->next,nv);
+      nred++;
+    } else
+      s = NEXT(s);
+  }
+  if ( done0 ) NEXT(done) = 0;
+  MKLIST(l0,done0);
+  if ( red0 ) NEXT(red) = 0;
+  MKLIST(l1,red0);
+  t = mknode(2,l1,l0);
+  MKLIST(l2,t);
+  return l2;
+}
+
+struct oMDP {
+  DP f;
+  DP h;
+  int level;
+};
+ 
+int comp_level(struct oMDP *a,struct oMDP *b)
+{
+  if ( a->level > b->level ) return 1;
+  else if ( a->level < b->level ) return -1;
+  else return 0;
+}
+
+NODE remove_dl_destructive(int nv,NODE d,DL dl)
+{
+  NODE prev, cur;
+
+  for ( prev = 0, cur = d; cur; prev = cur, cur = NEXT(cur) ) {
+    if ( dl_equal(nv,(DL)BDY(cur),dl) )
+      if ( prev ) {
+        NEXT(prev) = NEXT(cur);
+        return d;
+      } else
+        return NEXT(d);
+  }
+  error("specified DL not found");
+}
+
+LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
+{
+  int nv,nred,i,j;
+  NODE t,s0,s,done0,red0,done,red,new,prev,cur,th,h0,nd;
+  DP tdp1,tdp2,sd,f2;
+  DL dl;
+  MP m;
+  LIST l0,l1,l2;
+  struct oMDP *rarray;
+
+  nv = ((DP)BDY(g))->nv;
+  s0 = 0;
+  for ( t = f; t; t = NEXT(t) )
+      s0 = symb_merge(s0,dp_dllist((DP)(BDY(t))),nv);
+  done0 = 0; red0 = 0; s = s0; nred = 0;
+  while ( s != 0 ) {
+    for ( t = g, th = h;t ; t = NEXT(t), th = NEXT(th), i++ )
+      if ( _dl_redble(dl=BDY((DP)BDY(th))->dl,BDY(s),nv) )
+        break;
+    if ( t ) {
+      for ( prev = 0, cur = done0; cur; prev = cur, cur = NEXT(cur) )
+        if ( cmpdl(nv,dl,BDY((DP)BDY(cur))->dl) >= 0 )
+          break;
+      if ( dl_equal(nv,dl,BDY((DP)BDY(cur))->dl) ) {
+        s = NEXT(s); continue;
+      }
+      dltod((DL)BDY(s),nv,&tdp1);
+      MKNODE(new,tdp1,0); NEXT(new) = cur; 
+      if ( !prev )
+        done0 = new;
+      else 
+        NEXT(prev) = new;
+      dltod(dl,nv,&tdp2);
+      dp_subd(tdp1,tdp2,&sd);
+      muld(CO,sd,(DP)BDY(t),&f2);
+      NEXTNODE(red0,red); BDY(red) = (pointer)f2;
+      nd = remove_dl_destructive(nv,dp_dllist(f2),dl);
+      s = symb_merge(NEXT(s),nd,nv);
+      nred++;
+    } else
+      s = NEXT(s);
+  }
+  if ( red0 ) NEXT(red) = 0;
+  rarray = (struct oMDP *)MALLOC(nred*sizeof(struct oMDP));
+  for ( i = 0, t = red0, th = h; t; t = NEXT(t), i++, th = NEXT(th) ) {
+    rarray[i].f = (DP)BDY(t); rarray[i].h = (DP)BDY(th); rarray[i].level = 0;
+  }
+  for ( i = 0; i < nred; i++ ) {
+    dl = BDY(rarray[i].h)->dl;
+    for ( m = BDY(rarray[i].f); m; m = NEXT(m) ) {
+      for ( j = 0; j < nred; j++ )
+        if ( dl_equal(nv,dl,m->dl) ) break;
+      if ( j < nred )
+         rarray[j].level = MAX(rarray[j].level,rarray[i].level+1);
+    }
+  }
+  qsort(rarray,nred,sizeof(struct oMDP),(int (*)(const void *,const void *))comp_level);
+  for ( i = 0, t = red0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].f;
+  h0 = 0;
+  for ( i = nred-1; i >= 0; i++ ) {
+    MKNODE(t,(pointer)rarray[i].h,h0); h0 = t;
+  }
+  MKLIST(l0,red0);
+  MKLIST(l1,h0);
+  MKLIST(l2,done0);
+  t = mknode(2,l0,l1,l2);
+  MKLIST(l0,t);
+  return l0;
+}

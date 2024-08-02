@@ -1354,6 +1354,53 @@ void dp_true_nf(NODE b,DP g,DP *ps,int full,DP *rp,P *dnp)
   *rp = d; *dnp = dn;
 }
 
+// normal form by a linear base
+
+void dp_true_lnf(DP f,NODE g,DP *rp,P *dnp)
+{
+  P dn,tdn,tdn1;
+  int sugar,nv;
+  DP d,u,gi,dt,w,s,dmy;
+  MP m,mr;
+  NODE t;
+
+  dn = (P)ONE;
+  if ( !f ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  sugar = f->sugar;
+  nv = f->nv;
+  for ( d = 0; f; ) {
+    for ( u = 0, t = g; t; t = NEXT(t) ) {
+      gi = (DP)BDY(t);
+      if ( dl_equal(nv,BDY(f)->dl,BDY(gi)->dl) ) {
+        dp_red(d,f,gi,&dt,&u,&tdn,&dmy);
+        sugar = MAX(sugar,gi->sugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; *dnp = dn; return;
+        } else {
+          d = dt;
+          mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u )
+      f = u;
+    else {
+      m = BDY(f); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(nv,mr,w); w->sugar = mr->dl->td;
+      addd(CO,d,w,&s); d = s;
+      dp_rest(f,&w); f = w;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
+}
+
 void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Z *contp)
 {
   struct oVECT v;
