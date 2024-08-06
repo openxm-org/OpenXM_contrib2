@@ -2148,7 +2148,11 @@ RESET:
             }
           MPZTOZ(den,*dn);
           return rank;
-        }
+        } else {
+          fprintf(stderr,"F");
+          period = period*3/2;
+          count = 0;
+        } 
       }
     }
   }

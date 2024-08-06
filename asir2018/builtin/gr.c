@@ -2809,15 +2809,8 @@ LIST dp_symb_preproc(NODE f,NODE g)
 struct oMDP {
   DP f;
   DP h;
-  int level;
+  char *contain;
 };
- 
-int comp_level(struct oMDP *a,struct oMDP *b)
-{
-  if ( a->level > b->level ) return 1;
-  else if ( a->level < b->level ) return -1;
-  else return 0;
-}
 
 NODE remove_dl_destructive(int nv,NODE d,DL dl)
 {
@@ -2837,31 +2830,32 @@ NODE remove_dl_destructive(int nv,NODE d,DL dl)
 LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
 {
   int nv,nred,i,j;
-  NODE t,s0,s,done0,red0,done,red,new,prev,cur,th,h0,nd;
-  DP tdp1,tdp2,sd,f2;
+  NODE t,s0,s,done0,red0,done,red,hred,new,prev,cur,th,h0,nd;
+  DP tdp1,tdp2,sd,f2,hf2;
   DL dl;
   MP m;
   LIST l0,l1,l2;
   struct oMDP *rarray;
+  int depth,depth1;
 
   nv = ((DP)BDY(g))->nv;
   s0 = 0;
   for ( t = f; t; t = NEXT(t) )
       s0 = symb_merge(s0,dp_dllist((DP)(BDY(t))),nv);
-  done0 = 0; red0 = 0; s = s0; nred = 0;
+  done0 = 0; red0 = 0; s = s0; nred = 0; h0 = 0;
   while ( s != 0 ) {
     for ( t = g, th = h;t ; t = NEXT(t), th = NEXT(th), i++ )
       if ( _dl_redble(dl=BDY((DP)BDY(th))->dl,BDY(s),nv) )
         break;
     if ( t ) {
       for ( prev = 0, cur = done0; cur; prev = cur, cur = NEXT(cur) )
-        if ( cmpdl(nv,dl,BDY((DP)BDY(cur))->dl) >= 0 )
+        if ( cmpdl(nv,(DL)BDY(s),BDY((DP)BDY(cur))->dl) >= 0 )
           break;
-      if ( dl_equal(nv,dl,BDY((DP)BDY(cur))->dl) ) {
+      if ( cur && dl_equal(nv,(DL)BDY(s),BDY((DP)BDY(cur))->dl) ) {
         s = NEXT(s); continue;
       }
       dltod((DL)BDY(s),nv,&tdp1);
-      MKNODE(new,tdp1,0); NEXT(new) = cur; 
+      MKNODE(new,tdp1,cur);
       if ( !prev )
         done0 = new;
       else 
@@ -2870,7 +2864,10 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
       dp_subd(tdp1,tdp2,&sd);
       muld(CO,sd,(DP)BDY(t),&f2);
       NEXTNODE(red0,red); BDY(red) = (pointer)f2;
-      nd = remove_dl_destructive(nv,dp_dllist(f2),dl);
+      NEXTNODE(h0,hred); 
+      dltod((DL)BDY(s),nv,&hf2); BDY(hf2)->c = BDY((DP)BDY(th))->c;
+      BDY(hred) = (pointer)hf2;
+      nd = remove_dl_destructive(nv,dp_dllist(f2),(DL)BDY(s));
       s = symb_merge(NEXT(s),nd,nv);
       nred++;
     } else
@@ -2878,28 +2875,40 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
   }
   if ( red0 ) NEXT(red) = 0;
   rarray = (struct oMDP *)MALLOC(nred*sizeof(struct oMDP));
-  for ( i = 0, t = red0, th = h; t; t = NEXT(t), i++, th = NEXT(th) ) {
-    rarray[i].f = (DP)BDY(t); rarray[i].h = (DP)BDY(th); rarray[i].level = 0;
+  for ( i = 0, t = red0, th = h0; t; t = NEXT(t), th = NEXT(th), i++ ) {
+    rarray[i].f = (DP)BDY(t); rarray[i].h = (DP)BDY(th);
+    rarray[i].contain = (char *)CALLOC(nred,sizeof(char));
   }
   for ( i = 0; i < nred; i++ ) {
-    dl = BDY(rarray[i].h)->dl;
-    for ( m = BDY(rarray[i].f); m; m = NEXT(m) ) {
-      for ( j = 0; j < nred; j++ )
-        if ( dl_equal(nv,dl,m->dl) ) break;
-      if ( j < nred )
-         rarray[j].level = MAX(rarray[j].level,rarray[i].level+1);
+    for ( j = 0; j < nred; j++ ) {
+      dl = BDY(rarray[j].h)->dl;
+      for ( m = BDY(rarray[i].f); m; m = NEXT(m) )
+        if ( dl_equal(nv,dl,m->dl) ) rarray[i].contain[j] = 1;
+    } 
+  }
+  for ( i = 0; i < nred; i++ ) {
+    struct oMDP tmp;
+    int k;
+
+    for ( j = i; j < nred; j++ ) {
+      // find rarray[j] s.t. rarray[j].h does not appear in any rarray[k].f (k neq j)
+      for ( k = i; k < nred; k++ ) {
+        if ( k == j ) continue;
+        if ( rarray[k].contain[j] ) break;
+      }
+      if ( k == nred ) break;
+    } 
+    tmp = rarray[i]; rarray[i] = rarray[j]; rarray[j] = tmp;
+    for ( k = i+1; k < nred; k++ ) {
+      rarray[k].contain[j] = rarray[k].contain[i];
     }
   }
-  qsort(rarray,nred,sizeof(struct oMDP),(int (*)(const void *,const void *))comp_level);
   for ( i = 0, t = red0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].f;
-  h0 = 0;
-  for ( i = nred-1; i >= 0; i++ ) {
-    MKNODE(t,(pointer)rarray[i].h,h0); h0 = t;
-  }
+  for ( i = 0, t = h0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].h;
   MKLIST(l0,red0);
   MKLIST(l1,h0);
   MKLIST(l2,done0);
-  t = mknode(2,l0,l1,l2);
+  t = mknode(3,l0,l1,l2);
   MKLIST(l0,t);
   return l0;
 }

@@ -1112,6 +1112,43 @@ void dp_red_marked(DP p0,DP p1,DP p2,DP hp2,DP *head,DP *rest,P *dnp,DP *multp)
   *head = h; *rest = r; *dnp = (P)c2;
 }
 
+// eliminate the monomial in p1 at pos by a marked poly 
+void dp_red_marked_pos(DP p1,MP pos,DP p2,DP hp2,DP *rest,P *dnp)
+{
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  Z c,c1,c2,gn;
+  P g,a;
+  P p[2];
+
+  n = p1->nv; d1 = pos->dl; d2 = BDY(hp2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (Z)pos->c; c2 = (Z)BDY(hp2)->c;
+  if ( dp_fcoeffs == N_GFS ) {
+    p[0] = (P)c1; p[1] = (P)c2;
+    gcdsf(CO,p,2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
+  } else if ( dp_fcoeffs ) {
+    /* do nothing */
+  } else if ( INT(c1) && INT(c2) ) {
+    gcdz(c1,c2,&gn);
+    if ( !UNIQ(gn) ) {
+      divsz(c1,gn,&c); c1 = c;
+      divsz(c2,gn,&c); c2 = c;
+    }
+  } else {
+    ezgcdp(CO,(P)c1,(P)c2,&g);
+    divsp(CO,(P)c1,g,&a); c1 = (Z)a; divsp(CO,(P)c2,g,&a); c2 = (Z)a;
+  }
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); subd(CO,s,t,&r);
+  *rest = r; *dnp = (P)c2;
+}
+
 // p0 *= const
 void _dp_red_marked(DP *p0,DP p1,DP p2,DP hp2,DP *rest,P *dnp,DP *multp)
 {
@@ -1399,6 +1436,44 @@ void dp_true_lnf(DP f,NODE g,DP *rp,P *dnp)
   if ( d )
     d->sugar = sugar;
   *rp = d; *dnp = dn;
+}
+
+// normal form by a linear base using the sorted g
+void dp_true_lnf_marked(DP f,NODE g,NODE h,DP *rp,P *dnp)
+{
+  P dn,tdn,tdn1;
+  int sugar,nv;
+  DP r,u,gi,dt,w,s,dmy;
+  DL dl;
+  MP m,mr;
+  NODE t,th;
+
+  dn = (P)ONE;
+  if ( !f ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  sugar = f->sugar;
+  nv = f->nv;
+  r = f;
+  for ( t = g, th = h; t; t = NEXT(t), th = NEXT(th) ) {
+    if ( !r ) break;
+    dl = BDY((DP)BDY(th))->dl;
+    for ( u = 0, m = BDY(r); m; m = NEXT(m) )
+      if ( dl_equal(nv,m->dl,dl) ) break;
+    if ( m ) {
+      gi = (DP)BDY(t);
+      dp_red_marked_pos(r,m,gi,(DP)BDY(th),&u,&tdn);
+      sugar = MAX(sugar,gi->sugar);
+      if ( !u ) {
+        *rp = 0; *dnp = (P)ONE; return;
+      } else {
+        mulp(CO,dn,tdn,&tdn1); dn = tdn1;
+        r = u;
+      }
+    }
+  }
+  *rp = r;
+  *dnp = dn;
 }
 
 void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Z *contp)

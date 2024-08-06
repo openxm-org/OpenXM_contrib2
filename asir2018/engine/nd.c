@@ -8303,6 +8303,10 @@ int nd_to_vect_q(UINT *s0,int n,ND d,Z *r)
     UINT *t,*s,*u;
     int i,st,ed,md,prev,c;
 
+    if ( n == 1 ) {
+      r[0] = CZ(BDY(d));
+      return 0;
+    }
     for ( i = 0; i < n; i++ ) r[i] = 0;
     prev = 0;
     for ( i = 0, m = BDY(d); m; m = NEXT(m) ) {

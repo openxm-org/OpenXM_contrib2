@@ -279,7 +279,7 @@ struct ftab dp_tab[] = {
   {"dp_true_nf_marked",Pdp_true_nf_marked,4},
   {"dp_true_nf_marked_check",Pdp_true_nf_marked_check,4},
   {"dp_true_nf_marked_mod",Pdp_true_nf_marked_mod,5},
-  {"dp_true_lnf",Pdp_true_lnf,2},
+  {"dp_true_lnf",Pdp_true_lnf,-3},
 
   {"dp_true_nf_and_quotient",Pdp_true_nf_and_quotient,3},
   {"dp_true_nf_and_quotient_mod",Pdp_true_nf_and_quotient_mod,4},
@@ -2073,6 +2073,7 @@ void Pdp_true_nf(NODE arg,LIST *rp)
 }
 
 void dp_true_lnf(DP f,NODE g,DP *nm,P *dn);
+void dp_true_lnf_marked(DP f,NODE g,NODE h,DP *nm,P *dn);
 
 void Pdp_true_lnf(NODE arg,LIST *rp)
 {
@@ -2084,8 +2085,10 @@ void Pdp_true_lnf(NODE arg,LIST *rp)
   asir_assert(ARG1(arg),O_LIST,"dp_true_nf");
   if ( !(f = (DP)ARG0(arg)) ) {
     nm = 0; dn = (P)ONE;
-  } else {
+  } else if ( argc(arg) == 2 ) {
     dp_true_lnf(f,BDY((LIST)ARG1(arg)),&nm,&dn);
+  } else {
+    dp_true_lnf_marked(f,BDY((LIST)ARG1(arg)),BDY((LIST)ARG2(arg)),&nm,&dn);
   }
   n = mknode(2,nm,dn);
   MKLIST(*rp,n);
