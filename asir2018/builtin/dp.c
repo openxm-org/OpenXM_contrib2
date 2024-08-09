@@ -1772,6 +1772,7 @@ void Pdp_weyl_nf(NODE arg,DP *rp)
   b = BDY((LIST)ARG0(arg));
   zv = dpvtozdpv((VECT)ARG2(arg));
   g = dptozdp(g);
+  ps = (DP *)BDY(zv);
   full = (Q)ARG3(arg) ? 1 : 0;
   do_weyl = 1;
   dp_nf_z(b,g,ps,full,DP_Multiple,rp);

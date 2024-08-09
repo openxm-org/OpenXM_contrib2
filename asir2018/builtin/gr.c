@@ -2837,7 +2837,9 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
   LIST l0,l1,l2;
   struct oMDP *rarray;
   int depth,depth1;
+  struct oEGT t0,t1;
 
+  get_eg(&t0);
   nv = ((DP)BDY(g))->nv;
   s0 = 0;
   for ( t = f; t; t = NEXT(t) )
@@ -2879,6 +2881,7 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
     rarray[i].f = (DP)BDY(t); rarray[i].h = (DP)BDY(th);
     rarray[i].contain = (char *)CALLOC(nred,sizeof(char));
   }
+  get_eg(&t1); fprintf(asir_out,"symb step0"); print_split_eg(&t0,&t1); fprintf(asir_out," "); t0 = t1;
   for ( i = 0; i < nred; i++ ) {
     for ( j = 0; j < nred; j++ ) {
       dl = BDY(rarray[j].h)->dl;
@@ -2886,6 +2889,7 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
         if ( dl_equal(nv,dl,m->dl) ) rarray[i].contain[j] = 1;
     } 
   }
+  get_eg(&t1); fprintf(asir_out,"step1"); print_split_eg(&t0,&t1); fprintf(asir_out," "); t0 = t1;
   for ( i = 0; i < nred; i++ ) {
     struct oMDP tmp;
     int k;
@@ -2903,6 +2907,7 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
       rarray[k].contain[j] = rarray[k].contain[i];
     }
   }
+  get_eg(&t1); fprintf(asir_out,"step2"); print_split_eg(&t0,&t1); fprintf(asir_out,"\n"); t0 = t1;
   for ( i = 0, t = red0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].f;
   for ( i = 0, t = h0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].h;
   MKLIST(l0,red0);
