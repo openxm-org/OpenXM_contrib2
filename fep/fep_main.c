@@ -58,8 +58,8 @@ char	*myself;			/* the command name */
 char	*prompt = "";			/* prompt string */
 char	*delimiters = DEFAULT_DELIMITERS;
 					/* delimiter characters */
-int	master;				/* file discriptor for pty master */
-int	slave;				/* file discriptor for pty slave */
+int	master;				/* file descriptor for pty master */
+int	slave;				/* file descriptor for pty slave */
 fd_set	mastermask;			/* 1<<master */
 fd_set	stdinmask;			/* 1<<fileno(stdin) */
 fd_set	selectmask;			/* stdinmask | mastermask */
@@ -68,7 +68,7 @@ int	child_pid;			/* child pid */
 int	ptyflag = ON;			/* flag to use pty or not */
 int	histlen = -1;			/* history length */
 int	debug = OFF;			/* debug switch */
-int	auto_tty_fix = ON;		/* fix tty mode automaticaly */
+int	auto_tty_fix = ON;		/* fix tty mode automatically */
 FILE	*script_fp = NULL;		/* script file pointer */
 #if defined(sun)
 void	catchsig (int);		/* function take care SIGCHILD */
@@ -86,7 +86,7 @@ struct	ttystruct master_ttymode;		/* master tty mode */
 struct	ttystruct slave_ttymode;		/* slave tty mode */
 
 int	lines;				/* terminal line size */
-int	columns;			/* terminal coulumn size */
+int	columns;			/* terminal column size */
 char	*term_clear;			/* terminal clear code */
 
 #if defined(sun)
@@ -299,7 +299,7 @@ DEFAULT:
 	if ((size = atoi (look_var ("buffer"))) <= 0)
 	    size = 5120;
 	if (!set_buffer (output_buffer, size)) {
-	    fprintf (stderr, "Can't allocate enough momory\n");
+	    fprintf (stderr, "Can't allocate enough memory\n");
 	    kill_process ();
 	    exit (1);
 	}
@@ -519,7 +519,7 @@ RETRY:
 	RETURNCHAR:
 	if ((c = getc (stdin)) == EOF) {
 	    if (debug)
-		printf ("EOF chatched\n");
+		printf ("EOF caught\n");
 	    terminate (0);
 	}
 	else
@@ -577,7 +577,7 @@ int set_buffer (BUFFER *bp, int size)
     return (1);
 }
 	
-/*    int fd;			file discriptor */
+/*    int fd;			file descriptor */
 /*    BUFFER *bp;		buffer pointer */
 
 int buf_read (int fd, BUFFER *bp)

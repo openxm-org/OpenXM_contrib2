@@ -26,7 +26,7 @@ extern int	lines, columns;	/* terminal sizes */
 extern char	*term_clear;	/* terminal clear code */
 
 /*
- * tty control caracters.
+ * tty control characters.
  * defined in fep_main.c
  */
 #ifdef TERMIOS

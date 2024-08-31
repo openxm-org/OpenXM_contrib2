@@ -35,7 +35,7 @@ VAR default_set_vars [] = {
 	{"showhist",		"24",
 	 "History length used by show-history",	(VAR*)0},
 	{"delimiters",		" \t",
-	 "Argument delemiter characters",	(VAR*)0},
+	 "Argument delimiter characters",	(VAR*)0},
 	{"buffer",		"5120",
 	"Output buffer size",			(VAR*)0},
 	{NULL,			NULL,
