@@ -125,10 +125,14 @@ void Ptime(LIST *listp)
 
 void printtime(struct oEGT *egt0,struct oEGT *egt1,double r)
 {
+#if defined(VISUAL)
+  fprintf(stderr,"%.4gsec\n",r);
+#else
   double e,g;
 
   e = egt1->exectime - egt0->exectime;
   if ( e < 0 ) e = 0;
   g = 0;
   fprintf(stderr,"%.4gsec(%.4gsec)\n",e,r);
+#endif
 }

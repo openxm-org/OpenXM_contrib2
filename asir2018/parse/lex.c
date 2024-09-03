@@ -63,6 +63,8 @@
 #include <editline/readline.h>
 #endif
 
+extern int do_fep, do_file;
+
 static int Getc();
 static void Ungetc(int c);
 static void Gets(char *s);
@@ -143,6 +145,14 @@ int yylex()
   switch ( c = skipspace() ) {
     case EOF :  
       asir_terminate(2); break;
+    case ';' :
+      if ( do_fep ) {
+        return c;
+      } else {
+        if ( (c1 = Getc()) == c ) return SEMISEMI;
+        else { Ungetc(c1); return c; }
+      }
+      break;
     case '0' :
       while ( ( c = Getc() ) == '0' );
       if ( c == '.' ) {
@@ -617,8 +627,6 @@ void yyerror(char *s)
 }
 
 int echoback;
-
-extern int do_fep, do_file;
 
 unsigned char encrypt_char(unsigned char);
 unsigned char decrypt_char(unsigned char);

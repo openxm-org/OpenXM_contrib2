@@ -90,7 +90,7 @@ extern jmp_buf env;
 }
 
 %token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND
-%token <i> GLOBAL MGLOBAL LOCAL LOCALF CMP OR AND CAR CDR QUOTED COLONCOLON
+%token <i> GLOBAL MGLOBAL LOCAL LOCALF CMP OR AND CAR CDR QUOTED COLONCOLON SEMISEMI
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
 %token <p> FORMULA UCASE LCASE STR SELF BOPASS
@@ -194,6 +194,8 @@ stat 	: tail
 tail	: ';' 
 			{ if ( main_parser ) prresult = 1; } 
 		| '$' 
+			{ if ( main_parser ) prresult = 0; } 
+		| SEMISEMI
 			{ if ( main_parser ) prresult = 0; } 
 ;
 desc	:
