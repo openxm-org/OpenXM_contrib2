@@ -55,7 +55,7 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     STRUCT = 258,                  /* STRUCT  */
-    POINT = 259,                   /* POINT  */
+    PNT = 259,                   /* PNT  */
     NEWSTRUCT = 260,               /* NEWSTRUCT  */
     ANS = 261,                     /* ANS  */
     FDEF = 262,                    /* FDEF  */
@@ -114,7 +114,7 @@ extern int yydebug;
 #define YYerror 256
 #define YYUNDEF 257
 #define STRUCT 258
-#define POINT 259
+#define PNT 259
 #define NEWSTRUCT 260
 #define ANS 261
 #define FDEF 262
