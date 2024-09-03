@@ -772,7 +772,7 @@ def dp_fexponent(F,Id,Q)
 	N=size(Q)[0]; U = newvect(N);
 	for (I=0;I<N;I++)
 		U[I]=Q[I];
-	for (K = 1;; K++) { /* U[I] = Q[I]*F^K mod Id */
+	for (K = 1; ; K++) { /* U[I] = Q[I]*F^K mod Id */
 		for (FLAG = I = 0; I < N; I++) {
 			NF(U[I],IN,U[I]*F,Id,1); 
 			if ( U[I] ) FLAG = 1;
