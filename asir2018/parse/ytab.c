@@ -121,7 +121,7 @@ extern jmp_buf env;
 #  endif
 # endif
 
-#include "y.tab.h"
+#include "ytab.h"
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
