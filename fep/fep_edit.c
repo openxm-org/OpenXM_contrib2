@@ -58,7 +58,7 @@ int	NeedNewLine;			/* add new line flag */
 int	NeedSave;			/* need to save to history */
 int	Transparency = OFF;		/* transparent flag */
 int	Through = OFF;			/* through flag */
-int	eof_occured = 0;		/* eof has been occured */
+int	eof_occured = 0;		/* eof has occurred */
 jmp_buf	jbuf;				/* jump buffer */
 
 FUNC	*curFuncTab;			/* current function table */
@@ -457,7 +457,7 @@ RETURN:
 }
 
 /*
- * Invoke appropliate function according to fucntion table
+ * Invoke appropriate function according to function table
  * Return value 1 means exit from line editing
  */
 int callfunc (FUNC ft[], int c)
@@ -1702,7 +1702,7 @@ void print_com_line()
 }
 
 /*
- * Calcurate space of string using "^" for control character
+ * Calculate space of string using "^" for control character
  */
 int howlong(char *s, int n)
 {
@@ -1721,7 +1721,7 @@ int howlong(char *s, int n)
 }
 
 /*
- * Repeat puting character n times
+ * Repeat putting character n times
  */
 void repeat(char c, int n)
 {

@@ -47,7 +47,7 @@ void init_hist(int size)
     HistorySize = size;
 
     /*
-     * "set_var" will call "changeHistorySize" function for initilize
+     * "set_var" will call "changeHistorySize" function to initialize
      * history table.
      */
     set_var ("history", itoa (HistorySize));

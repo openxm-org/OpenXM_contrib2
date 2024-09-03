@@ -75,7 +75,7 @@
 /*
  * Typedef's
  */
-typedef	int	(*FUNC)();		/* pointer to funciton */
+typedef	int	(*FUNC)();		/* pointer to function */
 
 typedef enum {				/* edit status */
 	EDITING,

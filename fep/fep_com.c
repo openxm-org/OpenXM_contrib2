@@ -194,7 +194,7 @@ void fep_if (char *comline)
 	else if (eq (argv[2], "!="))
 	    value = 0;
 	else {
-	    printf ("%s: Unknown opperator \"%s\"", argv[0], argv[2]);
+	    printf ("%s: Unknown operator \"%s\"", argv[0], argv[2]);
 	    return;
 	}
 
@@ -246,7 +246,7 @@ void bind_to_key (char *comline)
     argc = mkargv (comline, argv, MAXARGS);
 
     /*
-     * Something error occured. Print message and return
+     * Something error occurred. Print message and return
      */
     if (argc < 0) {
 	printf ("%s\n", argv[0]);
@@ -394,7 +394,7 @@ extern	char slave_tty[];
  * Toggle transparency switch.
  * If variable Transparency is ON, fep doesn't care about input.
  * If OFF, line editing will be done by fep.
- * But this Transparency is set automaticaly by getcharacter() routine,
+ * But this Transparency is set automatically by getcharacter() routine,
  * if the variable auto-tty-fix is ON.
  */
 void toggle_through()
@@ -779,7 +779,7 @@ void fep_chdir (char *line)
 	    break;
 
 	/*
-	 * Something error occured in mkargv.
+	 * Something error occurred in mkargv.
 	 */
 	case -1:
 	    printf ("%s\n", argv[0]);
@@ -791,7 +791,7 @@ void fep_chdir (char *line)
     }
 
     /*
-     * Chane directory.
+     * Change directory.
      * Keep in mind that end process still in old directory
      */
     if (chdir (argv[1]) < 0) {
@@ -1155,7 +1155,7 @@ void fep_start_script (char *comline)
 	name = look_var ("script-file");
 
     /*
-     * If script is running alread, reatun.
+     * If script is running already, reatun.
      */
     if (script_fp) {
 	clear_edit_line ();
