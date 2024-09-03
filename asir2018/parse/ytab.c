@@ -641,7 +641,7 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "\"end of file\"", "error", "\"invalid token\"", "STRUCT", "POINT",
+  "\"end of file\"", "error", "\"invalid token\"", "STRUCT", "PNT",
   "NEWSTRUCT", "ANS", "FDEF", "PFDEF", "MODDEF", "MODEND", "GLOBAL",
   "MGLOBAL", "LOCAL", "LOCALF", "CMP", "OR", "AND", "CAR", "CDR", "QUOTED",
   "COLONCOLON", "SEMISEMI", "DO", "WHILE", "FOR", "IF", "ELSE", "BREAK",
