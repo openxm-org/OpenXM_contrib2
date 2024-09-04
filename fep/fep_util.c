@@ -19,7 +19,7 @@ static char rcsid[]=
 #include <string.h>
 #include <pwd.h>
 #include <sys/types.h>
-#if defined(__CYGWIN__) || defined(sun) || defined(ANDROID)
+#if defined(__CYGWIN__) || defined(sun) || defined(ANDROID) || defined(__FreeBSD__)
 #include <dirent.h>
 #else
 #include <sys/dir.h>
