@@ -742,7 +742,7 @@ int more (MORE *mp)
     }
 
     if (mp->cur_line == 1 && look_var ("clear-repaint") && term_clear)
-	tputs (term_clear, 1, putch);
+	tputs (term_clear, 1, (FUNC)putch);
 
     return (1);
 }
@@ -1253,7 +1253,7 @@ void fep_repaint(char *comline)
     i += 1;
 
     if (look_var("clear-repaint") && term_clear)
-	tputs (term_clear, 1, putch);
+	tputs (term_clear, 1, (FUNC)putch);
 
     for (; i < 0; i++)
 	putchar (buf_char(bp, i));

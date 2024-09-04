@@ -141,9 +141,8 @@ int main(int argc, char *argv[])
 {
     int     i;
     char    *cp;
-    char    *getenv();
     char    **commandv;
-    char    *allocAndCopyThere();
+    char    *allocAndCopyThere(char *);
 
     myself = argv[0];
 
@@ -166,19 +165,19 @@ int main(int argc, char *argv[])
      * Look environment variable first.
      */
     /* EDITMODE */
-    if ((cp=getenv("EDITMODE")) && (eq(cp,"emacs")||eq(cp,"vi")))
+    if ((cp=getenv("EDITMODE")) != 0 && (eq(cp,"emacs")||eq(cp,"vi")))
 	set_only_var ("editmode", cp);
     /* USER */
-    if (cp=getenv("USER"))
+    if ((cp=getenv("USER"))!=0)
 	set_only_var ("user", cp);
     /* HOME */
-    if (cp=getenv("HOME"))
+    if ((cp=getenv("HOME"))!=0)
 	set_only_var ("home", cp);
     /* TERM */
-    if (cp=getenv("TERM"))
+    if ((cp=getenv("TERM"))!=0)
 	set_only_var ("term", cp);
     /* SHELL */
-    if (cp=getenv("SHELL"))
+    if ((cp=getenv("SHELL"))!=0)
 	set_only_var ("shell", cp);
 
     /*
@@ -211,7 +210,7 @@ int main(int argc, char *argv[])
 		    histlen = atoi (argv[1]);
 		}
 		else {
-		    histlen = atoi (&argv[1] + 2);
+		    histlen = atoi (argv[1] + 2);
 		}
 		break;
 
@@ -256,7 +255,7 @@ DEFAULT:
 #if defined(ANDROID)
 	char *cp = argv[1];
 #else
-	char *cp = argv[1], *rindex();
+	char *cp = argv[1];
 #endif
 
 	if (any ('/', cp))
@@ -358,7 +357,7 @@ void input_handler()
     if ((slave = open (slave_tty, O_RDONLY)) < 0)
 	perror ("open");
 
-    while (inputline = mygetline ()) {
+    while ((inputline = mygetline ())!=0) {
 	/*
 	 * XXX: nbyte should be greater than 0 only for ^@ input in emacs.
 	 * This solution is very ugly.. but it will takes a half day
@@ -823,7 +822,7 @@ void terminate(int n)
      * Save history if 'history-file' is set
      */
     {
-	char *cp, *mk_home_relative(), *look_var();
+	char *cp, *mk_home_relative(char *), *look_var(char *);
 	char buf [256];
 	int num;
 
@@ -890,7 +889,7 @@ void get_pty_master()
         char *name;
 	grantpt(master);
 	unlockpt(master);
-	if ( name = (char *)ptsname(master) ) {
+	if ( (name = (char *)ptsname(master))!=0 ) {
 	    strcpy(slave_tty, name);
 	    goto FOUND;
 	}
@@ -1059,7 +1058,7 @@ int suspend()
 void look_cmdinfo (char *command)
 {
     struct cmdinfo *p;
-    char *allocAndCopyThere();
+    char *allocAndCopyThere(char *);
 
     if (strcmp (prompt, "") != 0)
 	return;

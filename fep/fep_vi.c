@@ -32,127 +32,127 @@ extern int CurrentPosition;
  * Default binding table
  */
 BINDENT viComBindings[] = {
-	/* 1       */	{"1",		vi_num},
-	/* 2       */	{"2",		vi_num},
-	/* 3       */	{"3",		vi_num},
-	/* 4       */	{"4",		vi_num},
-	/* 5       */	{"5",		vi_num},
-	/* 6       */	{"6",		vi_num},
-	/* 7       */	{"7",		vi_num},
-	/* 8       */	{"8",		vi_num},
-	/* 9       */	{"9",		vi_num},
+	/* 1       */	{"1",		(FUNC)vi_num},
+	/* 2       */	{"2",		(FUNC)vi_num},
+	/* 3       */	{"3",		(FUNC)vi_num},
+	/* 4       */	{"4",		(FUNC)vi_num},
+	/* 5       */	{"5",		(FUNC)vi_num},
+	/* 6       */	{"6",		(FUNC)vi_num},
+	/* 7       */	{"7",		(FUNC)vi_num},
+	/* 8       */	{"8",		(FUNC)vi_num},
+	/* 9       */	{"9",		(FUNC)vi_num},
 
-	/* ~       */	{"~",		vi_edit},
-	/* A       */	{"A",		vi_edit},
-	/* C       */	{"C",		vi_edit},
-	/* D       */	{"D",		vi_edit},
-	/* P       */	{"P",		vi_edit},
-	/* S       */	{"S",		vi_edit},
-	/* I       */	{"I",		vi_edit},
-	/* a       */	{"a",		vi_edit},
-	/* i       */	{"i",		vi_edit},
-	/* p       */	{"p",		vi_edit},
-	/* r       */	{"r",		vi_edit},
-	/* s       */	{"s",		vi_edit},
-	/* x       */	{"x",		vi_edit},
-	/* X       */	{"X",		vi_edit},
-	/* ^U      */	{"\\^U",	vi_edit},
+	/* ~       */	{"~",		(FUNC)vi_edit},
+	/* A       */	{"A",		(FUNC)vi_edit},
+	/* C       */	{"C",		(FUNC)vi_edit},
+	/* D       */	{"D",		(FUNC)vi_edit},
+	/* P       */	{"P",		(FUNC)vi_edit},
+	/* S       */	{"S",		(FUNC)vi_edit},
+	/* I       */	{"I",		(FUNC)vi_edit},
+	/* a       */	{"a",		(FUNC)vi_edit},
+	/* i       */	{"i",		(FUNC)vi_edit},
+	/* p       */	{"p",		(FUNC)vi_edit},
+	/* r       */	{"r",		(FUNC)vi_edit},
+	/* s       */	{"s",		(FUNC)vi_edit},
+	/* x       */	{"x",		(FUNC)vi_edit},
+	/* X       */	{"X",		(FUNC)vi_edit},
+	/* ^U      */	{"\\^U",	(FUNC)vi_edit},
 
-	/*         */	{" ",		vi_motion},
-	/* ^H      */	{"\b",		vi_motion},
-	/* l       */	{"l",		vi_motion},
-	/* h       */	{"h",		vi_motion},
-	/* k       */	{"k",		vi_motion},
-	/* j       */	{"j",		vi_motion},
-	/* b       */	{"b",		vi_motion},
-	/* B       */	{"B",		vi_motion},
-	/* e       */	{"e",		vi_motion},
-	/* E       */	{"E",		vi_motion},
-	/* w       */	{"w",		vi_motion},
-	/* W       */	{"W",		vi_motion},
-	/* n       */	{"n",		vi_motion},
-	/* N       */	{"N",		vi_motion},
-	/* 0       */	{"0",		vi_motion},
-	/* ^       */	{"^",		vi_motion},
-	/* $       */	{"$",		vi_motion},
-	/* |       */	{"|",		vi_motion},
-	/* -       */	{"-",		vi_motion},
-	/* +       */	{"+",		vi_motion},
+	/*         */	{" ",		(FUNC)vi_motion},
+	/* ^H      */	{"\b",		(FUNC)vi_motion},
+	/* l       */	{"l",		(FUNC)vi_motion},
+	/* h       */	{"h",		(FUNC)vi_motion},
+	/* k       */	{"k",		(FUNC)vi_motion},
+	/* j       */	{"j",		(FUNC)vi_motion},
+	/* b       */	{"b",		(FUNC)vi_motion},
+	/* B       */	{"B",		(FUNC)vi_motion},
+	/* e       */	{"e",		(FUNC)vi_motion},
+	/* E       */	{"E",		(FUNC)vi_motion},
+	/* w       */	{"w",		(FUNC)vi_motion},
+	/* W       */	{"W",		(FUNC)vi_motion},
+	/* n       */	{"n",		(FUNC)vi_motion},
+	/* N       */	{"N",		(FUNC)vi_motion},
+	/* 0       */	{"0",		(FUNC)vi_motion},
+	/* ^       */	{"^",		(FUNC)vi_motion},
+	/* $       */	{"$",		(FUNC)vi_motion},
+	/* |       */	{"|",		(FUNC)vi_motion},
+	/* -       */	{"-",		(FUNC)vi_motion},
+	/* +       */	{"+",		(FUNC)vi_motion},
 
-	/* cb      */	{"cb",		vi_c},
-	/* cB      */	{"cb",		vi_c},
-	/* cw      */	{"cw",		vi_c},
-	/* cW      */	{"cW",		vi_c},
-	/* c0      */	{"c0",		vi_c},
-	/* c^      */	{"c^",		vi_c},
-	/* c$      */	{"c$",		vi_c},
-	/* cc      */	{"cc",		vi_c},
+	/* cb      */	{"cb",		(FUNC)vi_c},
+	/* cB      */	{"cb",		(FUNC)vi_c},
+	/* cw      */	{"cw",		(FUNC)vi_c},
+	/* cW      */	{"cW",		(FUNC)vi_c},
+	/* c0      */	{"c0",		(FUNC)vi_c},
+	/* c^      */	{"c^",		(FUNC)vi_c},
+	/* c$      */	{"c$",		(FUNC)vi_c},
+	/* cc      */	{"cc",		(FUNC)vi_c},
 
-	/* db      */	{"db",		vi_d},
-	/* dB      */	{"dB",		vi_d},
-	/* dw      */	{"dw",		vi_d},
-	/* dW      */	{"dW",		vi_d},
-	/* d0      */	{"d0",		vi_d},
-	/* d^      */	{"d^",		vi_d},
-	/* d$      */	{"d$",		vi_d},
-	/* dd      */	{"dd",		vi_d},
+	/* db      */	{"db",		(FUNC)vi_d},
+	/* dB      */	{"dB",		(FUNC)vi_d},
+	/* dw      */	{"dw",		(FUNC)vi_d},
+	/* dW      */	{"dW",		(FUNC)vi_d},
+	/* d0      */	{"d0",		(FUNC)vi_d},
+	/* d^      */	{"d^",		(FUNC)vi_d},
+	/* d$      */	{"d$",		(FUNC)vi_d},
+	/* dd      */	{"dd",		(FUNC)vi_d},
 
-	/* ^E      */	{"\\^E",	expand_file_name},
-	/* ^J      */	{"\\^J",	vi_new_line},
-	/* ^L      */	{"\\^L",	list_file_name},
-	/* ^M      */	{"\\^M",	vi_new_line},
-	/* ^P      */	{"\\^P",	previous_history},
-	/* ^N      */	{"\\^N",	next_history},
-	/* ^R      */	{"\\^R",	reprint},
-	/* ^^      */	{"\\^^",	toggle_through},
-	/* ^X-^B   */	{"\\^X\\^B",	show_bindings},
-	/* ^X-B	   */	{"\\^XB",	show_bindings},
-	/* ^X-b	   */	{"\\^Xb",	show_bindings},
-	/* ^X-^H   */	{"\\^X\\^H",	show_history},
-	/* ^X-h    */	{"\\^Xh",	show_history},
-	/* ^X-H    */	{"\\^XH",	show_history},
-	/* ^X-l    */	{"\\^Xl",	list_file_name},
-	/* ^X-L    */	{"\\^XL",	list_file_name},
-	/* ^X-^L   */	{"\\^X\\^L",	fep_repaint},
-	/* ^X-^V   */	{"\\^X\\^V",	view_buffer},
-	/* ^X-^X   */	{"\\^X\\^X",	expand_file_name},
-	/* ^X-?    */	{"\\^X?",	show_bindings},
+	/* ^E      */	{"\\^E",	(FUNC)expand_file_name},
+	/* ^J      */	{"\\^J",	(FUNC)vi_new_line},
+	/* ^L      */	{"\\^L",	(FUNC)list_file_name},
+	/* ^M      */	{"\\^M",	(FUNC)vi_new_line},
+	/* ^P      */	{"\\^P",	(FUNC)previous_history},
+	/* ^N      */	{"\\^N",	(FUNC)next_history},
+	/* ^R      */	{"\\^R",	(FUNC)reprint},
+	/* ^^      */	{"\\^^",	(FUNC)toggle_through},
+	/* ^X-^B   */	{"\\^X\\^B",	(FUNC)show_bindings},
+	/* ^X-B	   */	{"\\^XB",	(FUNC)show_bindings},
+	/* ^X-b	   */	{"\\^Xb",	(FUNC)show_bindings},
+	/* ^X-^H   */	{"\\^X\\^H",	(FUNC)show_history},
+	/* ^X-h    */	{"\\^Xh",	(FUNC)show_history},
+	/* ^X-H    */	{"\\^XH",	(FUNC)show_history},
+	/* ^X-l    */	{"\\^Xl",	(FUNC)list_file_name},
+	/* ^X-L    */	{"\\^XL",	(FUNC)list_file_name},
+	/* ^X-^L   */	{"\\^X\\^L",	(FUNC)fep_repaint},
+	/* ^X-^V   */	{"\\^X\\^V",	(FUNC)view_buffer},
+	/* ^X-^X   */	{"\\^X\\^X",	(FUNC)expand_file_name},
+	/* ^X-?    */	{"\\^X?",	(FUNC)show_bindings},
 	/* ^X-^C   */	{"\\^X\\^C",	(FUNC)terminate},
-	/* ^X-^D   */	{"\\^X\\^D",	send_eof},
-	/* ^X-(	   */	{"\\^X(",	fep_start_script},
-	/* ^X-)	   */	{"\\^X)",	fep_end_script},
+	/* ^X-^D   */	{"\\^X\\^D",	(FUNC)send_eof},
+	/* ^X-(	   */	{"\\^X(",	(FUNC)fep_start_script},
+	/* ^X-)	   */	{"\\^X)",	(FUNC)fep_end_script},
 	/*         */	{NULL,		NULL}
 };
 
 BINDENT viInsertBindings[] = {
-	/* ^H      */	{"\\^H",	vi_ins_edit},
-	/* ^W      */	{"\\^W",	vi_ins_edit},
-	/* ^U      */	{"\\^U",	vi_ins_edit},
-	/* ^V      */	{"\\^V",	vi_ins_edit},
-	/* ^J      */	{"\\^J",	vi_new_line},
-	/* ^L      */	{"\\^L",	list_file_name},
-	/* ^M      */	{"\\^M",	vi_new_line},
-	/* ^P      */	{"\\^P",	previous_history},
-	/* ^N      */	{"\\^N",	next_history},
-	/* ESC     */	{"\\^[",	vi_ins_edit},
-	/* ^E      */	{"\\^E",	expand_file_name},
-	/* ^^      */	{"\\^^",	toggle_through},
-	/* ^X-^B   */	{"\\^X\\^B",	show_bindings},
-	/* ^X-B	   */	{"\\^XB",	show_bindings},
-	/* ^X-b	   */	{"\\^Xb",	show_bindings},
-	/* ^X-^H   */	{"\\^X\\^H",	show_history},
-	/* ^X-h    */	{"\\^Xh",	show_history},
-	/* ^X-H    */	{"\\^XH",	show_history},
-	/* ^X-l    */	{"\\^Xl",	list_file_name},
-	/* ^X-L    */	{"\\^XL",	list_file_name},
-	/* ^X-^L   */	{"\\^X\\^L",	fep_repaint},
-	/* ^X-^X   */	{"\\^X\\^X",	expand_file_name},
-	/* ^X-?    */	{"\\^X?",	show_bindings},
+	/* ^H      */	{"\\^H",	(FUNC)vi_ins_edit},
+	/* ^W      */	{"\\^W",	(FUNC)vi_ins_edit},
+	/* ^U      */	{"\\^U",	(FUNC)vi_ins_edit},
+	/* ^V      */	{"\\^V",	(FUNC)vi_ins_edit},
+	/* ^J      */	{"\\^J",	(FUNC)vi_new_line},
+	/* ^L      */	{"\\^L",	(FUNC)list_file_name},
+	/* ^M      */	{"\\^M",	(FUNC)vi_new_line},
+	/* ^P      */	{"\\^P",	(FUNC)previous_history},
+	/* ^N      */	{"\\^N",	(FUNC)next_history},
+	/* ESC     */	{"\\^[",	(FUNC)vi_ins_edit},
+	/* ^E      */	{"\\^E",	(FUNC)expand_file_name},
+	/* ^^      */	{"\\^^",	(FUNC)toggle_through},
+	/* ^X-^B   */	{"\\^X\\^B",	(FUNC)show_bindings},
+	/* ^X-B	   */	{"\\^XB",	(FUNC)show_bindings},
+	/* ^X-b	   */	{"\\^Xb",	(FUNC)show_bindings},
+	/* ^X-^H   */	{"\\^X\\^H",	(FUNC)show_history},
+	/* ^X-h    */	{"\\^Xh",	(FUNC)show_history},
+	/* ^X-H    */	{"\\^XH",	(FUNC)show_history},
+	/* ^X-l    */	{"\\^Xl",	(FUNC)list_file_name},
+	/* ^X-L    */	{"\\^XL",	(FUNC)list_file_name},
+	/* ^X-^L   */	{"\\^X\\^L",	(FUNC)fep_repaint},
+	/* ^X-^X   */	{"\\^X\\^X",	(FUNC)expand_file_name},
+	/* ^X-?    */	{"\\^X?",	(FUNC)show_bindings},
 	/* ^X-^C   */	{"\\^X\\^C",	(FUNC)terminate},
-	/* ^X-^D   */	{"\\^X\\^D",	send_eof},
-	/* ^X-^V   */	{"\\^X\\^V",	view_buffer},
-	/* ^X-(	   */	{"\\^X(",	fep_start_script},
-	/* ^X-)	   */	{"\\^X)",	fep_end_script},
+	/* ^X-^D   */	{"\\^X\\^D",	(FUNC)send_eof},
+	/* ^X-^V   */	{"\\^X\\^V",	(FUNC)view_buffer},
+	/* ^X-(	   */	{"\\^X(",	(FUNC)fep_start_script},
+	/* ^X-)	   */	{"\\^X)",	(FUNC)fep_end_script},
 	/*         */	{NULL,		NULL}
 };
 
@@ -165,65 +165,65 @@ void initViBindings (FUNC cft[], FUNC aft[])
     BINDENT *ftp;
 
     for (i = 0; i < 256; i++)
-	aft[i] = fep_abort;
+	aft[i] = (FUNC)fep_abort;
     for (i = 0; i < 256; i++)
-	cft[i] = self_insert;
+	cft[i] = (FUNC)self_insert;
 
 #define import(table,key,fn) if((int)key>0)table[(int)key]=fn
 #ifdef TERMIOS
     /* Now, using cbreak mode
-    import (cft, initial_ttymode.c_cc[VSTART], ignore);
-    import (cft, initial_ttymode.c_cc[VSTOP], ignore);
+    import (cft, initial_ttymode.c_cc[VSTART], (FUNC)ignore);
+    import (cft, initial_ttymode.c_cc[VSTOP], (FUNC)ignore);
     */
 #if 0
-    import (cft, initial_ttymode.c_cc[VINTR], insert_and_flush);
-    import (aft, initial_ttymode.c_cc[VINTR], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VINTR], (FUNC)insert_and_flush);
+    import (aft, initial_ttymode.c_cc[VINTR], (FUNC)insert_and_flush);
 #else
 	/* added by noro */
-    import (cft, initial_ttymode.c_cc[VINTR], send_int_sig);
+    import (cft, initial_ttymode.c_cc[VINTR], (FUNC)send_int_sig);
 	/* XXX : this may not be necessary */
-    import (aft, initial_ttymode.c_cc[VINTR], send_int_sig);
+    import (aft, initial_ttymode.c_cc[VINTR], (FUNC)send_int_sig);
 #endif
-    import (cft, initial_ttymode.c_cc[VQUIT], insert_and_flush);
-    import (cft, initial_ttymode.c_cc[VEOF], send_eof);
+    import (cft, initial_ttymode.c_cc[VQUIT], (FUNC)insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VEOF], (FUNC)send_eof);
 #ifdef VSWTC
-    import (cft, initial_ttymode.c_cc[VSWTC], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VSWTC], (FUNC)insert_and_flush);
 #endif
-    import (cft, initial_ttymode.c_cc[VSUSP], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VSUSP], (FUNC)insert_and_flush);
 #ifdef VDSUSP
-    import (cft, initial_ttymode.c_cc[VDSUSP], self_insert);
+    import (cft, initial_ttymode.c_cc[VDSUSP], (FUNC)self_insert);
 #endif
-    import (cft, initial_ttymode.c_cc[VREPRINT], reprint);
+    import (cft, initial_ttymode.c_cc[VREPRINT], (FUNC)reprint);
 #ifdef VDISCARD
-    import (cft, initial_ttymode.c_cc[VDISCARD], self_insert);
+    import (cft, initial_ttymode.c_cc[VDISCARD], (FUNC)self_insert);
 #endif
-    import (cft, initial_ttymode.c_cc[VWERASE], delete_previous_word);
-    import (cft, initial_ttymode.c_cc[VLNEXT], literal_next);
-    import (cft, initial_ttymode.c_cc[VERASE], delete_previous_character);
-    import (cft, initial_ttymode.c_cc[VKILL], delete_line);
+    import (cft, initial_ttymode.c_cc[VWERASE], (FUNC)delete_previous_word);
+    import (cft, initial_ttymode.c_cc[VLNEXT], (FUNC)literal_next);
+    import (cft, initial_ttymode.c_cc[VERASE], (FUNC)delete_previous_character);
+    import (cft, initial_ttymode.c_cc[VKILL], (FUNC)delete_line);
 #else
     /* Now, using cbreak mode
-    import (cft, tchars_buf.t_startx, ignore);
-    import (cft, tchars_buf.t_stopc, ignore);
+    import (cft, tchars_buf.t_startx, (FUNC)ignore);
+    import (cft, tchars_buf.t_stopc, (FUNC)ignore);
     */
 #if 0
-    import (cft, tchars_buf.t_intrc, insert_and_flush);
-    import (aft, tchars_buf.t_intrc, insert_and_flush);
+    import (cft, tchars_buf.t_intrc, (FUNC)insert_and_flush);
+    import (aft, tchars_buf.t_intrc, (FUNC)insert_and_flush);
 #else
-    import (cft, tchars_buf.t_intrc, send_int_sig);
-    import (aft, tchars_buf.t_intrc, send_int_sig);
+    import (cft, tchars_buf.t_intrc, (FUNC)send_int_sig);
+    import (aft, tchars_buf.t_intrc, (FUNC)send_int_sig);
 #endif
-    import (cft, tchars_buf.t_quitc, insert_and_flush);
-    import (cft, tchars_buf.t_eofc, send_eof);
-    import (cft, tchars_buf.t_brkc, insert_and_flush);
-    import (cft, ltchars_buf.t_suspc, insert_and_flush);
-    import (cft, ltchars_buf.t_dsuspc, self_insert);
-    import (cft, ltchars_buf.t_rprntc, reprint);
-    import (cft, ltchars_buf.t_flushc, self_insert);
-    import (cft, ltchars_buf.t_werasc, delete_previous_word);
-    import (cft, ltchars_buf.t_lnextc, literal_next);
-    import (cft, initial_ttymode.sg_erase, delete_previous_character);
-    import (cft, initial_ttymode.sg_kill, delete_line);
+    import (cft, tchars_buf.t_quitc, (FUNC)insert_and_flush);
+    import (cft, tchars_buf.t_eofc, (FUNC)send_eof);
+    import (cft, tchars_buf.t_brkc, (FUNC)insert_and_flush);
+    import (cft, ltchars_buf.t_suspc, (FUNC)insert_and_flush);
+    import (cft, ltchars_buf.t_dsuspc, (FUNC)self_insert);
+    import (cft, ltchars_buf.t_rprntc, (FUNC)reprint);
+    import (cft, ltchars_buf.t_flushc, (FUNC)self_insert);
+    import (cft, ltchars_buf.t_werasc, (FUNC)delete_previous_word);
+    import (cft, ltchars_buf.t_lnextc, (FUNC)literal_next);
+    import (cft, initial_ttymode.sg_erase, (FUNC)delete_previous_character);
+    import (cft, initial_ttymode.sg_kill, (FUNC)delete_line);
 #endif
 
 #undef import

@@ -70,56 +70,56 @@ void ls (DIR *dirp, char *prefixstring);
  * Default binding table
  */
 BINDENT emacsBindings[] = {
-	/* NULL		*/	{"\0",		mark},
-	/* ^A		*/	{"\\^A",	beginning_of_line},
-	/* ^B		*/	{"\\^B",	backward_character},
-	/* ^D		*/	{"\\^D",	delete_next_character},
-	/* ^E		*/	{"\\^E",	end_of_line},
-	/* ^F		*/	{"\\^F",	forward_character},
-	/* ^I		*/	{"\\^I",	insert_tab},
-	/* ^J		*/	{"\\^J",	new_line},
-	/* ^K		*/	{"\\^K",	kill_to_end_of_line},
-	/* ^L		*/	{"\\^L",	clear_screen},
-	/* ^M		*/	{"\\^M",	new_line},
-	/* ^N		*/	{"\\^N",	next_history},
-	/* ^P		*/	{"\\^P",	previous_history},
-	/* ^T		*/	{"\\^T",	previous_history},
-	/* ^Y		*/	{"\\^Y",	yank_from_kill_buffer},
-	/* ^^		*/	{"\\^^",	toggle_through},
-	/* esc-b	*/	{"\\^[b",	backward_word},
-	/* esc-B	*/	{"\\^[B",	backward_Word},
-	/* esc-d	*/	{"\\^[d",	delete_next_word},
-	/* esc-D	*/	{"\\^[D",	delete_next_Word},
-	/* esc-f	*/	{"\\^[f",	forward_word},
-	/* esc-F	*/	{"\\^[F",	forward_Word},
-	/* esc-h	*/	{"\\^[h",	delete_previous_word},
-	/* esc-H	*/	{"\\^[H",	delete_previous_Word},
-	/* esc-l	*/	{"\\^[l",	list_file_name},
-	/* esc-L	*/	{"\\^[L",	list_file_name},
-	/* esc-n	*/	{"\\^[n",	insert_next_history},
-	/* esc-N	*/	{"\\^[N",	insert_next_history},
-	/* esc-p	*/	{"\\^[p",	insert_previous_history},
-	/* esc-P	*/	{"\\^[P",	insert_previous_history},
-	/* esc-.	*/	{"\\^[.",	insert_current_history},
-    	/* esc-esc	*/	{"\\^[\\^[",	expand_file_name},
-	/* esc-"-"	*/	{"\\^[-",	toggle_through},
-	/* esc-_	*/	{"\\^[_",	invoke_shell},
-	/* esc-<	*/	{"\\^[<",	search_reverse},
-	/* esc->	*/	{"\\^[>",	search_forward},
-	/* esc-?	*/	{"\\^[?",	show_help},
-	/* ^X-^B	*/	{"\\^X\\^B",	show_bindings},
-	/* ^X-B		*/	{"\\^XB",	show_bindings},
-	/* ^X-b		*/	{"\\^Xb",	show_bindings},
-	/* ^X-^H	*/	{"\\^X\\^H",	show_history},
-	/* ^X-H		*/	{"\\^XH",	show_history},
-	/* ^X-h		*/	{"\\^Xh",	show_history},
-	/* ^X-^V	*/	{"\\^X\\^V",	view_buffer},
-	/* ^X-^K	*/	{"\\^X\\^K",	kill_to_top_of_line},
-	/* ^X-^L	*/	{"\\^X\\^L",	fep_repaint},
+	/* NULL		*/	{"\0",		(FUNC)mark},
+	/* ^A		*/	{"\\^A",	(FUNC)beginning_of_line},
+	/* ^B		*/	{"\\^B",	(FUNC)backward_character},
+	/* ^D		*/	{"\\^D",	(FUNC)delete_next_character},
+	/* ^E		*/	{"\\^E",	(FUNC)end_of_line},
+	/* ^F		*/	{"\\^F",	(FUNC)forward_character},
+	/* ^I		*/	{"\\^I",	(FUNC)insert_tab},
+	/* ^J		*/	{"\\^J",	(FUNC)new_line},
+	/* ^K		*/	{"\\^K",	(FUNC)kill_to_end_of_line},
+	/* ^L		*/	{"\\^L",	(FUNC)clear_screen},
+	/* ^M		*/	{"\\^M",	(FUNC)new_line},
+	/* ^N		*/	{"\\^N",	(FUNC)next_history},
+	/* ^P		*/	{"\\^P",	(FUNC)previous_history},
+	/* ^T		*/	{"\\^T",	(FUNC)previous_history},
+	/* ^Y		*/	{"\\^Y",	(FUNC)yank_from_kill_buffer},
+	/* ^^		*/	{"\\^^",	(FUNC)toggle_through},
+	/* esc-b	*/	{"\\^[b",	(FUNC)backward_word},
+	/* esc-B	*/	{"\\^[B",	(FUNC)backward_Word},
+	/* esc-d	*/	{"\\^[d",	(FUNC)delete_next_word},
+	/* esc-D	*/	{"\\^[D",	(FUNC)delete_next_Word},
+	/* esc-f	*/	{"\\^[f",	(FUNC)forward_word},
+	/* esc-F	*/	{"\\^[F",	(FUNC)forward_Word},
+	/* esc-h	*/	{"\\^[h",	(FUNC)delete_previous_word},
+	/* esc-H	*/	{"\\^[H",	(FUNC)delete_previous_Word},
+	/* esc-l	*/	{"\\^[l",	(FUNC)list_file_name},
+	/* esc-L	*/	{"\\^[L",	(FUNC)list_file_name},
+	/* esc-n	*/	{"\\^[n",	(FUNC)insert_next_history},
+	/* esc-N	*/	{"\\^[N",	(FUNC)insert_next_history},
+	/* esc-p	*/	{"\\^[p",	(FUNC)insert_previous_history},
+	/* esc-P	*/	{"\\^[P",	(FUNC)insert_previous_history},
+	/* esc-.	*/	{"\\^[.",	(FUNC)insert_current_history},
+    	/* esc-esc	*/	{"\\^[\\^[",	(FUNC)expand_file_name},
+	/* esc-"-"	*/	{"\\^[-",	(FUNC)toggle_through},
+	/* esc-_	*/	{"\\^[_",	(FUNC)invoke_shell},
+	/* esc-<	*/	{"\\^[<",	(FUNC)search_reverse},
+	/* esc->	*/	{"\\^[>",	(FUNC)search_forward},
+	/* esc-?	*/	{"\\^[?",	(FUNC)show_help},
+	/* ^X-^B	*/	{"\\^X\\^B",	(FUNC)show_bindings},
+	/* ^X-B		*/	{"\\^XB",	(FUNC)show_bindings},
+	/* ^X-b		*/	{"\\^Xb",	(FUNC)show_bindings},
+	/* ^X-^H	*/	{"\\^X\\^H",	(FUNC)show_history},
+	/* ^X-H		*/	{"\\^XH",	(FUNC)show_history},
+	/* ^X-h		*/	{"\\^Xh",	(FUNC)show_history},
+	/* ^X-^V	*/	{"\\^X\\^V",	(FUNC)view_buffer},
+	/* ^X-^K	*/	{"\\^X\\^K",	(FUNC)kill_to_top_of_line},
+	/* ^X-^L	*/	{"\\^X\\^L",	(FUNC)fep_repaint},
 	/* ^X-^C	*/	{"\\^X\\^C",	(FUNC)terminate},
-	/* ^X-^D	*/	{"\\^X\\^D",	send_eof},
-	/* ^X-(		*/	{"\\^X(",	fep_start_script},
-	/* ^X-)		*/	{"\\^X)",	fep_end_script},
+	/* ^X-^D	*/	{"\\^X\\^D",	(FUNC)send_eof},
+	/* ^X-(		*/	{"\\^X(",	(FUNC)fep_start_script},
+	/* ^X-)		*/	{"\\^X)",	(FUNC)fep_end_script},
 	/*		*/	{NULL,		NULL}
 };
 
@@ -218,46 +218,46 @@ void initEmacsBindings (FUNC cft[], FUNC aft[])
     BINDENT *ftp;
 
     for (i = 0; i < 256; i++)
-	cft[i] = self_insert;
+	cft[i] = (FUNC)self_insert;
 
 #define import(table,key,fn) if((int)key>0)table[(int)key]=fn
 
 #ifdef TERMIOS
     /* Now, using cbreak mode
-    import (cft, initial_ttymode.c_cc[VSTART], ignore);
-    import (cft, initial_ttymode.c_cc[VSTOP], ignore);
+    import (cft, initial_ttymode.c_cc[VSTART], (FUNC)ignore);
+    import (cft, initial_ttymode.c_cc[VSTOP], (FUNC)ignore);
     */
 #if 0
-    import (cft, initial_ttymode.c_cc[VINTR], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VINTR], (FUNC)insert_and_flush);
 #else
 	/* added by noro */
-    import (cft, initial_ttymode.c_cc[VINTR], send_int_sig);
+    import (cft, initial_ttymode.c_cc[VINTR], (FUNC)send_int_sig);
 	/* XXX : this may not be necessary */
-    import (aft, initial_ttymode.c_cc[VINTR], send_int_sig);
+    import (aft, initial_ttymode.c_cc[VINTR], (FUNC)send_int_sig);
 #endif
-    import (cft, initial_ttymode.c_cc[VQUIT], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VQUIT], (FUNC)insert_and_flush);
     /* Now, EOF will be sent on empty line.
-    import (cft, initial_ttymode.c_cc[VEOF], send_eof);
+    import (cft, initial_ttymode.c_cc[VEOF], (FUNC)send_eof);
     */
 #ifdef VSWTC
-    import (cft, initial_ttymode.c_cc[VSWTC], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VSWTC], (FUNC)insert_and_flush);
 #endif
-    import (cft, initial_ttymode.c_cc[VSUSP], insert_and_flush);
+    import (cft, initial_ttymode.c_cc[VSUSP], (FUNC)insert_and_flush);
     /* ^Y is used for yank-from-kill-buffer
-    import (cft, initial_ttymode.c_cc[VDSUSP], self_insert);
+    import (cft, initial_ttymode.c_cc[VDSUSP], (FUNC)self_insert);
     */
-    import (cft, initial_ttymode.c_cc[VREPRINT], reprint);
+    import (cft, initial_ttymode.c_cc[VREPRINT], (FUNC)reprint);
 #ifdef VDISCARD
-    import (cft, initial_ttymode.c_cc[VDISCARD], self_insert);
+    import (cft, initial_ttymode.c_cc[VDISCARD], (FUNC)self_insert);
 #endif
-    import (cft, initial_ttymode.c_cc[VWERASE], delete_previous_word);
-    import (cft, initial_ttymode.c_cc[VLNEXT], literal_next);
-    import (cft, initial_ttymode.c_cc[VERASE], delete_previous_character);
-    import (cft, initial_ttymode.c_cc[VKILL], delete_line);
+    import (cft, initial_ttymode.c_cc[VWERASE], (FUNC)delete_previous_word);
+    import (cft, initial_ttymode.c_cc[VLNEXT], (FUNC)literal_next);
+    import (cft, initial_ttymode.c_cc[VERASE], (FUNC)delete_previous_character);
+    import (cft, initial_ttymode.c_cc[VKILL], (FUNC)delete_line);
 #else
     /* Now, using cbreak mode
-    import (cft, tchars_buf.t_startc, ignore);
-    import (cft, tchars_buf.t_stopc, ignore);
+    import (cft, tchars_buf.t_startc, (FUNC)ignore);
+    import (cft, tchars_buf.t_stopc, (FUNC)ignore);
     */
 #if 0
     import (cft, tchars_buf.t_intrc, insert_and_flush);
@@ -1965,7 +1965,6 @@ void ls (DIR *dirp, char *prefixstring)
     int fpc;		/* file par column */
     int COL = 80;
     char format[10];
-    int scmp();
     
     for (dp = readdir(dirp), i = 0; dp != NULL; dp = readdir(dirp)) {
 	char *fcp;
@@ -2002,7 +2001,7 @@ void ls (DIR *dirp, char *prefixstring)
 
     files = i;
 
-    qsort (fileList, i, sizeof (char *), scmp);
+    qsort (fileList, i, sizeof (char *), (int (*)(const void *,const void *))scmp);
 
     if (debug)
 	printf ("%d files\n", files);
