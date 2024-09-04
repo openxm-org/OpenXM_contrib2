@@ -156,7 +156,7 @@ pointer evalparif(FUNC f,NODE arg)
       error("pari : no handler.");
     }
     MKNODE(nd,0,0);
-    r = (Q)bevalf((FUNC)v->priv,0);
+    r = (Q)bevalf((FUNC)v->priv,0,0);
   }else {
 #if !defined(VISUAL)    
   MKSTR(name,"ox_pari");

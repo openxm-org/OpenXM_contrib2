@@ -463,7 +463,7 @@ void ox_usr1_handler(int sig)
       fprintf(stderr,
         "usr1 : calling the registered exception handlers...");
       for ( t = user_int_handler; t; t = NEXT(t) )
-        bevalf((FUNC)BDY(t),0);
+        bevalf((FUNC)BDY(t),0,0);
       fprintf(stderr, "done.\n");
     }
     LEAVE_SIGNAL_CS_ALL;

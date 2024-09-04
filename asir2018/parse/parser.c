@@ -165,7 +165,7 @@ void read_eval_loop() {
     if ( !ox_do_copy ) {
       if ( prresult ) {
         if ( user_print_function ) {
-          bevalf(user_print_function,mknode(1,LastVal));
+          bevalf(user_print_function,mknode(1,LastVal),0);
 #if !defined(__MINGW32__)
           fflush(asir_out);
 #endif

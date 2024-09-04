@@ -388,7 +388,7 @@ int generic_comp_obj(Obj *a,Obj *b)
   
   BDY(generic_comp_obj_arg)=(pointer)(*a);
   BDY(NEXT(generic_comp_obj_arg))=(pointer)(*b);
-  r = (Q)bevalf_with_opts(generic_comp_obj_func,generic_comp_obj_arg,generic_comp_obj_option);
+  r = (Q)bevalf(generic_comp_obj_func,generic_comp_obj_arg,generic_comp_obj_option);
   if ( !r )
     return 0;
   else

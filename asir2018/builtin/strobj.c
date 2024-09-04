@@ -399,7 +399,7 @@ char *call_convfunc(char *name)
 
   MKSTR(str,name);
   arg = mknode(1,str);
-  r = (STRING)bevalf(convfunc,arg);
+  r = (STRING)bevalf(convfunc,arg,0);
   if ( !r || OID(r) != O_STR )
     error("call_convfunc : invalid result");
   return BDY(r);

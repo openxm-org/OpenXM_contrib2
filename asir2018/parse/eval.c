@@ -184,13 +184,13 @@ pointer eval(FNODE f)
       val = evalf((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
     case I_FUNC_QARG:
       tn = BDY(eval_arg((FNODE)FA1(f),(unsigned int)0xffffffff));
-      val = bevalf((FUNC)FA0(f),tn); break;
+      val = bevalf((FUNC)FA0(f),tn,0); break;
     case I_PFDERIV:
       val = evalf_deriv((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
     case I_MAP:
-      val = evalmapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
+      val = evalmapf((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
     case I_RECMAP:
-      val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f)); break;
+      val = eval_rec_mapf((FUNC)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
     case I_IFUNC:
       val = evalif((FNODE)FA0(f),(FNODE)FA1(f),(FNODE)FA2(f)); break;
 #if !defined(VISUAL) && !defined(__MINGW32__)
@@ -574,7 +574,7 @@ FNODE partial_eval(FNODE f)
         return a1;
       } else {
         n = BDY(eval_arg(a1,(unsigned int)0xffffffff));
-        obj = bevalf(func,n);
+        obj = bevalf(func,n,0);
         objtoquote(obj,&q);
         return BDY(q);
       }
@@ -1046,10 +1046,10 @@ pointer evalf_deriv(FUNC f,FNODE a,FNODE deriv)
   return val;
 }
 
-pointer evalmapf(FUNC f,FNODE a)
+pointer evalmapf(FUNC f,FNODE a,FNODE opt)
 {
   LIST args;
-  NODE node,rest,t,n,r,r0;
+  NODE node,rest,t,n,r,r0,opts,opt1;
   Obj head;
   VECT v,rv;
   MAT m,rm;
@@ -1059,15 +1059,29 @@ pointer evalmapf(FUNC f,FNODE a)
 
   args = (LIST)eval_arg(a,f->quote);
   node = BDY(args); head = (Obj)BDY(node); rest = NEXT(node);
+  if ( opt ) {
+    opts = BDY((LIST)eval(opt));
+    /* opts = ["opt1",arg1],... */
+    opt1 = BDY((LIST)BDY(opts));
+    if ( !strcmp(BDY((STRING)BDY(opt1)),"option_list") ) {
+      /*
+       * the special option specification:
+       *  option_list=[["o1","a1"],...]
+       */
+      asir_assert(BDY(NEXT(opt1)),O_LIST,"evalf");
+      opts = BDY((LIST)BDY(NEXT(opt1)));
+    }
+  } else
+    opts = 0;
   if ( !head ) {
-    val = bevalf(f,node);
+    val = bevalf(f,node,opts);
     return val;
   }
   switch ( OID(head) ) {
     case O_VECT:
       v = (VECT)head; len = v->len; MKVECT(rv,len);
       for ( i = 0; i < len; i++ ) {
-        MKNODE(t,BDY(v)[i],rest); BDY(rv)[i] = bevalf(f,t);
+        MKNODE(t,BDY(v)[i],rest); BDY(rv)[i] = bevalf(f,t,opts);
       }
       val = (pointer)rv;
       break;
@@ -1075,14 +1089,14 @@ pointer evalmapf(FUNC f,FNODE a)
       m = (MAT)head; row = m->row; col = m->col; MKMAT(rm,row,col);
       for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ ) {
-          MKNODE(t,BDY(m)[i][j],rest); BDY(rm)[i][j] = bevalf(f,t);
+          MKNODE(t,BDY(m)[i][j],rest); BDY(rm)[i][j] = bevalf(f,t,opts);
         }
       val = (pointer)rm;
       break;
     case O_LIST:
       n = BDY((LIST)head);
       for ( r0 = r = 0; n; n = NEXT(n) ) {
-        NEXTNODE(r0,r); MKNODE(t,BDY(n),rest); BDY(r) = bevalf(f,t);
+        NEXTNODE(r0,r); MKNODE(t,BDY(n),rest); BDY(r) = bevalf(f,t,opts);
       }
       if ( r0 )
         NEXT(r) = 0;
@@ -1090,21 +1104,36 @@ pointer evalmapf(FUNC f,FNODE a)
       val = (pointer)rl;
       break;
     default:
-      val = bevalf(f,node);
+      val = bevalf(f,node,opts);
       break;
   }
   return val;
 }
 
-pointer eval_rec_mapf(FUNC f,FNODE a)
+pointer eval_rec_mapf(FUNC f,FNODE a,FNODE opt)
 {
   LIST args;
+  NODE opts,opt1;
 
   args = (LIST)eval_arg(a,f->quote);
-  return beval_rec_mapf(f,BDY(args));
+  if ( opt ) {
+    opts = BDY((LIST)eval(opt));
+    /* opts = ["opt1",arg1],... */
+    opt1 = BDY((LIST)BDY(opts));
+    if ( !strcmp(BDY((STRING)BDY(opt1)),"option_list") ) {
+      /*
+       * the special option specification:
+       *  option_list=[["o1","a1"],...]
+       */
+      asir_assert(BDY(NEXT(opt1)),O_LIST,"evalf");
+      opts = BDY((LIST)BDY(NEXT(opt1)));
+    }
+  } else
+    opts = 0;
+  return beval_rec_mapf(f,BDY(args),opts);
 }
 
-pointer beval_rec_mapf(FUNC f,NODE node)
+pointer beval_rec_mapf(FUNC f,NODE node,NODE opts)
 {
   NODE rest,t,n,r,r0;
   Obj head;
@@ -1116,14 +1145,14 @@ pointer beval_rec_mapf(FUNC f,NODE node)
 
   head = (Obj)BDY(node); rest = NEXT(node);
   if ( !head ) {
-    val = bevalf(f,node);
+    val = bevalf(f,node,opts);
     return val;
   }
   switch ( OID(head) ) {
     case O_VECT:
       v = (VECT)head; len = v->len; MKVECT(rv,len);
       for ( i = 0; i < len; i++ ) {
-        MKNODE(t,BDY(v)[i],rest); BDY(rv)[i] = beval_rec_mapf(f,t);
+        MKNODE(t,BDY(v)[i],rest); BDY(rv)[i] = beval_rec_mapf(f,t,opts);
       }
       val = (pointer)rv;
       break;
@@ -1132,7 +1161,7 @@ pointer beval_rec_mapf(FUNC f,NODE node)
       for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ ) {
           MKNODE(t,BDY(m)[i][j],rest);
-          BDY(rm)[i][j] = beval_rec_mapf(f,t);
+          BDY(rm)[i][j] = beval_rec_mapf(f,t,opts);
         }
       val = (pointer)rm;
       break;
@@ -1140,7 +1169,7 @@ pointer beval_rec_mapf(FUNC f,NODE node)
       n = BDY((LIST)head);
       for ( r0 = r = 0; n; n = NEXT(n) ) {
         NEXTNODE(r0,r); MKNODE(t,BDY(n),rest);
-        BDY(r) = beval_rec_mapf(f,t);
+        BDY(r) = beval_rec_mapf(f,t,opts);
       }
       if ( r0 )
         NEXT(r) = 0;
@@ -1148,92 +1177,13 @@ pointer beval_rec_mapf(FUNC f,NODE node)
       val = (pointer)rl;
       break;
     default:
-      val = bevalf(f,node);
+      val = bevalf(f,node,opts);
       break;
   }
   return val;
 }
 
-pointer bevalf(FUNC f,NODE a)
-{
-  pointer val;
-  int i,n;
-  NODE tn,sn;
-  VS pvs,prev_mpvs;
-  char errbuf[BUFSIZ];
-
-  if ( f->id == A_UNDEF ) {
-    sprintf(errbuf,"bevalf : %s undefined",NAME(f));
-    error(errbuf);
-  }
-  if ( getsecuremode() && !PVSS && !f->secure ) {
-    sprintf(errbuf,"bevalf : %s not permitted",NAME(f));
-    error(errbuf);
-  }
-  if ( f->id != A_PARI ) {
-    for ( i = 0, tn = a; tn; i++, tn = NEXT(tn) );
-    if ( ((n = f->argc)>= 0 && i != n) || (n < 0 && i > -n) ) {
-      sprintf(errbuf,"bevalf : argument mismatch in %s()",NAME(f));
-      error(errbuf);
-    }
-  }
-  switch ( f->id ) {
-    case A_BIN:
-      current_option = 0;
-      if ( !n ) {
-        cur_binf = f;
-        (*f->f.binf)(&val);
-      } else {
-        cur_binf = f;
-        (*f->f.binf)(a,&val);
-      }
-      cur_binf = 0;
-      break;
-    case A_PARI:
-      cur_binf = f;
-      val = evalparif(f,a);
-      cur_binf = 0;
-      break;
-    case A_USR:
-        pvs = f->f.usrf->pvs;
-        if ( PVSS )
-            ((VS)BDY(PVSS))->at = evalstatline;
-        MKNODE(tn,pvs,PVSS); PVSS = tn;
-        CPVS = (VS)ALLOCA(sizeof(struct oVS)); BDY(PVSS) = (pointer)CPVS;
-        CPVS->usrf = f; CPVS->n = CPVS->asize = pvs->n;
-      CPVS->opt = 0;
-        if ( CPVS->n ) {
-            CPVS->va = (struct oPV *)ALLOCA(CPVS->n*sizeof(struct oPV));
-            bcopy((char *)pvs->va,(char *)CPVS->va,
-          (int)(pvs->n*sizeof(struct oPV)));
-        }
-        if ( nextbp )
-            nextbplevel++;
-      for ( tn = f->f.usrf->args, sn = a; 
-        sn; tn = NEXT(tn), sn = NEXT(sn) )
-        ASSPV((long)FA0((FNODE)BDY(tn)),BDY(sn));
-      f_return = f_break = f_continue = 0;
-      if ( f->f.usrf->module ) {
-        prev_mpvs = MPVS;
-        MPVS = f->f.usrf->module->pvs;
-        val = evalstat((SNODE)BDY(f->f.usrf)); 
-        MPVS = prev_mpvs;
-      } else
-        val = evalstat((SNODE)BDY(f->f.usrf)); 
-      f_return = f_break = f_continue = 0; poppvs(); 
-      break;
-    case A_PURE:
-      val = evalpf(f->f.puref,a,0);
-      break;
-    default:
-      sprintf(errbuf,"bevalf : %s undefined",NAME(f));
-      error(errbuf);
-      break;
-  }
-  return val;
-}
-
-pointer bevalf_with_opts(FUNC f,NODE a,NODE opts)
+pointer bevalf(FUNC f,NODE a,NODE opts)
 {
   pointer val;
   int i,n;

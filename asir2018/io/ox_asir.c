@@ -789,7 +789,7 @@ static void asir_executeFunction(int serial)
       sprintf(buf,"executeFunction : the function %s not found",func);
       goto error;
     } else {
-      result = (Obj)bevalf(f,n);
+      result = (Obj)bevalf(f,n,0);
     }
 #if 0
   }
@@ -863,7 +863,7 @@ static void asir_executeFunctionSync(int serial)
       sprintf(buf,"executeFunction : the function %s not found",func);
       goto error;
     } else {
-      result = (Obj)bevalf(f,n);
+      result = (Obj)bevalf(f,n,0);
     }
 #if 0
   }

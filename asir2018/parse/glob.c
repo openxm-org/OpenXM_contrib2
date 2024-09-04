@@ -259,7 +259,7 @@ void asir_terminate(int status)
 #endif
       }
       for ( n = user_quit_handler; n; n = NEXT(n) )
-        bevalf((FUNC)BDY(n),0);
+        bevalf((FUNC)BDY(n),0,0);
       if ( !do_terse ) {
         fprintf(stderr, "done.\n");
 #if defined(__MINGW32__)
@@ -663,7 +663,7 @@ void int_handler(int sig)
 #endif
             }
             for ( t = user_int_handler; t; t = NEXT(t) )
-              bevalf((FUNC)BDY(t),0);
+              bevalf((FUNC)BDY(t),0,0);
             if ( !do_terse ) {
               fprintf(stderr, "done.\n");
 #if defined(__MINGW32__)

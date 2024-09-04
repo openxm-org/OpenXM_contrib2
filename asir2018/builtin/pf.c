@@ -613,7 +613,7 @@ void Pcall(NODE arg,Obj *rp)
                 MKLIST(list,n);
                 /* falling next case */
             case O_LIST:
-                *rp = (Obj)bevalf_with_opts((FUNC)v->priv,BDY(list),current_option);
+                *rp = (Obj)bevalf((FUNC)v->priv,BDY(list),current_option);
                 return;
             default:
                 break;
@@ -666,7 +666,7 @@ void Pmapat(NODE arg,Obj *rp)
   NEXTNODE(r0,r);
   iter = BDY(t); rest = NEXT(t);
   if ( !iter ) {
-    *rp = bevalf_with_opts(f,node,option);
+    *rp = bevalf(f,node,option);
     return;
   }
   switch ( OID(iter) ) {
@@ -674,7 +674,7 @@ void Pmapat(NODE arg,Obj *rp)
       v = (VECT)iter; len = v->len; MKVECT(rv,len);
       for ( i = 0; i < len; i++ ) {
         BDY(r) = BDY(v)[i]; NEXT(r) = rest;
-        BDY(rv)[i] = bevalf_with_opts(f,r0,option);
+        BDY(rv)[i] = bevalf(f,r0,option);
       }
       *rp = (Obj)rv;
       break;
@@ -683,7 +683,7 @@ void Pmapat(NODE arg,Obj *rp)
       for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ ) {
           BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
-          BDY(rm)[i][j] = bevalf_with_opts(f,r0,option);
+          BDY(rm)[i][j] = bevalf(f,r0,option);
         }
       *rp = (Obj)rm;
       break;
@@ -691,7 +691,7 @@ void Pmapat(NODE arg,Obj *rp)
       n = BDY((LIST)iter);
       for ( t0 = t = 0; n; n = NEXT(n) ) {
         BDY(r) = BDY(n); NEXT(r) = rest;
-        NEXTNODE(t0,t); BDY(t) = bevalf_with_opts(f,r0,option);
+        NEXTNODE(t0,t); BDY(t) = bevalf(f,r0,option);
       }
       if ( t0 )
         NEXT(t) = 0;
@@ -699,7 +699,7 @@ void Pmapat(NODE arg,Obj *rp)
       *rp = (Obj)rl;
       break;
     default:
-      *rp = bevalf_with_opts(f,node,option);
+      *rp = bevalf(f,node,option);
       break;
   }
 }
@@ -740,7 +740,7 @@ void Pmap(NODE arg,Obj *rp)
   NEXTNODE(r0,r);
   iter = BDY(node); rest = NEXT(node);
   if ( !iter ) {
-    *rp = bevalf_with_opts(f,node,option);
+    *rp = bevalf(f,node,option);
     return;
   }
   switch ( OID(iter) ) {
@@ -748,7 +748,7 @@ void Pmap(NODE arg,Obj *rp)
       v = (VECT)iter; len = v->len; MKVECT(rv,len);
       for ( i = 0; i < len; i++ ) {
         BDY(r) = BDY(v)[i]; NEXT(r) = rest;
-        BDY(rv)[i] = bevalf_with_opts(f,r0,option);
+        BDY(rv)[i] = bevalf(f,r0,option);
       }
       *rp = (Obj)rv;
       break;
@@ -757,7 +757,7 @@ void Pmap(NODE arg,Obj *rp)
       for ( i = 0; i < row; i++ )
         for ( j = 0; j < col; j++ ) {
           BDY(r) = BDY(m)[i][j]; NEXT(r) = rest;
-          BDY(rm)[i][j] = bevalf_with_opts(f,r0,option);
+          BDY(rm)[i][j] = bevalf(f,r0,option);
         }
       *rp = (Obj)rm;
       break;
@@ -765,7 +765,7 @@ void Pmap(NODE arg,Obj *rp)
       n = BDY((LIST)iter);
       for ( t0 = t = 0; n; n = NEXT(n) ) {
         BDY(r) = BDY(n); NEXT(r) = rest;
-        NEXTNODE(t0,t); BDY(t) = bevalf_with_opts(f,r0,option);
+        NEXTNODE(t0,t); BDY(t) = bevalf(f,r0,option);
       }
       if ( t0 )
         NEXT(t) = 0;
@@ -773,7 +773,7 @@ void Pmap(NODE arg,Obj *rp)
       *rp = (Obj)rl;
       break;
     default:
-      *rp = bevalf_with_opts(f,node,option);
+      *rp = bevalf(f,node,option);
       break;
   }
 }
