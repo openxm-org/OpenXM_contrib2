@@ -146,7 +146,7 @@ int yylex()
     case EOF :  
       asir_terminate(2); break;
     case ';' :
-      if ( do_fep ) {
+      if ( do_fep && asir_infile->fp != 0 && isatty(fileno(asir_infile->fp)) ) {
         return c;
       } else {
         if ( (c1 = Getc()) == c ) return SEMISEMI;
