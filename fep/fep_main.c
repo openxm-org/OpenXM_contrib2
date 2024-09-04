@@ -762,8 +762,9 @@ void fix_tty()
     master_ttymode.c_cc[VTIME] = 0;
     slave_ttymode.c_lflag &= ~(ECHO|ECHOE|ECHOK);
     slave_ttymode.c_iflag &= ~(ICRNL);
-    slave_ttymode.c_oflag &= ~(ONLCR);
+//    slave_ttymode.c_oflag &= ~(ONLCR);
     tcsetattr(0, TCSANOW, &master_ttymode);
+    fprintf(stderr,"afo\n");
 }
 
 #elif defined(TIOCSETN)
