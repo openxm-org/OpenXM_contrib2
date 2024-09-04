@@ -299,13 +299,25 @@ pexpr	: STR
 			{
 				gen_searchf($3,(FUNC *)&val);
 				print_crossref(val);
-				$$ = mkfnode(2,I_MAP,val,mkfnode(1,I_LIST,$5));
+				$$ = mkfnode(3,I_MAP,val,mkfnode(1,I_LIST,$5),0);
+			}
+		| MAP '(' LCASE ',' node '|' optlist ')' 
+			{
+				gen_searchf($3,(FUNC *)&val);
+				print_crossref(val);
+				$$ = mkfnode(3,I_MAP,val,mkfnode(1,I_LIST,$5),mkfnode(1,I_LIST,$7));
 			}
 		| RECMAP '(' LCASE ',' node ')' 
 			{
 				gen_searchf($3,(FUNC *)&val);
 				print_crossref(val);
-				$$ = mkfnode(2,I_RECMAP,val,mkfnode(1,I_LIST,$5));
+				$$ = mkfnode(3,I_RECMAP,val,mkfnode(1,I_LIST,$5),0);
+			}
+		| RECMAP '(' LCASE ',' node '|' optlist ')' 
+			{
+				gen_searchf($3,(FUNC *)&val);
+				print_crossref(val);
+				$$ = mkfnode(3,I_RECMAP,val,mkfnode(1,I_LIST,$5),mkfnode(1,I_LIST,$7));
 			}
 		| LCASE '{' node '}' '(' node ')' 
 			{
