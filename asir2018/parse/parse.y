@@ -89,7 +89,7 @@ extern jmp_buf env;
 	pointer p;
 }
 
-%token <i> STRUCT POINT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND
+%token <i> STRUCT PNT NEWSTRUCT ANS FDEF PFDEF MODDEF MODEND
 %token <i> GLOBAL MGLOBAL LOCAL LOCALF CMP OR AND CAR CDR QUOTED COLONCOLON SEMISEMI
 %token <i> DO WHILE FOR IF ELSE BREAK RETURN CONTINUE PARIF MAP RECMAP TIMER GF2NGEN GFPNGEN GFSNGEN GETOPT
 %token <i> FOP_AND FOP_OR FOP_IMPL FOP_REPL FOP_EQUIV FOP_NOT LOP
@@ -123,7 +123,7 @@ extern jmp_buf env;
 %right '^'
 %right '!' 
 %right SELF
-%left POINT
+%left PNT
 
 %%
 
@@ -406,7 +406,7 @@ pexpr	: STR
 					$$ = mkfnode(2,I_INDEX,(pointer)$1,a);
 				}
 			}
-		| pexpr POINT rawstr
+		| pexpr PNT rawstr
 			{ $$ = mkfnode(2,I_POINT,$1,$3); }
 		;
 expr 	: pexpr

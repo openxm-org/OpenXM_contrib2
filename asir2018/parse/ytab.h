@@ -55,7 +55,7 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     STRUCT = 258,                  /* STRUCT  */
-    PNT = 259,                   /* PNT  */
+    PNT = 259,                     /* PNT  */
     NEWSTRUCT = 260,               /* NEWSTRUCT  */
     ANS = 261,                     /* ANS  */
     FDEF = 262,                    /* FDEF  */
