@@ -36,7 +36,7 @@ AC_ARG_WITH([asir-gc],
 [  --with-asir-gc          modify Boehm's GC [[yes]]],
 [with_asir_gc=${withval}],[with_asir_gc=yes])
 if test ${with_asir_gc:=yes} != no; then
-   GCLIB='-L${prefix}/lib -lasir-gc'
+   GCLIB='-L${prefix}/lib -lgc'
 else
    GCLIB='-L${prefix}/lib -lgc'
    AC_DEFINE([NO_ASIR_GC])

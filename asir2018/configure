@@ -14969,7 +14969,7 @@ else $as_nop
 fi
 
 if test ${with_asir_gc:=yes} != no; then
-   GCLIB='-L${prefix}/lib -lasir-gc'
+   GCLIB='-L${prefix}/lib -lgc'
 else
    GCLIB='-L${prefix}/lib -lgc'
    printf "%s\n" "#define NO_ASIR_GC 1" >>confdefs.h

@@ -59,8 +59,8 @@ build: configure
 
 install: build
 	${MKDIR_P} ${DESTDIR}${libdir}
-	${INSTALL_PROGRAM} ${top_srcdir}/${GC}/.libs/libasir-gc.* ${DESTDIR}${libdir}/
-	chmod 644 ${DESTDIR}${libdir}/libasir-gc.a
+	${INSTALL_PROGRAM} ${top_srcdir}/${GC}/.libs/libgc.* ${DESTDIR}${libdir}/
+	chmod 644 ${DESTDIR}${libdir}/libgc.a
 	${MKDIR_P} ${DESTDIR}${includedir}/gc
 	${INSTALL_DATA} ${top_srcdir}/${GC}/include/*.h ${DESTDIR}${includedir}/gc/
 	${INSTALL_DATA} ${top_srcdir}/${GC}/include/extra/gc.h ${DESTDIR}${includedir}/
