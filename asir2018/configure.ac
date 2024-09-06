@@ -54,21 +54,24 @@ if test "${ac_cv_sizeof_long}" = 8; then
 else
     AC_DEFINE([LONG_IS_32BIT])
 fi
-if test "${no_x}" != yes ; then
+
+AC_ARG_ENABLE([plot],
+[  --enable-plot           enable plot feature. [[no]]],
+[case "${enableval}" in yes) enable_plot=yes;; no) enable_plot=no;; esac],
+[enable_plot=no])
+XPMLIB=""
+sufx=""
+dnl sufx is suffix for libasir
+if test ${enable_plot:=no} != no -a "${no_x}" != yes; then
+    enable_plot=yes
+    sufx=${sufx}_X
+    AC_DEFINE([DO_PLOT])
     if test -f "${x_libraries}/libXpm.a" -o -f "${x_libraries}/libXpm.dll.a" ; then
 	    XPMLIB="-lXpm"
     fi
-    AC_ARG_ENABLE([plot],
-    [  --enable-plot           enable plot feature. [[no]]],
-    [enable_plot=yes],[enable_plot=no])
-fi
-AC_SUBST([XPMLIB])
-
-dnl sufx is suffix for libasir
-sufx=""
-if test ${enable_plot:=no} != no ; then
-    sufx=${sufx}_X
-    AC_DEFINE([DO_PLOT])
+    AC_SUBST([XPMLIB])
+else
+    enable_plot=no
 fi
 AM_CONDITIONAL([USE_PLOT],[test "$enable_plot" = yes])
 
