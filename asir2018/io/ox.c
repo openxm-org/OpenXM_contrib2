@@ -409,7 +409,7 @@ int check_by_mc(int s,unsigned int oxtag,unsigned int cmotag)
 }
 
 #if !defined(VISUAL_CONSOLE)
-extern int Im_ox_plot;
+int Im_ox_plot;
 #if defined(ANDROID)
 int Im_ox_plot = 0;
 #endif

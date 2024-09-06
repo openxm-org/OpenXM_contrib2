@@ -95,7 +95,7 @@ static void asir_do_cmd(unsigned int,unsigned int);
 static void process_ox();
 static void asir_executeFunction(int serial);
 
-int Im_ox_plot;
+extern int Im_ox_plot;
 
 #if defined(VISUAL) || defined(__MINGW32__)
 void ox_plot_main()
