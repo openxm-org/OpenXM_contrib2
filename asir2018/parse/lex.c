@@ -323,7 +323,7 @@ int yylex()
     }
     yylvalp->p = (pointer)r;
     return ( FORMULA );
-  } else if ( isalpha(c) || c == ':' || c == '_' ) {
+  } else if ( isalpha(c) || c == ':' || c == '_' || c == '.' ) {
     if ( c == ':' ) {
       c1 = Getc();
       if ( c1 != ':' ) {
@@ -351,7 +351,7 @@ int yylex()
         break;
     }
     REALLOC_TBUF tbuf[i] = 0; Ungetc(c); 
-    if ( isupper(tbuf[0]) || (tbuf[0] == '_' && isupper(tbuf[1])) ) {
+    if ( isupper(tbuf[0]) || tbuf[0] == '.' || (tbuf[0] == '_' && isupper(tbuf[1])) ) {
       cptr = (char *)MALLOC(strlen(tbuf)+1); strcpy(cptr,tbuf);
       yylvalp->p = (pointer)cptr;
       return UCASE;
