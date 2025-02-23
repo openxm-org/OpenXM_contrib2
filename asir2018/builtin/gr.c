@@ -2834,10 +2834,12 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
   DP tdp1,tdp2,sd,f2,hf2;
   DL dl;
   MP m;
-  LIST l0,l1,l2;
+  LIST l0,l1,l2,l3;
   struct oMDP *rarray;
   int depth,depth1;
   struct oEGT t0,t1;
+  double d;
+  Real r0,r1,r2;
 
   get_eg(&t0);
   nv = ((DP)BDY(g))->nv;
@@ -2872,6 +2874,7 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
       nd = remove_dl_destructive(nv,dp_dllist(f2),(DL)BDY(s));
       s = symb_merge(NEXT(s),nd,nv);
       nred++;
+      if ( nred > 5000 ) return 0;
     } else
       s = NEXT(s);
   }
@@ -2881,15 +2884,20 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
     rarray[i].f = (DP)BDY(t); rarray[i].h = (DP)BDY(th);
     rarray[i].contain = (char *)CALLOC(nred,sizeof(char));
   }
-//  get_eg(&t1); fprintf(asir_out,"symb step0"); print_split_eg(&t0,&t1); fprintf(asir_out," "); t0 = t1;
+  get_eg(&t1); d = t1.exectime-t0.exectime; MKReal(d,r0); fprintf(asir_out,"symb step0 nred=%d",nred); print_split_eg(&t0,&t1); fprintf(asir_out," "); t0 = t1; fflush(asir_out);
+  get_eg(&t0);
   for ( i = 0; i < nred; i++ ) {
     for ( j = 0; j < nred; j++ ) {
       dl = BDY(rarray[j].h)->dl;
-      for ( m = BDY(rarray[i].f); m; m = NEXT(m) )
+      for ( m = BDY(rarray[i].f); m; m = NEXT(m) ) {
+        if ( cmpdl(nv,m->dl,dl) < 0 )
+          break;
         if ( dl_equal(nv,dl,m->dl) ) rarray[i].contain[j] = 1;
+      }
     } 
   }
-//  get_eg(&t1); fprintf(asir_out,"step1"); print_split_eg(&t0,&t1); fprintf(asir_out," "); t0 = t1;
+  get_eg(&t1); d = t1.exectime-t0.exectime; MKReal(d,r1); fprintf(asir_out,"step1"); print_split_eg(&t0,&t1); fprintf(asir_out," "); t0 = t1; fflush(asir_out);
+  get_eg(&t0);
   for ( i = 0; i < nred; i++ ) {
     struct oMDP tmp;
     int k;
@@ -2907,13 +2915,15 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
       rarray[k].contain[j] = rarray[k].contain[i];
     }
   }
-//  get_eg(&t1); fprintf(asir_out,"step2"); print_split_eg(&t0,&t1); fprintf(asir_out,"\n"); t0 = t1;
+  get_eg(&t1); d = t1.exectime-t0.exectime; MKReal(d,r2); fprintf(asir_out,"step2"); print_split_eg(&t0,&t1); fprintf(asir_out,"\n"); t0 = t1;
   for ( i = 0, t = red0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].f;
   for ( i = 0, t = h0; t; t = NEXT(t), i++ ) BDY(t) = (pointer)rarray[i].h;
   MKLIST(l0,red0);
   MKLIST(l1,h0);
   MKLIST(l2,done0);
-  t = mknode(3,l0,l1,l2);
+  t = mknode(3,r0,r1,r2);
+  MKLIST(l3,t);
+  t = mknode(4,l0,l1,l2,l3);
   MKLIST(l0,t);
   return l0;
 }

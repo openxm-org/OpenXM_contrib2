@@ -1704,7 +1704,7 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
       if ( dp_redble(g,hp = hps[wb[i]]) ) {
         for ( l = done; l; l = NEXT(l) )
           if ( dl_equal(g->nv,BDY(g)->dl,(DL)BDY(l)) ) { count++; break; }
-        if ( l != 0 && count > 100 ) {
+        if ( l != 0 && count > 3000 ) {
           *rp = (DP)VOIDobj;
           *nmp = (P)ONE;
           *dnp = (P)ONE;
@@ -4364,18 +4364,6 @@ int dpv_ht(DPV p,DP *h)
   }
 }
 
-/* return 1 if 0 <_w1 v && v <_w2 0 */
-
-int in_c12(int n,int *v,int row1,int **w1,int row2, int **w2)
-{
-  int t1,t2;
-
-  t1 = compare_zero(n,v,row1,w1);
-  t2 = compare_zero(n,v,row2,w2);
-  if ( t1 > 0 && t2 < 0 ) return 1;
-  else return 0;
-}
-
 /* 0 < u => 1, 0 > u => -1 */
 
 int compare_zero(int n,int *u,int row,int **w)
@@ -4390,6 +4378,58 @@ int compare_zero(int n,int *u,int row,int **w)
     else if ( t < 0 ) return -1;
   }
   return 0;
+}
+
+/* compare by grevlex matrix */
+int compare_zero_0(int n,int *u)
+{
+  int i,j,t;
+
+  for ( j = 0, t = 0; j < n; j++ ) t += u[j];
+  if ( t > 0 ) return 1;
+  else if ( t < 0 ) return -1;
+
+  for ( i = 1; i < n; i++ ) {
+    t = -u[n-i];
+    if ( t > 0 ) return 1;
+    else if ( t < 0 ) return -1;
+  }
+  return 0;
+}
+
+/* compare by lex matrix */
+int compare_zero_2(int n,int *u)
+{
+  int i,j,t;
+
+  for ( i = 0; i < n; i++ ) {
+    t = u[i];
+    if ( t > 0 ) return 1;
+    else if ( t < 0 ) return -1;
+  }
+  return 0;
+}
+
+/* return 1 if 0 <_w1 v && v <_w2 0 */
+
+int in_c12(int n,int *v,int row1,int **w1,int row2, int **w2)
+{
+  int t1,t2;
+
+  t1 = compare_zero(n,v,row1,w1);
+  t2 = compare_zero(n,v,row2,w2);
+  if ( t1 > 0 && t2 < 0 ) return 1;
+  else return 0;
+}
+
+int in_c12_02(int n,int *v)
+{
+  int t1,t2;
+
+  t1 = compare_zero_0(n,v);
+  t2 = compare_zero_2(n,v);
+  if ( t1 > 0 && t2 < 0 ) return 1;
+  else return 0;
 }
 
 /* functions for generic groebner walk */
@@ -4410,6 +4450,23 @@ int compare_facet_preorder(int n,int *u,int *v,
       }
     for ( j = 0; j < n; j++ ) uv[j] = u[j]*tv-v[j]*tu;
     t = compare_zero(n,uv,row1,w1);
+    if ( t > 0 ) return 1;
+    else if ( t < 0 ) return 0;
+  }
+  return 1;
+}
+
+/* w1=grevlex, w2=lex */
+
+int compare_facet_preorder_02(int n,int *u,int *v, int *uv)
+{
+  int i,j,s,t,tu,tv;
+  int *w2i;
+
+  if ( !u ) return 1;
+  for ( i = 0; i < n; i++ ) {
+    for ( j = 0; j < n; j++ ) uv[j] = u[j]*v[i]-v[j]*u[i];
+    t = compare_zero_0(n,uv);
     if ( t > 0 ) return 1;
     else if ( t < 0 ) return 0;
   }
@@ -4552,6 +4609,68 @@ NODE compute_last_w(NODE g,NODE gh,int n,int **w,
       if ( i == n  ||
         (compare_facet_preorder(n,wt,*w,row1,w1,row2,w2,uv)
         && compare_facet_preorder(n,*w,wt,row1,w1,row2,w2,uv)) ) {
+        NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
+      }
+    }
+    NEXT(m) = 0;
+    MKDP(((DP)BDY(t))->nv,m0,d);  d->sugar = ((DP)BDY(t))->sugar;
+    NEXTNODE(r0,r); BDY(r) = (pointer)d;
+  }
+  NEXT(r) = 0;
+  return r0;
+}
+
+/* w1=grevlex, w2=lex */
+NODE compute_last_w_02(NODE g,NODE gh,int n,int **w)
+{
+  DP d;
+  MP f,m0,m;
+  int *wt,*v,*h,*uv;
+  NODE t,s,n0,tn,n1,r0,r;
+  int i;
+
+  wt = W_ALLOC(n);
+  uv = W_ALLOC(n);
+  n0 = 0;
+  for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
+    f = BDY((DP)BDY(t));
+    h = BDY((DP)BDY(s))->dl->d;
+    for ( ; f; f = NEXT(f) ) {
+      for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+      for ( i = 0; i < n && !wt[i]; i++ );
+      if ( i == n ) continue;
+
+      if ( in_c12_02(n,wt) && 
+        compare_facet_preorder_02(n,*w,wt,uv) ) {
+        v = (int *)MALLOC_ATOMIC(n*sizeof(int));
+        for ( i = 0; i < n; i++ ) v[i] = wt[i];
+        MKNODE(n1,v,n0); n0 = n1;
+      }
+    }
+  }
+  if ( !n0 ) return 0;
+  for ( t = n0; t; t = NEXT(t) ) {
+    v = (int *)BDY(t);
+    for ( s = n0; s; s = NEXT(s) )
+      if ( !compare_facet_preorder_02(n,v,(int *)BDY(s),uv) )
+        break;
+    if ( !s ) {
+      *w = v;
+      break;
+    }
+  }
+  if ( !t )
+    error("compute_last_w : cannot happen");
+  r0 = 0;
+  for ( t = g, s = gh; t; t = NEXT(t), s = NEXT(s) ) {
+    f = BDY((DP)BDY(t));
+    h = BDY((DP)BDY(s))->dl->d;
+    for ( m0 = 0; f; f = NEXT(f) ) {
+      for ( i = 0; i < n; i++ ) wt[i] = h[i]-f->dl->d[i];
+      for ( i = 0; i < n && !wt[i]; i++ );
+      if ( i == n  ||
+        (compare_facet_preorder_02(n,wt,*w,uv)
+        && compare_facet_preorder_02(n,*w,wt,uv)) ) {
         NEXTMP(m0,m); m->c = f->c; m->dl = f->dl;
       }
     }

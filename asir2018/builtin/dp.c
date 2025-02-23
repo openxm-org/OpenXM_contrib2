@@ -66,6 +66,7 @@ void Pdp_monomial_hilbert_poincare(NODE arg,LIST *rp);
 void Pdp_monomial_hilbert_poincare_incremental(NODE arg,LIST *rp);
 void Pdp_compute_last_t(NODE arg,LIST *rp);
 void Pdp_compute_last_w(NODE arg,LIST *rp);
+void Pdp_compute_last_w_02(NODE arg,LIST *rp);
 void Pdp_compute_essential_df(NODE arg,LIST *rp);
 void Pdp_inv_or_split(NODE arg,Obj *rp);
 void Pdp_sort(NODE arg,DP *rp);
@@ -446,6 +447,7 @@ struct ftab dp_supp_tab[] = {
   {"dp_tdiv",Pdp_tdiv,2},
   {"dp_minp",Pdp_minp,2},
   {"dp_compute_last_w",Pdp_compute_last_w,5},
+  {"dp_compute_last_w_02",Pdp_compute_last_w_02,3},
   {"dp_compute_last_t",Pdp_compute_last_t,5},
   {"dp_compute_essential_df",Pdp_compute_essential_df,2},
   {"dp_mono_raddec",Pdp_mono_raddec,2},
@@ -464,6 +466,7 @@ struct ftab dp_supp_tab[] = {
 };
 
 NODE compute_last_w(NODE g,NODE gh,int n,int **v,int row1,int **m1,int row2,int **m2);
+NODE compute_last_w_02(NODE g,NODE gh,int n,int **v);
 Q compute_last_t(NODE g,NODE gh,Q t,VECT w1,VECT w2,NODE *homo,VECT *wp);
 
 int comp_by_tdeg(DP *a,DP *b)
@@ -1036,6 +1039,36 @@ void Pdp_compute_last_w(NODE arg,LIST *rp)
   for ( i = 0; i < row2; i++ )
     for ( j = 0; j < n; j++ ) m2[i][j] = ZTOS((Q)w2->body[i][j]);
   r = compute_last_w(g,gh,n,&v,row1,m1,row2,m2);
+  if ( !r ) *rp = 0;
+  else {
+    MKVECT(rv,n);
+    for ( i = 0; i < n; i++ ) {
+      STOZ(v[i],q); rv->body[i] = (pointer)q;
+    }
+    MKLIST(l,r);
+    r = mknode(2,rv,l);
+    MKLIST(*rp,r);
+  }
+}
+
+void Pdp_compute_last_w_02(NODE arg,LIST *rp)
+{
+  NODE g,gh,r;
+  VECT w,rv;
+  LIST l;
+  int i,j,n;
+  int *v;
+  Z q;
+
+  g = (NODE)BDY((LIST)ARG0(arg));
+  gh = (NODE)BDY((LIST)ARG1(arg));
+  w = (VECT)ARG2(arg);
+  n = ((DP)BDY(g))->nv;
+  if ( w ) {
+    v = W_ALLOC(n);
+    for ( i = 0; i < n; i++ ) v[i] = ZTOS((Q)w->body[i]);
+  } else v = 0;
+  r = compute_last_w_02(g,gh,n,&v);
   if ( !r ) *rp = 0;
   else {
     MKVECT(rv,n);
