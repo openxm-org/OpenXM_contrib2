@@ -94,6 +94,7 @@ int DP_PrintShort = 0;
 int DP_Multiple = 0;
 int DP_NFStat = 0;
 LIST Dist = 0;
+LIST GwThreshold = 0;
 int NoGCD = 0;
 int GenTrace = 0;
 int GenSyz = 0;
@@ -2291,6 +2292,9 @@ void dp_set_flag(Obj name,Obj value)
   if ( !strcmp(n,"Dist") ) {
     Dist = (LIST)value; return;
   }
+  else if ( !strcmp(n,"GwThreshold") ) {
+    GwThreshold = (LIST)value; return;
+  }
   if ( !strcmp(n,"Content") ) {
     ratio = (Q)value;
     if ( ratio ) {
@@ -2372,6 +2376,7 @@ void dp_make_flaglist(LIST *list)
   MKNODE(n,r,0); MKSTR(name,"Content"); MKNODE(n1,name,n); n = n1;
 #endif
   MKNODE(n1,Dist,n); n = n1; MKSTR(name,"Dist"); MKNODE(n1,name,n); n = n1;
+  MKNODE(n1,GwThreshold,n); n = n1; MKSTR(name,"GwThreshold"); MKNODE(n1,name,n); n = n1;
   STOZ(Reverse,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Reverse"); MKNODE(n1,name,n); n = n1;
   STOZ(Stat,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Stat"); MKNODE(n1,name,n); n = n1;
   STOZ(DP_Print,v); MKNODE(n1,v,n); n = n1; MKSTR(name,"Print"); MKNODE(n1,name,n); n = n1;
@@ -2840,7 +2845,9 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
   struct oEGT t0,t1;
   double d;
   Real r0,r1,r2;
+  int threshold;
 
+  threshold = GwThreshold?ZTOS((Z)ARG1(BDY(GwThreshold))):3000;
   get_eg(&t0);
   nv = ((DP)BDY(g))->nv;
   s0 = 0;
@@ -2874,7 +2881,7 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
       nd = remove_dl_destructive(nv,dp_dllist(f2),(DL)BDY(s));
       s = symb_merge(NEXT(s),nd,nv);
       nred++;
-      if ( nred > 5000 ) return 0;
+      if ( nred > threshold ) return 0;
     } else
       s = NEXT(s);
   }

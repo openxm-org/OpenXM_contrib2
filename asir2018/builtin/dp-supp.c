@@ -1674,6 +1674,7 @@ void dp_separate_normal(DP g,DP *hps,int *ind,int n,DP *d,DP *r)
 }
 
 extern Obj VOIDobj;
+extern LIST GwThreshold;
 
 void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
 {
@@ -1686,7 +1687,9 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
   P nm,tnm1,dn,tdn,tdn1;
   Z cont;
   int count = 0;
+  int threshold;
 
+  threshold = GwThreshold?ZTOS((Z)ARG0(BDY(GwThreshold))):3000;
   nm = (P)ONE;
   dn = (P)ONE;
   if ( !g ) {
@@ -1704,7 +1707,7 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
       if ( dp_redble(g,hp = hps[wb[i]]) ) {
         for ( l = done; l; l = NEXT(l) )
           if ( dl_equal(g->nv,BDY(g)->dl,(DL)BDY(l)) ) { count++; break; }
-        if ( l != 0 && count > 3000 ) {
+        if ( l != 0 && count > threshold ) {
           *rp = (DP)VOIDobj;
           *nmp = (P)ONE;
           *dnp = (P)ONE;
