@@ -1689,7 +1689,13 @@ void dp_true_nf_marked_check(NODE b,DP g,DP *ps,DP *hps,DP *rp,P *nmp,P *dnp)
   int count = 0;
   int threshold;
 
-  threshold = GwThreshold?ZTOS((Z)ARG0(BDY(GwThreshold))):3000;
+  threshold = GwThreshold?ZTOS((Z)ARG0(BDY(GwThreshold))):1000;
+  if ( threshold == 0 ) {
+    *rp = (DP)VOIDobj;
+    *nmp = (P)ONE;
+    *dnp = (P)ONE;
+    return;
+  }
   nm = (P)ONE;
   dn = (P)ONE;
   if ( !g ) {

@@ -2847,7 +2847,7 @@ LIST dp_symb_preproc_marked(NODE f,NODE g,NODE h)
   Real r0,r1,r2;
   int threshold;
 
-  threshold = GwThreshold?ZTOS((Z)ARG1(BDY(GwThreshold))):3000;
+  threshold = GwThreshold?ZTOS((Z)ARG1(BDY(GwThreshold))):1000;
   get_eg(&t0);
   nv = ((DP)BDY(g))->nv;
   s0 = 0;
