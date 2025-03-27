@@ -47,5 +47,5 @@
  *
  * $OpenXM: OpenXM_contrib2/asir2018/include/version.h,v 1.92 2022/04/03 00:39:13 noro Exp $
 */
-#define ASIR_VERSION 20250320
+#define ASIR_VERSION 20250327
 #define ASIR_DISTRIBUTION "Kobe"

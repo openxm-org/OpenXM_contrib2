@@ -1149,6 +1149,31 @@ void dp_red_marked_pos(DP p1,MP pos,DP p2,DP hp2,DP *rest,P *dnp)
   *rest = r; *dnp = (P)c2;
 }
 
+void dp_red_marked_pos_mod(DP p1,MP pos,DP p2,DP hp2,int mod,DP *rest,P *dnp)
+{
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  P c1,c2,u;
+  P g,a;
+  P p[2];
+
+  n = p1->nv; d1 = pos->dl; d2 = BDY(hp2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (P)pos->c; c2 = (P)BDY(hp2)->c;
+  gcdprsmp(CO,mod,c1,c2,&g);
+  divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
+  if ( NUM(c2) ) {
+    divsmp(CO,mod,c1,c2,&u); c1 = u; c2 = (P)ONEM;
+  }
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  muld(CO,s,p2,&t); mulmdc(CO,mod,p1,c2,&s); submd(CO,mod,s,t,&r);
+  *rest = r; *dnp = (P)c2;
+}
+
 // p0 *= const
 void _dp_red_marked(DP *p0,DP p1,DP p2,DP hp2,DP *rest,P *dnp,DP *multp)
 {
@@ -1185,6 +1210,33 @@ void _dp_red_marked(DP *p0,DP p1,DP p2,DP hp2,DP *rest,P *dnp,DP *multp)
   *multp = s;
   muld(CO,s,p2,&t); muldc(CO,p1,(Obj)c2,&s); subd(CO,s,t,&r);
   _muldc(CO,p0,(Obj)c2);
+  *rest = r; *dnp = (P)c2;
+}
+
+void _mulmdc(VL CO,int mod,DP *p0,Obj c2);
+
+// p0 *= const
+void _dp_red_marked_mod(DP *p0,DP p1,DP p2,DP hp2,int mod,DP *rest,P *dnp,DP *multp)
+{
+  int i,n;
+  DL d1,d2,d;
+  MP m;
+  DP t,s,r,h;
+  P c,c1,c2,u;
+  P g,a;
+  P p[2];
+
+  n = p1->nv; d1 = BDY(p1)->dl; d2 = BDY(hp2)->dl;
+  NEWDL(d,n); d->td = d1->td - d2->td;
+  for ( i = 0; i < n; i++ )
+    d->d[i] = d1->d[i]-d2->d[i];
+  c1 = (P)BDY(p1)->c; c2 = (P)BDY(hp2)->c;
+  gcdprsmp(CO,mod,c1,c2,&g);
+  divsmp(CO,mod,c1,g,&u); c1 = u; divsmp(CO,mod,c2,g,&u); c2 = u;
+  NEWMP(m); m->dl = d; m->c = (Obj)c1; NEXT(m) = 0; MKDP(n,m,s); s->sugar = d->td;
+  *multp = s;
+  mulmd(CO,mod,s,p2,&t); mulmdc(CO,mod,p1,c2,&s); submd(CO,mod,s,t,&r);
+  _mulmdc(CO,mod,p0,(Obj)c2);
   *rest = r; *dnp = (P)c2;
 }
 
@@ -1476,6 +1528,89 @@ void dp_true_lnf_marked(DP f,NODE g,NODE h,DP *rp,P *dnp)
   *dnp = dn;
 }
 
+void dp_true_lnf_mod(DP f,NODE g,int mod,DP *rp,P *dnp)
+{
+  P dn,tdn,tdn1;
+  int sugar,nv;
+  DP d,u,gi,dt,w,s,dmy;
+  MP m,mr;
+  NODE t;
+
+  dn = (P)ONEM;
+  if ( !f ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  sugar = f->sugar;
+  nv = f->nv;
+  for ( d = 0; f; ) {
+    for ( u = 0, t = g; t; t = NEXT(t) ) {
+      gi = (DP)BDY(t);
+      if ( dl_equal(nv,BDY(f)->dl,BDY(gi)->dl) ) {
+        dp_red_mod(d,f,gi,mod,&dt,&u,&tdn);
+        sugar = MAX(sugar,gi->sugar);
+        if ( !u ) {
+          if ( d )
+            d->sugar = sugar;
+          *rp = d; *dnp = dn; return;
+        } else {
+          d = dt;
+          mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    if ( u )
+      f = u;
+    else {
+      m = BDY(f); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+      NEXT(mr) = 0; MKDP(nv,mr,w); w->sugar = mr->dl->td;
+      addmd(CO,mod,d,w,&s); d = s;
+      dp_rest(f,&w); f = w;
+    }
+  }
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
+}
+
+// normal form by a linear base using the sorted g
+void dp_true_lnf_marked_mod(DP f,NODE g,NODE h,int mod,DP *rp,P *dnp)
+{
+  P dn,tdn,tdn1;
+  int sugar,nv;
+  DP r,u,gi,dt,w,s,dmy;
+  DL dl;
+  MP m,mr;
+  NODE t,th;
+
+  dn = (P)ONEM;
+  if ( !f ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  sugar = f->sugar;
+  nv = f->nv;
+  r = f;
+  for ( t = g, th = h; t; t = NEXT(t), th = NEXT(th) ) {
+    if ( !r ) break;
+    dl = BDY((DP)BDY(th))->dl;
+    for ( u = 0, m = BDY(r); m; m = NEXT(m) )
+      if ( dl_equal(nv,m->dl,dl) ) break;
+    if ( m ) {
+      gi = (DP)BDY(t);
+      dp_red_marked_pos_mod(r,m,gi,(DP)BDY(th),mod,&u,&tdn);
+      sugar = MAX(sugar,gi->sugar);
+      if ( !u ) {
+        *rp = 0; *dnp = (P)ONEM; return;
+      } else {
+        mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+        r = u;
+      }
+    }
+  }
+  *rp = r;
+  *dnp = dn;
+}
+
 void dp_removecont2(DP p1,DP p2,DP *r1p,DP *r2p,Z *contp)
 {
   struct oVECT v;
@@ -1744,6 +1879,67 @@ last:
     d->sugar = sugar;
   }
   *rp = d; *nmp = nm; *dnp = dn;
+}
+
+void dp_true_nf_marked_check_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
+{
+  DP hp,u,p,d,s,t,dmy;
+  NODE l,done;
+  MP m,mr;
+  int i,n;
+  int *wb;
+  int sugar,psugar;
+  P dn,tdn,tdn1;
+  int count = 0;
+  int threshold;
+
+  threshold = GwThreshold?ZTOS((Z)ARG0(BDY(GwThreshold))):1000;
+  if ( threshold == 0 ) {
+    *rp = (DP)VOIDobj;
+    *dnp = (P)ONEM;
+    return;
+  }
+  dn = (P)ONEM;
+  if ( !g ) {
+    *rp = 0; *dnp = dn; return;
+  }
+  for ( n = 0, l = b; l; l = NEXT(l), n++ );
+  wb = (int *)ALLOCA(n*sizeof(int));
+  for ( i = 0, l = b; i < n; l = NEXT(l), i++ )
+    wb[i] = ZTOS((Q)BDY(l));
+  sugar = g->sugar;
+  done = 0;
+  dp_separate_normal(g,hps,wb,n,&d,&u); g = u;
+  for ( ; g; ) {
+    for ( u = 0, i = 0; i < n; i++ ) {
+      if ( dp_redble(g,hp = hps[wb[i]]) ) {
+        for ( l = done; l; l = NEXT(l) )
+          if ( dl_equal(g->nv,BDY(g)->dl,(DL)BDY(l)) ) { count++; break; }
+        if ( l != 0 && count > threshold ) {
+          *rp = (DP)VOIDobj;
+          *dnp = (P)ONEM;
+          return;
+        }
+        MKNODE(l,BDY(g)->dl,done); done = l;
+        p = ps[wb[i]];
+        dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&dmy);  
+        psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
+        sugar = MAX(sugar,psugar);
+        if ( !u ) {
+          goto last;
+        } else {
+          mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
+        }
+        break;
+      }
+    }
+    dp_separate_normal(u,hps,wb,n,&t,&g);
+    addmd(CO,mod,d,t,&u); d = u;
+  }
+last:
+  if ( d )
+    d->sugar = sugar;
+  *rp = d; *dnp = dn;
 }
 
 void dp_true_nf_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp)
@@ -2463,15 +2659,14 @@ DP *dp_true_nf_and_quotient_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp
     for ( u = 0, i = 0; i < n; i++ ) {
       if ( dp_redble(g,hp = hps[wb[i]]) ) {
         p = ps[wb[i]];
-        dp_red_marked_mod(d,g,p,hp,mod,&t,&u,&tdn,&mult);  
+        _dp_red_marked_mod(&d,g,p,hp,mod,&u,&tdn,&mult);  
         psugar = (BDY(g)->dl->td - BDY(p)->dl->td) + p->sugar;
         sugar = MAX(sugar,psugar);
         for ( j = 0; j < n; j++ ) {
-          mulmdc(CO,mod,q[j],(P)tdn,&dmy); q[j] = dmy;
+          _mulmdc(CO,mod,&q[j],(Obj)tdn);
         }
         addmd(CO,mod,q[wb[i]],mult,&dmy); q[wb[i]] = dmy;
         mulmp(CO,mod,dn,tdn,&tdn1); dn = tdn1;
-        d = t;
         if ( !u ) goto last;
         break;
       }
@@ -2479,12 +2674,18 @@ DP *dp_true_nf_and_quotient_marked_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp
     if ( u )
       g = u;
     else {
-      m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
-      NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
-      addmd(CO,mod,d,t,&s); d = s;
+      if ( d == 0 ) {
+        m = BDY(g); NEWMP(mr); mr->dl = m->dl; mr->c = m->c;
+        NEXT(mr) = 0; MKDP(g->nv,mr,t); t->sugar = mr->dl->td;
+        d = t;
+      } else {
+        for ( m = BDY(d); NEXT(m) != 0; m = NEXT(m) );
+        NEWMP(mr); *mr = *BDY(g); NEXT(mr) = 0; NEXT(m) = mr;
+        d->sugar = MAX(d->sugar,mr->dl->td);
+      }
       dp_rest(g,&t); g = t;
     }
-  }
+  } 
 last:
   if ( d )
     d->sugar = sugar;

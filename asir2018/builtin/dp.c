@@ -83,6 +83,7 @@ void Pdp_mbase(NODE arg,LIST *rp);
 void Pdp_etov(NODE arg,VECT *rp);
 void Pdp_vtoe(NODE arg,DP *rp);
 void Pdp_true_lnf(NODE arg,LIST *rp);
+void Pdp_true_lnf_mod(NODE arg,LIST *rp);
 void Pdp_lnf_mod(NODE arg,LIST *rp);
 void Pdp_lnf_f(NODE arg,LIST *rp);
 void Pdp_nf_tab_mod(NODE arg,DP *rp);
@@ -120,6 +121,7 @@ void Pdp_true_nf_and_quotient_marked_mod(NODE arg,LIST *rp);
 void Pdp_true_nf_and_quotient_mod(NODE arg,LIST *rp);
 void Pdp_true_nf_marked(NODE arg,LIST *rp);
 void Pdp_true_nf_marked_check(NODE arg,LIST *rp);
+void Pdp_true_nf_marked_check_mod(NODE arg,LIST *rp);
 void Pdp_true_nf_marked_mod(NODE arg,LIST *rp);
 void Pdp_weyl_nf_mod(NODE arg,DP *rp);
 void Pdp_true_nf_mod(NODE arg,LIST *rp);
@@ -279,8 +281,10 @@ struct ftab dp_tab[] = {
   {"dp_true_nf_mod",Pdp_true_nf_mod,5},
   {"dp_true_nf_marked",Pdp_true_nf_marked,4},
   {"dp_true_nf_marked_check",Pdp_true_nf_marked_check,4},
+  {"dp_true_nf_marked_check_mod",Pdp_true_nf_marked_check_mod,5},
   {"dp_true_nf_marked_mod",Pdp_true_nf_marked_mod,5},
   {"dp_true_lnf",Pdp_true_lnf,-3},
+  {"dp_true_lnf_mod",Pdp_true_lnf_mod,-4},
 
   {"dp_true_nf_and_quotient",Pdp_true_nf_and_quotient,3},
   {"dp_true_nf_and_quotient_mod",Pdp_true_nf_and_quotient_mod,4},
@@ -2108,6 +2112,8 @@ void Pdp_true_nf(NODE arg,LIST *rp)
 
 void dp_true_lnf(DP f,NODE g,DP *nm,P *dn);
 void dp_true_lnf_marked(DP f,NODE g,NODE h,DP *nm,P *dn);
+void dp_true_lnf_mod(DP f,NODE g,int mod,DP *nm,P *dn);
+void dp_true_lnf_marked_mod(DP f,NODE g,NODE h,int mod,DP *nm,P *dn);
 
 void Pdp_true_lnf(NODE arg,LIST *rp)
 {
@@ -2123,6 +2129,25 @@ void Pdp_true_lnf(NODE arg,LIST *rp)
     dp_true_lnf(f,BDY((LIST)ARG1(arg)),&nm,&dn);
   } else {
     dp_true_lnf_marked(f,BDY((LIST)ARG1(arg)),BDY((LIST)ARG2(arg)),&nm,&dn);
+  }
+  n = mknode(2,nm,dn);
+  MKLIST(*rp,n);
+}
+
+void Pdp_true_lnf_mod(NODE arg,LIST *rp)
+{
+  DP f,nm;
+  P dn;
+  NODE n;
+
+  asir_assert(ARG0(arg),O_DP,"dp_true_nf_mod");
+  asir_assert(ARG1(arg),O_LIST,"dp_true_nf_mod");
+  if ( !(f = (DP)ARG0(arg)) ) {
+    nm = 0; dn = (P)ONEM;
+  } else if ( argc(arg) == 3 ) {
+    dp_true_lnf_mod(f,BDY((LIST)ARG1(arg)),ZTOS((Z)ARG2(arg)),&nm,&dn);
+  } else {
+    dp_true_lnf_marked_mod(f,BDY((LIST)ARG1(arg)),BDY((LIST)ARG2(arg)),ZTOS((Z)ARG3(arg)),&nm,&dn);
   }
   n = mknode(2,nm,dn);
   MKLIST(*rp,n);
@@ -2256,6 +2281,37 @@ void Pdp_true_nf_marked_check(NODE arg,LIST *rp)
     dp_true_nf_marked_check(b,g,ps,hps,&nm,(P *)&cont,(P *)&dn);
   }
   n = mknode(3,nm,cont,dn);
+  MKLIST(*rp,n);
+}
+
+void dp_true_nf_marked_check_mod(NODE b,DP g,DP *ps,DP *hps,int mod,DP *rp,P *dnp);
+
+void Pdp_true_nf_marked_check_mod(NODE arg,LIST *rp)
+{
+  NODE b,n;
+  DP *ps,*hps;
+  DP g;
+  DP nm;
+  Q cont;
+  P dn;
+  int full,mod;
+
+  do_weyl = 0; dp_fcoeffs = 0;
+  asir_assert(ARG0(arg),O_LIST,"dp_true_nf_marked_check_mod");
+  asir_assert(ARG1(arg),O_DP,"dp_true_nf_marked_check_mod");
+  asir_assert(ARG2(arg),O_VECT,"dp_true_nf_marked_check_mod");
+  asir_assert(ARG3(arg),O_VECT,"dp_true_nf_marked_check_mod");
+  asir_assert(ARG4(arg),O_N,"dp_true_nf_marked_check_mod");
+  if ( !(g = (DP)ARG1(arg)) ) {
+    nm = 0; dn = (P)ONE;
+  } else {
+    b = BDY((LIST)ARG0(arg)); 
+    ps = (DP *)BDY((VECT)ARG2(arg));
+    hps = (DP *)BDY((VECT)ARG3(arg));
+    mod = (int)ZTOS((Z)ARG4(arg));
+    dp_true_nf_marked_check_mod(b,g,ps,hps,mod,&nm,(P *)&dn);
+  }
+  n = mknode(2,nm,dn);
   MKLIST(*rp,n);
 }
 

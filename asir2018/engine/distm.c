@@ -478,6 +478,27 @@ void mulmdc(VL vl,int mod,DP p,P c,DP *pr)
   }
 }
 
+void _mulmdc(VL vl,int mod,DP *p,P c)
+{
+  MP m;
+  int t;
+  MQ q;
+  P obj;
+
+  if ( *p == 0|| c == 0 )
+    *p = 0;
+  else {
+    for ( m = BDY(*p); m; m = NEXT(m) ) {
+      if ( NUM(C(m)) && NUM(c) ) {
+        t = dmar(((MQ)(C(m)))->cont,((MQ)c)->cont,0,mod);
+        STOMQ(t,q); C(m) = (Obj)q;
+      } else {
+        mulmp(vl,mod,(P)C(m),c,&obj); C(m) = (Obj)obj;
+      }
+    }
+  }
+}
+
 void divsmdc(VL vl,int mod,DP p,P c,DP *pr)
 {
   MP m,mr,mr0;
