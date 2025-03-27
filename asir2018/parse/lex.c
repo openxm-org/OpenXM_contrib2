@@ -136,7 +136,7 @@ int yylex()
   Real real;
 //  double atof();
   extern int bigfloat;
-
+  extern int I_am_server;
   
   /* initialize buffer pointers */
   nbuf = nbuf0; tbuf = tbuf0;
@@ -146,7 +146,7 @@ int yylex()
     case EOF :  
       asir_terminate(2); break;
     case ';' :
-      if ( do_fep && asir_infile->fp != 0 && isatty(fileno(asir_infile->fp)) ) {
+      if ( I_am_server || (do_fep && asir_infile->fp != 0 && isatty(fileno(asir_infile->fp))) ) {
         return c;
       } else {
         if ( (c1 = Getc()) == c ) return SEMISEMI;
