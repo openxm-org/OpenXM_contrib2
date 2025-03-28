@@ -240,7 +240,7 @@ void debug(SNODE f)
     bzero(buf,BUFSIZ);
     while ( 1 ) {
 #if FEP
-      if ( do_fep ) {
+      if ( !do_server_in_X11 && do_fep ) {
         line = (char *)readline_console(prompt);
         strcpy(buf,line); free(line);
       } else
