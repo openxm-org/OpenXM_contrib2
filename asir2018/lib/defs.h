@@ -49,17 +49,35 @@
 */
 /* some useful macros */
 
-#define VOID -1
-#define ZERO 0
-#define NUM 1
-#define POLY 2
-#define RAT 3
-#define LIST 4 
-#define VECT 5
-#define MAT 6
-#define STR 7
-#define STRUCT 8
-#define DPOLY 9
+#define O_VOID -1
+#define O_ZERO 0
+#define O_NUM 1
+#define O_POLY 2
+#define O_RAT 3
+#define O_LIST 4 
+#define O_VECT 5
+#define O_MAT 6
+#define O_STR 7
+#define O_STRUCT 8
+#define O_DPOLY 9
+#define O_USINT 10
+#define O_ERR 11
+#define O_GF2MAT 12
+#define O_MATHCAP 13
+#define O_F 14
+#define O_GFMMAT 15
+#define O_BYTEARRAY 16
+#define O_QUOTE 17
+#define O_OPTLIST 18
+#define O_SYMBOL 19
+#define O_RANGE 20
+#define O_TB 21
+#define O_DPV 22
+#define O_QUOTEARG 23
+#define O_VOID -1
+#define O_IMAT 24
+#define O_NBP 25
+#define O_DPM 26
 
 #define N_Q 0
 #define N_R 1
@@ -72,16 +90,33 @@
 #define V_PF 2
 #define V_SR 3
 
-#define isvoid(a) (type(a)==VOID)
-#define isnum(a) (type(a)==NUM)
-#define ispoly(a) (type(a)==POLY)
-#define israt(a) (type(a)==RAT)
-#define islist(a) (type(a)==LIST)
-#define isvect(a) (type(a)==VECT)
-#define ismat(a) (type(a)==MAT)
-#define isstr(a) (type(a)==STR)
-#define isstruct(A) (type(A)==STRUCT)
-#define isdpoly(a) (type(a)==DPOLY)
+#define isvoid(a) (type(a)==O_VOID)
+#define isnum(a) (type(a)==O_NUM)
+#define ispoly(a) (type(a)==O_POLY)
+#define israt(a) (type(a)==O_RAT)
+#define islist(a) (type(a)==O_LIST)
+#define isvect(a) (type(a)==O_VECT)
+#define ismat(a) (type(a)==O_MAT)
+#define isstr(a) (type(a)==O_STR)
+#define isstruct(A) (type(A)==O_STRUCT)
+#define isdpoly(a) (type(a)==O_DPOLY)
+#define isusint(a) (type(a)==O_USINT)
+#define iserr(a) (type(a)==O_ERR)
+#define isgf2mat(a) (type(a)==O_GF2MAT)
+#define ismathcap(a) (type(a)==O_MATHCAP)
+#define isf(a) (type(a)==O_F)
+#define isgfmmat(a) (type(a)==O_GFMMAT)
+#define isbytearray(a) (type(a)==O_BYTEARRAY)
+#define isquote(a) (type(a)==O_QUOTE)
+#define isoptlist(a) (type(a)==O_OPTLIST)
+#define issymbol(a) (type(a)==O_SYMBOl)
+#define isrange(a) (type(a)==O_RANGE)
+#define istb(a) (type(a)==O_TB)
+#define isdpv(a) (type(a)==O_DPV)
+#define isquotearg(a) (type(a)==O_QUOTEARG)
+#define isimat(a) (type(a)==O_IMAT)
+#define isnbp(a) (type(a)==O_NBP)
+#define isdpm(a) (type(a)==O_DPM)
 
 #define isnum_int(a) ((a)==0 || (type((a))==NUM && ntype((a))==N_Q && dn((a))==1))
 
