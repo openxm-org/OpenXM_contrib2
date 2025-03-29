@@ -179,13 +179,13 @@ void arf_mul(VL vl,Obj a,Obj b,Obj *r)
           notdef(vl,a,b,r);
         break;
       case O_MAT:
-        if ( bid <= O_R || bid == O_VECT || bid == O_DP )
+        if ( bid <= O_R || bid == O_VECT || bid == O_DP || bid == O_DPM )
           (*afunc[O_MAT].mul)(vl,a,b,r);
         else
           notdef(vl,a,b,r);
         break;
       case O_VECT:
-        if ( bid <= O_R || bid == O_DP )
+        if ( bid <= O_R || bid == O_DP || bid == O_DPM )
           (*afunc[O_VECT].mul)(vl,a,b,r);
         else if ( bid == O_MAT )
           (*afunc[O_MAT].mul)(vl,a,b,r);
@@ -203,6 +203,8 @@ void arf_mul(VL vl,Obj a,Obj b,Obj *r)
       case O_DPM:
         if ( bid <= O_R || bid == O_DP )
           (*afunc[O_DPM].mul)(vl,b,a,r);
+        else if ( bid == O_MAT || bid == O_VECT )
+          (*afunc[bid].mul)(vl,a,b,r);
         else
           notdef(vl,a,b,r);
         break;

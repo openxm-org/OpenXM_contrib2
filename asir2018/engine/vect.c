@@ -96,9 +96,9 @@ void mulvect(VL vl,Obj a,Obj b,Obj *c)
 {
   if ( !a || !b )
     *c = 0;
-  else if ( OID(a) <= O_R || OID(a) == O_DP )
+  else if ( OID(a) <= O_R || OID(a) == O_DP || OID(a) == O_DPM )
     mulrvect(vl,a,(VECT)b,(VECT *)c);
-  else if ( OID(b) <= O_R || OID(b) == O_DP )
+  else if ( OID(b) <= O_R || OID(b) == O_DP || OID(b) == O_DPM )
     mulrvect(vl,b,(VECT)a,(VECT *)c);
   else
     notdef(vl,a,b,c);

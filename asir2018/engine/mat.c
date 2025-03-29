@@ -215,9 +215,9 @@ void mulmat(VL vl,Obj a,Obj b,Obj *c)
         *c = 0;
         break;
     }
-  } else if ( OID(a) <= O_R || OID(a) == O_DP )
+  } else if ( OID(a) <= O_R || OID(a) == O_DP || OID(a) == O_DPM )
     mulrmat(vl,(Obj)a,(MAT)b,(MAT *)c);
-  else if ( OID(b) <= O_R || OID(b) == O_DP )
+  else if ( OID(b) <= O_R || OID(b) == O_DP || OID(b) == O_DPM )
     mulrmat(vl,(Obj)b,(MAT)a,(MAT *)c);
   else
     switch ( OID(a) ) {
