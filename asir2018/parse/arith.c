@@ -200,6 +200,12 @@ void arf_mul(VL vl,Obj a,Obj b,Obj *r)
         else
           notdef(vl,a,b,r);
         break;
+      case O_DPM:
+        if ( bid <= O_R || bid == O_DP )
+          (*afunc[O_DPM].mul)(vl,b,a,r);
+        else
+          notdef(vl,a,b,r);
+        break;
       case O_IMAT:
         (*afunc[O_IMAT].mul)(vl,a,b,r);
         break;
