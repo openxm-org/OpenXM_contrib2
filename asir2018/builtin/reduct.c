@@ -74,6 +74,8 @@ void Pred(NODE arg,Obj *rp)
   struct oNODE arg0;
   MP m,mp,mp0;
   DP d;
+  DMM dm,dm0,dm1;
+  DPM dd;
 
   a = (Obj)ARG0(arg);
   if ( !a ) {
@@ -138,6 +140,27 @@ void Pred(NODE arg,Obj *rp)
         MKDP(NV((DP)a),mp0,d);
         d->sugar = ((DP)a)->sugar;
         *rp = (Obj)d;
+      } else
+        *rp = 0;
+
+      break;
+    case O_DPM:
+      dm0 = 0;
+      for ( dm1 = BDY((DPM)a); dm1; dm1 = NEXT(dm1) ) {
+        arg0.body = (pointer)C(dm1);
+        arg0.next = 0;
+        Pred(&arg0,&b);
+        if ( b ) {
+          NEXTDMM(dm0,dm);
+          C(dm) = b;
+          dm->dl = dm1->dl;
+          dm->pos = dm1->pos;
+        }
+      }
+      if ( dm0 ) {
+        MKDPM(NV((DPM)a),dm0,dd);
+        dd->sugar = ((DPM)a)->sugar;
+        *rp = (Obj)dd;
       } else
         *rp = 0;
 
