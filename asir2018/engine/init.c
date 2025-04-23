@@ -355,6 +355,7 @@ void create_new_lprimes64(int index)
 #define MAXTHREADS 64
 
 #if defined(VISUAL)
+#if 0
 void *thread_args[MAXTHREADS];
 static HANDLE thread[MAXTHREADS];
 static CRITICAL_SECTION work_mutex;
@@ -447,6 +448,7 @@ void create_and_execute_worker(int nworker,WORKER_FUNC func)
   }
   WaitForMultipleObjects(nworker,thread,TRUE,INFINITE);
 }
+#endif
 #else
 #include <unistd.h>
 #include <sys/types.h>

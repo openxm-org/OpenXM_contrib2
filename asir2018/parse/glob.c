@@ -584,10 +584,12 @@ void int_handler(int sig)
     caught_intr = 1;
     return;
   }
+#if !defined(VISUAL) && !defined(__MINGW32__) 
   if ( thread_working != 0 ) {
     caught_intr = 1;
     return;
   }
+#endif
 #if defined(VISUAL) || defined(__MINGW32__)
   suspend_timer();
 #endif
