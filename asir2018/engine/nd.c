@@ -71,6 +71,7 @@ static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb,nd_allbase;
+static int nd_nocrit;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check,nd_sba_nosigrange,nd_sba_minsig;
 static int nd_top,nd_sba_syz,nd_sba_inputisgb,nd_sba_heu;
 static int *nd_gbblock;
@@ -3814,13 +3815,16 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
       return d;
     }
   }
-  d = crit_B(d,t);
+  if ( !nd_nocrit )
+    d = crit_B(d,t);
   d1 = nd_newpairs(g,t);
   len0 = ndplength(d1); 
-  d1 = crit_M(d1);
-  d1 = crit_F(d1);
+  if ( !nd_nocrit )
+    d1 = crit_M(d1);
+  if ( !nd_nocrit )
+    d1 = crit_F(d1);
   NcriMF += len0-ndplength(d1); 
-  if ( gensyz || do_weyl )
+  if ( nd_nocrit || gensyz || do_weyl )
     head = d1;
   else {
     prev = 0; cur = head = d1;
@@ -11187,6 +11191,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
   nd_hpdata = 0; nd_sba_heu = 0; nd_sba_nosigrange = 0; nd_sba_minsig = 0;
   nd_thread = 0;
+  nd_nocrit = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -11200,6 +11205,8 @@ void parse_nd_option(VL vl,NODE opt)
       nd_nora = value?1:0;
     else if ( !strcmp(key,"norb") )
       nd_norb = value?1:0;
+    else if ( !strcmp(key,"nocrit") )
+      nd_nocrit = value?1:0;
     else if ( !strcmp(key,"allbase") ) {
       nd_allbase = value?1:0; 
       if ( nd_allbase != 0 ) {
