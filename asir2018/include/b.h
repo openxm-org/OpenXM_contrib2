@@ -71,7 +71,7 @@
         chsgnq((Q)x,(Q *)&y); } \
     else if (NID((Q)x)==N_R) { \
         Real t__; NEWReal(t__); BDY(t__)= -BDY((Real)x); (y) = (P)t__; } \
-    else {P t__; (*chsgnnumt[NID((Q)x)])(x,&t__); (y) = t__; } }
+    else {P t__; (*chsgnnumt[NID((Q)x)])(x,(Num *)&t__); (y) = t__; } }
 #define ADDQ(x,y,z) addq(x,y,z)
 #define SUBQ(x,y,z) subq(x,y,z)
 #define MULQ(x,y,z) mulq(x,y,z)

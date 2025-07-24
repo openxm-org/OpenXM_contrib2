@@ -72,7 +72,7 @@ void addpq(P p,P q,P *pr)
   P t;
 
   if ( NUM(p) ) 
-    ADDNUM(p,q,pr);
+    ADDNUM((Num)p,(Num)q,(Num *)pr);
   else {
     dc = DC(p);
     for ( dcr0 = 0; dc && cmpz(DEG(dc),0) > 0; dc = NEXT(dc) ) {
@@ -202,7 +202,7 @@ void mulpq(P p,P q,P *pr)
   else if ( Uniq(q) ) 
     *pr = p;
   else if ( NUM(p) ) 
-    MULNUM(p,q,pr);
+    MULNUM((Num)p,(Num)q,(Num *)pr);
   else {
     for ( dcr0 = 0, dc = DC(p); dc; dc = NEXT(dc) ) {
       MULPQ(COEF(dc),q,&t);
@@ -262,7 +262,7 @@ void pwrp(VL vl,P p,Z q,P *pr)
   else if ( UNIQ(q) ) 
     *pr = p;
   else if ( NUM(p) ) 
-    PWRNUM(p,(Q)q,pr);
+    PWRNUM((Num)p,(Q)q,(Num *)pr);
   else {
     dc = DC(p);
     if ( !NEXT(dc) ) {
