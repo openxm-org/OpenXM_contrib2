@@ -2783,6 +2783,23 @@ init_eg(&eg_update);
   }
   while ( d ) {
 again:
+    if ( nd_hpdata ) {
+      int dg,sugar0;
+
+      dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
+      if ( dg < 0 ) {
+         int d_len;
+         for ( d_len = 0; d; d = d->next, d_len++);
+         fprintf(asir_out,"[%d] We found a gb\n",d_len);
+         break;
+      }
+      sugar0 = sugar;
+      while ( d && dg > sugar0 ) {
+        if ( DP_Print ) fprintf(asir_out,"%d:",sugar0);
+        d = nd_remove_same_sugar(d,sugar0);
+        sugar0++;
+      }
+    }
     l = nd_minp(d,&d);
     if ( MaxDeg > 0 && SG(l) > MaxDeg ) break;
     if ( SG(l) != sugar ) {
@@ -2855,20 +2872,7 @@ get_eg(&eg2); add_eg(&eg_update,&eg1,&eg2);
       g = update_base(g,nh);
       FREENDP(l);
       if ( nd_hpdata ) {
-        int dg,sugar0;
-
         update_hpdata(&current_hpdata,nh); 
-        dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
-        if ( dg < 0 ) {
-           int d_len;
-           for ( d_len = 0; d; d = d->next, d_len++);
-           fprintf(asir_out,"[%d] We found a gb\n",d_len);
-        }
-        sugar0 = sugar;
-        while ( d && dg > sugar0 ) {
-          d = nd_remove_same_sugar(d,sugar0);
-          sugar0++;
-        }
       }
     } else {
       Nnfz++;
@@ -3581,6 +3585,22 @@ NODE nd_gb_trace(int m,int ishomo,int **indp)
 
   while ( d ) {
 again:
+    if ( nd_hpdata ) {
+      int dg,sugar0;
+      dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
+      if ( dg < 0 ) {
+        int d_len;
+        for ( d_len = 0; d; d = d->next, d_len++);
+        fprintf(asir_out,"[%d] We found a gb\n",d_len);
+        break;
+      }
+      sugar0 = sugar;
+      while ( d && dg > sugar0 ) {
+        if ( DP_Print ) fprintf(asir_out,"%d:",sugar0);
+        d = nd_remove_same_sugar(d,sugar0);
+        sugar0++;
+      }
+    }
     l = nd_minp(d,&d);
     if ( MaxDeg > 0 && SG(l) > MaxDeg ) break;
     if ( SG(l) != sugar ) {
@@ -3673,20 +3693,7 @@ again:
         d = update_pairs(d,g,nh,0);
         g = update_base(g,nh);
         if ( nd_hpdata ) {
-          int dg,sugar0;
-
           update_hpdata(&current_hpdata,nh);
-          dg = comp_hn(final_hpdata.hn,current_hpdata.hn);
-          if ( dg < 0 ) {
-             int d_len;
-             for ( d_len = 0; d; d = d->next, d_len++);
-             fprintf(asir_out,"[%d] We found a gb\n",d_len);
-          }
-          sugar0 = sugar;
-          while ( d && dg > sugar0 ) {
-            d = nd_remove_same_sugar(d,sugar0);
-            sugar0++;
-          }
         }
       } else {
         if ( DP_Print ) { fprintf(asir_out,"*"); fflush(asir_out); }

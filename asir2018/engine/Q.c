@@ -166,6 +166,8 @@ void subz(Z n1,Z n2,Z *nr)
   }
 }
 
+unsigned long maxmpz;
+
 void mulz(Z n1,Z n2,Z *nr)
 {
   mpz_t t;
@@ -179,6 +181,7 @@ void mulz(Z n1,Z n2,Z *nr)
   else if ( MUNIQ(n2) ) chsgnz(n1,nr);
   else {
     mpz_init(t); mpz_mul(t,BDY(n1),BDY(n2)); MPZTOZ(t,*nr);
+    maxmpz = MAX(maxmpz,z_bits((Q)*nr));
   }
 }
 
