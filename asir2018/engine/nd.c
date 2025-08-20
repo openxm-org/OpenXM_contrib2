@@ -5339,6 +5339,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   nd_module = 0;
   nd_demand = 0;
   Nsamesig = 0;
+  nd_free_private_storage();
   if ( DP_Multiple )
     nd_scale = ((double)DP_Multiple)/(double)(Denominator?Denominator:1);
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
@@ -12839,8 +12840,8 @@ int nd_symbolic_preproc_s(PGeoBucket bucket,int trace,SIG minsig,UINT **s0vect,N
   PGeoBucket tbucket;
   ND t;
 
-  printf("minsig="); print_sig(minsig);
-  printf("\n");
+//  printf("minsig="); print_sig(minsig);
+//  printf("\n");
   s0 = 0; rp0 = 0; col = 0;
   if ( nd_demand )
     ps = trace?nd_ps_trace_sym:nd_ps_sym;
@@ -13837,12 +13838,12 @@ again :
     if ( i == nd_nbase ) continue;
 
     sugar = dmin[i]->sugar;
-    fprintf(stderr,"%d",sugar); 
+//    fprintf(stderr,"%d",sugar); 
     k = 0;
     for ( i = 0; i < nd_nbase; i++ )
       for ( j = 0, t = dmin[i]; t; t = NEXT(t), k++ );
-    printf("\nsugar=%d:number of spairs=%d\n",sugar,k);
     if ( k == 1 ) {
+      if ( DP_Print ) { printf("{%d}(%d)",sugar,k); fflush(stdout); }
       for ( i = 0; i < nd_nbase; i++ ) {
         if ( dmin[i] != 0 ) {
           NEXT(dmin[i]) = d[i]; d[i] = dmin[i];
@@ -13928,6 +13929,7 @@ again :
         nd_reconstruct_s(0,d);
         goto again;
       }
+      if ( DP_Print ) { printf("{%d}(%d)",sugar,k); fflush(stdout); }
       if ( bucket->m < 0 ) continue;
     get_eg(&eg1);
       col = nd_symbolic_preproc_s(bucket,0,minsig,&s0vect,&rp0);
@@ -13945,7 +13947,7 @@ again :
       }
       // inital reducer list expressed by IndexArray
     get_eg(&eg1);
-      printf("number of reducers=%d\n",length(rp0));
+//      printf("number of reducers=%d\n",length(rp0));
       redlist = ica_conv_ind_pairs(rp0,s0vect,col);
       redarray = ica_redlist_to_array(redlist,col);
     get_eg(&eg2); add_eg(&eg_ia,&eg1,&eg2);
