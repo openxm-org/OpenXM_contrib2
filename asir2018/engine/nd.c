@@ -11340,17 +11340,33 @@ ND nd_mul_nm(int mod,NM m0,ND p)
 {
   UINT *d0;
   int c0,c1,c;
+  P cp;
   NM tm,mr,mr0;
   ND r;
+  NDV p1;
 
   if ( !p ) return 0;
+  if ( do_weyl ) {
+    p1 = ndtondv(mod,p);
+    r = weyl_ndv_mul_nm(mod,m0,p1);
+    return r;
+  }
   d0 = DL(m0);
-  c0 = CM(m0);
   mr0 = 0;
-  for ( tm = BDY(p); tm; tm = NEXT(tm) ) {
-    NEXTNM(mr0,mr);
-  c = CM(tm); DMAR(c0,c,0,mod,c1); CM(mr) = c1;
-  ndl_add(d0,DL(tm),DL(mr));
+  if ( mod ) {
+    c0 = CM(m0);
+    for ( tm = BDY(p); tm; tm = NEXT(tm) ) {
+      NEXTNM(mr0,mr);
+      c = CM(tm); DMAR(c0,c,0,mod,c1); CM(mr) = c1;
+      ndl_add(d0,DL(tm),DL(mr));
+    }
+  } else {
+    cp = CP(m0);
+    for ( tm = BDY(p); tm; tm = NEXT(tm) ) {
+      NEXTNM(mr0,mr);
+      mulp(CO,CP(tm),cp,&CP(mr));
+      ndl_add(d0,DL(tm),DL(mr));
+    }
   }
   NEXT(mr) = 0;
   MKND(NV(p),mr0,LEN(p),r);
@@ -11415,6 +11431,36 @@ ND *btog(NODE ti,ND **p,int nb,int mod)
   if ( ci != 1 )
     for ( i = 0; i < nb; i++ ) nd_mul_c(mod,rd[i],ci);
    return rd;
+}
+
+ND *btog_q(NODE ti,ND **p,int nb)
+{
+  ND *r;
+  int i;
+  NODE t,s;
+  ND m,tp;
+  ND *pi;
+  P c;
+  Q inv;
+
+  r = (ND *)CALLOC(sizeof(ND),nb);
+  for ( t = ti; t; t = NEXT(t) ) {
+    s = BDY((LIST)BDY(t));
+    if ( ARG0(s) ) {
+      // s = [c,i,m,d] => f <- (cf+p[i]*m)/d
+      c = (P)ARG0(s);
+      for ( i = 0; i < nb; i++ ) nd_mul_c_q(r[i],c);
+      m = mdptond((DP)ARG2(s));
+      pi = p[ZTOS((Q)ARG1(s))];
+      for ( i = 0; i < nb; i++ ) {
+        tp = nd_mul_nm(0,BDY(m),pi[i]);
+        r[i] = nd_add(0,r[i],tp);
+      }
+    }
+    invq((Q)ARG3(s),&inv);
+    for ( i = 0; i < nb; i++ ) nd_mul_c_q(r[i],(P)inv);
+  }
+  return r;
 }
 
 /* YYY */
@@ -11497,6 +11543,7 @@ ND btog_one(NODE ti,ND *p,int nb,int mod)
 }
 
 MAT nd_btog_lf(LIST f,LIST v,struct order_spec *ord,LIST tlist,MAT *rp);
+MAT nd_btog_q(LIST f,LIST v,struct order_spec *ord,LIST tlist,MAT *rp);
 
 MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
 {
@@ -11511,6 +11558,8 @@ MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
 
   if ( mod == -2 )
     return nd_btog_lf(f,v,ord,tlist,rp);
+  if ( mod == 0 )
+    return nd_btog_q(f,v,ord,tlist,rp);
 
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
   parse_nd_option(vv,current_option);
@@ -11566,6 +11615,71 @@ MAT nd_btog(LIST f,LIST v,int mod,struct order_spec *ord,LIST tlist,MAT *rp)
   for ( j = 0, t = ind; j < m; j++, t = NEXT(t) ) 
     for ( i = 0, c = p[ZTOS((Q)BDY(t))]; i < nb; i++ ) 
       BDY(mat)[i][j] = ndtodp(mod,c[i]);
+  return mat;
+}
+
+MAT nd_btog_q(LIST f,LIST v,struct order_spec *ord,LIST tlist,MAT *rp)
+{
+  int i,j,n,m,nb,pi0,pi1,nvar;
+  VL fv,tv,vv;
+  NODE permtrace,perm,trace,intred,ind,t,pi,ti;
+  ND **p;
+  ND *c;
+  ND u;
+  Q inv;
+  MAT mat;
+
+  get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
+  parse_nd_option(vv,current_option);
+  for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
+  switch ( ord->id ) {
+    case 1:
+      if ( ord->nv != nvar )
+        error("nd_check : invalid order specification");
+      break;
+    default:
+      break;
+  }
+  nd_init_ord(ord);
+#if 0
+  nd_bpe = ZTOS((Q)ARG7(BDY(tlist)));
+#else
+  nd_bpe = 32;
+#endif
+  nd_setup_parameters(nvar,0);
+  permtrace = BDY((LIST)ARG2(BDY(tlist))); 
+  intred = BDY((LIST)ARG3(BDY(tlist))); 
+  ind = BDY((LIST)ARG4(BDY(tlist)));
+  perm = BDY((LIST)BDY(permtrace)); trace =NEXT(permtrace);
+  for ( i = length(perm)-1, t = trace; t; t = NEXT(t) ) {
+    j = (int)ZTOS((Q)BDY(BDY((LIST)BDY(t))));
+  if ( j > i ) i = j;
+  }
+  n = i+1;
+  nb = length(BDY(f));
+  p = (ND **)MALLOC(n*sizeof(ND *));
+  for ( t = perm, i = 0; t; t = NEXT(t), i++ ) {
+    pi = BDY((LIST)BDY(t)); 
+    pi0 = (int)ZTOS((Q)ARG0(pi)); pi1 = (int)ZTOS((Q)ARG1(pi));
+    p[pi0] = c = (ND *)MALLOC(nb*sizeof(ND));
+    invq((Q)ARG2(pi),&inv);
+    c[pi1] = ptond(CO,vv,(P)inv);
+  }
+  for ( t = trace,i=0; t; t = NEXT(t), i++ ) {
+    printf("%d ",i); fflush(stdout);
+    ti = BDY((LIST)BDY(t));
+    p[j=(int)ZTOS((Q)ARG0(ti))] = btog_q(BDY((LIST)ARG1(ti)),p,nb);
+  }
+  for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
+    printf("%d ",i); fflush(stdout);
+    ti = BDY((LIST)BDY(t));
+    p[j=(int)ZTOS((Q)ARG0(ti))] = btog_q(BDY((LIST)ARG1(ti)),p,nb);
+  }
+  m = length(ind);
+  MKMAT(mat,nb,m);
+  for ( j = 0, t = ind; j < m; j++, t = NEXT(t) ) 
+    for ( i = 0, c = p[ZTOS((Q)BDY(t))]; i < nb; i++ ) 
+      BDY(mat)[i][j] = ndtodp(0,c[i]);
   return mat;
 }
 
@@ -11648,6 +11762,8 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
   P inv;
   VECT vect;
 
+  if ( mod == 0 )
+    error("nd_btog_one : not implemented yet over the rationals");
   if ( mod == -2 )
     error("nd_btog_one : not implemented yet for a large finite field");
 
