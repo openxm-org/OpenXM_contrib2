@@ -64,6 +64,7 @@ typedef struct oNDV {
 typedef union oNDC {
   long m;
   Z z;
+  Q q;
   LM lm;
   P p;
   R r;
@@ -229,11 +230,13 @@ extern int *current_module_weight_vector;
 #define HCM(d) ((d)->body->c.m)
 #define HCLM(d) ((d)->body->c.lm)
 #define HCZ(d) ((d)->body->c.z)
+#define HCQ(d) ((d)->body->c.q)
 #define HCP(d) ((d)->body->c.p)
 #define HCA(d) ((d)->body->c.a)
 #define CM(x) ((x)->c.m)
 #define CLM(x) ((x)->c.lm)
 #define CZ(x) ((x)->c.z)
+#define CQ(x) ((x)->c.q)
 #define CP(x) ((x)->c.p)
 #define CA(x) ((x)->c.a)
 #define DL(x) ((x)->dl)

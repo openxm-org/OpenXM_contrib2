@@ -7079,7 +7079,7 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
     int i,n2,j,s,curlen,homo,h,a,b,k,l,u,min;
     UINT *d0,*d1,*d,*dt,*ctab;
     Z *ctab_q;
-    Z q,q1;
+    Q q,q1;
     UINT c0,c1,c;
     NM *p;
     NM m,t;
@@ -7097,7 +7097,7 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
     } else if ( nd_vc )
         mulp(nd_vc,CP(m0),CP(m1),&CP(m));
   else
-        mulz(CZ(m0),CZ(m1),&CZ(m));
+        mulq(CQ(m0),CQ(m1),&CQ(m));
     for ( i = 0; i < nd_wpd; i++ ) d[i] = 0;
     homo = n&1 ? 1 : 0;
     if ( homo ) {
@@ -7143,7 +7143,7 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
             } else TD(d) = h;
             if ( nd_blockmask ) ndl_weight_mask(d);
             if ( mod ) c = ctab[j];
-            else q = ctab_q[j];
+            else q = (Q)ctab_q[j];
             p = tab+curlen*j;
             if ( j == 0 ) {
                 for ( u = 0; u < curlen; u++, p++ ) {
@@ -7154,7 +7154,7 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
                         } else if ( nd_vc )
                             mulp(nd_vc,CP(tab[u]),(P)q,&CP(tab[u]));
             else {
-                            mulz(CZ(tab[u]),q,&q1); CZ(tab[u]) = q1;
+                            mulq(CQ(tab[u]),q,&q1); CQ(tab[u]) = q1;
                         }
                     }
                 }
@@ -7168,7 +7168,7 @@ void weyl_mul_nm_nmv(int n,int mod,NM m0,NMV m1,NM *tab,int tlen)
                         } else if ( nd_vc )
                             mulp(nd_vc,CP(tab[u]),(P)q,&CP(t));
             else
-                            mulz(CZ(tab[u]),q,&CZ(t));
+                            mulq(CQ(tab[u]),q,&CQ(t));
                         *p = t;
                     }
                 }
