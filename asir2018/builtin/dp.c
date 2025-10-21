@@ -3819,9 +3819,10 @@ void Pnd_btog(NODE arg,Obj *rp)
   int m,ac,pos;
   struct order_spec *ord;
   NODE node;
-  pointer val;
+  Obj val;
 
   do_weyl = 0;
+  if ( get_opt("weyl",&val) && val ) do_weyl = 1;
   asir_assert(ARG0(arg),O_LIST,"nd_btog");
   asir_assert(ARG1(arg),O_LIST,"nd_btog");
   asir_assert(ARG2(arg),O_N,"nd_btog");
@@ -3840,9 +3841,11 @@ void Pnd_btog(NODE arg,Obj *rp)
     asir_assert(ARG5(arg),O_N,"nd_btog");
     pos = ZTOS((Q)ARG5(arg));
     *rp = nd_btog_one(f,v,m,ord,tlist,pos);
-  } else if ( ac == 5 )
+    do_weyl = 0;
+  } else if ( ac == 5 ) {
     *rp = nd_btog(f,v,m,ord,tlist);
-  else
+    do_weyl = 0;
+  } else
     error("nd_btog : argument mismatch");
 }
 

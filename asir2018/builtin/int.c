@@ -91,8 +91,10 @@ void Pigcdbmod(NODE arg,Z *rp);
 void Pigcdacc(NODE arg,Z *rp);
 void PigcdEuc(NODE arg,Z *rp);
 void Pigcdcntl(NODE arg,Z *rp);
+void Pmaxzsize(NODE arg,Z *rp);
 
 struct ftab int_tab[] = {
+  {"maxzsize",Pmaxzsize,-1},
   {"dp_set_mpi",Pdp_set_mpi,-1},
   {"isqrt",Pisqrt,1},
   {"idiv",Pidiv,2},
@@ -152,6 +154,15 @@ void ibin(unsigned long int n,unsigned long int k,Z *r)
   mpz_init(t);
   mpz_bin_uiui(t,n,k);
   MPZTOZ(t,*r);
+}
+
+extern unsigned long maxmpz;
+
+void Pmaxzsize(NODE arg,Z *rp)
+{
+   if (arg)
+     maxmpz = ZTOS((Z)ARG0(arg));
+   STOZ(maxmpz,*rp);
 }
 
 void Pibin(NODE arg,Z *rp)

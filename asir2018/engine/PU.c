@@ -1090,16 +1090,29 @@ int maxblenp(P p)
 {
   int s,t;
   DCP dc;
+  NODE nd;
 
   if ( !p )
     return 0;
   else if ( OID(p) == O_N )
     return z_bits((Q)p);
-  else {
+  else if ( OID(p) == O_P ) {
     for ( dc = DC(p), s = 0; dc; dc = NEXT(dc) ) {
       t = maxblenp(COEF(dc));
       s = MAX(t,s);
     }
     return s;
+  } else if ( OID(p) == O_R ) {
+    s = maxblenp(((R)p)->nm); 
+    t = maxblenp(((R)p)->dn); 
+    return MAX(s,t);
+  } else if ( OID(p) == O_LIST ) {
+    nd = BDY((LIST)p);
+    t = 0;
+    for ( ; nd; nd = NEXT(nd) ) {
+      s = maxblenp(BDY(nd));
+      t = MAX(t,s);
+    }
+    return t;
   }
 }
