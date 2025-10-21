@@ -65,7 +65,7 @@
 #define SUBNUM(x,y,z) (*subnumt[MAX(NID((Q)x),NID((Q)y))])(x,y,z)
 #define MULNUM(x,y,z) (*mulnumt[MAX(NID((Q)x),NID((Q)y))])(x,y,z)
 #define DIVNUM(x,y,z) (*divnumt[MAX(NID((Q)x),NID((Q)y))])(x,y,z)
-#define PWRNUM(x,y,z) (*pwrnumt[NID((Q)x)])(x,y,z)
+#define PWRNUM(x,y,z) (*pwrnumt[NID((Q)x)])(x,(Num)y,z)
 #define CHSGNNUM(x,y) { \
     if (NID((Q)x)==N_Q) { \
         chsgnq((Q)x,(Q *)&y); } \
