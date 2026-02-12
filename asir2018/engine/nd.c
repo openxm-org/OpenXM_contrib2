@@ -7,6 +7,7 @@ void print_siglist(NODE l);
 NODE nd_hpdata;
 int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs,Nnewpair;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
+struct oEGT eg_B,eg_M,eg_F;
 
 int diag_period = 6;
 int weight_check = 1;
@@ -2839,7 +2840,13 @@ again:
           if ( MPOS(HDL(nf)) > 1 ) return 0;
         } else if ( !(HDL(nf)[nd_exporigin] & nd_mask[0]) ) return 0;
       }
-      if ( DP_Print ) { printf("+"); fflush(stdout); }
+      if ( DP_Print ) { 
+        if ( DP_Print >= 3 ) 
+          printf("(%d)",TD(HDL(nf))); 
+        else
+          printf("+"); 
+        fflush(stdout); 
+      }
       hc = HCU(nf);
       nd_removecont(m,nf);
       if ( !m && nd_nalg ) {
@@ -3808,6 +3815,7 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
 {
   ND_pairs d1,nd,cur,head,prev,remove;
   int len0;
+  struct oEGT eg0,eg1,eg2,eg3;
 
   if ( !g ) return d;
   /* for testing */
@@ -3822,14 +3830,18 @@ ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
       return d;
     }
   }
+  get_eg(&eg0); 
   if ( !nd_nocrit )
     d = crit_B(d,t);
+  get_eg(&eg1); add_eg(&eg_B,&eg0,&eg1);
   d1 = nd_newpairs(g,t);
   len0 = ndplength(d1); 
   if ( !nd_nocrit )
     d1 = crit_M(d1);
+  get_eg(&eg2); add_eg(&eg_M,&eg1,&eg2);
   if ( !nd_nocrit )
     d1 = crit_F(d1);
+  get_eg(&eg3); add_eg(&eg_F,&eg2,&eg3);
   NcriMF += len0-ndplength(d1); 
   if ( nd_nocrit || gensyz || do_weyl )
     head = d1;
@@ -4807,6 +4819,10 @@ int ndv_newps(int m,NDV a,NDV aq)
             nd_ps_sym[nd_psn] = ndv_symbolic(m,nd_ps[nd_psn]);
             nd_ps[nd_psn] = 0;
         }
+    } else if ( Demand ) {
+        // m !=0 and Demand is on
+        void ndvtodp_save_mod(int m,NDV p,int index);
+        ndvtodp_save_mod(m,nd_ps[nd_psn],nd_psn);
     }
     if ( nd_gentrace ) {
         /* reverse the tracelist and append it to alltracelist */
@@ -9417,10 +9433,11 @@ NODE nd_f4(int m,int checkonly,int **indp)
   UINT *s0vect;
   int sugar;
   PGeoBucket bucket;
-  struct oEGT eg0,eg1,eg_f4;
+  struct oEGT eg0,eg1,eg2,eg_f4,eg_nb;
   Z i1,i2,sugarq;
 
   init_eg(&f4_symb); init_eg(&f4_conv); init_eg(&f4_conv); init_eg(&f4_elim1); init_eg(&f4_elim2);
+  init_eg(&eg_B); init_eg(&eg_M); init_eg(&eg_F);
 #if 0
   ndv_alloc = 0;
 #endif
@@ -9489,8 +9506,9 @@ NODE nd_f4(int m,int checkonly,int **indp)
       d = update_pairs(d,g,nh,0);
       g = update_base(g,nh);
     }
+    get_eg(&eg2); init_eg(&eg_nb); add_eg(&eg_nb,&eg1,&eg2);
     if ( DP_Print ) { 
-      fprintf(asir_out,"f4red=%d,gblen=%d\n",f4red,length(g)); fflush(asir_out);
+      fprintf(asir_out,"f4red=%d,nbtime=%.3fsec,gblen=%d\n",f4red,eg_nb.exectime,length(g)); fflush(asir_out);
     }
     if ( nd_gentrace ) {
       for ( t = ll, tn0 = 0; t; t = NEXT(t) ) {
@@ -9519,6 +9537,8 @@ NODE nd_f4(int m,int checkonly,int **indp)
   fprintf(asir_out,"number of red=%d,",Nf4_red);
   fprintf(asir_out,"symb=%.3fsec,conv=%.3fsec,elim1=%.3fsec,elim2=%.3fsec\n",
     f4_symb.exectime,f4_conv.exectime,f4_elim1.exectime,f4_elim2.exectime);
+  fprintf(asir_out,"B=%.3fsec,M=%.3fsec,F=%.3fsec\n",
+    eg_B.exectime,eg_M.exectime,eg_F.exectime);
   fprintf(asir_out,"number of removed pairs=%d\n,",NcriB+NcriMF+Ncri2);
   }
   conv_ilist(nd_demand,0,g,indp);
@@ -10626,6 +10646,20 @@ void nd_save_mod(ND p,int index)
     fclose(s);
 }
 
+void ndvtodp_save_mod(int m,NDV p,int index)
+{
+   DP dp;
+   FILE *s;
+   char name[BUFSIZ];
+
+   sprintf(name,"%s/%d",Demand,index);
+   s = fopen(name,"w");
+   dp = ndvtodp(m,p);
+   savevl(s,0);
+   savedp(s,dp);
+   fclose(s);
+}
+
 NDV ndv_load(int index)
 {
     FILE *s;
@@ -10672,18 +10706,18 @@ NDV ndv_load(int index)
 
 ND nd_load_mod(int index)
 {
-    FILE *s;
-    char name[BUFSIZ];
-    int nv,sugar,len,i,c;
+  FILE *s;
+  char name[BUFSIZ];
+  int nv,sugar,len,i,c;
   ND d;
-    NM m0,m;
+  NM m0,m;
 
-    sprintf(name,"%s/%d",Demand,index);
-    s = fopen(name,"r");
+  sprintf(name,"%s/%d",Demand,index);
+  s = fopen(name,"r");
   /* if the file does not exist, it means p[index]=0 */
-    if ( !s ) return 0;
+  if ( !s ) return 0;
 
-    read_int(s,(unsigned int *)&nv);
+  read_int(s,(unsigned int *)&nv);
   if ( !nv ) { fclose(s); return 0; }
 
     read_int(s,(unsigned int *)&sugar);
@@ -10694,10 +10728,40 @@ ND nd_load_mod(int index)
     read_intarray(s,(unsigned int *)DL(m),nd_wpd);
   }
   NEXT(m) = 0;
-    MKND(nv,m0,len,d);
-    SG(d) = sugar;
+  MKND(nv,m0,len,d);
+  SG(d) = sugar;
   fclose(s);
-    return d;
+  return d;
+}
+
+DP nd_load_mod_byname(char *name)
+{
+  FILE *s;
+  int nv,sugar,len,i,c;
+  ND d;
+  NM m0,m;
+  DP dp;
+
+  s = fopen(name,"r");
+  if ( !s ) return 0;
+
+  read_int(s,(unsigned int *)&nv);
+  if ( !nv ) { fclose(s); return 0; }
+
+    read_int(s,(unsigned int *)&sugar);
+    read_int(s,(unsigned int *)&len);
+  for ( m0 = 0, i = 0; i < len; i++ ) {
+    NEXTNM(m0,m);
+    read_int(s,(unsigned int *)&c); CM(m) = c;
+    read_intarray(s,(unsigned int *)DL(m),nd_wpd);
+  }
+  NEXT(m) = 0;
+  MKND(nv,m0,len,d);
+  SG(d) = sugar;
+  fclose(s);
+  // 2 is a dummy prime
+  dp = ndtodp(2,d);
+  return dp;
 }
 
 void nd_det(int mod,MAT f,P *rp)
@@ -12483,7 +12547,6 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
     }
     /* free index arrays */
     for ( i = 0; i < nred; i++ ) GCFREE(imat[i]->index.c);
-
     /* elimination (2nd step) */
     colstat = (int *)MALLOC(spcol*sizeof(int));
     rank = nd_gauss_elim_mod64(spmat,spsugar,spactive,sprow,spcol,m,colstat);
@@ -12504,6 +12567,7 @@ NODE nd_f4_red_mod64_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
         fprintf(asir_out,"nsp=%d,nred=%d,spmat=(%d,%d),rank=%d ",
             nsp,nred,sprow,spcol,rank);
         fprintf(asir_out,"%.3fsec,",eg_f4.exectime);
+        fflush(asir_out);
     }
     if ( nz ) {
         for ( i = 0; i < rank-1; i++ ) NEXT(spactive[i]) = spactive[i+1];

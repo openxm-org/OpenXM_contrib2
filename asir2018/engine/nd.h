@@ -111,6 +111,11 @@ typedef struct oND_pairs {
   UINT lcm[1];
 } *ND_pairs;
 
+typedef struct oND_pairs_array {
+  int len;
+  ND_pairs *body;
+} *ND_pairs_array;
+
 /* index and shift count for each exponent */
 typedef struct oEPOS {
   int i; /* index */
@@ -275,6 +280,8 @@ extern int *current_module_weight_vector;
 #define NEWND_pairs(m) \
 if(!_ndp_free_list)_NDP_alloc();\
 (m)=_ndp_free_list; (m)->zero = 0; _ndp_free_list = NEXT(_ndp_free_list)   
+#define NEWND_pairs_array(m)\
+(m)=(ND_pairs_array)MALLOC(sizeof(ND_pairs_array)); (m)->body=(ND_pairs *)MALLOC(sizeof(ND_pairs))
 #define NEWNM(m)\
 if(!_nm_free_list)_NM_alloc();\
 (m)=_nm_free_list; _nm_free_list = NEXT(_nm_free_list)   
