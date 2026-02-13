@@ -6,7 +6,7 @@ void print_siglist(NODE l);
 
 NODE nd_hpdata;
 int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs,Nnewpair;
-struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2;
+struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2,f4_nb;
 struct oEGT eg_B,eg_M,eg_F;
 
 int diag_period = 6;
@@ -9437,7 +9437,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
   Z i1,i2,sugarq;
 
   init_eg(&f4_symb); init_eg(&f4_conv); init_eg(&f4_conv); init_eg(&f4_elim1); init_eg(&f4_elim2);
-  init_eg(&eg_B); init_eg(&eg_M); init_eg(&eg_F);
+  init_eg(&eg_B); init_eg(&eg_M); init_eg(&eg_F); init_eg(&f4_nb);
 #if 0
   ndv_alloc = 0;
 #endif
@@ -9490,6 +9490,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
     if ( checkonly && nflist ) return 0;
     /* adding new bases */
     if ( nflist ) nd_last_nonzero = f4red;
+    get_eg(&eg1);
     for ( r = nflist; r; r = NEXT(r) ) {
       nf = (NDV)BDY(r);
       if ( nd_f4_td ) SG(nf) = nd_tdeg(nf);
@@ -9506,7 +9507,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
       d = update_pairs(d,g,nh,0);
       g = update_base(g,nh);
     }
-    get_eg(&eg2); init_eg(&eg_nb); add_eg(&eg_nb,&eg1,&eg2);
+    get_eg(&eg2); init_eg(&eg_nb); add_eg(&eg_nb,&eg1,&eg2); add_eg(&f4_nb,&eg1,&eg2);
     if ( DP_Print ) { 
       fprintf(asir_out,"f4red=%d,nbtime=%.3fsec,gblen=%d\n",f4red,eg_nb.exectime,length(g)); fflush(asir_out);
     }
@@ -9535,11 +9536,11 @@ NODE nd_f4(int m,int checkonly,int **indp)
 #endif
   if ( DP_Print ) {
   fprintf(asir_out,"number of red=%d,",Nf4_red);
-  fprintf(asir_out,"symb=%.3fsec,conv=%.3fsec,elim1=%.3fsec,elim2=%.3fsec\n",
-    f4_symb.exectime,f4_conv.exectime,f4_elim1.exectime,f4_elim2.exectime);
+  fprintf(asir_out,"symb=%.3fsec,conv=%.3fsec,elim1=%.3fsec,elim2=%.3fsec,nb=%.3fsec\n",
+    f4_symb.exectime,f4_conv.exectime,f4_elim1.exectime,f4_elim2.exectime,f4_nb.exectime);
   fprintf(asir_out,"B=%.3fsec,M=%.3fsec,F=%.3fsec\n",
     eg_B.exectime,eg_M.exectime,eg_F.exectime);
-  fprintf(asir_out,"number of removed pairs=%d\n,",NcriB+NcriMF+Ncri2);
+  fprintf(asir_out,"number of removed pairs=%d\n",NcriB+NcriMF+Ncri2);
   }
   conv_ilist(nd_demand,0,g,indp);
   return g;
@@ -9862,6 +9863,7 @@ NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pai
 #endif
     else
         r0 = nd_f4_red_q_main(sp0,nsp,trace,s0vect,col,rvect,rhead,imat,nred);
+    fflush(asir_out);
     return r0;
 }
 
