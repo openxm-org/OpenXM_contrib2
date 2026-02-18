@@ -782,6 +782,7 @@ char *readline_console(char *prompt)
                                 // !pattern
                                 free(line);
                                 line = expansion;
+                                add_history(line);
                                 puts(line);
                                 break;
                         }
