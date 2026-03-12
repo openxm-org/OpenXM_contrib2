@@ -9,6 +9,7 @@ int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs,Nnewpair;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2,f4_nb;
 struct oEGT eg_B,eg_M,eg_F;
 
+int f4red_save;
 int diag_period = 6;
 int weight_check = 1;
 int (*ndl_compare_function)(UINT *a1,UINT *a2);
@@ -6614,7 +6615,9 @@ void nd_setup_parameters(int nvar,int max) {
     if ( max ) {
         /* XXX */
         if ( do_weyl ) nd_bpe = 32;
+#if 1
         else if ( max < 2 ) nd_bpe = 1;
+#endif
         else if ( max < 4 ) nd_bpe = 2;
         else if ( max < 8 ) nd_bpe = 3;
         else if ( max < 16 ) nd_bpe = 4;
@@ -9436,6 +9439,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
   struct oEGT eg0,eg1,eg2,eg_f4,eg_nb;
   Z i1,i2,sugarq;
 
+  f4red_save=0;
   init_eg(&f4_symb); init_eg(&f4_conv); init_eg(&f4_conv); init_eg(&f4_elim1); init_eg(&f4_elim2);
   init_eg(&eg_B); init_eg(&eg_M); init_eg(&eg_F); init_eg(&f4_nb);
 #if 0
@@ -9491,6 +9495,7 @@ NODE nd_f4(int m,int checkonly,int **indp)
     /* adding new bases */
     if ( nflist ) nd_last_nonzero = f4red;
     get_eg(&eg1);
+    f4red_save = f4red;
     for ( r = nflist; r; r = NEXT(r) ) {
       nf = (NDV)BDY(r);
       if ( nd_f4_td ) SG(nf) = nd_tdeg(nf);
@@ -10654,7 +10659,7 @@ void ndvtodp_save_mod(int m,NDV p,int index)
    FILE *s;
    char name[BUFSIZ];
 
-   sprintf(name,"%s/%d",Demand,index);
+   sprintf(name,"%s/%d-%d",Demand,f4red_save,index);
    s = fopen(name,"w");
    dp = ndvtodp(m,p);
    savevl(s,0);
@@ -11879,7 +11884,7 @@ VECT nd_btog_one(LIST f,LIST v,int mod,struct order_spec *ord,
     p[j=(int)ZTOS((Q)ARG0(ti))] = btog_one(BDY((LIST)ARG1(ti)),p,nb,mod);
     if ( Demand ) {
         nd_save_mod(p[j],j); nd_free(p[j]); p[j] = 0;
-  }
+    }
   }
   for ( t = intred, i=0; t; t = NEXT(t), i++ ) {
   printf("%d ",i); fflush(stdout);
