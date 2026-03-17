@@ -96,6 +96,7 @@ typedef struct oRHist {
   struct oRHist *next;
   int index;
   int sugar;
+  int len;
   SIG sig;
   UINT dl[1];
 } *RHist;
@@ -108,6 +109,7 @@ typedef struct oND_pairs {
   int sugar2;
   SIG sig;
   int zero;
+  int hash;
   UINT lcm[1];
 } *ND_pairs;
 
@@ -349,13 +351,14 @@ PGeoBucket create_pbucket();
 
 /* manipulation of pairs and bases */
 int nd_newps(int mod,ND a,ND aq);
-ND_pairs nd_newpairs( NODE g, int t );
+ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab);
 ND_pairs nd_minp( ND_pairs d, ND_pairs *prest );
 ND_pairs nd_minsugarp( ND_pairs d, ND_pairs *prest );
 NODE update_base(NODE nd,int ndp);
 ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz);
 ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest );
-ND_pairs crit_B( ND_pairs d, int s );
+ND_pairs crit_B( ND_pairs d, int s, ND_pairs *dtab);
+// ND_pairs crit_B( ND_pairs d, int s);
 ND_pairs crit_M( ND_pairs d1 );
 ND_pairs crit_F( ND_pairs d1 );
 int crit_2( int dp1, int dp2 );
@@ -455,6 +458,8 @@ INLINE int nd_length(ND p);
 NODE nd_f4_red(int m,ND_pairs sp0,int trace,UINT *s0vect,int col,NODE rp0,ND_pairs *nz);
 NODE nd_f4_red_dist(int m,ND_pairs sp0,UINT *s0vect,int col,NODE rp0, ND_pairs *nz);
 NODE nd_f4_red_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
+  NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
+NODE nd_f4_red_small_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
 NODE nd_f4_red_mod_main(int m,ND_pairs sp0,int nsp,UINT *s0vect,int col,
   NM_ind_pair *rvect,int *rhead,IndArray *imat,int nred,ND_pairs *nz);
