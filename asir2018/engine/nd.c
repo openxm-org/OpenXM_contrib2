@@ -3797,7 +3797,13 @@ ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab )
   UINT *dl;
   int ts,s,i,t0,min,max;
   ND_pairs r,r0;
+  static int wpd=0;
+  static UINT *tmp=0;
 
+  if ( wpd != nd_wpd ) {
+    wpd = nd_wpd;
+    tmp = (UINT *)MALLOC(wpd*sizeof(UINT));
+  }
   dl = DL(nd_psh[t]);
   ts = SG(nd_psh[t]) - TD(dl);
   if ( nd_module && nd_intersect && (MPOS(dl) > (UINT)nd_intersect) ) return 0;
@@ -3814,17 +3820,22 @@ ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab )
       if ( nd_gbblock[i] >= 0 )
         continue;
     }
-    NEXTND_pairs(r0,r); Npairs++;
-    dtab[(long)BDY(h)] = r;
-    r->i1 = (long)BDY(h);
-    r->i2 = t;
-    ndl_lcm(DL(nd_psh[r->i1]),dl,r->lcm);
-    r->hash = ndl_hash_value(r->lcm);
-    s = SG(nd_psh[r->i1])-TD(DL(nd_psh[r->i1]));
-    SG(r) = MAX(s,ts) + TD(LCM(r));
-    /* experimental */
-    if ( nd_sugarweight )
-      r->sugar2 = ndl_weight2(r->lcm); 
+    ndl_lcm(DL(nd_psh[(long)BDY(h)]),dl,tmp);
+    if ( !do_weyl && TD(tmp) == TD(DL(nd_psh[(long)BDY(h)]))+TD(DL(nd_psh[t])) ) {
+      continue;
+    } else {
+      NEXTND_pairs(r0,r); Npairs++;
+      ndl_copy(tmp,r->lcm);
+      dtab[(long)BDY(h)] = r;
+      r->i1 = (long)BDY(h);
+      r->i2 = t;
+      r->hash = ndl_hash_value(r->lcm);
+      s = SG(nd_psh[r->i1])-TD(DL(nd_psh[r->i1]));
+      SG(r) = MAX(s,ts) + TD(LCM(r));
+      /* experimental */
+      if ( nd_sugarweight )
+        r->sugar2 = ndl_weight2(r->lcm); 
+    }
   }
   if ( r0 ) NEXT(r) = 0;
   return r0;
