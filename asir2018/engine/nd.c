@@ -3822,6 +3822,7 @@ ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab )
     }
     ndl_lcm(DL(nd_psh[(long)BDY(h)]),dl,tmp);
     if ( !do_weyl && TD(tmp) == TD(DL(nd_psh[(long)BDY(h)]))+TD(DL(nd_psh[t])) ) {
+      Ncri2++;
       continue;
     } else {
       NEXTND_pairs(r0,r); Npairs++;
@@ -8853,6 +8854,7 @@ int ndv_reduce_vect_small(int m,UINT *svect,int col,IndArray *imat,NM_ind_pair *
         ivect = imat[i];
         k = ivect->head; svect[k] %= m;
         if ( (c = svect[k]) != 0 && (sig == 0 || comp_sig(sig,rp0[i]->sig) > 0 ) ) {
+            Nf4_red++;
             maxrs = MAX(maxrs,rp0[i]->sugar);
             c = m-c; redv = nd_ps[rp0[i]->index];
             len = LEN(redv); mr = BDY(redv);
