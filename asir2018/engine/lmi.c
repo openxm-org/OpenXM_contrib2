@@ -63,8 +63,12 @@ void random_lm(LM *r)
   if ( !current_mod_lm )
     error("random_lm : current_mod_lm is not set");
   randomz(z_bits((Q)current_mod_lm)+1,&n);
-  MKLM(BDY(n),s);
-  simplm_force(s,r);
+  if ( n == 0 ) {
+    *r = 0;
+  } else {
+    MKLM(BDY(n),s);
+    simplm_force(s,r);
+  }
 }
 
 void setmod_lm(Z p)
