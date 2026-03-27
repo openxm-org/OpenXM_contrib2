@@ -3821,7 +3821,7 @@ ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab )
         continue;
     }
     ndl_lcm(DL(nd_psh[(long)BDY(h)]),dl,tmp);
-    if ( !do_weyl && TD(tmp) == TD(DL(nd_psh[(long)BDY(h)]))+TD(DL(nd_psh[t])) ) {
+    if ( !nd_module && !do_weyl && TD(tmp) == TD(DL(nd_psh[(long)BDY(h)]))+TD(DL(nd_psh[t])) ) {
       Ncri2++;
       continue;
     } else {
