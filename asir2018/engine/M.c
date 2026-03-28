@@ -53,7 +53,7 @@
 void addum(int mod,UM p1,UM p2,UM pr)
 {
   register int *c1,*c2,*cr,i,dmax,dmin;
-    
+  
   if ( DEG(p1) == -1 ) {
     cpyum(p2,pr);
     return;
@@ -67,8 +67,10 @@ void addum(int mod,UM p1,UM p2,UM pr)
   } else {
     c1 = COEF(p2); c2 = COEF(p1); dmax = DEG(p2); dmin = DEG(p1);
   }
-  for ( i = 0, cr = COEF(pr); i <= dmin; i++ ) 
-    cr[i] = ( c1[i] + c2[i] ) % mod;
+  for ( i = 0, cr = COEF(pr); i <= dmin; i++ ) {
+//  cr[i] = ( c1[i] + c2[i] ) % mod;
+    cr[i] = (int)(((UINT)c1[i]+(UINT)c2[i])%(UINT)mod);
+  }
   for ( ; i <= dmax; i++ ) 
     cr[i] = c1[i];
   if ( dmax == dmin ) 
@@ -96,13 +98,13 @@ void subum(int mod,UM p1,UM p2,UM pr)
   if ( DEG(p1) >= DEG(p2) ) { 
     dmax = DEG(p1); dmin = DEG(p2);
     for ( i = 0; i <= dmin; i++ ) 
-      cr[i] = ( c1[i] + mod - c2[i] ) % mod;
+      cr[i] = (int)(( (UINT)c1[i] + (UINT)(mod - c2[i]) ) % (UINT)mod);
     for ( ; i <= dmax; i++ ) 
       cr[i] = c1[i];
   } else {
     dmax = DEG(p2); dmin = DEG(p1);
     for ( i = 0; i <= dmin; i++ ) 
-      cr[i] = ( c1[i] + mod - c2[i] ) % mod;
+      cr[i] = (int)(( (UINT)c1[i] + (UINT)(mod - c2[i]) ) % (UINT)mod);
     for ( ; i <= dmax; i++ ) 
       cr[i] = ( mod - c2[i] ) % mod;
   }
@@ -197,73 +199,6 @@ void eucum(int mod,UM f1,UM f2,UM a,UM b)
   mulum(mod,b,f2,t2);
   addum(mod,t1,t2,t3);
 #endif
-}
-
-void eucum2(int mod,UM f1,UM f2,UM a,UM b)
-{
-  UM gk,gk1,gk2,ak,ak1,ak2,bk,bk1,bk2,q,t,wm1,wm2,wz;
-  int d,inv;
-  UM t1,t2;
-
-  d = 2*(DEG(f1) + DEG(f2));
-  gk = W_UMALLOC(d); gk1 = W_UMALLOC(d); gk2 = W_UMALLOC(d);
-  ak = W_UMALLOC(d); ak1 = W_UMALLOC(d); ak2 = W_UMALLOC(d);
-  bk = W_UMALLOC(d); bk1 = W_UMALLOC(d); bk2 = W_UMALLOC(d);
-  q = W_UMALLOC(d); wm1 = W_UMALLOC(d); wm2 = W_UMALLOC(d);
-  wz = W_UMALLOC(d);
-  
-  t1 = UMALLOC(1000);
-  t2 = UMALLOC(1000);
-  cpyum(f1,t1);
-  cpyum(f2,t2);
-
-  DEG(ak) = 0; COEF(ak)[0] = 1;
-  DEG(ak1) = -1;
-  DEG(bk) = -1;
-  DEG(bk1) = 0; COEF(bk1)[0] = 1;
-
-  cpyum(f1,gk); cpyum(f2,gk1);
-
-  while ( 1 ) {
-    /* ak*f1+bk*f2 = gk, ak1*f1+bk1*f2 = gk1 */
-    cpyum(gk,gk2);
-    DEG(gk2) = divum(mod,gk2,gk1,q);
-    /* gk2 = gk - q*gk1 */
-    if ( DEG(gk2) == -1 ) 
-      break;
-    /* ak2 = ak - q*ak1, bk2 = bk - q*bk1 */
-    mulum(mod,ak1,q,wm1); subum(mod,ak,wm1,ak2);
-    mulum(mod,bk1,q,wm1); subum(mod,bk,wm1,bk2);
-
-    /* shift */
-    t = ak; ak = ak1; ak1 = ak2; ak2 = t;
-    t = bk; bk = bk1; bk1 = bk2; bk2 = t;
-    t = gk; gk = gk1; gk1 = gk2; gk2 = t;
-  }
-  /* ak1*f1+bk1*f2 = gk1 = GCD(f1,f2) */
-  mulum(mod,ak1,t1,wm1); 
-  mulum(mod,bk1,t2,wm2);
-  addum(mod,wm1,wm2,wz);
-  if ( DEG(wz) != 0 )
-    error("euc 1");
-
-  DEG(ak1) = divum(mod,ak1,f2,q);
-  DEG(bk1) = divum(mod,bk1,f1,q);
-  mulum(mod,ak1,f1,wm1); 
-  mulum(mod,bk1,f2,wm2);
-  addum(mod,wm1,wm2,wz);
-  if ( DEG(wz) != 0 )
-    error("euc 2");
-
-
-  if ( COEF(wz)[0] != 1 ) {
-    inv = invm(COEF(wz)[0],mod);
-    mulsum(mod,ak1,inv,a);
-    mulsum(mod,bk1,inv,b);
-  } else {
-    cpyum(ak1,a);
-    cpyum(bk1,b);
-  }
 }
 
 void sqfrum(int index,int count,P f,int *nindex,struct oDUM **dcr,ML *pl)
@@ -577,6 +512,8 @@ mp_limb_t **almat64(int n,int m)
 }
 #endif
 
+// mod < 2^15
+
 void mini(int mod,UM f,UM fr)
 {
   register int i,j,**c,*ptr;
@@ -610,6 +547,8 @@ void mini(int mod,UM f,UM fr)
     COEF(fr)[0] = 1;
   DEG(fr) = dm + 1;
 }
+
+// mod < 2^15
 
 int minimain(int mod,int n,int m,int **c)
 {

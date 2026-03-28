@@ -1428,7 +1428,7 @@ void make_qmat(UM p,int mod,UM *tab,int ***mp)
       mat[i][j] = c[i];
   }
   for ( i = 0; i < n; i++ )
-    mat[i][i] = (mat[i][i]+mod-1) % mod;
+    mat[i][i] = (int)(((UINT)mat[i][i]+(UINT)mod-1) % (UINT)mod);
 }
 
 void null_mod(int **mat,int mod,int n,int *ind)

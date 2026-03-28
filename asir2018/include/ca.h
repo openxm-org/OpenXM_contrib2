@@ -94,6 +94,7 @@
 typedef caddr_t pointer;
 #endif
 
+typedef unsigned int UINT;
 
 typedef void * pointer;
 

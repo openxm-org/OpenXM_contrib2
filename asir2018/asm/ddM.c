@@ -173,6 +173,7 @@ unsigned int invm(unsigned int s,int mod)
     if ( a1 >= r )
       r = a1 - r;
     else {
+      // a1 < r => r < mod
       r = (mod - r) + a1;
     }
     a1 = a2; a2 = r;
@@ -188,7 +189,7 @@ void addpadic(int mod,int n,unsigned int *n1,unsigned int *n2)
   int i;
 
   for ( i = 0, carry = 0; i < n; i++ ) {
-    tmp = *n1++ + *n2 + carry;
+    tmp = (UINT)*n1++ + (UINT)*n2 + (UINT)carry;
     DQR(tmp,mod,carry,*n2++)
 /*
     carry = tmp / mod;
