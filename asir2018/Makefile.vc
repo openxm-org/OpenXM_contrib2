@@ -7,7 +7,7 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 
 !if "$(ARCH)" == "AMD64"
 CPU_OBJ= asmalpha.obj
-GMPDIR= ..\windows\mpir\x64
+GMPDIR= ..\windows\gmp\x64
 !else
 CPU_OBJ= asmiw.obj gf2m_mul_w.obj 
 GMPDIR= ..\windows\mpir\win32
@@ -18,7 +18,7 @@ GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
 GMPINC= -I $(GMPDIR)
-GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\mpir.lib
+GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\gmpxx.lib $(GMPDIR)\gmp.lib
 
 DEFS = -D GC_THREADS -D NDEBUG -D VISUAL -D VISUAL_CONSOLE -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D WIN32 -D INET -D GC7 -D SIZEOF_LONG=4 -D HAVE_UNSIGNED_LONG_LONG -D ASIR_LIBDIR=\"c:/asir/stdlib\"
 INCLUDES= $(GCINC) $(GMPINC) -I include -I parse

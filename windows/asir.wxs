@@ -32,13 +32,16 @@
                             <File Id="JA.DLL" Name="ja.dll" Source="asir\bin\ja.dll" />
                         </Component>
                         <Component Id="mpc.dll" Guid="141B4A38-9ED9-4E2C-94F6-D13D30BF6F47">
-                            <File Id="MPC.DLL" Name="mpc.dll" Source="asir\bin\mpc.dll" />
+                            <File Id="MPC.DLL" Name="mpc-3.dll" Source="asir\bin\mpc-3.dll" />
                         </Component>
                         <Component Id="mpfr.dll" Guid="6675DB09-D36B-4ED7-8ACC-BDF02D3055E3">
-                            <File Id="MPFR.DLL" Name="mpfr.dll" Source="asir\bin\mpfr.dll" />
+                            <File Id="MPFR.DLL" Name="mpfr-6.dll" Source="asir\bin\mpfr-6.dll" />
                         </Component>
-                        <Component Id="mpir.dll" Guid="69B254E7-E98A-465A-8D8A-22593C4820B8">
-                            <File Id="MPIR.DLL" Name="mpir.dll" Source="asir\bin\mpir.dll" />
+                        <Component Id="gmpxx.dll" Guid="69B254E7-E98A-465A-8D8A-22593C4820B8">
+                            <File Id="GMPXX.DLL" Name="gmpxx-4.dll" Source="asir\bin\gmpxx-4.dll" />
+                        </Component>
+                        <Component Id="gmp.dll" Guid="2A4DF714-1B1C-4994-B15E-342FBA532194">
+                            <File Id="GMP.DLL" Name="gmp-10.dll" Source="asir\bin\gmp-10.dll" />
                         </Component>
                         <Component Id="curl.exe" Guid="CC7085F4-0142-4CFD-90A5-AACB606BE2B1">
                             <File Id="CURL.EXE" Name="curl.exe" Source="asir\bin\curl.exe" />
@@ -82,7 +85,8 @@
             <ComponentRef Id="ja.dll" />
             <ComponentRef Id="mpc.dll" />
             <ComponentRef Id="mpfr.dll" />
-            <ComponentRef Id="mpir.dll" />
+            <ComponentRef Id="gmpxx.dll" />
+            <ComponentRef Id="gmp.dll" />
             <ComponentRef Id="curl.exe" />
             <ComponentRef Id="unzip.exe" />
             <ComponentRef Id="LICENSE" />
