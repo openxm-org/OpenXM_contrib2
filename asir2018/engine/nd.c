@@ -5285,7 +5285,7 @@ void nd_sba(LIST f,LIST v,int m,int homo,int retdp,int f4,struct order_spec *ord
   get_vars((Obj)f,&fv); pltovl(v,&vv); vlminus(fv,vv,&nd_vc);
   parse_nd_option(vv,current_option);
   if ( m && nd_vc )
-    error("nd_sba : computation over Fp(X) is unsupported. Use dp_gr_mod_main().");
+    error("nd_sba : computation over Fp(X) is unsupported.");
   for ( nvar = 0, tv = vv; tv; tv = NEXT(tv), nvar++ );
   switch ( ord->id ) {
     case 1:

@@ -3682,8 +3682,9 @@ void Pnd_weyl_sba(NODE arg,LIST *rp)
   Z mq,z;
   Num nhomo;
   NODE node;
-  struct order_spec *ord;
+  struct order_spec *ord,*current_spec;
 
+  current_spec = dp_current_spec;
   do_weyl = 1;
   retdp = 0;
   if ( (ac=argc(arg)) == 4 ) {
@@ -3716,6 +3717,7 @@ void Pnd_weyl_sba(NODE arg,LIST *rp)
     error("nd_gr : invalid argument");
   nd_sba(f,v,m,homo,retdp,0,ord,rp);
   do_weyl = 0;
+  initd(current_spec);
 }
 
 void Pnd_sba_f4(NODE arg,LIST *rp)
@@ -3726,8 +3728,9 @@ void Pnd_sba_f4(NODE arg,LIST *rp)
   Z mq,z;
   Num nhomo;
   NODE node;
-  struct order_spec *ord;
+  struct order_spec *ord,*current_spec;
 
+  current_spec = dp_current_spec;
   do_weyl = 0;
   retdp = 0;
   if ( (ac=argc(arg)) == 4 ) {
@@ -3759,6 +3762,7 @@ void Pnd_sba_f4(NODE arg,LIST *rp)
   } else
     error("nd_gr : invalid argument");
   nd_sba(f,v,m,homo,retdp,1,ord,rp);
+  initd(current_spec);
 }
 
 void Pnd_gr_postproc(NODE arg,LIST *rp)
