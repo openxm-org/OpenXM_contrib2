@@ -88,9 +88,6 @@ install: build mkdir
 	-robocopy post-msg-asirgui asir\share\editor asirgui.mac  asir-mode.el install-ja-sjis.txt /nfl /ndl /njh /njs /np 
 	-robocopy ..\asir2018\lib asir\lib\asir /nfl /ndl /njh /njs /np /xf help*.uu
 	-robocopy ..\..\OpenXM\src\asir-contrib\packages\src asir\lib\asir-contrib /nfl /ndl /njh /njs /np /mir /xd CVS /xf *.in *.c *.sh *-sh .keepme
-	-robocopy ..\..\OpenXM\src\asir-contrib\testing\noro asir\lib\asir-contrib de.rr gw.rr module_syz.rr mwl.rr rewrite.rr ndbf.rr /nfl /ndl /njh /njs /np
-	for %i in ( de.rr gw.rr module_syz.rr mwl.rr rewrite.rr ) do ( pushd asir\lib\asir-contrib && move %i noro_%i && popd)	
-	pushd asir\lib\asir-contrib && move ndbf.rr nn_ndbf.rr && popd
 
 zip: install
 	zip -r asir_$(OS)_%DATE:/=.%.zip asir
