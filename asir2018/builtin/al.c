@@ -14,119 +14,6 @@
 #include <parse.h>
 #include <al.h>
 
-void Preverse();
-void Phugo();
-void Pex();
-void Pall();
-void constrq();
-void Pfop();
-void Pfargs();
-void Pfopargs();
-void Pcompf();
-void Patnum();
-int gauss_abc();
-int compf();
-void Patl();
-void Pqevar();
-void Pqe();
-void Psimpl();
-void Psubf();
-void Pnnf();
-void smkjf();
-void simpl();
-void simpl1();
-void simpl_gand();
-void simpl_th2atl();
-int simpl_gand_udnargls();
-int simpl_gand_thupd();
-int simpl_gand_thprsism();
-int simpl_gand_smtbdlhs();
-int simpl_gand_smtbelhs();
-void lbc();
-void replaceq();
-void deleteq();
-void simpl_gand_insert_a();
-void simpl_gand_insert_c();
-int compaf();
-int comprel();
-int synequalf();
-void simpl_impl();
-void simpl_equiv();
-void simpl_a();
-void simpl_a_o();
-void simpl_a_no();
-void qe();
-void blocksplit();
-void qeblock();
-int qeblock_verbose1a();
-void qeblock_verbose1b();
-void qeblock_verbose2();
-void qeblock_verbose0();
-int getmodulus();
-int qevar();
-int gausselim();
-int delv();
-int translate();
-int translate_a();
-void translate_a1();
-void mklgp();
-void translate_a2();
-void mkqgp();
-void getqcoeffs();
-void mkdiscr();
-int al_reorder();
-void indices();
-void mkeset();
-int selectside();
-int cmp2n();
-void add2eset();
-void seproots();
-void sp_add2eset();
-void subgpf();
-void subref();
-void subref_a();
-void substd_a();
-void substd_a1();
-void substd_a2();
-void substd_a21();
-void substd_a21_equal();
-void substd_a21_leq();
-void substd_a21_lessp();
-void getrecoeffs();
-void subinf_a();
-void subinf_a_o();
-void subinf_a_o1();
-void subtrans_a_no();
-void subpme_a();
-void subpme_a_o();
-void subpme_a_o1();
-int comember();
-void coadd();
-int coget();
-int colen();
-void apply2ats();
-void atl();
-void atl1();
-void atnum();
-void atnum1();
-void pnegate();
-void subf();
-void subf_a();
-void nnf();
-void nnf1();
-void ap();
-void freevars();
-void freevars1();
-void freevars1_a();
-void rep();
-void gpp();
-void esetp();
-void nodep();
-void gauss_mkeset1();
-void gauss_mkeset2();
-
-extern int Verbose;
-
 struct oRE {
   P p;
   P discr;
@@ -163,6 +50,134 @@ struct oQVL {
 };
 
 typedef struct oQVL *QVL;
+
+
+void Phugo(NODE arg,F *rp);
+void Pex(NODE arg,F *rp);
+void Pall(NODE arg,F *rp);
+void Pfop(NODE arg,Z *rp);
+void Pfargs(NODE arg,LIST *rp);
+void Pfopargs(NODE arg,LIST *rp);
+void Pcompf(NODE arg,Z *rp);
+void Patnum(NODE arg,Q *rp);
+void Patl(NODE arg,LIST *rp);
+void Pqevar(NODE arg,F *rp);
+void Pqe(NODE arg,F *rp);
+void Psubf(NODE arg,F *rp);
+void Pnnf(NODE arg,F *rp);
+void Psimpl(NODE argl,F *rp);
+void Phugo(NODE arg,F *rp);
+void Pex(NODE arg,F *rp);
+void Pall(NODE arg,F *rp);
+void constrq(oFOP q,Obj vars,F m,F *rp);
+void Pfop(NODE arg,Z *rp);
+void Pfargs(NODE arg,LIST *rp);
+void Pfopargs(NODE arg,LIST *rp);
+void Pcompf(NODE arg,Z *rp);
+void Patnum(NODE arg,Q *rp);
+void Patl(NODE arg,LIST *rp);
+void Pqevar(NODE arg,F *rp);
+void Pqe(NODE arg,F *rp);
+void Psubf(NODE arg,F *rp);
+void Pnnf(NODE arg,F *rp);
+void Psimpl(NODE argl,F *rp);
+void smkjf(F *pf,oFOP j,NODE argl);
+void simpl(F f,NODE th,F *pnf);
+void simpl1(F f,NODE th,int n,F *pnf);
+void simpl_gand(oFOP gand,oFOP gtrue,oFOP gfalse,NODE argl,NODE oth,int n,F *pnf);
+void simpl_th2atl(oFOP gand,NODE th,int n,NODE *patl,NODE *patlc);
+void lbc(P f,P *pc);
+void replaceq(NODE l,pointer old,pointer new,NODE *pnl,NODE *pnlc);
+void deleteq(NODE l,pointer obj,NODE *pnl,NODE *pnlc);
+void simpl_gand_insert_a(F f,NODE *paargl,NODE *pac);
+void simpl_gand_insert_c(F f,NODE *pcargl,NODE *pcc);
+void simpl_impl(oFOP op,F prem,F concl,NODE th,int n,F *pf);
+void simpl_equiv(F lhs,F rhs,NODE th,int n,F *pf);
+void simpl_a(F f,F *pnf);
+void simpl_a_o(oFOP *ar,P *alhs);
+void simpl_a_no(P *alhs);
+void qe(F f,F *pnf);
+void blocksplit(F f,NODE *pbl,F *pmat);
+void qeblock(VL vl,F f,F *pnf);
+void qeblock_verbose0(VL vl);
+void qeblock_verbose1b(int g,int print);
+void qeblock_verbose2();
+void gauss_mkeset1(P rlhs,P b,NODE *peset);
+void gauss_mkeset2(P rlhs,P a,P b,P c,NODE *peset);
+void translate_a1(oFOP op,P mp,NODE *trans,NODE *transc);
+void mklgp(P mp,P b,int itype,GP *pgp);
+void translate_a2(oFOP op,P mp,NODE *trans,NODE *transc);
+void mkqgp(P mp,P a,P b,P c,int rootno,int itype,GP *pgp);
+void getqcoeffs(P mp,P *pa,P *pb,P *pc);
+void mkdiscr(P a,P b,P c,P *pd);
+void indices(oFOP op,int s,int *pit,int *pbt);
+void mkeset(NODE *trans,V x,NODE *peset);
+void add2eset(NODE trfield,NODE *peset,NODE *pesetc);
+void seproots(NODE trfield,NODE *pntrfield,NODE *pntrfieldc);
+void sp_add2eset(NODE trfield,int itype,NODE *peset,NODE *pesetc);
+void subgpf(F f,V v,GP gp,F *pnf);
+void subref(F f,V v,RE r,F *pnf);
+void subref_a(F at,pointer *argv,F *pnat);
+void substd_a(F at,V v,RE re,F *pnf);
+void substd_a2(oFOP op,F prem,Q fdeg,RE re,F *pf);
+void substd_a21(oFOP op,P a,P b,P c,P d,F *pf);
+void substd_a21_equal(P a,P b,P c,P d,F *pf);
+void substd_a21_leq(P a,P b,P c,P d,F *pf);
+void substd_a21_lessp(P a,P b,P c,P d,F *pf);
+void getrecoeffs(P prem,Z fdeg,RE re,P *pa,P *pb,P *pc,P *pld);
+void subinf_a(F f,V v,RE re,F *pnf);
+void subinf_a_o(F f,V v,RE ire,F *pnf);
+void subinf_a_o1(oFOP op,DCP lhsdcp,RE ire,F *pnf);
+void subtrans_a_no(F f,V v,F *pnf);
+void subpme_a(F af,V v,RE re,F *pnf);
+void subpme_a_o(F af,V v,RE r,F *pnf);
+void subpme_a_o1(oFOP op,P lhs,V v,int minus,F *pnf);
+void coadd(CONT co,CEL x);
+void apply2ats(F f,void (*client)(F,pointer *,F *),pointer *argv,F *pnf);
+void atl(F f,NODE *pn);
+void atl1(F f,NODE *pn,NODE *pc);
+void atnum(F f,Q *pn);
+void atnum1(F f,Q *pn);
+void pnegate(F f,F *pnf);
+void subf(VL o,F f,V v,P p,F *pf);
+void subf_a(F at,pointer *argv,F *pat);
+void nnf(F f,F *pf);
+void nnf1(F f,int neg,int disj,F *pf);
+void freevars(F f,VL *pvl);
+void freevars1(F f,VL *pvl,VL cbvl);
+void freevars1_a(F f,VL *pvl,VL cbvl);
+void ap(pointer *x);
+void rep(RE re);
+void gpp(GP gp);
+void esetp(NODE eset);
+void nodep(NODE n);
+void lbfp(LBF x);
+void thp(NODE x);
+int simpl_gand_udnargls(oFOP gand,oFOP gtrue,F narg,int n,NODE *pth,NODE *pthc,NODE *pcnargl,NODE *pcc);
+int simpl_gand_thupd(oFOP top,F at,int n,NODE *pth,NODE *pthc);
+int simpl_gand_thprsism(LBF thpr,LBF *patpr);
+int simpl_gand_smtbelhs(oFOP thop,oFOP atop,oFOP *pnatop);
+int simpl_gand_smtbdlhs(oFOP thop,oFOP atop,P difference);
+int compaf(VL vl,F f1,F f2);
+int comprel(oFOP op1,oFOP op2);
+int synequalf(F f1,F f2);
+int qeblock_verbose1a(CONT co,VL cvl,int *pleft,int *pmodulus);
+int getmodulus(int n);
+int qevar(F f,VL *pcvl,NODE *pfl);
+int gausselim(F f,VL *pvl,V *px,NODE *peset);
+int gauss_abc(P rlhs,V v,Z deg,P *pa,P *pb,P *pc);
+int delv(V v,VL vl,VL *pnvl);
+int translate(F f,V x,NODE *trans);
+int translate_a(F at,V v,NODE *trans,NODE *transc);
+int al_reorder(P p,V v,P *pnp);
+int selectside(NODE *trans,int *pcw,int *pcs,int *pdeps,int *pdinf);
+int cmp2n(NODE n1a,NODE n1b,NODE n2a,NODE n2b);
+int comember(CONT co,CEL x);
+int coget(CONT co,CEL *px);
+int colen(CONT co);
+int compf(VL vl,F f1,F f2);
+
+extern int Verbose;
 
 #define GUARD(x) ((x)->g)
 #define POINT(x) ((x)->p)
@@ -205,38 +220,34 @@ if(!(r)){NEWVL(r);(c)=(r);}else{NEWVL(NEXT(c));(c)=NEXT(c);}
 #define MKCONT(x) ((x)=(CONT)MALLOC(sizeof(struct oCONT)),FIRST(x)=LAST(x)=NULL)
 
 struct ftab al_tab[] = {
-  {"simpl",Psimpl,-2},
-  {"ex",Pex,-2},
-  {"all",Pall,-2},
-  {"fop",Pfop,1},
-  {"fargs",Pfargs,1},
-  {"fopargs",Pfopargs,1},
-  {"compf",Pcompf,2},
-  {"atl",Patl,1},
-  {"qevar",Pqevar,2},
-  {"qe",Pqe,1},
-  {"atnum",Patnum,1},
-  {"subf",Psubf,3},
-  {"nnf",Pnnf,1},
-  {"hugo",Phugo,4},
+  {"simpl",(void(*)(void))Psimpl,-2},
+  {"ex",(void(*)(void))Pex,-2},
+  {"all",(void(*)(void))Pall,-2},
+  {"fop",(void(*)(void))Pfop,1},
+  {"fargs",(void(*)(void))Pfargs,1},
+  {"fopargs",(void(*)(void))Pfopargs,1},
+  {"compf",(void(*)(void))Pcompf,2},
+  {"atl",(void(*)(void))Patl,1},
+  {"qevar",(void(*)(void))Pqevar,2},
+  {"qe",(void(*)(void))Pqe,1},
+  {"atnum",(void(*)(void))Patnum,1},
+  {"subf",(void(*)(void))Psubf,3},
+  {"nnf",(void(*)(void))Pnnf,1},
+  {"hugo",(void(*)(void))Phugo,4},
   {0,0,0}
 };
 
-void Phugo(arg,rp)
-NODE arg;
-F *rp;
+void Phugo(NODE arg,F *rp)
 {
   substd_a21_equal(BDY(arg),BDY(NEXT(arg)),BDY(NEXT(NEXT(arg))),BDY(NEXT(NEXT(NEXT(arg)))),rp);
-  ap(*rp);
+  ap((pointer)*rp);
   substd_a21_leq(BDY(arg),BDY(NEXT(arg)),BDY(NEXT(NEXT(arg))),BDY(NEXT(NEXT(NEXT(arg)))),rp);
-  ap(*rp);
+  ap((pointer)*rp);
   substd_a21_lessp(BDY(arg),BDY(NEXT(arg)),BDY(NEXT(NEXT(arg))),BDY(NEXT(NEXT(NEXT(arg)))),rp);
-  ap(*rp);
+  ap((pointer)*rp);
 }
 
-void Pex(arg,rp)
-NODE arg;
-F *rp;
+void Pex(NODE arg,F *rp)
 {
   if (argc(arg) == 1)
     constrq(AL_EX,0,(F)BDY(arg),rp);
@@ -244,9 +255,7 @@ F *rp;
     constrq(AL_EX,BDY(arg),(F)BDY(NEXT(arg)),rp);
 }
 
-void Pall(arg,rp)
-NODE arg;
-F *rp;
+void Pall(NODE arg,F *rp)
 {
   if (argc(arg) == 1)
     constrq(AL_ALL,0,(F)BDY(arg),rp);
@@ -254,10 +263,9 @@ F *rp;
     constrq(AL_ALL,BDY(arg),(F)BDY(NEXT(arg)),rp);
 }
 
-void constrq(q,vars,m,rp)
-oFOP q;
-Obj vars;
-F m,*rp;
+void Preverse(NODE arg,LIST *rp);
+
+void constrq(oFOP q,Obj vars,F m,F *rp)
 {
   VL sc;
   NODE varl=NULL,varlc,arg;
@@ -271,7 +279,7 @@ F m,*rp;
     }
   } else if (OID(vars) == O_LIST) {
     MKNODE(arg,vars,NULL);
-    Preverse(arg,&vars);
+    Preverse(arg,(LIST *)&vars);
     varl = BDY((LIST)vars);
   } else
     MKNODE(varl,vars,NULL);
@@ -281,9 +289,7 @@ F m,*rp;
   }
 }
 
-void Pfop(arg,rp)
-NODE arg;
-Z *rp;
+void Pfop(NODE arg,Z *rp)
 {
   oFOP op;
 
@@ -291,9 +297,7 @@ Z *rp;
   STOZ((int)op,*rp);
 }
 
-void Pfargs(arg,rp)
-NODE arg;
-LIST *rp;
+void Pfargs(NODE arg,LIST *rp)
 {
   oFOP op;
   LIST l;
@@ -321,9 +325,7 @@ LIST *rp;
   *rp = l;
 }
 
-void Pfopargs(arg,rp)
-NODE arg;
-LIST *rp;
+void Pfopargs(NODE arg,LIST *rp)
 {
   oFOP op;
   LIST l;
@@ -354,23 +356,17 @@ LIST *rp;
   *rp = l;
 }
 
-void Pcompf(arg,rp)
-NODE arg;
-Z *rp;
+void Pcompf(NODE arg,Z *rp)
 {
   STOZ(compf(CO,BDY(arg),BDY(NEXT(arg))),*rp);
 }
 
-void Patnum(arg,rp)
-NODE arg;
-Q *rp;
+void Patnum(NODE arg,Q *rp)
 {
   atnum(BDY(arg),rp);
 }
 
-void Patl(arg,rp)
-NODE arg;
-LIST *rp;
+void Patl(NODE arg,LIST *rp)
 {
   NODE h;
 
@@ -378,30 +374,24 @@ LIST *rp;
   MKLIST(*rp,h);
 }
 
-void Pqevar(arg,rp)
-NODE arg;
-F *rp;
+void Pqevar(NODE arg,F *rp)
 {
-  qevar(BDY(arg),VR((P)BDY(NEXT(arg))),rp);
+  // XXX second variable should be VL *
+  // XXX third variable should be NODE *
+  qevar(BDY(arg),(VL *)VR((P)BDY(NEXT(arg))),(NODE *)rp);
 }
 
-void Pqe(arg,rp)
-NODE arg;
-F *rp;
+void Pqe(NODE arg,F *rp)
 {
   qe(BDY(arg),rp);
 }
 
-void Psubf(arg,rp)
-NODE arg;
-F *rp;
+void Psubf(NODE arg,F *rp)
 {
   subf(CO,(F)BDY(arg),VR((P)BDY(NEXT(arg))),(P)BDY(NEXT(NEXT(arg))),rp);
 }
 
-void Pnnf(arg,rp)
-NODE arg;
-F *rp;
+void Pnnf(NODE arg,F *rp)
 {
   nnf((F)BDY(arg),rp);
 }
@@ -419,9 +409,7 @@ F *rp;
 #define REPLACE 12
 #define KILL 13
 
-void Psimpl(argl,rp)
-NODE argl;
-F *rp;
+void Psimpl(NODE argl,F *rp)
 {
   if (argc(argl) == 1)
     simpl(BDY(argl),(NODE)NULL,rp);
@@ -429,10 +417,7 @@ F *rp;
     simpl(BDY(argl),BDY((LIST)BDY(NEXT(argl))),rp);
 }
 
-void smkjf(pf,j,argl)
-F *pf;
-oFOP j;
-NODE argl;
+void smkjf(F *pf,oFOP j,NODE argl)
 {
   if (!argl)
     MKTV(*pf,AL_NEUTRAL(j));
@@ -442,17 +427,12 @@ NODE argl;
     MKJF(*pf,j,argl);
 }
 
-void simpl(f,th,pnf)
-F f,*pnf;
-NODE th;
+void simpl(F f,NODE th,F *pnf)
 {
   simpl1(f,th,0,pnf);
 }
 
-void simpl1(f,th,n,pnf)
-F f,*pnf;
-NODE th;
-int n;
+void simpl1(F f,NODE th,int n,F *pnf)
 {
   F h;
   oFOP op=FOP(f);
@@ -504,11 +484,7 @@ int n;
     error("unknown operator in simpl1");
 }
 
-void simpl_gand(gand,gtrue,gfalse,argl,oth,n,pnf)
-oFOP gand,gtrue,gfalse;
-NODE argl,oth;
-int n;
-F *pnf;
+void simpl_gand(oFOP gand,oFOP gtrue,oFOP gfalse,NODE argl,NODE oth,int n,F *pnf)
 {
   NODE cnargl=NULL,cc=NULL,cnargl2=NULL,cc2=NULL,th=NULL,thc=NULL,nargl,narglc;
   F fgfalse,h;
@@ -570,10 +546,7 @@ F *pnf;
   smkjf(pnf,gand,nargl);
 }
 
-void simpl_th2atl(gand,th,n,patl,patlc)
-oFOP gand;
-NODE th,*patl,*patlc;
-int n;
+void simpl_th2atl(oFOP gand,NODE th,int n,NODE *patl,NODE *patlc)
 {
   NODE atl=NULL,atlc=NULL;
   F at,negat;
@@ -602,11 +575,7 @@ int n;
   *patlc = atlc;
 }
 
-int simpl_gand_udnargls(gand,gtrue,narg,n,pth,pthc,pcnargl,pcc)
-oFOP gand,gtrue;
-F narg;
-int n;
-NODE *pth,*pthc,*pcnargl,*pcc;
+int simpl_gand_udnargls(oFOP gand,oFOP gtrue,F narg,int n,NODE *pth,NODE *pthc,NODE *pcnargl,NODE *pcc)
 {
   NODE sargl;
   F h;
@@ -640,11 +609,7 @@ NODE *pth,*pthc,*pcnargl,*pcc;
   return(OK);
 }
 
-int simpl_gand_thupd(top,at,n,pth,pthc)
-oFOP top;
-F at;
-int n;
-NODE *pth,*pthc;
+int simpl_gand_thupd(oFOP top,F at,int n,NODE *pth,NODE *pthc)
 {
   LBF atpr,thpr;
   NODE scth;
@@ -676,8 +641,7 @@ NODE *pth,*pthc;
   return(NEWAT);
 }
 
-int simpl_gand_thprsism(thpr,patpr)
-LBF thpr,*patpr;
+int simpl_gand_thprsism(LBF thpr,LBF *patpr)
 {
   P thlbc,atlbc,thlhs1,atlhs1,difference;
   oFOP natfop;
@@ -704,8 +668,7 @@ LBF thpr,*patpr;
   return(simpl_gand_smtbdlhs(FOP(LBFF(thpr)),FOP(LBFF(*patpr)),difference));
 }
 
-int simpl_gand_smtbelhs(thop,atop,pnatop)
-     oFOP thop,atop,*pnatop;
+int simpl_gand_smtbelhs(oFOP thop,oFOP atop,oFOP *pnatop)
 {
   if (atop == thop)
     return(DROP);
@@ -787,9 +750,7 @@ int simpl_gand_smtbelhs(thop,atop,pnatop)
   return 0;
 }
 
-int simpl_gand_smtbdlhs(thop,atop,difference)
-     oFOP thop,atop;
-     P difference;
+int simpl_gand_smtbdlhs(oFOP thop,oFOP atop,P difference)
 {
   oFOP op1,op2;
   int drop1,drop2;
@@ -849,16 +810,13 @@ int simpl_gand_smtbdlhs(thop,atop,difference)
   return 0;
 }
 
-void lbc(f,pc)
-P f,*pc;
+void lbc(P f,P *pc)
 {
   for (*pc = f; !NUM(*pc); *pc = COEF(DC(*pc)))
     ;
 }
 
-void replaceq(l,old,new,pnl,pnlc)
-NODE l,*pnl,*pnlc;
-pointer old,new;
+void replaceq(NODE l,pointer old,pointer new,NODE *pnl,NODE *pnlc)
 {
   *pnl = NULL;
   for (; l; l = NEXT(l)) {
@@ -870,9 +828,7 @@ pointer old,new;
   }
 }
 
-void deleteq(l,obj,pnl,pnlc)
-NODE l,*pnl,*pnlc;
-pointer obj;
+void deleteq(NODE l,pointer obj,NODE *pnl,NODE *pnlc)
 {
   *pnl = NULL;
   for (; l; l = NEXT(l))
@@ -882,9 +838,7 @@ pointer obj;
    }
 }
 
-void simpl_gand_insert_a(f,paargl,pac)
-F f;
-NODE *paargl,*pac;
+void simpl_gand_insert_a(F f,NODE *paargl,NODE *pac)
 {
   int w;
   NODE n,sc,prev;
@@ -919,9 +873,7 @@ NODE *paargl,*pac;
   NEXT(prev) = n;
 }
 
-void simpl_gand_insert_c(f,pcargl,pcc)
-F f;
-NODE *pcargl,*pcc;
+void simpl_gand_insert_c(F f,NODE *pcargl,NODE *pcc)
 {
   NODE sc;
 
@@ -932,9 +884,7 @@ NODE *pcargl,*pcc;
   BDY(*pcc) = (pointer)f;
 }
 
-int compaf(vl,f1,f2)
-VL vl;
-F f1,f2;
+int compaf(VL vl,F f1,F f2)
 {
   int w;
 
@@ -944,8 +894,7 @@ F f1,f2;
   return comprel(FOP(f1),FOP(f2));
 }
 
-int comprel(op1,op2)
-oFOP op1,op2;
+int comprel(oFOP op1,oFOP op2)
 /* implement order: =, <>, <=, <, >=, > */
 {
   if (op1 == op2)
@@ -992,8 +941,7 @@ oFOP op1,op2;
   return 0;
 }
 
-int synequalf(f1,f2)
-F f1,f2;
+int synequalf(F f1,F f2)
 {
   oFOP op=FOP(f1);
 
@@ -1014,11 +962,7 @@ F f1,f2;
   return 0;
 }
 
-void simpl_impl(op,prem,concl,th,n,pf)
-oFOP op;
-F prem,concl,*pf;
-NODE th;
-int n;
+void simpl_impl(oFOP op,F prem,F concl,NODE th,int n,F *pf)
 {
   F h,hh;
   
@@ -1047,10 +991,7 @@ int n;
   MKBF(*pf,AL_REPL,hh,h);
 }
 
-void simpl_equiv(lhs,rhs,th,n,pf)
-F lhs,rhs,*pf;
-NODE th;
-int n;
+void simpl_equiv(F lhs,F rhs,NODE th,int n,F *pf)
 {
   F h,hh;
 
@@ -1075,8 +1016,7 @@ int n;
   MKBF(*pf,AL_EQUIV,h,hh);
 }
 
-void simpl_a(f,pnf)
-F f,*pnf;
+void simpl_a(F f,F *pnf)
 {
   oFOP r=FOP(f);
   P lhs=(P)FPL(f);
@@ -1115,9 +1055,7 @@ F f,*pnf;
   MKAF(*pnf,r,lhs);
 }
 
-void simpl_a_o(ar,alhs)
-oFOP *ar;
-P *alhs;
+void simpl_a_o(oFOP *ar,P *alhs)
 {
   DCP dec;
 
@@ -1132,8 +1070,7 @@ P *alhs;
   }
 }
 
-void simpl_a_no(alhs)
-P *alhs;
+void simpl_a_no(P *alhs)
 {
   DCP dec;
 
@@ -1161,8 +1098,7 @@ P *alhs;
 #define IME 2
 #define II 3
 
-void qe(f,pnf)
-F f,*pnf;
+void qe(F f,F *pnf)
 {
   NODE bl,sc;
   F h;
@@ -1182,9 +1118,7 @@ F f,*pnf;
   *pnf = h;
 }
 
-void blocksplit(f,pbl,pmat)
-F f,*pmat;
-NODE *pbl;
+void blocksplit(F f,NODE *pbl,F *pmat)
 {
   oFOP cq;
   NODE bl=NULL,blh;
@@ -1210,9 +1144,7 @@ NODE *pbl;
   *pmat = f;
 }
 
-void qeblock(vl,f,pnf)
-VL vl;
-F f,*pnf;
+void qeblock(VL vl,F f,F *pnf)
 {
   CONT co;
   CEL cel;
@@ -1249,8 +1181,7 @@ F f,*pnf;
   simpl(*pnf,(NODE)NULL,pnf);
 }
 
-void qeblock_verbose0(vl)
-VL vl;
+void qeblock_verbose0(VL vl)
 {
   if (!Verbose)
     return;
@@ -1259,10 +1190,7 @@ VL vl;
     printf(" %s",NAME(VR(vl)));
 }
 
-int qeblock_verbose1a(co,cvl,pleft,pmodulus)
-CONT co;
-VL cvl;
-int *pleft,*pmodulus;
+int qeblock_verbose1a(CONT co,VL cvl,int *pleft,int *pmodulus)
 {
   int i=0;
   
@@ -1287,8 +1215,7 @@ int *pleft,*pmodulus;
   return 0;
 }
 
-void qeblock_verbose1b(g,print)
-int g,print;
+void qeblock_verbose1b(int g,int print)
 {
   if (!(Verbose && print))
     return;
@@ -1303,8 +1230,7 @@ void qeblock_verbose2()
   printf("\n");
 }
 
-int getmodulus(n)
-int n;
+int getmodulus(int n)
 {
   int pow=1;
   
@@ -1314,11 +1240,7 @@ int n;
   return pow;
 }
 
-
-int qevar(f,pcvl,pfl)
-F f;
-VL *pcvl;
-NODE *pfl;
+int qevar(F f,VL *pcvl,NODE *pfl)
 {
   int w;
   V x;
@@ -1341,11 +1263,7 @@ NODE *pfl;
   return w;
 }
 
-int gausselim(f,pvl,px,peset)
-F f;
-VL *pvl;
-V *px;
-NODE *peset;
+int gausselim(F f,VL *pvl,V *px,NODE *peset)
 {
   Z deg,two;
   P rlhs,a,b,c;
@@ -1382,10 +1300,7 @@ NODE *peset;
   return 0;
 }
 
-int gauss_abc(rlhs,v,deg,pa,pb,pc)
-P rlhs,*pa,*pb,*pc;
-V v;
-Z deg;
+int gauss_abc(P rlhs,V v,Z deg,P *pa,P *pb,P *pc)
 {
   Z two;
   DCP rld;
@@ -1411,9 +1326,7 @@ Z deg;
   return (NZNUMBER(*pa) || NZNUMBER(*pb) || NZNUMBER(*pc));
 }
 
-void gauss_mkeset1(rlhs,b,peset)
-P rlhs,b;
-NODE *peset;
+void gauss_mkeset1(P rlhs,P b,NODE *peset)
 {
   GP hgp;
 
@@ -1421,9 +1334,7 @@ NODE *peset;
   MKNODE(*peset,hgp,NULL);
 }
 
-void gauss_mkeset2(rlhs,a,b,c,peset)
-P rlhs,a,b,c;
-NODE *peset;
+void gauss_mkeset2(P rlhs,P a,P b,P c,NODE *peset)
 {
   GP hgp;
   NODE esetc=NULL;
@@ -1442,9 +1353,7 @@ NODE *peset;
   BDY(esetc) = (pointer)hgp;
 }
 
-int delv(v,vl,pnvl)
-V v;
-VL vl,*pnvl;
+int delv(V v,VL vl,VL *pnvl)
 {
         VL nvl=NULL,nvlc;
 
@@ -1465,10 +1374,7 @@ VL vl,*pnvl;
   return 0;
 }
 
-int translate(f,x,trans)
-F f;
-V x;
-NODE trans[];
+int translate(F f,V x,NODE *trans)
 {
   NODE sc,transc[8];
   int bt,w=0;
@@ -1480,10 +1386,7 @@ NODE trans[];
   return w;
 }
 
-int translate_a(at,v,trans,transc)
-F at;
-V v;
-NODE trans[],transc[];
+int translate_a(F at,V v,NODE *trans,NODE *transc)
 {
   P mp;
   Z two;
@@ -1506,10 +1409,7 @@ NODE trans[],transc[];
   return -1;
 }
 
-void translate_a1(op,mp,trans,transc)
-oFOP op;
-P mp;
-NODE trans[],transc[];
+void translate_a1(oFOP op,P mp,NODE *trans,NODE *transc)
 {
   P b;
   int itype,btype;
@@ -1522,10 +1422,7 @@ NODE trans[],transc[];
   BDY(transc[btype]) = (pointer)hgp;
 }
 
-void mklgp(mp,b,itype,pgp)
-P mp,b;
-int itype;
-GP *pgp;
+void mklgp(P mp,P b,int itype,GP *pgp)
 {
   RE hre;
   F hf;
@@ -1535,10 +1432,7 @@ GP *pgp;
   MKGP(*pgp,hf,hre);
 }
 
-void translate_a2(op,mp,trans,transc)
-oFOP op;
-P mp;
-NODE trans[],transc[];
+void translate_a2(oFOP op,P mp,NODE *trans,NODE *transc)
 {
   P a,b,c,linred;
   int itype,btype;
@@ -1555,11 +1449,7 @@ NODE trans[],transc[];
   BDY(transc[btype]) = (pointer)hgp;
 }
 
-void mkqgp(mp,a,b,c,rootno,itype,pgp)
-P mp,a,b,c;
-int rootno;
-int itype;
-GP *pgp;
+void mkqgp(P mp,P a,P b,P c,int rootno,int itype,GP *pgp)
 {
   P discr;
   RE hre;
@@ -1578,8 +1468,7 @@ GP *pgp;
   MKGP(*pgp,hf,hre);
 }
 
-void getqcoeffs(mp,pa,pb,pc)
-P mp,*pa,*pb,*pc;
+void getqcoeffs(P mp,P *pa,P *pb,P *pc)
 {
   DCP hdcp;
   
@@ -1596,8 +1485,7 @@ P mp,*pa,*pb,*pc;
     *pc = 0;
 }
 
-void mkdiscr(a,b,c,pd)
-P a,b,c,*pd;
+void mkdiscr(P a,P b,P c,P *pd)
 {
   P h1,h2;
   Z four;
@@ -1609,9 +1497,7 @@ P a,b,c,*pd;
   subp(CO,h1,h2,pd);
 }
 
-int al_reorder(p,v,pnp)
-P p,*pnp;
-V v;
+int al_reorder(P p,V v,P *pnp)
 {
   VL tvl;
 
@@ -1623,9 +1509,7 @@ V v;
     return 0;
 }
 
-void indices(op,s,pit,pbt)
-oFOP op;
-int s,*pit,*pbt;
+void indices(oFOP op,int s,int *pit,int *pbt)
 {
   switch (op) {
   case AL_EQUAL:
@@ -1675,9 +1559,7 @@ int s,*pit,*pbt;
   }
 }
 
-void mkeset(trans,x,peset)
-NODE trans[],*peset;
-V x;
+void mkeset(NODE *trans,V x,NODE *peset)
 {
   NODE esetc=NULL;
   P h;
@@ -1707,9 +1589,7 @@ V x;
   sp_add2eset(trans[BTNEQ],deps,peset,&esetc);
 }
 
-int selectside(trans,pcw,pcs,pdeps,pdinf)
-NODE trans[];
-int *pcw,*pcs,*pdeps,*pdinf;
+int selectside(NODE *trans,int *pcw,int *pcs,int *pdeps,int *pdinf)
 {
   if (cmp2n(trans[BTLEQ],trans[BTLESSP],trans[BTGEQ],trans[BTGREATERP])==1) {
     *pcw = BTGEQ;
@@ -1728,8 +1608,7 @@ int *pcw,*pcs,*pdeps,*pdinf;
   return 1;
 }
   
-int cmp2n(n1a,n1b,n2a,n2b)
-NODE n1a,n1b,n2a,n2b;
+int cmp2n(NODE n1a,NODE n1b,NODE n2a,NODE n2b)
 {
   NODE n1,n2;
   int n1bleft=1,n2bleft=1;
@@ -1753,8 +1632,7 @@ NODE n1a,n1b,n2a,n2b;
   return 0;
 }
 
-void add2eset(trfield,peset,pesetc)
-NODE trfield,*peset,*pesetc;
+void add2eset(NODE trfield,NODE *peset,NODE *pesetc)
 {
         NODE ntrfield,ntrfieldc;
 
@@ -1770,8 +1648,7 @@ NODE trfield,*peset,*pesetc;
   }
 }
 
-void seproots(trfield,pntrfield,pntrfieldc)
-NODE trfield,*pntrfield,*pntrfieldc;
+void seproots(NODE trfield,NODE *pntrfield,NODE *pntrfieldc)
 {
   NODE sc;
   NODE ntrf=NULL,ntrfc;
@@ -1798,9 +1675,7 @@ NODE trfield,*pntrfield,*pntrfieldc;
   *pntrfieldc = ntrfc;
 }
 
-void sp_add2eset(trfield,itype,peset,pesetc)
-NODE trfield,*peset,*pesetc;
-int itype;
+void sp_add2eset(NODE trfield,int itype,NODE *peset,NODE *pesetc)
 {
   NODE sc;
   GP hgp;
@@ -1812,24 +1687,18 @@ int itype;
   add2eset(trfield,peset,pesetc);
 }
 
-void subgpf(f,v,gp,pnf)
-F f,*pnf;
-V v;
-GP gp;
+void subgpf(F f,V v,GP gp,F *pnf)
 {
   NODE argl=NULL,arglc=NULL;
 
   NEXTNODE(argl,arglc);
   BDY(arglc) = (pointer)GUARD(gp);
   NEXTNODE(argl,arglc);
-  subref(f,v,POINT(gp),&BDY(arglc));
+  subref(f,v,POINT(gp),(F *)&BDY(arglc));
   MKJF(*pnf,AL_AND,argl);
 }
 
-void subref(f,v,r,pnf)
-F f,*pnf;
-V v;
-RE r;
+void subref(F f,V v,RE r,F *pnf)
 {
   pointer argv[2];
 
@@ -1838,9 +1707,7 @@ RE r;
   apply2ats(f,subref_a,argv,pnf);
 }
 
-void subref_a(at,argv,pnat)
-F at,*pnat;
-pointer argv[];
+void subref_a(F at,pointer *argv,F *pnat)
 {
   switch (ITYPE((RE)argv[1])) {
   case STD:
@@ -1861,10 +1728,7 @@ pointer argv[];
   }
 }
 
-void substd_a(at,v,re,pnf)
-F at,*pnf;
-V v;
-RE re;
+void substd_a(F at,V v,RE re,F *pnf)
 {
   VL no;
   P rlhs,prem,nlhs;
@@ -1879,7 +1743,7 @@ RE re;
   premp(no,rlhs,re->p,&prem);
   if (prem && !NUM(prem) && VR(prem) == v) {
     /* quadratic case */
-    substd_a2(FOP(at),prem,DEG(DC(rlhs)),re,pnf);
+    substd_a2(FOP(at),(F)prem,(Q)DEG(DC(rlhs)),re,pnf);
     return;
   }
   subz(DEG(DC(rlhs)),DEG(DC(re->p)),&dd);
@@ -1891,16 +1755,11 @@ RE re;
   MKAF(*pnf,FOP(at),nlhs);
 }
     
-void substd_a2(op,prem,fdeg,re,pf)
-oFOP op;
-F prem;
-Q fdeg;
-RE re;
-F *pf;
+void substd_a2(oFOP op,F prem,Q fdeg,RE re,F *pf)
 {
   P a,b,c,ld;
 
-  getrecoeffs(prem,fdeg,re,&a,&b,&c,&ld);
+  getrecoeffs((P)prem,(Z)fdeg,re,&a,&b,&c,&ld);
   if (ROOTNO(re) == 1)
     chsgnp(b,&b);
   else if (ROOTNO(re) != 2)
@@ -1908,10 +1767,7 @@ F *pf;
   substd_a21(op,a,b,c,ld,pf);
 }
 
-void substd_a21(op,a,b,c,d,pf)
-oFOP op;
-P a,b,c,d;
-F *pf;
+void substd_a21(oFOP op,P a,P b,P c,P d,F *pf)
 {
   switch (op) {
   case AL_EQUAL:
@@ -1940,9 +1796,7 @@ F *pf;
   }
 }
 
-void substd_a21_equal(a,b,c,d,pf)
-P a,b,c,d;
-F *pf;
+void substd_a21_equal(P a,P b,P c,P d,F *pf)
 {
   F hf;
   NODE cj=NULL,cjc=NULL;
@@ -1962,9 +1816,7 @@ F *pf;
   MKJF(*pf,AL_AND,cj);
 }
 
-void substd_a21_leq(a,b,c,d,pf)
-P a,b,c,d;
-F *pf;
+void substd_a21_leq(P a,P b,P c,P d,F *pf)
 {
   F hf;
   NODE cj=NULL,cjc=NULL,dj=NULL,djc=NULL;
@@ -1998,9 +1850,7 @@ F *pf;
   MKJF(*pf,AL_OR,dj);
 }
 
-void substd_a21_lessp(a,b,c,d,pf)
-P a,b,c,d;
-F *pf;
+void substd_a21_lessp(P a,P b,P c,P d,F *pf)
 {
   F hf,hf0;
   NODE cj=NULL,cjc=NULL,d1=NULL,d1c=NULL,d2=NULL,d2c=NULL;
@@ -2039,10 +1889,7 @@ F *pf;
   MKJF(*pf,AL_OR,d1);
 }
 
-void getrecoeffs(prem,fdeg,re,pa,pb,pc,pld)
-P prem,*pa,*pb,*pc,*pld;
-Z fdeg;
-RE re;
+void getrecoeffs(P prem,Z fdeg,RE re,P *pa,P *pb,P *pc,P *pld)
 {
   P a,b,c,alpha,beta,h1,h2;
   Z two;
@@ -2060,10 +1907,7 @@ RE re;
   *pld = (evenz(fdeg)) ? (P)ONE : a;
 }
            
-void subinf_a(f,v,re,pnf)
-F f,*pnf;
-V v;
-RE re;
+void subinf_a(F f,V v,RE re,F *pnf)
 {
   if (AL_ORDER(FOP(f)))
     subinf_a_o(f,v,re,pnf);
@@ -2071,10 +1915,7 @@ RE re;
     subtrans_a_no(f,v,pnf);
 }
 
-void subinf_a_o(f,v,ire,pnf)
-F f,*pnf;
-V v;
-RE ire;
+void subinf_a_o(F f,V v,RE ire,F *pnf)
 {
   P rlhs;
   
@@ -2084,11 +1925,7 @@ RE ire;
     subinf_a_o1(FOP(f),DC(rlhs),ire,pnf);
 }
 
-void subinf_a_o1(op,lhsdcp,ire,pnf)
-oFOP op;
-DCP lhsdcp;
-RE ire;
-F *pnf;
+void subinf_a_o1(oFOP op,DCP lhsdcp,RE ire,F *pnf)
 {
   P an;
   F h;
@@ -2121,9 +1958,7 @@ F *pnf;
   MKJF(*pnf,AL_OR,d);
 }
 
-void subtrans_a_no(f,v,pnf)
-F f,*pnf;
-V v;
+void subtrans_a_no(F f,V v,F *pnf)
 {
   P rlhs;
   DCP sc;
@@ -2143,10 +1978,7 @@ V v;
   smkjf(pnf,AL_TRSUBEXP(op),nargl);
 }
 
-void subpme_a(af,v,re,pnf)
-F af,*pnf;
-V v;
-RE re;
+void subpme_a(F af,V v,RE re,F *pnf)
 {
   if (AL_ORDER(FOP(af)))
     subpme_a_o(af,v,re,pnf);
@@ -2154,10 +1986,7 @@ RE re;
     subtrans_a_no(af,v,pnf);
 }
 
-void subpme_a_o(af,v,r,pnf)
-F af,*pnf;
-V v;
-RE r;
+void subpme_a_o(F af,V v,RE r,F *pnf)
 {
   F h;
   RE stdre;
@@ -2167,12 +1996,7 @@ RE r;
   subref(h,v,stdre,pnf);
 }
 
-void subpme_a_o1(op,lhs,v,minus,pnf)
-oFOP op;
-P lhs;
-V v;
-int minus;
-F *pnf;
+void subpme_a_o1(oFOP op,P lhs,V v,int minus,F *pnf)
 {
   Z deg;
   F h;
@@ -2202,9 +2026,7 @@ F *pnf;
   MKJF(*pnf,AL_OR,d);
 }
 
-int comember(co,x)
-CONT co;
-CEL x;
+int comember(CONT co,CEL x)
 {
   NODE sc;
   
@@ -2214,17 +2036,13 @@ CEL x;
   return 0;
 }
 
-void coadd(co,x)
-CONT co;
-CEL x;
+void coadd(CONT co,CEL x)
 {
   NEXTNODE(FIRST(co),LAST(co));
   BDY(LAST(co)) = (pointer)x;
 }
 
-int coget(co,px)
-CONT co;
-CEL *px;
+int coget(CONT co,CEL *px)
 {
   if (FIRST(co) == 0)
     return 0;
@@ -2233,8 +2051,7 @@ CEL *px;
   return 1;
 }
 
-int colen(co)
-CONT co;
+int colen(CONT co)
 {
   NODE sc;
   int n=0;
@@ -2246,10 +2063,7 @@ CONT co;
 
 /* Misc */
 
-void apply2ats(f,client,argv,pnf)
-F f,*pnf;
-void (*client)();
-pointer argv[];
+void apply2ats(F f,void (*client)(F,pointer *,F *),pointer *argv,F *pnf)
 {
   if (AL_ATOMIC(FOP(f)))
     (*client)(f,argv,pnf);
@@ -2271,9 +2085,7 @@ pointer argv[];
     error("unknown operator in apply2ats");
 }
 
-void atl(f,pn)
-F f;
-NODE *pn;
+void atl(F f,NODE *pn)
 {
   NODE c;
 
@@ -2281,9 +2093,7 @@ NODE *pn;
   atl1(f,pn,&c);
 }
 
-void atl1(f,pn,pc)
-F f;
-NODE *pn,*pc;
+void atl1(F f,NODE *pn,NODE *pc)
 {
   NODE sc;
 
@@ -2296,17 +2106,13 @@ NODE *pn,*pc;
       atl1(BDY(sc),pn,pc);
 }
 
-void atnum(f,pn)
-F f;
-Q *pn;
+void atnum(F f,Q *pn)
 {
   *pn = 0;
   atnum1(f,pn);
 }
 
-void atnum1(f,pn)
-F f;
-Q *pn;
+void atnum1(F f,Q *pn)
 {
   NODE sc;
   
@@ -2317,8 +2123,7 @@ Q *pn;
       atnum1(BDY(sc),pn);
 }
 
-void pnegate(f,pnf)
-F f,*pnf;
+void pnegate(F f,F *pnf)
 {
   F h;
   NODE sc,n=NULL,c;
@@ -2352,11 +2157,7 @@ F f,*pnf;
   error("unknown operator in pnegate()");
 }
 
-void subf(o,f,v,p,pf)
-VL o;
-F f,*pf;
-V v;
-P p;
+void subf(VL o,F f,V v,P p,F *pf)
 {
   pointer argv[3];
 
@@ -2366,9 +2167,7 @@ P p;
   apply2ats(f,subf_a,argv,pf);
 }
 
-void subf_a(at,argv,pat)
-F at,*pat;
-pointer argv[];
+void subf_a(F at,pointer *argv,F *pat)
 {
   P nlhs;
 
@@ -2376,15 +2175,12 @@ pointer argv[];
   MKAF(*pat,FOP(at),nlhs);
 }
 
-void nnf(f,pf)
-F f,*pf;
+void nnf(F f,F *pf)
 {
   nnf1(f,0,0,pf);
 }
 
-void nnf1(f,neg,disj,pf)
-F f,*pf;
-int neg,disj;
+void nnf1(F f,int neg,int disj,F *pf)
 {
   F h;
   NODE sc,nargl=NULL,narglc=NULL;
@@ -2449,17 +2245,13 @@ int neg,disj;
   error("unknown operator in nnf1()");
 }
 
-void freevars(f,pvl)
-F f;
-VL *pvl;
+void freevars(F f,VL *pvl)
 {
   *pvl = NULL;
   freevars1(f,pvl,NULL);
 }
 
-void freevars1(f,pvl,cbvl)
-F f;
-VL *pvl,cbvl;
+void freevars1(F f,VL *pvl,VL cbvl)
 {
   VL hvl;
   NODE sc;
@@ -2493,9 +2285,7 @@ VL *pvl,cbvl;
   error("unknown operator in freevars1()");
 }
 
-void freevars1_a(f,pvl,cbvl)
-F f;
-VL *pvl,cbvl;
+void freevars1_a(F f,VL *pvl,VL cbvl)
 {
   VL sc,sc2,last;
 
@@ -2520,9 +2310,7 @@ VL *pvl,cbvl;
   }
 }
 
-int compf(vl,f1,f2)
-VL vl;
-F f1,f2;
+int compf(VL vl,F f1,F f2)
 {
   if (AL_ATOMIC(FOP(f1)) && AL_ATOMIC(FOP(f2)))
     return compaf(vl,f1,f2);
@@ -2537,15 +2325,13 @@ F f1,f2;
 
 /* Debug */
 
-void ap(x)
-pointer *x;
+void ap(pointer *x)
 {
   printexpr(CO,(Obj)x);
   printf("\n");
 }
 
-void rep(re)
-RE re;
+void rep(RE re)
 {
   printf("(");
   printexpr(CO,(Obj)re->p);
@@ -2555,15 +2341,13 @@ RE re;
   printf("%d)\n",re->itype);
 }
 
-void gpp(gp)
-GP gp;
+void gpp(GP gp)
 {
   ap((pointer *)gp->g);
   rep(gp->p);
 }
 
-void esetp(eset)
-NODE eset;
+void esetp(NODE eset)
 {
   NODE sc;
 
@@ -2571,8 +2355,7 @@ NODE eset;
     gpp(BDY(sc));
 }
 
-void nodep(n)
-NODE n;
+void nodep(NODE n)
 {
   NODE sc;
 
@@ -2580,16 +2363,14 @@ NODE n;
     ap(BDY(sc));
 }
 
-void lbfp(x)
-LBF x;
+void lbfp(LBF x)
 {
   printf("(%d,",LBFLB(x));
   printexpr(CO,(Obj)LBFF(x));
   printf(")");
 }
 
-void thp(x)
-NODE x;
+void thp(NODE x)
 {
   if (x == NULL) {
    printf("[]\n");

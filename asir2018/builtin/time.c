@@ -59,12 +59,12 @@ void Pcputime(NODE arg,pointer *rp);
 void Ptime(LIST *listp);
 
 struct ftab time_tab[] = {
-  {"time",Ptime,0},
-  {"cputime",Pcputime,1},
-  {"currenttime",Pcurrenttime,0},
-  {"dcurrenttime",Pdcurrenttime,0},
-  {"tstart",Ptstart,0},
-  {"tstop",Ptstop,0},
+  {"time",(void(*)(void))Ptime,0},
+  {"cputime",(void(*)(void))Pcputime,1},
+  {"currenttime",(void(*)(void))Pcurrenttime,0},
+  {"dcurrenttime",(void(*)(void))Pdcurrenttime,0},
+  {"tstart",(void(*)(void))Ptstart,0},
+  {"tstop",(void(*)(void))Ptstop,0},
   {0,0,0},
 };
 

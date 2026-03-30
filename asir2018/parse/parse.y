@@ -85,7 +85,7 @@ extern jmp_buf env;
 	SNODE s;
 	NODE n;
 	NODE2 n2;
-	int i;
+	long i;
 	pointer p;
 }
 
@@ -207,19 +207,19 @@ complex : '{' stats '}'
 			{ $$ = mksnode(1,S_CPLX,$2); }
 		;
 members	: rawstr
-			{ MKNODE($$,$1,0); }
+			{ MKNODE($$,$1,0L); }
 		| members ',' rawstr
 			{ appendtonode($1,$3,&$$); }
 		;
 vars	: LCASE
-			{ MKNODE($$,$1,0); }
+			{ MKNODE($$,$1,0L); }
 		| vars ',' LCASE
 			{ appendtonode($1,$3,&$$); }
 		;
 pvars	: UCASE
-			{ val = (pointer)((long)makepvar($1)); MKNODE($$,val,0); }
+			{ val = (pointer)(makepvar($1)); MKNODE($$,val,0L); }
 		| pvars ',' UCASE
-			{ appendtonode($1,(pointer)((long)makepvar($3)),&$$); }
+			{ appendtonode($1,(pointer)(makepvar($3)),&$$); }
 		;
 stats	:
 			{ $$ = 0; }
@@ -232,12 +232,12 @@ node 	:
 			{ $$ = $1; }
 		;
 _node	: expr
-			{ MKNODE($$,$1,0); }
+			{ MKNODE($$,$1,0L); }
 		| _node ',' expr
 			{ appendtonode($1,(pointer)$3,&$$); }
 		;
 optlist	: opt
-			{ MKNODE($$,$1,0); }
+			{ MKNODE($$,$1,0L); }
 		| optlist ',' opt
 			{ appendtonode($1,(pointer)$3,&$$); }
 		;
@@ -299,7 +299,7 @@ pexpr	: STR
 			{
 				gen_searchf($3,(FUNC *)&val);
 				print_crossref(val);
-				$$ = mkfnode(3,I_MAP,val,mkfnode(1,I_LIST,$5),0);
+				$$ = mkfnode(3,I_MAP,val,mkfnode(1,I_LIST,$5),0L);
 			}
 		| MAP '(' LCASE ',' node '|' optlist ')' 
 			{
@@ -311,7 +311,7 @@ pexpr	: STR
 			{
 				gen_searchf($3,(FUNC *)&val);
 				print_crossref(val);
-				$$ = mkfnode(3,I_RECMAP,val,mkfnode(1,I_LIST,$5),0);
+				$$ = mkfnode(3,I_RECMAP,val,mkfnode(1,I_LIST,$5),0L);
 			}
 		| RECMAP '(' LCASE ',' node '|' optlist ')' 
 			{
@@ -402,7 +402,7 @@ pexpr	: STR
 					appendtonode((NODE)$1->arg[1],(pointer)$3,&a);
 					$1->arg[1] = (pointer)a; $$ = $1;
 				} else {
-					MKNODE(a,$3,0);
+					MKNODE(a,$3,0L);
 					$$ = mkfnode(2,I_INDEX,(pointer)$1,a);
 				}
 			}
@@ -447,7 +447,7 @@ expr 	: pexpr
 			{ 
 				gen_searchf("factorial",(FUNC *)&val);
 				print_crossref(val);
-				MKNODE(a,$1,0);
+				MKNODE(a,$1,0L);
 				$$ = mkfnode(2,I_FUNC,val,mkfnode(1,I_LIST,a));
 			}
 	 	| expr OR expr
@@ -475,7 +475,7 @@ expr 	: pexpr
 		| '<' node ':' expr '>'
 			{ $$ = mkfnode(2,I_EVM,$2,$4); }
 		| NEWSTRUCT '(' rawstr ')'
-			{ $$ = mkfnode(1,I_NEWCOMP,(int)structtoindex($3)); }
+			{ $$ = mkfnode(1,I_NEWCOMP,structtoindex($3)); }
 		| QUOTED '(' expr ')'
 			{ MKQUOTE(quote,$3); $$ = mkfnode(1,I_FORMULA,(pointer)quote); }
 		| '[' node '|' expr ']'

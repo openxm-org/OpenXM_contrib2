@@ -617,7 +617,7 @@ void ox_bcast_102(int root)
 
 /* func : an arithmetic funcion func(vl,a,b,*c) */
 
-void ox_reduce_102(int root,void (*func)())
+void ox_reduce_102(int root,void (*func)(VL,Obj,Obj,Obj *))
 {
   Obj data,data0,t;
   int r,mask,id,src,dst;

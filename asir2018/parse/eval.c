@@ -931,12 +931,12 @@ pointer evalf(FUNC f,FNODE a,FNODE opt)
       if ( !n ) {
         current_option = opts;
         cur_binf = f;
-        (*f->f.binf)(&val);
+        ((void(*)(pointer *))(*f->f.binf))(&val);
       } else {
         args = (LIST)eval_arg(a,f->quote);
         current_option = opts;
         cur_binf = f;
-        (*f->f.binf)(args?BDY(args):0,&val);
+        ((void(*)(NODE,pointer *))(*f->f.binf))(args?BDY(args):0,&val);
       }
       cur_binf = 0;
       break;
@@ -1211,10 +1211,10 @@ pointer bevalf(FUNC f,NODE a,NODE opts)
       current_option = opts;
       if ( !n ) {
         cur_binf = f;
-        (*f->f.binf)(&val);
+        ((void(*)(pointer *))(*f->f.binf))(&val);
       } else {
         cur_binf = f;
-        (*f->f.binf)(a,&val);
+        ((void(*)(NODE,pointer *))(*f->f.binf))(a,&val);
       }
       cur_binf = 0;
       break;

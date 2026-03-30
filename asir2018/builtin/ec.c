@@ -107,29 +107,29 @@ extern int current_ff,lm_lazy;
 
 struct ftab ec_tab[] = {
 /* point addition */
-  {"ecm_add_ff",Pecm_add_ff,3},
+  {"ecm_add_ff",(void(*)(void))Pecm_add_ff,3},
 
 /* point change sign */
-  {"ecm_chsgn_ff",Pecm_chsgn_ff,1},
+  {"ecm_chsgn_ff",(void(*)(void))Pecm_chsgn_ff,1},
 
 /* point subtraction */
-  {"ecm_sub_ff",Pecm_sub_ff,3},
+  {"ecm_sub_ff",(void(*)(void))Pecm_sub_ff,3},
 
 /* key computation for sort and match */
-  {"ecm_compute_all_key_homo_ff",Pecm_compute_all_key_homo_ff,1},
+  {"ecm_compute_all_key_homo_ff",(void(*)(void))Pecm_compute_all_key_homo_ff,1},
 
 /* exhausitve search of rational points */
-  {"ecm_count_order",Pecm_count_order,1},
+  {"ecm_count_order",(void(*)(void))Pecm_count_order,1},
 
 /* common functions */
-  {"nextvect1",Pnextvect1,2},
-  {"sort_ktarray",Psort_ktarray,2},
-  {"separate_vect",Pseparate_vect,1},
-  {"ecm_find_match",Pecm_find_match,2},
-  {"ecm_set_addcounter",Pecm_set_addcounter,-1},
-  {"sha1",Psha1,-2},
+  {"nextvect1",(void(*)(void))Pnextvect1,2},
+  {"sort_ktarray",(void(*)(void))Psort_ktarray,2},
+  {"separate_vect",(void(*)(void))Pseparate_vect,1},
+  {"ecm_find_match",(void(*)(void))Pecm_find_match,2},
+  {"ecm_set_addcounter",(void(*)(void))Pecm_set_addcounter,-1},
+  {"sha1",(void(*)(void))Psha1,-2},
 #if 0
-  {"sha1_free",Psha1_free,1},
+  {"sha1_free",(void(*)(void))Psha1_free,1},
 #endif
   {0,0,0},
 };

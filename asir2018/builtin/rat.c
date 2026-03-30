@@ -58,12 +58,12 @@ void Pederiv(NODE arg,Obj *rp);
 void Plaurent_to_rat(NODE arg,Obj *rp);
 
 struct ftab rat_tab[] = {
-  {"nm",Pnm,1},
-  {"dn",Pdn,1},
-  {"diff",Pderiv,-99999999},
-  {"ediff",Pederiv,-99999999},
-  {"rdiff",Prderiv,-99999999},
-  {"laurent_to_rat",Plaurent_to_rat,1},
+  {"nm",(void(*)(void))Pnm,1},
+  {"dn",(void(*)(void))Pdn,1},
+  {"diff",(void(*)(void))Pderiv,-99999999},
+  {"ediff",(void(*)(void))Pederiv,-99999999},
+  {"rdiff",(void(*)(void))Prderiv,-99999999},
+  {"laurent_to_rat",(void(*)(void))Plaurent_to_rat,1},
   {0,0,0},
 };
 

@@ -2669,7 +2669,7 @@ void nd_nf_p(Obj f,LIST g,LIST v,int m,struct order_spec *ord,Obj *rp);
 void obj_algtodalg(Obj obj,Obj *r);
 void obj_dalgtoalg(Obj obj,Obj *r);
 void ox_bcast_102(int root);
-void ox_reduce_102(int root,void (*func)());
+void ox_reduce_102(int root,void (*func)(VL,Obj,Obj,Obj *));
 void print_to_wfep(Obj obj);
 void printz(Z n);
 void pthrootgfs(GFS a,GFS *b);

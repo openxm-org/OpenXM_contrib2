@@ -69,7 +69,7 @@ int cmpdl_top_weight(int,DL,DL);
 
 int (*cmpdl)(int,DL,DL)=cmpdl_revgradlex;
 int (*cmpdl_tie_breaker)(int,DL,DL);
-int (*primitive_cmpdl[3])() = {cmpdl_revgradlex,cmpdl_gradlex,cmpdl_lex};
+int (*primitive_cmpdl[3])() = {(int(*)(void))cmpdl_revgradlex,(int(*)(void))cmpdl_gradlex,(int(*)(void))cmpdl_lex};
 
 Obj current_top_weight;
 int current_top_weight_len;

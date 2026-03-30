@@ -109,24 +109,24 @@ void dtestsql(P f,ML list,struct oDUM *dc,DCP *dcp)
 {
   int j,n,m,b;
   P t,s,fq,fr;
-  P *true;
+  P *tru;
   Z tq;
   LUM *c;
   DCP dcr,dcr0;
 
   n = list->n; m = list->mod; b = list->bound; c = (LUM *)list->c;
-  true = (P*)ALLOCA(n*sizeof(P));
+  tru = (P*)ALLOCA(n*sizeof(P));
   for ( j = 0; j < n; j++ ) {
     dtestsq(m,b,f,c[j],&t);
     if ( t ) 
-      true[j] = t;
+      tru[j] = t;
     else {
       *dcp = 0;
       return;
     }
   }
   for ( t = f, j = 0; j < n; j++ ) {
-    STOZ(dc[j].n,tq); pwrp(CO,true[j],tq,&s); udivpz(t,s,&fq,&fr);
+    STOZ(dc[j].n,tq); pwrp(CO,tru[j],tq,&s); udivpz(t,s,&fq,&fr);
     if ( fq && !fr )
       t = fq;
     else {
@@ -135,7 +135,7 @@ void dtestsql(P f,ML list,struct oDUM *dc,DCP *dcp)
     }
   }
   for ( j = 0, dcr = dcr0 = 0; j < n; j++ ) {
-    NEXTDC(dcr0,dcr); STOZ(dc[j].n,DEG(dcr)); COEF(dcr) = true[j];
+    NEXTDC(dcr0,dcr); STOZ(dc[j].n,DEG(dcr)); COEF(dcr) = tru[j];
   }
   NEXT(dcr) = 0; *dcp = dcr0;
 }

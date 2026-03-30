@@ -130,7 +130,7 @@ void poppvs() {
 #define IS_PATTERN 3
 
 
-unsigned int makepvar(char *str)
+unsigned long makepvar(char *str)
 {
   int c,c1,created;
   char *buf;

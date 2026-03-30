@@ -79,7 +79,7 @@ int setsecureflag(char *name,int value)
   return -1;
 }
 
-void appendbinf(NODE *flistp,char *name,void (*func)(),int argc,unsigned int quote)
+void appendbinf(NODE *flistp,char *name,void (*func)(void),int argc,unsigned int quote)
 {
   FUNC t;
   NODE n;
@@ -90,7 +90,7 @@ void appendbinf(NODE *flistp,char *name,void (*func)(),int argc,unsigned int quo
   MKNODE(n,t,*flistp); *flistp = n;
 }
 
-void appendparif(NODE *flistp,char *name,int (*func)(),int type)
+void appendparif(NODE *flistp,char *name,int (*func)(void),int type)
 {
   FUNC t;
   NODE n;
@@ -101,12 +101,12 @@ void appendparif(NODE *flistp,char *name,int (*func)(),int type)
   MKNODE(n,t,*flistp); *flistp = n;
 }
 
-void appendsysf(char *name,void (*func)(),int argc,unsigned int quote)
+void appendsysf(char *name,void (*func)(void),int argc,unsigned int quote)
 {
   appendbinf(&sysf,name,func,argc,quote);
 }
 
-void appendubinf(char *name,void (*func)(),int argc,unsigned int quote)
+void appendubinf(char *name,void (*func)(void),int argc,unsigned int quote)
 {
   appendbinf(&ubinf,name,func,argc,quote);
 }

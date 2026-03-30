@@ -57,11 +57,11 @@ void Ppsubst(NODE arg,Obj *rp);
 void Psubstf(NODE arg,Obj *rp);
 
 struct ftab subst_tab[] = {
-  {"subst",Psubst,-99999999},
-  {"substr2np",Psubstr2np,-3},
-  {"subst_quote",Psubst_quote,-99999999},
-  {"psubst",Ppsubst,-99999999},
-  {"substf",Psubstf,-99999999},
+  {"subst",(void(*)(void))Psubst,-99999999},
+  {"substr2np",(void(*)(void))Psubstr2np,-3},
+  {"subst_quote",(void(*)(void))Psubst_quote,-99999999},
+  {"psubst",(void(*)(void))Ppsubst,-99999999},
+  {"substf",(void(*)(void))Psubstf,-99999999},
   {0,0,0},
 };
 

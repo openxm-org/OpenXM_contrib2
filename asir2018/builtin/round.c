@@ -16,14 +16,14 @@ void Pdiv_pinf(NODE arg,Real *rp);
 void Pdiv_minf(NODE arg,Real *rp);
 
 struct ftab round_tab[] = {
-  {"add_pinf",Padd_pinf,2},
-  {"add_minf",Padd_minf,2},
-  {"sub_pinf",Psub_pinf,2},
-  {"sub_minf",Psub_minf,2},
-  {"mul_pinf",Pmul_pinf,2},
-  {"mul_minf",Pmul_minf,2},
-  {"div_pinf",Pdiv_pinf,2},
-  {"div_minf",Pdiv_minf,2},
+  {"add_pinf",(void(*)(void))Padd_pinf,2},
+  {"add_minf",(void(*)(void))Padd_minf,2},
+  {"sub_pinf",(void(*)(void))Psub_pinf,2},
+  {"sub_minf",(void(*)(void))Psub_minf,2},
+  {"mul_pinf",(void(*)(void))Pmul_pinf,2},
+  {"mul_minf",(void(*)(void))Pmul_minf,2},
+  {"div_pinf",(void(*)(void))Pdiv_pinf,2},
+  {"div_minf",(void(*)(void))Pdiv_minf,2},
   {0,0,0},
 };
 

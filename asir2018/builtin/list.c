@@ -65,19 +65,19 @@ void Preplca(NODE arg,LIST *rp);
 void Passoc(NODE arg, LIST *rp);
 
 struct ftab list_tab[] = {
-  {"car",Pcar,1},
-  {"cdr",Pcdr,1},
-  {"cons",Pcons,2},
-  {"append",Pappend,2},
-  {"reverse",Preverse,1},
-  {"length",Plength,1},
-  {"nconc",Pnconc,2},
-  {"replcd",Preplcd,2},
-  {"replca",Preplca,2},
-  {"list", Plist, -99999999},
-  {"assoc",Passoc,2},
-  {"cddr",Pcddr,1},
-  {"cadr",Pcadr,1},
+  {"car",(void(*)(void))Pcar,1},
+  {"cdr",(void(*)(void))Pcdr,1},
+  {"cons",(void(*)(void))Pcons,2},
+  {"append",(void(*)(void))Pappend,2},
+  {"reverse",(void(*)(void))Preverse,1},
+  {"length",(void(*)(void))Plength,1},
+  {"nconc",(void(*)(void))Pnconc,2},
+  {"replcd",(void(*)(void))Preplcd,2},
+  {"replca",(void(*)(void))Preplca,2},
+  {"list",(void(*)(void))Plist, -99999999},
+  {"assoc",(void(*)(void))Passoc,2},
+  {"cddr",(void(*)(void))Pcddr,1},
+  {"cadr",(void(*)(void))Pcadr,1},
   {0,0,0},
 };
 

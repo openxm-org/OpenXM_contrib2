@@ -92,16 +92,16 @@ void sfuhensel(P,NODE,GFS,int,NODE *);
 extern int current_ff;
 
 struct ftab gf_tab[] = {
-  {"solve_linear_equation_gf2n",Psolve_linear_equation_gf2n,1},
-  {"nullspace",Pnullspace,3},
-  {"nullspace_ff",Pnullspace_ff,1},
-/*  {"gcda_mod",Pgcda_mod,5}, */
-  {"ftest",Pftest,2},
-  {"resfmain",Presfmain,4},
-  {"pwr_mod",Ppwr_mod,6},
-  {"uhensel",Puhensel,4},
-  {"uhensel_incremental",Puhensel_incremental,5},
-  {"sfuhensel",Psfuhensel,4},
+  {"solve_linear_equation_gf2n",(void(*)(void))Psolve_linear_equation_gf2n,1},
+  {"nullspace",(void(*)(void))Pnullspace,3},
+  {"nullspace_ff",(void(*)(void))Pnullspace_ff,1},
+/*  {"gcda_mod",(void(*)(void))Pgcda_mod,5}, */
+  {"ftest",(void(*)(void))Pftest,2},
+  {"resfmain",(void(*)(void))Presfmain,4},
+  {"pwr_mod",(void(*)(void))Ppwr_mod,6},
+  {"uhensel",(void(*)(void))Puhensel,4},
+  {"uhensel_incremental",(void(*)(void))Puhensel_incremental,5},
+  {"sfuhensel",(void(*)(void))Psfuhensel,4},
   {0,0,0},
 };
 

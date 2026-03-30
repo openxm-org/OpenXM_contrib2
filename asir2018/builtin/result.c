@@ -55,9 +55,9 @@ void Presult(NODE arg,P *rp);
 void Psrcr(NODE arg,P *rp);
 
 struct ftab result_tab[] = {
-  {"res",Presult,-4},
-  {"nd_res",Pnd_res,-4},
-  {"srcr",Psrcr,3},
+  {"res",(void(*)(void))Presult,-4},
+  {"nd_res",(void(*)(void))Pnd_res,-4},
+  {"srcr",(void(*)(void))Psrcr,3},
   {0,0,0},
 };
 

@@ -59,9 +59,9 @@ void cplx_real(Obj,Obj *);
 void cplx_imag(Obj,Obj *);
 
 struct ftab cplx_tab[] = {
-  {"conj",Pconj,1},
-  {"real",Preal,1},
-  {"imag",Pimag,1},
+  {"conj",(void(*)(void))Pconj,1},
+  {"real",(void(*)(void))Preal,1},
+  {"imag",(void(*)(void))Pimag,1},
   {0,0,0},
 };
 

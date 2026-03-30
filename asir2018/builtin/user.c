@@ -12,7 +12,7 @@ struct ftab user_tab[] = {
 /*
   {"partial_derivative",Ppartial_derivative,2},
 */
-  {"comp_f",Pcomp_f,2},
+  {"comp_f",(void(*)(void))Pcomp_f,2},
   {0,0,0},
 };
 

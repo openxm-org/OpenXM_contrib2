@@ -101,8 +101,9 @@ void mkpf(char *name,Obj body,int argc,V *args,
   NODE node;
 
   NEWPF(pf); pf->name = name; pf->body = body; 
-  pf->argc = argc; pf->args = args; pf->pari = parif; pf->simplify = simp;
-  pf->libm = libmf;
+  pf->argc = argc; pf->args = args; pf->pari = (int(*)(NODE,Obj *))parif; 
+  pf->simplify = (int(*)(PFINS,Obj *))simp;
+  pf->libm = (double(*)(double,double))libmf;
 #if defined(INTERVAL)
   pf->intervalfunc = intervalfunc;
 #endif
@@ -670,16 +671,16 @@ void devalins(PFINS ins,Obj *rp)
         error("devalins : not supported");
     switch ( pf->argc ) {
       case 0:
-        d = (*pf->libm)(); break;
+        d = ((double(*)(void))(*pf->libm))(); break;
       case 1:
-        d = (*pf->libm)(ToReal(tad[0].arg)); break;
+        d = ((double(*)(double))(*pf->libm))(ToReal(tad[0].arg)); break;
       case 2:
         d = (*pf->libm)(ToReal(tad[0].arg),ToReal(tad[1].arg)); break;
       case 3:
-        d = (*pf->libm)(ToReal(tad[0].arg),ToReal(tad[1].arg),
+        d = ((double(*)(double,double,double))(*pf->libm))(ToReal(tad[0].arg),ToReal(tad[1].arg),
           ToReal(tad[2].arg)); break;
       case 4:
-        d = (*pf->libm)(ToReal(tad[0].arg),ToReal(tad[1].arg),
+        d = ((double(*)(double,double,double,double))(*pf->libm))(ToReal(tad[0].arg),ToReal(tad[1].arg),
           ToReal(tad[2].arg),ToReal(tad[3].arg)); break;
       default:
         error("devalins : not supported");

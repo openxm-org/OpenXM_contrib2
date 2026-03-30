@@ -17,8 +17,6 @@
 #define INLINE
 #endif
 
-typedef unsigned int UINT;
-
 #define USE_GEOBUCKET 1
 #define USE_UNROLL 1
 

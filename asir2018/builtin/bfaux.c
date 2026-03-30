@@ -27,7 +27,7 @@ void Pmpfr_round(NODE arg,Z *rp);
 void Prk_ratmat(NODE arg,LIST *rp);
 void mp_pi(NODE arg,BF *rp);
 void mp_e(NODE arg,BF *rp);
-void mpfr_or_mpc(NODE arg,int (*mpfr_f)(),int (*mpc_f)(),Num *rp);
+void mpfr_or_mpc(NODE arg,int (*mpfr_f)(mpfr_ptr, mpfr_srcptr,mpfr_rnd_t),int (*mpc_f)(mpc_ptr, mpc_srcptr,mpfr_rnd_t),Num *rp);
 void mp_sin(NODE arg,Num *rp);
 void mp_cos(NODE arg,Num *rp);
 void mp_tan(NODE arg,Num *rp);
@@ -47,43 +47,43 @@ void mp_factorial(NODE arg,Num *rp);
 void mp_pow(NODE arg,Num *rp);
 
 struct ftab bf_tab[] = {
-  {"eval",Peval,-2},
-  {"setprec",Psetprec,-1},
-  {"setbprec",Psetbprec,-1},
-  {"setround",Psetround,-1},
-  {"todouble",Ptodouble,1},
-  {"mpfr_sin",mp_sin,-2},
-  {"mpfr_cos",mp_cos,-2},
-  {"mpfr_tan",mp_tan,-2},
-  {"mpfr_asin",mp_asin,-2},
-  {"mpfr_acos",mp_acos,-2},
-  {"mpfr_atan",mp_atan,-2},
-  {"mpfr_sinh",mp_sinh,-2},
-  {"mpfr_cosh",mp_cosh,-2},
-  {"mpfr_tanh",mp_tanh,-2},
-  {"mpfr_asinh",mp_asinh,-2},
-  {"mpfr_acosh",mp_acosh,-2},
-  {"mpfr_atanh",mp_atanh,-2},
-  {"mpfr_exp",mp_exp,-2},
-  {"mpfr_log",mp_log,-2},
-  {"mpfr_pow",mp_pow,-3},
-  {"mpfr_ai",Pmpfr_ai,-2},
-  {"mpfr_zeta",Pmpfr_zeta,-2},
-  {"mpfr_j0",Pmpfr_j0,-2},
-  {"mpfr_j1",Pmpfr_j1,-2},
-  {"mpfr_y0",Pmpfr_y0,-2},
-  {"mpfr_y1",Pmpfr_y1,-2},
-  {"mpfr_eint",Pmpfr_eint,-2},
-  {"mpfr_erf",Pmpfr_erf,-2},
-  {"mpfr_erfc",Pmpfr_erfc,-2},
-  {"mpfr_li2",Pmpfr_li2,-2},
-  {"mpfr_gamma",Pmpfr_gamma,-2},
-  {"mpfr_lngamma",Pmpfr_lngamma,-2},
-  {"mpfr_digamma",Pmpfr_digamma,-2},
-  {"mpfr_floor",Pmpfr_floor,-2},
-  {"mpfr_ceil",Pmpfr_ceil,-2},
-  {"mpfr_round",Pmpfr_round,-2},
-  {"rk_ratmat",Prk_ratmat,7},
+  {"eval",(void(*)(void))Peval,-2},
+  {"setprec",(void(*)(void))Psetprec,-1},
+  {"setbprec",(void(*)(void))Psetbprec,-1},
+  {"setround",(void(*)(void))Psetround,-1},
+  {"todouble",(void(*)(void))Ptodouble,1},
+  {"mpfr_sin",(void(*)(void))mp_sin,-2},
+  {"mpfr_cos",(void(*)(void))mp_cos,-2},
+  {"mpfr_tan",(void(*)(void))mp_tan,-2},
+  {"mpfr_asin",(void(*)(void))mp_asin,-2},
+  {"mpfr_acos",(void(*)(void))mp_acos,-2},
+  {"mpfr_atan",(void(*)(void))mp_atan,-2},
+  {"mpfr_sinh",(void(*)(void))mp_sinh,-2},
+  {"mpfr_cosh",(void(*)(void))mp_cosh,-2},
+  {"mpfr_tanh",(void(*)(void))mp_tanh,-2},
+  {"mpfr_asinh",(void(*)(void))mp_asinh,-2},
+  {"mpfr_acosh",(void(*)(void))mp_acosh,-2},
+  {"mpfr_atanh",(void(*)(void))mp_atanh,-2},
+  {"mpfr_exp",(void(*)(void))mp_exp,-2},
+  {"mpfr_log",(void(*)(void))mp_log,-2},
+  {"mpfr_pow",(void(*)(void))mp_pow,-3},
+  {"mpfr_ai",(void(*)(void))Pmpfr_ai,-2},
+  {"mpfr_zeta",(void(*)(void))Pmpfr_zeta,-2},
+  {"mpfr_j0",(void(*)(void))Pmpfr_j0,-2},
+  {"mpfr_j1",(void(*)(void))Pmpfr_j1,-2},
+  {"mpfr_y0",(void(*)(void))Pmpfr_y0,-2},
+  {"mpfr_y1",(void(*)(void))Pmpfr_y1,-2},
+  {"mpfr_eint",(void(*)(void))Pmpfr_eint,-2},
+  {"mpfr_erf",(void(*)(void))Pmpfr_erf,-2},
+  {"mpfr_erfc",(void(*)(void))Pmpfr_erfc,-2},
+  {"mpfr_li2",(void(*)(void))Pmpfr_li2,-2},
+  {"mpfr_gamma",(void(*)(void))Pmpfr_gamma,-2},
+  {"mpfr_lngamma",(void(*)(void))Pmpfr_lngamma,-2},
+  {"mpfr_digamma",(void(*)(void))Pmpfr_digamma,-2},
+  {"mpfr_floor",(void(*)(void))Pmpfr_floor,-2},
+  {"mpfr_ceil",(void(*)(void))Pmpfr_ceil,-2},
+  {"mpfr_round",(void(*)(void))Pmpfr_round,-2},
+  {"rk_ratmat",(void(*)(void))Prk_ratmat,7},
   {0,0,0},
 };
 
@@ -358,7 +358,7 @@ void mp_e(NODE arg,BF *rp)
   *rp = r; 
 }
 
-void mpfr_or_mpc(NODE arg,int (*mpfr_f)(),int (*mpc_f)(),Num *rp)
+void mpfr_or_mpc(NODE arg,int (*mpfr_f)(mpfr_ptr, mpfr_srcptr,mpfr_rnd_t),int (*mpc_f)(mpc_ptr, mpc_srcptr,mpfr_rnd_t),Num *rp)
 {
   Num a;
   int prec;
@@ -464,7 +464,7 @@ void mp_log(NODE arg,Num *rp)
 
 void mp_abs(NODE arg,Num *rp)
 {
-  mpfr_or_mpc(arg,mpfr_abs,mpc_abs,rp);
+  mpfr_or_mpc(arg,mpfr_abs,(int (*)(mpc_ptr,mpc_srcptr,mpfr_rnd_t))mpc_abs,rp);
 }
 
 void Pfac(NODE arg,Num *rp);
