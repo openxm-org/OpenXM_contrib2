@@ -147,7 +147,7 @@ typedef struct fid_spec {
 
 typedef struct oARF {
   char *name;
-  void (*fp)();
+  void (*fp)(VL,Obj,Obj,Obj *);
 } *ARF;
 
 typedef struct oFUNC {
@@ -174,21 +174,6 @@ typedef struct oUSRF {
   struct oSNODE *body;
 } *USRF;
 
-typedef struct oPF {
-  char *name;
-  int argc;
-  Obj body;
-  V *args;
-  Obj *deriv;
-  NODE ins;
-  int (*pari)();
-  double (*libm)();
-  int (*simplify)();
-#if defined(INTERVAL)
-  void (**intervalfunc)();
-#endif
-} *PF;
-
 typedef struct oPFAD {
   Obj arg;
   int d;
@@ -198,6 +183,21 @@ typedef struct oPFINS {
   struct oPF *pf;  
   struct oPFAD ad[1];
 } *PFINS;
+
+typedef struct oPF {
+  char *name;
+  int argc;
+  Obj body;
+  V *args;
+  Obj *deriv;
+  NODE ins;
+  int (*pari)(NODE,Obj *);
+  double (*libm)(double,double);
+  int (*simplify)(PFINS,Obj *);
+#if defined(INTERVAL)
+  void (**intervalfunc)();
+#endif
+} *PF;
 
 #define NEWPF(p) ((p)=(PF)MALLOC(sizeof(struct oPF)))
 
@@ -228,7 +228,7 @@ typedef struct oPVI {
 
 struct ftab {
   char *name;
-  void (*f)();
+  void (*f)(void);
   int argc;
   unsigned int quote;
 };
@@ -502,8 +502,8 @@ void closecurrentinput(void);
 void asir_terminate(int);
 void searchasirpath(char *,char **);
 void get_vars(Obj,VL *);
-void appendbinf(NODE *,char *,void(*)(),int,unsigned int);
-void appendubinf(char *,void(*)(),int,unsigned int);
+void appendbinf(NODE *,char *,void(*)(void),int,unsigned int);
+void appendubinf(char *,void(*)(void),int,unsigned int);
 void parif_init(void);
 void sysf_init(void);
 void makesrvar(FUNC, P *);
@@ -525,7 +525,7 @@ int gettype(unsigned int);
 int indextotype(int,int);
 int loadfile(char *);
 int loadfiles(NODE);
-unsigned int makepvar(char *);
+unsigned long makepvar(char *);
 int membertoindex(int,char *);
 int qcoefp(Obj);
 int qcoefr(Obj);
@@ -563,9 +563,9 @@ void help(char *);
 void instov(PFINS ,V *);
 Obj memberofstruct(COMP,char *);
 #if defined(INTERVAL)
-void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(),void (*[])(), PF *);
+void mkpf(char *,Obj ,int ,V *,int (*)(void),double (*)(void),int (*)(void),void (*[])(), PF *);
 #else
-void mkpf(char *,Obj ,int ,V *,int (*)(),double (*)(),int (*)(), PF *);
+void mkpf(char *,Obj ,int ,V *,int (*)(void),double (*)(void),int (*)(void), PF *);
 #endif
 void mkpfins(PF ,V *,V *);
 void mkuf(char *,char *,NODE,SNODE,int,int,char *,MODULE);
@@ -782,7 +782,7 @@ int TypeT_NB_check(unsigned int m, unsigned int t);
 int small_jacobi(int a,int m);
 void pushpvs(FUNC f);
 void poppvs();
-unsigned int makepvar(char *str);
+unsigned long makepvar(char *str);
 int searchpvar(char *str);
 int getpvar(VS pvs,char *str,int searchonly);
 void closecurrentinput();

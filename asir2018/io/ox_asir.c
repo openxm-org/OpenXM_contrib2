@@ -446,7 +446,7 @@ void asir_reduce_102(unsigned int serial)
   ERR err;
   STRING op;
   char *opname;
-  void (*func)();
+  void (*func)(VL,Obj,Obj,Obj *);
 
   func = 0;
   op = (STRING)asir_pop_one();

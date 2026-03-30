@@ -82,9 +82,9 @@ void Psysinfo(LIST *rp);
 static void get_sysinfo();
 
 struct ftab ctrl_tab[] = {
-  {"ctrl",Pctrl,-2},
-  {"asir_env",Pctrl,-2},
-  {"sysinfo", Psysinfo, 0},
+  {"ctrl",(void(*)(void))Pctrl,-2},
+  {"asir_env",(void(*)(void))Pctrl,-2},
+  {"sysinfo",(void(*)(void))Psysinfo, 0},
   {0,0,0},
 };
 

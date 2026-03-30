@@ -31,21 +31,21 @@ struct mpfr_tab_rec {
   char *name;
   mpfr_func func;
 } mpfr_tab[] = {
-  {"ai",Pmpfr_ai},
-  {"zeta",Pmpfr_zeta},
-  {"j0",Pmpfr_j0},
-  {"j1",Pmpfr_j1},
-  {"y0",Pmpfr_y0},
-  {"y1",Pmpfr_y1},
-  {"eint",Pmpfr_eint},
-  {"erf",Pmpfr_erf},
-  {"li2",Pmpfr_li2},
-  {"gamma",Pmpfr_gamma},
-  {"lngamma",Pmpfr_lngamma},
-  {"digamma",Pmpfr_digamma},
-  {"floor",Pmpfr_floor},
-  {"ceil",Pmpfr_ceil},
-  {"round",Pmpfr_round},
+  {"ai",(mpfr_func)Pmpfr_ai},
+  {"zeta",(mpfr_func)Pmpfr_zeta},
+  {"j0",(mpfr_func)Pmpfr_j0},
+  {"j1",(mpfr_func)Pmpfr_j1},
+  {"y0",(mpfr_func)Pmpfr_y0},
+  {"y1",(mpfr_func)Pmpfr_y1},
+  {"eint",(mpfr_func)Pmpfr_eint},
+  {"erf",(mpfr_func)Pmpfr_erf},
+  {"li2",(mpfr_func)Pmpfr_li2},
+  {"gamma",(mpfr_func)Pmpfr_gamma},
+  {"lngamma",(mpfr_func)Pmpfr_lngamma},
+  {"digamma",(mpfr_func)Pmpfr_digamma},
+  {"floor",(mpfr_func)Pmpfr_floor},
+  {"ceil",(mpfr_func)Pmpfr_ceil},
+  {"round",(mpfr_func)Pmpfr_round},
 };
 
 mpfr_func mpfr_search(char *name)

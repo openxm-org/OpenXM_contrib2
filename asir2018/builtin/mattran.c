@@ -20,13 +20,13 @@ static void BodyColExh(MAT, int, int);
 static void BodyColMulAdd(MAT, int, int, pointer);
 
 struct ftab mat_tab[] = {
-  {"mfund",MatFund,-5},
-  {"rowm",RowMul,3},
-  {"rowx",RowExh,3},
-  {"rowa",RowMulAdd,4},
-  {"colm",ColMul,3},
-  {"colx",ColExh,3},
-  {"cola",ColMulAdd,4},
+  {"mfund",(void(*)(void))MatFund,-5},
+  {"rowm",(void(*)(void))RowMul,3},
+  {"rowx",(void(*)(void))RowExh,3},
+  {"rowa",(void(*)(void))RowMulAdd,4},
+  {"colm",(void(*)(void))ColMul,3},
+  {"colx",(void(*)(void))ColExh,3},
+  {"cola",(void(*)(void))ColMulAdd,4},
   {0,0,0},
 };
 

@@ -54,7 +54,7 @@
 #include <alloca.h>
 #endif
 
-double const_pi(),const_e(), double_factorial();
+double const_pi(),const_e(), double_factorial(double);
 
 void make_ihyp(void);
 void make_hyp(void);
@@ -80,20 +80,20 @@ void Pdeval(NODE arg,Obj *rp);
 void Peval_quote(NODE arg,Obj *rp);
 
 struct ftab puref_tab[] = {
-  {"mapat",Pmapat,-99999999},
-  {"map",Pmap,-99999999},
-  {"functor",Pfunctor,1},
-  {"args",Pargs,1},
-  {"funargs",Pfunargs,1},
-  {"funargs_ext",Pfunargs_ext,1},
-  {"register_handler",Pregister_handler,1},
-  {"add_handler",Padd_handler,2},
-  {"list_handler",Plist_handler,1},
-  {"clear_handler",Pclear_handler,1},
-  {"call",Pcall,2},
-  {"vtype",Pvtype,1},
-  {"deval",Pdeval,1},
-  {"eval_quote",Peval_quote,-2},
+  {"mapat",(void(*)(void))Pmapat,-99999999},
+  {"map",(void(*)(void))Pmap,-99999999},
+  {"functor",(void(*)(void))Pfunctor,1},
+  {"args",(void(*)(void))Pargs,1},
+  {"funargs",(void(*)(void))Pfunargs,1},
+  {"funargs_ext",(void(*)(void))Pfunargs_ext,1},
+  {"register_handler",(void(*)(void))Pregister_handler,1},
+  {"add_handler",(void(*)(void))Padd_handler,2},
+  {"list_handler",(void(*)(void))Plist_handler,1},
+  {"clear_handler",(void(*)(void))Pclear_handler,1},
+  {"call",(void(*)(void))Pcall,2},
+  {"vtype",(void(*)(void))Pvtype,1},
+  {"deval",(void(*)(void))Pdeval,1},
+  {"eval_quote",(void(*)(void))Peval_quote,-2},
   {0,0,0},
 };
 
@@ -123,7 +123,7 @@ double double_factorial(double x)
   return tgamma(x+1);
 }
 
-int simplify_elemfunc_ins();
+int simplify_elemfunc_ins(PFINS,Obj *);
 int simplify_factorial_ins();
 int simplify_abs_ins();
 
@@ -136,56 +136,56 @@ void pf_init() {
   darg[1] = &oVAR[27]; MKV(darg[1],y);
 
 #if defined(INTERVAL)
-  mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,simplify_elemfunc_ins,pi_itv_ft,&pidef);
-  mkpf("@e",0,0,0,(int (*)())mp_e,const_e,simplify_elemfunc_ins,e_itv_ft,&edef);
+  mkpf("@pi",0,0,0,(int (*)())mp_pi,(double(*)(void))const_pi,(int(*)(void))simplify_elemfunc_ins,pi_itv_ft,&pidef);
+  mkpf("@e",0,0,0,(int (*)())mp_e,(double(*)(void))const_e,(int(*)(void))simplify_elemfunc_ins,e_itv_ft,&edef);
 
-  mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,double_factorial,simplify_factorial_ins,0,&factorialdef);
-  mkpf("abs",0,1,uarg,(int (*)())mp_abs,fabs,simplify_abs_ins,abs_itv_ft,&absdef);
+  mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,(double(*)(void))double_factorial,(int(*)(void))simplify_factorial_ins,0,&factorialdef);
+  mkpf("abs",0,1,uarg,(int (*)())mp_abs,(double(*)(void))fabs,(int(*)(void))simplify_abs_ins,abs_itv_ft,&absdef);
 
-  mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,log_itv_ft,&logdef);
-  mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,exp_itv_ft,&expdef);
-  mkpf("pow",0,2,darg,(int (*)())mp_pow,pow,(int (*)())simplify_pow,pow_itv_ft,&powdef);
+  mkpf("log",0,1,uarg,(int (*)())mp_log,(double(*)(void))log,(int(*)(void))simplify_elemfunc_ins,log_itv_ft,&logdef);
+  mkpf("exp",0,1,uarg,(int (*)())mp_exp,(double(*)(void))exp,(int(*)(void))simplify_elemfunc_ins,exp_itv_ft,&expdef);
+  mkpf("pow",0,2,darg,(int (*)())mp_pow,(double(*)(void))pow,(int (*)())simplify_pow,pow_itv_ft,&powdef);
 
-  mkpf("sin",0,1,uarg,(int (*)())mp_sin,sin,simplify_elemfunc_ins,sin_itv_ft,&sindef);
-  mkpf("cos",0,1,uarg,(int (*)())mp_cos,cos,simplify_elemfunc_ins,cos_itv_ft,&cosdef);
-  mkpf("tan",0,1,uarg,(int (*)())mp_tan,tan,simplify_elemfunc_ins,tan_itv_ft,&tandef);
-  mkpf("asin",0,1,uarg,(int (*)())mp_asin,asin,simplify_elemfunc_ins,asin_itv_ft,&asindef);
-  mkpf("acos",0,1,uarg,(int (*)())mp_acos,acos,simplify_elemfunc_ins,acos_itv_ft,&acosdef);
-  mkpf("atan",0,1,uarg,(int (*)())mp_atan,atan,simplify_elemfunc_ins,atan_itv_ft,&atandef);
+  mkpf("sin",0,1,uarg,(int (*)())mp_sin,(double(*)(void))sin,(int(*)(void))simplify_elemfunc_ins,sin_itv_ft,&sindef);
+  mkpf("cos",0,1,uarg,(int (*)())mp_cos,(double(*)(void))cos,(int(*)(void))simplify_elemfunc_ins,cos_itv_ft,&cosdef);
+  mkpf("tan",0,1,uarg,(int (*)())mp_tan,(double(*)(void))tan,(int(*)(void))simplify_elemfunc_ins,tan_itv_ft,&tandef);
+  mkpf("asin",0,1,uarg,(int (*)())mp_asin,(double(*)(void))asin,(int(*)(void))simplify_elemfunc_ins,asin_itv_ft,&asindef);
+  mkpf("acos",0,1,uarg,(int (*)())mp_acos,(double(*)(void))acos,(int(*)(void))simplify_elemfunc_ins,acos_itv_ft,&acosdef);
+  mkpf("atan",0,1,uarg,(int (*)())mp_atan,(double(*)(void))atan,(int(*)(void))simplify_elemfunc_ins,atan_itv_ft,&atandef);
 
-  mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,sinh,simplify_elemfunc_ins,sinh_itv_ft,&sinhdef);
-  mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,cosh,simplify_elemfunc_ins,cosh_itv_ft,&coshdef);
-  mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,tanh,simplify_elemfunc_ins,tanh_itv_ft,&tanhdef);
+  mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,(double(*)(void))sinh,(int(*)(void))simplify_elemfunc_ins,sinh_itv_ft,&sinhdef);
+  mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,(double(*)(void))cosh,(int(*)(void))simplify_elemfunc_ins,cosh_itv_ft,&coshdef);
+  mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,(double(*)(void))tanh,(int(*)(void))simplify_elemfunc_ins,tanh_itv_ft,&tanhdef);
 #if !defined(VISUAL) && !defined(__MINGW32__)
-  mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,asinh,simplify_elemfunc_ins,asinh_itv_ft,&asinhdef);
-  mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,acosh,simplify_elemfunc_ins,acosh_itv_ft,&acoshdef);
-  mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,atanh,simplify_elemfunc_ins,atanh_itv_ft,&atanhdef);
+  mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,(double(*)(void))asinh,(int(*)(void))simplify_elemfunc_ins,asinh_itv_ft,&asinhdef);
+  mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,(double(*)(void))acosh,(int(*)(void))simplify_elemfunc_ins,acosh_itv_ft,&acoshdef);
+  mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,(double(*)(void))atanh,(int(*)(void))simplify_elemfunc_ins,atanh_itv_ft,&atanhdef);
 #endif
 #else
-  mkpf("@pi",0,0,0,(int (*)())mp_pi,const_pi,simplify_elemfunc_ins,&pidef);
-  mkpf("@e",0,0,0,(int (*)())mp_e,const_e,simplify_elemfunc_ins,&edef);
+  mkpf("@pi",0,0,0,(int (*)())mp_pi,(double(*)(void))const_pi,(int(*)(void))simplify_elemfunc_ins,&pidef);
+  mkpf("@e",0,0,0,(int (*)())mp_e,(double(*)(void))const_e,(int(*)(void))simplify_elemfunc_ins,&edef);
 
-  mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,double_factorial,simplify_factorial_ins,&factorialdef);
-  mkpf("abs",0,1,uarg,(int (*)())mp_abs,fabs,simplify_abs_ins,&absdef);
+  mkpf("factorial",0,1,uarg,(int (*)())mp_factorial,(double(*)(void))double_factorial,(int(*)(void))simplify_factorial_ins,&factorialdef);
+  mkpf("abs",0,1,uarg,(int (*)())mp_abs,(double(*)(void))fabs,(int(*)(void))simplify_abs_ins,&absdef);
 
-  mkpf("log",0,1,uarg,(int (*)())mp_log,log,simplify_elemfunc_ins,&logdef);
-  mkpf("exp",0,1,uarg,(int (*)())mp_exp,exp,simplify_elemfunc_ins,&expdef);
-  mkpf("pow",0,2,darg,(int (*)())mp_pow,pow,(int (*)())simplify_pow,&powdef);
+  mkpf("log",0,1,uarg,(int (*)())mp_log,(double(*)(void))log,(int(*)(void))simplify_elemfunc_ins,&logdef);
+  mkpf("exp",0,1,uarg,(int (*)())mp_exp,(double(*)(void))exp,(int(*)(void))simplify_elemfunc_ins,&expdef);
+  mkpf("pow",0,2,darg,(int (*)())mp_pow,(double(*)(void))pow,(int (*)())simplify_pow,&powdef);
 
-  mkpf("sin",0,1,uarg,(int (*)())mp_sin,sin,simplify_elemfunc_ins,&sindef);
-  mkpf("cos",0,1,uarg,(int (*)())mp_cos,cos,simplify_elemfunc_ins,&cosdef);
-  mkpf("tan",0,1,uarg,(int (*)())mp_tan,tan,simplify_elemfunc_ins,&tandef);
-  mkpf("asin",0,1,uarg,(int (*)())mp_asin,asin,simplify_elemfunc_ins,&asindef);
-  mkpf("acos",0,1,uarg,(int (*)())mp_acos,acos,simplify_elemfunc_ins,&acosdef);
-  mkpf("atan",0,1,uarg,(int (*)())mp_atan,atan,simplify_elemfunc_ins,&atandef);
+  mkpf("sin",0,1,uarg,(int (*)())mp_sin,(double(*)(void))sin,(int(*)(void))simplify_elemfunc_ins,&sindef);
+  mkpf("cos",0,1,uarg,(int (*)())mp_cos,(double(*)(void))cos,(int(*)(void))simplify_elemfunc_ins,&cosdef);
+  mkpf("tan",0,1,uarg,(int (*)())mp_tan,(double(*)(void))tan,(int(*)(void))simplify_elemfunc_ins,&tandef);
+  mkpf("asin",0,1,uarg,(int (*)())mp_asin,(double(*)(void))asin,(int(*)(void))simplify_elemfunc_ins,&asindef);
+  mkpf("acos",0,1,uarg,(int (*)())mp_acos,(double(*)(void))acos,(int(*)(void))simplify_elemfunc_ins,&acosdef);
+  mkpf("atan",0,1,uarg,(int (*)())mp_atan,(double(*)(void))atan,(int(*)(void))simplify_elemfunc_ins,&atandef);
 
-  mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,sinh,simplify_elemfunc_ins,&sinhdef);
-  mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,cosh,simplify_elemfunc_ins,&coshdef);
-  mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,tanh,simplify_elemfunc_ins,&tanhdef);
+  mkpf("sinh",0,1,uarg,(int (*)())mp_sinh,(double(*)(void))sinh,(int(*)(void))simplify_elemfunc_ins,&sinhdef);
+  mkpf("cosh",0,1,uarg,(int (*)())mp_cosh,(double(*)(void))cosh,(int(*)(void))simplify_elemfunc_ins,&coshdef);
+  mkpf("tanh",0,1,uarg,(int (*)())mp_tanh,(double(*)(void))tanh,(int(*)(void))simplify_elemfunc_ins,&tanhdef);
 #if !defined(VISUAL) && !defined(__MINGW32__)
-  mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,asinh,simplify_elemfunc_ins,&asinhdef);
-  mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,acosh,simplify_elemfunc_ins,&acoshdef);
-  mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,atanh,simplify_elemfunc_ins,&atanhdef);
+  mkpf("asinh",0,1,uarg,(int (*)())mp_asinh,(double(*)(void))asinh,(int(*)(void))simplify_elemfunc_ins,&asinhdef);
+  mkpf("acosh",0,1,uarg,(int (*)())mp_acosh,(double(*)(void))acosh,(int(*)(void))simplify_elemfunc_ins,&acoshdef);
+  mkpf("atanh",0,1,uarg,(int (*)())mp_atanh,(double(*)(void))atanh,(int(*)(void))simplify_elemfunc_ins,&atanhdef);
 #endif
 #endif
   make_exp();

@@ -94,51 +94,51 @@ void Pigcdcntl(NODE arg,Z *rp);
 void Pmaxzsize(NODE arg,Z *rp);
 
 struct ftab int_tab[] = {
-  {"maxzsize",Pmaxzsize,-1},
-  {"dp_set_mpi",Pdp_set_mpi,-1},
-  {"isqrt",Pisqrt,1},
-  {"idiv",Pidiv,2},
-  {"irem",Pirem,2},
-  {"iqr",Piqr,2},
-  {"igcd",Pigcd,-2},
-  {"ilcm",Pilcm,2},
-  {"ibin",Pibin,2},
-  {"up2_inv",Pup2_inv,2},
-  {"up2_init_eg",Pup2_init_eg,0},
-  {"up2_show_eg",Pup2_show_eg,0},
-  {"type_t_NB",Ptype_t_NB,2},
-  {"gf2nton",Pgf2nton,1},
-  {"ntogf2n",Pntogf2n,1},
-  {"set_upkara",Pset_upkara,-1},
-  {"set_uptkara",Pset_uptkara,-1},
-  {"set_up2kara",Pset_up2kara,-1},
-  {"set_upfft",Pset_upfft,-1},
-  {"inv",Pinv,2},
-  {"inttorat",Pinttorat,3},
-  {"fac",Pfac,1},
-  {"prime",Pprime,1},
-  {"lprime",Plprime,1},
+  {"maxzsize",(void(*)(void))Pmaxzsize,-1},
+  {"dp_set_mpi",(void(*)(void))Pdp_set_mpi,-1},
+  {"isqrt",(void(*)(void))Pisqrt,1},
+  {"idiv",(void(*)(void))Pidiv,2},
+  {"irem",(void(*)(void))Pirem,2},
+  {"iqr",(void(*)(void))Piqr,2},
+  {"igcd",(void(*)(void))Pigcd,-2},
+  {"ilcm",(void(*)(void))Pilcm,2},
+  {"ibin",(void(*)(void))Pibin,2},
+  {"up2_inv",(void(*)(void))Pup2_inv,2},
+  {"up2_init_eg",(void(*)(void))Pup2_init_eg,0},
+  {"up2_show_eg",(void(*)(void))Pup2_show_eg,0},
+  {"type_t_NB",(void(*)(void))Ptype_t_NB,2},
+  {"gf2nton",(void(*)(void))Pgf2nton,1},
+  {"ntogf2n",(void(*)(void))Pntogf2n,1},
+  {"set_upkara",(void(*)(void))Pset_upkara,-1},
+  {"set_uptkara",(void(*)(void))Pset_uptkara,-1},
+  {"set_up2kara",(void(*)(void))Pset_up2kara,-1},
+  {"set_upfft",(void(*)(void))Pset_upfft,-1},
+  {"inv",(void(*)(void))Pinv,2},
+  {"inttorat",(void(*)(void))Pinttorat,3},
+  {"fac",(void(*)(void))Pfac,1},
+  {"prime",(void(*)(void))Pprime,1},
+  {"lprime",(void(*)(void))Plprime,1},
 #if SIZEOF_LONG==8
-  {"lprime64",Plprime64,1},
+  {"lprime64",(void(*)(void))Plprime64,1},
 #endif
-  {"random",Prandom,-1},
-  {"lrandom",Plrandom,1},
-  {"iand",Piand,2},
-  {"ior",Pior,2},
-  {"ixor",Pixor,2},
-  {"ishift",Pishift,2},
-  {"small_jacobi",Psmall_jacobi,2},
+  {"random",(void(*)(void))Prandom,-1},
+  {"lrandom",(void(*)(void))Plrandom,1},
+  {"iand",(void(*)(void))Piand,2},
+  {"ior",(void(*)(void))Pior,2},
+  {"ixor",(void(*)(void))Pixor,2},
+  {"ishift",(void(*)(void))Pishift,2},
+  {"small_jacobi",(void(*)(void))Psmall_jacobi,2},
 
-  {"igcdbin",Pigcdbin,2},    /* HM@CCUT extension */
-  {"igcdbmod",Pigcdbmod,2},  /* HM@CCUT extension */
-  {"igcdeuc",PigcdEuc,2},    /* HM@CCUT extension */
-  {"igcdacc",Pigcdacc,2},    /* HM@CCUT extension */
-  {"igcdcntl",Pigcdcntl,-1},  /* HM@CCUT extension */
+  {"igcdbin",(void(*)(void))Pigcdbin,2},    /* HM@CCUT extension */
+  {"igcdbmod",(void(*)(void))Pigcdbmod,2},  /* HM@CCUT extension */
+  {"igcdeuc",(void(*)(void))PigcdEuc,2},    /* HM@CCUT extension */
+  {"igcdacc",(void(*)(void))Pigcdacc,2},    /* HM@CCUT extension */
+  {"igcdcntl",(void(*)(void))Pigcdcntl,-1},  /* HM@CCUT extension */
 
-  {"mt_save",Pmt_save,1},
-  {"mt_load",Pmt_load,1},
-  {"ntoint32",Pntoint32,1},
-  {"int32ton",Pint32ton,1},
+  {"mt_save",(void(*)(void))Pmt_save,1},
+  {"mt_load",(void(*)(void))Pmt_load,1},
+  {"ntoint32",(void(*)(void))Pntoint32,1},
+  {"int32ton",(void(*)(void))Pint32ton,1},
   {0,0,0},
 };
 

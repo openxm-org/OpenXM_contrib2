@@ -232,10 +232,10 @@ int yylex()
     case '>': case '<': case '=': case '!':
       if ( (c1 = Getc()) == '=' )
         switch ( c ) {
-          case '>': yylvalp->i = (int)C_GE; break;
-          case '<': yylvalp->i = (int)C_LE; break;
-          case '=': yylvalp->i = (int)C_EQ; break;
-          case '!': yylvalp->i = (int)C_NE; break;
+          case '>': yylvalp->i = (long)C_GE; break;
+          case '<': yylvalp->i = (long)C_LE; break;
+          case '=': yylvalp->i = (long)C_EQ; break;
+          case '!': yylvalp->i = (long)C_NE; break;
           default: break;
         }
       else if ( (c == '<' && c1 == '<') || (c == '>' && c1 == '>') )
@@ -243,8 +243,8 @@ int yylex()
       else {
         Ungetc(c1);
         switch ( c ) {
-          case '>': yylvalp->i = (int)C_GT; break;
-          case '<': yylvalp->i = (int)C_LT; break;
+          case '>': yylvalp->i = (long)C_GT; break;
+          case '<': yylvalp->i = (long)C_LT; break;
           default: return c; break;
         }
       }
@@ -380,19 +380,19 @@ int yylex()
     } else if ( c == '>' ||  c == '<' ||  c == '=' || c == '!' ) {
       if ( (c1 = Getc()) == '=' )
         switch ( c ) {
-          case '>': yylvalp->i = (int)L_GE; break;
-          case '<': yylvalp->i = (int)L_LE; break;
-          case '=': yylvalp->i = (int)L_EQ; break;
-          case '!': yylvalp->i = (int)L_NE; break;
+          case '>': yylvalp->i = (long)L_GE; break;
+          case '<': yylvalp->i = (long)L_LE; break;
+          case '=': yylvalp->i = (long)L_EQ; break;
+          case '!': yylvalp->i = (long)L_NE; break;
           default: break;
         }
       else {
         Ungetc(c1);
         switch ( c ) {
-          case '>': yylvalp->i = (int)L_GT; break;
-          case '<': yylvalp->i = (int)L_LT; break;
-          case '=': yylvalp->i = (int)L_EQ; break;
-          case '!': yylvalp->i = (int)L_NOT; return FOP_NOT; break;
+          case '>': yylvalp->i = (long)L_GT; break;
+          case '<': yylvalp->i = (long)L_LT; break;
+          case '=': yylvalp->i = (long)L_EQ; break;
+          case '!': yylvalp->i = (long)L_NOT; return FOP_NOT; break;
           default: break;
         }
       }
@@ -401,9 +401,9 @@ int yylex()
       if ( (c1 = Getc()) != c )
         Ungetc(c1);
       switch ( c ) {
-        case '|': yylvalp->i = (int)L_OR;
+        case '|': yylvalp->i = (long)L_OR;
           return FOP_OR; break;
-        case '&': yylvalp->i = (int)L_AND;
+        case '&': yylvalp->i = (long)L_AND;
           return FOP_AND; break;
       }
     } else if ( isalpha(c) ) {
@@ -437,13 +437,13 @@ int yylex()
         yylvalp->p = F_FALSE;
         return FORMULA;
       } else if ( !strcmp(tbuf,"@impl") ) {
-        yylvalp->i = (int)L_IMPL;
+        yylvalp->i = (long)L_IMPL;
         return FOP_IMPL;
       } else if ( !strcmp(tbuf,"@repl") ) {
-        yylvalp->i = (int)L_REPL;
+        yylvalp->i = (long)L_REPL;
         return FOP_REPL;
       } else if ( !strcmp(tbuf,"@equiv") ) {
-        yylvalp->i = (int)L_EQUIV;
+        yylvalp->i = (long)L_EQUIV;
         return FOP_EQUIV;
       } else if ( !strcmp(tbuf,"@grlex") ) {
         yylvalp->p = Symbol_grlex;

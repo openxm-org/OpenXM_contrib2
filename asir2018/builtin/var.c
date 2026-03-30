@@ -58,12 +58,12 @@ void Puc(Obj *p);
 void Pdelete_uc(NODE arg,Obj *p);
 
 struct ftab var_tab[] = {
-  {"var",Pvar,1},
-  {"vars",Pvars,1},
-  {"vars_recursive",Pvars_recursive,1},
-  {"uc",Puc,0},
-  {"delete_uc",Pdelete_uc,-1},
-  {"simple_is_eq",Psimple_is_eq,2},
+  {"var",(void(*)(void))Pvar,1},
+  {"vars",(void(*)(void))Pvars,1},
+  {"vars_recursive",(void(*)(void))Pvars_recursive,1},
+  {"uc",(void(*)(void))Puc,0},
+  {"delete_uc",(void(*)(void))Pdelete_uc,-1},
+  {"simple_is_eq",(void(*)(void))Psimple_is_eq,2},
   {0,0,0},
 };
 

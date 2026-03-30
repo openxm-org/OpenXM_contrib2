@@ -9,9 +9,9 @@
 extern int StrassenSize;
 
 struct ftab imat_tab[] = {
-  {"newimat", Pnewimat,2},
-  {"m2im",  Pm2Im,1},
-  {"im2m",  PIm2m,1},
+  {"newimat",(void(*)(void))Pnewimat,2},
+  {"m2im",(void(*)(void))Pm2Im,1},
+  {"im2m",(void(*)(void))PIm2m,1},
   {0,0,0},
 };
 

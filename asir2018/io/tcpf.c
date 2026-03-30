@@ -159,66 +159,66 @@ void ox_launch_generic(char *host,char *launcher,char *server,
 
 
 struct ftab tcp_tab[] = {
-  {"ox_send_raw_cmo",Pox_send_raw_cmo,2},
-  {"ox_recv_raw_cmo",Pox_recv_raw_cmo,1},
-  {"ox_get_serverinfo",Pox_get_serverinfo,-1},
-  {"generate_port",Pgenerate_port,-1},
+  {"ox_send_raw_cmo",(void(*)(void))Pox_send_raw_cmo,2},
+  {"ox_recv_raw_cmo",(void(*)(void))Pox_recv_raw_cmo,1},
+  {"ox_get_serverinfo",(void(*)(void))Pox_get_serverinfo,-1},
+  {"generate_port",(void(*)(void))Pgenerate_port,-1},
 
   /* from master to client */
-  {"ox_set_rank_102",Pox_set_rank_102,3},
-  {"ox_tcp_accept_102",Pox_tcp_accept_102,3},
-  {"ox_tcp_connect_102",Pox_tcp_connect_102,4},
-  {"ox_reset_102",Pox_reset_102,1},
+  {"ox_set_rank_102",(void(*)(void))Pox_set_rank_102,3},
+  {"ox_tcp_accept_102",(void(*)(void))Pox_tcp_accept_102,3},
+  {"ox_tcp_connect_102",(void(*)(void))Pox_tcp_connect_102,4},
+  {"ox_reset_102",(void(*)(void))Pox_reset_102,1},
 
-  {"ox_get_rank_102",Pox_get_rank_102,0},
-  {"ox_send_102",Pox_send_102,2},
-  {"ox_recv_102",Pox_recv_102,1},
-  {"ox_bcast_102",Pox_bcast_102,-2},
-  {"ox_reduce_102",Pox_reduce_102,-3},
+  {"ox_get_rank_102",(void(*)(void))Pox_get_rank_102,0},
+  {"ox_send_102",(void(*)(void))Pox_send_102,2},
+  {"ox_recv_102",(void(*)(void))Pox_recv_102,1},
+  {"ox_bcast_102",(void(*)(void))Pox_bcast_102,-2},
+  {"ox_reduce_102",(void(*)(void))Pox_reduce_102,-3},
 
-  {"try_bind_listen",Ptry_bind_listen,1},
-  {"try_connect",Ptry_connect,2},
-  {"try_accept",Ptry_accept,2},
-  {"register_server",Pregister_server,4},
-  {"ox_flush",Pox_flush,1},
-  {"ox_launch",Pox_launch,-3},
-  {"ox_launch_nox",Pox_launch_nox,-3},
-  {"ox_launch_generic",Pox_launch_generic,7},
-  {"ox_shutdown",Pox_shutdown,1},
+  {"try_bind_listen",(void(*)(void))Ptry_bind_listen,1},
+  {"try_connect",(void(*)(void))Ptry_connect,2},
+  {"try_accept",(void(*)(void))Ptry_accept,2},
+  {"register_server",(void(*)(void))Pregister_server,4},
+  {"ox_flush",(void(*)(void))Pox_flush,1},
+  {"ox_launch",(void(*)(void))Pox_launch,-3},
+  {"ox_launch_nox",(void(*)(void))Pox_launch_nox,-3},
+  {"ox_launch_generic",(void(*)(void))Pox_launch_generic,7},
+  {"ox_shutdown",(void(*)(void))Pox_shutdown,1},
 
-  {"ox_rpc",Pox_rpc,-99999999},
-  {"ox_cmo_rpc",Pox_cmo_rpc,-99999999},
+  {"ox_rpc",(void(*)(void))Pox_rpc,-99999999},
+  {"ox_cmo_rpc",(void(*)(void))Pox_cmo_rpc,-99999999},
 
-  {"ox_sync",Pox_sync,1},
+  {"ox_sync",(void(*)(void))Pox_sync,1},
 #if defined(MPI)
-  {"ox_mpi_myid",Pox_mpi_myid,0},
-  {"ox_mpi_nprocs",Pox_mpi_nprocs,0},
+  {"ox_mpi_myid",(void(*)(void))Pox_mpi_myid,0},
+  {"ox_mpi_nprocs",(void(*)(void))Pox_mpi_nprocs,0},
 #endif
 #if !defined(MPI)
-  {"ox_reset",Pox_reset,-2},
-  {"ox_intr",Pox_intr,1},
-  {"ox_select",Pox_select,-2},
+  {"ox_reset",(void(*)(void))Pox_reset,-2},
+  {"ox_intr",(void(*)(void))Pox_intr,1},
+  {"ox_select",(void(*)(void))Pox_select,-2},
 #endif
 
-  {"ox_pop_string",Pox_pop_string,1},
-  {"ox_pop0_string",Pox_pop0_string,1},
-  {"ox_pop_local",Pox_pop_local,1},
-  {"ox_pop0_local",Pox_pop0_local,1},
-  {"ox_pop_cmo",Pox_pop_cmo,1},
-  {"ox_pop0_cmo",Pox_pop0_cmo,1},
-  {"ox_get",Pox_get,-1},
-  {"ox_pops",Pox_pops,-2},
+  {"ox_pop_string",(void(*)(void))Pox_pop_string,1},
+  {"ox_pop0_string",(void(*)(void))Pox_pop0_string,1},
+  {"ox_pop_local",(void(*)(void))Pox_pop_local,1},
+  {"ox_pop0_local",(void(*)(void))Pox_pop0_local,1},
+  {"ox_pop_cmo",(void(*)(void))Pox_pop_cmo,1},
+  {"ox_pop0_cmo",(void(*)(void))Pox_pop0_cmo,1},
+  {"ox_get",(void(*)(void))Pox_get,-1},
+  {"ox_pops",(void(*)(void))Pox_pops,-2},
 
-  {"ox_push_vl",Pox_push_vl,1},
-  {"ox_push_local",Pox_push_local,-99999999},
-  {"ox_push_cmo",Pox_push_cmo,-99999999},
-  {"ox_push_cmd",Pox_push_cmd,2},
+  {"ox_push_vl",(void(*)(void))Pox_push_vl,1},
+  {"ox_push_local",(void(*)(void))Pox_push_local,-99999999},
+  {"ox_push_cmo",(void(*)(void))Pox_push_cmo,-99999999},
+  {"ox_push_cmd",(void(*)(void))Pox_push_cmd,2},
 
-  {"ox_setname",Pox_setname,2},
-  {"ox_evalname",Pox_evalname,2},
+  {"ox_setname",(void(*)(void))Pox_setname,2},
+  {"ox_evalname",(void(*)(void))Pox_evalname,2},
 
-  {"ox_execute_string",Pox_execute_string,2},
-  {"ox_execute_function",Pox_execute_function,3},
+  {"ox_execute_string",(void(*)(void))Pox_execute_string,2},
+  {"ox_execute_function",(void(*)(void))Pox_execute_function,3},
 
   {0,0,0},
 };
@@ -1194,7 +1194,7 @@ void Pox_reduce_102(NODE arg,Obj *rp)
   int root = ZTOS((Q)ARG0(arg));
   STRING op;
   char *opname;
-  void (*func)();
+  void (*func)(VL,Obj,Obj,Obj *);
 
   op = (STRING)ARG1(arg);
   asir_assert(op,O_STR,"ox_reduce_102");

@@ -60,13 +60,13 @@ void Parfreg(NODE arg,Z *rp);
 void Prange(NODE arg,RANGE *rp);
 
 struct ftab comp_tab[] = {
-  {"arfreg",Parfreg,8},
-  {"struct_type",Pstruct_type,1},
-  {"get_element_at",Pget_element_at,2},
-  {"put_element_at",Pput_element_at,3},
-  {"get_element_names",Pget_element_names,1},
-  {"get_struct_name",Pget_struct_name,1},
-  {"range",Prange,2},
+  {"arfreg",(void(*)(void))Parfreg,8},
+  {"struct_type",(void(*)(void))Pstruct_type,1},
+  {"get_element_at",(void(*)(void))Pget_element_at,2},
+  {"put_element_at",(void(*)(void))Pput_element_at,3},
+  {"get_element_names",(void(*)(void))Pget_element_names,1},
+  {"get_struct_name",(void(*)(void))Pget_struct_name,1},
+  {"range",(void(*)(void))Prange,2},
   {0,0,0},
 };
 

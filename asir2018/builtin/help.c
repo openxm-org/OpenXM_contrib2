@@ -54,7 +54,7 @@ void Phelp(NODE arg,Obj *rp);
 void ghelp(void);
 
 struct ftab help_tab[] = {
-  {"help",Phelp,-1},
+  {"help",(void(*)(void))Phelp,-1},
   {0,0,0},
 };
 

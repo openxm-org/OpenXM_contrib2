@@ -100,8 +100,8 @@ void sysf_init() {
 
   for ( j = 0, sysf = 0; (tab = ftabs[j]) != 0; j++ )
     for ( i = 0; tab[i].name; i++ )
-      appendbinf(&sysf,tab[i].name,tab[i].f,tab[i].argc,tab[i].quote);
+      appendbinf(&sysf,tab[i].name,(void(*)(void))tab[i].f,tab[i].argc,tab[i].quote);
   for ( i = 0, noargsysf = 0; nasysftab[i].name; i++ )
-    appendbinf(&noargsysf,nasysftab[i].name, nasysftab[i].f,nasysftab[i].argc,0);
+    appendbinf(&noargsysf,nasysftab[i].name, (void(*)(void))nasysftab[i].f,nasysftab[i].argc,0);
   parif_init();
 }

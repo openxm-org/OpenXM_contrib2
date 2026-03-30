@@ -492,6 +492,7 @@ def reduce_dn(L)
 
 def minipoly(G0,V,O,P,V0)
 {
+	CurOrd = dp_ord();
 	if ( !zero_dim(hmlist(G0,V,O),V,O) )
 		error("tolex : ideal is not zero-dimensional!");
 
@@ -518,6 +519,7 @@ def minipoly(G0,V,O,P,V0)
 			TL = cons(V0^J,TL);
 		NF = gennf(G1,TL,V1,O1,V0,1)[0];
 		R = tolex_main(V1,O1,NF,[MP],M,MB);
+		dp_ord(CurOrd);
 		return ptozp(subst(R[0],V0,CP*V0));
 	}
 }

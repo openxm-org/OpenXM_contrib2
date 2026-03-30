@@ -55,9 +55,9 @@ void Predc(NODE arg,P *rp);
 void Pprim(NODE arg,P *rp);
 
 struct ftab reduct_tab[] = {
-  {"red",Pred,1},
-  {"redc",Predc,2},
-  {"prim",Pprim,-2},
+  {"red",(void(*)(void))Pred,1},
+  {"redc",(void(*)(void))Predc,2},
+  {"prim",(void(*)(void))Pprim,-2},
   {0,0,0},
 };
 

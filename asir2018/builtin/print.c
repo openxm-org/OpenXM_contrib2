@@ -59,12 +59,12 @@ void Peval_variables_in_quote(NODE arg,QUOTE *rp);
 void Pset_print_function(NODE arg,pointer *rp);
 
 struct ftab print_tab[] = {
-  {"printf",Pprintf,-99999999},
-  {"print",Pprint,-2},
-  {"objtoquote",Pobjtoquote,1},
-  {"quotetolist",Pquotetolist,1},
-  {"eval_variables_in_quote",Peval_variables_in_quote,1},
-  {"set_print_function",Pset_print_function,-1},
+  {"printf",(void(*)(void))Pprintf,-99999999},
+  {"print",(void(*)(void))Pprint,-2},
+  {"objtoquote",(void(*)(void))Pobjtoquote,1},
+  {"quotetolist",(void(*)(void))Pquotetolist,1},
+  {"eval_variables_in_quote",(void(*)(void))Peval_variables_in_quote,1},
+  {"set_print_function",(void(*)(void))Pset_print_function,-1},
   {0,0,0},
 };
 

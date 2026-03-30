@@ -55,9 +55,9 @@ void Pntype(NODE arg,Obj *rp);
 void Preadarray(NODE arg,VECT *rp);
 
 struct ftab type_tab[] = {
-  {"type",Ptype,1},
-  {"ntype",Pntype,1},
-  {"readarray",Preadarray,1},
+  {"type",(void(*)(void))Ptype,1},
+  {"ntype",(void(*)(void))Pntype,1},
+  {"readarray",(void(*)(void))Preadarray,1},
   {0,0,0},
 };
 
