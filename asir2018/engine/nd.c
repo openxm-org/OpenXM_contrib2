@@ -3698,12 +3698,12 @@ int ndplength(ND_pairs d)
 ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz)
 {
   ND_pairs d1,nd,cur,head,prev,remove;
-  ND_pairs *dtab;
+  UINT **dtab;
   int len0;
   struct oEGT eg0,eg1,eg2,eg3;
 
   if ( !g ) return d;
-  dtab = (ND_pairs *)CALLOC(t,sizeof(ND_pairs));
+  dtab = (UINT **)CALLOC(t,sizeof(UINT *));
   /* for testing */
   if ( gensyz && nd_gensyz == 2 ) {
     d1 = nd_newpairs(g,t,dtab);
@@ -3791,10 +3791,10 @@ get_eg(&eg3); add_eg(&eg_merge,&eg2,&eg3);
   return Nnewpair;
 }
 
-ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab )
+ND_pairs nd_newpairs( NODE g, int t, UINT **dtab )
 {
   NODE h;
-  UINT *dl;
+  UINT *dl,*lcm;
   int ts,s,i,t0,min,max;
   ND_pairs r,r0;
   static int wpd=0;
@@ -3827,7 +3827,9 @@ ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab )
     } else {
       NEXTND_pairs(r0,r); Npairs++;
       ndl_copy(tmp,r->lcm);
-      dtab[(long)BDY(h)] = r;
+      lcm = (UINT *)MALLOC(nd_wpd*sizeof(UINT));
+      ndl_copy(tmp,lcm);
+      dtab[(long)BDY(h)] = lcm;
       r->i1 = (long)BDY(h);
       r->i2 = t;
       r->hash = ndl_hash_value(r->lcm);
@@ -4363,35 +4365,28 @@ ND_pairs nd_ipairtospair(NODE ipair)
 
 /* kokokara */
 
-ND_pairs crit_B( ND_pairs d, int s, ND_pairs *dtab )
+ND_pairs crit_B( ND_pairs d, int s, UINT **dtab )
 {
   ND_pairs cur,head,prev,remove,r;
-  UINT *t,*tl,*lcm;
-  int h,i,z,x,w;
+  UINT *t,*tl;
 
   if ( !d ) return 0;
   t = DL(nd_psh[s]);
   prev = 0;
   head = cur = d;
-  lcm = (UINT *)MALLOC(nd_wpd*sizeof(UINT));
   while ( cur ) {
     tl = cur->lcm;
-    h = cur->hash;
     if ( ndl_reducible(tl,t) ) {
       if ( dtab[cur->i1] == 0 ) {
-        NEWND_pairs(r); dtab[cur->i1] = r;
-        ndl_lcm(DL(nd_psh[cur->i1]),t,r->lcm);
-        r->hash = ndl_hash_value(r->lcm);
-      } else
-        r = dtab[cur->i1];
-      if ( r->hash != h || !ndl_equal(r->lcm,tl) ) {
+        dtab[cur->i1] = (UINT *)MALLOC(nd_wpd*sizeof(UINT));
+        ndl_lcm(DL(nd_psh[cur->i1]),t,dtab[cur->i1]);
+      }
+      if ( !ndl_equal(dtab[cur->i1],tl) ) {
         if ( dtab[cur->i2] == 0 ) {
-          NEWND_pairs(r); dtab[cur->i2] = r;
-          ndl_lcm(DL(nd_psh[cur->i2]),t,r->lcm);
-          r->hash = ndl_hash_value(r->lcm);
-        } else
-          r = dtab[cur->i2];
-        if ( r->hash != h || !ndl_equal(r->lcm,tl)) {
+          dtab[cur->i2] = (UINT *)MALLOC(nd_wpd*sizeof(UINT));
+          ndl_lcm(DL(nd_psh[cur->i2]),t,dtab[cur->i2]);
+        }
+        if ( !ndl_equal(dtab[cur->i2],tl)) {
           remove = cur;
           if ( !prev ) {
             head = cur = NEXT(cur);

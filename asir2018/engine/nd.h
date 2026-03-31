@@ -351,13 +351,13 @@ PGeoBucket create_pbucket();
 
 /* manipulation of pairs and bases */
 int nd_newps(int mod,ND a,ND aq);
-ND_pairs nd_newpairs( NODE g, int t, ND_pairs *dtab);
+ND_pairs nd_newpairs( NODE g, int t, UINT **dtab);
 ND_pairs nd_minp( ND_pairs d, ND_pairs *prest );
 ND_pairs nd_minsugarp( ND_pairs d, ND_pairs *prest );
 NODE update_base(NODE nd,int ndp);
 ND_pairs update_pairs( ND_pairs d, NODE /* of index */ g, int t, int gensyz);
 ND_pairs equivalent_pairs( ND_pairs d1, ND_pairs *prest );
-ND_pairs crit_B( ND_pairs d, int s, ND_pairs *dtab);
+ND_pairs crit_B( ND_pairs d, int s, UINT **dtab);
 // ND_pairs crit_B( ND_pairs d, int s);
 ND_pairs crit_M( ND_pairs d1 );
 ND_pairs crit_F( ND_pairs d1 );
