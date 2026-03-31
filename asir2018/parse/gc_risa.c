@@ -149,6 +149,8 @@ double get_rtime()
 
 extern int recv_intr,doing_batch;
 void send_intr();
+void enter_signal_cs();
+void leave_signal_cs();
 
 BOOL set_ctrlc_flag(DWORD type)
 {

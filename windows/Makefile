@@ -8,7 +8,7 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 OS = win64
 CANDLE_ARCH = -nologo -arch x64
 PGDIR=ProgramFiles64Folder
-PRODUCTID=EEC1D477-7925-4B4D-8484-5174FD6D97C5
+PRODUCTID=8BAA1109-74E3-418A-8F55-DB123F03DD26
 !else
 OS = win32
 CANDLE_ARCH = -nologo
@@ -18,7 +18,7 @@ PRODUCTID=95F4A064-CFE0-45D4-AA55-F87921432478
 
 # DO NOT CHANGE UPGRADEID!!
 UPGRADEID=B7A582F5-0484-4030-9D38-BFAE00707F0D
-PRODUCTVER=1.1.0
+PRODUCTVER=1.1.1
 
 TARGET= asir$(OS).msi
 SRCS= asir.wxs _lib.wxs _contrib.wxs _share.wxs
@@ -48,7 +48,8 @@ build: ..\asir-gc\gc\gc.lib asir2000lib\asir2000lib.lib engine2000\engine.exe as
 	cd ..\asir-gc && $(MAKE) -e -f Makefile.vc
 
 asir2000lib\asir2000lib.lib: ..\asir-gc\gc\gc.lib
-	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH) CC=clang-cl
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
+#	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH) CC=clang-cl
 
 engine2000\engine.exe: asir2000lib\asir2000lib.lib
 	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
@@ -63,7 +64,8 @@ post-msg-asirgui\cmdasir.exe:
 	cd $(@D) && $(MAKE) -e -f Makefile.vc
 
 ..\asir2018\asir.exe: ..\asir-gc\gc\gc.lib
-	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH) CC=clang-cl
+	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH)
+#	cd $(@D) && $(MAKE) -e -f Makefile.vc ARCH=$(ARCH) CC=clang-cl
 
 msi: $(TARGET) wxs
 	copy /b $(TARGET) asir_$(OS)_%DATE:/=.%.msi
@@ -74,7 +76,7 @@ mkdir:
 	if not exist asir ( mkdir asir\bin asir\lib\asir asir\lib\asir-contrib asir\share\editor asir\share\skel )
 
 !if "$(ARCH)" == "AMD64"
-GMPDIR=mpir\x64
+GMPDIR=gmp\x64
 !else
 GMPDIR=mpir\win32
 !endif
@@ -86,9 +88,6 @@ install: build mkdir
 	-robocopy post-msg-asirgui asir\share\editor asirgui.mac  asir-mode.el install-ja-sjis.txt /nfl /ndl /njh /njs /np 
 	-robocopy ..\asir2018\lib asir\lib\asir /nfl /ndl /njh /njs /np /xf help*.uu
 	-robocopy ..\..\OpenXM\src\asir-contrib\packages\src asir\lib\asir-contrib /nfl /ndl /njh /njs /np /mir /xd CVS /xf *.in *.c *.sh *-sh .keepme
-	-robocopy ..\..\OpenXM\src\asir-contrib\testing\noro asir\lib\asir-contrib de.rr gw.rr module_syz.rr mwl.rr rewrite.rr ndbf.rr /nfl /ndl /njh /njs /np
-	for %i in ( de.rr gw.rr module_syz.rr mwl.rr rewrite.rr ) do ( pushd asir\lib\asir-contrib && move %i noro_%i && popd)	
-	pushd asir\lib\asir-contrib && move ndbf.rr nn_ndbf.rr && popd
 
 zip: install
 	zip -r asir_$(OS)_%DATE:/=.%.zip asir

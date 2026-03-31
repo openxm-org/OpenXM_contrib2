@@ -340,5 +340,5 @@ void asir_ox_execute_string(char *);
 int asir_ox_peek_cmo_size();
 int asir_ox_init(int);
 int no_ox_reset(int s);
-
-
+int asir_ox_pop_string(void *, int);
+int asir_ox_peek_cmo_string_length(void);

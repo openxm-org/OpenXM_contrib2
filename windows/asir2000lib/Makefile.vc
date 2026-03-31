@@ -7,7 +7,7 @@ ARCH=$(PROCESSOR_ARCHITECTURE)
 
 !if "$(ARCH)" == "AMD64"
 CPU_OBJ= asmalpha.obj
-GMPINC= -I ..\mpir\x64
+GMPINC= -I ..\gmp\x64
 !else
 CPU_OBJ= asmiw.obj gf2m_mul_w.obj 
 GMPINC= -I ..\mpir\win32

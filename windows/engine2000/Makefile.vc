@@ -9,12 +9,12 @@ GCINC = -I $(GCDIR)\include
 GCLIB= $(GCDIR)\gc.lib
 
 !if "$(ARCH)" == "AMD64"
-GMPDIR= ..\mpir\x64
+GMPDIR= ..\gmp\x64
 !else
 GMPDIR= ..\mpir\win32
 !endif
 GMPINC= -I $(GMPDIR)
-GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\mpir.lib
+GMPLIB= $(GMPDIR)\mpc.lib $(GMPDIR)\mpfr.lib $(GMPDIR)\gmpxx.lib $(GMPDIR)\gmp.lib
 
 INCLUDES= $(GCINC) $(GMPINC) -I $(SRCDIR)\include -I $(SRCDIR)\parse -I $(SRCDIR)\plot
 DEFS= -D NDEBUG -D VISUAL -D VISUAL_LIB -D _MBCS -D _CRT_SECURE_NO_WARNINGS -D _CRT_NONSTDC_NO_WARNINGS -D GC7
