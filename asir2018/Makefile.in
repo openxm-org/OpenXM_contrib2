@@ -95,6 +95,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @USE_PLOT_TRUE@am__append_1 = ${PLOT_SRCS}
+@USE_PLOT_FALSE@am__append_2 = ${NOX_PLOT_SRCS}
 bin_PROGRAMS = asir$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -223,11 +224,15 @@ am__objects_8 = plot/calc.lo plot/if.lo plot/plotp.lo plot/plotg.lo \
 	plot/ox_plot.lo plot/plotf.lo plot/ox_plot_xevent.lo \
 	plot/smoothing.lo
 @USE_PLOT_TRUE@am__objects_9 = $(am__objects_8)
+am__objects_10 = plot/nox_plotp.lo plot/nox_memory.lo plot/nox_stub.lo
+@USE_PLOT_FALSE@am__objects_11 = $(am__objects_10) plot/calc.lo \
+@USE_PLOT_FALSE@	plot/plotf.lo
 am_libasir@sufx@_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_9)
-am__objects_10 = parse/y.tab.lo
-nodist_libasir@sufx@_la_OBJECTS = $(am__objects_10)
+	$(am__objects_6) $(am__objects_7) $(am__objects_9) \
+	$(am__objects_11)
+am__objects_12 = parse/y.tab.lo
+nodist_libasir@sufx@_la_OBJECTS = $(am__objects_12)
 libasir@sufx@_la_OBJECTS = $(am_libasir@sufx@_la_OBJECTS) \
 	$(nodist_libasir@sufx@_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -558,7 +563,7 @@ inc_HEADERS = parse/comp.h parse/cpp.h parse/parse.h parse/w_stdio.h \
 
 AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
               -I${top_srcdir}/gc/include \
-              -I${prefix}/include @X_CFLAGS@
+              -I${prefix}/include @X_CFLAGS@ @USE_PLOT_FALSE@-DASIR_NO_XPLOT
 
 ASM_SRCS = asm/ddM.c asm/ddN.c asm/asmalpha.c
 BUILTIN_SRCS = builtin/ftab.c builtin/algnum.c builtin/array.c \
@@ -598,13 +603,15 @@ PARSE_SRCS = parse/arith.c parse/comp.c parse/debug.c parse/eval.c \
 
 PLOT_SRCS = plot/calc.c plot/if.c plot/plotp.c plot/plotg.c \
   plot/ox_plot.c plot/plotf.c plot/ox_plot_xevent.c plot/smoothing.c
+NOX_PLOT_SRCS = plot/calc.c plot/plotf.c plot/nox_plotp.c \
+  plot/nox_memory.c plot/nox_stub.c
 
 YTAB_SRCS = parse/y.tab.c parse/y.tab.h
 BUILT_SOURCES = ${YTAB_SRCS}
 lib_LTLIBRARIES = libasir@sufx@.la
 libasir@sufx@_la_SOURCES = ${ASM_SRCS} ${BUILTIN_SRCS} ${ENGINE_SRCS} \
 	${FFT_SRCS} ${IO_SRCS} ${PARSE_SRCS} ${inc_HEADERS} \
-	$(am__append_1)
+	$(am__append_1) $(am__append_2)
 nodist_libasir@sufx@_la_SOURCES = ${YTAB_SRCS}
 @USE_PLOT_TRUE@X11LIB = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
 asir_SOURCES = parse/main.c

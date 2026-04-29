@@ -83,7 +83,7 @@ struct ftab *ftabs[] = {
   interval_tab, isolv_tab,
 #endif
   comp_tab, gf_tab, imat_tab, math_tab, mat_tab, tcp_tab,
-#if defined(DO_PLOT)
+#if defined(DO_PLOT) || defined(ASIR_NO_XPLOT)
   plot_tab,
 #endif
 #if defined(LAPACK)

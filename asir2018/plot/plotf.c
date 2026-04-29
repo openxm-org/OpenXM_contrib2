@@ -56,6 +56,7 @@ int validate_ox_plot_stream(int);
 void ListCheck(char *,LIST);
 void Pplot(NODE,Obj *);
 void Ppolarplot(NODE,Z *);
+void Pmemory_polarplot(NODE,Obj *);
 void Pobj_cp(NODE,Obj *),Parrayplot(NODE,Obj*),Pdrawcircle(NODE,Obj*);
 void Pifplot(NODE,Obj *),Pconplot(NODE,Obj *),Pplotover(NODE,Obj *);
 void Pmemory_ifplot(NODE,Obj *),Pmemory_conplot(NODE,Obj *);
@@ -91,6 +92,9 @@ struct ftab plot_tab[]={
 #endif
   {OBJ_CP,Pobj_cp,4},
   {POLARPLOT,Ppolarplot,-6},
+#if defined(ASIR_NO_XPLOT)
+  {MEMORY_POLARPLOT,Pmemory_polarplot,-6},
+#endif
   {POLARPLOTD,PpolarplotD,-7},
   {IFPLOT,Pifplot,-7},
   {IFPLOTD,PifplotD,-8},
@@ -296,18 +300,25 @@ void ifplot_main(NODE arg,int is_memory,char *fn,Obj *rp){
     geom=[xsize,ysize] (LIST),
     wname=name (STRING)]
   */
-  stream=validate_ox_plot_stream(stream);
-  STOZ(stream,s_id);
   if(!geom){
     STOZ(300,w300);MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
   }
   if(is_memory){
+#if defined(ASIR_NO_XPLOT)
+    arg = mknode(5,poly,xrange,yrange,zrange,geom);
+    memory_plot(arg,(LIST *)rp);
+#else
+    stream=validate_ox_plot_stream(stream);
+    STOZ(stream,s_id);
     MKSTR(fname,MEMORY_PLOT);
     arg=mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom);
     Pox_rpc(arg,&t);
     arg=mknode(1,s_id);
     Pox_pop_cmo(arg,rp);
+#endif
   } else {
+    stream=validate_ox_plot_stream(stream);
+    STOZ(stream,s_id);
     MKSTR(fname,fn);
     arg=mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
     Pox_rpc(arg,&t);
@@ -425,19 +436,26 @@ void conplot_main(NODE arg,int is_memory,Obj *rp){
        wname=name (STRING)]
   */
 
-  stream = validate_ox_plot_stream(stream);
-  STOZ(stream,s_id);
   if ( !geom ) {
     STOZ(300,w300);
     MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
   }
   if ( is_memory ) {
+#if defined(ASIR_NO_XPLOT)
+    arg = mknode(5,poly,xrange,yrange,zrange,geom);
+    memory_plot(arg,(LIST *)rp);
+#else
+    stream = validate_ox_plot_stream(stream);
+    STOZ(stream,s_id);
     MKSTR(fname,"memory_plot");
     arg = mknode(7,s_id,fname,poly,xrange,yrange,zrange,geom);
     Pox_rpc(arg,&t);
     arg = mknode(1,s_id);
     Pox_pop_cmo(arg,rp);
+#endif
   } else {
+    stream = validate_ox_plot_stream(stream);
+    STOZ(stream,s_id);
     MKSTR(fname,CONPLOT);
     arg = mknode(8,s_id,fname,poly,xrange,yrange,zrange,geom,wname);
     Pox_rpc(arg,&t);
@@ -537,8 +555,6 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
        geom=[xsize,ysize] (LIST),
        wname=name (STRING)]
   */
-  stream=validate_ox_plot_stream(stream);
-  STOZ(stream,s_id);
   if(!geom ){
     STOZ(300,w300);
     MKNODE(n0,w300,0);MKNODE(n,w300,n0);MKLIST(geom,n);
@@ -548,12 +564,21 @@ void plot_main(NODE arg,int is_memory,char *fn,Obj *rp){
   else
     prec = 0;
   if(is_memory ){
+#if defined(ASIR_NO_XPLOT)
+    arg = mknode(6,func,xrange,NULLP,NULLP,geom,prec);
+    memory_plot(arg,(LIST *)rp);
+#else
+    stream=validate_ox_plot_stream(stream);
+    STOZ(stream,s_id);
     MKSTR(fname,MEMORY_PLOT);
     arg=mknode(8,s_id,fname,func,xrange,NULLP,NULLP,geom,prec);
     Pox_rpc(arg,&t);
     arg=mknode(1,s_id);
     Pox_pop_cmo(arg,rp);
+#endif
   } else {
+    stream=validate_ox_plot_stream(stream);
+    STOZ(stream,s_id);
     MKSTR(fname,fn);
     arg=mknode(9,s_id,fname,func,xrange,NULLP,NULLP,geom,wname,prec);
     Pox_rpc(arg,&t);
@@ -634,6 +659,67 @@ void Ppolarplot(NODE arg,Z *rp){
   Pox_rpc(arg,&t);
   *rp=s_id;
 }
+
+#if defined(ASIR_NO_XPLOT)
+void Pmemory_polarplot(NODE arg,Obj *rp){
+  Z w300;
+  NODE defrange,n,n0;
+  LIST zrange,range[1],geom,list;
+  VL vl,vl0;
+  V v[1],av[1];
+  int ri,i;
+  P poly,var;
+  Real pi2;
+
+  MKReal(2*Pi,pi2);MKNODE(n,pi2,0); MKNODE(defrange,0,n);
+  poly=0;vl=0;geom=0;ri=0;v[0]=0;
+  for(;arg;arg=NEXT(arg)){
+    if(!BDY(arg)) continue;
+    switch(OID(BDY(arg))){
+    case O_P: case O_R:
+      poly=(P)BDY(arg);
+      get_vars_recursive((Obj)poly,&vl);
+      for(vl0=vl,i=0;vl0;vl0=NEXT(vl0))
+        if(vl0->v->attr==(pointer)V_IND) {
+          if(i>=1)error("memory_polarplot : invalid argument");
+          else v[i++]=vl0->v;
+        }
+      if(i!=1)error("memory_polarplot : invalid argument");
+      break;
+    case O_LIST:
+      list=(LIST)BDY(arg);
+      if(OID(BDY(BDY(list)))==O_P)
+        if(ri>0)error("memory_polarplot : invalid argument");
+        else range[ri++]=list;
+      else geom=list;
+      break;
+    default:
+      error("memory_polarplot : invalid argument");
+      break;
+    }
+  }
+  if(!poly)error("memory_polarplot : invalid argument");
+  switch (ri){
+  case 0:
+    MKV(v[0],var); MKNODE(n,var,defrange); MKLIST(zrange,n);
+    break;
+  case 1:
+    av[0]=VR((P)BDY(BDY(range[0])));
+    if(v[0]==av[0]) zrange = range[0];
+    else error("memory_polarplot : invalid argument");
+    break;
+  default:
+    error("memory_polarplot : cannot happen");
+    break;
+  }
+  if(!geom){
+    STOZ(300,w300);
+    MKNODE(n0,w300,0); MKNODE(n,w300,n0); MKLIST(geom,n);
+  }
+  arg = mknode(5,poly,NULLP,NULLP,zrange,geom);
+  memory_polarplot(arg,(LIST *)rp);
+}
+#endif
 
 void Pplotover(NODE arg,Obj *rp){
   Q s_id,w_id,color;

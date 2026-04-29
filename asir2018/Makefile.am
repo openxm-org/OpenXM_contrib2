@@ -16,9 +16,10 @@ inc_HEADERS = parse/comp.h parse/cpp.h parse/parse.h parse/w_stdio.h \
   include/version.h include/wsio.h include/interval.h
 
 DEFS       = @DEFS@ -DASIR_LIBDIR=\"${asirdir}\"
+NOX_PLOT_CPPFLAGS =
 AM_CPPFLAGS   = -I${top_srcdir}/include -I${top_srcdir}/parse -I${top_srcdir}/io \
               -I${top_srcdir}/gc/include \
-              -I${prefix}/include @X_CFLAGS@
+              -I${prefix}/include @X_CFLAGS@ ${NOX_PLOT_CPPFLAGS}
 
 ## libasir
 
@@ -56,6 +57,8 @@ PARSE_SRCS = parse/arith.c parse/comp.c parse/debug.c parse/eval.c \
   parse/struct.c parse/util.c parse/xdeb.c parse/gc_risa.c
 PLOT_SRCS = plot/calc.c plot/if.c plot/plotp.c plot/plotg.c \
   plot/ox_plot.c plot/plotf.c plot/ox_plot_xevent.c plot/smoothing.c
+NOX_PLOT_SRCS = plot/calc.c plot/plotf.c plot/nox_plotp.c \
+  plot/nox_memory.c plot/nox_stub.c
 
 YTAB_SRCS = parse/y.tab.c parse/y.tab.h
 BUILT_SOURCES = ${YTAB_SRCS}
@@ -71,6 +74,9 @@ nodist_libasir@sufx@_la_SOURCES = ${YTAB_SRCS}
 if USE_PLOT
   X11LIB  = @X_LIBS@ -lXaw -lXmu -lXt @X_PRE_LIBS@ @XPMLIB@ -lXext -lX11 @X_EXTRA_LIBS@ 
   libasir@sufx@_la_SOURCES += ${PLOT_SRCS}
+else
+  NOX_PLOT_CPPFLAGS = -DASIR_NO_XPLOT
+  libasir@sufx@_la_SOURCES += ${NOX_PLOT_SRCS}
 endif
 
 LIBS = -L${libdir} @LIBS@ @GCLIB@ @LAPACKLIB@ ${X11LIB} ${FEPLIB} @GMPLIB@ \
@@ -112,4 +118,3 @@ install-openxm: install install-doc
 	${LN_S} asir${EXEEXT} ox_asir${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_launch${EXEEXT} ; \
 	${LN_S} asir${EXEEXT} ox_plot${EXEEXT})
-

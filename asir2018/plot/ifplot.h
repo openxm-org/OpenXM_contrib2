@@ -47,7 +47,33 @@
  *
  * $OpenXM$
 */
-#if defined(VISUAL) || defined(__MINGW32__)
+#if defined(ASIR_NO_XPLOT)
+typedef struct {
+  short x;
+  short y;
+} POINT;
+typedef void *Widget;
+typedef unsigned long Window;
+typedef unsigned long Pixmap;
+typedef void *DISPLAY;
+typedef Window WINDOW;
+typedef int CURSOR;
+typedef unsigned long DRAWABLE;
+typedef void *GC;
+typedef void XFontStruct;
+#define XC(a) ((a).x)
+#define YC(a) ((a).y)
+#define DRAWPOINT(d,p,g,x,y) ((void)0)
+#define DRAWLINE(d,p,g,x,y,u,v) ((void)0)
+#define DRAWSTRING(d,p,g,x,y,s,l) ((void)0)
+#define TEXTWIDTH(f,s,l) 0
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+#elif defined(VISUAL) || defined(__MINGW32__)
 /* for Visual C++ */
 #include <windows.h>
 #else
@@ -128,6 +154,7 @@
 #define MEMORY_IFPLOT "memory_ifplot"
 #define MEMORY_CONPLOT "memory_conplot"
 #define MEMORY_PLOT "memory_plot"
+#define MEMORY_POLARPLOT "memory_polarplot"
 #define ARRAYPLOT "arrayplot"
 #define OPEN_CANVAS "open_canvas"
 #define DRAWCIRCLE "drawcircle"
@@ -182,7 +209,8 @@
 #define DIR_Y 1
 #define DIR_Z 2
 
-#if defined(VISUAL) || defined(__MINGW32__)
+#if defined(ASIR_NO_XPLOT)
+#elif defined(VISUAL) || defined(__MINGW32__)
 /* for Visual C++ */
 #define XC(a) ((a).x)
 #define YC(a) ((a).y)
@@ -292,7 +320,8 @@ extern int stream;
 extern DISPLAY *display;
 extern CURSOR normalcur,runningcur,errorcur;
 
-#if defined(VISUAL) || defined(__MINGW32__)
+#if defined(ASIR_NO_XPLOT)
+#elif defined(VISUAL) || defined(__MINGW32__)
 extern POINT start_point,end_point;
 extern SIZE cansize;
 #else
@@ -327,6 +356,7 @@ int ifplotold(NODE);
 int polarplot(NODE);
 int conplotD(NODE);
 int memory_plot(NODE,LIST *);
+int memory_polarplot(NODE,LIST *);
 int plotover(NODE);
 int plotoverD(NODE);
 int drawcircle(NODE);
