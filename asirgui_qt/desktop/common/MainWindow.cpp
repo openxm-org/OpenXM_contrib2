@@ -190,10 +190,10 @@ void MainWindow::handleResult(const AsirResult &r)
             appendTranscriptLine(r.text);
             appendLogLine(r.text);
         }
-        if (!r.timingText.isEmpty()) {
-            appendTranscriptLine(r.timingText);
-            appendLogLine(QStringLiteral("Time[%1]> %2").arg(pending.id).arg(r.timingText));
-        }
+    }
+    if (!r.timingText.isEmpty()) {
+        appendTranscriptLine(r.timingText);
+        appendLogLine(QStringLiteral("Time[%1]> %2").arg(pending.id).arg(r.timingText));
     }
     if (pending.referenceCapable && !r.isError) {
         m_referenceableIds.insert(pending.id);
