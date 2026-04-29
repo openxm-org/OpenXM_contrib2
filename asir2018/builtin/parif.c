@@ -24,6 +24,19 @@ void Pox_launch(NODE arg,Obj *rp);
 void Pox_push_cmo(NODE arg,Obj *rp);
 void Pox_pop_cmo(NODE arg,Obj *rp);
 void Pox_execute_function(NODE arg,Obj *rp);
+int ox_shutdown_safe(int index);
+
+int asir_ox_shutdown_pari()
+{
+  int ok;
+
+  if ( !ox_pari_stream_initialized || !ox_pari_stream )
+    return 0;
+  ok = ox_shutdown_safe(ZTOS(ox_pari_stream));
+  ox_pari_stream_initialized = 0;
+  ox_get_pari_result = 0;
+  return ok;
+}
 
 int debug_pari;
 

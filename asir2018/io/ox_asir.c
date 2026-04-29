@@ -74,6 +74,8 @@ extern LIST LastStackTrace;
 
 int ox_sock_id;
 int lib_ox_need_conv;
+int asir_ox_lib_mode;
+int asir_ox_lib_interrupting;
 
 void create_error(ERR *,unsigned int ,char *,LIST trace);
 
@@ -108,6 +110,23 @@ char *name_of_id(int);
 static void asir_do_cmd(int,unsigned int);
 static void asir_executeFunction(int);
 static void asir_executeFunctionSync(int);
+
+#if !defined(VISUAL) && !defined(__MINGW32__)
+static void asir_ox_lib_interrupt_handler(int sig)
+{
+  extern int in_gc, caught_intr;
+
+  set_signal_for_restart(SIGUSR1,asir_ox_lib_interrupt_handler);
+  if ( in_gc ) {
+    caught_intr = 2;
+    return;
+  }
+  asir_ox_lib_interrupting = 1;
+  set_lasterror("return to toplevel");
+  LEAVE_SIGNAL_CS_ALL;
+  resetenv("return to toplevel");
+}
+#endif
 
 #if defined(MPI)
 /* XXX : currently MPI version supports only a homogeneous cluster. */
@@ -1147,6 +1166,8 @@ void asir_ox_push_cmd(int cmd)
     if ( ret == 1 ) {
       create_error(&err,0,LastError,LastStackTrace); /* XXX */
       asir_push_one((Obj)err);
+    } else if ( ret == 2 ) {
+      asir_ox_lib_interrupting = 0;
     }
   } else {
     asir_save_handler();
@@ -1174,6 +1195,8 @@ void asir_ox_execute_string(char *s)
     if ( ret == 1 ) {
       create_error(&err,0,LastError,LastStackTrace); /* XXX */
       asir_push_one((Obj)err);
+    } else if ( ret == 2 ) {
+      asir_ox_lib_interrupting = 0;
     }
   } else {
     asir_save_handler();
@@ -1208,10 +1231,8 @@ int asir_ox_peek_cmo_string_length()
   int len;
 
   obj = asir_peek_one();
-  if ( !valid_as_cmo(obj) ) {
-    fprintf(stderr,"The object at the stack top is invalid as a CMO.\n");
-    return 0;
-  }
+  if ( !obj )
+    return 2;
   len = estimate_length(CO,obj);
   return len+1;
 }
@@ -1278,6 +1299,11 @@ int asir_ox_init(int byteorder)
     lib_ox_need_conv = 0;
   do_message = 0;
   create_my_mathcap("ox_asir");
+#if !defined(VISUAL) && !defined(__MINGW32__)
+  asir_ox_lib_mode = 1;
+  asir_ox_lib_interrupting = 0;
+  set_signal(SIGUSR1,asir_ox_lib_interrupt_handler);
+#endif
   asir_reset_handler();
   return 0;
 }

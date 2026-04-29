@@ -528,6 +528,7 @@ void asir_reset_handler() {
 }
 
 extern int I_am_server;
+extern int asir_ox_lib_interrupting;
 
 void resetenv(char *s)
 {
@@ -554,7 +555,11 @@ void resetenv(char *s)
 #if !defined(VISUAL) && !defined(__MINGW32__)
   reset_timer();
 #endif
-  LONGJMP(main_env,1);
+  if ( asir_ox_lib_interrupting ) {
+    asir_ox_lib_interrupting = 0;
+    LONGJMP(main_env,2);
+  } else
+    LONGJMP(main_env,1);
 }
 
 void fatal(int n)

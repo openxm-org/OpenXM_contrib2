@@ -15,9 +15,12 @@
 void error(char *);
 void int_handler(int);
 void ox_usr1_handler(int sig);
+void set_lasterror(char *);
+void resetenv(char *);
 
 int *StackBottom;
 int in_gc, caught_intr;
+extern int asir_ox_lib_mode, asir_ox_lib_interrupting;
 
 #if defined(_WIN64)
 extern int recv_intr;
@@ -42,8 +45,14 @@ void check_caught_intr()
     int_handler(SIGINT);
   } else if ( caught_intr == 2 ) {
     caught_intr = 0;
-    fprintf(stderr,"entering reset mode...\n");
-    ox_usr1_handler(SIGUSR1);
+    if ( asir_ox_lib_mode ) {
+      asir_ox_lib_interrupting = 1;
+      set_lasterror("return to toplevel");
+      resetenv("return to toplevel");
+    } else {
+      fprintf(stderr,"entering reset mode...\n");
+      ox_usr1_handler(SIGUSR1);
+    }
   }
 }
 #endif
@@ -149,8 +158,6 @@ double get_rtime()
 
 extern int recv_intr,doing_batch;
 void send_intr();
-void enter_signal_cs();
-void leave_signal_cs();
 
 BOOL set_ctrlc_flag(DWORD type)
 {

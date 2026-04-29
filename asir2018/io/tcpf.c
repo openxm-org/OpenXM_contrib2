@@ -1583,6 +1583,31 @@ void Pox_shutdown(NODE arg,Z *rp)
   *rp = 0;
 }
 
+int ox_shutdown_safe(int index)
+{
+  int s;
+#if !defined(VISUAL) && !defined(__MINGW32__)
+  int status;
+#endif
+
+  check_valid_mctab_index(index);
+  if ( index < 0 ) {
+    return 0;
+  }
+  s = m_c_tab[index].m;
+  ox_send_cmd(s,SM_shutdown);
+  free_iofp(s);
+  s = m_c_tab[index].c;
+  free_iofp(s);
+#if !defined(MPI) && !defined(VISUAL) && !defined(__MINGW32__)
+  if ( m_c_tab[index].af_unix )
+    wait(&status);
+#endif
+  m_c_tab[index].m = -1; m_c_tab[index].c = -1;
+  m_c_tab[index].af_unix = 0;
+  return 1;
+}
+
 void Pox_push_cmd(NODE arg,Z *rp)
 {
   int ui;
@@ -1713,4 +1738,3 @@ int register_102(int s1,int rank,int is_master)
   iofp_102[rank].socket = 0;
   return 0;
 }
-
