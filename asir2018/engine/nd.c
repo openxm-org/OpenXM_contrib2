@@ -5,7 +5,7 @@
 void print_siglist(NODE l);
 
 int n_afo,n_bfo,n_cfo,n_dfo;
-NODE nd_hpdata;
+NODE nd_hpdata,f4_newbase_step;
 int Nnd_add,Nf4_red,NcriB,NcriMF,Ncri2,Npairs,Nnewpair;
 struct oEGT eg_search,f4_symb,f4_conv,f4_elim1,f4_elim2,f4_nb;
 struct oEGT eg_B,eg_M,eg_F;
@@ -74,7 +74,7 @@ static int *nd_poly_weight,*nd_module_weight;
 static NODE nd_tracelist;
 static NODE nd_alltracelist;
 static int nd_gentrace,nd_gensyz,nd_nora,nd_newelim,nd_intersect,nd_lf,nd_norb,nd_allbase;
-static int nd_nocrit;
+static int nd_nocrit,nd_f4_newbase_step;
 static int nd_f4_td,nd_sba_f4step,nd_sba_pot,nd_sba_largelcm,nd_sba_dontsort,nd_sba_redundant_check,nd_sba_nosigrange,nd_sba_minsig;
 static int nd_top,nd_sba_syz,nd_sba_inputisgb,nd_sba_heu;
 static int *nd_gbblock;
@@ -5220,34 +5220,39 @@ FINAL:
         r0 = postprocess_algcoef(av,alist,r0);
   MKLIST(*rp,r0);
   if ( nd_gentrace ) {
-  if ( f4 ) {
-            STOZ(16,bpe);
-            STOZ(nd_last_nonzero,last_nonzero);
-            tr = mknode(6,*rp,(!ishomo&&homo)?ONE:0,BDY(nzlist),bpe,last_nonzero,hvect); MKLIST(*rp,tr);
-        } else {
-            tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
-            tl3 = reverse_node(tl3);
-            /* tl2 = [[i,[[*,j,*,*],...]],...] */
-            for ( t = tl2; t; t = NEXT(t) ) {
-            /* s = [i,[*,j,*,*],...] */
-                s = BDY((LIST)BDY(t));
-                j = perm[ZTOS((Q)ARG0(s))]; STOZ(j,jq); ARG0(s) = (pointer)jq;
-                for ( s = BDY((LIST)ARG1(s)); s; s = NEXT(s) ) {
-                    j = perm[ZTOS((Q)ARG1(BDY((LIST)BDY(s))))]; STOZ(j,jq); 
-                    ARG1(BDY((LIST)BDY(s))) = (pointer)jq;
-                }
-            }
-            for ( j = length(x)-1, t = 0; j >= 0; j-- ) {
-                STOZ(perm[j],jq); MKNODE(s,jq,t); t = s;
-            }
-            MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
-            MKLIST(l5,tl4);
-            STOZ(nd_bpe,bpe);
-            tr = mknode(9,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe,hvect); MKLIST(*rp,tr);
+    if ( f4 ) {
+      STOZ(16,bpe);
+      STOZ(nd_last_nonzero,last_nonzero);
+      tr = mknode(6,*rp,(!ishomo&&homo)?ONE:0,BDY(nzlist),bpe,last_nonzero,hvect); MKLIST(*rp,tr);
+    } else {
+      tl1 = reverse_node(tl1); tl2 = reverse_node(tl2);
+      tl3 = reverse_node(tl3);
+      /* tl2 = [[i,[[*,j,*,*],...]],...] */
+      for ( t = tl2; t; t = NEXT(t) ) {
+        /* s = [i,[*,j,*,*],...] */
+        s = BDY((LIST)BDY(t));
+        j = perm[ZTOS((Q)ARG0(s))]; STOZ(j,jq); ARG0(s) = (pointer)jq;
+        for ( s = BDY((LIST)ARG1(s)); s; s = NEXT(s) ) {
+          j = perm[ZTOS((Q)ARG1(BDY((LIST)BDY(s))))]; STOZ(j,jq); 
+          ARG1(BDY((LIST)BDY(s))) = (pointer)jq;
         }
+      }
+      for ( j = length(x)-1, t = 0; j >= 0; j-- ) {
+        STOZ(perm[j],jq); MKNODE(s,jq,t); t = s;
+      }
+      MKLIST(l1,tl1); MKLIST(l2,tl2); MKLIST(l3,t); MKLIST(l4,tl3);
+      MKLIST(l5,tl4);
+      STOZ(nd_bpe,bpe);
+      tr = mknode(9,*rp,(!ishomo&&homo)?ONE:0,l1,l2,l3,l4,l5,bpe,hvect); MKLIST(*rp,tr);
     }
+  }
+  if ( nd_f4_newbase_step ) {
+    MKLIST(l1,f4_newbase_step);
+    tr = mknode(2,*rp,l1);
+    MKLIST(*rp,tr);
+  }
 #if 0
-    fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
+  fprintf(asir_out,"ndv_alloc=%d\n",ndv_alloc);
 #endif
 }
 
@@ -9465,9 +9470,11 @@ NODE nd_f4(int m,int checkonly,int **indp)
   int sugar;
   PGeoBucket bucket;
   struct oEGT eg0,eg1,eg2,eg_f4,eg_nb;
-  Z i1,i2,sugarq;
+  Z i1,i2,i3,sugarq;
+  int nflen;
 
   n_afo=n_bfo=n_cfo=0;
+  f4_newbase_step = 0;
   f4red_save = 0;
   init_eg(&f4_symb); init_eg(&f4_conv); init_eg(&f4_conv); init_eg(&f4_elim1); init_eg(&f4_elim2);
   init_eg(&eg_B); init_eg(&eg_M); init_eg(&eg_F); init_eg(&f4_nb);
@@ -9525,6 +9532,14 @@ NODE nd_f4(int m,int checkonly,int **indp)
     if ( nflist ) nd_last_nonzero = f4red;
     get_eg(&eg1);
     f4red_save = f4red;
+
+    // record the number of new bases in each F4 step
+    nflen = length(nflist);
+    STOZ(f4red,i1); STOZ(nd_psn,i2); STOZ(nflen,i3);
+    node = mknode(3,i1,i2,i3); MKLIST(l0,node);
+    NEXTNODE(f4_newbase_step,tn);
+    BDY(tn) = l0; NEXT(tn) = 0;
+
     for ( r = nflist; r; r = NEXT(r) ) {
       nf = (NDV)BDY(r);
       if ( nd_f4_td ) SG(nf) = nd_tdeg(nf);
@@ -11389,7 +11404,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
   nd_hpdata = 0; nd_sba_heu = 0; nd_sba_nosigrange = 0; nd_sba_minsig = 0;
   nd_thread = 0;
-  nd_nocrit = 0;
+  nd_nocrit = 0; nd_f4_newbase_step = 0;
 
   for ( t = opt; t; t = NEXT(t) ) {
     p = BDY((LIST)BDY(t));
@@ -11460,6 +11475,11 @@ void parse_nd_option(VL vl,NODE opt)
       nd_sugarweight = MALLOC(n*sizeof(int));
       for ( i = 0; i < n; i++, u = NEXT(u) ) 
         nd_sugarweight[i] = (int)ZTOS((Q)BDY(u));
+    } else if ( !strcmp(key,"f4_newbase_step") ) {
+      nd_f4_newbase_step = value?1:0;
+      if ( nd_f4_newbase_step != 0 ) {
+        nd_allbase = 1; nd_nora = 1; nd_norb = 1;
+      }
     } else if ( !strcmp(key,"f4_td") ) {
       nd_f4_td = value?1:0;
     } else if ( !strcmp(key,"sba_f4step") ) {
