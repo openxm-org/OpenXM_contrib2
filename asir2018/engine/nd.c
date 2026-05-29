@@ -9474,7 +9474,15 @@ NODE nd_f4(int m,int checkonly,int **indp)
   int nflen;
 
   n_afo=n_bfo=n_cfo=0;
+
+  // initialize f4_newbase_step
   f4_newbase_step = 0;
+  nflen = length(nflist);
+  i2 = 0; STOZ(nd_psn,i3);
+  node = mknode(2,i2,i3); MKLIST(l0,node);
+  NEXTNODE(f4_newbase_step,tn);
+  BDY(tn) = l0; NEXT(tn) = 0;
+
   f4red_save = 0;
   init_eg(&f4_symb); init_eg(&f4_conv); init_eg(&f4_conv); init_eg(&f4_elim1); init_eg(&f4_elim2);
   init_eg(&eg_B); init_eg(&eg_M); init_eg(&eg_F); init_eg(&f4_nb);
@@ -9535,8 +9543,8 @@ NODE nd_f4(int m,int checkonly,int **indp)
 
     // record the number of new bases in each F4 step
     nflen = length(nflist);
-    STOZ(f4red,i1); STOZ(nd_psn,i2); STOZ(nflen,i3);
-    node = mknode(3,i1,i2,i3); MKLIST(l0,node);
+    STOZ(nd_psn,i2); STOZ(nflen,i3);
+    node = mknode(2,i2,i3); MKLIST(l0,node);
     NEXTNODE(f4_newbase_step,tn);
     BDY(tn) = l0; NEXT(tn) = 0;
 
