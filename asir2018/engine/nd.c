@@ -9477,7 +9477,6 @@ NODE nd_f4(int m,int checkonly,int **indp)
 
   // initialize f4_newbase_step
   f4_newbase_step = 0;
-  nflen = length(nflist);
   i2 = 0; STOZ(nd_psn,i3);
   node = mknode(2,i2,i3); MKLIST(l0,node);
   NEXTNODE(f4_newbase_step,tn);
