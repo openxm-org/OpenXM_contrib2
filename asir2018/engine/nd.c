@@ -11406,7 +11406,7 @@ void parse_nd_option(VL vl,NODE opt)
   nd_newelim = 0; nd_intersect = 0; nd_nzlist = 0;
   nd_splist = 0; nd_check_splist = 0;
   nd_sugarweight = 0; nd_f4red =0; nd_rank0 = 0;
-  nd_f4_td = 0; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
+  nd_f4_td = 0; nd_f4_nsp = 0x7fffffff; nd_sba_f4step = 2; nd_sba_pot = 0; nd_sba_largelcm = 0;
   nd_sba_dontsort = 0; nd_top = 0; nd_sba_redundant_check = 0;
   nd_sba_syz = 0; nd_sba_modord = 0; nd_sba_inputisgb = 0;
   nd_hpdata = 0; nd_sba_heu = 0; nd_sba_nosigrange = 0; nd_sba_minsig = 0;
@@ -11489,6 +11489,8 @@ void parse_nd_option(VL vl,NODE opt)
       }
     } else if ( !strcmp(key,"f4_td") ) {
       nd_f4_td = value?1:0;
+    } else if ( !strcmp(key,"f4_nsp") ) {
+      nd_f4_nsp = (int)ZTOS((Q)value);
     } else if ( !strcmp(key,"sba_f4step") ) {
       nd_sba_f4step = value?(int)ZTOS((Q)value):0;
     } else if ( !strcmp(key,"sba_pot") ) {
