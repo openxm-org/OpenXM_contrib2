@@ -385,9 +385,38 @@ void loadasirfile(char *name0)
     asir_reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
 }
 
+void loadasirfile_nocpp(char *name0)
+{
+  FILE *in;
+  INFILE t;
+
+  in = fopen(name0,"r");
+  if ( !in ) {
+    perror("fopen");
+    error("load : failed");
+  }
+  t = (INFILE)MALLOC(sizeof(struct oINFILE));
+  t->name = (char *)MALLOC(strlen(name0)+1); strcpy(t->name,name0);
+  t->fp = in; t->ln = 1; t->next = asir_infile; asir_infile = t;
+  main_parser = 1; /* XXX */
+  Eungetc(afternl(),asir_infile->fp);
+  if ( !EPVS->va )
+    asir_reallocarray((char **)&EPVS->va,(int *)&EPVS->asize,(int *)&EPVS->n,(int)sizeof(struct oPV));
+}
+
 void execasirfile(char *name)
 {
   loadasirfile(name);
+  if ( !SETJMP(asir_infile->jmpbuf) ) {
+    asir_infile->ready_for_longjmp = 1;
+    read_eval_loop();
+  }
+  closecurrentinput();
+}
+
+void execasirfile_nocpp(char *name)
+{
+  loadasirfile_nocpp(name);
   if ( !SETJMP(asir_infile->jmpbuf) ) {
     asir_infile->ready_for_longjmp = 1;
     read_eval_loop();

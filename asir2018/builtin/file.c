@@ -345,8 +345,11 @@ void Pload(NODE arg,Z *rp)
   int ret = 0;
   char *name,*name0;
   char errbuf[BUFSIZ];
+  int nocpp = 0;
+  Obj val;
 
   if ( !arg ) error("load : invalid argument");
+  if ( get_opt("nocpp",&val) && val ) nocpp = 1;
   if ( ARG0(arg) ) {
     switch (OID(ARG0(arg))) {
       case O_STR:
@@ -356,7 +359,10 @@ void Pload(NODE arg,Z *rp)
           sprintf(errbuf,"load : \"%s\" not found in the search path",name0);
           error(errbuf);
         }
-        execasirfile(name);
+        if ( nocpp != 0 )
+          execasirfile_nocpp(name);
+        else
+          execasirfile(name);
         break;
       default:
         error("load : invalid argument");
